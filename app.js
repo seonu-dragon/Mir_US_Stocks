@@ -125,6 +125,16 @@ let selectedSectorRange = "1D";
 let selectedSectorBenchmark = "SPY";
 const detailCache = {};
 const detailPromises = {};
+
+// Optional Cloudflare Worker proxy that fetches Yahoo news + real charts live when a
+// stock-analysis page opens. Leave "" to fall back to the pre-generated detail files.
+// After deploying worker/yahoo-proxy.js, paste its URL here, e.g.
+//   const LIVE_DATA_PROXY = "https://mir-yahoo.yourname.workers.dev";
+const LIVE_DATA_PROXY = "";
+const liveNewsCache = {};
+const liveChartCache = {};
+const liveFetched = {};
+
 let chartState = {
   range: "1Y",
   zoom: 1,
@@ -1574,21 +1584,72 @@ function selectTicker(ticker, options = {}) {
 
 function renderSearch() {
   const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
-  const item = withDetail(base);
+  const item = applyLive(withDetail(base));
   byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
   byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
   drawChart(item);
   renderFundamentals(item);
   renderNews(item);
+  maybeFetchLiveData(base);
   loadStockDetail(item.ticker).then((detail) => {
     if (!detail || selectedTicker !== item.ticker) return;
-    const refreshed = withDetail(base);
+    const refreshed = applyLive(withDetail(base));
     byId("chartTitle").textContent = `${refreshed.ticker} · ${refreshed.company}`;
     byId("searchFacts").innerHTML = stockFacts(refreshed, "Search Ticker");
     drawChart(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
   });
+}
+
+// Merge any live (proxy-fetched) chart/news over the snapshot+detail data.
+function applyLive(item) {
+  if (!item) return item;
+  const chart = liveChartCache[item.ticker];
+  const news = liveNewsCache[item.ticker];
+  if (!chart && !news) return item;
+  const out = { ...item };
+  if (Array.isArray(chart) && chart.length) {
+    out.chartSeries = chart;
+    out.historySource = "yahoo";
+  }
+  if (Array.isArray(news) && news.length) out.news = news;
+  return out;
+}
+
+// On opening an analysis page, fetch live news + real chart from the proxy (if set).
+function maybeFetchLiveData(base) {
+  if (!LIVE_DATA_PROXY || !base) return;
+  const ticker = base.ticker;
+  if (liveFetched[ticker]) return;
+  liveFetched[ticker] = true;
+  setNewsLoading();
+  const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?ticker=${encodeURIComponent(ticker)}`;
+  fetch(endpoint, { cache: "no-store" })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((payload) => {
+      if (!payload) return;
+      if (Array.isArray(payload.news)) liveNewsCache[ticker] = payload.news;
+      if (Array.isArray(payload.chart)) liveChartCache[ticker] = payload.chart;
+      if (selectedTicker !== ticker) return;
+      const refreshedBase = data.stocks.find((row) => row.ticker === ticker) || base;
+      const merged = applyLive(withDetail(refreshedBase));
+      drawChart(merged);
+      renderFundamentals(merged);
+      renderNews(merged);
+    })
+    .catch(() => {
+      if (selectedTicker === ticker) renderNews(applyLive(withDetail(base)));
+    });
+}
+
+function setNewsLoading() {
+  const box = byId("searchNews");
+  if (!box) return;
+  box.innerHTML = `
+    <span class="muted">주요 뉴스</span>
+    <p class="news-empty">실시간 뉴스를 불러오는 중…</p>
+  `;
 }
 
 function isSyntheticChart(item) {

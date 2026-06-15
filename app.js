@@ -2614,6 +2614,11 @@ function pctFrom(now, then) {
 }
 
 function renderFundamentals(item) {
+  // ETFs don't need fundamentals — show their constituent stocks (by RS) instead.
+  if (item.sector === "EXCHANGE TRADED FUNDS") {
+    renderEtfConstituents(item);
+    return;
+  }
   const f = item.fundamentals || {};
   const detailMode = data.detailPolicy?.mode === "split";
   const hasFundamentals = Object.keys(f).length > 0;
@@ -2645,6 +2650,60 @@ function renderFundamentals(item) {
       </tbody>
     </table>
   `;
+}
+
+// Resolve an ETF's constituent stocks (best available), as {name, list}.
+function etfConstituentStocks(ticker) {
+  const rows = data.health?.etfRelative?.rows || [];
+  const row = rows.find((r) => r.representative === ticker
+    || (r.peers || []).some((p) => (p.ticker || p) === ticker));
+  if (row && Array.isArray(row.stockLeaders) && row.stockLeaders.length) {
+    return { name: row.category, list: row.stockLeaders.slice() };
+  }
+  const meta = SECTOR_ETFS.find((m) => m.ticker === ticker);
+  if (meta) {
+    return {
+      name: meta.name,
+      list: getSectorStocks(meta).map((s) => ({
+        ticker: s.ticker, name: s.company, rsScore: s.rsScore,
+        changePct: s.changePct, monthChangePct: s.monthChangePct
+      }))
+    };
+  }
+  return null;
+}
+
+function renderEtfConstituents(item) {
+  const result = etfConstituentStocks(item.ticker);
+  const head = `<div class="fundamental-head"><h3>구성 종목 (상대강도순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
+  const box = byId("fundamentalTable");
+  if (!result || !result.list.length) {
+    box.innerHTML = head + `<p class="muted" style="padding:12px;">이 ETF의 구성 종목 데이터가 없습니다.</p>`;
+    return;
+  }
+  const list = result.list.slice().sort((a, b) => (b.rsScore || 0) - (a.rsScore || 0));
+  box.innerHTML = head + `
+    <div class="table-wrap">
+      <table class="etf-constituents-table">
+        <thead><tr><th>#</th><th>티커</th><th>회사명</th><th>RS</th><th>당일</th><th>1개월</th></tr></thead>
+        <tbody>
+          ${list.map((s, i) => `
+            <tr class="etf-con-row" data-ticker="${escapeHtml(s.ticker)}" style="cursor:pointer;">
+              <td class="rank-cell">${i + 1}</td>
+              <td><strong>${escapeHtml(s.ticker)}</strong></td>
+              <td>${escapeHtml(s.name || "")}</td>
+              <td><span class="rs-badge">${Math.round(s.rsScore || 0)}</span></td>
+              <td class="${cls(s.changePct)}">${s.changePct != null ? fmtPct(s.changePct) : "-"}</td>
+              <td class="${cls(s.monthChangePct)}">${s.monthChangePct != null ? fmtPct(s.monthChangePct) : "-"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+  box.querySelectorAll(".etf-con-row").forEach((tr) => {
+    tr.addEventListener("click", () => selectTicker(tr.dataset.ticker, { openSearch: true }));
+  });
 }
 
 function metricPair(label, value) {

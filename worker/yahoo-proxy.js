@@ -252,6 +252,8 @@ const INDEX_LIST = [
   ["^RUT", "Russell 2000"],
   ["^KS11", "KOSPI"],
   ["^KQ11", "KOSDAQ"],
+  ["BTC-USD", "Bitcoin"],
+  ["ETH-USD", "Ethereum"],
 ];
 
 async function fetchIndices() {

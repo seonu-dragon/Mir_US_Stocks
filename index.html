@@ -33,6 +33,7 @@
         <button class="tab" data-tab="search">종목 분석</button>
         <button class="tab" data-tab="bulk">내 리스트</button>
         <button class="tab" data-tab="health">마켓 데이터</button>
+        <button class="tab" data-tab="calendar">경제 캘린더</button>
         <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
       </nav>
 
@@ -464,6 +465,20 @@
           <p>주요 지수·국가·채권·원자재·환율을 한눈에 봅니다. 지수/ETF는 하루 1회 스냅샷, 환율은 실시간으로 가져옵니다.</p>
         </div>
         <div class="markets-tables" id="marketsTables"></div>
+      </section>
+
+      <!-- ==================== 경제 캘린더 탭 ==================== -->
+      <section class="panel" id="tab-calendar">
+        <div class="section-title">
+          <h2>경제 캘린더</h2>
+          <p>이번 주 한국·미국 주요 경제지표 일정입니다. (한국 시간 기준 · 실시간)</p>
+        </div>
+        <div class="calendar-legend">
+          <span><b class="imp imp-3">●●●</b> 높음</span>
+          <span><b class="imp imp-2">●●</b><span class="imp-dim">●</span> 보통</span>
+          <span><b class="imp imp-1">●</b><span class="imp-dim">●●</span> 낮음</span>
+        </div>
+        <div id="calendarBody"><p class="muted">경제 캘린더를 불러오는 중…</p></div>
       </section>
 
       <!-- ==================== AI 브리핑 탭 ==================== -->

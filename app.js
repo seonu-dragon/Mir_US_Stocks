@@ -224,7 +224,7 @@ function computeSectorRanks() {
     .filter(([, v]) => v.n >= 5)
     .map(([sec, v]) => ({ ko: SECTOR_KO[sec], avg: v.sum / v.n }));
   arr.sort((a, b) => b.avg - a.avg);
-  return { strong: arr.slice(0, 3), weak: arr.slice(-3).reverse() };
+  return { strong: arr.slice(0, 5), weak: arr.slice(-5).reverse() };
 }
 
 function fngScore() {
@@ -304,15 +304,17 @@ function sectorTopCardHtml(title, list, strong) {
 
 function fxCardHtml() {
   const find = (sym) => (marketHeader.fx || []).find((f) => f.symbol === sym);
-  const row = (label, f, dec) => f
-    ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}</strong><em class="${cls(f.changePct)}">${fmtPct(f.changePct)}</em></div>`
+  const row = (label, f, dec, suffix = "") => f
+    ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}${suffix}</strong><em class="${cls(f.changePct)}">${fmtPct(f.changePct)}</em></div>`
     : `<div class="hx-row"><span>${label}</span><strong class="muted">불러오는 중…</strong></div>`;
   return `
     <div class="summary-card hx-card">
-      <span>환율 · 금</span>
+      <span>환율 · 금 · 금리</span>
       ${row("달러/원", find("KRW=X"), 1)}
       ${row("엔/원", find("JPYKRW=X"), 2)}
       ${row("금 ($/oz)", find("GC=F"), 1)}
+      ${row("미국채 10년", find("^TNX"), 2, "%")}
+      ${row("미국채 30년", find("^TYX"), 2, "%")}
     </div>
   `;
 }
@@ -321,8 +323,8 @@ function renderSummary() {
   const sectors = computeSectorRanks();
   byId("marketSummary").innerHTML =
     fngCardHtml() +
-    sectorTopCardHtml("강한 섹터 TOP3", sectors.strong, true) +
-    sectorTopCardHtml("약한 섹터 TOP3", sectors.weak, false) +
+    sectorTopCardHtml("강한 섹터 TOP5", sectors.strong, true) +
+    sectorTopCardHtml("약한 섹터 TOP5", sectors.weak, false) +
     fxCardHtml();
 }
 
@@ -366,6 +368,74 @@ function fetchMarketHeader() {
   }).catch(() => {});
 }
 
+// ===== 경제 캘린더 (한국 + 미국, investing.com via Worker) =====
+let calendarLoaded = false;
+
+function loadCalendar() {
+  if (calendarLoaded) return;
+  const body = byId("calendarBody");
+  if (!body) return;
+  if (!LIVE_DATA_PROXY) {
+    body.innerHTML = `<p class="muted">경제 캘린더는 실시간 프록시(Cloudflare Worker) 연결 시 표시됩니다.</p>`;
+    return;
+  }
+  calendarLoaded = true;
+  fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?calendar=1`, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((p) => renderCalendar((p && p.calendar) || []))
+    .catch(() => {
+      calendarLoaded = false;
+      body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
+    });
+}
+
+function impDots(n) {
+  const full = Math.max(0, Math.min(3, n || 0));
+  const lvl = full >= 3 ? "imp-3" : (full === 2 ? "imp-2" : "imp-1");
+  let out = "";
+  for (let i = 0; i < 3; i += 1) out += i < full ? `<b class="imp ${lvl}">●</b>` : `<span class="imp-dim">●</span>`;
+  return out;
+}
+
+function renderCalendar(events) {
+  const body = byId("calendarBody");
+  if (!body) return;
+  if (!events.length) {
+    body.innerHTML = `<p class="muted">표시할 일정이 없습니다. (investing.com 접근이 일시적으로 차단되었을 수 있습니다)</p>`;
+    return;
+  }
+  const groups = [];
+  const idx = {};
+  events.forEach((e) => {
+    const key = e.day || "";
+    if (idx[key] === undefined) { idx[key] = groups.length; groups.push({ day: key, rows: [] }); }
+    groups[idx[key]].rows.push(e);
+  });
+  body.innerHTML = groups.map((g) => `
+    <div class="cal-day">
+      <h3>${escapeHtml(g.day)}</h3>
+      <div class="table-wrap">
+        <table class="cal-table">
+          <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th>실제</th><th>예측</th><th>이전</th></tr></thead>
+          <tbody>
+            ${g.rows.map((e) => `
+              <tr>
+                <td class="cal-time">${escapeHtml(e.time || "")}</td>
+                <td class="cal-country">${escapeHtml(e.country || e.currency || "")}</td>
+                <td class="cal-imp">${impDots(e.importance)}</td>
+                <td class="cal-event">${escapeHtml(e.event || "")}</td>
+                <td class="cal-actual">${escapeHtml(e.actual || "")}</td>
+                <td>${escapeHtml(e.forecast || "")}</td>
+                <td>${escapeHtml(e.previous || "")}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `).join("");
+}
+
 let currentTab = "map";
 
 function activateTab(name, { push = true, ticker = null } = {}) {
@@ -376,6 +446,7 @@ function activateTab(name, { push = true, ticker = null } = {}) {
   tabBtn.classList.add("is-active");
   byId(`tab-${name}`).classList.add("is-active");
   currentTab = name;
+  if (name === "calendar") loadCalendar();
   if (push) {
     history.pushState({ tab: name, ticker }, "");
   }

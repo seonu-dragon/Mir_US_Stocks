@@ -46,6 +46,10 @@ export default {
     if (url.searchParams.get("indices")) {
       return cors(json({ indices: await fetchIndices() }));
     }
+    // Economic calendar (Korea + US) via investing.com XHR endpoint.
+    if (url.searchParams.get("calendar")) {
+      return cors(json({ calendar: await fetchCalendar() }));
+    }
 
     const ticker = (url.searchParams.get("ticker") || "")
       .toUpperCase()
@@ -158,6 +162,57 @@ async function fetchChart(symbol) {
 
 const round = (v) => Math.round(Number(v) * 100) / 100;
 
+// Economic calendar for Korea (id 11) + US (id 5), this week, KST (timeZone 88).
+async function fetchCalendar() {
+  try {
+    const r = await fetch("https://kr.investing.com/economic-calendar/Service/getCalendarFilteredData", {
+      method: "POST",
+      headers: {
+        ...UA,
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/x-www-form-urlencoded",
+        Referer: "https://kr.investing.com/economic-calendar/",
+        Accept: "application/json, text/javascript, */*; q=0.01",
+      },
+      body: "country%5B%5D=5&country%5B%5D=11&timeZone=88&timeFilter=timeRemain&currentTab=thisWeek&limit_from=0",
+    });
+    if (!r.ok) return [];
+    const payload = await r.json();
+    return parseCalendar(payload && payload.data ? String(payload.data) : "");
+  } catch (e) {
+    return [];
+  }
+}
+
+function parseCalendar(htmlStr) {
+  const events = [];
+  let day = "";
+  const stripTags = (s) => (s == null ? "" : s.replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").trim());
+  const rowRe = /<tr[^>]*>([\s\S]*?)<\/tr>/g;
+  let m;
+  while ((m = rowRe.exec(htmlStr)) !== null) {
+    const row = m[0];
+    const dayM = /class="theDay"[^>]*>([^<]+)</.exec(row);
+    if (dayM) { day = dayM[1].trim(); continue; }
+    if (!/js-event-item/.test(row)) continue;
+    const datetime = (/data-event-datetime="([^"]+)"/.exec(row) || [])[1] || "";
+    const time = ((/class="first left time[^"]*"[^>]*>([\s\S]*?)<\/td>/.exec(row) || [])[1] || "").replace(/<[^>]+>/g, "").trim();
+    const isKR = /South_Korea/.test(row);
+    const isUS = /United_States/.test(row);
+    const country = isKR ? "한국" : (isUS ? "미국" : "");
+    const currency = isKR ? "KRW" : (isUS ? "USD" : "");
+    const importance = (row.match(/grayFullBullishIcon/g) || []).length;
+    const eventRaw = (/class="left event"[^>]*>([\s\S]*?)<\/td>/.exec(row) || [])[1] || "";
+    const event = stripTags(eventRaw).replace(/\s+/g, " ").trim();
+    const actual = stripTags((/id="eventActual_\d+"[^>]*>([\s\S]*?)<\/td>/.exec(row) || [])[1]);
+    const forecast = stripTags((/id="eventForecast_\d+"[^>]*>([\s\S]*?)<\/td>/.exec(row) || [])[1]);
+    const previous = stripTags((/id="eventPrevious_\d+"[^>]*>([\s\S]*?)<\/td>/.exec(row) || [])[1]);
+    if (!event) continue;
+    events.push({ day, time, datetime, country, currency, importance, event, actual, forecast, previous });
+  }
+  return events;
+}
+
 // Live FX pairs (Yahoo symbols). KRW=X is USD/KRW, etc.
 const FX_LIST = [
   ["KRW=X", "원/달러 (USD/KRW)"],
@@ -169,6 +224,8 @@ const FX_LIST = [
   ["JPYKRW=X", "원/엔 (JPY/KRW)"],
   ["DX-Y.NYB", "달러 인덱스 (DXY)"],
   ["GC=F", "금 (Gold, $/oz)"],
+  ["^TNX", "미국채 10년 (%)"],
+  ["^TYX", "미국채 30년 (%)"],
 ];
 
 // CNN Fear & Greed index (server-side fetch avoids browser CORS).

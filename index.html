@@ -87,11 +87,24 @@
       </section>
 
       <section class="panel" id="tab-sector">
-        <div class="section-title">
-          <h2>Sector / Industry Treemap</h2>
-          <p>섹터별 강도, 신고가 종목 수, 대표 종목을 한 번에 봅니다.</p>
+        <div class="toolbar">
+          <label>
+            정렬 기준
+            <select id="sectorSort">
+              <option value="avg">당일 평균 등락률</option>
+              <option value="avg1w">1주일 평균 등락률</option>
+              <option value="avg1m">1개월 평균 등락률</option>
+              <option value="avg3m">3개월 평균 등락률</option>
+              <option value="rs">평균 상대강도 (RS)</option>
+              <option value="upPct">상승 종목 비중</option>
+            </select>
+          </label>
         </div>
-        <div class="sector-grid" id="sectorGrid"></div>
+        <div class="section-title compact-title">
+          <h2>Sector Flow Analysis</h2>
+          <p>섹터별 기간별 수익률 흐름, 상승/하락 비중, 그리고 섹터 내 최고 상대강도(RS) 주도주 목록을 비교합니다.</p>
+        </div>
+        <div class="sector-flow-grid" id="sectorGrid"></div>
       </section>
 
       <section class="panel" id="tab-top">

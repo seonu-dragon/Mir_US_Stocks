@@ -564,13 +564,59 @@ button.ghost {
   line-height: 1.5;
 }
 
+.news-summary {
+  margin: 10px 0 4px;
+  padding: 10px 12px;
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.2);
+  border-radius: 10px;
+}
+
+.news-summary-head {
+  font-size: 12px;
+  font-weight: 800;
+  color: #2563eb;
+  margin-bottom: 6px;
+}
+
+.news-summary p {
+  font-size: 12.5px;
+  line-height: 1.6;
+  margin: 0 0 6px;
+}
+
+.news-summary p:last-child {
+  margin-bottom: 0;
+}
+
+.news-summary.is-pending p {
+  font-size: 12px;
+}
+
+.news-list-head {
+  margin: 12px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
 .news-list {
   list-style: none;
-  margin: 10px 0 0;
-  padding: 0;
+  margin: 0;
+  padding: 0 6px 0 0;
   display: flex;
   flex-direction: column;
   gap: 10px;
+  /* Scrollable so headlines stay compact and free up room for the summary. */
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.news-list::-webkit-scrollbar {
+  width: 6px;
+}
+.news-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 4px;
 }
 
 .news-item {

@@ -1035,6 +1035,8 @@ button.ghost {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 14px 16px;
+  /* Let the grid cell shrink so the inner table-wrap can scroll (swipe) on mobile */
+  min-width: 0;
 }
 
 .market-section h3 {
@@ -2288,8 +2290,16 @@ footer {
   .sector-workspace.two-col {
     grid-template-columns: 1fr;
   }
+  /* Make the sector picker a clearly bounded, self-contained scroll box so it is
+     visually distinct and its scrolling doesn't bleed into the page. */
   .sector-scroll-panel {
-    max-height: 280px;
+    max-height: 300px;
+    overscroll-behavior: contain;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: #eef2f7;
+    padding: 10px;
+    margin-bottom: 14px;
   }
   /* Stacked layout: let the chart column flow naturally instead of a viewport cap. */
   .sector-chart-panel {

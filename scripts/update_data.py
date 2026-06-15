@@ -1532,6 +1532,7 @@ def make_stock(meta, rows):
                 round(row["low"], 2),
                 round(price if index == len(history_rows) - 1 else row["close"], 2),
                 int(row["volume"]),
+                row.get("date"),  # YYYY-MM-DD for the chart x-axis (None if unavailable)
             ]
             for index, row in enumerate(history_rows)
         ]

@@ -358,6 +358,47 @@ function setupEvents() {
   });
 }
 
+// Re-derive the currently shown stock (snapshot + detail + live data).
+function currentChartItem() {
+  const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
+  return applyLive(withDetail(base));
+}
+
+// Redraw only the price chart (no news/facts re-render) — used by zoom/pan/wheel/drag.
+function redrawChart() {
+  const item = currentChartItem();
+  if (item) drawChart(item);
+}
+
+// Number of bars available for the active range (matches visibleChartRows logic).
+function chartBaseLength(item) {
+  const rows = getChartRows(item);
+  const rangeMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
+  return Math.min(rows.length, rangeMap[chartState.range] || rows.length);
+}
+
+// Zoom keeping the bar under the cursor anchored (frac = 0 left … 1 right of plot).
+function zoomChartAt(frac, factor) {
+  const item = currentChartItem();
+  if (!item) return;
+  const n = chartBaseLength(item);
+  const minWindow = 16;
+  const oldWindow = Math.max(minWindow, Math.floor(n / chartState.zoom));
+  const oldStart = Math.max(0, n - chartState.offset - oldWindow);
+  const anchor = oldStart + frac * (oldWindow - 1);
+  const newZoom = Math.min(40, Math.max(1, chartState.zoom * factor));
+  const newWindow = Math.max(minWindow, Math.floor(n / newZoom));
+  let newStart = Math.round(anchor - frac * (newWindow - 1));
+  newStart = Math.max(0, Math.min(Math.max(0, n - newWindow), newStart));
+  chartState.zoom = newZoom;
+  chartState.offset = Math.max(0, n - newWindow - newStart);
+  redrawChart();
+}
+
+const CHART_VIEWBOX_W = 860;
+const CHART_PAD_L = 54;
+const CHART_PAD_R = 58;
+
 function setupChartControls() {
   byId("rangeControls").querySelectorAll("button").forEach((button) => {
     button.addEventListener("click", () => {
@@ -365,35 +406,83 @@ function setupChartControls() {
       chartState.zoom = 1;
       chartState.offset = 0;
       byId("rangeControls").querySelectorAll("button").forEach((item) => item.classList.toggle("is-active", item === button));
-      renderSearch();
+      redrawChart();
     });
   });
-  byId("chartZoomIn").addEventListener("click", () => {
-    chartState.zoom = Math.min(8, chartState.zoom * 1.35);
-    renderSearch();
-  });
-  byId("chartZoomOut").addEventListener("click", () => {
-    chartState.zoom = Math.max(1, chartState.zoom / 1.35);
-    chartState.offset = Math.max(0, Math.floor(chartState.offset / 1.35));
-    renderSearch();
-  });
+  byId("chartZoomIn").addEventListener("click", () => zoomChartAt(0.5, 1.35));
+  byId("chartZoomOut").addEventListener("click", () => zoomChartAt(0.5, 1 / 1.35));
   byId("chartPanLeft").addEventListener("click", () => {
     chartState.offset += Math.max(5, Math.round(12 / chartState.zoom));
-    renderSearch();
+    redrawChart();
   });
   byId("chartPanRight").addEventListener("click", () => {
     chartState.offset = Math.max(0, chartState.offset - Math.max(5, Math.round(12 / chartState.zoom)));
-    renderSearch();
+    redrawChart();
   });
   byId("chartReset").addEventListener("click", () => {
     chartState = { ...chartState, zoom: 1, offset: 0 };
-    renderSearch();
+    redrawChart();
   });
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120", "showVolume", "showRsi"].forEach((id) => {
     byId(id).addEventListener("change", (event) => {
       chartState[id] = event.target.checked;
-      renderSearch();
+      redrawChart();
     });
+  });
+  setupChartInteractions();
+}
+
+// TradingView-style mouse: wheel to zoom (cursor anchored), drag to pan.
+function setupChartInteractions() {
+  const svg = byId("priceChart");
+  if (!svg) return;
+
+  svg.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    const vbX = ((event.clientX - rect.left) / rect.width) * CHART_VIEWBOX_W;
+    const plotW = CHART_VIEWBOX_W - CHART_PAD_L - CHART_PAD_R;
+    const frac = Math.max(0, Math.min(1, (vbX - CHART_PAD_L) / plotW));
+    zoomChartAt(frac, event.deltaY < 0 ? 1.2 : 1 / 1.2);
+  }, { passive: false });
+
+  let dragging = false;
+  let startX = 0;
+  let startOffset = 0;
+  let dragN = 0;
+  let dragWindow = 0;
+  let dragPlotPx = 1;
+
+  svg.addEventListener("mousedown", (event) => {
+    const item = currentChartItem();
+    if (!item) return;
+    dragging = true;
+    startX = event.clientX;
+    startOffset = chartState.offset;
+    dragN = chartBaseLength(item);
+    dragWindow = Math.max(16, Math.floor(dragN / chartState.zoom));
+    const rect = svg.getBoundingClientRect();
+    dragPlotPx = rect.width * ((CHART_VIEWBOX_W - CHART_PAD_L - CHART_PAD_R) / CHART_VIEWBOX_W);
+    svg.classList.add("is-dragging");
+    event.preventDefault();
+  });
+
+  window.addEventListener("mousemove", (event) => {
+    if (!dragging) return;
+    const dx = event.clientX - startX;
+    const barsPerPx = dragWindow / Math.max(1, dragPlotPx);
+    let next = Math.round(startOffset + dx * barsPerPx); // drag right -> older bars
+    next = Math.max(0, Math.min(Math.max(0, dragN - dragWindow), next));
+    if (next !== chartState.offset) {
+      chartState.offset = next;
+      redrawChart();
+    }
+  });
+
+  window.addEventListener("mouseup", () => {
+    if (!dragging) return;
+    dragging = false;
+    svg.classList.remove("is-dragging");
   });
 }
 
@@ -1834,8 +1923,25 @@ function drawChart(item) {
   const first = rows[0];
   const last = rows[rows.length - 1];
   const chartChange = pctFrom(last.c, first.c);
+
+  // X-axis: date (or index) ticks + light vertical guides, shared by all panels.
+  const axisBottom = padT + plotH + volumeH + rsiH
+    + (chartState.showVolume ? 18 : 0) + (chartState.showRsi ? 18 : 0) + 16;
+  const tickCount = Math.min(6, Math.max(2, rows.length));
+  const ticks = [];
+  for (let k = 0; k < tickCount; k += 1) {
+    const idx = Math.round((k / (tickCount - 1)) * (rows.length - 1));
+    const x = xFor(idx);
+    const anchor = k === 0 ? "start" : (k === tickCount - 1 ? "end" : "middle");
+    const label = rows[idx] && rows[idx].d ? formatChartDate(rows[idx].d) : `${idx + 1}`;
+    ticks.push({ x, label, anchor });
+  }
+  const vGuides = ticks.map((t) => `<line x1="${t.x.toFixed(1)}" y1="${padT}" x2="${t.x.toFixed(1)}" y2="${padT + plotH}" class="chart-grid"></line>`).join("");
+  const dateLabels = ticks.map((t) => `<text x="${t.x.toFixed(1)}" y="${(axisBottom + 4).toFixed(1)}" text-anchor="${t.anchor}" class="chart-axis">${escapeHtml(t.label)}</text>`).join("");
+
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" rx="8" class="chart-bg"></rect>
+    ${vGuides}
     ${grid}
     <path d="${area}" class="chart-area"></path>
     ${volumeBars}
@@ -1844,24 +1950,34 @@ function drawChart(item) {
     ${smaPaths}
     ${rsiPanel}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
+    ${dateLabels}
     <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
-    <text x="${padL}" y="${height - 12}" class="chart-axis">${activeSmaLabels()}</text>
+    <text x="${padL}" y="36" class="chart-axis">${activeSmaLabels()}</text>
     <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">$${last.c.toFixed(2)}</text>
   `;
+}
+
+function formatChartDate(d) {
+  const parts = String(d).split("-");
+  if (parts.length < 3) return String(d);
+  const [y, m, day] = parts;
+  if (chartState.range === "5Y" || chartState.range === "1Y") return `${y.slice(2)}.${m}`;
+  return `${Number(m)}/${Number(day)}`;
 }
 
 function getChartRows(item) {
   if (Array.isArray(item.chartSeries) && item.chartSeries.length) {
     return item.chartSeries.map((row) => {
       if (Array.isArray(row)) {
-        return { o: Number(row[0]), h: Number(row[1]), l: Number(row[2]), c: Number(row[3]), v: Number(row[4] || 0) };
+        return { o: Number(row[0]), h: Number(row[1]), l: Number(row[2]), c: Number(row[3]), v: Number(row[4] || 0), d: row[5] || null };
       }
       return {
         o: Number(row.o ?? row.c),
         h: Number(row.h ?? row.c),
         l: Number(row.l ?? row.c),
         c: Number(row.c),
-        v: Number(row.v || 0)
+        v: Number(row.v || 0),
+        d: row.d ?? row.date ?? null
       };
     }).filter((row) => Number.isFinite(row.c));
   }

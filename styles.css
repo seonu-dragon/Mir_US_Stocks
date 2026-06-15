@@ -145,6 +145,19 @@ main {
 .hx-row strong { display: inline; margin: 0; font-size: 13px; }
 .hx-row em { font-style: normal; font-weight: 700; font-size: 12px; }
 
+/* 환율·금·금리: fixed-width right-aligned columns so the numbers line up vertically */
+.fx-card .hx-row {
+  display: grid;
+  grid-template-columns: 1fr 76px 50px;
+  align-items: baseline;
+  gap: 6px;
+}
+.fx-card .hx-row strong,
+.fx-card .hx-row em {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ===== Index strip (Finviz-style 일중 차트) ===== */
 .index-strip {
   display: grid;
@@ -1628,12 +1641,27 @@ footer {
 /* ==========================================================================
    AI Briefing & Social Sentiment Styles (Premium Light Mode Redesign)
    ========================================================================== */
+/* The AI briefing panel is the outer box; its title is the header and the three
+   briefing boxes sit inside a tinted inner container (box-in-box). */
+#tab-ai-briefing .section-title {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--line);
+}
+
 .ai-briefing-grid {
   display: grid;
   /* Single full-width column: KOR -> USA -> SOCIAL stacked top to bottom. */
   grid-template-columns: 1fr;
-  gap: 20px;
-  margin-top: 15px;
+  gap: 14px;
+  margin-top: 0;
+  background: #eef2f7;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px;
 }
 
 .briefing-box {

@@ -229,6 +229,9 @@ function setupFilters() {
   byId("etfRsBenchmark").innerHTML = benchmarks
     .map((ticker) => `<option value="${ticker}">${ticker} 대비</option>`)
     .join("");
+
+  // Also populate sectorEtfRsGroup (same groups as etfRsGroup)
+  byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
 }
 
 function setupEvents() {
@@ -254,13 +257,31 @@ function setupEvents() {
   byId("etfRelativeStrength").addEventListener("click", (event) => {
     const card = event.target.closest(".etf-rs-card");
     if (!card) return;
-    const params = new URLSearchParams({
-      category: card.dataset.category,
-      period: byId("etfRsPeriod").value,
-      benchmark: byId("etfRsBenchmark").value,
-      group: byId("etfRsGroup").value
+    showConstituentPanel(card.dataset.category, byId("etfRsPeriod").value);
+  });
+
+  // Sector tab sub-tab switching
+  byId("sectorSubTabs").querySelectorAll(".sub-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      byId("sectorSubTabs").querySelectorAll(".sub-tab").forEach((b) => b.classList.remove("is-active"));
+      document.querySelectorAll("#tab-sector .sub-panel").forEach((p) => p.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      byId(`sub-${btn.dataset.sub}`).classList.add("is-active");
+      if (btn.dataset.sub === "etf-rs") renderSectorEtfRelativeStrength();
     });
-    window.location.href = `sector-detail.html?${params.toString()}`;
+  });
+
+  // Sector tab ETF RS panel controls
+  ["sectorEtfRsBenchmark", "sectorEtfRsPeriod", "sectorEtfRsGroup", "sectorEtfRsSort"].forEach((id) => {
+    byId(id).addEventListener("change", renderSectorEtfRelativeStrength);
+  });
+  byId("sectorEtfGrid").addEventListener("click", (event) => {
+    const card = event.target.closest(".etf-rs-card");
+    if (!card) return;
+    showConstituentPanel(card.dataset.category, byId("sectorEtfRsPeriod").value);
+  });
+  byId("constituentPanelClose").addEventListener("click", () => {
+    byId("constituentPanel").style.display = "none";
   });
   byId("jumpCategory").addEventListener("change", renderJump);
   byId("jumpSort").addEventListener("change", renderJump);
@@ -275,7 +296,7 @@ function setupEvents() {
   setupChartControls();
   window.addEventListener("resize", debounce(renderTreemap, 120));
 
-  // Sector detail page timeframe and benchmark listeners
+  // Sector chart: timeframe and benchmark listeners
   byId("sectorTimeframeControls").querySelectorAll("button").forEach((btn) => {
     btn.addEventListener("click", () => {
       byId("sectorTimeframeControls").querySelectorAll("button").forEach((b) => b.classList.remove("is-active"));
@@ -1852,6 +1873,44 @@ function periodLabel(key) {
   }[key] || key;
 }
 
+function etfRsCardHtml(item, period, benchmark) {
+  const spy = item.relative?.SPY?.[period] ?? 0;
+  const qqq = item.relative?.QQQ?.[period] ?? 0;
+  // Show all peers (no limit) sorted by period return descending
+  const sortedPeers = (item.peers || [])
+    .slice()
+    .sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
+  const peers = sortedPeers.map((peer) => `
+    <span class="peer-chip ${cls(peer[period])}">
+      ${peer.ticker} ${fmtPct(peer[period] ?? 0)}
+    </span>
+  `).join("");
+  const totalPeers = sortedPeers.length;
+  return `
+    <article class="etf-rs-card" data-category="${item.category}" title="클릭해서 전체 ${totalPeers}개 구성 종목 보기">
+      <div class="etf-rs-topline">
+        <span class="group-badge">${item.group}</span>
+        <strong class="${cls(item.activeRelative)}">${benchmark} 대비 ${fmtPct(item.activeRelative)}</strong>
+      </div>
+      <h4>${item.category}</h4>
+      <div class="etf-rs-main">
+        <div>
+          <span class="ticker-pill">${item.representative}</span>
+          <strong>${item.name}</strong>
+        </div>
+        <div class="etf-rs-score ${cls(item.rsScore - 50)}">${item.rsScore}</div>
+      </div>
+      <div class="etf-rs-stats">
+        <span>${periodLabel(period)} 수익률 <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
+        <span>SPY 대비 <strong class="${cls(spy)}">${fmtPct(spy)}</strong></span>
+        <span>QQQ 대비 <strong class="${cls(qqq)}">${fmtPct(qqq)}</strong></span>
+      </div>
+      <div class="peer-list">${peers}</div>
+      <p class="drilldown-hint">👆 클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
+    </article>
+  `;
+}
+
 function renderEtfRelativeStrength() {
   const container = byId("etfRelativeStrength");
   const payload = data.health?.etfRelative || { rows: [], universeCount: 0, method: "" };
@@ -1867,26 +1926,60 @@ function renderEtfRelativeStrength() {
     }))
     .sort((a, b) => b.activeRelative - a.activeRelative);
 
-  byId("etfRsMeta").textContent = `${payload.universeCount || 0}개 ETF 목록 기반 · ${rows.length}개 세부 그룹`;
+  byId("etfRsMeta").textContent = `${payload.universeCount || 0}개 ETF 기반 · ${rows.length}개 세부 그룹`;
   byId("etfRsMethod").textContent = payload.method || "";
 
   if (!rows.length) {
     container.innerHTML = `<div class="empty-state">ETF 상대강도 데이터가 없습니다. 스냅샷을 다시 생성해 주세요.</div>`;
     return;
   }
+  container.innerHTML = rows.map((item) => etfRsCardHtml(item, period, benchmark)).join("");
+}
 
-  container.innerHTML = rows.map((item) => {
+function renderSectorEtfRelativeStrength() {
+  const container = byId("sectorEtfGrid");
+  const payload = data.health?.etfRelative || { rows: [], universeCount: 0, method: "" };
+  const benchmark = byId("sectorEtfRsBenchmark")?.value || "SPY";
+  const period = byId("sectorEtfRsPeriod")?.value || "monthChangePct";
+  const group = byId("sectorEtfRsGroup")?.value || "All";
+  const sort = byId("sectorEtfRsSort")?.value || "relative";
+
+  const rows = (payload.rows || [])
+    .filter((item) => group === "All" || item.group === group)
+    .map((item) => ({
+      ...item,
+      activeRelative: item.relative?.[benchmark]?.[period] ?? 0,
+      activeReturn: item[period] ?? 0
+    }))
+    .sort((a, b) => {
+      if (sort === "return") return b.activeReturn - a.activeReturn;
+      if (sort === "rs") return b.rsScore - a.rsScore;
+      return b.activeRelative - a.activeRelative; // default: relative
+    });
+
+  byId("sectorEtfRsMeta").textContent = `총 ${payload.universeCount || 0}개 ETF 기반 · ${rows.length}개 세부 그룹 표시 중`;
+
+  if (!rows.length) {
+    container.innerHTML = `<div class="empty-state">ETF 상대강도 데이터가 없습니다. 스냅샷을 다시 생성해 주세요.</div>`;
+    return;
+  }
+  container.innerHTML = rows.map((item, idx) => {
+    const rankBadge = idx < 3 ? `<span class="rank-medal rank-${idx + 1}">${["🥇","🥈","🥉"][idx]}</span>` : `<span class="rank-num">${idx + 1}</span>`;
     const spy = item.relative?.SPY?.[period] ?? 0;
     const qqq = item.relative?.QQQ?.[period] ?? 0;
-    const peers = (item.peers || []).slice(0, 6).map((peer) => `
-      <span class="peer-chip ${cls(peer[period])}">
-        ${peer.ticker} ${fmtPct(peer[period] ?? 0)}
-      </span>
-    `).join("");
+    const sortedPeers = (item.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
+    const totalPeers = sortedPeers.length;
+    // Show up to 8 peer chips, with count badge if more
+    const peersToShow = sortedPeers.slice(0, 8);
+    const remainCount = totalPeers - peersToShow.length;
+    const peerChips = peersToShow.map((peer) => `
+      <span class="peer-chip ${cls(peer[period])}">${peer.ticker} ${fmtPct(peer[period] ?? 0)}</span>
+    `).join("") + (remainCount > 0 ? `<span class="peer-more">+${remainCount}개 더</span>` : "");
     return `
-      <article class="etf-rs-card" data-category="${item.category}">
+      <article class="etf-rs-card" data-category="${item.category}" title="클릭해서 전체 ${totalPeers}개 구성 종목 보기">
         <div class="etf-rs-topline">
-          <span>${item.group}</span>
+          ${rankBadge}
+          <span class="group-badge">${item.group}</span>
           <strong class="${cls(item.activeRelative)}">${benchmark} 대비 ${fmtPct(item.activeRelative)}</strong>
         </div>
         <h4>${item.category}</h4>
@@ -1898,16 +1991,52 @@ function renderEtfRelativeStrength() {
           <div class="etf-rs-score ${cls(item.rsScore - 50)}">${item.rsScore}</div>
         </div>
         <div class="etf-rs-stats">
-          <span>${periodLabel(period)} 수익률 <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
+          <span>${periodLabel(period)} <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
           <span>SPY 대비 <strong class="${cls(spy)}">${fmtPct(spy)}</strong></span>
           <span>QQQ 대비 <strong class="${cls(qqq)}">${fmtPct(qqq)}</strong></span>
         </div>
-        <div class="peer-list">${peers}</div>
-        <p class="drilldown-hint">클릭해서 내부 주식 상대강도 보기</p>
+        <div class="peer-list">${peerChips}</div>
+        <p class="drilldown-hint">👆 클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
       </article>
     `;
   }).join("");
 }
+
+function showConstituentPanel(categoryName, period) {
+  const payload = data.health?.etfRelative || { rows: [] };
+  const row = (payload.rows || []).find((r) => r.category === categoryName);
+  if (!row) return;
+
+  const panel = byId("constituentPanel");
+  byId("constituentPanelTicker").textContent = row.representative;
+  byId("constituentPanelName").textContent = `${row.category} — ${row.name}`;
+  
+  // Sort ALL peers by the active period descending
+  const allPeers = (row.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
+  byId("constituentPanelCount").textContent = `${allPeers.length}개 구성 종목`;
+  byId("constituentPeriodHeader").textContent = periodLabel(period) + " 수익률";
+
+  byId("constituentPanelBody").innerHTML = allPeers.map((peer, idx) => {
+    const spyRel = peer.relSPY?.[period] ?? (row.relative?.SPY?.[period] ?? 0);
+    const qqqRel = peer.relQQQ?.[period] ?? (row.relative?.QQQ?.[period] ?? 0);
+    const pct = peer[period] ?? 0;
+    const rankIcon = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`;
+    return `
+      <tr>
+        <td><strong>${rankIcon}</strong></td>
+        <td><strong class="ticker-link" onclick="selectTicker('${peer.ticker}');document.querySelector('[data-tab=search]').click()">${peer.ticker}</strong></td>
+        <td>${peer.name || ""}</td>
+        <td class="${cls(pct)}"><strong>${fmtPct(pct)}</strong></td>
+        <td class="${cls(spyRel)}">${fmtPct(spyRel)}</td>
+        <td class="${cls(qqqRel)}">${fmtPct(qqqRel)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  panel.style.display = "block";
+  panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
 
 function renderAiBriefing() {
   const briefing = data.ai_briefing || {};

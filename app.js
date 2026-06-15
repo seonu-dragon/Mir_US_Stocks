@@ -275,11 +275,13 @@ function setupFilters() {
 
   const etfRows = data.health?.etfRelative?.rows || [];
   const etfGroups = ["All", ...[...new Set(etfRows.map((item) => item.group).filter(Boolean))].sort()];
-  byId("etfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
+  const etfRsGroupSel = byId("etfRsGroup");
+  if (etfRsGroupSel) etfRsGroupSel.innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
   const benchmarks = data.health?.etfRelative?.benchmarks?.length
     ? data.health.etfRelative.benchmarks
     : ["SPY", "QQQ", "TQQQ", "DIA", "IWM"];
-  byId("etfRsBenchmark").innerHTML = benchmarks
+  const etfRsBenchSel = byId("etfRsBenchmark");
+  if (etfRsBenchSel) etfRsBenchSel.innerHTML = benchmarks
     .map((ticker) => `<option value="${ticker}">${ticker} 대비</option>`)
     .join("");
 
@@ -302,12 +304,14 @@ function setupEvents() {
     byId(id).addEventListener("change", renderTopStocks);
   });
   ["etfRsBenchmark", "etfRsPeriod", "etfRsGroup"].forEach((id) => {
-    byId(id).addEventListener("change", () => {
+    const el = byId(id);
+    if (el) el.addEventListener("change", () => {
       if (id === "etfRsGroup") selectedEtfRsCategory = null;
       renderEtfRelativeStrength();
     });
   });
-  byId("etfRelativeStrength").addEventListener("click", (event) => {
+  const etfRsGrid = byId("etfRelativeStrength");
+  if (etfRsGrid) etfRsGrid.addEventListener("click", (event) => {
     const card = event.target.closest(".etf-rs-card");
     if (!card) return;
     showConstituentPanel(card.dataset.category, byId("etfRsPeriod").value);
@@ -2444,22 +2448,145 @@ function signalFor(item) {
   return "중립";
 }
 
+// ===== 마켓 데이터 탭 (SeekingAlpha key_markets 스타일) =====
+const MARKET_GROUPS = [
+  { title: "주요 지수 · 자산", tickers: [
+    ["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"], ["DIA", "Dow Jones"], ["IWM", "Russell 2000"],
+    ["TQQQ", "3x Nasdaq"], ["IBIT", "Bitcoin (IBIT)"], ["GLD", "Gold"], ["VIXY", "변동성 (VIX)"]
+  ] },
+  { title: "국가 · 지역", tickers: [
+    ["EWY", "한국 (Korea)"], ["SPY", "미국 (US)"], ["EFA", "선진국 (EAFE)"], ["VEA", "선진국 (ex-US)"],
+    ["EEM", "신흥국"], ["VWO", "신흥국 (Vanguard)"], ["FXI", "중국 대형주"], ["MCHI", "중국"],
+    ["KWEB", "중국 인터넷"], ["EWJ", "일본"], ["DXJ", "일본 (환헤지)"], ["VGK", "유럽"], ["EZU", "유로존"],
+    ["EWG", "독일"], ["EWU", "영국"], ["INDA", "인도"], ["EWZ", "브라질"], ["ILF", "중남미"],
+    ["EWT", "대만"], ["EWC", "캐나다"], ["EWA", "호주"]
+  ] },
+  { title: "채권", tickers: [
+    ["SHY", "미국채 1-3년"], ["IEF", "미국채 7-10년"], ["TLT", "미국채 20년+"], ["TIP", "물가연동채 (TIPS)"],
+    ["LQD", "투자등급 회사채"], ["HYG", "하이일드"], ["MUB", "지방채"], ["AGG", "종합채권 (AGG)"], ["BND", "종합채권 (BND)"]
+  ] },
+  { title: "원자재", tickers: [
+    ["GLD", "금"], ["SLV", "은"], ["USO", "WTI 원유"], ["UNG", "천연가스"], ["CPER", "구리"],
+    ["URA", "우라늄"], ["DBA", "농산물"], ["WOOD", "목재"], ["DBC", "종합 원자재 (DBC)"],
+    ["PDBC", "종합 원자재 (PDBC)"], ["GSG", "종합 원자재 (GSG)"]
+  ] }
+];
+
 function renderHealth() {
-  renderHealthGroup("majorHealth", data.health.major);
-  renderHealthGroup("etfHealth", data.health.etf);
-  renderEtfRelativeStrength();
-  renderHealthGroup("aiHealth", data.health.ai);
+  renderMarkets();
 }
 
-function renderHealthGroup(id, rows) {
-  byId(id).innerHTML = rows.map((item) => `
-    <article class="mini-card">
-      <h3>${item.ticker}</h3>
-      <p class="muted">${item.name}</p>
-      <p class="${cls(item.changePct)}"><strong>${fmtPct(item.changePct)}</strong></p>
-      <p>${item.note}</p>
-    </article>
-  `).join("");
+function renderMarkets() {
+  const container = byId("marketsTables");
+  if (!container) return;
+  const byTicker = {};
+  data.stocks.forEach((s) => { byTicker[s.ticker] = s; });
+
+  const sections = MARKET_GROUPS.map((group) => {
+    const seen = new Set();
+    const rows = [];
+    group.tickers.forEach(([ticker, name]) => {
+      const s = byTicker[ticker];
+      if (!s || seen.has(ticker)) return;
+      seen.add(ticker);
+      rows.push({ ticker, name, s });
+    });
+    if (!rows.length) return "";
+    return marketTableHtml(group.title, rows);
+  }).join("");
+
+  container.innerHTML = sections + currencySectionShell();
+
+  container.querySelectorAll(".market-row[data-ticker]").forEach((tr) => {
+    tr.addEventListener("click", () => selectTicker(tr.dataset.ticker, { openSearch: true }));
+  });
+
+  loadCurrencies();
+}
+
+function marketTableHtml(title, rows) {
+  return `
+    <div class="market-section">
+      <h3>${escapeHtml(title)}</h3>
+      <div class="table-wrap">
+        <table class="market-table">
+          <thead>
+            <tr>
+              <th>이름</th><th>티커</th><th>현재가</th><th>당일</th>
+              <th>1주</th><th>1개월</th><th>3개월</th><th>YTD</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(({ ticker, name, s }) => `
+              <tr class="market-row" data-ticker="${ticker}" style="cursor:pointer;" title="${escapeHtml(ticker)} 분석 보기">
+                <td>${escapeHtml(name)}</td>
+                <td><strong>${escapeHtml(ticker)}</strong></td>
+                <td>$${Number(s.price).toFixed(2)}</td>
+                <td class="${cls(s.changePct)}">${fmtPct(s.changePct)}</td>
+                <td class="${cls(s.weekChangePct)}">${fmtPct(s.weekChangePct)}</td>
+                <td class="${cls(s.monthChangePct)}">${fmtPct(s.monthChangePct)}</td>
+                <td class="${cls(s.threeMonthChangePct)}">${fmtPct(s.threeMonthChangePct)}</td>
+                <td class="${cls(s.ytdChangePct)}">${fmtPct(s.ytdChangePct)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function currencySectionShell() {
+  const body = LIVE_DATA_PROXY
+    ? `<p class="muted" id="currencyStatus">환율 불러오는 중…</p>`
+    : `<p class="muted">환율은 실시간 프록시(Cloudflare Worker) 연결 시 표시됩니다. (app.js의 LIVE_DATA_PROXY)</p>`;
+  return `
+    <div class="market-section" id="currencySection">
+      <h3>환율 <span class="muted" style="font-size:12px;font-weight:600;">실시간</span></h3>
+      <div id="currencyTableWrap">${body}</div>
+    </div>
+  `;
+}
+
+function loadCurrencies() {
+  if (!LIVE_DATA_PROXY) return;
+  const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?fx=1`;
+  fetch(endpoint, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((payload) => {
+      const wrap = byId("currencyTableWrap");
+      if (!wrap) return;
+      const fx = (payload && Array.isArray(payload.fx)) ? payload.fx : [];
+      if (!fx.length) {
+        wrap.innerHTML = `<p class="muted">환율 데이터를 불러오지 못했습니다.</p>`;
+        return;
+      }
+      wrap.innerHTML = `
+        <div class="table-wrap">
+          <table class="market-table">
+            <thead><tr><th>통화쌍</th><th>현재가</th><th>당일</th><th>1개월</th></tr></thead>
+            <tbody>
+              ${fx.map((f) => {
+                const price = Number(f.price);
+                const decimals = price >= 100 ? 2 : 4;
+                return `
+                  <tr>
+                    <td>${escapeHtml(f.name || f.symbol)}</td>
+                    <td><strong>${price.toFixed(decimals)}</strong></td>
+                    <td class="${cls(f.changePct)}">${fmtPct(f.changePct)}</td>
+                    <td class="${cls(f.monthChangePct)}">${fmtPct(f.monthChangePct)}</td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      `;
+    })
+    .catch(() => {
+      const wrap = byId("currencyTableWrap");
+      if (wrap) wrap.innerHTML = `<p class="muted">환율 데이터를 불러오지 못했습니다.</p>`;
+    });
 }
 
 function periodLabel(key) {

@@ -130,7 +130,7 @@ const detailPromises = {};
 // stock-analysis page opens. Leave "" to fall back to the pre-generated detail files.
 // After deploying worker/yahoo-proxy.js, paste its URL here, e.g.
 //   const LIVE_DATA_PROXY = "https://mir-yahoo.yourname.workers.dev";
-const LIVE_DATA_PROXY = "";
+const LIVE_DATA_PROXY = "https://mirusstocks.planbesides.workers.dev";
 const liveNewsCache = {};
 const liveChartCache = {};
 const liveFetched = {};

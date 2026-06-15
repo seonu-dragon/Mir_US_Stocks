@@ -823,6 +823,12 @@ button.ghost {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #101827;
+  cursor: grab;
+  touch-action: none;
+}
+
+#priceChart.is-dragging {
+  cursor: grabbing;
 }
 
 .chart-controls {

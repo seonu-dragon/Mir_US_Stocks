@@ -133,6 +133,7 @@ async function fetchChart(symbol) {
         round(q.low && q.low[i] != null ? q.low[i] : c),
         round(c),
         Math.round((q.volume && q.volume[i]) || 0),
+        new Date(ts[i] * 1000).toISOString().slice(0, 10), // YYYY-MM-DD for the x-axis
       ]);
     }
     return out;

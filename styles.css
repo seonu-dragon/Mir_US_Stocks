@@ -1497,7 +1497,9 @@ footer {
 }
 
 .sector-scroll-panel {
-  max-height: none;
+  /* Bounded height so the (now longer) sector list scrolls on the left instead of
+     stretching the whole row. Both columns share this cap to stay symmetric. */
+  max-height: calc(100vh - 150px);
   min-height: 0;
   overflow-y: auto;
   padding-right: 8px;
@@ -1717,6 +1719,11 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* Same height cap as the left list so the two columns stay symmetric and each
+     scrolls on its own. */
+  max-height: calc(100vh - 150px);
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .chart-header {
@@ -1927,8 +1934,8 @@ footer {
 }
 
 .compact-table-wrap {
-  max-height: 300px;
-  overflow-y: auto;
+  /* The whole right column scrolls as one unit now, so avoid a nested scrollbar here. */
+  overflow-x: auto;
 }
 
 .compact-table {
@@ -1954,6 +1961,11 @@ footer {
   }
   .sector-scroll-panel {
     max-height: 280px;
+  }
+  /* Stacked layout: let the chart column flow naturally instead of a viewport cap. */
+  .sector-chart-panel {
+    max-height: none;
+    overflow: visible;
   }
 }
 

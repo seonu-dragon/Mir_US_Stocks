@@ -22,12 +22,11 @@
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 // Workers AI text models tried in order for the Korean summary (first that works wins).
-// Qwen handles Korean / proper nouns noticeably better than Llama, so try it first.
+// Larger / newer models follow Korean instructions far better than the small ones.
 const SUMMARY_MODELS = [
-  "@cf/qwen/qwen1.5-14b-chat-awq",
+  "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "@cf/qwen/qwen2.5-7b-instruct",
   "@cf/meta/llama-3.1-8b-instruct",
-  "@cf/mistral/mistral-7b-instruct-v0.1",
 ];
 
 export default {
@@ -42,14 +41,18 @@ export default {
 
     const symbol = ticker.replace(/\./g, "-"); // Yahoo uses BRK-B style
     const [news, chart] = await Promise.all([fetchNews(symbol), fetchChart(symbol)]);
-    const { text: summary, error: summaryError } = await summarizeKorean(env, ticker, news);
-    return cors(json({ ticker, news, chart, summary, summaryError }));
+    // Optional ?model=... overrides the model list (for quick A/B testing).
+    const modelOverride = url.searchParams.get("model");
+    const { text: summary, error: summaryError, model: summaryModel } =
+      await summarizeKorean(env, ticker, news, modelOverride);
+    return cors(json({ ticker, news, chart, summary, summaryError, summaryModel }));
   },
 };
 
-async function summarizeKorean(env, ticker, news) {
+async function summarizeKorean(env, ticker, news, modelOverride) {
   if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
   if (!news || !news.length) return { text: "", error: "no_news" };
+  const models = modelOverride ? [modelOverride] : SUMMARY_MODELS;
   const headlines = news
     .slice(0, 8)
     .map((n, i) => `${i + 1}. ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`)
@@ -63,7 +66,7 @@ async function summarizeKorean(env, ticker, news) {
     `- 투자 조언은 하지 말고 사실 위주로 쓰세요.\n` +
     `- 한국어 단락만 출력하고 다른 말은 덧붙이지 마세요.`;
   let lastError = "no_model";
-  for (const model of SUMMARY_MODELS) {
+  for (const model of models) {
     try {
       const result = await env.AI.run(model, {
         messages: [
@@ -74,7 +77,7 @@ async function summarizeKorean(env, ticker, news) {
         temperature: 0.3,
       });
       const text = String((result && result.response) || "").trim();
-      if (text) return { text, error: "" };
+      if (text) return { text, error: "", model };
       lastError = `empty_response:${model}`;
     } catch (e) {
       lastError = `${model}: ${(e && e.message) || e}`;

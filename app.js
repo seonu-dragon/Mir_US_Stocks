@@ -194,6 +194,7 @@ function boot() {
   setupFilters();
   renderAll();
   setupEvents();
+  fetchMarketHeader();
   history.replaceState({ tab: currentTab, ticker: null }, "");
   if (route.get("tab")) {
     const tab = document.querySelector(`[data-tab="${route.get("tab")}"]`);
@@ -202,16 +203,167 @@ function boot() {
   if (route.get("ticker")) selectTicker(route.get("ticker"));
 }
 
+const marketHeader = { fng: null, fx: [] };
+
+const SECTOR_KO = {
+  "TECHNOLOGY": "정보기술", "HEALTHCARE": "헬스케어", "FINANCIAL": "금융",
+  "CONSUMER CYCLICAL": "임의소비재", "CONSUMER DEFENSIVE": "필수소비재",
+  "INDUSTRIALS": "산업재", "ENERGY": "에너지", "UTILITIES": "유틸리티",
+  "REAL ESTATE": "부동산", "BASIC MATERIALS": "소재", "COMMUNICATION SERVICES": "커뮤니케이션"
+};
+
+function computeSectorRanks() {
+  const agg = {};
+  data.stocks.forEach((s) => {
+    if (!SECTOR_KO[s.sector]) return;
+    const a = (agg[s.sector] = agg[s.sector] || { sum: 0, n: 0 });
+    a.sum += Number(s.changePct) || 0;
+    a.n += 1;
+  });
+  const arr = Object.entries(agg)
+    .filter(([, v]) => v.n >= 5)
+    .map(([sec, v]) => ({ ko: SECTOR_KO[sec], avg: v.sum / v.n }));
+  arr.sort((a, b) => b.avg - a.avg);
+  return { strong: arr.slice(0, 3), weak: arr.slice(-3).reverse() };
+}
+
+function fngScore() {
+  if (marketHeader.fng && Number.isFinite(marketHeader.fng.score)) return marketHeader.fng.score;
+  // Fallback proxy from market breadth until the live CNN value loads.
+  const eq = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS");
+  const up = eq.filter((s) => Number(s.changePct) > 0).length;
+  return eq.length ? Math.round((up / eq.length) * 100) : 50;
+}
+
+function fngLabel(score) {
+  if (score < 25) return "극단적 공포";
+  if (score < 45) return "공포";
+  if (score <= 55) return "중립";
+  if (score <= 75) return "욕심";
+  return "극단적 욕심";
+}
+
+function fngColor(score) {
+  if (score < 25) return "#dc2626";
+  if (score < 45) return "#f97316";
+  if (score <= 55) return "#eab308";
+  if (score <= 75) return "#84cc16";
+  return "#16a34a";
+}
+
+function gaugePolar(cx, cy, r, deg) {
+  const a = (deg * Math.PI) / 180;
+  return [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+}
+
+function gaugeArc(cx, cy, r, startDeg, endDeg, color, w) {
+  const [x1, y1] = gaugePolar(cx, cy, r, startDeg);
+  const [x2, y2] = gaugePolar(cx, cy, r, endDeg);
+  // startDeg > endDeg (going clockwise over the top), so sweep-flag = 1.
+  return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${w}"></path>`;
+}
+
+function fngCardHtml() {
+  const score = fngScore();
+  const label = fngLabel(score);
+  const color = fngColor(score);
+  const live = !!(marketHeader.fng && Number.isFinite(marketHeader.fng.score));
+  const cx = 100, cy = 96, r = 76, w = 16;
+  // score 0 -> 180deg (left), 100 -> 0deg (right)
+  const deg = (s) => 180 - (s / 100) * 180;
+  const arcs =
+    gaugeArc(cx, cy, r, deg(0), deg(25), "#dc2626", w) +
+    gaugeArc(cx, cy, r, deg(25), deg(45), "#f97316", w) +
+    gaugeArc(cx, cy, r, deg(45), deg(55), "#eab308", w) +
+    gaugeArc(cx, cy, r, deg(55), deg(75), "#84cc16", w) +
+    gaugeArc(cx, cy, r, deg(75), deg(100), "#16a34a", w);
+  const [nx, ny] = gaugePolar(cx, cy, r - 6, deg(score));
+  return `
+    <div class="summary-card fng-card">
+      <span>Fear &amp; Greed${live ? " · CNN" : " · 추정"}</span>
+      <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
+        ${arcs}
+        <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#0f172a" stroke-width="3" stroke-linecap="round"></line>
+        <circle cx="${cx}" cy="${cy}" r="5" fill="#0f172a"></circle>
+        <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${score}</text>
+      </svg>
+      <strong class="fng-label" style="color:${color}">${label}</strong>
+    </div>
+  `;
+}
+
+function sectorTopCardHtml(title, list, strong) {
+  const rows = (list || []).map((s, i) => `
+    <div class="hx-row">
+      <span>${i + 1}. ${escapeHtml(s.ko)}</span>
+      <em class="${cls(s.avg)}">${fmtPct(s.avg)}</em>
+    </div>
+  `).join("") || `<div class="hx-row"><span class="muted">데이터 없음</span></div>`;
+  return `<div class="summary-card hx-card"><span>${title}</span>${rows}</div>`;
+}
+
+function fxCardHtml() {
+  const find = (sym) => (marketHeader.fx || []).find((f) => f.symbol === sym);
+  const row = (label, f, dec) => f
+    ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}</strong><em class="${cls(f.changePct)}">${fmtPct(f.changePct)}</em></div>`
+    : `<div class="hx-row"><span>${label}</span><strong class="muted">불러오는 중…</strong></div>`;
+  return `
+    <div class="summary-card hx-card">
+      <span>환율 · 금</span>
+      ${row("달러/원", find("KRW=X"), 1)}
+      ${row("엔/원", find("JPYKRW=X"), 2)}
+      ${row("금 ($/oz)", find("GC=F"), 1)}
+    </div>
+  `;
+}
+
 function renderSummary() {
-  const cards = [
-    ["시장 톤", data.summary.marketTone],
-    ["강한 섹터", data.summary.strongSector],
-    ["약한 섹터", data.summary.weakSector],
-    ["AI/Growth", data.summary.aiBreadth]
-  ];
-  byId("marketSummary").innerHTML = cards.map(([label, value]) => `
-    <div class="summary-card"><span>${label}</span><strong>${value}</strong></div>
+  const sectors = computeSectorRanks();
+  byId("marketSummary").innerHTML =
+    fngCardHtml() +
+    sectorTopCardHtml("강한 섹터 TOP3", sectors.strong, true) +
+    sectorTopCardHtml("약한 섹터 TOP3", sectors.weak, false) +
+    fxCardHtml();
+}
+
+function renderIndexStrip(indices) {
+  const el = byId("indexStrip");
+  if (!el) return;
+  if (!indices || !indices.length) { el.innerHTML = ""; return; }
+  el.innerHTML = indices.map((ix) => `
+    <div class="index-card">
+      <div class="index-head">
+        <strong>${escapeHtml(ix.name)}</strong>
+        <em class="${cls(ix.changePct)}">${fmtPct(ix.changePct)}</em>
+      </div>
+      <div class="index-price">${Number(ix.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+      ${indexSparkline(ix.series, ix.changePct >= 0)}
+    </div>
   `).join("");
+}
+
+function indexSparkline(series, up) {
+  const vals = (series || []).filter((v) => Number.isFinite(v));
+  if (vals.length < 2) return `<div class="spark-empty"></div>`;
+  const w = 200, h = 44;
+  const min = Math.min(...vals), max = Math.max(...vals), rng = max - min || 1;
+  const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(h - ((v - min) / rng) * h).toFixed(1)}`).join(" ");
+  const color = up ? "#16a34a" : "#dc2626";
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"></polyline></svg>`;
+}
+
+function fetchMarketHeader() {
+  if (!LIVE_DATA_PROXY) { renderIndexStrip([]); return; }
+  const base = LIVE_DATA_PROXY.replace(/\/$/, "");
+  fetch(`${base}/?fng=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+    if (p && p.fng) { marketHeader.fng = p.fng; renderSummary(); }
+  }).catch(() => {});
+  fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+    if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); }
+  }).catch(() => {});
+  fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+    if (p && Array.isArray(p.indices)) renderIndexStrip(p.indices);
+  }).catch(() => {});
 }
 
 let currentTab = "map";

@@ -117,6 +117,66 @@ main {
   font-size: 21px;
 }
 
+/* ===== Top header: Fear&Greed gauge / sector TOP3 / FX ===== */
+.summary-band { align-items: stretch; }
+
+.fng-card,
+.hx-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fng-card { align-items: center; }
+.fng-card > span { align-self: flex-start; }
+.fng-gauge { width: 100%; max-width: 220px; height: auto; margin: 2px auto 0; }
+.fng-score { font-size: 30px; font-weight: 800; }
+.fng-label { font-size: 16px; font-weight: 800; }
+
+.hx-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+}
+.hx-row span { font-size: 13px; color: var(--text); font-weight: 600; }
+.hx-row strong { display: inline; margin: 0; font-size: 14px; }
+.hx-row em { font-style: normal; font-weight: 700; font-size: 12.5px; }
+
+/* ===== Index strip (Finviz-style 일중 차트) ===== */
+.index-strip {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.index-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  box-shadow: var(--shadow);
+}
+.index-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+}
+.index-head strong { font-size: 12px; }
+.index-head em { font-style: normal; font-weight: 700; font-size: 11.5px; }
+.index-price { font-size: 14px; font-weight: 700; margin: 2px 0 4px; }
+.spark { width: 100%; height: 40px; display: block; }
+.spark-empty { height: 40px; }
+
+@media (max-width: 1040px) {
+  .index-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .index-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 .tabs {
   display: grid;
   grid-template-columns: repeat(8, minmax(0, 1fr));

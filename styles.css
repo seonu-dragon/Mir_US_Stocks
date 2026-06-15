@@ -145,14 +145,18 @@ main {
 .hx-row strong { display: inline; margin: 0; font-size: 13px; }
 .hx-row em { font-style: normal; font-weight: 700; font-size: 12px; }
 
-/* 환율·금·금리: fixed-width right-aligned columns so the numbers line up vertically */
+/* 환율·금·금리: fixed-width columns; values left-aligned so each number's first
+   digit lines up in the same vertical column. */
 .fx-card .hx-row {
   display: grid;
-  grid-template-columns: 1fr 76px 50px;
+  grid-template-columns: 1fr 72px 48px;
   align-items: baseline;
-  gap: 6px;
+  gap: 8px;
 }
-.fx-card .hx-row strong,
+.fx-card .hx-row strong {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
 .fx-card .hx-row em {
   text-align: right;
   font-variant-numeric: tabular-nums;
@@ -1641,27 +1645,40 @@ footer {
 /* ==========================================================================
    AI Briefing & Social Sentiment Styles (Premium Light Mode Redesign)
    ========================================================================== */
-/* The AI briefing panel is the outer box; its title is the header and the three
-   briefing boxes sit inside a tinted inner container (box-in-box). */
+/* One single box: the panel holds the title (as header) and the three sections,
+   separated by divider lines (no nested boxes). */
 #tab-ai-briefing .section-title {
   flex-direction: column;
   align-items: flex-start;
   gap: 4px;
-  margin: 0 0 14px;
+  margin: 0 0 4px;
   padding-bottom: 12px;
   border-bottom: 2px solid var(--line);
 }
 
 .ai-briefing-grid {
   display: grid;
-  /* Single full-width column: KOR -> USA -> SOCIAL stacked top to bottom. */
   grid-template-columns: 1fr;
-  gap: 14px;
+  gap: 0;
   margin-top: 0;
-  background: #eef2f7;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 14px;
+}
+
+/* Sections inside the single box: no border/background, just a divider + heading. */
+.ai-briefing-grid .briefing-box {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 16px 0 4px;
+  border-top: 1px solid var(--line);
+}
+.ai-briefing-grid .briefing-box:first-child {
+  border-top: none;
+  padding-top: 10px;
+}
+.ai-briefing-grid .briefing-box:hover {
+  border-color: transparent;
+  box-shadow: none;
 }
 
 .briefing-box {
@@ -2322,13 +2339,20 @@ footer {
   /* Make the sector picker a clearly bounded, self-contained scroll box so it is
      visually distinct and its scrolling doesn't bleed into the page. */
   .sector-scroll-panel {
-    max-height: 300px;
+    max-height: 450px;
     overscroll-behavior: contain;
     border: 1px solid var(--line);
     border-radius: 10px;
     background: #eef2f7;
-    padding: 10px;
+    /* No top padding so the sticky 정렬 기준 header sits flush at the very top. */
+    padding: 0 8px 8px;
     margin-bottom: 14px;
+  }
+  /* Sticky sort header fills the top of the scroll box edge-to-edge. */
+  .sector-scroll-panel .panel-header-sticky {
+    margin: 0 -8px 8px;
+    padding: 8px 8px 8px;
+    background: #eef2f7;
   }
   /* Stacked layout: let the chart column flow naturally instead of a viewport cap. */
   .sector-chart-panel {

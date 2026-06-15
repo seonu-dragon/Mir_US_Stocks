@@ -117,37 +117,38 @@ main {
   font-size: 21px;
 }
 
-/* ===== Top header: Fear&Greed gauge / sector TOP3 / FX ===== */
+/* ===== Top header: Fear&Greed gauge / sector TOP5 / FX ===== */
 .summary-band { align-items: stretch; }
+.summary-band .summary-card { padding: 9px 11px; }
 
 .fng-card,
 .hx-card {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 1px;
 }
 
-.fng-card { align-items: center; }
+.fng-card { align-items: center; justify-content: center; gap: 0; }
 .fng-card > span { align-self: flex-start; }
-.fng-gauge { width: 100%; max-width: 220px; height: auto; margin: 2px auto 0; }
-.fng-score { font-size: 30px; font-weight: 800; }
-.fng-label { font-size: 16px; font-weight: 800; }
+.fng-gauge { width: 100%; max-width: 150px; height: auto; margin: 0 auto; }
+.fng-score { font-size: 24px; font-weight: 800; }
+.fng-label { font-size: 14px; font-weight: 800; }
 
 .hx-row {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding: 2px 0;
+  padding: 1px 0;
 }
-.hx-row span { font-size: 13px; color: var(--text); font-weight: 600; }
-.hx-row strong { display: inline; margin: 0; font-size: 14px; }
-.hx-row em { font-style: normal; font-weight: 700; font-size: 12.5px; }
+.hx-row span { font-size: 12px; color: var(--text); font-weight: 600; }
+.hx-row strong { display: inline; margin: 0; font-size: 13px; }
+.hx-row em { font-style: normal; font-weight: 700; font-size: 12px; }
 
 /* ===== Index strip (Finviz-style 일중 차트) ===== */
 .index-strip {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -171,7 +172,7 @@ main {
 .spark-empty { height: 40px; }
 
 @media (max-width: 1040px) {
-  .index-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .index-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .index-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1073,6 +1074,34 @@ button.ghost {
 .market-table tbody tr.market-row:hover {
   background: rgba(37, 99, 235, 0.06);
 }
+
+/* ETF 구성 종목 표 (종목 분석의 Fundamentals 자리) */
+.etf-constituents-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 0;
+}
+.etf-constituents-table th,
+.etf-constituents-table td {
+  padding: 6px 8px;
+  font-size: 12px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+.etf-constituents-table th:nth-child(-n+3),
+.etf-constituents-table td:nth-child(-n+3) { text-align: left; }
+.etf-constituents-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f1f5f9;
+  color: var(--muted);
+  font-weight: 700;
+}
+.etf-constituents-table .rank-cell { color: var(--muted); font-weight: 700; text-align: center; }
+.etf-constituents-table tbody tr:hover { background: rgba(37, 99, 235, 0.06); }
+.etf-constituents-table .table-wrap,
+.fundamental-table .table-wrap { max-height: 360px; overflow-y: auto; }
 
 /* ===== 경제 캘린더 ===== */
 .calendar-legend {

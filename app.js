@@ -133,7 +133,9 @@ const detailPromises = {};
 const LIVE_DATA_PROXY = "https://mirusstocks.planbesides.workers.dev";
 const liveNewsCache = {};
 const liveChartCache = {};
+const liveSummaryCache = {};
 const liveFetched = {};
+const liveDone = {};
 
 let chartState = {
   range: "1Y",
@@ -1614,6 +1616,8 @@ function applyLive(item) {
     out.historySource = "yahoo";
   }
   if (Array.isArray(news) && news.length) out.news = news;
+  const summary = liveSummaryCache[item.ticker];
+  if (typeof summary === "string" && summary.trim()) out.newsSummary = summary.trim();
   return out;
 }
 
@@ -1631,6 +1635,8 @@ function maybeFetchLiveData(base) {
       if (!payload) return;
       if (Array.isArray(payload.news)) liveNewsCache[ticker] = payload.news;
       if (Array.isArray(payload.chart)) liveChartCache[ticker] = payload.chart;
+      if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;
+      liveDone[ticker] = true;
       if (selectedTicker !== ticker) return;
       const refreshedBase = data.stocks.find((row) => row.ticker === ticker) || base;
       const merged = applyLive(withDetail(refreshedBase));
@@ -1639,6 +1645,7 @@ function maybeFetchLiveData(base) {
       renderNews(merged);
     })
     .catch(() => {
+      liveDone[ticker] = true;
       if (selectedTicker === ticker) renderNews(applyLive(withDetail(base)));
     });
 }
@@ -1666,6 +1673,7 @@ function renderNews(item) {
   const estimate = isSyntheticChart(item)
     ? `<p class="news-note">⚠ 실시간 야후 가격 이력이 없어 차트는 <strong>추정(합성) 차트</strong>입니다. 데이터 갱신 시 실제 차트로 채워집니다.</p>`
     : "";
+
   if (!news.length) {
     box.innerHTML = `
       <span class="muted">주요 뉴스</span>
@@ -1674,11 +1682,15 @@ function renderNews(item) {
     `;
     return;
   }
+
+  const summaryHtml = newsSummaryHtml(item);
   box.innerHTML = `
     <span class="muted">주요 뉴스</span>
     ${estimate}
+    ${summaryHtml}
+    <div class="news-list-head">최신 헤드라인 <span class="muted">(스크롤)</span></div>
     <ul class="news-list">
-      ${news.slice(0, 8).map((n) => `
+      ${news.slice(0, 12).map((n) => `
         <li class="news-item">
           <a href="${escapeHtml(n.link || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.title || "")}</a>
           <span class="news-meta">${escapeHtml(n.publisher || "")}${n.publishedAt ? ` · ${escapeHtml(n.publishedAt)}` : ""}</span>
@@ -1686,6 +1698,28 @@ function renderNews(item) {
       `).join("")}
     </ul>
   `;
+}
+
+function newsSummaryHtml(item) {
+  if (typeof item.newsSummary === "string" && item.newsSummary.trim()) {
+    const paras = item.newsSummary.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    return `
+      <div class="news-summary">
+        <div class="news-summary-head">🧠 한국어 요약</div>
+        ${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("")}
+      </div>
+    `;
+  }
+  // Show "generating" only while the live fetch is still in flight.
+  if (LIVE_DATA_PROXY && !liveDone[item.ticker]) {
+    return `
+      <div class="news-summary is-pending">
+        <div class="news-summary-head">🧠 한국어 요약</div>
+        <p class="muted">요약을 생성하는 중…</p>
+      </div>
+    `;
+  }
+  return "";
 }
 
 function withDetail(item) {

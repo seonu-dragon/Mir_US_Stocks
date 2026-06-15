@@ -7,21 +7,25 @@
 // static site can call it from the browser when the stock-analysis page opens.
 //
 // Endpoint:  GET https://<your-worker>.workers.dev/?ticker=NVDA
-// Response:  { "ticker": "NVDA", "news": [...], "chart": [[o,h,l,c,v], ...] }
+// Response:  { "ticker": "NVDA", "news": [...], "chart": [[o,h,l,c,v], ...], "summary": "..." }
 //
 // Deploy (one time, free):
 //   1) https://dash.cloudflare.com  ->  Workers & Pages  ->  Create  ->  Worker
 //   2) Replace the template code with this file, click Deploy.
-//   3) Copy the deployed URL (e.g. https://mir-yahoo.<name>.workers.dev).
-//   4) Put that URL into app.js -> LIVE_DATA_PROXY.
+//   3) Add the Workers AI binding so Korean summaries work (free allocation):
+//      Worker -> Settings -> Bindings -> Add -> Workers AI -> Variable name: AI -> Deploy.
+//   4) Copy the deployed URL (e.g. https://mir-yahoo.<name>.workers.dev).
+//   5) Put that URL into app.js -> LIVE_DATA_PROXY.
 // (Optional) restrict ALLOW_ORIGIN below to your site for a little extra safety.
 // =============================================================================
 
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
+// Workers AI text model used for the Korean summary.
+const SUMMARY_MODEL = "@cf/meta/llama-3.1-8b-instruct";
 
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
 
     const url = new URL(request.url);
@@ -32,9 +36,34 @@ export default {
 
     const symbol = ticker.replace(/\./g, "-"); // Yahoo uses BRK-B style
     const [news, chart] = await Promise.all([fetchNews(symbol), fetchChart(symbol)]);
-    return cors(json({ ticker, news, chart }));
+    const summary = await summarizeKorean(env, ticker, news);
+    return cors(json({ ticker, news, chart, summary }));
   },
 };
+
+async function summarizeKorean(env, ticker, news) {
+  if (!env || !env.AI || !news || !news.length) return "";
+  const headlines = news
+    .slice(0, 8)
+    .map((n, i) => `${i + 1}. ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`)
+    .join("\n");
+  const prompt =
+    `다음은 미국 주식 ${ticker} 관련 최신 뉴스 헤드라인입니다.\n\n${headlines}\n\n` +
+    `이 헤드라인들을 바탕으로 핵심 내용을 한국어로 3~4문장으로 요약해 주세요. ` +
+    `투자 조언은 하지 말고 사실 위주로, 자연스러운 한국어로만 작성하세요.`;
+  try {
+    const result = await env.AI.run(SUMMARY_MODEL, {
+      messages: [
+        { role: "system", content: "You are a financial news summarizer. Always answer only in natural Korean (한국어)." },
+        { role: "user", content: prompt },
+      ],
+      max_tokens: 400,
+    });
+    return String((result && result.response) || "").trim();
+  } catch (e) {
+    return "";
+  }
+}
 
 async function fetchNews(symbol) {
   try {

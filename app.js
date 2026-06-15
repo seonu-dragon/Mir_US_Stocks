@@ -411,9 +411,12 @@ function zoomChartAt(frac, factor) {
   setZoomAnchored(frac, chartState.zoom * factor);
 }
 
-const CHART_VIEWBOX_W = 860;
-const CHART_PAD_L = 54;
-const CHART_PAD_R = 58;
+// Narrower viewBox on phones gives the chart a taller, more readable aspect ratio.
+function priceChartGeom() {
+  return window.matchMedia("(max-width: 768px)").matches
+    ? { width: 480, padL: 42, padR: 46 }
+    : { width: 860, padL: 54, padR: 58 };
+}
 
 function setupChartControls() {
   byId("rangeControls").querySelectorAll("button").forEach((button) => {
@@ -469,10 +472,11 @@ function setupChartInteractions() {
 
   svg.addEventListener("wheel", (event) => {
     event.preventDefault();
+    const g = priceChartGeom();
     const rect = svg.getBoundingClientRect();
-    const vbX = ((event.clientX - rect.left) / rect.width) * CHART_VIEWBOX_W;
-    const plotW = CHART_VIEWBOX_W - CHART_PAD_L - CHART_PAD_R;
-    const frac = Math.max(0, Math.min(1, (vbX - CHART_PAD_L) / plotW));
+    const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
+    const plotW = g.width - g.padL - g.padR;
+    const frac = Math.max(0, Math.min(1, (vbX - g.padL) / plotW));
     zoomChartAt(frac, event.deltaY < 0 ? 1.2 : 1 / 1.2);
   }, { passive: false });
 
@@ -492,7 +496,8 @@ function setupChartInteractions() {
     dragN = chartBaseLength(item);
     dragWindow = Math.max(16, Math.floor(dragN / chartState.zoom));
     const rect = svg.getBoundingClientRect();
-    dragPlotPx = rect.width * ((CHART_VIEWBOX_W - CHART_PAD_L - CHART_PAD_R) / CHART_VIEWBOX_W);
+    const g = priceChartGeom();
+    dragPlotPx = rect.width * ((g.width - g.padL - g.padR) / g.width);
     svg.classList.add("is-dragging");
     event.preventDefault();
   });
@@ -534,7 +539,8 @@ function setupChartInteractions() {
       dragN = chartBaseLength(item);
       dragWindow = Math.max(16, Math.floor(dragN / chartState.zoom));
       const rect = svg.getBoundingClientRect();
-      dragPlotPx = rect.width * ((CHART_VIEWBOX_W - CHART_PAD_L - CHART_PAD_R) / CHART_VIEWBOX_W);
+      const g = priceChartGeom();
+      dragPlotPx = rect.width * ((g.width - g.padL - g.padR) / g.width);
     } else if (event.touches.length === 2) {
       touchMode = "pinch";
       pinchStartDist = touchDist(event.touches);
@@ -1319,10 +1325,11 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
   }
   byId("legendSectorLabel").textContent = `${sectorTicker} (섹터${approximate ? " · 근사" : ""})`;
 
-  const width = 860;
-  const height = 420;
-  const padL = 65;
-  const padR = 20;
+  const mobile = window.matchMedia("(max-width: 768px)").matches;
+  const width = mobile ? 480 : 860;
+  const height = mobile ? 380 : 420;
+  const padL = mobile ? 48 : 65;
+  const padR = mobile ? 14 : 20;
   const padT = 24;
   const padB = 48;
   const plotW = width - padL - padR;
@@ -1946,9 +1953,10 @@ function drawChart(item) {
   const svg = byId("priceChart");
   const allRows = resampleBars(getChartRows(item), chartState.barTf);
   const rows = visibleChartRows(allRows);
-  const width = 860;
-  const padL = 54;
-  const padR = 58;
+  const geom = priceChartGeom();
+  const width = geom.width;
+  const padL = geom.padL;
+  const padR = geom.padR;
   const padT = 28;
   const plotW = width - padL - padR;
   const plotH = 300;

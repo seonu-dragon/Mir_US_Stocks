@@ -103,8 +103,23 @@ const SECTOR_ETFS = [
   { ticker: "XLC", name: "통신 서비스 (Communication Services)", desc: "Communication Services Select Sector SPDR ETF", sectorName: "COMMUNICATION SERVICES" },
   { ticker: "JETS", name: "항공 (Airlines)", desc: "U.S. Global Jets ETF", sectorName: "Airlines" },
   { ticker: "XBI", name: "바이오테크 (Biotech)", desc: "SPDR S&P Biotech ETF", sectorName: "Biotech" },
-  { ticker: "KRE", name: "지역은행 (Regional Banks)", desc: "SPDR S&P Regional Banking ETF", sectorName: "Banks" }
+  { ticker: "KRE", name: "지역은행 (Regional Banks)", desc: "SPDR S&P Regional Banking ETF", sectorName: "Banks" },
+  { ticker: "IGV", name: "소프트웨어 (Software)", desc: "iShares Expanded Tech-Software ETF", sectorName: "Software" },
+  { ticker: "ITA", name: "항공우주·방산 (Aerospace & Defense)", desc: "iShares U.S. Aerospace & Defense ETF", sectorName: "Aerospace" },
+  { ticker: "XOP", name: "석유·가스 E&P (Oil & Gas)", desc: "SPDR S&P Oil & Gas Exploration & Production ETF", sectorName: "Oil & Gas" },
+  { ticker: "XME", name: "금속·광업 (Metals & Mining)", desc: "SPDR S&P Metals & Mining ETF", sectorName: "Metals & Mining" },
+  { ticker: "XRT", name: "소매 (Retail)", desc: "SPDR S&P Retail ETF", sectorName: "Retail" },
+  { ticker: "DRIV", name: "자동차 (Autos)", desc: "Global X Autonomous & Electric Vehicles ETF", sectorName: "Autos" },
+  { ticker: "XLRE", name: "리츠·부동산 (Real Estate)", desc: "Real Estate Select Sector SPDR ETF", sectorName: "REAL ESTATE" }
 ];
+// Many airlines are misclassified by the data provider under "Air Freight/Delivery
+// Services", so detect them by ticker as well as by industry keyword.
+const AIRLINE_TICKERS = new Set([
+  "UAL", "DAL", "AAL", "LUV", "ALK", "JBLU", "ALGT", "SAVE", "HA", "SKYW",
+  "MESA", "SNCY", "ULCC", "CPA", "VLRS", "AVAV", "GOL", "AZUL", "RYAAY",
+  "LTM", "ZNH", "CEA", "JETBLUE"
+]);
+
 let selectedSectorEtf = "XLK";
 let selectedSectorRange = "1D";
 let selectedSectorBenchmark = "SPY";
@@ -161,6 +176,7 @@ function boot() {
   setupFilters();
   renderAll();
   setupEvents();
+  history.replaceState({ tab: currentTab, ticker: null }, "");
   if (route.get("tab")) {
     const tab = document.querySelector(`[data-tab="${route.get("tab")}"]`);
     if (tab) tab.click();
@@ -180,14 +196,33 @@ function renderSummary() {
   `).join("");
 }
 
+let currentTab = "map";
+
+function activateTab(name, { push = true, ticker = null } = {}) {
+  const tabBtn = document.querySelector(`[data-tab="${name}"]`);
+  if (!tabBtn) return;
+  document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
+  document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
+  tabBtn.classList.add("is-active");
+  byId(`tab-${name}`).classList.add("is-active");
+  currentTab = name;
+  if (push) {
+    history.pushState({ tab: name, ticker }, "");
+  }
+}
+
 function setupTabs() {
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
-      document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
-      tab.classList.add("is-active");
-      byId(`tab-${tab.dataset.tab}`).classList.add("is-active");
+      const name = tab.dataset.tab;
+      activateTab(name, { push: name !== currentTab });
     });
+  });
+  // Browser back/forward restores the previous tab (and ticker) instead of leaving the site.
+  window.addEventListener("popstate", (event) => {
+    const state = event.state || { tab: "map", ticker: null };
+    if (state.ticker) selectTicker(state.ticker, { openSearch: false });
+    activateTab(state.tab || "map", { push: false });
   });
 }
 
@@ -872,9 +907,16 @@ function getSectorStocks(meta) {
     if (meta.ticker === "XLY") return s === "CONSUMER CYCLICAL";
     if (meta.ticker === "XLP") return s === "CONSUMER DEFENSIVE";
     if (meta.ticker === "XLC") return s === "COMMUNICATION SERVICES";
-    if (meta.ticker === "JETS") return ind.includes("airline");
+    if (meta.ticker === "JETS") return ind.includes("airline") || AIRLINE_TICKERS.has(stock.ticker);
     if (meta.ticker === "XBI") return ind.includes("biotech") || ind.includes("biotechnology");
     if (meta.ticker === "KRE") return ind.includes("regional bank") || ind.includes("regional banks") || ind.includes("commercial bank") || ind.includes("commercial banks") || ind.includes("banks");
+    if (meta.ticker === "IGV") return ind.includes("software");
+    if (meta.ticker === "ITA") return ind.includes("aerospace") || ind.includes("defense");
+    if (meta.ticker === "XOP") return s === "ENERGY" && (ind.includes("oil") || ind.includes("gas") || ind.includes("petroleum") || ind.includes("oilfield"));
+    if (meta.ticker === "XME") return ind.includes("mining") || ind.includes("metal") || ind.includes("steel") || ind.includes("precious metals");
+    if (meta.ticker === "XRT") return ind.includes("retail");
+    if (meta.ticker === "DRIV") return ind.includes("auto") || ind.includes("motor vehicle");
+    if (meta.ticker === "XLRE") return s === "REAL ESTATE";
     return false;
   });
 }
@@ -1006,8 +1048,9 @@ function renderSectorDetail() {
   
   // Render constituents table
   const sortedRows = [...rows].sort((a, b) => b.rsScore - a.rsScore);
-  byId("sectorConstituentsBody").innerHTML = sortedRows.map((stock) => `
+  byId("sectorConstituentsBody").innerHTML = sortedRows.map((stock, index) => `
     <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
+      <td class="rank-cell">${index + 1}</td>
       <td><strong>${stock.ticker}</strong></td>
       <td>${stock.company}</td>
       <td>$${stock.price.toFixed(2)}</td>
@@ -1040,17 +1083,61 @@ function formatTimestamp(t, range) {
   return (d.getMonth() + 1) + "/" + d.getDate();
 }
 
+function buildSectorSeriesFromConstituents(sectorTicker, benchmarkSeries) {
+  const meta = SECTOR_ETFS.find((m) => m.ticker === sectorTicker);
+  if (!meta) return [];
+  const seriesList = getSectorStocks(meta).map((stock) => {
+    const detail = detailCache[safeTicker(stock.ticker)];
+    const fromDetail = detail && Array.isArray(detail.chartSeries) && detail.chartSeries.length
+      ? detail.chartSeries.map((r) => (Array.isArray(r) ? Number(r[3]) : Number(r.c)))
+      : null;
+    const closes = fromDetail || (Array.isArray(stock.closeSeries) ? stock.closeSeries.map(Number) : []);
+    return closes.filter(Number.isFinite);
+  }).filter((closes) => closes.length >= 2);
+  if (!seriesList.length) return [];
+
+  const n = benchmarkSeries.length;
+  const out = [];
+  for (let i = 0; i < n; i += 1) {
+    const frac = n === 1 ? 0 : i / (n - 1);
+    let sum = 0;
+    let count = 0;
+    for (const closes of seriesList) {
+      const base = closes[0];
+      if (!base) continue;
+      const idx = Math.round(frac * (closes.length - 1));
+      sum += closes[idx] / base;
+      count += 1;
+    }
+    if (!count) return [];
+    out.push({ t: benchmarkSeries[i].t, c: sum / count });
+  }
+  return out;
+}
+
 function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
   const svg = byId("sectorComparisonChart");
   const tooltip = byId("chartTooltip");
-  
+
   // Update legend labels
   byId("legendSectorLabel").textContent = `${sectorTicker} (섹터)`;
   byId("legendBenchmarkLabel").textContent = `${benchmarkTicker} (벤치)`;
   
-  const sectorSeries = data.sector_charts?.[sectorTicker]?.[timeframe] || [];
+  let sectorSeries = data.sector_charts?.[sectorTicker]?.[timeframe] || [];
   const benchmarkSeries = data.sector_charts?.[benchmarkTicker]?.[timeframe] || [];
-  
+
+  // Sub-sectors added on the front-end may not have a precomputed ETF chart series yet.
+  // Approximate one from the sector's constituents so the comparison still renders.
+  let approximate = false;
+  if (!sectorSeries.length && benchmarkSeries.length) {
+    const built = buildSectorSeriesFromConstituents(sectorTicker, benchmarkSeries);
+    if (built.length) {
+      sectorSeries = built;
+      approximate = true;
+    }
+  }
+  byId("legendSectorLabel").textContent = `${sectorTicker} (섹터${approximate ? " · 근사" : ""})`;
+
   const width = 860;
   const height = 420;
   const padL = 65;
@@ -1067,7 +1154,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     svg.innerHTML = `
       <rect x="0" y="0" width="${width}" height="${height}" fill="#101827" rx="10"></rect>
       <text x="${width / 2}" y="${height / 2 - 10}" font-size="15" fill="#64748b" text-anchor="middle" font-weight="700">차트 데이터 없음</text>
-      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#475569" text-anchor="middle">스냅샷 수집 스크립트를 실행해 주세요.</text>
+      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#475569" text-anchor="middle">이 섹터의 비교 차트는 다음 데이터 갱신에서 추가됩니다.</text>
     `;
     tooltip.style.display = "none";
     return;
@@ -1455,13 +1542,17 @@ function renderJump() {
   }).sort((a, b) => b[sort] - a[sort]).slice(0, 12);
 
   byId("jumpGrid").innerHTML = rows.map((item) => `
-    <article class="stock-card">
+    <article class="stock-card jump-stock-card" data-ticker="${item.ticker}" style="cursor: pointer;">
       <h3>${item.ticker}</h3>
       <p class="muted">${item.company}</p>
       <p><strong class="${cls(item.changePct)}">${fmtPct(item.changePct)}</strong> · Vol ${item.volumeRatio.toFixed(1)}x</p>
       <p>RS ${item.rsScore} · EPS ${item.epsRevScore}</p>
     </article>
   `).join("");
+
+  byId("jumpGrid").querySelectorAll(".jump-stock-card").forEach((card) => {
+    card.addEventListener("click", () => selectTicker(card.dataset.ticker, { openSearch: true }));
+  });
 }
 
 function selectTicker(ticker, options = {}) {
@@ -1471,7 +1562,14 @@ function selectTicker(ticker, options = {}) {
   byId("tickerSearch").value = selectedTicker;
   renderTreemap();
   renderSearch();
-  if (options.openSearch !== false) document.querySelector('[data-tab="search"]').click();
+  if (options.openSearch !== false) {
+    if (currentTab !== "search") {
+      activateTab("search", { ticker: selectedTicker, push: true });
+    } else {
+      activateTab("search", { push: false });
+      history.replaceState({ tab: "search", ticker: selectedTicker }, "");
+    }
+  }
 }
 
 function renderSearch() {
@@ -1481,6 +1579,7 @@ function renderSearch() {
   byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
   drawChart(item);
   renderFundamentals(item);
+  renderNews(item);
   loadStockDetail(item.ticker).then((detail) => {
     if (!detail || selectedTicker !== item.ticker) return;
     const refreshed = withDetail(base);
@@ -1488,7 +1587,44 @@ function renderSearch() {
     byId("searchFacts").innerHTML = stockFacts(refreshed, "Search Ticker");
     drawChart(refreshed);
     renderFundamentals(refreshed);
+    renderNews(refreshed);
   });
+}
+
+function isSyntheticChart(item) {
+  // Real history comes from Yahoo (chartSeries in the detail file).
+  // Snapshot/synthetic tickers only carry a generated mini closeSeries.
+  if (Array.isArray(item.chartSeries) && item.chartSeries.length) return false;
+  return item.historySource !== "yahoo";
+}
+
+function renderNews(item) {
+  const box = byId("searchNews");
+  if (!box) return;
+  const news = Array.isArray(item.news) ? item.news : [];
+  const estimate = isSyntheticChart(item)
+    ? `<p class="news-note">⚠ 실시간 야후 가격 이력이 없어 차트는 <strong>추정(합성) 차트</strong>입니다. 데이터 갱신 시 실제 차트로 채워집니다.</p>`
+    : "";
+  if (!news.length) {
+    box.innerHTML = `
+      <span class="muted">주요 뉴스</span>
+      ${estimate}
+      <p class="news-empty">이 종목의 뉴스가 아직 수집되지 않았습니다. 데이터 갱신 스크립트 실행 시 자동으로 채워집니다.</p>
+    `;
+    return;
+  }
+  box.innerHTML = `
+    <span class="muted">주요 뉴스</span>
+    ${estimate}
+    <ul class="news-list">
+      ${news.slice(0, 8).map((n) => `
+        <li class="news-item">
+          <a href="${escapeHtml(n.link || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.title || "")}</a>
+          <span class="news-meta">${escapeHtml(n.publisher || "")}${n.publishedAt ? ` · ${escapeHtml(n.publishedAt)}` : ""}</span>
+        </li>
+      `).join("")}
+    </ul>
+  `;
 }
 
 function withDetail(item) {

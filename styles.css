@@ -1464,6 +1464,22 @@ footer {
   .briefing-box { padding: 16px; }
 
   .section-title { flex-direction: column; align-items: flex-start; gap: 4px; }
+
+  /* Stop wide content from forcing horizontal page scroll */
+  body { overflow-x: hidden; }
+
+  /* AI 브리핑 소셜 표: fit instead of forcing a 760px-min table */
+  .table-scroll { overflow-x: auto; }
+  .social-table-wrapper table { min-width: 0; }
+  .social-table-wrapper { padding: 12px; }
+
+  /* 섹터 흐름 비교차트 컨트롤이 넘치지 않고 줄바꿈 */
+  .chart-controls-row { flex-wrap: wrap; gap: 10px; }
+  .comparison-selectors select { margin-left: 0; }
+
+  /* 마켓 데이터/구성종목 표는 칸이 많아 가로 스크롤 유지하되 글자 축소 */
+  .market-table th, .market-table td,
+  .compact-table th, .compact-table td { padding: 6px 6px; font-size: 11px; }
 }
 
 /* ==========================================================================

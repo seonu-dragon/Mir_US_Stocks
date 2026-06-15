@@ -139,6 +139,7 @@ const liveDone = {};
 
 let chartState = {
   range: "1Y",
+  barTf: "D", // D=일봉, W=주봉, M=월봉
   zoom: 1,
   offset: 0,
   showSma5: false,
@@ -146,8 +147,13 @@ let chartState = {
   showSma20: true,
   showSma60: true,
   showSma120: false,
+  showEma20: false,
+  showEma60: false,
+  showBoll: false,
   showVolume: true,
-  showRsi: true
+  showRsi: true,
+  showMacd: false,
+  showStoch: false
 };
 
 const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
@@ -372,9 +378,8 @@ function redrawChart() {
 
 // Number of bars available for the active range (matches visibleChartRows logic).
 function chartBaseLength(item) {
-  const rows = getChartRows(item);
-  const rangeMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
-  return Math.min(rows.length, rangeMap[chartState.range] || rows.length);
+  const rows = resampleBars(getChartRows(item), chartState.barTf);
+  return rangeBarCount(rows.length);
 }
 
 // Zoom keeping the bar under the cursor anchored (frac = 0 left … 1 right of plot).
@@ -423,8 +428,22 @@ function setupChartControls() {
     chartState = { ...chartState, zoom: 1, offset: 0 };
     redrawChart();
   });
-  ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120", "showVolume", "showRsi"].forEach((id) => {
-    byId(id).addEventListener("change", (event) => {
+  const tfControls = byId("barTimeframeControls");
+  if (tfControls) {
+    tfControls.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        chartState.barTf = btn.dataset.tf;
+        chartState.zoom = 1;
+        chartState.offset = 0;
+        tfControls.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b === btn));
+        redrawChart();
+      });
+    });
+  }
+  ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
+   "showEma20", "showEma60", "showBoll", "showVolume", "showRsi", "showMacd", "showStoch"].forEach((id) => {
+    const el = byId(id);
+    if (el) el.addEventListener("change", (event) => {
       chartState[id] = event.target.checked;
       redrawChart();
     });
@@ -1864,96 +1883,294 @@ function loadStockDetailScript(key) {
 
 function drawChart(item) {
   const svg = byId("priceChart");
-  const rows = visibleChartRows(getChartRows(item));
+  const allRows = resampleBars(getChartRows(item), chartState.barTf);
+  const rows = visibleChartRows(allRows);
   const width = 860;
-  const height = 520;
   const padL = 54;
   const padR = 58;
   const padT = 28;
-  const rsiH = chartState.showRsi ? 62 : 0;
-  const volumeH = chartState.showVolume ? 48 : 0;
-  const padB = 36 + volumeH + rsiH + (chartState.showVolume ? 18 : 0) + (chartState.showRsi ? 18 : 0);
   const plotW = width - padL - padR;
-  const plotH = height - padT - padB;
-  const volumeTop = padT + plotH + 16;
-  const rsiTop = volumeTop + volumeH + (chartState.showVolume ? 18 : 0);
+  const plotH = 300;
+
+  if (!rows.length) {
+    svg.setAttribute("viewBox", `0 0 ${width} 360`);
+    svg.innerHTML = `<rect x="0" y="0" width="${width}" height="360" rx="8" class="chart-bg"></rect><text x="${width / 2}" y="180" text-anchor="middle" class="chart-axis">차트 데이터 없음</text>`;
+    return;
+  }
+
+  // Bottom panels stack below the price plot (dynamic height).
+  const gap = 18;
+  const panels = [];
+  if (chartState.showVolume) panels.push({ t: "volume", h: 46 });
+  if (chartState.showRsi) panels.push({ t: "rsi", h: 60 });
+  if (chartState.showMacd) panels.push({ t: "macd", h: 70 });
+  if (chartState.showStoch) panels.push({ t: "stoch", h: 60 });
+  const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
+  const axisH = 26;
+  const height = padT + plotH + panelsH + axisH;
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+
   const closes = rows.map((row) => row.c);
-  const highs = rows.map((row) => row.h);
   const lows = rows.map((row) => row.l);
+  const highs = rows.map((row) => row.h);
   const min = Math.min(...lows);
   const max = Math.max(...highs);
   const range = max - min || 1;
-
   const xFor = (index) => padL + (index / Math.max(1, rows.length - 1)) * plotW;
   const yFor = (value) => padT + ((max - value) / range) * plotH;
+  const candleW = Math.max(2, Math.min(11, (plotW / rows.length) * 0.62));
+
   const linePath = closes.map((value, index) => `${index ? "L" : "M"} ${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)}`).join(" ");
-  const area = `${linePath} L ${padL + plotW} ${padT + plotH} L ${padL} ${padT + plotH} Z`;
+  const area = `${linePath} L ${(padL + plotW).toFixed(1)} ${(padT + plotH).toFixed(1)} L ${padL} ${(padT + plotH).toFixed(1)} Z`;
   const grid = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
     const y = padT + plotH * ratio;
     const value = max - range * ratio;
     return `<line x1="${padL}" y1="${y}" x2="${padL + plotW}" y2="${y}" class="chart-grid"></line><text x="${width - 8}" y="${y + 4}" class="chart-axis" text-anchor="end">$${value.toFixed(2)}</text>`;
   }).join("");
-  const volumeMax = Math.max(...rows.map((row) => row.v), 1);
-  const candleW = Math.max(2, Math.min(9, plotW / rows.length * 0.62));
-  const volumeBars = chartState.showVolume ? rows.map((row, index) => {
-    const x = xFor(index) - candleW / 2;
-    const h = Math.max(1, (row.v / volumeMax) * volumeH);
-    const up = row.c >= row.o;
-    return `<rect x="${x.toFixed(1)}" y="${(volumeTop + volumeH - h).toFixed(1)}" width="${candleW.toFixed(1)}" height="${h.toFixed(1)}" class="${up ? "vol-up" : "vol-down"}"></rect>`;
-  }).join("") : "";
+
+  // Bollinger Bands (20, 2σ) overlay.
+  let bollSvg = "";
+  if (chartState.showBoll) {
+    const bb = bollinger(closes, 20, 2);
+    const upPts = bb.upper.map((v, i) => (v == null ? null : [xFor(i), yFor(v)])).filter(Boolean);
+    const loPts = bb.lower.map((v, i) => (v == null ? null : [xFor(i), yFor(v)])).filter(Boolean);
+    let fill = "";
+    if (upPts.length > 1 && loPts.length > 1) {
+      const top = upPts.map(([x, y], i) => `${i ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+      const bot = loPts.slice().reverse().map(([x, y]) => `L ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+      fill = `<path d="${top} ${bot} Z" fill="rgba(34,211,238,0.07)" stroke="none"></path>`;
+    }
+    bollSvg = fill
+      + pathFromSeries(bb.upper, xFor, yFor, "#22d3ee", 1.2, "4 3")
+      + pathFromSeries(bb.lower, xFor, yFor, "#22d3ee", 1.2, "4 3")
+      + pathFromSeries(bb.mid, xFor, yFor, "#94a3b8", 1, "");
+  }
+
   const candles = rows.map((row, index) => {
     const x = xFor(index);
     const up = row.c >= row.o;
     const yOpen = yFor(row.o);
     const yClose = yFor(row.c);
-    const yHigh = yFor(row.h);
-    const yLow = yFor(row.l);
     const bodyY = Math.min(yOpen, yClose);
     const bodyH = Math.max(1.2, Math.abs(yClose - yOpen));
-    return `<g class="${up ? "candle-up" : "candle-down"}"><line x1="${x.toFixed(1)}" y1="${yHigh.toFixed(1)}" x2="${x.toFixed(1)}" y2="${yLow.toFixed(1)}"></line><rect x="${(x - candleW / 2).toFixed(1)}" y="${bodyY.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}"></rect></g>`;
+    return `<g class="${up ? "candle-up" : "candle-down"}"><line x1="${x.toFixed(1)}" y1="${yFor(row.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yFor(row.l).toFixed(1)}"></line><rect x="${(x - candleW / 2).toFixed(1)}" y="${bodyY.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}"></rect></g>`;
   }).join("");
-  const smaPaths = [
+
+  const overlays = [
     chartState.showSma5 ? averagePath(closes, 5, xFor, yFor, "#60a5fa") : "",
     chartState.showSma10 ? averagePath(closes, 10, xFor, yFor, "#34d399") : "",
     chartState.showSma20 ? averagePath(closes, 20, xFor, yFor, "#a855f7") : "",
     chartState.showSma60 ? averagePath(closes, 60, xFor, yFor, "#d98a2b") : "",
-    chartState.showSma120 ? averagePath(closes, 120, xFor, yFor, "#facc15") : ""
+    chartState.showSma120 ? averagePath(closes, 120, xFor, yFor, "#facc15") : "",
+    chartState.showEma20 ? pathFromSeries(emaArray(closes, 20), xFor, yFor, "#f472b6", 1.6, "") : "",
+    chartState.showEma60 ? pathFromSeries(emaArray(closes, 60), xFor, yFor, "#38bdf8", 1.6, "") : ""
   ].join("");
-  const rsiPanel = chartState.showRsi ? renderRsiPanel(closes, xFor, padL, padL + plotW, rsiTop, rsiH) : "";
-  const first = rows[0];
-  const last = rows[rows.length - 1];
-  const chartChange = pctFrom(last.c, first.c);
 
-  // X-axis: date (or index) ticks + light vertical guides, shared by all panels.
-  const axisBottom = padT + plotH + volumeH + rsiH
-    + (chartState.showVolume ? 18 : 0) + (chartState.showRsi ? 18 : 0) + 16;
+  // Stacked indicator panels.
+  let cursorY = padT + plotH + gap;
+  let panelsSvg = "";
+  for (const p of panels) {
+    if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, cursorY, p.h, candleW);
+    else if (p.t === "rsi") panelsSvg += renderRsiPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "macd") panelsSvg += renderMacdPanel(closes, xFor, padL, padL + plotW, cursorY, p.h, candleW);
+    else if (p.t === "stoch") panelsSvg += renderStochPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    cursorY += p.h + gap;
+  }
+
+  // Shared x-axis: date (or index) ticks + light vertical guides on the price plot.
   const tickCount = Math.min(6, Math.max(2, rows.length));
   const ticks = [];
   for (let k = 0; k < tickCount; k += 1) {
     const idx = Math.round((k / (tickCount - 1)) * (rows.length - 1));
-    const x = xFor(idx);
     const anchor = k === 0 ? "start" : (k === tickCount - 1 ? "end" : "middle");
     const label = rows[idx] && rows[idx].d ? formatChartDate(rows[idx].d) : `${idx + 1}`;
-    ticks.push({ x, label, anchor });
+    ticks.push({ x: xFor(idx), label, anchor });
   }
   const vGuides = ticks.map((t) => `<line x1="${t.x.toFixed(1)}" y1="${padT}" x2="${t.x.toFixed(1)}" y2="${padT + plotH}" class="chart-grid"></line>`).join("");
-  const dateLabels = ticks.map((t) => `<text x="${t.x.toFixed(1)}" y="${(axisBottom + 4).toFixed(1)}" text-anchor="${t.anchor}" class="chart-axis">${escapeHtml(t.label)}</text>`).join("");
+  const dateLabels = ticks.map((t) => `<text x="${t.x.toFixed(1)}" y="${(height - 8).toFixed(1)}" text-anchor="${t.anchor}" class="chart-axis">${escapeHtml(t.label)}</text>`).join("");
+
+  const first = rows[0];
+  const last = rows[rows.length - 1];
+  const chartChange = pctFrom(last.c, first.c);
+  const tfLabel = { D: "일봉", W: "주봉", M: "월봉" }[chartState.barTf] || "일봉";
 
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" rx="8" class="chart-bg"></rect>
     ${vGuides}
     ${grid}
     <path d="${area}" class="chart-area"></path>
-    ${volumeBars}
+    ${bollSvg}
     ${candles}
     <path d="${linePath}" class="chart-line"></path>
-    ${smaPaths}
-    ${rsiPanel}
+    ${overlays}
+    ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
     ${dateLabels}
-    <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
+    <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${tfLabel} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeSmaLabels()}</text>
     <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">$${last.c.toFixed(2)}</text>
+  `;
+}
+
+// ----- Timeframe resampling (daily -> weekly / monthly) -----
+function resampleBars(rows, tf) {
+  if (tf !== "W" && tf !== "M") return rows;
+  const keyFor = tf === "W" ? isoWeekKey : (d) => String(d).slice(0, 7);
+  const groups = new Map();
+  const order = [];
+  for (const row of rows) {
+    const key = keyFor(row.d || "");
+    if (!groups.has(key)) {
+      groups.set(key, { o: row.o, h: row.h, l: row.l, c: row.c, v: row.v || 0, d: row.d });
+      order.push(key);
+    } else {
+      const g = groups.get(key);
+      g.h = Math.max(g.h, row.h);
+      g.l = Math.min(g.l, row.l);
+      g.c = row.c;
+      g.v += row.v || 0;
+      g.d = row.d;
+    }
+  }
+  return order.map((key) => groups.get(key));
+}
+
+function isoWeekKey(dateStr) {
+  const parts = String(dateStr).split("-");
+  if (parts.length < 3) return dateStr;
+  const dt = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  const tmp = new Date(dt);
+  tmp.setDate(tmp.getDate() + 4 - ((tmp.getDay() + 6) % 7)); // ISO: shift to Thursday
+  const yearStart = new Date(tmp.getFullYear(), 0, 1);
+  const week = Math.ceil((((tmp - yearStart) / 86400000) + 1) / 7);
+  return `${tmp.getFullYear()}-W${week}`;
+}
+
+// ----- Indicator math -----
+function pathFromSeries(values, xFor, yFor, color, strokeW, dash) {
+  const pts = values.map((v, i) => (v == null || !Number.isFinite(v) ? null : [xFor(i), yFor(v)])).filter(Boolean);
+  if (pts.length < 2) return "";
+  const d = pts.map(([x, y], i) => `${i ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeW}"${dash ? ` stroke-dasharray="${dash}"` : ""} stroke-linecap="round"></path>`;
+}
+
+function emaRaw(values, period) {
+  const out = [];
+  const k = 2 / (period + 1);
+  let ema = values.length ? values[0] : 0;
+  for (let i = 0; i < values.length; i += 1) {
+    ema = i ? values[i] * k + ema * (1 - k) : values[i];
+    out.push(ema);
+  }
+  return out;
+}
+
+function emaArray(values, period) {
+  const out = emaRaw(values, period);
+  for (let i = 0; i < Math.min(period - 1, out.length); i += 1) out[i] = null;
+  return out;
+}
+
+function bollinger(values, period, mult) {
+  const mid = Array(values.length).fill(null);
+  const upper = Array(values.length).fill(null);
+  const lower = Array(values.length).fill(null);
+  for (let i = period - 1; i < values.length; i += 1) {
+    const chunk = values.slice(i - period + 1, i + 1);
+    const m = chunk.reduce((a, b) => a + b, 0) / period;
+    const variance = chunk.reduce((a, b) => a + (b - m) * (b - m), 0) / period;
+    const sd = Math.sqrt(variance);
+    mid[i] = m;
+    upper[i] = m + mult * sd;
+    lower[i] = m - mult * sd;
+  }
+  return { mid, upper, lower };
+}
+
+function macdSeries(values) {
+  const fast = emaRaw(values, 12);
+  const slow = emaRaw(values, 26);
+  const macd = values.map((_, i) => fast[i] - slow[i]);
+  const signal = emaRaw(macd, 9);
+  const hist = macd.map((v, i) => v - signal[i]);
+  const warm = Math.min(25, values.length);
+  for (let i = 0; i < warm; i += 1) {
+    macd[i] = null;
+    signal[i] = null;
+    hist[i] = null;
+  }
+  return { macd, signal, hist };
+}
+
+function stochArrays(rows, kPeriod, dPeriod) {
+  const k = Array(rows.length).fill(null);
+  for (let i = kPeriod - 1; i < rows.length; i += 1) {
+    let hi = -Infinity;
+    let lo = Infinity;
+    for (let j = i - kPeriod + 1; j <= i; j += 1) {
+      hi = Math.max(hi, rows[j].h);
+      lo = Math.min(lo, rows[j].l);
+    }
+    k[i] = hi === lo ? 50 : ((rows[i].c - lo) / (hi - lo)) * 100;
+  }
+  const d = Array(rows.length).fill(null);
+  for (let i = kPeriod - 1 + dPeriod - 1; i < rows.length; i += 1) {
+    let sum = 0;
+    let count = 0;
+    for (let j = i - dPeriod + 1; j <= i; j += 1) {
+      if (k[j] != null) { sum += k[j]; count += 1; }
+    }
+    if (count) d[i] = sum / count;
+  }
+  return { k, d };
+}
+
+// ----- Indicator panels -----
+function renderVolumePanel(rows, xFor, top, height, candleW) {
+  const volMax = Math.max(...rows.map((row) => row.v), 1);
+  const bars = rows.map((row, index) => {
+    const x = xFor(index) - candleW / 2;
+    const h = Math.max(1, (row.v / volMax) * height);
+    const up = row.c >= row.o;
+    return `<rect x="${x.toFixed(1)}" y="${(top + height - h).toFixed(1)}" width="${candleW.toFixed(1)}" height="${h.toFixed(1)}" class="${up ? "vol-up" : "vol-down"}"></rect>`;
+  }).join("");
+  return `<text x="${xFor(0).toFixed(1)}" y="${(top + 10).toFixed(1)}" class="chart-axis">Volume</text>${bars}`;
+}
+
+function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW) {
+  const { macd, signal, hist } = macdSeries(closes);
+  const all = [...macd, ...signal, ...hist].filter((v) => v != null && Number.isFinite(v));
+  const m = Math.max(0.001, ...all.map((v) => Math.abs(v)));
+  const yFor = (v) => top + (1 - (v / m + 1) / 2) * height;
+  const zeroY = yFor(0);
+  const bars = hist.map((v, i) => {
+    if (v == null) return "";
+    const y = Math.min(zeroY, yFor(v));
+    const h = Math.max(0.5, Math.abs(yFor(v) - zeroY));
+    return `<rect x="${(xFor(i) - candleW / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${candleW.toFixed(1)}" height="${h.toFixed(1)}" class="${v >= 0 ? "macd-hist-up" : "macd-hist-down"}"></rect>`;
+  }).join("");
+  return `
+    <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
+    <line x1="${x1}" y1="${zeroY}" x2="${x2}" y2="${zeroY}" class="rsi-guide"></line>
+    ${bars}
+    ${pathFromSeries(macd, xFor, yFor, "#60a5fa", 1.4, "")}
+    ${pathFromSeries(signal, xFor, yFor, "#f59e0b", 1.4, "")}
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">MACD(12,26,9)</text>
+  `;
+}
+
+function renderStochPanel(rows, xFor, x1, x2, top, height) {
+  const { k, d } = stochArrays(rows, 14, 3);
+  const yFor = (v) => top + ((100 - v) / 100) * height;
+  return `
+    <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
+    <line x1="${x1}" y1="${yFor(80)}" x2="${x2}" y2="${yFor(80)}" class="rsi-guide"></line>
+    <line x1="${x1}" y1="${yFor(20)}" x2="${x2}" y2="${yFor(20)}" class="rsi-guide"></line>
+    ${pathFromSeries(k, xFor, yFor, "#22d3ee", 1.4, "")}
+    ${pathFromSeries(d, xFor, yFor, "#f472b6", 1.4, "")}
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">Stoch(14,3)</text>
+    <text x="${x2 + 44}" y="${yFor(80) + 4}" text-anchor="end" class="chart-axis">80</text>
+    <text x="${x2 + 44}" y="${yFor(20) + 4}" text-anchor="end" class="chart-axis">20</text>
   `;
 }
 
@@ -1966,8 +2183,9 @@ function formatChartDate(d) {
 }
 
 function getChartRows(item) {
+  let rows;
   if (Array.isArray(item.chartSeries) && item.chartSeries.length) {
-    return item.chartSeries.map((row) => {
+    rows = item.chartSeries.map((row) => {
       if (Array.isArray(row)) {
         return { o: Number(row[0]), h: Number(row[1]), l: Number(row[2]), c: Number(row[3]), v: Number(row[4] || 0), d: row[5] || null };
       }
@@ -1980,22 +2198,52 @@ function getChartRows(item) {
         d: row.d ?? row.date ?? null
       };
     }).filter((row) => Number.isFinite(row.c));
+  } else {
+    const closes = item.closeSeries || [];
+    rows = closes.map((close, index) => {
+      const previous = Number(closes[Math.max(0, index - 1)] || close);
+      const c = Number(close);
+      const high = Math.max(previous, c) * 1.004;
+      const low = Math.min(previous, c) * 0.996;
+      return { o: previous, h: high, l: low, c, v: 1, d: null };
+    });
   }
-  const closes = item.closeSeries || [];
-  return closes.map((close, index) => {
-    const previous = Number(closes[Math.max(0, index - 1)] || close);
-    const c = Number(close);
-    const high = Math.max(previous, c) * 1.004;
-    const low = Math.min(previous, c) * 0.996;
-    return { o: previous, h: high, l: low, c, v: 1 };
-  });
+  // When the data carries no dates (older detail files / synthetic series), infer
+  // approximate daily dates client-side so the x-axis works without the proxy.
+  if (rows.length && !rows[rows.length - 1].d) fillInferredDates(rows);
+  return rows;
+}
+
+function snapshotBaseDate() {
+  const raw = (data && (data.updatedAtKst || data.updated_at_kst)) || "";
+  const match = String(raw).match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  return new Date();
+}
+
+function fillInferredDates(rows) {
+  const d = snapshotBaseDate();
+  const iso = (dt) => `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+  for (let i = rows.length - 1; i >= 0; i -= 1) {
+    rows[i].d = iso(d);
+    do {
+      d.setDate(d.getDate() - 1);
+    } while (d.getDay() === 0 || d.getDay() === 6); // skip weekends
+  }
+}
+
+// How many bars the active range maps to, expressed in the active timeframe's units.
+function rangeBarCount(total) {
+  const dailyMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
+  const div = chartState.barTf === "W" ? 5 : (chartState.barTf === "M" ? 21 : 1);
+  const want = Math.round((dailyMap[chartState.range] || total) / div);
+  return Math.min(total, Math.max(10, want));
 }
 
 function visibleChartRows(rows) {
-  const rangeMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
-  const rangeSize = Math.min(rows.length, rangeMap[chartState.range] || rows.length);
+  const rangeSize = rangeBarCount(rows.length);
   const base = rows.slice(-rangeSize);
-  const windowSize = Math.max(16, Math.floor(base.length / chartState.zoom));
+  const windowSize = Math.max(12, Math.floor(base.length / chartState.zoom));
   const maxOffset = Math.max(0, base.length - windowSize);
   chartState.offset = Math.min(chartState.offset, maxOffset);
   const end = base.length - chartState.offset;

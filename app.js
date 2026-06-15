@@ -90,6 +90,24 @@ function health(ticker, name, changePct, note) {
 let data = fallbackData;
 let selectedTicker = "NVDA";
 let selectedEtfRsCategory = null;
+const SECTOR_ETFS = [
+  { ticker: "XLK", name: "정보기술 (Technology)", desc: "Technology Select Sector SPDR ETF", sectorName: "TECHNOLOGY" },
+  { ticker: "SOXX", name: "반도체 (Semiconductors)", desc: "iShares Semiconductor ETF", sectorName: "Semiconductors" },
+  { ticker: "XLF", name: "금융 (Financials)", desc: "Financial Select Sector SPDR ETF", sectorName: "FINANCIAL" },
+  { ticker: "XLE", name: "에너지 (Energy)", desc: "Energy Select Sector SPDR ETF", sectorName: "ENERGY" },
+  { ticker: "XLV", name: "헬스케어 (Health Care)", desc: "Health Care Select Sector SPDR ETF", sectorName: "HEALTHCARE" },
+  { ticker: "XLU", name: "유틸리티 (Utilities)", desc: "Utilities Select Sector SPDR ETF", sectorName: "UTILITIES" },
+  { ticker: "XLI", name: "산업재 (Industrials)", desc: "Industrials Select Sector SPDR ETF", sectorName: "INDUSTRIALS" },
+  { ticker: "XLY", name: "임의소비재 (Consumer Discretionary)", desc: "Consumer Discretionary Select Sector SPDR ETF", sectorName: "CONSUMER CYCLICAL" },
+  { ticker: "XLP", name: "필수소비재 (Consumer Staples)", desc: "Consumer Staples Select Sector SPDR ETF", sectorName: "CONSUMER DEFENSIVE" },
+  { ticker: "XLC", name: "통신 서비스 (Communication Services)", desc: "Communication Services Select Sector SPDR ETF", sectorName: "COMMUNICATION SERVICES" },
+  { ticker: "JETS", name: "항공 (Airlines)", desc: "U.S. Global Jets ETF", sectorName: "Airlines" },
+  { ticker: "XBI", name: "바이오테크 (Biotech)", desc: "SPDR S&P Biotech ETF", sectorName: "Biotech" },
+  { ticker: "KRE", name: "지역은행 (Regional Banks)", desc: "SPDR S&P Regional Banking ETF", sectorName: "Banks" }
+];
+let selectedSectorEtf = "XLK";
+let selectedSectorRange = "1D";
+let selectedSectorBenchmark = "SPY";
 const detailCache = {};
 const detailPromises = {};
 let chartState = {
@@ -256,6 +274,20 @@ function setupEvents() {
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
   setupChartControls();
   window.addEventListener("resize", debounce(renderTreemap, 120));
+
+  // Sector detail page timeframe and benchmark listeners
+  byId("sectorTimeframeControls").querySelectorAll("button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      byId("sectorTimeframeControls").querySelectorAll("button").forEach((b) => b.classList.remove("is-active"));
+      btn.classList.add("is-active");
+      selectedSectorRange = btn.dataset.range;
+      renderSectorDetail();
+    });
+  });
+  byId("sectorBenchmarkSelect").addEventListener("change", (e) => {
+    selectedSectorBenchmark = e.target.value;
+    renderSectorDetail();
+  });
 }
 
 function setupChartControls() {
@@ -803,15 +835,38 @@ function fact(label, value) {
   return `<div class="fact"><span>${label}</span><strong>${value}</strong></div>`;
 }
 
+function getSectorStocks(meta) {
+  return data.stocks.filter((stock) => {
+    if (!stock.sector) return false;
+    const s = stock.sector.toUpperCase();
+    const ind = (stock.industry || "").toLowerCase();
+    
+    if (meta.ticker === "XLK") return s === "TECHNOLOGY";
+    if (meta.ticker === "SOXX") return ind.includes("semiconductor");
+    if (meta.ticker === "XLF") return s === "FINANCIAL";
+    if (meta.ticker === "XLE") return s === "ENERGY";
+    if (meta.ticker === "XLV") return s === "HEALTHCARE";
+    if (meta.ticker === "XLU") return s === "UTILITIES";
+    if (meta.ticker === "XLI") return s === "INDUSTRIALS";
+    if (meta.ticker === "XLY") return s === "CONSUMER CYCLICAL";
+    if (meta.ticker === "XLP") return s === "CONSUMER DEFENSIVE";
+    if (meta.ticker === "XLC") return s === "COMMUNICATION SERVICES";
+    if (meta.ticker === "JETS") return ind.includes("airline");
+    if (meta.ticker === "XBI") return ind.includes("biotech") || ind.includes("biotechnology");
+    if (meta.ticker === "KRE") return ind.includes("regional bank") || ind.includes("regional banks") || ind.includes("commercial bank") || ind.includes("commercial banks") || ind.includes("banks");
+    return false;
+  });
+}
+
 function renderSectors() {
   const sortBy = byId("sectorSort")?.value || "avg";
-  const groups = [...new Set(data.stocks.map((item) => item.sector))].map((sector) => {
-    const rows = data.stocks.filter((item) => item.sector === sector);
-    const avg = rows.reduce((sum, item) => sum + item.changePct, 0) / rows.length;
-    const avg1w = rows.reduce((sum, item) => sum + (item.weekChangePct || 0), 0) / rows.length;
-    const avg1m = rows.reduce((sum, item) => sum + (item.monthChangePct || 0), 0) / rows.length;
-    const avg3m = rows.reduce((sum, item) => sum + (item.threeMonthChangePct || 0), 0) / rows.length;
-    const rs = rows.reduce((sum, item) => sum + item.rsScore, 0) / rows.length;
+  const groups = SECTOR_ETFS.map((meta) => {
+    const rows = getSectorStocks(meta);
+    const avg = rows.length ? rows.reduce((sum, item) => sum + item.changePct, 0) / rows.length : 0;
+    const avg1w = rows.length ? rows.reduce((sum, item) => sum + (item.weekChangePct || 0), 0) / rows.length : 0;
+    const avg1m = rows.length ? rows.reduce((sum, item) => sum + (item.monthChangePct || 0), 0) / rows.length : 0;
+    const avg3m = rows.length ? rows.reduce((sum, item) => sum + (item.threeMonthChangePct || 0), 0) / rows.length : 0;
+    const rs = rows.length ? rows.reduce((sum, item) => sum + item.rsScore, 0) / rows.length : 50;
     
     const upCount = rows.filter((item) => item.changePct > 0).length;
     const downCount = rows.filter((item) => item.changePct < 0).length;
@@ -822,90 +877,449 @@ function renderSectors() {
       .sort((a, b) => b.rsScore - a.rsScore)
       .slice(0, 3);
       
-    return { sector, avg, avg1w, avg1m, avg3m, rs, upCount, downCount, upPct, count: rows.length, topLeaders };
+    return { ...meta, avg, avg1w, avg1m, avg3m, rs, upCount, downCount, upPct, count: rows.length, topLeaders };
   });
 
   // Sort groups
   groups.sort((a, b) => b[sortBy] - a[sortBy]);
 
-  byId("sectorGrid").innerHTML = groups.map((item) => `
-    <article class="sector-card" data-sector="${escapeHtml(item.sector)}">
-      <div class="sector-card-header">
-        <h3>${item.sector}</h3>
-        <span class="symbol-badge">${item.count} 종목</span>
-      </div>
-      
-      <div class="sector-main-stats">
-        <div class="stat-group">
-          <span class="stat-label">당일 평균</span>
-          <strong class="stat-value ${cls(item.avg)}">${fmtPct(item.avg)}</strong>
+  byId("sectorList").innerHTML = groups.map((item) => {
+    const isActive = item.ticker === selectedSectorEtf;
+    return `
+      <article class="sector-card${isActive ? " is-active" : ""}" data-ticker="${item.ticker}">
+        <div class="sector-card-header">
+          <h3>${item.name} (${item.ticker})</h3>
+          <span class="symbol-badge">${item.count} 종목</span>
         </div>
-        <div class="stat-group">
-          <span class="stat-label">상승 / 하락</span>
-          <span class="stat-value font-sm" style="color: ${item.upCount >= item.downCount ? 'var(--green)' : 'var(--red)'}; font-weight: 700;">
-            ${item.upCount} ▲ / ${item.downCount} ▼
-          </span>
-        </div>
-      </div>
-      
-      <!-- Breadth Progress Gauge -->
-      <div class="breadth-gauge-bar" title="상승 ${item.upCount}개 / 하락 ${item.downCount}개">
-        <div class="gauge-up" style="width: ${item.upPct}%"></div>
-        <div class="gauge-down" style="width: ${100 - item.upPct}%"></div>
-      </div>
-      
-      <!-- Timeframe Returns & RS -->
-      <div class="timeframe-grid">
-        <div class="tf-col">
-          <span class="tf-lbl">1주</span>
-          <span class="tf-val ${cls(item.avg1w)}">${fmtPct(item.avg1w)}</span>
-        </div>
-        <div class="tf-col">
-          <span class="tf-lbl">1달</span>
-          <span class="tf-val ${cls(item.avg1m)}">${fmtPct(item.avg1m)}</span>
-        </div>
-        <div class="tf-col">
-          <span class="tf-lbl">3달</span>
-          <span class="tf-val ${cls(item.avg3m)}">${fmtPct(item.avg3m)}</span>
-        </div>
-        <div class="tf-col">
-          <span class="tf-lbl">평균 RS</span>
-          <span class="tf-val rs-badge">${Math.round(item.rs)}</span>
-        </div>
-      </div>
-      
-      <!-- Sector Leaders list -->
-      <div class="sector-leaders-section">
-        <span class="lbl-sub">섹터 내 주도주 (RS 순)</span>
-        <div class="leader-chips">
-          ${item.topLeaders.map(stock => `
-            <span class="leader-chip" data-ticker="${stock.ticker}">
-              <strong class="ticker">${stock.ticker}</strong>
-              <span class="change ${cls(stock.changePct)}">${fmtPct(stock.changePct)}</span>
+        
+        <div class="sector-main-stats">
+          <div class="stat-group">
+            <span class="stat-label">당일 평균</span>
+            <strong class="stat-value ${cls(item.avg)}">${fmtPct(item.avg)}</strong>
+          </div>
+          <div class="stat-group">
+            <span class="stat-label">상승 / 하락</span>
+            <span class="stat-value font-sm" style="color: ${item.upCount >= item.downCount ? 'var(--green)' : 'var(--red)'}; font-weight: 700;">
+              ${item.upCount} ▲ / ${item.downCount} ▼
             </span>
-          `).join("")}
+          </div>
         </div>
-      </div>
-    </article>
-  `).join("");
+        
+        <!-- Breadth Progress Gauge -->
+        <div class="breadth-gauge-bar" title="상승 ${item.upCount}개 / 하락 ${item.downCount}개">
+          <div class="gauge-up" style="width: ${item.upPct}%"></div>
+          <div class="gauge-down" style="width: ${100 - item.upPct}%"></div>
+        </div>
+        
+        <!-- Timeframe Returns & RS -->
+        <div class="timeframe-grid">
+          <div class="tf-col">
+            <span class="tf-lbl">1주</span>
+            <span class="tf-val ${cls(item.avg1w)}">${fmtPct(item.avg1w)}</span>
+          </div>
+          <div class="tf-col">
+            <span class="tf-lbl">1달</span>
+            <span class="tf-val ${cls(item.avg1m)}">${fmtPct(item.avg1m)}</span>
+          </div>
+          <div class="tf-col">
+            <span class="tf-lbl">3달</span>
+            <span class="tf-val ${cls(item.avg3m)}">${fmtPct(item.avg3m)}</span>
+          </div>
+          <div class="tf-col">
+            <span class="tf-lbl">평균 RS</span>
+            <span class="tf-val rs-badge">${Math.round(item.rs)}</span>
+          </div>
+        </div>
+        
+        <!-- Sector Leaders list -->
+        <div class="sector-leaders-section">
+          <span class="lbl-sub">주도주 (RS 순)</span>
+          <div class="leader-chips">
+            ${item.topLeaders.map(stock => `
+              <span class="leader-chip" data-ticker="${stock.ticker}">
+                <strong class="ticker">${stock.ticker}</strong>
+                <span class="change ${cls(stock.changePct)}">${fmtPct(stock.changePct)}</span>
+              </span>
+            `).join("")}
+          </div>
+        </div>
+      </article>
+    `;
+  }).join("");
 
   // Setup click events
-  byId("sectorGrid").querySelectorAll(".sector-card").forEach((card) => {
+  byId("sectorList").querySelectorAll(".sector-card").forEach((card) => {
     card.addEventListener("click", () => {
-      const sectorName = card.dataset.sector;
-      byId("sectorFilter").value = sectorName;
-      renderTreemap();
-      const mapTab = document.querySelector('[data-tab="map"]');
-      if (mapTab) mapTab.click();
+      selectedSectorEtf = card.dataset.ticker;
+      renderSectors(); // Redraw list to toggle is-active class
     });
   });
 
-  byId("sectorGrid").querySelectorAll(".leader-chip").forEach((chip) => {
+  byId("sectorList").querySelectorAll(".leader-chip").forEach((chip) => {
     chip.addEventListener("click", (e) => {
-      e.stopPropagation(); // Prevent card drilldown trigger
+      e.stopPropagation(); // Prevent card select trigger
       selectTicker(chip.dataset.ticker, { openSearch: true });
     });
   });
+
+  // Render detail on the right
+  renderSectorDetail();
+}
+
+function renderSectorDetail() {
+  const meta = SECTOR_ETFS.find((item) => item.ticker === selectedSectorEtf) || SECTOR_ETFS[0];
+  const rows = getSectorStocks(meta);
+  
+  // Update detail texts
+  byId("sectorDetailEtf").textContent = meta.ticker;
+  byId("sectorDetailTitle").textContent = meta.name;
+  byId("sectorDetailDesc").textContent = meta.desc;
+  
+  const avgRs = rows.length ? rows.reduce((sum, item) => sum + item.rsScore, 0) / rows.length : 50;
+  const upCount = rows.filter((item) => item.changePct > 0).length;
+  const upPct = rows.length ? (upCount / rows.length) * 100 : 0;
+  
+  byId("sectorDetailRs").textContent = Math.round(avgRs);
+  byId("sectorDetailUpPct").textContent = `${Math.round(upPct)}%`;
+  byId("sectorConstituentsCount").textContent = `${rows.length}개 종목`;
+  
+  // Render constituents table
+  const sortedRows = [...rows].sort((a, b) => b.rsScore - a.rsScore);
+  byId("sectorConstituentsBody").innerHTML = sortedRows.map((stock) => `
+    <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
+      <td><strong>${stock.ticker}</strong></td>
+      <td>${stock.company}</td>
+      <td>$${stock.price.toFixed(2)}</td>
+      <td class="${cls(stock.changePct)}">${fmtPct(stock.changePct)}</td>
+      <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
+      <td class="${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
+      <td><span class="rs-badge">${stock.rsScore}</span></td>
+    </tr>
+  `).join("");
+  
+  // Setup click events for table rows
+  byId("sectorConstituentsBody").querySelectorAll(".constituent-row").forEach((row) => {
+    row.addEventListener("click", () => {
+      selectTicker(row.dataset.ticker, { openSearch: true });
+    });
+  });
+  
+  // Draw comparison chart
+  drawSectorComparisonChart(selectedSectorEtf, selectedSectorRange, selectedSectorBenchmark);
+}
+
+function formatTimestamp(t, range) {
+  const d = new Date(t * 1000);
+  if (range === "1D") {
+    return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  }
+  if (range === "1W") {
+    return (d.getMonth() + 1) + "/" + d.getDate() + " " + d.toLocaleDateString('ko-KR', { weekday: 'short' });
+  }
+  return (d.getMonth() + 1) + "/" + d.getDate();
+}
+
+function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
+  const svg = byId("sectorComparisonChart");
+  const tooltip = byId("chartTooltip");
+  
+  // Update legend labels
+  byId("legendSectorLabel").textContent = `${sectorTicker} (섹터)`;
+  byId("legendBenchmarkLabel").textContent = `${benchmarkTicker} (벤치)`;
+  
+  const sectorSeries = data.sector_charts?.[sectorTicker]?.[timeframe] || [];
+  const benchmarkSeries = data.sector_charts?.[benchmarkTicker]?.[timeframe] || [];
+  
+  const width = 860;
+  const height = 420;
+  const padL = 65;
+  const padR = 20;
+  const padT = 24;
+  const padB = 48;
+  const plotW = width - padL - padR;
+  const plotH = height - padT - padB;
+  
+  // Update SVG viewBox
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  
+  if (!sectorSeries.length || !benchmarkSeries.length) {
+    svg.innerHTML = `
+      <rect x="0" y="0" width="${width}" height="${height}" fill="#101827" rx="10"></rect>
+      <text x="${width / 2}" y="${height / 2 - 10}" font-size="15" fill="#64748b" text-anchor="middle" font-weight="700">차트 데이터 없음</text>
+      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#475569" text-anchor="middle">스냅샷 수집 스크립트를 실행해 주세요.</text>
+    `;
+    tooltip.style.display = "none";
+    return;
+  }
+  
+  // Normalize returns relative to initial close price (starting at 0%)
+  const startSectorClose = sectorSeries[0].c;
+  const startBenchmarkClose = benchmarkSeries[0].c;
+  
+  const normSector = sectorSeries.map((p) => ({
+    t: p.t,
+    r: ((p.c / startSectorClose) - 1) * 100,
+    originalClose: p.c
+  }));
+  
+  const normBenchmark = benchmarkSeries.map((p) => ({
+    t: p.t,
+    r: ((p.c / startBenchmarkClose) - 1) * 100,
+    originalClose: p.c
+  }));
+  
+  // Calculate ranges
+  const allTimestamps = [...normSector.map((p) => p.t), ...normBenchmark.map((p) => p.t)];
+  const minT = Math.min(...allTimestamps);
+  const maxT = Math.max(...allTimestamps);
+  const rangeT = maxT - minT || 1;
+  
+  const allReturns = [...normSector.map((p) => p.r), ...normBenchmark.map((p) => p.r)];
+  let minR = Math.min(...allReturns, 0);
+  let maxR = Math.max(...allReturns, 0);
+  let rangeR = maxR - minR;
+  if (rangeR < 0.5) rangeR = 0.5;
+  
+  // Add margin
+  minR -= rangeR * 0.08;
+  maxR += rangeR * 0.08;
+  const finalRangeR = maxR - minR;
+  
+  const xFor = (t) => padL + ((t - minT) / rangeT) * plotW;
+  const yFor = (r) => padT + ((maxR - r) / finalRangeR) * plotH;
+  const yBase = yFor(0);
+  
+  // Compute nice grid lines (aim for 6 levels)
+  function niceGridLevels(min, max, count) {
+    const step = (max - min) / count;
+    const mag = Math.pow(10, Math.floor(Math.log10(Math.abs(step) || 1)));
+    const nicedStep = Math.ceil(step / mag) * mag;
+    const levels = [];
+    const startVal = Math.ceil(min / nicedStep) * nicedStep;
+    for (let v = startVal; v <= max + 0.001; v += nicedStep) {
+      levels.push(parseFloat(v.toFixed(4)));
+    }
+    return levels;
+  }
+  const gridLevels = niceGridLevels(minR, maxR, 6);
+  
+  // X axis date format
+  function xDateLabel(t, tf) {
+    const d = new Date(t * 1000);
+    if (tf === "1D") {
+      const h = String(d.getHours()).padStart(2, "0");
+      const m = String(d.getMinutes()).padStart(2, "0");
+      return `${h}:${m}`;
+    }
+    if (tf === "1W") {
+      const days = ["일","월","화","수","목","금","토"];
+      return `${d.getMonth()+1}/${d.getDate()} (${days[d.getDay()]})`;
+    }
+    return `${d.getMonth()+1}/${d.getDate()}`;
+  }
+  
+  // Horizontal grid lines
+  const gridLinesSvg = gridLevels.map((r) => {
+    const y = yFor(r);
+    if (y < padT - 1 || y > padT + plotH + 1) return "";
+    const isZero = Math.abs(r) < 0.001;
+    const color = isZero ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.07)";
+    const w = isZero ? 1.5 : 1;
+    const dash = isZero ? "" : `stroke-dasharray="4 4"`;
+    const labelColor = isZero ? "#e2e8f0" : "#64748b";
+    const labelWeight = isZero ? "800" : "600";
+    return `
+      <line x1="${padL}" y1="${y.toFixed(1)}" x2="${padL + plotW}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="${w}" ${dash}></line>
+      <text x="${padL - 8}" y="${(y + 4).toFixed(1)}" font-size="10.5" fill="${labelColor}" text-anchor="end" font-weight="${labelWeight}">${r >= 0 ? "+" : ""}${r.toFixed(2)}%</text>
+    `;
+  }).join("");
+  
+  // X axis labels (pick 5 evenly spaced points)
+  const xLabelCount = 5;
+  const xLabelIndices = Array.from({length: xLabelCount}, (_, i) =>
+    Math.round(i * (normSector.length - 1) / (xLabelCount - 1))
+  ).filter(idx => idx >= 0 && idx < normSector.length);
+
+  const xLabelsSvg = xLabelIndices.map((idx) => {
+    const p = normSector[idx];
+    const x = xFor(p.t);
+    return `
+      <line x1="${x.toFixed(1)}" y1="${(padT + plotH).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(padT + plotH + 6).toFixed(1)}" stroke="rgba(255,255,255,0.2)" stroke-width="1"></line>
+      <text x="${x.toFixed(1)}" y="${(padT + plotH + 20).toFixed(1)}" font-size="10.5" fill="#94a3b8" text-anchor="middle">${xDateLabel(p.t, timeframe)}</text>
+    `;
+  }).join("");
+  
+  // SVG path generation
+  const sectorPoints = normSector.map((p) => [xFor(p.t), yFor(p.r)]);
+  const benchmarkPoints = normBenchmark.map((p) => [xFor(p.t), yFor(p.r)]);
+  
+  const pathFrom = (pts) => pts.map(([x, y], i) => `${i ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
+  const sectorPath = pathFrom(sectorPoints);
+  const benchmarkPath = pathFrom(benchmarkPoints);
+  
+  // Area fill under sector line
+  const yClip = Math.min(yBase, padT + plotH);
+  const sectorAreaPath = sectorPath + ` L ${sectorPoints[sectorPoints.length-1][0].toFixed(1)} ${yClip.toFixed(1)} L ${sectorPoints[0][0].toFixed(1)} ${yClip.toFixed(1)} Z`;
+  
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="sectorGrad" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.02"/>
+      </linearGradient>
+      <clipPath id="chartClip">
+        <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}"/>
+      </clipPath>
+    </defs>
+    <!-- Background -->
+    <rect x="0" y="0" width="${width}" height="${height}" fill="#101827" rx="0"></rect>
+    <!-- Chart area background -->
+    <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="rgba(255,255,255,0.02)" rx="4"></rect>
+    <!-- Grid lines (clipped) -->
+    <g clip-path="url(#chartClip)">${gridLinesSvg}</g>
+    <!-- X axis labels -->
+    <g>${xLabelsSvg}</g>
+    <!-- Sector fill area -->
+    <path d="${sectorAreaPath}" fill="url(#sectorGrad)" clip-path="url(#chartClip)"></path>
+    <!-- Benchmark line -->
+    <path d="${benchmarkPath}" class="benchmark-line" fill="none" clip-path="url(#chartClip)"></path>
+    <!-- Sector line -->
+    <path d="${sectorPath}" class="sector-line" fill="none" clip-path="url(#chartClip)"></path>
+    <!-- Y Axis border -->
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.15)" stroke-width="1"></line>
+    <!-- X Axis border -->
+    <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" stroke="rgba(255,255,255,0.15)" stroke-width="1"></line>
+    <!-- Hover Elements -->
+    <line id="trackerLine" class="chart-tracker-line" x1="0" y1="${padT}" x2="0" y2="${padT + plotH}" style="display: none;"></line>
+    <circle id="sectorTrackerDot" class="sector-dot" r="5" style="display: none;"></circle>
+    <circle id="benchmarkTrackerDot" class="benchmark-dot" r="5" style="display: none;"></circle>
+  `;
+  
+  const trackerLine = svg.querySelector("#trackerLine");
+  const sectorDot = svg.querySelector("#sectorTrackerDot");
+  const benchmarkDot = svg.querySelector("#benchmarkTrackerDot");
+  
+  // Event logic for hover tracking
+  svg.addEventListener("mousemove", (event) => {
+    const rect = svg.getBoundingClientRect();
+    const scaleX = width / rect.width;
+    const scaleY = height / rect.height;
+    const clientX = (event.clientX - rect.left) * scaleX;
+    
+    if (clientX < padL || clientX > padL + plotW) {
+      hideHover();
+      return;
+    }
+    
+    let closestPoint = null;
+    let closestDist = Infinity;
+    let closestIndex = -1;
+    
+    normSector.forEach((p, idx) => {
+      const x = xFor(p.t);
+      const dist = Math.abs(x - clientX);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closestPoint = p;
+        closestIndex = idx;
+      }
+    });
+    
+    if (!closestPoint) return;
+    
+    const x = xFor(closestPoint.t);
+    const sectorY = yFor(closestPoint.r);
+    
+    let benchmarkPoint = normBenchmark[closestIndex];
+    if (!benchmarkPoint || Math.abs(benchmarkPoint.t - closestPoint.t) > 3600 * 24) {
+      let bestB = null;
+      let bestDist = Infinity;
+      normBenchmark.forEach((p) => {
+        const dist = Math.abs(p.t - closestPoint.t);
+        if (dist < bestDist) {
+          bestDist = dist;
+          bestB = p;
+        }
+      });
+      benchmarkPoint = bestB;
+    }
+    
+    if (!benchmarkPoint) return;
+    
+    const benchmarkY = yFor(benchmarkPoint.r);
+    
+    trackerLine.setAttribute("x1", x);
+    trackerLine.setAttribute("x2", x);
+    trackerLine.style.display = "block";
+    
+    sectorDot.setAttribute("cx", x);
+    sectorDot.setAttribute("cy", sectorY);
+    sectorDot.style.display = "block";
+    
+    benchmarkDot.setAttribute("cx", x);
+    benchmarkDot.setAttribute("cy", benchmarkY);
+    benchmarkDot.style.display = "block";
+    
+    // HTML Tooltip positioning (ensure it doesn't go offscreen)
+    const svgScreenW = rect.width;
+    const tooltipPx = x / scaleX;
+    const isRightHalf = tooltipPx > svgScreenW / 2;
+    
+    const formattedDate = new Date(closestPoint.t * 1000).toLocaleString("ko-KR", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+    
+    const relDiff = closestPoint.r - benchmarkPoint.r;
+    const diffText = `${relDiff >= 0 ? "+" : ""}${relDiff.toFixed(2)}%p`;
+    const diffClass = relDiff >= 0 ? "pos" : "neg";
+    
+    tooltip.innerHTML = `
+      <strong>${formattedDate}</strong>
+      <div class="item"><span style="width:120px;display:inline-block">📈 ${sectorTicker}:</span><b>${closestPoint.r >= 0 ? "+" : ""}${closestPoint.r.toFixed(2)}%</b></div>
+      <div class="item"><span style="width:120px;display:inline-block">📊 ${benchmarkTicker}:</span><b>${benchmarkPoint.r >= 0 ? "+" : ""}${benchmarkPoint.r.toFixed(2)}%</b></div>
+      <div class="item" style="margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 4px;">
+        <span>상대 수익률:</span><strong class="${diffClass}" style="margin-left:8px">${diffText}</strong>
+      </div>
+    `;
+    
+    const tipLeft = isRightHalf ? (tooltipPx - 175) : (tooltipPx + 16);
+    const topY = Math.min(sectorY, benchmarkY) / scaleY;
+    const tipTop = Math.max(8, topY - 10);
+    tooltip.style.left = `${tipLeft}px`;
+    tooltip.style.top = `${tipTop}px`;
+    tooltip.style.display = "block";
+    
+    const summaryValueEl = byId("relativePerfValue");
+    summaryValueEl.textContent = diffText;
+    summaryValueEl.className = relDiff >= 0 ? "pos" : "neg";
+  });
+  
+  svg.addEventListener("mouseleave", () => {
+    hideHover();
+  });
+  
+  function hideHover() {
+    trackerLine.style.display = "none";
+    sectorDot.style.display = "none";
+    benchmarkDot.style.display = "none";
+    tooltip.style.display = "none";
+    
+    const lastS = normSector[normSector.length - 1];
+    const lastB = normBenchmark[normBenchmark.length - 1];
+    if (lastS && lastB) {
+      const relDiff = lastS.r - lastB.r;
+      const summaryValueEl = byId("relativePerfValue");
+      summaryValueEl.textContent = `${relDiff >= 0 ? "+" : ""}${relDiff.toFixed(2)}%p`;
+      summaryValueEl.className = relDiff >= 0 ? "pos" : "neg";
+    }
+  }
+  
+  // Set initial performance summary values
+  hideHover();
 }
 
 function renderTopStocks() {

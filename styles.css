@@ -6,6 +6,7 @@
   --muted: #667085;
   --line: #d9dee7;
   --blue: #1d4ed8;
+  --primary: #1d4ed8;
   --green: #138a4d;
   --red: #c03535;
   --amber: #b7791f;
@@ -118,7 +119,7 @@ main {
 
 .tabs {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: repeat(8, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 10px;
 }
@@ -1177,6 +1178,10 @@ footer {
   .tabs {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
+
+  .sector-badge-stats {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
@@ -1403,55 +1408,99 @@ footer {
 }
 
 /* ==========================================================================
-   Sector Flow Tab Premium Redesign
+   Sector Flow Tab Premium Two-Column Redesign
    ========================================================================== */
-.sector-flow-grid {
+.sector-workspace.two-col {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 15px;
+  grid-template-columns: 360px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+.sector-scroll-panel {
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Custom scrollbar for scroll panel */
+.sector-scroll-panel::-webkit-scrollbar {
+  width: 6px;
+}
+.sector-scroll-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sector-scroll-panel::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+.sector-scroll-panel::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
+}
+
+.panel-header-sticky {
+  position: sticky;
+  top: 0;
+  background: #f8fafc; /* Matches main bg */
+  z-index: 10;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 8px;
+}
+
+.sector-flow-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .sector-card {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 18px;
+  padding: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
   cursor: pointer;
   transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .sector-card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(29, 78, 216, 0.35);
-  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.06);
+  transform: translateY(-2px);
+  border-color: var(--primary);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1);
+}
+
+.sector-card.is-active {
+  background: #f0f7ff;
+  border-color: var(--primary);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1);
 }
 
 .sector-card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 8px;
 }
 
 .sector-card-header h3 {
   margin: 0;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--text);
 }
 
 .symbol-badge {
-  background: #f1f5f9;
+  background: rgba(148, 163, 184, 0.12);
   color: #475569;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
 }
 
@@ -1464,39 +1513,38 @@ footer {
 .stat-group {
   display: flex;
   flex-direction: column;
-  gap: 2px;
 }
 
 .stat-label {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--muted);
 }
 
 .stat-value {
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 900;
 }
 
 .font-sm {
-  font-size: 13px;
+  font-size: 12px;
 }
 
 /* Up/Down Breadth Progress Gauge */
 .breadth-gauge-bar {
-  height: 6px;
+  height: 5px;
   display: flex;
   border-radius: 999px;
   overflow: hidden;
-  background: #f1f5f9;
+  background: #e2e8f0;
 }
 
 .gauge-up {
-  background: var(--green); /* Green for positive */
+  background: var(--green);
   height: 100%;
 }
 
 .gauge-down {
-  background: var(--red); /* Red for negative */
+  background: var(--red);
   height: 100%;
 }
 
@@ -1504,28 +1552,28 @@ footer {
 .timeframe-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 6px;
   background: #f8fafc;
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 6px;
   text-align: center;
 }
 
 .tf-col {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
 }
 
 .tf-lbl {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted);
   font-weight: 700;
 }
 
 .tf-val {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
@@ -1542,31 +1590,30 @@ footer {
 .sector-leaders-section {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
+  gap: 4px;
 }
 
 .lbl-sub {
-  font-size: 10.5px;
+  font-size: 10px;
   color: var(--muted);
   font-weight: 700;
 }
 
 .leader-chips {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   flex-wrap: wrap;
 }
 
 .leader-chip {
   display: flex;
   align-items: center;
-  gap: 4px;
-  background: #f8fafc;
+  gap: 3px;
+  background: #f1f5f9;
   border: 1px solid var(--line);
-  border-radius: 6px;
-  padding: 3px 6px;
-  font-size: 11px;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 10px;
   cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
@@ -1585,15 +1632,241 @@ footer {
   font-weight: 700;
 }
 
-@media (max-width: 1040px) {
-  .sector-flow-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+/* Sector Chart Panel */
+.sector-chart-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-@media (max-width: 640px) {
-  .sector-flow-grid {
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px 20px;
+}
+
+.chart-header h2 {
+  margin: 4px 0 2px;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.sector-badge-stats {
+  display: flex;
+  gap: 10px;
+}
+
+.stat-pill {
+  display: flex;
+  flex-direction: column;
+  background: #f1f5f9;
+  border: 1px solid var(--line);
+  padding: 6px 12px;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 70px;
+}
+
+.stat-pill span {
+  font-size: 9px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.stat-pill strong {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.chart-controls-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.comparison-selectors label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.comparison-selectors select {
+  margin-left: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: #fff;
+}
+
+/* SVG Chart lines styles */
+#sectorComparisonChart {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #101827;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  overflow: hidden;
+}
+
+.sector-line {
+  fill: none;
+  stroke: #2563eb; /* Blue for Sector */
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.benchmark-line {
+  fill: none;
+  stroke: #94a3b8; /* Slate gray for Benchmark */
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 4 4; /* Dashed */
+}
+
+/* Tracker line and points */
+.chart-tracker-line {
+  stroke: #cbd5e1;
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.sector-dot {
+  fill: #2563eb;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+.benchmark-dot {
+  fill: #94a3b8;
+  stroke: #fff;
+  stroke-width: 2;
+}
+
+/* Legend & Summary styling */
+.chart-legend-summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.legend-items {
+  display: flex;
+  gap: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+}
+
+.legend-color.sector-color {
+  background: #2563eb;
+}
+
+.legend-color.benchmark-color {
+  background: #94a3b8;
+  border: 1px dashed #64748b;
+}
+
+.relative-perf-summary {
+  font-weight: 800;
+}
+
+/* Custom interactive HTML tooltip */
+.custom-chart-tooltip {
+  background: rgba(15, 23, 42, 0.95);
+  color: #fff;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  pointer-events: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  line-height: 1.4;
+}
+
+.custom-chart-tooltip strong {
+  display: block;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+.custom-chart-tooltip .item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+/* Constituents Quick List */
+.sector-constituents-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+
+.card-title-row h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.compact-table-wrap {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.compact-table {
+  min-width: 100%;
+}
+
+.compact-table th, .compact-table td {
+  padding: 6px 8px;
+  font-size: 11.5px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1040px) {
+  .sector-workspace.two-col {
     grid-template-columns: 1fr;
+  }
+  .sector-scroll-panel {
+    max-height: 280px;
   }
 }
 

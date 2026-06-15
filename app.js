@@ -320,6 +320,7 @@ function setupEvents() {
       document.querySelectorAll("#tab-sector .sub-panel").forEach((p) => p.classList.remove("is-active"));
       btn.classList.add("is-active");
       byId(`sub-${btn.dataset.sub}`).classList.add("is-active");
+      closeConstituentPanel();
       if (btn.dataset.sub === "etf-rs") renderSectorEtfRelativeStrength();
     });
   });
@@ -333,8 +334,10 @@ function setupEvents() {
     if (!card) return;
     showConstituentPanel(card.dataset.category, byId("sectorEtfRsPeriod").value);
   });
-  byId("constituentPanelClose").addEventListener("click", () => {
-    byId("constituentPanel").style.display = "none";
+  byId("constituentPanelClose").addEventListener("click", closeConstituentPanel);
+  byId("constituentBackdrop").addEventListener("click", closeConstituentPanel);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeConstituentPanel();
   });
   byId("jumpCategory").addEventListener("change", renderJump);
   byId("jumpSort").addEventListener("change", renderJump);
@@ -2628,8 +2631,13 @@ function showConstituentPanel(categoryName, period) {
     `;
   }).join("");
 
-  panel.style.display = "block";
-  panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  panel.classList.add("is-open");
+  byId("constituentBackdrop").classList.add("is-open");
+}
+
+function closeConstituentPanel() {
+  byId("constituentPanel").classList.remove("is-open");
+  byId("constituentBackdrop").classList.remove("is-open");
 }
 
 

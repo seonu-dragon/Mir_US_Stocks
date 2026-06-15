@@ -35,6 +35,7 @@
         <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
       </nav>
 
+      <!-- ==================== 시장 지도 탭 ==================== -->
       <section class="panel is-active" id="tab-map">
         <div class="toolbar heatmap-toolbar">
           <label>
@@ -86,117 +87,199 @@
         </div>
       </section>
 
+      <!-- ==================== 섹터 흐름 탭 ==================== -->
       <section class="panel" id="tab-sector">
-        <div class="workspace two-col sector-workspace">
-          <!-- Left Column: Sector Cards Scroll Panel -->
-          <aside class="sector-scroll-panel">
-            <div class="panel-header-sticky">
-              <div class="toolbar compact-toolbar">
-                <label>
-                  정렬 기준
-                  <select id="sectorSort">
-                    <option value="avg">당일 평균 등락률</option>
-                    <option value="avg1w">1주일 평균 등락률</option>
-                    <option value="avg1m">1개월 평균 등락률</option>
-                    <option value="avg3m">3개월 평균 등락률</option>
-                    <option value="rs">평균 상대강도 (RS)</option>
-                    <option value="upPct">상승 종목 비중</option>
-                  </select>
-                </label>
-              </div>
-              <div class="section-title compact-title">
-                <h2>Sector Flow</h2>
-                <p>각 섹터/테마 ETF의 흐름을 확인하세요.</p>
-              </div>
-            </div>
-            <div class="sector-flow-list" id="sectorList"></div>
-          </aside>
-          
-          <!-- Right Column: Interactive Detail & Comparison Chart -->
-          <main class="sector-chart-panel">
-            <div class="chart-header">
-              <div class="title-area">
-                <span class="ticker-pill" id="sectorDetailEtf">XLK</span>
-                <h2 id="sectorDetailTitle">정보기술 섹터</h2>
-                <p class="muted" id="sectorDetailDesc">Technology Select Sector SPDR</p>
-              </div>
-              <div class="sector-badge-stats">
-                <div class="stat-pill">
-                  <span>RS 점수</span>
-                  <strong id="sectorDetailRs">85</strong>
-                </div>
-                <div class="stat-pill">
-                  <span>상승비율</span>
-                  <strong id="sectorDetailUpPct">65%</strong>
-                </div>
-              </div>
-            </div>
-            
-            <div class="chart-card">
-              <div class="chart-controls-row">
-                <div class="segmented" id="sectorTimeframeControls">
-                  <button type="button" class="is-active" data-range="1D">1D (5m)</button>
-                  <button type="button" data-range="1W">1W (30m)</button>
-                  <button type="button" data-range="1M">1M (1h)</button>
-                  <button type="button" data-range="3M">3M (1d)</button>
-                </div>
-                
-                <div class="comparison-selectors">
+        <!-- Sub-tab navigation -->
+        <nav class="sub-tabs" id="sectorSubTabs" aria-label="Sector sub-sections">
+          <button class="sub-tab is-active" data-sub="chart">📈 섹터 차트 비교</button>
+          <button class="sub-tab" data-sub="etf-rs">📊 ETF 상대강도 순위</button>
+        </nav>
+
+        <!-- Sub-panel 1: 섹터 차트 비교 -->
+        <div class="sub-panel is-active" id="sub-chart">
+          <div class="workspace two-col sector-workspace">
+            <!-- Left: Sector Cards -->
+            <aside class="sector-scroll-panel">
+              <div class="panel-header-sticky">
+                <div class="toolbar compact-toolbar">
                   <label>
-                    비교 벤치마크
-                    <select id="sectorBenchmarkSelect">
-                      <option value="SPY">SPY (S&P 500)</option>
-                      <option value="QQQ">QQQ (Nasdaq 100)</option>
+                    정렬 기준
+                    <select id="sectorSort">
+                      <option value="avg">당일 평균 등락률</option>
+                      <option value="avg1w">1주일 평균 등락률</option>
+                      <option value="avg1m">1개월 평균 등락률</option>
+                      <option value="avg3m">3개월 평균 등락률</option>
+                      <option value="rs">평균 상대강도 (RS)</option>
+                      <option value="upPct">상승 종목 비중</option>
                     </select>
                   </label>
                 </div>
-              </div>
-              
-              <div class="comparison-chart-container" style="position: relative;">
-                <svg id="sectorComparisonChart" viewBox="0 0 860 480" role="img" aria-label="Sector and Benchmark relative return comparison chart"></svg>
-                <!-- Custom Interactive HTML Tooltip -->
-                <div id="chartTooltip" class="custom-chart-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 10;"></div>
-              </div>
-              
-              <!-- Legend & Summary Info -->
-              <div class="chart-legend-summary">
-                <div class="legend-items">
-                  <div class="legend-item"><span class="legend-color sector-color"></span><span id="legendSectorLabel">정보기술 (XLK)</span></div>
-                  <div class="legend-item"><span class="legend-color benchmark-color"></span><span id="legendBenchmarkLabel">S&P 500 (SPY)</span></div>
-                </div>
-                <div class="relative-perf-summary" id="relativePerfSummary">
-                  상대 수익률: <strong class="pos" id="relativePerfValue">+0.0%</strong>
+                <div class="section-title compact-title">
+                  <h2>Sector Chart</h2>
+                  <p>ETF를 선택하고 벤치마크 대비 차트를 비교하세요.</p>
                 </div>
               </div>
-            </div>
-            
-            <!-- Sector Constituents Quick List -->
-            <div class="sector-constituents-card">
-              <div class="card-title-row">
-                <h3>섹터 내 주요 종목 현황</h3>
-                <span class="muted" id="sectorConstituentsCount">0개 종목</span>
+              <div class="sector-flow-list" id="sectorList"></div>
+            </aside>
+
+            <!-- Right: Chart Detail -->
+            <main class="sector-chart-panel">
+              <div class="chart-header">
+                <div class="title-area">
+                  <span class="ticker-pill" id="sectorDetailEtf">XLK</span>
+                  <h2 id="sectorDetailTitle">정보기술 섹터</h2>
+                  <p class="muted" id="sectorDetailDesc">Technology Select Sector SPDR</p>
+                </div>
+                <div class="sector-badge-stats">
+                  <div class="stat-pill">
+                    <span>RS 점수</span>
+                    <strong id="sectorDetailRs">85</strong>
+                  </div>
+                  <div class="stat-pill">
+                    <span>상승비율</span>
+                    <strong id="sectorDetailUpPct">65%</strong>
+                  </div>
+                </div>
               </div>
-              <div class="table-wrap compact-table-wrap">
-                <table class="compact-table">
-                  <thead>
-                    <tr>
-                      <th>티커</th>
-                      <th>회사명</th>
-                      <th>현재가</th>
-                      <th>당일 등락률</th>
-                      <th>1주 등락률</th>
-                      <th>1달 등락률</th>
-                      <th>RS 점수</th>
-                    </tr>
-                  </thead>
-                  <tbody id="sectorConstituentsBody"></tbody>
-                </table>
+
+              <div class="chart-card">
+                <div class="chart-controls-row">
+                  <div class="segmented" id="sectorTimeframeControls">
+                    <button type="button" class="is-active" data-range="1D">1D (5m)</button>
+                    <button type="button" data-range="1W">1W (30m)</button>
+                    <button type="button" data-range="1M">1M (1h)</button>
+                    <button type="button" data-range="3M">3M (1d)</button>
+                  </div>
+                  <div class="comparison-selectors">
+                    <label>
+                      비교 벤치마크
+                      <select id="sectorBenchmarkSelect">
+                        <option value="SPY">SPY (S&amp;P 500)</option>
+                        <option value="QQQ">QQQ (Nasdaq 100)</option>
+                        <option value="TQQQ">TQQQ (3x Nasdaq)</option>
+                        <option value="DIA">DIA (Dow Jones)</option>
+                        <option value="IWM">IWM (Russell 2000)</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <div class="comparison-chart-container" style="position: relative;">
+                  <svg id="sectorComparisonChart" viewBox="0 0 860 420" role="img" aria-label="Sector and Benchmark relative return comparison chart"></svg>
+                  <div id="chartTooltip" class="custom-chart-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 10;"></div>
+                </div>
+                <div class="chart-legend-summary">
+                  <div class="legend-items">
+                    <div class="legend-item"><span class="legend-color sector-color"></span><span id="legendSectorLabel">정보기술 (XLK)</span></div>
+                    <div class="legend-item"><span class="legend-color benchmark-color"></span><span id="legendBenchmarkLabel">S&amp;P 500 (SPY)</span></div>
+                  </div>
+                  <div class="relative-perf-summary" id="relativePerfSummary">
+                    상대 수익률: <strong class="pos" id="relativePerfValue">+0.0%</strong>
+                  </div>
+                </div>
               </div>
+
+              <!-- Constituents table -->
+              <div class="sector-constituents-card">
+                <div class="card-title-row">
+                  <h3>섹터 내 주요 종목 현황</h3>
+                  <span class="muted" id="sectorConstituentsCount">0개 종목</span>
+                </div>
+                <div class="table-wrap compact-table-wrap">
+                  <table class="compact-table">
+                    <thead>
+                      <tr>
+                        <th>티커</th>
+                        <th>회사명</th>
+                        <th>현재가</th>
+                        <th>당일 등락률</th>
+                        <th>1주 등락률</th>
+                        <th>1달 등락률</th>
+                        <th>RS 점수</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sectorConstituentsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+
+        <!-- Sub-panel 2: ETF 상대강도 순위 (시장 체력에서 이관) -->
+        <div class="sub-panel" id="sub-etf-rs">
+          <div class="etf-rs-controls-bar">
+            <div class="etf-rs-controls-row">
+              <label>
+                비교 기준
+                <select id="sectorEtfRsBenchmark">
+                  <option value="SPY">SPY (S&amp;P 500) 대비</option>
+                  <option value="QQQ">QQQ (Nasdaq 100) 대비</option>
+                  <option value="TQQQ">TQQQ (3x Nasdaq) 대비</option>
+                  <option value="DIA">DIA (Dow Jones) 대비</option>
+                  <option value="IWM">IWM (Russell 2000) 대비</option>
+                </select>
+              </label>
+              <label>
+                기간
+                <select id="sectorEtfRsPeriod">
+                  <option value="changePct">당일 등락률</option>
+                  <option value="monthChangePct" selected>1개월 수익률</option>
+                  <option value="threeMonthChangePct">3개월 수익률</option>
+                  <option value="ytdChangePct">YTD 수익률</option>
+                </select>
+              </label>
+              <label>
+                섹터 그룹
+                <select id="sectorEtfRsGroup">
+                  <option value="All">전체 그룹</option>
+                </select>
+              </label>
+              <label>
+                정렬 기준
+                <select id="sectorEtfRsSort">
+                  <option value="relative">벤치 대비 초과수익순</option>
+                  <option value="return">절대 수익률순</option>
+                  <option value="rs">RS 점수순</option>
+                </select>
+              </label>
             </div>
-          </main>
+            <div class="etf-rs-meta-bar">
+              <span id="sectorEtfRsMeta" class="muted"></span>
+            </div>
+          </div>
+
+          <div class="etf-rs-grid sector-etf-rs-grid" id="sectorEtfGrid"></div>
+
+          <!-- Inline constituent expansion panel -->
+          <div class="constituent-expansion-panel" id="constituentPanel" style="display:none;">
+            <div class="constituent-panel-header">
+              <div class="constituent-panel-title">
+                <span class="ticker-pill" id="constituentPanelTicker"></span>
+                <h3 id="constituentPanelName"></h3>
+                <span class="muted" id="constituentPanelCount"></span>
+              </div>
+              <button class="ghost" id="constituentPanelClose">✕ 닫기</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>티커</th>
+                    <th>회사명</th>
+                    <th id="constituentPeriodHeader">1개월 수익률</th>
+                    <th>SPY 대비</th>
+                    <th>QQQ 대비</th>
+                  </tr>
+                </thead>
+                <tbody id="constituentPanelBody"></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
+      <!-- ==================== 상위 종목 탭 ==================== -->
       <section class="panel" id="tab-top">
         <div class="toolbar">
           <label>
@@ -257,6 +340,7 @@
         <div class="rank-grid" id="topStocks"></div>
       </section>
 
+      <!-- ==================== 급등/거래량 탭 ==================== -->
       <section class="panel" id="tab-jump">
         <div class="toolbar">
           <label>
@@ -279,6 +363,7 @@
         <div class="card-grid" id="jumpGrid"></div>
       </section>
 
+      <!-- ==================== 종목 분석 탭 ==================== -->
       <section class="panel" id="tab-search">
         <div class="toolbar">
           <label class="grow">
@@ -324,6 +409,7 @@
         </div>
       </section>
 
+      <!-- ==================== 내 리스트 탭 ==================== -->
       <section class="panel" id="tab-bulk">
         <div class="toolbar">
           <label class="grow">
@@ -355,6 +441,7 @@
         </div>
       </section>
 
+      <!-- ==================== 시장 체력 탭 ==================== -->
       <section class="panel" id="tab-health">
         <div class="section-title">
           <h2>Health of Index / Assets / ETFs</h2>
@@ -372,7 +459,7 @@
           <div class="health-heading">
             <div>
               <h3>Industry ETF Relative Strength</h3>
-              <p>ETF로 거래 가능한 세부 섹터를 대표 ETF 중심으로 묶고, SPY / QQQ 대비 상대 강도를 비교합니다.</p>
+              <p>ETF 상대강도는 섹터 흐름 탭 → "ETF 상대강도 순위"에서 전체 기능을 이용할 수 있습니다.</p>
             </div>
             <span id="etfRsMeta" class="muted"></span>
           </div>
@@ -382,6 +469,9 @@
               <select id="etfRsBenchmark">
                 <option value="SPY">SPY 대비</option>
                 <option value="QQQ">QQQ 대비</option>
+                <option value="TQQQ">TQQQ 대비</option>
+                <option value="DIA">DIA 대비</option>
+                <option value="IWM">IWM 대비</option>
               </select>
             </label>
             <label>
@@ -407,9 +497,10 @@
         </div>
       </section>
 
+      <!-- ==================== AI 브리핑 탭 ==================== -->
       <section class="panel" id="tab-ai-briefing">
         <div class="section-title">
-          <h2>AI Market Briefing & Social Sentiment</h2>
+          <h2>AI Market Briefing &amp; Social Sentiment</h2>
           <p>국내 장마감 시황 분석, 미국 장전 프리마켓 브리핑, 그리고 실시간 소셜 미디어 트렌딩 종목을 취합해 모아봅니다. (매일 자동 업데이트)</p>
         </div>
         <div class="ai-briefing-grid">

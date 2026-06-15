@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
+    <title>미르의 미국 주식</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Financial Visualizations / US Stock Market Analysis</p>
+        <h1>미르의 미국 주식</h1>
+      </div>
+      <div class="update-card">
+        <span>데이터 기준</span>
+        <strong id="updatedAt">불러오는 중</strong>
+        <small>매일 한국 시간 오전 6시 1회 갱신</small>
+      </div>
+    </header>
+
+    <main>
+      <section class="summary-band" id="marketSummary"></section>
+
+      <nav class="tabs" aria-label="Dashboard sections">
+        <button class="tab is-active" data-tab="map">시장 지도</button>
+        <button class="tab" data-tab="sector">섹터 흐름</button>
+        <button class="tab" data-tab="top">상위 종목</button>
+        <button class="tab" data-tab="jump">급등/거래량</button>
+        <button class="tab" data-tab="search">종목 분석</button>
+        <button class="tab" data-tab="bulk">내 리스트</button>
+        <button class="tab" data-tab="health">시장 체력</button>
+        <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
+      </nav>
+
+      <section class="panel is-active" id="tab-map">
+        <div class="toolbar heatmap-toolbar">
+          <label>
+            지수/그룹
+            <select id="bucketFilter"></select>
+          </label>
+          <label>
+            섹터
+            <select id="sectorFilter"></select>
+          </label>
+          <label>
+            색상 기준
+            <select id="metricFilter">
+              <option value="changePct">당일 등락률</option>
+              <option value="weekChangePct">이번 주 등락률</option>
+              <option value="monthChangePct">1개월 등락률</option>
+              <option value="threeMonthChangePct">3개월 등락률</option>
+              <option value="ytdChangePct">YTD 등락률</option>
+              <option value="rsScore">RS 점수</option>
+              <option value="epsRevScore">EPS 추정 점수</option>
+              <option value="stochK">StochK 14</option>
+            </select>
+          </label>
+          <label>
+            타일 크기
+            <select id="tileSizeFilter">
+              <option value="marketCapB">시가총액</option>
+              <option value="equal">동일 크기</option>
+              <option value="volumeRatio">거래량 배율</option>
+              <option value="rsScore">RS 점수</option>
+            </select>
+          </label>
+          <label class="grow">
+            종목 찾기
+            <input id="heatmapSearch" placeholder="Ticker or company">
+          </label>
+          <button id="resetFilters" class="ghost">초기화</button>
+        </div>
+        <div class="heatmap-legend" id="heatmapLegend" aria-label="Heatmap color legend"></div>
+        <div class="workspace heatmap-layout">
+          <div>
+            <div class="section-title">
+              <h2>Market Heatmap</h2>
+              <p>섹터별 영역 안에서 타일 크기는 선택한 크기 기준, 색상은 선택한 지표를 의미합니다.</p>
+            </div>
+            <div class="treemap" id="stockTreemap"></div>
+          </div>
+          <aside class="detail-panel" id="selectedStock"></aside>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-sector">
+        <div class="section-title">
+          <h2>Sector / Industry Treemap</h2>
+          <p>섹터별 강도, 신고가 종목 수, 대표 종목을 한 번에 봅니다.</p>
+        </div>
+        <div class="sector-grid" id="sectorGrid"></div>
+      </section>
+
+      <section class="panel" id="tab-top">
+        <div class="toolbar">
+          <label>
+            Metric
+            <select id="topMetric">
+              <option value="changePct">당일 등락률</option>
+              <option value="weekChangePct">이번 주 등락률</option>
+              <option value="monthChangePct">1개월 등락률</option>
+              <option value="threeMonthChangePct">3개월 등락률</option>
+              <option value="ytdChangePct">YTD 등락률</option>
+              <option value="rsScore">RS 점수</option>
+              <option value="epsRevScore">EPS 추정 점수</option>
+              <option value="rsi14">RSI 14</option>
+              <option value="stochK">StochK 14</option>
+              <option value="volumeRatio">거래량 배율</option>
+              <option value="marketCapB">시가총액</option>
+              <option value="pe">P/E</option>
+              <option value="forwardPE">Forward P/E</option>
+              <option value="ps">Price to Sales</option>
+              <option value="pb">Price to Book</option>
+            </select>
+          </label>
+          <label>
+            지수/그룹
+            <select id="topBucket"></select>
+          </label>
+          <label>
+            Sector
+            <select id="topSector"></select>
+          </label>
+          <label>
+            New High Recency 4W
+            <select id="topNewHighRecency">
+              <option value="All">All</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="None">None</option>
+            </select>
+          </label>
+          <label>
+            New high (1Y)
+            <select id="topNewHigh">
+              <option value="All">All</option>
+              <option value="New_High">New High</option>
+              <option value="0-2%">0-2%</option>
+              <option value="2-5%">2-5%</option>
+              <option value="5-10%">5-10%</option>
+              <option value="10-20%">10-20%</option>
+              <option value="20+%">20+%</option>
+              <option value="NA">NA</option>
+            </select>
+          </label>
+        </div>
+        <div class="section-title compact-title">
+          <h2>Top Stocks</h2>
+          <p id="topStocksMeta">조건에 맞는 상위 종목입니다.</p>
+        </div>
+        <div class="rank-grid" id="topStocks"></div>
+      </section>
+
+      <section class="panel" id="tab-jump">
+        <div class="toolbar">
+          <label>
+            카테고리
+            <select id="jumpCategory">
+              <option value="rsVolume">RS 신고가 + 거래량</option>
+              <option value="volume">거래량 급증</option>
+              <option value="move">당일 급등</option>
+            </select>
+          </label>
+          <label>
+            정렬
+            <select id="jumpSort">
+              <option value="marketCapB">시가총액</option>
+              <option value="changePct">당일 등락률</option>
+              <option value="volumeRatio">거래량 배율</option>
+            </select>
+          </label>
+        </div>
+        <div class="card-grid" id="jumpGrid"></div>
+      </section>
+
+      <section class="panel" id="tab-search">
+        <div class="toolbar">
+          <label class="grow">
+            티커 검색
+            <input id="tickerSearch" list="tickerOptions" placeholder="예: NVDA, AAPL, MSFT">
+            <datalist id="tickerOptions"></datalist>
+          </label>
+          <button id="searchButton">분석</button>
+        </div>
+        <div class="workspace two-col">
+          <div class="chart-card">
+            <div class="section-title">
+              <h2 id="chartTitle">종목 차트</h2>
+              <p>스냅샷에 저장된 최근 가격 흐름입니다.</p>
+            </div>
+            <div class="chart-controls" aria-label="Chart controls">
+              <div class="segmented" id="rangeControls">
+                <button type="button" data-range="5Y">5Y</button>
+                <button type="button" class="is-active" data-range="1Y">1Y</button>
+                <button type="button" data-range="6M">6M</button>
+                <button type="button" data-range="3M">3M</button>
+                <button type="button" data-range="1M">1M</button>
+              </div>
+              <div class="icon-controls">
+                <button type="button" id="chartPanLeft" title="왼쪽으로 이동">‹</button>
+                <button type="button" id="chartZoomOut" title="축소">−</button>
+                <button type="button" id="chartZoomIn" title="확대">+</button>
+                <button type="button" id="chartPanRight" title="오른쪽으로 이동">›</button>
+                <button type="button" id="chartReset" title="초기화">Reset</button>
+              </div>
+              <label class="check-label"><input id="showSma5" type="checkbox"> SMA5</label>
+              <label class="check-label"><input id="showSma10" type="checkbox"> SMA10</label>
+              <label class="check-label"><input id="showSma20" type="checkbox" checked> SMA20</label>
+              <label class="check-label"><input id="showSma60" type="checkbox" checked> SMA60</label>
+              <label class="check-label"><input id="showSma120" type="checkbox"> SMA120</label>
+              <label class="check-label"><input id="showVolume" type="checkbox" checked> Volume</label>
+              <label class="check-label"><input id="showRsi" type="checkbox" checked> RSI(14)</label>
+            </div>
+            <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
+            <div class="fundamental-table" id="fundamentalTable"></div>
+          </div>
+          <aside class="detail-panel" id="searchFacts"></aside>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-bulk">
+        <div class="toolbar">
+          <label class="grow">
+            Tickers
+            <input id="bulkInput" value="NVDA, MSFT, AAPL, PLTR, SOXX" placeholder="쉼표로 구분해 입력">
+          </label>
+          <label>
+            최소 RS
+            <input id="bulkRs" type="number" min="0" max="100" value="0">
+          </label>
+          <button id="bulkRun">분석</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Ticker</th>
+                <th>Company</th>
+                <th>Sector</th>
+                <th>Change</th>
+                <th>RS</th>
+                <th>EPS Rev</th>
+                <th>Volume</th>
+                <th>Signal</th>
+              </tr>
+            </thead>
+            <tbody id="bulkTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-health">
+        <div class="section-title">
+          <h2>Health of Index / Assets / ETFs</h2>
+          <p>주요 자산, 섹터 ETF, AI 성장주 상태를 스냅샷 기준으로 확인합니다.</p>
+        </div>
+        <div class="health-block">
+          <h3>Major Indexes / Assets</h3>
+          <div class="mini-grid" id="majorHealth"></div>
+        </div>
+        <div class="health-block">
+          <h3>Sector ETFs</h3>
+          <div class="mini-grid" id="etfHealth"></div>
+        </div>
+        <div class="health-block">
+          <div class="health-heading">
+            <div>
+              <h3>Industry ETF Relative Strength</h3>
+              <p>ETF로 거래 가능한 세부 섹터를 대표 ETF 중심으로 묶고, SPY / QQQ 대비 상대 강도를 비교합니다.</p>
+            </div>
+            <span id="etfRsMeta" class="muted"></span>
+          </div>
+          <div class="health-controls">
+            <label>
+              비교 기준
+              <select id="etfRsBenchmark">
+                <option value="SPY">SPY 대비</option>
+                <option value="QQQ">QQQ 대비</option>
+              </select>
+            </label>
+            <label>
+              기간
+              <select id="etfRsPeriod">
+                <option value="monthChangePct">1개월</option>
+                <option value="threeMonthChangePct">3개월</option>
+                <option value="ytdChangePct">YTD</option>
+                <option value="changePct">당일</option>
+              </select>
+            </label>
+            <label>
+              ETF 그룹
+              <select id="etfRsGroup"></select>
+            </label>
+          </div>
+          <div class="etf-rs-grid" id="etfRelativeStrength"></div>
+          <p class="method-note" id="etfRsMethod"></p>
+        </div>
+        <div class="health-block">
+          <h3>AI / Growth Stocks Tracker</h3>
+          <div class="mini-grid" id="aiHealth"></div>
+        </div>
+      </section>
+
+      <section class="panel" id="tab-ai-briefing">
+        <div class="section-title">
+          <h2>AI Market Briefing & Social Sentiment</h2>
+          <p>국내 장마감 시황 분석, 미국 장전 프리마켓 브리핑, 그리고 실시간 소셜 미디어 트렌딩 종목을 취합해 모아봅니다. (매일 자동 업데이트)</p>
+        </div>
+        <div class="ai-briefing-grid">
+          <div class="briefing-box">
+            <div class="briefing-header">
+              <span class="badge badge-korea">KOR</span>
+              <h3>📈 국내 증시 장마감 시황 브리핑</h3>
+            </div>
+            <div id="koreaMarketBriefing" class="briefing-content">
+              브리핑 데이터가 아직 수집되지 않았습니다. 오후 4시 장마감 스크립트 실행 시 업데이트됩니다.
+            </div>
+          </div>
+          <div class="briefing-box">
+            <div class="briefing-header">
+              <span class="badge badge-us">USA</span>
+              <h3>🇺🇸 미국 증시 개장 전 심층 브리핑</h3>
+            </div>
+            <div id="usPremarketBriefing" class="briefing-content">
+              브리핑 데이터가 아직 수집되지 않았습니다. 오후 9시 장전 스크립트 실행 시 업데이트됩니다.
+            </div>
+          </div>
+          <div class="briefing-box social-box">
+            <div class="briefing-header">
+              <span class="badge badge-social">SOCIAL</span>
+              <h3>💬 실시간 미국 소셜 언급 및 트렌딩 종목</h3>
+            </div>
+            <div class="social-sentiment-tables">
+              <div class="social-table-wrapper">
+                <h4>Reddit (r/wallstreetbets) 언급 순위</h4>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>순위</th><th>티커</th><th>사명</th><th>언급수</th><th>변동(24h)</th></tr>
+                    </thead>
+                    <tbody id="socialRedditTable">
+                      <tr><td colspan="5" class="text-center">데이터 없음</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="social-table-wrapper">
+                <h4>Stocktwits 실시간 급상승 순위</h4>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>순위</th><th>티커</th><th>사명</th><th>관심등록수</th></tr>
+                    </thead>
+                    <tbody id="socialStocktwitsTable">
+                      <tr><td colspan="4" class="text-center">데이터 없음</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="social-table-wrapper">
+                <h4>Yahoo Finance 인기 검색 순위</h4>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>순위</th><th>티커</th><th>사명</th><th>현재가</th></tr>
+                    </thead>
+                    <tbody id="socialYahooTable">
+                      <tr><td colspan="4" class="text-center">데이터 없음</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>이 사이트는 하루 1회 저장된 스냅샷 데이터를 사용합니다.</span>
+      <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
+    </footer>
+
+    <script src="data/market_snapshot.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

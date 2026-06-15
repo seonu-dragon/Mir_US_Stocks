@@ -21,8 +21,13 @@
 
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
-// Workers AI text model used for the Korean summary.
-const SUMMARY_MODEL = "@cf/meta/llama-3.1-8b-instruct";
+// Workers AI text models tried in order for the Korean summary (first that works wins).
+const SUMMARY_MODELS = [
+  "@cf/meta/llama-3.1-8b-instruct",
+  "@cf/meta/llama-3-8b-instruct",
+  "@cf/qwen/qwen1.5-14b-chat-awq",
+  "@cf/mistral/mistral-7b-instruct-v0.1",
+];
 
 export default {
   async fetch(request, env) {
@@ -36,13 +41,14 @@ export default {
 
     const symbol = ticker.replace(/\./g, "-"); // Yahoo uses BRK-B style
     const [news, chart] = await Promise.all([fetchNews(symbol), fetchChart(symbol)]);
-    const summary = await summarizeKorean(env, ticker, news);
-    return cors(json({ ticker, news, chart, summary }));
+    const { text: summary, error: summaryError } = await summarizeKorean(env, ticker, news);
+    return cors(json({ ticker, news, chart, summary, summaryError }));
   },
 };
 
 async function summarizeKorean(env, ticker, news) {
-  if (!env || !env.AI || !news || !news.length) return "";
+  if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
+  if (!news || !news.length) return { text: "", error: "no_news" };
   const headlines = news
     .slice(0, 8)
     .map((n, i) => `${i + 1}. ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`)
@@ -51,18 +57,24 @@ async function summarizeKorean(env, ticker, news) {
     `다음은 미국 주식 ${ticker} 관련 최신 뉴스 헤드라인입니다.\n\n${headlines}\n\n` +
     `이 헤드라인들을 바탕으로 핵심 내용을 한국어로 3~4문장으로 요약해 주세요. ` +
     `투자 조언은 하지 말고 사실 위주로, 자연스러운 한국어로만 작성하세요.`;
-  try {
-    const result = await env.AI.run(SUMMARY_MODEL, {
-      messages: [
-        { role: "system", content: "You are a financial news summarizer. Always answer only in natural Korean (한국어)." },
-        { role: "user", content: prompt },
-      ],
-      max_tokens: 400,
-    });
-    return String((result && result.response) || "").trim();
-  } catch (e) {
-    return "";
+  let lastError = "no_model";
+  for (const model of SUMMARY_MODELS) {
+    try {
+      const result = await env.AI.run(model, {
+        messages: [
+          { role: "system", content: "You are a financial news summarizer. Always answer only in natural Korean (한국어)." },
+          { role: "user", content: prompt },
+        ],
+        max_tokens: 400,
+      });
+      const text = String((result && result.response) || "").trim();
+      if (text) return { text, error: "" };
+      lastError = `empty_response:${model}`;
+    } catch (e) {
+      lastError = `${model}: ${(e && e.message) || e}`;
+    }
   }
+  return { text: "", error: lastError };
 }
 
 async function fetchNews(symbol) {

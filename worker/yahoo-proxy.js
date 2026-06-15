@@ -34,9 +34,17 @@ export default {
 
     const url = new URL(request.url);
 
-    // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab.
+    // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
     if (url.searchParams.get("fx")) {
       return cors(json({ fx: await fetchFx() }));
+    }
+    // CNN Fear & Greed index for the top header gauge.
+    if (url.searchParams.get("fng")) {
+      return cors(json({ fng: await fetchFng() }));
+    }
+    // Intraday index mini-charts (Finviz-style strip).
+    if (url.searchParams.get("indices")) {
+      return cors(json({ indices: await fetchIndices() }));
     }
 
     const ticker = (url.searchParams.get("ticker") || "")
@@ -160,7 +168,68 @@ const FX_LIST = [
   ["EURKRW=X", "원/유로 (EUR/KRW)"],
   ["JPYKRW=X", "원/엔 (JPY/KRW)"],
   ["DX-Y.NYB", "달러 인덱스 (DXY)"],
+  ["GC=F", "금 (Gold, $/oz)"],
 ];
+
+// CNN Fear & Greed index (server-side fetch avoids browser CORS).
+async function fetchFng() {
+  try {
+    const r = await fetch("https://production.fear-and-greed.cnn.io/data/index", {
+      headers: { ...UA, Referer: "https://www.cnn.com/", Origin: "https://www.cnn.com" },
+    });
+    if (!r.ok) return null;
+    const data = await r.json();
+    const fg = data && data.fear_and_greed;
+    if (!fg || fg.score == null) return null;
+    return { score: Math.round(Number(fg.score)), rating: String(fg.rating || "") };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Intraday (1d / 5m) mini-series for major indices.
+const INDEX_LIST = [
+  ["^DJI", "Dow Jones"],
+  ["^IXIC", "Nasdaq"],
+  ["^GSPC", "S&P 500"],
+  ["^RUT", "Russell 2000"],
+  ["^KS11", "KOSPI"],
+  ["^KQ11", "KOSDAQ"],
+];
+
+async function fetchIndices() {
+  const out = [];
+  await Promise.all(INDEX_LIST.map(async ([symbol, name]) => {
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m`,
+        { headers: UA }
+      );
+      if (!r.ok) return;
+      const data = await r.json();
+      const res = data && data.chart && data.chart.result && data.chart.result[0];
+      if (!res) return;
+      const meta = res.meta || {};
+      const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
+      const closes = (q.close || []).filter((v) => v != null);
+      const price = closes.length ? closes[closes.length - 1] : meta.regularMarketPrice;
+      const prevClose = meta.chartPreviousClose || meta.previousClose || (closes.length ? closes[0] : null);
+      const changePct = (price != null && prevClose) ? (price / prevClose - 1) * 100 : 0;
+      out.push({
+        symbol,
+        name,
+        price: round(price),
+        changePct: Math.round(changePct * 100) / 100,
+        series: closes.map(round),
+      });
+    } catch (e) {
+      /* skip */
+    }
+  }));
+  const order = INDEX_LIST.map((i) => i[0]);
+  out.sort((a, b) => order.indexOf(a.symbol) - order.indexOf(b.symbol));
+  return out;
+}
 
 async function fetchFx() {
   const out = [];

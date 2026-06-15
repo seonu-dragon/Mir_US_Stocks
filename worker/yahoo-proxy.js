@@ -33,6 +33,12 @@ export default {
     if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
 
     const url = new URL(request.url);
+
+    // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab.
+    if (url.searchParams.get("fx")) {
+      return cors(json({ fx: await fetchFx() }));
+    }
+
     const ticker = (url.searchParams.get("ticker") || "")
       .toUpperCase()
       .replace(/[^A-Z0-9.\-]/g, "");
@@ -143,6 +149,52 @@ async function fetchChart(symbol) {
 }
 
 const round = (v) => Math.round(Number(v) * 100) / 100;
+
+// Live FX pairs (Yahoo symbols). KRW=X is USD/KRW, etc.
+const FX_LIST = [
+  ["KRW=X", "원/달러 (USD/KRW)"],
+  ["EURUSD=X", "유로/달러 (EUR/USD)"],
+  ["JPY=X", "엔/달러 (USD/JPY)"],
+  ["CNY=X", "위안/달러 (USD/CNY)"],
+  ["GBPUSD=X", "파운드/달러 (GBP/USD)"],
+  ["EURKRW=X", "원/유로 (EUR/KRW)"],
+  ["JPYKRW=X", "원/엔 (JPY/KRW)"],
+  ["DX-Y.NYB", "달러 인덱스 (DXY)"],
+];
+
+async function fetchFx() {
+  const out = [];
+  await Promise.all(FX_LIST.map(async ([symbol, name]) => {
+    try {
+      const r = await fetch(
+        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1mo&interval=1d`,
+        { headers: UA }
+      );
+      if (!r.ok) return;
+      const data = await r.json();
+      const result = data && data.chart && data.chart.result && data.chart.result[0];
+      if (!result) return;
+      const q = (result.indicators && result.indicators.quote && result.indicators.quote[0]) || {};
+      const closes = (q.close || []).filter((v) => v != null);
+      if (closes.length < 2) return;
+      const price = closes[closes.length - 1];
+      const prev = closes[closes.length - 2];
+      const monthBase = closes[0];
+      out.push({
+        symbol,
+        name,
+        price: Math.round(price * 10000) / 10000,
+        changePct: Math.round((price / prev - 1) * 10000) / 100,
+        monthChangePct: Math.round((price / monthBase - 1) * 10000) / 100,
+      });
+    } catch (e) {
+      /* skip this pair */
+    }
+  }));
+  const order = FX_LIST.map((f) => f[0]);
+  out.sort((a, b) => order.indexOf(a.symbol) - order.indexOf(b.symbol));
+  return out;
+}
 
 function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {

@@ -956,6 +956,64 @@ button.ghost {
   fill: rgba(239, 68, 68, 0.55);
 }
 
+/* ===== 마켓 데이터 탭 ===== */
+.markets-tables {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+@media (max-width: 1040px) {
+  .markets-tables {
+    grid-template-columns: 1fr;
+  }
+}
+
+.market-section {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.market-section h3 {
+  margin: 0 0 10px;
+  font-size: 15px;
+}
+
+.market-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.market-table th,
+.market-table td {
+  padding: 7px 8px;
+  font-size: 12px;
+  text-align: right;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+
+.market-table th:first-child,
+.market-table td:first-child,
+.market-table th:nth-child(2),
+.market-table td:nth-child(2) {
+  text-align: left;
+}
+
+.market-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f1f5f9;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.market-table tbody tr.market-row:hover {
+  background: rgba(37, 99, 235, 0.06);
+}
+
 .fundamental-table {
   margin-top: 12px;
   border: 1px solid var(--line);

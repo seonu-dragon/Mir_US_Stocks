@@ -798,6 +798,18 @@ ETF_THEME_DEFS.extend([
     },
 ])
 
+# Single-country and aggregate-bond ETFs for the 마켓 데이터 tab.
+ETF_THEME_DEFS.extend([
+    {"group": "International", "category": "Korea", "representative": "EWY", "peers": ["EWY"], "keywords": ["korea"]},
+    {"group": "International", "category": "Taiwan", "representative": "EWT", "peers": ["EWT"], "keywords": ["taiwan"]},
+    {"group": "International", "category": "Germany", "representative": "EWG", "peers": ["EWG"], "keywords": ["germany"]},
+    {"group": "International", "category": "United Kingdom", "representative": "EWU", "peers": ["EWU"], "keywords": ["united kingdom"]},
+    {"group": "International", "category": "Canada", "representative": "EWC", "peers": ["EWC"], "keywords": ["canada"]},
+    {"group": "International", "category": "Australia", "representative": "EWA", "peers": ["EWA"], "keywords": ["australia"]},
+    {"group": "Bonds", "category": "Aggregate Bonds", "representative": "AGG", "peers": ["AGG", "BND"], "keywords": ["aggregate bond", "total bond market"]},
+    {"group": "Bonds", "category": "TIPS / Inflation", "representative": "TIP", "peers": ["TIP", "SCHP", "VTIP"], "keywords": ["inflation protected", "tips"]},
+])
+
 ETF_EXCLUDE_KEYWORDS = [
     "2x", "3x", "ultra", "bear", "inverse", "short", "daily target", "daily bull",
     "daily bear", "buffer", "defined outcome", "covered call", "buywrite",

@@ -31,7 +31,7 @@
         <button class="tab" data-tab="jump">급등/거래량</button>
         <button class="tab" data-tab="search">종목 분석</button>
         <button class="tab" data-tab="bulk">내 리스트</button>
-        <button class="tab" data-tab="health">시장 체력</button>
+        <button class="tab" data-tab="health">마켓 데이터</button>
         <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
       </nav>
 
@@ -456,60 +456,13 @@
         </div>
       </section>
 
-      <!-- ==================== 시장 체력 탭 ==================== -->
+      <!-- ==================== 마켓 데이터 탭 ==================== -->
       <section class="panel" id="tab-health">
         <div class="section-title">
-          <h2>Health of Index / Assets / ETFs</h2>
-          <p>주요 자산, 섹터 ETF, AI 성장주 상태를 스냅샷 기준으로 확인합니다.</p>
+          <h2>마켓 데이터</h2>
+          <p>주요 지수·국가·채권·원자재·환율을 한눈에 봅니다. 지수/ETF는 하루 1회 스냅샷, 환율은 실시간으로 가져옵니다.</p>
         </div>
-        <div class="health-block">
-          <h3>Major Indexes / Assets</h3>
-          <div class="mini-grid" id="majorHealth"></div>
-        </div>
-        <div class="health-block">
-          <h3>Sector ETFs</h3>
-          <div class="mini-grid" id="etfHealth"></div>
-        </div>
-        <div class="health-block">
-          <div class="health-heading">
-            <div>
-              <h3>Industry ETF Relative Strength</h3>
-              <p>ETF 상대강도는 섹터 흐름 탭 → "ETF 상대강도 순위"에서 전체 기능을 이용할 수 있습니다.</p>
-            </div>
-            <span id="etfRsMeta" class="muted"></span>
-          </div>
-          <div class="health-controls">
-            <label>
-              비교 기준
-              <select id="etfRsBenchmark">
-                <option value="SPY">SPY 대비</option>
-                <option value="QQQ">QQQ 대비</option>
-                <option value="TQQQ">TQQQ 대비</option>
-                <option value="DIA">DIA 대비</option>
-                <option value="IWM">IWM 대비</option>
-              </select>
-            </label>
-            <label>
-              기간
-              <select id="etfRsPeriod">
-                <option value="monthChangePct">1개월</option>
-                <option value="threeMonthChangePct">3개월</option>
-                <option value="ytdChangePct">YTD</option>
-                <option value="changePct">당일</option>
-              </select>
-            </label>
-            <label>
-              ETF 그룹
-              <select id="etfRsGroup"></select>
-            </label>
-          </div>
-          <div class="etf-rs-grid" id="etfRelativeStrength"></div>
-          <p class="method-note" id="etfRsMethod"></p>
-        </div>
-        <div class="health-block">
-          <h3>AI / Growth Stocks Tracker</h3>
-          <div class="mini-grid" id="aiHealth"></div>
-        </div>
+        <div class="markets-tables" id="marketsTables"></div>
       </section>
 
       <!-- ==================== AI 브리핑 탭 ==================== -->

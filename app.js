@@ -246,6 +246,7 @@ function setupEvents() {
   });
   byId("jumpCategory").addEventListener("change", renderJump);
   byId("jumpSort").addEventListener("change", renderJump);
+  byId("sectorSort").addEventListener("change", renderSectors);
   byId("searchButton").addEventListener("click", () => selectTicker(byId("tickerSearch").value));
   byId("tickerSearch").addEventListener("keydown", (event) => {
     if (event.key === "Enter") selectTicker(event.target.value);
@@ -803,22 +804,108 @@ function fact(label, value) {
 }
 
 function renderSectors() {
+  const sortBy = byId("sectorSort")?.value || "avg";
   const groups = [...new Set(data.stocks.map((item) => item.sector))].map((sector) => {
     const rows = data.stocks.filter((item) => item.sector === sector);
     const avg = rows.reduce((sum, item) => sum + item.changePct, 0) / rows.length;
+    const avg1w = rows.reduce((sum, item) => sum + (item.weekChangePct || 0), 0) / rows.length;
+    const avg1m = rows.reduce((sum, item) => sum + (item.monthChangePct || 0), 0) / rows.length;
+    const avg3m = rows.reduce((sum, item) => sum + (item.threeMonthChangePct || 0), 0) / rows.length;
     const rs = rows.reduce((sum, item) => sum + item.rsScore, 0) / rows.length;
-    const leader = [...rows].sort((a, b) => b.changePct - a.changePct)[0];
-    return { sector, avg, rs, count: rows.length, leader };
-  }).sort((a, b) => b.avg - a.avg);
+    
+    const upCount = rows.filter((item) => item.changePct > 0).length;
+    const downCount = rows.filter((item) => item.changePct < 0).length;
+    const upPct = rows.length ? (upCount / rows.length) * 100 : 0;
+    
+    // Top 3 sector leaders by RS Score
+    const topLeaders = [...rows]
+      .sort((a, b) => b.rsScore - a.rsScore)
+      .slice(0, 3);
+      
+    return { sector, avg, avg1w, avg1m, avg3m, rs, upCount, downCount, upPct, count: rows.length, topLeaders };
+  });
+
+  // Sort groups
+  groups.sort((a, b) => b[sortBy] - a[sortBy]);
 
   byId("sectorGrid").innerHTML = groups.map((item) => `
-    <article class="sector-card">
-      <h3>${item.sector}</h3>
-      <p class="${cls(item.avg)}">${fmtPct(item.avg)} average</p>
-      <div class="bar"><i style="width:${Math.max(5, item.rs)}%"></i></div>
-      <p class="muted">${item.count} symbols · Leader ${item.leader.ticker}</p>
+    <article class="sector-card" data-sector="${escapeHtml(item.sector)}">
+      <div class="sector-card-header">
+        <h3>${item.sector}</h3>
+        <span class="symbol-badge">${item.count} 종목</span>
+      </div>
+      
+      <div class="sector-main-stats">
+        <div class="stat-group">
+          <span class="stat-label">당일 평균</span>
+          <strong class="stat-value ${cls(item.avg)}">${fmtPct(item.avg)}</strong>
+        </div>
+        <div class="stat-group">
+          <span class="stat-label">상승 / 하락</span>
+          <span class="stat-value font-sm" style="color: ${item.upCount >= item.downCount ? 'var(--green)' : 'var(--red)'}; font-weight: 700;">
+            ${item.upCount} ▲ / ${item.downCount} ▼
+          </span>
+        </div>
+      </div>
+      
+      <!-- Breadth Progress Gauge -->
+      <div class="breadth-gauge-bar" title="상승 ${item.upCount}개 / 하락 ${item.downCount}개">
+        <div class="gauge-up" style="width: ${item.upPct}%"></div>
+        <div class="gauge-down" style="width: ${100 - item.upPct}%"></div>
+      </div>
+      
+      <!-- Timeframe Returns & RS -->
+      <div class="timeframe-grid">
+        <div class="tf-col">
+          <span class="tf-lbl">1주</span>
+          <span class="tf-val ${cls(item.avg1w)}">${fmtPct(item.avg1w)}</span>
+        </div>
+        <div class="tf-col">
+          <span class="tf-lbl">1달</span>
+          <span class="tf-val ${cls(item.avg1m)}">${fmtPct(item.avg1m)}</span>
+        </div>
+        <div class="tf-col">
+          <span class="tf-lbl">3달</span>
+          <span class="tf-val ${cls(item.avg3m)}">${fmtPct(item.avg3m)}</span>
+        </div>
+        <div class="tf-col">
+          <span class="tf-lbl">평균 RS</span>
+          <span class="tf-val rs-badge">${Math.round(item.rs)}</span>
+        </div>
+      </div>
+      
+      <!-- Sector Leaders list -->
+      <div class="sector-leaders-section">
+        <span class="lbl-sub">섹터 내 주도주 (RS 순)</span>
+        <div class="leader-chips">
+          ${item.topLeaders.map(stock => `
+            <span class="leader-chip" data-ticker="${stock.ticker}">
+              <strong class="ticker">${stock.ticker}</strong>
+              <span class="change ${cls(stock.changePct)}">${fmtPct(stock.changePct)}</span>
+            </span>
+          `).join("")}
+        </div>
+      </div>
     </article>
   `).join("");
+
+  // Setup click events
+  byId("sectorGrid").querySelectorAll(".sector-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const sectorName = card.dataset.sector;
+      byId("sectorFilter").value = sectorName;
+      renderTreemap();
+      const mapTab = document.querySelector('[data-tab="map"]');
+      if (mapTab) mapTab.click();
+    });
+  });
+
+  byId("sectorGrid").querySelectorAll(".leader-chip").forEach((chip) => {
+    chip.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent card drilldown trigger
+      selectTicker(chip.dataset.ticker, { openSearch: true });
+    });
+  });
 }
 
 function renderTopStocks() {

@@ -1402,3 +1402,198 @@ footer {
   }
 }
 
+/* ==========================================================================
+   Sector Flow Tab Premium Redesign
+   ========================================================================== */
+.sector-flow-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 15px;
+}
+
+.sector-card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.01);
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sector-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(29, 78, 216, 0.35);
+  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.06);
+}
+
+.sector-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.sector-card-header h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.symbol-badge {
+  background: #f1f5f9;
+  color: #475569;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sector-main-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.font-sm {
+  font-size: 13px;
+}
+
+/* Up/Down Breadth Progress Gauge */
+.breadth-gauge-bar {
+  height: 6px;
+  display: flex;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #f1f5f9;
+}
+
+.gauge-up {
+  background: var(--green); /* Green for positive */
+  height: 100%;
+}
+
+.gauge-down {
+  background: var(--red); /* Red for negative */
+  height: 100%;
+}
+
+/* Multi-Timeframe Returns & RS Grid */
+.timeframe-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 8px;
+  padding: 8px;
+  text-align: center;
+}
+
+.tf-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tf-lbl {
+  font-size: 10px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.tf-val {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.rs-badge {
+  color: #7c3aed;
+  background: #faf5ff;
+  padding: 1px 4px;
+  border-radius: 4px;
+  border: 1px solid #f3e8ff;
+  display: inline-block;
+}
+
+/* Sector Leaders list */
+.sector-leaders-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.lbl-sub {
+  font-size: 10.5px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.leader-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.leader-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f8fafc;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.leader-chip:hover {
+  border-color: var(--blue);
+  background: #eff6ff;
+}
+
+.leader-chip .ticker {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.leader-chip .change {
+  font-weight: 700;
+}
+
+@media (max-width: 1040px) {
+  .sector-flow-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .sector-flow-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

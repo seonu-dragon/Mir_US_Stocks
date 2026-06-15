@@ -22,10 +22,11 @@
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 // Workers AI text models tried in order for the Korean summary (first that works wins).
+// Qwen handles Korean / proper nouns noticeably better than Llama, so try it first.
 const SUMMARY_MODELS = [
-  "@cf/meta/llama-3.1-8b-instruct",
-  "@cf/meta/llama-3-8b-instruct",
   "@cf/qwen/qwen1.5-14b-chat-awq",
+  "@cf/qwen/qwen2.5-7b-instruct",
+  "@cf/meta/llama-3.1-8b-instruct",
   "@cf/mistral/mistral-7b-instruct-v0.1",
 ];
 
@@ -54,18 +55,23 @@ async function summarizeKorean(env, ticker, news) {
     .map((n, i) => `${i + 1}. ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`)
     .join("\n");
   const prompt =
-    `다음은 미국 주식 ${ticker} 관련 최신 뉴스 헤드라인입니다.\n\n${headlines}\n\n` +
-    `이 헤드라인들을 바탕으로 핵심 내용을 한국어로 3~4문장으로 요약해 주세요. ` +
-    `투자 조언은 하지 말고 사실 위주로, 자연스러운 한국어로만 작성하세요.`;
+    `미국 주식 ${ticker}의 최신 뉴스 헤드라인:\n\n${headlines}\n\n` +
+    `위 헤드라인들을 종합해서 핵심 흐름을 한국어 3~4문장의 자연스러운 단락 하나로 요약하세요.\n` +
+    `규칙:\n` +
+    `- 헤드라인을 하나씩 번역하거나 번호로 나열하지 마세요. 반드시 하나의 단락으로 종합하세요.\n` +
+    `- 회사명, 제품명, 매체명 등 고유명사는 영어 원문 그대로 두세요(억지로 음역하지 마세요).\n` +
+    `- 투자 조언은 하지 말고 사실 위주로 쓰세요.\n` +
+    `- 한국어 단락만 출력하고 다른 말은 덧붙이지 마세요.`;
   let lastError = "no_model";
   for (const model of SUMMARY_MODELS) {
     try {
       const result = await env.AI.run(model, {
         messages: [
-          { role: "system", content: "You are a financial news summarizer. Always answer only in natural Korean (한국어)." },
+          { role: "system", content: "You are a financial news summarizer. Synthesize the headlines into ONE natural Korean paragraph (3-4 sentences). Never translate or list headlines one by one. Keep proper nouns in English." },
           { role: "user", content: prompt },
         ],
         max_tokens: 400,
+        temperature: 0.3,
       });
       const text = String((result && result.response) || "").trim();
       if (text) return { text, error: "" };

@@ -308,7 +308,7 @@ function fxCardHtml() {
     ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}${suffix}</strong><em class="${cls(f.changePct)}">${fmtPct(f.changePct)}</em></div>`
     : `<div class="hx-row"><span>${label}</span><strong class="muted">불러오는 중…</strong></div>`;
   return `
-    <div class="summary-card hx-card">
+    <div class="summary-card hx-card fx-card">
       <span>환율 · 금 · 금리</span>
       ${row("달러/원", find("KRW=X"), 1)}
       ${row("엔/원", find("JPYKRW=X"), 2)}

@@ -491,20 +491,22 @@
           <div class="briefing-box">
             <div class="briefing-header">
               <span class="badge badge-korea">KOR</span>
-              <h3>📈 국내 증시 장마감 시황 브리핑</h3>
+              <div class="briefing-toggle" data-side="kor">
+                <button type="button" data-key="korea_premarket">📈 개장 전 심층</button>
+                <button type="button" data-key="korea_close" class="is-active">📊 장마감 시황</button>
+              </div>
             </div>
-            <div id="koreaMarketBriefing" class="briefing-content">
-              브리핑 데이터가 아직 수집되지 않았습니다. 오후 4시 장마감 스크립트 실행 시 업데이트됩니다.
-            </div>
+            <div id="koreaBriefingContent" class="briefing-content"></div>
           </div>
           <div class="briefing-box">
             <div class="briefing-header">
               <span class="badge badge-us">USA</span>
-              <h3>🇺🇸 미국 증시 개장 전 심층 브리핑</h3>
+              <div class="briefing-toggle" data-side="us">
+                <button type="button" data-key="us_premarket" class="is-active">🇺🇸 개장 전 심층</button>
+                <button type="button" data-key="us_close">📊 장마감 시황</button>
+              </div>
             </div>
-            <div id="usPremarketBriefing" class="briefing-content">
-              브리핑 데이터가 아직 수집되지 않았습니다. 오후 9시 장전 스크립트 실행 시 업데이트됩니다.
-            </div>
+            <div id="usBriefingContent" class="briefing-content"></div>
           </div>
           <div class="briefing-box social-box">
             <div class="briefing-header">

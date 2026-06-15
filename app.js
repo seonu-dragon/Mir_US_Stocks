@@ -194,6 +194,7 @@ function boot() {
   setupFilters();
   renderAll();
   setupEvents();
+  setupBriefingToggles();
   fetchMarketHeader();
   history.replaceState({ tab: currentTab, ticker: null }, "");
   if (route.get("tab")) {
@@ -851,23 +852,35 @@ function metricColor(value, metric) {
   return "#6f1d2a";
 }
 
+let zoomView = null; // null | { sector } | { sector, industry }
+
 function renderTreemap() {
   const metric = byId("metricFilter").value;
   const sizeMetric = byId("tileSizeFilter").value;
   const query = byId("heatmapSearch").value.trim().toUpperCase();
-  const stocks = filteredStocks().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
   const map = byId("stockTreemap");
   const width = map.clientWidth || 1100;
   const height = map.clientHeight || 720;
 
   renderLegend(metric);
 
-  if (!stocks.length) {
+  const all = filteredStocks();
+  if (!all.length) {
     map.innerHTML = `<div class="heatmap-empty">조건에 맞는 종목이 없습니다.</div>`;
+    zoomView = null;
     renderSelected(data.stocks[0]);
     return;
   }
 
+  // Zoomed view: a sector or a single industry fills the whole heatmap.
+  if (zoomView) {
+    const scoped = all.filter((s) => s.sector === zoomView.sector
+      && (!zoomView.industry || (s.industry || "Other") === zoomView.industry));
+    if (scoped.length) { renderTreemapZoom(scoped, metric, sizeMetric, query, width, height); return; }
+    zoomView = null;
+  }
+
+  const stocks = all.slice().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
   const sectors = [...new Set(stocks.map((item) => item.sector))].map((sector) => {
     const children = stocks.filter((item) => item.sector === sector);
     return {
@@ -879,28 +892,72 @@ function renderTreemap() {
   }).sort((a, b) => sectorRank(a.sector) - sectorRank(b.sector) || b.weight - a.weight);
 
   const sectorRects = squarify(sectors, { x: 0, y: 0, w: width, h: height }, (item) => item.weight);
-  const html = sectorRects.map(({ item: sector, rect }) => {
+  map.innerHTML = sectorRects.map(({ item: sector, rect }) => {
     const inner = insetRect({ x: 0, y: 0, w: rect.w, h: rect.h }, 3, 22, 3, 3);
     const industries = groupIndustries(sector.children, metric, sizeMetric);
     const industryRects = squarify(industries, inner, (item) => item.weight);
     return `
       <section class="sector-box" data-sector="${escapeHtml(sector.sector)}" style="${rectStyle(rect)}">
-        <div class="sector-title">${sector.sector} · ${fmtMetric(sector.change, metric)}</div>
+        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(sector.sector)} 확대">${sector.sector} · ${fmtMetric(sector.change, metric)} 🔍</div>
         ${industryRects.map(({ item: industry, rect: industryRect }) => industryBox(sector.sector, industry, industryRect, metric, sizeMetric, query)).join("")}
       </section>
     `;
   }).join("");
 
-  map.innerHTML = html;
-  map.querySelectorAll(".heat-tile").forEach((tile) => {
-    tile.addEventListener("click", () => selectTicker(tile.dataset.ticker, { openSearch: false }));
-    tile.addEventListener("dblclick", () => selectTicker(tile.dataset.ticker, { openSearch: true }));
-    tile.addEventListener("mouseenter", () => {
-      const item = data.stocks.find((stockItem) => stockItem.ticker === tile.dataset.ticker);
-      if (item) renderSelected(item);
+  // Click an industry box (e.g. Semiconductors) -> zoom it to fill the heatmap.
+  map.querySelectorAll(".industry-box").forEach((box) => {
+    box.addEventListener("click", (event) => {
+      event.stopPropagation();
+      zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
+      renderTreemap();
     });
   });
+  // Click a sector title -> zoom the whole sector.
+  map.querySelectorAll(".sector-title[data-zoom-sector]").forEach((title) => {
+    title.addEventListener("click", (event) => {
+      event.stopPropagation();
+      zoomView = { sector: title.dataset.zoomSector };
+      renderTreemap();
+    });
+  });
+
   renderSelected(stocks.find((item) => item.ticker === selectedTicker) || stocks[0] || data.stocks[0]);
+}
+
+function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
+  const map = byId("stockTreemap");
+  const headerH = 34;
+  const inner = { x: 0, y: headerH, w: width, h: height - headerH };
+  const crumb = zoomView.industry ? `${zoomView.sector} · ${zoomView.industry}` : zoomView.sector;
+  const header = `
+    <div class="treemap-zoom-header">
+      <button type="button" id="treemapBack" class="treemap-back">← 전체 보기</button>
+      <span>${escapeHtml(crumb)} · ${fmtMetric(average(scoped, metric), metric)} · ${scoped.length}종목</span>
+    </div>`;
+
+  if (zoomView.industry) {
+    const sorted = scoped.slice().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
+    const rects = squarify(sorted, inner, (item) => sizeWeight(item, sizeMetric));
+    map.innerHTML = header + rects.map(({ item, rect }) => heatTile(item, rect, metric, query)).join("");
+    map.querySelectorAll(".heat-tile").forEach((tile) => {
+      tile.addEventListener("click", () => selectTicker(tile.dataset.ticker, { openSearch: true }));
+    });
+  } else {
+    const industries = groupIndustries(scoped, metric, sizeMetric);
+    const industryRects = squarify(industries, inner, (item) => item.weight);
+    map.innerHTML = header + industryRects
+      .map(({ item: industry, rect }) => industryBox(zoomView.sector, industry, rect, metric, sizeMetric, query)).join("");
+    map.querySelectorAll(".industry-box").forEach((box) => {
+      box.addEventListener("click", (event) => {
+        event.stopPropagation();
+        zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
+        renderTreemap();
+      });
+    });
+  }
+
+  byId("treemapBack").addEventListener("click", () => { zoomView = null; renderTreemap(); });
+  renderSelected(scoped.find((item) => item.ticker === selectedTicker) || scoped[0]);
 }
 
 function sectorRank(sector) {
@@ -3114,18 +3171,44 @@ function closeConstituentPanel() {
 }
 
 
+// AI briefing data pipeline: data.ai_briefing supports 4 keys (filled by the
+// external generator). 국내 장전 / 미국 장마감 are wired but may be empty for now.
+const BRIEFING_LABELS = {
+  korea_premarket: "국내 증시 개장 전 심층 브리핑",
+  korea_close: "국내 증시 장마감 시황 브리핑",
+  us_premarket: "미국 증시 개장 전 심층 브리핑",
+  us_close: "미국 증시 장마감 시황 브리핑"
+};
+const briefingSel = { kor: "korea_close", us: "us_premarket" };
+
 function renderAiBriefing() {
-  const briefing = data.ai_briefing || {};
-  byId("koreaMarketBriefing").innerHTML = briefing.korea_close || `
-    <div class="empty-briefing" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-      국내 장마감 시황 브리핑 데이터가 아직 없습니다. 오후 4시 장마감 스크립트 실행 시 업데이트됩니다.
-    </div>
-  `;
-  byId("usPremarketBriefing").innerHTML = briefing.us_premarket || `
-    <div class="empty-briefing" style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem;">
-      미국 프리마켓 장전 브리핑 데이터가 아직 없습니다. 오후 9시 장전 스크립트 실행 시 업데이트됩니다.
-    </div>
-  `;
+  renderBriefingSide("kor");
+  renderBriefingSide("us");
+}
+
+function renderBriefingSide(side) {
+  const key = briefingSel[side];
+  const el = byId(side === "kor" ? "koreaBriefingContent" : "usBriefingContent");
+  if (!el) return;
+  const html = (data.ai_briefing || {})[key];
+  el.innerHTML = html || `
+    <div class="empty-briefing">
+      <strong>${BRIEFING_LABELS[key]}</strong><br>
+      데이터가 아직 없습니다. 수집 파이프라인 실행 시 자동으로 표시됩니다.
+    </div>`;
+  const group = document.querySelector(`.briefing-toggle[data-side="${side}"]`);
+  if (group) group.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b.dataset.key === key));
+}
+
+function setupBriefingToggles() {
+  document.querySelectorAll(".briefing-toggle").forEach((group) => {
+    group.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        briefingSel[group.dataset.side] = btn.dataset.key;
+        renderBriefingSide(group.dataset.side);
+      });
+    });
+  });
 }
 
 function renderSocialSentiment() {

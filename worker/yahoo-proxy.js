@@ -25,8 +25,7 @@ const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 // Larger / newer models follow Korean instructions far better than the small ones.
 const SUMMARY_MODELS = [
   "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-  "@cf/qwen/qwen2.5-7b-instruct",
-  "@cf/meta/llama-3.1-8b-instruct",
+  "@cf/mistralai/mistral-small-3.1-24b-instruct",
 ];
 
 export default {

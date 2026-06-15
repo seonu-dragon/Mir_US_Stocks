@@ -16,10 +16,13 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "market_snapshot.json"
 OUT_JS = ROOT / "data" / "market_snapshot.js"
 DETAILS_DIR = ROOT / "data" / "details"
-MAX_REAL_HISTORY = 850
-MAX_FUNDAMENTALS = 650
-ACTIVE_SMALL_CAP_MIN_CAP_B = 1
+MAX_REAL_HISTORY = 1400
+MAX_FUNDAMENTALS = 900
+ACTIVE_SMALL_CAP_MIN_CAP_B = 0.3
 ACTIVE_SMALL_CAP_MIN_VOLUME = 1_000_000
+# Any reasonably liquid name gets real Yahoo history regardless of market cap, so
+# beaten-down small caps (e.g. FLNT, STTK) show their real chart instead of a synthetic one.
+ACTIVE_LIQUID_MIN_VOLUME = 1_500_000
 ACTIVE_MOVER_MIN_CHANGE_PCT = 20
 ACTIVE_MOVER_MIN_VOLUME = 500_000
 
@@ -1346,6 +1349,44 @@ def synthetic_history(symbol, price_hint=None, change_hint=None, volume_hint=Non
     return rows
 
 
+def fetch_news(symbol, limit=8):
+    """Fetch recent headlines for a ticker from Yahoo Finance search.
+
+    Returns a list of {title, publisher, link, publishedAt}. Network/parse
+    failures yield an empty list so the build never breaks on news.
+    """
+    url = (
+        "https://query1.finance.yahoo.com/v1/finance/search?"
+        f"q={urllib.parse.quote(symbol)}&newsCount={limit}&quotesCount=0&enableFuzzyQuery=false"
+    )
+    try:
+        payload = request_json(url, timeout=10)
+    except Exception:
+        return []
+    items = []
+    for entry in (payload.get("news") or [])[:limit]:
+        title = str(entry.get("title") or "").strip()
+        link = str(entry.get("link") or "").strip()
+        if not title or not link:
+            continue
+        published_at = ""
+        published = entry.get("providerPublishTime")
+        if published:
+            try:
+                published_at = datetime.fromtimestamp(
+                    int(published), tz=ZoneInfo("Asia/Seoul")
+                ).strftime("%Y-%m-%d")
+            except Exception:
+                published_at = ""
+        items.append({
+            "title": title,
+            "publisher": str(entry.get("publisher") or "").strip(),
+            "link": link,
+            "publishedAt": published_at,
+        })
+    return items
+
+
 def fetch_nasdaq_fundamentals(symbol, price_hint=None, market_cap_b=None):
     referer = f"https://www.nasdaq.com/market-activity/stocks/{symbol.lower()}"
     headers = {**NASDAQ_HEADERS, "Referer": referer}
@@ -1496,6 +1537,8 @@ def make_stock(meta, rows):
         ]
     if fundamentals:
         stock["fundamentals"] = fundamentals
+    if meta.get("news"):
+        stock["news"] = meta["news"]
     return stock
 
 
@@ -1654,6 +1697,8 @@ def is_active_small_cap(meta):
     cap = meta.get("marketCapB") or 0
     volume = meta.get("quoteVolume") or 0
     change = abs(meta.get("quoteChangePct") or 0)
+    if volume >= ACTIVE_LIQUID_MIN_VOLUME:
+        return True
     if change >= ACTIVE_MOVER_MIN_CHANGE_PCT and volume >= ACTIVE_MOVER_MIN_VOLUME:
         return True
     return cap >= ACTIVE_SMALL_CAP_MIN_CAP_B and volume >= ACTIVE_SMALL_CAP_MIN_VOLUME
@@ -1703,6 +1748,12 @@ def build_one(meta):
         except Exception as exc:
             meta["fundamentals"] = {}
             error = f"{error}; fundamentals {symbol}: {exc}" if error else f"fundamentals {symbol}: {exc}"
+    # News is attached to every ticker that gets a detail file (real history or fundamentals),
+    # so the stock-analysis page can show headlines when it lazily loads that detail file.
+    if meta.get("preferHistory") or meta.get("preferFundamentals"):
+        news = fetch_news(symbol)
+        if news:
+            meta["news"] = news
     return make_stock(meta, rows), error
 
 
@@ -2020,7 +2071,7 @@ def split_snapshot_details(payload):
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "fundamentals"]:
+        for key in ["chartSeries", "fundamentals", "news"]:
             if key in stock:
                 detail[key] = stock[key]
         if detail:
@@ -2033,7 +2084,7 @@ def split_snapshot_details(payload):
         light_stocks.append({
             key: value
             for key, value in stock.items()
-            if key not in {"chartSeries", "fundamentals"}
+            if key not in {"chartSeries", "fundamentals", "news"}
         })
     light_payload = dict(payload)
     light_payload["stocks"] = light_stocks
@@ -2078,12 +2129,33 @@ def write_details(details):
                 os.unlink(temp_name)
 
 
+def load_existing_snapshot():
+    try:
+        with open(OUT, encoding="utf-8") as handle:
+            return json.load(handle)
+    except Exception:
+        return {}
+
+
+# Sections produced by a separate generator (not by this script). Carry them over from
+# the previous snapshot so running this script does not blank out those parts of the site.
+PRESERVED_KEYS = ("sector_charts", "ai_briefing", "social_sentiment")
+
+
 def main():
     snapshot = build_snapshot()
     light_snapshot, details = split_snapshot_details(snapshot)
+    existing = load_existing_snapshot()
+    preserved = []
+    for key in PRESERVED_KEYS:
+        if key not in light_snapshot and key in existing:
+            light_snapshot[key] = existing[key]
+            preserved.append(key)
     write_details(details)
     write_json(light_snapshot)
     write_js(light_snapshot)
+    if preserved:
+        print(f"Preserved external sections from previous snapshot: {', '.join(preserved)}")
     groups = snapshot.get("groupCounts", {})
     print(f"Updated {OUT} with {len(snapshot['stocks'])} symbols")
     print(f"Updated {OUT_JS}")

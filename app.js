@@ -389,8 +389,8 @@ function chartBaseLength(item) {
   return rangeBarCount(rows.length);
 }
 
-// Zoom keeping the bar under the cursor anchored (frac = 0 left … 1 right of plot).
-function zoomChartAt(frac, factor) {
+// Set an absolute zoom, keeping the bar at `frac` (0 left … 1 right) anchored.
+function setZoomAnchored(frac, requestedZoom) {
   const item = currentChartItem();
   if (!item) return;
   const n = chartBaseLength(item);
@@ -398,13 +398,17 @@ function zoomChartAt(frac, factor) {
   const oldWindow = Math.max(minWindow, Math.floor(n / chartState.zoom));
   const oldStart = Math.max(0, n - chartState.offset - oldWindow);
   const anchor = oldStart + frac * (oldWindow - 1);
-  const newZoom = Math.min(40, Math.max(1, chartState.zoom * factor));
+  const newZoom = Math.min(40, Math.max(1, requestedZoom));
   const newWindow = Math.max(minWindow, Math.floor(n / newZoom));
   let newStart = Math.round(anchor - frac * (newWindow - 1));
   newStart = Math.max(0, Math.min(Math.max(0, n - newWindow), newStart));
   chartState.zoom = newZoom;
   chartState.offset = Math.max(0, n - newWindow - newStart);
   redrawChart();
+}
+
+function zoomChartAt(frac, factor) {
+  setZoomAnchored(frac, chartState.zoom * factor);
 }
 
 const CHART_VIEWBOX_W = 860;
@@ -509,6 +513,56 @@ function setupChartInteractions() {
     if (!dragging) return;
     dragging = false;
     svg.classList.remove("is-dragging");
+  });
+
+  // Touch: one finger pans, two fingers pinch-zoom.
+  let touchMode = null;
+  let pinchStartDist = 0;
+  let pinchStartZoom = 1;
+  const touchDist = (touches) => Math.hypot(
+    touches[0].clientX - touches[1].clientX,
+    touches[0].clientY - touches[1].clientY
+  );
+
+  svg.addEventListener("touchstart", (event) => {
+    const item = currentChartItem();
+    if (!item) return;
+    if (event.touches.length === 1) {
+      touchMode = "pan";
+      startX = event.touches[0].clientX;
+      startOffset = chartState.offset;
+      dragN = chartBaseLength(item);
+      dragWindow = Math.max(16, Math.floor(dragN / chartState.zoom));
+      const rect = svg.getBoundingClientRect();
+      dragPlotPx = rect.width * ((CHART_VIEWBOX_W - CHART_PAD_L - CHART_PAD_R) / CHART_VIEWBOX_W);
+    } else if (event.touches.length === 2) {
+      touchMode = "pinch";
+      pinchStartDist = touchDist(event.touches);
+      pinchStartZoom = chartState.zoom;
+    }
+  }, { passive: true });
+
+  svg.addEventListener("touchmove", (event) => {
+    if (touchMode === "pan" && event.touches.length === 1) {
+      const dx = event.touches[0].clientX - startX;
+      const barsPerPx = dragWindow / Math.max(1, dragPlotPx);
+      let next = Math.round(startOffset + dx * barsPerPx);
+      next = Math.max(0, Math.min(Math.max(0, dragN - dragWindow), next));
+      if (next !== chartState.offset) {
+        chartState.offset = next;
+        redrawChart();
+      }
+      if (Math.abs(dx) > 6) event.preventDefault();
+    } else if (touchMode === "pinch" && event.touches.length === 2) {
+      const dist = touchDist(event.touches);
+      if (pinchStartDist > 0) setZoomAnchored(0.5, pinchStartZoom * (dist / pinchStartDist));
+      event.preventDefault();
+    }
+  }, { passive: false });
+
+  svg.addEventListener("touchend", (event) => {
+    if (event.touches.length === 0) touchMode = null;
+    else if (event.touches.length === 1) { touchMode = null; }
   });
 }
 

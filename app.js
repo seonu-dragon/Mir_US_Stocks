@@ -2637,18 +2637,20 @@ function renderFundamentals(item) {
       <h3>Fundamentals</h3>
       <span>${hasFundamentals ? "Nasdaq detail snapshot" : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
     </div>
-    <table>
-      <tbody>
-        ${rows.map((row) => `
-          <tr>
-            ${metricPair(row[0], row[1])}
-            ${metricPair(row[2], row[3])}
-            ${metricPair(row[4], row[5])}
-            ${metricPair(row[6], row[7])}
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
+    <div class="fund-scroll">
+      <table>
+        <tbody>
+          ${rows.map((row) => `
+            <tr>
+              ${metricPair(row[0], row[1])}
+              ${metricPair(row[2], row[3])}
+              ${metricPair(row[4], row[5])}
+              ${metricPair(row[6], row[7])}
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
   `;
 }
 

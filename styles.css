@@ -1642,6 +1642,11 @@ footer {
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+/* The Social box spans the full row so the KOR/US 시황 boxes above stay symmetric. */
+.ai-briefing-grid .social-box {
+  grid-column: 1 / -1;
+}
+
 .briefing-box:hover {
   border-color: rgba(29, 78, 216, 0.3);
   box-shadow: 0 6px 20px rgba(20, 30, 50, 0.06);
@@ -2589,4 +2594,28 @@ footer {
   padding: 16px;
   margin-bottom: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+/* ==========================================================================
+   Mobile data-table swipe (placed last to override base min-widths) — wide
+   tables scroll horizontally (like the economic calendar) instead of squishing.
+   ========================================================================== */
+.fund-scroll { overflow-x: auto; }
+
+@media (max-width: 768px) {
+  /* 종목 분석 Fundamentals / ETF 구성종목: readable + horizontal swipe */
+  .fundamental-table table { min-width: 520px; }
+  .etf-constituents-table { min-width: 520px; }
+
+  /* 섹터 흐름 구성종목 표: swipe instead of squishing 8 columns */
+  .compact-table { min-width: 640px; }
+
+  /* Sector comparison legend wraps instead of overflowing */
+  .chart-legend-summary { flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
+  .legend-items { gap: 12px; flex-wrap: wrap; }
+
+  /* Charts never force the page wider than the screen */
+  .chart-card,
+  .sector-chart-panel,
+  .sector-chart-panel .chart-card { min-width: 0; }
 }

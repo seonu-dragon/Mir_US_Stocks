@@ -207,25 +207,52 @@ function boot() {
   if (route.get("ticker")) selectTicker(route.get("ticker"));
 }
 
-// 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { title, images: [...] }
-// 헤더 높이에 맞춰 한 장씩 자동 전환, 클릭하면 라이트박스로 크게 보기.
+// 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { us:{title,images}, kr:{title,images} }
+// 두 버전(미국장 마감 / 국내 뉴스)을 스위치로 선택, 헤더 높이에 맞춰 자동 전환, 클릭 시 라이트박스.
 let cardnewsTimer = null;
+let cardnewsView = "us";  // 기본: 미국장 마감(미국 주식 사이트)
 
 function renderCardNews() {
   const band = byId("contentBand");
   const img = byId("cardnewsCarouselImg");
+  const switchEl = byId("cardnewsSwitch");
   if (!band || !img) return;
-  const cardNews = data.cardNews || {};
-  const images = Array.isArray(cardNews.images) ? cardNews.images : [];
+
+  const cn = data.cardNews || {};
+  const sets = {
+    us: cn.us && Array.isArray(cn.us.images) && cn.us.images.length ? cn.us : null,
+    kr: cn.kr && Array.isArray(cn.kr.images) && cn.kr.images.length ? cn.kr : null,
+  };
   if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
-  if (!images.length) {
+
+  if (!sets.us && !sets.kr) {
     band.hidden = true;
+    if (switchEl) switchEl.hidden = true;
     return;
   }
+  // 선택된 버전이 없으면 us 우선, 없으면 kr
+  if (!sets[cardnewsView]) cardnewsView = sets.us ? "us" : "kr";
+
+  if (switchEl) {
+    switchEl.hidden = false;
+    switchEl.querySelectorAll("[data-cn]").forEach((btn) => {
+      const v = btn.dataset.cn;
+      btn.disabled = !sets[v];
+      btn.classList.toggle("is-active", v === cardnewsView && !!sets[v]);
+      btn.onclick = () => {
+        if (!sets[v] || v === cardnewsView) return;
+        cardnewsView = v;
+        renderCardNews();
+      };
+    });
+  }
+
+  const active = sets[cardnewsView];
+  const images = active.images;
   band.hidden = false;
   let idx = 0;
   img.src = images[0];
-  band.title = cardNews.title ? `${cardNews.title} — 클릭하면 크게 보기` : "클릭하면 크게 보기";
+  band.title = active.title ? `${active.title} — 클릭하면 크게 보기` : "클릭하면 크게 보기";
   band.onclick = () => openLightbox(images, idx);
   if (images.length > 1) {
     cardnewsTimer = setInterval(() => {

@@ -2155,8 +2155,8 @@ def load_existing_snapshot():
 
 def load_today_content():
     """Read data/today_content.json (written by scripts/build_today_content.py) and
-    return today's card-news gallery as {"title": ..., "images": [...]}. A stale date
-    (not today KST) is ignored so yesterday's deck never lingers on the site."""
+    return today's card-news versions as {"us": {...}, "kr": {...}} (each optional).
+    A stale date (not today KST) is ignored so yesterday's deck never lingers."""
     try:
         with open(TODAY_CONTENT_FILE, encoding="utf-8") as handle:
             raw = json.load(handle)
@@ -2174,10 +2174,12 @@ def load_today_content():
         if date != today:
             print(f"[content] today_content.json date {date} != today {today}; skipping.")
             return None
-    images = raw.get("images")
-    if not isinstance(images, list) or not images:
-        return None
-    return {"title": raw.get("title") or "", "images": images}
+    card_news = {}
+    for variant in ("us", "kr"):
+        deck = raw.get(variant)
+        if isinstance(deck, dict) and isinstance(deck.get("images"), list) and deck["images"]:
+            card_news[variant] = {"title": deck.get("title") or "", "images": deck["images"]}
+    return card_news or None
 
 
 def git_push_updates(updated_at_kst):
@@ -2255,7 +2257,7 @@ def main():
     card_news = load_today_content()
     if card_news is not None:
         light_snapshot["cardNews"] = card_news
-        print(f"[content] Injected cardNews with {len(card_news['images'])} image(s).")
+        print(f"[content] Injected cardNews versions: {', '.join(card_news.keys())}")
     elif "cardNews" in existing:
         light_snapshot["cardNews"] = existing["cardNews"]
 

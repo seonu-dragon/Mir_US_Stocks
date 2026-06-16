@@ -147,6 +147,52 @@ h1 {
   gap: 14px;
 }
 
+/* 카드뉴스 라벨 + 버전 스위치 */
+.cardnews-switch {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+}
+
+.cardnews-switch[hidden] { display: none; }
+
+.cardnews-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #cbd5e1;
+  white-space: nowrap;
+}
+
+.cardnews-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.cardnews-tabs button {
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cardnews-tabs button.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.cardnews-tabs button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* 오늘의 카드뉴스 미니 캐러셀: 데이터기준 박스와 같은 크기, 높이를 잘라내(crop) 글자 노출 */
 .cardnews-carousel {
   position: relative;        /* 내부 img 절대배치 기준 */

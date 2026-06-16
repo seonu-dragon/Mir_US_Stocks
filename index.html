@@ -6,7 +6,7 @@
     <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
     <title>미르의 미국 주식</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260616n">
+    <link rel="stylesheet" href="styles.css?v=20260616o">
   </head>
   <body>
     <header class="topbar">
@@ -34,6 +34,15 @@
      </div>
 
      <div class="topbar-right">
+      <!-- 카드뉴스 라벨 + 버전 스위치(미국장 마감 / 국내 뉴스) -->
+      <div class="cardnews-switch" id="cardnewsSwitch" hidden>
+        <span class="cardnews-label">📰 카드뉴스</span>
+        <div class="cardnews-tabs">
+          <button type="button" data-cn="us">미국장 마감</button>
+          <button type="button" data-cn="kr">국내 뉴스</button>
+        </div>
+      </div>
+
       <!-- 오늘의 카드뉴스 미니 캐러셀 (자동 전환 · 클릭 시 크게 보기) -->
       <button class="cardnews-carousel" id="contentBand" type="button" hidden
               aria-label="오늘의 카드뉴스 크게 보기" title="클릭하면 크게 보기">
@@ -624,6 +633,6 @@
     </div>
 
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260616n"></script>
+    <script src="app.js?v=20260616o"></script>
   </body>
 </html>

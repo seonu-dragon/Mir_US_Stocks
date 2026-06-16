@@ -3198,6 +3198,8 @@ footer {
 .chat-fab {
   position: relative;
   display: block;
+  width: auto;
+  height: auto;            /* 전역 button{height:38px} 무시 → 마스코트 전신이 안 잘리도록 */
   padding: 8px;            /* 캐릭터 주변까지 잡히는 여유 영역 */
   border: none;
   background: transparent;

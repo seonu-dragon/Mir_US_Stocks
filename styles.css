@@ -150,7 +150,7 @@ h1 {
 /* 오늘의 카드뉴스 미니 캐러셀: 데이터기준 박스와 같은 크기, 높이를 잘라내(crop) 글자 노출 */
 .cardnews-carousel {
   flex: 0 0 auto;
-  width: 250px;
+  width: 325px;            /* 데이터기준 박스보다 가로로 넓게(약 +30%) */
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
@@ -167,8 +167,8 @@ h1 {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;       /* 너비에 맞추고 위아래를 잘라 글자가 보이게 */
-  object-position: 50% 30%;
+  object-fit: cover;        /* 너비에 맞추고 위아래를 잘라 글자가 보이게 */
+  object-position: 50% 80%; /* 카드 헤드라인 위치를 보여줌(crop_sample 기준) */
   transition: opacity 0.25s ease;
 }
 
@@ -2914,13 +2914,16 @@ footer {
 .chatbot {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: 24px;
   z-index: 900;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 10px;
+  pointer-events: none;   /* 빈 영역은 클릭 통과, 자식만 클릭 받음 */
 }
+
+.chatbot > * { pointer-events: auto; }
 
 /* 미르 캐릭터 챗봇 버튼(말풍선 + 마스코트) */
 .chat-fab {
@@ -2935,7 +2938,7 @@ footer {
 }
 
 .chat-mascot {
-  width: 92px;
+  width: 76px;
   height: auto;
   filter: drop-shadow(0 8px 14px rgba(20, 30, 50, 0.28));
   transition: transform 0.2s ease;

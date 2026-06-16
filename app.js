@@ -390,11 +390,40 @@ function setupChatbot() {
     el.style.top = `${top}px`;
   }
 
+  // 모바일: 키보드가 올라오면 하단 입력칸이 가려져 무엇을 입력하는지 안 보이는 문제 방지.
+  // visualViewport로 키보드 높이를 감지해 패널을 키보드 위로 띄우고 높이를 보이는 영역에 맞춘다.
+  const vv = window.visualViewport;
+  function adjustForKeyboard() {
+    const el = byId("chatbot");
+    if (!el) return;
+    if (panel.hidden || !vv) {
+      // 패널이 닫혀 있으면 키보드용 인라인 보정 해제(CSS 기본값 복귀)
+      panel.style.maxHeight = "";
+      if (!el.style.left && !el.style.top) el.style.bottom = "";
+      return;
+    }
+    // 키보드(또는 하단 시스템 UI)에 가려진 높이
+    const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    const base = window.matchMedia("(max-width: 640px)").matches ? 12 : 24;
+    if (!el.style.left && !el.style.top) {
+      // 기본(bottom 앵커) 상태: 키보드 바로 위로 올림
+      el.style.bottom = `${base + overlap}px`;
+    }
+    // 패널 높이를 보이는 영역 안으로 제한 → 하단 입력칸이 항상 노출
+    panel.style.maxHeight = `${Math.max(220, vv.height - base - 16)}px`;
+    if (el.style.left || el.style.top) clampIntoView();
+  }
+  if (vv) {
+    vv.addEventListener("resize", adjustForKeyboard);
+    vv.addEventListener("scroll", adjustForKeyboard);
+  }
+
   function openPanel() {
     panel.hidden = false;
     toggle.hidden = true;
     clampIntoView();
     input.focus();
+    adjustForKeyboard();
     if (!greeted) {
       greeted = true;
       addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법이나 PER·ROE 같은 용어를 물어보세요.");
@@ -404,6 +433,7 @@ function setupChatbot() {
   function closePanel() {
     panel.hidden = true;
     toggle.hidden = false;
+    adjustForKeyboard();
   }
 
   async function sendChat() {

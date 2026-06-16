@@ -89,6 +89,7 @@ function health(ticker, name, changePct, note) {
 
 let data = fallbackData;
 let selectedTicker = "NVDA";
+let chatFocusTicker = selectedTicker;
 let selectedEtfRsCategory = null;
 const SECTOR_ETFS = [
   { ticker: "XLK", name: "정보기술 (Technology)", desc: "Technology Select Sector SPDR ETF", sectorName: "TECHNOLOGY" },
@@ -133,6 +134,7 @@ const detailPromises = {};
 const LIVE_DATA_PROXY = "https://mirusstocks.planbesides.workers.dev";
 const liveNewsCache = {};
 const liveChartCache = {};
+const liveEarningsCache = {};
 const liveSummaryCache = {};
 const liveFetched = {};
 const liveDone = {};
@@ -376,9 +378,15 @@ function setupLightbox() {
 }
 
 // 사이트 도우미 챗봇 (Cloudflare Worker /chat → Workers AI)
-const CHAT_SUGGESTIONS = ["PER이 뭐야?", "ROE 설명해줘", "시장 지도 보는 법", "RS 점수가 뭐야?"];
+const CHAT_SUGGESTIONS = ["PER이 뭐야?", "NVDA 요약해줘", "시장 지도 보는 법", "RS 점수가 뭐야?"];
 let chatHistory = [];
 let chatBusy = false;
+let rotationHorizon = "1M";
+const ROTATION_HORIZONS = {
+  "1W": { short: "weekChangePct", long: "monthChangePct", shortLabel: "1주", longLabel: "1개월" },
+  "1M": { short: "monthChangePct", long: "threeMonthChangePct", shortLabel: "1개월", longLabel: "3개월" },
+  "3M": { short: "threeMonthChangePct", long: "ytdChangePct", shortLabel: "3개월", longLabel: "YTD" }
+};
 
 function setupChatbot() {
   const panel = byId("chatPanel");
@@ -477,10 +485,11 @@ function setupChatbot() {
     typing.classList.add("typing");
     try {
       if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
+      const stockContext = buildStockChatContext(text);
       const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatHistory.slice(-10) }),
+        body: JSON.stringify({ messages: chatHistory.slice(-10), stockContext }),
       });
       const payload = await res.json();
       const reply = (payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.";
@@ -703,9 +712,55 @@ function fxCardHtml() {
   `;
 }
 
+function computeMarketRegime() {
+  const fng = fngScore();
+  const eq = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS");
+  const upPct = eq.length ? eq.filter((s) => Number(s.changePct) > 0).length / eq.length : 0.5;
+  const avgChange = (tickers, key) => {
+    const vals = tickers.map((t) => stockByTicker(t)).filter(Boolean).map((s) => Number(s[key]) || 0);
+    return vals.length ? vals.reduce((sum, v) => sum + v, 0) / vals.length : 0;
+  };
+  const growthLead = avgChange(["XLK", "QQQ", "SOXX"], "monthChangePct") - avgChange(["XLU", "XLP", "XLV"], "monthChangePct");
+  const sectors = computeSectorRanks();
+  let score = 0;
+  if (fng >= 55) score += 1;
+  else if (fng < 45) score -= 1;
+  if (upPct >= 0.55) score += 1;
+  else if (upPct < 0.45) score -= 1;
+  if (growthLead > 1) score += 1;
+  else if (growthLead < -0.5) score -= 1;
+  if ((sectors.strong[0]?.avg || 0) > Math.abs(sectors.weak[0]?.avg || 0)) score += 0.5;
+
+  if (score >= 2) {
+    return { label: "Risk-On", ko: "리스크 온", tone: "on", desc: "성장·기술주 우세, 상승 종목 비중이 높은 구간", fng, upPct, growthLead };
+  }
+  if (score <= -1) {
+    return { label: "Risk-Off", ko: "리스크 오프", tone: "off", desc: "방어주 선호, 시장 심리·브레드스가 약한 구간", fng, upPct, growthLead };
+  }
+  return { label: "Mixed", ko: "혼조", tone: "mixed", desc: "섹터 간 격차와 심리가 엇갈리는 구간", fng, upPct, growthLead };
+}
+
+function marketRegimeCardHtml() {
+  const regime = computeMarketRegime();
+  return `
+    <div class="summary-card regime-card regime-${regime.tone}">
+      <span>시장 국면</span>
+      <strong class="regime-label">${regime.label}</strong>
+      <em class="regime-ko">${regime.ko}</em>
+      <p class="regime-desc">${regime.desc}</p>
+      <div class="regime-stats">
+        <span>F&amp;G ${regime.fng}</span>
+        <span>상승 ${Math.round(regime.upPct * 100)}%</span>
+        <span>성장-방어 ${fmtPct(regime.growthLead)}</span>
+      </div>
+    </div>
+  `;
+}
+
 function renderSummary() {
   const sectors = computeSectorRanks();
   byId("marketSummary").innerHTML =
+    marketRegimeCardHtml() +
     fngCardHtml() +
     sectorTopCardHtml("강한 섹터 TOP5", sectors.strong, true) +
     sectorTopCardHtml("약한 섹터 TOP5", sectors.weak, false) +
@@ -2554,6 +2609,7 @@ function selectTicker(ticker, options = {}) {
   byId("tickerSearch").value = selectedTicker;
   renderTreemap();
   renderSearch();
+  chatFocusTicker = found.ticker;
   if (options.openSearch !== false) {
     if (currentTab !== "search") {
       activateTab("search", { ticker: selectedTicker, push: true });
@@ -2570,6 +2626,7 @@ function renderSearch() {
   byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
   byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
   drawChart(item);
+  renderEarningsCalendar(item);
   renderStockEvents(item);
   renderFundamentals(item);
   renderNews(item);
@@ -2580,6 +2637,7 @@ function renderSearch() {
     byId("chartTitle").textContent = `${refreshed.ticker} · ${refreshed.company}`;
     byId("searchFacts").innerHTML = stockFacts(refreshed, "Search Ticker");
     drawChart(refreshed);
+    renderEarningsCalendar(refreshed);
     renderStockEvents(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
@@ -2591,13 +2649,15 @@ function applyLive(item) {
   if (!item) return item;
   const chart = liveChartCache[item.ticker];
   const news = liveNewsCache[item.ticker];
-  if (!chart && !news) return item;
+  const earnings = liveEarningsCache[item.ticker];
+  if (!chart && !news && !earnings) return item;
   const out = { ...item };
   if (Array.isArray(chart) && chart.length) {
     out.chartSeries = chart;
     out.historySource = "yahoo";
   }
   if (Array.isArray(news) && news.length) out.news = news;
+  if (earnings) out.liveEarnings = earnings;
   const summary = liveSummaryCache[item.ticker];
   if (typeof summary === "string" && summary.trim()) out.newsSummary = summary.trim();
   return out;
@@ -2617,12 +2677,14 @@ function maybeFetchLiveData(base) {
       if (!payload) return;
       if (Array.isArray(payload.news)) liveNewsCache[ticker] = payload.news;
       if (Array.isArray(payload.chart)) liveChartCache[ticker] = payload.chart;
+      if (payload.earnings) liveEarningsCache[ticker] = payload.earnings;
       if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;
       liveDone[ticker] = true;
       if (selectedTicker !== ticker) return;
       const refreshedBase = data.stocks.find((row) => row.ticker === ticker) || base;
       const merged = applyLive(withDetail(refreshedBase));
       drawChart(merged);
+      renderEarningsCalendar(merged);
       renderStockEvents(merged);
       renderFundamentals(merged);
       renderNews(merged);
@@ -3703,6 +3765,101 @@ function pctFrom(now, then) {
   return ((now / then) - 1) * 100;
 }
 
+function extractTickerCandidates(text) {
+  const words = String(text || "").toUpperCase().match(/\b[A-Z][A-Z0-9.\-]{0,5}\b/g) || [];
+  return [...new Set(words.filter((w) => stockByTicker(w)))];
+}
+
+function buildStockChatContext(userText) {
+  const tickers = new Set();
+  if (chatFocusTicker) tickers.add(chatFocusTicker);
+  if (selectedTicker) tickers.add(selectedTicker);
+  extractTickerCandidates(userText).forEach((t) => tickers.add(t));
+  if (!tickers.size) return "";
+
+  const lines = [];
+  tickers.forEach((ticker) => {
+    const base = stockByTicker(ticker);
+    if (!base) return;
+    const item = applyLive(withDetail(base));
+    const f = item.fundamentals || {};
+    const earnings = item.liveEarnings || {};
+    lines.push(
+      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:$${Number(item.price).toFixed(2)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
+      (f.pe ? ` · PER:${f.pe}` : "") +
+      (f.forwardPE ? ` · FwdPER:${f.forwardPE}` : "") +
+      (earnings.nextDate ? ` · 다음실적:${earnings.nextDate}` : "") +
+      (earnings.epsEstimate != null ? ` · EPS예상:${earnings.epsEstimate}` : "")
+    );
+  });
+  return lines.length
+    ? `다음은 사이트 스냅샷/프록시 기준 종목 데이터입니다(실시간 투자 조언 아님, 참고용):\n${lines.join("\n")}`
+    : "";
+}
+
+function renderEarningsCalendar(item) {
+  const box = byId("stockEarnings");
+  if (!box) return;
+  if (item.sector === "EXCHANGE TRADED FUNDS") {
+    box.innerHTML = "";
+    box.hidden = true;
+    return;
+  }
+  box.hidden = false;
+  const f = item.fundamentals || {};
+  const live = item.liveEarnings || {};
+  const nextDate = live.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
+  const epsEstimate = live.epsEstimate ?? f.epsNextQ ?? null;
+  const history = Array.isArray(live.history) ? live.history : [];
+  const daysUntil = nextDate ? Math.ceil((new Date(nextDate) - snapshotBaseDate()) / 86400000) : null;
+
+  box.innerHTML = `
+    <div class="event-head">
+      <div>
+        <h3>실적 캘린더</h3>
+        <p class="muted">다음 실적 발표 일정과 최근 분기 실적 히스토리입니다.</p>
+      </div>
+      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+    </div>
+    <div class="earnings-summary">
+      <article class="earnings-upcoming">
+        <span>다음 실적 발표</span>
+        <strong>${nextDate ? escapeHtml(String(nextDate)) : "데이터 없음"}</strong>
+        <p>${nextDate && Number.isFinite(daysUntil) ? (daysUntil >= 0 ? `약 ${daysUntil}일 후` : `${Math.abs(daysUntil)}일 지남`) : "Yahoo Finance에서 일정을 가져오면 자동 표시됩니다."}</p>
+      </article>
+      <article class="earnings-upcoming">
+        <span>EPS 컨센서스</span>
+        <strong>${epsEstimate != null ? moneyOrDash(epsEstimate) : "—"}</strong>
+        <p>${f.epsNextY != null ? `연간 EPS 예상 ${moneyOrDash(f.epsNextY)}` : "Nasdaq/야후 데이터가 있으면 함께 표시됩니다."}</p>
+      </article>
+    </div>
+    ${history.length ? `
+      <div class="table-wrap compact-table-wrap">
+        <table class="compact-table earnings-table">
+          <thead>
+            <tr>
+              <th>분기</th>
+              <th>실제 EPS</th>
+              <th>예상 EPS</th>
+              <th>서프라이즈</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${history.map((row) => `
+              <tr>
+                <td>${escapeHtml(row.quarter || "—")}</td>
+                <td>${row.epsActual != null ? moneyOrDash(row.epsActual) : "—"}</td>
+                <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
+                <td class="${cls(row.surprisePct || 0)}">${row.surprisePct != null ? fmtPct(row.surprisePct) : "—"}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    ` : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
+  `;
+}
+
 function renderStockEvents(item) {
   const box = byId("stockEvents");
   if (!box) return;
@@ -4131,11 +4288,21 @@ function loadCurrencies() {
 
 function periodLabel(key) {
   return {
+    weekChangePct: "1주",
     monthChangePct: "1개월",
     threeMonthChangePct: "3개월",
     ytdChangePct: "YTD",
     changePct: "당일"
   }[key] || key;
+}
+
+function etfPeriodRelative(item, benchmark, periodKey) {
+  const rel = item.relative?.[benchmark]?.[periodKey];
+  if (Number.isFinite(rel)) return rel;
+  const rep = stockByTicker(item.representative);
+  const bench = stockByTicker(benchmark);
+  if (rep && bench) return (Number(rep[periodKey]) || 0) - (Number(bench[periodKey]) || 0);
+  return Number(item[periodKey]) || 0;
 }
 
 function etfRsCardHtml(item, period, benchmark) {
@@ -4272,33 +4439,41 @@ function renderSectorEtfRelativeStrength() {
 function renderSectorRotationBoard(rows, period, benchmark) {
   const board = byId("sectorRotationBoard");
   if (!board) return;
+  const horizon = ROTATION_HORIZONS[rotationHorizon] || ROTATION_HORIZONS["1M"];
   const enriched = rows.map((item) => {
-    const rel1m = item.relative?.[benchmark]?.monthChangePct ?? item.relative?.SPY?.monthChangePct ?? 0;
-    const rel3m = item.relative?.[benchmark]?.threeMonthChangePct ?? item.relative?.SPY?.threeMonthChangePct ?? 0;
+    const relShort = etfPeriodRelative(item, benchmark, horizon.short);
+    const relLong = etfPeriodRelative(item, benchmark, horizon.long);
     let quadrant = "lagging";
-    if (rel1m > 0 && rel3m > 0) quadrant = "leading";
-    else if (rel1m > 0 && rel3m <= 0) quadrant = "improving";
-    else if (rel1m <= 0 && rel3m > 0) quadrant = "weakening";
-    return { ...item, rel1m, rel3m, quadrant };
+    if (relShort > 0 && relLong > 0) quadrant = "leading";
+    else if (relShort > 0 && relLong <= 0) quadrant = "improving";
+    else if (relShort <= 0 && relLong > 0) quadrant = "weakening";
+    return { ...item, relShort, relLong, quadrant, activeRelative: relShort };
   });
   const groups = [
-    ["leading", "Leading", "1M/3M 모두 벤치마크 초과"],
-    ["improving", "Improving", "최근 1M 상대강도 개선"],
-    ["weakening", "Weakening", "3M은 강하지만 최근 둔화"],
+    ["leading", "Leading", `${horizon.shortLabel}/${horizon.longLabel} 모두 벤치마크 초과`],
+    ["improving", "Improving", `최근 ${horizon.shortLabel} 상대강도 개선`],
+    ["weakening", "Weakening", `${horizon.longLabel}은 강하지만 최근 둔화`],
     ["lagging", "Lagging", "벤치마크 대비 약세"]
   ];
   board.innerHTML = `
     <div class="rotation-head">
       <div>
         <h3>Sector Rotation Map</h3>
-        <p class="muted">${benchmark} 대비 1개월/3개월 상대강도로 ETF 그룹을 사분면으로 나눕니다.</p>
+        <p class="muted">${benchmark} 대비 ${horizon.shortLabel}/${horizon.longLabel} 상대강도로 ETF 그룹을 사분면으로 나눕니다.</p>
       </div>
-      <span class="event-badge">${periodLabel(period)}</span>
+      <div class="rotation-head-actions">
+        <div class="segmented rotation-horizon-tabs" aria-label="Rotation horizon">
+          ${Object.keys(ROTATION_HORIZONS).map((key) => `
+            <button type="button" data-horizon="${key}" class="${rotationHorizon === key ? "is-active" : ""}">${key}</button>
+          `).join("")}
+        </div>
+        <span class="event-badge">${periodLabel(period)}</span>
+      </div>
     </div>
     <div class="rotation-grid">
       ${groups.map(([key, title, desc]) => {
         const list = enriched.filter((item) => item.quadrant === key)
-          .sort((a, b) => b.activeRelative - a.activeRelative)
+          .sort((a, b) => b.relShort - a.relShort)
           .slice(0, 7);
         return `
           <section class="rotation-quadrant rotation-${key}">
@@ -4309,7 +4484,7 @@ function renderSectorRotationBoard(rows, period, benchmark) {
                 <button type="button" class="rotation-chip" data-category="${escapeHtml(item.category)}">
                   <strong>${escapeHtml(item.representative)}</strong>
                   <span>${escapeHtml(item.category)}</span>
-                  <b class="${cls(item.activeRelative)}">${fmtPct(item.activeRelative)}</b>
+                  <b class="${cls(item.relShort)}">${fmtPct(item.relShort)}</b>
                 </button>
               `).join("") : `<span class="muted">해당 그룹 없음</span>`}
             </div>
@@ -4318,6 +4493,13 @@ function renderSectorRotationBoard(rows, period, benchmark) {
       }).join("")}
     </div>
   `;
+  board.querySelectorAll("[data-horizon]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.dataset.horizon === rotationHorizon) return;
+      rotationHorizon = btn.dataset.horizon;
+      renderSectorEtfRelativeStrength();
+    });
+  });
   board.querySelectorAll(".rotation-chip").forEach((chip) => {
     chip.addEventListener("click", () => showConstituentPanel(chip.dataset.category, period));
   });
@@ -4403,6 +4585,29 @@ function setupBriefingToggles() {
   });
 }
 
+function openSocialTicker(ticker) {
+  if (!ticker || !stockByTicker(ticker)) return;
+  selectTicker(ticker, { openSearch: true });
+}
+
+function socialTickerCell(ticker) {
+  const known = stockByTicker(ticker);
+  if (!known) return `<strong>${escapeHtml(ticker)}</strong>`;
+  return `<button type="button" class="ticker-link" data-ticker="${escapeHtml(ticker)}" title="종목 분석 보기">${escapeHtml(ticker)}</button>`;
+}
+
+function bindSocialSentimentClicks() {
+  document.querySelectorAll("#socialRedditTable .ticker-link, #socialStocktwitsTable .ticker-link, #socialYahooTable .ticker-link").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      openSocialTicker(btn.dataset.ticker);
+    });
+  });
+  document.querySelectorAll("#socialRedditTable tr[data-ticker], #socialStocktwitsTable tr[data-ticker], #socialYahooTable tr[data-ticker]").forEach((row) => {
+    row.addEventListener("click", () => openSocialTicker(row.dataset.ticker));
+  });
+}
+
 function renderSocialSentiment() {
   const social = data.social_sentiment || {};
   
@@ -4410,9 +4615,9 @@ function renderSocialSentiment() {
   const redditRows = social.reddit || [];
   if (redditRows.length > 0) {
     byId("socialRedditTable").innerHTML = redditRows.map((item, idx) => `
-      <tr>
+      <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
-        <td><strong>${escapeHtml(item.ticker)}</strong></td>
+        <td>${socialTickerCell(item.ticker)}</td>
         <td>${escapeHtml(item.name || '')}</td>
         <td>${Number(item.mentions || 0).toLocaleString()}</td>
         <td class="${cls(item.change24h || 0)}">${fmtPct(item.change24h || 0)}</td>
@@ -4426,9 +4631,9 @@ function renderSocialSentiment() {
   const stocktwitsRows = social.stocktwits || [];
   if (stocktwitsRows.length > 0) {
     byId("socialStocktwitsTable").innerHTML = stocktwitsRows.map((item, idx) => `
-      <tr>
+      <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
-        <td><strong>${escapeHtml(item.ticker)}</strong></td>
+        <td>${socialTickerCell(item.ticker)}</td>
         <td>${escapeHtml(item.name || '')}</td>
         <td>${Number(item.watchlist_count || 0).toLocaleString()}</td>
       </tr>
@@ -4441,9 +4646,9 @@ function renderSocialSentiment() {
   const yahooRows = social.yahoo || [];
   if (yahooRows.length > 0) {
     byId("socialYahooTable").innerHTML = yahooRows.map((item, idx) => `
-      <tr>
+      <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
-        <td><strong>${escapeHtml(item.ticker)}</strong></td>
+        <td>${socialTickerCell(item.ticker)}</td>
         <td>${escapeHtml(item.name || '')}</td>
         <td class="${cls(item.changePct || 0)}">${escapeHtml(item.price || '-')}${item.changePct ? ` (${fmtPct(item.changePct)})` : ''}</td>
       </tr>
@@ -4451,6 +4656,7 @@ function renderSocialSentiment() {
   } else {
     byId("socialYahooTable").innerHTML = `<tr><td colspan="4" class="text-center" style="padding: 20px; text-align: center; color: var(--text-muted);">데이터 없음</td></tr>`;
   }
+  bindSocialSentimentClicks();
 }
 
 loadData();

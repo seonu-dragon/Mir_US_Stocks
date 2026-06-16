@@ -389,7 +389,7 @@ main {
 
 .summary-band {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 12px;
 }
@@ -422,6 +422,46 @@ main {
 /* ===== Top header: Fear&Greed gauge / sector TOP5 / FX ===== */
 .summary-band { align-items: stretch; }
 .summary-band .summary-card { padding: 9px 11px; }
+
+.regime-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left-width: 4px;
+}
+
+.regime-card.regime-on { border-left-color: #16a34a; }
+.regime-card.regime-off { border-left-color: #dc2626; }
+.regime-card.regime-mixed { border-left-color: #f59e0b; }
+
+.regime-label {
+  font-size: 22px !important;
+  line-height: 1.1;
+}
+
+.regime-ko {
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.regime-desc {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.regime-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
 
 .fng-card,
 .hx-card {
@@ -3706,10 +3746,85 @@ footer {
   white-space: nowrap;
 }
 
+.rotation-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.rotation-horizon-tabs button {
+  min-width: 42px;
+  padding: 0 10px;
+}
+
 .rotation-leading { box-shadow: inset 3px 0 0 #16a34a; }
 .rotation-improving { box-shadow: inset 3px 0 0 #2563eb; }
 .rotation-weakening { box-shadow: inset 3px 0 0 #f59e0b; }
 .rotation-lagging { box-shadow: inset 3px 0 0 #dc2626; }
+
+.earnings-calendar-card,
+.stock-events-card {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.earnings-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+}
+
+.earnings-upcoming {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+}
+
+.earnings-upcoming span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.earnings-upcoming strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.earnings-upcoming p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.earnings-empty {
+  padding: 0 12px 12px;
+}
+
+.social-row {
+  cursor: pointer;
+}
+
+.social-row:hover {
+  background: #f8fafc;
+}
+
+.social-table-wrapper .ticker-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1d4ed8;
+  font-weight: 800;
+  cursor: pointer;
+}
 
 @media (max-width: 960px) {
   .rotation-grid {

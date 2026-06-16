@@ -233,6 +233,15 @@ function renderCardNews() {
       img.src = images[idx];
     }, 3000);
   }
+  syncCardNewsHeight();
+}
+
+// 카드뉴스 박스 높이를 오른쪽 '데이터 기준' 박스와 픽셀 단위로 동일하게 맞춤.
+function syncCardNewsHeight() {
+  const band = byId("contentBand");
+  const card = document.querySelector(".update-card");
+  if (!band || !card || band.hidden) return;
+  band.style.height = `${card.offsetHeight}px`;
 }
 
 // 카드뉴스 크게 보기 라이트박스
@@ -825,6 +834,10 @@ function setupEvents() {
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
   setupChartControls();
   window.addEventListener("resize", debounce(renderTreemap, 120));
+  window.addEventListener("resize", syncCardNewsHeight);
+  // 폰트가 늦게 로드되면 데이터박스 높이가 바뀔 수 있어 한 번 더 맞춤
+  window.addEventListener("load", syncCardNewsHeight);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncCardNewsHeight);
 
   // Sector chart: timeframe and benchmark listeners
   byId("sectorTimeframeControls").querySelectorAll("button").forEach((btn) => {

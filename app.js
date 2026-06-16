@@ -426,7 +426,7 @@ function setupChatbot() {
     adjustForKeyboard();
     if (!greeted) {
       greeted = true;
-      addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법이나 PER·ROE 같은 용어를 물어보세요.");
+      addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법·투자 용어는 물론, 그냥 편하게 말 걸어 주셔도 좋아요. 😊");
     }
   }
 

@@ -6,7 +6,7 @@
     <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
     <title>미르의 미국 주식</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260616b">
+    <link rel="stylesheet" href="styles.css?v=20260616c">
   </head>
   <body>
     <header class="topbar">
@@ -39,15 +39,17 @@
     </header>
 
     <main>
-      <!-- 오늘의 카드뉴스 (data.cardNews.images 가 있을 때만 표시) -->
-      <section class="content-band" id="contentBand" hidden aria-label="오늘의 카드뉴스">
+     <div class="home-layout">
+      <!-- 오늘의 카드뉴스 왼쪽 세로 레일 (data.cardNews.images 가 있을 때만 표시) -->
+      <aside class="content-band cardnews-rail" id="contentBand" hidden aria-label="오늘의 카드뉴스">
         <div class="content-band-head">
           <h2>오늘의 카드뉴스</h2>
           <span class="muted" id="contentBandMeta"></span>
         </div>
         <div class="cardnews-strip" id="cardnewsStrip"></div>
-      </section>
+      </aside>
 
+      <div class="dash-col">
       <section class="summary-band" id="marketSummary"></section>
       <section class="index-strip" id="indexStrip"></section>
 
@@ -583,6 +585,8 @@
           </div>
         </div>
       </section>
+      </div><!-- /.dash-col -->
+     </div><!-- /.home-layout -->
     </main>
 
     <footer>
@@ -599,6 +603,6 @@
     </div>
 
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260616b">
+    <script src="app.js?v=20260616c">
   </body>
 </html>

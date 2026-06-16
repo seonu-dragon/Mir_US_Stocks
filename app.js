@@ -264,10 +264,15 @@ function renderCardNews() {
 }
 
 // 카드뉴스 박스 높이를 오른쪽 '데이터 기준' 박스와 픽셀 단위로 동일하게 맞춤.
+// 모바일에서는 CSS aspect-ratio로 높이를 잡고 가로 폭 100%를 유지한다.
 function syncCardNewsHeight() {
   const band = byId("contentBand");
   const card = document.querySelector(".update-card");
   if (!band || !card || band.hidden) return;
+  if (window.matchMedia("(max-width: 768px)").matches) {
+    band.style.height = "";
+    return;
+  }
   band.style.height = `${card.offsetHeight}px`;
 }
 

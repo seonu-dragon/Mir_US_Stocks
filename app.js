@@ -189,6 +189,7 @@ function boot() {
   const route = new URLSearchParams(window.location.search);
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
   byId("updatedAt").textContent = data.updatedAtKst || data.updated_at_kst || "스냅샷 데이터";
+  renderTodayContent();
   renderSummary();
   setupTabs();
   setupFilters();
@@ -202,6 +203,44 @@ function boot() {
     if (tab) tab.click();
   }
   if (route.get("ticker")) selectTicker(route.get("ticker"));
+}
+
+// 오늘의 콘텐츠 띠: data.todayContent = [{ platform, title, url, thumb, time }]
+const CONTENT_PLATFORM = {
+  instagram: { label: "Instagram", cls: "b-instagram" },
+  x: { label: "X", cls: "b-x" },
+  threads: { label: "Threads", cls: "b-threads" },
+  naver: { label: "네이버 블로그", cls: "b-naver" },
+  cardnews: { label: "카드뉴스", cls: "b-cardnews" }
+};
+
+function renderTodayContent() {
+  const band = byId("contentBand");
+  const track = byId("contentBandTrack");
+  if (!band || !track) return;
+  const items = Array.isArray(data.todayContent) ? data.todayContent : [];
+  if (!items.length) {
+    band.hidden = true;
+    return;
+  }
+  band.hidden = false;
+  const meta = byId("contentBandMeta");
+  if (meta) meta.textContent = `미르가 오늘 올린 글 ${items.length}건`;
+  track.innerHTML = items.map((it) => {
+    const p = CONTENT_PLATFORM[(it.platform || "").toLowerCase()] || { label: it.platform || "글", cls: "" };
+    const thumb = it.thumb
+      ? `<img class="content-card-thumb" src="${escapeHtml(it.thumb)}" alt="" loading="lazy">`
+      : "";
+    const time = it.time ? `<span class="muted" style="font-size:11px;">${escapeHtml(it.time)}</span>` : "";
+    return `<a class="content-card" href="${escapeHtml(it.url || "#")}" target="_blank" rel="noopener">
+      ${thumb}
+      <div class="content-card-body">
+        <span class="content-card-badge ${p.cls}">${escapeHtml(p.label)}</span>
+        <p class="content-card-title">${escapeHtml(it.title || "")}</p>
+        ${time}
+      </div>
+    </a>`;
+  }).join("");
 }
 
 const marketHeader = { fng: null, fx: [] };

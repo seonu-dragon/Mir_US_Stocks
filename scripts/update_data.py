@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "market_snapshot.json"
 OUT_JS = ROOT / "data" / "market_snapshot.js"
 DETAILS_DIR = ROOT / "data" / "details"
+TODAY_CONTENT_FILE = ROOT / "data" / "today_content.json"
 MAX_REAL_HISTORY = 1400
 MAX_FUNDAMENTALS = 900
 ACTIVE_SMALL_CAP_MIN_CAP_B = 0.3
@@ -2152,6 +2153,34 @@ def load_existing_snapshot():
         return {}
 
 
+def load_today_content():
+    """Read data/today_content.json (written by scripts/build_today_content.py) and
+    return today's homepage content items. Accepts either a bare list or
+    {"date": "YYYY-MM-DD", "items": [...]}; a stale date (not today KST) is ignored
+    so yesterday's posts never linger on the site."""
+    try:
+        with open(TODAY_CONTENT_FILE, encoding="utf-8") as handle:
+            raw = json.load(handle)
+    except FileNotFoundError:
+        return None
+    except Exception as exc:
+        print(f"[content] Failed to read {TODAY_CONTENT_FILE.name}: {exc}")
+        return None
+
+    if isinstance(raw, dict):
+        date = str(raw.get("date") or "").strip()
+        if date:
+            today = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
+            if date != today:
+                print(f"[content] today_content.json date {date} != today {today}; skipping.")
+                return None
+        items = raw.get("items")
+        return items if isinstance(items, list) else None
+    if isinstance(raw, list):
+        return raw
+    return None
+
+
 def git_push_updates(updated_at_kst):
     """Commit and push snapshot + detail files so GitHub Pages reflects the new data."""
     git_dir = ROOT / ".git"
@@ -2221,6 +2250,16 @@ def main():
         if key not in light_snapshot and key in existing:
             light_snapshot[key] = existing[key]
             preserved.append(key)
+
+    # Homepage "오늘의 콘텐츠" band: inject today's manifest if present, otherwise carry
+    # over whatever was on the previous snapshot so a market rebuild never blanks it.
+    today_content = load_today_content()
+    if today_content is not None:
+        light_snapshot["todayContent"] = today_content
+        print(f"[content] Injected todayContent with {len(today_content)} item(s).")
+    elif "todayContent" in existing:
+        light_snapshot["todayContent"] = existing["todayContent"]
+
     write_details(details)
     write_json(light_snapshot)
     write_js(light_snapshot)

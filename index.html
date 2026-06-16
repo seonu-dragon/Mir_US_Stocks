@@ -6,16 +6,17 @@
     <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
     <title>미르의 미국 주식</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260616e">
+    <link rel="stylesheet" href="styles.css?v=20260616f">
   </head>
   <body>
     <header class="topbar">
+     <div class="topbar-left">
       <div>
         <p class="eyebrow">Financial Visualizations / US Stock Market Analysis</p>
         <h1>미르의 미국 주식</h1>
       </div>
 
-      <!-- SNS 채널 (href는 실제 계정 주소로 교체하세요) -->
+      <!-- SNS 채널 (제목 오른쪽, 2x2) -->
       <nav class="social-links" aria-label="미르 SNS 채널">
         <a class="social-link sl-instagram" href="https://www.instagram.com/seonu_dragon/" target="_blank" rel="noopener" aria-label="Instagram" title="Instagram">
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="#f1f5f9"><path d="M12 2.2c3.2 0 3.6 0 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s0 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58 0-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.2 15.58 2.2 15.2 2.2 12s0-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.2 8.8 2.2 12 2.2Zm0 1.8c-3.15 0-3.5 0-4.74.07-.9.04-1.38.2-1.7.32-.43.17-.74.37-1.06.69-.32.32-.52.63-.69 1.06-.12.32-.28.8-.32 1.7C3.42 9.08 3.4 9.43 3.4 12s0 2.92.07 4.16c.04.9.2 1.38.32 1.7.17.43.37.74.69 1.06.32.32.63.52 1.06.69.32.12.8.28 1.7.32 1.24.07 1.59.07 4.74.07s3.5 0 4.74-.07c.9-.04 1.38-.2 1.7-.32.43-.17.74-.37 1.06-.69.32-.32.52-.63.69-1.06.12-.32.28-.8.32-1.7.07-1.24.07-1.59.07-4.16s0-2.92-.07-4.16c-.04-.9-.2-1.38-.32-1.7a2.86 2.86 0 0 0-.69-1.06 2.86 2.86 0 0 0-1.06-.69c-.32-.12-.8-.28-1.7-.32C15.5 4 15.15 4 12 4Zm0 3.05a4.95 4.95 0 1 1 0 9.9 4.95 4.95 0 0 1 0-9.9Zm0 1.8a3.15 3.15 0 1 0 0 6.3 3.15 3.15 0 0 0 0-6.3Zm5.15-1.45a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3Z"/></svg>
@@ -30,26 +31,24 @@
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="#f1f5f9"><path d="M5 4h4.4l5.05 7.3V4H19v16h-4.4L9.55 12.7V20H5V4Z"/></svg>
         </a>
       </nav>
+     </div>
+
+     <div class="topbar-right">
+      <!-- 오늘의 카드뉴스 미니 캐러셀 (자동 전환 · 클릭 시 크게 보기) -->
+      <button class="cardnews-carousel" id="contentBand" type="button" hidden
+              aria-label="오늘의 카드뉴스 크게 보기" title="클릭하면 크게 보기">
+        <img id="cardnewsCarouselImg" src="" alt="오늘의 카드뉴스">
+      </button>
 
       <div class="update-card">
         <span>데이터 기준</span>
         <strong id="updatedAt">불러오는 중</strong>
         <small>매일 한국 시간 오전 6시 1회 갱신</small>
       </div>
+     </div>
     </header>
 
     <main>
-     <div class="home-layout">
-      <!-- 오늘의 카드뉴스 왼쪽 세로 레일 (data.cardNews.images 가 있을 때만 표시) -->
-      <aside class="content-band cardnews-rail" id="contentBand" hidden aria-label="오늘의 카드뉴스">
-        <div class="content-band-head">
-          <h2>오늘의 카드뉴스</h2>
-          <span class="muted" id="contentBandMeta"></span>
-        </div>
-        <div class="cardnews-strip" id="cardnewsStrip"></div>
-      </aside>
-
-      <div class="dash-col">
       <section class="summary-band" id="marketSummary"></section>
       <section class="index-strip" id="indexStrip"></section>
 
@@ -585,8 +584,6 @@
           </div>
         </div>
       </section>
-      </div><!-- /.dash-col -->
-     </div><!-- /.home-layout -->
     </main>
 
     <footer>
@@ -626,6 +623,6 @@
     </div>
 
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260616e"></script>
+    <script src="app.js?v=20260616f"></script>
   </body>
 </html>

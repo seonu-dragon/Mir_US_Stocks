@@ -3513,6 +3513,20 @@ footer {
 }
 
 /* Screener, rotation, event, and chart-compare upgrades */
+.top-stocks-filters {
+  display: grid;
+  gap: 0;
+  margin-bottom: 14px;
+}
+
+.top-stocks-filters .toolbar {
+  margin-bottom: 10px;
+}
+
+.top-stocks-filters .toolbar:last-child {
+  margin-bottom: 0;
+}
+
 .toolbar input[type="number"] {
   min-width: 92px;
 }

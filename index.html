@@ -313,6 +313,7 @@
               <span id="sectorEtfRsMeta" class="muted"></span>
             </div>
           </div>
+          <div class="rotation-board" id="sectorRotationBoard"></div>
 
           <div class="etf-rs-grid sector-etf-rs-grid" id="sectorEtfGrid"></div>
 
@@ -400,6 +401,43 @@
             </select>
           </label>
         </div>
+          <label>
+            Preset
+            <select id="topPreset">
+              <option value="custom">Custom</option>
+              <option value="leaders">강한 추세 리더</option>
+              <option value="breakout">신고가 근접 + 거래량</option>
+              <option value="pullback">강한 종목 눌림목</option>
+              <option value="growth">EPS 추정 상향</option>
+              <option value="value">저평가 대형주</option>
+            </select>
+          </label>
+          <label>
+            Min RS
+            <input id="topMinRs" type="number" min="0" max="100" placeholder="0">
+          </label>
+          <label>
+            Min EPS
+            <input id="topMinEps" type="number" min="0" max="100" placeholder="0">
+          </label>
+          <label>
+            Vol Ratio
+            <input id="topMinVolume" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+          <label>
+            Min MktCap($B)
+            <input id="topMinMarketCap" type="number" min="0" step="1" placeholder="0">
+          </label>
+          <label>
+            Limit
+            <select id="topLimit">
+              <option value="12">12</option>
+              <option value="24" selected>24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
+            </select>
+          </label>
+          <button type="button" class="ghost" id="topResetFilters">Reset</button>
         <div class="section-title compact-title">
           <h2>Top Stocks</h2>
           <p id="topStocksMeta">조건에 맞는 상위 종목입니다.</p>
@@ -446,40 +484,102 @@
               <h2 id="chartTitle">종목 차트</h2>
               <p>스냅샷에 저장된 최근 가격 흐름입니다.</p>
             </div>
-            <div class="chart-controls" aria-label="Chart controls">
-              <div class="segmented" id="rangeControls">
-                <button type="button" data-range="5Y">5Y</button>
-                <button type="button" class="is-active" data-range="1Y">1Y</button>
-                <button type="button" data-range="6M">6M</button>
-                <button type="button" data-range="3M">3M</button>
-                <button type="button" data-range="1M">1M</button>
+            <div class="chart-command-bar" aria-label="Chart controls">
+              <div class="chart-command-main">
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">기간</span>
+                  <div class="segmented" id="rangeControls">
+                    <button type="button" data-range="5Y">5Y</button>
+                    <button type="button" class="is-active" data-range="1Y">1Y</button>
+                    <button type="button" data-range="6M">6M</button>
+                    <button type="button" data-range="3M">3M</button>
+                    <button type="button" data-range="1M">1M</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">봉</span>
+                  <div class="segmented" id="barTimeframeControls" title="봉 종류">
+                    <button type="button" class="is-active" data-tf="D">일</button>
+                    <button type="button" data-tf="W">주</button>
+                    <button type="button" data-tf="M">월</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">보기</span>
+                  <div class="icon-controls">
+                    <button type="button" id="chartPanLeft" title="왼쪽으로 이동">‹</button>
+                    <button type="button" id="chartZoomOut" title="축소">−</button>
+                    <button type="button" id="chartZoomIn" title="확대">+</button>
+                    <button type="button" id="chartPanRight" title="오른쪽으로 이동">›</button>
+                    <button type="button" id="chartReset" title="초기화">Reset</button>
+                  </div>
+                </div>
               </div>
-              <div class="segmented" id="barTimeframeControls" title="봉 종류">
-                <button type="button" class="is-active" data-tf="D">일봉</button>
-                <button type="button" data-tf="W">주봉</button>
-                <button type="button" data-tf="M">월봉</button>
+              <div class="chart-compare-bar">
+                <label class="grow">
+                  비교 종목
+                  <input id="chartCompareInput" list="tickerOptions" placeholder="예: SPY, QQQ, SOXX">
+                </label>
+                <button type="button" class="ghost" id="chartCompareAdd">추가</button>
+                <div class="compare-chip-list" id="chartCompareList"></div>
               </div>
-              <div class="icon-controls">
-                <button type="button" id="chartPanLeft" title="왼쪽으로 이동">‹</button>
-                <button type="button" id="chartZoomOut" title="축소">−</button>
-                <button type="button" id="chartZoomIn" title="확대">+</button>
-                <button type="button" id="chartPanRight" title="오른쪽으로 이동">›</button>
-                <button type="button" id="chartReset" title="초기화">Reset</button>
-              </div>
-              <label class="check-label"><input id="showSma5" type="checkbox"> SMA5</label>
-              <label class="check-label"><input id="showSma10" type="checkbox"> SMA10</label>
-              <label class="check-label"><input id="showSma20" type="checkbox" checked> SMA20</label>
-              <label class="check-label"><input id="showSma60" type="checkbox" checked> SMA60</label>
-              <label class="check-label"><input id="showSma120" type="checkbox"> SMA120</label>
-              <label class="check-label"><input id="showEma20" type="checkbox"> EMA20</label>
-              <label class="check-label"><input id="showEma60" type="checkbox"> EMA60</label>
-              <label class="check-label"><input id="showBoll" type="checkbox"> 볼린저</label>
-              <label class="check-label"><input id="showVolume" type="checkbox" checked> Volume</label>
-              <label class="check-label"><input id="showRsi" type="checkbox" checked> RSI(14)</label>
-              <label class="check-label"><input id="showMacd" type="checkbox"> MACD</label>
-              <label class="check-label"><input id="showStoch" type="checkbox"> Stoch</label>
+              <details class="chart-settings-panel">
+                <summary>
+                  <span>차트 설정</span>
+                  <strong>이동평균 · 보조지표</strong>
+                </summary>
+                <div class="chart-settings-grid">
+                  <fieldset>
+                    <legend>이동평균선</legend>
+                    <label class="check-label"><input id="showSma5" type="checkbox"> SMA5</label>
+                    <label class="check-label"><input id="showSma10" type="checkbox"> SMA10</label>
+                    <label class="check-label"><input id="showSma20" type="checkbox" checked> SMA20</label>
+                    <label class="check-label"><input id="showSma60" type="checkbox" checked> SMA60</label>
+                    <label class="check-label"><input id="showSma120" type="checkbox"> SMA120</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>추세/밴드</legend>
+                    <label class="check-label"><input id="showEma20" type="checkbox"> EMA20</label>
+                    <label class="check-label"><input id="showEma60" type="checkbox"> EMA60</label>
+                    <label class="check-label"><input id="showBoll" type="checkbox"> 볼린저</label>
+                    <label class="check-label"><input id="showVwap" type="checkbox"> VWAP</label>
+                    <label class="check-label"><input id="showSupertrend" type="checkbox"> Supertrend</label>
+                    <label class="check-label"><input id="showIchimoku" type="checkbox"> Ichimoku</label>
+                    <label class="check-label"><input id="showKeltner" type="checkbox"> Keltner</label>
+                    <label class="check-label"><input id="showDonchian" type="checkbox"> Donchian</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>거래량/수급</legend>
+                    <label class="check-label"><input id="showVolume" type="checkbox" checked> Volume</label>
+                    <label class="check-label"><input id="showVolMa20" type="checkbox"> Vol MA20</label>
+                    <label class="check-label"><input id="showVolumeRatio" type="checkbox"> Volume Ratio</label>
+                    <label class="check-label"><input id="showObv" type="checkbox"> OBV</label>
+                    <label class="check-label"><input id="showAd" type="checkbox"> A/D</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>모멘텀/강도</legend>
+                    <label class="check-label"><input id="showRsi" type="checkbox" checked> RSI(14)</label>
+                    <label class="check-label"><input id="showMacd" type="checkbox"> MACD</label>
+                    <label class="check-label"><input id="showStoch" type="checkbox"> Stoch</label>
+                    <label class="check-label"><input id="showRoc" type="checkbox"> ROC</label>
+                    <label class="check-label"><input id="showMomentum" type="checkbox"> Momentum</label>
+                    <label class="check-label"><input id="showWilliams" type="checkbox"> Williams %R</label>
+                    <label class="check-label"><input id="showAtr" type="checkbox"> ATR</label>
+                    <label class="check-label"><input id="showAdx" type="checkbox"> ADX/+DI/-DI</label>
+                    <label class="check-label"><input id="showCci" type="checkbox"> CCI</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>상대강도</legend>
+                    <label class="check-label"><input id="showRsSpy" type="checkbox"> RS vs SPY</label>
+                    <label class="check-label"><input id="showRsQqq" type="checkbox"> RS vs QQQ</label>
+                    <label class="check-label"><input id="showRsSector" type="checkbox"> RS vs Sector ETF</label>
+                    <label class="check-label"><input id="showMansfield" type="checkbox"> Mansfield RS</label>
+                  </fieldset>
+                </div>
+              </details>
             </div>
             <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
+            <section class="stock-events-card" id="stockEvents"></section>
             <div class="fundamental-table" id="fundamentalTable"></div>
           </div>
           <div class="search-side-col">

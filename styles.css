@@ -231,6 +231,27 @@ h1 {
   border-color: #03c75a;
 }
 
+/* 사이트 로고 + 제목 */
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.site-logo {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.site-brand-text {
+  min-width: 0;
+}
+
 /* 헤더 좌/우 그룹: 왼쪽=제목+SNS, 오른쪽=카드뉴스+데이터기준 */
 .topbar-left {
   display: flex;
@@ -1935,6 +1956,16 @@ footer {
     gap: 10px;
     width: 100%;
     min-width: 0;
+  }
+
+  .site-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+  }
+
+  .site-brand {
+    gap: 10px;
   }
 
   .topbar-left .eyebrow {

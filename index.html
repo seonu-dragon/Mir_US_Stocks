@@ -39,13 +39,13 @@
     </header>
 
     <main>
-      <!-- 오늘의 콘텐츠 (data.todayContent 가 있을 때만 표시) -->
-      <section class="content-band" id="contentBand" hidden aria-label="오늘 올린 콘텐츠">
+      <!-- 오늘의 카드뉴스 (data.cardNews.images 가 있을 때만 표시) -->
+      <section class="content-band" id="contentBand" hidden aria-label="오늘의 카드뉴스">
         <div class="content-band-head">
-          <h2>오늘의 콘텐츠</h2>
+          <h2>오늘의 카드뉴스</h2>
           <span class="muted" id="contentBandMeta"></span>
         </div>
-        <div class="content-band-track" id="contentBandTrack"></div>
+        <div class="cardnews-strip" id="cardnewsStrip"></div>
       </section>
 
       <section class="summary-band" id="marketSummary"></section>
@@ -589,6 +589,14 @@
       <span>이 사이트는 하루 1회 저장된 스냅샷 데이터를 사용합니다.</span>
       <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
     </footer>
+
+    <!-- 카드뉴스 크게 보기 -->
+    <div class="lightbox" id="lightbox" hidden>
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="닫기">✕</button>
+      <button class="lightbox-prev" id="lightboxPrev" type="button" aria-label="이전">‹</button>
+      <img id="lightboxImg" src="" alt="카드뉴스 크게 보기">
+      <button class="lightbox-next" id="lightboxNext" type="button" aria-label="다음">›</button>
+    </div>
 
     <script src="data/market_snapshot.js"></script>
     <script src="app.js"></script>

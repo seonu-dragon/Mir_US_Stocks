@@ -207,28 +207,32 @@ function boot() {
   if (route.get("ticker")) selectTicker(route.get("ticker"));
 }
 
-// 오늘의 카드뉴스 갤러리: data.cardNews = { title, images: ["data/content/<date>/02-topic.png", ...] }
+// 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { title, images: [...] }
+// 헤더 높이에 맞춰 한 장씩 자동 전환, 클릭하면 라이트박스로 크게 보기.
+let cardnewsTimer = null;
+
 function renderCardNews() {
   const band = byId("contentBand");
-  const strip = byId("cardnewsStrip");
-  if (!band || !strip) return;
+  const img = byId("cardnewsCarouselImg");
+  if (!band || !img) return;
   const cardNews = data.cardNews || {};
   const images = Array.isArray(cardNews.images) ? cardNews.images : [];
+  if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
   if (!images.length) {
     band.hidden = true;
     return;
   }
   band.hidden = false;
-  const meta = byId("contentBandMeta");
-  if (meta) meta.textContent = cardNews.title || "";
-  strip.innerHTML = images.map((src, i) =>
-    `<button class="cardnews-thumb" type="button" data-index="${i}" aria-label="카드뉴스 ${i + 1}장 크게 보기">
-      <img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 1}장" loading="lazy">
-    </button>`
-  ).join("");
-  strip.querySelectorAll(".cardnews-thumb").forEach((btn) => {
-    btn.addEventListener("click", () => openLightbox(images, Number(btn.dataset.index)));
-  });
+  let idx = 0;
+  img.src = images[0];
+  band.title = cardNews.title ? `${cardNews.title} — 클릭하면 크게 보기` : "클릭하면 크게 보기";
+  band.onclick = () => openLightbox(images, idx);
+  if (images.length > 1) {
+    cardnewsTimer = setInterval(() => {
+      idx = (idx + 1) % images.length;
+      img.src = images[idx];
+    }, 3000);
+  }
 }
 
 // 카드뉴스 크게 보기 라이트박스

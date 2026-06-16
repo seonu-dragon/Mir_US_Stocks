@@ -1962,8 +1962,17 @@ footer {
     width: 100%;
     max-width: 100%;
     align-self: auto;
-    aspect-ratio: 16 / 9;
-    min-height: 140px;
+    height: auto;
+    min-height: 0;
+  }
+
+  .cardnews-carousel img {
+    position: static;
+    display: block;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    object-position: center top;
   }
 
   .update-card {

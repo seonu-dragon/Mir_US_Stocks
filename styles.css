@@ -454,13 +454,32 @@ main {
 }
 
 .regime-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 6px;
+  margin-top: 6px;
+}
+
+.regime-stat {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 4px;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.regime-stat b {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
+  line-height: 1.2;
+}
+
+.regime-stat em {
+  color: #0f172a;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1.2;
 }
 
 .fng-card,
@@ -517,6 +536,19 @@ main {
   border-radius: 8px;
   padding: 8px 10px;
   box-shadow: var(--shadow);
+}
+
+.index-card-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.index-card-clickable:hover,
+.index-card-clickable:focus-visible {
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
+  outline: none;
+  transform: translateY(-1px);
 }
 .index-head {
   display: flex;
@@ -3763,12 +3795,18 @@ footer {
 .rotation-weakening { box-shadow: inset 3px 0 0 #f59e0b; }
 .rotation-lagging { box-shadow: inset 3px 0 0 #dc2626; }
 
-.earnings-calendar-card,
 .stock-events-card {
   margin-top: 12px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
+  overflow: hidden;
+}
+
+.earnings-calendar-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
   overflow: hidden;
 }
 
@@ -3840,5 +3878,11 @@ footer {
   .rotation-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .earnings-summary {
+    grid-template-columns: 1fr;
+  }
+  .regime-stats {
+    grid-template-columns: 1fr;
   }
 }

@@ -2932,16 +2932,27 @@ footer {
 .chat-fab {
   position: relative;
   display: block;
-  padding: 0;
+  padding: 8px;            /* 캐릭터 주변까지 잡히는 여유 영역 */
   border: none;
   background: transparent;
   cursor: grab;            /* 클릭 또는 드래그로 이동 */
   line-height: 0;
   touch-action: none;      /* 터치 드래그 시 스크롤 방지 */
+  /* 애니메이션·호버 변형을 버튼에 적용해야 클릭(히트) 영역이 캐릭터와 함께 움직임 */
+  transition: transform 0.2s ease;
+  animation: mascotBob 2.6s ease-in-out infinite;
 }
 
-.chatbot.dragging .chat-fab { cursor: grabbing; }
-.chatbot.dragging .chat-mascot { animation: none; }
+.chat-fab:hover {
+  animation-play-state: paused;
+  transform: translateY(-4px) scale(1.04);
+}
+
+.chatbot.dragging .chat-fab {
+  cursor: grabbing;
+  animation: none;
+  transform: none;
+}
 .chatbot.dragging .chat-bubble { display: none; }
 
 .chat-mascot {
@@ -2949,11 +2960,7 @@ footer {
   width: 72px;
   height: auto;
   filter: drop-shadow(0 8px 14px rgba(20, 30, 50, 0.28));
-  transition: transform 0.2s ease;
-  animation: mascotBob 2.6s ease-in-out infinite;
 }
-
-.chat-fab:hover .chat-mascot { transform: translateY(-4px) scale(1.04); }
 
 @keyframes mascotBob {
   0%, 100% { transform: translateY(0); }

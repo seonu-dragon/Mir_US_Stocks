@@ -5059,9 +5059,14 @@ function renderCompareBoard() {
   table.querySelectorAll(".ticker-link").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
-  tickers.forEach((t) => loadStockDetail(t).then(() => {
-    if (compareTickersFromInput().join() === tickers.join()) renderCompareBoard();
-  }));
+  tickers.forEach((t) => {
+    const key = safeTicker(t);
+    if (detailCache[key]) return;
+    loadStockDetail(t).then((detail) => {
+      if (!detail) return;
+      if (compareTickersFromInput().join() === tickers.join()) renderCompareBoard();
+    });
+  });
 }
 
 function setupCompareEvents() {

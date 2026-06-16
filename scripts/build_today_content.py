@@ -52,12 +52,17 @@ def load_json(path):
         return {}
 
 
-def find_card_dir(date):
-    """Prefer the US variant (the site is US stocks), then the plain date folder."""
-    for name in (f"{date}-us", date):
-        candidate = CARD_DAILY / name
-        if (candidate / "out").is_dir() and any((candidate / "out").glob("*.png")):
-            return candidate
+# Two card-news versions per day:
+#   us = 미국장 마감 시황 브리핑  -> 카드뉴스/daily/<date>-us
+#   kr = 국내 주요 뉴스           -> 카드뉴스/daily/<date>
+VARIANTS = {"us": "{date}-us", "kr": "{date}"}
+
+
+def variant_card_dir(date, variant):
+    candidate = CARD_DAILY / VARIANTS[variant].format(date=date)
+    out = candidate / "out"
+    if out.is_dir() and any(out.glob("*.png")):
+        return candidate
     return None
 
 
@@ -81,20 +86,23 @@ def first_heading(path):
     return None
 
 
-def day_title(date, card_dir):
-    naver_path = find_draft(SNS_PROD / date, "naver_blog")
-    if naver_path:
-        heading = first_heading(naver_path)
-        if heading:
-            return heading[:90].strip()
+def deck_title(date, card_dir, variant):
+    # 국내 버전은 그날 네이버 블로그 헤드라인이 가장 자연스러움
+    if variant == "kr":
+        naver_path = find_draft(SNS_PROD / date, "naver_blog")
+        if naver_path:
+            heading = first_heading(naver_path)
+            if heading:
+                return heading[:90].strip()
     cover = next((c for c in load_json(card_dir / "cards.json").get("cards", [])
                   if c.get("type") == "cover"), {})
     parts = [cover.get("headlineLine1"), cover.get("accentText"), cover.get("headlineTail")]
-    return (" ".join(p for p in parts if p) or "오늘의 카드뉴스")[:90].strip()
+    fallback = "미국장 마감 카드뉴스" if variant == "us" else "국내 뉴스 카드뉴스"
+    return (" ".join(p for p in parts if p) or fallback)[:90].strip()
 
 
-def build_payload(date):
-    card_dir = find_card_dir(date)
+def build_deck(date, variant):
+    card_dir = variant_card_dir(date, variant)
     if not card_dir:
         return None
 
@@ -102,7 +110,7 @@ def build_payload(date):
     # Drop the cover (first) and the closing page (last); keep only the body pages.
     body = pages[1:-1] if len(pages) > 2 else pages
 
-    dest_dir = CONTENT_ASSETS / date
+    dest_dir = CONTENT_ASSETS / date / variant
     dest_dir.mkdir(parents=True, exist_ok=True)
     for old in dest_dir.glob("*.png"):      # avoid stale leftovers from previous runs
         old.unlink()
@@ -110,9 +118,23 @@ def build_payload(date):
     images = []
     for src in body:
         shutil.copy2(src, dest_dir / src.name)
-        images.append(f"data/content/{date}/{src.name}")
+        images.append(f"data/content/{date}/{variant}/{src.name}")
 
-    return {"date": date, "title": day_title(date, card_dir), "images": images}
+    return {"title": deck_title(date, card_dir, variant), "images": images}
+
+
+def build_payload(date):
+    # Remove flat leftovers from the old single-version layout.
+    flat = CONTENT_ASSETS / date
+    if flat.is_dir():
+        for old in flat.glob("*.png"):
+            old.unlink()
+    payload = {"date": date}
+    for variant in VARIANTS:
+        deck = build_deck(date, variant)
+        if deck:
+            payload[variant] = deck
+    return payload
 
 
 def atomic_write(path, text):
@@ -135,7 +157,8 @@ def merge_into_snapshot(payload):
               "(it will be injected on the next update_data.py run).")
         return
     snapshot.pop("todayContent", None)   # drop the legacy platform-link key
-    snapshot["cardNews"] = {"title": payload["title"], "images": payload["images"]}
+    card_news = {v: payload[v] for v in VARIANTS if payload.get(v)}
+    snapshot["cardNews"] = card_news
     body = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
     atomic_write(OUT_JSON, body)
     atomic_write(OUT_JS, f"window.MARKET_SNAPSHOT = {body};\n")
@@ -150,14 +173,15 @@ def main():
     args = parser.parse_args()
 
     payload = build_payload(args.date)
-    if payload is None:
-        payload = {"date": args.date, "title": "", "images": []}
-        print(f"No card-news deck found for {args.date}; wrote an empty manifest.")
 
     atomic_write(OUT_MANIFEST, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
-    print(f"Wrote {OUT_MANIFEST.relative_to(ROOT)} - {len(payload['images'])} body page(s) for {args.date}.")
-    for src in payload["images"]:
-        print(f"  - {src}")
+    print(f"Wrote {OUT_MANIFEST.relative_to(ROOT)} for {args.date}.")
+    for variant in VARIANTS:
+        deck = payload.get(variant)
+        if deck:
+            print(f"  [{variant}] {len(deck['images'])} page(s): {deck['title'][:48]}")
+        else:
+            print(f"  [{variant}] (없음)")
 
     if args.merge:
         merge_into_snapshot(payload)

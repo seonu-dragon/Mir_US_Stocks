@@ -160,6 +160,25 @@ const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
 const byId = (id) => document.getElementById(id);
 
+function formatKstDateTime(date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Seoul",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(date);
+  const get = (type) => parts.find((p) => p.type === type)?.value || "";
+  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")} KST`;
+}
+
+function updateDataLoadedAt(date = new Date()) {
+  const el = byId("updatedAt");
+  if (el) el.textContent = formatKstDateTime(date);
+}
+
 async function loadData() {
   let loaded = false;
   try {
@@ -188,7 +207,7 @@ async function loadData() {
 function boot() {
   const route = new URLSearchParams(window.location.search);
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
-  byId("updatedAt").textContent = data.updatedAtKst || data.updated_at_kst || "스냅샷 데이터";
+  updateDataLoadedAt();
   renderCardNews();
   setupLightbox();
   setupChatbot();
@@ -644,15 +663,16 @@ function indexSparkline(series, up) {
 function fetchMarketHeader() {
   if (!LIVE_DATA_PROXY) { renderIndexStrip([]); return; }
   const base = LIVE_DATA_PROXY.replace(/\/$/, "");
-  fetch(`${base}/?fng=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+  const fngReq = fetch(`${base}/?fng=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
     if (p && p.fng) { marketHeader.fng = p.fng; renderSummary(); }
   }).catch(() => {});
-  fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+  const fxReq = fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
     if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); }
   }).catch(() => {});
-  fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+  const idxReq = fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
     if (p && Array.isArray(p.indices)) renderIndexStrip(p.indices);
   }).catch(() => {});
+  Promise.allSettled([fngReq, fxReq, idxReq]).then(() => updateDataLoadedAt());
 }
 
 // ===== 경제 캘린더 (한국 + 미국, investing.com via Worker) =====

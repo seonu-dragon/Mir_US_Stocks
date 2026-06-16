@@ -693,6 +693,7 @@ function activateTab(name, { push = true, ticker = null } = {}) {
   byId(`tab-${name}`).classList.add("is-active");
   currentTab = name;
   if (name === "calendar") loadCalendar();
+  if (name === "map") renderTreemap();  // 보이는 폭으로 다시 그려 깨짐 방지
   if (push) {
     history.pushState({ tab: name, ticker }, "");
   }
@@ -1104,7 +1105,13 @@ function renderTreemap() {
   const sizeMetric = byId("tileSizeFilter").value;
   const query = byId("heatmapSearch").value.trim().toUpperCase();
   const map = byId("stockTreemap");
-  const width = map.clientWidth || 1100;
+  const width = map.clientWidth;
+  // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음.
+  // 지도 탭이 보이는데도 일시적으로 0이면 다음 프레임에 다시 시도.
+  if (!width) {
+    if (currentTab === "map") requestAnimationFrame(renderTreemap);
+    return;
+  }
   const height = map.clientHeight || 720;
 
   renderLegend(metric);

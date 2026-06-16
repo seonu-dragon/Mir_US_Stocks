@@ -742,6 +742,8 @@ function computeMarketRegime() {
 
 function marketRegimeCardHtml() {
   const regime = computeMarketRegime();
+  const fngLive = !!(marketHeader.fng && Number.isFinite(marketHeader.fng.score));
+  const fngNote = fngLive ? "CNN Fear &amp; Greed Index" : "CNN 지수 로딩 전 · 상승 종목 비중으로 추정";
   return `
     <div class="summary-card regime-card regime-${regime.tone}">
       <span>시장 국면</span>
@@ -749,9 +751,18 @@ function marketRegimeCardHtml() {
       <em class="regime-ko">${regime.ko}</em>
       <p class="regime-desc">${regime.desc}</p>
       <div class="regime-stats">
-        <span>F&amp;G ${regime.fng}</span>
-        <span>상승 ${Math.round(regime.upPct * 100)}%</span>
-        <span>성장-방어 ${fmtPct(regime.growthLead)}</span>
+        <span class="regime-stat" title="${fngNote}">
+          <b>공포탐욕</b>
+          <em>${regime.fng}${fngLive ? "" : "·추정"}</em>
+        </span>
+        <span class="regime-stat" title="당일 상승한 종목 비율">
+          <b>상승 비중</b>
+          <em>${Math.round(regime.upPct * 100)}%</em>
+        </span>
+        <span class="regime-stat" title="성장 ETF(XLK·QQQ·SOXX) − 방어 ETF(XLU·XLP·XLV) 1개월 수익률 차이">
+          <b>성장-방어</b>
+          <em>${fmtPct(regime.growthLead)}</em>
+        </span>
       </div>
     </div>
   `;
@@ -767,12 +778,31 @@ function renderSummary() {
     fxCardHtml();
 }
 
+const INDEX_ANALYSIS_TICKER = {
+  "^DJI": "DIA",
+  "^IXIC": "QQQ",
+  "^GSPC": "SPY",
+  "^RUT": "IWM",
+  "^KS11": "EWY",
+  "^KQ11": "FLKR",
+  "BTC-USD": "GBTC",
+  "ETH-USD": "ETHA",
+};
+
+function indexAnalysisTicker(symbol) {
+  const mapped = INDEX_ANALYSIS_TICKER[symbol];
+  return mapped && stockByTicker(mapped) ? mapped : null;
+}
+
 function renderIndexStrip(indices) {
   const el = byId("indexStrip");
   if (!el) return;
   if (!indices || !indices.length) { el.innerHTML = ""; return; }
-  el.innerHTML = indices.map((ix) => `
-    <div class="index-card">
+  el.innerHTML = indices.map((ix) => {
+    const analysisTicker = indexAnalysisTicker(ix.symbol);
+    const clickable = !!analysisTicker;
+    return `
+    <div class="index-card${clickable ? " index-card-clickable" : ""}"${clickable ? ` data-ticker="${escapeHtml(analysisTicker)}" role="button" tabindex="0" title="${escapeHtml(ix.name)} → ${escapeHtml(analysisTicker)} 종목 분석"` : ""}>
       <div class="index-head">
         <strong>${escapeHtml(ix.name)}</strong>
         <em class="${cls(ix.changePct)}">${fmtPct(ix.changePct)}</em>
@@ -780,7 +810,18 @@ function renderIndexStrip(indices) {
       <div class="index-price">${Number(ix.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
       ${indexSparkline(ix.series, ix.changePct >= 0)}
     </div>
-  `).join("");
+  `;
+  }).join("");
+  el.querySelectorAll(".index-card-clickable").forEach((card) => {
+    const open = () => selectTicker(card.dataset.ticker, { openSearch: true });
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        open();
+      }
+    });
+  });
 }
 
 function indexSparkline(series, up) {

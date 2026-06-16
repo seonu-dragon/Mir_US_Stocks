@@ -372,9 +372,28 @@ function setupChatbot() {
     return div;
   }
 
+  // 드래그로 옮긴 뒤 패널을 열면 화면 밖으로 넘칠 수 있어, 열린 패널 전체가 보이도록 위치 보정
+  function clampIntoView() {
+    const el = byId("chatbot");
+    if (!el) return;
+    // 드래그로 left/top이 지정된 경우에만 보정(기본 right/bottom 위치는 그대로 둠)
+    if (!el.style.left && !el.style.top) return;
+    const margin = 8;
+    const rect = el.getBoundingClientRect();
+    let left = rect.left;
+    let top = rect.top;
+    if (rect.right > window.innerWidth - margin) left -= rect.right - (window.innerWidth - margin);
+    if (rect.bottom > window.innerHeight - margin) top -= rect.bottom - (window.innerHeight - margin);
+    left = Math.max(margin, left);
+    top = Math.max(margin, top);
+    el.style.left = `${left}px`;
+    el.style.top = `${top}px`;
+  }
+
   function openPanel() {
     panel.hidden = false;
     toggle.hidden = true;
+    clampIntoView();
     input.focus();
     if (!greeted) {
       greeted = true;

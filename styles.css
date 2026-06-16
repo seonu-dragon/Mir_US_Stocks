@@ -17,25 +17,6 @@
   --chip-border: #bfdbfe;
 }
 
-[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0b1120;
-  --panel: #141c2e;
-  --panel-soft: #1a2438;
-  --text: #e8edf7;
-  --muted: #94a3b8;
-  --line: #2a3650;
-  --blue: #60a5fa;
-  --primary: #60a5fa;
-  --green: #4ade80;
-  --red: #f87171;
-  --amber: #fbbf24;
-  --shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-  --link: #93c5fd;
-  --chip-bg: #1e3a5f;
-  --chip-border: #334155;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -4058,14 +4039,26 @@ footer {
   font-size: 12px;
 }
 
-.screener-table .ticker-link,
+.table-wrap .ticker-link,
 .compare-board .ticker-link {
+  height: auto;
+  min-height: 0;
   border: 0;
+  border-radius: 0;
   background: transparent;
   color: var(--link);
   font-weight: 800;
   cursor: pointer;
   padding: 0;
+  text-decoration: underline;
+  text-decoration-color: rgba(29, 78, 216, 0.3);
+}
+
+.table-wrap .ticker-link:hover,
+.compare-board .ticker-link:hover {
+  background: transparent;
+  color: #1e40af;
+  text-decoration-color: var(--link);
 }
 
 .compare-table-wrap { overflow-x: auto; }
@@ -4117,21 +4110,6 @@ footer {
 .earnings-day-head span { color: var(--muted); font-size: 12px; font-weight: 700; }
 
 .earnings-day-rows .compact-table { margin: 0; }
-
-[data-theme="dark"] .stock-events-card,
-[data-theme="dark"] .earnings-upcoming {
-  background: var(--panel-soft);
-}
-
-[data-theme="dark"] .social-row:hover {
-  background: var(--panel-soft);
-}
-
-[data-theme="dark"] .chart-card,
-[data-theme="dark"] .news-card,
-[data-theme="dark"] .briefing-box {
-  background: var(--panel);
-}
 
 @media (max-width: 640px) {
   .watchlist-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }

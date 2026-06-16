@@ -179,7 +179,7 @@ let chartState = {
 
 let compareTickers = [];
 const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
-const THEME_STORAGE_KEY = "mir_theme";
+
 const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
 let watchlist = [];
 let earningsCalendarCache = null;
@@ -246,7 +246,7 @@ function boot() {
   const route = new URLSearchParams(window.location.search);
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
   initWatchlist(route.get("watchlist"));
-  setupTheme();
+  document.documentElement.removeAttribute("data-theme");
   setupPwa();
   updateDataLoadedAt();
   renderCardNews();
@@ -4873,28 +4873,6 @@ function setupWatchlistUi() {
       window.prompt("관심종목 링크", url.toString());
     }
   });
-}
-
-// ===== 다크 모드 =====
-function setupTheme() {
-  const saved = localStorage.getItem(THEME_STORAGE_KEY);
-  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
-  applyTheme(saved || (prefersDark ? "dark" : "light"));
-  const btn = byId("themeToggle");
-  if (btn) btn.addEventListener("click", () => {
-    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
-    applyTheme(next);
-  });
-}
-
-function applyTheme(mode) {
-  const dark = mode === "dark";
-  document.documentElement.dataset.theme = dark ? "dark" : "light";
-  localStorage.setItem(THEME_STORAGE_KEY, dark ? "dark" : "light");
-  const meta = document.querySelector('meta[name="theme-color"]');
-  if (meta) meta.content = dark ? "#0b1120" : "#0f172a";
-  const btn = byId("themeToggle");
-  if (btn) btn.textContent = dark ? "☀️" : "🌙";
 }
 
 // ===== PWA =====

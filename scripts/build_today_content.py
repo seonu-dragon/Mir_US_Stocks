@@ -46,7 +46,6 @@ PLATFORM_FILES = [
     ("x", "x"),
     ("threads", "threads"),
     ("instagram", "instagram"),
-    ("facebook", "facebook"),
 ]
 
 

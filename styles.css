@@ -1922,6 +1922,60 @@ footer {
    Mobile usability (phones / small tablets) — placed last so it wins
    ========================================================================== */
 @media (max-width: 768px) {
+  .topbar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 12px 10px;
+  }
+
+  .topbar-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .topbar-left .eyebrow {
+    font-size: 11px;
+    line-height: 1.35;
+  }
+
+  .topbar-left h1 {
+    font-size: 20px;
+  }
+
+  .topbar-right {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    min-width: 0;
+    gap: 10px;
+  }
+
+  .cardnews-switch {
+    width: 100%;
+  }
+
+  .cardnews-carousel {
+    width: 100%;
+    max-width: 100%;
+    align-self: auto;
+    aspect-ratio: 16 / 9;
+    min-height: 140px;
+  }
+
+  .update-card {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .social-tooltip {
+    white-space: normal;
+    max-width: min(220px, 72vw);
+  }
+
   main { padding: 10px 10px 20px; }
   .panel { padding: 10px; }
 

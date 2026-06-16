@@ -1,8 +1,10 @@
+import argparse
 import hashlib
 import html
 import json
 import os
 import re
+import subprocess
 import tempfile
 import urllib.parse
 import urllib.request
@@ -2150,12 +2152,67 @@ def load_existing_snapshot():
         return {}
 
 
+def git_push_updates(updated_at_kst):
+    """Commit and push snapshot + detail files so GitHub Pages reflects the new data."""
+    git_dir = ROOT / ".git"
+    if not git_dir.exists():
+        print("[Git] .git not found; skipping push.")
+        return
+
+    try:
+        remote = subprocess.run(
+            ["git", "remote"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        if not remote.stdout.strip():
+            print("[Git] No remote configured; skipping push.")
+            return
+
+        print("[Git] Staging data/ for commit...")
+        subprocess.run(["git", "add", "data/"], cwd=ROOT, check=True)
+
+        status = subprocess.run(
+            ["git", "status", "--porcelain"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        if not status.stdout.strip():
+            print("[Git] No changes to commit.")
+            return
+
+        commit_msg = f"Auto-update market snapshot: {updated_at_kst} [skip ci]"
+        subprocess.run(["git", "commit", "-m", commit_msg], cwd=ROOT, check=True)
+        subprocess.run(["git", "push"], cwd=ROOT, check=True)
+        print("[Git] Pushed market data to remote.")
+    except subprocess.CalledProcessError as exc:
+        print(f"[Git] Push failed: {exc}")
+
+
 # Sections produced by a separate generator (not by this script). Carry them over from
 # the previous snapshot so running this script does not blank out those parts of the site.
 PRESERVED_KEYS = ("sector_charts", "ai_briefing", "social_sentiment")
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Build Mir_US_Stocks market snapshot data.")
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        default=False,
+        help="Commit and push data/ to the git remote after updating.",
+    )
+    parser.add_argument(
+        "--no-push",
+        action="store_true",
+        help="Skip git push even when --push is set (for wrapper scripts).",
+    )
+    args = parser.parse_args()
+
     snapshot = build_snapshot()
     light_snapshot, details = split_snapshot_details(snapshot)
     existing = load_existing_snapshot()
@@ -2170,10 +2227,14 @@ def main():
     if preserved:
         print(f"Preserved external sections from previous snapshot: {', '.join(preserved)}")
     groups = snapshot.get("groupCounts", {})
+    updated_at = light_snapshot.get("updatedAtKst", "")
     print(f"Updated {OUT} with {len(snapshot['stocks'])} symbols")
     print(f"Updated {OUT_JS}")
     print(f"Updated {DETAILS_DIR} with {len(details)} detail files")
     print(f"S&P 500: {groups.get('idx_sp500', 0)} / Nasdaq 100: {groups.get('idx_ndx100', 0)} / Nasdaq listed: {groups.get('idx_nasdaq', 0)}")
+
+    if args.push and not args.no_push:
+        git_push_updates(updated_at)
 
 
 if __name__ == "__main__":

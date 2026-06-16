@@ -69,12 +69,12 @@ export default {
     if (!ticker) return cors(json({ error: "missing ticker" }, 400));
 
     const symbol = ticker.replace(/\./g, "-"); // Yahoo uses BRK-B style
-    const [news, chart] = await Promise.all([fetchNews(symbol), fetchChart(symbol)]);
+    const [news, chart, earnings] = await Promise.all([fetchNews(symbol), fetchChart(symbol), fetchEarnings(symbol)]);
     // Optional ?model=... overrides the model list (for quick A/B testing).
     const modelOverride = url.searchParams.get("model");
     const { text: summary, error: summaryError, model: summaryModel } =
       await summarizeKorean(env, ticker, news, modelOverride);
-    return cors(json({ ticker, news, chart, summary, summaryError, summaryModel }));
+    return cors(json({ ticker, news, chart, earnings, summary, summaryError, summaryModel }));
   },
 };
 
@@ -137,6 +137,44 @@ async function fetchNews(symbol) {
       .filter((n) => n.title && n.link);
   } catch (e) {
     return [];
+  }
+}
+
+async function fetchEarnings(symbol) {
+  try {
+    const r = await fetch(
+      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=calendarEvents,earningsHistory,defaultKeyStatistics`,
+      { headers: UA }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    const result = (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) || {};
+    const cal = (result.calendarEvents && result.calendarEvents.earnings) || {};
+    const dates = (cal.earningsDate || [])
+      .map((ts) => {
+        const d = typeof ts === "number" ? new Date(ts * 1000) : new Date(ts);
+        return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+      })
+      .filter(Boolean);
+    const epsEstimate = cal.epsEstimate && cal.epsEstimate.raw != null
+      ? cal.epsEstimate.raw
+      : (cal.epsEstimate != null ? cal.epsEstimate : null);
+    const history = ((result.earningsHistory && result.earningsHistory.history) || [])
+      .slice(0, 4)
+      .map((row) => ({
+        quarter: (row.quarter && row.quarter.fmt) || row.period || "",
+        epsActual: row.epsActual && row.epsActual.raw != null ? row.epsActual.raw : null,
+        epsEstimate: row.epsEstimate && row.epsEstimate.raw != null ? row.epsEstimate.raw : null,
+        surprisePct: row.surprisePercent && row.surprisePercent.raw != null ? row.surprisePercent.raw : null,
+      }));
+    return {
+      nextDate: dates[0] || null,
+      dates,
+      epsEstimate,
+      history,
+    };
+  } catch (e) {
+    return null;
   }
 }
 
@@ -472,7 +510,11 @@ async function handleChat(request, env) {
     return json({ reply: "지금은 도우미를 사용할 수 없어요. 잠시 후 다시 시도해 주세요.", error: "no_ai_binding" });
   }
 
-  const messages = [{ role: "system", content: CHAT_SYSTEM_PROMPT }, ...history];
+  const stockContext = typeof body.stockContext === "string" ? body.stockContext.trim().slice(0, 4000) : "";
+  const systemContent = stockContext
+    ? `${CHAT_SYSTEM_PROMPT}\n\n[현재 사용자가 보고 있는 종목 컨텍스트]\n${stockContext}\n\n위 종목 데이터가 제공되면 이를 우선 참고해 설명하되, 매수/매도/목표가 추천은 하지 마세요.`
+    : CHAT_SYSTEM_PROMPT;
+  const messages = [{ role: "system", content: systemContent }, ...history];
   let lastError = "no_model";
   for (const model of CHAT_MODELS) {
     try {

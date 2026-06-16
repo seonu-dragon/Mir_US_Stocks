@@ -149,8 +149,10 @@ h1 {
 
 /* 오늘의 카드뉴스 미니 캐러셀: 데이터기준 박스와 같은 크기, 높이를 잘라내(crop) 글자 노출 */
 .cardnews-carousel {
+  position: relative;        /* 내부 img 절대배치 기준 */
+  align-self: stretch;       /* 높이를 데이터기준 박스와 동일하게 */
   flex: 0 0 auto;
-  width: 325px;            /* 데이터기준 박스보다 가로로 넓게(약 +30%) */
+  width: 325px;              /* 데이터기준 박스보다 가로로 넓게(약 +30%) */
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
@@ -164,11 +166,12 @@ h1 {
 .cardnews-carousel[hidden] { display: none; }
 
 .cardnews-carousel img {
-  display: block;
+  position: absolute;
+  inset: 0;                  /* 버튼(=데이터박스 높이)을 가득 채움 */
   width: 100%;
   height: 100%;
-  object-fit: cover;        /* 너비에 맞추고 위아래를 잘라 글자가 보이게 */
-  object-position: 50% 80%; /* 카드 헤드라인 위치를 보여줌(crop_sample 기준) */
+  object-fit: cover;         /* 너비에 맞추고 위아래를 잘라 글자가 보이게 */
+  object-position: 50% 80%;  /* 카드 헤드라인 위치를 보여줌(crop_sample 기준) */
   transition: opacity 0.25s ease;
 }
 
@@ -2925,20 +2928,20 @@ footer {
 
 .chatbot > * { pointer-events: auto; }
 
-/* 미르 캐릭터 챗봇 버튼(말풍선 + 마스코트) */
+/* 미르 캐릭터 챗봇 버튼: 마스코트가 버튼 본체, 말풍선은 위로 띄움(absolute) */
 .chat-fab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
+  position: relative;
+  display: block;
   padding: 0;
   border: none;
   background: transparent;
   cursor: pointer;
+  line-height: 0;
 }
 
 .chat-mascot {
-  width: 76px;
+  display: block;
+  width: 72px;
   height: auto;
   filter: drop-shadow(0 8px 14px rgba(20, 30, 50, 0.28));
   transition: transform 0.2s ease;
@@ -2953,13 +2956,17 @@ footer {
 }
 
 .chat-bubble {
-  position: relative;
+  position: absolute;
+  bottom: 100%;            /* 마스코트 위로 띄움(레이아웃 높이에 영향 없음) */
+  right: 0;
+  margin-bottom: 8px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 7px 13px;
   font-size: 12.5px;
   font-weight: 700;
+  line-height: 1.2;
   color: var(--text);
   white-space: nowrap;
   box-shadow: 0 8px 20px rgba(20, 30, 50, 0.16);
@@ -2970,9 +2977,8 @@ footer {
 .chat-bubble::after {
   content: "";
   position: absolute;
-  left: 50%;
+  right: 26px;
   bottom: -7px;
-  transform: translateX(-50%);
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
   border-top: 7px solid #fff;

@@ -27,6 +27,12 @@ const SUMMARY_MODELS = [
   "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "@cf/mistralai/mistral-small-3.1-24b-instruct",
 ];
+// Chatbot uses small/cheap models so it stays within the free Workers AI daily
+// neuron budget (large 70B/24B models burn through it fast).
+const CHAT_MODELS = [
+  "@cf/meta/llama-3.1-8b-instruct",
+  "@cf/meta/llama-3.2-3b-instruct",
+];
 
 export default {
   async fetch(request, env) {
@@ -425,9 +431,9 @@ async function handleChat(request, env) {
 
   const messages = [{ role: "system", content: CHAT_SYSTEM_PROMPT }, ...history];
   let lastError = "no_model";
-  for (const model of SUMMARY_MODELS) {
+  for (const model of CHAT_MODELS) {
     try {
-      const result = await env.AI.run(model, { messages, max_tokens: 600, temperature: 0.3 });
+      const result = await env.AI.run(model, { messages, max_tokens: 420, temperature: 0.3 });
       const text = String((result && result.response) || "").trim();
       if (text) return json({ reply: text, model });
       lastError = `empty_response:${model}`;

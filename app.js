@@ -358,7 +358,68 @@ function setupChatbot() {
     }
   }
 
-  toggle.addEventListener("click", openPanel);
+  // 캐릭터를 좌클릭 홀드로 드래그 이동(드래그 중엔 '날아가는 미르'로 교체)
+  const chatbotEl = byId("chatbot");
+  const mascotImg = toggle.querySelector(".chat-mascot");
+  const mascotNormal = mascotImg ? mascotImg.getAttribute("src") : "";
+  const mascotFly = "assets/mir-mascot-fly.png?v=1";
+  let drag = null;
+  let justDragged = false;
+
+  function onPointerMove(event) {
+    if (!drag) return;
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(dx, dy) < 6) return;
+    if (!drag.moved) {
+      drag.moved = true;
+      chatbotEl.classList.add("dragging");
+      chatbotEl.style.right = "auto";
+      chatbotEl.style.bottom = "auto";
+      if (mascotImg) mascotImg.src = mascotFly;
+    }
+    const w = chatbotEl.offsetWidth;
+    const h = chatbotEl.offsetHeight;
+    let left = event.clientX - drag.offsetX;
+    let top = event.clientY - drag.offsetY;
+    left = Math.max(4, Math.min(left, window.innerWidth - w - 4));
+    top = Math.max(4, Math.min(top, window.innerHeight - h - 4));
+    chatbotEl.style.left = `${left}px`;
+    chatbotEl.style.top = `${top}px`;
+  }
+
+  function endDrag() {
+    if (!drag) return;
+    const moved = drag.moved;
+    drag = null;
+    window.removeEventListener("pointermove", onPointerMove);
+    window.removeEventListener("pointerup", endDrag);
+    if (moved) {
+      justDragged = true;
+      chatbotEl.classList.remove("dragging");
+      if (mascotImg) mascotImg.src = mascotNormal;
+    }
+  }
+
+  toggle.addEventListener("pointerdown", (event) => {
+    if (event.button && event.button !== 0) return;
+    if (!chatbotEl) return;
+    const rect = chatbotEl.getBoundingClientRect();
+    drag = {
+      startX: event.clientX,
+      startY: event.clientY,
+      offsetX: event.clientX - rect.left,
+      offsetY: event.clientY - rect.top,
+      moved: false,
+    };
+    window.addEventListener("pointermove", onPointerMove);
+    window.addEventListener("pointerup", endDrag);
+  });
+
+  toggle.addEventListener("click", () => {
+    if (justDragged) { justDragged = false; return; }  // 드래그였으면 패널 열지 않음
+    openPanel();
+  });
   if (close) close.addEventListener("click", closePanel);
   form.addEventListener("submit", (event) => {
     event.preventDefault();

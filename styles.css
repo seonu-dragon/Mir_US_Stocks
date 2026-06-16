@@ -2935,9 +2935,14 @@ footer {
   padding: 0;
   border: none;
   background: transparent;
-  cursor: pointer;
+  cursor: grab;            /* 클릭 또는 드래그로 이동 */
   line-height: 0;
+  touch-action: none;      /* 터치 드래그 시 스크롤 방지 */
 }
+
+.chatbot.dragging .chat-fab { cursor: grabbing; }
+.chatbot.dragging .chat-mascot { animation: none; }
+.chatbot.dragging .chat-bubble { display: none; }
 
 .chat-mascot {
   display: block;

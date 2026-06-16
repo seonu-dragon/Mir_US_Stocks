@@ -21,7 +21,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260617a">
+    <link rel="stylesheet" href="styles.css?v=20260617b">
   </head>
   <body>
     <header class="topbar">
@@ -349,6 +349,7 @@
 
       <!-- ==================== 상위 종목 탭 ==================== -->
       <section class="panel" id="tab-top">
+        <div class="top-stocks-filters">
         <div class="toolbar">
           <label>
             Metric
@@ -401,6 +402,7 @@
             </select>
           </label>
         </div>
+        <div class="toolbar">
           <label>
             Preset
             <select id="topPreset">
@@ -438,6 +440,8 @@
             </select>
           </label>
           <button type="button" class="ghost" id="topResetFilters">Reset</button>
+        </div>
+        </div>
         <div class="section-title compact-title">
           <h2>Top Stocks</h2>
           <p id="topStocksMeta">조건에 맞는 상위 종목입니다.</p>

@@ -191,6 +191,7 @@ function boot() {
   byId("updatedAt").textContent = data.updatedAtKst || data.updated_at_kst || "스냅샷 데이터";
   renderCardNews();
   setupLightbox();
+  setupChatbot();
   renderSummary();
   setupTabs();
   setupFilters();
@@ -279,6 +280,100 @@ function setupLightbox() {
     else if (event.key === "ArrowLeft") lightboxStep(-1);
     else if (event.key === "ArrowRight") lightboxStep(1);
   });
+}
+
+// 사이트 도우미 챗봇 (Cloudflare Worker /chat → Workers AI)
+const CHAT_SUGGESTIONS = ["PER이 뭐야?", "ROE 설명해줘", "시장 지도 보는 법", "RS 점수가 뭐야?"];
+let chatHistory = [];
+let chatBusy = false;
+
+function setupChatbot() {
+  const panel = byId("chatPanel");
+  const toggle = byId("chatToggle");
+  const close = byId("chatClose");
+  const form = byId("chatForm");
+  const input = byId("chatInput");
+  const log = byId("chatLog");
+  const suggest = byId("chatSuggest");
+  if (!panel || !toggle || !form || !input || !log) return;
+
+  let greeted = false;
+
+  function addChatMessage(role, text) {
+    const div = document.createElement("div");
+    div.className = `chat-msg ${role === "user" ? "user" : "bot"}`;
+    div.textContent = text;
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  function openPanel() {
+    panel.hidden = false;
+    toggle.hidden = true;
+    input.focus();
+    if (!greeted) {
+      greeted = true;
+      addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법이나 PER·ROE 같은 용어를 물어보세요.");
+    }
+  }
+
+  function closePanel() {
+    panel.hidden = true;
+    toggle.hidden = false;
+  }
+
+  async function sendChat() {
+    if (chatBusy) return;
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    addChatMessage("user", text);
+    chatHistory.push({ role: "user", content: text });
+    chatBusy = true;
+    const typing = addChatMessage("bot", "답변을 준비하고 있어요…");
+    typing.classList.add("typing");
+    try {
+      if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
+      const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: chatHistory.slice(-10) }),
+      });
+      const payload = await res.json();
+      const reply = (payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.";
+      typing.classList.remove("typing");
+      typing.textContent = reply;
+      chatHistory.push({ role: "assistant", content: reply });
+    } catch (err) {
+      typing.classList.remove("typing");
+      typing.textContent = "지금은 도우미에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.";
+    } finally {
+      chatBusy = false;
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+
+  toggle.addEventListener("click", openPanel);
+  if (close) close.addEventListener("click", closePanel);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    sendChat();
+  });
+
+  if (suggest) {
+    CHAT_SUGGESTIONS.forEach((q) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "chat-chip";
+      chip.textContent = q;
+      chip.addEventListener("click", () => {
+        input.value = q;
+        sendChat();
+      });
+      suggest.appendChild(chip);
+    });
+  }
 }
 
 const marketHeader = { fng: null, fx: [] };

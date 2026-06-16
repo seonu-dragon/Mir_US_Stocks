@@ -82,8 +82,105 @@ h1 {
 /* SNS 채널 아이콘 줄 (헤더 가운데) */
 .social-links {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
+}
+
+.social-link-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.social-tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(15, 23, 42, 0.96);
+  color: #e2e8f0;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.35;
+  white-space: nowrap;
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease,
+    background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  z-index: 20;
+}
+
+.social-tooltip::before {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom-color: rgba(15, 23, 42, 0.96);
+  transition: border-bottom-color 0.15s ease;
+}
+
+.social-link-wrap:hover .social-tooltip,
+.social-link-wrap:focus-within .social-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
+}
+
+.social-link-wrap:has(.sl-instagram):hover .social-tooltip,
+.social-link-wrap:has(.sl-instagram):focus-within .social-tooltip {
+  background: #d6249f;
+  border-color: #d6249f;
+  color: #fff;
+}
+
+.social-link-wrap:has(.sl-instagram):hover .social-tooltip::before,
+.social-link-wrap:has(.sl-instagram):focus-within .social-tooltip::before {
+  border-bottom-color: #d6249f;
+}
+
+.social-link-wrap:has(.sl-x):hover .social-tooltip,
+.social-link-wrap:has(.sl-x):focus-within .social-tooltip {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.social-link-wrap:has(.sl-x):hover .social-tooltip::before,
+.social-link-wrap:has(.sl-x):focus-within .social-tooltip::before {
+  border-bottom-color: #000;
+}
+
+.social-link-wrap:has(.sl-threads):hover .social-tooltip,
+.social-link-wrap:has(.sl-threads):focus-within .social-tooltip {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.social-link-wrap:has(.sl-threads):hover .social-tooltip::before,
+.social-link-wrap:has(.sl-threads):focus-within .social-tooltip::before {
+  border-bottom-color: #000;
+}
+
+.social-link-wrap:has(.sl-naver):hover .social-tooltip,
+.social-link-wrap:has(.sl-naver):focus-within .social-tooltip {
+  background: #03c75a;
+  border-color: #03c75a;
+  color: #fff;
+}
+
+.social-link-wrap:has(.sl-naver):hover .social-tooltip::before,
+.social-link-wrap:has(.sl-naver):focus-within .social-tooltip::before {
+  border-bottom-color: #03c75a;
 }
 
 .social-link {
@@ -152,6 +249,7 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   gap: 6px;
 }
 
@@ -162,6 +260,7 @@ h1 {
   font-weight: 700;
   color: #cbd5e1;
   white-space: nowrap;
+  text-align: center;
 }
 
 .cardnews-tabs {

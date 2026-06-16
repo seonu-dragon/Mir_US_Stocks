@@ -148,8 +148,8 @@ h1 {
 
 /* 왼쪽 카드뉴스 세로 레일 (전체 이미지를 크게, 레일만 세로 스크롤) */
 .cardnews-rail {
-  flex: 0 0 320px;
-  width: 320px;
+  flex: 0 0 440px;
+  width: 440px;
   position: sticky;
   top: 12px;
   max-height: calc(100vh - 24px);
@@ -408,7 +408,7 @@ main {
   }
   .cardnews-rail .cardnews-thumb {
     flex: 0 0 auto;
-    width: 200px;
+    width: 300px;
   }
 }
 

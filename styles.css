@@ -93,15 +93,19 @@ h1 {
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  color: #f1f5f9;
   transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .social-link svg {
   width: 20px;
   height: 20px;
+  fill: currentColor;
+}
+
+.social-link svg path {
   fill: currentColor;
 }
 

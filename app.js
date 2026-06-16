@@ -208,9 +208,9 @@ function boot() {
 }
 
 // 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { us:{title,images}, kr:{title,images} }
-// 두 버전(미국장 마감 / 국내 뉴스)을 스위치로 선택, 헤더 높이에 맞춰 자동 전환, 클릭 시 라이트박스.
+// 두 버전(미국 뉴스 / 국내 뉴스)을 스위치로 선택, 헤더 높이에 맞춰 자동 전환, 클릭 시 라이트박스.
 let cardnewsTimer = null;
-let cardnewsView = "us";  // 기본: 미국장 마감(미국 주식 사이트)
+let cardnewsView = "us";  // 기본: 미국 뉴스(미국 주식 사이트)
 
 function renderCardNews() {
   const band = byId("contentBand");

@@ -937,6 +937,7 @@ const TAB_REDIRECT = {
   top: { tab: "search", sub: "top" },
   jump: { tab: "search", sub: "jump" },
   compare: { tab: "search", sub: "compare" },
+  screener: { tab: "search", sub: "screener" },
   earnings: { tab: "calendar", sub: "earnings" },
 };
 
@@ -958,6 +959,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "top") renderTopStocks();
   if (searchSubTab === "jump") renderJump();
   if (searchSubTab === "compare") renderCompareBoard();
+  if (searchSubTab === "screener") renderScreener();
   if (searchSubTab === "analysis") renderSearch();
   if (push) {
     history.pushState({ tab: "search", sub: searchSubTab, ticker: selectedTicker }, "");
@@ -993,7 +995,6 @@ function activateTab(name, { push = true, ticker = null, sub = null } = {}) {
   currentTab = name;
   if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
   if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
-  if (name === "screener") renderScreener();
   if (name === "map") renderTreemap();
   if (push) {
     history.pushState({ tab: name, sub: name === "search" ? searchSubTab : (name === "calendar" ? calendarSubTab : null), ticker }, "");

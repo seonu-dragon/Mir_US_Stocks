@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260618c">
+    <link rel="stylesheet" href="styles.css?v=20260618d">
   </head>
   <body>
     <header class="topbar">
@@ -112,7 +112,6 @@
       <nav class="tabs" aria-label="Dashboard sections">
         <button class="tab is-active" data-tab="map">시장 지도</button>
         <button class="tab" data-tab="sector">섹터 흐름</button>
-        <button class="tab" data-tab="screener">스크리너</button>
         <button class="tab" data-tab="search">종목 분석</button>
         <button class="tab" data-tab="bulk">관심 리스트</button>
         <button class="tab" data-tab="health">마켓 데이터</button>
@@ -367,13 +366,14 @@
         </div>
       </section>
 
-      <!-- ==================== 종목 분석 탭 (하위: 분석·상위·비교·급등) ==================== -->
+      <!-- ==================== 종목 분석 탭 (하위: 분석·상위·비교·급등·스크리너) ==================== -->
       <section class="panel" id="tab-search">
         <nav class="sub-tabs" id="searchSubTabs" aria-label="Stock analysis sub-sections">
           <button class="sub-tab is-active" data-sub="analysis">📈 종목 분석</button>
           <button class="sub-tab" data-sub="top">🏆 상위 종목</button>
           <button class="sub-tab" data-sub="compare">⚖️ 종목 비교</button>
           <button class="sub-tab" data-sub="jump">🚀 급등/거래량</button>
+          <button class="sub-tab" data-sub="screener">🔍 스크리너</button>
         </nav>
 
         <div class="sub-panel" id="sub-top">
@@ -637,10 +637,8 @@
           </div>
         </div>
         </div>
-      </section>
 
-      <!-- ==================== 스크리너 탭 ==================== -->
-      <section class="panel" id="tab-screener">
+        <div class="sub-panel" id="sub-screener">
         <div class="section-title">
           <h2>종목 스크리너</h2>
           <p>조건에 맞는 종목을 표로 검색합니다. 결과에서 ★를 눌러 관심종목에 추가할 수 있습니다.</p>
@@ -711,6 +709,7 @@
             </thead>
             <tbody id="screenerTable"></tbody>
           </table>
+        </div>
         </div>
       </section>
 
@@ -936,6 +935,6 @@
     </div>
 
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260618c"></script>
+    <script src="app.js?v=20260618d"></script>
   </body>
 </html>

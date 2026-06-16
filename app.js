@@ -189,7 +189,8 @@ function boot() {
   const route = new URLSearchParams(window.location.search);
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
   byId("updatedAt").textContent = data.updatedAtKst || data.updated_at_kst || "스냅샷 데이터";
-  renderTodayContent();
+  renderCardNews();
+  setupLightbox();
   renderSummary();
   setupTabs();
   setupFilters();
@@ -205,42 +206,79 @@ function boot() {
   if (route.get("ticker")) selectTicker(route.get("ticker"));
 }
 
-// 오늘의 콘텐츠 띠: data.todayContent = [{ platform, title, url, thumb, time }]
-const CONTENT_PLATFORM = {
-  instagram: { label: "Instagram", cls: "b-instagram" },
-  x: { label: "X", cls: "b-x" },
-  threads: { label: "Threads", cls: "b-threads" },
-  naver: { label: "네이버 블로그", cls: "b-naver" },
-  cardnews: { label: "카드뉴스", cls: "b-cardnews" }
-};
-
-function renderTodayContent() {
+// 오늘의 카드뉴스 갤러리: data.cardNews = { title, images: ["data/content/<date>/02-topic.png", ...] }
+function renderCardNews() {
   const band = byId("contentBand");
-  const track = byId("contentBandTrack");
-  if (!band || !track) return;
-  const items = Array.isArray(data.todayContent) ? data.todayContent : [];
-  if (!items.length) {
+  const strip = byId("cardnewsStrip");
+  if (!band || !strip) return;
+  const cardNews = data.cardNews || {};
+  const images = Array.isArray(cardNews.images) ? cardNews.images : [];
+  if (!images.length) {
     band.hidden = true;
     return;
   }
   band.hidden = false;
   const meta = byId("contentBandMeta");
-  if (meta) meta.textContent = `미르가 오늘 올린 글 ${items.length}건`;
-  track.innerHTML = items.map((it) => {
-    const p = CONTENT_PLATFORM[(it.platform || "").toLowerCase()] || { label: it.platform || "글", cls: "" };
-    const thumb = it.thumb
-      ? `<img class="content-card-thumb" src="${escapeHtml(it.thumb)}" alt="" loading="lazy">`
-      : "";
-    const time = it.time ? `<span class="muted" style="font-size:11px;">${escapeHtml(it.time)}</span>` : "";
-    return `<a class="content-card" href="${escapeHtml(it.url || "#")}" target="_blank" rel="noopener">
-      ${thumb}
-      <div class="content-card-body">
-        <span class="content-card-badge ${p.cls}">${escapeHtml(p.label)}</span>
-        <p class="content-card-title">${escapeHtml(it.title || "")}</p>
-        ${time}
-      </div>
-    </a>`;
-  }).join("");
+  if (meta) meta.textContent = cardNews.title || "";
+  strip.innerHTML = images.map((src, i) =>
+    `<button class="cardnews-thumb" type="button" data-index="${i}" aria-label="카드뉴스 ${i + 1}장 크게 보기">
+      <img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 1}장" loading="lazy">
+    </button>`
+  ).join("");
+  strip.querySelectorAll(".cardnews-thumb").forEach((btn) => {
+    btn.addEventListener("click", () => openLightbox(images, Number(btn.dataset.index)));
+  });
+}
+
+// 카드뉴스 크게 보기 라이트박스
+let lightboxImages = [];
+let lightboxIndex = 0;
+
+function updateLightboxImg() {
+  const img = byId("lightboxImg");
+  if (img) img.src = lightboxImages[lightboxIndex] || "";
+}
+
+function openLightbox(images, index) {
+  const lb = byId("lightbox");
+  if (!lb) return;
+  lightboxImages = images;
+  lightboxIndex = index || 0;
+  updateLightboxImg();
+  lb.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeLightbox() {
+  const lb = byId("lightbox");
+  if (lb) lb.hidden = true;
+  document.body.style.overflow = "";
+}
+
+function lightboxStep(delta) {
+  if (!lightboxImages.length) return;
+  lightboxIndex = (lightboxIndex + delta + lightboxImages.length) % lightboxImages.length;
+  updateLightboxImg();
+}
+
+function setupLightbox() {
+  const lb = byId("lightbox");
+  if (!lb) return;
+  const close = byId("lightboxClose");
+  const prev = byId("lightboxPrev");
+  const next = byId("lightboxNext");
+  if (close) close.addEventListener("click", closeLightbox);
+  if (prev) prev.addEventListener("click", () => lightboxStep(-1));
+  if (next) next.addEventListener("click", () => lightboxStep(1));
+  lb.addEventListener("click", (event) => {
+    if (event.target === lb) closeLightbox();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (lb.hidden) return;
+    if (event.key === "Escape") closeLightbox();
+    else if (event.key === "ArrowLeft") lightboxStep(-1);
+    else if (event.key === "ArrowRight") lightboxStep(1);
+  });
 }
 
 const marketHeader = { fng: null, fx: [] };

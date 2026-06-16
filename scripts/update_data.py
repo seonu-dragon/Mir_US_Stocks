@@ -2155,9 +2155,8 @@ def load_existing_snapshot():
 
 def load_today_content():
     """Read data/today_content.json (written by scripts/build_today_content.py) and
-    return today's homepage content items. Accepts either a bare list or
-    {"date": "YYYY-MM-DD", "items": [...]}; a stale date (not today KST) is ignored
-    so yesterday's posts never linger on the site."""
+    return today's card-news gallery as {"title": ..., "images": [...]}. A stale date
+    (not today KST) is ignored so yesterday's deck never lingers on the site."""
     try:
         with open(TODAY_CONTENT_FILE, encoding="utf-8") as handle:
             raw = json.load(handle)
@@ -2167,18 +2166,18 @@ def load_today_content():
         print(f"[content] Failed to read {TODAY_CONTENT_FILE.name}: {exc}")
         return None
 
-    if isinstance(raw, dict):
-        date = str(raw.get("date") or "").strip()
-        if date:
-            today = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
-            if date != today:
-                print(f"[content] today_content.json date {date} != today {today}; skipping.")
-                return None
-        items = raw.get("items")
-        return items if isinstance(items, list) else None
-    if isinstance(raw, list):
-        return raw
-    return None
+    if not isinstance(raw, dict):
+        return None
+    date = str(raw.get("date") or "").strip()
+    if date:
+        today = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d")
+        if date != today:
+            print(f"[content] today_content.json date {date} != today {today}; skipping.")
+            return None
+    images = raw.get("images")
+    if not isinstance(images, list) or not images:
+        return None
+    return {"title": raw.get("title") or "", "images": images}
 
 
 def git_push_updates(updated_at_kst):
@@ -2251,14 +2250,14 @@ def main():
             light_snapshot[key] = existing[key]
             preserved.append(key)
 
-    # Homepage "오늘의 콘텐츠" band: inject today's manifest if present, otherwise carry
-    # over whatever was on the previous snapshot so a market rebuild never blanks it.
-    today_content = load_today_content()
-    if today_content is not None:
-        light_snapshot["todayContent"] = today_content
-        print(f"[content] Injected todayContent with {len(today_content)} item(s).")
-    elif "todayContent" in existing:
-        light_snapshot["todayContent"] = existing["todayContent"]
+    # Homepage "오늘의 카드뉴스" gallery: inject today's manifest if present, otherwise
+    # carry over the previous snapshot's value so a market rebuild never blanks it.
+    card_news = load_today_content()
+    if card_news is not None:
+        light_snapshot["cardNews"] = card_news
+        print(f"[content] Injected cardNews with {len(card_news['images'])} image(s).")
+    elif "cardNews" in existing:
+        light_snapshot["cardNews"] = existing["cardNews"]
 
     write_details(details)
     write_json(light_snapshot)

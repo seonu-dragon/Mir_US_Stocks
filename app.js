@@ -150,10 +150,39 @@ let chartState = {
   showEma20: false,
   showEma60: false,
   showBoll: false,
+  showVwap: false,
+  showSupertrend: false,
+  showIchimoku: false,
+  showKeltner: false,
+  showDonchian: false,
   showVolume: true,
+  showVolMa20: false,
+  showVolumeRatio: false,
+  showObv: false,
+  showAd: false,
   showRsi: true,
   showMacd: false,
-  showStoch: false
+  showStoch: false,
+  showRoc: false,
+  showMomentum: false,
+  showWilliams: false,
+  showAtr: false,
+  showAdx: false,
+  showCci: false,
+  showRsSpy: false,
+  showRsQqq: false,
+  showRsSector: false,
+  showMansfield: false
+};
+
+let compareTickers = [];
+
+const TOP_PRESETS = {
+  leaders: { metric: "rsScore", minRs: 85, minEps: 70, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
+  breakout: { metric: "volumeRatio", minRs: 75, minEps: 0, minVolume: 1.5, minMarketCap: 1, newHigh: "0-2%", recency: "All" },
+  pullback: { metric: "rsScore", minRs: 80, minEps: 60, minVolume: 0, minMarketCap: 5, newHigh: "5-10%", recency: "All" },
+  growth: { metric: "epsRevScore", minRs: 70, minEps: 80, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" },
+  value: { metric: "forwardPE", minRs: 50, minEps: 50, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" }
 };
 
 const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
@@ -880,9 +909,18 @@ function setupEvents() {
     byId("heatmapSearch").value = "";
     renderTreemap();
   });
-  ["topMetric", "topBucket", "topSector", "topNewHighRecency", "topNewHigh"].forEach((id) => {
-    byId(id).addEventListener("change", renderTopStocks);
+  ["topMetric", "topBucket", "topSector", "topNewHighRecency", "topNewHigh", "topMinRs", "topMinEps", "topMinVolume", "topMinMarketCap", "topLimit"].forEach((id) => {
+    const el = byId(id);
+    if (el) el.addEventListener("change", () => {
+      const preset = byId("topPreset");
+      if (preset) preset.value = "custom";
+      renderTopStocks();
+    });
   });
+  const topPreset = byId("topPreset");
+  if (topPreset) topPreset.addEventListener("change", applyTopPreset);
+  const topReset = byId("topResetFilters");
+  if (topReset) topReset.addEventListener("click", resetTopScreener);
   ["etfRsBenchmark", "etfRsPeriod", "etfRsGroup"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", () => {
@@ -1039,7 +1077,10 @@ function setupChartControls() {
     });
   }
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-   "showEma20", "showEma60", "showBoll", "showVolume", "showRsi", "showMacd", "showStoch"].forEach((id) => {
+   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian",
+   "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
+   "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
+   "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", (event) => {
       chartState[id] = event.target.checked;
@@ -1047,9 +1088,57 @@ function setupChartControls() {
     });
   });
   setupChartInteractions();
+  setupChartCompareControls();
 }
 
-// TradingView-style mouse: wheel to zoom (cursor anchored), drag to pan.
+
+function setupChartCompareControls() {
+  const input = byId("chartCompareInput");
+  const add = byId("chartCompareAdd");
+  if (!input || !add) return;
+  add.addEventListener("click", () => addChartCompareTicker(input.value));
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      addChartCompareTicker(input.value);
+    }
+  });
+  renderCompareChips();
+}
+
+function addChartCompareTicker(raw) {
+  const ticker = String(raw || "").trim().toUpperCase();
+  if (!ticker || ticker === selectedTicker || compareTickers.includes(ticker)) return;
+  if (!stockByTicker(ticker)) {
+    const input = byId("chartCompareInput");
+    if (input) input.value = "";
+    return;
+  }
+  compareTickers = compareTickers.concat(ticker).slice(-5);
+  const input = byId("chartCompareInput");
+  if (input) input.value = "";
+  loadStockDetail(ticker).finally(() => {
+    renderCompareChips();
+    redrawChart();
+  });
+}
+
+function removeChartCompareTicker(ticker) {
+  compareTickers = compareTickers.filter((item) => item !== ticker);
+  renderCompareChips();
+  redrawChart();
+}
+
+function renderCompareChips() {
+  const box = byId("chartCompareList");
+  if (!box) return;
+  box.innerHTML = compareTickers.length
+    ? compareTickers.map((ticker) => `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}">${escapeHtml(ticker)} <span>x</span></button>`).join("")
+    : `<span class="muted">비교 종목을 추가하면 같은 기간 수익률 패널에 표시됩니다.</span>`;
+  box.querySelectorAll(".compare-chip").forEach((chip) => {
+    chip.addEventListener("click", () => removeChartCompareTicker(chip.dataset.ticker));
+  });
+}// TradingView-style mouse: wheel to zoom (cursor anchored), drag to pan.
 function setupChartInteractions() {
   const svg = byId("priceChart");
   if (!svg) return;
@@ -2270,17 +2359,38 @@ function renderTopStocks() {
   const sector = byId("topSector").value;
   const recency = byId("topNewHighRecency").value;
   const newHigh = byId("topNewHigh").value;
+  const minRs = numberInputValue("topMinRs", 0);
+  const minEps = numberInputValue("topMinEps", 0);
+  const minVolume = numberInputValue("topMinVolume", 0);
+  const minMarketCap = numberInputValue("topMinMarketCap", 0);
+  const limit = Math.max(1, numberInputValue("topLimit", 24));
+  const preset = byId("topPreset")?.value || "custom";
   const rows = data.stocks
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
     .filter((item) => recency === "All" || String(item.newHighRecency4w) === recency)
     .filter((item) => newHighMatches(item, newHigh))
+    .filter((item) => (Number(item.rsScore) || 0) >= minRs)
+    .filter((item) => (Number(item.epsRevScore) || 0) >= minEps)
+    .filter((item) => (Number(item.volumeRatio) || 0) >= minVolume)
+    .filter((item) => (Number(item.marketCapB) || 0) >= minMarketCap)
+    .filter((item) => topPresetMatches(item, preset))
     .map((item) => ({ item, value: metricValue(item, metric) }))
     .filter(({ value }) => Number.isFinite(value))
     .sort((a, b) => metricSortDirection(metric) * (b.value - a.value))
-    .slice(0, 24);
+    .slice(0, limit);
 
-  byId("topStocksMeta").textContent = `${labelForSelect("topBucket")} · ${sector} · ${labelForSelect("topMetric")} 기준 상위 ${rows.length}개`;
+  const filterText = [
+    labelForSelect("topBucket"),
+    sector,
+    labelForSelect("topMetric"),
+    preset !== "custom" ? labelForSelect("topPreset") : "",
+    minRs ? `RS >= ${minRs}` : "",
+    minEps ? `EPS >= ${minEps}` : "",
+    minVolume ? `Vol >= ${minVolume}x` : "",
+    minMarketCap ? `MktCap >= $${minMarketCap}B` : ""
+  ].filter(Boolean).join(" · ");
+  byId("topStocksMeta").textContent = `${filterText} · ${rows.length}개`;
 
   if (!rows.length) {
     byId("topStocks").innerHTML = `<article class="rank-card"><h3>조건에 맞는 종목이 없습니다.</h3><p class="muted">필터를 완화해보세요.</p></article>`;
@@ -2301,8 +2411,8 @@ function renderTopStocks() {
         ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
         ${miniMetric("RS", item.rsScore)}
         ${miniMetric("EPS", item.epsRevScore)}
+        ${miniMetric("거래량", `${Number(item.volumeRatio || 0).toFixed(1)}x`)}
         ${miniMetric("신고가", newHighLabel(item))}
-        ${miniMetric("4W", item.newHighRecency4w)}
       </div>
     </article>
   `).join("");
@@ -2310,6 +2420,54 @@ function renderTopStocks() {
   byId("topStocks").querySelectorAll(".top-stock-card").forEach((card) => {
     card.addEventListener("click", () => selectTicker(card.dataset.ticker, { openSearch: true }));
   });
+}
+
+function numberInputValue(id, fallback = 0) {
+  const value = Number(byId(id)?.value);
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function applyTopPreset() {
+  const key = byId("topPreset")?.value || "custom";
+  const preset = TOP_PRESETS[key];
+  if (!preset) {
+    renderTopStocks();
+    return;
+  }
+  byId("topMetric").value = preset.metric;
+  byId("topNewHigh").value = preset.newHigh;
+  byId("topNewHighRecency").value = preset.recency;
+  byId("topMinRs").value = preset.minRs || "";
+  byId("topMinEps").value = preset.minEps || "";
+  byId("topMinVolume").value = preset.minVolume || "";
+  byId("topMinMarketCap").value = preset.minMarketCap || "";
+  renderTopStocks();
+}
+
+function resetTopScreener() {
+  byId("topPreset").value = "custom";
+  byId("topMetric").value = "changePct";
+  byId("topBucket").value = "idx_sp500";
+  byId("topSector").value = "All";
+  byId("topNewHighRecency").value = "All";
+  byId("topNewHigh").value = "All";
+  ["topMinRs", "topMinEps", "topMinVolume", "topMinMarketCap"].forEach((id) => { byId(id).value = ""; });
+  byId("topLimit").value = "24";
+  renderTopStocks();
+}
+
+function topPresetMatches(item, preset) {
+  if (!preset || preset === "custom") return true;
+  const distance = Number(item.newHighDistancePct);
+  if (preset === "leaders") return item.rsScore >= 85 && item.monthChangePct > 0;
+  if (preset === "breakout") return item.rsScore >= 75 && item.volumeRatio >= 1.5 && Number.isFinite(distance) && distance <= 5;
+  if (preset === "pullback") return item.rsScore >= 80 && item.monthChangePct > 0 && item.changePct < 1 && Number.isFinite(distance) && distance >= 3;
+  if (preset === "growth") return item.epsRevScore >= 80 && item.rsScore >= 65;
+  if (preset === "value") {
+    const pe = Number(item.fundamentals?.forwardPE ?? item.fundamentals?.pe);
+    return item.marketCapB >= 10 && Number.isFinite(pe) && pe > 0 && pe <= 25;
+  }
+  return true;
 }
 
 function metricValue(item, metric) {
@@ -2412,6 +2570,7 @@ function renderSearch() {
   byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
   byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
   drawChart(item);
+  renderStockEvents(item);
   renderFundamentals(item);
   renderNews(item);
   maybeFetchLiveData(base);
@@ -2421,6 +2580,7 @@ function renderSearch() {
     byId("chartTitle").textContent = `${refreshed.ticker} · ${refreshed.company}`;
     byId("searchFacts").innerHTML = stockFacts(refreshed, "Search Ticker");
     drawChart(refreshed);
+    renderStockEvents(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
   });
@@ -2463,6 +2623,7 @@ function maybeFetchLiveData(base) {
       const refreshedBase = data.stocks.find((row) => row.ticker === ticker) || base;
       const merged = applyLive(withDetail(refreshedBase));
       drawChart(merged);
+      renderStockEvents(merged);
       renderFundamentals(merged);
       renderNews(merged);
     })
@@ -2613,13 +2774,25 @@ function drawChart(item) {
     return;
   }
 
+  requestBenchmarkDetails(item);
+
   // Bottom panels stack below the price plot (dynamic height).
   const gap = 18;
   const panels = [];
-  if (chartState.showVolume) panels.push({ t: "volume", h: 46 });
+  if (chartState.showVolume || chartState.showVolMa20 || chartState.showVolumeRatio) panels.push({ t: "volume", h: 52 });
+  if (chartState.showObv) panels.push({ t: "obv", h: 56 });
+  if (chartState.showAd) panels.push({ t: "ad", h: 56 });
   if (chartState.showRsi) panels.push({ t: "rsi", h: 60 });
   if (chartState.showMacd) panels.push({ t: "macd", h: 70 });
   if (chartState.showStoch) panels.push({ t: "stoch", h: 60 });
+  if (chartState.showRoc) panels.push({ t: "roc", h: 58 });
+  if (chartState.showMomentum) panels.push({ t: "momentum", h: 58 });
+  if (chartState.showWilliams) panels.push({ t: "williams", h: 58 });
+  if (chartState.showAtr) panels.push({ t: "atr", h: 58 });
+  if (chartState.showAdx) panels.push({ t: "adx", h: 62 });
+  if (chartState.showCci) panels.push({ t: "cci", h: 58 });
+  if (hasRelativePanel(item)) panels.push({ t: "relative", h: 70 });
+  if (compareTickers.length) panels.push({ t: "compare", h: 72 });
   const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
   const axisH = 26;
   const height = padT + plotH + panelsH + axisH;
@@ -2642,6 +2815,8 @@ function drawChart(item) {
     const value = max - range * ratio;
     return `<line x1="${padL}" y1="${y}" x2="${padL + plotW}" y2="${y}" class="chart-grid"></line><text x="${width - 8}" y="${y + 4}" class="chart-axis" text-anchor="end">$${value.toFixed(2)}</text>`;
   }).join("");
+  const overlayYFor = (value) => yFor(Math.max(min, Math.min(max, value)));
+
 
   // Bollinger Bands (20, 2σ) overlay.
   let bollSvg = "";
@@ -2671,6 +2846,11 @@ function drawChart(item) {
     return `<g class="${up ? "candle-up" : "candle-down"}"><line x1="${x.toFixed(1)}" y1="${yFor(row.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yFor(row.l).toFixed(1)}"></line><rect x="${(x - candleW / 2).toFixed(1)}" y="${bodyY.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}"></rect></g>`;
   }).join("");
 
+  const keltner = chartState.showKeltner ? keltnerChannels(rows, 20, 2) : null;
+  const donchian = chartState.showDonchian ? donchianChannels(rows, 20) : null;
+  const ichimoku = chartState.showIchimoku ? ichimokuArrays(rows) : null;
+  const supertrend = chartState.showSupertrend ? supertrendArray(rows, 10, 3) : null;
+
   const overlays = [
     chartState.showSma5 ? averagePath(closes, 5, xFor, yFor, "#60a5fa") : "",
     chartState.showSma10 ? averagePath(closes, 10, xFor, yFor, "#34d399") : "",
@@ -2678,17 +2858,32 @@ function drawChart(item) {
     chartState.showSma60 ? averagePath(closes, 60, xFor, yFor, "#d98a2b") : "",
     chartState.showSma120 ? averagePath(closes, 120, xFor, yFor, "#facc15") : "",
     chartState.showEma20 ? pathFromSeries(emaArray(closes, 20), xFor, yFor, "#f472b6", 1.6, "") : "",
-    chartState.showEma60 ? pathFromSeries(emaArray(closes, 60), xFor, yFor, "#38bdf8", 1.6, "") : ""
+    chartState.showEma60 ? pathFromSeries(emaArray(closes, 60), xFor, yFor, "#38bdf8", 1.6, "") : "",
+    chartState.showVwap ? pathFromSeries(vwapArray(rows), xFor, overlayYFor, "#f97316", 1.7, "") : "",
+    supertrend ? pathFromSeries(supertrend, xFor, overlayYFor, "#22c55e", 1.6, "5 3") : "",
+    ichimoku ? renderIchimokuOverlay(ichimoku, xFor, overlayYFor) : "",
+    keltner ? renderChannelOverlay(keltner.upper, keltner.lower, keltner.mid, xFor, overlayYFor, "#fb7185") : "",
+    donchian ? renderChannelOverlay(donchian.upper, donchian.lower, donchian.mid, xFor, overlayYFor, "#818cf8") : ""
   ].join("");
 
   // Stacked indicator panels.
   let cursorY = padT + plotH + gap;
   let panelsSvg = "";
   for (const p of panels) {
-    if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, cursorY, p.h, candleW);
+    if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW);
+    else if (p.t === "obv") panelsSvg += renderObvPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "ad") panelsSvg += renderAdPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "rsi") panelsSvg += renderRsiPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "macd") panelsSvg += renderMacdPanel(closes, xFor, padL, padL + plotW, cursorY, p.h, candleW);
     else if (p.t === "stoch") panelsSvg += renderStochPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "roc") panelsSvg += renderRocPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "momentum") panelsSvg += renderMomentumPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "williams") panelsSvg += renderWilliamsPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "atr") panelsSvg += renderAtrPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "adx") panelsSvg += renderAdxPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "cci") panelsSvg += renderCciPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "relative") panelsSvg += renderRelativePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "compare") panelsSvg += renderComparePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     cursorY += p.h + gap;
   }
 
@@ -2722,7 +2917,7 @@ function drawChart(item) {
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
     ${dateLabels}
     <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${tfLabel} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
-    <text x="${padL}" y="36" class="chart-axis">${activeSmaLabels()}</text>
+    <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
     <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">$${last.c.toFixed(2)}</text>
   `;
 }
@@ -2840,18 +3035,478 @@ function stochArrays(rows, kPeriod, dPeriod) {
   return { k, d };
 }
 
+function smaArray(values, period) {
+  const out = Array(values.length).fill(null);
+  for (let i = period - 1; i < values.length; i += 1) {
+    const chunk = values.slice(i - period + 1, i + 1);
+    out[i] = chunk.reduce((sum, value) => sum + value, 0) / period;
+  }
+  return out;
+}
+
+function vwapArray(rows) {
+  const out = Array(rows.length).fill(null);
+  let pv = 0;
+  let volume = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    const v = row.v || 0;
+    const typical = (row.h + row.l + row.c) / 3;
+    pv += typical * v;
+    volume += v;
+    out[i] = volume ? pv / volume : typical;
+  }
+  return out;
+}
+
+function trueRangeArray(rows) {
+  return rows.map((row, i) => {
+    if (!i) return row.h - row.l;
+    const prevClose = rows[i - 1].c;
+    return Math.max(row.h - row.l, Math.abs(row.h - prevClose), Math.abs(row.l - prevClose));
+  });
+}
+
+function wilderArray(values, period) {
+  const out = Array(values.length).fill(null);
+  if (values.length < period) return out;
+  let sum = 0;
+  for (let i = 0; i < period; i += 1) sum += values[i] || 0;
+  out[period - 1] = sum / period;
+  for (let i = period; i < values.length; i += 1) {
+    out[i] = ((out[i - 1] * (period - 1)) + (values[i] || 0)) / period;
+  }
+  return out;
+}
+
+function atrArray(rows, period = 14) {
+  return wilderArray(trueRangeArray(rows), period);
+}
+
+function keltnerChannels(rows, period = 20, mult = 2) {
+  const closes = rows.map((row) => row.c);
+  const mid = emaArray(closes, period);
+  const atr = atrArray(rows, period);
+  return {
+    mid,
+    upper: mid.map((v, i) => (v == null || atr[i] == null ? null : v + mult * atr[i])),
+    lower: mid.map((v, i) => (v == null || atr[i] == null ? null : v - mult * atr[i]))
+  };
+}
+
+function donchianChannels(rows, period = 20) {
+  const upper = Array(rows.length).fill(null);
+  const lower = Array(rows.length).fill(null);
+  const mid = Array(rows.length).fill(null);
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const slice = rows.slice(i - period + 1, i + 1);
+    upper[i] = Math.max(...slice.map((row) => row.h));
+    lower[i] = Math.min(...slice.map((row) => row.l));
+    mid[i] = (upper[i] + lower[i]) / 2;
+  }
+  return { upper, lower, mid };
+}
+
+function ichimokuArrays(rows) {
+  const midRange = (period) => {
+    const out = Array(rows.length).fill(null);
+    for (let i = period - 1; i < rows.length; i += 1) {
+      const slice = rows.slice(i - period + 1, i + 1);
+      out[i] = (Math.max(...slice.map((row) => row.h)) + Math.min(...slice.map((row) => row.l))) / 2;
+    }
+    return out;
+  };
+  const tenkan = midRange(9);
+  const kijun = midRange(26);
+  const spanB = midRange(52);
+  const spanA = tenkan.map((v, i) => (v == null || kijun[i] == null ? null : (v + kijun[i]) / 2));
+  return { tenkan, kijun, spanA, spanB };
+}
+
+function supertrendArray(rows, period = 10, mult = 3) {
+  const atr = atrArray(rows, period);
+  const out = Array(rows.length).fill(null);
+  const upper = Array(rows.length).fill(null);
+  const lower = Array(rows.length).fill(null);
+  let trendUp = true;
+  for (let i = 0; i < rows.length; i += 1) {
+    if (atr[i] == null) continue;
+    const hl2 = (rows[i].h + rows[i].l) / 2;
+    const basicUpper = hl2 + mult * atr[i];
+    const basicLower = hl2 - mult * atr[i];
+    upper[i] = i && upper[i - 1] != null && rows[i - 1].c <= upper[i - 1]
+      ? Math.min(basicUpper, upper[i - 1])
+      : basicUpper;
+    lower[i] = i && lower[i - 1] != null && rows[i - 1].c >= lower[i - 1]
+      ? Math.max(basicLower, lower[i - 1])
+      : basicLower;
+    if (i && out[i - 1] != null) {
+      if (trendUp && rows[i].c < lower[i]) trendUp = false;
+      else if (!trendUp && rows[i].c > upper[i]) trendUp = true;
+    } else {
+      trendUp = rows[i].c >= hl2;
+    }
+    out[i] = trendUp ? lower[i] : upper[i];
+  }
+  return out;
+}
+
+function obvArray(rows) {
+  const out = Array(rows.length).fill(null);
+  let obv = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    if (!i) obv = rows[i].v || 0;
+    else if (rows[i].c > rows[i - 1].c) obv += rows[i].v || 0;
+    else if (rows[i].c < rows[i - 1].c) obv -= rows[i].v || 0;
+    out[i] = obv;
+  }
+  return out;
+}
+
+function accumulationDistributionArray(rows) {
+  const out = Array(rows.length).fill(null);
+  let line = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    const row = rows[i];
+    const range = row.h - row.l;
+    const multiplier = range ? (((row.c - row.l) - (row.h - row.c)) / range) : 0;
+    line += multiplier * (row.v || 0);
+    out[i] = line;
+  }
+  return out;
+}
+
+function rocArray(values, period = 12) {
+  return values.map((value, i) => i < period || !values[i - period] ? null : ((value / values[i - period]) - 1) * 100);
+}
+
+function momentumArray(values, period = 10) {
+  return values.map((value, i) => i < period ? null : value - values[i - period]);
+}
+
+function williamsArray(rows, period = 14) {
+  const out = Array(rows.length).fill(null);
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const slice = rows.slice(i - period + 1, i + 1);
+    const hi = Math.max(...slice.map((row) => row.h));
+    const lo = Math.min(...slice.map((row) => row.l));
+    out[i] = hi === lo ? -50 : ((hi - rows[i].c) / (hi - lo)) * -100;
+  }
+  return out;
+}
+
+function adxArrays(rows, period = 14) {
+  const plusDm = Array(rows.length).fill(0);
+  const minusDm = Array(rows.length).fill(0);
+  for (let i = 1; i < rows.length; i += 1) {
+    const upMove = rows[i].h - rows[i - 1].h;
+    const downMove = rows[i - 1].l - rows[i].l;
+    plusDm[i] = upMove > downMove && upMove > 0 ? upMove : 0;
+    minusDm[i] = downMove > upMove && downMove > 0 ? downMove : 0;
+  }
+  const atr = atrArray(rows, period);
+  const smoothPlus = wilderArray(plusDm, period);
+  const smoothMinus = wilderArray(minusDm, period);
+  const plusDi = rows.map((_, i) => atr[i] ? (100 * smoothPlus[i]) / atr[i] : null);
+  const minusDi = rows.map((_, i) => atr[i] ? (100 * smoothMinus[i]) / atr[i] : null);
+  const dx = rows.map((_, i) => {
+    if (plusDi[i] == null || minusDi[i] == null || plusDi[i] + minusDi[i] === 0) return null;
+    return 100 * Math.abs(plusDi[i] - minusDi[i]) / (plusDi[i] + minusDi[i]);
+  });
+  const adx = wilderArray(dx.map((v) => v ?? 0), period);
+  for (let i = 0; i < period * 2 - 2 && i < adx.length; i += 1) adx[i] = null;
+  return { adx, plusDi, minusDi };
+}
+
+function cciArray(rows, period = 20) {
+  const typical = rows.map((row) => (row.h + row.l + row.c) / 3);
+  const out = Array(rows.length).fill(null);
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const chunk = typical.slice(i - period + 1, i + 1);
+    const avg = chunk.reduce((sum, value) => sum + value, 0) / period;
+    const meanDev = chunk.reduce((sum, value) => sum + Math.abs(value - avg), 0) / period;
+    out[i] = meanDev ? (typical[i] - avg) / (0.015 * meanDev) : 0;
+  }
+  return out;
+}
+
+function renderChannelOverlay(upper, lower, mid, xFor, yFor, color) {
+  return [
+    pathFromSeries(upper, xFor, yFor, color, 1.1, "4 3"),
+    pathFromSeries(lower, xFor, yFor, color, 1.1, "4 3"),
+    pathFromSeries(mid, xFor, yFor, color, 1.0, "")
+  ].join("");
+}
+
+function renderIchimokuOverlay(lines, xFor, yFor) {
+  return [
+    pathFromSeries(lines.spanA, xFor, yFor, "#22c55e", 1, "3 3"),
+    pathFromSeries(lines.spanB, xFor, yFor, "#ef4444", 1, "3 3"),
+    pathFromSeries(lines.tenkan, xFor, yFor, "#38bdf8", 1.2, ""),
+    pathFromSeries(lines.kijun, xFor, yFor, "#f59e0b", 1.2, "")
+  ].join("");
+}
+
+function finiteValues(values) {
+  return values.filter((v) => v != null && Number.isFinite(v));
+}
+
+function panelDomain(series, fallback = [-1, 1]) {
+  const vals = finiteValues(series.flatMap((s) => s.values || []));
+  if (!vals.length) return fallback;
+  let min = Math.min(...vals);
+  let max = Math.max(...vals);
+  if (min === max) {
+    min -= Math.abs(min || 1) * 0.05;
+    max += Math.abs(max || 1) * 0.05;
+  }
+  return [min, max];
+}
+
+function renderLinePanel(series, xFor, x1, x2, top, height, title, options = {}) {
+  const guideValues = options.guides || [];
+  const domainSource = options.domain ? null : series.concat([{ values: guideValues }]);
+  const [min, max] = options.domain || panelDomain(domainSource);
+  const span = max - min || 1;
+  const yFor = (value) => top + ((max - value) / span) * height;
+  const guides = guideValues.map((value) => `
+    <line x1="${x1}" y1="${yFor(value).toFixed(1)}" x2="${x2}" y2="${yFor(value).toFixed(1)}" class="rsi-guide"></line>
+    <text x="${x2 + 44}" y="${(yFor(value) + 4).toFixed(1)}" text-anchor="end" class="chart-axis">${options.formatGuide ? options.formatGuide(value) : value}</text>
+  `).join("");
+  const paths = series.map((s) => pathFromSeries(s.values, xFor, yFor, s.color, s.width || 1.4, s.dash || "")).join("");
+  const legend = series.map((s) => `<tspan fill="${s.color}">${escapeHtml(s.name)}</tspan>`).join("  ");
+  return `
+    <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
+    ${guides}
+    ${options.zeroLine && min < 0 && max > 0 ? `<line x1="${x1}" y1="${yFor(0).toFixed(1)}" x2="${x2}" y2="${yFor(0).toFixed(1)}" class="rsi-guide"></line>` : ""}
+    ${paths}
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">${escapeHtml(title)} ${legend}</text>
+  `;
+}
+
+function stockByTicker(ticker) {
+  const key = String(ticker || "").toUpperCase();
+  return (data.stocks || []).find((row) => String(row.ticker || "").toUpperCase() === key) || null;
+}
+
+function sectorBenchmarkTickerForItem(item) {
+  const sector = String(item.sector || "").toUpperCase();
+  const industry = String(item.industry || "").toUpperCase();
+  if (industry.includes("SEMICONDUCTOR") || sector.includes("SEMICONDUCTOR")) return "SOXX";
+  const exact = SECTOR_ETFS.find((meta) => String(meta.sectorName || "").toUpperCase() === sector);
+  if (exact) return exact.ticker;
+  const fuzzy = SECTOR_ETFS.find((meta) => {
+    const name = String(meta.sectorName || "").toUpperCase();
+    return name && (sector.includes(name) || industry.includes(name));
+  });
+  return fuzzy ? fuzzy.ticker : null;
+}
+
+function relativeBenchmarkTickers(item) {
+  const tickers = [];
+  if (chartState.showRsSpy || chartState.showMansfield) tickers.push("SPY");
+  if (chartState.showRsQqq) tickers.push("QQQ");
+  if (chartState.showRsSector) {
+    const sectorTicker = sectorBenchmarkTickerForItem(item);
+    if (sectorTicker && sectorTicker !== item.ticker) tickers.push(sectorTicker);
+  }
+  return [...new Set(tickers)];
+}
+
+function requestBenchmarkDetails(item) {
+  relativeBenchmarkTickers(item).forEach((ticker) => {
+    const key = safeTicker(ticker);
+    if (!stockByTicker(key) || detailCache[key] || detailPromises[key]) return;
+    loadStockDetail(key).then((detail) => {
+      if (detail && selectedTicker === item.ticker) redrawChart();
+    });
+  });
+}
+
+function hasRelativePanel(item) {
+  return relativeBenchmarkTickers(item).length > 0;
+}
+
+function benchmarkRowsForTicker(ticker) {
+  const base = stockByTicker(ticker);
+  return base ? resampleBars(getChartRows(withDetail(base)), chartState.barTf) : [];
+}
+
+function visibleRowsForBenchmark(rows, targetLength) {
+  if (!rows.length) return [];
+  const rangeSize = rangeBarCount(rows.length);
+  const base = rows.slice(-rangeSize);
+  const windowSize = Math.min(base.length, Math.max(12, targetLength || base.length));
+  const maxOffset = Math.max(0, base.length - windowSize);
+  const offset = Math.min(chartState.offset, maxOffset);
+  const end = base.length - offset;
+  return base.slice(Math.max(0, end - windowSize), end);
+}
+function alignBenchmarkRows(rows, benchmarkRows) {
+  if (!rows.length || !benchmarkRows.length) return [];
+  const dateMap = new Map(benchmarkRows.filter((row) => row.d).map((row) => [row.d, row]));
+  if (dateMap.size) {
+    const aligned = rows.map((row) => row.d && dateMap.get(row.d) ? dateMap.get(row.d) : null);
+    if (aligned.filter(Boolean).length >= Math.max(3, Math.floor(rows.length * 0.45))) return aligned;
+  }
+  const start = Math.max(0, benchmarkRows.length - rows.length);
+  const slice = benchmarkRows.slice(start);
+  return rows.map((_, i) => slice[i] || null);
+}
+
+function relativePerformanceSeries(rows, benchmarkRows) {
+  const aligned = alignBenchmarkRows(rows, benchmarkRows);
+  const firstIndex = aligned.findIndex((row, i) => row && rows[i]?.c);
+  if (firstIndex < 0) return Array(rows.length).fill(null);
+  const baseStock = rows[firstIndex].c;
+  const baseBench = aligned[firstIndex].c;
+  return rows.map((row, i) => {
+    const bench = aligned[i];
+    if (!row || !bench || !baseStock || !baseBench) return null;
+    return (((row.c / baseStock) / (bench.c / baseBench)) - 1) * 100;
+  });
+}
+
+function mansfieldSeries(rows, benchmarkRows) {
+  const aligned = alignBenchmarkRows(rows, benchmarkRows);
+  const ratio = rows.map((row, i) => (row && aligned[i]?.c ? row.c / aligned[i].c : null));
+  const period = Math.min(52, Math.max(10, Math.floor(rows.length / 3)));
+  const out = Array(rows.length).fill(null);
+  for (let i = period - 1; i < ratio.length; i += 1) {
+    const chunk = ratio.slice(i - period + 1, i + 1).filter((v) => v != null);
+    if (chunk.length < Math.max(5, Math.floor(period * 0.7))) continue;
+    const avg = chunk.reduce((sum, value) => sum + value, 0) / chunk.length;
+    out[i] = avg ? ((ratio[i] / avg) - 1) * 100 : null;
+  }
+  return out;
+}
+
 // ----- Indicator panels -----
-function renderVolumePanel(rows, xFor, top, height, candleW) {
-  const volMax = Math.max(...rows.map((row) => row.v), 1);
-  const bars = rows.map((row, index) => {
+function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW) {
+  const volumes = rows.map((row) => row.v || 0);
+  const ma20 = smaArray(volumes, 20);
+  const maxSource = chartState.showVolMa20 ? volumes.concat(ma20.filter((v) => v != null)) : volumes;
+  const volMax = Math.max(...maxSource, 1);
+  const yFor = (value) => top + height - (value / volMax) * height;
+  const bars = chartState.showVolume ? rows.map((row, index) => {
     const x = xFor(index) - candleW / 2;
     const h = Math.max(1, (row.v / volMax) * height);
     const up = row.c >= row.o;
     return `<rect x="${x.toFixed(1)}" y="${(top + height - h).toFixed(1)}" width="${candleW.toFixed(1)}" height="${h.toFixed(1)}" class="${up ? "vol-up" : "vol-down"}"></rect>`;
-  }).join("");
-  return `<text x="${xFor(0).toFixed(1)}" y="${(top + 10).toFixed(1)}" class="chart-axis">Volume</text>${bars}`;
+  }).join("") : "";
+  const lastVol = volumes[volumes.length - 1] || 0;
+  const recentAvg = finiteValues(ma20).slice(-1)[0] || (volumes.reduce((sum, value) => sum + value, 0) / Math.max(1, volumes.length));
+  const ratioLabel = chartState.showVolumeRatio && recentAvg ? ` · Vol ${Number(lastVol / recentAvg).toFixed(2)}x` : "";
+  return `
+    <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
+    ${bars}
+    ${chartState.showVolMa20 ? pathFromSeries(ma20, xFor, yFor, "#facc15", 1.3, "") : ""}
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">Volume${chartState.showVolMa20 ? " · MA20" : ""}${ratioLabel}</text>
+  `;
 }
 
+function renderObvPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "OBV", values: obvArray(rows), color: "#60a5fa" }], xFor, x1, x2, top, height, "OBV");
+}
+
+function renderAdPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "A/D", values: accumulationDistributionArray(rows), color: "#34d399" }], xFor, x1, x2, top, height, "Accum/Dist");
+}
+
+function renderRocPanel(closes, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "ROC", values: rocArray(closes, 12), color: "#38bdf8" }], xFor, x1, x2, top, height, "ROC(12)", { zeroLine: true, guides: [0] });
+}
+
+function renderMomentumPanel(closes, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "MOM", values: momentumArray(closes, 10), color: "#f59e0b" }], xFor, x1, x2, top, height, "Momentum(10)", { zeroLine: true, guides: [0] });
+}
+
+function renderWilliamsPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "%R", values: williamsArray(rows, 14), color: "#c084fc" }], xFor, x1, x2, top, height, "Williams %R(14)", { domain: [-100, 0], guides: [-20, -80] });
+}
+
+function renderAtrPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "ATR", values: atrArray(rows, 14), color: "#fb7185" }], xFor, x1, x2, top, height, "ATR(14)");
+}
+
+function renderAdxPanel(rows, xFor, x1, x2, top, height) {
+  const adx = adxArrays(rows, 14);
+  return renderLinePanel([
+    { name: "ADX", values: adx.adx, color: "#facc15", width: 1.5 },
+    { name: "+DI", values: adx.plusDi, color: "#22c55e", width: 1.2 },
+    { name: "-DI", values: adx.minusDi, color: "#ef4444", width: 1.2 }
+  ], xFor, x1, x2, top, height, "ADX(14)", { domain: [0, 60], guides: [20, 40] });
+}
+
+function renderCciPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "CCI", values: cciArray(rows, 20), color: "#818cf8" }], xFor, x1, x2, top, height, "CCI(20)", { zeroLine: true, guides: [-100, 0, 100] });
+}
+
+function renderRelativePanel(item, rows, xFor, x1, x2, top, height) {
+  const series = [];
+  if (chartState.showRsSpy) {
+    const bench = benchmarkRowsForTicker("SPY");
+    if (bench.length) series.push({ name: "RS/SPY", values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#60a5fa" });
+  }
+  if (chartState.showRsQqq) {
+    const bench = benchmarkRowsForTicker("QQQ");
+    if (bench.length) series.push({ name: "RS/QQQ", values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#a78bfa" });
+  }
+  if (chartState.showRsSector) {
+    const sectorTicker = sectorBenchmarkTickerForItem(item);
+    const bench = sectorTicker ? benchmarkRowsForTicker(sectorTicker) : [];
+    if (bench.length) series.push({ name: `RS/${sectorTicker}`, values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#34d399" });
+  }
+  if (chartState.showMansfield) {
+    const bench = benchmarkRowsForTicker("SPY");
+    if (bench.length) series.push({ name: "Mansfield", values: mansfieldSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#f59e0b", dash: "4 3" });
+  }
+  if (!series.length) {
+    return `
+      <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
+      <text x="${x1 + 4}" y="${top + 14}" class="chart-axis">Relative Strength · benchmark data loading</text>
+    `;
+  }
+  return renderLinePanel(series, xFor, x1, x2, top, height, "Relative Strength", { zeroLine: true, guides: [0], formatGuide: (v) => `${v}%` });
+}
+
+function renderComparePanel(item, rows, xFor, x1, x2, top, height) {
+  requestCompareDetails(item);
+  const series = [{
+    name: item.ticker,
+    values: indexedReturnSeries(rows),
+    color: "#f8fafc",
+    width: 1.5
+  }];
+  const colors = ["#60a5fa", "#34d399", "#f59e0b", "#f472b6", "#818cf8"];
+  compareTickers.forEach((ticker, index) => {
+    const bench = benchmarkRowsForTicker(ticker);
+    if (!bench.length) return;
+    series.push({
+      name: ticker,
+      values: indexedReturnSeries(alignBenchmarkRows(rows, visibleRowsForBenchmark(bench, rows.length))),
+      color: colors[index % colors.length],
+      width: 1.4
+    });
+  });
+  return renderLinePanel(series, xFor, x1, x2, top, height, "Indexed Compare", { zeroLine: true, guides: [0], formatGuide: (v) => `${v}%` });
+}
+
+function indexedReturnSeries(rows) {
+  const first = rows.find((row) => row && row.c);
+  if (!first) return Array(rows.length).fill(null);
+  return rows.map((row) => (row && row.c ? ((row.c / first.c) - 1) * 100 : null));
+}
+
+function requestCompareDetails(item) {
+  compareTickers.forEach((ticker) => {
+    const key = safeTicker(ticker);
+    if (!key || key === item.ticker || detailCache[key] || detailPromises[key]) return;
+    loadStockDetail(key).then((detail) => {
+      if (detail && selectedTicker === item.ticker) redrawChart();
+    });
+  });
+}
 function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW) {
   const { macd, signal, hist } = macdSeries(closes);
   const all = [...macd, ...signal, ...hist].filter((v) => v != null && Number.isFinite(v));
@@ -3021,14 +3676,26 @@ function rsiValue(avgGain, avgLoss) {
   return 100 - (100 / (1 + rs));
 }
 
-function activeSmaLabels() {
-  return [
+function activeIndicatorLabels(item) {
+  const labels = [
     chartState.showSma5 ? "SMA5" : "",
     chartState.showSma10 ? "SMA10" : "",
     chartState.showSma20 ? "SMA20" : "",
     chartState.showSma60 ? "SMA60" : "",
-    chartState.showSma120 ? "SMA120" : ""
-  ].filter(Boolean).join(" ");
+    chartState.showSma120 ? "SMA120" : "",
+    chartState.showEma20 ? "EMA20" : "",
+    chartState.showEma60 ? "EMA60" : "",
+    chartState.showBoll ? "BOLL" : "",
+    chartState.showVwap ? "VWAP" : "",
+    chartState.showSupertrend ? "Supertrend" : "",
+    chartState.showIchimoku ? "Ichimoku" : "",
+    chartState.showKeltner ? "Keltner" : "",
+    chartState.showDonchian ? "Donchian" : "",
+    chartState.showRsSector ? `RS/${sectorBenchmarkTickerForItem(item) || "Sector"}` : ""
+  ].filter(Boolean);
+  const visible = labels.slice(0, 9);
+  if (labels.length > visible.length) visible.push(`+${labels.length - visible.length}`);
+  return visible.join(" ");
 }
 
 function pctFrom(now, then) {
@@ -3036,6 +3703,110 @@ function pctFrom(now, then) {
   return ((now / then) - 1) * 100;
 }
 
+function renderStockEvents(item) {
+  const box = byId("stockEvents");
+  if (!box) return;
+  const events = stockEventRows(item);
+  box.innerHTML = `
+    <div class="event-head">
+      <div>
+        <h3>종목 이벤트</h3>
+        <p class="muted">실적, 옵션 만기, 컨센서스 목표가, 뉴스, 가격 변동 이벤트를 한곳에 모았습니다.</p>
+      </div>
+      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+    </div>
+    <div class="event-grid">
+      ${events.map(eventCardHtml).join("")}
+    </div>
+  `;
+}
+
+function stockEventRows(item) {
+  const f = item.fundamentals || {};
+  const rows = getChartRows(item);
+  const latestNews = Array.isArray(item.news) ? item.news[0] : null;
+  const target = Number(f.targetPrice);
+  const price = Number(item.price || f.prevClose);
+  const targetUpside = Number.isFinite(target) && Number.isFinite(price) && price ? pctFrom(target, price) : null;
+  const bigMove = recentBigMove(rows);
+  const earningsDate = f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
+  const dividend = f.dividendRate || f.dividendYield || item.dividendYield || null;
+  return [
+    {
+      type: "Earnings",
+      title: earningsDate ? "다음 실적 발표" : "실적 일정",
+      value: earningsDate ? String(earningsDate) : "데이터 없음",
+      note: f.epsNextQ != null ? `EPS next Q ${moneyOrDash(f.epsNextQ)} · EPS next Y ${moneyOrDash(f.epsNextY)}` : "상세 데이터에 실적 날짜가 없으면 표시하지 않습니다.",
+      tone: earningsDate ? "info" : "muted"
+    },
+    {
+      type: "Options",
+      title: "월간 옵션 만기",
+      value: nextMonthlyOptionsExpiration(),
+      note: "미국 주식 옵션의 일반적인 월간 만기 기준입니다. 개별 옵션 체인은 별도 데이터가 필요합니다.",
+      tone: "info"
+    },
+    {
+      type: "Target",
+      title: "Nasdaq 1Y 컨센서스 목표가",
+      value: Number.isFinite(target) ? priceOrDash(target) : "데이터 없음",
+      note: targetUpside == null ? "Nasdaq 제공 목표가 데이터 없음" : `현재가 대비 ${fmtPct(targetUpside)} · Nasdaq 제공 집계값`,
+      tone: targetUpside == null ? "muted" : cls(targetUpside)
+    },
+    {
+      type: "Dividend",
+      title: "배당 정보",
+      value: dividend ? String(dividend) : "해당 없음/데이터 없음",
+      note: f.dividendExDate ? `배당락 ${f.dividendExDate}` : "배당락일 데이터가 있으면 여기에 표시됩니다.",
+      tone: dividend ? "info" : "muted"
+    },
+    {
+      type: "News",
+      title: "최근 뉴스",
+      value: latestNews?.publishedAt || "데이터 없음",
+      note: latestNews?.title || "뉴스 데이터가 있으면 최신 제목을 표시합니다.",
+      tone: latestNews ? "info" : "muted"
+    },
+    {
+      type: "Move",
+      title: "최근 가격 이벤트",
+      value: bigMove ? `${bigMove.date} · ${fmtPct(bigMove.change)}` : "데이터 없음",
+      note: bigMove ? "최근 45거래일 중 절대 변동폭이 가장 컸던 날입니다." : "차트 데이터가 부족합니다.",
+      tone: bigMove ? cls(bigMove.change) : "muted"
+    }
+  ];
+}
+
+function eventCardHtml(event) {
+  return `
+    <article class="event-card event-${escapeHtml(event.tone)}">
+      <span>${escapeHtml(event.type)}</span>
+      <strong>${escapeHtml(event.title)}</strong>
+      <b>${escapeHtml(event.value)}</b>
+      <p>${escapeHtml(event.note)}</p>
+    </article>
+  `;
+}
+
+function recentBigMove(rows) {
+  if (!rows || rows.length < 3) return null;
+  return rows.slice(-45).map((row, index, arr) => {
+    const prev = index ? arr[index - 1] : rows[Math.max(0, rows.length - arr.length - 1)];
+    return { date: row.d || "-", change: pctFrom(row.c, prev?.c || row.o) };
+  }).filter((row) => Number.isFinite(row.change))
+    .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0] || null;
+}
+
+function nextMonthlyOptionsExpiration(base = snapshotBaseDate()) {
+  const thirdFriday = (year, month) => {
+    const d = new Date(year, month, 1);
+    const firstFriday = 1 + ((5 - d.getDay() + 7) % 7);
+    return new Date(year, month, firstFriday + 14);
+  };
+  let exp = thirdFriday(base.getFullYear(), base.getMonth());
+  if (exp < base) exp = thirdFriday(base.getFullYear(), base.getMonth() + 1);
+  return `${exp.getFullYear()}-${String(exp.getMonth() + 1).padStart(2, "0")}-${String(exp.getDate()).padStart(2, "0")}`;
+}
 function renderFundamentals(item) {
   // ETFs don't need fundamentals — show their constituent stocks (by RS) instead.
   if (item.sector === "EXCHANGE TRADED FUNDS") {
@@ -3052,13 +3823,13 @@ function renderFundamentals(item) {
     ["Income", fmtBillions(f.incomeB), "P/B", fmtNum(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
     ["Cash", fmtBillions(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],
     ["Shares Out", fmtBillions(f.sharesB), "Current Ratio", fmtRatio(f.currentRatio), "Profit Margin", fmtPercent(f.profitMargin), "52W Low", priceOrDash(f.week52Low)],
-    ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), "Target Price", priceOrDash(f.targetPrice)],
+    ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), "Nasdaq 1Y Target", priceOrDash(f.targetPrice)],
     ["Volume", fmtCompact(f.volume), "Prev Close", priceOrDash(f.prevClose), "RS Score", item.rsScore, "Price", priceOrDash(item.price)]
   ];
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
       <h3>Fundamentals</h3>
-      <span>${hasFundamentals ? "Nasdaq detail snapshot" : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
+      <span>${hasFundamentals ? "Nasdaq detail snapshot · 목표가는 Nasdaq 제공 1Y 집계값" : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
     </div>
     <div class="fund-scroll">
       <table>
@@ -3453,6 +4224,8 @@ function renderSectorEtfRelativeStrength() {
 
   byId("sectorEtfRsMeta").textContent = `총 ${payload.universeCount || 0}개 ETF 기반 · ${rows.length}개 세부 그룹 표시 중`;
 
+  renderSectorRotationBoard(rows, period, benchmark);
+
   if (!rows.length) {
     container.innerHTML = `<div class="empty-state">ETF 상대강도 데이터가 없습니다. 스냅샷을 다시 생성해 주세요.</div>`;
     return;
@@ -3496,6 +4269,59 @@ function renderSectorEtfRelativeStrength() {
   }).join("");
 }
 
+function renderSectorRotationBoard(rows, period, benchmark) {
+  const board = byId("sectorRotationBoard");
+  if (!board) return;
+  const enriched = rows.map((item) => {
+    const rel1m = item.relative?.[benchmark]?.monthChangePct ?? item.relative?.SPY?.monthChangePct ?? 0;
+    const rel3m = item.relative?.[benchmark]?.threeMonthChangePct ?? item.relative?.SPY?.threeMonthChangePct ?? 0;
+    let quadrant = "lagging";
+    if (rel1m > 0 && rel3m > 0) quadrant = "leading";
+    else if (rel1m > 0 && rel3m <= 0) quadrant = "improving";
+    else if (rel1m <= 0 && rel3m > 0) quadrant = "weakening";
+    return { ...item, rel1m, rel3m, quadrant };
+  });
+  const groups = [
+    ["leading", "Leading", "1M/3M 모두 벤치마크 초과"],
+    ["improving", "Improving", "최근 1M 상대강도 개선"],
+    ["weakening", "Weakening", "3M은 강하지만 최근 둔화"],
+    ["lagging", "Lagging", "벤치마크 대비 약세"]
+  ];
+  board.innerHTML = `
+    <div class="rotation-head">
+      <div>
+        <h3>Sector Rotation Map</h3>
+        <p class="muted">${benchmark} 대비 1개월/3개월 상대강도로 ETF 그룹을 사분면으로 나눕니다.</p>
+      </div>
+      <span class="event-badge">${periodLabel(period)}</span>
+    </div>
+    <div class="rotation-grid">
+      ${groups.map(([key, title, desc]) => {
+        const list = enriched.filter((item) => item.quadrant === key)
+          .sort((a, b) => b.activeRelative - a.activeRelative)
+          .slice(0, 7);
+        return `
+          <section class="rotation-quadrant rotation-${key}">
+            <h4>${title}</h4>
+            <p>${desc}</p>
+            <div>
+              ${list.length ? list.map((item) => `
+                <button type="button" class="rotation-chip" data-category="${escapeHtml(item.category)}">
+                  <strong>${escapeHtml(item.representative)}</strong>
+                  <span>${escapeHtml(item.category)}</span>
+                  <b class="${cls(item.activeRelative)}">${fmtPct(item.activeRelative)}</b>
+                </button>
+              `).join("") : `<span class="muted">해당 그룹 없음</span>`}
+            </div>
+          </section>
+        `;
+      }).join("")}
+    </div>
+  `;
+  board.querySelectorAll(".rotation-chip").forEach((chip) => {
+    chip.addEventListener("click", () => showConstituentPanel(chip.dataset.category, period));
+  });
+}
 function showConstituentPanel(categoryName, period) {
   const payload = data.health?.etfRelative || { rows: [] };
   const row = (payload.rows || []).find((r) => r.category === categoryName);

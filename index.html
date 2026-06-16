@@ -6,7 +6,7 @@
     <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
     <title>미르의 미국 주식</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css?v=20260616d">
+    <link rel="stylesheet" href="styles.css?v=20260616e">
   </head>
   <body>
     <header class="topbar">
@@ -602,7 +602,30 @@
       <button class="lightbox-next" id="lightboxNext" type="button" aria-label="다음">›</button>
     </div>
 
+    <!-- 사이트 도우미 챗봇 -->
+    <div class="chatbot" id="chatbot">
+      <div class="chat-panel" id="chatPanel" hidden>
+        <div class="chat-head">
+          <div>
+            <strong>미르 도우미</strong>
+            <span class="chat-sub">사이트 사용법 · 용어 설명</span>
+          </div>
+          <button class="chat-close" id="chatClose" type="button" aria-label="닫기">✕</button>
+        </div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-suggest" id="chatSuggest"></div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" type="text" autocomplete="off"
+                 placeholder="예: PER이 뭐야? / 히트맵 보는 법">
+          <button type="submit" aria-label="전송">↑</button>
+        </form>
+      </div>
+      <button class="chat-fab" id="chatToggle" type="button" aria-label="도우미 열기">
+        <span class="chat-fab-icon">💬</span><span class="chat-fab-text">도우미</span>
+      </button>
+    </div>
+
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260616d"></script>
+    <script src="app.js?v=20260616e"></script>
   </body>
 </html>

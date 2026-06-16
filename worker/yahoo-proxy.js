@@ -34,6 +34,11 @@ export default {
 
     const url = new URL(request.url);
 
+    // Site help chatbot (POST /chat): explains how to use the site + finance terms.
+    if (request.method === "POST" && url.pathname === "/chat") {
+      return cors(await handleChat(request, env));
+    }
+
     // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
     if (url.searchParams.get("fx")) {
       return cors(json({ fx: await fetchFx() }));
@@ -338,7 +343,97 @@ function json(obj, status = 200) {
 function cors(resp) {
   const r = new Response(resp.body, resp);
   r.headers.set("Access-Control-Allow-Origin", ALLOW_ORIGIN);
-  r.headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
+  r.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   r.headers.set("Access-Control-Allow-Headers", "Content-Type");
   return r;
+}
+
+// =============================================================================
+// Site help chatbot
+// =============================================================================
+
+// Knowledge base: how to use the site + finance-term glossary. Kept in the system
+// prompt so the model answers from grounded facts even when its own Korean is weak.
+const CHAT_SYSTEM_PROMPT = `당신은 "미르의 미국 주식" 웹사이트의 친절한 도우미입니다.
+역할: (1) 사이트 사용법 안내, (2) 주식·재무 기본 용어 쉬운 설명.
+말투: 한국어로 간결하고 친근하게. 보통 2~5문장. 필요하면 짧은 예시.
+중요한 규칙:
+- 특정 종목의 매수/매도/목표가/투자 추천은 절대 하지 않습니다. "이 사이트는 참고용이며 투자 판단은 본인 책임"이라고 안내하세요.
+- 실시간 시세나 "오늘 무엇이 올랐나" 같은 건 직접 알 수 없으니, 해당 탭(예: 급등/거래량, 상위 종목)에서 확인하라고 안내하세요.
+- 모르면 모른다고 솔직히 말하세요. 지어내지 마세요.
+- 질문이 사이트/투자용어와 무관하면 정중히 안내 범위를 알려주세요.
+
+[사이트 구성]
+- 상단: SNS 아이콘(인스타·X·스레드·네이버 블로그), 데이터 기준 시각. 데이터는 매일 한국시간 오전 6시에 1회 갱신되는 스냅샷입니다(실시간 아님).
+- 왼쪽 "오늘의 카드뉴스": 그날 만든 카드뉴스 본문 이미지. 클릭하면 크게 볼 수 있습니다.
+- 상단 요약: Fear & Greed(공포·탐욕) 지수, 섹터 TOP5, 환율 등.
+- 탭 설명:
+  · 시장 지도(히트맵): 종목을 타일로. 색은 등락률·RS 점수 등 선택 지표, 타일 크기는 시가총액·거래량 배율 등 선택. 섹터별로 묶여 한눈에 강약을 봅니다.
+  · 섹터 흐름: 섹터 ETF 차트 비교와 ETF 상대강도(RS) 순위.
+  · 상위 종목: PER·Forward P/E·P/S·P/B·RS 점수 등 지표 기준 상위 종목.
+  · 급등/거래량: 당일 급등, 거래량 급증, RS 신고가+거래량 종목.
+  · 종목 분석: 티커 검색 → 차트(이동평균·볼린저·RSI·MACD·스토캐스틱)와 재무, 실시간 뉴스.
+  · 내 리스트: 관심 티커를 입력해 한 번에 비교.
+  · 마켓 데이터: 주요 지수·국가·채권·원자재·환율.
+  · 경제 캘린더: 이번 주 한국·미국 주요 경제지표 일정.
+  · AI 브리핑: 국내 장마감·미국 장전 시황과 소셜 트렌딩 종목.
+
+[용어 사전 — 쉽게 설명할 때 참고]
+- 시가총액: 주가 × 총 발행주식수. 회사의 크기.
+- PER(P/E, 주가수익비율): 주가 ÷ 주당순이익(EPS). 이익 대비 주가가 비싼지 보는 지표. 낮을수록 싸 보이나 업종마다 다름.
+- Forward P/E(선행 PER): 과거가 아닌 '예상 이익' 기준 PER.
+- PBR(P/B, 주가순자산비율): 주가 ÷ 주당순자산. 1보다 낮으면 장부가보다 싸게 거래.
+- PSR(P/S, 주가매출비율): 시가총액 ÷ 매출. 적자 성장주 평가에 유용.
+- EPS(주당순이익): 순이익 ÷ 주식수. 한 주가 버는 이익.
+- ROE(자기자본이익률): 순이익 ÷ 자기자본. 주주 돈으로 얼마나 효율적으로 버는지(높을수록 좋음).
+- ROA(총자산이익률): 순이익 ÷ 총자산. 자산 대비 수익성.
+- 배당수익률: 연 배당금 ÷ 주가.
+- RS 점수(상대강도): 시장(혹은 벤치마크) 대비 주가가 얼마나 강한지 점수화(높을수록 강세). 이 사이트는 대략 3·6·12개월 수익률을 가중한 모멘텀 지표입니다.
+- EPS 추정 점수: 향후 이익 추정 개선 정도를 점수화.
+- RSI(상대강도지수, 14): 0~100. 보통 70 이상 과매수, 30 이하 과매도로 봅니다.
+- 스토캐스틱(StochK): 최근 가격 위치를 0~100으로. 과매수/과매도 판단.
+- MACD: 단기·장기 이동평균 차이로 추세·모멘텀을 보는 지표.
+- 볼린저 밴드: 이동평균 ± 표준편차 밴드. 변동성과 과열/침체 가늠.
+- 이동평균(SMA/EMA): 일정 기간 평균 가격선. EMA는 최근에 가중.
+- 거래량 배율: 평소 평균 대비 오늘 거래량이 몇 배인지.
+- YTD: 연초 대비 수익률.
+- 신고가(52주): 최근 1년 최고가. 신고가 경신은 강세 신호로 봄.
+- 섹터 ETF: 특정 업종(기술 XLK, 반도체 SOXX 등) 묶음에 투자하는 상품.
+- Fear & Greed 지수: 시장 심리를 0(극단적 공포)~100(극단적 탐욕)으로 나타낸 지표.
+- 베타: 시장 대비 변동성(1보다 크면 더 출렁임).`;
+
+async function handleChat(request, env) {
+  let body;
+  try {
+    body = await request.json();
+  } catch (e) {
+    return json({ error: "bad_json" }, 400);
+  }
+
+  const raw = Array.isArray(body && body.messages) ? body.messages : [];
+  const history = raw
+    .filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string")
+    .slice(-10)
+    .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
+
+  if (!history.length || history[history.length - 1].role !== "user") {
+    return json({ reply: "", error: "no_user_message" }, 400);
+  }
+  if (!env || !env.AI) {
+    return json({ reply: "지금은 도우미를 사용할 수 없어요. 잠시 후 다시 시도해 주세요.", error: "no_ai_binding" });
+  }
+
+  const messages = [{ role: "system", content: CHAT_SYSTEM_PROMPT }, ...history];
+  let lastError = "no_model";
+  for (const model of SUMMARY_MODELS) {
+    try {
+      const result = await env.AI.run(model, { messages, max_tokens: 600, temperature: 0.3 });
+      const text = String((result && result.response) || "").trim();
+      if (text) return json({ reply: text, model });
+      lastError = `empty_response:${model}`;
+    } catch (e) {
+      lastError = `${model}: ${(e && e.message) || e}`;
+    }
+  }
+  return json({ reply: "답변 생성에 실패했어요. 잠시 후 다시 시도해 주세요.", error: lastError });
 }

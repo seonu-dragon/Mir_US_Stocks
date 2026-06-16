@@ -3,6 +3,11 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="미르 주식">
+    <link rel="manifest" href="manifest.webmanifest">
     <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
     <link rel="canonical" href="https://seonu-dragon.github.io/Mir_US_Stocks/">
     <meta property="og:type" content="website">
@@ -21,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260617d">
+    <link rel="stylesheet" href="styles.css?v=20260618a">
   </head>
   <body>
     <header class="topbar">
@@ -76,6 +81,10 @@
         <img id="cardnewsCarouselImg" src="" alt="오늘의 카드뉴스">
       </button>
 
+      <div class="topbar-actions">
+        <button type="button" class="icon-action" id="themeToggle" title="다크/라이트 모드 전환" aria-label="테마 전환">🌙</button>
+        <button type="button" class="icon-action" id="installApp" hidden title="홈 화면에 추가">📲</button>
+      </div>
       <div class="update-card">
         <span>데이터 기준</span>
         <strong id="updatedAt">불러오는 중</strong>
@@ -87,14 +96,30 @@
     <main>
       <section class="summary-band" id="marketSummary"></section>
       <section class="index-strip" id="indexStrip"></section>
+      <section class="watchlist-bar" id="watchlistBar" hidden>
+        <div class="watchlist-head">
+          <div>
+            <strong>⭐ 관심종목</strong>
+            <span class="muted" id="watchlistSummary">0개</span>
+          </div>
+          <div class="watchlist-head-actions">
+            <button type="button" class="ghost compact-btn" id="watchlistOpenBulk">리스트 관리</button>
+            <button type="button" class="ghost compact-btn" id="watchlistShare">링크 공유</button>
+          </div>
+        </div>
+        <div class="watchlist-chips" id="watchlistChips"></div>
+      </section>
 
       <nav class="tabs" aria-label="Dashboard sections">
         <button class="tab is-active" data-tab="map">시장 지도</button>
         <button class="tab" data-tab="sector">섹터 흐름</button>
         <button class="tab" data-tab="top">상위 종목</button>
+        <button class="tab" data-tab="screener">스크리너</button>
         <button class="tab" data-tab="jump">급등/거래량</button>
         <button class="tab" data-tab="search">종목 분석</button>
-        <button class="tab" data-tab="bulk">내 리스트</button>
+        <button class="tab" data-tab="bulk">관심 리스트</button>
+        <button class="tab" data-tab="compare">종목 비교</button>
+        <button class="tab" data-tab="earnings">실적 일정</button>
         <button class="tab" data-tab="health">마켓 데이터</button>
         <button class="tab" data-tab="calendar">경제 캘린더</button>
         <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
@@ -594,23 +619,106 @@
         </div>
       </section>
 
-      <!-- ==================== 내 리스트 탭 ==================== -->
+      <!-- ==================== 스크리너 탭 ==================== -->
+      <section class="panel" id="tab-screener">
+        <div class="section-title">
+          <h2>종목 스크리너</h2>
+          <p>조건에 맞는 종목을 표로 검색합니다. 결과에서 ★를 눌러 관심종목에 추가할 수 있습니다.</p>
+        </div>
+        <div class="toolbar screener-toolbar">
+          <label>
+            유니버스
+            <select id="scrBucket"></select>
+          </label>
+          <label>
+            섹터
+            <select id="scrSector"></select>
+          </label>
+          <label>
+            프리셋
+            <select id="scrPreset">
+              <option value="custom">Custom</option>
+              <option value="leaders">강한 추세 리더</option>
+              <option value="breakout">신고가 + 거래량</option>
+              <option value="pullback">강한 종목 눌림목</option>
+              <option value="growth">EPS 추정 상향</option>
+              <option value="value">저평가 대형주</option>
+            </select>
+          </label>
+          <label>
+            정렬
+            <select id="scrMetric">
+              <option value="rsScore">RS 점수</option>
+              <option value="changePct">당일 등락률</option>
+              <option value="monthChangePct">1개월</option>
+              <option value="volumeRatio">거래량 배율</option>
+              <option value="epsRevScore">EPS Rev</option>
+              <option value="marketCapB">시가총액</option>
+            </select>
+          </label>
+          <label>Min RS <input id="scrMinRs" type="number" min="0" max="100" placeholder="0"></label>
+          <label>Min EPS <input id="scrMinEps" type="number" min="0" max="100" placeholder="0"></label>
+          <label>Vol <input id="scrMinVol" type="number" min="0" step="0.1" placeholder="0"></label>
+          <label>Cap($B) <input id="scrMinCap" type="number" min="0" step="1" placeholder="0"></label>
+          <label>
+            Limit
+            <select id="scrLimit">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+            </select>
+          </label>
+          <button type="button" id="scrRun">검색</button>
+          <button type="button" class="ghost" id="scrReset">초기화</button>
+        </div>
+        <p class="muted screener-meta" id="screenerMeta">조건을 설정하고 검색을 눌러주세요.</p>
+        <div class="table-wrap">
+          <table class="compact-table screener-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>티커</th>
+                <th>회사</th>
+                <th>섹터</th>
+                <th>당일</th>
+                <th>1M</th>
+                <th>RS</th>
+                <th>EPS</th>
+                <th>Vol</th>
+                <th>시총</th>
+                <th>신호</th>
+              </tr>
+            </thead>
+            <tbody id="screenerTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ==================== 관심 리스트 탭 ==================== -->
       <section class="panel" id="tab-bulk">
+        <div class="section-title">
+          <h2>관심 리스트</h2>
+          <p>브라우저에 저장됩니다. 상단 관심종목 바와 동기화됩니다.</p>
+        </div>
+        <div class="watchlist-stats" id="watchlistStats"></div>
         <div class="toolbar">
           <label class="grow">
             Tickers
-            <input id="bulkInput" value="NVDA, MSFT, AAPL, PLTR, SOXX" placeholder="쉼표로 구분해 입력">
+            <input id="bulkInput" placeholder="NVDA, MSFT, AAPL (쉼표 구분)">
           </label>
           <label>
             최소 RS
             <input id="bulkRs" type="number" min="0" max="100" value="0">
           </label>
-          <button id="bulkRun">분석</button>
+          <button type="button" id="bulkSave">저장</button>
+          <button type="button" id="bulkRun">분석</button>
+          <button type="button" class="ghost" id="bulkCompare">비교 탭</button>
         </div>
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
+                <th></th>
                 <th>Ticker</th>
                 <th>Company</th>
                 <th>Sector</th>
@@ -624,6 +732,53 @@
             <tbody id="bulkTable"></tbody>
           </table>
         </div>
+      </section>
+
+      <!-- ==================== 종목 비교 탭 ==================== -->
+      <section class="panel" id="tab-compare">
+        <div class="section-title">
+          <h2>종목 비교 보드</h2>
+          <p>최대 6개 종목의 핵심 지표를 한 표에서 비교합니다.</p>
+        </div>
+        <div class="toolbar">
+          <label class="grow">
+            비교 종목
+            <input id="compareInput" placeholder="NVDA, MSFT, AAPL, GOOGL">
+          </label>
+          <button type="button" id="compareRun">비교</button>
+          <button type="button" class="ghost" id="compareFromWatchlist">관심종목 불러오기</button>
+        </div>
+        <div class="table-wrap compare-table-wrap">
+          <table class="compare-board" id="compareBoard"></table>
+        </div>
+      </section>
+
+      <!-- ==================== 실적 일정 탭 ==================== -->
+      <section class="panel" id="tab-earnings">
+        <div class="section-title">
+          <h2>시장 실적 캘린더</h2>
+          <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
+        </div>
+        <div class="toolbar">
+          <label>
+            기간
+            <select id="earnHorizon">
+              <option value="7">이번 주 (7일)</option>
+              <option value="14" selected>2주</option>
+              <option value="30">1개월</option>
+            </select>
+          </label>
+          <label>
+            범위
+            <select id="earnScope">
+              <option value="watchlist">관심종목</option>
+              <option value="watchlist+top">관심 + 대형주</option>
+              <option value="sp500">S&amp;P 500 상위</option>
+            </select>
+          </label>
+          <button type="button" id="earnRefresh">새로고침</button>
+        </div>
+        <div id="earningsCalendarBody"><p class="muted">실적 일정을 불러오는 중…</p></div>
       </section>
 
       <!-- ==================== 마켓 데이터 탭 ==================== -->
@@ -774,6 +929,6 @@
     </div>
 
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260617d"></script>
+    <script src="app.js?v=20260618a"></script>
   </body>
 </html>

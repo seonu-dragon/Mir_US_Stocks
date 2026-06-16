@@ -62,6 +62,17 @@ export default {
     if (url.searchParams.get("calendar")) {
       return cors(json({ calendar: await fetchCalendar() }));
     }
+    // Batch earnings dates for market-wide calendar tab.
+    if (url.searchParams.get("earnings_calendar")) {
+      const raw = (url.searchParams.get("tickers") || "")
+        .toUpperCase()
+        .split(",")
+        .map((t) => t.trim().replace(/[^A-Z0-9.\-]/g, ""))
+        .filter(Boolean)
+        .slice(0, 60);
+      const earnings = await fetchEarningsCalendar(raw);
+      return cors(json({ earnings }));
+    }
 
     const ticker = (url.searchParams.get("ticker") || "")
       .toUpperCase()
@@ -176,6 +187,23 @@ async function fetchEarnings(symbol) {
   } catch (e) {
     return null;
   }
+}
+
+async function fetchEarningsCalendar(tickers) {
+  const out = [];
+  const batchSize = 8;
+  for (let i = 0; i < tickers.length; i += batchSize) {
+    const batch = tickers.slice(i, i + batchSize);
+    const chunk = await Promise.all(batch.map(async (ticker) => {
+      const symbol = ticker.replace(/\./g, "-");
+      const data = await fetchEarnings(symbol);
+      if (!data || !data.nextDate) return null;
+      return { ticker, nextDate: data.nextDate, epsEstimate: data.epsEstimate };
+    }));
+    chunk.filter(Boolean).forEach((row) => out.push(row));
+  }
+  out.sort((a, b) => String(a.nextDate).localeCompare(String(b.nextDate)));
+  return out;
 }
 
 async function fetchChart(symbol) {

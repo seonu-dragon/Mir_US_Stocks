@@ -178,6 +178,13 @@ let chartState = {
 };
 
 let compareTickers = [];
+const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
+const THEME_STORAGE_KEY = "mir_theme";
+const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
+let watchlist = [];
+let earningsCalendarCache = null;
+let earningsCalendarLoading = false;
+let deferredInstallPrompt = null;
 
 const TOP_PRESETS = {
   leaders: { metric: "rsScore", minRs: 85, minEps: 70, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
@@ -238,6 +245,9 @@ async function loadData() {
 function boot() {
   const route = new URLSearchParams(window.location.search);
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
+  initWatchlist(route.get("watchlist"));
+  setupTheme();
+  setupPwa();
   updateDataLoadedAt();
   renderCardNews();
   setupLightbox();
@@ -928,6 +938,9 @@ function activateTab(name, { push = true, ticker = null } = {}) {
   byId(`tab-${name}`).classList.add("is-active");
   currentTab = name;
   if (name === "calendar") loadCalendar();
+  if (name === "earnings") loadEarningsCalendar();
+  if (name === "screener") renderScreener();
+  if (name === "compare") renderCompareBoard();
   if (name === "map") renderTreemap();  // 보이는 폭으로 다시 그려 깨짐 방지
   if (push) {
     history.pushState({ tab: name, ticker }, "");
@@ -992,6 +1005,11 @@ function setupFilters() {
 
   // Also populate sectorEtfRsGroup (same groups as etfRsGroup)
   byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
+
+  const scrBucket = byId("scrBucket");
+  if (scrBucket) scrBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  const scrSector = byId("scrSector");
+  if (scrSector) scrSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
 }
 
 function setupEvents() {
@@ -1065,6 +1083,29 @@ function setupEvents() {
     if (event.key === "Enter") selectTicker(event.target.value);
   });
   byId("bulkRun").addEventListener("click", renderBulk);
+  const bulkSave = byId("bulkSave");
+  if (bulkSave) bulkSave.addEventListener("click", () => {
+    saveWatchlistFromInput(byId("bulkInput").value);
+    renderBulk();
+  });
+  const bulkCompare = byId("bulkCompare");
+  if (bulkCompare) bulkCompare.addEventListener("click", () => {
+    byId("compareInput").value = watchlist.join(", ");
+    activateTab("compare", { push: true });
+    renderCompareBoard();
+  });
+  setupWatchlistUi();
+  setupScreenerEvents();
+  setupCompareEvents();
+  setupEarningsEvents();
+  document.addEventListener("click", (event) => {
+    const star = event.target.closest("[data-watch]");
+    if (star) {
+      event.preventDefault();
+      event.stopPropagation();
+      toggleWatchlist(star.dataset.watch);
+    }
+  });
   byId("stockTreemap").addEventListener("mousemove", handleHeatmapPointer);
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
   setupChartControls();
@@ -1348,6 +1389,7 @@ function renderAll() {
   renderJump();
   renderSearch();
   renderBulk();
+  renderWatchlistBar();
   renderHealth();
   renderAiBriefing();
   renderSocialSentiment();
@@ -1890,7 +1932,7 @@ function renderSelected(item) {
 function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
-    <h3>${item.ticker}</h3>
+    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker}</h3>
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     <div class="facts">
       ${fact("가격", `$${item.price.toFixed(2)}`)}
@@ -4160,23 +4202,30 @@ function fmtCompact(value) {
 
 function renderBulk() {
   const minRs = Number(byId("bulkRs").value || 0);
-  const tickers = byId("bulkInput").value.split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
+  const input = byId("bulkInput");
+  if (input && !input.value.trim()) input.value = watchlist.join(", ");
+  const tickers = input.value.split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
   const rows = tickers
     .map((ticker) => data.stocks.find((item) => item.ticker === ticker))
     .filter(Boolean)
     .filter((item) => item.rsScore >= minRs);
-  byId("bulkTable").innerHTML = rows.map((item) => `
+  renderWatchlistStats(rows);
+  byId("bulkTable").innerHTML = rows.length ? rows.map((item) => `
     <tr>
-      <td><strong>${item.ticker}</strong></td>
-      <td>${item.company}</td>
-      <td>${item.sector}</td>
+      <td>${watchStarButton(item.ticker)}</td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
+      <td>${escapeHtml(item.company)}</td>
+      <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtPct(item.changePct)}</td>
       <td>${item.rsScore}</td>
       <td>${item.epsRevScore}</td>
-      <td>${item.volumeRatio.toFixed(1)}x</td>
+      <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
       <td>${signalFor(item)}</td>
     </tr>
-  `).join("");
+  `).join("") : `<tr><td colspan="9" class="muted">관심종목을 추가하거나 티커를 입력하세요.</td></tr>`;
+  byId("bulkTable").querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
 }
 
 function signalFor(item) {
@@ -4698,6 +4747,446 @@ function renderSocialSentiment() {
     byId("socialYahooTable").innerHTML = `<tr><td colspan="4" class="text-center" style="padding: 20px; text-align: center; color: var(--text-muted);">데이터 없음</td></tr>`;
   }
   bindSocialSentimentClicks();
+}
+
+// ===== 관심종목 (localStorage) =====
+function initWatchlist(urlList) {
+  try {
+    const saved = JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]");
+    watchlist = Array.isArray(saved) ? saved.map((t) => String(t).toUpperCase()).filter(Boolean) : [];
+  } catch (e) {
+    watchlist = [];
+  }
+  if (urlList) {
+    const fromUrl = String(urlList).split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t));
+    if (fromUrl.length) watchlist = [...new Set(fromUrl)];
+    persistWatchlist();
+  }
+  if (!watchlist.length) watchlist = DEFAULT_WATCHLIST.slice();
+  persistWatchlist();
+}
+
+function persistWatchlist() {
+  watchlist = [...new Set(watchlist.filter((t) => stockByTicker(t)))];
+  try { localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
+  const input = byId("bulkInput");
+  if (input) input.value = watchlist.join(", ");
+}
+
+function isInWatchlist(ticker) {
+  return watchlist.includes(String(ticker || "").toUpperCase());
+}
+
+function watchStarButton(ticker) {
+  const on = isInWatchlist(ticker);
+  return `<button type="button" class="watch-star${on ? " is-on" : ""}" data-watch="${escapeHtml(ticker)}" title="관심종목">${on ? "★" : "☆"}</button>`;
+}
+
+function toggleWatchlist(ticker) {
+  const t = String(ticker || "").toUpperCase();
+  if (!stockByTicker(t)) return;
+  if (isInWatchlist(t)) watchlist = watchlist.filter((x) => x !== t);
+  else watchlist.push(t);
+  persistWatchlist();
+  renderWatchlistBar();
+  renderBulk();
+  document.querySelectorAll(`[data-watch="${t}"]`).forEach((btn) => {
+    const on = isInWatchlist(t);
+    btn.classList.toggle("is-on", on);
+    btn.textContent = on ? "★" : "☆";
+  });
+  const facts = byId("searchFacts");
+  if (facts && selectedTicker === t) {
+    const base = data.stocks.find((row) => row.ticker === t);
+    if (base) facts.innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
+  }
+}
+
+function saveWatchlistFromInput(text) {
+  const tickers = String(text || "").split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t));
+  if (!tickers.length) return;
+  watchlist = [...new Set(tickers)];
+  persistWatchlist();
+  renderWatchlistBar();
+}
+
+function renderWatchlistBar() {
+  const bar = byId("watchlistBar");
+  const chips = byId("watchlistChips");
+  const summary = byId("watchlistSummary");
+  if (!bar || !chips) return;
+  if (!watchlist.length) { bar.hidden = true; return; }
+  bar.hidden = false;
+  const items = watchlist.map((t) => stockByTicker(t)).filter(Boolean);
+  const up = items.filter((s) => Number(s.changePct) > 0).length;
+  if (summary) summary.textContent = `${items.length}개 · 상승 ${items.length ? Math.round((up / items.length) * 100) : 0}%`;
+  chips.innerHTML = items.map((item) => `
+    <button type="button" class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
+      <strong>${escapeHtml(item.ticker)}</strong>
+      <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+      <span class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거">×</span>
+    </button>
+  `).join("");
+  chips.querySelectorAll(".watch-chip").forEach((chip) => {
+    chip.addEventListener("click", (event) => {
+      if (event.target.closest("[data-remove]")) return;
+      selectTicker(chip.dataset.ticker, { openSearch: true });
+    });
+  });
+  chips.querySelectorAll("[data-remove]").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      toggleWatchlist(btn.dataset.remove);
+    });
+  });
+}
+
+function renderWatchlistStats(rows) {
+  const box = byId("watchlistStats");
+  if (!box) return;
+  const items = rows || watchlist.map((t) => stockByTicker(t)).filter(Boolean);
+  if (!items.length) { box.innerHTML = ""; return; }
+  const up = items.filter((s) => Number(s.changePct) > 0).length;
+  const avgRs = items.reduce((sum, s) => sum + Number(s.rsScore || 0), 0) / items.length;
+  const avgChg = items.reduce((sum, s) => sum + Number(s.changePct || 0), 0) / items.length;
+  box.innerHTML = `
+    <article class="watch-stat-card"><span>종목 수</span><strong>${items.length}</strong></article>
+    <article class="watch-stat-card"><span>상승 비중</span><strong>${Math.round((up / items.length) * 100)}%</strong></article>
+    <article class="watch-stat-card"><span>평균 RS</span><strong>${avgRs.toFixed(0)}</strong></article>
+    <article class="watch-stat-card"><span>평균 당일</span><strong class="${cls(avgChg)}">${fmtPct(avgChg)}</strong></article>
+  `;
+}
+
+function setupWatchlistUi() {
+  const openBulk = byId("watchlistOpenBulk");
+  if (openBulk) openBulk.addEventListener("click", () => activateTab("bulk", { push: true }));
+  const share = byId("watchlistShare");
+  if (share) share.addEventListener("click", async () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set("watchlist", watchlist.join(","));
+    url.searchParams.delete("tab");
+    try {
+      await navigator.clipboard.writeText(url.toString());
+      share.textContent = "복사됨!";
+      setTimeout(() => { share.textContent = "링크 공유"; }, 1500);
+    } catch (e) {
+      window.prompt("관심종목 링크", url.toString());
+    }
+  });
+}
+
+// ===== 다크 모드 =====
+function setupTheme() {
+  const saved = localStorage.getItem(THEME_STORAGE_KEY);
+  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  applyTheme(saved || (prefersDark ? "dark" : "light"));
+  const btn = byId("themeToggle");
+  if (btn) btn.addEventListener("click", () => {
+    const next = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+    applyTheme(next);
+  });
+}
+
+function applyTheme(mode) {
+  const dark = mode === "dark";
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+  localStorage.setItem(THEME_STORAGE_KEY, dark ? "dark" : "light");
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.content = dark ? "#0b1120" : "#0f172a";
+  const btn = byId("themeToggle");
+  if (btn) btn.textContent = dark ? "☀️" : "🌙";
+}
+
+// ===== PWA =====
+function setupPwa() {
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+  const installBtn = byId("installApp");
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event;
+    if (installBtn) installBtn.hidden = false;
+  });
+  if (installBtn) {
+    installBtn.addEventListener("click", async () => {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        await deferredInstallPrompt.userChoice;
+        deferredInstallPrompt = null;
+        installBtn.hidden = true;
+        return;
+      }
+      const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+      window.alert(isIOS
+        ? "Safari 공유 버튼 → '홈 화면에 추가'를 선택하세요."
+        : "브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.");
+    });
+  }
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  if (isStandalone && installBtn) installBtn.hidden = true;
+}
+
+// ===== 스크리너 =====
+function screenerRows() {
+  const bucket = byId("scrBucket")?.value || "idx_sp500";
+  const sector = byId("scrSector")?.value || "All";
+  const preset = byId("scrPreset")?.value || "custom";
+  const metric = byId("scrMetric")?.value || "rsScore";
+  const minRs = numberInputValue("scrMinRs", 0);
+  const minEps = numberInputValue("scrMinEps", 0);
+  const minVol = numberInputValue("scrMinVol", 0);
+  const minCap = numberInputValue("scrMinCap", 0);
+  const limit = Math.max(1, numberInputValue("scrLimit", 100));
+  return data.stocks
+    .filter((item) => item.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
+    .filter((item) => sector === "All" || item.sector === sector)
+    .filter((item) => (Number(item.rsScore) || 0) >= minRs)
+    .filter((item) => (Number(item.epsRevScore) || 0) >= minEps)
+    .filter((item) => (Number(item.volumeRatio) || 0) >= minVol)
+    .filter((item) => (Number(item.marketCapB) || 0) >= minCap)
+    .filter((item) => topPresetMatches(item, preset))
+    .map((item) => ({ item, value: metricValue(item, metric) }))
+    .filter(({ value }) => Number.isFinite(value))
+    .sort((a, b) => metricSortDirection(metric) * (b.value - a.value))
+    .slice(0, limit);
+}
+
+function renderScreener() {
+  const body = byId("screenerTable");
+  const meta = byId("screenerMeta");
+  if (!body) return;
+  const rows = screenerRows();
+  if (meta) meta.textContent = `${rows.length}개 종목 · ${byId("scrBucket")?.selectedOptions?.[0]?.textContent || ""}`;
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="11" class="muted">조건에 맞는 종목이 없습니다.</td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map(({ item }) => `
+    <tr>
+      <td>${watchStarButton(item.ticker)}</td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
+      <td>${escapeHtml(item.company)}</td>
+      <td>${escapeHtml(item.sector)}</td>
+      <td class="${cls(item.changePct)}">${fmtPct(item.changePct)}</td>
+      <td class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</td>
+      <td>${item.rsScore}</td>
+      <td>${item.epsRevScore}</td>
+      <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
+      <td>$${Number(item.marketCapB || 0).toFixed(1)}B</td>
+      <td>${signalFor(item)}</td>
+    </tr>
+  `).join("");
+  body.querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function setupScreenerEvents() {
+  const run = () => renderScreener();
+  ["scrBucket", "scrSector", "scrMetric", "scrLimit"].forEach((id) => {
+    const el = byId(id);
+    if (el) el.addEventListener("change", run);
+  });
+  const preset = byId("scrPreset");
+  if (preset) preset.addEventListener("change", () => {
+    const key = preset.value;
+    const p = TOP_PRESETS[key];
+    if (p) {
+      byId("scrMetric").value = p.metric;
+      byId("scrMinRs").value = p.minRs || "";
+      byId("scrMinEps").value = p.minEps || "";
+      byId("scrMinVol").value = p.minVolume || "";
+      byId("scrMinCap").value = p.minMarketCap || "";
+    }
+    run();
+  });
+  const btn = byId("scrRun");
+  if (btn) btn.addEventListener("click", run);
+  const reset = byId("scrReset");
+  if (reset) reset.addEventListener("click", () => {
+    byId("scrPreset").value = "custom";
+    byId("scrBucket").value = "idx_sp500";
+    byId("scrSector").value = "All";
+    byId("scrMetric").value = "rsScore";
+    ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
+    run();
+  });
+}
+
+// ===== 종목 비교 =====
+const COMPARE_METRICS = [
+  ["가격", (i) => `$${Number(i.price).toFixed(2)}`],
+  ["당일", (i) => fmtPct(i.changePct), (i) => cls(i.changePct)],
+  ["1주", (i) => fmtPct(i.weekChangePct), (i) => cls(i.weekChangePct)],
+  ["1개월", (i) => fmtPct(i.monthChangePct), (i) => cls(i.monthChangePct)],
+  ["3개월", (i) => fmtPct(i.threeMonthChangePct), (i) => cls(i.threeMonthChangePct)],
+  ["RS", (i) => String(i.rsScore)],
+  ["EPS Rev", (i) => String(i.epsRevScore)],
+  ["거래량", (i) => `${Number(i.volumeRatio || 0).toFixed(1)}x`],
+  ["시총", (i) => `$${Number(i.marketCapB || 0).toFixed(1)}B`],
+  ["신고가 거리", (i) => fmtPct(-i.newHighDistancePct)],
+  ["PER", (i) => moneyOrDash(i.fundamentals?.pe)],
+  ["Fwd PER", (i) => moneyOrDash(i.fundamentals?.forwardPE)],
+  ["섹터", (i) => i.sector],
+  ["신호", (i) => signalFor(i)],
+];
+
+function compareTickersFromInput() {
+  const raw = byId("compareInput")?.value || "";
+  return [...new Set(raw.split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t)))].slice(0, 6);
+}
+
+function renderCompareBoard() {
+  const table = byId("compareBoard");
+  if (!table) return;
+  const tickers = compareTickersFromInput();
+  if (!tickers.length) {
+    table.innerHTML = `<tr><td class="muted">비교할 티커를 입력하세요. (최대 6개)</td></tr>`;
+    return;
+  }
+  const items = tickers.map((t) => withDetail(stockByTicker(t)));
+  let html = `<thead><tr><th>지표</th>${items.map((i) => `<th><button type="button" class="ticker-link" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(i.ticker)}</button><div class="muted" style="font-size:11px;font-weight:400">${escapeHtml(i.company)}</div></th>`).join("")}</tr></thead><tbody>`;
+  COMPARE_METRICS.forEach(([label, fmt, toneFn]) => {
+    html += `<tr><td class="metric-label">${label}</td>${items.map((item) => {
+      const tone = toneFn ? toneFn(item) : "";
+      return `<td${tone ? ` class="${tone}"` : ""}>${fmt(item)}</td>`;
+    }).join("")}</tr>`;
+  });
+  html += "</tbody>";
+  table.innerHTML = html;
+  table.querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+  tickers.forEach((t) => loadStockDetail(t).then(() => {
+    if (compareTickersFromInput().join() === tickers.join()) renderCompareBoard();
+  }));
+}
+
+function setupCompareEvents() {
+  const run = () => renderCompareBoard();
+  byId("compareRun")?.addEventListener("click", run);
+  byId("compareFromWatchlist")?.addEventListener("click", () => {
+    const input = byId("compareInput");
+    if (input) input.value = watchlist.slice(0, 6).join(", ");
+    run();
+  });
+  const input = byId("compareInput");
+  if (input && !input.value) input.value = watchlist.slice(0, 4).join(", ");
+}
+
+// ===== 시장 실적 캘린더 =====
+function earningsTickerPool() {
+  const scope = byId("earnScope")?.value || "watchlist";
+  const pool = new Set(watchlist);
+  if (scope === "watchlist+top" || scope === "sp500") {
+    sp500TopTickers(scope === "sp500" ? 80 : 35).forEach((t) => pool.add(t));
+  }
+  return [...pool].filter((t) => stockByTicker(t) && stockByTicker(t).sector !== "EXCHANGE TRADED FUNDS").slice(0, 60);
+}
+
+function sp500TopTickers(limit = 50) {
+  return data.stocks
+    .filter((s) => s.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((s) => bucketMatches(s, s.groups || [s.bucket].filter(Boolean), "idx_sp500"))
+    .sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0))
+    .slice(0, limit)
+    .map((s) => s.ticker);
+}
+
+function loadEarningsCalendar(force = false) {
+  const body = byId("earningsCalendarBody");
+  if (!body) return;
+  if (!LIVE_DATA_PROXY) {
+    body.innerHTML = `<p class="muted">실적 캘린더는 Cloudflare Worker 연결 후 표시됩니다.</p>`;
+    return;
+  }
+  if (earningsCalendarLoading) return;
+  if (earningsCalendarCache && !force) {
+    renderEarningsCalendarMarket(earningsCalendarCache);
+    return;
+  }
+  earningsCalendarLoading = true;
+  body.innerHTML = `<p class="muted">실적 일정을 불러오는 중… (${earningsTickerPool().length}종목)</p>`;
+  const tickers = earningsTickerPool().join(",");
+  fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?earnings_calendar=1&tickers=${encodeURIComponent(tickers)}`, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((payload) => {
+      earningsCalendarCache = (payload && payload.earnings) || [];
+      renderEarningsCalendarMarket(earningsCalendarCache);
+    })
+    .catch(() => {
+      body.innerHTML = `<p class="muted">실적 일정을 불러오지 못했습니다.</p>`;
+    })
+    .finally(() => { earningsCalendarLoading = false; });
+}
+
+function renderEarningsCalendarMarket(rows) {
+  const body = byId("earningsCalendarBody");
+  if (!body) return;
+  const horizon = Number(byId("earnHorizon")?.value || 14);
+  const today = snapshotBaseDate();
+  const end = new Date(today.getTime() + horizon * 86400000);
+  const grouped = {};
+  (rows || []).forEach((row) => {
+    const date = row.nextDate;
+    if (!date) return;
+    const d = new Date(date);
+    if (Number.isNaN(d.getTime()) || d < today || d > end) return;
+    if (!grouped[date]) grouped[date] = [];
+    grouped[date].push(row);
+  });
+  const dates = Object.keys(grouped).sort();
+  if (!dates.length) {
+    body.innerHTML = `<p class="muted">선택 기간에 실적 일정이 있는 종목이 없습니다. 범위를 넓히거나 새로고침해 보세요.</p>`;
+    return;
+  }
+  body.innerHTML = dates.map((date) => {
+    const list = grouped[date].sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0));
+    const days = Math.ceil((new Date(date) - today) / 86400000);
+    return `
+      <section class="earnings-day-group">
+        <div class="earnings-day-head">
+          <strong>${escapeHtml(date)}</strong>
+          <span>${days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`} · ${list.length}종목</span>
+        </div>
+        <div class="earnings-day-rows table-wrap">
+          <table class="compact-table">
+            <thead><tr><th>티커</th><th>회사</th><th>시총</th><th>EPS 예상</th><th>RS</th></tr></thead>
+            <tbody>
+              ${list.map((row) => {
+                const stock = stockByTicker(row.ticker) || {};
+                return `<tr>
+                  <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
+                  <td>${escapeHtml(stock.company || row.ticker)}</td>
+                  <td>$${Number(stock.marketCapB || 0).toFixed(1)}B</td>
+                  <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
+                  <td>${stock.rsScore ?? "—"}</td>
+                </tr>`;
+              }).join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    `;
+  }).join("");
+  body.querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function setupEarningsEvents() {
+  byId("earnRefresh")?.addEventListener("click", () => {
+    earningsCalendarCache = null;
+    loadEarningsCalendar(true);
+  });
+  ["earnHorizon", "earnScope"].forEach((id) => {
+    byId(id)?.addEventListener("change", () => {
+      earningsCalendarCache = null;
+      loadEarningsCalendar(true);
+    });
+  });
 }
 
 loadData();

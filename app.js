@@ -259,10 +259,12 @@ function boot() {
   setupEvents();
   setupBriefingToggles();
   fetchMarketHeader();
-  history.replaceState({ tab: currentTab, ticker: null }, "");
-  if (route.get("tab")) {
-    const tab = document.querySelector(`[data-tab="${route.get("tab")}"]`);
-    if (tab) tab.click();
+  const initialTab = route.get("tab");
+  const initialSub = route.get("sub");
+  history.replaceState({ tab: currentTab, sub: null, ticker: null }, "");
+  if (initialTab) {
+    const resolved = normalizeTabRequest(initialTab, initialSub);
+    activateTab(resolved.tab, { push: false, sub: resolved.sub });
   }
   if (route.get("ticker")) selectTicker(route.get("ticker"));
 }
@@ -928,8 +930,60 @@ function renderCalendar(events) {
 }
 
 let currentTab = "map";
+let searchSubTab = "analysis";
+let calendarSubTab = "macro";
 
-function activateTab(name, { push = true, ticker = null } = {}) {
+const TAB_REDIRECT = {
+  top: { tab: "search", sub: "top" },
+  jump: { tab: "search", sub: "jump" },
+  compare: { tab: "search", sub: "compare" },
+  earnings: { tab: "calendar", sub: "earnings" },
+};
+
+function normalizeTabRequest(name, sub) {
+  const redirect = TAB_REDIRECT[name];
+  if (redirect) return { tab: redirect.tab, sub: sub || redirect.sub };
+  return { tab: name, sub: sub || null };
+}
+
+function activateSearchSub(name, { push = false } = {}) {
+  searchSubTab = name || "analysis";
+  const nav = byId("searchSubTabs");
+  if (nav) {
+    nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === searchSubTab));
+    document.querySelectorAll("#tab-search .sub-panel").forEach((panel) => panel.classList.remove("is-active"));
+    const panel = byId(`sub-${searchSubTab}`);
+    if (panel) panel.classList.add("is-active");
+  }
+  if (searchSubTab === "top") renderTopStocks();
+  if (searchSubTab === "jump") renderJump();
+  if (searchSubTab === "compare") renderCompareBoard();
+  if (searchSubTab === "analysis") renderSearch();
+  if (push) {
+    history.pushState({ tab: "search", sub: searchSubTab, ticker: selectedTicker }, "");
+  }
+}
+
+function activateCalendarSub(name, { push = false } = {}) {
+  calendarSubTab = name || "macro";
+  const nav = byId("calendarSubTabs");
+  if (nav) {
+    nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === calendarSubTab));
+    document.querySelectorAll("#tab-calendar .sub-panel").forEach((panel) => panel.classList.remove("is-active"));
+    const panel = byId(`sub-${calendarSubTab}`);
+    if (panel) panel.classList.add("is-active");
+  }
+  if (calendarSubTab === "macro") loadCalendar();
+  if (calendarSubTab === "earnings") loadEarningsCalendar();
+  if (push) {
+    history.pushState({ tab: "calendar", sub: calendarSubTab, ticker: null }, "");
+  }
+}
+
+function activateTab(name, { push = true, ticker = null, sub = null } = {}) {
+  const resolved = normalizeTabRequest(name, sub);
+  name = resolved.tab;
+  sub = resolved.sub;
   const tabBtn = document.querySelector(`[data-tab="${name}"]`);
   if (!tabBtn) return;
   document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
@@ -937,13 +991,12 @@ function activateTab(name, { push = true, ticker = null } = {}) {
   tabBtn.classList.add("is-active");
   byId(`tab-${name}`).classList.add("is-active");
   currentTab = name;
-  if (name === "calendar") loadCalendar();
-  if (name === "earnings") loadEarningsCalendar();
+  if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
+  if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
   if (name === "screener") renderScreener();
-  if (name === "compare") renderCompareBoard();
-  if (name === "map") renderTreemap();  // 보이는 폭으로 다시 그려 깨짐 방지
+  if (name === "map") renderTreemap();
   if (push) {
-    history.pushState({ tab: name, ticker }, "");
+    history.pushState({ tab: name, sub: name === "search" ? searchSubTab : (name === "calendar" ? calendarSubTab : null), ticker }, "");
   }
 }
 
@@ -956,9 +1009,9 @@ function setupTabs() {
   });
   // Browser back/forward restores the previous tab (and ticker) instead of leaving the site.
   window.addEventListener("popstate", (event) => {
-    const state = event.state || { tab: "map", ticker: null };
+    const state = event.state || { tab: "map", ticker: null, sub: null };
     if (state.ticker) selectTicker(state.ticker, { openSearch: false });
-    activateTab(state.tab || "map", { push: false });
+    activateTab(state.tab || "map", { push: false, sub: state.sub, ticker: state.ticker });
   });
 }
 
@@ -1061,6 +1114,26 @@ function setupEvents() {
     });
   });
 
+  const searchSubTabs = byId("searchSubTabs");
+  if (searchSubTabs) {
+    searchSubTabs.querySelectorAll(".sub-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (currentTab !== "search") activateTab("search", { push: false });
+        activateSearchSub(btn.dataset.sub, { push: true });
+      });
+    });
+  }
+
+  const calendarSubTabs = byId("calendarSubTabs");
+  if (calendarSubTabs) {
+    calendarSubTabs.querySelectorAll(".sub-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (currentTab !== "calendar") activateTab("calendar", { push: false });
+        activateCalendarSub(btn.dataset.sub, { push: true });
+      });
+    });
+  }
+
   // Sector tab ETF RS panel controls
   ["sectorEtfRsBenchmark", "sectorEtfRsPeriod", "sectorEtfRsGroup", "sectorEtfRsSort"].forEach((id) => {
     byId(id).addEventListener("change", renderSectorEtfRelativeStrength);
@@ -1091,8 +1164,7 @@ function setupEvents() {
   const bulkCompare = byId("bulkCompare");
   if (bulkCompare) bulkCompare.addEventListener("click", () => {
     byId("compareInput").value = watchlist.join(", ");
-    activateTab("compare", { push: true });
-    renderCompareBoard();
+    activateTab("search", { sub: "compare", push: true });
   });
   setupWatchlistUi();
   setupScreenerEvents();
@@ -2694,11 +2766,10 @@ function selectTicker(ticker, options = {}) {
   renderSearch();
   chatFocusTicker = found.ticker;
   if (options.openSearch !== false) {
-    if (currentTab !== "search") {
-      activateTab("search", { ticker: selectedTicker, push: true });
+    if (currentTab !== "search" || searchSubTab !== "analysis") {
+      activateTab("search", { sub: "analysis", ticker: selectedTicker, push: true });
     } else {
-      activateTab("search", { push: false });
-      history.replaceState({ tab: "search", ticker: selectedTicker }, "");
+      history.replaceState({ tab: "search", sub: "analysis", ticker: selectedTicker }, "");
     }
   }
 }

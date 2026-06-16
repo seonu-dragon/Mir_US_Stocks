@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260618b">
+    <link rel="stylesheet" href="styles.css?v=20260618c">
   </head>
   <body>
     <header class="topbar">
@@ -112,13 +112,9 @@
       <nav class="tabs" aria-label="Dashboard sections">
         <button class="tab is-active" data-tab="map">시장 지도</button>
         <button class="tab" data-tab="sector">섹터 흐름</button>
-        <button class="tab" data-tab="top">상위 종목</button>
         <button class="tab" data-tab="screener">스크리너</button>
-        <button class="tab" data-tab="jump">급등/거래량</button>
         <button class="tab" data-tab="search">종목 분석</button>
         <button class="tab" data-tab="bulk">관심 리스트</button>
-        <button class="tab" data-tab="compare">종목 비교</button>
-        <button class="tab" data-tab="earnings">실적 일정</button>
         <button class="tab" data-tab="health">마켓 데이터</button>
         <button class="tab" data-tab="calendar">경제 캘린더</button>
         <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
@@ -371,8 +367,16 @@
         </div>
       </section>
 
-      <!-- ==================== 상위 종목 탭 ==================== -->
-      <section class="panel" id="tab-top">
+      <!-- ==================== 종목 분석 탭 (하위: 분석·상위·비교·급등) ==================== -->
+      <section class="panel" id="tab-search">
+        <nav class="sub-tabs" id="searchSubTabs" aria-label="Stock analysis sub-sections">
+          <button class="sub-tab is-active" data-sub="analysis">📈 종목 분석</button>
+          <button class="sub-tab" data-sub="top">🏆 상위 종목</button>
+          <button class="sub-tab" data-sub="compare">⚖️ 종목 비교</button>
+          <button class="sub-tab" data-sub="jump">🚀 급등/거래량</button>
+        </nav>
+
+        <div class="sub-panel" id="sub-top">
         <div class="top-stocks-filters">
         <div class="toolbar">
           <label>
@@ -471,10 +475,9 @@
           <p id="topStocksMeta">조건에 맞는 상위 종목입니다.</p>
         </div>
         <div class="rank-grid" id="topStocks"></div>
-      </section>
+        </div>
 
-      <!-- ==================== 급등/거래량 탭 ==================== -->
-      <section class="panel" id="tab-jump">
+        <div class="sub-panel" id="sub-jump">
         <div class="toolbar">
           <label>
             카테고리
@@ -494,10 +497,27 @@
           </label>
         </div>
         <div class="card-grid" id="jumpGrid"></div>
-      </section>
+        </div>
 
-      <!-- ==================== 종목 분석 탭 ==================== -->
-      <section class="panel" id="tab-search">
+        <div class="sub-panel" id="sub-compare">
+        <div class="section-title">
+          <h2>종목 비교 보드</h2>
+          <p>최대 6개 종목의 핵심 지표를 한 표에서 비교합니다.</p>
+        </div>
+        <div class="toolbar">
+          <label class="grow">
+            비교 종목
+            <input id="compareInput" placeholder="NVDA, MSFT, AAPL, GOOGL">
+          </label>
+          <button type="button" id="compareRun">비교</button>
+          <button type="button" class="ghost" id="compareFromWatchlist">관심종목 불러오기</button>
+        </div>
+        <div class="table-wrap compare-table-wrap">
+          <table class="compare-board" id="compareBoard"></table>
+        </div>
+        </div>
+
+        <div class="sub-panel is-active" id="sub-analysis">
         <div class="toolbar">
           <label class="grow">
             티커 검색
@@ -616,6 +636,7 @@
             <section class="earnings-calendar-card" id="stockEarnings"></section>
           </div>
         </div>
+        </div>
       </section>
 
       <!-- ==================== 스크리너 탭 ==================== -->
@@ -733,53 +754,6 @@
         </div>
       </section>
 
-      <!-- ==================== 종목 비교 탭 ==================== -->
-      <section class="panel" id="tab-compare">
-        <div class="section-title">
-          <h2>종목 비교 보드</h2>
-          <p>최대 6개 종목의 핵심 지표를 한 표에서 비교합니다.</p>
-        </div>
-        <div class="toolbar">
-          <label class="grow">
-            비교 종목
-            <input id="compareInput" placeholder="NVDA, MSFT, AAPL, GOOGL">
-          </label>
-          <button type="button" id="compareRun">비교</button>
-          <button type="button" class="ghost" id="compareFromWatchlist">관심종목 불러오기</button>
-        </div>
-        <div class="table-wrap compare-table-wrap">
-          <table class="compare-board" id="compareBoard"></table>
-        </div>
-      </section>
-
-      <!-- ==================== 실적 일정 탭 ==================== -->
-      <section class="panel" id="tab-earnings">
-        <div class="section-title">
-          <h2>시장 실적 캘린더</h2>
-          <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
-        </div>
-        <div class="toolbar">
-          <label>
-            기간
-            <select id="earnHorizon">
-              <option value="7">이번 주 (7일)</option>
-              <option value="14" selected>2주</option>
-              <option value="30">1개월</option>
-            </select>
-          </label>
-          <label>
-            범위
-            <select id="earnScope">
-              <option value="watchlist">관심종목</option>
-              <option value="watchlist+top">관심 + 대형주</option>
-              <option value="sp500">S&amp;P 500 상위</option>
-            </select>
-          </label>
-          <button type="button" id="earnRefresh">새로고침</button>
-        </div>
-        <div id="earningsCalendarBody"><p class="muted">실적 일정을 불러오는 중…</p></div>
-      </section>
-
       <!-- ==================== 마켓 데이터 탭 ==================== -->
       <section class="panel" id="tab-health">
         <div class="section-title">
@@ -789,18 +763,52 @@
         <div class="markets-tables" id="marketsTables"></div>
       </section>
 
-      <!-- ==================== 경제 캘린더 탭 ==================== -->
+      <!-- ==================== 경제 캘린더 탭 (하위: 경제지표·실적) ==================== -->
       <section class="panel" id="tab-calendar">
-        <div class="section-title">
-          <h2>경제 캘린더</h2>
-          <p>이번 주 한국·미국 주요 경제지표 일정입니다. (한국 시간 기준 · 실시간)</p>
+        <nav class="sub-tabs" id="calendarSubTabs" aria-label="Calendar sub-sections">
+          <button class="sub-tab is-active" data-sub="macro">📅 경제 캘린더</button>
+          <button class="sub-tab" data-sub="earnings">📊 실적 일정</button>
+        </nav>
+
+        <div class="sub-panel is-active" id="sub-macro">
+          <div class="section-title">
+            <h2>경제 캘린더</h2>
+            <p>이번 주 한국·미국 주요 경제지표 일정입니다. (한국 시간 기준 · 실시간)</p>
+          </div>
+          <div class="calendar-legend">
+            <span><b class="imp imp-3">●●●</b> 높음</span>
+            <span><b class="imp imp-2">●●</b><span class="imp-dim">●</span> 보통</span>
+            <span><b class="imp imp-1">●</b><span class="imp-dim">●●</span> 낮음</span>
+          </div>
+          <div id="calendarBody"><p class="muted">경제 캘린더를 불러오는 중…</p></div>
         </div>
-        <div class="calendar-legend">
-          <span><b class="imp imp-3">●●●</b> 높음</span>
-          <span><b class="imp imp-2">●●</b><span class="imp-dim">●</span> 보통</span>
-          <span><b class="imp imp-1">●</b><span class="imp-dim">●●</span> 낮음</span>
+
+        <div class="sub-panel" id="sub-earnings">
+          <div class="section-title">
+            <h2>시장 실적 캘린더</h2>
+            <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
+          </div>
+          <div class="toolbar">
+            <label>
+              기간
+              <select id="earnHorizon">
+                <option value="7">이번 주 (7일)</option>
+                <option value="14" selected>2주</option>
+                <option value="30">1개월</option>
+              </select>
+            </label>
+            <label>
+              범위
+              <select id="earnScope">
+                <option value="watchlist">관심종목</option>
+                <option value="watchlist+top">관심 + 대형주</option>
+                <option value="sp500">S&amp;P 500 상위</option>
+              </select>
+            </label>
+            <button type="button" id="earnRefresh">새로고침</button>
+          </div>
+          <div id="earningsCalendarBody"><p class="muted">실적 일정을 불러오는 중…</p></div>
         </div>
-        <div id="calendarBody"><p class="muted">경제 캘린더를 불러오는 중…</p></div>
       </section>
 
       <!-- ==================== AI 브리핑 탭 ==================== -->
@@ -928,6 +936,6 @@
     </div>
 
     <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260618b"></script>
+    <script src="app.js?v=20260618c"></script>
   </body>
 </html>

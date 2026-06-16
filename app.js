@@ -388,16 +388,22 @@ function setupChatbot() {
     chatbotEl.style.top = `${top}px`;
   }
 
-  function endDrag() {
+  function endDrag(event) {
     if (!drag) return;
     const moved = drag.moved;
     drag = null;
-    window.removeEventListener("pointermove", onPointerMove);
-    window.removeEventListener("pointerup", endDrag);
+    toggle.removeEventListener("pointermove", onPointerMove);
+    toggle.removeEventListener("pointerup", endDrag);
+    toggle.removeEventListener("pointercancel", endDrag);
+    try { if (event) toggle.releasePointerCapture(event.pointerId); } catch (e) { /* ignore */ }
     if (moved) {
       justDragged = true;
-      chatbotEl.classList.remove("dragging");
-      if (mascotImg) mascotImg.src = mascotNormal;
+      setTimeout(() => { justDragged = false; }, 0);  // 직후 click만 무시하고 곧 해제
+    }
+    // 드래그 여부와 상관없이 항상 원래 포즈로 복귀
+    chatbotEl.classList.remove("dragging");
+    if (mascotImg && mascotImg.getAttribute("src") !== mascotNormal) {
+      mascotImg.src = mascotNormal;
     }
   }
 
@@ -412,12 +418,14 @@ function setupChatbot() {
       offsetY: event.clientY - rect.top,
       moved: false,
     };
-    window.addEventListener("pointermove", onPointerMove);
-    window.addEventListener("pointerup", endDrag);
+    try { toggle.setPointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+    toggle.addEventListener("pointermove", onPointerMove);
+    toggle.addEventListener("pointerup", endDrag);
+    toggle.addEventListener("pointercancel", endDrag);
   });
 
   toggle.addEventListener("click", () => {
-    if (justDragged) { justDragged = false; return; }  // 드래그였으면 패널 열지 않음
+    if (justDragged) return;  // 드래그였으면 패널 열지 않음(justDragged는 곧 자동 해제)
     openPanel();
   });
   if (close) close.addEventListener("click", closePanel);

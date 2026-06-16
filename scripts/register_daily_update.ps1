@@ -1,36 +1,31 @@
-$ErrorActionPreference = "Stop"
+# UTF-8 Encoding for PowerShell Output
+$OutputEncoding = [System.Text.Encoding]::UTF8
 
-$Root = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
-$PythonCommand = Get-Command py -ErrorAction SilentlyContinue
-if ($PythonCommand) {
-  $Python = $PythonCommand.Source
-  $PythonArgs = "-3"
-} else {
-  $PythonCommand = Get-Command python -ErrorAction SilentlyContinue
-  if ($PythonCommand) {
-    $Python = $PythonCommand.Source
-  } else {
-    $BundledPython = Join-Path $env:USERPROFILE ".cache\codex-runtimes\codex-primary-runtime\dependencies\python\python.exe"
-    if (!(Test-Path -LiteralPath $BundledPython)) {
-      throw "Python 실행 파일을 찾을 수 없습니다. Python을 설치하거나 이 스크립트의 `$Python 값을 직접 지정하세요."
-    }
-    $Python = $BundledPython
-  }
-  $PythonArgs = ""
-}
-$Script = Join-Path $Root "scripts\update_data.py"
+$ScriptDir = $PSScriptRoot
+if (!$ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
+$Root = Split-Path -Parent $ScriptDir
+$BatPath = Join-Path $ScriptDir "run_daily_update.bat"
 $TaskName = "MijoomoDailySnapshot"
-$TaskRun = if ($PythonArgs) {
-  "`"$Python`" $PythonArgs `"$Script`""
-} else {
-  "`"$Python`" `"$Script`""
+
+Write-Host "Registering Scheduled Task: $TaskName"
+Write-Host "Action: $BatPath"
+Write-Host "Working Directory: $Root"
+Write-Host "Schedule: Daily at 05:00 KST (before briefing tasks at 06:00/06:10)"
+
+if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
+    Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false
+    Write-Host "Unregistered existing task."
 }
 
-schtasks /Create `
-  /TN $TaskName `
-  /SC DAILY `
-  /ST 06:00 `
-  /TR $TaskRun `
-  /F | Out-Host
+$Trigger = New-ScheduledTaskTrigger -Daily -At 5:00AM
+$Action = New-ScheduledTaskAction -Execute $BatPath -WorkingDirectory $Root
+$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun
 
-Write-Host "Registered $TaskName to update the market snapshot daily at 06:00 Korea local time."
+Register-ScheduledTask `
+    -TaskName $TaskName `
+    -Trigger $Trigger `
+    -Action $Action `
+    -Settings $Settings `
+    -Description "Daily full market snapshot at 05:00 KST (runs before briefing tasks; auto git push)"
+
+Write-Host "Successfully registered '$TaskName' to run daily at 05:00 KST."

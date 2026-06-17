@@ -26,7 +26,16 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260618d">
+    <link rel="stylesheet" href="styles.css?v=20260617f">
+    <script>
+      (function () {
+        if (!("serviceWorker" in navigator)) return;
+        var v = "20260617f";
+        navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
+          reg.update();
+        }).catch(function () {});
+      })();
+    </script>
   </head>
   <body>
     <header class="topbar">
@@ -934,7 +943,7 @@
       </button>
     </div>
 
-    <script src="data/market_snapshot.js"></script>
-    <script src="app.js?v=20260618d"></script>
+    <script src="data/market_snapshot.js?v=20260617f"></script>
+    <script src="app.js?v=20260617f"></script>
   </body>
 </html>

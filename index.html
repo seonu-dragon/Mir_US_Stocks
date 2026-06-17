@@ -26,11 +26,11 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260617i">
+    <link rel="stylesheet" href="styles.css?v=20260617o">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
-        var v = "20260617i";
+        var v = "20260617o";
         navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
           reg.update();
         }).catch(function () {});
@@ -762,6 +762,65 @@
             <tbody id="bulkTable"></tbody>
           </table>
         </div>
+
+        <div class="backtest-panel" id="backtestPanel">
+          <div class="section-title compact-title">
+            <h2>포트폴리오 시뮬레이터</h2>
+            <p>설정한 비중으로 매수 후 보유(buy-and-hold)했을 때의 수익률입니다. 일봉 종가 기준, 리밸런싱 없음.</p>
+          </div>
+          <div class="toolbar backtest-toolbar">
+            <label class="grow">
+              Tickers
+              <input id="backtestInput" placeholder="NVDA, MSFT, AAPL (최대 10개)">
+            </label>
+            <label>
+              기간
+              <select id="backtestPeriod">
+                <option value="252">1년</option>
+                <option value="756" selected>3년</option>
+                <option value="1260">5년</option>
+                <option value="custom">직접 선택</option>
+              </select>
+            </label>
+            <label id="backtestStartWrap" hidden>
+              시작일
+              <input id="backtestStartDate" type="date">
+            </label>
+            <label>
+              벤치마크
+              <select id="backtestBenchmark"></select>
+            </label>
+            <label>
+              투자금 (USD)
+              <input id="backtestInvestment" type="number" min="1" step="100" value="10000">
+            </label>
+            <button type="button" id="backtestRun">시뮬레이션</button>
+            <button type="button" class="ghost" id="backtestFromWatchlist">관심종목 불러오기</button>
+          </div>
+          <div class="toolbar backtest-toolbar">
+            <label>
+              비중
+              <select id="backtestWeightMode">
+                <option value="equal">동일 비중</option>
+                <option value="custom">직접 입력</option>
+              </select>
+            </label>
+            <label class="grow" id="backtestWeightsWrap" hidden>
+              비중 (%)
+              <input id="backtestWeights" placeholder="20,20,20,20,20 (티커 순서, 합계 100)">
+            </label>
+          </div>
+          <p class="backtest-status muted" id="backtestStatus"></p>
+          <div class="backtest-results" id="backtestResults" hidden>
+            <div class="backtest-summary" id="backtestSummary"></div>
+            <div class="backtest-chart-wrap">
+              <svg id="backtestChart" viewBox="0 0 800 260" role="img" aria-label="누적 수익 차트"></svg>
+            </div>
+            <div class="table-wrap">
+              <table class="backtest-table" id="backtestTable"></table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ==================== 마켓 데이터 탭 ==================== -->
@@ -912,6 +971,7 @@
       <span>이 사이트는 하루 1회 저장된 스냅샷 데이터를 사용합니다.</span>
       <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
     </footer>
+    <div class="chat-page-spacer" aria-hidden="true"></div>
 
     <!-- 카드뉴스 크게 보기 -->
     <div class="lightbox" id="lightbox" hidden>
@@ -945,7 +1005,7 @@
       </button>
     </div>
 
-    <script src="data/market_snapshot.js?v=20260617i"></script>
-    <script src="app.js?v=20260617i"></script>
+    <script src="data/market_snapshot.js?v=20260617o"></script>
+    <script src="app.js?v=20260617o"></script>
   </body>
 </html>

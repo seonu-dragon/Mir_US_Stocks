@@ -460,6 +460,15 @@ const CHAT_SUGGESTIONS = ["PER이 뭐야?", "NVDA 요약해줘", "시장 지도 
 let chatHistory = [];
 let chatBusy = false;
 let rotationHorizon = "1M";
+let rotationPage = 1;
+const ROTATION_PAGE_COUNT = 4;
+const ROTATION_QUADRANT_ORDER = { leading: 0, improving: 1, weakening: 2, lagging: 3 };
+const ROTATION_QUADRANT_LABEL = {
+  leading: "Leading",
+  improving: "Improving",
+  weakening: "Weakening",
+  lagging: "Lagging"
+};
 const ROTATION_HORIZONS = {
   "1W": { short: "weekChangePct", long: "monthChangePct", shortLabel: "1주", longLabel: "1개월" },
   "1M": { short: "monthChangePct", long: "threeMonthChangePct", shortLabel: "1개월", longLabel: "3개월" },
@@ -5296,6 +5305,7 @@ function renderEtfRelativeStrength() {
 }
 
 function renderSectorEtfRelativeStrength() {
+  rotationPage = 1;
   const container = byId("sectorEtfGrid");
   const payload = data.health?.etfRelative || { rows: [], universeCount: 0, method: "" };
   const benchmark = byId("sectorEtfRsBenchmark")?.value || "SPY";
@@ -5375,18 +5385,24 @@ function renderSectorRotationBoard(rows, period, benchmark) {
     else if (relShort > 0 && relLong <= 0) quadrant = "improving";
     else if (relShort <= 0 && relLong > 0) quadrant = "weakening";
     return { ...item, relShort, relLong, quadrant, activeRelative: relShort };
+  }).sort((a, b) => {
+    const quadrantDiff = ROTATION_QUADRANT_ORDER[a.quadrant] - ROTATION_QUADRANT_ORDER[b.quadrant];
+    if (quadrantDiff !== 0) return quadrantDiff;
+    return b.relShort - a.relShort;
   });
-  const groups = [
-    ["leading", "Leading", `${horizon.shortLabel}/${horizon.longLabel} 모두 벤치마크 초과`],
-    ["improving", "Improving", `최근 ${horizon.shortLabel} 상대강도 개선`],
-    ["weakening", "Weakening", `${horizon.longLabel}은 강하지만 최근 둔화`],
-    ["lagging", "Lagging", "벤치마크 대비 약세"]
-  ];
+
+  const perPage = Math.max(1, Math.ceil(enriched.length / ROTATION_PAGE_COUNT));
+  const maxPage = enriched.length ? Math.min(ROTATION_PAGE_COUNT, Math.ceil(enriched.length / perPage)) : 1;
+  rotationPage = Math.min(Math.max(1, rotationPage), maxPage);
+  const pageItems = enriched.slice((rotationPage - 1) * perPage, rotationPage * perPage);
+  const pageStart = enriched.length ? (rotationPage - 1) * perPage + 1 : 0;
+  const pageEnd = enriched.length ? pageStart + pageItems.length - 1 : 0;
+
   board.innerHTML = `
     <div class="rotation-head">
       <div>
         <h3>Sector Rotation Map</h3>
-        <p class="muted">${benchmark} 대비 ${horizon.shortLabel}/${horizon.longLabel} 상대강도로 ETF 그룹을 사분면으로 나눕니다.</p>
+        <p class="muted">${benchmark} 대비 ${horizon.shortLabel}/${horizon.longLabel} 상대강도로 ETF 그룹을 사분면으로 분류합니다.</p>
       </div>
       <div class="rotation-head-actions">
         <div class="segmented rotation-horizon-tabs" aria-label="Rotation horizon">
@@ -5397,38 +5413,47 @@ function renderSectorRotationBoard(rows, period, benchmark) {
         <span class="event-badge">${periodLabel(period)}</span>
       </div>
     </div>
-    <div class="rotation-grid">
-      ${groups.map(([key, title, desc]) => {
-        const list = enriched.filter((item) => item.quadrant === key)
-          .sort((a, b) => b.relShort - a.relShort)
-          .slice(0, 7);
-        return `
-          <section class="rotation-quadrant rotation-${key}">
-            <h4>${title}</h4>
-            <p>${desc}</p>
-            <div>
-              ${list.length ? list.map((item) => `
-                <button type="button" class="rotation-chip" data-category="${escapeHtml(item.category)}">
-                  <strong>${escapeHtml(item.representative)}</strong>
-                  <span>${escapeHtml(item.category)}</span>
-                  <b class="${cls(item.relShort)}">${fmtPct(item.relShort)}</b>
-                </button>
-              `).join("") : `<span class="muted">해당 그룹 없음</span>`}
-            </div>
-          </section>
-        `;
-      }).join("")}
+    <div class="rank-grid rotation-map-grid">
+      ${pageItems.length ? pageItems.map((item) => `
+        <article class="stock-card rotation-map-card rotation-${item.quadrant}" data-category="${escapeHtml(item.category)}">
+          <div class="rank-line">
+            <span class="rotation-quad-tag">${ROTATION_QUADRANT_LABEL[item.quadrant]}</span>
+            <strong>${escapeHtml(item.representative)}</strong>
+            <em class="${cls(item.relShort)}">${fmtPct(item.relShort)}</em>
+          </div>
+          <p class="muted">${escapeHtml(item.category)}</p>
+          <p>${escapeHtml(item.group)} · RS ${item.rsScore}</p>
+        </article>
+      `).join("") : `<article class="rank-card"><h3>표시할 ETF 그룹이 없습니다.</h3></article>`}
+    </div>
+    <div class="rotation-map-footer">
+      <span class="muted rotation-map-range">${enriched.length ? `${pageStart}–${pageEnd} / ${enriched.length}개` : "0개"}</span>
+      <div class="segmented rotation-pagination" aria-label="Rotation map pages">
+        ${Array.from({ length: ROTATION_PAGE_COUNT }, (_, idx) => {
+          const page = idx + 1;
+          const disabled = page > maxPage;
+          return `<button type="button" data-page="${page}" class="${rotationPage === page ? "is-active" : ""}" ${disabled ? "disabled" : ""}>${page}</button>`;
+        }).join("")}
+      </div>
     </div>
   `;
   board.querySelectorAll("[data-horizon]").forEach((btn) => {
     btn.addEventListener("click", () => {
       if (btn.dataset.horizon === rotationHorizon) return;
       rotationHorizon = btn.dataset.horizon;
+      rotationPage = 1;
       renderSectorEtfRelativeStrength();
     });
   });
-  board.querySelectorAll(".rotation-chip").forEach((chip) => {
-    chip.addEventListener("click", () => showConstituentPanel(chip.dataset.category, period));
+  board.querySelectorAll("[data-page]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (btn.disabled) return;
+      rotationPage = Number(btn.dataset.page);
+      renderSectorRotationBoard(rows, period, benchmark);
+    });
+  });
+  board.querySelectorAll(".rotation-map-card").forEach((card) => {
+    card.addEventListener("click", () => showConstituentPanel(card.dataset.category, period));
   });
 }
 function showConstituentPanel(categoryName, period) {

@@ -1067,13 +1067,16 @@ def fetch_nasdaq100_symbols():
     return symbols or set(NASDAQ_100_FALLBACK)
 
 
-def fetch_exchange_groups():
-    groups = {}
-    urls = [
+EXCHANGE_MAP = {"N": "idx_nyse", "A": "idx_amex", "P": "idx_nysearca", "Z": "idx_bats"}
+
+
+def iter_exchange_listed_rows():
+    """Yield common stocks/ADRs from official Nasdaq Trader symbol directories."""
+    specs = [
         ("idx_nasdaq", "https://www.nasdaqtrader.com/dynamic/SymDir/nasdaqlisted.txt"),
         ("other", "https://www.nasdaqtrader.com/dynamic/SymDir/otherlisted.txt"),
     ]
-    for group, url in urls:
+    for kind, url in specs:
         try:
             text = request_text(url, timeout=30)
         except Exception:
@@ -1087,25 +1090,44 @@ def fetch_exchange_groups():
             symbol = clean_symbol(values.get("Symbol") or values.get("ACT Symbol"))
             if not symbol or values.get("Test Issue") == "Y" or values.get("ETF") == "Y":
                 continue
-            if group == "other":
-                exchange = values.get("Exchange", "")
-                mapped = {"N": "idx_nyse", "A": "idx_amex", "P": "idx_nysearca", "Z": "idx_bats"}.get(exchange, "idx_other")
-                groups.setdefault(symbol, set()).add(mapped)
-            else:
-                groups.setdefault(symbol, set()).add(group)
+            company = str(values.get("Security Name") or symbol).strip()
+            groups = {"idx_nasdaq"} if kind == "idx_nasdaq" else {EXCHANGE_MAP.get(values.get("Exchange", ""), "idx_other")}
+            yield {
+                "symbol": symbol,
+                "company": company.replace(" Common Stock", "").strip(),
+                "groups": groups,
+            }
+
+
+def fetch_exchange_groups():
+    groups = {}
+    for row in iter_exchange_listed_rows():
+        groups.setdefault(row["symbol"], set()).update(row["groups"])
     return groups
 
 
 def is_common_equity(symbol, name):
+    symbol = clean_symbol(symbol)
+    if not symbol:
+        return False
+    if "$" in symbol or "+" in symbol:
+        return False
+    if symbol.endswith((".W", ".R", ".U", ".WS", ".RT", ".UN")):
+        return False
+
     text = f"{symbol} {name}".lower()
+    if "american depositary" in text or re.search(r"\badrs?\b", text):
+        return "preferred" not in text and "preference" not in text
+
     blocked = [
         " warrant", " warrants", " unit", " units", " right", " rights",
         " preferred", " preference", " depositary shares", " notes due",
         " senior note", " subordinated", " debenture", " bond", " etn",
+        " closed end fund", " closed-end fund", " trust preferred",
     ]
     if any(term in text for term in blocked):
         return False
-    if symbol.endswith(("W", "R", "U")) and len(symbol) >= 4:
+    if symbol.endswith("W") and len(symbol) >= 5 and "warrant" in text:
         return False
     return True
 
@@ -1964,6 +1986,26 @@ def build_universe():
         universe[symbol] = merge_meta(universe.get(symbol), meta)
         lev_etf_count += 1
 
+    exchange_backfill_count = 0
+    for row in iter_exchange_listed_rows():
+        symbol = row["symbol"]
+        if symbol in DUPLICATE_SHARE_CLASSES or not is_common_equity(symbol, row["company"]):
+            continue
+        if symbol in universe:
+            universe[symbol]["groups"].update(row["groups"])
+            continue
+        listed_groups = set(row["groups"])
+        universe[symbol] = merge_meta(universe.get(symbol), {
+            "symbol": symbol,
+            "company": row["company"],
+            "sector": "MISC",
+            "industry": "Other",
+            "marketCapB": MARKET_CAP_B.get(symbol),
+            "groups": {"all_us", *listed_groups},
+            "preferHistory": bool(listed_groups & {"idx_nyse", "idx_nasdaq", "idx_amex"}),
+        })
+        exchange_backfill_count += 1
+
     metas = list(universe.values())
     metas.sort(key=lambda item: history_priority(item), reverse=True)
     real_symbols = {meta["symbol"] for meta in metas[:MAX_REAL_HISTORY]}
@@ -1988,7 +2030,7 @@ def build_universe():
                 or float(meta.get("marketCapB") or 0) >= 0.05
             )
         )
-    return metas, etf_category_map, etf_universe_count, lev_etf_count
+    return metas, etf_category_map, etf_universe_count, lev_etf_count, exchange_backfill_count
 
 
 def history_priority(meta):
@@ -2286,7 +2328,7 @@ def build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_c
 
 
 def build_snapshot():
-    universe, etf_category_map, etf_universe_count, lev_etf_count = build_universe()
+    universe, etf_category_map, etf_universe_count, lev_etf_count, exchange_backfill_count = build_universe()
     stocks = []
     errors = []
     with ThreadPoolExecutor(max_workers=32) as executor:
@@ -2340,6 +2382,7 @@ def build_snapshot():
         "errors": errors[:80],
         "universeCount": len(universe),
         "leveragedEtfCount": lev_etf_count,
+        "exchangeBackfillCount": exchange_backfill_count,
         "groupCounts": group_counts,
         "historyPolicy": {
             "realHistoryMax": MAX_REAL_HISTORY,
@@ -2570,6 +2613,8 @@ def main():
     print(f"S&P 500: {groups.get('idx_sp500', 0)} / Nasdaq 100: {groups.get('idx_ndx100', 0)} / Nasdaq listed: {groups.get('idx_nasdaq', 0)}")
     if snapshot.get("leveragedEtfCount"):
         print(f"Leveraged/option ETF catalog: {snapshot['leveragedEtfCount']} symbols in universe")
+    if snapshot.get("exchangeBackfillCount"):
+        print(f"Exchange directory backfill: {snapshot['exchangeBackfillCount']} additional symbols")
 
     if args.push and not args.no_push:
         git_push_updates(updated_at)

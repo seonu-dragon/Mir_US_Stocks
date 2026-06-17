@@ -2919,7 +2919,7 @@ function formatMetricValue(value, metric) {
   if (metric === "marketCapB") return fmtBillions(value);
   if (metric === "volumeRatio") return `${Number(value).toFixed(1)}x`;
   if (["rsScore", "epsRevScore", "rsi14", "stochK"].includes(metric)) return `${Math.round(value)}`;
-  if (["pe", "forwardPE", "ps", "pb"].includes(metric)) return Number(value).toFixed(2);
+  if (["pe", "forwardPE", "ps", "pb"].includes(metric)) return fmtMultiple(value);
   return fmtPct(value);
 }
 
@@ -4427,8 +4427,10 @@ function buildStockChatContext(userText) {
     const earnings = item.liveEarnings || {};
     lines.push(
       `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:$${Number(item.price).toFixed(2)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
-      (f.pe ? ` · PER:${f.pe}` : "") +
-      (f.forwardPE ? ` · FwdPER:${f.forwardPE}` : "") +
+      (f.pe ? ` · PER:${fmtMultiple(f.pe)}` : "") +
+      (f.forwardPE ? ` · FwdPER:${fmtMultiple(f.forwardPE)}` : "") +
+      (f.ps ? ` · P/S:${fmtMultiple(f.ps)}` : "") +
+      (f.pb ? ` · P/B:${fmtMultiple(f.pb)}` : "") +
       (earnings.nextDate ? ` · 다음실적:${earnings.nextDate}` : "") +
       (earnings.epsEstimate != null ? ` · EPS예상:${earnings.epsEstimate}` : "")
     );
@@ -4615,10 +4617,10 @@ function renderFundamentals(item) {
   const detailMode = data.detailPolicy?.mode === "split";
   const hasFundamentals = Object.keys(f).length > 0;
   const rows = [
-    ["Index", indexLabel(item), "P/E", fmtNum(f.pe), "EPS TTM", moneyOrDash(f.epsTtm), "Perf Week", fmtPct(item.weekChangePct)],
-    ["Market Cap", fmtBillions(f.marketCapB || item.marketCapB), "Forward P/E", fmtNum(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
-    ["Sales", fmtBillions(f.salesB), "P/S", fmtNum(f.ps), "EPS Next Q", moneyOrDash(f.epsNextQ), "Perf Quarter", fmtPct(item.threeMonthChangePct)],
-    ["Income", fmtBillions(f.incomeB), "P/B", fmtNum(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
+    ["Index", indexLabel(item), "P/E", fmtMultiple(f.pe), "EPS TTM", moneyOrDash(f.epsTtm), "Perf Week", fmtPct(item.weekChangePct)],
+    ["Market Cap", fmtBillions(f.marketCapB || item.marketCapB), "Forward P/E", fmtMultiple(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
+    ["Sales", fmtBillions(f.salesB), "P/S", fmtMultiple(f.ps), "EPS Next Q", moneyOrDash(f.epsNextQ), "Perf Quarter", fmtPct(item.threeMonthChangePct)],
+    ["Income", fmtBillions(f.incomeB), "P/B", fmtMultiple(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
     ["Cash", fmtBillions(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],
     ["Shares Out", fmtBillions(f.sharesB), "Current Ratio", fmtRatio(f.currentRatio), "Profit Margin", fmtPercent(f.profitMargin), "52W Low", priceOrDash(f.week52Low)],
     ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), "Nasdaq 1Y Target", priceOrDash(f.targetPrice)],
@@ -4723,6 +4725,10 @@ function indexLabel(item) {
 
 function fmtNum(value) {
   return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "-";
+}
+
+function fmtMultiple(value, digits = 2) {
+  return Number.isFinite(Number(value)) ? `${Number(value).toFixed(digits)}배` : "-";
 }
 
 function moneyOrDash(value) {
@@ -5908,8 +5914,10 @@ const COMPARE_METRICS = [
   ["거래량", (i) => `${Number(i.volumeRatio || 0).toFixed(1)}x`],
   ["시총", (i) => `$${Number(i.marketCapB || 0).toFixed(1)}B`],
   ["신고가 거리", (i) => fmtPct(-i.newHighDistancePct)],
-  ["PER", (i) => moneyOrDash(i.fundamentals?.pe)],
-  ["Fwd PER", (i) => moneyOrDash(i.fundamentals?.forwardPE)],
+  ["PER", (i) => fmtMultiple(i.fundamentals?.pe)],
+  ["Fwd PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
+  ["P/S", (i) => fmtMultiple(i.fundamentals?.ps)],
+  ["P/B", (i) => fmtMultiple(i.fundamentals?.pb)],
   ["섹터", (i) => i.sector],
   ["신호", (i) => signalFor(i)],
 ];

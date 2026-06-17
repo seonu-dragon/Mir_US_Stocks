@@ -2987,16 +2987,14 @@ footer {
 }
 
 .sector-scroll-panel {
-  /* Bounded height so the (now longer) sector list scrolls on the left instead of
-     stretching the whole row. Both columns share this cap to stay symmetric. */
+  /* Header(정렬/Sector Chart)는 고정, 아래 ETF 카드 목록만 스크롤 */
   max-height: calc(100vh - 150px);
   min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
   padding-right: 8px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 0;
 }
 
 /* Custom scrollbar for scroll panel */
@@ -3015,9 +3013,8 @@ footer {
 }
 
 .panel-header-sticky {
-  position: sticky;
-  top: 0;
-  background: #f8fafc; /* Matches main bg */
+  flex-shrink: 0;
+  background: #f8fafc;
   z-index: 10;
   padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
@@ -3025,9 +3022,28 @@ footer {
 }
 
 .sector-flow-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding-right: 2px;
+}
+
+.sector-flow-list::-webkit-scrollbar {
+  width: 6px;
+}
+.sector-flow-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+.sector-flow-list::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.3);
+  border-radius: 4px;
+}
+.sector-flow-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.5);
 }
 
 .sector-card {
@@ -3210,12 +3226,9 @@ footer {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  /* Same height cap as the left list so the two columns stay symmetric and each
-     scrolls on its own. */
   max-height: calc(100vh - 150px);
   min-height: 0;
   overflow-y: auto;
-  overscroll-behavior: contain;
 }
 
 .sector-etf-rs-scroll {
@@ -3463,19 +3476,20 @@ footer {
      visually distinct and its scrolling doesn't bleed into the page. */
   .sector-scroll-panel {
     max-height: 450px;
-    overscroll-behavior: contain;
+    overflow: hidden;
     border: 1px solid var(--line);
     border-radius: 10px;
     background: #eef2f7;
-    /* No top padding so the sticky 정렬 기준 header sits flush at the very top. */
     padding: 0 8px 8px;
     margin-bottom: 14px;
   }
-  /* Sticky sort header fills the top of the scroll box edge-to-edge. */
   .sector-scroll-panel .panel-header-sticky {
     margin: 0 -8px 8px;
     padding: 8px 8px 8px;
     background: #eef2f7;
+  }
+  .sector-flow-list {
+    padding-right: 0;
   }
   /* Stacked layout: let the chart column flow naturally instead of a viewport cap. */
   .sector-chart-panel {

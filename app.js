@@ -1279,7 +1279,6 @@ function setupEvents() {
   setupScreenerEvents();
   setupCompareEvents();
   setupBacktestEvents();
-  setupSectorScrollPanels();
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
     const star = event.target.closest("[data-watch]");
@@ -6520,23 +6519,6 @@ function setupBacktestEvents() {
       if (!byId("backtestResults")?.hidden) run();
     });
   });
-}
-
-function bindLocalScrollWheel(container) {
-  if (!container || container.dataset.localScrollBound) return;
-  container.dataset.localScrollBound = "1";
-  container.addEventListener("wheel", (event) => {
-    if (container.scrollHeight <= container.clientHeight + 1) return;
-    const delta = event.deltaY;
-    const atTop = container.scrollTop <= 0;
-    const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 1;
-    if ((delta < 0 && atTop) || (delta > 0 && atBottom)) return;
-    event.preventDefault();
-  }, { passive: false });
-}
-
-function setupSectorScrollPanels() {
-  document.querySelectorAll(".sector-scroll-panel, .sector-chart-panel, .sector-etf-rs-scroll").forEach(bindLocalScrollWheel);
 }
 
 loadData();

@@ -84,11 +84,17 @@
         </div>
       </div>
 
-      <!-- 오늘의 카드뉴스 미니 캐러셀 (자동 전환 · 클릭 시 크게 보기) -->
-      <button class="cardnews-carousel" id="contentBand" type="button" hidden
-              aria-label="오늘의 카드뉴스 크게 보기" title="클릭하면 크게 보기">
-        <img id="cardnewsCarouselImg" src="" alt="오늘의 카드뉴스">
-      </button>
+      <!-- 오늘의 카드뉴스 미니 캐러셀 (자동 전환 · 스와이프/화살표 · 클릭 시 크게 보기) -->
+      <div class="cardnews-carousel-host" id="cardnewsHost" hidden>
+        <button class="cardnews-nav cardnews-prev" id="cardnewsPrev" type="button"
+                aria-label="이전 카드뉴스" title="이전">‹</button>
+        <button class="cardnews-carousel" id="contentBand" type="button"
+                aria-label="오늘의 카드뉴스 크게 보기" title="클릭하면 크게 보기">
+          <img id="cardnewsCarouselImg" src="" alt="오늘의 카드뉴스">
+        </button>
+        <button class="cardnews-nav cardnews-next" id="cardnewsNext" type="button"
+                aria-label="다음 카드뉴스" title="다음">›</button>
+      </div>
 
       <div class="topbar-actions">
         <button type="button" class="icon-action" id="installApp" hidden title="홈 화면에 추가">📲</button>
@@ -1045,6 +1051,6 @@
     <script src="data/market_snapshot.js?v=20260617x"></script>
     <script src="data/ticker_aliases_ko.js?v=20260617x"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>
-    <script src="app.js?v=20260618c"></script>
+    <script src="app.js?v=20260618d"></script>
   </body>
 </html>

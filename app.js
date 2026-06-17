@@ -278,12 +278,67 @@ function boot() {
 // 두 버전(미국 뉴스 / 국내 뉴스)을 스위치로 선택, 헤더 높이에 맞춰 자동 전환, 클릭 시 라이트박스.
 let cardnewsTimer = null;
 let cardnewsView = "us";  // 기본: 미국 뉴스(미국 주식 사이트)
+let cardnewsIdx = 0;
+let cardnewsImages = [];
+let cardnewsSwipeBound = false;
+
+function showCardNewsSlide(idx) {
+  const img = byId("cardnewsCarouselImg");
+  if (!img || !cardnewsImages.length) return;
+  cardnewsIdx = ((idx % cardnewsImages.length) + cardnewsImages.length) % cardnewsImages.length;
+  img.src = cardnewsImages[cardnewsIdx];
+}
+
+function startCardNewsTimer() {
+  if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
+  if (cardnewsImages.length > 1) {
+    cardnewsTimer = setInterval(() => showCardNewsSlide(cardnewsIdx + 1), 3000);
+  }
+}
+
+function stepCardNews(delta) {
+  if (cardnewsImages.length <= 1) return;
+  showCardNewsSlide(cardnewsIdx + delta);
+  startCardNewsTimer();
+}
+
+function bindCardNewsSwipe(host) {
+  if (!host || cardnewsSwipeBound) return;
+  cardnewsSwipeBound = true;
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let swiped = false;
+  host.addEventListener("touchstart", (event) => {
+    const t = event.changedTouches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    swiped = false;
+  }, { passive: true });
+  host.addEventListener("touchend", (event) => {
+    const t = event.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+      swiped = true;
+      stepCardNews(dx < 0 ? 1 : -1);
+    }
+  }, { passive: true });
+  const band = byId("contentBand");
+  if (band) {
+    band.addEventListener("click", (event) => {
+      if (swiped) { event.preventDefault(); event.stopPropagation(); swiped = false; }
+    });
+  }
+}
 
 function renderCardNews() {
+  const host = byId("cardnewsHost");
   const band = byId("contentBand");
   const img = byId("cardnewsCarouselImg");
+  const prevBtn = byId("cardnewsPrev");
+  const nextBtn = byId("cardnewsNext");
   const switchEl = byId("cardnewsSwitch");
-  if (!band || !img) return;
+  if (!host || !band || !img) return;
 
   const cn = data.cardNews || {};
   const sets = {
@@ -293,8 +348,9 @@ function renderCardNews() {
   if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
 
   if (!sets.us && !sets.kr) {
-    band.hidden = true;
+    host.hidden = true;
     if (switchEl) switchEl.hidden = true;
+    cardnewsImages = [];
     return;
   }
   // 선택된 버전이 없으면 us 우선, 없으면 kr
@@ -309,38 +365,43 @@ function renderCardNews() {
       btn.onclick = () => {
         if (!sets[v] || v === cardnewsView) return;
         cardnewsView = v;
+        cardnewsIdx = 0;
         renderCardNews();
       };
     });
   }
 
   const active = sets[cardnewsView];
-  const images = active.images;
-  band.hidden = false;
-  let idx = 0;
-  img.src = images[0];
+  cardnewsImages = active.images;
+  cardnewsIdx = 0;
+  host.hidden = false;
+  showCardNewsSlide(0);
+  const multi = cardnewsImages.length > 1;
+  host.classList.toggle("has-nav", multi);
+  if (prevBtn) prevBtn.onclick = (event) => { event.stopPropagation(); stepCardNews(-1); };
+  if (nextBtn) nextBtn.onclick = (event) => { event.stopPropagation(); stepCardNews(1); };
   band.title = active.title ? `${active.title} — 클릭하면 크게 보기` : "클릭하면 크게 보기";
-  band.onclick = () => openLightbox(images, idx);
-  if (images.length > 1) {
-    cardnewsTimer = setInterval(() => {
-      idx = (idx + 1) % images.length;
-      img.src = images[idx];
-    }, 3000);
-  }
+  band.onclick = () => openLightbox(cardnewsImages, cardnewsIdx);
+  bindCardNewsSwipe(host);
+  startCardNewsTimer();
   syncCardNewsHeight();
 }
 
 // 카드뉴스 박스 높이를 오른쪽 '데이터 기준' 박스와 픽셀 단위로 동일하게 맞춤.
 // 모바일에서는 CSS aspect-ratio로 높이를 잡고 가로 폭 100%를 유지한다.
 function syncCardNewsHeight() {
+  const host = byId("cardnewsHost");
   const band = byId("contentBand");
   const card = document.querySelector(".update-card");
-  if (!band || !card || band.hidden) return;
+  if (!host || !band || !card || host.hidden) return;
   if (window.matchMedia("(max-width: 768px)").matches) {
     band.style.height = "";
+    host.style.height = "";
     return;
   }
-  band.style.height = `${card.offsetHeight}px`;
+  const h = `${card.offsetHeight}px`;
+  band.style.height = h;
+  host.style.height = h;
 }
 
 // 카드뉴스 크게 보기 라이트박스
@@ -458,23 +519,37 @@ function setupChatbot() {
   // 모바일: 키보드가 올라오면 하단 입력칸이 가려져 무엇을 입력하는지 안 보이는 문제 방지.
   // visualViewport로 키보드 높이를 감지해 패널을 키보드 위로 띄우고 높이를 보이는 영역에 맞춘다.
   const vv = window.visualViewport;
+  const chatbotEl = byId("chatbot");
+  const isMobileChat = () => window.matchMedia("(max-width: 640px)").matches;
+
+  function resetChatbotPosition() {
+    if (!chatbotEl) return;
+    chatbotEl.style.left = "";
+    chatbotEl.style.top = "";
+    chatbotEl.style.right = "";
+    chatbotEl.style.bottom = "";
+    chatbotEl.classList.remove("is-chat-open");
+    panel.style.maxHeight = "";
+  }
+
   function adjustForKeyboard() {
-    const el = byId("chatbot");
+    const el = chatbotEl;
     if (!el) return;
     if (panel.hidden || !vv) {
-      // 패널이 닫혀 있으면 키보드용 인라인 보정 해제(CSS 기본값 복귀)
       panel.style.maxHeight = "";
-      if (!el.style.left && !el.style.top) el.style.bottom = "";
+      if (!el.classList.contains("is-chat-open") && !el.style.left && !el.style.top) el.style.bottom = "";
       return;
     }
-    // 키보드(또는 하단 시스템 UI)에 가려진 높이
     const overlap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-    const base = window.matchMedia("(max-width: 640px)").matches ? 12 : 24;
+    if (isMobileChat() && el.classList.contains("is-chat-open")) {
+      el.style.bottom = `${overlap}px`;
+      panel.style.maxHeight = `${Math.max(180, vv.height - 4)}px`;
+      return;
+    }
+    const base = isMobileChat() ? 12 : 24;
     if (!el.style.left && !el.style.top) {
-      // 기본(bottom 앵커) 상태: 키보드 바로 위로 올림
       el.style.bottom = `${base + overlap}px`;
     }
-    // 패널 높이를 보이는 영역 안으로 제한 → 하단 입력칸이 항상 노출
     panel.style.maxHeight = `${Math.max(220, vv.height - base - 16)}px`;
     if (el.style.left || el.style.top) clampIntoView();
   }
@@ -486,6 +561,7 @@ function setupChatbot() {
   function openPanel() {
     panel.hidden = false;
     toggle.hidden = true;
+    if (chatbotEl) chatbotEl.classList.add("is-chat-open");
     clampIntoView();
     input.focus();
     adjustForKeyboard();
@@ -498,7 +574,9 @@ function setupChatbot() {
   function closePanel() {
     panel.hidden = true;
     toggle.hidden = false;
+    resetChatbotPosition();
     adjustForKeyboard();
+    updateChatSafeArea();
   }
 
   async function sendChat() {
@@ -534,7 +612,6 @@ function setupChatbot() {
   }
 
   // 캐릭터를 좌클릭 홀드로 드래그 이동(드래그 중엔 '날아가는 미르'로 교체)
-  const chatbotEl = byId("chatbot");
   const mascotImg = toggle.querySelector(".chat-mascot");
   const mascotNormal = mascotImg ? mascotImg.getAttribute("src") : "";
   const mascotFly = "assets/mir-mascot-fly.png?v=1";

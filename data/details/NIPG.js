@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["NIPG"] = {"fundamentals":{"sharesB":0.223,"source":"nasdaq"},"ticker":"NIPG","company":"NIP Group Inc. American Depositary Shares","historySource":"snapshot"};

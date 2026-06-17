@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["WAFU"] = {"fundamentals":{"sharesB":0.004,"source":"nasdaq"},"ticker":"WAFU","company":"Wah Fu Education Group Limited Ordinary Shares","historySource":"snapshot"};

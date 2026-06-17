@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["AZUL"] = {"fundamentals":{"sharesB":0.366,"source":"nasdaq"},"ticker":"AZUL","company":"Azul S.A. American Depositary Shares each representing two (2) Common Shares","historySource":"snapshot"};

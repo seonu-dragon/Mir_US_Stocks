@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ARBK"] = {"fundamentals":{"sharesB":0.013,"source":"nasdaq"},"ticker":"ARBK","company":"Argo Blockchain plc American Depositary Shares","historySource":"snapshot"};

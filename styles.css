@@ -301,6 +301,49 @@ h1 {
   cursor: default;
 }
 
+.cardnews-carousel-host {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  flex: 0 0 auto;
+  align-self: stretch;
+}
+
+.cardnews-carousel-host[hidden] { display: none; }
+
+.cardnews-nav {
+  display: none;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cardnews-nav:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cardnews-carousel-host.has-nav .cardnews-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .cardnews-carousel-host.has-nav .cardnews-nav {
+    display: none;
+  }
+}
+
 /* 오늘의 카드뉴스 미니 캐러셀: 데이터기준 박스와 같은 크기, 높이를 잘라내(crop) 글자 노출 */
 .cardnews-carousel {
   position: relative;        /* 내부 img 절대배치 기준 */
@@ -2528,8 +2571,16 @@ footer {
     width: 100%;
   }
 
-  .cardnews-carousel {
+  .cardnews-carousel-host {
     width: 100%;
+    align-self: auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .cardnews-carousel {
+    flex: 1 1 auto;
+    width: auto;
     max-width: 100%;
     align-self: auto;
     height: auto;
@@ -4064,6 +4115,42 @@ footer {
 @media (max-width: 640px) {
   :root { --chat-safe-bottom: 53px; }
   .chatbot { right: 12px; bottom: 12px; }
+
+  .chatbot.is-chat-open {
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .chatbot.is-chat-open .chat-fab {
+    display: none !important;
+  }
+
+  .chatbot.is-chat-open .chat-panel {
+    width: 100%;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    max-height: min(72vh, calc(100dvh - 16px));
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -8px 32px rgba(20, 30, 50, 0.22);
+  }
+
+  .chatbot.is-chat-open .chat-suggest {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+  }
+
+  .chatbot.is-chat-open .chat-chip {
+    flex: 0 0 auto;
+    font-size: 11px;
+    padding: 4px 8px;
+  }
 }
 
 /* Screener, rotation, event, and chart-compare upgrades */
@@ -4367,10 +4454,6 @@ footer {
   .regime-stats {
     grid-template-columns: 1fr;
   }
-  .screener-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
 }
 
 /* ===== Theme / PWA / Watchlist / Screener / Compare / Earnings ===== */
@@ -4509,6 +4592,46 @@ footer {
 
 .screener-toolbar {
   flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .screener-toolbar {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 10px;
+    align-items: end;
+  }
+
+  .screener-toolbar > label,
+  .screener-toolbar > button {
+    flex: none;
+  }
+
+  .screener-toolbar > label {
+    min-width: 0;
+    font-size: 11px;
+    gap: 3px;
+  }
+
+  .screener-toolbar select,
+  .screener-toolbar input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    height: 34px;
+    padding: 6px 8px;
+    font-size: 13px;
+    box-sizing: border-box;
+  }
+
+  .screener-toolbar #scrRun,
+  .screener-toolbar #scrReset {
+    height: 38px;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .screener-toolbar #scrRun { grid-column: 1; }
+  .screener-toolbar #scrReset { grid-column: 2; }
 }
 
 .screener-meta {

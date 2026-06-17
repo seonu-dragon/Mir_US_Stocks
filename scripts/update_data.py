@@ -1,6 +1,7 @@
 import argparse
 import hashlib
 import html
+import importlib.util
 import json
 import os
 import re
@@ -828,7 +829,8 @@ ETF_EXCLUDE_KEYWORDS = [
 
 ETF_CAP_HINTS = {
     "SPY": 650, "VOO": 590, "IVV": 580, "VTI": 450, "QQQ": 380, "QQQM": 45,
-    "DIA": 35, "IWM": 70, "TQQQ": 25, "RSP": 60, "VUG": 150, "SCHG": 40, "IWF": 110,
+    "DIA": 35, "IWM": 70, "TQQQ": 25, "SQQQ": 8, "SOXL": 12, "SOXS": 4, "NVDL": 6,
+    "TSLL": 5, "UVXY": 2, "BITX": 3, "JEPI": 45, "QYLD": 8, "RSP": 60, "VUG": 150, "SCHG": 40, "IWF": 110,
     "XLK": 85, "VGT": 95, "IYW": 20, "FTEC": 15, "SOXX": 20, "SMH": 30,
     "XSD": 2, "PSI": 1.5, "SOXQ": 1.2, "IGV": 8, "SKYY": 3, "CLOU": 0.5,
     "CIBR": 7, "HACK": 1.6, "BOTZ": 3, "ROBO": 1.2, "XLC": 20, "FDN": 5,
@@ -1863,6 +1865,38 @@ def synthetic_cap(symbol, sector):
     return max(0.1, sector_base * (0.05 + stable_unit(symbol + "cap") * 2.8))
 
 
+def load_leveraged_etf_catalog_items():
+    script = ROOT / "scripts" / "build_leveraged_etf_catalog.py"
+    if not script.exists():
+        return []
+    spec = importlib.util.spec_from_file_location("build_leveraged_etf_catalog", script)
+    if spec is None or spec.loader is None:
+        return []
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.catalog_items()
+
+
+def build_leveraged_etf_metas():
+    """Include curated leveraged/inverse/option ETFs in the daily snapshot universe."""
+    metas = {}
+    for item in load_leveraged_etf_catalog_items():
+        symbol = item["ticker"]
+        group = item.get("group") or "레버리지·옵션 ETF"
+        metas[symbol] = {
+            "symbol": symbol,
+            "company": item.get("name") or symbol,
+            "sector": "EXCHANGE TRADED FUNDS",
+            "industry": f"Leveraged/Option ETF — {group}",
+            "marketCapB": ETF_CAP_HINTS.get(symbol, 0.15),
+            "groups": {"all_misc", "all_with_etf", "lev_etf"},
+            "etfCategory": group,
+            "levEtfType": item.get("type", "leveraged"),
+            "preferHistory": True,
+        }
+    return metas
+
+
 def merge_meta(existing, incoming):
     if not existing:
         return incoming
@@ -1925,6 +1959,11 @@ def build_universe():
     for symbol, meta in etf_metas.items():
         universe[symbol] = merge_meta(universe.get(symbol), meta)
 
+    lev_etf_count = 0
+    for symbol, meta in build_leveraged_etf_metas().items():
+        universe[symbol] = merge_meta(universe.get(symbol), meta)
+        lev_etf_count += 1
+
     metas = list(universe.values())
     metas.sort(key=lambda item: history_priority(item), reverse=True)
     real_symbols = {meta["symbol"] for meta in metas[:MAX_REAL_HISTORY]}
@@ -1949,7 +1988,7 @@ def build_universe():
                 or float(meta.get("marketCapB") or 0) >= 0.05
             )
         )
-    return metas, etf_category_map, etf_universe_count
+    return metas, etf_category_map, etf_universe_count, lev_etf_count
 
 
 def history_priority(meta):
@@ -2247,7 +2286,7 @@ def build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_c
 
 
 def build_snapshot():
-    universe, etf_category_map, etf_universe_count = build_universe()
+    universe, etf_category_map, etf_universe_count, lev_etf_count = build_universe()
     stocks = []
     errors = []
     with ThreadPoolExecutor(max_workers=32) as executor:
@@ -2300,6 +2339,7 @@ def build_snapshot():
         },
         "errors": errors[:80],
         "universeCount": len(universe),
+        "leveragedEtfCount": lev_etf_count,
         "groupCounts": group_counts,
         "historyPolicy": {
             "realHistoryMax": MAX_REAL_HISTORY,
@@ -2528,6 +2568,8 @@ def main():
     print(f"Updated {OUT_JS}")
     print(f"Updated {DETAILS_DIR} with {len(details)} detail files")
     print(f"S&P 500: {groups.get('idx_sp500', 0)} / Nasdaq 100: {groups.get('idx_ndx100', 0)} / Nasdaq listed: {groups.get('idx_nasdaq', 0)}")
+    if snapshot.get("leveragedEtfCount"):
+        print(f"Leveraged/option ETF catalog: {snapshot['leveragedEtfCount']} symbols in universe")
 
     if args.push and not args.no_push:
         git_push_updates(updated_at)

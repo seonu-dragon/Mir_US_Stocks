@@ -400,6 +400,17 @@ const ROTATION_HORIZONS = {
   "3M": { short: "threeMonthChangePct", long: "ytdChangePct", shortLabel: "3개월", longLabel: "YTD" }
 };
 
+function updateChatSafeArea() {
+  const chatbot = byId("chatbot");
+  const toggle = byId("chatToggle");
+  if (!chatbot || !toggle) return;
+  const bubble = toggle.querySelector(".chat-bubble");
+  const bottomGap = window.matchMedia("(max-width: 640px)").matches ? 12 : 24;
+  const bubbleGap = bubble ? bubble.offsetHeight + 8 : 0;
+  const safe = Math.ceil((bottomGap + toggle.offsetHeight + bubbleGap + 24) * 0.36);
+  document.documentElement.style.setProperty("--chat-safe-bottom", `${safe}px`);
+}
+
 function setupChatbot() {
   const panel = byId("chatPanel");
   const toggle = byId("chatToggle");
@@ -605,6 +616,13 @@ function setupChatbot() {
       });
       suggest.appendChild(chip);
     });
+  }
+
+  updateChatSafeArea();
+  window.addEventListener("resize", updateChatSafeArea);
+  if (mascotImg) {
+    if (mascotImg.complete) updateChatSafeArea();
+    else mascotImg.addEventListener("load", updateChatSafeArea, { once: true });
   }
 }
 
@@ -1249,6 +1267,7 @@ function setupEvents() {
   setupWatchlistUi();
   setupScreenerEvents();
   setupCompareEvents();
+  setupBacktestEvents();
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
     const star = event.target.closest("[data-watch]");
@@ -5027,7 +5046,7 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
-const SW_VERSION = "20260617i";
+const SW_VERSION = "20260617o";
 
 function setupPwa() {
   if ("serviceWorker" in navigator) {
@@ -5340,6 +5359,463 @@ function setupEarningsEvents() {
     byId(id)?.addEventListener("change", () => {
       earningsCalendarCache = null;
       loadEarningsCalendar(true);
+    });
+  });
+}
+
+// ===== 포트폴리오 시뮬레이터 (buy-and-hold) =====
+const BACKTEST_MAX_TICKERS = 10;
+const BACKTEST_BENCHMARK_OPTIONS = [
+  ["SPY", "S&P 500"],
+  ["QQQ", "Nasdaq 100"],
+  ["DIA", "다우존스"],
+  ["IWM", "러셀 2000"],
+  ["VTI", "전체 시장"],
+  ["VOO", "S&P 500 (VOO)"],
+  ["XLK", "기술 섹터"],
+  ["SOXX", "반도체"],
+];
+let backtestRunning = false;
+
+function backtestTickersFromInput() {
+  const raw = byId("backtestInput")?.value || "";
+  return [...new Set(raw.split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t)))].slice(0, BACKTEST_MAX_TICKERS);
+}
+
+function setBacktestStatus(text) {
+  const el = byId("backtestStatus");
+  if (el) el.textContent = text || "";
+}
+
+function closeSeriesToDateMap(rows) {
+  const map = new Map();
+  rows.forEach((row) => {
+    if (row.d && Number.isFinite(row.c)) map.set(row.d, row.c);
+  });
+  return map;
+}
+
+function backtestSnapshotIsoDate() {
+  const raw = (data && (data.updatedAtKst || data.updated_at_kst)) || "";
+  const match = String(raw).match(/(\d{4})-(\d{2})-(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : "";
+}
+
+function backtestPeriodMode() {
+  const value = byId("backtestPeriod")?.value || "756";
+  return value === "custom" ? "custom" : "preset";
+}
+
+function backtestPeriodBars() {
+  const value = byId("backtestPeriod")?.value || "756";
+  if (value === "custom") return null;
+  return Number(value) || 756;
+}
+
+function backtestCustomStartDate() {
+  if (backtestPeriodMode() !== "custom") return null;
+  const raw = byId("backtestStartDate")?.value || "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
+}
+
+function backtestInvestmentUsd() {
+  const value = Number(byId("backtestInvestment")?.value);
+  return Number.isFinite(value) && value > 0 ? value : 10000;
+}
+
+function backtestBenchmarkTicker() {
+  const sel = byId("backtestBenchmark");
+  const value = String(sel?.value || "SPY").toUpperCase();
+  return stockByTicker(value) ? value : "SPY";
+}
+
+function backtestBenchmarkLabel(ticker) {
+  const found = BACKTEST_BENCHMARK_OPTIONS.find(([t]) => t === ticker);
+  if (found) return found[1];
+  const stock = stockByTicker(ticker);
+  return stock?.company ? `${ticker} · ${stock.company}` : ticker;
+}
+
+function fmtBacktestUsd(value) {
+  if (!Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+}
+
+function backtestWeightsForTickers(tickers) {
+  const mode = byId("backtestWeightMode")?.value || "equal";
+  if (mode !== "custom") {
+    const each = 100 / tickers.length;
+    return { weights: tickers.map(() => each) };
+  }
+  const raw = byId("backtestWeights")?.value || "";
+  const parts = raw.split(",").map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+  if (parts.length !== tickers.length) return { error: `비중은 티커 ${tickers.length}개와 같은 개수로 입력하세요.` };
+  const sum = parts.reduce((acc, n) => acc + n, 0);
+  if (sum <= 0) return { error: "비중 합계가 0보다 커야 합니다." };
+  return { weights: parts.map((n) => (n / sum) * 100) };
+}
+
+function backtestCommonDateList(seriesList) {
+  if (!seriesList.length) return [];
+  const dated = seriesList.filter((s) => s.rows.some((r) => r.d));
+  if (!dated.length) return [];
+  const ref = dated.reduce((a, b) => (a.rows.length <= b.rows.length ? a : b));
+  const refDates = ref.rows.map((r) => r.d).filter(Boolean);
+  return refDates.filter((d) => dated.every((s) => s.dateMap.has(d)));
+}
+
+function backtestResolveDates(seriesList, periodBars, customStart) {
+  const allDates = backtestCommonDateList(seriesList);
+  if (!allDates.length) return { dates: [], error: "공통 거래일을 찾지 못했습니다." };
+  const endDate = allDates[allDates.length - 1];
+  let dates;
+  if (customStart) {
+    const first = allDates.find((d) => d >= customStart);
+    if (!first) {
+      return { dates: [], error: `시작일(${customStart})이 모든 종목 데이터보다 늦습니다. 더 이른 날짜를 선택하세요.` };
+    }
+    dates = allDates.filter((d) => d >= first && d <= endDate);
+  } else {
+    const endIdx = allDates.length - 1;
+    const startIdx = Math.max(0, endIdx - periodBars + 1);
+    dates = allDates.slice(startIdx, endIdx + 1);
+  }
+  if (dates.length < 22) {
+    return { dates: [], error: `공통 거래일이 부족합니다 (${dates.length}일). 기간을 줄이거나 종목을 바꿔 보세요.` };
+  }
+  return { dates, startDate: dates[0], endDate: dates[dates.length - 1] };
+}
+
+function backtestPortfolioSeries(seriesList, dates, weights) {
+  const startDate = dates[0];
+  const startPrices = seriesList.map((s) => s.dateMap.get(startDate));
+  const units = startPrices.map((p, i) => (weights[i] / 100) / p);
+  return dates.map((d) => {
+    let value = 0;
+    seriesList.forEach((s, i) => {
+      value += units[i] * s.dateMap.get(d);
+    });
+    return { d, v: value };
+  });
+}
+
+function backtestIndexedSeries(dateMap, dates) {
+  const start = dateMap.get(dates[0]);
+  if (!start) return [];
+  return dates.map((d) => ({ d, v: (dateMap.get(d) / start) * 100 }));
+}
+
+function backtestAnnualizedPct(startVal, endVal, tradingDays) {
+  if (!Number.isFinite(startVal) || !Number.isFinite(endVal) || startVal <= 0 || tradingDays < 2) return null;
+  const years = tradingDays / 252;
+  if (years <= 0) return null;
+  return (Math.pow(endVal / startVal, 1 / years) - 1) * 100;
+}
+
+function drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker) {
+  const svg = byId("backtestChart");
+  if (!svg || !portfolioSeries.length) return;
+  const width = 800;
+  const height = 260;
+  const padL = 52;
+  const padR = 16;
+  const padT = 18;
+  const padB = 34;
+  const plotW = width - padL - padR;
+  const plotH = height - padT - padB;
+  const allVals = portfolioSeries.map((p) => p.v);
+  if (benchmarkSeries.length) benchmarkSeries.forEach((p) => allVals.push(p.v));
+  const minV = Math.min(...allVals) * 0.98;
+  const maxV = Math.max(...allVals) * 1.02;
+  const span = maxV - minV || 1;
+  const xFor = (i) => padL + (i / Math.max(1, portfolioSeries.length - 1)) * plotW;
+  const yFor = (v) => padT + plotH - ((v - minV) / span) * plotH;
+  const baseY = yFor(100);
+  const portPath = pathFromSeries(portfolioSeries.map((p) => p.v), xFor, yFor, "#2563eb", 2.2, "");
+  const benchPath = benchmarkSeries.length
+    ? pathFromSeries(benchmarkSeries.map((p) => p.v), xFor, yFor, "#94a3b8", 1.8, "6 4")
+    : "";
+  const y100 = yFor(100);
+  const tickCount = 4;
+  const yTicks = Array.from({ length: tickCount + 1 }, (_, i) => minV + (span * i) / tickCount);
+  const xLabels = [
+    { i: 0, label: startDate },
+    { i: portfolioSeries.length - 1, label: endDate },
+  ];
+  if (portfolioSeries.length > 2) {
+    const mid = Math.floor((portfolioSeries.length - 1) / 2);
+    xLabels.splice(1, 0, { i: mid, label: portfolioSeries[mid].d });
+  }
+  svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  svg.innerHTML = `
+    <rect x="0" y="0" width="${width}" height="${height}" rx="8" class="chart-bg"></rect>
+    ${yTicks.map((v) => `<line x1="${padL}" y1="${yFor(v).toFixed(1)}" x2="${width - padR}" y2="${yFor(v).toFixed(1)}" class="chart-grid"></line>`).join("")}
+    <line x1="${padL}" y1="${y100.toFixed(1)}" x2="${width - padR}" y2="${y100.toFixed(1)}" class="rsi-guide"></line>
+    ${portPath}
+    ${benchPath}
+    ${yTicks.map((v) => `<text x="${padL - 6}" y="${yFor(v) + 4}" text-anchor="end" class="chart-axis">${Math.round(v)}</text>`).join("")}
+    ${xLabels.map(({ i, label }) => `<text x="${xFor(i).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="chart-axis">${escapeHtml(String(label || "").slice(2))}</text>`).join("")}
+    <text x="${padL + 4}" y="${padT + 12}" class="chart-axis">포트폴리오</text>
+    <text x="${padL + 84}" y="${padT + 12}" class="chart-axis" fill="#94a3b8">${escapeHtml(benchmarkTicker)}</text>
+    <text x="${padL - 6}" y="${baseY + 4}" text-anchor="end" class="chart-axis">100</text>
+  `;
+}
+
+function renderBacktestResults(payload) {
+  const box = byId("backtestResults");
+  const summary = byId("backtestSummary");
+  const table = byId("backtestTable");
+  if (!box || !summary || !table) return;
+  const {
+    tickers,
+    startDate,
+    endDate,
+    tradingDays,
+    totalReturn,
+    annReturn,
+    benchmarkReturn,
+    alpha,
+    stockReturns,
+    warnings,
+    portfolioSeries,
+    benchmarkSeries,
+    investment,
+    finalValue,
+    profit,
+    benchmarkTicker,
+    benchmarkLabel,
+    periodLabel,
+    weightLabel,
+  } = payload;
+  summary.innerHTML = `
+    <article class="backtest-metric"><span>포트폴리오 수익률</span><strong class="${cls(totalReturn)}">${fmtPct(totalReturn)}</strong></article>
+    <article class="backtest-metric"><span>연환산</span><strong class="${cls(annReturn)}">${annReturn == null ? "—" : fmtPct(annReturn)}</strong></article>
+    <article class="backtest-metric"><span>투자금</span><strong class="is-money">${fmtBacktestUsd(investment)}</strong></article>
+    <article class="backtest-metric"><span>최종 평가액</span><strong class="is-money ${cls(totalReturn)}">${fmtBacktestUsd(finalValue)}</strong></article>
+    <article class="backtest-metric"><span>${escapeHtml(benchmarkTicker)} (${escapeHtml(benchmarkLabel)})</span><strong class="${cls(benchmarkReturn)}">${benchmarkReturn == null ? "—" : fmtPct(benchmarkReturn)}</strong></article>
+    <article class="backtest-metric"><span>초과 수익 (α)</span><strong class="${cls(alpha)}">${alpha == null ? "—" : fmtPct(alpha)}</strong></article>
+    <article class="backtest-metric"><span>수익금</span><strong class="is-money ${cls(profit)}">${profit >= 0 ? "+" : ""}${fmtBacktestUsd(profit)}</strong></article>
+  `;
+  const warnHtml = warnings.length
+    ? `<p class="backtest-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>`
+    : "";
+  table.innerHTML = `
+    <caption class="backtest-meta">${escapeHtml(tickers.join(", "))} · ${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · buy-and-hold</caption>
+    ${warnHtml}
+    <thead><tr><th>티커</th><th>회사</th><th>시작가</th><th>종가</th><th>수익률</th><th>비중</th><th>투자액</th><th>평가액</th></tr></thead>
+    <tbody>
+      ${stockReturns.map((row) => `
+        <tr>
+          <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
+          <td>${escapeHtml(row.company)}</td>
+          <td>$${row.startPrice.toFixed(2)}</td>
+          <td>$${row.endPrice.toFixed(2)}</td>
+          <td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td>
+          <td>${row.weightPct.toFixed(1)}%</td>
+          <td>${fmtBacktestUsd(row.invested)}</td>
+          <td class="${cls(row.returnPct)}">${fmtBacktestUsd(row.finalValue)}</td>
+        </tr>
+      `).join("")}
+    </tbody>
+  `;
+  table.querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+  drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker);
+  box.hidden = false;
+  setBacktestStatus("");
+}
+
+async function runPortfolioBacktest() {
+  if (backtestRunning) return;
+  const tickers = backtestTickersFromInput();
+  const periodMode = backtestPeriodMode();
+  const periodBars = backtestPeriodBars();
+  const customStart = backtestCustomStartDate();
+  if (tickers.length < 2) {
+    setBacktestStatus("2개 이상의 유효한 티커를 입력하세요.");
+    byId("backtestResults").hidden = true;
+    return;
+  }
+  if (periodMode === "custom" && !customStart) {
+    setBacktestStatus("시작일을 선택하세요.");
+    byId("backtestResults").hidden = true;
+    return;
+  }
+  const weightResult = backtestWeightsForTickers(tickers);
+  if (weightResult.error) {
+    setBacktestStatus(weightResult.error);
+    byId("backtestResults").hidden = true;
+    return;
+  }
+  const weights = weightResult.weights;
+  const investment = backtestInvestmentUsd();
+  const benchmarkTicker = backtestBenchmarkTicker();
+  const benchmarkLabel = backtestBenchmarkLabel(benchmarkTicker);
+  backtestRunning = true;
+  setBacktestStatus("가격 이력을 불러오는 중…");
+  byId("backtestResults").hidden = true;
+  try {
+    const loaded = await Promise.all(tickers.map(async (ticker) => {
+      const stock = stockByTicker(ticker);
+      const detail = await loadStockDetail(ticker);
+      const merged = detail ? { ...stock, ...detail } : stock;
+      const rows = getChartRows(merged);
+      return {
+        ticker,
+        company: stock?.company || ticker,
+        rows,
+        dateMap: closeSeriesToDateMap(rows),
+        synthetic: isSyntheticChart(merged),
+      };
+    }));
+    const warnings = [];
+    const invalid = loaded.filter((s) => s.synthetic || s.dateMap.size < 30);
+    invalid.forEach((s) => {
+      warnings.push(`${s.ticker}: 실제 일봉 이력 없음 — 제외됨.`);
+    });
+    const valid = loaded.filter((s) => !s.synthetic && s.dateMap.size >= 30);
+    if (valid.length < 2) {
+      setBacktestStatus("실제 가격 이력이 있는 종목이 2개 이상 필요합니다. (상위 ~1,400종목 지원)");
+      return;
+    }
+    const weightByTicker = new Map(tickers.map((ticker, index) => [ticker, weights[index]]));
+    let activeWeights = valid.map((s) => weightByTicker.get(s.ticker) || 0);
+    const weightSum = activeWeights.reduce((sum, w) => sum + w, 0);
+    if (weightSum <= 0) {
+      setBacktestStatus("유효 종목에 적용할 비중이 없습니다.");
+      return;
+    }
+    activeWeights = activeWeights.map((w) => (w / weightSum) * 100);
+    let dateResult = backtestResolveDates(valid, periodBars, customStart);
+    if (!dateResult.dates.length && periodMode === "preset" && periodBars) {
+      dateResult = backtestResolveDates(valid, Math.min(periodBars, valid.reduce((m, s) => Math.min(m, s.dateMap.size), Infinity)), null);
+    }
+    if (!dateResult.dates.length) {
+      setBacktestStatus(dateResult.error || "시뮬레이션 기간을 계산하지 못했습니다.");
+      return;
+    }
+    const { dates, startDate, endDate } = dateResult;
+    if (periodMode === "preset" && periodBars && dates.length < periodBars * 0.6) {
+      warnings.push(`요청 기간보다 짧은 ${dates.length}거래일만 시뮬레이션했습니다.`);
+    }
+    const portfolioRaw = backtestPortfolioSeries(valid, dates, activeWeights);
+    const portfolioSeries = portfolioRaw.map((p) => ({ d: p.d, v: (p.v / portfolioRaw[0].v) * 100 }));
+    const benchStock = stockByTicker(benchmarkTicker);
+    const benchDetail = await loadStockDetail(benchmarkTicker);
+    const benchMerged = benchDetail ? { ...benchStock, ...benchDetail } : benchStock;
+    const benchRows = getChartRows(benchMerged);
+    const benchMap = closeSeriesToDateMap(benchRows);
+    const benchmarkSeries = benchMap.has(startDate) ? backtestIndexedSeries(benchMap, dates) : [];
+    if (!benchmarkSeries.length) warnings.push(`${benchmarkTicker} 벤치마크 데이터가 시작일에 없어 비교를 생략했습니다.`);
+    const portStart = portfolioSeries[0].v;
+    const portEnd = portfolioSeries[portfolioSeries.length - 1].v;
+    const totalReturn = (portEnd / portStart - 1) * 100;
+    const annReturn = backtestAnnualizedPct(portStart, portEnd, dates.length);
+    const finalValue = investment * (portEnd / portStart);
+    const profit = finalValue - investment;
+    let benchmarkReturn = null;
+    let alpha = null;
+    if (benchmarkSeries.length) {
+      benchmarkReturn = benchmarkSeries[benchmarkSeries.length - 1].v - 100;
+      alpha = totalReturn - benchmarkReturn;
+    }
+    const stockReturns = valid.map((s, i) => {
+      const startPrice = s.dateMap.get(startDate);
+      const endPrice = s.dateMap.get(endDate);
+      const returnPct = (endPrice / startPrice - 1) * 100;
+      const weightPct = activeWeights[i];
+      const invested = investment * (weightPct / 100);
+      const finalStockValue = invested * (endPrice / startPrice);
+      return { ticker: s.ticker, company: s.company, startPrice, endPrice, returnPct, weightPct, invested, finalValue: finalStockValue };
+    }).sort((a, b) => b.returnPct - a.returnPct);
+    const periodLabel = periodMode === "custom"
+      ? `시작 ${startDate}`
+      : (byId("backtestPeriod")?.selectedOptions?.[0]?.textContent || "");
+    const weightLabel = byId("backtestWeightMode")?.value === "custom" ? "직접 비중" : "동일 비중";
+    renderBacktestResults({
+      tickers: valid.map((s) => s.ticker),
+      startDate,
+      endDate,
+      tradingDays: dates.length,
+      totalReturn,
+      annReturn,
+      benchmarkReturn,
+      alpha,
+      stockReturns,
+      warnings,
+      portfolioSeries,
+      benchmarkSeries,
+      investment,
+      finalValue,
+      profit,
+      benchmarkTicker,
+      benchmarkLabel,
+      periodLabel,
+      weightLabel,
+    });
+  } catch (err) {
+    console.warn("backtest failed", err);
+    setBacktestStatus("시뮬레이션 중 오류가 발생했습니다.");
+  } finally {
+    backtestRunning = false;
+  }
+}
+
+function populateBacktestBenchmarks() {
+  const sel = byId("backtestBenchmark");
+  if (!sel) return;
+  const fromHealth = data.health?.etfRelative?.benchmarks || [];
+  const merged = [...new Set([...BACKTEST_BENCHMARK_OPTIONS.map(([t]) => t), ...fromHealth])]
+    .filter((t) => stockByTicker(t));
+  sel.innerHTML = merged.map((ticker) => {
+    const label = backtestBenchmarkLabel(ticker);
+    return `<option value="${escapeHtml(ticker)}">${escapeHtml(ticker)} · ${escapeHtml(label)}</option>`;
+  }).join("");
+  if (!sel.value) sel.value = "SPY";
+}
+
+function initBacktestStartDate() {
+  const input = byId("backtestStartDate");
+  if (!input) return;
+  const end = backtestSnapshotIsoDate() || new Date().toISOString().slice(0, 10);
+  input.max = end;
+  input.min = "2021-06-17";
+  const d = new Date(end);
+  d.setFullYear(d.getFullYear() - 3);
+  input.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function syncBacktestCustomUi() {
+  const period = byId("backtestPeriod")?.value;
+  const startWrap = byId("backtestStartWrap");
+  if (startWrap) startWrap.hidden = period !== "custom";
+  const weightMode = byId("backtestWeightMode")?.value;
+  const weightsWrap = byId("backtestWeightsWrap");
+  if (weightsWrap) weightsWrap.hidden = weightMode !== "custom";
+}
+
+function setupBacktestEvents() {
+  populateBacktestBenchmarks();
+  initBacktestStartDate();
+  syncBacktestCustomUi();
+  const run = () => runPortfolioBacktest();
+  byId("backtestRun")?.addEventListener("click", run);
+  byId("backtestFromWatchlist")?.addEventListener("click", () => {
+    const input = byId("backtestInput");
+    if (input) input.value = watchlist.slice(0, BACKTEST_MAX_TICKERS).join(", ");
+    run();
+  });
+  const input = byId("backtestInput");
+  if (input && !input.value) input.value = watchlist.slice(0, 5).join(", ");
+  byId("backtestPeriod")?.addEventListener("change", () => {
+    syncBacktestCustomUi();
+    if (!byId("backtestResults")?.hidden) run();
+  });
+  byId("backtestWeightMode")?.addEventListener("change", syncBacktestCustomUi);
+  ["backtestBenchmark", "backtestInvestment", "backtestStartDate", "backtestWeights"].forEach((id) => {
+    byId(id)?.addEventListener("change", () => {
+      if (!byId("backtestResults")?.hidden) run();
     });
   });
 }

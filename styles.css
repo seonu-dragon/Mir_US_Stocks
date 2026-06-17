@@ -15,10 +15,15 @@
   --link: #1d4ed8;
   --chip-bg: #eff6ff;
   --chip-border: #bfdbfe;
+  --chat-safe-bottom: 61px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-padding-bottom: var(--chat-safe-bottom);
 }
 
 body {
@@ -2036,6 +2041,11 @@ footer {
   font-size: 12px;
 }
 
+.chat-page-spacer {
+  height: var(--chat-safe-bottom);
+  pointer-events: none;
+}
+
 @media (max-width: 1040px) {
   .summary-band,
   .sector-grid,
@@ -3643,6 +3653,7 @@ footer {
 .chat-form button:disabled { opacity: 0.5; cursor: default; }
 
 @media (max-width: 640px) {
+  :root { --chat-safe-bottom: 53px; }
   .chatbot { right: 12px; bottom: 12px; }
 }
 
@@ -4171,6 +4182,108 @@ footer {
 @media (max-width: 640px) {
   .watchlist-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .watchlist-head { flex-direction: column; align-items: flex-start; }
+}
+
+.backtest-panel {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.backtest-toolbar {
+  flex-wrap: wrap;
+}
+
+.backtest-status {
+  margin: 0 0 8px;
+  font-size: 12px;
+  min-height: 18px;
+}
+
+.backtest-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.backtest-metric {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-soft);
+}
+
+.backtest-metric span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.backtest-metric strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 18px;
+}
+
+.backtest-meta {
+  margin: 0 0 10px;
+  font-size: 12px;
+}
+
+.backtest-chart-wrap {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  padding: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+#backtestChart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.backtest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.backtest-table th,
+.backtest-table td {
+  border: 1px solid var(--line);
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.backtest-table th {
+  background: var(--panel-soft);
+  color: var(--muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.backtest-warn {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 8px;
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.backtest-metric strong.is-money {
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 900px) {
+  .backtest-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 /* ==========================================================================

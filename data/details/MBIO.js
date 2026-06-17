@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MBIO"] = {"fundamentals":{"sharesB":0.007,"source":"nasdaq"},"ticker":"MBIO","company":"Mustang Bio Inc.","historySource":"snapshot"};

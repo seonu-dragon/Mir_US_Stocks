@@ -91,6 +91,7 @@ let data = fallbackData;
 let selectedTicker = "NVDA";
 let chatFocusTicker = selectedTicker;
 let selectedEtfRsCategory = null;
+let scoreHelpOpen = null;
 const SECTOR_ETFS = [
   { ticker: "XLK", name: "정보기술 (Technology)", desc: "Technology Select Sector SPDR ETF", sectorName: "TECHNOLOGY" },
   { ticker: "SOXX", name: "반도체 (Semiconductors)", desc: "iShares Semiconductor ETF", sectorName: "Semiconductors" },
@@ -218,7 +219,9 @@ function formatKstDateTime(date = new Date()) {
 
 function updateDataLoadedAt(date = new Date()) {
   const el = byId("updatedAt");
-  if (el) el.textContent = formatKstDateTime(date);
+  if (!el) return;
+  const snapshotTime = data && (data.updatedAtKst || data.updated_at_kst);
+  el.textContent = snapshotTime || formatKstDateTime(date);
 }
 
 async function loadData() {
@@ -1373,6 +1376,16 @@ function setupEvents() {
   setupBacktestEvents();
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
+    const scoreButton = event.target.closest("[data-score-help]");
+    if (scoreButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      const kind = scoreButton.dataset.scoreHelp;
+      scoreHelpOpen = scoreHelpOpen === kind ? null : kind;
+      const base = data.stocks.find((row) => row.ticker === selectedTicker);
+      if (base) byId("searchFacts").innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
+      return;
+    }
     const star = event.target.closest("[data-watch]");
     if (star) {
       event.preventDefault();
@@ -1666,6 +1679,7 @@ function renderAll() {
   renderWatchlistBar();
   renderHealth();
   renderInstitutional13f();
+  renderDataFreshnessStatus();
   renderAiBriefing();
   renderSocialSentiment();
 }
@@ -2238,6 +2252,7 @@ function renderSelected(item) {
 }
 
 function stockFacts(item, title) {
+  const isSearchPanel = title === "Search Ticker";
   return `
     <span class="muted">${title}</span>
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker}</h3>
@@ -2246,17 +2261,43 @@ function stockFacts(item, title) {
       ${fact("가격", `$${item.price.toFixed(2)}`)}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
       ${fact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
-      ${fact("RS", item.rsScore)}
-      ${fact("EPS Rev", item.epsRevScore)}
+      ${isSearchPanel ? scoreFact("RS", item.rsScore, "rs") : fact("RS", item.rsScore)}
+      ${isSearchPanel ? scoreFact("EPS Rev", item.epsRevScore, "eps") : fact("EPS Rev", item.epsRevScore)}
       ${fact("거래량", `${item.volumeRatio.toFixed(1)}x`)}
       ${fact("StochK", item.stochK)}
       ${fact("신고가 거리", fmtPct(-item.newHighDistancePct))}
     </div>
+    ${isSearchPanel ? scoreHelpHtml() : ""}
   `;
 }
 
 function fact(label, value) {
   return `<div class="fact"><span>${label}</span><strong>${value}</strong></div>`;
+}
+
+function scoreFact(label, value, kind) {
+  const active = scoreHelpOpen === kind;
+  return `
+    <button type="button" class="fact fact-score-button${active ? " is-active" : ""}" data-score-help="${kind}" aria-expanded="${active}">
+      <span>${label}</span>
+      <strong>${value ?? "-"}</strong>
+      <em>산정 기준</em>
+    </button>
+  `;
+}
+
+function scoreHelpHtml() {
+  if (!scoreHelpOpen) return "";
+  const title = scoreHelpOpen === "eps" ? "EPS 추정 점수 산정 기준" : "RS 점수 산정 기준";
+  const body = scoreHelpOpen === "eps"
+    ? "EPS Next Y, EPS TTM, Forward PER 등 이익 전망과 밸류에이션 데이터를 우선 반영합니다. 재무 데이터가 부족한 소형주는 가격 모멘텀으로 일부 보완될 수 있어, 점수는 선별용 참고 지표로 봐야 합니다."
+    : "3개월, 6개월, 1년 가격 모멘텀을 가중해 0~100점으로 환산한 상대강도 지표입니다. 높을수록 최근 중기 추세가 강하다는 뜻이며, 절대 수익률 보장은 아닙니다.";
+  return `
+    <div class="score-help-inline">
+      <strong>${title}</strong>
+      <p>${body}</p>
+    </div>
+  `;
 }
 
 function getSectorStocks(meta) {
@@ -2997,6 +3038,7 @@ function selectTicker(ticker, options = {}) {
   const resolved = resolveTickerQuery(ticker) || String(ticker || "").trim().toUpperCase();
   const found = data.stocks.find((item) => item.ticker.toUpperCase() === resolved.toUpperCase());
   if (!found) return;
+  if (found.ticker !== selectedTicker) scoreHelpOpen = null;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
   renderTreemap();
@@ -3019,6 +3061,7 @@ function renderSearch() {
   drawChart(item);
   renderEarningsCalendar(item);
   renderStockEvents(item);
+  renderDataQualityPanel(item);
   renderFundamentals(item);
   renderNews(item);
   maybeFetchLiveData(base);
@@ -3030,6 +3073,7 @@ function renderSearch() {
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
     renderStockEvents(refreshed);
+    renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
   });
@@ -3077,6 +3121,7 @@ function maybeFetchLiveData(base) {
       drawChart(merged);
       renderEarningsCalendar(merged);
       renderStockEvents(merged);
+      renderDataQualityPanel(merged);
       renderFundamentals(merged);
       renderNews(merged);
     })
@@ -3177,40 +3222,17 @@ function loadStockDetail(ticker) {
   if (!key) return Promise.resolve(null);
   if (detailCache[key]) return Promise.resolve(detailCache[key]);
   if (detailPromises[key]) return detailPromises[key];
-  detailPromises[key] = window.location.protocol === "file:"
-    ? loadStockDetailScript(key)
-    : fetch(`data/details/${encodeURIComponent(key)}.json`, { cache: "no-store" })
-      .then((response) => response.ok ? response.json() : null)
-      .then((detail) => {
-        if (detail) {
-          detailCache[key] = detail;
-          if (ticker && ticker !== key) detailCache[ticker] = detail;
-        }
-        return detail;
-      })
-      .catch(() => null);
+  detailPromises[key] = fetch(`data/details/${encodeURIComponent(key)}.json`, { cache: "no-store" })
+    .then((response) => response.ok ? response.json() : null)
+    .then((detail) => {
+      if (detail) {
+        detailCache[key] = detail;
+        if (ticker && ticker !== key) detailCache[ticker] = detail;
+      }
+      return detail;
+    })
+    .catch(() => null);
   return detailPromises[key];
-}
-
-function loadStockDetailScript(key) {
-  window.STOCK_DETAILS = window.STOCK_DETAILS || {};
-  return new Promise((resolve) => {
-    const existing = window.STOCK_DETAILS[key];
-    if (existing) {
-      detailCache[key] = existing;
-      resolve(existing);
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = `data/details/${key}.js`;
-    script.onload = () => {
-      const detail = window.STOCK_DETAILS?.[key] || null;
-      if (detail) detailCache[key] = detail;
-      resolve(detail);
-    };
-    script.onerror = () => resolve(null);
-    document.head.appendChild(script);
-  });
 }
 
 function drawChart(item) {
@@ -4620,6 +4642,91 @@ function nextMonthlyOptionsExpiration(base = snapshotBaseDate()) {
   if (exp < base) exp = thirdFriday(base.getFullYear(), base.getMonth() + 1);
   return `${exp.getFullYear()}-${String(exp.getMonth() + 1).padStart(2, "0")}-${String(exp.getDate()).padStart(2, "0")}`;
 }
+
+function sourceLabel(source) {
+  const src = String(source || "").toLowerCase();
+  if (!src) return "데이터 없음";
+  if (src.includes("nasdaq") && src.includes("sec") && src.includes("yahoo")) return "Nasdaq + SEC + Yahoo";
+  if (src.includes("nasdaq") && src.includes("sec")) return "Nasdaq + SEC";
+  if (src.includes("nasdaq")) return "Nasdaq";
+  if (src.includes("yahoo")) return "Yahoo Finance";
+  if (src.includes("sec")) return "SEC EDGAR";
+  if (src.includes("snapshot")) return "스냅샷 생성값";
+  return source;
+}
+
+function missingFundamentalFields(f) {
+  const fields = [
+    ["pe", "PER"],
+    ["forwardPE", "Forward PER"],
+    ["epsTtm", "EPS TTM"],
+    ["epsNextY", "EPS Next Y"],
+    ["salesB", "Sales"],
+    ["incomeB", "Income"],
+    ["roe", "ROE"],
+    ["targetPrice", "1Y Target"]
+  ];
+  return fields.filter(([key]) => f[key] == null || f[key] === "").map(([, label]) => label);
+}
+
+function renderDataQualityPanel(item) {
+  const box = byId("dataQualityPanel");
+  if (!box || !item) return;
+  const f = item.fundamentals || {};
+  const hasDetail = Boolean(detailCache[safeTicker(item.ticker)] || item.chartSeries || Object.keys(f).length);
+  const missing = missingFundamentalFields(f);
+  const chartRows = getChartRows(item);
+  const source = sourceLabel(f.source);
+  const history = sourceLabel(item.historySource);
+  const detailStatus = hasDetail ? "상세 데이터 로드됨" : "상세 데이터 로딩 전/없음";
+  const quality = missing.length <= 2 && chartRows.length > 240 ? "good" : missing.length <= 5 ? "warn" : "muted";
+  const toneText = quality === "good" ? "양호" : quality === "warn" ? "일부 누락" : "제한적";
+  box.innerHTML = `
+    <div class="quality-head">
+      <div>
+        <h3>데이터 품질 / 출처</h3>
+        <p class="muted">가격·재무·뉴스가 어디서 왔고 무엇이 비어 있는지 먼저 확인합니다.</p>
+      </div>
+      <span class="quality-badge quality-${quality}">${toneText}</span>
+    </div>
+    <div class="quality-grid">
+      <article><span>스냅샷 기준</span><strong>${escapeHtml(data.updatedAtKst || data.updated_at_kst || "-")}</strong></article>
+      <article><span>가격 이력</span><strong>${escapeHtml(history)}</strong><em>${chartRows.length ? `${chartRows.length} bars` : "차트 없음"}</em></article>
+      <article><span>재무 데이터</span><strong>${escapeHtml(source)}</strong><em>${Object.keys(f).length ? `${Object.keys(f).length} fields` : "없음"}</em></article>
+      <article><span>뉴스</span><strong>${Array.isArray(item.news) && item.news.length ? `${item.news.length}건` : "없음"}</strong><em>${detailStatus}</em></article>
+    </div>
+    <p class="quality-note">
+      ${missing.length ? `누락 지표: ${escapeHtml(missing.slice(0, 6).join(", "))}${missing.length > 6 ? " 외" : ""}` : "핵심 재무 지표가 대부분 채워져 있습니다."}
+    </p>
+  `;
+}
+
+function parseSnapshotDate(raw) {
+  const text = String(raw || "").replace(" KST", "").trim();
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{2}):(\d{2}))?/);
+  if (!match) return null;
+  const [, y, m, d, hh = "0", mm = "0"] = match;
+  return new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm));
+}
+
+function renderDataFreshnessStatus() {
+  const box = byId("aiDataStatus");
+  if (!box) return;
+  const raw = data.updatedAtKst || data.updated_at_kst || "";
+  const snap = parseSnapshotDate(raw);
+  const ageHours = snap ? Math.max(0, (Date.now() - snap.getTime()) / 36e5) : null;
+  const stale = ageHours != null && ageHours > 30;
+  const aiKeys = Object.keys(data.ai_briefing || {});
+  const social = data.social_sentiment || {};
+  const socialCount = Object.values(social).reduce((sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0), 0);
+  box.classList.toggle("is-stale", stale);
+  box.innerHTML = `
+    <strong>데이터 상태</strong>
+    <span>스냅샷 ${escapeHtml(raw || "-")} · AI 브리핑 ${aiKeys.length}종 · 소셜 트렌딩 ${socialCount}개</span>
+    <span>${stale ? "스냅샷이 30시간 이상 지나 오래된 데이터일 수 있습니다." : "주식 데이터는 하루 1회 스냅샷이며, AI/소셜 블록은 별도 생성기가 채운 값을 표시합니다."}</span>
+  `;
+}
+
 function renderFundamentals(item) {
   // ETFs don't need fundamentals — show their constituent stocks (by RS) instead.
   if (item.sector === "EXCHANGE TRADED FUNDS") {
@@ -4990,10 +5097,12 @@ function renderInstitutional13f() {
     ? "분기별 갱신 (13F 공시 주기)"
     : "스냅샷 갱신";
   meta.innerHTML = `
-    <span>데이터 출처: <strong>${escapeHtml(payload.source || "SEC EDGAR 13F-HR")}</strong></span>
-    <span>갱신 주기: <strong>${escapeHtml(schedule)}</strong></span>
-    <span>마지막 빌드: <strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></span>
-    <span>${escapeHtml(payload.note || "")}</span>
+    <div class="institutional-meta-grid">
+      <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "SEC EDGAR 13F-HR")}</strong></article>
+      <article><span>갱신 주기</span><strong>${escapeHtml(schedule)}</strong></article>
+      <article><span>마지막 빌드</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
+    </div>
+    <p>${escapeHtml(payload.note || "")}</p>
   `;
 
   if (!institutions.length) {
@@ -6614,6 +6723,13 @@ function renderBacktestResults(payload) {
   const warnHtml = warnings.length
     ? `<p class="backtest-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>`
     : "";
+  renderPortfolioRiskPanel({
+    stockReturns,
+    portfolioSeries,
+    benchmarkSeries,
+    benchmarkTicker,
+    weights: stockReturns.map((row) => row.weightPct / 100)
+  });
   table.innerHTML = `
     <caption class="backtest-meta">${escapeHtml(tickers.join(", "))} · ${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · buy-and-hold</caption>
     ${warnHtml}
@@ -6639,6 +6755,105 @@ function renderBacktestResults(payload) {
   drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker);
   box.hidden = false;
   setBacktestStatus("");
+}
+
+function percentReturnSeries(series) {
+  if (!Array.isArray(series) || series.length < 2) return [];
+  const out = [];
+  for (let i = 1; i < series.length; i += 1) {
+    const prev = Number(series[i - 1]?.v);
+    const now = Number(series[i]?.v);
+    if (Number.isFinite(prev) && Number.isFinite(now) && prev) out.push((now / prev) - 1);
+  }
+  return out;
+}
+
+function annualizedVolPct(series) {
+  const returns = percentReturnSeries(series);
+  if (returns.length < 3) return null;
+  const avg = returns.reduce((sum, value) => sum + value, 0) / returns.length;
+  const variance = returns.reduce((sum, value) => sum + Math.pow(value - avg, 2), 0) / Math.max(1, returns.length - 1);
+  return Math.sqrt(variance) * Math.sqrt(252) * 100;
+}
+
+function maxDrawdownPct(series) {
+  if (!Array.isArray(series) || !series.length) return null;
+  let peak = Number(series[0].v);
+  let maxDd = 0;
+  series.forEach((point) => {
+    const value = Number(point.v);
+    if (!Number.isFinite(value)) return;
+    peak = Math.max(peak, value);
+    if (peak) maxDd = Math.min(maxDd, (value / peak - 1) * 100);
+  });
+  return maxDd;
+}
+
+function betaAndCorrelation(portfolioSeries, benchmarkSeries) {
+  const p = percentReturnSeries(portfolioSeries);
+  const b = percentReturnSeries(benchmarkSeries);
+  const n = Math.min(p.length, b.length);
+  if (n < 5) return { beta: null, corr: null };
+  const pr = p.slice(-n);
+  const br = b.slice(-n);
+  const avgP = pr.reduce((s, v) => s + v, 0) / n;
+  const avgB = br.reduce((s, v) => s + v, 0) / n;
+  let cov = 0;
+  let varB = 0;
+  let varP = 0;
+  for (let i = 0; i < n; i += 1) {
+    const dp = pr[i] - avgP;
+    const db = br[i] - avgB;
+    cov += dp * db;
+    varB += db * db;
+    varP += dp * dp;
+  }
+  const beta = varB ? cov / varB : null;
+  const corr = varB && varP ? cov / Math.sqrt(varB * varP) : null;
+  return { beta, corr };
+}
+
+function sectorConcentration(stockReturns) {
+  const sectors = {};
+  stockReturns.forEach((row) => {
+    const sector = stockByTicker(row.ticker)?.sector || "Unknown";
+    sectors[sector] = (sectors[sector] || 0) + Number(row.weightPct || 0);
+  });
+  return Object.entries(sectors).sort((a, b) => b[1] - a[1]);
+}
+
+function renderPortfolioRiskPanel(payload) {
+  const box = byId("portfolioRiskPanel");
+  if (!box) return;
+  const { stockReturns, portfolioSeries, benchmarkSeries, benchmarkTicker } = payload;
+  const maxDd = maxDrawdownPct(portfolioSeries);
+  const vol = annualizedVolPct(portfolioSeries);
+  const bench = betaAndCorrelation(portfolioSeries, benchmarkSeries);
+  const sectors = sectorConcentration(stockReturns);
+  const topSector = sectors[0];
+  const topPosition = stockReturns.slice().sort((a, b) => b.weightPct - a.weightPct)[0];
+  const warnings = [];
+  if (topSector && topSector[1] >= 50) warnings.push(`섹터 쏠림: ${topSector[0]} 비중 ${topSector[1].toFixed(0)}% (점검 기준 50% 이상).`);
+  if (topPosition && topPosition.weightPct >= 35) warnings.push(`단일 종목 쏠림: ${topPosition.ticker} 비중 ${topPosition.weightPct.toFixed(0)}% (점검 기준 35% 이상).`);
+  if (maxDd != null && maxDd <= -30) warnings.push(`하락 위험: 과거 구간 최대낙폭 ${fmtPct(maxDd)} (점검 기준 -30% 이하).`);
+  box.innerHTML = `
+    <div class="risk-head">
+      <div>
+        <h3>포트폴리오 위험 분석</h3>
+        <p class="muted">수익률뿐 아니라 하락폭, 변동성, 섹터 쏠림을 같이 봅니다.</p>
+      </div>
+      <span class="quality-badge ${warnings.length ? "quality-warn" : "quality-good"}">${warnings.length ? "점검 필요" : "균형 양호"}</span>
+    </div>
+    <div class="risk-grid">
+      <article><span>최대 낙폭</span><strong class="${cls(maxDd)}">${maxDd == null ? "-" : fmtPct(maxDd)}</strong></article>
+      <article><span>연환산 변동성</span><strong>${vol == null ? "-" : fmtPct(vol)}</strong></article>
+      <article><span>${escapeHtml(benchmarkTicker)} 베타</span><strong>${bench.beta == null ? "-" : bench.beta.toFixed(2)}</strong></article>
+      <article><span>상관계수</span><strong>${bench.corr == null ? "-" : bench.corr.toFixed(2)}</strong></article>
+      <article><span>최대 섹터</span><strong>${topSector ? escapeHtml(topSector[0]) : "-"}</strong><em>${topSector ? `${topSector[1].toFixed(1)}%` : ""}</em></article>
+      <article><span>최대 종목</span><strong>${topPosition ? escapeHtml(topPosition.ticker) : "-"}</strong><em>${topPosition ? `${topPosition.weightPct.toFixed(1)}%` : ""}</em></article>
+    </div>
+    ${warnings.length ? `<p class="risk-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>` : `<p class="risk-note">점검 기준: 섹터 50% 이상, 단일 종목 35% 이상, 최대낙폭 -30% 이하. 리밸런싱, 배당, 세금, 거래비용은 반영하지 않습니다.</p>`}
+  `;
 }
 
 async function runPortfolioBacktest() {
@@ -6725,7 +6940,7 @@ async function runPortfolioBacktest() {
     }
     const { dates, startDate, endDate } = dateResult;
     if (periodMode === "preset" && periodBars && dates.length < periodBars * 0.6) {
-      warnings.push(`요청 기간보다 짧은 ${dates.length}거래일만 시뮬레이션했습니다.`);
+      warnings.push(`선택 종목 중 가격 이력이 짧은 종목이 있어 공통으로 겹치는 ${dates.length}거래일만 시뮬레이션했습니다.`);
     }
     const portfolioRaw = backtestPortfolioSeries(valid, dates, activeWeights);
     const portfolioSeries = portfolioRaw.map((p) => ({ d: p.d, v: (p.v / portfolioRaw[0].v) * 100 }));

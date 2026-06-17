@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["NCEW"] = {"fundamentals":{"sharesB":0.003,"source":"nasdaq"},"ticker":"NCEW","company":"New Century Logistics (BVI) Limited Ordinary Shares","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ABTS"] = {"fundamentals":{"sharesB":0.003,"source":"nasdaq"},"ticker":"ABTS","company":"Abits Group Inc Ordinary Shares","historySource":"snapshot"};

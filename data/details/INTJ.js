@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["INTJ"] = {"fundamentals":{"sharesB":0.002,"source":"nasdaq"},"ticker":"INTJ","company":"Intelligent Group Limited Class A Ordinary Shares","historySource":"snapshot"};

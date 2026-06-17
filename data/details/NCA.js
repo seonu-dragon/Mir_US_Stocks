@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["NCA"] = {"news":[{"title":"Net Asset Value(s)","publisher":"Business Wire","link":"https://finance.yahoo.com/markets/stocks/articles/net-asset-value-154900303.html","publishedAt":"2026-04-18"}],"ticker":"NCA","company":"Nuveen California Municipal Value Fund","historySource":"snapshot"};

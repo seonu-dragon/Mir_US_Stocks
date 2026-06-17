@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MATH"] = {"fundamentals":{"sharesB":0.043,"source":"nasdaq"},"ticker":"MATH","company":"Metalpha Technology Holding Limited Ordinary Shares","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["PLBL"] = {"fundamentals":{"sharesB":0.366,"source":"nasdaq"},"ticker":"PLBL","company":"Polibeli Group Ltd Class A Ordinary Shares","historySource":"snapshot"};

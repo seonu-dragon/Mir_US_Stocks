@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["DCX"] = {"fundamentals":{"sharesB":0.02,"source":"nasdaq"},"ticker":"DCX","company":"Digital Currency X Technology Inc. Class A Ordinary Shares","historySource":"snapshot"};

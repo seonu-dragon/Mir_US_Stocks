@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ONEG"] = {"fundamentals":{"sharesB":0.016,"source":"nasdaq"},"ticker":"ONEG","company":"OneConstruction Group Limited Ordinary Shares","historySource":"snapshot"};

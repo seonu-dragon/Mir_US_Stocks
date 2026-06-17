@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["AQB"] = {"fundamentals":{"sharesB":0.005,"source":"nasdaq"},"ticker":"AQB","company":"AquaBounty Technologies Inc.","historySource":"snapshot"};

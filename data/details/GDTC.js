@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["GDTC"] = {"fundamentals":{"sharesB":0.012,"source":"nasdaq"},"ticker":"GDTC","company":"CytoMed Therapeutics Limited Ordinary Shares","historySource":"snapshot"};

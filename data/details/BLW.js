@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BLW"] = {"fundamentals":{"sharesB":0.036,"source":"nasdaq"},"ticker":"BLW","company":"Blackrock Limited Duration Income Trust","historySource":"snapshot"};

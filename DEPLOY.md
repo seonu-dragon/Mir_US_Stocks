@@ -5,10 +5,9 @@
 ## 권장 구조
 
 - `data/market_snapshot.js`: 첫 화면용 가벼운 시장 데이터
-- `data/details/{TICKER}.json`: 서버/웹 배포용 종목 상세 데이터
-- `data/details/{TICKER}.js`: `index.html`을 직접 여는 file:// 환경용 상세 데이터
+- `data/details/{TICKER}.json`: 종목 분석에서 필요할 때만 불러오는 상세 데이터
 
-현재 구조에서는 첫 화면이 `market_snapshot.js`만 읽고, 종목 분석을 열 때 해당 종목의 상세 파일만 추가로 불러옵니다.
+현재 구조에서는 첫 화면이 `market_snapshot.js`만 읽고, 종목 분석을 열 때 해당 종목의 JSON 상세 파일만 추가로 불러옵니다. 로컬 확인도 `file://` 직접 열기보다 `scripts/serve.ps1` 같은 로컬 서버 실행을 권장합니다.
 
 ## 배포 선택지
 

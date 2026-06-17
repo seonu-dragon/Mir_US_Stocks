@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["JL"] = {"fundamentals":{"sharesB":0.004,"source":"nasdaq"},"ticker":"JL","company":"J-Long Group Limited Class A Ordinary Shares","historySource":"snapshot"};

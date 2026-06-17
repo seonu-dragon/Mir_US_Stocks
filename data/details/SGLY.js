@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SGLY"] = {"fundamentals":{"sharesB":0.006,"source":"nasdaq"},"ticker":"SGLY","company":"Singularity Future Technology Ltd.","historySource":"snapshot"};

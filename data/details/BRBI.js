@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BRBI"] = {"fundamentals":{"sharesB":0.05,"source":"nasdaq"},"ticker":"BRBI","company":"BRBI BR Partners S.A. ADSs","historySource":"snapshot"};

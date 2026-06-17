@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["XHG"] = {"fundamentals":{"sharesB":0.052,"source":"nasdaq"},"ticker":"XHG","company":"XChange TEC.INC American Depositary Shares","historySource":"snapshot"};

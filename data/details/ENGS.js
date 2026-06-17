@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ENGS"] = {"fundamentals":{"sharesB":0.031,"source":"nasdaq"},"ticker":"ENGS","company":"Energys Group Limited Ordinary Shares","historySource":"snapshot"};

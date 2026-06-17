@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["VYNE"] = {"fundamentals":{"sharesB":0.033,"source":"nasdaq"},"ticker":"VYNE","company":"VYNE Therapeutics Inc.","historySource":"snapshot"};

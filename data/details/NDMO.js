@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["NDMO"] = {"fundamentals":{"sharesB":0.059,"source":"nasdaq"},"ticker":"NDMO","company":"Nuveen Dynamic Municipal Opportunities Fund Common Shares of Beneficial Interest","historySource":"snapshot"};

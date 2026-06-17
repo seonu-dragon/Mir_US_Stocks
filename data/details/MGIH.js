@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MGIH"] = {"fundamentals":{"sharesB":0.011,"source":"nasdaq"},"ticker":"MGIH","company":"Millennium Group International Holdings Limited Ordinary Shares","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BGM"] = {"fundamentals":{"sharesB":0.185,"source":"nasdaq"},"ticker":"BGM","company":"BGM Group Ltd. Class A Ordinary Shares","historySource":"snapshot"};

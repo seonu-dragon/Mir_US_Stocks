@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["CRESY"] = {"fundamentals":{"sharesB":0.071,"source":"nasdaq"},"ticker":"CRESY","company":"Cresud S.A.C.I.F. y A. American Depositary Shares","historySource":"snapshot"};

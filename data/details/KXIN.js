@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["KXIN"] = {"fundamentals":{"sharesB":0.002,"source":"nasdaq"},"ticker":"KXIN","company":"Kaixin Holdings Ordinary Shares","historySource":"snapshot"};

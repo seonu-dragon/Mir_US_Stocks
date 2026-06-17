@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["YHGJ"] = {"fundamentals":{"sharesB":0.003,"source":"nasdaq"},"ticker":"YHGJ","company":"Yunhong Green CTI Ltd.","historySource":"snapshot"};

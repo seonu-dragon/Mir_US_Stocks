@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SCAG"] = {"fundamentals":{"sharesB":0.072,"source":"nasdaq"},"ticker":"SCAG","company":"Scage Future American Depositary Shares","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["AUC"] = {"fundamentals":{"sharesB":0.01,"source":"nasdaq"},"ticker":"AUC","company":"ATIF Holdings Limited Ordinary Shares","historySource":"snapshot"};

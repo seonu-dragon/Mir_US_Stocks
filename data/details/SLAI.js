@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SLAI"] = {"fundamentals":{"sharesB":0.02,"source":"nasdaq"},"ticker":"SLAI","company":"SOLAI Limited American Depositary Shares (each representing one hundred (100) Class A Ordinary Shares)","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ABLV"] = {"fundamentals":{"sharesB":0.05,"source":"nasdaq"},"ticker":"ABLV","company":"Able View Global Inc. Class B Ordinary Shares","historySource":"snapshot"};

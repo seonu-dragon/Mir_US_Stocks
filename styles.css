@@ -1241,6 +1241,50 @@ button.ghost {
   margin-top: 3px;
 }
 
+.fact-score-button {
+  appearance: none;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fact-score-button em {
+  display: block;
+  margin-top: 4px;
+  color: var(--accent);
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+}
+
+.fact-score-button.is-active {
+  border-color: rgba(67, 76, 211, 0.45);
+  background: rgba(67, 76, 211, 0.06);
+}
+
+.score-help-inline {
+  margin-top: 10px;
+  border: 1px solid rgba(67, 76, 211, 0.18);
+  border-radius: 8px;
+  background: rgba(67, 76, 211, 0.05);
+  padding: 10px;
+}
+
+.score-help-inline strong {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+.score-help-inline p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .sector-grid,
 .rank-grid,
 .card-grid,
@@ -1619,9 +1663,8 @@ button.ghost {
 
 /* ===== 거장 포트폴리오 (13F) 탭 ===== */
 .institutional-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
+  display: grid;
+  gap: 10px;
   margin-bottom: 14px;
   font-size: 12px;
   color: var(--text-muted);
@@ -1629,6 +1672,32 @@ button.ghost {
 
 .institutional-meta strong {
   color: var(--text);
+}
+
+.institutional-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.institutional-meta-grid article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+.institutional-meta-grid span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.institutional-meta p {
+  margin: 0;
+  line-height: 1.45;
 }
 
 .institutional-picker {
@@ -4556,6 +4625,156 @@ footer {
 .event-neg b { color: #b91c1c; }
 .event-info b { color: #1d4ed8; }
 .event-muted b { color: #64748b; }
+
+.data-quality-card,
+.portfolio-risk-panel,
+.data-disclaimer {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+
+.quality-head,
+.risk-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.quality-head h3,
+.risk-head h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.quality-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.quality-good {
+  background: rgba(34, 197, 94, 0.14);
+  color: #15803d;
+}
+
+.quality-warn {
+  background: rgba(245, 158, 11, 0.16);
+  color: #b45309;
+}
+
+.quality-muted {
+  background: rgba(100, 116, 139, 0.14);
+  color: var(--muted);
+}
+
+.quality-grid,
+.risk-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.quality-grid article,
+.risk-grid article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8fafc;
+  padding: 10px;
+  min-width: 0;
+}
+
+.quality-grid span,
+.risk-grid span {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.quality-grid strong,
+.risk-grid strong {
+  display: block;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.quality-grid em,
+.risk-grid em {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.search-side-col .data-quality-card .quality-head {
+  flex-direction: column;
+}
+
+.search-side-col .data-quality-card .quality-badge {
+  align-self: flex-start;
+}
+
+.search-side-col .data-quality-card .quality-grid {
+  grid-template-columns: 1fr;
+}
+
+.quality-note,
+.risk-note,
+.risk-warn {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.risk-warn {
+  color: #b45309;
+  font-weight: 700;
+}
+
+.data-disclaimer {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.data-disclaimer strong {
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.data-disclaimer.is-stale {
+  border-color: rgba(245, 158, 11, 0.5);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+@media (max-width: 768px) {
+  .institutional-meta-grid,
+  .quality-grid,
+  .risk-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .quality-head,
+  .risk-head,
+  .data-disclaimer {
+    flex-direction: column;
+  }
+}
 
 .rotation-board {
   margin: 12px 0;

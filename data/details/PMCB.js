@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["PMCB"] = {"fundamentals":{"sharesB":0.011,"source":"nasdaq"},"ticker":"PMCB","company":"PharmaCyte  Biotech Inc.","historySource":"snapshot"};

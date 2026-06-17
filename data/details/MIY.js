@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MIY"] = {"fundamentals":{"sharesB":0.149,"source":"nasdaq"},"ticker":"MIY","company":"Blackrock MuniYield Michigan Quality Fund Inc.","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MKDW"] = {"fundamentals":{"sharesB":0.004,"source":"nasdaq"},"ticker":"MKDW","company":"MKDWELL Tech Inc. Ordinary Share","historySource":"snapshot"};

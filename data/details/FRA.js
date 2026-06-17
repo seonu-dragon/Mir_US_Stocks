@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["FRA"] = {"fundamentals":{"sharesB":0.149,"source":"nasdaq"},"ticker":"FRA","company":"Blackrock Floating Rate Income Strategies Fund Inc","historySource":"snapshot"};

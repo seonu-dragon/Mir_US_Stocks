@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["GJS"] = {"fundamentals":{"sharesB":0.312,"source":"nasdaq"},"ticker":"GJS","company":"Goldman Sachs Group Securities STRATS Trust for Goldman Sachs Group Securities Series 2006-2","historySource":"snapshot"};

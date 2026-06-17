@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ELOG"] = {"fundamentals":{"sharesB":0.012,"source":"nasdaq"},"ticker":"ELOG","company":"Eastern International Ltd. Ordinary Shares","historySource":"snapshot"};

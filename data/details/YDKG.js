@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["YDKG"] = {"fundamentals":{"sharesB":0.005,"source":"nasdaq"},"ticker":"YDKG","company":"Yueda Digital Holding Class A Ordinary Share","historySource":"snapshot"};

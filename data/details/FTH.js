@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["FTH"] = {"fundamentals":{"sharesB":0.001,"source":"nasdaq"},"ticker":"FTH","company":"Faeth Therapeutics Inc.","historySource":"snapshot"};

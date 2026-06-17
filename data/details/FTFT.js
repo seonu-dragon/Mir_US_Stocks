@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["FTFT"] = {"fundamentals":{"sharesB":0.006,"source":"nasdaq"},"ticker":"FTFT","company":"Future FinTech Group Inc.","historySource":"snapshot"};

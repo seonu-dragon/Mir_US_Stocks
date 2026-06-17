@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BTZ"] = {"fundamentals":{"sharesB":0.108,"source":"nasdaq"},"ticker":"BTZ","company":"BlackRock Credit Allocation Income Trust","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BAOS"] = {"fundamentals":{"sharesB":0.002,"source":"nasdaq"},"ticker":"BAOS","company":"Baosheng Media Group Holdings Limited Ordinary shares","historySource":"snapshot"};

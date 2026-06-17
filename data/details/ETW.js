@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ETW"] = {"fundamentals":{"sharesB":0.11,"source":"nasdaq"},"ticker":"ETW","company":"Eaton Vance Corporation Eaton Vance Tax-Managed Global Buy-Write Opportunites Fund Common Shares of Beneficial Interest","historySource":"snapshot"};

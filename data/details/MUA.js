@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MUA"] = {"fundamentals":{"sharesB":0.149,"source":"nasdaq"},"ticker":"MUA","company":"Blackrock MuniAssets Fund Inc","historySource":"snapshot"};

@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MEGL"] = {"fundamentals":{"sharesB":0.005,"source":"nasdaq"},"ticker":"MEGL","company":"Magic Empire Global Limited Class A Ordinary Shares","historySource":"snapshot"};

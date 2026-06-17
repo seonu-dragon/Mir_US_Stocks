@@ -1,1 +1,0 @@
-window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ABVC"] = {"fundamentals":{"sharesB":0.026,"source":"nasdaq"},"ticker":"ABVC","company":"ABVC BioPharma Inc.","historySource":"snapshot"};

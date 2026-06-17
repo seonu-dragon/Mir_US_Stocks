@@ -4811,7 +4811,34 @@ function institutionQuarterRows(inst) {
 }
 
 function holdingKey(row) {
-  return `${row.issuer || ""}|${row.titleOfClass || ""}`;
+  return `${row.issuer || ""}|${row.titleOfClass || ""}|${row.putCall || ""}`;
+}
+
+function holdingPositionMeta(row) {
+  const pc = String(row?.putCall || "").toLowerCase();
+  if (pc === "put") {
+    return { badge: "PUT", label: "풋 옵션", cls: "is-put", hint: "하락 베팅 (주식 숏 아님)" };
+  }
+  if (pc === "call") {
+    return { badge: "CALL", label: "콜 옵션", cls: "is-call", hint: "콜 옵션 보유" };
+  }
+  return { badge: "", label: "주식", cls: "is-stock", hint: "" };
+}
+
+function formatHoldingShares(row) {
+  const shares = Number(row?.shares || 0);
+  const pc = String(row?.putCall || "").toLowerCase();
+  if (pc === "put" || pc === "call") {
+    const contracts = Math.round(shares / 100);
+    return `${contracts.toLocaleString()}계약 <span class="muted">(명목 ${shares.toLocaleString()}주)</span>`;
+  }
+  return shares.toLocaleString();
+}
+
+function resolveHoldingTicker(row) {
+  const fromRow = String(row?.ticker || "").toUpperCase().trim();
+  if (fromRow && stockByTicker(fromRow)) return fromRow;
+  return resolveIssuerTicker(row?.issuer);
 }
 
 function holdingQuarterDelta(current, prior, row) {
@@ -4927,7 +4954,7 @@ function renderInstitutional13f() {
         <h3>${escapeHtml(active.name)}</h3>
         <p>${escapeHtml(active.manager || "")} · ${escapeHtml(current?.reportLabel || current?.reportDate || "-")} · 제출 ${escapeHtml(current?.filedDate || "-")}</p>
       </div>
-      <p>상위 ${rows.length}개 · 전분기 대비 주식수 변화</p>
+      <p>상위 ${rows.length}개 · 전분기 대비 수량 변화 · <span class="muted">풋/콜 옵션은 13F에 기초자산명으로 표기됩니다</span></p>
     </div>
     ${quarterTabs}
     <div class="table-wrap">
@@ -4939,25 +4966,32 @@ function renderInstitutional13f() {
             <th>티커</th>
             <th>보유가치</th>
             <th>비중</th>
-            <th>주식수</th>
+            <th>수량</th>
             <th>전분기</th>
           </tr>
         </thead>
         <tbody>
           ${rows.map((row, idx) => {
-            const ticker = resolveIssuerTicker(row.issuer);
+            const pos = holdingPositionMeta(row);
+            const ticker = resolveHoldingTicker(row);
             const tickerCell = ticker && stockByTicker(ticker)
               ? `<button type="button" class="ticker-link" data-ticker="${escapeHtml(ticker)}">${escapeHtml(ticker)}</button>`
               : `<span class="muted">-</span>`;
             const delta = holdingQuarterDelta(current, prior, row);
+            const posBadge = pos.badge
+              ? `<span class="inst-pos-badge ${pos.cls}" title="${escapeHtml(pos.hint)}">${escapeHtml(pos.badge)}</span>`
+              : "";
+            const posLabel = pos.badge
+              ? `<span class="inst-pos-label ${pos.cls}">${escapeHtml(pos.label)}</span>`
+              : (row.titleOfClass ? `<span class="muted">(${escapeHtml(row.titleOfClass)})</span>` : "");
             return `
-              <tr data-ticker="${escapeHtml(ticker || "")}">
+              <tr data-ticker="${escapeHtml(ticker || "")}" class="${pos.cls}">
                 <td>${idx + 1}</td>
-                <td>${escapeHtml(row.issuer || "")}${row.titleOfClass ? ` <span class="muted">(${escapeHtml(row.titleOfClass)})</span>` : ""}</td>
+                <td>${posBadge}${escapeHtml(row.issuer || "")} ${posLabel}</td>
                 <td>${tickerCell}</td>
                 <td>$${Number(row.valueM || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}M</td>
                 <td>${Number(row.weightPct || 0).toFixed(2)}%</td>
-                <td>${Number(row.shares || 0).toLocaleString()}</td>
+                <td>${formatHoldingShares(row)}</td>
                 <td><span class="inst-delta ${delta.cls}">${escapeHtml(delta.text)}</span></td>
               </tr>
             `;

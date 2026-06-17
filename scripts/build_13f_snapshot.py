@@ -112,7 +112,7 @@ def parse_manager_filings(html: str, limit: int = MAX_QUARTERS) -> list[dict]:
 def aggregate_holdings(rows: list[dict], top_n: int = TOP_HOLDINGS) -> list[dict]:
     by_key: dict[str, dict] = {}
     for row in rows:
-        key = f"{row['issuer']}|{row.get('titleOfClass', '')}"
+        key = f"{row['issuer']}|{row.get('titleOfClass', '')}|{row.get('putCall', '')}"
         if key not in by_key:
             by_key[key] = {**row}
         else:
@@ -133,12 +133,19 @@ def holdings_from_13finfo(accession_raw: str) -> list[dict]:
     for item in payload.get("data", []):
         if not item or len(item) < 7:
             continue
+        put_call = ""
+        if len(item) > 8 and item[8]:
+            raw_pc = str(item[8]).strip().lower()
+            if raw_pc in {"put", "call"}:
+                put_call = raw_pc
         rows.append({
+            "ticker": str(item[0] or "").strip().upper(),
             "issuer": str(item[1]).strip(),
             "titleOfClass": str(item[2]).strip(),
             "cusip": str(item[3]).strip(),
             "valueK": int(item[4]),
             "shares": int(item[6] or 0),
+            "putCall": put_call,
         })
     if not rows:
         raise RuntimeError("13f.info returned no holdings")

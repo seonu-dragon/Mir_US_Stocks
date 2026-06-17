@@ -1711,6 +1711,36 @@ button.ghost {
 .inst-delta.is-down { color: var(--neg); }
 .inst-delta.is-flat { color: var(--text-muted); }
 
+.inst-pos-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  vertical-align: middle;
+}
+
+.inst-pos-badge.is-put {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.inst-pos-badge.is-call {
+  color: #15803d;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.inst-pos-label.is-put { color: #b91c1c; font-weight: 700; font-size: 12px; }
+.inst-pos-label.is-call { color: #15803d; font-weight: 700; font-size: 12px; }
+
+.inst-holdings-table tbody tr.is-put {
+  background: rgba(239, 68, 68, 0.03);
+}
+
 .institutional-detail {
   background: var(--panel);
   border: 1px solid var(--line);

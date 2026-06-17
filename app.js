@@ -184,9 +184,13 @@ let chartState = {
 
 let compareTickers = [];
 const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
+const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
+const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
 
 const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
 let watchlist = [];
+let chartPresets = {};
+let moveAnalysisState = null;
 let earningsCalendarCache = null;
 let earningsCalendarLoading = false;
 let deferredInstallPrompt = null;
@@ -1386,6 +1390,13 @@ function setupEvents() {
       if (base) byId("searchFacts").innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
       return;
     }
+    const moveButton = event.target.closest("[data-move-analysis]");
+    if (moveButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      runMoveAnalysis(moveButton.dataset.moveAnalysis);
+      return;
+    }
     const star = event.target.closest("[data-watch]");
     if (star) {
       event.preventDefault();
@@ -1396,6 +1407,7 @@ function setupEvents() {
   byId("stockTreemap").addEventListener("mousemove", handleHeatmapPointer);
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
   setupChartControls();
+  setupWatchAlertEvents();
   window.addEventListener("resize", debounce(renderTreemap, 120));
   window.addEventListener("resize", syncCardNewsHeight);
   // 폰트가 늦게 로드되면 데이터박스 높이가 바뀔 수 있어 한 번 더 맞춤
@@ -1511,8 +1523,108 @@ function setupChartControls() {
       redrawChart();
     });
   });
+  setupChartPresetControls();
   setupChartInteractions();
   setupChartCompareControls();
+}
+
+function chartSettingIds() {
+  return [
+    "showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
+    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian",
+    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
+    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
+    "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"
+  ];
+}
+
+function loadChartPresets() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CHART_PRESET_STORAGE_KEY) || "{}");
+    chartPresets = raw && typeof raw === "object" ? raw : {};
+  } catch (e) {
+    chartPresets = {};
+  }
+}
+
+function saveChartPresets() {
+  try { localStorage.setItem(CHART_PRESET_STORAGE_KEY, JSON.stringify(chartPresets)); } catch (e) { /* ignore */ }
+}
+
+function currentChartPreset() {
+  const settings = {};
+  chartSettingIds().forEach((id) => { settings[id] = Boolean(chartState[id]); });
+  return {
+    range: chartState.range,
+    barTf: chartState.barTf,
+    settings,
+    compareTickers: compareTickers.slice()
+  };
+}
+
+function renderChartPresetOptions() {
+  const select = byId("chartPresetSelect");
+  if (!select) return;
+  const names = Object.keys(chartPresets).sort((a, b) => a.localeCompare(b));
+  select.innerHTML = `<option value="">프리셋 선택</option>` +
+    names.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+}
+
+function syncChartControlUi() {
+  byId("rangeControls")?.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.range === chartState.range);
+  });
+  byId("barTimeframeControls")?.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("is-active", button.dataset.tf === chartState.barTf);
+  });
+  chartSettingIds().forEach((id) => {
+    const el = byId(id);
+    if (el) el.checked = Boolean(chartState[id]);
+  });
+}
+
+function applyChartPreset(name) {
+  const preset = chartPresets[name];
+  if (!preset) return;
+  chartState = {
+    ...chartState,
+    range: preset.range || chartState.range,
+    barTf: preset.barTf || chartState.barTf,
+    zoom: 1,
+    offset: 0,
+    ...(preset.settings || {})
+  };
+  compareTickers = Array.isArray(preset.compareTickers)
+    ? preset.compareTickers.filter((ticker) => stockByTicker(ticker)).slice(0, 5)
+    : [];
+  syncChartControlUi();
+  renderCompareChips();
+  Promise.all(compareTickers.map((ticker) => loadStockDetail(ticker))).finally(redrawChart);
+}
+
+function setupChartPresetControls() {
+  loadChartPresets();
+  renderChartPresetOptions();
+  byId("chartPresetSave")?.addEventListener("click", () => {
+    const name = window.prompt("저장할 차트 프리셋 이름", "내 차트 설정");
+    if (!name || !name.trim()) return;
+    chartPresets[name.trim()] = currentChartPreset();
+    saveChartPresets();
+    renderChartPresetOptions();
+    const select = byId("chartPresetSelect");
+    if (select) select.value = name.trim();
+  });
+  byId("chartPresetApply")?.addEventListener("click", () => {
+    const name = byId("chartPresetSelect")?.value;
+    if (name) applyChartPreset(name);
+  });
+  byId("chartPresetDelete")?.addEventListener("click", () => {
+    const name = byId("chartPresetSelect")?.value;
+    if (!name) return;
+    delete chartPresets[name];
+    saveChartPresets();
+    renderChartPresetOptions();
+  });
 }
 
 
@@ -1677,6 +1789,7 @@ function renderAll() {
   renderSearch();
   renderBulk();
   renderWatchlistBar();
+  renderWatchAlerts();
   renderHealth();
   renderInstitutional13f();
   renderDataFreshnessStatus();
@@ -2267,7 +2380,6 @@ function stockFacts(item, title) {
       ${fact("StochK", item.stochK)}
       ${fact("신고가 거리", fmtPct(-item.newHighDistancePct))}
     </div>
-    ${isSearchPanel ? scoreHelpHtml() : ""}
   `;
 }
 
@@ -2278,22 +2390,22 @@ function fact(label, value) {
 function scoreFact(label, value, kind) {
   const active = scoreHelpOpen === kind;
   return `
-    <button type="button" class="fact fact-score-button${active ? " is-active" : ""}" data-score-help="${kind}" aria-expanded="${active}">
+    <div class="fact fact-score${active ? " is-active" : ""}">
       <span>${label}</span>
       <strong>${value ?? "-"}</strong>
-      <em>산정 기준</em>
-    </button>
+      <button type="button" class="score-help-button" data-score-help="${kind}" aria-expanded="${active}" title="${label} 산정 기준">!</button>
+      ${active ? scoreHelpHtml(kind) : ""}
+    </div>
   `;
 }
 
-function scoreHelpHtml() {
-  if (!scoreHelpOpen) return "";
-  const title = scoreHelpOpen === "eps" ? "EPS 추정 점수 산정 기준" : "RS 점수 산정 기준";
-  const body = scoreHelpOpen === "eps"
+function scoreHelpHtml(kind) {
+  const title = kind === "eps" ? "EPS 추정 점수" : "RS 점수";
+  const body = kind === "eps"
     ? "EPS Next Y, EPS TTM, Forward PER 등 이익 전망과 밸류에이션 데이터를 우선 반영합니다. 재무 데이터가 부족한 소형주는 가격 모멘텀으로 일부 보완될 수 있어, 점수는 선별용 참고 지표로 봐야 합니다."
     : "3개월, 6개월, 1년 가격 모멘텀을 가중해 0~100점으로 환산한 상대강도 지표입니다. 높을수록 최근 중기 추세가 강하다는 뜻이며, 절대 수익률 보장은 아닙니다.";
   return `
-    <div class="score-help-inline">
+    <div class="score-help-popover">
       <strong>${title}</strong>
       <p>${body}</p>
     </div>
@@ -3039,6 +3151,7 @@ function selectTicker(ticker, options = {}) {
   const found = data.stocks.find((item) => item.ticker.toUpperCase() === resolved.toUpperCase());
   if (!found) return;
   if (found.ticker !== selectedTicker) scoreHelpOpen = null;
+  if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
   renderTreemap();
@@ -3061,6 +3174,7 @@ function renderSearch() {
   drawChart(item);
   renderEarningsCalendar(item);
   renderStockEvents(item);
+  renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
   renderNews(item);
@@ -3073,6 +3187,7 @@ function renderSearch() {
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
     renderStockEvents(refreshed);
+    renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
@@ -3121,6 +3236,7 @@ function maybeFetchLiveData(base) {
       drawChart(merged);
       renderEarningsCalendar(merged);
       renderStockEvents(merged);
+      renderEarningsReaction(merged);
       renderDataQualityPanel(merged);
       renderFundamentals(merged);
       renderNews(merged);
@@ -4553,6 +4669,7 @@ function renderStockEvents(item) {
     <div class="event-grid">
       ${events.map(eventCardHtml).join("")}
     </div>
+    ${moveAnalysisHtml(item, events.find((event) => event.type === "Move")?.move || null)}
   `;
 }
 
@@ -4607,7 +4724,9 @@ function stockEventRows(item) {
       title: "최근 가격 이벤트",
       value: bigMove ? `${bigMove.date} · ${fmtPct(bigMove.change)}` : "데이터 없음",
       note: bigMove ? "최근 45거래일 중 절대 변동폭이 가장 컸던 날입니다." : "차트 데이터가 부족합니다.",
-      tone: bigMove ? cls(bigMove.change) : "muted"
+      tone: bigMove ? cls(bigMove.change) : "muted",
+      move: bigMove,
+      action: bigMove ? `<button type="button" class="event-action" data-move-analysis="${escapeHtml(bigMove.date)}">원인 분석</button>` : ""
     }
   ];
 }
@@ -4619,6 +4738,7 @@ function eventCardHtml(event) {
       <strong>${escapeHtml(event.title)}</strong>
       <b>${escapeHtml(event.value)}</b>
       <p>${escapeHtml(event.note)}</p>
+      ${event.action || ""}
     </article>
   `;
 }
@@ -4630,6 +4750,150 @@ function recentBigMove(rows) {
     return { date: row.d || "-", change: pctFrom(row.c, prev?.c || row.o) };
   }).filter((row) => Number.isFinite(row.change))
     .sort((a, b) => Math.abs(b.change) - Math.abs(a.change))[0] || null;
+}
+
+function dateDistanceDays(a, b) {
+  const da = new Date(`${a}T00:00:00`);
+  const db = new Date(`${b}T00:00:00`);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return Infinity;
+  return Math.abs((da - db) / 86400000);
+}
+
+function volumeContext(rows, date) {
+  const idx = rows.findIndex((row) => row.d === date);
+  if (idx < 0) return null;
+  const start = Math.max(0, idx - 20);
+  const sample = rows.slice(start, idx).map((row) => Number(row.v || 0)).filter(Boolean);
+  if (!sample.length || !rows[idx].v) return null;
+  const avg = sample.reduce((sum, value) => sum + value, 0) / sample.length;
+  return avg ? rows[idx].v / avg : null;
+}
+
+function localMoveAnalysis(item, move) {
+  if (!move) return "";
+  const rows = getChartRows(item);
+  const relatedNews = (item.news || [])
+    .filter((news) => news.publishedAt && dateDistanceDays(news.publishedAt, move.date) <= 2)
+    .slice(0, 3);
+  const volumeRatio = volumeContext(rows, move.date);
+  const direction = move.change > 0 ? "상승" : "하락";
+  const newsText = relatedNews.length
+    ? `해당 날짜 전후 저장 뉴스 ${relatedNews.length}건이 있습니다: ${relatedNews.map((news) => news.title).join(" / ")}`
+    : "저장된 뉴스 중 해당 날짜 전후 2일 안에 직접 연결되는 제목은 없습니다.";
+  const volText = volumeRatio == null
+    ? "거래량 비교 데이터는 부족합니다."
+    : `거래량은 직전 20거래일 평균의 약 ${volumeRatio.toFixed(1)}배였습니다.`;
+  return `${move.date}에는 종가 기준 ${fmtPct(move.change)} ${direction}했습니다. ${volText} ${newsText} 자동 API 호출 없이 저장된 뉴스와 가격 데이터만으로 만든 원인 후보입니다.`;
+}
+
+function moveAnalysisHtml(item, move) {
+  if (!move || !moveAnalysisState || moveAnalysisState.ticker !== item.ticker || moveAnalysisState.date !== move.date) return "";
+  return `
+    <div class="move-analysis-box">
+      <strong>${escapeHtml(item.ticker)} ${escapeHtml(move.date)} 원인 분석</strong>
+      <p>${escapeHtml(moveAnalysisState.text || localMoveAnalysis(item, move))}</p>
+      <span class="muted">정확한 원인은 공시·뉴스 원문 확인이 필요합니다. 서버 AI 분석을 연결하면 이 버튼에서만 API를 호출하도록 확장할 수 있습니다.</span>
+    </div>
+  `;
+}
+
+function runMoveAnalysis(date) {
+  const base = data.stocks.find((row) => row.ticker === selectedTicker);
+  if (!base) return;
+  const item = applyLive(withDetail(base));
+  const move = recentBigMove(getChartRows(item));
+  if (!move || move.date !== date) return;
+  moveAnalysisState = {
+    ticker: item.ticker,
+    date,
+    text: localMoveAnalysis(item, move)
+  };
+  renderStockEvents(item);
+}
+
+function normalizeEarningsHistory(item) {
+  const f = item.fundamentals || {};
+  const live = item.liveEarnings || {};
+  const raw = live.history || live.quarters || item.earningsHistory || f.earningsHistory || f.quarterlyEarnings || [];
+  return (Array.isArray(raw) ? raw : []).map((row) => {
+    const date = row.date || row.reportDate || row.earningsDate || row.period || row.fiscalDateEnding;
+    return {
+      date: date ? String(date).slice(0, 10) : "",
+      epsActual: row.epsActual ?? row.actual ?? row.reportedEPS ?? row.eps,
+      epsEstimate: row.epsEstimate ?? row.estimate ?? row.estimatedEPS,
+      revenue: row.revenue ?? row.sales
+    };
+  }).filter((row) => row.date);
+}
+
+function nearestTradingIndex(rows, date) {
+  const target = new Date(`${date}T00:00:00`).getTime();
+  if (!Number.isFinite(target)) return -1;
+  let best = -1;
+  let bestDist = Infinity;
+  rows.forEach((row, index) => {
+    const t = new Date(`${row.d}T00:00:00`).getTime();
+    const dist = Math.abs(t - target);
+    if (dist < bestDist) {
+      best = index;
+      bestDist = dist;
+    }
+  });
+  return best;
+}
+
+function earningsReactionRows(item) {
+  const rows = getChartRows(item);
+  const history = normalizeEarningsHistory(item);
+  if (rows.length < 30 || !history.length) return [];
+  return history.slice(-8).reverse().map((event) => {
+    const idx = nearestTradingIndex(rows, event.date);
+    if (idx < 0) return null;
+    const before = rows[Math.max(0, idx - 5)];
+    const eventRow = rows[idx];
+    const after = rows[Math.min(rows.length - 1, idx + 5)];
+    const oneDay = idx > 0 ? pctFrom(eventRow.c, rows[idx - 1].c) : null;
+    const pre5 = before ? pctFrom(eventRow.c, before.c) : null;
+    const post5 = after ? pctFrom(after.c, eventRow.c) : null;
+    const surprise = event.epsActual != null && event.epsEstimate != null && Number(event.epsEstimate)
+      ? ((Number(event.epsActual) - Number(event.epsEstimate)) / Math.abs(Number(event.epsEstimate))) * 100
+      : null;
+    return { ...event, tradingDate: eventRow.d, oneDay, pre5, post5, surprise };
+  }).filter(Boolean);
+}
+
+function renderEarningsReaction(item) {
+  const box = byId("earningsReaction");
+  if (!box || !item) return;
+  const rows = earningsReactionRows(item);
+  box.innerHTML = `
+    <div class="event-head">
+      <div>
+        <h3>실적 발표 전후 움직임</h3>
+        <p class="muted">최근 실적 발표일 기준 -5거래일, 발표일, +5거래일 반응을 비교합니다.</p>
+      </div>
+      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+    </div>
+    ${rows.length ? `
+      <div class="table-wrap">
+        <table class="compact-table earnings-reaction-table">
+          <thead><tr><th>발표일</th><th>거래일</th><th>EPS 서프라이즈</th><th>-5D→발표</th><th>발표일</th><th>발표→+5D</th></tr></thead>
+          <tbody>
+            ${rows.map((row) => `
+              <tr>
+                <td>${escapeHtml(row.date)}</td>
+                <td>${escapeHtml(row.tradingDate)}</td>
+                <td class="${cls(row.surprise || 0)}">${row.surprise == null ? "-" : fmtPct(row.surprise)}</td>
+                <td class="${cls(row.pre5 || 0)}">${row.pre5 == null ? "-" : fmtPct(row.pre5)}</td>
+                <td class="${cls(row.oneDay || 0)}">${row.oneDay == null ? "-" : fmtPct(row.oneDay)}</td>
+                <td class="${cls(row.post5 || 0)}">${row.post5 == null ? "-" : fmtPct(row.post5)}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    ` : `<p class="muted earnings-reaction-empty">실적 히스토리 데이터가 있으면 자동으로 채워집니다. 현재 스냅샷에는 최근 실적 발표 히스토리가 부족합니다.</p>`}
+  `;
 }
 
 function nextMonthlyOptionsExpiration(base = snapshotBaseDate()) {
@@ -6009,6 +6273,7 @@ function toggleWatchlist(ticker) {
   else watchlist.push(t);
   persistWatchlist();
   renderWatchlistBar();
+  renderWatchAlerts();
   renderBulk();
   document.querySelectorAll(`[data-watch="${t}"]`).forEach((btn) => {
     const on = isInWatchlist(t);
@@ -6028,6 +6293,7 @@ function saveWatchlistFromInput(text) {
   watchlist = [...new Set(tickers)];
   persistWatchlist();
   renderWatchlistBar();
+  renderWatchAlerts();
 }
 
 function renderWatchlistBar() {
@@ -6075,6 +6341,127 @@ function renderWatchlistStats(rows) {
     <article class="watch-stat-card"><span>평균 RS</span><strong>${avgRs.toFixed(0)}</strong></article>
     <article class="watch-stat-card"><span>평균 당일</span><strong class="${cls(avgChg)}">${fmtPct(avgChg)}</strong></article>
   `;
+}
+
+function watchAlertSettings() {
+  const defaults = {
+    useRs: true,
+    minRs: 80,
+    useEps: false,
+    minEps: 75,
+    useHigh: true,
+    highDist: 3,
+    useVol: true,
+    minVol: 2,
+    useSma20: false
+  };
+  try {
+    return { ...defaults, ...(JSON.parse(localStorage.getItem(WATCH_ALERT_STORAGE_KEY) || "{}") || {}) };
+  } catch (e) {
+    return defaults;
+  }
+}
+
+function saveWatchAlertSettings(settings) {
+  try { localStorage.setItem(WATCH_ALERT_STORAGE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+}
+
+function readWatchAlertSettingsFromUi() {
+  return {
+    useRs: Boolean(byId("alertUseRs")?.checked),
+    minRs: numberInputValue("alertMinRs", 80),
+    useEps: Boolean(byId("alertUseEps")?.checked),
+    minEps: numberInputValue("alertMinEps", 75),
+    useHigh: Boolean(byId("alertUseHigh")?.checked),
+    highDist: numberInputValue("alertHighDist", 3),
+    useVol: Boolean(byId("alertUseVol")?.checked),
+    minVol: numberInputValue("alertMinVol", 2),
+    useSma20: Boolean(byId("alertUseSma20")?.checked)
+  };
+}
+
+function applyWatchAlertSettingsToUi(settings) {
+  const pairs = [
+    ["alertUseRs", "useRs"], ["alertMinRs", "minRs"],
+    ["alertUseEps", "useEps"], ["alertMinEps", "minEps"],
+    ["alertUseHigh", "useHigh"], ["alertHighDist", "highDist"],
+    ["alertUseVol", "useVol"], ["alertMinVol", "minVol"],
+    ["alertUseSma20", "useSma20"]
+  ];
+  pairs.forEach(([id, key]) => {
+    const el = byId(id);
+    if (!el) return;
+    if (el.type === "checkbox") el.checked = Boolean(settings[key]);
+    else el.value = settings[key];
+  });
+}
+
+function sma20Recovered(item) {
+  const rows = getChartRows(item);
+  if (rows.length < 22) return false;
+  const closes = rows.map((row) => row.c);
+  const sma = smaArray(closes, 20);
+  const last = rows.length - 1;
+  const prev = last - 1;
+  return rows[prev].c <= sma[prev] && rows[last].c > sma[last];
+}
+
+function watchAlertReasons(item, settings) {
+  const reasons = [];
+  if (settings.useRs && Number(item.rsScore || 0) >= settings.minRs) reasons.push(`RS ${item.rsScore}`);
+  if (settings.useEps && Number(item.epsRevScore || 0) >= settings.minEps) reasons.push(`EPS ${item.epsRevScore}`);
+  if (settings.useHigh && Number.isFinite(Number(item.newHighDistancePct)) && Number(item.newHighDistancePct) <= settings.highDist) {
+    reasons.push(`신고가 ${Number(item.newHighDistancePct).toFixed(1)}% 이내`);
+  }
+  if (settings.useVol && Number(item.volumeRatio || 0) >= settings.minVol) reasons.push(`거래량 ${Number(item.volumeRatio || 0).toFixed(1)}x`);
+  if (settings.useSma20 && sma20Recovered(item)) reasons.push("SMA20 회복");
+  return reasons;
+}
+
+function renderWatchAlerts() {
+  const panel = byId("watchAlertPanel");
+  if (!panel) return;
+  const settings = watchAlertSettings();
+  applyWatchAlertSettingsToUi(settings);
+  const results = byId("watchAlertResults");
+  const count = byId("watchAlertCount");
+  const rows = watchlist
+    .map((ticker) => stockByTicker(ticker))
+    .filter(Boolean)
+    .map((item) => applyLive(withDetail(item)))
+    .filter(Boolean)
+    .map((item) => ({ item, reasons: watchAlertReasons(item, settings) }))
+    .filter((row) => row.reasons.length);
+  if (count) count.textContent = `${rows.length}건`;
+  if (!results) return;
+  results.innerHTML = rows.length
+    ? rows.map(({ item, reasons }) => `
+      <button type="button" class="watch-alert-item" data-ticker="${escapeHtml(item.ticker)}">
+        <strong>${escapeHtml(item.ticker)}</strong>
+        <span>${reasons.map(escapeHtml).join(" · ")}</span>
+        <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+      </button>
+    `).join("")
+    : `<p class="muted">현재 조건에 걸린 관심종목이 없습니다.</p>`;
+  results.querySelectorAll(".watch-alert-item").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function setupWatchAlertEvents() {
+  const panel = byId("watchAlertPanel");
+  if (!panel) return;
+  applyWatchAlertSettingsToUi(watchAlertSettings());
+  ["alertUseRs", "alertMinRs", "alertUseEps", "alertMinEps", "alertUseHigh", "alertHighDist", "alertUseVol", "alertMinVol", "alertUseSma20"].forEach((id) => {
+    const el = byId(id);
+    if (!el) return;
+    el.addEventListener("change", () => {
+      const settings = readWatchAlertSettingsFromUi();
+      saveWatchAlertSettings(settings);
+      renderWatchAlerts();
+    });
+  });
+  renderWatchAlerts();
 }
 
 function setupWatchlistUi() {

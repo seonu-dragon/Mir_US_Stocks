@@ -4948,9 +4948,30 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
+const SW_VERSION = "20260617f";
+
 function setupPwa() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(() => {});
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
+    navigator.serviceWorker.getRegistration().then((registration) => {
+      if (!registration) return;
+      registration.update();
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        if (!worker) return;
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            worker.postMessage({ type: "SKIP_WAITING" });
+          }
+        });
+      });
+    }).catch(() => {});
   }
   const installBtn = byId("installApp");
   window.addEventListener("beforeinstallprompt", (event) => {

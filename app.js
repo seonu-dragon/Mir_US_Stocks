@@ -1299,6 +1299,7 @@ function setupEvents() {
       byId(`sub-${btn.dataset.sub}`).classList.add("is-active");
       closeConstituentPanel();
       if (btn.dataset.sub === "etf-rs") renderSectorEtfRelativeStrength();
+      if (btn.dataset.sub === "etf-lev") renderLeveragedEtfPage();
     });
   });
 
@@ -1331,6 +1332,18 @@ function setupEvents() {
     if (!card) return;
     showConstituentPanel(card.dataset.category, byId("sectorEtfRsPeriod").value);
   });
+  ["levEtfType", "levEtfScope", "levEtfSort"].forEach((id) => {
+    byId(id)?.addEventListener("change", renderLeveragedEtfPage);
+  });
+  const levSearch = byId("levEtfSearch");
+  if (levSearch) {
+    let levSearchTimer = null;
+    levSearch.addEventListener("input", () => {
+      clearTimeout(levSearchTimer);
+      levSearchTimer = setTimeout(renderLeveragedEtfPage, 180);
+    });
+  }
+
   byId("constituentPanelClose").addEventListener("click", closeConstituentPanel);
   byId("constituentBackdrop").addEventListener("click", closeConstituentPanel);
   document.addEventListener("keydown", (event) => {
@@ -5482,6 +5495,215 @@ function renderSectorRotationBoard(rows, period, benchmark) {
     chip.addEventListener("click", () => showConstituentPanel(chip.dataset.category, period));
   });
 }
+
+const LEV_ETF_TYPE_LABEL = {
+  leveraged: "레버리지",
+  inverse: "인버스",
+  "covered-call": "커버드콜",
+  volatility: "변동성",
+  buffer: "버퍼",
+  "defined-outcome": "디파인드",
+};
+
+const LEV_ETF_SCOPE_LABEL = {
+  index: "지수",
+  sector: "섹터",
+  "single-stock": "개별종목",
+  commodity: "원자재",
+  international: "국제",
+  thematic: "테마",
+};
+
+const LEV_ETF_DISCOVER_PATTERNS = [
+  /\b2x\b/i, /\b3x\b/i, /\b4x\b/i, /\bultra\b/i, /\binverse\b/i, /\bshort\b/i,
+  /\bbear\b/i, /\bbull\b/i, /\bleverag/i, /\bcovered call\b/i, /\bbuywrite\b/i,
+  /\boption income\b/i, /\bdaily target\b/i, /\bdefined outcome\b/i, /\bbuffer\b/i,
+];
+
+function inferLeveragedEtfMeta(stock) {
+  const name = `${stock.company || ""} ${stock.industry || ""}`;
+  let type = "leveraged";
+  if (/inverse|short|bear/i.test(name)) type = "inverse";
+  else if (/covered call|buywrite|option income|premium income/i.test(name)) type = "covered-call";
+  else if (/vix|volatility/i.test(name)) type = "volatility";
+  else if (/buffer|defined outcome/i.test(name)) type = "buffer";
+  let leverage = "—";
+  const levMatch = name.match(/(\d+(?:\.\d+)?)\s*x/i);
+  if (levMatch) leverage = `${levMatch[1]}x`;
+  else if (/ultrapro/i.test(name)) leverage = "3x";
+  else if (/ultra(?!pro)/i.test(name)) leverage = "2x";
+  return {
+    ticker: stock.ticker,
+    name: stock.company || stock.ticker,
+    type,
+    leverage,
+    direction: type === "inverse" ? "short" : (type === "covered-call" ? "neutral" : "long"),
+    underlying: "—",
+    underlyingLabel: "미분류",
+    scope: "thematic",
+    group: "스냅샷 자동 분류",
+    issuer: "—",
+    discovered: true,
+  };
+}
+
+function leveragedEtfCatalogItems() {
+  const catalog = (window.LEVERAGED_ETF_CATALOG && window.LEVERAGED_ETF_CATALOG.items) || [];
+  const byTicker = new Map(catalog.map((item) => [item.ticker, { ...item }]));
+  (data.stocks || []).forEach((stock) => {
+    if (stock.sector !== "EXCHANGE TRADED FUNDS") return;
+    const text = `${stock.company || ""} ${stock.industry || ""}`;
+    if (!LEV_ETF_DISCOVER_PATTERNS.some((re) => re.test(text))) return;
+    if (!byTicker.has(stock.ticker)) byTicker.set(stock.ticker, inferLeveragedEtfMeta(stock));
+  });
+  return [...byTicker.values()];
+}
+
+function levEtfLiveRow(ticker) {
+  return stockByTicker(ticker);
+}
+
+function levEtfTypeBadge(type) {
+  const label = LEV_ETF_TYPE_LABEL[type] || type;
+  return `<span class="lev-etf-badge lev-etf-badge-${type}">${escapeHtml(label)}</span>`;
+}
+
+function levEtfCardHtml(item) {
+  const live = levEtfLiveRow(item.ticker);
+  const hasLive = !!live;
+  const price = hasLive ? priceOrDash(live.price) : "—";
+  const chg = hasLive ? fmtPct(live.changePct) : "—";
+  const chgCls = hasLive ? cls(live.changePct) : "";
+  const month = hasLive && Number.isFinite(live.monthChangePct) ? fmtPct(live.monthChangePct) : "—";
+  const monthCls = hasLive ? cls(live.monthChangePct) : "";
+  const rs = hasLive ? live.rsScore : "—";
+  const scopeLabel = LEV_ETF_SCOPE_LABEL[item.scope] || item.scope;
+  return `
+    <article class="lev-etf-card ${hasLive ? "has-live" : "no-live"}" data-ticker="${escapeHtml(item.ticker)}" tabindex="0" role="button">
+      <div class="lev-etf-card-head">
+        <span class="ticker-pill">${escapeHtml(item.ticker)}</span>
+        ${levEtfTypeBadge(item.type)}
+        <span class="lev-etf-lev">${escapeHtml(item.leverage || "—")}</span>
+      </div>
+      <h4>${escapeHtml(item.name)}</h4>
+      <p class="lev-etf-underlying">
+        <span>기초</span>
+        <strong>${escapeHtml(item.underlying)}</strong>
+        <em>${escapeHtml(item.underlyingLabel)}</em>
+      </p>
+      <div class="lev-etf-stats">
+        <span>범위 <b>${escapeHtml(scopeLabel)}</b></span>
+        <span>발행 <b>${escapeHtml(item.issuer || "—")}</b></span>
+      </div>
+      <div class="lev-etf-quote">
+        <span>가격 <strong>${price}</strong></span>
+        <span>당일 <strong class="${chgCls}">${chg}</strong></span>
+        <span>1M <strong class="${monthCls}">${month}</strong></span>
+        <span>RS <strong>${rs}</strong></span>
+      </div>
+      ${hasLive ? "" : `<p class="lev-etf-note muted">스냅샷 미포함 · 카탈로그 참고용</p>`}
+    </article>
+  `;
+}
+
+function renderLeveragedEtfPage() {
+  const host = byId("levEtfGroups");
+  const meta = byId("levEtfMeta");
+  if (!host) return;
+
+  const typeFilter = byId("levEtfType")?.value || "All";
+  const scopeFilter = byId("levEtfScope")?.value || "All";
+  const sort = byId("levEtfSort")?.value || "group";
+  const query = (byId("levEtfSearch")?.value || "").trim().toLowerCase();
+
+  let items = leveragedEtfCatalogItems().filter((item) => {
+    if (typeFilter !== "All" && item.type !== typeFilter) return false;
+    if (scopeFilter !== "All" && item.scope !== scopeFilter) return false;
+    if (!query) return true;
+    const blob = `${item.ticker} ${item.name} ${item.underlying} ${item.underlyingLabel} ${item.group} ${item.issuer}`.toLowerCase();
+    return blob.includes(query);
+  });
+
+  const liveCount = items.filter((item) => levEtfLiveRow(item.ticker)).length;
+  if (meta) {
+    meta.textContent = `총 ${items.length}개 · 스냅샷 시세 ${liveCount}개 · ${window.LEVERAGED_ETF_CATALOG?.updated || ""}`;
+  }
+
+  if (!items.length) {
+    host.innerHTML = `<div class="empty-state">조건에 맞는 레버리지·인버스 ETF가 없습니다.</div>`;
+    return;
+  }
+
+  if (sort === "change" || sort === "month") {
+    const key = sort === "change" ? "changePct" : "monthChangePct";
+    items.sort((a, b) => {
+      const av = Number(levEtfLiveRow(a.ticker)?.[key]);
+      const bv = Number(levEtfLiveRow(b.ticker)?.[key]);
+      if (!Number.isFinite(av) && !Number.isFinite(bv)) return a.ticker.localeCompare(b.ticker);
+      if (!Number.isFinite(av)) return 1;
+      if (!Number.isFinite(bv)) return -1;
+      return bv - av;
+    });
+    host.innerHTML = `
+      <section class="lev-etf-section">
+        <div class="lev-etf-section-head">
+          <h3>검색 결과</h3>
+          <span class="muted">${items.length}개</span>
+        </div>
+        <div class="rank-grid lev-etf-grid">${items.map((item) => levEtfCardHtml(item)).join("")}</div>
+      </section>
+    `;
+  } else if (sort === "underlying") {
+    items.sort((a, b) => `${a.underlyingLabel}|${a.ticker}`.localeCompare(`${b.underlyingLabel}|${b.ticker}`, "ko"));
+    const groups = [];
+    const map = new Map();
+    items.forEach((item) => {
+      const g = item.underlyingLabel || item.underlying || "기타";
+      if (!map.has(g)) { map.set(g, []); groups.push(g); }
+      map.get(g).push(item);
+    });
+    host.innerHTML = groups.map((group) => `
+      <section class="lev-etf-section">
+        <div class="lev-etf-section-head">
+          <h3>${escapeHtml(group)}</h3>
+          <span class="muted">${map.get(group).length}개</span>
+        </div>
+        <div class="rank-grid lev-etf-grid">${map.get(group).map((item) => levEtfCardHtml(item)).join("")}</div>
+      </section>
+    `).join("");
+  } else {
+    items.sort((a, b) => `${a.group}|${a.ticker}`.localeCompare(`${b.group}|${b.ticker}`, "ko"));
+    const groups = [];
+    const map = new Map();
+    items.forEach((item) => {
+      const g = item.group || "기타";
+      if (!map.has(g)) { map.set(g, []); groups.push(g); }
+      map.get(g).push(item);
+    });
+    host.innerHTML = groups.map((group) => `
+      <section class="lev-etf-section">
+        <div class="lev-etf-section-head">
+          <h3>${escapeHtml(group)}</h3>
+          <span class="muted">${map.get(group).length}개</span>
+        </div>
+        <div class="rank-grid lev-etf-grid">${map.get(group).map((item) => levEtfCardHtml(item)).join("")}</div>
+      </section>
+    `).join("");
+  }
+
+  host.querySelectorAll(".lev-etf-card").forEach((card) => {
+    const open = () => {
+      const ticker = card.dataset.ticker;
+      if (!ticker) return;
+      if (stockByTicker(ticker)) selectTicker(ticker, { openSearch: true });
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(); }
+    });
+  });
+}
+
 function showConstituentPanel(categoryName, period) {
   const payload = data.health?.etfRelative || { rows: [] };
   const row = (payload.rows || []).find((r) => r.category === categoryName);

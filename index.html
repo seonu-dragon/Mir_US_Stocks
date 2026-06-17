@@ -649,6 +649,15 @@
                   <span>차트 설정</span>
                   <strong>이동평균 · 보조지표</strong>
                 </summary>
+                <div class="chart-preset-bar">
+                  <label>
+                    프리셋
+                    <select id="chartPresetSelect"></select>
+                  </label>
+                  <button type="button" class="ghost" id="chartPresetApply">적용</button>
+                  <button type="button" class="ghost" id="chartPresetSave">현재 설정 저장</button>
+                  <button type="button" class="ghost" id="chartPresetDelete">삭제</button>
+                </div>
                 <div class="chart-settings-grid">
                   <fieldset>
                     <legend>이동평균선</legend>
@@ -701,6 +710,7 @@
             </div>
             <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
             <section class="stock-events-card" id="stockEvents"></section>
+            <section class="earnings-reaction-card" id="earningsReaction"></section>
             <div class="fundamental-table" id="fundamentalTable"></div>
           </div>
           <div class="search-side-col">
@@ -794,6 +804,23 @@
           <p>브라우저에 저장됩니다. 상단 관심종목 바와 동기화됩니다.</p>
         </div>
         <div class="watchlist-stats" id="watchlistStats"></div>
+        <div class="watch-alert-panel" id="watchAlertPanel">
+          <div class="watch-alert-head">
+            <div>
+              <h3>관심종목 조건 알림</h3>
+              <p class="muted">브라우저 안에서 조건을 감지합니다. 실제 푸시 알림은 서버 알림을 붙이면 확장할 수 있습니다.</p>
+            </div>
+            <span class="event-badge" id="watchAlertCount">0</span>
+          </div>
+          <div class="watch-alert-controls">
+            <label><input id="alertUseRs" type="checkbox" checked><span>RS</span><input id="alertMinRs" type="number" min="0" max="100" value="80"></label>
+            <label><input id="alertUseEps" type="checkbox"><span>EPS</span><input id="alertMinEps" type="number" min="0" max="100" value="75"></label>
+            <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3"><em>%</em></label>
+            <label><input id="alertUseVol" type="checkbox" checked><span>거래량</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2"><em>x</em></label>
+            <label><input id="alertUseSma20" type="checkbox"><span>SMA20 위 회복</span></label>
+          </div>
+          <div class="watch-alert-results" id="watchAlertResults"></div>
+        </div>
         <div class="toolbar">
           <label class="grow">
             Tickers

@@ -2447,7 +2447,8 @@ def split_snapshot_details(payload):
         "mode": "split",
         "directory": "data/details",
         "count": len(details),
-        "note": "The main snapshot excludes 5Y OHLCV chartSeries and fundamentals. The browser loads data/details/{TICKER}.json or .js when a ticker detail view is opened.",
+        "format": "json",
+        "note": "The main snapshot excludes 5Y OHLCV chartSeries and fundamentals. The browser loads data/details/{TICKER}.json only when a ticker detail view is opened.",
     }
     return light_payload, details
 
@@ -2462,23 +2463,11 @@ def write_details(details):
         if safe.split(".")[0] in {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"}:
             safe = f"_{safe}"
         json_path = DETAILS_DIR / f"{safe}.json"
-        js_path = DETAILS_DIR / f"{safe}.js"
         fd, temp_name = tempfile.mkstemp(prefix=f"{safe}_", suffix=".json", dir=str(DETAILS_DIR))
         try:
             with os.fdopen(fd, "w", encoding="utf-8") as handle:
                 json.dump(detail, handle, ensure_ascii=False, separators=(",", ":"))
             os.replace(temp_name, json_path)
-        finally:
-            if os.path.exists(temp_name):
-                os.unlink(temp_name)
-        fd, temp_name = tempfile.mkstemp(prefix=f"{safe}_", suffix=".js", dir=str(DETAILS_DIR))
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
-                handle.write("window.STOCK_DETAILS = window.STOCK_DETAILS || {};")
-                handle.write(f"window.STOCK_DETAILS[{json.dumps(ticker)}] = ")
-                json.dump(detail, handle, ensure_ascii=False, separators=(",", ":"))
-                handle.write(";\n")
-            os.replace(temp_name, js_path)
         finally:
             if os.path.exists(temp_name):
                 os.unlink(temp_name)

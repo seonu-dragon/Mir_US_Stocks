@@ -26,11 +26,11 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260617o">
+    <link rel="stylesheet" href="styles.css?v=20260617v">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
-        var v = "20260617o";
+        var v = "20260617v";
         navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
           reg.update();
         }).catch(function () {});
@@ -165,7 +165,7 @@
           </label>
           <label class="grow">
             종목 찾기
-            <input id="heatmapSearch" placeholder="Ticker or company">
+            <input id="heatmapSearch" placeholder="한국어·티커·영문 (예: 테슬라, NVIDIA)" autocomplete="off">
           </label>
           <button id="resetFilters" class="ghost">초기화</button>
         </div>
@@ -518,7 +518,7 @@
         <div class="toolbar">
           <label class="grow">
             비교 종목
-            <input id="compareInput" placeholder="NVDA, MSFT, AAPL, GOOGL">
+            <input id="compareInput" placeholder="한국어·티커·영문 (예: 테슬라, Apple)" autocomplete="off">
           </label>
           <button type="button" id="compareRun">비교</button>
           <button type="button" class="ghost" id="compareFromWatchlist">관심종목 불러오기</button>
@@ -532,8 +532,7 @@
         <div class="toolbar">
           <label class="grow">
             티커 검색
-            <input id="tickerSearch" list="tickerOptions" placeholder="예: NVDA, AAPL, MSFT">
-            <datalist id="tickerOptions"></datalist>
+            <input id="tickerSearch" placeholder="한국어·티커·영문 (예: 테슬라, NVDA, Apple)" autocomplete="off">
           </label>
           <button id="searchButton">분석</button>
         </div>
@@ -577,7 +576,8 @@
               <div class="chart-compare-bar">
                 <label class="grow">
                   비교 종목
-                  <input id="chartCompareInput" list="tickerOptions" placeholder="예: SPY, QQQ, SOXX">
+                  <input id="chartCompareInput" list="tickerOptions" placeholder="예: SPY, QQQ, SOXX" autocomplete="off">
+                  <datalist id="tickerOptions"></datalist>
                 </label>
                 <button type="button" class="ghost" id="chartCompareAdd">추가</button>
                 <div class="compare-chip-list" id="chartCompareList"></div>
@@ -734,7 +734,7 @@
         <div class="toolbar">
           <label class="grow">
             Tickers
-            <input id="bulkInput" placeholder="NVDA, MSFT, AAPL (쉼표 구분)">
+            <input id="bulkInput" placeholder="한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)" autocomplete="off">
           </label>
           <label>
             최소 RS
@@ -771,7 +771,7 @@
           <div class="toolbar backtest-toolbar">
             <label class="grow">
               Tickers
-              <input id="backtestInput" placeholder="NVDA, MSFT, AAPL (최대 10개)">
+              <input id="backtestInput" placeholder="한국어·티커·영문 (예: 테슬라, NVIDIA)" autocomplete="off">
             </label>
             <label>
               기간
@@ -1005,7 +1005,8 @@
       </button>
     </div>
 
-    <script src="data/market_snapshot.js?v=20260617o"></script>
-    <script src="app.js?v=20260617o"></script>
+    <script src="data/market_snapshot.js?v=20260617v"></script>
+    <script src="data/ticker_aliases_ko.js?v=20260617v"></script>
+    <script src="app.js?v=20260617v"></script>
   </body>
 </html>

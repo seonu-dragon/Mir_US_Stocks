@@ -255,6 +255,7 @@ function boot() {
   renderSummary();
   setupTabs();
   setupFilters();
+  setupTickerSearchHelpers();
   renderAll();
   setupEvents();
   setupBriefingToggles();
@@ -1137,9 +1138,14 @@ function setupFilters() {
   byId("topSector").innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
   byId("topSector").value = "All";
 
-  byId("tickerOptions").innerHTML = data.stocks
-    .map((item) => `<option value="${item.ticker}">${item.company}</option>`)
-    .join("");
+  byId("tickerOptions").innerHTML = data.stocks.flatMap((item) => {
+    const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
+    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(item.company)}</option>`];
+    aliases.slice(0, 2).forEach((alias) => {
+      rows.push(`<option value="${escapeHtml(item.ticker)}">${escapeHtml(alias)} · ${escapeHtml(item.ticker)}</option>`);
+    });
+    return rows;
+  }).join("");
   byId("tickerSearch").value = selectedTicker;
 
   const etfRows = data.health?.etfRelative?.rows || [];
@@ -1615,7 +1621,7 @@ let zoomView = null; // null | { sector } | { sector, industry }
 function renderTreemap() {
   const metric = byId("metricFilter").value;
   const sizeMetric = byId("tileSizeFilter").value;
-  const query = byId("heatmapSearch").value.trim().toUpperCase();
+  const query = byId("heatmapSearch").value.trim();
   const map = byId("stockTreemap");
   const width = map.clientWidth;
   // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음.
@@ -1789,8 +1795,7 @@ function renderLegend(metric) {
 function heatTile(item, rect, metric, query) {
   const value = item[metric] ?? 0;
   const isSelected = item.ticker === selectedTicker;
-  const haystack = `${item.ticker} ${item.company} ${item.sector} ${item.industry}`.toUpperCase();
-  const isMatch = query && haystack.includes(query);
+  const isMatch = query && heatmapItemMatchesQuery(item, query);
   const isDimmed = query && !isMatch;
   const label = fmtMetric(value, metric);
   const area = rect.w * rect.h;
@@ -2857,7 +2862,8 @@ function renderJump() {
 }
 
 function selectTicker(ticker, options = {}) {
-  const found = data.stocks.find((item) => item.ticker.toUpperCase() === String(ticker).trim().toUpperCase());
+  const resolved = resolveTickerQuery(ticker) || String(ticker || "").trim().toUpperCase();
+  const found = data.stocks.find((item) => item.ticker.toUpperCase() === resolved.toUpperCase());
   if (!found) return;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
@@ -3602,6 +3608,262 @@ function renderLinePanel(series, xFor, x1, x2, top, height, title, options = {})
 function stockByTicker(ticker) {
   const key = String(ticker || "").toUpperCase();
   return (data.stocks || []).find((row) => String(row.ticker || "").toUpperCase() === key) || null;
+}
+
+// ===== 한국어/회사명 → 티커 검색 =====
+const TICKER_SEARCH_TOP_N = 1500;
+const TICKER_SEARCH_COMPANY_SCAN_N = 2800;
+
+let tickerKoAliasIndex = null;
+let tickerKoAliasEntries = null;
+let tickerSearchIndex = null;
+
+function buildTickerKoAliasIndex() {
+  const byKo = new Map();
+  const raw = window.TICKER_ALIASES_KO || {};
+  Object.entries(raw).forEach(([ticker, aliases]) => {
+    if (!stockByTicker(ticker)) return;
+    (aliases || []).forEach((alias) => {
+      const key = String(alias || "").trim();
+      if (!key) return;
+      if (!byKo.has(key)) byKo.set(key, []);
+      if (!byKo.get(key).includes(ticker)) byKo.get(key).push(ticker);
+    });
+  });
+  tickerKoAliasIndex = byKo;
+  tickerKoAliasEntries = [];
+  byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers }));
+}
+
+function buildTickerSearchIndex() {
+  buildTickerKoAliasIndex();
+  const stocks = (data.stocks || []).slice().sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0));
+  tickerSearchIndex = {
+    byMarketCap: stocks.map((s) => ({
+      ticker: s.ticker,
+      company: s.company || "",
+      companyLower: String(s.company || "").toLowerCase(),
+      marketCapB: Number(s.marketCapB) || 0,
+    })),
+  };
+}
+
+function tickerKoHaystack(ticker) {
+  const stock = stockByTicker(ticker);
+  if (!stock) return "";
+  const aliases = (window.TICKER_ALIASES_KO || {})[ticker] || [];
+  return `${stock.ticker} ${stock.company} ${aliases.join(" ")}`;
+}
+
+function heatmapItemMatchesQuery(item, rawQuery) {
+  const q = String(rawQuery || "").trim();
+  if (!q) return true;
+  const hayUpper = `${item.ticker} ${item.company} ${item.sector} ${item.industry}`.toUpperCase();
+  if (hayUpper.includes(q.toUpperCase())) return true;
+  const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
+  return aliases.some((alias) => alias.includes(q) || q.includes(alias));
+}
+
+function searchTickerSuggestions(query, limit = 8) {
+  const q = String(query || "").trim();
+  if (!q || !tickerSearchIndex) return [];
+  const qUpper = q.toUpperCase();
+  const qLower = q.toLowerCase();
+  const scored = [];
+  const seen = new Set();
+
+  function push(ticker, score, hint) {
+    const stock = stockByTicker(ticker);
+    if (!stock || seen.has(stock.ticker)) return;
+    seen.add(stock.ticker);
+    scored.push({ ticker: stock.ticker, company: stock.company, hint: hint || null, score });
+  }
+
+  const exactTicker = stockByTicker(qUpper);
+  if (exactTicker) push(exactTicker.ticker, 1000, "티커");
+
+  (tickerKoAliasEntries || []).forEach(({ alias, tickers }) => {
+    let score = 0;
+    if (alias === q) score = 980;
+    else if (alias.startsWith(q)) score = 900 - alias.length;
+    else if (alias.includes(q)) score = 760 - alias.length;
+    if (score > 0) tickers.forEach((t) => push(t, score, alias));
+  });
+
+  const pool = tickerSearchIndex.byMarketCap;
+  const maxScan = q.length <= 2
+    ? Math.min(pool.length, TICKER_SEARCH_TOP_N)
+    : Math.min(pool.length, TICKER_SEARCH_COMPANY_SCAN_N);
+  for (let i = 0; i < maxScan && seen.size < limit + 4; i += 1) {
+    const row = pool[i];
+    const ticker = String(row.ticker || "").toUpperCase();
+    if (ticker === qUpper) push(ticker, 995, null);
+    else if (ticker.startsWith(qUpper)) push(ticker, 620 - i * 0.001, null);
+    else if (row.companyLower.includes(qLower)) push(ticker, 500 - i * 0.01, null);
+  }
+  if (seen.size < limit && q.length >= 3 && maxScan < pool.length) {
+    for (let i = maxScan; i < pool.length && seen.size < limit + 2; i += 1) {
+      const row = pool[i];
+      if (row.companyLower.includes(qLower)) push(row.ticker, 320 - i * 0.001, null);
+    }
+  }
+
+  return scored.sort((a, b) => b.score - a.score).slice(0, limit);
+}
+
+function resolveTickerQuery(raw) {
+  const q = String(raw || "").trim();
+  if (!q) return null;
+  const direct = stockByTicker(q);
+  if (direct) return direct.ticker;
+  const hits = searchTickerSuggestions(q, 6);
+  if (!hits.length) return null;
+  const exactKo = hits.find((h) => h.hint === q);
+  if (exactKo) return exactKo.ticker;
+  if (hits.length === 1) return hits[0].ticker;
+  if (hits[0].score - (hits[1]?.score || 0) >= 180) return hits[0].ticker;
+  return hits[0].ticker;
+}
+
+function resolveTickerListInput(text) {
+  return [...new Set(
+    String(text || "").split(",")
+      .map((part) => resolveTickerQuery(part.trim()))
+      .filter(Boolean),
+  )];
+}
+
+function tickerInputActiveToken(input) {
+  const val = input.value;
+  const pos = input.selectionStart ?? val.length;
+  const before = val.slice(0, pos);
+  const lastComma = before.lastIndexOf(",");
+  const segment = before.slice(lastComma + 1);
+  const lead = segment.match(/^\s*/)?.[0]?.length || 0;
+  const token = segment.slice(lead).trim();
+  const start = lastComma + 1 + lead;
+  const end = pos;
+  return { token, start, end, val };
+}
+
+function setupTickerAutocomplete(inputId, options = {}) {
+  const input = byId(inputId);
+  if (!input || input.dataset.tickerAcReady) return;
+  input.dataset.tickerAcReady = "1";
+  const multi = Boolean(options.multi);
+  const label = input.closest("label");
+  let wrap = input.parentElement;
+  if (label && label.parentElement) {
+    wrap = document.createElement("div");
+    wrap.className = "ticker-ac-wrap";
+    if (label.classList.contains("grow")) {
+      label.classList.remove("grow");
+      wrap.classList.add("grow");
+    }
+    label.parentElement.insertBefore(wrap, label);
+    wrap.appendChild(label);
+  } else if (wrap) {
+    wrap.classList.add("ticker-ac-wrap");
+  } else {
+    return;
+  }
+  const list = document.createElement("div");
+  list.className = "ticker-ac-list";
+  list.hidden = true;
+  wrap.appendChild(list);
+
+  let timer = null;
+  let activeIdx = -1;
+
+  function closeList() {
+    list.hidden = true;
+    list.innerHTML = "";
+    activeIdx = -1;
+  }
+
+  function applySuggestion(ticker) {
+    if (!multi) {
+      input.value = ticker;
+      closeList();
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      return;
+    }
+    const { start, end, val } = tickerInputActiveToken(input);
+    const next = `${val.slice(0, start)}${ticker}${val.slice(end)}`;
+    input.value = next.includes(",") ? next.replace(/\s*,\s*/g, ", ") : next;
+    closeList();
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function renderList(items, token) {
+    if (!items.length) {
+      closeList();
+      return;
+    }
+    list.innerHTML = items.map((item, index) => `
+      <button type="button" class="ticker-ac-item${index === activeIdx ? " is-active" : ""}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
+        <strong>${escapeHtml(item.ticker)}</strong>
+        <span>${escapeHtml(item.company)}</span>
+        ${item.hint && item.hint !== item.ticker ? `<em>${escapeHtml(item.hint)}</em>` : ""}
+      </button>
+    `).join("");
+    list.hidden = false;
+    list.querySelectorAll(".ticker-ac-item").forEach((btn) => {
+      btn.addEventListener("mousedown", (event) => {
+        event.preventDefault();
+        applySuggestion(btn.dataset.ticker);
+      });
+    });
+  }
+
+  function refresh() {
+    const token = multi ? tickerInputActiveToken(input).token : input.value.trim();
+    if (token.length < 1) {
+      closeList();
+      return;
+    }
+    renderList(searchTickerSuggestions(token, 8), token);
+    activeIdx = -1;
+  }
+
+  input.addEventListener("input", () => {
+    clearTimeout(timer);
+    timer = setTimeout(refresh, 120);
+  });
+  input.addEventListener("focus", () => {
+    if ((multi ? tickerInputActiveToken(input).token : input.value.trim()).length) refresh();
+  });
+  input.addEventListener("keydown", (event) => {
+    const items = [...list.querySelectorAll(".ticker-ac-item")];
+    if (!items.length) return;
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      activeIdx = (activeIdx + 1) % items.length;
+      items.forEach((el, i) => el.classList.toggle("is-active", i === activeIdx));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      activeIdx = activeIdx <= 0 ? items.length - 1 : activeIdx - 1;
+      items.forEach((el, i) => el.classList.toggle("is-active", i === activeIdx));
+    } else if (event.key === "Enter" && activeIdx >= 0) {
+      event.preventDefault();
+      applySuggestion(items[activeIdx].dataset.ticker);
+    } else if (event.key === "Escape") {
+      closeList();
+    }
+  });
+  input.addEventListener("blur", () => setTimeout(closeList, 140));
+  document.addEventListener("click", (event) => {
+    if (!wrap.contains(event.target)) closeList();
+  });
+}
+
+function setupTickerSearchHelpers() {
+  buildTickerSearchIndex();
+  setupTickerAutocomplete("tickerSearch");
+  setupTickerAutocomplete("bulkInput", { multi: true });
+  setupTickerAutocomplete("compareInput", { multi: true });
+  setupTickerAutocomplete("backtestInput", { multi: true });
+  setupTickerAutocomplete("heatmapSearch");
 }
 
 function sectorBenchmarkTickerForItem(item) {
@@ -4374,9 +4636,9 @@ function renderBulk() {
   const minRs = Number(byId("bulkRs").value || 0);
   const input = byId("bulkInput");
   if (input && !input.value.trim()) input.value = watchlist.join(", ");
-  const tickers = input.value.split(",").map((item) => item.trim().toUpperCase()).filter(Boolean);
+  const tickers = resolveTickerListInput(input.value);
   const rows = tickers
-    .map((ticker) => data.stocks.find((item) => item.ticker === ticker))
+    .map((ticker) => stockByTicker(ticker))
     .filter(Boolean)
     .filter((item) => item.rsScore >= minRs);
   renderWatchlistStats(rows);
@@ -4973,7 +5235,7 @@ function toggleWatchlist(ticker) {
 }
 
 function saveWatchlistFromInput(text) {
-  const tickers = String(text || "").split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t));
+  const tickers = resolveTickerListInput(text);
   if (!tickers.length) return;
   watchlist = [...new Set(tickers)];
   persistWatchlist();
@@ -5046,7 +5308,7 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
-const SW_VERSION = "20260617o";
+const SW_VERSION = "20260617r";
 
 function setupPwa() {
   if ("serviceWorker" in navigator) {
@@ -5204,7 +5466,7 @@ const COMPARE_METRICS = [
 
 function compareTickersFromInput() {
   const raw = byId("compareInput")?.value || "";
-  return [...new Set(raw.split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t)))].slice(0, 6);
+  return resolveTickerListInput(raw).slice(0, 6);
 }
 
 function renderCompareBoard() {
@@ -5379,7 +5641,7 @@ let backtestRunning = false;
 
 function backtestTickersFromInput() {
   const raw = byId("backtestInput")?.value || "";
-  return [...new Set(raw.split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t)))].slice(0, BACKTEST_MAX_TICKERS);
+  return resolveTickerListInput(raw).slice(0, BACKTEST_MAX_TICKERS);
 }
 
 function setBacktestStatus(text) {

@@ -3674,8 +3674,6 @@ footer {
    Sector ETF RS Grid
    ========================================================================== */
 .sector-etf-rs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 14px;
 }
 
@@ -4296,55 +4294,76 @@ footer {
   overflow: hidden;
 }
 
-.rotation-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+.rotation-map-grid {
   padding: 12px;
 }
 
-.rotation-quadrant {
-  min-width: 0;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: #f8fafc;
+.rotation-map-card .rank-line {
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
-.rotation-quadrant h4 {
-  margin: 0 0 4px;
-  font-size: 14px;
-}
-
-.rotation-quadrant p {
-  min-height: 32px;
-  margin: 0 0 8px;
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.rotation-chip {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
+.rotation-map-card .rank-line .rotation-quad-tag {
+  width: auto;
   height: auto;
-  min-height: 34px;
-  margin-bottom: 6px;
-  padding: 6px 8px;
-  border-color: #dbe3ef;
-  background: #fff;
-  color: var(--text);
-  text-align: left;
 }
 
-.rotation-chip span {
-  overflow: hidden;
+.rotation-map-card {
+  cursor: pointer;
+  box-shadow: inset 3px 0 0 #cbd5e1;
+}
+
+.rotation-map-card:hover {
+  border-color: rgba(29, 78, 216, 0.55);
+  box-shadow: inset 3px 0 0 #cbd5e1, 0 10px 24px rgba(29, 78, 216, 0.12);
+}
+
+.rotation-map-card.rotation-leading { box-shadow: inset 3px 0 0 #16a34a; }
+.rotation-map-card.rotation-improving { box-shadow: inset 3px 0 0 #2563eb; }
+.rotation-map-card.rotation-weakening { box-shadow: inset 3px 0 0 #f59e0b; }
+.rotation-map-card.rotation-lagging { box-shadow: inset 3px 0 0 #dc2626; }
+
+.rotation-map-card.rotation-leading:hover { box-shadow: inset 3px 0 0 #16a34a, 0 10px 24px rgba(29, 78, 216, 0.12); }
+.rotation-map-card.rotation-improving:hover { box-shadow: inset 3px 0 0 #2563eb, 0 10px 24px rgba(29, 78, 216, 0.12); }
+.rotation-map-card.rotation-weakening:hover { box-shadow: inset 3px 0 0 #f59e0b, 0 10px 24px rgba(29, 78, 216, 0.12); }
+.rotation-map-card.rotation-lagging:hover { box-shadow: inset 3px 0 0 #dc2626, 0 10px 24px rgba(29, 78, 216, 0.12); }
+
+.rotation-quad-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #eef2f7;
   color: var(--muted);
-  font-size: 12px;
-  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 800;
+  font-style: normal;
   white-space: nowrap;
+}
+
+.rotation-map-card.rotation-leading .rotation-quad-tag { background: #dcfce7; color: #15803d; }
+.rotation-map-card.rotation-improving .rotation-quad-tag { background: #dbeafe; color: #1d4ed8; }
+.rotation-map-card.rotation-weakening .rotation-quad-tag { background: #fef3c7; color: #b45309; }
+.rotation-map-card.rotation-lagging .rotation-quad-tag { background: #fee2e2; color: #b91c1c; }
+
+.rotation-map-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 12px 12px;
+  border-top: 1px solid var(--line);
+}
+
+.rotation-map-range {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rotation-pagination button {
+  min-width: 36px;
+  padding: 0 10px;
 }
 
 .rotation-head-actions {
@@ -4433,20 +4452,18 @@ footer {
   cursor: pointer;
 }
 
-@media (max-width: 960px) {
-  .rotation-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 640px) {
-  .rotation-grid {
-    grid-template-columns: 1fr;
-  }
   .event-head,
   .rotation-head {
     align-items: flex-start;
     flex-direction: column;
+  }
+  .rotation-map-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .rotation-pagination {
+    justify-content: center;
   }
   .earnings-summary {
     grid-template-columns: 1fr;

@@ -26,11 +26,11 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260617f">
+    <link rel="stylesheet" href="styles.css?v=20260617i">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
-        var v = "20260617f";
+        var v = "20260617i";
         navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
           reg.update();
         }).catch(function () {});
@@ -118,15 +118,17 @@
         <div class="watchlist-chips" id="watchlistChips"></div>
       </section>
 
-      <nav class="tabs" aria-label="Dashboard sections">
-        <button class="tab is-active" data-tab="map">시장 지도</button>
-        <button class="tab" data-tab="sector">섹터 흐름</button>
-        <button class="tab" data-tab="search">종목 분석</button>
-        <button class="tab" data-tab="bulk">관심 리스트</button>
-        <button class="tab" data-tab="health">마켓 데이터</button>
-        <button class="tab" data-tab="calendar">경제 캘린더</button>
-        <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
-      </nav>
+      <div class="tabs-scroll-wrap" id="tabsScrollWrap">
+        <nav class="tabs" id="mainTabs" aria-label="Dashboard sections">
+          <button class="tab is-active" data-tab="map">시장 지도</button>
+          <button class="tab" data-tab="sector">섹터 흐름</button>
+          <button class="tab" data-tab="search">종목 분석</button>
+          <button class="tab" data-tab="bulk">관심 리스트</button>
+          <button class="tab" data-tab="health">마켓 데이터</button>
+          <button class="tab" data-tab="calendar">경제 캘린더</button>
+          <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
+        </nav>
+      </div>
 
       <!-- ==================== 시장 지도 탭 ==================== -->
       <section class="panel is-active" id="tab-map">
@@ -943,7 +945,7 @@
       </button>
     </div>
 
-    <script src="data/market_snapshot.js?v=20260617f"></script>
-    <script src="app.js?v=20260617f"></script>
+    <script src="data/market_snapshot.js?v=20260617i"></script>
+    <script src="app.js?v=20260617i"></script>
   </body>
 </html>

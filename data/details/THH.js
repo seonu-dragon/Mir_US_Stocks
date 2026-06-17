@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["THH"] = {"fundamentals":{"sharesB":0.053,"source":"nasdaq"},"ticker":"THH","company":"TryHard Holdings Limited Ordinary Shares","historySource":"snapshot"};

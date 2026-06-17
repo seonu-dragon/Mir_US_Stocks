@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["IFBD"] = {"fundamentals":{"sharesB":0.008,"source":"nasdaq"},"ticker":"IFBD","company":"Infobird Co. Ltd Ordinary Shares","historySource":"snapshot"};

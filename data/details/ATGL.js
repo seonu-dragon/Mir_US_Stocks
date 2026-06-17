@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ATGL"] = {"fundamentals":{"sharesB":0.016,"source":"nasdaq"},"ticker":"ATGL","company":"Alpha Technology Group Limited Class A Ordinary Shares","historySource":"snapshot"};

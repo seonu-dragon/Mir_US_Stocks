@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ANPA"] = {"fundamentals":{"sharesB":0.015,"source":"nasdaq"},"ticker":"ANPA","company":"Rich Sparkle Holdings Limited Ordinary Shares","historySource":"snapshot"};

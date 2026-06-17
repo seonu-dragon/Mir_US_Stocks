@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SONM"] = {"fundamentals":{"sharesB":0.001,"source":"nasdaq"},"ticker":"SONM","company":"DNA X Inc.","historySource":"snapshot"};

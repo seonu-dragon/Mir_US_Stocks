@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["FEBO"] = {"fundamentals":{"sharesB":0.011,"source":"nasdaq"},"ticker":"FEBO","company":"Fenbo Holdings Limited Class A Ordinary Shares","historySource":"snapshot"};

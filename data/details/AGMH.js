@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["AGMH"] = {"fundamentals":{"sharesB":0.004,"source":"nasdaq"},"ticker":"AGMH","company":"AGM Group Holdings Inc. Class A Ordinary Shares","historySource":"snapshot"};

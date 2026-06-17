@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["IMTE"] = {"fundamentals":{"sharesB":0.004,"source":"nasdaq"},"ticker":"IMTE","company":"Integrated Media Technology Limited Ordinary Shares","historySource":"snapshot"};

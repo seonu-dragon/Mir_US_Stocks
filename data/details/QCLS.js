@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["QCLS"] = {"fundamentals":{"sharesB":0.008,"source":"nasdaq"},"ticker":"QCLS","company":"Q/C Technologies Inc.","historySource":"snapshot"};

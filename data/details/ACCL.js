@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ACCL"] = {"fundamentals":{"sharesB":0.014,"source":"nasdaq"},"ticker":"ACCL","company":"Acco Group Holdings Limited Class A Ordinary Shares","historySource":"snapshot"};

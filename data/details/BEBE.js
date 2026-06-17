@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BEBE"] = {"fundamentals":{"sharesB":0.013,"source":"nasdaq"},"ticker":"BEBE","company":"TGE Value Creative Solutions Corp Class A Ordinary Shares","historySource":"snapshot"};

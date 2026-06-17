@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["AEI"] = {"fundamentals":{"sharesB":0.039,"source":"nasdaq"},"ticker":"AEI","company":"Alset Inc. (TX)","historySource":"snapshot"};

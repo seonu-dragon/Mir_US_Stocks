@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["WAI"] = {"fundamentals":{"sharesB":0.003,"source":"nasdaq"},"ticker":"WAI","company":"Top KingWin Ltd Class A Ordinary Shares","historySource":"snapshot"};

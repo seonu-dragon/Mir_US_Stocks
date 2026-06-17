@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["RFMZ"] = {"fundamentals":{"sharesB":0.024,"source":"nasdaq"},"ticker":"RFMZ","company":"RiverNorth Flexible Municipal Income Fund II Inc.","historySource":"snapshot"};

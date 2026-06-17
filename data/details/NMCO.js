@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["NMCO"] = {"fundamentals":{"sharesB":0.055,"source":"nasdaq"},"ticker":"NMCO","company":"Nuveen Municipal Credit Opportunities Fund Common Shares","historySource":"snapshot"};

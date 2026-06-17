@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["KTWO"] = {"fundamentals":{"sharesB":0.02,"source":"nasdaq"},"ticker":"KTWO","company":"K2 Capital Acquisition Corporation Class A Ordinary Share","historySource":"snapshot"};

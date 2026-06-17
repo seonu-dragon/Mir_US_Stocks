@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MUC"] = {"fundamentals":{"sharesB":0.149,"source":"nasdaq"},"ticker":"MUC","company":"Blackrock MuniHoldings California Quality Fund Inc.","historySource":"snapshot"};

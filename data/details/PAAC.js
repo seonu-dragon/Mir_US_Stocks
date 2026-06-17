@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["PAAC"] = {"fundamentals":{"sharesB":0.014,"source":"nasdaq"},"ticker":"PAAC","company":"Proem Acquisition Corp I Ordinary Shares","historySource":"snapshot"};

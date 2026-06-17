@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["FAMI"] = {"fundamentals":{"sharesB":0.013,"source":"nasdaq"},"ticker":"FAMI","company":"Farmmi Inc. Class A Ordinary Shares","historySource":"snapshot"};

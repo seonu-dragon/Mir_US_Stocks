@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SHOE"] = {"fundamentals":{"sharesB":0.027,"source":"nasdaq"},"ticker":"SHOE","company":"Shoe Station Group Inc.","historySource":"snapshot"};

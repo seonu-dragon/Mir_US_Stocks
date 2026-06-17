@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["RMMZ"] = {"fundamentals":{"sharesB":0.02,"source":"nasdaq"},"ticker":"RMMZ","company":"RiverNorth Managed Duration Municipal Income Fund II Inc.","historySource":"snapshot"};

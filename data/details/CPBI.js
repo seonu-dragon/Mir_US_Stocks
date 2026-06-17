@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["CPBI"] = {"fundamentals":{"sharesB":0.004,"source":"nasdaq"},"ticker":"CPBI","company":"Central Plains Bancshares Inc.","historySource":"snapshot"};

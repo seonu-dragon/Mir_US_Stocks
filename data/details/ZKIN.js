@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["ZKIN"] = {"fundamentals":{"sharesB":0.017,"source":"nasdaq"},"ticker":"ZKIN","company":"ZK International Group Co. Ltd Ordinary Share","historySource":"snapshot"};

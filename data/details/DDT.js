@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["DDT"] = {"fundamentals":{"sharesB":0.016,"source":"nasdaq"},"ticker":"DDT","company":"Dillard's Capital Trust I","historySource":"snapshot"};

@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["NEUP"] = {"fundamentals":{"sharesB":0.005,"source":"nasdaq"},"ticker":"NEUP","company":"Neuphoria Therapeutics Inc.","historySource":"snapshot"};

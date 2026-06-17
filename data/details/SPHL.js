@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SPHL"] = {"fundamentals":{"sharesB":0.012,"source":"nasdaq"},"ticker":"SPHL","company":"Springview Holdings Ltd Class A Ordinary Shares","historySource":"snapshot"};

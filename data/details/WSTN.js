@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["WSTN"] = {"fundamentals":{"sharesB":0.008,"source":"nasdaq"},"ticker":"WSTN","company":"Westin Acquisition Corp Class A Ordinary Share","historySource":"snapshot"};

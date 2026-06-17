@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["EOT"] = {"fundamentals":{"sharesB":0.016,"source":"nasdaq"},"ticker":"EOT","company":"Eaton Vance Municipal Income Trust EATON VANCE NATIONAL MUNICIPAL OPPORTUNITIES TRUST","historySource":"snapshot"};

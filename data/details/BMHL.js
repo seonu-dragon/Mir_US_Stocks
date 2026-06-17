@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BMHL"] = {"fundamentals":{"sharesB":0.024,"source":"nasdaq"},"ticker":"BMHL","company":"Bluemount Holdings Limited Class B Ordinary Shares","historySource":"snapshot"};

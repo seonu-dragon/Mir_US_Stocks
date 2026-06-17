@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SMJF"] = {"fundamentals":{"sharesB":0.025,"source":"nasdaq"},"ticker":"SMJF","company":"SMJ International Holdings Inc. Class A Ordinary Shares","historySource":"snapshot"};

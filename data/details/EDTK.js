@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["EDTK"] = {"fundamentals":{"sharesB":0.016,"source":"nasdaq"},"ticker":"EDTK","company":"Skillful Craftsman Education Technology Limited Ordinary Share","historySource":"snapshot"};

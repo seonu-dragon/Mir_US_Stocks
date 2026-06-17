@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["COOT"] = {"fundamentals":{"sharesB":0.028,"source":"nasdaq"},"ticker":"COOT","company":"Australian Oilseeds Holdings Limited Ordinary Shares","historySource":"snapshot"};

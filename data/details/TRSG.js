@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["TRSG"] = {"fundamentals":{"sharesB":0.017,"source":"nasdaq"},"ticker":"TRSG","company":"Tungray Technologies Inc Class A Ordinary Shares","historySource":"snapshot"};

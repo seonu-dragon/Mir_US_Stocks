@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["PDO"] = {"fundamentals":{"sharesB":0.145,"source":"nasdaq"},"ticker":"PDO","company":"PIMCO Dynamic Income Opportunities Fund Common Shares of Beneficial Interest","historySource":"snapshot"};

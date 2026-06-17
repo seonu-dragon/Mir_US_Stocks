@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["BLIV"] = {"fundamentals":{"sharesB":0.011,"source":"nasdaq"},"ticker":"BLIV","company":"BeLive Holdings Ordinary Share","historySource":"snapshot"};

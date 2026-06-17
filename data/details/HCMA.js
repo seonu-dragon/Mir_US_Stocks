@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["HCMA"] = {"fundamentals":{"sharesB":0.079,"source":"nasdaq"},"ticker":"HCMA","company":"HCM III Acquisition Corp. Class A Ordinary Share","historySource":"snapshot"};

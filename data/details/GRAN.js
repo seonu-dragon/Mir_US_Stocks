@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["GRAN"] = {"fundamentals":{"sharesB":0.023,"source":"nasdaq"},"ticker":"GRAN","company":"Grande Group Limited Class A Ordinary Shares","historySource":"snapshot"};

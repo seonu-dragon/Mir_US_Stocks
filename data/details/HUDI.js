@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["HUDI"] = {"fundamentals":{"sharesB":0.014,"source":"nasdaq"},"ticker":"HUDI","company":"Huadi International Group Co. Ltd. Ordinary Shares","historySource":"snapshot"};

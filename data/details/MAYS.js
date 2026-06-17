@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["MAYS"] = {"fundamentals":{"sharesB":0.002,"source":"nasdaq"},"ticker":"MAYS","company":"J. W. Mays Inc.","historySource":"snapshot"};

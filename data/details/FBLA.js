@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["FBLA"] = {"fundamentals":{"sharesB":0.016,"source":"nasdaq"},"ticker":"FBLA","company":"FB Bancorp Inc.","historySource":"snapshot"};

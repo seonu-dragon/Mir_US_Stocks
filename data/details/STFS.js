@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["STFS"] = {"fundamentals":{"sharesB":0.001,"source":"nasdaq"},"ticker":"STFS","company":"Star Fashion Culture Holdings Limited Class A Ordinary Shares","historySource":"snapshot"};

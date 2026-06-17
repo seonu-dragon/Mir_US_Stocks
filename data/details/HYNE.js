@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["HYNE"] = {"fundamentals":{"sharesB":0.008,"source":"nasdaq"},"ticker":"HYNE","company":"Hoyne Bancorp Inc.","historySource":"snapshot"};

@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["SNTG"] = {"fundamentals":{"sharesB":0.003,"source":"nasdaq"},"ticker":"SNTG","company":"Sentage Holdings Inc. Class A Ordinary Shares","historySource":"snapshot"};

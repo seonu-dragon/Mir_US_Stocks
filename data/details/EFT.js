@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["EFT"] = {"fundamentals":{"sharesB":0.029,"source":"nasdaq"},"ticker":"EFT","company":"Eaton Vance Floating Rate Income Trust Common Shares of Beneficial Interest","historySource":"snapshot"};

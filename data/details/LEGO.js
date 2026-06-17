@@ -1,0 +1,1 @@
+window.STOCK_DETAILS = window.STOCK_DETAILS || {};window.STOCK_DETAILS["LEGO"] = {"fundamentals":{"sharesB":0.03,"source":"nasdaq"},"ticker":"LEGO","company":"Legato Merger Corp. IV Ordinary Shares","historySource":"snapshot"};

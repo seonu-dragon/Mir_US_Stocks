@@ -20,7 +20,7 @@ OUT_JS = ROOT / "data" / "market_snapshot.js"
 DETAILS_DIR = ROOT / "data" / "details"
 TODAY_CONTENT_FILE = ROOT / "data" / "today_content.json"
 MAX_REAL_HISTORY = 1400
-MAX_FUNDAMENTALS = 900
+MAX_FUNDAMENTALS = 3500
 ACTIVE_SMALL_CAP_MIN_CAP_B = 0.3
 ACTIVE_SMALL_CAP_MIN_VOLUME = 1_000_000
 # Any reasonably liquid name gets real Yahoo history regardless of market cap, so
@@ -44,6 +44,13 @@ NASDAQ_HEADERS = {
     "Origin": "https://www.nasdaq.com",
     "Referer": "https://www.nasdaq.com/market-activity/stocks/screener",
 }
+
+SEC_HEADERS = {
+    **HTTP_HEADERS,
+    "User-Agent": "Mir US Stocks mir-us-stocks@users.noreply.github.com",
+}
+
+_TICKER_CIK_CACHE = None
 
 ETFS = {
     "SPY": ("SPDR S&P 500 ETF", "EXCHANGE TRADED FUNDS", "Broad Market ETF", "all_misc", 650),
@@ -1488,8 +1495,249 @@ def fetch_nasdaq_fundamentals(symbol, price_hint=None, market_cap_b=None):
         out["pb"] = round(market_cap / out["equityB"], 2)
     if out.get("debtB") is not None and out.get("equityB"):
         out["debtEq"] = round(out["debtB"] / out["equityB"], 2) if out["equityB"] else None
+    if out:
+        out["source"] = "nasdaq"
 
     return {key: value for key, value in out.items() if value not in (None, "")}
+
+
+def load_ticker_cik_map():
+    global _TICKER_CIK_CACHE
+    if _TICKER_CIK_CACHE is not None:
+        return _TICKER_CIK_CACHE
+    try:
+        payload = request_json(
+            "https://www.sec.gov/files/company_tickers.json",
+            headers=SEC_HEADERS,
+            timeout=20,
+        )
+    except Exception:
+        _TICKER_CIK_CACHE = {}
+        return _TICKER_CIK_CACHE
+    _TICKER_CIK_CACHE = {
+        str(item.get("ticker") or "").upper(): str(item.get("cik_str") or "").zfill(10)
+        for item in payload.values()
+        if item.get("ticker")
+    }
+    return _TICKER_CIK_CACHE
+
+
+def latest_sec_gaap_value(usgaap, tags):
+    for tag in tags:
+        block = usgaap.get(tag)
+        if not block:
+            continue
+        for unit_key in ("USD", "shares", "pure"):
+            rows = (block.get("units") or {}).get(unit_key) or []
+            if not rows:
+                continue
+            annual = [row for row in rows if row.get("form") == "10-K"]
+            pool = annual or rows
+            pool.sort(key=lambda row: row.get("end", ""), reverse=True)
+            if pool and pool[0].get("val") is not None:
+                return float(pool[0]["val"])
+    return None
+
+
+def fetch_sec_fundamentals(symbol, price_hint=None, market_cap_b=None):
+    cik = load_ticker_cik_map().get(str(symbol or "").upper())
+    if not cik:
+        return {}
+    try:
+        payload = request_json(
+            f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json",
+            headers=SEC_HEADERS,
+            timeout=24,
+        )
+    except Exception:
+        return {}
+    usgaap = payload.get("facts", {}).get("us-gaap", {})
+    revenue = latest_sec_gaap_value(
+        usgaap,
+        [
+            "Revenues",
+            "RevenueFromContractWithCustomerExcludingAssessedTax",
+            "InterestIncomeExpenseNet",
+            "TotalRevenuesAndOtherIncome",
+        ],
+    )
+    net_income = latest_sec_gaap_value(usgaap, ["NetIncomeLoss", "ProfitLoss"])
+    equity = latest_sec_gaap_value(usgaap, ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"])
+    assets = latest_sec_gaap_value(usgaap, ["Assets"])
+    cash = latest_sec_gaap_value(usgaap, ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsAndShortTermInvestments"])
+    debt = latest_sec_gaap_value(usgaap, ["LongTermDebt", "LongTermDebtNoncurrent"])
+    eps = latest_sec_gaap_value(usgaap, ["EarningsPerShareBasic", "EarningsPerShareDiluted"])
+
+    out = {}
+    if revenue:
+        out["salesB"] = round(revenue / 1_000_000_000, 3)
+    if net_income:
+        out["incomeB"] = round(net_income / 1_000_000_000, 3)
+    if cash:
+        out["cashB"] = round(cash / 1_000_000_000, 3)
+    if assets:
+        out["assetsB"] = round(assets / 1_000_000_000, 3)
+    if equity:
+        out["equityB"] = round(equity / 1_000_000_000, 3)
+    if debt and equity:
+        out["debtB"] = round(debt / 1_000_000_000, 3)
+        out["debtEq"] = round((debt / 1_000_000_000) / max(out["equityB"], 0.001), 2)
+    if net_income and revenue:
+        out["profitMargin"] = round((net_income / revenue) * 100, 2)
+    if net_income and equity:
+        out["roe"] = round((net_income / equity) * 100, 2)
+
+    price = price_hint
+    market_cap = market_cap_b
+    if eps and price:
+        out["epsTtm"] = round(eps, 2)
+        if eps > 0:
+            out["pe"] = round(price / eps, 2)
+    if market_cap and out.get("incomeB") and out["incomeB"] > 0:
+        out["pe"] = out.get("pe") or round(market_cap / out["incomeB"], 2)
+    if market_cap and out.get("salesB") and out["salesB"] > 0:
+        out["ps"] = round(market_cap / out["salesB"], 2)
+    if market_cap and out.get("equityB") and out["equityB"] > 0:
+        out["pb"] = round(market_cap / out["equityB"], 2)
+    if price and market_cap:
+        out["sharesB"] = round(market_cap / price, 3)
+    out["source"] = "sec"
+    return {key: value for key, value in out.items() if value not in (None, "")}
+
+
+def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
+    try:
+        import yfinance as yf
+    except ImportError:
+        return {}
+    try:
+        info = yf.Ticker(yahoo_symbol(symbol)).info or {}
+    except Exception:
+        return {}
+    if not info:
+        return {}
+
+    def pct_val(raw):
+        if raw is None:
+            return None
+        val = float(raw)
+        if abs(val) <= 1.5:
+            return round(val * 100, 2)
+        return round(val, 2)
+
+    out = {}
+    mcap = info.get("marketCap")
+    if mcap:
+        out["marketCapB"] = round(float(mcap) / 1_000_000_000, 3)
+    for src, dst in (
+        ("targetMeanPrice", "targetPrice"),
+        ("averageVolume", "avgVolume"),
+        ("volume", "volume"),
+        ("previousClose", "prevClose"),
+        ("fiftyTwoWeekHigh", "week52High"),
+        ("fiftyTwoWeekLow", "week52Low"),
+        ("exchange", "exchange"),
+        ("trailingEps", "epsTtm"),
+        ("forwardEps", "epsNextY"),
+    ):
+        val = info.get(src)
+        if val not in (None, ""):
+            out[dst] = round(float(val), 4) if isinstance(val, (int, float)) else val
+    for src, dst in (
+        ("totalRevenue", "salesB"),
+        ("grossProfits", "grossProfitB"),
+        ("operatingIncome", "operIncomeB"),
+        ("netIncomeToCommon", "incomeB"),
+        ("totalCash", "cashB"),
+        ("totalAssets", "assetsB"),
+        ("totalDebt", "debtB"),
+        ("totalStockholderEquity", "equityB"),
+    ):
+        val = info.get(src)
+        if val:
+            out[dst] = round(float(val) / 1_000_000_000, 3)
+    for src, dst in (
+        ("profitMargins", "profitMargin"),
+        ("grossMargins", "grossMargin"),
+        ("operatingMargins", "operMargin"),
+        ("returnOnEquity", "roe"),
+    ):
+        val = pct_val(info.get(src))
+        if val is not None:
+            out[dst] = val
+    cr = info.get("currentRatio")
+    qr = info.get("quickRatio")
+    if cr is not None:
+        out["currentRatio"] = round(float(cr), 2)
+    if qr is not None:
+        out["quickRatio"] = round(float(qr), 2)
+
+    price = price_hint or out.get("prevClose") or info.get("regularMarketPrice")
+    market_cap = out.get("marketCapB") or market_cap_b
+    pe = info.get("trailingPE")
+    fpe = info.get("forwardPE")
+    if pe:
+        out["pe"] = round(float(pe), 2)
+    if fpe:
+        out["forwardPE"] = round(float(fpe), 2)
+    if price and market_cap:
+        out["sharesB"] = round(float(market_cap) / float(price), 3)
+    if market_cap and out.get("salesB"):
+        out["ps"] = round(float(market_cap) / float(out["salesB"]), 2)
+    if market_cap and out.get("equityB"):
+        out["pb"] = round(float(market_cap) / float(out["equityB"]), 2)
+    if out.get("debtB") and out.get("equityB"):
+        out["debtEq"] = round(float(out["debtB"]) / max(float(out["equityB"]), 0.001), 2)
+    out["source"] = "yahoo"
+    return {key: value for key, value in out.items() if value not in (None, "")}
+
+
+def merge_fundamentals(primary, secondary):
+    merged = dict(secondary or {})
+    merged.update(primary or {})
+    if primary and secondary:
+        merged["source"] = "nasdaq+sec"
+    elif primary:
+        merged["source"] = (primary or {}).get("source") or "nasdaq"
+    elif secondary:
+        merged["source"] = (secondary or {}).get("source") or "sec"
+    return {key: value for key, value in merged.items() if value not in (None, "")}
+
+
+def fetch_all_fundamentals(symbol, price_hint=None, market_cap_b=None, min_fields_for_yahoo=10):
+    nasdaq = fetch_nasdaq_fundamentals(symbol, price_hint=price_hint, market_cap_b=market_cap_b)
+    sec = fetch_sec_fundamentals(symbol, price_hint=price_hint, market_cap_b=market_cap_b)
+    merged = merge_fundamentals(nasdaq, sec)
+    yahoo = {}
+    if len(merged) < min_fields_for_yahoo:
+        yahoo = fetch_yahoo_fundamentals(symbol, price_hint=price_hint, market_cap_b=market_cap_b)
+        merged = merge_fundamentals(merged, yahoo)
+    sources = []
+    for part in (nasdaq, sec, yahoo):
+        src = (part or {}).get("source")
+        if src and src not in sources:
+            sources.append(src)
+    if sources:
+        merged["source"] = "+".join(sources)
+    return merged
+
+
+def fetch_fundamentals_backfill(symbol, price_hint=None, market_cap_b=None, min_fields=10):
+    """백필용: Yahoo 우선(Nasdaq/SEC 403 회피), 부족 시 API 병합."""
+    yahoo = fetch_yahoo_fundamentals(symbol, price_hint=price_hint, market_cap_b=market_cap_b)
+    if len(yahoo) >= min_fields:
+        return yahoo
+    nasdaq = fetch_nasdaq_fundamentals(symbol, price_hint=price_hint, market_cap_b=market_cap_b)
+    sec = fetch_sec_fundamentals(symbol, price_hint=price_hint, market_cap_b=market_cap_b)
+    merged = merge_fundamentals(yahoo, merge_fundamentals(nasdaq, sec))
+    sources = []
+    for part in (yahoo, nasdaq, sec):
+        src = (part or {}).get("source")
+        if src and src not in sources:
+            sources.append(src)
+    if sources:
+        merged["source"] = "+".join(sources)
+    return merged
 
 
 def make_stock(meta, rows):
@@ -1687,9 +1935,19 @@ def build_universe():
             meta["preferHistory"] = False
     fundamental_symbols = {meta["symbol"] for meta in metas[:MAX_FUNDAMENTALS]}
     for meta in metas:
+        groups = set(meta.get("groups") or [])
         meta["preferFundamentals"] = (
-            (meta["symbol"] in fundamental_symbols or is_active_small_cap(meta))
-            and "all_misc" not in meta["groups"]
+            "all_misc" not in groups
+            and meta.get("sector") != "EXCHANGE TRADED FUNDS"
+            and (
+                "idx_sp500" in groups
+                or "idx_ndx100" in groups
+                or "idx_nyse" in groups
+                or "idx_nasdaq" in groups
+                or meta["symbol"] in fundamental_symbols
+                or is_active_small_cap(meta)
+                or float(meta.get("marketCapB") or 0) >= 0.05
+            )
         )
     return metas, etf_category_map, etf_universe_count
 
@@ -1756,11 +2014,9 @@ def build_one(meta):
         error = f"{symbol}: {exc}"
     if meta.get("preferFundamentals"):
         try:
-            meta["fundamentals"] = fetch_nasdaq_fundamentals(
-                symbol,
-                price_hint=meta.get("quotePrice") or (rows[-1]["close"] if rows else None),
-                market_cap_b=meta.get("marketCapB"),
-            )
+            price_hint = meta.get("quotePrice") or (rows[-1]["close"] if rows else None)
+            cap_hint = meta.get("marketCapB")
+            meta["fundamentals"] = fetch_all_fundamentals(symbol, price_hint=price_hint, market_cap_b=cap_hint)
         except Exception as exc:
             meta["fundamentals"] = {}
             error = f"{error}; fundamentals {symbol}: {exc}" if error else f"fundamentals {symbol}: {exc}"

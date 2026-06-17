@@ -26,11 +26,11 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260617v">
+    <link rel="stylesheet" href="styles.css?v=20260617x">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
-        var v = "20260617v";
+        var v = "20260617x";
         navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
           reg.update();
         }).catch(function () {});
@@ -124,6 +124,7 @@
           <button class="tab" data-tab="sector">섹터 흐름</button>
           <button class="tab" data-tab="search">종목 분석</button>
           <button class="tab" data-tab="bulk">관심 리스트</button>
+          <button class="tab" data-tab="institutional">거장 포트폴리오</button>
           <button class="tab" data-tab="health">마켓 데이터</button>
           <button class="tab" data-tab="calendar">경제 캘린더</button>
           <button class="tab" data-tab="ai-briefing">AI 브리핑</button>
@@ -343,9 +344,10 @@
               <span id="sectorEtfRsMeta" class="muted"></span>
             </div>
           </div>
-          <div class="rotation-board" id="sectorRotationBoard"></div>
-
-          <div class="etf-rs-grid sector-etf-rs-grid" id="sectorEtfGrid"></div>
+          <div class="sector-etf-rs-scroll" id="sectorEtfRsScroll">
+            <div class="rotation-board" id="sectorRotationBoard"></div>
+            <div class="etf-rs-grid sector-etf-rs-grid" id="sectorEtfGrid"></div>
+          </div>
 
           <!-- Right slide-in drawer with the ETF constituents -->
           <div class="constituent-backdrop" id="constituentBackdrop"></div>
@@ -768,23 +770,33 @@
             <h2>포트폴리오 시뮬레이터</h2>
             <p>설정한 비중으로 매수 후 보유(buy-and-hold)했을 때의 수익률입니다. 일봉 종가 기준, 리밸런싱 없음.</p>
           </div>
-          <div class="toolbar backtest-toolbar">
+          <div class="toolbar backtest-toolbar backtest-ticker-toolbar">
             <label class="grow">
-              Tickers
-              <input id="backtestInput" placeholder="한국어·티커·영문 (예: 테슬라, NVIDIA)" autocomplete="off">
+              종목 추가
+              <div class="backtest-ticker-add">
+                <input id="backtestTickerInput" placeholder="한국어·티커 검색 (예: 테슬라)" autocomplete="off">
+                <button type="button" id="backtestTickerAdd">추가</button>
+              </div>
             </label>
+          </div>
+          <div class="backtest-chip-list compare-chip-list" id="backtestTickerList"></div>
+          <div class="toolbar backtest-toolbar">
             <label>
               기간
               <select id="backtestPeriod">
                 <option value="252">1년</option>
                 <option value="756" selected>3년</option>
                 <option value="1260">5년</option>
-                <option value="custom">직접 선택</option>
+                <option value="custom">직접 설정</option>
               </select>
             </label>
-            <label id="backtestStartWrap" hidden>
+            <label id="backtestStartWrap">
               시작일
               <input id="backtestStartDate" type="date">
+            </label>
+            <label id="backtestEndWrap">
+              종료일
+              <input id="backtestEndDate" type="date">
             </label>
             <label>
               벤치마크
@@ -819,6 +831,31 @@
             <div class="table-wrap">
               <table class="backtest-table" id="backtestTable"></table>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 거장 포트폴리오 탭 (SEC 13F) ==================== -->
+      <section class="panel" id="tab-institutional">
+        <div class="section-title">
+          <h2>거장 포트폴리오</h2>
+          <p>대형 헤지펀드·자산운용사 100곳의 SEC 13F-HR 분기 공시입니다. 최근 10분기 보유 변화를 비교할 수 있으며, 데이터는 분기 공시 후에만 갱신합니다.</p>
+        </div>
+        <div class="institutional-meta" id="institutionalMeta"></div>
+        <div class="institutional-picker">
+          <label class="grow">
+            기관 검색
+            <input id="institutionalSearch" type="search" placeholder="버크셔, 시타델, 블랙록…" autocomplete="off">
+          </label>
+          <label>
+            기관 선택
+            <select id="institutionalSelect" size="1"></select>
+          </label>
+        </div>
+        <div class="institutional-layout">
+          <aside class="institutional-nav" id="institutionalNav" aria-label="기관 목록" hidden></aside>
+          <div class="institutional-detail" id="institutionalDetail">
+            <p class="muted">기관을 선택하면 상위 보유 종목이 표시됩니다.</p>
           </div>
         </div>
       </section>
@@ -1005,8 +1042,9 @@
       </button>
     </div>
 
-    <script src="data/market_snapshot.js?v=20260617v"></script>
-    <script src="data/ticker_aliases_ko.js?v=20260617v"></script>
-    <script src="app.js?v=20260617v"></script>
+    <script src="data/market_snapshot.js?v=20260617x"></script>
+    <script src="data/ticker_aliases_ko.js?v=20260617x"></script>
+    <script src="data/institutional_13f.js?v=20260617z"></script>
+    <script src="app.js?v=20260618a"></script>
   </body>
 </html>

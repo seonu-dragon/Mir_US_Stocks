@@ -5617,7 +5617,8 @@ function renderLeveragedEtfPage() {
   const query = (byId("levEtfSearch")?.value || "").trim().toLowerCase();
 
   let items = leveragedEtfCatalogItems().filter((item) => {
-    if (typeFilter !== "All" && item.type !== typeFilter) return false;
+    if (typeFilter === "buffer" && !["buffer", "defined-outcome"].includes(item.type)) return false;
+    else if (typeFilter !== "All" && item.type !== typeFilter) return false;
     if (scopeFilter !== "All" && item.scope !== scopeFilter) return false;
     if (!query) return true;
     const blob = `${item.ticker} ${item.name} ${item.underlying} ${item.underlyingLabel} ${item.group} ${item.issuer}`.toLowerCase();

@@ -146,11 +146,88 @@ ROWS = [
     ("TMF", "Direxion Daily 20+ Year Treasury Bull 3X", "leveraged", "3x", "long", "TLT", "장기국채", "thematic", "국채", "Direxion"),
     ("TMV", "Direxion Daily 20+ Year Treasury Bear 3X", "inverse", "3x", "short", "TLT", "장기국채", "thematic", "국채", "Direxion"),
     ("TBT", "ProShares UltraShort 20+ Year Treasury", "inverse", "2x", "short", "TLT", "장기국채", "thematic", "국채", "ProShares"),
+    ("TYD", "Direxion Daily 7-10 Year Treasury Bull 3X", "leveraged", "3x", "long", "IEF", "중기국채", "thematic", "국채", "Direxion"),
+    ("TYO", "Direxion Daily 7-10 Year Treasury Bear 3X", "inverse", "3x", "short", "IEF", "중기국채", "thematic", "국채", "Direxion"),
+    # --- 추가 섹터 레버리지·인버스 ---
+    ("DRN", "Direxion Daily Real Estate Bull 3X", "leveraged", "3x", "long", "XLRE", "리츠", "sector", "리츠", "Direxion"),
+    ("DRE", "Direxion Daily Real Estate Bear 3X", "inverse", "3x", "short", "XLRE", "리츠", "sector", "리츠", "Direxion"),
+    ("UTSL", "Direxion Daily Utilities Bull 3X", "leveraged", "3x", "long", "XLU", "유틸리티", "sector", "유틸리티", "Direxion"),
+    ("UXI", "ProShares Ultra Industrials", "leveraged", "2x", "long", "XLI", "산업재", "sector", "산업재", "ProShares"),
+    ("SIJ", "ProShares UltraShort Industrials", "inverse", "2x", "short", "XLI", "산업재", "sector", "산업재", "ProShares"),
+    ("MIDU", "Direxion Daily Mid Cap Bull 3X", "leveraged", "3x", "long", "MDY", "중형주", "index", "중형주", "Direxion"),
+    ("MIDZ", "Direxion Daily Mid Cap Bear 3X", "inverse", "3x", "short", "MDY", "중형주", "index", "중형주", "Direxion"),
+    ("UYG", "ProShares Ultra Financials", "leveraged", "2x", "long", "XLF", "금융", "sector", "금융", "ProShares"),
+    ("SKF", "ProShares UltraShort Financials", "inverse", "2x", "short", "XLF", "금융", "sector", "금융", "ProShares"),
+    ("RXL", "ProShares Ultra Health Care", "leveraged", "2x", "long", "XLV", "헬스케어", "sector", "헬스케어", "ProShares"),
+    ("RXD", "ProShares UltraShort Health Care", "inverse", "2x", "short", "XLV", "헬스케어", "sector", "헬스케어", "ProShares"),
+    ("GUSH", "Direxion Daily S&P Oil & Gas Exp Bull 2X", "leveraged", "2x", "long", "XOP", "석유가스", "sector", "석유·가스", "Direxion"),
+    ("DRIP", "Direxion Daily S&P Oil & Gas Exp Bear 2X", "inverse", "2x", "short", "XOP", "석유가스", "sector", "석유·가스", "Direxion"),
+    ("SCC", "ProShares UltraShort Consumer Services", "inverse", "2x", "short", "XLY", "임의소비재", "sector", "임의소비재", "ProShares"),
+    # --- 크립토 레버리지·인버스 ---
+    ("BITX", "2x Bitcoin Strategy ETF", "leveraged", "2x", "long", "BTC", "비트코인", "thematic", "비트코인", "Volatility Shares"),
+    ("BITU", "ProShares Ultra Bitcoin ETF", "leveraged", "2x", "long", "BTC", "비트코인", "thematic", "비트코인", "ProShares"),
+    ("SBIT", "ProShares Short Bitcoin ETF", "inverse", "1x", "short", "BTC", "비트코인", "thematic", "비트코인", "ProShares"),
+    ("BITI", "ProShares Short Bitcoin Strategy ETF", "inverse", "1x", "short", "BTC", "비트코인", "thematic", "비트코인", "ProShares"),
+    ("ETHU", "2x Ether ETF", "leveraged", "2x", "long", "ETH", "이더리움", "thematic", "이더리움", "Volatility Shares"),
+    ("ETHD", "ProShares UltraShort Ether ETF", "inverse", "2x", "short", "ETH", "이더리움", "thematic", "이더리움", "ProShares"),
+    ("TARK", "Tradr 2X Long Innovation ETF", "leveraged", "2x", "long", "ARKK", "혁신성장", "thematic", "ARK 혁신", "Tradr"),
+    # --- 추가 개별종목 레버리지·인버스 ---
+    ("AVGX", "GraniteShares 2x Long AVGO Daily", "leveraged", "2x", "long", "AVGO", "브로드컴", "single-stock", "AVGO", "GraniteShares"),
+    ("TSLR", "GraniteShares 2x Long TSLA Daily", "leveraged", "2x", "long", "TSLA", "테슬라", "single-stock", "TSLA", "GraniteShares"),
+    ("TSDD", "GraniteShares 2x Short TSLA Daily", "inverse", "2x", "short", "TSLA", "테슬라", "single-stock", "TSLA", "GraniteShares"),
+    ("HOOX", "Defiance 2X Long HOOD Daily", "leveraged", "2x", "long", "HOOD", "로빈후드", "single-stock", "HOOD", "Defiance"),
+    ("RKLX", "Defiance 2X Long RKLB Daily", "leveraged", "2x", "long", "RKLB", "로켓랩", "single-stock", "RKLB", "Defiance"),
+    ("CRWL", "GraniteShares 2x Long CRWD Daily", "leveraged", "2x", "long", "CRWD", "크라우드스트라이크", "single-stock", "CRWD", "GraniteShares"),
+    ("AMZZ", "GraniteShares 2x Long AMZN Daily", "leveraged", "2x", "long", "AMZN", "아마존", "single-stock", "AMZN", "GraniteShares"),
+    ("MSFX", "T-Rex 2X Long Microsoft Daily", "leveraged", "2x", "long", "MSFT", "마이크로소프트", "single-stock", "MSFT", "T-Rex"),
+    ("MULL", "GraniteShares 2x Long MU Daily", "leveraged", "2x", "long", "MU", "마이크론", "single-stock", "MU", "GraniteShares"),
+    ("AMUU", "Direxion Daily AMD Bull 2X Shares", "leveraged", "2x", "long", "AMD", "AMD", "single-stock", "AMD", "Direxion"),
+    ("AMDD", "Tradr 2X Short AMD Daily", "inverse", "2x", "short", "AMD", "AMD", "single-stock", "AMD", "Tradr"),
+    ("NFLU", "T-Rex 2X Long NFLX Daily", "leveraged", "2x", "long", "NFLX", "넷플릭스", "single-stock", "NFLX", "T-Rex"),
+    ("BABO", "YieldMax BABA Option Income Strategy", "covered-call", "옵션", "neutral", "BABA", "알리바바", "single-stock", "BABA 옵션인컴", "YieldMax"),
+    ("GOOY", "YieldMax GOOGL Option Income Strategy", "covered-call", "옵션", "neutral", "GOOGL", "알파벳", "single-stock", "GOOGL 옵션인컴", "YieldMax"),
+    ("AMZY", "YieldMax AMZN Option Income Strategy", "covered-call", "옵션", "neutral", "AMZN", "아마존", "single-stock", "AMZN 옵션인컴", "YieldMax"),
+    ("NFLY", "YieldMax NFLX Option Income Strategy", "covered-call", "옵션", "neutral", "NFLX", "넷플릭스", "single-stock", "NFLX 옵션인컴", "YieldMax"),
+    ("PLTY", "YieldMax PLTR Option Income Strategy", "covered-call", "옵션", "neutral", "PLTR", "팔란티어", "single-stock", "PLTR 옵션인컴", "YieldMax"),
+    ("MARO", "YieldMax MARA Option Income Strategy", "covered-call", "옵션", "neutral", "MARA", "마라톤", "single-stock", "MARA 옵션인컴", "YieldMax"),
+    ("OARK", "YieldMax Innovation Option Income Strategy", "covered-call", "옵션", "neutral", "ARKK", "ARK 혁신", "thematic", "ARK 옵션인컴", "YieldMax"),
+    ("SNOY", "YieldMax SNOW Option Income Strategy", "covered-call", "옵션", "neutral", "SNOW", "스노우플레이크", "single-stock", "SNOW 옵션인컴", "YieldMax"),
+    ("TSMY", "YieldMax TSM Option Income Strategy", "covered-call", "옵션", "neutral", "TSM", "TSMC", "single-stock", "TSM 옵션인컴", "YieldMax"),
+    ("MSTY", "YieldMax MSTR Option Income Strategy", "covered-call", "옵션", "neutral", "MSTR", "마이크로스트래티지", "single-stock", "MSTR 옵션인컴", "YieldMax"),
+    ("HOOW", "YieldMax HOOD Option Income Strategy", "covered-call", "옵션", "neutral", "HOOD", "로빈후드", "single-stock", "HOOD 옵션인컴", "YieldMax"),
+    ("RBLY", "YieldMax RBLX Option Income Strategy", "covered-call", "옵션", "neutral", "RBLX", "로블록스", "single-stock", "RBLX 옵션인컴", "YieldMax"),
+    ("YBIT", "YieldMax Bitcoin Option Income Strategy", "covered-call", "옵션", "neutral", "BTC", "비트코인", "thematic", "BTC 옵션인컴", "YieldMax"),
+    ("CVNY", "YieldMax CVNA Option Income Strategy", "covered-call", "옵션", "neutral", "CVNA", "카바나", "single-stock", "CVNA 옵션인컴", "YieldMax"),
+    ("LLYX", "YieldMax LLY Option Income Strategy", "covered-call", "옵션", "neutral", "LLY", "일라이릴리", "single-stock", "LLY 옵션인컴", "YieldMax"),
+    # --- 추가 커버드콜·0DTE ---
+    ("NVDW", "Roundhill NVDA WeeklyPay Covered Call", "covered-call", "옵션", "neutral", "NVDA", "엔비디아", "single-stock", "NVDA 커버드콜", "Roundhill"),
+    ("TSLW", "Roundhill TSLA WeeklyPay Covered Call", "covered-call", "옵션", "neutral", "TSLA", "테슬라", "single-stock", "TSLA 커버드콜", "Roundhill"),
+    ("PLTW", "Roundhill PLTR WeeklyPay Covered Call", "covered-call", "옵션", "neutral", "PLTR", "팔란티어", "single-stock", "PLTR 커버드콜", "Roundhill"),
+    ("XDTE", "Roundhill S&P 500 0DTE Covered Call", "covered-call", "옵션", "neutral", "SPY", "S&P 500", "index", "S&P 0DTE", "Roundhill"),
+    ("QDTE", "Roundhill Nasdaq 100 0DTE Covered Call", "covered-call", "옵션", "neutral", "QQQ", "Nasdaq 100", "index", "나스닥 0DTE", "Roundhill"),
+    ("RDTE", "Roundhill Russell 2000 0DTE Covered Call", "covered-call", "옵션", "neutral", "IWM", "Russell 2000", "index", "러셀 0DTE", "Roundhill"),
+    ("QQQI", "NEOS Nasdaq 100 High Income ETF", "covered-call", "옵션", "neutral", "QQQ", "Nasdaq 100", "index", "나스닥 옵션인컴", "NEOS"),
+    ("IWMI", "NEOS Russell 2000 High Income ETF", "covered-call", "옵션", "neutral", "IWM", "Russell 2000", "index", "러셀 옵션인컴", "NEOS"),
+    ("DIVO", "Amplify CWP Enhanced Dividend Income", "covered-call", "옵션", "neutral", "SPY", "S&P 500", "index", "배당+콜", "Amplify"),
+    ("BALI", "iShares Large Cap 10% Buffer Mar ETF", "buffer", "버퍼", "neutral", "SPY", "S&P 500", "index", "버퍼 ETF", "iShares"),
+    # --- 추가 원자재 ---
+    ("AGQ", "ProShares Ultra Silver", "leveraged", "2x", "long", "SLV", "은", "commodity", "은", "ProShares"),
+    ("ZSL", "ProShares UltraShort Silver", "inverse", "2x", "short", "SLV", "은", "commodity", "은", "ProShares"),
+    ("SLVO", "Credit Suisse Silver Shares Covered Call", "covered-call", "옵션", "neutral", "SLV", "은", "commodity", "은 커버드콜", "Credit Suisse"),
+    ("WTIU", "MicroSectors Energy 3X Leveraged", "leveraged", "3x", "long", "XLE", "에너지", "commodity", "에너지", "MicroSectors"),
+    ("WTID", "MicroSectors Energy -3X Inverse", "inverse", "3x", "short", "XLE", "에너지", "commodity", "에너지", "MicroSectors"),
+    # --- 추가 국제 ---
+    ("INDL", "Direxion Daily MSCI India Bull 2X", "leveraged", "2x", "long", "INDA", "인도", "international", "인도", "Direxion"),
+    ("INDZ", "Direxion Daily MSCI India Bear 2X", "inverse", "2x", "short", "INDA", "인도", "international", "인도", "Direxion"),
+    ("MEXX", "Direxion Daily MSCI Mexico Bull 3X", "leveraged", "3x", "long", "EWW", "멕시코", "international", "멕시코", "Direxion"),
+    ("TUR", "Direxion Daily MSCI Turkey Bull 2X", "leveraged", "2x", "long", "TUR", "터키", "international", "터키", "Direxion"),
+    ("YXI", "ProShares Short FTSE China 50", "inverse", "1x", "short", "FXI", "중국", "international", "중국", "ProShares"),
 ]
 
 FIELDS = ("ticker", "name", "type", "leverage", "direction", "underlying", "underlyingLabel", "scope", "group", "issuer")
 
-def main() -> None:
+
+def catalog_items() -> list[dict]:
     items = []
     seen = set()
     for row in ROWS:
@@ -160,11 +237,16 @@ def main() -> None:
             continue
         seen.add(key)
         items.append(item)
+    return items
+
+
+def main() -> None:
+    items = catalog_items()
 
     out = Path(__file__).resolve().parents[1] / "data" / "leveraged_etf_catalog.js"
     payload = {
         "updated": "2026-06-18",
-        "note": "레버리지·인버스·커버드콜·변동성 등 옵션형 ETF 카탈로그. 스냅샷에 없는 티커는 메타데이터만 표시됩니다.",
+        "note": "레버리지·인버스·커버드콜·변동성 등 옵션형 ETF 카탈로그. 일일 스냅샷 업데이트 시 시세가 자동 반영됩니다.",
         "items": items,
     }
     body = "window.LEVERAGED_ETF_CATALOG = " + json.dumps(payload, ensure_ascii=False, indent=2) + ";\n"

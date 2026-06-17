@@ -1,10 +1,11 @@
 # UTF-8 Encoding for PowerShell Output
 $OutputEncoding = [System.Text.Encoding]::UTF8
+[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 $ScriptDir = $PSScriptRoot
 if (!$ScriptDir) { $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path }
 $Root = Split-Path -Parent $ScriptDir
-$BatPath = Join-Path $ScriptDir "run_daily_update.bat"
+$BatPath = (Resolve-Path -LiteralPath (Join-Path $ScriptDir "run_daily_update.bat")).Path
 $TaskName = "MijoomoDailySnapshot"
 
 Write-Host "Registering Scheduled Task: $TaskName"
@@ -18,8 +19,16 @@ if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
 }
 
 $Trigger = New-ScheduledTaskTrigger -Daily -At 5:00AM
-$Action = New-ScheduledTaskAction -Execute $BatPath -WorkingDirectory $Root
-$Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -StartWhenAvailable -WakeToRun
+$Action = New-ScheduledTaskAction `
+    -Execute "cmd.exe" `
+    -Argument "/d /c `"`"$BatPath`"`"" `
+    -WorkingDirectory $Root
+$Settings = New-ScheduledTaskSettingsSet `
+    -AllowStartIfOnBatteries `
+    -DontStopIfGoingOnBatteries `
+    -StartWhenAvailable `
+    -WakeToRun `
+    -ExecutionTimeLimit (New-TimeSpan -Hours 3)
 
 Register-ScheduledTask `
     -TaskName $TaskName `

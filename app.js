@@ -124,6 +124,10 @@ const AIRLINE_TICKERS = new Set([
 let selectedSectorEtf = "XLK";
 let selectedSectorRange = "1D";
 let selectedSectorBenchmark = "SPY";
+let selectedInstitutionId = "berkshire";
+let selectedInstitutionQuarterIdx = 0;
+let institutionalSearchQuery = "";
+let institutionalUiReady = false;
 const detailCache = {};
 const detailPromises = {};
 
@@ -1081,6 +1085,7 @@ function activateTab(name, { push = true, ticker = null, sub = null } = {}) {
   currentTab = name;
   if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
   if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
+  if (name === "institutional") renderInstitutional13f();
   if (name === "map") renderTreemap();
   if (push) {
     history.pushState({ tab: name, sub: name === "search" ? searchSubTab : (name === "calendar" ? calendarSubTab : null), ticker }, "");
@@ -1274,6 +1279,7 @@ function setupEvents() {
   setupScreenerEvents();
   setupCompareEvents();
   setupBacktestEvents();
+  setupSectorScrollPanels();
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
     const star = event.target.closest("[data-watch]");
@@ -1568,6 +1574,7 @@ function renderAll() {
   renderBulk();
   renderWatchlistBar();
   renderHealth();
+  renderInstitutional13f();
   renderAiBriefing();
   renderSocialSentiment();
 }
@@ -1617,6 +1624,8 @@ function metricColor(value, metric) {
 }
 
 let zoomView = null; // null | { sector } | { sector, industry }
+let treemapFocusTicker = null;
+let treemapFocusTimer = null;
 
 function renderTreemap() {
   const metric = byId("metricFilter").value;
@@ -1692,6 +1701,36 @@ function renderTreemap() {
   });
 
   renderSelected(stocks.find((item) => item.ticker === selectedTicker) || stocks[0] || data.stocks[0]);
+  pulseTreemapFocusTile();
+}
+
+function focusTreemapTicker(ticker, options = {}) {
+  const stock = stockByTicker(ticker);
+  if (!stock) return;
+  treemapFocusTicker = stock.ticker;
+  selectedTicker = stock.ticker;
+  zoomView = { sector: stock.sector, industry: stock.industry || "Other" };
+  const search = byId("heatmapSearch");
+  if (search) search.value = stock.ticker;
+  if (options.openMap !== false && currentTab !== "map") {
+    activateTab("map", { push: Boolean(options.push), ticker: stock.ticker });
+    return;
+  }
+  renderTreemap();
+  renderSelected(stock);
+}
+
+function pulseTreemapFocusTile() {
+  if (!treemapFocusTicker) return;
+  clearTimeout(treemapFocusTimer);
+  treemapFocusTimer = setTimeout(() => {
+    const tile = byId("stockTreemap")?.querySelector(`.heat-tile[data-ticker="${treemapFocusTicker}"]`);
+    if (tile) tile.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
+    treemapFocusTimer = setTimeout(() => {
+      treemapFocusTicker = null;
+      if (currentTab === "map") renderTreemap();
+    }, 3200);
+  }, 60);
 }
 
 function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
@@ -1728,6 +1767,7 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
 
   byId("treemapBack").addEventListener("click", () => { zoomView = null; renderTreemap(); });
   renderSelected(scoped.find((item) => item.ticker === selectedTicker) || scoped[0]);
+  pulseTreemapFocusTile();
 }
 
 function sectorRank(sector) {
@@ -1795,6 +1835,7 @@ function renderLegend(metric) {
 function heatTile(item, rect, metric, query) {
   const value = item[metric] ?? 0;
   const isSelected = item.ticker === selectedTicker;
+  const isFocused = item.ticker === treemapFocusTicker;
   const isMatch = query && heatmapItemMatchesQuery(item, query);
   const isDimmed = query && !isMatch;
   const label = fmtMetric(value, metric);
@@ -1805,7 +1846,7 @@ function heatTile(item, rect, metric, query) {
   const showMetric = rect.w > 62 && rect.h > 48;
   return `
     <button
-      class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
+      class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
       style="${rectStyle(rect)} background:${metricColor(value, metric)}"
       data-ticker="${item.ticker}"
       data-sector="${escapeHtml(item.sector)}"
@@ -3028,7 +3069,8 @@ function newsSummaryHtml(item) {
 
 function withDetail(item) {
   if (!item) return item;
-  const detail = detailCache[item.ticker];
+  const key = safeTicker(item.ticker);
+  const detail = detailCache[key] || detailCache[item.ticker];
   return detail ? { ...item, ...detail } : item;
 }
 
@@ -3049,7 +3091,10 @@ function loadStockDetail(ticker) {
     : fetch(`data/details/${encodeURIComponent(key)}.json`, { cache: "no-store" })
       .then((response) => response.ok ? response.json() : null)
       .then((detail) => {
-        if (detail) detailCache[key] = detail;
+        if (detail) {
+          detailCache[key] = detail;
+          if (ticker && ticker !== key) detailCache[ticker] = detail;
+        }
         return detail;
       })
       .catch(() => null);
@@ -3785,6 +3830,7 @@ function setupTickerAutocomplete(inputId, options = {}) {
     if (!multi) {
       input.value = ticker;
       closeList();
+      if (typeof options.onSelect === "function") options.onSelect(ticker);
       input.dispatchEvent(new Event("change", { bubbles: true }));
       return;
     }
@@ -3862,8 +3908,10 @@ function setupTickerSearchHelpers() {
   setupTickerAutocomplete("tickerSearch");
   setupTickerAutocomplete("bulkInput", { multi: true });
   setupTickerAutocomplete("compareInput", { multi: true });
-  setupTickerAutocomplete("backtestInput", { multi: true });
-  setupTickerAutocomplete("heatmapSearch");
+  setupTickerAutocomplete("backtestTickerInput");
+  setupTickerAutocomplete("heatmapSearch", {
+    onSelect: (ticker) => focusTreemapTicker(ticker, { push: false, openMap: false }),
+  });
 }
 
 function sectorBenchmarkTickerForItem(item) {
@@ -4501,7 +4549,7 @@ function renderFundamentals(item) {
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
       <h3>Fundamentals</h3>
-      <span>${hasFundamentals ? "Nasdaq detail snapshot · 목표가는 Nasdaq 제공 1Y 집계값" : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
+      <span>${hasFundamentals ? (f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC 보완" : f.source === "sec" ? "SEC EDGAR · 분기 재무 공시" : f.source === "nasdaq+sec" || f.source === "nasdaq+sec+yahoo" ? "Nasdaq + SEC + Yahoo · NYSE 등 전 거래소" : "Nasdaq + SEC/Yahoo 스냅샷") : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
     </div>
     <div class="fund-scroll">
       <table>
@@ -4690,6 +4738,253 @@ const MARKET_GROUPS = [
     ["PDBC", "종합 원자재 (PDBC)"], ["GSG", "종합 원자재 (GSG)"]
   ] }
 ];
+
+const ISSUER_TICKER_HINTS = {
+  "APPLE INC": "AAPL",
+  "AMAZON COM INC": "AMZN",
+  "ALPHABET INC": "GOOGL",
+  "MICROSOFT CORP": "MSFT",
+  "META PLATFORMS INC": "META",
+  "NVIDIA CORP": "NVDA",
+  "TESLA INC": "TSLA",
+  "BERKSHIRE HATHAWAY INC": "BRK.B",
+  "JPMORGAN CHASE & CO": "JPM",
+  "BANK AMERICA CORP": "BAC",
+  "CHEVRON CORP NEW": "CVX",
+  "CHEVRON CORPORATION": "CVX",
+  "COCA COLA CO": "KO",
+  "AMERICAN EXPRESS CO": "AXP",
+  "WELLS FARGO & CO NEW": "WFC",
+  "CITIGROUP INC": "C",
+  "GOLDMAN SACHS GROUP INC": "GS",
+  "MORGAN STANLEY": "MS",
+  "VISA INC": "V",
+  "MASTERCARD INC": "MA",
+  "UNITEDHEALTH GROUP INC": "UNH",
+  "JOHNSON & JOHNSON": "JNJ",
+  "ELI LILLY & CO": "LLY",
+  "PROCTER & GAMBLE CO": "PG",
+  "COSTCO WHSL CORP NEW": "COST",
+  "HOME DEPOT INC": "HD",
+  "NETFLIX INC": "NFLX",
+  "PALANTIR TECHNOLOGIES INC": "PLTR",
+  "ADVANCED MICRO DEVICES INC": "AMD",
+  "BROADCOM INC": "AVGO",
+};
+
+function normalizeIssuerName(name) {
+  return String(name || "")
+    .toUpperCase()
+    .replace(/[.,]/g, "")
+    .replace(/\s+(INC|CORP|CO|LTD|PLC|NEW|HLDGS|HOLDINGS|GROUP)\b/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function resolveIssuerTicker(issuer) {
+  const upper = String(issuer || "").toUpperCase().trim();
+  if (ISSUER_TICKER_HINTS[upper]) return ISSUER_TICKER_HINTS[upper];
+  const norm = normalizeIssuerName(issuer);
+  const byCompany = data.stocks.find((stock) => normalizeIssuerName(stock.company) === norm);
+  if (byCompany) return byCompany.ticker;
+  const first = norm.split(" ")[0];
+  if (!first || first.length < 3) return null;
+  const fuzzy = data.stocks.find((stock) => normalizeIssuerName(stock.company).startsWith(first));
+  return fuzzy?.ticker || null;
+}
+
+function institutional13fData() {
+  return window.INSTITUTIONAL_13F || { institutions: [] };
+}
+
+function institutionQuarterRows(inst) {
+  if (Array.isArray(inst.quarters) && inst.quarters.length) return inst.quarters;
+  if ((inst.holdings || []).length) {
+    return [{
+      reportDate: inst.reportDate,
+      reportLabel: inst.reportDate,
+      filedDate: inst.filedDate,
+      accession: inst.accession,
+      holdings: inst.holdings,
+    }];
+  }
+  return [];
+}
+
+function holdingKey(row) {
+  return `${row.issuer || ""}|${row.titleOfClass || ""}`;
+}
+
+function holdingQuarterDelta(current, prior, row) {
+  const key = holdingKey(row);
+  const prev = (prior?.holdings || []).find((h) => holdingKey(h) === key);
+  if (!prev) return { text: "신규", cls: "is-new" };
+  const delta = Number(row.shares || 0) - Number(prev.shares || 0);
+  if (!delta) return { text: "유지", cls: "is-flat" };
+  const pct = prev.shares ? ((delta / prev.shares) * 100) : null;
+  const sign = delta > 0 ? "+" : "";
+  const pctText = pct != null ? ` (${sign}${pct.toFixed(1)}%)` : "";
+  return {
+    text: `${sign}${delta.toLocaleString()}${pctText}`,
+    cls: delta > 0 ? "is-up" : "is-down",
+  };
+}
+
+function setupInstitutionalUi() {
+  if (institutionalUiReady) return;
+  const search = byId("institutionalSearch");
+  const select = byId("institutionalSelect");
+  if (search) {
+    search.addEventListener("input", () => {
+      institutionalSearchQuery = search.value.trim().toLowerCase();
+      renderInstitutional13f();
+    });
+  }
+  if (select) {
+    select.addEventListener("change", () => {
+      selectedInstitutionId = select.value;
+      selectedInstitutionQuarterIdx = 0;
+      renderInstitutional13f();
+    });
+  }
+  institutionalUiReady = true;
+}
+
+function renderInstitutional13f() {
+  setupInstitutionalUi();
+  const payload = institutional13fData();
+  const institutions = (payload.institutions || []).filter((inst) => {
+    if (inst.status !== "ok") return false;
+    return institutionQuarterRows(inst).length > 0;
+  });
+  const meta = byId("institutionalMeta");
+  const select = byId("institutionalSelect");
+  const detail = byId("institutionalDetail");
+  if (!meta || !detail) return;
+
+  const schedule = payload.updateSchedule === "quarterly"
+    ? "분기별 갱신 (13F 공시 주기)"
+    : "스냅샷 갱신";
+  meta.innerHTML = `
+    <span>데이터 출처: <strong>${escapeHtml(payload.source || "SEC EDGAR 13F-HR")}</strong></span>
+    <span>갱신 주기: <strong>${escapeHtml(schedule)}</strong></span>
+    <span>마지막 빌드: <strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></span>
+    <span>${escapeHtml(payload.note || "")}</span>
+  `;
+
+  if (!institutions.length) {
+    if (select) select.innerHTML = "";
+    detail.innerHTML = `<p class="muted">13F 데이터를 불러오지 못했습니다. <code>python scripts/build_13f_snapshot.py</code> 실행 후 다시 시도하세요.</p>`;
+    return;
+  }
+
+  const filtered = institutions.filter((inst) => {
+    if (!institutionalSearchQuery) return true;
+    const hay = `${inst.name} ${inst.manager || ""} ${inst.id}`.toLowerCase();
+    return hay.includes(institutionalSearchQuery);
+  });
+  const list = filtered.length ? filtered : institutions;
+
+  if (!list.some((inst) => inst.id === selectedInstitutionId)) {
+    selectedInstitutionId = list[0].id;
+    selectedInstitutionQuarterIdx = 0;
+  }
+
+  if (select) {
+    const prev = select.value;
+    select.innerHTML = list.map((inst) => {
+      const q = institutionQuarterRows(inst)[0];
+      const label = inst.manager
+        ? `${inst.name} · ${inst.manager}`
+        : inst.name;
+      const suffix = q?.reportLabel || q?.reportDate || "";
+      return `<option value="${escapeHtml(inst.id)}">${escapeHtml(label)}${suffix ? ` (${escapeHtml(suffix)})` : ""}</option>`;
+    }).join("");
+    select.value = list.some((inst) => inst.id === selectedInstitutionId) ? selectedInstitutionId : list[0].id;
+    if (prev !== select.value) selectedInstitutionQuarterIdx = 0;
+    selectedInstitutionId = select.value;
+  }
+
+  const active = list.find((inst) => inst.id === selectedInstitutionId) || list[0];
+  const quarters = institutionQuarterRows(active);
+  if (selectedInstitutionQuarterIdx >= quarters.length) selectedInstitutionQuarterIdx = 0;
+  const current = quarters[selectedInstitutionQuarterIdx] || quarters[0];
+  const prior = quarters[selectedInstitutionQuarterIdx + 1] || null;
+  const rows = (current?.holdings || []).slice(0, 25);
+
+  const quarterTabs = quarters.length > 1
+    ? `<div class="inst-quarter-tabs" role="tablist" aria-label="분기 선택">
+        ${quarters.map((q, idx) => `
+          <button type="button" class="inst-quarter-btn ${idx === selectedInstitutionQuarterIdx ? "is-active" : ""}" data-qidx="${idx}">
+            ${escapeHtml(q.reportLabel || q.reportDate || `분기 ${idx + 1}`)}
+          </button>
+        `).join("")}
+      </div>`
+    : "";
+
+  detail.innerHTML = `
+    <div class="inst-detail-head">
+      <div>
+        <h3>${escapeHtml(active.name)}</h3>
+        <p>${escapeHtml(active.manager || "")} · ${escapeHtml(current?.reportLabel || current?.reportDate || "-")} · 제출 ${escapeHtml(current?.filedDate || "-")}</p>
+      </div>
+      <p>상위 ${rows.length}개 · 전분기 대비 주식수 변화</p>
+    </div>
+    ${quarterTabs}
+    <div class="table-wrap">
+      <table class="inst-holdings-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>종목</th>
+            <th>티커</th>
+            <th>보유가치</th>
+            <th>비중</th>
+            <th>주식수</th>
+            <th>전분기</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row, idx) => {
+            const ticker = resolveIssuerTicker(row.issuer);
+            const tickerCell = ticker && stockByTicker(ticker)
+              ? `<button type="button" class="ticker-link" data-ticker="${escapeHtml(ticker)}">${escapeHtml(ticker)}</button>`
+              : `<span class="muted">-</span>`;
+            const delta = holdingQuarterDelta(current, prior, row);
+            return `
+              <tr data-ticker="${escapeHtml(ticker || "")}">
+                <td>${idx + 1}</td>
+                <td>${escapeHtml(row.issuer || "")}${row.titleOfClass ? ` <span class="muted">(${escapeHtml(row.titleOfClass)})</span>` : ""}</td>
+                <td>${tickerCell}</td>
+                <td>$${Number(row.valueM || 0).toLocaleString(undefined, { maximumFractionDigits: 1 })}M</td>
+                <td>${Number(row.weightPct || 0).toFixed(2)}%</td>
+                <td>${Number(row.shares || 0).toLocaleString()}</td>
+                <td><span class="inst-delta ${delta.cls}">${escapeHtml(delta.text)}</span></td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  detail.querySelectorAll(".inst-quarter-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      selectedInstitutionQuarterIdx = Number(btn.dataset.qidx || 0);
+      renderInstitutional13f();
+    });
+  });
+  detail.querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      selectTicker(btn.dataset.ticker, { openSearch: true });
+    });
+  });
+  detail.querySelectorAll("tbody tr[data-ticker]").forEach((row) => {
+    if (!row.dataset.ticker) return;
+    row.addEventListener("click", () => selectTicker(row.dataset.ticker, { openSearch: true }));
+  });
+}
 
 function renderHealth() {
   renderMarkets();
@@ -5308,7 +5603,7 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
-const SW_VERSION = "20260617r";
+const SW_VERSION = "20260617x";
 
 function setupPwa() {
   if ("serviceWorker" in navigator) {
@@ -5627,6 +5922,7 @@ function setupEarningsEvents() {
 
 // ===== 포트폴리오 시뮬레이터 (buy-and-hold) =====
 const BACKTEST_MAX_TICKERS = 10;
+let backtestTickers = [];
 const BACKTEST_BENCHMARK_OPTIONS = [
   ["SPY", "S&P 500"],
   ["QQQ", "Nasdaq 100"],
@@ -5638,10 +5934,64 @@ const BACKTEST_BENCHMARK_OPTIONS = [
   ["SOXX", "반도체"],
 ];
 let backtestRunning = false;
+let backtestDatesProgrammatic = false;
 
 function backtestTickersFromInput() {
-  const raw = byId("backtestInput")?.value || "";
-  return resolveTickerListInput(raw).slice(0, BACKTEST_MAX_TICKERS);
+  return backtestTickers.slice(0, BACKTEST_MAX_TICKERS);
+}
+
+function renderBacktestTickerChips() {
+  const box = byId("backtestTickerList");
+  if (!box) return;
+  box.innerHTML = backtestTickers.length
+    ? backtestTickers.map((ticker) => {
+      const stock = stockByTicker(ticker);
+      const label = stock?.company ? `${ticker} · ${stock.company}` : ticker;
+      return `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}" title="${escapeHtml(label)}">${escapeHtml(ticker)} <span>x</span></button>`;
+    }).join("")
+    : `<span class="muted">종목을 하나씩 추가하세요. (최대 ${BACKTEST_MAX_TICKERS}개)</span>`;
+  box.querySelectorAll(".compare-chip").forEach((chip) => {
+    chip.addEventListener("click", () => removeBacktestTicker(chip.dataset.ticker));
+  });
+  const weightsInput = byId("backtestWeights");
+  if (weightsInput && byId("backtestWeightMode")?.value === "custom" && backtestTickers.length) {
+    const each = Math.round(100 / backtestTickers.length);
+    const parts = backtestTickers.map((_, i) => (i === backtestTickers.length - 1
+      ? 100 - each * (backtestTickers.length - 1)
+      : each));
+    weightsInput.placeholder = parts.join(",");
+  }
+}
+
+function addBacktestTicker(raw) {
+  const resolved = resolveTickerListInput(String(raw || "").trim());
+  const ticker = resolved[0];
+  if (!ticker) {
+    setBacktestStatus("유효한 티커를 입력하세요.");
+    return false;
+  }
+  if (backtestTickers.includes(ticker)) {
+    setBacktestStatus(`${ticker}는 이미 추가되어 있습니다.`);
+    return false;
+  }
+  if (backtestTickers.length >= BACKTEST_MAX_TICKERS) {
+    setBacktestStatus(`최대 ${BACKTEST_MAX_TICKERS}개까지 추가할 수 있습니다.`);
+    return false;
+  }
+  backtestTickers.push(ticker);
+  renderBacktestTickerChips();
+  setBacktestStatus("");
+  return true;
+}
+
+function removeBacktestTicker(ticker) {
+  backtestTickers = backtestTickers.filter((item) => item !== ticker);
+  renderBacktestTickerChips();
+}
+
+function setBacktestTickers(list) {
+  backtestTickers = [...new Set((list || []).map((t) => String(t).toUpperCase()).filter((t) => stockByTicker(t)))].slice(0, BACKTEST_MAX_TICKERS);
+  renderBacktestTickerChips();
 }
 
 function setBacktestStatus(text) {
@@ -5677,6 +6027,12 @@ function backtestPeriodBars() {
 function backtestCustomStartDate() {
   if (backtestPeriodMode() !== "custom") return null;
   const raw = byId("backtestStartDate")?.value || "";
+  return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
+}
+
+function backtestCustomEndDate() {
+  if (backtestPeriodMode() !== "custom") return null;
+  const raw = byId("backtestEndDate")?.value || "";
   return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
 }
 
@@ -5726,19 +6082,30 @@ function backtestCommonDateList(seriesList) {
   return refDates.filter((d) => dated.every((s) => s.dateMap.has(d)));
 }
 
-function backtestResolveDates(seriesList, periodBars, customStart) {
+function backtestResolveDates(seriesList, periodBars, customStart, customEnd) {
   const allDates = backtestCommonDateList(seriesList);
   if (!allDates.length) return { dates: [], error: "공통 거래일을 찾지 못했습니다." };
-  const endDate = allDates[allDates.length - 1];
+  const latest = allDates[allDates.length - 1];
+  let endDate = latest;
+  if (customEnd) {
+    const capped = allDates.filter((d) => d <= customEnd);
+    if (!capped.length) {
+      return { dates: [], error: `종료일(${customEnd})이 모든 종목 데이터보다 이릅니다.` };
+    }
+    endDate = capped[capped.length - 1];
+  }
   let dates;
   if (customStart) {
     const first = allDates.find((d) => d >= customStart);
     if (!first) {
       return { dates: [], error: `시작일(${customStart})이 모든 종목 데이터보다 늦습니다. 더 이른 날짜를 선택하세요.` };
     }
+    if (first > endDate) {
+      return { dates: [], error: "시작일이 종료일보다 늦습니다." };
+    }
     dates = allDates.filter((d) => d >= first && d <= endDate);
   } else {
-    const endIdx = allDates.length - 1;
+    const endIdx = allDates.indexOf(endDate);
     const startIdx = Math.max(0, endIdx - periodBars + 1);
     dates = allDates.slice(startIdx, endIdx + 1);
   }
@@ -5894,15 +6261,23 @@ async function runPortfolioBacktest() {
   const periodMode = backtestPeriodMode();
   const periodBars = backtestPeriodBars();
   const customStart = backtestCustomStartDate();
+  const customEnd = backtestCustomEndDate();
   if (tickers.length < 2) {
-    setBacktestStatus("2개 이상의 유효한 티커를 입력하세요.");
+    setBacktestStatus("2개 이상의 종목을 추가하세요.");
     byId("backtestResults").hidden = true;
     return;
   }
-  if (periodMode === "custom" && !customStart) {
-    setBacktestStatus("시작일을 선택하세요.");
-    byId("backtestResults").hidden = true;
-    return;
+  if (periodMode === "custom") {
+    if (!customStart || !customEnd) {
+      setBacktestStatus("시작일과 종료일을 모두 선택하세요.");
+      byId("backtestResults").hidden = true;
+      return;
+    }
+    if (customStart > customEnd) {
+      setBacktestStatus("시작일이 종료일보다 늦을 수 없습니다.");
+      byId("backtestResults").hidden = true;
+      return;
+    }
   }
   const weightResult = backtestWeightsForTickers(tickers);
   if (weightResult.error) {
@@ -5949,9 +6324,14 @@ async function runPortfolioBacktest() {
       return;
     }
     activeWeights = activeWeights.map((w) => (w / weightSum) * 100);
-    let dateResult = backtestResolveDates(valid, periodBars, customStart);
+    let dateResult = backtestResolveDates(valid, periodBars, customStart, customEnd);
     if (!dateResult.dates.length && periodMode === "preset" && periodBars) {
-      dateResult = backtestResolveDates(valid, Math.min(periodBars, valid.reduce((m, s) => Math.min(m, s.dateMap.size), Infinity)), null);
+      dateResult = backtestResolveDates(
+        valid,
+        Math.min(periodBars, valid.reduce((m, s) => Math.min(m, s.dateMap.size), Infinity)),
+        null,
+        null,
+      );
     }
     if (!dateResult.dates.length) {
       setBacktestStatus(dateResult.error || "시뮬레이션 기간을 계산하지 못했습니다.");
@@ -5992,7 +6372,7 @@ async function runPortfolioBacktest() {
       return { ticker: s.ticker, company: s.company, startPrice, endPrice, returnPct, weightPct, invested, finalValue: finalStockValue };
     }).sort((a, b) => b.returnPct - a.returnPct);
     const periodLabel = periodMode === "custom"
-      ? `시작 ${startDate}`
+      ? `${startDate} → ${endDate}`
       : (byId("backtestPeriod")?.selectedOptions?.[0]?.textContent || "");
     const weightLabel = byId("backtestWeightMode")?.value === "custom" ? "직접 비중" : "동일 비중";
     renderBacktestResults({
@@ -6037,49 +6417,126 @@ function populateBacktestBenchmarks() {
   if (!sel.value) sel.value = "SPY";
 }
 
-function initBacktestStartDate() {
-  const input = byId("backtestStartDate");
-  if (!input) return;
-  const end = backtestSnapshotIsoDate() || new Date().toISOString().slice(0, 10);
-  input.max = end;
-  input.min = "2021-06-17";
-  const d = new Date(end);
-  d.setFullYear(d.getFullYear() - 3);
-  input.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+function backtestSnapshotEndDate() {
+  return backtestSnapshotIsoDate() || new Date().toISOString().slice(0, 10);
+}
+
+function shiftIsoDateByYears(iso, years) {
+  const d = new Date(`${iso}T12:00:00`);
+  d.setFullYear(d.getFullYear() + years);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function backtestPresetYears(periodValue) {
+  if (periodValue === "252") return 1;
+  if (periodValue === "1260") return 5;
+  if (periodValue === "756") return 3;
+  return null;
+}
+
+function applyBacktestPresetDates() {
+  const period = byId("backtestPeriod")?.value || "756";
+  const years = backtestPresetYears(period);
+  if (!years) return;
+  const startInput = byId("backtestStartDate");
+  const endInput = byId("backtestEndDate");
+  if (!startInput || !endInput) return;
+  const end = backtestSnapshotEndDate();
+  const min = "2021-06-17";
+  startInput.min = min;
+  endInput.min = min;
+  startInput.max = end;
+  endInput.max = end;
+  backtestDatesProgrammatic = true;
+  endInput.value = end;
+  startInput.value = shiftIsoDateByYears(end, -years);
+  backtestDatesProgrammatic = false;
+}
+
+function initBacktestDateRange() {
+  applyBacktestPresetDates();
 }
 
 function syncBacktestCustomUi() {
   const period = byId("backtestPeriod")?.value;
-  const startWrap = byId("backtestStartWrap");
-  if (startWrap) startWrap.hidden = period !== "custom";
+  if (period !== "custom") applyBacktestPresetDates();
   const weightMode = byId("backtestWeightMode")?.value;
   const weightsWrap = byId("backtestWeightsWrap");
   if (weightsWrap) weightsWrap.hidden = weightMode !== "custom";
 }
 
+function setBacktestPeriodToCustom() {
+  if (backtestDatesProgrammatic) return;
+  const sel = byId("backtestPeriod");
+  if (sel && sel.value !== "custom") sel.value = "custom";
+}
+
+function submitBacktestTickerAdd() {
+  const input = byId("backtestTickerInput");
+  if (!input) return;
+  if (addBacktestTicker(input.value)) input.value = "";
+}
+
 function setupBacktestEvents() {
   populateBacktestBenchmarks();
-  initBacktestStartDate();
+  initBacktestDateRange();
   syncBacktestCustomUi();
+  if (!backtestTickers.length) setBacktestTickers(watchlist.slice(0, 5));
+  else renderBacktestTickerChips();
   const run = () => runPortfolioBacktest();
   byId("backtestRun")?.addEventListener("click", run);
+  byId("backtestTickerAdd")?.addEventListener("click", submitBacktestTickerAdd);
+  byId("backtestTickerInput")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      submitBacktestTickerAdd();
+    }
+  });
   byId("backtestFromWatchlist")?.addEventListener("click", () => {
-    const input = byId("backtestInput");
-    if (input) input.value = watchlist.slice(0, BACKTEST_MAX_TICKERS).join(", ");
+    setBacktestTickers(watchlist.slice(0, BACKTEST_MAX_TICKERS));
     run();
   });
-  const input = byId("backtestInput");
-  if (input && !input.value) input.value = watchlist.slice(0, 5).join(", ");
   byId("backtestPeriod")?.addEventListener("change", () => {
     syncBacktestCustomUi();
+    if (byId("backtestResults")?.hidden) setBacktestStatus("");
     if (!byId("backtestResults")?.hidden) run();
   });
-  byId("backtestWeightMode")?.addEventListener("change", syncBacktestCustomUi);
-  ["backtestBenchmark", "backtestInvestment", "backtestStartDate", "backtestWeights"].forEach((id) => {
+  byId("backtestWeightMode")?.addEventListener("change", () => {
+    syncBacktestCustomUi();
+    renderBacktestTickerChips();
+  });
+  ["backtestBenchmark", "backtestInvestment", "backtestWeights"].forEach((id) => {
     byId(id)?.addEventListener("change", () => {
       if (!byId("backtestResults")?.hidden) run();
     });
   });
+  ["backtestStartDate", "backtestEndDate"].forEach((id) => {
+    byId(id)?.addEventListener("change", () => {
+      setBacktestPeriodToCustom();
+      const start = byId("backtestStartDate")?.value;
+      const end = byId("backtestEndDate")?.value;
+      if (start && end && start > end) setBacktestStatus("시작일이 종료일보다 늦습니다.");
+      else if (byId("backtestResults")?.hidden) setBacktestStatus("");
+      if (!byId("backtestResults")?.hidden) run();
+    });
+  });
+}
+
+function bindLocalScrollWheel(container) {
+  if (!container || container.dataset.localScrollBound) return;
+  container.dataset.localScrollBound = "1";
+  container.addEventListener("wheel", (event) => {
+    if (container.scrollHeight <= container.clientHeight + 1) return;
+    const delta = event.deltaY;
+    const atTop = container.scrollTop <= 0;
+    const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 1;
+    if ((delta < 0 && atTop) || (delta > 0 && atBottom)) return;
+    event.preventDefault();
+  }, { passive: false });
+}
+
+function setupSectorScrollPanels() {
+  document.querySelectorAll(".sector-scroll-panel, .sector-chart-panel, .sector-etf-rs-scroll").forEach(bindLocalScrollWheel);
 }
 
 loadData();

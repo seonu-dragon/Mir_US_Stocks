@@ -573,16 +573,19 @@ main {
   .index-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+.tabs-scroll-wrap {
+  margin-bottom: 10px;
+}
+
 .tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin-bottom: 10px;
 }
 
 .tabs .tab {
   flex: 1 1 88px;
-  min-width: 0;
+  min-width: max-content;
 }
 
 .tab {
@@ -2081,10 +2084,6 @@ footer {
     align-items: stretch;
   }
 
-  .tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .treemap {
     min-height: 620px;
   }
@@ -2164,22 +2163,80 @@ footer {
   main { padding: 10px 10px 20px; }
   .panel { padding: 10px; }
 
-  /* Tabs: one swipeable row instead of stacking into many rows */
+  /* Tabs: horizontal swipe row — full labels, no truncation */
+  .tabs-scroll-wrap {
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 10px;
+    touch-action: pan-x;
+  }
+
+  .tabs-scroll-wrap::before,
+  .tabs-scroll-wrap::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 4px;
+    width: 28px;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .tabs-scroll-wrap::before {
+    left: 0;
+    background: linear-gradient(to right, var(--bg) 15%, transparent);
+  }
+
+  .tabs-scroll-wrap::after {
+    right: 0;
+    background: linear-gradient(to left, var(--bg) 15%, transparent);
+  }
+
+  .tabs-scroll-wrap.can-scroll-left::before,
+  .tabs-scroll-wrap.can-scroll-right::after {
+    opacity: 1;
+  }
+
   .tabs {
     display: flex;
     flex-wrap: nowrap;
     overflow-x: auto;
     gap: 6px;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 2px;
     scrollbar-width: none;
-    padding-bottom: 2px;
+    padding: 0 2px 4px;
   }
+
   .tabs::-webkit-scrollbar { display: none; }
-  .tab {
-    flex: 0 0 auto;
-    padding: 0 14px;
+
+  /* Show ~3 tabs per screen; rest revealed by horizontal swipe */
+  .tabs .tab {
+    flex: 0 0 calc((100vw - 32px) / 3);
+    box-sizing: border-box;
+    min-width: 0;
+    padding: 0 8px;
     white-space: nowrap;
+    text-align: center;
     font-size: 13px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  @media (min-width: 400px) {
+    .tabs .tab {
+      flex-basis: calc((100vw - 42px) / 3.5);
+    }
+  }
+
+  @media (min-width: 520px) {
+    .tabs .tab {
+      flex-basis: calc((100vw - 48px) / 4);
+    }
   }
 
   /* Sub-tabs (섹터 흐름) also scroll horizontally */
@@ -4114,4 +4171,82 @@ footer {
 @media (max-width: 640px) {
   .watchlist-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .watchlist-head { flex-direction: column; align-items: flex-start; }
+}
+
+/* ==========================================================================
+   Mobile tab carousel — last in file so it always wins
+   ========================================================================== */
+.tabs-scroll-wrap.is-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  margin-bottom: 10px;
+  touch-action: pan-x;
+}
+
+.tabs-scroll-wrap.is-carousel::before,
+.tabs-scroll-wrap.is-carousel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 4px;
+  width: 28px;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.tabs-scroll-wrap.is-carousel::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg) 20%, transparent);
+}
+
+.tabs-scroll-wrap.is-carousel::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg) 20%, transparent);
+}
+
+.tabs-scroll-wrap.is-carousel.can-scroll-left::before,
+.tabs-scroll-wrap.is-carousel.can-scroll-right::after {
+  opacity: 1;
+}
+
+.tabs.is-carousel {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  gap: 6px;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: 2px;
+  scrollbar-width: none;
+  padding: 0 2px 4px;
+  margin: 0;
+}
+
+.tabs.is-carousel::-webkit-scrollbar {
+  display: none;
+}
+
+.tabs.is-carousel .tab {
+  flex: 0 0 var(--tab-width, 108px);
+  width: var(--tab-width, 108px);
+  min-width: var(--tab-width, 108px);
+  max-width: var(--tab-width, 108px);
+  box-sizing: border-box;
+  padding: 0 6px;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.2;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }

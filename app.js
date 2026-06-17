@@ -982,6 +982,72 @@ function activateCalendarSub(name, { push = false } = {}) {
   }
 }
 
+const MOBILE_TABS_MQ = "(max-width: 960px)";
+
+function layoutMobileTabs() {
+  const wrap = byId("tabsScrollWrap");
+  const tabsEl = byId("mainTabs");
+  if (!wrap || !tabsEl) return;
+
+  const isCarousel = window.matchMedia(MOBILE_TABS_MQ).matches;
+  wrap.classList.toggle("is-carousel", isCarousel);
+  tabsEl.classList.toggle("is-carousel", isCarousel);
+
+  if (!isCarousel) {
+    tabsEl.style.removeProperty("--tab-width");
+    tabsEl.querySelectorAll(".tab").forEach((tab) => {
+      tab.style.removeProperty("width");
+      tab.style.removeProperty("flex");
+      tab.style.removeProperty("minWidth");
+      tab.style.removeProperty("maxWidth");
+    });
+    updateTabsScrollHints();
+    return;
+  }
+
+  const gap = 6;
+  const width = wrap.clientWidth;
+  const visible = width >= 560 ? 4 : width >= 400 ? 3.5 : 3;
+  const gapCount = visible >= 4 ? 3 : visible >= 3.5 ? 2.5 : 2;
+  const tabWidth = Math.max(96, Math.floor((width - gap * gapCount) / visible));
+
+  tabsEl.style.setProperty("--tab-width", `${tabWidth}px`);
+  tabsEl.querySelectorAll(".tab").forEach((tab) => {
+    const px = `${tabWidth}px`;
+    tab.style.width = px;
+    tab.style.flex = `0 0 ${px}`;
+    tab.style.minWidth = px;
+    tab.style.maxWidth = px;
+  });
+
+  updateTabsScrollHints();
+}
+
+function scrollTabIntoView(tabBtn) {
+  if (!tabBtn) return;
+  const tabsEl = byId("mainTabs");
+  if (!tabsEl || !tabsEl.classList.contains("is-carousel")) return;
+  const tabsLeft = tabsEl.getBoundingClientRect().left;
+  const tabsWidth = tabsEl.clientWidth;
+  const btnLeft = tabBtn.offsetLeft;
+  const btnWidth = tabBtn.offsetWidth;
+  const target = btnLeft - tabsLeft - (tabsWidth - btnWidth) / 2;
+  tabsEl.scrollTo({ left: Math.max(0, target), behavior: "smooth" });
+}
+
+function updateTabsScrollHints() {
+  const wrap = byId("tabsScrollWrap");
+  const tabsEl = byId("mainTabs");
+  if (!wrap || !tabsEl) return;
+  if (!wrap.classList.contains("is-carousel")) {
+    wrap.classList.remove("can-scroll-left", "can-scroll-right");
+    return;
+  }
+  const maxScroll = tabsEl.scrollWidth - tabsEl.clientWidth;
+  wrap.classList.toggle("can-scroll-left", tabsEl.scrollLeft > 4);
+  wrap.classList.toggle("can-scroll-right", maxScroll > 4 && tabsEl.scrollLeft < maxScroll - 4);
+}
+
 function activateTab(name, { push = true, ticker = null, sub = null } = {}) {
   const resolved = normalizeTabRequest(name, sub);
   name = resolved.tab;
@@ -992,6 +1058,7 @@ function activateTab(name, { push = true, ticker = null, sub = null } = {}) {
   document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
   byId(`tab-${name}`).classList.add("is-active");
+  scrollTabIntoView(tabBtn);
   currentTab = name;
   if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
   if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
@@ -1008,6 +1075,18 @@ function setupTabs() {
       activateTab(name, { push: name !== currentTab });
     });
   });
+
+  const tabsEl = byId("mainTabs");
+  const wrap = byId("tabsScrollWrap");
+  if (tabsEl && wrap) {
+    tabsEl.addEventListener("scroll", updateTabsScrollHints, { passive: true });
+    window.addEventListener("resize", layoutMobileTabs);
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(() => layoutMobileTabs()).observe(wrap);
+    }
+    requestAnimationFrame(layoutMobileTabs);
+  }
+
   // Browser back/forward restores the previous tab (and ticker) instead of leaving the site.
   window.addEventListener("popstate", (event) => {
     const state = event.state || { tab: "map", ticker: null, sub: null };
@@ -4948,7 +5027,7 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
-const SW_VERSION = "20260617f";
+const SW_VERSION = "20260617i";
 
 function setupPwa() {
   if ("serviceWorker" in navigator) {

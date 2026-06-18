@@ -1261,6 +1261,7 @@ function applyCommunityBoardTickerFilter(ticker) {
     ? (resolveCommunityTickerInput(ticker) || String(ticker).trim().toUpperCase())
     : "";
   communityBoardTickerFilter = resolved;
+  communityBoardPage = 1;
   const filterEl = byId("communityFilter");
   const tickerEl = byId("communityFilterTicker");
   if (filterEl) filterEl.value = "all";
@@ -7132,6 +7133,8 @@ let communityPollTimer = null;
 let communityFetchPromise = null;
 let communityReplyPostId = null;
 let communitySortMode = "latest";
+const COMMUNITY_PAGE_SIZE = 10;
+let communityBoardPage = 1;
 const COMMUNITY_MINICHART_KEY = "mir_community_minichart_v1";
 let communityShowMiniChart = localStorage.getItem(COMMUNITY_MINICHART_KEY) !== "0";
 // 새 글/댓글 배너용 — 마지막으로 본 글·댓글 id 집합(null이면 첫 로드 전).
@@ -7634,6 +7637,7 @@ function renderCommunityHotTickersPanel() {
     const input = byId("communityFilterTicker");
     if (input) input.value = "";
     communityBoardTickerFilter = "";
+    communityBoardPage = 1;
     renderCommunityBoard();
   });
 }
@@ -7687,14 +7691,22 @@ function renderCommunityBoard() {
     return;
   }
 
-  meta.textContent = posts.length
-    ? `${posts.length}개 글${filterTicker ? ` · ${filterTicker} 필터` : ""}`
-    : (communityBoardError ? "글을 불러오지 못했습니다." : "아직 등록된 글이 없습니다. 첫 글을 남겨보세요.");
-
   if (!posts.length) {
+    meta.textContent = communityBoardError ? "글을 불러오지 못했습니다." : "아직 등록된 글이 없습니다. 첫 글을 남겨보세요.";
     feed.innerHTML = `<div class="community-empty">${communityBoardError ? "게시판 연결을 확인한 뒤 새로고침해 주세요." : "트렌딩 탭에서 관심 종목을 보고, 종목 없이도 시장 의견을 남길 수 있습니다."}</div>`;
+    renderCommunityPagination(0);
     return;
   }
+
+  // 10개 단위 페이지네이션
+  const totalPages = Math.max(1, Math.ceil(posts.length / COMMUNITY_PAGE_SIZE));
+  if (communityBoardPage > totalPages) communityBoardPage = totalPages;
+  if (communityBoardPage < 1) communityBoardPage = 1;
+  const pageStart = (communityBoardPage - 1) * COMMUNITY_PAGE_SIZE;
+  const pagePosts = posts.slice(pageStart, pageStart + COMMUNITY_PAGE_SIZE);
+
+  meta.textContent = `${posts.length}개 글${filterTicker ? ` · ${filterTicker} 필터` : ""}`
+    + (totalPages > 1 ? ` · ${communityBoardPage}/${totalPages}페이지` : "");
 
   // 재렌더(특히 12초 자동 새로고침) 시 작성 중이던 댓글 입력이 사라지지 않도록
   // 열려 있는 답글 입력칸의 내용·커서·포커스를 미리 보존한다.
@@ -7710,7 +7722,7 @@ function renderCommunityBoard() {
       }
     : null;
 
-  feed.innerHTML = posts.map((post) => {
+  feed.innerHTML = pagePosts.map((post) => {
     const stock = post.ticker ? stockByTicker(post.ticker) : null;
     const canDelete = post.clientId === clientId;
     const comments = Array.isArray(post.comments) ? post.comments : [];
@@ -7852,6 +7864,44 @@ function renderCommunityBoard() {
       }
     }
   }
+
+  renderCommunityPagination(totalPages);
+}
+
+// 10개 단위 페이지네이션 컨트롤(< 1 2 3 >). totalPages<=1 이면 숨김.
+function renderCommunityPagination(totalPages) {
+  const box = byId("communityPagination");
+  if (!box) return;
+  if (!totalPages || totalPages <= 1) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  const page = communityBoardPage;
+  const go = (p) => {
+    communityBoardPage = Math.min(totalPages, Math.max(1, p));
+    renderCommunityBoard();
+    byId("communityFeed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  // 현재 페이지 주변 최대 5개 번호만 노출
+  const windowSize = 5;
+  let from = Math.max(1, page - 2);
+  let to = Math.min(totalPages, from + windowSize - 1);
+  from = Math.max(1, to - windowSize + 1);
+  const nums = [];
+  for (let p = from; p <= to; p++) nums.push(p);
+  box.hidden = false;
+  box.innerHTML = `
+    <button type="button" class="community-page-btn" data-page="${page - 1}" ${page <= 1 ? "disabled" : ""}>‹</button>
+    ${from > 1 ? `<button type="button" class="community-page-btn" data-page="1">1</button>${from > 2 ? `<span class="community-page-ellipsis">…</span>` : ""}` : ""}
+    ${nums.map((p) => `<button type="button" class="community-page-btn${p === page ? " is-active" : ""}" data-page="${p}">${p}</button>`).join("")}
+    ${to < totalPages ? `${to < totalPages - 1 ? `<span class="community-page-ellipsis">…</span>` : ""}<button type="button" class="community-page-btn" data-page="${totalPages}">${totalPages}</button>` : ""}
+    <button type="button" class="community-page-btn" data-page="${page + 1}" ${page >= totalPages ? "disabled" : ""}>›</button>
+  `;
+  box.querySelectorAll(".community-page-btn").forEach((btn) => {
+    if (btn.disabled) return;
+    btn.addEventListener("click", () => go(Number(btn.dataset.page)));
+  });
 }
 
 async function fetchCommunityPosts({ silent = false } = {}) {
@@ -7950,6 +8000,7 @@ async function postCommunityMessage() {
     if (sortEl) sortEl.value = "latest";
     communityBoardTickerFilter = "";
     communitySortMode = "latest";
+    communityBoardPage = 1;
     communityClearNewBanner();
     await fetchCommunityPosts();
     if (data.post && data.post.id) communityHighlightPost(data.post.id);
@@ -8093,14 +8144,21 @@ function setupCommunityBoard() {
   });
 
   byId("communityRefresh")?.addEventListener("click", () => fetchCommunityPosts());
-  byId("communityFilter")?.addEventListener("change", renderCommunityBoard);
+  byId("communityFilter")?.addEventListener("change", () => {
+    communityBoardPage = 1;
+    renderCommunityBoard();
+  });
   byId("communitySort")?.addEventListener("change", (event) => {
     communitySortMode = event.target.value || "latest";
+    communityBoardPage = 1;
     renderCommunityBoard();
   });
   byId("communityFilterTicker")?.addEventListener("input", () => {
     clearTimeout(setupCommunityBoard._filterTimer);
-    setupCommunityBoard._filterTimer = setTimeout(renderCommunityBoard, 200);
+    setupCommunityBoard._filterTimer = setTimeout(() => {
+      communityBoardPage = 1;
+      renderCommunityBoard();
+    }, 200);
   });
   byId("communityClearMine")?.addEventListener("click", clearCommunityPostsMine);
 

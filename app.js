@@ -132,6 +132,8 @@ let institutionalUiReady = false;
 let institutionalSubTab = "13f";
 let congressSearchQuery = "";
 let selectedPoliticianId = "";
+let congressRankPage = 0;
+const CONGRESS_RANK_PAGE_SIZE = 15;
 let congressUiReady = false;
 let calendarEventsCache = [];
 let calendarFiltersReady = false;
@@ -5709,6 +5711,12 @@ function setupCongressUi() {
   congressUiReady = true;
 }
 
+function scrollToCongressDetail() {
+  const target = byId("congressDetail");
+  if (!target) return;
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 function renderCongressTrades() {
   setupCongressUi();
   const payload = congressTradesData();
@@ -5723,7 +5731,7 @@ function renderCongressTrades() {
   meta.innerHTML = `
     <div class="institutional-meta-grid">
       <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "Congress PTR")}</strong></article>
-      <article><span>갱신 주기</span><strong>미국 장마감 브리핑 (06:00 KST)</strong></article>
+      <article><span>갱신 주기</span><strong>매일 06:00 KST (미국 장마감 브리핑)</strong></article>
       <article><span>마지막 빌드</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
     </div>
     <p>${escapeHtml(payload.note || "")}</p>
@@ -5738,6 +5746,11 @@ function renderCongressTrades() {
   }
 
   const rankingRows = Array.isArray(payload.rankings) ? payload.rankings : [];
+  const rankTotal = rankingRows.length;
+  const rankPageCount = Math.max(1, Math.ceil(rankTotal / CONGRESS_RANK_PAGE_SIZE));
+  if (congressRankPage >= rankPageCount) congressRankPage = 0;
+  const rankStart = congressRankPage * CONGRESS_RANK_PAGE_SIZE;
+  const rankPageRows = rankingRows.slice(rankStart, rankStart + CONGRESS_RANK_PAGE_SIZE);
   if (rankings) {
     rankings.innerHTML = `
       <div class="congress-section-head">
@@ -5750,7 +5763,7 @@ function renderCongressTrades() {
             <tr><th>#</th><th>의원</th><th>의회</th><th>정당</th><th>추정 수익률</th><th>매수</th><th>매도</th></tr>
           </thead>
           <tbody>
-            ${rankingRows.slice(0, 50).map((row) => `
+            ${rankPageRows.length ? rankPageRows.map((row) => `
               <tr data-pol-id="${escapeHtml(row.id || "")}">
                 <td>${row.rank}</td>
                 <td><button type="button" class="congress-pol-link" data-pol-id="${escapeHtml(row.id || "")}">${escapeHtml(row.name || "")}</button></td>
@@ -5760,15 +5773,31 @@ function renderCongressTrades() {
                 <td>${row.buyCount || 0}</td>
                 <td>${row.sellCount || 0}</td>
               </tr>
-            `).join("")}
+            `).join("") : `<tr><td colspan="7" class="muted">랭킹 데이터가 없습니다.</td></tr>`}
           </tbody>
         </table>
       </div>
+      ${rankTotal > CONGRESS_RANK_PAGE_SIZE ? `
+        <nav class="congress-rank-pagination" aria-label="랭킹 페이지">
+          <button type="button" class="ghost-button congress-page-btn" data-rank-page="prev" ${congressRankPage <= 0 ? "disabled" : ""}>이전</button>
+          <span class="congress-page-label">${congressRankPage + 1} / ${rankPageCount} · ${rankStart + 1}–${Math.min(rankStart + CONGRESS_RANK_PAGE_SIZE, rankTotal)}위</span>
+          <button type="button" class="ghost-button congress-page-btn" data-rank-page="next" ${congressRankPage >= rankPageCount - 1 ? "disabled" : ""}>다음</button>
+        </nav>
+      ` : ""}
     `;
     rankings.querySelectorAll(".congress-pol-link").forEach((btn) => {
       btn.addEventListener("click", () => {
         selectedPoliticianId = btn.dataset.polId || "";
         if (select) select.value = selectedPoliticianId;
+        renderCongressTrades();
+        scrollToCongressDetail();
+      });
+    });
+    rankings.querySelectorAll(".congress-page-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        if (btn.dataset.rankPage === "prev") congressRankPage = Math.max(0, congressRankPage - 1);
+        if (btn.dataset.rankPage === "next") congressRankPage = Math.min(rankPageCount - 1, congressRankPage + 1);
         renderCongressTrades();
       });
     });
@@ -5790,12 +5819,13 @@ function renderCongressTrades() {
               <span>매수 <b>${row.buyCount || 0}</b></span>
               <span>매도 <b>${row.sellCount || 0}</b></span>
             </div>
-            <p class="congress-matrix-tickers">${(row.topTickers || []).slice(0, 5).map((t) => `<button type="button" class="ticker-chip" data-ticker="${escapeHtml(t.ticker)}">${escapeHtml(t.ticker)}</button>`).join(" ") || "—"}</p>
+            <p class="congress-matrix-tickers">${(row.topTickers || []).slice(0, 5).map((t) => `<button type="button" class="congress-ticker-chip" data-ticker="${escapeHtml(t.ticker)}">${escapeHtml(t.ticker)} <span class="muted">×${t.count || 0}</span></button>`).join(" ") || "—"}</p>
+            ${(row.topPoliticians || []).length ? `<p class="congress-matrix-pols muted">${(row.topPoliticians || []).slice(0, 3).map((p) => escapeHtml(p.name)).join(" · ")}</p>` : ""}
           </article>
         `).join("")}
       </div>
     ` : `<p class="muted">위원회 매칭 데이터가 아직 없습니다.</p>`;
-    matrix.querySelectorAll(".ticker-chip").forEach((btn) => {
+    matrix.querySelectorAll(".congress-ticker-chip").forEach((btn) => {
       btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
     });
   }

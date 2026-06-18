@@ -17,6 +17,7 @@ import sys
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+from earnings_history_store import merge_earnings_history, refresh_ticker  # noqa: E402
 from update_data import DETAILS_DIR, fetch_earnings_history  # noqa: E402
 
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -118,7 +119,11 @@ def main() -> None:
                 print(f"[skip] {ticker}: no earnings history")
                 done.add(ticker)
                 continue
-            detail["earningsHistory"] = history
+            detail["earningsHistory"] = merge_earnings_history(
+                detail.get("earningsHistory") or [],
+                history,
+                limit=args.limit,
+            )
             write_detail(ticker, detail)
             updated += 1
             done.add(ticker)

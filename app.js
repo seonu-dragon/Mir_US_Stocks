@@ -4790,16 +4790,32 @@ function moveAnalysisHtml(item, move) {
   if (!move || !moveAnalysisState || moveAnalysisState.ticker !== item.ticker || moveAnalysisState.date !== move.date) return "";
   const isLoading = moveAnalysisState.status === "loading";
   const isError = moveAnalysisState.status === "error";
-  const text = isLoading ? "Cloudflare AI가 해당 날짜의 가격·거래량과 관련 뉴스를 함께 확인하고 있습니다." : (moveAnalysisState.text || localMoveAnalysis(item, move));
+  const text = isLoading ? "해당 날짜 전후의 과거 뉴스와 SPY·QQQ 시장 흐름을 검색하고 있습니다." : (moveAnalysisState.text || localMoveAnalysis(item, move));
+  const sources = Array.isArray(moveAnalysisState.sources) ? moveAnalysisState.sources : [];
+  const sourceHtml = !isLoading && sources.length ? `
+    <div class="move-analysis-sources">
+      <b>분석 근거</b>
+      ${sources.slice(0, 5).map((source) => {
+        const href = /^https?:\/\//i.test(source.link || "") ? source.link : "#";
+        return `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"><span>${escapeHtml(source.publisher || source.provider || "뉴스")}</span>${escapeHtml(source.publishedAt || "")} · ${escapeHtml(source.title || "원문 보기")}</a>`;
+      }).join("")}
+    </div>` : "";
+  const confidenceHtml = !isLoading && moveAnalysisState.confidence
+    ? `<span class="move-confidence confidence-${moveAnalysisState.confidence === "높음" ? "high" : moveAnalysisState.confidence === "보통" ? "medium" : "low"}">근거 신뢰도 ${escapeHtml(moveAnalysisState.confidence)}</span>`
+    : "";
   const note = isLoading
-    ? "잠시만 기다려 주세요. 이 분석은 버튼을 눌렀을 때만 실행됩니다."
+    ? "분석은 버튼을 누른 경우에만 실행되며, 같은 날짜의 결과는 캐시될 수 있습니다."
     : isError
-      ? "AI 분석을 불러오지 못해 저장된 데이터 기준으로 표시했습니다. 원문 뉴스와 공시를 함께 확인하세요."
-      : "Cloudflare AI가 뉴스와 가격 데이터를 바탕으로 요약한 내용입니다. 원문 뉴스와 공시를 함께 확인하세요.";
+      ? "날짜 기준 뉴스를 충분히 찾지 못했거나 AI 분석을 불러오지 못해 저장 데이터 기준으로 표시했습니다."
+      : `이벤트 날짜 전후 ${moveAnalysisState.searchWindowDays || 2}일 뉴스와 시장 흐름을 함께 비교했습니다.`;
   return `
     <div class="move-analysis-box ${isLoading ? "is-loading" : ""}">
-      <strong>${escapeHtml(item.ticker)} ${escapeHtml(move.date)} 원인 분석</strong>
+      <div class="move-analysis-title">
+        <strong>${escapeHtml(item.ticker)} ${escapeHtml(move.date)} 원인 분석</strong>
+        ${confidenceHtml}
+      </div>
       <p>${escapeHtml(text)}</p>
+      ${sourceHtml}
       <span class="muted">${escapeHtml(note)}</span>
     </div>
   `;
@@ -4825,7 +4841,7 @@ async function runMoveAnalysis(date) {
   }
   try {
     const baseUrl = LIVE_DATA_PROXY.replace(/\/$/, "");
-    const endpoint = `${baseUrl}/?ticker=${encodeURIComponent(item.ticker)}&move_analysis=1&date=${encodeURIComponent(date)}&change=${encodeURIComponent(move.change)}`;
+    const endpoint = `${baseUrl}/?ticker=${encodeURIComponent(item.ticker)}&company=${encodeURIComponent(item.company || item.ticker)}&move_analysis=1&date=${encodeURIComponent(date)}&change=${encodeURIComponent(move.change)}`;
     const response = await fetch(endpoint, { cache: "no-store" });
     const payload = response.ok ? await response.json() : null;
     const hasAnalysis = typeof payload?.analysis === "string" && Boolean(payload.analysis.trim());
@@ -4834,7 +4850,12 @@ async function runMoveAnalysis(date) {
       ticker: item.ticker,
       date,
       status: hasAnalysis ? "done" : "error",
-      text
+      text,
+      confidence: payload?.confidence || "",
+      sources: Array.isArray(payload?.sources) ? payload.sources : [],
+      newsProviders: Array.isArray(payload?.newsProviders) ? payload.newsProviders : [],
+      searchWindowDays: Number(payload?.searchWindowDays || 0),
+      marketContext: payload?.marketContext || null
     };
   } catch (error) {
     console.warn("move analysis failed", error);

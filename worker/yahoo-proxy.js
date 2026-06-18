@@ -85,11 +85,46 @@ export default {
     if (url.searchParams.get("move_analysis")) {
       const eventDate = String(url.searchParams.get("date") || "").slice(0, 10);
       const eventChange = Number(url.searchParams.get("change") || 0);
-      const [news, chart] = await Promise.all([fetchNews(symbol), fetchChart(symbol)]);
+      const company = String(url.searchParams.get("company") || ticker).replace(/[<>]/g, "").slice(0, 120);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return cors(json({ error: "invalid date" }, 400));
+      const cacheKey = `move:v3:${ticker}:${eventDate}`;
+      if (env && env.MOVE_CACHE) {
+        const cached = await env.MOVE_CACHE.get(cacheKey, "json");
+        if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
+      }
+      const [newsResult, chart, spyChart, qqqChart] = await Promise.all([
+        fetchHistoricalNews(env, ticker, company, eventDate),
+        fetchChart(symbol),
+        fetchChart("SPY"),
+        fetchChart("QQQ"),
+      ]);
+      const marketContext = {
+        SPY: chartMoveContext(spyChart, eventDate),
+        QQQ: chartMoveContext(qqqChart, eventDate),
+      };
       const modelOverride = url.searchParams.get("model");
+      const confidence = evidenceConfidence(newsResult.news, eventDate);
       const { text: analysis, error: analysisError, model: analysisModel } =
-        await summarizeMoveAnalysisKorean(env, ticker, eventDate, eventChange, news, chart, modelOverride);
-      return cors(json({ ticker, date: eventDate, changePct: eventChange, news, chartContext: chartMoveContext(chart, eventDate), analysis, analysisError, analysisModel }));
+        await summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, newsResult.news, chart, marketContext, confidence, modelOverride);
+      const payload = {
+        ticker,
+        company,
+        date: eventDate,
+        changePct: eventChange,
+        chartContext: chartMoveContext(chart, eventDate),
+        marketContext,
+        analysis,
+        analysisError,
+        analysisModel,
+        confidence,
+        sources: newsResult.news.slice(0, 6),
+        newsProviders: newsResult.providers,
+        searchWindowDays: newsResult.windowDays,
+      };
+      if (analysis && env && env.MOVE_CACHE) {
+        await env.MOVE_CACHE.put(cacheKey, JSON.stringify(payload), { expirationTtl: 2592000 });
+      }
+      return cors(json(payload, 200, analysis ? 2592000 : 900));
     }
 
     const [news, chart, earnings] = await Promise.all([fetchNews(symbol), fetchChart(symbol), fetchEarnings(symbol)]);
@@ -126,51 +161,233 @@ function chartMoveContext(chart, eventDate) {
   };
 }
 
-async function summarizeMoveAnalysisKorean(env, ticker, eventDate, eventChange, news, chart, modelOverride) {
+function shiftIsoDate(iso, days) {
+  const date = new Date(`${iso}T12:00:00Z`);
+  if (Number.isNaN(date.getTime())) return iso;
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+function dateDistanceDays(a, b) {
+  const da = new Date(`${a}T12:00:00Z`);
+  const db = new Date(`${b}T12:00:00Z`);
+  if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return 999;
+  return Math.abs((da - db) / 86400000);
+}
+
+function normalizeGdeltDate(value) {
+  const raw = String(value || "");
+  const match = raw.match(/^(\d{4})(\d{2})(\d{2})/);
+  return match ? `${match[1]}-${match[2]}-${match[3]}` : raw.slice(0, 10);
+}
+
+function newsIdentity(news) {
+  return String(news.title || "").toLowerCase().replace(/[^a-z0-9가-힣]+/g, " ").trim();
+}
+
+function rankHistoricalNews(news, ticker, company, eventDate) {
+  const trusted = /reuters|apnews|bloomberg|cnbc|wsj|ft\.com|marketwatch|barrons|investors\.com|sec\.gov/i;
+  const terms = [ticker, ...String(company || "").split(/\s+/)].filter((term) => term.length >= 3);
+  const seen = new Set();
+  return (news || [])
+    .filter((item) => item && item.title && item.link && /^https?:\/\//i.test(item.link))
+    .map((item) => {
+      const key = newsIdentity(item);
+      const distance = dateDistanceDays(item.publishedAt, eventDate);
+      const haystack = `${item.title} ${item.summary || ""}`.toLowerCase();
+      const matches = terms.filter((term) => haystack.includes(term.toLowerCase())).length;
+      const score = 100 - distance * 12 + matches * 9 + (trusted.test(`${item.publisher} ${item.link}`) ? 12 : 0) + (item.summary ? 4 : 0);
+      return { ...item, distanceDays: distance, score };
+    })
+    .filter((item) => item.distanceDays <= 8 && item.score > 20)
+    .sort((a, b) => b.score - a.score)
+    .filter((item) => {
+      const key = newsIdentity(item);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 12)
+    .map(({ score, distanceDays, ...item }) => ({ ...item, distanceDays }));
+}
+
+async function fetchFinnhubNews(env, ticker, from, to) {
+  const token = env && env.FINNHUB_API_KEY;
+  if (!token) return [];
+  try {
+    const endpoint = `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(ticker)}&from=${from}&to=${to}&token=${encodeURIComponent(token)}`;
+    const response = await fetch(endpoint, { headers: UA });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    return (Array.isArray(rows) ? rows : []).map((item) => ({
+      title: item.headline || "",
+      summary: item.summary || "",
+      publisher: item.source || "Finnhub",
+      link: item.url || "",
+      publishedAt: item.datetime ? new Date(item.datetime * 1000).toISOString().slice(0, 10) : "",
+      provider: "Finnhub",
+    }));
+  } catch (error) {
+    return [];
+  }
+}
+
+function decodeXmlText(value) {
+  return String(value || "")
+    .replace(/^<!\[CDATA\[|\]\]>$/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .trim();
+}
+
+function rssTag(block, tag) {
+  const match = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i").exec(block);
+  return decodeXmlText(match ? match[1] : "");
+}
+
+function parseGoogleNewsRss(xml) {
+  const items = String(xml || "").match(/<item>[\s\S]*?<\/item>/gi) || [];
+  return items.slice(0, 50).map((block) => ({
+    title: rssTag(block, "title"),
+    summary: "",
+    publisher: rssTag(block, "source") || "Google News",
+    link: rssTag(block, "link") || rssTag(block, "guid"),
+    publishedAt: (() => {
+      const date = new Date(rssTag(block, "pubDate"));
+      return Number.isNaN(date.getTime()) ? "" : date.toISOString().slice(0, 10);
+    })(),
+    provider: "Google News",
+  })).filter((item) => item.title && item.link);
+}
+
+async function fetchGoogleNewsRss(ticker, company, from, to) {
+  try {
+    const companyTerm = String(company || "").trim();
+    const identity = companyTerm && companyTerm.toUpperCase() !== ticker
+      ? `(\"${companyTerm}\" OR \"${ticker}\")`
+      : `\"${ticker}\"`;
+    const after = shiftIsoDate(from, -1);
+    const before = shiftIsoDate(to, 1);
+    const query = `${identity} stock after:${after} before:${before}`;
+    const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
+    const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
+    if (!response.ok) return [];
+    return parseGoogleNewsRss(await response.text());
+  } catch (error) {
+    return [];
+  }
+}
+async function fetchGdeltNews(ticker, company, from, to) {
+  try {
+    const companyTerm = String(company || "").trim();
+    const query = companyTerm && companyTerm.toUpperCase() !== ticker
+      ? `\"${companyTerm}\" OR \"${ticker}\"`
+      : `\"${ticker}\"`;
+    const startdatetime = `${from.replace(/-/g, "")}000000`;
+    const enddatetime = `${to.replace(/-/g, "")}235959`;
+    const endpoint = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=75&format=json&sort=HybridRel&startdatetime=${startdatetime}&enddatetime=${enddatetime}`;
+    const response = await fetch(endpoint, { headers: UA });
+    if (!response.ok) return [];
+    const payload = await response.json();
+    return (payload.articles || []).map((item) => ({
+      title: item.title || "",
+      summary: "",
+      publisher: item.domain || item.sourcecountry || "GDELT",
+      link: item.url || "",
+      publishedAt: normalizeGdeltDate(item.seendate),
+      provider: "GDELT",
+    }));
+  } catch (error) {
+    return [];
+  }
+}
+
+async function historicalNewsWindow(env, ticker, company, eventDate, days) {
+  const from = shiftIsoDate(eventDate, -days);
+  const to = shiftIsoDate(eventDate, days);
+  const [finnhub, googleNews] = await Promise.all([
+    fetchFinnhubNews(env, ticker, from, to),
+    fetchGoogleNewsRss(ticker, company, from, to),
+  ]);
+  let ranked = rankHistoricalNews([...finnhub, ...googleNews], ticker, company, eventDate);
+  if (ranked.length < 3) {
+    const gdelt = await fetchGdeltNews(ticker, company, from, to);
+    ranked = rankHistoricalNews([...ranked, ...gdelt], ticker, company, eventDate);
+  }
+  return ranked;
+}
+
+async function fetchHistoricalNews(env, ticker, company, eventDate) {
+  let windowDays = 2;
+  let news = await historicalNewsWindow(env, ticker, company, eventDate, windowDays);
+  if (news.length < 3) {
+    windowDays = 7;
+    news = await historicalNewsWindow(env, ticker, company, eventDate, windowDays);
+  }
+  const yahoo = await fetchNews(ticker);
+  news = rankHistoricalNews([...news, ...yahoo.map((item) => ({ ...item, provider: "Yahoo" }))], ticker, company, eventDate);
+  const providers = [...new Set(news.map((item) => item.provider).filter(Boolean))];
+  return { news, providers, windowDays };
+}
+
+function evidenceConfidence(news, eventDate) {
+  const close = (news || []).filter((item) => dateDistanceDays(item.publishedAt, eventDate) <= 2);
+  if (close.length >= 3) return "높음";
+  if (close.length >= 1 || (news || []).length >= 3) return "보통";
+  return "낮음";
+}
+
+async function summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, news, chart, marketContext, confidence, modelOverride) {
   if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
   const context = chartMoveContext(chart, eventDate);
-  const datedNews = (news || [])
-    .map((n) => ({ ...n, distance: n.publishedAt ? Math.abs((new Date(`${n.publishedAt}T00:00:00`) - new Date(`${eventDate}T00:00:00`)) / 86400000) : 999 }))
-    .sort((a, b) => a.distance - b.distance)
-    .slice(0, 8);
-  const headlines = datedNews.length
-    ? datedNews.map((n, i) => `${i + 1}. ${n.publishedAt || "날짜 없음"} · ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`).join("\n")
-    : "관련 뉴스 헤드라인 없음";
+  const headlines = (news || []).length
+    ? news.slice(0, 10).map((item, index) => {
+      const summary = item.summary ? ` | 요약: ${item.summary.slice(0, 500)}` : "";
+      return `${index + 1}. ${item.publishedAt || "날짜 없음"} | ${item.publisher || item.provider || "출처 없음"} | ${item.title}${summary}`;
+    }).join("\n")
+    : "해당 날짜 전후로 검색된 관련 뉴스 없음";
   const chartText = context
-    ? `가격: 시가 ${context.open}, 고가 ${context.high}, 저가 ${context.low}, 종가 ${context.close}, 전일 종가 ${context.prevClose ?? "없음"}, 당일 등락률 ${context.changePct ?? eventChange}%, 거래량 ${context.volume}, 20일 평균 대비 거래량 ${context.volumeRatio20d ?? "계산 불가"}배`
-    : `차트에서 해당 날짜(${eventDate})를 찾지 못했습니다. 전달 등락률: ${eventChange}%`;
+    ? `종목: 시가 ${context.open}, 고가 ${context.high}, 저가 ${context.low}, 종가 ${context.close}, 전일 종가 ${context.prevClose ?? "없음"}, 등락률 ${context.changePct ?? eventChange}%, 20일 평균 대비 거래량 ${context.volumeRatio20d ?? "계산 불가"}배`
+    : `종목 차트에서 ${eventDate}를 찾지 못했습니다. 전달 등락률은 ${eventChange}%입니다.`;
+  const marketText = ["SPY", "QQQ"].map((symbol) => {
+    const row = marketContext && marketContext[symbol];
+    return row ? `${symbol} ${row.changePct}%` : `${symbol} 데이터 없음`;
+  }).join(", ");
   const prompt =
-    `미국 주식 ${ticker}의 ${eventDate} 가격 이벤트 원인을 한국어로 분석하세요.\n\n` +
-    `[가격/거래량]\n${chartText}\n\n` +
-    `[뉴스 헤드라인]\n${headlines}\n\n` +
-    `규칙:\n` +
-    `- 위 가격/거래량과 뉴스 헤드라인만 근거로 쓰세요. 모르는 사실을 만들지 마세요.\n` +
-    `- 직접 원인으로 볼 수 있는 내용과 가능성 수준의 해석을 구분하세요.\n` +
-    `- 뉴스가 해당 날짜와 멀거나 부족하면 "직접 연결되는 뉴스가 부족하다"고 명확히 말하세요.\n` +
-    `- 3~5문장의 자연스러운 한국어 단락 하나로 작성하세요.\n` +
-    `- 매수/매도 조언은 하지 마세요.`;
+    `미국 주식 ${ticker}(${company})의 ${eventDate} 가격 이벤트 원인을 분석하세요.\n\n` +
+    `[가격/거래량]\n${chartText}\n시장 비교: ${marketText}\n\n` +
+    `[날짜 기준 검색 뉴스]\n${headlines}\n\n` +
+    `검색 근거 신뢰도: ${confidence}\n\n` +
+    `작성 규칙:\n` +
+    `- 가장 가능성이 높은 촉매를 첫 문장에 제시하고, 근거가 된 매체명과 날짜를 문장 안에 포함하세요.\n` +
+    `- 종목 고유 뉴스와 SPY·QQQ 등 시장 전체 움직임을 구분하세요.\n` +
+    `- 직접 확인된 사실과 가능성 수준의 해석을 분리하고, 제공되지 않은 사실은 만들지 마세요.\n` +
+    `- 관련 뉴스가 없을 때만 원인 불명확이라고 말하세요. 관련 헤드라인이 있으면 핵심 재료부터 설명하세요.\n` +
+    `- 4~6문장의 자연스러운 한국어 단락 하나로 작성하고 매수·매도 조언은 하지 마세요.`;
   const models = modelOverride ? [modelOverride] : SUMMARY_MODELS;
   let lastError = "no_model";
   for (const model of models) {
     try {
       const result = await env.AI.run(model, {
         messages: [
-          { role: "system", content: "You are a careful market news analyst. Answer in Korean only, cite uncertainty clearly, and never invent facts beyond the supplied headlines and price/volume context." },
+          { role: "system", content: "You are a careful US stock event analyst. Identify the strongest dated catalyst from supplied evidence, compare it with the broad market, answer only in Korean, and never invent facts." },
           { role: "user", content: prompt },
         ],
-        max_tokens: 520,
-        temperature: 0.25,
+        max_tokens: 700,
+        temperature: 0.2,
       });
       const text = String((result && result.response) || "").trim();
       if (text) return { text, error: "", model };
       lastError = `empty_response:${model}`;
-    } catch (e) {
-      lastError = `${model}: ${(e && e.message) || e}`;
+    } catch (error) {
+      lastError = `${model}: ${(error && error.message) || error}`;
     }
   }
   return { text: "", error: lastError };
 }
-
 async function summarizeKorean(env, ticker, news, modelOverride) {
   if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
   if (!news || !news.length) return { text: "", error: "no_news" };
@@ -484,13 +701,12 @@ async function fetchFx() {
   return out;
 }
 
-function json(obj, status = 200) {
+function json(obj, status = 200, cacheSeconds = 900) {
   return new Response(JSON.stringify(obj), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      // Cache at the edge for 15 min to ease Yahoo rate limits.
-      "Cache-Control": "public, max-age=900",
+      "Cache-Control": `public, max-age=${cacheSeconds}`,
     },
   });
 }

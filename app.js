@@ -6797,6 +6797,14 @@ function openSocialTicker(ticker) {
   selectTicker(ticker, { openSearch: true });
 }
 
+// 종목 분석 탭으로 이동한 뒤 차트 영역이 보이도록 스크롤한다.
+function scrollCommunityToChart() {
+  setTimeout(() => {
+    const el = byId("chartTitle") || byId("sub-analysis");
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 120);
+}
+
 function socialTickerCell(ticker) {
   const known = stockByTicker(ticker);
   if (!known) return `<strong>${escapeHtml(ticker)}</strong>`;
@@ -7096,6 +7104,7 @@ let communityBoardError = "";
 let communityPollTimer = null;
 let communityFetchPromise = null;
 let communityReplyPostId = null;
+let communitySortMode = "latest";
 
 function getCommunityNickname() {
   return (localStorage.getItem(COMMUNITY_NICKNAME_KEY) || "").trim();
@@ -7156,6 +7165,145 @@ function formatCommunityTime(iso) {
   }
 }
 
+function communityLikeCount(post) {
+  return Array.isArray(post && post.likes) ? post.likes.length : 0;
+}
+
+function communityLikedByMe(post) {
+  return Array.isArray(post && post.likes) && post.likes.includes(getCommunityClientId());
+}
+
+function communityCommentCount(post) {
+  return Array.isArray(post && post.comments) ? post.comments.length : 0;
+}
+
+function communityTimeVal(post) {
+  const t = Date.parse(post && post.createdAt);
+  return Number.isFinite(t) ? t : 0;
+}
+
+// 게시판에 등장한 작성자 닉네임 목록(긴 이름 우선 — 부분 일치 충돌 방지).
+function communityKnownAuthors() {
+  const names = new Set();
+  communityPostsCache.forEach((p) => {
+    if (p && p.author) names.add(p.author);
+    (Array.isArray(p && p.comments) ? p.comments : []).forEach((c) => {
+      if (c && c.author) names.add(c.author);
+    });
+  });
+  return [...names].filter(Boolean).sort((a, b) => b.length - a.length);
+}
+
+// 본문·댓글의 @닉네임 멘션을 강조 span으로 변환한다(이미 escapeHtml 된 문자열에 적용).
+// 닉네임에 공백이 있을 수 있어(예: "젠슨 황") 실제 참여자 이름만 1패스로 매칭한다.
+function highlightCommunityMentions(escaped) {
+  const text = String(escaped);
+  const names = communityKnownAuthors();
+  if (!names.length || text.indexOf("@") < 0) return text;
+  const pattern = names
+    .map((n) => escapeHtml(n).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("|");
+  const re = new RegExp(`@(${pattern})`, "g");
+  return text.replace(re, (m, name) => `<span class="community-mention">@${name}</span>`);
+}
+
+// 종목 글 하단 미니 스파크라인(스냅샷 closeSeries 사용, 비동기 없음).
+function communityMiniChartHtml(ticker) {
+  const stock = ticker ? stockByTicker(ticker) : null;
+  const series = stock && Array.isArray(stock.closeSeries) ? stock.closeSeries : null;
+  if (!series || series.length < 2) return "";
+  const color = (stock.changePct ?? 0) >= 0 ? "#138a4d" : "#c03535";
+  return `<div class="community-post-spark">${sparklineSvg(series, { width: 160, height: 40, color })}</div>`;
+}
+
+async function toggleCommunityLike(postId) {
+  if (!postId) return;
+  const url = communityApiUrl("/community/like");
+  if (!url) {
+    alert("게시판을 일시적으로 사용할 수 없습니다.");
+    return;
+  }
+  const clientId = getCommunityClientId();
+  // 낙관적 업데이트(서버 응답 전 즉시 반영)
+  const cached = communityPostsCache.find((p) => p.id === postId);
+  if (cached) {
+    const likes = Array.isArray(cached.likes) ? cached.likes.slice() : [];
+    const i = likes.indexOf(clientId);
+    if (i >= 0) likes.splice(i, 1); else likes.push(clientId);
+    cached.likes = likes;
+    renderCommunityBoard();
+  }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, clientId }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.error || "공감 처리 실패"));
+    }
+    await fetchCommunityPosts({ silent: true });
+  } catch (err) {
+    await fetchCommunityPosts({ silent: true });
+  }
+}
+
+// 댓글의 작성자를 멘션하며 답글 입력칸을 연다(@닉네임 프리필).
+function openCommunityReplyWithMention(postId, author) {
+  const feed = byId("communityFeed");
+  if (!feed) return;
+  communityReplyPostId = postId;
+  renderCommunityBoard();
+  const input = feed.querySelector(`.community-reply-input[data-post-id="${CSS.escape(postId)}"]`);
+  if (input) {
+    const mention = `@${String(author || "익명").trim()} `;
+    if (!input.value.startsWith(mention)) input.value = mention + input.value;
+    input.focus();
+    const end = input.value.length;
+    try { input.setSelectionRange(end, end); } catch (_) {}
+  }
+}
+
+// 인기 종목 토론 랭킹(글 수 기준 TOP5) 칩 렌더 + 클릭 시 해당 종목 필터.
+function renderCommunityHotTickersPanel() {
+  const box = byId("communityHotTickers");
+  if (!box) return;
+  const counts = new Map();
+  communityPostsCache.forEach((p) => {
+    if (p.ticker) counts.set(p.ticker, (counts.get(p.ticker) || 0) + 1);
+  });
+  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+  if (!top.length) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  const activeTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
+  box.hidden = false;
+  box.innerHTML = `
+    <span class="community-hot-tickers-label">🔥 인기 종목</span>
+    ${top.map(([ticker, count]) => `
+      <button type="button" class="community-hot-ticker${activeTicker === ticker ? " is-active" : ""}" data-ticker="${escapeHtml(ticker)}">
+        ${escapeHtml(ticker)}<em>${count}</em>
+      </button>
+    `).join("")}
+    ${activeTicker ? `<button type="button" class="community-hot-ticker community-hot-clear" data-clear="1">전체 보기</button>` : ""}
+  `;
+  box.querySelectorAll(".community-hot-ticker[data-ticker]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      applyCommunityBoardTickerFilter(btn.dataset.ticker);
+      renderCommunityBoard();
+    });
+  });
+  box.querySelector(".community-hot-clear")?.addEventListener("click", () => {
+    const input = byId("communityFilterTicker");
+    if (input) input.value = "";
+    communityBoardTickerFilter = "";
+    renderCommunityBoard();
+  });
+}
+
 function filterCommunityPostsView(posts) {
   const filterMode = byId("communityFilter")?.value || "all";
   const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
@@ -7166,6 +7314,16 @@ function filterCommunityPostsView(posts) {
   }
   if (filterTicker) {
     filtered = filtered.filter((p) => p.ticker === filterTicker);
+  }
+  // 정렬: 인기순(공감+댓글) / 댓글순 / 최신순
+  if (communitySortMode === "popular") {
+    filtered.sort((a, b) =>
+      (communityLikeCount(b) + communityCommentCount(b)) - (communityLikeCount(a) + communityCommentCount(a))
+      || communityTimeVal(b) - communityTimeVal(a));
+  } else if (communitySortMode === "comments") {
+    filtered.sort((a, b) => communityCommentCount(b) - communityCommentCount(a) || communityTimeVal(b) - communityTimeVal(a));
+  } else {
+    filtered.sort((a, b) => communityTimeVal(b) - communityTimeVal(a));
   }
   return filtered;
 }
@@ -7181,6 +7339,8 @@ function renderCommunityBoard() {
   const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
   const posts = filterCommunityPostsView(communityPostsCache);
   const clientId = getCommunityClientId();
+
+  renderCommunityHotTickersPanel();
 
   if (communityFetchPromise && !communityPostsCache.length && !communityBoardError) {
     meta.textContent = "글을 불러오는 중…";
@@ -7220,13 +7380,14 @@ function renderCommunityBoard() {
       <article class="community-post" data-id="${escapeHtml(post.id)}">
         <div class="community-post-head">
           ${post.ticker
-            ? `<button type="button" class="ticker-pill community-post-ticker" data-ticker="${escapeHtml(post.ticker)}">${escapeHtml(post.ticker)}</button>`
+            ? `<button type="button" class="ticker-pill community-post-ticker" data-ticker="${escapeHtml(post.ticker)}" title="이 종목 글만 보기">${escapeHtml(post.ticker)}</button>`
             : `<span class="community-post-tag">일반</span>`}
           <span class="community-post-author">${escapeHtml(post.author || "익명")}</span>
           <time class="muted">${escapeHtml(formatCommunityTime(post.createdAt))}</time>
         </div>
         ${stock ? `<p class="community-post-company muted">${escapeHtml(stock.company)} · 당일 ${fmtPct(stock.changePct)}</p>` : ""}
-        <p class="community-post-body">${escapeHtml(post.content)}</p>
+        ${post.ticker ? communityMiniChartHtml(post.ticker) : ""}
+        <p class="community-post-body">${highlightCommunityMentions(escapeHtml(post.content))}</p>
         ${comments.length ? `
           <div class="community-comments">
             ${comments.map((comment) => {
@@ -7236,15 +7397,19 @@ function renderCommunityBoard() {
                   <div class="community-comment-head">
                     <span class="community-comment-author">${escapeHtml(comment.author || "익명")}</span>
                     <time class="muted">${escapeHtml(formatCommunityTime(comment.createdAt))}</time>
-                    ${canDeleteComment ? `<button type="button" class="ghost compact-btn community-comment-delete" data-post-id="${escapeHtml(post.id)}" data-comment-id="${escapeHtml(comment.id)}">삭제</button>` : ""}
+                    <div class="community-comment-actions">
+                      <button type="button" class="ghost compact-btn community-comment-reply" data-post-id="${escapeHtml(post.id)}" data-author="${escapeHtml(comment.author || "익명")}">답글</button>
+                      ${canDeleteComment ? `<button type="button" class="ghost compact-btn community-comment-delete" data-post-id="${escapeHtml(post.id)}" data-comment-id="${escapeHtml(comment.id)}">삭제</button>` : ""}
+                    </div>
                   </div>
-                  <p class="community-comment-body">${escapeHtml(comment.content)}</p>
+                  <p class="community-comment-body">${highlightCommunityMentions(escapeHtml(comment.content))}</p>
                 </div>
               `;
             }).join("")}
           </div>
         ` : ""}
         <div class="community-post-actions">
+          <button type="button" class="ghost compact-btn community-post-like${communityLikedByMe(post) ? " is-liked" : ""}" data-post-id="${escapeHtml(post.id)}" aria-pressed="${communityLikedByMe(post)}">👍 <span class="community-like-count">${communityLikeCount(post)}</span></button>
           <button type="button" class="ghost compact-btn community-post-reply" data-post-id="${escapeHtml(post.id)}">${comments.length ? `댓글 ${comments.length}개 · 답글` : "댓글 달기"}</button>
           ${post.ticker ? `<button type="button" class="ghost compact-btn community-post-analyze" data-ticker="${escapeHtml(post.ticker)}">종목 분석</button>` : ""}
           ${canDelete ? `<button type="button" class="ghost compact-btn community-post-delete" data-id="${escapeHtml(post.id)}">삭제</button>` : ""}
@@ -7263,8 +7428,23 @@ function renderCommunityBoard() {
     `;
   }).join("");
 
-  feed.querySelectorAll(".community-post-ticker, .community-post-analyze").forEach((btn) => {
-    btn.addEventListener("click", () => openSocialTicker(btn.dataset.ticker));
+  feed.querySelectorAll(".community-post-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      applyCommunityBoardTickerFilter(btn.dataset.ticker);
+      renderCommunityBoard();
+    });
+  });
+  feed.querySelectorAll(".community-post-analyze").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      openSocialTicker(btn.dataset.ticker);
+      scrollCommunityToChart();
+    });
+  });
+  feed.querySelectorAll(".community-post-like").forEach((btn) => {
+    btn.addEventListener("click", () => toggleCommunityLike(btn.dataset.postId));
+  });
+  feed.querySelectorAll(".community-comment-reply").forEach((btn) => {
+    btn.addEventListener("click", () => openCommunityReplyWithMention(btn.dataset.postId, btn.dataset.author));
   });
   feed.querySelectorAll(".community-post-delete").forEach((btn) => {
     btn.addEventListener("click", () => deleteCommunityPost(btn.dataset.id));
@@ -7549,6 +7729,10 @@ function setupCommunityBoard() {
 
   byId("communityRefresh")?.addEventListener("click", () => fetchCommunityPosts());
   byId("communityFilter")?.addEventListener("change", renderCommunityBoard);
+  byId("communitySort")?.addEventListener("change", (event) => {
+    communitySortMode = event.target.value || "latest";
+    renderCommunityBoard();
+  });
   byId("communityFilterTicker")?.addEventListener("input", () => {
     clearTimeout(setupCommunityBoard._filterTimer);
     setupCommunityBoard._filterTimer = setTimeout(renderCommunityBoard, 200);

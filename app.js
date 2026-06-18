@@ -1282,6 +1282,7 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
     renderCommunityTrending();
   }
   if (communitySubTab === "board") {
+    communityClearNewBanner();
     fetchCommunityPosts();
     startCommunityPolling();
   }
@@ -1645,6 +1646,13 @@ function setupEvents() {
       event.preventDefault();
       event.stopPropagation();
       openCommunityBoardForTicker(communityBoardButton.dataset.communityBoard);
+      return;
+    }
+    const communityWriteButton = event.target.closest("[data-community-write]");
+    if (communityWriteButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      openCommunityComposeForTicker(communityWriteButton.dataset.communityWrite);
       return;
     }
     const star = event.target.closest("[data-watch]");
@@ -4942,7 +4950,10 @@ function stockEventCommunityCardHtml(item) {
       <strong>커뮤니티</strong>
       <b>${loading ? "불러오는 중…" : (count ? `${count}개 의견` : "의견 없음")}</b>
       ${previewHtml}
-      <button type="button" class="event-action event-community-cta" data-community-board="${escapeHtml(item.ticker)}">${escapeHtml(ctaLabel)}</button>
+      <div class="event-community-actions">
+        <button type="button" class="event-action event-community-cta" data-community-board="${escapeHtml(item.ticker)}">${escapeHtml(ctaLabel)}</button>
+        <button type="button" class="event-action event-community-write" data-community-write="${escapeHtml(item.ticker)}">✏️ 글쓰기</button>
+      </div>
     </article>
   `;
 }
@@ -4951,6 +4962,17 @@ function openCommunityBoardForTicker(ticker) {
   if (!ticker) return;
   applyCommunityBoardTickerFilter(ticker);
   activateTab("community", { push: true, sub: "board", communityTicker: ticker });
+}
+
+// 분석 페이지 → 해당 종목으로 바로 글쓰기(작성칸에 티커 채우고 포커스).
+function openCommunityComposeForTicker(ticker) {
+  activateTab("community", { push: true, sub: "board" });
+  const tickerInput = byId("communityTicker");
+  if (tickerInput) tickerInput.value = ticker || "";
+  setTimeout(() => {
+    byId("communityCompose")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    byId("communityContent")?.focus();
+  }, 140);
 }
 
 function renderStockEvents(item) {
@@ -7105,6 +7127,12 @@ let communityPollTimer = null;
 let communityFetchPromise = null;
 let communityReplyPostId = null;
 let communitySortMode = "latest";
+const COMMUNITY_MINICHART_KEY = "mir_community_minichart_v1";
+let communityShowMiniChart = localStorage.getItem(COMMUNITY_MINICHART_KEY) !== "0";
+// 새 글/댓글 배너용 — 마지막으로 본 글·댓글 id 집합(null이면 첫 로드 전).
+let communitySeenPostIds = null;
+let communitySeenCommentIds = null;
+let communityNewCount = 0;
 
 function getCommunityNickname() {
   return (localStorage.getItem(COMMUNITY_NICKNAME_KEY) || "").trim();
@@ -7209,11 +7237,162 @@ function highlightCommunityMentions(escaped) {
 
 // 종목 글 하단 미니 스파크라인(스냅샷 closeSeries 사용, 비동기 없음).
 function communityMiniChartHtml(ticker) {
+  if (!communityShowMiniChart) return "";
   const stock = ticker ? stockByTicker(ticker) : null;
   const series = stock && Array.isArray(stock.closeSeries) ? stock.closeSeries : null;
   if (!series || series.length < 2) return "";
   const color = (stock.changePct ?? 0) >= 0 ? "#138a4d" : "#c03535";
   return `<div class="community-post-spark">${sparklineSvg(series, { width: 160, height: 40, color })}</div>`;
+}
+
+// 닉네임 기반 일관 색상 아바타(로그인 없는 익명 작성자 시각 구분).
+function communityAvatarColor(name) {
+  const str = String(name || "익명");
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return `hsl(${hash % 360}, 55%, 45%)`;
+}
+
+function communityAvatarHtml(name) {
+  const label = String(name || "익명").trim();
+  const initial = label ? Array.from(label)[0].toUpperCase() : "?";
+  return `<span class="community-avatar" style="background:${communityAvatarColor(label)}" aria-hidden="true">${escapeHtml(initial)}</span>`;
+}
+
+// ----- 투표(매수/매도/관망) -----
+function communityVoteTally(post) {
+  const tally = { buy: 0, sell: 0, hold: 0 };
+  const votes = post && post.votes;
+  if (votes && typeof votes === "object") {
+    for (const choice of Object.values(votes)) {
+      if (tally[choice] != null) tally[choice] += 1;
+    }
+  }
+  return tally;
+}
+
+function communityMyVote(post) {
+  const votes = post && post.votes;
+  return (votes && typeof votes === "object") ? (votes[getCommunityClientId()] || null) : null;
+}
+
+const COMMUNITY_VOTE_META = {
+  buy: { label: "매수", color: "var(--green)" },
+  sell: { label: "매도", color: "var(--red)" },
+  hold: { label: "관망", color: "var(--muted)" },
+};
+
+function communityVoteBarHtml(post) {
+  const tally = communityVoteTally(post);
+  const total = tally.buy + tally.sell + tally.hold;
+  const mine = communityMyVote(post);
+  const buttons = ["buy", "sell", "hold"].map((key) => {
+    const m = COMMUNITY_VOTE_META[key];
+    const pct = total ? Math.round((tally[key] / total) * 100) : 0;
+    return `
+      <button type="button" class="community-vote-btn${mine === key ? " is-mine" : ""}" data-post-id="${escapeHtml(post.id)}" data-choice="${key}" style="--vote-color:${m.color}">
+        <span class="community-vote-fill" style="width:${pct}%"></span>
+        <span class="community-vote-label">${m.label}</span>
+        <span class="community-vote-num">${tally[key]}</span>
+      </button>`;
+  }).join("");
+  return `<div class="community-vote" role="group" aria-label="이 종목 투표">${buttons}</div>`;
+}
+
+async function castCommunityVote(postId, choice) {
+  const url = communityApiUrl("/community/vote");
+  if (!url) { alert("게시판을 일시적으로 사용할 수 없습니다."); return; }
+  const clientId = getCommunityClientId();
+  const cached = communityPostsCache.find((p) => p.id === postId);
+  if (cached) {
+    const votes = (cached.votes && typeof cached.votes === "object") ? { ...cached.votes } : {};
+    if (votes[clientId] === choice) delete votes[clientId]; else votes[clientId] = choice;
+    cached.votes = votes;
+    renderCommunityBoard();
+  }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, choice, clientId }),
+    });
+    const data = await res.json();
+    if (!res.ok) alert(data.message || data.error || "투표 처리 실패");
+  } catch (_) {}
+  await fetchCommunityPosts({ silent: true });
+}
+
+// ----- 신고 -----
+async function reportCommunityPost(postId) {
+  if (!postId || !confirm("이 글을 신고할까요? 누적 신고 시 자동으로 숨겨집니다.")) return;
+  const url = communityApiUrl("/community/report");
+  if (!url) { alert("게시판을 일시적으로 사용할 수 없습니다."); return; }
+  try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, clientId: getCommunityClientId() }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.message || data.error || "신고 처리 실패");
+      return;
+    }
+    alert(data.hidden ? "신고가 접수되어 글이 숨겨졌습니다." : "신고가 접수되었습니다.");
+    await fetchCommunityPosts({ silent: true });
+  } catch (err) {
+    alert((err && err.message) || "신고에 실패했습니다.");
+  }
+}
+
+// ----- 작성 후 내 글로 스크롤 + 강조 -----
+function communityHighlightPost(id) {
+  setTimeout(() => {
+    const feed = byId("communityFeed");
+    const el = feed?.querySelector(`.community-post[data-id="${CSS.escape(id)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("is-mine-new");
+    setTimeout(() => el.classList.remove("is-mine-new"), 2400);
+  }, 120);
+}
+
+// ----- 새 글/댓글 배너 -----
+function communityCollectIds(posts) {
+  const postIds = new Set();
+  const commentIds = new Set();
+  (posts || []).forEach((p) => {
+    postIds.add(p.id);
+    (Array.isArray(p.comments) ? p.comments : []).forEach((c) => commentIds.add(c.id));
+  });
+  return { postIds, commentIds };
+}
+
+function communityUpdateNewBanner(posts) {
+  const { postIds, commentIds } = communityCollectIds(posts);
+  if (communitySeenPostIds === null) {
+    communitySeenPostIds = postIds;
+    communitySeenCommentIds = commentIds;
+    return;
+  }
+  let newPosts = 0;
+  let newComments = 0;
+  postIds.forEach((id) => { if (!communitySeenPostIds.has(id)) newPosts += 1; });
+  commentIds.forEach((id) => { if (!communitySeenCommentIds.has(id)) newComments += 1; });
+  communityNewCount += newPosts + newComments;
+  const banner = byId("communityNewBanner");
+  if (banner && communityNewCount > 0) {
+    banner.hidden = false;
+    banner.textContent = `🔔 새 소식 ${communityNewCount}건 · 맨 위로`;
+  }
+  communitySeenPostIds = postIds;
+  communitySeenCommentIds = commentIds;
+}
+
+function communityClearNewBanner() {
+  communityNewCount = 0;
+  const banner = byId("communityNewBanner");
+  if (banner) { banner.hidden = true; banner.textContent = ""; }
 }
 
 async function toggleCommunityLike(postId) {
@@ -7311,6 +7490,9 @@ function filterCommunityPostsView(posts) {
   let filtered = posts.slice();
   if (filterMode === "mine") {
     filtered = filtered.filter((p) => p.clientId === clientId);
+  } else if (filterMode === "watchlist") {
+    const set = new Set((Array.isArray(watchlist) ? watchlist : []).map((t) => String(t).toUpperCase()));
+    filtered = filtered.filter((p) => p.ticker && set.has(String(p.ticker).toUpperCase()));
   }
   if (filterTicker) {
     filtered = filtered.filter((p) => p.ticker === filterTicker);
@@ -7382,12 +7564,14 @@ function renderCommunityBoard() {
           ${post.ticker
             ? `<button type="button" class="ticker-pill community-post-ticker" data-ticker="${escapeHtml(post.ticker)}" title="이 종목 글만 보기">${escapeHtml(post.ticker)}</button>`
             : `<span class="community-post-tag">일반</span>`}
+          ${communityAvatarHtml(post.author)}
           <span class="community-post-author">${escapeHtml(post.author || "익명")}</span>
           <time class="muted">${escapeHtml(formatCommunityTime(post.createdAt))}</time>
         </div>
         ${stock ? `<p class="community-post-company muted">${escapeHtml(stock.company)} · 당일 ${fmtPct(stock.changePct)}</p>` : ""}
         ${post.ticker ? communityMiniChartHtml(post.ticker) : ""}
         <p class="community-post-body">${highlightCommunityMentions(escapeHtml(post.content))}</p>
+        ${post.ticker ? communityVoteBarHtml(post) : ""}
         ${comments.length ? `
           <div class="community-comments">
             ${comments.map((comment) => {
@@ -7412,7 +7596,9 @@ function renderCommunityBoard() {
           <button type="button" class="ghost compact-btn community-post-like${communityLikedByMe(post) ? " is-liked" : ""}" data-post-id="${escapeHtml(post.id)}" aria-pressed="${communityLikedByMe(post)}">👍 <span class="community-like-count">${communityLikeCount(post)}</span></button>
           <button type="button" class="ghost compact-btn community-post-reply" data-post-id="${escapeHtml(post.id)}">${comments.length ? `댓글 ${comments.length}개 · 답글` : "댓글 달기"}</button>
           ${post.ticker ? `<button type="button" class="ghost compact-btn community-post-analyze" data-ticker="${escapeHtml(post.ticker)}">종목 분석</button>` : ""}
-          ${canDelete ? `<button type="button" class="ghost compact-btn community-post-delete" data-id="${escapeHtml(post.id)}">삭제</button>` : ""}
+          ${canDelete
+            ? `<button type="button" class="ghost compact-btn community-post-delete" data-id="${escapeHtml(post.id)}">삭제</button>`
+            : `<button type="button" class="ghost compact-btn community-post-report" data-post-id="${escapeHtml(post.id)}" title="부적절한 글 신고">🚩 신고</button>`}
         </div>
         ${replyOpen ? `
           <div class="community-reply-form">
@@ -7442,6 +7628,12 @@ function renderCommunityBoard() {
   });
   feed.querySelectorAll(".community-post-like").forEach((btn) => {
     btn.addEventListener("click", () => toggleCommunityLike(btn.dataset.postId));
+  });
+  feed.querySelectorAll(".community-post-report").forEach((btn) => {
+    btn.addEventListener("click", () => reportCommunityPost(btn.dataset.postId));
+  });
+  feed.querySelectorAll(".community-vote-btn").forEach((btn) => {
+    btn.addEventListener("click", () => castCommunityVote(btn.dataset.postId, btn.dataset.choice));
   });
   feed.querySelectorAll(".community-comment-reply").forEach((btn) => {
     btn.addEventListener("click", () => openCommunityReplyWithMention(btn.dataset.postId, btn.dataset.author));
@@ -7532,6 +7724,7 @@ async function fetchCommunityPosts({ silent = false } = {}) {
       }
       communityBoardError = data.error === "no_community_kv" ? "no_community_kv" : "";
       communityPostsCache = Array.isArray(data.posts) ? data.posts : [];
+      communityUpdateNewBanner(communityPostsCache);
     } catch (err) {
       if (!silent) communityBoardError = (err && err.message) || "네트워크 오류";
       else if (!communityPostsCache.length) communityBoardError = (err && err.message) || "네트워크 오류";
@@ -7595,7 +7788,18 @@ async function postCommunityMessage() {
     }
     if (contentInput) contentInput.value = "";
     communityBoardError = "";
+    // 내 새 글이 필터/정렬에 가려지지 않도록 보기 상태를 초기화한 뒤 글로 스크롤·강조한다.
+    const filterEl = byId("communityFilter");
+    const tickerEl = byId("communityFilterTicker");
+    const sortEl = byId("communitySort");
+    if (filterEl) filterEl.value = "all";
+    if (tickerEl) tickerEl.value = "";
+    if (sortEl) sortEl.value = "latest";
+    communityBoardTickerFilter = "";
+    communitySortMode = "latest";
+    communityClearNewBanner();
     await fetchCommunityPosts();
+    if (data.post && data.post.id) communityHighlightPost(data.post.id);
   } catch (err) {
     alert((err && err.message) || "글 등록에 실패했습니다.");
   } finally {
@@ -7727,6 +7931,14 @@ function setupCommunityBoard() {
     });
   });
 
+  // 본문 Ctrl/⌘+Enter 로 바로 등록
+  byId("communityContent")?.addEventListener("keydown", (event) => {
+    if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+      event.preventDefault();
+      postBtn.click();
+    }
+  });
+
   byId("communityRefresh")?.addEventListener("click", () => fetchCommunityPosts());
   byId("communityFilter")?.addEventListener("change", renderCommunityBoard);
   byId("communitySort")?.addEventListener("change", (event) => {
@@ -7738,6 +7950,21 @@ function setupCommunityBoard() {
     setupCommunityBoard._filterTimer = setTimeout(renderCommunityBoard, 200);
   });
   byId("communityClearMine")?.addEventListener("click", clearCommunityPostsMine);
+
+  const miniToggle = byId("communityMiniChartToggle");
+  if (miniToggle) {
+    miniToggle.checked = communityShowMiniChart;
+    miniToggle.addEventListener("change", () => {
+      communityShowMiniChart = miniToggle.checked;
+      localStorage.setItem(COMMUNITY_MINICHART_KEY, communityShowMiniChart ? "1" : "0");
+      renderCommunityBoard();
+    });
+  }
+
+  byId("communityNewBanner")?.addEventListener("click", () => {
+    communityClearNewBanner();
+    byId("communityFeed")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
 }
 
 // ===== 관심종목 (localStorage) =====

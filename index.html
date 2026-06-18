@@ -1261,6 +1261,7 @@
               <select id="communityFilter">
                 <option value="all">전체 글</option>
                 <option value="mine">내 글만</option>
+                <option value="watchlist">관심종목</option>
               </select>
             </label>
             <label>
@@ -1275,9 +1276,14 @@
               종목 검색
               <input id="communityFilterTicker" type="search" placeholder="티커로 필터 (비우면 전체)" autocomplete="off">
             </label>
+            <label class="community-toggle">
+              <input type="checkbox" id="communityMiniChartToggle" checked>
+              <span>미니 차트</span>
+            </label>
             <button type="button" class="ghost" id="communityClearMine">내 글 전체 삭제</button>
           </div>
           <div class="community-hot-tickers" id="communityHotTickers" hidden></div>
+          <button type="button" class="community-new-banner" id="communityNewBanner" hidden></button>
           <p class="muted community-board-meta" id="communityBoardMeta">글을 불러오는 중…</p>
           <div class="community-feed" id="communityFeed"></div>
         </div>

@@ -6844,6 +6844,143 @@ footer {
   color: var(--muted);
 }
 
+/* 작성자 아바타(닉네임 색상) */
+.community-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 11px;
+  font-weight: var(--fw-bold);
+  flex: 0 0 auto;
+}
+
+/* 매수/매도/관망 투표 */
+.community-vote {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 10px;
+}
+
+.community-vote-btn {
+  position: relative;
+  overflow: hidden;
+  flex: 1 1 0;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.community-vote-btn.is-mine {
+  border-color: var(--vote-color);
+}
+
+.community-vote-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--vote-color);
+  opacity: 0.14;
+  transition: width 0.25s;
+}
+
+.community-vote-label,
+.community-vote-num {
+  position: relative;
+  z-index: 1;
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-semibold);
+}
+
+.community-vote-num {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.community-vote-btn.is-mine .community-vote-label {
+  color: var(--vote-color);
+  font-weight: var(--fw-bold);
+}
+
+/* 신고 버튼 */
+.community-post-report {
+  color: var(--muted);
+}
+
+.community-post-report:hover {
+  color: var(--red);
+  border-color: var(--red);
+}
+
+/* 새 소식 배너 */
+.community-new-banner {
+  position: sticky;
+  top: 8px;
+  z-index: 5;
+  display: block;
+  width: fit-content;
+  margin: 0 auto 12px;
+  padding: 8px 16px;
+  border: 1px solid var(--chip-border);
+  border-radius: 999px;
+  background: var(--chip-bg);
+  color: var(--primary);
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-label);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+
+/* 미니 차트 토글(인라인 체크박스) */
+.community-toggle {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  color: var(--text);
+  font-size: var(--fs-label);
+  font-weight: var(--fw-semibold);
+}
+
+.community-toggle input {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  accent-color: var(--blue);
+}
+
+/* 분석 카드 커뮤니티 버튼 그룹 */
+.event-community-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* 작성 직후 내 글 강조 */
+.community-post.is-mine-new {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+  animation: communityPulse 1.2s ease-out;
+}
+
+@keyframes communityPulse {
+  0% { box-shadow: 0 0 0 6px rgba(29, 78, 216, 0.30); }
+  100% { box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.10); }
+}
+
 .community-reply-form {
   display: grid;
   gap: 8px;

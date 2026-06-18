@@ -287,7 +287,6 @@ function boot() {
   const initialSub = route.get("sub");
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
-  history.replaceState({ tab: currentTab, sub: null, ticker: null, communityTicker: null }, "");
   if (initialTab) {
     const resolved = normalizeTabRequest(initialTab, initialSub);
     activateTab(resolved.tab, {
@@ -297,6 +296,9 @@ function boot() {
     });
   }
   if (route.get("ticker")) selectTicker(route.get("ticker"));
+  // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
+  navStack = [navCurrentState()];
+  setupBackGuard();
 }
 
 // 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { us:{title,images}, kr:{title,images} }
@@ -1191,6 +1193,102 @@ let communitySubTab = "trending";
 let communityCardnewsView = "us";
 let communityBoardTickerFilter = "";
 
+// ===== 뒤로가기 내비게이션 (이전 탭 복귀 N회 → '한 번 더 누르면 종료' → 종료) =====
+const NAV_MAX_BACK = 2;     // 뒤로가기로 이전 탭 복귀 가능 횟수
+let navStack = [];          // 방문한 탭 상태 breadcrumb (현재 + 최대 NAV_MAX_BACK개)
+let backExitArmed = false;  // '한 번 더 누르면 종료' 대기 상태
+let backExitTimer = null;
+
+function navCurrentSub(tab) {
+  if (tab === "search") return searchSubTab;
+  if (tab === "calendar") return calendarSubTab;
+  if (tab === "community") return communitySubTab;
+  if (tab === "institutional") return (typeof institutionalSubTab !== "undefined" ? institutionalSubTab : null);
+  return null;
+}
+
+function navCurrentState() {
+  return {
+    tab: currentTab,
+    sub: navCurrentSub(currentTab),
+    ticker: selectedTicker || null,
+    communityTicker: communityBoardTickerFilter || null,
+  };
+}
+
+function navStatesEqual(a, b) {
+  return a && b && a.tab === b.tab && a.sub === b.sub
+    && a.ticker === b.ticker && a.communityTicker === b.communityTicker;
+}
+
+// 사용자 주도 탭/하위탭 이동을 breadcrumb에 기록(중복 제거 + 깊이 제한)
+function recordNav() {
+  const state = navCurrentState();
+  const top = navStack[navStack.length - 1];
+  if (navStatesEqual(top, state)) return;
+  navStack.push(state);
+  if (navStack.length > NAV_MAX_BACK + 1) navStack.shift();
+  disarmBackExit();
+}
+
+function applyNavState(state) {
+  if (!state) return;
+  if (state.ticker) selectTicker(state.ticker, { openSearch: false });
+  if (state.communityTicker != null) applyCommunityBoardTickerFilter(state.communityTicker);
+  activateTab(state.tab || "map", {
+    push: false,
+    sub: state.sub,
+    ticker: state.ticker,
+    communityTicker: state.communityTicker,
+  });
+}
+
+function disarmBackExit() {
+  backExitArmed = false;
+  if (backExitTimer) { clearTimeout(backExitTimer); backExitTimer = null; }
+}
+
+// 히스토리에는 [base][sentinel] 두 칸만 유지하고, 뒤로가기 판단은 navStack으로 한다.
+function setupBackGuard() {
+  history.replaceState({ _app: true }, "");
+  history.pushState({ _sentinel: true }, "");
+  window.addEventListener("popstate", () => {
+    if (navStack.length > 1) {
+      // 이전 탭으로 복귀하고 앱에 머문다.
+      navStack.pop();
+      applyNavState(navStack[navStack.length - 1]);
+      history.pushState({ _sentinel: true }, "");
+      disarmBackExit();
+      return;
+    }
+    // 최상위(루트) — 한 번 더 누르면 종료
+    if (backExitArmed) {
+      disarmBackExit();
+      history.back(); // base 까지 빠져나가 앱 종료
+      return;
+    }
+    backExitArmed = true;
+    showAppToast("한 번 더 뒤로 가기하면 종료됩니다");
+    history.pushState({ _sentinel: true }, "");
+    backExitTimer = setTimeout(disarmBackExit, 2000);
+  });
+}
+
+function showAppToast(message, ms = 2000) {
+  let el = byId("appToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "appToast";
+    el.className = "app-toast";
+    el.setAttribute("role", "status");
+    document.body.appendChild(el);
+  }
+  el.textContent = message;
+  el.classList.add("is-visible");
+  clearTimeout(showAppToast._timer);
+  showAppToast._timer = setTimeout(() => el.classList.remove("is-visible"), ms);
+}
+
 const TAB_REDIRECT = {
   top: { tab: "search", sub: "top" },
   jump: { tab: "search", sub: "jump" },
@@ -1219,9 +1317,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "compare") renderCompareBoard();
   if (searchSubTab === "screener") renderScreener();
   if (searchSubTab === "analysis") renderSearch();
-  if (push) {
-    history.replaceState({ tab: "search", sub: searchSubTab, ticker: selectedTicker }, "");
-  }
+  if (push) recordNav();
 }
 
 function activateInstitutionalSub(name, { push = false } = {}) {
@@ -1236,7 +1332,7 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "13f") renderInstitutional13f();
   if (institutionalSubTab === "congress") renderCongressTrades();
   if (push) {
-    history.replaceState({ tab: "institutional", sub: institutionalSubTab, ticker: selectedTicker }, "");
+    recordNav();
   }
 }
 
@@ -1252,7 +1348,7 @@ function activateCalendarSub(name, { push = false } = {}) {
   if (calendarSubTab === "macro") loadCalendar();
   if (calendarSubTab === "earnings") loadEarningsCalendar();
   if (push) {
-    history.replaceState({ tab: "calendar", sub: calendarSubTab, ticker: null }, "");
+    recordNav();
   }
 }
 
@@ -1296,14 +1392,7 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
     stopCommunityPolling();
     renderCommunityVote();
   }
-  if (push) {
-    history.replaceState({
-      tab: "community",
-      sub: communitySubTab,
-      ticker: null,
-      communityTicker: communityBoardTickerFilter || null,
-    }, "");
-  }
+  if (push) recordNav();
 }
 
 const MOBILE_TABS_MQ = "(max-width: 960px)";
@@ -1390,17 +1479,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "community") activateCommunitySub(sub || communitySubTab, { push: false, communityTicker });
   if (name !== "community") stopCommunityPolling();
   if (name === "map") renderTreemap();
-  if (push) {
-    const subTab = name === "search" ? searchSubTab
-      : (name === "calendar" ? calendarSubTab
-        : (name === "institutional" ? institutionalSubTab
-          : (name === "community" ? communitySubTab : null)));
-    const state = { tab: name, sub: subTab, ticker };
-    if (name === "community") state.communityTicker = communityBoardTickerFilter || null;
-    // pushState 대신 replaceState — 탭 이동마다 히스토리가 쌓여 뒤로가기를 여러 번 눌러야
-    // 앱이 종료되던 문제를 막는다(설치형 PWA에서 뒤로가기 1번으로 종료).
-    history.replaceState(state, "");
-  }
+  if (push) recordNav();
 }
 
 function setupTabs() {
@@ -1422,18 +1501,7 @@ function setupTabs() {
     requestAnimationFrame(layoutMobileTabs);
   }
 
-  // Browser back/forward restores the previous tab (and ticker) instead of leaving the site.
-  window.addEventListener("popstate", (event) => {
-    const state = event.state || { tab: "map", ticker: null, sub: null, communityTicker: null };
-    if (state.ticker) selectTicker(state.ticker, { openSearch: false });
-    if (state.communityTicker != null) applyCommunityBoardTickerFilter(state.communityTicker);
-    activateTab(state.tab || "map", {
-      push: false,
-      sub: state.sub,
-      ticker: state.ticker,
-      communityTicker: state.communityTicker,
-    });
-  });
+  // 뒤로가기 동작은 setupBackGuard()의 popstate 핸들러가 담당한다.
 }
 
 function setupFilters() {

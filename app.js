@@ -5768,7 +5768,7 @@ function renderCongressTrades() {
     rankings.innerHTML = `
       <div class="congress-section-head">
         <h3>의원별 추정 수익률 랭킹</h3>
-        <p class="muted">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>
+        <p class="congress-section-note">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>
       </div>
       <div class="table-wrap">
         <table class="congress-rank-table">
@@ -5792,9 +5792,9 @@ function renderCongressTrades() {
       </div>
       ${rankTotal > CONGRESS_RANK_PAGE_SIZE ? `
         <nav class="congress-rank-pagination" aria-label="랭킹 페이지">
-          <button type="button" class="ghost-button congress-page-btn" data-rank-page="prev" ${congressRankPage <= 0 ? "disabled" : ""}>이전</button>
+          <button type="button" class="congress-page-btn" data-rank-page="prev" ${congressRankPage <= 0 ? "disabled" : ""}>이전</button>
           <span class="congress-page-label">${congressRankPage + 1} / ${rankPageCount} · ${rankStart + 1}–${Math.min(rankStart + CONGRESS_RANK_PAGE_SIZE, rankTotal)}위</span>
-          <button type="button" class="ghost-button congress-page-btn" data-rank-page="next" ${congressRankPage >= rankPageCount - 1 ? "disabled" : ""}>다음</button>
+          <button type="button" class="congress-page-btn" data-rank-page="next" ${congressRankPage >= rankPageCount - 1 ? "disabled" : ""}>다음</button>
         </nav>
       ` : ""}
     `;
@@ -5819,9 +5819,13 @@ function renderCongressTrades() {
   const matrixRows = Array.isArray(payload.committeeSectorMatrix) ? payload.committeeSectorMatrix : [];
   if (matrix) {
     matrix.innerHTML = matrixRows.length ? `
-      <div class="congress-section-head">
-        <h3>상임위원회 × 업종 크로스 분석</h3>
-        <p class="muted">위원회 소속 의원들의 실제 매수 종목 빈도 (섹터 필터 없음 · 등록된 의원만)</p>
+      <div class="congress-section-head congress-section-head--help${congressMatrixHelpOpen ? " is-open" : ""}">
+        <h3 class="congress-title-row">
+          <span>상임위원회 × 업종 크로스 분석</span>
+          <button type="button" class="congress-help-button" data-congress-matrix-help aria-expanded="${congressMatrixHelpOpen}" title="기능 설명">!</button>
+        </h3>
+        ${congressMatrixHelpOpen ? congressMatrixHelpHtml() : ""}
+        <p class="congress-section-note">위원회 소속 의원 매수·매도 패턴 요약 (등록된 의원 기준)</p>
       </div>
       <div class="congress-matrix-grid">
         ${matrixRows.slice(0, 12).map((row) => `
@@ -5841,6 +5845,15 @@ function renderCongressTrades() {
     matrix.querySelectorAll(".congress-ticker-chip").forEach((btn) => {
       btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
     });
+    const helpBtn = matrix.querySelector("[data-congress-matrix-help]");
+    if (helpBtn) {
+      helpBtn.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        congressMatrixHelpOpen = !congressMatrixHelpOpen;
+        renderCongressTrades();
+      });
+    }
   }
 
   const filtered = politicians.filter((pol) => {

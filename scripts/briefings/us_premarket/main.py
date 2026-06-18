@@ -3,6 +3,9 @@ import time
 import argparse
 import requests
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+KST = ZoneInfo("Asia/Seoul")
 from pathlib import Path
 
 _PKG_DIR = Path(__file__).resolve().parent
@@ -199,7 +202,7 @@ def main():
     except ValueError as e:
         print(f"  [경고] {e}")
         
-    today = datetime.now().strftime("%Y년 %m월 %d일 %H시 %M분")
+    today = datetime.now(KST).strftime("%Y년 %m월 %d일 %H시 %M분")
     
     # 1. 데이터 수집
     print("  > 미국 주요 경제 뉴스 수집 중...")

@@ -14,6 +14,7 @@ for _path in (_COMMON_DIR, _PKG_DIR):
 from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news
 from config import GEMINI_API_KEY, validate_config
 from publish import publish_briefing_to_site
+from schedules import refresh_white_house_schedule_safe
 from telegram_bot import send_telegram_message, notify_briefing_status
 
 if sys.platform == "win32":
@@ -280,6 +281,8 @@ def main():
     published = update_market_snapshot(combined_briefing)
     if not published:
         raise RuntimeError("국내 장마감 브리핑의 GitHub 게시 및 원격 검증에 실패했습니다.")
+
+    refresh_white_house_schedule_safe()
 
     # 완료 알림은 원격 브랜치 검증 후에만 출력합니다.
     print("[완료] 국내 장마감 시황이 GitHub와 웹사이트 데이터에 반영·검증되었습니다. (텔레그램 발송 생략)")

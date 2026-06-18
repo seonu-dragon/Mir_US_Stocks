@@ -716,6 +716,22 @@ main {
   color: #fff;
 }
 
+/* 탭 순서 변경(드래그) */
+.tab.is-dragging {
+  opacity: 0.92;
+  z-index: 6;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.28);
+  cursor: grabbing;
+}
+
+.tabs.is-reordering {
+  cursor: grabbing;
+}
+
+.tabs.is-reordering .tab:not(.is-dragging) {
+  transition: transform 0.15s ease;
+}
+
 .panel {
   display: none;
   background: var(--panel);

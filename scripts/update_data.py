@@ -2547,7 +2547,16 @@ def git_push_updates(updated_at_kst):
 
         commit_msg = f"Auto-update market snapshot: {updated_at_kst} [skip ci]"
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=ROOT, check=True)
-        subprocess.run(["git", "push"], cwd=ROOT, check=True)
+        branch = subprocess.run(
+            ["git", "branch", "--show-current"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip() or "main"
+        subprocess.run(["git", "fetch", "origin", branch], cwd=ROOT, check=True)
+        subprocess.run(["git", "pull", "--rebase", "origin", branch], cwd=ROOT, check=True)
+        subprocess.run(["git", "push", "origin", branch], cwd=ROOT, check=True)
         print("[Git] Pushed market data to remote.")
     except subprocess.CalledProcessError as exc:
         print(f"[Git] Push failed: {exc}")

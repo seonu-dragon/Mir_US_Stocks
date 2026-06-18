@@ -2056,6 +2056,26 @@ button.ghost {
   grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
   gap: 14px;
   margin-bottom: 14px;
+  min-width: 0;
+}
+
+.congress-rankings,
+.congress-matrix {
+  min-width: 0;
+  max-width: 100%;
+}
+
+#sub-inst-congress,
+#tab-institutional {
+  min-width: 0;
+  overflow-x: hidden;
+}
+
+.congress-rankings .table-wrap,
+#congressDetail .table-wrap {
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .congress-section-head h3 {
@@ -2138,7 +2158,9 @@ button.ghost {
 }
 
 .congress-rank-table,
-.congress-trades-table {
+.congress-trades-table,
+.table-wrap > .congress-rank-table,
+.table-wrap > .congress-trades-table {
   width: 100%;
   border-collapse: collapse;
   min-width: 520px;
@@ -2312,6 +2334,77 @@ button.ghost {
 @media (max-width: 960px) {
   .congress-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  #sub-inst-congress .institutional-meta-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #sub-inst-congress .data-disclaimer strong {
+    white-space: normal;
+  }
+
+  #sub-inst-congress .inst-detail-head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  #sub-inst-congress .inst-detail-head > p {
+    width: 100%;
+    word-break: break-word;
+    line-height: 1.45;
+  }
+
+  .congress-rank-pagination {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+
+  .congress-page-label {
+    flex: 1 1 100%;
+    text-align: center;
+    order: -1;
+  }
+
+  .congress-matrix-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .congress-help-popover {
+    position: static;
+    margin-top: 8px;
+    box-shadow: none;
+  }
+
+  .congress-rank-table,
+  .congress-trades-table {
+    min-width: 480px;
+  }
+
+  .congress-rank-table th,
+  .congress-rank-table td,
+  .congress-trades-table th,
+  .congress-trades-table td {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .congress-rank-table th:nth-child(3),
+  .congress-rank-table td:nth-child(3),
+  .congress-rank-table th:nth-child(4),
+  .congress-rank-table td:nth-child(4) {
+    white-space: nowrap;
+  }
+
+  .congress-trades-table th:nth-child(4),
+  .congress-trades-table td:nth-child(4) {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }
 

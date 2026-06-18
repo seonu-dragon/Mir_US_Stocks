@@ -39,11 +39,10 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 
 ### 최초 설정 (한 번만)
 
-1. **저장소 Private + Pages Public**
-   - 저장소는 Private으로 전환되어 있습니다.
-   - 웹사이트 주소(`https://seonu-dragon.github.io/Mir_US_Stocks/`)를 계속 공개하려면:
-     GitHub → Settings → Pages → **Visibility: Public** 로 설정하세요.
-   - 이 메뉴는 GitHub Pro(유료) 계정에서 Private 저장소에만 나타납니다.
+1. **저장소는 Public 유지**
+   - GitHub Pro가 없으면 Private 저장소에서 Pages를 공개로 유지할 수 없습니다.
+   - 현재 저장소는 Public이며, API 키는 **Repository Secrets**에만 저장됩니다.
+   - 코드를 누가 봐도 Secrets 값은 GitHub 밖으로 노출되지 않습니다.
 
 2. **Repository Secrets 등록**
    - Settings → Secrets and variables → Actions → New repository secret

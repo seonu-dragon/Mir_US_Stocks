@@ -39,9 +39,11 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 
 ### 최초 설정 (한 번만)
 
-1. **저장소를 Private으로 전환** (선택이지만 API 키 보호에 권장)
-   - GitHub → Settings → General → Danger Zone → Change visibility
-   - Private 저장소도 GitHub Pro 이상이면 Pages 사용 가능합니다.
+1. **저장소 Private + Pages Public**
+   - 저장소는 Private으로 전환되어 있습니다.
+   - 웹사이트 주소(`https://seonu-dragon.github.io/Mir_US_Stocks/`)를 계속 공개하려면:
+     GitHub → Settings → Pages → **Visibility: Public** 로 설정하세요.
+   - 이 메뉴는 GitHub Pro(유료) 계정에서 Private 저장소에만 나타납니다.
 
 2. **Repository Secrets 등록**
    - Settings → Secrets and variables → Actions → New repository secret

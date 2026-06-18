@@ -222,6 +222,25 @@ h1 {
   fill: currentColor;
 }
 
+/* SNS 줄 끝의 앱 설치 버튼(항상 표시, 설치되면 숨김) */
+.social-link.sl-install {
+  padding: 0;
+  cursor: pointer;
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #fff;
+}
+
+.social-link.sl-install:hover {
+  background: #15803d;
+  border-color: #15803d;
+  transform: translateY(-1px);
+}
+
+.social-link.sl-install[hidden] {
+  display: none;
+}
+
 .social-link svg path {
   fill: currentColor;
 }

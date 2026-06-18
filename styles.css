@@ -16,6 +16,17 @@
   --chip-bg: #eff6ff;
   --chip-border: #bfdbfe;
   --chat-safe-bottom: 61px;
+
+  /* 타이포그래피 스케일 (관심 리스트 · 종목 분석 페이지 공용) */
+  --fs-stat: 18px;   /* 통계 카드 대표 수치 (4·3열 카드) */
+  --fs-stat-sm: 16px;/* 컴팩트 KPI 수치 (8칸 facts) */
+  --fs-h3: 16px;     /* 하위 섹션 제목 */
+  --fs-body: 14px;   /* 패널 기준 본문 */
+  --fs-table: 13px;  /* 표 셀 · 설명문 */
+  --fs-label: 12px;  /* 컨트롤 라벨 */
+  --fs-cap: 11px;    /* 작은 캡션 라벨 */
+  --fw-semibold: 700;
+  --fw-bold: 800;
 }
 
 * {
@@ -661,6 +672,14 @@ main {
   box-shadow: var(--shadow);
 }
 
+/* 관심 리스트 · 종목 분석 패널: 기준 글자 크기를 14px로 고정해
+   크기 미지정 텍스트가 16px로 튀는 불일치를 없앤다. */
+#tab-bulk,
+#tab-search {
+  font-size: var(--fs-body);
+  line-height: 1.5;
+}
+
 .panel.is-active {
   display: block;
 }
@@ -1233,12 +1252,15 @@ button.ghost {
 .fact span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-semibold);
 }
 
 .fact strong {
   display: block;
   margin-top: 3px;
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
 }
 
 .fact-score {
@@ -3649,13 +3671,13 @@ footer {
 }
 
 .stat-label {
-  font-size: 10px;
+  font-size: var(--fs-cap);
   color: var(--muted);
 }
 
 .stat-value {
-  font-size: 16px;
-  font-weight: 900;
+  font-size: var(--fs-stat-sm);
+  font-weight: var(--fw-bold);
 }
 
 .font-sm {
@@ -4054,8 +4076,8 @@ footer {
   border-bottom: 3px solid transparent;
   padding: 11px 22px;
   margin-bottom: -2px;
-  font-size: 13.5px;
-  font-weight: 700;
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
   color: var(--muted);
   cursor: pointer;
   transition: color 0.18s, border-color 0.18s, background 0.18s;
@@ -5029,14 +5051,15 @@ footer {
 
 .event-card span {
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 900;
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-bold);
   text-transform: uppercase;
+  letter-spacing: 0.02em;
 }
 
 .event-card strong {
   color: var(--text);
-  font-size: 13px;
+  font-size: var(--fs-table);
 }
 
 .event-card b {
@@ -5713,6 +5736,7 @@ footer {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-size: var(--fs-h3);
 }
 
 .watchlist-stats {
@@ -5740,7 +5764,7 @@ footer {
 
 .watch-alert-head h3 {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: var(--fs-h3);
 }
 
 .watch-alert-controls {
@@ -5836,8 +5860,8 @@ footer {
 
 .watch-alert-item em {
   font-style: normal;
-  font-size: 12px;
-  font-weight: 900;
+  font-size: var(--fs-label);
+  font-weight: var(--fw-bold);
 }
 
 .watch-stat-card {
@@ -5850,14 +5874,15 @@ footer {
 .watch-stat-card span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-semibold);
 }
 
 .watch-stat-card strong {
   display: block;
   margin-top: 3px;
-  font-size: 18px;
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
 }
 
 .screener-toolbar {
@@ -6052,14 +6077,15 @@ footer {
 .backtest-metric span {
   display: block;
   color: var(--muted);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-semibold);
 }
 
 .backtest-metric strong {
   display: block;
   margin-top: 3px;
-  font-size: 18px;
+  font-size: var(--fs-stat);
+  font-weight: var(--fw-bold);
 }
 
 .backtest-meta {

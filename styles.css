@@ -6925,6 +6925,10 @@ footer {
 }
 
 /* 새 소식 배너 */
+.community-new-banner[hidden] {
+  display: none;
+}
+
 .community-new-banner {
   position: sticky;
   top: 8px;
@@ -6979,6 +6983,210 @@ footer {
 @keyframes communityPulse {
   0% { box-shadow: 0 0 0 6px rgba(29, 78, 216, 0.30); }
   100% { box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.10); }
+}
+
+/* ===== 관리자 신고 내역 패널 ===== */
+.community-admin {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--amber);
+  border-radius: 12px;
+  background: rgba(183, 121, 31, 0.06);
+}
+
+.community-admin-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.community-admin-head strong {
+  font-size: var(--fs-h3);
+}
+
+.community-admin-head .compact-btn {
+  margin-left: auto;
+}
+
+.community-admin-item {
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.community-admin-item-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.community-admin-count {
+  font-weight: var(--fw-bold);
+  color: var(--red);
+  font-size: var(--fs-cap);
+}
+
+.community-admin-item-head .community-admin-delete {
+  margin-left: auto;
+}
+
+.community-admin-item-body {
+  margin: 6px 0 4px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.community-admin-reasons {
+  margin: 0;
+  font-size: var(--fs-cap);
+}
+
+/* ===== 투표 페이지 ===== */
+.community-vote-compose {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.community-vote-choices {
+  display: flex;
+  gap: 8px;
+}
+
+.community-vote-choice {
+  height: 38px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+}
+
+.community-vote-choice[data-choice="buy"].is-selected {
+  border-color: var(--green);
+  background: rgba(19, 138, 77, 0.10);
+  color: var(--green);
+}
+
+.community-vote-choice[data-choice="sell"].is-selected {
+  border-color: var(--red);
+  background: rgba(192, 53, 53, 0.10);
+  color: var(--red);
+}
+
+.community-vote-choice[data-choice="hold"].is-selected {
+  border-color: var(--muted);
+  background: rgba(102, 112, 133, 0.12);
+  color: var(--text);
+}
+
+.community-vote-mine {
+  margin: 0 0 14px;
+  font-weight: var(--fw-semibold);
+}
+
+.community-rank-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-soft);
+  margin-bottom: 12px;
+}
+
+.community-rank-tab {
+  height: 32px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-table);
+  cursor: pointer;
+}
+
+.community-rank-tab.is-active {
+  background: #fff;
+  color: var(--primary);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.10);
+}
+
+.community-vote-rank-meta {
+  margin: 0 0 10px;
+}
+
+.community-vote-rank-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.community-vote-rank-row {
+  display: grid;
+  grid-template-columns: 28px auto 1fr auto 120px 64px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.community-vote-rank-num {
+  font-weight: var(--fw-bold);
+  color: var(--muted);
+  text-align: center;
+}
+
+.community-vote-rank-company {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-cap);
+}
+
+.community-vote-rank-total {
+  font-weight: var(--fw-bold);
+  font-size: var(--fs-table);
+  white-space: nowrap;
+}
+
+.community-vote-rank-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--line);
+}
+
+.community-vote-rank-bar span {
+  display: block;
+  height: 100%;
+}
+
+.community-vote-rank-pct {
+  font-size: var(--fs-cap);
+  color: var(--green);
+  font-weight: var(--fw-semibold);
+  text-align: right;
+}
+
+@media (max-width: 720px) {
+  .community-vote-rank-row {
+    grid-template-columns: 24px auto 1fr auto;
+  }
+  .community-vote-rank-company,
+  .community-vote-rank-bar,
+  .community-vote-rank-pct {
+    display: none;
+  }
 }
 
 .community-reply-form {

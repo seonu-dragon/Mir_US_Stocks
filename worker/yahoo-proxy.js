@@ -62,8 +62,14 @@ export default {
     if (request.method === "POST" && url.pathname === "/community/report") {
       return cors(await handleCommunityReport(request, env));
     }
+    if (request.method === "GET" && url.pathname === "/community/reports") {
+      return cors(await handleCommunityReportsList(url, env));
+    }
     if (request.method === "POST" && url.pathname === "/community/vote") {
       return cors(await handleCommunityVote(request, env));
+    }
+    if (request.method === "GET" && url.pathname === "/community/votes") {
+      return cors(await handleCommunityVotesList(url, env));
     }
     if (request.method === "POST" && url.pathname === "/community/clear") {
       return cors(await handleCommunityClear(request, env));
@@ -763,14 +769,18 @@ const COMMUNITY_MAX_CONTENT = 12000;
 const COMMUNITY_MAX_COMMENT_CONTENT = 4000;
 const COMMUNITY_MAX_COMMENTS_PER_POST = 80;
 const COMMUNITY_MAX_AUTHOR = 24;
-// 스팸 방지 + 신고 자동 숨김
+// 스팸 방지
 const COMMUNITY_POST_COOLDOWN_MS = 12000;
 const COMMUNITY_COMMENT_COOLDOWN_MS = 6000;
 const COMMUNITY_DUP_WINDOW_MS = 600000;
-const COMMUNITY_REPORT_HIDE_THRESHOLD = 3;
 const COMMUNITY_MAX_LINKS = 2;
 const COMMUNITY_BANNED_PATTERNS = [/viagra|카지노|토토사이트|먹튀|불법대출/i];
+
+// 투표(별도 KV) — 하루 1표, 35일 보관
+const COMMUNITY_VOTES_KV_KEY = "community:v1:votes";
 const COMMUNITY_VOTE_CHOICES = ["buy", "sell", "hold"];
+const COMMUNITY_MAX_VOTES = 8000;
+const COMMUNITY_VOTE_RETENTION_MS = 35 * 24 * 60 * 60 * 1000;
 
 function communityLinkCount(text) {
   return (String(text || "").match(/https?:\/\/|www\./gi) || []).length;
@@ -782,19 +792,31 @@ function communitySpamReason(content) {
   return null;
 }
 
-function communityIsHidden(post) {
-  const reports = Array.isArray(post && post.reports) ? post.reports.length : 0;
-  return reports >= COMMUNITY_REPORT_HIDE_THRESHOLD;
+function communityAdminOk(env, key) {
+  const adminKey = env && env.COMMUNITY_ADMIN_KEY;
+  return Boolean(adminKey) && String(key || "") === String(adminKey);
 }
 
-function communityVoteTally(votes) {
-  const tally = { buy: 0, sell: 0, hold: 0 };
-  if (votes && typeof votes === "object") {
-    for (const choice of Object.values(votes)) {
-      if (tally[choice] != null) tally[choice] += 1;
-    }
+function communityDayKey(ms) {
+  return new Date(ms).toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
+}
+
+async function loadCommunityVotesKv(env) {
+  const raw = await env.COMMUNITY_KV.get(COMMUNITY_VOTES_KV_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
   }
-  return tally;
+}
+
+async function saveCommunityVotesKv(env, votes) {
+  const cutoff = Date.now() - COMMUNITY_VOTE_RETENTION_MS;
+  const pruned = votes.filter((v) => Date.parse(v.at) >= cutoff).slice(-COMMUNITY_MAX_VOTES);
+  await env.COMMUNITY_KV.put(COMMUNITY_VOTES_KV_KEY, JSON.stringify(pruned));
+  return pruned;
 }
 
 function communityKvMissing() {
@@ -854,9 +876,14 @@ async function handleCommunityList(url, env) {
   const posts = await loadCommunityPostsKv(env);
   const ticker = sanitizeCommunityTicker(url.searchParams.get("ticker"));
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 80));
-  const visible = posts.filter((p) => !communityIsHidden(p));
-  const filtered = ticker ? visible.filter((p) => p.ticker === ticker) : visible;
-  return json({ posts: filtered.slice(0, limit), total: filtered.length }, 200, 8);
+  // 신고는 더 이상 전체 공개 목록을 숨기지 않는다(신고자 본인만 클라이언트에서 가림).
+  // 응답에는 신고 내역을 노출하지 않는다(관리자 전용 엔드포인트로 분리).
+  const filtered = ticker ? posts.filter((p) => p.ticker === ticker) : posts;
+  const publicPosts = filtered.slice(0, limit).map((p) => {
+    const { reports, ...rest } = p;
+    return rest;
+  });
+  return json({ posts: publicPosts, total: filtered.length }, 200, 8);
 }
 
 async function handleCommunityCreate(request, env) {
@@ -910,11 +937,12 @@ async function handleCommunityDelete(request, env) {
   }
   const id = String(body && body.id || "").trim();
   const clientId = sanitizeCommunityClientId(body && body.clientId);
-  if (!id || !clientId) return json({ error: "missing_fields" }, 400, 30);
+  const isAdmin = communityAdminOk(env, body && body.adminKey);
+  if (!id || (!clientId && !isAdmin)) return json({ error: "missing_fields" }, 400, 30);
   const posts = await loadCommunityPostsKv(env);
   const target = posts.find((p) => p.id === id);
   if (!target) return json({ error: "not_found" }, 404, 30);
-  if (target.clientId !== clientId) return json({ error: "forbidden" }, 403, 30);
+  if (!isAdmin && target.clientId !== clientId) return json({ error: "forbidden" }, 403, 30);
   const next = posts.filter((p) => p.id !== id);
   await saveCommunityPostsKv(env, next);
   return json({ ok: true, deleted: id }, 200, 0);
@@ -1009,16 +1037,42 @@ async function handleCommunityReport(request, env) {
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!postId) return json({ error: "missing_post_id" }, 400, 30);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const reason = String(body && body.reason || "").trim().slice(0, 200);
   const posts = await loadCommunityPostsKv(env);
   const post = posts.find((p) => p.id === postId);
   if (!post) return json({ error: "not_found" }, 404, 30);
   const reports = Array.isArray(post.reports) ? post.reports : [];
-  if (!reports.includes(clientId)) reports.push(clientId);
+  if (!reports.some((r) => (r && r.clientId) === clientId)) {
+    reports.push({ clientId, reason, at: new Date().toISOString() });
+  }
   post.reports = reports;
   await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, postId, reportCount: reports.length, hidden: communityIsHidden(post) }, 200, 0);
+  return json({ ok: true, postId, reportCount: reports.length }, 200, 0);
 }
 
+// 관리자 전용: 신고된 글 목록 + 신고 내역(adminKey 필요)
+async function handleCommunityReportsList(url, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  if (!communityAdminOk(env, url.searchParams.get("adminKey"))) {
+    return json({ error: "forbidden" }, 403, 0);
+  }
+  const posts = await loadCommunityPostsKv(env);
+  const reported = posts
+    .filter((p) => Array.isArray(p.reports) && p.reports.length)
+    .map((p) => ({
+      id: p.id,
+      author: p.author,
+      ticker: p.ticker || "",
+      content: p.content,
+      createdAt: p.createdAt,
+      reportCount: p.reports.length,
+      reports: p.reports,
+    }))
+    .sort((a, b) => b.reportCount - a.reportCount);
+  return json({ posts: reported, total: reported.length }, 200, 0);
+}
+
+// 투표: 하루 1표(같은 날 재투표 시 교체). 게시글이 아니라 종목 대상.
 async function handleCommunityVote(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
   let body;
@@ -1027,27 +1081,47 @@ async function handleCommunityVote(request, env) {
   } catch {
     return json({ error: "bad_json" }, 400, 30);
   }
-  const postId = String(body && body.postId || "").trim();
   const clientId = sanitizeCommunityClientId(body && body.clientId);
+  const ticker = sanitizeCommunityTicker(body && body.ticker);
   const choice = String(body && body.choice || "").trim().toLowerCase();
-  if (!postId) return json({ error: "missing_post_id" }, 400, 30);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  if (!ticker) return json({ error: "missing_ticker" }, 400, 30);
   if (!COMMUNITY_VOTE_CHOICES.includes(choice)) return json({ error: "bad_choice" }, 400, 30);
-  const posts = await loadCommunityPostsKv(env);
-  const post = posts.find((p) => p.id === postId);
-  if (!post) return json({ error: "not_found" }, 404, 30);
-  const votes = (post.votes && typeof post.votes === "object") ? post.votes : {};
-  let myVote;
-  if (votes[clientId] === choice) {
-    delete votes[clientId];
-    myVote = null;
-  } else {
-    votes[clientId] = choice;
-    myVote = choice;
+  const votes = await loadCommunityVotesKv(env);
+  const today = communityDayKey(Date.now());
+  const existingIdx = votes.findIndex((v) => v.clientId === clientId && communityDayKey(Date.parse(v.at)) === today);
+  if (existingIdx >= 0) {
+    // 하루 1표 — 같은 날 표는 새 선택으로 교체
+    votes.splice(existingIdx, 1);
   }
-  post.votes = votes;
-  await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, postId, tally: communityVoteTally(votes), myVote }, 200, 0);
+  const vote = { clientId, ticker, choice, at: new Date().toISOString() };
+  votes.push(vote);
+  await saveCommunityVotesKv(env, votes);
+  return json({ ok: true, vote }, 200, 0);
+}
+
+// 투표 순위: ?period=day|week|month, ?clientId= (내 오늘 투표 표시용)
+async function handleCommunityVotesList(url, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  const period = String(url.searchParams.get("period") || "day").toLowerCase();
+  const clientId = sanitizeCommunityClientId(url.searchParams.get("clientId"));
+  const days = period === "month" ? 30 : period === "week" ? 7 : 1;
+  const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
+  const votes = await loadCommunityVotesKv(env);
+  const inRange = votes.filter((v) => Date.parse(v.at) >= cutoff);
+  const byTicker = new Map();
+  for (const v of inRange) {
+    if (!byTicker.has(v.ticker)) byTicker.set(v.ticker, { ticker: v.ticker, total: 0, buy: 0, sell: 0, hold: 0 });
+    const row = byTicker.get(v.ticker);
+    row.total += 1;
+    if (row[v.choice] != null) row[v.choice] += 1;
+  }
+  const ranking = [...byTicker.values()].sort((a, b) => b.total - a.total).slice(0, 30);
+  const today = communityDayKey(Date.now());
+  const myToday = clientId
+    ? (votes.find((v) => v.clientId === clientId && communityDayKey(Date.parse(v.at)) === today) || null)
+    : null;
+  return json({ period, ranking, totalVotes: inRange.length, myToday }, 200, 8);
 }
 
 async function handleCommunityCommentDelete(request, env) {

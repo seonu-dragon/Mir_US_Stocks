@@ -266,6 +266,7 @@ async function loadData() {
 
 function boot() {
   const route = new URLSearchParams(window.location.search);
+  if (route.get("cadmin")) setCommunityAdminKey(route.get("cadmin"));
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
   initWatchlist(route.get("watchlist"));
   document.documentElement.removeAttribute("data-theme");
@@ -1289,6 +1290,10 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
   if (communitySubTab === "news" || communitySubTab === "sns") {
     stopCommunityPolling();
     renderCommunityNews();
+  }
+  if (communitySubTab === "vote") {
+    stopCommunityPolling();
+    renderCommunityVote();
   }
   if (push) {
     history.pushState({
@@ -7133,6 +7138,40 @@ let communityShowMiniChart = localStorage.getItem(COMMUNITY_MINICHART_KEY) !== "
 let communitySeenPostIds = null;
 let communitySeenCommentIds = null;
 let communityNewCount = 0;
+const COMMUNITY_HIDDEN_KEY = "mir_community_hidden_v1";
+const COMMUNITY_ADMIN_KEY_LS = "mir_community_admin_key_v1";
+let communityVotePeriod = "day";
+
+function getCommunityHiddenIds() {
+  try {
+    const arr = JSON.parse(localStorage.getItem(COMMUNITY_HIDDEN_KEY) || "[]");
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch (_) {
+    return new Set();
+  }
+}
+
+function addCommunityHiddenId(id) {
+  const set = getCommunityHiddenIds();
+  set.add(id);
+  localStorage.setItem(COMMUNITY_HIDDEN_KEY, JSON.stringify([...set]));
+}
+
+function clearCommunityHiddenIds() {
+  localStorage.removeItem(COMMUNITY_HIDDEN_KEY);
+}
+
+function getCommunityAdminKey() {
+  return localStorage.getItem(COMMUNITY_ADMIN_KEY_LS) || "";
+}
+
+function setCommunityAdminKey(key) {
+  if (key) localStorage.setItem(COMMUNITY_ADMIN_KEY_LS, String(key));
+}
+
+function isCommunityAdmin() {
+  return Boolean(getCommunityAdminKey());
+}
 
 function getCommunityNickname() {
   return (localStorage.getItem(COMMUNITY_NICKNAME_KEY) || "").trim();
@@ -7259,22 +7298,27 @@ function communityAvatarHtml(name) {
   return `<span class="community-avatar" style="background:${communityAvatarColor(label)}" aria-hidden="true">${escapeHtml(initial)}</span>`;
 }
 
-// ----- 투표(매수/매도/관망) -----
-function communityVoteTally(post) {
-  const tally = { buy: 0, sell: 0, hold: 0 };
-  const votes = post && post.votes;
-  if (votes && typeof votes === "object") {
-    for (const choice of Object.values(votes)) {
-      if (tally[choice] != null) tally[choice] += 1;
-    }
-  }
-  return tally;
+// ----- 신고: 신고자 본인 화면에서만 가림 + 관리자에게 신고 로그 전송 -----
+async function reportCommunityPost(postId) {
+  if (!postId) return;
+  const reason = prompt("신고 사유를 적어주세요(선택). 신고한 글은 내 화면에서 가려지고, 관리자가 검토합니다.", "");
+  if (reason === null) return; // 취소
+  addCommunityHiddenId(postId);
+  renderCommunityBoard();
+  const url = communityApiUrl("/community/report");
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ postId, clientId: getCommunityClientId(), reason: String(reason || "").slice(0, 200) }),
+    });
+  } catch (_) {}
 }
 
-function communityMyVote(post) {
-  const votes = post && post.votes;
-  return (votes && typeof votes === "object") ? (votes[getCommunityClientId()] || null) : null;
-}
+// ===== 투표 페이지 (하루 1표 · 일/주/월 순위) =====
+let communityVoteSelectedChoice = null;
+let communityVoteMyToday = null;
 
 const COMMUNITY_VOTE_META = {
   buy: { label: "매수", color: "var(--green)" },
@@ -7282,66 +7326,177 @@ const COMMUNITY_VOTE_META = {
   hold: { label: "관망", color: "var(--muted)" },
 };
 
-function communityVoteBarHtml(post) {
-  const tally = communityVoteTally(post);
-  const total = tally.buy + tally.sell + tally.hold;
-  const mine = communityMyVote(post);
-  const buttons = ["buy", "sell", "hold"].map((key) => {
-    const m = COMMUNITY_VOTE_META[key];
-    const pct = total ? Math.round((tally[key] / total) * 100) : 0;
-    return `
-      <button type="button" class="community-vote-btn${mine === key ? " is-mine" : ""}" data-post-id="${escapeHtml(post.id)}" data-choice="${key}" style="--vote-color:${m.color}">
-        <span class="community-vote-fill" style="width:${pct}%"></span>
-        <span class="community-vote-label">${m.label}</span>
-        <span class="community-vote-num">${tally[key]}</span>
-      </button>`;
-  }).join("");
-  return `<div class="community-vote" role="group" aria-label="이 종목 투표">${buttons}</div>`;
-}
-
-async function castCommunityVote(postId, choice) {
-  const url = communityApiUrl("/community/vote");
-  if (!url) { alert("게시판을 일시적으로 사용할 수 없습니다."); return; }
-  const clientId = getCommunityClientId();
-  const cached = communityPostsCache.find((p) => p.id === postId);
-  if (cached) {
-    const votes = (cached.votes && typeof cached.votes === "object") ? { ...cached.votes } : {};
-    if (votes[clientId] === choice) delete votes[clientId]; else votes[clientId] = choice;
-    cached.votes = votes;
-    renderCommunityBoard();
-  }
-  try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId, choice, clientId }),
+function renderCommunityVote() {
+  const choicesBox = byId("communityVoteChoices");
+  if (choicesBox) {
+    choicesBox.querySelectorAll(".community-vote-choice").forEach((btn) => {
+      btn.classList.toggle("is-selected", btn.dataset.choice === communityVoteSelectedChoice);
     });
-    const data = await res.json();
-    if (!res.ok) alert(data.message || data.error || "투표 처리 실패");
-  } catch (_) {}
-  await fetchCommunityPosts({ silent: true });
+  }
+  byId("communityVoteRankTabs")?.querySelectorAll(".community-rank-tab").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.period === communityVotePeriod);
+  });
+  const mine = byId("communityVoteMine");
+  if (mine) {
+    mine.textContent = communityVoteMyToday
+      ? `오늘 내 투표: ${escapeHtml(communityVoteMyToday.ticker)} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
+      : "오늘은 아직 투표하지 않았습니다.";
+  }
+  fetchCommunityVotes();
 }
 
-// ----- 신고 -----
-async function reportCommunityPost(postId) {
-  if (!postId || !confirm("이 글을 신고할까요? 누적 신고 시 자동으로 숨겨집니다.")) return;
-  const url = communityApiUrl("/community/report");
-  if (!url) { alert("게시판을 일시적으로 사용할 수 없습니다."); return; }
+async function fetchCommunityVotes() {
+  const box = byId("communityVoteRanking");
+  if (!box) return;
+  const url = communityApiUrl(`/community/votes?period=${encodeURIComponent(communityVotePeriod)}&clientId=${encodeURIComponent(getCommunityClientId())}`);
+  if (!url) { box.innerHTML = `<div class="community-empty">투표 기능을 사용할 수 없습니다.</div>`; return; }
+  box.innerHTML = `<div class="community-empty">순위를 불러오는 중…</div>`;
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "load_failed");
+    communityVoteMyToday = data.myToday || null;
+    const mine = byId("communityVoteMine");
+    if (mine) {
+      mine.textContent = communityVoteMyToday
+        ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
+        : "오늘은 아직 투표하지 않았습니다.";
+    }
+    renderCommunityVoteRanking(data.ranking || [], data.totalVotes || 0);
+  } catch (err) {
+    box.innerHTML = `<div class="community-empty">순위를 불러오지 못했습니다.</div>`;
+  }
+}
+
+function renderCommunityVoteRanking(ranking, totalVotes) {
+  const box = byId("communityVoteRanking");
+  if (!box) return;
+  const periodLabel = communityVotePeriod === "month" ? "월간" : communityVotePeriod === "week" ? "주간" : "일간";
+  if (!ranking.length) {
+    box.innerHTML = `<div class="community-empty">${periodLabel} 투표가 아직 없습니다. 첫 투표를 남겨보세요.</div>`;
+    return;
+  }
+  box.innerHTML = `
+    <p class="muted community-vote-rank-meta">${periodLabel} 총 ${totalVotes}표 · 상위 ${ranking.length}개 종목</p>
+    <div class="community-vote-rank-list">
+      ${ranking.map((row, i) => {
+        const stock = stockByTicker(row.ticker);
+        const buyPct = row.total ? Math.round((row.buy / row.total) * 100) : 0;
+        const sellPct = row.total ? Math.round((row.sell / row.total) * 100) : 0;
+        const holdPct = Math.max(0, 100 - buyPct - sellPct);
+        return `
+          <div class="community-vote-rank-row">
+            <span class="community-vote-rank-num">${i + 1}</span>
+            <button type="button" class="ticker-pill community-vote-rank-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
+            <span class="community-vote-rank-company muted">${stock ? escapeHtml(stock.company) : ""}</span>
+            <span class="community-vote-rank-total">${row.total}표</span>
+            <span class="community-vote-rank-bar" title="매수 ${buyPct}% · 매도 ${sellPct}% · 관망 ${holdPct}%">
+              <span style="width:${buyPct}%;background:var(--green)"></span>
+              <span style="width:${sellPct}%;background:var(--red)"></span>
+              <span style="width:${holdPct}%;background:var(--line)"></span>
+            </span>
+            <span class="community-vote-rank-pct">매수 ${buyPct}%</span>
+          </div>`;
+      }).join("")}
+    </div>
+  `;
+  box.querySelectorAll(".community-vote-rank-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => openSocialTicker(btn.dataset.ticker));
+  });
+}
+
+async function submitCommunityVote() {
+  const tickerInput = byId("communityVoteTicker");
+  const raw = (tickerInput?.value || "").trim();
+  const ticker = raw ? resolveCommunityTickerInput(raw) : "";
+  if (!ticker) { alert("투표할 종목을 입력해주세요."); return; }
+  if (!communityVoteSelectedChoice) { alert("매수·매도·관망 중 하나를 선택해주세요."); return; }
+  const url = communityApiUrl("/community/vote");
+  if (!url) { alert("투표 기능을 사용할 수 없습니다."); return; }
+  const btn = byId("communityVoteSubmit");
+  if (btn) btn.disabled = true;
   try {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ postId, clientId: getCommunityClientId() }),
+      body: JSON.stringify({ ticker, choice: communityVoteSelectedChoice, clientId: getCommunityClientId() }),
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.message || data.error || "신고 처리 실패");
+      alert(data.message || data.error || "투표 실패");
       return;
     }
-    alert(data.hidden ? "신고가 접수되어 글이 숨겨졌습니다." : "신고가 접수되었습니다.");
-    await fetchCommunityPosts({ silent: true });
+    communityVoteSelectedChoice = null;
+    if (tickerInput) tickerInput.value = "";
+    renderCommunityVote();
   } catch (err) {
-    alert((err && err.message) || "신고에 실패했습니다.");
+    alert((err && err.message) || "투표에 실패했습니다.");
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+// ===== 관리자 신고 내역 패널 =====
+async function renderCommunityAdminPanel() {
+  const panel = byId("communityAdminPanel");
+  if (!panel) return;
+  if (!isCommunityAdmin()) { panel.hidden = true; panel.innerHTML = ""; return; }
+  const url = communityApiUrl(`/community/reports?adminKey=${encodeURIComponent(getCommunityAdminKey())}`);
+  if (!url) { panel.hidden = true; return; }
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) {
+      panel.hidden = false;
+      panel.innerHTML = `<div class="community-admin-head"><strong>🛡 관리자 · 신고 내역</strong></div><p class="muted">권한 확인 실패(키를 확인하세요).</p>`;
+      return;
+    }
+    const posts = data.posts || [];
+    panel.hidden = false;
+    panel.innerHTML = `
+      <div class="community-admin-head">
+        <strong>🛡 관리자 · 신고 내역 ${posts.length}건</strong>
+        <button type="button" class="ghost compact-btn" id="communityAdminRefresh">새로고침</button>
+      </div>
+      ${posts.length ? posts.map((p) => `
+        <div class="community-admin-item">
+          <div class="community-admin-item-head">
+            <span class="community-admin-count">신고 ${p.reportCount}</span>
+            ${p.ticker ? `<span class="community-post-tag">${escapeHtml(p.ticker)}</span>` : ""}
+            <span class="community-post-author">${escapeHtml(p.author || "익명")}</span>
+            <time class="muted">${escapeHtml(formatCommunityTime(p.createdAt))}</time>
+            <button type="button" class="ghost compact-btn community-admin-delete" data-id="${escapeHtml(p.id)}">글 삭제</button>
+          </div>
+          <p class="community-admin-item-body">${escapeHtml(p.content)}</p>
+          <p class="community-admin-reasons muted">사유: ${escapeHtml((p.reports || []).map((r) => r.reason || "(없음)").join(" · "))}</p>
+        </div>
+      `).join("") : `<p class="muted">신고된 글이 없습니다.</p>`}
+    `;
+    byId("communityAdminRefresh")?.addEventListener("click", renderCommunityAdminPanel);
+    panel.querySelectorAll(".community-admin-delete").forEach((btn) => {
+      btn.addEventListener("click", () => adminDeleteCommunityPost(btn.dataset.id));
+    });
+  } catch (_) {
+    panel.hidden = true;
+  }
+}
+
+async function adminDeleteCommunityPost(id) {
+  if (!id || !confirm("이 글을 삭제할까요? (관리자 권한)")) return;
+  const url = communityApiUrl("/community");
+  if (!url) return;
+  try {
+    const res = await fetch(url, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, clientId: getCommunityClientId(), adminKey: getCommunityAdminKey() }),
+    });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || "삭제 실패"); return; }
+    await fetchCommunityPosts({ silent: true });
+    renderCommunityAdminPanel();
+  } catch (err) {
+    alert((err && err.message) || "삭제 실패");
   }
 }
 
@@ -7487,7 +7642,8 @@ function filterCommunityPostsView(posts) {
   const filterMode = byId("communityFilter")?.value || "all";
   const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
   const clientId = getCommunityClientId();
-  let filtered = posts.slice();
+  const hidden = getCommunityHiddenIds();
+  let filtered = posts.filter((p) => !hidden.has(p.id));
   if (filterMode === "mine") {
     filtered = filtered.filter((p) => p.clientId === clientId);
   } else if (filterMode === "watchlist") {
@@ -7523,6 +7679,7 @@ function renderCommunityBoard() {
   const clientId = getCommunityClientId();
 
   renderCommunityHotTickersPanel();
+  renderCommunityAdminPanel();
 
   if (communityFetchPromise && !communityPostsCache.length && !communityBoardError) {
     meta.textContent = "글을 불러오는 중…";
@@ -7571,7 +7728,6 @@ function renderCommunityBoard() {
         ${stock ? `<p class="community-post-company muted">${escapeHtml(stock.company)} · 당일 ${fmtPct(stock.changePct)}</p>` : ""}
         ${post.ticker ? communityMiniChartHtml(post.ticker) : ""}
         <p class="community-post-body">${highlightCommunityMentions(escapeHtml(post.content))}</p>
-        ${post.ticker ? communityVoteBarHtml(post) : ""}
         ${comments.length ? `
           <div class="community-comments">
             ${comments.map((comment) => {
@@ -7631,9 +7787,6 @@ function renderCommunityBoard() {
   });
   feed.querySelectorAll(".community-post-report").forEach((btn) => {
     btn.addEventListener("click", () => reportCommunityPost(btn.dataset.postId));
-  });
-  feed.querySelectorAll(".community-vote-btn").forEach((btn) => {
-    btn.addEventListener("click", () => castCommunityVote(btn.dataset.postId, btn.dataset.choice));
   });
   feed.querySelectorAll(".community-comment-reply").forEach((btn) => {
     btn.addEventListener("click", () => openCommunityReplyWithMention(btn.dataset.postId, btn.dataset.author));
@@ -7965,6 +8118,31 @@ function setupCommunityBoard() {
     communityClearNewBanner();
     byId("communityFeed")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
+
+  // ----- 투표 페이지 -----
+  const voteChoices = byId("communityVoteChoices");
+  if (voteChoices) {
+    voteChoices.querySelectorAll(".community-vote-choice").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        communityVoteSelectedChoice = communityVoteSelectedChoice === btn.dataset.choice ? null : btn.dataset.choice;
+        voteChoices.querySelectorAll(".community-vote-choice").forEach((b) =>
+          b.classList.toggle("is-selected", b.dataset.choice === communityVoteSelectedChoice));
+      });
+    });
+  }
+  byId("communityVoteSubmit")?.addEventListener("click", submitCommunityVote);
+  const rankTabs = byId("communityVoteRankTabs");
+  if (rankTabs) {
+    rankTabs.querySelectorAll(".community-rank-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        communityVotePeriod = btn.dataset.period || "day";
+        rankTabs.querySelectorAll(".community-rank-tab").forEach((b) =>
+          b.classList.toggle("is-active", b.dataset.period === communityVotePeriod));
+        fetchCommunityVotes();
+      });
+    });
+  }
+  setupTickerAutocomplete("communityVoteTicker");
 }
 
 // ===== 관심종목 (localStorage) =====

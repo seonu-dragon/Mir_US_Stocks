@@ -1155,6 +1155,7 @@
           <button class="sub-tab is-active" data-sub="trending">🔥 트렌딩</button>
           <button class="sub-tab" data-sub="board">💬 종목 토론</button>
           <button class="sub-tab" data-sub="news">📰 오늘의 뉴스</button>
+          <button class="sub-tab" data-sub="vote">🗳 투표</button>
         </nav>
 
         <div class="sub-panel" id="sub-community-news">
@@ -1284,8 +1285,35 @@
           </div>
           <div class="community-hot-tickers" id="communityHotTickers" hidden></div>
           <button type="button" class="community-new-banner" id="communityNewBanner" hidden></button>
+          <div class="community-admin" id="communityAdminPanel" hidden></div>
           <p class="muted community-board-meta" id="communityBoardMeta">글을 불러오는 중…</p>
           <div class="community-feed" id="communityFeed"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-community-vote">
+          <div class="section-title">
+            <h2>종목 투표</h2>
+            <p>오늘의 한 종목에 매수·매도·관망을 투표하세요. 하루 한 표만 행사할 수 있으며, 일간·주간·월간 순위로 집계됩니다.</p>
+          </div>
+          <div class="community-vote-compose">
+            <label class="grow">
+              종목
+              <input id="communityVoteTicker" type="search" placeholder="티커·한국어 (예: NVDA, 테슬라)" autocomplete="off">
+            </label>
+            <div class="community-vote-choices" id="communityVoteChoices" role="group" aria-label="투표 선택">
+              <button type="button" class="community-vote-choice" data-choice="buy">📈 매수</button>
+              <button type="button" class="community-vote-choice" data-choice="sell">📉 매도</button>
+              <button type="button" class="community-vote-choice" data-choice="hold">⏸ 관망</button>
+            </div>
+            <button type="button" id="communityVoteSubmit">투표하기</button>
+          </div>
+          <p class="muted community-vote-mine" id="communityVoteMine"></p>
+          <div class="community-rank-tabs" id="communityVoteRankTabs">
+            <button type="button" class="community-rank-tab is-active" data-period="day">일간</button>
+            <button type="button" class="community-rank-tab" data-period="week">주간</button>
+            <button type="button" class="community-rank-tab" data-period="month">월간</button>
+          </div>
+          <div class="community-vote-ranking" id="communityVoteRanking"></div>
         </div>
       </section>
     </main>

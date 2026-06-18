@@ -46,6 +46,20 @@ export default {
       return cors(await handleChat(request, env));
     }
 
+    // Shared community board (KV binding COMMUNITY_KV required).
+    if (url.pathname === "/community") {
+      if (request.method === "GET") return cors(await handleCommunityList(url, env));
+      if (request.method === "POST") return cors(await handleCommunityCreate(request, env));
+      if (request.method === "DELETE") return cors(await handleCommunityDelete(request, env));
+    }
+    if (url.pathname === "/community/comment") {
+      if (request.method === "POST") return cors(await handleCommunityCommentCreate(request, env));
+      if (request.method === "DELETE") return cors(await handleCommunityCommentDelete(request, env));
+    }
+    if (request.method === "POST" && url.pathname === "/community/clear") {
+      return cors(await handleCommunityClear(request, env));
+    }
+
     // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
     if (url.searchParams.get("fx")) {
       return cors(json({ fx: await fetchFx() }));
@@ -725,9 +739,211 @@ function json(obj, status = 200, cacheSeconds = 900) {
 function cors(resp) {
   const r = new Response(resp.body, resp);
   r.headers.set("Access-Control-Allow-Origin", ALLOW_ORIGIN);
-  r.headers.set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  r.headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   r.headers.set("Access-Control-Allow-Headers", "Content-Type");
   return r;
+}
+
+// =============================================================================
+// Shared community board (Cloudflare KV: COMMUNITY_KV)
+// =============================================================================
+
+const COMMUNITY_KV_KEY = "community:v1:posts";
+const COMMUNITY_MAX_POSTS = 400;
+const COMMUNITY_MAX_CONTENT = 12000;
+const COMMUNITY_MAX_COMMENT_CONTENT = 4000;
+const COMMUNITY_MAX_COMMENTS_PER_POST = 80;
+const COMMUNITY_MAX_AUTHOR = 24;
+
+function communityKvMissing() {
+  return json({
+    posts: [],
+    error: "no_community_kv",
+    message: "Worker에 COMMUNITY_KV 바인딩이 필요합니다.",
+  }, 503, 30);
+}
+
+async function loadCommunityPostsKv(env) {
+  const raw = await env.COMMUNITY_KV.get(COMMUNITY_KV_KEY);
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function saveCommunityPostsKv(env, posts) {
+  await env.COMMUNITY_KV.put(COMMUNITY_KV_KEY, JSON.stringify(posts.slice(0, COMMUNITY_MAX_POSTS)));
+}
+
+function sanitizeCommunityTicker(raw) {
+  const t = String(raw || "").trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, "");
+  return t.slice(0, 12);
+}
+
+function sanitizeCommunityAuthor(raw) {
+  return String(raw || "").trim().replace(/[<>]/g, "").slice(0, COMMUNITY_MAX_AUTHOR) || "익명";
+}
+
+function sanitizeCommunityContent(raw) {
+  return String(raw || "").trim().replace(/\r\n/g, "\n").slice(0, COMMUNITY_MAX_CONTENT);
+}
+
+function sanitizeCommunityCommentContent(raw) {
+  return String(raw || "").trim().replace(/\r\n/g, "\n").slice(0, COMMUNITY_MAX_COMMENT_CONTENT);
+}
+
+function normalizeCommunityComments(raw) {
+  return Array.isArray(raw) ? raw : [];
+}
+
+function sanitizeCommunityClientId(raw) {
+  return String(raw || "").trim().replace(/[^a-zA-Z0-9\-_]/g, "").slice(0, 64);
+}
+
+function newCommunityPostId() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+async function handleCommunityList(url, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  const posts = await loadCommunityPostsKv(env);
+  const ticker = sanitizeCommunityTicker(url.searchParams.get("ticker"));
+  const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 80));
+  const filtered = ticker ? posts.filter((p) => p.ticker === ticker) : posts;
+  return json({ posts: filtered.slice(0, limit), total: filtered.length }, 200, 8);
+}
+
+async function handleCommunityCreate(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const content = sanitizeCommunityContent(body && body.content);
+  if (content.length < 2) return json({ error: "content_too_short" }, 400, 30);
+  const author = sanitizeCommunityAuthor(body && body.author);
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const ticker = sanitizeCommunityTicker(body && body.ticker);
+  const post = {
+    id: newCommunityPostId(),
+    author,
+    clientId,
+    ticker: ticker || "",
+    content,
+    createdAt: new Date().toISOString(),
+  };
+  const posts = await loadCommunityPostsKv(env);
+  posts.unshift(post);
+  await saveCommunityPostsKv(env, posts);
+  return json({ ok: true, post }, 201, 0);
+}
+
+async function handleCommunityDelete(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const id = String(body && body.id || "").trim();
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!id || !clientId) return json({ error: "missing_fields" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const target = posts.find((p) => p.id === id);
+  if (!target) return json({ error: "not_found" }, 404, 30);
+  if (target.clientId !== clientId) return json({ error: "forbidden" }, 403, 30);
+  const next = posts.filter((p) => p.id !== id);
+  await saveCommunityPostsKv(env, next);
+  return json({ ok: true, deleted: id }, 200, 0);
+}
+
+async function handleCommunityCommentCreate(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const postId = String(body && body.postId || "").trim();
+  const content = sanitizeCommunityCommentContent(body && body.content);
+  if (!postId) return json({ error: "missing_post_id" }, 400, 30);
+  if (content.length < 2) return json({ error: "content_too_short" }, 400, 30);
+  const author = sanitizeCommunityAuthor(body && body.author);
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const post = posts.find((p) => p.id === postId);
+  if (!post) return json({ error: "not_found" }, 404, 30);
+  const comments = normalizeCommunityComments(post.comments);
+  const comment = {
+    id: newCommunityPostId(),
+    author,
+    clientId,
+    content,
+    createdAt: new Date().toISOString(),
+  };
+  comments.push(comment);
+  post.comments = comments.slice(-COMMUNITY_MAX_COMMENTS_PER_POST);
+  await saveCommunityPostsKv(env, posts);
+  return json({ ok: true, postId, comment }, 201, 0);
+}
+
+async function handleCommunityCommentDelete(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const postId = String(body && body.postId || "").trim();
+  const commentId = String(body && body.commentId || "").trim();
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!postId || !commentId || !clientId) return json({ error: "missing_fields" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const post = posts.find((p) => p.id === postId);
+  if (!post) return json({ error: "not_found" }, 404, 30);
+  const comments = normalizeCommunityComments(post.comments);
+  const target = comments.find((c) => c.id === commentId);
+  if (!target) return json({ error: "comment_not_found" }, 404, 30);
+  if (target.clientId !== clientId) return json({ error: "forbidden" }, 403, 30);
+  post.comments = comments.filter((c) => c.id !== commentId);
+  await saveCommunityPostsKv(env, posts);
+  return json({ ok: true, postId, deleted: commentId }, 200, 0);
+}
+
+async function handleCommunityClear(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const next = posts
+    .filter((p) => p.clientId !== clientId)
+    .map((p) => ({
+      ...p,
+      comments: normalizeCommunityComments(p.comments).filter((c) => c.clientId !== clientId),
+    }));
+  const removedPosts = posts.length - next.length;
+  const removedComments = posts.reduce((sum, post) => {
+    const comments = normalizeCommunityComments(post.comments);
+    return sum + comments.filter((c) => c.clientId === clientId).length;
+  }, 0);
+  await saveCommunityPostsKv(env, next);
+  return json({ ok: true, removed: removedPosts, removedComments }, 200, 0);
 }
 
 // =============================================================================

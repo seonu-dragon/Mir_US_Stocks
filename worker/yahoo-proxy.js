@@ -1108,7 +1108,8 @@ async function handleCommunityVotesList(url, env) {
   const days = period === "month" ? 30 : period === "week" ? 7 : 1;
   const cutoff = Date.now() - (days * 24 * 60 * 60 * 1000);
   const votes = await loadCommunityVotesKv(env);
-  const inRange = votes.filter((v) => Date.parse(v.at) >= cutoff);
+  // 유효한 선택(매수/매도)만 집계 — 옛 '관망' 등 무효 표는 총계에서도 제외해 숫자 불일치 방지
+  const inRange = votes.filter((v) => Date.parse(v.at) >= cutoff && COMMUNITY_VOTE_CHOICES.includes(v.choice));
   const byTicker = new Map();
   for (const v of inRange) {
     if (!byTicker.has(v.ticker)) byTicker.set(v.ticker, { ticker: v.ticker, total: 0, buy: 0, sell: 0 });

@@ -1,4 +1,4 @@
-const CACHE_NAME = "mir-us-stocks-v20260618a";
+const CACHE_NAME = "mir-us-stocks-v20260618b";
 
 const OFFLINE_ASSETS = [
   "./assets/favicon.ico",

@@ -6761,8 +6761,87 @@ footer {
   word-break: break-word;
 }
 
-.community-comment-delete {
+.community-comment-actions {
+  display: flex;
+  gap: 6px;
   margin-left: auto;
+}
+
+/* 본문·댓글의 @닉네임 멘션 강조 */
+.community-mention {
+  color: var(--primary);
+  font-weight: var(--fw-semibold);
+}
+
+/* 종목 글 미니 스파크라인 */
+.community-post-spark {
+  margin: 2px 0 8px;
+}
+
+.community-post-spark .sparkline {
+  width: 160px;
+  height: 40px;
+}
+
+/* 공감(좋아요) 버튼 */
+.community-post-like.is-liked {
+  border-color: var(--chip-border);
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.community-like-count {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 인기 종목 토론 랭킹 칩 */
+.community-hot-tickers {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.community-hot-tickers-label {
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-bold);
+  color: var(--muted);
+}
+
+.community-hot-ticker {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text);
+  font-size: var(--fs-cap);
+  font-weight: var(--fw-semibold);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.community-hot-ticker em {
+  font-style: normal;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.community-hot-ticker.is-active {
+  border-color: var(--primary);
+  background: var(--chip-bg);
+  color: var(--primary);
+}
+
+.community-hot-ticker.is-active em {
+  color: var(--primary);
+}
+
+.community-hot-clear {
+  color: var(--muted);
 }
 
 .community-reply-form {

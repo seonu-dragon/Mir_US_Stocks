@@ -56,6 +56,9 @@ export default {
       if (request.method === "POST") return cors(await handleCommunityCommentCreate(request, env));
       if (request.method === "DELETE") return cors(await handleCommunityCommentDelete(request, env));
     }
+    if (request.method === "POST" && url.pathname === "/community/like") {
+      return cors(await handleCommunityLike(request, env));
+    }
     if (request.method === "POST" && url.pathname === "/community/clear") {
       return cors(await handleCommunityClear(request, env));
     }
@@ -894,6 +897,36 @@ async function handleCommunityCommentCreate(request, env) {
   post.comments = comments.slice(-COMMUNITY_MAX_COMMENTS_PER_POST);
   await saveCommunityPostsKv(env, posts);
   return json({ ok: true, postId, comment }, 201, 0);
+}
+
+async function handleCommunityLike(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const postId = String(body && body.postId || "").trim();
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!postId) return json({ error: "missing_post_id" }, 400, 30);
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const post = posts.find((p) => p.id === postId);
+  if (!post) return json({ error: "not_found" }, 404, 30);
+  const likes = Array.isArray(post.likes) ? post.likes : [];
+  const idx = likes.indexOf(clientId);
+  let liked;
+  if (idx >= 0) {
+    likes.splice(idx, 1);
+    liked = false;
+  } else {
+    likes.push(clientId);
+    liked = true;
+  }
+  post.likes = likes;
+  await saveCommunityPostsKv(env, posts);
+  return json({ ok: true, postId, likeCount: likes.length, liked }, 200, 0);
 }
 
 async function handleCommunityCommentDelete(request, env) {

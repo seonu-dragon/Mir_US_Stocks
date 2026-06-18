@@ -1263,12 +1263,21 @@
                 <option value="mine">내 글만</option>
               </select>
             </label>
+            <label>
+              정렬
+              <select id="communitySort">
+                <option value="latest">최신순</option>
+                <option value="popular">인기순</option>
+                <option value="comments">댓글순</option>
+              </select>
+            </label>
             <label class="grow">
               종목 검색
               <input id="communityFilterTicker" type="search" placeholder="티커로 필터 (비우면 전체)" autocomplete="off">
             </label>
             <button type="button" class="ghost" id="communityClearMine">내 글 전체 삭제</button>
           </div>
+          <div class="community-hot-tickers" id="communityHotTickers" hidden></div>
           <p class="muted community-board-meta" id="communityBoardMeta">글을 불러오는 중…</p>
           <div class="community-feed" id="communityFeed"></div>
         </div>

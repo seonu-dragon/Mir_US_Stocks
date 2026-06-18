@@ -717,6 +717,7 @@
             <aside class="detail-panel" id="searchFacts"></aside>
             <section class="news-card" id="searchNews"></section>
             <section class="earnings-calendar-card" id="stockEarnings"></section>
+            <section class="congress-trades-card" id="stockCongress"></section>
             <section class="data-quality-card" id="dataQualityPanel"></section>
           </div>
         </div>
@@ -924,31 +925,67 @@
         </div>
       </section>
 
-      <!-- ==================== 거장 포트폴리오 탭 (SEC 13F) ==================== -->
+      <!-- ==================== 거장 포트폴리오 탭 (13F + 정치인 매매) ==================== -->
       <section class="panel" id="tab-institutional">
-        <div class="section-title">
-          <h2>거장 포트폴리오</h2>
-          <p>대형 헤지펀드·자산운용사 100곳의 SEC 13F-HR 분기 공시입니다. 최근 10분기 보유 변화를 비교할 수 있으며, 데이터는 분기 공시 후에만 갱신합니다.</p>
+        <nav class="sub-tabs" id="institutionalSubTabs" aria-label="Institutional sub-sections">
+          <button class="sub-tab is-active" data-sub="13f">📊 13F 포트폴리오</button>
+          <button class="sub-tab" data-sub="congress">🏛 정치인 매매</button>
+        </nav>
+
+        <div class="sub-panel is-active" id="sub-inst-13f">
+          <div class="section-title">
+            <h2>거장 포트폴리오 · 13F</h2>
+            <p>대형 헤지펀드·자산운용사 100곳의 SEC 13F-HR 분기 공시입니다. 최근 10분기 보유 변화를 비교할 수 있으며, 데이터는 분기 공시 후에만 갱신합니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>13F 해석 주의</strong>
+            <span>공시일 기준 최대 45일 지연될 수 있고, 미국 상장 롱 포지션 중심입니다. 매도·공매도·해외주식·파생상품 전체 노출은 반영되지 않을 수 있습니다.</span>
+          </div>
+          <div class="institutional-meta" id="institutionalMeta"></div>
+          <div class="institutional-picker">
+            <label class="grow">
+              기관 검색
+              <input id="institutionalSearch" type="search" placeholder="버크셔, 시타델, 블랙록…" autocomplete="off">
+            </label>
+            <label>
+              기관 선택
+              <select id="institutionalSelect" size="1"></select>
+            </label>
+          </div>
+          <div class="institutional-layout">
+            <aside class="institutional-nav" id="institutionalNav" aria-label="기관 목록" hidden></aside>
+            <div class="institutional-detail" id="institutionalDetail">
+              <p class="muted">기관을 선택하면 상위 보유 종목이 표시됩니다.</p>
+            </div>
+          </div>
         </div>
-        <div class="data-disclaimer">
-          <strong>13F 해석 주의</strong>
-          <span>공시일 기준 최대 45일 지연될 수 있고, 미국 상장 롱 포지션 중심입니다. 매도·공매도·해외주식·파생상품 전체 노출은 반영되지 않을 수 있습니다.</span>
-        </div>
-        <div class="institutional-meta" id="institutionalMeta"></div>
-        <div class="institutional-picker">
-          <label class="grow">
-            기관 검색
-            <input id="institutionalSearch" type="search" placeholder="버크셔, 시타델, 블랙록…" autocomplete="off">
-          </label>
-          <label>
-            기관 선택
-            <select id="institutionalSelect" size="1"></select>
-          </label>
-        </div>
-        <div class="institutional-layout">
-          <aside class="institutional-nav" id="institutionalNav" aria-label="기관 목록" hidden></aside>
-          <div class="institutional-detail" id="institutionalDetail">
-            <p class="muted">기관을 선택하면 상위 보유 종목이 표시됩니다.</p>
+
+        <div class="sub-panel" id="sub-inst-congress">
+          <div class="section-title">
+            <h2>미국 의회 주식 매매</h2>
+            <p>상원·하원 금융 공시(PTR) 기반 의원별 매매 기록, 추정 수익률 랭킹, 상임위원회×업종 크로스 분석입니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 지연 주의</strong>
+            <span>거래 후 최대 45일 내 공시되며 실시간 매매가 아닙니다. 수익률은 최근 매수 거래의 추정값이며 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="congressMeta"></div>
+          <div class="congress-layout">
+            <section class="congress-rankings" id="congressRankings"></section>
+            <section class="congress-matrix" id="congressMatrix"></section>
+          </div>
+          <div class="institutional-picker">
+            <label class="grow">
+              의원 검색
+              <input id="congressSearch" type="search" placeholder="Pelosi, Tuberville, Wyden…" autocomplete="off">
+            </label>
+            <label>
+              의원 선택
+              <select id="congressSelect" size="1"></select>
+            </label>
+          </div>
+          <div class="institutional-detail" id="congressDetail">
+            <p class="muted">의원을 선택하면 최근 매매 내역이 표시됩니다.</p>
           </div>
         </div>
       </section>
@@ -972,7 +1009,21 @@
         <div class="sub-panel is-active" id="sub-macro">
           <div class="section-title">
             <h2>경제 캘린더</h2>
-            <p>이번 주 한국·미국 주요 경제지표 일정입니다. (한국 시간 기준 · 실시간)</p>
+            <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 통합 표시합니다. 백악관 일정은 06·16·21시에 갱신됩니다.</p>
+          </div>
+          <div class="calendar-filters" id="calendarFilters">
+            <fieldset class="calendar-filter-group">
+              <legend>국가·출처</legend>
+              <label class="check-label"><input type="checkbox" id="calFilterKorea" checked> 한국</label>
+              <label class="check-label"><input type="checkbox" id="calFilterUs" checked> 미국</label>
+              <label class="check-label"><input type="checkbox" id="calFilterWhiteHouse" checked> 백악관</label>
+            </fieldset>
+            <fieldset class="calendar-filter-group">
+              <legend>중요성</legend>
+              <label class="check-label"><input type="checkbox" id="calFilterHigh" checked> 높음</label>
+              <label class="check-label"><input type="checkbox" id="calFilterMedium" checked> 보통</label>
+              <label class="check-label"><input type="checkbox" id="calFilterLow" checked> 낮음</label>
+            </fieldset>
           </div>
           <div class="calendar-legend">
             <span><b class="imp imp-3">●●●</b> 높음</span>
@@ -1139,7 +1190,9 @@
     <script src="data/market_snapshot.js?v=20260617x"></script>
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>
+    <script src="data/congress_trades.js?v=20260618n"></script>
+    <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260618m"></script>
+    <script src="app.js?v=20260618n"></script>
   </body>
 </html>

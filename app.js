@@ -129,6 +129,14 @@ let selectedInstitutionId = "berkshire";
 let selectedInstitutionQuarterIdx = 0;
 let institutionalSearchQuery = "";
 let institutionalUiReady = false;
+let institutionalSubTab = "13f";
+let congressSearchQuery = "";
+let selectedPoliticianId = "";
+let congressUiReady = false;
+let calendarEventsCache = [];
+let calendarFiltersReady = false;
+const calendarCountryFilters = { korea: true, us: true, whitehouse: true };
+const calendarImportanceFilters = { high: true, medium: true, low: true };
 const detailCache = {};
 const detailPromises = {};
 
@@ -973,21 +981,115 @@ function fetchMarketHeader() {
 // ===== 경제 캘린더 (한국 + 미국, investing.com via Worker) =====
 let calendarLoaded = false;
 
+function whiteHouseCalendarEvents() {
+  const payload = window.WHITE_HOUSE_SCHEDULE || {};
+  return Array.isArray(payload.events) ? payload.events : [];
+}
+
+function calendarCountryBucket(event) {
+  const country = String(event.country || event.currency || "").trim();
+  if (country === "백악관" || country.toLowerCase().includes("white house")) return "whitehouse";
+  if (country.includes("한국") || country === "KRW" || country.toLowerCase().includes("south korea")) return "korea";
+  if (country.includes("미국") || country === "USD" || country.toLowerCase().includes("united states")) return "us";
+  return "other";
+}
+
+function calendarImportanceBucket(event) {
+  const imp = Number(event.importance) || 0;
+  if (imp >= 3) return "high";
+  if (imp === 2) return "medium";
+  return "low";
+}
+
+function setupCalendarFilters() {
+  if (calendarFiltersReady) return;
+  const map = [
+    ["calFilterKorea", "korea"],
+    ["calFilterUs", "us"],
+    ["calFilterWhiteHouse", "whitehouse"],
+    ["calFilterHigh", "high"],
+    ["calFilterMedium", "medium"],
+    ["calFilterLow", "low"],
+  ];
+  map.forEach(([id, key]) => {
+    const el = byId(id);
+    if (!el) return;
+    el.addEventListener("change", () => {
+      if (id.startsWith("calFilterK") || id === "calFilterUs" || id === "calFilterWhiteHouse") {
+        calendarCountryFilters[key] = el.checked;
+      } else {
+        calendarImportanceFilters[key] = el.checked;
+      }
+      renderCalendarFiltered();
+    });
+  });
+  calendarFiltersReady = true;
+}
+
+function mergeCalendarEvents(macroEvents, whEvents) {
+  const merged = [...(macroEvents || []), ...(whEvents || [])];
+  merged.sort((a, b) => {
+    const ad = String(a.datetime || a.day || "");
+    const bd = String(b.datetime || b.day || "");
+    if (ad && bd && ad !== bd) return ad.localeCompare(bd);
+    return String(a.time || "").localeCompare(String(b.time || ""));
+  });
+  return merged;
+}
+
+function calendarEventPassesFilters(event) {
+  const country = calendarCountryBucket(event);
+  const imp = calendarImportanceBucket(event);
+  if (country === "korea" && !calendarCountryFilters.korea) return false;
+  if (country === "us" && !calendarCountryFilters.us) return false;
+  if (country === "whitehouse" && !calendarCountryFilters.whitehouse) return false;
+  if (country === "other" && !calendarCountryFilters.korea && !calendarCountryFilters.us) return false;
+  if (imp === "high" && !calendarImportanceFilters.high) return false;
+  if (imp === "medium" && !calendarImportanceFilters.medium) return false;
+  if (imp === "low" && !calendarImportanceFilters.low) return false;
+  return true;
+}
+
+function renderCalendarFiltered() {
+  const filtered = calendarEventsCache.filter(calendarEventPassesFilters);
+  renderCalendar(filtered);
+}
+
 function loadCalendar() {
-  if (calendarLoaded) return;
+  if (calendarLoaded) {
+    renderCalendarFiltered();
+    return;
+  }
   const body = byId("calendarBody");
   if (!body) return;
+  setupCalendarFilters();
+  const whEvents = whiteHouseCalendarEvents();
   if (!LIVE_DATA_PROXY) {
-    body.innerHTML = `<p class="muted">경제 캘린더는 실시간 프록시(Cloudflare Worker) 연결 시 표시됩니다.</p>`;
+    calendarEventsCache = mergeCalendarEvents([], whEvents);
+    calendarLoaded = true;
+    renderCalendarFiltered();
+    if (!calendarEventsCache.length) {
+      body.innerHTML = `<p class="muted">경제 캘린더는 실시간 프록시 연결 시 표시됩니다. 백악관 일정 데이터가 없습니다.</p>`;
+    }
     return;
   }
   calendarLoaded = true;
+  body.innerHTML = `<p class="muted">경제 캘린더를 불러오는 중…</p>`;
   fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?calendar=1`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
-    .then((p) => renderCalendar((p && p.calendar) || []))
+    .then((p) => {
+      calendarEventsCache = mergeCalendarEvents((p && p.calendar) || [], whEvents);
+      renderCalendarFiltered();
+    })
     .catch(() => {
       calendarLoaded = false;
-      body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
+      calendarEventsCache = mergeCalendarEvents([], whEvents);
+      if (calendarEventsCache.length) {
+        calendarLoaded = true;
+        renderCalendarFiltered();
+      } else {
+        body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
+      }
     });
 }
 
@@ -1072,6 +1174,22 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "analysis") renderSearch();
   if (push) {
     history.pushState({ tab: "search", sub: searchSubTab, ticker: selectedTicker }, "");
+  }
+}
+
+function activateInstitutionalSub(name, { push = false } = {}) {
+  institutionalSubTab = name || "13f";
+  const nav = byId("institutionalSubTabs");
+  if (nav) {
+    nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === institutionalSubTab));
+    document.querySelectorAll("#tab-institutional .sub-panel").forEach((panel) => panel.classList.remove("is-active"));
+    const panel = byId(institutionalSubTab === "congress" ? "sub-inst-congress" : "sub-inst-13f");
+    if (panel) panel.classList.add("is-active");
+  }
+  if (institutionalSubTab === "13f") renderInstitutional13f();
+  if (institutionalSubTab === "congress") renderCongressTrades();
+  if (push) {
+    history.pushState({ tab: "institutional", sub: institutionalSubTab, ticker: selectedTicker }, "");
   }
 }
 
@@ -1171,10 +1289,11 @@ function activateTab(name, { push = true, ticker = null, sub = null } = {}) {
   currentTab = name;
   if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
   if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
-  if (name === "institutional") renderInstitutional13f();
+  if (name === "institutional") activateInstitutionalSub(sub || institutionalSubTab, { push: false });
   if (name === "map") renderTreemap();
   if (push) {
-    history.pushState({ tab: name, sub: name === "search" ? searchSubTab : (name === "calendar" ? calendarSubTab : null), ticker }, "");
+    const subTab = name === "search" ? searchSubTab : (name === "calendar" ? calendarSubTab : (name === "institutional" ? institutionalSubTab : null));
+    history.pushState({ tab: name, sub: subTab, ticker }, "");
   }
 }
 
@@ -1326,6 +1445,16 @@ function setupEvents() {
       btn.addEventListener("click", () => {
         if (currentTab !== "calendar") activateTab("calendar", { push: false });
         activateCalendarSub(btn.dataset.sub, { push: true });
+      });
+    });
+  }
+
+  const institutionalSubTabs = byId("institutionalSubTabs");
+  if (institutionalSubTabs) {
+    institutionalSubTabs.querySelectorAll(".sub-tab").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (currentTab !== "institutional") activateTab("institutional", { push: false });
+        activateInstitutionalSub(btn.dataset.sub, { push: true });
       });
     });
   }
@@ -1791,7 +1920,7 @@ function renderAll() {
   renderWatchlistBar();
   renderWatchAlerts();
   renderHealth();
-  renderInstitutional13f();
+  activateInstitutionalSub(institutionalSubTab, { push: false });
   renderDataFreshnessStatus();
   renderAiBriefing();
   renderSocialSentiment();
@@ -3173,6 +3302,7 @@ function renderSearch() {
   byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
   drawChart(item);
   renderEarningsCalendar(item);
+  renderCongressTradesForTicker(item);
   renderStockEvents(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
@@ -3186,6 +3316,7 @@ function renderSearch() {
     byId("searchFacts").innerHTML = stockFacts(refreshed, "Search Ticker");
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
+    renderCongressTradesForTicker(refreshed);
     renderStockEvents(refreshed);
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
@@ -5543,6 +5674,227 @@ function renderInstitutional13f() {
     if (!row.dataset.ticker) return;
     row.addEventListener("click", () => selectTicker(row.dataset.ticker, { openSearch: true }));
   });
+}
+
+function congressTradesData() {
+  return window.CONGRESS_TRADES || {};
+}
+
+function congressSideBadge(side) {
+  if (side === "buy") return `<span class="congress-side buy">매수</span>`;
+  if (side === "sell") return `<span class="congress-side sell">매도</span>`;
+  return `<span class="congress-side other">${escapeHtml(side || "기타")}</span>`;
+}
+
+function setupCongressUi() {
+  if (congressUiReady) return;
+  const search = byId("congressSearch");
+  const select = byId("congressSelect");
+  if (search) {
+    search.addEventListener("input", () => {
+      congressSearchQuery = search.value.trim().toLowerCase();
+      renderCongressTrades();
+    });
+  }
+  if (select) {
+    select.addEventListener("change", () => {
+      selectedPoliticianId = select.value;
+      renderCongressTrades();
+    });
+  }
+  congressUiReady = true;
+}
+
+function renderCongressTrades() {
+  setupCongressUi();
+  const payload = congressTradesData();
+  const politicians = Array.isArray(payload.politicians) ? payload.politicians : [];
+  const meta = byId("congressMeta");
+  const rankings = byId("congressRankings");
+  const matrix = byId("congressMatrix");
+  const select = byId("congressSelect");
+  const detail = byId("congressDetail");
+  if (!meta || !detail) return;
+
+  meta.innerHTML = `
+    <div class="institutional-meta-grid">
+      <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "Congress PTR")}</strong></article>
+      <article><span>갱신 주기</span><strong>미국 장마감 브리핑 (06:00 KST)</strong></article>
+      <article><span>마지막 빌드</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
+    </div>
+    <p>${escapeHtml(payload.note || "")}</p>
+  `;
+
+  if (!politicians.length) {
+    if (rankings) rankings.innerHTML = `<p class="muted">의회 매매 데이터가 없습니다. <code>python scripts/build_congress_trades.py</code> 실행 후 다시 시도하세요.</p>`;
+    if (matrix) matrix.innerHTML = "";
+    if (select) select.innerHTML = "";
+    detail.innerHTML = `<p class="muted">데이터를 불러오지 못했습니다.</p>`;
+    return;
+  }
+
+  const rankingRows = Array.isArray(payload.rankings) ? payload.rankings : [];
+  if (rankings) {
+    rankings.innerHTML = `
+      <div class="congress-section-head">
+        <h3>의원별 추정 수익률 랭킹</h3>
+        <p class="muted">최근 18개월 매수 거래 기준 추정 수익률 (Quiver 초과수익 또는 가격 기반 가중 평균)</p>
+      </div>
+      <div class="table-wrap">
+        <table class="congress-rank-table">
+          <thead>
+            <tr><th>#</th><th>의원</th><th>의회</th><th>정당</th><th>추정 수익률</th><th>매수</th><th>매도</th></tr>
+          </thead>
+          <tbody>
+            ${rankingRows.slice(0, 50).map((row) => `
+              <tr data-pol-id="${escapeHtml(row.id || "")}">
+                <td>${row.rank}</td>
+                <td><button type="button" class="congress-pol-link" data-pol-id="${escapeHtml(row.id || "")}">${escapeHtml(row.name || "")}</button></td>
+                <td>${escapeHtml(row.chamber || "")}</td>
+                <td>${escapeHtml(row.party || "-")}</td>
+                <td class="${cls(row.estReturnPct || 0)}">${row.estReturnPct != null ? fmtPct(row.estReturnPct) : "—"}</td>
+                <td>${row.buyCount || 0}</td>
+                <td>${row.sellCount || 0}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      </div>
+    `;
+    rankings.querySelectorAll(".congress-pol-link").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedPoliticianId = btn.dataset.polId || "";
+        if (select) select.value = selectedPoliticianId;
+        renderCongressTrades();
+      });
+    });
+  }
+
+  const matrixRows = Array.isArray(payload.committeeSectorMatrix) ? payload.committeeSectorMatrix : [];
+  if (matrix) {
+    matrix.innerHTML = matrixRows.length ? `
+      <div class="congress-section-head">
+        <h3>상임위원회 × 업종 크로스 분석</h3>
+        <p class="muted">위원회 관련 섹터와 최근 매수 패턴 (등록된 의원 기준)</p>
+      </div>
+      <div class="congress-matrix-grid">
+        ${matrixRows.slice(0, 12).map((row) => `
+          <article class="congress-matrix-card">
+            <h4>${escapeHtml(row.committee || "")}</h4>
+            <p class="muted">${(row.sectors || []).map((s) => escapeHtml(s)).join(" · ") || "섹터 미지정"}</p>
+            <div class="congress-matrix-stats">
+              <span>매수 <b>${row.buyCount || 0}</b></span>
+              <span>매도 <b>${row.sellCount || 0}</b></span>
+            </div>
+            <p class="congress-matrix-tickers">${(row.topTickers || []).slice(0, 5).map((t) => `<button type="button" class="ticker-chip" data-ticker="${escapeHtml(t.ticker)}">${escapeHtml(t.ticker)}</button>`).join(" ") || "—"}</p>
+          </article>
+        `).join("")}
+      </div>
+    ` : `<p class="muted">위원회 매칭 데이터가 아직 없습니다.</p>`;
+    matrix.querySelectorAll(".ticker-chip").forEach((btn) => {
+      btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+    });
+  }
+
+  const filtered = politicians.filter((pol) => {
+    if (!congressSearchQuery) return true;
+    const hay = `${pol.name} ${pol.chamber} ${pol.party} ${(pol.committees || []).join(" ")}`.toLowerCase();
+    return hay.includes(congressSearchQuery);
+  });
+  const list = filtered.length ? filtered : politicians;
+  if (!list.some((pol) => pol.id === selectedPoliticianId)) {
+    selectedPoliticianId = list[0].id;
+  }
+  if (select) {
+    select.innerHTML = list.map((pol) => {
+      const ret = pol.estReturnPct != null ? ` · ${fmtPct(pol.estReturnPct)}` : "";
+      return `<option value="${escapeHtml(pol.id)}">${escapeHtml(pol.name)} (${escapeHtml(pol.chamber)})${ret}</option>`;
+    }).join("");
+    select.value = selectedPoliticianId;
+  }
+
+  const active = list.find((pol) => pol.id === selectedPoliticianId) || list[0];
+  const trades = Array.isArray(active.recentTrades) ? active.recentTrades : [];
+  detail.innerHTML = `
+    <div class="inst-detail-head">
+      <div>
+        <h3>${escapeHtml(active.name)}</h3>
+        <p>${escapeHtml(active.chamber || "")} · ${escapeHtml(active.party || "-")} · ${escapeHtml((active.committees || []).join(", ") || "위원회 정보 없음")}</p>
+      </div>
+      <p>최근 매매 ${active.tradeCount || 0}건 · 매수 ${active.buyCount || 0} · 매도 ${active.sellCount || 0} · 추정 수익률 ${active.estReturnPct != null ? fmtPct(active.estReturnPct) : "—"}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="congress-trades-table">
+        <thead>
+          <tr><th>일자</th><th>구분</th><th>티커</th><th>종목</th><th>금액</th><th>소유</th></tr>
+        </thead>
+        <tbody>
+          ${trades.length ? trades.map((t) => `
+            <tr>
+              <td>${escapeHtml(t.transactionDate || "")}</td>
+              <td>${congressSideBadge(t.side)}</td>
+              <td>${t.ticker ? `<button type="button" class="ticker-link" data-ticker="${escapeHtml(t.ticker)}">${escapeHtml(t.ticker)}</button>` : "—"}</td>
+              <td>${escapeHtml(t.asset || "")}</td>
+              <td>${escapeHtml(t.amount || "")}</td>
+              <td>${escapeHtml(t.owner || "")}</td>
+            </tr>
+          `).join("") : `<tr><td colspan="6" class="muted">최근 매매 기록이 없습니다.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `;
+  detail.querySelectorAll(".ticker-link").forEach((btn) => {
+    btn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      selectTicker(btn.dataset.ticker, { openSearch: true });
+    });
+  });
+}
+
+function renderCongressTradesForTicker(item) {
+  const box = byId("stockCongress");
+  if (!box) return;
+  if (!item || item.sector === "EXCHANGE TRADED FUNDS") {
+    box.innerHTML = "";
+    box.hidden = true;
+    return;
+  }
+  const payload = congressTradesData();
+  const cell = (payload.byTicker || {})[item.ticker];
+  if (!cell || !(cell.trades || []).length) {
+    box.hidden = true;
+    box.innerHTML = "";
+    return;
+  }
+  box.hidden = false;
+  const trades = cell.trades.slice(0, 12);
+  box.innerHTML = `
+    <div class="event-head">
+      <div>
+        <h3>정치인 매수·매도 현황</h3>
+        <p class="muted">미국 의회 PTR 공시 기준 · 매수 ${cell.netBuys || 0} · 매도 ${cell.netSells || 0} · 의원 ${cell.politicianCount || 0}명</p>
+      </div>
+      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+    </div>
+    <div class="table-wrap compact-table-wrap">
+      <table class="compact-table congress-trades-table">
+        <thead>
+          <tr><th>일자</th><th>의원</th><th>구분</th><th>금액</th></tr>
+        </thead>
+        <tbody>
+          ${trades.map((t) => `
+            <tr>
+              <td>${escapeHtml(t.transactionDate || "")}</td>
+              <td>${escapeHtml(t.politician || "")}</td>
+              <td>${congressSideBadge(t.side)}</td>
+              <td>${escapeHtml(t.amount || "")}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    </div>
+    <p class="muted congress-stock-note">공시 지연으로 실제 거래 시점과 차이가 있을 수 있습니다.</p>
+  `;
 }
 
 function renderHealth() {

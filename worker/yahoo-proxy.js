@@ -80,6 +80,18 @@ export default {
     if (!ticker) return cors(json({ error: "missing ticker" }, 400));
 
     const symbol = ticker.replace(/\./g, "-"); // Yahoo uses BRK-B style
+    // Price-event analysis is intentionally opt-in: the static site calls this
+    // only after the visitor clicks "원인 분석" on a recent price event.
+    if (url.searchParams.get("move_analysis")) {
+      const eventDate = String(url.searchParams.get("date") || "").slice(0, 10);
+      const eventChange = Number(url.searchParams.get("change") || 0);
+      const [news, chart] = await Promise.all([fetchNews(symbol), fetchChart(symbol)]);
+      const modelOverride = url.searchParams.get("model");
+      const { text: analysis, error: analysisError, model: analysisModel } =
+        await summarizeMoveAnalysisKorean(env, ticker, eventDate, eventChange, news, chart, modelOverride);
+      return cors(json({ ticker, date: eventDate, changePct: eventChange, news, chartContext: chartMoveContext(chart, eventDate), analysis, analysisError, analysisModel }));
+    }
+
     const [news, chart, earnings] = await Promise.all([fetchNews(symbol), fetchChart(symbol), fetchEarnings(symbol)]);
     // Optional ?model=... overrides the model list (for quick A/B testing).
     const modelOverride = url.searchParams.get("model");
@@ -88,6 +100,76 @@ export default {
     return cors(json({ ticker, news, chart, earnings, summary, summaryError, summaryModel }));
   },
 };
+
+function chartMoveContext(chart, eventDate) {
+  if (!Array.isArray(chart) || !eventDate) return null;
+  const idx = chart.findIndex((row) => row && row[5] === eventDate);
+  if (idx < 0) return null;
+  const row = chart[idx];
+  const prev = chart[Math.max(0, idx - 1)];
+  const prevClose = Number(prev && prev[3]);
+  const close = Number(row[3]);
+  const volume = Number(row[4] || 0);
+  const start = Math.max(0, idx - 20);
+  const sample = chart.slice(start, idx).map((r) => Number(r && r[4])).filter((v) => Number.isFinite(v) && v > 0);
+  const avgVolume = sample.length ? sample.reduce((sum, value) => sum + value, 0) / sample.length : null;
+  return {
+    date: eventDate,
+    open: row[0],
+    high: row[1],
+    low: row[2],
+    close: row[3],
+    prevClose: Number.isFinite(prevClose) ? prevClose : null,
+    changePct: Number.isFinite(close) && Number.isFinite(prevClose) && prevClose ? round((close / prevClose - 1) * 100) : null,
+    volume,
+    volumeRatio20d: avgVolume ? round(volume / avgVolume) : null,
+  };
+}
+
+async function summarizeMoveAnalysisKorean(env, ticker, eventDate, eventChange, news, chart, modelOverride) {
+  if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
+  const context = chartMoveContext(chart, eventDate);
+  const datedNews = (news || [])
+    .map((n) => ({ ...n, distance: n.publishedAt ? Math.abs((new Date(`${n.publishedAt}T00:00:00`) - new Date(`${eventDate}T00:00:00`)) / 86400000) : 999 }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 8);
+  const headlines = datedNews.length
+    ? datedNews.map((n, i) => `${i + 1}. ${n.publishedAt || "날짜 없음"} · ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`).join("\n")
+    : "관련 뉴스 헤드라인 없음";
+  const chartText = context
+    ? `가격: 시가 ${context.open}, 고가 ${context.high}, 저가 ${context.low}, 종가 ${context.close}, 전일 종가 ${context.prevClose ?? "없음"}, 당일 등락률 ${context.changePct ?? eventChange}%, 거래량 ${context.volume}, 20일 평균 대비 거래량 ${context.volumeRatio20d ?? "계산 불가"}배`
+    : `차트에서 해당 날짜(${eventDate})를 찾지 못했습니다. 전달 등락률: ${eventChange}%`;
+  const prompt =
+    `미국 주식 ${ticker}의 ${eventDate} 가격 이벤트 원인을 한국어로 분석하세요.\n\n` +
+    `[가격/거래량]\n${chartText}\n\n` +
+    `[뉴스 헤드라인]\n${headlines}\n\n` +
+    `규칙:\n` +
+    `- 위 가격/거래량과 뉴스 헤드라인만 근거로 쓰세요. 모르는 사실을 만들지 마세요.\n` +
+    `- 직접 원인으로 볼 수 있는 내용과 가능성 수준의 해석을 구분하세요.\n` +
+    `- 뉴스가 해당 날짜와 멀거나 부족하면 "직접 연결되는 뉴스가 부족하다"고 명확히 말하세요.\n` +
+    `- 3~5문장의 자연스러운 한국어 단락 하나로 작성하세요.\n` +
+    `- 매수/매도 조언은 하지 마세요.`;
+  const models = modelOverride ? [modelOverride] : SUMMARY_MODELS;
+  let lastError = "no_model";
+  for (const model of models) {
+    try {
+      const result = await env.AI.run(model, {
+        messages: [
+          { role: "system", content: "You are a careful market news analyst. Answer in Korean only, cite uncertainty clearly, and never invent facts beyond the supplied headlines and price/volume context." },
+          { role: "user", content: prompt },
+        ],
+        max_tokens: 520,
+        temperature: 0.25,
+      });
+      const text = String((result && result.response) || "").trim();
+      if (text) return { text, error: "", model };
+      lastError = `empty_response:${model}`;
+    } catch (e) {
+      lastError = `${model}: ${(e && e.message) || e}`;
+    }
+  }
+  return { text: "", error: lastError };
+}
 
 async function summarizeKorean(env, ticker, news, modelOverride) {
   if (!env || !env.AI) return { text: "", error: "no_ai_binding" };

@@ -4783,21 +4783,29 @@ function localMoveAnalysis(item, move) {
   const volText = volumeRatio == null
     ? "거래량 비교 데이터는 부족합니다."
     : `거래량은 직전 20거래일 평균의 약 ${volumeRatio.toFixed(1)}배였습니다.`;
-  return `${move.date}에는 종가 기준 ${fmtPct(move.change)} ${direction}했습니다. ${volText} ${newsText} 자동 API 호출 없이 저장된 뉴스와 가격 데이터만으로 만든 원인 후보입니다.`;
+  return `${move.date}에는 종가 기준 ${fmtPct(move.change)} ${direction}했습니다. ${volText} ${newsText} 저장된 뉴스와 가격 데이터 기준의 보조 분석입니다.`;
 }
 
 function moveAnalysisHtml(item, move) {
   if (!move || !moveAnalysisState || moveAnalysisState.ticker !== item.ticker || moveAnalysisState.date !== move.date) return "";
+  const isLoading = moveAnalysisState.status === "loading";
+  const isError = moveAnalysisState.status === "error";
+  const text = isLoading ? "Cloudflare AI가 해당 날짜의 가격·거래량과 관련 뉴스를 함께 확인하고 있습니다." : (moveAnalysisState.text || localMoveAnalysis(item, move));
+  const note = isLoading
+    ? "잠시만 기다려 주세요. 이 분석은 버튼을 눌렀을 때만 실행됩니다."
+    : isError
+      ? "AI 분석을 불러오지 못해 저장된 데이터 기준으로 표시했습니다. 원문 뉴스와 공시를 함께 확인하세요."
+      : "Cloudflare AI가 뉴스와 가격 데이터를 바탕으로 요약한 내용입니다. 원문 뉴스와 공시를 함께 확인하세요.";
   return `
-    <div class="move-analysis-box">
+    <div class="move-analysis-box ${isLoading ? "is-loading" : ""}">
       <strong>${escapeHtml(item.ticker)} ${escapeHtml(move.date)} 원인 분석</strong>
-      <p>${escapeHtml(moveAnalysisState.text || localMoveAnalysis(item, move))}</p>
-      <span class="muted">정확한 원인은 공시·뉴스 원문 확인이 필요합니다. 서버 AI 분석을 연결하면 이 버튼에서만 API를 호출하도록 확장할 수 있습니다.</span>
+      <p>${escapeHtml(text)}</p>
+      <span class="muted">${escapeHtml(note)}</span>
     </div>
   `;
 }
 
-function runMoveAnalysis(date) {
+async function runMoveAnalysis(date) {
   const base = data.stocks.find((row) => row.ticker === selectedTicker);
   if (!base) return;
   const item = applyLive(withDetail(base));
@@ -4806,9 +4814,35 @@ function runMoveAnalysis(date) {
   moveAnalysisState = {
     ticker: item.ticker,
     date,
-    text: localMoveAnalysis(item, move)
+    status: "loading",
+    text: ""
   };
   renderStockEvents(item);
+  if (!LIVE_DATA_PROXY) {
+    moveAnalysisState = { ticker: item.ticker, date, status: "error", text: localMoveAnalysis(item, move) };
+    renderStockEvents(item);
+    return;
+  }
+  try {
+    const baseUrl = LIVE_DATA_PROXY.replace(/\/$/, "");
+    const endpoint = `${baseUrl}/?ticker=${encodeURIComponent(item.ticker)}&move_analysis=1&date=${encodeURIComponent(date)}&change=${encodeURIComponent(move.change)}`;
+    const response = await fetch(endpoint, { cache: "no-store" });
+    const payload = response.ok ? await response.json() : null;
+    const hasAnalysis = typeof payload?.analysis === "string" && Boolean(payload.analysis.trim());
+    const text = hasAnalysis ? payload.analysis.trim() : localMoveAnalysis(item, move);
+    moveAnalysisState = {
+      ticker: item.ticker,
+      date,
+      status: hasAnalysis ? "done" : "error",
+      text
+    };
+  } catch (error) {
+    console.warn("move analysis failed", error);
+    moveAnalysisState = { ticker: item.ticker, date, status: "error", text: localMoveAnalysis(item, move) };
+  }
+  if (selectedTicker !== item.ticker) return;
+  const refreshedBase = data.stocks.find((row) => row.ticker === item.ticker) || base;
+  renderStockEvents(applyLive(withDetail(refreshedBase)));
 }
 
 function normalizeEarningsHistory(item) {

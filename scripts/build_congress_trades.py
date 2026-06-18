@@ -24,6 +24,10 @@ from congress_committees_registry import (  # noqa: E402
     COMMITTEE_SECTOR_MAP,
     lookup_politician,
 )
+from congress_party_lookup import (  # noqa: E402
+    CongressPartyLookup,
+    normalize_party_code,
+)
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
@@ -252,12 +256,42 @@ def _trade_key(trade: dict) -> str:
     ]).lower()
 
 
-def _load_trades(cutoff: datetime) -> list[dict]:
+def _build_quiver_party_map(rows: list[dict]) -> dict[str, str]:
+    party_map: dict[str, str] = {}
+    for row in rows:
+        name = str(row.get("Representative") or "").strip()
+        party = normalize_party_code(str(row.get("Party") or "").strip())
+        if name and party:
+            party_map[name] = party
+    return party_map
+
+
+def _resolve_party(
+    name: str,
+    chamber: str,
+    trade_party: str | None,
+    *,
+    registry_meta: dict | None,
+    quiver_party_map: dict[str, str],
+    party_lookup: CongressPartyLookup | None,
+) -> str:
+    for raw in (trade_party, (registry_meta or {}).get("party"), quiver_party_map.get(name)):
+        party = normalize_party_code(raw)
+        if party:
+            return party
+    if party_lookup:
+        return party_lookup.lookup(name, chamber)
+    return ""
+
+
+def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str]]:
     merged: dict[str, dict] = {}
+    quiver_party_map: dict[str, str] = {}
 
     # Recent cross-chamber feed (Senate + House, ~1000 rows)
     try:
         quiver_rows = _fetch_quiver()
+        quiver_party_map = _build_quiver_party_map(quiver_rows)
         kept = 0
         for row in quiver_rows:
             t = _normalize_quiver(row)
@@ -313,7 +347,7 @@ def _load_trades(cutoff: datetime) -> list[dict]:
 
     trades = list(merged.values())
     trades.sort(key=lambda t: t["transactionDate"], reverse=True)
-    return trades
+    return trades, quiver_party_map
 
 
 def _price_on_date(ticker: str, date: datetime, cache: dict) -> float | None:
@@ -472,7 +506,27 @@ def _build_committee_matrix(trades: list[dict]) -> list[dict]:
 
 def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_returns: bool = False) -> dict:
     cutoff = datetime.now() - timedelta(days=lookback_years * 365)
-    trades = _load_trades(cutoff)
+    trades, quiver_party_map = _load_trades(cutoff)
+    party_lookup = None
+    try:
+        party_lookup = CongressPartyLookup.from_remote()
+        print("[fetch] congress legislators party index loaded")
+    except Exception as exc:
+        print(f"[warn] congress party lookup unavailable: {exc}")
+
+    for t in trades:
+        meta = lookup_politician(t["politician"]) or {}
+        party = _resolve_party(
+            t["politician"],
+            t["chamber"],
+            t.get("party"),
+            registry_meta=meta,
+            quiver_party_map=quiver_party_map,
+            party_lookup=party_lookup,
+        )
+        if party:
+            t["party"] = party
+
     returns = {} if skip_returns else _estimate_returns(trades, months=return_months)
 
     by_pol: dict[str, dict] = {}
@@ -482,7 +536,14 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
         pol = t["politician"]
         if pol not in by_pol:
             meta = lookup_politician(pol) or {}
-            party = t.get("party") or meta.get("party", "")
+            party = _resolve_party(
+                pol,
+                t["chamber"],
+                t.get("party"),
+                registry_meta=meta,
+                quiver_party_map=quiver_party_map,
+                party_lookup=party_lookup,
+            )
             by_pol[pol] = {
                 "id": _slug_id(pol, t["chamber"]),
                 "name": pol,
@@ -496,6 +557,18 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
                 "recentTrades": [],
                 "estReturnPct": None,
             }
+        elif not by_pol[pol]["party"]:
+            meta = lookup_politician(pol) or {}
+            party = _resolve_party(
+                pol,
+                t["chamber"],
+                t.get("party"),
+                registry_meta=meta,
+                quiver_party_map=quiver_party_map,
+                party_lookup=party_lookup,
+            )
+            if party:
+                by_pol[pol]["party"] = party
         rec = by_pol[pol]
         rec["tradeCount"] += 1
         if t["side"] == "buy":
@@ -519,6 +592,18 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
 
     politicians = list(by_pol.values())
     for p in politicians:
+        if not p.get("party"):
+            meta = lookup_politician(p["name"]) or {}
+            party = _resolve_party(
+                p["name"],
+                p["chamber"],
+                None,
+                registry_meta=meta,
+                quiver_party_map=quiver_party_map,
+                party_lookup=party_lookup,
+            )
+            if party:
+                p["party"] = party
         p["estReturnPct"] = returns.get(p["name"])
         p["recentTrades"] = p["recentTrades"][:20]
 

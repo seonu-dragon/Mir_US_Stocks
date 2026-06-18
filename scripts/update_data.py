@@ -2159,12 +2159,7 @@ def build_one(meta):
         except Exception as exc:
             meta["fundamentals"] = {}
             error = f"{error}; fundamentals {symbol}: {exc}" if error else f"fundamentals {symbol}: {exc}"
-        try:
-            history = fetch_earnings_history(symbol)
-            if history:
-                meta["earningsHistory"] = history
-        except Exception as exc:
-            error = f"{error}; earnings {symbol}: {exc}" if error else f"earnings {symbol}: {exc}"
+    # earningsHistory는 주간 증분 갱신(earnings_history_store.py)으로만 업데이트합니다.
     # News is attached to every ticker that gets a detail file (real history or fundamentals),
     # so the stock-analysis page can show headlines when it lazily loads that detail file.
     if meta.get("preferHistory") or meta.get("preferFundamentals"):
@@ -2503,7 +2498,7 @@ def split_snapshot_details(payload):
         light_stocks.append({
             key: value
             for key, value in stock.items()
-            if key not in {"chartSeries", "fundamentals", "news"}
+            if key not in {"chartSeries", "fundamentals", "news", "earningsHistory"}
         })
     light_payload = dict(payload)
     light_payload["stocks"] = light_stocks
@@ -2517,12 +2512,34 @@ def split_snapshot_details(payload):
     return light_payload, details
 
 
+def _load_existing_earnings_histories():
+    preserved = {}
+    if not DETAILS_DIR.exists():
+        return preserved
+    for path in DETAILS_DIR.glob("*.json"):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        history = payload.get("earningsHistory")
+        if not history:
+            continue
+        ticker = str(payload.get("ticker") or path.stem).upper()
+        preserved[ticker] = history
+    return preserved
+
+
 def write_details(details):
     DETAILS_DIR.mkdir(parents=True, exist_ok=True)
+    preserved_earnings = _load_existing_earnings_histories()
     for old_file in DETAILS_DIR.glob("*"):
         if old_file.is_file() and old_file.suffix.lower() in {".json", ".js"}:
             old_file.unlink()
     for ticker, detail in details.items():
+        if "earningsHistory" not in detail:
+            saved = preserved_earnings.get(str(ticker).upper())
+            if saved:
+                detail["earningsHistory"] = saved
         safe = re.sub(r"[^A-Z0-9._-]", "_", ticker.upper())
         if safe.split(".")[0] in {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"}:
             safe = f"_{safe}"

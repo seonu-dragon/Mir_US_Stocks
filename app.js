@@ -1029,12 +1029,45 @@ function setupCalendarFilters() {
   calendarFiltersReady = true;
 }
 
+const CAL_WEEKDAY_KO = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+
+/** investing.com(한국어 날짜) · 백악관(YYYY-MM-DD) 등 서로 다른 day 문자열을 YYYY-MM-DD로 통일 */
+function calendarIsoFromEvent(event) {
+  const dt = String(event.datetime || "").trim();
+  if (dt) {
+    const iso = dt.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (iso) return iso[1];
+    const slash = dt.match(/^(\d{4})\/(\d{1,2})\/(\d{1,2})/);
+    if (slash) {
+      return `${slash[1]}-${String(slash[2]).padStart(2, "0")}-${String(slash[3]).padStart(2, "0")}`;
+    }
+  }
+  const day = String(event.day || "").trim();
+  const wh = day.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (wh) return wh[1];
+  const kr = day.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
+  if (kr) {
+    return `${kr[1]}-${String(kr[2]).padStart(2, "0")}-${String(kr[3]).padStart(2, "0")}`;
+  }
+  return day || "unknown";
+}
+
+function calendarDayLabel(isoKey, rows) {
+  const krLabel = (rows || []).map((e) => String(e.day || "").trim()).find((d) => /년.*월.*일/.test(d));
+  if (krLabel) return krLabel;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(isoKey)) return isoKey;
+  const parts = isoKey.split("-").map(Number);
+  const date = new Date(parts[0], parts[1] - 1, parts[2]);
+  if (Number.isNaN(date.getTime())) return isoKey;
+  return `${parts[0]}년 ${parts[1]}월 ${parts[2]}일 ${CAL_WEEKDAY_KO[date.getDay()]}`;
+}
+
 function mergeCalendarEvents(macroEvents, whEvents) {
   const merged = [...(macroEvents || []), ...(whEvents || [])];
   merged.sort((a, b) => {
-    const ad = String(a.datetime || a.day || "");
-    const bd = String(b.datetime || b.day || "");
-    if (ad && bd && ad !== bd) return ad.localeCompare(bd);
+    const ad = calendarIsoFromEvent(a);
+    const bd = calendarIsoFromEvent(b);
+    if (ad !== bd) return ad.localeCompare(bd);
     return String(a.time || "").localeCompare(String(b.time || ""));
   });
   return merged;
@@ -1114,13 +1147,14 @@ function renderCalendar(events) {
   const groups = [];
   const idx = {};
   events.forEach((e) => {
-    const key = e.day || "";
-    if (idx[key] === undefined) { idx[key] = groups.length; groups.push({ day: key, rows: [] }); }
+    const key = calendarIsoFromEvent(e);
+    if (idx[key] === undefined) { idx[key] = groups.length; groups.push({ key, rows: [] }); }
     groups[idx[key]].rows.push(e);
   });
+  groups.sort((a, b) => a.key.localeCompare(b.key));
   body.innerHTML = groups.map((g) => `
     <div class="cal-day">
-      <h3>${escapeHtml(g.day)}</h3>
+      <h3>${escapeHtml(calendarDayLabel(g.key, g.rows))}</h3>
       <div class="table-wrap">
         <table class="cal-table">
           <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th>실제</th><th>예측</th><th>이전</th></tr></thead>
@@ -4938,7 +4972,7 @@ function moveAnalysisHtml(item, move) {
     ? `<span class="move-confidence confidence-${moveAnalysisState.confidence === "높음" ? "high" : moveAnalysisState.confidence === "보통" ? "medium" : "low"}">근거 신뢰도 ${escapeHtml(moveAnalysisState.confidence)}</span>`
     : "";
   const note = isLoading
-    ? "분석은 버튼을 누른 경우에만 실행되며, 같은 날짜의 결과는 캐시될 수 있습니다."
+    ? "분석 중입니다. 잠시만 기다려주세요."
     : isError
       ? "날짜 기준 뉴스를 충분히 찾지 못했거나 AI 분석을 불러오지 못해 저장 데이터 기준으로 표시했습니다."
       : `이벤트 날짜 전후 ${moveAnalysisState.searchWindowDays || 2}일 뉴스와 시장 흐름을 함께 비교했습니다.`;

@@ -1483,14 +1483,18 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
 }
 
 function setupTabs() {
+  const tabsEl = byId("mainTabs");
+  if (tabsEl) applySavedTabOrder(tabsEl);
+
   document.querySelectorAll(".tab").forEach((tab) => {
     tab.addEventListener("click", () => {
+      // 드래그(순서 변경) 직후의 클릭은 탭 전환으로 처리하지 않는다.
+      if (tabDragJustHappened) { tabDragJustHappened = false; return; }
       const name = tab.dataset.tab;
       activateTab(name, { push: name !== currentTab });
     });
   });
 
-  const tabsEl = byId("mainTabs");
   const wrap = byId("tabsScrollWrap");
   if (tabsEl && wrap) {
     tabsEl.addEventListener("scroll", updateTabsScrollHints, { passive: true });
@@ -1501,7 +1505,116 @@ function setupTabs() {
     requestAnimationFrame(layoutMobileTabs);
   }
 
+  if (tabsEl) setupTabReorder(tabsEl);
+
   // 뒤로가기 동작은 setupBackGuard()의 popstate 핸들러가 담당한다.
+}
+
+// ===== 메인 탭 순서 변경(드래그) =====
+const TAB_ORDER_KEY = "mir_tab_order_v1";
+let tabDragJustHappened = false;
+
+function saveTabOrder(nav) {
+  const order = [...nav.querySelectorAll(".tab")].map((t) => t.dataset.tab);
+  try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch (_) {}
+}
+
+function applySavedTabOrder(nav) {
+  let order = null;
+  try { order = JSON.parse(localStorage.getItem(TAB_ORDER_KEY) || "null"); } catch (_) { order = null; }
+  if (!Array.isArray(order)) return;
+  const all = [...nav.querySelectorAll(".tab")];
+  const byName = new Map(all.map((t) => [t.dataset.tab, t]));
+  const seen = new Set();
+  const final = [];
+  order.forEach((n) => { if (byName.has(n)) { final.push(byName.get(n)); seen.add(n); } });
+  all.forEach((t) => { if (!seen.has(t.dataset.tab)) final.push(t); }); // 새 탭은 뒤에 유지
+  final.forEach((t) => nav.appendChild(t));
+}
+
+// PC: 좌클릭 후 일정 거리 이동하면 그랩 / 모바일: 길게 눌러(롱프레스) 그랩
+function setupTabReorder(nav) {
+  const LONG_PRESS_MS = 320;
+  const MOVE_THRESHOLD = 8;
+  let dragEl = null, pointerId = null, startX = 0;
+  let dragging = false, moved = false, longPressTimer = null;
+
+  const clearLongPress = () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } };
+
+  function beginDrag() {
+    if (!dragEl) return;
+    dragging = true;
+    dragEl.classList.add("is-dragging");
+    nav.classList.add("is-reordering");
+    dragEl.style.touchAction = "none";
+    try { dragEl.setPointerCapture(pointerId); } catch (_) {}
+  }
+
+  function onDown(e) {
+    if (e.button != null && e.button > 0) return; // 좌클릭/터치만
+    const tab = e.target.closest(".tab");
+    if (!tab || !nav.contains(tab)) return;
+    dragEl = tab; pointerId = e.pointerId; startX = e.clientX;
+    dragging = false; moved = false;
+    clearLongPress();
+    if (e.pointerType === "touch") {
+      longPressTimer = setTimeout(() => { if (dragEl && !moved) beginDrag(); }, LONG_PRESS_MS);
+    }
+  }
+
+  function onMove(e) {
+    if (!dragEl || e.pointerId !== pointerId) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > MOVE_THRESHOLD) moved = true;
+    if (!dragging) {
+      if (e.pointerType !== "touch" && Math.abs(dx) > MOVE_THRESHOLD) {
+        beginDrag(); // 마우스: 임계 이동 시 그랩
+      } else if (e.pointerType === "touch" && moved) {
+        clearLongPress(); // 롱프레스 전에 움직이면 스크롤로 간주 → 그랩 취소
+        dragEl = null;
+        return;
+      }
+      if (!dragging) return;
+    }
+    e.preventDefault();
+    dragEl.style.transform = `translateX(${dx}px)`;
+    const rect = dragEl.getBoundingClientRect();
+    const center = rect.left + rect.width / 2;
+    const tabs = [...nav.querySelectorAll(".tab")];
+    for (const other of tabs) {
+      if (other === dragEl) continue;
+      const r = other.getBoundingClientRect();
+      if (center > r.left && center < r.right) {
+        const di = tabs.indexOf(dragEl), oi = tabs.indexOf(other);
+        if (di < oi) nav.insertBefore(dragEl, other.nextSibling);
+        else nav.insertBefore(dragEl, other);
+        startX = e.clientX;
+        dragEl.style.transform = "";
+        break;
+      }
+    }
+  }
+
+  function onUp(e) {
+    clearLongPress();
+    if (dragging && dragEl) {
+      dragEl.classList.remove("is-dragging");
+      nav.classList.remove("is-reordering");
+      dragEl.style.transform = "";
+      dragEl.style.touchAction = "";
+      try { dragEl.releasePointerCapture(pointerId); } catch (_) {}
+      saveTabOrder(nav);
+      layoutMobileTabs();
+      tabDragJustHappened = true; // 뒤따르는 click 무시
+      setTimeout(() => { tabDragJustHappened = false; }, 60);
+    }
+    dragEl = null; pointerId = null; dragging = false; moved = false;
+  }
+
+  nav.addEventListener("pointerdown", onDown);
+  window.addEventListener("pointermove", onMove, { passive: false });
+  window.addEventListener("pointerup", onUp);
+  window.addEventListener("pointercancel", onUp);
 }
 
 function setupFilters() {

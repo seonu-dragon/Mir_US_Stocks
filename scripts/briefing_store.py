@@ -131,6 +131,8 @@ def _git_publish(project_dir, key, expected_html, commit_label, paths):
     last_error = None
     for attempt in range(1, 4):
         try:
+            _run_git(project_dir, ["fetch", "origin", branch], check=True)
+            _run_git(project_dir, ["pull", "--rebase", "origin", branch], check=True)
             _run_git(project_dir, ["push", "origin", branch], check=True)
             _run_git(project_dir, ["fetch", "origin", branch], check=True)
             _verify_remote_briefing(project_dir, branch, key, expected_html)

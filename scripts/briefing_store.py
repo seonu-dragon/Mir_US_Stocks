@@ -101,9 +101,14 @@ def _verify_remote_briefing(project_dir, branch, key, expected_html):
         raise RuntimeError(f"origin/{branch} verification failed for ai_briefing.{key}")
 
 
-def _parse_porcelain_paths(stdout):
+def _parse_porcelain_paths(stdout, include_untracked=False):
     paths = []
     for line in stdout.splitlines():
+        if not line:
+            continue
+        code = line[:2]
+        if code == "??" and not include_untracked:
+            continue  # 추적되지 않는 파일은 reset --hard 의 영향을 받지 않음
         p = line[3:].strip().strip('"') if len(line) > 3 else ""
         if " -> " in p:  # rename
             p = p.split(" -> ", 1)[1]

@@ -7249,6 +7249,51 @@ footer {
   background: var(--panel-soft);
 }
 
+/* 페이지네이션 */
+.community-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.community-page-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--text);
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-table);
+  cursor: pointer;
+}
+
+.community-page-btn:hover:not(:disabled):not(.is-active) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.community-page-btn.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  cursor: default;
+}
+
+.community-page-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.community-page-ellipsis {
+  color: var(--muted);
+  padding: 0 2px;
+}
+
 @media (max-width: 1040px) {
   .community-sns-grid,
   .community-hot-grid {

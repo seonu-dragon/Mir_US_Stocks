@@ -2063,6 +2063,67 @@ button.ghost {
   font-size: 15px;
 }
 
+.congress-section-head--help {
+  position: relative;
+}
+
+.congress-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.congress-help-button {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: 1px solid rgba(29, 78, 216, 0.28);
+  border-radius: 999px;
+  background: #eef2ff;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.congress-help-button:hover,
+.congress-section-head--help.is-open .congress-help-button {
+  border-color: var(--blue);
+  background: #dbeafe;
+}
+
+.congress-help-popover {
+  position: absolute;
+  z-index: 20;
+  top: 34px;
+  left: 0;
+  right: 0;
+  border: 1px solid rgba(29, 78, 216, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+  padding: 12px 14px;
+}
+
+.congress-help-popover strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.congress-help-popover p {
+  margin: 0 0 8px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.congress-help-popover p:last-child {
+  margin-bottom: 0;
+}
+
 .congress-section-head p {
   margin: 0 0 10px;
 }

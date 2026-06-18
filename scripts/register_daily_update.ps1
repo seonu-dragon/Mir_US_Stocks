@@ -11,7 +11,7 @@ $TaskName = "MijoomoDailySnapshot"
 Write-Host "Registering Scheduled Task: $TaskName"
 Write-Host "Action: $BatPath"
 Write-Host "Working Directory: $Root"
-Write-Host "Schedule: Daily at 05:00 KST (before briefing tasks at 06:00/06:10)"
+Write-Host "Schedule: Daily at 05:00 KST (GitHub Actions is primary; this is a local backup)"
 
 if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) {
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false

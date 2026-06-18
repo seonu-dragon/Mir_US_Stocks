@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 
+# Local secrets (GitHub Actions uses Repository Secrets)
+.env
+
 # OS / editor cruft
 .DS_Store
 Thumbs.db

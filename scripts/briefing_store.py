@@ -132,6 +132,7 @@ def _git_publish(project_dir, key, expected_html, commit_label, paths):
     for attempt in range(1, 4):
         try:
             _run_git(project_dir, ["push", "origin", branch], check=True)
+            _run_git(project_dir, ["fetch", "origin", branch], check=True)
             _verify_remote_briefing(project_dir, branch, key, expected_html)
             print(f"  [Git] origin/{branch} 푸시 및 ai_briefing.{key} 검증 완료")
             return True

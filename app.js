@@ -1220,7 +1220,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "screener") renderScreener();
   if (searchSubTab === "analysis") renderSearch();
   if (push) {
-    history.pushState({ tab: "search", sub: searchSubTab, ticker: selectedTicker }, "");
+    history.replaceState({ tab: "search", sub: searchSubTab, ticker: selectedTicker }, "");
   }
 }
 
@@ -1236,7 +1236,7 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "13f") renderInstitutional13f();
   if (institutionalSubTab === "congress") renderCongressTrades();
   if (push) {
-    history.pushState({ tab: "institutional", sub: institutionalSubTab, ticker: selectedTicker }, "");
+    history.replaceState({ tab: "institutional", sub: institutionalSubTab, ticker: selectedTicker }, "");
   }
 }
 
@@ -1252,7 +1252,7 @@ function activateCalendarSub(name, { push = false } = {}) {
   if (calendarSubTab === "macro") loadCalendar();
   if (calendarSubTab === "earnings") loadEarningsCalendar();
   if (push) {
-    history.pushState({ tab: "calendar", sub: calendarSubTab, ticker: null }, "");
+    history.replaceState({ tab: "calendar", sub: calendarSubTab, ticker: null }, "");
   }
 }
 
@@ -1297,7 +1297,7 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
     renderCommunityVote();
   }
   if (push) {
-    history.pushState({
+    history.replaceState({
       tab: "community",
       sub: communitySubTab,
       ticker: null,
@@ -1397,7 +1397,9 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
           : (name === "community" ? communitySubTab : null)));
     const state = { tab: name, sub: subTab, ticker };
     if (name === "community") state.communityTicker = communityBoardTickerFilter || null;
-    history.pushState(state, "");
+    // pushState 대신 replaceState — 탭 이동마다 히스토리가 쌓여 뒤로가기를 여러 번 눌러야
+    // 앱이 종료되던 문제를 막는다(설치형 PWA에서 뒤로가기 1번으로 종료).
+    history.replaceState(state, "");
   }
 }
 
@@ -8490,10 +8492,21 @@ function setupPwa() {
     }).catch(() => {});
   }
   const installBtn = byId("installApp");
+  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+  // 설치 버튼은 모바일에서만(데스크톱 웹에서는 숨김), 이미 설치(standalone)된 경우에도 숨김
+  const isMobile = window.matchMedia("(pointer: coarse)").matches
+    || /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+  const showInstall = isMobile && !isStandalone;
+  if (installBtn) installBtn.hidden = !showInstall;
+
   window.addEventListener("beforeinstallprompt", (event) => {
     event.preventDefault();
     deferredInstallPrompt = event;
-    if (installBtn) installBtn.hidden = false;
+    if (installBtn && showInstall) installBtn.hidden = false;
+  });
+  // 설치 완료 시 버튼 즉시 숨김
+  window.addEventListener("appinstalled", () => {
+    if (installBtn) installBtn.hidden = true;
   });
   if (installBtn) {
     installBtn.addEventListener("click", async () => {
@@ -8510,8 +8523,6 @@ function setupPwa() {
         : "브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.");
     });
   }
-  const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-  if (isStandalone && installBtn) installBtn.hidden = true;
 }
 
 // ===== 스크리너 =====

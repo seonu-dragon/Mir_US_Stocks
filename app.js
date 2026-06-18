@@ -5002,7 +5002,11 @@ function normalizeEarningsHistory(item) {
   const live = item.liveEarnings || {};
   const raw = live.history || live.quarters || item.earningsHistory || f.earningsHistory || f.quarterlyEarnings || [];
   return (Array.isArray(raw) ? raw : []).map((row) => {
-    const date = row.date || row.reportDate || row.earningsDate || row.period || row.fiscalDateEnding;
+    let date = row.date || row.reportDate || row.earningsDate || row.period || row.fiscalDateEnding;
+    if (!date && row.quarter) {
+      const q = String(row.quarter);
+      if (/^\d{4}-\d{2}-\d{2}/.test(q)) date = q.slice(0, 10);
+    }
     return {
       date: date ? String(date).slice(0, 10) : "",
       epsActual: row.epsActual ?? row.actual ?? row.reportedEPS ?? row.eps,

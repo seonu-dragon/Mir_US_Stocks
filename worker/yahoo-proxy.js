@@ -470,13 +470,24 @@ async function fetchEarnings(symbol) {
       ? cal.epsEstimate.raw
       : (cal.epsEstimate != null ? cal.epsEstimate : null);
     const history = ((result.earningsHistory && result.earningsHistory.history) || [])
-      .slice(0, 4)
-      .map((row) => ({
-        quarter: (row.quarter && row.quarter.fmt) || row.period || "",
-        epsActual: row.epsActual && row.epsActual.raw != null ? row.epsActual.raw : null,
-        epsEstimate: row.epsEstimate && row.epsEstimate.raw != null ? row.epsEstimate.raw : null,
-        surprisePct: row.surprisePercent && row.surprisePercent.raw != null ? row.surprisePercent.raw : null,
-      }));
+      .slice(0, 8)
+      .map((row) => {
+        const quarter = (row.quarter && row.quarter.fmt) || row.period || "";
+        let date = "";
+        if (row.quarter && row.quarter.raw != null) {
+          const d = new Date(row.quarter.raw * 1000);
+          date = Number.isNaN(d.getTime()) ? "" : d.toISOString().slice(0, 10);
+        } else if (/^\d{4}-\d{2}-\d{2}/.test(quarter)) {
+          date = quarter.slice(0, 10);
+        }
+        return {
+          date,
+          quarter,
+          epsActual: row.epsActual && row.epsActual.raw != null ? row.epsActual.raw : null,
+          epsEstimate: row.epsEstimate && row.epsEstimate.raw != null ? row.epsEstimate.raw : null,
+          surprisePct: row.surprisePercent && row.surprisePercent.raw != null ? row.surprisePercent.raw : null,
+        };
+      });
     return {
       nextDate: dates[0] || null,
       dates,

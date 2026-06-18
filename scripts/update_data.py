@@ -1718,6 +1718,62 @@ def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
     return {key: value for key, value in out.items() if value not in (None, "")}
 
 
+def fetch_earnings_history(symbol, limit=12):
+    """Yahoo earnings_dates → 발표일 기준 분기 실적 히스토리."""
+    try:
+        import yfinance as yf
+    except ImportError:
+        return []
+    try:
+        frame = yf.Ticker(yahoo_symbol(symbol)).earnings_dates
+    except Exception:
+        return []
+    if frame is None or getattr(frame, "empty", True):
+        return []
+
+    rows = []
+    for idx, row in frame.iterrows():
+        reported = row.get("Reported EPS")
+        try:
+            import pandas as pd
+
+            if pd.isna(reported):
+                continue
+        except Exception:
+            if reported in (None, ""):
+                continue
+        date = str(idx)
+        if hasattr(idx, "strftime"):
+            try:
+                date = idx.tz_localize(None).strftime("%Y-%m-%d") if getattr(idx, "tzinfo", None) else idx.strftime("%Y-%m-%d")
+            except Exception:
+                date = str(idx)[:10]
+        else:
+            date = date[:10]
+        estimate = row.get("EPS Estimate")
+        surprise = row.get("Surprise(%)")
+        try:
+            import pandas as pd
+
+            est_val = None if pd.isna(estimate) else round(float(estimate), 4)
+            sur_val = None if pd.isna(surprise) else round(float(surprise), 2)
+        except Exception:
+            est_val = round(float(estimate), 4) if estimate not in (None, "") else None
+            sur_val = round(float(surprise), 2) if surprise not in (None, "") else None
+        rows.append({
+            "date": date,
+            "epsActual": round(float(reported), 4),
+            "epsEstimate": est_val,
+            "surprisePct": sur_val,
+        })
+        if len(rows) >= limit:
+            break
+    rows.sort(key=lambda item: item.get("date") or "")
+    if len(rows) > limit:
+        rows = rows[-limit:]
+    return rows
+
+
 def merge_fundamentals(primary, secondary):
     merged = dict(secondary or {})
     merged.update(primary or {})
@@ -2103,6 +2159,12 @@ def build_one(meta):
         except Exception as exc:
             meta["fundamentals"] = {}
             error = f"{error}; fundamentals {symbol}: {exc}" if error else f"fundamentals {symbol}: {exc}"
+        try:
+            history = fetch_earnings_history(symbol)
+            if history:
+                meta["earningsHistory"] = history
+        except Exception as exc:
+            error = f"{error}; earnings {symbol}: {exc}" if error else f"earnings {symbol}: {exc}"
     # News is attached to every ticker that gets a detail file (real history or fundamentals),
     # so the stock-analysis page can show headlines when it lazily loads that detail file.
     if meta.get("preferHistory") or meta.get("preferFundamentals"):
@@ -2428,7 +2490,7 @@ def split_snapshot_details(payload):
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "fundamentals", "news"]:
+        for key in ["chartSeries", "fundamentals", "news", "earningsHistory"]:
             if key in stock:
                 detail[key] = stock[key]
         if detail:

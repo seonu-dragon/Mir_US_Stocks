@@ -6629,6 +6629,12 @@ footer {
   display: grid;
   grid-template-columns: 180px 1fr;
   gap: 12px;
+  align-items: end;
+}
+
+/* 닉네임·종목 라벨의 캡션을 한 줄로 고정해 입력칸 높이를 맞춘다. */
+.community-field-label {
+  white-space: nowrap;
 }
 
 .community-optional {
@@ -6685,6 +6691,12 @@ footer {
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.community-post:hover {
+  border-color: #c7d2e5;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.09);
 }
 
 .community-post-head {
@@ -6775,6 +6787,33 @@ footer {
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.community-reply-submit {
+  height: 34px;
+  padding: 0 16px;
+}
+
+.community-reply-cancel {
+  height: 34px;
+  padding: 0 12px;
+}
+
+.community-reply-hint {
+  margin-left: auto;
+  font-size: var(--fs-cap);
+  white-space: nowrap;
+}
+
+.community-reply-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (max-width: 480px) {
+  .community-reply-hint {
+    display: none;
+  }
 }
 
 .community-empty {

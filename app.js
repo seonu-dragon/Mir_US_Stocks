@@ -7137,22 +7137,6 @@ function stopCommunityPolling() {
   }
 }
 
-function updateCommunityBoardStatus() {
-  const el = byId("communityBoardStatus");
-  if (!el) return;
-  if (!LIVE_DATA_PROXY || communityBoardError === "no_community_kv" || communityBoardError === "board_unavailable" || communityBoardError) {
-    el.hidden = false;
-    if (!LIVE_DATA_PROXY || communityBoardError === "no_community_kv" || communityBoardError === "board_unavailable") {
-      el.innerHTML = `<strong>게시판 준비 중</strong><span>잠시 후 다시 시도해 주세요.</span>`;
-      return;
-    }
-    el.innerHTML = `<strong>연결 오류</strong><span>글을 불러오지 못했습니다. 새로고침해 주세요.</span>`;
-    return;
-  }
-  el.hidden = true;
-  el.innerHTML = "";
-}
-
 function resolveCommunityTickerInput(raw) {
   const text = String(raw || "").trim();
   if (!text) return "";
@@ -7192,8 +7176,6 @@ function renderCommunityBoard() {
   const nickInput = byId("communityNickname");
   if (!feed || !meta) return;
 
-  updateCommunityBoardStatus();
-
   if (nickInput && !nickInput.value) nickInput.value = getCommunityNickname();
 
   const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
@@ -7214,6 +7196,20 @@ function renderCommunityBoard() {
     feed.innerHTML = `<div class="community-empty">${communityBoardError ? "게시판 연결을 확인한 뒤 새로고침해 주세요." : "트렌딩 탭에서 관심 종목을 보고, 종목 없이도 시장 의견을 남길 수 있습니다."}</div>`;
     return;
   }
+
+  // 재렌더(특히 12초 자동 새로고침) 시 작성 중이던 댓글 입력이 사라지지 않도록
+  // 열려 있는 답글 입력칸의 내용·커서·포커스를 미리 보존한다.
+  const openReply = communityReplyPostId
+    ? feed.querySelector(`.community-reply-input[data-post-id="${CSS.escape(communityReplyPostId)}"]`)
+    : null;
+  const replyDraft = openReply
+    ? {
+        value: openReply.value,
+        start: openReply.selectionStart,
+        end: openReply.selectionEnd,
+        focused: document.activeElement === openReply,
+      }
+    : null;
 
   feed.innerHTML = posts.map((post) => {
     const stock = post.ticker ? stockByTicker(post.ticker) : null;
@@ -7259,6 +7255,7 @@ function renderCommunityBoard() {
             <div class="community-reply-actions">
               <button type="button" class="community-reply-submit" data-post-id="${escapeHtml(post.id)}">댓글 등록</button>
               <button type="button" class="ghost community-reply-cancel" data-post-id="${escapeHtml(post.id)}">취소</button>
+              <span class="community-reply-hint muted">Ctrl·⌘+Enter로 등록</span>
             </div>
           </div>
         ` : ""}
@@ -7290,15 +7287,46 @@ function renderCommunityBoard() {
     });
   });
   feed.querySelectorAll(".community-reply-submit").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", async () => {
       const postId = btn.dataset.postId;
       const input = feed.querySelector(`.community-reply-input[data-post-id="${CSS.escape(postId)}"]`);
-      postCommunityComment(postId, input?.value || "");
+      if (btn.disabled) return;
+      btn.disabled = true;
+      const prevLabel = btn.textContent;
+      btn.textContent = "등록 중…";
+      try {
+        await postCommunityComment(postId, input?.value || "");
+      } finally {
+        // 성공 시 폼이 재렌더로 사라지지만, 실패 시엔 버튼을 되살린다.
+        btn.disabled = false;
+        btn.textContent = prevLabel;
+      }
+    });
+  });
+  // Ctrl/⌘ + Enter 로 댓글 바로 등록
+  feed.querySelectorAll(".community-reply-input").forEach((input) => {
+    input.addEventListener("keydown", (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
+        event.preventDefault();
+        postCommunityComment(input.dataset.postId, input.value || "");
+      }
     });
   });
   feed.querySelectorAll(".community-comment-delete").forEach((btn) => {
     btn.addEventListener("click", () => deleteCommunityComment(btn.dataset.postId, btn.dataset.commentId));
   });
+
+  // 보존해 둔 답글 입력 내용·커서·포커스를 복원한다.
+  if (replyDraft && communityReplyPostId) {
+    const nextReply = feed.querySelector(`.community-reply-input[data-post-id="${CSS.escape(communityReplyPostId)}"]`);
+    if (nextReply) {
+      nextReply.value = replyDraft.value;
+      if (replyDraft.focused) {
+        nextReply.focus();
+        try { nextReply.setSelectionRange(replyDraft.start, replyDraft.end); } catch (_) {}
+      }
+    }
+  }
 }
 
 async function fetchCommunityPosts({ silent = false } = {}) {
@@ -7329,9 +7357,16 @@ async function fetchCommunityPosts({ silent = false } = {}) {
       else if (!communityPostsCache.length) communityBoardError = (err && err.message) || "네트워크 오류";
     } finally {
       communityFetchPromise = null;
-      if (currentTab === "community" && communitySubTab === "board") renderCommunityBoard();
-      if (currentTab === "search" && searchSubTab === "analysis") {
-        const base = data.stocks.find((row) => row.ticker === selectedTicker);
+      if (currentTab === "community" && communitySubTab === "board") {
+        // 자동(silent) 새로고침이 답글 작성 중인 입력칸을 건드리지 않도록,
+        // 사용자가 답글 입력칸에 포커스를 둔 동안에는 재렌더를 건너뛴다.
+        const active = document.activeElement;
+        const typingReply = silent && active && active.classList
+          && active.classList.contains("community-reply-input");
+        if (!typingReply) renderCommunityBoard();
+      }
+      if (currentTab === "search" && searchSubTab === "analysis" && selectedTicker) {
+        const base = stockByTicker(selectedTicker);
         if (base) renderStockEvents(applyLive(withDetail(base)));
       }
     }

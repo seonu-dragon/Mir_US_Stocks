@@ -1536,18 +1536,54 @@ function applySavedTabOrder(nav) {
 function setupTabReorder(nav) {
   const LONG_PRESS_MS = 320;
   const MOVE_THRESHOLD = 8;
-  let dragEl = null, pointerId = null, startX = 0;
+  let dragEl = null, placeholder = null, pointerId = null;
+  let startX = 0, grabOffsetX = 0, fixedTop = 0, dragW = 0, dragH = 0;
   let dragging = false, moved = false, longPressTimer = null;
 
   const clearLongPress = () => { if (longPressTimer) { clearTimeout(longPressTimer); longPressTimer = null; } };
 
+  // 그랩한 탭을 커서 아래에 '띄워서'(position:fixed) 따라오게 하고, 빈 자리는 placeholder가 차지한다.
   function beginDrag() {
     if (!dragEl) return;
     dragging = true;
+    const rect = dragEl.getBoundingClientRect();
+    grabOffsetX = startX - rect.left;
+    fixedTop = rect.top;
+    dragW = rect.width;
+    dragH = rect.height;
+
+    placeholder = document.createElement("div");
+    placeholder.className = "tab-placeholder";
+    placeholder.style.width = `${dragW}px`;
+    placeholder.style.height = `${dragH}px`;
+    nav.insertBefore(placeholder, dragEl);
+
     dragEl.classList.add("is-dragging");
     nav.classList.add("is-reordering");
-    dragEl.style.touchAction = "none";
+    Object.assign(dragEl.style, {
+      position: "fixed",
+      left: `${rect.left}px`,
+      top: `${fixedTop}px`,
+      width: `${dragW}px`,
+      height: `${dragH}px`,
+      margin: "0",
+      zIndex: "1000",
+      pointerEvents: "none",
+      transform: "none",
+    });
     try { dragEl.setPointerCapture(pointerId); } catch (_) {}
+  }
+
+  function movePlaceholder(pointerX) {
+    const tabs = [...nav.querySelectorAll(".tab")].filter((t) => t !== dragEl);
+    for (const other of tabs) {
+      const r = other.getBoundingClientRect();
+      if (pointerX < r.left + r.width / 2) {
+        if (placeholder.nextSibling !== other) nav.insertBefore(placeholder, other);
+        return;
+      }
+    }
+    if (nav.lastElementChild !== placeholder) nav.appendChild(placeholder);
   }
 
   function onDown(e) {
@@ -1577,40 +1613,37 @@ function setupTabReorder(nav) {
       if (!dragging) return;
     }
     e.preventDefault();
-    dragEl.style.transform = `translateX(${dx}px)`;
-    const rect = dragEl.getBoundingClientRect();
-    const center = rect.left + rect.width / 2;
-    const tabs = [...nav.querySelectorAll(".tab")];
-    for (const other of tabs) {
-      if (other === dragEl) continue;
-      const r = other.getBoundingClientRect();
-      if (center > r.left && center < r.right) {
-        const di = tabs.indexOf(dragEl), oi = tabs.indexOf(other);
-        if (di < oi) nav.insertBefore(dragEl, other.nextSibling);
-        else nav.insertBefore(dragEl, other);
-        startX = e.clientX;
-        dragEl.style.transform = "";
-        break;
-      }
-    }
+    // 그랩한 탭은 항상 커서에 정확히 붙어 따라온다(끊김 없음).
+    dragEl.style.left = `${e.clientX - grabOffsetX}px`;
+    dragEl.style.top = `${fixedTop}px`;
+    movePlaceholder(e.clientX);
   }
 
-  function onUp(e) {
-    clearLongPress();
-    if (dragging && dragEl) {
-      dragEl.classList.remove("is-dragging");
-      nav.classList.remove("is-reordering");
-      dragEl.style.transform = "";
-      dragEl.style.touchAction = "";
-      try { dragEl.releasePointerCapture(pointerId); } catch (_) {}
-      saveTabOrder(nav);
-      layoutMobileTabs();
-      tabDragJustHappened = true; // 뒤따르는 click 무시
-      setTimeout(() => { tabDragJustHappened = false; }, 60);
+  function finishDrag() {
+    if (!dragging || !dragEl) return;
+    if (placeholder && placeholder.parentNode === nav) {
+      nav.insertBefore(dragEl, placeholder);
     }
+    dragEl.classList.remove("is-dragging");
+    nav.classList.remove("is-reordering");
+    ["position", "left", "top", "width", "height", "margin", "zIndex", "pointerEvents", "transform"]
+      .forEach((p) => dragEl.style.removeProperty(p.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase())));
+    if (placeholder) { placeholder.remove(); placeholder = null; }
+    try { dragEl.releasePointerCapture(pointerId); } catch (_) {}
+    saveTabOrder(nav);
+    layoutMobileTabs();
+    tabDragJustHappened = true; // 뒤따르는 click 무시
+    setTimeout(() => { tabDragJustHappened = false; }, 60);
+  }
+
+  function onUp() {
+    clearLongPress();
+    if (dragging) finishDrag();
     dragEl = null; pointerId = null; dragging = false; moved = false;
   }
 
+  // 모바일 롱프레스 시 뜨는 컨텍스트 메뉴/선택 방지
+  nav.addEventListener("contextmenu", (e) => { if (dragging) e.preventDefault(); });
   nav.addEventListener("pointerdown", onDown);
   window.addEventListener("pointermove", onMove, { passive: false });
   window.addEventListener("pointerup", onUp);

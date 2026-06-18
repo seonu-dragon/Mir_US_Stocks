@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260618k">
+    <link rel="stylesheet" href="styles.css?v=20260618l">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -807,17 +807,17 @@
         <div class="watch-alert-panel" id="watchAlertPanel">
           <div class="watch-alert-head">
             <div>
-              <h3>관심종목 조건 알림</h3>
-              <p class="muted">브라우저 안에서 조건을 감지합니다. 실제 푸시 알림은 서버 알림을 붙이면 확장할 수 있습니다.</p>
+              <h3>관심종목 조건 감지</h3>
+              <p class="muted">조건에 맞는 관심종목을 이 화면에서 바로 표시합니다. 설정은 이 브라우저에 저장됩니다.</p>
             </div>
             <span class="event-badge" id="watchAlertCount">0</span>
           </div>
           <div class="watch-alert-controls">
             <label><input id="alertUseRs" type="checkbox" checked><span>RS</span><input id="alertMinRs" type="number" min="0" max="100" value="80"></label>
             <label><input id="alertUseEps" type="checkbox"><span>EPS</span><input id="alertMinEps" type="number" min="0" max="100" value="75"></label>
-            <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3"><em>%</em></label>
-            <label><input id="alertUseVol" type="checkbox" checked><span>거래량</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2"><em>x</em></label>
-            <label><input id="alertUseSma20" type="checkbox"><span>SMA20 위 회복</span></label>
+            <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3" aria-label="52주 신고가 근접 기준 퍼센트"><em>%</em></label>
+            <label><input id="alertUseVol" type="checkbox" checked><span>거래량 배율</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2" aria-label="거래량 배율 기준"><em>x</em></label>
+            <label class="watch-alert-toggle-only"><input id="alertUseSma20" type="checkbox"><span>SMA 20 위 회복</span></label>
           </div>
           <div class="watch-alert-results" id="watchAlertResults"></div>
         </div>
@@ -1140,6 +1140,6 @@
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260618k"></script>
+    <script src="app.js?v=20260618l"></script>
   </body>
 </html>

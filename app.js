@@ -132,8 +132,7 @@ let institutionalUiReady = false;
 let institutionalSubTab = "13f";
 let congressSearchQuery = "";
 let selectedPoliticianId = "";
-let congressRankPage = 0;
-const CONGRESS_RANK_PAGE_SIZE = 15;
+const CONGRESS_RANK_MAX = 20;
 let congressUiReady = false;
 let calendarEventsCache = [];
 let calendarFiltersReady = false;
@@ -5745,17 +5744,12 @@ function renderCongressTrades() {
     return;
   }
 
-  const rankingRows = Array.isArray(payload.rankings) ? payload.rankings : [];
-  const rankTotal = rankingRows.length;
-  const rankPageCount = Math.max(1, Math.ceil(rankTotal / CONGRESS_RANK_PAGE_SIZE));
-  if (congressRankPage >= rankPageCount) congressRankPage = 0;
-  const rankStart = congressRankPage * CONGRESS_RANK_PAGE_SIZE;
-  const rankPageRows = rankingRows.slice(rankStart, rankStart + CONGRESS_RANK_PAGE_SIZE);
+  const rankingRows = (Array.isArray(payload.rankings) ? payload.rankings : []).slice(0, CONGRESS_RANK_MAX);
   if (rankings) {
     rankings.innerHTML = `
       <div class="congress-section-head">
-        <h3>의원별 추정 수익률 랭킹</h3>
-        <p class="muted">최근 18개월 매수 거래 기준 추정 수익률 (Quiver 초과수익 또는 가격 기반 가중 평균)</p>
+        <h3>의원별 추정 수익률 랭킹 (상위 ${CONGRESS_RANK_MAX}위)</h3>
+        <p class="muted">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>
       </div>
       <div class="table-wrap">
         <table class="congress-rank-table">
@@ -5763,7 +5757,7 @@ function renderCongressTrades() {
             <tr><th>#</th><th>의원</th><th>의회</th><th>정당</th><th>추정 수익률</th><th>매수</th><th>매도</th></tr>
           </thead>
           <tbody>
-            ${rankPageRows.length ? rankPageRows.map((row) => `
+            ${rankingRows.length ? rankingRows.map((row) => `
               <tr data-pol-id="${escapeHtml(row.id || "")}">
                 <td>${row.rank}</td>
                 <td><button type="button" class="congress-pol-link" data-pol-id="${escapeHtml(row.id || "")}">${escapeHtml(row.name || "")}</button></td>
@@ -5777,13 +5771,6 @@ function renderCongressTrades() {
           </tbody>
         </table>
       </div>
-      ${rankTotal > CONGRESS_RANK_PAGE_SIZE ? `
-        <nav class="congress-rank-pagination" aria-label="랭킹 페이지">
-          <button type="button" class="ghost-button congress-page-btn" data-rank-page="prev" ${congressRankPage <= 0 ? "disabled" : ""}>이전</button>
-          <span class="congress-page-label">${congressRankPage + 1} / ${rankPageCount} · ${rankStart + 1}–${Math.min(rankStart + CONGRESS_RANK_PAGE_SIZE, rankTotal)}위</span>
-          <button type="button" class="ghost-button congress-page-btn" data-rank-page="next" ${congressRankPage >= rankPageCount - 1 ? "disabled" : ""}>다음</button>
-        </nav>
-      ` : ""}
     `;
     rankings.querySelectorAll(".congress-pol-link").forEach((btn) => {
       btn.addEventListener("click", () => {
@@ -5793,14 +5780,6 @@ function renderCongressTrades() {
         scrollToCongressDetail();
       });
     });
-    rankings.querySelectorAll(".congress-page-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        if (btn.disabled) return;
-        if (btn.dataset.rankPage === "prev") congressRankPage = Math.max(0, congressRankPage - 1);
-        if (btn.dataset.rankPage === "next") congressRankPage = Math.min(rankPageCount - 1, congressRankPage + 1);
-        renderCongressTrades();
-      });
-    });
   }
 
   const matrixRows = Array.isArray(payload.committeeSectorMatrix) ? payload.committeeSectorMatrix : [];
@@ -5808,7 +5787,7 @@ function renderCongressTrades() {
     matrix.innerHTML = matrixRows.length ? `
       <div class="congress-section-head">
         <h3>상임위원회 × 업종 크로스 분석</h3>
-        <p class="muted">위원회 관련 섹터와 최근 매수 패턴 (등록된 의원 기준)</p>
+        <p class="muted">위원회 소속 의원들의 실제 매수 종목 빈도 (섹터 필터 없음 · 등록된 의원만)</p>
       </div>
       <div class="congress-matrix-grid">
         ${matrixRows.slice(0, 12).map((row) => `

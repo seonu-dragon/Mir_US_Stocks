@@ -147,7 +147,7 @@ def main():
     print("=== 국내 증시 개장 전 심층 분석 데이터 수집 시작 ===")
 
     try:
-        validate_config(require_gemini=True)
+        validate_config(require_gemini=True, require_telegram=True)
     except ValueError as e:
         print(f"  [경고] {e}")
 

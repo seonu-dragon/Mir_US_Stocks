@@ -163,7 +163,7 @@ def main():
     print("=== 국내 장마감 시황 데이터 수집 시작 ===")
     
     try:
-        validate_config(require_gemini=True)
+        validate_config(require_gemini=True, require_telegram=True)
     except ValueError as e:
         print(f"  [경고] {e}")
         

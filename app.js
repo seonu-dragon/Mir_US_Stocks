@@ -7326,7 +7326,6 @@ let communityVoteMyToday = null;
 const COMMUNITY_VOTE_META = {
   buy: { label: "매수", color: "var(--green)" },
   sell: { label: "매도", color: "var(--red)" },
-  hold: { label: "관망", color: "var(--muted)" },
 };
 
 function renderCommunityVote() {
@@ -7365,42 +7364,54 @@ async function fetchCommunityVotes() {
         ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
         : "오늘은 아직 투표하지 않았습니다.";
     }
-    renderCommunityVoteRanking(data.ranking || [], data.totalVotes || 0);
+    renderCommunityVoteRanking(data.buyRanking || [], data.sellRanking || [], data.totalVotes || 0);
   } catch (err) {
     box.innerHTML = `<div class="community-empty">순위를 불러오지 못했습니다.</div>`;
   }
 }
 
-function renderCommunityVoteRanking(ranking, totalVotes) {
+function communityVoteRankColHtml(rows, kind) {
+  const meta = COMMUNITY_VOTE_META[kind];
+  if (!rows.length) {
+    return `
+      <div class="community-vote-rank-col">
+        <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "📈" : "📉"} ${meta.label} 순위</h3>
+        <div class="community-empty">아직 ${meta.label} 투표가 없습니다.</div>
+      </div>`;
+  }
+  return `
+    <div class="community-vote-rank-col">
+      <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "📈" : "📉"} ${meta.label} 순위</h3>
+      <div class="community-vote-rank-list">
+        ${rows.map((row, i) => {
+          const stock = stockByTicker(row.ticker);
+          const count = kind === "buy" ? row.buy : row.sell;
+          return `
+            <div class="community-vote-rank-row">
+              <span class="community-vote-rank-num">${i + 1}</span>
+              <button type="button" class="ticker-pill community-vote-rank-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
+              <span class="community-vote-rank-company muted">${stock ? escapeHtml(stock.company) : ""}</span>
+              <span class="community-vote-rank-count community-vote-${kind}">${count}표</span>
+              <span class="community-vote-rank-sub muted">전체 ${row.total}</span>
+            </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+function renderCommunityVoteRanking(buyRanking, sellRanking, totalVotes) {
   const box = byId("communityVoteRanking");
   if (!box) return;
   const periodLabel = communityVotePeriod === "month" ? "월간" : communityVotePeriod === "week" ? "주간" : "일간";
-  if (!ranking.length) {
+  if (!buyRanking.length && !sellRanking.length) {
     box.innerHTML = `<div class="community-empty">${periodLabel} 투표가 아직 없습니다. 첫 투표를 남겨보세요.</div>`;
     return;
   }
   box.innerHTML = `
-    <p class="muted community-vote-rank-meta">${periodLabel} 총 ${totalVotes}표 · 상위 ${ranking.length}개 종목</p>
-    <div class="community-vote-rank-list">
-      ${ranking.map((row, i) => {
-        const stock = stockByTicker(row.ticker);
-        const buyPct = row.total ? Math.round((row.buy / row.total) * 100) : 0;
-        const sellPct = row.total ? Math.round((row.sell / row.total) * 100) : 0;
-        const holdPct = Math.max(0, 100 - buyPct - sellPct);
-        return `
-          <div class="community-vote-rank-row">
-            <span class="community-vote-rank-num">${i + 1}</span>
-            <button type="button" class="ticker-pill community-vote-rank-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
-            <span class="community-vote-rank-company muted">${stock ? escapeHtml(stock.company) : ""}</span>
-            <span class="community-vote-rank-total">${row.total}표</span>
-            <span class="community-vote-rank-bar" title="매수 ${buyPct}% · 매도 ${sellPct}% · 관망 ${holdPct}%">
-              <span style="width:${buyPct}%;background:var(--green)"></span>
-              <span style="width:${sellPct}%;background:var(--red)"></span>
-              <span style="width:${holdPct}%;background:var(--line)"></span>
-            </span>
-            <span class="community-vote-rank-pct">매수 ${buyPct}%</span>
-          </div>`;
-      }).join("")}
+    <p class="muted community-vote-rank-meta">${periodLabel} 총 ${totalVotes}표</p>
+    <div class="community-vote-rank-cols">
+      ${communityVoteRankColHtml(buyRanking, "buy")}
+      ${communityVoteRankColHtml(sellRanking, "sell")}
     </div>
   `;
   box.querySelectorAll(".community-vote-rank-ticker").forEach((btn) => {

@@ -203,6 +203,18 @@ h1 {
   border-bottom-color: #03c75a;
 }
 
+.social-link-wrap:has(.sl-install):hover .social-tooltip,
+.social-link-wrap:has(.sl-install):focus-within .social-tooltip {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.social-link-wrap:has(.sl-install):hover .social-tooltip::before,
+.social-link-wrap:has(.sl-install):focus-within .social-tooltip::before {
+  border-bottom-color: #2563eb;
+}
+
 .social-link {
   display: inline-flex;
   align-items: center;
@@ -222,19 +234,15 @@ h1 {
   fill: currentColor;
 }
 
-/* SNS 줄 끝의 앱 설치 버튼(항상 표시, 설치되면 숨김) */
+/* SNS 줄 끝의 앱 설치 버튼(항상 표시, 설치되면 숨김) — 평소 흑백, 호버 시 파란색 */
 .social-link.sl-install {
   padding: 0;
   cursor: pointer;
-  background: #16a34a;
-  border-color: #16a34a;
-  color: #fff;
 }
 
 .social-link.sl-install:hover {
-  background: #15803d;
-  border-color: #15803d;
-  transform: translateY(-1px);
+  background: #2563eb;
+  border-color: #2563eb;
 }
 
 .social-link.sl-install[hidden] {
@@ -7141,6 +7149,22 @@ footer {
   margin: 0 0 10px;
 }
 
+/* 매수/매도 두 순위를 나란히 */
+.community-vote-rank-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.community-vote-rank-title {
+  margin: 0 0 8px;
+  font-size: var(--fs-h3);
+}
+
+.community-vote-rank-title.community-vote-buy { color: var(--green); }
+.community-vote-rank-title.community-vote-sell { color: var(--red); }
+
 .community-vote-rank-list {
   display: flex;
   flex-direction: column;
@@ -7149,7 +7173,7 @@ footer {
 
 .community-vote-rank-row {
   display: grid;
-  grid-template-columns: 28px auto 1fr auto 120px 64px;
+  grid-template-columns: 28px auto 1fr auto auto;
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
@@ -7171,39 +7195,28 @@ footer {
   font-size: var(--fs-cap);
 }
 
-.community-vote-rank-total {
+.community-vote-rank-count {
   font-weight: var(--fw-bold);
   font-size: var(--fs-table);
   white-space: nowrap;
 }
 
-.community-vote-rank-bar {
-  display: flex;
-  height: 10px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--line);
-}
+.community-vote-rank-count.community-vote-buy { color: var(--green); }
+.community-vote-rank-count.community-vote-sell { color: var(--red); }
 
-.community-vote-rank-bar span {
-  display: block;
-  height: 100%;
-}
-
-.community-vote-rank-pct {
+.community-vote-rank-sub {
   font-size: var(--fs-cap);
-  color: var(--green);
-  font-weight: var(--fw-semibold);
-  text-align: right;
+  white-space: nowrap;
 }
 
 @media (max-width: 720px) {
+  .community-vote-rank-cols {
+    grid-template-columns: 1fr;
+  }
   .community-vote-rank-row {
     grid-template-columns: 24px auto 1fr auto;
   }
-  .community-vote-rank-company,
-  .community-vote-rank-bar,
-  .community-vote-rank-pct {
+  .community-vote-rank-company {
     display: none;
   }
 }

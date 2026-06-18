@@ -59,6 +59,12 @@ export default {
     if (request.method === "POST" && url.pathname === "/community/like") {
       return cors(await handleCommunityLike(request, env));
     }
+    if (request.method === "POST" && url.pathname === "/community/report") {
+      return cors(await handleCommunityReport(request, env));
+    }
+    if (request.method === "POST" && url.pathname === "/community/vote") {
+      return cors(await handleCommunityVote(request, env));
+    }
     if (request.method === "POST" && url.pathname === "/community/clear") {
       return cors(await handleCommunityClear(request, env));
     }
@@ -757,6 +763,39 @@ const COMMUNITY_MAX_CONTENT = 12000;
 const COMMUNITY_MAX_COMMENT_CONTENT = 4000;
 const COMMUNITY_MAX_COMMENTS_PER_POST = 80;
 const COMMUNITY_MAX_AUTHOR = 24;
+// 스팸 방지 + 신고 자동 숨김
+const COMMUNITY_POST_COOLDOWN_MS = 12000;
+const COMMUNITY_COMMENT_COOLDOWN_MS = 6000;
+const COMMUNITY_DUP_WINDOW_MS = 600000;
+const COMMUNITY_REPORT_HIDE_THRESHOLD = 3;
+const COMMUNITY_MAX_LINKS = 2;
+const COMMUNITY_BANNED_PATTERNS = [/viagra|카지노|토토사이트|먹튀|불법대출/i];
+const COMMUNITY_VOTE_CHOICES = ["buy", "sell", "hold"];
+
+function communityLinkCount(text) {
+  return (String(text || "").match(/https?:\/\/|www\./gi) || []).length;
+}
+
+function communitySpamReason(content) {
+  if (COMMUNITY_BANNED_PATTERNS.some((re) => re.test(content))) return "banned_word";
+  if (communityLinkCount(content) > COMMUNITY_MAX_LINKS) return "too_many_links";
+  return null;
+}
+
+function communityIsHidden(post) {
+  const reports = Array.isArray(post && post.reports) ? post.reports.length : 0;
+  return reports >= COMMUNITY_REPORT_HIDE_THRESHOLD;
+}
+
+function communityVoteTally(votes) {
+  const tally = { buy: 0, sell: 0, hold: 0 };
+  if (votes && typeof votes === "object") {
+    for (const choice of Object.values(votes)) {
+      if (tally[choice] != null) tally[choice] += 1;
+    }
+  }
+  return tally;
+}
 
 function communityKvMissing() {
   return json({
@@ -815,7 +854,8 @@ async function handleCommunityList(url, env) {
   const posts = await loadCommunityPostsKv(env);
   const ticker = sanitizeCommunityTicker(url.searchParams.get("ticker"));
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 80));
-  const filtered = ticker ? posts.filter((p) => p.ticker === ticker) : posts;
+  const visible = posts.filter((p) => !communityIsHidden(p));
+  const filtered = ticker ? visible.filter((p) => p.ticker === ticker) : visible;
   return json({ posts: filtered.slice(0, limit), total: filtered.length }, 200, 8);
 }
 
@@ -832,7 +872,21 @@ async function handleCommunityCreate(request, env) {
   const author = sanitizeCommunityAuthor(body && body.author);
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const spam = communitySpamReason(content);
+  if (spam) return json({ error: spam, message: "스팸으로 의심되는 내용이 포함되어 등록할 수 없습니다." }, 400, 0);
   const ticker = sanitizeCommunityTicker(body && body.ticker);
+  const posts = await loadCommunityPostsKv(env);
+  const now = Date.now();
+  const lastByClient = posts.find((p) => p.clientId === clientId);
+  if (lastByClient) {
+    const dt = now - Date.parse(lastByClient.createdAt);
+    if (dt >= 0 && dt < COMMUNITY_POST_COOLDOWN_MS) {
+      return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
+    }
+  }
+  const isDuplicate = posts.some((p) =>
+    p.clientId === clientId && p.content === content && (now - Date.parse(p.createdAt)) < COMMUNITY_DUP_WINDOW_MS);
+  if (isDuplicate) return json({ error: "duplicate", message: "같은 내용을 방금 등록했습니다." }, 409, 0);
   const post = {
     id: newCommunityPostId(),
     author,
@@ -841,7 +895,6 @@ async function handleCommunityCreate(request, env) {
     content,
     createdAt: new Date().toISOString(),
   };
-  const posts = await loadCommunityPostsKv(env);
   posts.unshift(post);
   await saveCommunityPostsKv(env, posts);
   return json({ ok: true, post }, 201, 0);
@@ -882,9 +935,24 @@ async function handleCommunityCommentCreate(request, env) {
   const author = sanitizeCommunityAuthor(body && body.author);
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const spam = communitySpamReason(content);
+  if (spam) return json({ error: spam, message: "스팸으로 의심되는 내용이 포함되어 등록할 수 없습니다." }, 400, 0);
   const posts = await loadCommunityPostsKv(env);
   const post = posts.find((p) => p.id === postId);
   if (!post) return json({ error: "not_found" }, 404, 30);
+  const now = Date.now();
+  let lastCommentAt = 0;
+  for (const p of posts) {
+    for (const c of (Array.isArray(p.comments) ? p.comments : [])) {
+      if (c.clientId === clientId) {
+        const t = Date.parse(c.createdAt);
+        if (Number.isFinite(t) && t > lastCommentAt) lastCommentAt = t;
+      }
+    }
+  }
+  if (lastCommentAt && (now - lastCommentAt) < COMMUNITY_COMMENT_COOLDOWN_MS) {
+    return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
+  }
   const comments = normalizeCommunityComments(post.comments);
   const comment = {
     id: newCommunityPostId(),
@@ -927,6 +995,59 @@ async function handleCommunityLike(request, env) {
   post.likes = likes;
   await saveCommunityPostsKv(env, posts);
   return json({ ok: true, postId, likeCount: likes.length, liked }, 200, 0);
+}
+
+async function handleCommunityReport(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const postId = String(body && body.postId || "").trim();
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!postId) return json({ error: "missing_post_id" }, 400, 30);
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const post = posts.find((p) => p.id === postId);
+  if (!post) return json({ error: "not_found" }, 404, 30);
+  const reports = Array.isArray(post.reports) ? post.reports : [];
+  if (!reports.includes(clientId)) reports.push(clientId);
+  post.reports = reports;
+  await saveCommunityPostsKv(env, posts);
+  return json({ ok: true, postId, reportCount: reports.length, hidden: communityIsHidden(post) }, 200, 0);
+}
+
+async function handleCommunityVote(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return json({ error: "bad_json" }, 400, 30);
+  }
+  const postId = String(body && body.postId || "").trim();
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  const choice = String(body && body.choice || "").trim().toLowerCase();
+  if (!postId) return json({ error: "missing_post_id" }, 400, 30);
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  if (!COMMUNITY_VOTE_CHOICES.includes(choice)) return json({ error: "bad_choice" }, 400, 30);
+  const posts = await loadCommunityPostsKv(env);
+  const post = posts.find((p) => p.id === postId);
+  if (!post) return json({ error: "not_found" }, 404, 30);
+  const votes = (post.votes && typeof post.votes === "object") ? post.votes : {};
+  let myVote;
+  if (votes[clientId] === choice) {
+    delete votes[clientId];
+    myVote = null;
+  } else {
+    votes[clientId] = choice;
+    myVote = choice;
+  }
+  post.votes = votes;
+  await saveCommunityPostsKv(env, posts);
+  return json({ ok: true, postId, tally: communityVoteTally(votes), myVote }, 200, 0);
 }
 
 async function handleCommunityCommentDelete(request, env) {

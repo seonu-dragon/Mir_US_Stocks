@@ -29,6 +29,8 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from briefing_store import apply_briefing_fragments, repository_publish_lock
+
 ROOT = Path(__file__).resolve().parents[1]            # Mir_US_Stocks/
 AI_ROOT = ROOT.parent                                  # AI/
 CARD_DAILY = AI_ROOT / "카드뉴스" / "daily"
@@ -150,19 +152,23 @@ def atomic_write(path, text):
 
 
 def merge_into_snapshot(payload):
-    """Inject cardNews into the existing snapshot files without a market rebuild."""
-    snapshot = load_json(OUT_JSON)
-    if not snapshot:
-        print("[merge] market_snapshot.json not found; skipping live merge "
-              "(it will be injected on the next update_data.py run).")
-        return
-    snapshot.pop("todayContent", None)   # drop the legacy platform-link key
-    card_news = {v: payload[v] for v in VARIANTS if payload.get(v)}
-    snapshot["cardNews"] = card_news
-    body = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
-    atomic_write(OUT_JSON, body)
-    atomic_write(OUT_JS, f"window.MARKET_SNAPSHOT = {body};\n")
-    print(f"[merge] Wrote cardNews into {OUT_JSON.name} and {OUT_JS.name}.")
+    """Inject cardNews while preserving independently stored briefings."""
+    with repository_publish_lock(ROOT):
+        snapshot = load_json(OUT_JSON)
+        if not snapshot:
+            print("[merge] market_snapshot.json not found; skipping live merge "
+                  "(it will be injected on the next update_data.py run).")
+            return
+        snapshot.pop("todayContent", None)
+        card_news = {v: payload[v] for v in VARIANTS if payload.get(v)}
+        snapshot["cardNews"] = card_news
+        restored = apply_briefing_fragments(snapshot, ROOT)
+        body = json.dumps(snapshot, ensure_ascii=False, separators=(",", ":"))
+        atomic_write(OUT_JSON, body)
+        atomic_write(OUT_JS, f"window.MARKET_SNAPSHOT = {body};\n")
+        if restored:
+            print(f"[merge] Preserved briefing fragments: {', '.join(restored)}")
+        print(f"[merge] Wrote cardNews into {OUT_JSON.name} and {OUT_JS.name}.")
 
 
 def main():

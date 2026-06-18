@@ -14,6 +14,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+from briefing_store import apply_briefing_fragments, repository_publish_lock
+
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "market_snapshot.json"
@@ -2571,43 +2573,55 @@ def main():
     )
     args = parser.parse_args()
 
+    # Network-heavy collection runs without the publish lock. Only the final
+    # read/merge/write/commit phase is serialized with the briefing jobs.
     snapshot = build_snapshot()
     light_snapshot, details = split_snapshot_details(snapshot)
-    existing = load_existing_snapshot()
-    preserved = []
-    for key in PRESERVED_KEYS:
-        if key not in light_snapshot and key in existing:
-            light_snapshot[key] = existing[key]
-            preserved.append(key)
-
-    # Homepage "오늘의 카드뉴스" gallery: inject today's manifest if present, otherwise
-    # carry over the previous snapshot's value so a market rebuild never blanks it.
-    card_news = load_today_content()
-    if card_news is not None:
-        light_snapshot["cardNews"] = card_news
-        print(f"[content] Injected cardNews versions: {', '.join(card_news.keys())}")
-    elif "cardNews" in existing:
-        light_snapshot["cardNews"] = existing["cardNews"]
-
     write_details(details)
-    write_json(light_snapshot)
-    write_js(light_snapshot)
-    if preserved:
-        print(f"Preserved external sections from previous snapshot: {', '.join(preserved)}")
-    groups = snapshot.get("groupCounts", {})
-    updated_at = light_snapshot.get("updatedAtKst", "")
-    print(f"Updated {OUT} with {len(snapshot['stocks'])} symbols")
-    print(f"Updated {OUT_JS}")
-    print(f"Updated {DETAILS_DIR} with {len(details)} detail files")
-    print(f"S&P 500: {groups.get('idx_sp500', 0)} / Nasdaq 100: {groups.get('idx_ndx100', 0)} / Nasdaq listed: {groups.get('idx_nasdaq', 0)}")
-    if snapshot.get("leveragedEtfCount"):
-        print(f"Leveraged/option ETF catalog: {snapshot['leveragedEtfCount']} symbols in universe")
-    if snapshot.get("exchangeBackfillCount"):
-        print(f"Exchange directory backfill: {snapshot['exchangeBackfillCount']} additional symbols")
 
-    if args.push and not args.no_push:
-        git_push_updates(updated_at)
+    with repository_publish_lock(ROOT):
+        existing = load_existing_snapshot()
+        preserved = []
+        for key in PRESERVED_KEYS:
+            if key not in light_snapshot and key in existing:
+                light_snapshot[key] = existing[key]
+                preserved.append(key)
+        if "briefing_meta" in existing:
+            light_snapshot["briefing_meta"] = existing["briefing_meta"]
 
+        # Reapply independently stored briefing fragments. This protects fresh
+        # briefings even if this build started from an older in-memory snapshot.
+        restored_briefings = apply_briefing_fragments(light_snapshot, ROOT)
+
+        # Homepage card-news gallery: inject today's manifest if present,
+        # otherwise carry over the previous snapshot value.
+        card_news = load_today_content()
+        if card_news is not None:
+            light_snapshot["cardNews"] = card_news
+            print(f"[content] Injected cardNews versions: {', '.join(card_news.keys())}")
+        elif "cardNews" in existing:
+            light_snapshot["cardNews"] = existing["cardNews"]
+
+        write_json(light_snapshot)
+        write_js(light_snapshot)
+        if preserved:
+            print(f"Preserved external sections from previous snapshot: {', '.join(preserved)}")
+        if restored_briefings:
+            print(f"Restored briefing fragments: {', '.join(restored_briefings)}")
+
+        groups = snapshot.get("groupCounts", {})
+        updated_at = light_snapshot.get("updatedAtKst", "")
+        print(f"Updated {OUT} with {len(snapshot['stocks'])} symbols")
+        print(f"Updated {OUT_JS}")
+        print(f"Updated {DETAILS_DIR} with {len(details)} detail files")
+        print(f"S&P 500: {groups.get('idx_sp500', 0)} / Nasdaq 100: {groups.get('idx_ndx100', 0)} / Nasdaq listed: {groups.get('idx_nasdaq', 0)}")
+        if snapshot.get("leveragedEtfCount"):
+            print(f"Leveraged/option ETF catalog: {snapshot['leveragedEtfCount']} symbols in universe")
+        if snapshot.get("exchangeBackfillCount"):
+            print(f"Exchange directory backfill: {snapshot['exchangeBackfillCount']} additional symbols")
+
+        if args.push and not args.no_push:
+            git_push_updates(updated_at)
 
 if __name__ == "__main__":
     main()

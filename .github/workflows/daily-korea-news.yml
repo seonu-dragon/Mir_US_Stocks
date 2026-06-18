@@ -1,0 +1,56 @@
+name: Daily Korea News Top 5
+
+on:
+  schedule:
+    # 20:30 UTC = 05:30 KST on the following day.
+    - cron: "30 20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  collect-and-analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+      NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collect 50 articles and create Gemini Top 5
+        run: python SNS/Naver/automation/daily_news_pipeline.py --max-articles 50
+
+      - name: Commit daily results
+        shell: bash
+        run: |
+          DATE_KST=$(TZ=Asia/Seoul date +%F)
+          DAILY_DIR="SNS/Naver/02_daily_work/${DATE_KST}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "${DAILY_DIR}/01_input/news_collection.json"
+          git add "${DAILY_DIR}/01_input/news_collection.md"
+          git add "${DAILY_DIR}/02_analysis/01_gemini_phase1.md"
+          git add "${DAILY_DIR}/status/01_collection.done"
+          git add "${DAILY_DIR}/status/02_gemini.done"
+          if git diff --cached --quiet; then
+            echo "No new daily results to commit."
+            exit 0
+          fi
+          git commit -m "chore: add ${DATE_KST} Korea news Top 5"
+          git push

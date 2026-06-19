@@ -1706,6 +1706,35 @@ def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
         out["pe"] = round(float(pe), 2)
     if fpe:
         out["forwardPE"] = round(float(fpe), 2)
+    # 시장지도 색상 기준용 추가 지표 (PEG / 배당수익률 / EV·EBITDA / P·FCF)
+    peg = info.get("trailingPegRatio") or info.get("pegRatio")
+    if peg:
+        try:
+            out["peg"] = round(float(peg), 2)
+        except (TypeError, ValueError):
+            pass
+    dy = info.get("dividendYield")
+    if dy not in (None, ""):
+        try:
+            dy = float(dy)
+            # yfinance 가 0.012(비율) 또는 1.2(%) 둘 다 반환할 수 있어 정규화
+            out["divYield"] = round(dy * 100 if 0 < dy < 1 else dy, 2)
+        except (TypeError, ValueError):
+            pass
+    ev_ebitda = info.get("enterpriseToEbitda")
+    if ev_ebitda:
+        try:
+            out["evEbitda"] = round(float(ev_ebitda), 2)
+        except (TypeError, ValueError):
+            pass
+    fcf = info.get("freeCashflow")
+    if fcf and market_cap:
+        try:
+            fcf = float(fcf)
+            if fcf > 0:
+                out["pfcf"] = round(float(market_cap) * 1_000_000_000 / fcf, 2)
+        except (TypeError, ValueError):
+            pass
     if price and market_cap:
         out["sharesB"] = round(float(market_cap) / float(price), 3)
     if market_cap and out.get("salesB"):
@@ -2692,6 +2721,15 @@ def main():
 
         write_json(light_snapshot)
         write_js(light_snapshot)
+
+        # 시장지도 색상 기준용 펀더멘털 요약(data/map_fundamentals.*)을 디스크의
+        # 최신 detail 파일 기준으로 재생성한다. (write_details 직후이므로 동기화 보장)
+        try:
+            import build_map_fundamentals
+            build_map_fundamentals.main()
+        except Exception as exc:
+            print(f"[map_fundamentals] rebuild skipped: {exc}")
+
         if preserved:
             print(f"Preserved external sections from previous snapshot: {', '.join(preserved)}")
         if restored_briefings:

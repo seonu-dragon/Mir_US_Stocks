@@ -673,6 +673,33 @@ const INDEX_LIST = [
   ["ETH-USD", "Ethereum"],
 ];
 
+// Yahoo's chartPreviousClose for the Korean indices (^KS11/^KQ11) is frequently
+// stale by a session (and even varies by requested range), which roughly doubles
+// the reported % change. For these symbols we derive the true prior-session close
+// from the daily candle series instead.
+const KR_INDICES = new Set(["^KS11", "^KQ11"]);
+
+async function fetchPrevDailyClose(symbol) {
+  try {
+    const r = await fetch(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=7d&interval=1d`,
+      { headers: UA }
+    );
+    if (!r.ok) return null;
+    const data = await r.json();
+    const res = data && data.chart && data.chart.result && data.chart.result[0];
+    if (!res) return null;
+    const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
+    const closes = (q.close || []).filter((v) => v != null);
+    if (closes.length < 2) return null;
+    // The last daily candle is the current (live) session; the one before it is
+    // the true previous-session close.
+    return closes[closes.length - 2];
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fetchIndices() {
   const out = [];
   await Promise.all(INDEX_LIST.map(async ([symbol, name]) => {
@@ -689,7 +716,11 @@ async function fetchIndices() {
       const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
       const closes = (q.close || []).filter((v) => v != null);
       const price = closes.length ? closes[closes.length - 1] : meta.regularMarketPrice;
-      const prevClose = meta.chartPreviousClose || meta.previousClose || (closes.length ? closes[0] : null);
+      let prevClose = meta.chartPreviousClose || meta.previousClose || (closes.length ? closes[0] : null);
+      if (KR_INDICES.has(symbol)) {
+        const krPrev = await fetchPrevDailyClose(symbol);
+        if (krPrev) prevClose = krPrev;
+      }
       const changePct = (price != null && prevClose) ? (price / prevClose - 1) * 100 : 0;
       out.push({
         symbol,

@@ -2,7 +2,7 @@ name: US premarket briefing
 
 on:
   schedule:
-    - cron: "0 12 * * *"  # 21:00 KST (UTC+9)
+    - cron: "7 12 * * *"  # 21:07 KST (UTC+9)
   workflow_dispatch:
 
 permissions:

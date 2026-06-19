@@ -1326,6 +1326,8 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "jump") renderJump();
   if (searchSubTab === "compare") renderCompareBoard();
   if (searchSubTab === "screener") renderScreener();
+  if (searchSubTab === "valuation") renderValuation();
+  if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "analysis") renderSearch();
   if (push) recordNav();
 }
@@ -1624,6 +1626,192 @@ function renderIpoCalendar() {
     <table class="insider-table"><thead><tr><th>제출일</th><th>단계</th><th>티커</th><th>회사</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
+// ===== #3 밸류에이션 랭킹 =====
+let valOrder = "asc";
+let valQuery = "";
+function setupValuationControls() {
+  const sectorSel = byId("valSector");
+  if (sectorSel && !sectorSel.dataset.filled) {
+    sectorSel.dataset.filled = "1";
+    const sectors = [...new Set(data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS").map((s) => s.sector))].sort();
+    sectorSel.innerHTML = `<option value="All">전체 섹터</option>` + sectors.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  }
+  ["valMetric", "valSector", "valCap"].forEach((id) => {
+    const el = byId(id);
+    if (el && !el.dataset.bound) { el.dataset.bound = "1"; el.addEventListener("change", renderValuation); }
+  });
+  const order = byId("valOrder");
+  if (order && !order.dataset.bound) {
+    order.dataset.bound = "1";
+    order.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      valOrder = b.dataset.order; order.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b)); renderValuation();
+    }));
+  }
+  const s = byId("valSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { valQuery = s.value; renderValuation(); }); }
+}
+function renderValuation() {
+  setupValuationControls();
+  const wrap = byId("valuationTable");
+  const meta = byId("valMeta");
+  if (!wrap) return;
+  const metric = byId("valMetric")?.value || "pe";
+  const sector = byId("valSector")?.value || "All";
+  const cap = byId("valCap")?.value || "all";
+  const q = valQuery.trim().toLowerCase();
+  const cfg = MAP_METRIC_CONFIG[metric] || {};
+  const mf = window.MAP_FUNDAMENTALS || {};
+  let rows = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((s) => sector === "All" || s.sector === sector)
+    .filter((s) => bucketMatches(s, s.groups || [s.bucket].filter(Boolean), cap))
+    .map((s) => ({ item: s, value: Number((mf[s.ticker] || {})[metric]) }))
+    .filter((r) => Number.isFinite(r.value) && (metric === "divYield" ? r.value >= 0 : r.value > 0));
+  if (q) rows = rows.filter((r) => r.item.ticker.toLowerCase().includes(q) || (r.item.company || "").toLowerCase().includes(q));
+  rows.sort((a, b) => (valOrder === "asc" ? a.value - b.value : b.value - a.value));
+  const shown = rows.slice(0, 200);
+  if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}`;
+  if (!shown.length) { wrap.innerHTML = `<p class="muted">펀더멘털 데이터가 있는 종목이 없습니다.</p>`; return; }
+  const fmtv = (v) => cfg.fmt === "pct" ? `${v.toFixed(1)}%` : cfg.fmt === "usd" ? `$${v.toFixed(2)}` : v.toFixed(2);
+  const body = shown.map((r, i) => `<tr>
+    <td class="ins-date">${i + 1}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(r.item.ticker)}</button><div class="ins-sub">${escapeHtml(r.item.company || "")}</div></td>
+    <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
+    <td class="ins-num"><strong>${fmtv(r.value)}</strong></td>
+    <td class="ins-num">$${Number(r.item.marketCapB || 0).toFixed(1)}B</td>
+    <td class="ins-num ${cls(r.item.changePct)}">${fmtPct(r.item.changePct)}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">시총</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== #7 공매도 잔고 =====
+let shortSort = "dtc";
+let shortQuery = "";
+function setupShortControls() {
+  const sort = byId("shortSort");
+  if (sort && !sort.dataset.bound) {
+    sort.dataset.bound = "1";
+    sort.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      shortSort = b.dataset.sort; sort.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b)); renderShortInterest();
+    }));
+  }
+  const s = byId("shortSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { shortQuery = s.value; renderShortInterest(); }); }
+}
+function renderShortInterest() {
+  setupShortControls();
+  const wrap = byId("shortTable");
+  const meta = byId("shortMeta");
+  if (!wrap) return;
+  const payload = window.SHORT_INTEREST;
+  if (!payload || !Array.isArray(payload.rows) || !payload.rows.length) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = `<p class="muted">아직 공매도 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    return;
+  }
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${Number(payload.count || 0).toLocaleString()}종목 · 기준일 ${escapeHtml(payload.settlementDate || "")}`;
+  const q = shortQuery.trim().toLowerCase();
+  let rows = payload.rows.slice();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  rows.sort((a, b) => (shortSort === "dtc" ? (b.daysToCover || 0) - (a.daysToCover || 0) : (b.changePct ?? -999) - (a.changePct ?? -999)));
+  const shown = rows.slice(0, 200);
+  if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
+  const body = shown.map((r, i) => {
+    const chg = Number.isFinite(r.changePct) ? `${r.changePct > 0 ? "+" : ""}${r.changePct.toFixed(1)}%` : "—";
+    const chgCls = r.changePct > 0 ? "ins-sell" : r.changePct < 0 ? "ins-buy" : "";
+    return `<tr>
+      <td class="ins-date">${i + 1}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
+      <td class="ins-num"><strong>${Number(r.daysToCover || 0).toFixed(2)}</strong></td>
+      <td class="ins-num">${insiderFmtShares(r.shortShares)}</td>
+      <td class="ins-num ${chgCls}">${chg}</td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">잔고일수</th><th class="ins-num">공매도 주식수</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== #6 13F 변동 하이라이트 =====
+function compute13fChanges() {
+  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
+  const newBuys = {}, soldOut = {};
+  for (const inst of insts) {
+    const qs = (inst.quarters || []).slice().sort((a, b) => (a.reportDate || "").localeCompare(b.reportDate || ""));
+    if (qs.length < 2) continue;
+    const cur = new Set((qs[qs.length - 1].holdings || []).map((h) => h.ticker).filter(Boolean));
+    const prev = new Set((qs[qs.length - 2].holdings || []).map((h) => h.ticker).filter(Boolean));
+    for (const t of cur) if (!prev.has(t)) (newBuys[t] = newBuys[t] || { ticker: t, n: 0 }).n++;
+    for (const t of prev) if (!cur.has(t)) (soldOut[t] = soldOut[t] || { ticker: t, n: 0 }).n++;
+  }
+  const top = (o) => Object.values(o).sort((a, b) => b.n - a.n).slice(0, 15);
+  return { newBuys: top(newBuys), soldOut: top(soldOut) };
+}
+function render13fHighlights() {
+  const el = byId("inst13fHighlights");
+  if (!el) return;
+  const { newBuys, soldOut } = compute13fChanges();
+  if (!newBuys.length && !soldOut.length) { el.innerHTML = ""; return; }
+  const list = (arr, c) => arr.map((x) => `<button type="button" class="hl-chip ${c}" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(x.ticker)} <em>${x.n}</em></button>`).join("");
+  el.innerHTML = `
+    <div class="hl-col"><h4>🟢 분기 신규 매수 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(newBuys, "hl-buy")}</div></div>
+    <div class="hl-col"><h4>🔴 분기 전량 매도 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(soldOut, "hl-sell")}</div></div>`;
+  el.querySelectorAll(".hl-chip").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== #8 52주 레인지 바 =====
+function render52wRange(item) {
+  const el = byId("range52Bar");
+  if (!el || !item) return;
+  const f = (window.MAP_FUNDAMENTALS || {})[item.ticker] || {};
+  const low = Number(f.low52), high = Number(f.high52), price = Number(item.price);
+  if (!Number.isFinite(low) || !Number.isFinite(high) || high <= low || !Number.isFinite(price)) { el.innerHTML = ""; return; }
+  const pct = Math.max(0, Math.min(100, (price - low) / (high - low) * 100));
+  el.innerHTML = `
+    <div class="r52-head"><span>52주 레인지</span><strong>저가 대비 ${pct.toFixed(0)}%</strong></div>
+    <div class="r52-bar"><div class="r52-fill" style="width:${pct}%"></div><div class="r52-marker" style="left:${pct}%"></div></div>
+    <div class="r52-ends"><span>저 $${low.toFixed(2)}</span><span>현 $${price.toFixed(2)}</span><span>고 $${high.toFixed(2)}</span></div>`;
+}
+
+// ===== #9 오늘의 시그널 통합 대시보드 =====
+function signalCard(title, items, note) {
+  const body = items.length
+    ? items.map((x) => `<li><button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(x.ticker)}</button><span>${escapeHtml(x.note || "")}</span></li>`).join("")
+    : `<li class="muted">해당 신호 없음</li>`;
+  return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul></div>`;
+}
+function renderSignals() {
+  const el = byId("signalsGrid");
+  if (!el) return;
+  const cards = [];
+  // 내부자 클러스터 매수
+  const ins = (window.INSIDER_TRADES || {}).trades || [];
+  const byT = {};
+  for (const r of ins) {
+    if (r.kind !== "buy" || !r.ticker) continue;
+    const g = byT[r.ticker] || (byT[r.ticker] = { t: r.ticker, owners: new Set(), v: 0 });
+    g.owners.add(r.owner || "?"); g.v += Number(r.value) || 0;
+  }
+  const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
+  cards.push(signalCard("🟢 내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
+  // 52주 신고가 근접
+  const highs = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS" && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= 2)
+    .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
+  cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `$${Number(s.price).toFixed(2)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
+  // 주요 8-K
+  const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
+  cards.push(signalCard("📣 주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
+  // 액티비스트 13D
+  const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((a) => a.kind === "activist").slice(0, 8);
+  cards.push(signalCard("📐 액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" }))));
+  // 신규 상장
+  const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
+  cards.push(signalCard("🆕 신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
+  el.innerHTML = cards.join("");
+  el.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.ticker && b.dataset.ticker !== "—") selectTicker(b.dataset.ticker, { openSearch: true });
+  }));
+}
+
 function activateCalendarSub(name, { push = false } = {}) {
   calendarSubTab = name || "macro";
   const nav = byId("calendarSubTabs");
@@ -1767,6 +1955,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "community") activateCommunitySub(sub || communitySubTab, { push: false, communityTicker });
   if (name !== "community") stopCommunityPolling();
   if (name === "map") renderTreemap();
+  if (name === "signals") renderSignals();
   if (push) recordNav();
 }
 
@@ -4044,6 +4233,7 @@ function renderSearch() {
   renderEarningsCalendar(item);
   renderCongressTradesForTicker(item);
   renderSmartMoney(item);
+  render52wRange(item);
   renderStockEvents(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
@@ -4060,6 +4250,7 @@ function renderSearch() {
     renderEarningsCalendar(refreshed);
     renderCongressTradesForTicker(refreshed);
     renderSmartMoney(refreshed);
+    render52wRange(refreshed);
     renderStockEvents(refreshed);
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
@@ -6385,6 +6576,7 @@ function setupInstitutionalUi() {
 
 function renderInstitutional13f() {
   setupInstitutionalUi();
+  render13fHighlights();
   const payload = institutional13fData();
   const institutions = (payload.institutions || []).filter((inst) => {
     if (inst.status !== "ok") return false;

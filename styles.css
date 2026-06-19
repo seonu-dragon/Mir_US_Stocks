@@ -7507,3 +7507,33 @@ footer {
 .sm-row strong.ins-buy { color: #16a34a; }
 .sm-row strong.ins-sell { color: #dc2626; }
 .sm-note { font-size: 11px; color: var(--text-muted); margin: 8px 0 0; }
+
+/* 52주 레인지 바 (#8) */
+.range52-card:empty { display: none; }
+.range52-card { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.r52-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); margin-bottom: 8px; }
+.r52-head strong { color: var(--text); }
+.r52-bar { position: relative; height: 8px; border-radius: 6px; background: linear-gradient(90deg,#dc2626,#eab308,#16a34a); }
+.r52-marker { position: absolute; top: -3px; width: 3px; height: 14px; background: var(--text); border-radius: 2px; transform: translateX(-50%); }
+.r52-ends { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+/* 13F 변동 하이라이트 (#6) */
+.inst-13f-highlights:empty { display: none; }
+.inst-13f-highlights { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0 14px; }
+.hl-col h4 { margin: 0 0 8px; font-size: 13px; }
+.hl-col h4 span { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+.hl-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.hl-chip { border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; cursor: pointer; background: transparent; color: var(--text); }
+.hl-chip em { font-style: normal; color: var(--text-muted); font-size: 11px; }
+.hl-chip.hl-buy { background: rgba(22,163,74,0.1); }
+.hl-chip.hl-sell { background: rgba(220,38,38,0.1); }
+@media (max-width: 720px) { .inst-13f-highlights { grid-template-columns: 1fr; } }
+
+/* 시그널 대시보드 (#9) */
+.signals-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.signal-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.signal-card h3 { margin: 0 0 4px; font-size: 14px; }
+.signal-card .sig-note { margin: 0 0 8px; font-size: 11px; color: var(--text-muted); }
+.signal-card ul { list-style: none; margin: 0; padding: 0; }
+.signal-card li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.signal-card li span { color: var(--text-muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

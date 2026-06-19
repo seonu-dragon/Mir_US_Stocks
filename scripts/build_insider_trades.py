@@ -76,8 +76,8 @@ TX_CODES = {
     "W": ("상속/취득", "other"),
 }
 
-RETENTION_DAYS = 120   # 보관 기간(파일 날짜 기준)
-MAX_ROWS = 6000        # 행수 상한
+RETENTION_DAYS = 45    # 보관 기간(파일 날짜 기준)
+MAX_ROWS = 20000       # 행수 상한
 REQUEST_PAUSE = 0.13   # SEC 예의상 ~8 req/s
 
 

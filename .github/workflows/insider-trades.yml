@@ -31,4 +31,4 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Build insider trades
-        run: python scripts/build_insider_trades.py --backfill-days 14 --push
+        run: python scripts/build_insider_trades.py --top 1000 --backfill-days 45 --push

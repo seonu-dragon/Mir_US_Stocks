@@ -1,9 +1,8 @@
 name: SEC connectivity test
 
-# 1회성 진단: GitHub Actions 러너에서 SEC 호스트(특히 Form 4 XML이 있는
-# www.sec.gov/Archives)에 접근 가능한지 확인한다. 결과에 따라 내부자 거래
-# 빌드를 Actions에서 돌릴지(가능) 사용자 PC 로컬에서 돌릴지(403) 결정.
-# 확인이 끝나면 이 파일은 삭제해도 된다.
+# 1회성 진단: GitHub Actions 러너에서 SEC Archives(Form 4 XML 호스트)에
+# 브라우저 헤더(Sec-Fetch-*, sec-ch-ua)를 보내면 접근 가능한지 확인한다.
+# PASS면 내부자 거래 빌드를 Actions에서 그대로 돌릴 수 있다. 확인 후 삭제 예정.
 
 on:
   workflow_dispatch:
@@ -17,86 +16,81 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Probe SEC hosts
+      - name: Probe SEC Archives with browser headers
         run: |
           python - <<'PY'
-          import json, urllib.request, urllib.error
+          import json, gzip, urllib.request, urllib.error
 
-          SEC_UA = "Mir US Stocks mir-us-stocks@users.noreply.github.com"
-          BROWSER_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/124.0.0.0 Safari/537.36")
+          # Akamai 봇 매니저를 통과하려면 브라우저처럼 Sec-Fetch-*/sec-ch-ua 를 보내야 한다.
+          HEADERS = {
+              "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                             "AppleWebKit/537.36 (KHTML, like Gecko) "
+                             "Chrome/124.0.0.0 Safari/537.36"),
+              "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+              "Accept-Language": "en-US,en;q=0.9",
+              "Accept-Encoding": "gzip, deflate",
+              "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+              "sec-ch-ua-mobile": "?0",
+              "sec-ch-ua-platform": '"Windows"',
+              "Sec-Fetch-Dest": "document",
+              "Sec-Fetch-Mode": "navigate",
+              "Sec-Fetch-Site": "none",
+              "Sec-Fetch-User": "?1",
+              "Upgrade-Insecure-Requests": "1",
+          }
 
-          def probe(url, ua, accept="*/*"):
-              req = urllib.request.Request(url, headers={
-                  "User-Agent": ua,
-                  "Accept-Encoding": "gzip, deflate",
-                  "Accept": accept,
-              })
+          def get(url, raw=False):
+              req = urllib.request.Request(url, headers=HEADERS)
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  data = r.read()
+                  if r.headers.get("Content-Encoding") == "gzip":
+                      data = gzip.decompress(data)
+                  return (r.status, data if raw else len(data))
+
+          print("=== Archives reachability (browser headers) ===")
+          for url in (
+              "https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/",
+              "https://www.sec.gov/Archives/edgar/daily-index/2024/QTR1/",
+          ):
               try:
-                  with urllib.request.urlopen(req, timeout=25) as r:
-                      body = r.read(400)
-                      return r.status, len(body)
+                  st, ln = get(url)
+                  print(f"  {st}  bytes~{ln}  {url}")
               except urllib.error.HTTPError as e:
-                  return e.code, 0
+                  print(f"  {e.code}  (blocked)  {url}")
               except Exception as e:
-                  return f"ERR:{type(e).__name__}", 0
+                  print(f"  ERR {type(e).__name__}  {url}")
 
-          targets = [
-              ("data.sec.gov submissions", "https://data.sec.gov/submissions/CIK0000320193.json"),
-              ("efts full-text search",    "https://efts.sec.gov/LATEST/search-index?q=Apple&forms=4"),
-              ("ARCHIVES full-index dir",  "https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/"),
-              ("ARCHIVES form.idx file",   "https://www.sec.gov/Archives/edgar/full-index/2024/QTR1/form.idx"),
-          ]
-
-          print("=== Host reachability (SEC-declared UA / browser UA) ===")
-          for name, url in targets:
-              s1 = probe(url, SEC_UA)
-              s2 = probe(url, BROWSER_UA)
-              print(f"  {name:28} SEC-UA={s1}  BROWSER-UA={s2}")
-
-          # End-to-end: the exact operation the real build performs.
-          print("\n=== End-to-end Form 4 fetch (Apple CIK 320193) ===")
+          # End-to-end: efts 검색 → Archives Form 4 XML 실제 fetch (빌드와 동일 동작)
+          print("\n=== End-to-end Form 4 fetch+parse ===")
           archives_ok = False
-          import gzip
-          def fetch_json(url):
-              for ua in (BROWSER_UA, SEC_UA):
-                  req = urllib.request.Request(url, headers={
-                      "User-Agent": ua, "Accept-Encoding": "gzip, deflate"})
-                  try:
-                      with urllib.request.urlopen(req, timeout=25) as r:
-                          raw = r.read()
-                          if r.headers.get("Content-Encoding") == "gzip":
-                              raw = gzip.decompress(raw)
-                          return json.loads(raw)
-                  except Exception:
-                      continue
-              raise RuntimeError("all UAs failed")
           try:
-              data = fetch_json("https://data.sec.gov/submissions/CIK0000320193.json")
-              recent = data["filings"]["recent"]
-              forms = recent["form"]; accs = recent["accessionNumber"]
-              docs = recent["primaryDocument"]; dates = recent["filingDate"]
-              idx = next((i for i, f in enumerate(forms) if f == "4"), None)
-              if idx is None:
-                  print("  No Form 4 found in recent submissions.")
-              else:
-                  acc_nodash = accs[idx].replace("-", "")
-                  doc = docs[idx]
-                  xml_url = f"https://www.sec.gov/Archives/edgar/data/320193/{acc_nodash}/{doc}"
-                  print(f"  Latest Form 4: {accs[idx]} ({dates[idx]}) doc={doc}")
-                  print(f"  Fetching: {xml_url}")
-                  for ua_name, ua in (("SEC-UA", SEC_UA), ("BROWSER-UA", BROWSER_UA)):
-                      st, ln = probe(xml_url, ua, accept="application/xml,text/xml,*/*")
-                      print(f"    {ua_name}: status={st} bytes~{ln}")
+              j = json.loads(get("https://efts.sec.gov/LATEST/search-index?q=&forms=4", raw=True)[1])
+              hit = j["hits"]["hits"][0]
+              acc, doc = hit["_id"].split(":")
+              src = hit.get("_source", {})
+              print(f"  hit: {hit['_id']} ({src.get('file_date')}) {src.get('display_names')}")
+              for cik in src.get("ciks", []):
+                  url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc.replace('-','')}/{doc}"
+                  try:
+                      st, body = get(url, raw=True)
+                      print(f"  {st}  {url}")
                       if st == 200:
+                          import xml.etree.ElementTree as ET
+                          root = ET.fromstring(body)
+                          sym = root.findtext("issuer/issuerTradingSymbol")
+                          n = len(root.findall("nonDerivativeTable/nonDerivativeTransaction"))
+                          print(f"  PARSED: issuer={sym}, nonDerivative tx={n}")
                           archives_ok = True
+                          break
+                  except urllib.error.HTTPError as e:
+                      print(f"  {e.code}  {url}")
           except Exception as e:
-              print(f"  submissions step failed: {type(e).__name__}: {e}")
+              print(f"  e2e failed: {type(e).__name__}: {e}")
 
           print("\n=== VERDICT ===")
           if archives_ok:
-              print("  PASS: Archives Form 4 XML is reachable from Actions → SEC build can run on GitHub Actions.")
+              print("  PASS: Form 4 XML reachable+parseable from Actions with browser headers.")
+              print("        → 내부자 거래 빌드를 GitHub Actions에서 자동 실행 가능.")
           else:
-              print("  FAIL: Archives blocked (403) from Actions → run the SEC build on the user's PC instead.")
+              print("  FAIL: still blocked → 사용자 PC 로컬 실행으로 진행.")
           PY

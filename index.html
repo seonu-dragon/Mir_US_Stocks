@@ -952,6 +952,7 @@
         <nav class="sub-tabs" id="institutionalSubTabs" aria-label="Institutional sub-sections">
           <button class="sub-tab is-active" data-sub="13f">📊 13F 포트폴리오</button>
           <button class="sub-tab" data-sub="congress">🏛 정치인 매매</button>
+          <button class="sub-tab" data-sub="insider">🧑‍💼 내부자 거래</button>
         </nav>
 
         <div class="sub-panel is-active" id="sub-inst-13f">
@@ -1008,6 +1009,32 @@
           </div>
           <div class="institutional-detail" id="congressDetail">
             <p class="muted">의원을 선택하면 최근 매매 내역이 표시됩니다.</p>
+          </div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-insider">
+          <div class="section-title">
+            <h2>미국 기업 내부자 거래</h2>
+            <p>SEC Form 4 공시 기반 임원·이사·10%+ 주주의 매매입니다. <b>P=공개시장 매수</b>, <b>S=매도</b>. 추적 종목 한정, 비파생(직접 보유) 거래만 표시합니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 지연 주의</strong>
+            <span>거래 후 2영업일 내 공시가 원칙이나 지연될 수 있고 실시간이 아닙니다. 옵션 행사(M)·세금정산(F)·부여(A)·증여(G)도 함께 표시되며 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="insiderMeta"></div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="insiderKindFilter" role="group" aria-label="거래 유형 필터">
+              <button type="button" data-kind="all" class="is-active">전체</button>
+              <button type="button" data-kind="buy">매수 P</button>
+              <button type="button" data-kind="sell">매도 S</button>
+            </div>
+            <label class="grow">
+              검색
+              <input id="insiderSearch" type="search" placeholder="티커·회사·인물 (예: NVDA, Huang)" autocomplete="off">
+            </label>
+          </div>
+          <div class="insider-table-wrap" id="insiderTable">
+            <p class="muted">내부자 거래 데이터를 불러오는 중입니다…</p>
           </div>
         </div>
       </section>
@@ -1382,8 +1409,9 @@
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>
     <script src="data/congress_trades.js?v=20260618n"></script>
+    <script src="data/insider_trades.js?v=20260619a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260619a"></script>
+    <script src="app.js?v=20260619b"></script>
   </body>
 </html>

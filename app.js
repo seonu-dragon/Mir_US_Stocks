@@ -1326,14 +1326,110 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (nav) {
     nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === institutionalSubTab));
     document.querySelectorAll("#tab-institutional .sub-panel").forEach((panel) => panel.classList.remove("is-active"));
-    const panel = byId(institutionalSubTab === "congress" ? "sub-inst-congress" : "sub-inst-13f");
+    const panel = byId(`sub-inst-${institutionalSubTab}`) || byId("sub-inst-13f");
     if (panel) panel.classList.add("is-active");
   }
   if (institutionalSubTab === "13f") renderInstitutional13f();
   if (institutionalSubTab === "congress") renderCongressTrades();
+  if (institutionalSubTab === "insider") renderInsiderTrades();
   if (push) {
     recordNav();
   }
+}
+
+// ==================== 내부자 거래 (SEC Form 4) ====================
+let insiderKind = "all";
+let insiderQuery = "";
+
+function insiderFmtShares(n) {
+  return Number.isFinite(n) ? Math.round(n).toLocaleString() : "—";
+}
+function insiderFmtUsd(n) {
+  if (!Number.isFinite(n) || n === 0) return "—";
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(2)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(2)}M`;
+  if (n >= 1e3) return `$${(n / 1e3).toFixed(1)}K`;
+  return `$${n.toFixed(0)}`;
+}
+function insiderKindClass(kind) {
+  if (kind === "buy") return "ins-buy";
+  if (kind === "sell") return "ins-sell";
+  return "ins-neutral";
+}
+
+function setupInsiderControls() {
+  const filter = byId("insiderKindFilter");
+  if (filter && !filter.dataset.bound) {
+    filter.dataset.bound = "1";
+    filter.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        insiderKind = btn.dataset.kind || "all";
+        filter.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b === btn));
+        renderInsiderTrades();
+      });
+    });
+  }
+  const search = byId("insiderSearch");
+  if (search && !search.dataset.bound) {
+    search.dataset.bound = "1";
+    search.addEventListener("input", () => { insiderQuery = search.value; renderInsiderTrades(); });
+  }
+}
+
+function renderInsiderTrades() {
+  setupInsiderControls();
+  const wrap = byId("insiderTable");
+  const meta = byId("insiderMeta");
+  if (!wrap) return;
+  const payload = window.INSIDER_TRADES;
+  if (!payload || !Array.isArray(payload.trades) || !payload.trades.length) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = `<p class="muted">아직 내부자 거래 데이터가 없습니다. 데이터 수집(GitHub Actions) 후 표시됩니다.</p>`;
+    return;
+  }
+  if (meta) {
+    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC Form 4")}`;
+  }
+  const q = insiderQuery.trim().toLowerCase();
+  let rows = payload.trades;
+  if (insiderKind !== "all") rows = rows.filter((r) => r.kind === insiderKind);
+  if (q) {
+    rows = rows.filter((r) =>
+      (r.ticker || "").toLowerCase().includes(q) ||
+      (r.issuer || "").toLowerCase().includes(q) ||
+      (r.owner || "").toLowerCase().includes(q));
+  }
+  const shown = rows.slice(0, 300);
+  if (!shown.length) {
+    wrap.innerHTML = `<p class="muted">조건에 맞는 거래가 없습니다.</p>`;
+    return;
+  }
+  const body = shown.map((r) => {
+    const kc = insiderKindClass(r.kind);
+    const price = Number.isFinite(r.price) && r.price > 0 ? `$${Number(r.price).toFixed(2)}` : "—";
+    return `
+      <tr>
+        <td class="ins-date">${escapeHtml(r.txDate || r.fileDate || "")}</td>
+        <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button></td>
+        <td class="ins-owner"><span>${escapeHtml(r.owner || "")}</span><em>${escapeHtml(r.relation || "")}</em></td>
+        <td><span class="ins-code ${kc}">${escapeHtml(r.codeLabel || r.code || "")}</span></td>
+        <td class="ins-num">${insiderFmtShares(r.shares)}</td>
+        <td class="ins-num">${price}</td>
+        <td class="ins-num ins-value ${kc}">${insiderFmtUsd(r.value)}</td>
+      </tr>`;
+  }).join("");
+  wrap.innerHTML = `
+    <div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건 표시${rows.length > 300 ? " (검색으로 좁혀보세요)" : ""}</div>
+    <table class="insider-table">
+      <thead><tr>
+        <th>거래일</th><th>종목</th><th>보고자 / 직책</th><th>유형</th>
+        <th class="ins-num">수량</th><th class="ins-num">단가</th><th class="ins-num">금액</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
 }
 
 function activateCalendarSub(name, { push = false } = {}) {

@@ -1,0 +1,31 @@
+name: Short interest (Nasdaq/FINRA)
+
+on:
+  schedule:
+    - cron: "47 5 * * 2,5"  # 화·금 05:47 UTC (격주 공시 갱신 커버, KST 14:47)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  short:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Build short interest
+        run: python scripts/build_short_interest.py --top 700 --push

@@ -133,6 +133,7 @@
           <button class="tab" data-tab="sector">섹터 흐름</button>
           <button class="tab" data-tab="search">종목 분석</button>
           <button class="tab" data-tab="bulk">관심 리스트</button>
+          <button class="tab" data-tab="signals">🚦 시그널</button>
           <button class="tab" data-tab="institutional">거장 포트폴리오</button>
           <button class="tab" data-tab="health">마켓 데이터</button>
           <button class="tab" data-tab="calendar">경제 캘린더</button>
@@ -469,6 +470,8 @@
           <button class="sub-tab" data-sub="compare">⚖️ 종목 비교</button>
           <button class="sub-tab" data-sub="jump">🚀 급등/거래량</button>
           <button class="sub-tab" data-sub="screener">🔍 스크리너</button>
+          <button class="sub-tab" data-sub="valuation">💰 밸류에이션</button>
+          <button class="sub-tab" data-sub="short">🩳 공매도</button>
         </nav>
 
         <div class="sub-panel" id="sub-top">
@@ -740,6 +743,7 @@
           </div>
           <div class="search-side-col">
             <aside class="detail-panel" id="searchFacts"></aside>
+            <section class="range52-card" id="range52Bar"></section>
             <section class="news-card" id="searchNews"></section>
             <section class="earnings-calendar-card" id="stockEarnings"></section>
             <section class="smart-money-card" id="stockSmartMoney"></section>
@@ -824,6 +828,65 @@
             <tbody id="screenerTable"></tbody>
           </table>
         </div>
+        </div>
+
+        <div class="sub-panel" id="sub-valuation">
+          <div class="section-title">
+            <h2>밸류에이션 랭킹</h2>
+            <p>추적 종목을 지표별로 정렬합니다. P/E·P/S 등은 낮을수록 저평가, ROE·배당은 높을수록 우수. (펀더멘털 보유 종목 한정)</p>
+          </div>
+          <div class="insider-controls">
+            <label>지표
+              <select id="valMetric">
+                <option value="pe">P/E</option>
+                <option value="forwardPE">Forward P/E</option>
+                <option value="peg">PEG</option>
+                <option value="ps">P/S</option>
+                <option value="pb">P/B</option>
+                <option value="evEbitda">EV/EBITDA</option>
+                <option value="roe">ROE</option>
+                <option value="roa">ROA</option>
+                <option value="netMargin">Net Margin</option>
+                <option value="divYield">Dividend Yield</option>
+              </select>
+            </label>
+            <label>섹터<select id="valSector"></select></label>
+            <label>시총
+              <select id="valCap">
+                <option value="all">전체</option>
+                <option value="gte10b">대형(10B+)</option>
+                <option value="1to10b">중형(1~10B)</option>
+                <option value="lt1b">소형(&lt;1B)</option>
+              </select>
+            </label>
+            <div class="insider-filter" id="valOrder" role="group" aria-label="정렬 방향">
+              <button type="button" data-order="asc" class="is-active">낮은순</button>
+              <button type="button" data-order="desc">높은순</button>
+            </div>
+            <label class="grow">검색<input id="valSearch" type="search" placeholder="티커·회사" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="valMeta"></div>
+          <div class="insider-table-wrap" id="valuationTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-short">
+          <div class="section-title">
+            <h2>공매도 잔고 · 숏스퀴즈 후보</h2>
+            <p>FINRA 격주 공시(Nasdaq) 기반. <b>잔고일수(Days to Cover)</b>가 높을수록 숏 커버에 오래 걸려 스퀴즈 가능성이 큽니다. <b>Nasdaq 상장 종목 한정</b>.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>지연 주의</strong>
+            <span>공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="shortSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="dtc" class="is-active">잔고일수 높은순</button>
+              <button type="button" data-sort="change">증가율 높은순</button>
+            </div>
+            <label class="grow">검색<input id="shortSearch" type="search" placeholder="티커·회사" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="shortMeta"></div>
+          <div class="insider-table-wrap" id="shortTable"></div>
         </div>
       </section>
 
@@ -975,6 +1038,7 @@
             <span>공시일 기준 최대 45일 지연될 수 있고, 미국 상장 롱 포지션 중심입니다. 매도·공매도·해외주식·파생상품 전체 노출은 반영되지 않을 수 있습니다.</span>
           </div>
           <div class="institutional-meta" id="institutionalMeta"></div>
+          <div class="inst-13f-highlights" id="inst13fHighlights"></div>
           <div class="institutional-picker">
             <label class="grow">
               기관 검색
@@ -1102,6 +1166,15 @@
           <div class="institutional-meta" id="ipoMeta"></div>
           <div class="insider-table-wrap" id="ipoTable"></div>
         </div>
+      </section>
+
+      <!-- ==================== 시그널 대시보드 탭 ==================== -->
+      <section class="panel" id="tab-signals">
+        <div class="section-title">
+          <h2>🚦 오늘의 시그널</h2>
+          <p>내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.</p>
+        </div>
+        <div class="signals-grid" id="signalsGrid"></div>
       </section>
 
       <!-- ==================== 마켓 데이터 탭 ==================== -->
@@ -1478,8 +1551,9 @@
     <script src="data/activist_stakes.js?v=20260619a"></script>
     <script src="data/material_events.js?v=20260619a"></script>
     <script src="data/ipo_calendar.js?v=20260619a"></script>
+    <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620b"></script>
+    <script src="app.js?v=20260620c"></script>
   </body>
 </html>

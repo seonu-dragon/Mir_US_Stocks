@@ -211,7 +211,8 @@ const TOP_PRESETS = {
   breakout: { metric: "volumeRatio", minRs: 75, minEps: 0, minVolume: 1.5, minMarketCap: 1, newHigh: "0-2%", recency: "All" },
   pullback: { metric: "rsScore", minRs: 80, minEps: 60, minVolume: 0, minMarketCap: 5, newHigh: "5-10%", recency: "All" },
   growth: { metric: "epsRevScore", minRs: 70, minEps: 80, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" },
-  value: { metric: "forwardPE", minRs: 50, minEps: 50, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" }
+  value: { metric: "forwardPE", minRs: 50, minEps: 50, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
+  lows: { metric: "newHighDistancePct", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 1, newHigh: "20+%", recency: "All" }
 };
 
 const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
@@ -3920,6 +3921,7 @@ function topPresetMatches(item, preset) {
     const pe = Number(item.fundamentals?.forwardPE ?? item.fundamentals?.pe);
     return item.marketCapB >= 10 && Number.isFinite(pe) && pe > 0 && pe <= 25;
   }
+  if (preset === "lows") return Number.isFinite(distance) && distance >= 20;
   return true;
 }
 
@@ -3938,6 +3940,7 @@ function metricSortDirection(metric) {
 function formatMetricValue(value, metric) {
   if (metric === "marketCapB") return fmtBillions(value);
   if (metric === "volumeRatio") return `${Number(value).toFixed(1)}x`;
+  if (metric === "newHighDistancePct") return `${Number(value).toFixed(1)}%↓`;
   if (["rsScore", "epsRevScore", "rsi14", "stochK"].includes(metric)) return `${Math.round(value)}`;
   if (["pe", "forwardPE", "ps", "pb"].includes(metric)) return fmtMultiple(value);
   return fmtPct(value);
@@ -3945,6 +3948,7 @@ function formatMetricValue(value, metric) {
 
 function metricClass(value, metric) {
   if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio"].includes(metric)) return "";
+  if (metric === "newHighDistancePct") return "neg";
   return cls(value);
 }
 

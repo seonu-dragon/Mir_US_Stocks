@@ -2,8 +2,8 @@ name: Daily Korea News Top 5
 
 on:
   schedule:
-    # 19:40 UTC = 04:40 KST on the following day.
-    - cron: "40 19 * * *"
+    # 19:43 UTC = 04:43 KST on the following day.
+    - cron: "43 19 * * *"
   workflow_dispatch:
 
 permissions:

@@ -155,14 +155,32 @@
           <label>
             색상 기준
             <select id="metricFilter">
-              <option value="changePct">당일 등락률</option>
-              <option value="weekChangePct">이번 주 등락률</option>
-              <option value="monthChangePct">1개월 등락률</option>
-              <option value="threeMonthChangePct">3개월 등락률</option>
-              <option value="ytdChangePct">YTD 등락률</option>
-              <option value="rsScore">RS 점수</option>
-              <option value="epsRevScore">EPS 추정 점수</option>
-              <option value="stochK">StochK 14</option>
+              <optgroup label="등락률·기술">
+                <option value="changePct">당일 등락률</option>
+                <option value="weekChangePct">이번 주 등락률</option>
+                <option value="monthChangePct">1개월 등락률</option>
+                <option value="threeMonthChangePct">3개월 등락률</option>
+                <option value="ytdChangePct">YTD 등락률</option>
+                <option value="rsScore">RS 점수</option>
+                <option value="epsRevScore">EPS 추정 점수</option>
+                <option value="stochK">StochK 14</option>
+              </optgroup>
+              <optgroup label="밸류에이션 (낮을수록 초록)">
+                <option value="pe">P/E</option>
+                <option value="forwardPE">Forward P/E</option>
+                <option value="peg">PEG</option>
+                <option value="ps">P/S</option>
+                <option value="pb">P/B</option>
+                <option value="pfcf">P/FCF</option>
+                <option value="evEbitda">EV/EBITDA</option>
+              </optgroup>
+              <optgroup label="수익성·배당 (높을수록 초록)">
+                <option value="divYield">Dividend Yield</option>
+                <option value="eps">EPS</option>
+                <option value="roe">ROE</option>
+                <option value="roa">ROA</option>
+                <option value="netMargin">Net Margin</option>
+              </optgroup>
             </select>
           </label>
           <label>
@@ -1360,11 +1378,12 @@
     </div>
 
     <script src="data/market_snapshot.js?v=20260617x"></script>
+    <script src="data/map_fundamentals.js?v=20260619a"></script>
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>
     <script src="data/congress_trades.js?v=20260618n"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260618ac"></script>
+    <script src="app.js?v=20260619a"></script>
   </body>
 </html>

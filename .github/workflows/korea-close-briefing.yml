@@ -2,7 +2,7 @@ name: Korea close briefing
 
 on:
   schedule:
-    - cron: "0 7 * * *"  # 16:00 KST (UTC+9)
+    - cron: "42 6 * * *"  # 15:42 KST (UTC+9)
   workflow_dispatch:
 
 permissions:

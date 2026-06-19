@@ -2301,7 +2301,64 @@ function bucketMatches(item, groups, bucket) {
   return groups.includes(bucket) || item.bucket === bucket;
 }
 
+// 시장지도 펀더멘털 지표 설정 (finviz map 스타일: 지표별 임계값으로 초록↔빨강)
+//  good:'low'  → 값이 낮을수록 초록(저평가·저비용), 높을수록 빨강 (예: P/E 20 미만 초록)
+//  good:'high' → 값이 높을수록 초록(고수익성·고배당), 낮을수록 빨강
+//  stops 는 오름차순 경계값. fmt: num(배수) | pct(%) | usd($)
+const MAP_METRIC_CONFIG = {
+  pe:        { label: "P/E",            good: "low",  fmt: "num", stops: [10, 15, 20, 30, 50] },
+  forwardPE: { label: "Forward P/E",    good: "low",  fmt: "num", stops: [10, 15, 20, 30, 50] },
+  peg:       { label: "PEG",            good: "low",  fmt: "num", stops: [0.5, 1, 1.5, 2, 3] },
+  ps:        { label: "P/S",            good: "low",  fmt: "num", stops: [1, 2, 4, 8, 12] },
+  pb:        { label: "P/B",            good: "low",  fmt: "num", stops: [1, 2, 3, 6, 10] },
+  pfcf:      { label: "P/FCF",          good: "low",  fmt: "num", stops: [15, 25, 40, 60, 90] },
+  evEbitda:  { label: "EV/EBITDA",      good: "low",  fmt: "num", stops: [6, 9, 12, 18, 25] },
+  divYield:  { label: "Dividend Yield", good: "high", fmt: "pct", stops: [0.5, 1, 2, 3, 5] },
+  eps:       { label: "EPS",            good: "high", fmt: "usd", stops: [0, 1, 3, 6, 10] },
+  roe:       { label: "ROE",            good: "high", fmt: "pct", stops: [0, 5, 10, 17, 25] },
+  roa:       { label: "ROA",            good: "high", fmt: "pct", stops: [0, 3, 6, 10, 15] },
+  netMargin: { label: "Net Margin",     good: "high", fmt: "pct", stops: [0, 5, 10, 20, 30] },
+};
+// 초록(저평가/우수) → 빨강(고평가/부진) 6단계 팔레트
+const MAP_FUND_PALETTE = ["#006b35", "#20a05a", "#64ad65", "#b26a4a", "#b6463f", "#6f1d2a"];
+const MAP_NODATA_COLOR = "#475467"; // 데이터 없음 중립색
+
+function mapFundamentalsFor(ticker) {
+  return (window.MAP_FUNDAMENTALS || {})[ticker] || null;
+}
+
+// 지도 타일/평균에서 쓸 지표 값. 펀더멘털 지표는 별도 lookup, 그 외는 종목 객체.
+// 펀더멘털 누락 시 null(→데이터 없음), 변동률/점수 누락 시 0(기존 동작 유지).
+// (주의: 화면 하단 종목 스크리너용 metricValue 와 별개 함수 — 이름 충돌 방지)
+function mapMetricValue(item, metric) {
+  if (!item) return null;
+  if (MAP_METRIC_CONFIG[metric]) {
+    const f = mapFundamentalsFor(item.ticker);
+    const v = f ? f[metric] : null;
+    return Number.isFinite(v) ? v : null;
+  }
+  const v = Number(item[metric]);
+  return Number.isFinite(v) ? v : 0;
+}
+
+function fundamentalColor(value, cfg) {
+  if (!Number.isFinite(value)) return MAP_NODATA_COLOR;
+  const stops = cfg.stops;
+  let idx = stops.findIndex((s) => value < s);
+  if (idx === -1) idx = stops.length; // 모든 경계 이상
+  const bins = stops.length + 1;
+  let p = idx / (bins - 1); // 0(작음)~1(큼)
+  if (cfg.good === "high") p = 1 - p;
+  const pi = Math.round(p * (MAP_FUND_PALETTE.length - 1));
+  return MAP_FUND_PALETTE[Math.max(0, Math.min(MAP_FUND_PALETTE.length - 1, pi))];
+}
+
 function metricColor(value, metric) {
+  const cfg = MAP_METRIC_CONFIG[metric];
+  if (cfg) {
+    const num = (value === null || value === undefined || value === "") ? NaN : Number(value);
+    return fundamentalColor(num, cfg);
+  }
   const v = Number(value);
   if (metric === "rsScore" || metric === "epsRevScore" || metric === "stochK") {
     if (v >= 85) return "#007a3d";
@@ -2517,8 +2574,31 @@ function industryBox(sector, industry, rect, metric, sizeMetric, query) {
   `;
 }
 
+function fmtLegendNum(v, cfg) {
+  if (cfg.fmt === "pct") return `${v}%`;
+  if (cfg.fmt === "usd") return `$${v}`;
+  return `${v}`;
+}
+
 function renderLegend(metric) {
   const legend = byId("heatmapLegend");
+  const cfg = MAP_METRIC_CONFIG[metric];
+  if (cfg) {
+    const stops = cfg.stops;
+    // 각 구간 대표값(해당 bin에 들어가는 값)으로 색을 칠한다.
+    const reps = [stops[0] - 0.001, ...stops];
+    const labels = [`<${fmtLegendNum(stops[0], cfg)}`];
+    for (let i = 0; i < stops.length - 1; i++) {
+      labels.push(`${fmtLegendNum(stops[i], cfg)}–${fmtLegendNum(stops[i + 1], cfg)}`);
+    }
+    labels.push(`≥${fmtLegendNum(stops[stops.length - 1], cfg)}`);
+    const cells = labels.map((label, i) => (
+      `<div class="legend-cell" style="background:${metricColor(reps[i], metric)}">${label}</div>`
+    ));
+    cells.push(`<div class="legend-cell" style="background:${MAP_NODATA_COLOR}">데이터없음</div>`);
+    legend.innerHTML = cells.join("");
+    return;
+  }
   const cells = metric.includes("Score") || metric === "stochK"
     ? [
         ["0", 10], ["30", 30], ["45", 45], ["55", 55], ["70", 70], ["85", 85], ["100", 100]
@@ -2532,7 +2612,7 @@ function renderLegend(metric) {
 }
 
 function heatTile(item, rect, metric, query) {
-  const value = item[metric] ?? 0;
+  const value = mapMetricValue(item, metric);
   const isSelected = item.ticker === selectedTicker;
   const isFocused = item.ticker === treemapFocusTicker;
   const isMatch = query && heatmapItemMatchesQuery(item, query);
@@ -2627,6 +2707,7 @@ function hideHeatmapTooltip() {
 
 function stockTooltip(item) {
   const metric = byId("metricFilter").value;
+  const metricCfg = MAP_METRIC_CONFIG[metric];
   const peers = data.stocks
     .filter((stockItem) => stockItem.ticker !== item.ticker && stockItem.industry === item.industry)
     .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
@@ -2651,7 +2732,7 @@ function stockTooltip(item) {
     <div class="tooltip-facts">
       ${miniFact("Sector", item.sector)}
       ${miniFact("Industry", item.industry)}
-      ${miniFact("Metric", fmtMetric(item[metric] ?? 0, metric))}
+      ${miniFact(metricCfg ? metricCfg.label : "Metric", fmtMetric(mapMetricValue(item, metric), metric))}
       ${miniFact("Volume", `${Number(item.volumeRatio).toFixed(1)}x`)}
     </div>
     <div class="tooltip-peers">
@@ -2732,6 +2813,14 @@ function sparklineSvg(series, options = {}) {
 }
 
 function fmtMetric(value, metric) {
+  const cfg = MAP_METRIC_CONFIG[metric];
+  if (cfg) {
+    if (value === null || value === undefined || !Number.isFinite(Number(value))) return "—";
+    const n = Number(value);
+    if (cfg.fmt === "pct") return `${n.toFixed(1)}%`;
+    if (cfg.fmt === "usd") return `$${n.toFixed(2)}`;
+    return n.toFixed(n >= 100 ? 0 : 1); // 배수(P/E 등)
+  }
   if (metric.includes("Score") || metric === "stochK" || metric === "rsi14") {
     return `${Math.round(Number(value) || 0)}`;
   }
@@ -2748,8 +2837,14 @@ function sizeWeight(item, sizeMetric) {
 }
 
 function average(items, metric) {
-  if (!items.length) return 0;
-  return items.reduce((sum, item) => sum + Number(item[metric] || 0), 0) / items.length;
+  if (!items || !items.length) return null;
+  const vals = [];
+  for (const item of items) {
+    const v = mapMetricValue(item, metric);
+    if (Number.isFinite(v)) vals.push(v);
+  }
+  if (!vals.length) return null;
+  return vals.reduce((sum, v) => sum + v, 0) / vals.length;
 }
 
 function rectStyle(rect) {

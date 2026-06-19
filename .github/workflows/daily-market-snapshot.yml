@@ -2,7 +2,7 @@ name: Daily market snapshot
 
 on:
   schedule:
-    - cron: "0 20 * * *"  # 05:00 KST (UTC+9)
+    - cron: "5 20 * * *"  # 05:05 KST (UTC+9)
   workflow_dispatch:
 
 permissions:

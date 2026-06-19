@@ -2,7 +2,7 @@ name: US close briefing
 
 on:
   schedule:
-    - cron: "30 20 * * *"  # 05:30 KST (UTC+9)
+    - cron: "34 20 * * *"  # 05:34 KST (UTC+9)
   workflow_dispatch:
 
 permissions:

@@ -212,8 +212,17 @@ const TOP_PRESETS = {
   pullback: { metric: "rsScore", minRs: 80, minEps: 60, minVolume: 0, minMarketCap: 5, newHigh: "5-10%", recency: "All" },
   growth: { metric: "epsRevScore", minRs: 70, minEps: 80, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" },
   value: { metric: "forwardPE", minRs: 50, minEps: 50, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
-  lows: { metric: "newHighDistancePct", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 1, newHigh: "20+%", recency: "All" }
+  lows: { metric: "low52Dist", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 1, newHigh: "All", recency: "All" }
 };
+
+// 52주 저가 대비 상승률(%) — MAP_FUNDAMENTALS.low52 + 스냅샷 price 로 계산.
+function low52DistPct(item) {
+  const f = (window.MAP_FUNDAMENTALS || {})[item?.ticker];
+  const low = f && Number(f.low52);
+  const price = Number(item?.price);
+  if (!Number.isFinite(low) || low <= 0 || !Number.isFinite(price)) return NaN;
+  return (price / low - 1) * 100;
+}
 
 const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
@@ -3921,7 +3930,7 @@ function topPresetMatches(item, preset) {
     const pe = Number(item.fundamentals?.forwardPE ?? item.fundamentals?.pe);
     return item.marketCapB >= 10 && Number.isFinite(pe) && pe > 0 && pe <= 25;
   }
-  if (preset === "lows") return Number.isFinite(distance) && distance >= 20;
+  if (preset === "lows") { const d = low52DistPct(item); return Number.isFinite(d) && d <= 15; }
   return true;
 }
 
@@ -3930,24 +3939,26 @@ function metricValue(item, metric) {
   if (metric === "forwardPE") return Number(item.fundamentals?.forwardPE);
   if (metric === "ps") return Number(item.fundamentals?.ps);
   if (metric === "pb") return Number(item.fundamentals?.pb);
+  if (metric === "low52Dist") return low52DistPct(item);
   return Number(item[metric]);
 }
 
 function metricSortDirection(metric) {
-  return ["pe", "forwardPE", "ps", "pb"].includes(metric) ? -1 : 1;
+  return ["pe", "forwardPE", "ps", "pb", "low52Dist"].includes(metric) ? -1 : 1;
 }
 
 function formatMetricValue(value, metric) {
   if (metric === "marketCapB") return fmtBillions(value);
   if (metric === "volumeRatio") return `${Number(value).toFixed(1)}x`;
   if (metric === "newHighDistancePct") return `${Number(value).toFixed(1)}%↓`;
+  if (metric === "low52Dist") return `저가 +${Number(value).toFixed(1)}%`;
   if (["rsScore", "epsRevScore", "rsi14", "stochK"].includes(metric)) return `${Math.round(value)}`;
   if (["pe", "forwardPE", "ps", "pb"].includes(metric)) return fmtMultiple(value);
   return fmtPct(value);
 }
 
 function metricClass(value, metric) {
-  if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio"].includes(metric)) return "";
+  if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio", "low52Dist"].includes(metric)) return "";
   if (metric === "newHighDistancePct") return "neg";
   return cls(value);
 }

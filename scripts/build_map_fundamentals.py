@@ -38,6 +38,8 @@ DIRECT = {
     "epsTtm": "eps",
     "roe": "roe",
     "profitMargin": "netMargin",
+    "week52Low": "low52",
+    "week52High": "high52",
 }
 
 

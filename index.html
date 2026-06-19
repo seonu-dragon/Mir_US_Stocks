@@ -739,6 +739,7 @@
             <aside class="detail-panel" id="searchFacts"></aside>
             <section class="news-card" id="searchNews"></section>
             <section class="earnings-calendar-card" id="stockEarnings"></section>
+            <section class="smart-money-card" id="stockSmartMoney"></section>
             <section class="congress-trades-card" id="stockCongress"></section>
             <section class="data-quality-card" id="dataQualityPanel"></section>
           </div>
@@ -953,6 +954,9 @@
           <button class="sub-tab is-active" data-sub="13f">📊 13F 포트폴리오</button>
           <button class="sub-tab" data-sub="congress">🏛 정치인 매매</button>
           <button class="sub-tab" data-sub="insider">🧑‍💼 내부자 거래</button>
+          <button class="sub-tab" data-sub="activist">📐 액티비스트 13D/G</button>
+          <button class="sub-tab" data-sub="events">📣 주요 공시 8-K</button>
+          <button class="sub-tab" data-sub="ipo">🆕 IPO 캘린더</button>
         </nav>
 
         <div class="sub-panel is-active" id="sub-inst-13f">
@@ -1033,9 +1037,64 @@
               <input id="insiderSearch" type="search" placeholder="티커·회사·인물 (예: NVDA, Huang)" autocomplete="off">
             </label>
           </div>
+          <div class="insider-cluster" id="insiderCluster"></div>
           <div class="insider-table-wrap" id="insiderTable">
             <p class="muted">내부자 거래 데이터를 불러오는 중입니다…</p>
           </div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-activist">
+          <div class="section-title">
+            <h2>액티비스트 · 대량보유 공시 (13D/G)</h2>
+            <p>5% 이상 지분 취득 시 의무 공시입니다. <b>13D=경영참여(액티비스트)</b>, <b>13G=단순투자(수동)</b>, /A=정정. 추적 종목 한정.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>해석 주의</strong>
+            <span>13D는 행동주의 개입 신호일 수 있으나, 13G는 대형 패시브 펀드의 5% 돌파인 경우가 많습니다. 공시 지연이 있으며 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="activistMeta"></div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="activistKindFilter" role="group" aria-label="유형 필터">
+              <button type="button" data-kind="all" class="is-active">전체</button>
+              <button type="button" data-kind="activist">13D 액티비스트</button>
+              <button type="button" data-kind="passive">13G 수동</button>
+            </div>
+            <label class="grow">검색<input id="activistSearch" type="search" placeholder="티커·기업·신고자" autocomplete="off"></label>
+          </div>
+          <div class="insider-table-wrap" id="activistTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-events">
+          <div class="section-title">
+            <h2>주요 공시 피드 (8-K)</h2>
+            <p>중대 이벤트 발생 시 제출하는 8-K입니다. 실적 발표·임원 변동·M&A·계약 등을 item 기준으로 분류해 보여줍니다. 추적 종목 한정.</p>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="eventsHotFilter" role="group" aria-label="중요도 필터">
+              <button type="button" data-hot="all" class="is-active">전체</button>
+              <button type="button" data-hot="hot">주요만</button>
+            </div>
+            <label class="grow">검색<input id="eventsSearch" type="search" placeholder="티커·기업·이벤트" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="eventsMeta"></div>
+          <div class="insider-table-wrap" id="eventsTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-ipo">
+          <div class="section-title">
+            <h2>IPO · 신규상장 캘린더</h2>
+            <p><b>424B4=가격확정(상장 임박/직후)</b>, <b>S-1=등록 신청</b>, S-1/A=정정. SEC 등록서류 기반입니다.</p>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="ipoStageFilter" role="group" aria-label="단계 필터">
+              <button type="button" data-stage="all" class="is-active">전체</button>
+              <button type="button" data-stage="priced">상장(가격확정)</button>
+              <button type="button" data-stage="filed">등록 신청</button>
+            </div>
+            <label class="grow">검색<input id="ipoSearch" type="search" placeholder="회사·티커" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="ipoMeta"></div>
+          <div class="insider-table-wrap" id="ipoTable"></div>
         </div>
       </section>
 
@@ -1409,9 +1468,12 @@
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>
     <script src="data/congress_trades.js?v=20260618n"></script>
-    <script src="data/insider_trades.js?v=20260619a"></script>
+    <script src="data/insider_trades.js?v=20260619b"></script>
+    <script src="data/activist_stakes.js?v=20260619a"></script>
+    <script src="data/material_events.js?v=20260619a"></script>
+    <script src="data/ipo_calendar.js?v=20260619a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260619b"></script>
+    <script src="app.js?v=20260619c"></script>
   </body>
 </html>

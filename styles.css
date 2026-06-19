@@ -7474,3 +7474,36 @@ footer {
 .ins-code.ins-neutral { background: rgba(148, 163, 184, 0.15); }
 .ins-value.ins-buy { color: #16a34a; }
 .ins-value.ins-sell { color: #dc2626; }
+.ins-sub { font-size: 11px; color: var(--text-muted); }
+
+/* 내부자 클러스터 매수 */
+.insider-cluster { margin: 6px 0 14px; }
+.insider-cluster:empty { display: none; }
+.cluster-head { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 8px; }
+.cluster-head span { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); margin-top: 2px; }
+.cluster-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.cluster-card {
+  border: 1px solid var(--line); border-radius: 10px; background: rgba(22,163,74,0.08);
+  padding: 8px 12px; cursor: pointer; text-align: left; min-width: 96px;
+}
+.cluster-card strong { display: block; color: #16a34a; font-size: 14px; }
+.cluster-card span { display: block; font-size: 11px; color: var(--text-muted); }
+.cluster-card em { font-style: normal; font-size: 12px; color: var(--text); }
+
+/* 8-K 이벤트 칩 */
+.ev-item {
+  display: inline-block; padding: 2px 7px; border-radius: 6px; font-size: 11px;
+  background: rgba(148,163,184,0.15); color: var(--text); margin: 1px 2px 1px 0;
+}
+.ev-item.ev-hot { background: rgba(220,38,38,0.16); color: #dc2626; font-weight: 600; }
+
+/* 스마트머니 종합 카드 */
+.smart-money-card { border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
+.smart-money-card:empty { display: none; }
+.smart-money-card h3 { margin: 0 0 10px; font-size: 14px; }
+.sm-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.sm-row span { color: var(--text-muted); }
+.sm-row strong { color: var(--text); }
+.sm-row strong.ins-buy { color: #16a34a; }
+.sm-row strong.ins-sell { color: #dc2626; }
+.sm-note { font-size: 11px; color: var(--text-muted); margin: 8px 0 0; }

@@ -1,0 +1,31 @@
+name: IPO calendar (SEC S-1/424B4)
+
+on:
+  schedule:
+    - cron: "33 4 * * *"  # 04:33 UTC (KST 13:33)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  ipo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Build IPO calendar
+        run: python scripts/build_ipo_calendar.py --backfill-days 30 --push

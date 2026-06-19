@@ -1332,6 +1332,9 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "13f") renderInstitutional13f();
   if (institutionalSubTab === "congress") renderCongressTrades();
   if (institutionalSubTab === "insider") renderInsiderTrades();
+  if (institutionalSubTab === "activist") renderActivistStakes();
+  if (institutionalSubTab === "events") renderMaterialEvents();
+  if (institutionalSubTab === "ipo") renderIpoCalendar();
   if (push) {
     recordNav();
   }
@@ -1378,6 +1381,7 @@ function setupInsiderControls() {
 
 function renderInsiderTrades() {
   setupInsiderControls();
+  renderInsiderCluster();
   const wrap = byId("insiderTable");
   const meta = byId("insiderMeta");
   if (!wrap) return;
@@ -1430,6 +1434,184 @@ function renderInsiderTrades() {
   wrap.querySelectorAll(".ins-ticker").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
+}
+
+// ===== #1 내부자 클러스터 매수 시그널 =====
+function renderInsiderCluster() {
+  const el = byId("insiderCluster");
+  if (!el) return;
+  const payload = window.INSIDER_TRADES;
+  if (!payload || !Array.isArray(payload.trades)) { el.innerHTML = ""; return; }
+  const byTicker = {};
+  for (const r of payload.trades) {
+    if (r.kind !== "buy" || !r.ticker) continue;
+    const g = byTicker[r.ticker] || (byTicker[r.ticker] = { ticker: r.ticker, owners: new Set(), value: 0, count: 0 });
+    g.owners.add(r.owner || "?");
+    g.value += Number(r.value) || 0;
+    g.count += 1;
+  }
+  const clusters = Object.values(byTicker)
+    .filter((g) => g.owners.size >= 2)
+    .sort((a, b) => b.owners.size - a.owners.size || b.value - a.value)
+    .slice(0, 12);
+  if (!clusters.length) { el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="cluster-head">🟢 클러스터 매수 <span>보관 기간 내 2인 이상 임원이 공개시장 매수(P)한 종목 — 강한 내부자 신뢰 신호</span></div>
+    <div class="cluster-grid">
+      ${clusters.map((g) => `
+        <button type="button" class="cluster-card" data-ticker="${escapeHtml(g.ticker)}" title="${g.owners.size}명 매수 · ${g.count}건">
+          <strong>${escapeHtml(g.ticker)}</strong>
+          <span>${g.owners.size}명 · ${g.count}건</span>
+          <em>${insiderFmtUsd(g.value)}</em>
+        </button>`).join("")}
+    </div>`;
+  el.querySelectorAll(".cluster-card").forEach((b) =>
+    b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== #5 액티비스트 13D/G =====
+let activistKind = "all";
+let activistQuery = "";
+function setupActivistControls() {
+  const f = byId("activistKindFilter");
+  if (f && !f.dataset.bound) {
+    f.dataset.bound = "1";
+    f.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      activistKind = b.dataset.kind || "all";
+      f.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b));
+      renderActivistStakes();
+    }));
+  }
+  const s = byId("activistSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { activistQuery = s.value; renderActivistStakes(); }); }
+}
+function renderActivistStakes() {
+  setupActivistControls();
+  const wrap = byId("activistTable");
+  const meta = byId("activistMeta");
+  if (!wrap) return;
+  const payload = window.ACTIVIST_STAKES;
+  if (!payload || !Array.isArray(payload.filings) || !payload.filings.length) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = `<p class="muted">아직 13D/G 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    return;
+  }
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 13D/G")}`;
+  const q = activistQuery.trim().toLowerCase();
+  let rows = payload.filings;
+  if (activistKind !== "all") rows = rows.filter((r) => r.kind === activistKind);
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.filer || "").toLowerCase().includes(q));
+  const shown = rows.slice(0, 300);
+  if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 공시가 없습니다.</p>`; return; }
+  const body = shown.map((r) => {
+    const kc = r.kind === "activist" ? "ins-buy" : "ins-neutral";
+    return `<tr>
+      <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
+      <td><span class="ins-code ${kc}">${escapeHtml(r.form || "")}</span><div class="ins-sub">${escapeHtml(r.kindLabel || "")}</div></td>
+      <td>${escapeHtml(r.filer || "")}</td>
+      <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
+    <table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th>신고자</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== #6 주요 공시 8-K =====
+let eventsHot = "all";
+let eventsQuery = "";
+function setupEventsControls() {
+  const f = byId("eventsHotFilter");
+  if (f && !f.dataset.bound) {
+    f.dataset.bound = "1";
+    f.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      eventsHot = b.dataset.hot || "all";
+      f.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b));
+      renderMaterialEvents();
+    }));
+  }
+  const s = byId("eventsSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { eventsQuery = s.value; renderMaterialEvents(); }); }
+}
+function renderMaterialEvents() {
+  setupEventsControls();
+  const wrap = byId("eventsTable");
+  const meta = byId("eventsMeta");
+  if (!wrap) return;
+  const payload = window.MATERIAL_EVENTS;
+  if (!payload || !Array.isArray(payload.events) || !payload.events.length) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = `<p class="muted">아직 8-K 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    return;
+  }
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 8-K")}`;
+  const q = eventsQuery.trim().toLowerCase();
+  let rows = payload.events;
+  if (eventsHot === "hot") rows = rows.filter((r) => r.hot);
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.items || []).some((i) => (i.label || "").toLowerCase().includes(q)));
+  const shown = rows.slice(0, 300);
+  if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 공시가 없습니다.</p>`; return; }
+  const body = shown.map((r) => {
+    const items = (r.items || []).map((i) => `<span class="ev-item${r.hot ? " ev-hot" : ""}">${escapeHtml(i.label)}</span>`).join(" ");
+    return `<tr>
+      <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
+      <td>${items}</td>
+      <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
+    <table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>이벤트</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== #7 IPO 캘린더 =====
+let ipoStage = "all";
+let ipoQuery = "";
+function setupIpoControls() {
+  const f = byId("ipoStageFilter");
+  if (f && !f.dataset.bound) {
+    f.dataset.bound = "1";
+    f.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      ipoStage = b.dataset.stage || "all";
+      f.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b));
+      renderIpoCalendar();
+    }));
+  }
+  const s = byId("ipoSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { ipoQuery = s.value; renderIpoCalendar(); }); }
+}
+function renderIpoCalendar() {
+  setupIpoControls();
+  const wrap = byId("ipoTable");
+  const meta = byId("ipoMeta");
+  if (!wrap) return;
+  const payload = window.IPO_CALENDAR;
+  if (!payload || !Array.isArray(payload.ipos) || !payload.ipos.length) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = `<p class="muted">아직 IPO 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    return;
+  }
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC S-1/424B4")}`;
+  const q = ipoQuery.trim().toLowerCase();
+  let rows = payload.ipos;
+  if (ipoStage !== "all") rows = rows.filter((r) => r.stage === ipoStage);
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  const shown = rows.slice(0, 300);
+  if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 IPO가 없습니다.</p>`; return; }
+  const body = shown.map((r) => {
+    const sc = r.stage === "priced" ? "ins-buy" : "ins-neutral";
+    return `<tr>
+      <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
+      <td><span class="ins-code ${sc}">${escapeHtml(r.stageLabel || "")}</span></td>
+      <td>${escapeHtml(r.ticker || "—")}</td>
+      <td>${escapeHtml(r.company || "")}</td>
+      <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
+    <table class="insider-table"><thead><tr><th>제출일</th><th>단계</th><th>티커</th><th>회사</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 function activateCalendarSub(name, { push = false } = {}) {
@@ -3846,6 +4028,7 @@ function renderSearch() {
   drawChart(item);
   renderEarningsCalendar(item);
   renderCongressTradesForTicker(item);
+  renderSmartMoney(item);
   renderStockEvents(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
@@ -3861,12 +4044,58 @@ function renderSearch() {
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
     renderCongressTradesForTicker(refreshed);
+    renderSmartMoney(refreshed);
     renderStockEvents(refreshed);
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
   });
+}
+
+// ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
+let _inst13fIndex = null;
+function inst13fIndex() {
+  if (_inst13fIndex) return _inst13fIndex;
+  const idx = {};
+  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
+  for (const inst of insts) {
+    for (const h of (inst.holdings || [])) {
+      const t = h.ticker;
+      if (!t) continue;
+      const g = idx[t] || (idx[t] = { holders: 0, valueM: 0 });
+      g.holders += 1;
+      g.valueM += Number(h.valueM) || 0;
+    }
+  }
+  _inst13fIndex = idx;
+  return idx;
+}
+
+function renderSmartMoney(item) {
+  const el = byId("stockSmartMoney");
+  if (!el || !item) return;
+  const t = item.ticker;
+  const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((r) => r.ticker === t);
+  const insBuy = ins.filter((r) => r.kind === "buy").length;
+  const insSell = ins.filter((r) => r.kind === "sell").length;
+  const cg = ((window.CONGRESS_TRADES || {}).byTicker || {})[t];
+  const f = inst13fIndex()[t];
+  const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((r) => r.ticker === t);
+
+  if (!(ins.length || cg || f || act.length)) {
+    el.innerHTML = `<h3>🐳 스마트머니 종합</h3><p class="muted">이 종목에 대한 내부자·의회·기관·대량보유 신호가 없습니다.</p>`;
+    return;
+  }
+  const row = (label, val, tone) => `<div class="sm-row"><span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong></div>`;
+  const insTone = insBuy > insSell ? "ins-buy" : insSell > insBuy ? "ins-sell" : "";
+  el.innerHTML = `
+    <h3>🐳 스마트머니 종합 · ${escapeHtml(t)}</h3>
+    ${row("내부자 (Form 4)", ins.length ? `매수 ${insBuy} · 매도 ${insSell}` : "—", insTone)}
+    ${row("의회 매매", cg ? `매수 ${cg.netBuys} · 매도 ${cg.netSells} · ${cg.politicianCount}명` : "—")}
+    ${row("기관 13F 보유", f ? `${f.holders}곳 · $${(f.valueM / 1000).toFixed(1)}B` : "—")}
+    ${row("대량보유 13D/G", act.length ? `${act.length}건 (액티비스트 ${act.filter((a) => a.kind === "activist").length})` : "—")}
+    <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
 
 // Merge any live (proxy-fetched) chart/news over the snapshot+detail data.

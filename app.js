@@ -8437,7 +8437,7 @@ function corrDailyReturns(closes, lookback) {
 }
 
 function corrColor(c) {
-  if (!Number.isFinite(c)) return "#f1f5f9";
+  if (!Number.isFinite(c)) return "var(--surface-2)";
   if (c >= 0) return `rgba(239,68,68,${(0.10 + 0.80 * Math.min(1, c)).toFixed(2)})`;
   return `rgba(37,99,235,${(0.10 + 0.80 * Math.min(1, -c)).toFixed(2)})`;
 }

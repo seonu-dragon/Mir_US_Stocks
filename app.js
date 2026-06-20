@@ -951,11 +951,17 @@ function actionBoardCard(title, hint, rows, emptyText, target) {
     </article>`;
 }
 
+// 액션보드 컴팩트 등락률: 화살표 없이 부호+숫자만(색으로 방향 표시) → 좁은 카드에서도 안 잘림
+function actionPct(value) {
+  const n = Number(value) || 0;
+  return `${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+}
+
 function actionStockRow(item, note) {
   return `
     <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
       <span><strong>${escapeHtml(item.ticker)}</strong><small>${escapeHtml(note || item.company || "")}</small></span>
-      <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+      <em class="${cls(item.changePct)}">${actionPct(item.changePct)}</em>
     </button>`;
 }
 
@@ -971,7 +977,7 @@ function portfolioActionRows() {
   }).filter(Boolean).sort((a, b) => b.value - a.value).slice(0, 4).map(({ item, value, plPct }) => `
     <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
       <span><strong>${escapeHtml(item.ticker)}</strong><small>평가 $${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</small></span>
-      <em class="${cls(plPct)}">${fmtPct(plPct)}</em>
+      <em class="${cls(plPct)}">${actionPct(plPct)}</em>
     </button>`);
 }
 

@@ -578,7 +578,7 @@ main {
 }
 
 /* ===== Top header: Fear&Greed gauge / sector TOP5 / FX ===== */
-.summary-band { align-items: stretch; }
+.summary-band { align-items: start; }
 .summary-band .summary-card { padding: 9px 11px; }
 
 .regime-card {
@@ -647,7 +647,7 @@ main {
   gap: 1px;
 }
 
-.fng-card { align-items: center; justify-content: center; gap: 0; }
+.fng-card { align-items: center; justify-content: flex-start; gap: 2px; }
 .fng-card > span { align-self: flex-start; }
 .fng-gauge { width: 100%; max-width: 150px; height: auto; margin: 0 auto; }
 .fng-score { font-size: 24px; font-weight: 800; }
@@ -6588,7 +6588,7 @@ footer {
 
 .daily-action-row strong { font-size: var(--fs-label); }
 .daily-action-row small { margin-top: 2px; color: var(--muted); font-size: var(--fs-cap); }
-.daily-action-row em { flex: 0 0 auto; font-size: var(--fs-cap); font-style: normal; font-weight: 800; }
+.daily-action-row em { flex: 0 0 auto; white-space: nowrap; font-size: var(--fs-cap); font-style: normal; font-weight: 800; }
 .daily-action-row em.info { color: var(--primary); }
 .daily-action-row em.warn { color: var(--amber); }
 .daily-action-empty { margin: 8px 0; color: var(--muted); font-size: var(--fs-cap); }

@@ -152,20 +152,18 @@ select {
   flex: 0 0 auto;
   display: grid;
   place-items: center;
-  width: 50px;
-  height: 50px;
-  border-radius: var(--r-md);
-  background: radial-gradient(circle at 50% 38%, rgba(96, 165, 250, 0.32), rgba(15, 23, 42, 0) 72%);
 }
 .brand-logo {
-  width: 46px;
-  height: 46px;
-  object-fit: contain;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-md);
+  object-fit: cover;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 .brand-lockup:hover .brand-logo {
-  transform: translateY(-2px) rotate(-4deg) scale(1.05);
+  transform: translateY(-2px) scale(1.04);
 }
 .brand-text { min-width: 0; }
 .brand-text .eyebrow {

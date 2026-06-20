@@ -7870,3 +7870,232 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .agg-bar-wrap { flex: 1; height: 14px; background: rgba(148,163,184,0.15); border-radius: 4px; overflow: hidden; }
 .agg-bar { height: 100%; border-radius: 4px; }
 .agg-val { flex: 0 0 auto; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; min-width: 52px; text-align: right; }
+
+/* 저장형 스크리너 */
+.saved-screener-panel {
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #eff6ff, #fff 55%);
+}
+.saved-screener-head,
+.saved-screener-controls,
+.screener-delta-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.saved-screener-head h3 { margin: 0 0 3px; font-size: 15px; }
+.saved-screener-head p { margin: 0; color: var(--muted); font-size: 11px; }
+.saved-screener-badge { padding: 5px 9px; border-radius: 999px; background: #dbeafe; color: #1e40af; font-size: 11px; font-weight: 800; }
+.saved-screener-controls { margin-top: 12px; align-items: end; }
+.saved-screener-controls label { display: grid; gap: 4px; color: var(--muted); font-size: 11px; }
+.saved-screener-controls select,
+.saved-screener-controls input { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: #fff; color: var(--text); padding: 7px 9px; }
+.saved-screener-controls button { min-height: 38px; white-space: nowrap; }
+.saved-screener-delta { margin-top: 10px; padding-top: 10px; border-top: 1px solid #dbeafe; }
+.saved-screener-delta p { margin: 0; font-size: 11px; }
+.screener-delta-meta strong,
+.screener-delta-meta span { display: block; }
+.screener-delta-meta strong { font-size: 12px; }
+.screener-delta-meta span { color: var(--muted); font-size: 10px; }
+.screener-delta-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 9px; }
+.screener-delta-cols > div { min-width: 0; padding: 9px; border-radius: 8px; background: var(--panel-soft); }
+.screener-delta-cols b { display: block; margin-bottom: 6px; font-size: 11px; }
+.screener-delta-cols > div > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.screener-delta-chip { height: auto; padding: 3px 7px; border: 1px solid var(--line); border-radius: 999px; background: #fff; font-size: 10px; font-weight: 800; cursor: pointer; }
+.screener-delta-chip.is-added { border-color: #86efac; color: var(--green); background: #f0fdf4; }
+.screener-delta-chip.is-removed { border-color: #fca5a5; color: var(--red); background: #fef2f2; }
+
+/* 데이터 신뢰도 센터 */
+.data-trust-center { margin-bottom: 18px; padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); box-shadow: var(--shadow); }
+.data-trust-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.data-trust-head h2 { margin: 3px 0 4px; font-size: 20px; }
+.data-trust-head p { margin: 0; color: var(--muted); font-size: 12px; }
+.data-trust-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 14px 0; }
+.data-trust-summary > div { padding: 10px; border-radius: 9px; background: var(--panel-soft); }
+.data-trust-summary span,
+.data-trust-summary strong { display: block; }
+.data-trust-summary span { color: var(--muted); font-size: 10px; }
+.data-trust-summary strong { margin-top: 3px; font-size: 16px; }
+.data-trust-summary strong.warn { color: var(--amber); }
+.data-trust-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.data-trust-card { min-width: 0; padding: 11px; border: 1px solid var(--line); border-top-width: 3px; border-radius: 9px; background: #fff; }
+.data-trust-card.trust-good { border-top-color: var(--green); }
+.data-trust-card.trust-warn { border-top-color: var(--amber); }
+.data-trust-card.trust-stale,
+.data-trust-card.trust-missing { border-top-color: var(--red); }
+.data-trust-card.trust-unknown { border-top-color: #64748b; }
+.data-trust-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
+.data-trust-card-head strong { min-width: 0; font-size: 12px; }
+.data-trust-card-head span { flex: 0 0 auto; font-size: 9px; font-weight: 800; }
+.trust-good .data-trust-card-head span { color: var(--green); }
+.trust-warn .data-trust-card-head span { color: var(--amber); }
+.trust-stale .data-trust-card-head span,
+.trust-missing .data-trust-card-head span { color: var(--red); }
+.data-trust-card p { margin: 5px 0 8px; color: var(--muted); font-size: 9px; }
+.data-trust-card dl { display: grid; gap: 5px; margin: 0; }
+.data-trust-card dl > div { min-width: 0; }
+.data-trust-card dt { color: var(--muted); font-size: 8px; }
+.data-trust-card dd { margin: 1px 0 0; overflow: hidden; color: var(--text); font-size: 9px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.data-trust-card small { display: block; margin-top: 8px; color: var(--muted); font-size: 8px; }
+.data-trust-note { margin: 12px 0 0; color: var(--muted); font-size: 10px; }
+
+/* 투자 체크리스트 */
+.investment-checklist-card { padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: #fff; }
+.investment-check-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.investment-check-head span { color: var(--primary); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
+.investment-check-head h3 { margin: 2px 0 0; font-size: 16px; }
+.investment-check-head > strong { font-size: 12px; }
+.investment-check-progress { height: 5px; margin: 10px 0; overflow: hidden; border-radius: 999px; background: #e2e8f0; }
+.investment-check-progress i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #2563eb, #16a34a); }
+.investment-check-list { display: grid; gap: 6px; }
+.investment-check-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 48px; padding: 7px; border: 1px solid #e2e8f0; border-radius: 8px; }
+.investment-check-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: 11px; font-weight: 900; }
+.checklist-pass .investment-check-icon { background: #dcfce7; color: var(--green); }
+.checklist-warn .investment-check-icon { background: #fef3c7; color: var(--amber); }
+.checklist-check .investment-check-icon { background: #e2e8f0; color: #475569; }
+.investment-check-row strong,
+.investment-check-row small { display: block; }
+.investment-check-row strong { font-size: 11px; }
+.investment-check-row small { margin-top: 2px; color: var(--muted); font-size: 9px; line-height: 1.4; }
+.investment-check-row em { font-size: 9px; font-style: normal; font-weight: 800; }
+.checklist-pass em { color: var(--green); }
+.checklist-warn em { color: var(--amber); }
+.checklist-check em { color: #64748b; }
+.investment-check-note { margin: 9px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+
+@media (max-width: 1180px) {
+  .data-trust-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .saved-screener-head,
+  .saved-screener-controls,
+  .data-trust-head { align-items: stretch; flex-direction: column; }
+  .saved-screener-controls button { width: 100%; }
+  .screener-delta-cols { grid-template-columns: 1fr; }
+  .data-trust-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .data-trust-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 460px) {
+  .data-trust-grid { grid-template-columns: 1fr; }
+}
+
+/* 종목 분석 균형 레이아웃 */
+.stock-analysis-top {
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr) !important;
+  align-items: stretch !important;
+}
+.stock-analysis-top > .chart-card,
+.stock-analysis-top > .search-side-col {
+  min-width: 0;
+  height: 100%;
+}
+.stock-analysis-top > .search-side-col {
+  display: grid;
+  align-content: start;
+  grid-template-columns: 1fr;
+}
+.analysis-balanced-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+  margin-top: 14px;
+}
+.analysis-balanced-grid > * {
+  min-width: 0;
+  height: 100%;
+  margin-top: 0;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.analysis-fundamentals {
+  margin-top: 14px;
+}
+.analysis-smart-grid .smart-money-card,
+.analysis-smart-grid .congress-trades-card {
+  border-radius: 10px;
+}
+
+/* 일정·컨센서스·발표 반응을 하나의 EARNINGS 카드로 통합 */
+.event-card-earnings {
+  display: block;
+  grid-column: span 4;
+  min-height: 0;
+  padding: 12px;
+  background: linear-gradient(145deg, #eff6ff, #fff 55%);
+}
+.earnings-card-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.earnings-card-title span { color: var(--primary); }
+.earnings-card-title strong { font-size: 14px; }
+.earnings-inline-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 9px;
+  border-top: 1px solid #dbeafe;
+}
+.earnings-inline-head strong { font-size: 12px; }
+.earnings-inline-head span { color: var(--muted); font-size: 10px; }
+.event-card-earnings .earnings-summary {
+  padding: 9px 0;
+}
+.event-card-earnings .earnings-upcoming {
+  background: rgba(255, 255, 255, 0.86);
+}
+.earnings-inline-history,
+.earnings-inline-reaction {
+  margin-top: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+}
+.earnings-inline-history summary,
+.earnings-inline-reaction summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  list-style: none;
+}
+.earnings-inline-history summary::-webkit-details-marker,
+.earnings-inline-reaction summary::-webkit-details-marker { display: none; }
+.earnings-inline-history summary::after,
+.earnings-inline-reaction summary::after { content: "+"; color: var(--primary); font-size: 14px; }
+.earnings-inline-history[open] summary::after,
+.earnings-inline-reaction[open] summary::after { content: "−"; }
+.earnings-inline-history summary span,
+.earnings-inline-reaction summary span { margin-left: auto; color: var(--muted); font-size: 9px; }
+.event-card-earnings .table-wrap { margin: 0; border-top: 1px solid var(--line); }
+.event-card-earnings .earnings-empty,
+.event-card-earnings .earnings-reaction-empty { margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid #dbeafe; font-size: 10px; }
+
+@media (max-width: 1040px) {
+  .stock-analysis-top { grid-template-columns: minmax(0, 1fr) 320px !important; }
+}
+@media (max-width: 900px) {
+  .stock-analysis-top,
+  .analysis-balanced-grid { grid-template-columns: 1fr !important; }
+  .event-card-earnings { grid-column: span 2; }
+}
+@media (max-width: 520px) {
+  .event-card-earnings { grid-column: span 1; }
+  .earnings-card-title { align-items: flex-start; flex-direction: column; }
+  .event-card-earnings .earnings-summary { grid-template-columns: 1fr; }
+}

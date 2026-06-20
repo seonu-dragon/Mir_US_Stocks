@@ -199,6 +199,7 @@ const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
 const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v1";
+const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
 
 const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
 let watchlist = [];
@@ -757,7 +758,8 @@ function setupChatbot() {
   }
 }
 
-const marketHeader = { fng: null, fx: [] };
+const CNN_FNG_URL = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+const marketHeader = { fng: null, fngStatus: "loading", fx: [] };
 
 const SECTOR_KO = {
   "TECHNOLOGY": "정보기술", "HEALTHCARE": "헬스케어", "FINANCIAL": "금융",
@@ -783,10 +785,7 @@ function computeSectorRanks() {
 
 function fngScore() {
   if (marketHeader.fng && Number.isFinite(marketHeader.fng.score)) return marketHeader.fng.score;
-  // Fallback proxy from market breadth until the live CNN value loads.
-  const eq = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS");
-  const up = eq.filter((s) => Number(s.changePct) > 0).length;
-  return eq.length ? Math.round((up / eq.length) * 100) : 50;
+  return null;
 }
 
 function fngLabel(score) {
@@ -819,9 +818,10 @@ function gaugeArc(cx, cy, r, startDeg, endDeg, color, w) {
 
 function fngCardHtml() {
   const score = fngScore();
-  const label = fngLabel(score);
-  const color = fngColor(score);
-  const live = !!(marketHeader.fng && Number.isFinite(marketHeader.fng.score));
+  const live = Number.isFinite(score);
+  const gaugeScore = live ? score : 50;
+  const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "CNN 연결 실패" : "CNN 지수 로딩 중");
+  const color = live ? fngColor(score) : "#94a3b8";
   const cx = 100, cy = 96, r = 76, w = 16;
   // score 0 -> 180deg (left), 100 -> 0deg (right)
   const deg = (s) => 180 - (s / 100) * 180;
@@ -831,15 +831,15 @@ function fngCardHtml() {
     gaugeArc(cx, cy, r, deg(45), deg(55), "#eab308", w) +
     gaugeArc(cx, cy, r, deg(55), deg(75), "#84cc16", w) +
     gaugeArc(cx, cy, r, deg(75), deg(100), "#16a34a", w);
-  const [nx, ny] = gaugePolar(cx, cy, r - 6, deg(score));
+  const [nx, ny] = gaugePolar(cx, cy, r - 6, deg(gaugeScore));
   return `
     <div class="summary-card fng-card">
-      <span>Fear &amp; Greed${live ? " · CNN" : " · 추정"}</span>
+      <span>CNN Fear &amp; Greed</span>
       <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
         ${arcs}
         <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#0f172a" stroke-width="3" stroke-linecap="round"></line>
         <circle cx="${cx}" cy="${cy}" r="5" fill="#0f172a"></circle>
-        <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${score}</text>
+        <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
       </svg>
       <strong class="fng-label" style="color:${color}">${label}</strong>
     </div>
@@ -884,8 +884,8 @@ function computeMarketRegime() {
   const growthLead = avgChange(["XLK", "QQQ", "SOXX"], "monthChangePct") - avgChange(["XLU", "XLP", "XLV"], "monthChangePct");
   const sectors = computeSectorRanks();
   let score = 0;
-  if (fng >= 55) score += 1;
-  else if (fng < 45) score -= 1;
+  if (Number.isFinite(fng) && fng >= 55) score += 1;
+  else if (Number.isFinite(fng) && fng < 45) score -= 1;
   if (upPct >= 0.55) score += 1;
   else if (upPct < 0.45) score -= 1;
   if (growthLead > 1) score += 1;
@@ -904,7 +904,7 @@ function computeMarketRegime() {
 function marketRegimeCardHtml() {
   const regime = computeMarketRegime();
   const fngLive = !!(marketHeader.fng && Number.isFinite(marketHeader.fng.score));
-  const fngNote = fngLive ? "CNN Fear &amp; Greed Index" : "CNN 지수 로딩 전 · 상승 종목 비중으로 추정";
+  const fngNote = fngLive ? "CNN Fear &amp; Greed Index" : "CNN 지수를 불러오는 중입니다";
   return `
     <div class="summary-card regime-card regime-${regime.tone}">
       <span>시장 국면</span>
@@ -914,7 +914,7 @@ function marketRegimeCardHtml() {
       <div class="regime-stats">
         <span class="regime-stat" title="${fngNote}">
           <b>공포탐욕</b>
-          <em>${regime.fng}${fngLive ? "" : "·추정"}</em>
+          <em>${fngLive ? regime.fng : "--"}</em>
         </span>
         <span class="regime-stat" title="당일 상승한 종목 비율">
           <b>상승 비중</b>
@@ -1102,12 +1102,43 @@ function indexSparkline(series, up) {
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"></polyline></svg>`;
 }
 
+function normalizeCnnFng(payload) {
+  const fg = payload && (payload.fear_and_greed || payload.fng);
+  const rawScore = Number(fg && fg.score);
+  if (!Number.isFinite(rawScore)) return null;
+  return {
+    score: Math.round(rawScore),
+    rawScore,
+    rating: String(fg.rating || ""),
+    timestamp: fg.timestamp || null,
+    previousClose: Number.isFinite(Number(fg.previous_close)) ? Number(fg.previous_close) : null,
+    source: "CNN",
+  };
+}
+
+async function fetchCnnFng(base) {
+  const urls = [CNN_FNG_URL, `${base}/?fng=1`];
+  for (const url of urls) {
+    try {
+      const response = await fetch(url, { cache: "no-store" });
+      if (!response.ok) continue;
+      const fng = normalizeCnnFng(await response.json());
+      if (fng) return fng;
+    } catch (_) {
+      // Try the Worker fallback when CNN cannot be reached directly.
+    }
+  }
+  return null;
+}
+
 function fetchMarketHeader() {
   if (!LIVE_DATA_PROXY) { renderIndexStrip([]); return; }
   const base = LIVE_DATA_PROXY.replace(/\/$/, "");
-  const fngReq = fetch(`${base}/?fng=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
-    if (p && p.fng) { marketHeader.fng = p.fng; renderSummary(); }
-  }).catch(() => {});
+  const fngReq = fetchCnnFng(base).then((fng) => {
+    marketHeader.fng = fng;
+    marketHeader.fngStatus = fng ? "loaded" : "error";
+    renderSummary();
+  });
   const fxReq = fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
     if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); }
   }).catch(() => {});
@@ -4430,6 +4461,7 @@ function renderSearch() {
   renderCongressTradesForTicker(item);
   renderSmartMoney(item);
   renderMoveExplanation(item);
+  renderInvestmentChecklist(item);
   render52wRange(item);
   renderStockEvents(item);
   renderEarningsReaction(item);
@@ -4448,6 +4480,7 @@ function renderSearch() {
     renderCongressTradesForTicker(refreshed);
     renderSmartMoney(refreshed);
     renderMoveExplanation(refreshed);
+    renderInvestmentChecklist(refreshed);
     render52wRange(refreshed);
     renderStockEvents(refreshed);
     renderEarningsReaction(refreshed);
@@ -4517,6 +4550,86 @@ function renderMoveExplanation(item) {
     <p class="move-explanation-summary">${escapeHtml(item.ticker)}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
     <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
     <p class="move-explanation-note">스냅샷·뉴스·공시의 기준 시각이 다를 수 있습니다. 투자 판단 전 원문과 최신 시세를 확인하세요.</p>`;
+}
+
+function checklistRow(label, result) {
+  const icon = result.status === "pass" ? "✓" : result.status === "warn" ? "!" : "?";
+  const state = result.status === "pass" ? "통과" : result.status === "warn" ? "주의" : "확인 필요";
+  return `
+    <div class="investment-check-row checklist-${result.status}">
+      <span class="investment-check-icon" aria-hidden="true">${icon}</span>
+      <span><strong>${escapeHtml(label)}</strong><small>${escapeHtml(result.detail)}</small></span>
+      <em>${state}</em>
+    </div>`;
+}
+
+function sectorForwardPeMedian(item) {
+  const values = (data.stocks || []).filter((row) => row.sector === item.sector).map((row) => {
+    const f = row.fundamentals || (window.MAP_FUNDAMENTALS || {})[row.ticker] || {};
+    return Number(f.forwardPE);
+  }).filter((value) => Number.isFinite(value) && value > 0).sort((a, b) => a - b);
+  if (!values.length) return null;
+  const middle = Math.floor(values.length / 2);
+  return values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+}
+
+function investmentChecklistResults(item) {
+  const f = item.fundamentals || (window.MAP_FUNDAMENTALS || {})[item.ticker] || {};
+  const rows = getChartRows(item);
+  const closes = rows.map((row) => Number(row.c)).filter(Number.isFinite);
+  const last = closes[closes.length - 1] || Number(item.price || 0);
+  const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((sum, value) => sum + value, 0) / 20 : null;
+  const trendPass = Number(item.monthChangePct) > 0 && Number(item.rsScore) >= 70 && (sma20 == null || last >= sma20);
+  const trendWarn = Number(item.monthChangePct) < 0 || (sma20 != null && last < sma20);
+
+  const epsScore = Number(item.epsRevScore || 0);
+  const earningsKnown = epsScore > 0 || f.epsNextY != null || f.epsTtm != null;
+  const earningsPass = epsScore >= 70 || (Number(f.epsNextY) > Number(f.epsTtm) && Number.isFinite(Number(f.epsTtm)));
+
+  const forwardPe = Number(f.forwardPE);
+  const sectorMedian = sectorForwardPeMedian(item);
+  const valuationKnown = Number.isFinite(forwardPe) && forwardPe > 0;
+  const valuationPass = valuationKnown && sectorMedian != null && forwardPe <= sectorMedian;
+  const valuationWarn = valuationKnown && sectorMedian != null && forwardPe > sectorMedian * 1.35;
+
+  const volume = Number(item.volumeRatio || 0);
+  const insider = ((window.INSIDER_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
+  const buys = insider.filter((row) => row.kind === "buy").length;
+  const sells = insider.filter((row) => row.kind === "sell").length;
+  const flowPass = volume >= 1.2 || buys > sells;
+  const flowWarn = volume < 0.7 || sells > buys + 2;
+
+  const rsi = Number(item.rsi14);
+  const debtEq = Number(f.debtEq);
+  const highDistance = Number(item.newHighDistancePct);
+  const riskFlags = [];
+  if (Number.isFinite(rsi) && rsi >= 75) riskFlags.push(`RSI ${Math.round(rsi)} 과열`);
+  if (Number.isFinite(debtEq) && debtEq > 2) riskFlags.push(`부채비율 ${debtEq.toFixed(1)}배`);
+  if (Number.isFinite(highDistance) && highDistance > 30) riskFlags.push(`52주 고점 대비 ${highDistance.toFixed(0)}% 하락`);
+
+  return [
+    { label: "추세", status: trendPass ? "pass" : trendWarn ? "warn" : "check", detail: `1개월 ${fmtPct(item.monthChangePct)} · RS ${item.rsScore}${sma20 != null ? ` · SMA20 ${last >= sma20 ? "위" : "아래"}` : ""}` },
+    { label: "실적·추정", status: !earningsKnown ? "check" : earningsPass ? "pass" : epsScore < 45 ? "warn" : "check", detail: earningsKnown ? `EPS 추정 점수 ${Math.round(epsScore)}${f.epsNextY != null ? ` · EPS Next Y ${moneyOrDash(f.epsNextY)}` : ""}` : "EPS 추정 데이터가 부족합니다." },
+    { label: "밸류에이션", status: !valuationKnown || sectorMedian == null ? "check" : valuationPass ? "pass" : valuationWarn ? "warn" : "check", detail: valuationKnown ? `Forward P/E ${forwardPe.toFixed(1)}${sectorMedian != null ? ` · 섹터 중앙값 ${sectorMedian.toFixed(1)}` : " · 섹터 비교값 없음"}` : "Forward P/E 데이터가 없습니다." },
+    { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volume.toFixed(1)}배 · 내부자 매수 ${buys} / 매도 ${sells}` },
+    { label: "리스크", status: riskFlags.length ? "warn" : "pass", detail: riskFlags.length ? riskFlags.join(" · ") : "현재 규칙에서 과열·부채·낙폭 경고가 없습니다." }
+  ];
+}
+
+function renderInvestmentChecklist(item) {
+  const box = byId("investmentChecklist");
+  if (!box || !item) return;
+  const results = investmentChecklistResults(item);
+  const passed = results.filter((row) => row.status === "pass").length;
+  const warned = results.filter((row) => row.status === "warn").length;
+  box.innerHTML = `
+    <div class="investment-check-head">
+      <div><span>DECISION CHECK</span><h3>투자 체크리스트</h3></div>
+      <strong>${passed}/${results.length} 통과</strong>
+    </div>
+    <div class="investment-check-progress"><i style="width:${(passed / results.length) * 100}%"></i></div>
+    <div class="investment-check-list">${results.map((row) => checklistRow(row.label, row)).join("")}</div>
+    <p class="investment-check-note">${warned ? `주의 항목 ${warned}개를 원문 데이터와 함께 확인하세요.` : "규칙 기반 요약이며 매수·매도 추천이 아닙니다."}</p>`;
 }
 
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
@@ -4611,6 +4724,7 @@ function maybeFetchLiveData(base) {
       renderFundamentals(merged);
       renderNews(merged);
       renderMoveExplanation(merged);
+      renderInvestmentChecklist(merged);
     })
     .catch(() => {
       liveDone[ticker] = true;
@@ -4618,6 +4732,7 @@ function maybeFetchLiveData(base) {
         const merged = applyLive(withDetail(base));
         renderNews(merged);
         renderMoveExplanation(merged);
+        renderInvestmentChecklist(merged);
       }
     });
 }
@@ -6096,16 +6211,13 @@ function renderEarningsCalendar(item) {
   const live = item.liveEarnings || {};
   const nextDate = live.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
   const epsEstimate = live.epsEstimate ?? f.epsNextQ ?? null;
-  const history = Array.isArray(live.history) ? live.history : [];
+  const history = normalizeEarningsHistory(item).slice(-4).reverse();
   const daysUntil = nextDate ? Math.ceil((new Date(nextDate) - snapshotBaseDate()) / 86400000) : null;
 
   box.innerHTML = `
-    <div class="event-head">
-      <div>
-        <h3>실적 캘린더</h3>
-        <p class="muted">다음 실적 발표 일정과 최근 분기 실적 히스토리입니다.</p>
-      </div>
-      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+    <div class="earnings-inline-head">
+      <strong>일정 · 컨센서스</strong>
+      <span>${escapeHtml(item.ticker)}</span>
     </div>
     <div class="earnings-summary">
       <article class="earnings-upcoming">
@@ -6120,7 +6232,9 @@ function renderEarningsCalendar(item) {
       </article>
     </div>
     ${history.length ? `
-      <div class="table-wrap compact-table-wrap">
+      <details class="earnings-inline-history">
+        <summary>최근 분기 EPS 기록 <span>${history.length}개 분기</span></summary>
+        <div class="table-wrap compact-table-wrap">
         <table class="compact-table earnings-table">
           <thead>
             <tr>
@@ -6133,17 +6247,25 @@ function renderEarningsCalendar(item) {
           <tbody>
             ${history.map((row) => `
               <tr>
-                <td>${escapeHtml(row.quarter || "—")}</td>
+                <td>${escapeHtml(row.date || "—")}</td>
                 <td>${row.epsActual != null ? moneyOrDash(row.epsActual) : "—"}</td>
                 <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
-                <td class="${cls(row.surprisePct || 0)}">${row.surprisePct != null ? fmtPct(row.surprisePct) : "—"}</td>
+                <td class="${cls(earningsSurprisePct(row) || 0)}">${earningsSurprisePct(row) == null ? "—" : fmtPct(earningsSurprisePct(row))}</td>
               </tr>
             `).join("")}
           </tbody>
         </table>
-      </div>
+        </div>
+      </details>
     ` : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
   `;
+}
+
+function earningsSurprisePct(row) {
+  const actual = Number(row?.epsActual);
+  const estimate = Number(row?.epsEstimate);
+  if (!Number.isFinite(actual) || !Number.isFinite(estimate) || estimate === 0) return null;
+  return ((actual - estimate) / Math.abs(estimate)) * 100;
 }
 
 function communityPostsForTicker(ticker) {
@@ -6221,6 +6343,8 @@ function renderStockEvents(item) {
     </div>
     ${moveAnalysisHtml(item, events.find((event) => event.type === "Move")?.move || null)}
   `;
+  renderEarningsCalendar(item);
+  renderEarningsReaction(item);
 }
 
 function stockEventRows(item) {
@@ -6231,7 +6355,7 @@ function stockEventRows(item) {
   const price = Number(item.price || f.prevClose);
   const targetUpside = Number.isFinite(target) && Number.isFinite(price) && price ? pctFrom(target, price) : null;
   const bigMove = recentBigMove(rows);
-  const earningsDate = f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
+  const earningsDate = item.liveEarnings?.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
   const dividend = f.dividendRate || f.dividendYield || item.dividendYield || null;
   return [
     {
@@ -6282,6 +6406,17 @@ function stockEventRows(item) {
 }
 
 function eventCardHtml(event) {
+  if (event.type === "Earnings") {
+    return `
+      <article class="event-card event-${escapeHtml(event.tone)} event-card-earnings">
+        <div class="earnings-card-title">
+          <span>EARNINGS</span>
+          <strong>실적 일정과 발표 반응</strong>
+        </div>
+        <div id="stockEarnings" class="earnings-inline-calendar"></div>
+        <div id="earningsReaction" class="earnings-inline-reaction-host"></div>
+      </article>`;
+  }
   return `
     <article class="event-card event-${escapeHtml(event.tone)}">
       <span>${escapeHtml(event.type)}</span>
@@ -6476,19 +6611,14 @@ function renderEarningsReaction(item) {
   if (!box || !item) return;
   const rows = earningsReactionRows(item);
   box.innerHTML = `
-    <div class="event-head">
-      <div>
-        <h3>실적 발표 전후 움직임</h3>
-        <p class="muted">최근 실적 발표일 기준 -5거래일, 발표일, +5거래일 반응을 비교합니다.</p>
-      </div>
-      <span class="event-badge">${escapeHtml(item.ticker)}</span>
-    </div>
     ${rows.length ? `
-      <div class="table-wrap">
+      <details class="earnings-inline-reaction">
+        <summary>실적 발표 전후 주가 반응 <span>최근 ${Math.min(rows.length, 4)}회</span></summary>
+        <div class="table-wrap">
         <table class="compact-table earnings-reaction-table">
           <thead><tr><th>발표일</th><th>거래일</th><th>EPS 서프라이즈</th><th>-5D→발표</th><th>발표일</th><th>발표→+5D</th></tr></thead>
           <tbody>
-            ${rows.map((row) => `
+            ${rows.slice(0, 4).map((row) => `
               <tr>
                 <td>${escapeHtml(row.date)}</td>
                 <td>${escapeHtml(row.tradingDate)}</td>
@@ -6500,8 +6630,9 @@ function renderEarningsReaction(item) {
             `).join("")}
           </tbody>
         </table>
-      </div>
-    ` : `<p class="muted earnings-reaction-empty">실적 히스토리 데이터가 있으면 자동으로 채워집니다. 현재 스냅샷에는 최근 실적 발표 히스토리가 부족합니다.</p>`}
+        </div>
+      </details>
+    ` : `<p class="muted earnings-reaction-empty">실적 발표 반응을 계산할 가격·실적 히스토리가 부족합니다.</p>`}
   `;
 }
 
@@ -7491,7 +7622,87 @@ function renderCongressTradesForTicker(item) {
 }
 
 function renderHealth() {
+  renderDataTrustCenter();
   renderMarkets();
+}
+
+function trustPayloadCount(payload, keys = []) {
+  if (!payload) return 0;
+  if (Number.isFinite(Number(payload.count))) return Number(payload.count);
+  for (const key of keys) {
+    const value = payload[key];
+    if (Array.isArray(value)) return value.length;
+    if (value && typeof value === "object") return Object.keys(value).length;
+  }
+  return 0;
+}
+
+function trustStatus(timestamp, count, maxHours) {
+  if (!count) return { key: "missing", label: "데이터 없음", age: null };
+  const parsed = parseSnapshotDate(timestamp);
+  if (!parsed) return { key: "unknown", label: "시각 확인 필요", age: null };
+  const age = Math.max(0, (Date.now() - parsed.getTime()) / 36e5);
+  if (age > maxHours) return { key: "stale", label: "갱신 지연", age };
+  if (age > maxHours * 0.72) return { key: "warn", label: "갱신 임박", age };
+  return { key: "good", label: "정상", age };
+}
+
+function trustAgeLabel(hours) {
+  if (hours == null) return "경과 시간 미확인";
+  if (hours < 1) return "1시간 이내";
+  if (hours < 48) return `${Math.floor(hours)}시간 전`;
+  return `${Math.floor(hours / 24)}일 전`;
+}
+
+function dataTrustSources() {
+  const snapshotTime = data.updatedAtKst || data.updated_at_kst || "";
+  const fundamentals = window.MAP_FUNDAMENTALS || {};
+  const source = (name, provider, payload, keys, maxHours, cadence, fallbackTime = "") => {
+    const count = trustPayloadCount(payload, keys);
+    const timestamp = payload?.updatedAtKst || payload?.updated_at_kst || payload?.updated || fallbackTime;
+    return { name, provider, count, timestamp, maxHours, cadence, status: trustStatus(timestamp, count, maxHours) };
+  };
+  return [
+    { name: "시장 스냅샷", provider: "Nasdaq · Yahoo", count: (data.stocks || []).length, timestamp: snapshotTime, maxHours: 36, cadence: "매일 06:00 KST", status: trustStatus(snapshotTime, (data.stocks || []).length, 36) },
+    { name: "펀더멘털", provider: "Nasdaq · SEC · Yahoo", count: Object.keys(fundamentals).length, timestamp: snapshotTime, maxHours: 36, cadence: "시장 스냅샷과 동시", status: trustStatus(snapshotTime, Object.keys(fundamentals).length, 36) },
+    source("내부자 거래", "SEC Form 4", window.INSIDER_TRADES, ["trades"], 72, "영업일 기준 수집"),
+    source("주요 공시", "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일"),
+    source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주"),
+    source("IPO", "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주"),
+    source("공매도", "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], 1080, "월 2회"),
+    source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후"),
+    source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집"),
+    source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시")
+  ];
+}
+
+function renderDataTrustCenter() {
+  const grid = byId("dataTrustGrid");
+  const summary = byId("dataTrustSummary");
+  if (!grid || !summary) return;
+  const sources = dataTrustSources();
+  const counts = sources.reduce((acc, row) => { acc[row.status.key] = (acc[row.status.key] || 0) + 1; return acc; }, {});
+  summary.innerHTML = `
+    <div><span>정상</span><strong class="pos">${counts.good || 0}</strong></div>
+    <div><span>주의·지연</span><strong class="warn">${(counts.warn || 0) + (counts.stale || 0)}</strong></div>
+    <div><span>확인 필요</span><strong>${(counts.missing || 0) + (counts.unknown || 0)}</strong></div>
+    <div><span>마지막 점검</span><strong>${escapeHtml(formatKstDateTime().slice(5))}</strong></div>`;
+  grid.innerHTML = sources.map((row) => `
+    <article class="data-trust-card trust-${row.status.key}">
+      <div class="data-trust-card-head"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status.label)}</span></div>
+      <p>${escapeHtml(row.provider)}</p>
+      <dl>
+        <div><dt>기준 시각</dt><dd>${escapeHtml(row.timestamp || "확인 불가")}</dd></div>
+        <div><dt>로드 수량</dt><dd>${Number(row.count || 0).toLocaleString()}건</dd></div>
+        <div><dt>갱신 정책</dt><dd>${escapeHtml(row.cadence)}</dd></div>
+      </dl>
+      <small>${escapeHtml(trustAgeLabel(row.status.age))}</small>
+    </article>`).join("");
+  const refresh = byId("dataTrustRefresh");
+  if (refresh && !refresh.dataset.bound) {
+    refresh.dataset.bound = "1";
+    refresh.addEventListener("click", () => { renderDataTrustCenter(); showAppToast("로드된 데이터 상태를 다시 확인했습니다"); });
+  }
 }
 
 function renderMarkets() {
@@ -9865,6 +10076,158 @@ function setupPwa() {
 }
 
 // ===== 스크리너 =====
+let savedScreeners = [];
+let selectedSavedScreenerId = "";
+let applyingSavedScreener = false;
+
+function screenerSnapshotKey() {
+  return String(data.updatedAtKst || data.updated_at_kst || "unknown");
+}
+
+function currentScreenerConfig() {
+  return {
+    bucket: byId("scrBucket")?.value || "idx_sp500",
+    sector: byId("scrSector")?.value || "All",
+    preset: byId("scrPreset")?.value || "custom",
+    metric: byId("scrMetric")?.value || "rsScore",
+    minRs: numberInputValue("scrMinRs", 0),
+    minEps: numberInputValue("scrMinEps", 0),
+    minVol: numberInputValue("scrMinVol", 0),
+    minCap: numberInputValue("scrMinCap", 0),
+    limit: Math.max(1, numberInputValue("scrLimit", 100))
+  };
+}
+
+function applyScreenerConfig(config) {
+  if (!config) return;
+  applyingSavedScreener = true;
+  const values = {
+    scrBucket: config.bucket,
+    scrSector: config.sector,
+    scrPreset: config.preset,
+    scrMetric: config.metric,
+    scrMinRs: config.minRs || "",
+    scrMinEps: config.minEps || "",
+    scrMinVol: config.minVol || "",
+    scrMinCap: config.minCap || "",
+    scrLimit: config.limit || 100
+  };
+  Object.entries(values).forEach(([id, value]) => { const el = byId(id); if (el) el.value = value; });
+  applyingSavedScreener = false;
+}
+
+function loadSavedScreeners() {
+  try {
+    const rows = JSON.parse(localStorage.getItem(SAVED_SCREENER_STORAGE_KEY) || "[]");
+    savedScreeners = Array.isArray(rows) ? rows.filter((row) => row && row.id && row.name && row.config) : [];
+  } catch (_) { savedScreeners = []; }
+}
+
+function persistSavedScreeners() {
+  try { localStorage.setItem(SAVED_SCREENER_STORAGE_KEY, JSON.stringify(savedScreeners)); } catch (_) {}
+}
+
+function savedScreenerById(id = selectedSavedScreenerId) {
+  return savedScreeners.find((row) => row.id === id) || null;
+}
+
+function renderSavedScreenerPicker() {
+  const select = byId("savedScreenerSelect");
+  const badge = byId("savedScreenerBadge");
+  const del = byId("savedScreenerDelete");
+  if (badge) badge.textContent = `저장 ${savedScreeners.length}개`;
+  if (!select) return;
+  select.innerHTML = `<option value="">저장된 조건 선택</option>` + savedScreeners.map((row) => `<option value="${escapeHtml(row.id)}">${escapeHtml(row.name)}</option>`).join("");
+  select.value = selectedSavedScreenerId;
+  if (del) del.disabled = !selectedSavedScreenerId;
+}
+
+function savedScreenerDeltaHtml(record) {
+  const delta = record?.lastDelta || { added: [], removed: [] };
+  const chips = (rows, tone, empty) => rows.length
+    ? rows.map((ticker) => `<button type="button" class="screener-delta-chip ${tone}" data-ticker="${escapeHtml(ticker)}">${escapeHtml(ticker)}</button>`).join("")
+    : `<span class="muted">${empty}</span>`;
+  return `
+    <div class="screener-delta-meta">
+      <strong>${escapeHtml(record.name)}</strong>
+      <span>기준 ${escapeHtml(record.lastSnapshotKey || "-")} · 결과 ${(record.lastTickers || []).length}개</span>
+    </div>
+    <div class="screener-delta-cols">
+      <div><b>신규 편입 ${delta.added.length}</b><div>${chips(delta.added, "is-added", "신규 편입 없음")}</div></div>
+      <div><b>이탈 ${delta.removed.length}</b><div>${chips(delta.removed, "is-removed", "이탈 없음")}</div></div>
+    </div>`;
+}
+
+function renderSavedScreenerDelta(record) {
+  const box = byId("savedScreenerDelta");
+  if (!box) return;
+  if (!record) {
+    box.innerHTML = `<p class="muted">조건을 저장하면 다음 스냅샷부터 편입·이탈을 비교합니다.</p>`;
+    return;
+  }
+  box.innerHTML = savedScreenerDeltaHtml(record);
+  box.querySelectorAll("[data-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.ticker, { openSearch: true })));
+}
+
+function compareSavedScreener(record, tickers) {
+  if (!record) return;
+  const snapshotKey = screenerSnapshotKey();
+  const previous = Array.isArray(record.lastTickers) ? record.lastTickers : [];
+  if (!record.lastSnapshotKey) {
+    record.lastSnapshotKey = snapshotKey;
+    record.lastTickers = tickers;
+    record.lastDelta = { added: [], removed: [] };
+  } else if (record.lastSnapshotKey !== snapshotKey) {
+    const before = new Set(previous);
+    const now = new Set(tickers);
+    record.lastDelta = {
+      added: tickers.filter((ticker) => !before.has(ticker)),
+      removed: previous.filter((ticker) => !now.has(ticker))
+    };
+    record.lastSnapshotKey = snapshotKey;
+    record.lastTickers = tickers;
+  }
+  record.lastCheckedAt = formatKstDateTime();
+  persistSavedScreeners();
+  renderSavedScreenerDelta(record);
+}
+
+function saveCurrentScreener() {
+  const input = byId("savedScreenerName");
+  const name = String(input?.value || "").trim();
+  if (!name) { showAppToast("저장할 스크리너 이름을 입력하세요"); input?.focus(); return; }
+  const rows = screenerRows();
+  let record = savedScreenerById();
+  if (!record) {
+    record = { id: `scr_${Date.now().toString(36)}`, name, config: {}, createdAt: formatKstDateTime() };
+    savedScreeners.push(record);
+  }
+  record.name = name;
+  record.config = currentScreenerConfig();
+  record.lastSnapshotKey = screenerSnapshotKey();
+  record.lastTickers = rows.map(({ item }) => item.ticker);
+  record.lastDelta = { added: [], removed: [] };
+  record.lastCheckedAt = formatKstDateTime();
+  selectedSavedScreenerId = record.id;
+  persistSavedScreeners();
+  renderSavedScreenerPicker();
+  renderSavedScreenerDelta(record);
+  showAppToast(`'${name}' 조건을 저장했습니다`);
+}
+
+function deleteSelectedScreener() {
+  const record = savedScreenerById();
+  if (!record) return;
+  savedScreeners = savedScreeners.filter((row) => row.id !== record.id);
+  selectedSavedScreenerId = "";
+  persistSavedScreeners();
+  renderSavedScreenerPicker();
+  renderSavedScreenerDelta(null);
+  const input = byId("savedScreenerName");
+  if (input) input.value = "";
+  showAppToast("저장 조건을 삭제했습니다");
+}
+
 function screenerRows() {
   const bucket = byId("scrBucket")?.value || "idx_sp500";
   const sector = byId("scrSector")?.value || "All";
@@ -9890,11 +10253,12 @@ function screenerRows() {
     .slice(0, limit);
 }
 
-function renderScreener() {
+function renderScreener({ trackSaved = false } = {}) {
   const body = byId("screenerTable");
   const meta = byId("screenerMeta");
   if (!body) return;
   const rows = screenerRows();
+  if (trackSaved && selectedSavedScreenerId) compareSavedScreener(savedScreenerById(), rows.map(({ item }) => item.ticker));
   if (meta) meta.textContent = `${rows.length}개 종목 · ${byId("scrBucket")?.selectedOptions?.[0]?.textContent || ""}`;
   if (!rows.length) {
     body.innerHTML = `<tr><td colspan="11" class="muted">조건에 맞는 종목이 없습니다.</td></tr>`;
@@ -9921,10 +10285,16 @@ function renderScreener() {
 }
 
 function setupScreenerEvents() {
-  const run = () => renderScreener();
+  loadSavedScreeners();
+  renderSavedScreenerPicker();
+  renderSavedScreenerDelta(null);
+  const run = (trackSaved = false) => renderScreener({ trackSaved });
   ["scrBucket", "scrSector", "scrMetric", "scrLimit"].forEach((id) => {
     const el = byId(id);
-    if (el) el.addEventListener("change", run);
+    if (el) el.addEventListener("change", () => {
+      if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }
+      run(false);
+    });
   });
   const preset = byId("scrPreset");
   if (preset) preset.addEventListener("change", () => {
@@ -9937,10 +10307,11 @@ function setupScreenerEvents() {
       byId("scrMinVol").value = p.minVolume || "";
       byId("scrMinCap").value = p.minMarketCap || "";
     }
-    run();
+    if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }
+    run(false);
   });
   const btn = byId("scrRun");
-  if (btn) btn.addEventListener("click", run);
+  if (btn) btn.addEventListener("click", () => run(true));
   const reset = byId("scrReset");
   if (reset) reset.addEventListener("click", () => {
     byId("scrPreset").value = "custom";
@@ -9948,8 +10319,25 @@ function setupScreenerEvents() {
     byId("scrSector").value = "All";
     byId("scrMetric").value = "rsScore";
     ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
-    run();
+    selectedSavedScreenerId = "";
+    renderSavedScreenerPicker();
+    renderSavedScreenerDelta(null);
+    run(false);
   });
+  ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => byId(id)?.addEventListener("change", () => {
+    if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }
+  }));
+  byId("savedScreenerSelect")?.addEventListener("change", (event) => {
+    selectedSavedScreenerId = event.target.value;
+    const record = savedScreenerById();
+    const input = byId("savedScreenerName");
+    if (input) input.value = record?.name || "";
+    if (record) { applyScreenerConfig(record.config); renderScreener({ trackSaved: true }); }
+    else renderSavedScreenerDelta(null);
+    renderSavedScreenerPicker();
+  });
+  byId("savedScreenerSave")?.addEventListener("click", saveCurrentScreener);
+  byId("savedScreenerDelete")?.addEventListener("click", deleteSelectedScreener);
 }
 
 // ===== 종목 비교 =====

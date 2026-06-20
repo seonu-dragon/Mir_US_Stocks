@@ -7627,8 +7627,109 @@ function renderCongressTradesForTicker(item) {
 }
 
 function renderHealth() {
+  renderMarketBreadth();
   renderDataTrustCenter();
   renderMarkets();
+}
+
+// ===== 시장 폭(Market Breadth) — 스냅샷 종목군 기반 시장 체력 지표 =====
+function breadthBar(label, upPct, sub) {
+  const p = Math.max(0, Math.min(100, upPct));
+  const tone = p >= 60 ? "pos" : p <= 40 ? "neg" : "muted";
+  return `
+    <div class="breadth-row">
+      <div class="breadth-row-head"><span>${escapeHtml(label)}</span><strong class="${tone}">${p.toFixed(0)}%</strong></div>
+      <div class="breadth-track"><i class="breadth-fill bf-${tone}" style="width:${p.toFixed(1)}%"></i></div>
+      ${sub ? `<small class="muted">${escapeHtml(sub)}</small>` : ""}
+    </div>`;
+}
+
+function renderMarketBreadth() {
+  const box = byId("marketBreadthCard");
+  if (!box) return;
+  const stocks = (data.stocks || []).filter((s) =>
+    s && s.sector && s.sector !== "EXCHANGE TRADED FUNDS" && Number.isFinite(Number(s.changePct)));
+  const n = stocks.length;
+  if (n < 5) { box.innerHTML = ""; return; }
+
+  const adv = stocks.filter((s) => Number(s.changePct) > 0).length;
+  const dec = stocks.filter((s) => Number(s.changePct) < 0).length;
+  const unch = n - adv - dec;
+  const advPct = (adv / n) * 100;
+  const upPctOf = (key) => (stocks.filter((s) => Number(s[key]) > 0).length / n) * 100;
+  const weekUp = upPctOf("weekChangePct");
+  const monthUp = upPctOf("monthChangePct");
+
+  const strong = stocks.filter((s) => Number(s.rsScore) >= 80).length;
+  const weak = stocks.filter((s) => Number(s.rsScore) <= 20).length;
+  const strongPct = (strong / n) * 100;
+
+  const nearHigh = stocks.filter((s) => Number(s.newHighDistancePct) <= 2).length;
+  const nearLow = stocks.filter((s) => { const d = low52DistPct(s); return Number.isFinite(d) && d <= 5; }).length;
+  const volAdv = stocks.filter((s) => Number(s.changePct) > 0 && Number(s.volumeRatio) >= 1.5).length;
+  const volAdvPct = (volAdv / Math.max(1, adv)) * 100;
+
+  // McClellan-식 단순 지표: (상승-하락)/전체
+  const adLine = ((adv - dec) / n) * 100;
+  const regime = adLine >= 25 ? { k: "pos", t: "강세 우위" } : adLine <= -25 ? { k: "neg", t: "약세 우위" } : { k: "muted", t: "혼조" };
+
+  // 섹터별 상승 비율
+  const bySector = {};
+  stocks.forEach((s) => {
+    const k = s.sector || "기타";
+    if (!bySector[k]) bySector[k] = { up: 0, total: 0 };
+    bySector[k].total += 1;
+    if (Number(s.changePct) > 0) bySector[k].up += 1;
+  });
+  const sectorRows = Object.entries(bySector)
+    .filter(([, v]) => v.total >= 3)
+    .map(([sec, v]) => ({ sec, pct: (v.up / v.total) * 100, total: v.total }))
+    .sort((a, b) => b.pct - a.pct);
+  const sectorHtml = sectorRows.map((r) => {
+    const tone = r.pct >= 60 ? "pos" : r.pct <= 40 ? "neg" : "muted";
+    return `<div class="breadth-sector"><span title="${escapeHtml(r.sec)}">${escapeHtml(sectorShortName(r.sec))}</span><div class="breadth-track sm"><i class="breadth-fill bf-${tone}" style="width:${r.pct.toFixed(1)}%"></i></div><b class="${tone}">${r.pct.toFixed(0)}%</b></div>`;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="breadth-head">
+      <div>
+        <span class="daily-action-kicker">MARKET BREADTH</span>
+        <h2>시장 폭 지표</h2>
+        <p>스냅샷 ${n.toLocaleString()}개 종목(ETF 제외) 기준 시장 전체의 참여도·체력입니다.</p>
+      </div>
+      <span class="breadth-regime breadth-${regime.k}">${regime.t} · A/D ${adLine >= 0 ? "+" : ""}${adLine.toFixed(0)}</span>
+    </div>
+    <div class="breadth-stats">
+      <article><span>상승 / 하락</span><strong><b class="pos">${adv.toLocaleString()}</b> / <b class="neg">${dec.toLocaleString()}</b></strong><em class="muted">보합 ${unch}</em></article>
+      <article><span>52주 신고가 근접</span><strong class="pos">${nearHigh.toLocaleString()}</strong><em class="muted">≤ 2%</em></article>
+      <article><span>52주 신저가 근접</span><strong class="neg">${nearLow.toLocaleString()}</strong><em class="muted">≤ 5%</em></article>
+      <article><span>RS 강세(≥80)</span><strong class="pos">${strong.toLocaleString()}</strong><em class="muted">약세(≤20) ${weak}</em></article>
+      <article><span>거래량 동반 상승</span><strong>${volAdv.toLocaleString()}</strong><em class="muted">상승종목의 ${volAdvPct.toFixed(0)}%</em></article>
+      <article><span>당일 상승 비율</span><strong class="${advPct >= 50 ? "pos" : "neg"}">${advPct.toFixed(0)}%</strong><em class="muted">참여도</em></article>
+    </div>
+    <div class="breadth-bars">
+      ${breadthBar("당일 상승 비율", advPct, `${adv} / ${n}개 상승`)}
+      ${breadthBar("1주 상승 비율", weekUp, "주간 추세 참여도")}
+      ${breadthBar("1개월 상승 비율", monthUp, "중기 추세 참여도")}
+      ${breadthBar("RS 강세 비율", strongPct, "상대강도 80 이상")}
+    </div>
+    <div class="breadth-sectors">
+      <div class="breadth-sectors-title">섹터별 상승 비율</div>
+      ${sectorHtml}
+    </div>
+    <p class="breadth-note">참여도가 넓을수록(상승 비율·RS 강세 높을수록) 추세가 건강합니다. 지수만 오르고 폭이 좁으면(소수 종목 주도) 되돌림 위험을 함께 봐야 합니다.</p>
+  `;
+}
+
+function sectorShortName(sector) {
+  const map = {
+    "TECHNOLOGY": "기술", "FINANCIAL": "금융", "FINANCIAL SERVICES": "금융",
+    "HEALTHCARE": "헬스케어", "ENERGY": "에너지", "INDUSTRIALS": "산업재",
+    "CONSUMER CYCLICAL": "경기소비재", "CONSUMER DEFENSIVE": "필수소비재",
+    "COMMUNICATION SERVICES": "커뮤니케이션", "UTILITIES": "유틸리티",
+    "REAL ESTATE": "부동산", "BASIC MATERIALS": "소재", "MATERIALS": "소재"
+  };
+  return map[String(sector || "").toUpperCase()] || sector;
 }
 
 function trustPayloadCount(payload, keys = []) {

@@ -579,8 +579,9 @@ async function fetchChart(symbol) {
 
 const round = (v) => Math.round(Number(v) * 100) / 100;
 
-// Economic calendar for Korea (id 11) + US (id 5), this week, KST (timeZone 88).
-async function fetchCalendar() {
+// Economic calendar for Korea (id 11) + US (id 5), KST (timeZone 88).
+// 이번 주 + 다음 주를 함께 가져와 합쳐서 다음 주 일정까지 표시.
+async function fetchCalendarTab(tab) {
   try {
     const r = await fetch("https://kr.investing.com/economic-calendar/Service/getCalendarFilteredData", {
       method: "POST",
@@ -591,7 +592,7 @@ async function fetchCalendar() {
         Referer: "https://kr.investing.com/economic-calendar/",
         Accept: "application/json, text/javascript, */*; q=0.01",
       },
-      body: "country%5B%5D=5&country%5B%5D=11&timeZone=88&timeFilter=timeRemain&currentTab=thisWeek&limit_from=0",
+      body: `country%5B%5D=5&country%5B%5D=11&timeZone=88&timeFilter=timeRemain&currentTab=${tab}&limit_from=0`,
     });
     if (!r.ok) return [];
     const payload = await r.json();
@@ -599,6 +600,20 @@ async function fetchCalendar() {
   } catch (e) {
     return [];
   }
+}
+
+async function fetchCalendar() {
+  const [thisWeek, nextWeek] = await Promise.all([
+    fetchCalendarTab("thisWeek"),
+    fetchCalendarTab("nextWeek"),
+  ]);
+  const seen = new Set();
+  return [...thisWeek, ...nextWeek].filter((ev) => {
+    const key = `${ev.datetime || ev.day || ""}|${ev.event || ""}|${ev.country || ""}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function parseCalendar(htmlStr) {

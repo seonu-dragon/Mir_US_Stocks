@@ -26,7 +26,18 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260620k">
+    <script>
+      // 테마·밀도 즉시 적용 (FOUC 방지)
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem("mir_ui_prefs_v1")) || {};
+          var theme = p.theme || ((window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.setAttribute("data-density", p.density || "comfortable");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="styles.css?v=20260620l">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -149,9 +160,15 @@
           <strong>핵심 탐색</strong>
           <span>시장 · 종목 · 내 투자 중심으로 보고, 필요할 때 고급 기능을 펼치세요.</span>
         </div>
-        <div class="view-mode-switch" id="viewModeSwitch" role="group" aria-label="탐색 모드">
-          <button type="button" data-view-mode="basic" class="is-active" aria-pressed="true">기본 모드</button>
-          <button type="button" data-view-mode="advanced" aria-pressed="false">고급 모드</button>
+        <div class="navigation-mode-actions">
+          <div class="view-mode-switch" id="viewModeSwitch" role="group" aria-label="탐색 모드">
+            <button type="button" data-view-mode="basic" class="is-active" aria-pressed="true">기본 모드</button>
+            <button type="button" data-view-mode="advanced" aria-pressed="false">고급 모드</button>
+          </div>
+          <div class="ui-pref-toggles" role="group" aria-label="화면 설정">
+            <button type="button" class="ui-pref-btn" id="themeToggle" aria-pressed="false" title="라이트/다크 모드">🌙 다크</button>
+            <button type="button" class="ui-pref-btn" id="densityToggle" aria-pressed="false" title="화면 밀도">↕ 넓게</button>
+          </div>
         </div>
       </div>
 
@@ -1712,6 +1729,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620m"></script>
+    <script src="app.js?v=20260620n"></script>
   </body>
 </html>

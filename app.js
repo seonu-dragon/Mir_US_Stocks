@@ -2545,6 +2545,7 @@ function setupEvents() {
   });
   setupWatchlistUi();
   setupScreenerEvents();
+  setupNlScreener();
   setupCompareEvents();
   setupBacktestEvents();
   setupEarningsEvents();
@@ -10388,6 +10389,209 @@ function renderScreener({ trackSaved = false } = {}) {
   body.querySelectorAll(".ticker-link").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
+}
+
+// ===== AI 자연어 스크리너 (규칙 기반 파서 · 백엔드 불필요) =====
+const NL_EXAMPLES = [
+  "RSI 30 이하 반도체주",
+  "RS 80 이상 신고가 근접 대형주",
+  "PER 15 이하 ROE 15 이상",
+  "1개월 20% 이상 거래량 2배 이상",
+  "과매도 기술주",
+];
+
+const NL_SECTORS = [
+  { kw: ["반도체", "semiconduct", "칩"], label: "반도체", test: (it) => /semiconduct/i.test(it.industry || "") },
+  { kw: ["바이오", "biotech", "제약", "pharma"], label: "바이오/제약", test: (it) => /(biotech|pharma|drug|life science)/i.test(it.industry || "") || (it.sector || "").toUpperCase() === "HEALTHCARE" },
+  { kw: ["헬스케어", "healthcare", "의료"], label: "헬스케어", test: (it) => (it.sector || "").toUpperCase() === "HEALTHCARE" },
+  { kw: ["기술주", "기술", "테크", "tech", "소프트웨어", "software"], label: "기술", test: (it) => (it.sector || "").toUpperCase() === "TECHNOLOGY" },
+  { kw: ["금융", "은행", "bank", "financ"], label: "금융", test: (it) => /FINANCIAL/.test((it.sector || "").toUpperCase()) },
+  { kw: ["에너지", "energy", "석유", "oil"], label: "에너지", test: (it) => (it.sector || "").toUpperCase() === "ENERGY" },
+  { kw: ["소비재", "소비", "consumer", "리테일", "retail", "유통"], label: "소비재", test: (it) => /CONSUMER/.test((it.sector || "").toUpperCase()) },
+  { kw: ["산업재", "industrial"], label: "산업재", test: (it) => (it.sector || "").toUpperCase() === "INDUSTRIALS" },
+  { kw: ["유틸", "utilit"], label: "유틸리티", test: (it) => (it.sector || "").toUpperCase() === "UTILITIES" },
+  { kw: ["부동산", "reit", "real estate"], label: "부동산", test: (it) => /REAL ESTATE/.test((it.sector || "").toUpperCase()) },
+  { kw: ["소재", "material", "mining", "금속", "철강"], label: "소재", test: (it) => /MATERIAL/.test((it.sector || "").toUpperCase()) },
+  { kw: ["커뮤니케이션", "communication", "미디어", "media"], label: "커뮤니케이션", test: (it) => /COMMUNICATION/.test((it.sector || "").toUpperCase()) },
+];
+
+const NL_FLAGS = [
+  { kw: ["과매도", "oversold"], label: "과매도 RSI≤30", test: (it) => Number(it.rsi14) <= 30 },
+  { kw: ["과매수", "overbought"], label: "과매수 RSI≥70", test: (it) => Number(it.rsi14) >= 70 },
+  { kw: ["신고가", "new high", "고점 근접"], label: "신고가 근접", test: (it) => Number(it.newHighDistancePct) <= 2 },
+  { kw: ["신저가", "저점 근접", "52주 저가"], label: "신저가 근접", test: (it) => { const d = low52DistPct(it); return Number.isFinite(d) && d <= 10; } },
+  { kw: ["급등"], label: "당일 급등 ≥5%", test: (it) => Number(it.changePct) >= 5 },
+  { kw: ["급락"], label: "당일 급락 ≤-5%", test: (it) => Number(it.changePct) <= -5 },
+  { kw: ["대형주", "large cap", "largecap"], label: "대형주 시총≥10B", test: (it) => Number(it.marketCapB) >= 10 },
+  { kw: ["소형주", "중소형", "스몰캡", "small cap"], label: "소형주 시총≤2B", test: (it) => Number(it.marketCapB) <= 2 },
+  { kw: ["주도주", "강세주", "리더", "leader"], label: "주도주 RS≥80", test: (it) => Number(it.rsScore) >= 80 },
+  { kw: ["저평가", "value"], label: "저평가 PER≤15", test: (it, f) => Number(f.pe) > 0 && Number(f.pe) <= 15 },
+];
+
+const NL_METRICS = [
+  { keys: ["rsi"], label: "RSI", unit: "", get: (it) => Number(it.rsi14), dir: "max" },
+  { keys: ["per", "pe", "p/e", "주가수익"], label: "PER", unit: "", get: (it, f) => Number(f.pe != null ? f.pe : f.forwardPE), dir: "max" },
+  { keys: ["pbr", "pb", "p/b"], label: "PBR", unit: "", get: (it, f) => Number(f.pb), dir: "max" },
+  { keys: ["psr", "ps", "p/s"], label: "PSR", unit: "", get: (it, f) => Number(f.ps), dir: "max" },
+  { keys: ["roe", "자기자본"], label: "ROE", unit: "%", get: (it, f) => Number(f.roe), dir: "min" },
+  { keys: ["시총", "시가총액", "market cap", "marketcap"], label: "시총", unit: "B", get: (it) => Number(it.marketCapB), dir: "min", cap: true },
+  { keys: ["거래량", "volume", "vol"], label: "거래량", unit: "x", get: (it) => Number(it.volumeRatio), dir: "min" },
+  { keys: ["eps점수", "eps추정", "eps rev"], label: "EPS점수", unit: "", get: (it) => Number(it.epsRevScore), dir: "min" },
+  { keys: ["당일", "오늘"], label: "당일등락", unit: "%", get: (it) => Number(it.changePct), dir: "min" },
+  { keys: ["1개월", "한달", "월간"], label: "1개월", unit: "%", get: (it) => Number(it.monthChangePct), dir: "min" },
+  { keys: ["1주", "주간"], label: "1주", unit: "%", get: (it) => Number(it.weekChangePct), dir: "min" },
+  { keys: ["rs"], label: "RS", unit: "", get: (it) => Number(it.rsScore), dir: "min" },
+];
+
+function nlScaleCap(v, unit) {
+  if (unit === "조" || unit === "t") return v * 1000;
+  if (unit === "억") return v * 0.1;
+  return v;
+}
+
+function nlDirFromText(s) {
+  if (/<=|≤|이하|미만|아래|이내|under|below/.test(s)) return "max";
+  if (/>=|≥|이상|초과|위|넘|over|above/.test(s)) return "min";
+  if (s.includes("<")) return "max";
+  if (s.includes(">")) return "min";
+  return null;
+}
+
+function nlExtractMetric(text, metric) {
+  for (const key of metric.keys) {
+    const k = key.toLowerCase();
+    let startWin = -1;
+    if (/^[\x00-\x7f]+$/.test(k)) {
+      const re = new RegExp("(^|[^a-z0-9])" + k.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![a-z])", "i");
+      const m = re.exec(text);
+      if (m) startWin = m.index + m[0].length;
+    } else {
+      const i = text.indexOf(k);
+      if (i >= 0) startWin = i + k.length;
+    }
+    if (startWin < 0) continue;
+    const win = text.slice(startWin, startWin + 18);
+    const m2 = win.match(/^\s*(<=|>=|≤|≥|이하|미만|이상|초과|under|below|over|above)?\s*(-?\d+(?:\.\d+)?)\s*(%|배|조|억|b|t|x)?\s*(이하|미만|이상|초과|아래|위|넘는|이내|under|below|over|above)?/i);
+    if (m2 && m2[2] != null) {
+      let value = parseFloat(m2[2]);
+      const unit = (m2[3] || "").toLowerCase();
+      if (metric.cap) value = nlScaleCap(value, unit);
+      const dir = nlDirFromText(((m2[1] || "") + " " + (m2[4] || "")).trim()) || metric.dir;
+      return { value, dir };
+    }
+  }
+  return null;
+}
+
+function parseNlQuery(rawText) {
+  const text = String(rawText || "").toLowerCase().trim();
+  if (!text) return { conditions: [], warnings: [], error: "검색할 문장을 입력하세요." };
+  const conditions = [];
+  const warnings = [];
+  NL_SECTORS.forEach((s) => {
+    if (s.kw.some((k) => text.includes(k.toLowerCase()))) conditions.push({ label: s.label, test: s.test });
+  });
+  const usedLabels = new Set();
+  NL_METRICS.forEach((metric) => {
+    if (usedLabels.has(metric.label)) return;
+    const r = nlExtractMetric(text, metric);
+    if (r && Number.isFinite(r.value)) {
+      usedLabels.add(metric.label);
+      const get = metric.get;
+      const { value, dir } = r;
+      conditions.push({
+        label: `${metric.label} ${dir === "max" ? "≤" : "≥"} ${value}${metric.unit || ""}`,
+        sortKey: get, sortDir: dir,
+        test: (it, f) => { const v = get(it, f); return Number.isFinite(v) && (dir === "max" ? v <= value : v >= value); }
+      });
+    }
+  });
+  NL_FLAGS.forEach((fl) => {
+    if (fl.kw.some((k) => text.includes(k.toLowerCase()))) conditions.push({ label: fl.label, test: fl.test });
+  });
+  if (text.includes("배당")) warnings.push("배당 데이터가 없어 배당 조건은 검색에 반영되지 않았습니다.");
+  return { conditions, warnings, error: conditions.length ? "" : "이해할 수 있는 조건을 찾지 못했어요. 아래 예시를 참고해 주세요." };
+}
+
+function runNlScreener() {
+  const input = byId("nlQuery");
+  const chips = byId("nlChips");
+  const meta = byId("nlMeta");
+  const wrap = byId("nlResultsWrap");
+  const body = byId("nlResults");
+  if (!input || !body || !wrap) return;
+  const parsed = parseNlQuery(input.value);
+  if (chips) {
+    chips.innerHTML = parsed.conditions.map((c) => `<span class="nl-chip">${escapeHtml(c.label)}</span>`).join("")
+      + parsed.warnings.map((w) => `<span class="nl-chip nl-chip-warn">${escapeHtml(w)}</span>`).join("");
+  }
+  if (parsed.error) {
+    if (meta) meta.textContent = parsed.error;
+    wrap.hidden = true;
+    body.innerHTML = "";
+    return;
+  }
+  const universe = (data.stocks || []).filter((s) => s && s.sector !== "EXCHANGE TRADED FUNDS");
+  let rows = universe.filter((it) => {
+    const f = mapFundamentalsFor(it.ticker) || {};
+    return parsed.conditions.every((c) => c.test(it, f));
+  });
+  const sorter = parsed.conditions.find((c) => c.sortKey);
+  if (sorter) {
+    rows.sort((a, b) => {
+      const av = sorter.sortKey(a, mapFundamentalsFor(a.ticker) || {});
+      const bv = sorter.sortKey(b, mapFundamentalsFor(b.ticker) || {});
+      const an = Number.isFinite(av) ? av : (sorter.sortDir === "max" ? Infinity : -Infinity);
+      const bn = Number.isFinite(bv) ? bv : (sorter.sortDir === "max" ? Infinity : -Infinity);
+      return sorter.sortDir === "max" ? an - bn : bn - an;
+    });
+  } else {
+    rows.sort((a, b) => Number(b.rsScore) - Number(a.rsScore));
+  }
+  const total = rows.length;
+  rows = rows.slice(0, 100);
+  if (meta) meta.textContent = total ? `${total.toLocaleString()}개 종목 일치 (상위 ${rows.length}개 표시)` : "조건에 맞는 종목이 없습니다.";
+  wrap.hidden = !rows.length;
+  body.innerHTML = rows.map((it) => {
+    const f = mapFundamentalsFor(it.ticker) || {};
+    const pe = Number(f.pe != null ? f.pe : f.forwardPE);
+    return `<tr>
+      <td>${watchStarButton(it.ticker)}</td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(it.ticker)}">${escapeHtml(it.ticker)}</button></td>
+      <td>${escapeHtml(it.company)}</td>
+      <td>${escapeHtml(it.sector)}</td>
+      <td class="${cls(it.changePct)}">${fmtPct(it.changePct)}</td>
+      <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>
+      <td>${it.rsScore}</td>
+      <td>${Number.isFinite(Number(it.rsi14)) ? it.rsi14 : "-"}</td>
+      <td>${Number.isFinite(pe) ? pe.toFixed(1) : "-"}</td>
+      <td>$${Number(it.marketCapB || 0).toFixed(1)}B</td>
+      <td>${signalFor(it)}</td>
+    </tr>`;
+  }).join("");
+  body.querySelectorAll(".ticker-link").forEach((btn) => btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true })));
+}
+
+function setupNlScreener() {
+  const run = byId("nlRun");
+  if (!run || run.dataset.bound) return;
+  run.dataset.bound = "1";
+  run.addEventListener("click", runNlScreener);
+  byId("nlQuery")?.addEventListener("keydown", (e) => { if (e.key === "Enter") runNlScreener(); });
+  byId("nlClear")?.addEventListener("click", () => {
+    const q = byId("nlQuery"); if (q) q.value = "";
+    if (byId("nlChips")) byId("nlChips").innerHTML = "";
+    if (byId("nlResults")) byId("nlResults").innerHTML = "";
+    if (byId("nlResultsWrap")) byId("nlResultsWrap").hidden = true;
+    if (byId("nlMeta")) byId("nlMeta").textContent = "문장을 입력하고 검색을 눌러보세요.";
+  });
+  const ex = byId("nlExamples");
+  if (ex) {
+    ex.innerHTML = NL_EXAMPLES.map((q) => `<button type="button" class="nl-example" data-q="${escapeHtml(q)}">${escapeHtml(q)}</button>`).join("");
+    ex.querySelectorAll(".nl-example").forEach((b) => b.addEventListener("click", () => {
+      const q = byId("nlQuery"); if (q) q.value = b.dataset.q; runNlScreener();
+    }));
+  }
 }
 
 function setupScreenerEvents() {

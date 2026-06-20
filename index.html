@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260620h">
+    <link rel="stylesheet" href="styles.css?v=20260620i">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -804,6 +804,29 @@
           <h2>종목 스크리너</h2>
           <p>조건에 맞는 종목을 표로 검색합니다. 결과에서 ★를 눌러 관심종목에 추가할 수 있습니다.</p>
         </div>
+        <section class="nl-screener" aria-labelledby="nlScreenerTitle">
+          <div class="nl-screener-head">
+            <span class="daily-action-kicker">AI 자연어 검색</span>
+            <h3 id="nlScreenerTitle">문장으로 종목 찾기</h3>
+            <p>조건을 한국어/영어 문장으로 입력하면 자동 해석해 검색합니다. 예: "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주".</p>
+          </div>
+          <div class="nl-screener-bar">
+            <input id="nlQuery" type="search" placeholder="예: RSI 30 이하 반도체 RS 70 이상" autocomplete="off">
+            <button type="button" id="nlRun">검색</button>
+            <button type="button" class="ghost" id="nlClear">지움</button>
+          </div>
+          <div class="nl-examples" id="nlExamples"></div>
+          <div class="nl-chips" id="nlChips" aria-live="polite"></div>
+          <p class="muted nl-meta" id="nlMeta">문장을 입력하고 검색을 눌러보세요.</p>
+          <div class="table-wrap" id="nlResultsWrap" hidden>
+            <table class="compact-table screener-table">
+              <thead>
+                <tr><th></th><th>티커</th><th>회사</th><th>섹터</th><th>당일</th><th>1M</th><th>RS</th><th>RSI</th><th>PER</th><th>시총</th><th>신호</th></tr>
+              </thead>
+              <tbody id="nlResults"></tbody>
+            </table>
+          </div>
+        </section>
         <section class="saved-screener-panel" aria-labelledby="savedScreenerTitle">
           <div class="saved-screener-head">
             <div>
@@ -1657,6 +1680,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620k"></script>
+    <script src="app.js?v=20260620l"></script>
   </body>
 </html>

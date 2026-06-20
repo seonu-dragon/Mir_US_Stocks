@@ -648,14 +648,26 @@ const FX_LIST = [
 // CNN Fear & Greed index (server-side fetch avoids browser CORS).
 async function fetchFng() {
   try {
-    const r = await fetch("https://production.fear-and-greed.cnn.io/data/index", {
-      headers: { ...UA, Referer: "https://www.cnn.com/", Origin: "https://www.cnn.com" },
+    const r = await fetch("https://production.dataviz.cnn.io/index/fearandgreed/graphdata", {
+      headers: {
+        ...UA,
+        Accept: "application/json, text/plain, */*",
+        Referer: "https://edition.cnn.com/markets/fear-and-greed",
+        Origin: "https://edition.cnn.com",
+      },
     });
     if (!r.ok) return null;
     const data = await r.json();
     const fg = data && data.fear_and_greed;
     if (!fg || fg.score == null) return null;
-    return { score: Math.round(Number(fg.score)), rating: String(fg.rating || "") };
+    return {
+      score: Math.round(Number(fg.score)),
+      rawScore: Number(fg.score),
+      rating: String(fg.rating || ""),
+      timestamp: fg.timestamp || null,
+      previousClose: fg.previous_close == null ? null : Number(fg.previous_close),
+      source: "CNN",
+    };
   } catch (e) {
     return null;
   }

@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260620d">
+    <link rel="stylesheet" href="styles.css?v=20260620f">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -654,7 +654,7 @@
           </label>
           <button id="searchButton">분석</button>
         </div>
-        <div class="workspace two-col">
+        <div class="workspace two-col stock-analysis-top">
           <div class="chart-card">
             <div class="section-title">
               <h2 id="chartTitle">종목 차트</h2>
@@ -780,21 +780,24 @@
               </details>
             </div>
             <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
-            <section class="stock-events-card" id="stockEvents"></section>
-            <section class="earnings-reaction-card" id="earningsReaction"></section>
-            <div class="fundamental-table" id="fundamentalTable"></div>
           </div>
           <div class="search-side-col">
             <aside class="detail-panel" id="searchFacts"></aside>
-            <section class="move-explanation-card" id="moveExplanation" aria-live="polite"></section>
             <section class="range52-card" id="range52Bar"></section>
             <section class="news-card" id="searchNews"></section>
-            <section class="earnings-calendar-card" id="stockEarnings"></section>
-            <section class="smart-money-card" id="stockSmartMoney"></section>
-            <section class="congress-trades-card" id="stockCongress"></section>
             <section class="data-quality-card" id="dataQualityPanel"></section>
           </div>
         </div>
+        <div class="analysis-balanced-grid analysis-insight-grid">
+          <section class="move-explanation-card" id="moveExplanation" aria-live="polite"></section>
+          <section class="investment-checklist-card" id="investmentChecklist" aria-live="polite"></section>
+        </div>
+        <section class="stock-events-card" id="stockEvents"></section>
+        <div class="analysis-balanced-grid analysis-smart-grid">
+          <section class="smart-money-card" id="stockSmartMoney"></section>
+          <section class="congress-trades-card" id="stockCongress"></section>
+        </div>
+        <div class="fundamental-table analysis-fundamentals" id="fundamentalTable"></div>
         </div>
 
         <div class="sub-panel" id="sub-screener">
@@ -802,6 +805,24 @@
           <h2>종목 스크리너</h2>
           <p>조건에 맞는 종목을 표로 검색합니다. 결과에서 ★를 눌러 관심종목에 추가할 수 있습니다.</p>
         </div>
+        <section class="saved-screener-panel" aria-labelledby="savedScreenerTitle">
+          <div class="saved-screener-head">
+            <div>
+              <h3 id="savedScreenerTitle">저장형 스크리너</h3>
+              <p>현재 조건을 저장하고 새 스냅샷에서 신규 편입·이탈 종목을 확인합니다.</p>
+            </div>
+            <span class="saved-screener-badge" id="savedScreenerBadge">저장 0개</span>
+          </div>
+          <div class="saved-screener-controls">
+            <label class="grow">저장 조건<select id="savedScreenerSelect"><option value="">저장된 조건 선택</option></select></label>
+            <label class="grow">이름<input id="savedScreenerName" type="text" maxlength="30" placeholder="예: 강한 추세 + 거래량"></label>
+            <button type="button" id="savedScreenerSave">현재 조건 저장</button>
+            <button type="button" class="ghost" id="savedScreenerDelete" disabled>삭제</button>
+          </div>
+          <div class="saved-screener-delta" id="savedScreenerDelta" aria-live="polite">
+            <p class="muted">조건을 저장하면 다음 스냅샷부터 편입·이탈을 비교합니다.</p>
+          </div>
+        </section>
         <div class="toolbar screener-toolbar">
           <label>
             유니버스
@@ -1252,6 +1273,19 @@
           <h2>마켓 데이터</h2>
           <p>주요 지수·국가·채권·원자재·환율을 한눈에 봅니다. 지수/ETF는 하루 1회 스냅샷, 환율은 실시간으로 가져옵니다.</p>
         </div>
+        <section class="data-trust-center" aria-labelledby="dataTrustTitle">
+          <div class="data-trust-head">
+            <div>
+              <span class="daily-action-kicker">DATA TRUST</span>
+              <h2 id="dataTrustTitle">데이터 신뢰도 센터</h2>
+              <p>출처별 기준 시각, 지연 가능성과 현재 연결 상태를 한곳에서 확인합니다.</p>
+            </div>
+            <button type="button" class="ghost compact-btn" id="dataTrustRefresh">상태 다시 확인</button>
+          </div>
+          <div class="data-trust-summary" id="dataTrustSummary"></div>
+          <div class="data-trust-grid" id="dataTrustGrid" aria-live="polite"></div>
+          <p class="data-trust-note">상태는 브라우저에 로드된 최신 파일을 기준으로 계산합니다. 실시간 원본 장애 여부를 직접 보장하지는 않습니다.</p>
+        </section>
         <div class="markets-tables" id="marketsTables"></div>
       </section>
 
@@ -1623,6 +1657,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620f"></script>
+    <script src="app.js?v=20260620i"></script>
   </body>
 </html>

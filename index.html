@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260620a">
+    <link rel="stylesheet" href="styles.css?v=20260620b">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -662,6 +662,21 @@
                     <button type="button" id="chartReset" title="초기화">Reset</button>
                   </div>
                 </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">유형</span>
+                  <div class="segmented" id="chartTypeControls" title="차트 유형">
+                    <button type="button" class="is-active" data-ctype="candle">캔들</button>
+                    <button type="button" data-ctype="line">라인</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">그리기</span>
+                  <div class="icon-controls" id="chartDrawControls" title="추세선·피보나치 (차트에서 드래그)">
+                    <button type="button" data-draw="trend" title="추세선">╱</button>
+                    <button type="button" data-draw="fib" title="피보나치 되돌림">≣</button>
+                    <button type="button" id="chartDrawClear" title="그린 선 지우기">✕</button>
+                  </div>
+                </div>
               </div>
               <div class="chart-compare-bar">
                 <label class="grow">
@@ -896,6 +911,26 @@
           <h2>관심 리스트</h2>
           <p>브라우저에 저장됩니다. 상단 관심종목 바와 동기화됩니다.</p>
         </div>
+
+        <section class="portfolio-card" id="portfolioCard">
+          <div class="pf-head">
+            <h3>📊 가상 포트폴리오</h3>
+            <span class="muted">평단가·수량을 입력해 손익·섹터 분산·일간 기여도를 확인하세요. (이 브라우저에 저장)</span>
+          </div>
+          <div class="pf-input">
+            <input id="pfTicker" placeholder="티커 (예: NVDA)" autocomplete="off">
+            <input id="pfQty" type="number" min="0" step="any" placeholder="수량">
+            <input id="pfCost" type="number" min="0" step="any" placeholder="평단가 $">
+            <button type="button" id="pfAdd">추가</button>
+            <button type="button" class="ghost" id="pfClear">초기화</button>
+          </div>
+          <div class="pf-summary" id="pfSummary"></div>
+          <div class="pf-body">
+            <div class="pf-table-wrap" id="pfTable"></div>
+            <div class="pf-pie" id="pfPie"></div>
+          </div>
+        </section>
+
         <div class="watchlist-stats" id="watchlistStats"></div>
         <div class="watch-alert-panel" id="watchAlertPanel">
           <div class="watch-alert-head">
@@ -1175,6 +1210,11 @@
           <p>내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.</p>
         </div>
         <div class="signals-grid" id="signalsGrid"></div>
+        <div class="section-title" style="margin-top:24px">
+          <h2>📈 집계 인사이트</h2>
+          <p>개별 거래를 종합한 매크로 트렌드입니다 (최근 30일 기준).</p>
+        </div>
+        <div class="agg-grid" id="aggInsights"></div>
       </section>
 
       <!-- ==================== 마켓 데이터 탭 ==================== -->
@@ -1554,6 +1594,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620c"></script>
+    <script src="app.js?v=20260620d"></script>
   </body>
 </html>

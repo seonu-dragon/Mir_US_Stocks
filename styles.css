@@ -3341,18 +3341,18 @@ footer {
   /* Chart controls: compact tap targets */
   .chart-controls { gap: 6px; }
 
+  /* 차트 컨트롤: 풀폭 스택(세로로 김) → 인라인 줄바꿈(컴팩트) */
+  .chart-command-bar { gap: var(--space-2); }
   .chart-command-main {
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 10px 14px;
   }
-
-  .chart-command-main .control-group {
-    width: 100%;
-  }
-
+  .chart-command-main .control-group { width: auto; }
   .chart-command-main .segmented,
   .chart-command-main .icon-controls {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
   }
 
   .chart-settings-grid {
@@ -3360,7 +3360,7 @@ footer {
   }
 
   .check-label { font-size: var(--fs-cap); height: 28px; }
-  .segmented button, .icon-controls button { height: 30px; min-width: 34px; padding: 0 8px; font-size: var(--fs-label); }
+  .segmented button, .icon-controls button { height: 32px; min-width: 36px; padding: 0 9px; font-size: var(--fs-label); }
 
   /* Stack multi-column grids */
   .ai-briefing-grid,

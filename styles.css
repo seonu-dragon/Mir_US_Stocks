@@ -17,7 +17,7 @@
   --shadow: 0 10px 28px rgba(20, 30, 50, 0.08);
   --link: #1d4ed8;
   --chip-bg: #eff6ff;
-  --chip-border: #bfdbfe;
+  --chip-border: var(--chip-border);
   --chat-safe-bottom: 61px;
 
   /* 타이포그래피 스케일 (관심 리스트 · 종목 분석 페이지 공용) */
@@ -3488,7 +3488,7 @@ footer {
 .badge-korea {
   background: var(--chip-bg);
   color: #2563eb;
-  border: 1px solid #dbeafe;
+  border: 1px solid var(--line);
 }
 
 .badge-us {
@@ -4816,7 +4816,7 @@ footer {
   bottom: -7px;
   border-left: 7px solid transparent;
   border-right: 7px solid transparent;
-  border-top: 7px solid #fff;
+  border-top: 7px solid var(--panel);
   filter: drop-shadow(0 1px 0 var(--line));
 }
 
@@ -5029,7 +5029,7 @@ footer {
   height: 28px;
   min-width: 0;
   padding: 0 9px;
-  border-color: #cbd5e1;
+  border-color: var(--line);
   background: var(--panel);
   color: var(--text);
   font-size: 12px;
@@ -5155,7 +5155,7 @@ footer {
 .event-action {
   justify-self: start;
   margin-top: 2px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--chip-border);
   border-radius: 999px;
   background: var(--chip-bg);
   color: #1d4ed8;
@@ -5512,7 +5512,7 @@ footer {
   min-height: 36px;
   margin-bottom: 6px;
   padding: 7px 9px;
-  border: 1px solid #dbe3ef;
+  border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
   color: var(--text);
@@ -5990,7 +5990,7 @@ footer {
   align-items: center;
   gap: 8px;
   max-width: 100%;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--chip-border);
   border-radius: 999px;
   background: var(--chip-bg);
   color: var(--text);
@@ -6418,7 +6418,7 @@ footer {
 .daily-action-board {
   margin: 14px 0 16px;
   padding: 18px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--chip-border);
   border-radius: 14px;
   background: linear-gradient(135deg, #eff6ff 0%, #ffffff 46%, #f8fafc 100%);
   box-shadow: var(--shadow);
@@ -6625,7 +6625,7 @@ footer {
 /* Evidence-based price move explanation */
 .move-explanation-card {
   padding: 14px;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--line);
   border-radius: 10px;
   background: linear-gradient(155deg, #f8fafc, #ffffff);
 }
@@ -6870,7 +6870,7 @@ footer {
   padding: 14px 16px;
   border-radius: 10px;
   background: var(--chip-bg);
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--chip-border);
   text-align: center;
 }
 
@@ -7066,7 +7066,7 @@ footer {
 }
 
 .community-post:hover {
-  border-color: #c7d2e5;
+  border-color: var(--line);
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.09);
 }
 
@@ -7884,7 +7884,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .saved-screener-panel {
   margin-bottom: 14px;
   padding: 14px;
-  border: 1px solid #bfdbfe;
+  border: 1px solid var(--chip-border);
   border-radius: 12px;
   background: linear-gradient(145deg, #eff6ff, #fff 55%);
 }
@@ -7904,7 +7904,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .saved-screener-controls select,
 .saved-screener-controls input { width: 100%; min-height: 38px; border: 1px solid var(--line); border-radius: 7px; background: var(--panel); color: var(--text); padding: 7px 9px; }
 .saved-screener-controls button { min-height: 38px; white-space: nowrap; }
-.saved-screener-delta { margin-top: 10px; padding-top: 10px; border-top: 1px solid #dbeafe; }
+.saved-screener-delta { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); }
 .saved-screener-delta p { margin: 0; font-size: 11px; }
 .screener-delta-meta strong,
 .screener-delta-meta span { display: block; }
@@ -7953,7 +7953,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .data-trust-note { margin: 12px 0 0; color: var(--muted); font-size: 10px; }
 
 /* 투자 체크리스트 */
-.investment-checklist-card { padding: 14px; border: 1px solid #cbd5e1; border-radius: 10px; background: var(--panel); }
+.investment-checklist-card { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); }
 .investment-check-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .investment-check-head span { color: var(--primary); font-size: 9px; font-weight: 800; letter-spacing: .12em; }
 .investment-check-head h3 { margin: 2px 0 0; font-size: 16px; }
@@ -8062,7 +8062,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
   justify-content: space-between;
   gap: 8px;
   padding-top: 9px;
-  border-top: 1px solid #dbeafe;
+  border-top: 1px solid var(--line);
 }
 .earnings-inline-head strong { font-size: 12px; }
 .earnings-inline-head span { color: var(--muted); font-size: 10px; }
@@ -8103,7 +8103,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .earnings-inline-reaction summary span { margin-left: auto; color: var(--muted); font-size: 9px; }
 .event-card-earnings .table-wrap { margin: 0; border-top: 1px solid var(--line); }
 .event-card-earnings .earnings-empty,
-.event-card-earnings .earnings-reaction-empty { margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid #dbeafe; font-size: 10px; }
+.event-card-earnings .earnings-reaction-empty { margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--line); font-size: 10px; }
 
 @media (max-width: 1040px) {
   .stock-analysis-top { grid-template-columns: minmax(0, 1fr) 320px !important; }
@@ -8504,6 +8504,7 @@ html[data-theme="dark"] .nl-screener {
 html[data-theme="dark"] .daily-action-card,
 html[data-theme="dark"] .event-community-preview,
 html[data-theme="dark"] .event-card-earnings .earnings-upcoming,
+html[data-theme="dark"] .earnings-inline-history,
 html[data-theme="dark"] .earnings-inline-reaction {
   background: var(--surface-2);
 }

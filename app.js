@@ -2455,8 +2455,10 @@ function setupEvents() {
       closeConstituentPanel();
       if (btn.dataset.sub === "etf-rs") renderSectorEtfRelativeStrength();
       if (btn.dataset.sub === "etf-lev") renderLeveragedEtfPage();
+      if (btn.dataset.sub === "rrg") renderRrg();
     });
   });
+  byId("rrgTail")?.addEventListener("change", renderRrg);
 
   const searchSubTabs = byId("searchSubTabs");
   if (searchSubTabs) {
@@ -7011,6 +7013,7 @@ function renderPortfolio() {
 
 function renderBulk() {
   renderPortfolio();
+  renderCorrelationMatrix();
   const minRs = Number(byId("bulkRs").value || 0);
   const input = byId("bulkInput");
   if (input && !input.value.trim()) input.value = watchlist.join(", ");
@@ -8295,6 +8298,189 @@ function levEtfCardHtml(item) {
       ${hasLive ? "" : `<p class="lev-etf-note muted">스냅샷 미포함 · 카탈로그 참고용</p>`}
     </article>
   `;
+}
+
+// ===== RRG · 섹터 상대회전 그래프 (SPY 대비) =====
+const RRG_QUADRANTS = [
+  { key: "leading", label: "주도 (Leading)", color: "#16a34a" },
+  { key: "weakening", label: "둔화 (Weakening)", color: "#d97706" },
+  { key: "lagging", label: "소외 (Lagging)", color: "#dc2626" },
+  { key: "improving", label: "회복 (Improving)", color: "#2563eb" },
+];
+
+function rrgBenchmarkSeries() {
+  for (const t of ["SPY", "VOO", "IVV", "QQQ"]) {
+    const s = stockByTicker(t);
+    if (s && Array.isArray(s.closeSeries) && s.closeSeries.length >= 40) return { ticker: t, series: s.closeSeries };
+  }
+  return null;
+}
+
+function rrgComputePoint(etfCloses, benchCloses, tailLen) {
+  const L = Math.min(etfCloses.length, benchCloses.length);
+  if (L < 40) return null;
+  const e = etfCloses.slice(-L);
+  const b = benchCloses.slice(-L);
+  const rel = [];
+  for (let i = 0; i < L; i++) rel.push(b[i] ? e[i] / b[i] : NaN);
+  const sma = (arr, idx, w) => {
+    let sum = 0, count = 0;
+    for (let k = idx - w + 1; k <= idx; k++) { if (k >= 0 && Number.isFinite(arr[k])) { sum += arr[k]; count++; } }
+    return count ? sum / count : NaN;
+  };
+  const ratio = rel.map((v, i) => { const m = sma(rel, i, 20); return (Number.isFinite(v) && m) ? (v / m) * 100 : NaN; });
+  const mom = ratio.map((v, i) => { const m = sma(ratio, i, 10); return (Number.isFinite(v) && m) ? (v / m) * 100 : NaN; });
+  const last = ratio.length - 1;
+  if (!Number.isFinite(ratio[last]) || !Number.isFinite(mom[last])) return null;
+  const tail = [];
+  for (let i = Math.max(0, ratio.length - tailLen); i < ratio.length; i++) {
+    if (Number.isFinite(ratio[i]) && Number.isFinite(mom[i])) tail.push({ x: ratio[i], y: mom[i] });
+  }
+  return { x: ratio[last], y: mom[last], tail };
+}
+
+function rrgQuadrant(x, y) {
+  if (x >= 100 && y >= 100) return "leading";
+  if (x >= 100 && y < 100) return "weakening";
+  if (x < 100 && y < 100) return "lagging";
+  return "improving";
+}
+
+function renderRrg() {
+  const wrap = byId("rrgWrap");
+  const legendEl = byId("rrgLegend");
+  const metaEl = byId("rrgMeta");
+  if (!wrap) return;
+  const bench = rrgBenchmarkSeries();
+  if (!bench) {
+    wrap.innerHTML = `<p class="muted">벤치마크(SPY 등) 가격 데이터를 찾지 못했습니다.</p>`;
+    if (legendEl) legendEl.innerHTML = "";
+    return;
+  }
+  const tailLen = Number(byId("rrgTail")?.value || 5);
+  const points = [];
+  SECTOR_ETFS.forEach((etf) => {
+    const s = stockByTicker(etf.ticker);
+    if (!s || !Array.isArray(s.closeSeries) || s.closeSeries.length < 40) return;
+    const p = rrgComputePoint(s.closeSeries, bench.series, tailLen);
+    if (p) points.push({ ...p, ticker: etf.ticker, name: etf.name, quad: rrgQuadrant(p.x, p.y) });
+  });
+  if (!points.length) {
+    wrap.innerHTML = `<p class="muted">RRG를 그릴 ETF 가격 데이터가 부족합니다.</p>`;
+    if (legendEl) legendEl.innerHTML = "";
+    return;
+  }
+  const allX = points.flatMap((p) => [p.x, ...p.tail.map((t) => t.x)]);
+  const allY = points.flatMap((p) => [p.y, ...p.tail.map((t) => t.y)]);
+  const maxDev = Math.max(2, ...allX.map((v) => Math.abs(v - 100)), ...allY.map((v) => Math.abs(v - 100))) * 1.18;
+  const lo = 100 - maxDev, hi = 100 + maxDev;
+  const W = 640, H = 520, pad = 46;
+  const sx = (x) => pad + ((x - lo) / (hi - lo)) * (W - pad * 2);
+  const sy = (y) => H - pad - ((y - lo) / (hi - lo)) * (H - pad * 2);
+  const cx = sx(100), cy = sy(100);
+  const quads = `
+    <rect x="${cx}" y="${pad}" width="${W - pad - cx}" height="${cy - pad}" fill="rgba(34,197,94,0.08)"/>
+    <rect x="${cx}" y="${cy}" width="${W - pad - cx}" height="${H - pad - cy}" fill="rgba(245,158,11,0.08)"/>
+    <rect x="${pad}" y="${cy}" width="${cx - pad}" height="${H - pad - cy}" fill="rgba(239,68,68,0.08)"/>
+    <rect x="${pad}" y="${pad}" width="${cx - pad}" height="${cy - pad}" fill="rgba(59,130,246,0.08)"/>`;
+  const quadLabels = `
+    <text x="${W - pad - 6}" y="${pad + 15}" text-anchor="end" class="rrg-quad-label" fill="#16a34a">주도</text>
+    <text x="${W - pad - 6}" y="${H - pad - 7}" text-anchor="end" class="rrg-quad-label" fill="#d97706">둔화</text>
+    <text x="${pad + 6}" y="${H - pad - 7}" class="rrg-quad-label" fill="#dc2626">소외</text>
+    <text x="${pad + 6}" y="${pad + 15}" class="rrg-quad-label" fill="#2563eb">회복</text>`;
+  const axes = `
+    <line x1="${pad}" y1="${cy}" x2="${W - pad}" y2="${cy}" stroke="#cbd5e1" stroke-width="1"/>
+    <line x1="${cx}" y1="${pad}" x2="${cx}" y2="${H - pad}" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="${W - pad}" y="${cy - 7}" text-anchor="end" class="rrg-axis-label">상대강도 →</text>
+    <text x="${cx + 6}" y="${pad + 2}" class="rrg-axis-label">상대모멘텀 ↑</text>`;
+  const dots = points.map((p) => {
+    const q = RRG_QUADRANTS.find((qq) => qq.key === p.quad);
+    const color = q ? q.color : "#475569";
+    const tailPath = p.tail.length > 1
+      ? `<polyline points="${p.tail.map((t) => `${sx(t.x).toFixed(1)},${sy(t.y).toFixed(1)}`).join(" ")}" fill="none" stroke="${color}" stroke-width="1.4" stroke-opacity="0.45"/>`
+      : "";
+    const px = sx(p.x), py = sy(p.y);
+    return `${tailPath}<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5" fill="${color}"/><text x="${(px + 7).toFixed(1)}" y="${(py + 3).toFixed(1)}" class="rrg-dot-label">${escapeHtml(p.ticker)}</text>`;
+  }).join("");
+  wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="rrg-svg" role="img" aria-label="RRG 섹터 회전 그래프">${quads}${axes}${quadLabels}${dots}</svg>`;
+  if (metaEl) metaEl.textContent = `벤치마크 ${bench.ticker} · ${points.length}개 섹터 ETF`;
+  if (legendEl) {
+    const byQuad = {};
+    points.forEach((p) => { (byQuad[p.quad] = byQuad[p.quad] || []).push(p.ticker); });
+    legendEl.innerHTML = RRG_QUADRANTS.map((q) => `
+      <div class="rrg-leg-item">
+        <span class="rrg-leg-dot" style="background:${q.color}"></span>
+        <div><strong>${q.label}</strong><small>${(byQuad[q.key] || []).join(", ") || "—"}</small></div>
+      </div>`).join("");
+  }
+}
+
+// ===== 관심종목 상관관계 히트맵 =====
+function corrPearson(a, b) {
+  const n = Math.min(a.length, b.length);
+  if (n < 10) return NaN;
+  let sa = 0, sb = 0;
+  for (let i = 0; i < n; i++) { sa += a[i]; sb += b[i]; }
+  const ma = sa / n, mb = sb / n;
+  let num = 0, da = 0, db = 0;
+  for (let i = 0; i < n; i++) { const x = a[i] - ma, y = b[i] - mb; num += x * y; da += x * x; db += y * y; }
+  const den = Math.sqrt(da * db);
+  return den ? num / den : NaN;
+}
+
+function corrDailyReturns(closes, lookback) {
+  const arr = closes.slice(-lookback - 1);
+  const out = [];
+  for (let i = 1; i < arr.length; i++) { if (arr[i - 1]) out.push(arr[i] / arr[i - 1] - 1); }
+  return out;
+}
+
+function corrColor(c) {
+  if (!Number.isFinite(c)) return "#f1f5f9";
+  if (c >= 0) return `rgba(239,68,68,${(0.10 + 0.80 * Math.min(1, c)).toFixed(2)})`;
+  return `rgba(37,99,235,${(0.10 + 0.80 * Math.min(1, -c)).toFixed(2)})`;
+}
+
+function renderCorrelationMatrix() {
+  const box = byId("corrMatrix");
+  const meta = byId("corrMeta");
+  if (!box) return;
+  const lookback = 60;
+  const tickers = (watchlist || []).slice(0, 14).filter((t) => {
+    const s = stockByTicker(t);
+    return s && Array.isArray(s.closeSeries) && s.closeSeries.length >= 20;
+  });
+  if (tickers.length < 2) {
+    box.innerHTML = `<p class="muted">관심종목을 2개 이상 추가하면 상관관계가 표시됩니다. (가격 이력이 있는 종목 기준)</p>`;
+    if (meta) meta.textContent = "";
+    return;
+  }
+  const returns = {};
+  tickers.forEach((t) => { returns[t] = corrDailyReturns(stockByTicker(t).closeSeries, lookback); });
+  const head = `<th class="corr-corner"></th>` + tickers.map((t) => `<th class="corr-th">${escapeHtml(t)}</th>`).join("");
+  const bodyRows = tickers.map((rt) => {
+    const cells = tickers.map((ct) => {
+      if (rt === ct) return `<td class="corr-cell corr-diag">1.00</td>`;
+      const c = corrPearson(returns[rt], returns[ct]);
+      const txt = Number.isFinite(c) ? c.toFixed(2) : "–";
+      const strong = Number.isFinite(c) && Math.abs(c) >= 0.6;
+      return `<td class="corr-cell${strong ? " corr-strong" : ""}" style="background:${corrColor(c)}" title="${escapeHtml(rt)} vs ${escapeHtml(ct)}: ${txt}">${txt}</td>`;
+    }).join("");
+    return `<tr><th class="corr-rowhead">${escapeHtml(rt)}</th>${cells}</tr>`;
+  }).join("");
+  box.innerHTML = `<table class="corr-table"><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  let sum = 0, cnt = 0, maxPair = null;
+  for (let i = 0; i < tickers.length; i++) {
+    for (let j = i + 1; j < tickers.length; j++) {
+      const c = corrPearson(returns[tickers[i]], returns[tickers[j]]);
+      if (Number.isFinite(c)) { sum += c; cnt++; if (!maxPair || c > maxPair.c) maxPair = { c, a: tickers[i], b: tickers[j] }; }
+    }
+  }
+  if (meta) {
+    meta.textContent = cnt
+      ? `최근 ${lookback}거래일 · 평균 상관 ${(sum / cnt).toFixed(2)}${maxPair ? ` · 최고 ${maxPair.a}–${maxPair.b} ${maxPair.c.toFixed(2)}` : ""}`
+      : `최근 ${lookback}거래일`;
+  }
 }
 
 function renderLeveragedEtfPage() {

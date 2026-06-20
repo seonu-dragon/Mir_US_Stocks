@@ -8855,3 +8855,97 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 /* F&G 게이지 바늘/허브: 테마 대응 색 (다크에서도 보이게) */
 .gauge-needle { stroke: var(--text); }
 .gauge-hub { fill: var(--text); }
+
+/* ============================================================
+   오늘의 액션 보드 ↔ 오늘의 뉴스 전환 (웹 전용)
+   ============================================================ */
+.action-mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.action-mode-switch button {
+  height: 30px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--muted);
+  font-size: var(--fs-cap);
+  font-weight: 800;
+  cursor: pointer;
+}
+.action-mode-switch button.is-active {
+  background: var(--panel);
+  color: var(--primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.daily-action-news { margin-top: 14px; }
+.action-news-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.action-news-head strong { font-size: var(--fs-body); }
+.action-news-switch { display: inline-flex; gap: 4px; }
+.action-news-switch button {
+  height: 28px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--panel);
+  color: var(--muted);
+  font-size: var(--fs-cap);
+  font-weight: 700;
+  cursor: pointer;
+}
+.action-news-switch button.is-active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+/* 카드뉴스 5장 한 줄 */
+.action-news-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.action-news-item {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel-soft);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.action-news-item img { display: block; width: 100%; height: auto; }
+.action-news-item:hover {
+  border-color: #93c5fd;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow);
+}
+
+/* 웹: 헤더 카드뉴스 캐러셀 숨김(액션 보드로 이동) */
+@media (min-width: 769px) {
+  #cardnewsHost,
+  #cardnewsSwitch { display: none !important; }
+}
+/* 모바일: 액션 보드는 기존대로 — 모드 스위치/뉴스 숨김(헤더 캐러셀 유지) */
+@media (max-width: 768px) {
+  .action-mode-switch { display: none; }
+  .daily-action-news { display: none !important; }
+}
+.daily-action-board.is-news .daily-action-head p { display: none; }

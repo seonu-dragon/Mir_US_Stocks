@@ -1048,6 +1048,7 @@ function upcomingActionRows() {
   const calendarRows = (calendarEventsCache || [])
     .map((event) => ({ event, date: calendarIsoFromEvent(event) }))
     .filter(({ date }) => date && date >= today)
+    .filter(({ event }) => calendarEventPassesFilters(event))
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 3)
     .map(({ event, date }) => {
@@ -1063,6 +1064,64 @@ function upcomingActionRows() {
     if (!item || !date || String(date) < today) return null;
     return `<button type="button" class="daily-action-row daily-action-schedule-row" data-action-ticker="${escapeHtml(ticker)}"><span><strong>${escapeHtml(ticker)} 실적</strong><small>${escapeHtml(String(date))}</small></span><em class="info">예정</em></button>`;
   }).filter(Boolean).slice(0, 3);
+}
+
+// ===== 액션 보드 ↔ 오늘의 뉴스 전환 (웹) =====
+let actionBoardMode = "actions";
+
+function renderActionNews() {
+  const box = byId("dailyActionNews");
+  if (!box) return;
+  const cn = data.cardNews || {};
+  const sets = {
+    us: cn.us && Array.isArray(cn.us.images) && cn.us.images.length ? cn.us : null,
+    kr: cn.kr && Array.isArray(cn.kr.images) && cn.kr.images.length ? cn.kr : null,
+  };
+  if (!sets.us && !sets.kr) {
+    box.innerHTML = `<p class="muted daily-action-empty">오늘 카드뉴스가 아직 준비되지 않았습니다.</p>`;
+    return;
+  }
+  if (!sets[cardnewsView]) cardnewsView = sets.us ? "us" : "kr";
+  const active = sets[cardnewsView];
+  const imgs = active.images;
+  const head = `
+    <div class="action-news-head">
+      <strong>${escapeHtml(active.title || "오늘의 카드뉴스")}</strong>
+      <div class="action-news-switch">
+        ${sets.us ? `<button type="button" data-cn="us" class="${cardnewsView === "us" ? "is-active" : ""}">미국</button>` : ""}
+        ${sets.kr ? `<button type="button" data-cn="kr" class="${cardnewsView === "kr" ? "is-active" : ""}">국내</button>` : ""}
+      </div>
+    </div>`;
+  const row = `<div class="action-news-row">` + imgs.map((src, i) => `
+    <button type="button" class="action-news-item" data-news-idx="${i}" title="크게 보기">
+      <img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 1}" loading="lazy">
+    </button>`).join("") + `</div>`;
+  box.innerHTML = head + row;
+  box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
+    if (btn.dataset.cn === cardnewsView) return;
+    cardnewsView = btn.dataset.cn;
+    renderActionNews();
+  }));
+  box.querySelectorAll("[data-news-idx]").forEach((btn) => btn.addEventListener("click", () => {
+    openLightbox(imgs, Number(btn.dataset.newsIdx));
+  }));
+}
+
+function setActionBoardMode(mode) {
+  actionBoardMode = mode === "news" ? "news" : "actions";
+  const isNews = actionBoardMode === "news";
+  const grid = byId("dailyActionGrid");
+  const news = byId("dailyActionNews");
+  const board = byId("dailyActionBoard");
+  const title = byId("dailyActionTitle");
+  const sw = byId("actionModeSwitch");
+  if (sw) sw.querySelectorAll("[data-action-mode]").forEach((b) =>
+    b.classList.toggle("is-active", b.dataset.actionMode === actionBoardMode));
+  if (grid) grid.hidden = isNews;
+  if (news) news.hidden = !isNews;
+  if (board) board.classList.toggle("is-news", isNews);
+  if (title) title.textContent = isNews ? "오늘의 뉴스" : "오늘의 액션 보드";
+  if (isNews) renderActionNews();
 }
 
 function filingActionRows() {
@@ -1102,6 +1161,12 @@ function renderActionBoard() {
 }
 
 function setupActionBoard() {
+  const modeSwitch = byId("actionModeSwitch");
+  if (modeSwitch && !modeSwitch.dataset.bound) {
+    modeSwitch.dataset.bound = "1";
+    modeSwitch.querySelectorAll("[data-action-mode]").forEach((b) =>
+      b.addEventListener("click", () => setActionBoardMode(b.dataset.actionMode)));
+  }
   const refresh = byId("dailyActionRefresh");
   if (!refresh || refresh.dataset.bound) return;
   refresh.dataset.bound = "1";
@@ -1109,6 +1174,7 @@ function setupActionBoard() {
     calendarLoaded = false;
     earningsCalendarCache = null;
     renderActionBoard();
+    if (actionBoardMode === "news") renderActionNews();
     loadCalendar();
     showAppToast("오늘의 확인 항목을 새로 불러옵니다");
   });
@@ -1259,6 +1325,7 @@ function setupCalendarFilters() {
         calendarImportanceFilters[key] = el.checked;
       }
       renderCalendarFiltered();
+      renderActionBoard();
     });
   });
   calendarFiltersReady = true;

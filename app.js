@@ -198,6 +198,7 @@ let compareTickers = [];
 const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
+const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v1";
 
 const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
 let watchlist = [];
@@ -225,7 +226,11 @@ function low52DistPct(item) {
   return (price / low - 1) * 100;
 }
 
-const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value).toFixed(1)}%`;
+const fmtPct = (value) => {
+  const n = Number(value) || 0;
+  const marker = n > 0 ? "▲ " : n < 0 ? "▼ " : "";
+  return `${marker}${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+};
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
 const byId = (id) => document.getElementById(id);
 
@@ -288,10 +293,13 @@ function boot() {
   setupLightbox();
   setupChatbot();
   renderSummary();
+  setupViewMode(route.get("tab"));
   setupTabs();
   setupFilters();
   setupTickerSearchHelpers();
   renderAll();
+  setupActionBoard();
+  loadCalendar();
   setupEvents();
   setupBriefingToggles();
   fetchMarketHeader();
@@ -931,6 +939,113 @@ function renderSummary() {
     fxCardHtml();
 }
 
+function actionBoardCard(title, hint, rows, emptyText, target) {
+  const body = rows.length ? rows.join("") : `<p class="daily-action-empty">${escapeHtml(emptyText)}</p>`;
+  return `
+    <article class="daily-action-card">
+      <div class="daily-action-card-head">
+        <div><h3>${title}</h3><p>${escapeHtml(hint)}</p></div>
+        ${target ? `<button type="button" class="daily-action-more" data-action-tab="${target.tab}"${target.sub ? ` data-action-sub="${target.sub}"` : ""}>전체 보기</button>` : ""}
+      </div>
+      <div class="daily-action-list">${body}</div>
+    </article>`;
+}
+
+function actionStockRow(item, note) {
+  return `
+    <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
+      <span><strong>${escapeHtml(item.ticker)}</strong><small>${escapeHtml(note || item.company || "")}</small></span>
+      <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+    </button>`;
+}
+
+function portfolioActionRows() {
+  if (!portfolio.length) return [];
+  return portfolio.map((position) => {
+    const item = stockByTicker(position.ticker);
+    if (!item) return null;
+    const value = Number(position.qty || 0) * Number(item.price || 0);
+    const cost = Number(position.qty || 0) * Number(position.avgCost || 0);
+    const plPct = cost > 0 ? ((value - cost) / cost) * 100 : 0;
+    return { item, value, plPct };
+  }).filter(Boolean).sort((a, b) => b.value - a.value).slice(0, 4).map(({ item, value, plPct }) => `
+    <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
+      <span><strong>${escapeHtml(item.ticker)}</strong><small>평가 $${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</small></span>
+      <em class="${cls(plPct)}">${fmtPct(plPct)}</em>
+    </button>`);
+}
+
+function upcomingActionRows() {
+  const today = formatKstDateTime().slice(0, 10);
+  const calendarRows = (calendarEventsCache || [])
+    .map((event) => ({ event, date: calendarIsoFromEvent(event) }))
+    .filter(({ date }) => date && date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(0, 3)
+    .map(({ event, date }) => {
+      const title = event.title || event.name || event.event || event.indicator || "주요 일정";
+      const country = event.country || event.source || "일정";
+      return `<button type="button" class="daily-action-row daily-action-schedule-row" data-action-tab="calendar"><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(country)} · ${escapeHtml(date)}</small></span><em class="info">일정</em></button>`;
+    });
+  if (calendarRows.length) return calendarRows;
+  return watchlist.map((ticker) => {
+    const item = stockByTicker(ticker);
+    const f = (window.MAP_FUNDAMENTALS || {})[ticker] || {};
+    const date = f.earningsDate || f.nextEarningsDate || item?.earningsDate;
+    if (!item || !date || String(date) < today) return null;
+    return `<button type="button" class="daily-action-row daily-action-schedule-row" data-action-ticker="${escapeHtml(ticker)}"><span><strong>${escapeHtml(ticker)} 실적</strong><small>${escapeHtml(String(date))}</small></span><em class="info">예정</em></button>`;
+  }).filter(Boolean).slice(0, 3);
+}
+
+function filingActionRows() {
+  const watched = new Set(watchlist);
+  const events = ((window.MATERIAL_EVENTS || {}).events || []);
+  let rows = events.filter((event) => watched.has(String(event.ticker || "").toUpperCase()));
+  if (!rows.length) rows = events.filter((event) => event.hot);
+  return rows.slice(0, 4).map((event) => {
+    const labels = (event.items || []).map((item) => item.label).filter(Boolean).slice(0, 2).join(" · ") || "8-K 공시";
+    return `<button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(event.ticker)}"><span><strong>${escapeHtml(event.ticker)}</strong><small>${escapeHtml(labels)} · ${escapeHtml(event.fileDate || "")}</small></span><em class="${event.hot ? "warn" : "info"}">${event.hot ? "주요" : "신규"}</em></button>`;
+  });
+}
+
+function renderActionBoard() {
+  const grid = byId("dailyActionGrid");
+  if (!grid) return;
+  const watched = watchlist.map((ticker) => stockByTicker(ticker)).filter(Boolean);
+  const movers = watched.slice().sort((a, b) => Math.abs(Number(b.changePct || 0)) - Math.abs(Number(a.changePct || 0))).slice(0, 4);
+  const alerts = watched.map((item) => ({ item, reasons: watchAlertReasons(item, watchAlertSettings()) }))
+    .filter((row) => row.reasons.length).slice(0, 4);
+  const portfolioRows = portfolioActionRows();
+  const scheduleRows = upcomingActionRows();
+  const filingRows = filingActionRows();
+  const attentionCount = alerts.length + scheduleRows.length + filingRows.filter((row) => row.includes('class="warn"')).length;
+  const count = byId("dailyActionCount");
+  if (count) count.textContent = attentionCount ? `우선 확인 ${attentionCount}건` : "새 긴급 항목 없음";
+  const alertOrPortfolio = alerts.length
+    ? alerts.map(({ item, reasons }) => actionStockRow(item, reasons.join(" · ")))
+    : portfolioRows;
+  grid.innerHTML =
+    actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
+    actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? "저장한 조건에 맞는 종목" : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
+    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }) +
+    actionBoardCard("새 공시", "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" });
+  grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
+  grid.querySelectorAll("[data-action-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.actionTab, { sub: button.dataset.actionSub || null })));
+}
+
+function setupActionBoard() {
+  const refresh = byId("dailyActionRefresh");
+  if (!refresh || refresh.dataset.bound) return;
+  refresh.dataset.bound = "1";
+  refresh.addEventListener("click", () => {
+    calendarLoaded = false;
+    earningsCalendarCache = null;
+    renderActionBoard();
+    loadCalendar();
+    showAppToast("오늘의 확인 항목을 새로 불러옵니다");
+  });
+}
+
 const INDEX_ANALYSIS_TICKER = {
   "^DJI": "DIA",
   "^IXIC": "QQQ",
@@ -1137,6 +1252,7 @@ function loadCalendar() {
     .then((p) => {
       calendarEventsCache = mergeCalendarEvents((p && p.calendar) || [], whEvents);
       renderCalendarFiltered();
+      renderActionBoard();
     })
     .catch(() => {
       calendarLoaded = false;
@@ -1144,6 +1260,7 @@ function loadCalendar() {
       if (calendarEventsCache.length) {
         calendarLoaded = true;
         renderCalendarFiltered();
+        renderActionBoard();
       } else {
         body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
       }
@@ -1919,6 +2036,35 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
   if (push) recordNav();
 }
 
+let currentViewMode = "basic";
+
+function setViewMode(mode, { persist = true } = {}) {
+  currentViewMode = mode === "advanced" ? "advanced" : "basic";
+  const tabs = byId("mainTabs");
+  if (tabs) tabs.dataset.viewMode = currentViewMode;
+  document.documentElement.dataset.viewMode = currentViewMode;
+  byId("viewModeSwitch")?.querySelectorAll("[data-view-mode]").forEach((button) => {
+    const active = button.dataset.viewMode === currentViewMode;
+    button.classList.toggle("is-active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  if (persist) {
+    try { localStorage.setItem(VIEW_MODE_STORAGE_KEY, currentViewMode); } catch (_) {}
+  }
+  requestAnimationFrame(layoutMobileTabs);
+}
+
+function setupViewMode(requestedTab) {
+  let saved = "basic";
+  try { saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || "basic"; } catch (_) {}
+  const requestedButton = requestedTab ? document.querySelector(`[data-tab="${requestedTab}"]`) : null;
+  if (requestedButton?.dataset.advanced === "true") saved = "advanced";
+  setViewMode(saved, { persist: false });
+  byId("viewModeSwitch")?.querySelectorAll("[data-view-mode]").forEach((button) => {
+    button.addEventListener("click", () => setViewMode(button.dataset.viewMode));
+  });
+}
+
 const MOBILE_TABS_MQ = "(max-width: 960px)";
 
 function layoutMobileTabs() {
@@ -1991,6 +2137,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   sub = resolved.sub;
   const tabBtn = document.querySelector(`[data-tab="${name}"]`);
   if (!tabBtn) return;
+  if (tabBtn.dataset.advanced === "true" && currentViewMode !== "advanced") setViewMode("advanced");
   document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
   document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
@@ -2795,6 +2942,7 @@ function renderAll() {
   renderBulk();
   renderWatchlistBar();
   renderWatchAlerts();
+  renderActionBoard();
   renderHealth();
   activateInstitutionalSub(institutionalSubTab, { push: false });
   renderDataFreshnessStatus();
@@ -4281,6 +4429,7 @@ function renderSearch() {
   renderEarningsCalendar(item);
   renderCongressTradesForTicker(item);
   renderSmartMoney(item);
+  renderMoveExplanation(item);
   render52wRange(item);
   renderStockEvents(item);
   renderEarningsReaction(item);
@@ -4298,6 +4447,7 @@ function renderSearch() {
     renderEarningsCalendar(refreshed);
     renderCongressTradesForTicker(refreshed);
     renderSmartMoney(refreshed);
+    renderMoveExplanation(refreshed);
     render52wRange(refreshed);
     renderStockEvents(refreshed);
     renderEarningsReaction(refreshed);
@@ -4305,6 +4455,68 @@ function renderSearch() {
     renderFundamentals(refreshed);
     renderNews(refreshed);
   });
+}
+
+function moveEvidenceRow(kind, title, detail, options = {}) {
+  const body = `<span class="move-evidence-icon" aria-hidden="true">${options.icon || "•"}</span><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail || "")}</small></span>`;
+  return options.href
+    ? `<a class="move-evidence-row" href="${escapeHtml(options.href)}" target="_blank" rel="noopener">${body}<em>원문</em></a>`
+    : `<div class="move-evidence-row">${body}<em class="${options.tone || "info"}">${escapeHtml(kind)}</em></div>`;
+}
+
+function renderMoveExplanation(item) {
+  const box = byId("moveExplanation");
+  if (!box || !item) return;
+  const change = Number(item.changePct || 0);
+  const direction = change > 0 ? "상승" : change < 0 ? "하락" : "보합";
+  const peers = (data.stocks || []).filter((row) => row.sector === item.sector && row.ticker !== item.ticker && Number.isFinite(Number(row.changePct)));
+  const sectorAvg = peers.length ? peers.reduce((sum, row) => sum + Number(row.changePct), 0) / peers.length : 0;
+  const relative = change - sectorAvg;
+  const evidence = [];
+  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtPct(change)} · 섹터 평균 ${fmtPct(sectorAvg)} · 차이 ${relative >= 0 ? "+" : ""}${relative.toFixed(1)}%p`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
+
+  const volume = Number(item.volumeRatio || 0);
+  if (volume > 0) {
+    const volumeLabel = volume >= 2 ? "평균보다 크게 증가" : volume >= 1.2 ? "평균보다 증가" : "평균 수준 이하";
+    evidence.push(moveEvidenceRow("수급", `거래량 ${volume.toFixed(1)}배`, volumeLabel, { icon: "V", tone: volume >= 2 ? "warn" : "info" }));
+  }
+
+  const technical = [];
+  if (Number(item.rsScore) >= 80) technical.push(`RS ${item.rsScore}`);
+  if (Number(item.newHighDistancePct) <= 3) technical.push(`52주 고점 ${Number(item.newHighDistancePct).toFixed(1)}% 이내`);
+  if (Number(item.rsi14) >= 70) technical.push(`RSI ${Math.round(item.rsi14)} 과열권`);
+  else if (Number(item.rsi14) <= 30) technical.push(`RSI ${Math.round(item.rsi14)} 침체권`);
+  if (technical.length) evidence.push(moveEvidenceRow("기술", "가격·모멘텀 신호", technical.join(" · "), { icon: "T", tone: "info" }));
+
+  const filing = ((window.MATERIAL_EVENTS || {}).events || []).find((event) => String(event.ticker || "").toUpperCase() === item.ticker);
+  if (filing) {
+    const labels = (filing.items || []).map((row) => row.label).filter(Boolean).slice(0, 3).join(" · ") || "8-K 공시";
+    evidence.push(moveEvidenceRow("공시", `SEC 8-K · ${filing.fileDate || "최근"}`, labels, { icon: "F", tone: filing.hot ? "warn" : "info", href: filing.link }));
+  }
+
+  const news = Array.isArray(item.news) ? item.news[0] : null;
+  if (news) {
+    const newsTitle = news.title || news.headline || "최근 관련 뉴스";
+    const source = news.publisher || news.source || "뉴스";
+    evidence.push(moveEvidenceRow("뉴스", newsTitle, `${source} · 가격 변동과의 인과관계는 원문 확인 필요`, { icon: "N", href: news.link || news.url }));
+  }
+
+  const insiderRows = ((window.INSIDER_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
+  if (insiderRows.length) {
+    const buys = insiderRows.filter((row) => row.kind === "buy").length;
+    const sells = insiderRows.filter((row) => row.kind === "sell").length;
+    evidence.push(moveEvidenceRow("공시", "내부자 거래", `공개시장 매수 ${buys}건 · 매도 ${sells}건`, { icon: "I", tone: buys > sells ? "pos" : sells > buys ? "neg" : "info" }));
+  }
+
+  const magnitude = Math.abs(change) >= 5 ? "큰 폭" : Math.abs(change) >= 2 ? "뚜렷한" : "제한적인";
+  box.innerHTML = `
+    <div class="move-explanation-head">
+      <div><span>WHY IT MOVED</span><h3>왜 ${direction}했나?</h3></div>
+      <strong class="${cls(change)}">${fmtPct(change)}</strong>
+    </div>
+    <p class="move-explanation-summary">${escapeHtml(item.ticker)}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
+    <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
+    <p class="move-explanation-note">스냅샷·뉴스·공시의 기준 시각이 다를 수 있습니다. 투자 판단 전 원문과 최신 시세를 확인하세요.</p>`;
 }
 
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
@@ -4398,10 +4610,15 @@ function maybeFetchLiveData(base) {
       renderDataQualityPanel(merged);
       renderFundamentals(merged);
       renderNews(merged);
+      renderMoveExplanation(merged);
     })
     .catch(() => {
       liveDone[ticker] = true;
-      if (selectedTicker === ticker) renderNews(applyLive(withDetail(base)));
+      if (selectedTicker === ticker) {
+        const merged = applyLive(withDetail(base));
+        renderNews(merged);
+        renderMoveExplanation(merged);
+      }
     });
 }
 
@@ -9378,6 +9595,7 @@ function toggleWatchlist(ticker) {
   renderWatchlistBar();
   renderWatchAlerts();
   renderBulk();
+  renderActionBoard();
   document.querySelectorAll(`[data-watch="${t}"]`).forEach((btn) => {
     const on = isInWatchlist(t);
     btn.classList.toggle("is-on", on);
@@ -9397,6 +9615,7 @@ function saveWatchlistFromInput(text) {
   persistWatchlist();
   renderWatchlistBar();
   renderWatchAlerts();
+  renderActionBoard();
 }
 
 function renderWatchlistBar() {

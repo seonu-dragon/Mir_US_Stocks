@@ -5206,7 +5206,7 @@ footer {
 
 .event-card-community {
   grid-column: span 2;
-  var(--panel);
+  background: var(--panel);
 }
 
 .event-community-previews {
@@ -6420,7 +6420,7 @@ footer {
   padding: 16px 18px;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  var(--panel);
+  background: var(--panel);
   box-shadow: var(--shadow);
 }
 
@@ -6459,7 +6459,7 @@ footer {
   padding: 18px;
   border: 1px solid var(--chip-border);
   border-radius: var(--r-lg);
-  var(--panel);
+  background: var(--panel);
   box-shadow: var(--shadow);
 }
 
@@ -6666,7 +6666,7 @@ footer {
   padding: 14px;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  var(--panel);
+  background: var(--panel);
 }
 
 .move-explanation-head {
@@ -6844,7 +6844,7 @@ footer {
   padding: 18px 20px;
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  var(--panel);
+  background: var(--panel);
   box-shadow: var(--shadow);
   border-top: 4px solid #94a3b8;
 }
@@ -7925,7 +7925,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
   padding: 14px;
   border: 1px solid var(--chip-border);
   border-radius: var(--r-lg);
-  var(--panel);
+  background: var(--panel);
 }
 .saved-screener-head,
 .saved-screener-controls,
@@ -8074,7 +8074,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
   grid-column: span 2;
   min-height: 120px;
   padding: 12px;
-  var(--panel);
+  background: var(--panel);
 }
 /* EARNINGS 옆 절반 자리에 스마트머니 종합 */
 .event-card-smart {
@@ -8083,7 +8083,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
   margin: 0;
   border: 1px solid var(--line);
   border-radius: var(--r-md);
-  var(--panel);
+  background: var(--panel);
 }
 .event-card-smart:empty { display: none; }
 .earnings-card-title {
@@ -8270,7 +8270,7 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
   padding: 16px;
   border: 1px solid #c7d2fe;
   border-radius: var(--r-lg);
-  var(--panel);
+  background: var(--panel);
 }
 .nl-screener-head .daily-action-kicker { color: #4f46e5; }
 .nl-screener-head h3 { margin: 2px 0 3px; font-size: var(--fs-h3); }
@@ -8572,6 +8572,28 @@ html[data-theme="dark"] .corr-diag { background: var(--surface-3); }
 html[data-theme="dark"] .daily-action-row:hover { background: #1e3a5f; border-color: #2563eb; }
 /* 기본/고급 스위치: 다크에서 활성 알약이 도드라지게 */
 html[data-theme="dark"] .view-mode-switch button.is-active { background: var(--surface-3); color: var(--link); }
+
+/* ============================================================
+   홈 구역(zone) 위계 — 시선 흐름·그룹핑
+   ============================================================ */
+.home-zone-head {
+  margin: var(--space-1) 0 var(--space-3);
+}
+.home-zone-head h2 {
+  margin: 2px 0 3px;
+  font-size: var(--fs-stat);
+  letter-spacing: -0.01em;
+}
+.home-zone-head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--fs-cap);
+}
+/* 홈 구역 일관 간격 */
+.summary-band { margin-bottom: var(--space-4); }
+.daily-action-board { margin: var(--space-5) 0 var(--space-4); }
+/* 오늘의 액션 보드 = 개인 히어로: 더 또렷한 입체감 */
+.daily-action-board { box-shadow: var(--shadow-lg); }
 
 /* ============================================================
    상단 탭 고정 (sticky) — 스크롤해도 섹션 전환 가능

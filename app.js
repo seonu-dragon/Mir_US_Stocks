@@ -1068,6 +1068,7 @@ function upcomingActionRows() {
 
 // ===== 액션 보드 ↔ 오늘의 뉴스 전환 (웹) =====
 let actionBoardMode = "actions";
+let actionBoardMqBound = false;
 
 function renderActionNews() {
   const box = byId("dailyActionNews");
@@ -1108,6 +1109,9 @@ function renderActionNews() {
 }
 
 function setActionBoardMode(mode) {
+  // 뉴스 모드는 웹(데스크톱) 전용. 모바일은 전환 UI가 없어 뉴스 모드로 두면
+  // 액션 보드가 빈 채로 남으므로 항상 액션 보드로 강제한다.
+  if (mode === "news" && window.matchMedia("(max-width: 768px)").matches) mode = "actions";
   actionBoardMode = mode === "news" ? "news" : "actions";
   const isNews = actionBoardMode === "news";
   const grid = byId("dailyActionGrid");
@@ -1166,6 +1170,13 @@ function setupActionBoard() {
     modeSwitch.dataset.bound = "1";
     modeSwitch.querySelectorAll("[data-action-mode]").forEach((b) =>
       b.addEventListener("click", () => setActionBoardMode(b.dataset.actionMode)));
+  }
+  // 데스크톱에서 '오늘의 뉴스'로 둔 채 모바일 폭으로 좁히면 보드가 비므로 액션 모드로 복구
+  if (!actionBoardMqBound) {
+    actionBoardMqBound = true;
+    window.matchMedia("(max-width: 768px)").addEventListener("change", (e) => {
+      if (e.matches && actionBoardMode === "news") setActionBoardMode("actions");
+    });
   }
   const refresh = byId("dailyActionRefresh");
   if (!refresh || refresh.dataset.bound) return;

@@ -26,7 +26,7 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260620i">
+    <link rel="stylesheet" href="styles.css?v=20260620j">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -246,6 +246,7 @@
         <nav class="sub-tabs" id="sectorSubTabs" aria-label="Sector sub-sections">
           <button class="sub-tab is-active" data-sub="chart">📈 섹터 차트 비교</button>
           <button class="sub-tab" data-sub="etf-rs">📊 ETF 상대강도 순위</button>
+          <button class="sub-tab" data-sub="rrg">🔄 RRG 회전</button>
           <button class="sub-tab" data-sub="etf-lev">⚡ 레버리지·인버스 ETF</button>
         </nav>
 
@@ -487,6 +488,26 @@
             </div>
           </div>
           <div id="levEtfGroups" class="lev-etf-groups"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-rrg">
+          <div class="section-title">
+            <h2>RRG · 섹터 상대회전 그래프</h2>
+            <p>SPY 대비 각 섹터 ETF의 상대강도(가로)와 상대 모멘텀(세로)을 사분면으로 표시합니다. 시계 방향(주도→둔화→소외→회복)으로 순환합니다.</p>
+          </div>
+          <div class="rrg-controls">
+            <label>주기
+              <select id="rrgTail">
+                <option value="1">현재 위치</option>
+                <option value="5" selected>최근 5일 꼬리</option>
+                <option value="10">최근 10일 꼬리</option>
+              </select>
+            </label>
+            <span class="muted" id="rrgMeta"></span>
+          </div>
+          <div class="rrg-wrap" id="rrgWrap"></div>
+          <div class="rrg-legend" id="rrgLegend"></div>
+          <p class="muted rrg-note">상대강도·모멘텀은 SPY 대비 종가 비율을 정규화(기준 100)해 계산한 근사치입니다. 투자 권유가 아닙니다.</p>
         </div>
       </section>
 
@@ -1001,6 +1022,17 @@
             <div class="pf-table-wrap" id="pfTable"></div>
             <div class="pf-pie" id="pfPie"></div>
           </div>
+        </section>
+
+        <section class="corr-card" id="corrCard">
+          <div class="corr-head">
+            <div>
+              <h3>🔗 관심종목 상관관계</h3>
+              <p class="muted">관심종목 간 일간 수익률 상관계수입니다. 빨강=같이 움직임(분산효과 낮음), 파랑=반대로 움직임. 값이 낮을수록 분산투자에 유리합니다.</p>
+            </div>
+            <span class="muted" id="corrMeta"></span>
+          </div>
+          <div class="corr-wrap" id="corrMatrix"></div>
         </section>
 
         <div class="watchlist-stats" id="watchlistStats"></div>
@@ -1680,6 +1712,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620l"></script>
+    <script src="app.js?v=20260620m"></script>
   </body>
 </html>

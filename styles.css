@@ -8287,3 +8287,93 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .nl-chip-warn { background: #fef3c7; color: #92400e; }
 .nl-meta { margin: 10px 0 0; font-size: 12px; }
 .nl-screener .table-wrap { margin-top: 10px; }
+
+/* ===== RRG 회전 그래프 ===== */
+.rrg-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.rrg-wrap {
+  max-width: 720px;
+  margin: 0 auto;
+}
+.rrg-svg {
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+.rrg-quad-label { font-size: 13px; font-weight: 800; opacity: 0.8; }
+.rrg-axis-label { font-size: 10px; fill: #94a3b8; font-weight: 700; }
+.rrg-dot-label { font-size: 11px; font-weight: 800; fill: #1e293b; }
+.rrg-legend {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 720px;
+  margin: 14px auto 0;
+}
+.rrg-leg-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel-soft);
+}
+.rrg-leg-dot { flex: 0 0 auto; width: 11px; height: 11px; border-radius: 50%; margin-top: 3px; }
+.rrg-leg-item strong { display: block; font-size: 12px; }
+.rrg-leg-item small { display: block; margin-top: 2px; color: var(--muted); font-size: 10px; line-height: 1.4; }
+.rrg-note { margin: 12px 0 0; font-size: 11px; }
+@media (max-width: 640px) {
+  .rrg-legend { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ===== 관심종목 상관관계 히트맵 ===== */
+.corr-card {
+  margin: 0 0 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.corr-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.corr-head h3 { margin: 0 0 3px; font-size: 15px; }
+.corr-head p { margin: 0; font-size: 11px; line-height: 1.5; }
+.corr-wrap { overflow-x: auto; }
+.corr-table {
+  border-collapse: separate;
+  border-spacing: 2px;
+  font-size: 11px;
+}
+.corr-table th {
+  font-weight: 800;
+  color: var(--muted);
+  padding: 4px 6px;
+  white-space: nowrap;
+}
+.corr-th { text-align: center; }
+.corr-rowhead { text-align: right; position: sticky; left: 0; background: var(--panel); }
+.corr-corner { position: sticky; left: 0; background: var(--panel); }
+.corr-cell {
+  min-width: 46px;
+  padding: 7px 6px;
+  text-align: center;
+  font-weight: 700;
+  color: #1e293b;
+  border-radius: 5px;
+}
+.corr-cell.corr-strong { color: #fff; }
+.corr-diag { background: #e2e8f0; color: #64748b; }

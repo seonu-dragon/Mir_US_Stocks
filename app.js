@@ -859,7 +859,7 @@ function sectorTopCardHtml(title, list, strong) {
 function fxCardHtml() {
   const find = (sym) => (marketHeader.fx || []).find((f) => f.symbol === sym);
   const row = (label, f, dec, suffix = "") => f
-    ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}${suffix}</strong><em class="${cls(f.changePct)}">${fmtPct(f.changePct)}</em></div>`
+    ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}${suffix}</strong><em class="${cls(f.changePct)}">${actionPct(f.changePct)}</em></div>`
     : `<div class="hx-row"><span>${label}</span><strong class="muted">불러오는 중…</strong></div>`;
   return `
     <div class="summary-card hx-card fx-card">
@@ -929,14 +929,76 @@ function marketRegimeCardHtml() {
   `;
 }
 
+// 시장 국면 + CNN 공포탐욕을 하나의 카드로 병합
+function regimeFngCardHtml() {
+  const regime = computeMarketRegime();
+  const score = fngScore();
+  const live = Number.isFinite(score);
+  const gaugeScore = live ? score : 50;
+  const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "연결 실패" : "로딩 중");
+  const color = live ? fngColor(score) : "#94a3b8";
+  const cx = 100, cy = 96, r = 76, w = 16;
+  const deg = (s) => 180 - (s / 100) * 180;
+  const arcs =
+    gaugeArc(cx, cy, r, deg(0), deg(25), "#dc2626", w) +
+    gaugeArc(cx, cy, r, deg(25), deg(45), "#f97316", w) +
+    gaugeArc(cx, cy, r, deg(45), deg(55), "#eab308", w) +
+    gaugeArc(cx, cy, r, deg(55), deg(75), "#84cc16", w) +
+    gaugeArc(cx, cy, r, deg(75), deg(100), "#16a34a", w);
+  const [nx, ny] = gaugePolar(cx, cy, r - 6, deg(gaugeScore));
+  return `
+    <div class="summary-card regime-fng-card regime-${regime.tone}">
+      <span>시장 국면 · 공포탐욕</span>
+      <div class="rf-head">
+        <strong class="regime-label">${regime.label}</strong>
+        <em class="regime-ko">${regime.ko}</em>
+      </div>
+      <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
+        ${arcs}
+        <line class="gauge-needle" x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke-width="3" stroke-linecap="round"></line>
+        <circle class="gauge-hub" cx="${cx}" cy="${cy}" r="5"></circle>
+        <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
+      </svg>
+      <div class="rf-foot">
+        <span class="rf-fng" style="color:${color}">${escapeHtml(label)}</span>
+        <span class="rf-stat" title="당일 상승 종목 비율">상승 ${Math.round(regime.upPct * 100)}%</span>
+      </div>
+    </div>`;
+}
+
+// 관심종목 요약 카드 (섹터 TOP5 형식: 티커 + 등락률, 클릭 시 분석)
+function watchlistSummaryCardHtml() {
+  const items = watchlist.map((t) => stockByTicker(t)).filter(Boolean);
+  if (!items.length) {
+    return `<div class="summary-card hx-card watchlist-summary-card">
+      <span>⭐ 관심종목</span>
+      <div class="hx-row"><span class="muted">종목 옆 ★를 눌러 추가하세요</span></div>
+    </div>`;
+  }
+  const sorted = items.slice().sort((a, b) => Math.abs(Number(b.changePct || 0)) - Math.abs(Number(a.changePct || 0)));
+  const rows = sorted.slice(0, 6).map((s) => `
+    <button type="button" class="hx-row watch-summary-row" data-ticker="${escapeHtml(s.ticker)}">
+      <span>${escapeHtml(s.ticker)}</span>
+      <em class="${cls(s.changePct)}">${actionPct(s.changePct)}</em>
+    </button>`).join("");
+  return `<div class="summary-card hx-card watchlist-summary-card">
+    <span>⭐ 관심종목 <b>${items.length}</b></span>
+    ${rows}
+  </div>`;
+}
+
 function renderSummary() {
   const sectors = computeSectorRanks();
-  byId("marketSummary").innerHTML =
-    marketRegimeCardHtml() +
-    fngCardHtml() +
+  const el = byId("marketSummary");
+  if (!el) return;
+  el.innerHTML =
+    regimeFngCardHtml() +
     sectorTopCardHtml("강한 섹터 TOP5", sectors.strong, true) +
     sectorTopCardHtml("약한 섹터 TOP5", sectors.weak, false) +
-    fxCardHtml();
+    fxCardHtml() +
+    watchlistSummaryCardHtml();
+  el.querySelectorAll(".watch-summary-row").forEach((row) =>
+    row.addEventListener("click", () => selectTicker(row.dataset.ticker, { openSearch: true })));
 }
 
 function actionBoardCard(title, hint, rows, emptyText, target) {
@@ -10104,6 +10166,7 @@ function toggleWatchlist(ticker) {
   else watchlist.push(t);
   persistWatchlist();
   renderWatchlistBar();
+  renderSummary();
   renderWatchAlerts();
   renderBulk();
   renderActionBoard();

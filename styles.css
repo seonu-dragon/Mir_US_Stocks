@@ -31,7 +31,7 @@
   --tint-info: #dbeafe;
   --tint-pos-fg: #15803d;
   --tint-neg-fg: #b91c1c;
-  --tint-warn-fg: #a16207;
+  --tint-warn-fg: #92400e;
   --tint-info-fg: #1e40af;
 
   /* ── 반경 스케일 (4단 + pill) ── */
@@ -578,7 +578,8 @@ main {
 }
 
 /* ===== Top header: Fear&Greed gauge / sector TOP5 / FX ===== */
-.summary-band { align-items: start; }
+/* 모든 카드 높이를 동일하게(가장 큰 = F&G 게이지 기준) + 내용으로 채워 빈공간 제거 */
+.summary-band { align-items: stretch; }
 .summary-band .summary-card { padding: 9px 11px; }
 
 .regime-card {
@@ -615,7 +616,8 @@ main {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px 6px;
-  margin-top: 6px;
+  margin-top: auto;
+  padding-top: 6px;
 }
 
 .regime-stat {
@@ -647,8 +649,9 @@ main {
   gap: 1px;
 }
 
-.fng-card { align-items: center; justify-content: flex-start; gap: 2px; }
+.fng-card { align-items: center; justify-content: space-between; gap: 2px; }
 .fng-card > span { align-self: flex-start; }
+.hx-card { justify-content: space-between; }
 .fng-gauge { width: 100%; max-width: 150px; height: auto; margin: 0 auto; }
 .fng-score { font-size: 24px; font-weight: 800; }
 .fng-label { font-size: var(--fs-body); font-weight: 800; }
@@ -6558,12 +6561,14 @@ footer {
 .daily-action-row {
   width: 100%;
   min-height: 44px;
-  padding: 7px 8px;
+  gap: var(--space-2);
+  padding: 7px 10px;
   border: 1px solid transparent;
   border-radius: var(--r-md);
   background: var(--panel-soft);
   color: var(--text);
   text-align: left;
+  line-height: 1.3;
   cursor: pointer;
 }
 
@@ -6587,8 +6592,8 @@ footer {
 }
 
 .daily-action-row strong { font-size: var(--fs-label); }
-.daily-action-row small { margin-top: 2px; color: var(--muted); font-size: var(--fs-cap); }
-.daily-action-row em { flex: 0 0 auto; white-space: nowrap; font-size: var(--fs-cap); font-style: normal; font-weight: 800; }
+.daily-action-row small { margin-top: 1px; color: var(--muted); font-size: var(--fs-cap); }
+.daily-action-row em { flex: 0 0 auto; white-space: nowrap; text-align: right; font-size: var(--fs-label); font-style: normal; font-weight: 800; }
 .daily-action-row em.info { color: var(--primary); }
 .daily-action-row em.warn { color: var(--amber); }
 .daily-action-empty { margin: 8px 0; color: var(--muted); font-size: var(--fs-cap); }

@@ -8735,3 +8735,21 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
   .summary-band { animation-delay: 0.09s; }
   .daily-action-board { animation-delay: 0.14s; }
 }
+
+/* ============================================================
+   모바일 정밀화 — 다열 그리드 안전 붕괴
+   ============================================================ */
+@media (max-width: 768px) {
+  /* 요약밴드: 5열 → 2열 (대형폰·태블릿 세로) */
+  .summary-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* 히트맵 범례: 고정 9열 → 자동 줄바꿈 */
+  .heatmap-legend { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); }
+}
+@media (max-width: 480px) {
+  /* 작은 폰: 요약밴드 1열로 완전 스택 */
+  .summary-band { grid-template-columns: 1fr; }
+  .heatmap-legend { grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); }
+  /* 데이터 신뢰도 카드 2열 */
+  .data-trust-grid,
+  .data-trust-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

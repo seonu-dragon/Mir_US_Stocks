@@ -3395,7 +3395,7 @@ footer {
   padding: 14px 16px;
   border: 1px solid rgba(37, 99, 235, 0.18);
   border-radius: var(--r-lg);
-  var(--panel), rgba(248, 250, 252, 0.98));
+  background: var(--panel-soft);
 }
 
 .briefing-schedule-title {
@@ -3590,7 +3590,7 @@ footer {
 }
 
 .briefing-content b {
-  color: #1e3a8a; /* High contrast dark blue */
+  color: var(--link); /* 테마 대응: 라이트=진파랑, 다크=밝은 파랑 */
   font-weight: 700;
 }
 
@@ -6596,6 +6596,9 @@ footer {
 }
 
 .daily-action-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(3.6em, auto);
+  align-items: center;
   width: 100%;
   min-height: 44px;
   gap: var(--space-2);
@@ -6630,7 +6633,7 @@ footer {
 
 .daily-action-row strong { font-size: var(--fs-label); }
 .daily-action-row small { margin-top: 1px; color: var(--muted); font-size: var(--fs-cap); }
-.daily-action-row em { flex: 0 0 auto; min-width: max-content; white-space: nowrap; text-align: right; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; font-style: normal; font-weight: 800; }
+.daily-action-row em { justify-self: end; white-space: nowrap; text-align: right; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; font-style: normal; font-weight: 800; }
 .daily-action-row em.info { color: var(--primary); }
 .daily-action-row em.warn { color: var(--amber); }
 .daily-action-empty { margin: 8px 0; color: var(--muted); font-size: var(--fs-cap); }
@@ -8625,6 +8628,14 @@ html[data-theme="dark"] .corr-diag { background: var(--surface-3); }
 html[data-theme="dark"] .daily-action-row:hover { background: #1e3a5f; border-color: #2563eb; }
 /* 기본/고급 스위치: 다크에서 활성 알약이 도드라지게 */
 html[data-theme="dark"] .view-mode-switch button.is-active { background: var(--surface-3); color: var(--link); }
+/* 다크: 라이트 틴트 배지/버튼이 흰 박스처럼 떠 보이는 것 보정 */
+html[data-theme="dark"] .rs-badge,
+html[data-theme="dark"] .badge-social { background: #2a2140; color: #c4b5fd; border-color: #4c3a6e; }
+html[data-theme="dark"] .badge-korea { color: var(--tint-info-fg); }
+html[data-theme="dark"] .badge-us { color: var(--tint-neg-fg); border-color: #4a2424; }
+html[data-theme="dark"] .score-help-button,
+html[data-theme="dark"] .congress-help-button,
+html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 
 /* ============================================================
    홈 구역(zone) 위계 — 시선 흐름·그룹핑

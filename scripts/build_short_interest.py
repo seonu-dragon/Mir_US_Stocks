@@ -129,6 +129,7 @@ def build(top):
 def main():
     ap = argparse.ArgumentParser(description="공매도 잔고 수집 (Nasdaq)")
     ap.add_argument("--top", type=int, default=700, help="시총 상위 N 종목")
+    ap.add_argument("--push", action="store_true", default=False)
     ap.add_argument("--no-push", action="store_true")
     args = ap.parse_args()
     if sys.platform == "win32":
@@ -142,7 +143,7 @@ def main():
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "SHORT_INTEREST", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} rows")
-        if not args.no_push:
+        if args.push and not args.no_push:
             sec.git_publish(["data/short_interest.json", "data/short_interest.js"], "short interest")
 
 

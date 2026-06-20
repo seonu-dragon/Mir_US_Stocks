@@ -376,6 +376,7 @@ def main():
     parser = argparse.ArgumentParser(description="SEC Form 4 내부자 거래 수집")
     parser.add_argument("--backfill-days", type=int, default=30, help="최초 수집 시 거슬러 올라갈 일수")
     parser.add_argument("--top", type=int, default=0, help="시총 상위 N 종목으로 universe 제한(0=전체)")
+    parser.add_argument("--push", action="store_true", default=False)
     parser.add_argument("--no-push", action="store_true")
     args = parser.parse_args()
 
@@ -389,7 +390,7 @@ def main():
     with repository_publish_lock(ROOT):
         write_files(payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} trades")
-        if not args.no_push:
+        if args.push and not args.no_push:
             publish()
 
 

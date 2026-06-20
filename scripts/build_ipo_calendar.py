@@ -111,6 +111,7 @@ def build(backfill_days, overlap_days=5):
 def main():
     ap = argparse.ArgumentParser(description="SEC IPO 캘린더 수집")
     ap.add_argument("--backfill-days", type=int, default=30)
+    ap.add_argument("--push", action="store_true", default=False)
     ap.add_argument("--no-push", action="store_true")
     args = ap.parse_args()
     if sys.platform == "win32":
@@ -121,7 +122,7 @@ def main():
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "IPO_CALENDAR", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} ipos")
-        if not args.no_push:
+        if args.push and not args.no_push:
             sec.git_publish(["data/ipo_calendar.json", "data/ipo_calendar.js"], "IPO calendar")
 
 

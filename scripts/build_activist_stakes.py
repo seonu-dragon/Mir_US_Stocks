@@ -138,6 +138,7 @@ def main():
     ap = argparse.ArgumentParser(description="SEC 13D/G 대량보유 공시 수집")
     ap.add_argument("--backfill-days", type=int, default=21)
     ap.add_argument("--top", type=int, default=0, help="0=전체 universe")
+    ap.add_argument("--push", action="store_true", default=False)
     ap.add_argument("--no-push", action="store_true")
     args = ap.parse_args()
     if sys.platform == "win32":
@@ -148,7 +149,7 @@ def main():
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "ACTIVIST_STAKES", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} filings")
-        if not args.no_push:
+        if args.push and not args.no_push:
             sec.git_publish(["data/activist_stakes.json", "data/activist_stakes.js"], "activist stakes")
 
 

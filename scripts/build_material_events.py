@@ -138,6 +138,7 @@ def main():
     ap = argparse.ArgumentParser(description="SEC 8-K 주요 공시 수집")
     ap.add_argument("--backfill-days", type=int, default=14)
     ap.add_argument("--top", type=int, default=1500)
+    ap.add_argument("--push", action="store_true", default=False)
     ap.add_argument("--no-push", action="store_true")
     args = ap.parse_args()
     if sys.platform == "win32":
@@ -148,7 +149,7 @@ def main():
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "MATERIAL_EVENTS", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} events")
-        if not args.no_push:
+        if args.push and not args.no_push:
             sec.git_publish(["data/material_events.json", "data/material_events.js"], "material events")
 
 

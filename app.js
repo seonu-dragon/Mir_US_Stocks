@@ -158,6 +158,7 @@ const liveDone = {};
 let chartState = {
   range: "1Y",
   barTf: "D", // D=일봉, W=주봉, M=월봉
+  chartType: "candle", // candle | line
   zoom: 1,
   offset: 0,
   showSma5: false,
@@ -279,6 +280,7 @@ function boot() {
   if (route.get("cadmin")) setCommunityAdminKey(route.get("cadmin"));
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
   initWatchlist(route.get("watchlist"));
+  loadPortfolio();
   document.documentElement.removeAttribute("data-theme");
   setupPwa();
   updateDataLoadedAt();
@@ -1810,6 +1812,52 @@ function renderSignals() {
   el.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.ticker && b.dataset.ticker !== "—") selectTicker(b.dataset.ticker, { openSearch: true });
   }));
+  renderAggregateInsights();
+}
+
+// ===== 집계 인사이트 (의회·내부자 종합) =====
+function aggBars(items, fmtVal, color) {
+  const max = Math.max(...items.map((i) => i.value), 1);
+  return items.map((i) => {
+    const lbl = i.ticker
+      ? `<button type="button" class="agg-label ins-ticker" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(i.label)}</button>`
+      : `<span class="agg-label">${escapeHtml(i.label)}</span>`;
+    return `<div class="agg-row">${lbl}<div class="agg-bar-wrap"><div class="agg-bar" style="width:${(i.value / max * 100).toFixed(1)}%;background:${color}"></div></div><span class="agg-val">${fmtVal(i.value)}</span></div>`;
+  }).join("");
+}
+function renderAggregateInsights() {
+  const el = byId("aggInsights");
+  if (!el) return;
+  const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
+  const usd = (v) => v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${(v / 1e3).toFixed(0)}K` : `$${v.toFixed(0)}`;
+  const cards = [];
+  // 의회 30일 순매수 TOP5
+  const cg = (window.CONGRESS_TRADES || {}).byTicker || {};
+  const netByT = [];
+  for (const [t, info] of Object.entries(cg)) {
+    let net = 0;
+    for (const tr of (info.trades || [])) {
+      if ((tr.transactionDate || "") < cutoff) continue;
+      const amt = Number(tr.amountMid) || 0;
+      net += (tr.side === "buy" || tr.type === "Purchase") ? amt : -amt;
+    }
+    if (net > 0) netByT.push({ ticker: t, label: t, value: net });
+  }
+  netByT.sort((a, b) => b.value - a.value);
+  cards.push(`<div class="agg-card"><h3>🏛 의원 순매수 TOP5</h3>${netByT.length ? aggBars(netByT.slice(0, 5), usd, "#3b82f6") : '<p class="muted">최근 30일 순매수 데이터 없음</p>'}</div>`);
+  // 내부자 매수 거래대금 섹터 랭킹 (30일)
+  const ins = (window.INSIDER_TRADES || {}).trades || [];
+  const bySec = {};
+  for (const r of ins) {
+    if (r.kind !== "buy" || (r.fileDate || "") < cutoff) continue;
+    const st = stockByTicker(r.ticker);
+    if (!st || !st.sector) continue;
+    bySec[st.sector] = (bySec[st.sector] || 0) + (Number(r.value) || 0);
+  }
+  const secRows = Object.entries(bySec).map(([s, v]) => ({ label: s, value: v })).sort((a, b) => b.value - a.value).slice(0, 8);
+  cards.push(`<div class="agg-card"><h3>🧑‍💼 내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "#16a34a") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
+  el.innerHTML = cards.join("");
+  el.querySelectorAll(".ins-ticker[data-ticker]").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
 function activateCalendarSub(name, { push = false } = {}) {
@@ -4461,7 +4509,117 @@ function loadStockDetail(ticker) {
   return detailPromises[key];
 }
 
+// ===== 차트 드로잉(추세선·피보나치 되돌림) =====
+let lastChartGeom = null;
+const chartDrawings = {};          // ticker -> [{type, x1,p1,x2,p2}]  (x: 플롯 가로비율 0~1, p: 가격)
+let drawTool = null;               // null | "trend" | "fib"
+let drawStart = null;
+let drawPreview = null;
+const FIB_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+
+function renderChartDrawings() {
+  const g = lastChartGeom;
+  if (!g) return "";
+  const items = (chartDrawings[g.ticker] || []).slice();
+  if (drawPreview) items.push(drawPreview);
+  if (!items.length) return "";
+  const pxX = (xn) => g.padL + xn * g.plotW;
+  const pxY = (price) => g.padT + ((g.max - price) / g.range) * g.plotH;
+  let out = "";
+  for (const d of items) {
+    if (d.type === "trend") {
+      out += `<line x1="${pxX(d.x1).toFixed(1)}" y1="${pxY(d.p1).toFixed(1)}" x2="${pxX(d.x2).toFixed(1)}" y2="${pxY(d.p2).toFixed(1)}" class="draw-line"></line>`;
+    } else if (d.type === "fib") {
+      const hi = Math.max(d.p1, d.p2), lo = Math.min(d.p1, d.p2), span = hi - lo || 1;
+      const xa = pxX(Math.min(d.x1, d.x2)), xb = pxX(Math.max(d.x1, d.x2));
+      out += FIB_LEVELS.map((lv) => {
+        const price = hi - span * lv;
+        const y = pxY(price);
+        return `<line x1="${xa.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xb.toFixed(1)}" y2="${y.toFixed(1)}" class="draw-fib"></line>`
+          + `<text x="${(xb + 4).toFixed(1)}" y="${(y + 3).toFixed(1)}" class="draw-fib-label">${(lv * 100).toFixed(1)}% · $${price.toFixed(2)}</text>`;
+      }).join("");
+    }
+  }
+  return out;
+}
+
+function chartPointToData(evt) {
+  const g = lastChartGeom;
+  const svg = byId("priceChart");
+  if (!g || !svg) return null;
+  const rect = svg.getBoundingClientRect();
+  const px = (evt.clientX - rect.left) * (g.width / rect.width);
+  const py = (evt.clientY - rect.top) * (g.height / rect.height);
+  const xn = Math.max(0, Math.min(1, (px - g.padL) / g.plotW));
+  const price = g.max - ((py - g.padT) / g.plotH) * g.range;
+  return { xn, price };
+}
+
+function updateDrawLayer() {
+  const layer = byId("chartDrawLayer");
+  if (layer) layer.innerHTML = renderChartDrawings();
+}
+
+function setDrawTool(tool) {
+  drawTool = (drawTool === tool) ? null : tool;
+  drawStart = null; drawPreview = null;
+  byId("chartDrawControls")?.querySelectorAll("button[data-draw]").forEach((b) => b.classList.toggle("is-active", b.dataset.draw === drawTool));
+  const svg = byId("priceChart");
+  if (svg) svg.classList.toggle("is-drawing", Boolean(drawTool));
+}
+
+function setupChartDrawing() {
+  // 차트 유형(캔들/라인) 토글
+  const typeCtl = byId("chartTypeControls");
+  if (typeCtl && !typeCtl.dataset.bound) {
+    typeCtl.dataset.bound = "1";
+    typeCtl.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      chartState.chartType = b.dataset.ctype || "candle";
+      typeCtl.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b));
+      const item = stockByTicker(selectedTicker);
+      if (item) drawChart(applyLive(withDetail(item)));
+    }));
+  }
+  // 드로잉 도구
+  const drawCtl = byId("chartDrawControls");
+  if (drawCtl && !drawCtl.dataset.bound) {
+    drawCtl.dataset.bound = "1";
+    drawCtl.querySelectorAll("button[data-draw]").forEach((b) => b.addEventListener("click", () => setDrawTool(b.dataset.draw)));
+    byId("chartDrawClear")?.addEventListener("click", () => {
+      if (lastChartGeom) chartDrawings[lastChartGeom.ticker] = [];
+      drawPreview = null; updateDrawLayer();
+    });
+  }
+  // 차트 위 드래그
+  const svg = byId("priceChart");
+  if (svg && !svg.dataset.drawBound) {
+    svg.dataset.drawBound = "1";
+    svg.addEventListener("mousedown", (e) => {
+      if (!drawTool) return;
+      e.preventDefault();
+      drawStart = chartPointToData(e);
+    });
+    svg.addEventListener("mousemove", (e) => {
+      if (!drawTool || !drawStart) return;
+      const p = chartPointToData(e);
+      if (!p) return;
+      drawPreview = { type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price };
+      updateDrawLayer();
+    });
+    window.addEventListener("mouseup", (e) => {
+      if (!drawTool || !drawStart) return;
+      const p = chartPointToData(e);
+      const t = lastChartGeom && lastChartGeom.ticker;
+      if (p && t && (Math.abs(p.xn - drawStart.xn) > 0.005 || Math.abs(p.price - drawStart.price) > 1e-9)) {
+        (chartDrawings[t] = chartDrawings[t] || []).push({ type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price });
+      }
+      drawStart = null; drawPreview = null; updateDrawLayer();
+    });
+  }
+}
+
 function drawChart(item) {
+  setupChartDrawing();
   const svg = byId("priceChart");
   const allRows = resampleBars(getChartRows(item), chartState.barTf);
   const rows = visibleChartRows(allRows);
@@ -4609,15 +4767,20 @@ function drawChart(item) {
   const chartChange = pctFrom(last.c, first.c);
   const tfLabel = { D: "일봉", W: "주봉", M: "월봉" }[chartState.barTf] || "일봉";
 
+  // 드로잉(추세선/피보) 좌표 매핑용 지오메트리 저장.
+  lastChartGeom = { padL, plotW, padT, plotH, min, max, range, width, height, ticker: item.ticker };
+  const isLine = chartState.chartType === "line";
+
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" rx="8" class="chart-bg"></rect>
     ${vGuides}
     ${grid}
-    <path d="${area}" class="chart-area"></path>
+    ${isLine ? `<path d="${area}" class="chart-area"></path>` : ""}
     ${bollSvg}
-    ${candles}
-    <path d="${linePath}" class="chart-line"></path>
+    ${isLine ? "" : candles}
+    ${isLine ? `<path d="${linePath}" class="chart-line"></path>` : ""}
     ${overlays}
+    <g id="chartDrawLayer">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
     ${dateLabels}
@@ -6377,7 +6540,123 @@ function fmtCompact(value) {
   return `${num.toFixed(0)}`;
 }
 
+// ===== 가상 포트폴리오 시뮬레이터 (#24) =====
+const PORTFOLIO_KEY = "mir_portfolio_v1";
+let portfolio = [];
+const PIE_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#eab308"];
+
+function loadPortfolio() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PORTFOLIO_KEY));
+    portfolio = Array.isArray(saved) ? saved.filter((p) => p && p.ticker) : [];
+  } catch (e) { portfolio = []; }
+}
+function savePortfolio() {
+  try { localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(portfolio)); } catch (e) { /* ignore */ }
+}
+
+function setupPortfolio() {
+  const add = byId("pfAdd");
+  if (add && !add.dataset.bound) {
+    add.dataset.bound = "1";
+    const doAdd = () => {
+      const t = resolveCommunityTickerInput(byId("pfTicker").value) || String(byId("pfTicker").value || "").trim().toUpperCase();
+      const qty = Number(byId("pfQty").value);
+      const cost = Number(byId("pfCost").value);
+      if (!t || !stockByTicker(t) || !(qty > 0) || !(cost > 0)) { return; }
+      const existing = portfolio.find((p) => p.ticker === t);
+      if (existing) { existing.qty = qty; existing.avgCost = cost; }
+      else portfolio.push({ ticker: t, qty, avgCost: cost });
+      savePortfolio();
+      byId("pfTicker").value = ""; byId("pfQty").value = ""; byId("pfCost").value = "";
+      renderPortfolio();
+    };
+    add.addEventListener("click", doAdd);
+    byId("pfClear")?.addEventListener("click", () => { portfolio = []; savePortfolio(); renderPortfolio(); });
+    ["pfTicker", "pfQty", "pfCost"].forEach((id) => byId(id)?.addEventListener("keydown", (e) => { if (e.key === "Enter") doAdd(); }));
+  }
+}
+
+function donutSvg(slices) {
+  const total = slices.reduce((s, x) => s + x.value, 0) || 1;
+  const r = 52, cx = 60, cy = 60, sw = 22;
+  const C = 2 * Math.PI * r;
+  let acc = 0;
+  const segs = slices.map((s, i) => {
+    const frac = s.value / total;
+    const dash = `${(frac * C).toFixed(2)} ${(C - frac * C).toFixed(2)}`;
+    const off = (-acc * C).toFixed(2);
+    acc += frac;
+    return `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${PIE_COLORS[i % PIE_COLORS.length]}" stroke-width="${sw}" stroke-dasharray="${dash}" stroke-dashoffset="${off}" transform="rotate(-90 ${cx} ${cy})"></circle>`;
+  }).join("");
+  return `<svg viewBox="0 0 120 120" class="pf-donut">${segs}</svg>`;
+}
+
+function renderPortfolio() {
+  setupPortfolio();
+  const summaryEl = byId("pfSummary");
+  const tableEl = byId("pfTable");
+  const pieEl = byId("pfPie");
+  if (!tableEl) return;
+  if (!portfolio.length) {
+    if (summaryEl) summaryEl.innerHTML = "";
+    tableEl.innerHTML = `<p class="muted">보유 종목을 추가하면 손익과 섹터 분산이 표시됩니다.</p>`;
+    if (pieEl) pieEl.innerHTML = "";
+    return;
+  }
+  const rows = portfolio.map((p) => {
+    const stock = stockByTicker(p.ticker);
+    const price = stock ? Number(stock.price) : 0;
+    const value = p.qty * price;
+    const cost = p.qty * p.avgCost;
+    const pl = value - cost;
+    const plPct = cost > 0 ? (pl / cost) * 100 : 0;
+    return { ...p, stock, price, value, cost, pl, plPct, sector: stock?.sector || "기타", changePct: Number(stock?.changePct) || 0 };
+  });
+  const totalValue = rows.reduce((s, r) => s + r.value, 0);
+  const totalCost = rows.reduce((s, r) => s + r.cost, 0);
+  const totalPL = totalValue - totalCost;
+  const totalPLPct = totalCost > 0 ? (totalPL / totalCost) * 100 : 0;
+  // 일간 기여도 = Σ(비중 × 종목 당일등락률)
+  const dayContribution = rows.reduce((s, r) => s + (totalValue > 0 ? (r.value / totalValue) * r.changePct : 0), 0);
+
+  if (summaryEl) {
+    summaryEl.innerHTML = `
+      <div class="pf-stat"><span>평가금액</span><strong>$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+      <div class="pf-stat"><span>투자원금</span><strong>$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+      <div class="pf-stat"><span>평가손익</span><strong class="${cls(totalPL)}">${totalPL >= 0 ? "+" : ""}$${Math.abs(totalPL).toLocaleString(undefined, { maximumFractionDigits: 0 })} (${fmtPct(totalPLPct)})</strong></div>
+      <div class="pf-stat"><span>오늘 기여도</span><strong class="${cls(dayContribution)}">${fmtPct(dayContribution)}</strong></div>`;
+  }
+
+  rows.sort((a, b) => b.value - a.value);
+  const body = rows.map((r) => `<tr>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button></td>
+    <td class="ins-num">${r.qty.toLocaleString()}</td>
+    <td class="ins-num">$${r.avgCost.toFixed(2)}</td>
+    <td class="ins-num">$${r.price.toFixed(2)}</td>
+    <td class="ins-num">$${r.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+    <td class="ins-num">${totalValue > 0 ? (r.value / totalValue * 100).toFixed(1) : "0"}%</td>
+    <td class="ins-num ${cls(r.pl)}">${fmtPct(r.plPct)}</td>
+    <td class="ins-num"><button type="button" class="pf-del" data-ticker="${escapeHtml(r.ticker)}" title="삭제">✕</button></td>
+  </tr>`).join("");
+  tableEl.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+  tableEl.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+  tableEl.querySelectorAll(".pf-del").forEach((b) => b.addEventListener("click", () => {
+    portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker); savePortfolio(); renderPortfolio();
+  }));
+
+  // 섹터 분산 도넛
+  if (pieEl) {
+    const bySector = {};
+    rows.forEach((r) => { bySector[r.sector] = (bySector[r.sector] || 0) + r.value; });
+    const slices = Object.entries(bySector).map(([sector, value]) => ({ sector, value })).sort((a, b) => b.value - a.value);
+    const legend = slices.map((s, i) => `<div class="pf-leg"><i style="background:${PIE_COLORS[i % PIE_COLORS.length]}"></i>${escapeHtml(s.sector)} <b>${(s.value / totalValue * 100).toFixed(0)}%</b></div>`).join("");
+    pieEl.innerHTML = `<div class="pf-pie-title">섹터 분산</div>${donutSvg(slices)}<div class="pf-legend">${legend}</div>`;
+  }
+}
+
 function renderBulk() {
+  renderPortfolio();
   const minRs = Number(byId("bulkRs").value || 0);
   const input = byId("bulkInput");
   if (input && !input.value.trim()) input.value = watchlist.join(", ");

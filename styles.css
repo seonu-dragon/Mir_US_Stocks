@@ -119,13 +119,68 @@ select {
 }
 
 .topbar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   padding: 18px 24px 12px;
-  background: #0f172a;
+  background: linear-gradient(118deg, #13213b 0%, #0f172a 58%);
   color: #fff;
+}
+/* 시그니처 하단 액센트 라인 */
+.topbar::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), #60a5fa 35%, transparent 80%);
+}
+
+/* ===== 브랜드 로고 락업 ===== */
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.brand-logo-wrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: var(--r-md);
+  background: radial-gradient(circle at 50% 38%, rgba(96, 165, 250, 0.32), rgba(15, 23, 42, 0) 72%);
+}
+.brand-logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.45));
+  transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.brand-lockup:hover .brand-logo {
+  transform: translateY(-2px) rotate(-4deg) scale(1.05);
+}
+.brand-text { min-width: 0; }
+.brand-text .eyebrow {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.brand-text h1 {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.brand-accent {
+  background: linear-gradient(90deg, #93c5fd, #60a5fa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
 .eyebrow {
@@ -8678,4 +8733,23 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
   h1 { font-size: 21px; }
   .summary-band { grid-template-columns: 1fr 1fr; }
   .tab { font-size: var(--fs-table); }
+}
+
+/* ============================================================
+   브랜드 모션 — 진입 페이드업 (감속 모션 선호 시 비활성)
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes brand-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .topbar-left,
+  .home-zone-head,
+  .summary-band,
+  .daily-action-board {
+    animation: brand-fade-up 0.5s ease backwards;
+  }
+  .home-zone-head { animation-delay: 0.04s; }
+  .summary-band { animation-delay: 0.09s; }
+  .daily-action-board { animation-delay: 0.14s; }
 }

@@ -10802,6 +10802,15 @@ function setupUiPrefs() {
     setUiPref("density", next);
     applyDensity(next);
   });
+  const brandHome = byId("brandHome");
+  if (brandHome && !brandHome.dataset.bound) {
+    brandHome.dataset.bound = "1";
+    const goTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+    brandHome.addEventListener("click", goTop);
+    brandHome.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goTop(); }
+    });
+  }
 }
 
 function setupNlScreener() {

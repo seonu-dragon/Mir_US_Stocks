@@ -1001,10 +1001,10 @@ function renderSummary() {
     row.addEventListener("click", () => selectTicker(row.dataset.ticker, { openSearch: true })));
 }
 
-function actionBoardCard(title, hint, rows, emptyText, target) {
+function actionBoardCard(title, hint, rows, emptyText, target, extraClass = "") {
   const body = rows.length ? rows.join("") : `<p class="daily-action-empty">${escapeHtml(emptyText)}</p>`;
   return `
-    <article class="daily-action-card">
+    <article class="daily-action-card${extraClass ? ` ${extraClass}` : ""}">
       <div class="daily-action-card-head">
         <div><h3>${title}</h3><p>${escapeHtml(hint)}</p></div>
         ${target ? `<button type="button" class="daily-action-more" data-action-tab="${target.tab}"${target.sub ? ` data-action-sub="${target.sub}"` : ""}>전체 보기</button>` : ""}
@@ -1154,7 +1154,7 @@ function renderActionBoard() {
   grid.innerHTML =
     actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
     actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? "저장한 조건에 맞는 종목" : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
-    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }) +
+    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, "is-wide") +
     actionBoardCard("새 공시", "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" });
   grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
   grid.querySelectorAll("[data-action-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.actionTab, { sub: button.dataset.actionSub || null })));

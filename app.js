@@ -2548,6 +2548,7 @@ function setupEvents() {
   setupWatchlistUi();
   setupScreenerEvents();
   setupNlScreener();
+  setupUiPrefs();
   setupCompareEvents();
   setupBacktestEvents();
   setupEarningsEvents();
@@ -10756,6 +10757,51 @@ function runNlScreener() {
     </tr>`;
   }).join("");
   body.querySelectorAll(".ticker-link").forEach((btn) => btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 화면 설정 (테마 · 밀도) 토글 =====
+const UI_PREFS_KEY = "mir_ui_prefs_v1";
+function getUiPrefs() {
+  try { return JSON.parse(localStorage.getItem(UI_PREFS_KEY)) || {}; } catch (e) { return {}; }
+}
+function setUiPref(key, val) {
+  const p = getUiPrefs();
+  p[key] = val;
+  try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(p)); } catch (e) { /* ignore */ }
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  const btn = byId("themeToggle");
+  if (btn) {
+    const dark = theme === "dark";
+    btn.textContent = dark ? "☀️ 라이트" : "🌙 다크";
+    btn.setAttribute("aria-pressed", dark ? "true" : "false");
+  }
+}
+function applyDensity(density) {
+  document.documentElement.setAttribute("data-density", density);
+  const btn = byId("densityToggle");
+  if (btn) {
+    const compact = density === "compact";
+    btn.textContent = compact ? "↕ 넓게" : "↕ 컴팩트";
+    btn.setAttribute("aria-pressed", compact ? "true" : "false");
+  }
+}
+function setupUiPrefs() {
+  const prefs = getUiPrefs();
+  const theme = prefs.theme || (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  applyTheme(theme);
+  applyDensity(prefs.density || "comfortable");
+  byId("themeToggle")?.addEventListener("click", () => {
+    const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
+    setUiPref("theme", next);
+    applyTheme(next);
+  });
+  byId("densityToggle")?.addEventListener("click", () => {
+    const next = document.documentElement.getAttribute("data-density") === "compact" ? "comfortable" : "compact";
+    setUiPref("density", next);
+    applyDensity(next);
+  });
 }
 
 function setupNlScreener() {

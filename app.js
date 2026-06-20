@@ -6329,6 +6329,8 @@ function renderStockEvents(item) {
   const box = byId("stockEvents");
   if (!box) return;
   const events = stockEventRows(item);
+  const earningsEvent = events.find((event) => event.type === "Earnings");
+  const restEvents = events.filter((event) => event.type !== "Earnings");
   box.innerHTML = `
     <div class="event-head">
       <div>
@@ -6338,13 +6340,16 @@ function renderStockEvents(item) {
       <span class="event-badge">${escapeHtml(item.ticker)}</span>
     </div>
     <div class="event-grid">
-      ${events.map(eventCardHtml).join("")}
+      ${earningsEvent ? eventCardHtml(earningsEvent) : ""}
+      <section class="smart-money-card event-card-smart" id="stockSmartMoney"></section>
+      ${restEvents.map(eventCardHtml).join("")}
       ${stockEventCommunityCardHtml(item)}
     </div>
     ${moveAnalysisHtml(item, events.find((event) => event.type === "Move")?.move || null)}
   `;
   renderEarningsCalendar(item);
   renderEarningsReaction(item);
+  renderSmartMoney(item);
 }
 
 function stockEventRows(item) {

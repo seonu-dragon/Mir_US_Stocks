@@ -26,11 +26,11 @@
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
     <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
-    <link rel="stylesheet" href="styles.css?v=20260620f">
+    <link rel="stylesheet" href="styles.css?v=20260620g">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
-        var v = "20260617x";
+        var v = "20260620a";
         navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
           reg.update();
         }).catch(function () {});
@@ -780,12 +780,12 @@
               </details>
             </div>
             <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
+            <div class="fundamental-table analysis-fundamentals" id="fundamentalTable"></div>
           </div>
           <div class="search-side-col">
             <aside class="detail-panel" id="searchFacts"></aside>
             <section class="range52-card" id="range52Bar"></section>
             <section class="news-card" id="searchNews"></section>
-            <section class="data-quality-card" id="dataQualityPanel"></section>
           </div>
         </div>
         <div class="analysis-balanced-grid analysis-insight-grid">
@@ -793,11 +793,10 @@
           <section class="investment-checklist-card" id="investmentChecklist" aria-live="polite"></section>
         </div>
         <section class="stock-events-card" id="stockEvents"></section>
-        <div class="analysis-balanced-grid analysis-smart-grid">
-          <section class="smart-money-card" id="stockSmartMoney"></section>
+        <div class="analysis-balanced-grid analysis-quality-grid">
+          <section class="data-quality-card" id="dataQualityPanel"></section>
           <section class="congress-trades-card" id="stockCongress"></section>
         </div>
-        <div class="fundamental-table analysis-fundamentals" id="fundamentalTable"></div>
         </div>
 
         <div class="sub-panel" id="sub-screener">
@@ -1657,6 +1656,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260620i"></script>
+    <script src="app.js?v=20260620j"></script>
   </body>
 </html>

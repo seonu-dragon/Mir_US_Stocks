@@ -6556,15 +6556,21 @@ footer {
 }
 
 .daily-action-schedule-row strong {
-  display: -webkit-box;
-  overflow: hidden;
+  display: block;
+  overflow: visible;
   white-space: normal;
   overflow-wrap: anywhere;
   word-break: keep-all;
   line-height: 1.4;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
+  text-overflow: clip;
+}
+
+.daily-action-schedule-row small {
+  overflow: visible;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
+  text-overflow: clip;
 }
 
 .daily-action-schedule-row em {
@@ -8015,19 +8021,29 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .analysis-fundamentals {
   margin-top: 14px;
 }
-.analysis-smart-grid .smart-money-card,
-.analysis-smart-grid .congress-trades-card {
+.analysis-quality-grid .data-quality-card,
+.analysis-quality-grid .congress-trades-card {
   border-radius: 10px;
 }
 
-/* 일정·컨센서스·발표 반응을 하나의 EARNINGS 카드로 통합 */
+/* 일정·컨센서스·발표 반응을 하나의 EARNINGS 카드로 통합 (절반 폭) */
 .event-card-earnings {
   display: block;
-  grid-column: span 4;
-  min-height: 0;
+  grid-column: span 2;
+  min-height: 120px;
   padding: 12px;
   background: linear-gradient(145deg, #eff6ff, #fff 55%);
 }
+/* EARNINGS 옆 절반 자리에 스마트머니 종합 */
+.event-card-smart {
+  grid-column: span 2;
+  min-height: 120px;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: linear-gradient(145deg, #f0fdfa, #fff 55%);
+}
+.event-card-smart:empty { display: none; }
 .earnings-card-title {
   display: flex;
   align-items: baseline;
@@ -8092,10 +8108,12 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 @media (max-width: 900px) {
   .stock-analysis-top,
   .analysis-balanced-grid { grid-template-columns: 1fr !important; }
-  .event-card-earnings { grid-column: span 2; }
+  .event-card-earnings,
+  .event-card-smart { grid-column: span 2; }
 }
 @media (max-width: 520px) {
-  .event-card-earnings { grid-column: span 1; }
+  .event-card-earnings,
+  .event-card-smart { grid-column: span 1; }
   .earnings-card-title { align-items: flex-start; flex-direction: column; }
   .event-card-earnings .earnings-summary { grid-template-columns: 1fr; }
 }

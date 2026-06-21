@@ -1288,7 +1288,7 @@ function fetchMarketHeader() {
     renderSummary();
   });
   const fxReq = fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
-    if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); }
+    if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); renderPortfolio(); }
   }).catch(() => {});
   const idxReq = fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
     if (p && Array.isArray(p.indices)) renderIndexStrip(p.indices);
@@ -7162,12 +7162,15 @@ const INVESTMENT_JOURNAL_KEY = "mir_investment_journal_v1";
 const REBALANCE_TARGET_KEY = "mir_rebalance_targets_v1";
 const PORTFOLIO_DONUT_MODE_KEY = "mir_portfolio_donut_mode_v1";
 const STRESS_TEST_KEY = "mir_stress_test_v1";
+const PORTFOLIO_FX_KEY = "mir_portfolio_entry_fx_v1";
 let portfolio = [];
 let dividendPlan = {};
 let investmentJournal = [];
 let rebalanceTargets = {};
 let portfolioDonutMode = "sector";
 let stressTestState = { scenario: "market", overrides: {} };
+let portfolioEntryFx = {};
+let benchmarkAttributionRequest = 0;
 const PIE_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#eab308"];
 
 function loadPortfolio() {
@@ -7192,6 +7195,7 @@ function loadPortfolioExtensions() {
     const saved = JSON.parse(localStorage.getItem(STRESS_TEST_KEY) || "{}");
     stressTestState = { scenario: saved.scenario || "market", overrides: saved.overrides || {} };
   } catch (_) { stressTestState = { scenario: "market", overrides: {} }; }
+  try { portfolioEntryFx = JSON.parse(localStorage.getItem(PORTFOLIO_FX_KEY) || "{}") || {}; } catch (_) { portfolioEntryFx = {}; }
 }
 
 function savePortfolioExtension(key, value) {
@@ -7447,6 +7451,144 @@ function syncPositionTickerPrice() {
   renderPositionSizeCalculator(false);
 }
 
+function currentUsdKrw() {
+  const row = (marketHeader.fx || []).find((item) => item.symbol === "KRW=X");
+  const rate = Number(row?.price);
+  return Number.isFinite(rate) && rate > 0 ? rate : null;
+}
+
+function fmtKrw(value) {
+  if (!Number.isFinite(Number(value))) return "-";
+  return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(Number(value));
+}
+
+function renderKrwPortfolio() {
+  const summary = byId("krwPortfolioSummary");
+  const table = byId("krwPortfolioTable");
+  const rateLabel = byId("krwCurrentRate");
+  if (!summary || !table || !rateLabel) return;
+  const currentFx = currentUsdKrw();
+  rateLabel.textContent = currentFx ? `USD/KRW ${currentFx.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "USD/KRW 로딩 중";
+  const rows = portfolioDetailRows();
+  if (!rows.length) {
+    summary.innerHTML = "";
+    table.innerHTML = `<p class="muted">보유 종목을 추가하면 원화 평가손익을 계산할 수 있습니다.</p>`;
+    return;
+  }
+  if (!currentFx) {
+    summary.innerHTML = "";
+    table.innerHTML = `<p class="muted">실시간 USD/KRW 환율을 불러오는 중입니다.</p>`;
+    return;
+  }
+  const detailed = rows.map((row) => {
+    const savedEntryFx = Number(portfolioEntryFx[row.ticker]);
+    const entryFx = Number.isFinite(savedEntryFx) && savedEntryFx > 0 ? savedEntryFx : currentFx;
+    const usdCost = Number(row.qty || 0) * Number(row.avgCost || 0);
+    const usdValue = row.value;
+    const krwCost = usdCost * entryFx;
+    const krwValue = usdValue * currentFx;
+    const priceEffect = (usdValue - usdCost) * entryFx;
+    const fxEffect = usdValue * (currentFx - entryFx);
+    return { ...row, entryFx, hasSavedFx: savedEntryFx > 0, usdCost, usdValue, krwCost, krwValue, priceEffect, fxEffect, totalEffect: krwValue - krwCost };
+  });
+  const totals = detailed.reduce((acc, row) => {
+    ["krwCost", "krwValue", "priceEffect", "fxEffect", "totalEffect"].forEach((key) => { acc[key] += row[key]; });
+    return acc;
+  }, { krwCost: 0, krwValue: 0, priceEffect: 0, fxEffect: 0, totalEffect: 0 });
+  summary.innerHTML = `
+    <div><span>원화 평가액</span><strong>${fmtKrw(totals.krwValue)}</strong></div>
+    <div><span>총 원화 손익</span><strong class="${cls(totals.totalEffect)}">${fmtKrw(totals.totalEffect)}</strong></div>
+    <div><span>주가 효과</span><strong class="${cls(totals.priceEffect)}">${fmtKrw(totals.priceEffect)}</strong></div>
+    <div><span>환율 효과</span><strong class="${cls(totals.fxEffect)}">${fmtKrw(totals.fxEffect)}</strong></div>`;
+  table.innerHTML = `<table><thead><tr><th>종목</th><th>매입 환율</th><th>원화 원금</th><th>원화 평가액</th><th>주가 효과</th><th>환율 효과</th><th>총 손익</th></tr></thead><tbody>${detailed.map((row) => `
+    <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
+      <td><input type="number" min="1" step="0.1" value="${row.entryFx.toFixed(1)}" data-entry-fx-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 매입 환율"><small>${row.hasSavedFx ? "저장됨" : "현재 환율 임시 적용"}</small></td>
+      <td>${fmtKrw(row.krwCost)}</td><td>${fmtKrw(row.krwValue)}</td>
+      <td class="${cls(row.priceEffect)}">${fmtKrw(row.priceEffect)}</td><td class="${cls(row.fxEffect)}">${fmtKrw(row.fxEffect)}</td><td class="${cls(row.totalEffect)}"><strong>${fmtKrw(row.totalEffect)}</strong></td></tr>`).join("")}</tbody></table>`;
+  table.querySelectorAll("[data-entry-fx-ticker]").forEach((input) => input.addEventListener("change", () => {
+    const value = Number(input.value);
+    if (!(value > 0)) return;
+    portfolioEntryFx[input.dataset.entryFxTicker] = value;
+    savePortfolioExtension(PORTFOLIO_FX_KEY, portfolioEntryFx);
+    renderKrwPortfolio();
+  }));
+}
+
+async function renderBenchmarkAttribution() {
+  const summary = byId("benchmarkAttributionSummary");
+  const table = byId("benchmarkAttributionTable");
+  const status = byId("benchmarkAttributionStatus");
+  if (!summary || !table || !status) return;
+  const positions = portfolioDetailRows();
+  const benchmarkTicker = String(byId("portfolioBenchmark")?.value || "SPY").toUpperCase();
+  const periodBars = Number(byId("portfolioBenchmarkPeriod")?.value || 63);
+  const requestId = ++benchmarkAttributionRequest;
+  if (!positions.length) {
+    summary.innerHTML = "";
+    table.innerHTML = `<p class="muted">보유 종목을 추가하면 벤치마크 대비 성과를 계산할 수 있습니다.</p>`;
+    status.textContent = "";
+    return;
+  }
+  status.textContent = "가격 이력을 불러오는 중입니다.";
+  summary.innerHTML = "";
+  table.innerHTML = "";
+  try {
+    const loaded = await Promise.all([...positions.map(async (position) => {
+      const detail = await loadStockDetail(position.ticker);
+      const merged = detail ? { ...position.stock, ...detail } : position.stock;
+      const chartRows = getChartRows(merged);
+      return { ...position, rows: chartRows, dateMap: closeSeriesToDateMap(chartRows), synthetic: isSyntheticChart(merged) };
+    }), (async () => {
+      const stock = stockByTicker(benchmarkTicker);
+      const detail = await loadStockDetail(benchmarkTicker);
+      const merged = detail ? { ...stock, ...detail } : stock;
+      const chartRows = getChartRows(merged);
+      return { ticker: benchmarkTicker, stock, rows: chartRows, dateMap: closeSeriesToDateMap(chartRows), synthetic: isSyntheticChart(merged), benchmark: true };
+    })()]);
+    if (requestId !== benchmarkAttributionRequest) return;
+    const benchmark = loaded.find((row) => row.benchmark);
+    const valid = loaded.filter((row) => !row.benchmark && !row.synthetic && row.dateMap.size >= 22);
+    if (!benchmark || benchmark.synthetic || benchmark.dateMap.size < 22 || !valid.length) {
+      status.textContent = "실제 가격 이력이 있는 보유종목과 벤치마크가 필요합니다.";
+      return;
+    }
+    let dateResult = backtestResolveDates([...valid, benchmark], periodBars, null, null);
+    if (!dateResult.dates.length) {
+      const fallback = Math.min(periodBars, ...valid.map((row) => row.dateMap.size), benchmark.dateMap.size);
+      dateResult = backtestResolveDates([...valid, benchmark], fallback, null, null);
+    }
+    if (!dateResult.dates.length) {
+      status.textContent = dateResult.error || "공통 거래일을 계산하지 못했습니다.";
+      return;
+    }
+    const startDate = dateResult.dates[0];
+    const endDate = dateResult.dates[dateResult.dates.length - 1];
+    const benchmarkReturn = (benchmark.dateMap.get(endDate) / benchmark.dateMap.get(startDate) - 1) * 100;
+    const validValue = valid.reduce((sum, row) => sum + row.value, 0);
+    const rows = valid.map((row) => {
+      const weightPct = validValue > 0 ? row.value / validValue * 100 : 100 / valid.length;
+      const returnPct = (row.dateMap.get(endDate) / row.dateMap.get(startDate) - 1) * 100;
+      const contribution = returnPct * weightPct / 100;
+      const alphaContribution = (returnPct - benchmarkReturn) * weightPct / 100;
+      return { ...row, weightPct, returnPct, contribution, alphaContribution };
+    });
+    const portfolioReturn = rows.reduce((sum, row) => sum + row.contribution, 0);
+    const alpha = portfolioReturn - benchmarkReturn;
+    summary.innerHTML = `
+      <div><span>포트폴리오</span><strong class="${cls(portfolioReturn)}">${fmtPct(portfolioReturn)}</strong></div>
+      <div><span>${escapeHtml(benchmarkTicker)}</span><strong class="${cls(benchmarkReturn)}">${fmtPct(benchmarkReturn)}</strong></div>
+      <div><span>초과수익</span><strong class="${cls(alpha)}">${fmtPct(alpha)}</strong></div>
+      <div><span>비교 기간</span><strong>${escapeHtml(startDate)} ~ ${escapeHtml(endDate)}</strong></div>`;
+    table.innerHTML = `<table><thead><tr><th>종목</th><th>현재 비중</th><th>기간 수익률</th><th>수익 기여도</th><th>${escapeHtml(benchmarkTicker)} 대비 기여도</th></tr></thead><tbody>${rows.sort((a, b) => b.alphaContribution - a.alphaContribution).map((row) => `
+      <tr><td><button type="button" class="benchmark-ticker" data-benchmark-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td><td>${row.weightPct.toFixed(1)}%</td><td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td><td class="${cls(row.contribution)}">${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(2)}%p</td><td class="${cls(row.alphaContribution)}"><strong>${row.alphaContribution >= 0 ? "+" : ""}${row.alphaContribution.toFixed(2)}%p</strong></td></tr>`).join("")}</tbody></table>`;
+    table.querySelectorAll("[data-benchmark-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.benchmarkTicker, { openSearch: true })));
+    const excluded = positions.length - valid.length;
+    status.textContent = excluded ? `가격 이력이 부족한 ${excluded}개 종목은 제외했습니다. 현재 비중을 유효 종목에 다시 배분한 근사치입니다.` : "현재 비중을 기간 시작점에 적용한 근사 기여도입니다.";
+  } catch (_) {
+    if (requestId === benchmarkAttributionRequest) status.textContent = "벤치마크 분석 데이터를 불러오지 못했습니다.";
+  }
+}
+
 function setupPortfolioExtensions() {
   const equal = byId("rebalanceEqual");
   if (equal && !equal.dataset.bound) {
@@ -7469,6 +7611,12 @@ function setupPortfolioExtensions() {
     positionButton.addEventListener("click", () => renderPositionSizeCalculator(true));
     byId("positionTicker")?.addEventListener("change", syncPositionTickerPrice);
     ["positionCapital", "positionEntry", "positionStop", "positionRiskPct", "positionMaxPct"].forEach((id) => byId(id)?.addEventListener("change", () => renderPositionSizeCalculator(false)));
+  }
+  const benchmark = byId("portfolioBenchmark");
+  if (benchmark && !benchmark.dataset.bound) {
+    benchmark.dataset.bound = "1";
+    benchmark.addEventListener("change", renderBenchmarkAttribution);
+    byId("portfolioBenchmarkPeriod")?.addEventListener("change", renderBenchmarkAttribution);
   }
   const save = byId("journalSave");
   if (save && !save.dataset.bound) {
@@ -7584,6 +7732,8 @@ function renderPortfolio() {
     renderRebalanceCalculator();
     renderStressTest();
     renderPositionSizeCalculator(false);
+    renderKrwPortfolio();
+    renderBenchmarkAttribution();
     renderInvestmentJournal();
     return;
   }
@@ -7662,6 +7812,8 @@ function renderPortfolio() {
   renderRebalanceCalculator();
   renderStressTest();
   renderPositionSizeCalculator(false);
+  renderKrwPortfolio();
+  renderBenchmarkAttribution();
   renderInvestmentJournal();
 }
 

@@ -7160,10 +7160,14 @@ const PORTFOLIO_KEY = "mir_portfolio_v1";
 const DIVIDEND_PLAN_KEY = "mir_dividend_plan_v1";
 const INVESTMENT_JOURNAL_KEY = "mir_investment_journal_v1";
 const REBALANCE_TARGET_KEY = "mir_rebalance_targets_v1";
+const PORTFOLIO_DONUT_MODE_KEY = "mir_portfolio_donut_mode_v1";
+const STRESS_TEST_KEY = "mir_stress_test_v1";
 let portfolio = [];
 let dividendPlan = {};
 let investmentJournal = [];
 let rebalanceTargets = {};
+let portfolioDonutMode = "sector";
+let stressTestState = { scenario: "market", overrides: {} };
 const PIE_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#eab308"];
 
 function loadPortfolio() {
@@ -7183,6 +7187,11 @@ function loadPortfolioExtensions() {
     investmentJournal = Array.isArray(rows) ? rows : [];
   } catch (_) { investmentJournal = []; }
   try { rebalanceTargets = JSON.parse(localStorage.getItem(REBALANCE_TARGET_KEY) || "{}") || {}; } catch (_) { rebalanceTargets = {}; }
+  try { portfolioDonutMode = localStorage.getItem(PORTFOLIO_DONUT_MODE_KEY) === "stock" ? "stock" : "sector"; } catch (_) { portfolioDonutMode = "sector"; }
+  try {
+    const saved = JSON.parse(localStorage.getItem(STRESS_TEST_KEY) || "{}");
+    stressTestState = { scenario: saved.scenario || "market", overrides: saved.overrides || {} };
+  } catch (_) { stressTestState = { scenario: "market", overrides: {} }; }
 }
 
 function savePortfolioExtension(key, value) {
@@ -7333,12 +7342,133 @@ function normalizeRebalanceTargets() {
   renderRebalanceCalculator();
 }
 
+function presetStressShock(row, scenario) {
+  const sector = String(row.stock?.sector || "").toUpperCase();
+  if (scenario === "market") return -10;
+  if (scenario === "tech") return sector === "TECHNOLOGY" ? -15 : sector === "COMMUNICATION SERVICES" ? -10 : -6;
+  if (scenario === "recession") {
+    if (["CONSUMER CYCLICAL", "FINANCIAL", "INDUSTRIALS", "ENERGY"].includes(sector)) return -15;
+    if (["CONSUMER DEFENSIVE", "HEALTHCARE", "UTILITIES"].includes(sector)) return -5;
+    return -10;
+  }
+  if (scenario === "rates") {
+    if (sector === "FINANCIAL") return 3;
+    if (["REAL ESTATE", "TECHNOLOGY"].includes(sector)) return -12;
+    if (sector === "UTILITIES") return -8;
+    return -5;
+  }
+  return -10;
+}
+
+function stressShockFor(row) {
+  const override = stressTestState.overrides?.[row.ticker];
+  return Number.isFinite(Number(override)) ? Number(override) : presetStressShock(row, stressTestState.scenario);
+}
+
+function saveStressTestState() {
+  savePortfolioExtension(STRESS_TEST_KEY, stressTestState);
+}
+
+function renderStressTest() {
+  const table = byId("stressTable");
+  const summary = byId("stressSummary");
+  const scenario = byId("stressScenario");
+  if (!table || !summary || !scenario) return;
+  scenario.value = stressTestState.scenario;
+  const rows = portfolioDetailRows();
+  if (!rows.length) {
+    summary.innerHTML = "";
+    table.innerHTML = `<p class="muted">보유 종목을 추가하면 시나리오별 예상 손실을 계산할 수 있습니다.</p>`;
+    return;
+  }
+  const original = rows.reduce((sum, row) => sum + row.value, 0);
+  const detailed = rows.map((row) => {
+    const shock = stressShockFor(row);
+    const stressedValue = Math.max(0, row.value * (1 + shock / 100));
+    return { ...row, shock, stressedValue, impact: stressedValue - row.value };
+  });
+  const stressed = detailed.reduce((sum, row) => sum + row.stressedValue, 0);
+  const impact = stressed - original;
+  summary.innerHTML = `
+    <div><span>현재 평가액</span><strong>$${original.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>스트레스 후</span><strong>$${stressed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>예상 변화</span><strong class="${cls(impact)}">${impact >= 0 ? "+" : "-"}$${Math.abs(impact).toLocaleString(undefined, { maximumFractionDigits: 0 })} (${original > 0 ? (impact / original * 100).toFixed(1) : "0.0"}%)</strong></div>`;
+  table.innerHTML = `<table><thead><tr><th>종목</th><th>현재 평가액</th><th>충격률</th><th>예상 영향</th><th>스트레스 후 비중</th></tr></thead><tbody>${detailed.map((row) => `
+    <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${escapeHtml(row.stock?.sector || "기타")}</small></td>
+      <td>$${row.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+      <td><input type="number" min="-100" max="100" step="1" value="${row.shock.toFixed(1)}" data-stress-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 충격률">%</td>
+      <td class="${cls(row.impact)}">${row.impact >= 0 ? "+" : "-"}$${Math.abs(row.impact).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+      <td>${stressed > 0 ? (row.stressedValue / stressed * 100).toFixed(1) : "0.0"}%</td></tr>`).join("")}</tbody></table>`;
+  table.querySelectorAll("[data-stress-ticker]").forEach((input) => input.addEventListener("change", () => {
+    if (stressTestState.scenario !== "custom") {
+      stressTestState.overrides = Object.fromEntries(detailed.map((row) => [row.ticker, row.shock]));
+    }
+    stressTestState.scenario = "custom";
+    stressTestState.overrides[input.dataset.stressTicker] = Math.max(-100, Math.min(100, Number(input.value) || 0));
+    saveStressTestState();
+    renderStressTest();
+  }));
+}
+
+function renderPositionSizeCalculator(showErrors = false) {
+  const box = byId("positionSizeResult");
+  if (!box) return;
+  const capital = Number(byId("positionCapital")?.value);
+  const entry = Number(byId("positionEntry")?.value);
+  const stop = Number(byId("positionStop")?.value);
+  const riskPct = Number(byId("positionRiskPct")?.value);
+  const maxPct = Number(byId("positionMaxPct")?.value);
+  if (!(capital > 0) || !(entry > 0) || !(stop > 0) || !(stop < entry) || !(riskPct > 0) || !(maxPct > 0)) {
+    box.innerHTML = `<p class="${showErrors ? "neg" : "muted"}">${showErrors ? "투자금·진입가·손절가를 확인하세요. 롱 포지션은 손절가가 진입가보다 낮아야 합니다." : "값을 입력하면 허용 손실 기준 적정 매수 수량을 계산합니다."}</p>`;
+    return;
+  }
+  const riskBudget = capital * riskPct / 100;
+  const riskPerShare = entry - stop;
+  const riskShares = Math.floor(riskBudget / riskPerShare);
+  const allocationShares = Math.floor((capital * Math.min(100, maxPct) / 100) / entry);
+  const shares = Math.max(0, Math.min(riskShares, allocationShares));
+  const positionValue = shares * entry;
+  const plannedLoss = shares * riskPerShare;
+  const binding = riskShares <= allocationShares ? "허용 손실" : "최대 비중";
+  box.innerHTML = `
+    <div><span>적정 수량</span><strong>${shares.toLocaleString()}주</strong></div>
+    <div><span>예상 투자금</span><strong>$${positionValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>손절 시 손실</span><strong class="neg">-$${plannedLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>적용 제한</span><strong>${binding}</strong></div>`;
+}
+
+function syncPositionTickerPrice() {
+  const raw = byId("positionTicker")?.value || "";
+  const ticker = resolveCommunityTickerInput(raw) || String(raw).trim().toUpperCase();
+  const stock = stockByTicker(ticker);
+  if (!stock) return;
+  byId("positionTicker").value = ticker;
+  byId("positionEntry").value = Number(stock.price).toFixed(2);
+  renderPositionSizeCalculator(false);
+}
+
 function setupPortfolioExtensions() {
   const equal = byId("rebalanceEqual");
   if (equal && !equal.dataset.bound) {
     equal.dataset.bound = "1";
     equal.addEventListener("click", setEqualRebalanceTargets);
     byId("rebalanceNormalize")?.addEventListener("click", normalizeRebalanceTargets);
+  }
+  const scenario = byId("stressScenario");
+  if (scenario && !scenario.dataset.bound) {
+    scenario.dataset.bound = "1";
+    scenario.addEventListener("change", () => {
+      stressTestState = { scenario: scenario.value, overrides: {} };
+      saveStressTestState();
+      renderStressTest();
+    });
+  }
+  const positionButton = byId("positionCalculate");
+  if (positionButton && !positionButton.dataset.bound) {
+    positionButton.dataset.bound = "1";
+    positionButton.addEventListener("click", () => renderPositionSizeCalculator(true));
+    byId("positionTicker")?.addEventListener("change", syncPositionTickerPrice);
+    ["positionCapital", "positionEntry", "positionStop", "positionRiskPct", "positionMaxPct"].forEach((id) => byId(id)?.addEventListener("change", () => renderPositionSizeCalculator(false)));
   }
   const save = byId("journalSave");
   if (save && !save.dataset.bound) {
@@ -7452,6 +7582,8 @@ function renderPortfolio() {
     if (pieEl) pieEl.innerHTML = "";
     renderDividendPlanner();
     renderRebalanceCalculator();
+    renderStressTest();
+    renderPositionSizeCalculator(false);
     renderInvestmentJournal();
     return;
   }
@@ -7496,16 +7628,40 @@ function renderPortfolio() {
     portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker); savePortfolio(); renderPortfolio();
   }));
 
-  // 섹터 분산 도넛
+  // 섹터/종목 비중 도넛
   if (pieEl) {
-    const bySector = {};
-    rows.forEach((r) => { bySector[r.sector] = (bySector[r.sector] || 0) + r.value; });
-    const slices = Object.entries(bySector).map(([sector, value]) => ({ sector, value })).sort((a, b) => b.value - a.value);
-    const legend = slices.map((s, i) => `<div class="pf-leg"><i style="background:${PIE_COLORS[i % PIE_COLORS.length]}"></i>${escapeHtml(s.sector)} <b>${(s.value / totalValue * 100).toFixed(0)}%</b></div>`).join("");
-    pieEl.innerHTML = `<div class="pf-pie-title">섹터 분산</div>${donutSvg(slices)}<div class="pf-legend">${legend}</div>`;
+    let slices;
+    if (portfolioDonutMode === "stock") {
+      slices = rows.map((row) => ({ label: row.ticker, ticker: row.ticker, value: row.value })).sort((a, b) => b.value - a.value);
+    } else {
+      const bySector = {};
+      rows.forEach((row) => { bySector[row.sector] = (bySector[row.sector] || 0) + row.value; });
+      slices = Object.entries(bySector).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
+    }
+    const legend = slices.map((slice, index) => {
+      const content = `<i style="background:${PIE_COLORS[index % PIE_COLORS.length]}"></i><span>${escapeHtml(slice.label)}</span><b>${totalValue > 0 ? (slice.value / totalValue * 100).toFixed(0) : "0"}%</b>`;
+      return slice.ticker ? `<button type="button" class="pf-leg pf-leg-button" data-pie-ticker="${escapeHtml(slice.ticker)}">${content}</button>` : `<div class="pf-leg">${content}</div>`;
+    }).join("");
+    pieEl.innerHTML = `
+      <div class="pf-pie-head">
+        <div class="pf-pie-title">${portfolioDonutMode === "stock" ? "종목 비중" : "섹터 분산"}</div>
+        <div class="pf-pie-switch" role="group" aria-label="포트폴리오 비중 표시 기준">
+          <button type="button" data-pie-mode="sector" class="${portfolioDonutMode === "sector" ? "is-active" : ""}">섹터</button>
+          <button type="button" data-pie-mode="stock" class="${portfolioDonutMode === "stock" ? "is-active" : ""}">종목</button>
+        </div>
+      </div>
+      ${donutSvg(slices)}<div class="pf-legend">${legend}</div>`;
+    pieEl.querySelectorAll("[data-pie-mode]").forEach((button) => button.addEventListener("click", () => {
+      portfolioDonutMode = button.dataset.pieMode === "stock" ? "stock" : "sector";
+      try { localStorage.setItem(PORTFOLIO_DONUT_MODE_KEY, portfolioDonutMode); } catch (_) { /* ignore */ }
+      renderPortfolio();
+    }));
+    pieEl.querySelectorAll("[data-pie-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.pieTicker, { openSearch: true })));
   }
   renderDividendPlanner();
   renderRebalanceCalculator();
+  renderStressTest();
+  renderPositionSizeCalculator(false);
   renderInvestmentJournal();
 }
 

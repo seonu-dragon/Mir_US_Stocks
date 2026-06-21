@@ -39,7 +39,7 @@
     </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260621l">
+    <link rel="stylesheet" href="styles.css?v=20260621m">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1081,6 +1081,40 @@
             <div class="portfolio-tool-table" id="rebalanceTable"></div>
           </section>
 
+          <section class="portfolio-tool-card" id="stressTestCard">
+            <div class="portfolio-tool-head">
+              <div><span>RISK SCENARIO</span><h3>포트폴리오 스트레스 테스트</h3></div>
+              <select id="stressScenario" aria-label="스트레스 시나리오">
+                <option value="market">시장 급락</option>
+                <option value="tech">기술주 조정</option>
+                <option value="recession">경기침체</option>
+                <option value="rates">금리 급등</option>
+                <option value="custom">직접 입력</option>
+              </select>
+            </div>
+            <p class="muted">종목별 가정 충격률을 적용해 예상 평가손실과 스트레스 후 비중을 계산합니다.</p>
+            <div class="portfolio-tool-summary" id="stressSummary"></div>
+            <div class="portfolio-tool-table" id="stressTable"></div>
+          </section>
+
+          <section class="portfolio-tool-card" id="positionSizeCard">
+            <div class="portfolio-tool-head">
+              <div><span>RISK BUDGET</span><h3>포지션 크기 계산기</h3></div>
+              <strong>롱 포지션 기준</strong>
+            </div>
+            <p class="muted">손절 시 허용 손실과 최대 투자비중 중 더 보수적인 기준으로 매수 수량을 계산합니다.</p>
+            <div class="position-size-form">
+              <label>종목<input id="positionTicker" list="tickerOptions" placeholder="NVDA" autocomplete="off"></label>
+              <label>투자금<input id="positionCapital" type="number" min="1" step="100" value="10000"></label>
+              <label>진입가<input id="positionEntry" type="number" min="0" step="any" placeholder="현재가"></label>
+              <label>손절가<input id="positionStop" type="number" min="0" step="any" placeholder="손절가"></label>
+              <label>허용 손실<input id="positionRiskPct" type="number" min="0.1" max="100" step="0.1" value="1"><em>%</em></label>
+              <label>최대 비중<input id="positionMaxPct" type="number" min="1" max="100" step="1" value="20"><em>%</em></label>
+              <button type="button" id="positionCalculate">계산</button>
+            </div>
+            <div class="position-size-result" id="positionSizeResult"></div>
+          </section>
+
           <section class="portfolio-tool-card investment-journal-card" id="investmentJournalCard">
             <div class="portfolio-tool-head">
               <div><span>DECISION LOG</span><h3>투자 아이디어 · 매매일지</h3></div>
@@ -1788,6 +1822,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260621f"></script>
+    <script src="app.js?v=20260621g"></script>
   </body>
 </html>

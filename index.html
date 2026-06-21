@@ -39,7 +39,7 @@
     </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260621k">
+    <link rel="stylesheet" href="styles.css?v=20260621l">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -844,6 +844,7 @@
           <section class="move-explanation-card" id="moveExplanation" aria-live="polite"></section>
           <section class="investment-checklist-card" id="investmentChecklist" aria-live="polite"></section>
         </div>
+        <section class="estimate-revision-card" id="estimateRevisionCard" aria-live="polite"></section>
         <section class="stock-events-card" id="stockEvents"></section>
         <div class="analysis-balanced-grid analysis-quality-grid">
           <section class="data-quality-card" id="dataQualityPanel"></section>
@@ -1054,6 +1055,50 @@
             <div class="pf-pie" id="pfPie"></div>
           </div>
         </section>
+
+        <div class="portfolio-extension-grid">
+          <section class="portfolio-tool-card" id="dividendPlannerCard">
+            <div class="portfolio-tool-head">
+              <div><span>INCOME PLAN</span><h3>배당 캘린더 · 현금흐름</h3></div>
+              <strong id="dividendPlannerTotal">연 $0</strong>
+            </div>
+            <p class="muted">보유 수량과 연간 주당배당금을 기준으로 향후 12개월 현금흐름을 계산합니다.</p>
+            <div class="portfolio-tool-summary" id="dividendPlannerSummary"></div>
+            <div class="portfolio-tool-table" id="dividendPlannerTable"></div>
+            <div class="dividend-month-grid" id="dividendMonthGrid"></div>
+          </section>
+
+          <section class="portfolio-tool-card" id="rebalanceCard">
+            <div class="portfolio-tool-head">
+              <div><span>ALLOCATION</span><h3>포트폴리오 리밸런싱</h3></div>
+              <div class="portfolio-tool-actions">
+                <button type="button" class="ghost compact-btn" id="rebalanceEqual">동일 비중</button>
+                <button type="button" class="ghost compact-btn" id="rebalanceNormalize">100% 맞춤</button>
+              </div>
+            </div>
+            <p class="muted">현재 평가금액을 유지한다고 가정해 목표 비중별 매수·매도 수량을 계산합니다.</p>
+            <div class="portfolio-tool-summary" id="rebalanceSummary"></div>
+            <div class="portfolio-tool-table" id="rebalanceTable"></div>
+          </section>
+
+          <section class="portfolio-tool-card investment-journal-card" id="investmentJournalCard">
+            <div class="portfolio-tool-head">
+              <div><span>DECISION LOG</span><h3>투자 아이디어 · 매매일지</h3></div>
+              <strong id="journalCount">0건</strong>
+            </div>
+            <div class="journal-form">
+              <input id="journalTicker" placeholder="티커" autocomplete="off">
+              <select id="journalStatus" aria-label="진행 상태"><option value="idea">검토</option><option value="open">보유</option><option value="closed">종료</option></select>
+              <input id="journalEntry" type="number" min="0" step="any" placeholder="진입가">
+              <input id="journalTarget" type="number" min="0" step="any" placeholder="목표가">
+              <input id="journalStop" type="number" min="0" step="any" placeholder="손절가">
+              <input id="journalDate" type="date" aria-label="기록일">
+              <textarea id="journalThesis" rows="2" placeholder="매수 근거, 촉매, 핵심 리스크를 기록하세요."></textarea>
+              <button type="button" id="journalSave">기록 저장</button>
+            </div>
+            <div class="journal-list" id="journalList"></div>
+          </section>
+        </div>
 
         <section class="corr-card" id="corrCard">
           <div class="corr-head">
@@ -1743,6 +1788,6 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260621e"></script>
+    <script src="app.js?v=20260621f"></script>
   </body>
 </html>

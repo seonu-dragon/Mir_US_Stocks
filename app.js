@@ -200,6 +200,7 @@ const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
 const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v1";
 const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
+const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
 const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
 let watchlist = [];
@@ -208,6 +209,7 @@ let moveAnalysisState = null;
 let earningsCalendarCache = null;
 let earningsCalendarLoading = false;
 let deferredInstallPrompt = null;
+let estimateHistoryStore = null;
 
 const TOP_PRESETS = {
   leaders: { metric: "rsScore", minRs: 85, minEps: 70, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
@@ -287,6 +289,7 @@ function boot() {
   if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
   initWatchlist(route.get("watchlist"));
   loadPortfolio();
+  loadPortfolioExtensions();
   document.documentElement.removeAttribute("data-theme");
   setupPwa();
   updateDataLoadedAt();
@@ -4612,6 +4615,7 @@ function renderSearch() {
   renderSmartMoney(item);
   renderMoveExplanation(item);
   renderInvestmentChecklist(item);
+  renderEstimateRevision(item);
   render52wRange(item);
   renderStockEvents(item);
   renderEarningsReaction(item);
@@ -4631,6 +4635,7 @@ function renderSearch() {
     renderSmartMoney(refreshed);
     renderMoveExplanation(refreshed);
     renderInvestmentChecklist(refreshed);
+    renderEstimateRevision(refreshed);
     render52wRange(refreshed);
     renderStockEvents(refreshed);
     renderEarningsReaction(refreshed);
@@ -4782,6 +4787,111 @@ function renderInvestmentChecklist(item) {
     <p class="investment-check-note">${warned ? `주의 항목 ${warned}개를 원문 데이터와 함께 확인하세요.` : "규칙 기반 요약이며 매수·매도 추천이 아닙니다."}</p>`;
 }
 
+function loadEstimateHistoryStore() {
+  if (estimateHistoryStore) return estimateHistoryStore;
+  try { estimateHistoryStore = JSON.parse(localStorage.getItem(ESTIMATE_HISTORY_STORAGE_KEY) || "{}") || {}; }
+  catch (_) { estimateHistoryStore = {}; }
+  return estimateHistoryStore;
+}
+
+function currentEstimateSnapshot(item) {
+  const f = item.fundamentals || (window.MAP_FUNDAMENTALS || {})[item.ticker] || {};
+  const firstFinite = (...values) => {
+    for (const value of values) {
+      if (value == null || value === "") continue;
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+    return null;
+  };
+  return {
+    date: formatKstDateTime().slice(0, 10),
+    savedAt: Date.now(),
+    epsScore: firstFinite(item.epsRevScore),
+    epsNextQ: firstFinite(f.epsNextQ, item.epsNextQ),
+    epsNextY: firstFinite(f.epsNextY, item.epsNextY),
+    revenueNextQ: firstFinite(f.revenueEstimateNextQ, f.revenueNextQ, item.revenueEstimateNextQ),
+    revenueNextY: firstFinite(f.revenueEstimateNextY, f.revenueNextY, item.revenueEstimateNextY),
+    targetPrice: firstFinite(f.targetPrice, item.targetPrice),
+  };
+}
+
+function recordEstimateSnapshot(item) {
+  const store = loadEstimateHistoryStore();
+  const snapshot = currentEstimateSnapshot(item);
+  const hasEstimate = [snapshot.epsScore, snapshot.epsNextQ, snapshot.epsNextY, snapshot.revenueNextQ, snapshot.revenueNextY, snapshot.targetPrice].some(Number.isFinite);
+  if (!hasEstimate) return [];
+  const rows = Array.isArray(store[item.ticker]) ? store[item.ticker] : [];
+  const index = rows.findIndex((row) => row.date === snapshot.date);
+  if (index >= 0) rows[index] = snapshot;
+  else rows.push(snapshot);
+  rows.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+  store[item.ticker] = rows.slice(-45);
+  try { localStorage.setItem(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
+  return store[item.ticker];
+}
+
+function estimateBaseline(rows, days) {
+  const cutoff = Date.now() - days * 86400000;
+  const eligible = rows.filter((row) => {
+    const time = Number(row.savedAt) || new Date(`${row.date}T00:00:00`).getTime();
+    return Number.isFinite(time) && time <= cutoff;
+  });
+  return eligible.length ? eligible[eligible.length - 1] : null;
+}
+
+function estimateValue(value, kind) {
+  if (!Number.isFinite(Number(value))) return "-";
+  const number = Number(value);
+  if (kind === "score") return `${Math.round(number)}점`;
+  if (kind === "revenue") return `$${fmtCompact(number)}`;
+  return `$${number.toFixed(2)}`;
+}
+
+function estimateChange(current, baseline, kind) {
+  if (!Number.isFinite(Number(current)) || !Number.isFinite(Number(baseline))) return { text: "기준 부족", tone: "muted" };
+  const now = Number(current);
+  const before = Number(baseline);
+  if (kind === "score") {
+    const points = now - before;
+    return { text: `${points > 0 ? "+" : ""}${points.toFixed(0)}점`, tone: cls(points) };
+  }
+  if (before === 0) return { text: "비교 불가", tone: "muted" };
+  const pct = (now / before - 1) * 100;
+  return { text: `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`, tone: cls(pct) };
+}
+
+function renderEstimateRevision(item) {
+  const box = byId("estimateRevisionCard");
+  if (!box || !item) return;
+  const rows = recordEstimateSnapshot(item);
+  const current = rows[rows.length - 1] || currentEstimateSnapshot(item);
+  const week = estimateBaseline(rows, 7);
+  const month = estimateBaseline(rows, 30);
+  const metrics = [
+    { key: "epsScore", label: "EPS 추정 점수", kind: "score" },
+    { key: "epsNextQ", label: "다음 분기 EPS", kind: "money" },
+    { key: "epsNextY", label: "향후 1년 EPS", kind: "money" },
+    { key: "revenueNextQ", label: "다음 분기 매출", kind: "revenue", optional: true },
+    { key: "revenueNextY", label: "향후 1년 매출", kind: "revenue", optional: true },
+    { key: "targetPrice", label: "평균 목표가", kind: "money" },
+  ].filter((metric) => !metric.optional || Number.isFinite(current[metric.key]));
+  const historyDays = rows.length > 1 ? Math.round((Date.now() - (Number(rows[0].savedAt) || Date.now())) / 86400000) : 0;
+  box.innerHTML = `
+    <div class="estimate-revision-head">
+      <div><span>ESTIMATE TREND</span><h3>실적 추정치 변화</h3></div>
+      <strong>${escapeHtml(item.ticker)} · ${historyDays ? `${historyDays}일 추적` : "오늘부터 추적"}</strong>
+    </div>
+    <div class="estimate-revision-grid">
+      ${metrics.map((metric) => {
+        const weekChange = estimateChange(current[metric.key], week?.[metric.key], metric.kind);
+        const monthChange = estimateChange(current[metric.key], month?.[metric.key], metric.kind);
+        return `<article><span>${escapeHtml(metric.label)}</span><strong>${estimateValue(current[metric.key], metric.kind)}</strong><div><em class="${weekChange.tone}">7일 ${weekChange.text}</em><em class="${monthChange.tone}">30일 ${monthChange.text}</em></div></article>`;
+      }).join("")}
+    </div>
+    <p>이 브라우저가 확인한 일별 값을 최대 45일간 저장합니다. 매출 컨센서스는 원본 데이터가 제공되는 종목에만 표시됩니다.</p>`;
+}
+
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
 let _inst13fIndex = null;
 function inst13fIndex() {
@@ -4875,6 +4985,7 @@ function maybeFetchLiveData(base) {
       renderNews(merged);
       renderMoveExplanation(merged);
       renderInvestmentChecklist(merged);
+      renderEstimateRevision(merged);
     })
     .catch(() => {
       liveDone[ticker] = true;
@@ -4883,6 +4994,7 @@ function maybeFetchLiveData(base) {
         renderNews(merged);
         renderMoveExplanation(merged);
         renderInvestmentChecklist(merged);
+        renderEstimateRevision(merged);
       }
     });
 }
@@ -7045,7 +7157,13 @@ function fmtCompact(value) {
 
 // ===== 가상 포트폴리오 시뮬레이터 (#24) =====
 const PORTFOLIO_KEY = "mir_portfolio_v1";
+const DIVIDEND_PLAN_KEY = "mir_dividend_plan_v1";
+const INVESTMENT_JOURNAL_KEY = "mir_investment_journal_v1";
+const REBALANCE_TARGET_KEY = "mir_rebalance_targets_v1";
 let portfolio = [];
+let dividendPlan = {};
+let investmentJournal = [];
+let rebalanceTargets = {};
 const PIE_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#eab308"];
 
 function loadPortfolio() {
@@ -7056,6 +7174,232 @@ function loadPortfolio() {
 }
 function savePortfolio() {
   try { localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(portfolio)); } catch (e) { /* ignore */ }
+}
+
+function loadPortfolioExtensions() {
+  try { dividendPlan = JSON.parse(localStorage.getItem(DIVIDEND_PLAN_KEY) || "{}") || {}; } catch (_) { dividendPlan = {}; }
+  try {
+    const rows = JSON.parse(localStorage.getItem(INVESTMENT_JOURNAL_KEY) || "[]");
+    investmentJournal = Array.isArray(rows) ? rows : [];
+  } catch (_) { investmentJournal = []; }
+  try { rebalanceTargets = JSON.parse(localStorage.getItem(REBALANCE_TARGET_KEY) || "{}") || {}; } catch (_) { rebalanceTargets = {}; }
+}
+
+function savePortfolioExtension(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { /* ignore */ }
+}
+
+function portfolioDetailRows() {
+  return portfolio.map((position) => {
+    const stock = stockByTicker(position.ticker);
+    const price = Number(stock?.price) || 0;
+    return { ...position, stock, price, value: Number(position.qty || 0) * price };
+  }).filter((row) => row.stock);
+}
+
+function numericDividend(value) {
+  const parsed = Number(String(value ?? "").replace(/[^0-9.-]/g, ""));
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function dividendDefaults(row) {
+  const f = row.stock?.fundamentals || (window.MAP_FUNDAMENTALS || {})[row.ticker] || {};
+  const direct = numericDividend(f.dividendRate || row.stock?.dividendRate);
+  const rawYield = numericDividend(f.dividendYield || row.stock?.dividendYield);
+  const yieldRatio = rawYield > 1 ? rawYield / 100 : rawYield;
+  return {
+    annualDps: direct || (yieldRatio > 0 ? row.price * yieldRatio : 0),
+    frequency: 4,
+    exDate: f.dividendExDate || row.stock?.dividendExDate || "",
+  };
+}
+
+function dividendSetting(row) {
+  return { ...dividendDefaults(row), ...(dividendPlan[row.ticker] || {}) };
+}
+
+function dividendMonthBuckets(rows) {
+  const now = new Date();
+  const months = Array.from({ length: 12 }, (_, offset) => {
+    const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+    return { key: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`, label: `${date.getMonth() + 1}월`, value: 0 };
+  });
+  rows.forEach((row) => {
+    const setting = dividendSetting(row);
+    const annualCash = numericDividend(setting.annualDps) * Number(row.qty || 0);
+    const frequency = [1, 2, 4, 12].includes(Number(setting.frequency)) ? Number(setting.frequency) : 4;
+    if (!(annualCash > 0) || !setting.exDate) return;
+    const exDate = new Date(`${setting.exDate}T00:00:00`);
+    if (Number.isNaN(exDate.getTime())) return;
+    const step = 12 / frequency;
+    months.forEach((month, offset) => {
+      const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      if (((date.getMonth() - exDate.getMonth()) + 12) % step === 0) month.value += annualCash / frequency;
+    });
+  });
+  return months;
+}
+
+function renderDividendPlanner() {
+  const table = byId("dividendPlannerTable");
+  const summary = byId("dividendPlannerSummary");
+  const monthsBox = byId("dividendMonthGrid");
+  if (!table || !summary || !monthsBox) return;
+  const rows = portfolioDetailRows();
+  if (!rows.length) {
+    byId("dividendPlannerTotal").textContent = "연 $0";
+    summary.innerHTML = "";
+    table.innerHTML = `<p class="muted">가상 포트폴리오에 종목을 추가하면 배당 계획을 만들 수 있습니다.</p>`;
+    monthsBox.innerHTML = "";
+    return;
+  }
+  const detailed = rows.map((row) => {
+    const setting = dividendSetting(row);
+    const annualCash = numericDividend(setting.annualDps) * Number(row.qty || 0);
+    return { ...row, setting, annualCash };
+  });
+  const annual = detailed.reduce((sum, row) => sum + row.annualCash, 0);
+  const portfolioValue = detailed.reduce((sum, row) => sum + row.value, 0);
+  byId("dividendPlannerTotal").textContent = `연 $${annual.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  summary.innerHTML = `
+    <div><span>연간 예상</span><strong>$${annual.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>월평균</span><strong>$${(annual / 12).toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>평가액 대비</span><strong>${portfolioValue > 0 ? (annual / portfolioValue * 100).toFixed(2) : "0.00"}%</strong></div>`;
+  table.innerHTML = `<table><thead><tr><th>종목</th><th>연 DPS</th><th>주기</th><th>기준일</th><th>연 예상</th></tr></thead><tbody>${detailed.map((row) => `
+    <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
+      <td><input type="number" min="0" step="0.01" value="${numericDividend(row.setting.annualDps) || ""}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="annualDps" aria-label="${escapeHtml(row.ticker)} 연간 주당배당금"></td>
+      <td><select data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="frequency" aria-label="${escapeHtml(row.ticker)} 배당 주기">${[[12,"월"],[4,"분기"],[2,"반기"],[1,"연"]].map(([value, label]) => `<option value="${value}"${Number(row.setting.frequency) === value ? " selected" : ""}>${label}</option>`).join("")}</select></td>
+      <td><input type="date" value="${escapeHtml(row.setting.exDate || "")}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="exDate" aria-label="${escapeHtml(row.ticker)} 배당 기준일"></td>
+      <td><strong>$${row.annualCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></td></tr>`).join("")}</tbody></table>`;
+  table.querySelectorAll("[data-dividend-ticker]").forEach((control) => control.addEventListener("change", () => {
+    const ticker = control.dataset.dividendTicker;
+    const current = dividendSetting(rows.find((row) => row.ticker === ticker));
+    current[control.dataset.dividendField] = control.dataset.dividendField === "exDate" ? control.value : Number(control.value || 0);
+    dividendPlan[ticker] = current;
+    savePortfolioExtension(DIVIDEND_PLAN_KEY, dividendPlan);
+    renderDividendPlanner();
+  }));
+  const months = dividendMonthBuckets(rows);
+  monthsBox.innerHTML = months.map((month) => `<div class="dividend-month"><span>${month.label}</span><strong>$${month.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>`).join("");
+}
+
+function renderRebalanceCalculator() {
+  const table = byId("rebalanceTable");
+  const summary = byId("rebalanceSummary");
+  if (!table || !summary) return;
+  const rows = portfolioDetailRows();
+  if (!rows.length) {
+    summary.innerHTML = "";
+    table.innerHTML = `<p class="muted">보유 종목을 추가하면 목표 비중을 계산할 수 있습니다.</p>`;
+    return;
+  }
+  const totalValue = rows.reduce((sum, row) => sum + row.value, 0);
+  const equal = 100 / rows.length;
+  const targets = rows.map((row) => Number.isFinite(Number(rebalanceTargets[row.ticker])) ? Number(rebalanceTargets[row.ticker]) : equal);
+  const targetTotal = targets.reduce((sum, value) => sum + value, 0);
+  summary.innerHTML = `
+    <div><span>평가금액</span><strong>$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>목표 합계</span><strong class="${Math.abs(targetTotal - 100) < 0.05 ? "pos" : "neg"}">${targetTotal.toFixed(1)}%</strong></div>
+    <div><span>계산 기준</span><strong>현재 총액 유지</strong></div>`;
+  table.innerHTML = `<table><thead><tr><th>종목</th><th>현재</th><th>목표</th><th>차이</th><th>주문 수량</th></tr></thead><tbody>${rows.map((row, index) => {
+    const currentPct = totalValue > 0 ? row.value / totalValue * 100 : 0;
+    const targetPct = targets[index];
+    const difference = totalValue * (targetPct - currentPct) / 100;
+    const shares = row.price > 0 ? Math.abs(difference) / row.price : 0;
+    const action = Math.abs(difference) < Math.max(1, totalValue * 0.001) ? "유지" : difference > 0 ? `매수 ${shares.toFixed(2)}주` : `매도 ${shares.toFixed(2)}주`;
+    return `<tr><td><strong>${escapeHtml(row.ticker)}</strong><small>$${row.price.toFixed(2)}</small></td><td>${currentPct.toFixed(1)}%</td><td><input type="number" min="0" max="100" step="0.1" value="${targetPct.toFixed(1)}" data-rebalance-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 목표 비중">%</td><td class="${cls(difference)}">${difference >= 0 ? "+" : "-"}$${Math.abs(difference).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td><td><strong class="${difference > 0 ? "pos" : difference < 0 ? "neg" : "muted"}">${action}</strong></td></tr>`;
+  }).join("")}</tbody></table>`;
+  table.querySelectorAll("[data-rebalance-ticker]").forEach((input) => input.addEventListener("change", () => {
+    rebalanceTargets[input.dataset.rebalanceTicker] = Math.max(0, Number(input.value) || 0);
+    savePortfolioExtension(REBALANCE_TARGET_KEY, rebalanceTargets);
+    renderRebalanceCalculator();
+  }));
+}
+
+function setEqualRebalanceTargets() {
+  const rows = portfolioDetailRows();
+  const value = rows.length ? 100 / rows.length : 0;
+  rows.forEach((row) => { rebalanceTargets[row.ticker] = value; });
+  savePortfolioExtension(REBALANCE_TARGET_KEY, rebalanceTargets);
+  renderRebalanceCalculator();
+}
+
+function normalizeRebalanceTargets() {
+  const rows = portfolioDetailRows();
+  const total = rows.reduce((sum, row) => sum + Math.max(0, Number(rebalanceTargets[row.ticker]) || 0), 0);
+  if (!(total > 0)) return setEqualRebalanceTargets();
+  rows.forEach((row) => { rebalanceTargets[row.ticker] = (Math.max(0, Number(rebalanceTargets[row.ticker]) || 0) / total) * 100; });
+  savePortfolioExtension(REBALANCE_TARGET_KEY, rebalanceTargets);
+  renderRebalanceCalculator();
+}
+
+function setupPortfolioExtensions() {
+  const equal = byId("rebalanceEqual");
+  if (equal && !equal.dataset.bound) {
+    equal.dataset.bound = "1";
+    equal.addEventListener("click", setEqualRebalanceTargets);
+    byId("rebalanceNormalize")?.addEventListener("click", normalizeRebalanceTargets);
+  }
+  const save = byId("journalSave");
+  if (save && !save.dataset.bound) {
+    save.dataset.bound = "1";
+    const date = byId("journalDate");
+    if (date && !date.value) date.value = formatKstDateTime().slice(0, 10);
+    save.addEventListener("click", () => {
+      const rawTicker = byId("journalTicker")?.value || "";
+      const ticker = resolveCommunityTickerInput(rawTicker) || String(rawTicker).trim().toUpperCase();
+      const thesis = String(byId("journalThesis")?.value || "").trim();
+      if (!ticker || !stockByTicker(ticker) || !thesis) {
+        showAppToast("유효한 티커와 투자 근거를 입력하세요");
+        return;
+      }
+      investmentJournal.unshift({
+        id: `${Date.now()}-${ticker}`,
+        ticker,
+        status: byId("journalStatus")?.value || "idea",
+        date: byId("journalDate")?.value || formatKstDateTime().slice(0, 10),
+        entry: Number(byId("journalEntry")?.value) || null,
+        target: Number(byId("journalTarget")?.value) || null,
+        stop: Number(byId("journalStop")?.value) || null,
+        thesis,
+      });
+      investmentJournal = investmentJournal.slice(0, 100);
+      savePortfolioExtension(INVESTMENT_JOURNAL_KEY, investmentJournal);
+      ["journalTicker", "journalEntry", "journalTarget", "journalStop", "journalThesis"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
+      renderInvestmentJournal();
+    });
+  }
+}
+
+function renderInvestmentJournal() {
+  const list = byId("journalList");
+  if (!list) return;
+  setupPortfolioExtensions();
+  byId("journalCount").textContent = `${investmentJournal.length}건`;
+  if (!investmentJournal.length) {
+    list.innerHTML = `<p class="muted">투자 근거를 기록하면 목표가·손절가와 함께 추적할 수 있습니다.</p>`;
+    return;
+  }
+  const labels = { idea: "검토", open: "보유", closed: "종료" };
+  list.innerHTML = investmentJournal.map((row) => `
+    <article class="journal-entry">
+      <button type="button" class="journal-ticker" data-journal-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
+      <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? `$${Number(row.entry).toFixed(2)}` : "-"} · 목표 ${row.target ? `$${Number(row.target).toFixed(2)}` : "-"} · 손절 ${row.stop ? `$${Number(row.stop).toFixed(2)}` : "-"}</small></div>
+      <select data-journal-status="${escapeHtml(row.id)}" aria-label="${escapeHtml(row.ticker)} 기록 상태">${Object.entries(labels).map(([value, label]) => `<option value="${value}"${row.status === value ? " selected" : ""}>${label}</option>`).join("")}</select>
+      <button type="button" class="journal-delete" data-journal-delete="${escapeHtml(row.id)}" aria-label="기록 삭제">삭제</button>
+    </article>`).join("");
+  list.querySelectorAll("[data-journal-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.journalTicker, { openSearch: true })));
+  list.querySelectorAll("[data-journal-status]").forEach((select) => select.addEventListener("change", () => {
+    const row = investmentJournal.find((item) => item.id === select.dataset.journalStatus);
+    if (row) row.status = select.value;
+    savePortfolioExtension(INVESTMENT_JOURNAL_KEY, investmentJournal);
+    renderInvestmentJournal();
+  }));
+  list.querySelectorAll("[data-journal-delete]").forEach((button) => button.addEventListener("click", () => {
+    investmentJournal = investmentJournal.filter((item) => item.id !== button.dataset.journalDelete);
+    savePortfolioExtension(INVESTMENT_JOURNAL_KEY, investmentJournal);
+    renderInvestmentJournal();
+  }));
 }
 
 function setupPortfolio() {
@@ -7097,6 +7441,7 @@ function donutSvg(slices) {
 
 function renderPortfolio() {
   setupPortfolio();
+  setupPortfolioExtensions();
   const summaryEl = byId("pfSummary");
   const tableEl = byId("pfTable");
   const pieEl = byId("pfPie");
@@ -7105,6 +7450,9 @@ function renderPortfolio() {
     if (summaryEl) summaryEl.innerHTML = "";
     tableEl.innerHTML = `<p class="muted">보유 종목을 추가하면 손익과 섹터 분산이 표시됩니다.</p>`;
     if (pieEl) pieEl.innerHTML = "";
+    renderDividendPlanner();
+    renderRebalanceCalculator();
+    renderInvestmentJournal();
     return;
   }
   const rows = portfolio.map((p) => {
@@ -7156,6 +7504,9 @@ function renderPortfolio() {
     const legend = slices.map((s, i) => `<div class="pf-leg"><i style="background:${PIE_COLORS[i % PIE_COLORS.length]}"></i>${escapeHtml(s.sector)} <b>${(s.value / totalValue * 100).toFixed(0)}%</b></div>`).join("");
     pieEl.innerHTML = `<div class="pf-pie-title">섹터 분산</div>${donutSvg(slices)}<div class="pf-legend">${legend}</div>`;
   }
+  renderDividendPlanner();
+  renderRebalanceCalculator();
+  renderInvestmentJournal();
 }
 
 function renderBulk() {

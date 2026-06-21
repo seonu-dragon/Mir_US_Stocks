@@ -8990,6 +8990,175 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 .daily-action-board.is-news .daily-action-grid { display: none !important; }
 .daily-action-board.is-news .daily-action-count { display: none; }
 
+/* Portfolio decision tools */
+.portfolio-extension-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 14px 0;
+}
+
+.portfolio-tool-card,
+.estimate-revision-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.investment-journal-card { grid-column: 1 / -1; }
+
+.portfolio-tool-head,
+.estimate-revision-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.portfolio-tool-head span,
+.estimate-revision-head span {
+  color: var(--primary);
+  font-size: var(--fs-cap);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.portfolio-tool-head h3,
+.estimate-revision-head h3 { margin: 2px 0 0; font-size: var(--fs-h3); }
+.portfolio-tool-head > strong,
+.estimate-revision-head > strong { color: var(--text); font-size: var(--fs-table); }
+.portfolio-tool-card > .muted { margin: 8px 0 10px; font-size: var(--fs-cap); line-height: 1.5; }
+.portfolio-tool-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 5px; }
+
+.portfolio-tool-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.portfolio-tool-summary > div {
+  min-width: 0;
+  padding: 8px;
+  border-radius: var(--r-md);
+  background: var(--panel-soft);
+}
+
+.portfolio-tool-summary span,
+.portfolio-tool-summary strong { display: block; }
+.portfolio-tool-summary span { color: var(--muted); font-size: var(--fs-cap); }
+.portfolio-tool-summary strong { margin-top: 3px; font-size: var(--fs-table); }
+.portfolio-tool-table { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.portfolio-tool-table table { width: 100%; min-width: 560px; border-collapse: collapse; }
+.portfolio-tool-table th,
+.portfolio-tool-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); font-size: var(--fs-cap); text-align: right; white-space: nowrap; }
+.portfolio-tool-table th:first-child,
+.portfolio-tool-table td:first-child { text-align: left; }
+.portfolio-tool-table td small { display: block; margin-top: 2px; color: var(--muted); }
+.portfolio-tool-table input,
+.portfolio-tool-table select { width: 104px; min-width: 0; height: 32px; padding: 0 6px; font-size: var(--fs-cap); }
+.portfolio-tool-table input[type="date"] { width: 128px; }
+
+.dividend-month-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 5px;
+  margin-top: 10px;
+}
+
+.dividend-month {
+  min-width: 0;
+  padding: 7px 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: var(--panel-soft);
+  text-align: center;
+}
+
+.dividend-month span,
+.dividend-month strong { display: block; }
+.dividend-month span { color: var(--muted); font-size: var(--fs-cap); }
+.dividend-month strong { margin-top: 2px; font-size: var(--fs-cap); }
+
+.journal-form {
+  display: grid;
+  grid-template-columns: 110px 100px repeat(3, minmax(92px, 1fr)) 135px auto;
+  gap: 7px;
+  margin: 12px 0;
+}
+
+.journal-form input,
+.journal-form select,
+.journal-form textarea { width: 100%; min-width: 0; }
+.journal-form textarea { grid-column: 1 / -2; min-height: 58px; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text); font: inherit; resize: vertical; }
+.journal-form button { grid-column: -2 / -1; height: auto; min-height: 58px; }
+.journal-list { display: grid; gap: 7px; }
+
+.journal-entry {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 90px 54px;
+  align-items: center;
+  gap: 9px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel-soft);
+}
+
+.journal-entry > div { min-width: 0; }
+.journal-entry strong,
+.journal-entry small { display: block; }
+.journal-entry strong { overflow: hidden; font-size: var(--fs-table); text-overflow: ellipsis; white-space: nowrap; }
+.journal-entry small { margin-top: 3px; color: var(--muted); font-size: var(--fs-cap); }
+.journal-ticker,
+.journal-delete { height: 32px; min-width: 0; padding: 0 8px; font-size: var(--fs-cap); }
+.journal-ticker { background: var(--panel); color: var(--primary); }
+.journal-delete { border-color: var(--line); background: var(--panel); color: var(--muted); }
+.journal-entry select { width: 100%; min-width: 0; height: 32px; font-size: var(--fs-cap); }
+
+.estimate-revision-card { margin: 14px 0; }
+.estimate-revision-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.estimate-revision-grid article { min-width: 0; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); }
+.estimate-revision-grid article > span,
+.estimate-revision-grid article > strong { display: block; }
+.estimate-revision-grid article > span { color: var(--muted); font-size: var(--fs-cap); }
+.estimate-revision-grid article > strong { margin: 4px 0 7px; font-size: var(--fs-h3); }
+.estimate-revision-grid article > div { display: flex; flex-wrap: wrap; gap: 5px; }
+.estimate-revision-grid em { padding: 3px 6px; border-radius: var(--r-pill); background: var(--panel); font-size: var(--fs-cap); font-style: normal; font-weight: 700; }
+.estimate-revision-card > p { margin: 9px 0 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; }
+
+@media (max-width: 900px) {
+  .portfolio-extension-grid { grid-template-columns: 1fr; }
+  .investment-journal-card { grid-column: auto; }
+  .journal-form { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .journal-form textarea { grid-column: 1 / -1; }
+  .journal-form button { grid-column: 1 / -1; min-height: 40px; }
+}
+
+@media (max-width: 640px) {
+  .portfolio-tool-head,
+  .estimate-revision-head { flex-direction: column; }
+  .portfolio-tool-actions { width: 100%; justify-content: stretch; }
+  .portfolio-tool-actions button { flex: 1; }
+  .portfolio-tool-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dividend-month-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .journal-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .journal-entry { grid-template-columns: 64px minmax(0, 1fr) 78px; }
+  .journal-entry > div { grid-column: 2 / -1; }
+  .journal-entry select { grid-column: 2; }
+  .journal-delete { grid-column: 3; }
+  .estimate-revision-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* 모바일: 뉴스 모드(웹 전용)가 켜진 채로 들어와도 액션 보드가 빈 채로
    남지 않도록 항상 액션 그리드를 표시한다. (뉴스 영역/전환 UI는 모바일 비노출) */
 @media (max-width: 768px) {

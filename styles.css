@@ -6820,6 +6820,10 @@ footer {
   }
   .daily-action-meta .compact-btn { height: 34px; }
   .daily-action-card { padding: 11px; }
+  .daily-action-card.is-wide {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
   .daily-action-card-head { gap: 8px; }
   .daily-action-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .daily-action-row { padding: 8px; }

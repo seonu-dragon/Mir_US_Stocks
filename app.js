@@ -175,6 +175,7 @@ let chartState = {
   showKeltner: false,
   showDonchian: false,
   showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
+  showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이
   showVolume: true,
   showVolMa20: false,
   showVolumeRatio: false,
@@ -2816,11 +2817,12 @@ function runChartProbAnalysis() {
     panel.innerHTML = '<div class="notice">먼저 종목을 검색해 차트를 띄워 주세요.</div>';
     return;
   }
-  // 이동평균선(20·60)과 지지/저항선을 차트에 자동 표시.
+  // 이동평균선(20·60)·지지/저항선·차트 패턴을 차트에 자동 표시.
   chartState.showSma20 = true;
   chartState.showSma60 = true;
   chartState.showSupportResistance = true;
-  ["showSma20", "showSma60", "showSupportResistance"].forEach((id) => {
+  chartState.showPatterns = true;
+  ["showSma20", "showSma60", "showSupportResistance", "showPatterns"].forEach((id) => {
     const el = byId(id);
     if (el) el.checked = true;
   });
@@ -2911,7 +2913,7 @@ function setupChartControls() {
     });
   }
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance",
+   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showPatterns",
    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
    "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
@@ -2931,7 +2933,7 @@ function setupChartControls() {
 function chartSettingIds() {
   return [
     "showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance",
+    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showPatterns",
     "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
     "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
     "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"
@@ -5411,6 +5413,58 @@ function drawChart(item) {
     }).join("");
   }
 
+  // 차트 패턴 도형 오버레이(역H&S·쌍바닥 등): 패턴을 이루는 피벗을 선으로 잇고
+  // 좌어깨/머리/우어깨를 라벨링, 목선을 점선으로 표시. 전체 일봉으로 감지하고
+  // 날짜로 보이는 봉에 매핑한다(확대해도 일관).
+  let patSvg = "";
+  if (chartState.showPatterns && window.MirProb && window.MirProb.detectCurrentPatterns) {
+    const dailyRows = getChartRows(item);
+    const pats = window.MirProb.detectCurrentPatterns(dailyRows).filter((p) => p.points).slice(0, 2);
+    const labels = window.MirProb.patternLabels || {};
+    const firstD = rows[0].d;
+    const lastD = rows[rows.length - 1].d;
+    const days = (d) => (d ? Date.parse(d) / 86400000 : NaN);
+    const visIdxForDate = (d) => {
+      if (!d || d < firstD || d > lastD) return -1; // 보이는 구간 밖
+      let best = -1;
+      let bestDiff = Infinity;
+      const td = days(d);
+      for (let i = 0; i < rows.length; i += 1) {
+        const diff = Math.abs(days(rows[i].d) - td);
+        if (diff < bestDiff) { bestDiff = diff; best = i; }
+      }
+      return best;
+    };
+    const mapPt = (p) => {
+      const dt = dailyRows[p.idx] && dailyRows[p.idx].d;
+      const vi = visIdxForDate(dt);
+      return vi < 0 ? null : { x: xFor(vi), y: overlayYFor(p.price), label: p.label };
+    };
+    patSvg = pats.map((pat) => {
+      const color = pat.dir > 0 ? "#0ea5e9" : "#a855f7"; // S/R(초록·빨강)과 구분되는 색
+      const pts = pat.points.map(mapPt).filter(Boolean);
+      if (pts.length < 2) return ""; // 대부분 화면 밖이면 생략
+      const poly = pts.map((p, i) => `${i ? "L" : "M"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+      let svg = `<path d="${poly}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" opacity="0.9"></path>`;
+      // 목선
+      if (pat.necklinePts) {
+        const nl = pat.necklinePts.map(mapPt).filter(Boolean);
+        if (nl.length === 2) {
+          svg += `<line x1="${nl[0].x.toFixed(1)}" y1="${nl[0].y.toFixed(1)}" x2="${nl[1].x.toFixed(1)}" y2="${nl[1].y.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="5 4" opacity="0.8"></line>`;
+        }
+      }
+      // 점 + 라벨
+      for (const p of pts) {
+        svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${color}"></circle>`;
+        if (p.label) svg += `<text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" text-anchor="middle" fill="${color}" font-size="10" font-weight="700">${escapeHtml(p.label)}</text>`;
+      }
+      // 패턴 이름(첫 점 근처)
+      const name = labels[pat.pattern] || pat.pattern;
+      svg += `<text x="${pts[0].x.toFixed(1)}" y="${(pts[0].y + 14).toFixed(1)}" fill="${color}" font-size="10.5" font-weight="800">${escapeHtml(name)}</text>`;
+      return svg;
+    }).join("");
+  }
+
   // Stacked indicator panels.
   let cursorY = padT + plotH + gap;
   let panelsSvg = "";
@@ -5463,6 +5517,7 @@ function drawChart(item) {
     ${isLine ? `<path d="${linePath}" class="chart-line"></path>` : ""}
     ${overlays}
     ${srSvg}
+    ${patSvg}
     <g id="chartDrawLayer">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>

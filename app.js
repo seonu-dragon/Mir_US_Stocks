@@ -183,9 +183,12 @@ let chartState = {
     lrUpper: false, lrLower: false, psar: false,
   },
   showVolumeProfile: false,
-  showTrendlines: true,
+  showTrendlines: false,
   showGapZones: false,
   showTtmSqueeze: false,
+  showMarketStructure: false,
+  showChandelier: false,
+  showAnchoredVwap: false,
   showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이 마스터
   patternTypes: {
     hns: true, double: true, triangle: true, wedge: true, box: true, flag: true, pennant: true,
@@ -2921,9 +2924,103 @@ function renderPsarDots(psarValues, ctxRows, rows, xFor, overlayYFor) {
   return out;
 }
 
+function heikinAshiRows(rows) {
+  const out = [];
+  let prev = null;
+  for (const r of rows) {
+    const haC = (r.o + r.h + r.l + r.c) / 4;
+    const haO = prev ? (prev.o + prev.c) / 2 : (r.o + r.c) / 2;
+    const haH = Math.max(r.h, haO, haC);
+    const haL = Math.min(r.l, haO, haC);
+    const bar = { o: haO, h: haH, l: haL, c: haC, v: r.v, d: r.d };
+    out.push(bar);
+    prev = bar;
+  }
+  return out;
+}
+
+function computeMarketStructureLabels(rows, win = 3) {
+  const pivots = [];
+  for (let i = win; i < rows.length - win; i += 1) {
+    let isHigh = true;
+    let isLow = true;
+    for (let j = i - win; j <= i + win; j += 1) {
+      if (j === i) continue;
+      if (rows[j].h >= rows[i].h) isHigh = false;
+      if (rows[j].l <= rows[i].l) isLow = false;
+    }
+    if (isHigh) pivots.push({ idx: i, price: rows[i].h, type: "H" });
+    if (isLow) pivots.push({ idx: i, price: rows[i].l, type: "L" });
+  }
+  pivots.sort((a, b) => a.idx - b.idx);
+  let lastHigh = null;
+  let lastLow = null;
+  const labels = [];
+  for (const p of pivots) {
+    if (p.type === "H") {
+      const lbl = lastHigh == null ? "H" : p.price >= lastHigh ? "HH" : "LH";
+      lastHigh = p.price;
+      labels.push({ ...p, label: lbl });
+    } else {
+      const lbl = lastLow == null ? "L" : p.price >= lastLow ? "HL" : "LL";
+      lastLow = p.price;
+      labels.push({ ...p, label: lbl });
+    }
+  }
+  return labels.slice(-8);
+}
+
+function anchoredVwapOverlays(allRows, item) {
+  const anchors = [];
+  const n = allRows.length;
+  if (n < 10) return [];
+  let swingIdx = Math.max(0, n - 60);
+  let swingPrice = Infinity;
+  for (let i = Math.max(0, n - 80); i < n; i += 1) {
+    if (allRows[i].l < swingPrice) { swingPrice = allRows[i].l; swingIdx = i; }
+  }
+  anchors.push({ idx: swingIdx, label: "스윙저", color: "#38bdf8" });
+  const f = (window.MAP_FUNDAMENTALS || {})[item.ticker] || {};
+  const findNear = (target) => {
+    if (!Number.isFinite(target)) return -1;
+    let best = -1;
+    let bestDiff = Infinity;
+    for (let i = 0; i < n; i += 1) {
+      const diff = Math.abs(allRows[i].c - target);
+      if (diff < bestDiff) { bestDiff = diff; best = i; }
+    }
+    return bestDiff < target * 0.06 ? best : -1;
+  };
+  const iLo = findNear(Number(f.low52));
+  const iHi = findNear(Number(f.high52));
+  if (iLo >= 0) anchors.push({ idx: iLo, label: "52주저", color: "#22c55e" });
+  if (iHi >= 0) anchors.push({ idx: iHi, label: "52주고", color: "#f87171" });
+  const seen = new Set();
+  return anchors.filter((a) => {
+    if (seen.has(a.idx)) return false;
+    seen.add(a.idx);
+    return true;
+  }).map((a) => ({
+    label: a.label,
+    color: a.color,
+    startIdx: a.idx,
+    vwap: vwapArray(allRows.slice(a.idx)),
+  }));
+}
+
+function applyBuiltinOverlayPreset(key) {
+  const preset = BUILTIN_OVERLAY_PRESETS[key];
+  if (!preset) return;
+  Object.assign(chartState, preset.settings);
+  syncChartControlUi();
+  syncCprobChartControlChips();
+  redrawChart();
+}
+
 function syncChartOverlayCheckboxes() {
   ["showSma20", "showSma60", "showSupportResistance", "showPatterns", "showTechLevels",
-    "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze"].forEach((id) => {
+    "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze",
+    "showMarketStructure", "showChandelier", "showAnchoredVwap"].forEach((id) => {
     const el = byId(id);
     if (el) el.checked = chartState[id];
   });
@@ -2940,6 +3037,9 @@ function snapshotChartOverlaysForProb() {
     showTrendlines: chartState.showTrendlines,
     showGapZones: chartState.showGapZones,
     showTtmSqueeze: chartState.showTtmSqueeze,
+    showMarketStructure: chartState.showMarketStructure,
+    showChandelier: chartState.showChandelier,
+    showAnchoredVwap: chartState.showAnchoredVwap,
     showPatterns: chartState.showPatterns,
     patternTypes: { ...chartState.patternTypes },
   };
@@ -2954,6 +3054,9 @@ function restoreChartOverlaysFromProb() {
     chartState.showTrendlines = false;
     chartState.showGapZones = false;
     chartState.showTtmSqueeze = false;
+    chartState.showMarketStructure = false;
+    chartState.showChandelier = false;
+    chartState.showAnchoredVwap = false;
     chartState.showPatterns = false;
     chartState.lastProbResult = null;
     syncChartOverlayCheckboxes();
@@ -2968,6 +3071,9 @@ function restoreChartOverlaysFromProb() {
   chartState.showTrendlines = snap.showTrendlines ?? false;
   chartState.showGapZones = snap.showGapZones ?? false;
   chartState.showTtmSqueeze = snap.showTtmSqueeze ?? false;
+  chartState.showMarketStructure = snap.showMarketStructure ?? false;
+  chartState.showChandelier = snap.showChandelier ?? false;
+  chartState.showAnchoredVwap = snap.showAnchoredVwap ?? false;
   chartState.showPatterns = snap.showPatterns;
   chartState.patternTypes = { ...snap.patternTypes };
   chartProbOverlaySnapshot = null;
@@ -3044,8 +3150,34 @@ function patternCategory(p) {
 const CHART_OVERLAY_LABELS = [
   ["showSma20", "SMA20"], ["showSma60", "SMA60"], ["showSupportResistance", "지지/저항"],
   ["showVolumeProfile", "VP(POC/HVN)"], ["showTrendlines", "추세선"], ["showGapZones", "갭 존"],
+  ["showMarketStructure", "시장구조"], ["showChandelier", "Chandelier"], ["showAnchoredVwap", "앵커 VWAP"],
   ["showTtmSqueeze", "TTM Squeeze"],
 ];
+const BUILTIN_OVERLAY_PRESETS = {
+  swing: {
+    label: "스윙",
+    settings: {
+      showSma20: true, showSma60: true, showSupportResistance: true, showTrendlines: true,
+      showVolumeProfile: true, showGapZones: true, showMarketStructure: true, showPatterns: true,
+      showTechLevels: false, showVwap: false, showCmf: false, showMfi: false, showTtmSqueeze: false,
+    },
+  },
+  day: {
+    label: "데이",
+    settings: {
+      showVwap: true, showVolume: true, showVolMa20: true, showTtmSqueeze: true,
+      showBoll: true, showChandelier: true, showGapZones: true, showAnchoredVwap: true,
+      showSma20: false, showSma60: false, showTrendlines: false,
+    },
+  },
+  flow: {
+    label: "수급",
+    settings: {
+      showObv: true, showCmf: true, showMfi: true, showAd: true, showVolumeProfile: true,
+      showVolume: true, showVolMa20: true, showAnchoredVwap: false, showTrendlines: false,
+    },
+  },
+};
 const TECH_LEVEL_LABELS = [
   ["pivot", "Pivot (P)"], ["r1", "R1"], ["r2", "R2"], ["s1", "S1"], ["s2", "S2"],
   ["fib0", "Fib 0%"], ["fib236", "Fib 23.6%"], ["fib382", "Fib 38.2%"], ["fib50", "Fib 50%"],
@@ -3294,6 +3426,7 @@ function setupChartControls() {
    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci", "showCmf", "showMfi",
    "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze",
+   "showMarketStructure", "showChandelier", "showAnchoredVwap",
    "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", (event) => {
@@ -3319,6 +3452,7 @@ function chartSettingIds() {
     "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
     "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci", "showCmf", "showMfi",
     "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze",
+    "showMarketStructure", "showChandelier", "showAnchoredVwap",
     "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"
   ];
 }
@@ -3390,6 +3524,15 @@ function applyChartPreset(name) {
 function setupChartPresetControls() {
   loadChartPresets();
   renderChartPresetOptions();
+  const builtinBar = byId("chartBuiltinPresets");
+  if (builtinBar && !builtinBar.dataset.bound) {
+    builtinBar.dataset.bound = "1";
+    builtinBar.innerHTML = Object.entries(BUILTIN_OVERLAY_PRESETS).map(([k, p]) =>
+      `<button type="button" class="ghost chart-builtin-preset" data-bpreset="${k}">${escapeHtml(p.label)}</button>`).join("");
+    builtinBar.querySelectorAll("[data-bpreset]").forEach((btn) => {
+      btn.addEventListener("click", () => applyBuiltinOverlayPreset(btn.dataset.bpreset));
+    });
+  }
   byId("chartPresetSave")?.addEventListener("click", () => {
     const name = window.prompt("저장할 차트 프리셋 이름", "내 차트 설정");
     if (!name || !name.trim()) return;
@@ -5610,6 +5753,7 @@ function setupChartDrawing() {
     typeCtl.dataset.bound = "1";
     typeCtl.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
       chartState.chartType = b.dataset.ctype || "candle";
+      if (chartState.chartType !== "candle" && chartState.chartType !== "line" && chartState.chartType !== "heikin") chartState.chartType = "candle";
       typeCtl.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b));
       const item = stockByTicker(selectedTicker);
       if (item) drawChart(applyLive(withDetail(item)));
@@ -5700,9 +5844,10 @@ function drawChart(item) {
   const height = padT + plotH + panelsH + axisH;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
-  const closes = rows.map((row) => row.c);
-  const lows = rows.map((row) => row.l);
-  const highs = rows.map((row) => row.h);
+  const plotRows = chartState.chartType === "heikin" ? heikinAshiRows(rows) : rows;
+  const closes = plotRows.map((row) => row.c);
+  const lows = plotRows.map((row) => row.l);
+  const highs = plotRows.map((row) => row.h);
   const min = Math.min(...lows);
   const max = Math.max(...highs);
   const range = max - min || 1;
@@ -5738,7 +5883,7 @@ function drawChart(item) {
       + pathFromSeries(bb.mid, xFor, yFor, "#94a3b8", 1, "");
   }
 
-  const candles = rows.map((row, index) => {
+  const candles = plotRows.map((row, index) => {
     const x = xFor(index);
     const up = row.c >= row.o;
     const yOpen = yFor(row.o);
@@ -5806,7 +5951,7 @@ function drawChart(item) {
         return cd && cd >= firstD && cd <= lastD;
       })
       .sort((a, b) => b.confirm_idx - a.confirm_idx)
-      .slice(0, 2);
+      .slice(0, 3);
     const days = (d) => (d ? Date.parse(d) / 86400000 : NaN);
     const visIdxForDate = (d) => {
       if (!d || d < firstD || d > lastD) return -1; // 보이는 구간 밖
@@ -5873,6 +6018,44 @@ function drawChart(item) {
       const w = ln.weight || 1;
       vpSvg += `<line x1="${padL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xPlotRight.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${ln.color}" stroke-width="${w}" stroke-dasharray="10 5" opacity="0.8"></line>`
         + `<text x="${(padL + 5).toFixed(1)}" y="${(y - 3).toFixed(1)}" fill="${ln.color}" font-size="10" font-weight="700">${escapeHtml(ln.label)} $${ln.price.toFixed(2)}</text>`;
+    });
+  }
+
+  let msSvg = "";
+  if (!chartPanActive && chartState.showMarketStructure) {
+    computeMarketStructureLabels(rows).forEach((p) => {
+      const x = xFor(p.idx);
+      const y = overlayYFor(p.price) + (p.type === "H" ? -6 : 12);
+      const col = p.label.includes("H") ? "#f87171" : "#4ade80";
+      msSvg += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" fill="${col}" font-size="10" font-weight="800">${p.label}</text>`;
+    });
+  }
+
+  let chandelierSvg = "";
+  if (!chartPanActive && chartState.showChandelier && window.MirProb && window.MirProb.chandelierExitArray) {
+    const ce = window.MirProb.chandelierExitArray(ctxRows);
+    const mapped = rows.map((r) => {
+      const gi = ctxIdxForVisibleRow(ctxRows, r);
+      if (gi < 0 || !ce[gi]) return null;
+      return r.c >= ce[gi].longStop ? ce[gi].longStop : ce[gi].shortStop;
+    });
+    chandelierSvg = pathFromSeries(mapped, xFor, overlayYFor, "#fb923c", 1.5, "5 3")
+      + `<text x="${(padL + 5).toFixed(1)}" y="${(padT + 14).toFixed(1)}" fill="#fb923c" font-size="9.5" font-weight="700">Chandelier</text>`;
+  }
+
+  let avwapSvg = "";
+  if (!chartPanActive && chartState.showAnchoredVwap) {
+    anchoredVwapOverlays(ctxRows, item).forEach((ln) => {
+      const mapped = rows.map((r) => {
+        const gi = ctxIdxForVisibleRow(ctxRows, r);
+        if (gi < ln.startIdx) return null;
+        return ln.vwap[gi - ln.startIdx];
+      });
+      avwapSvg += pathFromSeries(mapped, xFor, overlayYFor, ln.color, 1.5, "8 4");
+      const lastV = mapped.filter((v) => v != null).slice(-1)[0];
+      if (lastV != null) {
+        avwapSvg += `<text x="${(xPlotRight - 4).toFixed(1)}" y="${(overlayYFor(lastV) - 3).toFixed(1)}" text-anchor="end" fill="${ln.color}" font-size="9.5" font-weight="600">${escapeHtml(ln.label)} AVWAP</text>`;
+      }
     });
   }
 
@@ -5996,6 +6179,7 @@ function drawChart(item) {
   // 드로잉(추세선/피보) 좌표 매핑용 지오메트리 저장.
   lastChartGeom = { padL, plotW, padT, plotH, min, max, range, width, height, ticker: item.ticker };
   const isLine = chartState.chartType === "line";
+  const isHeikin = chartState.chartType === "heikin";
 
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" rx="8" class="chart-bg"></rect>
@@ -6006,17 +6190,20 @@ function drawChart(item) {
     ${isLine ? "" : candles}
     ${isLine ? `<path d="${linePath}" class="chart-line"></path>` : ""}
     ${overlays}
+    ${avwapSvg}
     ${srSvg}
     ${vpSvg}
     ${gapSvg}
     ${trendSvg}
+    ${msSvg}
+    ${chandelierSvg}
     ${patSvg}
     ${techLevelSvg}
     <g id="chartDrawLayer">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
     ${dateLabels}
-    <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${tfLabel} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
+    <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
     <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">$${last.c.toFixed(2)}</text>
   `;
@@ -7160,6 +7347,9 @@ function activeIndicatorLabels(item) {
     chartState.showVolumeProfile ? "VP" : "",
     chartState.showTrendlines ? "Trend" : "",
     chartState.showGapZones ? "Gap" : "",
+    chartState.showMarketStructure ? "MS" : "",
+    chartState.showChandelier ? "Chand" : "",
+    chartState.showAnchoredVwap ? "AVWAP" : "",
     chartState.showRsSector ? `RS/${sectorBenchmarkTickerForItem(item) || "Sector"}` : ""
   ].filter(Boolean);
   const visible = labels.slice(0, 9);

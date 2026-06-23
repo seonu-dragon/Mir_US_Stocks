@@ -10,8 +10,13 @@
  *
  * 두 값은 모두 "기술적 추정치"이며 미래를 보장하지 않는다. UI에 면책 문구를 둔다.
  * 외부 서버 없이 브라우저에서 data/details/{TICKER}.json 한 파일만 읽어 계산한다.
+ *
+ * 이 파일은 standalone 페이지(analysis.html)와 대시보드 종목 분석 페이지(index.html)
+ * 양쪽에서 로드된다. 전역 충돌을 피하려고 전체를 IIFE로 감싸고, 엔진은 window.MirProb
+ * 로만 노출한다. (analysis.html 의 UI 바인딩은 해당 DOM이 있을 때만 동작.)
  */
 
+(function () {
 // ===== 지표 수학 (app.js와 동일한 정의를 self-contained로 복제) =====
 function emaRaw(values, period) {
   const out = [];
@@ -805,22 +810,22 @@ function backtestBaseRate(rows, horizon) {
 }
 
 // ===== 종합 =====
-function analyzeTicker(detail, horizon) {
-  const series = detail.chartSeries || [];
-  const rows = series
-    .map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }))
-    .filter((r) => Number.isFinite(r.c) && r.c > 0);
-  if (rows.length < 60) {
-    return { error: "insufficient", bars: rows.length };
+// 코어: OHLCV 행 배열({o,h,l,c,v,d})을 받아 분석 결과를 만든다.
+// app.js(대시보드 차트)는 이미 같은 형식의 행을 갖고 있으므로 이 함수를 직접 부른다.
+function analyzeRows(rows, horizon, meta) {
+  meta = meta || {};
+  const clean = (rows || []).filter((r) => r && Number.isFinite(r.c) && r.c > 0);
+  if (clean.length < 60) {
+    return { error: "insufficient", bars: clean.length };
   }
 
-  const { signals, adxVal } = buildSignals(rows);
+  const { signals, adxVal } = buildSignals(clean);
   // 차트 패턴 신호를 합의에 합류시킨다(감지된 현재 패턴이 있을 때만).
-  const pat = patternSignals(rows, horizon, patternStats);
+  const pat = patternSignals(clean, horizon, patternStats);
   for (const s of pat.signals) signals.push(s);
   const consensus = consensusProbability(signals, adxVal);
-  const base = rows.length >= 250 ? backtestBaseRate(rows, horizon) : null;
-  const sr = findSupportResistance(rows);
+  const base = clean.length >= 250 ? backtestBaseRate(clean, horizon) : null;
+  const sr = findSupportResistance(clean);
 
   // 헤드라인: 백테스트 표본이 충분하면 두 값을 블렌딩, 아니면 신호만
   let headlineUp;
@@ -832,11 +837,11 @@ function analyzeTicker(detail, horizon) {
   headlineUp = Math.max(12, Math.min(88, headlineUp));
 
   return {
-    ticker: detail.ticker,
-    company: detail.company,
-    bars: rows.length,
-    lastDate: rows[rows.length - 1].d,
-    price: rows[rows.length - 1].c,
+    ticker: meta.ticker,
+    company: meta.company,
+    bars: clean.length,
+    lastDate: clean[clean.length - 1].d,
+    price: clean[clean.length - 1].c,
     horizon,
     consensus,
     signals,
@@ -847,6 +852,13 @@ function analyzeTicker(detail, horizon) {
     headlineUp,
     headlineDown: 100 - headlineUp,
   };
+}
+
+// detail json(chartSeries 배열) 진입점 — standalone 페이지용.
+function analyzeTicker(detail, horizon) {
+  const rows = (detail.chartSeries || [])
+    .map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
+  return analyzeRows(rows, horizon, { ticker: detail.ticker, company: detail.company });
 }
 
 // ===== UI =====
@@ -861,6 +873,7 @@ let patternStats = null; // data/pattern_stats.json (오프라인 집계 결과)
 
 function $(id) { return document.getElementById(id); }
 
+let statsPromise = null;
 async function loadPatternStats() {
   try {
     const res = await fetch("data/pattern_stats.json", { cache: "no-store" });
@@ -868,6 +881,13 @@ async function loadPatternStats() {
   } catch (e) {
     patternStats = null; // 없으면 패턴 섹션만 생략, 나머지 분석은 정상 동작
   }
+  return patternStats;
+}
+
+// 패턴 통계는 한 번만 받아 캐시한다(대시보드/standalone 공용).
+function ensureStats() {
+  if (!statsPromise) statsPromise = loadPatternStats();
+  return statsPromise;
 }
 
 function escapeHtml(s) {
@@ -930,11 +950,10 @@ function renderPatternCard(result) {
   </div>`;
 }
 
-function renderResult(result) {
-  const el = $("result");
+// 결과 → HTML 문자열(순수 함수). analysis.html 과 대시보드 패널이 동일 마크업을 공유한다.
+function buildResultHTML(result) {
   if (result.error === "insufficient") {
-    el.innerHTML = `<div class="notice">이 종목은 차트 데이터가 부족합니다(${result.bars}봉). 대형주·주요 종목을 입력해 주세요.</div>`;
-    return;
+    return `<div class="notice">이 종목은 차트 데이터가 부족합니다(${result.bars}봉). 대형주·주요 종목을 입력해 주세요.</div>`;
   }
   const up = result.headlineUp;
   const down = result.headlineDown;
@@ -981,7 +1000,7 @@ function renderResult(result) {
       <span>저항선 <b>${sr.resistance ? "$" + sr.resistance.toFixed(2) : "—"}</b></span>
     </div>`;
 
-  el.innerHTML = `
+  return `
     <div class="head-card">
       <div class="head-meta">
         <h2>${escapeHtml(result.ticker)} <span class="muted">${escapeHtml(result.company || "")}</span></h2>
@@ -1022,6 +1041,12 @@ function renderResult(result) {
   `;
 }
 
+function renderResult(result) {
+  const el = $("result");
+  if (!el) return;
+  el.innerHTML = buildResultHTML(result);
+}
+
 async function runAnalysis(ticker) {
   const el = $("result");
   el.innerHTML = `<div class="notice">분석 중…</div>`;
@@ -1045,9 +1070,10 @@ function rerenderHorizon() {
 }
 
 async function init() {
-  await loadPatternStats();
-  const input = $("tickerInput");
   const form = $("searchForm");
+  if (!form) return; // standalone 분석 페이지가 아니면(예: 대시보드) UI 바인딩 생략
+  await ensureStats();
+  const input = $("tickerInput");
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (input.value.trim()) runAnalysis(input.value);
@@ -1068,3 +1094,16 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// ===== 외부 노출 (대시보드 app.js 등에서 재사용) =====
+window.MirProb = {
+  analyzeRows,
+  analyzeTicker,
+  buildResultHTML,
+  findSupportResistance,
+  detectCurrentPatterns,
+  ensureStats,
+  gaugeColor,
+  verdictText,
+};
+})();

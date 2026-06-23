@@ -759,6 +759,10 @@
                     <button type="button" id="chartDrawClear" title="그린 선 지우기">✕</button>
                   </div>
                 </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">분석</span>
+                  <button type="button" id="chartProbBtn" class="chart-prob-btn" title="이동평균선·지지/저항을 차트에 표시하고 상승 확률을 계산합니다">📊 상승확률 분석</button>
+                </div>
               </div>
               <div class="chart-compare-bar">
                 <label class="grow">
@@ -802,6 +806,7 @@
                     <label class="check-label"><input id="showIchimoku" type="checkbox"> Ichimoku</label>
                     <label class="check-label"><input id="showKeltner" type="checkbox"> Keltner</label>
                     <label class="check-label"><input id="showDonchian" type="checkbox"> Donchian</label>
+                    <label class="check-label"><input id="showSupportResistance" type="checkbox"> 지지/저항</label>
                   </fieldset>
                   <fieldset>
                     <legend>거래량/수급</legend>
@@ -834,6 +839,7 @@
               </details>
             </div>
             <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
+            <div id="chartProbPanel" class="cprob" hidden></div>
           </div>
           <div class="search-side-col">
             <aside class="detail-panel" id="searchFacts"></aside>
@@ -1848,6 +1854,7 @@
     <script src="data/short_interest.js?v=20260620a"></script>
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
-    <script src="app.js?v=20260621h"></script>
+    <script src="analysis.js?v=20260623b"></script>
+    <script src="app.js?v=20260621i"></script>
   </body>
 </html>

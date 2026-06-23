@@ -174,6 +174,7 @@ let chartState = {
   showIchimoku: false,
   showKeltner: false,
   showDonchian: false,
+  showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
   showVolume: true,
   showVolMa20: false,
   showVolumeRatio: false,
@@ -2777,6 +2778,67 @@ function redrawChart() {
   if (item) drawChart(item);
 }
 
+// ===== 차트 상승확률 분석 (analysis.js 엔진 재사용) =====
+let chartProbHorizon = 20; // 5=1주, 20=1개월, 60=3개월
+
+function buildChartProbPanel(result) {
+  const hz = [[5, "1주"], [20, "1개월"], [60, "3개월"]];
+  const btns = hz.map(([k, l]) =>
+    `<button type="button" class="cprob-hz${k === chartProbHorizon ? " is-active" : ""}" data-cphz="${k}">${l}</button>`).join("");
+  const toolbar = `<div class="cprob-toolbar">
+      <span class="cprob-title">📊 상승확률 분석</span>
+      <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
+    </div>`;
+  return toolbar + window.MirProb.buildResultHTML(result);
+}
+
+function bindChartProbHorizon() {
+  document.querySelectorAll(".cprob-hz").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      chartProbHorizon = Number(btn.dataset.cphz);
+      runChartProbAnalysis();
+    });
+  });
+}
+
+// "상승확률 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 확률을 계산해 패널에 표시.
+function runChartProbAnalysis() {
+  const panel = byId("chartProbPanel");
+  if (!panel) return;
+  if (!window.MirProb) {
+    panel.hidden = false;
+    panel.innerHTML = '<div class="notice err">분석 엔진을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.</div>';
+    return;
+  }
+  const item = currentChartItem();
+  if (!item) {
+    panel.hidden = false;
+    panel.innerHTML = '<div class="notice">먼저 종목을 검색해 차트를 띄워 주세요.</div>';
+    return;
+  }
+  // 이동평균선(20·60)과 지지/저항선을 차트에 자동 표시.
+  chartState.showSma20 = true;
+  chartState.showSma60 = true;
+  chartState.showSupportResistance = true;
+  ["showSma20", "showSma60", "showSupportResistance"].forEach((id) => {
+    const el = byId(id);
+    if (el) el.checked = true;
+  });
+  redrawChart();
+
+  panel.hidden = false;
+  panel.innerHTML = '<div class="notice">분석 중…</div>';
+  window.MirProb.ensureStats().then(() => {
+    const rows = getChartRows(item); // 전체 일봉(백테스트·패턴에 5년 이력 사용)
+    const result = window.MirProb.analyzeRows(rows, chartProbHorizon, { ticker: item.ticker, company: item.company });
+    panel.innerHTML = buildChartProbPanel(result);
+    bindChartProbHorizon();
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }).catch(() => {
+    panel.innerHTML = '<div class="notice err">분석 중 오류가 발생했습니다.</div>';
+  });
+}
+
 // Number of bars available for the active range (matches visibleChartRows logic).
 function chartBaseLength(item) {
   const rows = resampleBars(getChartRows(item), chartState.barTf);
@@ -2849,7 +2911,7 @@ function setupChartControls() {
     });
   }
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian",
+   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance",
    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
    "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
@@ -2859,6 +2921,8 @@ function setupChartControls() {
       redrawChart();
     });
   });
+  const probBtn = byId("chartProbBtn");
+  if (probBtn) probBtn.addEventListener("click", runChartProbAnalysis);
   setupChartPresetControls();
   setupChartInteractions();
   setupChartCompareControls();
@@ -2867,7 +2931,7 @@ function setupChartControls() {
 function chartSettingIds() {
   return [
     "showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian",
+    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance",
     "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
     "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
     "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"
@@ -5323,6 +5387,19 @@ function drawChart(item) {
     donchian ? renderChannelOverlay(donchian.upper, donchian.lower, donchian.mid, xFor, overlayYFor, "#818cf8") : ""
   ].join("");
 
+  // 지지/저항 수평선 오버레이 (보이는 구간의 스윙 고저점 클러스터)
+  let srSvg = "";
+  if (chartState.showSupportResistance) {
+    const levels = supportResistanceLevels(rows);
+    srSvg = levels.map((lvl) => {
+      const y = overlayYFor(lvl.price);
+      const color = lvl.type === "sup" ? "#16a34a" : "#dc2626";
+      const label = `${lvl.type === "sup" ? "지지" : "저항"} $${lvl.price.toFixed(2)}`;
+      return `<line x1="${padL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(padL + plotW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.8"></line>`
+        + `<text x="${(padL + 5).toFixed(1)}" y="${(y - 3).toFixed(1)}" fill="${color}" font-size="10" font-weight="700">${label}</text>`;
+    }).join("");
+  }
+
   // Stacked indicator panels.
   let cursorY = padT + plotH + gap;
   let panelsSvg = "";
@@ -5374,6 +5451,7 @@ function drawChart(item) {
     ${isLine ? "" : candles}
     ${isLine ? `<path d="${linePath}" class="chart-line"></path>` : ""}
     ${overlays}
+    ${srSvg}
     <g id="chartDrawLayer">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
@@ -6341,6 +6419,44 @@ function visibleChartRows(rows) {
   chartState.offset = Math.min(chartState.offset, maxOffset);
   const end = base.length - chartState.offset;
   return base.slice(Math.max(0, end - windowSize), end);
+}
+
+// 보이는 구간의 스윙 고저점을 찾아 비슷한 가격끼리 묶고, 현재가 기준 가까운
+// 지지(아래)·저항(위) 레벨을 최대 4개 돌려준다. 차트 오버레이용.
+function supportResistanceLevels(rows, maxPerSide = 2) {
+  const n = rows.length;
+  if (n < 12) return [];
+  const win = Math.max(3, Math.min(8, Math.floor(n / 25)));
+  const piv = [];
+  for (let i = win; i < n - win; i += 1) {
+    let isHigh = true;
+    let isLow = true;
+    for (let j = i - win; j <= i + win; j += 1) {
+      if (j === i) continue;
+      if (rows[j].h > rows[i].h) isHigh = false;
+      if (rows[j].l < rows[i].l) isLow = false;
+    }
+    if (isHigh) piv.push(rows[i].h);
+    if (isLow) piv.push(rows[i].l);
+  }
+  if (!piv.length) return [];
+  piv.sort((a, b) => a - b);
+  const tol = 0.012; // 1.2% 이내는 같은 레벨로 묶음
+  const clusters = [];
+  for (const p of piv) {
+    const last = clusters[clusters.length - 1];
+    const mean = last ? last.sum / last.n : 0;
+    if (last && mean && Math.abs(p - mean) / mean <= tol) { last.sum += p; last.n += 1; }
+    else clusters.push({ sum: p, n: 1 });
+  }
+  const price = rows[n - 1].c;
+  const levels = clusters.map((c) => ({ price: c.sum / c.n, touches: c.n }));
+  const sup = levels.filter((l) => l.price < price).sort((a, b) => b.price - a.price);
+  const res = levels.filter((l) => l.price >= price).sort((a, b) => a.price - b.price);
+  return [
+    ...sup.slice(0, maxPerSide).map((l) => ({ ...l, type: "sup" })),
+    ...res.slice(0, maxPerSide).map((l) => ({ ...l, type: "res" })),
+  ];
 }
 
 function averagePath(values, period, xFor, yFor, color) {

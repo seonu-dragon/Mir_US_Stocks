@@ -44,6 +44,55 @@ PATTERN_LABELS = {
     "ascending_triangle": "상승 삼각수렴",
     "descending_triangle": "하락 삼각수렴",
     "symmetrical_triangle": "대칭 삼각수렴",
+    "falling_wedge": "하락 쐐기형",
+    "rising_wedge": "상승 쐐기형",
+    "box_breakout": "박스권 상향 돌파",
+    "box_breakdown": "박스권 하향 이탈",
+    "bull_flag": "상승 깃발형",
+    "bear_flag": "하락 깃발형",
+    "bull_pennant": "상승 페넌트",
+    "bear_pennant": "하락 페넌트",
+    "triple_top": "삼중 천장형",
+    "triple_bottom": "삼중 바닥형",
+    "broadening_triangle": "확산형 삼각수렴",
+    "diamond_top": "다이아몬드 천장형",
+    "diamond_bottom": "다이아몬드 바닥형",
+    "rounding_bottom": "라운딩 바닥형(U자형)",
+    "complex_hns": "복합 헤드앤숄더",
+    "cup_and_handle": "컵 앤 핸들",
+    "ascending_channel_breakout": "상승 채널 돌파",
+    "descending_channel_breakout": "하락 채널 이탈",
+    "reversal_123_up": "1-2-3 반전(상승)",
+    "reversal_123_down": "1-2-3 반전(하락)",
+    "two_b_bottom": "2B 바닥",
+    "two_b_top": "2B 천장",
+    "bull_trap": "불 트랩(가짜 돌파)",
+    "bear_trap": "베어 트랩(가짜 이탈)",
+    "breakaway_gap_up": "상승 갭(돌파형)",
+    "breakaway_gap_down": "하락 갭(돌파형)",
+    "exhaustion_gap_up": "상승 갭(소진형)",
+    "exhaustion_gap_down": "하락 갭(소진형)",
+    "island_reversal": "아일랜드 반전",
+    "gap_fill_setup": "갭 메우기 셋업",
+    "volume_climax_up": "거래량 클라이맥스(상승)",
+    "volume_climax_down": "거래량 클라이맥스(하락)",
+    "nr4_breakout_up": "NR4 상향 돌파",
+    "nr4_breakout_down": "NR4 하향 이탈",
+    "inside_bar_breakout_up": "인사이드바 상향 돌파",
+    "inside_bar_breakout_down": "인사이드바 하향 이탈",
+    "harmonic_abcd_bull": "하모닉 AB=CD(상승)",
+    "harmonic_abcd_bear": "하모닉 AB=CD(하락)",
+    "bullish_engulfing": "상승 장악형",
+    "bearish_engulfing": "하락 장악형",
+    "hammer": "망치형",
+    "shooting_star": "유성형",
+    "doji": "도지",
+    "morning_star": "샛별형(모닝스타)",
+    "evening_star": "석별형(이브닝스타)",
+    "three_white_soldiers": "적삼병",
+    "three_black_crows": "흑삼병",
+    "piercing_line": "관통형",
+    "dark_cloud_cover": "먹구름형",
     "resistance_breakout": "저항선 돌파",
     "support_breakdown": "지지선 이탈",
 }
@@ -331,6 +380,8 @@ def detect_confirmations(rows):
     """모든 패턴의 확정 이벤트를 confirm_idx 순으로 반환."""
     if len(rows) < PIVOT_WIN * 2 + 5:
         return []
+    from pattern_detectors_extended import detect_all_extended
+
     pivots = find_pivots(rows)
     z = zigzag(pivots)
     events = []
@@ -338,6 +389,7 @@ def detect_confirmations(rows):
     events += _detect_hns(rows, z)
     events += _detect_triangle(rows, z)
     events += _detect_sr_breakout(rows, pivots)
+    events += detect_all_extended(rows, z, pivots)
 
     # 같은 (pattern, confirm_idx) 중복 제거
     seen = set()

@@ -183,6 +183,273 @@ function rocArray(values, period = 12) {
   return values.map((value, i) => (i < period || !values[i - period] ? null : ((value / values[i - period]) - 1) * 100));
 }
 
+function emaArray(values, period) {
+  const out = Array(values.length).fill(null);
+  const k = 2 / (period + 1);
+  let ema = null;
+  for (let i = 0; i < values.length; i += 1) {
+    if (i < period - 1) continue;
+    if (ema == null) {
+      let sum = 0;
+      for (let j = i - period + 1; j <= i; j += 1) sum += values[j];
+      ema = sum / period;
+    } else ema = values[i] * k + ema * (1 - k);
+    out[i] = ema;
+  }
+  return out;
+}
+
+function vwapArray(rows) {
+  const out = Array(rows.length).fill(null);
+  let pv = 0;
+  let vol = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    const typical = (rows[i].h + rows[i].l + rows[i].c) / 3;
+    const v = rows[i].v || 0;
+    pv += typical * v;
+    vol += v;
+    out[i] = vol ? pv / vol : typical;
+  }
+  return out;
+}
+
+function keltnerChannels(rows, period = 20, mult = 2) {
+  const closes = rows.map((r) => r.c);
+  const mid = emaArray(closes, period);
+  const atr = atrArray(rows, period);
+  return {
+    mid,
+    upper: mid.map((v, i) => (v == null || atr[i] == null ? null : v + mult * atr[i])),
+    lower: mid.map((v, i) => (v == null || atr[i] == null ? null : v - mult * atr[i])),
+  };
+}
+
+function ichimokuArrays(rows) {
+  const midRange = (period) => {
+    const out = Array(rows.length).fill(null);
+    for (let i = period - 1; i < rows.length; i += 1) {
+      const slice = rows.slice(i - period + 1, i + 1);
+      out[i] = (Math.max(...slice.map((r) => r.h)) + Math.min(...slice.map((r) => r.l))) / 2;
+    }
+    return out;
+  };
+  const tenkan = midRange(9);
+  const kijun = midRange(26);
+  const spanB = midRange(52);
+  const spanA = tenkan.map((v, i) => (v == null || kijun[i] == null ? null : (v + kijun[i]) / 2));
+  return { tenkan, kijun, spanA, spanB };
+}
+
+function supertrendState(rows, period = 10, mult = 3) {
+  const atr = atrArray(rows, period);
+  const upper = Array(rows.length).fill(null);
+  const lower = Array(rows.length).fill(null);
+  let trendUp = true;
+  for (let i = 0; i < rows.length; i += 1) {
+    if (atr[i] == null) continue;
+    const hl2 = (rows[i].h + rows[i].l) / 2;
+    const bu = hl2 + mult * atr[i];
+    const bl = hl2 - mult * atr[i];
+    upper[i] = i && upper[i - 1] != null && rows[i - 1].c <= upper[i - 1] ? Math.min(bu, upper[i - 1]) : bu;
+    lower[i] = i && lower[i - 1] != null && rows[i - 1].c >= lower[i - 1] ? Math.max(bl, lower[i - 1]) : bl;
+    if (i) {
+      if (trendUp && rows[i].c < lower[i]) trendUp = false;
+      else if (!trendUp && rows[i].c > upper[i]) trendUp = true;
+    } else trendUp = rows[i].c >= hl2;
+  }
+  return { bullish: trendUp, line: trendUp ? lower[rows.length - 1] : upper[rows.length - 1] };
+}
+
+function cmfArray(rows, period = 20) {
+  const out = Array(rows.length).fill(null);
+  const mfv = rows.map((r) => {
+    const range = r.h - r.l;
+    const m = range ? (((r.c - r.l) - (r.h - r.c)) / range) : 0;
+    return m * (r.v || 0);
+  });
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const volSum = rows.slice(i - period + 1, i + 1).reduce((a, r) => a + (r.v || 0), 0);
+    const mfvSum = mfv.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+    out[i] = volSum ? mfvSum / volSum : 0;
+  }
+  return out;
+}
+
+function mfiArray(rows, period = 14) {
+  const tp = rows.map((r) => (r.h + r.l + r.c) / 3);
+  const rmf = rows.map((r, i) => {
+    const raw = tp[i] * (r.v || 0);
+    if (!i) return { pos: 0, neg: 0 };
+    return raw > tp[i - 1] * (rows[i - 1].v || 0) ? { pos: raw, neg: 0 } : { pos: 0, neg: raw };
+  });
+  const out = Array(rows.length).fill(null);
+  for (let i = period; i < rows.length; i += 1) {
+    let pos = 0;
+    let neg = 0;
+    for (let j = i - period + 1; j <= i; j += 1) { pos += rmf[j].pos; neg += rmf[j].neg; }
+    const ratio = neg ? pos / neg : 100;
+    out[i] = 100 - 100 / (1 + ratio);
+  }
+  return out;
+}
+
+function parabolicSarArray(rows, step = 0.02, maxStep = 0.2) {
+  const out = Array(rows.length).fill(null);
+  if (rows.length < 2) return out;
+  let bull = rows[1].c > rows[0].c;
+  let af = step;
+  let ep = bull ? rows[0].h : rows[0].l;
+  let sar = bull ? rows[0].l : rows[0].h;
+  out[0] = sar;
+  for (let i = 1; i < rows.length; i += 1) {
+    sar = sar + af * (ep - sar);
+    if (bull) {
+      if (rows[i].l < sar) { bull = false; sar = ep; ep = rows[i].l; af = step; }
+      else { if (rows[i].h > ep) { ep = rows[i].h; af = Math.min(maxStep, af + step); } }
+    } else {
+      if (rows[i].h > sar) { bull = true; sar = ep; ep = rows[i].h; af = step; }
+      else { if (rows[i].l < ep) { ep = rows[i].l; af = Math.min(maxStep, af + step); } }
+    }
+    out[i] = sar;
+  }
+  return { values: out, bullish: rows[rows.length - 1].c > out[rows.length - 1] };
+}
+
+function linearRegressionChannel(rows, period = 40) {
+  const n = rows.length;
+  if (n < period) return null;
+  const closes = rows.slice(-period).map((r) => r.c);
+  const xs = closes.map((_, i) => i);
+  const mx = (period - 1) / 2;
+  const my = closes.reduce((a, b) => a + b, 0) / period;
+  let num = 0;
+  let den = 0;
+  for (let i = 0; i < period; i += 1) { num += (i - mx) * (closes[i] - my); den += (i - mx) ** 2; }
+  const slope = den ? num / den : 0;
+  const intercept = my - slope * mx;
+  const residuals = closes.map((c, i) => c - (intercept + slope * i));
+  const std = Math.sqrt(residuals.reduce((a, r) => a + r * r, 0) / period);
+  const endY = intercept + slope * (period - 1);
+  const startY = intercept;
+  return { slope, upper: endY + std * 2, lower: endY - std * 2, mid: endY, start: startY, std };
+}
+
+function ttmSqueezeState(rows) {
+  const closes = rows.map((r) => r.c);
+  const bb = bollinger(closes, 20, 2);
+  const kc = keltnerChannels(rows, 20, 1.5);
+  const i = rows.length - 1;
+  if (bb.upper[i] == null || kc.upper[i] == null) return { squeezed: false, fired: false };
+  const squeezed = bb.upper[i] < kc.upper[i] && bb.lower[i] > kc.lower[i];
+  const prev = i > 0 && bb.upper[i - 1] != null && kc.upper[i - 1] != null
+    ? bb.upper[i - 1] < kc.upper[i - 1] && bb.lower[i - 1] > kc.lower[i - 1] : false;
+  return { squeezed, fired: prev && !squeezed };
+}
+
+function floorTraderPivots(rows) {
+  if (rows.length < 2) return null;
+  const prev = rows[rows.length - 2];
+  const p = (prev.h + prev.l + prev.c) / 3;
+  const r1 = 2 * p - prev.l;
+  const s1 = 2 * p - prev.h;
+  const r2 = p + (prev.h - prev.l);
+  const s2 = p - (prev.h - prev.l);
+  return { pivot: p, r1, r2, s1, s2 };
+}
+
+function fibonacciLevels(rows, lookback = 60) {
+  const slice = rows.slice(-lookback);
+  if (!slice.length) return null;
+  const hi = Math.max(...slice.map((r) => r.h));
+  const lo = Math.min(...slice.map((r) => r.l));
+  const range = hi - lo;
+  return {
+    high: hi, low: lo,
+    levels: {
+      "0%": hi,
+      "23.6%": hi - range * 0.236,
+      "38.2%": hi - range * 0.382,
+      "50%": hi - range * 0.5,
+      "61.8%": hi - range * 0.618,
+      "100%": lo,
+    },
+  };
+}
+
+function aggregateWeekly(rows) {
+  const weeks = [];
+  let cur = null;
+  for (const r of rows) {
+    const d = r.d ? new Date(r.d) : null;
+    const key = d ? `${d.getUTCFullYear()}-W${Math.floor((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 604800000)}` : String(weeks.length);
+    if (!cur || cur.key !== key) {
+      cur = { key, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v || 0, d: r.d };
+      weeks.push(cur);
+    } else {
+      cur.h = Math.max(cur.h, r.h);
+      cur.l = Math.min(cur.l, r.l);
+      cur.c = r.c;
+      cur.v += r.v || 0;
+      cur.d = r.d;
+    }
+  }
+  return weeks;
+}
+
+function getShortInterest(ticker) {
+  const data = typeof window !== "undefined" && window.SHORT_INTEREST;
+  if (!data || !ticker || !data.rows) return null;
+  const row = data.rows.find((r) => String(r.ticker).toUpperCase() === String(ticker).toUpperCase());
+  return row || null;
+}
+
+function computeAtrLevels(rows, price, mult = 2) {
+  const atr = atrArray(rows, 14);
+  const last = atr[atr.length - 1];
+  if (last == null) return null;
+  return {
+    atr: last,
+    stop: price - mult * last,
+    target: price + mult * last,
+    target2: price + mult * 2 * last,
+    riskPct: (mult * last / price) * 100,
+  };
+}
+
+function computeTechnicalLevels(rows, price) {
+  return {
+    fib: fibonacciLevels(rows),
+    pivots: floorTraderPivots(rows),
+    atr: computeAtrLevels(rows, price),
+    linreg: linearRegressionChannel(rows),
+    psar: parabolicSarArray(rows),
+  };
+}
+
+function buildMultiTimeframeContext(rows) {
+  const weekly = aggregateWeekly(rows);
+  if (weekly.length < 30) return { alignment: 0, bias: 0, label: "주봉 데이터 부족", weeklyTrend: null };
+  const wCloses = weekly.map((r) => r.c);
+  const wSma10 = smaArray(wCloses, 10);
+  const wSma20 = smaArray(wCloses, 20);
+  const n = wCloses.length - 1;
+  const dailyBull = rows[rows.length - 1].c > (smaArray(rows.map((r) => r.c), 20).slice(-1)[0] || 0);
+  let weeklyBull = false;
+  let weeklyBear = false;
+  if (wSma10[n] != null && wSma20[n] != null) {
+    weeklyBull = wCloses[n] > wSma10[n] && wSma10[n] > wSma20[n];
+    weeklyBear = wCloses[n] < wSma10[n] && wSma10[n] < wSma20[n];
+  }
+  let bias = 0;
+  let label = "일·주 혼조";
+  if (dailyBull && weeklyBull) { bias = 0.6; label = "일봉·주봉 정배열 일치"; }
+  else if (!dailyBull && weeklyBear) { bias = -0.6; label = "일봉·주봉 역배열 일치"; }
+  else if (weeklyBull) { bias = 0.25; label = "주봉 상승 추세 (일봉 혼조)"; }
+  else if (weeklyBear) { bias = -0.25; label = "주봉 하락 추세 (일봉 혼조)"; }
+  const alignment = Math.abs(bias) > 0.5 ? 0.85 : Math.abs(bias) > 0.2 ? 0.55 : 0.2;
+  return { alignment, bias, label, weeklyBull, weeklyBear };
+}
+
 // 선형회귀 기울기를 평균값 대비 % 로 환산 (추세 방향/강도 측정에 사용)
 function slopePct(values, lookback) {
   const n = values.length;
@@ -424,6 +691,8 @@ const PATTERN_LABELS = {
   box_breakdown: "박스권 하향 이탈",
   bull_flag: "상승 깃발형",
   bear_flag: "하락 깃발형",
+  bull_pennant: "상승 페넌트",
+  bear_pennant: "하락 페넌트",
   triple_top: "삼중 천장형",
   triple_bottom: "삼중 바닥형",
   broadening_triangle: "확산형 삼각수렴",
@@ -431,6 +700,40 @@ const PATTERN_LABELS = {
   diamond_bottom: "다이아몬드 바닥형",
   rounding_bottom: "라운딩 바닥형(U자형)",
   complex_hns: "복합 헤드앤숄더",
+  cup_and_handle: "컵 앤 핸들",
+  ascending_channel_breakout: "상승 채널 돌파",
+  descending_channel_breakout: "하락 채널 이탈",
+  reversal_123_up: "1-2-3 반전(상승)",
+  reversal_123_down: "1-2-3 반전(하락)",
+  two_b_bottom: "2B 바닥",
+  two_b_top: "2B 천장",
+  bull_trap: "불 트랩(가짜 돌파)",
+  bear_trap: "베어 트랩(가짜 이탈)",
+  breakaway_gap_up: "상승 갭(돌파형)",
+  breakaway_gap_down: "하락 갭(돌파형)",
+  exhaustion_gap_up: "상승 갭(소진형)",
+  exhaustion_gap_down: "하락 갭(소진형)",
+  island_reversal: "아일랜드 반전",
+  gap_fill_setup: "갭 메우기 셋업",
+  volume_climax_up: "거래량 클라이맥스(상승)",
+  volume_climax_down: "거래량 클라이맥스(하락)",
+  nr4_breakout_up: "NR4 상향 돌파",
+  nr4_breakout_down: "NR4 하향 이탈",
+  inside_bar_breakout_up: "인사이드바 상향 돌파",
+  inside_bar_breakout_down: "인사이드바 하향 이탈",
+  harmonic_abcd_bull: "하모닉 AB=CD(상승)",
+  harmonic_abcd_bear: "하모닉 AB=CD(하락)",
+  bullish_engulfing: "상승 장악형",
+  bearish_engulfing: "하락 장악형",
+  hammer: "망치형",
+  shooting_star: "유성형",
+  doji: "도지",
+  morning_star: "샛별형(모닝스타)",
+  evening_star: "석별형(이브닝스타)",
+  three_white_soldiers: "적삼병",
+  three_black_crows: "흑삼병",
+  piercing_line: "관통형",
+  dark_cloud_cover: "먹구름형",
   resistance_breakout: "저항선 돌파",
   support_breakdown: "지지선 이탈",
 };
@@ -1156,7 +1459,8 @@ function detectConfirmations(rows) {
     detectBroadening(rows, z),
     detectDiamond(rows, z),
     detectRoundingBottom(rows),
-    detectComplexHns(rows, z)
+    detectComplexHns(rows, z),
+    ...(window.MirPatternExt ? window.MirPatternExt.detectAll(rows, z, pivots, { confirmBreak, slopePctPts, PAT }) : [])
   );
   const seen = new Set();
   const uniq = [];
@@ -1206,8 +1510,54 @@ function analyzeIndividualPatternPerformance(cleanRows, patternName, horizon) {
   };
 }
 
+// 패턴 목표가(Measured Move) — 넥라인 ± 패턴 높이
+function computeMeasuredMove(rows, ev) {
+  if (!ev || ev.neckline == null) return null;
+  const pts = ev.points || [];
+  if (!pts.length) return { target: ev.neckline, note: "넥라인 기준" };
+  const prices = pts.map((p) => p.price).filter((x) => Number.isFinite(x));
+  if (!prices.length) return null;
+  const extreme = ev.dir > 0 ? Math.min(...prices) : Math.max(...prices);
+  const height = Math.abs(ev.neckline - extreme);
+  const target = ev.dir > 0 ? ev.neckline + height : ev.neckline - height;
+  return { target, height, extreme, note: "넥라인 ± 패턴 높이" };
+}
+
+// 확정 후 넥라인 재이탈 = 패턴 실패
+function checkPatternFailure(rows, ev, win = 15) {
+  if (!ev || ev.neckline == null) return false;
+  const n = rows.length;
+  const start = ev.confirm_idx + 1;
+  const end = Math.min(n, start + win);
+  for (let k = start; k < end; k += 1) {
+    const c = rows[k].c;
+    if (ev.dir > 0 && c < ev.neckline) return true;
+    if (ev.dir < 0 && c > ev.neckline) return true;
+  }
+  return false;
+}
+
+// 동시에 감지된 패턴 방향 일치도
+function computeConfluence(cards) {
+  if (!cards || !cards.length) return { score: 0, bull: 0, bear: 0, label: "패턴 없음" };
+  let bull = 0, bear = 0;
+  for (const c of cards) {
+    const w = c.stat && c.stat.n >= 100 ? 1.2 : 1;
+    if (c.nominalDir > 0) bull += w;
+    else if (c.nominalDir < 0) bear += w;
+  }
+  const total = bull + bear;
+  const score = total ? Math.round((Math.max(bull, bear) / total) * 100) : 0;
+  let label = "혼조";
+  if (score >= 75 && bull > bear) label = "강한 상승 중첩";
+  else if (score >= 75 && bear > bull) label = "강한 하락 중첩";
+  else if (score >= 55) label = bull >= bear ? "약한 상승 중첩" : "약한 하락 중첩";
+  return { score, bull, bear, label };
+}
+
 // 감지된 현재 패턴 + 과거 통계 → 신호 + 카드 정보
-function patternSignals(rows, horizon, stats) {
+function patternSignals(rows, horizon, stats, opts) {
+  opts = opts || {};
   const result = { signals: [], cards: [] };
   if (!stats || !stats.patterns) return result;
   const cur = detectCurrentPatterns(rows);
@@ -1224,16 +1574,24 @@ function patternSignals(rows, horizon, stats) {
       weight: 1.0,
       detail: `과거 ${s.n.toLocaleString()}건 중 ${s.up_rate.toFixed(0)}% 상승 (${barsAgo === 0 ? "오늘" : barsAgo + "봉 전"} 확정)`,
     });
+    const indyStat = analyzeIndividualPatternPerformance(rows, ev.pattern, horizon);
+    const useIndy = opts.statsMode === "individual" && indyStat;
+    const displayStat = useIndy ? { ...indyStat, edge: s.edge, n: indyStat.n, _source: "individual" } : { ...s, _source: "population" };
     result.cards.push({
       pattern: ev.pattern,
       label: PATTERN_LABELS[ev.pattern] || ev.pattern,
       nominalDir: ev.dir,
       barsAgo,
-      stat: s,
+      stat: displayStat,
+      popStat: s,
+      indyStat,
       baseline: stats.baseline ? stats.baseline[hKey] : null,
-      indyStat: analyzeIndividualPatternPerformance(rows, ev.pattern, horizon)
+      measuredMove: computeMeasuredMove(rows, ev),
+      failed: checkPatternFailure(rows, ev),
+      event: ev,
     });
   }
+  result.confluence = computeConfluence(result.cards);
   return result;
 }
 
@@ -1422,11 +1780,213 @@ function buildSignals(rows) {
     }
   }
 
+  // 11. VWAP
+  {
+    const vwap = last(vwapArray(rows));
+    if (vwap != null) {
+      const dir = price > vwap ? 0.45 : price < vwap ? -0.45 : 0;
+      signals.push({
+        label: "VWAP",
+        dir,
+        weight: 0.85,
+        detail: price > vwap ? `VWAP($${vwap.toFixed(2)}) 위` : price < vwap ? `VWAP($${vwap.toFixed(2)}) 아래` : "VWAP 부근",
+      });
+    }
+  }
+
+  // 12. Supertrend
+  {
+    const st = supertrendState(rows);
+    if (st.line != null) {
+      signals.push({
+        label: "Supertrend",
+        dir: st.bullish ? 0.7 : -0.7,
+        weight: 1.0,
+        detail: st.bullish ? `강세 추세 ($${st.line.toFixed(2)})` : `약세 추세 ($${st.line.toFixed(2)})`,
+      });
+    }
+  }
+
+  // 13. Ichimoku
+  {
+    const ichi = ichimokuArrays(rows);
+    const t = last(ichi.tenkan);
+    const k = last(ichi.kijun);
+    const sa = last(ichi.spanA);
+    const sb = last(ichi.spanB);
+    let dir = 0;
+    let detail = "중립";
+    if (t != null && k != null) {
+      if (t > k && price > Math.max(sa || 0, sb || 0)) { dir = 0.65; detail = "전환>기준선 + 구름 위"; }
+      else if (t < k && price < Math.min(sa || Infinity, sb || Infinity)) { dir = -0.65; detail = "전환<기준선 + 구름 아래"; }
+      else if (t > k) { dir = 0.35; detail = "전환선 > 기준선"; }
+      else if (t < k) { dir = -0.35; detail = "전환선 < 기준선"; }
+    }
+    signals.push({ label: "Ichimoku", dir, weight: 0.95, detail });
+  }
+
+  // 14. 골든/데드크로스 (SMA20 × SMA60)
+  {
+    const s20 = sma20[n - 1];
+    const s60 = sma60[n - 1];
+    const s20p = sma20[n - 2];
+    const s60p = sma60[n - 2];
+    if (s20 != null && s60 != null) {
+      let dir = s20 > s60 ? 0.5 : -0.5;
+      let detail = s20 > s60 ? "SMA20 > SMA60" : "SMA20 < SMA60";
+      if (s20p != null && s60p != null) {
+        if (s20p <= s60p && s20 > s60) { dir = 0.75; detail = "골든크로스 직후"; }
+        if (s20p >= s60p && s20 < s60) { dir = -0.75; detail = "데드크로스 직후"; }
+      }
+      signals.push({ label: "골든/데드크로스", dir, weight: 1.15, detail });
+    }
+  }
+
+  // 15. +DI / -DI
+  {
+    const { plusDi, minusDi } = adxArrays(rows, 14);
+    const pdi = last(plusDi);
+    const mdi = last(minusDi);
+    if (pdi != null && mdi != null) {
+      const dir = Math.max(-1, Math.min(1, (pdi - mdi) / 25));
+      signals.push({
+        label: "+DI/-DI",
+        dir,
+        weight: 0.75,
+        detail: `+DI ${pdi.toFixed(0)} / -DI ${mdi.toFixed(0)}`,
+      });
+    }
+  }
+
+  // 16. Williams %R
+  {
+    const w = last(williamsArray(rows, 14));
+    if (w != null) {
+      let dir = 0;
+      let detail = `${w.toFixed(0)}`;
+      if (w > -20) { dir = -0.4; detail += " (과매수)"; }
+      else if (w < -80) { dir = 0.45; detail += " (과매도)"; }
+      else dir = (w + 50) / 50;
+      signals.push({ label: "Williams %R", dir, weight: 0.55, detail });
+    }
+  }
+
+  // 17. CCI
+  {
+    const cci = last(cciArray(rows, 20));
+    if (cci != null) {
+      let dir = Math.max(-1, Math.min(1, cci / 150));
+      let detail = cci.toFixed(0);
+      if (cci > 100) detail += " (강세)";
+      else if (cci < -100) detail += " (약세)";
+      signals.push({ label: "CCI", dir, weight: 0.55, detail });
+    }
+  }
+
+  // 18. TTM Squeeze
+  {
+    const sq = ttmSqueezeState(rows);
+    let dir = 0;
+    let detail = sq.squeezed ? "수축 중 (변동성 폭발 대기)" : "수축 해제";
+    if (sq.fired) {
+      const mom = last(rocArray(closes, 12));
+      dir = mom != null && mom > 0 ? 0.55 : mom != null && mom < 0 ? -0.55 : 0;
+      detail = "스퀴즈 해제 + 모멘텀 " + (mom >= 0 ? "상승" : "하락");
+    } else if (sq.squeezed) dir = 0.1;
+    signals.push({ label: "TTM Squeeze", dir, weight: sq.fired ? 1.0 : 0.5, detail });
+  }
+
+  // 19. CMF / MFI
+  {
+    const cmf = last(cmfArray(rows, 20));
+    if (cmf != null) {
+      const dir = Math.max(-1, Math.min(1, cmf * 5));
+      signals.push({
+        label: "CMF(수급)",
+        dir,
+        weight: 0.8,
+        detail: cmf > 0.05 ? "자금 유입" : cmf < -0.05 ? "자금 유출" : `중립 (${cmf.toFixed(2)})`,
+      });
+    }
+    const mfi = last(mfiArray(rows, 14));
+    if (mfi != null) {
+      let dir = 0;
+      let detail = mfi.toFixed(0);
+      if (mfi < 20) { dir = 0.4; detail += " (과매도)"; }
+      else if (mfi > 80) { dir = -0.4; detail += " (과매수)"; }
+      else dir = (mfi - 50) / 50;
+      signals.push({ label: "MFI", dir, weight: 0.7, detail });
+    }
+  }
+
+  // 20. Parabolic SAR
+  {
+    const ps = parabolicSarArray(rows);
+    if (ps.values[n - 1] != null) {
+      signals.push({
+        label: "Parabolic SAR",
+        dir: ps.bullish ? 0.5 : -0.5,
+        weight: 0.65,
+        detail: ps.bullish ? "SAR 아래 (상승 추세)" : "SAR 위 (하락 추세)",
+      });
+    }
+  }
+
+  // 21. 선형회귀 채널
+  {
+    const lr = linearRegressionChannel(rows);
+    if (lr) {
+      let dir = 0;
+      let detail = "채널 중간";
+      if (price > lr.upper) { dir = -0.35; detail = "상단 밴드 돌파(과열)"; }
+      else if (price < lr.lower) { dir = 0.4; detail = "하단 밴드 이탈(반등 가능)"; }
+      else dir = (price - lr.mid) / (lr.std || 1) * 0.3;
+      signals.push({ label: "선형회귀 채널", dir, weight: 0.6, detail });
+    }
+  }
+
+  // 22. 피벗 포인트
+  {
+    const pv = floorTraderPivots(rows);
+    if (pv) {
+      let dir = 0;
+      let detail = `피벗 $${pv.pivot.toFixed(2)}`;
+      if (price > pv.r1) { dir = 0.45; detail = `R1($${pv.r1.toFixed(2)}) 돌파`; }
+      else if (price < pv.s1) { dir = -0.45; detail = `S1($${pv.s1.toFixed(2)}) 이탈`; }
+      else if (price > pv.pivot) { dir = 0.2; detail += " 위"; }
+      else { dir = -0.2; detail += " 아래"; }
+      signals.push({ label: "피벗 포인트", dir, weight: 0.55, detail });
+    }
+  }
+
   // ADX는 방향이 아니라 "추세 강도" → 신뢰도 가중치로 별도 반환
   const { adx } = adxArrays(rows, 14);
   const adxVal = last(adx);
 
   return { signals, adxVal };
+}
+
+function williamsArray(rows, period = 14) {
+  const out = Array(rows.length).fill(null);
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const slice = rows.slice(i - period + 1, i + 1);
+    const hi = Math.max(...slice.map((r) => r.h));
+    const lo = Math.min(...slice.map((r) => r.l));
+    out[i] = hi === lo ? -50 : ((hi - rows[i].c) / (hi - lo)) * -100;
+  }
+  return out;
+}
+
+function cciArray(rows, period = 20) {
+  const typical = rows.map((r) => (r.h + r.l + r.c) / 3);
+  const out = Array(rows.length).fill(null);
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const chunk = typical.slice(i - period + 1, i + 1);
+    const avg = chunk.reduce((a, b) => a + b, 0) / period;
+    const meanDev = chunk.reduce((a, b) => a + Math.abs(b - avg), 0) / period;
+    out[i] = meanDev ? (typical[i] - avg) / (0.015 * meanDev) : 0;
+  }
+  return out;
 }
 
 // dir 가중 평균 → 상승 확률(%). ADX(추세 강도)로 신호의 진폭을 조절.
@@ -1519,16 +2079,53 @@ function analyzeRows(rows, horizon, meta) {
     return { error: "insufficient", bars: clean.length };
   }
 
+  const price = clean[clean.length - 1].c;
   const { signals, adxVal } = buildSignals(clean);
-  // 차트 패턴 신호를 합의에 합류시킨다(감지된 현재 패턴이 있을 때만).
-  const pat = patternSignals(clean, horizon, patternStats);
+  const pat = patternSignals(clean, horizon, patternStats, meta);
   for (const s of pat.signals) signals.push(s);
-  const consensus = consensusProbability(signals, adxVal);
-  const base = clean.length >= 250 ? backtestBaseRate(clean, horizon) : null;
-  const sr = srSummary(clean); // 차트 오버레이와 동일한 강도점수 기반 S/R
-  const breakout = detectBreakoutRetest(clean, horizon, breakoutStats);
 
-  // 헤드라인: 백테스트 표본이 충분하면 두 값을 블렌딩, 아니면 신호만
+  const mtf = buildMultiTimeframeContext(clean);
+  if (mtf.bias !== 0) {
+    signals.push({
+      label: "다중 타임프레임",
+      dir: mtf.bias,
+      weight: 1.2 * mtf.alignment,
+      detail: mtf.label,
+    });
+  }
+
+  const shortData = meta.ticker ? getShortInterest(meta.ticker) : null;
+  let shortSqueeze = null;
+  if (shortData && shortData.daysToCover != null) {
+    const dtc = shortData.daysToCover;
+    const bullPat = (pat.confluence && pat.confluence.bull > pat.confluence.bear) || false;
+    if (dtc >= 5) {
+      const dir = bullPat ? 0.55 : 0.15;
+      signals.push({
+        label: "공매도(숏)",
+        dir,
+        weight: Math.min(1.3, 0.5 + dtc / 10),
+        detail: `커버 ${dtc.toFixed(1)}일${bullPat ? " + 강세 패턴 (스퀴즈 셋업)" : ""}`,
+      });
+      if (dtc >= 5 && bullPat) {
+        shortSqueeze = { daysToCover: dtc, setup: true, changePct: shortData.changePct };
+      }
+    } else if (dtc <= 2) {
+      signals.push({ label: "공매도(숏)", dir: -0.1, weight: 0.3, detail: `커버 ${dtc.toFixed(1)}일 (낮음)` });
+    }
+  }
+
+  let consensus = consensusProbability(signals, adxVal);
+  if (mtf.alignment >= 0.55 && mtf.bias !== 0) {
+    const boost = mtf.bias * mtf.alignment * 2.5;
+    consensus = { ...consensus, up: Math.max(12, Math.min(88, consensus.up + boost)) };
+  }
+
+  const base = clean.length >= 250 ? backtestBaseRate(clean, horizon) : null;
+  const sr = srSummary(clean);
+  const breakout = detectBreakoutRetest(clean, horizon, breakoutStats);
+  const techLevels = computeTechnicalLevels(clean, price);
+
   let headlineUp;
   if (base && base.samples >= 40) {
     headlineUp = consensus.up * 0.5 + base.upProb * 0.5;
@@ -1542,7 +2139,7 @@ function analyzeRows(rows, horizon, meta) {
     company: meta.company,
     bars: clean.length,
     lastDate: clean[clean.length - 1].d,
-    price: clean[clean.length - 1].c,
+    price,
     horizon,
     consensus,
     signals,
@@ -1550,7 +2147,12 @@ function analyzeRows(rows, horizon, meta) {
     base,
     sr,
     patterns: pat.cards,
+    patternConfluence: pat.confluence,
     breakout,
+    mtf,
+    techLevels,
+    shortSqueeze,
+    shortData,
     headlineUp,
     headlineDown: 100 - headlineUp,
   };
@@ -1644,12 +2246,18 @@ function renderPatternCard(result) {
     const dirWord = c.nominalDir > 0 ? "상승형" : c.nominalDir < 0 ? "하락형" : "중립형";
     const edgeStr = edge == null ? "" :
       `<span class="pat-edge ${edge >= 0 ? "pos" : "neg"}">시장 대비 ${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%p</span>`;
-    const indyStr = c.indyStat ? 
+    const srcLabel = c.stat && c.stat._source === "individual" ? "종목 실측" : "전체 통계";
+    const indyStr = c.indyStat && c.stat && c.stat._source === "population" ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 과거 실측: <b>${c.indyStat.n}회</b> 발생 중 <b>${c.indyStat.up_rate.toFixed(0)}%</b> 상승 (평균 <b>${c.indyStat.avg_ret >= 0 ? "+" : ""}${c.indyStat.avg_ret.toFixed(1)}%</b>)</span>` : "";
+    const failStr = c.failed ? `<span class="pat-tag" style="background:var(--tint-neg);color:var(--tint-neg-fg);border-color:var(--neg)">패턴 실패</span>` : "";
+    const targetStr = c.measuredMove && Number.isFinite(c.measuredMove.target) ?
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">🎯 목표가 추정: <b>$${c.measuredMove.target.toFixed(2)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
     return `<div class="pat-item">
       <div class="pat-head">
         <span class="pat-name">${escapeHtml(c.label)}</span>
         <span class="pat-tag">${dirWord}</span>
+        <span class="pat-tag muted">${srcLabel}</span>
+        ${failStr}
         <span class="pat-when muted">${c.barsAgo === 0 ? "오늘 확정" : c.barsAgo + "봉 전 확정"}</span>
       </div>
       <p class="pat-stat">과거 같은 패턴 <b>${c.stat.n.toLocaleString()}건</b> 중
@@ -1657,6 +2265,7 @@ function renderPatternCard(result) {
         · 평균 <b style="color:${c.stat.avg_ret >= 0 ? "var(--pos)" : "var(--neg)"}">${c.stat.avg_ret >= 0 ? "+" : ""}${c.stat.avg_ret.toFixed(1)}%</b>
         ${edgeStr}
         ${indyStr}
+        ${targetStr}
       </p>
     </div>`;
   }).join("");
@@ -1718,12 +2327,23 @@ function generateBriefing(result) {
     }
   }
 
+  const vwapSig = signals.find((s) => s.label === "VWAP");
+  if (vwapSig && vwapSig.dir > 0.3) supportReasons.push("VWAP 위에서 거래되어 기관·단기 매수세가 우위입니다.");
+  const ichiSig = signals.find((s) => s.label === "Ichimoku");
+  if (ichiSig && ichiSig.dir > 0.5) supportReasons.push("일목균형표상 구름 위 강세 구간입니다.");
+  else if (ichiSig && ichiSig.dir < -0.5) riskReasons.push("일목균형표상 구름 아래 약세 구간입니다.");
+  const sqSig = signals.find((s) => s.label === "TTM Squeeze");
+  if (sqSig && sqSig.detail.includes("해제")) supportReasons.push("볼린저·켈트너 수축 해제로 변동성 확대 국면에 진입했습니다.");
+  if (result.mtf && result.mtf.bias > 0.5) supportReasons.push(`주봉 추세와 일봉이 일치합니다 (${result.mtf.label}).`);
+  else if (result.mtf && result.mtf.bias < -0.5) riskReasons.push(`주봉·일봉 추세가 하락 방향으로 일치합니다.`);
+  if (result.shortSqueeze) supportReasons.push(`공매도 커버 ${result.shortSqueeze.daysToCover.toFixed(1)}일 + 강세 패턴으로 숏 스퀴즈 셋업이 관찰됩니다.`);
+
   let coreBrief = "";
   if (supportReasons.length > 0) {
-    coreBrief += `<li>🟢 <strong>호재 요인:</strong> ${supportReasons.slice(0, 2).join(" ")}</li>`;
+    coreBrief += `<li>🟢 <strong>호재 요인:</strong> ${supportReasons.slice(0, 3).join(" ")}</li>`;
   }
   if (riskReasons.length > 0) {
-    coreBrief += `<li>🔴 <strong>리스크 요인:</strong> ${riskReasons.slice(0, 2).join(" ")}</li>`;
+    coreBrief += `<li>🔴 <strong>리스크 요인:</strong> ${riskReasons.slice(0, 3).join(" ")}</li>`;
   }
 
   const sr = result.sr || {};
@@ -1740,6 +2360,10 @@ function generateBriefing(result) {
     }
   } else {
     strategy = "지지선과 저항선 데이터가 부족해 돌파 여부 위주의 실시간 차트 확인이 필요합니다.";
+  }
+  if (result.techLevels && result.techLevels.atr) {
+    const a = result.techLevels.atr;
+    strategy += ` ATR 기준 손절 $${a.stop.toFixed(2)}, 1차 목표 $${a.target.toFixed(2)} (리스크 약 ${a.riskPct.toFixed(1)}%).`;
   }
 
   return `
@@ -1797,6 +2421,13 @@ function buildResultHTML(result) {
   const patternHtml = renderPatternCard(result);
   const breakoutHtml = renderBreakoutCard(result);
   const briefingHtml = generateBriefing(result);
+  const confluence = result.patternConfluence;
+  const confluenceHtml = confluence && confluence.score > 0 ? `
+    <div class="card cprob-confluence-card">
+      <h3>패턴 중첩 점수</h3>
+      <p class="base-line"><b style="color:${gaugeColor(confluence.bull >= confluence.bear ? 55 + confluence.score * 0.1 : 45 - confluence.score * 0.1)}">${confluence.score}%</b> 일치 · <b>${escapeHtml(confluence.label)}</b></p>
+      <p class="muted" style="margin:0;font-size:12px;">강세 패턴 ${confluence.bull.toFixed(1)} / 약세 패턴 ${confluence.bear.toFixed(1)} (표본 가중)</p>
+    </div>` : "";
 
   const sr = result.sr;
   const srHtml = `<div class="sr-line">
@@ -1837,6 +2468,14 @@ function buildResultHTML(result) {
       ${baseHtml}
     </div>
 
+    ${confluenceHtml}
+
+    ${renderMtfCard(result)}
+
+    ${renderShortSqueezeCard(result)}
+
+    ${renderTechnicalLevelsCard(result)}
+
     ${patternHtml}
 
     ${breakoutHtml}
@@ -1851,6 +2490,62 @@ function buildResultHTML(result) {
       실적·금리·뉴스 등 펀더멘털 변수는 반영되지 않습니다. 투자 판단과 책임은 본인에게 있습니다.
     </div>
   `;
+}
+
+function renderTechnicalLevelsCard(result) {
+  const tl = result.techLevels;
+  if (!tl) return "";
+  const parts = [];
+  if (tl.atr) {
+    parts.push(`<p class="pat-stat">🛡 <b>ATR 손절</b> (2ATR): <b style="color:var(--neg)">$${tl.atr.stop.toFixed(2)}</b> · 
+      <b>목표</b> (1R): <b style="color:var(--pos)">$${tl.atr.target.toFixed(2)}</b> · 
+      <b>목표</b> (2R): <b style="color:var(--pos)">$${tl.atr.target2.toFixed(2)}</b>
+      <span class="muted"> (리스크 ${tl.atr.riskPct.toFixed(1)}%)</span></p>`);
+  }
+  if (tl.pivots) {
+    const p = tl.pivots;
+    parts.push(`<p class="pat-stat">📍 <b>피벗</b> P $${p.pivot.toFixed(2)} · R1 $${p.r1.toFixed(2)} · R2 $${p.r2.toFixed(2)} · S1 $${p.s1.toFixed(2)} · S2 $${p.s2.toFixed(2)}</p>`);
+  }
+  if (tl.fib && tl.fib.levels) {
+    const f = Object.entries(tl.fib.levels).map(([k, v]) => `${k} $${v.toFixed(2)}`).join(" · ");
+    parts.push(`<p class="pat-stat">📐 <b>피보나치</b> (60봉) ${f}</p>`);
+  }
+  if (tl.linreg) {
+    parts.push(`<p class="pat-stat">📈 <b>선형회귀</b> 상단 $${tl.linreg.upper.toFixed(2)} · 중심 $${tl.linreg.mid.toFixed(2)} · 하단 $${tl.linreg.lower.toFixed(2)}</p>`);
+  }
+  if (tl.psar && tl.psar.values) {
+    const ps = tl.psar.values[tl.psar.values.length - 1];
+    if (ps != null) {
+      parts.push(`<p class="pat-stat">🔶 <b>Parabolic SAR</b> $${ps.toFixed(2)} · ${tl.psar.bullish ? "상승 추세" : "하락 추세"}</p>`);
+    }
+  }
+  if (!parts.length) return "";
+  return `<div class="card tech-levels-card">
+    <h3>기술적 레벨 · 리스크 프레임</h3>
+    ${parts.join("")}
+    <p class="pat-note muted">※ 피보나치·피벗·ATR 목표가는 참고용이며 투자 권유가 아닙니다.</p>
+  </div>`;
+}
+
+function renderMtfCard(result) {
+  const mtf = result.mtf;
+  if (!mtf || mtf.alignment <= 0) return "";
+  const color = mtf.bias > 0 ? "var(--pos)" : mtf.bias < 0 ? "var(--neg)" : "var(--muted)";
+  return `<div class="card mtf-card">
+    <h3>다중 타임프레임</h3>
+    <p class="base-line"><b style="color:${color}">${escapeHtml(mtf.label)}</b> · 일치도 <b>${(mtf.alignment * 100).toFixed(0)}%</b></p>
+    <p class="muted" style="margin:0;font-size:12px;">일봉 신호에 주봉 추세 가중치가 반영되었습니다.</p>
+  </div>`;
+}
+
+function renderShortSqueezeCard(result) {
+  if (!result.shortSqueeze) return "";
+  const s = result.shortSqueeze;
+  return `<div class="card squeeze-card">
+    <h3>숏 스퀴즈 셋업</h3>
+    <p class="base-line">공매도 커버 <b>${s.daysToCover.toFixed(1)}일</b> + <b>강세 패턴 중첩</b> → 기술적 스퀴즈 가능성</p>
+    <p class="muted" style="margin:0;font-size:12px;">공매도 변화 ${s.changePct >= 0 ? "+" : ""}${(s.changePct || 0).toFixed(1)}% (최근 결산 기준)</p>
+  </div>`;
 }
 
 function renderBreakoutCard(result) {
@@ -1937,6 +2632,11 @@ window.MirProb = {
   detectCurrentPatterns,
   detectConfirmations,
   patternLabels: PATTERN_LABELS,
+  computeMeasuredMove,
+  checkPatternFailure,
+  computeConfluence,
+  computeTechnicalLevels,
+  buildMultiTimeframeContext,
   ensureStats,
   gaugeColor,
   verdictText,

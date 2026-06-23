@@ -175,8 +175,20 @@ let chartState = {
   showKeltner: false,
   showDonchian: false,
   showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
+  showTechLevels: false, // 피벗·Fib·ATR·LinReg 등 기술 레벨선 마스터
+  techLevelTypes: {
+    pivot: false, r1: false, s1: false,
+    fib618: false, fib382: false,
+    stop: false, tgt: false,
+    lrUpper: false, lrLower: false,
+  },
   showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이 마스터
-  patternTypes: { hns: true, double: true, triangle: true, wedge: true, box: true, flag: true, triple: true, broadening: true, diamond: true, rounding: true, complex_hns: true, breakout: true }, // 종류별 표시 필터
+  patternTypes: {
+    hns: true, double: true, triangle: true, wedge: true, box: true, flag: true, pennant: true,
+    triple: true, broadening: true, diamond: true, rounding: true, complex_hns: true, breakout: true,
+    cup: true, channel: true, reversal: true, trap: true, gap: true, volume: true, squeeze: true,
+    harmonic: true, candle: true,
+  },
   showVolume: true,
   showVolMa20: false,
   showVolumeRatio: false,
@@ -2780,82 +2792,256 @@ function redrawChart() {
   if (item) drawChart(item);
 }
 
+let chartPanActive = false;
+let chartPanRafId = 0;
+let patternConfirmCache = { ticker: "", len: 0, lastD: "", data: null };
+let lastTechLevelsOverlay = null;
+
+function invalidatePatternConfirmCache() {
+  patternConfirmCache = { ticker: "", len: 0, lastD: "", data: null };
+}
+
+function getCachedPatternConfirmations(ticker, dailyRows) {
+  const n = dailyRows.length;
+  const lastD = dailyRows[n - 1]?.d || "";
+  if (patternConfirmCache.ticker === ticker && patternConfirmCache.len === n && patternConfirmCache.lastD === lastD) {
+    return patternConfirmCache.data;
+  }
+  const data = window.MirProb.detectConfirmations(dailyRows);
+  patternConfirmCache = { ticker, len: n, lastD, data };
+  return data;
+}
+
+function scheduleChartPanRedraw() {
+  if (chartPanRafId) return;
+  chartPanRafId = requestAnimationFrame(() => {
+    chartPanRafId = 0;
+    redrawChart();
+  });
+}
+
+function endChartPan() {
+  chartPanActive = false;
+  if (chartPanRafId) {
+    cancelAnimationFrame(chartPanRafId);
+    chartPanRafId = 0;
+  }
+  redrawChart();
+}
+
+function syncChartOverlayCheckboxes() {
+  ["showSma20", "showSma60", "showSupportResistance", "showPatterns", "showTechLevels"].forEach((id) => {
+    const el = byId(id);
+    if (el) el.checked = chartState[id];
+  });
+}
+
+function snapshotChartOverlaysForProb() {
+  chartProbOverlaySnapshot = {
+    showSma20: chartState.showSma20,
+    showSma60: chartState.showSma60,
+    showSupportResistance: chartState.showSupportResistance,
+    showTechLevels: chartState.showTechLevels,
+    techLevelTypes: { ...chartState.techLevelTypes },
+    showPatterns: chartState.showPatterns,
+    patternTypes: { ...chartState.patternTypes },
+  };
+}
+
+function restoreChartOverlaysFromProb() {
+  const snap = chartProbOverlaySnapshot;
+  if (!snap) {
+    chartState.showSupportResistance = false;
+    chartState.showTechLevels = false;
+    chartState.showPatterns = false;
+    chartState.lastProbResult = null;
+    syncChartOverlayCheckboxes();
+    return;
+  }
+  chartState.showSma20 = snap.showSma20;
+  chartState.showSma60 = snap.showSma60;
+  chartState.showSupportResistance = snap.showSupportResistance;
+  chartState.showTechLevels = snap.showTechLevels ?? false;
+  chartState.techLevelTypes = { ...chartState.techLevelTypes, ...(snap.techLevelTypes || {}) };
+  chartState.showPatterns = snap.showPatterns;
+  chartState.patternTypes = { ...snap.patternTypes };
+  chartProbOverlaySnapshot = null;
+  syncChartOverlayCheckboxes();
+}
+
 // ===== 차트 상승확률 분석 (analysis.js 엔진 재사용) =====
 let chartProbHorizon = 20; // 5=1주, 20=1개월, 60=3개월
+let chartProbStatsMode = "population"; // population | individual
+let chartProbPanelOpen = false;
+let chartProbOverlaySnapshot = null;
+const watchPatternCache = new Map(); // ticker → [{ pattern, label, barsAgo }]
+const patternScreenerCache = new Map(); // ticker → string[] patterns
 
 function buildChartProbPanel(result) {
   const hz = [[5, "1주"], [20, "1개월"], [60, "3개월"]];
   const btns = hz.map(([k, l]) =>
     `<button type="button" class="cprob-hz${k === chartProbHorizon ? " is-active" : ""}" data-cphz="${k}">${l}</button>`).join("");
+  const statsBtns = [["population", "전체 통계"], ["individual", "종목 실측"]].map(([k, l]) =>
+    `<button type="button" class="cprob-hz cprob-stats-btn${k === chartProbStatsMode ? " is-active" : ""}" data-cpstats="${k}">${l}</button>`).join("");
   const toolbar = `<div class="cprob-toolbar">
       <span class="cprob-title">📊 상승확률 분석</span>
       <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
+      <div class="cprob-hz-group" role="group" aria-label="패턴 통계 기준">${statsBtns}</div>
     </div>
     <div id="cprobChartControls"></div>`;
   return toolbar + window.MirProb.buildResultHTML(result);
 }
 
 function bindChartProbHorizon() {
-  document.querySelectorAll(".cprob-hz").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      chartProbHorizon = Number(btn.dataset.cphz);
+  const panel = byId("chartProbPanel");
+  if (!panel || panel.dataset.hzBound) return;
+  panel.dataset.hzBound = "1";
+  panel.addEventListener("click", (event) => {
+    const hzBtn = event.target.closest(".cprob-hz[data-cphz]");
+    if (hzBtn) {
+      chartProbHorizon = Number(hzBtn.dataset.cphz);
       runChartProbAnalysis();
-    });
+      return;
+    }
+    const stBtn = event.target.closest(".cprob-stats-btn[data-cpstats]");
+    if (stBtn) {
+      chartProbStatsMode = stBtn.dataset.cpstats;
+      runChartProbAnalysis();
+    }
   });
 }
 
 // 패턴 → 종류(체크박스 카테고리) 매핑.
 function patternCategory(p) {
-  if (p === "hns" || p === "inv_hns") return "hns";
-  if (p === "double_top" || p === "double_bottom") return "double";
+  if (p === "hns" || p === "inv_hns" || p === "complex_hns") return p === "complex_hns" ? "complex_hns" : "hns";
+  if (p === "double_top" || p === "double_bottom" || p === "two_b_bottom" || p === "two_b_top") return p.startsWith("two_b") ? "reversal" : "double";
   if (p === "ascending_triangle" || p === "descending_triangle" || p === "symmetrical_triangle") return "triangle";
   if (p === "falling_wedge" || p === "rising_wedge") return "wedge";
   if (p === "box_breakout" || p === "box_breakdown") return "box";
   if (p === "bull_flag" || p === "bear_flag") return "flag";
+  if (p === "bull_pennant" || p === "bear_pennant") return "pennant";
   if (p === "triple_top" || p === "triple_bottom") return "triple";
   if (p === "broadening_triangle") return "broadening";
   if (p === "diamond_top" || p === "diamond_bottom") return "diamond";
-  if (p === "rounding_bottom") return "rounding";
-  if (p === "complex_hns") return "complex_hns";
+  if (p === "rounding_bottom" || p === "cup_and_handle") return p === "cup_and_handle" ? "cup" : "rounding";
+  if (p === "ascending_channel_breakout" || p === "descending_channel_breakout") return "channel";
+  if (p === "reversal_123_up" || p === "reversal_123_down") return "reversal";
+  if (p === "bull_trap" || p === "bear_trap") return "trap";
+  if (/gap|island/.test(p)) return "gap";
+  if (p === "volume_climax_up" || p === "volume_climax_down") return "volume";
+  if (/nr4|inside_bar/.test(p)) return "squeeze";
+  if (/harmonic/.test(p)) return "harmonic";
+  if (/engulfing|hammer|shooting_star|doji|morning_star|evening_star|soldiers|crows|piercing|dark_cloud/.test(p)) return "candle";
   if (p === "resistance_breakout" || p === "support_breakdown") return "breakout";
   return null;
 }
 
+const CHART_OVERLAY_LABELS = [
+  ["showSma20", "SMA20"], ["showSma60", "SMA60"], ["showSupportResistance", "지지/저항"],
+];
+const TECH_LEVEL_LABELS = [
+  ["pivot", "Pivot (P)"], ["r1", "R1"], ["s1", "S1"],
+  ["fib618", "Fib 61.8%"], ["fib382", "Fib 38.2%"],
+  ["stop", "Stop"], ["tgt", "Tgt"],
+  ["lrUpper", "LR+"], ["lrLower", "LR-"],
+];
 // 결과 패널의 ② 카드 안에 종류별 '차트에 패턴 표시' 체크박스를 넣고 차트 오버레이를 제어.
 const PATTERN_TYPE_LABELS = [
-  ["hns", "헤드앤숄더"],
-  ["double", "쌍바닥/쌍천장"],
-  ["triangle", "삼각수렴"],
-  ["wedge", "쐐기형"],
-  ["box", "박스권 횡보"],
-  ["flag", "깃발형"],
-  ["triple", "삼중 바닥/천장"],
-  ["broadening", "확산형 수렴"],
-  ["diamond", "다이아몬드형"],
-  ["rounding", "라운딩 바닥형"],
-  ["complex_hns", "복합 H&S"],
-  ["breakout", "돌파"],
+  ["hns", "헤드앤숄더"], ["double", "쌍바닥/쌍천장"], ["triangle", "삼각수렴"], ["wedge", "쐐기형"],
+  ["box", "박스권"], ["flag", "깃발형"], ["pennant", "페넌트"], ["triple", "삼중 천장/바닥"],
+  ["broadening", "확산형"], ["diamond", "다이아몬드"], ["rounding", "라운딩"], ["complex_hns", "복합 H&S"],
+  ["cup", "컵앤핸들"], ["channel", "채널"], ["reversal", "1-2-3/2B"], ["trap", "가짜돌파"],
+  ["gap", "갭"], ["volume", "거래량"], ["squeeze", "NR4/인사이드"], ["harmonic", "하모닉"],
+  ["candle", "캔들"], ["breakout", "지지/저항 돌파"],
 ];
+function syncCprobChartControlChips() {
+  const host = byId("cprobChartControls");
+  if (!host || !host.querySelector("input[data-overlay]")) return;
+  host.querySelectorAll("input[data-overlay]").forEach((cb) => {
+    cb.checked = Boolean(chartState[cb.dataset.overlay]);
+  });
+  host.querySelectorAll("input[data-tl]").forEach((cb) => {
+    cb.checked = Boolean(chartState.showTechLevels && chartState.techLevelTypes[cb.dataset.tl]);
+  });
+  host.querySelectorAll("input[data-pt]").forEach((cb) => {
+    cb.checked = Boolean(chartState.patternTypes[cb.dataset.pt]);
+  });
+}
+
 function fillCprobChartControls() {
   const host = byId("cprobChartControls");
   if (!host) return;
+  const overlayBoxes = CHART_OVERLAY_LABELS.map(([k, l]) =>
+    `<label class="cprob-chip"><input type="checkbox" data-overlay="${k}"${chartState[k] ? " checked" : ""}><span>${l}</span></label>`).join("");
+  const levelBoxes = TECH_LEVEL_LABELS.map(([k, l]) =>
+    `<label class="cprob-chip"><input type="checkbox" data-tl="${k}"${chartState.showTechLevels && chartState.techLevelTypes[k] ? " checked" : ""}><span>${l}</span></label>`).join("");
   const pt = chartState.patternTypes;
-  const boxes = PATTERN_TYPE_LABELS.map(([k, l]) =>
-    `<label><input type="checkbox" data-pt="${k}"${pt[k] ? " checked" : ""}> ${l}</label>`).join("");
+  const patternBoxes = PATTERN_TYPE_LABELS.map(([k, l]) =>
+    `<label class="cprob-chip"><input type="checkbox" data-pt="${k}"${pt[k] ? " checked" : ""}><span>${l}</span></label>`).join("");
   host.innerHTML = `<div class="cprob-chart-toggle">
-      <span class="cprob-toggle-title">차트에 패턴 표시</span>
-      <div class="cprob-checkbox-group">${boxes}</div>
+      <span class="cprob-toggle-title">차트 오버레이</span>
+      <div class="cprob-checkbox-group" role="group" aria-label="차트 오버레이">${overlayBoxes}</div>
+    </div>
+    <div class="cprob-chart-toggle">
+      <span class="cprob-toggle-title">기술 레벨선</span>
+      <div class="cprob-checkbox-group" role="group" aria-label="기술 레벨선">${levelBoxes}</div>
+    </div>
+    <div class="cprob-chart-toggle">
+      <span class="cprob-toggle-title">차트 패턴</span>
+      <div class="cprob-checkbox-group" role="group" aria-label="차트 패턴">${patternBoxes}</div>
     </div>`;
-  host.querySelectorAll("input[data-pt]").forEach((cb) => {
+  host.querySelectorAll("input[data-overlay]").forEach((cb) => {
     cb.addEventListener("change", (e) => {
-      chartState.patternTypes[e.target.dataset.pt] = e.target.checked;
-      // 하나라도 켜져 있으면 마스터 on(차트 설정의 패턴 체크박스와 동기화).
-      chartState.showPatterns = Object.values(chartState.patternTypes).some(Boolean);
-      const mirror = byId("showPatterns");
-      if (mirror) mirror.checked = chartState.showPatterns;
+      const id = e.target.dataset.overlay;
+      chartState[id] = e.target.checked;
+      const mirror = byId(id);
+      if (mirror) mirror.checked = e.target.checked;
       redrawChart();
     });
   });
+  host.querySelectorAll("input[data-tl]").forEach((cb) => {
+    cb.addEventListener("change", (e) => {
+      chartState.techLevelTypes[e.target.dataset.tl] = e.target.checked;
+      chartState.showTechLevels = Object.values(chartState.techLevelTypes).some(Boolean);
+      syncChartOverlayCheckboxes();
+      redrawChart();
+    });
+  });
+  host.querySelectorAll("input[data-pt]").forEach((cb) => {
+    cb.addEventListener("change", (e) => {
+      chartState.patternTypes[e.target.dataset.pt] = e.target.checked;
+      chartState.showPatterns = Object.values(chartState.patternTypes).some(Boolean);
+      syncChartOverlayCheckboxes();
+      redrawChart();
+    });
+  });
+}
+
+function setChartProbBtnActive(active) {
+  const probBtn = byId("chartProbBtn");
+  if (probBtn) probBtn.classList.toggle("is-active", !!active);
+}
+
+function closeChartProbPanel() {
+  const panel = byId("chartProbPanel");
+  if (!panel) return;
+  chartProbPanelOpen = false;
+  panel.hidden = true;
+  panel.innerHTML = "";
+  chartState.lastProbResult = null;
+  lastTechLevelsOverlay = null;
+  restoreChartOverlaysFromProb();
+  setChartProbBtnActive(false);
+  redrawChart();
+}
+
+function toggleChartProbAnalysis() {
+  const panel = byId("chartProbPanel");
+  if (panel && chartProbPanelOpen && !panel.hidden) {
+    closeChartProbPanel();
+    return;
+  }
+  runChartProbAnalysis();
 }
 
 // "상승확률 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 확률을 계산해 패널에 표시.
@@ -2863,35 +3049,57 @@ function runChartProbAnalysis() {
   const panel = byId("chartProbPanel");
   if (!panel) return;
   if (!window.MirProb) {
+    chartProbPanelOpen = true;
     panel.hidden = false;
+    setChartProbBtnActive(true);
     panel.innerHTML = '<div class="notice err">분석 엔진을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.</div>';
     return;
   }
   const item = currentChartItem();
   if (!item) {
+    chartProbPanelOpen = true;
     panel.hidden = false;
+    setChartProbBtnActive(true);
     panel.innerHTML = '<div class="notice">먼저 종목을 검색해 차트를 띄워 주세요.</div>';
     return;
   }
+  if (!chartProbOverlaySnapshot) snapshotChartOverlaysForProb();
   // 이동평균선(20·60)·지지/저항선·차트 패턴을 차트에 자동 표시.
   chartState.showSma20 = true;
   chartState.showSma60 = true;
   chartState.showSupportResistance = true;
+  chartState.showTechLevels = false;
+  chartState.techLevelTypes = Object.fromEntries(TECH_LEVEL_LABELS.map(([k]) => [k, false]));
   chartState.showPatterns = true;
   ["showSma20", "showSma60", "showSupportResistance", "showPatterns"].forEach((id) => {
     const el = byId(id);
     if (el) el.checked = true;
   });
+  const techEl = byId("showTechLevels");
+  if (techEl) techEl.checked = false;
   redrawChart();
 
+  chartProbPanelOpen = true;
+  setChartProbBtnActive(true);
   panel.hidden = false;
   panel.innerHTML = '<div class="notice">분석 중…</div>';
   window.MirProb.ensureStats().then(() => {
     const rows = getChartRows(item); // 전체 일봉(백테스트·패턴에 5년 이력 사용)
-    const result = window.MirProb.analyzeRows(rows, chartProbHorizon, { ticker: item.ticker, company: item.company });
+    const result = window.MirProb.analyzeRows(rows, chartProbHorizon, {
+      ticker: item.ticker, company: item.company, statsMode: chartProbStatsMode,
+    });
+    if (result.patterns && result.patterns.length) {
+      watchPatternCache.set(item.ticker, result.patterns.map((p) => ({
+        pattern: p.pattern, label: p.label, barsAgo: p.barsAgo,
+      })));
+    }
+    chartState.lastProbResult = result;
+    invalidatePatternConfirmCache();
+    lastTechLevelsOverlay = null;
     panel.innerHTML = buildChartProbPanel(result);
     bindChartProbHorizon();
     fillCprobChartControls();
+    redrawChart();
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }).catch(() => {
     panel.innerHTML = '<div class="notice err">분석 중 오류가 발생했습니다.</div>';
@@ -2970,18 +3178,22 @@ function setupChartControls() {
     });
   }
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showPatterns",
+   "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showTechLevels", "showPatterns",
    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
    "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", (event) => {
       chartState[id] = event.target.checked;
+      if (id === "showTechLevels" && event.target.checked && !Object.values(chartState.techLevelTypes).some(Boolean)) {
+        chartState.techLevelTypes = Object.fromEntries(TECH_LEVEL_LABELS.map(([k]) => [k, true]));
+      }
+      syncCprobChartControlChips();
       redrawChart();
     });
   });
   const probBtn = byId("chartProbBtn");
-  if (probBtn) probBtn.addEventListener("click", runChartProbAnalysis);
+  if (probBtn) probBtn.addEventListener("click", toggleChartProbAnalysis);
   setupChartPresetControls();
   setupChartInteractions();
   setupChartCompareControls();
@@ -2990,7 +3202,7 @@ function setupChartControls() {
 function chartSettingIds() {
   return [
     "showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
-    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showPatterns",
+    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showTechLevels", "showPatterns",
     "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
     "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
     "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"
@@ -3133,10 +3345,11 @@ function renderCompareChips() {
   box.querySelectorAll(".compare-chip").forEach((chip) => {
     chip.addEventListener("click", () => removeChartCompareTicker(chip.dataset.ticker));
   });
-}// TradingView-style mouse: wheel to zoom (cursor anchored), drag to pan.
+}// TradingView-style: wheel=봉 확대/축소, pointer drag=봉 이동 (상승확률 분석 중에도 동작).
 function setupChartInteractions() {
   const svg = byId("priceChart");
-  if (!svg) return;
+  if (!svg || svg.dataset.panBound) return;
+  svg.dataset.panBound = "1";
 
   svg.addEventListener("wheel", (event) => {
     event.preventDefault();
@@ -3148,17 +3361,20 @@ function setupChartInteractions() {
     zoomChartAt(frac, event.deltaY < 0 ? 1.2 : 1 / 1.2);
   }, { passive: false });
 
-  let dragging = false;
+  let dragPointerId = null;
   let startX = 0;
   let startOffset = 0;
   let dragN = 0;
   let dragWindow = 0;
   let dragPlotPx = 1;
 
-  svg.addEventListener("mousedown", (event) => {
+  const beginPan = (event) => {
+    if (drawTool) return;
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     const item = currentChartItem();
     if (!item) return;
-    dragging = true;
+    dragPointerId = event.pointerId;
+    chartPanActive = true;
     startX = event.clientX;
     startOffset = chartState.offset;
     dragN = chartBaseLength(item);
@@ -3167,28 +3383,36 @@ function setupChartInteractions() {
     const g = priceChartGeom();
     dragPlotPx = rect.width * ((g.width - g.padL - g.padR) / g.width);
     svg.classList.add("is-dragging");
+    try { svg.setPointerCapture(event.pointerId); } catch (e) { /* ignore */ }
     event.preventDefault();
-  });
+  };
 
-  window.addEventListener("mousemove", (event) => {
-    if (!dragging) return;
+  const movePan = (event) => {
+    if (dragPointerId == null || event.pointerId !== dragPointerId) return;
     const dx = event.clientX - startX;
     const barsPerPx = dragWindow / Math.max(1, dragPlotPx);
-    let next = Math.round(startOffset + dx * barsPerPx); // drag right -> older bars
+    let next = Math.round(startOffset + dx * barsPerPx);
     next = Math.max(0, Math.min(Math.max(0, dragN - dragWindow), next));
     if (next !== chartState.offset) {
       chartState.offset = next;
-      redrawChart();
+      scheduleChartPanRedraw();
     }
-  });
+    event.preventDefault();
+  };
 
-  window.addEventListener("mouseup", () => {
-    if (!dragging) return;
-    dragging = false;
+  const endPan = (event) => {
+    if (dragPointerId == null || event.pointerId !== dragPointerId) return;
+    dragPointerId = null;
     svg.classList.remove("is-dragging");
-  });
+    try { svg.releasePointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+    endChartPan();
+  };
 
-  // Touch: one finger pans, two fingers pinch-zoom.
+  svg.addEventListener("pointerdown", beginPan);
+  document.addEventListener("pointermove", movePan);
+  document.addEventListener("pointerup", endPan);
+  document.addEventListener("pointercancel", endPan);
+
   let touchMode = null;
   let pinchStartDist = 0;
   let pinchStartZoom = 1;
@@ -3198,36 +3422,17 @@ function setupChartInteractions() {
   );
 
   svg.addEventListener("touchstart", (event) => {
-    const item = currentChartItem();
-    if (!item) return;
-    if (event.touches.length === 1) {
-      touchMode = "pan";
-      startX = event.touches[0].clientX;
-      startOffset = chartState.offset;
-      dragN = chartBaseLength(item);
-      dragWindow = Math.max(16, Math.floor(dragN / chartState.zoom));
-      const rect = svg.getBoundingClientRect();
-      const g = priceChartGeom();
-      dragPlotPx = rect.width * ((g.width - g.padL - g.padR) / g.width);
-    } else if (event.touches.length === 2) {
+    if (event.touches.length === 2) {
       touchMode = "pinch";
+      dragPointerId = null;
+      chartPanActive = false;
       pinchStartDist = touchDist(event.touches);
       pinchStartZoom = chartState.zoom;
     }
   }, { passive: true });
 
   svg.addEventListener("touchmove", (event) => {
-    if (touchMode === "pan" && event.touches.length === 1) {
-      const dx = event.touches[0].clientX - startX;
-      const barsPerPx = dragWindow / Math.max(1, dragPlotPx);
-      let next = Math.round(startOffset + dx * barsPerPx);
-      next = Math.max(0, Math.min(Math.max(0, dragN - dragWindow), next));
-      if (next !== chartState.offset) {
-        chartState.offset = next;
-        redrawChart();
-      }
-      if (Math.abs(dx) > 6) event.preventDefault();
-    } else if (touchMode === "pinch" && event.touches.length === 2) {
+    if (touchMode === "pinch" && event.touches.length === 2) {
       const dist = touchDist(event.touches);
       if (pinchStartDist > 0) setZoomAnchored(0.5, pinchStartZoom * (dist / pinchStartDist));
       event.preventDefault();
@@ -3235,8 +3440,7 @@ function setupChartInteractions() {
   }, { passive: false });
 
   svg.addEventListener("touchend", (event) => {
-    if (event.touches.length === 0) touchMode = null;
-    else if (event.touches.length === 1) { touchMode = null; }
+    if (event.touches.length < 2) touchMode = null;
   });
 }
 
@@ -5347,6 +5551,7 @@ function drawChart(item) {
   const padT = 28;
   const plotW = width - padL - padR;
   const plotH = 300;
+  const xPlotRight = padL + plotW;
 
   if (!rows.length) {
     svg.setAttribute("viewBox", `0 0 ${width} 360`);
@@ -5446,16 +5651,11 @@ function drawChart(item) {
     donchian ? renderChannelOverlay(donchian.upper, donchian.lower, donchian.mid, xFor, overlayYFor, "#818cf8") : ""
   ].join("");
 
-  // 지지/저항 오버레이: 강도 점수로 고른 ATR 존(반투명 밴드) + 중심선 + 강도 막대
-  // 단일 소스: analysis.js(window.MirProb)의 supportResistanceLevels 를 그대로 사용.
-  // 레벨은 보이는 구간이 아니라 **전체 일봉**으로 계산한다 → 확대/이동해도 선이
-  // 바뀌지 않고, 확률 패널의 지지/저항 숫자와도 정확히 일치한다.
-  // (보이는 가격 범위 밖의 레벨은 그리지 않는다.)
+  // 지지/저항 오버레이: 보이는 구간(rows)으로 계산 → 차트 이동·확대 시 선이 자동 갱신.
   let srSvg = "";
-  if (chartState.showSupportResistance && window.MirProb && window.MirProb.supportResistanceLevels) {
-    const levels = window.MirProb.supportResistanceLevels(getChartRows(item))
+  if (!chartPanActive && chartState.showSupportResistance && window.MirProb && window.MirProb.supportResistanceLevels) {
+    const levels = window.MirProb.supportResistanceLevels(rows)
       .filter((lvl) => lvl.hi >= min && lvl.lo <= max);
-    const xR = padL + plotW;
     srSvg = levels.map((lvl) => {
       const yMid = overlayYFor(lvl.price);
       const yHi = overlayYFor(lvl.hi); // 높은 가격 = 작은 y
@@ -5465,7 +5665,7 @@ function drawChart(item) {
       const dots = "●".repeat(lvl.tier) + "○".repeat(3 - lvl.tier);
       const label = `${lvl.type === "sup" ? "지지" : "저항"} $${lvl.price.toFixed(2)} ${dots}`;
       return `<rect x="${padL.toFixed(1)}" y="${yHi.toFixed(1)}" width="${plotW.toFixed(1)}" height="${bandH.toFixed(1)}" fill="${color}" opacity="0.08"></rect>`
-        + `<line x1="${padL.toFixed(1)}" y1="${yMid.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.85"></line>`
+        + `<line x1="${padL.toFixed(1)}" y1="${yMid.toFixed(1)}" x2="${xPlotRight.toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.85"></line>`
         + `<text x="${(padL + 5).toFixed(1)}" y="${(yMid - 3).toFixed(1)}" fill="${color}" font-size="10" font-weight="700">${label}</text>`;
     }).join("");
   }
@@ -5474,14 +5674,14 @@ function drawChart(item) {
   // 좌어깨/머리/우어깨를 라벨링, 목선을 점선으로 표시. 전체 일봉으로 감지하고
   // 날짜로 보이는 봉에 매핑한다(확대해도 일관).
   let patSvg = "";
-  if (chartState.showPatterns && window.MirProb && window.MirProb.detectConfirmations) {
+  if (!chartPanActive && chartState.showPatterns && window.MirProb && window.MirProb.detectConfirmations) {
     const dailyRows = getChartRows(item);
     const labels = window.MirProb.patternLabels || {};
     const firstD = rows[0].d;
     const lastD = rows[rows.length - 1].d;
     // 보이는 구간 안에서 확정된 패턴 중, 체크된 종류만, 가장 최근 것들을 그린다.
     const enabled = chartState.patternTypes || {};
-    const pats = window.MirProb.detectConfirmations(dailyRows)
+    const pats = getCachedPatternConfirmations(item.ticker, dailyRows)
       .filter((p) => p.points || p.lines)
       .filter((p) => { const cat = patternCategory(p.pattern); return cat && enabled[cat]; })
       .filter((p) => {
@@ -5547,6 +5747,44 @@ function drawChart(item) {
     }).join("");
   }
 
+  let techLevelSvg = "";
+  const probRes = chartState.lastProbResult;
+  const probTickerMatch = probRes && probRes.ticker === item.ticker;
+  let tl = null;
+  if (chartPanActive) {
+    tl = lastTechLevelsOverlay;
+  } else if (chartState.showTechLevels && chartProbPanelOpen && probTickerMatch && window.MirProb && window.MirProb.computeTechnicalLevels) {
+    tl = window.MirProb.computeTechnicalLevels(chartAnalysisContextRows(allRows), rows[rows.length - 1].c);
+    lastTechLevelsOverlay = tl;
+  } else if (chartState.showTechLevels && probTickerMatch) {
+    tl = probRes.techLevels;
+  }
+  const tlTypes = chartState.techLevelTypes || {};
+  if (tl && chartState.showTechLevels) {
+    const hLine = (price, label, color, dash) => {
+      const y = overlayYFor(price);
+      return `<line x1="${padL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xPlotRight.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1" stroke-dasharray="${dash}" opacity="0.75"></line>`
+        + `<text x="${(xPlotRight - 4).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="end" fill="${color}" font-size="9.5" font-weight="600">${escapeHtml(label)}</text>`;
+    };
+    if (tl.pivots) {
+      if (tlTypes.pivot) techLevelSvg += hLine(tl.pivots.pivot, `P ${tl.pivots.pivot.toFixed(2)}`, "#6366f1", "4 3");
+      if (tlTypes.r1) techLevelSvg += hLine(tl.pivots.r1, `R1 ${tl.pivots.r1.toFixed(2)}`, "#a855f7", "3 4");
+      if (tlTypes.s1) techLevelSvg += hLine(tl.pivots.s1, `S1 ${tl.pivots.s1.toFixed(2)}`, "#0ea5e9", "3 4");
+    }
+    if (tl.fib && tl.fib.levels) {
+      if (tlTypes.fib618) techLevelSvg += hLine(tl.fib.levels["61.8%"], "Fib 61.8%", "#f59e0b", "6 4");
+      if (tlTypes.fib382) techLevelSvg += hLine(tl.fib.levels["38.2%"], "Fib 38.2%", "#fbbf24", "6 4");
+    }
+    if (tl.atr) {
+      if (tlTypes.stop) techLevelSvg += hLine(tl.atr.stop, `Stop ${tl.atr.stop.toFixed(2)}`, "#dc2626", "2 3");
+      if (tlTypes.tgt) techLevelSvg += hLine(tl.atr.target, `Tgt ${tl.atr.target.toFixed(2)}`, "#16a34a", "2 3");
+    }
+    if (tl.linreg) {
+      if (tlTypes.lrUpper) techLevelSvg += hLine(tl.linreg.upper, "LR+", "#94a3b8", "8 4");
+      if (tlTypes.lrLower) techLevelSvg += hLine(tl.linreg.lower, "LR-", "#94a3b8", "8 4");
+    }
+  }
+
   // Stacked indicator panels.
   let cursorY = padT + plotH + gap;
   let panelsSvg = "";
@@ -5600,6 +5838,7 @@ function drawChart(item) {
     ${overlays}
     ${srSvg}
     ${patSvg}
+    ${techLevelSvg}
     <g id="chartDrawLayer">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
@@ -6569,8 +6808,21 @@ function visibleChartRows(rows) {
   return base.slice(Math.max(0, end - windowSize), end);
 }
 
+// 상승확률 분석 차트 오버레이: 보이는 구간 + 앞쪽 이력(피보·회귀 등)을 함께 쓴다.
+function chartAnalysisContextRows(allRows) {
+  const rangeSize = rangeBarCount(allRows.length);
+  const base = allRows.slice(-rangeSize);
+  const windowSize = Math.max(12, Math.floor(base.length / chartState.zoom));
+  const maxOffset = Math.max(0, base.length - windowSize);
+  const offset = Math.min(chartState.offset, maxOffset);
+  const end = base.length - offset;
+  const ctxStart = Math.max(0, end - Math.max(252, windowSize + 80));
+  return base.slice(ctxStart, end);
+}
+
 // 지지/저항 레벨 계산은 analysis.js(window.MirProb.supportResistanceLevels)로 일원화했다.
-// (차트 오버레이 srSvg 와 확률 패널의 S/R 숫자가 같은 소스를 쓰도록.)
+// 차트 오버레이는 보이는 봉(rows) 기준 — 이동·확대 시 선이 따라 갱신된다.
+// 확률 패널 숫자는 분석 시점 전체 일봉 기준(srSummary)을 유지한다.
 
 function averagePath(values, period, xFor, yFor, color) {
   const points = values.map((_, index) => {
@@ -11238,7 +11490,9 @@ function readWatchAlertSettingsFromUi() {
     highDist: numberInputValue("alertHighDist", 3),
     useVol: Boolean(byId("alertUseVol")?.checked),
     minVol: numberInputValue("alertMinVol", 2),
-    useSma20: Boolean(byId("alertUseSma20")?.checked)
+    useSma20: Boolean(byId("alertUseSma20")?.checked),
+    usePattern: Boolean(byId("alertUsePattern")?.checked),
+    patternCat: byId("alertPatternCat")?.value || "any",
   };
 }
 
@@ -11248,7 +11502,8 @@ function applyWatchAlertSettingsToUi(settings) {
     ["alertUseEps", "useEps"], ["alertMinEps", "minEps"],
     ["alertUseHigh", "useHigh"], ["alertHighDist", "highDist"],
     ["alertUseVol", "useVol"], ["alertMinVol", "minVol"],
-    ["alertUseSma20", "useSma20"]
+    ["alertUseSma20", "useSma20"],
+    ["alertUsePattern", "usePattern"], ["alertPatternCat", "patternCat"]
   ];
   pairs.forEach(([id, key]) => {
     const el = byId(id);
@@ -11277,6 +11532,11 @@ function watchAlertReasons(item, settings) {
   }
   if (settings.useVol && Number(item.volumeRatio || 0) >= settings.minVol) reasons.push(`거래량 ${Number(item.volumeRatio || 0).toFixed(1)}x`);
   if (settings.useSma20 && sma20Recovered(item)) reasons.push("SMA20 회복");
+  if (settings.usePattern) {
+    const cached = watchPatternCache.get(item.ticker) || [];
+    const hit = cached.filter((p) => settings.patternCat === "any" || patternCategory(p.pattern) === settings.patternCat);
+    if (hit.length) reasons.push(`패턴 ${hit[0].label}${hit.length > 1 ? ` 외 ${hit.length - 1}` : ""}`);
+  }
   return reasons;
 }
 
@@ -11314,7 +11574,7 @@ function setupWatchAlertEvents() {
   const panel = byId("watchAlertPanel");
   if (!panel) return;
   applyWatchAlertSettingsToUi(watchAlertSettings());
-  ["alertUseRs", "alertMinRs", "alertUseEps", "alertMinEps", "alertUseHigh", "alertHighDist", "alertUseVol", "alertMinVol", "alertUseSma20"].forEach((id) => {
+  ["alertUseRs", "alertMinRs", "alertUseEps", "alertMinEps", "alertUseHigh", "alertHighDist", "alertUseVol", "alertMinVol", "alertUseSma20", "alertUsePattern", "alertPatternCat"].forEach((id) => {
     const el = byId(id);
     if (!el) return;
     el.addEventListener("change", () => {
@@ -11562,6 +11822,7 @@ function screenerRows() {
   const sector = byId("scrSector")?.value || "All";
   const preset = byId("scrPreset")?.value || "custom";
   const metric = byId("scrMetric")?.value || "rsScore";
+  const patternCat = byId("scrPattern")?.value || "any";
   const minRs = numberInputValue("scrMinRs", 0);
   const minEps = numberInputValue("scrMinEps", 0);
   const minVol = numberInputValue("scrMinVol", 0);
@@ -11576,6 +11837,11 @@ function screenerRows() {
     .filter((item) => (Number(item.volumeRatio) || 0) >= minVol)
     .filter((item) => (Number(item.marketCapB) || 0) >= minCap)
     .filter((item) => topPresetMatches(item, preset))
+    .filter((item) => {
+      if (patternCat === "any") return true;
+      const pats = patternScreenerCache.get(item.ticker);
+      return pats && pats.some((p) => patternCategory(p) === patternCat);
+    })
     .map((item) => ({ item, value: metricValue(item, metric) }))
     .filter(({ value }) => Number.isFinite(value))
     .sort((a, b) => metricSortDirection(metric) * (b.value - a.value))
@@ -11870,12 +12136,41 @@ function setupNlScreener() {
   }
 }
 
+async function scanPatternsForScreener(candidates) {
+  if (!window.MirProb) return;
+  await window.MirProb.ensureStats();
+  const list = candidates.slice(0, 80);
+  for (const item of list) {
+    if (patternScreenerCache.has(item.ticker)) continue;
+    try {
+      const res = await fetch(`data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-store" });
+      if (!res.ok) continue;
+      const detail = await res.json();
+      const rows = (detail.chartSeries || []).map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
+      const cur = window.MirProb.detectCurrentPatterns(rows);
+      patternScreenerCache.set(item.ticker, cur.map((p) => p.pattern));
+    } catch (e) { /* skip */ }
+  }
+}
+
 function setupScreenerEvents() {
   loadSavedScreeners();
   renderSavedScreenerPicker();
   renderSavedScreenerDelta(null);
-  const run = (trackSaved = false) => renderScreener({ trackSaved });
-  ["scrBucket", "scrSector", "scrMetric", "scrLimit"].forEach((id) => {
+  const run = async (trackSaved = false) => {
+    const patternCat = byId("scrPattern")?.value || "any";
+    if (patternCat !== "any") {
+      const meta = byId("screenerMeta");
+      if (meta) meta.textContent = "패턴 스캔 중… (최대 80종목)";
+      const pre = data.stocks
+        .filter((item) => item.sector !== "EXCHANGE TRADED FUNDS")
+        .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), byId("scrBucket")?.value || "idx_sp500"))
+        .slice(0, 120);
+      await scanPatternsForScreener(pre);
+    }
+    renderScreener({ trackSaved });
+  };
+  ["scrBucket", "scrSector", "scrMetric", "scrLimit", "scrPattern"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", () => {
       if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }

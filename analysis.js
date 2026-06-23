@@ -576,6 +576,11 @@ function detectTriangle(rows, z) {
     const sup = lows.reduce((a, p) => a + p.price, 0) / lows.length;
     if (res <= sup) continue;
     const lastIdx = Math.max(highs[highs.length - 1].idx, lows[lows.length - 1].idx);
+    // 수렴 추세선(저항=고점선, 지지=저점선) 좌표 — 차트 도형용
+    const triLines = [
+      { pts: [{ idx: highs[0].idx, price: highs[0].price }, { idx: highs[highs.length - 1].idx, price: highs[highs.length - 1].price }] },
+      { pts: [{ idx: lows[0].idx, price: lows[0].price }, { idx: lows[lows.length - 1].idx, price: lows[lows.length - 1].price }] },
+    ];
     const flatH = Math.abs(sh) < PAT.FLAT_SLOPE;
     const flatL = Math.abs(sl) < PAT.FLAT_SLOPE;
     let pat = null;
@@ -587,15 +592,18 @@ function detectTriangle(rows, z) {
       const ciUp = confirmBreak(rows, lastIdx, highs[highs.length - 1].price, +1, null);
       const ciDn = confirmBreak(rows, lastIdx, lows[lows.length - 1].price, -1, null);
       if (ciUp != null && (ciDn == null || ciUp <= ciDn)) {
-        out.push({ pattern: "symmetrical_triangle", dir: +1, confirm_idx: ciUp, neckline: highs[highs.length - 1].price });
+        out.push({ pattern: "symmetrical_triangle", dir: +1, confirm_idx: ciUp, neckline: highs[highs.length - 1].price,
+          lines: triLines, points: [{ idx: ciUp, price: highs[highs.length - 1].price, label: "돌파" }] });
       } else if (ciDn != null) {
-        out.push({ pattern: "symmetrical_triangle", dir: -1, confirm_idx: ciDn, neckline: lows[lows.length - 1].price });
+        out.push({ pattern: "symmetrical_triangle", dir: -1, confirm_idx: ciDn, neckline: lows[lows.length - 1].price,
+          lines: triLines, points: [{ idx: ciDn, price: lows[lows.length - 1].price, label: "이탈" }] });
       }
       continue;
     }
     if (pat != null) {
       const ci = confirmBreak(rows, lastIdx, neck, direction, null);
-      if (ci != null) out.push({ pattern: pat, dir: direction, confirm_idx: ci, neckline: neck });
+      if (ci != null) out.push({ pattern: pat, dir: direction, confirm_idx: ci, neckline: neck,
+        lines: triLines, points: [{ idx: ci, price: neck, label: direction > 0 ? "돌파" : "이탈" }] });
     }
   }
   return out;
@@ -634,14 +642,18 @@ function detectSrBreakout(rows, pivots) {
     if (hiDq.length) {
       const r = hiDq[0][1];
       if (prev <= r && r < price && k - lastResBreak > PAT.PIVOT_WIN) {
-        out.push({ pattern: "resistance_breakout", dir: +1, confirm_idx: k, neckline: r });
+        out.push({ pattern: "resistance_breakout", dir: +1, confirm_idx: k, neckline: r,
+          lines: [{ pts: [{ idx: Math.max(0, k - 30), price: r }, { idx: k, price: r }] }],
+          points: [{ idx: k, price: r, label: "돌파" }] });
         lastResBreak = k;
       }
     }
     if (loDq.length) {
       const s = loDq[0][1];
       if (prev >= s && s > price && k - lastSupBreak > PAT.PIVOT_WIN) {
-        out.push({ pattern: "support_breakdown", dir: -1, confirm_idx: k, neckline: s });
+        out.push({ pattern: "support_breakdown", dir: -1, confirm_idx: k, neckline: s,
+          lines: [{ pts: [{ idx: Math.max(0, k - 30), price: s }, { idx: k, price: s }] }],
+          points: [{ idx: k, price: s, label: "이탈" }] });
         lastSupBreak = k;
       }
     }
@@ -1208,6 +1220,8 @@ function buildResultHTML(result) {
       </div>
       ${baseHtml}
     </div>
+
+    <div id="cprobChartControls"></div>
 
     ${patternHtml}
 

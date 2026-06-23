@@ -2802,6 +2802,25 @@ function bindChartProbHorizon() {
   });
 }
 
+// 결과 패널의 ② 카드 아래에 '차트에 패턴 표시' 체크박스를 넣고 차트 오버레이를 제어.
+function fillCprobChartControls() {
+  const host = byId("cprobChartControls");
+  if (!host) return;
+  host.innerHTML = `<label class="cprob-chart-toggle">
+      <input type="checkbox" id="cprobPatternToggle"${chartState.showPatterns ? " checked" : ""}>
+      차트에 패턴 표시 <span class="muted">(역H&S·쌍바닥·삼각수렴·돌파 등)</span>
+    </label>`;
+  const cb = byId("cprobPatternToggle");
+  if (cb) {
+    cb.addEventListener("change", (e) => {
+      chartState.showPatterns = e.target.checked;
+      const mirror = byId("showPatterns");
+      if (mirror) mirror.checked = e.target.checked;
+      redrawChart();
+    });
+  }
+}
+
 // "상승확률 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 확률을 계산해 패널에 표시.
 function runChartProbAnalysis() {
   const panel = byId("chartProbPanel");
@@ -2835,6 +2854,7 @@ function runChartProbAnalysis() {
     const result = window.MirProb.analyzeRows(rows, chartProbHorizon, { ticker: item.ticker, company: item.company });
     panel.innerHTML = buildChartProbPanel(result);
     bindChartProbHorizon();
+    fillCprobChartControls();
     panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }).catch(() => {
     panel.innerHTML = '<div class="notice err">분석 중 오류가 발생했습니다.</div>';
@@ -5419,7 +5439,7 @@ function drawChart(item) {
   let patSvg = "";
   if (chartState.showPatterns && window.MirProb && window.MirProb.detectCurrentPatterns) {
     const dailyRows = getChartRows(item);
-    const pats = window.MirProb.detectCurrentPatterns(dailyRows).filter((p) => p.points).slice(0, 2);
+    const pats = window.MirProb.detectCurrentPatterns(dailyRows).filter((p) => p.points || p.lines).slice(0, 2);
     const labels = window.MirProb.patternLabels || {};
     const firstD = rows[0].d;
     const lastD = rows[rows.length - 1].d;
@@ -5442,25 +5462,40 @@ function drawChart(item) {
     };
     patSvg = pats.map((pat) => {
       const color = pat.dir > 0 ? "#0ea5e9" : "#a855f7"; // S/R(초록·빨강)과 구분되는 색
-      const pts = pat.points.map(mapPt).filter(Boolean);
-      if (pts.length < 2) return ""; // 대부분 화면 밖이면 생략
-      const poly = pts.map((p, i) => `${i ? "L" : "M"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-      let svg = `<path d="${poly}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" opacity="0.9"></path>`;
-      // 목선
+      let svg = "";
+      let anchor = null; // 패턴 이름 라벨 기준점
+      // 추세선/레벨(실선) — 삼각수렴·돌파
+      if (pat.lines) {
+        for (const ln of pat.lines) {
+          const lp = ln.pts.map(mapPt).filter(Boolean);
+          if (lp.length === 2) {
+            svg += `<line x1="${lp[0].x.toFixed(1)}" y1="${lp[0].y.toFixed(1)}" x2="${lp[1].x.toFixed(1)}" y2="${lp[1].y.toFixed(1)}" stroke="${color}" stroke-width="1.5" opacity="0.9"></line>`;
+            anchor = anchor || lp[0];
+          }
+        }
+      }
+      const pts = (pat.points || []).map(mapPt).filter(Boolean);
+      // 반전 패턴 윤곽선(피벗 3개 이상을 선으로 연결)
+      if (pts.length >= 3) {
+        const poly = pts.map((p, i) => `${i ? "L" : "M"} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+        svg += `<path d="${poly}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" opacity="0.9"></path>`;
+      }
+      // 목선(점선)
       if (pat.necklinePts) {
         const nl = pat.necklinePts.map(mapPt).filter(Boolean);
         if (nl.length === 2) {
           svg += `<line x1="${nl[0].x.toFixed(1)}" y1="${nl[0].y.toFixed(1)}" x2="${nl[1].x.toFixed(1)}" y2="${nl[1].y.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="5 4" opacity="0.8"></line>`;
         }
       }
-      // 점 + 라벨
+      // 피벗/돌파 점 + 라벨
       for (const p of pts) {
         svg += `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.2" fill="${color}"></circle>`;
         if (p.label) svg += `<text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" text-anchor="middle" fill="${color}" font-size="10" font-weight="700">${escapeHtml(p.label)}</text>`;
       }
-      // 패턴 이름(첫 점 근처)
+      if (pts.length) anchor = anchor || pts[0];
+      if (!anchor) return ""; // 전부 화면 밖이면 생략
       const name = labels[pat.pattern] || pat.pattern;
-      svg += `<text x="${pts[0].x.toFixed(1)}" y="${(pts[0].y + 14).toFixed(1)}" fill="${color}" font-size="10.5" font-weight="800">${escapeHtml(name)}</text>`;
+      svg += `<text x="${anchor.x.toFixed(1)}" y="${(anchor.y + 14).toFixed(1)}" fill="${color}" font-size="10.5" font-weight="800">${escapeHtml(name)}</text>`;
       return svg;
     }).join("");
   }

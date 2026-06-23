@@ -697,6 +697,31 @@ function patternSignals(rows, horizon, stats) {
   return result;
 }
 
+// ===== 돌파 연속성 / 되돌림 셋업 (build_breakout_retest.py 로 검증한 엣지) =====
+// 검증 결과: 상승 돌파는 약한 추세 지속 우위(+1~2%p), 하락 돌파는 오히려 반등 경향.
+// 되돌림(retest)은 상승 돌파의 단기 진입 타이밍에 도움. → 표시용 카드(중복 신호 방지).
+function detectBreakoutRetest(rows, horizon, stats) {
+  if (!stats || !stats.directions) return null;
+  const n = rows.length;
+  const WIN = 20; // 최근 N봉 내 돌파만 '현재 셋업'으로 본다
+  const evs = detectConfirmations(rows)
+    .filter((e) => e.pattern === "resistance_breakout" || e.pattern === "support_breakdown")
+    .filter((e) => n - 1 - e.confirm_idx <= WIN)
+    .sort((a, b) => b.confirm_idx - a.confirm_idx);
+  if (!evs.length) return null;
+  const recent = evs[0];
+  const price = rows[n - 1].c;
+  const atr = windowAtr(rows);
+  const barsSince = n - 1 - recent.confirm_idx;
+  const isRetest = barsSince >= 1 && Math.abs(price - recent.neckline) <= atr; // 돌파선 재접촉
+  const dirKey = recent.dir > 0 ? "up_break" : "down_break";
+  const entry = isRetest ? "retest" : "breakout";
+  const dd = stats.directions[dirKey];
+  const s = dd && dd.entries && dd.entries[entry] && dd.entries[entry][String(horizon)];
+  if (!s) return null;
+  return { dir: recent.dir, isRetest, barsSince, neckline: recent.neckline, stat: s };
+}
+
 // ===== 신호 합의 (Signal Consensus) =====
 // 각 신호: { label, dir(-1..+1), weight, detail }
 function buildSignals(rows) {
@@ -961,6 +986,7 @@ function analyzeRows(rows, horizon, meta) {
   const consensus = consensusProbability(signals, adxVal);
   const base = clean.length >= 250 ? backtestBaseRate(clean, horizon) : null;
   const sr = srSummary(clean); // 차트 오버레이와 동일한 강도점수 기반 S/R
+  const breakout = detectBreakoutRetest(clean, horizon, breakoutStats);
 
   // 헤드라인: 백테스트 표본이 충분하면 두 값을 블렌딩, 아니면 신호만
   let headlineUp;
@@ -984,6 +1010,7 @@ function analyzeRows(rows, horizon, meta) {
     base,
     sr,
     patterns: pat.cards,
+    breakout,
     headlineUp,
     headlineDown: 100 - headlineUp,
   };
@@ -1005,6 +1032,7 @@ const HORIZONS = [
 let currentHorizon = 20;
 let currentDetail = null;
 let patternStats = null; // data/pattern_stats.json (오프라인 집계 결과)
+let breakoutStats = null; // data/breakout_retest_stats.json (돌파 연속성/되돌림 통계)
 
 function $(id) { return document.getElementById(id); }
 
@@ -1019,9 +1047,19 @@ async function loadPatternStats() {
   return patternStats;
 }
 
-// 패턴 통계는 한 번만 받아 캐시한다(대시보드/standalone 공용).
+async function loadBreakoutStats() {
+  try {
+    const res = await fetch("data/breakout_retest_stats.json", { cache: "no-store" });
+    if (res.ok) breakoutStats = await res.json();
+  } catch (e) {
+    breakoutStats = null;
+  }
+  return breakoutStats;
+}
+
+// 통계는 한 번만 받아 캐시한다(대시보드/standalone 공용).
 function ensureStats() {
-  if (!statsPromise) statsPromise = loadPatternStats();
+  if (!statsPromise) statsPromise = Promise.all([loadPatternStats(), loadBreakoutStats()]);
   return statsPromise;
 }
 
@@ -1127,6 +1165,7 @@ function buildResultHTML(result) {
     </div>`;
 
   const patternHtml = renderPatternCard(result);
+  const breakoutHtml = renderBreakoutCard(result);
 
   const sr = result.sr;
   const srHtml = `<div class="sr-line">
@@ -1164,6 +1203,8 @@ function buildResultHTML(result) {
 
     ${patternHtml}
 
+    ${breakoutHtml}
+
     <div class="card">
       <h3>지지 / 저항</h3>
       ${srHtml}
@@ -1174,6 +1215,25 @@ function buildResultHTML(result) {
       실적·금리·뉴스 등 펀더멘털 변수는 반영되지 않습니다. 투자 판단과 책임은 본인에게 있습니다.
     </div>
   `;
+}
+
+function renderBreakoutCard(result) {
+  if (!breakoutStats) return "";
+  const b = result.breakout;
+  if (!b) return "";
+  const dirWord = b.dir > 0 ? "상승 돌파" : "하락 돌파";
+  const phase = b.isRetest ? "되돌림(retest) 구간" : "돌파 직후";
+  const cont = b.stat.cont_rate;
+  const edge = b.stat.edge_vs_market;
+  const contColor = edge != null && edge >= 0 ? "var(--pos)" : "var(--neg)";
+  const edgeStr = edge == null ? "" :
+    `<span class="pat-edge ${edge >= 0 ? "pos" : "neg"}">시장 대비 ${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%p</span>`;
+  return `<div class="card">
+    <h3>④ 돌파 연속성 <span class="muted">(${b.barsSince}봉 전 ${dirWord} · ${phase})</span></h3>
+    <p class="pat-stat">과거 같은 셋업 <b>${b.stat.n.toLocaleString()}건</b> 중
+      <b style="color:${contColor}">${cont.toFixed(0)}%</b>가 ${result.horizon}거래일 뒤 ${b.dir > 0 ? "상승" : "하락"} 지속 ${edgeStr}</p>
+    <p class="pat-note muted">※ 검증 결과: 상승 돌파는 약한 지속 우위, 하락 돌파는 오히려 반등 경향이 강합니다. 되돌림은 주로 단기 진입 타이밍에 도움.</p>
+  </div>`;
 }
 
 function renderResult(result) {

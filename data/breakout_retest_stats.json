@@ -1,0 +1,124 @@
+{
+  "generated": "2026-06-23 15:50 KST",
+  "tickers_scanned": 604,
+  "horizons": [
+    5,
+    20,
+    60
+  ],
+  "retest_win": 15,
+  "baseline": {
+    "5": {
+      "n": 70159,
+      "up_rate": 49.1,
+      "down_rate": 50.9,
+      "avg_ret": 0.21
+    },
+    "20": {
+      "n": 69011,
+      "up_rate": 49.7,
+      "down_rate": 50.3,
+      "avg_ret": 1.29
+    },
+    "60": {
+      "n": 66595,
+      "up_rate": 49.8,
+      "down_rate": 50.2,
+      "avg_ret": 3.34
+    }
+  },
+  "directions": {
+    "up_break": {
+      "breakouts": 7306,
+      "retest_rate": 80.2,
+      "entries": {
+        "breakout": {
+          "5": {
+            "n": 7270,
+            "cont_rate": 49.8,
+            "avg_dir_ret": 0.14,
+            "edge_vs_market": 0.7
+          },
+          "20": {
+            "n": 7138,
+            "cont_rate": 51.6,
+            "avg_dir_ret": 0.97,
+            "edge_vs_market": 1.9
+          },
+          "60": {
+            "n": 6857,
+            "cont_rate": 51.2,
+            "avg_dir_ret": 2.9,
+            "edge_vs_market": 1.4
+          }
+        },
+        "retest": {
+          "5": {
+            "n": 5842,
+            "cont_rate": 51.9,
+            "avg_dir_ret": 0.35,
+            "edge_vs_market": 2.8
+          },
+          "20": {
+            "n": 5724,
+            "cont_rate": 50.9,
+            "avg_dir_ret": 0.66,
+            "edge_vs_market": 1.2
+          },
+          "60": {
+            "n": 5507,
+            "cont_rate": 51.1,
+            "avg_dir_ret": 2.94,
+            "edge_vs_market": 1.3
+          }
+        }
+      }
+    },
+    "down_break": {
+      "breakouts": 6789,
+      "retest_rate": 80.7,
+      "entries": {
+        "breakout": {
+          "5": {
+            "n": 6759,
+            "cont_rate": 50.9,
+            "avg_dir_ret": -0.29,
+            "edge_vs_market": 0.0
+          },
+          "20": {
+            "n": 6667,
+            "cont_rate": 48.1,
+            "avg_dir_ret": -1.48,
+            "edge_vs_market": -2.2
+          },
+          "60": {
+            "n": 6444,
+            "cont_rate": 46.7,
+            "avg_dir_ret": -5.87,
+            "edge_vs_market": -3.5
+          }
+        },
+        "retest": {
+          "5": {
+            "n": 5457,
+            "cont_rate": 48.8,
+            "avg_dir_ret": -0.45,
+            "edge_vs_market": -2.1
+          },
+          "20": {
+            "n": 5386,
+            "cont_rate": 48.5,
+            "avg_dir_ret": -1.48,
+            "edge_vs_market": -1.8
+          },
+          "60": {
+            "n": 5184,
+            "cont_rate": 47.3,
+            "avg_dir_ret": -7.99,
+            "edge_vs_market": -2.9
+          }
+        }
+      }
+    }
+  }
+}

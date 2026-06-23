@@ -43,3 +43,16 @@ PowerShell에서 실행합니다.
 - `data/market_snapshot.json`: 사이트가 읽는 하루 스냅샷 데이터
 - `scripts/update_data.py`: 하루 1회 데이터 수집/저장 스크립트
 - `scripts/register_daily_update.ps1`: Windows 작업 스케줄러 등록 스크립트
+- `analysis.html` / `analysis.js`: 차트 확률 분석 페이지(티커 → 상승/하락 확률 추정)
+- `scripts/pattern_lib.py`: 차트 패턴 감지 공용 라이브러리(브라우저 analysis.js 와 동일 알고리즘)
+- `scripts/build_pattern_stats.py`: 전 종목 패턴 과거 성공률 집계 → `data/pattern_stats.json`
+- `data/pattern_stats.json`: 패턴별·기간별 과거 상승률(차트 확률 분석 ③ 패턴 섹션이 읽음)
+
+## 차트 패턴 통계 갱신
+
+```powershell
+py scripts/build_pattern_stats.py
+```
+
+`data/details/*.json` 전체를 스캔해 패턴 성공률을 다시 계산합니다. 가격 이력이 누적될
+때만 값이 변하므로 매일 돌릴 필요는 없고, 월 1회 정도면 충분합니다(전체 스캔 수십 초).

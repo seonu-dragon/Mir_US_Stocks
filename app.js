@@ -175,7 +175,8 @@ let chartState = {
   showKeltner: false,
   showDonchian: false,
   showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
-  showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이
+  showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이 마스터
+  patternTypes: { hns: true, double: true, triangle: true, breakout: true }, // 종류별 표시 필터
   showVolume: true,
   showVolMa20: false,
   showVolumeRatio: false,
@@ -2802,23 +2803,41 @@ function bindChartProbHorizon() {
   });
 }
 
-// 결과 패널의 ② 카드 아래에 '차트에 패턴 표시' 체크박스를 넣고 차트 오버레이를 제어.
+// 패턴 → 종류(체크박스 카테고리) 매핑.
+function patternCategory(p) {
+  if (p === "hns" || p === "inv_hns") return "hns";
+  if (p === "double_top" || p === "double_bottom") return "double";
+  if (p === "ascending_triangle" || p === "descending_triangle" || p === "symmetrical_triangle") return "triangle";
+  if (p === "resistance_breakout" || p === "support_breakdown") return "breakout";
+  return null;
+}
+
+// 결과 패널의 ② 카드 안에 종류별 '차트에 패턴 표시' 체크박스를 넣고 차트 오버레이를 제어.
+const PATTERN_TYPE_LABELS = [
+  ["hns", "헤드앤숄더"],
+  ["double", "쌍바닥/쌍천장"],
+  ["triangle", "삼각수렴"],
+  ["breakout", "돌파"],
+];
 function fillCprobChartControls() {
   const host = byId("cprobChartControls");
   if (!host) return;
-  host.innerHTML = `<label class="cprob-chart-toggle">
-      <input type="checkbox" id="cprobPatternToggle"${chartState.showPatterns ? " checked" : ""}>
-      차트에 패턴 표시 <span class="muted">(역H&S·쌍바닥·삼각수렴·돌파 등)</span>
-    </label>`;
-  const cb = byId("cprobPatternToggle");
-  if (cb) {
+  const pt = chartState.patternTypes;
+  const boxes = PATTERN_TYPE_LABELS.map(([k, l]) =>
+    `<label><input type="checkbox" data-pt="${k}"${pt[k] ? " checked" : ""}> ${l}</label>`).join("");
+  host.innerHTML = `<div class="cprob-chart-toggle">
+      <span class="cprob-toggle-title">차트에 패턴 표시</span>${boxes}
+    </div>`;
+  host.querySelectorAll("input[data-pt]").forEach((cb) => {
     cb.addEventListener("change", (e) => {
-      chartState.showPatterns = e.target.checked;
+      chartState.patternTypes[e.target.dataset.pt] = e.target.checked;
+      // 하나라도 켜져 있으면 마스터 on(차트 설정의 패턴 체크박스와 동기화).
+      chartState.showPatterns = Object.values(chartState.patternTypes).some(Boolean);
       const mirror = byId("showPatterns");
-      if (mirror) mirror.checked = e.target.checked;
+      if (mirror) mirror.checked = chartState.showPatterns;
       redrawChart();
     });
-  }
+  });
 }
 
 // "상승확률 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 확률을 계산해 패널에 표시.
@@ -5442,10 +5461,11 @@ function drawChart(item) {
     const labels = window.MirProb.patternLabels || {};
     const firstD = rows[0].d;
     const lastD = rows[rows.length - 1].d;
-    // 보이는 구간 안에서 확정된 패턴 중 가장 최근 것들을 그린다(최근 10봉으로
-    // 한정하지 않아 더 많은 종목에서 패턴이 보인다). 화면 밖 패턴은 제외.
+    // 보이는 구간 안에서 확정된 패턴 중, 체크된 종류만, 가장 최근 것들을 그린다.
+    const enabled = chartState.patternTypes || {};
     const pats = window.MirProb.detectConfirmations(dailyRows)
       .filter((p) => p.points || p.lines)
+      .filter((p) => { const cat = patternCategory(p.pattern); return cat && enabled[cat]; })
       .filter((p) => {
         const cd = dailyRows[p.confirm_idx] && dailyRows[p.confirm_idx].d;
         return cd && cd >= firstD && cd <= lastD;

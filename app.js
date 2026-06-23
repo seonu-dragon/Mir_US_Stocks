@@ -3461,6 +3461,33 @@ function setupChartControls() {
   setupChartPresetControls();
   setupChartInteractions();
   setupChartCompareControls();
+  setupMobileChartViewControls();
+}
+
+// 모바일에서는 스크롤·드래그가 어려우므로, 차트 위 명령바의 '보기' 그룹
+// (‹ − + › Reset)을 차트 바로 아래로 옮겨 엄지로 쉽게 조작하게 한다.
+// 데스크톱에서는 원래 명령바 위치로 복원한다(같은 버튼/리스너 그대로 사용).
+function setupMobileChartViewControls() {
+  const group = byId("chartViewGroup");
+  const chart = byId("priceChart");
+  if (!group || !chart) return;
+  const homeParent = group.parentNode;
+  const homeNext = group.nextSibling; // 복원 시 이 노드 앞에 다시 삽입
+  const mq = window.matchMedia("(max-width: 640px)");
+  const apply = () => {
+    if (mq.matches) {
+      if (chart.nextElementSibling !== group) chart.insertAdjacentElement("afterend", group);
+      group.classList.add("chart-view-mobile");
+    } else {
+      if (group.parentNode !== homeParent || group.nextSibling !== homeNext) {
+        homeParent.insertBefore(group, homeNext);
+      }
+      group.classList.remove("chart-view-mobile");
+    }
+  };
+  apply();
+  if (mq.addEventListener) mq.addEventListener("change", apply);
+  else if (mq.addListener) mq.addListener(apply);
 }
 
 function chartSettingIds() {

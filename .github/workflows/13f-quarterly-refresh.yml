@@ -1,0 +1,37 @@
+name: Institutional 13F quarterly refresh
+
+on:
+  schedule:
+    # 매월 5일 06:05 UTC = 15:05 KST — 분기 공시(45일 지연) 반영 여부 점검
+    - cron: "5 6 5 * *"
+    # 분기 공시 집중 시즌(2·5·8·11월) 중순 추가 점검
+    - cron: "10 6 15 2,5,8,11 *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  refresh-13f:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build and publish institutional 13F snapshot
+        run: python scripts/build_13f_snapshot.py --push

@@ -1,0 +1,36 @@
+name: White House schedule refresh
+
+on:
+  schedule:
+    - cron: "0 21 * * *"  # 21:00 UTC = 06:00 KST
+    - cron: "0 7 * * *"   # 07:00 UTC = 16:00 KST
+    - cron: "0 12 * * *"  # 12:00 UTC = 21:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  schedule:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Refresh White House schedule
+        run: python scripts/schedule_store.py

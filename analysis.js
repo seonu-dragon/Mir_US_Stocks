@@ -2575,11 +2575,6 @@ function buildResultHTML(result) {
       <div class="verdict" style="color:${color}">${verdictText(up)}</div>
     </div>
 
-    <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
-      <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">💡 AI 기술적 요약 브리핑</h3>
-      ${briefingHtml}
-    </div>
-
     <div class="prob-wrap">
       <div class="prob-bar">
         <div class="prob-up" style="width:${up.toFixed(1)}%">상승 ${up.toFixed(0)}%</div>
@@ -2588,34 +2583,49 @@ function buildResultHTML(result) {
       <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 신호 합의 ${result.consensus.up.toFixed(0)}%${result.base ? ` / 과거 실측 ${result.base.upProb.toFixed(0)}%` : ""}</p>
     </div>
 
-    <div class="grid2 cprob-top-grid">
-      <div class="card">
-        <h3>① 신호 합의 <span class="muted">(추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
-        ${bullSignals.length ? `<div class="sig-group"><h4 class="bull">강세 신호</h4>${bullSignals.map(signalRow).join("")}</div>` : ""}
-        ${bearSignals.length ? `<div class="sig-group"><h4 class="bear">약세 신호</h4>${bearSignals.map(signalRow).join("")}</div>` : ""}
-        ${neutralSignals.length ? `<div class="sig-group"><h4 class="neu">중립</h4>${neutralSignals.map(signalRow).join("")}</div>` : ""}
+    <div class="cprob-tabs" role="tablist">
+      <button type="button" class="cprob-tab-btn is-active" data-cptab="summary">📊 종합</button>
+      <button type="button" class="cprob-tab-btn" data-cptab="pattern">🔍 패턴</button>
+      <button type="button" class="cprob-tab-btn" data-cptab="flow">💧 수급·옵션</button>
+      <button type="button" class="cprob-tab-btn" data-cptab="tech">📐 기술 심화</button>
+    </div>
+
+    <div class="cprob-tab-panel is-active" data-cptab="summary">
+      <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
+        <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">💡 AI 기술적 요약 브리핑</h3>
+        ${briefingHtml}
       </div>
-      <div class="cprob-rstack">
+      <div class="grid2 cprob-top-grid">
+        <div class="card">
+          <h3>① 신호 합의 <span class="muted">(추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
+          ${bullSignals.length ? `<div class="sig-group"><h4 class="bull">강세 신호</h4>${bullSignals.map(signalRow).join("")}</div>` : ""}
+          ${bearSignals.length ? `<div class="sig-group"><h4 class="bear">약세 신호</h4>${bearSignals.map(signalRow).join("")}</div>` : ""}
+          ${neutralSignals.length ? `<div class="sig-group"><h4 class="neu">중립</h4>${neutralSignals.map(signalRow).join("")}</div>` : ""}
+        </div>
         ${baseHtml}
-        ${renderMtfCard(result)}
-        ${renderGapFillCard(result)}
-        ${renderOptionsContextCard(result)}
-        ${renderInstitutionalFlowCard(result)}
-        ${renderTechnicalLevelsCard(result)}
       </div>
     </div>
 
-    ${confluenceHtml}
+    <div class="cprob-tab-panel" data-cptab="pattern">
+      ${patternHtml}
+      ${breakoutHtml}
+      ${confluenceHtml}
+    </div>
 
-    ${renderShortSqueezeCard(result)}
+    <div class="cprob-tab-panel" data-cptab="flow">
+      ${renderInstitutionalFlowCard(result)}
+      ${renderOptionsContextCard(result)}
+      ${renderShortSqueezeCard(result)}
+    </div>
 
-    ${patternHtml}
-
-    ${breakoutHtml}
-
-    <div class="card">
-      <h3>지지 / 저항</h3>
-      ${srHtml}
+    <div class="cprob-tab-panel" data-cptab="tech">
+      ${renderMtfCard(result)}
+      ${renderGapFillCard(result)}
+      ${renderTechnicalLevelsCard(result)}
+      <div class="card">
+        <h3>지지 / 저항</h3>
+        ${srHtml}
+      </div>
     </div>
 
     <div class="disclaimer">
@@ -2797,6 +2807,16 @@ async function init() {
 }
 
 document.addEventListener("DOMContentLoaded", init);
+
+// 결과 패널 탭 전환 — 위임 방식이라 재렌더/양쪽 페이지(#result·#chartProbPanel)에서 모두 동작.
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest && e.target.closest(".cprob-tab-btn");
+  if (!btn) return;
+  const scope = btn.closest("#result, #chartProbPanel") || document;
+  const key = btn.dataset.cptab;
+  scope.querySelectorAll(".cprob-tab-btn").forEach((b) => b.classList.toggle("is-active", b === btn));
+  scope.querySelectorAll(".cprob-tab-panel").forEach((p) => p.classList.toggle("is-active", p.dataset.cptab === key));
+});
 
 // ===== 외부 노출 (대시보드 app.js 등에서 재사용) =====
 window.MirProb = {

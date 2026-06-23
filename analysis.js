@@ -418,6 +418,19 @@ const PATTERN_LABELS = {
   ascending_triangle: "상승 삼각수렴",
   descending_triangle: "하락 삼각수렴",
   symmetrical_triangle: "대칭 삼각수렴",
+  falling_wedge: "하락 쐐기형",
+  rising_wedge: "상승 쐐기형",
+  box_breakout: "박스권 상향 돌파",
+  box_breakdown: "박스권 하향 이탈",
+  bull_flag: "상승 깃발형",
+  bear_flag: "하락 깃발형",
+  triple_top: "삼중 천장형",
+  triple_bottom: "삼중 바닥형",
+  broadening_triangle: "확산형 삼각수렴",
+  diamond_top: "다이아몬드 천장형",
+  diamond_bottom: "다이아몬드 바닥형",
+  rounding_bottom: "라운딩 바닥형(U자형)",
+  complex_hns: "복합 헤드앤숄더",
   resistance_breakout: "저항선 돌파",
   support_breakdown: "지지선 이탈",
 };
@@ -661,12 +674,490 @@ function detectSrBreakout(rows, pivots) {
   return out;
 }
 
+function detectWedge(rows, z) {
+  const out = [];
+  for (let end = 4; end < z.length; end += 1) {
+    const window = z.slice(0, end + 1).filter((p) => z[end].idx - p.idx <= PAT.TRI_LOOKBACK);
+    let highs = window.filter((p) => p.type === "H");
+    let lows = window.filter((p) => p.type === "L");
+    if (highs.length < 2 || lows.length < 2) continue;
+    highs = highs.slice(-3);
+    lows = lows.slice(-3);
+    const sh = slopePctPts(highs.map((p) => [p.idx, p.price]));
+    const sl = slopePctPts(lows.map((p) => [p.idx, p.price]));
+    const res = highs.reduce((a, p) => a + p.price, 0) / highs.length;
+    const sup = lows.reduce((a, p) => a + p.price, 0) / lows.length;
+    if (res <= sup) continue;
+
+    const lastIdx = Math.max(highs[highs.length - 1].idx, lows[lows.length - 1].idx);
+    
+    let pat = null;
+    let direction = null;
+    let neck = null;
+    
+    const TOL = 0.001; // 0.1% 기울기
+    if (sh < -TOL && sl < -TOL && sh < sl) {
+      pat = "falling_wedge";
+      direction = +1;
+      neck = highs[highs.length - 1].price;
+    } else if (sh > TOL && sl > TOL && sh < sl) {
+      pat = "rising_wedge";
+      direction = -1;
+      neck = lows[lows.length - 1].price;
+    }
+
+    if (pat != null) {
+      const ci = confirmBreak(rows, lastIdx, neck, direction, null);
+      if (ci != null) {
+        const wedgeLines = [
+          { pts: [{ idx: highs[0].idx, price: highs[0].price }, { idx: highs[highs.length - 1].idx, price: highs[highs.length - 1].price }] },
+          { pts: [{ idx: lows[0].idx, price: lows[0].price }, { idx: lows[lows.length - 1].idx, price: lows[lows.length - 1].price }] },
+        ];
+        out.push({
+          pattern: pat,
+          dir: direction,
+          confirm_idx: ci,
+          neckline: neck,
+          lines: wedgeLines,
+          points: [{ idx: ci, price: neck, label: direction > 0 ? "돌파" : "이탈" }]
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function detectBox(rows, z) {
+  const out = [];
+  for (let end = 4; end < z.length; end += 1) {
+    const window = z.slice(0, end + 1).filter((p) => z[end].idx - p.idx <= 50);
+    let highs = window.filter((p) => p.type === "H");
+    let lows = window.filter((p) => p.type === "L");
+    if (highs.length < 2 || lows.length < 2) continue;
+    highs = highs.slice(-3);
+    lows = lows.slice(-3);
+
+    const avgH = highs.reduce((a, p) => a + p.price, 0) / highs.length;
+    const avgL = lows.reduce((a, p) => a + p.price, 0) / lows.length;
+    if (avgH <= avgL) continue;
+
+    const sh = slopePctPts(highs.map((p) => [p.idx, p.price]));
+    const sl = slopePctPts(lows.map((p) => [p.idx, p.price]));
+
+    const FLAT_SLOPE = 0.003;
+    if (Math.abs(sh) < FLAT_SLOPE && Math.abs(sl) < FLAT_SLOPE) {
+      const hTol = highs.every((p) => Math.abs(p.price - avgH) / avgH < 0.02);
+      const lTol = lows.every((p) => Math.abs(p.price - avgL) / avgL < 0.02);
+
+      if (hTol && lTol) {
+        const lastIdx = Math.max(highs[highs.length - 1].idx, lows[lows.length - 1].idx);
+        const ciUp = confirmBreak(rows, lastIdx, avgH, +1, null);
+        const ciDn = confirmBreak(rows, lastIdx, avgL, -1, null);
+
+        const boxLines = [
+          { pts: [{ idx: highs[0].idx, price: avgH }, { idx: Math.max(ciUp || 0, ciDn || 0, lastIdx), price: avgH }] },
+          { pts: [{ idx: lows[0].idx, price: avgL }, { idx: Math.max(ciUp || 0, ciDn || 0, lastIdx), price: avgL }] }
+        ];
+
+        if (ciUp != null && (ciDn == null || ciUp <= ciDn)) {
+          out.push({
+            pattern: "box_breakout",
+            dir: +1,
+            confirm_idx: ciUp,
+            neckline: avgH,
+            lines: boxLines,
+            points: [{ idx: ciUp, price: avgH, label: "상향돌파" }]
+          });
+        } else if (ciDn != null) {
+          out.push({
+            pattern: "box_breakdown",
+            dir: -1,
+            confirm_idx: ciDn,
+            neckline: avgL,
+            lines: boxLines,
+            points: [{ idx: ciDn, price: avgL, label: "하향이탈" }]
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function detectFlag(rows, z) {
+  const out = [];
+  for (let end = 3; end < z.length; end += 1) {
+    const a = z[end - 3];
+    const b = z[end - 2];
+    const c = z[end - 1];
+    const d = z[end];
+    if (!a || !b || !c || !d) continue;
+
+    const flagpoleRise = (b.price - a.price) / a.price;
+    if (a.type === "L" && b.type === "H" && flagpoleRise >= 0.10) {
+      if (c.type === "L" && d.type === "H") {
+        if (d.price < b.price && c.price < b.price) {
+          const channelTop = b.price;
+          const ci = confirmBreak(rows, d.idx, channelTop, +1, null);
+          if (ci != null) {
+            const flagLines = [
+              { pts: [{ idx: a.idx, price: a.price }, { idx: b.idx, price: b.price }] },
+              { pts: [{ idx: b.idx, price: b.price }, { idx: d.idx, price: d.price }] }
+            ];
+            out.push({
+              pattern: "bull_flag",
+              dir: +1,
+              confirm_idx: ci,
+              neckline: channelTop,
+              lines: flagLines,
+              points: [{ idx: ci, price: channelTop, label: "깃발돌파" }]
+            });
+          }
+        }
+      }
+    }
+
+    const flagpoleDrop = (a.price - b.price) / a.price;
+    if (a.type === "H" && b.type === "L" && flagpoleDrop >= 0.10) {
+      if (c.type === "H" && d.type === "L") {
+        if (d.price > b.price && c.price > b.price) {
+          const channelBottom = b.price;
+          const ci = confirmBreak(rows, d.idx, channelBottom, -1, null);
+          if (ci != null) {
+            const flagLines = [
+              { pts: [{ idx: a.idx, price: a.price }, { idx: b.idx, price: b.price }] },
+              { pts: [{ idx: b.idx, price: b.price }, { idx: d.idx, price: d.price }] }
+            ];
+            out.push({
+              pattern: "bear_flag",
+              dir: -1,
+              confirm_idx: ci,
+              neckline: channelBottom,
+              lines: flagLines,
+              points: [{ idx: ci, price: channelBottom, label: "깃발이탈" }]
+            });
+          }
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function detectTriple(rows, z) {
+  const out = [];
+  for (let i = 0; i < z.length - 4; i += 1) {
+    const p = z.slice(i, i + 5);
+    const types = p.map((x) => x.type).join("");
+    
+    if (types === "HLHLH") {
+      const [t1, b1, t2, b2, t3] = p;
+      const top = (t1.price + t2.price + t3.price) / 3;
+      const diff1 = Math.abs(t1.price - t2.price) / top;
+      const diff2 = Math.abs(t2.price - t3.price) / top;
+      const diff3 = Math.abs(t1.price - t3.price) / top;
+      const trough1 = (top - b1.price) / top;
+      const trough2 = (top - b2.price) / top;
+
+      if (diff1 <= 0.02 && diff2 <= 0.02 && diff3 <= 0.02 && trough1 >= 0.03 && trough2 >= 0.03) {
+        const neck = Math.min(b1.price, b2.price);
+        const ci = confirmBreak(rows, t3.idx, neck, -1, Math.max(t1.price, t2.price, t3.price));
+        if (ci != null) {
+          out.push({
+            pattern: "triple_top",
+            dir: -1,
+            confirm_idx: ci,
+            neckline: neck,
+            points: [
+              { idx: t1.idx, price: t1.price, label: "천장1" },
+              { idx: t2.idx, price: t2.price, label: "천장2" },
+              { idx: t3.idx, price: t3.price, label: "천장3" },
+              { idx: b1.idx, price: b1.price, label: "" },
+              { idx: b2.idx, price: b2.price, label: "" }
+            ],
+            necklinePts: [{ idx: t1.idx, price: neck }, { idx: ci, price: neck }]
+          });
+        }
+      }
+    }
+    
+    if (types === "LHLHL") {
+      const [b1, t1, b2, t2, b3] = p;
+      const bot = (b1.price + b2.price + b3.price) / 3;
+      const diff1 = Math.abs(b1.price - b2.price) / bot;
+      const diff2 = Math.abs(b2.price - b3.price) / bot;
+      const diff3 = Math.abs(b1.price - b3.price) / bot;
+      const peak1 = (t1.price - bot) / bot;
+      const peak2 = (t2.price - bot) / bot;
+
+      if (diff1 <= 0.02 && diff2 <= 0.02 && diff3 <= 0.02 && peak1 >= 0.03 && peak2 >= 0.03) {
+        const neck = Math.max(t1.price, t2.price);
+        const ci = confirmBreak(rows, b3.idx, neck, +1, Math.min(b1.price, b2.price, b3.price));
+        if (ci != null) {
+          out.push({
+            pattern: "triple_bottom",
+            dir: +1,
+            confirm_idx: ci,
+            neckline: neck,
+            points: [
+              { idx: b1.idx, price: b1.price, label: "바닥1" },
+              { idx: b2.idx, price: b2.price, label: "바닥2" },
+              { idx: b3.idx, price: b3.price, label: "바닥3" },
+              { idx: t1.idx, price: t1.price, label: "" },
+              { idx: t2.idx, price: t2.price, label: "" }
+            ],
+            necklinePts: [{ idx: b1.idx, price: neck }, { idx: ci, price: neck }]
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+
+function detectBroadening(rows, z) {
+  const out = [];
+  for (let end = 4; end < z.length; end += 1) {
+    const window = z.slice(0, end + 1).filter((p) => z[end].idx - p.idx <= PAT.TRI_LOOKBACK);
+    let highs = window.filter((p) => p.type === "H");
+    let lows = window.filter((p) => p.type === "L");
+    if (highs.length < 2 || lows.length < 2) continue;
+    highs = highs.slice(-3);
+    lows = lows.slice(-3);
+
+    const sh = slopePctPts(highs.map((p) => [p.idx, p.price]));
+    const sl = slopePctPts(lows.map((p) => [p.idx, p.price]));
+    const res = highs.reduce((a, p) => a + p.price, 0) / highs.length;
+    const sup = lows.reduce((a, p) => a + p.price, 0) / lows.length;
+    if (res <= sup) continue;
+
+    const lastIdx = Math.max(highs[highs.length - 1].idx, lows[lows.length - 1].idx);
+
+    const FLAT_SLOPE = 0.001;
+    if (sh > FLAT_SLOPE && sl < -FLAT_SLOPE) {
+      const ciUp = confirmBreak(rows, lastIdx, highs[highs.length - 1].price, +1, null);
+      const ciDn = confirmBreak(rows, lastIdx, lows[lows.length - 1].price, -1, null);
+
+      const broadeningLines = [
+        { pts: [{ idx: highs[0].idx, price: highs[0].price }, { idx: highs[highs.length - 1].idx, price: highs[highs.length - 1].price }] },
+        { pts: [{ idx: lows[0].idx, price: lows[0].price }, { idx: lows[lows.length - 1].idx, price: lows[lows.length - 1].price }] }
+      ];
+
+      if (ciUp != null && (ciDn == null || ciUp <= ciDn)) {
+        out.push({
+          pattern: "broadening_triangle",
+          dir: +1,
+          confirm_idx: ciUp,
+          neckline: highs[highs.length - 1].price,
+          lines: broadeningLines,
+          points: [{ idx: ciUp, price: highs[highs.length - 1].price, label: "돌파" }]
+        });
+      } else if (ciDn != null) {
+        out.push({
+          pattern: "broadening_triangle",
+          dir: -1,
+          confirm_idx: ciDn,
+          neckline: lows[lows.length - 1].price,
+          lines: broadeningLines,
+          points: [{ idx: ciDn, price: lows[lows.length - 1].price, label: "이탈" }]
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function detectDiamond(rows, z) {
+  const out = [];
+  for (let i = 0; i < z.length - 6; i += 1) {
+    const p = z.slice(i, i + 7);
+    const range1 = Math.abs(p[1].price - p[0].price);
+    const range3 = Math.abs(p[3].price - p[2].price);
+    const range4 = Math.abs(p[4].price - p[3].price);
+    const range6 = Math.abs(p[6].price - p[5].price);
+
+    if (range3 > range1 && range6 < range4) {
+      const lastIdx = p[6].idx;
+      const highs = p.filter((x) => x.type === "H");
+      const lows = p.filter((x) => x.type === "L");
+      if (highs.length < 3 || lows.length < 3) continue;
+
+      const resPrice = highs[highs.length - 1].price;
+      const supPrice = lows[lows.length - 1].price;
+
+      const ciUp = confirmBreak(rows, lastIdx, resPrice, +1, null);
+      const ciDn = confirmBreak(rows, lastIdx, supPrice, -1, null);
+
+      const diamondLines = [
+        { pts: [{ idx: highs[0].idx, price: highs[0].price }, { idx: highs[1].idx, price: highs[1].price }] },
+        { pts: [{ idx: highs[1].idx, price: highs[1].price }, { idx: highs[highs.length-1].idx, price: highs[highs.length-1].price }] },
+        { pts: [{ idx: lows[0].idx, price: lows[0].price }, { idx: lows[1].idx, price: lows[1].price }] },
+        { pts: [{ idx: lows[1].idx, price: lows[1].price }, { idx: lows[lows.length-1].idx, price: lows[lows.length-1].price }] }
+      ];
+
+      if (ciUp != null && (ciDn == null || ciUp <= ciDn)) {
+        out.push({
+          pattern: "diamond_top",
+          dir: +1,
+          confirm_idx: ciUp,
+          neckline: resPrice,
+          lines: diamondLines,
+          points: [{ idx: ciUp, price: resPrice, label: "다이아돌파" }]
+        });
+      } else if (ciDn != null) {
+        out.push({
+          pattern: "diamond_bottom",
+          dir: -1,
+          confirm_idx: ciDn,
+          neckline: supPrice,
+          lines: diamondLines,
+          points: [{ idx: ciDn, price: supPrice, label: "다이아이탈" }]
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function detectRoundingBottom(rows) {
+  const out = [];
+  const n = rows.length;
+  const WIN = 40;
+  if (n < WIN + 10) return out;
+
+  for (let k = WIN; k < n; k += 5) {
+    const slice = rows.slice(k - WIN, k);
+    const xs = Array.from({ length: WIN }, (_, i) => i);
+    const ys = slice.map((r) => r.l);
+
+    let sumX = 0, sumX2 = 0, sumX3 = 0, sumX4 = 0;
+    let sumY = 0, sumXY = 0, sumX2Y = 0;
+    for (let i = 0; i < WIN; i += 1) {
+      const x = xs[i];
+      const y = ys[i];
+      const x2 = x * x;
+      sumX += x;
+      sumX2 += x2;
+      sumX3 += x2 * x;
+      sumX4 += x2 * x2;
+      sumY += y;
+      sumXY += x * y;
+      sumX2Y += x2 * y;
+    }
+    
+    const S = WIN;
+    const det = S*(sumX2*sumX4 - sumX3*sumX3) - sumX*(sumX*sumX4 - sumX2*sumX3) + sumX2*(sumX*sumX3 - sumX2*sumX2);
+    if (Math.abs(det) < 1e-5) continue;
+
+    const detA = sumY*(sumX2*sumX4 - sumX3*sumX3) - sumX*(sumXY*sumX4 - sumX2Y*sumX3) + sumX2*(sumXY*sumX3 - sumX2Y*sumX2);
+    const a = detA / det;
+
+    const detB = S*(sumXY*sumX4 - sumX2Y*sumX3) - sumY*(sumX*sumX4 - sumX2*sumX3) + sumX2*(sumX*sumX2Y - sumXY*sumX2);
+    const b = detB / det;
+    const axis = -b / (2 * a);
+
+    if (a > 0.005 && axis > WIN * 0.35 && axis < WIN * 0.65) {
+      const startPrice = ys[0];
+      const endPrice = ys[WIN - 1];
+      const cupLip = Math.max(startPrice, endPrice);
+
+      const ci = confirmBreak(rows, k - 1, cupLip, +1, null);
+      if (ci != null && ci >= k) {
+        const pts = [];
+        for (let i = 0; i < WIN; i += 10) {
+          const originalIdx = k - WIN + i;
+          pts.push({ idx: originalIdx, price: ys[i] });
+        }
+        pts.push({ idx: k, price: ys[WIN - 1] });
+
+        out.push({
+          pattern: "rounding_bottom",
+          dir: +1,
+          confirm_idx: ci,
+          neckline: cupLip,
+          lines: [{ pts }],
+          points: [{ idx: ci, price: cupLip, label: "라운딩돌파" }]
+        });
+      }
+    }
+  }
+  return out;
+}
+
+function detectComplexHns(rows, z) {
+  const out = [];
+  for (let i = 0; i < z.length - 6; i += 1) {
+    const p = z.slice(i, i + 7);
+    const types = p.map((x) => x.type).join("");
+    
+    if (types === "HLHLHLH") {
+      const [ls1, b1, head, b2, rs1, b3, rs2] = p;
+      if (head.price > ls1.price && head.price > rs1.price && head.price > rs2.price) {
+        const neck = Math.min(b1.price, b2.price, b3.price);
+        const ci = confirmBreak(rows, rs2.idx, neck, -1, head.price);
+        if (ci != null) {
+          out.push({
+            pattern: "complex_hns",
+            dir: -1,
+            confirm_idx: ci,
+            neckline: neck,
+            points: [
+              { idx: ls1.idx, price: ls1.price, label: "좌어깨" },
+              { idx: head.idx, price: head.price, label: "머리" },
+              { idx: rs1.idx, price: rs1.price, label: "우어깨1" },
+              { idx: rs2.idx, price: rs2.price, label: "우어깨2" }
+            ],
+            necklinePts: [{ idx: b1.idx, price: neck }, { idx: ci, price: neck }]
+          });
+        }
+      }
+    }
+
+    if (types === "LHLHLHL") {
+      const [ls1, t1, head, t2, rs1, t3, rs2] = p;
+      if (head.price < ls1.price && head.price < rs1.price && head.price < rs2.price) {
+        const neck = Math.max(t1.price, t2.price, t3.price);
+        const ci = confirmBreak(rows, rs2.idx, neck, +1, head.price);
+        if (ci != null) {
+          out.push({
+            pattern: "complex_hns",
+            dir: +1,
+            confirm_idx: ci,
+            neckline: neck,
+            points: [
+              { idx: ls1.idx, price: ls1.price, label: "역좌어깨" },
+              { idx: head.idx, price: head.price, label: "역머리" },
+              { idx: rs1.idx, price: rs1.price, label: "역우어깨1" },
+              { idx: rs2.idx, price: rs2.price, label: "역우어깨2" }
+            ],
+            necklinePts: [{ idx: t1.idx, price: neck }, { idx: ci, price: neck }]
+          });
+        }
+      }
+    }
+  }
+  return out;
+}
+
 function detectConfirmations(rows) {
   if (rows.length < PAT.PIVOT_WIN * 2 + 5) return [];
   const pivots = findPivots(rows);
   const z = zigzagPivots(pivots);
   let events = [];
-  events = events.concat(detectDouble(rows, z), detectHns(rows, z), detectTriangle(rows, z), detectSrBreakout(rows, pivots));
+  events = events.concat(
+    detectDouble(rows, z),
+    detectHns(rows, z),
+    detectTriangle(rows, z),
+    detectSrBreakout(rows, pivots),
+    detectWedge(rows, z),
+    detectBox(rows, z),
+    detectFlag(rows, z),
+    detectTriple(rows, z),
+    detectBroadening(rows, z),
+    detectDiamond(rows, z),
+    detectRoundingBottom(rows),
+    detectComplexHns(rows, z)
+  );
   const seen = new Set();
   const uniq = [];
   events.sort((a, b) => a.confirm_idx - b.confirm_idx);
@@ -686,6 +1177,35 @@ function detectCurrentPatterns(rows) {
   return evs;
 }
 
+function analyzeIndividualPatternPerformance(cleanRows, patternName, horizon) {
+  const n = cleanRows.length;
+  const allEvents = detectConfirmations(cleanRows);
+  const matchedEvents = allEvents.filter((e) => e.pattern === patternName);
+  
+  let totalCount = 0;
+  let upCount = 0;
+  let returnsSum = 0;
+
+  for (const ev of matchedEvents) {
+    const idx = ev.confirm_idx;
+    if (idx + horizon < n) {
+      const priceNow = cleanRows[idx].c;
+      const priceFuture = cleanRows[idx + horizon].c;
+      const ret = (priceFuture - priceNow) / priceNow;
+      totalCount += 1;
+      if (ret > 0) upCount += 1;
+      returnsSum += ret;
+    }
+  }
+
+  if (totalCount === 0) return null;
+  return {
+    n: totalCount,
+    up_rate: (upCount / totalCount) * 100,
+    avg_ret: (returnsSum / totalCount) * 100
+  };
+}
+
 // 감지된 현재 패턴 + 과거 통계 → 신호 + 카드 정보
 function patternSignals(rows, horizon, stats) {
   const result = { signals: [], cards: [] };
@@ -697,7 +1217,6 @@ function patternSignals(rows, horizon, stats) {
     if (!pstat || !pstat[hKey]) continue;
     const s = pstat[hKey];
     const barsAgo = rows.length - 1 - ev.confirm_idx;
-    // 신호 방향: 교과서 방향이 아니라 과거 실측 상승확률(50% 기준)을 따른다.
     const dir = Math.max(-1, Math.min(1, (s.up_rate - 50) / 8));
     result.signals.push({
       label: `패턴: ${PATTERN_LABELS[ev.pattern] || ev.pattern}`,
@@ -712,6 +1231,7 @@ function patternSignals(rows, horizon, stats) {
       barsAgo,
       stat: s,
       baseline: stats.baseline ? stats.baseline[hKey] : null,
+      indyStat: analyzeIndividualPatternPerformance(rows, ev.pattern, horizon)
     });
   }
   return result;
@@ -1124,6 +1644,8 @@ function renderPatternCard(result) {
     const dirWord = c.nominalDir > 0 ? "상승형" : c.nominalDir < 0 ? "하락형" : "중립형";
     const edgeStr = edge == null ? "" :
       `<span class="pat-edge ${edge >= 0 ? "pos" : "neg"}">시장 대비 ${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%p</span>`;
+    const indyStr = c.indyStat ? 
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 과거 실측: <b>${c.indyStat.n}회</b> 발생 중 <b>${c.indyStat.up_rate.toFixed(0)}%</b> 상승 (평균 <b>${c.indyStat.avg_ret >= 0 ? "+" : ""}${c.indyStat.avg_ret.toFixed(1)}%</b>)</span>` : "";
     return `<div class="pat-item">
       <div class="pat-head">
         <span class="pat-name">${escapeHtml(c.label)}</span>
@@ -1133,7 +1655,9 @@ function renderPatternCard(result) {
       <p class="pat-stat">과거 같은 패턴 <b>${c.stat.n.toLocaleString()}건</b> 중
         <b style="color:${gaugeColor(up)}">${up.toFixed(0)}%</b>가 ${result.horizon}거래일 뒤 상승
         · 평균 <b style="color:${c.stat.avg_ret >= 0 ? "var(--pos)" : "var(--neg)"}">${c.stat.avg_ret >= 0 ? "+" : ""}${c.stat.avg_ret.toFixed(1)}%</b>
-        ${edgeStr}</p>
+        ${edgeStr}
+        ${indyStr}
+      </p>
     </div>`;
   }).join("");
   return `<div class="card">
@@ -1141,6 +1665,92 @@ function renderPatternCard(result) {
     ${rows}
     <p class="pat-note muted">※ 고전 패턴은 통계적으로 '약한 우위'에 그칩니다. 방향은 교과서 정의가 아니라 <b>과거 실측 상승률</b>로 표시했습니다.</p>
   </div>`;
+}
+
+function generateBriefing(result) {
+  const up = result.headlineUp;
+  const price = result.price;
+  const signals = result.signals || [];
+  
+  let opinion = "";
+  if (up >= 65) opinion = `종합 분석 결과 <strong>상승 우위 국면</strong>입니다. 기술적 지표와 과거 통계가 일관되게 긍정적인 방향을 가리키고 있습니다.`;
+  else if (up >= 55) opinion = `종합 분석 결과 <strong>약한 상승 우위</strong> 상태입니다. 전반적인 추세는 우상향이나 단기 매물 소화 과정이 관찰됩니다.`;
+  else if (up > 45) opinion = `종합 분석 결과 <strong>방향성이 불분명한 혼조 국면</strong>입니다. 주요 신호들이 서로 엇갈리고 있어 무리한 추격 매수보다는 관망이 유리할 수 있습니다.`;
+  else if (up > 35) opinion = `종합 분석 결과 <strong>약한 하락 우위</strong> 상태입니다. 매수세가 점차 약해지고 있어 보수적인 리스크 관리가 필요합니다.`;
+  else opinion = `종합 분석 결과 <strong>하락 우위 국면</strong>입니다. 추세 이탈 신호가 다수 감지되어 기술적 반등 시 비중을 조절하는 전략을 권장합니다.`;
+
+  let supportReasons = [];
+  let riskReasons = [];
+  
+  const maSig = signals.find(s => s.label === "이동평균선 배열");
+  const rsiSig = signals.find(s => s.label.includes("RSI"));
+  const macdSig = signals.find(s => s.label === "MACD");
+  const volSig = signals.find(s => s.label.includes("OBV"));
+
+  if (maSig) {
+    if (maSig.dir > 0.5) supportReasons.push("이동평균선이 정배열되어 탄탄한 상승 추세를 지지하고 있습니다.");
+    else if (maSig.dir < -0.5) riskReasons.push("이평선이 역배열 상태로 상단에 강한 저항 매물이 쌓여 있습니다.");
+  }
+  
+  if (rsiSig) {
+    if (rsiSig.dir < -0.4) riskReasons.push("RSI 지표가 과매수 구간에 진입하여 단기 조정 리스크가 존재합니다.");
+    else if (rsiSig.dir > 0.5) supportReasons.push("RSI 지표가 과매도(침체)권에 있어 기술적 반등 가능성이 높습니다.");
+  }
+
+  if (macdSig) {
+    if (macdSig.detail.includes("골든크로스")) supportReasons.push("MACD가 골든크로스를 기록하며 강세 전환 모멘텀이 포착되었습니다.");
+    else if (macdSig.detail.includes("데드크로스")) riskReasons.push("MACD 데드크로스가 발생해 단기 하락 압력이 증가하고 있습니다.");
+  }
+
+  if (volSig) {
+    if (volSig.dir > 0.1) supportReasons.push("OBV상 자금 유입(매집 우위) 흐름이 관찰되어 수급이 양호합니다.");
+    else if (volSig.dir < -0.1) riskReasons.push("OBV상 매도 분산 흐름이 이어져 수급이 약화되고 있습니다.");
+  }
+
+  const pats = result.patterns || [];
+  if (pats.length > 0) {
+    const topPat = pats[0];
+    const isBull = topPat.nominalDir > 0;
+    if (isBull) {
+      supportReasons.push(`최근 차트에서 <strong>${topPat.label}</strong> 패턴이 확정되어 추가 상승 에너지를 모으고 있습니다.`);
+    } else {
+      riskReasons.push(`최근 차트에서 <strong>${topPat.label}</strong> 패턴이 확정되어 기술적 하락 위험이 감지되었습니다.`);
+    }
+  }
+
+  let coreBrief = "";
+  if (supportReasons.length > 0) {
+    coreBrief += `<li>🟢 <strong>호재 요인:</strong> ${supportReasons.slice(0, 2).join(" ")}</li>`;
+  }
+  if (riskReasons.length > 0) {
+    coreBrief += `<li>🔴 <strong>리스크 요인:</strong> ${riskReasons.slice(0, 2).join(" ")}</li>`;
+  }
+
+  const sr = result.sr || {};
+  let strategy = "";
+  if (sr.support && sr.resistance) {
+    const distSup = ((price - sr.support) / price) * 100;
+    const distRes = ((sr.resistance - price) / price) * 100;
+    if (distSup < 3) {
+      strategy = `현재 주가가 지지선($${sr.support.toFixed(2)}) 부근에 밀착해 있어 반등 타점이나 지지선 이탈 시 손절 기준으로 활용하기 적합한 구간입니다.`;
+    } else if (distRes < 3) {
+      strategy = `저항선($${sr.resistance.toFixed(2)})에 도달하여 돌파 여부 확인이 중요합니다. 돌파 시 추가 급등, 저항 시 비중 축소 타이밍입니다.`;
+    } else {
+      strategy = `주가가 지지선($${sr.support.toFixed(2)})과 저항선($${sr.resistance.toFixed(2)})의 박스권 중간에 위치해 있어 돌파 또는 지지 확인 후 진입하는 것이 안전합니다.`;
+    }
+  } else {
+    strategy = "지지선과 저항선 데이터가 부족해 돌파 여부 위주의 실시간 차트 확인이 필요합니다.";
+  }
+
+  return `
+    <div class="cprob-briefing">
+      <p class="cprob-briefing-opinion">💡 ${opinion}</p>
+      <ul class="cprob-briefing-reasons" style="margin: 8px 0 12px; padding-left: 20px; list-style-type: none;">
+        ${coreBrief}
+      </ul>
+      <p class="cprob-briefing-strategy" style="margin: 10px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; font-size: 13px;">🎯 <strong>대응 전략:</strong> ${strategy}</p>
+    </div>
+  `;
 }
 
 // 결과 → HTML 문자열(순수 함수). analysis.html 과 대시보드 패널이 동일 마크업을 공유한다.
@@ -1178,16 +1788,15 @@ function buildResultHTML(result) {
         <div><span class="muted">최고</span><b style="color:var(--pos)">+${result.base.best.toFixed(0)}%</b></div>
         <div><span class="muted">최저</span><b style="color:var(--neg)">${result.base.worst.toFixed(0)}%</b></div>
       </div>
-      <div id="cprobChartControls"></div>
     </div>` : `
     <div class="card">
       <h3>② 과거 유사 상황 실측</h3>
       <p class="muted">유사 표본이 부족해 실측 확률을 계산하지 못했습니다(데이터 길이 부족).</p>
-      <div id="cprobChartControls"></div>
     </div>`;
 
   const patternHtml = renderPatternCard(result);
   const breakoutHtml = renderBreakoutCard(result);
+  const briefingHtml = generateBriefing(result);
 
   const sr = result.sr;
   const srHtml = `<div class="sr-line">
@@ -1203,6 +1812,11 @@ function buildResultHTML(result) {
         <p class="muted">기준일 ${escapeHtml(result.lastDate)} · 종가 $${result.price.toFixed(2)} · 분석 봉 ${result.bars}개</p>
       </div>
       <div class="verdict" style="color:${color}">${verdictText(up)}</div>
+    </div>
+
+    <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
+      <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">💡 AI 기술적 요약 브리핑</h3>
+      ${briefingHtml}
     </div>
 
     <div class="prob-wrap">

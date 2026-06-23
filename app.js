@@ -176,7 +176,7 @@ let chartState = {
   showDonchian: false,
   showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
   showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이 마스터
-  patternTypes: { hns: true, double: true, triangle: true, breakout: true }, // 종류별 표시 필터
+  patternTypes: { hns: true, double: true, triangle: true, wedge: true, box: true, flag: true, triple: true, broadening: true, diamond: true, rounding: true, complex_hns: true, breakout: true }, // 종류별 표시 필터
   showVolume: true,
   showVolMa20: false,
   showVolumeRatio: false,
@@ -2790,7 +2790,8 @@ function buildChartProbPanel(result) {
   const toolbar = `<div class="cprob-toolbar">
       <span class="cprob-title">📊 상승확률 분석</span>
       <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
-    </div>`;
+    </div>
+    <div id="cprobChartControls"></div>`;
   return toolbar + window.MirProb.buildResultHTML(result);
 }
 
@@ -2808,6 +2809,14 @@ function patternCategory(p) {
   if (p === "hns" || p === "inv_hns") return "hns";
   if (p === "double_top" || p === "double_bottom") return "double";
   if (p === "ascending_triangle" || p === "descending_triangle" || p === "symmetrical_triangle") return "triangle";
+  if (p === "falling_wedge" || p === "rising_wedge") return "wedge";
+  if (p === "box_breakout" || p === "box_breakdown") return "box";
+  if (p === "bull_flag" || p === "bear_flag") return "flag";
+  if (p === "triple_top" || p === "triple_bottom") return "triple";
+  if (p === "broadening_triangle") return "broadening";
+  if (p === "diamond_top" || p === "diamond_bottom") return "diamond";
+  if (p === "rounding_bottom") return "rounding";
+  if (p === "complex_hns") return "complex_hns";
   if (p === "resistance_breakout" || p === "support_breakdown") return "breakout";
   return null;
 }
@@ -2817,6 +2826,14 @@ const PATTERN_TYPE_LABELS = [
   ["hns", "헤드앤숄더"],
   ["double", "쌍바닥/쌍천장"],
   ["triangle", "삼각수렴"],
+  ["wedge", "쐐기형"],
+  ["box", "박스권 횡보"],
+  ["flag", "깃발형"],
+  ["triple", "삼중 바닥/천장"],
+  ["broadening", "확산형 수렴"],
+  ["diamond", "다이아몬드형"],
+  ["rounding", "라운딩 바닥형"],
+  ["complex_hns", "복합 H&S"],
   ["breakout", "돌파"],
 ];
 function fillCprobChartControls() {
@@ -2826,7 +2843,8 @@ function fillCprobChartControls() {
   const boxes = PATTERN_TYPE_LABELS.map(([k, l]) =>
     `<label><input type="checkbox" data-pt="${k}"${pt[k] ? " checked" : ""}> ${l}</label>`).join("");
   host.innerHTML = `<div class="cprob-chart-toggle">
-      <span class="cprob-toggle-title">차트에 패턴 표시</span>${boxes}
+      <span class="cprob-toggle-title">차트에 패턴 표시</span>
+      <div class="cprob-checkbox-group">${boxes}</div>
     </div>`;
   host.querySelectorAll("input[data-pt]").forEach((cb) => {
     cb.addEventListener("change", (e) => {

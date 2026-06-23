@@ -25,6 +25,12 @@ from telegram_notifier import notify_pipeline_status
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL_FALLBACKS = (
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.0-flash",
+)
+RETRYABLE_GEMINI_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
 SCORING_RUBRIC = {
     "market_impact": (30, "주식·채권·환율·원자재·산업에 미치는 시장 영향"),
     "timeliness": (20, "오늘 새롭게 발생했거나 중요하게 전개된 시의성"),
@@ -154,15 +160,25 @@ def validate_analysis(payload: dict, article_count: int) -> dict:
 
 
 class GeminiTop5Analyzer:
-    def __init__(self, api_key: str, model: str = DEFAULT_GEMINI_MODEL, timeout: int = 120) -> None:
+    def __init__(
+        self,
+        api_key: str,
+        model: str = DEFAULT_GEMINI_MODEL,
+        timeout: int = 120,
+        models: tuple[str, ...] | None = None,
+    ) -> None:
         if not api_key:
             raise ValueError("GEMINI_API_KEY가 필요합니다.")
         self.api_key = api_key
-        self.model = model
         self.timeout = timeout
+        ordered_models = []
+        for candidate in (model, *GEMINI_MODEL_FALLBACKS):
+            if candidate and candidate not in ordered_models:
+                ordered_models.append(candidate)
+        self.models = tuple(models or ordered_models)
 
-    def _call(self, prompt: str) -> dict:
-        url = f"{GEMINI_API_BASE}/{self.model}:generateContent"
+    def _call(self, prompt: str, model: str) -> dict:
+        url = f"{GEMINI_API_BASE}/{model}:generateContent"
         payload = {
             "contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {
@@ -185,7 +201,9 @@ class GeminiTop5Analyzer:
                 result = json.loads(response.read().decode("utf-8"))
         except HTTPError as exc:
             detail = exc.read().decode("utf-8", errors="replace")
-            raise RuntimeError(f"Gemini HTTP {exc.code}: {detail[:500]}") from exc
+            error = RuntimeError(f"Gemini HTTP {exc.code}: {detail[:500]}")
+            error.http_code = exc.code  # type: ignore[attr-defined]
+            raise error from exc
         except (URLError, TimeoutError, json.JSONDecodeError) as exc:
             raise RuntimeError(f"Gemini 요청 실패: {exc}") from exc
 
@@ -195,17 +213,49 @@ class GeminiTop5Analyzer:
             raise RuntimeError(f"Gemini 응답 형식을 읽을 수 없습니다: {result}") from exc
         return _clean_json_response(text)
 
-    def analyze(self, collection: dict, retries: int = 3) -> dict:
+    @staticmethod
+    def _retry_delay(attempt: int, http_code: int | None) -> float:
+        if http_code in RETRYABLE_GEMINI_HTTP_CODES:
+            return min(15 * (2 ** (attempt - 1)), 120)
+        return min(10 * attempt, 60)
+
+    @staticmethod
+    def _is_retryable(exc: Exception) -> bool:
+        if isinstance(exc, (ValueError, json.JSONDecodeError)):
+            return True
+        http_code = getattr(exc, "http_code", None)
+        if isinstance(http_code, int):
+            if http_code in RETRYABLE_GEMINI_HTTP_CODES:
+                return True
+            if 400 <= http_code < 500:
+                return False
+        message = str(exc).lower()
+        return any(token in message for token in ("timeout", "temporarily", "high demand", "unavailable"))
+
+    def analyze(self, collection: dict, retries: int = 5) -> dict:
         prompt = build_prompt(collection)
         last_error: Exception | None = None
-        for attempt in range(1, retries + 1):
-            try:
-                return validate_analysis(self._call(prompt), collection["article_count"])
-            except (RuntimeError, ValueError, json.JSONDecodeError) as exc:
-                last_error = exc
-                print(f"[Gemini] 시도 {attempt}/{retries} 실패: {exc}")
-                if attempt < retries:
-                    time.sleep(10 * attempt)
+        total_attempts = retries * len(self.models)
+        attempt = 0
+        for model in self.models:
+            for model_attempt in range(1, retries + 1):
+                attempt += 1
+                try:
+                    print(f"[Gemini] {model} 시도 {model_attempt}/{retries} (전체 {attempt}/{total_attempts})")
+                    return validate_analysis(
+                        self._call(prompt, model),
+                        collection["article_count"],
+                    )
+                except (RuntimeError, ValueError, json.JSONDecodeError) as exc:
+                    last_error = exc
+                    print(f"[Gemini] {model} 시도 {model_attempt}/{retries} 실패: {exc}")
+                    if attempt >= total_attempts:
+                        break
+                    if not self._is_retryable(exc):
+                        break
+                    time.sleep(self._retry_delay(model_attempt, getattr(exc, "http_code", None)))
+            if attempt >= total_attempts:
+                break
         raise RuntimeError("Gemini Top 5 생성이 모든 재시도에서 실패했습니다.") from last_error
 
 

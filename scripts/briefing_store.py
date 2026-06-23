@@ -117,11 +117,39 @@ def _parse_porcelain_paths(stdout, include_untracked=False):
     return paths
 
 
+def _commits_ahead_of_origin(project_dir, branch):
+    result = _run_git(
+        project_dir,
+        ["rev-list", "--count", f"origin/{branch}..HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return int(result.stdout.strip() or 0)
+
+
+def _files_in_ahead_commits(project_dir, branch):
+    """Return paths touched only by local commits that are not on origin/branch."""
+    result = _run_git(
+        project_dir,
+        ["log", "--name-only", "--pretty=format:", f"origin/{branch}..HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    paths = []
+    for line in result.stdout.splitlines():
+        path = line.strip()
+        if path:
+            paths.append(path)
+    return paths
+
+
 def _assert_safe_to_reset(project_dir, branch, allowed_paths):
     """reset --hard 로 사용자의 다른 작업이 사라지지 않도록 안전 점검.
 
     - 게시 대상 외에 커밋되지 않은 변경이 있으면 중단.
-    - origin/branch 에 없는 로컬 커밋이 게시 대상 외 파일을 건드리면 중단.
+    - origin/branch 보다 앞선 로컬 커밋이 게시 대상 외 파일을 건드리면 중단.
     """
     allowed = set(allowed_paths)
     status = _run_git(project_dir, ["status", "--porcelain"], capture_output=True, text=True, check=True)
@@ -131,12 +159,15 @@ def _assert_safe_to_reset(project_dir, branch, allowed_paths):
             "작업 트리에 커밋되지 않은 다른 변경이 있어 안전을 위해 게시를 중단합니다: "
             + ", ".join(unrelated[:8])
         )
-    ahead = _run_git(
-        project_dir,
-        ["diff", "--name-only", f"origin/{branch}..HEAD"],
-        capture_output=True, text=True, check=True,
-    )
-    ahead_unrelated = [p.strip() for p in ahead.stdout.splitlines() if p.strip() and p.strip() not in allowed]
+    if _commits_ahead_of_origin(project_dir, branch) == 0:
+        return
+    seen = set()
+    ahead_unrelated = []
+    for path in _files_in_ahead_commits(project_dir, branch):
+        if path in allowed or path in seen:
+            continue
+        seen.add(path)
+        ahead_unrelated.append(path)
     if ahead_unrelated:
         raise RuntimeError(
             "푸시되지 않은 로컬 커밋이 게시 대상 외 파일을 포함해 안전을 위해 게시를 중단합니다: "

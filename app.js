@@ -5387,16 +5387,22 @@ function drawChart(item) {
     donchian ? renderChannelOverlay(donchian.upper, donchian.lower, donchian.mid, xFor, overlayYFor, "#818cf8") : ""
   ].join("");
 
-  // 지지/저항 수평선 오버레이 (보이는 구간의 스윙 고저점 클러스터)
+  // 지지/저항 오버레이: 강도 점수로 고른 ATR 존(반투명 밴드) + 중심선 + 강도 막대
   let srSvg = "";
   if (chartState.showSupportResistance) {
     const levels = supportResistanceLevels(rows);
+    const xR = padL + plotW;
     srSvg = levels.map((lvl) => {
-      const y = overlayYFor(lvl.price);
+      const yMid = overlayYFor(lvl.price);
+      const yHi = overlayYFor(lvl.hi); // 높은 가격 = 작은 y
+      const yLo = overlayYFor(lvl.lo);
       const color = lvl.type === "sup" ? "#16a34a" : "#dc2626";
-      const label = `${lvl.type === "sup" ? "지지" : "저항"} $${lvl.price.toFixed(2)}`;
-      return `<line x1="${padL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${(padL + plotW).toFixed(1)}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.8"></line>`
-        + `<text x="${(padL + 5).toFixed(1)}" y="${(y - 3).toFixed(1)}" fill="${color}" font-size="10" font-weight="700">${label}</text>`;
+      const bandH = Math.max(2, yLo - yHi);
+      const dots = "●".repeat(lvl.tier) + "○".repeat(3 - lvl.tier);
+      const label = `${lvl.type === "sup" ? "지지" : "저항"} $${lvl.price.toFixed(2)} ${dots}`;
+      return `<rect x="${padL.toFixed(1)}" y="${yHi.toFixed(1)}" width="${plotW.toFixed(1)}" height="${bandH.toFixed(1)}" fill="${color}" opacity="0.08"></rect>`
+        + `<line x1="${padL.toFixed(1)}" y1="${yMid.toFixed(1)}" x2="${xR.toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.85"></line>`
+        + `<text x="${(padL + 5).toFixed(1)}" y="${(yMid - 3).toFixed(1)}" fill="${color}" font-size="10" font-weight="700">${label}</text>`;
     }).join("");
   }
 
@@ -6421,13 +6427,64 @@ function visibleChartRows(rows) {
   return base.slice(Math.max(0, end - windowSize), end);
 }
 
-// 보이는 구간의 스윙 고저점을 찾아 비슷한 가격끼리 묶고, 현재가 기준 가까운
-// 지지(아래)·저항(위) 레벨을 최대 4개 돌려준다. 차트 오버레이용.
-function supportResistanceLevels(rows, maxPerSide = 2) {
+// 보이는 구간의 평균 True Range(가격 단위)를 구한다 — 존 폭/클러스터 허용오차의 기준.
+function windowAtr(rows) {
+  const n = rows.length;
+  let sum = 0;
+  let cnt = 0;
+  for (let i = Math.max(1, n - 50); i < n; i += 1) {
+    const tr = Math.max(
+      rows[i].h - rows[i].l,
+      Math.abs(rows[i].h - rows[i - 1].c),
+      Math.abs(rows[i].l - rows[i - 1].c),
+    );
+    sum += tr; cnt += 1;
+  }
+  return cnt ? sum / cnt : (rows[n - 1].c * 0.02);
+}
+
+// 거래량 프로파일: 가격축을 BINS개 구간으로 나눠 각 봉의 거래량을 [저,고] 범위에
+// 분산 누적한다. 국소 최대(고거래량 노드, HVN) = 실제 매물이 몰린 가격대.
+function volumeProfileNodes(rows) {
+  const n = rows.length;
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const r of rows) { if (r.l < lo) lo = r.l; if (r.h > hi) hi = r.h; }
+  if (!(hi > lo)) return [];
+  const BINS = 60;
+  const binW = (hi - lo) / BINS;
+  const vol = new Array(BINS).fill(0);
+  const lastIdx = new Array(BINS).fill(0);
+  for (let i = 0; i < n; i += 1) {
+    const r = rows[i];
+    const a = Math.max(0, Math.floor((r.l - lo) / binW));
+    const b = Math.min(BINS - 1, Math.floor((r.h - lo) / binW));
+    const share = (r.v || 0) / (b - a + 1);
+    for (let k = a; k <= b; k += 1) { vol[k] += share; lastIdx[k] = i; }
+  }
+  const nodes = [];
+  for (let k = 1; k < BINS - 1; k += 1) {
+    if (vol[k] > 0 && vol[k] >= vol[k - 1] && vol[k] >= vol[k + 1]) {
+      nodes.push({ price: lo + (k + 0.5) * binW, vol: vol[k], idx: lastIdx[k] });
+    }
+  }
+  return nodes;
+}
+
+// 보이는 구간에서 지지/저항 레벨을 강도 점수로 평가해 돌려준다.
+// 근거 = ① 스윙 고저점(터치) ② 닿은 뒤 반전 크기(ATR 대비) ③ 거래량 프로파일(매물대)
+//        ④ 최신성. 클러스터 폭/존 두께는 ATR로 자동 조절. (차트 오버레이용)
+function supportResistanceLevels(rows, maxPerSide = 3) {
   const n = rows.length;
   if (n < 12) return [];
+  const price = rows[n - 1].c;
+  const atr = windowAtr(rows);
+  const atrPct = price ? atr / price : 0.02;
   const win = Math.max(3, Math.min(8, Math.floor(n / 25)));
-  const piv = [];
+  const fwd = Math.min(20, Math.floor(n / 4)); // 반전 크기를 보는 전방 봉 수
+
+  // 후보 = 스윙 피벗(터치·반전) + 거래량 노드(매물대)
+  const cands = [];
   for (let i = win; i < n - win; i += 1) {
     let isHigh = true;
     let isLow = true;
@@ -6436,27 +6493,63 @@ function supportResistanceLevels(rows, maxPerSide = 2) {
       if (rows[j].h > rows[i].h) isHigh = false;
       if (rows[j].l < rows[i].l) isLow = false;
     }
-    if (isHigh) piv.push(rows[i].h);
-    if (isLow) piv.push(rows[i].l);
+    if (isHigh) {
+      let drop = 0;
+      for (let j = i + 1; j <= Math.min(n - 1, i + fwd); j += 1) drop = Math.max(drop, rows[i].h - rows[j].l);
+      cands.push({ price: rows[i].h, touches: 1, reaction: atr ? drop / atr : 0, vol: 0, idx: i });
+    }
+    if (isLow) {
+      let rise = 0;
+      for (let j = i + 1; j <= Math.min(n - 1, i + fwd); j += 1) rise = Math.max(rise, rows[j].h - rows[i].l);
+      cands.push({ price: rows[i].l, touches: 1, reaction: atr ? rise / atr : 0, vol: 0, idx: i });
+    }
   }
-  if (!piv.length) return [];
-  piv.sort((a, b) => a - b);
-  const tol = 0.012; // 1.2% 이내는 같은 레벨로 묶음
+  for (const node of volumeProfileNodes(rows)) {
+    cands.push({ price: node.price, touches: 0, reaction: 0, vol: node.vol, idx: node.idx });
+  }
+  if (!cands.length) return [];
+
+  // ATR 기반 허용오차로 비슷한 가격끼리 클러스터링(존)
+  cands.sort((a, b) => a.price - b.price);
+  const tol = Math.max(0.6 * atrPct, 0.004);
   const clusters = [];
-  for (const p of piv) {
+  for (const c of cands) {
     const last = clusters[clusters.length - 1];
-    const mean = last ? last.sum / last.n : 0;
-    if (last && mean && Math.abs(p - mean) / mean <= tol) { last.sum += p; last.n += 1; }
-    else clusters.push({ sum: p, n: 1 });
+    const mean = last ? last.sum / last.wsum : 0;
+    if (last && mean && Math.abs(c.price - mean) / mean <= tol) {
+      last.sum += c.price; last.wsum += 1;
+      last.touches += c.touches; last.reaction += c.reaction; last.vol += c.vol;
+      last.lo = Math.min(last.lo, c.price); last.hi = Math.max(last.hi, c.price);
+      last.idx = Math.max(last.idx, c.idx);
+    } else {
+      clusters.push({ sum: c.price, wsum: 1, touches: c.touches, reaction: c.reaction, vol: c.vol, lo: c.price, hi: c.price, idx: c.idx });
+    }
   }
-  const price = rows[n - 1].c;
-  const levels = clusters.map((c) => ({ price: c.sum / c.n, touches: c.n }));
-  const sup = levels.filter((l) => l.price < price).sort((a, b) => b.price - a.price);
-  const res = levels.filter((l) => l.price >= price).sort((a, b) => a.price - b.price);
-  return [
-    ...sup.slice(0, maxPerSide).map((l) => ({ ...l, type: "sup" })),
-    ...res.slice(0, maxPerSide).map((l) => ({ ...l, type: "res" })),
+
+  // 필드별 최댓값으로 0~1 정규화 후 가중합 = 강도 점수
+  const maxT = Math.max(1, ...clusters.map((c) => c.touches));
+  const maxR = Math.max(1e-9, ...clusters.map((c) => c.reaction));
+  const maxV = Math.max(1e-9, ...clusters.map((c) => c.vol));
+  const levels = clusters.map((c) => {
+    const p = c.sum / c.wsum;
+    const recency = n > 1 ? c.idx / (n - 1) : 0.5;           // 최근일수록 1
+    const prox = 1 - Math.min(1, Math.abs(p - price) / (price * 0.25)); // 25% 밖이면 0
+    const score = 0.30 * (c.vol / maxV) + 0.22 * (c.touches / maxT)
+      + 0.18 * (c.reaction / maxR) + 0.12 * recency + 0.18 * prox;
+    const half = Math.max(0.4 * atr, (c.hi - c.lo) / 2);
+    return { price: p, lo: p - half, hi: p + half, touches: c.touches, vol: c.vol, score };
+  });
+
+  const sup = levels.filter((l) => l.price < price).sort((a, b) => b.score - a.score).slice(0, maxPerSide);
+  const res = levels.filter((l) => l.price >= price).sort((a, b) => b.score - a.score).slice(0, maxPerSide);
+  const maxScore = Math.max(1e-9, ...levels.map((l) => l.score));
+  const out = [
+    ...sup.map((l) => ({ ...l, type: "sup" })),
+    ...res.map((l) => ({ ...l, type: "res" })),
   ];
+  // 점수 3단계(강도 막대)로 표시용 tier 부여
+  for (const l of out) l.tier = l.score >= 0.66 * maxScore ? 3 : (l.score >= 0.4 * maxScore ? 2 : 1);
+  return out;
 }
 
 function averagePath(values, period, xFor, yFor, color) {

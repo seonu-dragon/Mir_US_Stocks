@@ -22,10 +22,12 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+from briefing_store import repository_publish_lock  # noqa: E402
 from institutions_13f_registry import UNIQUE_INSTITUTIONS  # noqa: E402
 
 OUT_JSON = ROOT / "data" / "institutional_13f.json"
 OUT_JS = ROOT / "data" / "institutional_13f.js"
+KST = ZoneInfo("Asia/Seoul")
 
 CURL = shutil.which("curl") or shutil.which("curl.exe")
 QUARTER_ENDS = {1: "03-31", 2: "06-30", 3: "09-30", 4: "12-31"}
@@ -166,27 +168,22 @@ def institution_quarters(cik: str, quarters: int = MAX_QUARTERS) -> list[dict]:
     return out
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--limit", type=int, default=len(UNIQUE_INSTITUTIONS), help="기관 수 제한")
-    parser.add_argument("--quarters", type=int, default=MAX_QUARTERS, help="기관당 분기 수")
-    args = parser.parse_args()
-
-    institutions = UNIQUE_INSTITUTIONS[: args.limit]
+def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
+    institutions = UNIQUE_INSTITUTIONS[:limit]
     payload = {
-        "updatedAtKst": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST"),
+        "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
         "updateSchedule": "quarterly",
         "source": "SEC EDGAR 13F-HR via 13f.info",
         "note": "분기마다 제출되는 공시 기준 보유 내역입니다. 매일 갱신해도 동일하므로 분기 공시 후에만 업데이트합니다. 실시간 매매가 아닙니다.",
-        "quartersPerInstitution": args.quarters,
+        "quartersPerInstitution": quarters,
         "institutionCount": len(institutions),
         "institutions": [],
     }
     ok = 0
     for inst in institutions:
         try:
-            quarters = institution_quarters(inst["cik"], quarters=args.quarters)
-            latest = quarters[0] if quarters else {}
+            inst_quarters = institution_quarters(inst["cik"], quarters=quarters)
+            latest = inst_quarters[0] if inst_quarters else {}
             payload["institutions"].append({
                 **inst,
                 "status": "ok",
@@ -194,11 +191,11 @@ def main() -> None:
                 "filedDate": latest.get("filedDate", ""),
                 "accession": latest.get("accession", ""),
                 "holdings": latest.get("holdings", []),
-                "quarters": quarters,
+                "quarters": inst_quarters,
             })
             ok += 1
             top = latest.get("holdings", [{}])[0].get("issuer", "-")
-            print(f"[ok] {inst['name']} quarters={len(quarters)} top={top}")
+            print(f"[ok] {inst['name']} quarters={len(inst_quarters)} top={top}")
         except Exception as exc:
             payload["institutions"].append({
                 **inst,
@@ -209,7 +206,10 @@ def main() -> None:
             })
             print(f"[err] {inst['name']}: {exc}")
         time.sleep(0.25)
+    return payload, ok, len(institutions)
 
+
+def write_files(payload: dict) -> None:
     OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     OUT_JS.write_text(
         "window.INSTITUTIONAL_13F = "
@@ -217,7 +217,60 @@ def main() -> None:
         + ";\n",
         encoding="utf-8",
     )
-    print(f"Wrote {OUT_JSON} ({ok}/{len(institutions)} ok)")
+
+
+def _run_git(args, **kwargs):
+    return subprocess.run(["git", *args], cwd=ROOT, **kwargs)
+
+
+def publish() -> bool:
+    paths = ["data/institutional_13f.json", "data/institutional_13f.js"]
+    remotes = _run_git(["remote"], capture_output=True, text=True, check=True)
+    if not remotes.stdout.strip():
+        print("  [Git] 원격 없음 — 푸시 생략")
+        return True
+    branch = _run_git(["branch", "--show-current"], capture_output=True, text=True, check=True).stdout.strip()
+    if not branch:
+        raise RuntimeError("detached HEAD")
+    _run_git(["add", "--", *paths], check=True)
+    status = _run_git(["status", "--porcelain", "--", *paths], capture_output=True, text=True, check=True)
+    if status.stdout.strip():
+        stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
+        msg = f"Auto-update institutional 13F: {stamp} [skip ci]"
+        _run_git(["commit", "-m", msg, "--", *paths], check=True)
+    for attempt in range(1, 4):
+        try:
+            _run_git(["fetch", "origin", branch], check=True)
+            _run_git(["pull", "--rebase", "origin", branch], check=True)
+            _run_git(["push", "origin", branch], check=True)
+            print(f"  [Git] origin/{branch} institutional 13F 푸시 완료")
+            return True
+        except Exception as error:
+            if attempt < 3:
+                print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
+                time.sleep(10)
+    return False
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--limit", type=int, default=len(UNIQUE_INSTITUTIONS), help="기관 수 제한")
+    parser.add_argument("--quarters", type=int, default=MAX_QUARTERS, help="기관당 분기 수")
+    parser.add_argument("--push", action="store_true", default=False)
+    parser.add_argument("--no-push", action="store_true")
+    args = parser.parse_args()
+
+    if sys.platform == "win32":
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+
+    print("=== SEC 13F-HR 기관 보유 스냅샷 빌드 시작 ===")
+    payload, ok, total = build_payload(args.limit, args.quarters)
+    with repository_publish_lock(ROOT):
+        write_files(payload)
+        print(f"Wrote {OUT_JSON} ({ok}/{total} ok)")
+        if args.push and not args.no_push:
+            publish()
 
 
 if __name__ == "__main__":

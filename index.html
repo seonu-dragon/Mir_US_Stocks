@@ -39,7 +39,7 @@
     </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260623bb">
+    <link rel="stylesheet" href="styles.css?v=20260623bc">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1871,10 +1871,13 @@
           <button type="submit" aria-label="전송">↑</button>
         </form>
       </div>
-      <button class="chat-fab" id="chatToggle" type="button" aria-label="미르 AI 챗봇 열기">
-        <span class="chat-bubble">미르 AI 챗봇 <b>Click!</b></span>
-        <img class="chat-mascot" src="assets/mir-mascot.png?v=1" alt="미르 캐릭터">
-      </button>
+      <div class="chat-fab-wrap">
+        <button class="chat-fab" id="chatToggle" type="button" aria-label="미르 AI 챗봇 열기">
+          <span class="chat-bubble">미르 AI 챗봇 <b>Click!</b></span>
+          <img class="chat-mascot" src="assets/mir-mascot.png?v=1" alt="미르 캐릭터">
+        </button>
+        <button class="chat-dismiss" id="chatDismiss" type="button" aria-label="챗봇 숨기기" title="챗봇 숨기기">✕</button>
+      </div>
     </div>
 
     <script src="data/market_snapshot.js?v=20260617x"></script>
@@ -1891,6 +1894,6 @@
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
     <script src="pattern_detectors_extended.js?v=20260623c"></script>
     <script src="analysis.js?v=20260623h"></script>
-    <script src="app.js?v=20260623h"></script>
+    <script src="app.js?v=20260623i"></script>
   </body>
 </html>

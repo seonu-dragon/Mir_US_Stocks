@@ -4835,6 +4835,35 @@ footer {
 
 .chatbot > * { pointer-events: auto; }
 
+/* FAB 래퍼: 마스코트 버튼 + 숨기기(X) 버튼을 함께 담는다(빈 영역은 클릭 통과) */
+.chat-fab-wrap { position: relative; pointer-events: none; }
+.chat-fab-wrap > * { pointer-events: auto; }
+
+/* 챗봇 숨기기(X): 마스코트 우상단 모서리 */
+.chat-dismiss {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--panel);
+  color: var(--muted);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  z-index: 2;
+}
+.chat-dismiss:hover { background: var(--neg); color: #fff; border-color: var(--neg); }
+.chatbot.dragging .chat-dismiss,
+.chatbot.is-chat-open .chat-dismiss { display: none; }
+
 /* 미르 캐릭터 챗봇 버튼: 마스코트가 버튼 본체, 말풍선은 위로 띄움(absolute) */
 .chat-fab {
   position: relative;

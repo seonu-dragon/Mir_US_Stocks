@@ -505,7 +505,9 @@ function detectDouble(rows, z) {
         && (top - b.price) / top >= PAT.TROUGH_MIN) {
         const neck = b.price;
         const ci = confirmBreak(rows, c.idx, neck, -1, Math.max(a.price, c.price));
-        if (ci != null) out.push({ pattern: "double_top", dir: -1, confirm_idx: ci, neckline: neck });
+        if (ci != null) out.push({ pattern: "double_top", dir: -1, confirm_idx: ci, neckline: neck,
+          points: [{ idx: a.idx, price: a.price, label: "천장" }, { idx: b.idx, price: b.price, label: "" }, { idx: c.idx, price: c.price, label: "천장" }],
+          necklinePts: [{ idx: a.idx, price: neck }, { idx: ci, price: neck }] });
       }
     }
     if (a.type === "L" && b.type === "H" && c.type === "L") {
@@ -514,7 +516,9 @@ function detectDouble(rows, z) {
         && (b.price - bot) / bot >= PAT.TROUGH_MIN) {
         const neck = b.price;
         const ci = confirmBreak(rows, c.idx, neck, +1, Math.min(a.price, c.price));
-        if (ci != null) out.push({ pattern: "double_bottom", dir: +1, confirm_idx: ci, neckline: neck });
+        if (ci != null) out.push({ pattern: "double_bottom", dir: +1, confirm_idx: ci, neckline: neck,
+          points: [{ idx: a.idx, price: a.price, label: "바닥" }, { idx: b.idx, price: b.price, label: "" }, { idx: c.idx, price: c.price, label: "바닥" }],
+          necklinePts: [{ idx: a.idx, price: neck }, { idx: ci, price: neck }] });
       }
     }
   }
@@ -534,7 +538,9 @@ function detectHns(rows, z) {
           && (head.price - sh) / sh >= PAT.HEAD_MIN) {
           const neck = lineAt(t1.idx, t1.price, t2.idx, t2.price, rs.idx);
           const ci = confirmBreak(rows, rs.idx, neck, -1, head.price);
-          if (ci != null) out.push({ pattern: "hns", dir: -1, confirm_idx: ci, neckline: neck });
+          if (ci != null) out.push({ pattern: "hns", dir: -1, confirm_idx: ci, neckline: neck,
+            points: [{ idx: ls.idx, price: ls.price, label: "좌어깨" }, { idx: t1.idx, price: t1.price, label: "" }, { idx: head.idx, price: head.price, label: "머리" }, { idx: t2.idx, price: t2.price, label: "" }, { idx: rs.idx, price: rs.price, label: "우어깨" }],
+            necklinePts: [{ idx: t1.idx, price: t1.price }, { idx: ci, price: lineAt(t1.idx, t1.price, t2.idx, t2.price, ci) }] });
         }
       }
     } else if (types === "LHLHL") {
@@ -545,7 +551,9 @@ function detectHns(rows, z) {
           && (sh - head.price) / sh >= PAT.HEAD_MIN) {
           const neck = lineAt(t1.idx, t1.price, t2.idx, t2.price, rs.idx);
           const ci = confirmBreak(rows, rs.idx, neck, +1, head.price);
-          if (ci != null) out.push({ pattern: "inv_hns", dir: +1, confirm_idx: ci, neckline: neck });
+          if (ci != null) out.push({ pattern: "inv_hns", dir: +1, confirm_idx: ci, neckline: neck,
+            points: [{ idx: ls.idx, price: ls.price, label: "좌어깨" }, { idx: t1.idx, price: t1.price, label: "" }, { idx: head.idx, price: head.price, label: "머리" }, { idx: t2.idx, price: t2.price, label: "" }, { idx: rs.idx, price: rs.price, label: "우어깨" }],
+            necklinePts: [{ idx: t1.idx, price: t1.price }, { idx: ci, price: lineAt(t1.idx, t1.price, t2.idx, t2.price, ci) }] });
         }
       }
     }
@@ -1299,6 +1307,7 @@ window.MirProb = {
   supportResistanceLevels,
   srSummary,
   detectCurrentPatterns,
+  patternLabels: PATTERN_LABELS,
   ensureStats,
   gaugeColor,
   verdictText,

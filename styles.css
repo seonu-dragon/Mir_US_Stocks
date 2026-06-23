@@ -9321,6 +9321,11 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 
 .cprob .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 @media (max-width: 720px) { .cprob .grid2 { grid-template-columns: 1fr; } }
+/* ① 옆 우측 칼럼 스택(② 과거실측 + 다중 타임프레임 + 갭 메우기) — ②가 늘어나지 않고
+   빈 공간을 채우도록 콘텐츠 높이로 쌓는다. */
+.cprob .cprob-top-grid { align-items: start; }
+.cprob .cprob-rstack { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.cprob .cprob-rstack > .card { margin-bottom: 0; }
 .cprob .card {
   background: var(--panel);
   border: 1px solid var(--line);

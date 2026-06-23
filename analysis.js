@@ -2588,21 +2588,21 @@ function buildResultHTML(result) {
       <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 신호 합의 ${result.consensus.up.toFixed(0)}%${result.base ? ` / 과거 실측 ${result.base.upProb.toFixed(0)}%` : ""}</p>
     </div>
 
-    <div class="grid2">
+    <div class="grid2 cprob-top-grid">
       <div class="card">
         <h3>① 신호 합의 <span class="muted">(추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
         ${bullSignals.length ? `<div class="sig-group"><h4 class="bull">강세 신호</h4>${bullSignals.map(signalRow).join("")}</div>` : ""}
         ${bearSignals.length ? `<div class="sig-group"><h4 class="bear">약세 신호</h4>${bearSignals.map(signalRow).join("")}</div>` : ""}
         ${neutralSignals.length ? `<div class="sig-group"><h4 class="neu">중립</h4>${neutralSignals.map(signalRow).join("")}</div>` : ""}
       </div>
-      ${baseHtml}
+      <div class="cprob-rstack">
+        ${baseHtml}
+        ${renderMtfCard(result)}
+        ${renderGapFillCard(result)}
+      </div>
     </div>
 
     ${confluenceHtml}
-
-    ${renderMtfCard(result)}
-
-    ${renderGapFillCard(result)}
 
     ${renderOptionsContextCard(result)}
 

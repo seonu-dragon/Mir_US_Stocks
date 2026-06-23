@@ -1178,10 +1178,12 @@ function buildResultHTML(result) {
         <div><span class="muted">최고</span><b style="color:var(--pos)">+${result.base.best.toFixed(0)}%</b></div>
         <div><span class="muted">최저</span><b style="color:var(--neg)">${result.base.worst.toFixed(0)}%</b></div>
       </div>
+      <div id="cprobChartControls"></div>
     </div>` : `
     <div class="card">
       <h3>② 과거 유사 상황 실측</h3>
       <p class="muted">유사 표본이 부족해 실측 확률을 계산하지 못했습니다(데이터 길이 부족).</p>
+      <div id="cprobChartControls"></div>
     </div>`;
 
   const patternHtml = renderPatternCard(result);
@@ -1220,8 +1222,6 @@ function buildResultHTML(result) {
       </div>
       ${baseHtml}
     </div>
-
-    <div id="cprobChartControls"></div>
 
     ${patternHtml}
 

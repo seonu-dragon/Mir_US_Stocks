@@ -5388,11 +5388,14 @@ function drawChart(item) {
   ].join("");
 
   // 지지/저항 오버레이: 강도 점수로 고른 ATR 존(반투명 밴드) + 중심선 + 강도 막대
-  // 단일 소스: analysis.js(window.MirProb)의 supportResistanceLevels 를 그대로 사용
-  // → 차트 위 선과 확률 패널의 지지/저항 숫자가 같은 로직에서 나온다.
+  // 단일 소스: analysis.js(window.MirProb)의 supportResistanceLevels 를 그대로 사용.
+  // 레벨은 보이는 구간이 아니라 **전체 일봉**으로 계산한다 → 확대/이동해도 선이
+  // 바뀌지 않고, 확률 패널의 지지/저항 숫자와도 정확히 일치한다.
+  // (보이는 가격 범위 밖의 레벨은 그리지 않는다.)
   let srSvg = "";
   if (chartState.showSupportResistance && window.MirProb && window.MirProb.supportResistanceLevels) {
-    const levels = window.MirProb.supportResistanceLevels(rows);
+    const levels = window.MirProb.supportResistanceLevels(getChartRows(item))
+      .filter((lvl) => lvl.hi >= min && lvl.lo <= max);
     const xR = padL + plotW;
     srSvg = levels.map((lvl) => {
       const yMid = overlayYFor(lvl.price);

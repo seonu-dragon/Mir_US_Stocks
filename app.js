@@ -183,7 +183,7 @@ let chartState = {
     lrUpper: false, lrLower: false, psar: false,
   },
   showVolumeProfile: false,
-  showTrendlines: false,
+  showTrendlines: true,
   showGapZones: false,
   showTtmSqueeze: false,
   showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이 마스터
@@ -3179,10 +3179,11 @@ function runChartProbAnalysis() {
   chartState.showSma20 = true;
   chartState.showSma60 = true;
   chartState.showSupportResistance = true;
+  chartState.showTrendlines = true;
   chartState.showTechLevels = false;
   chartState.techLevelTypes = Object.fromEntries(TECH_LEVEL_LABELS.map(([k]) => [k, false]));
   chartState.showPatterns = true;
-  ["showSma20", "showSma60", "showSupportResistance", "showPatterns"].forEach((id) => {
+  ["showSma20", "showSma60", "showSupportResistance", "showTrendlines", "showPatterns"].forEach((id) => {
     const el = byId(id);
     if (el) el.checked = true;
   });

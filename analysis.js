@@ -2599,18 +2599,15 @@ function buildResultHTML(result) {
         ${baseHtml}
         ${renderMtfCard(result)}
         ${renderGapFillCard(result)}
+        ${renderOptionsContextCard(result)}
+        ${renderInstitutionalFlowCard(result)}
+        ${renderTechnicalLevelsCard(result)}
       </div>
     </div>
 
     ${confluenceHtml}
 
-    ${renderOptionsContextCard(result)}
-
-    ${renderInstitutionalFlowCard(result)}
-
     ${renderShortSqueezeCard(result)}
-
-    ${renderTechnicalLevelsCard(result)}
 
     ${patternHtml}
 

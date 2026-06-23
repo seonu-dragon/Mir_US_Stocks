@@ -346,6 +346,18 @@ function ttmSqueezeState(rows) {
   return { squeezed, fired: prev && !squeezed };
 }
 
+function ttmSqueezeSeries(rows) {
+  const closes = rows.map((r) => r.c);
+  const bb = bollinger(closes, 20, 2);
+  const kc = keltnerChannels(rows, 20, 1.5);
+  const squeezed = Array(rows.length).fill(false);
+  for (let i = 0; i < rows.length; i += 1) {
+    if (bb.upper[i] == null || kc.upper[i] == null) continue;
+    squeezed[i] = bb.upper[i] < kc.upper[i] && bb.lower[i] > kc.lower[i];
+  }
+  return { squeezed, momentum: rocArray(closes, 12) };
+}
+
 function floorTraderPivots(rows) {
   if (rows.length < 2) return null;
   const prev = rows[rows.length - 2];
@@ -2636,6 +2648,10 @@ window.MirProb = {
   checkPatternFailure,
   computeConfluence,
   computeTechnicalLevels,
+  volumeProfileNodes,
+  ttmSqueezeSeries,
+  cmfArray,
+  mfiArray,
   buildMultiTimeframeContext,
   ensureStats,
   gaugeColor,

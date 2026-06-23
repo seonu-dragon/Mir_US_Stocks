@@ -177,11 +177,15 @@ let chartState = {
   showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
   showTechLevels: false, // 피벗·Fib·ATR·LinReg 등 기술 레벨선 마스터
   techLevelTypes: {
-    pivot: false, r1: false, s1: false,
-    fib618: false, fib382: false,
-    stop: false, tgt: false,
-    lrUpper: false, lrLower: false,
+    pivot: false, r1: false, r2: false, s1: false, s2: false,
+    fib0: false, fib236: false, fib382: false, fib50: false, fib618: false, fib100: false,
+    stop: false, tgt: false, tgt2: false,
+    lrUpper: false, lrLower: false, psar: false,
   },
+  showVolumeProfile: false,
+  showTrendlines: false,
+  showGapZones: false,
+  showTtmSqueeze: false,
   showPatterns: false, // 차트 패턴(역H&S 등) 도형 오버레이 마스터
   patternTypes: {
     hns: true, double: true, triangle: true, wedge: true, box: true, flag: true, pennant: true,
@@ -203,6 +207,8 @@ let chartState = {
   showAtr: false,
   showAdx: false,
   showCci: false,
+  showCmf: false,
+  showMfi: false,
   showRsSpy: false,
   showRsQqq: false,
   showRsSector: false,
@@ -2829,8 +2835,95 @@ function endChartPan() {
   redrawChart();
 }
 
+function ctxIdxForVisibleRow(ctxRows, visRow) {
+  if (!visRow?.d) return -1;
+  for (let i = ctxRows.length - 1; i >= 0; i -= 1) {
+    if (ctxRows[i].d === visRow.d) return i;
+  }
+  return -1;
+}
+
+function volumeProfileOverlayLines(rows) {
+  const fn = window.MirProb && window.MirProb.volumeProfileNodes;
+  if (!fn) return [];
+  const nodes = fn(rows);
+  if (!nodes.length) return [];
+  const sorted = nodes.slice().sort((a, b) => b.vol - a.vol);
+  const poc = sorted[0];
+  const lines = [{ price: poc.price, label: "POC", color: "#eab308", weight: 2 }];
+  sorted.slice(1, 4).forEach((node, i) => {
+    if (node.vol >= poc.vol * 0.45) {
+      lines.push({ price: node.price, label: `HVN${i + 1}`, color: "#94a3b8", weight: 1 });
+    }
+  });
+  return lines;
+}
+
+function detectUnfilledGapZones(rows, minPct = 0.003) {
+  const gaps = [];
+  for (let i = 1; i < rows.length; i += 1) {
+    const prev = rows[i - 1];
+    const cur = rows[i];
+    let zone = null;
+    if (cur.l > prev.h * (1 + minPct)) zone = { type: "up", lo: prev.h, hi: cur.l, startIdx: i - 1 };
+    else if (cur.h < prev.l * (1 - minPct)) zone = { type: "down", lo: cur.h, hi: prev.l, startIdx: i - 1 };
+    if (!zone) continue;
+    let filled = false;
+    for (let j = i; j < rows.length; j += 1) {
+      if (rows[j].l <= zone.hi && rows[j].h >= zone.lo) { filled = true; break; }
+    }
+    if (!filled) gaps.push(zone);
+  }
+  return gaps.slice(-4);
+}
+
+function computeAutoTrendlines(rows, win = 3) {
+  const pivots = [];
+  for (let i = win; i < rows.length - win; i += 1) {
+    let isHigh = true;
+    let isLow = true;
+    for (let j = i - win; j <= i + win; j += 1) {
+      if (j === i) continue;
+      if (rows[j].h >= rows[i].h) isHigh = false;
+      if (rows[j].l <= rows[i].l) isLow = false;
+    }
+    if (isHigh) pivots.push({ idx: i, price: rows[i].h, type: "H" });
+    if (isLow) pivots.push({ idx: i, price: rows[i].l, type: "L" });
+  }
+  const lines = [];
+  const highs = pivots.filter((p) => p.type === "H").slice(-3);
+  const lows = pivots.filter((p) => p.type === "L").slice(-3);
+  if (highs.length >= 2) {
+    const a = highs[highs.length - 2];
+    const b = highs[highs.length - 1];
+    lines.push({ kind: "res", x1: a.idx, y1: a.price, x2: b.idx, y2: b.price, color: "#f87171" });
+  }
+  if (lows.length >= 2) {
+    const a = lows[lows.length - 2];
+    const b = lows[lows.length - 1];
+    lines.push({ kind: "sup", x1: a.idx, y1: a.price, x2: b.idx, y2: b.price, color: "#4ade80" });
+  }
+  return lines;
+}
+
+function renderPsarDots(psarValues, ctxRows, rows, xFor, overlayYFor) {
+  if (!psarValues || !psarValues.length) return "";
+  let out = "";
+  for (let i = 0; i < rows.length; i += 1) {
+    const gi = ctxIdxForVisibleRow(ctxRows, rows[i]);
+    const v = gi >= 0 ? psarValues[gi] : null;
+    if (v == null) continue;
+    const x = xFor(i);
+    const y = overlayYFor(v);
+    const up = rows[i].c >= v;
+    out += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="${up ? "#22c55e" : "#ef4444"}" opacity="0.9"></circle>`;
+  }
+  return out;
+}
+
 function syncChartOverlayCheckboxes() {
-  ["showSma20", "showSma60", "showSupportResistance", "showPatterns", "showTechLevels"].forEach((id) => {
+  ["showSma20", "showSma60", "showSupportResistance", "showPatterns", "showTechLevels",
+    "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze"].forEach((id) => {
     const el = byId(id);
     if (el) el.checked = chartState[id];
   });
@@ -2843,6 +2936,10 @@ function snapshotChartOverlaysForProb() {
     showSupportResistance: chartState.showSupportResistance,
     showTechLevels: chartState.showTechLevels,
     techLevelTypes: { ...chartState.techLevelTypes },
+    showVolumeProfile: chartState.showVolumeProfile,
+    showTrendlines: chartState.showTrendlines,
+    showGapZones: chartState.showGapZones,
+    showTtmSqueeze: chartState.showTtmSqueeze,
     showPatterns: chartState.showPatterns,
     patternTypes: { ...chartState.patternTypes },
   };
@@ -2853,6 +2950,10 @@ function restoreChartOverlaysFromProb() {
   if (!snap) {
     chartState.showSupportResistance = false;
     chartState.showTechLevels = false;
+    chartState.showVolumeProfile = false;
+    chartState.showTrendlines = false;
+    chartState.showGapZones = false;
+    chartState.showTtmSqueeze = false;
     chartState.showPatterns = false;
     chartState.lastProbResult = null;
     syncChartOverlayCheckboxes();
@@ -2863,6 +2964,10 @@ function restoreChartOverlaysFromProb() {
   chartState.showSupportResistance = snap.showSupportResistance;
   chartState.showTechLevels = snap.showTechLevels ?? false;
   chartState.techLevelTypes = { ...chartState.techLevelTypes, ...(snap.techLevelTypes || {}) };
+  chartState.showVolumeProfile = snap.showVolumeProfile ?? false;
+  chartState.showTrendlines = snap.showTrendlines ?? false;
+  chartState.showGapZones = snap.showGapZones ?? false;
+  chartState.showTtmSqueeze = snap.showTtmSqueeze ?? false;
   chartState.showPatterns = snap.showPatterns;
   chartState.patternTypes = { ...snap.patternTypes };
   chartProbOverlaySnapshot = null;
@@ -2938,13 +3043,19 @@ function patternCategory(p) {
 
 const CHART_OVERLAY_LABELS = [
   ["showSma20", "SMA20"], ["showSma60", "SMA60"], ["showSupportResistance", "지지/저항"],
+  ["showVolumeProfile", "VP(POC/HVN)"], ["showTrendlines", "추세선"], ["showGapZones", "갭 존"],
+  ["showTtmSqueeze", "TTM Squeeze"],
 ];
 const TECH_LEVEL_LABELS = [
-  ["pivot", "Pivot (P)"], ["r1", "R1"], ["s1", "S1"],
-  ["fib618", "Fib 61.8%"], ["fib382", "Fib 38.2%"],
-  ["stop", "Stop"], ["tgt", "Tgt"],
-  ["lrUpper", "LR+"], ["lrLower", "LR-"],
+  ["pivot", "Pivot (P)"], ["r1", "R1"], ["r2", "R2"], ["s1", "S1"], ["s2", "S2"],
+  ["fib0", "Fib 0%"], ["fib236", "Fib 23.6%"], ["fib382", "Fib 38.2%"], ["fib50", "Fib 50%"],
+  ["fib618", "Fib 61.8%"], ["fib100", "Fib 100%"],
+  ["stop", "Stop"], ["tgt", "Tgt"], ["tgt2", "Tgt 2R"],
+  ["lrUpper", "LR+"], ["lrLower", "LR-"], ["psar", "PSAR"],
 ];
+const FIB_LEVEL_KEYS = {
+  fib0: "0%", fib236: "23.6%", fib382: "38.2%", fib50: "50%", fib618: "61.8%", fib100: "100%",
+};
 // 결과 패널의 ② 카드 안에 종류별 '차트에 패턴 표시' 체크박스를 넣고 차트 오버레이를 제어.
 const PATTERN_TYPE_LABELS = [
   ["hns", "헤드앤숄더"], ["double", "쌍바닥/쌍천장"], ["triangle", "삼각수렴"], ["wedge", "쐐기형"],
@@ -3180,7 +3291,8 @@ function setupChartControls() {
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showTechLevels", "showPatterns",
    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
-   "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
+   "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci", "showCmf", "showMfi",
+   "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze",
    "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", (event) => {
@@ -3204,7 +3316,8 @@ function chartSettingIds() {
     "showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
     "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showTechLevels", "showPatterns",
     "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
-    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci",
+    "showRsi", "showMacd", "showStoch", "showRoc", "showMomentum", "showWilliams", "showAtr", "showAdx", "showCci", "showCmf", "showMfi",
+    "showVolumeProfile", "showTrendlines", "showGapZones", "showTtmSqueeze",
     "showRsSpy", "showRsQqq", "showRsSector", "showMansfield"
   ];
 }
@@ -5576,6 +5689,9 @@ function drawChart(item) {
   if (chartState.showAtr) panels.push({ t: "atr", h: 58 });
   if (chartState.showAdx) panels.push({ t: "adx", h: 62 });
   if (chartState.showCci) panels.push({ t: "cci", h: 58 });
+  if (chartState.showCmf) panels.push({ t: "cmf", h: 56 });
+  if (chartState.showMfi) panels.push({ t: "mfi", h: 56 });
+  if (chartState.showTtmSqueeze) panels.push({ t: "ttm", h: 58 });
   if (hasRelativePanel(item)) panels.push({ t: "relative", h: 70 });
   if (compareTickers.length) panels.push({ t: "compare", h: 72 });
   const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
@@ -5747,14 +5863,54 @@ function drawChart(item) {
     }).join("");
   }
 
+  const ctxRows = chartAnalysisContextRows(allRows);
+
+  let vpSvg = "";
+  if (!chartPanActive && chartState.showVolumeProfile) {
+    volumeProfileOverlayLines(rows).forEach((ln) => {
+      const y = overlayYFor(ln.price);
+      const w = ln.weight || 1;
+      vpSvg += `<line x1="${padL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xPlotRight.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${ln.color}" stroke-width="${w}" stroke-dasharray="10 5" opacity="0.8"></line>`
+        + `<text x="${(padL + 5).toFixed(1)}" y="${(y - 3).toFixed(1)}" fill="${ln.color}" font-size="10" font-weight="700">${escapeHtml(ln.label)} $${ln.price.toFixed(2)}</text>`;
+    });
+  }
+
+  let trendSvg = "";
+  if (!chartPanActive && chartState.showTrendlines) {
+    const extendTo = rows.length - 1;
+    computeAutoTrendlines(rows).forEach((ln) => {
+      const dx = ln.x2 - ln.x1 || 1;
+      const slope = (ln.y2 - ln.y1) / dx;
+      const yEnd = ln.y2 + slope * (extendTo - ln.x2);
+      const x1 = xFor(ln.x1);
+      const x2 = xFor(extendTo);
+      trendSvg += `<line x1="${x1.toFixed(1)}" y1="${overlayYFor(ln.y1).toFixed(1)}" x2="${x2.toFixed(1)}" y2="${overlayYFor(yEnd).toFixed(1)}" stroke="${ln.color}" stroke-width="1.5" stroke-dasharray="7 4" opacity="0.85"></line>`
+        + `<text x="${x1.toFixed(1)}" y="${(overlayYFor(ln.y1) - 4).toFixed(1)}" fill="${ln.color}" font-size="9.5" font-weight="700">${ln.kind === "sup" ? "지지 추세선" : "저항 추세선"}</text>`;
+    });
+  }
+
+  let gapSvg = "";
+  if (!chartPanActive && chartState.showGapZones) {
+    detectUnfilledGapZones(rows).forEach((g) => {
+      const x1 = xFor(g.startIdx);
+      const yTop = overlayYFor(g.hi);
+      const yBot = overlayYFor(g.lo);
+      const h = Math.max(2, yBot - yTop);
+      const fill = g.type === "up" ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)";
+      const stroke = g.type === "up" ? "#22c55e" : "#ef4444";
+      gapSvg += `<rect x="${x1.toFixed(1)}" y="${yTop.toFixed(1)}" width="${(xPlotRight - x1).toFixed(1)}" height="${h.toFixed(1)}" fill="${fill}" stroke="${stroke}" stroke-width="0.8" stroke-dasharray="4 3" opacity="0.9"></rect>`
+        + `<text x="${(x1 + 4).toFixed(1)}" y="${(yTop + 11).toFixed(1)}" fill="${stroke}" font-size="9.5" font-weight="700">${g.type === "up" ? "상승 갭" : "하락 갭"}</text>`;
+    });
+  }
+
   let techLevelSvg = "";
   const probRes = chartState.lastProbResult;
   const probTickerMatch = probRes && probRes.ticker === item.ticker;
   let tl = null;
   if (chartPanActive) {
     tl = lastTechLevelsOverlay;
-  } else if (chartState.showTechLevels && chartProbPanelOpen && probTickerMatch && window.MirProb && window.MirProb.computeTechnicalLevels) {
-    tl = window.MirProb.computeTechnicalLevels(chartAnalysisContextRows(allRows), rows[rows.length - 1].c);
+  } else if (chartState.showTechLevels && window.MirProb && window.MirProb.computeTechnicalLevels) {
+    tl = window.MirProb.computeTechnicalLevels(ctxRows, rows[rows.length - 1].c);
     lastTechLevelsOverlay = tl;
   } else if (chartState.showTechLevels && probTickerMatch) {
     tl = probRes.techLevels;
@@ -5769,19 +5925,29 @@ function drawChart(item) {
     if (tl.pivots) {
       if (tlTypes.pivot) techLevelSvg += hLine(tl.pivots.pivot, `P ${tl.pivots.pivot.toFixed(2)}`, "#6366f1", "4 3");
       if (tlTypes.r1) techLevelSvg += hLine(tl.pivots.r1, `R1 ${tl.pivots.r1.toFixed(2)}`, "#a855f7", "3 4");
+      if (tlTypes.r2) techLevelSvg += hLine(tl.pivots.r2, `R2 ${tl.pivots.r2.toFixed(2)}`, "#c084fc", "3 4");
       if (tlTypes.s1) techLevelSvg += hLine(tl.pivots.s1, `S1 ${tl.pivots.s1.toFixed(2)}`, "#0ea5e9", "3 4");
+      if (tlTypes.s2) techLevelSvg += hLine(tl.pivots.s2, `S2 ${tl.pivots.s2.toFixed(2)}`, "#38bdf8", "3 4");
     }
     if (tl.fib && tl.fib.levels) {
-      if (tlTypes.fib618) techLevelSvg += hLine(tl.fib.levels["61.8%"], "Fib 61.8%", "#f59e0b", "6 4");
-      if (tlTypes.fib382) techLevelSvg += hLine(tl.fib.levels["38.2%"], "Fib 38.2%", "#fbbf24", "6 4");
+      const fibColors = { fib0: "#78716c", fib236: "#d6d3d1", fib382: "#fbbf24", fib50: "#f59e0b", fib618: "#ea580c", fib100: "#57534e" };
+      Object.entries(FIB_LEVEL_KEYS).forEach(([key, pct]) => {
+        if (tlTypes[key] && tl.fib.levels[pct] != null) {
+          techLevelSvg += hLine(tl.fib.levels[pct], `Fib ${pct}`, fibColors[key] || "#f59e0b", "6 4");
+        }
+      });
     }
     if (tl.atr) {
       if (tlTypes.stop) techLevelSvg += hLine(tl.atr.stop, `Stop ${tl.atr.stop.toFixed(2)}`, "#dc2626", "2 3");
       if (tlTypes.tgt) techLevelSvg += hLine(tl.atr.target, `Tgt ${tl.atr.target.toFixed(2)}`, "#16a34a", "2 3");
+      if (tlTypes.tgt2 && tl.atr.target2 != null) techLevelSvg += hLine(tl.atr.target2, `Tgt2 ${tl.atr.target2.toFixed(2)}`, "#15803d", "2 3");
     }
     if (tl.linreg) {
       if (tlTypes.lrUpper) techLevelSvg += hLine(tl.linreg.upper, "LR+", "#94a3b8", "8 4");
       if (tlTypes.lrLower) techLevelSvg += hLine(tl.linreg.lower, "LR-", "#94a3b8", "8 4");
+    }
+    if (tlTypes.psar && tl.psar && tl.psar.values) {
+      techLevelSvg += renderPsarDots(tl.psar.values, ctxRows, rows, xFor, overlayYFor);
     }
   }
 
@@ -5801,6 +5967,9 @@ function drawChart(item) {
     else if (p.t === "atr") panelsSvg += renderAtrPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "adx") panelsSvg += renderAdxPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "cci") panelsSvg += renderCciPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "cmf") panelsSvg += renderCmfPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "mfi") panelsSvg += renderMfiPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
+    else if (p.t === "ttm") panelsSvg += renderTtmSqueezePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW);
     else if (p.t === "relative") panelsSvg += renderRelativePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "compare") panelsSvg += renderComparePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     cursorY += p.h + gap;
@@ -5837,6 +6006,9 @@ function drawChart(item) {
     ${isLine ? `<path d="${linePath}" class="chart-line"></path>` : ""}
     ${overlays}
     ${srSvg}
+    ${vpSvg}
+    ${gapSvg}
+    ${trendSvg}
     ${patSvg}
     ${techLevelSvg}
     <g id="chartDrawLayer">${renderChartDrawings()}</g>
@@ -6630,6 +6802,95 @@ function renderCciPanel(rows, xFor, x1, x2, top, height) {
   return renderLinePanel([{ name: "CCI", values: cciArray(rows, 20), color: "#818cf8" }], xFor, x1, x2, top, height, "CCI(20)", { zeroLine: true, guides: [-100, 0, 100] });
 }
 
+function cmfArray(rows, period = 20) {
+  const fn = window.MirProb && window.MirProb.cmfArray;
+  if (fn) return fn(rows, period);
+  const out = Array(rows.length).fill(null);
+  const mfv = rows.map((r) => {
+    const range = r.h - r.l;
+    const m = range ? (((r.c - r.l) - (r.h - r.c)) / range) : 0;
+    return m * (r.v || 0);
+  });
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const volSum = rows.slice(i - period + 1, i + 1).reduce((a, r) => a + (r.v || 0), 0);
+    const mfvSum = mfv.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+    out[i] = volSum ? mfvSum / volSum : 0;
+  }
+  return out;
+}
+
+function mfiArray(rows, period = 14) {
+  const fn = window.MirProb && window.MirProb.mfiArray;
+  if (fn) return fn(rows, period);
+  const tp = rows.map((r) => (r.h + r.l + r.c) / 3);
+  const rmf = rows.map((r, i) => {
+    const raw = tp[i] * (r.v || 0);
+    if (!i) return { pos: 0, neg: 0 };
+    return raw > tp[i - 1] * (rows[i - 1].v || 0) ? { pos: raw, neg: 0 } : { pos: 0, neg: raw };
+  });
+  const out = Array(rows.length).fill(null);
+  for (let i = period; i < rows.length; i += 1) {
+    let pos = 0;
+    let neg = 0;
+    for (let j = i - period + 1; j <= i; j += 1) { pos += rmf[j].pos; neg += rmf[j].neg; }
+    const ratio = neg ? pos / neg : 100;
+    out[i] = 100 - 100 / (1 + ratio);
+  }
+  return out;
+}
+
+function renderCmfPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "CMF", values: cmfArray(rows, 20), color: "#2dd4bf" }], xFor, x1, x2, top, height, "CMF(20)", { domain: [-0.35, 0.35], zeroLine: true, guides: [-0.1, 0, 0.1] });
+}
+
+function renderMfiPanel(rows, xFor, x1, x2, top, height) {
+  return renderLinePanel([{ name: "MFI", values: mfiArray(rows, 14), color: "#a78bfa" }], xFor, x1, x2, top, height, "MFI(14)", { domain: [0, 100], guides: [20, 50, 80] });
+}
+
+function ttmSqueezeSeries(rows) {
+  const fn = window.MirProb && window.MirProb.ttmSqueezeSeries;
+  if (fn) return fn(rows);
+  const closes = rows.map((r) => r.c);
+  const bb = bollinger(closes, 20, 2);
+  const kc = keltnerChannels(rows, 20, 1.5);
+  const squeezed = Array(rows.length).fill(false);
+  for (let i = 0; i < rows.length; i += 1) {
+    if (bb.upper[i] == null || kc.upper[i] == null) continue;
+    squeezed[i] = bb.upper[i] < kc.upper[i] && bb.lower[i] > kc.lower[i];
+  }
+  return { squeezed, momentum: rocArray(closes, 12) };
+}
+
+function renderTtmSqueezePanel(rows, xFor, x1, x2, top, height, candleW) {
+  const { squeezed, momentum } = ttmSqueezeSeries(rows);
+  const moms = momentum.filter((v) => v != null && Number.isFinite(v));
+  const mMax = Math.max(...moms.map((v) => Math.abs(v)), 1);
+  const bandH = height * 0.28;
+  const momTop = top + bandH + 6;
+  const momH = height - bandH - 8;
+  const yForMom = (v) => momTop + momH * 0.5 - (v / mMax) * momH * 0.45;
+  const zeroY = yForMom(0);
+  const sqRects = rows.map((_, i) => {
+    if (!squeezed[i]) return "";
+    const x = xFor(i) - candleW / 2;
+    return `<rect x="${x.toFixed(1)}" y="${(top + 2).toFixed(1)}" width="${candleW.toFixed(1)}" height="${bandH.toFixed(1)}" fill="rgba(250,204,21,0.32)" rx="1"></rect>`;
+  }).join("");
+  const momBars = momentum.map((v, i) => {
+    if (v == null || !Number.isFinite(v)) return "";
+    const y = Math.min(zeroY, yForMom(v));
+    const h = Math.max(0.5, Math.abs(yForMom(v) - zeroY));
+    return `<rect x="${(xFor(i) - candleW / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${candleW.toFixed(1)}" height="${h.toFixed(1)}" class="${v >= 0 ? "macd-hist-up" : "macd-hist-down"}"></rect>`;
+  }).join("");
+  const sqNow = squeezed[squeezed.length - 1];
+  return `
+    <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
+    ${sqRects}
+    <line x1="${x1}" y1="${zeroY.toFixed(1)}" x2="${x2}" y2="${zeroY.toFixed(1)}" class="rsi-guide"></line>
+    ${momBars}
+    <text x="${x1 + 4}" y="${top + 12}" class="chart-axis">TTM Squeeze · ${sqNow ? "수축 중" : "해제"} · Mom(12)</text>
+  `;
+}
+
 function renderRelativePanel(item, rows, xFor, x1, x2, top, height) {
   const series = [];
   if (chartState.showRsSpy) {
@@ -6895,6 +7156,9 @@ function activeIndicatorLabels(item) {
     chartState.showIchimoku ? "Ichimoku" : "",
     chartState.showKeltner ? "Keltner" : "",
     chartState.showDonchian ? "Donchian" : "",
+    chartState.showVolumeProfile ? "VP" : "",
+    chartState.showTrendlines ? "Trend" : "",
+    chartState.showGapZones ? "Gap" : "",
     chartState.showRsSector ? `RS/${sectorBenchmarkTickerForItem(item) || "Sector"}` : ""
   ].filter(Boolean);
   const visible = labels.slice(0, 9);

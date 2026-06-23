@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="종목 차트 분석 기반 상승/하락 확률 추정">
+    <title>차트 확률 분석 | 미르의 미국 주식</title>
+    <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
+    <link rel="stylesheet" href="styles.css?v=20260621j">
+    <style>
+      .ca-main { max-width: 960px; margin: 0 auto; padding: 16px 16px 80px; }
+      .ca-intro { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 4px 0 18px; }
+      .ca-search { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+      .ca-search input { flex: 1 1 220px; padding: 12px 14px; font-size: 16px; border: 1px solid var(--line);
+        border-radius: var(--r-md); background: var(--panel); color: var(--text); }
+      .ca-search button { padding: 12px 20px; font-size: 15px; font-weight: 700; border: none;
+        border-radius: var(--r-md); background: var(--primary); color: #fff; cursor: pointer; }
+      .ca-hz { display: flex; gap: 6px; margin-bottom: 18px; flex-wrap: wrap; }
+      .hz-btn { padding: 7px 14px; font-size: 13px; border: 1px solid var(--line); background: var(--panel);
+        color: var(--muted); border-radius: var(--r-pill); cursor: pointer; }
+      .hz-btn.is-active { background: var(--chip-bg); border-color: var(--chip-border); color: var(--primary); font-weight: 700; }
+      .ca-examples { font-size: 13px; color: var(--muted); margin-bottom: 8px; }
+      .ca-examples button { background: none; border: none; color: var(--link); cursor: pointer; padding: 0 4px; font-size: 13px; }
+
+      .notice { padding: 24px; text-align: center; color: var(--muted); background: var(--panel-soft);
+        border: 1px solid var(--line); border-radius: var(--r-lg); }
+      .notice.err { color: var(--neg); }
+
+      .head-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
+        padding: 16px 18px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm); margin-bottom: 14px; }
+      .head-card h2 { margin: 0 0 4px; font-size: 22px; }
+      .head-card .muted { font-weight: 500; font-size: 15px; }
+      .head-card p { margin: 0; font-size: 13px; }
+      .verdict { font-size: 17px; font-weight: 800; white-space: nowrap; }
+
+      .prob-wrap { margin-bottom: 18px; }
+      .prob-bar { display: flex; height: 46px; border-radius: var(--r-md); overflow: hidden;
+        font-weight: 800; color: #fff; box-shadow: var(--shadow-sm); }
+      .prob-up { background: var(--pos); display: flex; align-items: center; padding-left: 14px; min-width: 48px;
+        transition: width .4s ease; }
+      .prob-down { background: var(--neg); display: flex; align-items: center; justify-content: flex-end;
+        padding-right: 14px; min-width: 48px; transition: width .4s ease; }
+      .prob-caption { text-align: center; font-size: 13px; color: var(--muted); margin: 8px 0 0; }
+
+      .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+      @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
+      .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+        padding: 14px 16px; box-shadow: var(--shadow-sm); }
+      .card h3 { margin: 0 0 12px; font-size: var(--fs-h3); }
+      .card h3 .muted { font-weight: 500; font-size: 12px; }
+      .sig-group { margin-bottom: 12px; }
+      .sig-group h4 { margin: 0 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+      .sig-group h4.bull { color: var(--pos); }
+      .sig-group h4.bear { color: var(--neg); }
+      .sig-group h4.neu { color: var(--muted); }
+      .sig-row { display: grid; grid-template-columns: 18px 92px 1fr 40px; align-items: center; gap: 8px;
+        padding: 5px 0; font-size: 13px; border-bottom: 1px solid var(--surface-2); }
+      .sig-row:last-child { border-bottom: none; }
+      .sig-arrow { text-align: center; }
+      .sig-row.is-bull .sig-arrow { color: var(--pos); }
+      .sig-row.is-bear .sig-arrow { color: var(--neg); }
+      .sig-row.is-neutral .sig-arrow { color: var(--muted); }
+      .sig-label { font-weight: 600; }
+      .sig-detail { color: var(--muted); font-size: 12px; }
+      .sig-strength { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+      .base-line { font-size: 14px; line-height: 1.6; margin: 0 0 12px; }
+      .base-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+      .base-stats > div { display: flex; flex-direction: column; }
+      .base-stats span { font-size: 12px; }
+      .base-stats b { font-size: 17px; }
+
+      .pat-item { padding: 10px 0; border-bottom: 1px solid var(--surface-2); }
+      .pat-item:last-of-type { border-bottom: none; }
+      .pat-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+      .pat-name { font-weight: 700; font-size: 14px; }
+      .pat-tag { font-size: 11px; padding: 1px 7px; border-radius: var(--r-pill);
+        background: var(--chip-bg); color: var(--primary); border: 1px solid var(--chip-border); }
+      .pat-when { font-size: 12px; }
+      .pat-stat { margin: 0; font-size: 13px; line-height: 1.6; }
+      .pat-edge { margin-left: 6px; font-size: 12px; font-weight: 700; }
+      .pat-edge.pos { color: var(--pos); }
+      .pat-edge.neg { color: var(--neg); }
+      .pat-note { font-size: 11.5px; line-height: 1.5; margin: 10px 0 0; }
+
+      .sr-line { display: flex; justify-content: space-between; align-items: center; font-size: 14px; gap: 8px; }
+      .sr-line b { font-size: 16px; }
+      .sr-cur b { color: var(--primary); }
+
+      .disclaimer { margin-top: 16px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6;
+        color: var(--tint-warn-fg); background: var(--tint-warn); border-radius: var(--r-md); }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Chart Probability</p>
+        <h1>차트 확률 분석</h1>
+      </div>
+      <a class="ghost-button" href="index.html">← 대시보드</a>
+    </header>
+
+    <main class="ca-main">
+      <p class="ca-intro">
+        종목 티커를 입력하면 지난 5년 차트를 분석해 <b>상승/하락 확률</b>을 추정합니다.
+        ① 추세·모멘텀·거래량 등 기술적 신호의 합의와, ② 과거 비슷한 상황에서 실제로 오른 비율(실측),
+        ③ 최근 형성된 차트 패턴(쌍바닥·헤드앤숄더·삼각수렴·돌파)의 전 종목 과거 성공률을 함께 보여줍니다.
+      </p>
+
+      <form id="searchForm" class="ca-search" autocomplete="off">
+        <input id="tickerInput" type="text" placeholder="티커 입력 (예: NVDA)" aria-label="티커" inputmode="latin" />
+        <button type="submit">분석</button>
+      </form>
+      <div class="ca-examples">
+        예시:
+        <button type="button" onclick="document.getElementById('tickerInput').value='NVDA';document.getElementById('searchForm').requestSubmit()">NVDA</button>
+        <button type="button" onclick="document.getElementById('tickerInput').value='AAPL';document.getElementById('searchForm').requestSubmit()">AAPL</button>
+        <button type="button" onclick="document.getElementById('tickerInput').value='TSLA';document.getElementById('searchForm').requestSubmit()">TSLA</button>
+        <button type="button" onclick="document.getElementById('tickerInput').value='MSFT';document.getElementById('searchForm').requestSubmit()">MSFT</button>
+      </div>
+
+      <div class="ca-hz" role="group" aria-label="예측 기간">
+        <button type="button" class="hz-btn" data-hz="5">1주</button>
+        <button type="button" class="hz-btn is-active" data-hz="20">1개월</button>
+        <button type="button" class="hz-btn" data-hz="60">3개월</button>
+      </div>
+
+      <div id="result">
+        <div class="notice">종목 티커를 입력하고 <b>분석</b>을 눌러 주세요.</div>
+      </div>
+    </main>
+
+    <footer>
+      <span>차트 패턴 기반 기술적 추정이며 매수/매도 추천이 아닙니다.</span>
+      <span>투자 판단과 책임은 본인에게 있습니다.</span>
+    </footer>
+
+    <script src="analysis.js?v=20260623a"></script>
+  </body>
+</html>

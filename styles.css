@@ -9509,3 +9509,32 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
   .cprob .base-stats b { font-size: 15px; }
   .cprob .base-line { font-size: 13px; }
 }
+
+/* 모바일: '보기' 버튼 그룹(‹ − + › Reset)을 차트 바로 아래 큰 터치 바로 배치.
+   (JS가 640px 이하에서 차트 SVG 다음으로 이동시키며 .chart-view-mobile 부여) */
+.chart-view-mobile {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 8px 0 2px;
+  padding: 0;
+}
+.chart-view-mobile .control-caption { display: none; }
+.chart-view-mobile .icon-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.chart-view-mobile .icon-controls button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 44px;
+  font-size: 19px;
+  font-weight: 700;
+  border-radius: var(--r-md);
+}
+.chart-view-mobile .icon-controls #chartReset {
+  flex: 1.5 1 0;
+  font-size: 13px;
+}

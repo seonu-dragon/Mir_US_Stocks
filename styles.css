@@ -9305,8 +9305,9 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 .cprob .disclaimer { margin-top: 16px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6;
   color: var(--tint-warn-fg); background: var(--tint-warn); border-radius: var(--r-md); }
 .cprob .muted { color: var(--muted); }
-/* ② 카드 안에 들어가는 '차트에 패턴 표시' 토글 — 가벼운 구분선 스타일 */
-.cprob-chart-toggle { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding-top: 10px;
-  border-top: 1px solid var(--surface-2); font-size: 13px; font-weight: 600; cursor: pointer; }
-.cprob-chart-toggle input { width: 15px; height: 15px; cursor: pointer; flex: 0 0 auto; }
-.cprob-chart-toggle .muted { font-weight: 500; font-size: 12px; }
+/* ② 카드 안 '차트에 패턴 표시' — 종류별 체크박스(헤드앤숄더/쌍바닥/삼각수렴/돌파) */
+.cprob-chart-toggle { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px;
+  margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--surface-2); font-size: 12.5px; }
+.cprob-toggle-title { font-weight: 700; }
+.cprob-chart-toggle label { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; cursor: pointer; }
+.cprob-chart-toggle input { width: 15px; height: 15px; margin: 0; cursor: pointer; flex: 0 0 auto; }

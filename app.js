@@ -3362,7 +3362,6 @@ function runChartProbAnalysis() {
     bindChartProbHorizon();
     fillCprobChartControls();
     redrawChart();
-    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }).catch(() => {
     panel.innerHTML = '<div class="notice err">분석 중 오류가 발생했습니다.</div>';
   });

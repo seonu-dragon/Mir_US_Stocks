@@ -206,7 +206,7 @@ function dateDistanceDays(a, b) {
   const da = new Date(`${a}T12:00:00Z`);
   const db = new Date(`${b}T12:00:00Z`);
   if (Number.isNaN(da.getTime()) || Number.isNaN(db.getTime())) return 999;
-  return Math.abs((da - db) / 86400000);
+  return Math.abs((da.getTime() - db.getTime()) / 86400000);
 }
 
 function normalizeGdeltDate(value) {

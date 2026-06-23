@@ -44,6 +44,9 @@ HOLD = 60             # 레벨이 테스트될 때까지 기다리는 최대 봉
 REACTW = 20           # 테스트 후 반응/돌파를 보는 창
 REACT = 1.0           # 반응 임계(ATR 배수) — CLI --react 로 덮어씀
 BREAK = 0.5           # 돌파 임계(ATR 배수) — CLI --brk 로 덮어씀
+MOM_LOOKBACK = 10     # 레벨로 접근하는 모멘텀을 보는 과거 봉 수
+LOWMOM = 1.0          # 이 ATR배수 미만으로 접근하면 '저모멘텀' 테스트로 본다
+RETEST_LOOKBACK = 15  # 돌파-되돌림: 최근 N봉 안에 레벨이 가로질러졌는지
 
 
 # ----------------------------------------------------------------------------
@@ -183,10 +186,31 @@ def levels_random(price, rng):
     ]
 
 
+def retest_levels(rows, base_levels, atr):
+    """돌파-되돌림: 최근 RETEST_LOOKBACK봉 안에서 종가가 레벨을 가로질러(돌파) 간
+    레벨만 골라, 현재가 기준 역할이 뒤집힌 타입으로 돌려준다(지지↔저항 전환).
+    """
+    t = len(rows) - 1
+    price = rows[t]["c"]
+    buf = BREAK * atr
+    seg = rows[max(0, t - RETEST_LOOKBACK):t + 1]
+    hi = max(r["c"] for r in seg)
+    lo = min(r["c"] for r in seg)
+    out = []
+    for lv in base_levels:
+        L = lv["price"]
+        if hi > L + buf and lo < L - buf:  # 최근 구간에서 양쪽 종가 → 가로질렀음
+            out.append({"price": L, "type": "sup" if price > L else "res"})
+    return out
+
+
 # ----------------------------------------------------------------------------
 # 존중/돌파 판정
 # ----------------------------------------------------------------------------
 def evaluate_level(rows, t, level, atr):
+    """반환: (outcome, approach_mom). outcome=True(존중)/False(돌파)/None(표본 제외).
+    approach_mom = 테스트 시점에 레벨로 다가온 모멘텀(ATR 배수, 양수=레벨 방향으로 강하게).
+    """
     n = len(rows)
     L = level["price"]
     kind = level["type"]
@@ -197,7 +221,10 @@ def evaluate_level(rows, t, level, atr):
             test = i
             break
     if test is None:
-        return None  # 레벨에 닿지 않음 → 표본 제외
+        return None, None  # 레벨에 닿지 않음 → 표본 제외
+    # 접근 모멘텀(레벨 방향으로의 직전 MOM_LOOKBACK봉 이동)
+    j = max(0, test - MOM_LOOKBACK)
+    mom = ((rows[test]["c"] - rows[j]["c"]) if kind == "res" else (rows[j]["c"] - rows[test]["c"])) / atr
     # 2) 테스트 후 반응 vs 돌파 중 먼저 오는 것
     first_react = None
     first_break = None
@@ -215,31 +242,32 @@ def evaluate_level(rows, t, level, atr):
         if first_react is not None and first_break is not None:
             break
     if first_react is None and first_break is None:
-        return None
+        return None, mom
     if first_break is None:
-        return True
+        return True, mom
     if first_react is None:
-        return False
-    return first_react <= first_break
+        return False, mom
+    return (first_react <= first_break), mom
 
 
 # ----------------------------------------------------------------------------
 def main():
-    global REACT, BREAK
+    global REACT, BREAK, LOWMOM
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--react", type=float, default=REACT)
     ap.add_argument("--brk", type=float, default=BREAK)
+    ap.add_argument("--lowmom", type=float, default=LOWMOM)
     args = ap.parse_args()
     rng = random.Random(args.seed)
-    REACT, BREAK = args.react, args.brk
+    REACT, BREAK, LOWMOM = args.react, args.brk, args.lowmom
 
     files = sorted(DETAILS_DIR.glob("*.json"))
     if args.limit:
         files = files[:args.limit]
 
-    methods = ["OLD", "NEW_top1", "NEW_all", "RANDOM"]
+    methods = ["OLD", "NEW_top1", "NEW_all", "NEW_lowmom", "STRONG_lm", "RETEST", "RANDOM"]
     agg = {m: {"respected": 0, "broken": 0, "tested": 0, "drawn": 0} for m in methods}
 
     scanned = 0
@@ -274,16 +302,21 @@ def main():
                 "OLD": levels_old(past),
                 "NEW_top1": new_top1,
                 "NEW_all": new_all,
+                "NEW_lowmom": new_all,                       # 동일 레벨, 저모멘텀 테스트만 카운트
+                "STRONG_lm": new_top1,                        # 점수 1위 레벨 + 저모멘텀
+                "RETEST": retest_levels(past, new_all, atr),  # 돌파 후 되돌림(역할 전환)
                 "RANDOM": levels_random(price, rng),
             }
             for m, levels in sets.items():
                 for lv in levels:
                     agg[m]["drawn"] += 1
-                    res_eval = evaluate_level(rows, t, lv, atr)
-                    if res_eval is None:
+                    outcome, mom = evaluate_level(rows, t, lv, atr)
+                    if outcome is None:
                         continue
+                    if m in ("NEW_lowmom", "STRONG_lm") and (mom is None or mom >= LOWMOM):
+                        continue  # 강한 모멘텀으로 닿은 건 제외
                     agg[m]["tested"] += 1
-                    if res_eval:
+                    if outcome:
                         agg[m]["respected"] += 1
                     else:
                         agg[m]["broken"] += 1

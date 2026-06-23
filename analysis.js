@@ -408,6 +408,118 @@ function aggregateWeekly(rows) {
   return weeks;
 }
 
+function aggregateMonthly(rows) {
+  const months = [];
+  let cur = null;
+  for (const r of rows) {
+    const key = r.d ? String(r.d).slice(0, 7) : String(months.length);
+    if (!cur || cur.key !== key) {
+      cur = { key, o: r.o, h: r.h, l: r.l, c: r.c, v: r.v || 0, d: r.d };
+      months.push(cur);
+    } else {
+      cur.h = Math.max(cur.h, r.h);
+      cur.l = Math.min(cur.l, r.l);
+      cur.c = r.c;
+      cur.v += r.v || 0;
+      cur.d = r.d;
+    }
+  }
+  return months;
+}
+
+function tfTrendState(closes) {
+  const sma20 = smaArray(closes, 20);
+  const sma60 = smaArray(closes, 60);
+  const n = closes.length - 1;
+  const s20 = sma20[n];
+  const s60 = sma60[n];
+  const price = closes[n];
+  if (s20 == null || s60 == null) return { bull: false, bear: false, label: "데이터 부족" };
+  if (price > s20 && s20 > s60) return { bull: true, bear: false, label: "정배열" };
+  if (price < s20 && s20 < s60) return { bull: false, bear: true, label: "역배열" };
+  return { bull: false, bear: false, label: "혼조" };
+}
+
+function computeGapFillStats(rows, maxFillBars = 40, minPct = 0.003) {
+  const samples = [];
+  for (let i = 1; i < rows.length - 5; i += 1) {
+    const prev = rows[i - 1];
+    const cur = rows[i];
+    let zone = null;
+    if (cur.l > prev.h * (1 + minPct)) zone = { type: "up", lo: prev.h, hi: cur.l, idx: i };
+    else if (cur.h < prev.l * (1 - minPct)) zone = { type: "down", lo: cur.h, hi: prev.l, idx: i };
+    if (!zone) continue;
+    let filled = false;
+    let fillBars = null;
+    for (let j = i; j < Math.min(rows.length, i + maxFillBars); j += 1) {
+      if (rows[j].l <= zone.hi && rows[j].h >= zone.lo) { filled = true; fillBars = j - i; break; }
+    }
+    samples.push({ ...zone, filled, fillBars });
+  }
+  const n = samples.length;
+  const filledN = samples.filter((s) => s.filled).length;
+  const recent = samples.slice(-3).reverse();
+  return {
+    samples: n,
+    fillRate: n ? (filledN / n) * 100 : null,
+    avgFillBars: filledN ? samples.filter((s) => s.filled && s.fillBars != null).reduce((a, s) => a + s.fillBars, 0) / filledN : null,
+    recent,
+  };
+}
+
+function estimateOptionsContext(price, rows) {
+  const step = price >= 200 ? 10 : price >= 50 ? 5 : price >= 10 ? 2.5 : 1;
+  const strike = Math.round(price / step) * step;
+  const nodes = volumeProfileNodes(rows || []);
+  const sorted = nodes.slice().sort((a, b) => b.vol - a.vol);
+  const magnet = sorted[0] ? sorted[0].price : strike;
+  const maxPain = Math.abs(magnet - price) < step * 2 ? magnet : strike;
+  return {
+    maxPain,
+    callWall: strike + step,
+    putWall: Math.max(0.01, strike - step),
+    gammaZone: [strike - step, strike + step],
+    note: "옵션 OI 미연동 · VP·행사가 그리드 기반 추정",
+  };
+}
+
+function institutionalFlowForTicker(ticker) {
+  if (!ticker || typeof window === "undefined") return null;
+  const key = String(ticker).toUpperCase();
+  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
+  let instCount = 0;
+  let totalValueM = 0;
+  let topInst = "";
+  for (const inst of insts) {
+    const holdings = (inst.quarters && inst.quarters.length ? inst.quarters[inst.quarters.length - 1].holdings : inst.holdings) || [];
+    const h = holdings.find((x) => String(x.ticker).toUpperCase() === key);
+    if (h) {
+      instCount += 1;
+      totalValueM += Number(h.valueM) || (Number(h.valueK) || 0) / 1000;
+      if (!topInst) topInst = inst.name || inst.manager || "";
+    }
+  }
+  const trades = ((window.INSIDER_TRADES || {}).trades || []).filter((t) => String(t.ticker).toUpperCase() === key);
+  const buys = trades.filter((t) => t.kind === "buy").length;
+  const sells = trades.filter((t) => t.kind === "sell").length;
+  const recent = trades.slice(0, 4).map((t) => `${t.owner || "임원"} ${t.codeLabel || t.kind} ${t.shares ? Math.round(t.shares).toLocaleString() + "주" : ""}`.trim());
+  return { instCount, totalValueM, topInst, insiderCount: trades.length, netBuyBias: buys - sells, recent };
+}
+
+function chandelierExitArray(rows, period = 22, mult = 3) {
+  const atr = atrArray(rows, period);
+  const out = Array(rows.length).fill(null);
+  for (let i = period - 1; i < rows.length; i += 1) {
+    const slice = rows.slice(Math.max(0, i - period + 1), i + 1);
+    const hi = Math.max(...slice.map((r) => r.h));
+    const lo = Math.min(...slice.map((r) => r.l));
+    const a = atr[i];
+    if (a == null) continue;
+    out[i] = { longStop: hi - mult * a, shortStop: lo + mult * a };
+  }
+  return out;
+}
+
 function getShortInterest(ticker) {
   const data = typeof window !== "undefined" && window.SHORT_INTEREST;
   if (!data || !ticker || !data.rows) return null;
@@ -439,27 +551,27 @@ function computeTechnicalLevels(rows, price) {
 }
 
 function buildMultiTimeframeContext(rows) {
+  const daily = tfTrendState(rows.map((r) => r.c));
   const weekly = aggregateWeekly(rows);
-  if (weekly.length < 30) return { alignment: 0, bias: 0, label: "주봉 데이터 부족", weeklyTrend: null };
-  const wCloses = weekly.map((r) => r.c);
-  const wSma10 = smaArray(wCloses, 10);
-  const wSma20 = smaArray(wCloses, 20);
-  const n = wCloses.length - 1;
-  const dailyBull = rows[rows.length - 1].c > (smaArray(rows.map((r) => r.c), 20).slice(-1)[0] || 0);
-  let weeklyBull = false;
-  let weeklyBear = false;
-  if (wSma10[n] != null && wSma20[n] != null) {
-    weeklyBull = wCloses[n] > wSma10[n] && wSma10[n] > wSma20[n];
-    weeklyBear = wCloses[n] < wSma10[n] && wSma10[n] < wSma20[n];
-  }
-  let bias = 0;
-  let label = "일·주 혼조";
-  if (dailyBull && weeklyBull) { bias = 0.6; label = "일봉·주봉 정배열 일치"; }
-  else if (!dailyBull && weeklyBear) { bias = -0.6; label = "일봉·주봉 역배열 일치"; }
-  else if (weeklyBull) { bias = 0.25; label = "주봉 상승 추세 (일봉 혼조)"; }
-  else if (weeklyBear) { bias = -0.25; label = "주봉 하락 추세 (일봉 혼조)"; }
-  const alignment = Math.abs(bias) > 0.5 ? 0.85 : Math.abs(bias) > 0.2 ? 0.55 : 0.2;
-  return { alignment, bias, label, weeklyBull, weeklyBear };
+  const monthly = aggregateMonthly(rows);
+  if (weekly.length < 20) return { alignment: 0, bias: 0, label: "주봉 데이터 부족", daily, weekly: null, monthly: null };
+  const wTrend = tfTrendState(weekly.map((r) => r.c));
+  const mTrend = monthly.length >= 12 ? tfTrendState(monthly.map((r) => r.c)) : { bull: false, bear: false, label: "월봉 부족" };
+  let score = 0;
+  if (daily.bull) score += 1; else if (daily.bear) score -= 1;
+  if (wTrend.bull) score += 1.2; else if (wTrend.bear) score -= 1.2;
+  if (mTrend.bull) score += 1.5; else if (mTrend.bear) score -= 1.5;
+  const bias = Math.max(-1, Math.min(1, score / 3.7));
+  let label = `일 ${daily.label} · 주 ${wTrend.label} · 월 ${mTrend.label}`;
+  if (score >= 2.5) label = "일·주·월 상승 정렬";
+  else if (score <= -2.5) label = "일·주·월 하락 정렬";
+  const agree = [daily.bull === wTrend.bull && daily.bull, daily.bear === wTrend.bear && daily.bear,
+    mTrend.bull && wTrend.bull, mTrend.bear && wTrend.bear].filter(Boolean).length;
+  const alignment = agree >= 2 ? 0.9 : Math.abs(bias) > 0.45 ? 0.7 : Math.abs(bias) > 0.2 ? 0.5 : 0.25;
+  return {
+    alignment, bias, label, daily, weekly: wTrend, monthly: mTrend,
+    weeklyBull: wTrend.bull, weeklyBear: wTrend.bear,
+  };
 }
 
 // 선형회귀 기울기를 평균값 대비 % 로 환산 (추세 방향/강도 측정에 사용)
@@ -2137,6 +2249,9 @@ function analyzeRows(rows, horizon, meta) {
   const sr = srSummary(clean);
   const breakout = detectBreakoutRetest(clean, horizon, breakoutStats);
   const techLevels = computeTechnicalLevels(clean, price);
+  const gapFill = computeGapFillStats(clean);
+  const optionsContext = estimateOptionsContext(price, clean);
+  const institutionalFlow = meta.ticker ? institutionalFlowForTicker(meta.ticker) : null;
 
   let headlineUp;
   if (base && base.samples >= 40) {
@@ -2165,6 +2280,9 @@ function analyzeRows(rows, horizon, meta) {
     techLevels,
     shortSqueeze,
     shortData,
+    gapFill,
+    optionsContext,
+    institutionalFlow,
     headlineUp,
     headlineDown: 100 - headlineUp,
   };
@@ -2484,6 +2602,12 @@ function buildResultHTML(result) {
 
     ${renderMtfCard(result)}
 
+    ${renderGapFillCard(result)}
+
+    ${renderOptionsContextCard(result)}
+
+    ${renderInstitutionalFlowCard(result)}
+
     ${renderShortSqueezeCard(result)}
 
     ${renderTechnicalLevelsCard(result)}
@@ -2543,10 +2667,54 @@ function renderMtfCard(result) {
   const mtf = result.mtf;
   if (!mtf || mtf.alignment <= 0) return "";
   const color = mtf.bias > 0 ? "var(--pos)" : mtf.bias < 0 ? "var(--neg)" : "var(--muted)";
+  const tfLine = (t, name) => t ? `<span>${name} <b>${escapeHtml(t.label)}</b></span>` : "";
   return `<div class="card mtf-card">
-    <h3>다중 타임프레임</h3>
+    <h3>다중 타임프레임 (일·주·월)</h3>
     <p class="base-line"><b style="color:${color}">${escapeHtml(mtf.label)}</b> · 일치도 <b>${(mtf.alignment * 100).toFixed(0)}%</b></p>
-    <p class="muted" style="margin:0;font-size:12px;">일봉 신호에 주봉 추세 가중치가 반영되었습니다.</p>
+    <p class="muted mtf-tf-row" style="margin:6px 0 0;font-size:12px;display:flex;gap:12px;flex-wrap:wrap;">
+      ${tfLine(mtf.daily, "일")}${tfLine(mtf.weekly, "주")}${tfLine(mtf.monthly, "월")}
+    </p>
+  </div>`;
+}
+
+function renderGapFillCard(result) {
+  const g = result.gapFill;
+  if (!g || !g.samples) return "";
+  const rate = g.fillRate != null ? `${g.fillRate.toFixed(0)}%` : "—";
+  const avg = g.avgFillBars != null ? `${g.avgFillBars.toFixed(0)}봉` : "—";
+  const recent = (g.recent || []).map((z) => {
+    const word = z.type === "up" ? "상승갭" : "하락갭";
+    const st = z.filled ? `메움(${z.fillBars}봉)` : "미체결";
+    return `<li>${word} $${z.lo.toFixed(2)}~$${z.hi.toFixed(2)} · ${st}</li>`;
+  }).join("");
+  return `<div class="card gap-fill-card">
+    <h3>갭 메우기 통계</h3>
+    <p class="base-line">과거 <b>${g.samples}</b>건 중 <b style="color:var(--primary)">${rate}</b>가 40봉 내 메워짐 · 평균 <b>${avg}</b></p>
+    ${recent ? `<ul class="muted" style="margin:8px 0 0;padding-left:18px;font-size:12px;">${recent}</ul>` : ""}
+  </div>`;
+}
+
+function renderOptionsContextCard(result) {
+  const o = result.optionsContext;
+  if (!o) return "";
+  return `<div class="card options-card">
+    <h3>옵션 맥스페인 · 감마 (추정)</h3>
+    <p class="base-line">맥스페인 <b>$${o.maxPain.toFixed(2)}</b> · 콜월 <b>$${o.callWall.toFixed(2)}</b> · 풋월 <b>$${o.putWall.toFixed(2)}</b></p>
+    <p class="muted" style="margin:0;font-size:12px;">${escapeHtml(o.note)}</p>
+  </div>`;
+}
+
+function renderInstitutionalFlowCard(result) {
+  const f = result.institutionalFlow;
+  if (!f) return "";
+  const inst = f.instCount ? `13F 보유 기관 <b>${f.instCount}</b>곳 · 합계 <b>$${f.totalValueM.toFixed(0)}M</b>${f.topInst ? ` (${escapeHtml(f.topInst)})` : ""}` : "13F 보유 기관 데이터 없음";
+  const ins = f.insiderCount ? `내부자 거래 <b>${f.insiderCount}</b>건 · 순매수 편향 <b>${f.netBuyBias >= 0 ? "+" : ""}${f.netBuyBias}</b>` : "최근 내부자 거래 없음";
+  const recent = (f.recent || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
+  return `<div class="card inst-flow-card">
+    <h3>기관 · 내부자 수급</h3>
+    <p class="pat-stat">${inst}</p>
+    <p class="pat-stat">${ins}</p>
+    ${recent ? `<ul class="muted" style="margin:6px 0 0;padding-left:18px;font-size:12px;">${recent}</ul>` : ""}
   </div>`;
 }
 
@@ -2652,6 +2820,10 @@ window.MirProb = {
   ttmSqueezeSeries,
   cmfArray,
   mfiArray,
+  computeGapFillStats,
+  estimateOptionsContext,
+  institutionalFlowForTicker,
+  chandelierExitArray,
   buildMultiTimeframeContext,
   ensureStats,
   gaugeColor,

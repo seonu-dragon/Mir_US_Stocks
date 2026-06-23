@@ -1321,6 +1321,7 @@ window.MirProb = {
   supportResistanceLevels,
   srSummary,
   detectCurrentPatterns,
+  detectConfirmations,
   patternLabels: PATTERN_LABELS,
   ensureStats,
   gaugeColor,

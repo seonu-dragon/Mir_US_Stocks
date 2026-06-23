@@ -5437,12 +5437,21 @@ function drawChart(item) {
   // 좌어깨/머리/우어깨를 라벨링, 목선을 점선으로 표시. 전체 일봉으로 감지하고
   // 날짜로 보이는 봉에 매핑한다(확대해도 일관).
   let patSvg = "";
-  if (chartState.showPatterns && window.MirProb && window.MirProb.detectCurrentPatterns) {
+  if (chartState.showPatterns && window.MirProb && window.MirProb.detectConfirmations) {
     const dailyRows = getChartRows(item);
-    const pats = window.MirProb.detectCurrentPatterns(dailyRows).filter((p) => p.points || p.lines).slice(0, 2);
     const labels = window.MirProb.patternLabels || {};
     const firstD = rows[0].d;
     const lastD = rows[rows.length - 1].d;
+    // 보이는 구간 안에서 확정된 패턴 중 가장 최근 것들을 그린다(최근 10봉으로
+    // 한정하지 않아 더 많은 종목에서 패턴이 보인다). 화면 밖 패턴은 제외.
+    const pats = window.MirProb.detectConfirmations(dailyRows)
+      .filter((p) => p.points || p.lines)
+      .filter((p) => {
+        const cd = dailyRows[p.confirm_idx] && dailyRows[p.confirm_idx].d;
+        return cd && cd >= firstD && cd <= lastD;
+      })
+      .sort((a, b) => b.confirm_idx - a.confirm_idx)
+      .slice(0, 2);
     const days = (d) => (d ? Date.parse(d) / 86400000 : NaN);
     const visIdxForDate = (d) => {
       if (!d || d < firstD || d > lastD) return -1; // 보이는 구간 밖

@@ -39,7 +39,7 @@
     </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260623bf">
+    <link rel="stylesheet" href="styles.css?v=20260624b">
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -546,6 +546,7 @@
       <section class="panel" id="tab-search">
         <nav class="sub-tabs" id="searchSubTabs" aria-label="Stock analysis sub-sections">
           <button class="sub-tab is-active" data-sub="analysis">📈 종목 분석</button>
+          <button class="sub-tab" data-sub="scanner">⚡ 상승확률 스캐너</button>
           <button class="sub-tab" data-sub="top">🏆 상위 종목</button>
           <button class="sub-tab" data-sub="compare">⚖️ 종목 비교</button>
           <button class="sub-tab" data-sub="jump">🚀 급등/거래량</button>
@@ -553,6 +554,51 @@
           <button class="sub-tab" data-sub="valuation">💰 밸류에이션</button>
           <button class="sub-tab" data-sub="short">🩳 공매도</button>
         </nav>
+
+        <div class="sub-panel" id="sub-scanner">
+          <div class="top-stocks-filters">
+            <div class="toolbar">
+              <label>
+                대상 범위
+                <select id="scanBucket"></select>
+              </label>
+              <label>
+                섹터
+                <select id="scanSector"></select>
+              </label>
+              <label>
+                예측 기간
+                <select id="scanHorizon">
+                  <option value="1">1일 (1거래일)</option>
+                  <option value="3">3일 (3거래일)</option>
+                  <option value="5">1주 (5거래일)</option>
+                  <option value="10">2주 (10거래일)</option>
+                  <option value="20" selected>1개월 (20거래일)</option>
+                  <option value="60">3개월 (60거래일)</option>
+                </select>
+              </label>
+              <label>
+                표시 개수
+                <select id="scanLimit">
+                  <option value="12">12</option>
+                  <option value="24" selected>24</option>
+                  <option value="48">48</option>
+                  <option value="96">96</option>
+                </select>
+              </label>
+              <label class="scan-deep-toggle">
+                정밀 분석
+                <input id="scanDeep" type="checkbox" checked>
+              </label>
+              <button type="button" class="ghost" id="scanRefresh">새로고침</button>
+            </div>
+          </div>
+          <div class="section-title compact-title">
+            <h2>상승확률 스캐너</h2>
+            <p id="scannerMeta">기술적 지표를 종합해 상승 확률이 높은 종목을 순위로 보여줍니다.</p>
+          </div>
+          <div class="rank-grid scanner-grid" id="scannerCards"></div>
+        </div>
 
         <div class="sub-panel" id="sub-top">
         <div class="top-stocks-filters">
@@ -1893,7 +1939,7 @@
     <script src="data/white_house_schedule.js?v=20260618n"></script>
     <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
     <script src="pattern_detectors_extended.js?v=20260623c"></script>
-    <script src="analysis.js?v=20260623k"></script>
-    <script src="app.js?v=20260623m"></script>
+    <script src="analysis.js?v=20260624c"></script>
+    <script src="app.js?v=20260624c"></script>
   </body>
 </html>

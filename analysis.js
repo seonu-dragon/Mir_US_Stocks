@@ -213,6 +213,27 @@ function vwapArray(rows) {
   return out;
 }
 
+// 롤링 N일 거래량가중평균가(VWAP). 전체 누적 VWAP(vwapArray)은 오래된 데이터에
+// 지배돼 현재 신호로 의미가 약하므로, 신호용은 최근 구간만 보는 롤링 VWAP을 쓴다.
+function rollingVwap(rows, period = 20) {
+  const out = Array(rows.length).fill(null);
+  let pv = 0;
+  let vol = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    const tp = (rows[i].h + rows[i].l + rows[i].c) / 3;
+    pv += tp * (rows[i].v || 0);
+    vol += (rows[i].v || 0);
+    if (i >= period) {
+      const j = i - period;
+      const tpj = (rows[j].h + rows[j].l + rows[j].c) / 3;
+      pv -= tpj * (rows[j].v || 0);
+      vol -= (rows[j].v || 0);
+    }
+    if (i >= period - 1) out[i] = vol ? pv / vol : tp;
+  }
+  return out;
+}
+
 function keltnerChannels(rows, period = 20, mult = 2) {
   const closes = rows.map((r) => r.c);
   const mid = emaArray(closes, period);
@@ -1904,16 +1925,17 @@ function buildSignals(rows) {
     }
   }
 
-  // 11. VWAP
+  // 11. VWAP (최근 20일 거래량가중평균 대비 위치 — 괴리율로 강도 조절)
   {
-    const vwap = last(vwapArray(rows));
-    if (vwap != null) {
-      const dir = price > vwap ? 0.45 : price < vwap ? -0.45 : 0;
+    const vwap = last(rollingVwap(rows, 20));
+    if (vwap != null && vwap > 0) {
+      const gap = (price - vwap) / vwap;
+      const dir = Math.max(-1, Math.min(1, gap / 0.05)) * 0.9; // ±5% 괴리에서 포화
       signals.push({
         label: "VWAP",
         dir,
         weight: 0.85,
-        detail: price > vwap ? `VWAP($${vwap.toFixed(2)}) 위` : price < vwap ? `VWAP($${vwap.toFixed(2)}) 아래` : "VWAP 부근",
+        detail: `20일 VWAP($${vwap.toFixed(2)}) 대비 ${gap >= 0 ? "+" : ""}${(gap * 100).toFixed(1)}%`,
       });
     }
   }
@@ -2113,21 +2135,60 @@ function cciArray(rows, period = 20) {
   return out;
 }
 
-// dir 가중 평균 → 상승 확률(%). ADX(추세 강도)로 신호의 진폭을 조절.
+// 신호 → 상관 그룹(family). 같은 현상을 측정하는 신호들(추세 9종, 오실레이터 6종 등)을
+// 독립 투표처럼 합산하면 다중공선성으로 특정 family가 과대 반영된다. 그래서 family별로
+// 먼저 묶어 평균하고, family를 한 단위로만 종합한다.
+const SIGNAL_GROUPS = {
+  "이동평균선 배열": "trend", "단기 추세 기울기": "trend", "MACD": "trend",
+  "Supertrend": "trend", "Ichimoku": "trend", "골든/데드크로스": "trend",
+  "+DI/-DI": "trend", "Parabolic SAR": "trend", "VWAP": "trend",
+  "모멘텀(20일)": "momentum", "52주 위치": "momentum",
+  "RSI(14)": "oscillator", "스토캐스틱": "oscillator", "볼린저 밴드": "oscillator",
+  "Williams %R": "oscillator", "CCI": "oscillator", "MFI": "oscillator",
+  "거래량 흐름(OBV)": "volume", "CMF(수급)": "volume",
+  "TTM Squeeze": "volatility", "선형회귀 채널": "level", "피벗 포인트": "level",
+};
+// family별 종합 가중치(한 family = 증거 한 덩어리). solo 그룹은 개별 신호 가중치를 그대로 쓴다.
+const GROUP_WEIGHT = {
+  trend: 2.0, momentum: 1.0, oscillator: 1.3, volume: 1.0, volatility: 0.7, level: 0.7,
+  candle: 0.7, pattern: 1.4,
+};
+function signalGroup(s) {
+  if (s.group) return s.group;
+  if (SIGNAL_GROUPS[s.label]) return SIGNAL_GROUPS[s.label];
+  if (typeof s.label === "string") {
+    if (s.label.startsWith("캔들")) return "candle";
+    if (s.label.startsWith("패턴")) return "pattern";
+  }
+  return "solo:" + (s.label || ""); // 그 외(다중 타임프레임·공매도 등)는 단독으로 1표
+}
+
+// family별로 dir을 평균한 뒤, family 단위로 가중 종합 → 상승 확률(%). ADX로 진폭 조절.
 function consensusProbability(signals, adxVal) {
+  const groups = new Map();
+  for (const s of signals) {
+    const g = signalGroup(s);
+    if (!groups.has(g)) groups.set(g, { wsum: 0, wtot: 0 });
+    const e = groups.get(g);
+    e.wsum += s.dir * s.weight;
+    e.wtot += s.weight;
+  }
   let wsum = 0;
   let wtot = 0;
-  for (const s of signals) {
-    wsum += s.dir * s.weight;
-    wtot += s.weight;
+  for (const [g, e] of groups) {
+    if (!e.wtot) continue;
+    const dir = e.wsum / e.wtot;                      // family 내부 평균 방향
+    const gw = g.startsWith("solo:") ? e.wtot : (GROUP_WEIGHT[g] || e.wtot);
+    wsum += dir * gw;
+    wtot += gw;
   }
   const net = wtot ? wsum / wtot : 0; // -1..+1
   // 추세가 강할수록(ADX 높음) 신호를 더 신뢰 → 진폭 확대 (0.6~1.0배)
   const conf = adxVal == null ? 0.75 : Math.max(0.6, Math.min(1.0, 0.6 + (adxVal - 15) / 100));
   const scaled = net * conf;
-  // 로지스틱풍 변환, 15~85%로 클램프(과신 방지)
-  let prob = 50 + scaled * 38;
-  prob = Math.max(15, Math.min(85, prob));
+  // 선형 매핑, 12~88%로 클램프(과신 방지). family 종합으로 희석이 줄어 진폭을 약간 키움.
+  let prob = 50 + scaled * 42;
+  prob = Math.max(12, Math.min(88, prob));
   return { up: prob, net, conf };
 }
 
@@ -2142,14 +2203,15 @@ function backtestBaseRate(rows, horizon) {
   const bb = bollinger(closes, 20, 2);
   const roc = rocArray(closes, 20);
 
-  // 정규화된 상태 벡터: [RSI/100, 가격-SMA20 괴리, SMA20-SMA60 괴리, %B, ROC]
+  // 상태 벡터: 모든 특징을 ~[-1,1]로 표준화(축별 스케일을 맞춰 거리 왜곡 방지).
+  // [RSI, 가격-SMA20 괴리, SMA20-SMA60 괴리, %B, ROC]
   function stateAt(i) {
     if (rsi[i] == null || sma20[i] == null || sma60[i] == null || bb.pctB[i] == null || roc[i] == null) return null;
     return [
-      rsi[i] / 100,
+      (rsi[i] - 50) / 50,
       Math.max(-0.3, Math.min(0.3, (closes[i] - sma20[i]) / sma20[i])) / 0.3,
       Math.max(-0.3, Math.min(0.3, (sma20[i] - sma60[i]) / sma60[i])) / 0.3,
-      Math.max(0, Math.min(1, bb.pctB[i])),
+      Math.max(-1, Math.min(1, (bb.pctB[i] - 0.5) * 2)),
       Math.max(-1, Math.min(1, roc[i] / 20)),
     ];
   }
@@ -2157,7 +2219,7 @@ function backtestBaseRate(rows, horizon) {
   const cur = stateAt(n - 1);
   if (!cur) return null;
 
-  // 과거 후보: forward 결과를 알 수 있는 i (i + horizon < n), 그리고 최근 5거래일은 제외(중복 회피)
+  // 과거 후보: forward 결과를 알 수 있는 i (i + horizon < n)
   const cand = [];
   for (let i = 120; i < n - horizon - 1; i += 1) {
     const st = stateAt(i);
@@ -2166,14 +2228,24 @@ function backtestBaseRate(rows, horizon) {
     for (let k = 0; k < cur.length; k += 1) dist += (st[k] - cur[k]) * (st[k] - cur[k]);
     dist = Math.sqrt(dist);
     const fwd = (closes[i + horizon] - closes[i]) / closes[i];
-    cand.push({ dist, fwd });
+    cand.push({ dist, fwd, idx: i });
   }
   if (cand.length < 30) return null;
 
+  // 거리순 정렬 후, 서로 horizon 이상 떨어진 이웃만 채택(시간적 독립성 확보).
+  // 연속된 날은 상태가 거의 같아 표본수를 부풀리므로, 겹치는 구간은 한 번만 센다.
   cand.sort((a, b) => a.dist - b.dist);
-  // 가장 유사한 상위 K개(최소 30, 전체의 12% 중 큰 값)
-  const K = Math.max(30, Math.round(cand.length * 0.12));
-  const top = cand.slice(0, K);
+  const gap = Math.max(horizon, 5);
+  const target = Math.min(60, Math.max(20, Math.round(cand.length * 0.06)));
+  const top = [];
+  for (const c of cand) {
+    if (top.every((m) => Math.abs(m.idx - c.idx) >= gap)) {
+      top.push(c);
+      if (top.length >= target) break;
+    }
+  }
+  if (top.length < 12) return null; // 독립 표본이 너무 적으면 신뢰 불가
+
   let upCount = 0;
   let sumFwd = 0;
   let best = -Infinity;
@@ -2185,7 +2257,7 @@ function backtestBaseRate(rows, horizon) {
     worst = Math.min(worst, m.fwd);
   }
   return {
-    samples: top.length,
+    samples: top.length, // 시간적으로 독립인 유효 표본 수
     upProb: (upCount / top.length) * 100,
     avgReturn: (sumFwd / top.length) * 100,
     best: best * 100,
@@ -2253,9 +2325,12 @@ function analyzeRows(rows, horizon, meta) {
   const optionsContext = estimateOptionsContext(price, clean);
   const institutionalFlow = meta.ticker ? institutionalFlowForTicker(meta.ticker) : null;
 
+  // 실측(과거 유사 상황) 가중치는 독립 표본 수에 비례 — 표본이 많을수록 신뢰.
+  // 60개에서 최대 0.5 가중(과거에는 표본 수와 무관하게 항상 0.5였음).
   let headlineUp;
-  if (base && base.samples >= 40) {
-    headlineUp = consensus.up * 0.5 + base.upProb * 0.5;
+  if (base && base.samples >= 15) {
+    const wBase = Math.max(0, Math.min(0.5, base.samples / 120));
+    headlineUp = consensus.up * (1 - wBase) + base.upProb * wBase;
   } else {
     headlineUp = consensus.up;
   }

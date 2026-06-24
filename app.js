@@ -1663,6 +1663,7 @@ function activateSearchSub(name, { push = false } = {}) {
     const panel = byId(`sub-${searchSubTab}`);
     if (panel) panel.classList.add("is-active");
   }
+  if (searchSubTab === "scanner") renderScanner();
   if (searchSubTab === "top") renderTopStocks();
   if (searchSubTab === "jump") renderJump();
   if (searchSubTab === "compare") renderCompareBoard();
@@ -2546,6 +2547,8 @@ function setupTabReorder(nav) {
 
 function setupFilters() {
   const buckets = [
+    ["watchlist", "⭐ 내 관심종목"],
+    ["portfolio", "💼 내 보유종목"],
     ["all", "All US Stocks"],
     ["all_with_etf", "All incl. ETFs"],
     ["idx_sp500", "S&P 500"],
@@ -2597,6 +2600,11 @@ function setupFilters() {
   if (scrBucket) scrBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
   const scrSector = byId("scrSector");
   if (scrSector) scrSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
+
+  const scanBucket = byId("scanBucket");
+  if (scanBucket) { scanBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join(""); scanBucket.value = "idx_sp500"; }
+  const scanSector = byId("scanSector");
+  if (scanSector) scanSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
 }
 
 function setupEvents() {
@@ -2622,6 +2630,12 @@ function setupEvents() {
   if (topPreset) topPreset.addEventListener("change", applyTopPreset);
   const topReset = byId("topResetFilters");
   if (topReset) topReset.addEventListener("click", resetTopScreener);
+  ["scanBucket", "scanSector", "scanHorizon", "scanLimit", "scanDeep"].forEach((id) => {
+    const el = byId(id);
+    if (el) el.addEventListener("change", renderScanner);
+  });
+  const scanRefresh = byId("scanRefresh");
+  if (scanRefresh) scanRefresh.addEventListener("click", renderScanner);
   ["etfRsBenchmark", "etfRsPeriod", "etfRsGroup"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", () => {
@@ -3775,6 +3789,8 @@ function filteredStocks() {
 }
 
 function bucketMatches(item, groups, bucket) {
+  if (bucket === "watchlist") return watchlist.includes(item.ticker);
+  if (bucket === "portfolio") return portfolio.some((p) => p && p.ticker === item.ticker);
   if (bucket === "all") return item.sector !== "EXCHANGE TRADED FUNDS";
   if (bucket === "all_with_etf") return true;
   if (bucket === "gte10b") return item.sector !== "EXCHANGE TRADED FUNDS" && Number(item.marketCapB || 0) >= 10;
@@ -3886,7 +3902,11 @@ function renderTreemap() {
 
   const all = filteredStocks();
   if (!all.length) {
-    map.innerHTML = `<div class="heatmap-empty">조건에 맞는 종목이 없습니다.</div>`;
+    const bucket = byId("bucketFilter").value;
+    let emptyMsg = "조건에 맞는 종목이 없습니다.";
+    if (bucket === "watchlist") emptyMsg = "관심종목이 없습니다. 종목 분석에서 ⭐를 눌러 관심종목에 추가해 보세요.";
+    else if (bucket === "portfolio") emptyMsg = "보유종목이 없습니다. 포트폴리오 탭에서 보유 종목을 추가해 보세요.";
+    map.innerHTML = `<div class="heatmap-empty">${escapeHtml(emptyMsg)}</div>`;
     zoomView = null;
     renderSelected(data.stocks[0]);
     return;
@@ -5082,6 +5102,233 @@ function renderTopStocks() {
   });
 }
 
+// ===== 상승확률 스캐너 =====
+// 전 종목을 스냅샷 지표(추세·모멘텀·상대강도·거래량 등)로 빠르게 점수화해 상승확률 순위를 매기고,
+// "정밀 분석" 옵션을 켜면 화면에 보이는 상위 종목만 5년 일봉을 받아 차트 확률 엔진(window.MirProb)으로 재계산한다.
+let scannerRunId = 0;
+
+const scanMean = (arr) => (arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0);
+const scanClamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+const scanTanh = (x) => Math.tanh(x);
+
+function scanHorizonLabel(h) {
+  return ({ 1: "1일", 3: "3일", 5: "1주", 10: "2주", 20: "1개월", 60: "3개월" })[h] || `${h}거래일`;
+}
+
+function scanRsiBias(rsi) {
+  if (!Number.isFinite(rsi)) return 0;
+  if (rsi >= 70) return 0.25;   // 과매수: 추세는 강하나 과열
+  if (rsi >= 55) return 0.7;
+  if (rsi >= 50) return 0.35;
+  if (rsi >= 40) return -0.3;
+  if (rsi >= 30) return -0.55;
+  return 0.15;                  // 과매도: 반등 여지
+}
+
+function scanSeriesBias(series) {
+  const v = (Array.isArray(series) ? series : []).map(Number).filter(Number.isFinite);
+  if (v.length < 20) return 0;
+  const last = v[v.length - 1];
+  const smaShort = scanMean(v.slice(-5));
+  const smaLong = scanMean(v.slice(-20));
+  let b = 0;
+  b += smaShort > smaLong ? 0.5 : -0.5;        // 단기 > 장기 이평
+  b += last > smaShort ? 0.25 : -0.25;         // 단기 이평 위/아래
+  const ref = v[v.length - 10] || last || 1;   // 최근 10봉 기울기
+  const slope = (last - ref) / Math.abs(ref || 1);
+  b += scanClamp(slope * 5, -0.5, 0.5);
+  return scanClamp(b, -1, 1);
+}
+
+// 스냅샷 지표만으로 빠르게 추정하는 상승확률(12~88%).
+function scanQuickProb(item, horizon) {
+  // 예측 기간에 따라 단기/장기 신호 가중을 조절한다.
+  const shortW = horizon <= 5 ? 1.4 : horizon >= 60 ? 0.5 : 0.9;
+  const longW = horizon >= 60 ? 1.5 : horizon <= 5 ? 0.7 : 1.1;
+  const signals = [];
+  const push = (bias, weight) => { if (Number.isFinite(bias)) signals.push([bias, weight]); };
+
+  if (Number.isFinite(item.rsScore)) push(scanClamp((item.rsScore - 50) / 45, -1, 1), 1.4);
+  if (Number.isFinite(item.epsRevScore)) push(scanClamp((item.epsRevScore - 50) / 45, -1, 1), 1.0);
+  if (Number.isFinite(item.threeMonthChangePct)) push(scanTanh(item.threeMonthChangePct / 15), 1.2 * longW);
+  if (Number.isFinite(item.monthChangePct)) push(scanTanh(item.monthChangePct / 8), 0.9);
+  if (Number.isFinite(item.weekChangePct)) push(scanTanh(item.weekChangePct / 4), 0.6 * shortW);
+  push(scanRsiBias(Number(item.rsi14)), 0.7 * shortW);
+  if (Number.isFinite(item.stochK)) push(scanClamp((item.stochK - 50) / 45, -1, 1) * 0.8, 0.4 * shortW);
+
+  // 거래량 확인: 추세 방향과 거래량 증가가 같은 방향이면 강화
+  const trendSign = Math.sign(Number(item.monthChangePct) || Number(item.weekChangePct) || 0);
+  if (Number.isFinite(item.volumeRatio) && trendSign !== 0) {
+    push(trendSign * scanClamp((item.volumeRatio - 1) / 1.5, -0.5, 1), 0.5);
+  }
+  // 신고가 근접도(고점 대비 하락폭이 작을수록 강세)
+  const dist = Number(item.newHighDistancePct);
+  if (Number.isFinite(dist)) push(scanClamp((10 - dist) / 10, -0.3, 1), 0.5);
+  // 종가 시계열 구조(이평 정배열·기울기)
+  push(scanSeriesBias(item.closeSeries), 0.8);
+
+  const totW = signals.reduce((s, [, w]) => s + w, 0) || 1;
+  const z = signals.reduce((s, [b, w]) => s + b * w, 0) / totW;  // -1 ~ 1
+  const up = scanClamp(50 + 38 * z, 12, 88);
+  return { up, z };
+}
+
+function scanVerdict(up) {
+  if (window.MirProb && window.MirProb.verdictText) return window.MirProb.verdictText(up);
+  if (up >= 60) return "상승 우위";
+  if (up <= 40) return "하락 우위";
+  return "중립";
+}
+
+function scanProbColor(up) {
+  if (up >= 60) return "var(--pos, #138a4d)";
+  if (up <= 40) return "var(--neg, #c03535)";
+  return "var(--amber, #b7791f)";
+}
+
+function scanBadgeText(mode) {
+  return mode === "deep" ? "정밀" : mode === "loading" ? "분석중" : "빠른";
+}
+
+function scanCardHtml(entry, rank) {
+  const item = entry.item;
+  const up = Math.round(entry.prob);
+  const color = scanProbColor(entry.prob);
+  const spark = sparklineSvg(item.closeSeries, { width: 240, height: 56, color: (item.changePct || 0) >= 0 ? "#22c55e" : "#ef4444" });
+  return `
+    <article class="stock-card scanner-card" data-ticker="${escapeHtml(item.ticker)}">
+      <div class="rank-line">
+        <span>${rank}</span>
+        <strong>${escapeHtml(item.ticker)}</strong>
+        <em class="scan-badge scan-badge-${entry.mode}">${scanBadgeText(entry.mode)}</em>
+      </div>
+      <p class="muted">${escapeHtml(item.company || "")}</p>
+      <div class="scan-prob">
+        <div class="scan-prob-head"><span>상승확률</span><b style="color:${color}">${up}%</b></div>
+        <div class="scan-prob-bar"><div class="scan-prob-fill" style="width:${up}%;background:${color}"></div></div>
+        <div class="scan-verdict">${scanVerdict(entry.prob)}</div>
+      </div>
+      <div class="scanner-spark">${spark}</div>
+      <div class="mini-facts">
+        ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
+        ${miniMetric("RS", Number.isFinite(item.rsScore) ? item.rsScore : "—")}
+        ${miniMetric("RSI", Number.isFinite(item.rsi14) ? item.rsi14 : "—")}
+        ${miniMetric("거래량", `${Number(item.volumeRatio || 0).toFixed(1)}x`)}
+      </div>
+    </article>`;
+}
+
+function renderScannerCards(entries) {
+  const grid = byId("scannerCards");
+  if (!grid) return;
+  const sorted = entries.slice().sort((a, b) => b.prob - a.prob);
+  grid.innerHTML = sorted.map((entry, i) => scanCardHtml(entry, i + 1)).join("");
+  grid.querySelectorAll(".scanner-card").forEach((card) => {
+    card.addEventListener("click", () => selectTicker(card.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function updateScanCardInPlace(entry) {
+  const grid = byId("scannerCards");
+  if (!grid) return;
+  const card = grid.querySelector(`.scanner-card[data-ticker="${escapeHtml(entry.item.ticker)}"]`);
+  if (!card) return;
+  const up = Math.round(entry.prob);
+  const color = scanProbColor(entry.prob);
+  const b = card.querySelector(".scan-prob-head b");
+  if (b) { b.textContent = `${up}%`; b.style.color = color; }
+  const fill = card.querySelector(".scan-prob-fill");
+  if (fill) { fill.style.width = `${up}%`; fill.style.background = color; }
+  const v = card.querySelector(".scan-verdict");
+  if (v) v.textContent = scanVerdict(entry.prob);
+  const badge = card.querySelector(".scan-badge");
+  if (badge) { badge.textContent = scanBadgeText(entry.mode); badge.className = `scan-badge scan-badge-${entry.mode}`; }
+}
+
+async function deepAnalyzeEntry(entry, horizon) {
+  try {
+    const detail = await loadStockDetail(entry.item.ticker);
+    const series = detail && Array.isArray(detail.chartSeries) ? detail.chartSeries : null;
+    if (!series || series.length < 60) { entry.mode = "quick"; return; }
+    const rows = series.map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
+    const res = window.MirProb.analyzeRows(rows, horizon, { ticker: entry.item.ticker, company: entry.item.company });
+    if (res && Number.isFinite(res.headlineUp)) {
+      entry.prob = res.headlineUp;
+      entry.mode = "deep";
+    } else {
+      entry.mode = "quick";
+    }
+  } catch (e) {
+    entry.mode = "quick";
+  }
+}
+
+async function runDeepScan(entries, horizon, runId) {
+  try { await window.MirProb.ensureStats(); } catch (e) { /* 통계 없어도 진행 */ }
+  if (runId !== scannerRunId) return;
+  const queue = entries.slice();
+  const CONCURRENCY = 5;
+  let idx = 0, active = 0, done = 0;
+  await new Promise((resolve) => {
+    const pump = () => {
+      if (runId !== scannerRunId) return resolve();
+      if (done >= queue.length) return resolve();
+      while (active < CONCURRENCY && idx < queue.length) {
+        const entry = queue[idx++];
+        active++;
+        entry.mode = "loading";
+        updateScanCardInPlace(entry);
+        deepAnalyzeEntry(entry, horizon).then(() => {
+          if (runId === scannerRunId) updateScanCardInPlace(entry);
+        }).finally(() => {
+          active--; done++;
+          pump();
+        });
+      }
+    };
+    pump();
+  });
+  if (runId !== scannerRunId) return;
+  renderScannerCards(entries);  // 정밀 확률 기준으로 최종 재정렬
+  const meta = byId("scannerMeta");
+  if (meta) meta.textContent = meta.textContent.replace(/· 정밀 분석 적용 중…$/, "· 정밀 분석 완료");
+}
+
+function renderScanner() {
+  const bucketEl = byId("scanBucket");
+  if (!bucketEl) return;
+  const bucket = bucketEl.value;
+  const sector = byId("scanSector").value;
+  const horizon = Number(byId("scanHorizon").value) || 20;
+  const limit = Math.max(1, Number(byId("scanLimit").value) || 24);
+  const deep = byId("scanDeep").checked;
+  const runId = ++scannerRunId;  // 진행 중이던 이전 정밀 분석은 무효화
+
+  const scored = data.stocks
+    .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
+    .filter((item) => sector === "All" || item.sector === sector)
+    .filter((item) => bucket === "watchlist" || bucket === "portfolio" || item.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((item) => Array.isArray(item.closeSeries) && item.closeSeries.length >= 20)
+    .map((item) => ({ item, prob: scanQuickProb(item, horizon).up, mode: "quick" }))
+    .sort((a, b) => b.prob - a.prob)
+    .slice(0, limit);
+
+  const scope = labelForSelect("scanBucket");
+  const meta = byId("scannerMeta");
+  if (meta) {
+    meta.textContent = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 상위 ${scored.length}개`
+      + (deep && window.MirProb ? " · 정밀 분석 적용 중…" : " · 빠른 스캔");
+  }
+
+  if (!scored.length) {
+    byId("scannerCards").innerHTML = `<article class="rank-card"><h3>분석할 종목이 없습니다.</h3><p class="muted">대상 범위나 섹터를 바꿔보세요.</p></article>`;
+    return;
+  }
+
+  renderScannerCards(scored);
+  if (deep && window.MirProb) runDeepScan(scored, horizon, runId);
+}
+
 function numberInputValue(id, fallback = 0) {
   const value = Number(byId(id)?.value);
   return Number.isFinite(value) ? value : fallback;
@@ -5908,11 +6155,21 @@ function drawChart(item) {
   }).join("");
   const overlayYFor = (value) => yFor(Math.max(min, Math.min(max, value)));
 
+  // 지표 계산용 컨텍스트(보이는 구간 + 앞쪽 이력). 보이는 rows는 ctxRows의 꼬리이므로
+  // 지표를 ctxRows로 계산한 뒤 lastN(..., visN)으로 잘라 그린다(좌측 워밍업 잘림 방지).
+  const ctxRows = chartAnalysisContextRows(allRows);
+  const visN = rows.length;
+  const ctxCloses = ctxRows.map((r) => r.c);
+  const tailCh = (ch) => ch ? { upper: lastN(ch.upper, visN), lower: lastN(ch.lower, visN), mid: lastN(ch.mid, visN) } : null;
+  const tailObj = (o) => { const r = {}; for (const k in o) r[k] = Array.isArray(o[k]) ? lastN(o[k], visN) : o[k]; return r; };
+  // 화면 가격범위 밖 값은 가장자리에 평평하게 깔리지 않도록 null 처리(선이 끊김) — 가짜 수평선 방지.
+  const clipRange = (arr) => arr.map((v) => (v == null || !Number.isFinite(v) || v < min || v > max) ? null : v);
 
   // Bollinger Bands (20, 2σ) overlay.
   let bollSvg = "";
   if (chartState.showBoll) {
-    const bb = bollinger(closes, 20, 2);
+    const bb0 = bollinger(ctxCloses, 20, 2);
+    const bb = { upper: lastN(bb0.upper, visN), lower: lastN(bb0.lower, visN), mid: lastN(bb0.mid, visN) };
     const upPts = bb.upper.map((v, i) => (v == null ? null : [xFor(i), yFor(v)])).filter(Boolean);
     const loPts = bb.lower.map((v, i) => (v == null ? null : [xFor(i), yFor(v)])).filter(Boolean);
     let fill = "";
@@ -5937,31 +6194,37 @@ function drawChart(item) {
     return `<g class="${up ? "candle-up" : "candle-down"}"><line x1="${x.toFixed(1)}" y1="${yFor(row.h).toFixed(1)}" x2="${x.toFixed(1)}" y2="${yFor(row.l).toFixed(1)}"></line><rect x="${(x - candleW / 2).toFixed(1)}" y="${bodyY.toFixed(1)}" width="${candleW.toFixed(1)}" height="${bodyH.toFixed(1)}"></rect></g>`;
   }).join("");
 
-  const keltner = chartState.showKeltner ? keltnerChannels(rows, 20, 2) : null;
-  const donchian = chartState.showDonchian ? donchianChannels(rows, 20) : null;
-  const ichimoku = chartState.showIchimoku ? ichimokuArrays(rows) : null;
-  const supertrend = chartState.showSupertrend ? supertrendArray(rows, 10, 3) : null;
+  const keltner = chartState.showKeltner ? tailCh(keltnerChannels(ctxRows, 20, 2)) : null;
+  const donchian = chartState.showDonchian ? tailCh(donchianChannels(ctxRows, 20)) : null;
+  const ichimoku = chartState.showIchimoku ? tailObj(ichimokuArrays(ctxRows)) : null;
+  const supertrend = chartState.showSupertrend ? lastN(supertrendArray(ctxRows, 10, 3), visN) : null;
 
+  // 이평/지표는 컨텍스트로 계산 후 보이는 구간으로 잘라 그린다. 단일 라인은 clipRange로
+  // 화면 밖 구간을 끊고, 채널(밴드 채움)은 기존 overlayYFor(클램프)를 유지한다.
   const overlays = [
-    chartState.showSma5 ? averagePath(closes, 5, xFor, yFor, "#60a5fa") : "",
-    chartState.showSma10 ? averagePath(closes, 10, xFor, yFor, "#34d399") : "",
-    chartState.showSma20 ? averagePath(closes, 20, xFor, yFor, "#a855f7") : "",
-    chartState.showSma60 ? averagePath(closes, 60, xFor, yFor, "#d98a2b") : "",
-    chartState.showSma120 ? averagePath(closes, 120, xFor, yFor, "#facc15") : "",
-    chartState.showEma20 ? pathFromSeries(emaArray(closes, 20), xFor, yFor, "#f472b6", 1.6, "") : "",
-    chartState.showEma60 ? pathFromSeries(emaArray(closes, 60), xFor, yFor, "#38bdf8", 1.6, "") : "",
-    chartState.showVwap ? pathFromSeries(vwapArray(rows), xFor, overlayYFor, "#f97316", 1.7, "") : "",
-    supertrend ? pathFromSeries(supertrend, xFor, overlayYFor, "#22c55e", 1.6, "5 3") : "",
+    chartState.showSma5 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 5), visN)), xFor, yFor, "#60a5fa", 1.8, "") : "",
+    chartState.showSma10 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 10), visN)), xFor, yFor, "#34d399", 1.8, "") : "",
+    chartState.showSma20 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 20), visN)), xFor, yFor, "#a855f7", 1.8, "") : "",
+    chartState.showSma60 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 60), visN)), xFor, yFor, "#d98a2b", 1.8, "") : "",
+    chartState.showSma120 ? pathFromSeries(clipRange(lastN(smaSeries(ctxCloses, 120), visN)), xFor, yFor, "#facc15", 1.8, "") : "",
+    chartState.showEma20 ? pathFromSeries(clipRange(lastN(emaArray(ctxCloses, 20), visN)), xFor, yFor, "#f472b6", 1.6, "") : "",
+    chartState.showEma60 ? pathFromSeries(clipRange(lastN(emaArray(ctxCloses, 60), visN)), xFor, yFor, "#38bdf8", 1.6, "") : "",
+    chartState.showVwap ? pathFromSeries(clipRange(lastN(vwapArray(ctxRows), visN)), xFor, yFor, "#f97316", 1.7, "") : "",
+    supertrend ? pathFromSeries(clipRange(supertrend), xFor, yFor, "#22c55e", 1.6, "5 3") : "",
     ichimoku ? renderIchimokuOverlay(ichimoku, xFor, overlayYFor) : "",
     keltner ? renderChannelOverlay(keltner.upper, keltner.lower, keltner.mid, xFor, overlayYFor, "#fb7185") : "",
     donchian ? renderChannelOverlay(donchian.upper, donchian.lower, donchian.mid, xFor, overlayYFor, "#818cf8") : ""
   ].join("");
 
-  // 지지/저항 오버레이: 보이는 구간(rows)으로 계산 → 차트 이동·확대 시 선이 자동 갱신.
+  // 지지/저항 오버레이: 확률 패널에 표시된 레벨(분석 결과)이 있으면 그대로 사용해
+  // 패널 숫자와 차트 선을 일치시킨다. 없으면 컨텍스트 봉으로 계산(이력 포함, 안정적).
   let srSvg = "";
   if (!chartPanActive && chartState.showSupportResistance && window.MirProb && window.MirProb.supportResistanceLevels) {
-    const levels = window.MirProb.supportResistanceLevels(rows)
-      .filter((lvl) => lvl.hi >= min && lvl.lo <= max);
+    const srProb = chartState.lastProbResult;
+    const baseLevels = (srProb && srProb.ticker === item.ticker && srProb.sr && srProb.sr.levels && srProb.sr.levels.length)
+      ? srProb.sr.levels
+      : window.MirProb.supportResistanceLevels(ctxRows);
+    const levels = baseLevels.filter((lvl) => lvl.hi >= min && lvl.lo <= max);
     srSvg = levels.map((lvl) => {
       const yMid = overlayYFor(lvl.price);
       const yHi = overlayYFor(lvl.hi); // 높은 가격 = 작은 y
@@ -6053,8 +6316,6 @@ function drawChart(item) {
     }).join("");
   }
 
-  const ctxRows = chartAnalysisContextRows(allRows);
-
   let vpSvg = "";
   if (!chartPanActive && chartState.showVolumeProfile) {
     volumeProfileOverlayLines(rows).forEach((ln) => {
@@ -6083,7 +6344,7 @@ function drawChart(item) {
       if (gi < 0 || !ce[gi]) return null;
       return r.c >= ce[gi].longStop ? ce[gi].longStop : ce[gi].shortStop;
     });
-    chandelierSvg = pathFromSeries(mapped, xFor, overlayYFor, "#fb923c", 1.5, "5 3")
+    chandelierSvg = pathFromSeries(clipRange(mapped), xFor, yFor, "#fb923c", 1.5, "5 3")
       + `<text x="${(padL + 5).toFixed(1)}" y="${(padT + 14).toFixed(1)}" fill="#fb923c" font-size="9.5" font-weight="700">Chandelier</text>`;
   }
 
@@ -6095,7 +6356,7 @@ function drawChart(item) {
         if (gi < ln.startIdx) return null;
         return ln.vwap[gi - ln.startIdx];
       });
-      avwapSvg += pathFromSeries(mapped, xFor, overlayYFor, ln.color, 1.5, "8 4");
+      avwapSvg += pathFromSeries(clipRange(mapped), xFor, yFor, ln.color, 1.5, "8 4");
       const lastV = mapped.filter((v) => v != null).slice(-1)[0];
       if (lastV != null) {
         avwapSvg += `<text x="${(xPlotRight - 4).toFixed(1)}" y="${(overlayYFor(lastV) - 3).toFixed(1)}" text-anchor="end" fill="${ln.color}" font-size="9.5" font-weight="600">${escapeHtml(ln.label)} AVWAP</text>`;
@@ -6186,18 +6447,18 @@ function drawChart(item) {
     if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW);
     else if (p.t === "obv") panelsSvg += renderObvPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "ad") panelsSvg += renderAdPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "rsi") panelsSvg += renderRsiPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "macd") panelsSvg += renderMacdPanel(closes, xFor, padL, padL + plotW, cursorY, p.h, candleW);
-    else if (p.t === "stoch") panelsSvg += renderStochPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "roc") panelsSvg += renderRocPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "momentum") panelsSvg += renderMomentumPanel(closes, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "williams") panelsSvg += renderWilliamsPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "atr") panelsSvg += renderAtrPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "adx") panelsSvg += renderAdxPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "cci") panelsSvg += renderCciPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "cmf") panelsSvg += renderCmfPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "mfi") panelsSvg += renderMfiPanel(rows, xFor, padL, padL + plotW, cursorY, p.h);
-    else if (p.t === "ttm") panelsSvg += renderTtmSqueezePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW);
+    else if (p.t === "rsi") panelsSvg += renderRsiPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "macd") panelsSvg += renderMacdPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, candleW, visN);
+    else if (p.t === "stoch") panelsSvg += renderStochPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "roc") panelsSvg += renderRocPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "momentum") panelsSvg += renderMomentumPanel(ctxCloses, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "williams") panelsSvg += renderWilliamsPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "atr") panelsSvg += renderAtrPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "adx") panelsSvg += renderAdxPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "cci") panelsSvg += renderCciPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "cmf") panelsSvg += renderCmfPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "mfi") panelsSvg += renderMfiPanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, visN);
+    else if (p.t === "ttm") panelsSvg += renderTtmSqueezePanel(ctxRows, xFor, padL, padL + plotW, cursorY, p.h, candleW, visN);
     else if (p.t === "relative") panelsSvg += renderRelativePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     else if (p.t === "compare") panelsSvg += renderComparePanel(item, rows, xFor, padL, padL + plotW, cursorY, p.h);
     cursorY += p.h + gap;
@@ -6293,6 +6554,21 @@ function pathFromSeries(values, xFor, yFor, color, strokeW, dash) {
   if (pts.length < 2) return "";
   const d = pts.map(([x, y], i) => `${i ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
   return `<path d="${d}" fill="none" stroke="${color}" stroke-width="${strokeW}"${dash ? ` stroke-dasharray="${dash}"` : ""} stroke-linecap="round"></path>`;
+}
+
+// 보이는 구간(rows)은 분석 컨텍스트(ctxRows)의 꼬리다. 컨텍스트에서 계산한 지표 배열을
+// 보이는 길이(visN)만큼 잘라 xFor(0..visN-1)에 정렬한다 → 확대해도 이평/지표 좌측이 잘리지 않는다.
+function lastN(arr, n) {
+  return (n != null && Array.isArray(arr) && arr.length > n) ? arr.slice(arr.length - n) : arr;
+}
+function smaSeries(values, period) {
+  const out = Array(values.length).fill(null);
+  for (let i = period - 1; i < values.length; i += 1) {
+    let s = 0;
+    for (let j = i - period + 1; j <= i; j += 1) s += values[j];
+    out[i] = s / period;
+  }
+  return out;
 }
 
 function emaRaw(values, period) {
@@ -7005,33 +7281,33 @@ function renderAdPanel(rows, xFor, x1, x2, top, height) {
   return renderLinePanel([{ name: "A/D", values: accumulationDistributionArray(rows), color: "#34d399" }], xFor, x1, x2, top, height, "Accum/Dist");
 }
 
-function renderRocPanel(closes, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "ROC", values: rocArray(closes, 12), color: "#38bdf8" }], xFor, x1, x2, top, height, "ROC(12)", { zeroLine: true, guides: [0] });
+function renderRocPanel(closes, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "ROC", values: lastN(rocArray(closes, 12), visN), color: "#38bdf8" }], xFor, x1, x2, top, height, "ROC(12)", { zeroLine: true, guides: [0] });
 }
 
-function renderMomentumPanel(closes, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "MOM", values: momentumArray(closes, 10), color: "#f59e0b" }], xFor, x1, x2, top, height, "Momentum(10)", { zeroLine: true, guides: [0] });
+function renderMomentumPanel(closes, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "MOM", values: lastN(momentumArray(closes, 10), visN), color: "#f59e0b" }], xFor, x1, x2, top, height, "Momentum(10)", { zeroLine: true, guides: [0] });
 }
 
-function renderWilliamsPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "%R", values: williamsArray(rows, 14), color: "#c084fc" }], xFor, x1, x2, top, height, "Williams %R(14)", { domain: [-100, 0], guides: [-20, -80] });
+function renderWilliamsPanel(rows, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "%R", values: lastN(williamsArray(rows, 14), visN), color: "#c084fc" }], xFor, x1, x2, top, height, "Williams %R(14)", { domain: [-100, 0], guides: [-20, -80] });
 }
 
-function renderAtrPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "ATR", values: atrArray(rows, 14), color: "#fb7185" }], xFor, x1, x2, top, height, "ATR(14)");
+function renderAtrPanel(rows, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "ATR", values: lastN(atrArray(rows, 14), visN), color: "#fb7185" }], xFor, x1, x2, top, height, "ATR(14)");
 }
 
-function renderAdxPanel(rows, xFor, x1, x2, top, height) {
+function renderAdxPanel(rows, xFor, x1, x2, top, height, visN) {
   const adx = adxArrays(rows, 14);
   return renderLinePanel([
-    { name: "ADX", values: adx.adx, color: "#facc15", width: 1.5 },
-    { name: "+DI", values: adx.plusDi, color: "#22c55e", width: 1.2 },
-    { name: "-DI", values: adx.minusDi, color: "#ef4444", width: 1.2 }
+    { name: "ADX", values: lastN(adx.adx, visN), color: "#facc15", width: 1.5 },
+    { name: "+DI", values: lastN(adx.plusDi, visN), color: "#22c55e", width: 1.2 },
+    { name: "-DI", values: lastN(adx.minusDi, visN), color: "#ef4444", width: 1.2 }
   ], xFor, x1, x2, top, height, "ADX(14)", { domain: [0, 60], guides: [20, 40] });
 }
 
-function renderCciPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "CCI", values: cciArray(rows, 20), color: "#818cf8" }], xFor, x1, x2, top, height, "CCI(20)", { zeroLine: true, guides: [-100, 0, 100] });
+function renderCciPanel(rows, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "CCI", values: lastN(cciArray(rows, 20), visN), color: "#818cf8" }], xFor, x1, x2, top, height, "CCI(20)", { zeroLine: true, guides: [-100, 0, 100] });
 }
 
 function cmfArray(rows, period = 20) {
@@ -7071,12 +7347,12 @@ function mfiArray(rows, period = 14) {
   return out;
 }
 
-function renderCmfPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "CMF", values: cmfArray(rows, 20), color: "#2dd4bf" }], xFor, x1, x2, top, height, "CMF(20)", { domain: [-0.35, 0.35], zeroLine: true, guides: [-0.1, 0, 0.1] });
+function renderCmfPanel(rows, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "CMF", values: lastN(cmfArray(rows, 20), visN), color: "#2dd4bf" }], xFor, x1, x2, top, height, "CMF(20)", { domain: [-0.35, 0.35], zeroLine: true, guides: [-0.1, 0, 0.1] });
 }
 
-function renderMfiPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "MFI", values: mfiArray(rows, 14), color: "#a78bfa" }], xFor, x1, x2, top, height, "MFI(14)", { domain: [0, 100], guides: [20, 50, 80] });
+function renderMfiPanel(rows, xFor, x1, x2, top, height, visN) {
+  return renderLinePanel([{ name: "MFI", values: lastN(mfiArray(rows, 14), visN), color: "#a78bfa" }], xFor, x1, x2, top, height, "MFI(14)", { domain: [0, 100], guides: [20, 50, 80] });
 }
 
 function ttmSqueezeSeries(rows) {
@@ -7093,8 +7369,10 @@ function ttmSqueezeSeries(rows) {
   return { squeezed, momentum: rocArray(closes, 12) };
 }
 
-function renderTtmSqueezePanel(rows, xFor, x1, x2, top, height, candleW) {
-  const { squeezed, momentum } = ttmSqueezeSeries(rows);
+function renderTtmSqueezePanel(rows, xFor, x1, x2, top, height, candleW, visN) {
+  const ttm = ttmSqueezeSeries(rows);
+  const squeezed = lastN(ttm.squeezed, visN);
+  const momentum = lastN(ttm.momentum, visN);
   const moms = momentum.filter((v) => v != null && Number.isFinite(v));
   const mMax = Math.max(...moms.map((v) => Math.abs(v)), 1);
   const bandH = height * 0.28;
@@ -7102,8 +7380,8 @@ function renderTtmSqueezePanel(rows, xFor, x1, x2, top, height, candleW) {
   const momH = height - bandH - 8;
   const yForMom = (v) => momTop + momH * 0.5 - (v / mMax) * momH * 0.45;
   const zeroY = yForMom(0);
-  const sqRects = rows.map((_, i) => {
-    if (!squeezed[i]) return "";
+  const sqRects = squeezed.map((sq, i) => {
+    if (!sq) return "";
     const x = xFor(i) - candleW / 2;
     return `<rect x="${x.toFixed(1)}" y="${(top + 2).toFixed(1)}" width="${candleW.toFixed(1)}" height="${bandH.toFixed(1)}" fill="rgba(250,204,21,0.32)" rx="1"></rect>`;
   }).join("");
@@ -7188,8 +7466,11 @@ function requestCompareDetails(item) {
     });
   });
 }
-function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW) {
-  const { macd, signal, hist } = macdSeries(closes);
+function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW, visN) {
+  const full = macdSeries(closes);
+  const macd = lastN(full.macd, visN);
+  const signal = lastN(full.signal, visN);
+  const hist = lastN(full.hist, visN);
   const all = [...macd, ...signal, ...hist].filter((v) => v != null && Number.isFinite(v));
   const m = Math.max(0.001, ...all.map((v) => Math.abs(v)));
   const yFor = (v) => top + (1 - (v / m + 1) / 2) * height;
@@ -7210,8 +7491,10 @@ function renderMacdPanel(closes, xFor, x1, x2, top, height, candleW) {
   `;
 }
 
-function renderStochPanel(rows, xFor, x1, x2, top, height) {
-  const { k, d } = stochArrays(rows, 14, 3);
+function renderStochPanel(rows, xFor, x1, x2, top, height, visN) {
+  const st = stochArrays(rows, 14, 3);
+  const k = lastN(st.k, visN);
+  const d = lastN(st.d, visN);
   const yFor = (v) => top + ((100 - v) / 100) * height;
   return `
     <rect x="${x1}" y="${top}" width="${x2 - x1}" height="${height}" class="rsi-bg"></rect>
@@ -7329,8 +7612,8 @@ function averagePath(values, period, xFor, yFor, color) {
   return `<path d="${path}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round"></path>`;
 }
 
-function renderRsiPanel(closes, xFor, x1, x2, top, height) {
-  const values = rsiSeries(closes, 14);
+function renderRsiPanel(closes, xFor, x1, x2, top, height, visN) {
+  const values = lastN(rsiSeries(closes, 14), visN);
   const yFor = (value) => top + ((100 - value) / 100) * height;
   const points = values.map((value, index) => Number.isFinite(value) ? [xFor(index), yFor(value)] : null).filter(Boolean);
   const path = points.map(([x, y], index) => `${index ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");

@@ -2414,10 +2414,21 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
+function analysisTickerKey(ticker) {
+  if (window.MirMarket) return window.MirMarket.getConfig().formatTicker(ticker);
+  return String(ticker).trim().toUpperCase();
+}
+
+function analysisDetailPath(ticker) {
+  const key = analysisTickerKey(ticker);
+  if (window.MirMarket) return window.MirMarket.detailPath(key);
+  return `data/details/${encodeURIComponent(key)}.json`;
+}
+
 async function loadDetail(ticker) {
-  const key = String(ticker).trim().toUpperCase();
+  const key = analysisTickerKey(ticker);
   if (!key) return null;
-  const res = await fetch(`data/details/${encodeURIComponent(key)}.json`, { cache: "no-store" });
+  const res = await fetch(analysisDetailPath(key), { cache: "no-store" });
   if (!res.ok) throw new Error("not_found");
   return res.json();
 }
@@ -2837,7 +2848,8 @@ async function runAnalysis(ticker) {
     url.searchParams.set("t", String(ticker).trim().toUpperCase());
     window.history.replaceState({}, "", url);
   } catch (e) {
-    el.innerHTML = `<div class="notice err">"${escapeHtml(ticker)}" 종목 데이터를 찾을 수 없습니다. 티커를 정확히 입력했는지 확인해 주세요. (예: NVDA, AAPL, TSLA)</div>`;
+    const hint = (window.MirMarket && window.MirMarket.getMode() === "kr") ? "005930, 000660" : "NVDA, AAPL, TSLA";
+    el.innerHTML = `<div class="notice err">"${escapeHtml(ticker)}" 종목 데이터를 찾을 수 없습니다. 티커를 정확히 입력했는지 확인해 주세요. (예: ${hint})</div>`;
   }
 }
 
@@ -2850,6 +2862,12 @@ function rerenderHorizon() {
 async function init() {
   const form = $("searchForm");
   if (!form) return; // standalone 분석 페이지가 아니면(예: 대시보드) UI 바인딩 생략
+  if (window.MirMarket) {
+    const params = new URLSearchParams(window.location.search);
+    const market = params.get("market");
+    window.MirMarket.setMode(market === "kr" ? "kr" : window.MirMarket.getInitialMode());
+    document.title = window.MirMarket.getConfig().pageTitle + " · 차트 확률 분석";
+  }
   await ensureStats();
   const input = $("tickerInput");
   form.addEventListener("submit", (e) => {
@@ -2868,7 +2886,7 @@ async function init() {
   // URL ?t= 로 진입 시 자동 분석
   const params = new URLSearchParams(window.location.search);
   const t = params.get("t");
-  if (t) { input.value = t.toUpperCase(); runAnalysis(t); }
+  if (t) { input.value = analysisTickerKey(t); runAnalysis(t); }
 }
 
 document.addEventListener("DOMContentLoaded", init);

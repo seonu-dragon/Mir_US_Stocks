@@ -175,6 +175,10 @@
           <span>시장 · 종목 · 내 투자 중심으로 보고, 필요할 때 고급 기능을 펼치세요.</span>
         </div>
         <div class="navigation-mode-actions">
+          <div class="market-mode-switch" id="marketModeSwitch" role="group" aria-label="시장 모드">
+            <button type="button" data-market-mode="us" class="is-active" aria-pressed="true">🇺🇸 미국 주식</button>
+            <button type="button" data-market-mode="kr" aria-pressed="false">🇰🇷 한국 주식</button>
+          </div>
           <div class="view-mode-switch" id="viewModeSwitch" role="group" aria-label="탐색 모드">
             <button type="button" data-view-mode="basic" class="is-active" aria-pressed="true">기본 모드</button>
             <button type="button" data-view-mode="advanced" aria-pressed="false">고급 모드</button>
@@ -1926,7 +1930,9 @@
       </div>
     </div>
 
+    <script src="market_config.js?v=20260624a"></script>
     <script src="data/market_snapshot.js?v=20260617x"></script>
+    <script src="data/korea/market_snapshot.js?v=20260624a"></script>
     <script src="data/map_fundamentals.js?v=20260620b"></script>
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
     <script src="data/institutional_13f.js?v=20260618c"></script>

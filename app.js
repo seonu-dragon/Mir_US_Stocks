@@ -88,10 +88,46 @@ function health(ticker, name, changePct, note) {
 }
 
 let data = fallbackData;
-let selectedTicker = "NVDA";
+function marketCfg() {
+  return (window.MirMarket && window.MirMarket.getConfig()) || {
+    id: "us",
+    formatTicker: (t) => String(t || "").toUpperCase(),
+    defaultTicker: "NVDA",
+    defaultBucket: "idx_sp500",
+    buckets: [],
+    matchBucket: () => true,
+    formatPrice: (v) => (Number.isFinite(Number(v)) ? `$${Number(v).toFixed(2)}` : "-"),
+    formatMoney: (v) => (Number.isFinite(Number(v)) ? `$${Number(v).toFixed(2)}` : "-"),
+    formatMarketCap: (v) => String(v ?? "-"),
+    sectorEtfs: [],
+    etfBenchmarks: ["SPY"],
+    indexAnalysisMap: {},
+    cardnewsDefault: "us",
+    snapshotPath: "data/market_snapshot.json",
+    snapshotJsGlobal: "MARKET_SNAPSHOT",
+    hiddenInstitutionalSubs: [],
+    features: {},
+  };
+}
+function isKrMarket() { return marketCfg().id === "kr"; }
+function normalizeTickerKey(ticker) { return marketCfg().formatTicker(ticker); }
+function liveProxyTicker(itemOrTicker) {
+  const cfg = marketCfg();
+  if (cfg.id === "kr") {
+    const item = typeof itemOrTicker === "object" ? itemOrTicker : stockByTicker(itemOrTicker);
+    return cfg.yahooTicker(item || { ticker: itemOrTicker }, item?.market);
+  }
+  return String(itemOrTicker || "").toUpperCase();
+}
+let selectedTicker = (window.MirMarket && window.MirMarket.getInitialMode() === "kr") ? "005930" : "NVDA";
 let chatFocusTicker = selectedTicker;
 let selectedEtfRsCategory = null;
 let scoreHelpOpen = null;
+function getSectorEtfs() {
+  const cfg = marketCfg();
+  return (cfg.sectorEtfs && cfg.sectorEtfs.length) ? cfg.sectorEtfs : SECTOR_ETFS;
+}
+
 const SECTOR_ETFS = [
   { ticker: "XLK", name: "정보기술 (Technology)", desc: "Technology Select Sector SPDR ETF", sectorName: "TECHNOLOGY" },
   { ticker: "SOXX", name: "반도체 (Semiconductors)", desc: "iShares Semiconductor ETF", sectorName: "Semiconductors" },
@@ -282,11 +318,12 @@ function updateDataLoadedAt(date = new Date()) {
   el.textContent = snapshotTime || formatKstDateTime(date);
 }
 
-async function loadData() {
+async function loadData(options = {}) {
+  const cfg = marketCfg();
   let loaded = false;
   try {
     if (window.location.protocol !== "file:") {
-      const response = await fetch("data/market_snapshot.json", { cache: "no-store" });
+      const response = await fetch(cfg.snapshotPath, { cache: "no-store" });
       if (response.ok) {
         data = await response.json();
         loaded = true;
@@ -296,21 +333,101 @@ async function loadData() {
     console.warn("Unable to load JSON snapshot", error);
   }
 
-  if (!loaded && window.MARKET_SNAPSHOT) {
+  if (!loaded && window[cfg.snapshotJsGlobal]) {
+    data = window[cfg.snapshotJsGlobal];
+    loaded = true;
+  }
+
+  if (!loaded && cfg.id === "us" && window.MARKET_SNAPSHOT) {
     data = window.MARKET_SNAPSHOT;
     loaded = true;
   }
 
   if (!loaded) {
-    console.warn("Using fallback snapshot. Open through scripts/serve.ps1 or regenerate data/market_snapshot.js.");
+    console.warn(`Using fallback snapshot for ${cfg.id}. Regenerate ${cfg.snapshotPath}.`);
+    data = fallbackData;
   }
-  boot();
+
+  if (!options.skipBoot) boot(options);
 }
 
-function boot() {
+function resetMarketCaches() {
+  Object.keys(detailCache).forEach((k) => delete detailCache[k]);
+  Object.keys(detailPromises).forEach((k) => delete detailPromises[k]);
+  tickerKoAliasIndex = null;
+  tickerKoAliasEntries = null;
+  tickerSearchIndex = null;
+}
+
+async function switchMarketMode(mode) {
+  if (!window.MirMarket || window.MirMarket.getMode() === mode) return;
+  window.MirMarket.setMode(mode);
+  const cfg = marketCfg();
+  cardnewsView = cfg.cardnewsDefault;
+  selectedTicker = cfg.defaultTicker;
+  selectedSectorEtf = (cfg.sectorEtfs[0] || {}).ticker || selectedSectorEtf;
+  selectedSectorBenchmark = cfg.etfBenchmarks[0] || selectedSectorBenchmark;
+  resetMarketCaches();
+  await loadData({ preserveRoute: true });
+}
+
+let marketModeUiReady = false;
+
+function setupMarketMode() {
+  if (!window.MirMarket) return;
+  if (!marketModeUiReady) {
+    window.MirMarket.setMode(window.MirMarket.getInitialMode(), { skipButtons: false });
+  } else {
+    window.MirMarket.setMode(window.MirMarket.getMode(), { skipButtons: false });
+  }
+  window._mirWatchlistMatch = (item) => watchlist.includes(item.ticker);
+  window._mirPortfolioMatch = (item) => portfolio.some((p) => p && p.ticker === item.ticker);
+  const switchEl = byId("marketModeSwitch");
+  if (switchEl && !marketModeUiReady) {
+    switchEl.querySelectorAll("[data-market-mode]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.marketMode;
+        if (mode && mode !== window.MirMarket.getMode()) switchMarketMode(mode);
+      });
+    });
+    marketModeUiReady = true;
+  }
+  applyMarketOnlyUi();
+}
+
+function applyMarketOnlyUi() {
+  const cfg = marketCfg();
+  document.title = cfg.pageTitle;
+  const search = byId("heatmapSearch");
+  if (search) search.placeholder = cfg.searchPlaceholder;
+  const instNav = byId("institutionalSubTabs");
+  if (instNav) {
+    instNav.querySelectorAll(".sub-tab").forEach((btn) => {
+      const sub = btn.dataset.sub;
+      const hidden = (cfg.hiddenInstitutionalSubs || []).includes(sub)
+        || (sub === "congress" && cfg.features && !cfg.features.congress)
+        || (sub === "13f" && cfg.features && !cfg.features.sec13f);
+      btn.hidden = hidden;
+      btn.style.display = hidden ? "none" : "";
+    });
+    if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)) {
+      activateInstitutionalSub("events", { push: false });
+    }
+  }
+  const calKr = document.querySelector('[data-cal-country="korea"]');
+  const calUs = document.querySelector('[data-cal-country="us"]');
+  if (calKr && calUs) {
+    calendarCountryFilters.korea = cfg.id === "kr" ? true : calendarCountryFilters.korea;
+    calendarCountryFilters.us = cfg.id === "us" ? true : calendarCountryFilters.us;
+  }
+}
+
+function boot(options = {}) {
   const route = new URLSearchParams(window.location.search);
+  setupMarketMode();
   if (route.get("cadmin")) setCommunityAdminKey(route.get("cadmin"));
-  if (route.get("ticker")) selectedTicker = route.get("ticker").toUpperCase();
+  if (route.get("ticker")) selectedTicker = normalizeTickerKey(route.get("ticker"));
+  else if (!stockByTicker(selectedTicker)) selectedTicker = marketCfg().defaultTicker;
   initWatchlist(route.get("watchlist"));
   loadPortfolio();
   loadPortfolioExtensions();
@@ -331,6 +448,7 @@ function boot() {
   setupEvents();
   setupBriefingToggles();
   fetchMarketHeader();
+  renderSnapshotIndices();
   const initialTab = route.get("tab");
   const initialSub = route.get("sub");
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
@@ -1248,8 +1366,23 @@ const INDEX_ANALYSIS_TICKER = {
 };
 
 function indexAnalysisTicker(symbol) {
-  const mapped = INDEX_ANALYSIS_TICKER[symbol];
+  const mapped = (marketCfg().indexAnalysisMap || INDEX_ANALYSIS_TICKER || {})[symbol];
   return mapped && stockByTicker(mapped) ? mapped : null;
+}
+
+function renderSnapshotIndices() {
+  if (!isKrMarket() || !Array.isArray(data.indices)) return;
+  const items = data.indices.map((ix) => {
+    const proxy = stockByTicker(ix.ticker);
+    return {
+      symbol: ix.symbol,
+      name: ix.name,
+      price: proxy?.price || 0,
+      changePct: ix.changePct ?? proxy?.changePct ?? 0,
+      series: proxy?.closeSeries || [],
+    };
+  }).filter((ix) => ix.name);
+  if (items.length) renderIndexStrip(items);
 }
 
 function renderIndexStrip(indices) {
@@ -2546,24 +2679,13 @@ function setupTabReorder(nav) {
 }
 
 function setupFilters() {
-  const buckets = [
-    ["watchlist", "⭐ 내 관심종목"],
-    ["portfolio", "💼 내 보유종목"],
-    ["all", "All US Stocks"],
-    ["all_with_etf", "All incl. ETFs"],
-    ["idx_sp500", "S&P 500"],
-    ["idx_ndx100", "Nasdaq 100"],
-    ["idx_nasdaq", "Nasdaq Listed"],
-    ["idx_nyse", "NYSE Listed"],
-    ["gte10b", "Stocks >= 10B"],
-    ["1to10b", "Stocks 1B-10B"],
-    ["lt1b", "Stocks < 1B"],
-    ["all_misc", "ETF / Misc"]
-  ];
+  const cfg = marketCfg();
+  const buckets = cfg.buckets || [];
+  const defaultBucket = cfg.defaultBucket || "idx_sp500";
   byId("bucketFilter").innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
-  byId("bucketFilter").value = "idx_sp500";
+  byId("bucketFilter").value = defaultBucket;
   byId("topBucket").innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
-  byId("topBucket").value = "idx_sp500";
+  byId("topBucket").value = defaultBucket;
 
   const sectors = ["All", ...[...new Set(data.stocks.map((item) => item.sector))].sort()];
   byId("sectorFilter").innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
@@ -2587,7 +2709,7 @@ function setupFilters() {
   if (etfRsGroupSel) etfRsGroupSel.innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
   const benchmarks = data.health?.etfRelative?.benchmarks?.length
     ? data.health.etfRelative.benchmarks
-    : ["SPY", "QQQ", "TQQQ", "DIA", "IWM"];
+    : (cfg.etfBenchmarks || ["SPY", "QQQ", "TQQQ", "DIA", "IWM"]);
   const etfRsBenchSel = byId("etfRsBenchmark");
   if (etfRsBenchSel) etfRsBenchSel.innerHTML = benchmarks
     .map((ticker) => `<option value="${ticker}">${ticker} 대비</option>`)
@@ -2602,7 +2724,7 @@ function setupFilters() {
   if (scrSector) scrSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
 
   const scanBucket = byId("scanBucket");
-  if (scanBucket) { scanBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join(""); scanBucket.value = "idx_sp500"; }
+  if (scanBucket) { scanBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join(""); scanBucket.value = defaultBucket; }
   const scanSector = byId("scanSector");
   if (scanSector) scanSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
 }
@@ -2611,7 +2733,7 @@ function setupEvents() {
   ["bucketFilter", "sectorFilter", "metricFilter", "tileSizeFilter"].forEach((id) => byId(id).addEventListener("change", renderTreemap));
   byId("heatmapSearch").addEventListener("input", renderTreemap);
   byId("resetFilters").addEventListener("click", () => {
-    byId("bucketFilter").value = "idx_sp500";
+    byId("bucketFilter").value = marketCfg().defaultBucket || "idx_sp500";
     byId("sectorFilter").value = "All";
     byId("metricFilter").value = "changePct";
     byId("tileSizeFilter").value = "marketCapB";
@@ -3789,16 +3911,8 @@ function filteredStocks() {
 }
 
 function bucketMatches(item, groups, bucket) {
-  if (bucket === "watchlist") return watchlist.includes(item.ticker);
-  if (bucket === "portfolio") return portfolio.some((p) => p && p.ticker === item.ticker);
-  if (bucket === "all") return item.sector !== "EXCHANGE TRADED FUNDS";
-  if (bucket === "all_with_etf") return true;
-  if (bucket === "gte10b") return item.sector !== "EXCHANGE TRADED FUNDS" && Number(item.marketCapB || 0) >= 10;
-  if (bucket === "1to10b") {
-    const cap = Number(item.marketCapB || 0);
-    return item.sector !== "EXCHANGE TRADED FUNDS" && cap >= 1 && cap < 10;
-  }
-  if (bucket === "lt1b") return item.sector !== "EXCHANGE TRADED FUNDS" && Number(item.marketCapB || 0) < 1;
+  const cfg = marketCfg();
+  if (cfg.matchBucket) return cfg.matchBucket(item, groups, bucket);
   return groups.includes(bucket) || item.bucket === bucket;
 }
 
@@ -4525,7 +4639,7 @@ function getSectorStocks(meta) {
 
 function renderSectors() {
   const sortBy = byId("sectorSort")?.value || "avg";
-  const groups = SECTOR_ETFS.map((meta) => {
+  const groups = getSectorEtfs().map((meta) => {
     const rows = getSectorStocks(meta);
     const avg = rows.length ? rows.reduce((sum, item) => sum + item.changePct, 0) / rows.length : 0;
     const avg1w = rows.length ? rows.reduce((sum, item) => sum + (item.weekChangePct || 0), 0) / rows.length : 0;
@@ -4632,7 +4746,7 @@ function renderSectors() {
 }
 
 function renderSectorDetail() {
-  const meta = SECTOR_ETFS.find((item) => item.ticker === selectedSectorEtf) || SECTOR_ETFS[0];
+  const meta = getSectorEtfs().find((item) => item.ticker === selectedSectorEtf) || getSectorEtfs()[0];
   const rows = getSectorStocks(meta);
   
   // Update detail texts
@@ -4686,7 +4800,7 @@ function formatTimestamp(t, range) {
 }
 
 function buildSectorSeriesFromConstituents(sectorTicker, benchmarkSeries) {
-  const meta = SECTOR_ETFS.find((m) => m.ticker === sectorTicker);
+  const meta = getSectorEtfs().find((m) => m.ticker === sectorTicker);
   if (!meta) return [];
   const seriesList = getSectorStocks(meta).map((stock) => {
     const detail = detailCache[safeTicker(stock.ticker)];
@@ -5354,7 +5468,7 @@ function applyTopPreset() {
 function resetTopScreener() {
   byId("topPreset").value = "custom";
   byId("topMetric").value = "changePct";
-  byId("topBucket").value = "idx_sp500";
+  byId("topBucket").value = marketCfg().defaultBucket || "idx_sp500";
   byId("topSector").value = "All";
   byId("topNewHighRecency").value = "All";
   byId("topNewHigh").value = "All";
@@ -5460,8 +5574,8 @@ function renderJump() {
 }
 
 function selectTicker(ticker, options = {}) {
-  const resolved = resolveTickerQuery(ticker) || String(ticker || "").trim().toUpperCase();
-  const found = data.stocks.find((item) => item.ticker.toUpperCase() === resolved.toUpperCase());
+  const resolved = normalizeTickerKey(resolveTickerQuery(ticker) || String(ticker || "").trim());
+  const found = data.stocks.find((item) => normalizeTickerKey(item.ticker) === resolved);
   if (!found) return;
   if (found.ticker !== selectedTicker) scoreHelpOpen = null;
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
@@ -5838,7 +5952,7 @@ function maybeFetchLiveData(base) {
   if (liveFetched[ticker]) return;
   liveFetched[ticker] = true;
   setNewsLoading();
-  const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?ticker=${encodeURIComponent(ticker)}`;
+  const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?ticker=${encodeURIComponent(liveProxyTicker(base))}`;
   fetch(endpoint, { cache: "no-store" })
     .then((response) => (response.ok ? response.json() : null))
     .then((payload) => {
@@ -5954,6 +6068,7 @@ function withDetail(item) {
 }
 
 function safeTicker(ticker) {
+  if (isKrMarket()) return normalizeTickerKey(ticker);
   const safe = String(ticker || "").toUpperCase().replace(/[^A-Z0-9._-]/g, "_");
   const root = safe.split(".")[0];
   const reserved = new Set(["CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"]);
@@ -5965,7 +6080,8 @@ function loadStockDetail(ticker) {
   if (!key) return Promise.resolve(null);
   if (detailCache[key]) return Promise.resolve(detailCache[key]);
   if (detailPromises[key]) return detailPromises[key];
-  detailPromises[key] = fetch(`data/details/${encodeURIComponent(key)}.json`, { cache: "no-store" })
+  const detailUrl = (window.MirMarket && window.MirMarket.detailPath(key)) || `data/details/${encodeURIComponent(key)}.json`;
+  detailPromises[key] = fetch(detailUrl, { cache: "no-store" })
     .then((response) => response.ok ? response.json() : null)
     .then((detail) => {
       if (detail) {
@@ -6892,8 +7008,8 @@ function renderLinePanel(series, xFor, x1, x2, top, height, title, options = {})
 }
 
 function stockByTicker(ticker) {
-  const key = String(ticker || "").toUpperCase();
-  return (data.stocks || []).find((row) => String(row.ticker || "").toUpperCase() === key) || null;
+  const key = normalizeTickerKey(ticker);
+  return (data.stocks || []).find((row) => normalizeTickerKey(row.ticker) === key) || null;
 }
 
 // ===== 한국어/회사명 → 티커 검색 =====
@@ -6916,6 +7032,14 @@ function buildTickerKoAliasIndex() {
       if (!byKo.get(key).includes(ticker)) byKo.get(key).push(ticker);
     });
   });
+  if (isKrMarket()) {
+    (data.stocks || []).forEach((stock) => {
+      const name = String(stock.company || "").trim();
+      if (!name) return;
+      if (!byKo.has(name)) byKo.set(name, []);
+      if (!byKo.get(name).includes(stock.ticker)) byKo.get(name).push(stock.ticker);
+    });
+  }
   tickerKoAliasIndex = byKo;
   tickerKoAliasEntries = [];
   byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers }));
@@ -7161,9 +7285,9 @@ function sectorBenchmarkTickerForItem(item) {
   const sector = String(item.sector || "").toUpperCase();
   const industry = String(item.industry || "").toUpperCase();
   if (industry.includes("SEMICONDUCTOR") || sector.includes("SEMICONDUCTOR")) return "SOXX";
-  const exact = SECTOR_ETFS.find((meta) => String(meta.sectorName || "").toUpperCase() === sector);
+  const exact = getSectorEtfs().find((meta) => String(meta.sectorName || "").toUpperCase() === sector);
   if (exact) return exact.ticker;
-  const fuzzy = SECTOR_ETFS.find((meta) => {
+  const fuzzy = getSectorEtfs().find((meta) => {
     const name = String(meta.sectorName || "").toUpperCase();
     return name && (sector.includes(name) || industry.includes(name));
   });
@@ -8310,7 +8434,7 @@ function etfConstituentStocks(ticker) {
   if (row && Array.isArray(row.stockLeaders) && row.stockLeaders.length) {
     return { name: row.category, list: row.stockLeaders.slice() };
   }
-  const meta = SECTOR_ETFS.find((m) => m.ticker === ticker);
+  const meta = getSectorEtfs().find((m) => m.ticker === ticker);
   if (meta) {
     return {
       name: meta.name,
@@ -8370,10 +8494,20 @@ function valueWithClass(value) {
 function indexLabel(item) {
   const groups = item.groups || [];
   const labels = [];
-  if (groups.includes("idx_ndx100")) labels.push("Nasdaq 100");
-  if (groups.includes("idx_sp500")) labels.push("S&P 500");
-  if (groups.includes("idx_nasdaq")) labels.push("Nasdaq");
-  if (groups.includes("idx_nyse")) labels.push("NYSE");
+  const cfgLabels = marketCfg().groupLabels || {};
+  groups.forEach((g) => {
+    if (cfgLabels[g]) labels.push(cfgLabels[g]);
+  });
+  if (!labels.length) {
+    if (groups.includes("idx_ndx100")) labels.push("Nasdaq 100");
+    if (groups.includes("idx_sp500")) labels.push("S&P 500");
+    if (groups.includes("idx_nasdaq")) labels.push("Nasdaq");
+    if (groups.includes("idx_nyse")) labels.push("NYSE");
+    if (groups.includes("idx_kospi200")) labels.push("코스피200");
+    if (groups.includes("idx_kospi")) labels.push("코스피");
+    if (groups.includes("idx_kosdaq150")) labels.push("코스닥150");
+    if (groups.includes("idx_kosdaq")) labels.push("코스닥");
+  }
   return labels.slice(0, 2).join(", ") || "-";
 }
 
@@ -8386,11 +8520,11 @@ function fmtMultiple(value, digits = 2) {
 }
 
 function moneyOrDash(value) {
-  return Number.isFinite(Number(value)) ? `$${Number(value).toFixed(2)}` : "-";
+  return marketCfg().formatMoney(value);
 }
 
 function priceOrDash(value) {
-  return Number.isFinite(Number(value)) ? `$${Number(value).toFixed(2)}` : "-";
+  return marketCfg().formatPrice(value);
 }
 
 function fmtRatio(value) {
@@ -8402,11 +8536,7 @@ function fmtPercent(value) {
 }
 
 function fmtBillions(value) {
-  if (!Number.isFinite(Number(value))) return "-";
-  const num = Number(value);
-  if (Math.abs(num) >= 1000) return `${(num / 1000).toFixed(2)}T`;
-  if (Math.abs(num) >= 1) return `${num.toFixed(2)}B`;
-  return `${(num * 1000).toFixed(0)}M`;
+  return marketCfg().formatMarketCap(value);
 }
 
 function fmtCompact(value) {
@@ -10428,7 +10558,7 @@ function renderRrg() {
   }
   const tailLen = Number(byId("rrgTail")?.value || 5);
   const points = [];
-  SECTOR_ETFS.forEach((etf) => {
+  getSectorEtfs().forEach((etf) => {
     const s = stockByTicker(etf.ticker);
     if (!s || !Array.isArray(s.closeSeries) || s.closeSeries.length < 40) return;
     const p = rrgComputePoint(s.closeSeries, bench.series, tailLen);
@@ -12457,7 +12587,7 @@ function screenerSnapshotKey() {
 
 function currentScreenerConfig() {
   return {
-    bucket: byId("scrBucket")?.value || "idx_sp500",
+    bucket: byId("scrBucket")?.value || marketCfg().defaultBucket || "idx_sp500",
     sector: byId("scrSector")?.value || "All",
     preset: byId("scrPreset")?.value || "custom",
     metric: byId("scrMetric")?.value || "rsScore",
@@ -12600,7 +12730,7 @@ function deleteSelectedScreener() {
 }
 
 function screenerRows() {
-  const bucket = byId("scrBucket")?.value || "idx_sp500";
+  const bucket = byId("scrBucket")?.value || marketCfg().defaultBucket || "idx_sp500";
   const sector = byId("scrSector")?.value || "All";
   const preset = byId("scrPreset")?.value || "custom";
   const metric = byId("scrMetric")?.value || "rsScore";
@@ -12925,7 +13055,7 @@ async function scanPatternsForScreener(candidates) {
   for (const item of list) {
     if (patternScreenerCache.has(item.ticker)) continue;
     try {
-      const res = await fetch(`data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-store" });
+      const res = await fetch((window.MirMarket && window.MirMarket.detailPath(item.ticker)) || `data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-store" });
       if (!res.ok) continue;
       const detail = await res.json();
       const rows = (detail.chartSeries || []).map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
@@ -12946,7 +13076,7 @@ function setupScreenerEvents() {
       if (meta) meta.textContent = "패턴 스캔 중… (최대 80종목)";
       const pre = data.stocks
         .filter((item) => item.sector !== "EXCHANGE TRADED FUNDS")
-        .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), byId("scrBucket")?.value || "idx_sp500"))
+        .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), byId("scrBucket")?.value || marketCfg().defaultBucket || "idx_sp500"))
         .slice(0, 120);
       await scanPatternsForScreener(pre);
     }
@@ -12978,7 +13108,7 @@ function setupScreenerEvents() {
   const reset = byId("scrReset");
   if (reset) reset.addEventListener("click", () => {
     byId("scrPreset").value = "custom";
-    byId("scrBucket").value = "idx_sp500";
+    byId("scrBucket").value = marketCfg().defaultBucket || "idx_sp500";
     byId("scrSector").value = "All";
     byId("scrMetric").value = "rsScore";
     ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
@@ -13084,7 +13214,7 @@ function earningsTickerPool() {
 function sp500TopTickers(limit = 50) {
   return data.stocks
     .filter((s) => s.sector !== "EXCHANGE TRADED FUNDS")
-    .filter((s) => bucketMatches(s, s.groups || [s.bucket].filter(Boolean), "idx_sp500"))
+    .filter((s) => bucketMatches(s, s.groups || [s.bucket].filter(Boolean), marketCfg().defaultBucket || "idx_sp500"))
     .sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0))
     .slice(0, limit)
     .map((s) => s.ticker);

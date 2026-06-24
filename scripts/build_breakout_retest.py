@@ -36,7 +36,7 @@ DETAILS_DIR = ROOT / "data" / "details"
 OUT_JSON = ROOT / "data" / "breakout_retest_stats.json"
 KST = timezone(timedelta(hours=9))
 
-HORIZONS = (5, 20, 60)
+HORIZONS = (1, 3, 5, 10, 20, 60)
 RETEST_WIN = 15          # 돌파 후 되돌림(레벨 재접촉)을 기다리는 최대 봉
 MIN_BARS = 300
 BASE_STRIDE = 10

@@ -67,6 +67,121 @@ THEMATIC_CODES = {
     "000270", "005380", "207940", "068270", "105560", "055550", "003670",
 }
 
+ETF_NAME_PREFIXES = ("KODEX", "TIGER", "ACE", "RISE", "KBSTAR", "SOL", "ARIRANG", "HANARO", "TIME", "PLUS", "KOSEF", "WOORI", "KIWOOM", "UNIS", "HI", "FOCUS", "KINDEX")
+ETF_KEYWORDS = ("ETF", "ETN")
+
+KR_SECTOR_OVERRIDES = {
+    "005930": ("기술", "반도체"),
+    "000660": ("기술", "반도체"),
+    "009150": ("기술", "전자부품"),
+    "005380": ("경기소비재", "자동차"),
+    "000270": ("경기소비재", "자동차"),
+    "012330": ("경기소비재", "자동차부품"),
+    "018880": ("경기소비재", "자동차부품"),
+    "373220": ("기술", "2차전지"),
+    "006400": ("기술", "2차전지"),
+    "051910": ("소재", "2차전지 소재"),
+    "003670": ("소재", "2차전지 소재"),
+    "096770": ("소재", "2차전지 소재"),
+    "207940": ("헬스케어", "바이오"),
+    "068270": ("헬스케어", "바이오"),
+    "128940": ("헬스케어", "바이오"),
+    "035420": ("커뮤니케이션", "인터넷"),
+    "035720": ("커뮤니케이션", "인터넷"),
+    "105560": ("금융", "은행"),
+    "055550": ("금융", "은행"),
+    "086790": ("금융", "은행"),
+    "316140": ("금융", "은행"),
+    "024110": ("금융", "은행"),
+    "032830": ("금융", "보험"),
+    "000810": ("금융", "보험"),
+    "005830": ("금융", "보험"),
+    "006800": ("금융", "증권"),
+    "028260": ("산업재", "지주회사"),
+    "034730": ("산업재", "지주회사"),
+    "402340": ("산업재", "지주회사"),
+    "329180": ("산업재", "조선"),
+    "010140": ("산업재", "조선"),
+    "042660": ("산업재", "조선"),
+    "009540": ("산업재", "조선"),
+    "010620": ("산업재", "조선"),
+    "034020": ("산업재", "전력기기"),
+    "267260": ("산업재", "전력기기"),
+    "010120": ("산업재", "전력기기"),
+    "064350": ("산업재", "기계"),
+    "047810": ("산업재", "방산"),
+    "012450": ("산업재", "방산"),
+    "005490": ("소재", "철강"),
+    "010130": ("소재", "비철금속"),
+    "004020": ("소재", "철강"),
+    "011780": ("소재", "화학"),
+    "047050": ("소재", "상사"),
+    "015760": ("유틸리티", "전력"),
+    "017670": ("커뮤니케이션", "통신"),
+    "030200": ("커뮤니케이션", "통신"),
+    "032640": ("커뮤니케이션", "통신"),
+    "090430": ("필수소비재", "화장품"),
+    "051900": ("필수소비재", "생활소비재"),
+    "033780": ("필수소비재", "담배"),
+    "097950": ("필수소비재", "식품"),
+    # 세부 분류 추가 (Overrides)
+    "000150": ("산업재", "지주회사"), # 두산
+    "011070": ("기술", "전자부품"), # LG이노텍
+    "196170": ("헬스케어", "바이오"), # 알테오젠
+    "267250": ("산업재", "지주회사"), # HD현대
+    "003550": ("산업재", "지주회사"), # LG
+    "307950": ("기술", "IT 서비스"), # 현대오토에버
+    "018260": ("기술", "IT 서비스"), # 삼성에스디에스
+    "086280": ("산업재", "물류/운송"), # 현대글로비스
+    "278470": ("필수소비재", "화장품"), # 에이피알
+    "006260": ("산업재", "지주회사"), # LS
+    "259960": ("커뮤니케이션", "게임"), # 크래프톤
+    "277810": ("기술", "로보틱스"), # 레인보우로보틱스
+    "443060": ("산업재", "해운/서비스"), # HD현대마린솔루션
+    "028050": ("산업재", "건설"), # 삼성E&A
+    "950160": ("헬스케어", "바이오"), # 코오롱티슈진
+    "352820": ("커뮤니케이션", "엔터테인먼트"), # 하이브
+    "007660": ("기술", "전자부품"), # 이수페타시스
+    "064400": ("기술", "IT 서비스"), # LG씨엔에스
+    "180640": ("산업재", "항공/운송"), # 한진칼
+    "000880": ("산업재", "지주회사"), # 한화
+    "028300": ("헬스케어", "바이오"), # HLB
+    "000990": ("기술", "반도체"), # DB하이텍
+    "004170": ("경기소비재", "유통/레저"), # 신세계
+    "454910": ("기술", "로보틱스"), # 두산로보틱스
+    "078930": ("산업재", "지주회사"), # GS
+    "021240": ("필수소비재", "생활소비재"), # 코웨이
+    "034220": ("기술", "디스플레이"), # LG디스플레이
+    "039030": ("기술", "반도체 장비"), # 이오테크닉스
+    "241560": ("산업재", "기계"), # 두산밥캣
+    "009830": ("소재", "화학"), # 한화솔루션
+    "000100": ("헬스케어", "제약"), # 유한양행
+    "011790": ("소재", "화학"), # SKC
+    "036570": ("커뮤니케이션", "게임"), # 엔씨소프트
+    "088980": ("금융", "기타금융"), # 맥쿼리인프라
+    "087010": ("헬스케어", "바이오"), # 펩트론
+    "319660": ("기술", "반도체 장비"), # 피에스케이
+    "001040": ("산업재", "지주회사"), # CJ
+    "222800": ("기술", "전자부품"), # 심텍
+    "440110": ("기술", "반도체"), # 파두
+    "082740": ("산업재", "기계"), # 한화엔진
+    "002380": ("소재", "화학/건자재"), # KCC
+    "088350": ("금융", "금융"), # 한화생명
+    "001450": ("금융", "금융"), # 현대해상
+    "085620": ("금융", "금융"), # 미래에셋생명
+    "279570": ("금융", "금융"), # 케이뱅크
+    "005850": ("경기소비재", "자동차부품"), # 에스엘
+    "007340": ("경기소비재", "자동차부품"), # DN오토모티브
+    "035250": ("경기소비재", "유통/레저"), # 강원랜드 (카지노/레저)
+    "026960": ("필수소비재", "식품"), # 동서
+}
+
+KR_NAME_RULES = [
+    (("배터리", "2차전지", "에너지솔루션", "SDI", "에코프로", "엘앤에프", "포스코퓨처엠", "코스모신소재", "대주전자재료", "천보"), ("기술", "2차전지")),
+    (("로봇", "로보틱스", "로보"), ("기술", "로보틱스")),
+    (("지주", "홀딩스"), ("산업재", "지주회사")),
+]
+
 
 def load_update_data():
     path = ROOT / "scripts" / "update_data.py"
@@ -115,6 +230,176 @@ def yahoo_ticker(code: str, market: str) -> str:
     return f"{code}.{suffix}"
 
 
+def is_etf_like_name(company: str, industry: str = "", sector: str = "") -> bool:
+    text = f"{company or ''} {industry or ''} {sector or ''}".upper()
+    return (
+        text.startswith(ETF_NAME_PREFIXES)
+        or any(f" {kw}" in f" {text}" for kw in ETF_KEYWORDS)
+    )
+
+
+def is_korean_preferred_stock(ticker: str, name: str) -> bool:
+    if not ticker or len(ticker) != 6:
+        return False
+    if ticker.endswith("0"):
+        return False
+    n = name.strip()
+    if n.endswith("우") or n.endswith("우선주"):
+        return True
+    if re.search(r"우[0-9A-Za-z가-힣]*$", n):
+        return True
+    return False
+
+
+GLOBAL_NAVER_MAP = {}
+
+NAVER_INDUSTRY_MAPPING = {
+    "생물공학": ("헬스케어", "바이오"),
+    "생명과학도구및서비스": ("헬스케어", "바이오/제약"),
+    "제약": ("헬스케어", "제약"),
+    "건강관리장비와용품": ("헬스케어", "의료기기"),
+    "건강관리기술": ("헬스케어", "의료 IT"),
+    "건강관리업체및서비스": ("헬스케어", "의료서비스"),
+    
+    "반도체와반도체장비": ("기술", "반도체"),
+    "디스플레이장비및부품": ("기술", "디스플레이장비"),
+    "디스플레이패널": ("기술", "디스플레이패널"),
+    "소프트웨어": ("기술", "소프트웨어"),
+    "IT서비스": ("기술", "IT 서비스"),
+    "컴퓨터와주변기기": ("기술", "IT 장비"),
+    "핸드셋": ("기술", "모바일 부품"),
+    "통신장비": ("기술", "통신장비"),
+    "전자제품": ("기술", "전자제품"),
+    "전자장비와기기": ("기술", "전자장비"),
+    "사무용전자제품": ("기술", "사무용기기"),
+    
+    "복합기업": ("산업재", "지주회사"),
+    "기계": ("산업재", "기계"),
+    "우주항공과국방": ("산업재", "방산/우주항공"),
+    "조선": ("산업재", "조선"),
+    "건설": ("산업재", "건설"),
+    "전기제품": ("산업재", "전기제품"),
+    "전기장비": ("산업재", "전기장비"),
+    "상업서비스와공급품": ("산업재", "상업서비스"),
+    "항공화물운송과물류": ("산업재", "물류"),
+    "해운사": ("산업재", "해운"),
+    "항공사": ("산업재", "항공"),
+    "도로와철도운송": ("산업재", "육상운송"),
+    "운송인프라": ("산업재", "운송인프라"),
+    "무역회사와판매업체": ("산업재", "상사"),
+    
+    "생명보험": ("금융", "보험"),
+    "손해보험": ("금융", "보험"),
+    "은행": ("금융", "은행"),
+    "증권": ("금융", "증권"),
+    "카드": ("금융", "카드"),
+    "기타금융": ("금융", "기타금융"),
+    "창업투자": ("금융", "벤처캐피탈"),
+    
+    "자동차": ("경기소비재", "자동차"),
+    "자동차부품": ("경기소비재", "자동차부품"),
+    "가구": ("경기소비재", "가구"),
+    "레저용장비와제품": ("경기소비재", "레저용품"),
+    "백화점과일반상점": ("경기소비재", "유통"),
+    "전문소매": ("경기소비재", "소매"),
+    "판매업체": ("경기소비재", "유통"),
+    "호텔,레스토랑,레저": ("경기소비재", "레저/관광"),
+    "섬유,의류,신발,호화품": ("경기소비재", "의류/패션"),
+    "다각화된소비자서비스": ("경기소비재", "소비자서비스"),
+    
+    "식품": ("필수소비재", "식품"),
+    "음료": ("필수소비재", "음료"),
+    "식품과기본식료품소매": ("필수소비재", "유통"),
+    "가정용기기와용품": ("필수소비재", "가정용품"),
+    "가정용품": ("필수소비재", "가정용품"),
+    "화장품": ("필수소비재", "화장품"),
+    "담배": ("필수소비재", "담배"),
+    
+    "화학": ("소재", "화학"),
+    "철강": ("소재", "철강"),
+    "비철금속": ("소재", "비철금속"),
+    "에너지장비및서비스": ("소재", "에너지소재"),
+    "건축제품": ("소재", "건축자재"),
+    "건축자재": ("소재", "건축자재"),
+    "종이와목재": ("소재", "제지/목재"),
+    "포장재": ("소재", "포장재"),
+    
+    "게임엔터테인먼트": ("커뮤니케이션", "게임"),
+    "방송과엔터테인먼트": ("커뮤니케이션", "엔터테인먼트"),
+    "양방향미디어와서비스": ("커뮤니케이션", "인터넷서비스"),
+    "인터넷과카탈로그소매": ("커뮤니케이션", "전자상거래"),
+    "무선통신서비스": ("커뮤니케이션", "통신"),
+    "다각화된통신서비스": ("커뮤니케이션", "통신"),
+    "광고": ("커뮤니케이션", "광고"),
+    "출판": ("커뮤니케이션", "미디어/출판"),
+    
+    "전기유틸리티": ("유틸리티", "전력"),
+    "가스유틸리티": ("유틸리티", "가스"),
+    "복합유틸리티": ("유틸리티", "유틸리티"),
+    
+    "부동산": ("부동산", "부동산"),
+    "교육서비스": ("기타", "교육서비스"),
+    "문구류": ("기타", "문구류"),
+}
+
+
+def fetch_naver_industry_map() -> dict[str, tuple[str, str]]:
+    print("Fetching Naver Finance industry classifications...")
+    url = "https://finance.naver.com/sise/sise_group.naver?type=upjong"
+    try:
+        html = request_html(url)
+        links = re.findall(r'href="/sise/sise_group_detail\.naver\?[^"]*no=(\d+)"[^>]*>([^<]+)</a>', html)
+        if not links:
+            print("[warn] No Naver industries matched in list HTML.")
+            return {}
+        
+        ticker_map = {}
+        
+        def fetch_one_detail(no, raw_name):
+            name = raw_name.strip()
+            detail_url = f"https://finance.naver.com/sise/sise_group_detail.naver?no={no}"
+            try:
+                html_d = request_html(detail_url)
+                codes = re.findall(r'/item/main\.naver\?code=(\d+)"', html_d)
+                ret = {}
+                if name in NAVER_INDUSTRY_MAPPING:
+                    sector, ind = NAVER_INDUSTRY_MAPPING[name]
+                    for code in codes:
+                        ret[code] = (sector, ind)
+                return ret
+            except Exception as e:
+                print(f"[warn] Fetch detail failed for {name} (no={no}): {e}")
+                return {}
+
+        with ThreadPoolExecutor(max_workers=8) as pool:
+            futures = {pool.submit(fetch_one_detail, no, name): name for no, name in links}
+            for fut in as_completed(futures):
+                res = fut.result()
+                ticker_map.update(res)
+        print(f"Successfully mapped {len(ticker_map)} stocks from Naver Finance.")
+        return ticker_map
+    except Exception as e:
+        print(f"[warn] Failed to fetch Naver industry list: {e}")
+        return {}
+
+
+def classify_kr_stock(code: str, company: str, sector: str = "", industry: str = "") -> tuple[str, str]:
+    if code in KR_SECTOR_OVERRIDES:
+        return KR_SECTOR_OVERRIDES[code]
+    
+    comp_upper = (company or "").upper()
+    for needles, result in KR_NAME_RULES:
+        if any(str(needle).upper() in comp_upper for needle in needles):
+            return result
+            
+    if code in GLOBAL_NAVER_MAP:
+        return GLOBAL_NAVER_MAP[code]
+        
+    current_sector = sector if sector and sector != "MISC" else ""
+    current_industry = industry if industry and industry != "기타" else ""
+    return current_sector or "기타", current_industry or "기타"
+
+
 def cap_bucket_kr(cap_trillion: float, groups: set[str]) -> str:
     if "all_etf" in groups or "all_misc" in groups:
         return "all_misc"
@@ -152,16 +437,22 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             continue
         price = parse_number(cells[2])
         change_pct = parse_change_pct(cells[4])
-        volume = parse_number(cells[5])
-        amount = parse_number(cells[6]) if len(cells) > 6 else None
-        cap_eok = parse_number(cells[7]) if len(cells) > 7 else None
+        # Naver market-sum table order is:
+        # 현재가, 전일비, 등락률, 액면가, 시가총액, 상장주식수, ...
+        # Keep 시가총액 at cells[6]; cells[7] is listed shares and must not drive heatmap area.
+        cap_eok = parse_number(cells[6]) if len(cells) > 6 else None
+        volume = parse_number(cells[9]) if len(cells) > 9 else None
+        amount = parse_number(cells[10]) if len(cells) > 10 else None
         if price is None:
             continue
         cap_trillion = (cap_eok or 0) / 10000.0  # 억원 → 조원
+        is_etf_like = is_etf_like_name(company)
+        groups = {"all_etf", "all_misc"} if is_etf_like else {f"idx_{market}", "all_kr"}
+        sector, industry = ("ETF", "ETF/ETN") if is_etf_like else classify_kr_stock(code, company)
         out.append({
             "symbol": code,
             "company": company,
-            "market": market,
+            "market": "etf" if is_etf_like else market,
             "yahooSymbol": yahoo_ticker(code, market),
             "quotePrice": price,
             "quoteChangePct": change_pct if change_pct is not None else 0.0,
@@ -169,14 +460,16 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             "quoteAmount": amount,
             "marketCapT": cap_trillion,
             "marketCapB": cap_trillion,  # 조원 단위 (한국 모드 전용)
-            "sector": "MISC",
-            "industry": "기타",
-            "groups": {f"idx_{market}", "all_kr"},
+            "sector": sector,
+            "industry": industry,
+            "groups": groups,
         })
     return out
 
 
 def fetch_all_listed(limit: int | None = None) -> list[dict]:
+    global GLOBAL_NAVER_MAP
+    GLOBAL_NAVER_MAP = fetch_naver_industry_map()
     universe: dict[str, dict] = {}
     for sosok in (0, 1):
         for page in range(1, 60):
@@ -188,6 +481,8 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
             if not rows:
                 break
             for row in rows:
+                if is_korean_preferred_stock(row["symbol"], row["company"]):
+                    continue
                 universe[row["symbol"]] = row
             if limit and len(universe) >= limit:
                 break
@@ -240,6 +535,13 @@ def enrich_sector(meta: dict) -> None:
         meta["industry"] = industry
     except Exception:
         meta["sector"] = meta.get("sector") or "기타"
+    if meta.get("market") != "etf":
+        meta["sector"], meta["industry"] = classify_kr_stock(
+            meta.get("symbol") or "",
+            meta.get("company") or "",
+            meta.get("sector") or "",
+            meta.get("industry") or "",
+        )
 
 
 def yahoo_quote_symbol(yahoo_symbol: str) -> str:
@@ -344,6 +646,13 @@ def build_one(meta: dict):
     stock["marketCapT"] = round(meta.get("marketCapT") or 0, 3)
     stock["marketCapB"] = stock["marketCapT"]
     stock["currency"] = "KRW"
+    if stock.get("market") != "etf":
+        stock["sector"], stock["industry"] = classify_kr_stock(
+            stock.get("ticker") or "",
+            stock.get("company") or "",
+            stock.get("sector") or "",
+            stock.get("industry") or "",
+        )
     return stock, error
 
 

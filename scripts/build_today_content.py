@@ -109,8 +109,14 @@ def build_deck(date, variant):
         return None
 
     pages = sorted((card_dir / "out").glob("*.png"))
-    # Drop the cover (first) and the closing page (last); keep only the body pages.
-    body = pages[1:-1] if len(pages) > 2 else pages
+    # Drop the cover (first page). Drop the last page only if it is a closing card
+    # (legacy 7-card decks). 6-card decks (cover + 5 topics, no closing) keep all topics.
+    cards = load_json(card_dir / "cards.json").get("cards", [])
+    has_closing = bool(cards) and cards[-1].get("type") == "closing"
+    if len(pages) > 2:
+        body = pages[1:-1] if has_closing else pages[1:]
+    else:
+        body = pages
 
     dest_dir = CONTENT_ASSETS / date / variant
     dest_dir.mkdir(parents=True, exist_ok=True)

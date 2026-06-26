@@ -923,7 +923,10 @@ def request_json(url, headers=None, timeout=30):
 
 
 def yahoo_symbol(symbol):
-    return symbol.replace(".", "-")
+    s = str(symbol)
+    if s.upper().endswith(".KS") or s.upper().endswith(".KQ"):
+        return s
+    return s.replace(".", "-")
 
 
 def strip_tags(value):

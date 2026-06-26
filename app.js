@@ -4613,6 +4613,17 @@ function getSectorStocks(meta) {
     const s = stock.sector.toUpperCase();
     const ind = (stock.industry || "").toLowerCase();
     
+    if (isKrMarket()) {
+      const t = meta.ticker;
+      if (t === "069500") return (stock.groups || []).includes("idx_kospi200");
+      if (t === "091160") return ind.includes("반도체");
+      if (t === "091170") return ind.includes("은행");
+      if (t === "091180") return ind.includes("자동차");
+      if (t === "305720") return ind.includes("2차전지");
+      if (t === "244580") return ind.includes("바이오") || ind.includes("제약") || ind.includes("헬스케어");
+      return false;
+    }
+    
     if (meta.ticker === "XLK") return s === "TECHNOLOGY";
     if (meta.ticker === "SOXX") return ind.includes("semiconductor");
     if (meta.ticker === "XLF") return s === "FINANCIAL";
@@ -4769,7 +4780,7 @@ function renderSectorDetail() {
       <td class="rank-cell">${index + 1}</td>
       <td><strong>${stock.ticker}</strong></td>
       <td>${stock.company}</td>
-      <td>$${stock.price.toFixed(2)}</td>
+      <td>${marketCfg().formatPrice(stock.price)}</td>
       <td class="${cls(stock.changePct)}">${fmtPct(stock.changePct)}</td>
       <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
       <td class="${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
@@ -7282,6 +7293,22 @@ function setupTickerSearchHelpers() {
 }
 
 function sectorBenchmarkTickerForItem(item) {
+  if (isKrMarket()) {
+    const ind = String(item.industry || "");
+    const sec = String(item.sector || "");
+    if (ind.includes("반도체")) return "091160";
+    if (ind.includes("2차전지")) return "305720";
+    if (ind.includes("은행")) return "091170";
+    if (ind.includes("자동차")) return "091180";
+    if (ind.includes("바이오") || ind.includes("제약") || ind.includes("헬스케어")) return "244580";
+    
+    if (sec === "기술") return "091160";
+    if (sec === "금융") return "091170";
+    if (sec === "헬스케어") return "244580";
+    if (sec === "산업재" && ind.includes("자동차")) return "091180";
+    return null;
+  }
+
   const sector = String(item.sector || "").toUpperCase();
   const industry = String(item.industry || "").toUpperCase();
   if (industry.includes("SEMICONDUCTOR") || sector.includes("SEMICONDUCTOR")) return "SOXX";

@@ -115,7 +115,7 @@
     snapshotPath: "data/korea/market_snapshot.json",
     snapshotJsGlobal: "KOREA_MARKET_SNAPSHOT",
     detailsDir: "data/korea/details",
-    defaultBucket: "idx_kospi200",
+    defaultBucket: "idx_kospi_stock",
     defaultTicker: "005930",
     searchPlaceholder: "종목명·종목코드 (예: 삼성전자, 005930)",
     cardnewsDefault: "kr",
@@ -135,6 +135,7 @@
       ["portfolio", "💼 내 보유종목"],
       ["all", "전체 한국 주식"],
       ["all_with_etf", "ETF 포함 전체"],
+      ["idx_kospi_stock", "코스피 개별 종목"],
       ["idx_kospi", "코스피"],
       ["idx_kospi200", "코스피 200"],
       ["idx_kosdaq", "코스닥"],
@@ -185,13 +186,18 @@
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
       if (bucket === "portfolio") return window._mirPortfolioMatch?.(item) ?? false;
-      if (bucket === "all") return item.sector !== "ETF" && item.sector !== "EXCHANGE TRADED FUNDS";
+      const stockOnly = !isKrEtfLike(item);
+      if (bucket === "all") return stockOnly;
       if (bucket === "all_with_etf") return true;
+      if (bucket === "idx_kospi_stock") return stockOnly && item.market === "kospi";
       const capT = Number(item.marketCapT ?? item.marketCapB ?? 0);
-      if (bucket === "gte10t") return item.sector !== "ETF" && capT >= 10;
-      if (bucket === "gte1t") return item.sector !== "ETF" && capT >= 1 && capT < 10;
-      if (bucket === "gte100b") return item.sector !== "ETF" && capT >= 0.1 && capT < 1;
-      if (bucket === "lt100b") return item.sector !== "ETF" && capT < 0.1;
+      if (bucket === "gte10t") return stockOnly && capT >= 10;
+      if (bucket === "gte1t") return stockOnly && capT >= 1 && capT < 10;
+      if (bucket === "gte100b") return stockOnly && capT >= 0.1 && capT < 1;
+      if (bucket === "lt100b") return stockOnly && capT < 0.1;
+      if (bucket === "idx_kospi" || bucket === "idx_kospi200" || bucket === "idx_kosdaq" || bucket === "idx_kosdaq150") {
+        return stockOnly && (groups.includes(bucket) || item.bucket === bucket);
+      }
       return groups.includes(bucket) || item.bucket === bucket;
     },
     formatPrice(value) {
@@ -213,6 +219,15 @@
 
   function getMode() {
     return window.MIR_MARKET_MODE === "kr" ? "kr" : "us";
+  }
+
+  function isKrEtfLike(item) {
+    const text = `${item?.company || ""} ${item?.industry || ""} ${item?.sector || ""}`.toUpperCase();
+    return item?.market === "etf"
+      || item?.sector === "ETF"
+      || text.includes(" ETF")
+      || text.includes(" ETN")
+      || /^(KODEX|TIGER|ACE|RISE|KBSTAR|SOL|ARIRANG|HANARO)\b/.test(text);
   }
 
   function getConfig(mode) {

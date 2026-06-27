@@ -342,6 +342,100 @@ function loadSnapshotScript(cfg) {
   });
 }
 
+// Feature datasets that used to be eager <script> tags in index.html. They are
+// multi-MB and many are US-only, so we load them on demand after boot, gated by
+// the active market's feature flags. `feature` maps to cfg.features; `usOnly`
+// loads only in US mode; datasets without either load in both markets.
+const FEATURE_DATA = {
+  inst13f:    { global: "INSTITUTIONAL_13F",     src: "data/institutional_13f.js?v=20260618c",     feature: "sec13f" },
+  congress:   { global: "CONGRESS_TRADES",       src: "data/congress_trades.js?v=20260618n",       feature: "congress" },
+  insider:    { global: "INSIDER_TRADES",        src: "data/insider_trades.js?v=20260619b",        feature: "insider" },
+  activist:   { global: "ACTIVIST_STAKES",       src: "data/activist_stakes.js?v=20260619a",       feature: "activist" },
+  events:     { global: "MATERIAL_EVENTS",       src: "data/material_events.js?v=20260619a",       feature: "materialEvents" },
+  ipo:        { global: "IPO_CALENDAR",          src: "data/ipo_calendar.js?v=20260619a",          feature: "ipo" },
+  short:      { global: "SHORT_INTEREST",        src: "data/short_interest.js?v=20260620a",        feature: "shortInterest" },
+  whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  src: "data/white_house_schedule.js?v=20260618n",  feature: "whiteHouse" },
+  leveraged:  { global: "LEVERAGED_ETF_CATALOG", src: "data/leveraged_etf_catalog.js?v=20260618j", usOnly: true },
+};
+const _featureDataPromises = {};
+
+function featureDataEnabled(meta, cfg) {
+  if (meta.usOnly) return cfg.id === "us";
+  if (meta.feature) return !(cfg.features && cfg.features[meta.feature] === false);
+  return true;
+}
+
+// Inject a feature dataset's <script> once. Resolves true when its window global
+// is available, false if disabled for this market or the load failed. The result
+// for a disabled feature is not cached, so a later market switch can still load it.
+function ensureFeatureData(key) {
+  const meta = FEATURE_DATA[key];
+  if (!meta) return Promise.resolve(false);
+  if (window[meta.global]) return Promise.resolve(true);
+  if (!featureDataEnabled(meta, marketCfg())) return Promise.resolve(false);
+  if (_featureDataPromises[key]) return _featureDataPromises[key];
+  _featureDataPromises[key] = new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = meta.src;
+    script.async = true;
+    script.dataset.featureData = key;
+    script.addEventListener("load", () => resolve(!!window[meta.global]), { once: true });
+    script.addEventListener("error", () => { delete _featureDataPromises[key]; resolve(false); }, { once: true });
+    document.head.appendChild(script);
+  });
+  return _featureDataPromises[key];
+}
+
+// After boot, stream in every enabled feature dataset in parallel. As each lands,
+// refresh whatever feature-dependent surface is currently on screen.
+function preloadFeatureData() {
+  Object.keys(FEATURE_DATA).forEach((key) => {
+    ensureFeatureData(key).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
+  });
+}
+
+let _featureRefreshTimer = null;
+function scheduleFeatureViewRefresh() {
+  clearTimeout(_featureRefreshTimer);
+  _featureRefreshTimer = setTimeout(refreshFeatureViews, 250);
+}
+
+// Re-render only the on-screen surfaces that read feature globals (no network).
+function refreshFeatureViews() {
+  const calls = [renderSignals, renderActionBoard];
+  if (currentTab === "institutional") {
+    calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
+  } else if (currentTab === "search") {
+    if (searchSubTab === "short") {
+      calls.push(renderShortInterest);
+    } else if (selectedTicker && data && Array.isArray(data.stocks)) {
+      const base = data.stocks.find((r) => r.ticker === selectedTicker);
+      if (base) {
+        const item = applyLive(withDetail(base));
+        calls.push(
+          () => renderCongressTradesForTicker(item),
+          () => renderSmartMoney(item),
+          () => renderMoveExplanation(item),
+          () => renderEstimateRevision(item),
+          () => renderStockEvents(item),
+        );
+      }
+    }
+  }
+  calls.forEach((fn) => { try { fn(); } catch (e) { console.warn("refreshFeatureViews", e); } });
+}
+
+// The MirProb analysis engine (analysis.js) reads 13F / insider / short-interest
+// globals as scoring inputs. Await them before a deep run so lazy loading never
+// silently drops those signals. In KR mode these are disabled → resolves instantly.
+function ensureAnalysisFeatureData() {
+  return Promise.all([
+    ensureFeatureData("inst13f"),
+    ensureFeatureData("insider"),
+    ensureFeatureData("short"),
+  ]);
+}
+
 async function loadData(options = {}) {
   const cfg = marketCfg();
   let loaded = false;
@@ -488,6 +582,8 @@ function boot(options = {}) {
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
+  // 초기 렌더 이후, 현재 시장에서 활성화된 feature 데이터를 백그라운드로 로드.
+  preloadFeatureData();
 }
 
 // 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { us:{title,images}, kr:{title,images} }
@@ -3504,7 +3600,7 @@ function runChartProbAnalysis() {
   setChartProbBtnActive(true);
   panel.hidden = false;
   panel.innerHTML = '<div class="notice">분석 중…</div>';
-  window.MirProb.ensureStats().then(() => {
+  Promise.all([window.MirProb.ensureStats(), ensureAnalysisFeatureData()]).then(() => {
     const rows = getChartRows(item); // 전체 일봉(백테스트·패턴에 5년 이력 사용)
     const result = window.MirProb.analyzeRows(rows, chartProbHorizon, {
       ticker: item.ticker, company: item.company, statsMode: chartProbStatsMode,
@@ -5418,6 +5514,7 @@ async function deepAnalyzeEntry(entry, horizon) {
 
 async function runDeepScan(entries, horizon, runId) {
   try { await window.MirProb.ensureStats(); } catch (e) { /* 통계 없어도 진행 */ }
+  try { await ensureAnalysisFeatureData(); } catch (e) { /* 신호 데이터 없어도 진행 */ }
   if (runId !== scannerRunId) return;
   const queue = entries.slice();
   const CONCURRENCY = 5;

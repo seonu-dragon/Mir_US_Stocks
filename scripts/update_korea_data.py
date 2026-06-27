@@ -699,6 +699,243 @@ def build_one(meta: dict):
     return stock, error
 
 
+# ===================== Korean ETF analytics (상대강도 / 레버리지) =====================
+# Benchmarks for ETF relative-strength (KODEX 200 / KODEX 코스닥150 / TIGER 200).
+KR_ETF_RS_BENCHMARKS = ["069500", "229200", "102110"]
+# Names we never want inside an equity-sector representative group.
+KR_ETF_THEME_EXCLUDE = [
+    "인버스", "레버리지", "2X", "선물", "채권", "채액티브", "은행채", "국고", "단기", "금리",
+    "TR", "달러", "미국", "나스닥", "S&P", "차이나", "중국", "일본", "인도", "베트남",
+    "유럽", "글로벌", "선진", "신흥", "리츠", "금현물", "골드",
+]
+KR_ETF_THEME_DEFS = [
+    ("대표지수", "코스피200", ["코스피200", "KODEX 200", "TIGER 200", " 200"]),
+    ("대표지수", "코스닥150", ["코스닥150"]),
+    ("기술", "반도체", ["반도체"]),
+    ("기술", "2차전지", ["2차전지", "배터리"]),
+    ("기술", "인터넷/SW", ["인터넷", "소프트웨어"]),
+    ("커뮤니케이션", "게임", ["게임"]),
+    ("커뮤니케이션", "미디어/엔터", ["미디어", "엔터", "콘텐츠", "K-팝", "케이팝"]),
+    ("경기소비재", "자동차", ["자동차"]),
+    ("금융", "은행", ["은행"]),
+    ("금융", "증권", ["증권"]),
+    ("헬스케어", "바이오/헬스케어", ["바이오", "헬스케어", "제약"]),
+    ("산업재", "조선/중공업", ["조선", "중공업"]),
+    ("산업재", "방산/우주", ["방산", "우주"]),
+    ("산업재", "건설/인프라", ["건설", "인프라"]),
+    ("소재", "철강/소재", ["철강", "소재", "화학"]),
+    ("전략", "고배당", ["고배당", "배당"]),
+]
+
+
+def fetch_kr_etf_universe() -> list[dict]:
+    """All listed Korean ETFs from Naver (code, name, price, daily change, cap)."""
+    url = "https://finance.naver.com/api/sise/etfItemList.nhn"
+    try:
+        req = urllib.request.Request(url, headers={**HTTP_HEADERS, "Referer": "https://finance.naver.com/sise/etf.naver"})
+        raw = urllib.request.urlopen(req, timeout=15).read()
+        payload = json.loads(raw.decode("cp949", "replace"))
+        items = payload.get("result", {}).get("etfItemList", [])
+    except Exception as exc:
+        print(f"[warn] Naver ETF list: {exc}")
+        return []
+    out = []
+    for e in items:
+        code = str(e.get("itemcode") or "").strip()
+        name = str(e.get("itemname") or "").strip()
+        if not code or not name:
+            continue
+        out.append({
+            "code": code,
+            "name": name,
+            "price": _num(e.get("nowVal")),
+            "changePct": _num(e.get("changeRate")),
+            "volume": _num(e.get("quant")),
+            "capEok": _num(e.get("marketSum")) or 0,  # 억원
+        })
+    return out
+
+
+def _num(v):
+    try:
+        return float(str(v).replace(",", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+def _etf_theme_match(name: str, includes: list[str]) -> bool:
+    return any(k in name for k in includes) and not any(x in name for x in KR_ETF_THEME_EXCLUDE)
+
+
+def is_kr_leveraged_name(name: str) -> bool:
+    return ("레버리지" in name) or ("인버스" in name) or bool(re.search(r"[23]X", name))
+
+
+def classify_kr_leveraged(name: str) -> dict:
+    is_inverse = "인버스" in name
+    kind = "inverse" if is_inverse else "leveraged"
+    if re.search(r"2X|2배", name):
+        leverage = "2x"
+    elif re.search(r"3X|3배", name):
+        leverage = "3x"
+    elif is_inverse:
+        leverage = "1x"  # plain 인버스 tracks -1x
+    else:
+        leverage = "2x"  # Korean 레버리지 products are 2x by default
+    if "단일종목" in name or "단일" in name:
+        scope = "single-stock"
+    elif any(k in name for k in ["반도체", "2차전지", "바이오", "은행", "자동차", "헬스", "게임", "방산", "조선"]):
+        scope = "sector"
+    elif any(k in name for k in ["미국", "나스닥", "S&P", "차이나", "중국", "일본", "인도", "유럽", "글로벌", "베트남", "달러"]):
+        scope = "international"
+    elif any(k in name for k in ["원유", "금", "은", "구리", "천연가스", "농산물", "원자재"]):
+        scope = "commodity"
+    else:
+        scope = "index"
+    issuer = name.split(" ")[0] if " " in name else "—"
+    return {
+        "type": kind,
+        "leverage": leverage,
+        "direction": "short" if is_inverse else "long",
+        "scope": scope,
+        "issuer": issuer,
+    }
+
+
+def fetch_one_etf_stock(info: dict) -> dict | None:
+    code = info["code"]
+    ysym = f"{code}.KS"
+    meta = {
+        "symbol": code,
+        "company": info["name"],
+        "industry": "ETF",
+        "sector": "EXCHANGE TRADED FUNDS",
+        "groups": {"all_etf", "all_misc"},
+        "quotePrice": info.get("price"),
+        "quoteChangePct": info.get("changePct"),
+        "quoteVolume": info.get("volume"),
+        "marketCapB": (info.get("capEok") or 0) / 10000.0,  # 억원 → 조원
+        "preferHistory": True,
+    }
+    try:
+        rows = fetch_yahoo_history_kr(ysym)
+    except Exception:
+        return None
+    stock = UD.make_stock(meta, rows)
+    stock["ticker"] = code
+    stock["market"] = "etf"
+    stock["yahooSymbol"] = ysym
+    stock["currency"] = "KRW"
+    stock["marketCapT"] = round((info.get("capEok") or 0) / 10000.0, 3)
+    stock["marketCapB"] = stock["marketCapT"]
+    return stock
+
+
+def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
+    """Returns (etfRelative payload, leveraged ETF stock rows, leveraged catalog)."""
+    universe = fetch_kr_etf_universe()
+    if not universe:
+        return {"rows": [], "universeCount": 0, "benchmarks": [], "method": "no_etf_universe"}, [], {"items": [], "updated": ""}
+    print(f"Fetching Korean ETF universe... {len(universe)} ETFs")
+    by_code = {e["code"]: e for e in universe}
+
+    # Build representative + peer groups per theme (largest cap first).
+    category_map = []
+    needed: set[str] = set(KR_ETF_RS_BENCHMARKS)
+    for group, category, includes in KR_ETF_THEME_DEFS:
+        matches = sorted(
+            (e for e in universe if _etf_theme_match(e["name"], includes)),
+            key=lambda e: e.get("capEok") or 0, reverse=True,
+        )
+        peers = [e["code"] for e in matches[:8]]
+        if not peers:
+            continue
+        category_map.append({"group": group, "category": category, "representative": peers[0], "peers": peers})
+        needed.update(peers)
+
+    leveraged = sorted(
+        (e for e in universe if is_kr_leveraged_name(e["name"])),
+        key=lambda e: e.get("capEok") or 0, reverse=True,
+    )[:40]
+    needed.update(e["code"] for e in leveraged)
+
+    # Fetch history + returns for every ETF we will display.
+    lookup: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        futures = {pool.submit(fetch_one_etf_stock, by_code[c]): c for c in needed if c in by_code}
+        for fut in as_completed(futures):
+            stock = fut.result()
+            if stock:
+                lookup[stock["ticker"]] = stock
+    print(f"  ETF returns computed for {len(lookup)}/{len(needed)} ETFs")
+
+    period_keys = ["monthChangePct", "threeMonthChangePct", "ytdChangePct", "changePct"]
+    benchmarks = {t: lookup[t] for t in KR_ETF_RS_BENCHMARKS if t in lookup}
+    rows = []
+    for cat in category_map:
+        rep = lookup.get(cat["representative"])
+        if not rep:
+            # fall back to the largest peer that did resolve
+            rep = next((lookup[p] for p in cat["peers"] if p in lookup), None)
+            if not rep:
+                continue
+        peers = [{
+            "ticker": p, "name": lookup[p]["company"],
+            "monthChangePct": lookup[p].get("monthChangePct", 0),
+            "threeMonthChangePct": lookup[p].get("threeMonthChangePct", 0),
+            "ytdChangePct": lookup[p].get("ytdChangePct", 0),
+            "changePct": lookup[p].get("changePct", 0),
+        } for p in cat["peers"] if p in lookup]
+        relative = {
+            b: {k: round(rep.get(k, 0) - bi.get(k, 0), 1) for k in period_keys}
+            for b, bi in benchmarks.items()
+        }
+        primary = KR_ETF_RS_BENCHMARKS[0]
+        secondary = KR_ETF_RS_BENCHMARKS[1]
+        rs_score = max(0, min(100, round(
+            50 + relative.get(primary, {}).get("monthChangePct", 0) * 2.2
+            + relative.get(primary, {}).get("threeMonthChangePct", 0) * 1.1
+            + relative.get(secondary, {}).get("monthChangePct", 0) * 1.4
+        )))
+        rows.append({
+            "group": cat["group"], "category": cat["category"],
+            "representative": rep["ticker"], "name": rep["company"],
+            "price": rep.get("price", 0), "changePct": rep.get("changePct", 0),
+            "monthChangePct": rep.get("monthChangePct", 0),
+            "threeMonthChangePct": rep.get("threeMonthChangePct", 0),
+            "ytdChangePct": rep.get("ytdChangePct", 0),
+            "rsScore": rs_score, "relative": relative,
+            "peers": sorted(peers, key=lambda x: x.get("monthChangePct", 0), reverse=True)[:10],
+        })
+    rows.sort(key=lambda r: r["relative"].get(KR_ETF_RS_BENCHMARKS[0], {}).get("monthChangePct", 0), reverse=True)
+
+    etf_relative = {
+        "rows": rows,
+        "universeCount": len(universe),
+        "benchmarks": list(benchmarks.keys()),
+        "method": "네이버 ETF 목록을 이름 기준으로 테마/섹터 그룹화하고, 각 그룹 대표 ETF의 수익률에서 벤치마크(코스피200·코스닥150) 수익률을 뺀 값이 상대강도입니다. 레버리지·인버스·채권·해외 ETF는 대표 그룹에서 제외됩니다.",
+    }
+
+    # Leveraged / inverse catalog + their live stock rows.
+    lev_stocks = []
+    lev_items = []
+    for e in leveraged:
+        meta = classify_kr_leveraged(e["name"])
+        lev_items.append({
+            "ticker": e["code"], "name": e["name"],
+            "underlying": "—", "underlyingLabel": meta["scope"],
+            "group": "한국 레버리지·인버스", **meta,
+        })
+        st = lookup.get(e["code"])
+        if st:
+            lev_stocks.append(st)
+    lev_catalog = {
+        "items": lev_items,
+        "updated": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d"),
+    }
+    return etf_relative, lev_stocks, lev_catalog
+
+
 def build_summary(stocks: list[dict]) -> dict:
     stock_rows = [s for s in stocks if s.get("sector") != "ETF"]
     sector_scores: dict[str, list[float]] = {}
@@ -802,6 +1039,14 @@ def build_snapshot(limit: int | None = None) -> dict:
             if err:
                 errors.append(err)
 
+    # Korean ETF relative-strength + leveraged catalog (ETF RS / RRG / 레버리지 pages).
+    etf_relative, lev_stocks, lev_catalog = build_kr_etf_section()
+    existing_tickers = {s["ticker"] for s in stocks}
+    for st in lev_stocks:
+        if st["ticker"] not in existing_tickers:
+            stocks.append(st)
+            existing_tickers.add(st["ticker"])
+
     stocks.sort(key=lambda s: s.get("marketCapT") or 0, reverse=True)
     lookup = {s["ticker"]: s for s in stocks}
 
@@ -846,8 +1091,9 @@ def build_snapshot(limit: int | None = None) -> dict:
                 for t in ["005930", "000660", "373220", "035420", "035720", "068270"]
                 if t in lookup
             ],
-            "etfRelative": {"rows": [], "universeCount": len(stocks), "method": "korea"},
+            "etfRelative": etf_relative,
         },
+        "leveragedEtfCatalog": lev_catalog,
         "indices": [
             {"symbol": "^KS11", "name": "코스피", "ticker": "069500", "changePct": kospi[0]["changePct"] if kospi else 0},
             {"symbol": "^KQ11", "name": "코스닥", "ticker": "229200", "changePct": kosdaq[0]["changePct"] if kosdaq else 0},

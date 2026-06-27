@@ -535,12 +535,28 @@ function populateSectorBenchmarkSelect(cfg) {
   select.value = selectedSectorBenchmark;
 }
 
+const ETF_RS_BENCHMARK_OPTIONS = {
+  us: [["SPY", "SPY (S&P 500)"], ["QQQ", "QQQ (Nasdaq 100)"], ["TQQQ", "TQQQ (3x Nasdaq)"], ["DIA", "DIA (Dow Jones)"], ["IWM", "IWM (Russell 2000)"]],
+  kr: [["069500", "KODEX 200 (코스피200)"], ["229200", "KODEX 코스닥150"], ["102110", "TIGER 200"]],
+};
+
+// ETF 상대강도 순위 페이지의 "비교 기준" 드롭다운도 시장별로 다르게 채운다.
+function populateEtfRsBenchmarkSelect(cfg) {
+  const select = byId("sectorEtfRsBenchmark");
+  if (!select) return;
+  const opts = ETF_RS_BENCHMARK_OPTIONS[cfg.id] || ETF_RS_BENCHMARK_OPTIONS.us;
+  const prev = select.value;
+  select.innerHTML = opts.map(([v, l]) => `<option value="${v}">${escapeHtml(l)} 대비</option>`).join("");
+  select.value = opts.some(([v]) => v === prev) ? prev : opts[0][0];
+}
+
 function applyMarketOnlyUi() {
   const cfg = marketCfg();
   document.title = cfg.pageTitle;
   const search = byId("heatmapSearch");
   if (search) search.placeholder = cfg.searchPlaceholder;
   populateSectorBenchmarkSelect(cfg);
+  populateEtfRsBenchmarkSelect(cfg);
   const instNav = byId("institutionalSubTabs");
   if (instNav) {
     instNav.querySelectorAll(".sub-tab").forEach((btn) => {
@@ -10422,9 +10438,22 @@ function etfPeriodRelative(item, benchmark, periodKey) {
   return Number(item[periodKey]) || 0;
 }
 
+// The two secondary benchmarks ([ticker, label]) used across the ETF RS surfaces.
+function etfRsSecondaryBenchmarks() {
+  return isKrMarket()
+    ? [["069500", "코스피200"], ["229200", "코스닥150"]]
+    : [["SPY", "SPY"], ["QQQ", "QQQ"]];
+}
+
+// The two "대비" secondary benchmarks shown on each ETF RS card, per market.
+function etfRsSecondaryStatsHtml(item, period) {
+  return etfRsSecondaryBenchmarks().map(([t, label]) => {
+    const v = item.relative?.[t]?.[period] ?? 0;
+    return `<span>${label} 대비 <strong class="${cls(v)}">${fmtPct(v)}</strong></span>`;
+  }).join("");
+}
+
 function etfRsCardHtml(item, period, benchmark) {
-  const spy = item.relative?.SPY?.[period] ?? 0;
-  const qqq = item.relative?.QQQ?.[period] ?? 0;
   // Show all peers (no limit) sorted by period return descending
   const sortedPeers = (item.peers || [])
     .slice()
@@ -10451,8 +10480,7 @@ function etfRsCardHtml(item, period, benchmark) {
       </div>
       <div class="etf-rs-stats">
         <span>${periodLabel(period)} 수익률 <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
-        <span>SPY 대비 <strong class="${cls(spy)}">${fmtPct(spy)}</strong></span>
-        <span>QQQ 대비 <strong class="${cls(qqq)}">${fmtPct(qqq)}</strong></span>
+        ${etfRsSecondaryStatsHtml(item, period)}
       </div>
       <div class="peer-list">${peers}</div>
       <p class="drilldown-hint">👆 클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
@@ -10510,8 +10538,6 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
   const rankBadge = rankIdx < 3
     ? `<span class="rank-medal rank-${rankIdx + 1}">${["🥇", "🥈", "🥉"][rankIdx]}</span>`
     : `<span class="rank-num">${rankIdx + 1}</span>`;
-  const spy = item.relative?.SPY?.[period] ?? 0;
-  const qqq = item.relative?.QQQ?.[period] ?? 0;
   const sortedPeers = (item.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
   const totalPeers = sortedPeers.length;
   const peersToShow = sortedPeers.slice(0, 8);
@@ -10536,8 +10562,7 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
       </div>
       <div class="etf-rs-stats">
         <span>${periodLabel(period)} <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
-        <span>SPY 대비 <strong class="${cls(spy)}">${fmtPct(spy)}</strong></span>
-        <span>QQQ 대비 <strong class="${cls(qqq)}">${fmtPct(qqq)}</strong></span>
+        ${etfRsSecondaryStatsHtml(item, period)}
       </div>
       <div class="peer-list">${peerChips}</div>
       <p class="drilldown-hint">👆 클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
@@ -10716,13 +10741,20 @@ function inferLeveragedEtfMeta(stock) {
   };
 }
 
+// Korean ETF names use 레버리지 / 인버스 / 2X for discovery from the snapshot.
+const LEV_ETF_DISCOVER_PATTERNS_KR = [/레버리지/, /인버스/, /\d+\s*배/, /\b[234]x\b/i];
+
 function leveragedEtfCatalogItems() {
-  const catalog = (window.LEVERAGED_ETF_CATALOG && window.LEVERAGED_ETF_CATALOG.items) || [];
+  // KR ships a curated catalog inside the snapshot; US uses the LEVERAGED_ETF_CATALOG global.
+  const catalog = (isKrMarket() && data.leveragedEtfCatalog?.items)
+    || (window.LEVERAGED_ETF_CATALOG && window.LEVERAGED_ETF_CATALOG.items)
+    || [];
   const byTicker = new Map(catalog.map((item) => [item.ticker, { ...item }]));
+  const patterns = isKrMarket() ? LEV_ETF_DISCOVER_PATTERNS_KR : LEV_ETF_DISCOVER_PATTERNS;
   (data.stocks || []).forEach((stock) => {
     if (stock.sector !== "EXCHANGE TRADED FUNDS") return;
     const text = `${stock.company || ""} ${stock.industry || ""}`;
-    if (!LEV_ETF_DISCOVER_PATTERNS.some((re) => re.test(text))) return;
+    if (!patterns.some((re) => re.test(text))) return;
     if (!byTicker.has(stock.ticker)) byTicker.set(stock.ticker, inferLeveragedEtfMeta(stock));
   });
   return [...byTicker.values()];
@@ -10784,7 +10816,8 @@ const RRG_QUADRANTS = [
 ];
 
 function rrgBenchmarkSeries() {
-  for (const t of ["SPY", "VOO", "IVV", "QQQ"]) {
+  const candidates = isKrMarket() ? ["069500", "102110", "229200"] : ["SPY", "VOO", "IVV", "QQQ"];
+  for (const t of candidates) {
     const s = stockByTicker(t);
     if (s && Array.isArray(s.closeSeries) && s.closeSeries.length >= 40) return { ticker: t, series: s.closeSeries };
   }
@@ -10828,7 +10861,7 @@ function renderRrg() {
   if (!wrap) return;
   const bench = rrgBenchmarkSeries();
   if (!bench) {
-    wrap.innerHTML = `<p class="muted">벤치마크(SPY 등) 가격 데이터를 찾지 못했습니다.</p>`;
+    wrap.innerHTML = `<p class="muted">벤치마크 가격 데이터를 찾지 못했습니다.</p>`;
     if (legendEl) legendEl.innerHTML = "";
     return;
   }
@@ -10979,7 +11012,8 @@ function renderLeveragedEtfPage() {
 
   const liveCount = items.filter((item) => levEtfLiveRow(item.ticker)).length;
   if (meta) {
-    meta.textContent = `총 ${items.length}개 · 스냅샷 시세 ${liveCount}개 · ${window.LEVERAGED_ETF_CATALOG?.updated || ""}`;
+    const catUpdated = (isKrMarket() && data.leveragedEtfCatalog?.updated) || window.LEVERAGED_ETF_CATALOG?.updated || "";
+    meta.textContent = `총 ${items.length}개 · 스냅샷 시세 ${liveCount}개 · ${catUpdated}`;
   }
 
   if (!items.length) {
@@ -11070,10 +11104,13 @@ function showConstituentPanel(categoryName, period) {
   const allPeers = (row.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
   byId("constituentPanelCount").textContent = `${allPeers.length}개 구성 종목`;
   byId("constituentPeriodHeader").textContent = periodLabel(period) + " 수익률";
+  const [[bench1, bench1Label], [bench2, bench2Label]] = etfRsSecondaryBenchmarks();
+  if (byId("constituentBench1Header")) byId("constituentBench1Header").textContent = `${bench1Label} 대비`;
+  if (byId("constituentBench2Header")) byId("constituentBench2Header").textContent = `${bench2Label} 대비`;
 
   byId("constituentPanelBody").innerHTML = allPeers.map((peer, idx) => {
-    const spyRel = peer.relSPY?.[period] ?? (row.relative?.SPY?.[period] ?? 0);
-    const qqqRel = peer.relQQQ?.[period] ?? (row.relative?.QQQ?.[period] ?? 0);
+    const spyRel = peer[`rel_${bench1}`]?.[period] ?? (row.relative?.[bench1]?.[period] ?? 0);
+    const qqqRel = peer[`rel_${bench2}`]?.[period] ?? (row.relative?.[bench2]?.[period] ?? 0);
     const pct = peer[period] ?? 0;
     const rankIcon = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`;
     return `

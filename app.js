@@ -6074,10 +6074,14 @@ function applyLive(item) {
     out.chartSeries = chart;
     out.historySource = "yahoo";
   }
-  if (Array.isArray(news) && news.length) out.news = news;
+  // KR mode keeps the curated Korean (Naver) headlines from the build; the live
+  // proxy only serves English Yahoo news + a summary derived from it, so don't
+  // let it overwrite the better Korean news/summary. Live chart/earnings still apply.
+  const krMode = isKrMarket();
+  if (Array.isArray(news) && news.length && !krMode) out.news = news;
   if (earnings) out.liveEarnings = earnings;
   const summary = liveSummaryCache[item.ticker];
-  if (typeof summary === "string" && summary.trim()) out.newsSummary = summary.trim();
+  if (typeof summary === "string" && summary.trim() && !krMode) out.newsSummary = summary.trim();
   return out;
 }
 
@@ -6087,7 +6091,8 @@ function maybeFetchLiveData(base) {
   const ticker = base.ticker;
   if (liveFetched[ticker]) return;
   liveFetched[ticker] = true;
-  setNewsLoading();
+  // KR uses curated Naver news from the build; don't flash a "loading" state over it.
+  if (!isKrMarket()) setNewsLoading();
   const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?ticker=${encodeURIComponent(liveProxyTicker(base))}`;
   fetch(endpoint, { cache: "no-store" })
     .then((response) => (response.ok ? response.json() : null))
@@ -6184,8 +6189,9 @@ function newsSummaryHtml(item) {
       </div>
     `;
   }
-  // Show "generating" only while the live fetch is still in flight.
-  if (LIVE_DATA_PROXY && !liveDone[item.ticker]) {
+  // Show "generating" only while the live fetch is still in flight (US only — the
+  // KR proxy summary is built from English news, so we don't surface it).
+  if (LIVE_DATA_PROXY && !liveDone[item.ticker] && !isKrMarket()) {
     return `
       <div class="news-summary is-pending">
         <div class="news-summary-head">🧠 한국어 요약</div>

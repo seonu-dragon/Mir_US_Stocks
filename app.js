@@ -513,11 +513,34 @@ function setupMarketMode() {
   applyMarketOnlyUi();
 }
 
+const SECTOR_BENCHMARK_LABELS = {
+  SPY: "SPY (S&P 500)", QQQ: "QQQ (Nasdaq 100)", TQQQ: "TQQQ (3x Nasdaq)",
+  DIA: "DIA (Dow Jones)", IWM: "IWM (Russell 2000)",
+};
+
+// The 섹터 차트 비교 benchmark dropdown is market-specific (US uses SPY/QQQ…, KR uses
+// KODEX 200 등). Build it from cfg.etfBenchmarks so KR never offers US-only symbols
+// (which have no entry in the KR snapshot's sector_charts → blank chart).
+function populateSectorBenchmarkSelect(cfg) {
+  const select = byId("sectorBenchmarkSelect");
+  if (!select) return;
+  const benches = (cfg.etfBenchmarks && cfg.etfBenchmarks.length) ? cfg.etfBenchmarks : ["SPY"];
+  const sectorName = {};
+  (cfg.sectorEtfs || []).forEach((e) => { sectorName[e.ticker] = e.name; });
+  select.innerHTML = benches.map((t) => {
+    const label = SECTOR_BENCHMARK_LABELS[t] || (sectorName[t] ? `${t} (${sectorName[t]})` : t);
+    return `<option value="${t}">${escapeHtml(label)}</option>`;
+  }).join("");
+  if (!benches.includes(selectedSectorBenchmark)) selectedSectorBenchmark = benches[0];
+  select.value = selectedSectorBenchmark;
+}
+
 function applyMarketOnlyUi() {
   const cfg = marketCfg();
   document.title = cfg.pageTitle;
   const search = byId("heatmapSearch");
   if (search) search.placeholder = cfg.searchPlaceholder;
+  populateSectorBenchmarkSelect(cfg);
   const instNav = byId("institutionalSubTabs");
   if (instNav) {
     instNav.querySelectorAll(".sub-tab").forEach((btn) => {

@@ -719,6 +719,58 @@ def build_summary(stocks: list[dict]) -> dict:
     }
 
 
+# ETFs needed by the 섹터 차트 비교 page (KR sector ETFs + benchmark). Keyed in the
+# snapshot by their plain code (069500), fetched from Yahoo with the .KS suffix.
+SECTOR_CHART_ETFS = ["069500", "102110", "091160", "091170", "091180", "305720", "244580"]
+SECTOR_CHART_TIMEFRAMES = [
+    {"name": "1D", "range": "1d", "interval": "5m"},
+    {"name": "1W", "range": "5d", "interval": "30m"},
+    {"name": "1M", "range": "1mo", "interval": "1h"},
+    {"name": "3M", "range": "3mo", "interval": "1d"},
+]
+
+
+def fetch_one_sector_chart(code: str) -> dict:
+    out: dict[str, list] = {}
+    ysym = f"{code}.KS"
+    for tf in SECTOR_CHART_TIMEFRAMES:
+        url = (
+            "https://query1.finance.yahoo.com/v8/finance/chart/"
+            f"{ysym}?range={tf['range']}&interval={tf['interval']}"
+        )
+        try:
+            payload = UD.request_json(url, timeout=12)
+            res = payload["chart"]["result"][0]
+            timestamps = res.get("timestamp", [])
+            closes = res["indicators"]["quote"][0].get("close", [])
+            points = [
+                {"t": t, "c": round(float(c), 2)}
+                for t, c in zip(timestamps, closes)
+                if c is not None
+            ]
+            if points:
+                out[tf["name"]] = points
+        except Exception as exc:
+            print(f"[warn] sector chart {code} {tf['name']}: {exc}")
+    return out
+
+
+def fetch_sector_charts() -> dict:
+    """Intraday/period close series for the KR sector ETFs, matching the US
+    snapshot's `sector_charts` shape so the 섹터 차트 비교 page renders."""
+    print("Fetching Korean sector ETF charts...")
+    charts: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=7) as pool:
+        futures = {pool.submit(fetch_one_sector_chart, code): code for code in SECTOR_CHART_ETFS}
+        for fut in as_completed(futures):
+            code = futures[fut]
+            data = fut.result()
+            if data:
+                charts[code] = data
+    print(f"  sector charts collected for {len(charts)}/{len(SECTOR_CHART_ETFS)} ETFs")
+    return charts
+
+
 def build_snapshot(limit: int | None = None) -> dict:
     metas = fetch_all_listed(limit=limit)
     metas.sort(key=history_priority, reverse=True)
@@ -763,9 +815,11 @@ def build_snapshot(limit: int | None = None) -> dict:
 
     kospi = [s for s in stocks if s.get("market") == "kospi"]
     kosdaq = [s for s in stocks if s.get("market") == "kosdaq"]
+    sector_charts = fetch_sector_charts()
 
     return {
         "market": "kr",
+        "sector_charts": sector_charts,
         "updatedAtKst": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST"),
         "policy": "Daily snapshot. Korean equities from Naver Finance + Yahoo Finance.",
         "summary": build_summary(stocks),

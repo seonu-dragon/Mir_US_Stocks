@@ -318,29 +318,52 @@ function updateDataLoadedAt(date = new Date()) {
   el.textContent = snapshotTime || formatKstDateTime(date);
 }
 
+// Inject the active market's snapshot .js (window global) on demand. Used as the
+// file:// path and as an http fallback when the JSON fetch fails. Only the active
+// market is ever loaded, so we never download the other market's snapshot.
+function loadSnapshotScript(cfg) {
+  return new Promise((resolve) => {
+    if (window[cfg.snapshotJsGlobal]) { resolve(true); return; }
+    const src = cfg.snapshotJsPath || cfg.snapshotPath.replace(/\.json($|\?)/, ".js$1");
+    const existing = document.querySelector(`script[data-snapshot="${cfg.id}"]`);
+    const done = () => resolve(!!window[cfg.snapshotJsGlobal]);
+    if (existing) {
+      existing.addEventListener("load", done, { once: true });
+      existing.addEventListener("error", () => resolve(false), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.dataset.snapshot = cfg.id;
+    script.addEventListener("load", done, { once: true });
+    script.addEventListener("error", () => resolve(false), { once: true });
+    document.head.appendChild(script);
+  });
+}
+
 async function loadData(options = {}) {
   const cfg = marketCfg();
   let loaded = false;
-  try {
-    if (window.location.protocol !== "file:") {
+  if (window.location.protocol !== "file:") {
+    try {
       const response = await fetch(cfg.snapshotPath, { cache: "no-store" });
       if (response.ok) {
         data = await response.json();
         loaded = true;
       }
+    } catch (error) {
+      console.warn("Unable to load JSON snapshot", error);
     }
-  } catch (error) {
-    console.warn("Unable to load JSON snapshot", error);
   }
 
-  if (!loaded && window[cfg.snapshotJsGlobal]) {
-    data = window[cfg.snapshotJsGlobal];
-    loaded = true;
-  }
-
-  if (!loaded && cfg.id === "us" && window.MARKET_SNAPSHOT) {
-    data = window.MARKET_SNAPSHOT;
-    loaded = true;
+  // file:// (no fetch) or fetch failed → load the active market's snapshot script.
+  if (!loaded) {
+    await loadSnapshotScript(cfg);
+    if (window[cfg.snapshotJsGlobal]) {
+      data = window[cfg.snapshotJsGlobal];
+      loaded = true;
+    }
   }
 
   if (!loaded) {

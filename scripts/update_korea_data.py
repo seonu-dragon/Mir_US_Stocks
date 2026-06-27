@@ -493,17 +493,20 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
     if limit:
         metas = metas[:limit]
 
-    for rank, meta in enumerate(metas):
-        if meta["market"] == "kospi" and rank < 200:
-            meta["groups"].add("idx_kospi200")
-        if meta["market"] == "kosdaq" and rank < 150 and meta["market"] == "kosdaq":
-            pass
-        if meta["symbol"] in THEMATIC_CODES:
-            meta["groups"].add("thematic")
+    # Index membership = top-N by market cap WITHIN each market, not across the
+    # combined list. metas is already sorted by marketCapT desc, so filtering by
+    # market preserves the per-market rank order.
+    kospi_sorted = [m for m in metas if m["market"] == "kospi"]
+    for meta in kospi_sorted[:200]:
+        meta["groups"].add("idx_kospi200")
 
     kosdaq_sorted = [m for m in metas if m["market"] == "kosdaq"]
     for meta in kosdaq_sorted[:150]:
         meta["groups"].add("idx_kosdaq150")
+
+    for meta in metas:
+        if meta["symbol"] in THEMATIC_CODES:
+            meta["groups"].add("thematic")
 
     for code, (company, sector, industry, bucket, cap) in KR_ETFS.items():
         universe[code] = {

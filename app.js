@@ -8299,7 +8299,8 @@ function moveAnalysisHtml(item, move) {
   if (!move || !moveAnalysisState || moveAnalysisState.ticker !== item.ticker || moveAnalysisState.date !== move.date) return "";
   const isLoading = moveAnalysisState.status === "loading";
   const isError = moveAnalysisState.status === "error";
-  const text = isLoading ? "해당 날짜 전후의 과거 뉴스와 SPY·QQQ 시장 흐름을 검색하고 있습니다." : (moveAnalysisState.text || localMoveAnalysis(item, move));
+  const benchLabel = isKrMarket() ? "코스피·코스닥" : "SPY·QQQ";
+  const text = isLoading ? `해당 날짜 전후의 과거 뉴스와 ${benchLabel} 시장 흐름을 검색하고 있습니다.` : (moveAnalysisState.text || localMoveAnalysis(item, move));
   const sources = Array.isArray(moveAnalysisState.sources) ? moveAnalysisState.sources : [];
   const sourceHtml = !isLoading && sources.length ? `
     <div class="move-analysis-sources">
@@ -8350,7 +8351,9 @@ async function runMoveAnalysis(date) {
   }
   try {
     const baseUrl = LIVE_DATA_PROXY.replace(/\/$/, "");
-    const endpoint = `${baseUrl}/?ticker=${encodeURIComponent(item.ticker)}&company=${encodeURIComponent(item.company || item.ticker)}&move_analysis=1&date=${encodeURIComponent(date)}&change=${encodeURIComponent(move.change)}`;
+    // Send the Yahoo-suffixed symbol (005930.KS) so the proxy detects Korean
+    // stocks and uses Naver/Korean news + KOSPI·KOSDAQ benchmarks.
+    const endpoint = `${baseUrl}/?ticker=${encodeURIComponent(liveProxyTicker(item))}&company=${encodeURIComponent(item.company || item.ticker)}&move_analysis=1&date=${encodeURIComponent(date)}&change=${encodeURIComponent(move.change)}`;
     const response = await fetch(endpoint, { cache: "no-store" });
     const payload = response.ok ? await response.json() : null;
     const hasAnalysis = typeof payload?.analysis === "string" && Boolean(payload.analysis.trim());

@@ -4239,9 +4239,14 @@ function heatTile(item, rect, metric, query) {
   const label = fmtMetric(value, metric);
   const area = rect.w * rect.h;
   const sizeClass = area > 55000 ? " is-large" : area > 18000 ? " is-medium" : area > 6500 ? " is-small" : " is-tiny";
-  const showTicker = rect.w > 42 && rect.h > 26;
-  const showCompany = rect.w > 110 && rect.h > 70;
+  const kr = isKrMarket();
+  const showPrimary = rect.w > 42 && rect.h > 26;
+  const showCompanySub = !kr && rect.w > 110 && rect.h > 70;
   const showMetric = rect.w > 62 && rect.h > 48;
+  const primaryText = kr ? item.company : item.ticker;
+  const titleText = kr
+    ? `${item.company} · ${label} · ${marketCfg().formatPrice(item.price)}`
+    : `${item.ticker} · ${item.company} · ${label} · $${Number(item.price).toFixed(2)}`;
   return `
     <button
       class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
@@ -4249,10 +4254,10 @@ function heatTile(item, rect, metric, query) {
       data-ticker="${item.ticker}"
       data-sector="${escapeHtml(item.sector)}"
       data-industry="${escapeHtml(item.industry)}"
-      title="${item.ticker} · ${item.company} · ${label} · $${Number(item.price).toFixed(2)}"
+      title="${escapeHtml(titleText)}"
     >
-      ${showTicker ? `<strong>${escapeHtml(item.ticker)}</strong>` : ""}
-      ${showCompany ? `<span>${escapeHtml(item.company)}</span>` : ""}
+      ${showPrimary ? `<strong>${escapeHtml(primaryText)}</strong>` : ""}
+      ${showCompanySub ? `<span>${escapeHtml(item.company)}</span>` : ""}
       ${showMetric ? `<small>${label}</small>` : ""}
     </button>
   `;

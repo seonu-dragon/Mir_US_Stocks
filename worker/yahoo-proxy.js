@@ -128,20 +128,24 @@ export default {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
         if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
       }
-      const [newsResult, chart, spyChart, qqqChart] = await Promise.all([
-        fetchHistoricalNews(env, ticker, company, eventDate),
+      const kr = isKoreanTicker(ticker);
+      // Benchmarks: Korean stocks compare against KOSPI/KOSDAQ, US against S&P/Nasdaq.
+      const benchmarks = kr
+        ? [["^KS11", "KOSPI"], ["^KQ11", "KOSDAQ"]]
+        : [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"]];
+      const [newsResult, chart, ...benchCharts] = await Promise.all([
+        kr ? fetchHistoricalNewsKorean(env, ticker, company, eventDate)
+           : fetchHistoricalNews(env, ticker, company, eventDate),
         fetchChart(symbol),
-        fetchChart("SPY"),
-        fetchChart("QQQ"),
+        ...benchmarks.map(([sym]) => fetchChart(sym)),
       ]);
-      const marketContext = {
-        SPY: chartMoveContext(spyChart, eventDate),
-        QQQ: chartMoveContext(qqqChart, eventDate),
-      };
+      const benchLabels = Object.fromEntries(benchmarks);
+      const marketContext = {};
+      benchmarks.forEach(([sym], i) => { marketContext[sym] = chartMoveContext(benchCharts[i], eventDate); });
       const modelOverride = url.searchParams.get("model");
       const confidence = evidenceConfidence(newsResult.news, eventDate);
       const { text: analysis, error: analysisError, model: analysisModel } =
-        await summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, newsResult.news, chart, marketContext, confidence, modelOverride);
+        await summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, newsResult.news, chart, marketContext, confidence, modelOverride, { isKr: kr, benchLabels });
       const payload = {
         ticker,
         company,
@@ -305,14 +309,24 @@ function parseGoogleNewsRss(xml) {
   })).filter((item) => item.title && item.link);
 }
 
-async function fetchGoogleNewsRss(ticker, company, from, to) {
+async function fetchGoogleNewsRss(ticker, company, from, to, isKr = false) {
   try {
     const companyTerm = String(company || "").trim();
+    const after = shiftIsoDate(from, -1);
+    const before = shiftIsoDate(to, 1);
+    // Korean stocks: the numeric code isn't searchable, so query the (Korean)
+    // company name in the Korean locale; US: company name and/or ticker in English.
+    if (isKr) {
+      const term = companyTerm || ticker;
+      const query = `\"${term}\" 주가 after:${after} before:${before}`;
+      const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
+      const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
+      if (!response.ok) return [];
+      return parseGoogleNewsRss(await response.text());
+    }
     const identity = companyTerm && companyTerm.toUpperCase() !== ticker
       ? `(\"${companyTerm}\" OR \"${ticker}\")`
       : `\"${ticker}\"`;
-    const after = shiftIsoDate(from, -1);
-    const before = shiftIsoDate(to, 1);
     const query = `${identity} stock after:${after} before:${before}`;
     const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
     const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
@@ -375,6 +389,36 @@ async function fetchHistoricalNews(env, ticker, company, eventDate) {
   return { news, providers, windowDays };
 }
 
+// Korean price-event news. Google News (Korean locale) + GDELT both support a
+// date window, which the Naver stock-news API does not (it only pages backwards
+// from today). Naver recent news is added as a supplement for recent events.
+async function historicalNewsWindowKorean(ticker, company, eventDate, days) {
+  const from = shiftIsoDate(eventDate, -days);
+  const to = shiftIsoDate(eventDate, days);
+  const [googleNews, gdelt] = await Promise.all([
+    fetchGoogleNewsRss(ticker, company, from, to, true),
+    fetchGdeltNews(ticker, company, from, to),
+  ]);
+  return rankHistoricalNews([...googleNews, ...gdelt], ticker, company, eventDate);
+}
+
+async function fetchHistoricalNewsKorean(env, ticker, company, eventDate) {
+  let windowDays = 3;
+  let news = await historicalNewsWindowKorean(ticker, company, eventDate, windowDays);
+  if (news.length < 3) {
+    windowDays = 8;
+    news = await historicalNewsWindowKorean(ticker, company, eventDate, windowDays);
+  }
+  // For recent events Naver's stock news API is dense and reliable — fold it in.
+  const naver = await fetchNaverNews(ticker);
+  news = rankHistoricalNews(
+    [...news, ...naver.map((item) => ({ ...item, provider: "Naver" }))],
+    ticker, company, eventDate,
+  );
+  const providers = [...new Set(news.map((item) => item.provider).filter(Boolean))];
+  return { news, providers, windowDays };
+}
+
 function evidenceConfidence(news, eventDate) {
   const close = (news || []).filter((item) => dateDistanceDays(item.publishedAt, eventDate) <= 2);
   if (close.length >= 3) return "높음";
@@ -382,8 +426,11 @@ function evidenceConfidence(news, eventDate) {
   return "낮음";
 }
 
-async function summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, news, chart, marketContext, confidence, modelOverride) {
+async function summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, news, chart, marketContext, confidence, modelOverride, options = {}) {
   if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
+  const isKr = Boolean(options.isKr);
+  const benchLabels = options.benchLabels || {};
+  const marketLabel = isKr ? "국내(한국)" : "미국";
   const context = chartMoveContext(chart, eventDate);
   const headlines = (news || []).length
     ? news.slice(0, 10).map((item, index) => {
@@ -394,18 +441,21 @@ async function summarizeMoveAnalysisKorean(env, ticker, company, eventDate, even
   const chartText = context
     ? `종목: 시가 ${context.open}, 고가 ${context.high}, 저가 ${context.low}, 종가 ${context.close}, 전일 종가 ${context.prevClose ?? "없음"}, 등락률 ${context.changePct ?? eventChange}%, 20일 평균 대비 거래량 ${context.volumeRatio20d ?? "계산 불가"}배`
     : `종목 차트에서 ${eventDate}를 찾지 못했습니다. 전달 등락률은 ${eventChange}%입니다.`;
-  const marketText = ["SPY", "QQQ"].map((symbol) => {
+  const benchSymbols = Object.keys(marketContext || {});
+  const marketText = benchSymbols.map((symbol) => {
     const row = marketContext && marketContext[symbol];
-    return row ? `${symbol} ${row.changePct}%` : `${symbol} 데이터 없음`;
+    const label = benchLabels[symbol] || symbol;
+    return row ? `${label} ${row.changePct}%` : `${label} 데이터 없음`;
   }).join(", ");
+  const benchNames = benchSymbols.map((s) => benchLabels[s] || s).join("·") || "지수";
   const prompt =
-    `미국 주식 ${ticker}(${company})의 ${eventDate} 가격 이벤트 원인을 분석하세요.\n\n` +
+    `${marketLabel} 주식 ${ticker}(${company})의 ${eventDate} 가격 이벤트 원인을 분석하세요.\n\n` +
     `[가격/거래량]\n${chartText}\n시장 비교: ${marketText}\n\n` +
     `[날짜 기준 검색 뉴스]\n${headlines}\n\n` +
     `검색 근거 신뢰도: ${confidence}\n\n` +
     `작성 규칙:\n` +
     `- 가장 가능성이 높은 촉매를 첫 문장에 제시하고, 근거가 된 매체명과 날짜를 문장 안에 포함하세요.\n` +
-    `- 종목 고유 뉴스와 SPY·QQQ 등 시장 전체 움직임을 구분하세요.\n` +
+    `- 종목 고유 뉴스와 ${benchNames} 등 시장 전체 움직임을 구분하세요.\n` +
     `- 직접 확인된 사실과 가능성 수준의 해석을 분리하고, 제공되지 않은 사실은 만들지 마세요.\n` +
     `- 관련 뉴스가 없을 때만 원인 불명확이라고 말하세요. 관련 헤드라인이 있으면 핵심 재료부터 설명하세요.\n` +
     `- 4~6문장의 자연스러운 한국어 단락 하나로 작성하고 매수·매도 조언은 하지 마세요.`;
@@ -415,7 +465,7 @@ async function summarizeMoveAnalysisKorean(env, ticker, company, eventDate, even
     try {
       const result = await env.AI.run(model, {
         messages: [
-          { role: "system", content: "You are a careful US stock event analyst. Identify the strongest dated catalyst from supplied evidence, compare it with the broad market, answer only in Korean, and never invent facts." },
+          { role: "system", content: `You are a careful ${isKr ? "Korean" : "US"} stock event analyst. Identify the strongest dated catalyst from supplied evidence, compare it with the broad market, answer only in Korean, and never invent facts.` },
           { role: "user", content: prompt },
         ],
         max_tokens: 700,

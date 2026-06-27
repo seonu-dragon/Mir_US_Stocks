@@ -6137,7 +6137,7 @@ function renderChartDrawings() {
         const price = hi - span * lv;
         const y = pxY(price);
         return `<line x1="${xa.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xb.toFixed(1)}" y2="${y.toFixed(1)}" class="draw-fib"></line>`
-          + `<text x="${(xb + 4).toFixed(1)}" y="${(y + 3).toFixed(1)}" class="draw-fib-label">${(lv * 100).toFixed(1)}% · $${price.toFixed(2)}</text>`;
+          + `<text x="${(xb + 4).toFixed(1)}" y="${(y + 3).toFixed(1)}" class="draw-fib-label">${(lv * 100).toFixed(1)}% · ${chartPriceLabel(price)}</text>`;
       }).join("");
     }
   }
@@ -6167,6 +6167,13 @@ function setDrawTool(tool) {
   byId("chartDrawControls")?.querySelectorAll("button[data-draw]").forEach((b) => b.classList.toggle("is-active", b.dataset.draw === drawTool));
   const svg = byId("priceChart");
   if (svg) svg.classList.toggle("is-drawing", Boolean(drawTool));
+}
+
+function chartPriceLabel(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  const text = Math.round(n).toLocaleString(isKrMarket() ? "ko-KR" : undefined, { maximumFractionDigits: 0 });
+  return isKrMarket() ? text : `$${text}`;
 }
 
 function setupChartDrawing() {
@@ -6283,7 +6290,7 @@ function drawChart(item) {
   const grid = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
     const y = padT + plotH * ratio;
     const value = max - range * ratio;
-    return `<line x1="${padL}" y1="${y}" x2="${padL + plotW}" y2="${y}" class="chart-grid"></line><text x="${width - 8}" y="${y + 4}" class="chart-axis" text-anchor="end">$${value.toFixed(2)}</text>`;
+    return `<line x1="${padL}" y1="${y}" x2="${padL + plotW}" y2="${y}" class="chart-grid"></line><text x="${width - 8}" y="${y + 4}" class="chart-axis" text-anchor="end">${chartPriceLabel(value)}</text>`;
   }).join("");
   const overlayYFor = (value) => yFor(Math.max(min, Math.min(max, value)));
 
@@ -6364,7 +6371,7 @@ function drawChart(item) {
       const color = lvl.type === "sup" ? "#16a34a" : "#dc2626";
       const bandH = Math.max(2, yLo - yHi);
       const dots = "●".repeat(lvl.tier) + "○".repeat(3 - lvl.tier);
-      const label = `${lvl.type === "sup" ? "지지" : "저항"} $${lvl.price.toFixed(2)} ${dots}`;
+      const label = `${lvl.type === "sup" ? "지지" : "저항"} ${chartPriceLabel(lvl.price)} ${dots}`;
       return `<rect x="${padL.toFixed(1)}" y="${yHi.toFixed(1)}" width="${plotW.toFixed(1)}" height="${bandH.toFixed(1)}" fill="${color}" opacity="0.08"></rect>`
         + `<line x1="${padL.toFixed(1)}" y1="${yMid.toFixed(1)}" x2="${xPlotRight.toFixed(1)}" y2="${yMid.toFixed(1)}" stroke="${color}" stroke-width="1.1" stroke-dasharray="6 4" opacity="0.85"></line>`
         + `<text x="${(padL + 5).toFixed(1)}" y="${(yMid - 3).toFixed(1)}" fill="${color}" font-size="10" font-weight="700">${label}</text>`;
@@ -6454,7 +6461,7 @@ function drawChart(item) {
       const y = overlayYFor(ln.price);
       const w = ln.weight || 1;
       vpSvg += `<line x1="${padL.toFixed(1)}" y1="${y.toFixed(1)}" x2="${xPlotRight.toFixed(1)}" y2="${y.toFixed(1)}" stroke="${ln.color}" stroke-width="${w}" stroke-dasharray="10 5" opacity="0.8"></line>`
-        + `<text x="${(padL + 5).toFixed(1)}" y="${(y - 3).toFixed(1)}" fill="${ln.color}" font-size="10" font-weight="700">${escapeHtml(ln.label)} $${ln.price.toFixed(2)}</text>`;
+        + `<text x="${(padL + 5).toFixed(1)}" y="${(y - 3).toFixed(1)}" fill="${ln.color}" font-size="10" font-weight="700">${escapeHtml(ln.label)} ${chartPriceLabel(ln.price)}</text>`;
     });
   }
 
@@ -6544,11 +6551,11 @@ function drawChart(item) {
         + `<text x="${(xPlotRight - 4).toFixed(1)}" y="${(y - 3).toFixed(1)}" text-anchor="end" fill="${color}" font-size="9.5" font-weight="600">${escapeHtml(label)}</text>`;
     };
     if (tl.pivots) {
-      if (tlTypes.pivot) techLevelSvg += hLine(tl.pivots.pivot, `P ${tl.pivots.pivot.toFixed(2)}`, "#6366f1", "4 3");
-      if (tlTypes.r1) techLevelSvg += hLine(tl.pivots.r1, `R1 ${tl.pivots.r1.toFixed(2)}`, "#a855f7", "3 4");
-      if (tlTypes.r2) techLevelSvg += hLine(tl.pivots.r2, `R2 ${tl.pivots.r2.toFixed(2)}`, "#c084fc", "3 4");
-      if (tlTypes.s1) techLevelSvg += hLine(tl.pivots.s1, `S1 ${tl.pivots.s1.toFixed(2)}`, "#0ea5e9", "3 4");
-      if (tlTypes.s2) techLevelSvg += hLine(tl.pivots.s2, `S2 ${tl.pivots.s2.toFixed(2)}`, "#38bdf8", "3 4");
+      if (tlTypes.pivot) techLevelSvg += hLine(tl.pivots.pivot, `P ${chartPriceLabel(tl.pivots.pivot)}`, "#6366f1", "4 3");
+      if (tlTypes.r1) techLevelSvg += hLine(tl.pivots.r1, `R1 ${chartPriceLabel(tl.pivots.r1)}`, "#a855f7", "3 4");
+      if (tlTypes.r2) techLevelSvg += hLine(tl.pivots.r2, `R2 ${chartPriceLabel(tl.pivots.r2)}`, "#c084fc", "3 4");
+      if (tlTypes.s1) techLevelSvg += hLine(tl.pivots.s1, `S1 ${chartPriceLabel(tl.pivots.s1)}`, "#0ea5e9", "3 4");
+      if (tlTypes.s2) techLevelSvg += hLine(tl.pivots.s2, `S2 ${chartPriceLabel(tl.pivots.s2)}`, "#38bdf8", "3 4");
     }
     if (tl.fib && tl.fib.levels) {
       const fibColors = { fib0: "#78716c", fib236: "#d6d3d1", fib382: "#fbbf24", fib50: "#f59e0b", fib618: "#ea580c", fib100: "#57534e" };
@@ -6559,9 +6566,9 @@ function drawChart(item) {
       });
     }
     if (tl.atr) {
-      if (tlTypes.stop) techLevelSvg += hLine(tl.atr.stop, `Stop ${tl.atr.stop.toFixed(2)}`, "#dc2626", "2 3");
-      if (tlTypes.tgt) techLevelSvg += hLine(tl.atr.target, `Tgt ${tl.atr.target.toFixed(2)}`, "#16a34a", "2 3");
-      if (tlTypes.tgt2 && tl.atr.target2 != null) techLevelSvg += hLine(tl.atr.target2, `Tgt2 ${tl.atr.target2.toFixed(2)}`, "#15803d", "2 3");
+      if (tlTypes.stop) techLevelSvg += hLine(tl.atr.stop, `Stop ${chartPriceLabel(tl.atr.stop)}`, "#dc2626", "2 3");
+      if (tlTypes.tgt) techLevelSvg += hLine(tl.atr.target, `Tgt ${chartPriceLabel(tl.atr.target)}`, "#16a34a", "2 3");
+      if (tlTypes.tgt2 && tl.atr.target2 != null) techLevelSvg += hLine(tl.atr.target2, `Tgt2 ${chartPriceLabel(tl.atr.target2)}`, "#15803d", "2 3");
     }
     if (tl.linreg) {
       if (tlTypes.lrUpper) techLevelSvg += hLine(tl.linreg.upper, "LR+", "#94a3b8", "8 4");
@@ -6642,7 +6649,7 @@ function drawChart(item) {
     ${dateLabels}
     <text x="${padL}" y="20" class="chart-label">${item.ticker} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
-    <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">$${last.c.toFixed(2)}</text>
+    <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">${chartPriceLabel(last.c)}</text>
   `;
 }
 
@@ -7888,7 +7895,7 @@ function renderEarningsCalendar(item) {
     return;
   }
   box.hidden = false;
-  const f = item.fundamentals || {};
+  const f = normalizedFundamentalsForItem(item);
   const live = item.liveEarnings || {};
   const nextDate = live.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
   const epsEstimate = live.epsEstimate ?? f.epsNextQ ?? null;
@@ -8034,11 +8041,12 @@ function renderStockEvents(item) {
 }
 
 function stockEventRows(item) {
-  const f = item.fundamentals || {};
+  const f = normalizedFundamentalsForItem(item);
+  const displayPrice = latestPriceForFundamentals(item, f);
   const rows = getChartRows(item);
   const latestNews = Array.isArray(item.news) ? item.news[0] : null;
   const target = Number(f.targetPrice);
-  const price = Number(item.price || f.prevClose);
+  const price = Number(displayPrice || item.price || f.prevClose);
   const targetUpside = Number.isFinite(target) && Number.isFinite(price) && price ? pctFrom(target, price) : null;
   const bigMove = recentBigMove(rows);
   const earningsDate = item.liveEarnings?.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
@@ -8359,10 +8367,69 @@ function missingFundamentalFields(f) {
   return fields.filter(([key]) => f[key] == null || f[key] === "").map(([, label]) => label);
 }
 
+function firstFiniteNumber(...values) {
+  for (const value of values) {
+    if (value === null || value === "") continue;
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function latestPriceForFundamentals(item, f = item?.fundamentals || {}) {
+  const rows = getChartRows(item || {});
+  const lastClose = rows.length ? Number(rows[rows.length - 1].c) : null;
+  return firstFiniteNumber(lastClose, item?.price, f.prevClose, f.price);
+}
+
+function marketCapBillionForFundamentals(item, f = item?.fundamentals || {}) {
+  const detailCap = firstFiniteNumber(f.marketCapB);
+  if (isKrMarket()) {
+    if (detailCap != null && detailCap > 1000) return detailCap;
+    const snapshotCap = firstFiniteNumber(item?.marketCapT, item?.marketCapB);
+    if (snapshotCap != null) return snapshotCap * 1000;
+    return detailCap;
+  }
+  return firstFiniteNumber(detailCap, item?.marketCapB);
+}
+
+function normalizedFundamentalsForItem(item) {
+  const raw = item?.fundamentals || {};
+  const f = { ...raw };
+  const price = latestPriceForFundamentals(item, f);
+  const marketCapB = marketCapBillionForFundamentals(item, f);
+  if (isKrMarket() && marketCapB != null) f.marketCapDisplay = marketCapB / 1000;
+
+  let epsTtm = firstFiniteNumber(f.epsTtm, f.trailingEps, f.trailingEPS, f.eps);
+  let sharesB = firstFiniteNumber(f.sharesB, f.sharesOutstandingB);
+  if (isKrMarket() && marketCapB != null && price && price > 0) {
+    const derivedSharesB = marketCapB / price;
+    if (derivedSharesB > 0) sharesB = derivedSharesB;
+  }
+  if (!(epsTtm > 0) && sharesB > 0 && Number(f.incomeB) > 0) {
+    epsTtm = Number(f.incomeB) / sharesB;
+  }
+  if (epsTtm > 0) f.epsTtm = epsTtm;
+  if (sharesB > 0) f.sharesBDisplay = sharesB;
+  if (price > 0 && epsTtm > 0) f.pe = price / epsTtm;
+
+  const epsNextY = firstFiniteNumber(f.epsNextY, f.forwardEps, f.forwardEPS, f.epsForward);
+  if (price > 0 && epsNextY > 0) {
+    f.epsNextY = epsNextY;
+    f.forwardPE = price / epsNextY;
+  } else if (isKrMarket()) {
+    f.forwardPE = null;
+  } else if (Number.isFinite(Number(raw.forwardPE))) {
+    const basePrice = firstFiniteNumber(f.prevClose, item?.price);
+    f.forwardPE = basePrice > 0 && price > 0 ? Number(raw.forwardPE) * price / basePrice : Number(raw.forwardPE);
+  }
+  return f;
+}
+
 function renderDataQualityPanel(item) {
   const box = byId("dataQualityPanel");
   if (!box || !item) return;
-  const f = item.fundamentals || {};
+  const f = normalizedFundamentalsForItem(item);
   const hasDetail = Boolean(detailCache[safeTicker(item.ticker)] || item.chartSeries || Object.keys(f).length);
   const missing = missingFundamentalFields(f);
   const chartRows = getChartRows(item);
@@ -8423,18 +8490,19 @@ function renderFundamentals(item) {
     renderEtfConstituents(item);
     return;
   }
-  const f = item.fundamentals || {};
+  const f = normalizedFundamentalsForItem(item);
+  const displayPrice = latestPriceForFundamentals(item, f);
   const detailMode = data.detailPolicy?.mode === "split";
   const hasFundamentals = Object.keys(f).length > 0;
   const rows = [
     ["Index", indexLabel(item), "P/E", fmtMultiple(f.pe), "EPS TTM", moneyOrDash(f.epsTtm), "Perf Week", fmtPct(item.weekChangePct)],
-    ["Market Cap", fmtBillions(f.marketCapB || item.marketCapB), "Forward P/E", fmtMultiple(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
-    ["Sales", fmtBillions(f.salesB), "P/S", fmtMultiple(f.ps), "EPS Next Q", moneyOrDash(f.epsNextQ), "Perf Quarter", fmtPct(item.threeMonthChangePct)],
-    ["Income", fmtBillions(f.incomeB), "P/B", fmtMultiple(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
-    ["Cash", fmtBillions(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],
-    ["Shares Out", fmtBillions(f.sharesB), "Current Ratio", fmtRatio(f.currentRatio), "Profit Margin", fmtPercent(f.profitMargin), "52W Low", priceOrDash(f.week52Low)],
+    ["Market Cap", fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB), "Forward P/E", fmtMultiple(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
+    ["Sales", fmtFinancialB(f.salesB), "P/S", fmtMultiple(f.ps), "EPS Next Q", moneyOrDash(f.epsNextQ), "Perf Quarter", fmtPct(item.threeMonthChangePct)],
+    ["Income", fmtFinancialB(f.incomeB), "P/B", fmtMultiple(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
+    ["Cash", fmtFinancialB(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],
+    ["Shares Out", fmtShares(f.sharesBDisplay ?? f.sharesB), "Current Ratio", fmtRatio(f.currentRatio), "Profit Margin", fmtPercent(f.profitMargin), "52W Low", priceOrDash(f.week52Low)],
     ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), "Nasdaq 1Y Target", priceOrDash(f.targetPrice)],
-    ["Volume", fmtCompact(f.volume), "Prev Close", priceOrDash(f.prevClose), "RS Score", item.rsScore, "Price", priceOrDash(item.price)]
+    ["Volume", fmtCompact(f.volume), "Prev Close", priceOrDash(f.prevClose), "RS Score", item.rsScore, "Price", priceOrDash(displayPrice)]
   ];
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
@@ -8543,36 +8611,56 @@ function indexLabel(item) {
   return labels.slice(0, 2).join(", ") || "-";
 }
 
+function hasFiniteNumber(value) {
+  return value !== null && value !== "" && Number.isFinite(Number(value));
+}
+
 function fmtNum(value) {
-  return Number.isFinite(Number(value)) ? Number(value).toFixed(2) : "-";
+  return hasFiniteNumber(value) ? Number(value).toFixed(2) : "-";
 }
 
 function fmtMultiple(value, digits = 2) {
-  return Number.isFinite(Number(value)) ? `${Number(value).toFixed(digits)}배` : "-";
+  return hasFiniteNumber(value) ? `${Number(value).toFixed(digits)}배` : "-";
 }
 
 function moneyOrDash(value) {
+  if (!hasFiniteNumber(value)) return "-";
   return marketCfg().formatMoney(value);
 }
 
 function priceOrDash(value) {
+  if (!hasFiniteNumber(value)) return "-";
   return marketCfg().formatPrice(value);
 }
 
 function fmtRatio(value) {
-  return Number.isFinite(Number(value)) ? (Number(value) / 100).toFixed(2) : "-";
+  return hasFiniteNumber(value) ? (Number(value) / 100).toFixed(2) : "-";
 }
 
 function fmtPercent(value) {
-  return Number.isFinite(Number(value)) ? `${Number(value).toFixed(2)}%` : "-";
+  return hasFiniteNumber(value) ? `${Number(value).toFixed(2)}%` : "-";
 }
 
 function fmtBillions(value) {
+  if (!hasFiniteNumber(value)) return "-";
   return marketCfg().formatMarketCap(value);
 }
 
+function fmtFinancialB(value) {
+  if (!hasFiniteNumber(value)) return "-";
+  const n = Number(value);
+  return marketCfg().formatMarketCap(isKrMarket() ? n / 1000 : n);
+}
+
+function fmtShares(value) {
+  if (!hasFiniteNumber(value)) return "-";
+  const n = Number(value);
+  if (Math.abs(n) >= 1) return `${n.toFixed(2)}B`;
+  return `${(n * 1000).toFixed(0)}M`;
+}
+
 function fmtCompact(value) {
-  if (!Number.isFinite(Number(value))) return "-";
+  if (!hasFiniteNumber(value)) return "-";
   const num = Number(value);
   if (Math.abs(num) >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(2)}B`;
   if (Math.abs(num) >= 1_000_000) return `${(num / 1_000_000).toFixed(2)}M`;

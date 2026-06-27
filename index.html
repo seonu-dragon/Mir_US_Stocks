@@ -1935,15 +1935,10 @@
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <script src="data/map_fundamentals.js?v=20260620b"></script>
     <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
-    <script src="data/institutional_13f.js?v=20260618c"></script>
-    <script src="data/congress_trades.js?v=20260618n"></script>
-    <script src="data/insider_trades.js?v=20260619b"></script>
-    <script src="data/activist_stakes.js?v=20260619a"></script>
-    <script src="data/material_events.js?v=20260619a"></script>
-    <script src="data/ipo_calendar.js?v=20260619a"></script>
-    <script src="data/short_interest.js?v=20260620a"></script>
-    <script src="data/white_house_schedule.js?v=20260618n"></script>
-    <script src="data/leveraged_etf_catalog.js?v=20260618j"></script>
+    <!-- Feature datasets (13F / congress / insider / activist / events / IPO /
+         short / white-house / leveraged-ETF) are loaded on demand after boot by
+         preloadFeatureData() in app.js, gated by the active market's features.
+         KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="pattern_detectors_extended.js?v=20260623c"></script>
     <script src="analysis.js?v=20260624c"></script>
     <script src="app.js?v=20260624c"></script>

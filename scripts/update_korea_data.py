@@ -13,6 +13,7 @@ Output:
 from __future__ import annotations
 
 import argparse
+import html
 import importlib.util
 import json
 import os
@@ -600,6 +601,44 @@ def history_priority(meta):
     return score
 
 
+def fetch_naver_news(code: str, limit: int = 8) -> list[dict]:
+    """Korean-language headlines for a stock from Naver's mobile stock API.
+
+    Returns {title, publisher, link, publishedAt}. Far richer and in Korean
+    compared to Yahoo's search API for .KS/.KQ tickers. One representative
+    article per news cluster keeps the headlines diverse. Failures → [].
+    """
+    code = str(code or "").replace(".KS", "").replace(".KQ", "")
+    url = f"https://m.stock.naver.com/api/news/stock/{code}?pageSize={limit}&page=1"
+    req = urllib.request.Request(url, headers={**HTTP_HEADERS, "Referer": "https://m.stock.naver.com/"})
+    try:
+        raw = urllib.request.urlopen(req, timeout=12).read()
+        clusters = json.loads(raw.decode("utf-8", "replace"))
+    except Exception:
+        return []
+    items: list[dict] = []
+    seen: set[str] = set()
+    for cluster in clusters if isinstance(clusters, list) else []:
+        for entry in (cluster.get("items") or []):
+            title = html.unescape(strip_cell(entry.get("titleFull") or entry.get("title") or ""))
+            link = str(entry.get("mobileNewsUrl") or "").strip()
+            if not title or not link or title in seen:
+                continue
+            seen.add(title)
+            dt = str(entry.get("datetime") or "")
+            published_at = f"{dt[0:4]}-{dt[4:6]}-{dt[6:8]}" if len(dt) >= 8 else ""
+            items.append({
+                "title": title,
+                "publisher": html.unescape(str(entry.get("officeName") or "").strip()),
+                "link": link,
+                "publishedAt": published_at,
+            })
+            break  # one representative article per cluster
+        if len(items) >= limit:
+            break
+    return items
+
+
 def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
@@ -637,7 +676,8 @@ def build_one(meta: dict):
             error = f"{error}; fundamentals {symbol}: {exc}" if error else f"fundamentals {symbol}: {exc}"
 
     if meta.get("preferHistory") or meta.get("preferFundamentals"):
-        news = UD.fetch_news(yahoo_quote_symbol(ysym))
+        # Korean stocks: prefer Naver (Korean) headlines, fall back to Yahoo.
+        news = fetch_naver_news(symbol) or UD.fetch_news(yahoo_quote_symbol(ysym))
         if news:
             meta["news"] = news
 

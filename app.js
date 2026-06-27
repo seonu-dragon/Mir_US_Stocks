@@ -188,6 +188,7 @@ const liveNewsCache = {};
 const liveChartCache = {};
 const liveEarningsCache = {};
 const liveSummaryCache = {};
+const liveNewsSourceCache = {}; // "naver" | "yahoo" — which source the proxy returned
 const liveFetched = {};
 const liveDone = {};
 
@@ -6074,14 +6075,16 @@ function applyLive(item) {
     out.chartSeries = chart;
     out.historySource = "yahoo";
   }
-  // KR mode keeps the curated Korean (Naver) headlines from the build; the live
-  // proxy only serves English Yahoo news + a summary derived from it, so don't
-  // let it overwrite the better Korean news/summary. Live chart/earnings still apply.
+  // KR keeps the build's curated Korean (Naver) headlines unless the live proxy
+  // also returns Naver news (worker updated) — then we prefer the fresher live
+  // headlines + Korean summary. If the proxy still serves English Yahoo news
+  // (older worker), we ignore it so it never overwrites the better Korean news.
   const krMode = isKrMarket();
-  if (Array.isArray(news) && news.length && !krMode) out.news = news;
+  const allowLiveNews = !krMode || liveNewsSourceCache[item.ticker] === "naver";
+  if (Array.isArray(news) && news.length && allowLiveNews) out.news = news;
   if (earnings) out.liveEarnings = earnings;
   const summary = liveSummaryCache[item.ticker];
-  if (typeof summary === "string" && summary.trim() && !krMode) out.newsSummary = summary.trim();
+  if (typeof summary === "string" && summary.trim() && allowLiveNews) out.newsSummary = summary.trim();
   return out;
 }
 
@@ -6099,6 +6102,7 @@ function maybeFetchLiveData(base) {
     .then((payload) => {
       if (!payload) return;
       if (Array.isArray(payload.news)) liveNewsCache[ticker] = payload.news;
+      if (typeof payload.newsSource === "string") liveNewsSourceCache[ticker] = payload.newsSource;
       if (Array.isArray(payload.chart)) liveChartCache[ticker] = payload.chart;
       if (payload.earnings) liveEarningsCache[ticker] = payload.earnings;
       if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;

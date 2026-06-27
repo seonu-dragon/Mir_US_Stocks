@@ -113,7 +113,9 @@ export default {
       .replace(/[^A-Z0-9.\-]/g, "");
     if (!ticker) return cors(json({ error: "missing ticker" }, 400));
 
-    const symbol = ticker.replace(/\./g, "-"); // Yahoo uses BRK-B style
+    // Korean tickers must keep the dot for Yahoo (005930.KS); US class shares use
+    // dashes (BRK.B -> BRK-B).
+    const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
     // Price-event analysis is intentionally opt-in: the static site calls this
     // only after the visitor clicks "원인 분석" on a recent price event.
     if (url.searchParams.get("move_analysis")) {
@@ -161,12 +163,18 @@ export default {
       return cors(json(payload, 200, analysis ? 2592000 : 900));
     }
 
-    const [news, chart, earnings] = await Promise.all([fetchNews(symbol), fetchChart(symbol), fetchEarnings(symbol)]);
+    // Korean stocks get Korean-language headlines from Naver; US stays on Yahoo.
+    const kr = isKoreanTicker(ticker);
+    const [news, chart, earnings] = await Promise.all([
+      kr ? fetchNaverNews(ticker) : fetchNews(symbol),
+      fetchChart(symbol),
+      fetchEarnings(symbol),
+    ]);
     // Optional ?model=... overrides the model list (for quick A/B testing).
     const modelOverride = url.searchParams.get("model");
     const { text: summary, error: summaryError, model: summaryModel } =
-      await summarizeKorean(env, ticker, news, modelOverride);
-    return cors(json({ ticker, news, chart, earnings, summary, summaryError, summaryModel }));
+      await summarizeKorean(env, ticker, news, modelOverride, kr);
+    return cors(json({ ticker, news, chart, earnings, summary, summaryError, summaryModel, newsSource: kr ? "naver" : "yahoo" }));
   },
 };
 
@@ -422,7 +430,7 @@ async function summarizeMoveAnalysisKorean(env, ticker, company, eventDate, even
   }
   return { text: "", error: lastError };
 }
-async function summarizeKorean(env, ticker, news, modelOverride) {
+async function summarizeKorean(env, ticker, news, modelOverride, isKr = false) {
   if (!env || !env.AI) return { text: "", error: "no_ai_binding" };
   if (!news || !news.length) return { text: "", error: "no_news" };
   const models = modelOverride ? [modelOverride] : SUMMARY_MODELS;
@@ -430,12 +438,16 @@ async function summarizeKorean(env, ticker, news, modelOverride) {
     .slice(0, 8)
     .map((n, i) => `${i + 1}. ${n.title}${n.publisher ? ` (${n.publisher})` : ""}`)
     .join("\n");
+  const marketLabel = isKr ? "국내(한국)" : "미국";
+  const properNounRule = isKr
+    ? "- 회사명·제품명 등 고유명사는 뉴스에 나온 한국어 표기를 그대로 사용하세요.\n"
+    : "- 회사명, 제품명, 매체명 등 고유명사는 영어 원문 그대로 두세요(억지로 음역하지 마세요).\n";
   const prompt =
-    `미국 주식 ${ticker}의 최신 뉴스 헤드라인:\n\n${headlines}\n\n` +
+    `${marketLabel} 주식 ${ticker}의 최신 뉴스 헤드라인:\n\n${headlines}\n\n` +
     `위 헤드라인들을 종합해서 핵심 흐름을 한국어 3~4문장의 자연스러운 단락 하나로 요약하세요.\n` +
     `규칙:\n` +
     `- 헤드라인을 하나씩 번역하거나 번호로 나열하지 마세요. 반드시 하나의 단락으로 종합하세요.\n` +
-    `- 회사명, 제품명, 매체명 등 고유명사는 영어 원문 그대로 두세요(억지로 음역하지 마세요).\n` +
+    properNounRule +
     `- 투자 조언은 하지 말고 사실 위주로 쓰세요.\n` +
     `- 한국어 단락만 출력하고 다른 말은 덧붙이지 마세요.`;
   let lastError = "no_model";
@@ -457,6 +469,44 @@ async function summarizeKorean(env, ticker, news, modelOverride) {
     }
   }
   return { text: "", error: lastError };
+}
+
+function isKoreanTicker(ticker) {
+  return /\.(KS|KQ)$/i.test(String(ticker || ""));
+}
+
+// Korean-language headlines from Naver's mobile stock news API. One representative
+// article per news cluster keeps the list diverse. Mirrors fetch_naver_news() in
+// scripts/update_korea_data.py so live and build-time news stay consistent.
+async function fetchNaverNews(ticker) {
+  const code = String(ticker || "").replace(/\.(KS|KQ)$/i, "").replace(/[^0-9A-Za-z]/g, "");
+  if (!code) return [];
+  try {
+    const r = await fetch(
+      `https://m.stock.naver.com/api/news/stock/${encodeURIComponent(code)}?pageSize=8&page=1`,
+      { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" } }
+    );
+    if (!r.ok) return [];
+    const clusters = await r.json();
+    const out = [];
+    const seen = new Set();
+    for (const cluster of Array.isArray(clusters) ? clusters : []) {
+      for (const item of (cluster.items || [])) {
+        const title = decodeXmlText(String(item.titleFull || item.title || ""));
+        const link = String(item.mobileNewsUrl || "").trim();
+        if (!title || !link || seen.has(title)) continue;
+        seen.add(title);
+        const dt = String(item.datetime || "");
+        const publishedAt = dt.length >= 8 ? `${dt.slice(0, 4)}-${dt.slice(4, 6)}-${dt.slice(6, 8)}` : "";
+        out.push({ title, publisher: decodeXmlText(String(item.officeName || "")), link, publishedAt });
+        break; // one representative article per cluster
+      }
+      if (out.length >= 8) break;
+    }
+    return out;
+  } catch (e) {
+    return [];
+  }
 }
 
 async function fetchNews(symbol) {

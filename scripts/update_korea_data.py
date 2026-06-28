@@ -920,11 +920,13 @@ def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
         }
         primary = KR_ETF_RS_BENCHMARKS[0]
         secondary = KR_ETF_RS_BENCHMARKS[1]
-        rs_score = max(0, min(100, round(
-            50 + relative.get(primary, {}).get("monthChangePct", 0) * 2.2
+        # Weighted relative-strength vs the benchmarks. Kept unclamped here and
+        # percentile-ranked across themes below.
+        raw_strength = (
+            relative.get(primary, {}).get("monthChangePct", 0) * 2.2
             + relative.get(primary, {}).get("threeMonthChangePct", 0) * 1.1
             + relative.get(secondary, {}).get("monthChangePct", 0) * 1.4
-        )))
+        )
         rows.append({
             "group": cat["group"], "category": cat["category"],
             "representative": rep["ticker"], "name": rep["company"],
@@ -932,9 +934,29 @@ def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
             "monthChangePct": rep.get("monthChangePct", 0),
             "threeMonthChangePct": rep.get("threeMonthChangePct", 0),
             "ytdChangePct": rep.get("ytdChangePct", 0),
-            "rsScore": rs_score, "relative": relative,
+            "rsScore": 50, "rawStrength": round(raw_strength, 2), "relative": relative,
             "peers": sorted(peers, key=lambda x: x.get("monthChangePct", 0), reverse=True)[:10],
         })
+
+    # Cross-sectional percentile RS (강한 섹터 ~99, 약한 섹터 ~1). When the broad
+    # market trails a mega-cap-driven benchmark, an absolute RS would clamp every
+    # sector to 0; a rank keeps sectors distinguishable. Ties share the average rank.
+    n = len(rows)
+    if n > 1:
+        order = sorted(range(n), key=lambda i: rows[i]["rawStrength"])
+        i = 0
+        while i < n:
+            j = i
+            while j + 1 < n and rows[order[j + 1]]["rawStrength"] == rows[order[i]]["rawStrength"]:
+                j += 1
+            avg_rank = (i + j) / 2
+            score = round(1 + 98 * avg_rank / (n - 1))
+            for k in range(i, j + 1):
+                rows[order[k]]["rsScore"] = score
+            i = j + 1
+    for r in rows:
+        r.pop("rawStrength", None)
+
     rows.sort(key=lambda r: r["relative"].get(KR_ETF_RS_BENCHMARKS[0], {}).get("monthChangePct", 0), reverse=True)
 
     etf_relative = {

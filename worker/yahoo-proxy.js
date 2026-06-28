@@ -639,7 +639,8 @@ async function fetchEarningsCalendar(tickers) {
   for (let i = 0; i < tickers.length; i += batchSize) {
     const batch = tickers.slice(i, i + batchSize);
     const chunk = await Promise.all(batch.map(async (ticker) => {
-      const symbol = ticker.replace(/\./g, "-");
+      // Korean tickers keep the dot for Yahoo (005930.KS); US class shares use dashes.
+      const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
       const data = await fetchEarnings(symbol);
       if (!data || !data.nextDate) return null;
       return { ticker, nextDate: data.nextDate, epsEstimate: data.epsEstimate };

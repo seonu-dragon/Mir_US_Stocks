@@ -17,6 +17,10 @@
  */
 
 (function () {
+function isKrAnalysisMode() {
+  return typeof window !== "undefined" && window.MirMarket?.getMode?.() === "kr";
+}
+
 // ===== 지표 수학 (app.js와 동일한 정의를 self-contained로 복제) =====
 function emaRaw(values, period) {
   const out = [];
@@ -2290,7 +2294,7 @@ function analyzeRows(rows, horizon, meta) {
     });
   }
 
-  const shortData = meta.ticker ? getShortInterest(meta.ticker) : null;
+  const shortData = (!isKrAnalysisMode() && meta.ticker) ? getShortInterest(meta.ticker) : null;
   let shortSqueeze = null;
   if (shortData && shortData.daysToCover != null) {
     const dtc = shortData.daysToCover;
@@ -2322,8 +2326,8 @@ function analyzeRows(rows, horizon, meta) {
   const breakout = detectBreakoutRetest(clean, horizon, breakoutStats);
   const techLevels = computeTechnicalLevels(clean, price);
   const gapFill = computeGapFillStats(clean);
-  const optionsContext = estimateOptionsContext(price, clean);
-  const institutionalFlow = meta.ticker ? institutionalFlowForTicker(meta.ticker) : null;
+  const optionsContext = isKrAnalysisMode() ? null : estimateOptionsContext(price, clean);
+  const institutionalFlow = (!isKrAnalysisMode() && meta.ticker) ? institutionalFlowForTicker(meta.ticker) : null;
 
   // 실측(과거 유사 상황) 가중치는 독립 표본 수에 비례 — 표본이 많을수록 신뢰.
   // 60개에서 최대 0.5 가중(과거에는 표본 수와 무관하게 항상 0.5였음).
@@ -2778,6 +2782,7 @@ function renderGapFillCard(result) {
 }
 
 function renderOptionsContextCard(result) {
+  if (isKrAnalysisMode()) return "";
   const o = result.optionsContext;
   if (!o) return "";
   return `<div class="card options-card">
@@ -2788,6 +2793,7 @@ function renderOptionsContextCard(result) {
 }
 
 function renderInstitutionalFlowCard(result) {
+  if (isKrAnalysisMode()) return "";
   const f = result.institutionalFlow;
   if (!f) return "";
   const inst = f.instCount ? `13F 보유 기관 <b>${f.instCount}</b>곳 · 합계 <b>$${f.totalValueM.toFixed(0)}M</b>${f.topInst ? ` (${escapeHtml(f.topInst)})` : ""}` : "13F 보유 기관 데이터 없음";
@@ -2802,7 +2808,7 @@ function renderInstitutionalFlowCard(result) {
 }
 
 function renderShortSqueezeCard(result) {
-  if (!result.shortSqueeze) return "";
+  if (isKrAnalysisMode() || !result.shortSqueeze) return "";
   const s = result.shortSqueeze;
   return `<div class="card squeeze-card">
     <h3>숏 스퀴즈 셋업</h3>

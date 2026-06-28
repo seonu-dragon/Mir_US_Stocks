@@ -174,11 +174,11 @@
       "^KQ11": "229200",
     },
     hiddenTabs: ["institutional"],
-    hiddenInstitutionalSubs: ["congress", "13f"],
+    hiddenInstitutionalSubs: ["congress", "13f", "insider", "activist"],
     features: {
       congress: false,
       sec13f: false,
-      insider: true,
+      insider: false,
       activist: false,
       materialEvents: true,
       ipo: true,
@@ -281,6 +281,7 @@
     getInitialMode,
     setMode,
     detailPath,
+    isKrEtfLike,
     STORAGE_KEY,
   };
   window.MIR_MARKET_MODE = getInitialMode();

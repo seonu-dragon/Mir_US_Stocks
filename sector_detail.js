@@ -1,9 +1,33 @@
-const data = window.MARKET_SNAPSHOT || { health: { etfRelative: { rows: [] } }, stocks: [] };
+let data = { health: { etfRelative: { rows: [] } }, stocks: [] };
 const params = new URLSearchParams(window.location.search);
 
 const byId = (id) => document.getElementById(id);
 const fmtPct = (value) => `${value > 0 ? "+" : ""}${Number(value || 0).toFixed(1)}%`;
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
+
+function marketCfg() {
+  return window.MirMarket?.getConfig?.() || { id: "us", pageTitle: "미르의 미국 주식", etfBenchmarks: ["SPY", "QQQ", "TQQQ", "DIA", "IWM"] };
+}
+
+function isKrMarket() {
+  return marketCfg().id === "kr";
+}
+
+function loadSnapshotScript(cfg) {
+  return new Promise((resolve) => {
+    if (window[cfg.snapshotJsGlobal]) {
+      resolve(true);
+      return;
+    }
+    const src = cfg.snapshotJsPath || cfg.snapshotPath.replace(/\.json($|\?)/, ".js$1");
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.addEventListener("load", () => resolve(!!window[cfg.snapshotJsGlobal]), { once: true });
+    script.addEventListener("error", () => resolve(false), { once: true });
+    document.head.appendChild(script);
+  });
+}
 
 function periodLabel(key) {
   return {
@@ -24,14 +48,17 @@ function currentCategory() {
 }
 
 function stockAnalysisUrl(ticker) {
-  return `index.html?tab=search&ticker=${encodeURIComponent(ticker)}`;
+  const market = marketCfg().id === "kr" ? "kr" : "us";
+  return `index.html?market=${market}&tab=search&ticker=${encodeURIComponent(ticker)}`;
 }
 
 function setupDetail() {
+  const cfg = marketCfg();
+  document.title = cfg.pageTitle;
   byId("updatedAt").textContent = data.updatedAtKst || "N/A";
   const benchmarks = data.health?.etfRelative?.benchmarks?.length
     ? data.health.etfRelative.benchmarks
-    : ["SPY", "QQQ", "TQQQ", "DIA", "IWM"];
+    : cfg.etfBenchmarks;
   byId("detailBenchmark").innerHTML = benchmarks.map((ticker) => `<option value="${ticker}">${ticker} 대비</option>`).join("");
   byId("detailCategory").innerHTML = rows()
     .map((item) => `<option value="${item.category}">${item.group} · ${item.category}</option>`)
@@ -65,7 +92,8 @@ function renderDetail() {
     .filter((leader) => leader.activeRelative > 0)
     .sort((a, b) => b.activeRelative - a.activeRelative);
 
-  document.title = `${item.category} 내부 상대강도 | 미르의 미국 주식`;
+  const cfg = marketCfg();
+  document.title = `${item.category} 내부 상대강도 | ${cfg.pageTitle}`;
   byId("detailTitle").textContent = item.category;
   byId("categoryTitle").textContent = `${item.category} · ${item.representative}`;
   byId("categoryDescription").textContent =
@@ -104,10 +132,13 @@ function renderDetail() {
     return;
   }
 
+  const primaryLabel = (leader) => (isKrMarket() ? (leader.name || leader.ticker) : leader.ticker);
+  const secondaryLabel = (leader) => (isKrMarket() ? leader.ticker : (leader.name || ""));
+
   byId("leaderRows").innerHTML = leaders.map((leader, index) => `
     <tr onclick="window.location.href='${stockAnalysisUrl(leader.ticker)}'">
       <td>${index + 1}</td>
-      <td><strong>${leader.ticker}</strong><br><span>${leader.name}</span></td>
+      <td><strong>${primaryLabel(leader)}</strong><br><span>${secondaryLabel(leader)}</span></td>
       <td>${leader.sector}</td>
       <td>${leader.industry}</td>
       <td class="${cls(leader.activeReturn)}">${fmtPct(leader.activeReturn)}</td>
@@ -119,4 +150,14 @@ function renderDetail() {
   `).join("");
 }
 
-setupDetail();
+async function boot() {
+  const mode = params.get("market") || window.MirMarket?.getInitialMode?.() || "us";
+  if (window.MirMarket) window.MirMarket.setMode(mode);
+  const cfg = marketCfg();
+  document.documentElement.setAttribute("data-market", cfg.id);
+  await loadSnapshotScript(cfg);
+  data = window[cfg.snapshotJsGlobal] || data;
+  setupDetail();
+}
+
+boot();

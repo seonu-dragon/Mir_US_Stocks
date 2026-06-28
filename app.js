@@ -555,6 +555,14 @@ function applyMarketOnlyUi() {
   document.title = cfg.pageTitle;
   const search = byId("heatmapSearch");
   if (search) search.placeholder = cfg.searchPlaceholder;
+  // Hide tabs with no data in this market (KR: 거장 포트폴리오는 미국 전용 데이터).
+  const hiddenTabs = cfg.hiddenTabs || [];
+  document.querySelectorAll("#mainTabs .tab[data-tab]").forEach((btn) => {
+    const hide = hiddenTabs.includes(btn.dataset.tab);
+    btn.hidden = hide;
+    btn.style.display = hide ? "none" : "";
+  });
+  if (currentTab && hiddenTabs.includes(currentTab)) activateTab("search", { push: false });
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
   // Chart RS-overlay toggle labels follow the market's benchmarks (SPY/QQQ vs 코스피200/코스닥150).
@@ -2664,6 +2672,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   const resolved = normalizeTabRequest(name, sub);
   name = resolved.tab;
   sub = resolved.sub;
+  // Tabs hidden for this market (e.g. KR 거장 포트폴리오) fall back to 종목 검색.
+  if ((marketCfg().hiddenTabs || []).includes(name)) { name = "search"; sub = null; }
   const tabBtn = document.querySelector(`[data-tab="${name}"]`);
   if (!tabBtn) return;
   if (tabBtn.dataset.advanced === "true" && currentViewMode !== "advanced") setViewMode("advanced");
@@ -8695,7 +8705,7 @@ function renderFundamentals(item) {
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
       <h3>Fundamentals</h3>
-      <span>${hasFundamentals ? (f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC 보완" : f.source === "sec" ? "SEC EDGAR · 분기 재무 공시" : f.source === "nasdaq+sec" || f.source === "nasdaq+sec+yahoo" ? "Nasdaq + SEC + Yahoo · NYSE 등 전 거래소" : "Nasdaq + SEC/Yahoo 스냅샷") : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
+      <span>${hasFundamentals ? (isKrMarket() ? "Yahoo Finance · 네이버 금융 보완 (KRX)" : f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC 보완" : f.source === "sec" ? "SEC EDGAR · 분기 재무 공시" : f.source === "nasdaq+sec" || f.source === "nasdaq+sec+yahoo" ? "Nasdaq + SEC + Yahoo · NYSE 등 전 거래소" : "Nasdaq + SEC/Yahoo 스냅샷") : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
     </div>
     <div class="fund-scroll">
       <table>
@@ -9579,6 +9589,22 @@ const MARKET_GROUPS = [
   ] }
 ];
 
+// KR 마켓 데이터 탭: 한국 ETF 기반(전부 KR 스냅샷 data.stocks에 존재). 미국 ETF는
+// KR 모드 data.stocks에 없어 빈 표가 되므로 한국 상품으로 대체한다.
+const KR_MARKET_GROUPS = [
+  { title: "주요 지수 · 레버리지", tickers: [
+    ["069500", "코스피200 (KODEX 200)"], ["229200", "코스닥150"], ["102110", "TIGER 200"],
+    ["122630", "코스피 레버리지"], ["252670", "코스피 인버스2X"]
+  ] },
+  { title: "섹터 ETF", tickers: [
+    ["091160", "반도체"], ["305720", "2차전지"], ["091170", "은행"],
+    ["091180", "자동차"], ["244580", "바이오"]
+  ] },
+  { title: "해외 ETF", tickers: [
+    ["228800", "미국 S&P500"], ["133690", "미국 나스닥100"]
+  ] }
+];
+
 const ISSUER_TICKER_HINTS = {
   "APPLE INC": "AAPL",
   "AMAZON COM INC": "AMZN",
@@ -10328,7 +10354,7 @@ function renderMarkets() {
   const byTicker = {};
   data.stocks.forEach((s) => { byTicker[s.ticker] = s; });
 
-  const sections = MARKET_GROUPS.map((group) => {
+  const sections = (isKrMarket() ? KR_MARKET_GROUPS : MARKET_GROUPS).map((group) => {
     const seen = new Set();
     const rows = [];
     group.tickers.forEach(([ticker, name]) => {
@@ -10367,7 +10393,7 @@ function marketTableHtml(title, rows) {
               <tr class="market-row" data-ticker="${ticker}" style="cursor:pointer;" title="${escapeHtml(ticker)} 분석 보기">
                 <td>${escapeHtml(name)}</td>
                 <td><strong>${escapeHtml(ticker)}</strong></td>
-                <td>$${Number(s.price).toFixed(2)}</td>
+                <td>${priceOrDash(s.price)}</td>
                 <td class="${cls(s.changePct)}">${fmtPct(s.changePct)}</td>
                 <td class="${cls(s.weekChangePct)}">${fmtPct(s.weekChangePct)}</td>
                 <td class="${cls(s.monthChangePct)}">${fmtPct(s.monthChangePct)}</td>

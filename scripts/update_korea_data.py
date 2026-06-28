@@ -19,6 +19,8 @@ import json
 import os
 import re
 import tempfile
+import threading
+import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -32,7 +34,9 @@ OUT_JS = ROOT / "data" / "korea" / "market_snapshot.js"
 DETAILS_DIR = ROOT / "data" / "korea" / "details"
 
 MAX_REAL_HISTORY = 600
-MAX_FUNDAMENTALS = 400
+# Naver fundamentals are cheap (1 JSON call) and cover all listed stocks, so we
+# fetch them far wider than Yahoo did — every mid/small cap gets financials too.
+MAX_FUNDAMENTALS = 1600
 HTTP_HEADERS = {"User-Agent": "Mozilla/5.0", "Accept": "text/html,application/json"}
 
 SECTOR_MAP = {
@@ -602,6 +606,110 @@ def history_priority(meta):
     return score
 
 
+# Global throttle for Naver API calls. Sustained high concurrency makes Naver
+# block the IP for a while (most financials then come back empty), so cap the
+# aggregate request rate regardless of worker count.
+_naver_lock = threading.Lock()
+_naver_next = [0.0]
+_NAVER_MIN_INTERVAL = 0.10  # ~10 requests/sec across all threads
+
+
+def _naver_throttle():
+    with _naver_lock:
+        now = time.monotonic()
+        wait = _naver_next[0] - now
+        if wait > 0:
+            time.sleep(wait)
+            now = time.monotonic()
+        _naver_next[0] = now + _NAVER_MIN_INTERVAL
+
+
+def _fnum(v):
+    if v is None or v in ("-", ""):
+        return None
+    try:
+        return float(str(v).replace(",", "").replace("%", ""))
+    except (TypeError, ValueError):
+        return None
+
+
+def fetch_naver_fundamentals(code: str, price=None) -> dict:
+    """Financial statements + ratios from Naver's mobile finance API.
+
+    Naver covers every listed Korean stock (Yahoo's .KS fundamentals are sparse for
+    mid/small caps like 무학). Mapped to the same schema the US pipeline produces so
+    the fundamentals panel renders identically. Monetary fields use the billions-of-
+    KRW convention (억 ÷ 10) to match Yahoo's salesB/incomeB scale.
+    """
+    url = f"https://m.stock.naver.com/api/stock/{code}/finance/annual"
+    req = urllib.request.Request(url, headers={**HTTP_HEADERS, "Referer": "https://m.stock.naver.com/"})
+    info = None
+    for attempt in range(5):  # Naver rate-limits bursts; throttle + retry with backoff.
+        try:
+            _naver_throttle()
+            payload = json.loads(urllib.request.urlopen(req, timeout=12).read().decode("utf-8", "replace"))
+            info = payload["financeInfo"]
+            break
+        except Exception:
+            if attempt == 4:
+                return {}
+            time.sleep(0.6 * (attempt + 1))
+    if not info:
+        return {}
+    titles = info["trTitleList"]
+    rows = info["rowList"]
+    actual = [t["key"] for t in titles if t.get("isConsensus") == "N"]
+    forward = [t["key"] for t in titles if t.get("isConsensus") == "Y"]
+    if not actual:
+        return {}
+    cur = actual[-1]
+    fwd = forward[-1] if forward else None
+
+    def val(title, key):
+        for r in rows:
+            if r.get("title") == title:
+                col = (r.get("columns") or {}).get(key) or {}
+                return _fnum(col.get("value"))
+        return None
+
+    sales = val("매출액", cur)
+    income = val("당기순이익", cur)
+    if income is None:
+        income = val("지배주주순이익", cur)
+    f = {"source": "naver"}
+    if sales is not None:
+        f["salesB"] = round(sales / 10, 3)        # 억 → billions KRW
+    if income is not None:
+        f["incomeB"] = round(income / 10, 3)
+    if val("영업이익률", cur) is not None:
+        f["operMargin"] = val("영업이익률", cur)
+    if val("순이익률", cur) is not None:
+        f["profitMargin"] = val("순이익률", cur)
+    if val("ROE", cur) is not None:
+        f["roe"] = val("ROE", cur)
+    if val("부채비율", cur) is not None:
+        f["debtEq"] = round(val("부채비율", cur) / 100, 2)
+    if val("당좌비율", cur) is not None:
+        f["quickRatio"] = round(val("당좌비율", cur) / 100, 2)
+    if val("PER", cur) is not None:
+        f["pe"] = val("PER", cur)
+    if val("PBR", cur) is not None:
+        f["pb"] = f["pbr"] = val("PBR", cur)
+    if val("EPS", cur) is not None:
+        f["eps"] = f["epsTtm"] = val("EPS", cur)
+    if val("BPS", cur) is not None:
+        f["bps"] = val("BPS", cur)
+    if fwd:
+        if val("PER", fwd) is not None:
+            f["forwardPE"] = val("PER", fwd)
+        if val("EPS", fwd) is not None:
+            f["epsNextY"] = val("EPS", fwd)
+    div = val("주당배당금", cur)
+    if div is not None and price:
+        f["divYield"] = round(div / float(price) * 100, 2)
+    return f
+
+
 def fetch_naver_news(code: str, limit: int = 8) -> list[dict]:
     """Korean-language headlines for a stock from Naver's mobile stock API.
 
@@ -613,6 +721,7 @@ def fetch_naver_news(code: str, limit: int = 8) -> list[dict]:
     url = f"https://m.stock.naver.com/api/news/stock/{code}?pageSize={limit}&page=1"
     req = urllib.request.Request(url, headers={**HTTP_HEADERS, "Referer": "https://m.stock.naver.com/"})
     try:
+        _naver_throttle()
         raw = urllib.request.urlopen(req, timeout=12).read()
         clusters = json.loads(raw.decode("utf-8", "replace"))
     except Exception:
@@ -667,17 +776,18 @@ def build_one(meta: dict):
         error = f"{symbol}: {exc}"
 
     if meta.get("preferFundamentals"):
+        # Naver covers every listed Korean stock; Yahoo's .KS fundamentals are sparse
+        # for mid/small caps (e.g. 무학). Use Naver as the primary source.
+        price_hint = meta.get("quotePrice") or (rows[-1]["close"] if rows else None)
         try:
-            price_hint = meta.get("quotePrice") or (rows[-1]["close"] if rows else None)
-            meta["fundamentals"] = UD.fetch_all_fundamentals(
-                yahoo_quote_symbol(ysym), price_hint=price_hint, market_cap_b=meta.get("marketCapT")
-            )
+            meta["fundamentals"] = fetch_naver_fundamentals(symbol, price_hint)
         except Exception as exc:
             meta["fundamentals"] = {}
             error = f"{error}; fundamentals {symbol}: {exc}" if error else f"fundamentals {symbol}: {exc}"
 
-    if meta.get("preferHistory") or meta.get("preferFundamentals"):
+    if meta.get("preferHistory"):
         # Korean stocks: prefer Naver (Korean) headlines, fall back to Yahoo.
+        # Limited to top names (preferHistory) to keep total Naver request rate sane.
         news = fetch_naver_news(symbol) or UD.fetch_news(yahoo_quote_symbol(ysym))
         if news:
             meta["news"] = news
@@ -1063,7 +1173,11 @@ def build_snapshot(limit: int | None = None) -> dict:
     metas = fetch_all_listed(limit=limit)
     metas.sort(key=history_priority, reverse=True)
     real_symbols = {m["symbol"] for m in metas[:MAX_REAL_HISTORY]}
-    fund_symbols = {m["symbol"] for m in metas[:MAX_FUNDAMENTALS]}
+    # Fundamentals are selected by market cap (not history_priority): index-membership
+    # bonuses would otherwise push mid-caps like 무학(시총 ~805위) far down the ranking
+    # and out of coverage. Naver covers every stock, so go purely by size.
+    cap_ranked = sorted(metas, key=lambda m: m.get("marketCapT") or 0, reverse=True)
+    fund_symbols = {m["symbol"] for m in cap_ranked[:MAX_FUNDAMENTALS]}
 
     for meta in metas:
         groups = set(meta.get("groups") or [])
@@ -1082,7 +1196,9 @@ def build_snapshot(limit: int | None = None) -> dict:
 
     stocks = []
     errors = []
-    with ThreadPoolExecutor(max_workers=16) as pool:
+    # 10 workers (not 16): wide Naver fundamentals coverage triggers rate limits at
+    # higher concurrency, dropping most financials. 10 keeps coverage high.
+    with ThreadPoolExecutor(max_workers=10) as pool:
         futures = [pool.submit(build_one, meta) for meta in metas]
         for fut in as_completed(futures):
             stock, err = fut.result()
@@ -1195,16 +1311,32 @@ def split_snapshot_details(payload: dict):
     return light, details
 
 
+def _atomic_replace(temp: str, path: Path, attempts: int = 10):
+    # OneDrive sync / open editors briefly lock the target on Windows (WinError 32).
+    # Retry the rename with backoff instead of losing the whole build's output.
+    for i in range(attempts):
+        try:
+            os.replace(temp, path)
+            return
+        except PermissionError:
+            if i == attempts - 1:
+                raise
+            time.sleep(0.8 * (i + 1))
+
+
 def write_json(path: Path, payload: dict):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, temp = tempfile.mkstemp(prefix="korea_snapshot_", suffix=".json", dir=str(path.parent))
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as handle:
             json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
-        os.replace(temp, path)
+        _atomic_replace(temp, path)
     finally:
-        if os.path.exists(temp):
-            os.unlink(temp)
+        try:
+            if os.path.exists(temp):
+                os.unlink(temp)
+        except OSError:
+            pass
 
 
 def write_js(path: Path, payload: dict):
@@ -1215,10 +1347,13 @@ def write_js(path: Path, payload: dict):
             handle.write("window.KOREA_MARKET_SNAPSHOT = ")
             json.dump(payload, handle, ensure_ascii=False, separators=(",", ":"))
             handle.write(";\n")
-        os.replace(temp, path)
+        _atomic_replace(temp, path)
     finally:
-        if os.path.exists(temp):
-            os.unlink(temp)
+        try:
+            if os.path.exists(temp):
+                os.unlink(temp)
+        except OSError:
+            pass
 
 
 def write_details(details: dict):

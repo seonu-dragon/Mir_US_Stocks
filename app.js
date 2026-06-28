@@ -8698,7 +8698,7 @@ function renderFundamentals(item) {
   const hasFundamentals = Object.keys(f).length > 0;
   const rows = [
     ["Index", indexLabel(item), "P/E", fmtMultiple(f.pe), "EPS TTM", moneyOrDash(f.epsTtm), "Perf Week", fmtPct(item.weekChangePct)],
-    ["Market Cap", fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB), "Forward P/E", fmtMultiple(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
+    ["Market Cap", isKrMarket() ? fmtBillions(item.marketCapB) : fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB), "Forward P/E", fmtMultiple(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
     ["Sales", fmtFinancialB(f.salesB), "P/S", fmtMultiple(f.ps), "EPS Next Q", moneyOrDash(f.epsNextQ), "Perf Quarter", fmtPct(item.threeMonthChangePct)],
     ["Income", fmtFinancialB(f.incomeB), "P/B", fmtMultiple(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
     ["Cash", fmtFinancialB(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],

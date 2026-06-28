@@ -214,8 +214,7 @@
       const num = Number(value);
       if (!Number.isFinite(num)) return "-";
       if (num >= 1) return `${num.toFixed(2)}조`;
-      if (num >= 0.01) return `${(num * 1000).toFixed(0)}억`;
-      return `${(num * 10000).toFixed(0)}억`;
+      return `${(num * 10000).toFixed(0)}억`;  // 1조 = 10,000억
     },
   };
 

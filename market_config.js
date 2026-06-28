@@ -173,7 +173,7 @@
       "^KS11": "069500",
       "^KQ11": "229200",
     },
-    hiddenTabs: [],
+    hiddenTabs: ["institutional"],
     hiddenInstitutionalSubs: ["congress", "13f"],
     features: {
       congress: false,

@@ -51,6 +51,7 @@ SECTOR_MAP = {
 
 KR_ETFS = {
     "069500": ("KODEX 200", "ETF", "대형주 ETF", "all_etf", 50),
+    "229200": ("KODEX 코스닥150", "ETF", "코스닥 ETF", "all_etf", 8),
     "102110": ("TIGER 200", "ETF", "대형주 ETF", "all_etf", 45),
     "091160": ("KODEX 반도체", "ETF", "반도체 ETF", "all_etf", 8),
     "305720": ("KODEX 2차전지산업", "ETF", "2차전지 ETF", "all_etf", 5),

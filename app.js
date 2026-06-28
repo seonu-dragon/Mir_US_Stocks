@@ -557,6 +557,12 @@ function applyMarketOnlyUi() {
   if (search) search.placeholder = cfg.searchPlaceholder;
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
+  // Chart RS-overlay toggle labels follow the market's benchmarks (SPY/QQQ vs 코스피200/코스닥150).
+  const [[, rsB1], [, rsB2]] = etfRsSecondaryBenchmarks();
+  const rsSpyLabel = byId("showRsSpy")?.parentElement;
+  if (rsSpyLabel && rsSpyLabel.lastChild) rsSpyLabel.lastChild.textContent = ` RS vs ${rsB1}`;
+  const rsQqqLabel = byId("showRsQqq")?.parentElement;
+  if (rsQqqLabel && rsQqqLabel.lastChild) rsQqqLabel.lastChild.textContent = ` RS vs ${rsB2}`;
   const instNav = byId("institutionalSubTabs");
   if (instNav) {
     instNav.querySelectorAll(".sub-tab").forEach((btn) => {
@@ -1548,6 +1554,14 @@ function renderIndexStrip(indices) {
   const el = byId("indexStrip");
   if (!el) return;
   if (!indices || !indices.length) { el.innerHTML = ""; return; }
+  // In KR mode, lead with KOSPI/KOSDAQ; the worker's index list is US-first.
+  if (isKrMarket()) {
+    const krOrder = ["^KS11", "^KQ11"];
+    indices = [...indices].sort((a, b) => {
+      const ai = krOrder.indexOf(a.symbol), bi = krOrder.indexOf(b.symbol);
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+    });
+  }
   el.innerHTML = indices.map((ix) => {
     const analysisTicker = indexAnalysisTicker(ix.symbol);
     const clickable = !!analysisTicker;
@@ -2403,7 +2417,7 @@ function render52wRange(item) {
   el.innerHTML = `
     <div class="r52-head"><span>52주 레인지</span><strong>저가 대비 ${pct.toFixed(0)}%</strong></div>
     <div class="r52-bar"><div class="r52-fill" style="width:${pct}%"></div><div class="r52-marker" style="left:${pct}%"></div></div>
-    <div class="r52-ends"><span>저 $${low.toFixed(2)}</span><span>현 $${price.toFixed(2)}</span><span>고 $${high.toFixed(2)}</span></div>`;
+    <div class="r52-ends"><span>저 ${priceOrDash(low)}</span><span>현 ${priceOrDash(price)}</span><span>고 ${priceOrDash(high)}</span></div>`;
 }
 
 // ===== #9 오늘의 시그널 통합 대시보드 =====
@@ -2430,7 +2444,7 @@ function renderSignals() {
   // 52주 신고가 근접
   const highs = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS" && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= 2)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
-  cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `$${Number(s.price).toFixed(2)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
+  cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
   // 주요 8-K
   const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
   cards.push(signalCard("📣 주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
@@ -4405,7 +4419,7 @@ function heatTile(item, rect, metric, query) {
   const primaryText = kr ? item.company : item.ticker;
   const titleText = kr
     ? `${item.company} · ${label} · ${marketCfg().formatPrice(item.price)}`
-    : `${item.ticker} · ${item.company} · ${label} · $${Number(item.price).toFixed(2)}`;
+    : `${item.ticker} · ${item.company} · ${label} · ${priceOrDash(item.price)}`;
   return `
     <button
       class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
@@ -4507,7 +4521,7 @@ function stockTooltip(item) {
         <span>${escapeHtml(item.company)}</span>
       </div>
       <div class="tooltip-price">
-        <b>$${Number(item.price).toFixed(2)}</b>
+        <b>${priceOrDash(item.price)}</b>
         <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
       </div>
     </div>
@@ -4561,7 +4575,7 @@ function peerTooltipRow(item) {
     <div class="peer-row">
       <strong>${escapeHtml(item.ticker)}</strong>
       ${sparklineSvg(item.closeSeries, { width: 76, height: 20, color: item.changePct >= 0 ? "#22c55e" : "#ef4444" })}
-      <span>$${Number(item.price).toFixed(2)}</span>
+      <span>${priceOrDash(item.price)}</span>
       <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
     </div>
   `;
@@ -4730,7 +4744,7 @@ function stockFacts(item, title) {
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker}</h3>
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     <div class="facts">
-      ${fact("가격", `$${item.price.toFixed(2)}`)}
+      ${fact("가격", priceOrDash(item.price))}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
       ${fact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
       ${isSearchPanel ? scoreFact("RS", item.rsScore, "rs") : fact("RS", item.rsScore)}
@@ -7503,9 +7517,10 @@ function sectorBenchmarkTickerForItem(item) {
 }
 
 function relativeBenchmarkTickers(item) {
+  const [[b1], [b2]] = etfRsSecondaryBenchmarks();
   const tickers = [];
-  if (chartState.showRsSpy || chartState.showMansfield) tickers.push("SPY");
-  if (chartState.showRsQqq) tickers.push("QQQ");
+  if (chartState.showRsSpy || chartState.showMansfield) tickers.push(b1);
+  if (chartState.showRsQqq) tickers.push(b2);
   if (chartState.showRsSector) {
     const sectorTicker = sectorBenchmarkTickerForItem(item);
     if (sectorTicker && sectorTicker !== item.ticker) tickers.push(sectorTicker);
@@ -7735,13 +7750,14 @@ function renderTtmSqueezePanel(rows, xFor, x1, x2, top, height, candleW, visN) {
 
 function renderRelativePanel(item, rows, xFor, x1, x2, top, height) {
   const series = [];
+  const [[b1, b1Label], [b2, b2Label]] = etfRsSecondaryBenchmarks();
   if (chartState.showRsSpy) {
-    const bench = benchmarkRowsForTicker("SPY");
-    if (bench.length) series.push({ name: "RS/SPY", values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#60a5fa" });
+    const bench = benchmarkRowsForTicker(b1);
+    if (bench.length) series.push({ name: `RS/${b1Label}`, values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#60a5fa" });
   }
   if (chartState.showRsQqq) {
-    const bench = benchmarkRowsForTicker("QQQ");
-    if (bench.length) series.push({ name: "RS/QQQ", values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#a78bfa" });
+    const bench = benchmarkRowsForTicker(b2);
+    if (bench.length) series.push({ name: `RS/${b2Label}`, values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#a78bfa" });
   }
   if (chartState.showRsSector) {
     const sectorTicker = sectorBenchmarkTickerForItem(item);
@@ -7749,7 +7765,7 @@ function renderRelativePanel(item, rows, xFor, x1, x2, top, height) {
     if (bench.length) series.push({ name: `RS/${sectorTicker}`, values: relativePerformanceSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#34d399" });
   }
   if (chartState.showMansfield) {
-    const bench = benchmarkRowsForTicker("SPY");
+    const bench = benchmarkRowsForTicker(b1);
     if (bench.length) series.push({ name: "Mansfield", values: mansfieldSeries(rows, visibleRowsForBenchmark(bench, rows.length)), color: "#f59e0b", dash: "4 3" });
   }
   if (!series.length) {
@@ -8041,7 +8057,7 @@ function buildStockChatContext(userText) {
     const f = item.fundamentals || {};
     const earnings = item.liveEarnings || {};
     lines.push(
-      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:$${Number(item.price).toFixed(2)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
+      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
       (f.pe ? ` · PER:${fmtMultiple(f.pe)}` : "") +
       (f.forwardPE ? ` · FwdPER:${fmtMultiple(f.forwardPE)}` : "") +
       (f.ps ? ` · P/S:${fmtMultiple(f.ps)}` : "") +
@@ -13448,7 +13464,7 @@ function setupScreenerEvents() {
 
 // ===== 종목 비교 =====
 const COMPARE_METRICS = [
-  ["가격", (i) => `$${Number(i.price).toFixed(2)}`],
+  ["가격", (i) => priceOrDash(i.price)],
   ["당일", (i) => fmtPct(i.changePct), (i) => cls(i.changePct)],
   ["1주", (i) => fmtPct(i.weekChangePct), (i) => cls(i.weekChangePct)],
   ["1개월", (i) => fmtPct(i.monthChangePct), (i) => cls(i.monthChangePct)],
@@ -13951,8 +13967,8 @@ function renderBacktestResults(payload) {
         <tr>
           <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
           <td>${escapeHtml(row.company)}</td>
-          <td>$${row.startPrice.toFixed(2)}</td>
-          <td>$${row.endPrice.toFixed(2)}</td>
+          <td>${priceOrDash(row.startPrice)}</td>
+          <td>${priceOrDash(row.endPrice)}</td>
           <td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td>
           <td>${row.weightPct.toFixed(1)}%</td>
           <td>${fmtBacktestUsd(row.invested)}</td>

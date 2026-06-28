@@ -62,7 +62,7 @@ KR_ETFS = {
     "091170": ("KODEX 은행", "ETF", "은행 ETF", "all_etf", 3),
     "091180": ("KODEX 자동차", "ETF", "자동차 ETF", "all_etf", 2),
     "244580": ("KODEX 바이오", "ETF", "바이오 ETF", "all_etf", 2),
-    "228800": ("TIGER 미국S&P500", "ETF", "해외 ETF", "all_etf", 12),
+    "360750": ("TIGER 미국S&P500", "ETF", "해외 ETF", "all_etf", 195),
     "133690": ("TIGER 미국나스닥100", "ETF", "해외 ETF", "all_etf", 10),
     "122630": ("KODEX 레버리지", "ETF", "레버리지 ETF", "all_etf", 4),
     "252670": ("KODEX 200선물인버스2X", "ETF", "인버스 ETF", "all_etf", 3),
@@ -837,8 +837,19 @@ KR_ETF_THEME_DEFS = [
     ("산업재", "조선/중공업", ["조선", "중공업"], None),
     ("산업재", "방산/우주", ["방산", "우주"], None),
     ("산업재", "건설", ["건설"], "117700"),         # KODEX 건설 ('인프라'는 통신/전력 인프라라 제외)
+    ("산업재", "전력/AI인프라", ["전력", "AI인프라"], None),
+    ("산업재", "로봇", ["로봇", "로보틱스"], None),
+    ("산업재", "운송/물류", ["운송", "물류"], None),
+    ("산업재", "기계", ["기계장비", "기계"], None),
     ("소재", "철강/화학", ["철강", "화학"], "117680"),  # KODEX 철강 ('소재'는 2차전지소재와 중복돼 제외)
-    ("전략", "고배당", ["고배당", "배당"], "161510"),  # PLUS 고배당주 (정통 고배당)
+    ("에너지", "원자력", ["원자력", "원전"], None),
+    ("에너지", "신재생에너지", ["태양광", "풍력", "신재생"], None),
+    ("부동산", "리츠", ["리츠"], None),
+    ("필수소비재", "화장품/뷰티", ["화장품", "뷰티", "미용"], None),
+    ("경기소비재", "소비재", ["경기소비재", "필수소비재"], None),
+    ("경기소비재", "여행/레저", ["여행", "레저"], None),
+    ("전략", "고배당", ["고배당"], "161510"),        # PLUS 고배당주 (정통 고배당)
+    ("전략", "배당성장", ["배당성장", "배당다우"], None),
 ]
 
 
@@ -878,7 +889,10 @@ def _num(v):
 
 
 def _etf_theme_match(name: str, includes: list[str]) -> bool:
-    return any(k in name for k in includes) and not any(x in name for x in KR_ETF_THEME_EXCLUDE)
+    # A keyword in this theme's own includes is never treated as an exclude (so the
+    # 리츠 theme can match 리츠 ETFs even though 리츠 is globally excluded elsewhere).
+    excludes = [x for x in KR_ETF_THEME_EXCLUDE if x not in includes]
+    return any(k in name for k in includes) and not any(x in name for x in excludes)
 
 
 def is_kr_leveraged_name(name: str) -> bool:
@@ -1241,7 +1255,7 @@ def build_snapshot(limit: int | None = None) -> dict:
                 UD.health("069500", "KODEX 200", chg("069500"), "코스피 대형주"),
                 UD.health("102110", "TIGER 200", chg("102110"), "코스피 추종"),
                 UD.health("091160", "KODEX 반도체", chg("091160"), "반도체 섹터"),
-                UD.health("228800", "TIGER 미국S&P500", chg("228800"), "해외 분산"),
+                UD.health("360750", "TIGER 미국S&P500", chg("360750"), "해외 분산"),
                 UD.health("122630", "KODEX 레버리지", chg("122630"), "레버리지"),
                 UD.health("252670", "KODEX 인버스2X", chg("252670"), "하락 베팅"),
             ],

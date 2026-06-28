@@ -5955,7 +5955,7 @@ function investmentChecklistResults(item) {
     { label: "추세", status: trendPass ? "pass" : trendWarn ? "warn" : "check", detail: `1개월 ${fmtPct(item.monthChangePct)} · RS ${item.rsScore}${sma20 != null ? ` · SMA20 ${last >= sma20 ? "위" : "아래"}` : ""}` },
     { label: "실적·추정", status: !earningsKnown ? "check" : earningsPass ? "pass" : epsScore < 45 ? "warn" : "check", detail: earningsKnown ? `EPS 추정 점수 ${Math.round(epsScore)}${f.epsNextY != null ? ` · EPS Next Y ${moneyOrDash(f.epsNextY)}` : ""}` : "EPS 추정 데이터가 부족합니다." },
     { label: "밸류에이션", status: !valuationKnown || sectorMedian == null ? "check" : valuationPass ? "pass" : valuationWarn ? "warn" : "check", detail: valuationKnown ? `Forward P/E ${forwardPe.toFixed(1)}${sectorMedian != null ? ` · 섹터 중앙값 ${sectorMedian.toFixed(1)}` : " · 섹터 비교값 없음"}` : "Forward P/E 데이터가 없습니다." },
-    { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volume.toFixed(1)}배 · 내부자 매수 ${buys} / 매도 ${sells}` },
+    { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volume.toFixed(1)}배${isKrMarket() ? "" : ` · 내부자 매수 ${buys} / 매도 ${sells}`}` },
     { label: "리스크", status: riskFlags.length ? "warn" : "pass", detail: riskFlags.length ? riskFlags.join(" · ") : "현재 규칙에서 과열·부채·낙폭 경고가 없습니다." }
   ];
 }
@@ -6103,6 +6103,9 @@ function inst13fIndex() {
 function renderSmartMoney(item) {
   const el = byId("stockSmartMoney");
   if (!el || !item) return;
+  // 내부자·의회·기관(13F)·행동주의는 미국 전용 데이터라 KR 종목엔 항상 비어 있다 → 패널 숨김.
+  if (isKrMarket()) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
   const t = item.ticker;
   const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((r) => r.ticker === t);
   const insBuy = ins.filter((r) => r.kind === "buy").length;
@@ -8547,6 +8550,7 @@ function sourceLabel(source) {
   if (src.includes("nasdaq")) return "Nasdaq";
   if (src.includes("yahoo")) return "Yahoo Finance";
   if (src.includes("sec")) return "SEC EDGAR";
+  if (src.includes("naver")) return "네이버 금융";
   if (src.includes("snapshot")) return "스냅샷 생성값";
   return source;
 }
@@ -10120,7 +10124,8 @@ function renderCongressTrades() {
 function renderCongressTradesForTicker(item) {
   const box = byId("stockCongress");
   if (!box) return;
-  if (!item || item.sector === "EXCHANGE TRADED FUNDS") {
+  // 미 의회 거래는 미국 전용 데이터 → KR/ETF에선 숨김.
+  if (isKrMarket() || !item || item.sector === "EXCHANGE TRADED FUNDS") {
     box.innerHTML = "";
     box.hidden = true;
     return;

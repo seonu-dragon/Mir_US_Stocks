@@ -706,25 +706,28 @@ KR_ETF_RS_BENCHMARKS = ["069500", "229200", "102110"]
 KR_ETF_THEME_EXCLUDE = [
     "인버스", "레버리지", "2X", "선물", "채권", "채액티브", "은행채", "국고", "단기", "금리",
     "TR", "달러", "미국", "나스닥", "S&P", "차이나", "중국", "일본", "인도", "베트남",
-    "유럽", "글로벌", "선진", "신흥", "리츠", "금현물", "골드",
+    "유럽", "글로벌", "선진", "신흥", "리츠", "금현물", "골드", "커버드콜",
 ]
+# Each theme: (group, category, [name keywords], pinned_representative_or_None).
+# A pinned code forces the "정통" product as representative instead of the
+# largest-cap keyword match (which can be a covered-call / dividend hybrid).
 KR_ETF_THEME_DEFS = [
-    ("대표지수", "코스피200", ["코스피200", "KODEX 200", "TIGER 200", " 200"]),
-    ("대표지수", "코스닥150", ["코스닥150"]),
-    ("기술", "반도체", ["반도체"]),
-    ("기술", "2차전지", ["2차전지", "배터리"]),
-    ("기술", "인터넷/SW", ["인터넷", "소프트웨어"]),
-    ("커뮤니케이션", "게임", ["게임"]),
-    ("커뮤니케이션", "미디어/엔터", ["미디어", "엔터", "콘텐츠", "K-팝", "케이팝"]),
-    ("경기소비재", "자동차", ["자동차"]),
-    ("금융", "은행", ["은행"]),
-    ("금융", "증권", ["증권"]),
-    ("헬스케어", "바이오/헬스케어", ["바이오", "헬스케어", "제약"]),
-    ("산업재", "조선/중공업", ["조선", "중공업"]),
-    ("산업재", "방산/우주", ["방산", "우주"]),
-    ("산업재", "건설/인프라", ["건설", "인프라"]),
-    ("소재", "철강/소재", ["철강", "소재", "화학"]),
-    ("전략", "고배당", ["고배당", "배당"]),
+    ("대표지수", "코스피200", ["코스피200", "KODEX 200", "TIGER 200", " 200"], "069500"),
+    ("대표지수", "코스닥150", ["코스닥150"], None),
+    ("기술", "반도체", ["반도체"], None),
+    ("기술", "2차전지", ["2차전지", "배터리"], None),
+    ("기술", "인터넷/SW", ["인터넷", "소프트웨어"], None),
+    ("커뮤니케이션", "게임", ["게임"], None),
+    ("커뮤니케이션", "미디어/엔터", ["미디어", "엔터", "콘텐츠", "K-팝", "케이팝"], None),
+    ("경기소비재", "자동차", ["자동차"], None),
+    ("금융", "은행", ["은행"], "091170"),          # KODEX 은행 (정통 은행 섹터)
+    ("금융", "증권", ["증권"], None),
+    ("헬스케어", "바이오/헬스케어", ["바이오", "헬스케어", "제약"], None),
+    ("산업재", "조선/중공업", ["조선", "중공업"], None),
+    ("산업재", "방산/우주", ["방산", "우주"], None),
+    ("산업재", "건설/인프라", ["건설", "인프라"], None),
+    ("소재", "철강/소재", ["철강", "소재", "화학"], None),
+    ("전략", "고배당", ["고배당", "배당"], "161510"),  # PLUS 고배당주 (정통 고배당)
 ]
 
 
@@ -842,16 +845,22 @@ def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
     # Build representative + peer groups per theme (largest cap first).
     category_map = []
     needed: set[str] = set(KR_ETF_RS_BENCHMARKS)
-    for group, category, includes in KR_ETF_THEME_DEFS:
+    for group, category, includes, pinned in KR_ETF_THEME_DEFS:
         matches = sorted(
             (e for e in universe if _etf_theme_match(e["name"], includes)),
             key=lambda e: e.get("capEok") or 0, reverse=True,
         )
         peers = [e["code"] for e in matches[:8]]
-        if not peers:
+        # Pin the "정통" representative when specified; keep it first in the peer list.
+        if pinned and pinned in by_code:
+            peers = [pinned] + [c for c in peers if c != pinned]
+            peers = peers[:8]
+        representative = pinned if (pinned and pinned in by_code) else (peers[0] if peers else None)
+        if not representative:
             continue
-        category_map.append({"group": group, "category": category, "representative": peers[0], "peers": peers})
+        category_map.append({"group": group, "category": category, "representative": representative, "peers": peers})
         needed.update(peers)
+        needed.add(representative)
 
     leveraged = sorted(
         (e for e in universe if is_kr_leveraged_name(e["name"])),

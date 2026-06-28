@@ -834,6 +834,25 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
     return stock
 
 
+def minimal_naver_etf_row(info: dict) -> dict | None:
+    """Lightweight ETF row from Naver quote only (no Yahoo history). Used for newer
+    leveraged products Yahoo has no .KS series for, so the card still shows a price
+    and today's change instead of all dashes. monthChangePct is intentionally absent."""
+    if info.get("price") is None:
+        return None
+    cap_t = round((info.get("capEok") or 0) / 10000.0, 3)
+    return {
+        "ticker": info["code"], "company": info["name"], "industry": "ETF",
+        "sector": "EXCHANGE TRADED FUNDS", "market": "etf", "currency": "KRW",
+        "yahooSymbol": f"{info['code']}.KS",
+        "price": round(info["price"], 2),
+        "changePct": round(info.get("changePct") or 0, 1),
+        "marketCapT": cap_t, "marketCapB": cap_t,
+        "groups": ["all_etf", "all_misc"], "bucket": "all_misc",
+        "rsScore": 50, "historySource": "naver",
+    }
+
+
 def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
     """Returns (etfRelative payload, leveraged ETF stock rows, leveraged catalog)."""
     universe = fetch_kr_etf_universe()
@@ -935,7 +954,7 @@ def build_kr_etf_section() -> tuple[dict, list[dict], dict]:
             "underlying": "—", "underlyingLabel": meta["scope"],
             "group": "한국 레버리지·인버스", **meta,
         })
-        st = lookup.get(e["code"])
+        st = lookup.get(e["code"]) or minimal_naver_etf_row(e)
         if st:
             lev_stocks.append(st)
     lev_catalog = {

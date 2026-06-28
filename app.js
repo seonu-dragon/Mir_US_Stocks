@@ -11192,18 +11192,33 @@ function renderAiBriefing() {
   renderBriefingSide("us");
 }
 
+const briefingFileCache = {};
+
 function renderBriefingSide(side) {
   const key = briefingSel[side];
   const el = byId(side === "kor" ? "koreaBriefingContent" : "usBriefingContent");
   if (!el) return;
-  const html = (data.ai_briefing || {})[key];
-  el.innerHTML = html || `
+  const group = document.querySelector(`.briefing-toggle[data-side="${side}"]`);
+  if (group) group.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b.dataset.key === key));
+
+  const emptyHtml = `
     <div class="empty-briefing">
       <strong>${BRIEFING_LABELS[key]}</strong><br>
       데이터가 아직 없습니다. 수집 파이프라인 실행 시 자동으로 표시됩니다.
     </div>`;
-  const group = document.querySelector(`.briefing-toggle[data-side="${side}"]`);
-  if (group) group.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b.dataset.key === key));
+  // Snapshot ai_briefing (US) → standalone file fallback (KR 스냅샷엔 ai_briefing이 없음).
+  const inline = (data.ai_briefing || {})[key] || briefingFileCache[key];
+  if (inline) { el.innerHTML = inline; return; }
+  el.innerHTML = `<div class="empty-briefing"><strong>${BRIEFING_LABELS[key]}</strong><br>브리핑을 불러오는 중…</div>`;
+  fetch(`data/briefings/${key}.json`, { cache: "no-store" })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((b) => {
+      const html = b && b.html;
+      if (html) briefingFileCache[key] = html;
+      if (briefingSel[side] !== key) return; // user toggled away while loading
+      el.innerHTML = html || emptyHtml;
+    })
+    .catch(() => { if (briefingSel[side] === key) el.innerHTML = emptyHtml; });
 }
 
 function setupBriefingToggles() {
@@ -13589,7 +13604,9 @@ function loadEarningsCalendar(force = false) {
   }
   earningsCalendarLoading = true;
   body.innerHTML = `<p class="muted">실적 일정을 불러오는 중… (${earningsTickerPool().length}종목)</p>`;
-  const tickers = earningsTickerPool().join(",");
+  // KR: send Yahoo symbols (005930.KS) so the proxy can query Yahoo; the response is
+  // normalized back to the snapshot ticker in renderEarningsCalendarMarket.
+  const tickers = earningsTickerPool().map((t) => liveProxyTicker(stockByTicker(t) || t)).join(",");
   fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?earnings_calendar=1&tickers=${encodeURIComponent(tickers)}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((payload) => {
@@ -13636,11 +13653,12 @@ function renderEarningsCalendarMarket(rows) {
             <thead><tr><th>티커</th><th>회사</th><th>시총</th><th>EPS 예상</th><th>RS</th></tr></thead>
             <tbody>
               ${list.map((row) => {
-                const stock = stockByTicker(row.ticker) || {};
+                const t = normalizeTickerKey(row.ticker);
+                const stock = stockByTicker(t) || {};
                 return `<tr>
-                  <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
-                  <td>${escapeHtml(stock.company || row.ticker)}</td>
-                  <td>$${Number(stock.marketCapB || 0).toFixed(1)}B</td>
+                  <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(t)}">${escapeHtml(t)}</button></td>
+                  <td>${escapeHtml(stock.company || t)}</td>
+                  <td>${fmtBillions(stock.marketCapB)}</td>
                   <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
                   <td>${stock.rsScore ?? "—"}</td>
                 </tr>`;

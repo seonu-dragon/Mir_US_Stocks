@@ -1391,6 +1391,11 @@ def main():
     write_json(OUT, light)
     write_js(OUT_JS, light)
     print(f"Updated {OUT} with {len(snapshot['stocks'])} symbols, {len(details)} detail files")
+    try:
+        import build_map_fundamentals
+        build_map_fundamentals.build_market("kr")
+    except Exception as exc:
+        print(f"[map_fundamentals/kr] rebuild skipped: {exc}")
 
 
 if __name__ == "__main__":

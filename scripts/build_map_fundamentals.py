@@ -21,9 +21,22 @@ import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-DETAILS_DIR = ROOT / "data" / "details"
-OUT_JS = ROOT / "data" / "map_fundamentals.js"
-OUT_JSON = ROOT / "data" / "map_fundamentals.json"
+MARKET_PATHS = {
+    "us": {
+        "details": ROOT / "data" / "details",
+        "out_js": ROOT / "data" / "map_fundamentals.js",
+        "out_json": ROOT / "data" / "map_fundamentals.json",
+        "global": "MAP_FUNDAMENTALS",
+        "ticker_key": lambda t: str(t).upper(),
+    },
+    "kr": {
+        "details": ROOT / "data" / "korea" / "details",
+        "out_js": ROOT / "data" / "korea" / "map_fundamentals.js",
+        "out_json": ROOT / "data" / "korea" / "map_fundamentals.json",
+        "global": "KOREA_MAP_FUNDAMENTALS",
+        "ticker_key": lambda t: str(t).zfill(6),
+    },
+}
 
 # fundamentals 키 -> 지도 키 (직접 매핑)
 DIRECT = {
@@ -67,15 +80,17 @@ def extract(fund: dict) -> dict:
     return out
 
 
-def main() -> None:
+def build_market(market: str) -> None:
+    cfg = MARKET_PATHS[market]
+    details_dir = cfg["details"]
     table = {}
-    files = glob.glob(str(DETAILS_DIR / "*.json"))
+    files = glob.glob(str(details_dir / "*.json"))
     for path in files:
         try:
             detail = json.loads(Path(path).read_text(encoding="utf-8"))
         except Exception:
             continue
-        ticker = str(detail.get("ticker") or "").upper()
+        ticker = cfg["ticker_key"](detail.get("ticker") or Path(path).stem)
         fund = detail.get("fundamentals") or {}
         if not ticker or not fund:
             continue
@@ -84,19 +99,31 @@ def main() -> None:
             table[ticker] = metrics
 
     payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
-    OUT_JSON.write_text(payload, encoding="utf-8")
-    OUT_JS.write_text(f"window.MAP_FUNDAMENTALS = {payload};\n", encoding="utf-8")
+    cfg["out_json"].parent.mkdir(parents=True, exist_ok=True)
+    cfg["out_json"].write_text(payload, encoding="utf-8")
+    cfg["out_js"].write_text(f"window.{cfg['global']} = {payload};\n", encoding="utf-8")
 
-    # 커버리지 요약
     counts = {}
     for metrics in table.values():
         for key in metrics:
             counts[key] = counts.get(key, 0) + 1
-    print(f"map_fundamentals: {len(table)} tickers")
+    print(f"map_fundamentals[{market}]: {len(table)} tickers")
     for key in ("pe", "forwardPE", "peg", "ps", "pb", "pfcf",
                 "evEbitda", "divYield", "eps", "roe", "roa", "netMargin"):
         print(f"  {key}: {counts.get(key, 0)}")
 
 
+def main(markets=None) -> None:
+    targets = markets or ["us", "kr"]
+    for market in targets:
+        if market not in MARKET_PATHS:
+            raise SystemExit(f"unknown market: {market}")
+        if not MARKET_PATHS[market]["details"].is_dir():
+            print(f"map_fundamentals[{market}]: skipped (no details dir)")
+            continue
+        build_market(market)
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    main(sys.argv[1:] or None)

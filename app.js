@@ -110,6 +110,14 @@ function marketCfg() {
   };
 }
 function isKrMarket() { return marketCfg().id === "kr"; }
+function isStockEtf(item) {
+  if (!item) return false;
+  if (isKrMarket()) {
+    const fn = window.MirMarket?.isKrEtfLike;
+    return fn ? fn(item) : item.sector === "ETF" || item.market === "etf";
+  }
+  return item.sector === "EXCHANGE TRADED FUNDS" || item.sector === "ETF";
+}
 function normalizeTickerKey(ticker) { return marketCfg().formatTicker(ticker); }
 function liveProxyTicker(itemOrTicker) {
   const cfg = marketCfg();
@@ -263,7 +271,9 @@ const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v1";
 const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
 const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
-const DEFAULT_WATCHLIST = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
+const DEFAULT_WATCHLIST_US = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
+const DEFAULT_WATCHLIST_KR = ["005930", "000660", "005380", "035420", "069500"];
+function defaultWatchlist() { return isKrMarket() ? DEFAULT_WATCHLIST_KR : DEFAULT_WATCHLIST_US; }
 let watchlist = [];
 let chartPresets = {};
 let moveAnalysisState = null;
@@ -322,6 +332,35 @@ function updateDataLoadedAt(date = new Date()) {
 // Inject the active market's snapshot .js (window global) on demand. Used as the
 // file:// path and as an http fallback when the JSON fetch fails. Only the active
 // market is ever loaded, so we never download the other market's snapshot.
+function loadMapFundamentalsScript(cfg) {
+  return new Promise((resolve) => {
+    const isKr = cfg.id === "kr";
+    const src = isKr ? "data/korea/map_fundamentals.js" : "data/map_fundamentals.js";
+    const globalName = isKr ? "KOREA_MAP_FUNDAMENTALS" : "MAP_FUNDAMENTALS";
+    const apply = () => {
+      window.MAP_FUNDAMENTALS = window[globalName] || {};
+      resolve(true);
+    };
+    if (window[globalName] && Object.keys(window[globalName]).length) {
+      apply();
+      return;
+    }
+    const existing = document.querySelector(`script[data-map-fundamentals="${cfg.id}"]`);
+    if (existing) {
+      existing.addEventListener("load", apply, { once: true });
+      existing.addEventListener("error", () => resolve(false), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = false;
+    script.dataset.mapFundamentals = cfg.id;
+    script.addEventListener("load", apply, { once: true });
+    script.addEventListener("error", () => resolve(false), { once: true });
+    document.head.appendChild(script);
+  });
+}
+
 function loadSnapshotScript(cfg) {
   return new Promise((resolve) => {
     if (window[cfg.snapshotJsGlobal]) { resolve(true); return; }
@@ -466,6 +505,8 @@ async function loadData(options = {}) {
     data = fallbackData;
   }
 
+  await loadMapFundamentalsScript(cfg);
+
   if (!options.skipBoot) boot(options);
 }
 
@@ -565,6 +606,17 @@ function applyMarketOnlyUi() {
   if (currentTab && hiddenTabs.includes(currentTab)) activateTab("search", { push: false });
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
+  const pfBench = byId("portfolioBenchmark");
+  if (pfBench) {
+    const benches = cfg.etfBenchmarks || ["SPY"];
+    const prev = pfBench.value;
+    pfBench.innerHTML = benches.map((t) => `<option value="${t}">${escapeHtml(t)}</option>`).join("");
+    pfBench.value = benches.includes(prev) ? prev : benches[0];
+  }
+  const valSector = byId("valSector");
+  if (valSector) delete valSector.dataset.filled;
+  const krwCard = byId("krwPortfolioCard");
+  if (krwCard) krwCard.hidden = cfg.id === "kr";
   // Chart RS-overlay toggle labels follow the market's benchmarks (SPY/QQQ vs 코스피200/코스닥150).
   const [[, rsB1], [, rsB2]] = etfRsSecondaryBenchmarks();
   const rsSpyLabel = byId("showRsSpy")?.parentElement;
@@ -577,12 +629,28 @@ function applyMarketOnlyUi() {
       const sub = btn.dataset.sub;
       const hidden = (cfg.hiddenInstitutionalSubs || []).includes(sub)
         || (sub === "congress" && cfg.features && !cfg.features.congress)
-        || (sub === "13f" && cfg.features && !cfg.features.sec13f);
+        || (sub === "13f" && cfg.features && !cfg.features.sec13f)
+        || (sub === "insider" && cfg.features && !cfg.features.insider)
+        || (sub === "activist" && cfg.features && !cfg.features.activist);
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
-    if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)) {
+    if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)
+      || (institutionalSubTab === "insider" && cfg.features && !cfg.features.insider)
+      || (institutionalSubTab === "activist" && cfg.features && !cfg.features.activist)) {
       activateInstitutionalSub("events", { push: false });
+    }
+  }
+  const searchNav = byId("searchSubTabs");
+  if (searchNav) {
+    searchNav.querySelectorAll(".sub-tab").forEach((btn) => {
+      const sub = btn.dataset.sub;
+      const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest);
+      btn.hidden = hidden;
+      btn.style.display = hidden ? "none" : "";
+    });
+    if (searchSubTab === "short" && cfg.features && !cfg.features.shortInterest) {
+      activateSearchSub("analysis", { push: false });
     }
   }
   const calKr = document.querySelector('[data-cal-country="korea"]');
@@ -1106,15 +1174,18 @@ const SECTOR_KO = {
 
 function computeSectorRanks() {
   const agg = {};
+  const kr = isKrMarket();
   data.stocks.forEach((s) => {
-    if (!SECTOR_KO[s.sector]) return;
+    if (isStockEtf(s) || !s.sector) return;
+    if (!kr && !SECTOR_KO[s.sector]) return;
     const a = (agg[s.sector] = agg[s.sector] || { sum: 0, n: 0 });
     a.sum += Number(s.changePct) || 0;
     a.n += 1;
   });
+  const minCount = kr ? 3 : 5;
   const arr = Object.entries(agg)
-    .filter(([, v]) => v.n >= 5)
-    .map(([sec, v]) => ({ ko: SECTOR_KO[sec], avg: v.sum / v.n }));
+    .filter(([, v]) => v.n >= minCount)
+    .map(([sec, v]) => ({ ko: kr ? sec : SECTOR_KO[sec], avg: v.sum / v.n }));
   arr.sort((a, b) => b.avg - a.avg);
   return { strong: arr.slice(0, 5), weak: arr.slice(-5).reverse() };
 }
@@ -1211,13 +1282,15 @@ function fxCardHtml() {
 
 function computeMarketRegime() {
   const fng = fngScore();
-  const eq = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS");
+  const eq = data.stocks.filter((s) => !isStockEtf(s));
   const upPct = eq.length ? eq.filter((s) => Number(s.changePct) > 0).length / eq.length : 0.5;
   const avgChange = (tickers, key) => {
     const vals = tickers.map((t) => stockByTicker(t)).filter(Boolean).map((s) => Number(s[key]) || 0);
     return vals.length ? vals.reduce((sum, v) => sum + v, 0) / vals.length : 0;
   };
-  const growthLead = avgChange(["XLK", "QQQ", "SOXX"], "monthChangePct") - avgChange(["XLU", "XLP", "XLV"], "monthChangePct");
+  const growthLead = isKrMarket()
+    ? avgChange(["091160", "069500", "305720"], "monthChangePct") - avgChange(["091170", "091180", "244580"], "monthChangePct")
+    : avgChange(["XLK", "QQQ", "SOXX"], "monthChangePct") - avgChange(["XLU", "XLP", "XLV"], "monthChangePct");
   const sectors = computeSectorRanks();
   let score = 0;
   if (Number.isFinite(fng) && fng >= 55) score += 1;
@@ -1256,7 +1329,7 @@ function marketRegimeCardHtml() {
           <b>상승 비중</b>
           <em>${Math.round(regime.upPct * 100)}%</em>
         </span>
-        <span class="regime-stat" title="성장 ETF(XLK·QQQ·SOXX) − 방어 ETF(XLU·XLP·XLV) 1개월 수익률 차이">
+        <span class="regime-stat" title="${isKrMarket() ? "성장 섹터 ETF(반도체·KODEX200·2차전지) − 방어 섹터 ETF(은행·자동차·바이오) 1개월 수익률 차이" : "성장 ETF(XLK·QQQ·SOXX) − 방어 ETF(XLU·XLP·XLV) 1개월 수익률 차이"}">
           <b>성장-방어</b>
           <em>${fmtPct(regime.growthLead)}</em>
         </span>
@@ -2289,7 +2362,7 @@ function setupValuationControls() {
   const sectorSel = byId("valSector");
   if (sectorSel && !sectorSel.dataset.filled) {
     sectorSel.dataset.filled = "1";
-    const sectors = [...new Set(data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS").map((s) => s.sector))].sort();
+    const sectors = [...new Set(data.stocks.filter((s) => !isStockEtf(s)).map((s) => s.sector))].sort();
     sectorSel.innerHTML = `<option value="All">전체 섹터</option>` + sectors.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
   }
   ["valMetric", "valSector", "valCap"].forEach((id) => {
@@ -2317,23 +2390,27 @@ function renderValuation() {
   const q = valQuery.trim().toLowerCase();
   const cfg = MAP_METRIC_CONFIG[metric] || {};
   const mf = window.MAP_FUNDAMENTALS || {};
-  let rows = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS")
+  let rows = data.stocks.filter((s) => !isStockEtf(s))
     .filter((s) => sector === "All" || s.sector === sector)
     .filter((s) => bucketMatches(s, s.groups || [s.bucket].filter(Boolean), cap))
-    .map((s) => ({ item: s, value: Number((mf[s.ticker] || {})[metric]) }))
+    .map((s) => ({ item: s, value: Number((mapFundamentalsFor(s.ticker) || {})[metric]) }))
     .filter((r) => Number.isFinite(r.value) && (metric === "divYield" ? r.value >= 0 : r.value > 0));
   if (q) rows = rows.filter((r) => r.item.ticker.toLowerCase().includes(q) || (r.item.company || "").toLowerCase().includes(q));
   rows.sort((a, b) => (valOrder === "asc" ? a.value - b.value : b.value - a.value));
   const shown = rows.slice(0, 200);
   if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}`;
   if (!shown.length) { wrap.innerHTML = `<p class="muted">펀더멘털 데이터가 있는 종목이 없습니다.</p>`; return; }
-  const fmtv = (v) => cfg.fmt === "pct" ? `${v.toFixed(1)}%` : cfg.fmt === "usd" ? `$${v.toFixed(2)}` : v.toFixed(2);
+  const fmtv = (v) => {
+    if (cfg.fmt === "pct") return `${v.toFixed(1)}%`;
+    if (cfg.fmt === "usd") return isKrMarket() ? marketCfg().formatMoney(v) : `$${v.toFixed(2)}`;
+    return v.toFixed(2);
+  };
   const body = shown.map((r, i) => `<tr>
     <td class="ins-date">${i + 1}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(r.item.ticker)}</button><div class="ins-sub">${escapeHtml(r.item.company || "")}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(isKrMarket() ? (r.item.company || r.item.ticker) : r.item.ticker)}</button><div class="ins-sub">${escapeHtml(isKrMarket() ? r.item.ticker : (r.item.company || ""))}</div></td>
     <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
     <td class="ins-num"><strong>${fmtv(r.value)}</strong></td>
-    <td class="ins-num">$${Number(r.item.marketCapB || 0).toFixed(1)}B</td>
+    <td class="ins-num">${fmtBillions(r.item.marketCapB)}</td>
     <td class="ins-num ${cls(r.item.changePct)}">${fmtPct(r.item.changePct)}</td>
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">시총</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
@@ -2450,7 +2527,7 @@ function renderSignals() {
   const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
   cards.push(signalCard("🟢 내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
   // 52주 신고가 근접
-  const highs = data.stocks.filter((s) => s.sector !== "EXCHANGE TRADED FUNDS" && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= 2)
+  const highs = data.stocks.filter((s) => !isStockEtf(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= 2)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
   cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
   // 주요 8-K
@@ -4122,7 +4199,8 @@ const MAP_FUND_PALETTE = ["#006b35", "#20a05a", "#64ad65", "#b26a4a", "#b6463f",
 const MAP_NODATA_COLOR = "#475467"; // 데이터 없음 중립색
 
 function mapFundamentalsFor(ticker) {
-  return (window.MAP_FUNDAMENTALS || {})[ticker] || null;
+  const key = normalizeTickerKey(ticker);
+  return (window.MAP_FUNDAMENTALS || {})[key] || (window.MAP_FUNDAMENTALS || {})[ticker] || null;
 }
 
 // 지도 타일/평균에서 쓸 지표 값. 펀더멘털 지표는 별도 lookup, 그 외는 종목 객체.
@@ -5621,7 +5699,7 @@ function renderScanner() {
   const scored = data.stocks
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
-    .filter((item) => bucket === "watchlist" || bucket === "portfolio" || item.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((item) => bucket === "watchlist" || bucket === "portfolio" || !isStockEtf(item))
     .filter((item) => Array.isArray(item.closeSeries) && item.closeSeries.length >= 20)
     .map((item) => ({ item, prob: scanQuickProb(item, horizon).up, mode: "quick" }))
     .sort((a, b) => b.prob - a.prob)
@@ -6033,8 +6111,8 @@ function estimateValue(value, kind) {
   if (!Number.isFinite(Number(value))) return "-";
   const number = Number(value);
   if (kind === "score") return `${Math.round(number)}점`;
-  if (kind === "revenue") return `$${fmtCompact(number)}`;
-  return `$${number.toFixed(2)}`;
+  if (kind === "revenue") return isKrMarket() ? fmtFinancialB(number / 10) : `$${fmtCompact(number)}`;
+  return marketCfg().formatMoney(number);
 }
 
 function estimateChange(current, baseline, kind) {
@@ -8087,7 +8165,7 @@ function buildStockChatContext(userText) {
 function renderEarningsCalendar(item) {
   const box = byId("stockEarnings");
   if (!box) return;
-  if (item.sector === "EXCHANGE TRADED FUNDS") {
+  if (isStockEtf(item)) {
     box.innerHTML = "";
     box.hidden = true;
     return;
@@ -8688,7 +8766,7 @@ function renderDataFreshnessStatus() {
 
 function renderFundamentals(item) {
   // ETFs don't need fundamentals — show their constituent stocks (by RS) instead.
-  if (item.sector === "EXCHANGE TRADED FUNDS") {
+  if (isStockEtf(item)) {
     renderEtfConstituents(item);
     return;
   }
@@ -8703,7 +8781,7 @@ function renderFundamentals(item) {
     ["Income", fmtFinancialB(f.incomeB), "P/B", fmtMultiple(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
     ["Cash", fmtFinancialB(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],
     ["Shares Out", fmtShares(f.sharesBDisplay ?? f.sharesB), "Current Ratio", fmtRatio(f.currentRatio), "Profit Margin", fmtPercent(f.profitMargin), "52W Low", priceOrDash(f.week52Low)],
-    ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), "Nasdaq 1Y Target", priceOrDash(f.targetPrice)],
+    ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), isKrMarket() ? "1Y 목표가" : "Nasdaq 1Y Target", priceOrDash(f.targetPrice)],
     ["Volume", fmtCompact(f.volume), "Prev Close", priceOrDash(f.prevClose), "RS Score", item.rsScore, "Price", priceOrDash(displayPrice)]
   ];
   byId("fundamentalTable").innerHTML = `
@@ -8857,6 +8935,10 @@ function fmtFinancialB(value) {
 function fmtShares(value) {
   if (!hasFiniteNumber(value)) return "-";
   const n = Number(value);
+  if (isKrMarket()) {
+    if (Math.abs(n) >= 1) return `${n.toFixed(2)}조`;
+    return `${(n * 10000).toFixed(0)}억`;
+  }
   if (Math.abs(n) >= 1) return `${n.toFixed(2)}B`;
   return `${(n * 1000).toFixed(0)}M`;
 }
@@ -9149,10 +9231,11 @@ function renderPositionSizeCalculator(showErrors = false) {
   const positionValue = shares * entry;
   const plannedLoss = shares * riskPerShare;
   const binding = riskShares <= allocationShares ? "허용 손실" : "최대 비중";
+  const fmtPosMoney = (v) => marketCfg().formatMoney(v);
   box.innerHTML = `
     <div><span>적정 수량</span><strong>${shares.toLocaleString()}주</strong></div>
-    <div><span>예상 투자금</span><strong>$${positionValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
-    <div><span>손절 시 손실</span><strong class="neg">-$${plannedLoss.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>예상 투자금</span><strong>${fmtPosMoney(positionValue)}</strong></div>
+    <div><span>손절 시 손실</span><strong class="neg">-${fmtPosMoney(plannedLoss)}</strong></div>
     <div><span>적용 제한</span><strong>${binding}</strong></div>`;
 }
 
@@ -9235,7 +9318,7 @@ async function renderBenchmarkAttribution() {
   const status = byId("benchmarkAttributionStatus");
   if (!summary || !table || !status) return;
   const positions = portfolioDetailRows();
-  const benchmarkTicker = String(byId("portfolioBenchmark")?.value || "SPY").toUpperCase();
+  const benchmarkTicker = normalizeTickerKey(byId("portfolioBenchmark")?.value || (isKrMarket() ? "069500" : "SPY"));
   const periodBars = Number(byId("portfolioBenchmarkPeriod")?.value || 63);
   const requestId = ++benchmarkAttributionRequest;
   if (!positions.length) {
@@ -9468,21 +9551,22 @@ function renderPortfolio() {
   // 일간 기여도 = Σ(비중 × 종목 당일등락률)
   const dayContribution = rows.reduce((s, r) => s + (totalValue > 0 ? (r.value / totalValue) * r.changePct : 0), 0);
 
+  const fmtPfMoney = (v) => marketCfg().formatMoney(v);
   if (summaryEl) {
     summaryEl.innerHTML = `
-      <div class="pf-stat"><span>평가금액</span><strong>$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
-      <div class="pf-stat"><span>투자원금</span><strong>$${totalCost.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
-      <div class="pf-stat"><span>평가손익</span><strong class="${cls(totalPL)}">${totalPL >= 0 ? "+" : ""}$${Math.abs(totalPL).toLocaleString(undefined, { maximumFractionDigits: 0 })} (${fmtPct(totalPLPct)})</strong></div>
+      <div class="pf-stat"><span>평가금액</span><strong>${fmtPfMoney(totalValue)}</strong></div>
+      <div class="pf-stat"><span>투자원금</span><strong>${fmtPfMoney(totalCost)}</strong></div>
+      <div class="pf-stat"><span>평가손익</span><strong class="${cls(totalPL)}">${totalPL >= 0 ? "+" : ""}${fmtPfMoney(Math.abs(totalPL))} (${fmtPct(totalPLPct)})</strong></div>
       <div class="pf-stat"><span>오늘 기여도</span><strong class="${cls(dayContribution)}">${fmtPct(dayContribution)}</strong></div>`;
   }
 
   rows.sort((a, b) => b.value - a.value);
   const body = rows.map((r) => `<tr>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(isKrMarket() ? (r.stock?.company || r.ticker) : r.ticker)}</button></td>
     <td class="ins-num">${r.qty.toLocaleString()}</td>
-    <td class="ins-num">$${r.avgCost.toFixed(2)}</td>
-    <td class="ins-num">$${r.price.toFixed(2)}</td>
-    <td class="ins-num">$${r.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+    <td class="ins-num">${fmtPfMoney(r.avgCost)}</td>
+    <td class="ins-num">${fmtPfMoney(r.price)}</td>
+    <td class="ins-num">${fmtPfMoney(r.value)}</td>
     <td class="ins-num">${totalValue > 0 ? (r.value / totalValue * 100).toFixed(1) : "0"}%</td>
     <td class="ins-num ${cls(r.pl)}">${fmtPct(r.plPct)}</td>
     <td class="ins-num"><button type="button" class="pf-del" data-ticker="${escapeHtml(r.ticker)}" title="삭제">✕</button></td>
@@ -10125,7 +10209,7 @@ function renderCongressTradesForTicker(item) {
   const box = byId("stockCongress");
   if (!box) return;
   // 미 의회 거래는 미국 전용 데이터 → KR/ETF에선 숨김.
-  if (isKrMarket() || !item || item.sector === "EXCHANGE TRADED FUNDS") {
+  if (isKrMarket() || !item || isStockEtf(item)) {
     box.innerHTML = "";
     box.hidden = true;
     return;
@@ -10190,7 +10274,7 @@ function renderMarketBreadth() {
   const box = byId("marketBreadthCard");
   if (!box) return;
   const stocks = (data.stocks || []).filter((s) =>
-    s && s.sector && s.sector !== "EXCHANGE TRADED FUNDS" && Number.isFinite(Number(s.changePct)));
+    s && s.sector && !isStockEtf(s) && Number.isFinite(Number(s.changePct)));
   const n = stocks.length;
   if (n < 5) { box.innerHTML = ""; return; }
 
@@ -10264,6 +10348,7 @@ function renderMarketBreadth() {
 }
 
 function sectorShortName(sector) {
+  if (isKrMarket()) return sector || "기타";
   const map = {
     "TECHNOLOGY": "기술", "FINANCIAL": "금융", "FINANCIAL SERVICES": "금융",
     "HEALTHCARE": "헬스케어", "ENERGY": "에너지", "INDUSTRIALS": "산업재",
@@ -10305,23 +10390,41 @@ function trustAgeLabel(hours) {
 function dataTrustSources() {
   const snapshotTime = data.updatedAtKst || data.updated_at_kst || "";
   const fundamentals = window.MAP_FUNDAMENTALS || {};
+  const cfg = marketCfg();
   const source = (name, provider, payload, keys, maxHours, cadence, fallbackTime = "") => {
     const count = trustPayloadCount(payload, keys);
     const timestamp = payload?.updatedAtKst || payload?.updated_at_kst || payload?.updated || fallbackTime;
     return { name, provider, count, timestamp, maxHours, cadence, status: trustStatus(timestamp, count, maxHours) };
   };
-  return [
-    { name: "시장 스냅샷", provider: "Nasdaq · Yahoo", count: (data.stocks || []).length, timestamp: snapshotTime, maxHours: 36, cadence: "매일 06:00 KST", status: trustStatus(snapshotTime, (data.stocks || []).length, 36) },
-    { name: "펀더멘털", provider: "Nasdaq · SEC · Yahoo", count: Object.keys(fundamentals).length, timestamp: snapshotTime, maxHours: 36, cadence: "시장 스냅샷과 동시", status: trustStatus(snapshotTime, Object.keys(fundamentals).length, 36) },
-    source("내부자 거래", "SEC Form 4", window.INSIDER_TRADES, ["trades"], 72, "영업일 기준 수집"),
-    source("주요 공시", "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일"),
-    source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주"),
-    source("IPO", "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주"),
-    source("공매도", "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], 1080, "월 2회"),
-    source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후"),
-    source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집"),
-    source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시")
+  const rows = [
+    {
+      name: "시장 스냅샷",
+      provider: cfg.id === "kr" ? "KRX · Yahoo · 네이버 금융" : "Nasdaq · Yahoo",
+      count: (data.stocks || []).length,
+      timestamp: snapshotTime,
+      maxHours: 36,
+      cadence: "매일 06:00 KST",
+      status: trustStatus(snapshotTime, (data.stocks || []).length, 36),
+    },
+    {
+      name: "펀더멘털",
+      provider: cfg.id === "kr" ? "네이버 금융 · Yahoo" : "Nasdaq · SEC · Yahoo",
+      count: Object.keys(fundamentals).length,
+      timestamp: snapshotTime,
+      maxHours: 36,
+      cadence: "시장 스냅샷과 동시",
+      status: trustStatus(snapshotTime, Object.keys(fundamentals).length, 36),
+    },
   ];
+  if (cfg.features?.insider !== false) rows.push(source("내부자 거래", "SEC Form 4", window.INSIDER_TRADES, ["trades"], 72, "영업일 기준 수집"));
+  if (cfg.features?.materialEvents !== false) rows.push(source("주요 공시", cfg.id === "kr" ? "DART · 공시" : "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일"));
+  if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주"));
+  if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주"));
+  if (cfg.features?.shortInterest !== false) rows.push(source("공매도", "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], 1080, "월 2회"));
+  if (cfg.features?.sec13f !== false) rows.push(source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후"));
+  if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집"));
+  if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시"));
+  return rows;
 }
 
 function renderDataTrustCenter() {
@@ -10799,7 +10902,7 @@ function leveragedEtfCatalogItems() {
   const byTicker = new Map(catalog.map((item) => [item.ticker, { ...item }]));
   const patterns = isKrMarket() ? LEV_ETF_DISCOVER_PATTERNS_KR : LEV_ETF_DISCOVER_PATTERNS;
   (data.stocks || []).forEach((stock) => {
-    if (stock.sector !== "EXCHANGE TRADED FUNDS") return;
+    if (!isStockEtf(stock)) return;
     const text = `${stock.company || ""} ${stock.industry || ""}`;
     if (!patterns.some((re) => re.test(text))) return;
     if (!byTicker.has(stock.ticker)) byTicker.set(stock.ticker, inferLeveragedEtfMeta(stock));
@@ -12635,16 +12738,16 @@ function setupCommunityBoard() {
 function initWatchlist(urlList) {
   try {
     const saved = JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]");
-    watchlist = Array.isArray(saved) ? saved.map((t) => String(t).toUpperCase()).filter(Boolean) : [];
+    watchlist = Array.isArray(saved) ? saved.map((t) => normalizeTickerKey(t)).filter(Boolean) : [];
   } catch (e) {
     watchlist = [];
   }
   if (urlList) {
-    const fromUrl = String(urlList).split(",").map((t) => t.trim().toUpperCase()).filter((t) => stockByTicker(t));
+    const fromUrl = String(urlList).split(",").map((t) => normalizeTickerKey(t.trim())).filter((t) => stockByTicker(t));
     if (fromUrl.length) watchlist = [...new Set(fromUrl)];
     persistWatchlist();
   }
-  if (!watchlist.length) watchlist = DEFAULT_WATCHLIST.slice();
+  if (!watchlist.length) watchlist = defaultWatchlist().slice();
   persistWatchlist();
 }
 
@@ -12656,7 +12759,7 @@ function persistWatchlist() {
 }
 
 function isInWatchlist(ticker) {
-  return watchlist.includes(String(ticker || "").toUpperCase());
+  return watchlist.includes(normalizeTickerKey(ticker));
 }
 
 function watchStarButton(ticker) {
@@ -12665,7 +12768,7 @@ function watchStarButton(ticker) {
 }
 
 function toggleWatchlist(ticker) {
-  const t = String(ticker || "").toUpperCase();
+  const t = normalizeTickerKey(ticker);
   if (!stockByTicker(t)) return;
   if (isInWatchlist(t)) watchlist = watchlist.filter((x) => x !== t);
   else watchlist.push(t);
@@ -13116,7 +13219,7 @@ function screenerRows() {
   const minCap = numberInputValue("scrMinCap", 0);
   const limit = Math.max(1, numberInputValue("scrLimit", 100));
   return data.stocks
-    .filter((item) => item.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((item) => !isStockEtf(item))
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
     .filter((item) => (Number(item.rsScore) || 0) >= minRs)
@@ -13157,7 +13260,7 @@ function renderScreener({ trackSaved = false } = {}) {
       <td>${item.rsScore}</td>
       <td>${item.epsRevScore}</td>
       <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
-      <td>$${Number(item.marketCapB || 0).toFixed(1)}B</td>
+      <td>${fmtBillions(item.marketCapB)}</td>
       <td>${signalFor(item)}</td>
     </tr>
   `).join("");
@@ -13176,18 +13279,20 @@ const NL_EXAMPLES = [
 ];
 
 const NL_SECTORS = [
-  { kw: ["반도체", "semiconduct", "칩"], label: "반도체", test: (it) => /semiconduct/i.test(it.industry || "") },
-  { kw: ["바이오", "biotech", "제약", "pharma"], label: "바이오/제약", test: (it) => /(biotech|pharma|drug|life science)/i.test(it.industry || "") || (it.sector || "").toUpperCase() === "HEALTHCARE" },
-  { kw: ["헬스케어", "healthcare", "의료"], label: "헬스케어", test: (it) => (it.sector || "").toUpperCase() === "HEALTHCARE" },
-  { kw: ["기술주", "기술", "테크", "tech", "소프트웨어", "software"], label: "기술", test: (it) => (it.sector || "").toUpperCase() === "TECHNOLOGY" },
-  { kw: ["금융", "은행", "bank", "financ"], label: "금융", test: (it) => /FINANCIAL/.test((it.sector || "").toUpperCase()) },
-  { kw: ["에너지", "energy", "석유", "oil"], label: "에너지", test: (it) => (it.sector || "").toUpperCase() === "ENERGY" },
-  { kw: ["소비재", "소비", "consumer", "리테일", "retail", "유통"], label: "소비재", test: (it) => /CONSUMER/.test((it.sector || "").toUpperCase()) },
-  { kw: ["산업재", "industrial"], label: "산업재", test: (it) => (it.sector || "").toUpperCase() === "INDUSTRIALS" },
-  { kw: ["유틸", "utilit"], label: "유틸리티", test: (it) => (it.sector || "").toUpperCase() === "UTILITIES" },
-  { kw: ["부동산", "reit", "real estate"], label: "부동산", test: (it) => /REAL ESTATE/.test((it.sector || "").toUpperCase()) },
-  { kw: ["소재", "material", "mining", "금속", "철강"], label: "소재", test: (it) => /MATERIAL/.test((it.sector || "").toUpperCase()) },
-  { kw: ["커뮤니케이션", "communication", "미디어", "media"], label: "커뮤니케이션", test: (it) => /COMMUNICATION/.test((it.sector || "").toUpperCase()) },
+  { kw: ["반도체", "semiconduct", "칩"], label: "반도체", test: (it) => /semiconduct|반도체/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["바이오", "biotech", "제약", "pharma"], label: "바이오/제약", test: (it) => /(biotech|pharma|drug|life science|바이오|제약)/i.test(`${it.industry || ""} ${it.sector || ""}`) || /헬스케어|HEALTHCARE/i.test(it.sector || "") },
+  { kw: ["헬스케어", "healthcare", "의료"], label: "헬스케어", test: (it) => /헬스케어|HEALTHCARE|의료/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["기술주", "기술", "테크", "tech", "소프트웨어", "software"], label: "기술", test: (it) => /기술|TECHNOLOGY|소프트웨어|software/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["금융", "은행", "bank", "financ"], label: "금융", test: (it) => /금융|FINANCIAL|은행|bank/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["에너지", "energy", "석유", "oil"], label: "에너지", test: (it) => /에너지|ENERGY|석유|oil/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["소비재", "소비", "consumer", "리테일", "retail", "유통"], label: "소비재", test: (it) => /소비|CONSUMER|리테일|retail|유통/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["산업재", "industrial"], label: "산업재", test: (it) => /산업재|INDUSTRIAL/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["유틸", "utilit"], label: "유틸리티", test: (it) => /유틸|UTILIT/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["부동산", "reit", "real estate"], label: "부동산", test: (it) => /부동산|REAL ESTATE|reit/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["소재", "material", "mining", "금속", "철강"], label: "소재", test: (it) => /소재|MATERIAL|금속|철강|mining/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["커뮤니케이션", "communication", "미디어", "media"], label: "커뮤니케이션", test: (it) => /커뮤니케이션|COMMUNICATION|미디어|media/i.test(`${it.industry || ""} ${it.sector || ""}`) },
+  { kw: ["2차전지", "배터리", "battery"], label: "2차전지", test: (it) => /2차전지|배터리|battery/i.test(`${it.industry || ""} ${it.sector || ""} ${it.company || ""}`) },
+  { kw: ["자동차", "auto"], label: "자동차", test: (it) => /자동차|auto/i.test(`${it.industry || ""} ${it.sector || ""} ${it.company || ""}`) },
 ];
 
 const NL_FLAGS = [
@@ -13197,8 +13302,8 @@ const NL_FLAGS = [
   { kw: ["신저가", "저점 근접", "52주 저가"], label: "신저가 근접", test: (it) => { const d = low52DistPct(it); return Number.isFinite(d) && d <= 10; } },
   { kw: ["급등"], label: "당일 급등 ≥5%", test: (it) => Number(it.changePct) >= 5 },
   { kw: ["급락"], label: "당일 급락 ≤-5%", test: (it) => Number(it.changePct) <= -5 },
-  { kw: ["대형주", "large cap", "largecap"], label: "대형주 시총≥10B", test: (it) => Number(it.marketCapB) >= 10 },
-  { kw: ["소형주", "중소형", "스몰캡", "small cap"], label: "소형주 시총≤2B", test: (it) => Number(it.marketCapB) <= 2 },
+  { kw: ["대형주", "large cap", "largecap"], label: "대형주", test: (it) => Number(it.marketCapB) >= 10 },
+  { kw: ["소형주", "중소형", "스몰캡", "small cap"], label: "소형주", test: (it) => isKrMarket() ? Number(it.marketCapB) < 0.1 : Number(it.marketCapB) <= 2 },
   { kw: ["주도주", "강세주", "리더", "leader"], label: "주도주 RS≥80", test: (it) => Number(it.rsScore) >= 80 },
   { kw: ["저평가", "value"], label: "저평가 PER≤15", test: (it, f) => Number(f.pe) > 0 && Number(f.pe) <= 15 },
 ];
@@ -13306,7 +13411,7 @@ function runNlScreener() {
     body.innerHTML = "";
     return;
   }
-  const universe = (data.stocks || []).filter((s) => s && s.sector !== "EXCHANGE TRADED FUNDS");
+  const universe = (data.stocks || []).filter((s) => s && !isStockEtf(s));
   let rows = universe.filter((it) => {
     const f = mapFundamentalsFor(it.ticker) || {};
     return parsed.conditions.every((c) => c.test(it, f));
@@ -13340,7 +13445,7 @@ function runNlScreener() {
       <td>${it.rsScore}</td>
       <td>${Number.isFinite(Number(it.rsi14)) ? it.rsi14 : "-"}</td>
       <td>${Number.isFinite(pe) ? pe.toFixed(1) : "-"}</td>
-      <td>$${Number(it.marketCapB || 0).toFixed(1)}B</td>
+      <td>${fmtBillions(it.marketCapB)}</td>
       <td>${signalFor(it)}</td>
     </tr>`;
   }).join("");
@@ -13450,7 +13555,7 @@ function setupScreenerEvents() {
       const meta = byId("screenerMeta");
       if (meta) meta.textContent = "패턴 스캔 중… (최대 80종목)";
       const pre = data.stocks
-        .filter((item) => item.sector !== "EXCHANGE TRADED FUNDS")
+        .filter((item) => !isStockEtf(item))
         .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), byId("scrBucket")?.value || marketCfg().defaultBucket || "idx_sp500"))
         .slice(0, 120);
       await scanPatternsForScreener(pre);
@@ -13518,7 +13623,7 @@ const COMPARE_METRICS = [
   ["RS", (i) => String(i.rsScore)],
   ["EPS Rev", (i) => String(i.epsRevScore)],
   ["거래량", (i) => `${Number(i.volumeRatio || 0).toFixed(1)}x`],
-  ["시총", (i) => `$${Number(i.marketCapB || 0).toFixed(1)}B`],
+  ["시총", (i) => fmtBillions(i.marketCapB)],
   ["신고가 거리", (i) => fmtPct(-i.newHighDistancePct)],
   ["PER", (i) => fmtMultiple(i.fundamentals?.pe)],
   ["Fwd PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
@@ -13583,12 +13688,12 @@ function earningsTickerPool() {
   if (scope === "watchlist+top" || scope === "sp500") {
     sp500TopTickers(scope === "sp500" ? 80 : 35).forEach((t) => pool.add(t));
   }
-  return [...pool].filter((t) => stockByTicker(t) && stockByTicker(t).sector !== "EXCHANGE TRADED FUNDS").slice(0, 60);
+  return [...pool].filter((t) => stockByTicker(t) && !isStockEtf(stockByTicker(t))).slice(0, 60);
 }
 
 function sp500TopTickers(limit = 50) {
   return data.stocks
-    .filter((s) => s.sector !== "EXCHANGE TRADED FUNDS")
+    .filter((s) => !isStockEtf(s))
     .filter((s) => bucketMatches(s, s.groups || [s.bucket].filter(Boolean), marketCfg().defaultBucket || "idx_sp500"))
     .sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0))
     .slice(0, limit)

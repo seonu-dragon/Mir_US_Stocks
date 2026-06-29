@@ -2388,9 +2388,22 @@ let breakoutStats = null; // data/breakout_retest_stats.json (돌파 연속성/�
 function $(id) { return document.getElementById(id); }
 
 let statsPromise = null;
+let statsMarket = null;
+function statsBasePath() {
+  return (window.MirMarket && window.MirMarket.getMode() === "kr") ? "data/korea" : "data";
+}
+function resetStatsCacheIfMarketChanged() {
+  const mode = (window.MirMarket && window.MirMarket.getMode()) || "us";
+  if (statsMarket === mode) return;
+  statsMarket = mode;
+  statsPromise = null;
+  patternStats = null;
+  breakoutStats = null;
+}
+
 async function loadPatternStats() {
   try {
-    const res = await fetch("data/pattern_stats.json", { cache: "no-store" });
+    const res = await fetch(`${statsBasePath()}/pattern_stats.json`, { cache: "no-store" });
     if (res.ok) patternStats = await res.json();
   } catch (e) {
     patternStats = null; // 없으면 패턴 섹션만 생략, 나머지 분석은 정상 동작
@@ -2400,7 +2413,7 @@ async function loadPatternStats() {
 
 async function loadBreakoutStats() {
   try {
-    const res = await fetch("data/breakout_retest_stats.json", { cache: "no-store" });
+    const res = await fetch(`${statsBasePath()}/breakout_retest_stats.json`, { cache: "no-store" });
     if (res.ok) breakoutStats = await res.json();
   } catch (e) {
     breakoutStats = null;
@@ -2408,8 +2421,9 @@ async function loadBreakoutStats() {
   return breakoutStats;
 }
 
-// 통계는 한 번만 받아 캐시한다(대시보드/standalone 공용).
+// 통계는 한 번만 받아 캐시한다(대시보드/standalone 공용). 시장 전환 시 경로가 바뀌므로 캐시를 비운다.
 function ensureStats() {
+  resetStatsCacheIfMarketChanged();
   if (!statsPromise) statsPromise = Promise.all([loadPatternStats(), loadBreakoutStats()]);
   return statsPromise;
 }
@@ -2851,7 +2865,7 @@ async function runAnalysis(ticker) {
     const result = analyzeTicker(detail, currentHorizon);
     renderResult(result);
     const url = new URL(window.location);
-    url.searchParams.set("t", String(ticker).trim().toUpperCase());
+    url.searchParams.set("t", analysisTickerKey(ticker));
     window.history.replaceState({}, "", url);
   } catch (e) {
     const hint = (window.MirMarket && window.MirMarket.getMode() === "kr") ? "005930, 000660" : "NVDA, AAPL, TSLA";
@@ -2880,6 +2894,22 @@ async function init() {
     e.preventDefault();
     if (input.value.trim()) runAnalysis(input.value);
   });
+
+  // 시장에 맞는 예시 티커/플레이스홀더 (KR이면 한국 종목으로 교체)
+  const krMode = window.MirMarket && window.MirMarket.getMode() === "kr";
+  if (input) input.placeholder = krMode ? "티커 입력 (예: 005930)" : "티커 입력 (예: NVDA)";
+  const examplesBox = document.querySelector(".ca-examples");
+  if (examplesBox) {
+    const examples = krMode
+      ? [["005930", "삼성전자"], ["000660", "SK하이닉스"], ["035420", "NAVER"], ["005380", "현대차"]]
+      : [["NVDA"], ["AAPL"], ["TSLA"], ["MSFT"]];
+    examplesBox.innerHTML = "예시: " + examples
+      .map(([code, label]) => `<button type="button" data-example="${code}">${label || code}</button>`)
+      .join(" ");
+    examplesBox.querySelectorAll("button[data-example]").forEach((btn) => {
+      btn.addEventListener("click", () => { input.value = btn.dataset.example; form.requestSubmit(); });
+    });
+  }
 
   document.querySelectorAll(".hz-btn").forEach((btn) => {
     btn.addEventListener("click", () => {

@@ -604,6 +604,24 @@ function applyMarketOnlyUi() {
     btn.style.display = hide ? "none" : "";
   });
   if (currentTab && hiddenTabs.includes(currentTab)) activateTab("search", { push: false });
+  // Market-aware placeholders + signal sections that have no KR data.
+  const krMode = cfg.id === "kr";
+  const setPh = (id, ph) => { const el = byId(id); if (el) el.placeholder = ph; };
+  setPh("tickerSearch", krMode ? "종목명·종목코드·한국어 (예: 삼성전자, 005930)" : "한국어·티커·영문 (예: 테슬라, NVDA, Apple)");
+  setPh("pfTicker", krMode ? "티커 (예: 005930)" : "티커 (예: NVDA)");
+  setPh("pfCost", `평단가 ${cfg.currencySymbol || "$"}`);
+  setPh("positionTicker", krMode ? "005930" : "NVDA");
+  const sigIntro = document.querySelector("#tab-signals .section-title p");
+  if (sigIntro) {
+    sigIntro.textContent = krMode
+      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다."
+      : "내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.";
+  }
+  // 집계 인사이트(의회·내부자 종합)는 미국 전용 데이터 → KR에서는 빈 섹션이 되므로 숨긴다.
+  const sigTitles = document.querySelectorAll("#tab-signals .section-title");
+  const aggInsights = byId("aggInsights");
+  if (sigTitles[1]) sigTitles[1].style.display = krMode ? "none" : "";
+  if (aggInsights) aggInsights.style.display = krMode ? "none" : "";
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
   const pfBench = byId("portfolioBenchmark");
@@ -623,6 +641,14 @@ function applyMarketOnlyUi() {
   if (rsSpyLabel && rsSpyLabel.lastChild) rsSpyLabel.lastChild.textContent = ` RS vs ${rsB1}`;
   const rsQqqLabel = byId("showRsQqq")?.parentElement;
   if (rsQqqLabel && rsQqqLabel.lastChild) rsQqqLabel.lastChild.textContent = ` RS vs ${rsB2}`;
+  const topMinCapText = byId("topMinMarketCapLabelText");
+  if (topMinCapText) {
+    topMinCapText.textContent = cfg.id === "kr" ? "최소 시총(조원)" : "Min MktCap($B)";
+  }
+  const scrMinCapText = byId("scrMinCapLabelText");
+  if (scrMinCapText) {
+    scrMinCapText.textContent = cfg.id === "kr" ? "시총(조원)" : "Cap($B)";
+  }
   const instNav = byId("institutionalSubTabs");
   if (instNav) {
     instNav.querySelectorAll(".sub-tab").forEach((btn) => {
@@ -1447,7 +1473,7 @@ function portfolioActionRows() {
     return { item, value, plPct };
   }).filter(Boolean).sort((a, b) => b.value - a.value).slice(0, 4).map(({ item, value, plPct }) => `
     <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
-      <span><strong>${escapeHtml(item.ticker)}</strong><small>평가 $${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</small></span>
+      <span><strong>${escapeHtml(item.ticker)}</strong><small>평가 ${marketCfg().formatMoney(value)}</small></span>
       <em class="${cls(plPct)}">${actionPct(plPct)}</em>
     </button>`);
 }
@@ -1557,7 +1583,8 @@ function renderActionBoard() {
     .filter((row) => row.reasons.length).slice(0, 4);
   const portfolioRows = portfolioActionRows();
   const scheduleRows = upcomingActionRows();
-  const filingRows = filingActionRows();
+  const showFilings = marketCfg().features?.materialEvents !== false;
+  const filingRows = showFilings ? filingActionRows() : [];
   const attentionCount = alerts.length + scheduleRows.length + filingRows.filter((row) => row.includes('class="warn"')).length;
   const count = byId("dailyActionCount");
   if (count) count.textContent = attentionCount ? `우선 확인 ${attentionCount}건` : "새 긴급 항목 없음";
@@ -1568,7 +1595,7 @@ function renderActionBoard() {
     actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
     actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? "저장한 조건에 맞는 종목" : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
     actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, "is-wide") +
-    actionBoardCard("새 공시", "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" });
+    (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "");
   grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
   grid.querySelectorAll("[data-action-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.actionTab, { sub: button.dataset.actionSub || null })));
 }
@@ -1719,9 +1746,12 @@ function fetchMarketHeader() {
   const fxReq = fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
     if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); renderPortfolio(); }
   }).catch(() => {});
-  const idxReq = fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
-    if (p && Array.isArray(p.indices)) renderIndexStrip(p.indices);
-  }).catch(() => {});
+  // KR mode renders KOSPI/KOSDAQ from the snapshot (renderSnapshotIndices); worker indices are US-only.
+  const idxReq = isKrMarket()
+    ? Promise.resolve()
+    : fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
+        if (p && Array.isArray(p.indices)) renderIndexStrip(p.indices);
+      }).catch(() => {});
   Promise.allSettled([fngReq, fxReq, idxReq]).then(() => updateDataLoadedAt());
 }
 
@@ -2516,29 +2546,36 @@ function renderSignals() {
   const el = byId("signalsGrid");
   if (!el) return;
   const cards = [];
-  // 내부자 클러스터 매수
-  const ins = (window.INSIDER_TRADES || {}).trades || [];
-  const byT = {};
-  for (const r of ins) {
-    if (r.kind !== "buy" || !r.ticker) continue;
-    const g = byT[r.ticker] || (byT[r.ticker] = { t: r.ticker, owners: new Set(), v: 0 });
-    g.owners.add(r.owner || "?"); g.v += Number(r.value) || 0;
+  const cfg = marketCfg();
+  const minCapForHighs = isKrMarket() ? 1 : 2;
+  if (!isKrMarket()) {
+    // 내부자 클러스터 매수
+    const ins = (window.INSIDER_TRADES || {}).trades || [];
+    const byT = {};
+    for (const r of ins) {
+      if (r.kind !== "buy" || !r.ticker) continue;
+      const g = byT[r.ticker] || (byT[r.ticker] = { t: r.ticker, owners: new Set(), v: 0 });
+      g.owners.add(r.owner || "?"); g.v += Number(r.value) || 0;
+    }
+    const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
+    cards.push(signalCard("🟢 내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
   }
-  const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
-  cards.push(signalCard("🟢 내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
   // 52주 신고가 근접
-  const highs = data.stocks.filter((s) => !isStockEtf(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= 2)
+  const highs = data.stocks.filter((s) => !isStockEtf(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= minCapForHighs)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
   cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
-  // 주요 8-K
-  const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
-  cards.push(signalCard("📣 주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
-  // 액티비스트 13D
-  const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((a) => a.kind === "activist").slice(0, 8);
-  cards.push(signalCard("📐 액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" }))));
-  // 신규 상장
-  const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
-  cards.push(signalCard("🆕 신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
+  if (cfg.features?.materialEvents !== false) {
+    const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
+    cards.push(signalCard("📣 주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
+  }
+  if (!isKrMarket()) {
+    const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((a) => a.kind === "activist").slice(0, 8);
+    cards.push(signalCard("📐 액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" }))));
+  }
+  if (cfg.features?.ipo !== false) {
+    const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
+    cards.push(signalCard("🆕 신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
+  }
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.ticker && b.dataset.ticker !== "—") selectTicker(b.dataset.ticker, { openSearch: true });
@@ -2559,6 +2596,7 @@ function aggBars(items, fmtVal, color) {
 function renderAggregateInsights() {
   const el = byId("aggInsights");
   if (!el) return;
+  if (isKrMarket()) { el.innerHTML = ""; return; }
   const cutoff = new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10);
   const usd = (v) => v >= 1e6 ? `$${(v / 1e6).toFixed(1)}M` : v >= 1e3 ? `$${(v / 1e3).toFixed(0)}K` : `$${v.toFixed(0)}`;
   const cards = [];
@@ -5024,6 +5062,9 @@ function renderSectors() {
 
 function renderSectorDetail() {
   const meta = getSectorEtfs().find((item) => item.ticker === selectedSectorEtf) || getSectorEtfs()[0];
+  // Keep the selection in sync with the resolved ETF so the comparison chart/legend
+  // use the current market's ETF (e.g. KR 069500) instead of a stale default (XLK).
+  if (meta && meta.ticker) selectedSectorEtf = meta.ticker;
   const rows = getSectorStocks(meta);
   
   // Update detail texts
@@ -5459,7 +5500,7 @@ function renderTopStocks() {
     minRs ? `RS >= ${minRs}` : "",
     minEps ? `EPS >= ${minEps}` : "",
     minVolume ? `Vol >= ${minVolume}x` : "",
-    minMarketCap ? `MktCap >= $${minMarketCap}B` : ""
+    minMarketCap ? (isKrMarket() ? `시총 >= ${minMarketCap}조` : `MktCap >= $${minMarketCap}B`) : ""
   ].filter(Boolean).join(" · ");
   byId("topStocksMeta").textContent = `${filterText} · ${rows.length}개`;
 
@@ -7312,6 +7353,21 @@ function stockByTicker(ticker) {
 // ===== 한국어/회사명 → 티커 검색 =====
 const TICKER_SEARCH_TOP_N = 1500;
 const TICKER_SEARCH_COMPANY_SCAN_N = 2800;
+const KR_TICKER_NICKNAMES = {
+  "005930": ["삼전", "삼성", "삼성전자"],
+  "000660": ["하이닉", "하이닉스"],
+  "035420": ["네이버", "NAVER"],
+  "035720": ["카카오"],
+  "005380": ["현대차", "현대자동차"],
+  "000270": ["기아"],
+  "373220": ["LG에너지", "엘지에너지", "LG에너지솔루션"],
+  "006400": ["삼성SDI", "삼성에스디아이"],
+  "051910": ["LG화학", "엘지화학"],
+  "207940": ["삼바", "삼성바이오"],
+  "068270": ["셀트리온"],
+  "105560": ["KB", "KB금융", "국민은행"],
+  "055550": ["신한", "신한지주"],
+};
 
 let tickerKoAliasIndex = null;
 let tickerKoAliasEntries = null;
@@ -7335,6 +7391,15 @@ function buildTickerKoAliasIndex() {
       if (!name) return;
       if (!byKo.has(name)) byKo.set(name, []);
       if (!byKo.get(name).includes(stock.ticker)) byKo.get(name).push(stock.ticker);
+    });
+    Object.entries(KR_TICKER_NICKNAMES).forEach(([ticker, aliases]) => {
+      if (!stockByTicker(ticker)) return;
+      (aliases || []).forEach((alias) => {
+        const key = String(alias || "").trim();
+        if (!key) return;
+        if (!byKo.has(key)) byKo.set(key, []);
+        if (!byKo.get(key).includes(ticker)) byKo.get(key).push(ticker);
+      });
     });
   }
   tickerKoAliasIndex = byKo;
@@ -7374,8 +7439,10 @@ function heatmapItemMatchesQuery(item, rawQuery) {
 function searchTickerSuggestions(query, limit = 8) {
   const q = String(query || "").trim();
   if (!q || !tickerSearchIndex) return [];
+  const kr = isKrMarket();
   const qUpper = q.toUpperCase();
   const qLower = q.toLowerCase();
+  const qTickerKey = kr ? normalizeTickerKey(q) : qUpper;
   const scored = [];
   const seen = new Set();
 
@@ -7386,7 +7453,7 @@ function searchTickerSuggestions(query, limit = 8) {
     scored.push({ ticker: stock.ticker, company: stock.company, hint: hint || null, score });
   }
 
-  const exactTicker = stockByTicker(qUpper);
+  const exactTicker = stockByTicker(kr ? qTickerKey : qUpper);
   if (exactTicker) push(exactTicker.ticker, 1000, "티커");
 
   (tickerKoAliasEntries || []).forEach(({ alias, tickers }) => {
@@ -7403,10 +7470,16 @@ function searchTickerSuggestions(query, limit = 8) {
     : Math.min(pool.length, TICKER_SEARCH_COMPANY_SCAN_N);
   for (let i = 0; i < maxScan && seen.size < limit + 4; i += 1) {
     const row = pool[i];
-    const ticker = String(row.ticker || "").toUpperCase();
-    if (ticker === qUpper) push(ticker, 995, null);
-    else if (ticker.startsWith(qUpper)) push(ticker, 620 - i * 0.001, null);
-    else if (row.companyLower.includes(qLower)) push(ticker, 500 - i * 0.01, null);
+    const ticker = kr ? row.ticker : String(row.ticker || "").toUpperCase();
+    if (kr) {
+      if (ticker === qTickerKey) push(ticker, 995, null);
+      else if (/^\d+$/.test(q) && ticker.startsWith(q)) push(ticker, 620 - i * 0.001, null);
+      else if (row.companyLower.includes(qLower)) push(ticker, 500 - i * 0.01, null);
+    } else {
+      if (ticker === qUpper) push(ticker, 995, null);
+      else if (ticker.startsWith(qUpper)) push(ticker, 620 - i * 0.001, null);
+      else if (row.companyLower.includes(qLower)) push(ticker, 500 - i * 0.01, null);
+    }
   }
   if (seen.size < limit && q.length >= 3 && maxScan < pool.length) {
     for (let i = maxScan; i < pool.length && seen.size < limit + 2; i += 1) {
@@ -8936,11 +9009,15 @@ function fmtShares(value) {
   if (!hasFiniteNumber(value)) return "-";
   const n = Number(value);
   if (isKrMarket()) {
-    if (Math.abs(n) >= 1) return `${n.toFixed(2)}조`;
-    return `${(n * 10000).toFixed(0)}억`;
+    const valInEok = n * 10;
+    if (Math.abs(valInEok) >= 10000) {
+      const valInJo = valInEok / 10000;
+      return `${parseFloat(valInJo.toFixed(2)).toLocaleString("ko-KR")}조`;
+    }
+    return `${parseFloat(valInEok.toFixed(2)).toLocaleString("ko-KR")}억`;
   }
-  if (Math.abs(n) >= 1) return `${n.toFixed(2)}B`;
-  return `${(n * 1000).toFixed(0)}M`;
+  if (Math.abs(n) >= 1) return `${parseFloat(n.toFixed(2)).toLocaleString("en-US")}B`;
+  return `${parseFloat((n * 1000).toFixed(0)).toLocaleString("en-US")}M`;
 }
 
 function fmtCompact(value) {
@@ -9057,7 +9134,7 @@ function renderDividendPlanner() {
   if (!table || !summary || !monthsBox) return;
   const rows = portfolioDetailRows();
   if (!rows.length) {
-    byId("dividendPlannerTotal").textContent = "연 $0";
+    byId("dividendPlannerTotal").textContent = `연 ${marketCfg().formatMoney(0)}`;
     summary.innerHTML = "";
     table.innerHTML = `<p class="muted">가상 포트폴리오에 종목을 추가하면 배당 계획을 만들 수 있습니다.</p>`;
     monthsBox.innerHTML = "";
@@ -9070,17 +9147,17 @@ function renderDividendPlanner() {
   });
   const annual = detailed.reduce((sum, row) => sum + row.annualCash, 0);
   const portfolioValue = detailed.reduce((sum, row) => sum + row.value, 0);
-  byId("dividendPlannerTotal").textContent = `연 $${annual.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  byId("dividendPlannerTotal").textContent = `연 ${marketCfg().formatMoney(annual)}`;
   summary.innerHTML = `
-    <div><span>연간 예상</span><strong>$${annual.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
-    <div><span>월평균</span><strong>$${(annual / 12).toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>연간 예상</span><strong>${marketCfg().formatMoney(annual)}</strong></div>
+    <div><span>월평균</span><strong>${marketCfg().formatMoney(annual / 12)}</strong></div>
     <div><span>평가액 대비</span><strong>${portfolioValue > 0 ? (annual / portfolioValue * 100).toFixed(2) : "0.00"}%</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>연 DPS</th><th>주기</th><th>기준일</th><th>연 예상</th></tr></thead><tbody>${detailed.map((row) => `
     <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
       <td><input type="number" min="0" step="0.01" value="${numericDividend(row.setting.annualDps) || ""}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="annualDps" aria-label="${escapeHtml(row.ticker)} 연간 주당배당금"></td>
       <td><select data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="frequency" aria-label="${escapeHtml(row.ticker)} 배당 주기">${[[12,"월"],[4,"분기"],[2,"반기"],[1,"연"]].map(([value, label]) => `<option value="${value}"${Number(row.setting.frequency) === value ? " selected" : ""}>${label}</option>`).join("")}</select></td>
       <td><input type="date" value="${escapeHtml(row.setting.exDate || "")}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="exDate" aria-label="${escapeHtml(row.ticker)} 배당 기준일"></td>
-      <td><strong>$${row.annualCash.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></td></tr>`).join("")}</tbody></table>`;
+      <td><strong>${marketCfg().formatMoney(row.annualCash)}</strong></td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-dividend-ticker]").forEach((control) => control.addEventListener("change", () => {
     const ticker = control.dataset.dividendTicker;
     const current = dividendSetting(rows.find((row) => row.ticker === ticker));
@@ -13380,7 +13457,7 @@ function parseNlQuery(rawText) {
       const get = metric.get;
       const { value, dir } = r;
       conditions.push({
-        label: `${metric.label} ${dir === "max" ? "≤" : "≥"} ${value}${metric.unit || ""}`,
+        label: `${metric.label} ${dir === "max" ? "≤" : "≥"} ${value}${metric.cap && isKrMarket() ? "조" : (metric.unit || "")}`,
         sortKey: get, sortDir: dir,
         test: (it, f) => { const v = get(it, f); return Number.isFinite(v) && (dir === "max" ? v <= value : v >= value); }
       });

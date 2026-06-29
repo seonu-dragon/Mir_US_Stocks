@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Generate data/leveraged_etf_catalog.js from curated ETF rows."""
+"""Generate data/leveraged_etf_catalog.js from curated rows + Nasdaq auto-discovery."""
 from __future__ import annotations
 
 import json
+import re
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 # type: leveraged | inverse | covered-call | buffer | defined-outcome | volatility
 # scope: index | sector | single-stock | commodity | international | thematic
@@ -226,32 +229,180 @@ ROWS = [
 
 FIELDS = ("ticker", "name", "type", "leverage", "direction", "underlying", "underlyingLabel", "scope", "group", "issuer")
 
+LEV_ETF_EXCLUDE_RE = re.compile(
+    r"ultra[- ]short|ultrashort|short[- ]duration|short[- ]maturity|"
+    r"enhanced short maturity|ultra[- ]short[- ]municipal|ultra[- ]short[- ]income",
+    re.I,
+)
 
-def catalog_items() -> list[dict]:
+LEV_ETF_INCLUDE_RES = [
+    re.compile(p, re.I)
+    for p in (
+        r"direxion\s+daily",
+        r"proshares\s+ultra(?!pro)",
+        r"proshares\s+short\b",
+        r"graniteshares\s+\d",
+        r"yieldmax\b",
+        r"\btradr\s+\d",
+        r"defiance\s+\d",
+        r"t[- ]?rex\s+\d",
+        r"leverage\s+shares\s+\d",
+        r"kraneshares\s+\d",
+        r"microsectors\b",
+        r"roundhill\b.*(covered|weekly|0dte|option)",
+        r"neos\b.*(income|0dte|covered)",
+        r"volatility\s+shares",
+        r"\b\d+x\s+(long|short|leveraged|inverse)",
+        r"\b-?\d+x\b",
+        r"\bultrapro\b",
+        r"\bdaily\s+(bull|bear)\b",
+        r"\binverse\s+leverag",
+        r"\bleverag(ed)?\s+etn",
+        r"\bcovered\s+call\b",
+        r"\bbuywrite\b",
+        r"\boption\s+income\b",
+        r"\bweeklypay\b",
+        r"\b0dte\b",
+        r"\bvix\b.*\bfutures\b",
+        r"\bultra\s+vix\b",
+        r"\bshort\s+vix\b",
+    )
+]
+
+ISSUER_HINTS = (
+    ("Direxion", "Direxion"),
+    ("ProShares", "ProShares"),
+    ("GraniteShares", "GraniteShares"),
+    ("YieldMax", "YieldMax"),
+    ("T-Rex", "T-Rex"),
+    ("Tradr", "Tradr"),
+    ("Defiance", "Defiance"),
+    ("Leverage Shares", "Leverage Shares"),
+    ("KraneShares", "KraneShares"),
+    ("MicroSectors", "MicroSectors"),
+    ("Roundhill", "Roundhill"),
+    ("NEOS", "NEOS"),
+    ("Volatility Shares", "Volatility Shares"),
+    ("Global X", "Global X"),
+    ("Amplify", "Amplify"),
+    ("Simplify", "Simplify"),
+    ("ETRACS", "ETRACS"),
+)
+
+
+def is_leveraged_option_etf(name: str) -> bool:
+    text = str(name or "").strip()
+    if not text or LEV_ETF_EXCLUDE_RE.search(text):
+        return False
+    return any(rx.search(text) for rx in LEV_ETF_INCLUDE_RES)
+
+
+def infer_leveraged_etf_meta(symbol: str, name: str) -> dict:
+    text = str(name or symbol)
+    lower = text.lower()
+    etf_type = "leveraged"
+    if re.search(r"inverse|short|bear", lower) and not re.search(r"covered call|option income|buywrite", lower):
+        etf_type = "inverse"
+    elif re.search(r"covered call|buywrite|option income|weeklypay|0dte|premium income", lower):
+        etf_type = "covered-call"
+    elif re.search(r"\bvix\b|volatility", lower):
+        etf_type = "volatility"
+    elif re.search(r"buffer|defined outcome", lower):
+        etf_type = "buffer"
+
+    leverage = "—"
+    lev_match = re.search(r"(\d+(?:\.\d+)?)\s*x", text, re.I)
+    if lev_match:
+        leverage = f"{lev_match.group(1)}x"
+    elif re.search(r"ultrapro", lower):
+        leverage = "3x"
+    elif re.search(r"\bultra\b", lower):
+        leverage = "2x"
+
+    issuer = "—"
+    for needle, label in ISSUER_HINTS:
+        if needle.lower() in lower:
+            issuer = label
+            break
+
+    scope = "thematic"
+    if re.search(r"s&p|nasdaq|russell|dow|msci|ftse|index|100|500|2000", lower):
+        scope = "index"
+    elif re.search(r"semiconductor|technology|financial|energy|biotech|health|real estate|sector|gold|oil|silver|gas", lower):
+        scope = "commodity" if re.search(r"gold|oil|silver|gas|crude|commodity", lower) else "sector"
+    elif re.search(r"china|korea|japan|europe|emerging|brazil|india|mexico|international|msci", lower):
+        scope = "international"
+    elif re.search(r"\b(nvda|tsla|aapl|amzn|msft|meta|coin|pltr|amd|nflx|mstr|bitcoin|ether|btc|eth)\b", lower):
+        scope = "single-stock"
+
+    direction = "short" if etf_type == "inverse" else ("neutral" if etf_type in {"covered-call", "buffer", "volatility"} else "long")
+    return {
+        "ticker": symbol,
+        "name": text,
+        "type": etf_type,
+        "leverage": leverage,
+        "direction": direction,
+        "underlying": "—",
+        "underlyingLabel": "자동 분류",
+        "scope": scope,
+        "group": "Nasdaq 자동 탐지",
+        "issuer": issuer,
+        "discovered": True,
+    }
+
+
+def discover_from_screener(screener_rows: list[dict] | None) -> list[dict]:
+    if not screener_rows:
+        return []
     items = []
     seen = set()
-    for row in ROWS:
-        item = dict(zip(FIELDS, row))
-        key = item["ticker"]
-        if key in seen:
+    for row in screener_rows:
+        symbol = str(row.get("symbol") or "").strip().upper()
+        name = str(row.get("company") or row.get("name") or symbol).strip()
+        if not symbol or symbol in seen or not is_leveraged_option_etf(name):
             continue
-        seen.add(key)
-        items.append(item)
+        seen.add(symbol)
+        items.append(infer_leveraged_etf_meta(symbol, name))
     return items
 
 
+def catalog_items(screener_rows: list[dict] | None = None) -> list[dict]:
+    by_ticker: dict[str, dict] = {}
+    for row in discover_from_screener(screener_rows):
+        by_ticker[row["ticker"]] = row
+    for row in ROWS:
+        item = dict(zip(FIELDS, row))
+        item.pop("discovered", None)
+        by_ticker[item["ticker"]] = item
+    return sorted(by_ticker.values(), key=lambda item: (item.get("group") or "", item["ticker"]))
+
+
 def main() -> None:
-    items = catalog_items()
+    screener_rows = None
+    try:
+        import sys
+        scripts_dir = Path(__file__).resolve().parent
+        sys.path.insert(0, str(scripts_dir))
+        import update_data as ud
+        screener_rows = ud.fetch_nasdaq_etf_screener()
+    except Exception as exc:
+        print(f"[warn] Nasdaq ETF screener unavailable for discovery: {exc}")
+
+    items = catalog_items(screener_rows)
+    curated = sum(1 for item in items if not item.get("discovered"))
+    discovered = len(items) - curated
 
     out = Path(__file__).resolve().parents[1] / "data" / "leveraged_etf_catalog.js"
     payload = {
-        "updated": "2026-06-18",
-        "note": "레버리지·인버스·커버드콜·변동성 등 옵션형 ETF 카탈로그. 일일 스냅샷 업데이트 시 시세가 자동 반영됩니다.",
+        "updated": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d"),
+        "note": "레버리지·인버스·커버드콜·변동성 등 옵션형 ETF 카탈로그. 수동 큐레이션 + Nasdaq 스크리너 자동 탐지.",
+        "curatedCount": curated,
+        "discoveredCount": discovered,
         "items": items,
     }
     body = "window.LEVERAGED_ETF_CATALOG = " + json.dumps(payload, ensure_ascii=False, indent=2) + ";\n"
     out.write_text(body, encoding="utf-8")
-    print(f"Wrote {len(items)} items to {out}")
+    print(f"Wrote {len(items)} items ({curated} curated + {discovered} discovered) to {out}")
 
 if __name__ == "__main__":
     main()

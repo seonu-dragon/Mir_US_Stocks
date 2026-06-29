@@ -1986,7 +1986,8 @@ def load_leveraged_etf_catalog_items():
         return []
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod.catalog_items()
+    screener_rows = fetch_nasdaq_etf_screener()
+    return mod.catalog_items(screener_rows=screener_rows)
 
 
 def build_leveraged_etf_metas():

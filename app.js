@@ -395,7 +395,7 @@ const FEATURE_DATA = {
   ipo:        { global: "IPO_CALENDAR",          src: "data/ipo_calendar.js?v=20260619a",          feature: "ipo" },
   short:      { global: "SHORT_INTEREST",        src: "data/short_interest.js?v=20260620a",        feature: "shortInterest" },
   whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  src: "data/white_house_schedule.js?v=20260618n",  feature: "whiteHouse" },
-  leveraged:  { global: "LEVERAGED_ETF_CATALOG", src: "data/leveraged_etf_catalog.js?v=20260618j", usOnly: true },
+  leveraged:  { global: "LEVERAGED_ETF_CATALOG", src: "data/leveraged_etf_catalog.js?v=20260629a", usOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -461,6 +461,9 @@ function refreshFeatureViews() {
         );
       }
     }
+  }
+  if (byId("sub-etf-lev")?.classList.contains("is-active")) {
+    calls.push(() => ensureFeatureData("leveraged").then(() => renderLeveragedEtfPage()));
   }
   calls.forEach((fn) => { try { fn(); } catch (e) { console.warn("refreshFeatureViews", e); } });
 }
@@ -3083,7 +3086,7 @@ function setupEvents() {
       byId(`sub-${btn.dataset.sub}`).classList.add("is-active");
       closeConstituentPanel();
       if (btn.dataset.sub === "etf-rs") renderSectorEtfRelativeStrength();
-      if (btn.dataset.sub === "etf-lev") renderLeveragedEtfPage();
+      if (btn.dataset.sub === "etf-lev") ensureFeatureData("leveraged").then(() => renderLeveragedEtfPage());
       if (btn.dataset.sub === "rrg") renderRrg();
     });
   });
@@ -10939,10 +10942,17 @@ const LEV_ETF_SCOPE_LABEL = {
   thematic: "테마",
 };
 
+const LEV_ETF_DISCOVER_EXCLUDE = /ultra[- ]short|ultrashort|short[- ]duration|short[- ]maturity|enhanced short maturity/i;
+
 const LEV_ETF_DISCOVER_PATTERNS = [
-  /\b2x\b/i, /\b3x\b/i, /\b4x\b/i, /\bultra\b/i, /\binverse\b/i, /\bshort\b/i,
+  /\b2x\b/i, /\b3x\b/i, /\b4x\b/i, /\b-2x\b/i, /\b-3x\b/i,
+  /\bultrapro\b/i, /\bultra\b/i, /\binverse\b/i, /\bshort\b/i,
   /\bbear\b/i, /\bbull\b/i, /\bleverag/i, /\bcovered call\b/i, /\bbuywrite\b/i,
-  /\boption income\b/i, /\bdaily target\b/i, /\bdefined outcome\b/i, /\bbuffer\b/i,
+  /\boption income\b/i, /\bweeklypay\b/i, /\b0dte\b/i,
+  /\bdaily target\b/i, /\bdaily (bull|bear)\b/i, /\bdefined outcome\b/i, /\bbuffer\b/i,
+  /\bdirexion daily\b/i, /\byieldmax\b/i, /\bgraniteshares\b/i, /\btradr\b/i,
+  /\bdefiance\b/i, /\bt-?rex\b/i, /\bleverage shares\b/i, /\bkraneshares\b/i,
+  /\bmicrosectors\b/i, /\bvolatility shares\b/i,
 ];
 
 function inferLeveragedEtfMeta(stock) {
@@ -10975,17 +10985,25 @@ function inferLeveragedEtfMeta(stock) {
 // Korean ETF names use 레버리지 / 인버스 / 2X for discovery from the snapshot.
 const LEV_ETF_DISCOVER_PATTERNS_KR = [/레버리지/, /인버스/, /\d+\s*배/, /\b[234]x\b/i];
 
+function isLeveragedOptionEtfStock(stock) {
+  if (!stock || !isStockEtf(stock)) return false;
+  const text = `${stock.company || ""} ${stock.industry || ""}`;
+  if ((stock.industry || "").includes("Leveraged/Option ETF")) return true;
+  if (Array.isArray(stock.groups) && stock.groups.includes("lev_etf")) return true;
+  if (stock.bucket === "lev_etf") return true;
+  if (LEV_ETF_DISCOVER_EXCLUDE.test(text)) return false;
+  const patterns = isKrMarket() ? LEV_ETF_DISCOVER_PATTERNS_KR : LEV_ETF_DISCOVER_PATTERNS;
+  return patterns.some((re) => re.test(text));
+}
+
 function leveragedEtfCatalogItems() {
   // KR ships a curated catalog inside the snapshot; US uses the LEVERAGED_ETF_CATALOG global.
   const catalog = (isKrMarket() && data.leveragedEtfCatalog?.items)
     || (window.LEVERAGED_ETF_CATALOG && window.LEVERAGED_ETF_CATALOG.items)
     || [];
   const byTicker = new Map(catalog.map((item) => [item.ticker, { ...item }]));
-  const patterns = isKrMarket() ? LEV_ETF_DISCOVER_PATTERNS_KR : LEV_ETF_DISCOVER_PATTERNS;
   (data.stocks || []).forEach((stock) => {
-    if (!isStockEtf(stock)) return;
-    const text = `${stock.company || ""} ${stock.industry || ""}`;
-    if (!patterns.some((re) => re.test(text))) return;
+    if (!isLeveragedOptionEtfStock(stock)) return;
     if (!byTicker.has(stock.ticker)) byTicker.set(stock.ticker, inferLeveragedEtfMeta(stock));
   });
   return [...byTicker.values()];

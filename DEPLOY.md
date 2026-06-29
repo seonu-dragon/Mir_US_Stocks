@@ -29,10 +29,11 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 
 | KST | 작업 | 워크플로 |
 |---|---|---|
-| 05:00 | 전체 시장 스냅샷 | `daily-market-snapshot.yml` |
+| 05:05 | 미국 시장 스냅샷 | `daily-market-snapshot.yml` |
 | 06:00 | 미국 장마감 브리핑 | `us-close-briefing.yml` |
 | 07:00 | 국내 개장 전 브리핑 | `korea-premarket-briefing.yml` |
-| 16:00 | 국내 장마감 브리핑 | `korea-close-briefing.yml` |
+| 15:40 | 국내 시장 스냅샷 | `daily-korea-market-snapshot.yml` |
+| 15:42 | 국내 장마감 브리핑 | `korea-close-briefing.yml` |
 | 21:00 | 미국 개장 전 브리핑 | `us-premarket-briefing.yml` |
 
 모든 job은 `mir-data-publish` concurrency 그룹을 공유해 git push 충돌을 방지합니다.

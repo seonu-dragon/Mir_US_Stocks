@@ -641,6 +641,10 @@ function applyMarketOnlyUi() {
   if (rsSpyLabel && rsSpyLabel.lastChild) rsSpyLabel.lastChild.textContent = ` RS vs ${rsB1}`;
   const rsQqqLabel = byId("showRsQqq")?.parentElement;
   if (rsQqqLabel && rsQqqLabel.lastChild) rsQqqLabel.lastChild.textContent = ` RS vs ${rsB2}`;
+  const cadenceNote = byId("snapshotCadenceNote");
+  if (cadenceNote) {
+    cadenceNote.textContent = `주식 데이터는 ${cfg.snapshotCadence || "매일 06:00 KST"} 스냅샷 · 일부 보조 데이터는 별도 조회`;
+  }
   const topMinCapText = byId("topMinMarketCapLabelText");
   if (topMinCapText) {
     topMinCapText.textContent = cfg.id === "kr" ? "최소 시총(조원)" : "Min MktCap($B)";
@@ -10480,7 +10484,7 @@ function dataTrustSources() {
       count: (data.stocks || []).length,
       timestamp: snapshotTime,
       maxHours: 36,
-      cadence: "매일 06:00 KST",
+      cadence: cfg.snapshotCadence || "매일 06:00 KST",
       status: trustStatus(snapshotTime, (data.stocks || []).length, 36),
     },
     {

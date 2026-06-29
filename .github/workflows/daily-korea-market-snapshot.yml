@@ -1,8 +1,8 @@
-name: Daily US market snapshot
+name: Daily Korea market snapshot
 
 on:
   schedule:
-    - cron: "5 20 * * *"  # 05:05 KST (UTC+9) — US market close snapshot
+    - cron: "40 6 * * *"  # 15:40 KST (UTC+9) — Korea market close snapshot
   workflow_dispatch:
 
 permissions:
@@ -35,5 +35,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-      - name: Update US market snapshot
-        run: python scripts/update_data.py --push
+      - name: Update Korea market snapshot
+        run: python scripts/update_korea_data.py --push

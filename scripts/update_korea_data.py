@@ -1379,14 +1379,7 @@ def write_details(details: dict):
         write_json(DETAILS_DIR / f"{safe}.json", detail)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Build Korean market snapshot.")
-    parser.add_argument("--limit", type=int, default=None, help="Limit universe size (testing).")
-    args = parser.parse_args()
-
-    print("Building Korean market snapshot...")
-    snapshot = build_snapshot(limit=args.limit)
-    light, details = split_snapshot_details(snapshot)
+def persist_snapshot(snapshot, light, details):
     write_details(details)
     write_json(OUT, light)
     write_js(OUT_JS, light)
@@ -1396,6 +1389,44 @@ def main():
         build_map_fundamentals.build_market("kr")
     except Exception as exc:
         print(f"[map_fundamentals/kr] rebuild skipped: {exc}")
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_pattern_stats.py"), "--market", "kr"],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[pattern_stats/kr] rebuild skipped: {exc}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Build Korean market snapshot.")
+    parser.add_argument("--limit", type=int, default=None, help="Limit universe size (testing).")
+    parser.add_argument(
+        "--push",
+        action="store_true",
+        default=False,
+        help="Commit and push data/korea/ to the git remote after updating.",
+    )
+    args = parser.parse_args()
+
+    print("Building Korean market snapshot...")
+    snapshot = build_snapshot(limit=args.limit)
+    light, details = split_snapshot_details(snapshot)
+
+    if args.push:
+        import sys
+        sys.path.insert(0, str(ROOT / "scripts"))
+        from briefing_store import repository_publish_lock
+        from sec_client import git_publish
+
+        with repository_publish_lock(ROOT):
+            persist_snapshot(snapshot, light, details)
+            if not git_publish(["data/korea/"], "Korea market snapshot"):
+                raise SystemExit(1)
+    else:
+        persist_snapshot(snapshot, light, details)
 
 
 if __name__ == "__main__":

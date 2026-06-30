@@ -956,21 +956,14 @@ function setupChatbot() {
   const suggest = byId("chatSuggest");
   if (!panel || !toggle || !form || !input || !log) return;
 
-  // X로 챗봇을 숨긴 적이 있으면(저장됨) 아예 띄우지 않는다.
   const chatRoot = byId("chatbot");
   const dismissBtn = byId("chatDismiss");
-  const CHATBOT_HIDDEN_KEY = "mir_chatbot_hidden_v1";
-  try {
-    if (localStorage.getItem(CHATBOT_HIDDEN_KEY) === "1") {
-      if (chatRoot) chatRoot.style.display = "none";
-      return;
-    }
-  } catch (e) { /* localStorage 비활성 시 무시하고 정상 표시 */ }
+  // 이전 버전에서 영구 숨김으로 저장된 값은 제거 (새로고침 시 챗봇 복구)
+  try { localStorage.removeItem("mir_chatbot_hidden_v1"); } catch (e) { /* ignore */ }
   if (dismissBtn) {
     dismissBtn.addEventListener("click", (event) => {
       event.stopPropagation();
       if (chatRoot) chatRoot.style.display = "none";
-      try { localStorage.setItem(CHATBOT_HIDDEN_KEY, "1"); } catch (err) { /* ignore */ }
     });
   }
 

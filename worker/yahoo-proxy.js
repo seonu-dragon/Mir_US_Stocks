@@ -84,9 +84,7 @@ export default {
       if (request.method === "GET") return cors(await handleSyncPrefsGet(url, env));
       if (request.method === "PUT") return cors(await handleSyncPrefsPut(request, env));
     }
-    if (request.method === "POST" && url.pathname === "/alerts/telegram") {
-      return cors(await handleTelegramAlert(request, env));
-    }
+
 
     // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
     if (url.searchParams.get("fx")) {
@@ -1355,31 +1353,10 @@ async function handleSyncPrefsPut(request, env) {
     watchlist: Array.isArray(prefs.watchlist) ? prefs.watchlist.slice(0, 80) : [],
     portfolio: Array.isArray(prefs.portfolio) ? prefs.portfolio.slice(0, 60) : [],
     alertSettings: prefs.alertSettings && typeof prefs.alertSettings === "object" ? prefs.alertSettings : {},
-    telegram: prefs.telegram && typeof prefs.telegram === "object" ? prefs.telegram : {},
     updatedAt: Number(prefs.updatedAt) || Date.now(),
   };
   await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload));
   return json({ ok: true, updatedAt: payload.updatedAt }, 200, 0);
-}
-
-async function handleTelegramAlert(request, env) {
-  const token = env && env.TELEGRAM_BOT_TOKEN;
-  if (!token) return json({ error: "no_telegram_token" }, 503, 30);
-  let body;
-  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400, 30); }
-  const chatId = String(body && body.chatId || "").trim();
-  const text = String(body && body.text || "").trim().slice(0, 3500);
-  const clientId = sanitizeCommunityClientId(body && body.clientId);
-  if (!chatId || !text) return json({ error: "missing_fields" }, 400, 30);
-  const url = `https://api.telegram.org/bot${token}/sendMessage`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.ok) return json({ error: "telegram_failed", detail: data }, 502, 30);
-  return json({ ok: true, clientId }, 200, 0);
 }
 
 async function handleCommunityClear(request, env) {

@@ -62,11 +62,32 @@ Cloudflare Dashboard에서 **Settings → Variables and Secrets**에 `FINNHUB_AP
 
 - 같은 Worker에 챗봇 엔드포인트가 포함돼 있습니다. **추가 배포 없이** `yahoo-proxy.js`를
   다시 붙여넣어 Deploy 하면 됩니다(Workers AI `AI` 바인딩을 그대로 사용 → 추가 비용/키 없음).
-- 호출: `POST https://<worker>/chat`  body: `{ "messages": [{ "role": "user", "content": "PER이 뭐야?" }] }`
-- 응답: `{ "reply": "...", "model": "..." }`
+- 호출: `POST https://<worker>/chat`
+  ```json
+  {
+    "messages": [{ "role": "user", "content": "삼성전자 최근 이슈가 뭐야?" }],
+    "stockContext": "...",
+    "market": "kr",
+    "searchHints": { "tickers": ["005930"], "companies": ["삼성전자"] }
+  }
+  ```
+- 응답: `{ "reply": "...", "model": "...", "rag": { "newsCount": 5, "sources": ["..."] } }`
 - 사이트 사용법과 PER·ROE 등 금융 기본 용어를 한국어로 설명합니다. 시스템 프롬프트에
   사이트 구성·용어 사전이 들어 있어, 특정 종목 매수/매도 추천은 하지 않습니다.
+- **뉴스 RAG (1단계)**: "왜 올랐어?", "최근 뉴스", "실적 이슈" 같은 질문이면 Worker가
+  네이버 뉴스 Open API → (없으면) Google News RSS → 종목별 네이버/야후 뉴스 순으로
+  관련 기사 3~6건을 검색해 LLM에 근거로 전달합니다.
 - 프론트는 `app.js`의 `LIVE_DATA_PROXY` 주소 뒤에 `/chat`을 붙여 호출합니다(우하단 "💬 도우미").
+
+### 챗봇 뉴스 RAG용 Secret (권장)
+
+Worker → **Settings → Variables and Secrets**에 아래를 추가하면 국내 뉴스 검색 품질이 좋아집니다.
+(SNS 자동화 파이프라인과 동일한 키)
+
+- `NAVER_CLIENT_ID`
+- `NAVER_CLIENT_SECRET`
+
+키가 없어도 Google News RSS + 네이버 종목 뉴스 API 폴백으로 동작합니다.
 
 ## 보안(선택)
 

@@ -754,7 +754,6 @@ function boot(options = {}) {
     renderWatchlistBar();
     renderPortfolio();
     renderWatchAlerts();
-    maybeSendTelegramAlerts();
   });
   loadPortfolioExtensions();
   document.documentElement.removeAttribute("data-theme");
@@ -14827,16 +14826,12 @@ function exportBacktestCsv() {
 
 // ===== Cloud sync (watchlist + portfolio + alerts) =====
 const CLOUD_SYNC_KEY = "mir_cloud_sync_v1";
-const TELEGRAM_ALERT_KEY = "mir_telegram_alert_v1";
 
 function cloudSyncPayload() {
   return {
     watchlist,
     portfolio,
     alertSettings: watchAlertSettings(),
-    telegram: (() => {
-      try { return JSON.parse(localStorage.getItem(TELEGRAM_ALERT_KEY) || "{}") || {}; } catch (e) { return {}; }
-    })(),
     updatedAt: Date.now(),
   };
 }
@@ -14877,10 +14872,6 @@ async function pullCloudSync() {
     if (prefs.alertSettings && typeof prefs.alertSettings === "object") {
       saveWatchAlertSettings({ ...watchAlertSettings(), ...prefs.alertSettings });
     }
-    if (prefs.telegram && typeof prefs.telegram === "object") {
-      localStorage.setItem(TELEGRAM_ALERT_KEY, JSON.stringify(prefs.telegram));
-      applyTelegramSettingsToUi(prefs.telegram);
-    }
     updateCloudSyncStatus("불러옴");
   } catch (e) { /* ignore */ }
 }
@@ -14893,63 +14884,13 @@ function updateCloudSyncStatus(text) {
   updateCloudSyncStatus._timer = setTimeout(() => { el.textContent = ""; }, 2500);
 }
 
-function telegramAlertSettings() {
-  try { return { enabled: false, chatId: "", ...JSON.parse(localStorage.getItem(TELEGRAM_ALERT_KEY) || "{}") }; }
-  catch (e) { return { enabled: false, chatId: "" }; }
-}
-
-function saveTelegramAlertSettings(settings) {
-  try { localStorage.setItem(TELEGRAM_ALERT_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
-  pushCloudSync();
-}
-
-function applyTelegramSettingsToUi(settings) {
-  const enabled = byId("telegramAlertEnabled");
-  const chatId = byId("telegramChatId");
-  if (enabled) enabled.checked = Boolean(settings.enabled);
-  if (chatId && settings.chatId) chatId.value = settings.chatId;
-}
-
-async function maybeSendTelegramAlerts() {
-  const settings = telegramAlertSettings();
-  if (!settings.enabled || !settings.chatId || !LIVE_DATA_PROXY) return;
-  const alertSettings = watchAlertSettings();
-  const hits = watchlist
-    .map((ticker) => stockByTicker(ticker))
-    .filter(Boolean)
-    .map((item) => ({ item, reasons: watchAlertReasons(item, alertSettings) }))
-    .filter((row) => row.reasons.length);
-  if (!hits.length) return;
-  const today = new Date().toISOString().slice(0, 10);
-  const sentKey = `mir_telegram_sent_${today}`;
-  if (localStorage.getItem(sentKey)) return;
-  const lines = hits.slice(0, 8).map(({ item, reasons }) => `${item.ticker}: ${reasons.join(", ")}`);
-  const text = `[미르 관심종목 알림]\n${lines.join("\n")}\n\n${window.location.origin}`;
-  try {
-    const res = await fetch(communityApiUrl("/alerts/telegram"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chatId: settings.chatId, text, clientId: getCommunityClientId() }),
-    });
-    if (res.ok) localStorage.setItem(sentKey, "1");
-  } catch (e) { /* ignore */ }
-}
-
 function setupCloudSyncEvents() {
-  applyTelegramSettingsToUi(telegramAlertSettings());
   byId("cloudSyncPull")?.addEventListener("click", () => pullCloudSync().then(() => {
     renderWatchlistBar();
     renderPortfolio();
     renderWatchAlerts();
   }));
   byId("cloudSyncPush")?.addEventListener("click", () => pushCloudSync());
-  byId("telegramAlertSave")?.addEventListener("click", () => {
-    saveTelegramAlertSettings({
-      enabled: Boolean(byId("telegramAlertEnabled")?.checked),
-      chatId: String(byId("telegramChatId")?.value || "").trim(),
-    });
-    alert("텔레그램 알림 설정이 저장되었습니다.");
-  });
 }
 
 // ===== KR DART disclosures =====

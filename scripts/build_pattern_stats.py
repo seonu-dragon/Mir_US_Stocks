@@ -40,8 +40,10 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import pattern_lib as pl  # noqa: E402
 
-DETAILS_DIR = ROOT / "data" / "details"
-OUT_JSON = ROOT / "data" / "pattern_stats.json"
+MARKET_PATHS = {
+    "us": (ROOT / "data" / "details", ROOT / "data" / "pattern_stats.json"),
+    "kr": (ROOT / "data" / "korea" / "details", ROOT / "data" / "korea" / "pattern_stats.json"),
+}
 MIN_BARS = 250            # 전방 수익률 측정 여유를 위해 최소 봉 수
 BASELINE_STRIDE = 10      # 기준선 표본 추출 간격(모든 봉을 쓰면 과다)
 KST = timezone(timedelta(hours=9))
@@ -71,10 +73,12 @@ def summarize(returns):
 
 def main():
     ap = argparse.ArgumentParser()
+    ap.add_argument("--market", choices=("us", "kr"), default="us", help="대상 시장 (us|kr)")
     ap.add_argument("--limit", type=int, default=0, help="처리할 종목 수 제한(테스트용)")
     args = ap.parse_args()
 
-    files = sorted(DETAILS_DIR.glob("*.json"))
+    details_dir, out_json = MARKET_PATHS[args.market]
+    files = sorted(details_dir.glob("*.json"))
     if args.limit:
         files = files[:args.limit]
 
@@ -149,9 +153,10 @@ def main():
         "baseline": baseline,
         "patterns": patterns,
     }
-    OUT_JSON.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    out_json.parent.mkdir(parents=True, exist_ok=True)
+    out_json.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    print(f"\n완료: {scanned}종목 스캔, {event_total}개 패턴 이벤트 → {OUT_JSON}")
+    print(f"\n완료: {scanned}종목 스캔, {event_total}개 패턴 이벤트 → {out_json}")
     print(f"기준선(20일) 상승률: {baseline.get('20', {}).get('up_rate')}%")
     print("패턴별 20일 up_rate / edge:")
     for p, e in sorted(patterns.items(), key=lambda kv: -(kv[1].get('20', {}).get('n', 0))):

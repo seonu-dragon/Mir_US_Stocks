@@ -1,8 +1,8 @@
 {
-  "generated": "2026-07-01 00:45 KST",
-  "tickers_scanned": 3428,
-  "tickers_skipped": 3055,
-  "events_total": 4706267,
+  "generated": "2026-07-01 07:07 KST",
+  "tickers_scanned": 2962,
+  "tickers_skipped": 3944,
+  "events_total": 3905366,
   "horizons": [
     1,
     3,
@@ -14,40 +14,40 @@
   "min_bars": 250,
   "baseline": {
     "1": {
-      "n": 399026,
-      "up_rate": 49.5,
+      "n": 329693,
+      "up_rate": 50.2,
       "avg_ret": 0.08,
-      "median_ret": 0.0
+      "median_ret": 0.02
     },
     "3": {
-      "n": 398916,
-      "up_rate": 50.1,
-      "avg_ret": 0.08,
-      "median_ret": 0.02
+      "n": 329579,
+      "up_rate": 50.5,
+      "avg_ret": 0.22,
+      "median_ret": 0.05
     },
     "5": {
-      "n": 398779,
-      "up_rate": 51.3,
-      "avg_ret": 0.4,
-      "median_ret": 0.15
+      "n": 329446,
+      "up_rate": 51.0,
+      "avg_ret": 0.34,
+      "median_ret": 0.11
     },
     "10": {
-      "n": 395643,
-      "up_rate": 50.4,
-      "avg_ret": 0.49,
-      "median_ret": 0.07
+      "n": 326824,
+      "up_rate": 50.7,
+      "avg_ret": 0.48,
+      "median_ret": 0.11
     },
     "20": {
-      "n": 392215,
-      "up_rate": 50.0,
-      "avg_ret": 0.97,
-      "median_ret": 0.02
+      "n": 323862,
+      "up_rate": 50.4,
+      "avg_ret": 0.95,
+      "median_ret": 0.1
     },
     "60": {
-      "n": 378503,
-      "up_rate": 50.2,
-      "avg_ret": 2.64,
-      "median_ret": 0.1
+      "n": 312014,
+      "up_rate": 50.1,
+      "avg_ret": 2.59,
+      "median_ret": 0.06
     }
   },
   "patterns": {
@@ -55,229 +55,229 @@
       "label": "쌍천장(이중 천장)",
       "dir": -1,
       "1": {
-        "n": 42879,
-        "up_rate": 48.5,
-        "avg_ret": -0.07,
-        "median_ret": -0.01,
-        "edge": -1.0
+        "n": 35361,
+        "up_rate": 48.3,
+        "avg_ret": -0.09,
+        "median_ret": -0.03,
+        "edge": -1.9
       },
       "3": {
-        "n": 42813,
-        "up_rate": 49.3,
-        "avg_ret": 0.26,
-        "median_ret": 0.0,
-        "edge": -0.8
+        "n": 35322,
+        "up_rate": 49.1,
+        "avg_ret": -0.04,
+        "median_ret": -0.03,
+        "edge": -1.4
       },
       "5": {
-        "n": 42746,
-        "up_rate": 50.0,
-        "avg_ret": 0.37,
+        "n": 35273,
+        "up_rate": 49.7,
+        "avg_ret": 0.09,
         "median_ret": 0.0,
         "edge": -1.3
       },
       "10": {
-        "n": 42550,
+        "n": 35093,
         "up_rate": 51.6,
-        "avg_ret": 0.67,
-        "median_ret": 0.28,
-        "edge": 1.2
+        "avg_ret": 0.43,
+        "median_ret": 0.25,
+        "edge": 0.9
       },
       "20": {
-        "n": 42118,
-        "up_rate": 52.9,
-        "avg_ret": 1.29,
-        "median_ret": 0.62,
-        "edge": 2.9
+        "n": 34739,
+        "up_rate": 53.1,
+        "avg_ret": 1.06,
+        "median_ret": 0.66,
+        "edge": 2.7
       },
       "60": {
-        "n": 41120,
-        "up_rate": 53.1,
-        "avg_ret": 3.03,
-        "median_ret": 1.12,
-        "edge": 2.9
+        "n": 33812,
+        "up_rate": 53.3,
+        "avg_ret": 2.83,
+        "median_ret": 1.17,
+        "edge": 3.2
       }
     },
     "double_bottom": {
       "label": "쌍바닥(이중 바닥)",
       "dir": 1,
       "1": {
-        "n": 43423,
-        "up_rate": 50.2,
-        "avg_ret": 0.1,
-        "median_ret": 0.02,
-        "edge": 0.7
+        "n": 35899,
+        "up_rate": 50.7,
+        "avg_ret": 0.11,
+        "median_ret": 0.04,
+        "edge": 0.5
       },
       "3": {
-        "n": 43279,
-        "up_rate": 51.7,
-        "avg_ret": 0.24,
-        "median_ret": 0.14,
-        "edge": 1.6
-      },
-      "5": {
-        "n": 43199,
-        "up_rate": 51.9,
-        "avg_ret": 0.26,
+        "n": 35777,
+        "up_rate": 52.4,
+        "avg_ret": 0.25,
         "median_ret": 0.18,
-        "edge": 0.6
-      },
-      "10": {
-        "n": 42914,
-        "up_rate": 52.3,
-        "avg_ret": 0.53,
-        "median_ret": 0.31,
         "edge": 1.9
       },
+      "5": {
+        "n": 35669,
+        "up_rate": 52.1,
+        "avg_ret": 0.25,
+        "median_ret": 0.18,
+        "edge": 1.1
+      },
+      "10": {
+        "n": 35500,
+        "up_rate": 52.4,
+        "avg_ret": 0.54,
+        "median_ret": 0.32,
+        "edge": 1.7
+      },
       "20": {
-        "n": 42444,
-        "up_rate": 51.8,
+        "n": 35064,
+        "up_rate": 52.0,
         "avg_ret": 0.93,
-        "median_ret": 0.38,
-        "edge": 1.8
+        "median_ret": 0.39,
+        "edge": 1.6
       },
       "60": {
-        "n": 40943,
-        "up_rate": 49.6,
-        "avg_ret": 1.08,
-        "median_ret": -0.12,
-        "edge": -0.6
+        "n": 33821,
+        "up_rate": 49.3,
+        "avg_ret": 0.99,
+        "median_ret": -0.19,
+        "edge": -0.8
       }
     },
     "hns": {
       "label": "헤드앤숄더(천장)",
       "dir": -1,
       "1": {
-        "n": 14479,
-        "up_rate": 45.9,
-        "avg_ret": -0.24,
-        "median_ret": -0.12,
-        "edge": -3.6
+        "n": 11920,
+        "up_rate": 45.7,
+        "avg_ret": -0.28,
+        "median_ret": -0.13,
+        "edge": -4.5
       },
       "3": {
-        "n": 14448,
-        "up_rate": 44.4,
-        "avg_ret": -0.48,
-        "median_ret": -0.42,
-        "edge": -5.7
+        "n": 11900,
+        "up_rate": 43.8,
+        "avg_ret": -0.56,
+        "median_ret": -0.46,
+        "edge": -6.7
       },
       "5": {
-        "n": 14422,
-        "up_rate": 46.0,
-        "avg_ret": -0.35,
-        "median_ret": -0.42,
-        "edge": -5.3
+        "n": 11862,
+        "up_rate": 45.3,
+        "avg_ret": -0.39,
+        "median_ret": -0.48,
+        "edge": -5.7
       },
       "10": {
-        "n": 14342,
-        "up_rate": 49.7,
-        "avg_ret": 0.01,
-        "median_ret": 0.0,
-        "edge": -0.7
+        "n": 11803,
+        "up_rate": 49.1,
+        "avg_ret": -0.08,
+        "median_ret": -0.08,
+        "edge": -1.6
       },
       "20": {
-        "n": 14193,
-        "up_rate": 48.9,
-        "avg_ret": 0.45,
-        "median_ret": -0.2,
-        "edge": -1.1
+        "n": 11658,
+        "up_rate": 48.5,
+        "avg_ret": 0.39,
+        "median_ret": -0.32,
+        "edge": -1.9
       },
       "60": {
-        "n": 13839,
-        "up_rate": 52.2,
+        "n": 11346,
+        "up_rate": 52.4,
         "avg_ret": 2.64,
-        "median_ret": 0.73,
-        "edge": 2.0
+        "median_ret": 0.75,
+        "edge": 2.3
       }
     },
     "inv_hns": {
       "label": "역헤드앤숄더(바닥)",
       "dir": 1,
       "1": {
-        "n": 15178,
-        "up_rate": 52.6,
-        "avg_ret": 0.27,
-        "median_ret": 0.11,
-        "edge": 3.1
+        "n": 12603,
+        "up_rate": 53.1,
+        "avg_ret": 0.28,
+        "median_ret": 0.12,
+        "edge": 2.9
       },
       "3": {
-        "n": 15146,
-        "up_rate": 54.5,
-        "avg_ret": 0.56,
-        "median_ret": 0.31,
-        "edge": 4.4
+        "n": 12571,
+        "up_rate": 54.7,
+        "avg_ret": 0.53,
+        "median_ret": 0.3,
+        "edge": 4.2
       },
       "5": {
-        "n": 15109,
-        "up_rate": 53.9,
-        "avg_ret": 0.6,
-        "median_ret": 0.36,
-        "edge": 2.6
+        "n": 12540,
+        "up_rate": 54.1,
+        "avg_ret": 0.57,
+        "median_ret": 0.34,
+        "edge": 3.1
       },
       "10": {
-        "n": 15034,
+        "n": 12496,
         "up_rate": 54.2,
-        "avg_ret": 0.93,
-        "median_ret": 0.56,
-        "edge": 3.8
+        "avg_ret": 0.91,
+        "median_ret": 0.54,
+        "edge": 3.5
       },
       "20": {
-        "n": 14857,
-        "up_rate": 52.7,
-        "avg_ret": 1.36,
-        "median_ret": 0.6,
-        "edge": 2.7
+        "n": 12335,
+        "up_rate": 53.3,
+        "avg_ret": 1.44,
+        "median_ret": 0.65,
+        "edge": 2.9
       },
       "60": {
-        "n": 14276,
-        "up_rate": 49.1,
-        "avg_ret": 1.69,
-        "median_ret": -0.31,
-        "edge": -1.1
+        "n": 11806,
+        "up_rate": 49.4,
+        "avg_ret": 1.8,
+        "median_ret": -0.21,
+        "edge": -0.7
       }
     },
     "ascending_triangle": {
       "label": "상승 삼각수렴",
       "dir": 1,
       "1": {
-        "n": 10731,
-        "up_rate": 50.0,
-        "avg_ret": 0.09,
-        "median_ret": 0.01,
-        "edge": 0.5
+        "n": 9049,
+        "up_rate": 50.6,
+        "avg_ret": 0.13,
+        "median_ret": 0.03,
+        "edge": 0.4
       },
       "3": {
-        "n": 10684,
-        "up_rate": 52.4,
-        "avg_ret": 0.31,
-        "median_ret": 0.17,
+        "n": 9011,
+        "up_rate": 52.8,
+        "avg_ret": 0.34,
+        "median_ret": 0.18,
         "edge": 2.3
       },
       "5": {
-        "n": 10667,
+        "n": 8981,
         "up_rate": 52.0,
-        "avg_ret": 0.27,
-        "median_ret": 0.15,
-        "edge": 0.7
+        "avg_ret": 0.25,
+        "median_ret": 0.14,
+        "edge": 1.0
       },
       "10": {
-        "n": 10588,
-        "up_rate": 52.2,
-        "avg_ret": 0.56,
-        "median_ret": 0.25,
-        "edge": 1.8
+        "n": 8946,
+        "up_rate": 52.0,
+        "avg_ret": 0.48,
+        "median_ret": 0.22,
+        "edge": 1.3
       },
       "20": {
-        "n": 10419,
-        "up_rate": 52.1,
-        "avg_ret": 0.85,
-        "median_ret": 0.38,
-        "edge": 2.1
+        "n": 8791,
+        "up_rate": 52.6,
+        "avg_ret": 0.78,
+        "median_ret": 0.42,
+        "edge": 2.2
       },
       "60": {
-        "n": 10038,
-        "up_rate": 50.3,
-        "avg_ret": 1.29,
-        "median_ret": 0.12,
+        "n": 8447,
+        "up_rate": 50.2,
+        "avg_ret": 1.05,
+        "median_ret": 0.09,
         "edge": 0.1
       }
     },
@@ -285,781 +285,781 @@
       "label": "하락 삼각수렴",
       "dir": -1,
       "1": {
-        "n": 9148,
-        "up_rate": 47.6,
-        "avg_ret": -0.11,
-        "median_ret": -0.05,
-        "edge": -1.9
+        "n": 7628,
+        "up_rate": 47.0,
+        "avg_ret": -0.14,
+        "median_ret": -0.07,
+        "edge": -3.2
       },
       "3": {
-        "n": 9132,
-        "up_rate": 48.4,
-        "avg_ret": -0.19,
-        "median_ret": -0.06,
-        "edge": -1.7
+        "n": 7618,
+        "up_rate": 48.2,
+        "avg_ret": -0.23,
+        "median_ret": -0.09,
+        "edge": -2.3
       },
       "5": {
-        "n": 9116,
-        "up_rate": 49.6,
-        "avg_ret": -0.08,
+        "n": 7604,
+        "up_rate": 49.4,
+        "avg_ret": -0.13,
         "median_ret": 0.0,
-        "edge": -1.7
+        "edge": -1.6
       },
       "10": {
-        "n": 9060,
+        "n": 7551,
+        "up_rate": 50.0,
+        "avg_ret": 0.15,
+        "median_ret": 0.02,
+        "edge": -0.7
+      },
+      "20": {
+        "n": 7452,
         "up_rate": 50.6,
-        "avg_ret": 0.21,
+        "avg_ret": 0.61,
         "median_ret": 0.12,
         "edge": 0.2
       },
-      "20": {
-        "n": 8928,
-        "up_rate": 50.4,
-        "avg_ret": 0.59,
-        "median_ret": 0.1,
-        "edge": 0.4
-      },
       "60": {
-        "n": 8680,
-        "up_rate": 52.5,
-        "avg_ret": 2.62,
-        "median_ret": 0.84,
-        "edge": 2.3
+        "n": 7199,
+        "up_rate": 53.1,
+        "avg_ret": 2.61,
+        "median_ret": 0.97,
+        "edge": 3.0
       }
     },
     "symmetrical_triangle": {
       "label": "대칭 삼각수렴",
-      "dir": -1,
+      "dir": 1,
       "1": {
-        "n": 23705,
-        "up_rate": 49.4,
+        "n": 18933,
+        "up_rate": 49.5,
         "avg_ret": 0.09,
         "median_ret": 0.0,
-        "edge": -0.1
+        "edge": -0.7
       },
       "3": {
-        "n": 23638,
-        "up_rate": 49.7,
-        "avg_ret": 0.17,
+        "n": 18874,
+        "up_rate": 49.4,
+        "avg_ret": 0.14,
         "median_ret": 0.0,
-        "edge": -0.4
+        "edge": -1.1
       },
       "5": {
-        "n": 23594,
-        "up_rate": 49.5,
-        "avg_ret": 0.31,
-        "median_ret": 0.0,
-        "edge": -1.8
+        "n": 18809,
+        "up_rate": 49.1,
+        "avg_ret": 0.33,
+        "median_ret": -0.05,
+        "edge": -1.9
       },
       "10": {
-        "n": 23439,
+        "n": 18714,
         "up_rate": 50.3,
-        "avg_ret": 0.73,
-        "median_ret": 0.08,
-        "edge": -0.1
+        "avg_ret": 0.8,
+        "median_ret": 0.07,
+        "edge": -0.4
       },
       "20": {
-        "n": 23063,
-        "up_rate": 50.4,
-        "avg_ret": 1.39,
-        "median_ret": 0.15,
-        "edge": 0.4
+        "n": 18356,
+        "up_rate": 50.5,
+        "avg_ret": 1.54,
+        "median_ret": 0.17,
+        "edge": 0.1
       },
       "60": {
-        "n": 22202,
-        "up_rate": 48.4,
-        "avg_ret": 3.15,
-        "median_ret": -0.67,
-        "edge": -1.8
+        "n": 17608,
+        "up_rate": 48.7,
+        "avg_ret": 3.29,
+        "median_ret": -0.56,
+        "edge": -1.4
       }
     },
     "falling_wedge": {
       "label": "하락 쐐기형",
       "dir": 1,
       "1": {
-        "n": 21466,
-        "up_rate": 49.0,
-        "avg_ret": 0.18,
+        "n": 17438,
+        "up_rate": 49.3,
+        "avg_ret": 0.22,
         "median_ret": 0.0,
-        "edge": -0.5
+        "edge": -0.9
       },
       "3": {
-        "n": 21394,
-        "up_rate": 50.5,
-        "avg_ret": 0.37,
-        "median_ret": 0.09,
-        "edge": 0.4
+        "n": 17389,
+        "up_rate": 51.0,
+        "avg_ret": 0.43,
+        "median_ret": 0.12,
+        "edge": 0.5
       },
       "5": {
-        "n": 21368,
-        "up_rate": 50.0,
-        "avg_ret": 0.37,
-        "median_ret": 0.0,
-        "edge": -1.3
+        "n": 17331,
+        "up_rate": 50.1,
+        "avg_ret": 0.4,
+        "median_ret": 0.02,
+        "edge": -0.9
       },
       "10": {
-        "n": 21259,
-        "up_rate": 51.4,
-        "avg_ret": 1.01,
-        "median_ret": 0.3,
-        "edge": 1.0
+        "n": 17266,
+        "up_rate": 52.2,
+        "avg_ret": 1.11,
+        "median_ret": 0.44,
+        "edge": 1.5
       },
       "20": {
-        "n": 21075,
-        "up_rate": 50.9,
-        "avg_ret": 2.11,
-        "median_ret": 0.32,
+        "n": 17102,
+        "up_rate": 51.3,
+        "avg_ret": 2.16,
+        "median_ret": 0.42,
         "edge": 0.9
       },
       "60": {
-        "n": 20119,
-        "up_rate": 47.5,
-        "avg_ret": 2.39,
-        "median_ret": -1.15,
-        "edge": -2.7
+        "n": 16259,
+        "up_rate": 47.0,
+        "avg_ret": 2.35,
+        "median_ret": -1.44,
+        "edge": -3.1
       }
     },
     "rising_wedge": {
       "label": "상승 쐐기형",
       "dir": -1,
       "1": {
-        "n": 24109,
-        "up_rate": 48.3,
-        "avg_ret": -0.06,
-        "median_ret": -0.02,
-        "edge": -1.2
+        "n": 19564,
+        "up_rate": 48.2,
+        "avg_ret": -0.08,
+        "median_ret": -0.04,
+        "edge": -2.0
       },
       "3": {
-        "n": 24043,
-        "up_rate": 48.5,
-        "avg_ret": -0.01,
-        "median_ret": -0.09,
-        "edge": -1.6
+        "n": 19524,
+        "up_rate": 48.3,
+        "avg_ret": -0.04,
+        "median_ret": -0.11,
+        "edge": -2.2
       },
       "5": {
-        "n": 23991,
+        "n": 19463,
         "up_rate": 48.5,
-        "avg_ret": 0.0,
-        "median_ret": -0.12,
-        "edge": -2.8
+        "avg_ret": 0.02,
+        "median_ret": -0.13,
+        "edge": -2.5
       },
       "10": {
-        "n": 23890,
-        "up_rate": 49.4,
-        "avg_ret": 0.35,
-        "median_ret": -0.06,
-        "edge": -1.0
+        "n": 19353,
+        "up_rate": 49.5,
+        "avg_ret": 0.44,
+        "median_ret": -0.03,
+        "edge": -1.2
       },
       "20": {
-        "n": 23600,
-        "up_rate": 51.8,
-        "avg_ret": 1.18,
-        "median_ret": 0.43,
-        "edge": 1.8
+        "n": 19100,
+        "up_rate": 52.7,
+        "avg_ret": 1.44,
+        "median_ret": 0.63,
+        "edge": 2.3
       },
       "60": {
-        "n": 23120,
-        "up_rate": 50.6,
-        "avg_ret": 3.02,
-        "median_ret": 0.25,
-        "edge": 0.4
+        "n": 18695,
+        "up_rate": 51.3,
+        "avg_ret": 3.58,
+        "median_ret": 0.54,
+        "edge": 1.2
       }
     },
     "box_breakout": {
       "label": "박스권 상향 돌파",
       "dir": 1,
       "1": {
-        "n": 11686,
-        "up_rate": 42.3,
-        "avg_ret": -0.06,
+        "n": 10782,
+        "up_rate": 42.9,
+        "avg_ret": -0.05,
         "median_ret": 0.0,
-        "edge": -7.2
+        "edge": -7.3
       },
       "3": {
-        "n": 11651,
-        "up_rate": 44.6,
-        "avg_ret": -0.05,
-        "median_ret": -0.02,
-        "edge": -5.5
+        "n": 10743,
+        "up_rate": 44.8,
+        "avg_ret": -0.08,
+        "median_ret": -0.03,
+        "edge": -5.7
       },
       "5": {
-        "n": 11621,
-        "up_rate": 46.9,
-        "avg_ret": -0.04,
-        "median_ret": 0.0,
-        "edge": -4.4
+        "n": 10712,
+        "up_rate": 46.5,
+        "avg_ret": -0.09,
+        "median_ret": -0.02,
+        "edge": -4.5
       },
       "10": {
-        "n": 11545,
-        "up_rate": 50.3,
-        "avg_ret": 0.11,
-        "median_ret": 0.03,
-        "edge": -0.1
+        "n": 10645,
+        "up_rate": 50.2,
+        "avg_ret": 0.07,
+        "median_ret": 0.02,
+        "edge": -0.5
       },
       "20": {
-        "n": 11412,
-        "up_rate": 53.0,
-        "avg_ret": 0.35,
+        "n": 10507,
+        "up_rate": 53.3,
+        "avg_ret": 0.31,
         "median_ret": 0.19,
-        "edge": 3.0
+        "edge": 2.9
       },
       "60": {
-        "n": 11183,
-        "up_rate": 54.7,
-        "avg_ret": 0.28,
-        "median_ret": 0.5,
-        "edge": 4.5
+        "n": 10284,
+        "up_rate": 53.9,
+        "avg_ret": 0.31,
+        "median_ret": 0.41,
+        "edge": 3.8
       }
     },
     "box_breakdown": {
       "label": "박스권 하향 이탈",
       "dir": -1,
       "1": {
-        "n": 8778,
-        "up_rate": 53.5,
-        "avg_ret": 0.04,
+        "n": 8316,
+        "up_rate": 54.0,
+        "avg_ret": 0.02,
         "median_ret": 0.08,
-        "edge": 4.0
+        "edge": 3.8
       },
       "3": {
-        "n": 8766,
-        "up_rate": 55.5,
-        "avg_ret": 0.17,
-        "median_ret": 0.18,
-        "edge": 5.4
+        "n": 8305,
+        "up_rate": 56.0,
+        "avg_ret": 0.12,
+        "median_ret": 0.17,
+        "edge": 5.5
       },
       "5": {
-        "n": 8744,
-        "up_rate": 55.9,
-        "avg_ret": 0.34,
-        "median_ret": 0.23,
-        "edge": 4.6
+        "n": 8288,
+        "up_rate": 56.3,
+        "avg_ret": 0.26,
+        "median_ret": 0.21,
+        "edge": 5.3
       },
       "10": {
-        "n": 8695,
+        "n": 8233,
         "up_rate": 55.8,
-        "avg_ret": 0.53,
-        "median_ret": 0.31,
-        "edge": 5.4
+        "avg_ret": 0.4,
+        "median_ret": 0.26,
+        "edge": 5.1
       },
       "20": {
-        "n": 8583,
-        "up_rate": 56.4,
-        "avg_ret": 1.09,
-        "median_ret": 0.44,
-        "edge": 6.4
+        "n": 8136,
+        "up_rate": 56.2,
+        "avg_ret": 0.95,
+        "median_ret": 0.4,
+        "edge": 5.8
       },
       "60": {
-        "n": 8390,
-        "up_rate": 56.5,
-        "avg_ret": 2.18,
-        "median_ret": 0.92,
-        "edge": 6.3
+        "n": 7906,
+        "up_rate": 55.9,
+        "avg_ret": 2.0,
+        "median_ret": 0.73,
+        "edge": 5.8
       }
     },
     "bull_flag": {
       "label": "상승 깃발형",
       "dir": 1,
       "1": {
-        "n": 19537,
-        "up_rate": 48.5,
-        "avg_ret": 0.19,
+        "n": 15531,
+        "up_rate": 48.7,
+        "avg_ret": 0.27,
         "median_ret": 0.0,
-        "edge": -1.0
+        "edge": -1.5
       },
       "3": {
-        "n": 19463,
-        "up_rate": 49.1,
-        "avg_ret": 0.38,
-        "median_ret": -0.03,
-        "edge": -1.0
-      },
-      "5": {
-        "n": 19413,
+        "n": 15470,
         "up_rate": 49.2,
-        "avg_ret": 0.43,
-        "median_ret": -0.05,
-        "edge": -2.1
-      },
-      "10": {
-        "n": 19276,
-        "up_rate": 50.7,
-        "avg_ret": 0.89,
-        "median_ret": 0.17,
-        "edge": 0.3
-      },
-      "20": {
-        "n": 19050,
-        "up_rate": 48.7,
-        "avg_ret": 1.53,
-        "median_ret": -0.32,
+        "avg_ret": 0.49,
+        "median_ret": -0.02,
         "edge": -1.3
       },
-      "60": {
-        "n": 18150,
-        "up_rate": 45.8,
+      "5": {
+        "n": 15412,
+        "up_rate": 49.0,
+        "avg_ret": 0.49,
+        "median_ret": -0.09,
+        "edge": -2.0
+      },
+      "10": {
+        "n": 15309,
+        "up_rate": 50.8,
+        "avg_ret": 1.03,
+        "median_ret": 0.19,
+        "edge": 0.1
+      },
+      "20": {
+        "n": 15143,
+        "up_rate": 49.0,
         "avg_ret": 1.83,
-        "median_ret": -2.24,
-        "edge": -4.4
+        "median_ret": -0.26,
+        "edge": -1.4
+      },
+      "60": {
+        "n": 14343,
+        "up_rate": 45.5,
+        "avg_ret": 1.87,
+        "median_ret": -2.48,
+        "edge": -4.6
       }
     },
     "bear_flag": {
       "label": "하락 깃발형",
       "dir": -1,
       "1": {
-        "n": 17955,
-        "up_rate": 48.8,
-        "avg_ret": 0.01,
+        "n": 14307,
+        "up_rate": 48.6,
+        "avg_ret": -0.0,
         "median_ret": 0.0,
-        "edge": -0.7
+        "edge": -1.6
       },
       "3": {
-        "n": 17875,
-        "up_rate": 48.7,
-        "avg_ret": 0.32,
-        "median_ret": -0.05,
-        "edge": -1.4
-      },
-      "5": {
-        "n": 17827,
-        "up_rate": 49.1,
-        "avg_ret": 0.51,
-        "median_ret": 0.0,
+        "n": 14287,
+        "up_rate": 48.3,
+        "avg_ret": 0.31,
+        "median_ret": -0.11,
         "edge": -2.2
       },
+      "5": {
+        "n": 14221,
+        "up_rate": 48.9,
+        "avg_ret": 0.6,
+        "median_ret": -0.06,
+        "edge": -2.1
+      },
       "10": {
-        "n": 17730,
-        "up_rate": 50.1,
-        "avg_ret": 1.0,
-        "median_ret": 0.05,
-        "edge": -0.3
+        "n": 14108,
+        "up_rate": 49.9,
+        "avg_ret": 1.06,
+        "median_ret": 0.0,
+        "edge": -0.8
       },
       "20": {
-        "n": 17441,
-        "up_rate": 49.7,
-        "avg_ret": 1.78,
+        "n": 13827,
+        "up_rate": 49.9,
+        "avg_ret": 1.9,
         "median_ret": 0.0,
-        "edge": -0.3
+        "edge": -0.5
       },
       "60": {
-        "n": 16936,
+        "n": 13399,
         "up_rate": 49.4,
-        "avg_ret": 4.4,
-        "median_ret": -0.24,
-        "edge": -0.8
+        "avg_ret": 4.45,
+        "median_ret": -0.27,
+        "edge": -0.7
       }
     },
     "bull_pennant": {
       "label": "상승 페넌트",
       "dir": 1,
       "1": {
-        "n": 592,
+        "n": 587,
         "up_rate": 41.9,
         "avg_ret": -0.12,
-        "median_ret": -0.11,
-        "edge": -7.6
+        "median_ret": -0.14,
+        "edge": -8.3
       },
       "3": {
-        "n": 592,
+        "n": 587,
         "up_rate": 43.6,
-        "avg_ret": -0.13,
+        "avg_ret": -0.15,
         "median_ret": -0.14,
-        "edge": -6.5
+        "edge": -6.9
       },
       "5": {
-        "n": 592,
-        "up_rate": 45.4,
+        "n": 586,
+        "up_rate": 46.1,
         "avg_ret": -0.26,
-        "median_ret": -0.16,
-        "edge": -5.9
+        "median_ret": -0.14,
+        "edge": -4.9
       },
       "10": {
         "n": 586,
-        "up_rate": 50.9,
-        "avg_ret": -0.11,
-        "median_ret": 0.07,
-        "edge": 0.5
+        "up_rate": 51.7,
+        "avg_ret": -0.12,
+        "median_ret": 0.11,
+        "edge": 1.0
       },
       "20": {
-        "n": 579,
-        "up_rate": 51.3,
-        "avg_ret": -0.03,
-        "median_ret": 0.26,
-        "edge": 1.3
+        "n": 572,
+        "up_rate": 53.3,
+        "avg_ret": 0.03,
+        "median_ret": 0.43,
+        "edge": 2.9
       },
       "60": {
-        "n": 567,
-        "up_rate": 58.4,
-        "avg_ret": 1.57,
-        "median_ret": 1.25,
-        "edge": 8.2
+        "n": 558,
+        "up_rate": 58.8,
+        "avg_ret": 1.23,
+        "median_ret": 1.29,
+        "edge": 8.7
       }
     },
     "bear_pennant": {
       "label": "하락 페넌트",
       "dir": -1,
       "1": {
-        "n": 272,
-        "up_rate": 53.3,
-        "avg_ret": 0.17,
-        "median_ret": 0.07,
-        "edge": 3.8
+        "n": 304,
+        "up_rate": 52.3,
+        "avg_ret": 0.05,
+        "median_ret": 0.05,
+        "edge": 2.1
       },
       "3": {
-        "n": 272,
-        "up_rate": 49.3,
-        "avg_ret": 0.22,
+        "n": 304,
+        "up_rate": 49.7,
+        "avg_ret": 0.05,
         "median_ret": 0.0,
         "edge": -0.8
       },
       "5": {
-        "n": 272,
-        "up_rate": 53.3,
-        "avg_ret": 0.45,
-        "median_ret": 0.22,
-        "edge": 2.0
+        "n": 304,
+        "up_rate": 52.3,
+        "avg_ret": 0.27,
+        "median_ret": 0.19,
+        "edge": 1.3
       },
       "10": {
-        "n": 272,
-        "up_rate": 56.6,
-        "avg_ret": 0.82,
-        "median_ret": 0.63,
-        "edge": 6.2
+        "n": 303,
+        "up_rate": 55.1,
+        "avg_ret": 0.49,
+        "median_ret": 0.34,
+        "edge": 4.4
       },
       "20": {
-        "n": 271,
-        "up_rate": 52.4,
-        "avg_ret": 0.53,
-        "median_ret": 0.2,
-        "edge": 2.4
+        "n": 302,
+        "up_rate": 51.0,
+        "avg_ret": 0.22,
+        "median_ret": 0.06,
+        "edge": 0.6
       },
       "60": {
-        "n": 267,
-        "up_rate": 59.2,
-        "avg_ret": 2.21,
-        "median_ret": 2.2,
-        "edge": 9.0
+        "n": 293,
+        "up_rate": 57.0,
+        "avg_ret": 1.53,
+        "median_ret": 2.01,
+        "edge": 6.9
       }
     },
     "triple_top": {
       "label": "삼중 천장형",
       "dir": -1,
       "1": {
-        "n": 4140,
-        "up_rate": 50.0,
+        "n": 3432,
+        "up_rate": 49.5,
         "avg_ret": 0.03,
         "median_ret": 0.0,
-        "edge": 0.5
+        "edge": -0.7
       },
       "3": {
-        "n": 4135,
-        "up_rate": 51.5,
-        "avg_ret": 0.2,
-        "median_ret": 0.16,
-        "edge": 1.4
+        "n": 3427,
+        "up_rate": 51.2,
+        "avg_ret": 0.21,
+        "median_ret": 0.14,
+        "edge": 0.7
       },
       "5": {
-        "n": 4131,
-        "up_rate": 52.3,
-        "avg_ret": 0.37,
-        "median_ret": 0.21,
-        "edge": 1.0
+        "n": 3422,
+        "up_rate": 52.1,
+        "avg_ret": 0.35,
+        "median_ret": 0.19,
+        "edge": 1.1
       },
       "10": {
-        "n": 4113,
-        "up_rate": 54.1,
+        "n": 3404,
+        "up_rate": 54.3,
         "avg_ret": 0.73,
-        "median_ret": 0.58,
-        "edge": 3.7
+        "median_ret": 0.59,
+        "edge": 3.6
       },
       "20": {
-        "n": 4068,
-        "up_rate": 55.3,
-        "avg_ret": 1.47,
-        "median_ret": 1.05,
-        "edge": 5.3
+        "n": 3376,
+        "up_rate": 56.4,
+        "avg_ret": 1.58,
+        "median_ret": 1.21,
+        "edge": 6.0
       },
       "60": {
-        "n": 4006,
-        "up_rate": 55.2,
-        "avg_ret": 2.3,
-        "median_ret": 1.66,
-        "edge": 5.0
+        "n": 3302,
+        "up_rate": 56.6,
+        "avg_ret": 2.74,
+        "median_ret": 1.88,
+        "edge": 6.5
       }
     },
     "triple_bottom": {
       "label": "삼중 바닥형",
       "dir": 1,
       "1": {
-        "n": 3901,
-        "up_rate": 50.8,
-        "avg_ret": 0.05,
-        "median_ret": 0.04,
-        "edge": 1.3
+        "n": 3236,
+        "up_rate": 51.1,
+        "avg_ret": 0.07,
+        "median_ret": 0.05,
+        "edge": 0.9
       },
       "3": {
-        "n": 3887,
-        "up_rate": 50.9,
-        "avg_ret": 0.23,
-        "median_ret": 0.08,
-        "edge": 0.8
+        "n": 3221,
+        "up_rate": 51.6,
+        "avg_ret": 0.18,
+        "median_ret": 0.13,
+        "edge": 1.1
       },
       "5": {
-        "n": 3874,
-        "up_rate": 51.7,
-        "avg_ret": 0.31,
-        "median_ret": 0.14,
-        "edge": 0.4
+        "n": 3212,
+        "up_rate": 52.3,
+        "avg_ret": 0.26,
+        "median_ret": 0.18,
+        "edge": 1.3
       },
       "10": {
-        "n": 3848,
-        "up_rate": 53.0,
-        "avg_ret": 0.59,
-        "median_ret": 0.38,
+        "n": 3190,
+        "up_rate": 53.3,
+        "avg_ret": 0.57,
+        "median_ret": 0.39,
         "edge": 2.6
       },
       "20": {
-        "n": 3811,
-        "up_rate": 52.3,
-        "avg_ret": 1.22,
-        "median_ret": 0.42,
-        "edge": 2.3
+        "n": 3158,
+        "up_rate": 53.2,
+        "avg_ret": 1.36,
+        "median_ret": 0.54,
+        "edge": 2.8
       },
       "60": {
-        "n": 3726,
-        "up_rate": 50.1,
-        "avg_ret": 0.88,
-        "median_ret": 0.03,
-        "edge": -0.1
+        "n": 3083,
+        "up_rate": 49.4,
+        "avg_ret": 0.51,
+        "median_ret": -0.14,
+        "edge": -0.7
       }
     },
     "broadening_triangle": {
       "label": "확산형 삼각수렴",
       "dir": 1,
       "1": {
-        "n": 12395,
-        "up_rate": 47.8,
+        "n": 9977,
+        "up_rate": 48.2,
         "avg_ret": 0.13,
-        "median_ret": -0.03,
-        "edge": -1.7
+        "median_ret": -0.0,
+        "edge": -2.0
       },
       "3": {
-        "n": 12345,
-        "up_rate": 48.2,
-        "avg_ret": 1.64,
-        "median_ret": -0.11,
-        "edge": -1.9
+        "n": 9950,
+        "up_rate": 48.5,
+        "avg_ret": 0.25,
+        "median_ret": -0.09,
+        "edge": -2.0
       },
       "5": {
-        "n": 12311,
-        "up_rate": 48.3,
-        "avg_ret": 1.73,
-        "median_ret": -0.16,
-        "edge": -3.0
+        "n": 9909,
+        "up_rate": 48.5,
+        "avg_ret": 0.24,
+        "median_ret": -0.13,
+        "edge": -2.5
       },
       "10": {
-        "n": 12253,
-        "up_rate": 49.1,
-        "avg_ret": 0.7,
-        "median_ret": -0.08,
-        "edge": -1.3
+        "n": 9849,
+        "up_rate": 48.9,
+        "avg_ret": 0.46,
+        "median_ret": -0.14,
+        "edge": -1.8
       },
       "20": {
-        "n": 12137,
-        "up_rate": 50.2,
-        "avg_ret": 1.48,
-        "median_ret": 0.11,
-        "edge": 0.2
+        "n": 9749,
+        "up_rate": 49.9,
+        "avg_ret": 1.27,
+        "median_ret": 0.0,
+        "edge": -0.5
       },
       "60": {
-        "n": 11597,
-        "up_rate": 50.2,
-        "avg_ret": 3.88,
-        "median_ret": 0.13,
-        "edge": 0.0
+        "n": 9267,
+        "up_rate": 50.3,
+        "avg_ret": 4.08,
+        "median_ret": 0.21,
+        "edge": 0.2
       }
     },
     "diamond_top": {
       "label": "다이아몬드 천장형",
       "dir": 1,
       "1": {
-        "n": 38448,
-        "up_rate": 50.1,
-        "avg_ret": 0.16,
-        "median_ret": 0.02,
-        "edge": 0.6
-      },
-      "3": {
-        "n": 38344,
-        "up_rate": 51.5,
-        "avg_ret": 0.4,
-        "median_ret": 0.12,
-        "edge": 1.4
-      },
-      "5": {
-        "n": 38287,
-        "up_rate": 51.6,
-        "avg_ret": 0.42,
-        "median_ret": 0.15,
+        "n": 31623,
+        "up_rate": 50.5,
+        "avg_ret": 0.19,
+        "median_ret": 0.04,
         "edge": 0.3
       },
-      "10": {
-        "n": 38063,
+      "3": {
+        "n": 31516,
         "up_rate": 52.0,
-        "avg_ret": 0.8,
-        "median_ret": 0.25,
-        "edge": 1.6
+        "avg_ret": 0.44,
+        "median_ret": 0.14,
+        "edge": 1.5
+      },
+      "5": {
+        "n": 31430,
+        "up_rate": 51.8,
+        "avg_ret": 0.42,
+        "median_ret": 0.16,
+        "edge": 0.8
+      },
+      "10": {
+        "n": 31303,
+        "up_rate": 52.2,
+        "avg_ret": 0.83,
+        "median_ret": 0.28,
+        "edge": 1.5
       },
       "20": {
-        "n": 37643,
-        "up_rate": 51.7,
+        "n": 30948,
+        "up_rate": 52.1,
         "avg_ret": 1.34,
-        "median_ret": 0.35,
+        "median_ret": 0.4,
         "edge": 1.7
       },
       "60": {
-        "n": 36005,
-        "up_rate": 49.7,
-        "avg_ret": 1.93,
-        "median_ret": -0.06,
-        "edge": -0.5
+        "n": 29572,
+        "up_rate": 49.9,
+        "avg_ret": 1.82,
+        "median_ret": -0.03,
+        "edge": -0.2
       }
     },
     "diamond_bottom": {
       "label": "다이아몬드 바닥형",
       "dir": -1,
       "1": {
-        "n": 37676,
-        "up_rate": 48.2,
-        "avg_ret": -0.02,
+        "n": 30943,
+        "up_rate": 48.0,
+        "avg_ret": -0.03,
         "median_ret": 0.0,
-        "edge": -1.3
+        "edge": -2.2
       },
       "3": {
-        "n": 37586,
-        "up_rate": 48.1,
-        "avg_ret": 0.41,
-        "median_ret": -0.1,
-        "edge": -2.0
+        "n": 30889,
+        "up_rate": 47.9,
+        "avg_ret": -0.06,
+        "median_ret": -0.11,
+        "edge": -2.6
       },
       "5": {
-        "n": 37499,
-        "up_rate": 49.0,
-        "avg_ret": 0.55,
-        "median_ret": -0.03,
+        "n": 30800,
+        "up_rate": 48.7,
+        "avg_ret": 0.05,
+        "median_ret": -0.08,
         "edge": -2.3
       },
       "10": {
-        "n": 37328,
-        "up_rate": 50.2,
-        "avg_ret": 0.43,
-        "median_ret": 0.05,
-        "edge": -0.2
+        "n": 30629,
+        "up_rate": 50.1,
+        "avg_ret": 0.39,
+        "median_ret": 0.03,
+        "edge": -0.6
       },
       "20": {
-        "n": 36875,
-        "up_rate": 51.1,
-        "avg_ret": 1.2,
-        "median_ret": 0.27,
-        "edge": 1.1
+        "n": 30248,
+        "up_rate": 51.2,
+        "avg_ret": 1.21,
+        "median_ret": 0.28,
+        "edge": 0.8
       },
       "60": {
-        "n": 35771,
-        "up_rate": 50.6,
-        "avg_ret": 3.74,
-        "median_ret": 0.25,
-        "edge": 0.4
+        "n": 29236,
+        "up_rate": 50.4,
+        "avg_ret": 3.75,
+        "median_ret": 0.19,
+        "edge": 0.3
       }
     },
     "complex_hns": {
       "label": "복합 헤드앤숄더",
       "dir": 1,
       "1": {
-        "n": 38093,
+        "n": 31480,
         "up_rate": 48.6,
-        "avg_ret": 0.02,
+        "avg_ret": 0.01,
+        "median_ret": 0.0,
+        "edge": -1.6
+      },
+      "3": {
+        "n": 31402,
+        "up_rate": 49.6,
+        "avg_ret": 0.09,
         "median_ret": 0.0,
         "edge": -0.9
       },
-      "3": {
-        "n": 37973,
-        "up_rate": 49.5,
-        "avg_ret": 0.1,
-        "median_ret": 0.0,
-        "edge": -0.6
-      },
       "5": {
-        "n": 37866,
-        "up_rate": 50.1,
-        "avg_ret": 0.21,
-        "median_ret": 0.02,
-        "edge": -1.2
+        "n": 31293,
+        "up_rate": 49.9,
+        "avg_ret": 0.15,
+        "median_ret": 0.0,
+        "edge": -1.1
       },
       "10": {
-        "n": 37644,
-        "up_rate": 51.2,
-        "avg_ret": 0.62,
-        "median_ret": 0.19,
-        "edge": 0.8
+        "n": 31085,
+        "up_rate": 51.0,
+        "avg_ret": 0.55,
+        "median_ret": 0.16,
+        "edge": 0.3
       },
       "20": {
-        "n": 37191,
-        "up_rate": 51.1,
-        "avg_ret": 1.19,
-        "median_ret": 0.25,
-        "edge": 1.1
+        "n": 30707,
+        "up_rate": 50.9,
+        "avg_ret": 1.14,
+        "median_ret": 0.2,
+        "edge": 0.5
       },
       "60": {
-        "n": 36063,
-        "up_rate": 51.9,
-        "avg_ret": 3.24,
-        "median_ret": 0.66,
-        "edge": 1.7
+        "n": 29710,
+        "up_rate": 52.1,
+        "avg_ret": 3.44,
+        "median_ret": 0.71,
+        "edge": 2.0
       }
     },
     "cup_and_handle": {
       "label": "컵 앤 핸들",
       "dir": 1,
       "1": {
-        "n": 14245,
-        "up_rate": 50.2,
-        "avg_ret": 0.16,
-        "median_ret": 0.03,
-        "edge": 0.7
+        "n": 11090,
+        "up_rate": 50.7,
+        "avg_ret": 0.17,
+        "median_ret": 0.06,
+        "edge": 0.5
       },
       "3": {
-        "n": 14203,
-        "up_rate": 52.3,
-        "avg_ret": 0.4,
+        "n": 11062,
+        "up_rate": 52.4,
+        "avg_ret": 0.39,
         "median_ret": 0.23,
-        "edge": 2.2
+        "edge": 1.9
       },
       "5": {
-        "n": 14181,
-        "up_rate": 51.7,
-        "avg_ret": 0.38,
-        "median_ret": 0.24,
-        "edge": 0.4
+        "n": 11027,
+        "up_rate": 51.5,
+        "avg_ret": 0.35,
+        "median_ret": 0.2,
+        "edge": 0.5
       },
       "10": {
-        "n": 14087,
-        "up_rate": 52.4,
-        "avg_ret": 0.72,
-        "median_ret": 0.4,
-        "edge": 2.0
+        "n": 10986,
+        "up_rate": 53.0,
+        "avg_ret": 0.77,
+        "median_ret": 0.49,
+        "edge": 2.3
       },
       "20": {
-        "n": 13931,
-        "up_rate": 51.5,
-        "avg_ret": 1.31,
-        "median_ret": 0.45,
-        "edge": 1.5
+        "n": 10850,
+        "up_rate": 52.3,
+        "avg_ret": 1.43,
+        "median_ret": 0.61,
+        "edge": 1.9
       },
       "60": {
-        "n": 13309,
-        "up_rate": 47.0,
-        "avg_ret": 0.92,
-        "median_ret": -1.21,
+        "n": 10351,
+        "up_rate": 46.9,
+        "avg_ret": 1.06,
+        "median_ret": -1.35,
         "edge": -3.2
       }
     },
@@ -1067,919 +1067,919 @@
       "label": "상승 채널 돌파",
       "dir": 1,
       "1": {
-        "n": 30819,
-        "up_rate": 49.0,
-        "avg_ret": 0.07,
+        "n": 25534,
+        "up_rate": 49.5,
+        "avg_ret": 0.09,
         "median_ret": 0.0,
-        "edge": -0.5
+        "edge": -0.7
       },
       "3": {
-        "n": 30706,
-        "up_rate": 50.8,
-        "avg_ret": 0.22,
-        "median_ret": 0.07,
-        "edge": 0.7
+        "n": 25443,
+        "up_rate": 51.7,
+        "avg_ret": 0.28,
+        "median_ret": 0.12,
+        "edge": 1.2
       },
       "5": {
-        "n": 30628,
-        "up_rate": 51.2,
-        "avg_ret": 0.22,
-        "median_ret": 0.12,
-        "edge": -0.1
+        "n": 25361,
+        "up_rate": 51.9,
+        "avg_ret": 0.27,
+        "median_ret": 0.19,
+        "edge": 0.9
       },
       "10": {
-        "n": 30432,
-        "up_rate": 50.9,
-        "avg_ret": 0.37,
-        "median_ret": 0.13,
+        "n": 25205,
+        "up_rate": 51.2,
+        "avg_ret": 0.44,
+        "median_ret": 0.16,
         "edge": 0.5
       },
       "20": {
-        "n": 30160,
-        "up_rate": 50.8,
-        "avg_ret": 0.83,
-        "median_ret": 0.18,
-        "edge": 0.8
+        "n": 24960,
+        "up_rate": 51.5,
+        "avg_ret": 0.89,
+        "median_ret": 0.32,
+        "edge": 1.1
       },
       "60": {
-        "n": 28957,
-        "up_rate": 49.9,
-        "avg_ret": 1.58,
-        "median_ret": -0.01,
-        "edge": -0.3
+        "n": 23945,
+        "up_rate": 50.6,
+        "avg_ret": 1.86,
+        "median_ret": 0.23,
+        "edge": 0.5
       }
     },
     "descending_channel_breakout": {
       "label": "하락 채널 이탈",
       "dir": -1,
       "1": {
-        "n": 29711,
-        "up_rate": 48.2,
-        "avg_ret": -0.07,
+        "n": 24451,
+        "up_rate": 48.3,
+        "avg_ret": -0.05,
         "median_ret": -0.03,
-        "edge": -1.3
+        "edge": -1.9
       },
       "3": {
-        "n": 29632,
-        "up_rate": 48.7,
-        "avg_ret": 0.0,
+        "n": 24412,
+        "up_rate": 48.6,
+        "avg_ret": 0.01,
         "median_ret": -0.07,
-        "edge": -1.4
+        "edge": -1.9
       },
       "5": {
-        "n": 29575,
-        "up_rate": 48.9,
+        "n": 24335,
+        "up_rate": 48.7,
         "avg_ret": 0.05,
-        "median_ret": -0.07,
-        "edge": -2.4
+        "median_ret": -0.11,
+        "edge": -2.3
       },
       "10": {
-        "n": 29440,
-        "up_rate": 50.3,
-        "avg_ret": 0.4,
-        "median_ret": 0.07,
-        "edge": -0.1
+        "n": 24202,
+        "up_rate": 50.2,
+        "avg_ret": 0.42,
+        "median_ret": 0.05,
+        "edge": -0.5
       },
       "20": {
-        "n": 29096,
-        "up_rate": 52.2,
-        "avg_ret": 1.1,
-        "median_ret": 0.49,
-        "edge": 2.2
+        "n": 23906,
+        "up_rate": 52.7,
+        "avg_ret": 1.19,
+        "median_ret": 0.59,
+        "edge": 2.3
       },
       "60": {
-        "n": 28480,
-        "up_rate": 51.8,
-        "avg_ret": 2.75,
-        "median_ret": 0.7,
-        "edge": 1.6
+        "n": 23350,
+        "up_rate": 52.5,
+        "avg_ret": 3.05,
+        "median_ret": 0.91,
+        "edge": 2.4
       }
     },
     "reversal_123_up": {
       "label": "1-2-3 반전(상승)",
       "dir": 1,
       "1": {
-        "n": 66746,
-        "up_rate": 49.6,
-        "avg_ret": 0.16,
-        "median_ret": 0.0,
-        "edge": 0.1
+        "n": 55481,
+        "up_rate": 50.1,
+        "avg_ret": 0.2,
+        "median_ret": 0.02,
+        "edge": -0.1
       },
       "3": {
-        "n": 66532,
-        "up_rate": 51.1,
-        "avg_ret": 0.36,
-        "median_ret": 0.09,
-        "edge": 1.0
+        "n": 55311,
+        "up_rate": 51.8,
+        "avg_ret": 0.42,
+        "median_ret": 0.13,
+        "edge": 1.3
       },
       "5": {
-        "n": 66423,
-        "up_rate": 50.9,
-        "avg_ret": 0.36,
-        "median_ret": 0.1,
-        "edge": -0.4
+        "n": 55121,
+        "up_rate": 51.3,
+        "avg_ret": 0.39,
+        "median_ret": 0.12,
+        "edge": 0.3
       },
       "10": {
-        "n": 66006,
-        "up_rate": 50.8,
-        "avg_ret": 0.61,
-        "median_ret": 0.1,
+        "n": 54870,
+        "up_rate": 51.1,
+        "avg_ret": 0.64,
+        "median_ret": 0.14,
         "edge": 0.4
       },
       "20": {
-        "n": 65323,
-        "up_rate": 50.8,
-        "avg_ret": 1.05,
-        "median_ret": 0.17,
-        "edge": 0.8
+        "n": 54251,
+        "up_rate": 51.3,
+        "avg_ret": 1.09,
+        "median_ret": 0.23,
+        "edge": 0.9
       },
       "60": {
-        "n": 62625,
-        "up_rate": 49.5,
-        "avg_ret": 1.7,
-        "median_ret": -0.12,
-        "edge": -0.7
+        "n": 51919,
+        "up_rate": 49.9,
+        "avg_ret": 1.83,
+        "median_ret": -0.01,
+        "edge": -0.2
       }
     },
     "reversal_123_down": {
       "label": "1-2-3 반전(하락)",
       "dir": -1,
       "1": {
-        "n": 64059,
-        "up_rate": 47.5,
-        "avg_ret": -0.08,
-        "median_ret": -0.05,
-        "edge": -2.0
-      },
-      "3": {
-        "n": 63911,
+        "n": 53070,
         "up_rate": 47.3,
-        "avg_ret": 0.31,
-        "median_ret": -0.18,
-        "edge": -2.8
-      },
-      "5": {
-        "n": 63787,
-        "up_rate": 48.4,
-        "avg_ret": 0.51,
-        "median_ret": -0.11,
+        "avg_ret": -0.11,
+        "median_ret": -0.06,
         "edge": -2.9
       },
+      "3": {
+        "n": 52988,
+        "up_rate": 46.9,
+        "avg_ret": -0.23,
+        "median_ret": -0.21,
+        "edge": -3.6
+      },
+      "5": {
+        "n": 52810,
+        "up_rate": 47.9,
+        "avg_ret": -0.01,
+        "median_ret": -0.17,
+        "edge": -3.1
+      },
       "10": {
-        "n": 63512,
-        "up_rate": 50.5,
-        "avg_ret": 0.59,
-        "median_ret": 0.1,
-        "edge": 0.1
+        "n": 52538,
+        "up_rate": 50.3,
+        "avg_ret": 0.38,
+        "median_ret": 0.06,
+        "edge": -0.4
       },
       "20": {
-        "n": 62739,
+        "n": 51884,
         "up_rate": 51.4,
-        "avg_ret": 1.46,
-        "median_ret": 0.35,
-        "edge": 1.4
+        "avg_ret": 1.29,
+        "median_ret": 0.33,
+        "edge": 1.0
       },
       "60": {
-        "n": 61129,
-        "up_rate": 51.6,
-        "avg_ret": 4.0,
-        "median_ret": 0.66,
-        "edge": 1.4
+        "n": 50383,
+        "up_rate": 51.4,
+        "avg_ret": 3.75,
+        "median_ret": 0.56,
+        "edge": 1.3
       }
     },
     "two_b_bottom": {
       "label": "2B 바닥",
       "dir": 1,
       "1": {
-        "n": 17445,
-        "up_rate": 49.1,
-        "avg_ret": 0.07,
+        "n": 14454,
+        "up_rate": 49.6,
+        "avg_ret": 0.08,
         "median_ret": 0.0,
-        "edge": -0.4
+        "edge": -0.6
       },
       "3": {
-        "n": 17383,
-        "up_rate": 50.8,
+        "n": 14404,
+        "up_rate": 51.0,
         "avg_ret": 0.16,
-        "median_ret": 0.07,
-        "edge": 0.7
+        "median_ret": 0.08,
+        "edge": 0.5
       },
       "5": {
-        "n": 17348,
-        "up_rate": 51.5,
-        "avg_ret": 0.21,
-        "median_ret": 0.15,
-        "edge": 0.2
+        "n": 14357,
+        "up_rate": 51.3,
+        "avg_ret": 0.18,
+        "median_ret": 0.12,
+        "edge": 0.3
       },
       "10": {
-        "n": 17229,
+        "n": 14276,
         "up_rate": 52.5,
-        "avg_ret": 0.44,
-        "median_ret": 0.31,
-        "edge": 2.1
+        "avg_ret": 0.42,
+        "median_ret": 0.3,
+        "edge": 1.8
       },
       "20": {
-        "n": 17056,
-        "up_rate": 52.0,
-        "avg_ret": 1.0,
+        "n": 14117,
+        "up_rate": 52.1,
+        "avg_ret": 1.04,
         "median_ret": 0.42,
-        "edge": 2.0
+        "edge": 1.7
       },
       "60": {
-        "n": 16466,
-        "up_rate": 49.4,
-        "avg_ret": 0.94,
-        "median_ret": -0.16,
-        "edge": -0.8
+        "n": 13600,
+        "up_rate": 48.9,
+        "avg_ret": 0.69,
+        "median_ret": -0.34,
+        "edge": -1.2
       }
     },
     "two_b_top": {
       "label": "2B 천장",
       "dir": -1,
       "1": {
-        "n": 18184,
-        "up_rate": 49.2,
-        "avg_ret": -0.06,
+        "n": 15197,
+        "up_rate": 48.8,
+        "avg_ret": -0.07,
         "median_ret": 0.0,
-        "edge": -0.3
+        "edge": -1.4
       },
       "3": {
-        "n": 18157,
-        "up_rate": 50.3,
+        "n": 15186,
+        "up_rate": 50.2,
         "avg_ret": 0.03,
-        "median_ret": 0.04,
-        "edge": 0.2
+        "median_ret": 0.03,
+        "edge": -0.3
       },
       "5": {
-        "n": 18128,
-        "up_rate": 50.8,
-        "avg_ret": 0.2,
+        "n": 15168,
+        "up_rate": 50.9,
+        "avg_ret": 0.18,
         "median_ret": 0.09,
-        "edge": -0.5
+        "edge": -0.1
       },
       "10": {
-        "n": 18046,
-        "up_rate": 52.2,
-        "avg_ret": 0.53,
-        "median_ret": 0.35,
-        "edge": 1.8
+        "n": 15091,
+        "up_rate": 52.0,
+        "avg_ret": 0.47,
+        "median_ret": 0.29,
+        "edge": 1.3
       },
       "20": {
-        "n": 17848,
-        "up_rate": 53.7,
-        "avg_ret": 1.05,
-        "median_ret": 0.68,
-        "edge": 3.7
+        "n": 14928,
+        "up_rate": 54.2,
+        "avg_ret": 1.04,
+        "median_ret": 0.75,
+        "edge": 3.8
       },
       "60": {
-        "n": 17446,
-        "up_rate": 52.9,
-        "avg_ret": 2.3,
-        "median_ret": 0.93,
-        "edge": 2.7
+        "n": 14546,
+        "up_rate": 53.6,
+        "avg_ret": 2.47,
+        "median_ret": 1.04,
+        "edge": 3.5
       }
     },
     "bull_trap": {
       "label": "불 트랩(가짜 돌파)",
       "dir": -1,
       "1": {
-        "n": 65507,
-        "up_rate": 36.4,
-        "avg_ret": -0.76,
-        "median_ret": -0.45,
-        "edge": -13.1
+        "n": 57587,
+        "up_rate": 36.9,
+        "avg_ret": -0.7,
+        "median_ret": -0.4,
+        "edge": -13.3
       },
       "3": {
-        "n": 65507,
-        "up_rate": 32.9,
-        "avg_ret": -1.58,
-        "median_ret": -0.91,
-        "edge": -17.2
+        "n": 57587,
+        "up_rate": 33.5,
+        "avg_ret": -1.5,
+        "median_ret": -0.84,
+        "edge": -17.0
       },
       "5": {
-        "n": 65507,
-        "up_rate": 32.0,
-        "avg_ret": -2.1,
-        "median_ret": -1.29,
-        "edge": -19.3
+        "n": 57587,
+        "up_rate": 32.5,
+        "avg_ret": -2.04,
+        "median_ret": -1.2,
+        "edge": -18.5
       },
       "10": {
-        "n": 65507,
-        "up_rate": 33.0,
-        "avg_ret": -2.55,
-        "median_ret": -1.74,
-        "edge": -17.4
+        "n": 57587,
+        "up_rate": 33.4,
+        "avg_ret": -2.43,
+        "median_ret": -1.59,
+        "edge": -17.3
       },
       "20": {
-        "n": 64643,
-        "up_rate": 40.8,
-        "avg_ret": -2.2,
-        "median_ret": -1.63,
-        "edge": -9.2
+        "n": 56924,
+        "up_rate": 41.8,
+        "avg_ret": -2.03,
+        "median_ret": -1.41,
+        "edge": -8.6
       },
       "60": {
-        "n": 61287,
-        "up_rate": 47.0,
-        "avg_ret": -0.56,
-        "median_ret": -0.93,
-        "edge": -3.2
+        "n": 53542,
+        "up_rate": 47.7,
+        "avg_ret": -0.35,
+        "median_ret": -0.66,
+        "edge": -2.4
       }
     },
     "bear_trap": {
       "label": "베어 트랩(가짜 이탈)",
       "dir": 1,
       "1": {
-        "n": 57262,
-        "up_rate": 60.8,
-        "avg_ret": 1.44,
-        "median_ret": 0.66,
-        "edge": 11.3
+        "n": 49062,
+        "up_rate": 60.3,
+        "avg_ret": 1.17,
+        "median_ret": 0.6,
+        "edge": 10.1
       },
       "3": {
-        "n": 57262,
+        "n": 49062,
         "up_rate": 66.7,
-        "avg_ret": 3.3,
-        "median_ret": 1.7,
-        "edge": 16.6
+        "avg_ret": 2.85,
+        "median_ret": 1.61,
+        "edge": 16.2
       },
       "5": {
-        "n": 57262,
-        "up_rate": 69.1,
-        "avg_ret": 4.43,
-        "median_ret": 2.4,
-        "edge": 17.8
+        "n": 49062,
+        "up_rate": 69.0,
+        "avg_ret": 3.88,
+        "median_ret": 2.3,
+        "edge": 18.0
       },
       "10": {
-        "n": 57262,
-        "up_rate": 70.8,
-        "avg_ret": 5.83,
-        "median_ret": 3.4,
-        "edge": 20.4
+        "n": 49062,
+        "up_rate": 70.4,
+        "avg_ret": 5.32,
+        "median_ret": 3.19,
+        "edge": 19.7
       },
       "20": {
-        "n": 56634,
-        "up_rate": 64.7,
-        "avg_ret": 6.79,
-        "median_ret": 4.09,
-        "edge": 14.7
+        "n": 48514,
+        "up_rate": 64.5,
+        "avg_ret": 6.26,
+        "median_ret": 3.84,
+        "edge": 14.1
       },
       "60": {
-        "n": 55225,
-        "up_rate": 60.8,
-        "avg_ret": 10.23,
-        "median_ret": 5.23,
-        "edge": 10.6
+        "n": 47055,
+        "up_rate": 60.3,
+        "avg_ret": 9.3,
+        "median_ret": 4.78,
+        "edge": 10.2
       }
     },
     "breakaway_gap_up": {
       "label": "상승 갭(돌파형)",
       "dir": 1,
       "1": {
-        "n": 20653,
-        "up_rate": 49.5,
-        "avg_ret": 0.33,
+        "n": 20262,
+        "up_rate": 49.9,
+        "avg_ret": 0.41,
         "median_ret": 0.0,
-        "edge": 0.0
+        "edge": -0.3
       },
       "3": {
-        "n": 20627,
-        "up_rate": 50.2,
-        "avg_ret": 0.6,
-        "median_ret": 0.05,
-        "edge": 0.1
+        "n": 20229,
+        "up_rate": 50.4,
+        "avg_ret": 0.68,
+        "median_ret": 0.09,
+        "edge": -0.1
       },
       "5": {
-        "n": 20585,
-        "up_rate": 48.7,
-        "avg_ret": 0.24,
-        "median_ret": -0.15,
-        "edge": -2.6
+        "n": 20199,
+        "up_rate": 49.4,
+        "avg_ret": 0.34,
+        "median_ret": -0.04,
+        "edge": -1.6
       },
       "10": {
-        "n": 20406,
-        "up_rate": 49.2,
-        "avg_ret": 0.7,
-        "median_ret": -0.1,
+        "n": 20126,
+        "up_rate": 49.5,
+        "avg_ret": 0.69,
+        "median_ret": -0.03,
         "edge": -1.2
       },
       "20": {
-        "n": 20255,
-        "up_rate": 50.1,
-        "avg_ret": 2.2,
-        "median_ret": 0.05,
-        "edge": 0.1
+        "n": 19832,
+        "up_rate": 50.0,
+        "avg_ret": 2.41,
+        "median_ret": 0.0,
+        "edge": -0.4
       },
       "60": {
-        "n": 18871,
-        "up_rate": 48.9,
-        "avg_ret": 4.34,
-        "median_ret": -0.56,
-        "edge": -1.3
+        "n": 18328,
+        "up_rate": 48.6,
+        "avg_ret": 4.78,
+        "median_ret": -0.78,
+        "edge": -1.5
       }
     },
     "breakaway_gap_down": {
       "label": "하락 갭(돌파형)",
       "dir": -1,
       "1": {
-        "n": 19061,
-        "up_rate": 47.9,
-        "avg_ret": -0.06,
+        "n": 19166,
+        "up_rate": 48.2,
+        "avg_ret": -0.12,
         "median_ret": 0.0,
-        "edge": -1.6
+        "edge": -2.0
       },
       "3": {
-        "n": 19019,
-        "up_rate": 48.9,
-        "avg_ret": 1.0,
-        "median_ret": 0.0,
-        "edge": -1.2
+        "n": 19145,
+        "up_rate": 49.0,
+        "avg_ret": 0.99,
+        "median_ret": -0.04,
+        "edge": -1.5
       },
       "5": {
-        "n": 18875,
-        "up_rate": 49.6,
-        "avg_ret": 1.88,
+        "n": 19095,
+        "up_rate": 50.0,
+        "avg_ret": 1.02,
         "median_ret": 0.0,
-        "edge": -1.7
+        "edge": -1.0
       },
       "10": {
-        "n": 18795,
-        "up_rate": 50.8,
-        "avg_ret": 1.76,
-        "median_ret": 0.26,
-        "edge": 0.4
+        "n": 18889,
+        "up_rate": 51.0,
+        "avg_ret": 1.33,
+        "median_ret": 0.29,
+        "edge": 0.3
       },
       "20": {
-        "n": 18586,
+        "n": 18593,
         "up_rate": 52.0,
-        "avg_ret": 2.83,
-        "median_ret": 0.77,
-        "edge": 2.0
+        "avg_ret": 2.48,
+        "median_ret": 0.8,
+        "edge": 1.6
       },
       "60": {
-        "n": 17808,
-        "up_rate": 51.1,
-        "avg_ret": 6.67,
-        "median_ret": 0.78,
-        "edge": 0.9
+        "n": 17746,
+        "up_rate": 50.7,
+        "avg_ret": 6.4,
+        "median_ret": 0.54,
+        "edge": 0.6
       }
     },
     "exhaustion_gap_up": {
       "label": "상승 갭(소진형)",
       "dir": 1,
       "1": {
-        "n": 7549,
-        "up_rate": 49.7,
-        "avg_ret": 0.17,
-        "median_ret": 0.0,
-        "edge": 0.2
+        "n": 9410,
+        "up_rate": 50.6,
+        "avg_ret": 0.15,
+        "median_ret": 0.04,
+        "edge": 0.4
       },
       "3": {
-        "n": 7538,
-        "up_rate": 51.9,
-        "avg_ret": 0.16,
-        "median_ret": 0.17,
-        "edge": 1.8
+        "n": 9389,
+        "up_rate": 52.1,
+        "avg_ret": 0.13,
+        "median_ret": 0.19,
+        "edge": 1.6
       },
       "5": {
-        "n": 7529,
-        "up_rate": 52.5,
-        "avg_ret": 0.2,
-        "median_ret": 0.3,
-        "edge": 1.2
+        "n": 9376,
+        "up_rate": 53.1,
+        "avg_ret": 0.17,
+        "median_ret": 0.37,
+        "edge": 2.1
       },
       "10": {
-        "n": 7427,
-        "up_rate": 53.9,
-        "avg_ret": 0.84,
-        "median_ret": 0.68,
-        "edge": 3.5
+        "n": 9349,
+        "up_rate": 54.1,
+        "avg_ret": 0.67,
+        "median_ret": 0.75,
+        "edge": 3.4
       },
       "20": {
-        "n": 7391,
-        "up_rate": 57.3,
-        "avg_ret": 2.52,
-        "median_ret": 1.75,
-        "edge": 7.3
+        "n": 9205,
+        "up_rate": 56.8,
+        "avg_ret": 2.06,
+        "median_ret": 1.74,
+        "edge": 6.4
       },
       "60": {
-        "n": 6711,
-        "up_rate": 55.6,
-        "avg_ret": 3.94,
-        "median_ret": 2.12,
-        "edge": 5.4
+        "n": 8498,
+        "up_rate": 55.0,
+        "avg_ret": 3.05,
+        "median_ret": 1.99,
+        "edge": 4.9
       }
     },
     "exhaustion_gap_down": {
       "label": "하락 갭(소진형)",
       "dir": -1,
       "1": {
-        "n": 6980,
-        "up_rate": 47.6,
-        "avg_ret": -0.1,
+        "n": 8719,
+        "up_rate": 48.3,
+        "avg_ret": -0.09,
         "median_ret": 0.0,
         "edge": -1.9
       },
       "3": {
-        "n": 6959,
-        "up_rate": 49.2,
-        "avg_ret": 0.08,
-        "median_ret": 0.0,
-        "edge": -0.9
+        "n": 8711,
+        "up_rate": 50.1,
+        "avg_ret": 0.07,
+        "median_ret": 0.03,
+        "edge": -0.4
       },
       "5": {
-        "n": 6879,
-        "up_rate": 49.9,
-        "avg_ret": 0.17,
-        "median_ret": 0.0,
-        "edge": -1.4
+        "n": 8679,
+        "up_rate": 50.6,
+        "avg_ret": 0.13,
+        "median_ret": 0.1,
+        "edge": -0.4
       },
       "10": {
-        "n": 6856,
-        "up_rate": 54.0,
-        "avg_ret": 0.94,
-        "median_ret": 0.66,
-        "edge": 3.6
+        "n": 8575,
+        "up_rate": 53.8,
+        "avg_ret": 0.78,
+        "median_ret": 0.67,
+        "edge": 3.1
       },
       "20": {
-        "n": 6791,
-        "up_rate": 55.4,
-        "avg_ret": 1.8,
-        "median_ret": 1.25,
-        "edge": 5.4
+        "n": 8494,
+        "up_rate": 54.8,
+        "avg_ret": 1.39,
+        "median_ret": 1.17,
+        "edge": 4.4
       },
       "60": {
-        "n": 6532,
-        "up_rate": 56.6,
-        "avg_ret": 4.02,
-        "median_ret": 2.48,
-        "edge": 6.4
+        "n": 8142,
+        "up_rate": 55.7,
+        "avg_ret": 3.27,
+        "median_ret": 2.26,
+        "edge": 5.6
       }
     },
     "island_reversal": {
       "label": "아일랜드 반전",
       "dir": 1,
       "1": {
-        "n": 6670,
-        "up_rate": 46.4,
-        "avg_ret": 0.03,
-        "median_ret": -0.12,
-        "edge": -3.1
+        "n": 9055,
+        "up_rate": 47.8,
+        "avg_ret": 0.04,
+        "median_ret": -0.07,
+        "edge": -2.4
       },
       "3": {
-        "n": 6632,
-        "up_rate": 52.5,
-        "avg_ret": 0.88,
-        "median_ret": 0.31,
-        "edge": 2.4
+        "n": 9046,
+        "up_rate": 53.0,
+        "avg_ret": 0.8,
+        "median_ret": 0.38,
+        "edge": 2.5
       },
       "5": {
-        "n": 6603,
-        "up_rate": 53.5,
-        "avg_ret": 2.65,
-        "median_ret": 0.46,
-        "edge": 2.2
+        "n": 8998,
+        "up_rate": 53.9,
+        "avg_ret": 0.68,
+        "median_ret": 0.54,
+        "edge": 2.9
       },
       "10": {
-        "n": 6557,
+        "n": 8947,
         "up_rate": 55.9,
-        "avg_ret": 1.66,
+        "avg_ret": 1.75,
         "median_ret": 1.06,
-        "edge": 5.5
+        "edge": 5.2
       },
       "20": {
-        "n": 6462,
-        "up_rate": 58.1,
-        "avg_ret": 3.96,
-        "median_ret": 2.47,
-        "edge": 8.1
+        "n": 8793,
+        "up_rate": 57.4,
+        "avg_ret": 3.26,
+        "median_ret": 2.21,
+        "edge": 7.0
       },
       "60": {
-        "n": 6232,
-        "up_rate": 59.9,
-        "avg_ret": 8.13,
-        "median_ret": 4.44,
-        "edge": 9.7
+        "n": 8443,
+        "up_rate": 58.2,
+        "avg_ret": 7.08,
+        "median_ret": 3.8,
+        "edge": 8.1
       }
     },
     "gap_fill_setup": {
       "label": "갭 메우기 셋업",
-      "dir": -1,
+      "dir": 1,
       "1": {
-        "n": 296025,
-        "up_rate": 49.5,
-        "avg_ret": 0.07,
+        "n": 290014,
+        "up_rate": 49.9,
+        "avg_ret": 0.03,
         "median_ret": 0.0,
-        "edge": 0.0
+        "edge": -0.3
       },
       "3": {
-        "n": 296014,
-        "up_rate": 51.2,
-        "avg_ret": 0.18,
-        "median_ret": 0.09,
-        "edge": 1.1
+        "n": 290009,
+        "up_rate": 51.4,
+        "avg_ret": 0.12,
+        "median_ret": 0.1,
+        "edge": 0.9
       },
       "5": {
-        "n": 295996,
-        "up_rate": 52.1,
-        "avg_ret": 0.32,
-        "median_ret": 0.18,
-        "edge": 0.8
+        "n": 289997,
+        "up_rate": 52.3,
+        "avg_ret": 0.27,
+        "median_ret": 0.19,
+        "edge": 1.3
       },
       "10": {
-        "n": 295771,
-        "up_rate": 52.8,
-        "avg_ret": 0.59,
-        "median_ret": 0.32,
-        "edge": 2.4
+        "n": 289792,
+        "up_rate": 52.7,
+        "avg_ret": 0.52,
+        "median_ret": 0.3,
+        "edge": 2.0
       },
       "20": {
-        "n": 293524,
-        "up_rate": 52.6,
-        "avg_ret": 0.99,
-        "median_ret": 0.42,
-        "edge": 2.6
+        "n": 287323,
+        "up_rate": 52.3,
+        "avg_ret": 0.89,
+        "median_ret": 0.37,
+        "edge": 1.9
       },
       "60": {
-        "n": 281485,
-        "up_rate": 53.7,
-        "avg_ret": 2.61,
-        "median_ret": 1.04,
-        "edge": 3.5
+        "n": 275503,
+        "up_rate": 53.3,
+        "avg_ret": 2.49,
+        "median_ret": 0.89,
+        "edge": 3.2
       }
     },
     "volume_climax_up": {
       "label": "거래량 클라이맥스(상승)",
       "dir": 1,
       "1": {
-        "n": 46019,
-        "up_rate": 46.1,
-        "avg_ret": 0.24,
-        "median_ret": -0.22,
-        "edge": -3.4
+        "n": 38028,
+        "up_rate": 46.6,
+        "avg_ret": 0.28,
+        "median_ret": -0.18,
+        "edge": -3.6
       },
       "3": {
-        "n": 45954,
+        "n": 37739,
         "up_rate": 47.4,
-        "avg_ret": 0.66,
+        "avg_ret": 0.6,
         "median_ret": -0.27,
-        "edge": -2.7
+        "edge": -3.1
       },
       "5": {
-        "n": 45898,
-        "up_rate": 46.8,
-        "avg_ret": 0.75,
-        "median_ret": -0.5,
-        "edge": -4.5
+        "n": 37687,
+        "up_rate": 46.6,
+        "avg_ret": 0.65,
+        "median_ret": -0.56,
+        "edge": -4.4
       },
       "10": {
-        "n": 45671,
-        "up_rate": 47.5,
-        "avg_ret": 1.6,
-        "median_ret": -0.53,
-        "edge": -2.9
+        "n": 37530,
+        "up_rate": 47.3,
+        "avg_ret": 1.11,
+        "median_ret": -0.61,
+        "edge": -3.4
       },
       "20": {
-        "n": 45346,
-        "up_rate": 47.4,
-        "avg_ret": 2.6,
-        "median_ret": -0.86,
-        "edge": -2.6
+        "n": 37266,
+        "up_rate": 47.2,
+        "avg_ret": 2.38,
+        "median_ret": -0.93,
+        "edge": -3.2
       },
       "60": {
-        "n": 43591,
-        "up_rate": 45.6,
-        "avg_ret": 4.55,
-        "median_ret": -2.68,
-        "edge": -4.6
+        "n": 35586,
+        "up_rate": 45.3,
+        "avg_ret": 3.82,
+        "median_ret": -2.9,
+        "edge": -4.8
       }
     },
     "volume_climax_down": {
       "label": "거래량 클라이맥스(하락)",
       "dir": -1,
       "1": {
-        "n": 39582,
-        "up_rate": 49.2,
-        "avg_ret": 0.82,
+        "n": 32787,
+        "up_rate": 49.0,
+        "avg_ret": 0.16,
         "median_ret": 0.0,
-        "edge": -0.3
+        "edge": -1.2
       },
       "3": {
-        "n": 39524,
-        "up_rate": 50.1,
-        "avg_ret": 1.91,
-        "median_ret": 0.03,
-        "edge": 0.0
+        "n": 32685,
+        "up_rate": 50.0,
+        "avg_ret": 0.56,
+        "median_ret": 0.0,
+        "edge": -0.5
       },
       "5": {
-        "n": 39485,
-        "up_rate": 50.2,
-        "avg_ret": 2.18,
-        "median_ret": 0.05,
-        "edge": -1.1
+        "n": 32641,
+        "up_rate": 50.3,
+        "avg_ret": 0.79,
+        "median_ret": 0.06,
+        "edge": -0.7
       },
       "10": {
-        "n": 39288,
-        "up_rate": 50.5,
-        "avg_ret": 1.44,
-        "median_ret": 0.13,
-        "edge": 0.1
+        "n": 32465,
+        "up_rate": 50.9,
+        "avg_ret": 1.55,
+        "median_ret": 0.24,
+        "edge": 0.2
       },
       "20": {
-        "n": 39002,
-        "up_rate": 51.0,
-        "avg_ret": 2.62,
-        "median_ret": 0.38,
+        "n": 32173,
+        "up_rate": 51.4,
+        "avg_ret": 2.48,
+        "median_ret": 0.52,
         "edge": 1.0
       },
       "60": {
-        "n": 37892,
-        "up_rate": 49.9,
-        "avg_ret": 5.81,
-        "median_ret": 0.0,
-        "edge": -0.3
+        "n": 31109,
+        "up_rate": 49.7,
+        "avg_ret": 5.35,
+        "median_ret": -0.09,
+        "edge": -0.4
       }
     },
     "nr4_breakout_up": {
       "label": "NR4 상향 돌파",
       "dir": 1,
       "1": {
-        "n": 350261,
-        "up_rate": 48.3,
-        "avg_ret": -0.01,
-        "median_ret": -0.02,
-        "edge": -1.2
+        "n": 289955,
+        "up_rate": 48.5,
+        "avg_ret": -0.0,
+        "median_ret": -0.01,
+        "edge": -1.7
       },
       "3": {
-        "n": 349674,
-        "up_rate": 49.2,
-        "avg_ret": 0.04,
-        "median_ret": -0.01,
-        "edge": -0.9
+        "n": 289449,
+        "up_rate": 49.5,
+        "avg_ret": 0.05,
+        "median_ret": 0.0,
+        "edge": -1.0
       },
       "5": {
-        "n": 349141,
-        "up_rate": 49.7,
-        "avg_ret": 0.09,
+        "n": 288978,
+        "up_rate": 49.9,
+        "avg_ret": 0.1,
         "median_ret": 0.0,
-        "edge": -1.6
+        "edge": -1.1
       },
       "10": {
-        "n": 347804,
-        "up_rate": 49.6,
+        "n": 287969,
+        "up_rate": 49.7,
         "avg_ret": 0.23,
-        "median_ret": -0.02,
-        "edge": -0.8
+        "median_ret": 0.0,
+        "edge": -1.0
       },
       "20": {
-        "n": 345594,
-        "up_rate": 49.4,
-        "avg_ret": 0.69,
-        "median_ret": -0.09,
-        "edge": -0.6
+        "n": 286017,
+        "up_rate": 49.5,
+        "avg_ret": 0.67,
+        "median_ret": -0.06,
+        "edge": -0.9
       },
       "60": {
-        "n": 332514,
+        "n": 274674,
         "up_rate": 49.6,
-        "avg_ret": 2.06,
-        "median_ret": -0.1,
-        "edge": -0.6
+        "avg_ret": 2.03,
+        "median_ret": -0.08,
+        "edge": -0.5
       }
     },
     "nr4_breakout_down": {
       "label": "NR4 하향 이탈",
       "dir": -1,
       "1": {
-        "n": 347661,
+        "n": 284574,
         "up_rate": 49.9,
-        "avg_ret": 0.07,
+        "avg_ret": 0.04,
         "median_ret": 0.0,
-        "edge": 0.4
+        "edge": -0.3
       },
       "3": {
-        "n": 347032,
-        "up_rate": 51.0,
-        "avg_ret": 0.28,
+        "n": 284334,
+        "up_rate": 51.1,
+        "avg_ret": 0.29,
         "median_ret": 0.11,
-        "edge": 0.9
-      },
-      "5": {
-        "n": 346427,
-        "up_rate": 51.3,
-        "avg_ret": 0.46,
-        "median_ret": 0.17,
-        "edge": 0.0
-      },
-      "10": {
-        "n": 344485,
-        "up_rate": 51.0,
-        "avg_ret": 0.66,
-        "median_ret": 0.19,
         "edge": 0.6
       },
-      "20": {
-        "n": 341394,
-        "up_rate": 50.3,
-        "avg_ret": 1.04,
-        "median_ret": 0.09,
+      "5": {
+        "n": 283750,
+        "up_rate": 51.4,
+        "avg_ret": 0.43,
+        "median_ret": 0.17,
+        "edge": 0.4
+      },
+      "10": {
+        "n": 281753,
+        "up_rate": 51.0,
+        "avg_ret": 0.7,
+        "median_ret": 0.18,
         "edge": 0.3
       },
+      "20": {
+        "n": 279269,
+        "up_rate": 50.4,
+        "avg_ret": 1.04,
+        "median_ret": 0.1,
+        "edge": 0.0
+      },
       "60": {
-        "n": 330386,
+        "n": 269553,
         "up_rate": 50.0,
-        "avg_ret": 2.79,
-        "median_ret": 0.02,
-        "edge": -0.2
+        "avg_ret": 2.81,
+        "median_ret": 0.0,
+        "edge": -0.1
       }
     },
     "inside_bar_breakout_up": {
       "label": "인사이드바 상향 돌파",
       "dir": 1,
       "1": {
-        "n": 208770,
-        "up_rate": 47.6,
-        "avg_ret": 0.02,
+        "n": 170024,
+        "up_rate": 48.0,
+        "avg_ret": 0.03,
+        "median_ret": 0.0,
+        "edge": -2.2
+      },
+      "3": {
+        "n": 169675,
+        "up_rate": 48.6,
+        "avg_ret": 0.08,
         "median_ret": 0.0,
         "edge": -1.9
       },
-      "3": {
-        "n": 208343,
-        "up_rate": 48.3,
-        "avg_ret": 0.07,
-        "median_ret": -0.04,
-        "edge": -1.8
-      },
       "5": {
-        "n": 207927,
-        "up_rate": 48.7,
-        "avg_ret": 0.11,
-        "median_ret": -0.04,
-        "edge": -2.6
+        "n": 169347,
+        "up_rate": 49.0,
+        "avg_ret": 0.12,
+        "median_ret": 0.0,
+        "edge": -2.0
       },
       "10": {
-        "n": 206949,
-        "up_rate": 49.5,
-        "avg_ret": 0.47,
+        "n": 168751,
+        "up_rate": 49.7,
+        "avg_ret": 0.42,
         "median_ret": 0.0,
-        "edge": -0.9
+        "edge": -1.0
       },
       "20": {
-        "n": 205343,
-        "up_rate": 50.0,
+        "n": 167105,
+        "up_rate": 50.1,
         "avg_ret": 1.08,
-        "median_ret": 0.0,
-        "edge": 0.0
+        "median_ret": 0.04,
+        "edge": -0.3
       },
       "60": {
-        "n": 197829,
-        "up_rate": 50.2,
-        "avg_ret": 2.82,
+        "n": 160877,
+        "up_rate": 50.3,
+        "avg_ret": 2.78,
         "median_ret": 0.1,
-        "edge": 0.0
+        "edge": 0.2
       }
     },
     "inside_bar_breakout_down": {
       "label": "인사이드바 하향 이탈",
       "dir": -1,
       "1": {
-        "n": 205480,
-        "up_rate": 49.4,
-        "avg_ret": 0.06,
+        "n": 164258,
+        "up_rate": 49.3,
+        "avg_ret": 0.04,
         "median_ret": 0.0,
-        "edge": -0.1
+        "edge": -0.9
       },
       "3": {
-        "n": 205156,
+        "n": 164113,
         "up_rate": 50.6,
-        "avg_ret": 0.43,
-        "median_ret": 0.08,
-        "edge": 0.5
-      },
-      "5": {
-        "n": 204723,
-        "up_rate": 50.8,
-        "avg_ret": 0.63,
-        "median_ret": 0.1,
-        "edge": -0.5
-      },
-      "10": {
-        "n": 203800,
-        "up_rate": 50.5,
-        "avg_ret": 0.89,
-        "median_ret": 0.1,
+        "avg_ret": 0.33,
+        "median_ret": 0.07,
         "edge": 0.1
       },
-      "20": {
-        "n": 201612,
-        "up_rate": 49.9,
-        "avg_ret": 1.36,
-        "median_ret": 0.0,
+      "5": {
+        "n": 163828,
+        "up_rate": 50.9,
+        "avg_ret": 0.54,
+        "median_ret": 0.1,
         "edge": -0.1
       },
+      "10": {
+        "n": 162873,
+        "up_rate": 50.5,
+        "avg_ret": 0.85,
+        "median_ret": 0.1,
+        "edge": -0.2
+      },
+      "20": {
+        "n": 161031,
+        "up_rate": 49.9,
+        "avg_ret": 1.28,
+        "median_ret": 0.0,
+        "edge": -0.5
+      },
       "60": {
-        "n": 195339,
-        "up_rate": 49.4,
-        "avg_ret": 3.63,
-        "median_ret": -0.18,
+        "n": 155576,
+        "up_rate": 49.3,
+        "avg_ret": 3.52,
+        "median_ret": -0.22,
         "edge": -0.8
       }
     },
@@ -1987,137 +1987,137 @@
       "label": "하모닉 AB=CD(상승)",
       "dir": 1,
       "1": {
-        "n": 4441,
+        "n": 3698,
         "up_rate": 30.0,
-        "avg_ret": -1.18,
-        "median_ret": -0.72,
-        "edge": -19.5
+        "avg_ret": -1.22,
+        "median_ret": -0.71,
+        "edge": -20.2
       },
       "3": {
-        "n": 4440,
-        "up_rate": 22.2,
-        "avg_ret": -2.64,
-        "median_ret": -1.73,
-        "edge": -27.9
+        "n": 3697,
+        "up_rate": 21.3,
+        "avg_ret": -2.73,
+        "median_ret": -1.75,
+        "edge": -29.2
       },
       "5": {
-        "n": 4436,
-        "up_rate": 24.3,
-        "avg_ret": -3.1,
-        "median_ret": -2.22,
-        "edge": -27.0
+        "n": 3695,
+        "up_rate": 23.2,
+        "avg_ret": -3.21,
+        "median_ret": -2.26,
+        "edge": -27.8
       },
       "10": {
-        "n": 4394,
-        "up_rate": 33.4,
-        "avg_ret": -2.99,
-        "median_ret": -2.2,
-        "edge": -17.0
+        "n": 3671,
+        "up_rate": 34.0,
+        "avg_ret": -3.05,
+        "median_ret": -2.15,
+        "edge": -16.7
       },
       "20": {
-        "n": 4353,
-        "up_rate": 36.9,
-        "avg_ret": -3.26,
-        "median_ret": -2.55,
-        "edge": -13.1
+        "n": 3631,
+        "up_rate": 36.7,
+        "avg_ret": -3.35,
+        "median_ret": -2.64,
+        "edge": -13.7
       },
       "60": {
-        "n": 4224,
-        "up_rate": 42.2,
-        "avg_ret": -2.25,
-        "median_ret": -2.61,
-        "edge": -8.0
+        "n": 3514,
+        "up_rate": 41.9,
+        "avg_ret": -2.09,
+        "median_ret": -2.65,
+        "edge": -8.2
       }
     },
     "harmonic_abcd_bear": {
       "label": "하모닉 AB=CD(하락)",
       "dir": -1,
       "1": {
-        "n": 4226,
-        "up_rate": 70.5,
-        "avg_ret": 1.74,
-        "median_ret": 1.07,
-        "edge": 21.0
+        "n": 3526,
+        "up_rate": 71.0,
+        "avg_ret": 1.8,
+        "median_ret": 1.09,
+        "edge": 20.8
       },
       "3": {
-        "n": 4226,
-        "up_rate": 77.5,
-        "avg_ret": 3.17,
-        "median_ret": 2.14,
-        "edge": 27.4
+        "n": 3526,
+        "up_rate": 78.1,
+        "avg_ret": 3.22,
+        "median_ret": 2.09,
+        "edge": 27.6
       },
       "5": {
-        "n": 4219,
-        "up_rate": 76.4,
-        "avg_ret": 4.05,
-        "median_ret": 2.74,
-        "edge": 25.1
+        "n": 3525,
+        "up_rate": 77.1,
+        "avg_ret": 4.16,
+        "median_ret": 2.68,
+        "edge": 26.1
       },
       "10": {
-        "n": 4205,
-        "up_rate": 69.5,
-        "avg_ret": 4.67,
+        "n": 3517,
+        "up_rate": 69.7,
+        "avg_ret": 4.88,
         "median_ret": 3.09,
-        "edge": 19.1
+        "edge": 19.0
       },
       "20": {
-        "n": 4172,
-        "up_rate": 64.9,
-        "avg_ret": 5.09,
-        "median_ret": 3.54,
-        "edge": 14.9
+        "n": 3485,
+        "up_rate": 65.6,
+        "avg_ret": 5.35,
+        "median_ret": 3.53,
+        "edge": 15.2
       },
       "60": {
-        "n": 4057,
-        "up_rate": 62.3,
-        "avg_ret": 7.93,
+        "n": 3381,
+        "up_rate": 62.8,
+        "avg_ret": 8.32,
         "median_ret": 4.88,
-        "edge": 12.1
+        "edge": 12.7
       }
     },
     "bullish_engulfing": {
       "label": "상승 장악형",
       "dir": 1,
       "1": {
-        "n": 153414,
-        "up_rate": 47.6,
+        "n": 121799,
+        "up_rate": 47.8,
         "avg_ret": -0.06,
-        "median_ret": -0.05,
-        "edge": -1.9
-      },
-      "3": {
-        "n": 153249,
-        "up_rate": 48.9,
-        "avg_ret": 0.05,
-        "median_ret": -0.03,
-        "edge": -1.2
-      },
-      "5": {
-        "n": 152994,
-        "up_rate": 48.9,
-        "avg_ret": 0.13,
-        "median_ret": -0.06,
+        "median_ret": -0.04,
         "edge": -2.4
       },
-      "10": {
-        "n": 152678,
-        "up_rate": 49.5,
-        "avg_ret": 0.35,
-        "median_ret": -0.02,
-        "edge": -0.9
+      "3": {
+        "n": 121453,
+        "up_rate": 49.1,
+        "avg_ret": 0.05,
+        "median_ret": -0.01,
+        "edge": -1.4
       },
-      "20": {
-        "n": 151391,
-        "up_rate": 48.9,
-        "avg_ret": 0.66,
-        "median_ret": -0.19,
+      "5": {
+        "n": 121325,
+        "up_rate": 49.0,
+        "avg_ret": 0.11,
+        "median_ret": -0.05,
+        "edge": -2.0
+      },
+      "10": {
+        "n": 120995,
+        "up_rate": 49.6,
+        "avg_ret": 0.28,
+        "median_ret": 0.0,
         "edge": -1.1
       },
+      "20": {
+        "n": 120062,
+        "up_rate": 49.0,
+        "avg_ret": 0.57,
+        "median_ret": -0.17,
+        "edge": -1.4
+      },
       "60": {
-        "n": 145224,
-        "up_rate": 49.4,
-        "avg_ret": 2.41,
-        "median_ret": -0.21,
+        "n": 115133,
+        "up_rate": 49.3,
+        "avg_ret": 2.39,
+        "median_ret": -0.2,
         "edge": -0.8
       }
     },
@@ -2125,275 +2125,275 @@
       "label": "하락 장악형",
       "dir": -1,
       "1": {
-        "n": 171123,
-        "up_rate": 50.2,
+        "n": 136031,
+        "up_rate": 50.3,
         "avg_ret": 0.12,
-        "median_ret": 0.02,
-        "edge": 0.7
+        "median_ret": 0.03,
+        "edge": 0.1
       },
       "3": {
-        "n": 170848,
-        "up_rate": 51.7,
-        "avg_ret": 0.34,
-        "median_ret": 0.18,
-        "edge": 1.6
+        "n": 135879,
+        "up_rate": 52.2,
+        "avg_ret": 0.37,
+        "median_ret": 0.2,
+        "edge": 1.7
       },
       "5": {
-        "n": 170722,
-        "up_rate": 51.3,
-        "avg_ret": 0.47,
+        "n": 135651,
+        "up_rate": 51.5,
+        "avg_ret": 0.51,
         "median_ret": 0.18,
-        "edge": 0.0
-      },
-      "10": {
-        "n": 169918,
-        "up_rate": 50.9,
-        "avg_ret": 0.71,
-        "median_ret": 0.16,
         "edge": 0.5
       },
+      "10": {
+        "n": 135187,
+        "up_rate": 51.0,
+        "avg_ret": 0.75,
+        "median_ret": 0.18,
+        "edge": 0.3
+      },
       "20": {
-        "n": 168721,
-        "up_rate": 49.7,
-        "avg_ret": 1.04,
+        "n": 134117,
+        "up_rate": 49.8,
+        "avg_ret": 1.07,
         "median_ret": 0.0,
-        "edge": -0.3
+        "edge": -0.6
       },
       "60": {
-        "n": 163409,
+        "n": 129705,
         "up_rate": 49.3,
-        "avg_ret": 2.56,
-        "median_ret": -0.24,
-        "edge": -0.9
+        "avg_ret": 2.61,
+        "median_ret": -0.23,
+        "edge": -0.8
       }
     },
     "hammer": {
       "label": "망치형",
       "dir": 1,
       "1": {
-        "n": 86428,
-        "up_rate": 49.2,
-        "avg_ret": 0.01,
+        "n": 71686,
+        "up_rate": 49.6,
+        "avg_ret": 0.02,
         "median_ret": 0.0,
-        "edge": -0.3
+        "edge": -0.6
       },
       "3": {
-        "n": 86329,
-        "up_rate": 49.7,
-        "avg_ret": 0.13,
+        "n": 71538,
+        "up_rate": 49.9,
+        "avg_ret": 0.17,
         "median_ret": 0.0,
-        "edge": -0.4
+        "edge": -0.6
       },
       "5": {
-        "n": 86272,
-        "up_rate": 50.5,
-        "avg_ret": 0.29,
-        "median_ret": 0.07,
-        "edge": -0.8
+        "n": 71434,
+        "up_rate": 50.7,
+        "avg_ret": 0.33,
+        "median_ret": 0.09,
+        "edge": -0.3
       },
       "10": {
-        "n": 86019,
-        "up_rate": 50.2,
-        "avg_ret": 0.39,
-        "median_ret": 0.05,
+        "n": 71212,
+        "up_rate": 50.5,
+        "avg_ret": 0.43,
+        "median_ret": 0.1,
         "edge": -0.2
       },
       "20": {
-        "n": 85410,
-        "up_rate": 50.3,
-        "avg_ret": 0.93,
-        "median_ret": 0.08,
-        "edge": 0.3
+        "n": 70778,
+        "up_rate": 50.5,
+        "avg_ret": 0.99,
+        "median_ret": 0.12,
+        "edge": 0.1
       },
       "60": {
-        "n": 82549,
-        "up_rate": 50.1,
-        "avg_ret": 2.35,
-        "median_ret": 0.08,
-        "edge": -0.1
+        "n": 68154,
+        "up_rate": 50.2,
+        "avg_ret": 2.49,
+        "median_ret": 0.09,
+        "edge": 0.1
       }
     },
     "shooting_star": {
       "label": "유성형",
       "dir": -1,
       "1": {
-        "n": 85689,
+        "n": 69270,
         "up_rate": 49.4,
-        "avg_ret": 0.09,
+        "avg_ret": 0.08,
         "median_ret": 0.0,
-        "edge": -0.1
+        "edge": -0.8
       },
       "3": {
-        "n": 85386,
-        "up_rate": 50.4,
-        "avg_ret": 0.22,
-        "median_ret": 0.05,
-        "edge": 0.3
+        "n": 69149,
+        "up_rate": 50.6,
+        "avg_ret": 0.2,
+        "median_ret": 0.06,
+        "edge": 0.1
       },
       "5": {
-        "n": 85159,
+        "n": 68902,
         "up_rate": 49.3,
-        "avg_ret": 0.11,
+        "avg_ret": 0.12,
         "median_ret": -0.02,
-        "edge": -2.0
+        "edge": -1.7
       },
       "10": {
-        "n": 84494,
-        "up_rate": 49.4,
-        "avg_ret": 0.31,
-        "median_ret": -0.04,
-        "edge": -1.0
+        "n": 68434,
+        "up_rate": 49.6,
+        "avg_ret": 0.33,
+        "median_ret": 0.0,
+        "edge": -1.1
       },
       "20": {
-        "n": 83657,
-        "up_rate": 49.8,
-        "avg_ret": 1.04,
-        "median_ret": 0.0,
-        "edge": -0.2
+        "n": 67587,
+        "up_rate": 50.1,
+        "avg_ret": 1.16,
+        "median_ret": 0.03,
+        "edge": -0.3
       },
       "60": {
-        "n": 80289,
-        "up_rate": 49.6,
-        "avg_ret": 2.18,
-        "median_ret": -0.14,
-        "edge": -0.6
+        "n": 64923,
+        "up_rate": 49.8,
+        "avg_ret": 2.24,
+        "median_ret": -0.05,
+        "edge": -0.3
       }
     },
     "doji": {
       "label": "도지",
       "dir": 0,
       "1": {
-        "n": 453065,
-        "up_rate": 47.7,
-        "avg_ret": 0.05,
+        "n": 376450,
+        "up_rate": 48.2,
+        "avg_ret": 0.04,
         "median_ret": 0.0,
-        "edge": -1.8
+        "edge": -2.0
       },
       "3": {
-        "n": 452274,
-        "up_rate": 49.1,
-        "avg_ret": 0.19,
+        "n": 375833,
+        "up_rate": 49.6,
+        "avg_ret": 0.15,
         "median_ret": 0.0,
-        "edge": -1.0
+        "edge": -0.9
       },
       "5": {
-        "n": 451386,
-        "up_rate": 49.9,
-        "avg_ret": 0.35,
-        "median_ret": 0.0,
-        "edge": -1.4
+        "n": 375136,
+        "up_rate": 50.4,
+        "avg_ret": 0.29,
+        "median_ret": 0.05,
+        "edge": -0.6
       },
       "10": {
-        "n": 449386,
-        "up_rate": 50.4,
-        "avg_ret": 0.65,
-        "median_ret": 0.08,
-        "edge": 0.0
+        "n": 373343,
+        "up_rate": 50.9,
+        "avg_ret": 0.56,
+        "median_ret": 0.1,
+        "edge": 0.2
       },
       "20": {
-        "n": 445852,
-        "up_rate": 50.9,
-        "avg_ret": 1.3,
-        "median_ret": 0.17,
+        "n": 370306,
+        "up_rate": 51.3,
+        "avg_ret": 1.18,
+        "median_ret": 0.2,
         "edge": 0.9
       },
       "60": {
-        "n": 430850,
-        "up_rate": 51.4,
-        "avg_ret": 3.39,
-        "median_ret": 0.41,
-        "edge": 1.2
+        "n": 357259,
+        "up_rate": 51.6,
+        "avg_ret": 3.32,
+        "median_ret": 0.46,
+        "edge": 1.5
       }
     },
     "morning_star": {
       "label": "샛별형(모닝스타)",
       "dir": 1,
       "1": {
-        "n": 157253,
-        "up_rate": 48.7,
-        "avg_ret": 0.05,
+        "n": 126218,
+        "up_rate": 49.0,
+        "avg_ret": 0.06,
         "median_ret": 0.0,
-        "edge": -0.8
+        "edge": -1.2
       },
       "3": {
-        "n": 156992,
-        "up_rate": 48.8,
-        "avg_ret": 0.04,
-        "median_ret": -0.04,
+        "n": 125905,
+        "up_rate": 49.2,
+        "avg_ret": 0.07,
+        "median_ret": 0.0,
         "edge": -1.3
       },
       "5": {
-        "n": 156532,
-        "up_rate": 49.1,
-        "avg_ret": 0.07,
-        "median_ret": -0.04,
-        "edge": -2.2
+        "n": 125692,
+        "up_rate": 49.6,
+        "avg_ret": 0.1,
+        "median_ret": 0.0,
+        "edge": -1.4
       },
       "10": {
-        "n": 156004,
-        "up_rate": 49.4,
-        "avg_ret": 0.33,
-        "median_ret": -0.05,
+        "n": 125082,
+        "up_rate": 49.7,
+        "avg_ret": 0.42,
+        "median_ret": 0.0,
         "edge": -1.0
       },
       "20": {
-        "n": 154690,
-        "up_rate": 49.6,
-        "avg_ret": 0.87,
-        "median_ret": -0.04,
-        "edge": -0.4
+        "n": 124060,
+        "up_rate": 49.9,
+        "avg_ret": 0.95,
+        "median_ret": 0.0,
+        "edge": -0.5
       },
       "60": {
-        "n": 149133,
-        "up_rate": 49.6,
-        "avg_ret": 2.13,
-        "median_ret": -0.1,
-        "edge": -0.6
+        "n": 119415,
+        "up_rate": 49.8,
+        "avg_ret": 2.11,
+        "median_ret": -0.03,
+        "edge": -0.3
       }
     },
     "evening_star": {
       "label": "석별형(이브닝스타)",
       "dir": -1,
       "1": {
-        "n": 154261,
-        "up_rate": 49.6,
+        "n": 123423,
+        "up_rate": 49.5,
         "avg_ret": 0.05,
         "median_ret": 0.0,
-        "edge": 0.1
-      },
-      "3": {
-        "n": 153916,
-        "up_rate": 50.6,
-        "avg_ret": 0.19,
-        "median_ret": 0.07,
-        "edge": 0.5
-      },
-      "5": {
-        "n": 153700,
-        "up_rate": 50.6,
-        "avg_ret": 0.31,
-        "median_ret": 0.09,
         "edge": -0.7
       },
-      "10": {
-        "n": 153105,
-        "up_rate": 50.7,
-        "avg_ret": 0.56,
-        "median_ret": 0.13,
+      "3": {
+        "n": 123272,
+        "up_rate": 50.8,
+        "avg_ret": 0.21,
+        "median_ret": 0.09,
         "edge": 0.3
       },
+      "5": {
+        "n": 122975,
+        "up_rate": 50.8,
+        "avg_ret": 0.32,
+        "median_ret": 0.1,
+        "edge": -0.2
+      },
+      "10": {
+        "n": 122426,
+        "up_rate": 50.6,
+        "avg_ret": 0.5,
+        "median_ret": 0.11,
+        "edge": -0.1
+      },
       "20": {
-        "n": 151789,
-        "up_rate": 49.7,
-        "avg_ret": 0.75,
-        "median_ret": -0.01,
-        "edge": -0.3
+        "n": 121507,
+        "up_rate": 49.6,
+        "avg_ret": 0.68,
+        "median_ret": -0.02,
+        "edge": -0.8
       },
       "60": {
-        "n": 146840,
-        "up_rate": 49.6,
-        "avg_ret": 2.3,
-        "median_ret": -0.12,
+        "n": 117158,
+        "up_rate": 49.5,
+        "avg_ret": 2.18,
+        "median_ret": -0.16,
         "edge": -0.6
       }
     },
@@ -2401,91 +2401,91 @@
       "label": "적삼병",
       "dir": 1,
       "1": {
-        "n": 314939,
-        "up_rate": 47.9,
-        "avg_ret": -0.07,
-        "median_ret": -0.05,
-        "edge": -1.6
+        "n": 256448,
+        "up_rate": 48.2,
+        "avg_ret": -0.06,
+        "median_ret": -0.04,
+        "edge": -2.0
       },
       "3": {
-        "n": 313941,
-        "up_rate": 48.3,
-        "avg_ret": -0.11,
-        "median_ret": -0.1,
+        "n": 255680,
+        "up_rate": 48.7,
+        "avg_ret": -0.1,
+        "median_ret": -0.06,
         "edge": -1.8
       },
       "5": {
-        "n": 313599,
-        "up_rate": 48.9,
-        "avg_ret": -0.07,
-        "median_ret": -0.07,
-        "edge": -2.4
+        "n": 254945,
+        "up_rate": 49.3,
+        "avg_ret": -0.05,
+        "median_ret": -0.03,
+        "edge": -1.7
       },
       "10": {
-        "n": 312531,
-        "up_rate": 49.5,
-        "avg_ret": 0.08,
-        "median_ret": -0.04,
+        "n": 254370,
+        "up_rate": 49.8,
+        "avg_ret": 0.07,
+        "median_ret": 0.0,
         "edge": -0.9
       },
       "20": {
-        "n": 310098,
-        "up_rate": 48.7,
-        "avg_ret": 0.32,
-        "median_ret": -0.27,
-        "edge": -1.3
+        "n": 252599,
+        "up_rate": 48.9,
+        "avg_ret": 0.35,
+        "median_ret": -0.21,
+        "edge": -1.5
       },
       "60": {
-        "n": 297149,
-        "up_rate": 48.1,
-        "avg_ret": 1.01,
-        "median_ret": -0.67,
-        "edge": -2.1
+        "n": 241740,
+        "up_rate": 48.2,
+        "avg_ret": 1.11,
+        "median_ret": -0.59,
+        "edge": -1.9
       }
     },
     "three_black_crows": {
       "label": "흑삼병",
       "dir": -1,
       "1": {
-        "n": 326345,
-        "up_rate": 49.7,
-        "avg_ret": 0.15,
+        "n": 262067,
+        "up_rate": 49.8,
+        "avg_ret": 0.12,
         "median_ret": 0.0,
-        "edge": 0.2
+        "edge": -0.4
       },
       "3": {
-        "n": 325812,
-        "up_rate": 50.6,
-        "avg_ret": 0.43,
-        "median_ret": 0.08,
-        "edge": 0.5
+        "n": 261797,
+        "up_rate": 50.8,
+        "avg_ret": 0.35,
+        "median_ret": 0.09,
+        "edge": 0.3
       },
       "5": {
-        "n": 325319,
-        "up_rate": 51.0,
-        "avg_ret": 0.57,
-        "median_ret": 0.14,
-        "edge": -0.3
+        "n": 261267,
+        "up_rate": 51.1,
+        "avg_ret": 0.46,
+        "median_ret": 0.15,
+        "edge": 0.1
       },
       "10": {
-        "n": 323783,
-        "up_rate": 50.9,
-        "avg_ret": 0.65,
-        "median_ret": 0.17,
-        "edge": 0.5
+        "n": 259619,
+        "up_rate": 51.0,
+        "avg_ret": 0.69,
+        "median_ret": 0.19,
+        "edge": 0.3
       },
       "20": {
-        "n": 320724,
-        "up_rate": 50.4,
-        "avg_ret": 1.21,
-        "median_ret": 0.13,
-        "edge": 0.4
+        "n": 257333,
+        "up_rate": 50.5,
+        "avg_ret": 1.26,
+        "median_ret": 0.16,
+        "edge": 0.1
       },
       "60": {
-        "n": 311402,
-        "up_rate": 50.2,
-        "avg_ret": 2.73,
-        "median_ret": 0.11,
+        "n": 249133,
+        "up_rate": 50.1,
+        "avg_ret": 2.63,
+        "median_ret": 0.06,
         "edge": 0.0
       }
     },
@@ -2493,184 +2493,184 @@
       "label": "관통형",
       "dir": 1,
       "1": {
-        "n": 184798,
-        "up_rate": 48.0,
-        "avg_ret": -0.06,
-        "median_ret": -0.05,
-        "edge": -1.5
+        "n": 147328,
+        "up_rate": 48.2,
+        "avg_ret": -0.05,
+        "median_ret": -0.04,
+        "edge": -2.0
       },
       "3": {
-        "n": 184615,
-        "up_rate": 49.5,
-        "avg_ret": 0.05,
+        "n": 146933,
+        "up_rate": 49.6,
+        "avg_ret": 0.06,
         "median_ret": 0.0,
-        "edge": -0.6
+        "edge": -0.9
       },
       "5": {
-        "n": 184297,
+        "n": 146792,
         "up_rate": 49.2,
-        "avg_ret": 0.07,
+        "avg_ret": 0.05,
         "median_ret": -0.04,
-        "edge": -2.1
+        "edge": -1.8
       },
       "10": {
-        "n": 183940,
+        "n": 146397,
         "up_rate": 49.8,
-        "avg_ret": 0.26,
+        "avg_ret": 0.23,
         "median_ret": 0.0,
-        "edge": -0.6
+        "edge": -0.9
       },
       "20": {
-        "n": 182478,
-        "up_rate": 49.0,
-        "avg_ret": 0.49,
-        "median_ret": -0.17,
-        "edge": -1.0
+        "n": 145331,
+        "up_rate": 49.1,
+        "avg_ret": 0.44,
+        "median_ret": -0.16,
+        "edge": -1.3
       },
       "60": {
-        "n": 175401,
+        "n": 139654,
         "up_rate": 49.3,
-        "avg_ret": 1.93,
-        "median_ret": -0.23,
-        "edge": -0.9
+        "avg_ret": 1.95,
+        "median_ret": -0.24,
+        "edge": -0.8
       }
     },
     "dark_cloud_cover": {
       "label": "먹구름형",
       "dir": -1,
       "1": {
-        "n": 208930,
-        "up_rate": 50.7,
+        "n": 167033,
+        "up_rate": 50.8,
         "avg_ret": 0.16,
         "median_ret": 0.05,
-        "edge": 1.2
+        "edge": 0.6
       },
       "3": {
-        "n": 208625,
-        "up_rate": 52.3,
-        "avg_ret": 0.37,
-        "median_ret": 0.22,
+        "n": 166825,
+        "up_rate": 52.7,
+        "avg_ret": 0.39,
+        "median_ret": 0.24,
         "edge": 2.2
       },
       "5": {
-        "n": 208467,
-        "up_rate": 51.8,
-        "avg_ret": 0.49,
+        "n": 166575,
+        "up_rate": 52.0,
+        "avg_ret": 0.51,
         "median_ret": 0.23,
-        "edge": 0.5
+        "edge": 1.0
       },
       "10": {
-        "n": 207517,
-        "up_rate": 51.1,
-        "avg_ret": 0.69,
-        "median_ret": 0.2,
-        "edge": 0.7
+        "n": 166057,
+        "up_rate": 51.3,
+        "avg_ret": 0.73,
+        "median_ret": 0.23,
+        "edge": 0.6
       },
       "20": {
-        "n": 206155,
+        "n": 164760,
         "up_rate": 50.2,
-        "avg_ret": 1.0,
-        "median_ret": 0.06,
-        "edge": 0.2
+        "avg_ret": 1.04,
+        "median_ret": 0.07,
+        "edge": -0.2
       },
       "60": {
-        "n": 199571,
-        "up_rate": 49.4,
-        "avg_ret": 2.24,
-        "median_ret": -0.19,
-        "edge": -0.8
+        "n": 159246,
+        "up_rate": 49.5,
+        "avg_ret": 2.29,
+        "median_ret": -0.17,
+        "edge": -0.6
       }
     },
     "resistance_breakout": {
       "label": "저항선 돌파",
       "dir": 1,
       "1": {
-        "n": 41279,
-        "up_rate": 48.4,
-        "avg_ret": 0.03,
-        "median_ret": -0.02,
-        "edge": -1.1
+        "n": 34854,
+        "up_rate": 48.8,
+        "avg_ret": 0.06,
+        "median_ret": 0.0,
+        "edge": -1.4
       },
       "3": {
-        "n": 41139,
-        "up_rate": 49.6,
-        "avg_ret": 0.12,
-        "median_ret": 0.0,
-        "edge": -0.5
+        "n": 34735,
+        "up_rate": 50.3,
+        "avg_ret": 0.16,
+        "median_ret": 0.03,
+        "edge": -0.2
       },
       "5": {
-        "n": 41022,
-        "up_rate": 50.0,
-        "avg_ret": 0.17,
-        "median_ret": 0.0,
-        "edge": -1.3
+        "n": 34621,
+        "up_rate": 50.6,
+        "avg_ret": 0.18,
+        "median_ret": 0.06,
+        "edge": -0.4
       },
       "10": {
-        "n": 40802,
-        "up_rate": 49.5,
-        "avg_ret": 0.29,
-        "median_ret": -0.03,
-        "edge": -0.9
+        "n": 34426,
+        "up_rate": 49.6,
+        "avg_ret": 0.31,
+        "median_ret": 0.0,
+        "edge": -1.1
       },
       "20": {
-        "n": 40375,
-        "up_rate": 50.8,
-        "avg_ret": 0.74,
-        "median_ret": 0.16,
-        "edge": 0.8
+        "n": 34054,
+        "up_rate": 51.5,
+        "avg_ret": 0.86,
+        "median_ret": 0.28,
+        "edge": 1.1
       },
       "60": {
-        "n": 38444,
-        "up_rate": 51.6,
-        "avg_ret": 2.26,
-        "median_ret": 0.49,
-        "edge": 1.4
+        "n": 32357,
+        "up_rate": 52.4,
+        "avg_ret": 2.47,
+        "median_ret": 0.71,
+        "edge": 2.3
       }
     },
     "support_breakdown": {
       "label": "지지선 이탈",
       "dir": -1,
       "1": {
-        "n": 37917,
-        "up_rate": 48.1,
-        "avg_ret": -0.03,
-        "median_ret": 0.0,
-        "edge": -1.4
+        "n": 31622,
+        "up_rate": 47.5,
+        "avg_ret": -0.08,
+        "median_ret": -0.06,
+        "edge": -2.7
       },
       "3": {
-        "n": 37804,
-        "up_rate": 49.0,
-        "avg_ret": 0.86,
-        "median_ret": 0.0,
-        "edge": -1.1
+        "n": 31587,
+        "up_rate": 48.4,
+        "avg_ret": 0.02,
+        "median_ret": -0.08,
+        "edge": -2.1
       },
       "5": {
-        "n": 37745,
-        "up_rate": 50.1,
-        "avg_ret": 1.14,
-        "median_ret": 0.04,
-        "edge": -1.2
+        "n": 31462,
+        "up_rate": 49.5,
+        "avg_ret": 0.26,
+        "median_ret": 0.0,
+        "edge": -1.5
       },
       "10": {
-        "n": 37591,
-        "up_rate": 52.2,
-        "avg_ret": 1.14,
-        "median_ret": 0.45,
-        "edge": 1.8
+        "n": 31284,
+        "up_rate": 51.9,
+        "avg_ret": 0.71,
+        "median_ret": 0.38,
+        "edge": 1.2
       },
       "20": {
-        "n": 37182,
-        "up_rate": 52.4,
-        "avg_ret": 2.13,
-        "median_ret": 0.7,
-        "edge": 2.4
+        "n": 30906,
+        "up_rate": 52.3,
+        "avg_ret": 1.6,
+        "median_ret": 0.61,
+        "edge": 1.9
       },
       "60": {
-        "n": 36187,
-        "up_rate": 53.4,
-        "avg_ret": 5.22,
-        "median_ret": 1.64,
-        "edge": 3.2
+        "n": 29984,
+        "up_rate": 53.2,
+        "avg_ret": 4.68,
+        "median_ret": 1.46,
+        "edge": 3.1
       }
     }
   }

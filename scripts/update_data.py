@@ -2738,6 +2738,16 @@ def main():
         except Exception as exc:
             print(f"[map_fundamentals] rebuild skipped: {exc}")
 
+        try:
+            import subprocess
+            import sys
+            subprocess.run(
+                [sys.executable, str(ROOT / "scripts" / "build_pattern_stats.py"), "--market", "us"],
+                check=False,
+            )
+        except Exception as exc:
+            print(f"[pattern_stats] rebuild skipped: {exc}")
+
         if preserved:
             print(f"Preserved external sections from previous snapshot: {', '.join(preserved)}")
         if restored_briefings:

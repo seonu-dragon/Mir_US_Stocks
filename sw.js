@@ -1,6 +1,21 @@
-const CACHE_NAME = "mir-us-stocks-v20260623z";
+const BUILD_ID = "20260701a";
+const CACHE_NAME = `mir-us-stocks-v${BUILD_ID}`;
 
 const OFFLINE_ASSETS = [
+  "./",
+  "./index.html",
+  "./build_id.js",
+  "./market_config.js",
+  "./app.js",
+  "./styles.css",
+  "./manifest.webmanifest",
+  "./analysis.js",
+  "./pattern_detectors_extended.js",
+  "./data/ticker_aliases_ko.js",
+  "./data/market_snapshot.js",
+  "./data/market_snapshot.json",
+  "./data/korea/market_snapshot.js",
+  "./data/korea/market_snapshot.json",
   "./assets/favicon.ico",
   "./assets/favicon-32.png",
   "./assets/apple-touch-icon.png",
@@ -12,23 +27,25 @@ function isDynamicAsset(pathname) {
     pathname.endsWith("/") ||
     pathname.endsWith("/index.html") ||
     pathname.endsWith("/sw.js") ||
+    pathname.endsWith("/build_id.js") ||
     pathname.endsWith("/app.js") ||
     pathname.endsWith("/styles.css") ||
     pathname.endsWith("/manifest.webmanifest") ||
     pathname.includes("/data/market_snapshot") ||
+    pathname.includes("/data/korea/market_snapshot") ||
     pathname.includes("/data/content_sources") ||
     /\.(js|css|json|webmanifest)$/.test(pathname)
   );
 }
 
 function isDetailData(pathname) {
-  return pathname.includes("/data/details/");
+  return pathname.includes("/data/details/") || pathname.includes("/data/korea/details/");
 }
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(OFFLINE_ASSETS))
+      .then((cache) => cache.addAll(OFFLINE_ASSETS).catch(() => Promise.resolve()))
       .then(() => self.skipWaiting())
   );
 });

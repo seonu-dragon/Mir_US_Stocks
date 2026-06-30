@@ -2,96 +2,18 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="ETF 섹터 내부 주식 상대강도 상세 랭킹">
-    <title>ETF 내부 상대강도</title>
-    <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="styles.css">
+    <meta http-equiv="refresh" content="0;url=index.html?tab=sector">
+    <title>리다이렉트 중…</title>
+    <script>
+      (function () {
+        var q = window.location.search || "";
+        var params = new URLSearchParams(q);
+        params.set("tab", "sector");
+        window.location.replace("index.html?" + params.toString());
+      })();
+    </script>
   </head>
   <body>
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">ETF Sector Drilldown</p>
-        <h1 id="detailTitle">ETF 내부 상대강도</h1>
-      </div>
-      <div class="update-card">
-        <span>데이터 기준</span>
-        <strong id="updatedAt">불러오는 중</strong>
-        <small>스냅샷 데이터 기준</small>
-      </div>
-    </header>
-
-    <main>
-      <section class="panel is-active detail-panel">
-        <div class="detail-nav">
-          <a class="ghost-button" href="index.html">← 시장 체력으로 돌아가기</a>
-          <a class="ghost-button" id="openRepresentative" href="index.html">대표 ETF 분석</a>
-        </div>
-
-        <div class="section-title">
-          <h2 id="categoryTitle">Loading</h2>
-          <p id="categoryDescription">선택한 ETF 그룹 안에서 대표 ETF보다 강한 관련 주식을 순위로 보여줍니다.</p>
-        </div>
-
-        <div class="health-controls detail-controls">
-          <label>
-            비교 기준
-            <select id="detailBenchmark"></select>
-          </label>
-          <label>
-            기간
-            <select id="detailPeriod">
-              <option value="monthChangePct">1개월</option>
-              <option value="threeMonthChangePct">3개월</option>
-              <option value="ytdChangePct">YTD</option>
-              <option value="changePct">당일</option>
-            </select>
-          </label>
-          <label>
-            ETF 그룹
-            <select id="detailCategory"></select>
-          </label>
-        </div>
-
-        <div class="detail-summary-grid" id="detailSummary"></div>
-
-        <div class="sector-stock-panel">
-          <div class="sector-stock-header">
-            <div>
-              <h3 id="leaderTitle">내부 상대강도</h3>
-              <p id="leaderMeta"></p>
-            </div>
-          </div>
-          <div class="sector-stock-table-wrap">
-            <table class="sector-stock-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>종목</th>
-                  <th>섹터</th>
-                  <th>산업</th>
-                  <th id="returnHead">수익률</th>
-                  <th id="relativeHead">ETF 대비</th>
-                  <th>RS</th>
-                  <th>EPS 추정</th>
-                  <th>거래량</th>
-                </tr>
-              </thead>
-              <tbody id="leaderRows"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <p class="method-note" id="methodNote"></p>
-      </section>
-    </main>
-
-    <footer>
-      <span>이 페이지는 시장 체력 카드에서 선택한 ETF 그룹의 내부 상대강도를 보여줍니다.</span>
-      <span>투자 판단 참고 자료이며 매수/매도 추천이 아닙니다.</span>
-    </footer>
-
-    <script src="market_config.js"></script>
-    <script src="sector_detail.js"></script>
+    <p><a href="index.html?tab=sector">섹터 흐름 탭으로 이동</a></p>
   </body>
 </html>

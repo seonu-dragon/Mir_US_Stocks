@@ -37,6 +37,9 @@ THEMATIC_REAL_SYMBOLS = {
     "PLTR", "APP", "HOOD", "IREN", "CORZ", "CLSK", "RIOT", "MARA",
 }
 
+# Pre-IPO / synthetic snapshot placeholders that must not enter the public universe.
+TICKER_BLOCKLIST = {"SPCX"}
+
 HTTP_HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json, text/plain, */*",
@@ -2427,7 +2430,8 @@ def build_snapshot():
         futures = [executor.submit(build_one, meta) for meta in universe]
         for future in as_completed(futures):
             stock, error = future.result()
-            stocks.append(stock)
+            if stock and stock.get("ticker") not in TICKER_BLOCKLIST:
+                stocks.append(stock)
             if error:
                 errors.append(error)
 

@@ -80,6 +80,14 @@ export default {
       return cors(await handleCommunityClear(request, env));
     }
 
+    if (url.pathname === "/sync/prefs") {
+      if (request.method === "GET") return cors(await handleSyncPrefsGet(url, env));
+      if (request.method === "PUT") return cors(await handleSyncPrefsPut(request, env));
+    }
+    if (request.method === "POST" && url.pathname === "/alerts/telegram") {
+      return cors(await handleTelegramAlert(request, env));
+    }
+
     // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
     if (url.searchParams.get("fx")) {
       return cors(json({ fx: await fetchFx() }));
@@ -1315,6 +1323,65 @@ async function handleCommunityCommentDelete(request, env) {
   return json({ ok: true, postId, deleted: commentId }, 200, 0);
 }
 
+// =============================================================================
+// Cloud sync (watchlist / portfolio / alerts)
+// =============================================================================
+
+function syncKvKey(clientId) {
+  return `sync:prefs:${clientId}`;
+}
+
+async function handleSyncPrefsGet(url, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  const clientId = sanitizeCommunityClientId(url.searchParams.get("clientId"));
+  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  const raw = await env.COMMUNITY_KV.get(syncKvKey(clientId));
+  if (!raw) return json({ prefs: null }, 200, 30);
+  try {
+    return json({ prefs: JSON.parse(raw) }, 200, 30);
+  } catch {
+    return json({ prefs: null }, 200, 30);
+  }
+}
+
+async function handleSyncPrefsPut(request, env) {
+  if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400, 30); }
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  const prefs = body && body.prefs;
+  if (!clientId || !prefs || typeof prefs !== "object") return json({ error: "missing_fields" }, 400, 30);
+  const payload = {
+    watchlist: Array.isArray(prefs.watchlist) ? prefs.watchlist.slice(0, 80) : [],
+    portfolio: Array.isArray(prefs.portfolio) ? prefs.portfolio.slice(0, 60) : [],
+    alertSettings: prefs.alertSettings && typeof prefs.alertSettings === "object" ? prefs.alertSettings : {},
+    telegram: prefs.telegram && typeof prefs.telegram === "object" ? prefs.telegram : {},
+    updatedAt: Number(prefs.updatedAt) || Date.now(),
+  };
+  await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload));
+  return json({ ok: true, updatedAt: payload.updatedAt }, 200, 0);
+}
+
+async function handleTelegramAlert(request, env) {
+  const token = env && env.TELEGRAM_BOT_TOKEN;
+  if (!token) return json({ error: "no_telegram_token" }, 503, 30);
+  let body;
+  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400, 30); }
+  const chatId = String(body && body.chatId || "").trim();
+  const text = String(body && body.text || "").trim().slice(0, 3500);
+  const clientId = sanitizeCommunityClientId(body && body.clientId);
+  if (!chatId || !text) return json({ error: "missing_fields" }, 400, 30);
+  const url = `https://api.telegram.org/bot${token}/sendMessage`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, disable_web_page_preview: true }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.ok) return json({ error: "telegram_failed", detail: data }, 502, 30);
+  return json({ ok: true, clientId }, 200, 0);
+}
+
 async function handleCommunityClear(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
   let body;
@@ -1675,6 +1742,7 @@ async function handleChat(request, env) {
 
   const userText = history[history.length - 1].content;
   const stockContext = typeof body.stockContext === "string" ? body.stockContext.trim().slice(0, 4000) : "";
+  const snapshotContext = typeof body.snapshotContext === "string" ? body.snapshotContext.trim().slice(0, 2500) : "";
   const market = body.market === "us" ? "us" : "kr";
   const searchHints = body.searchHints && typeof body.searchHints === "object" ? body.searchHints : {};
 
@@ -1687,6 +1755,9 @@ async function handleChat(request, env) {
   }
 
   let systemContent = CHAT_SYSTEM_PROMPT;
+  if (snapshotContext) {
+    systemContent += `\n\n[오늘의 시장 스냅샷 요약 — 사실로만 사용]\n${snapshotContext}\n\n위 스냅샷은 매일 1회 갱신된 참고 데이터입니다. 실시간 시세가 아님을 안내하세요.`;
+  }
   if (stockContext) {
     systemContent += `\n\n[현재 사용자가 보고 있는 종목 컨텍스트]\n${stockContext}\n\n위 종목 데이터가 제공되면 이를 우선 참고해 설명하되, 매수/매도/목표가 추천은 하지 마세요.`;
   }

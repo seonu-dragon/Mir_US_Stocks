@@ -6,8 +6,18 @@
     <meta name="description" content="종목 차트 분석 기반 상승/하락 확률 추정">
     <title>차트 확률 분석 | 미르의 미국 주식</title>
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
+    <script>
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem("mir_ui_prefs_v1")) || {};
+          var theme = p.theme || ((window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.setAttribute("data-density", p.density || "comfortable");
+        } catch (e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260623bf">
+    <link rel="stylesheet" href="styles.css?v=20260701a">
     <style>
       .ca-main { max-width: 960px; margin: 0 auto; padding: 16px 16px 80px; }
       .ca-intro { color: var(--muted); font-size: 14px; line-height: 1.6; margin: 4px 0 18px; }
@@ -140,9 +150,9 @@
       <span>투자 판단과 책임은 본인에게 있습니다.</span>
     </footer>
 
-    <script src="market_config.js?v=20260624a"></script>
-    <script src="data/short_interest.js?v=20260620a"></script>
-    <script src="pattern_detectors_extended.js?v=20260623c"></script>
-    <script src="analysis.js?v=20260624c"></script>
+    <script src="build_id.js?v=20260701a"></script>
+    <script src="market_config.js?v=20260701a"></script>
+    <script src="pattern_detectors_extended.js?v=20260701a"></script>
+    <script src="analysis.js?v=20260701a"></script>
   </body>
 </html>

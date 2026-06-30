@@ -175,8 +175,8 @@
       "^KS11": "069500",
       "^KQ11": "229200",
     },
-    hiddenTabs: ["institutional"],
-    hiddenInstitutionalSubs: ["congress", "13f", "insider", "activist"],
+    hiddenTabs: [],
+    hiddenInstitutionalSubs: ["congress", "13f", "insider", "activist", "events", "ipo"],
     features: {
       congress: false,
       sec13f: false,
@@ -186,6 +186,7 @@
       ipo: false,
       shortInterest: false,
       whiteHouse: false,
+      krDart: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

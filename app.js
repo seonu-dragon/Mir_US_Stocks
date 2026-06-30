@@ -88,6 +88,22 @@ function health(ticker, name, changePct, note) {
 }
 
 let data = fallbackData;
+let usingFallbackSnapshot = false;
+
+// Tickers with bad/synthetic snapshot data (e.g. pre-IPO placeholders).
+const TICKER_BLOCKLIST = new Set(["SPCX"]);
+
+function featureDataSrc(path) {
+  const v = window.MIR_BUILD_ID || "20260701a";
+  return `${path}?v=${v}`;
+}
+
+function filterBlockedStocks(snapshot) {
+  if (!snapshot || !Array.isArray(snapshot.stocks)) return snapshot;
+  const stocks = snapshot.stocks.filter((item) => !TICKER_BLOCKLIST.has(String(item.ticker || "").toUpperCase()));
+  if (stocks.length === snapshot.stocks.length) return snapshot;
+  return { ...snapshot, stocks };
+}
 function marketCfg() {
   return (window.MirMarket && window.MirMarket.getConfig()) || {
     id: "us",
@@ -387,20 +403,22 @@ function loadSnapshotScript(cfg) {
 // the active market's feature flags. `feature` maps to cfg.features; `usOnly`
 // loads only in US mode; datasets without either load in both markets.
 const FEATURE_DATA = {
-  inst13f:    { global: "INSTITUTIONAL_13F",     src: "data/institutional_13f.js?v=20260618c",     feature: "sec13f" },
-  congress:   { global: "CONGRESS_TRADES",       src: "data/congress_trades.js?v=20260618n",       feature: "congress" },
-  insider:    { global: "INSIDER_TRADES",        src: "data/insider_trades.js?v=20260619b",        feature: "insider" },
-  activist:   { global: "ACTIVIST_STAKES",       src: "data/activist_stakes.js?v=20260619a",       feature: "activist" },
-  events:     { global: "MATERIAL_EVENTS",       src: "data/material_events.js?v=20260619a",       feature: "materialEvents" },
-  ipo:        { global: "IPO_CALENDAR",          src: "data/ipo_calendar.js?v=20260619a",          feature: "ipo" },
-  short:      { global: "SHORT_INTEREST",        src: "data/short_interest.js?v=20260620a",        feature: "shortInterest" },
-  whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  src: "data/white_house_schedule.js?v=20260618n",  feature: "whiteHouse" },
-  leveraged:  { global: "LEVERAGED_ETF_CATALOG", src: "data/leveraged_etf_catalog.js?v=20260629a", usOnly: true },
+  inst13f:    { global: "INSTITUTIONAL_13F",     src: featureDataSrc("data/institutional_13f.js"),     feature: "sec13f" },
+  congress:   { global: "CONGRESS_TRADES",       src: featureDataSrc("data/congress_trades.js"),       feature: "congress" },
+  insider:    { global: "INSIDER_TRADES",        src: featureDataSrc("data/insider_trades.js"),        feature: "insider" },
+  activist:   { global: "ACTIVIST_STAKES",       src: featureDataSrc("data/activist_stakes.js"),       feature: "activist" },
+  events:     { global: "MATERIAL_EVENTS",       src: featureDataSrc("data/material_events.js"),       feature: "materialEvents" },
+  ipo:        { global: "IPO_CALENDAR",          src: featureDataSrc("data/ipo_calendar.js"),          feature: "ipo" },
+  short:      { global: "SHORT_INTEREST",        src: featureDataSrc("data/short_interest.js"),        feature: "shortInterest" },
+  whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  src: featureDataSrc("data/white_house_schedule.js"),  feature: "whiteHouse" },
+  leveraged:  { global: "LEVERAGED_ETF_CATALOG", src: featureDataSrc("data/leveraged_etf_catalog.js"), usOnly: true },
+  krDart:     { global: "KR_DISCLOSURES",        src: featureDataSrc("data/kr_disclosures.js"),        feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
 function featureDataEnabled(meta, cfg) {
   if (meta.usOnly) return cfg.id === "us";
+  if (meta.krOnly) return cfg.id === "kr";
   if (meta.feature) return !(cfg.features && cfg.features[meta.feature] === false);
   return true;
 }
@@ -482,11 +500,12 @@ function ensureAnalysisFeatureData() {
 async function loadData(options = {}) {
   const cfg = marketCfg();
   let loaded = false;
+  usingFallbackSnapshot = false;
   if (window.location.protocol !== "file:") {
     try {
       const response = await fetch(cfg.snapshotPath, { cache: "no-store" });
       if (response.ok) {
-        data = await response.json();
+        data = filterBlockedStocks(await response.json());
         loaded = true;
       }
     } catch (error) {
@@ -498,7 +517,7 @@ async function loadData(options = {}) {
   if (!loaded) {
     await loadSnapshotScript(cfg);
     if (window[cfg.snapshotJsGlobal]) {
-      data = window[cfg.snapshotJsGlobal];
+      data = filterBlockedStocks(window[cfg.snapshotJsGlobal]);
       loaded = true;
     }
   }
@@ -506,11 +525,30 @@ async function loadData(options = {}) {
   if (!loaded) {
     console.warn(`Using fallback snapshot for ${cfg.id}. Regenerate ${cfg.snapshotPath}.`);
     data = fallbackData;
+    usingFallbackSnapshot = true;
   }
 
   await loadMapFundamentalsScript(cfg);
 
   if (!options.skipBoot) boot(options);
+}
+
+function showFallbackBanner() {
+  const existing = byId("fallbackDataBanner");
+  if (!usingFallbackSnapshot) {
+    if (existing) existing.hidden = true;
+    return;
+  }
+  let banner = existing;
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "fallbackDataBanner";
+    banner.className = "fallback-data-banner";
+    banner.setAttribute("role", "alert");
+    banner.innerHTML = `<strong>데모 데이터 표시 중</strong><span>시장 스냅샷을 불러오지 못해 샘플 데이터만 보여주고 있습니다. 새로고침하거나 잠시 후 다시 시도해 주세요.</span>`;
+    document.body.prepend(banner);
+  }
+  banner.hidden = false;
 }
 
 function resetMarketCaches() {
@@ -664,14 +702,23 @@ function applyMarketOnlyUi() {
         || (sub === "congress" && cfg.features && !cfg.features.congress)
         || (sub === "13f" && cfg.features && !cfg.features.sec13f)
         || (sub === "insider" && cfg.features && !cfg.features.insider)
-        || (sub === "activist" && cfg.features && !cfg.features.activist);
+        || (sub === "activist" && cfg.features && !cfg.features.activist)
+        || (sub === "events" && cfg.features && !cfg.features.materialEvents)
+        || (sub === "ipo" && cfg.features && !cfg.features.ipo)
+        || (sub === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)));
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
+    const instFallback = cfg.id === "kr" && cfg.features?.krDart ? "dart" : "events";
+    if (cfg.id === "kr" && cfg.features?.krDart) {
+      const dartBtn = instNav.querySelector('[data-sub="dart"]');
+      if (dartBtn) { dartBtn.hidden = false; dartBtn.style.display = ""; }
+    }
     if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)
       || (institutionalSubTab === "insider" && cfg.features && !cfg.features.insider)
-      || (institutionalSubTab === "activist" && cfg.features && !cfg.features.activist)) {
-      activateInstitutionalSub("events", { push: false });
+      || (institutionalSubTab === "activist" && cfg.features && !cfg.features.activist)
+      || (institutionalSubTab === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))) {
+      activateInstitutionalSub(instFallback, { push: false });
     }
   }
   const searchNav = byId("searchSubTabs");
@@ -697,11 +744,18 @@ function applyMarketOnlyUi() {
 function boot(options = {}) {
   const route = new URLSearchParams(window.location.search);
   setupMarketMode();
+  showFallbackBanner();
   if (route.get("cadmin")) setCommunityAdminKey(route.get("cadmin"));
   if (route.get("ticker")) selectedTicker = normalizeTickerKey(route.get("ticker"));
   else if (!stockByTicker(selectedTicker)) selectedTicker = marketCfg().defaultTicker;
   initWatchlist(route.get("watchlist"));
   loadPortfolio();
+  pullCloudSync().finally(() => {
+    renderWatchlistBar();
+    renderPortfolio();
+    renderWatchAlerts();
+    maybeSendTelegramAlerts();
+  });
   loadPortfolioExtensions();
   document.documentElement.removeAttribute("data-theme");
   setupPwa();
@@ -713,6 +767,7 @@ function boot(options = {}) {
   setupViewMode(route.get("tab"));
   setupTabs();
   setupFilters();
+  applyHeatmapRoute(route);
   setupTickerSearchHelpers();
   renderAll();
   setupActionBoard();
@@ -732,6 +787,8 @@ function boot(options = {}) {
       sub: resolved.sub,
       communityTicker: initialCommunityTicker,
     });
+  } else if (route.get("map_bucket") || route.get("map_sector") || route.get("map_metric")) {
+    activateTab("map", { push: false });
   }
   if (route.get("ticker")) selectTicker(route.get("ticker"));
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
@@ -1078,6 +1135,7 @@ function setupChatbot() {
         body: JSON.stringify({
           messages: chatHistory.slice(-10),
           stockContext,
+          snapshotContext: buildMarketChatContext(),
           market: isKrMarket() ? "kr" : "us",
           searchHints: buildChatSearchHints(text),
         }),
@@ -2111,6 +2169,7 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "activist") renderActivistStakes();
   if (institutionalSubTab === "events") renderMaterialEvents();
   if (institutionalSubTab === "ipo") renderIpoCalendar();
+  if (institutionalSubTab === "dart") renderKrDisclosures();
   if (push) {
     recordNav();
   }
@@ -3225,6 +3284,11 @@ function setupEvents() {
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
   setupChartControls();
   setupWatchAlertEvents();
+  setupCloudSyncEvents();
+  setupKrDartEvents();
+  byId("heatmapShare")?.addEventListener("click", shareHeatmapLink);
+  byId("pfExportCsv")?.addEventListener("click", exportPortfolioCsv);
+  byId("backtestExportCsv")?.addEventListener("click", exportBacktestCsv);
   window.addEventListener("resize", debounce(renderTreemap, 120));
   window.addEventListener("resize", syncCardNewsHeight);
   // 폰트가 늦게 로드되면 데이터박스 높이가 바뀔 수 있어 한 번 더 맞춤
@@ -9079,6 +9143,7 @@ function loadPortfolio() {
 }
 function savePortfolio() {
   try { localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(portfolio)); } catch (e) { /* ignore */ }
+  scheduleCloudSyncPush();
 }
 
 function loadPortfolioExtensions() {
@@ -12060,7 +12125,7 @@ async function submitCommunityVote() {
   const raw = (tickerInput?.value || "").trim();
   const ticker = raw ? resolveCommunityTickerInput(raw) : "";
   if (!ticker) { alert("투표할 종목을 입력해주세요."); return; }
-  if (!communityVoteSelectedChoice) { alert("매수·매도·관망 중 하나를 선택해주세요."); return; }
+  if (!communityVoteSelectedChoice) { alert("매수 또는 매도를 선택해주세요."); return; }
   const url = communityApiUrl("/community/vote");
   if (!url) { alert("투표 기능을 사용할 수 없습니다."); return; }
   const btn = byId("communityVoteSubmit");
@@ -12872,6 +12937,13 @@ function persistWatchlist() {
   try { localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
   const input = byId("bulkInput");
   if (input) input.value = watchlist.join(", ");
+  scheduleCloudSyncPush();
+}
+
+let _cloudSyncPushTimer = null;
+function scheduleCloudSyncPush() {
+  clearTimeout(_cloudSyncPushTimer);
+  _cloudSyncPushTimer = setTimeout(() => pushCloudSync(), 1200);
 }
 
 function isInWatchlist(ticker) {
@@ -12984,6 +13056,7 @@ function watchAlertSettings() {
 
 function saveWatchAlertSettings(settings) {
   try { localStorage.setItem(WATCH_ALERT_STORAGE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+  scheduleCloudSyncPush();
 }
 
 function readWatchAlertSettingsFromUi() {
@@ -13111,8 +13184,6 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
-const SW_VERSION = "20260617x";
-
 function setupPwa() {
   if ("serviceWorker" in navigator) {
     let refreshing = false;
@@ -14251,6 +14322,7 @@ function renderBacktestResults(payload) {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
   drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker);
+  lastBacktestExportPayload = payload;
   box.hidden = false;
   setBacktestStatus("");
 }
@@ -14619,6 +14691,316 @@ function setupBacktestEvents() {
       if (!byId("backtestResults")?.hidden) run();
     });
   });
+}
+
+// ===== Market chat context (RAG) =====
+function buildMarketChatContext() {
+  const cfg = marketCfg();
+  const summary = data.summary || {};
+  const updated = data.updatedAtKst || data.updated_at_kst || "";
+  const tone = summary.marketTone || summary.market_tone || "";
+  const strong = summary.strongSector || summary.strong_sector || "";
+  const weak = summary.weakSector || summary.weak_sector || "";
+  const breadth = summary.aiBreadth || summary.ai_breadth || "";
+  const stockCount = Array.isArray(data.stocks) ? data.stocks.length : 0;
+  const majors = (data.health?.major || []).slice(0, 6).map((row) => {
+    const chg = Number(row.changePct);
+    const chgText = Number.isFinite(chg) ? `${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%` : "-";
+    return `${row.ticker || row.name}: ${chgText}`;
+  }).join(", ");
+  return [
+    `[${cfg.label} 시장 스냅샷]`,
+    `기준: ${updated}`,
+    tone ? `국면: ${tone}` : "",
+    strong ? `강세 섹터: ${strong}` : "",
+    weak ? `약세 섹터: ${weak}` : "",
+    breadth ? `AI breadth: ${breadth}` : "",
+    `추적 종목: ${stockCount}개`,
+    majors ? `주요 지표: ${majors}` : "",
+  ].filter(Boolean).join("\n").slice(0, 2000);
+}
+
+// ===== Heatmap share deeplink =====
+function heatmapRouteParams() {
+  const bucket = byId("bucketFilter")?.value;
+  const sector = byId("sectorFilter")?.value;
+  const metric = byId("metricFilter")?.value;
+  const tile = byId("tileSizeFilter")?.value;
+  const q = byId("heatmapSearch")?.value?.trim();
+  const params = { tab: "map" };
+  if (bucket) params.map_bucket = bucket;
+  if (sector && sector !== "All") params.map_sector = sector;
+  if (metric && metric !== "changePct") params.map_metric = metric;
+  if (tile && tile !== "marketCapB") params.map_tile = tile;
+  if (q) params.map_q = q;
+  return params;
+}
+
+function applyHeatmapRoute(route) {
+  const bucket = route.get("map_bucket");
+  const sector = route.get("map_sector");
+  const metric = route.get("map_metric");
+  const tile = route.get("map_tile");
+  const q = route.get("map_q");
+  if (bucket && byId("bucketFilter")) byId("bucketFilter").value = bucket;
+  if (sector && byId("sectorFilter")) byId("sectorFilter").value = sector;
+  if (metric && byId("metricFilter")) byId("metricFilter").value = metric;
+  if (tile && byId("tileSizeFilter")) byId("tileSizeFilter").value = tile;
+  if (q != null && byId("heatmapSearch")) byId("heatmapSearch").value = q;
+}
+
+async function shareHeatmapLink() {
+  const url = new URL(window.location.href);
+  Object.entries(heatmapRouteParams()).forEach(([key, value]) => url.searchParams.set(key, value));
+  try {
+    await navigator.clipboard.writeText(url.toString());
+    const btn = byId("heatmapShare");
+    if (btn) {
+      const prev = btn.textContent;
+      btn.textContent = "복사됨!";
+      setTimeout(() => { btn.textContent = prev; }, 1500);
+    }
+  } catch (e) {
+    window.prompt("히트맵 링크", url.toString());
+  }
+}
+
+// ===== CSV export =====
+function downloadCsv(filename, rows) {
+  const bom = "\uFEFF";
+  const body = rows.map((row) => row.map((cell) => {
+    const text = String(cell ?? "");
+    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }).join(",")).join("\n");
+  const blob = new Blob([bom + body], { type: "text/csv;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
+
+function exportPortfolioCsv() {
+  if (!portfolio.length) { alert("보낼 보유 종목이 없습니다."); return; }
+  const fmt = marketCfg().formatMoney;
+  const rows = [["티커", "종목명", "수량", "평단", "현재가", "평가액", "손익%", "섹터"]];
+  portfolio.forEach((p) => {
+    const stock = stockByTicker(p.ticker);
+    const price = stock ? Number(stock.price) : 0;
+    const value = p.qty * price;
+    const cost = p.qty * p.avgCost;
+    const plPct = cost > 0 ? ((value - cost) / cost) * 100 : 0;
+    rows.push([
+      p.ticker,
+      stock?.company || "",
+      p.qty,
+      p.avgCost,
+      price,
+      value,
+      plPct.toFixed(2),
+      stock?.sector || "",
+    ]);
+  });
+  downloadCsv(`mir-portfolio-${marketCfg().id}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+}
+
+let lastBacktestExportPayload = null;
+
+function exportBacktestCsv() {
+  if (!lastBacktestExportPayload) { alert("먼저 시뮬레이션을 실행해 주세요."); return; }
+  const p = lastBacktestExportPayload;
+  const rows = [
+    ["포트폴리오 수익률%", p.totalReturn],
+    ["연환산%", p.annReturn ?? ""],
+    ["벤치마크", p.benchmarkTicker],
+    ["벤치마크 수익률%", p.benchmarkReturn ?? ""],
+    ["초과수익 α%", p.alpha ?? ""],
+    ["기간", `${p.startDate} → ${p.endDate}`],
+    [],
+    ["티커", "회사", "시작가", "종가", "수익률%", "비중%", "투자액", "평가액"],
+  ];
+  (p.stockReturns || []).forEach((row) => {
+    rows.push([row.ticker, row.company, row.startPrice, row.endPrice, row.returnPct, row.weightPct, row.invested, row.finalValue]);
+  });
+  downloadCsv(`mir-backtest-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+}
+
+// ===== Cloud sync (watchlist + portfolio + alerts) =====
+const CLOUD_SYNC_KEY = "mir_cloud_sync_v1";
+const TELEGRAM_ALERT_KEY = "mir_telegram_alert_v1";
+
+function cloudSyncPayload() {
+  return {
+    watchlist,
+    portfolio,
+    alertSettings: watchAlertSettings(),
+    telegram: (() => {
+      try { return JSON.parse(localStorage.getItem(TELEGRAM_ALERT_KEY) || "{}") || {}; } catch (e) { return {}; }
+    })(),
+    updatedAt: Date.now(),
+  };
+}
+
+async function pushCloudSync() {
+  if (!LIVE_DATA_PROXY) return;
+  const url = communityApiUrl("/sync/prefs");
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: getCommunityClientId(), prefs: cloudSyncPayload() }),
+    });
+    localStorage.setItem(CLOUD_SYNC_KEY, String(Date.now()));
+    updateCloudSyncStatus("저장됨");
+  } catch (e) { /* ignore */ }
+}
+
+async function pullCloudSync() {
+  if (!LIVE_DATA_PROXY) return;
+  const url = communityApiUrl(`/sync/prefs?clientId=${encodeURIComponent(getCommunityClientId())}`);
+  if (!url) return;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const payload = await res.json();
+    const prefs = payload && payload.prefs;
+    if (!prefs) return;
+    if (Array.isArray(prefs.watchlist) && prefs.watchlist.length) {
+      watchlist = [...new Set(prefs.watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))].slice(0, 80);
+      persistWatchlist();
+    }
+    if (Array.isArray(prefs.portfolio) && prefs.portfolio.length) {
+      portfolio = prefs.portfolio.filter((p) => p && p.ticker).slice(0, 60);
+      savePortfolio();
+    }
+    if (prefs.alertSettings && typeof prefs.alertSettings === "object") {
+      saveWatchAlertSettings({ ...watchAlertSettings(), ...prefs.alertSettings });
+    }
+    if (prefs.telegram && typeof prefs.telegram === "object") {
+      localStorage.setItem(TELEGRAM_ALERT_KEY, JSON.stringify(prefs.telegram));
+      applyTelegramSettingsToUi(prefs.telegram);
+    }
+    updateCloudSyncStatus("불러옴");
+  } catch (e) { /* ignore */ }
+}
+
+function updateCloudSyncStatus(text) {
+  const el = byId("cloudSyncStatus");
+  if (!el) return;
+  el.textContent = text;
+  clearTimeout(updateCloudSyncStatus._timer);
+  updateCloudSyncStatus._timer = setTimeout(() => { el.textContent = ""; }, 2500);
+}
+
+function telegramAlertSettings() {
+  try { return { enabled: false, chatId: "", ...JSON.parse(localStorage.getItem(TELEGRAM_ALERT_KEY) || "{}") }; }
+  catch (e) { return { enabled: false, chatId: "" }; }
+}
+
+function saveTelegramAlertSettings(settings) {
+  try { localStorage.setItem(TELEGRAM_ALERT_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+  pushCloudSync();
+}
+
+function applyTelegramSettingsToUi(settings) {
+  const enabled = byId("telegramAlertEnabled");
+  const chatId = byId("telegramChatId");
+  if (enabled) enabled.checked = Boolean(settings.enabled);
+  if (chatId && settings.chatId) chatId.value = settings.chatId;
+}
+
+async function maybeSendTelegramAlerts() {
+  const settings = telegramAlertSettings();
+  if (!settings.enabled || !settings.chatId || !LIVE_DATA_PROXY) return;
+  const alertSettings = watchAlertSettings();
+  const hits = watchlist
+    .map((ticker) => stockByTicker(ticker))
+    .filter(Boolean)
+    .map((item) => ({ item, reasons: watchAlertReasons(item, alertSettings) }))
+    .filter((row) => row.reasons.length);
+  if (!hits.length) return;
+  const today = new Date().toISOString().slice(0, 10);
+  const sentKey = `mir_telegram_sent_${today}`;
+  if (localStorage.getItem(sentKey)) return;
+  const lines = hits.slice(0, 8).map(({ item, reasons }) => `${item.ticker}: ${reasons.join(", ")}`);
+  const text = `[미르 관심종목 알림]\n${lines.join("\n")}\n\n${window.location.origin}`;
+  try {
+    const res = await fetch(communityApiUrl("/alerts/telegram"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chatId: settings.chatId, text, clientId: getCommunityClientId() }),
+    });
+    if (res.ok) localStorage.setItem(sentKey, "1");
+  } catch (e) { /* ignore */ }
+}
+
+function setupCloudSyncEvents() {
+  applyTelegramSettingsToUi(telegramAlertSettings());
+  byId("cloudSyncPull")?.addEventListener("click", () => pullCloudSync().then(() => {
+    renderWatchlistBar();
+    renderPortfolio();
+    renderWatchAlerts();
+  }));
+  byId("cloudSyncPush")?.addEventListener("click", () => pushCloudSync());
+  byId("telegramAlertSave")?.addEventListener("click", () => {
+    saveTelegramAlertSettings({
+      enabled: Boolean(byId("telegramAlertEnabled")?.checked),
+      chatId: String(byId("telegramChatId")?.value || "").trim(),
+    });
+    alert("텔레그램 알림 설정이 저장되었습니다.");
+  });
+}
+
+// ===== KR DART disclosures =====
+let krDartQuery = "";
+
+function renderKrDisclosures() {
+  const meta = byId("krDartMeta");
+  const table = byId("krDartTable");
+  if (!table) return;
+  const payload = window.KR_DISCLOSURES;
+  if (!payload) {
+    table.innerHTML = `<p class="muted">DART 공시 데이터를 불러오는 중…</p>`;
+    return;
+  }
+  if (meta) {
+    meta.textContent = `${payload.updatedAtKst || ""} · ${payload.count || 0}건 · ${payload.source || ""}`;
+  }
+  let rows = payload.disclosures || [];
+  const q = krDartQuery.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter((row) =>
+      [row.ticker, row.company, row.title, row.typeLabel].some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }
+  if (!rows.length) {
+    table.innerHTML = `<p class="muted">${payload.note || "표시할 공시가 없습니다."}</p>`;
+    return;
+  }
+  table.innerHTML = `
+    <table class="insider-table">
+      <thead><tr><th>일자</th><th>종목</th><th>회사</th><th>유형</th><th>제목</th></tr></thead>
+      <tbody>
+        ${rows.slice(0, 200).map((row) => `
+          <tr>
+            <td>${escapeHtml(row.fileDate || "")}</td>
+            <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
+            <td>${escapeHtml(row.company || "")}</td>
+            <td>${escapeHtml(row.typeLabel || "")}</td>
+            <td>${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>`;
+  table.querySelectorAll(".ins-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function setupKrDartEvents() {
+  const search = byId("krDartSearch");
+  if (search) search.addEventListener("input", () => { krDartQuery = search.value; renderKrDisclosures(); });
 }
 
 loadData();

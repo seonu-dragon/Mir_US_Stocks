@@ -1067,7 +1067,7 @@ function setupChatbot() {
     addChatMessage("user", text);
     chatHistory.push({ role: "user", content: text });
     chatBusy = true;
-    const typing = addChatMessage("bot", "답변을 준비하고 있어요…");
+    const typing = addChatMessage("bot", chatLikelyNeedsNews(text) ? "관련 뉴스를 찾고 있어요…" : "답변을 준비하고 있어요…");
     typing.classList.add("typing");
     try {
       if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
@@ -1075,7 +1075,12 @@ function setupChatbot() {
       const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: chatHistory.slice(-10), stockContext }),
+        body: JSON.stringify({
+          messages: chatHistory.slice(-10),
+          stockContext,
+          market: isKrMarket() ? "kr" : "us",
+          searchHints: buildChatSearchHints(text),
+        }),
       });
       const payload = await res.json();
       const reply = (payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.";
@@ -8202,8 +8207,27 @@ function pctFrom(now, then) {
 }
 
 function extractTickerCandidates(text) {
-  const words = String(text || "").toUpperCase().match(/\b[A-Z][A-Z0-9.\-]{0,5}\b/g) || [];
-  return [...new Set(words.filter((w) => stockByTicker(w)))];
+  const raw = String(text || "");
+  const us = raw.toUpperCase().match(/\b[A-Z][A-Z0-9.\-]{0,5}\b/g) || [];
+  const kr = raw.match(/\b\d{6}\b/g) || [];
+  return [...new Set([...us, ...kr].filter((w) => stockByTicker(w)))];
+}
+
+function buildChatSearchHints(userText) {
+  const tickers = new Set();
+  if (chatFocusTicker) tickers.add(chatFocusTicker);
+  if (selectedTicker) tickers.add(selectedTicker);
+  extractTickerCandidates(userText).forEach((t) => tickers.add(t));
+  const companies = [];
+  tickers.forEach((ticker) => {
+    const base = stockByTicker(ticker);
+    if (base && base.company) companies.push(base.company);
+  });
+  return { tickers: [...tickers], companies };
+}
+
+function chatLikelyNeedsNews(text) {
+  return /뉴스|왜\s*(올|하|떨|급|상|폭|조|강|쳤)|이슈|이유|배경|실적|어닝|공시|리포트|전망|하락|상승|급등|급락|수주|계약|인수|합병|소식|최근|무슨\s*일|요약해|분석해/i.test(String(text || ""));
 }
 
 function buildStockChatContext(userText) {

@@ -1437,6 +1437,221 @@ const CHAT_SYSTEM_PROMPT = `당신은 "미르의 미국 주식" 웹사이트의 
 - "이번 주 경제 일정이 궁금해요" → '경제 캘린더' 탭에서 한국·미국 주요 지표 일정을 보세요.
 - "이 종목 사도 돼요? / 목표가 알려줘" → 죄송하지만 특정 종목의 매수·매도·목표가는 안내하지 않아요. 참고용 지표만 제공하며 투자 판단은 본인 책임입니다.`;
 
+// -----------------------------------------------------------------------------
+// Chat RAG — retrieve recent news (Naver Open API → stock feed → Google RSS)
+// -----------------------------------------------------------------------------
+
+const CHAT_NEWS_INTENT_RE = /뉴스|기사|보도|왜\s*(올|하|떨|급|상|폭|조|강|쳤|내려|올라)|이슈|이유|배경|실적|어닝|공시|리포트|전망|하락|상승|급등|급락|수주|계약|인수|합병|소식|최근|오늘|무슨\s*일|어떤\s*일|어떻게\s*됐|분석해|요약해|알려줘.*(뉴스|이슈|이유)/i;
+
+function stripNewsHtml(value) {
+  return String(value || "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&quot;/g, "\"")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&#39;|&apos;/g, "'")
+    .trim();
+}
+
+function chatNeedsNewsRag(userText, stockContext) {
+  const text = String(userText || "").trim();
+  if (!text) return false;
+  if (CHAT_NEWS_INTENT_RE.test(text)) return true;
+  if (stockContext && /[?？]/.test(text)) return true;
+  return false;
+}
+
+function parseStockContextEntities(stockContext) {
+  const out = [];
+  const re = /\[(\S+)\s+([^\]]+)\]/g;
+  let match;
+  while ((match = re.exec(String(stockContext || "")))) {
+    out.push({ ticker: match[1], company: match[2].trim() });
+  }
+  return out;
+}
+
+function collectChatEntities(userText, stockContext, searchHints, market) {
+  const byTicker = new Map();
+  const add = (ticker, company) => {
+    const t = String(ticker || "").trim();
+    if (!t) return;
+    const c = String(company || "").trim();
+    const prev = byTicker.get(t) || { ticker: t, company: "" };
+    byTicker.set(t, { ticker: t, company: c || prev.company });
+  };
+
+  const hints = searchHints && typeof searchHints === "object" ? searchHints : {};
+  const tickers = Array.isArray(hints.tickers) ? hints.tickers : [];
+  const companies = Array.isArray(hints.companies) ? hints.companies : [];
+  tickers.forEach((ticker, index) => add(ticker, companies[index] || ""));
+
+  parseStockContextEntities(stockContext).forEach((row) => add(row.ticker, row.company));
+
+  const text = String(userText || "");
+  for (const code of text.match(/\b\d{6}\b/g) || []) add(code, "");
+  for (const sym of text.match(/\b[A-Z][A-Z0-9.\-]{0,5}\b/g) || []) add(sym, "");
+
+  const entities = [...byTicker.values()];
+  if (!entities.length && market === "kr") {
+    const macro = text.replace(/[?？!！.]/g, "").trim().slice(0, 48);
+    if (macro.length >= 4) entities.push({ ticker: "", company: macro });
+  }
+  return entities.slice(0, 4);
+}
+
+function buildChatNewsQueries(userText, entities, market) {
+  const isKr = market !== "us";
+  const text = String(userText || "");
+  const topic = (() => {
+    if (/실적|어닝|EPS/i.test(text)) return "실적";
+    if (/공시/.test(text)) return "공시";
+    if (/수주|계약/.test(text)) return "수주";
+    if (/인수|합병|M&A/i.test(text)) return "인수합병";
+    if (/왜|이유|배경|올랐|하락|급등|급락/.test(text)) return "주가";
+    return "뉴스";
+  })();
+  const queries = [];
+  for (const ent of entities) {
+    const name = String(ent.company || ent.ticker || "").trim();
+    if (!name) continue;
+    if (isKr) queries.push(ent.company ? `${ent.company} ${topic}` : `${ent.ticker} ${topic}`);
+    else queries.push(ent.company && ent.company.toUpperCase() !== ent.ticker
+      ? `${ent.company} stock ${topic}`
+      : `${ent.ticker} stock news`);
+  }
+  if (!queries.length && isKr) {
+    const macro = text.replace(/[?？!！.]/g, "").trim().slice(0, 48);
+    if (macro.length >= 4) queries.push(macro);
+  }
+  return [...new Set(queries.filter(Boolean))].slice(0, 3);
+}
+
+async function fetchNaverNewsOpenApi(query, env, display = 10) {
+  const clientId = env && env.NAVER_CLIENT_ID;
+  const clientSecret = env && env.NAVER_CLIENT_SECRET;
+  if (!clientId || !clientSecret || !query) return null;
+  try {
+    const url = `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(query)}&display=${Math.min(Math.max(display, 1), 20)}&start=1&sort=date`;
+    const response = await fetch(url, {
+      headers: {
+        "X-Naver-Client-Id": clientId,
+        "X-Naver-Client-Secret": clientSecret,
+        "User-Agent": "MirChatRAG/1.0",
+        Accept: "application/json",
+      },
+    });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    return (payload.items || []).map((item) => ({
+      title: stripNewsHtml(item.title),
+      summary: stripNewsHtml(item.description),
+      publisher: "",
+      link: item.originallink || item.link || "",
+      publishedAt: item.pubDate ? new Date(item.pubDate).toISOString().slice(0, 10) : "",
+      provider: "Naver Search API",
+    })).filter((item) => item.title);
+  } catch (e) {
+    return null;
+  }
+}
+
+async function fetchGoogleNewsRecent(query, isKr = true) {
+  if (!query) return [];
+  try {
+    const rssQuery = `${query} when:7d`;
+    const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(rssQuery)}&hl=${isKr ? "ko" : "en-US"}&gl=${isKr ? "KR" : "US"}&ceid=${isKr ? "KR:ko" : "US:en"}`;
+    const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
+    if (!response.ok) return [];
+    return parseGoogleNewsRss(await response.text()).map((item) => ({
+      ...item,
+      summary: item.summary || "",
+      provider: "Google News",
+    }));
+  } catch (e) {
+    return [];
+  }
+}
+
+function scoreChatNewsItem(item, query, userText) {
+  const blob = `${item.title} ${item.summary}`.toLowerCase();
+  const terms = new Set(
+    `${query} ${userText}`
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((term) => term.length >= 2)
+  );
+  let score = 0;
+  terms.forEach((term) => {
+    if (blob.includes(term)) score += 1;
+  });
+  if (item.publishedAt) {
+    const ageDays = (Date.now() - new Date(item.publishedAt).getTime()) / 86400000;
+    if (Number.isFinite(ageDays) && ageDays <= 3) score += 2;
+    else if (Number.isFinite(ageDays) && ageDays <= 7) score += 1;
+  }
+  return score;
+}
+
+function dedupeChatNews(items) {
+  const seen = new Set();
+  const out = [];
+  for (const item of items) {
+    const key = stripNewsHtml(item.title).toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+async function retrieveChatNewsRag(userText, entities, env, market) {
+  const isKr = market !== "us";
+  const queries = buildChatNewsQueries(userText, entities, market);
+  const pool = [];
+
+  for (const query of queries) {
+    let batch = null;
+    if (isKr) batch = await fetchNaverNewsOpenApi(query, env, 10);
+    if (!batch || !batch.length) batch = await fetchGoogleNewsRecent(query, isKr);
+    batch.forEach((item) => {
+      pool.push({ ...item, _score: scoreChatNewsItem(item, query, userText) });
+    });
+  }
+
+  for (const ent of entities.slice(0, 2)) {
+    if (!ent.ticker) continue;
+    let batch = [];
+    if (isKoreanTicker(ent.ticker)) batch = await fetchNaverNews(ent.ticker);
+    else batch = await fetchNews(ent.ticker.replace(/\./g, "-"));
+    batch.forEach((item) => {
+      pool.push({
+        ...item,
+        summary: item.summary || "",
+        provider: item.provider || (isKoreanTicker(ent.ticker) ? "Naver Stock" : "Yahoo"),
+        _score: scoreChatNewsItem(item, ent.company || ent.ticker, userText) + 1,
+      });
+    });
+  }
+
+  return dedupeChatNews(pool)
+    .sort((a, b) => (b._score || 0) - (a._score || 0))
+    .slice(0, 6)
+    .map(({ _score, ...item }) => item);
+}
+
+function formatChatNewsRagBlock(news) {
+  if (!Array.isArray(news) || !news.length) return "";
+  const lines = news.map((item, index) => {
+    const date = item.publishedAt ? ` · ${item.publishedAt}` : "";
+    const publisher = item.publisher ? ` · ${item.publisher}` : (item.provider ? ` · ${item.provider}` : "");
+    const summary = item.summary ? `\n   요약: ${item.summary.slice(0, 220)}` : "";
+    return `${index + 1}. [${item.title}]${date}${publisher}${summary}`;
+  });
+  return `\n\n[검색된 최근 뉴스 근거 — 아래 내용만 사실로 사용하고, 없는 내용은 지어내지 마세요]\n${lines.join("\n")}\n\n뉴스 답변 규칙:\n- 위 기사에 나온 사실만 바탕으로 설명하세요.\n- 답변 말미에 참고한 기사 제목·날짜를 짧게 언급하세요.\n- 근거가 부족하면 "확인된 뉴스가 충분하지 않다"고 솔직히 말하세요.\n- 매수/매도/목표가 추천은 하지 마세요.`;
+}
+
 async function handleChat(request, env) {
   let body;
   try {
@@ -1458,17 +1673,38 @@ async function handleChat(request, env) {
     return json({ reply: "지금은 도우미를 사용할 수 없어요. 잠시 후 다시 시도해 주세요.", error: "no_ai_binding" });
   }
 
+  const userText = history[history.length - 1].content;
   const stockContext = typeof body.stockContext === "string" ? body.stockContext.trim().slice(0, 4000) : "";
-  const systemContent = stockContext
-    ? `${CHAT_SYSTEM_PROMPT}\n\n[현재 사용자가 보고 있는 종목 컨텍스트]\n${stockContext}\n\n위 종목 데이터가 제공되면 이를 우선 참고해 설명하되, 매수/매도/목표가 추천은 하지 마세요.`
-    : CHAT_SYSTEM_PROMPT;
+  const market = body.market === "us" ? "us" : "kr";
+  const searchHints = body.searchHints && typeof body.searchHints === "object" ? body.searchHints : {};
+
+  let newsRagBlock = "";
+  let newsSources = [];
+  if (chatNeedsNewsRag(userText, stockContext)) {
+    const entities = collectChatEntities(userText, stockContext, searchHints, market);
+    newsSources = await retrieveChatNewsRag(userText, entities, env, market);
+    newsRagBlock = formatChatNewsRagBlock(newsSources);
+  }
+
+  let systemContent = CHAT_SYSTEM_PROMPT;
+  if (stockContext) {
+    systemContent += `\n\n[현재 사용자가 보고 있는 종목 컨텍스트]\n${stockContext}\n\n위 종목 데이터가 제공되면 이를 우선 참고해 설명하되, 매수/매도/목표가 추천은 하지 마세요.`;
+  }
+  if (newsRagBlock) systemContent += newsRagBlock;
+
   const messages = [{ role: "system", content: systemContent }, ...history];
   let lastError = "no_model";
   for (const model of CHAT_MODELS) {
     try {
       const result = await env.AI.run(model, { messages, max_tokens: 768, temperature: 0.3 });
       const text = String((result && result.response) || "").trim();
-      if (text) return json({ reply: text, model });
+      if (text) {
+        return json({
+          reply: text,
+          model,
+          rag: newsSources.length ? { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } : null,
+        });
+      }
       lastError = `empty_response:${model}`;
     } catch (e) {
       lastError = `${model}: ${(e && e.message) || e}`;

@@ -1,8 +1,8 @@
 name: Daily Korea market snapshot
 
 on:
-  schedule:
-    - cron: "40 6 * * *"  # 15:40 KST (UTC+9) — Korea market close snapshot
+  # Primary path: korea-close-briefing.yml runs this script at 15:42 KST.
+  # Keep manual trigger for recovery when the afternoon schedule is missed.
   workflow_dispatch:
 
 permissions:

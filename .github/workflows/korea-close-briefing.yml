@@ -15,7 +15,7 @@ concurrency:
 jobs:
   briefing:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,6 +34,11 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # 장마감 스냅샷(15:40) 전용 워크플로가 스케줄 누락되는 경우가 있어
+      # 장마감 브리핑 job에서 함께 갱신한다.
+      - name: Update Korea market snapshot
+        run: python scripts/update_korea_data.py --push
 
       - name: Run Korea close briefing
         env:

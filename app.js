@@ -15778,9 +15778,9 @@ function createAiChartState() {
     showRsi: true,
     showMacd: false,
     showStoch: false,
-    showSupportResistance: false,
-    showPatterns: false,
-    showTechLevels: false,
+    showSupportResistance: true,
+    showPatterns: true,
+    showTechLevels: true,
     showVolumeProfile: false,
     showTrendlines: true,
     showGapZones: false,
@@ -16382,6 +16382,12 @@ function setupAiWidgetChartControls(widget, item, state) {
         state.showRsi = active;
       } else if (type === "trendlines") {
         state.showTrendlines = active;
+      } else if (type === "support") {
+        state.showSupportResistance = active;
+      } else if (type === "patterns") {
+        state.showPatterns = active;
+      } else if (type === "levels") {
+        state.showTechLevels = active;
       }
       render();
     });
@@ -16667,6 +16673,9 @@ async function renderInlineStockWidget(ticker, parentBubble) {
           </div>
           <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="trendlines" title="자동 추세선 온/오프">추세선</button>
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="support" title="수평 지지/저항선 온/오프">지지/저항</button>
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="patterns" title="차트 패턴 온/오프">패턴</button>
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="levels" title="기술적 매물대 온/오프">매물대</button>
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="sma" title="이동평균선 온/오프">이동평균</button>
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="volume" title="거래량 온/오프">거래량</button>
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="rsi" title="RSI 온/오프">RSI</button>

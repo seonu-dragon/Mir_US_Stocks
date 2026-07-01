@@ -17007,6 +17007,10 @@ function setupAiChatModeEvents() {
     card.addEventListener("click", () => {
       const query = card.dataset.query;
       sendAiChat(query);
+      const input = byId("aiChatInput");
+      if (input) {
+        input.focus();
+      }
     });
   });
   

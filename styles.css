@@ -11970,6 +11970,42 @@ body.ai-mode-active #tab-ai-chat {
   background: rgba(239, 68, 68, 0.05);
 }
 
+/* 8. Busy 상태 컨트롤 비활성화 및 미니 스피너 */
+.ai-chat-form input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+[data-theme="light"] .ai-chat-form input:disabled {
+  background: rgba(15, 23, 42, 0.02) !important;
+}
+
+.ai-chat-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ai-mini-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: aiSpinnerSpin 0.8s linear infinite;
+  vertical-align: middle;
+}
+
+[data-theme="light"] .ai-mini-spinner {
+  border-color: rgba(15, 23, 42, 0.1);
+  border-top-color: var(--brand);
+}
+
+@keyframes aiSpinnerSpin {
+  to { transform: rotate(360deg); }
+}
+
 
 
 

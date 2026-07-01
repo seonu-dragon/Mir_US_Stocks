@@ -15469,6 +15469,50 @@ function renderAiHistoryList() {
       switchAiChatSession(id);
     });
     
+    // 더블클릭 인라인 이름 변경
+    item.addEventListener("dblclick", (e) => {
+      if (e.target.classList.contains("delete-session-btn")) return;
+      
+      const infoWrap = item.querySelector(".session-info-wrap");
+      const strong = infoWrap?.querySelector("strong");
+      if (!strong || infoWrap.querySelector(".rename-session-input")) return;
+      
+      const prevName = session.name;
+      strong.style.display = "none";
+      
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "rename-session-input";
+      input.value = prevName;
+      
+      input.addEventListener("click", (evt) => evt.stopPropagation());
+      input.addEventListener("dblclick", (evt) => evt.stopPropagation());
+      
+      const saveRename = () => {
+        const val = input.value.trim();
+        if (val && val !== prevName) {
+          session.name = val;
+          saveAiSessionsToStorage();
+        }
+        renderAiHistoryList();
+      };
+      
+      input.addEventListener("keydown", (evt) => {
+        if (evt.key === "Enter") {
+          evt.preventDefault();
+          saveRename();
+        } else if (evt.key === "Escape") {
+          renderAiHistoryList();
+        }
+      });
+      
+      input.addEventListener("blur", saveRename);
+      
+      infoWrap.insertBefore(input, strong);
+      input.focus();
+      input.select();
+    });
+    
     const delBtn = item.querySelector(".delete-session-btn");
     if (delBtn) {
       delBtn.addEventListener("click", (e) => {
@@ -15786,7 +15830,30 @@ function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
     // 동기식 복원 시 배지 즉시 그리기
     const badgesHtml = role === "bot" ? generateAiBadges(htmlOrText) : "";
     const parsedContent = isMarkdown ? formatMarkdownToHtml(htmlOrText) : htmlOrText;
-    msg.innerHTML = `${badgesHtml}<div class="msg-bubble">${parsedContent}</div>`;
+    msg.innerHTML = `
+      ${badgesHtml}
+      <div class="msg-bubble-wrap">
+        <div class="msg-bubble">${parsedContent}</div>
+        ${role === "bot" && htmlOrText ? `<button class="copy-msg-btn" title="답변 복사" aria-label="답변 복사">📋</button>` : ""}
+      </div>
+    `;
+    
+    const copyBtn = msg.querySelector(".copy-msg-btn");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", () => {
+        const textToCopy = msg.querySelector(".msg-bubble")?.innerText || htmlOrText;
+        navigator.clipboard.writeText(textToCopy).then(() => {
+          copyBtn.textContent = "✓";
+          copyBtn.classList.add("copied");
+          setTimeout(() => {
+            copyBtn.textContent = "📋";
+            copyBtn.classList.remove("copied");
+          }, 1500);
+        }).catch(err => {
+          console.error("복사 실패:", err);
+        });
+      });
+    }
   }
   
   log.appendChild(msg);

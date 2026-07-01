@@ -10269,6 +10269,20 @@ body.ai-mode-active #tab-ai-chat {
   max-width: 680px;
   padding: 40px 20px;
   position: relative;
+  animation: welcomeReveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes welcomeReveal {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
 }
 
 /* 웰컴 화면용 백그라운드 오로라 라이트 효과 */
@@ -11308,19 +11322,29 @@ body.ai-mode-active #tab-ai-chat {
 }
 
 .ai-history-item {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.session-info-wrap {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  border: 1px solid transparent;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
 }
 
 .ai-history-item:hover {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.05);
 }
 
 [data-theme="light"] .ai-history-item:hover {
@@ -11340,11 +11364,44 @@ body.ai-mode-active #tab-ai-chat {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
 }
 
 .ai-history-item span {
   font-size: 10px;
   color: var(--muted);
+  display: block;
+}
+
+.delete-session-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+
+.ai-history-item:hover .delete-session-btn {
+  opacity: 0.6;
+  transform: translateX(0);
+}
+
+.delete-session-btn:hover {
+  opacity: 1 !important;
+  color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.08) !important;
 }
 
 .ai-header-controls {

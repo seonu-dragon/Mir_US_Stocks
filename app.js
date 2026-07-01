@@ -15458,16 +15458,48 @@ function renderAiHistoryList() {
     const dateStr = new Date(session.timestamp).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
     
     item.innerHTML = `
-      <strong>${escapeHtml(shortName)}</strong>
-      <span>${escapeHtml(dateStr)}</span>
+      <div class="session-info-wrap">
+        <strong>${escapeHtml(shortName)}</strong>
+        <span>${escapeHtml(dateStr)}</span>
+      </div>
+      <button class="delete-session-btn" title="대화 삭제" aria-label="대화 삭제">×</button>
     `;
     
     item.addEventListener("click", () => {
       switchAiChatSession(id);
     });
     
+    const delBtn = item.querySelector(".delete-session-btn");
+    if (delBtn) {
+      delBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm("이 대화 기록을 삭제하시겠습니까?")) {
+          deleteAiChatSession(id);
+        }
+      });
+    }
+    
     historyList.appendChild(item);
   });
+}
+
+// 세션 개별 삭제
+function deleteAiChatSession(sessionId) {
+  if (!aiChatSessions[sessionId]) return;
+  
+  delete aiChatSessions[sessionId];
+  saveAiSessionsToStorage();
+  
+  if (currentSessionId === sessionId) {
+    const remaining = Object.keys(aiChatSessions);
+    if (remaining.length > 0) {
+      switchAiChatSession(remaining[0]);
+    } else {
+      startNewAiChatSession();
+    }
+  } else {
+    renderAiHistoryList();
+  }
 }
 
 // 세션 전환

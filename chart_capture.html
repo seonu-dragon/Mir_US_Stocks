@@ -13,7 +13,7 @@
       padding: 16px;
     }
     #chart-capture-area {
-      width: 900px;
+      width: 960px;
       background: #111827;
       border: 1px solid #1f2937;
       border-radius: 12px;
@@ -30,9 +30,10 @@
     #captureChart { width: 100%; display: block; }
     .capture-legend {
       display: flex;
-      gap: 14px;
+      flex-wrap: wrap;
+      gap: 10px 14px;
       margin-top: 10px;
-      font-size: 12px;
+      font-size: 11px;
       color: #94a3b8;
     }
     .legend-dot {
@@ -52,7 +53,7 @@
         <h1 id="captureTitle">—</h1>
         <p id="captureMeta">차트 로딩 중…</p>
       </div>
-      <p id="capturePeriod">1Y · 일봉</p>
+      <p id="capturePeriod">6M · 일봉 · 상승확률 분석</p>
     </div>
     <svg id="captureChart" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="capture-legend">
@@ -60,9 +61,13 @@
       <span><i class="legend-dot" style="background:#d98a2b"></i>SMA60</span>
       <span><i class="legend-dot" style="background:#16a34a"></i>지지</span>
       <span><i class="legend-dot" style="background:#dc2626"></i>저항</span>
+      <span><i class="legend-dot" style="background:#4ade80"></i>지지 추세선</span>
+      <span><i class="legend-dot" style="background:#f87171"></i>저항 추세선</span>
+      <span><i class="legend-dot" style="background:#0ea5e9"></i>차트 패턴</span>
     </div>
     <p class="status" id="captureStatus">준비 중</p>
   </div>
+  <script src="analysis.js"></script>
   <script src="chart_capture.js"></script>
 </body>
 </html>

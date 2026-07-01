@@ -11560,5 +11560,100 @@ body.ai-mode-active #tab-ai-chat {
   stroke: rgba(15, 23, 42, 0.08);
 }
 
+/* ==========================================
+   AI 모드 2차 고도화 추가 스타일
+   ========================================== */
+
+/* 1. 음성 인식 마이크 버튼 */
+.ai-voice-btn {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  outline: none;
+}
+
+.ai-voice-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .ai-voice-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.ai-voice-btn.is-recording {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+  animation: voicePulse 1.4s infinite alternate ease-in-out;
+}
+
+@keyframes voicePulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(239, 68, 68, 0); }
+  100% { transform: scale(1.12); box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
+}
+
+/* 2. 보조지표 온/오프 토글 단추 */
+.indicator-toggle-btn {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--muted) !important;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.indicator-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
+}
+
+.indicator-toggle-btn.is-active {
+  background: rgba(139, 92, 246, 0.12) !important;
+  border-color: rgba(139, 92, 246, 0.3) !important;
+  color: #c084fc !important;
+}
+
+[data-theme="light"] .indicator-toggle-btn {
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .indicator-toggle-btn:hover {
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+[data-theme="light"] .indicator-toggle-btn.is-active {
+  background: rgba(139, 92, 246, 0.08) !important;
+  border-color: rgba(139, 92, 246, 0.25) !important;
+  color: #8b5cf6 !important;
+}
+
+/* 3. 공유/캡처용 단추 */
+.widget-share-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px 8px;
+}
+
+.widget-share-btn:hover {
+  color: var(--text);
+}
+
+
 
 

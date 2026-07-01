@@ -15495,6 +15495,28 @@ function switchAiChatSession(sessionId) {
   }
 }
 
+function getPersonalizedWelcomeData() {
+  let bestTicker = "NVDA";
+  let bestName = "엔비디아";
+  let maxChange = 0;
+  
+  if (window.watchlist && window.watchlist.length > 0) {
+    window.watchlist.forEach(t => {
+      const stock = stockByTicker(t);
+      if (stock && stock.changePercent != null) {
+        const absChange = Math.abs(parseFloat(stock.changePercent));
+        if (absChange > maxChange) {
+          maxChange = absChange;
+          bestTicker = t;
+          bestName = stock.company;
+        }
+      }
+    });
+  }
+  
+  return { ticker: bestTicker, name: bestName, change: maxChange };
+}
+
 // 새 대화 시작
 function startNewAiChatSession() {
   currentSessionId = "session_" + Date.now();
@@ -15513,8 +15535,23 @@ function startNewAiChatSession() {
   if (log) {
     log.innerHTML = "";
     if (welcome) {
-      welcome.appendChild(log.appendChild(welcome)); // 웰컴 복구
       welcome.style.display = "block";
+      
+      // 관심종목 변동 정보 연동 개인화
+      const welcomeData = getPersonalizedWelcomeData();
+      const mutedP = welcome.querySelector("p.muted");
+      if (mutedP) {
+        mutedP.innerHTML = `오늘 관심 종목 중 등락률이 높은 <strong>${escapeHtml(welcomeData.name)} (${escapeHtml(welcomeData.ticker)})</strong>의 정밀 AI 리포트를 확인해 보시겠어요? 아래 카드를 누르거나 무엇이든 질문해 주세요.`;
+      }
+      
+      const firstCard = welcome.querySelector(".welcome-suggestions .ai-chat-suggest-card");
+      if (firstCard) {
+        firstCard.dataset.query = `${welcomeData.ticker} 분석해줘`;
+        const cardStrong = firstCard.querySelector("strong");
+        const cardSpan = firstCard.querySelector("span");
+        if (cardStrong) cardStrong.textContent = `${welcomeData.ticker} 분석해줘`;
+        if (cardSpan) cardSpan.textContent = `${escapeHtml(welcomeData.name)}의 핵심 기술 지표, 실적 상황을 종합 점검합니다.`;
+      }
     }
   }
 }
@@ -16266,10 +16303,91 @@ function toggleAiWidgetFullscreen(widget) {
   }
 }
 
+async function exportWidgetAsImage(widget, ticker) {
+  const shareBtn = widget.querySelector(".widget-share-btn");
+  const prevText = shareBtn ? shareBtn.textContent : "💾 공유";
+  
+  if (shareBtn) {
+    shareBtn.textContent = "💾 캡처 중...";
+    shareBtn.disabled = true;
+  }
+  
+  try {
+    // 1. html2canvas 동적 로딩
+    if (!window.html2canvas) {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+        script.crossOrigin = "anonymous";
+        script.onload = resolve;
+        script.onerror = () => reject(new Error("캡처 라이브러리를 로드하지 못했습니다."));
+        document.head.appendChild(script);
+      });
+    }
+    
+    // SVG 가이드라인 충돌 제거
+    const crosshair = widget.querySelector(".chart-crosshair-line");
+    const tooltip = widget.querySelector(".chart-tooltip-box");
+    if (crosshair) crosshair.remove();
+    if (tooltip) tooltip.remove();
+    
+    // 2. 캔버스 캡처 실행 (다크/라이트 모드 배경 보정)
+    const isLight = document.body.getAttribute("data-theme") === "light";
+    const bgColor = isLight ? "#ffffff" : "#0f172a";
+    
+    const canvas = await window.html2canvas(widget, {
+      backgroundColor: bgColor,
+      scale: 2, // 고해상도 2배 출력
+      useCORS: true,
+      logging: false,
+      ignoreElements: (el) => {
+        return el.classList.contains("ai-widget-chart-tools") || el.classList.contains("widget-assembly-overlay");
+      }
+    });
+    
+    // 3. 파일 다운로드 실행
+    const dataUrl = canvas.toDataURL("image/png");
+    const link = document.createElement("a");
+    const dateStr = new Date().toISOString().substring(0, 10).replace(/-/g, "");
+    link.download = `mir_ai_report_${ticker}_${dateStr}.png`;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+  } catch (err) {
+    alert("이미지 캡처 중 오류가 발생했습니다: " + err.message);
+  } finally {
+    if (shareBtn) {
+      shareBtn.textContent = prevText;
+      shareBtn.disabled = false;
+    }
+  }
+}
+
 function setupAiWidgetChartControls(widget, item, state) {
   const svg = widget.querySelector(".ai-widget-chart");
   const meta = widget.querySelector(".ai-widget-chart-meta");
   const render = () => drawAiWidgetChart(item, svg, state, meta);
+
+  // 보조지표 버튼 바인딩
+  widget.querySelectorAll("[data-indicator]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const type = btn.dataset.indicator;
+      btn.classList.toggle("is-active");
+      const active = btn.classList.contains("is-active");
+      
+      if (type === "sma") {
+        state.showSma20 = active;
+        state.showSma60 = active;
+      } else if (type === "volume") {
+        state.showVolume = active;
+      } else if (type === "rsi") {
+        state.showRsi = active;
+      }
+      render();
+    });
+  });
 
   widget.querySelectorAll("[data-ai-chart-range]").forEach((button) => {
     button.addEventListener("click", () => {
@@ -16291,11 +16409,20 @@ function setupAiWidgetChartControls(widget, item, state) {
       else if (action === "pan-right") state.offset = Math.max(0, state.offset - Math.max(5, Math.round(12 / state.zoom)));
       else if (action === "reset") { state.zoom = 1; state.offset = 0; }
       else if (action === "fullscreen") toggleAiWidgetFullscreen(widget);
+      else if (action === "share") exportWidgetAsImage(widget, item.ticker);
       render();
     });
   });
 
   if (!svg) return;
+  
+  // 더블클릭 뷰 리셋 제스처
+  svg.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    state.zoom = 1;
+    state.offset = 0;
+    render();
+  });
   svg.addEventListener("wheel", (event) => {
     event.preventDefault();
     const rect = svg.getBoundingClientRect();
@@ -16541,6 +16668,10 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <small class="ai-widget-chart-meta">차트 준비 중</small>
           </div>
           <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="sma" title="이동평균선 온/오프">이동평균</button>
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="volume" title="거래량 온/오프">거래량</button>
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="rsi" title="RSI 온/오프">RSI</button>
+            <span style="border-left:1px solid rgba(255,255,255,0.1);height:14px;margin:0 4px;"></span>
             <button type="button" class="is-active" data-ai-chart-range="1Y">1Y</button>
             <button type="button" data-ai-chart-range="6M">6M</button>
             <button type="button" data-ai-chart-range="3M">3M</button>
@@ -16551,6 +16682,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <button type="button" data-ai-chart-action="pan-right" title="다음 구간">›</button>
             <button type="button" data-ai-chart-action="reset" title="초기화">Reset</button>
             <button type="button" data-ai-chart-action="fullscreen" title="풀스크린 분석" class="fullscreen-toggle-btn">⤢</button>
+            <button type="button" class="widget-share-btn" data-ai-chart-action="share" title="리포트 이미지 저장">💾 공유</button>
           </div>
         </div>
         <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(initialItem.ticker)} interactive chart"></svg>
@@ -16802,6 +16934,60 @@ function setupAiChatModeEvents() {
         popup.hidden = true;
       }
     });
+
+    // 음성인식 STT 바인딩
+    const voiceBtn = byId("aiVoiceBtn");
+    if (voiceBtn) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (SpeechRecognition) {
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        
+        let isListening = false;
+        
+        voiceBtn.addEventListener("click", () => {
+          if (isListening) {
+            recognition.stop();
+          } else {
+            try {
+              recognition.start();
+            } catch (e) { /* ignore */ }
+          }
+        });
+        
+        recognition.onstart = () => {
+          isListening = true;
+          voiceBtn.classList.add("is-recording");
+          input.placeholder = "듣고 있습니다... 말씀해 주세요.";
+        };
+        
+        recognition.onerror = (e) => {
+          console.error("STT Error:", e);
+          recognition.stop();
+        };
+        
+        recognition.onend = () => {
+          isListening = false;
+          voiceBtn.classList.remove("is-recording");
+          input.placeholder = "종목 분석 또는 투자 질문을 입력하세요...";
+        };
+        
+        recognition.onresult = (e) => {
+          const resultText = e.results[0][0].transcript;
+          if (resultText) {
+            input.value = resultText;
+            popup.hidden = true;
+            sendAiChat();
+          }
+        };
+      } else {
+        voiceBtn.style.opacity = "0.3";
+        voiceBtn.style.cursor = "not-allowed";
+        voiceBtn.title = "이 브라우저에서는 음성 인식을 지원하지 않습니다.";
+      }
+    }
   }
 }
 

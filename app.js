@@ -15565,10 +15565,6 @@ function triggerInlineRename(item, session) {
   input.focus();
   input.select();
 }
-    
-    historyList.appendChild(item);
-  });
-}
 
 // 세션 개별 삭제
 function deleteAiChatSession(sessionId) {

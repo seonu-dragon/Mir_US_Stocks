@@ -749,6 +749,18 @@ def fetch_naver_news(code: str, limit: int = 8) -> list[dict]:
     return items
 
 
+def backfill_change_from_history(stock: dict, rows: list) -> None:
+    """장 개장 전에는 네이버 시세의 '당일 등락률'이 0으로 내려와 히트맵이 전 종목
+    0%가 된다. 실거래(야후) 히스토리가 있으면 직전 완성 세션의 종가 등락률로
+    changePct를 보정한다. 장중·마감 후 실제 등락률이 있으면 건드리지 않는다.
+    합성(snapshot) 시계열에는 적용하지 않는다(가짜 등락률 방지)."""
+    if stock.get("changePct"):
+        return
+    closes = [row.get("close") for row in rows if row.get("close")]
+    if len(closes) >= 2 and closes[-2]:
+        stock["changePct"] = round((closes[-1] / closes[-2] - 1) * 100, 1)
+
+
 def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
@@ -793,6 +805,8 @@ def build_one(meta: dict):
             meta["news"] = news
 
     stock = UD.make_stock(meta, rows)
+    if meta.get("historySource") == "yahoo":
+        backfill_change_from_history(stock, rows)
     stock["ticker"] = symbol
     stock["market"] = meta.get("market")
     stock["yahooSymbol"] = ysym
@@ -950,6 +964,7 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
     except Exception:
         return None
     stock = UD.make_stock(meta, rows)
+    backfill_change_from_history(stock, rows)  # 야후 실 히스토리 → 개장 전 0% 보정
     stock["ticker"] = code
     stock["market"] = "etf"
     stock["yahooSymbol"] = ysym

@@ -403,16 +403,16 @@ function loadSnapshotScript(cfg) {
 // the active market's feature flags. `feature` maps to cfg.features; `usOnly`
 // loads only in US mode; datasets without either load in both markets.
 const FEATURE_DATA = {
-  inst13f:    { global: "INSTITUTIONAL_13F",     src: featureDataSrc("data/institutional_13f.js"),     feature: "sec13f" },
-  congress:   { global: "CONGRESS_TRADES",       src: featureDataSrc("data/congress_trades.js"),       feature: "congress" },
-  insider:    { global: "INSIDER_TRADES",        src: featureDataSrc("data/insider_trades.js"),        feature: "insider" },
-  activist:   { global: "ACTIVIST_STAKES",       src: featureDataSrc("data/activist_stakes.js"),       feature: "activist" },
-  events:     { global: "MATERIAL_EVENTS",       src: featureDataSrc("data/material_events.js"),       feature: "materialEvents" },
-  ipo:        { global: "IPO_CALENDAR",          src: featureDataSrc("data/ipo_calendar.js"),          feature: "ipo" },
-  short:      { global: "SHORT_INTEREST",        src: featureDataSrc("data/short_interest.js"),        feature: "shortInterest" },
-  whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  src: featureDataSrc("data/white_house_schedule.js"),  feature: "whiteHouse" },
-  leveraged:  { global: "LEVERAGED_ETF_CATALOG", src: featureDataSrc("data/leveraged_etf_catalog.js"), usOnly: true },
-  krDart:     { global: "KR_DISCLOSURES",        src: featureDataSrc("data/kr_disclosures.js"),        feature: "krDart", krOnly: true },
+  inst13f:    { global: "INSTITUTIONAL_13F",     path: "data/institutional_13f.js",     feature: "sec13f" },
+  congress:   { global: "CONGRESS_TRADES",       path: "data/congress_trades.js",       feature: "congress" },
+  insider:    { global: "INSIDER_TRADES",        path: "data/insider_trades.js",        feature: "insider" },
+  activist:   { global: "ACTIVIST_STAKES",       path: "data/activist_stakes.js",       feature: "activist" },
+  events:     { global: "MATERIAL_EVENTS",       path: "data/material_events.js",       feature: "materialEvents" },
+  ipo:        { global: "IPO_CALENDAR",          path: "data/ipo_calendar.js",          feature: "ipo",          marketSpecific: true },
+  short:      { global: "SHORT_INTEREST",        path: "data/short_interest.js",        feature: "shortInterest", marketSpecific: true },
+  whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  path: "data/white_house_schedule.js",  feature: "whiteHouse" },
+  leveraged:  { global: "LEVERAGED_ETF_CATALOG", path: "data/leveraged_etf_catalog.js", usOnly: true },
+  krDart:     { global: "KR_DISCLOSURES",        path: "data/kr_disclosures.js",        feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -432,9 +432,16 @@ function ensureFeatureData(key) {
   if (window[meta.global]) return Promise.resolve(true);
   if (!featureDataEnabled(meta, marketCfg())) return Promise.resolve(false);
   if (_featureDataPromises[key]) return _featureDataPromises[key];
+
+  let path = meta.path;
+  if (meta.marketSpecific && marketCfg().id === "kr") {
+    path = `data/korea/${path.split("/").pop()}`;
+  }
+  const src = featureDataSrc(path);
+
   _featureDataPromises[key] = new Promise((resolve) => {
     const script = document.createElement("script");
-    script.src = meta.src;
+    script.src = src;
     script.async = true;
     script.dataset.featureData = key;
     script.addEventListener("load", () => resolve(!!window[meta.global]), { once: true });
@@ -557,6 +564,15 @@ function resetMarketCaches() {
   tickerKoAliasIndex = null;
   tickerKoAliasEntries = null;
   tickerSearchIndex = null;
+
+  // Clear market-specific feature globals and promises so they reload for the new market!
+  Object.keys(FEATURE_DATA).forEach((key) => {
+    const meta = FEATURE_DATA[key];
+    if (meta.marketSpecific) {
+      delete _featureDataPromises[key];
+      delete window[meta.global];
+    }
+  });
 }
 
 async function switchMarketMode(mode) {
@@ -1127,7 +1143,7 @@ function setupChatbot() {
     typing.classList.add("typing");
     try {
       if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
-      const stockContext = buildStockChatContext(text);
+      const stockContext = await buildStockChatContext(text);
       const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -5969,7 +5985,7 @@ function selectTicker(ticker, options = {}) {
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
   renderTreemap();
-  renderSearch();
+  renderSearch(options);
   chatFocusTicker = found.ticker;
   if (options.openSearch !== false) {
     if (currentTab !== "search" || searchSubTab !== "analysis") {
@@ -5980,7 +5996,7 @@ function selectTicker(ticker, options = {}) {
   }
 }
 
-function renderSearch() {
+function renderSearch(options = {}) {
   const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
   const item = applyLive(withDetail(base));
   byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
@@ -6019,6 +6035,15 @@ function renderSearch() {
     renderFundamentals(refreshed);
     renderNews(refreshed);
   });
+
+  // If not triggered via natural language AI search, instantly reveal dashboard components.
+  if (!options.fromAiSearch) {
+    document.querySelectorAll(".animate-reveal").forEach((card) => {
+      card.classList.add("reveal-active");
+    });
+  }
+
+  loadAiDeepReport(item.ticker);
 }
 
 function moveEvidenceRow(kind, title, detail, options = {}) {
@@ -6610,9 +6635,9 @@ function setupChartDrawing() {
   }
 }
 
-function drawChart(item) {
+function drawChart(item, options = {}) {
   setupChartDrawing();
-  const svg = byId("priceChart");
+  const svg = options.svgElement || byId("priceChart");
   const allRows = resampleBars(getChartRows(item), chartState.barTf);
   const rows = visibleChartRows(allRows);
   const geom = priceChartGeom();
@@ -8293,12 +8318,20 @@ function chatLikelyNeedsNews(text) {
   return /뉴스|왜\s*(올|하|떨|급|상|폭|조|강|쳤)|이슈|이유|배경|실적|어닝|공시|리포트|전망|하락|상승|급등|급락|수주|계약|인수|합병|소식|최근|무슨\s*일|요약해|분석해/i.test(String(text || ""));
 }
 
-function buildStockChatContext(userText) {
+async function buildStockChatContext(userText) {
   const tickers = new Set();
   if (chatFocusTicker) tickers.add(chatFocusTicker);
   if (selectedTicker) tickers.add(selectedTicker);
   extractTickerCandidates(userText).forEach((t) => tickers.add(t));
   if (!tickers.size) return "";
+
+  // Wait for all tickers' details + 스마트머니/촉매 데이터셋이 로드되도록 보장한다.
+  // (내부자·의회·13F·대량보유·공매도·주요공시 — AI가 함께 참고하려면 먼저 받아와야 함)
+  await Promise.all([
+    ...[...tickers].map((ticker) => loadStockDetail(ticker)),
+    ...["inst13f", "insider", "short", "congress", "activist", "events"].map((k) =>
+      (typeof ensureFeatureData === "function" ? ensureFeatureData(k) : Promise.resolve()).catch(() => {})),
+  ]);
 
   const lines = [];
   tickers.forEach((ticker) => {
@@ -8307,15 +8340,91 @@ function buildStockChatContext(userText) {
     const item = applyLive(withDetail(base));
     const f = item.fundamentals || {};
     const earnings = item.liveEarnings || {};
+    
+    let techStr = "";
+    const closes = (item.chartSeries || []).map((r) => (Array.isArray(r) ? Number(r[3]) : Number(r.c)));
+    const volumes = (item.chartSeries || []).map((r) => (Array.isArray(r) ? Number(r[4]) : Number(r.v)));
+    
+    if (closes.length > 14) {
+      const rsis = rsiSeries(closes, 14);
+      const latestRsi = rsis[rsis.length - 1];
+      const { macd, signal, hist } = macdSeries(closes);
+      const latestMacd = macd[macd.length - 1];
+      const latestMacdSignal = signal[signal.length - 1];
+      const latestMacdHist = hist[hist.length - 1];
+      
+      let rsiState = "보통";
+      if (latestRsi >= 70) rsiState = "과매수(Overbought)";
+      else if (latestRsi <= 30) rsiState = "과매도(Oversold)";
+
+      let macdState = "중립";
+      if (latestMacd != null && latestMacdSignal != null) {
+        if (latestMacd > latestMacdSignal) macdState = "강세(골든크로스 상태)";
+        else if (latestMacd < latestMacdSignal) macdState = "약세(데드크로스 상태)";
+      }
+
+      techStr = ` · RSI(14):${latestRsi != null ? latestRsi.toFixed(1) : "—"} (${rsiState}) · MACD:${latestMacd != null ? latestMacd.toFixed(2) : "—"} (시그널:${latestMacdSignal != null ? latestMacdSignal.toFixed(2) : "—"}, 히스토그램:${latestMacdHist != null ? latestMacdHist.toFixed(2) : "—"}, 상태:${macdState})`;
+    }
+    
+    if (volumes.length >= 20) {
+      const latestVol = volumes[volumes.length - 1];
+      const avgVol20 = volumes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+      if (avgVol20 > 0) {
+        const ratio = latestVol / avgVol20;
+        techStr += ` · 거래량비율(최근20일평균대비):${ratio.toFixed(2)}x`;
+      }
+    }
+    
+    if (closes.length >= 60) {
+      const price = Number(item.price || closes[closes.length - 1]);
+      const sma20 = closes.slice(-20).reduce((a, b) => a + b, 0) / 20;
+      const sma60 = closes.slice(-60).reduce((a, b) => a + b, 0) / 60;
+      techStr += ` · 이평선상태: 가격이 SMA20(${sma20.toFixed(0)}) 대비 ${price >= sma20 ? '상회' : '하회'}, SMA60(${sma60.toFixed(0)}) 대비 ${price >= sma60 ? '상회' : '하회'}`;
+    }
+
     lines.push(
-      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
+      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량비율:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
       (f.pe ? ` · PER:${fmtMultiple(f.pe)}` : "") +
       (f.forwardPE ? ` · FwdPER:${fmtMultiple(f.forwardPE)}` : "") +
       (f.ps ? ` · P/S:${fmtMultiple(f.ps)}` : "") +
       (f.pb ? ` · P/B:${fmtMultiple(f.pb)}` : "") +
       (earnings.nextDate ? ` · 다음실적:${earnings.nextDate}` : "") +
-      (earnings.epsEstimate != null ? ` · EPS예상:${earnings.epsEstimate}` : "")
+      (earnings.epsEstimate != null ? ` · EPS예상:${earnings.epsEstimate}` : "") +
+      techStr
     );
+
+    // 스마트머니·촉매·상승확률 — 사이트의 차별화 데이터(내부자/의회/13F/대량보유/공매도/공시/MirProb)도
+    // AI가 함께 보고 판단하도록 컨텍스트에 추가한다. 데이터가 없는 항목은 생략(주로 KR 종목).
+    const smLines = [];
+    const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((r) => r.ticker === item.ticker);
+    if (ins.length) {
+      const insBuy = ins.filter((r) => r.kind === "buy").length;
+      const insSell = ins.filter((r) => r.kind === "sell").length;
+      smLines.push(`내부자(Form4) 매수 ${insBuy}·매도 ${insSell}`);
+    }
+    const cg = ((window.CONGRESS_TRADES || {}).byTicker || {})[item.ticker];
+    if (cg) smLines.push(`의회매매 매수 ${cg.netBuys}·매도 ${cg.netSells}·${cg.politicianCount}명`);
+    const f13 = (typeof inst13fIndex === "function" ? inst13fIndex() : {})[item.ticker];
+    if (f13) smLines.push(`기관13F ${f13.holders}곳·$${(f13.valueM / 1000).toFixed(1)}B`);
+    const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((r) => r.ticker === item.ticker);
+    if (act.length) smLines.push(`대량보유13D/G ${act.length}건(액티비스트 ${act.filter((a) => a.kind === "activist").length})`);
+    const si = ((window.SHORT_INTEREST || {}).rows || []).find((r) => r.ticker === item.ticker);
+    if (si) smLines.push(`공매도 잔고일수 ${Number(si.daysToCover || 0).toFixed(1)}일${Number.isFinite(si.changePct) ? `(전기대비 ${si.changePct > 0 ? "+" : ""}${si.changePct.toFixed(1)}%)` : ""}`);
+    const evs = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => String(e.ticker || "").toUpperCase() === item.ticker);
+    if (evs.length) {
+      const labels = (evs[0].items || []).map((x) => x.label).filter(Boolean).slice(0, 3).join(", ") || "8-K";
+      smLines.push(`주요공시(8-K) ${evs.length}건·최근 ${evs[0].fileDate || "—"}(${labels})`);
+    }
+    try {
+      if (typeof scanQuickProb === "function") {
+        const { up } = scanQuickProb(item, 20);
+        if (Number.isFinite(up)) {
+          const upR = Math.round(up);
+          smLines.push(`MirProb 상승확률(약 1개월, 스냅샷 추정) ${upR}%(${typeof scanVerdict === "function" ? scanVerdict(upR) : ""})`);
+        }
+      }
+    } catch (e) { /* 확률 계산 실패 시 생략 */ }
+    if (smLines.length) lines.push(`  └ 스마트머니·촉매·확률: ${smLines.join(" · ")}`);
   });
   return lines.length
     ? `다음은 사이트 스냅샷/프록시 기준 종목 데이터입니다(실시간 투자 조언 아님, 참고용):\n${lines.join("\n")}`
@@ -14945,3 +15054,1336 @@ function setupKrDartEvents() {
 }
 
 loadData();
+
+// ===== PWA Offline State Banner =====
+function updateOnlineStatus() {
+  const isOnline = navigator.onLine;
+  const existing = byId("offlineBanner");
+  if (!isOnline) {
+    if (!existing) {
+      const banner = document.createElement("div");
+      banner.id = "offlineBanner";
+      banner.className = "offline-banner";
+      banner.innerHTML = `
+        <div class="offline-banner-content">
+          <span class="offline-icon">⚠️</span>
+          <strong>네트워크 연결이 끊겼습니다</strong>
+          <span>최신 스냅샷(캐시된 데이터)을 표시하고 있습니다.</span>
+        </div>
+      `;
+      document.body.appendChild(banner);
+    }
+  } else {
+    if (existing) {
+      existing.remove();
+      showAppToast("네트워크가 복구되었습니다. 최신 데이터를 받아옵니다.", 3000);
+      loadData({ preserveRoute: true });
+    }
+  }
+}
+window.addEventListener("online", updateOnlineStatus);
+window.addEventListener("offline", updateOnlineStatus);
+updateOnlineStatus();
+
+// ===== AI Search and Deep Report UI Handler =====
+let currentActiveReportTicker = null;
+let aiReportBusy = false;
+
+function extractStockTickerFromQuery(query) {
+  const text = String(query || "").trim().toLowerCase();
+  if (!text) return null;
+  
+  // 1. Try exact ticker match candidate
+  const candidates = extractTickerCandidates(query);
+  if (candidates && candidates.length > 0) {
+    return candidates[0];
+  }
+  
+  // 2. Try Korean nickname / alias lookup
+  if (tickerKoAliasEntries) {
+    const sorted = [...tickerKoAliasEntries].sort((a, b) => b.alias.length - a.alias.length);
+    for (const entry of sorted) {
+      if (text.includes(entry.alias.toLowerCase())) {
+        if (entry.tickers && entry.tickers.length > 0) {
+          return entry.tickers[0];
+        }
+      }
+    }
+  }
+  
+  // 3. Scan company name matches
+  if (tickerSearchIndex && tickerSearchIndex.byMarketCap) {
+    for (const row of tickerSearchIndex.byMarketCap) {
+      const comp = String(row.companyLower || "").toLowerCase();
+      if (comp.length > 1 && text.includes(comp)) {
+        return row.ticker;
+      }
+    }
+  }
+  return null;
+}
+
+function formatMarkdownToHtml(md) {
+  let html = String(md || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+    
+  // Format bold **text** -> <strong>text</strong>
+  html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+  
+  // Format headers ### title -> <h4>title</h4>
+  html = html.replace(/^###\s+(.*?)$/gm, "<h4>$1</h4>");
+  html = html.replace(/^##\s+(.*?)$/gm, "<h4>$1</h4>");
+  html = html.replace(/^#\s+(.*?)$/gm, "<h4>$1</h4>");
+  
+  // Format bullet points
+  html = html.replace(/^\s*[-*]\s+(.*?)$/gm, "<li>$1</li>");
+  
+  // Wrap list items in <ul> groups
+  html = html.replace(/(<li>.*?<\/li>)/gs, "<ul>$1</ul>");
+  html = html.replace(/<\/ul>\s*<ul>/g, "");
+
+  // Convert double newlines to breaks
+  html = html.replace(/\n\n/g, "<br><br>");
+  
+  return html;
+}
+
+async function loadAiDeepReport(ticker, customQuery = null) {
+  const stock = stockByTicker(ticker);
+  if (!stock) return;
+
+  const card = byId("analysisAiReportCard");
+  const body = byId("analysisAiReportBody");
+  if (!body) return;
+
+  if (card) card.style.display = "flex";
+
+  currentActiveReportTicker = ticker;
+
+  // Show shimmer loading skeleton
+  body.innerHTML = `
+    <div class="shimmer-loading shimmer-line mid"></div>
+    <div class="shimmer-loading shimmer-line"></div>
+    <div class="shimmer-loading shimmer-line short"></div>
+    <div class="shimmer-loading shimmer-line mid"></div>
+    <div class="shimmer-loading shimmer-line"></div>
+  `;
+
+  try {
+    if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
+    
+    const query = customQuery || `${stock.company} (${stock.ticker}) 종목의 최근 차트 보조지표 상태와 펀더멘탈, 리스크 요인을 분석한 투자 의견 리포트`;
+    const stockContext = await buildStockChatContext(ticker);
+    
+    const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: query }],
+        stockContext,
+        snapshotContext: buildMarketChatContext(),
+        market: isKrMarket() ? "kr" : "us",
+        searchHints: { tickers: [ticker], companies: [stock.company] },
+      }),
+    });
+    
+    const payload = await res.json();
+    
+    // Check if the ticker has changed during the request
+    if (currentActiveReportTicker !== ticker) return;
+    
+    const reply = (payload && payload.reply) || "리포트를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    body.innerHTML = formatMarkdownToHtml(reply);
+    
+    if (customQuery) {
+      body.dataset.lastQuery = customQuery;
+    } else {
+      delete body.dataset.lastQuery;
+    }
+  } catch (err) {
+    if (currentActiveReportTicker === ticker) {
+      body.innerHTML = `<p class="muted">분석 리포트 로딩 실패: ${err.message || err}</p>`;
+    }
+  }
+}
+
+function handleHomeSearch(query) {
+  const q = String(query || "").trim();
+  if (!q) return;
+
+  const matchedTicker = extractStockTickerFromQuery(q);
+  if (matchedTicker) {
+    const stock = stockByTicker(matchedTicker);
+    if (stock) {
+      const isKr = stock.market === "kospi" || stock.market === "kosdaq";
+      const targetMarket = isKr ? "kr" : "us";
+      
+      if (marketCfg().id !== targetMarket) {
+        switchMarketMode(targetMarket).then(() => {
+          navigateToStockAnalysis(matchedTicker, q);
+        });
+      } else {
+        navigateToStockAnalysis(matchedTicker, q);
+      }
+    }
+  } else {
+    // If no stock matched, open floating chatbot and ask it!
+    const panel = byId("chatPanel");
+    const input = byId("chatInput");
+    if (panel) {
+      panel.hidden = false;
+      if (input) {
+        input.value = q;
+        // Trigger chatbot submit
+        const form = byId("chatForm");
+        if (form) {
+          form.dispatchEvent(new Event("submit"));
+        }
+      }
+    }
+  }
+}
+
+function navigateToStockAnalysis(ticker, query) {
+  // 1. Switch main tab to "search"
+  const tabButton = document.querySelector('.tab[data-tab="search"]');
+  if (tabButton) {
+    tabButton.click();
+  }
+  
+  // 2. Select sub-tab "analysis"
+  const subTabButton = document.querySelector('.sub-tab[data-sub="analysis"]');
+  if (subTabButton) {
+    subTabButton.click();
+  }
+  
+  // 3. Scroll smoothly to the analysis sub-panel first
+  const analysisPanel = byId("sub-analysis");
+  if (analysisPanel) {
+    setTimeout(() => {
+      analysisPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
+  }
+
+  // 4. Run the visual assembly animation
+  runAiReportAssemblyAnimation(ticker, () => {
+    // Callback loads data and report once overlay transitions
+    selectTicker(ticker, { fromAiSearch: true });
+    loadAiDeepReport(ticker, query);
+  });
+}
+
+function runAiReportAssemblyAnimation(ticker, callback) {
+  const overlay = byId("aiAssemblyOverlay");
+  const title = byId("aiAssemblyStatusTitle");
+  if (!overlay) {
+    if (typeof callback === "function") callback();
+    return;
+  }
+
+  const stock = stockByTicker(ticker);
+  const companyName = stock ? `${stock.company} (${stock.ticker})` : ticker;
+  if (title) {
+    title.textContent = `${companyName} 투자 보고서 데이터 조립 중`;
+  }
+
+  // 1. Reset all step logs to default states
+  const steps = ["stepChart", "stepFund", "stepNews", "stepReport"];
+  steps.forEach((id) => {
+    const el = byId(id);
+    if (el) {
+      el.className = "assembly-step";
+    }
+  });
+
+  // 2. Hide all the dashboard components by removing reveal-active
+  document.querySelectorAll(".animate-reveal").forEach((card) => {
+    card.classList.remove("reveal-active");
+  });
+
+  // 3. Show overlay
+  overlay.hidden = false;
+  overlay.style.opacity = "1";
+
+  // 4. Run step-by-step progress logging
+  setTimeout(() => {
+    activateStep("stepChart");
+  }, 150);
+
+  setTimeout(() => {
+    markStepDone("stepChart");
+    activateStep("stepFund");
+  }, 600);
+
+  setTimeout(() => {
+    markStepDone("stepFund");
+    activateStep("stepNews");
+  }, 1100);
+
+  setTimeout(() => {
+    markStepDone("stepNews");
+    activateStep("stepReport");
+  }, 1600);
+
+  // 5. Fade out overlay and reveal dashboard components in staggered sequence
+  setTimeout(() => {
+    markStepDone("stepReport");
+    
+    // Smoothly fade out the overlay
+    overlay.style.opacity = "0";
+    setTimeout(() => {
+      overlay.hidden = true;
+      
+      // Execute the load details callback
+      if (typeof callback === "function") callback();
+
+      // Trigger staggered component reveals
+      revealComponentsStaggered();
+    }, 500);
+  }, 2200);
+}
+
+function activateStep(id) {
+  const el = byId(id);
+  if (el) {
+    el.classList.add("active");
+  }
+}
+
+function markStepDone(id) {
+  const el = byId(id);
+  if (el) {
+    el.classList.remove("active");
+    el.classList.add("done");
+  }
+}
+
+function revealComponentsStaggered() {
+  const cards = Array.from(document.querySelectorAll(".animate-reveal"));
+  cards.forEach((card, index) => {
+    setTimeout(() => {
+      card.classList.add("reveal-active");
+    }, index * 100); // 100ms staggered delay
+  });
+}
+
+function setupAiSearchEvents() {
+  const form = byId("homeSearchForm");
+  const input = byId("homeSearchInput");
+  if (form && input) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      handleHomeSearch(input.value);
+    });
+  }
+  
+  document.querySelectorAll(".search-suggest-chip").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const q = btn.dataset.query;
+      if (input) input.value = q;
+      handleHomeSearch(q);
+    });
+  });
+
+  const refreshBtn = byId("analysisAiReportRefresh");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", () => {
+      if (selectedTicker) {
+        const body = byId("analysisAiReportBody");
+        const lastQuery = body ? body.dataset.lastQuery : null;
+        loadAiDeepReport(selectedTicker, lastQuery);
+      }
+    });
+  }
+}
+
+// Initialize AI Search Events
+setupAiSearchEvents();
+
+// ===== Dedicated AI Chat Mode Handler =====
+let isAiChatMode = false;
+let aiChatBusy = false;
+let aiChatHistory = [];
+
+function toggleAiChatMode(active) {
+  isAiChatMode = active;
+  const toggleBtn = byId("aiModeToggle");
+  
+  if (active) {
+    document.body.classList.add("ai-mode-active");
+    if (toggleBtn) toggleBtn.classList.add("active");
+    
+    // Switch to chat panel
+    const tabChat = byId("tab-ai-chat");
+    if (tabChat) {
+      tabChat.hidden = false;
+    }
+    
+    // Scroll chat log to bottom
+    const log = byId("aiChatLog");
+    if (log) log.scrollTop = log.scrollHeight;
+  } else {
+    document.body.classList.remove("ai-mode-active");
+    if (toggleBtn) toggleBtn.classList.remove("active");
+    
+    const tabChat = byId("tab-ai-chat");
+    if (tabChat) {
+      tabChat.hidden = true;
+    }
+  }
+}
+
+async function sendAiChat(queryText = null) {
+  if (aiChatBusy) return;
+  
+  const input = byId("aiChatInput");
+  const text = queryText !== null ? queryText.trim() : (input ? input.value.trim() : "");
+  if (!text) return;
+  
+  if (input && queryText === null) {
+    input.value = "";
+  }
+  
+  const log = byId("aiChatLog");
+  const welcome = byId("aiChatWelcome");
+  if (welcome) {
+    welcome.style.display = "none";
+  }
+  
+  // 1. Add User Message bubble
+  appendAiChatMessage("user", text);
+  aiChatHistory.push({ role: "user", content: text });
+  
+  aiChatBusy = true;
+  
+  // 2. Add Bot Loading/Typing bubble
+  const matchedTicker = extractStockTickerFromQuery(text);
+  const loadingText = matchedTicker 
+    ? `${stockByTicker(matchedTicker).company} (${matchedTicker}) 데이터를 분석하여 심층 투자 보고서를 요약하고 있습니다...`
+    : "답변을 작성하고 있습니다...";
+    
+  const typingBubble = appendAiChatMessage("bot", loadingText);
+  typingBubble.classList.add("typing");
+
+  if (matchedTicker) {
+    const chartMessage = appendAiChatMessage("bot", "");
+    if (chartMessage) {
+      chartMessage.classList.add("chart-message");
+      chartMessage.querySelector(".msg-bubble")?.remove();
+      renderInlineStockWidget(matchedTicker, chartMessage);
+    }
+  }
+  
+  if (log) log.scrollTop = log.scrollHeight;
+  
+  try {
+    if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
+    
+    const stockContext = matchedTicker ? await buildStockChatContext(matchedTicker) : "";
+    const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: aiChatHistory.slice(-10),
+        stockContext,
+        snapshotContext: buildMarketChatContext(),
+        market: isKrMarket() ? "kr" : "us",
+        searchHints: matchedTicker ? { tickers: [matchedTicker], companies: [stockByTicker(matchedTicker).company] } : {},
+      }),
+    });
+    
+    const payload = await res.json();
+    const reply = (payload && payload.reply) || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+    
+    typingBubble.classList.remove("typing");
+    typingBubble.innerHTML = `<div class="msg-bubble">${formatMarkdownToHtml(reply)}</div>`;
+    aiChatHistory.push({ role: "assistant", content: reply });
+    
+  } catch (err) {
+    typingBubble.classList.remove("typing");
+    typingBubble.innerHTML = `<div class="msg-bubble">연결 실패: ${err.message || err}</div>`;
+  } finally {
+    aiChatBusy = false;
+    if (log) log.scrollTop = log.scrollHeight;
+  }
+}
+
+function appendAiChatMessage(role, htmlOrText) {
+  const log = byId("aiChatLog");
+  if (!log) return null;
+  
+  const msg = document.createElement("div");
+  msg.className = `chat-msg ${role}`;
+  
+  if (role === "user") {
+    msg.innerHTML = `<div class="msg-bubble">${escapeHtml(htmlOrText)}</div>`;
+  } else {
+    msg.innerHTML = `<div class="msg-bubble">${htmlOrText}</div>`;
+  }
+  
+  log.appendChild(msg);
+  log.scrollTop = log.scrollHeight;
+  return msg;
+}
+
+const aiLiveDataPromises = {};
+
+function createAiChartState() {
+  return {
+    ...chartState,
+    range: "1Y",
+    barTf: "D",
+    chartType: "candle",
+    zoom: 1,
+    offset: 0,
+    showSma20: true,
+    showSma60: true,
+    showVolume: true,
+    showRsi: true,
+    showMacd: false,
+    showStoch: false,
+    showSupportResistance: false,
+    showPatterns: false,
+    showTechLevels: false,
+    showVolumeProfile: false,
+    showTrendlines: false,
+    showGapZones: false,
+    showTtmSqueeze: false,
+    showMarketStructure: false,
+    showChandelier: false,
+    showAnchoredVwap: false,
+    showRsSpy: false,
+    showRsQqq: false,
+    showRsSector: false,
+    showMansfield: false,
+    techLevelTypes: { ...chartState.techLevelTypes },
+    patternTypes: { ...chartState.patternTypes },
+  };
+}
+
+async function ensureAiWidgetStock(ticker) {
+  const base = stockByTicker(ticker) || data.stocks.find((row) => row.ticker === ticker);
+  if (!base) return null;
+  await Promise.all([
+    loadStockDetail(ticker),
+    ...["inst13f", "insider", "short", "congress", "activist", "events"].map((key) =>
+      (typeof ensureFeatureData === "function" ? ensureFeatureData(key) : Promise.resolve(false)).catch(() => false)),
+  ]);
+
+  if (LIVE_DATA_PROXY && !liveDone[ticker]) {
+    if (!aiLiveDataPromises[ticker]) {
+      liveFetched[ticker] = true;
+      const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?ticker=${encodeURIComponent(liveProxyTicker(base))}`;
+      aiLiveDataPromises[ticker] = fetch(endpoint, { cache: "no-store" })
+        .then((response) => (response.ok ? response.json() : null))
+        .then((payload) => {
+          if (!payload) return;
+          if (Array.isArray(payload.news)) liveNewsCache[ticker] = payload.news;
+          if (typeof payload.newsSource === "string") liveNewsSourceCache[ticker] = payload.newsSource;
+          if (Array.isArray(payload.chart)) liveChartCache[ticker] = payload.chart;
+          if (payload.earnings) liveEarningsCache[ticker] = payload.earnings;
+          if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;
+          liveDone[ticker] = true;
+        })
+        .catch(() => {
+          liveDone[ticker] = true;
+        });
+    }
+    await aiLiveDataPromises[ticker].catch(() => {});
+  }
+
+  const refreshed = stockByTicker(ticker) || base;
+  return applyLive(withDetail(refreshed));
+}
+
+function aiEvidenceCard(title, value, detail, tone = "") {
+  return `
+    <article class="ai-evidence-card${tone ? ` ${tone}` : ""}">
+      <span>${escapeHtml(title)}</span>
+      <strong>${escapeHtml(value || "-")}</strong>
+      <p>${escapeHtml(detail || "확인된 데이터가 아직 없습니다.")}</p>
+    </article>
+  `;
+}
+
+function aiSectorEvidence(item) {
+  const peers = (data.stocks || []).filter((row) => row.sector === item.sector && row.ticker !== item.ticker);
+  const sectorAvg = peers.length
+    ? peers.reduce((sum, row) => sum + Number(row.changePct || 0), 0) / peers.length
+    : 0;
+  const ranked = peers.concat(item).sort((a, b) => Number(b.rsScore || 0) - Number(a.rsScore || 0));
+  const rank = ranked.findIndex((row) => row.ticker === item.ticker) + 1;
+  const rel = Number(item.changePct || 0) - sectorAvg;
+  return aiEvidenceCard(
+    "섹터 흐름",
+    `${item.sector || "섹터"} ${rel >= 0 ? "대비 강함" : "대비 약함"}`,
+    `섹터 평균 ${fmtPct(sectorAvg)} · 종목 ${fmtPct(item.changePct)} · RS 순위 ${rank || "-"}/${ranked.length || "-"}`,
+    rel >= 0 ? "is-positive" : "is-negative"
+  );
+}
+
+function aiSmartMoneyEvidence(item) {
+  if (isKrMarket()) {
+    return aiEvidenceCard("스마트머니", "국내 종목", "미국식 내부자·13F·의회 매매 데이터는 국내 종목에 제한적으로만 적용됩니다.");
+  }
+  const t = item.ticker;
+  const bits = [];
+  const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((row) => row.ticker === t);
+  if (ins.length) {
+    const buys = ins.filter((row) => row.kind === "buy").length;
+    const sells = ins.filter((row) => row.kind === "sell").length;
+    bits.push(`내부자 매수 ${buys} / 매도 ${sells}`);
+  }
+  const cg = ((window.CONGRESS_TRADES || {}).byTicker || {})[t];
+  if (cg) bits.push(`의회 매수 ${cg.netBuys || 0} / 매도 ${cg.netSells || 0}`);
+  const f13 = (typeof inst13fIndex === "function" ? inst13fIndex() : {})[t];
+  if (f13) bits.push(`13F 보유 ${f13.holders}곳`);
+  const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((row) => row.ticker === t);
+  if (act.length) bits.push(`대량보유 ${act.length}건`);
+  const shortRow = ((window.SHORT_INTEREST || {}).rows || []).find((row) => row.ticker === t);
+  if (shortRow) bits.push(`공매도 DTC ${Number(shortRow.daysToCover || 0).toFixed(1)}일`);
+
+  return aiEvidenceCard(
+    "스마트머니",
+    bits.length ? "신호 확인" : "특이 신호 적음",
+    bits.slice(0, 4).join(" · ") || "내부자·기관·의회·대량보유 신호가 아직 뚜렷하지 않습니다.",
+    bits.length ? "is-info" : ""
+  );
+}
+
+function aiDisclosureEvidence(item) {
+  const events = ((window.MATERIAL_EVENTS || {}).events || []).filter((event) => String(event.ticker || "").toUpperCase() === item.ticker);
+  const earnings = item.liveEarnings || {};
+  if (events.length) {
+    const latest = events[0];
+    const labels = (latest.items || []).map((entry) => entry.label).filter(Boolean).slice(0, 3).join(", ");
+    return aiEvidenceCard("공시·이벤트", `${events.length}건`, `${latest.fileDate || "최근"} · ${labels || latest.type || "주요 이벤트"}`, latest.hot ? "is-warning" : "is-info");
+  }
+  if (earnings.nextDate) {
+    return aiEvidenceCard("공시·이벤트", "실적 예정", `${earnings.nextDate}${earnings.epsEstimate != null ? ` · EPS 예상 ${earnings.epsEstimate}` : ""}`, "is-info");
+  }
+  return aiEvidenceCard("공시·이벤트", "특이 공시 없음", "최근 수집된 주요 8-K·실적 이벤트가 없습니다.");
+}
+
+function aiNewsEvidence(item) {
+  const news = Array.isArray(item.news) ? item.news : [];
+  if (!news.length) return aiEvidenceCard("뉴스", "뉴스 부족", "이 종목의 최신 뉴스가 아직 수집되지 않았습니다.");
+  const headline = news[0].title || "최신 헤드라인";
+  const source = news[0].source || news[0].publisher || "";
+  return aiEvidenceCard("뉴스", headline.slice(0, 34), `${source}${news.length > 1 ? ` · 추가 ${news.length - 1}건` : ""}`, "is-info");
+}
+
+function renderAiEvidenceGrid(item) {
+  return [
+    aiSectorEvidence(item),
+    aiSmartMoneyEvidence(item),
+    aiDisclosureEvidence(item),
+    aiNewsEvidence(item),
+  ].join("");
+}
+
+function aiModePanel(title, subtitle, body, extraClass = "") {
+  return `
+    <section class="ai-mode-data-panel${extraClass ? ` ${extraClass}` : ""}">
+      <div class="ai-mode-data-head">
+        <strong>${escapeHtml(title)}</strong>
+        <span>${escapeHtml(subtitle || "")}</span>
+      </div>
+      ${body || `<p class="muted">표시할 데이터가 아직 없습니다.</p>`}
+    </section>
+  `;
+}
+
+function aiMetricGrid(metrics) {
+  return `<div class="ai-mode-metric-grid">${metrics.map((metric) => `
+    <article>
+      <span>${escapeHtml(metric.label)}</span>
+      <strong class="${metric.tone || ""}">${escapeHtml(String(metric.value ?? "-"))}</strong>
+      ${metric.detail ? `<em>${escapeHtml(metric.detail)}</em>` : ""}
+    </article>
+  `).join("")}</div>`;
+}
+
+function aiMiniTable(headers, rows, emptyText = "데이터가 없습니다.") {
+  if (!rows.length) return `<p class="muted ai-mode-empty">${escapeHtml(emptyText)}</p>`;
+  return `
+    <div class="ai-mode-table-wrap">
+      <table class="ai-mode-table">
+        <thead><tr>${headers.map((header) => `<th>${escapeHtml(header)}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map((row) => `<tr>${row.map((cell) => `<td>${cell}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function aiTechnicalPanel(item) {
+  const rows = getChartRows(item);
+  const closes = rows.map((row) => Number(row.c)).filter(Number.isFinite);
+  const last = closes[closes.length - 1];
+  const rsi = closes.length > 14 ? lastN(rsiSeries(closes, 14), 1)[0] : null;
+  const macdPack = closes.length > 35 ? macdSeries(closes) : null;
+  const macd = macdPack ? lastN(macdPack.macd, 1)[0] : null;
+  const signal = macdPack ? lastN(macdPack.signal, 1)[0] : null;
+  const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((sum, value) => sum + value, 0) / 20 : null;
+  const sma60 = closes.length >= 60 ? closes.slice(-60).reduce((sum, value) => sum + value, 0) / 60 : null;
+  return aiModePanel("기술 지표", "추세·모멘텀·이평", aiMetricGrid([
+    { label: "현재가", value: priceOrDash(last || item.price) },
+    { label: "1개월", value: fmtPct(item.monthChangePct), tone: cls(item.monthChangePct) },
+    { label: "RS 점수", value: item.rsScore ?? "-", detail: "상대강도" },
+    { label: "거래량", value: `${Number(item.volumeRatio || 0).toFixed(1)}x`, detail: "평균 대비" },
+    { label: "RSI(14)", value: rsi == null ? "-" : rsi.toFixed(1), tone: rsi >= 70 ? "warn" : rsi <= 30 ? "pos" : "" },
+    { label: "MACD", value: macd == null ? "-" : macd.toFixed(2), detail: signal == null ? "" : `Signal ${signal.toFixed(2)}`, tone: macd != null && signal != null ? cls(macd - signal) : "" },
+    { label: "SMA20", value: sma20 == null ? "-" : chartPriceLabel(sma20), tone: last != null && sma20 != null ? cls(last - sma20) : "" },
+    { label: "SMA60", value: sma60 == null ? "-" : chartPriceLabel(sma60), tone: last != null && sma60 != null ? cls(last - sma60) : "" },
+  ]));
+}
+
+function aiFundamentalPanel(item) {
+  const f = normalizedFundamentalsForItem(item);
+  return aiModePanel("밸류에이션", "재무·가치", aiMetricGrid([
+    { label: "시가총액", value: fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB) },
+    { label: "PER", value: fmtMultiple(f.pe) },
+    { label: "Forward PER", value: fmtMultiple(f.forwardPE) },
+    { label: "P/S", value: fmtMultiple(f.ps) },
+    { label: "EPS Next Y", value: moneyOrDash(f.epsNextY) },
+    { label: "매출", value: fmtFinancialB(f.salesB) },
+    { label: "순이익", value: fmtFinancialB(f.incomeB) },
+    { label: "ROE", value: fmtPercent(f.roe) },
+  ]));
+}
+
+function aiNewsPanel(item) {
+  const news = Array.isArray(item.news) ? item.news : [];
+  const rows = news.slice(0, 8).map((newsItem) => {
+    const href = newsItem.url || newsItem.link || "#";
+    const title = escapeHtml(newsItem.title || "제목 없음");
+    const source = escapeHtml(newsItem.source || newsItem.publisher || "뉴스");
+    const time = escapeHtml(newsItem.time || newsItem.publishedAt || "");
+    return [
+      `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${title}</a>`,
+      source,
+      time || "-",
+    ];
+  });
+  return aiModePanel("뉴스", `${news.length}건`, aiMiniTable(["헤드라인", "출처", "시간"], rows, "이 종목의 뉴스가 아직 수집되지 않았습니다."), "is-wide");
+}
+
+function aiEventsPanel(item) {
+  const events = ((window.MATERIAL_EVENTS || {}).events || []).filter((event) => String(event.ticker || "").toUpperCase() === item.ticker);
+  const rows = events.slice(0, 8).map((event) => {
+    const labels = (event.items || []).map((entry) => entry.label).filter(Boolean).slice(0, 3).join(", ") || event.type || "-";
+    return [
+      escapeHtml(event.fileDate || event.date || "-"),
+      escapeHtml(labels),
+      `<span class="${event.hot ? "warn" : "muted"}">${event.hot ? "주요" : "일반"}</span>`,
+    ];
+  });
+  return aiModePanel("공시·이벤트", "8-K·실적", aiMiniTable(["일자", "내용", "구분"], rows, "수집된 주요 공시·이벤트가 없습니다."));
+}
+
+function aiSectorPanel(item) {
+  const peers = (data.stocks || [])
+    .filter((row) => row.sector === item.sector)
+    .sort((a, b) => Number(b.rsScore || 0) - Number(a.rsScore || 0));
+  const rows = peers.slice(0, 8).map((row, index) => [
+    `${index + 1}`,
+    `<strong>${escapeHtml(row.ticker)}</strong>`,
+    escapeHtml(row.company || ""),
+    `<span class="${cls(row.changePct)}">${fmtPct(row.changePct)}</span>`,
+    `${Math.round(Number(row.rsScore || 0))}`,
+  ]);
+  return aiModePanel("섹터 흐름", `${item.sector || "-"} 상대강도`, aiMiniTable(["#", "티커", "회사", "당일", "RS"], rows, "동일 섹터 비교 데이터가 없습니다."));
+}
+
+function aiInsiderPanel(item) {
+  const rowsRaw = ((window.INSIDER_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
+  const rows = rowsRaw.slice(0, 8).map((row) => [
+    escapeHtml(row.date || row.filingDate || "-"),
+    escapeHtml(row.owner || row.name || row.insider || "-"),
+    `<span class="${row.kind === "buy" ? "pos" : row.kind === "sell" ? "neg" : "muted"}">${escapeHtml(row.kind || row.transaction || "-")}</span>`,
+    escapeHtml(row.valueText || row.valueM ? `$${Number(row.valueM || 0).toFixed(1)}M` : row.shares ? `${row.shares}주` : "-"),
+  ]);
+  return aiModePanel("내부자 거래", "Form 4", aiMiniTable(["일자", "내부자", "구분", "규모"], rows, "최근 내부자 거래 데이터가 없습니다."));
+}
+
+function aiCongressPanel(item) {
+  const meta = ((window.CONGRESS_TRADES || {}).byTicker || {})[item.ticker];
+  const recent = ((window.CONGRESS_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
+  const summary = meta ? aiMetricGrid([
+    { label: "순매수", value: meta.netBuys ?? "-" },
+    { label: "순매도", value: meta.netSells ?? "-" },
+    { label: "정치인 수", value: meta.politicianCount ?? "-" },
+  ]) : "";
+  const rows = recent.slice(0, 6).map((row) => [
+    escapeHtml(row.transactionDate || row.date || "-"),
+    escapeHtml(row.representative || row.politician || "-"),
+    `<span class="${String(row.side || "").toLowerCase().includes("buy") ? "pos" : String(row.side || "").toLowerCase().includes("sell") ? "neg" : "muted"}">${escapeHtml(row.side || row.type || "-")}</span>`,
+    escapeHtml(row.amount || row.amountText || "-"),
+  ]);
+  return aiModePanel("의회 매매", "PTR", summary + aiMiniTable(["일자", "인물", "구분", "규모"], rows, meta ? "상세 거래 목록이 없습니다." : "의회 매매 데이터가 없습니다."));
+}
+
+function aiInstitutionalPanel(item) {
+  const f13 = (typeof inst13fIndex === "function" ? inst13fIndex() : {})[item.ticker];
+  const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((row) => row.ticker === item.ticker);
+  const body = aiMetricGrid([
+    { label: "13F 보유기관", value: f13 ? `${f13.holders}곳` : "-" },
+    { label: "13F 평가액", value: f13 ? `$${(Number(f13.valueM || 0) / 1000).toFixed(1)}B` : "-" },
+    { label: "13D/G", value: act.length ? `${act.length}건` : "-" },
+    { label: "액티비스트", value: act.filter((row) => row.kind === "activist").length || "-" },
+  ]);
+  return aiModePanel("기관·대량보유", "13F·13D/G", body);
+}
+
+function aiShortInterestPanel(item) {
+  const shortRow = ((window.SHORT_INTEREST || {}).rows || []).find((row) => row.ticker === item.ticker);
+  if (!shortRow) return aiModePanel("공매도", "숏 인터레스트", `<p class="muted ai-mode-empty">공매도 데이터가 없습니다.</p>`);
+  return aiModePanel("공매도", "숏 인터레스트", aiMetricGrid([
+    { label: "Days To Cover", value: Number(shortRow.daysToCover || 0).toFixed(1) },
+    { label: "변화율", value: Number.isFinite(Number(shortRow.changePct)) ? fmtPct(shortRow.changePct) : "-", tone: cls(shortRow.changePct) },
+    { label: "공매도 수량", value: shortRow.shortInterest ? Number(shortRow.shortInterest).toLocaleString() : "-" },
+    { label: "기준일", value: shortRow.settlementDate || shortRow.date || "-" },
+  ]));
+}
+
+function aiEarningsPanel(item) {
+  const earnings = item.liveEarnings || {};
+  const reactions = earningsReactionRows(item).slice(0, 4).map((row) => [
+    escapeHtml(row.date || "-"),
+    row.surprise == null ? "-" : `<span class="${cls(row.surprise)}">${fmtPct(row.surprise)}</span>`,
+    row.post5 == null ? "-" : `<span class="${cls(row.post5)}">${fmtPct(row.post5)}</span>`,
+  ]);
+  const next = aiMetricGrid([
+    { label: "다음 실적", value: earnings.nextDate || "-" },
+    { label: "EPS 예상", value: earnings.epsEstimate ?? "-" },
+    { label: "EPS 점수", value: item.epsRevScore ?? "-" },
+  ]);
+  return aiModePanel("실적", "캘린더·반응", next + aiMiniTable(["발표일", "EPS 서프라이즈", "발표 후 5D"], reactions, "실적 발표 반응 데이터가 부족합니다."));
+}
+
+function aiDataQualityPanel(item) {
+  const f = normalizedFundamentalsForItem(item);
+  const chartRows = getChartRows(item);
+  const missing = missingFundamentalFields(f);
+  return aiModePanel("데이터 품질", "출처", aiMetricGrid([
+    { label: "스냅샷", value: data.updatedAtKst || data.updated_at_kst || "-" },
+    { label: "가격 이력", value: `${chartRows.length} bars`, detail: sourceLabel(item.historySource) },
+    { label: "재무 출처", value: sourceLabel(f.source) },
+    { label: "누락 지표", value: missing.length ? `${missing.length}개` : "없음", tone: missing.length > 5 ? "warn" : "" },
+  ]));
+}
+
+function renderAiModeDataBoard(item) {
+  return `
+    <div class="ai-mode-data-board">
+      ${aiTechnicalPanel(item)}
+      ${aiFundamentalPanel(item)}
+      ${aiNewsPanel(item)}
+      ${aiEventsPanel(item)}
+      ${aiSectorPanel(item)}
+      ${aiInsiderPanel(item)}
+      ${aiCongressPanel(item)}
+      ${aiInstitutionalPanel(item)}
+      ${aiShortInterestPanel(item)}
+      ${aiEarningsPanel(item)}
+      ${aiDataQualityPanel(item)}
+    </div>
+  `;
+}
+
+function aiChartRangeBarCount(total, state) {
+  const dailyMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
+  const div = state.barTf === "W" ? 5 : (state.barTf === "M" ? 21 : 1);
+  const want = Math.round((dailyMap[state.range] || total) / div);
+  return Math.min(total, Math.max(10, want));
+}
+
+function aiChartWindowInfo(item, state) {
+  const allRows = resampleBars(getChartRows(item), state.barTf);
+  const rangeSize = aiChartRangeBarCount(allRows.length, state);
+  const base = allRows.slice(-rangeSize);
+  const windowSize = Math.max(12, Math.floor(base.length / state.zoom));
+  const maxOffset = Math.max(0, base.length - windowSize);
+  state.offset = Math.min(state.offset, maxOffset);
+  return { total: base.length, windowSize, maxOffset };
+}
+
+function aiSetZoomAnchored(item, state, frac, requestedZoom) {
+  const info = aiChartWindowInfo(item, state);
+  const minWindow = Math.min(12, Math.max(1, info.total));
+  const oldWindow = Math.max(minWindow, Math.floor(info.total / state.zoom));
+  const oldStart = Math.max(0, info.total - state.offset - oldWindow);
+  const anchor = oldStart + frac * (oldWindow - 1);
+  const newZoom = Math.min(40, Math.max(1, requestedZoom));
+  const newWindow = Math.max(minWindow, Math.floor(info.total / newZoom));
+  let newStart = Math.round(anchor - frac * (newWindow - 1));
+  newStart = Math.max(0, Math.min(Math.max(0, info.total - newWindow), newStart));
+  state.zoom = newZoom;
+  state.offset = Math.max(0, info.total - newWindow - newStart);
+}
+
+function drawAiWidgetChart(item, svg, state, metaEl) {
+  if (!item || !svg || !state) return;
+  const prevState = chartState;
+  const prevCompare = compareTickers;
+  const prevGeom = lastChartGeom;
+  try {
+    chartState = state;
+    compareTickers = [];
+    drawChart(item, { svgElement: svg });
+  } finally {
+    chartState = prevState;
+    compareTickers = prevCompare;
+    lastChartGeom = prevGeom;
+  }
+  const info = aiChartWindowInfo(item, state);
+  if (metaEl) {
+    metaEl.textContent = `${state.range} · ${info.windowSize}봉 표시 · 휠 확대/축소 · 드래그 이동`;
+  }
+}
+
+function setupAiWidgetChartControls(widget, item, state) {
+  const svg = widget.querySelector(".ai-widget-chart");
+  const meta = widget.querySelector(".ai-widget-chart-meta");
+  const render = () => drawAiWidgetChart(item, svg, state, meta);
+
+  widget.querySelectorAll("[data-ai-chart-range]").forEach((button) => {
+    button.addEventListener("click", () => {
+      state.range = button.dataset.aiChartRange || "1Y";
+      state.zoom = 1;
+      state.offset = 0;
+      widget.querySelectorAll("[data-ai-chart-range]").forEach((item) => item.classList.toggle("is-active", item === button));
+      render();
+    });
+  });
+
+  widget.querySelectorAll("[data-ai-chart-action]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const action = button.dataset.aiChartAction;
+      const info = aiChartWindowInfo(item, state);
+      if (action === "zoom-in") aiSetZoomAnchored(item, state, 0.5, state.zoom * 1.35);
+      else if (action === "zoom-out") aiSetZoomAnchored(item, state, 0.5, state.zoom / 1.35);
+      else if (action === "pan-left") state.offset = Math.min(info.maxOffset, state.offset + Math.max(5, Math.round(12 / state.zoom)));
+      else if (action === "pan-right") state.offset = Math.max(0, state.offset - Math.max(5, Math.round(12 / state.zoom)));
+      else if (action === "reset") { state.zoom = 1; state.offset = 0; }
+      render();
+    });
+  });
+
+  if (!svg) return;
+  svg.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const rect = svg.getBoundingClientRect();
+    const g = priceChartGeom();
+    const vbX = ((event.clientX - rect.left) / Math.max(1, rect.width)) * g.width;
+    const plotW = g.width - g.padL - g.padR;
+    const frac = Math.max(0, Math.min(1, (vbX - g.padL) / plotW));
+    aiSetZoomAnchored(item, state, frac, event.deltaY < 0 ? state.zoom * 1.2 : state.zoom / 1.2);
+    render();
+  }, { passive: false });
+
+  let dragPointerId = null;
+  let startX = 0;
+  let startOffset = 0;
+  let dragInfo = null;
+  let dragPlotPx = 1;
+  let raf = 0;
+  const schedule = () => {
+    if (raf) return;
+    raf = requestAnimationFrame(() => {
+      raf = 0;
+      render();
+    });
+  };
+
+  svg.addEventListener("pointerdown", (event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    dragPointerId = event.pointerId;
+    startX = event.clientX;
+    startOffset = state.offset;
+    dragInfo = aiChartWindowInfo(item, state);
+    const rect = svg.getBoundingClientRect();
+    const g = priceChartGeom();
+    dragPlotPx = rect.width * ((g.width - g.padL - g.padR) / g.width);
+    svg.classList.add("is-dragging");
+    try { svg.setPointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+    event.preventDefault();
+  });
+
+  svg.addEventListener("pointermove", (event) => {
+    if (dragPointerId == null || event.pointerId !== dragPointerId || !dragInfo) return;
+    const dx = event.clientX - startX;
+    const barsPerPx = dragInfo.windowSize / Math.max(1, dragPlotPx);
+    let next = Math.round(startOffset + dx * barsPerPx);
+    next = Math.max(0, Math.min(dragInfo.maxOffset, next));
+    if (next !== state.offset) {
+      state.offset = next;
+      schedule();
+    }
+    event.preventDefault();
+  });
+
+  const endDrag = (event) => {
+    if (dragPointerId == null || event.pointerId !== dragPointerId) return;
+    dragPointerId = null;
+    dragInfo = null;
+    svg.classList.remove("is-dragging");
+    try { svg.releasePointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+    render();
+  };
+  svg.addEventListener("pointerup", endDrag);
+  svg.addEventListener("pointercancel", endDrag);
+}
+
+// ===== AI 모드: 상승확률(MirProb) 히어로 & 시각화 헬퍼 =====
+let aiProbHorizon = 20; // 5=1주, 20=1개월, 60=3개월
+
+// 5년 일봉이 있으면 차트 확률 엔진으로 정밀 분석, 없으면 스냅샷 지표로 간이 추정.
+async function computeAiProbability(item, horizon) {
+  const hz = horizon || aiProbHorizon;
+  const rows = getChartRows(item);
+  const quick = () => {
+    const q = scanQuickProb(item, hz);
+    return { fallback: true, headlineUp: q.up, horizon: hz, signals: [], patterns: [] };
+  };
+  if (!window.MirProb || !window.MirProb.analyzeRows || !Array.isArray(rows) || rows.length < 60) {
+    return quick();
+  }
+  try {
+    await Promise.all([
+      window.MirProb.ensureStats ? window.MirProb.ensureStats() : Promise.resolve(),
+      (typeof ensureAnalysisFeatureData === "function" ? ensureAnalysisFeatureData() : Promise.resolve()),
+    ]);
+    const result = window.MirProb.analyzeRows(rows, hz, {
+      ticker: item.ticker, company: item.company, statsMode: "population",
+    });
+    if (!result || result.error) return quick();
+    return result;
+  } catch (e) {
+    return quick();
+  }
+}
+
+// 270° 원형 게이지 SVG. CSS 애니메이션(aiGaugeSweep)으로 아크가 그려진다.
+function aiRadialGauge(pct, opts = {}) {
+  const size = opts.size || 176;
+  const stroke = opts.stroke || 15;
+  const r = (size - stroke) / 2 - 2;
+  const cx = size / 2, cy = size / 2;
+  const circ = 2 * Math.PI * r;
+  const track = circ * 0.75;                       // 270° 아크
+  const val = Math.max(0, Math.min(100, Number(pct) || 0));
+  const filled = track * (val / 100);
+  const color = scanProbColor(val);
+  const rot = 135;                                 // 하단 중앙에 갭
+  return `
+    <svg class="ai-gauge" viewBox="0 0 ${size} ${size}" role="img" aria-label="상승확률 ${Math.round(val)}%">
+      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--line)" stroke-width="${stroke}"
+        stroke-dasharray="${track.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"
+        transform="rotate(${rot} ${cx} ${cy})"/>
+      <circle class="ai-gauge-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke-width="${stroke}"
+        stroke-dasharray="${filled.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"
+        style="stroke:${color};--gauge-dash:${filled.toFixed(1)}" transform="rotate(${rot} ${cx} ${cy})"/>
+      <text x="${cx}" y="${cy - 2}" class="ai-gauge-num" text-anchor="middle" style="fill:${color}">${Math.round(val)}<tspan class="ai-gauge-pct">%</tspan></text>
+      <text x="${cx}" y="${cy + 22}" class="ai-gauge-cap" text-anchor="middle">상승확률</text>
+    </svg>`;
+}
+
+function aiProbStat(label, value, detail, tone) {
+  return `<article class="ai-prob-stat">
+      <span>${escapeHtml(label)}</span>
+      <strong class="${tone || ""}">${escapeHtml(String(value))}</strong>
+      <em>${escapeHtml(detail || "")}</em>
+    </article>`;
+}
+
+function aiSignalBar(s) {
+  const dir = Math.max(-1, Math.min(1, Number(s.dir) || 0));
+  const pct = Math.round(Math.abs(dir) * 100);
+  const bull = dir >= 0;
+  return `<div class="ai-sig-row" title="${escapeHtml(s.detail || "")}">
+      <span class="ai-sig-label">${escapeHtml(s.label || "신호")}</span>
+      <span class="ai-sig-track"><span class="ai-sig-fill ${bull ? "is-bull" : "is-bear"}" style="width:${pct}%"></span></span>
+      <span class="ai-sig-dir ${bull ? "pos" : "neg"}">${bull ? "▲" : "▼"}</span>
+    </div>`;
+}
+
+function aiProbabilityHero(result) {
+  const up = Math.round(result.headlineUp ?? 50);
+  const color = scanProbColor(up);
+  const verdict = (window.MirProb && window.MirProb.verdictText) ? window.MirProb.verdictText(up) : scanVerdict(up);
+  const hz = result.horizon || aiProbHorizon;
+  const hzLabel = hz <= 5 ? "1주" : hz >= 60 ? "3개월" : "1개월";
+  const base = result.base;
+  const consensus = result.consensus ? Math.round(result.consensus.up) : null;
+
+  const stats = [];
+  if (consensus != null) stats.push(aiProbStat("신호 합의", `${consensus}%`, "기술 지표 종합"));
+  if (base && base.samples) stats.push(aiProbStat("과거 실측", `${Math.round(base.upProb)}%`, `유사 ${base.samples}회`));
+  if (result.adxVal != null) stats.push(aiProbStat("추세 강도", result.adxVal.toFixed(0), "ADX"));
+
+  const analog = base && base.samples ? `
+    <div class="ai-prob-analog">
+      <div class="ai-prob-analog-head">📅 지금 차트, 과거엔 어땠나 <span>지난 5년 · ${hzLabel} 뒤</span></div>
+      <p>지금과 비슷했던 <b>${base.samples}회</b> 중
+         <b style="color:${scanProbColor(base.upProb)}">${Math.round(base.upProb)}%</b>가 ${hzLabel} 뒤 상승했어요.</p>
+      <div class="ai-prob-analog-grid">
+        <div><span>평균</span><b class="${cls(base.avgReturn)}">${base.avgReturn >= 0 ? "+" : ""}${base.avgReturn.toFixed(1)}%</b></div>
+        <div><span>최고</span><b class="pos">+${base.best.toFixed(0)}%</b></div>
+        <div><span>최저</span><b class="neg">${base.worst.toFixed(0)}%</b></div>
+      </div>
+    </div>` : (result.fallback ? `<div class="ai-prob-analog is-lite"><p class="muted">5년 일봉이 부족해 스냅샷 지표로 간이 추정했습니다.</p></div>` : "");
+
+  const signals = (result.signals || []).slice()
+    .sort((a, b) => Math.abs(b.dir * b.weight) - Math.abs(a.dir * a.weight)).slice(0, 5);
+  const signalBars = signals.length
+    ? `<div class="ai-prob-signals"><div class="ai-prob-sub-head">핵심 신호</div>${signals.map(aiSignalBar).join("")}</div>`
+    : "";
+
+  const pats = (result.patterns || []).slice(0, 6);
+  const patChips = pats.length ? `<div class="ai-prob-patterns">${pats.map((p) => {
+    const d = Number(p.nominalDir) || 0;
+    const when = p.barsAgo === 0 ? "오늘 확정" : `${p.barsAgo || 0}봉 전 확정`;
+    return `<span class="ai-pat-chip ${d > 0 ? "is-bull" : d < 0 ? "is-bear" : ""}" title="${escapeHtml(when)}">${escapeHtml(p.label || p.pattern)}</span>`;
+  }).join("")}</div>` : "";
+
+  return `
+    <section class="ai-prob-hero" style="--prob-color:${color}">
+      <div class="ai-prob-gauge-col">
+        ${aiRadialGauge(up)}
+        <div class="ai-prob-verdict" style="color:${color}">${escapeHtml(verdict)}</div>
+        <div class="ai-prob-hznote">${hzLabel} 기준 종합 추정${result.fallback ? " · 간이" : ""}</div>
+      </div>
+      <div class="ai-prob-detail">
+        <div class="ai-prob-stats">${stats.join("")}</div>
+        ${analog}
+        ${signalBars}
+        ${patChips}
+      </div>
+    </section>`;
+}
+
+function aiProbSkeleton() {
+  return `
+    <div class="ai-prob-skeleton">
+      <div class="ai-prob-skel-gauge shimmer-loading"></div>
+      <div class="ai-prob-skel-lines">
+        <div class="shimmer-loading shimmer-line mid"></div>
+        <div class="shimmer-loading shimmer-line"></div>
+        <div class="shimmer-loading shimmer-line short"></div>
+        <div class="shimmer-loading shimmer-line mid"></div>
+      </div>
+    </div>`;
+}
+
+// 블록을 Claude 웹처럼 순차적으로 blur-in 리빌.
+function revealAiBlocksStaggered(container, step = 130) {
+  if (!container) return;
+  const blocks = Array.from(container.querySelectorAll(".ai-block.animate-reveal"));
+  blocks.forEach((block, index) => {
+    setTimeout(() => block.classList.add("reveal-active"), index * step);
+  });
+}
+
+async function renderInlineStockWidget(ticker, parentBubble) {
+  const base = stockByTicker(ticker) || data.stocks.find((row) => row.ticker === ticker);
+  if (!base) return;
+  const initialItem = applyLive(withDetail(base));
+  const itemPromise = ensureAiWidgetStock(ticker);
+  
+  const widgetId = "widget_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
+  
+  const widgetContainer = document.createElement("div");
+  widgetContainer.className = "chat-msg-widget ai-chart-widget";
+  widgetContainer.id = widgetId;
+  
+  widgetContainer.innerHTML = `
+    <div class="widget-assembly-overlay">
+      <div class="ai-assembly-orb">
+        <span class="ai-orb-core">✦</span>
+        <span class="ai-orb-ring"></span>
+        <span class="ai-orb-ring is-2"></span>
+      </div>
+      <p class="widget-status" id="status_${widgetId}">${escapeHtml(initialItem.company)} 투자 데이터를 모으는 중...</p>
+      <div class="ai-assembly-track"><span class="ai-assembly-track-fill"></span></div>
+    </div>
+    <div class="widget-content-grid" id="grid_${widgetId}" style="opacity: 0; display: none; transition: opacity 0.5s ease-in-out;">
+      <div class="ai-prob-host ai-block animate-reveal" id="prob_${widgetId}"></div>
+      <div class="widget-chart-box ai-block animate-reveal">
+        <div class="ai-widget-chart-head">
+          <div>
+            <strong>${escapeHtml(initialItem.company)} <span>${escapeHtml(initialItem.ticker)}</span></strong>
+            <small class="ai-widget-chart-meta">차트 준비 중</small>
+          </div>
+          <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
+            <button type="button" class="is-active" data-ai-chart-range="1Y">1Y</button>
+            <button type="button" data-ai-chart-range="6M">6M</button>
+            <button type="button" data-ai-chart-range="3M">3M</button>
+            <button type="button" data-ai-chart-range="1M">1M</button>
+            <button type="button" data-ai-chart-action="pan-left" title="이전 구간">‹</button>
+            <button type="button" data-ai-chart-action="zoom-out" title="축소">−</button>
+            <button type="button" data-ai-chart-action="zoom-in" title="확대">+</button>
+            <button type="button" data-ai-chart-action="pan-right" title="다음 구간">›</button>
+            <button type="button" data-ai-chart-action="reset" title="초기화">Reset</button>
+          </div>
+        </div>
+        <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(initialItem.ticker)} interactive chart"></svg>
+        <p class="ai-widget-chart-hint">마우스 휠로 확대/축소하고, 차트를 좌우로 드래그해서 구간을 이동할 수 있습니다.</p>
+      </div>
+      <div class="widget-info-grid">
+        <div class="ai-evidence-grid ai-block animate-reveal" id="evidence_${widgetId}"></div>
+        <div class="ai-mode-data-host ai-block animate-reveal" id="modeData_${widgetId}"></div>
+        <div class="widget-facts ai-block animate-reveal">
+          <h4>핵심 투자 지표</h4>
+          <div id="facts_${widgetId}"></div>
+        </div>
+        <div class="widget-news ai-block animate-reveal">
+          <h4>관련 최신 소식</h4>
+          <div id="news_${widgetId}" class="widget-news-list"></div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  parentBubble.appendChild(widgetContainer);
+  
+  const log = byId("aiChatLog");
+  if (log) log.scrollTop = log.scrollHeight;
+  
+  const statusLabel = byId("status_" + widgetId);
+  const overlay = widgetContainer.querySelector(".widget-assembly-overlay");
+  const grid = byId("grid_" + widgetId);
+  
+  // Step-by-step assembly animation inline
+  setTimeout(() => {
+    if (statusLabel) statusLabel.textContent = "가격 이력과 보조지표를 불러오는 중...";
+  }, 400);
+  
+  setTimeout(() => {
+    if (statusLabel) statusLabel.textContent = "차트 확대/이동 컨트롤을 연결하는 중...";
+  }, 800);
+  
+  setTimeout(() => {
+    if (statusLabel) statusLabel.textContent = "실시간 뉴스와 핵심 지표를 정리하는 중...";
+  }, 1200);
+  
+  setTimeout(async () => {
+    const item = await itemPromise || initialItem;
+    // Fade out overlay
+    if (overlay) overlay.style.opacity = "0";
+    
+    setTimeout(() => {
+      if (overlay) overlay.style.display = "none";
+      if (grid) {
+        grid.style.display = "grid";
+        // Force reflow
+        grid.offsetHeight;
+        grid.style.opacity = "1";
+      }
+
+      // 상승확률 히어로: 먼저 스켈레톤을 보여주고, 분석이 끝나면 교체(Claude 웹 스타일).
+      const probContainer = byId("prob_" + widgetId);
+      if (probContainer) {
+        probContainer.innerHTML = aiProbSkeleton();
+      }
+
+      // Render components inside the bubble!
+      const factsContainer = byId("facts_" + widgetId);
+      if (factsContainer) {
+        factsContainer.innerHTML = stockFacts(item, "AI Mode");
+      }
+
+      const evidenceContainer = byId("evidence_" + widgetId);
+      if (evidenceContainer) {
+        evidenceContainer.innerHTML = renderAiEvidenceGrid(item);
+      }
+
+      const modeDataContainer = byId("modeData_" + widgetId);
+      if (modeDataContainer) {
+        modeDataContainer.innerHTML = renderAiModeDataBoard(item);
+      }
+      
+      const newsContainer = byId("news_" + widgetId);
+      if (newsContainer) {
+        if (item.news && item.news.length > 0) {
+          newsContainer.innerHTML = item.news.slice(0, 3).map(n => `
+            <div class="widget-news-item">
+              <a href="${n.url}" target="_blank" rel="noopener">${escapeHtml(n.title)}</a>
+              <small>${escapeHtml(n.source)} · ${escapeHtml(n.time || "")}</small>
+            </div>
+          `).join("");
+        } else {
+          newsContainer.innerHTML = `<p class="muted font-small">최근 뉴스 정보가 없습니다.</p>`;
+        }
+      }
+      
+      // Draw interactive SVG price chart inside bubble!
+      const chartSvg = byId("chart_" + widgetId);
+      if (chartSvg) {
+        const aiState = createAiChartState();
+        drawAiWidgetChart(item, chartSvg, aiState, widgetContainer.querySelector(".ai-widget-chart-meta"));
+        setupAiWidgetChartControls(widgetContainer, item, aiState);
+      }
+      
+      // Reveal widget (차트 레이어 애니메이션 트리거) + 블록을 순차 blur-in.
+      widgetContainer.classList.add("reveal-active");
+      revealAiBlocksStaggered(widgetContainer);
+
+      // 상승확률 분석은 무겁게 걸릴 수 있어 리빌을 막지 않고 끝나면 스켈레톤을 교체한다.
+      computeAiProbability(item).then((probResult) => {
+        if (!probContainer || !probContainer.isConnected) return;
+        probContainer.innerHTML = aiProbabilityHero(probResult);
+        probContainer.classList.add("is-loaded");
+        if (log) log.scrollTop = log.scrollHeight;
+      }).catch(() => { /* 실패 시 스켈레톤 유지 */ });
+
+      if (log) log.scrollTop = log.scrollHeight;
+    }, 400);
+  }, 1600);
+}
+
+function setupAiChatModeEvents() {
+  const toggleBtn = byId("aiModeToggle");
+  const exitBtn = byId("exitAiModeBtn");
+  
+  if (toggleBtn) {
+    toggleBtn.addEventListener("click", () => {
+      toggleAiChatMode(!isAiChatMode);
+    });
+  }
+  
+  if (exitBtn) {
+    exitBtn.addEventListener("click", () => {
+      toggleAiChatMode(false);
+    });
+  }
+  
+  // Suggestion cards click
+  document.querySelectorAll(".ai-chat-suggest-card").forEach((card) => {
+    card.addEventListener("click", () => {
+      const query = card.dataset.query;
+      sendAiChat(query);
+    });
+  });
+  
+  // Submit chat form
+  const form = byId("aiChatForm");
+  const input = byId("aiChatInput");
+  if (form && input) {
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      sendAiChat();
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendAiChat();
+      }
+    });
+  }
+}
+
+// Initialize AI Chat Mode Events
+setupAiChatModeEvents();

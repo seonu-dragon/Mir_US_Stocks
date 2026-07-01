@@ -134,7 +134,46 @@
       <!-- AI 모드 전용 챗 대화방 -->
       <section class="panel" id="tab-ai-chat" hidden>
         <div class="ai-chat-container" aria-label="미르 AI 채팅">
-          <div class="ai-chat-log" id="aiChatLog" aria-live="polite"></div>
+          <div class="ai-chat-header">
+            <div class="ai-chat-branding">
+              <span class="ai-sparkle-large">✦</span>
+              <div>
+                <h2>미르 AI 어시스턴트</h2>
+                <p class="muted">실시간 데이터 기반 심층 시장 분석 및 리서치</p>
+              </div>
+            </div>
+            <button type="button" class="ghost exit-ai-btn" id="exitAiModeBtn" aria-label="AI 모드 종료">
+              종료
+            </button>
+          </div>
+
+          <div class="ai-chat-log" id="aiChatLog" aria-live="polite">
+            <!-- 웰컴 상태 UI -->
+            <div class="ai-chat-welcome" id="aiChatWelcome">
+              <div class="welcome-icon">✦</div>
+              <h2>무엇을 분석해 드릴까요?</h2>
+              <p class="muted">미국 및 한국 주식 시장의 실시간 데이터를 기반으로 기업 정보, 차트 기술적 분석, 실적 지표를 대화하듯 점검해 드립니다.</p>
+              
+              <div class="welcome-suggestions">
+                <button type="button" class="ai-chat-suggest-card" data-query="NVDA 분석해줘">
+                  <strong>NVDA 분석해줘</strong>
+                  <span>엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.</span>
+                </button>
+                <button type="button" class="ai-chat-suggest-card" data-query="반도체 섹터 흐름 어때?">
+                  <strong>반도체 섹터 흐름 어때?</strong>
+                  <span>오늘 반도체 관련 섹터의 흐름과 피어 상대강도를 비교 분석합니다.</span>
+                </button>
+                <button type="button" class="ai-chat-suggest-card" data-query="현재 가장 강한 섹터는?">
+                  <strong>현재 가장 강한 섹터는?</strong>
+                  <span>시장 지도 및 섹터 등락률 기준 가장 두드러진 강세 섹터를 찾아줍니다.</span>
+                </button>
+                <button type="button" class="ai-chat-suggest-card" data-query="나의 관심종목 브리핑해줘">
+                  <strong>나의 관심종목 브리핑해줘</strong>
+                  <span>등록된 관심종목의 오늘 변동 사항과 주요 뉴스를 한번에 요약합니다.</span>
+                </button>
+              </div>
+            </div>
+          </div>
           
           <form class="ai-chat-form" id="aiChatForm">
             <input id="aiChatInput" type="text" placeholder="종목 분석 또는 투자 질문을 입력하세요..." autocomplete="off">

@@ -15406,6 +15406,118 @@ setupAiSearchEvents();
 let isAiChatMode = false;
 let aiChatBusy = false;
 let aiChatHistory = [];
+let aiChatSessions = {}; // Structure: { [sessionId]: { name: string, history: Array, timestamp: string } }
+let currentSessionId = null;
+
+// 로컬스토리지 대화 기록 저장
+function saveAiSessionsToStorage() {
+  localStorage.setItem("mir_ai_sessions", JSON.stringify(aiChatSessions));
+  localStorage.setItem("mir_ai_current_session", currentSessionId);
+}
+
+// 대화 기록 불러오기 및 사이드바 렌더링
+function loadAndRenderAiHistory() {
+  const saved = localStorage.getItem("mir_ai_sessions");
+  const savedCurrent = localStorage.getItem("mir_ai_current_session");
+  
+  if (saved) {
+    try {
+      aiChatSessions = JSON.parse(saved);
+    } catch (e) {
+      aiChatSessions = {};
+    }
+  } else {
+    aiChatSessions = {};
+  }
+  
+  currentSessionId = savedCurrent || null;
+  renderAiHistoryList();
+}
+
+function renderAiHistoryList() {
+  const historyList = byId("aiHistoryList");
+  if (!historyList) return;
+  
+  historyList.innerHTML = "";
+  const sortedSessions = Object.entries(aiChatSessions).sort((a, b) => {
+    return new Date(b[1].timestamp) - new Date(a[1].timestamp);
+  });
+  
+  if (sortedSessions.length === 0) {
+    historyList.innerHTML = `<li class="muted font-small" style="text-align:center;padding:12px;">이전 기록이 없습니다.</li>`;
+    return;
+  }
+  
+  sortedSessions.forEach(([id, session]) => {
+    const item = document.createElement("li");
+    item.className = `ai-history-item${id === currentSessionId ? " active" : ""}`;
+    item.dataset.id = id;
+    
+    // 대화방 이름 줄임표 처리
+    const shortName = session.name.length > 18 ? session.name.substring(0, 18) + "..." : session.name;
+    const dateStr = new Date(session.timestamp).toLocaleDateString("ko-KR", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    
+    item.innerHTML = `
+      <strong>${escapeHtml(shortName)}</strong>
+      <span>${escapeHtml(dateStr)}</span>
+    `;
+    
+    item.addEventListener("click", () => {
+      switchAiChatSession(id);
+    });
+    
+    historyList.appendChild(item);
+  });
+}
+
+// 세션 전환
+function switchAiChatSession(sessionId) {
+  if (!aiChatSessions[sessionId]) return;
+  
+  currentSessionId = sessionId;
+  aiChatHistory = aiChatSessions[sessionId].history;
+  saveAiSessionsToStorage();
+  renderAiHistoryList();
+  
+  // 채팅창 로그 리빌
+  const log = byId("aiChatLog");
+  const welcome = byId("aiChatWelcome");
+  if (log) {
+    log.innerHTML = "";
+    if (welcome) welcome.style.display = "none";
+    
+    // 복원 시에는 타이핑 효과 없이 즉시 렌더링
+    aiChatHistory.forEach(msg => {
+      appendAiChatMessage(msg.role, msg.content, false); // 세 번째 인자로 typingEffect = false
+    });
+    
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+// 새 대화 시작
+function startNewAiChatSession() {
+  currentSessionId = "session_" + Date.now();
+  aiChatHistory = [];
+  aiChatSessions[currentSessionId] = {
+    name: "새로운 대화",
+    history: aiChatHistory,
+    timestamp: new Date().toISOString()
+  };
+  
+  saveAiSessionsToStorage();
+  renderAiHistoryList();
+  
+  const log = byId("aiChatLog");
+  const welcome = byId("aiChatWelcome");
+  if (log) {
+    log.innerHTML = "";
+    if (welcome) {
+      welcome.appendChild(log.appendChild(welcome)); // 웰컴 복구
+      welcome.style.display = "block";
+    }
+  }
+}
 
 function toggleAiChatMode(active) {
   isAiChatMode = active;
@@ -15421,6 +15533,12 @@ function toggleAiChatMode(active) {
       tabChat.hidden = false;
     }
     
+    // 사이드바 목록 로드
+    loadAndRenderAiHistory();
+    if (!currentSessionId || !aiChatSessions[currentSessionId]) {
+      startNewAiChatSession();
+    }
+    
     // Scroll chat log to bottom
     const log = byId("aiChatLog");
     if (log) log.scrollTop = log.scrollHeight;
@@ -15433,6 +15551,58 @@ function toggleAiChatMode(active) {
       tabChat.hidden = true;
     }
   }
+}
+
+function generateAiBadges(text) {
+  const badges = [];
+  const lower = text.toLowerCase();
+  
+  // 1. 호재/악재 감지
+  if (lower.includes("호재") || lower.includes("긍정") || lower.includes("상승") || lower.includes("매수 신호") || lower.includes("강세")) {
+    badges.push('<span class="ai-badge-tag bullish">✦ 종합: 호재</span>');
+  } else if (lower.includes("악재") || lower.includes("경계") || lower.includes("하락") || lower.includes("위험") || lower.includes("우려")) {
+    badges.push('<span class="ai-badge-tag bearish">⚠ 종합: 경계</span>');
+  } else {
+    badges.push('<span class="ai-badge-tag neutral">✦ 종합: 중립</span>');
+  }
+  
+  // 2. 테마 감지
+  if (lower.includes("반도체") || lower.includes("hbm") || lower.includes("메모리") || lower.includes("삼성전자") || lower.includes("하이닉스") || lower.includes("nvda") || lower.includes("엔비디아")) {
+    badges.push('<span class="ai-badge-tag neutral">⚙ 테마: 반도체</span>');
+  } else if (lower.includes("금리") || lower.includes("연준") || lower.includes("fomc") || lower.includes("인플레이션")) {
+    badges.push('<span class="ai-badge-tag neutral">📉 매크로: 금리</span>');
+  } else if (lower.includes("수출") || lower.includes("수입") || lower.includes("무역")) {
+    badges.push('<span class="ai-badge-tag neutral">🚢 실물: 수출</span>');
+  } else if (lower.includes("부동산") || lower.includes("규제") || lower.includes("동탄") || lower.includes("기흥")) {
+    badges.push('<span class="ai-badge-tag neutral">🏢 자산: 부동산</span>');
+  }
+  
+  if (badges.length > 0) {
+    return `<div class="ai-badge-tags-container">${badges.join("")}</div>`;
+  }
+  return "";
+}
+
+function typeWriterMarkdown(element, rawText, onComplete) {
+  let i = 0;
+  element.innerHTML = "";
+  
+  const interval = setInterval(() => {
+    if (i >= rawText.length) {
+      clearInterval(interval);
+      element.innerHTML = formatMarkdownToHtml(rawText); // 최종 HTML 정밀 파싱 적용
+      if (onComplete) onComplete();
+      return;
+    }
+    
+    // 타이핑 속도 보정 (한 번에 3글자씩 누적하여 부드러운 가속 제공)
+    const step = Math.min(3, rawText.length - i);
+    i += step;
+    element.innerHTML = formatMarkdownToHtml(rawText.substring(0, i));
+    
+    const log = byId("aiChatLog");
+    if (log) log.scrollTop = log.scrollHeight;
+  }, 16);
 }
 
 async function sendAiChat(queryText = null) {
@@ -15452,6 +15622,11 @@ async function sendAiChat(queryText = null) {
     welcome.style.display = "none";
   }
   
+  // 첫 질문 시 대화 세션명 업데이트
+  if (aiChatSessions[currentSessionId] && aiChatSessions[currentSessionId].name === "새로운 대화") {
+    aiChatSessions[currentSessionId].name = text;
+  }
+  
   // 1. Add User Message bubble
   appendAiChatMessage("user", text);
   aiChatHistory.push({ role: "user", content: text });
@@ -15464,11 +15639,11 @@ async function sendAiChat(queryText = null) {
     ? `${stockByTicker(matchedTicker).company} (${matchedTicker}) 데이터를 분석하여 심층 투자 보고서를 요약하고 있습니다...`
     : "답변을 작성하고 있습니다...";
     
-  const typingBubble = appendAiChatMessage("bot", loadingText);
+  const typingBubble = appendAiChatMessage("bot", loadingText, false);
   typingBubble.classList.add("typing");
 
   if (matchedTicker) {
-    const chartMessage = appendAiChatMessage("bot", "");
+    const chartMessage = appendAiChatMessage("bot", "", false);
     if (chartMessage) {
       chartMessage.classList.add("chart-message");
       chartMessage.querySelector(".msg-bubble")?.remove();
@@ -15498,19 +15673,42 @@ async function sendAiChat(queryText = null) {
     const reply = (payload && payload.reply) || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
     
     typingBubble.classList.remove("typing");
-    typingBubble.innerHTML = `<div class="msg-bubble">${formatMarkdownToHtml(reply)}</div>`;
-    aiChatHistory.push({ role: "assistant", content: reply });
+    const bubbleDiv = typingBubble.querySelector(".msg-bubble");
+    
+    // 타이핑 라이터 효과 실행
+    typeWriterMarkdown(bubbleDiv, reply, () => {
+      aiChatHistory.push({ role: "assistant", content: reply });
+      
+      // 오토 태그 바인딩
+      const badgesHtml = generateAiBadges(reply);
+      if (badgesHtml) {
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = badgesHtml;
+        typingBubble.insertBefore(tempDiv.firstChild, bubbleDiv);
+      }
+      
+      // 로컬스토리지 저장 및 사이드바 갱신
+      if (aiChatSessions[currentSessionId]) {
+        aiChatSessions[currentSessionId].history = aiChatHistory;
+        aiChatSessions[currentSessionId].timestamp = new Date().toISOString();
+        saveAiSessionsToStorage();
+        renderAiHistoryList();
+      }
+    });
     
   } catch (err) {
     typingBubble.classList.remove("typing");
-    typingBubble.innerHTML = `<div class="msg-bubble">연결 실패: ${err.message || err}</div>`;
+    const bubbleDiv = typingBubble.querySelector(".msg-bubble");
+    if (bubbleDiv) {
+      bubbleDiv.innerHTML = `연결 실패: ${err.message || err}`;
+    }
   } finally {
     aiChatBusy = false;
     if (log) log.scrollTop = log.scrollHeight;
   }
 }
 
-function appendAiChatMessage(role, htmlOrText) {
+function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
   const log = byId("aiChatLog");
   if (!log) return null;
   
@@ -15520,7 +15718,10 @@ function appendAiChatMessage(role, htmlOrText) {
   if (role === "user") {
     msg.innerHTML = `<div class="msg-bubble">${escapeHtml(htmlOrText)}</div>`;
   } else {
-    msg.innerHTML = `<div class="msg-bubble">${htmlOrText}</div>`;
+    // 동기식 복원 시 배지 즉시 그리기
+    const badgesHtml = role === "bot" ? generateAiBadges(htmlOrText) : "";
+    const parsedContent = isMarkdown ? formatMarkdownToHtml(htmlOrText) : htmlOrText;
+    msg.innerHTML = `${badgesHtml}<div class="msg-bubble">${parsedContent}</div>`;
   }
   
   log.appendChild(msg);
@@ -15942,6 +16143,127 @@ function drawAiWidgetChart(item, svg, state, metaEl) {
   if (metaEl) {
     metaEl.textContent = `${state.range} · ${info.windowSize}봉 표시 · 휠 확대/축소 · 드래그 이동`;
   }
+
+  // 크로스헤어 트래커 바인딩
+  if (svg.dataset.crosshairBound !== "true") {
+    svg.dataset.crosshairBound = "true";
+    let guideLine = null;
+    let tooltip = null;
+
+    const removeCrosshair = () => {
+      if (guideLine) { guideLine.remove(); guideLine = null; }
+      if (tooltip) { tooltip.remove(); tooltip = null; }
+    };
+
+    const updateCrosshair = (event) => {
+      const rect = svg.getBoundingClientRect();
+      const g = priceChartGeom();
+      
+      const vbAttr = svg.getAttribute("viewBox") || "0 0 860 520";
+      const vbTokens = vbAttr.split(" ");
+      const vbWidth = parseFloat(vbTokens[2]) || g.width;
+      const vbHeight = parseFloat(vbTokens[3]) || 520;
+      
+      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
+      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
+      
+      const vbX = ((clientX - rect.left) / Math.max(1, rect.width)) * vbWidth;
+      const vbY = ((clientY - rect.top) / Math.max(1, rect.height)) * vbHeight;
+
+      const padL = g.padL;
+      const padR = g.padR;
+      const plotW = vbWidth - padL - padR;
+
+      if (vbX < padL || vbX > vbWidth - padR) {
+        removeCrosshair();
+        return;
+      }
+
+      // visibleBars 직접 역추출
+      const allRows = resampleBars(getChartRows(item), state.barTf);
+      const rangeSize = aiChartRangeBarCount(allRows.length, state);
+      const base = allRows.slice(-rangeSize);
+      const windowSize = Math.max(12, Math.floor(base.length / state.zoom));
+      const offset = state.offset;
+      const visibleBars = base.slice(base.length - offset - windowSize, base.length - offset);
+
+      if (!visibleBars || visibleBars.length === 0) return;
+
+      const frac = Math.max(0, Math.min(1, (vbX - padL) / plotW));
+      const barIdx = Math.min(visibleBars.length - 1, Math.floor(frac * visibleBars.length));
+      const targetBar = visibleBars[barIdx];
+      if (!targetBar) return;
+
+      const targetX = padL + (barIdx + 0.5) * (plotW / visibleBars.length);
+
+      // 세로선 그리기
+      if (!guideLine) {
+        guideLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        guideLine.setAttribute("class", "chart-crosshair-line");
+        guideLine.setAttribute("y1", "0");
+        guideLine.setAttribute("y2", vbHeight.toString());
+        svg.appendChild(guideLine);
+      }
+      guideLine.setAttribute("x1", targetX.toString());
+      guideLine.setAttribute("x2", targetX.toString());
+
+      // 툴팁 박스 그리기
+      if (!tooltip) {
+        tooltip = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        tooltip.setAttribute("class", "chart-tooltip-box");
+        tooltip.innerHTML = `
+          <rect width="135" height="58" rx="8" fill="rgba(15,23,42,0.9)" />
+          <text x="10" y="18" fill="#fff" font-size="10.5" font-weight="600" class="tip-date"></text>
+          <text x="10" y="34" fill="#10b981" font-size="11.5" font-weight="700" class="tip-price"></text>
+          <text x="10" y="47" fill="#c084fc" font-size="9" class="tip-volume"></text>
+        `;
+        svg.appendChild(tooltip);
+      }
+
+      const priceVal = isKrMarket() ? `${parseFloat(targetBar.close || 0).toLocaleString()}원` : `$${parseFloat(targetBar.close || 0).toFixed(2)}`;
+      const volVal = `거래량: ${parseFloat(targetBar.volume || 0).toLocaleString()}`;
+      
+      tooltip.querySelector(".tip-date").textContent = targetBar.time || "";
+      tooltip.querySelector(".tip-price").textContent = `종가: ${priceVal}`;
+      tooltip.querySelector(".tip-volume").textContent = volVal;
+
+      let tooltipX = targetX + 15;
+      if (tooltipX + 135 > vbWidth) {
+        tooltipX = targetX - 150;
+      }
+      let tooltipY = vbY - 26;
+      if (tooltipY < 8) tooltipY = 8;
+      if (tooltipY + 58 > vbHeight) tooltipY = vbHeight - 66;
+
+      tooltip.setAttribute("transform", `translate(${tooltipX}, ${tooltipY})`);
+    };
+
+    svg.addEventListener("pointermove", updateCrosshair);
+    svg.addEventListener("pointerleave", removeCrosshair);
+    svg.addEventListener("pointerup", removeCrosshair);
+  }
+}
+
+function toggleAiWidgetFullscreen(widget) {
+  const isModal = widget.classList.contains("is-fullscreen-modal");
+  
+  if (isModal) {
+    widget.classList.remove("is-fullscreen-modal");
+    const overlay = document.querySelector(".ai-modal-overlay");
+    if (overlay) overlay.remove();
+  } else {
+    const overlay = document.createElement("div");
+    overlay.className = "ai-modal-overlay";
+    document.body.appendChild(overlay);
+    
+    widget.classList.add("is-fullscreen-modal");
+    
+    // 오버레이 클릭 시 닫기
+    overlay.addEventListener("click", () => {
+      widget.classList.remove("is-fullscreen-modal");
+      overlay.remove();
+    });
+  }
 }
 
 function setupAiWidgetChartControls(widget, item, state) {
@@ -15968,6 +16290,7 @@ function setupAiWidgetChartControls(widget, item, state) {
       else if (action === "pan-left") state.offset = Math.min(info.maxOffset, state.offset + Math.max(5, Math.round(12 / state.zoom)));
       else if (action === "pan-right") state.offset = Math.max(0, state.offset - Math.max(5, Math.round(12 / state.zoom)));
       else if (action === "reset") { state.zoom = 1; state.offset = 0; }
+      else if (action === "fullscreen") toggleAiWidgetFullscreen(widget);
       render();
     });
   });
@@ -16227,6 +16550,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <button type="button" data-ai-chart-action="zoom-in" title="확대">+</button>
             <button type="button" data-ai-chart-action="pan-right" title="다음 구간">›</button>
             <button type="button" data-ai-chart-action="reset" title="초기화">Reset</button>
+            <button type="button" data-ai-chart-action="fullscreen" title="풀스크린 분석" class="fullscreen-toggle-btn">⤢</button>
           </div>
         </div>
         <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(initialItem.ticker)} interactive chart"></svg>
@@ -16347,6 +16671,9 @@ async function renderInlineStockWidget(ticker, parentBubble) {
 function setupAiChatModeEvents() {
   const toggleBtn = byId("aiModeToggle");
   const exitBtn = byId("exitAiModeBtn");
+  const sidebarToggleBtn = byId("sidebarToggleBtn");
+  const newChatBtn = byId("newChatBtn");
+  const sidebar = byId("aiChatSidebar");
   
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
@@ -16357,6 +16684,19 @@ function setupAiChatModeEvents() {
   if (exitBtn) {
     exitBtn.addEventListener("click", () => {
       toggleAiChatMode(false);
+    });
+  }
+
+  if (sidebarToggleBtn && sidebar) {
+    sidebarToggleBtn.addEventListener("click", () => {
+      sidebar.classList.toggle("collapsed");
+      sidebarToggleBtn.classList.toggle("active");
+    });
+  }
+
+  if (newChatBtn) {
+    newChatBtn.addEventListener("click", () => {
+      startNewAiChatSession();
     });
   }
   
@@ -16371,15 +16711,95 @@ function setupAiChatModeEvents() {
   // Submit chat form
   const form = byId("aiChatForm");
   const input = byId("aiChatInput");
-  if (form && input) {
+  const popup = byId("aiAutoComplete");
+  
+  if (form && input && popup) {
+    let activeIndex = -1;
+    let results = [];
+    
+    // 자동완성 추천 입력 리스너
+    input.addEventListener("input", () => {
+      const value = input.value.trim().toLowerCase();
+      if (value.length < 1) {
+        popup.hidden = true;
+        results = [];
+        return;
+       }
+       
+       results = data.stocks.filter(s => {
+         return s.ticker.toLowerCase().includes(value) || s.company.toLowerCase().includes(value);
+       }).slice(0, 5);
+       
+       if (results.length === 0) {
+         popup.hidden = true;
+         return;
+       }
+       
+       activeIndex = -1;
+       popup.innerHTML = results.map((s, idx) => `
+         <div class="autocomplete-item" data-ticker="${s.ticker}" data-index="${idx}">
+           <div style="display:flex;align-items:center;gap:10px;">
+             <span class="ticker-badge">${escapeHtml(s.ticker)}</span>
+             <span class="company-name">${escapeHtml(s.company)}</span>
+           </div>
+           <span class="market-badge">${isKrTicker(s.ticker) ? "KOSPI" : "NASDAQ"}</span>
+         </div>
+       `).join("");
+       popup.hidden = false;
+       
+       // 클릭 바인딩
+       popup.querySelectorAll(".autocomplete-item").forEach(item => {
+         item.addEventListener("click", () => {
+           input.value = item.dataset.ticker + " 분석해줘";
+           popup.hidden = true;
+           sendAiChat();
+         });
+       });
+    });
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      popup.hidden = true;
       sendAiChat();
     });
+    
     input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (popup.hidden) {
+        if (e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          sendAiChat();
+        }
+        return;
+      }
+      
+      const items = popup.querySelectorAll(".autocomplete-item");
+      if (e.key === "ArrowDown") {
         e.preventDefault();
-        sendAiChat();
+        activeIndex = (activeIndex + 1) % items.length;
+        items.forEach((item, idx) => item.classList.toggle("active", idx === activeIndex));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        activeIndex = (activeIndex - 1 + items.length) % items.length;
+        items.forEach((item, idx) => item.classList.toggle("active", idx === activeIndex));
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (activeIndex >= 0 && results[activeIndex]) {
+          input.value = results[activeIndex].ticker + " 분석해줘";
+          popup.hidden = true;
+          sendAiChat();
+        } else {
+          popup.hidden = true;
+          sendAiChat();
+        }
+      } else if (e.key === "Escape") {
+        popup.hidden = true;
+      }
+    });
+
+    // 외부 클릭 시 자동완성 닫기
+    document.addEventListener("click", (e) => {
+      if (!input.contains(e.target) && !popup.contains(e.target)) {
+        popup.hidden = true;
       }
     });
   }

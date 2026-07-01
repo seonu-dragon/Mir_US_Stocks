@@ -1,0 +1,64 @@
+name: Kiwoom Content Pipeline
+
+on:
+  schedule:
+    # 07:00 KST (월-금) = 22:00 UTC (일-목)
+    - cron: "0 22 * * 0-4"
+    # 13:00 KST (월-금) = 04:00 UTC (월-금)
+    - cron: "0 4 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      batch:
+        description: "domestic_morning 또는 overseas_afternoon"
+        required: true
+        default: "domestic_morning"
+        type: choice
+        options:
+          - domestic_morning
+          - overseas_afternoon
+
+jobs:
+  generate-content:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Determine batch
+        id: batch
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "value=${{ github.event.inputs.batch }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event.schedule }}" = "0 22 * * 0-4" ]; then
+            echo "value=domestic_morning" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=overseas_afternoon" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python dependencies
+        run: |
+          pip install -r automation/requirements.txt
+
+      - name: Install Playwright Chromium
+        run: |
+          playwright install chromium
+
+      - name: Build Kiwoom export JSON
+        run: python scripts/build_kiwoom_exports.py
+
+      - name: Run Kiwoom pipeline
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
+          KIWOOM_BATCH: ${{ steps.batch.outputs.value }}
+        run: python automation/main.py --skip-exports --batch ${{ steps.batch.outputs.value }}

@@ -68,6 +68,11 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
    - `DART_API_KEY` (선택, KR DART 공시)
    - `TELEGRAM_BOT_TOKEN` (선택, 관심종목 알림·진행 알림)
    - `TELEGRAM_CHAT_ID` (선택, 진행 알림용)
+   - `NOTION_TOKEN` (키움 파이프라인, Notion Integration Secret)
+   - `NOTION_DATABASE_ID` (키움 파이프라인, `cc26d8ab4b524db19cda74797c01e430`)
+   - `SITE_BASE_URL` (키움 파이프라인, `https://seonu-dragon.github.io/Mir_US_Stocks`)
+
+   일괄 등록: `gh auth login` 후 `.\scripts\setup_kiwoom_secrets.ps1`
 
 3. **Cloudflare Worker Secrets** (커뮤니티·동기화·텔레그램)
    - `TELEGRAM_BOT_TOKEN` — `/alerts/telegram` 엔드포인트
@@ -79,6 +84,29 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 5. **워크플로 push 후 확인**
    - Actions 탭에서 각 워크플로를 `Run workflow`로 수동 테스트
    - 성공하면 GitHub Pages에 자동 반영됩니다.
+
+### 키움 커뮤니티 파이프라인 (Kiwoom Content Pipeline)
+
+| KST | 배치 | 워크플로 |
+|---|---|---|
+| 07:00 | 국내 상승확률 스캐너 상위 5개 | `kiwoom_content_pipeline.yml` |
+| 13:00 | 해외 스캐너 10 + 커뮤니티 언급 5 | `kiwoom_content_pipeline.yml` |
+
+**Notion DB:** [Kiwoom Supporters Daily Posts](https://www.notion.so/cc26d8ab4b524db19cda74797c01e430)
+
+**Notion Integration (최초 1회)**
+
+1. [Notion Integrations](https://www.notion.so/my-integrations) → New integration → Internal
+2. Secret 복사 → `.env`에 `NOTION_TOKEN="secret_..."` 추가
+3. 위 Notion DB 페이지 → `...` → 연결 → Integration 추가
+
+**로컬 테스트**
+
+```powershell
+python scripts/build_kiwoom_exports.py
+python automation/main.py --batch domestic_morning
+python automation/record_engagement.py --ticker NVDA --posted-url "https://..." --likes 5 --status "업로드 완료"
+```
 
 ### 로컬 개발
 

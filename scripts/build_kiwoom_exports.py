@@ -408,7 +408,7 @@ def build_analysis_export(
     market: str,
     detail: dict,
     stock: dict | None = None,
-    period: str = "1Y",
+    period: str = "6M",
 ) -> dict | None:
     series = detail.get("chartSeries") or []
     rows = rows_from_chart_series(series)

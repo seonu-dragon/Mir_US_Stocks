@@ -84,7 +84,7 @@ def process_target(
 
     chart_path = None
     if not skip_capture:
-        chart_path = capture_chart(ticker=ticker, market=market, period=analysis.get("period", "1Y"))
+        chart_path = capture_chart(ticker=ticker, market=market, period=analysis.get("period", "6M"))
 
     if skip_gemini:
         post = {

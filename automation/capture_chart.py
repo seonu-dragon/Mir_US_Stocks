@@ -34,7 +34,7 @@ def _local_site():
         thread.join(timeout=2)
 
 
-def _page_url(base: str, ticker: str, market: str, period: str = "1Y") -> str:
+def _page_url(base: str, ticker: str, market: str, period: str = "6M") -> str:
     query = urlencode({"ticker": ticker, "market": market.lower(), "period": period})
     return f"{base.rstrip('/')}/chart_capture.html?{query}"
 
@@ -42,7 +42,7 @@ def _page_url(base: str, ticker: str, market: str, period: str = "1Y") -> str:
 def capture_chart(
     ticker: str,
     market: str,
-    period: str = "1Y",
+    period: str = "6M",
     output_dir: str | Path | None = None,
     date_str: str | None = None,
 ) -> Path | None:
@@ -67,7 +67,7 @@ def capture_chart(
         url = _page_url(base_url, ticker, market, period)
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            page = browser.new_page(viewport={"width": 960, "height": 720})
+            page = browser.new_page(viewport={"width": 1000, "height": 820})
             page.goto(url, wait_until="domcontentloaded", timeout=60_000)
             page.wait_for_function(
                 """() => {
@@ -103,7 +103,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Capture chart PNG for a ticker.")
     parser.add_argument("--ticker", required=True)
     parser.add_argument("--market", choices=("kr", "us", "KR", "US"), default="us")
-    parser.add_argument("--period", default="1Y")
+    parser.add_argument("--period", default="6M")
     args = parser.parse_args()
     result = capture_chart(args.ticker, args.market.upper(), period=args.period)
     print(result or "capture failed")

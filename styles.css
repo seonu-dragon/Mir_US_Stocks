@@ -11716,6 +11716,66 @@ body.ai-mode-active #tab-ai-chat {
   color: var(--text);
 }
 
+/* 4. 봇 답변 복사 버튼 */
+.msg-bubble-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.copy-msg-btn {
+  background: transparent;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+  opacity: 0;
+  transition: all 0.2s ease;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.msg-bubble-wrap:hover .copy-msg-btn {
+  opacity: 0.6;
+}
+
+.copy-msg-btn:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+[data-theme="light"] .copy-msg-btn:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.copy-msg-btn.copied {
+  color: #16a34a !important;
+  opacity: 1 !important;
+}
+
+/* 5. 세션 이름 인라인 수정 */
+.rename-session-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.4);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 2px 6px;
+  width: 100%;
+  box-sizing: border-box;
+  outline: none;
+}
+
+[data-theme="light"] .rename-session-input {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
 
 
 

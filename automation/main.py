@@ -19,8 +19,13 @@ from capture_chart import capture_chart  # noqa: E402
 from compliance_check import check_compliance  # noqa: E402
 from generate_post import generate_post  # noqa: E402
 from notion_client import create_daily_page, create_stock_page  # noqa: E402
-from select_targets import select_domestic_targets, select_overseas_targets  # noqa: E402
+from select_targets import (  # noqa: E402
+    resolve_targets_by_tickers,
+    select_domestic_targets,
+    select_overseas_targets,
+)
 from telegram_client import send_error_message, send_summary_message  # noqa: E402
+from ticker_cooldown import get_cooldown_tickers  # noqa: E402
 from utils import (  # noqa: E402
     analysis_path,
     load_env_file,
@@ -43,6 +48,23 @@ def run_exports() -> None:
     script = ROOT / "scripts" / "build_kiwoom_exports.py"
     print(f"[pipeline] running exports: {script.name}")
     subprocess.run([sys.executable, str(script)], check=True, cwd=str(ROOT))
+
+
+def merge_run_results(today: str, batch: str, new_results: list[dict]) -> dict:
+    output_path = f"outputs/posts/{today}_{batch}.json"
+    try:
+        existing = load_json(output_path)
+    except Exception:
+        existing = {"batch": batch, "date": today, "results": []}
+
+    by_ticker = {item["ticker"]: item for item in existing.get("results") or [] if item.get("ticker")}
+    for item in new_results:
+        if item.get("ticker"):
+            by_ticker[item["ticker"]] = item
+
+    merged = list(by_ticker.values())
+    merged.sort(key=lambda x: x.get("ticker", ""))
+    return {"batch": batch, "date": today, "results": merged}
 
 
 def process_target(
@@ -71,16 +93,22 @@ def process_target(
             "market": market,
             "selected_type": "분석/정보형",
             "selection_reason": "dry-run",
-            "title": f"{target.get('name', ticker)} 차트 체크포인트",
+            "title": f"{target.get('name', ticker)} 차트 같이 봤어요",
             "body": "드라이런 모드 — Gemini 호출을 건너뛰었습니다.",
             "question_for_comments": "이 구간은 어떻게 보시나요?",
-            "disclaimer": "매수·매도 추천이 아닌 차트 기준 체크포인트입니다.",
-            "hashtags": ["차트분석"],
+            "disclaimer": "",
+            "hashtags": ["차트"],
             "quality_score": 0,
         }
         compliance = {"pass": True, "risk_level": "low", "issues": [], "fix_suggestions": [], "safe_version": post["body"]}
     else:
-        post = generate_post(target=target, analysis=analysis, chart_path=chart_path, batch_label=batch_label)
+        post = generate_post(
+            target=target,
+            analysis=analysis,
+            chart_path=chart_path,
+            batch_label=batch_label,
+            market=market,
+        )
         compliance = check_compliance(post)
 
     notion_url = ""
@@ -114,6 +142,7 @@ def main() -> int:
     load_env_file()
     parser = argparse.ArgumentParser(description="Kiwoom content automation pipeline")
     parser.add_argument("--batch", choices=("domestic_morning", "overseas_afternoon"))
+    parser.add_argument("--tickers", help="쉼표로 구분한 종목코드 (재생성 시 쿨다운 무시)")
     parser.add_argument("--skip-exports", action="store_true")
     parser.add_argument("--skip-gemini", action="store_true", help="Dry-run without Gemini API")
     parser.add_argument("--skip-notion", action="store_true")
@@ -131,13 +160,39 @@ def main() -> int:
 
         if batch == "domestic_morning":
             scanner = load_json("data/export/domestic_scanner.json")
-            targets = select_domestic_targets(scanner.get("items") or [], limit=5)
+            scanner_items = scanner.get("items") or []
             market = "KR"
+            if args.tickers:
+                tickers = [t.strip() for t in args.tickers.split(",") if t.strip()]
+                targets = resolve_targets_by_tickers(tickers, scanner_items)
+            else:
+                excluded = get_cooldown_tickers(today)
+                if excluded:
+                    print(f"[pipeline] cooldown excluded ({len(excluded)}): {', '.join(sorted(excluded))}")
+                targets = select_domestic_targets(scanner_items, limit=5, excluded_tickers=excluded)
         else:
             scanner = load_json("data/export/overseas_scanner.json")
             mentions = load_json("data/export/overseas_community_mentions.json")
-            targets = select_overseas_targets(scanner.get("items") or [], mentions.get("items") or [])
+            scanner_items = scanner.get("items") or []
+            mention_items = mentions.get("items") or []
             market = "US"
+            if args.tickers:
+                tickers = [t.strip() for t in args.tickers.split(",") if t.strip()]
+                targets = resolve_targets_by_tickers(tickers, scanner_items, mention_items)
+            else:
+                excluded = get_cooldown_tickers(today)
+                if excluded:
+                    print(f"[pipeline] cooldown excluded ({len(excluded)}): {', '.join(sorted(excluded))}")
+                targets = select_overseas_targets(
+                    scanner_items,
+                    mention_items,
+                    excluded_tickers=excluded,
+                )
+
+        if not targets:
+            raise RuntimeError("선정 가능한 종목이 없습니다. (쿨다운 또는 스캐너 데이터 확인)")
+
+        print(f"[pipeline] targets ({len(targets)}): {', '.join(t['ticker'] for t in targets)}")
 
         daily_page_url = ""
         if not args.skip_notion:
@@ -162,7 +217,8 @@ def main() -> int:
                 if not args.skip_telegram:
                     send_error_message(batch_label, f"{target.get('ticker')}: {exc}")
 
-        save_json(f"outputs/posts/{today}_{batch}.json", {"batch": batch, "date": today, "results": results})
+        payload = merge_run_results(today, batch, results)
+        save_json(f"outputs/posts/{today}_{batch}.json", payload)
 
         if not args.skip_telegram:
             send_summary_message(batch=batch_label, today=today, results=results, daily_page_url=daily_page_url)

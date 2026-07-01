@@ -11200,4 +11200,365 @@ body.ai-mode-active #tab-ai-chat {
   }
 }
 
+/* ==========================================
+   AI 모드 6대 프리미엄 기능 추가 스타일
+   ========================================== */
+
+/* 1. 사이드바 레이아웃 */
+.ai-chat-layout {
+  display: flex;
+  width: 100%;
+  max-width: min(1320px, calc(100vw - 32px));
+  height: calc(100dvh - 120px);
+  gap: 20px;
+  align-self: center;
+  overflow: hidden;
+}
+
+.ai-chat-sidebar {
+  width: 280px;
+  flex: 0 0 280px;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="light"] .ai-chat-sidebar {
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.03);
+}
+
+.ai-chat-sidebar.collapsed {
+  width: 0;
+  flex: 0 0 0;
+  opacity: 0;
+  pointer-events: none;
+  margin-right: -20px;
+}
+
+.sidebar-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-theme="light"] .sidebar-header {
+  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+}
+
+.sidebar-header h3 {
+  font-size: 13.5px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.new-chat-btn {
+  background: linear-gradient(135deg, var(--brand) 0%, #7c3aed 100%);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.new-chat-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+}
+
+.sidebar-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 16px;
+}
+
+.ai-history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ai-history-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid transparent;
+}
+
+.ai-history-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme="light"] .ai-history-item:hover {
+  background: rgba(15, 23, 42, 0.03);
+  border-color: rgba(15, 23, 42, 0.04);
+}
+
+.ai-history-item.active {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+.ai-history-item strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ai-history-item span {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.ai-header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sidebar-toggle-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text);
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.sidebar-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] .sidebar-toggle-btn {
+  background: rgba(15, 23, 42, 0.03);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+/* 2. 자동완성 팝업 */
+.ai-chat-input-wrapper {
+  position: relative;
+  width: min(900px, 100%);
+  align-self: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.ai-autocomplete {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 24px;
+  right: 24px;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+}
+
+[data-theme="light"] .ai-autocomplete {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.08);
+}
+
+.autocomplete-item {
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.autocomplete-item .ticker-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="light"] .autocomplete-item .ticker-badge {
+  background: rgba(15, 23, 42, 0.04);
+  border: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+.autocomplete-item .company-name {
+  font-size: 12.5px;
+  color: var(--text);
+}
+
+.autocomplete-item .market-badge {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+/* 3. 인사이트 요약 태깅 */
+.ai-badge-tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-badge-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ai-badge-tag.bullish {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+}
+
+.ai-badge-tag.bearish {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+.ai-badge-tag.neutral {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.2);
+  color: #8b5cf6;
+}
+
+/* 4. 위젯 풀스크린 팝아웃 */
+.fullscreen-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 15px;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px 8px;
+}
+
+.fullscreen-toggle-btn:hover {
+  color: var(--text);
+}
+
+.chat-msg-widget.is-fullscreen-modal {
+  position: fixed;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) scale(1) !important;
+  width: min(1080px, 92vw) !important;
+  max-height: 85vh !important;
+  z-index: 10000 !important;
+  margin: 0 !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5) !important;
+  animation: modalZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both !important;
+  overflow-y: auto !important;
+}
+
+@keyframes modalZoomIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 모달용 차단 오버레이 */
+.ai-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(10, 15, 30, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 9999;
+  animation: fadeInOverlay 0.25s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* 5. 차트 크로스헤어 툴팁 */
+.chart-crosshair-line {
+  stroke: rgba(139, 92, 246, 0.4);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+.chart-tooltip-box {
+  pointer-events: none;
+  filter: drop-shadow(0 8px 16px rgba(0,0,0,0.3));
+}
+
+.chart-tooltip-box rect {
+  fill: rgba(15, 23, 42, 0.88);
+  stroke: rgba(255, 255, 255, 0.1);
+  stroke-width: 1;
+}
+
+[data-theme="light"] .chart-tooltip-box rect {
+  fill: rgba(255, 255, 255, 0.95);
+  stroke: rgba(15, 23, 42, 0.08);
+}
+
+
 

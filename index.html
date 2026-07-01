@@ -60,6 +60,10 @@
           <h1>미르의 <span class="brand-accent">미국 주식</span></h1>
         </div>
       </div>
+      <!-- AI 모드 토글 버튼 -->
+      <button type="button" class="ai-mode-btn" id="aiModeToggle" aria-label="AI 모드 전환">
+        <span class="ai-sparkle-icon">✦</span> AI 모드
+      </button>
      </div>
 
       <!-- SNS 채널 (헤더 중앙으로 이동) -->
@@ -127,6 +131,20 @@
     </header>
 
     <main>
+      <!-- AI 모드 전용 챗 대화방 -->
+      <section class="panel" id="tab-ai-chat" hidden>
+        <div class="ai-chat-container" aria-label="미르 AI 채팅">
+          <div class="ai-chat-log" id="aiChatLog" aria-live="polite"></div>
+          
+          <form class="ai-chat-form" id="aiChatForm">
+            <input id="aiChatInput" type="text" placeholder="종목 분석 또는 투자 질문을 입력하세요..." autocomplete="off">
+            <button type="submit" aria-label="질문 전송" title="질문 전송">↑</button>
+          </form>
+        </div>
+      </section>
+
+
+
       <div class="home-zone-head">
         <span class="daily-action-kicker">TODAY'S MARKET</span>
         <h2>오늘의 시장</h2>
@@ -751,6 +769,20 @@
         </div>
 
         <div class="sub-panel is-active" id="sub-analysis">
+        <!-- AI 데이터 조립 오버레이 -->
+        <div id="aiAssemblyOverlay" class="ai-assembly-overlay" hidden>
+          <div class="ai-assembly-content">
+            <div class="ai-assembly-logo">✦</div>
+            <h3 id="aiAssemblyStatusTitle">엔비디아 (NVDA) 분석 보고서 조립 중</h3>
+            <div class="ai-assembly-steps">
+              <div class="assembly-step" id="stepChart">📈 기술적 차트 생성 완료</div>
+              <div class="assembly-step" id="stepFund">📊 기본 재무제표 및 밸류에이션 로드 완료</div>
+              <div class="assembly-step" id="stepNews">📰 수급 및 실시간 뉴스 데이터 매핑 완료</div>
+              <div class="assembly-step" id="stepReport">✦ AI 투자 진단 리포트 요약 중...</div>
+            </div>
+          </div>
+        </div>
+
         <div class="toolbar">
           <label class="grow">
             티커 검색
@@ -759,7 +791,7 @@
           <button id="searchButton">분석</button>
         </div>
         <div class="workspace two-col stock-analysis-top">
-          <div class="chart-card">
+          <div class="chart-card animate-reveal">
             <div class="section-title">
               <h2 id="chartTitle">종목 차트</h2>
               <p>스냅샷에 저장된 최근 가격 흐름입니다.</p>
@@ -905,22 +937,36 @@
             <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
           </div>
           <div class="search-side-col">
-            <aside class="detail-panel" id="searchFacts"></aside>
-            <section class="range52-card" id="range52Bar"></section>
-            <section class="news-card" id="searchNews"></section>
+            <!-- AI 투자 진단 리포트 -->
+            <section class="ai-report-card animate-reveal" id="analysisAiReportCard">
+              <div class="ai-report-header">
+                <div>
+                  <span class="ai-report-kicker">AI DEEP REPORT</span>
+                  <h3 class="ai-report-title">AI 투자 분석 진단</h3>
+                </div>
+                <button type="button" class="ghost compact-btn" id="analysisAiReportRefresh" title="리포트 다시 불러오기">🔄 갱신</button>
+              </div>
+              <div class="ai-report-body" id="analysisAiReportBody">
+                <p class="muted">종목을 선택하거나 검색창에 질문하면 AI가 수집된 지표를 진단하여 심층 리포트를 작성합니다.</p>
+              </div>
+            </section>
+
+            <aside class="detail-panel animate-reveal" id="searchFacts"></aside>
+            <section class="range52-card animate-reveal" id="range52Bar"></section>
+            <section class="news-card animate-reveal" id="searchNews"></section>
           </div>
-          <div class="fundamental-table analysis-fundamentals" id="fundamentalTable"></div>
+          <div class="fundamental-table analysis-fundamentals animate-reveal" id="fundamentalTable"></div>
         </div>
         <div id="chartProbPanel" class="cprob" hidden></div>
         <div class="analysis-balanced-grid analysis-insight-grid">
-          <section class="move-explanation-card" id="moveExplanation" aria-live="polite"></section>
-          <section class="investment-checklist-card" id="investmentChecklist" aria-live="polite"></section>
+          <section class="move-explanation-card animate-reveal" id="moveExplanation" aria-live="polite"></section>
+          <section class="investment-checklist-card animate-reveal" id="investmentChecklist" aria-live="polite"></section>
         </div>
-        <section class="estimate-revision-card" id="estimateRevisionCard" aria-live="polite"></section>
-        <section class="stock-events-card" id="stockEvents"></section>
+        <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
+        <section class="stock-events-card animate-reveal" id="stockEvents"></section>
         <div class="analysis-balanced-grid analysis-quality-grid">
-          <section class="data-quality-card" id="dataQualityPanel"></section>
-          <section class="congress-trades-card" id="stockCongress"></section>
+          <section class="data-quality-card animate-reveal" id="dataQualityPanel"></section>
+          <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
         </div>
         </div>
 

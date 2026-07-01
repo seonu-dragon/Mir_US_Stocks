@@ -1740,6 +1740,54 @@ async function handleChat(request, env) {
   }
   if (newsRagBlock) systemContent += newsRagBlock;
 
+  // 만약 환경 변수에 GEMINI_API_KEY가 존재하면 Google Gemini API를 호출하여 성능을 대폭 향상합니다.
+  if (env && env.GEMINI_API_KEY) {
+    try {
+      const geminiModel = env.GEMINI_MODEL || "gemini-1.5-flash";
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${env.GEMINI_API_KEY}`;
+      
+      const contents = history.map((m) => ({
+        role: m.role === "assistant" ? "model" : "user",
+        parts: [{ text: m.content }]
+      }));
+      
+      const payload = {
+        contents,
+        systemInstruction: {
+          parts: [{ text: systemContent }]
+        },
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1024
+        }
+      };
+      
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        const text = String(data.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+        if (text) {
+          return json({
+            reply: text,
+            model: geminiModel,
+            rag: newsSources.length ? { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } : null,
+          });
+        }
+      } else {
+        const errText = await res.text();
+        console.error("Gemini API Error Response:", errText);
+      }
+    } catch (e) {
+      console.error("Gemini API Call Failed:", e);
+      // Gemini API 호출에 실패한 경우 기존 Cloudflare AI로 폴백합니다.
+    }
+  }
+
   const messages = [{ role: "system", content: systemContent }, ...history];
   let lastError = "no_model";
   for (const model of CHAT_MODELS) {

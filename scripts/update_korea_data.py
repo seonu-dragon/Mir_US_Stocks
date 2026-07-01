@@ -1413,6 +1413,24 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[pattern_stats/kr] rebuild skipped: {exc}")
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_ipo_calendar.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[ipo_calendar/kr] rebuild skipped: {exc}")
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_short_interest.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[short_interest/kr] rebuild skipped: {exc}")
 
 
 def main():

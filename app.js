@@ -15636,9 +15636,6 @@ function typeWriterMarkdown(element, rawText, onComplete) {
     const step = Math.min(3, rawText.length - i);
     i += step;
     element.innerHTML = formatMarkdownToHtml(rawText.substring(0, i));
-    
-    const log = byId("aiChatLog");
-    if (log) log.scrollTop = log.scrollHeight;
   }, 16);
 }
 
@@ -15741,7 +15738,6 @@ async function sendAiChat(queryText = null) {
     }
   } finally {
     aiChatBusy = false;
-    if (log) log.scrollTop = log.scrollHeight;
   }
 }
 
@@ -15786,7 +15782,7 @@ function createAiChartState() {
     showPatterns: false,
     showTechLevels: false,
     showVolumeProfile: false,
-    showTrendlines: false,
+    showTrendlines: true,
     showGapZones: false,
     showTtmSqueeze: false,
     showMarketStructure: false,
@@ -16384,6 +16380,8 @@ function setupAiWidgetChartControls(widget, item, state) {
         state.showVolume = active;
       } else if (type === "rsi") {
         state.showRsi = active;
+      } else if (type === "trendlines") {
+        state.showTrendlines = active;
       }
       render();
     });
@@ -16668,10 +16666,12 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <small class="ai-widget-chart-meta">차트 준비 중</small>
           </div>
           <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
+            <button type="button" class="indicator-toggle-btn is-active" data-indicator="trendlines" title="자동 추세선 온/오프">추세선</button>
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="sma" title="이동평균선 온/오프">이동평균</button>
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="volume" title="거래량 온/오프">거래량</button>
             <button type="button" class="indicator-toggle-btn is-active" data-indicator="rsi" title="RSI 온/오프">RSI</button>
             <span style="border-left:1px solid rgba(255,255,255,0.1);height:14px;margin:0 4px;"></span>
+            <button type="button" data-ai-chart-range="5Y">5Y</button>
             <button type="button" class="is-active" data-ai-chart-range="1Y">1Y</button>
             <button type="button" data-ai-chart-range="6M">6M</button>
             <button type="button" data-ai-chart-range="3M">3M</button>
@@ -16706,7 +16706,6 @@ async function renderInlineStockWidget(ticker, parentBubble) {
   parentBubble.appendChild(widgetContainer);
   
   const log = byId("aiChatLog");
-  if (log) log.scrollTop = log.scrollHeight;
   
   const statusLabel = byId("status_" + widgetId);
   const overlay = widgetContainer.querySelector(".widget-assembly-overlay");
@@ -16792,10 +16791,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
         if (!probContainer || !probContainer.isConnected) return;
         probContainer.innerHTML = aiProbabilityHero(probResult);
         probContainer.classList.add("is-loaded");
-        if (log) log.scrollTop = log.scrollHeight;
       }).catch(() => { /* 실패 시 스켈레톤 유지 */ });
-
-      if (log) log.scrollTop = log.scrollHeight;
     }, 400);
   }, 1600);
 }

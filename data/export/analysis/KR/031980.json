@@ -1,0 +1,35 @@
+{
+  "ticker": "031980",
+  "name": "피에스케이홀딩스",
+  "market": "KR",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 160000.0,
+  "return_period": 350.1,
+  "support_levels": [
+    154900.0,
+    139250.0
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 58.0,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 154,900 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "변동성 확대 시 방향성 재확인 필요"
+  ]
+}

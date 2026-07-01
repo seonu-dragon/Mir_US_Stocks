@@ -1,0 +1,35 @@
+{
+  "ticker": "NKE",
+  "name": "Nike Inc.",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 41.05,
+  "return_period": -42.2,
+  "support_levels": [],
+  "resistance_levels": [
+    41.72,
+    46.64
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "downtrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 34.5,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 42 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "단기 이평선 및 지지선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

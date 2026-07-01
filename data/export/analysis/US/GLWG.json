@@ -1,0 +1,35 @@
+{
+  "ticker": "GLWG",
+  "name": "Leverage Shares 2X Long GLW Daily ETF",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 45.2,
+  "return_period": 171.6,
+  "support_levels": [
+    26.5,
+    22.53
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 74.3,
+    "state": "overbought"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 26 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "RSI 과열 구간 — 눌림 확인 필요"
+  ]
+}

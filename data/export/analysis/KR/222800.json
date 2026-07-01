@@ -1,0 +1,35 @@
+{
+  "ticker": "222800",
+  "name": "심텍",
+  "market": "KR",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 148700.0,
+  "return_period": 538.2,
+  "support_levels": [
+    142150.0,
+    65700.0
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 68.1,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 142,150 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "변동성 확대 시 방향성 재확인 필요"
+  ]
+}

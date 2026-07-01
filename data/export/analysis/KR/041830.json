@@ -1,0 +1,35 @@
+{
+  "ticker": "041830",
+  "name": "인바디",
+  "market": "KR",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 57800.0,
+  "return_period": 135.9,
+  "support_levels": [
+    48900.0,
+    36150.0
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 73.1,
+    "state": "overbought"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 48,900 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "RSI 과열 구간 — 눌림 확인 필요"
+  ]
+}

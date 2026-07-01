@@ -1,0 +1,37 @@
+{
+  "ticker": "SPY",
+  "name": "State Street SPDR S&P 500 ETF Trust Unit",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 741.0,
+  "return_period": 19.9,
+  "support_levels": [
+    696.79,
+    674.38
+  ],
+  "resistance_levels": [
+    760.4
+  ],
+  "moving_average": {
+    "sma20": "price_near_sma20",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 52.1,
+    "state": "neutral"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 760 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 697 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

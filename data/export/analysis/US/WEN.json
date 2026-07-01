@@ -1,0 +1,38 @@
+{
+  "ticker": "WEN",
+  "name": "Wendy's Company (The)",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 8.29,
+  "return_period": -27.4,
+  "support_levels": [
+    8.0,
+    7.32
+  ],
+  "resistance_levels": [
+    8.43,
+    8.75
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 67.0,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 8 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 8 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

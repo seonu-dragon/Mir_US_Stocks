@@ -1,0 +1,35 @@
+{
+  "ticker": "ATEX",
+  "name": "Anterix Inc.",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 102.94,
+  "return_period": 301.3,
+  "support_levels": [
+    88.12,
+    34.76
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 81.9,
+    "state": "overbought"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 88 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "RSI 과열 구간 — 눌림 확인 필요"
+  ]
+}

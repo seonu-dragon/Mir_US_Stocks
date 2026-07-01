@@ -10292,12 +10292,12 @@ body.ai-mode-active #tab-ai-chat {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 280px;
-  height: 280px;
-  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.05) 50%, transparent 70%);
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.03) 60%, transparent 80%);
   z-index: -1;
   pointer-events: none;
-  filter: blur(40px);
+  filter: blur(20px);
   animation: auroraFlow 8s infinite alternate ease-in-out;
 }
 
@@ -11717,15 +11717,15 @@ body.ai-mode-active #tab-ai-chat {
 }
 
 /* 4. 봇 답변 복사 버튼 */
-.msg-bubble-wrap {
+.msg-bubble {
   position: relative;
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  width: 100%;
+  padding-right: 32px !important;
 }
 
 .copy-msg-btn {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
   background: transparent;
   border: none;
   font-size: 13px;
@@ -11733,23 +11733,23 @@ body.ai-mode-active #tab-ai-chat {
   padding: 4px 6px;
   border-radius: 6px;
   opacity: 0;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--muted);
-  flex-shrink: 0;
+  z-index: 10;
 }
 
-.msg-bubble-wrap:hover .copy-msg-btn {
+.msg-bubble:hover .copy-msg-btn {
   opacity: 0.6;
 }
 
 .copy-msg-btn:hover {
   opacity: 1 !important;
-  background: rgba(255, 255, 255, 0.05);
-  color: var(--text);
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
 }
 
 [data-theme="light"] .copy-msg-btn:hover {
-  background: rgba(15, 23, 42, 0.04);
+  background: rgba(15, 23, 42, 0.05) !important;
 }
 
 .copy-msg-btn.copied {
@@ -11774,6 +11774,200 @@ body.ai-mode-active #tab-ai-chat {
 [data-theme="light"] .rename-session-input {
   background: rgba(15, 23, 42, 0.03);
   border-color: rgba(139, 92, 246, 0.3);
+}
+
+/* 6. 지표 설정 드롭다운 */
+.ai-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.ai-dropdown-trigger-btn {
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  background: rgba(255, 255, 255, 0.03) !important;
+  color: var(--muted) !important;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+
+.ai-dropdown-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: var(--text) !important;
+}
+
+[data-theme="light"] .ai-dropdown-trigger-btn {
+  border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  background: rgba(15, 23, 42, 0.03) !important;
+}
+
+[data-theme="light"] .ai-dropdown-trigger-btn:hover {
+  background: rgba(15, 23, 42, 0.06) !important;
+}
+
+.ai-indicators-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 140px;
+  z-index: 1000;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px) scale(0.95);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-indicators-dropdown.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+[data-theme="light"] .ai-indicators-dropdown {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.ai-indicators-dropdown label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.ai-indicators-dropdown label:hover {
+  color: var(--text);
+}
+
+.ai-indicators-dropdown input[type="checkbox"] {
+  accent-color: #8b5cf6;
+  cursor: pointer;
+}
+
+/* 7. 세션 옵션 더보기 및 메뉴 */
+.session-menu-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.session-menu-trigger {
+  background: transparent;
+  border: none;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  opacity: 0;
+  transform: translateX(8px);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ai-history-item:hover .session-menu-trigger {
+  opacity: 0.6;
+  transform: translateX(0);
+}
+
+.session-menu-trigger:hover {
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+}
+
+[data-theme="light"] .session-menu-trigger:hover {
+  background: rgba(15, 23, 42, 0.04);
+}
+
+.session-context-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 100px;
+  z-index: 1000;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px) scale(0.95);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.session-context-menu.is-open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+[data-theme="light"] .session-context-menu {
+  background: rgba(255, 255, 255, 0.98);
+  border-color: rgba(15, 23, 42, 0.08);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
+}
+
+.session-context-menu button {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 6px 10px;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.session-context-menu button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text);
+}
+
+.session-context-menu button.context-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+[data-theme="light"] .session-context-menu button:hover {
+  background: rgba(15, 23, 42, 0.03);
+}
+
+[data-theme="light"] .session-context-menu button.context-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.05);
 }
 
 

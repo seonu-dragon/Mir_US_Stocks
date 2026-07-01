@@ -15462,66 +15462,109 @@ function renderAiHistoryList() {
         <strong>${escapeHtml(shortName)}</strong>
         <span>${escapeHtml(dateStr)}</span>
       </div>
-      <button class="delete-session-btn" title="대화 삭제" aria-label="대화 삭제">×</button>
+      <div class="session-menu-wrapper">
+        <button class="session-menu-trigger" title="대화방 옵션" aria-label="대화방 옵션">⋯</button>
+        <div class="session-context-menu">
+          <button class="context-rename-btn">✏️ 이름 변경</button>
+          <button class="context-delete-btn">🗑️ 삭제</button>
+        </div>
+      </div>
     `;
     
     item.addEventListener("click", () => {
       switchAiChatSession(id);
     });
     
-    // 더블클릭 인라인 이름 변경
+    // 더블클릭 인라인 이름 변경 (PC 편의용)
     item.addEventListener("dblclick", (e) => {
-      if (e.target.classList.contains("delete-session-btn")) return;
-      
-      const infoWrap = item.querySelector(".session-info-wrap");
-      const strong = infoWrap?.querySelector("strong");
-      if (!strong || infoWrap.querySelector(".rename-session-input")) return;
-      
-      const prevName = session.name;
-      strong.style.display = "none";
-      
-      const input = document.createElement("input");
-      input.type = "text";
-      input.className = "rename-session-input";
-      input.value = prevName;
-      
-      input.addEventListener("click", (evt) => evt.stopPropagation());
-      input.addEventListener("dblclick", (evt) => evt.stopPropagation());
-      
-      const saveRename = () => {
-        const val = input.value.trim();
-        if (val && val !== prevName) {
-          session.name = val;
-          saveAiSessionsToStorage();
-        }
-        renderAiHistoryList();
-      };
-      
-      input.addEventListener("keydown", (evt) => {
-        if (evt.key === "Enter") {
-          evt.preventDefault();
-          saveRename();
-        } else if (evt.key === "Escape") {
-          renderAiHistoryList();
-        }
-      });
-      
-      input.addEventListener("blur", saveRename);
-      
-      infoWrap.insertBefore(input, strong);
-      input.focus();
-      input.select();
+      if (e.target.closest(".session-menu-wrapper")) return;
+      triggerInlineRename(item, session);
     });
     
-    const delBtn = item.querySelector(".delete-session-btn");
-    if (delBtn) {
-      delBtn.addEventListener("click", (e) => {
+    const trigger = item.querySelector(".session-menu-trigger");
+    const menu = item.querySelector(".session-context-menu");
+    
+    if (trigger && menu) {
+      trigger.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (confirm("이 대화 기록을 삭제하시겠습니까?")) {
-          deleteAiChatSession(id);
-        }
+        document.querySelectorAll(".session-context-menu.is-open").forEach(m => {
+          if (m !== menu) m.classList.remove("is-open");
+        });
+        menu.classList.toggle("is-open");
       });
+      
+      const renameBtn = menu.querySelector(".context-rename-btn");
+      if (renameBtn) {
+        renameBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          menu.classList.remove("is-open");
+          triggerInlineRename(item, session);
+        });
+      }
+      
+      const deleteBtn = menu.querySelector(".context-delete-btn");
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          menu.classList.remove("is-open");
+          if (confirm("이 대화 기록을 삭제하시겠습니까?")) {
+            deleteAiChatSession(id);
+          }
+        });
+      }
     }
+    
+    document.addEventListener("click", (e) => {
+      if (menu && !menu.contains(e.target) && e.target !== trigger) {
+        menu.classList.remove("is-open");
+      }
+    });
+    
+    historyList.appendChild(item);
+  });
+}
+
+// 인라인 세션 이름 편집 실행 헬퍼
+function triggerInlineRename(item, session) {
+  const infoWrap = item.querySelector(".session-info-wrap");
+  const strong = infoWrap?.querySelector("strong");
+  if (!strong || infoWrap.querySelector(".rename-session-input")) return;
+  
+  const prevName = session.name;
+  strong.style.display = "none";
+  
+  const input = document.createElement("input");
+  input.type = "text";
+  input.className = "rename-session-input";
+  input.value = prevName;
+  
+  input.addEventListener("click", (evt) => evt.stopPropagation());
+  input.addEventListener("dblclick", (evt) => evt.stopPropagation());
+  
+  const saveRename = () => {
+    const val = input.value.trim();
+    if (val && val !== prevName) {
+      session.name = val;
+      saveAiSessionsToStorage();
+    }
+    renderAiHistoryList();
+  };
+  
+  input.addEventListener("keydown", (evt) => {
+    if (evt.key === "Enter") {
+      evt.preventDefault();
+      saveRename();
+    } else if (evt.key === "Escape") {
+      renderAiHistoryList();
+    }
+  });
+  
+  input.addEventListener("blur", saveRename);
+  
+  infoWrap.insertBefore(input, strong);
+  input.focus();
+  input.select();
+}
     
     historyList.appendChild(item);
   });
@@ -15827,13 +15870,12 @@ function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
   if (role === "user") {
     msg.innerHTML = `<div class="msg-bubble">${escapeHtml(htmlOrText)}</div>`;
   } else {
-    // 동기식 복원 시 배지 즉시 그리기
     const badgesHtml = role === "bot" ? generateAiBadges(htmlOrText) : "";
     const parsedContent = isMarkdown ? formatMarkdownToHtml(htmlOrText) : htmlOrText;
     msg.innerHTML = `
       ${badgesHtml}
-      <div class="msg-bubble-wrap">
-        <div class="msg-bubble">${parsedContent}</div>
+      <div class="msg-bubble">
+        ${parsedContent}
         ${role === "bot" && htmlOrText ? `<button class="copy-msg-btn" title="답변 복사" aria-label="답변 복사">📋</button>` : ""}
       </div>
     `;
@@ -15841,17 +15883,24 @@ function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
     const copyBtn = msg.querySelector(".copy-msg-btn");
     if (copyBtn) {
       copyBtn.addEventListener("click", () => {
-        const textToCopy = msg.querySelector(".msg-bubble")?.innerText || htmlOrText;
-        navigator.clipboard.writeText(textToCopy).then(() => {
-          copyBtn.textContent = "✓";
-          copyBtn.classList.add("copied");
-          setTimeout(() => {
-            copyBtn.textContent = "📋";
-            copyBtn.classList.remove("copied");
-          }, 1500);
-        }).catch(err => {
-          console.error("복사 실패:", err);
-        });
+        // 복사 버튼 자신을 제외한 텍스트만 복사하기 위해, 복제 후 복사 버튼 노드를 제거하고 텍스트를 파싱
+        const bubble = msg.querySelector(".msg-bubble");
+        if (bubble) {
+          const clone = bubble.cloneNode(true);
+          clone.querySelector(".copy-msg-btn")?.remove();
+          const textToCopy = clone.innerText.trim();
+          
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            copyBtn.textContent = "✓";
+            copyBtn.classList.add("copied");
+            setTimeout(() => {
+              copyBtn.textContent = "📋";
+              copyBtn.classList.remove("copied");
+            }, 1500);
+          }).catch(err => {
+            console.error("복사 실패:", err);
+          });
+        }
       });
     }
   }
@@ -16465,12 +16514,28 @@ function setupAiWidgetChartControls(widget, item, state) {
   const meta = widget.querySelector(".ai-widget-chart-meta");
   const render = () => drawAiWidgetChart(item, svg, state, meta);
 
-  // 보조지표 버튼 바인딩
-  widget.querySelectorAll("[data-indicator]").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const type = btn.dataset.indicator;
-      btn.classList.toggle("is-active");
-      const active = btn.classList.contains("is-active");
+  // 지표 설정 드롭다운 토글 및 외부 클릭 감지
+  const dropdownTrigger = widget.querySelector(".ai-dropdown-trigger-btn");
+  const dropdownMenu = widget.querySelector(".ai-indicators-dropdown");
+  
+  if (dropdownTrigger && dropdownMenu) {
+    dropdownTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dropdownMenu.classList.toggle("is-open");
+    });
+    
+    document.addEventListener("click", (e) => {
+      if (!dropdownMenu.contains(e.target) && e.target !== dropdownTrigger) {
+        dropdownMenu.classList.remove("is-open");
+      }
+    });
+  }
+
+  // 지표 체크박스 바인딩
+  widget.querySelectorAll(".ai-indicators-dropdown input[type='checkbox']").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const type = cb.dataset.indicator;
+      const active = cb.checked;
       
       if (type === "sma") {
         state.showSma20 = active;
@@ -16771,13 +16836,18 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <small class="ai-widget-chart-meta">차트 준비 중</small>
           </div>
           <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="trendlines" title="자동 추세선 온/오프">추세선</button>
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="support" title="수평 지지/저항선 온/오프">지지/저항</button>
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="patterns" title="차트 패턴 온/오프">패턴</button>
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="levels" title="기술적 매물대 온/오프">매물대</button>
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="sma" title="이동평균선 온/오프">이동평균</button>
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="volume" title="거래량 온/오프">거래량</button>
-            <button type="button" class="indicator-toggle-btn is-active" data-indicator="rsi" title="RSI 온/오프">RSI</button>
+            <div class="ai-dropdown-wrapper">
+              <button type="button" class="ai-dropdown-trigger-btn" title="차트 분석 레이어 설정">지표 설정 ⚙</button>
+              <div class="ai-indicators-dropdown">
+                <label><input type="checkbox" data-indicator="trendlines" checked> 자동 추세선</label>
+                <label><input type="checkbox" data-indicator="support" checked> 지지/저항선</label>
+                <label><input type="checkbox" data-indicator="patterns" checked> 차트 패턴</label>
+                <label><input type="checkbox" data-indicator="levels" checked> 매물대 가이드</label>
+                <label><input type="checkbox" data-indicator="sma" checked> 이동평균선</label>
+                <label><input type="checkbox" data-indicator="volume" checked> 거래량 차트</label>
+                <label><input type="checkbox" data-indicator="rsi" checked> RSI 보조지표</label>
+              </div>
+            </div>
             <span style="border-left:1px solid rgba(255,255,255,0.1);height:14px;margin:0 4px;"></span>
             <button type="button" data-ai-chart-range="5Y">5Y</button>
             <button type="button" class="is-active" data-ai-chart-range="1Y">1Y</button>

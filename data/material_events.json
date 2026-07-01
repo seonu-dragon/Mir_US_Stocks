@@ -1,10 +1,646 @@
 {
-  "updatedAtKst": "2026-06-30 17:05 KST",
-  "lastFileDate": "2026-06-29",
-  "count": 743,
+  "updatedAtKst": "2026-07-01 17:33 KST",
+  "lastFileDate": "2026-06-30",
+  "count": 777,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조.",
   "events": [
+    {
+      "ticker": "GJO",
+      "company": "STRATS SM TRUST FOR WAL-MART STORES, INC. SECURITIES, SERIES 2005-4  (GJO)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001999371-26-013808",
+      "link": "https://www.sec.gov/Archives/edgar/data/1340909/000199937126013808/strats-8k_061526.htm"
+    },
+    {
+      "ticker": "GJP",
+      "company": "STRATS(SM) TRUST FOR DOMINION RESOURCES, INC. SECURITIES, SERIES 2005-6  (GJP)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001999371-26-013803",
+      "link": "https://www.sec.gov/Archives/edgar/data/1343491/000199937126013803/strats-8k_061526.htm"
+    },
+    {
+      "ticker": "GJH",
+      "company": "STRATS SM TRUST FOR U S CELL CORP SEC SERIES 2004 6  (GJH)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001999371-26-013800",
+      "link": "https://www.sec.gov/Archives/edgar/data/1286405/000199937126013800/strats-8k_061526.htm"
+    },
+    {
+      "ticker": "QBTS",
+      "company": "D-Wave Quantum Inc.  (QBTS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001907982-26-000093",
+      "link": "https://www.sec.gov/Archives/edgar/data/1907982/000190798226000093/qbts-20260630.htm"
+    },
+    {
+      "ticker": "JOBY",
+      "company": "Joby Aviation, Inc.  (JOBY, JOBY-WT)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001819848-26-000378",
+      "link": "https://www.sec.gov/Archives/edgar/data/1819848/000181984826000378/joby-20260629.htm"
+    },
+    {
+      "ticker": "SNOW",
+      "company": "Snowflake Inc.  (SNOW)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001640147-26-000032",
+      "link": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000032/snow-20260629.htm"
+    },
+    {
+      "ticker": "FLS",
+      "company": "FLOWSERVE CORP  (FLS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001628280-26-046231",
+      "link": "https://www.sec.gov/Archives/edgar/data/30625/000162828026046231/fls-20260630.htm"
+    },
+    {
+      "ticker": "AFL",
+      "company": "AFLAC INC  (AFL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001628280-26-046124",
+      "link": "https://www.sec.gov/Archives/edgar/data/4977/000162828026046124/afl-20260630.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001564708-26-000142",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000142/nws-20260629.htm"
+    },
+    {
+      "ticker": "NET",
+      "company": "Cloudflare, Inc.  (NET)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001477333-26-000042",
+      "link": "https://www.sec.gov/Archives/edgar/data/1477333/000147733326000042/cloud-20260630.htm"
+    },
+    {
+      "ticker": "LSCC",
+      "company": "LATTICE SEMICONDUCTOR CORP  (LSCC)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001437749-26-022141",
+      "link": "https://www.sec.gov/Archives/edgar/data/855658/000143774926022141/lscc20260629_8k.htm"
+    },
+    {
+      "ticker": "CEPO",
+      "company": "Cantor Equity Partners I, Inc.  (CEPO)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001213900-26-073774",
+      "link": "https://www.sec.gov/Archives/edgar/data/2027708/000121390026073774/ea0296601-8k_cantor1.htm"
+    },
+    {
+      "ticker": "LPBB",
+      "company": "Launch Two Acquisition Corp.  (LPBB, LPBBU, LPBBW)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001213900-26-073592",
+      "link": "https://www.sec.gov/Archives/edgar/data/2023676/000121390026073592/ea0296048-8k425_launch.htm"
+    },
+    {
+      "ticker": "PLMK",
+      "company": "Plum Acquisition Corp, IV  (PLMK, PLMKU, PLMKW)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001213900-26-073261",
+      "link": "https://www.sec.gov/Archives/edgar/data/2030482/000121390026073261/ea0296261-8k_plum4.htm"
+    },
+    {
+      "ticker": "BLK",
+      "company": "BlackRock, Inc.  (BLK)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001193125-26-290830",
+      "link": "https://www.sec.gov/Archives/edgar/data/2012383/000119312526290830/d108689d8k.htm"
+    },
+    {
+      "ticker": "DVN",
+      "company": "DEVON ENERGY CORP/DE  (DVN)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001193125-26-290829",
+      "link": "https://www.sec.gov/Archives/edgar/data/1090012/000119312526290829/d214249d8k.htm"
+    },
+    {
+      "ticker": "SUNB",
+      "company": "Sunbelt Rentals Holdings, Inc.  (SUNB)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001193125-26-290643",
+      "link": "https://www.sec.gov/Archives/edgar/data/2083785/000119312526290643/d136822d8k.htm"
+    },
+    {
+      "ticker": "FOXA",
+      "company": "Fox Corp  (FOX, FOXA)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001193125-26-290605",
+      "link": "https://www.sec.gov/Archives/edgar/data/1754301/000119312526290605/d44317d8k.htm"
+    },
+    {
+      "ticker": "ALV",
+      "company": "AUTOLIV INC  (ALV)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001193125-26-289515",
+      "link": "https://www.sec.gov/Archives/edgar/data/1034670/000119312526289515/alv-20260624.htm"
+    },
+    {
+      "ticker": "APD",
+      "company": "Air Products & Chemicals, Inc.  (APD)",
+      "items": [
+        {
+          "code": "2.06",
+          "label": "자산 손상차손"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001193125-26-289427",
+      "link": "https://www.sec.gov/Archives/edgar/data/2969/000119312526289427/d97956d8k.htm"
+    },
+    {
+      "ticker": "VST",
+      "company": "Vistra Corp.  (VST)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001140361-26-026944",
+      "link": "https://www.sec.gov/Archives/edgar/data/1692819/000114036126026944/ef20077059_8k.htm"
+    },
+    {
+      "ticker": "JHG",
+      "company": "JANUS HENDERSON GROUP PLC  (JHG)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "1.02",
+          "label": "중요계약 종료"
+        },
+        {
+          "code": "2.01",
+          "label": "자산 인수·처분"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "3.01",
+          "label": "상장폐지·규정 미준수"
+        },
+        {
+          "code": "3.03",
+          "label": "주주 권리 변경"
+        },
+        {
+          "code": "5.01",
+          "label": "지배권 변경"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001104659-26-079401",
+      "link": "https://www.sec.gov/Archives/edgar/data/1274173/000110465926079401/tm2619303d2_8k.htm"
+    },
+    {
+      "ticker": "WPC",
+      "company": "W. P. Carey Inc.  (WPC)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0001104659-26-079341",
+      "link": "https://www.sec.gov/Archives/edgar/data/1025378/000110465926079341/tm2619376d1_8k.htm"
+    },
+    {
+      "ticker": "QXO",
+      "company": "QXO, Inc.  (QXO, QXO-PB)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001104659-26-079101",
+      "link": "https://www.sec.gov/Archives/edgar/data/1236275/000110465926079101/tm2618991d6_8k.htm"
+    },
+    {
+      "ticker": "O",
+      "company": "REALTY INCOME CORP  (O)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001104659-26-079023",
+      "link": "https://www.sec.gov/Archives/edgar/data/726728/000110465926079023/tm2613710d3_8k.htm"
+    },
+    {
+      "ticker": "SVAC",
+      "company": "Spring Valley Acquisition Corp. III  (SVAC, SVACU, SVACW)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001104659-26-078975",
+      "link": "https://www.sec.gov/Archives/edgar/data/2074850/000110465926078975/tm2617090d4_8k.htm"
+    },
+    {
+      "ticker": "NVDA",
+      "company": "NVIDIA CORP  (NVDA)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0001045810-26-000056",
+      "link": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000056/nvda-20260624.htm"
+    },
+    {
+      "ticker": "PPL",
+      "company": "PPL Corp  (PPL, PPLC)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0000922224-26-000040",
+      "link": "https://www.sec.gov/Archives/edgar/data/922224/000092222426000040/ppl-20260630.htm"
+    },
+    {
+      "ticker": "LH",
+      "company": "LABCORP HOLDINGS INC.  (LH)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-06-30",
+      "accession": "0000920148-26-000150",
+      "link": "https://www.sec.gov/Archives/edgar/data/920148/000092014826000150/lh-20260630.htm"
+    },
+    {
+      "ticker": "NKE",
+      "company": "NIKE, Inc.  (NKE)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0000320187-26-000076",
+      "link": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000076/nke-20260630.htm"
+    },
+    {
+      "ticker": "TEX",
+      "company": "TEREX CORP  (TEX)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0000097216-26-000105",
+      "link": "https://www.sec.gov/Archives/edgar/data/97216/000009721626000105/tex-20260625.htm"
+    },
+    {
+      "ticker": "STZ",
+      "company": "CONSTELLATION BRANDS, INC.  (STZ)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-30",
+      "accession": "0000016918-26-000028",
+      "link": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000028/stz-20260630.htm"
+    },
     {
       "ticker": "PSKY",
       "company": "Paramount Skydance Corp  (PSKY)",
@@ -58,6 +694,60 @@
       "fileDate": "2026-06-29",
       "accession": "0001689548-26-000069",
       "link": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000069/prax-20260629.htm"
+    },
+    {
+      "ticker": "HONA",
+      "company": "Honeywell Aerospace Inc.  (HONA, HONAV)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "3.03",
+          "label": "주주 권리 변경"
+        },
+        {
+          "code": "5.01",
+          "label": "지배권 변경"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        },
+        {
+          "code": "5.05",
+          "label": "Item 5.05"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-29",
+      "accession": "0001628280-26-045874",
+      "link": "https://www.sec.gov/Archives/edgar/data/2089271/000162828026045874/hona-20260625.htm"
     },
     {
       "ticker": "SYF",
@@ -406,6 +1096,28 @@
       "fileDate": "2026-06-29",
       "accession": "0001104659-26-078885",
       "link": "https://www.sec.gov/Archives/edgar/data/1633931/000110465926078885/bld-20260629x8k.htm"
+    },
+    {
+      "ticker": "AVAV",
+      "company": "AeroVironment Inc  (AVAV)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-06-29",
+      "accession": "0001104659-26-078824",
+      "link": "https://www.sec.gov/Archives/edgar/data/1368622/000110465926078824/avav-20260629x8k.htm"
     },
     {
       "ticker": "PM",

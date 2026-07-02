@@ -58,10 +58,8 @@ def generate_korea_premarket_analysis(raw_data_text):
 """
 
     models_config = [
-        {"model": "gemini-3.5-flash", "version": "v1beta"},
-        {"model": "gemini-3.1-flash-lite", "version": "v1beta"},
-        {"model": "gemini-2.5-flash", "version": "v1beta"},
-        {"model": "gemini-flash-latest", "version": "v1beta"}
+        {"model": "gemini-2.0-flash", "version": "v1beta"},
+        {"model": "gemini-1.5-flash", "version": "v1beta"}
     ]
 
     for cfg in models_config:

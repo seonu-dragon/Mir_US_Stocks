@@ -76,20 +76,32 @@ def dart_get(path: str, params: dict, api_key: str) -> dict:
 
 
 def load_corp_map(api_key: str) -> dict[str, str]:
-    data = dart_get("corpCode.xml", {}, api_key)
-    if data.get("status") != "000":
+    import zipfile
+    import io
+    import xml.etree.ElementTree as ET
+
+    url = f"{DART_BASE}/corpCode.xml?crtfc_key={api_key}"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mir-US-Stocks/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            zip_data = resp.read()
+        with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+            with zf.open("CORPCODE.xml") as xml_file:
+                tree = ET.parse(xml_file)
+                root = tree.getroot()
+        out = {}
+        for list_node in root.findall("list"):
+            stock = list_node.findtext("stock_code")
+            corp = list_node.findtext("corp_code")
+            if stock and corp:
+                stock = stock.strip()
+                corp = corp.strip()
+                if stock:
+                    out[stock.zfill(6)] = corp
+        return out
+    except Exception as e:
+        print(f"Error loading corp map: {e}")
         return {}
-    # corpCode.xml returns zip — DART also offers JSON list via corpCode but XML zip is standard.
-    # Use list.json alternative endpoint when available.
-    listed = dart_get("company.json", {"corp_cls": "Y"}, api_key)
-    rows = listed.get("list") or []
-    out = {}
-    for row in rows:
-        stock = str(row.get("stock_code") or "").strip()
-        corp = str(row.get("corp_code") or "").strip()
-        if stock and corp:
-            out[stock.zfill(6)] = corp
-    return out
 
 
 def fetch_disclosures(api_key: str, corp_codes: list[str], days: int = 14) -> list[dict]:

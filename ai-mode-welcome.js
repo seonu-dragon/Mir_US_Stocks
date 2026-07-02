@@ -131,6 +131,45 @@
     return window.matchMedia("(max-width: 768px)").matches;
   }
 
+  let mobileViewportBound = false;
+
+  function updateMobileVisualViewport() {
+    if (!isAiChatMode || !isMobileViewport()) return;
+
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const keyboardGap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    const keyboardOpen = keyboardGap > 72;
+
+    document.documentElement.style.setProperty("--ai-vv-height", `${Math.round(vv.height)}px`);
+    document.documentElement.style.setProperty("--ai-vv-top", `${Math.round(vv.offsetTop)}px`);
+
+    const wrapper = byId("aiChatInput")?.closest(".ai-chat-input-wrapper");
+    const dockH = wrapper ? Math.ceil(wrapper.getBoundingClientRect().height) + 6 : 58;
+    document.documentElement.style.setProperty("--ai-dock-offset", `${dockH}px`);
+
+    document.body.classList.toggle("ai-keyboard-open", keyboardOpen);
+    window.MirCosmos?.relayout?.();
+    window.dispatchEvent(new Event("resize"));
+  }
+
+  function clearMobileVisualViewport() {
+    document.documentElement.style.removeProperty("--ai-vv-height");
+    document.documentElement.style.removeProperty("--ai-vv-top");
+    document.documentElement.style.removeProperty("--ai-dock-offset");
+    document.body.classList.remove("ai-keyboard-open", "ai-input-focused");
+    window.MirCosmos?.relayout?.();
+  }
+
+  function bindMobileVisualViewport() {
+    if (mobileViewportBound || !window.visualViewport) return;
+    mobileViewportBound = true;
+    const vv = window.visualViewport;
+    vv.addEventListener("resize", updateMobileVisualViewport);
+    vv.addEventListener("scroll", updateMobileVisualViewport);
+  }
+
   function syncMobileChatUi() {
     const input = byId("aiChatInput");
     if (!input) return;
@@ -232,16 +271,22 @@
       if (tabChat) tabChat.hidden = false;
       enterAiWelcomeView();
       syncMobileChatUi();
+      if (isMobileViewport()) {
+        bindMobileVisualViewport();
+        updateMobileVisualViewport();
+      }
       requestAnimationFrame(() => {
         window.MirCosmos?.start?.();
         requestAnimationFrame(() => {
           window.dispatchEvent(new Event("resize"));
+          updateMobileVisualViewport();
           if (!isMobileViewport()) byId("aiChatInput")?.focus();
         });
       });
       return;
     }
 
+    clearMobileVisualViewport();
     delete document.documentElement.dataset.aiMode;
     const prevTheme = document.documentElement.dataset.aiPrevTheme;
     if (prevTheme) {
@@ -272,6 +317,29 @@
     window.addEventListener("resize", () => {
       if (!isAiChatMode) return;
       syncMobileChatUi();
+      updateMobileVisualViewport();
+    });
+
+    const chatInput = byId("aiChatInput");
+    chatInput?.addEventListener("focus", () => {
+      if (!isMobileViewport()) return;
+      document.body.classList.add("ai-input-focused");
+      window.scrollTo(0, 0);
+      bindMobileVisualViewport();
+      window.MirCosmos?.relayout?.();
+      requestAnimationFrame(updateMobileVisualViewport);
+      window.setTimeout(updateMobileVisualViewport, 90);
+      window.setTimeout(updateMobileVisualViewport, 320);
+      window.setTimeout(updateMobileVisualViewport, 520);
+    });
+    chatInput?.addEventListener("blur", () => {
+      if (!isMobileViewport()) return;
+      window.setTimeout(() => {
+        if (document.activeElement === chatInput) return;
+        document.body.classList.remove("ai-input-focused", "ai-keyboard-open");
+        window.MirCosmos?.relayout?.();
+        updateMobileVisualViewport();
+      }, 120);
     });
 
     document.addEventListener("keydown", (e) => {

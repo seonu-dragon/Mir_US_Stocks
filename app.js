@@ -2099,6 +2099,12 @@ function setupBackGuard() {
   history.replaceState({ _app: true }, "");
   history.pushState({ _sentinel: true }, "");
   window.addEventListener("popstate", () => {
+    if (window.MirAI?.isActive?.()) {
+      window.MirAI.exit();
+      history.pushState({ _sentinel: true }, "");
+      disarmBackExit();
+      return;
+    }
     if (navStack.length > 1) {
       // 이전 탭으로 복귀하고 앱에 머문다.
       navStack.pop();

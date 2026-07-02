@@ -12460,51 +12460,92 @@ body.ai-mode-active .ai-input-hint:empty {
 /* AI mode — mobile optimization */
 @media (max-width: 768px) {
   body.ai-mode-active {
-    --ai-topbar-h: 56px;
+    --ai-topbar-h: 0px;
+    --ai-vv-height: 100svh;
+    --ai-vv-top: 0px;
+    --ai-dock-offset: 58px;
     overscroll-behavior: none;
     touch-action: manipulation;
   }
 
   body.ai-mode-active .topbar {
+    left: auto;
+    right: 0;
+    width: auto;
     flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    padding-top: max(8px, env(safe-area-inset-top, 0px));
-    padding-bottom: 8px;
-    padding-left: max(12px, env(safe-area-inset-left, 0px));
-    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 0;
+    min-height: 0;
+    padding: max(6px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) 0 0;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-bottom: none;
+    pointer-events: none;
+    transition: transform 220ms ease, opacity 220ms ease;
+  }
+
+  body.ai-mode-active .topbar::after {
+    display: none;
   }
 
   body.ai-mode-active .topbar-left {
     flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    width: 100%;
+    justify-content: flex-end;
+    gap: 0;
+    width: auto;
     min-width: 0;
   }
 
   body.ai-mode-active .brand-lockup {
-    min-width: 0;
-    flex: 1 1 auto;
-  }
-
-  body.ai-mode-active .brand-text .eyebrow {
     display: none;
   }
 
+  body.ai-mode-active .brand-text .eyebrow,
   body.ai-mode-active .brand-text h1 {
-    font-size: 17px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    display: none;
   }
 
   body.ai-mode-active .ai-mode-btn {
     flex: 0 0 auto;
-    min-height: 40px;
-    padding: 8px 12px;
-    font-size: 12px;
+    min-height: 26px;
+    margin-left: 0;
+    padding: 4px 9px;
+    font-size: 10px;
+    border-radius: 999px;
+    pointer-events: auto;
+    background: rgba(5, 7, 13, 0.52);
+    backdrop-filter: blur(12px) saturate(1.2);
+    -webkit-backdrop-filter: blur(12px) saturate(1.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
+  }
+
+  body.ai-keyboard-open.ai-mode-active .topbar {
+    transform: translateY(calc(-100% - env(safe-area-inset-top, 0px)));
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  body.ai-mode-active #tab-ai-chat {
+    top: var(--ai-vv-top, 0px);
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100vw;
+    height: var(--ai-vv-height, 100svh);
+    inset: auto;
+  }
+
+  body.ai-mode-active .ai-cosmos {
+    top: var(--ai-vv-top, 0px);
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: 100vw;
+    height: var(--ai-vv-height, 100svh);
+    inset: auto;
   }
 
   body.ai-welcome-view .ai-chat-input-wrapper,
@@ -12512,7 +12553,8 @@ body.ai-mode-active .ai-input-hint:empty {
   body.ai-mode-active .ai-chat-input-wrapper {
     width: calc(100vw - 16px);
     max-width: none;
-    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    bottom: auto;
+    top: calc(var(--ai-vv-top, 0px) + var(--ai-vv-height, 100svh) - var(--ai-dock-offset, 58px));
     padding-left: max(0px, env(safe-area-inset-left, 0px)) !important;
     padding-right: max(0px, env(safe-area-inset-right, 0px)) !important;
   }
@@ -12555,25 +12597,19 @@ body.ai-mode-active .ai-input-hint:empty {
     user-select: none;
   }
 
-  body.ai-mode-active #tab-ai-chat {
-    height: 100dvh;
-    height: 100svh;
+  body.ai-keyboard-open.ai-mode-active .ai-cosmos {
+    transition: height 180ms ease, top 180ms ease;
   }
 
-  body.ai-mode-active .ai-cosmos {
-    height: 100dvh;
-    height: 100svh;
+  body.ai-keyboard-open.ai-mode-active #tab-ai-chat {
+    transition: height 180ms ease, top 180ms ease;
   }
 }
 
 @media (max-width: 390px) {
-  body.ai-mode-active .brand-text h1 {
-    font-size: 15px;
-  }
-
   body.ai-mode-active .ai-mode-btn {
-    padding: 8px 10px;
-    font-size: 11px;
+    padding: 5px 9px;
+    font-size: 10px;
   }
 
   body.ai-welcome-view .ai-chat-input-wrapper,

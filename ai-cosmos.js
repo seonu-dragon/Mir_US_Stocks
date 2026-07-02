@@ -23,6 +23,10 @@
   const BASE_SCALE = 0.39;
   const CAM_CENTER_X = 0.5;
   const CAM_CENTER_Y = 0.46;
+  let camCenterY = CAM_CENTER_Y;
+  let targetCamCenterY = CAM_CENTER_Y;
+  let targetViewScale = BASE_SCALE;
+  let targetViewPitch = DEFAULT_PITCH;
   const PROJ_X = 0.9;
   const PROJ_Y = 0.36;
   const PROJ_Z = 0.5;
@@ -95,7 +99,7 @@
   let lastDrawTs = 0;
   let stars = [];
   let starsSizeKey = "";
-  let lastLayoutBand = "";
+  let lastLayoutKey = "";
   let pinchStartDist = 0;
   let pinchStartScale = BASE_SCALE;
   const activePointers = new Map();
@@ -537,25 +541,57 @@
     return "lg";
   }
 
-  function applyViewportLayout(w) {
+  function isInputActive() {
+    return (
+      document.body.classList.contains("ai-input-focused") ||
+      document.body.classList.contains("ai-keyboard-open")
+    );
+  }
+
+  function isShortViewport(h) {
+    if (isInputActive()) return true;
+    const height = h || root?.clientHeight || window.innerHeight;
+    if (height <= 0) return false;
+    const vv = window.visualViewport;
+    if (vv && vv.height < window.innerHeight * 0.78) return true;
+    return height < 440;
+  }
+
+  function applyViewportLayout(w, h) {
     const band = layoutBand(w);
-    if (band === lastLayoutBand) return;
-    lastLayoutBand = band;
+    const shortH = isShortViewport(h);
+    const key = `${band}-${shortH ? "s" : "t"}`;
+    const keyChanged = key !== lastLayoutKey;
+    if (!keyChanged) return;
+    lastLayoutKey = key;
     if (renderMode !== "landscape" || isDragging || isZoomDrag || activePointers.size > 0) return;
 
     if (band === "xs") {
-      viewScale = 0.32;
-      viewPitch = 0.2;
+      targetViewScale = shortH ? 0.22 : 0.32;
+      targetViewPitch = shortH ? 0.08 : 0.2;
+      targetCamCenterY = shortH ? 0.26 : 0.42;
     } else if (band === "sm") {
-      viewScale = 0.35;
-      viewPitch = 0.16;
+      targetViewScale = shortH ? 0.24 : 0.35;
+      targetViewPitch = shortH ? 0.06 : 0.16;
+      targetCamCenterY = shortH ? 0.28 : 0.44;
     } else {
-      viewScale = BASE_SCALE;
-      viewPitch = DEFAULT_PITCH;
+      targetViewScale = BASE_SCALE;
+      targetViewPitch = DEFAULT_PITCH;
+      targetCamCenterY = CAM_CENTER_Y;
     }
 
     stars = [];
     starsSizeKey = "";
+  }
+
+  function stepCameraLayout(dt) {
+    if (renderMode !== "landscape") return;
+    const t = 1 - Math.exp(-7 * dt);
+    camCenterY += (targetCamCenterY - camCenterY) * t;
+    viewPitch += (targetViewPitch - viewPitch) * t;
+    if (!isDragging && !isZoomDrag && activePointers.size === 0) {
+      viewScale += (targetViewScale - viewScale) * t;
+    }
   }
 
   function starCountForWidth(w) {
@@ -587,10 +623,10 @@
 
     const grad = ctx.createRadialGradient(
       w * 0.5,
-      h * 0.44,
+      h * camCenterY,
       Math.min(w, h) * 0.04,
       w * 0.5,
-      h * 0.5,
+      h * (camCenterY + 0.04),
       Math.max(w, h) * 0.82,
     );
     grad.addColorStop(0, "#0d1220");
@@ -700,7 +736,7 @@
     const { rx, ry, rz } = rotateView3(x, y, z);
     const scale = Math.min(w, h) * viewScale;
     const cx = w * CAM_CENTER_X;
-    const cy = h * CAM_CENTER_Y;
+    const cy = h * camCenterY;
     const px = cx + (rx - ry) * scale * PROJ_X;
     const py = cy + (rx + ry) * scale * PROJ_Y - rz * scale * PROJ_Z;
     return [px, py];
@@ -888,7 +924,7 @@
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    applyViewportLayout(width);
+    applyViewportLayout(width, height);
   }
 
   function drawOptimizer(zMin, zMax, w, h) {
@@ -987,6 +1023,9 @@
   }
 
   function drawLandscape(w, h, dt) {
+    applyViewportLayout(w, h);
+    stepCameraLayout(dt);
+
     const delta = reducedMotion ? dt * 0.22 : dt;
     if (!reducedMotion && !isDragging && !isZoomDrag) {
       viewYaw += AUTO_YAW_RATE * delta;
@@ -1230,11 +1269,7 @@
       return;
     }
 
-    if (isZoomModifier(e)) {
-      isZoomDrag = true;
-    } else {
-      isDragging = true;
-    }
+    isDragging = true;
 
     lastPointerX = e.clientX;
     lastPointerY = e.clientY;
@@ -1305,13 +1340,6 @@
     canvas.addEventListener("pointermove", onPointerMove, opts);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
-    canvas.addEventListener("wheel", onWheel, { passive: false });
-  }
-
-  function onWheel(e) {
-    if (!running || !isZoomModifier(e)) return;
-    viewScale = clamp(viewScale - e.deltaY * 0.0008, 0.2, 0.62);
-    e.preventDefault();
   }
 
   function unbindPointer() {
@@ -1320,7 +1348,6 @@
     canvas.removeEventListener("pointermove", onPointerMove);
     canvas.removeEventListener("pointerup", onPointerUp);
     canvas.removeEventListener("pointercancel", onPointerUp);
-    canvas.removeEventListener("wheel", onWheel);
     canvas.classList.remove("is-dragging");
     isDragging = false;
     isZoomDrag = false;
@@ -1363,9 +1390,13 @@
     chartBars = [];
     chartMeta = { ticker: "", name: "", range: "6M" };
     viewScale = BASE_SCALE;
+    targetViewScale = BASE_SCALE;
     viewYaw = DEFAULT_YAW;
     viewPitch = DEFAULT_PITCH;
+    targetViewPitch = DEFAULT_PITCH;
     viewRoll = DEFAULT_ROLL;
+    camCenterY = CAM_CENTER_Y;
+    targetCamCenterY = CAM_CENTER_Y;
     const peak = findHighestStart(0);
     optX = peak.x;
     optY = peak.y;
@@ -1431,8 +1462,11 @@
     if (renderMode === "landscape") {
       epoch = 0;
       resetLandscapeState();
-      lastLayoutBand = "";
-      applyViewportLayout(root?.clientWidth || window.innerWidth);
+      lastLayoutKey = "";
+      applyViewportLayout(
+        root?.clientWidth || window.innerWidth,
+        root?.clientHeight || window.innerHeight,
+      );
     }
     root.classList.add("is-live");
     running = true;
@@ -1466,12 +1500,20 @@
     return ensureCanvas();
   }
 
+  function relayout() {
+    if (!root) return;
+    lastLayoutKey = "";
+    applyViewportLayout(root.clientWidth, root.clientHeight);
+    resize();
+  }
+
   window.MirCosmos = {
     init,
     start,
     stop,
     morphToChart,
     resetToLandscape,
+    relayout,
     getMode: () => renderMode,
     getChartMeta: () => ({ ...chartMeta }),
   };

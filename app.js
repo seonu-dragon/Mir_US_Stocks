@@ -16979,12 +16979,14 @@ function setupAiChatModeEvents() {
   
   if (toggleBtn) {
     toggleBtn.addEventListener("click", () => {
+      if (window.MirAI?.toggle) return;
       toggleAiChatMode(!isAiChatMode);
     });
   }
   
   if (exitBtn) {
     exitBtn.addEventListener("click", () => {
+      if (window.MirAI?.exit) return;
       toggleAiChatMode(false);
     });
   }

@@ -39,7 +39,7 @@
     </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260701a">
+    <link rel="stylesheet" href="styles.css?v=20260702ai11">
     <script src="build_id.js?v=20260701a"></script>
     <script>
       (function () {
@@ -133,6 +133,19 @@
     <main>
       <!-- AI 모드 전용 챗 대화방 -->
       <section class="panel" id="tab-ai-chat" hidden>
+        <div id="aiCosmos" class="ai-cosmos" aria-hidden="true"></div>
+        <div class="ai-chat-input-wrapper">
+          <div class="ai-autocomplete" id="aiAutoComplete" hidden></div>
+          <form class="ai-chat-form" id="aiChatForm" role="search">
+            <input id="aiChatInput" type="text" placeholder="종목 분석 또는 투자 질문을 입력하세요..." autocomplete="off">
+            <button type="button" class="ai-voice-btn" id="aiVoiceBtn" aria-label="음성 인식 질문" title="말로 질문하기">
+              <span class="ai-voice-glyph" aria-hidden="true">🎙</span>
+            </button>
+            <button type="submit" class="ai-send-btn" aria-label="질문 전송" title="질문 전송">
+              <span class="ai-send-glyph" aria-hidden="true">↑</span>
+            </button>
+          </form>
+        </div>
         <div class="ai-chat-layout">
           <!-- 좌측 사이드바 (대화 기록) -->
           <aside class="ai-chat-sidebar" id="aiChatSidebar" aria-label="AI 대화 이력">
@@ -195,17 +208,6 @@
                   </button>
                 </div>
               </div>
-            </div>
-            
-            <div class="ai-chat-input-wrapper">
-              <!-- 자동완성 제안 팝업 -->
-              <div class="ai-autocomplete" id="aiAutoComplete" hidden></div>
-              
-              <form class="ai-chat-form" id="aiChatForm">
-                <button type="button" class="ai-voice-btn" id="aiVoiceBtn" aria-label="음성 인식 질문" title="말로 질문하기">🎙</button>
-                <input id="aiChatInput" type="text" placeholder="종목 분석 또는 투자 질문을 입력하세요..." autocomplete="off">
-                <button type="submit" aria-label="질문 전송" title="질문 전송">↑</button>
-              </form>
             </div>
           </div>
         </div>
@@ -2088,6 +2090,8 @@
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="pattern_detectors_extended.js?v=20260701a"></script>
     <script src="analysis.js?v=20260701a"></script>
-    <script src="app.js?v=20260701a"></script>
+    <script src="app.js?v=20260702ai"></script>
+    <script src="ai-cosmos.js?v=20260702cosmos9"></script>
+    <script src="ai-mode-welcome.js?v=20260702ai12"></script>
   </body>
 </html>

@@ -95,6 +95,10 @@
   let lastDrawTs = 0;
   let stars = [];
   let starsSizeKey = "";
+  let lastLayoutBand = "";
+  let pinchStartDist = 0;
+  let pinchStartScale = BASE_SCALE;
+  const activePointers = new Map();
 
   /* ── Landscape primitives (3D z = f(x,y,t)) ── */
 
@@ -527,12 +531,44 @@
     return blendLandscapes(x, y, idx, (idx + 1) % n, segT);
   }
 
+  function layoutBand(w) {
+    if (w <= 390) return "xs";
+    if (w <= 768) return "sm";
+    return "lg";
+  }
+
+  function applyViewportLayout(w) {
+    const band = layoutBand(w);
+    if (band === lastLayoutBand) return;
+    lastLayoutBand = band;
+    if (renderMode !== "landscape" || isDragging || isZoomDrag || activePointers.size > 0) return;
+
+    if (band === "xs") {
+      viewScale = 0.32;
+      viewPitch = 0.2;
+    } else if (band === "sm") {
+      viewScale = 0.35;
+      viewPitch = 0.16;
+    } else {
+      viewScale = BASE_SCALE;
+      viewPitch = DEFAULT_PITCH;
+    }
+
+    stars = [];
+    starsSizeKey = "";
+  }
+
+  function starCountForWidth(w) {
+    return w <= 768 ? Math.round(STAR_COUNT * 0.68) : STAR_COUNT;
+  }
+
   function seedStars(w, h) {
     const key = `${w}x${h}`;
     if (starsSizeKey === key && stars.length) return;
     starsSizeKey = key;
     stars = [];
-    for (let i = 0; i < STAR_COUNT; i += 1) {
+    const count = starCountForWidth(w);
+    for (let i = 0; i < count; i += 1) {
       const roll = Math.random();
       stars.push({
         x: Math.random() * w,
@@ -827,13 +863,18 @@
     return project(optX, optY, z, w, h);
   }
 
+  function ballHitRadius() {
+    const w = canvas?.clientWidth || window.innerWidth;
+    return w <= 768 ? 26 : BALL_HIT_RADIUS;
+  }
+
   function hitTestBall(clientX, clientY) {
     if (!canvas) return false;
     const rect = canvas.getBoundingClientRect();
     const mx = clientX - rect.left;
     const my = clientY - rect.top;
     const [px, py] = getBallScreenPos(canvas.clientWidth, canvas.clientHeight);
-    return Math.hypot(mx - px, my - py) <= BALL_HIT_RADIUS;
+    return Math.hypot(mx - px, my - py) <= ballHitRadius();
   }
 
   function resize() {
@@ -847,6 +888,7 @@
     canvas.style.width = `${width}px`;
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    applyViewportLayout(width);
   }
 
   function drawOptimizer(zMin, zMax, w, h) {
@@ -1156,12 +1198,33 @@
     }
   }
 
+  function pointerDistance() {
+    const pts = [...activePointers.values()];
+    if (pts.length < 2) return 0;
+    return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+  }
+
   function onPointerDown(e) {
     if (!running || e.button !== 0) return;
     if (renderMode !== "landscape") return;
 
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePointers.size === 2) {
+      isDragging = false;
+      isZoomDrag = false;
+      pinchStartDist = pointerDistance();
+      pinchStartScale = viewScale;
+      canvas.classList.add("is-dragging");
+      canvas.setPointerCapture?.(e.pointerId);
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+
     if (hitTestBall(e.clientX, e.clientY) && !isZoomModifier(e)) {
       resetBallToPeak();
+      activePointers.delete(e.pointerId);
       e.preventDefault();
       e.stopPropagation();
       return;
@@ -1182,8 +1245,23 @@
   }
 
   function onPointerMove(e) {
+    if (activePointers.has(e.pointerId)) {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    if (activePointers.size >= 2 && pinchStartDist > 0) {
+      const dist = pointerDistance();
+      if (dist > 0) {
+        viewScale = clamp(pinchStartScale * (dist / pinchStartDist), 0.2, 0.62);
+      }
+      e.preventDefault();
+      return;
+    }
+
     const dx = e.clientX - lastPointerX;
     const dy = e.clientY - lastPointerY;
+    const dragGain = (canvas?.clientWidth || window.innerWidth) <= 768 ? 0.005 : 0.004;
+    const pitchGain = (canvas?.clientWidth || window.innerWidth) <= 768 ? 0.0038 : 0.003;
 
     if (isZoomDrag) {
       viewScale = clamp(viewScale - dy * 0.0014, 0.2, 0.62);
@@ -1194,8 +1272,8 @@
     }
 
     if (isDragging && renderMode === "landscape") {
-      viewYaw += dx * 0.004;
-      viewPitch = clamp(viewPitch + dy * 0.003, -0.5, 1.3);
+      viewYaw += dx * dragGain;
+      viewPitch = clamp(viewPitch + dy * pitchGain, -0.5, 1.3);
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
       e.preventDefault();
@@ -1205,6 +1283,10 @@
   }
 
   function onPointerUp(e) {
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) {
+      pinchStartDist = 0;
+    }
     isDragging = false;
     isZoomDrag = false;
     canvas.classList.remove("is-dragging");
@@ -1242,6 +1324,8 @@
     canvas.classList.remove("is-dragging");
     isDragging = false;
     isZoomDrag = false;
+    activePointers.clear();
+    pinchStartDist = 0;
   }
 
   function ensureCanvas() {
@@ -1347,6 +1431,8 @@
     if (renderMode === "landscape") {
       epoch = 0;
       resetLandscapeState();
+      lastLayoutBand = "";
+      applyViewportLayout(root?.clientWidth || window.innerWidth);
     }
     root.classList.add("is-live");
     running = true;

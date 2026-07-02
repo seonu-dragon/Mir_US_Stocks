@@ -127,6 +127,18 @@
     return { __fetchError: lastStatus ? `http-${lastStatus}` : "unknown" };
   }
 
+  function isMobileViewport() {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  function syncMobileChatUi() {
+    const input = byId("aiChatInput");
+    if (!input) return;
+    input.placeholder = isMobileViewport()
+      ? "종목 분석·질문 입력..."
+      : "종목 분석 또는 투자 질문을 입력하세요...";
+  }
+
   function setInputHint(msg, isError) {
     let hint = byId("aiInputHint");
     if (!hint) {
@@ -219,11 +231,12 @@
       toggleBtn?.classList.add("active");
       if (tabChat) tabChat.hidden = false;
       enterAiWelcomeView();
+      syncMobileChatUi();
       requestAnimationFrame(() => {
         window.MirCosmos?.start?.();
         requestAnimationFrame(() => {
           window.dispatchEvent(new Event("resize"));
-          byId("aiChatInput")?.focus();
+          if (!isMobileViewport()) byId("aiChatInput")?.focus();
         });
       });
       return;
@@ -255,6 +268,11 @@
       e.stopImmediatePropagation();
       toggleAiChatMode(false);
     }, true);
+
+    window.addEventListener("resize", () => {
+      if (!isAiChatMode) return;
+      syncMobileChatUi();
+    });
 
     document.addEventListener("keydown", (e) => {
       if (!isAiChatMode || e.key !== "Escape") return;

@@ -6,7 +6,7 @@
 
   let isAiChatMode = false;
   let isStockView = false;
-  const AI_SERVICE_READY = false;
+  const AI_SERVICE_READY = true;
   const SERVICE_PREP_MSG = "서비스 준비 중입니다.";
 
   function byId(id) {

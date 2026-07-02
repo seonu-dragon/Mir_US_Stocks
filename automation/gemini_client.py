@@ -16,7 +16,7 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 GEMINI_MODEL_FALLBACKS = (
     "gemini-2.0-flash",
-    "gemini-1.5-flash",
+    "gemini-2.0-flash-lite",
 )
 RETRYABLE_GEMINI_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
 MIN_REQUEST_INTERVAL_SEC = float(os.getenv("GEMINI_MIN_INTERVAL_SEC", "4"))

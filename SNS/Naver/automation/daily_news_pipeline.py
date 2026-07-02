@@ -24,11 +24,10 @@ from telegram_notifier import notify_pipeline_status
 
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
+DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 GEMINI_MODEL_FALLBACKS = (
-    "gemini-2.5-flash",
-    "gemini-flash-latest",
     "gemini-2.0-flash",
+    "gemini-1.5-flash",
 )
 RETRYABLE_GEMINI_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
 SCORING_RUBRIC = {
@@ -56,11 +55,34 @@ def build_source_text(collection: dict, per_article_chars: int = 2_500) -> str:
     return "\n\n".join(sections)
 
 
-def build_prompt(collection: dict) -> str:
+def build_previous_section(previous: dict | None) -> tuple[str, str]:
+    """Return (rule_line, context_block) injecting yesterday's published post."""
+    if not previous:
+        return "", ""
+    prev_date = previous.get("date", "어제")
+    prev_text = previous.get("text", "")
+    rule_line = (
+        f"7. 아래 [어제 발행한 경제 뉴스]와 사실상 같은 사건·주제는, 어제 발행분 이후 "
+        f"'의미 있는 새로운 전개'(신규 수치·공식 발표·정책·이벤트·시장 반응 변화 등)가 있을 때만 선정한다. "
+        f"어제와 같은 주제인데 새로 달라진 내용이 없으면 그 주제를 제외하고, 대신 어제 다루지 않은 다른 구별되는 주제를 선정한다. "
+        f"어제와 주제가 겹치지만 내용이 실질적으로 달라졌다면 선정하되 무엇이 달라졌는지 continuity_from_yesterday에 적는다."
+    )
+    context_block = (
+        f"\n[어제 발행한 경제 뉴스]\n"
+        f"아래는 어제({prev_date}) 발행한 '오늘의 경제 뉴스' 글이다. "
+        f"오늘 후보 주제가 이 내용과 겹치는지, 겹친다면 오늘 실질적으로 달라진 내용이 있는지 반드시 대조하라.\n"
+        f"{prev_text}\n"
+    )
+    return rule_line, context_block
+
+
+def build_prompt(collection: dict, previous: dict | None = None) -> str:
     rubric_lines = "\n".join(
         f"- {key}: {maximum}점 - {description}"
         for key, (maximum, description) in SCORING_RUBRIC.items()
     )
+    dedup_rule, previous_block = build_previous_section(previous)
+    dedup_rule_line = f"\n{dedup_rule}" if dedup_rule else ""
     return f"""당신은 한국 경제·금융 뉴스 편집장이다.
 
 아래 수집 기사 {collection.get('article_count', 0)}건을 먼저 동일 사건·주제별로 묶어라. 여러 기사가 같은 사건을 다루면 하나의 후보 주제로 통합하고, 단순히 기사 한 건을 고르는 방식으로 처리하지 마라.
@@ -74,7 +96,7 @@ def build_prompt(collection: dict) -> str:
 3. 특정 기업·산업 한 분야는 최대 2개까지만 허용해 오늘 시장 전체를 균형 있게 보여준다.
 4. 광고성·단순 홍보성·의견만 있고 새로운 사실이 없는 기사는 제외한다.
 5. 제공된 기사에 없는 사실을 만들지 않는다. 불확실한 내용은 risks_or_uncertainties에 명시한다.
-6. source_article_ids에는 아래 [기사 N] 번호만 정수로 넣고, 각 주제마다 근거 기사 1개 이상을 연결한다.
+6. source_article_ids에는 아래 [기사 N] 번호만 정수로 넣고, 각 주제마다 근거 기사 1개 이상을 연결한다.{dedup_rule_line}
 
 [출력]
 마크다운 없이 다음 구조의 JSON 객체만 출력한다.
@@ -96,11 +118,12 @@ def build_prompt(collection: dict) -> str:
       "key_facts": ["검증 가능한 핵심 사실"],
       "source_article_ids": [1],
       "grok_research_requests": ["Grok이 추가 조사할 구체적 질문"],
-      "risks_or_uncertainties": ["추가 확인이 필요한 내용"]
+      "risks_or_uncertainties": ["추가 확인이 필요한 내용"],
+      "continuity_from_yesterday": "어제 발행분과의 관계. 어제와 무관한 새 주제면 null, 어제와 겹치는 주제면 오늘 새로 달라진 내용을 1~2문장으로 설명."
     }}
   ]
 }}
-
+{previous_block}
 [수집 기사]
 {build_source_text(collection)}
 """
@@ -151,6 +174,11 @@ def validate_analysis(payload: dict, article_count: int) -> dict:
         for field in ("key_facts", "grok_research_requests", "risks_or_uncertainties"):
             value = normalized.get(field, [])
             normalized[field] = value if isinstance(value, list) else [str(value)]
+        continuity = normalized.get("continuity_from_yesterday")
+        if continuity is None or not str(continuity).strip() or str(continuity).strip().lower() == "null":
+            normalized["continuity_from_yesterday"] = None
+        else:
+            normalized["continuity_from_yesterday"] = str(continuity).strip()
         validated.append(normalized)
 
     validated.sort(key=lambda item: item["total_score"], reverse=True)
@@ -232,8 +260,8 @@ class GeminiTop5Analyzer:
         message = str(exc).lower()
         return any(token in message for token in ("timeout", "temporarily", "high demand", "unavailable"))
 
-    def analyze(self, collection: dict, retries: int = 5) -> dict:
-        prompt = build_prompt(collection)
+    def analyze(self, collection: dict, retries: int = 5, previous: dict | None = None) -> dict:
+        prompt = build_prompt(collection, previous)
         last_error: Exception | None = None
         total_attempts = retries * len(self.models)
         attempt = 0
@@ -309,10 +337,12 @@ def render_markdown(analysis: dict, collection: dict) -> str:
                 "",
                 f"**시장 영향**: {topic.get('market_impact', '')}",
                 "",
-                "### 핵심 사실",
-                "",
             ]
         )
+        continuity = topic.get("continuity_from_yesterday")
+        if continuity:
+            lines.extend([f"**어제와 달라진 점**: {continuity}", ""])
+        lines.extend(["### 핵심 사실", ""])
         lines.extend(f"- {fact}" for fact in topic.get("key_facts", []))
         lines.extend(["", "### 근거 기사", ""])
         for article_id in topic["source_article_ids"]:
@@ -342,6 +372,56 @@ def render_markdown(analysis: dict, collection: dict) -> str:
         ]
     )
     return "\n".join(lines)
+
+
+PREVIOUS_TEXT_BUDGET = 8_000
+
+
+def _extract_topic_section(markdown: str) -> str:
+    """Keep only the Top 5 topic blocks, dropping 선정 기준·Grok 전달용 요청 boilerplate."""
+    lines = markdown.splitlines()
+    kept: list[str] = []
+    capturing = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith("## "):
+            heading = stripped[3:]
+            # 주제 블록은 "## 1. ..." 처럼 숫자로 시작한다.
+            capturing = heading[:1].isdigit()
+        if stripped == "---":
+            capturing = False
+        if capturing:
+            kept.append(line)
+    return "\n".join(kept).strip() or markdown.strip()
+
+
+def load_previous_publication(daily_root: Path, date_str: str) -> dict | None:
+    """Load the most recent prior day's published '오늘의 경제 뉴스' for dedup comparison.
+
+    Returns {"date", "text"} where text combines yesterday's Gemini Top5(phase1)와
+    있으면 Grok 심층분석(phase2) 주제 본문. 어제가 없으면 None.
+    """
+    if not daily_root.exists():
+        return None
+    prior_dates = sorted(
+        entry.name
+        for entry in daily_root.iterdir()
+        if entry.is_dir() and entry.name < date_str
+    )
+    for prev_date in reversed(prior_dates):
+        phase1 = daily_root / prev_date / "02_analysis" / "01_gemini_phase1.md"
+        if not phase1.exists():
+            continue
+        sections = [f"# 어제({prev_date}) Top 5 주제", _extract_topic_section(phase1.read_text(encoding="utf-8"))]
+        phase2 = daily_root / prev_date / "02_analysis" / "02_grok_phase2.md"
+        if phase2.exists():
+            sections.append(f"# 어제({prev_date}) 심층 분석")
+            sections.append(_extract_topic_section(phase2.read_text(encoding="utf-8")))
+        text = "\n\n".join(sections).strip()
+        if len(text) > PREVIOUS_TEXT_BUDGET:
+            text = text[:PREVIOUS_TEXT_BUDGET] + "\n…(이하 생략)"
+        return {"date": prev_date, "text": text}
+    return None
 
 
 def write_status(path: Path, stage: str, details: dict) -> None:
@@ -401,9 +481,15 @@ def main() -> int:
         {"article_count": collection["article_count"], "input": str(news_json.relative_to(PROJECT_ROOT))},
     )
 
+    previous = load_previous_publication(daily_dir.parent, date_str)
+    if previous:
+        print(f"[중복 확인] 어제 발행분({previous['date']})과 대조하여 주제를 선정합니다.")
+    else:
+        print("[중복 확인] 비교할 이전 발행분이 없어 중복 확인을 건너뜁니다.")
+
     print(f"[Gemini] {args.model}로 Top 5 선정 중...")
     analyzer = GeminiTop5Analyzer(os.getenv("GEMINI_API_KEY", ""), model=args.model)
-    analysis = analyzer.analyze(collection)
+    analysis = analyzer.analyze(collection, previous=previous)
     analysis_dir.mkdir(parents=True, exist_ok=True)
     output_path = analysis_dir / "01_gemini_phase1.md"
     output_path.write_text(render_markdown(analysis, collection), encoding="utf-8")
@@ -414,6 +500,12 @@ def main() -> int:
             "model": args.model,
             "output": str(output_path.relative_to(PROJECT_ROOT)),
             "top5_scores": [topic["total_score"] for topic in analysis["topics"]],
+            "compared_with": previous["date"] if previous else None,
+            "carried_over_topics": [
+                {"title": topic["title"], "continuity_from_yesterday": topic["continuity_from_yesterday"]}
+                for topic in analysis["topics"]
+                if topic.get("continuity_from_yesterday")
+            ],
         },
     )
 

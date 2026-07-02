@@ -142,16 +142,22 @@
     const keyboardGap = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
     const keyboardOpen = keyboardGap > 72;
 
-    document.documentElement.style.setProperty("--ai-vv-height", `${Math.round(vv.height)}px`);
-    document.documentElement.style.setProperty("--ai-vv-top", `${Math.round(vv.offsetTop)}px`);
-
-    const wrapper = byId("aiChatInput")?.closest(".ai-chat-input-wrapper");
-    const dockH = wrapper ? Math.ceil(wrapper.getBoundingClientRect().height) + 6 : 58;
-    document.documentElement.style.setProperty("--ai-dock-offset", `${dockH}px`);
-
     document.body.classList.toggle("ai-keyboard-open", keyboardOpen);
+
+    if (keyboardOpen) {
+      document.documentElement.style.setProperty("--ai-vv-height", `${Math.round(vv.height)}px`);
+      document.documentElement.style.setProperty("--ai-vv-top", `${Math.round(vv.offsetTop)}px`);
+
+      const wrapper = byId("aiChatInput")?.closest(".ai-chat-input-wrapper");
+      const dockH = wrapper ? Math.ceil(wrapper.getBoundingClientRect().height) + 6 : 58;
+      document.documentElement.style.setProperty("--ai-dock-offset", `${dockH}px`);
+    } else {
+      document.documentElement.style.removeProperty("--ai-vv-height");
+      document.documentElement.style.removeProperty("--ai-vv-top");
+      document.documentElement.style.removeProperty("--ai-dock-offset");
+    }
+
     window.MirCosmos?.relayout?.();
-    window.dispatchEvent(new Event("resize"));
   }
 
   function clearMobileVisualViewport() {

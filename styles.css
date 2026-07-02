@@ -10266,13 +10266,21 @@ body.ai-mode-active .ai-cosmos {
 }
 
 /* AI immersive stage — full bleed below site header (Phase 1) */
-body.ai-welcome-view .ai-cosmos,
-body.ai-stock-analysis-view .ai-cosmos {
+body.ai-welcome-view:not(.ai-mode-active) .ai-cosmos,
+body.ai-stock-analysis-view:not(.ai-mode-active) .ai-cosmos {
   position: absolute;
   inset: 0;
 }
 
-body.ai-welcome-view .ai-cosmos {
+body.ai-welcome-view:not(.ai-mode-active) .ai-cosmos {
+  pointer-events: auto;
+}
+
+body.ai-mode-active.ai-welcome-view .ai-cosmos,
+body.ai-mode-active.ai-stock-analysis-view .ai-cosmos {
+  position: fixed;
+  inset: 0;
+  opacity: 1;
   pointer-events: auto;
 }
 
@@ -12529,16 +12537,24 @@ body.ai-mode-active .ai-input-hint:empty {
   }
 
   body.ai-mode-active #tab-ai-chat {
-    top: var(--ai-vv-top, 0px);
-    right: 0;
-    bottom: auto;
-    left: 0;
+    inset: 0;
     width: 100vw;
-    height: var(--ai-vv-height, 100svh);
-    inset: auto;
+    height: 100dvh;
+    height: 100svh;
   }
 
   body.ai-mode-active .ai-cosmos {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100dvh;
+    height: 100svh;
+    opacity: 1;
+    z-index: 0;
+  }
+
+  body.ai-keyboard-open.ai-mode-active #tab-ai-chat,
+  body.ai-keyboard-open.ai-mode-active .ai-cosmos {
     top: var(--ai-vv-top, 0px);
     right: 0;
     bottom: auto;
@@ -12553,10 +12569,15 @@ body.ai-mode-active .ai-input-hint:empty {
   body.ai-mode-active .ai-chat-input-wrapper {
     width: calc(100vw - 16px);
     max-width: none;
-    bottom: auto;
-    top: calc(var(--ai-vv-top, 0px) + var(--ai-vv-height, 100svh) - var(--ai-dock-offset, 58px));
+    top: auto;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
     padding-left: max(0px, env(safe-area-inset-left, 0px)) !important;
     padding-right: max(0px, env(safe-area-inset-right, 0px)) !important;
+  }
+
+  body.ai-keyboard-open.ai-mode-active .ai-chat-input-wrapper {
+    bottom: auto;
+    top: calc(var(--ai-vv-top, 0px) + var(--ai-vv-height, 100svh) - var(--ai-dock-offset, 58px));
   }
 
   body.ai-mode-active .ai-chat-form,

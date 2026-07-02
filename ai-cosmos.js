@@ -23,16 +23,16 @@
   const BASE_SCALE = 0.39;
   const CAM_CENTER_X = 0.5;
   const CAM_CENTER_Y = 0.46;
-  let camCenterY = CAM_CENTER_Y;
-  let targetCamCenterY = CAM_CENTER_Y;
-  let targetViewScale = BASE_SCALE;
-  let targetViewPitch = DEFAULT_PITCH;
   const PROJ_X = 0.9;
   const PROJ_Y = 0.36;
   const PROJ_Z = 0.5;
   const DEFAULT_YAW = 0;
   const DEFAULT_PITCH = 0.12;
   const DEFAULT_ROLL = 0;
+  let camCenterY = CAM_CENTER_Y;
+  let targetCamCenterY = CAM_CENTER_Y;
+  let targetViewScale = BASE_SCALE;
+  let targetViewPitch = DEFAULT_PITCH;
   const MORPH_DURATION = 1800;
   const MORPH_CRISP_START = 0.7;
   const RANGE_BARS = { "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504 };
@@ -541,39 +541,45 @@
     return "lg";
   }
 
-  function isInputActive() {
-    return (
-      document.body.classList.contains("ai-input-focused") ||
-      document.body.classList.contains("ai-keyboard-open")
-    );
+  function isKeyboardCompact() {
+    return document.body.classList.contains("ai-keyboard-open");
+  }
+
+  function isInputFocused() {
+    return document.body.classList.contains("ai-input-focused");
   }
 
   function isShortViewport(h) {
-    if (isInputActive()) return true;
+    if (isKeyboardCompact()) return true;
+    if (isInputFocused()) return true;
     const height = h || root?.clientHeight || window.innerHeight;
     if (height <= 0) return false;
     const vv = window.visualViewport;
-    if (vv && vv.height < window.innerHeight * 0.78) return true;
-    return height < 440;
+    if (vv && vv.height < window.innerHeight * 0.72) return true;
+    return height < 400;
   }
 
   function applyViewportLayout(w, h) {
     const band = layoutBand(w);
     const shortH = isShortViewport(h);
-    const key = `${band}-${shortH ? "s" : "t"}`;
+    const focusKey = isKeyboardCompact() ? "k" : isInputFocused() ? "f" : "n";
+    const key = `${band}-${focusKey}`;
     const keyChanged = key !== lastLayoutKey;
     if (!keyChanged) return;
     lastLayoutKey = key;
     if (renderMode !== "landscape" || isDragging || isZoomDrag || activePointers.size > 0) return;
 
+    const keyboard = isKeyboardCompact();
+    const focused = isInputFocused() && !keyboard;
+
     if (band === "xs") {
-      targetViewScale = shortH ? 0.22 : 0.32;
-      targetViewPitch = shortH ? 0.08 : 0.2;
-      targetCamCenterY = shortH ? 0.26 : 0.42;
+      targetViewScale = keyboard ? 0.22 : focused ? 0.28 : 0.32;
+      targetViewPitch = keyboard ? 0.08 : focused ? 0.14 : 0.2;
+      targetCamCenterY = keyboard ? 0.26 : focused ? 0.34 : 0.42;
     } else if (band === "sm") {
-      targetViewScale = shortH ? 0.24 : 0.35;
-      targetViewPitch = shortH ? 0.06 : 0.16;
-      targetCamCenterY = shortH ? 0.28 : 0.44;
+      targetViewScale = keyboard ? 0.24 : focused ? 0.3 : 0.35;
+      targetViewPitch = keyboard ? 0.06 : focused ? 0.12 : 0.16;
+      targetCamCenterY = keyboard ? 0.28 : focused ? 0.36 : 0.44;
     } else {
       targetViewScale = BASE_SCALE;
       targetViewPitch = DEFAULT_PITCH;

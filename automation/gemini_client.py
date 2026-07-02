@@ -13,10 +13,12 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
+# gemini-2.0-flash 계열은 무료 티어 한도가 0으로 막혀(429) 사용 불가.
+# 무료 티어가 유효한 2.5 계열로 교체. GEMINI_MODEL 환경변수로 덮어쓸 수 있음.
+DEFAULT_GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash").strip() or "gemini-2.5-flash"
 GEMINI_MODEL_FALLBACKS = (
-    "gemini-2.0-flash",
-    "gemini-2.0-flash-lite",
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
 )
 RETRYABLE_GEMINI_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
 MIN_REQUEST_INTERVAL_SEC = float(os.getenv("GEMINI_MIN_INTERVAL_SEC", "4"))

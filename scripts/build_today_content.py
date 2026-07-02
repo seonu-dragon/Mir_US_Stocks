@@ -25,7 +25,7 @@ import json
 import os
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -33,7 +33,26 @@ from briefing_store import apply_briefing_fragments, repository_publish_lock
 
 ROOT = Path(__file__).resolve().parents[1]            # Mir_US_Stocks/
 AI_ROOT = ROOT.parent                                  # AI/
-CARD_DAILY = AI_ROOT / "카드뉴스" / "daily"
+
+
+def _resolve_card_daily():
+    """카드뉴스 생성물이 실제로 있는 daily 폴더를 찾는다.
+
+    정식 위치(AI/카드뉴스/daily)를 우선하되, 생성 도구가 스크래치 영역
+    (AI/temp/카드뉴스/daily)에 출력하는 현재 구성도 폴백으로 지원한다.
+    둘 다 없으면 정식 경로를 반환해 오류 메시지가 정식 위치를 가리키게 한다.
+    """
+    candidates = (
+        AI_ROOT / "카드뉴스" / "daily",
+        AI_ROOT / "temp" / "카드뉴스" / "daily",
+    )
+    for candidate in candidates:
+        if candidate.is_dir():
+            return candidate
+    return candidates[0]
+
+
+CARD_DAILY = _resolve_card_daily()
 SNS_PROD = AI_ROOT / "SNS" / "Production"
 
 OUT_MANIFEST = ROOT / "data" / "today_content.json"
@@ -54,14 +73,37 @@ def load_json(path):
         return {}
 
 
-# Two card-news versions per day:
-#   us = 미국장 마감 시황 브리핑  -> 카드뉴스/daily/<date>-us
-#   kr = 국내 주요 뉴스           -> 카드뉴스/daily/<date>
-VARIANTS = {"us": "{date}-us", "kr": "{date}"}
+# Two card-news versions per homepage build date D (KST):
+#   us = 미국장 마감 시황 브리핑
+#   kr = 국내 주요 뉴스
+# 미국장은 한국과 시차가 있어 같은 시각에 만들어도 세션 날짜가 하루 빠르다.
+# 그래서 KST 기준 오늘(D) 홈페이지에는 하루 전 세션의 미국 덱을 싣는다.
+#   us -> 카드뉴스/daily/<D-1>-us
+#   kr -> 카드뉴스/daily/<D>
+VARIANTS = ("us", "kr")
+
+
+def variant_card_date(date, variant):
+    """홈페이지 빌드 날짜(date=D)에 대해 각 버전이 사용할 카드뉴스 폴더 날짜.
+
+    us는 시차 때문에 D-1 세션을 싣는다. 잘못된 날짜 문자열이면 그대로 되돌려
+    폴더를 못 찾고 조용히 건너뛰도록 한다(예외로 전체 빌드를 깨지 않음)."""
+    if variant == "us":
+        try:
+            prev = datetime.strptime(date, "%Y-%m-%d") - timedelta(days=1)
+            return prev.strftime("%Y-%m-%d")
+        except ValueError:
+            return date
+    return date
+
+
+def variant_folder_name(date, variant):
+    card_date = variant_card_date(date, variant)
+    return f"{card_date}-us" if variant == "us" else card_date
 
 
 def variant_card_dir(date, variant):
-    candidate = CARD_DAILY / VARIANTS[variant].format(date=date)
+    candidate = CARD_DAILY / variant_folder_name(date, variant)
     out = candidate / "out"
     if out.is_dir() and any(out.glob("*.png")):
         return candidate

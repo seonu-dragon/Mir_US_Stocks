@@ -573,13 +573,15 @@
     const focused = isInputFocused() && !keyboard;
 
     if (band === "xs") {
-      targetViewScale = keyboard ? 0.22 : focused ? 0.28 : 0.32;
-      targetViewPitch = keyboard ? 0.08 : focused ? 0.14 : 0.2;
-      targetCamCenterY = keyboard ? 0.26 : focused ? 0.34 : 0.42;
+      // 세로로 긴 모바일에서 서피스가 상단에 몰리고 아래가 비지 않도록
+      // 화면 중앙(0.5 부근)에 놓고, 스케일·틸트를 키워 존재감을 확보한다.
+      targetViewScale = keyboard ? 0.24 : focused ? 0.32 : 0.38;
+      targetViewPitch = keyboard ? 0.1 : focused ? 0.2 : 0.28;
+      targetCamCenterY = keyboard ? 0.3 : focused ? 0.44 : 0.5;
     } else if (band === "sm") {
-      targetViewScale = keyboard ? 0.24 : focused ? 0.3 : 0.35;
-      targetViewPitch = keyboard ? 0.06 : focused ? 0.12 : 0.16;
-      targetCamCenterY = keyboard ? 0.28 : focused ? 0.36 : 0.44;
+      targetViewScale = keyboard ? 0.26 : focused ? 0.34 : 0.4;
+      targetViewPitch = keyboard ? 0.08 : focused ? 0.18 : 0.24;
+      targetCamCenterY = keyboard ? 0.32 : focused ? 0.44 : 0.5;
     } else {
       targetViewScale = BASE_SCALE;
       targetViewPitch = DEFAULT_PITCH;

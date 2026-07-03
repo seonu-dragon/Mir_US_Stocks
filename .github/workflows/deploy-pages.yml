@@ -1,0 +1,45 @@
+name: Deploy Pages
+
+# 정적 사이트(HTML/JS/CSS + data/)를 GitHub Actions로 직접 배포한다.
+# legacy(브랜치 Jekyll) 자동 배포는 push가 몰릴 때 배포끼리 경합해
+# "Deployment failed, try again later" (syncing_files) transient 실패를 냈다.
+# concurrency 그룹으로 배포를 직렬화해 그 경합을 없앤다.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 배포는 한 번에 하나만. 진행 중인 배포는 끊지 않고(false), 대기열의
+# 중간 실행들은 GitHub가 자동으로 정리해 최신 것만 남긴다.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload site artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # 추적 파일 전체(루트) = 기존 legacy 빌드와 동일한 서빙 내용.
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

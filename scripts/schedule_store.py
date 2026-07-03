@@ -59,12 +59,28 @@ def _git_publish_data(project_dir: Path, commit_label: str, paths: list[str]) ->
     for attempt in range(1, 4):
         try:
             _run_git(project_dir, ["fetch", "origin", branch], check=True)
-            _run_git(project_dir, ["pull", "--rebase", "origin", branch], check=True)
+            # 스케줄 파일은 매 실행마다 원본에서 통째로 재생성되므로, 동시 push로
+            # 충돌이 나면 방금 만든 우리 버전(-X theirs: rebase에서는 replay 중인
+            # 로컬 커밋을 의미)을 채택한다.
+            _run_git(
+                project_dir,
+                ["pull", "--rebase", "-X", "theirs", "origin", branch],
+                check=True,
+            )
             _run_git(project_dir, ["push", "origin", branch], check=True)
             print(f"  [Git] origin/{branch} 일정 데이터 푸시 완료")
             return True
         except Exception as error:
             last_error = error
+            # 실패한 rebase가 중간 상태로 남아 다음 시도의 pull이 exit 128로
+            # 죽는 것을 막기 위해 미완료 rebase를 정리한다(없으면 무시).
+            _run_git(
+                project_dir,
+                ["rebase", "--abort"],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
             if attempt < 3:
                 print(f"  [Git] 푸시 시도 {attempt} 실패, 10초 후 재시도: {error}")
                 import time

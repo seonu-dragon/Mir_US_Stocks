@@ -46,25 +46,22 @@ def send_telegram_message(text: str, retries: int = 3) -> bool:
     return False
 
 
-def send_summary_message(batch: str, today: str, results: list[dict], daily_page_url: str) -> bool:
-    is_domestic = "국내" in batch
-    header = "[키움 국내 주식 초안 생성 완료]" if is_domestic else "[키움 해외 주식 초안 생성 완료]"
+def send_summary_message(today: str, results: list[dict], daily_page_url: str) -> bool:
+    kr = [r for r in results if str(r.get("market", "")).upper() == "KR"]
+    us = [r for r in results if str(r.get("market", "")).upper() == "US"]
     lines = [
-        header,
+        "[키움 종목 브리핑 초안 생성 완료]",
         "",
-        f"시간: {today}",
-        f"생성 종목 수: {len(results)}개",
+        f"날짜: {today}",
+        f"생성 종목 수: {len(results)}개 (한국 {len(kr)} · 미국 {len(us)})",
+        "",
+        "종목:",
     ]
-    if is_domestic:
-        lines.append("선정 기준: 상승 확률 스캐너 상위 5개")
-    else:
-        lines.append("구성: 상승 확률 스캐너 10개 + 커뮤니티 언급 순위 5개")
-
-    lines.extend(["", "종목:"])
-    for idx, item in enumerate(results[:15], 1):
-        lines.append(f"{idx}. {item.get('name', item.get('ticker'))} - {item.get('selected_type', '—')}")
-    if len(results) > 15:
-        lines.append(f"... 외 {len(results) - 15}개")
+    for idx, item in enumerate(results[:20], 1):
+        market_tag = "한국" if str(item.get("market", "")).upper() == "KR" else "미국"
+        lines.append(f"{idx}. [{market_tag}] {item.get('name', item.get('ticker'))}")
+    if len(results) > 20:
+        lines.append(f"... 외 {len(results) - 20}개")
 
     lines.extend(["", "검수 페이지:", daily_page_url or "(Notion URL 없음)"])
     return send_telegram_message("\n".join(lines))

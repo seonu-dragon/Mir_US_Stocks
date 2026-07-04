@@ -1,4 +1,7 @@
-"""Ticker repost cooldown — same symbol blocked for 7 days after last post."""
+"""Ticker repost cooldown — same symbol blocked for 3 days after last post.
+
+예: 월요일에 다룬 종목은 화·수는 제외되고, 가장 빨라도 목요일에 다시 등장한다.
+"""
 
 from __future__ import annotations
 
@@ -6,8 +9,9 @@ from datetime import datetime
 
 from utils import paths, today_kst
 
-COOLDOWN_DAYS = 7
-_BATCH_GLOBS = ("*_domestic_morning.json", "*_overseas_afternoon.json")
+COOLDOWN_DAYS = 3
+# 과거 배치별 파일(_domestic_morning/_overseas_afternoon)과 새 일일 파일(_daily)을 모두 읽는다.
+_BATCH_GLOBS = ("*.json",)
 
 
 def _parse_date(value: str):

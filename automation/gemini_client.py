@@ -21,7 +21,8 @@ GEMINI_MODEL_FALLBACKS = (
     "gemini-2.5-flash-lite",
 )
 RETRYABLE_GEMINI_HTTP_CODES = frozenset({429, 500, 502, 503, 504})
-MIN_REQUEST_INTERVAL_SEC = float(os.getenv("GEMINI_MIN_INTERVAL_SEC", "4"))
+# 무료 티어 분당 한도(약 10 RPM) 아래로 유지하려면 6초 이상 간격이 안전하다.
+MIN_REQUEST_INTERVAL_SEC = float(os.getenv("GEMINI_MIN_INTERVAL_SEC", "6"))
 _CACHE_DIR = Path(__file__).resolve().parents[1] / "outputs" / "gemini_cache"
 _last_request_at = 0.0
 

@@ -20,7 +20,6 @@ if str(AUTOMATION_DIR) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_DIR))
 
 from capture_chart import capture_chart  # noqa: E402
-from compliance_check import check_compliance  # noqa: E402
 from fetch_news import fetch_stock_news  # noqa: E402
 from generate_post import generate_post  # noqa: E402
 from notion_client import append_stock_section, create_daily_page  # noqa: E402
@@ -108,8 +107,9 @@ def process_target(
             "body": "드라이런 모드 — Gemini 호출을 건너뛰었습니다.",
             "quality_score": 0,
         }
-        body = post["body"]
     else:
+        # 준법 규칙은 생성 프롬프트의 "지킬 내용"에 이미 반영돼 있어
+        # 별도 준법 체크 호출 없이 생성 결과를 그대로 쓴다 (Gemini 호출량 절감).
         post = generate_post(
             target=target,
             analysis=analysis,
@@ -117,10 +117,6 @@ def process_target(
             market=market,
             recent_news=recent_news,
         )
-        compliance = check_compliance(post)
-        # 준법 체크 결과는 페이지에 따로 노출하지 않고 본문에만 반영한다.
-        body = compliance.get("safe_version") or post.get("body", "")
-        post["body"] = body
 
     if not skip_notion:
         append_stock_section(page_id=daily_page_id, post=post, news=recent_news, market=market)

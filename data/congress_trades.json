@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-07-04 06:43:37 KST",
+  "updatedAtKst": "2026-07-04 16:30:15 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 7603,
@@ -24,7 +24,7 @@
       "name": "Tim Moore",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 86.71,
+      "estReturnPct": 86.57,
       "buyCount": 49,
       "sellCount": 26,
       "tradeCount": 75,
@@ -84,7 +84,7 @@
       "name": "Jared Moskowitz",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 49.17,
+      "estReturnPct": 49.05,
       "buyCount": 121,
       "sellCount": 56,
       "tradeCount": 177,
@@ -108,7 +108,7 @@
       "name": "Tim Walberg",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 39.46,
+      "estReturnPct": 39.42,
       "buyCount": 13,
       "sellCount": 2,
       "tradeCount": 15,
@@ -120,7 +120,7 @@
       "name": "Josh Gottheimer",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 37.19,
+      "estReturnPct": 37.17,
       "buyCount": 432,
       "sellCount": 143,
       "tradeCount": 576,
@@ -134,7 +134,7 @@
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 35.54,
+      "estReturnPct": 35.52,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
@@ -146,7 +146,7 @@
       "name": "Valerie Hoyle",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 33.78,
+      "estReturnPct": 34.25,
       "buyCount": 97,
       "sellCount": 89,
       "tradeCount": 186,
@@ -154,6 +154,18 @@
     },
     {
       "rank": 13,
+      "id": "house-julie-johnson",
+      "name": "Julie Johnson",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 33.73,
+      "buyCount": 44,
+      "sellCount": 125,
+      "tradeCount": 170,
+      "committees": []
+    },
+    {
+      "rank": 14,
       "id": "house-bruce-westerman",
       "name": "Bruce Westerman",
       "chamber": "House",
@@ -162,18 +174,6 @@
       "buyCount": 51,
       "sellCount": 47,
       "tradeCount": 98,
-      "committees": []
-    },
-    {
-      "rank": 14,
-      "id": "house-julie-johnson",
-      "name": "Julie Johnson",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 33.16,
-      "buyCount": 44,
-      "sellCount": 125,
-      "tradeCount": 170,
       "committees": []
     },
     {
@@ -244,7 +244,7 @@
       "name": "Lisa McClain",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 24.4,
+      "estReturnPct": 24.35,
       "buyCount": 332,
       "sellCount": 332,
       "tradeCount": 664,
@@ -256,7 +256,7 @@
       "name": "Maria Elvira Salazar",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 23.99,
+      "estReturnPct": 23.94,
       "buyCount": 31,
       "sellCount": 8,
       "tradeCount": 41,
@@ -304,7 +304,7 @@
       "name": "Scott Scott Franklin",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 16.31,
+      "estReturnPct": 16.15,
       "buyCount": 21,
       "sellCount": 13,
       "tradeCount": 34,
@@ -328,7 +328,7 @@
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 14.95,
+      "estReturnPct": 14.93,
       "buyCount": 155,
       "sellCount": 5,
       "tradeCount": 160,
@@ -342,7 +342,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 14.22,
+      "estReturnPct": 14.35,
       "buyCount": 49,
       "sellCount": 35,
       "tradeCount": 84,
@@ -870,7 +870,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 24.4
+      "estReturnPct": 24.35
     },
     {
       "id": "house-josh-gottheimer",
@@ -1226,7 +1226,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 37.19
+      "estReturnPct": 37.17
     },
     {
       "id": "house-gilbert-cisneros",
@@ -2642,7 +2642,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 35.54
+      "estReturnPct": 35.52
     },
     {
       "id": "house-kevin-hern",
@@ -4058,7 +4058,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 33.78
+      "estReturnPct": 34.25
     },
     {
       "id": "house-jared-moskowitz",
@@ -4412,7 +4412,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 49.17
+      "estReturnPct": 49.05
     },
     {
       "id": "house-julie-johnson",
@@ -4766,7 +4766,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 33.16
+      "estReturnPct": 33.73
     },
     {
       "id": "house-marjorie-taylor-greene",
@@ -5122,7 +5122,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 14.95
+      "estReturnPct": 14.93
     },
     {
       "id": "house-lois-frankel",
@@ -9016,7 +9016,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 14.22
+      "estReturnPct": 14.35
     },
     {
       "id": "house-susie-lee",
@@ -10078,7 +10078,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 86.71
+      "estReturnPct": 86.57
     },
     {
       "id": "house-greg-landsman",
@@ -16096,7 +16096,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 23.99
+      "estReturnPct": 23.94
     },
     {
       "id": "house-michael-c-burgess",
@@ -18220,7 +18220,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 16.31
+      "estReturnPct": 16.15
     },
     {
       "id": "house-donald-sternoff-beyer",
@@ -25653,7 +25653,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 39.46
+      "estReturnPct": 39.42
     },
     {
       "id": "house-victoria-spartz",

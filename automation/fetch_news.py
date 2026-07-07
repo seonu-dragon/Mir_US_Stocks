@@ -2,6 +2,11 @@
 
 브리핑에 쓰는 뉴스는 반드시 '최근' 것만 사용한다. 기본적으로 오늘/어제(2일 이내)
 뉴스만 남기고, 3일 이상 지난 기사는 제외한다. (NEWS_MAX_AGE_DAYS로 조정 가능)
+
+뉴스 출처는 특정 매체(야후 등)에 쏠리지 않게 여러 소스를 섞는다.
+- 국내: 네이버 증권(여러 언론사) + 구글뉴스(한국)
+- 해외: 구글뉴스(여러 언론사) + 야후파이낸스
+동일 종목이라도 매체가 다양하게 노출되도록 publisher 기준으로 분산한다.
 """
 
 from __future__ import annotations
@@ -12,7 +17,9 @@ import os
 import time
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import date, datetime
+from email.utils import parsedate_to_datetime
 from zoneinfo import ZoneInfo
 
 KST = ZoneInfo("Asia/Seoul")
@@ -127,15 +134,104 @@ def fetch_yahoo_news(symbol: str, limit: int = 3) -> list[dict]:
     return items
 
 
-def fetch_stock_news(ticker: str, market: str, limit: int = 3) -> list[dict]:
-    """최근(기본 2일 이내) 뉴스만 최대 limit개 반환한다."""
-    max_age = _max_age_days()
-    # 최신성 필터로 상당수가 걸러지므로 넉넉히 받아서 자른다.
-    raw_limit = max(limit * 3, 10)
-    if market.upper() == "KR":
-        raw = fetch_naver_news(ticker, limit=raw_limit)
+def fetch_google_news(query: str, limit: int = 6, region: str = "US") -> list[dict]:
+    """구글뉴스 RSS 검색 — 여러 언론사 기사를 모은다. 링크는 원 매체로 연결된다."""
+    if not query:
+        return []
+    if region == "KR":
+        params = "hl=ko&gl=KR&ceid=KR:ko"
     else:
-        raw = fetch_yahoo_news(ticker, limit=raw_limit)
+        params = "hl=en-US&gl=US&ceid=US:en"
+    url = f"https://news.google.com/rss/search?q={urllib.parse.quote(query)}&{params}"
+    req = urllib.request.Request(url, headers={**_HTTP_HEADERS, "Accept": "application/rss+xml"})
+    try:
+        raw = urllib.request.urlopen(req, timeout=10).read()
+        root = ET.fromstring(raw)
+    except Exception:
+        return []
 
-    recent = [item for item in raw if _is_recent(item.get("publishedAt", ""), max_age)]
-    return recent[:limit]
+    items: list[dict] = []
+    for item in root.iter("item"):
+        title = html.unescape((item.findtext("title") or "").strip())
+        if not title:
+            continue
+        # 구글뉴스 제목은 "헤드라인 - 매체" 형태 → 매체명을 분리.
+        source_el = item.find("source")
+        publisher = (source_el.text or "").strip() if source_el is not None else ""
+        if not publisher and " - " in title:
+            title, publisher = title.rsplit(" - ", 1)
+            title = title.strip()
+            publisher = publisher.strip()
+        published_at = ""
+        pub = item.findtext("pubDate")
+        if pub:
+            try:
+                published_at = parsedate_to_datetime(pub).astimezone(KST).strftime("%Y-%m-%d")
+            except (TypeError, ValueError):
+                published_at = ""
+        items.append(
+            {
+                "title": title,
+                "publisher": publisher,
+                "publishedAt": published_at,
+                "link": (item.findtext("link") or "").strip(),
+            }
+        )
+        if len(items) >= limit:
+            break
+    return items
+
+
+def _dedupe_diversify(items: list[dict], limit: int) -> list[dict]:
+    """제목 중복 제거 + 같은 매체 쏠림 방지(매체별 우선 1건씩 라운드로빈)."""
+    seen_titles: set[str] = set()
+    by_publisher: dict[str, list[dict]] = {}
+    order: list[str] = []
+    for it in items:
+        title = str(it.get("title") or "").strip()
+        key = title.lower()[:60]
+        if not title or key in seen_titles:
+            continue
+        seen_titles.add(key)
+        pub = str(it.get("publisher") or "").strip() or "기타"
+        if pub not in by_publisher:
+            by_publisher[pub] = []
+            order.append(pub)
+        by_publisher[pub].append(it)
+
+    result: list[dict] = []
+    round_idx = 0
+    while len(result) < limit:
+        added = False
+        for pub in order:
+            bucket = by_publisher[pub]
+            if round_idx < len(bucket):
+                result.append(bucket[round_idx])
+                added = True
+                if len(result) >= limit:
+                    break
+        if not added:
+            break
+        round_idx += 1
+    return result
+
+
+def fetch_stock_news(
+    ticker: str, market: str, limit: int = 3, name: str | None = None
+) -> list[dict]:
+    """최근(기본 2일 이내) 뉴스만 최대 limit개 반환. 여러 매체를 섞어 야후 등 한쪽 쏠림을 막는다."""
+    max_age = _max_age_days()
+    raw_limit = max(limit * 3, 10)
+    combined: list[dict] = []
+    if market.upper() == "KR":
+        combined += fetch_naver_news(ticker, limit=raw_limit)
+        query = (name or "").strip() or str(ticker)
+        combined += fetch_google_news(f"{query} 주가", limit=raw_limit, region="KR")
+    else:
+        query = (name or "").strip()
+        # 회사명이 있으면 관련도가 높고 매체가 다양한 구글뉴스를 우선.
+        combined += fetch_google_news(f"{query or ticker} stock", limit=raw_limit, region="US")
+        combined += fetch_yahoo_news(ticker, limit=raw_limit)
+
+    recent = [item for item in combined if _is_recent(item.get("publishedAt", ""), max_age)]
+    return _dedupe_diversify(recent, limit)

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import random
 import subprocess
 import sys
 import time
@@ -21,12 +22,11 @@ if str(AUTOMATION_DIR) not in sys.path:
 
 from capture_chart import capture_chart  # noqa: E402
 from fetch_news import fetch_stock_news  # noqa: E402
-from generate_post import generate_post  # noqa: E402
+from generate_post import ANGLES, generate_post  # noqa: E402
 from notion_client import append_stock_section, create_daily_page  # noqa: E402
 from select_targets import (  # noqa: E402
     resolve_targets_by_tickers,
-    select_domestic_targets,
-    select_overseas_targets,
+    select_issue_targets,
 )
 from telegram_client import send_error_message, send_summary_message  # noqa: E402
 from ticker_cooldown import get_cooldown_tickers  # noqa: E402
@@ -42,6 +42,8 @@ from utils import (  # noqa: E402
 # 시장별 라벨/설정
 MARKETS = ("KR", "US")
 MARKET_LABEL = {"KR": "한국", "US": "미국"}
+# 시장별 목표 선정 개수 — 반드시 채운다(부족분은 이슈 스코어/상승확률로 보충).
+TARGET_COUNT = {"KR": 10, "US": 20}
 
 
 def run_exports() -> None:
@@ -50,28 +52,57 @@ def run_exports() -> None:
     subprocess.run([sys.executable, str(script)], check=True, cwd=str(ROOT))
 
 
-def select_market_targets(market: str, today: str, tickers: list[str] | None) -> list[dict]:
-    """시장별 종목 선정. tickers가 주어지면 쿨다운을 무시하고 그 목록을 재생성한다."""
-    if market == "KR":
-        scanner = load_json("data/export/domestic_scanner.json")
-        items = scanner.get("items") or []
-        if tickers:
-            return resolve_targets_by_tickers(tickers, items)
-        excluded = get_cooldown_tickers(today)
-        if excluded:
-            print(f"[pipeline] KR cooldown excluded ({len(excluded)}): {', '.join(sorted(excluded))}")
-        return select_domestic_targets(items, limit=5, excluded_tickers=excluded)
+def _make_news_fetcher(market: str, name_by_ticker: dict[str, str] | None = None):
+    """티커별 최근 뉴스 조회기(캐시). 이슈 스코어 가점/티어 판정에 쓴다."""
+    cache: dict[str, list[dict]] = {}
+    names = name_by_ticker or {}
 
-    scanner = load_json("data/export/overseas_scanner.json")
-    mentions = load_json("data/export/overseas_community_mentions.json")
-    scanner_items = scanner.get("items") or []
-    mention_items = mentions.get("items") or []
+    def fetch(ticker: str) -> list[dict]:
+        key = str(ticker or "").strip()
+        if not key:
+            return []
+        if key not in cache:
+            cache[key] = fetch_stock_news(
+                ticker=key, market=market, limit=3, name=names.get(key)
+            )
+        return cache[key]
+
+    return fetch
+
+
+def _analyzable(market: str, candidates: list[dict]) -> list[dict]:
+    """분석 JSON이 있는 후보만 남긴다(process_target가 분석 파일을 요구하므로 선제 필터)."""
+    return [c for c in candidates if analysis_path(market, c.get("ticker", "")).exists()]
+
+
+def select_market_targets(market: str, today: str, tickers: list[str] | None) -> list[dict]:
+    """시장별 이슈 우선 선정(개수 보장). tickers가 주어지면 쿨다운을 무시하고 재생성한다."""
+    scanner = load_json(
+        "data/export/domestic_scanner.json"
+        if market == "KR"
+        else "data/export/overseas_scanner.json"
+    )
+    candidates = list(scanner.get("items") or [])
+    if market == "US":
+        mentions = load_json("data/export/overseas_community_mentions.json")
+        seen = {c["ticker"] for c in candidates}
+        candidates += [m for m in (mentions.get("items") or []) if m["ticker"] not in seen]
+
     if tickers:
-        return resolve_targets_by_tickers(tickers, scanner_items, mention_items)
+        mention_items = candidates if market == "US" else None
+        return resolve_targets_by_tickers(tickers, candidates, mention_items)
+
     excluded = get_cooldown_tickers(today)
     if excluded:
-        print(f"[pipeline] US cooldown excluded ({len(excluded)}): {', '.join(sorted(excluded))}")
-    return select_overseas_targets(scanner_items, mention_items, excluded_tickers=excluded)
+        print(f"[pipeline] {market} cooldown excluded ({len(excluded)}): {', '.join(sorted(excluded))}")
+    candidates = _analyzable(market, candidates)
+    name_by_ticker = {c.get("ticker", ""): c.get("name", "") for c in candidates}
+    return select_issue_targets(
+        candidates,
+        target=TARGET_COUNT[market],
+        excluded_tickers=excluded,
+        news_fetcher=_make_news_fetcher(market, name_by_ticker),
+    )
 
 
 def process_target(
@@ -82,6 +113,7 @@ def process_target(
     skip_gemini: bool,
     skip_notion: bool,
     skip_capture: bool,
+    angle: dict | None = None,
 ) -> dict:
     ticker = target["ticker"]
     analysis_file = analysis_path(market, ticker)
@@ -90,7 +122,10 @@ def process_target(
     analysis = load_json(analysis_file)
 
     # 최근(기본 2일 이내) 뉴스만. 게시글 작성과 Notion 브리핑에 함께 쓴다.
-    recent_news = fetch_stock_news(ticker=ticker, market=market, limit=3)
+    # 선정 단계(뉴스 필터)에서 이미 조회했다면 재사용해 중복 호출을 피한다.
+    recent_news = target.get("recent_news") or fetch_stock_news(
+        ticker=ticker, market=market, limit=3, name=target.get("name")
+    )
 
     chart_path = None
     if not skip_capture:
@@ -102,7 +137,7 @@ def process_target(
             "ticker": ticker,
             "name": target.get("name", ticker),
             "market": market,
-            "selected_type": "뉴스/이슈형",
+            "selected_type": (angle or {}).get("name", "뉴스/이슈형"),
             "title": f"{target.get('name', ticker)} 요즘 어떤가요",
             "body": "드라이런 모드 — Gemini 호출을 건너뛰었습니다.",
             "quality_score": 0,
@@ -116,6 +151,7 @@ def process_target(
             chart_path=chart_path,
             market=market,
             recent_news=recent_news,
+            angle=angle,
         )
 
     if not skip_notion:
@@ -176,8 +212,13 @@ def main() -> int:
             daily_page_id = daily.get("id", "")
             daily_page_url = daily.get("url", "")
 
+        # 30개 글의 앵글(형식)을 골고루 섞는다 — 같은 틀이 이어지지 않게 날짜 시드로 셔플.
+        reps = len(targets_by_market) // len(ANGLES) + 1
+        angle_order = ANGLES * reps
+        random.Random(today).shuffle(angle_order)
+
         results = []
-        for market, target in targets_by_market:
+        for idx, (market, target) in enumerate(targets_by_market):
             try:
                 result = process_target(
                     target,
@@ -187,6 +228,7 @@ def main() -> int:
                     skip_gemini=args.skip_gemini,
                     skip_notion=args.skip_notion,
                     skip_capture=args.skip_capture,
+                    angle=angle_order[idx],
                 )
                 results.append(result)
                 time.sleep(float(os.getenv("PIPELINE_TARGET_DELAY_SEC", "5")))

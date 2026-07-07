@@ -6,7 +6,7 @@ from __future__ import annotations
 import json
 import math
 import sys
-from datetime import datetime
+from datetime import date, datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -181,31 +181,159 @@ def scanner_reason(item: dict) -> str:
     return " · ".join(parts[:3])
 
 
-def build_scanner_items(stocks: list[dict], market: str, limit: int = 50) -> list[dict]:
+def is_etf(stock: dict) -> bool:
+    """ETF/ETN 여부. US 스냅샷은 sector='EXCHANGE TRADED FUNDS', KR은 sector='ETF'."""
+    sector = str(stock.get("sector") or "").strip().upper()
+    if sector in {"ETF", "ETN"}:
+        return True
+    return "EXCHANGE TRADED FUND" in sector
+
+
+# ── 이슈(카탈리스트) 스코어링 ─────────────────────────────────────────────
+# 키움 커뮤니티 특성상 "이슈가 있는/예상되는 종목"을 우선한다.
+# 파일 갱신 주기(수일)를 감안해 최근 카탈리스트는 CATALYST_RECENCY_DAYS 이내를 인정.
+CATALYST_RECENCY_DAYS = 10
+
+
+def _issue_ticker_key(ticker: str, market: str) -> str:
+    return str(ticker or "").upper() if market == "US" else str(ticker or "").strip()
+
+
+def _parse_iso_date(value: object) -> date | None:
+    s = str(value or "")[:10].replace(".", "-").replace("/", "-")
+    try:
+        return date.fromisoformat(s)
+    except ValueError:
+        return None
+
+
+def _is_recent(value: object, today: date, days: int = CATALYST_RECENCY_DAYS) -> bool:
+    d = _parse_iso_date(value)
+    return bool(d and 0 <= (today - d).days <= days)
+
+
+def load_json_safe(path: Path) -> dict:
+    try:
+        return load_json(path)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+
+def build_issue_index(market: str, today: date) -> dict[str, dict]:
+    """티커 → {'score': float, 'hard': bool, 'tags': [str]} 카탈리스트 이슈 신호.
+
+    hard=True 는 구체적 사건(뉴스급 이슈: 공시/행동주의/내부자매수 등)이 있음을 뜻하며
+    선정 시 '이슈 있는 종목' 티어로 분류된다. score 는 정렬 가중치.
+    """
+    idx: dict[str, dict] = {}
+    seen: set[tuple[str, str]] = set()  # (ticker, category) — 카테고리별 1회만 가점
+
+    def add(ticker: object, score: float, tag: str, category: str, hard: bool = False) -> None:
+        key = _issue_ticker_key(str(ticker or ""), market)
+        if not key or (key, category) in seen:
+            return
+        seen.add((key, category))
+        cur = idx.setdefault(key, {"score": 0.0, "hard": False, "tags": []})
+        cur["score"] += score
+        cur["hard"] = cur["hard"] or hard
+        if tag and tag not in cur["tags"]:
+            cur["tags"].append(tag)
+
+    if market == "US":
+        for e in (load_json_safe(ROOT / "data" / "material_events.json").get("events") or []):
+            if _is_recent(e.get("fileDate"), today):
+                add(e.get("ticker"), 2.5 if e.get("hot") else 1.2, "주요 공시 이벤트", "event", hard=True)
+        for f in (load_json_safe(ROOT / "data" / "activist_stakes.json").get("filings") or []):
+            if _is_recent(f.get("fileDate"), today):
+                add(f.get("ticker"), 2.5, "행동주의 지분공시", "activist", hard=True)
+        for tr in (load_json_safe(ROOT / "data" / "insider_trades.json").get("trades") or []):
+            if tr.get("kind") == "buy" and _is_recent(tr.get("fileDate"), today):
+                add(tr.get("ticker"), 1.2, "내부자 매수", "insider", hard=True)
+        for r in (load_json_safe(ROOT / "data" / "short_interest.json").get("rows") or []):
+            dtc = r.get("daysToCover")
+            if isinstance(dtc, (int, float)):
+                if dtc >= 5:
+                    add(r.get("ticker"), 1.5, "숏스퀴즈 가능(공매도 커버 부담)", "short")
+                elif dtc >= 3:
+                    add(r.get("ticker"), 0.8, "공매도 커버 부담", "short")
+    else:  # KR
+        for d in (load_json_safe(ROOT / "data" / "kr_disclosures.json").get("disclosures") or []):
+            if _is_recent(d.get("fileDate") or d.get("date"), today):
+                add(d.get("ticker") or d.get("stockCode"), 2.5, "주요 공시", "disclosure", hard=True)
+        for r in (load_json_safe(ROOT / "data" / "korea" / "short_interest.json").get("rows") or []):
+            dtc = r.get("daysToCover")
+            if isinstance(dtc, (int, float)) and dtc >= 3:
+                add(r.get("ticker"), 0.8, "공매도 부담", "short")
+    return idx
+
+
+def snapshot_issue_score(stock: dict) -> tuple[float, list[str]]:
+    """스냅샷 지표에서 '이슈가 예상되는' 신호(거래량 급증·큰 변동성·신고가 근접)를 뽑는다."""
+    score = 0.0
+    tags: list[str] = []
+    vr = stock.get("volumeRatio")
+    if isinstance(vr, (int, float)):
+        if vr >= 2:
+            score += 1.5
+            tags.append("거래량 급증")
+        elif vr >= 1.5:
+            score += 0.9
+            tags.append("거래량 증가")
+    wk = stock.get("weekChangePct")
+    if isinstance(wk, (int, float)):
+        if abs(wk) >= 12:
+            score += 1.5
+            tags.append("주간 변동성 큼")
+        elif abs(wk) >= 7:
+            score += 0.8
+    dist = stock.get("newHighDistancePct")
+    if isinstance(dist, (int, float)) and dist <= 3:
+        score += 1.0
+        tags.append("신고가 근접")
+    return score, tags
+
+
+def apply_issue_fields(row: dict, stock: dict, market: str, issue_index: dict) -> None:
+    """스캐너/멘션 row 에 issue_score·hard_catalyst·issue_tags 를 부여한다."""
+    cat = issue_index.get(_issue_ticker_key(row.get("ticker", ""), market)) or {}
+    snap_score, snap_tags = snapshot_issue_score(stock or {})
+    row["issue_score"] = round(float(cat.get("score", 0.0)) + snap_score, 2)
+    row["hard_catalyst"] = bool(cat.get("hard", False))
+    row["issue_tags"] = (list(cat.get("tags", [])) + snap_tags)[:4]
+
+
+def build_scanner_items(
+    stocks: list[dict],
+    market: str,
+    limit: int = 50,
+    issue_index: dict | None = None,
+) -> list[dict]:
+    issue_index = issue_index or {}
     candidates = [
         stock
         for stock in stocks
-        if isinstance(stock.get("closeSeries"), list) and len(stock["closeSeries"]) >= 20
+        if isinstance(stock.get("closeSeries"), list)
+        and len(stock["closeSeries"]) >= 20
+        and not is_etf(stock)  # ETF 제외 — 개별 종목만 분석
     ]
     scored = []
     for stock in candidates:
         prob = scan_quick_prob(stock)
-        scored.append(
-            {
-                "ticker": stock.get("ticker", ""),
-                "name": stock.get("company") or stock.get("name") or stock.get("ticker", ""),
-                "probability_score": round(prob["up"], 1),
-                "trend_score": trend_score(stock),
-                "volume_score": volume_score(stock),
-                "rsi_state": rsi_state(stock.get("rsi14")),
-                "reason": scanner_reason(stock),
-                "_stock": stock,
-            }
-        )
-    scored.sort(key=lambda x: x["probability_score"], reverse=True)
+        row = {
+            "ticker": stock.get("ticker", ""),
+            "name": stock.get("company") or stock.get("name") or stock.get("ticker", ""),
+            "probability_score": round(prob["up"], 1),
+            "trend_score": trend_score(stock),
+            "volume_score": volume_score(stock),
+            "rsi_state": rsi_state(stock.get("rsi14")),
+            "reason": scanner_reason(stock),
+        }
+        apply_issue_fields(row, stock, market, issue_index)
+        scored.append(row)
+    # 이슈 스코어 우선, 동점은 상승확률(probability_score)로 정렬.
+    scored.sort(key=lambda x: (x["issue_score"], x["probability_score"]), reverse=True)
     items = []
-    for rank, entry in enumerate(scored[:limit], 1):
-        row = {k: v for k, v in entry.items() if k != "_stock"}
+    for rank, row in enumerate(scored[:limit], 1):
         row["rank"] = rank
         items.append(row)
     return items
@@ -523,15 +651,29 @@ def export_analysis_for_targets(targets: list[dict], market: str, stock_lookup: 
     return exported
 
 
+# 선정 후보 풀 크기 — 목표(KR 10 / US 20)보다 넉넉히 뽑아 쿨다운·뉴스 필터 후에도
+# 개수를 확실히 채운다. 이 풀 전체의 분석 JSON을 내보내 어떤 종목이 뽑혀도 분석이 있게 한다.
+POOL_KR = 60
+POOL_US = 60
+
+
 def main() -> int:
     now = datetime.now(KST)
     generated_at = now.isoformat(timespec="seconds")
+    today = now.date()
 
     kr_snapshot = load_json(ROOT / "data" / "korea" / "market_snapshot.json")
     us_snapshot = load_json(ROOT / "data" / "market_snapshot.json")
 
-    kr_items = build_scanner_items(kr_snapshot.get("stocks") or [], "KR", limit=30)
-    us_items = build_scanner_items(us_snapshot.get("stocks") or [], "US", limit=30)
+    kr_issue = build_issue_index("KR", today)
+    us_issue = build_issue_index("US", today)
+
+    kr_items = build_scanner_items(
+        kr_snapshot.get("stocks") or [], "KR", limit=POOL_KR, issue_index=kr_issue
+    )
+    us_items = build_scanner_items(
+        us_snapshot.get("stocks") or [], "US", limit=POOL_US, issue_index=us_issue
+    )
 
     save_json(
         ROOT / "data" / "export" / "domestic_scanner.json",
@@ -542,20 +684,28 @@ def main() -> int:
         {"generated_at": generated_at, "market": "US", "items": us_items},
     )
 
+    kr_lookup = {s["ticker"]: s for s in kr_snapshot.get("stocks") or []}
+    us_lookup = {s["ticker"]: s for s in us_snapshot.get("stocks") or []}
+
     social = us_snapshot.get("social_sentiment") or {}
-    mention_items = compute_community_hot_topics(social, limit=15)
+    mention_items = compute_community_hot_topics(social, limit=20)
+    # 커뮤니티 언급도 ETF(SPY/QQQ 등)는 제외 — 개별 종목만.
+    us_etf_tickers = {t for t, s in us_lookup.items() if is_etf(s)}
+    mention_items = [m for m in mention_items if m["ticker"].upper() not in us_etf_tickers]
     enrich_community_names(mention_items, us_snapshot.get("stocks") or [])
+    for m in mention_items:
+        apply_issue_fields(m, us_lookup.get(m["ticker"], {}), "US", us_issue)
+        m["source"] = "community_mentions"
     save_json(
         ROOT / "data" / "export" / "overseas_community_mentions.json",
         {"generated_at": generated_at, "market": "US", "items": mention_items},
     )
 
-    kr_lookup = {s["ticker"]: s for s in kr_snapshot.get("stocks") or []}
-    us_lookup = {s["ticker"]: s for s in us_snapshot.get("stocks") or []}
-
-    export_analysis_for_targets(kr_items[:10], "KR", kr_lookup)
-    us_targets = us_items[:15] + [m for m in mention_items[:10] if m["ticker"] not in {u["ticker"] for u in us_items[:15]}]
-    export_analysis_for_targets(us_targets[:20], "US", us_lookup)
+    # 후보 풀 전체의 분석 JSON을 내보낸다(선정이 풀 어디를 뽑아도 분석 존재 보장).
+    export_analysis_for_targets(kr_items, "KR", kr_lookup)
+    us_seen = {u["ticker"] for u in us_items}
+    us_targets = us_items + [m for m in mention_items if m["ticker"] not in us_seen]
+    export_analysis_for_targets(us_targets, "US", us_lookup)
 
     print(f"Kiwoom exports written at {generated_at}")
     return 0

@@ -16,6 +16,14 @@ on:
           - KR
           - US
 
+permissions:
+  contents: write
+
+concurrency:
+  # 다른 데이터 발행 워크플로우와 push 경합을 피하기 위해 직렬화한다.
+  group: mir-data-publish
+  cancel-in-progress: false
+
 jobs:
   generate-content:
     runs-on: ubuntu-latest
@@ -23,6 +31,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -49,3 +59,26 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           SITE_BASE_URL: ${{ secrets.SITE_BASE_URL }}
         run: python automation/main.py --skip-exports ${{ github.event.inputs.only && format('--only {0}', github.event.inputs.only) || '' }}
+
+      - name: Persist post history (for ticker cooldown)
+        if: always()
+        shell: bash
+        run: |
+          # 같은 종목 3일 재등장 금지(ticker_cooldown)는 outputs/posts/*.json 기록을 읽는다.
+          # 이 기록을 커밋해 두지 않으면 다음 실행이 checkout 시점에 기록을 못 읽어 쿨다운이 무력화된다.
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f outputs/posts/*.json
+          if git diff --cached --quiet; then
+            echo "No post history to commit."
+            exit 0
+          fi
+          DATE_KST=$(TZ=Asia/Seoul date +%F)
+          git commit -m "chore: record ${DATE_KST} kiwoom post history for ticker cooldown"
+          # 동시 실행/데이터 발행과의 경합을 흡수한다.
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin "${GITHUB_REF_NAME}" && git push && exit 0
+            echo "push retry ${attempt}..."
+            sleep 5
+          done
+          echo "::warning::failed to push post history after retries"

@@ -60,7 +60,9 @@ class GeminiClient:
         data = base64.b64encode(image_path.read_bytes()).decode("ascii")
         return {"inline_data": {"mime_type": mime, "data": data}}
 
-    def _call(self, prompt: str, model: str, image_path: Path | None = None) -> dict:
+    def _call(
+        self, prompt: str, model: str, image_path: Path | None = None, temperature: float = 0.3
+    ) -> dict:
         parts: list[dict] = [{"text": prompt}]
         image_part = self._image_part(image_path)
         if image_part:
@@ -70,7 +72,9 @@ class GeminiClient:
         payload = {
             "contents": [{"role": "user", "parts": parts}],
             "generationConfig": {
-                "temperature": 0.3,
+                # 사람이 쓴 듯한 다양성을 위해 높게. 글마다 톤/구성이 달라지도록.
+                "temperature": temperature,
+                "topP": 0.95,
                 "responseMimeType": "application/json",
             },
         }
@@ -160,6 +164,7 @@ class GeminiClient:
         image_path: Path | None = None,
         retries: int = 3,
         use_cache: bool = True,
+        temperature: float = 0.3,
     ) -> dict:
         cache_key = self._cache_key(prompt, image_path)
         if use_cache:
@@ -177,7 +182,7 @@ class GeminiClient:
                 try:
                     print(f"[Gemini] {model} 시도 {model_attempt}/{retries}")
                     self._throttle()
-                    result = self._call(prompt, model, image_path=image_path)
+                    result = self._call(prompt, model, image_path=image_path, temperature=temperature)
                     if use_cache:
                         self._write_cache(cache_key, result)
                     return result

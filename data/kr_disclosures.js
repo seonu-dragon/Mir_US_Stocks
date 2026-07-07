@@ -1,1 +1,1 @@
-window.KR_DISCLOSURES = {"updatedAtKst":"2026-07-06 20:18 KST","lastFileDate":"2026-07-06","count":0,"source":"DART Open API","note":"추적 KR 종목 한정. 실적·지분·주요사항 공시.","disclosures":[]};
+window.KR_DISCLOSURES = {"updatedAtKst":"2026-07-07 19:12 KST","lastFileDate":"2026-07-07","count":0,"source":"DART Open API","note":"추적 KR 종목 한정. 실적·지분·주요사항 공시.","disclosures":[]};

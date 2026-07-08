@@ -1,5 +1,5 @@
-const BUILD_ID = "20260701a";
-const CACHE_NAME = `mir-us-stocks-v${BUILD_ID}`;
+const BUILD_ID_FALLBACK = "20260701a";
+let ACTIVE_CACHE_NAME = null;
 
 const OFFLINE_ASSETS = [
   "./",
@@ -22,6 +22,24 @@ const OFFLINE_ASSETS = [
   "./assets/mir-mascot.png"
 ];
 
+function parseBuildId(text) {
+  const m = String(text || "").match(/MIR_BUILD_ID\s*=\s*"([^"]+)"/);
+  return m ? m[1] : null;
+}
+
+async function ensureCacheName() {
+  if (ACTIVE_CACHE_NAME) return ACTIVE_CACHE_NAME;
+  try {
+    const res = await fetch("./build_id.js", { cache: "no-store" });
+    const text = await res.text();
+    const id = parseBuildId(text) || BUILD_ID_FALLBACK;
+    ACTIVE_CACHE_NAME = `mir-us-stocks-v${id}`;
+  } catch (_) {
+    ACTIVE_CACHE_NAME = `mir-us-stocks-v${BUILD_ID_FALLBACK}`;
+  }
+  return ACTIVE_CACHE_NAME;
+}
+
 function isDynamicAsset(pathname) {
   return (
     pathname.endsWith("/") ||
@@ -42,30 +60,8 @@ function isDetailData(pathname) {
   return pathname.includes("/data/details/") || pathname.includes("/data/korea/details/");
 }
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(OFFLINE_ASSETS).catch(() => Promise.resolve()))
-      .then(() => self.skipWaiting())
-  );
-});
-
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))
-      .then(() => self.clients.claim())
-  );
-});
-
-self.addEventListener("message", (event) => {
-  if (event.data && event.data.type === "SKIP_WAITING") {
-    self.skipWaiting();
-  }
-});
-
-async function networkFirst(request) {
-  const cache = await caches.open(CACHE_NAME);
+async function networkFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
   try {
     const response = await fetch(request);
     if (response && response.status === 200) {
@@ -79,8 +75,8 @@ async function networkFirst(request) {
   }
 }
 
-async function staleWhileRevalidate(request) {
-  const cache = await caches.open(CACHE_NAME);
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
   const cached = await cache.match(request);
   const network = fetch(request)
     .then((response) => {
@@ -93,6 +89,31 @@ async function staleWhileRevalidate(request) {
   return cached || network || fetch(request);
 }
 
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    ensureCacheName()
+      .then((name) => caches.open(name))
+      .then((cache) => cache.addAll(OFFLINE_ASSETS).catch(() => Promise.resolve()))
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    ensureCacheName()
+      .then((name) => caches.keys().then((keys) => Promise.all(
+        keys.filter((k) => k !== name).map((k) => caches.delete(k))
+      )))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "SKIP_WAITING") {
+    self.skipWaiting();
+  }
+});
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
@@ -101,15 +122,15 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
   if (isDetailData(url.pathname)) return;
 
-  if (isDynamicAsset(url.pathname)) {
-    event.respondWith(networkFirst(req));
-    return;
-  }
-
-  if (/\.(png|ico|jpg|jpeg|svg|webp)$/i.test(url.pathname)) {
-    event.respondWith(staleWhileRevalidate(req));
-    return;
-  }
-
-  event.respondWith(networkFirst(req));
+  event.respondWith(
+    ensureCacheName().then((cacheName) => {
+      if (isDynamicAsset(url.pathname)) {
+        return networkFirst(req, cacheName);
+      }
+      if (/\.(png|ico|jpg|jpeg|svg|webp)$/i.test(url.pathname)) {
+        return staleWhileRevalidate(req, cacheName);
+      }
+      return networkFirst(req, cacheName);
+    })
+  );
 });

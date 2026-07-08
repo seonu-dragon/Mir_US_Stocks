@@ -209,6 +209,7 @@ const detailPromises = {};
 // After deploying worker/yahoo-proxy.js, paste its URL here, e.g.
 //   const LIVE_DATA_PROXY = "https://mir-yahoo.yourname.workers.dev";
 const LIVE_DATA_PROXY = "https://mirusstocks.planbesides.workers.dev";
+window.MIR_LIVE_PROXY = LIVE_DATA_PROXY;
 const liveNewsCache = {};
 const liveChartCache = {};
 const liveEarningsCache = {};
@@ -317,10 +318,22 @@ function low52DistPct(item) {
   return (price / low - 1) * 100;
 }
 
+const KR_PRICE_LIMIT_PCT = 30;
+
+function krDisplayChangePct(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  if (!isKrMarket()) return n;
+  return Math.max(-KR_PRICE_LIMIT_PCT, Math.min(KR_PRICE_LIMIT_PCT, n));
+}
+
 const fmtPct = (value) => {
-  const n = Number(value) || 0;
+  const raw = Number(value) || 0;
+  const n = isKrMarket() ? krDisplayChangePct(raw) : raw;
+  const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
   const marker = n > 0 ? "▲ " : n < 0 ? "▼ " : "";
-  return `${marker}${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+  const suffix = atLimit ? " (상하한)" : "";
+  return `${marker}${n > 0 ? "+" : ""}${n.toFixed(1)}%${suffix}`;
 };
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
 const byId = (id) => document.getElementById(id);
@@ -562,6 +575,8 @@ async function loadData(options = {}) {
   }
 
   if (!options.skipBoot) boot(options);
+  if (typeof refreshMirDataStatus === "function") refreshMirDataStatus();
+  if (typeof updateOnlineStatus === "function") updateOnlineStatus();
 }
 
 function showFallbackBanner() {
@@ -714,6 +729,8 @@ function applyMarketOnlyUi() {
   }
   const valSector = byId("valSector");
   if (valSector) delete valSector.dataset.filled;
+  const valCap = byId("valCap");
+  if (valCap) delete valCap.dataset.marketCapKey;
   const krwCard = byId("krwPortfolioCard");
   if (krwCard) krwCard.hidden = cfg.id === "kr";
   // Chart RS-overlay toggle labels follow the market's benchmarks (SPY/QQQ vs 코스피200/코스닥150).
@@ -2505,6 +2522,15 @@ function setupValuationControls() {
     const sectors = [...new Set(data.stocks.filter((s) => !isStockEtf(s)).map((s) => s.sector))].sort();
     sectorSel.innerHTML = `<option value="All">전체 섹터</option>` + sectors.map((s) => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
   }
+  const capSel = byId("valCap");
+  const capKey = isKrMarket() ? "kr" : "us";
+  if (capSel && capSel.dataset.marketCapKey !== capKey) {
+    capSel.dataset.marketCapKey = capKey;
+    const prev = capSel.value;
+    const buckets = VAL_CAP_BUCKETS[capKey] || VAL_CAP_BUCKETS.us;
+    capSel.innerHTML = buckets.map(([v, l]) => `<option value="${v}">${escapeHtml(l)}</option>`).join("");
+    capSel.value = buckets.some(([v]) => v === prev) ? prev : "all";
+  }
   ["valMetric", "valSector", "valCap"].forEach((id) => {
     const el = byId(id);
     if (el && !el.dataset.bound) { el.dataset.bound = "1"; el.addEventListener("change", renderValuation); }
@@ -2528,7 +2554,7 @@ function renderValuation() {
   const sector = byId("valSector")?.value || "All";
   const cap = byId("valCap")?.value || "all";
   const q = valQuery.trim().toLowerCase();
-  const cfg = MAP_METRIC_CONFIG[metric] || {};
+  const cfg = mapMetricConfig(metric) || {};
   const mf = window.MAP_FUNDAMENTALS || {};
   let rows = data.stocks.filter((s) => !isStockEtf(s))
     .filter((s) => sector === "All" || s.sector === sector)
@@ -2538,7 +2564,8 @@ function renderValuation() {
   if (q) rows = rows.filter((r) => r.item.ticker.toLowerCase().includes(q) || (r.item.company || "").toLowerCase().includes(q));
   rows.sort((a, b) => (valOrder === "asc" ? a.value - b.value : b.value - a.value));
   const shown = rows.slice(0, 200);
-  if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}`;
+  const krNote = isKrMarket() ? " · 당일 등락은 상하한가 ±30% 기준 표시" : "";
+  if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}${krNote}`;
   if (!shown.length) { wrap.innerHTML = `<p class="muted">펀더멘털 데이터가 있는 종목이 없습니다.</p>`; return; }
   const fmtv = (v) => {
     if (cfg.fmt === "pct") return `${v.toFixed(1)}%`;
@@ -2550,10 +2577,10 @@ function renderValuation() {
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(isKrMarket() ? (r.item.company || r.item.ticker) : r.item.ticker)}</button><div class="ins-sub">${escapeHtml(isKrMarket() ? r.item.ticker : (r.item.company || ""))}</div></td>
     <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
     <td class="ins-num"><strong>${fmtv(r.value)}</strong></td>
-    <td class="ins-num">${fmtBillions(r.item.marketCapB)}</td>
-    <td class="ins-num ${cls(r.item.changePct)}">${fmtPct(r.item.changePct)}</td>
+    <td class="ins-num">${fmtBillions(itemCapForValuation(r.item))}</td>
+    <td class="ins-num ${cls(krDisplayChangePct(r.item.changePct))}">${fmtPct(r.item.changePct)}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">시총</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">${isKrMarket() ? "시총(조)" : "시총"}</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -4347,6 +4374,40 @@ const MAP_METRIC_CONFIG = {
   roa:       { label: "ROA",            good: "high", fmt: "pct", stops: [0, 3, 6, 10, 15] },
   netMargin: { label: "Net Margin",     good: "high", fmt: "pct", stops: [0, 5, 10, 20, 30] },
 };
+const MAP_METRIC_STOPS_KR = {
+  pe: [8, 12, 18, 28, 45],
+  forwardPE: [8, 12, 18, 28, 45],
+  pb: [0.8, 1.5, 2.5, 4, 8],
+  ps: [0.8, 2, 4, 8, 15],
+  evEbitda: [5, 8, 12, 18, 28],
+};
+const VAL_CAP_BUCKETS = {
+  us: [
+    ["all", "전체"],
+    ["gte10b", "대형(10B+)"],
+    ["1to10b", "중형(1~10B)"],
+    ["lt1b", "소형(<1B)"],
+  ],
+  kr: [
+    ["all", "전체"],
+    ["gte10t", "시총 10조 이상"],
+    ["gte1t", "시총 1조~10조"],
+    ["gte100b", "시총 1천억~1조"],
+    ["lt100b", "시총 1천억 미만"],
+  ],
+};
+
+function mapMetricConfig(metric) {
+  const base = MAP_METRIC_CONFIG[metric];
+  if (!base || !isKrMarket()) return base;
+  const stops = MAP_METRIC_STOPS_KR[metric];
+  return stops ? { ...base, stops } : base;
+}
+
+function itemCapForValuation(item) {
+  if (isKrMarket()) return Number(item.marketCapT ?? item.marketCapB ?? 0);
+  return Number(item.marketCapB ?? 0);
+}
 // 초록(저평가/우수) → 빨강(고평가/부진) 6단계 팔레트
 const MAP_FUND_PALETTE = ["#006b35", "#20a05a", "#64ad65", "#b26a4a", "#b6463f", "#6f1d2a"];
 const MAP_NODATA_COLOR = "#475467"; // 데이터 없음 중립색
@@ -6007,9 +6068,30 @@ function renderJump() {
   });
 }
 
+function createLiveSearchStub(resolved) {
+  if (!resolved || !LIVE_DATA_PROXY) return null;
+  if (isKrMarket()) {
+    if (!/^\d{6}$/.test(resolved)) return null;
+  } else if (!/^[A-Z][A-Z0-9._-]{0,11}$/.test(resolved)) {
+    return null;
+  }
+  return {
+    ticker: resolved,
+    company: resolved,
+    price: 0,
+    changePct: 0,
+    sector: "-",
+    bucket: "live",
+    groups: ["live"],
+    historySource: "yahoo",
+    __liveStub: true,
+  };
+}
+
 function selectTicker(ticker, options = {}) {
   const resolved = normalizeTickerKey(resolveTickerQuery(ticker) || String(ticker || "").trim());
-  const found = data.stocks.find((item) => normalizeTickerKey(item.ticker) === resolved);
+  let found = data.stocks.find((item) => normalizeTickerKey(item.ticker) === resolved);
+  if (!found) found = createLiveSearchStub(resolved);
   if (!found) return;
   if (found.ticker !== selectedTicker) scoreHelpOpen = null;
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
@@ -6530,6 +6612,34 @@ function safeTicker(ticker) {
   return reserved.has(root) ? `_${safe}` : safe;
 }
 
+async function fetchLiveDetailForTicker(ticker) {
+  if (!LIVE_DATA_PROXY || !ticker) return null;
+  const base = stockByTicker(ticker) || { ticker };
+  const endpoint = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?ticker=${encodeURIComponent(liveProxyTicker(base))}`;
+  try {
+    const response = await fetch(endpoint, { cache: "no-store" });
+    if (!response.ok) return null;
+    const payload = await response.json();
+    if (!Array.isArray(payload.chart) || !payload.chart.length) return null;
+    const normalized = normalizeTickerKey(ticker);
+    return {
+      ticker: normalized,
+      name: payload.name || normalized,
+      company: payload.name || normalized,
+      chartSeries: payload.chart,
+      historySource: "yahoo",
+      __liveGenerated: true,
+    };
+  } catch {
+    return null;
+  }
+}
+
+window.MirLiveDetail = {
+  get proxyUrl() { return LIVE_DATA_PROXY; },
+  fetch: fetchLiveDetailForTicker,
+};
+
 function loadStockDetail(ticker) {
   const key = safeTicker(ticker);
   if (!key) return Promise.resolve(null);
@@ -6537,13 +6647,21 @@ function loadStockDetail(ticker) {
   if (detailPromises[key]) return detailPromises[key];
   const detailUrl = (window.MirMarket && window.MirMarket.detailPath(key)) || `data/details/${encodeURIComponent(key)}.json`;
   detailPromises[key] = fetch(detailUrl, { cache: "no-store" })
-    .then((response) => response.ok ? response.json() : null)
-    .then((detail) => {
+    .then((response) => (response.ok ? response.json() : null))
+    .then(async (detail) => {
       if (detail) {
         detailCache[key] = detail;
         if (ticker && ticker !== key) detailCache[ticker] = detail;
+        return detail;
       }
-      return detail;
+      const live = await fetchLiveDetailForTicker(ticker);
+      if (live) {
+        detailCache[key] = live;
+        if (ticker && ticker !== key) detailCache[ticker] = live;
+        liveChartCache[ticker] = live.chartSeries;
+        liveDone[ticker] = true;
+      }
+      return live;
     })
     .catch(() => null);
   return detailPromises[key];
@@ -9448,22 +9566,57 @@ function normalizeRebalanceTargets() {
   renderRebalanceCalculator();
 }
 
+function stressSectorKind(sector) {
+  const s = String(sector || "");
+  const u = s.toUpperCase();
+  if (u === "TECHNOLOGY" || /기술|반도체|정보|IT|소프트웨어/.test(s)) return "technology";
+  if (u === "COMMUNICATION SERVICES" || /커뮤니케이션|통신|미디어/.test(s)) return "communication";
+  if (u === "FINANCIAL" || /금융|은행|보험|증권/.test(s)) return "financial";
+  if (u === "CONSUMER CYCLICAL" || /경기소비|자동차|호텔|레저/.test(s)) return "consumer_cyclical";
+  if (u === "CONSUMER DEFENSIVE" || /필수소비/.test(s)) return "consumer_defensive";
+  if (u === "HEALTHCARE" || /헬스|의료|바이오|제약/.test(s)) return "healthcare";
+  if (u === "UTILITIES" || /유틸/.test(s)) return "utilities";
+  if (u === "INDUSTRIALS" || /산업|기계|조선|항공/.test(s)) return "industrials";
+  if (u === "ENERGY" || /에너지|석유|가스/.test(s)) return "energy";
+  if (u === "REAL ESTATE" || /부동산|리츠|REIT/.test(s)) return "real_estate";
+  if (u === "BASIC MATERIALS" || /소재|화학|철강/.test(s)) return "materials";
+  return "other";
+}
+
 function presetStressShock(row, scenario) {
-  const sector = String(row.stock?.sector || "").toUpperCase();
+  const kind = stressSectorKind(row.stock?.sector);
   if (scenario === "market") return -10;
-  if (scenario === "tech") return sector === "TECHNOLOGY" ? -15 : sector === "COMMUNICATION SERVICES" ? -10 : -6;
+  if (scenario === "tech") {
+    if (kind === "technology") return -15;
+    if (kind === "communication") return -10;
+    return -6;
+  }
   if (scenario === "recession") {
-    if (["CONSUMER CYCLICAL", "FINANCIAL", "INDUSTRIALS", "ENERGY"].includes(sector)) return -15;
-    if (["CONSUMER DEFENSIVE", "HEALTHCARE", "UTILITIES"].includes(sector)) return -5;
+    if (["consumer_cyclical", "financial", "industrials", "energy", "materials"].includes(kind)) return -15;
+    if (["consumer_defensive", "healthcare", "utilities"].includes(kind)) return -5;
     return -10;
   }
   if (scenario === "rates") {
-    if (sector === "FINANCIAL") return 3;
-    if (["REAL ESTATE", "TECHNOLOGY"].includes(sector)) return -12;
-    if (sector === "UTILITIES") return -8;
+    if (kind === "financial") return 3;
+    if (kind === "real_estate" || kind === "technology") return -12;
+    if (kind === "utilities") return -8;
     return -5;
   }
   return -10;
+}
+
+function fmtStressMoney(value) {
+  if (!Number.isFinite(Number(value))) return "-";
+  if (isKrMarket()) return fmtKrw(value);
+  return `$${Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+}
+
+function fmtStressDelta(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  const sign = n >= 0 ? "+" : "-";
+  if (isKrMarket()) return `${sign}${fmtKrw(Math.abs(n))}`;
+  return `${sign}$${Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
 function stressShockFor(row) {
@@ -9496,14 +9649,14 @@ function renderStressTest() {
   const stressed = detailed.reduce((sum, row) => sum + row.stressedValue, 0);
   const impact = stressed - original;
   summary.innerHTML = `
-    <div><span>현재 평가액</span><strong>$${original.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
-    <div><span>스트레스 후</span><strong>$${stressed.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
-    <div><span>예상 변화</span><strong class="${cls(impact)}">${impact >= 0 ? "+" : "-"}$${Math.abs(impact).toLocaleString(undefined, { maximumFractionDigits: 0 })} (${original > 0 ? (impact / original * 100).toFixed(1) : "0.0"}%)</strong></div>`;
+    <div><span>현재 평가액</span><strong>${fmtStressMoney(original)}</strong></div>
+    <div><span>스트레스 후</span><strong>${fmtStressMoney(stressed)}</strong></div>
+    <div><span>예상 변화</span><strong class="${cls(impact)}">${fmtStressDelta(impact)} (${original > 0 ? (impact / original * 100).toFixed(1) : "0.0"}%)</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>현재 평가액</th><th>충격률</th><th>예상 영향</th><th>스트레스 후 비중</th></tr></thead><tbody>${detailed.map((row) => `
     <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${escapeHtml(row.stock?.sector || "기타")}</small></td>
-      <td>$${row.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+      <td>${fmtStressMoney(row.value)}</td>
       <td><input type="number" min="-100" max="100" step="1" value="${row.shock.toFixed(1)}" data-stress-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 충격률">%</td>
-      <td class="${cls(row.impact)}">${row.impact >= 0 ? "+" : "-"}$${Math.abs(row.impact).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td>
+      <td class="${cls(row.impact)}">${fmtStressDelta(row.impact)}</td>
       <td>${stressed > 0 ? (row.stressedValue / stressed * 100).toFixed(1) : "0.0"}%</td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-stress-ticker]").forEach((input) => input.addEventListener("change", () => {
     if (stressTestState.scenario !== "custom") {
@@ -9565,25 +9718,55 @@ function fmtKrw(value) {
   return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(Number(value));
 }
 
+function isKrwQuotedTicker(ticker) {
+  const key = String(ticker || "").replace(/\.(KS|KQ)$/i, "");
+  if (isKrMarket()) return true;
+  return /^\d{6}$/.test(key);
+}
+
 function renderKrwPortfolio() {
   const summary = byId("krwPortfolioSummary");
   const table = byId("krwPortfolioTable");
   const rateLabel = byId("krwCurrentRate");
   if (!summary || !table || !rateLabel) return;
-  const currentFx = currentUsdKrw();
-  rateLabel.textContent = currentFx ? `USD/KRW ${currentFx.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "USD/KRW 로딩 중";
   const rows = portfolioDetailRows();
   if (!rows.length) {
     summary.innerHTML = "";
     table.innerHTML = `<p class="muted">보유 종목을 추가하면 원화 평가손익을 계산할 수 있습니다.</p>`;
+    rateLabel.textContent = "USD/KRW —";
     return;
   }
-  if (!currentFx) {
+  const needsFx = rows.some((row) => !isKrwQuotedTicker(row.ticker));
+  const currentFx = currentUsdKrw();
+  if (needsFx) {
+    rateLabel.textContent = currentFx ? `USD/KRW ${currentFx.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "USD/KRW 로딩 중";
+  } else {
+    rateLabel.textContent = "원화 종목 — 환율 미적용";
+  }
+  if (needsFx && !currentFx) {
     summary.innerHTML = "";
     table.innerHTML = `<p class="muted">실시간 USD/KRW 환율을 불러오는 중입니다.</p>`;
     return;
   }
   const detailed = rows.map((row) => {
+    if (isKrwQuotedTicker(row.ticker)) {
+      const krwCost = Number(row.qty || 0) * Number(row.avgCost || 0);
+      const krwValue = row.value;
+      const priceEffect = krwValue - krwCost;
+      return {
+        ...row,
+        krwNative: true,
+        entryFx: 1,
+        hasSavedFx: false,
+        usdCost: 0,
+        usdValue: 0,
+        krwCost,
+        krwValue,
+        priceEffect,
+        fxEffect: 0,
+        totalEffect: priceEffect,
+      };
+    }
     const savedEntryFx = Number(portfolioEntryFx[row.ticker]);
     const entryFx = Number.isFinite(savedEntryFx) && savedEntryFx > 0 ? savedEntryFx : currentFx;
     const usdCost = Number(row.qty || 0) * Number(row.avgCost || 0);
@@ -9592,7 +9775,7 @@ function renderKrwPortfolio() {
     const krwValue = usdValue * currentFx;
     const priceEffect = (usdValue - usdCost) * entryFx;
     const fxEffect = usdValue * (currentFx - entryFx);
-    return { ...row, entryFx, hasSavedFx: savedEntryFx > 0, usdCost, usdValue, krwCost, krwValue, priceEffect, fxEffect, totalEffect: krwValue - krwCost };
+    return { ...row, krwNative: false, entryFx, hasSavedFx: savedEntryFx > 0, usdCost, usdValue, krwCost, krwValue, priceEffect, fxEffect, totalEffect: krwValue - krwCost };
   });
   const totals = detailed.reduce((acc, row) => {
     ["krwCost", "krwValue", "priceEffect", "fxEffect", "totalEffect"].forEach((key) => { acc[key] += row[key]; });
@@ -9605,7 +9788,7 @@ function renderKrwPortfolio() {
     <div><span>환율 효과</span><strong class="${cls(totals.fxEffect)}">${fmtKrw(totals.fxEffect)}</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>매입 환율</th><th>원화 원금</th><th>원화 평가액</th><th>주가 효과</th><th>환율 효과</th><th>총 손익</th></tr></thead><tbody>${detailed.map((row) => `
     <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
-      <td><input type="number" min="1" step="0.1" value="${row.entryFx.toFixed(1)}" data-entry-fx-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 매입 환율"><small>${row.hasSavedFx ? "저장됨" : "현재 환율 임시 적용"}</small></td>
+      <td>${row.krwNative ? `<span class="muted">—</span>` : `<input type="number" min="1" step="0.1" value="${row.entryFx.toFixed(1)}" data-entry-fx-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 매입 환율"><small>${row.hasSavedFx ? "저장됨" : "현재 환율 임시 적용"}</small>`}</td>
       <td>${fmtKrw(row.krwCost)}</td><td>${fmtKrw(row.krwValue)}</td>
       <td class="${cls(row.priceEffect)}">${fmtKrw(row.priceEffect)}</td><td class="${cls(row.fxEffect)}">${fmtKrw(row.fxEffect)}</td><td class="${cls(row.totalEffect)}"><strong>${fmtKrw(row.totalEffect)}</strong></td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-entry-fx-ticker]").forEach((input) => input.addEventListener("change", () => {
@@ -9791,7 +9974,10 @@ function setupPortfolio() {
       const t = resolveCommunityTickerInput(byId("pfTicker").value) || String(byId("pfTicker").value || "").trim().toUpperCase();
       const qty = Number(byId("pfQty").value);
       const cost = Number(byId("pfCost").value);
-      if (!t || !stockByTicker(t) || !(qty > 0) || !(cost > 0)) { return; }
+      if (!t) { showAppToast("종목 코드를 입력해 주세요."); return; }
+      if (!stockByTicker(t)) { showAppToast(`'${t}' 종목을 찾지 못했습니다. 티커·종목명을 확인해 주세요.`); return; }
+      if (!(qty > 0)) { showAppToast("수량은 0보다 커야 합니다."); return; }
+      if (!(cost > 0)) { showAppToast("평단가는 0보다 커야 합니다."); return; }
       const existing = portfolio.find((p) => p.ticker === t);
       if (existing) { existing.qty = qty; existing.avgCost = cost; }
       else portfolio.push({ ticker: t, qty, avgCost: cost });
@@ -13323,8 +13509,36 @@ function setupWatchlistUi() {
 }
 
 // ===== PWA =====
+const MIR_SW_BUILD_KEY = "mir_sw_build_id_v1";
+
+async function detectHotUpdate() {
+  const current = window.MIR_BUILD_ID || "20260701a";
+  let stored = null;
+  try { stored = localStorage.getItem(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
+  if (stored && stored !== current) {
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      const reg = await navigator.serviceWorker.getRegistration();
+      if (reg) {
+        reg.waiting?.postMessage({ type: "SKIP_WAITING" });
+        await reg.update();
+      }
+    } catch (_) { /* ignore */ }
+    try { localStorage.setItem(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
+    showAppToast("새 버전이 배포되었습니다. 최신 파일을 불러옵니다.", 2800);
+    window.setTimeout(() => window.location.reload(), 700);
+    return true;
+  }
+  try { localStorage.setItem(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
+  return false;
+}
+
 function setupPwa() {
   if ("serviceWorker" in navigator) {
+    detectHotUpdate().catch(() => {});
     let refreshing = false;
     navigator.serviceWorker.addEventListener("controllerchange", () => {
       if (refreshing) return;
@@ -13640,7 +13854,7 @@ const NL_METRICS = [
   { keys: ["pbr", "pb", "p/b"], label: "PBR", unit: "", get: (it, f) => Number(f.pb), dir: "max" },
   { keys: ["psr", "ps", "p/s"], label: "PSR", unit: "", get: (it, f) => Number(f.ps), dir: "max" },
   { keys: ["roe", "자기자본"], label: "ROE", unit: "%", get: (it, f) => Number(f.roe), dir: "min" },
-  { keys: ["시총", "시가총액", "market cap", "marketcap"], label: "시총", unit: "B", get: (it) => Number(it.marketCapB), dir: "min", cap: true },
+  { keys: ["시총", "시가총액", "market cap", "marketcap"], label: "시총", unit: "B", get: (it) => itemCapForValuation(it), dir: "min", cap: true },
   { keys: ["거래량", "volume", "vol"], label: "거래량", unit: "x", get: (it) => Number(it.volumeRatio), dir: "min" },
   { keys: ["eps점수", "eps추정", "eps rev"], label: "EPS점수", unit: "", get: (it) => Number(it.epsRevScore), dir: "min" },
   { keys: ["당일", "오늘"], label: "당일등락", unit: "%", get: (it) => Number(it.changePct), dir: "min" },
@@ -13650,8 +13864,14 @@ const NL_METRICS = [
 ];
 
 function nlScaleCap(v, unit) {
-  if (unit === "조" || unit === "t") return v * 1000;
-  if (unit === "억") return v * 0.1;
+  const u = String(unit || "").toLowerCase();
+  if (isKrMarket()) {
+    if (u === "조" || u === "t") return v;
+    if (u === "억") return v * 0.0001;
+    return v;
+  }
+  if (u === "조" || u === "t") return v * 1000;
+  if (u === "억") return v * 0.1;
   return v;
 }
 
@@ -14431,6 +14651,7 @@ function renderBacktestResults(payload) {
   const warnHtml = warnings.length
     ? `<p class="backtest-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>`
     : "";
+  const disclaimerHtml = `<p class="backtest-disclaimer muted">⚠ <strong>면책:</strong> 본 백테스트는 현재 스냅샷에 포함된 종목만 사용합니다. 기간 중 상장폐지·합병된 종목은 제외되어 <strong>생존 편향(survivorship bias)</strong>으로 실제 수익률보다 높게 나올 수 있습니다. 거래비용·세금·슬리피지는 반영되지 않은 총수익(buy-and-hold) 기준입니다.</p>`;
   renderPortfolioRiskPanel({
     stockReturns,
     portfolioSeries,
@@ -14441,6 +14662,7 @@ function renderBacktestResults(payload) {
   table.innerHTML = `
     <caption class="backtest-meta">${escapeHtml(tickers.join(", "))} · ${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · buy-and-hold</caption>
     ${warnHtml}
+    ${disclaimerHtml}
     <thead><tr><th>티커</th><th>회사</th><th>시작가</th><th>종가</th><th>수익률</th><th>비중</th><th>투자액</th><th>평가액</th></tr></thead>
     <tbody>
       ${stockReturns.map((row) => `
@@ -15086,27 +15308,63 @@ function setupKrDartEvents() {
 
 loadData();
 
-// ===== PWA Offline State Banner =====
-function updateOnlineStatus() {
+// ===== PWA Offline / Stale Snapshot Banner =====
+function getSnapshotTimestamp() {
+  return (data && (data.updatedAtKst || data.updated_at_kst)) || "";
+}
+
+function snapshotAgeHours() {
+  const snap = parseSnapshotDate(getSnapshotTimestamp());
+  return snap ? Math.max(0, (Date.now() - snap.getTime()) / 36e5) : null;
+}
+
+function refreshMirDataStatus() {
   const isOnline = navigator.onLine;
+  const snapshotTime = getSnapshotTimestamp();
+  const ageHours = snapshotAgeHours();
+  const isStale = ageHours != null && ageHours > 30;
+  window.MirDataStatus = {
+    isOnline,
+    isOffline: !isOnline,
+    isStale,
+    snapshotTime,
+    ageHours,
+    showBanner: !isOnline || isStale,
+  };
+  return window.MirDataStatus;
+}
+
+function updateOnlineStatus() {
+  const status = refreshMirDataStatus();
   const existing = byId("offlineBanner");
-  if (!isOnline) {
+  if (status.showBanner) {
+    const timeLabel = status.snapshotTime || "갱신 시각 미상";
+    const reason = status.isOffline
+      ? "네트워크 연결이 끊겼습니다"
+      : "로컬 과거 데이터 표시 중";
+    const detail = status.isOffline
+      ? `오프라인 캐시 스냅샷(${timeLabel})입니다. 실시간 시세가 아닙니다.`
+      : `스냅샷 기준 ${timeLabel} · ${Math.round(status.ageHours || 0)}시간 경과. 실시간 시세가 아닐 수 있습니다.`;
     if (!existing) {
       const banner = document.createElement("div");
       banner.id = "offlineBanner";
       banner.className = "offline-banner";
+      document.body.appendChild(banner);
+    }
+    const banner = byId("offlineBanner");
+    if (banner) {
       banner.innerHTML = `
         <div class="offline-banner-content">
           <span class="offline-icon">⚠️</span>
-          <strong>네트워크 연결이 끊겼습니다</strong>
-          <span>최신 스냅샷(캐시된 데이터)을 표시하고 있습니다.</span>
-        </div>
-      `;
-      document.body.appendChild(banner);
+          <strong>${reason}</strong>
+          <span>${detail}</span>
+        </div>`;
     }
-  } else {
-    if (existing) {
-      existing.remove();
+    return;
+  }
+  if (existing) {
+    existing.remove();
+    if (status.isOnline) {
       showAppToast("네트워크가 복구되었습니다. 최신 데이터를 받아옵니다.", 3000);
       loadData({ preserveRoute: true });
     }

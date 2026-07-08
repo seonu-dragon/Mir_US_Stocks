@@ -3,7 +3,8 @@
  * Loaded before app.js; exposes window.MirMarket helpers.
  */
 (function () {
-  const STORAGE_KEY = "mir_market_mode_v1";
+  const STORAGE_KEY = "mir_market_mode_v2";
+  const DEFAULT_MARKET_MODE = "us";
 
   const US = {
     id: "us",
@@ -246,7 +247,7 @@
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved === "kr" || saved === "us") return saved;
     } catch (_) {}
-    return "us";
+    return DEFAULT_MARKET_MODE;
   }
 
   function setMode(mode, options) {
@@ -289,4 +290,7 @@
   };
   window.MIR_MARKET_MODE = getInitialMode();
   document.documentElement.setAttribute("data-market", window.MIR_MARKET_MODE);
+  if (window.MIR_MARKET_MODE === DEFAULT_MARKET_MODE) {
+    try { localStorage.setItem(STORAGE_KEY, DEFAULT_MARKET_MODE); } catch (_) {}
+  }
 })();

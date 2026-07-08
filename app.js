@@ -9435,6 +9435,38 @@ function numericDividend(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
+const DIVIDEND_PAYMENT_LAG_MONTHS = 1;
+
+function parseIsoDateParts(dateStr) {
+  const m = String(dateStr || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (!Number.isFinite(year) || !Number.isFinite(month) || month < 1 || month > 12) return null;
+  return { year, month, day };
+}
+
+function fmtPortfolioMoney(value) {
+  return marketCfg().formatMoney(Number.isFinite(Number(value)) ? Number(value) : 0);
+}
+
+function fmtPortfolioMoneyDelta(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  const sign = n >= 0 ? "+" : "-";
+  return `${sign}${fmtPortfolioMoney(Math.abs(n))}`;
+}
+
+function rebalanceShareLabel(shares) {
+  if (isKrMarket()) {
+    const whole = Math.floor(shares);
+    if (whole <= 0) return "1주 미만";
+    return `${whole.toLocaleString()}주`;
+  }
+  return `${shares.toFixed(2)}주`;
+}
+
 function dividendDefaults(row) {
   const f = row.stock?.fundamentals || (window.MAP_FUNDAMENTALS || {})[row.ticker] || {};
   const direct = numericDividend(f.dividendRate || row.stock?.dividendRate);
@@ -9462,12 +9494,16 @@ function dividendMonthBuckets(rows) {
     const annualCash = numericDividend(setting.annualDps) * Number(row.qty || 0);
     const frequency = [1, 2, 4, 12].includes(Number(setting.frequency)) ? Number(setting.frequency) : 4;
     if (!(annualCash > 0) || !setting.exDate) return;
-    const exDate = new Date(`${setting.exDate}T00:00:00`);
-    if (Number.isNaN(exDate.getTime())) return;
+    const exParts = parseIsoDateParts(setting.exDate);
+    if (!exParts) return;
+    const exMonthIdx = exParts.month - 1;
     const step = 12 / frequency;
+    const perPayment = annualCash / frequency;
     months.forEach((month, offset) => {
       const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-      if (((date.getMonth() - exDate.getMonth()) + 12) % step === 0) month.value += annualCash / frequency;
+      if (((date.getMonth() - exMonthIdx) + 12) % step !== 0) return;
+      const payOffset = offset + DIVIDEND_PAYMENT_LAG_MONTHS;
+      if (payOffset < months.length) months[payOffset].value += perPayment;
     });
   });
   return months;
@@ -9513,7 +9549,8 @@ function renderDividendPlanner() {
     renderDividendPlanner();
   }));
   const months = dividendMonthBuckets(rows);
-  monthsBox.innerHTML = months.map((month) => `<div class="dividend-month"><span>${month.label}</span><strong>$${month.value.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>`).join("");
+  monthsBox.innerHTML = `${months.map((month) => `<div class="dividend-month"><span>${month.label}</span><strong>${fmtPortfolioMoney(month.value)}</strong></div>`).join("")}
+    <p class="muted dividend-month-note">배당락일 기준 +${DIVIDEND_PAYMENT_LAG_MONTHS}개월 지급 가정(현금 유입 월)</p>`;
 }
 
 function renderRebalanceCalculator() {
@@ -9531,7 +9568,7 @@ function renderRebalanceCalculator() {
   const targets = rows.map((row) => Number.isFinite(Number(rebalanceTargets[row.ticker])) ? Number(rebalanceTargets[row.ticker]) : equal);
   const targetTotal = targets.reduce((sum, value) => sum + value, 0);
   summary.innerHTML = `
-    <div><span>평가금액</span><strong>$${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</strong></div>
+    <div><span>평가금액</span><strong>${fmtPortfolioMoney(totalValue)}</strong></div>
     <div><span>목표 합계</span><strong class="${Math.abs(targetTotal - 100) < 0.05 ? "pos" : "neg"}">${targetTotal.toFixed(1)}%</strong></div>
     <div><span>계산 기준</span><strong>현재 총액 유지</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>현재</th><th>목표</th><th>차이</th><th>주문 수량</th></tr></thead><tbody>${rows.map((row, index) => {
@@ -9539,8 +9576,12 @@ function renderRebalanceCalculator() {
     const targetPct = targets[index];
     const difference = totalValue * (targetPct - currentPct) / 100;
     const shares = row.price > 0 ? Math.abs(difference) / row.price : 0;
-    const action = Math.abs(difference) < Math.max(1, totalValue * 0.001) ? "유지" : difference > 0 ? `매수 ${shares.toFixed(2)}주` : `매도 ${shares.toFixed(2)}주`;
-    return `<tr><td><strong>${escapeHtml(row.ticker)}</strong><small>$${row.price.toFixed(2)}</small></td><td>${currentPct.toFixed(1)}%</td><td><input type="number" min="0" max="100" step="0.1" value="${targetPct.toFixed(1)}" data-rebalance-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 목표 비중">%</td><td class="${cls(difference)}">${difference >= 0 ? "+" : "-"}$${Math.abs(difference).toLocaleString(undefined, { maximumFractionDigits: 0 })}</td><td><strong class="${difference > 0 ? "pos" : difference < 0 ? "neg" : "muted"}">${action}</strong></td></tr>`;
+    const action = Math.abs(difference) < Math.max(1, totalValue * 0.001)
+      ? "유지"
+      : difference > 0
+        ? `매수 ${rebalanceShareLabel(shares)}`
+        : `매도 ${rebalanceShareLabel(shares)}`;
+    return `<tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${priceOrDash(row.price)}</small></td><td>${currentPct.toFixed(1)}%</td><td><input type="number" min="0" max="100" step="0.1" value="${targetPct.toFixed(1)}" data-rebalance-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 목표 비중">%</td><td class="${cls(difference)}">${fmtPortfolioMoneyDelta(difference)}</td><td><strong class="${difference > 0 ? "pos" : difference < 0 ? "neg" : "muted"}">${action}</strong></td></tr>`;
   }).join("")}</tbody></table>`;
   table.querySelectorAll("[data-rebalance-ticker]").forEach((input) => input.addEventListener("change", () => {
     rebalanceTargets[input.dataset.rebalanceTicker] = Math.max(0, Number(input.value) || 0);

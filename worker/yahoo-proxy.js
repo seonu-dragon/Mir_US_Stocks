@@ -534,6 +534,22 @@ function isKoreanTicker(ticker) {
 let yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
 const YAHOO_SESSION_TTL_MS = 20 * 60 * 1000;
 
+function cookiesFromResponse(response) {
+  const parts = [];
+  const push = (line) => {
+    const head = String(line || "").split(";")[0].trim();
+    if (!head || !head.includes("=")) return;
+    const name = head.slice(0, head.indexOf("="));
+    if (!parts.some((item) => item.startsWith(`${name}=`))) parts.push(head);
+  };
+  if (typeof response.headers.getSetCookie === "function") {
+    response.headers.getSetCookie().forEach(push);
+  }
+  const legacy = response.headers.get("Set-Cookie");
+  if (legacy) push(legacy);
+  return parts;
+}
+
 function mergeCookieHeader(existing, response) {
   const jar = new Map();
   String(existing || "")
@@ -544,11 +560,7 @@ function mergeCookieHeader(existing, response) {
       const idx = pair.indexOf("=");
       if (idx > 0) jar.set(pair.slice(0, idx), pair.slice(idx + 1));
     });
-  const setCookies = typeof response.headers.getSetCookie === "function"
-    ? response.headers.getSetCookie()
-    : [];
-  setCookies.forEach((line) => {
-    const part = String(line).split(";")[0].trim();
+  cookiesFromResponse(response).forEach((part) => {
     const idx = part.indexOf("=");
     if (idx > 0) jar.set(part.slice(0, idx), part.slice(idx + 1));
   });
@@ -575,11 +587,13 @@ function normalizeEarningsDateValue(value) {
 }
 
 async function bootstrapYahooSessionBasic() {
+  // fc.yahoo.com returns 404 but still sets the A3 session cookie Yahoo requires.
   let cookie = "";
   for (const url of ["https://fc.yahoo.com", "https://finance.yahoo.com/"]) {
     try {
       const response = await fetch(url, { headers: UA, redirect: "follow" });
       cookie = mergeCookieHeader(cookie, response);
+      if (cookie) break;
     } catch (_) { /* try next bootstrap URL */ }
   }
   if (!cookie) return null;
@@ -646,18 +660,31 @@ async function ensureYahooSession(force = false) {
   return yahooSession;
 }
 
-async function yahooAuthedFetch(url, { forceAuth = false } = {}) {
+function yahooAuthedInit(session, method, body) {
+  const init = {
+    method,
+    headers: { ...UA, Cookie: session.cookie },
+  };
+  if (body != null) {
+    init.headers["Content-Type"] = "application/json";
+    init.body = JSON.stringify(body);
+  }
+  return init;
+}
+
+async function yahooAuthedFetch(url, { forceAuth = false, method = "GET", body = null } = {}) {
   let session = await ensureYahooSession(forceAuth);
   if (!session.crumb) return null;
   const joiner = url.includes("?") ? "&" : "?";
   const authedUrl = `${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`;
-  let response = await fetch(authedUrl, { headers: { ...UA, Cookie: session.cookie } });
+  let response = await fetch(authedUrl, yahooAuthedInit(session, method, body));
   if (response.status === 401 || response.status === 403) {
     session = await ensureYahooSession(true);
     if (!session.crumb) return response;
-    response = await fetch(`${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`, {
-      headers: { ...UA, Cookie: session.cookie },
-    });
+    response = await fetch(
+      `${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`,
+      yahooAuthedInit(session, method, body),
+    );
   }
   return response;
 }
@@ -721,12 +748,64 @@ async function fetchNews(symbol) {
   }
 }
 
+async function fetchEarningsFromVisualization(symbol) {
+  const plain = String(symbol || "").replace(/\.(KS|KQ)$/i, "");
+  const r = await yahooAuthedFetch(
+    "https://query1.finance.yahoo.com/v1/finance/visualization?lang=en-US&region=US",
+    {
+      method: "POST",
+      body: {
+        size: 16,
+        query: { operator: "eq", operands: ["ticker", plain] },
+        sortField: "startdatetime",
+        sortType: "DESC",
+        entityIdType: "earnings",
+        includeFields: ["startdatetime", "epsestimate", "epsactual", "epssurprisepct", "eventtype"],
+      },
+    },
+  );
+  if (!r || !r.ok) return null;
+  const data = await r.json();
+  const rows = data?.finance?.result?.[0]?.documents?.[0]?.rows || [];
+  const today = new Date().toISOString().slice(0, 10);
+  let nextDate = null;
+  let epsEstimate = null;
+  const history = [];
+  rows.forEach((row) => {
+    const iso = normalizeEarningsDateValue(row[0]);
+    if (!iso) return;
+    const est = row[2] != null && Number.isFinite(Number(row[2])) ? Number(row[2]) : null;
+    const actual = row[3] != null && Number.isFinite(Number(row[3])) ? Number(row[3]) : null;
+    const eventType = String(row[5] || "");
+    if (actual != null) {
+      history.push({
+        date: iso,
+        epsActual: actual,
+        epsEstimate: est,
+        surprisePct: row[4] != null && Number.isFinite(Number(row[4])) ? Number(row[4]) : null,
+      });
+    }
+    if (!nextDate && iso >= today && actual == null && (eventType === "2" || eventType === "1" || eventType === "11")) {
+      nextDate = iso;
+      epsEstimate = est;
+    }
+  });
+  if (!nextDate) return null;
+  return { nextDate, dates: [nextDate], epsEstimate, history: history.slice(0, 8) };
+}
+
 async function fetchEarnings(symbol) {
   try {
-    const r = await yahooAuthedFetch(
-      `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=calendarEvents,earningsHistory,defaultKeyStatistics`,
-    );
-    if (!r || !r.ok) return null;
+    const summaryUrl =
+      `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}` +
+      `?modules=calendarEvents,earningsHistory,defaultKeyStatistics`;
+    let r = await yahooAuthedFetch(summaryUrl);
+    if (!r || !r.ok) {
+      r = await yahooAuthedFetch(
+        `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=calendarEvents,earningsHistory,defaultKeyStatistics`,
+      );
+    }
+    if (!r || !r.ok) return await fetchEarningsFromVisualization(symbol);
     const data = await r.json();
     const result = (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) || {};
     const cal = (result.calendarEvents && result.calendarEvents.earnings) || {};
@@ -755,14 +834,16 @@ async function fetchEarnings(symbol) {
           surprisePct: row.surprisePercent && row.surprisePercent.raw != null ? row.surprisePercent.raw : null,
         };
       });
-    return {
+    const payload = {
       nextDate: dates[0] || null,
       dates,
       epsEstimate,
       history,
     };
+    if (!payload.nextDate) return await fetchEarningsFromVisualization(symbol);
+    return payload;
   } catch (e) {
-    return null;
+    return await fetchEarningsFromVisualization(symbol);
   }
 }
 

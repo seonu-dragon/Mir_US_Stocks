@@ -285,7 +285,8 @@ let compareTickers = [];
 const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
-const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v1";
+const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
+const DEFAULT_VIEW_MODE = "advanced";
 const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
 const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
@@ -2825,7 +2826,7 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
   if (push) recordNav();
 }
 
-let currentViewMode = "basic";
+let currentViewMode = DEFAULT_VIEW_MODE;
 
 function setViewMode(mode, { persist = true } = {}) {
   currentViewMode = mode === "advanced" ? "advanced" : "basic";
@@ -2844,8 +2845,8 @@ function setViewMode(mode, { persist = true } = {}) {
 }
 
 function setupViewMode(requestedTab) {
-  let saved = "basic";
-  try { saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || "basic"; } catch (_) {}
+  let saved = DEFAULT_VIEW_MODE;
+  try { saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
   const requestedButton = requestedTab ? document.querySelector(`[data-tab="${requestedTab}"]`) : null;
   if (requestedButton?.dataset.advanced === "true") saved = "advanced";
   setViewMode(saved, { persist: false });

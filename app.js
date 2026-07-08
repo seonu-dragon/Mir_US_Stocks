@@ -14234,8 +14234,8 @@ function renderCompareBoard() {
     table.innerHTML = `<tr><td class="muted">비교할 티커를 입력하세요. (최대 6개)</td></tr>`;
     return;
   }
-  const items = tickers.map((t) => withDetail(stockByTicker(t)));
-  let html = `<thead><tr><th>지표</th>${items.map((i) => `<th><button type="button" class="ticker-link" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(i.ticker)}</button><div class="muted" style="font-size:11px;font-weight:400">${escapeHtml(i.company)}</div></th>`).join("")}</tr></thead><tbody>`;
+  const items = tickers.map((t) => withDetail(stockByTicker(t))).filter(Boolean);
+  let html = `<thead><tr><th>지표</th>${items.map((i) => `<th><button type="button" class="ticker-link" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(i.ticker)}</button><div class="muted" style="font-size:11px;font-weight:400">${escapeHtml(i.company || i.name || "")}</div></th>`).join("")}</tr></thead><tbody>`;
   COMPARE_METRICS.forEach(([label, fmt, toneFn]) => {
     html += `<tr><td class="metric-label">${label}</td>${items.map((item) => {
       const tone = toneFn ? toneFn(item) : "";

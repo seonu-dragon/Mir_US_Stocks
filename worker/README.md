@@ -26,6 +26,8 @@ GitHub Pages는 정적 호스팅이라 방문자가 페이지를 열어도 서�
   합성차트였던 종목(FLNT·STTK 등)도 **실제 차트로 자동 교체**합니다.
 - 호출 실패 시에는 빌드 때 미리 저장해 둔 상세파일 뉴스로 자동 폴백합니다.
 - Worker 응답은 엣지에서 15분 캐시되어 야후 호출 부담을 줄입니다.
+- **실적 일정**(`?earnings_calendar=1`, 종목 상세 `earnings`)은 Yahoo `quoteSummary` API가
+  쿠키+crumb 인증을 요구합니다. 실적이 비어 보이면 `yahoo-proxy.js`를 Cloudflare에 **재배포**하세요.
 
 ## 과거 가격 이벤트 원인 분석
 

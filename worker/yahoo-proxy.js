@@ -105,9 +105,8 @@ export default {
     // Batch earnings dates for market-wide calendar tab.
     if (url.searchParams.get("earnings_calendar")) {
       const raw = (url.searchParams.get("tickers") || "")
-        .toUpperCase()
         .split(",")
-        .map((t) => t.trim().replace(/[^A-Z0-9.\-]/g, ""))
+        .map((t) => t.trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, ""))
         .filter(Boolean)
         .slice(0, 60);
       const earnings = await fetchEarningsCalendar(raw);
@@ -531,6 +530,138 @@ function isKoreanTicker(ticker) {
   return /\.(KS|KQ)$/i.test(String(ticker || ""));
 }
 
+// Yahoo quoteSummary now requires session cookies + crumb (otherwise 401 → earnings null).
+let yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
+const YAHOO_SESSION_TTL_MS = 20 * 60 * 1000;
+
+function mergeCookieHeader(existing, response) {
+  const jar = new Map();
+  String(existing || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .forEach((pair) => {
+      const idx = pair.indexOf("=");
+      if (idx > 0) jar.set(pair.slice(0, idx), pair.slice(idx + 1));
+    });
+  const setCookies = typeof response.headers.getSetCookie === "function"
+    ? response.headers.getSetCookie()
+    : [];
+  setCookies.forEach((line) => {
+    const part = String(line).split(";")[0].trim();
+    const idx = part.indexOf("=");
+    if (idx > 0) jar.set(part.slice(0, idx), part.slice(idx + 1));
+  });
+  return [...jar.entries()].map(([key, value]) => `${key}=${value}`).join("; ");
+}
+
+function normalizeEarningsDateValue(value) {
+  if (value == null) return null;
+  if (typeof value === "number" && Number.isFinite(value)) {
+    const d = new Date(value * 1000);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  }
+  if (typeof value === "string") {
+    const match = value.match(/^(\d{4}-\d{2}-\d{2})/);
+    if (match) return match[1];
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
+  }
+  if (typeof value === "object") {
+    if (typeof value.fmt === "string" && /^\d{4}-\d{2}-\d{2}/.test(value.fmt)) return value.fmt.slice(0, 10);
+    if (typeof value.raw === "number") return normalizeEarningsDateValue(value.raw);
+  }
+  return null;
+}
+
+async function bootstrapYahooSessionBasic() {
+  let cookie = "";
+  for (const url of ["https://fc.yahoo.com", "https://finance.yahoo.com/"]) {
+    try {
+      const response = await fetch(url, { headers: UA, redirect: "follow" });
+      cookie = mergeCookieHeader(cookie, response);
+    } catch (_) { /* try next bootstrap URL */ }
+  }
+  if (!cookie) return null;
+  const crumbResponse = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
+    headers: { ...UA, Cookie: cookie },
+    redirect: "follow",
+  });
+  const crumb = String(await crumbResponse.text() || "").trim();
+  if (!crumbResponse.ok || !crumb || crumb.includes("<html>")) return null;
+  return { cookie, crumb, strategy: "basic", at: Date.now() };
+}
+
+async function bootstrapYahooSessionCsrf() {
+  let cookie = "";
+  try {
+    const consent = await fetch("https://guce.yahoo.com/consent", { headers: UA, redirect: "follow" });
+    cookie = mergeCookieHeader(cookie, consent);
+    const body = await consent.text();
+    const csrfMatch = body.match(/name="csrfToken"\s+value="([^"]+)"/);
+    const sessionMatch = body.match(/name="sessionId"\s+value="([^"]+)"/);
+    if (csrfMatch && sessionMatch) {
+      const form = new URLSearchParams({
+        agree: "agree",
+        consentUUID: "default",
+        sessionId: sessionMatch[1],
+        csrfToken: csrfMatch[1],
+        originalDoneUrl: "https://finance.yahoo.com/",
+        namespace: "yahoo",
+      });
+      const post = await fetch(`https://consent.yahoo.com/v2/collectConsent?sessionId=${encodeURIComponent(sessionMatch[1])}`, {
+        method: "POST",
+        headers: { ...UA, Cookie: cookie, "Content-Type": "application/x-www-form-urlencoded" },
+        body: form.toString(),
+        redirect: "follow",
+      });
+      cookie = mergeCookieHeader(cookie, post);
+      const copy = await fetch(`https://guce.yahoo.com/copyConsent?sessionId=${encodeURIComponent(sessionMatch[1])}`, {
+        headers: { ...UA, Cookie: cookie },
+        redirect: "follow",
+      });
+      cookie = mergeCookieHeader(cookie, copy);
+    }
+    const finance = await fetch("https://finance.yahoo.com/", { headers: { ...UA, Cookie: cookie }, redirect: "follow" });
+    cookie = mergeCookieHeader(cookie, finance);
+  } catch (_) {
+    return null;
+  }
+  if (!cookie) return null;
+  const crumbResponse = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
+    headers: { ...UA, Cookie: cookie },
+    redirect: "follow",
+  });
+  const crumb = String(await crumbResponse.text() || "").trim();
+  if (!crumbResponse.ok || !crumb || crumb.includes("<html>")) return null;
+  return { cookie, crumb, strategy: "csrf", at: Date.now() };
+}
+
+async function ensureYahooSession(force = false) {
+  if (!force && yahooSession.crumb && Date.now() - yahooSession.at < YAHOO_SESSION_TTL_MS) {
+    return yahooSession;
+  }
+  const next = (await bootstrapYahooSessionBasic()) || (await bootstrapYahooSessionCsrf());
+  if (next) yahooSession = next;
+  return yahooSession;
+}
+
+async function yahooAuthedFetch(url, { forceAuth = false } = {}) {
+  let session = await ensureYahooSession(forceAuth);
+  if (!session.crumb) return null;
+  const joiner = url.includes("?") ? "&" : "?";
+  const authedUrl = `${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`;
+  let response = await fetch(authedUrl, { headers: { ...UA, Cookie: session.cookie } });
+  if (response.status === 401 || response.status === 403) {
+    session = await ensureYahooSession(true);
+    if (!session.crumb) return response;
+    response = await fetch(`${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`, {
+      headers: { ...UA, Cookie: session.cookie },
+    });
+  }
+  return response;
+}
+
 // Korean-language headlines from Naver's mobile stock news API. One representative
 // article per news cluster keeps the list diverse. Mirrors fetch_naver_news() in
 // scripts/update_korea_data.py so live and build-time news stay consistent.
@@ -592,19 +723,15 @@ async function fetchNews(symbol) {
 
 async function fetchEarnings(symbol) {
   try {
-    const r = await fetch(
+    const r = await yahooAuthedFetch(
       `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=calendarEvents,earningsHistory,defaultKeyStatistics`,
-      { headers: UA }
     );
-    if (!r.ok) return null;
+    if (!r || !r.ok) return null;
     const data = await r.json();
     const result = (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) || {};
     const cal = (result.calendarEvents && result.calendarEvents.earnings) || {};
     const dates = (cal.earningsDate || [])
-      .map((ts) => {
-        const d = typeof ts === "number" ? new Date(ts * 1000) : new Date(ts);
-        return Number.isNaN(d.getTime()) ? null : d.toISOString().slice(0, 10);
-      })
+      .map((ts) => normalizeEarningsDateValue(ts))
       .filter(Boolean);
     const epsEstimate = cal.epsEstimate && cal.epsEstimate.raw != null
       ? cal.epsEstimate.raw

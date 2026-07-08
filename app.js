@@ -14359,18 +14359,25 @@ function loadEarningsCalendar(force = false) {
     .finally(() => { earningsCalendarLoading = false; });
 }
 
+function localDateFromIso(iso) {
+  const parts = parseIsoDateParts(iso);
+  return parts ? new Date(parts.year, parts.month - 1, parts.day) : null;
+}
+
 function renderEarningsCalendarMarket(rows) {
   const body = byId("earningsCalendarBody");
   if (!body) return;
   const horizon = Number(byId("earnHorizon")?.value || 14);
   const today = snapshotBaseDate();
+  today.setHours(0, 0, 0, 0);
   const end = new Date(today.getTime() + horizon * 86400000);
+  end.setHours(23, 59, 59, 999);
   const grouped = {};
   (rows || []).forEach((row) => {
     const date = row.nextDate;
     if (!date) return;
-    const d = new Date(date);
-    if (Number.isNaN(d.getTime()) || d < today || d > end) return;
+    const d = localDateFromIso(date);
+    if (!d || d < today || d > end) return;
     if (!grouped[date]) grouped[date] = [];
     grouped[date].push(row);
   });
@@ -14381,7 +14388,7 @@ function renderEarningsCalendarMarket(rows) {
   }
   body.innerHTML = dates.map((date) => {
     const list = grouped[date].sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0));
-    const days = Math.ceil((new Date(date) - today) / 86400000);
+    const days = Math.ceil((localDateFromIso(date) - today) / 86400000);
     return `
       <section class="earnings-day-group">
         <div class="earnings-day-head">

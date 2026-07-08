@@ -101,6 +101,40 @@
     return { detail, status: res.status };
   }
 
+  function liveProxySymbol(ticker) {
+    const key = String(ticker || "").toUpperCase();
+    const isKr = window.MirMarket?.getMode?.() === "kr";
+    if (isKr && /^\d{6}$/.test(key)) {
+      return window.MirMarket?.getConfig?.()?.yahooTicker?.({ ticker: key }, "kospi") || `${key}.KS`;
+    }
+    return key.replace(/\./g, "-");
+  }
+
+  async function fetchLiveDetailFromProxy(ticker) {
+    if (window.MirLiveDetail?.fetch) {
+      return window.MirLiveDetail.fetch(ticker);
+    }
+    const proxy = window.MIR_LIVE_PROXY || window.MirLiveDetail?.proxyUrl || null;
+    if (!proxy) return null;
+    const endpoint = `${String(proxy).replace(/\/$/, "")}/?ticker=${encodeURIComponent(liveProxySymbol(ticker))}`;
+    try {
+      const res = await fetch(endpoint, { cache: "no-store" });
+      if (!res.ok) return null;
+      const payload = await res.json();
+      if (!Array.isArray(payload.chart) || !payload.chart.length) return null;
+      return {
+        ticker: String(ticker || "").toUpperCase(),
+        name: payload.name || payload.company || ticker,
+        company: payload.name || payload.company || ticker,
+        chartSeries: payload.chart,
+        historySource: "yahoo",
+        __liveGenerated: true,
+      };
+    } catch {
+      return null;
+    }
+  }
+
   async function loadTickerDetail(ticker) {
     const paths = detailPathsForTicker(ticker);
     let lastStatus = 0;
@@ -122,9 +156,22 @@
       }
     }
 
+    const live = await fetchLiveDetailFromProxy(ticker);
+    if (live) return live;
+
     if (sawDetail) return { __emptyChart: true };
     if (lastStatus === 404) return { __notFound: true, paths };
     return { __fetchError: lastStatus ? `http-${lastStatus}` : "unknown" };
+  }
+
+  function submitAiChatForm() {
+    const form = byId("aiChatForm");
+    if (!form) return;
+    if (typeof form.requestSubmit === "function") {
+      form.requestSubmit();
+      return;
+    }
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   }
 
   function isMobileViewport() {
@@ -223,7 +270,7 @@
       setInputHint(
         inKr && !/^\d{6}$/.test(ticker)
           ? `${ticker}는 미국 종목입니다. 상단에서 🇺🇸 미국 주식 모드로 전환한 뒤 다시 시도해 보세요.`
-          : `${ticker} 상세 파일을 찾지 못했습니다.`,
+          : `${ticker} 차트를 불러오지 못했습니다. 네트워크·프록시 설정을 확인해 주세요.`,
         true,
       );
       return;
@@ -250,7 +297,9 @@
         const container = byId("tab-ai-chat")?.querySelector(".ai-chat-container");
         container?.classList.remove("is-welcome-view");
         document.body.classList.add("ai-stock-analysis-view");
-        setInputHint(`${ticker} · 6개월 차트`, false);
+        const liveTag = detail?.__liveGenerated ? " · 실시간" : "";
+        const staleTag = window.MirDataStatus?.showBanner ? " · 캐시 데이터" : "";
+        setInputHint(`${ticker} · 6개월 차트${liveTag}${staleTag}`, false);
       },
     });
 
@@ -398,7 +447,7 @@
         setInputHint(SERVICE_PREP_MSG, true);
         return;
       }
-      byId("aiChatForm")?.requestSubmit();
+      submitAiChatForm();
     }, true);
 
     byId("aiChatInput")?.addEventListener("input", () => {

@@ -3,7 +3,13 @@
  * morphs into a 2D stock chart when the user requests a ticker.
  */
 (function () {
-  const GRID = 44;
+  const GRID_MAX = 44;
+  const GRID_MIN = 20;
+  const GRID_FPS_TARGET = 30;
+  const GRID_FPS_RECOVER = 52;
+  let gridRes = GRID_MAX;
+  let fpsSamples = [];
+  let fpsCheckTs = 0;
   const BG = "#080b12";
   const STAR_COUNT = 92;
   const EPOCH_CYCLE = 108;
@@ -33,8 +39,10 @@
   let targetCamCenterY = CAM_CENTER_Y;
   let targetViewScale = BASE_SCALE;
   let targetViewPitch = DEFAULT_PITCH;
-  const MORPH_DURATION = 1800;
-  const MORPH_CRISP_START = 0.7;
+  const MORPH_DURATION = 2200;
+  const MORPH_CRISP_START = 0.52;
+  const MORPH_MESH_FADE_START = 0.6;
+  const REVEAL_EDGE = 0.34;
   const RANGE_BARS = { "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504 };
   const CHART_TARGET_YAW = 0;
   const CHART_TARGET_PITCH = 1.12;
@@ -262,6 +270,16 @@
     return easeInOutQuart(t);
   }
 
+  /**
+   * Left→right reveal front used to "draw in" the crisp chart during the
+   * morph. `crispPhase` 0→1 sweeps the front across the plot; each column
+   * (normalized x in [0,1]) ramps in as the soft-edged front passes it.
+   */
+  function columnReveal(iNorm, crispPhase) {
+    const front = crispPhase * (1 + REVEAL_EDGE);
+    return smoothstep((front - iNorm) / REVEAL_EDGE);
+  }
+
   function clamp(v, lo, hi) {
     return Math.max(lo, Math.min(hi, v));
   }
@@ -374,7 +392,7 @@
     return `${parts[1]}/${parts[2]}`;
   }
 
-  function drawCrispCandles(w, h, layout, alpha, includeVolume) {
+  function drawCrispCandles(w, h, layout, alpha, includeVolume, reveal) {
     if (!chartBars.length || alpha <= 0) return;
     const { padL, padT, plotW, plotH, volH, gap } = layout;
     const { n, xAt, yAt, candleW } = layoutHelpers(layout);
@@ -382,6 +400,9 @@
     const sma5 = computeSma(chartBars, 5);
     const sma20 = computeSma(chartBars, 20);
     const sma60 = computeSma(chartBars, 60);
+    const rev = typeof reveal === "function" ? reveal : null;
+    // per-column reveal in [0,1]; 1 (fully drawn) when no reveal fn supplied
+    const revAt = (i) => (rev ? clamp(rev(i, n), 0, 1) : 1);
 
     ctx.save();
     ctx.globalAlpha = alpha;
@@ -396,6 +417,7 @@
       ctx.stroke();
     }
 
+    // MA lines "draw in" left→right: extend only as far as the reveal front.
     function drawMaLine(values, color) {
       ctx.strokeStyle = color;
       ctx.lineWidth = 1.4;
@@ -403,6 +425,7 @@
       let started = false;
       for (let i = 0; i < values.length; i += 1) {
         if (values[i] == null) continue;
+        if (rev && revAt(i) <= 0.5) break;
         const x = xAt(i);
         const y = yAt(values[i]);
         if (!started) {
@@ -420,16 +443,22 @@
     drawMaLine(sma5, "rgba(251, 146, 60, 0.9)");
 
     for (let i = 0; i < n; i += 1) {
+      const r = revAt(i);
+      if (r <= 0.01) continue;
       const bar = chartBars[i];
       const x = xAt(i);
       const up = bar.c >= bar.o;
       const color = up ? "#22c55e" : "#ef4444";
-      const bodyTop = yAt(Math.max(bar.o, bar.c));
-      const bodyBot = yAt(Math.min(bar.o, bar.c));
-      const wickTop = yAt(bar.h);
-      const wickBot = yAt(bar.l);
+      // candles sprout from the close-price line outward as they reveal
+      const grow = rev ? smoothstep(r) : 1;
+      const baseY = yAt(bar.c);
+      const bodyTop = lerp(baseY, yAt(Math.max(bar.o, bar.c)), grow);
+      const bodyBot = lerp(baseY, yAt(Math.min(bar.o, bar.c)), grow);
+      const wickTop = lerp(baseY, yAt(bar.h), grow);
+      const wickBot = lerp(baseY, yAt(bar.l), grow);
       const bodyH = Math.max(1, bodyBot - bodyTop);
 
+      ctx.globalAlpha = alpha * r;
       ctx.strokeStyle = color;
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -439,19 +468,43 @@
       ctx.fillStyle = color;
       ctx.fillRect(x - candleW * 0.5, bodyTop, candleW, bodyH);
     }
+    ctx.globalAlpha = alpha;
 
     if (includeVolume) {
       const volTop = padT + plotH + gap;
       for (let i = 0; i < n; i += 1) {
+        const r = revAt(i);
+        if (r <= 0.01) continue;
         const bar = chartBars[i];
         const x = xAt(i);
         const up = bar.c >= bar.o;
-        const vh = ((bar.v || 0) / maxVol) * (volH - 4);
+        const grow = rev ? smoothstep(r) : 1;
+        const vh = ((bar.v || 0) / maxVol) * (volH - 4) * grow;
+        ctx.globalAlpha = alpha * r;
         ctx.fillStyle = up ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)";
         ctx.fillRect(x - candleW * 0.5, volTop + volH - vh, candleW, vh);
       }
     }
 
+    ctx.restore();
+  }
+
+  /** Soft glowing scan line that rides the reveal front while the chart draws in. */
+  function drawRevealScanline(w, h, layout, crispPhase) {
+    if (crispPhase <= 0 || crispPhase >= 1) return;
+    const { padL, padT, plotW, plotH } = layout;
+    const front = clamp(crispPhase * (1 + REVEAL_EDGE), 0, 1);
+    const x = padL + front * plotW;
+    const glowW = Math.max(18, plotW * 0.045);
+    const a = 0.55 * Math.sin(Math.PI * clamp(crispPhase, 0, 1));
+    const grad = ctx.createLinearGradient(x - glowW, 0, x + glowW, 0);
+    grad.addColorStop(0, "rgba(56, 189, 248, 0)");
+    grad.addColorStop(0.5, `rgba(125, 211, 252, ${a})`);
+    grad.addColorStop(1, "rgba(56, 189, 248, 0)");
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    ctx.fillStyle = grad;
+    ctx.fillRect(x - glowW, padT - 6, glowW * 2, plotH + 12);
     ctx.restore();
   }
 
@@ -975,8 +1028,8 @@
 
   function drawSurfaceMesh(w, h, points, zMin, zMax) {
     const cells = [];
-    for (let i = 0; i < GRID - 1; i++) {
-      for (let j = 0; j < GRID - 1; j++) {
+    for (let i = 0; i < gridRes - 1; i++) {
+      for (let j = 0; j < gridRes - 1; j++) {
         const p00 = points[i][j];
         const p11 = points[i + 1][j + 1];
         cells.push({ i, j, depth: p00.x + p00.y + p00.z + p11.x + p11.y + p11.z });
@@ -1005,21 +1058,21 @@
     }
 
     ctx.lineWidth = 0.5;
-    for (let i = 0; i < GRID; i++) {
-      for (let j = 0; j < GRID; j++) {
+    for (let i = 0; i < gridRes; i++) {
+      for (let j = 0; j < gridRes; j++) {
         const p = points[i][j];
         const [px, py] = project(p.x, p.y, p.z, w, h);
         const tc = (p.z - zMin) / (zMax - zMin + 0.0001);
         const [r, g, b] = jetColor(tc);
         ctx.strokeStyle = `rgba(${Math.round(r * 0.35)},${Math.round(g * 0.35)},${Math.round(b * 0.45)},${0.2 + tc * 0.16})`;
         ctx.beginPath();
-        if (i < GRID - 1) {
+        if (i < gridRes - 1) {
           const n = points[i + 1][j];
           const [nx, ny] = project(n.x, n.y, n.z, w, h);
           ctx.moveTo(px, py);
           ctx.lineTo(nx, ny);
         }
-        if (j < GRID - 1) {
+        if (j < gridRes - 1) {
           const n = points[i][j + 1];
           const [nx, ny] = project(n.x, n.y, n.z, w, h);
           ctx.moveTo(px, py);
@@ -1044,14 +1097,14 @@
 
     drawSpaceBackground(w, h, performance.now() * 0.001);
 
-    const step = 2 / (GRID - 1);
+    const step = 2 / (gridRes - 1);
     const points = [];
     let zMin = Infinity;
     let zMax = -Infinity;
 
-    for (let i = 0; i < GRID; i++) {
+    for (let i = 0; i < gridRes; i++) {
       points[i] = [];
-      for (let j = 0; j < GRID; j++) {
+      for (let j = 0; j < gridRes; j++) {
         const x = -1 + i * step;
         const y = -1 + j * step;
         const z = heightAt(x, y, epoch);
@@ -1063,8 +1116,8 @@
       }
     }
 
-    for (let i = 0; i < GRID; i++) {
-      for (let j = 0; j < GRID; j++) {
+    for (let i = 0; i < gridRes; i++) {
+      for (let j = 0; j < gridRes; j++) {
         const tc = (points[i][j].z - zMin) / (zMax - zMin + 0.0001);
         const [r, g, b] = jetColor(tc);
         points[i][j].r = r;
@@ -1111,17 +1164,17 @@
     drawSpaceBackground(w, h, performance.now() * 0.001);
 
     withCamera(camYaw, camPitch, camRoll, camScale, () => {
-      const step = 2 / (GRID - 1);
+      const step = 2 / (gridRes - 1);
       const points = [];
       let zMin = Infinity;
       let zMax = -Infinity;
       const landHeights = [];
 
-      for (let i = 0; i < GRID; i++) {
-        landHeights[i] = new Float32Array(GRID);
+      for (let i = 0; i < gridRes; i++) {
+        landHeights[i] = new Float32Array(gridRes);
         points[i] = [];
         const x = -1 + i * step;
-        for (let j = 0; j < GRID; j++) {
+        for (let j = 0; j < gridRes; j++) {
           const y = -1 + j * step;
           const zLand = heightAt(x, y, morphEpoch);
           const zChart = chartSurfaceZ(x, y, ease);
@@ -1135,17 +1188,17 @@
 
       let landLo = Infinity;
       let landHi = -Infinity;
-      for (let i = 0; i < GRID; i++) {
-        for (let j = 0; j < GRID; j++) {
+      for (let i = 0; i < gridRes; i++) {
+        for (let j = 0; j < gridRes; j++) {
           landLo = Math.min(landLo, landHeights[i][j]);
           landHi = Math.max(landHi, landHeights[i][j]);
         }
       }
       const landSpan = landHi - landLo + 0.0001;
 
-      for (let i = 0; i < GRID; i++) {
+      for (let i = 0; i < gridRes; i++) {
         const x = -1 + i * step;
-        for (let j = 0; j < GRID; j++) {
+        for (let j = 0; j < gridRes; j++) {
           const zLand = landHeights[i][j];
           const [lr, lg, lb] = jetColor((zLand - landLo) / landSpan);
           const colorT = waveFrontBlend(x, ease);
@@ -1157,7 +1210,10 @@
         }
       }
 
-      const meshFade = rawT >= MORPH_CRISP_START ? 1 - smoothstep((rawT - MORPH_CRISP_START) / (1 - MORPH_CRISP_START)) : 1;
+      const meshFade =
+        rawT >= MORPH_MESH_FADE_START
+          ? 1 - smoothstep((rawT - MORPH_MESH_FADE_START) / (1 - MORPH_MESH_FADE_START))
+          : 1;
       ctx.save();
       ctx.globalAlpha = meshFade;
       drawSurfaceMesh(w, h, points, zMin, zMax);
@@ -1165,11 +1221,15 @@
     });
 
     if (rawT >= MORPH_CRISP_START) {
-      const crispA = smoothstep((rawT - MORPH_CRISP_START) / (1 - MORPH_CRISP_START));
-      if (crispA > 0.02) {
-        drawCrispCandles(w, h, layout, crispA, true);
-        drawChartChrome(w, h, layout, crispA);
-      }
+      // crisp chart materializes left→right as a soft wave sweeps the plot,
+      // overlapping the dissolving 3D mesh for a seamless hand-off.
+      const crispPhase = (rawT - MORPH_CRISP_START) / (1 - MORPH_CRISP_START);
+      const reveal = (i, n) => columnReveal(n > 1 ? i / (n - 1) : 1, crispPhase);
+      drawCrispCandles(w, h, layout, 1, true, reveal);
+      drawRevealScanline(w, h, layout, crispPhase);
+      // labels/axes settle in once the sweep is mostly done
+      const chromeA = smoothstep(clamp((crispPhase - 0.4) / 0.6, 0, 1));
+      if (chromeA > 0.02) drawChartChrome(w, h, layout, chromeA);
     }
   }
 
@@ -1203,6 +1263,21 @@
     return Math.min(0.05, Math.max(0.001, raw));
   }
 
+  function trackAdaptiveGrid(now, dt) {
+    if (reducedMotion || renderMode !== "landscape") return;
+    if (dt > 0) fpsSamples.push(1 / dt);
+    if (fpsSamples.length > 36) fpsSamples.shift();
+    if (now - fpsCheckTs < 1200 || fpsSamples.length < 12) return;
+    fpsCheckTs = now;
+    const avgFps = fpsSamples.reduce((sum, fps) => sum + fps, 0) / fpsSamples.length;
+    if (avgFps < GRID_FPS_TARGET && gridRes > GRID_MIN) {
+      gridRes = Math.max(GRID_MIN, gridRes - 4);
+      fpsSamples.length = 0;
+    } else if (avgFps > GRID_FPS_RECOVER && gridRes < GRID_MAX) {
+      gridRes = Math.min(GRID_MAX, gridRes + 2);
+    }
+  }
+
   function draw(now) {
     if (!running || !ctx || !canvas) return;
 
@@ -1226,7 +1301,9 @@
       return;
     }
 
-    drawLandscape(w, h, frameDelta(now));
+    const dt = frameDelta(now);
+    trackAdaptiveGrid(typeof now === "number" ? now : performance.now(), dt);
+    drawLandscape(w, h, dt);
     raf = requestAnimationFrame(draw);
   }
 
@@ -1466,6 +1543,9 @@
 
   function start() {
     if (!ensureCanvas()) return;
+    gridRes = GRID_MAX;
+    fpsSamples.length = 0;
+    fpsCheckTs = 0;
     reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (renderMode === "landscape") {
       epoch = 0;

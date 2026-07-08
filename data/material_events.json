@@ -1,10 +1,358 @@
 {
-  "updatedAtKst": "2026-07-07 16:57 KST",
-  "lastFileDate": "2026-07-06",
-  "count": 850,
+  "updatedAtKst": "2026-07-08 15:41 KST",
+  "lastFileDate": "2026-07-07",
+  "count": 869,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조.",
   "events": [
+    {
+      "ticker": "QBTS",
+      "company": "D-Wave Quantum Inc.  (QBTS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-07",
+      "accession": "0001907982-26-000097",
+      "link": "https://www.sec.gov/Archives/edgar/data/1907982/000190798226000097/qbts-20260707.htm"
+    },
+    {
+      "ticker": "FXAC",
+      "company": "FortuneX Acquisition Corp  (FXAC, FXACU)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001829126-26-007307",
+      "link": "https://www.sec.gov/Archives/edgar/data/2121703/000182912626007307/fortunexacq_8k.htm"
+    },
+    {
+      "ticker": "PRAX",
+      "company": "Praxis Precision Medicines, Inc.  (PRAX)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-07",
+      "accession": "0001689548-26-000072",
+      "link": "https://www.sec.gov/Archives/edgar/data/1689548/000168954826000072/prax-20260707.htm"
+    },
+    {
+      "ticker": "DOCN",
+      "company": "DigitalOcean Holdings, Inc.  (DOCN)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001582961-26-000055",
+      "link": "https://www.sec.gov/Archives/edgar/data/1582961/000158296126000055/docn-20260707.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-07",
+      "accession": "0001564708-26-000146",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000146/nws-20260706.htm"
+    },
+    {
+      "ticker": "LPAA",
+      "company": "Launch One Acquisition Corp.  (LPAA, LPAAU, LPAAW)",
+      "items": [
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-07",
+      "accession": "0001213900-26-075677",
+      "link": "https://www.sec.gov/Archives/edgar/data/2015502/000121390026075677/ea0297154-8k_launch.htm"
+    },
+    {
+      "ticker": "SOLS",
+      "company": "Solstice Advanced Materials Inc.  (SOLS)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001213900-26-075618",
+      "link": "https://www.sec.gov/Archives/edgar/data/2064953/000121390026075618/ea0297143-8k425_solstice.htm"
+    },
+    {
+      "ticker": "RMD",
+      "company": "RESMED INC  (RMD, RSMDF)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-297658",
+      "link": "https://www.sec.gov/Archives/edgar/data/943819/000119312526297658/d88958d8k.htm"
+    },
+    {
+      "ticker": "PSA",
+      "company": "Public Storage  (PSA, PSA-PF, PSA-PG, PSA-PH, PSA-PI, PSA-PJ, PSA-PK, PSA-PL, PSA-PM, PSA-PN, PSA-PO, PSA-PP, PSA-PQ)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-297556",
+      "link": "https://www.sec.gov/Archives/edgar/data/1393311/000119312526297556/d156543d8k.htm"
+    },
+    {
+      "ticker": "MTZ",
+      "company": "MASTEC INC  (MTZ)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-297552",
+      "link": "https://www.sec.gov/Archives/edgar/data/15615/000119312526297552/d77261d8k.htm"
+    },
+    {
+      "ticker": "PRMB",
+      "company": "Primo Brands Corp  (PRMB)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-297539",
+      "link": "https://www.sec.gov/Archives/edgar/data/2042694/000119312526297539/d59881d8k.htm"
+    },
+    {
+      "ticker": "TMUS",
+      "company": "T-Mobile US, Inc.  (TMUS, TMUSI, TMUSL, TMUSZ)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-297534",
+      "link": "https://www.sec.gov/Archives/edgar/data/1283699/000119312526297534/d170112d8k.htm"
+    },
+    {
+      "ticker": "FISV",
+      "company": "FISERV INC  (FISV)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-297448",
+      "link": "https://www.sec.gov/Archives/edgar/data/798354/000119312526297448/d110419d8k.htm"
+    },
+    {
+      "ticker": "VRTX",
+      "company": "VERTEX PHARMACEUTICALS INC / MA  (VRTX)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001193125-26-296710",
+      "link": "https://www.sec.gov/Archives/edgar/data/875320/000119312526296710/d113650d8k.htm"
+    },
+    {
+      "ticker": "UGI",
+      "company": "UGI CORP /PA/  (UGI)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001104659-26-081321",
+      "link": "https://www.sec.gov/Archives/edgar/data/884614/000110465926081321/ugi-20260630x8k.htm"
+    },
+    {
+      "ticker": "ECHO",
+      "company": "EchoStar CORP  (ECHO, SATS)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-07",
+      "accession": "0001104659-26-080994",
+      "link": "https://www.sec.gov/Archives/edgar/data/1415404/000110465926080994/tm2619909d1_8k.htm"
+    },
+    {
+      "ticker": "O",
+      "company": "REALTY INCOME CORP  (O)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-07",
+      "accession": "0001104659-26-080984",
+      "link": "https://www.sec.gov/Archives/edgar/data/726728/000110465926080984/tm2619513d1_8k.htm"
+    },
+    {
+      "ticker": "EL",
+      "company": "ESTEE LAUDER COMPANIES INC  (EL)",
+      "items": [
+        {
+          "code": "2.05",
+          "label": "구조조정 비용"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-07",
+      "accession": "0001001250-26-000031",
+      "link": "https://www.sec.gov/Archives/edgar/data/1001250/000100125026000031/el-20240201.htm"
+    },
     {
       "ticker": "MDB",
       "company": "MongoDB, Inc.  (MDB)",
@@ -458,6 +806,28 @@
       "fileDate": "2026-07-06",
       "accession": "0001171843-26-004484",
       "link": "https://www.sec.gov/Archives/edgar/data/1937926/000117184326004484/f8k_070626.htm"
+    },
+    {
+      "ticker": "CRNX",
+      "company": "Crinetics Pharmaceuticals, Inc.  (CRNX)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-06",
+      "accession": "0001140361-26-027642",
+      "link": "https://www.sec.gov/Archives/edgar/data/1658247/000114036126027642/ef20077399_form8k.htm"
     },
     {
       "ticker": "ESI",

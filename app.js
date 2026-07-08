@@ -363,6 +363,49 @@ function updateDataLoadedAt(date = new Date()) {
 // Inject the active market's snapshot .js (window global) on demand. Used as the
 // file:// path and as an http fallback when the JSON fetch fails. Only the active
 // market is ever loaded, so we never download the other market's snapshot.
+function loadEarningsCalendarSnapshot(cfg) {
+  return new Promise((resolve) => {
+    const isKr = cfg.id === "kr";
+    const src = isKr ? "data/korea/earnings_calendar.js" : "data/earnings_calendar.js";
+    const globalName = isKr ? "KOREA_EARNINGS_CALENDAR" : "EARNINGS_CALENDAR_SNAPSHOT";
+    if (window[globalName]) { resolve(true); return; }
+    const existing = document.querySelector(`script[data-earnings-calendar="${cfg.id}"]`);
+    if (existing) {
+      existing.addEventListener("load", () => resolve(true), { once: true });
+      existing.addEventListener("error", () => resolve(false), { once: true });
+      return;
+    }
+    const script = document.createElement("script");
+    script.src = src;
+    script.async = true;
+    script.dataset.earningsCalendar = cfg.id;
+    script.addEventListener("load", () => resolve(true), { once: true });
+    script.addEventListener("error", () => resolve(false), { once: true });
+    document.head.appendChild(script);
+  });
+}
+
+function earningsSnapshotRows() {
+  const payload = isKrMarket() ? window.KOREA_EARNINGS_CALENDAR : window.EARNINGS_CALENDAR_SNAPSHOT;
+  return Array.isArray(payload?.earnings) ? payload.earnings : [];
+}
+
+function staticEarningsRowsForTickers(tickers) {
+  const pool = new Set(tickers.map((t) => normalizeTickerKey(t)));
+  return earningsSnapshotRows().filter((row) => pool.has(normalizeTickerKey(row.ticker)));
+}
+
+function staticEarningsForTicker(ticker) {
+  const row = earningsSnapshotRows().find((item) => normalizeTickerKey(item.ticker) === normalizeTickerKey(ticker));
+  if (!row?.nextDate) return null;
+  return {
+    nextDate: row.nextDate,
+    epsEstimate: row.epsEstimate ?? null,
+    dates: [row.nextDate],
+    history: Array.isArray(row.history) ? row.history : [],
+  };
+}
+
 function loadMapFundamentalsScript(cfg) {
   return new Promise((resolve) => {
     const isKr = cfg.id === "kr";
@@ -551,6 +594,7 @@ async function loadData(options = {}) {
   }
 
   await loadMapFundamentalsScript(cfg);
+  loadEarningsCalendarSnapshot(cfg);
 
   // 백업 및 복원 로직: 한쪽 마켓 스냅샷에 cardNews가 없는 경우 상대 마켓(기본적으로 US) 스냅샷에서 백업/복원
   if (data && data.cardNews) {
@@ -8620,7 +8664,7 @@ function renderEarningsCalendar(item) {
   }
   box.hidden = false;
   const f = normalizedFundamentalsForItem(item);
-  const live = item.liveEarnings || {};
+  const live = item.liveEarnings || staticEarningsForTicker(item.ticker) || {};
   const nextDate = live.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
   const epsEstimate = live.epsEstimate ?? f.epsNextQ ?? null;
   const history = normalizeEarningsHistory(item).slice(-4).reverse();
@@ -14347,14 +14391,20 @@ function loadEarningsCalendar(force = false) {
   // KR: send Yahoo symbols (005930.KS) so the proxy can query Yahoo; the response is
   // normalized back to the snapshot ticker in renderEarningsCalendarMarket.
   const tickers = earningsTickerPool().map((t) => liveProxyTicker(stockByTicker(t) || t)).join(",");
+  const applyEarningsRows = (rows) => {
+    earningsCalendarCache = rows || [];
+    renderEarningsCalendarMarket(earningsCalendarCache);
+  };
   fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?earnings_calendar=1&tickers=${encodeURIComponent(tickers)}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((payload) => {
-      earningsCalendarCache = (payload && payload.earnings) || [];
-      renderEarningsCalendarMarket(earningsCalendarCache);
+      const liveRows = (payload && payload.earnings) || [];
+      applyEarningsRows(liveRows.length ? liveRows : staticEarningsRowsForTickers(earningsTickerPool()));
     })
     .catch(() => {
-      body.innerHTML = `<p class="muted">실적 일정을 불러오지 못했습니다.</p>`;
+      const fallback = staticEarningsRowsForTickers(earningsTickerPool());
+      if (fallback.length) applyEarningsRows(fallback);
+      else body.innerHTML = `<p class="muted">실적 일정을 불러오지 못했습니다.</p>`;
     })
     .finally(() => { earningsCalendarLoading = false; });
 }

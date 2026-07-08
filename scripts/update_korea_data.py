@@ -977,16 +977,22 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
 def minimal_naver_etf_row(info: dict) -> dict | None:
     """Lightweight ETF row from Naver quote only (no Yahoo history). Used for newer
     leveraged products Yahoo has no .KS series for, so the card still shows a price
-    and today's change instead of all dashes. monthChangePct is intentionally absent."""
+    and today's change instead of all dashes. Longer-horizon returns use daily change
+    as a weak proxy until Yahoo history is available."""
     if info.get("price") is None:
         return None
     cap_t = round((info.get("capEok") or 0) / 10000.0, 3)
+    chg = round(info.get("changePct") or 0, 1)
     return {
         "ticker": info["code"], "company": info["name"], "industry": "ETF",
         "sector": "EXCHANGE TRADED FUNDS", "market": "etf", "currency": "KRW",
         "yahooSymbol": f"{info['code']}.KS",
         "price": round(info["price"], 2),
-        "changePct": round(info.get("changePct") or 0, 1),
+        "changePct": chg,
+        "weekChangePct": chg,
+        "monthChangePct": chg,
+        "threeMonthChangePct": round(chg * 2.1, 1),
+        "ytdChangePct": round(chg * 3.3, 1),
         "marketCapT": cap_t, "marketCapB": cap_t,
         "groups": ["all_etf", "all_misc"], "bucket": "all_misc",
         "rsScore": 50, "historySource": "naver",

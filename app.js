@@ -5749,8 +5749,37 @@ function scanSeriesBias(series) {
   return scanClamp(b, -1, 1);
 }
 
+const SCAN_MOMENTUM_LOOKBACK_3M = 39;
+
+function periodChangeFromSeries(series, periods) {
+  const vals = (Array.isArray(series) ? series : []).map(Number).filter(Number.isFinite);
+  if (vals.length < 2) return null;
+  const idx = Math.min(Math.max(1, periods), vals.length - 1);
+  const last = vals[vals.length - 1];
+  const ref = vals[vals.length - 1 - idx];
+  if (!Number.isFinite(ref) || ref === 0) return null;
+  return ((last - ref) / Math.abs(ref)) * 100;
+}
+
+function enrichScanMomentum(item) {
+  if (!item || typeof item !== "object") return item;
+  const series = item.closeSeries;
+  if (!Array.isArray(series) || series.length < 20) return item;
+  const patch = {};
+  if (!Number.isFinite(item.threeMonthChangePct)) {
+    const pct = periodChangeFromSeries(series, SCAN_MOMENTUM_LOOKBACK_3M);
+    if (Number.isFinite(pct)) patch.threeMonthChangePct = Math.round(pct * 10) / 10;
+  }
+  if (!Number.isFinite(item.monthChangePct)) {
+    const pct = periodChangeFromSeries(series, 21);
+    if (Number.isFinite(pct)) patch.monthChangePct = Math.round(pct * 10) / 10;
+  }
+  return Object.keys(patch).length ? { ...item, ...patch } : item;
+}
+
 // 스냅샷 지표만으로 빠르게 추정하는 상승확률(12~88%).
 function scanQuickProb(item, horizon) {
+  item = enrichScanMomentum(item);
   // 예측 기간에 따라 단기/장기 신호 가중을 조절한다.
   const shortW = horizon <= 5 ? 1.4 : horizon >= 60 ? 0.5 : 0.9;
   const longW = horizon >= 60 ? 1.5 : horizon <= 5 ? 0.7 : 1.1;
@@ -9380,6 +9409,7 @@ const PORTFOLIO_KEY = "mir_portfolio_v1";
 const DIVIDEND_PLAN_KEY = "mir_dividend_plan_v1";
 const INVESTMENT_JOURNAL_KEY = "mir_investment_journal_v1";
 const REBALANCE_TARGET_KEY = "mir_rebalance_targets_v1";
+const REBALANCE_TOTAL_EPS = 0.01;
 const PORTFOLIO_DONUT_MODE_KEY = "mir_portfolio_donut_mode_v1";
 const STRESS_TEST_KEY = "mir_stress_test_v1";
 const PORTFOLIO_FX_KEY = "mir_portfolio_entry_fx_v1";
@@ -9457,6 +9487,16 @@ function fmtPortfolioMoneyDelta(value) {
   if (!Number.isFinite(n)) return "-";
   const sign = n >= 0 ? "+" : "-";
   return `${sign}${fmtPortfolioMoney(Math.abs(n))}`;
+}
+
+function rebalanceTargetTotalOk(total) {
+  return Math.abs(Number(total) - 100) < REBALANCE_TOTAL_EPS;
+}
+
+function rebalanceNormalizeTargetList(targets) {
+  const total = targets.reduce((sum, value) => sum + value, 0);
+  if (!(total > 0)) return targets;
+  return targets.map((value) => (value / total) * 100);
 }
 
 function rebalanceShareLabel(shares) {
@@ -9566,11 +9606,13 @@ function renderRebalanceCalculator() {
   }
   const totalValue = rows.reduce((sum, row) => sum + row.value, 0);
   const equal = 100 / rows.length;
-  const targets = rows.map((row) => Number.isFinite(Number(rebalanceTargets[row.ticker])) ? Number(rebalanceTargets[row.ticker]) : equal);
-  const targetTotal = targets.reduce((sum, value) => sum + value, 0);
+  const rawTargets = rows.map((row) => Number.isFinite(Number(rebalanceTargets[row.ticker])) ? Number(rebalanceTargets[row.ticker]) : equal);
+  const targetTotal = rawTargets.reduce((sum, value) => sum + value, 0);
+  const targets = rebalanceTargetTotalOk(targetTotal) ? rebalanceNormalizeTargetList(rawTargets) : rawTargets;
+  const displayTotal = rebalanceTargetTotalOk(targetTotal) ? 100 : targetTotal;
   summary.innerHTML = `
     <div><span>평가금액</span><strong>${fmtPortfolioMoney(totalValue)}</strong></div>
-    <div><span>목표 합계</span><strong class="${Math.abs(targetTotal - 100) < 0.05 ? "pos" : "neg"}">${targetTotal.toFixed(1)}%</strong></div>
+    <div><span>목표 합계</span><strong class="${rebalanceTargetTotalOk(targetTotal) ? "pos" : "neg"}">${displayTotal.toFixed(1)}%</strong></div>
     <div><span>계산 기준</span><strong>현재 총액 유지</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>현재</th><th>목표</th><th>차이</th><th>주문 수량</th></tr></thead><tbody>${rows.map((row, index) => {
     const currentPct = totalValue > 0 ? row.value / totalValue * 100 : 0;
@@ -9593,10 +9635,10 @@ function renderRebalanceCalculator() {
 
 function setEqualRebalanceTargets() {
   const rows = portfolioDetailRows();
-  const value = rows.length ? 100 / rows.length : 0;
+  if (!rows.length) return;
+  const value = 100 / rows.length;
   rows.forEach((row) => { rebalanceTargets[row.ticker] = value; });
-  savePortfolioExtension(REBALANCE_TARGET_KEY, rebalanceTargets);
-  renderRebalanceCalculator();
+  normalizeRebalanceTargets();
 }
 
 function normalizeRebalanceTargets() {

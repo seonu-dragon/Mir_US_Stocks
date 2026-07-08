@@ -102,6 +102,21 @@ export default {
     if (url.searchParams.get("calendar")) {
       return cors(json({ calendar: await fetchCalendar() }));
     }
+    if (url.searchParams.get("earnings_probe")) {
+      const session = await bootstrapYahooSessionBasic();
+      let quoteStatus = null;
+      if (session?.crumb) {
+        const probe = await yahooAuthedFetch(
+          "https://query1.finance.yahoo.com/v10/finance/quoteSummary/NVDA?modules=calendarEvents",
+        );
+        quoteStatus = probe ? probe.status : null;
+      }
+      return cors(json({
+        cookieLen: session?.cookie?.length || 0,
+        hasCrumb: Boolean(session?.crumb),
+        quoteStatus,
+      }));
+    }
     // Batch earnings dates for market-wide calendar tab.
     if (url.searchParams.get("earnings_calendar")) {
       const raw = (url.searchParams.get("tickers") || "")
@@ -657,6 +672,7 @@ async function ensureYahooSession(force = false) {
   }
   const next = (await bootstrapYahooSessionBasic()) || (await bootstrapYahooSessionCsrf());
   if (next) yahooSession = next;
+  else yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
   return yahooSession;
 }
 

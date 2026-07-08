@@ -245,17 +245,17 @@
           </div>
           <div class="daily-action-meta">
             <div class="action-mode-switch" id="actionModeSwitch" role="group" aria-label="액션 보드 / 오늘의 뉴스 전환">
-              <button type="button" data-action-mode="actions" class="is-active">액션 보드</button>
-              <button type="button" data-action-mode="news">오늘의 뉴스</button>
+              <button type="button" data-action-mode="actions">액션 보드</button>
+              <button type="button" data-action-mode="news" class="is-active">오늘의 뉴스</button>
             </div>
             <span id="dailyActionCount" class="daily-action-count">확인 중</span>
             <button type="button" class="ghost compact-btn" id="dailyActionRefresh">새로고침</button>
           </div>
         </div>
-        <div class="daily-action-grid" id="dailyActionGrid" aria-live="polite">
+        <div class="daily-action-grid" id="dailyActionGrid" aria-live="polite" hidden>
           <p class="muted">오늘의 확인 항목을 정리하는 중입니다.</p>
         </div>
-        <div class="daily-action-news" id="dailyActionNews" hidden></div>
+        <div class="daily-action-news" id="dailyActionNews"></div>
       </section>
 
       <div class="navigation-mode-bar">

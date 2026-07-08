@@ -88,6 +88,7 @@ function health(ticker, name, changePct, note) {
 }
 
 let data = fallbackData;
+let cardNewsBackup = null;
 let usingFallbackSnapshot = false;
 
 // Tickers with bad/synthetic snapshot data (e.g. pre-IPO placeholders).
@@ -537,6 +538,29 @@ async function loadData(options = {}) {
 
   await loadMapFundamentalsScript(cfg);
 
+  // 백업 및 복원 로직: 한쪽 마켓 스냅샷에 cardNews가 없는 경우 상대 마켓(기본적으로 US) 스냅샷에서 백업/복원
+  if (data && data.cardNews) {
+    cardNewsBackup = data.cardNews;
+  } else if (data && !data.cardNews) {
+    if (cardNewsBackup) {
+      data.cardNews = cardNewsBackup;
+    } else {
+      try {
+        const usSnapPath = "data/market_snapshot.json";
+        const response = await fetch(usSnapPath);
+        if (response.ok) {
+          const usData = await response.json();
+          if (usData && usData.cardNews) {
+            cardNewsBackup = usData.cardNews;
+            data.cardNews = cardNewsBackup;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to fetch fallback cardNews from US snapshot", err);
+      }
+    }
+  }
+
   if (!options.skipBoot) boot(options);
 }
 
@@ -786,6 +810,7 @@ function boot(options = {}) {
   setupTickerSearchHelpers();
   renderAll();
   setupActionBoard();
+  setActionBoardMode(actionBoardMode);
   loadCalendar();
   setupEvents();
   setupBriefingToggles();
@@ -1580,7 +1605,7 @@ function upcomingActionRows() {
 }
 
 // ===== 액션 보드 ↔ 오늘의 뉴스 전환 (웹) =====
-let actionBoardMode = "actions";
+let actionBoardMode = "news";
 let actionBoardMqBound = false;
 
 function renderActionNews() {

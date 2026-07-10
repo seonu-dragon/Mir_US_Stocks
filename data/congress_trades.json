@@ -1,33 +1,33 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-07-10 17:05:07 KST",
+  "updatedAtKst": "2026-07-11 06:39:07 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7641,
+  "tradeCount": 7643,
   "politicianCount": 165,
   "rankings": [
     {
       "rank": 1,
-      "id": "house-greg-landsman",
-      "name": "Greg Landsman",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 101.14,
-      "buyCount": 22,
-      "sellCount": 50,
-      "tradeCount": 72,
-      "committees": []
-    },
-    {
-      "rank": 2,
       "id": "house-terri-a-sewell",
       "name": "Terri A. Sewell",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 88.55,
+      "estReturnPct": 96.16,
       "buyCount": 1,
       "sellCount": 1,
       "tradeCount": 2,
+      "committees": []
+    },
+    {
+      "rank": 2,
+      "id": "house-greg-landsman",
+      "name": "Greg Landsman",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 89.76,
+      "buyCount": 22,
+      "sellCount": 50,
+      "tradeCount": 72,
       "committees": []
     },
     {
@@ -36,7 +36,7 @@
       "name": "Tim Moore",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 81.15,
+      "estReturnPct": 80.41,
       "buyCount": 49,
       "sellCount": 26,
       "tradeCount": 75,
@@ -48,7 +48,7 @@
       "name": "James Comer",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 76.6,
+      "estReturnPct": 73.52,
       "buyCount": 15,
       "sellCount": 0,
       "tradeCount": 15,
@@ -60,7 +60,7 @@
       "name": "Thomas H. Kean",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 66.51,
+      "estReturnPct": 68.04,
       "buyCount": 32,
       "sellCount": 12,
       "tradeCount": 55,
@@ -72,7 +72,7 @@
       "name": "Dwight Evans",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 59.22,
+      "estReturnPct": 59.27,
       "buyCount": 9,
       "sellCount": 15,
       "tradeCount": 24,
@@ -84,7 +84,7 @@
       "name": "Jared Moskowitz",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 50.89,
+      "estReturnPct": 51.35,
       "buyCount": 121,
       "sellCount": 56,
       "tradeCount": 177,
@@ -96,7 +96,7 @@
       "name": "Rob Bresnahan",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 40.79,
+      "estReturnPct": 41.92,
       "buyCount": 111,
       "sellCount": 165,
       "tradeCount": 276,
@@ -108,7 +108,7 @@
       "name": "Tim Walberg",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 40.0,
+      "estReturnPct": 40.64,
       "buyCount": 13,
       "sellCount": 2,
       "tradeCount": 15,
@@ -116,11 +116,23 @@
     },
     {
       "rank": 10,
+      "id": "house-jefferson-shreve",
+      "name": "Jefferson Shreve",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 39.89,
+      "buyCount": 104,
+      "sellCount": 144,
+      "tradeCount": 249,
+      "committees": []
+    },
+    {
+      "rank": 11,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 39.03,
+      "estReturnPct": 38.54,
       "buyCount": 13,
       "sellCount": 4,
       "tradeCount": 19,
@@ -129,24 +141,12 @@
       ]
     },
     {
-      "rank": 11,
-      "id": "house-jefferson-shreve",
-      "name": "Jefferson Shreve",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 38.41,
-      "buyCount": 104,
-      "sellCount": 144,
-      "tradeCount": 249,
-      "committees": []
-    },
-    {
       "rank": 12,
       "id": "house-bruce-westerman",
       "name": "Bruce Westerman",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 35.35,
+      "estReturnPct": 35.23,
       "buyCount": 51,
       "sellCount": 47,
       "tradeCount": 98,
@@ -158,7 +158,7 @@
       "name": "Debbie Dingell",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 32.46,
+      "estReturnPct": 34.45,
       "buyCount": 7,
       "sellCount": 3,
       "tradeCount": 14,
@@ -166,26 +166,26 @@
     },
     {
       "rank": 14,
-      "id": "house-valerie-hoyle",
-      "name": "Valerie Hoyle",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 29.88,
-      "buyCount": 97,
-      "sellCount": 89,
-      "tradeCount": 186,
-      "committees": []
-    },
-    {
-      "rank": 15,
       "id": "house-kelly-louise-morrison",
       "name": "Kelly Louise Morrison",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 28.22,
+      "estReturnPct": 33.44,
       "buyCount": 6,
       "sellCount": 13,
       "tradeCount": 21,
+      "committees": []
+    },
+    {
+      "rank": 15,
+      "id": "house-valerie-hoyle",
+      "name": "Valerie Hoyle",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 28.41,
+      "buyCount": 97,
+      "sellCount": 89,
+      "tradeCount": 186,
       "committees": []
     },
     {
@@ -194,7 +194,7 @@
       "name": "Josh Gottheimer",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 27.95,
+      "estReturnPct": 28.35,
       "buyCount": 431,
       "sellCount": 147,
       "tradeCount": 579,
@@ -208,7 +208,7 @@
       "name": "Lisa McClain",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 26.15,
+      "estReturnPct": 25.97,
       "buyCount": 332,
       "sellCount": 332,
       "tradeCount": 664,
@@ -216,50 +216,50 @@
     },
     {
       "rank": 18,
+      "id": "house-rick-larsen",
+      "name": "Rick Larsen",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 25.52,
+      "buyCount": 17,
+      "sellCount": 15,
+      "tradeCount": 33,
+      "committees": []
+    },
+    {
+      "rank": 19,
       "id": "house-byron-donalds",
       "name": "Byron Donalds",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 25.99,
+      "estReturnPct": 25.23,
       "buyCount": 37,
       "sellCount": 34,
       "tradeCount": 71,
       "committees": []
     },
     {
-      "rank": 19,
+      "rank": 20,
       "id": "house-julia-letlow",
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 23.94,
+      "estReturnPct": 24.56,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
       "committees": []
     },
     {
-      "rank": 20,
+      "rank": 21,
       "id": "house-ed-case",
       "name": "Ed Case",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 23.7,
+      "estReturnPct": 23.35,
       "buyCount": 5,
       "sellCount": 1,
       "tradeCount": 6,
-      "committees": []
-    },
-    {
-      "rank": 21,
-      "id": "house-rick-larsen",
-      "name": "Rick Larsen",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 22.75,
-      "buyCount": 17,
-      "sellCount": 15,
-      "tradeCount": 33,
       "committees": []
     },
     {
@@ -268,7 +268,7 @@
       "name": "Julie Johnson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 22.31,
+      "estReturnPct": 21.03,
       "buyCount": 44,
       "sellCount": 125,
       "tradeCount": 170,
@@ -280,7 +280,7 @@
       "name": "Robert E. Latta",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 20.58,
+      "estReturnPct": 20.1,
       "buyCount": 20,
       "sellCount": 0,
       "tradeCount": 20,
@@ -288,11 +288,23 @@
     },
     {
       "rank": 24,
+      "id": "house-scott-scott-franklin",
+      "name": "Scott Scott Franklin",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 15.45,
+      "buyCount": 21,
+      "sellCount": 13,
+      "tradeCount": 34,
+      "committees": []
+    },
+    {
+      "rank": 25,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 14.65,
+      "estReturnPct": 15.01,
       "buyCount": 155,
       "sellCount": 5,
       "tradeCount": 160,
@@ -301,51 +313,39 @@
       ]
     },
     {
-      "rank": 25,
+      "rank": 26,
       "id": "house-jonathan-jackson",
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 14.49,
+      "estReturnPct": 13.22,
       "buyCount": 49,
       "sellCount": 35,
       "tradeCount": 84,
       "committees": []
     },
     {
-      "rank": 26,
-      "id": "house-scott-scott-franklin",
-      "name": "Scott Scott Franklin",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 14.49,
-      "buyCount": 21,
-      "sellCount": 13,
-      "tradeCount": 34,
-      "committees": []
-    },
-    {
       "rank": 27,
-      "id": "house-cleo-fields",
-      "name": "Cleo Fields",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 11.62,
-      "buyCount": 102,
-      "sellCount": 6,
-      "tradeCount": 108,
-      "committees": []
-    },
-    {
-      "rank": 28,
       "id": "house-richard-dean-dr-mccormick",
       "name": "Richard Dean Dr McCormick",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 11.42,
+      "estReturnPct": 11.9,
       "buyCount": 27,
       "sellCount": 1,
       "tradeCount": 28,
+      "committees": []
+    },
+    {
+      "rank": 28,
+      "id": "house-cleo-fields",
+      "name": "Cleo Fields",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 11.61,
+      "buyCount": 102,
+      "sellCount": 6,
+      "tradeCount": 108,
       "committees": []
     },
     {
@@ -354,7 +354,7 @@
       "name": "Lloyd Doggett",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 7.84,
+      "estReturnPct": 7.62,
       "buyCount": 69,
       "sellCount": 0,
       "tradeCount": 69,
@@ -362,26 +362,26 @@
     },
     {
       "rank": 30,
-      "id": "house-gilbert-cisneros",
-      "name": "Gilbert Cisneros",
+      "id": "house-dan-newhouse",
+      "name": "Dan Newhouse",
       "chamber": "House",
-      "party": "D",
-      "estReturnPct": 5.79,
-      "buyCount": 452,
-      "sellCount": 109,
-      "tradeCount": 564,
+      "party": "R",
+      "estReturnPct": 5.84,
+      "buyCount": 45,
+      "sellCount": 8,
+      "tradeCount": 53,
       "committees": []
     },
     {
       "rank": 31,
-      "id": "house-carol-devine-miller",
-      "name": "Carol Devine Miller",
+      "id": "house-gilbert-cisneros",
+      "name": "Gilbert Cisneros",
       "chamber": "House",
-      "party": "R",
-      "estReturnPct": 5.74,
-      "buyCount": 17,
-      "sellCount": 10,
-      "tradeCount": 27,
+      "party": "D",
+      "estReturnPct": 5.59,
+      "buyCount": 452,
+      "sellCount": 109,
+      "tradeCount": 564,
       "committees": []
     },
     {
@@ -390,7 +390,7 @@
       "name": "David J. Taylor",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 5.38,
+      "estReturnPct": 5.22,
       "buyCount": 55,
       "sellCount": 45,
       "tradeCount": 100,
@@ -398,38 +398,38 @@
     },
     {
       "rank": 33,
-      "id": "house-dan-newhouse",
-      "name": "Dan Newhouse",
+      "id": "house-carol-devine-miller",
+      "name": "Carol Devine Miller",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 4.97,
-      "buyCount": 45,
-      "sellCount": 8,
-      "tradeCount": 53,
+      "estReturnPct": 3.35,
+      "buyCount": 17,
+      "sellCount": 10,
+      "tradeCount": 27,
       "committees": []
     },
     {
       "rank": 34,
-      "id": "house-maria-elvira-salazar",
-      "name": "Maria Elvira Salazar",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 1.26,
-      "buyCount": 37,
-      "sellCount": 10,
-      "tradeCount": 49,
-      "committees": []
-    },
-    {
-      "rank": 35,
       "id": "house-april-mcclain-delaney",
       "name": "April McClain Delaney",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 0.93,
+      "estReturnPct": 1.16,
       "buyCount": 100,
       "sellCount": 6,
       "tradeCount": 106,
+      "committees": []
+    },
+    {
+      "rank": 35,
+      "id": "house-maria-elvira-salazar",
+      "name": "Maria Elvira Salazar",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 0.7,
+      "buyCount": 37,
+      "sellCount": 10,
+      "tradeCount": 49,
       "committees": []
     },
     {
@@ -438,7 +438,7 @@
       "name": "James French Hill",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -1.78,
+      "estReturnPct": -1.76,
       "buyCount": 6,
       "sellCount": 10,
       "tradeCount": 16,
@@ -450,7 +450,7 @@
       "name": "Richard W. Allen",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -6.34,
+      "estReturnPct": -6.35,
       "buyCount": 15,
       "sellCount": 30,
       "tradeCount": 45,
@@ -462,7 +462,7 @@
       "name": "Cliff Bentz",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -7.89,
+      "estReturnPct": -7.77,
       "buyCount": 1,
       "sellCount": 1,
       "tradeCount": 2,
@@ -474,7 +474,7 @@
       "name": "Sheri Biggs",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -13.59,
+      "estReturnPct": -12.57,
       "buyCount": 1,
       "sellCount": 37,
       "tradeCount": 38,
@@ -486,10 +486,10 @@
       "name": "John McGuire",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -17.65,
-      "buyCount": 7,
+      "estReturnPct": -16.63,
+      "buyCount": 8,
       "sellCount": 0,
-      "tradeCount": 7,
+      "tradeCount": 8,
       "committees": []
     },
     {
@@ -498,7 +498,7 @@
       "name": "William R. Keating",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -33.27,
+      "estReturnPct": -33.72,
       "buyCount": 18,
       "sellCount": 11,
       "tradeCount": 29,
@@ -510,7 +510,7 @@
       "name": "Brandon Gill",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -42.93,
+      "estReturnPct": -42.26,
       "buyCount": 1,
       "sellCount": 0,
       "tradeCount": 1,
@@ -870,7 +870,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 26.15
+      "estReturnPct": 25.97
     },
     {
       "id": "house-josh-gottheimer",
@@ -1226,7 +1226,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 27.95
+      "estReturnPct": 28.35
     },
     {
       "id": "house-gilbert-cisneros",
@@ -1580,7 +1580,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 5.79
+      "estReturnPct": 5.59
     },
     {
       "id": "house-daniel-goldman",
@@ -2288,7 +2288,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 40.79
+      "estReturnPct": 41.92
     },
     {
       "id": "house-jefferson-shreve",
@@ -2642,7 +2642,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 38.41
+      "estReturnPct": 39.89
     },
     {
       "id": "house-kevin-hern",
@@ -4058,7 +4058,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 29.88
+      "estReturnPct": 28.41
     },
     {
       "id": "house-jared-moskowitz",
@@ -4412,7 +4412,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 50.89
+      "estReturnPct": 51.35
     },
     {
       "id": "house-julie-johnson",
@@ -4766,7 +4766,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 22.31
+      "estReturnPct": 21.03
     },
     {
       "id": "house-marjorie-taylor-greene",
@@ -5122,7 +5122,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 14.65
+      "estReturnPct": 15.01
     },
     {
       "id": "house-lois-frankel",
@@ -6538,7 +6538,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 11.62
+      "estReturnPct": 11.61
     },
     {
       "id": "house-april-mcclain-delaney",
@@ -6892,7 +6892,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 0.93
+      "estReturnPct": 1.16
     },
     {
       "id": "house-julia-letlow",
@@ -7246,7 +7246,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 23.94
+      "estReturnPct": 24.56
     },
     {
       "id": "house-david-j-taylor",
@@ -7600,7 +7600,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 5.38
+      "estReturnPct": 5.22
     },
     {
       "id": "house-bruce-westerman",
@@ -7954,7 +7954,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 35.35
+      "estReturnPct": 35.23
     },
     {
       "id": "house-greg-stanton",
@@ -9016,7 +9016,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 14.49
+      "estReturnPct": 13.22
     },
     {
       "id": "house-christopher-l-jacobs",
@@ -10078,7 +10078,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 81.15
+      "estReturnPct": 80.41
     },
     {
       "id": "house-greg-landsman",
@@ -10432,7 +10432,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 101.14
+      "estReturnPct": 89.76
     },
     {
       "id": "house-byron-donalds",
@@ -10786,7 +10786,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 25.99
+      "estReturnPct": 25.23
     },
     {
       "id": "house-lloyd-doggett",
@@ -11140,7 +11140,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 7.84
+      "estReturnPct": 7.62
     },
     {
       "id": "house-earl-blumenauer",
@@ -11503,8 +11503,8 @@
       "party": "D",
       "committees": [],
       "district": "NY15",
-      "tradeCount": 63,
-      "buyCount": 33,
+      "tradeCount": 64,
+      "buyCount": 34,
       "sellCount": 30,
       "recentTrades": [
         {
@@ -12910,7 +12910,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 66.51
+      "estReturnPct": 68.04
     },
     {
       "id": "house-dan-newhouse",
@@ -13264,7 +13264,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 4.97
+      "estReturnPct": 5.84
     },
     {
       "id": "house-thomas-suozzi",
@@ -14680,7 +14680,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 1.26
+      "estReturnPct": 0.7
     },
     {
       "id": "house-robert-j-wittman",
@@ -15742,7 +15742,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -6.34
+      "estReturnPct": -6.35
     },
     {
       "id": "house-marie-newman",
@@ -16804,7 +16804,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -13.59
+      "estReturnPct": -12.57
     },
     {
       "id": "house-katherine-m-clark",
@@ -17866,7 +17866,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 14.49
+      "estReturnPct": 15.45
     },
     {
       "id": "house-rick-larsen",
@@ -18220,7 +18220,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 22.75
+      "estReturnPct": 25.52
     },
     {
       "id": "house-donald-sternoff-beyer",
@@ -18928,7 +18928,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -33.27
+      "estReturnPct": -33.72
     },
     {
       "id": "house-donald-sternoff-honorable-beyer",
@@ -19636,7 +19636,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 11.42
+      "estReturnPct": 11.9
     },
     {
       "id": "house-michael-patrick-guest",
@@ -20344,7 +20344,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 5.74
+      "estReturnPct": 3.35
     },
     {
       "id": "house-austin-scott",
@@ -21406,7 +21406,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 59.22
+      "estReturnPct": 59.27
     },
     {
       "id": "house-blake-moore",
@@ -22822,7 +22822,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 28.22
+      "estReturnPct": 33.44
     },
     {
       "id": "house-robert-e-latta",
@@ -23176,7 +23176,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 20.58
+      "estReturnPct": 20.1
     },
     {
       "id": "house-bob-gibbs",
@@ -23869,7 +23869,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 39.03
+      "estReturnPct": 38.54
     },
     {
       "id": "house-george-whitesides",
@@ -25115,7 +25115,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -1.78
+      "estReturnPct": -1.76
     },
     {
       "id": "house-steve-cohen",
@@ -25653,7 +25653,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 40.0
+      "estReturnPct": 40.64
     },
     {
       "id": "house-victoria-spartz",
@@ -26191,7 +26191,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 76.6
+      "estReturnPct": 73.52
     },
     {
       "id": "house-debbie-dingell",
@@ -26443,7 +26443,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 32.46
+      "estReturnPct": 34.45
     },
     {
       "id": "house-matthew-robert-van-epps",
@@ -28109,6 +28109,156 @@
       "estReturnPct": null
     },
     {
+      "id": "house-john-mcguire",
+      "name": "John McGuire",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "VA05",
+      "tradeCount": 8,
+      "buyCount": 8,
+      "sellCount": 0,
+      "recentTrades": [
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "SPCX",
+          "asset": "Space Exploration Technologies Corp. - Class A Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-06-15",
+          "disclosureDate": "06/30/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034942.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "META",
+          "asset": "Meta Platforms, Inc. - Class A Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-06-04",
+          "disclosureDate": "06/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034748.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-04-15",
+          "disclosureDate": "05/01/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034521.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "NVDA",
+          "asset": "NVIDIA Corporation - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-01-30",
+          "disclosureDate": "02/06/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033956.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Merrill Lynch SEP IRA",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-01-21",
+          "disclosureDate": "02/06/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033956.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "NFLX",
+          "asset": "Netflix, Inc. - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-06-16",
+          "disclosureDate": "07/07/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030620.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "NOW",
+          "asset": "ServiceNow, Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-16",
+          "disclosureDate": "05/30/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030509.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "UNH",
+          "asset": "UnitedHealth Group Incorporated Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Merrill Lynch SEP IRA",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-04-10",
+          "disclosureDate": "05/15/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20016861.pdf",
+          "district": "VA05",
+          "source": "house_ptr",
+          "party": "D"
+        }
+      ],
+      "estReturnPct": -16.63
+    },
+    {
       "id": "house-mike-kelly",
       "name": "Mike Kelly",
       "chamber": "House",
@@ -29159,139 +29309,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-john-mcguire",
-      "name": "John McGuire",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "VA05",
-      "tradeCount": 7,
-      "buyCount": 7,
-      "sellCount": 0,
-      "recentTrades": [
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "META",
-          "asset": "Meta Platforms, Inc. - Class A Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-06-04",
-          "disclosureDate": "06/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034748.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-04-15",
-          "disclosureDate": "05/01/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034521.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "NVDA",
-          "asset": "NVIDIA Corporation - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-01-30",
-          "disclosureDate": "02/06/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033956.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Merrill Lynch SEP IRA",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-01-21",
-          "disclosureDate": "02/06/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033956.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "NFLX",
-          "asset": "Netflix, Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-06-16",
-          "disclosureDate": "07/07/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030620.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "NOW",
-          "asset": "ServiceNow, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-16",
-          "disclosureDate": "05/30/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030509.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "John McGuire",
-          "chamber": "House",
-          "ticker": "UNH",
-          "asset": "UnitedHealth Group Incorporated Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Merrill Lynch SEP IRA",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-04-10",
-          "disclosureDate": "05/15/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20016861.pdf",
-          "district": "VA05",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": -17.65
-    },
-    {
       "id": "house-brian-mast",
       "name": "Brian Mast",
       "chamber": "House",
@@ -29787,7 +29804,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 23.7
+      "estReturnPct": 23.35
     },
     {
       "id": "house-brian-babin",
@@ -31758,7 +31775,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -7.89
+      "estReturnPct": -7.77
     },
     {
       "id": "house-terri-a-sewell",
@@ -31806,7 +31823,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 88.55
+      "estReturnPct": 96.16
     },
     {
       "id": "house-jake-auchincloss",
@@ -32571,7 +32588,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -42.93
+      "estReturnPct": -42.26
     },
     {
       "id": "house-linda-t-sanchez",
@@ -34888,9 +34905,9 @@
     },
     "SPCX": {
       "ticker": "SPCX",
-      "netBuys": 2,
+      "netBuys": 3,
       "netSells": 0,
-      "politicianCount": 2,
+      "politicianCount": 3,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -34906,6 +34923,23 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034906.pdf",
           "district": "CA31",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "John McGuire",
+          "chamber": "House",
+          "ticker": "SPCX",
+          "asset": "Space Exploration Technologies Corp. - Class A Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-06-15",
+          "disclosureDate": "06/30/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034942.pdf",
+          "district": "VA05",
           "source": "house_ptr",
           "party": "D"
         },
@@ -93514,7 +93548,7 @@
     },
     "MCK": {
       "ticker": "MCK",
-      "netBuys": 10,
+      "netBuys": 11,
       "netSells": 7,
       "politicianCount": 10,
       "trades": [
@@ -93685,6 +93719,23 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026731.pdf",
           "district": "FL23",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Ritchie John Torres",
+          "chamber": "House",
+          "ticker": "MCK",
+          "asset": "McKesson Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: Amended C\u0000\u0000\u0000\u0000\u0000\u0000\u0000: This investment is held within a publicly available, widely held independently managed portfolio over which I have no authority to exercise control over or influence the financial interests held by the portfolio. The assets of the portfolio are widely diversified, and all investment decisions are made solely by the independent manager, without my input or direction.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-01-07",
+          "disclosureDate": "08/01/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034224.pdf",
+          "district": "NY15",
           "source": "house_ptr",
           "party": "D"
         },
@@ -165771,6 +165822,23 @@
       "party": "R"
     },
     {
+      "politician": "John McGuire",
+      "chamber": "House",
+      "ticker": "SPCX",
+      "asset": "Space Exploration Technologies Corp. - Class A Common Stock",
+      "side": "buy",
+      "type": "Purchase",
+      "amount": "$1,001 - $15,000",
+      "amountMid": 8000,
+      "transactionDate": "2026-06-15",
+      "disclosureDate": "06/30/2026",
+      "owner": "Spouse",
+      "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034942.pdf",
+      "district": "VA05",
+      "source": "house_ptr",
+      "party": "D"
+    },
+    {
       "politician": "Daniel Meuser",
       "chamber": "House",
       "ticker": "SPCX",
@@ -168285,23 +168353,6 @@
       "district": "TX32",
       "source": "house_ptr",
       "party": "D"
-    },
-    {
-      "politician": "Maria Elvira Salazar",
-      "chamber": "House",
-      "ticker": "BIIB",
-      "asset": "Biogen Inc. - Common Stock",
-      "side": "buy",
-      "type": "Purchase",
-      "amount": "$1,001 - $15,000",
-      "amountMid": 8000,
-      "transactionDate": "2026-05-12",
-      "disclosureDate": "06/01/2026",
-      "owner": "Self",
-      "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034709.pdf",
-      "district": "FL27",
-      "source": "house_ptr",
-      "party": "R"
     }
   ]
 }

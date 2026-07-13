@@ -1,0 +1,38 @@
+{
+  "ticker": "402340",
+  "name": "SK스퀘어",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 1327000.0,
+  "return_period": 219.0,
+  "support_levels": [
+    1231000.0,
+    1075000.0
+  ],
+  "resistance_levels": [
+    1392000.0,
+    2189000.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 35.0,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 1,392,000 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 1,231,000 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

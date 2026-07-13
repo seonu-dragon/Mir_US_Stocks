@@ -1,0 +1,38 @@
+{
+  "ticker": "META",
+  "name": "Meta Platforms Inc. Class A",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 669.21,
+  "return_period": 3.6,
+  "support_levels": [
+    643.0,
+    626.57
+  ],
+  "resistance_levels": [
+    672.77,
+    691.52
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 68.7,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 673 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 643 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

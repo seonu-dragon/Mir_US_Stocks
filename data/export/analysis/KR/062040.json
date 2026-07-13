@@ -1,0 +1,38 @@
+{
+  "ticker": "062040",
+  "name": "산일전기",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 189100.0,
+  "return_period": 35.7,
+  "support_levels": [
+    181800.0,
+    164600.0
+  ],
+  "resistance_levels": [
+    200500.0,
+    230000.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 38.1,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 200,500 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 181,800 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

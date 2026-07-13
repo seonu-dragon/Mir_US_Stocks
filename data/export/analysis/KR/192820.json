@@ -1,0 +1,38 @@
+{
+  "ticker": "192820",
+  "name": "코스맥스",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 183000.0,
+  "return_period": 12.3,
+  "support_levels": [
+    176850.0,
+    155800.0
+  ],
+  "resistance_levels": [
+    187250.0,
+    208000.0
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "price_near_sma60",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 60.0,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 187,250 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 176,850 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

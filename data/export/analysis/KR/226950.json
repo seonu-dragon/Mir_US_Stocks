@@ -1,0 +1,37 @@
+{
+  "ticker": "226950",
+  "name": "올릭스",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 123200.0,
+  "return_period": -15.0,
+  "support_levels": [
+    115225.0
+  ],
+  "resistance_levels": [
+    133600.0,
+    156820.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 47.3,
+    "state": "neutral"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 133,600 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 115,225 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

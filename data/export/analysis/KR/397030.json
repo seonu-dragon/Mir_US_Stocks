@@ -1,0 +1,36 @@
+{
+  "ticker": "397030",
+  "name": "에이프릴바이오",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 27300.0,
+  "return_period": -47.6,
+  "support_levels": [],
+  "resistance_levels": [
+    47775.0,
+    54950.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 35.4,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "low",
+    "comment": "최근 고점 구간 대비 거래량은 둔화"
+  },
+  "scenario": {
+    "up": "저항 47,775 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "단기 이평선 및 지지선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성",
+    "거래량 없는 반등은 신뢰도 낮음"
+  ]
+}

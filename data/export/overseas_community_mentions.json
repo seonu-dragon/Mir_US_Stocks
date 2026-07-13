@@ -1,191 +1,283 @@
 {
-  "generated_at": "2026-07-02T12:23:58+09:00",
+  "generated_at": "2026-07-13T08:26:07+09:00",
   "market": "US",
   "items": [
     {
-      "rank": 1,
-      "ticker": "MU",
-      "name": "Micron Technology Inc.",
-      "mention_count": 2167,
-      "mention_change_rate": 71.4,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Yahoo 언급 급증",
-      "sources": [
-        "reddit",
-        "yahoo"
-      ]
-    },
-    {
       "rank": 2,
-      "ticker": "META",
-      "name": "Meta Platforms Inc. Class A",
-      "mention_count": 2122,
-      "mention_change_rate": 1245.5,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Yahoo 언급 급증",
+      "ticker": "MSFT",
+      "name": "Microsoft Corporation",
+      "mention_count": 1136,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Reddit 종합 언급 상위",
       "sources": [
-        "reddit",
-        "yahoo"
-      ]
+        "reddit"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
     },
     {
       "rank": 3,
-      "ticker": "NBIS",
-      "name": "Nebius Group N.V. Class A Ordinary Shares",
-      "mention_count": 1402,
-      "mention_change_rate": 292.3,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Yahoo 언급 급증",
+      "ticker": "MU",
+      "name": "Micron Technology Inc.",
+      "mention_count": 1120,
+      "mention_change_rate": -58.5,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit · Yahoo 언급 감소",
       "sources": [
         "reddit",
         "yahoo"
-      ]
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
     },
     {
       "rank": 4,
-      "ticker": "RDDT",
-      "name": "Reddit Inc. Class A",
-      "mention_count": 1269,
-      "mention_change_rate": 885.7,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Yahoo 언급 급증",
+      "ticker": "SPCX",
+      "name": "SPCX",
+      "mention_count": 919,
+      "mention_change_rate": -33.3,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
-        "reddit",
-        "yahoo"
-      ]
+        "reddit"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
     },
     {
       "rank": 5,
-      "ticker": "WEN",
-      "name": "Wendy's Company (The)",
-      "mention_count": 1168,
-      "mention_change_rate": 35.3,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "ticker": "NVDA",
+      "name": "NVIDIA Corporation",
+      "mention_count": 814,
+      "mention_change_rate": -25.0,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
         "reddit"
-      ]
+      ],
+      "issue_score": 0.8,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
     },
     {
       "rank": 6,
-      "ticker": "SPY",
-      "name": "State Street SPDR S&P 500 ETF Trust Unit",
-      "mention_count": 1054,
-      "mention_change_rate": -13.8,
-      "sentiment_hint": "bearish",
-      "reason": "Reddit 언급 감소",
+      "ticker": "LYFT",
+      "name": "Lyft Inc. Class A",
+      "mention_count": 800,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
       "sources": [
-        "reddit"
-      ]
-    },
-    {
-      "rank": 7,
-      "ticker": "MSFT",
-      "name": "Microsoft Corporation",
-      "mention_count": 952,
-      "mention_change_rate": 27.1,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
-      "sources": [
-        "reddit"
-      ]
+        "yahoo"
+      ],
+      "issue_score": 2.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시"
+      ],
+      "source": "community_mentions"
     },
     {
       "rank": 8,
-      "ticker": "NVDA",
-      "name": "NVIDIA Corporation",
-      "mention_count": 680,
-      "mention_change_rate": 47.7,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "ticker": "BATRA",
+      "name": "Atlanta Braves Holdings Inc. Series A",
+      "mention_count": 700,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
       "sources": [
-        "reddit"
-      ]
+        "yahoo"
+      ],
+      "issue_score": 1.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "신고가 근접"
+      ],
+      "source": "community_mentions"
     },
     {
-      "rank": 9,
-      "ticker": "SNDK",
-      "name": "Sandisk Corporation",
-      "mention_count": 463,
-      "mention_change_rate": -11.3,
+      "rank": 10,
+      "ticker": "AXON",
+      "name": "Axon Enterprise Inc.",
+      "mention_count": 600,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
+      ],
+      "issue_score": 3.3,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "공매도 커버 부담"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 11,
+      "ticker": "DTE",
+      "name": "DTE Energy Company",
+      "mention_count": 508,
+      "mention_change_rate": -37.5,
       "sentiment_hint": "bearish",
       "reason": "Reddit 언급 감소",
       "sources": [
         "reddit"
-      ]
+      ],
+      "issue_score": 1.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "신고가 근접"
+      ],
+      "source": "community_mentions"
     },
     {
-      "rank": 10,
-      "ticker": "BSP",
-      "name": "Bending Spoons S.p.A. - Ordinary Shares",
+      "rank": 12,
+      "ticker": "BKR",
+      "name": "Baker Hughes Company Class A",
+      "mention_count": 500,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
+      ],
+      "issue_score": 1.6,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "공매도 커버 부담"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 13,
+      "ticker": "HBM",
+      "name": "Hudbay Minerals Inc. Ordinary Shares (Canada)",
+      "mention_count": 408,
+      "mention_change_rate": -40.0,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
+      "sources": [
+        "reddit"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 14,
+      "ticker": "ET",
+      "name": "ET",
       "mention_count": 400,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
       "reason": "Yahoo 종합 언급 상위",
       "sources": [
         "yahoo"
-      ]
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
     },
     {
-      "rank": 11,
-      "ticker": "SPCX",
-      "name": "SPCX",
-      "mention_count": 358,
-      "mention_change_rate": 24.5,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "rank": 15,
+      "ticker": "AAPL",
+      "name": "Apple Inc.",
+      "mention_count": 307,
+      "mention_change_rate": -12.5,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
         "reddit"
-      ]
+      ],
+      "issue_score": 1.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "신고가 근접"
+      ],
+      "source": "community_mentions"
     },
     {
-      "rank": 12,
-      "ticker": "CRWV",
-      "name": "CoreWeave Inc. Class A",
+      "rank": 16,
+      "ticker": "STRL",
+      "name": "Sterling Infrastructure Inc.",
       "mention_count": 300,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
       "reason": "Yahoo 종합 언급 상위",
       "sources": [
         "yahoo"
-      ]
+      ],
+      "issue_score": 2.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트"
+      ],
+      "source": "community_mentions"
     },
     {
-      "rank": 13,
+      "rank": 17,
       "ticker": "AMD",
       "name": "Advanced Micro Devices Inc.",
-      "mention_count": 258,
-      "mention_change_rate": -21.2,
-      "sentiment_hint": "bearish",
-      "reason": "Reddit 언급 감소",
+      "mention_count": 207,
+      "mention_change_rate": 40.0,
+      "sentiment_hint": "bullish",
+      "reason": "Reddit 언급 급증",
       "sources": [
         "reddit"
-      ]
+      ],
+      "issue_score": 0.8,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
     },
     {
-      "rank": 14,
-      "ticker": "PLTR",
-      "name": "Palantir Technologies Inc. Class A",
-      "mention_count": 244,
-      "mention_change_rate": 357.9,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Yahoo 언급 급증",
-      "sources": [
-        "reddit",
-        "yahoo"
-      ]
-    },
-    {
-      "rank": 15,
-      "ticker": "WMT",
-      "name": "Walmart Inc.",
+      "rank": 18,
+      "ticker": "WYFI",
+      "name": "WhiteFiber Inc. Ordinary Shares",
       "mention_count": 200,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
       "reason": "Yahoo 종합 언급 상위",
       "sources": [
         "yahoo"
-      ]
+      ],
+      "issue_score": 1.5,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "주간 변동성 큼"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 19,
+      "ticker": "META",
+      "name": "Meta Platforms Inc. Class A",
+      "mention_count": 107,
+      "mention_change_rate": -36.4,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
+      "sources": [
+        "reddit"
+      ],
+      "issue_score": 3.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "source": "community_mentions"
     }
   ]
 }

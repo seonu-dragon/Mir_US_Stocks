@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-07-13 06:27:57 KST",
+  "updatedAtKst": "2026-07-13 16:53:57 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7637,
+  "tradeCount": 7634,
   "politicianCount": 165,
   "rankings": [
     {
@@ -2639,8 +2639,8 @@
       "party": "R",
       "committees": [],
       "district": "OK01",
-      "tradeCount": 246,
-      "buyCount": 191,
+      "tradeCount": 245,
+      "buyCount": 190,
       "sellCount": 50,
       "recentTrades": [
         {
@@ -5119,8 +5119,8 @@
       "party": "D",
       "committees": [],
       "district": "FL22",
-      "tradeCount": 149,
-      "buyCount": 83,
+      "tradeCount": 148,
+      "buyCount": 82,
       "sellCount": 66,
       "recentTrades": [
         {
@@ -10429,9 +10429,9 @@
       "party": "D",
       "committees": [],
       "district": "NV03",
-      "tradeCount": 71,
+      "tradeCount": 70,
       "buyCount": 15,
-      "sellCount": 56,
+      "sellCount": 55,
       "recentTrades": [
         {
           "politician": "Susie Lee",
@@ -90128,7 +90128,7 @@
     },
     "DD": {
       "ticker": "DD",
-      "netBuys": 8,
+      "netBuys": 7,
       "netSells": 2,
       "politicianCount": 3,
       "trades": [
@@ -90281,23 +90281,6 @@
           "disclosureDate": "08/16/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019346.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "DD",
-          "asset": "DuPont de Nemours, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-07-14",
-          "disclosureDate": "07/14/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019173.pdf",
           "district": "FL21",
           "source": "house_ptr",
           "party": "D"
@@ -143271,7 +143254,7 @@
     },
     "PXD": {
       "ticker": "PXD",
-      "netBuys": 10,
+      "netBuys": 9,
       "netSells": 2,
       "politicianCount": 2,
       "trades": [
@@ -143475,23 +143458,6 @@
           "disclosureDate": "09/20/2021",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019594.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "PXD",
-          "asset": "Pioneer Natural Resources Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-07-14",
-          "disclosureDate": "07/15/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019334.pdf",
           "district": "OK01",
           "source": "house_ptr",
           "party": "R"
@@ -164701,31 +164667,6 @@
           "owner": "Spouse",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019240.pdf",
           "district": "IL03",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ]
-    },
-    "NLOK": {
-      "ticker": "NLOK",
-      "netBuys": 0,
-      "netSells": 1,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Susie Lee",
-          "chamber": "House",
-          "ticker": "NLOK",
-          "asset": "NortonLifeLock Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-07-14",
-          "disclosureDate": "08/01/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019238.pdf",
-          "district": "NV03",
           "source": "house_ptr",
           "party": "D"
         }

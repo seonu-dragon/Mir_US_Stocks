@@ -4,13 +4,15 @@
   "market": "KR",
   "period": "6M",
   "timeframe": "일봉",
-  "price": 7800.0,
-  "return_period": 39.5,
+  "price": 7160.0,
+  "return_period": 29.7,
   "support_levels": [
-    7650.0,
-    6392.0
+    6392.0,
+    5680.0
   ],
-  "resistance_levels": [],
+  "resistance_levels": [
+    7650.0
+  ],
   "moving_average": {
     "sma20": "uptrend",
     "sma60": "uptrend",
@@ -18,7 +20,7 @@
   },
   "rsi": {
     "period": 14,
-    "value": 76.6,
+    "value": 71.9,
     "state": "overbought"
   },
   "volume": {
@@ -26,10 +28,11 @@
     "comment": "최근 구간 거래량이 평균 대비 증가"
   },
   "scenario": {
-    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
-    "down": "지지 7,650 및 단기 추세선 이탈 시 관망 필요"
+    "up": "저항 7,650 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 6,392 및 단기 추세선 이탈 시 관망 필요"
   },
   "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성",
     "RSI 과열 구간 — 눌림 확인 필요"
   ]
 }

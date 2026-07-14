@@ -3604,6 +3604,18 @@ function computeAutoTrendlines(rows, win = 3) {
   return lines;
 }
 
+// AI 모드 차트(cosmos) 오버레이 계산: 바 배열({o,h,l,c,v})에서 지지/저항·추세선·패턴을
+// 산출한다(분석 페이지와 동일 엔진 재사용). ai-mode-welcome이 morphToChart에 넘긴다.
+window.MirChartOverlays = function (bars) {
+  const P = window.MirProb || {};
+  let sr = [], trendlines = [], patterns = [];
+  if (!Array.isArray(bars) || bars.length < 12) return { sr, trendlines, patterns };
+  try { sr = (P.supportResistanceLevels ? P.supportResistanceLevels(bars) : []).map((l) => l.price).filter((v) => Number.isFinite(v)); } catch (_) {}
+  try { trendlines = computeAutoTrendlines(bars) || []; } catch (_) {}
+  try { patterns = (P.detectCurrentPatterns ? P.detectCurrentPatterns(bars) : []) || []; } catch (_) {}
+  return { sr, trendlines, patterns };
+};
+
 function renderPsarDots(psarValues, ctxRows, rows, xFor, overlayYFor) {
   if (!psarValues || !psarValues.length) return "";
   let out = "";

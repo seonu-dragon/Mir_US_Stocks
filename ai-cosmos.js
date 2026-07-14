@@ -103,6 +103,7 @@
   let chartFullBars = []; // 원본 전체 bars(기간 탭 전환 시 재슬라이스용)
   let chartViewStart = 0; // 가시 윈도우 시작 인덱스(확대/이동용, float)
   let chartViewCount = 0; // 가시 윈도우 바 개수
+  let chartOverlays = null; // {sr:[price], trendlines:[{kind,x1,y1,x2,y2}], patterns:[{confirm_idx,...}]}
   const MIN_CHART_BARS = 12;
   let chartMeta = { ticker: "", name: "", range: "6M" };
   let chartPriceMin = 0;
@@ -599,7 +600,71 @@
     const a = alpha == null ? 1 : alpha;
     drawSpaceBackground(w, h, performance.now() * 0.001);
     drawCrispCandles(w, h, layout, a, true);
+    drawChartOverlays(w, h, layout, a);
     drawChartChrome(w, h, layout, a);
+  }
+
+  // 지지/저항·추세선·차트 패턴을 2D 차트 위에 그린다(가시 윈도우 기준).
+  function drawChartOverlays(w, h, layout, alpha) {
+    if (!chartOverlays || alpha <= 0 || !chartBars.length) return;
+    const { n, xAt, yAt } = layoutHelpers(layout);
+    const start = Math.round(chartViewStart);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // 지지/저항 수평선
+    (chartOverlays.sr || []).forEach((price) => {
+      if (!Number.isFinite(price) || price < chartPriceMin || price > chartPriceMax) return;
+      const y = yAt(price);
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.42)";
+      ctx.lineWidth = 1;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(layout.padL, y);
+      ctx.lineTo(layout.padL + layout.plotW, y);
+      ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // 추세선(가시 윈도우 전체로 외삽해 그린다)
+    (chartOverlays.trendlines || []).forEach((ln) => {
+      const slope = (ln.y2 - ln.y1) / ((ln.x2 - ln.x1) || 1);
+      const priceAt = (idx) => ln.y1 + slope * (idx - ln.x1);
+      ctx.strokeStyle = ln.color || (ln.kind === "sup" ? "rgba(74, 222, 128, 0.7)" : "rgba(248, 113, 113, 0.7)");
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(xAt(0), yAt(priceAt(start)));
+      ctx.lineTo(xAt(n - 1), yAt(priceAt(start + n - 1)));
+      ctx.stroke();
+    });
+
+    // 차트 패턴(최근 3개, 확정 지점에 마커 + 라벨 · 겹침 방지로 세로 어긋나게)
+    ctx.textAlign = "center";
+    ctx.font = "700 10px system-ui, -apple-system, sans-serif";
+    (chartOverlays.patterns || []).slice(0, 3).forEach((e, i) => {
+      const idx = (e && e.confirm_idx != null) ? e.confirm_idx : -1;
+      const vi = idx - start;
+      if (vi < 0 || vi >= n) return;
+      const bar = chartBars[vi];
+      if (!bar) return;
+      const x = xAt(vi);
+      const y = yAt(bar.h) - 9 - i * 18; // 최근 순으로 위로 어긋나게
+      ctx.fillStyle = "rgba(250, 204, 21, 0.95)";
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 5, y - 8);
+      ctx.lineTo(x + 5, y - 8);
+      ctx.closePath();
+      ctx.fill();
+      const label = String(e.pattern_ko || e.label || e.pattern || e.name || e.type || "패턴").slice(0, 12);
+      ctx.fillStyle = "rgba(15, 23, 42, 0.7)";
+      const tw = ctx.measureText(label).width;
+      ctx.fillRect(x - tw / 2 - 4, y - 24, tw + 8, 13);
+      ctx.fillStyle = "rgba(253, 224, 71, 0.98)";
+      ctx.fillText(label, x, y - 13);
+    });
+
+    ctx.restore();
   }
 
   function waveFrontBlend(x, segT) {
@@ -1569,6 +1634,7 @@
     if (!bars.length) return false;
 
     chartFullBars = bars;
+    chartOverlays = payload.overlays || null;
     chartBars = sliceBarsByRange(bars, payload.range || "6M");
     resetChartWindow();
     chartMeta = {
@@ -1691,6 +1757,6 @@
     resetToLandscape,
     relayout,
     getMode: () => renderMode,
-    getChartMeta: () => ({ ...chartMeta, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length }),
+    getChartMeta: () => ({ ...chartMeta, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length, overlays: chartOverlays ? { sr: (chartOverlays.sr || []).length, trendlines: (chartOverlays.trendlines || []).length, patterns: (chartOverlays.patterns || []).length } : null }),
   };
 })();

@@ -15,13 +15,13 @@
     <meta property="og:title" content="미르의 미국 주식">
     <meta property="og:description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
     <meta property="og:url" content="https://seonu-dragon.github.io/Mir_US_Stocks/">
-    <meta property="og:image" content="https://seonu-dragon.github.io/Mir_US_Stocks/assets/og-image.png?v=3">
+    <meta property="og:image" content="https://seonu-dragon.github.io/Mir_US_Stocks/assets/og-cover.png?v=4">
     <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="1200">
+    <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="미르의 미국 주식">
     <meta name="twitter:description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
-    <meta name="twitter:image" content="https://seonu-dragon.github.io/Mir_US_Stocks/assets/og-image.png?v=3">
+    <meta name="twitter:image" content="https://seonu-dragon.github.io/Mir_US_Stocks/assets/og-cover.png?v=4">
     <title>미르의 미국 주식</title>
     <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
@@ -116,7 +116,7 @@
                 aria-label="이전 카드뉴스" title="이전">‹</button>
         <button class="cardnews-carousel" id="contentBand" type="button"
                 aria-label="오늘의 카드뉴스 크게 보기" title="클릭하면 크게 보기">
-          <img id="cardnewsCarouselImg" src="" alt="오늘의 카드뉴스">
+          <img id="cardnewsCarouselImg" alt="오늘의 카드뉴스" loading="lazy">
         </button>
         <button class="cardnews-nav cardnews-next" id="cardnewsNext" type="button"
                 aria-label="다음 카드뉴스" title="다음">›</button>
@@ -1759,7 +1759,7 @@
             <h2>시장 실적 캘린더</h2>
             <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
           </div>
-          <div class="toolbar">
+          <div class="toolbar earnings-toolbar">
             <label>
               기간
               <select id="earnHorizon">
@@ -1772,10 +1772,40 @@
               범위
               <select id="earnScope">
                 <option value="watchlist">관심종목</option>
-                <option value="watchlist+top">관심 + 대형주</option>
+                <option value="watchlist+top" selected>관심 + 대형주</option>
                 <option value="sp500">S&amp;P 500 상위</option>
               </select>
             </label>
+            <label>
+              섹터
+              <select id="earnSector">
+                <option value="all">전체</option>
+                <option value="TECHNOLOGY">정보기술</option>
+                <option value="HEALTHCARE">헬스케어</option>
+                <option value="FINANCIAL">금융</option>
+                <option value="CONSUMER CYCLICAL">임의소비재</option>
+                <option value="CONSUMER DEFENSIVE">필수소비재</option>
+                <option value="INDUSTRIALS">산업재</option>
+                <option value="ENERGY">에너지</option>
+                <option value="UTILITIES">유틸리티</option>
+                <option value="REAL ESTATE">부동산</option>
+                <option value="BASIC MATERIALS">소재</option>
+                <option value="COMMUNICATION SERVICES">커뮤니케이션</option>
+              </select>
+            </label>
+            <label>
+              정렬
+              <select id="earnSort">
+                <option value="date">날짜순</option>
+                <option value="cap">시총순</option>
+                <option value="rs">RS순</option>
+              </select>
+            </label>
+            <label class="earn-check"><input type="checkbox" id="earnWatchOnly"> 관심종목만</label>
+            <div class="earn-view-toggle" id="earnViewToggle" role="group" aria-label="실적 캘린더 보기 전환">
+              <button type="button" data-earn-view="calendar" class="is-active">📅 캘린더</button>
+              <button type="button" data-earn-view="list">☰ 목록</button>
+            </div>
             <button type="button" id="earnRefresh">새로고침</button>
           </div>
           <div id="earningsCalendarBody"><p class="muted">실적 일정을 불러오는 중…</p></div>
@@ -2048,7 +2078,7 @@
     <div class="lightbox" id="lightbox" hidden>
       <button class="lightbox-close" id="lightboxClose" type="button" aria-label="닫기">✕</button>
       <button class="lightbox-prev" id="lightboxPrev" type="button" aria-label="이전">‹</button>
-      <img id="lightboxImg" src="" alt="카드뉴스 크게 보기">
+      <img id="lightboxImg" alt="카드뉴스 크게 보기">
       <button class="lightbox-next" id="lightboxNext" type="button" aria-label="다음">›</button>
     </div>
 

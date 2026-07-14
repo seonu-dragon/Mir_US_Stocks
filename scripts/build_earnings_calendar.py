@@ -155,12 +155,23 @@ def main() -> None:
     ap = argparse.ArgumentParser(description="Build static earnings calendar snapshot")
     ap.add_argument("--market", choices=["us", "kr"], default="us")
     ap.add_argument("--limit", type=int, default=80)
+    ap.add_argument("--push", action="store_true", default=False, help="빌드 후 data 파일을 커밋·푸시")
     args = ap.parse_args()
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
     payload = build(args.market, args.limit)
+    if not payload["earnings"]:
+        # Yahoo가 0건을 주면(일시적 오류·레이트리밋) 기존 스냅샷을 덮어쓰지 않는다.
+        print("  [경고] 실적 일정 0건 — 기존 파일 유지(덮어쓰지 않음)")
+        return
     write_outputs(payload, args.market)
+    if args.push:
+        import sec_client as sec
+        if args.market == "kr":
+            sec.git_publish(["data/korea/earnings_calendar.json", "data/korea/earnings_calendar.js"], "KR earnings calendar")
+        else:
+            sec.git_publish(["data/earnings_calendar.json", "data/earnings_calendar.js"], "earnings calendar")
 
 
 if __name__ == "__main__":

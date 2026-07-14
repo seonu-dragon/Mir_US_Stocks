@@ -10650,7 +10650,7 @@ body.ai-stock-analysis-view .ai-dash.is-active {
   right: 14px;
   bottom: 86px;
   left: auto;
-  width: 372px;
+  width: 336px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -10658,6 +10658,13 @@ body.ai-stock-analysis-view .ai-dash.is-active {
   overflow-x: hidden;
   pointer-events: auto;
   padding-right: 2px;
+  transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.28s ease;
+}
+/* 접힘: 사이드바를 오른쪽으로 밀어내고 차트를 전체 폭으로 */
+body.ai-dash-collapsed .ai-dash-grid {
+  transform: translateX(calc(100% + 24px));
+  opacity: 0;
+  pointer-events: none;
 }
 /* 래퍼는 사라지고 자식 패널들이 사이드바에 순서대로 흐른다 */
 .ai-dash-col { display: contents; }
@@ -10680,8 +10687,41 @@ body.ai-stock-analysis-view .ai-dash.is-active {
 }
 .ai-dash-subpanel { width: 100%; }
 
-/* 차트 전용 영역 확보: 우측 사이드바 폭만큼 cosmos를 좁힌다 (canvas는 컨테이너에 맞춰 재렌더) */
-body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 400px; }
+/* 차트 전용 영역 확보: 우측 사이드바 폭만큼 cosmos를 좁힌다 (canvas는 컨테이너에 맞춰 재렌더).
+   width:auto 로 base의 width:100vw 를 무효화해야 right 값이 실제로 폭을 줄인다. */
+body.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
+  right: 362px;
+  width: auto;
+}
+body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 0; }
+
+/* 사이드바 접기/펼치기 버튼 (차트·사이드바 경계에 고정) */
+.ai-dash-collapse {
+  position: absolute;
+  top: 62px;
+  right: 358px;
+  z-index: 4;
+  width: 26px;
+  height: 40px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(120, 160, 255, 0.18);
+  border-radius: 9px;
+  background: rgba(13, 20, 38, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  color: #cdd8ee;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: right 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ai-dash-collapse:hover { border-color: var(--accent); color: #fff; }
+body.ai-dash-collapsed .ai-dash-collapse { right: 14px; }
 .ai-dash-h {
   margin: 0 0 9px;
   font-size: 12.5px;
@@ -10711,8 +10751,9 @@ body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 400px; }
 .ai-dash-rangebar {
   position: absolute;
   top: 64px;
-  left: calc((100% - 400px) / 2); /* 차트 영역(사이드바 제외)의 중앙 */
+  left: calc((100% - 362px) / 2); /* 차트 영역(사이드바 제외)의 중앙 */
   transform: translateX(-50%);
+  transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   gap: 2px;
   padding: 3px;
@@ -10736,6 +10777,7 @@ body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 400px; }
   cursor: pointer;
 }
 .ai-dash-rangebar button.is-active { background: var(--accent); color: #fff; }
+body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
 
 .ai-dash-stats {
   display: grid;
@@ -10852,7 +10894,7 @@ body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 400px; }
 
 /* 태블릿·모바일: 차트 상단, 정보 패널은 하단 시트(가로 전체) */
 @media (max-width: 900px) {
-  body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 0; bottom: 54%; }
+  body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 0; bottom: 54%; width: auto; height: auto; }
   .ai-dash-grid {
     top: auto;
     left: 10px;
@@ -10861,7 +10903,13 @@ body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 400px; }
     width: auto;
     height: 50%;
   }
-  .ai-dash-rangebar { left: 50%; }
+  .ai-dash-rangebar,
+  body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
+  /* 접힘: 하단 시트를 아래로 내리고 차트를 전체 높이로 */
+  body.ai-dash-collapsed .ai-dash-grid { transform: translateY(calc(100% + 24px)); }
+  body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { bottom: 0; right: 0; }
+  .ai-dash-collapse,
+  body.ai-dash-collapsed .ai-dash-collapse { top: auto; bottom: 92px; right: 14px; }
 }
 
 body.ai-welcome-view .ai-chat-input-wrapper::before,

@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-07-14 06:33:01 KST",
+  "updatedAtKst": "2026-07-14 15:59:09 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7634,
+  "tradeCount": 7630,
   "politicianCount": 165,
   "rankings": [
     {
@@ -256,7 +256,7 @@
       "name": "Robert E. Latta",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 22.08,
+      "estReturnPct": 22.75,
       "buyCount": 20,
       "sellCount": 0,
       "tradeCount": 20,
@@ -451,9 +451,9 @@
       "chamber": "House",
       "party": "D",
       "estReturnPct": -7.19,
-      "buyCount": 15,
+      "buyCount": 14,
       "sellCount": 30,
-      "tradeCount": 45,
+      "tradeCount": 44,
       "committees": []
     },
     {
@@ -5119,8 +5119,8 @@
       "party": "D",
       "committees": [],
       "district": "FL22",
-      "tradeCount": 148,
-      "buyCount": 82,
+      "tradeCount": 147,
+      "buyCount": 81,
       "sellCount": 66,
       "recentTrades": [
         {
@@ -15385,8 +15385,8 @@
       "party": "D",
       "committees": [],
       "district": "GA12",
-      "tradeCount": 45,
-      "buyCount": 15,
+      "tradeCount": 44,
+      "buyCount": 14,
       "sellCount": 30,
       "recentTrades": [
         {
@@ -15739,8 +15739,8 @@
       "party": "D",
       "committees": [],
       "district": "IL03",
-      "tradeCount": 43,
-      "buyCount": 24,
+      "tradeCount": 42,
+      "buyCount": 23,
       "sellCount": 19,
       "recentTrades": [
         {
@@ -17155,9 +17155,9 @@
       "party": "R",
       "committees": [],
       "district": "TX04",
-      "tradeCount": 36,
+      "tradeCount": 35,
       "buyCount": 11,
-      "sellCount": 25,
+      "sellCount": 24,
       "recentTrades": [
         {
           "politician": "Patrick Fallon",
@@ -23164,7 +23164,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 22.08
+      "estReturnPct": 22.75
     },
     {
       "id": "house-bob-gibbs",
@@ -83588,9 +83588,9 @@
     },
     "PFE": {
       "ticker": "PFE",
-      "netBuys": 14,
+      "netBuys": 13,
       "netSells": 16,
-      "politicianCount": 21,
+      "politicianCount": 20,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -90128,7 +90128,7 @@
     },
     "DD": {
       "ticker": "DD",
-      "netBuys": 7,
+      "netBuys": 6,
       "netSells": 2,
       "politicianCount": 3,
       "trades": [
@@ -90261,23 +90261,6 @@
           "amount": "$1,001 - $15,000",
           "amountMid": 8000,
           "transactionDate": "2021-07-29",
-          "disclosureDate": "08/16/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019346.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "DD",
-          "asset": "DuPont de Nemours, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-07-15",
           "disclosureDate": "08/16/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019346.pdf",
@@ -91364,7 +91347,7 @@
     "DIS": {
       "ticker": "DIS",
       "netBuys": 16,
-      "netSells": 19,
+      "netSells": 18,
       "politicianCount": 22,
       "trades": [
         {
@@ -164642,31 +164625,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019295.pdf",
           "district": "MN03",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ]
-    },
-    "LMND": {
-      "ticker": "LMND",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Marie Newman",
-          "chamber": "House",
-          "ticker": "LMND",
-          "asset": "Lemonade, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-07-15",
-          "disclosureDate": "08/02/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019240.pdf",
-          "district": "IL03",
           "source": "house_ptr",
           "party": "D"
         }

@@ -17656,6 +17656,8 @@ async function renderAiStockDashboard(ticker) {
     </div>`;
   host.classList.add("is-active");
   host.setAttribute("aria-hidden", "false");
+  // 사이드바가 차트 폭을 줄였으니 cosmos 캔버스를 새 영역에 맞춰 다시 그린다.
+  requestAnimationFrame(() => { try { window.MirCosmos?.relayout?.(); } catch (_) {} });
   const rangeKo = { "1M": "1개월", "3M": "3개월", "6M": "6개월", "1Y": "1년", "5Y": "5년" };
   const rangeBar = byId("aiDashRange");
   if (rangeBar) rangeBar.querySelectorAll("[data-range]").forEach((btn) => {
@@ -17908,6 +17910,8 @@ window.MirDash = {
     const host = byId("aiStockDashboard");
     if (host) { host.classList.remove("is-active"); host.setAttribute("aria-hidden", "true"); host.innerHTML = ""; }
     aiDashSeq++;
+    // 사이드바가 사라졌으니 차트를 다시 전체 폭으로 되돌린다.
+    requestAnimationFrame(() => { try { window.MirCosmos?.relayout?.(); } catch (_) {} });
   },
 };
 

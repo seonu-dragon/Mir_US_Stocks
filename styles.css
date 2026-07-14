@@ -10650,7 +10650,7 @@ body.ai-stock-analysis-view .ai-dash.is-active {
   right: 14px;
   bottom: 86px;
   left: auto;
-  width: 336px;
+  width: 408px; /* 정보 박스 가독성 위해 넓게(차트가 좁으면 접기 사용) */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -10690,7 +10690,7 @@ body.ai-dash-collapsed .ai-dash-grid {
 /* 차트 전용 영역 확보: 우측 사이드바 폭만큼 cosmos를 좁힌다 (canvas는 컨테이너에 맞춰 재렌더).
    width:auto 로 base의 width:100vw 를 무효화해야 right 값이 실제로 폭을 줄인다. */
 body.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
-  right: 362px;
+  right: 434px;
   width: auto;
 }
 body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 0; }
@@ -10699,7 +10699,7 @@ body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right:
 .ai-dash-collapse {
   position: absolute;
   top: 80px;
-  right: 358px;
+  right: 430px;
   z-index: 4;
   width: 26px;
   height: 40px;
@@ -10751,7 +10751,7 @@ body.ai-dash-collapsed .ai-dash-collapse { right: 14px; }
 .ai-dash-rangebar {
   position: absolute;
   top: 78px; /* AI 헤더(~56px) 아래로 내려 잘리지 않게 */
-  left: calc((100% - 362px) / 2); /* 차트 영역(사이드바 제외)의 중앙 */
+  left: calc((100% - 434px) / 2); /* 차트 영역(사이드바 제외)의 중앙 */
   transform: translateX(-50%);
   transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;

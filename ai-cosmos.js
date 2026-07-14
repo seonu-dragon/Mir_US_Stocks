@@ -101,6 +101,9 @@
   let morphEpoch = 0;
   let chartBars = [];
   let chartFullBars = []; // 원본 전체 bars(기간 탭 전환 시 재슬라이스용)
+  let chartViewStart = 0; // 가시 윈도우 시작 인덱스(확대/이동용, float)
+  let chartViewCount = 0; // 가시 윈도우 바 개수
+  const MIN_CHART_BARS = 12;
   let chartMeta = { ticker: "", name: "", range: "6M" };
   let chartPriceMin = 0;
   let chartPriceMax = 1;
@@ -315,6 +318,44 @@
     const pad = (hi - lo) * 0.06 || 1;
     chartPriceMin = lo - pad;
     chartPriceMax = hi + pad;
+  }
+
+  // 확대/이동: chartFullBars 위의 가시 윈도우를 초기화·적용한다.
+  function resetChartWindow() {
+    chartViewCount = chartBars.length || chartFullBars.length;
+    chartViewStart = Math.max(0, chartFullBars.length - chartViewCount);
+  }
+  function applyChartWindow() {
+    if (!chartFullBars.length) return;
+    chartViewCount = clamp(chartViewCount, Math.min(MIN_CHART_BARS, chartFullBars.length), chartFullBars.length);
+    chartViewStart = clamp(chartViewStart, 0, chartFullBars.length - chartViewCount);
+    const s = Math.round(chartViewStart);
+    chartBars = chartFullBars.slice(s, s + chartViewCount);
+    updateChartBounds();
+  }
+  function redrawChartNow() {
+    if (running && renderMode === "chart") { cancelAnimationFrame(raf); draw(); }
+  }
+  // 휠 줌: anchorFrac(0~1) 위치의 바가 고정되도록 윈도우 크기를 조절.
+  function chartZoom(factor, anchorFrac) {
+    if (renderMode !== "chart" || chartFullBars.length < MIN_CHART_BARS) return;
+    const oldCount = chartViewCount || chartBars.length;
+    let newCount = Math.round(oldCount * factor);
+    newCount = clamp(newCount, MIN_CHART_BARS, chartFullBars.length);
+    if (newCount === oldCount) return;
+    const anchorIdx = chartViewStart + anchorFrac * oldCount;
+    chartViewStart = anchorIdx - anchorFrac * newCount;
+    chartViewCount = newCount;
+    applyChartWindow();
+    redrawChartNow();
+  }
+  // 드래그 팬: 픽셀 이동량(dx)만큼 윈도우를 시간축으로 민다.
+  function chartPan(dxPx, widthPx) {
+    if (renderMode !== "chart" || !chartFullBars.length) return;
+    const barsPerPx = chartViewCount / Math.max(1, widthPx);
+    chartViewStart -= dxPx * barsPerPx; // 오른쪽 드래그 → 과거 데이터
+    applyChartWindow();
+    redrawChartNow();
   }
 
   function barIndexFromX(x) {
@@ -1331,6 +1372,16 @@
 
   function onPointerDown(e) {
     if (!running || e.button !== 0) return;
+    // 차트 모드: 드래그로 시간축 이동(팬)
+    if (renderMode === "chart") {
+      isDragging = true;
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      canvas.classList.add("is-dragging");
+      canvas.setPointerCapture?.(e.pointerId);
+      e.preventDefault();
+      return;
+    }
     if (renderMode !== "landscape") return;
 
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1392,6 +1443,14 @@
       return;
     }
 
+    if (isDragging && renderMode === "chart") {
+      chartPan(dx, canvas?.clientWidth || window.innerWidth);
+      lastPointerX = e.clientX;
+      lastPointerY = e.clientY;
+      e.preventDefault();
+      return;
+    }
+
     if (isDragging && renderMode === "landscape") {
       viewYaw += dx * dragGain;
       viewPitch = clamp(viewPitch + dy * pitchGain, -0.5, 1.3);
@@ -1419,6 +1478,15 @@
     }
   }
 
+  function onWheel(e) {
+    if (renderMode !== "chart" || chartFullBars.length < MIN_CHART_BARS) return;
+    e.preventDefault();
+    const rect = canvas.getBoundingClientRect();
+    const anchorFrac = clamp((e.clientX - rect.left) / (rect.width || 1), 0, 1);
+    // 아래로 스크롤 → 축소(더 넓게), 위로 → 확대(더 좁게)
+    chartZoom(e.deltaY > 0 ? 1.18 : 0.85, anchorFrac);
+  }
+
   function bindPointer() {
     if (!canvas) return;
     const opts = { passive: false };
@@ -1426,6 +1494,7 @@
     canvas.addEventListener("pointermove", onPointerMove, opts);
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener("wheel", onWheel, opts);
   }
 
   function unbindPointer() {
@@ -1501,6 +1570,7 @@
 
     chartFullBars = bars;
     chartBars = sliceBarsByRange(bars, payload.range || "6M");
+    resetChartWindow();
     chartMeta = {
       ticker: String(payload.ticker || "").toUpperCase(),
       name: String(payload.name || payload.ticker || ""),
@@ -1548,6 +1618,7 @@
     if (!chartFullBars.length || renderMode === "landscape") return false;
     chartBars = sliceBarsByRange(chartFullBars, range || "6M");
     if (!chartBars.length) return false;
+    resetChartWindow();
     chartMeta.range = range || "6M";
     updateChartBounds();
     if (running && renderMode === "chart") {
@@ -1620,6 +1691,6 @@
     resetToLandscape,
     relayout,
     getMode: () => renderMode,
-    getChartMeta: () => ({ ...chartMeta }),
+    getChartMeta: () => ({ ...chartMeta, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length }),
   };
 })();

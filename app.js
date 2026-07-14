@@ -3604,16 +3604,34 @@ function computeAutoTrendlines(rows, win = 3) {
   return lines;
 }
 
-// AI 모드 차트(cosmos) 오버레이 계산: 바 배열({o,h,l,c,v})에서 지지/저항·추세선·패턴을
-// 산출한다(분석 페이지와 동일 엔진 재사용). ai-mode-welcome이 morphToChart에 넘긴다.
-window.MirChartOverlays = function (bars) {
+// AI 모드 차트(cosmos) 오버레이 계산: 바 배열({o,h,l,c,v,d})에서 지지/저항·추세선·
+// 기하학적 차트 패턴을 산출한다. 종목 분석 탭과 "동일한" 엔진/데이터 구조를 재사용해
+// (supportResistanceLevels·computeAutoTrendlines·getCachedPatternConfirmations)
+// 분석 페이지 차트와 같은 오버레이가 나오도록 한다. ai-mode-welcome이 morphToChart에 넘김.
+window.MirChartOverlays = function (bars, ticker) {
   const P = window.MirProb || {};
+  const empty = { sr: [], trendlines: [], patterns: [], totalBars: (bars || []).length };
+  if (!Array.isArray(bars) || bars.length < 12) return empty;
   let sr = [], trendlines = [], patterns = [];
-  if (!Array.isArray(bars) || bars.length < 12) return { sr, trendlines, patterns };
-  try { sr = (P.supportResistanceLevels ? P.supportResistanceLevels(bars) : []).map((l) => l.price).filter((v) => Number.isFinite(v)); } catch (_) {}
+  // 지지/저항: 리치 레벨 객체(price/hi/lo/type/tier) 그대로 — 분석 탭과 동일.
+  try { sr = (P.supportResistanceLevels ? P.supportResistanceLevels(bars) : []) || []; } catch (_) {}
+  // 추세선: 분석 탭과 동일한 자동 추세선({kind,x1,y1,x2,y2,color}).
   try { trendlines = computeAutoTrendlines(bars) || []; } catch (_) {}
-  try { patterns = (P.detectCurrentPatterns ? P.detectCurrentPatterns(bars) : []) || []; } catch (_) {}
-  return { sr, trendlines, patterns };
+  // 차트 패턴: 분석 탭과 동일한 기하학적 패턴(points/lines/necklinePts). 캔들패턴 아님.
+  try {
+    const labels = P.patternLabels || {};
+    const enabled = chartState.patternTypes || {};
+    patterns = (typeof getCachedPatternConfirmations === "function" ? getCachedPatternConfirmations(ticker || "", bars) : [])
+      .filter((p) => p.points || p.lines)
+      .filter((p) => { const c = patternCategory(p.pattern); return c && enabled[c] !== false; })
+      .sort((a, b) => b.confirm_idx - a.confirm_idx)
+      .slice(0, 3)
+      .map((p) => ({
+        dir: p.dir, pattern: p.pattern, name: labels[p.pattern] || p.pattern,
+        points: p.points || [], lines: p.lines || [], necklinePts: p.necklinePts || null,
+      }));
+  } catch (_) {}
+  return { sr, trendlines, patterns, totalBars: bars.length };
 };
 
 function renderPsarDots(psarValues, ctxRows, rows, xFor, overlayYFor) {

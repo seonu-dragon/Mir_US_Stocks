@@ -10713,6 +10713,36 @@ body.ai-stock-analysis-view .ai-dash.is-active {
 .ai-dash-price .neg { color: var(--red); }
 .ai-dash-price > span { display: block; font-size: 13px; font-weight: 700; }
 
+/* 차트 기간 탭 (상단 중앙 플로팅) */
+.ai-dash-rangebar {
+  position: absolute;
+  top: 64px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(13, 20, 38, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(120, 160, 255, 0.16);
+  pointer-events: auto;
+  z-index: 2;
+}
+.ai-dash-rangebar button {
+  height: auto;
+  border: 0;
+  background: transparent;
+  color: #9fb0cc;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ai-dash-rangebar button.is-active { background: var(--accent); color: #fff; }
+
 .ai-dash-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -10777,6 +10807,18 @@ body.ai-stock-analysis-view .ai-dash.is-active {
 .ai-verdict-pts li { font-size: 11.5px; line-height: 1.4; color: #cbd6e8; }
 .ai-verdict-pts li.muted { color: #7c8aa5; list-style: none; margin-left: -15px; }
 .ai-verdict-disc { display: block; margin-top: 10px; font-size: 10px; color: #6b7a94; }
+.ai-verdict-llm:not(:empty) {
+  margin-top: 11px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ai-verdict-llm-head { font-size: 11px; font-weight: 800; color: #a5b4fc; margin-bottom: 5px; }
+.ai-verdict-llm-body { margin: 0; font-size: 12px; line-height: 1.55; color: #dce4f2; }
+.ai-verdict-llm-body p { margin: 0 0 6px; }
+.ai-verdict-llm-loading { color: #8b9bb8; animation: aiDashIn 0.8s ease infinite alternate; }
+
+/* 대시보드는 전용 뉴스 패널(우상단)이 있어 재사용 컴포넌트의 중복 뉴스는 숨긴다 */
+.ai-dash .ai-news-dup { display: none !important; }
 
 .ai-dash-news-list { display: flex; flex-direction: column; gap: 8px; }
 .ai-dash-news-item {

@@ -16700,7 +16700,7 @@ function aiNewsEvidence(item) {
   if (!news.length) return aiEvidenceCard("뉴스", "뉴스 부족", "이 종목의 최신 뉴스가 아직 수집되지 않았습니다.");
   const headline = news[0].title || "최신 헤드라인";
   const source = news[0].source || news[0].publisher || "";
-  return aiEvidenceCard("뉴스", headline.slice(0, 34), `${source}${news.length > 1 ? ` · 추가 ${news.length - 1}건` : ""}`, "is-info");
+  return aiEvidenceCard("뉴스", headline.slice(0, 34), `${source}${news.length > 1 ? ` · 추가 ${news.length - 1}건` : ""}`, "is-info ai-news-dup");
 }
 
 function renderAiEvidenceGrid(item) {
@@ -16795,7 +16795,7 @@ function aiNewsPanel(item) {
       time || "-",
     ];
   });
-  return aiModePanel("뉴스", `${news.length}건`, aiMiniTable(["헤드라인", "출처", "시간"], rows, "이 종목의 뉴스가 아직 수집되지 않았습니다."), "is-wide");
+  return aiModePanel("뉴스", `${news.length}건`, aiMiniTable(["헤드라인", "출처", "시간"], rows, "이 종목의 뉴스가 아직 수집되지 않았습니다."), "is-wide ai-news-dup");
 }
 
 function aiEventsPanel(item) {
@@ -17649,9 +17649,20 @@ async function renderAiStockDashboard(ticker) {
         <section class="ai-dash-subpanel" id="aiDashMetrics"></section>
         <section class="ai-dash-subpanel" id="aiDashData"></section>
       </div>
+    </div>
+    <div class="ai-dash-rangebar" id="aiDashRange">
+      ${["1M", "3M", "6M", "1Y", "5Y"].map((r) => `<button type="button" data-range="${r}"${r === "6M" ? ' class="is-active"' : ""}>${r}</button>`).join("")}
     </div>`;
   host.classList.add("is-active");
   host.setAttribute("aria-hidden", "false");
+  const rangeBar = byId("aiDashRange");
+  if (rangeBar) rangeBar.querySelectorAll("[data-range]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (window.MirCosmos?.setChartRange?.(btn.dataset.range)) {
+        rangeBar.querySelectorAll("[data-range]").forEach((b) => b.classList.toggle("is-active", b === btn));
+      }
+    });
+  });
 
   const paint = (item) => {
     if (seq !== aiDashSeq) return; // 새 종목 요청이 들어오면 이전 렌더 중단
@@ -17665,7 +17676,10 @@ async function renderAiStockDashboard(ticker) {
   paint(initial);
   revealAiBlocksStaggered(host);
   const item = (await ensureAiWidgetStock(t)) || initial;
+  if (seq !== aiDashSeq) return false;
   paint(item);
+  // 규칙 기반 verdict 위에 워커 LLM 자연어 코멘트를 비동기로 덧붙인다(있으면).
+  fetchAiDashLlmComment(item, seq);
   return true;
 }
 
@@ -17809,7 +17823,45 @@ function aiVerdictPanel(item) {
         <ul>${li(risks, "특이 리스크 신호 없음")}</ul>
       </div>
     </div>
+    <div class="ai-verdict-llm" id="aiDashLlm"></div>
     <small class="ai-verdict-disc">규칙 기반 참고 지표 · 투자 조언이 아닙니다</small>`;
+}
+
+// 워커 LLM(/chat)으로 간결한 자연어 투자 코멘트를 받아 verdict 패널에 덧붙인다.
+// 프록시가 없거나 실패하면 규칙 기반 verdict만 남는다(그레이스풀).
+async function fetchAiDashLlmComment(item, seq) {
+  const slot = byId("aiDashLlm");
+  if (!slot || !LIVE_DATA_PROXY) return;
+  slot.innerHTML = `<div class="ai-verdict-llm-head">✦ AI 심층 코멘트</div><p class="ai-verdict-llm-body ai-verdict-llm-loading">작성 중…</p>`;
+  try {
+    const query = `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 2~3문장의 간결한 한국어 투자 코멘트를 작성해줘. 매수/매도 단정은 피하고 핵심 포인트와 주의점 위주로. 마크다운 없이 평문으로.`;
+    const stockContext = await buildStockChatContext(item.ticker);
+    if (seq !== aiDashSeq) return; // 사용자가 다른 종목으로 이동함
+    const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messages: [{ role: "user", content: query }],
+        stockContext,
+        snapshotContext: (typeof buildMarketChatContext === "function" ? buildMarketChatContext() : ""),
+        market: isKrMarket() ? "kr" : "us",
+        searchHints: { tickers: [item.ticker], companies: [item.company].filter(Boolean) },
+      }),
+    });
+    if (seq !== aiDashSeq) return;
+    const payload = await res.json();
+    const reply = (payload && payload.reply || "").trim();
+    const cur = byId("aiDashLlm");
+    if (!cur || seq !== aiDashSeq) return;
+    if (reply) {
+      cur.innerHTML = `<div class="ai-verdict-llm-head">✦ AI 심층 코멘트</div><p class="ai-verdict-llm-body">${formatMarkdownToHtml(reply)}</p>`;
+    } else {
+      cur.innerHTML = "";
+    }
+  } catch (_) {
+    const cur = byId("aiDashLlm");
+    if (cur && seq === aiDashSeq) cur.innerHTML = ""; // 실패 시 조용히 규칙 기반만
+  }
 }
 
 window.MirDash = {

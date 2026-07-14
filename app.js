@@ -17632,6 +17632,7 @@ async function renderAiStockDashboard(ticker) {
   if (!base) return false;
   const seq = ++aiDashSeq;
   const initial = applyLive(withDetail(base));
+  let dashItem = initial; // 칩 핸들러가 참조(리페인트에도 최신 item 유지)
 
   host.innerHTML = `
     <div class="ai-dash-grid">
@@ -17655,12 +17656,29 @@ async function renderAiStockDashboard(ticker) {
     </div>`;
   host.classList.add("is-active");
   host.setAttribute("aria-hidden", "false");
+  const rangeKo = { "1M": "1개월", "3M": "3개월", "6M": "6개월", "1Y": "1년", "5Y": "5년" };
   const rangeBar = byId("aiDashRange");
   if (rangeBar) rangeBar.querySelectorAll("[data-range]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      if (window.MirCosmos?.setChartRange?.(btn.dataset.range)) {
+      const r = btn.dataset.range;
+      if (window.MirCosmos?.setChartRange?.(r)) {
         rangeBar.querySelectorAll("[data-range]").forEach((b) => b.classList.toggle("is-active", b === btn));
+        const hint = byId("aiInputHint"); // 하단 라벨 동기화
+        if (hint) hint.textContent = `${t} · ${rangeKo[r] || r} 차트`;
       }
+    });
+  });
+
+  // 후속 질문 칩(위임): 리페인트에도 살아남도록 host에 한 번만 바인딩
+  host.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-dash-q]");
+    if (!chip) return;
+    const q = chip.getAttribute("data-dash-q");
+    const label = chip.getAttribute("data-dash-l") || "질문";
+    host.querySelectorAll("[data-dash-q]").forEach((c) => c.classList.toggle("is-active", c === chip));
+    fetchAiDashLlmComment(dashItem, aiDashSeq, {
+      query: `${dashItem.company || dashItem.ticker}(${dashItem.ticker}) — ${q}`,
+      label,
     });
   });
 
@@ -17677,6 +17695,7 @@ async function renderAiStockDashboard(ticker) {
   revealAiBlocksStaggered(host);
   const item = (await ensureAiWidgetStock(t)) || initial;
   if (seq !== aiDashSeq) return false;
+  dashItem = item;
   paint(item);
   // 규칙 기반 verdict 위에 워커 LLM 자연어 코멘트를 비동기로 덧붙인다(있으면).
   fetchAiDashLlmComment(item, seq);
@@ -17824,17 +17843,36 @@ function aiVerdictPanel(item) {
       </div>
     </div>
     <div class="ai-verdict-llm" id="aiDashLlm"></div>
+    <div class="ai-dash-chips" aria-label="후속 질문">
+      <span class="ai-dash-chips-h">💬 이어서 묻기</span>
+      ${AI_DASH_CHIPS.map((c) => `<button type="button" data-dash-q="${escapeHtml(c.q)}" data-dash-l="${escapeHtml(c.l)}">${escapeHtml(c.l)}</button>`).join("")}
+    </div>
     <small class="ai-verdict-disc">규칙 기반 참고 지표 · 투자 조언이 아닙니다</small>`;
 }
 
-// 워커 LLM(/chat)으로 간결한 자연어 투자 코멘트를 받아 verdict 패널에 덧붙인다.
-// 프록시가 없거나 실패하면 규칙 기반 verdict만 남는다(그레이스풀).
-async function fetchAiDashLlmComment(item, seq) {
+const AI_DASH_CHIPS = [
+  { l: "매수 타이밍?", q: "지금 매수하기 좋은 시점인지 기술적·펀더멘탈 근거와 함께 판단해줘" },
+  { l: "핵심 리스크", q: "이 종목의 핵심 하방 리스크 요인을 짚어줘" },
+  { l: "동종업체 비교", q: "주요 동종업체 대비 강점과 약점을 비교해줘" },
+  { l: "실적 전망", q: "다가오는 실적과 향후 실적 전망을 정리해줘" },
+  { l: "적정 매수가", q: "기술적 지지선과 밸류에이션을 고려한 매수 고려 가격대를 알려줘" },
+];
+
+// 워커 LLM(/chat)으로 자연어 코멘트/후속답변을 받아 verdict 패널의 슬롯에 채운다.
+// opts.query가 있으면 후속 질문 답변(Q&A), 없으면 자동 심층 코멘트.
+// 프록시가 없거나 실패하면: 자동 코멘트는 조용히 비우고, 후속 질문은 안내 메시지를 표시.
+async function fetchAiDashLlmComment(item, seq, opts) {
   const slot = byId("aiDashLlm");
-  if (!slot || !LIVE_DATA_PROXY) return;
-  slot.innerHTML = `<div class="ai-verdict-llm-head">✦ AI 심층 코멘트</div><p class="ai-verdict-llm-body ai-verdict-llm-loading">작성 중…</p>`;
+  if (!slot) return;
+  const custom = opts && opts.query;
+  const headLabel = custom ? `💬 ${escapeHtml(opts.label || "질문")}` : "✦ AI 심층 코멘트";
+  if (!LIVE_DATA_PROXY) {
+    if (custom) slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">AI 답변은 서버(Worker) 연결 후 이용할 수 있습니다.</p>`;
+    return;
+  }
+  slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body ai-verdict-llm-loading">작성 중…</p>`;
   try {
-    const query = `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 2~3문장의 간결한 한국어 투자 코멘트를 작성해줘. 매수/매도 단정은 피하고 핵심 포인트와 주의점 위주로. 마크다운 없이 평문으로.`;
+    const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 2~3문장의 간결한 한국어 투자 코멘트를 작성해줘. 매수/매도 단정은 피하고 핵심 포인트와 주의점 위주로. 마크다운 없이 평문으로.`;
     const stockContext = await buildStockChatContext(item.ticker);
     if (seq !== aiDashSeq) return; // 사용자가 다른 종목으로 이동함
     const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
@@ -17854,13 +17892,13 @@ async function fetchAiDashLlmComment(item, seq) {
     const cur = byId("aiDashLlm");
     if (!cur || seq !== aiDashSeq) return;
     if (reply) {
-      cur.innerHTML = `<div class="ai-verdict-llm-head">✦ AI 심층 코멘트</div><p class="ai-verdict-llm-body">${formatMarkdownToHtml(reply)}</p>`;
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body">${formatMarkdownToHtml(reply)}</p>`;
     } else {
-      cur.innerHTML = "";
+      cur.innerHTML = custom ? `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">답변을 받지 못했습니다.</p>` : "";
     }
   } catch (_) {
     const cur = byId("aiDashLlm");
-    if (cur && seq === aiDashSeq) cur.innerHTML = ""; // 실패 시 조용히 규칙 기반만
+    if (cur && seq === aiDashSeq) cur.innerHTML = custom ? `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">지금은 답변을 불러올 수 없습니다.</p>` : "";
   }
 }
 

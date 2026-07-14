@@ -100,6 +100,7 @@
   let morphFromScale = BASE_SCALE;
   let morphEpoch = 0;
   let chartBars = [];
+  let chartFullBars = []; // 원본 전체 bars(기간 탭 전환 시 재슬라이스용)
   let chartMeta = { ticker: "", name: "", range: "6M" };
   let chartPriceMin = 0;
   let chartPriceMax = 1;
@@ -1498,6 +1499,7 @@
     const bars = Array.isArray(payload?.bars) ? payload.bars : [];
     if (!bars.length) return false;
 
+    chartFullBars = bars;
     chartBars = sliceBarsByRange(bars, payload.range || "6M");
     chartMeta = {
       ticker: String(payload.ticker || "").toUpperCase(),
@@ -1539,6 +1541,20 @@
       cancelAnimationFrame(raf);
       draw();
     }
+  }
+
+  // 기간 탭 전환: 재-morph 없이 전체 bars를 새 기간으로 재슬라이스해 즉시 다시 그린다.
+  function setChartRange(range) {
+    if (!chartFullBars.length || renderMode === "landscape") return false;
+    chartBars = sliceBarsByRange(chartFullBars, range || "6M");
+    if (!chartBars.length) return false;
+    chartMeta.range = range || "6M";
+    updateChartBounds();
+    if (running && renderMode === "chart") {
+      cancelAnimationFrame(raf);
+      draw();
+    }
+    return true;
   }
 
   function start() {
@@ -1600,6 +1616,7 @@
     start,
     stop,
     morphToChart,
+    setChartRange,
     resetToLandscape,
     relayout,
     getMode: () => renderMode,

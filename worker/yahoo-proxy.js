@@ -1148,7 +1148,7 @@ function json(obj, status = 200, cacheSeconds = 900) {
 function cors(resp) {
   const r = new Response(resp.body, resp);
   r.headers.set("Access-Control-Allow-Origin", ALLOW_ORIGIN);
-  r.headers.set("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  r.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   r.headers.set("Access-Control-Allow-Headers", "Content-Type");
   return r;
 }

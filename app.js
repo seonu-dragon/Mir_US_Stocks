@@ -142,7 +142,8 @@ function liveProxyTicker(itemOrTicker) {
     const item = typeof itemOrTicker === "object" ? itemOrTicker : stockByTicker(itemOrTicker);
     return cfg.yahooTicker(item || { ticker: itemOrTicker }, item?.market);
   }
-  return String(itemOrTicker || "").toUpperCase();
+  const raw = (itemOrTicker && typeof itemOrTicker === "object") ? (itemOrTicker.ticker || "") : itemOrTicker;
+  return String(raw || "").toUpperCase();
 }
 let selectedTicker = (window.MirMarket && window.MirMarket.getInitialMode() === "kr") ? "005930" : "NVDA";
 let chatFocusTicker = selectedTicker;
@@ -298,6 +299,10 @@ let chartPresets = {};
 let moveAnalysisState = null;
 let earningsCalendarCache = null;
 let earningsCalendarLoading = false;
+let earnView = "calendar";   // "calendar" | "list"
+let earnSector = "all";
+let earnSort = "date";       // "date" | "cap" | "rs"
+let earnWatchOnly = false;
 let deferredInstallPrompt = null;
 let estimateHistoryStore = null;
 
@@ -461,9 +466,9 @@ function loadSnapshotScript(cfg) {
 // the active market's feature flags. `feature` maps to cfg.features; `usOnly`
 // loads only in US mode; datasets without either load in both markets.
 const FEATURE_DATA = {
-  inst13f:    { global: "INSTITUTIONAL_13F",     path: "data/institutional_13f.js",     feature: "sec13f" },
-  congress:   { global: "CONGRESS_TRADES",       path: "data/congress_trades.js",       feature: "congress" },
-  insider:    { global: "INSIDER_TRADES",        path: "data/insider_trades.js",        feature: "insider" },
+  inst13f:    { global: "INSTITUTIONAL_13F",     path: "data/institutional_13f.js",     feature: "sec13f",   heavy: true },
+  congress:   { global: "CONGRESS_TRADES",       path: "data/congress_trades.js",       feature: "congress", heavy: true },
+  insider:    { global: "INSIDER_TRADES",        path: "data/insider_trades.js",        feature: "insider",  heavy: true },
   activist:   { global: "ACTIVIST_STAKES",       path: "data/activist_stakes.js",       feature: "activist" },
   events:     { global: "MATERIAL_EVENTS",       path: "data/material_events.js",       feature: "materialEvents" },
   ipo:        { global: "IPO_CALENDAR",          path: "data/ipo_calendar.js",          feature: "ipo",          marketSpecific: true },
@@ -509,12 +514,35 @@ function ensureFeatureData(key) {
   return _featureDataPromises[key];
 }
 
-// After boot, stream in every enabled feature dataset in parallel. As each lands,
-// refresh whatever feature-dependent surface is currently on screen.
+// After boot, stream in the *light* feature datasets — but only once the browser is
+// idle, so the prefetch never competes with first paint or the market snapshot.
+// Heavy datasets (13F / congress / insider, ~11MB combined) are excluded here and
+// load lazily when their tab is first opened (see renderWithFeature / activateTab),
+// so a visitor who never opens those tabs never downloads them.
 function preloadFeatureData() {
-  Object.keys(FEATURE_DATA).forEach((key) => {
+  const run = () => Object.keys(FEATURE_DATA).forEach((key) => {
+    if (FEATURE_DATA[key].heavy) return;
     ensureFeatureData(key).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
   });
+  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 2500 });
+  else setTimeout(run, 1200);
+}
+
+// Render a feature surface, lazy-loading its dataset on first use. While the dataset
+// streams in, a loading notice is shown in `loadingTargetId` (if given); the surface
+// re-renders once the data lands. Datasets already loaded render synchronously.
+// `shouldLoad` gates the network fetch: pass false when rendering a hidden/pre-rendered
+// surface (e.g. the boot pre-render) so heavy datasets only download once the surface
+// is actually viewed.
+function renderWithFeature(key, renderFn, loadingTargetId, shouldLoad = true) {
+  const meta = FEATURE_DATA[key];
+  if (shouldLoad && meta && featureDataEnabled(meta, marketCfg()) && !window[meta.global]) {
+    const target = loadingTargetId ? byId(loadingTargetId) : null;
+    if (target) target.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    ensureFeatureData(key).then(() => renderFn());
+    return;
+  }
+  renderFn();
 }
 
 let _featureRefreshTimer = null;
@@ -574,7 +602,9 @@ async function loadData(options = {}) {
         loaded = true;
       }
     } catch (error) {
-      console.warn("Unable to load JSON snapshot", error);
+      // Not user-facing: we fall back to the .js snapshot below (and warn only if that
+      // also fails). Keep this at debug level so a transient blip isn't console noise.
+      console.debug("JSON snapshot fetch failed, falling back to script", error);
     }
   }
 
@@ -907,18 +937,26 @@ let cardnewsView = "us";  // 기본: 미국 뉴스(미국 주식 사이트)
 let cardnewsIdx = 0;
 let cardnewsImages = [];
 let cardnewsSwipeBound = false;
+let cardnewsInView = true;
 
 function showCardNewsSlide(idx) {
   const img = byId("cardnewsCarouselImg");
   if (!img || !cardnewsImages.length) return;
   cardnewsIdx = ((idx % cardnewsImages.length) + cardnewsImages.length) % cardnewsImages.length;
+  img.decoding = "async";
   img.src = cardnewsImages[cardnewsIdx];
 }
 
 function startCardNewsTimer() {
   if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
   if (cardnewsImages.length > 1) {
-    cardnewsTimer = setInterval(() => showCardNewsSlide(cardnewsIdx + 1), 3000);
+    // Auto-advance lazy-loads the next ~1.3MB card image. Skip advancing while the tab is
+    // backgrounded or the carousel is scrolled out of view, so a visitor who never looks
+    // at it doesn't pull the whole ~7MB set. Manual prev/next/swipe still work anytime.
+    cardnewsTimer = setInterval(() => {
+      if (document.hidden || !cardnewsInView) return;
+      showCardNewsSlide(cardnewsIdx + 1);
+    }, 3000);
   }
 }
 
@@ -931,6 +969,12 @@ function stepCardNews(delta) {
 function bindCardNewsSwipe(host) {
   if (!host || cardnewsSwipeBound) return;
   cardnewsSwipeBound = true;
+  // Track whether the carousel is on screen so startCardNewsTimer can pause off-screen.
+  if (typeof IntersectionObserver !== "undefined") {
+    new IntersectionObserver((entries) => {
+      cardnewsInView = entries.some((e) => e.isIntersecting);
+    }, { threshold: 0.1 }).observe(host);
+  }
   let touchStartX = 0;
   let touchStartY = 0;
   let swiped = false;
@@ -1695,7 +1739,7 @@ function renderActionNews() {
     </div>`;
   const row = `<div class="action-news-row">` + imgs.map((src, i) => `
     <button type="button" class="action-news-item" data-news-idx="${i}" title="크게 보기">
-      <img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 1}" loading="lazy">
+      <img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 1}" loading="lazy" decoding="async" fetchpriority="low">
     </button>`).join("") + `</div>`;
   box.innerHTML = head + row;
   box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
@@ -1886,17 +1930,16 @@ function normalizeCnnFng(payload) {
 }
 
 async function fetchCnnFng(base) {
-  const urls = [CNN_FNG_URL, `${base}/?fng=1`];
-  for (const url of urls) {
-    try {
-      const response = await fetch(url, { cache: "no-store" });
-      if (!response.ok) continue;
+  // CNN's endpoint (CNN_FNG_URL) sends no CORS headers, so a direct browser fetch always
+  // fails with an uncatchable console error. Go straight through the Worker proxy, which
+  // fetches CNN server-side and returns CORS-allowed JSON.
+  try {
+    const response = await fetch(`${base}/?fng=1`, { cache: "no-store" });
+    if (response.ok) {
       const fng = normalizeCnnFng(await response.json());
       if (fng) return fng;
-    } catch (_) {
-      // Try the Worker fallback when CNN cannot be reached directly.
     }
-  }
+  } catch (_) { /* Worker unreachable → gauge shows the loading state. */ }
   return null;
 }
 
@@ -2271,13 +2314,16 @@ function activateInstitutionalSub(name, { push = false } = {}) {
     const panel = byId(`sub-inst-${institutionalSubTab}`) || byId("sub-inst-13f");
     if (panel) panel.classList.add("is-active");
   }
-  if (institutionalSubTab === "13f") renderInstitutional13f();
-  if (institutionalSubTab === "congress") renderCongressTrades();
-  if (institutionalSubTab === "insider") renderInsiderTrades();
-  if (institutionalSubTab === "activist") renderActivistStakes();
-  if (institutionalSubTab === "events") renderMaterialEvents();
-  if (institutionalSubTab === "ipo") renderIpoCalendar();
-  if (institutionalSubTab === "dart") renderKrDisclosures();
+  // Only fetch the (often multi-MB) dataset when the institutional tab is actually
+  // active — not during the boot pre-render (renderAll), where currentTab is "map".
+  const load = currentTab === "institutional";
+  if (institutionalSubTab === "13f") renderWithFeature("inst13f", renderInstitutional13f, "institutionalDetail", load);
+  if (institutionalSubTab === "congress") renderWithFeature("congress", renderCongressTrades, "congressRankings", load);
+  if (institutionalSubTab === "insider") renderWithFeature("insider", renderInsiderTrades, "insiderTable", load);
+  if (institutionalSubTab === "activist") renderWithFeature("activist", renderActivistStakes, "activistTable", load);
+  if (institutionalSubTab === "events") renderWithFeature("events", renderMaterialEvents, "eventsTable", load);
+  if (institutionalSubTab === "ipo") renderWithFeature("ipo", renderIpoCalendar, "ipoTable", load);
+  if (institutionalSubTab === "dart") renderWithFeature("krDart", renderKrDisclosures, "krDartTable", load);
   if (push) {
     recordNav();
   }
@@ -2986,7 +3032,17 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "community") activateCommunitySub(sub || communitySubTab, { push: false, communityTicker });
   if (name !== "community") stopCommunityPolling();
   if (name === "map") renderTreemap();
-  if (name === "signals") renderSignals();
+  if (name === "signals") {
+    renderSignals();
+    // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
+    // first visit (they're excluded from the boot prefetch) and re-render as each lands.
+    ["insider", "congress", "inst13f"].forEach((k) => {
+      const meta = FEATURE_DATA[k];
+      if (meta && featureDataEnabled(meta, marketCfg()) && !window[meta.global]) {
+        ensureFeatureData(k).then((ok) => { if (ok && currentTab === "signals") renderSignals(); });
+      }
+    });
+  }
   if (push) recordNav();
 }
 
@@ -6230,7 +6286,12 @@ function renderSearch(options = {}) {
     });
   }
 
-  loadAiDeepReport(item.ticker);
+  // Auto-load the AI report only when the analysis view is actually being viewed.
+  // renderSearch also runs during the boot pre-render (map tab active) and as the
+  // first of selectTicker's two render passes — firing here would waste an LLM /chat
+  // call on every visit and force-load the heavy 13F/insider/congress datasets.
+  // The natural-language search path issues its own loadAiDeepReport with a custom query.
+  if (currentTab === "search" && !options.fromAiSearch) loadAiDeepReport(item.ticker);
 }
 
 function moveEvidenceRow(kind, title, detail, options = {}) {
@@ -8752,7 +8813,7 @@ function stockEventCommunityCardHtml(item) {
   const ctaLabel = `${count}개의 의견 보기`;
   return `
     <article class="event-card event-card-community event-info">
-      <span>Community</span>
+      <span class="event-type"><i aria-hidden="true">💬</i>커뮤니티</span>
       <strong>커뮤니티</strong>
       <b>${loading ? "불러오는 중…" : (count ? `${count}개 의견` : "의견 없음")}</b>
       ${previewHtml}
@@ -8867,12 +8928,26 @@ function stockEventRows(item) {
   ];
 }
 
+const EVENT_META = {
+  Earnings: { icon: "📅", ko: "실적" },
+  Options:  { icon: "⏱️", ko: "옵션 만기" },
+  Target:   { icon: "🎯", ko: "목표가" },
+  Dividend: { icon: "💵", ko: "배당" },
+  News:     { icon: "📰", ko: "뉴스" },
+  Move:     { icon: "⚡", ko: "가격 이벤트" },
+};
+
+function eventTypeLabel(type) {
+  const meta = EVENT_META[type] || { icon: "•", ko: type };
+  return `<span class="event-type"><i aria-hidden="true">${meta.icon}</i>${escapeHtml(meta.ko)}</span>`;
+}
+
 function eventCardHtml(event) {
   if (event.type === "Earnings") {
     return `
       <article class="event-card event-${escapeHtml(event.tone)} event-card-earnings">
         <div class="earnings-card-title">
-          <span>EARNINGS</span>
+          ${eventTypeLabel("Earnings")}
           <strong>실적 일정과 발표 반응</strong>
         </div>
         <div id="stockEarnings" class="earnings-inline-calendar"></div>
@@ -8881,7 +8956,7 @@ function eventCardHtml(event) {
   }
   return `
     <article class="event-card event-${escapeHtml(event.tone)}">
-      <span>${escapeHtml(event.type)}</span>
+      ${eventTypeLabel(event.type)}
       <strong>${escapeHtml(event.title)}</strong>
       <b>${escapeHtml(event.value)}</b>
       <p>${escapeHtml(event.note)}</p>
@@ -9266,34 +9341,64 @@ function renderFundamentals(item) {
   const displayPrice = latestPriceForFundamentals(item, f);
   const detailMode = data.detailPolicy?.mode === "split";
   const hasFundamentals = Object.keys(f).length > 0;
-  const rows = [
-    ["Index", indexLabel(item), "P/E", fmtMultiple(f.pe), "EPS TTM", moneyOrDash(f.epsTtm), "Perf Week", fmtPct(item.weekChangePct)],
-    ["Market Cap", isKrMarket() ? fmtBillions(item.marketCapB) : fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB), "Forward P/E", fmtMultiple(f.forwardPE), "EPS Next Y", moneyOrDash(f.epsNextY), "Perf Month", fmtPct(item.monthChangePct)],
-    ["Sales", fmtFinancialB(f.salesB), "P/S", fmtMultiple(f.ps), "EPS Next Q", moneyOrDash(f.epsNextQ), "Perf Quarter", fmtPct(item.threeMonthChangePct)],
-    ["Income", fmtFinancialB(f.incomeB), "P/B", fmtMultiple(f.pb), "Gross Margin", fmtPercent(f.grossMargin), "Perf YTD", fmtPct(item.ytdChangePct)],
-    ["Cash", fmtFinancialB(f.cashB), "Debt/Eq", fmtNum(f.debtEq), "Oper Margin", fmtPercent(f.operMargin), "52W High", priceOrDash(f.week52High)],
-    ["Shares Out", fmtShares(f.sharesBDisplay ?? f.sharesB), "Current Ratio", fmtRatio(f.currentRatio), "Profit Margin", fmtPercent(f.profitMargin), "52W Low", priceOrDash(f.week52Low)],
-    ["Avg Volume", fmtCompact(f.avgVolume), "Quick Ratio", fmtRatio(f.quickRatio), "ROE", fmtPercent(f.roe), isKrMarket() ? "1Y 목표가" : "Nasdaq 1Y Target", priceOrDash(f.targetPrice)],
-    ["Volume", fmtCompact(f.volume), "Prev Close", priceOrDash(f.prevClose), "RS Score", item.rsScore, "Price", priceOrDash(displayPrice)]
+  const krT = isKrMarket();
+
+  // Group the metrics by what they tell you, so the eye can jump to a theme (밸류에이션,
+  // 수익성 …) instead of scanning a flat 30-cell grid.
+  const groups = [
+    { title: "밸류에이션", metrics: [
+      ["P/E", fmtMultiple(f.pe)], ["Forward P/E", fmtMultiple(f.forwardPE)],
+      ["P/S", fmtMultiple(f.ps)], ["P/B", fmtMultiple(f.pb)],
+    ] },
+    { title: "수익성", metrics: [
+      ["Gross Margin", fmtPercent(f.grossMargin)], ["Oper Margin", fmtPercent(f.operMargin)],
+      ["Profit Margin", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
+    ] },
+    { title: "실적 (EPS)", metrics: [
+      ["EPS TTM", moneyOrDash(f.epsTtm)], ["EPS Next Y", moneyOrDash(f.epsNextY)],
+      ["EPS Next Q", moneyOrDash(f.epsNextQ)], [krT ? "1Y 목표가" : "1Y Target", priceOrDash(f.targetPrice)],
+    ] },
+    { title: "기간 성과", metrics: [
+      ["Perf Week", fmtPct(item.weekChangePct)], ["Perf Month", fmtPct(item.monthChangePct)],
+      ["Perf Quarter", fmtPct(item.threeMonthChangePct)], ["Perf YTD", fmtPct(item.ytdChangePct)],
+    ] },
+    { title: "규모 · 유동성", wide: true, metrics: [
+      ["Market Cap", krT ? fmtBillions(item.marketCapB) : fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB)],
+      ["Sales", fmtFinancialB(f.salesB)], ["Income", fmtFinancialB(f.incomeB)], ["Cash", fmtFinancialB(f.cashB)],
+      ["Shares Out", fmtShares(f.sharesBDisplay ?? f.sharesB)], ["Avg Volume", fmtCompact(f.avgVolume)],
+      ["Volume", fmtCompact(f.volume)], ["Debt/Eq", fmtNum(f.debtEq)],
+      ["Current Ratio", fmtRatio(f.currentRatio)], ["Quick Ratio", fmtRatio(f.quickRatio)],
+    ] },
+    { title: "가격", wide: true, metrics: [
+      ["Price", priceOrDash(displayPrice)], ["Prev Close", priceOrDash(f.prevClose)],
+      ["52W High", priceOrDash(f.week52High)], ["52W Low", priceOrDash(f.week52Low)],
+      ["RS Score", item.rsScore ?? "-"], ["Index", indexLabel(item)],
+    ] },
   ];
+
+  const sourceText = hasFundamentals
+    ? (krT ? "Yahoo Finance · 네이버 금융 보완 (KRX)" : f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC 보완" : f.source === "sec" ? "SEC EDGAR · 분기 재무 공시" : f.source === "nasdaq+sec" || f.source === "nasdaq+sec+yahoo" ? "Nasdaq + SEC + Yahoo · NYSE 등 전 거래소" : "Nasdaq + SEC/Yahoo 스냅샷")
+    : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.");
+
+  const groupHtml = (g) => `
+    <div class="fund-group${g.wide ? " fund-group-wide" : ""}">
+      <div class="fund-group-title">${escapeHtml(g.title)}</div>
+      <div class="fund-metrics">
+        ${g.metrics.map(([label, value]) => `
+          <div class="fund-metric">
+            <span class="fund-metric-label">${escapeHtml(label)}</span>
+            ${valueWithClass(value)}
+          </div>`).join("")}
+      </div>
+    </div>`;
+
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
       <h3>Fundamentals</h3>
-      <span>${hasFundamentals ? (isKrMarket() ? "Yahoo Finance · 네이버 금융 보완 (KRX)" : f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC 보완" : f.source === "sec" ? "SEC EDGAR · 분기 재무 공시" : f.source === "nasdaq+sec" || f.source === "nasdaq+sec+yahoo" ? "Nasdaq + SEC + Yahoo · NYSE 등 전 거래소" : "Nasdaq + SEC/Yahoo 스냅샷") : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.")}</span>
+      <span>${sourceText}</span>
     </div>
-    <div class="fund-scroll">
-      <table>
-        <tbody>
-          ${rows.map((row) => `
-            <tr>
-              ${metricPair(row[0], row[1])}
-              ${metricPair(row[2], row[3])}
-              ${metricPair(row[4], row[5])}
-              ${metricPair(row[6], row[7])}
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
+    <div class="fund-groups">
+      ${groups.map(groupHtml).join("")}
     </div>
   `;
 }
@@ -14374,36 +14479,48 @@ function sp500TopTickers(limit = 50) {
     .map((s) => s.ticker);
 }
 
+// Snapshot-first: the static earnings_calendar snapshot is rebuilt every morning by the
+// daily-earnings-calendar workflow, so it's fresh — render it instantly with no worker
+// wait. The worker is only used for an explicit "새로고침" (force) to pull intraday-latest,
+// or when the snapshot is empty (e.g. first build hasn't run).
 function loadEarningsCalendar(force = false) {
   const body = byId("earningsCalendarBody");
   if (!body) return;
-  if (!LIVE_DATA_PROXY) {
-    body.innerHTML = `<p class="muted">실적 캘린더는 Cloudflare Worker 연결 후 표시됩니다.</p>`;
-    return;
-  }
-  if (earningsCalendarLoading) return;
   if (earningsCalendarCache && !force) {
     renderEarningsCalendarMarket(earningsCalendarCache);
     return;
   }
+  const staticRows = staticEarningsRowsForTickers(earningsTickerPool());
+
+  // 기본 경로: 매일 갱신되는 스냅샷을 즉시 렌더(대기 없음).
+  if (!force && staticRows.length) {
+    earningsCalendarCache = staticRows;
+    renderEarningsCalendarMarket(staticRows);
+    return;
+  }
+
+  // 새로고침(force) 또는 스냅샷이 비었을 때만 워커로 최신 데이터 조회.
+  if (!LIVE_DATA_PROXY) {
+    if (staticRows.length) { earningsCalendarCache = staticRows; renderEarningsCalendarMarket(staticRows); }
+    else body.innerHTML = `<p class="muted">실적 일정 데이터가 아직 없습니다. (매일 아침 자동 갱신)</p>`;
+    return;
+  }
+  if (earningsCalendarLoading) return;
   earningsCalendarLoading = true;
-  body.innerHTML = `<p class="muted">실적 일정을 불러오는 중… (${earningsTickerPool().length}종목)</p>`;
+  body.innerHTML = `<p class="muted">최신 실적 일정을 불러오는 중…</p>`;
   // KR: send Yahoo symbols (005930.KS) so the proxy can query Yahoo; the response is
   // normalized back to the snapshot ticker in renderEarningsCalendarMarket.
   const tickers = earningsTickerPool().map((t) => liveProxyTicker(stockByTicker(t) || t)).join(",");
-  const applyEarningsRows = (rows) => {
-    earningsCalendarCache = rows || [];
-    renderEarningsCalendarMarket(earningsCalendarCache);
-  };
   fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?earnings_calendar=1&tickers=${encodeURIComponent(tickers)}`, { cache: "no-store" })
     .then((r) => (r.ok ? r.json() : null))
     .then((payload) => {
       const liveRows = (payload && payload.earnings) || [];
-      applyEarningsRows(liveRows.length ? liveRows : staticEarningsRowsForTickers(earningsTickerPool()));
+      earningsCalendarCache = liveRows.length ? liveRows : staticRows;
+      if (earningsCalendarCache.length) renderEarningsCalendarMarket(earningsCalendarCache);
+      else body.innerHTML = `<p class="muted">실적 일정 데이터가 없습니다.</p>`;
     })
     .catch(() => {
-      const fallback = staticEarningsRowsForTickers(earningsTickerPool());
-      if (fallback.length) applyEarningsRows(fallback);
+      if (staticRows.length) { earningsCalendarCache = staticRows; renderEarningsCalendarMarket(staticRows); }
       else body.innerHTML = `<p class="muted">실적 일정을 불러오지 못했습니다.</p>`;
     })
     .finally(() => { earningsCalendarLoading = false; });
@@ -14414,6 +14531,29 @@ function localDateFromIso(iso) {
   return parts ? new Date(parts.year, parts.month - 1, parts.day) : null;
 }
 
+// Join an earnings-calendar row with the snapshot so the calendar can show sector,
+// price/change, valuation, target upside, size tier and watchlist state.
+function enrichEarningsRow(row) {
+  const t = normalizeTickerKey(row.ticker);
+  const stock = stockByTicker(t) || {};
+  const f = stock.ticker ? normalizedFundamentalsForItem(stock) : {};
+  const price = Number(latestPriceForFundamentals(stock, f) || stock.price || f.prevClose) || null;
+  const target = Number(f.targetPrice ?? stock.targetPrice);
+  const upside = (Number.isFinite(target) && Number.isFinite(price) && price) ? pctFrom(target, price) : null;
+  const capB = Number(stock.marketCapB) || 0;
+  const capTier = capB >= 200 ? "메가" : capB >= 10 ? "대형" : capB >= 2 ? "중형" : capB > 0 ? "소형" : "";
+  return {
+    ticker: t, date: row.nextDate, company: stock.company || t,
+    sector: stock.sector || "", sectorKo: isKrMarket() ? (stock.sector || "") : (SECTOR_KO[stock.sector] || stock.sector || ""),
+    marketCapB: capB, capTier, rsScore: (stock.rsScore ?? null),
+    price, changePct: Number.isFinite(Number(stock.changePct)) ? Number(stock.changePct) : null,
+    epsEstimate: (row.epsEstimate != null ? Number(row.epsEstimate) : null),
+    target, upside, watch: isInWatchlist(t),
+  };
+}
+
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
 function renderEarningsCalendarMarket(rows) {
   const body = byId("earningsCalendarBody");
   if (!body) return;
@@ -14422,64 +14562,144 @@ function renderEarningsCalendarMarket(rows) {
   today.setHours(0, 0, 0, 0);
   const end = new Date(today.getTime() + horizon * 86400000);
   end.setHours(23, 59, 59, 999);
-  const grouped = {};
-  (rows || []).forEach((row) => {
-    const date = row.nextDate;
-    if (!date) return;
-    const d = localDateFromIso(date);
-    if (!d || d < today || d > end) return;
-    if (!grouped[date]) grouped[date] = [];
-    grouped[date].push(row);
-  });
-  const dates = Object.keys(grouped).sort();
-  if (!dates.length) {
-    body.innerHTML = `<p class="muted">선택 기간에 실적 일정이 있는 종목이 없습니다. 범위를 넓히거나 새로고침해 보세요.</p>`;
+
+  // Enrich + filter (date range, sector, watchlist-only).
+  let items = (rows || [])
+    .filter((r) => r.nextDate)
+    .map(enrichEarningsRow)
+    .filter((it) => { const d = localDateFromIso(it.date); return d && d >= today && d <= end; });
+  if (earnSector !== "all") items = items.filter((it) => it.sector === earnSector);
+  if (earnWatchOnly) items = items.filter((it) => it.watch);
+
+  if (!items.length) {
+    const reason = earnWatchOnly ? "관심종목 중 " : earnSector !== "all" ? "이 섹터에서 " : "";
+    body.innerHTML = `<p class="muted">선택 기간에 ${reason}실적 발표 예정 종목이 없습니다. 필터를 넓히거나 범위를 바꿔 보세요.</p>`;
     return;
   }
-  body.innerHTML = dates.map((date) => {
-    const list = grouped[date].sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0));
-    const days = Math.ceil((localDateFromIso(date) - today) / 86400000);
-    return `
-      <section class="earnings-day-group">
-        <div class="earnings-day-head">
-          <strong>${escapeHtml(date)}</strong>
-          <span>${days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`} · ${list.length}종목</span>
-        </div>
-        <div class="earnings-day-rows table-wrap">
-          <table class="compact-table">
-            <thead><tr><th>티커</th><th>회사</th><th>시총</th><th>EPS 예상</th><th>RS</th></tr></thead>
-            <tbody>
-              ${list.map((row) => {
-                const t = normalizeTickerKey(row.ticker);
-                const stock = stockByTicker(t) || {};
-                return `<tr>
-                  <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(t)}">${escapeHtml(t)}</button></td>
-                  <td>${escapeHtml(stock.company || t)}</td>
-                  <td>${fmtBillions(stock.marketCapB)}</td>
-                  <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
-                  <td>${stock.rsScore ?? "—"}</td>
-                </tr>`;
-              }).join("")}
-            </tbody>
-          </table>
-        </div>
-      </section>
-    `;
-  }).join("");
-  body.querySelectorAll(".ticker-link").forEach((btn) => {
+
+  // "이번 주 주목" — 향후 7일 내 시총 상위(관심종목 우선).
+  const weekEnd = new Date(today.getTime() + 7 * 86400000);
+  const highlights = items
+    .filter((it) => { const d = localDateFromIso(it.date); return d && d <= weekEnd; })
+    .sort((a, b) => (b.watch - a.watch) || (b.marketCapB - a.marketCapB))
+    .slice(0, 6);
+  const highlightHtml = highlights.length ? `
+    <div class="earn-highlight">
+      <span class="earn-highlight-label">🔥 이번 주 주목</span>
+      <div class="earn-highlight-chips">
+        ${highlights.map((it) => {
+          const d = localDateFromIso(it.date);
+          const dow = d ? WEEKDAY_KO[d.getDay()] : "";
+          return `<button type="button" class="earn-hl-chip" data-ticker="${escapeHtml(it.ticker)}">
+            ${it.watch ? "★ " : ""}<b>${escapeHtml(it.ticker)}</b><em>${dow}</em></button>`;
+        }).join("")}
+      </div>
+    </div>` : "";
+
+  const body_html = earnView === "calendar" ? earningsCalendarGrid(items, today) : earningsListView(items, today);
+  body.innerHTML = highlightHtml + body_html;
+
+  body.querySelectorAll("[data-ticker]").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
 }
 
+// Small colored change/EPS bits reused by both views.
+function earnChange(pct) {
+  if (pct == null) return "";
+  return `<span class="earn-chg ${cls(pct)}">${fmtPct(pct)}</span>`;
+}
+
+function earningsCalendarGrid(items, today) {
+  const byDate = {};
+  items.forEach((it) => (byDate[it.date] = byDate[it.date] || []).push(it));
+  const dates = Object.keys(byDate).sort();
+  const cols = dates.map((date) => {
+    const list = byDate[date].sort(earnSortCmp);
+    const d = localDateFromIso(date);
+    const dow = d ? WEEKDAY_KO[d.getDay()] : "";
+    const days = Math.ceil((d - today) / 86400000);
+    const rel = days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`;
+    const isToday = days === 0;
+    return `
+      <div class="earn-cal-day${isToday ? " is-today" : ""}">
+        <div class="earn-cal-date">
+          <strong>${escapeHtml(date.slice(5))} <em>(${dow})</em></strong>
+          <span>${rel} · ${list.length}</span>
+        </div>
+        <div class="earn-cal-chips">
+          ${list.map((it) => `
+            <button type="button" class="earn-cal-chip" data-ticker="${escapeHtml(it.ticker)}" title="${escapeHtml(it.company)}">
+              <span class="earn-chip-top">${it.watch ? `<i class="earn-star">★</i>` : ""}<b>${escapeHtml(it.ticker)}</b>${earnChange(it.changePct)}</span>
+              <span class="earn-chip-sub">${it.capTier ? `${escapeHtml(it.capTier)} · ` : ""}${escapeHtml(it.sectorKo || "-")}</span>
+            </button>`).join("")}
+        </div>
+      </div>`;
+  }).join("");
+  return `<div class="earn-cal">${cols}</div>`;
+}
+
+function earningsListView(items, today) {
+  const byDate = {};
+  items.forEach((it) => (byDate[it.date] = byDate[it.date] || []).push(it));
+  const dates = Object.keys(byDate).sort();
+  return dates.map((date) => {
+    const list = byDate[date].sort(earnSortCmp);
+    const d = localDateFromIso(date);
+    const dow = d ? WEEKDAY_KO[d.getDay()] : "";
+    const days = Math.ceil((d - today) / 86400000);
+    const rel = days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`;
+    const capSum = list.reduce((s, it) => s + (it.marketCapB || 0), 0);
+    return `
+      <section class="earn-list-group">
+        <div class="earn-list-head">
+          <strong>${escapeHtml(date.slice(5))} <em>(${dow})</em></strong>
+          <span>${rel} · ${list.length}종목 · 합산 ${fmtBillions(capSum)}</span>
+        </div>
+        <div class="earn-list-rows">
+          ${list.map((it) => `
+            <button type="button" class="earn-row" data-ticker="${escapeHtml(it.ticker)}">
+              <span class="earn-row-id">
+                ${it.watch ? `<i class="earn-star">★</i>` : ""}
+                <b>${escapeHtml(it.ticker)}</b>
+                <em>${escapeHtml(it.company)}</em>
+              </span>
+              <span class="earn-row-sector">${escapeHtml(it.sectorKo || "-")}</span>
+              <span class="earn-row-price">${it.price != null ? priceOrDash(it.price) : "—"} ${earnChange(it.changePct)}</span>
+              <span class="earn-row-eps"><i>EPS 예상</i>${it.epsEstimate != null ? moneyOrDash(it.epsEstimate) : "—"}</span>
+              <span class="earn-row-target"><i>목표 여력</i>${it.upside != null ? `<b class="${cls(it.upside)}">${fmtPct(it.upside)}</b>` : "—"}</span>
+              <span class="earn-row-cap"><i>시총</i>${fmtBillions(it.marketCapB)}${it.capTier ? ` <em class="earn-tier earn-tier-${it.capTier === "메가" ? "mega" : it.capTier === "대형" ? "large" : "mid"}">${escapeHtml(it.capTier)}</em>` : ""}</span>
+              <span class="earn-row-rs"><i>RS</i>${it.rsScore ?? "—"}</span>
+            </button>`).join("")}
+        </div>
+      </section>`;
+  }).join("");
+}
+
+function earnSortCmp(a, b) {
+  if (earnSort === "cap") return (b.marketCapB || 0) - (a.marketCapB || 0);
+  if (earnSort === "rs") return (Number(b.rsScore) || 0) - (Number(a.rsScore) || 0);
+  // date sort → within a day, keep biggest first
+  return (b.marketCapB || 0) - (a.marketCapB || 0);
+}
+
 function setupEarningsEvents() {
-  byId("earnRefresh")?.addEventListener("click", () => {
-    earningsCalendarCache = null;
-    loadEarningsCalendar(true);
-  });
-  ["earnHorizon", "earnScope"].forEach((id) => {
-    byId(id)?.addEventListener("change", () => {
-      earningsCalendarCache = null;
-      loadEarningsCalendar(true);
+  // Filters/sort/view/horizon only change the display → re-render from cache (no refetch).
+  // Scope changes the ticker pool → refetch.
+  const rerender = () => { if (earningsCalendarCache) renderEarningsCalendarMarket(earningsCalendarCache); else loadEarningsCalendar(); };
+  // 새로고침: 워커로 최신 조회. 범위 변경: 종목 풀만 바뀌므로 스냅샷에서 즉시 재구성.
+  byId("earnRefresh")?.addEventListener("click", () => { earningsCalendarCache = null; loadEarningsCalendar(true); });
+  byId("earnScope")?.addEventListener("change", () => { earningsCalendarCache = null; loadEarningsCalendar(false); });
+  byId("earnHorizon")?.addEventListener("change", rerender);
+  byId("earnSector")?.addEventListener("change", (e) => { earnSector = e.target.value; rerender(); });
+  byId("earnSort")?.addEventListener("change", (e) => { earnSort = e.target.value; rerender(); });
+  byId("earnWatchOnly")?.addEventListener("change", (e) => { earnWatchOnly = e.target.checked; rerender(); });
+  const vt = byId("earnViewToggle");
+  if (vt) vt.querySelectorAll("[data-earn-view]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      earnView = btn.dataset.earnView;
+      vt.querySelectorAll("[data-earn-view]").forEach((b) => b.classList.toggle("is-active", b === btn));
+      rerender();
     });
   });
 }

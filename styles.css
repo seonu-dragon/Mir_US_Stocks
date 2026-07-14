@@ -10646,7 +10646,7 @@ body.ai-stock-analysis-view .ai-dash.is-active {
 /* 차트는 좌측 전용 영역에 선명하게, 정보 패널은 우측 사이드바(겹침 없음) */
 .ai-dash-grid {
   position: absolute;
-  top: 58px;
+  top: 88px; /* AI 헤더(~78px) 아래로 내려 상단 박스가 가려지지 않게 */
   right: 14px;
   bottom: 86px;
   left: auto;

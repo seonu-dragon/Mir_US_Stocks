@@ -300,6 +300,8 @@
         const liveTag = detail?.__liveGenerated ? " · 실시간" : "";
         const staleTag = window.MirDataStatus?.showBanner ? " · 캐시 데이터" : "";
         setInputHint(`${ticker} · 6개월 차트${liveTag}${staleTag}`, false);
+        // 배경 차트 위로 JARVIS 대시보드(종목 카드·투자의견·기관·뉴스) 페이드인
+        try { window.MirDash?.render?.(ticker); } catch (_) {}
       },
     });
 
@@ -349,6 +351,7 @@
       delete document.documentElement.dataset.aiPrevTheme;
     }
     document.body.classList.remove("ai-mode-active", "ai-mode-entering", "ai-stock-analysis-view");
+    window.MirDash?.hide?.();
     exitAiWelcomeView();
     window.MirCosmos?.stop?.();
     toggleBtn?.classList.remove("active");
@@ -413,6 +416,7 @@
 
       if (isStockView && window.MirCosmos?.getMode?.() === "chart") {
         window.MirCosmos.resetToLandscape?.();
+        window.MirDash?.hide?.();
         document.body.classList.remove("ai-stock-analysis-view");
         document.body.classList.add("ai-welcome-view");
         const container = byId("tab-ai-chat")?.querySelector(".ai-chat-container");

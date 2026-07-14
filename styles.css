@@ -10619,6 +10619,189 @@ body.ai-mode-active .ai-chat-input-wrapper {
   box-shadow: none !important;
 }
 
+/* ===== JARVIS 종목 대시보드 오버레이 ===== */
+.ai-dash {
+  position: absolute;
+  inset: 0;
+  z-index: 10; /* cosmos 배경 위, 입력창(25) 아래 */
+  pointer-events: none;
+  opacity: 0;
+  display: none;
+  /* 대시보드는 항상 다크 글래스 — 전역 테마와 무관하게 내부 컴포넌트(var 기반)를
+     다크로 강제한다. (AI 모드가 라이트로 떠도 카드가 흰색으로 뜨지 않게) */
+  --panel: rgba(255, 255, 255, 0.05);
+  --panel-soft: rgba(255, 255, 255, 0.03);
+  --text: #eaf0fb;
+  --muted: #9fb0cc;
+  --line: rgba(150, 175, 255, 0.16);
+  color: #eaf0fb;
+}
+body.ai-stock-analysis-view .ai-dash.is-active {
+  display: block;
+  opacity: 1;
+  animation: aiDashIn 0.5s ease both;
+}
+@keyframes aiDashIn { from { opacity: 0; } to { opacity: 1; } }
+
+.ai-dash-grid {
+  position: absolute;
+  inset: 60px 16px 92px 16px; /* 상단 헤더 · 하단 입력창 공간 확보 */
+  display: grid;
+  grid-template-columns: 316px minmax(0, 1fr) 336px;
+  grid-template-rows: minmax(0, 1fr) minmax(0, 42%);
+  gap: 14px;
+  pointer-events: none;
+}
+.ai-dash-col-left  { grid-column: 1; grid-row: 1; }
+.ai-dash-col-right { grid-column: 3; grid-row: 1; }
+.ai-dash-bottom    { grid-column: 1 / -1; grid-row: 2; }
+/* 가운데 열(row 1)은 비워 배경 차트가 그대로 보인다 */
+
+.ai-dash-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  pointer-events: auto;
+}
+.ai-dash-panel, .ai-dash-subpanel {
+  pointer-events: auto;
+  background: rgba(13, 20, 38, 0.74);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+  border-radius: 14px;
+  padding: 13px 14px;
+  box-shadow: 0 10px 34px rgba(0, 0, 0, 0.45);
+  color: #e8edf7;
+}
+.ai-dash-bottom {
+  pointer-events: none;
+  display: flex;
+  gap: 14px;
+  min-height: 0;
+}
+.ai-dash-subpanel {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+}
+.ai-dash-h {
+  margin: 0 0 9px;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #cbd5e1;
+}
+.ai-dash-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.ai-dash-idname { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ai-dash-ticker { font-size: 19px; font-weight: 800; color: #fff; }
+.ai-dash-company { font-size: 12px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-dash-price { text-align: right; white-space: nowrap; }
+.ai-dash-price b { font-size: 18px; font-weight: 800; }
+.ai-dash-price .pos { color: var(--green); }
+.ai-dash-price .neg { color: var(--red); }
+.ai-dash-price > span { display: block; font-size: 13px; font-weight: 700; }
+
+.ai-dash-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.ai-dash-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 9px;
+}
+.ai-dash-stat span { font-size: 11px; color: #9fb0cc; font-weight: 700; }
+.ai-dash-stat b { font-size: 14px; font-weight: 800; color: #fff; font-variant-numeric: tabular-nums; }
+.ai-dash-stat b em { font-style: normal; font-size: 11px; font-weight: 800; margin-left: 4px; }
+.ai-dash-stat b em.pos { color: var(--green); }
+.ai-dash-stat b em.neg { color: var(--red); }
+
+/* AI 투자 의견 verdict */
+.ai-verdict-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ai-verdict-head .ai-dash-h { margin: 0; }
+.ai-verdict-badge {
+  font-size: 13px;
+  font-weight: 800;
+  padding: 4px 11px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.ai-verdict-buy  { background: rgba(16, 185, 129, 0.18); color: #34d399; }
+.ai-verdict-hold { background: rgba(148, 163, 184, 0.18); color: #cbd5e1; }
+.ai-verdict-sell { background: rgba(244, 63, 94, 0.18); color: #fb7185; }
+.ai-verdict-conf {
+  display: flex; align-items: center; gap: 8px;
+  margin: 11px 0 9px;
+  font-size: 11.5px; color: #9fb0cc; font-weight: 700;
+}
+.ai-verdict-gauge {
+  flex: 1;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+.ai-verdict-gauge i { display: block; height: 100%; border-radius: 999px; }
+.ai-verdict-gauge i.ai-verdict-buy  { background: linear-gradient(90deg, #10b981, #34d399); }
+.ai-verdict-gauge i.ai-verdict-hold { background: linear-gradient(90deg, #64748b, #94a3b8); }
+.ai-verdict-gauge i.ai-verdict-sell { background: linear-gradient(90deg, #f43f5e, #fb7185); }
+.ai-verdict-conf b { color: #eaf0fb; font-size: 12.5px; }
+.ai-verdict-comment {
+  margin: 0 0 11px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: #dce4f2;
+}
+.ai-verdict-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ai-verdict-pts-h { display: block; font-size: 11px; font-weight: 800; margin-bottom: 5px; }
+.ai-verdict-pts-h.up { color: #34d399; }
+.ai-verdict-pts-h.down { color: #fb7185; }
+.ai-verdict-pts ul { margin: 0; padding-left: 15px; display: flex; flex-direction: column; gap: 4px; }
+.ai-verdict-pts li { font-size: 11.5px; line-height: 1.4; color: #cbd6e8; }
+.ai-verdict-pts li.muted { color: #7c8aa5; list-style: none; margin-left: -15px; }
+.ai-verdict-disc { display: block; margin-top: 10px; font-size: 10px; color: #6b7a94; }
+
+.ai-dash-news-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-dash-news-item {
+  display: flex; flex-direction: column; gap: 2px;
+  text-decoration: none; color: #dbe4f3;
+  padding: 6px 8px; border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.ai-dash-news-item:hover { background: rgba(255, 255, 255, 0.07); }
+.ai-dash-news-item span { font-size: 12.5px; line-height: 1.35; }
+.ai-dash-news-item small { color: #7c8aa5; font-size: 11px; }
+
+@media (max-width: 1100px) {
+  .ai-dash-grid {
+    inset: 54px 10px 90px 10px;
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+    overflow-y: auto;
+  }
+  .ai-dash-col-left, .ai-dash-col-right, .ai-dash-bottom { grid-column: 1; grid-row: auto; }
+  .ai-dash-col { overflow: visible; max-height: none; }
+  .ai-dash-bottom { max-height: none; }
+}
+
 body.ai-welcome-view .ai-chat-input-wrapper::before,
 body.ai-stock-analysis-view .ai-chat-input-wrapper::before,
 body.ai-mode-active .ai-chat-input-wrapper::before {

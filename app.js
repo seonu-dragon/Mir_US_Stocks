@@ -17620,6 +17620,207 @@ async function renderInlineStockWidget(ticker, parentBubble) {
   }, 1600);
 }
 
+// ===== JARVIS 종목 대시보드 (AI 모드) =====
+// 티커 입력 시 배경 차트(ai-cosmos morph) 위로 종목 카드·투자의견·핵심근거·
+// 기관/내부자/의회/공매도/실적·뉴스 패널이 페이드인한다. 모든 데이터는 사이트에 이미 있는 것을 재사용.
+let aiDashSeq = 0;
+async function renderAiStockDashboard(ticker) {
+  const host = byId("aiStockDashboard");
+  if (!host) return false;
+  const t = normalizeTickerKey(ticker);
+  const base = stockByTicker(t) || data.stocks.find((r) => r.ticker === t);
+  if (!base) return false;
+  const seq = ++aiDashSeq;
+  const initial = applyLive(withDetail(base));
+
+  host.innerHTML = `
+    <div class="ai-dash-grid">
+      <aside class="ai-dash-col ai-dash-col-left">
+        <section class="ai-dash-panel ai-block animate-reveal" id="aiDashCard"></section>
+      </aside>
+      <aside class="ai-dash-col ai-dash-col-right">
+        <section class="ai-dash-panel ai-dash-verdict-panel ai-block animate-reveal" id="aiDashVerdict"></section>
+        <section class="ai-dash-panel ai-block animate-reveal" id="aiDashNews">
+          <h4 class="ai-dash-h">📰 관련 소식</h4>
+          <div class="ai-dash-news-list"></div>
+        </section>
+      </aside>
+      <div class="ai-dash-bottom ai-block animate-reveal">
+        <section class="ai-dash-subpanel" id="aiDashMetrics"></section>
+        <section class="ai-dash-subpanel" id="aiDashData"></section>
+      </div>
+    </div>`;
+  host.classList.add("is-active");
+  host.setAttribute("aria-hidden", "false");
+
+  const paint = (item) => {
+    if (seq !== aiDashSeq) return; // 새 종목 요청이 들어오면 이전 렌더 중단
+    const card = byId("aiDashCard"); if (card) card.innerHTML = aiDashCardHtml(item);
+    const metrics = byId("aiDashMetrics"); if (metrics) metrics.innerHTML = `<h4 class="ai-dash-h">🔍 핵심 신호 · 이벤트</h4>${renderAiEvidenceGrid(item)}`;
+    const dataB = byId("aiDashData"); if (dataB) dataB.innerHTML = `<h4 class="ai-dash-h">📊 기술 지표 · 밸류에이션</h4>${renderAiModeDataBoard(item)}`;
+    const verdict = byId("aiDashVerdict"); if (verdict) verdict.innerHTML = aiVerdictPanel(item);
+    const newsList = host.querySelector("#aiDashNews .ai-dash-news-list");
+    if (newsList) newsList.innerHTML = aiDashNewsHtml(item);
+  };
+  paint(initial);
+  revealAiBlocksStaggered(host);
+  const item = (await ensureAiWidgetStock(t)) || initial;
+  paint(item);
+  return true;
+}
+
+function aiDashCardHtml(item) {
+  const f = (typeof normalizedFundamentalsForItem === "function") ? normalizedFundamentalsForItem(item) : (item.fundamentals || {});
+  const chg = Number(item.changePct);
+  const chgCls = chg > 0 ? "pos" : chg < 0 ? "neg" : "muted";
+  const secKo = item.sector ? (SECTOR_KO[item.sector] || item.sector) : "";
+  const stat = (label, val) => `<div class="ai-dash-stat"><span>${escapeHtml(label)}</span><b>${val}</b></div>`;
+  // 목표주가 + 상승 여력
+  const price = Number(item.price) || Number(f.prevClose);
+  const tgt = Number(f.targetPrice);
+  let targetVal = "—";
+  if (Number.isFinite(tgt)) {
+    const up = (Number.isFinite(price) && price) ? (tgt - price) / price * 100 : null;
+    targetVal = `${priceOrDash(tgt)}${up != null ? ` <em class="${up >= 0 ? "pos" : "neg"}">${fmtPct(up)}</em>` : ""}`;
+  }
+  // 기관 보유(13F)
+  let instVal = "—";
+  try {
+    const g = (typeof inst13fIndex === "function") ? inst13fIndex()[item.ticker] : null;
+    if (g && g.holders) instVal = `${g.holders}곳${g.valueM ? " · " + fmtBillions(g.valueM / 1000) : ""}`;
+  } catch (_) {}
+  return `
+    <div class="ai-dash-card-head">
+      <div class="ai-dash-idname">
+        <strong class="ai-dash-ticker">${escapeHtml(item.ticker)}</strong>
+        <span class="ai-dash-company">${escapeHtml(item.company || "")}${secKo ? " · " + escapeHtml(secKo) : ""}</span>
+      </div>
+      <div class="ai-dash-price">
+        <b>${priceOrDash(item.price)}</b>
+        <span class="${chgCls}">${fmtPct(chg)}</span>
+      </div>
+    </div>
+    <div class="ai-dash-stats">
+      ${stat("시가총액", fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB))}
+      ${stat("목표주가", targetVal)}
+      ${stat("PER", fmtMultiple(f.pe))}
+      ${stat("Fwd PER", fmtMultiple(f.forwardPE))}
+      ${stat("RS 점수", item.rsScore ?? "—")}
+      ${stat("기관 보유(13F)", instVal)}
+      ${stat("52주 고", priceOrDash(f.week52High))}
+      ${stat("52주 저", priceOrDash(f.week52Low))}
+    </div>`;
+}
+
+function aiDashNewsHtml(item) {
+  const news = Array.isArray(item.news) ? item.news.slice(0, 4) : [];
+  if (!news.length) return `<p class="muted font-small">최근 뉴스 정보가 없습니다.</p>`;
+  return news.map((n) => `
+    <a class="ai-dash-news-item" href="${escapeHtml(n.url || "#")}" target="_blank" rel="noopener">
+      <span>${escapeHtml(n.title || "")}</span>
+      <small>${escapeHtml(n.source || "")}${n.time ? " · " + escapeHtml(n.time) : ""}</small>
+    </a>`).join("");
+}
+
+// AI 투자 의견 verdict — 사이트에 이미 있는 신호(RS·모멘텀·52주위치·목표가여력·밸류·
+// 내부자)를 종합한 규칙 기반 스코어카드. 오프라인 즉시 계산(투자 조언 아님).
+function aiVerdictPanel(item) {
+  const f = (typeof normalizedFundamentalsForItem === "function") ? normalizedFundamentalsForItem(item) : (item.fundamentals || {});
+  const price = Number(item.price) || Number(f.prevClose);
+  const sig = []; // {s: score, k: 'strength'|'risk'|'neutral', t: text}
+
+  const rs = Number(item.rsScore);
+  if (Number.isFinite(rs)) {
+    if (rs >= 80) sig.push({ s: 2, k: "strength", t: `RS ${rs} · 시장 상위 강세` });
+    else if (rs >= 60) sig.push({ s: 1, k: "strength", t: `RS ${rs} · 평균 이상 강세` });
+    else if (rs <= 30) sig.push({ s: -2, k: "risk", t: `RS ${rs} · 시장 대비 약세` });
+    else if (rs <= 45) sig.push({ s: -1, k: "risk", t: `RS ${rs} · 상대적 부진` });
+  }
+  const m3 = Number(item.threeMonthChangePct);
+  if (Number.isFinite(m3)) {
+    if (m3 >= 15) sig.push({ s: 1.5, k: "strength", t: `3개월 +${m3.toFixed(0)}% 상승 추세` });
+    else if (m3 <= -15) sig.push({ s: -1.5, k: "risk", t: `3개월 ${m3.toFixed(0)}% 하락 추세` });
+  }
+  const hi = Number(f.week52High), lo = Number(f.week52Low);
+  if (Number.isFinite(hi) && Number.isFinite(lo) && hi > lo && Number.isFinite(price)) {
+    const pos = Math.round((price - lo) / (hi - lo) * 100);
+    if (pos >= 90) sig.push({ s: 0.5, k: "neutral", t: `52주 신고가 근접 (상위 ${pos}%)` });
+    else if (pos <= 25) sig.push({ s: -0.5, k: "risk", t: `52주 저점권 (하위 ${pos}%)` });
+  }
+  const tgt = Number(f.targetPrice);
+  if (Number.isFinite(tgt) && Number.isFinite(price) && price) {
+    const up = (tgt - price) / price * 100;
+    if (up >= 15) sig.push({ s: 1.5, k: "strength", t: `목표가 +${up.toFixed(0)}% 상승 여력` });
+    else if (up <= -5) sig.push({ s: -1, k: "risk", t: `현재가가 목표가 상회 (${up.toFixed(0)}%)` });
+  }
+  const fpe = Number(f.forwardPE);
+  if (Number.isFinite(fpe) && fpe > 0) {
+    if (fpe > 40) sig.push({ s: -1, k: "risk", t: `Forward PER ${fpe.toFixed(0)}배 · 고평가 부담` });
+    else if (fpe < 15) sig.push({ s: 1, k: "strength", t: `Forward PER ${fpe.toFixed(0)}배 · 밸류 매력` });
+  }
+  const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((r) => r.ticker === item.ticker);
+  const insBuy = ins.filter((r) => r.kind === "buy").length;
+  const insSell = ins.filter((r) => r.kind === "sell").length;
+  if (insBuy || insSell) {
+    if (insBuy > insSell) sig.push({ s: 1, k: "strength", t: `내부자 순매수 (매수 ${insBuy} / 매도 ${insSell})` });
+    else if (insSell > insBuy * 2) sig.push({ s: -1, k: "risk", t: `내부자 순매도 (매도 ${insSell}건)` });
+  }
+
+  const total = sig.reduce((a, x) => a + x.s, 0);
+  const strengths = sig.filter((x) => x.k === "strength").sort((a, b) => b.s - a.s);
+  const risks = sig.filter((x) => x.k === "risk").sort((a, b) => a.s - b.s);
+
+  let verdict, vcls;
+  if (total >= 3.5) { verdict = "적극 매수"; vcls = "buy"; }
+  else if (total >= 1.5) { verdict = "매수 우위"; vcls = "buy"; }
+  else if (total > -1.5) { verdict = "중립 · 관망"; vcls = "hold"; }
+  else if (total > -3.5) { verdict = "비중 축소"; vcls = "sell"; }
+  else { verdict = "매도 우위"; vcls = "sell"; }
+
+  const absSum = sig.reduce((a, x) => a + Math.abs(x.s), 0) || 1;
+  const agree = Math.abs(total) / absSum;
+  const conf = sig.length ? Math.round(Math.min(94, 42 + sig.length * 7 + agree * 22)) : 30;
+
+  const name = item.company || item.ticker;
+  const dir = vcls === "buy" ? "매수 우위 신호가 우세합니다" : vcls === "sell" ? "하방 리스크 신호가 우세합니다" : "뚜렷한 방향성이 약해 관망이 유효합니다";
+  const comment = `${escapeHtml(name)}은(는) 현재 ${dir}.` +
+    (strengths[0] ? ` 핵심 강점은 ${escapeHtml(strengths[0].t)}` + (risks[0] ? `이며, 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : `입니다.`) : (risks[0] ? ` 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : ""));
+
+  const li = (arr, empty) => arr.length ? arr.slice(0, 3).map((x) => `<li>${escapeHtml(x.t)}</li>`).join("") : `<li class="muted">${empty}</li>`;
+
+  return `
+    <div class="ai-verdict-head">
+      <h4 class="ai-dash-h">🤖 AI 투자 의견</h4>
+      <span class="ai-verdict-badge ai-verdict-${vcls}">${verdict}</span>
+    </div>
+    <div class="ai-verdict-conf">
+      <span>신뢰도</span>
+      <div class="ai-verdict-gauge"><i class="ai-verdict-${vcls}" style="width:${conf}%"></i></div>
+      <b>${conf}%</b>
+    </div>
+    <p class="ai-verdict-comment">${comment}</p>
+    <div class="ai-verdict-cols">
+      <div class="ai-verdict-pts">
+        <span class="ai-verdict-pts-h up">👍 강점</span>
+        <ul>${li(strengths, "특이 강점 신호 없음")}</ul>
+      </div>
+      <div class="ai-verdict-pts">
+        <span class="ai-verdict-pts-h down">⚠️ 리스크</span>
+        <ul>${li(risks, "특이 리스크 신호 없음")}</ul>
+      </div>
+    </div>
+    <small class="ai-verdict-disc">규칙 기반 참고 지표 · 투자 조언이 아닙니다</small>`;
+}
+
+window.MirDash = {
+  render: renderAiStockDashboard,
+  hide() {
+    const host = byId("aiStockDashboard");
+    if (host) { host.classList.remove("is-active"); host.setAttribute("aria-hidden", "true"); host.innerHTML = ""; }
+    aiDashSeq++;
+  },
+};
+
 function setupAiChatModeEvents() {
   const toggleBtn = byId("aiModeToggle");
   const exitBtn = byId("exitAiModeBtn");
@@ -17700,7 +17901,7 @@ function setupAiChatModeEvents() {
              <span class="ticker-badge">${escapeHtml(s.ticker)}</span>
              <span class="company-name">${escapeHtml(s.company)}</span>
            </div>
-           <span class="market-badge">${isKrTicker(s.ticker) ? "KOSPI" : "NASDAQ"}</span>
+           <span class="market-badge">${/^\d{6}$/.test(s.ticker) ? "KOSPI" : "NASDAQ"}</span>
          </div>
        `).join("");
        popup.hidden = false;

@@ -288,7 +288,7 @@
 
     // 지지/저항·추세선·차트 패턴 오버레이 계산(분석 엔진 재사용) → 차트에 자동 표시
     let overlays = null;
-    try { overlays = (typeof window.MirChartOverlays === "function") ? window.MirChartOverlays(bars) : null; } catch (_) {}
+    try { overlays = (typeof window.MirChartOverlays === "function") ? window.MirChartOverlays(bars, ticker) : null; } catch (_) {}
 
     const ok = window.MirCosmos?.morphToChart?.({
       ticker,

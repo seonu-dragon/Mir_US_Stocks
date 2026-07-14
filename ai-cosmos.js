@@ -604,64 +604,95 @@
     drawChartChrome(w, h, layout, a);
   }
 
-  // 지지/저항·추세선·차트 패턴을 2D 차트 위에 그린다(가시 윈도우 기준).
+  // 지지/저항·추세선·기하학적 차트 패턴을 2D 차트 위에 그린다(종목 분석 탭과 동일 로직).
   function drawChartOverlays(w, h, layout, alpha) {
     if (!chartOverlays || alpha <= 0 || !chartBars.length) return;
     const { n, xAt, yAt } = layoutHelpers(layout);
     const start = Math.round(chartViewStart);
+    const total = chartOverlays.totalBars || chartFullBars.length;
+    // 전체바 인덱스 → 가시 좌표(윈도우 밖이면 null)
+    const mapPt = (idx, price) => {
+      const vi = idx - start;
+      if (vi < 0 || vi >= n) return null;
+      return { x: xAt(vi), y: yAt(price) };
+    };
+    const clampY = (price) => yAt(Math.max(chartPriceMin, Math.min(chartPriceMax, price)));
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    // 지지/저항 수평선
-    (chartOverlays.sr || []).forEach((price) => {
-      if (!Number.isFinite(price) || price < chartPriceMin || price > chartPriceMax) return;
-      const y = yAt(price);
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.42)";
+    // 지지/저항: 밴드(hi~lo) + 가격선, 지지=초록·저항=빨강 (분석 탭과 동일)
+    (chartOverlays.sr || []).forEach((lvl) => {
+      if (!lvl || !Number.isFinite(lvl.price) || lvl.price < chartPriceMin || lvl.price > chartPriceMax) return;
+      const rgb = lvl.type === "sup" ? "22,163,74" : "220,38,38";
+      const yHi = clampY(lvl.hi != null ? lvl.hi : lvl.price);
+      const yLo = clampY(lvl.lo != null ? lvl.lo : lvl.price);
+      ctx.fillStyle = `rgba(${rgb},0.08)`;
+      ctx.fillRect(layout.padL, yHi, layout.plotW, Math.max(1.5, yLo - yHi));
+      const y = yAt(lvl.price);
+      ctx.strokeStyle = `rgba(${rgb},0.7)`;
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 4]);
-      ctx.beginPath();
-      ctx.moveTo(layout.padL, y);
-      ctx.lineTo(layout.padL + layout.plotW, y);
-      ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(layout.padL, y); ctx.lineTo(layout.padL + layout.plotW, y); ctx.stroke();
     });
     ctx.setLineDash([]);
 
-    // 추세선(가시 윈도우 전체로 외삽해 그린다)
+    // 추세선: 피벗(x1) → 마지막 봉까지 외삽, 가시 구간만 그림 (분석 탭과 동일)
     (chartOverlays.trendlines || []).forEach((ln) => {
       const slope = (ln.y2 - ln.y1) / ((ln.x2 - ln.x1) || 1);
-      const priceAt = (idx) => ln.y1 + slope * (idx - ln.x1);
-      ctx.strokeStyle = ln.color || (ln.kind === "sup" ? "rgba(74, 222, 128, 0.7)" : "rgba(248, 113, 113, 0.7)");
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(xAt(0), yAt(priceAt(start)));
-      ctx.lineTo(xAt(n - 1), yAt(priceAt(start + n - 1)));
-      ctx.stroke();
+      const priceAt = (i) => ln.y1 + slope * (i - ln.x1);
+      const segS = Math.max(ln.x1, start);
+      const segE = Math.min(total - 1, start + n - 1);
+      if (segE <= segS) return;
+      const p1 = mapPt(segS, priceAt(segS));
+      const p2 = mapPt(segE, priceAt(segE));
+      if (!p1 || !p2) return;
+      const col = ln.color || (ln.kind === "sup" ? "#4ade80" : "#f87171");
+      ctx.strokeStyle = col;
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([7, 4]);
+      ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font = "700 10px system-ui, -apple-system, sans-serif";
+      ctx.fillStyle = col;
+      ctx.textAlign = "left";
+      ctx.fillText(ln.kind === "sup" ? "지지 추세선" : "저항 추세선", p1.x + 3, p1.y - 4);
     });
 
-    // 차트 패턴(최근 3개, 확정 지점에 마커 + 라벨 · 겹침 방지로 세로 어긋나게)
-    ctx.textAlign = "center";
-    ctx.font = "700 10px system-ui, -apple-system, sans-serif";
-    (chartOverlays.patterns || []).slice(0, 3).forEach((e, i) => {
-      const idx = (e && e.confirm_idx != null) ? e.confirm_idx : -1;
-      const vi = idx - start;
-      if (vi < 0 || vi >= n) return;
-      const bar = chartBars[vi];
-      if (!bar) return;
-      const x = xAt(vi);
-      const y = yAt(bar.h) - 9 - i * 18; // 최근 순으로 위로 어긋나게
-      ctx.fillStyle = "rgba(250, 204, 21, 0.95)";
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-      ctx.lineTo(x - 5, y - 8);
-      ctx.lineTo(x + 5, y - 8);
-      ctx.closePath();
-      ctx.fill();
-      const label = String(e.pattern_ko || e.label || e.pattern || e.name || e.type || "패턴").slice(0, 12);
-      ctx.fillStyle = "rgba(15, 23, 42, 0.7)";
-      const tw = ctx.measureText(label).width;
-      ctx.fillRect(x - tw / 2 - 4, y - 24, tw + 8, 13);
-      ctx.fillStyle = "rgba(253, 224, 71, 0.98)";
-      ctx.fillText(label, x, y - 13);
+    // 차트 패턴: 기하학적 도형(추세선/윤곽선/목선/피벗+라벨) (분석 탭과 동일)
+    (chartOverlays.patterns || []).forEach((pat) => {
+      const color = pat.dir > 0 ? "#0ea5e9" : "#a855f7";
+      let anchor = null;
+      (pat.lines || []).forEach((lnp) => {
+        const pp = (lnp.pts || []).map((q) => mapPt(q.idx, q.price)).filter(Boolean);
+        if (pp.length === 2) {
+          ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+          ctx.beginPath(); ctx.moveTo(pp[0].x, pp[0].y); ctx.lineTo(pp[1].x, pp[1].y); ctx.stroke();
+          anchor = anchor || pp[0];
+        }
+      });
+      const pvs = (pat.points || []).map((q) => { const m = mapPt(q.idx, q.price); return m ? { ...m, label: q.label } : null; }).filter(Boolean);
+      if (pvs.length >= 3) {
+        ctx.strokeStyle = color; ctx.lineWidth = 1.6; ctx.lineJoin = "round"; ctx.setLineDash([]);
+        ctx.beginPath(); pvs.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y))); ctx.stroke();
+      }
+      if (pat.necklinePts) {
+        const nl = pat.necklinePts.map((q) => mapPt(q.idx, q.price)).filter(Boolean);
+        if (nl.length === 2) {
+          ctx.strokeStyle = color; ctx.lineWidth = 1.1; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.moveTo(nl[0].x, nl[0].y); ctx.lineTo(nl[1].x, nl[1].y); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+      ctx.fillStyle = color;
+      pvs.forEach((p) => {
+        ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2); ctx.fill();
+        if (p.label) { ctx.font = "700 10px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(p.label, p.x, p.y - 7); }
+      });
+      if (pvs.length) anchor = anchor || pvs[0];
+      if (anchor) {
+        ctx.font = "800 10.5px system-ui, sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = color;
+        ctx.fillText(pat.name || pat.pattern || "패턴", anchor.x, anchor.y + 14);
+      }
     });
 
     ctx.restore();

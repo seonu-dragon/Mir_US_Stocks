@@ -17624,6 +17624,12 @@ async function renderInlineStockWidget(ticker, parentBubble) {
 // 티커 입력 시 배경 차트(ai-cosmos morph) 위로 종목 카드·투자의견·핵심근거·
 // 기관/내부자/의회/공매도/실적·뉴스 패널이 페이드인한다. 모든 데이터는 사이트에 이미 있는 것을 재사용.
 let aiDashSeq = 0;
+// 차트 영역 폭이 바뀐 뒤 cosmos 캔버스를 새 크기에 맞춰 다시 그린다(여러 번 호출로 확실히).
+function aiCosmosRelayoutSoon() {
+  const relayout = () => { try { window.MirCosmos?.relayout?.(); } catch (_) {} };
+  requestAnimationFrame(relayout);
+  setTimeout(relayout, 200);
+}
 async function renderAiStockDashboard(ticker) {
   const host = byId("aiStockDashboard");
   if (!host) return false;
@@ -17653,11 +17659,21 @@ async function renderAiStockDashboard(ticker) {
     </div>
     <div class="ai-dash-rangebar" id="aiDashRange">
       ${["1M", "3M", "6M", "1Y", "5Y"].map((r) => `<button type="button" data-range="${r}"${r === "6M" ? ' class="is-active"' : ""}>${r}</button>`).join("")}
-    </div>`;
+    </div>
+    <button type="button" class="ai-dash-collapse" id="aiDashCollapse" aria-label="정보 패널 접기/펼치기" title="정보 패널 접기/펼치기"></button>`;
   host.classList.add("is-active");
   host.setAttribute("aria-hidden", "false");
+  // 사이드바 접기 토글 (차트를 전체 폭으로)
+  const collapseBtn = byId("aiDashCollapse");
+  const syncCollapseGlyph = () => { if (collapseBtn) collapseBtn.textContent = document.body.classList.contains("ai-dash-collapsed") ? "‹" : "›"; };
+  syncCollapseGlyph();
+  if (collapseBtn) collapseBtn.addEventListener("click", () => {
+    document.body.classList.toggle("ai-dash-collapsed");
+    syncCollapseGlyph();
+    aiCosmosRelayoutSoon();
+  });
   // 사이드바가 차트 폭을 줄였으니 cosmos 캔버스를 새 영역에 맞춰 다시 그린다.
-  requestAnimationFrame(() => { try { window.MirCosmos?.relayout?.(); } catch (_) {} });
+  aiCosmosRelayoutSoon();
   const rangeKo = { "1M": "1개월", "3M": "3개월", "6M": "6개월", "1Y": "1년", "5Y": "5년" };
   const rangeBar = byId("aiDashRange");
   if (rangeBar) rangeBar.querySelectorAll("[data-range]").forEach((btn) => {
@@ -17911,7 +17927,7 @@ window.MirDash = {
     if (host) { host.classList.remove("is-active"); host.setAttribute("aria-hidden", "true"); host.innerHTML = ""; }
     aiDashSeq++;
     // 사이드바가 사라졌으니 차트를 다시 전체 폭으로 되돌린다.
-    requestAnimationFrame(() => { try { window.MirCosmos?.relayout?.(); } catch (_) {} });
+    aiCosmosRelayoutSoon();
   },
 };
 

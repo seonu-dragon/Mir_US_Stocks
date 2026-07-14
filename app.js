@@ -4002,20 +4002,18 @@ function runChartProbAnalysis() {
     return;
   }
   if (!chartProbOverlaySnapshot) snapshotChartOverlaysForProb();
-  // 이동평균선(20·60)·지지/저항선·차트 패턴을 차트에 자동 표시.
+  // 이동평균선(20·60)·지지/저항선·추세선·차트 패턴·기술 레벨선을 차트에 자동 표시.
   chartState.showSma20 = true;
   chartState.showSma60 = true;
   chartState.showSupportResistance = true;
   chartState.showTrendlines = true;
-  chartState.showTechLevels = false;
-  chartState.techLevelTypes = Object.fromEntries(TECH_LEVEL_LABELS.map(([k]) => [k, false]));
+  chartState.showTechLevels = true;
+  chartState.techLevelTypes = Object.fromEntries(TECH_LEVEL_LABELS.map(([k]) => [k, true]));
   chartState.showPatterns = true;
-  ["showSma20", "showSma60", "showSupportResistance", "showTrendlines", "showPatterns"].forEach((id) => {
+  ["showSma20", "showSma60", "showSupportResistance", "showTrendlines", "showPatterns", "showTechLevels"].forEach((id) => {
     const el = byId(id);
     if (el) el.checked = true;
   });
-  const techEl = byId("showTechLevels");
-  if (techEl) techEl.checked = false;
   redrawChart();
 
   chartProbPanelOpen = true;

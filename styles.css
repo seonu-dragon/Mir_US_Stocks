@@ -10698,7 +10698,7 @@ body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right:
 /* 사이드바 접기/펼치기 버튼 (차트·사이드바 경계에 고정) */
 .ai-dash-collapse {
   position: absolute;
-  top: 62px;
+  top: 80px;
   right: 358px;
   z-index: 4;
   width: 26px;
@@ -10750,7 +10750,7 @@ body.ai-dash-collapsed .ai-dash-collapse { right: 14px; }
 /* 차트 기간 탭 (상단 중앙 플로팅) */
 .ai-dash-rangebar {
   position: absolute;
-  top: 64px;
+  top: 78px; /* AI 헤더(~56px) 아래로 내려 잘리지 않게 */
   left: calc((100% - 362px) / 2); /* 차트 영역(사이드바 제외)의 중앙 */
   transform: translateX(-50%);
   transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);

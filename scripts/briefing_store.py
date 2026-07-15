@@ -28,11 +28,23 @@ def _run_git(project_dir: Path, args, **kwargs):
     return subprocess.run(["git", *args], cwd=project_dir, **kwargs)
 
 
+_LOCK_OWNER_ENV = "MIR_PUBLISH_LOCK_OWNER"
+
+
 @contextmanager
 def repository_publish_lock(project_dir, timeout=1800):
-    """Serialize every snapshot writer and its git commit/push on this machine."""
+    """Serialize every snapshot writer and its git commit/push on this machine.
+
+    The lock is held per-process, so a builder spawned as a subprocess from
+    inside the lock would block on its own parent until `timeout` and die.
+    Ownership is therefore published through the environment, which children
+    inherit: an already-owned lock re-enters instead of self-deadlocking.
+    """
     project_dir = Path(project_dir).resolve()
     digest = hashlib.sha256(str(project_dir).lower().encode("utf-8")).hexdigest()[:16]
+    if os.environ.get(_LOCK_OWNER_ENV) == digest:
+        yield
+        return
     lock_path = Path(tempfile.gettempdir()) / f"mir-us-stocks-publish-{digest}.lock"
     lock_path.parent.mkdir(parents=True, exist_ok=True)
     handle = open(lock_path, "a+b")
@@ -57,9 +69,11 @@ def repository_publish_lock(project_dir, timeout=1800):
                 print("  [동기화] 다른 데이터 게시 작업이 끝나기를 기다립니다...")
                 announced = True
             time.sleep(1)
+    os.environ[_LOCK_OWNER_ENV] = digest
     try:
         yield
     finally:
+        os.environ.pop(_LOCK_OWNER_ENV, None)
         handle.seek(0)
         if msvcrt:
             msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)

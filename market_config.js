@@ -185,7 +185,9 @@
       activist: false,
       materialEvents: false,
       ipo: true,
-      shortInterest: true,
+      // KRX 공매도 잔고를 수집하는 실데이터 소스가 아직 없다. 지어낸 수치를
+      // 공시처럼 노출하지 않도록 패널을 닫아 둔다.
+      shortInterest: false,
       whiteHouse: false,
       krDart: true,
     },

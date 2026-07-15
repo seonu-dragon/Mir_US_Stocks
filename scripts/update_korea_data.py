@@ -1428,15 +1428,9 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[ipo_calendar/kr] rebuild skipped: {exc}")
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_short_interest.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[short_interest/kr] rebuild skipped: {exc}")
+    # build_kr_short_interest.py is intentionally not run: it fabricates balances
+    # with random.Random(ticker) rather than sourcing KRX, so its output must not
+    # be published. Re-enable only once it reads real disclosures.
 
 
 def main():

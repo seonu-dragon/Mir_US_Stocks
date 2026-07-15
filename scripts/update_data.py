@@ -2661,7 +2661,7 @@ def git_push_updates(updated_at_kst):
             print("[Git] No changes to commit.")
             return
 
-        commit_msg = f"Auto-update market snapshot: {updated_at_kst} [skip ci]"
+        commit_msg = f"Auto-update market snapshot: {updated_at_kst}"
         subprocess.run(["git", "commit", "-m", commit_msg], cwd=ROOT, check=True)
         branch = subprocess.run(
             ["git", "branch", "--show-current"],

@@ -168,7 +168,7 @@ def publish_detail_changes(project_dir: Path, commit_label: str = "Earnings Refr
     )
     if status.stdout.strip():
         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        msg = f"Auto-update earnings history ({commit_label}): {stamp} [skip ci]"
+        msg = f"Auto-update earnings history ({commit_label}): {stamp}"
         _run_git(project_dir, ["commit", "-m", msg, "--", *paths], check=True)
 
     for attempt in range(1, 4):

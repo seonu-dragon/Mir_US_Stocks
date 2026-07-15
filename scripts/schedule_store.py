@@ -52,7 +52,7 @@ def _git_publish_data(project_dir: Path, commit_label: str, paths: list[str]) ->
     )
     if status.stdout.strip():
         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        message = f"Auto-update schedule data ({commit_label}): {stamp} [skip ci]"
+        message = f"Auto-update schedule data ({commit_label}): {stamp}"
         _run_git(project_dir, ["commit", "-m", message, "--", *paths], check=True)
 
     last_error = None

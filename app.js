@@ -2788,8 +2788,8 @@ function renderSignals() {
     const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
     cards.push(signalCard("🟢 내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
   }
-  // 52주 신고가 근접
-  const highs = data.stocks.filter((s) => !isStockEtf(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= minCapForHighs)
+  // 52주 신고가 근접 — 합성 이력은 52주 고점 자체가 랜덤워크가 만든 값이라 제외한다.
+  const highs = data.stocks.filter((s) => !isStockEtf(s) && !isSyntheticHistory(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= minCapForHighs)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
   cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
   if (cfg.features?.materialEvents !== false) {
@@ -5176,7 +5176,7 @@ function stockFacts(item, title) {
   const isSearchPanel = title === "Search Ticker";
   return `
     <span class="muted">${title}</span>
-    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker}</h3>
+    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker} ${syntheticBadge(item)}</h3>
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     <div class="facts">
       ${fact("가격", priceOrDash(item.price))}
@@ -6079,6 +6079,8 @@ function renderScanner() {
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
     .filter((item) => bucket === "watchlist" || bucket === "portfolio" || !isStockEtf(item))
+    // 합성 이력에서 뽑은 확률은 랜덤워크의 성질일 뿐이다. 순위 자체가 무의미하므로 제외한다.
+    .filter((item) => !isSyntheticHistory(item))
     .filter((item) => Array.isArray(item.closeSeries) && item.closeSeries.length >= 20)
     .map((item) => ({ item, prob: scanQuickProb(item, horizon).up, mode: "quick" }))
     .sort((a, b) => b.prob - a.prob)
@@ -6705,6 +6707,21 @@ function isSyntheticChart(item) {
   // Snapshot/synthetic tickers only carry a generated mini closeSeries.
   if (Array.isArray(item.chartSeries) && item.chartSeries.length) return false;
   return item.historySource !== "yahoo";
+}
+
+// 스냅샷 종목의 가격 이력이 합성인지. update_data.py 는 상위 MAX_REAL_HISTORY
+// 종목만 야후 실이력을 받고 나머지는 synthetic_history() 로 랜덤워크를 만든다
+// (끝점만 실제가에 맞춘다). 그래서 이 종목들은 price/changePct 외에
+// weekChangePct·monthChangePct·ytdChangePct·rsi14·stochK·newHighDistancePct·
+// closeSeries 가 전부 합성이다. 순위를 매기거나 추천하는 화면에서는 제외하고,
+// 값을 그대로 보여주는 화면에서는 배지로 알린다.
+function isSyntheticHistory(item) {
+  return !!item && item.historySource !== "yahoo";
+}
+
+function syntheticBadge(item) {
+  if (!isSyntheticHistory(item)) return "";
+  return `<span class="synth-badge" title="야후 실시간 가격 이력이 없어 이력 기반 지표(1개월·StochK·신고가 거리 등)는 추정값입니다. 가격과 당일 등락률은 실제입니다.">추정</span>`;
 }
 
 function renderNews(item) {

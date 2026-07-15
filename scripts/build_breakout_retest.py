@@ -67,6 +67,7 @@ def summarize_dir(rets, direction):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--push", action="store_true", default=False)
     args = ap.parse_args()
     files = sorted(DETAILS_DIR.glob("*.json"))
     if args.limit:
@@ -84,6 +85,11 @@ def main():
         try:
             d = json.loads(fp.read_text(encoding="utf-8"))
         except Exception:
+            continue
+        # 합성 이력(update_data.py 의 synthetic_history)은 랜덤워크라 돌파 연속성
+        # 측정을 희석시킨다. 지금은 260봉이라 MIN_BARS(300) 에 우연히 걸러지지만
+        # 봉수가 바뀌면 조용히 섞이므로 출처로 명시해 막는다.
+        if d.get("historySource") != "yahoo":
             continue
         rows = pl.rows_from_chart_series(d.get("chartSeries") or [])
         n = len(rows)
@@ -183,6 +189,15 @@ def main():
     print("해석: 연속률이 시장 기준선보다 높을수록(+) 엣지. retest > breakout 이면 "
           "되돌림 기다린 진입이 더 낫다는 뜻.")
 
+    if args.push:
+        import sec_client as sec
+        from briefing_store import repository_publish_lock
+
+        with repository_publish_lock(ROOT):
+            if not sec.git_publish(["data/breakout_retest_stats.json"], "breakout/retest stats"):
+                return 1
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main() or 0)

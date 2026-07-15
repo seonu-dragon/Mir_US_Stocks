@@ -3590,6 +3590,20 @@ footer {
   border: 1px solid #f3e8ff;
 }
 
+/* 야후 실이력이 없어 이력 기반 지표가 추정값인 종목 표시 */
+.synth-badge {
+  display: inline-block;
+  vertical-align: middle;
+  padding: 2px 7px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-cap);
+  font-weight: 700;
+  color: var(--amber);
+  background: var(--chip-bg);
+  border: 1px solid var(--line);
+  cursor: help;
+}
+
 .briefing-content {
   font-size: var(--fs-body);
   line-height: 1.75;

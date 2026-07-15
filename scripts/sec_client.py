@@ -201,11 +201,18 @@ def git_publish(paths, label):
     for attempt in range(1, 4):
         try:
             run(["fetch", "origin", branch], check=True)
-            run(["pull", "--rebase", "origin", branch], check=True)
+            # 이 헬퍼를 쓰는 빌더는 모두 매 실행마다 데이터 파일을 통째로
+            # 재생성한다. 다른 워크플로우가 먼저 push 해 충돌하면 방금 만든
+            # 우리 버전을 채택한다(-X theirs 는 rebase 에서 replay 중인 로컬
+            # 커밋을 가리킨다). schedule_store 와 같은 전략.
+            run(["pull", "--rebase", "-X", "theirs", "origin", branch], check=True)
             run(["push", "origin", branch], check=True)
             print(f"  [Git] origin/{branch} {label} 푸시 완료")
             return True
         except Exception as error:
+            # 실패한 rebase 가 중간 상태로 남으면 다음 시도의 pull 이
+            # "unmerged files" 로 죽어 재시도가 전부 무의미해진다. 정리 후 재시도.
+            run(["rebase", "--abort"], capture_output=True, text=True, check=False)
             if attempt < 3:
                 print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
                 time.sleep(10)

@@ -2403,7 +2403,7 @@ function resetStatsCacheIfMarketChanged() {
 
 async function loadPatternStats() {
   try {
-    const res = await fetch(`${statsBasePath()}/pattern_stats.json`, { cache: "no-store" });
+    const res = await fetch(`${statsBasePath()}/pattern_stats.json`, { cache: "no-cache" });
     if (res.ok) patternStats = await res.json();
   } catch (e) {
     patternStats = null; // 없으면 패턴 섹션만 생략, 나머지 분석은 정상 동작
@@ -2413,7 +2413,7 @@ async function loadPatternStats() {
 
 async function loadBreakoutStats() {
   try {
-    const res = await fetch(`${statsBasePath()}/breakout_retest_stats.json`, { cache: "no-store" });
+    const res = await fetch(`${statsBasePath()}/breakout_retest_stats.json`, { cache: "no-cache" });
     if (res.ok) breakoutStats = await res.json();
   } catch (e) {
     breakoutStats = null;
@@ -2446,7 +2446,7 @@ function analysisDetailPath(ticker) {
 async function loadDetail(ticker) {
   const key = analysisTickerKey(ticker);
   if (!key) return null;
-  const res = await fetch(analysisDetailPath(key), { cache: "no-store" });
+  const res = await fetch(analysisDetailPath(key), { cache: "no-cache" });
   if (!res.ok) throw new Error("not_found");
   return res.json();
 }

@@ -280,7 +280,7 @@ def publish_briefing(project_dir, key, html, commit_label, mutate=None, attempts
                     )
                     if status.stdout.strip():
                         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-                        message = f"Auto-update market data ({commit_label}): {stamp} [skip ci]"
+                        message = f"Auto-update market data ({commit_label}): {stamp}"
                         _run_git(project_dir, ["commit", "-m", message, "--", *paths], check=True)
                     push = _run_git(project_dir, ["push", "origin", branch], capture_output=True, text=True)
                     if push.returncode != 0:

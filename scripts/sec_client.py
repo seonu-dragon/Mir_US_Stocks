@@ -197,7 +197,7 @@ def git_publish(paths, label):
     status = run(["status", "--porcelain", "--", *paths], capture_output=True, text=True, check=True)
     if status.stdout.strip():
         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        run(["commit", "-m", f"Auto-update {label}: {stamp} [skip ci]", "--", *paths], check=True)
+        run(["commit", "-m", f"Auto-update {label}: {stamp}", "--", *paths], check=True)
     for attempt in range(1, 4):
         try:
             run(["fetch", "origin", branch], check=True)

@@ -236,7 +236,7 @@ def publish() -> bool:
     status = _run_git(["status", "--porcelain", "--", *paths], capture_output=True, text=True, check=True)
     if status.stdout.strip():
         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        msg = f"Auto-update institutional 13F: {stamp} [skip ci]"
+        msg = f"Auto-update institutional 13F: {stamp}"
         _run_git(["commit", "-m", msg, "--", *paths], check=True)
     for attempt in range(1, 4):
         try:

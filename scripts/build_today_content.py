@@ -23,6 +23,7 @@ Usage:
 import argparse
 import json
 import os
+import re
 import shutil
 import tempfile
 from datetime import datetime, timedelta
@@ -130,19 +131,28 @@ def first_heading(path):
     return None
 
 
+def plain_text(value):
+    """표지 헤드라인의 마크업을 걷어낸다.
+
+    cards.json 의 headlineLine1 은 카드 *이미지* 레이아웃용이라 줄바꿈 지점에
+    <br/> 이 박혀 있다. 띠 제목은 textContent 로 들어가 태그가 글자 그대로
+    보이므로, 태그를 공백으로 풀고 연속 공백을 정리한다."""
+    return " ".join(re.sub(r"<[^>]*>", " ", value or "").split())
+
+
 def deck_title(date, card_dir, variant):
     # 국내 버전은 그날 네이버 블로그 헤드라인이 가장 자연스러움
     if variant == "kr":
         naver_path = find_draft(SNS_PROD / date, "naver_blog")
         if naver_path:
-            heading = first_heading(naver_path)
+            heading = plain_text(first_heading(naver_path))
             if heading:
                 return heading[:90].strip()
     cover = next((c for c in load_json(card_dir / "cards.json").get("cards", [])
                   if c.get("type") == "cover"), {})
     parts = [cover.get("headlineLine1"), cover.get("accentText"), cover.get("headlineTail")]
     fallback = "미국장 마감 카드뉴스" if variant == "us" else "국내 뉴스 카드뉴스"
-    return (" ".join(p for p in parts if p) or fallback)[:90].strip()
+    return (plain_text(" ".join(p for p in parts if p)) or fallback)[:90].strip()
 
 
 def build_deck(date, variant):

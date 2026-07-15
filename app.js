@@ -596,7 +596,10 @@ async function loadData(options = {}) {
   usingFallbackSnapshot = false;
   if (window.location.protocol !== "file:") {
     try {
-      const response = await fetch(cfg.snapshotPath, { cache: "no-store" });
+      // no-cache 는 캐시를 쓰되 매번 서버에 재검증한다 — 데이터 신선도는 no-store 와
+      // 같지만, 바뀐 게 없으면 GitHub Pages 가 ETag 로 304(0바이트)를 돌려준다.
+      // no-store 는 캐시를 아예 쓰지 않아 재방문마다 스냅샷 전체를 다시 받았다.
+      const response = await fetch(cfg.snapshotPath, { cache: "no-cache" });
       if (response.ok) {
         data = filterBlockedStocks(await response.json());
         loaded = true;
@@ -6830,7 +6833,7 @@ function loadStockDetail(ticker) {
   if (detailCache[key]) return Promise.resolve(detailCache[key]);
   if (detailPromises[key]) return detailPromises[key];
   const detailUrl = (window.MirMarket && window.MirMarket.detailPath(key)) || `data/details/${encodeURIComponent(key)}.json`;
-  detailPromises[key] = fetch(detailUrl, { cache: "no-store" })
+  detailPromises[key] = fetch(detailUrl, { cache: "no-cache" })
     .then((response) => (response.ok ? response.json() : null))
     .then(async (detail) => {
       if (detail) {
@@ -12106,7 +12109,7 @@ function renderBriefingSide(side) {
   const inline = (data.ai_briefing || {})[key] || briefingFileCache[key];
   if (inline) { el.innerHTML = inline; return; }
   el.innerHTML = `<div class="empty-briefing"><strong>${BRIEFING_LABELS[key]}</strong><br>브리핑을 불러오는 중…</div>`;
-  fetch(`data/briefings/${key}.json`, { cache: "no-store" })
+  fetch(`data/briefings/${key}.json`, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : null))
     .then((b) => {
       const html = b && b.html;
@@ -14363,7 +14366,7 @@ async function scanPatternsForScreener(candidates) {
   for (const item of list) {
     if (patternScreenerCache.has(item.ticker)) continue;
     try {
-      const res = await fetch((window.MirMarket && window.MirMarket.detailPath(item.ticker)) || `data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-store" });
+      const res = await fetch((window.MirMarket && window.MirMarket.detailPath(item.ticker)) || `data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-cache" });
       if (!res.ok) continue;
       const detail = await res.json();
       const rows = (detail.chartSeries || []).map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));

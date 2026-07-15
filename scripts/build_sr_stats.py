@@ -259,6 +259,7 @@ def main():
     ap.add_argument("--react", type=float, default=REACT)
     ap.add_argument("--brk", type=float, default=BREAK)
     ap.add_argument("--lowmom", type=float, default=LOWMOM)
+    ap.add_argument("--push", action="store_true", default=False)
     args = ap.parse_args()
     rng = random.Random(args.seed)
     REACT, BREAK, LOWMOM = args.react, args.brk, args.lowmom
@@ -275,6 +276,12 @@ def main():
         try:
             d = json.loads(fp.read_text(encoding="utf-8"))
         except Exception:
+            continue
+        # update_data.py 의 synthetic_history() 가 만든 랜덤워크는 백테스트 표본에
+        # 들어가면 안 된다 — 랜덤워크는 정의상 지지/저항 엣지가 없어 결과를 희석시킨다.
+        # 지금은 합성이 260봉이라 MIN_BARS(300) 에 우연히 걸러지지만, 봉수가 바뀌면
+        # 조용히 섞이므로 출처로 명시해 막는다.
+        if d.get("historySource") != "yahoo":
             continue
         cs = d.get("chartSeries") or []
         rows = [{"o": r[0], "h": r[1], "l": r[2], "c": r[3], "v": (r[4] or 0)} for r in cs
@@ -356,6 +363,16 @@ def main():
     print("\n해석: respect%가 RANDOM보다 높을수록 '진짜' 지지/저항. "
           "NEW_top1 ≥ OLD 이면 강도점수 선택이 더 나은 레벨을 고른다는 뜻.")
 
+    if args.push:
+        sys.path.insert(0, str(ROOT / "scripts"))
+        import sec_client as sec
+        from briefing_store import repository_publish_lock
+
+        with repository_publish_lock(ROOT):
+            if not sec.git_publish(["data/sr_stats.json"], "S/R stats"):
+                return 1
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main() or 0)

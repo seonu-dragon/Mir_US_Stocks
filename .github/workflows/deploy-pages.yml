@@ -5,9 +5,36 @@ name: Deploy Pages
 # "Deployment failed, try again later" (syncing_files) transient 실패를 냈다.
 # concurrency 그룹으로 배포를 직렬화해 그 경합을 없앤다.
 
+# 데이터 워크플로우는 actions/checkout 의 기본 GITHUB_TOKEN 으로 푸시하는데,
+# GITHUB_TOKEN 이 만든 push 이벤트는 워크플로우를 트리거하지 않는다(재귀 실행
+# 방지). 그래서 아래 push 트리거는 사람이 푸시할 때만 걸린다. 자동 데이터
+# 갱신을 사이트에 반영하려면 각 워크플로우의 완료를 workflow_run 으로 받아야
+# 한다 — 이 목록이 비면 데이터가 레포에만 쌓이고 사이트는 멈춘다.
+# 데이터 워크플로우를 새로 추가하면 여기에도 그 name: 을 넣을 것.
 on:
   push:
     branches: [main]
+  workflow_run:
+    types: [completed]
+    workflows:
+      - "Institutional 13F quarterly refresh"
+      - "Activist stakes (SEC 13D/G)"
+      - "Congress trades refresh"
+      - "Daily earnings calendar"
+      - "Daily Korea market snapshot"
+      - "Daily Korea News Top 5"
+      - "Daily US market snapshot"
+      - "Insider trades (SEC Form 4)"
+      - "IPO calendar (SEC S-1/424B4)"
+      - "Korea close briefing"
+      - "Korea premarket briefing"
+      - "KR DART disclosures"
+      - "Material events (SEC 8-K)"
+      - "Short interest (Nasdaq/FINRA)"
+      - "US close briefing"
+      - "US premarket briefing"
+      - "Weekly earnings history refresh"
+      - "White House schedule refresh"
   workflow_dispatch:
 
 permissions:

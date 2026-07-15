@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  검색엔진에 색인할 페이지 목록. Google Search Console 에 직접 제출한다.
+  (프로젝트 페이지라 /Mir_US_Stocks/robots.txt 는 크롤러가 읽지 않으므로
+   robots.txt 의 Sitemap: 지시문으로는 알릴 수 없다.)
+
+  sector-detail.html 은 index.html 로 보내는 리다이렉트, chart_capture.html 은
+  내부 도구라 제외한다.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://seonu-dragon.github.io/Mir_US_Stocks/</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://seonu-dragon.github.io/Mir_US_Stocks/analysis.html</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

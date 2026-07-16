@@ -64,6 +64,26 @@ FEE_NET_NAMES = ("순수수료손익",)
 # 재무상태표에서 총자산. ROA(순이익/총자산) 계산에 쓴다.
 ASSET_NAMES = ("자산총계",)
 
+# 현금흐름표는 주요계정(fnlttMultiAcnt)에 없고 전체재무제표(fnlttSinglAcntAll)에만 있다.
+# 그쪽은 corp_code 가 하나뿐이라 종목당 1회씩 든다 — 그래서 최신 연간 한 번만 받는다.
+# 계정명 대신 IFRS 표준코드(account_id)로 집는다. 이름은 회사마다 갈리지만 코드는 같다.
+CF_OPERATING_ID = "ifrs-full_CashFlowsFromUsedInOperatingActivities"
+CF_CAPEX_ID = "ifrs-full_PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"
+
+# EV(기업가치) = 시총 + 총차입금 - 현금성자산. 같은 전체재무제표 응답의 BS 에 들어 있어
+# 추가 호출이 없다.
+#
+# EBITDA 는 만들 수 없다. '감가상각비' 계정을 본문에 싣는 회사가 79곳 중 7곳(9%)뿐이고
+# (나머지는 현금흐름표에서 '조정' 한 줄로 뭉뚱그린다) D&A 는 주석에 있는데 DART 정형
+# API 로는 안 나온다. fnlttSinglIndx(재무지표) 에도 EBITDA 는 없다. 그래서 분모를
+# 영업이익(EBIT)으로 두고 이름도 EV/EBIT 으로 정직하게 쓴다.
+BS_CASH_ID = "ifrs-full_CashAndCashEquivalents"
+# 이자부 차입금만. 부채총계를 쓰면 매입채무 같은 영업부채까지 들어가 EV 가 부풀려진다.
+DEBT_NAMES = (
+    "단기차입금", "장기차입금", "사채", "유동성장기부채", "유동성사채",
+    "유동성장기차입금", "단기사채", "리스부채", "유동리스부채", "비유동리스부채",
+)
+
 
 def now_kst() -> str:
     return datetime.now(KST).strftime("%Y-%m-%d %H:%M KST")
@@ -250,7 +270,77 @@ def build(api_key: str, years: list[str], limit: int | None):
 
     if cumulative_suspect:
         print(f"[실적] 누적값 의심 {cumulative_suspect}종목-연도 — cumulativeSuspect 로 표시했다.")
-    return out, errors
+    return out, errors, pairs
+
+
+def fetch_cash_flow_and_ev(api_key: str, pairs: list[tuple[str, str]], year: str):
+    """{ticker: {operatingCashFlow, capex, freeCashFlow, cash, totalDebt}} — 최신 연간.
+
+    한 번의 전체재무제표 응답에서 현금흐름표(P/FCF 용)와 재무상태표(EV 용)를 같이
+    뽑는다. 종목당 1회로 끝난다.
+
+    차입금은 이름으로 찾는다 — 단기차입금은 '-표준계정코드 미사용-' 인 회사가 있어
+    account_id 로는 못 집는다. 대신 '못 찾았을 때' 를 0 으로 두지 않는다: 무차입 회사인지
+    계정명이 달라 놓친 것인지 구분할 수 없고, 후자를 0 으로 처리하면 EV 를 과소평가해
+    틀린 색을 칠하게 된다. 그래서 하나도 못 찾으면 totalDebt 를 비워 두고, 소비하는 쪽이
+    EV 계산을 건너뛰게 한다(그 종목은 회색으로 남는다 — 틀린 값보다 낫다).
+    """
+    out: dict[str, dict] = {}
+    errors: dict[str, int] = {}
+    for i, (ticker, corp) in enumerate(pairs, 1):
+        if i % 500 == 0:
+            print(f"[현금흐름] {i}/{len(pairs)} …")
+        try:
+            data = dart_get(
+                "fnlttSinglAcntAll.json",
+                {"corp_code": corp, "bsns_year": year, "reprt_code": "11011", "fs_div": "CFS"},
+                api_key,
+            )
+        except Exception as exc:
+            errors[f"request:{type(exc).__name__}"] = errors.get(f"request:{type(exc).__name__}", 0) + 1
+            continue
+        status = str(data.get("status") or "")
+        if status == "013":
+            continue
+        if status != "000":
+            key = f'{status}:{data.get("message") or ""}'.strip(":")
+            errors[key] = errors.get(key, 0) + 1
+            continue
+        ocf = capex = cash = None
+        debt_parts = []
+        for row in data.get("list") or []:
+            sj = row.get("sj_div")
+            aid = row.get("account_id")
+            if sj == "CF":
+                if aid == CF_OPERATING_ID and ocf is None:
+                    ocf = to_num(row.get("thstrm_amount"))
+                elif aid == CF_CAPEX_ID and capex is None:
+                    capex = to_num(row.get("thstrm_amount"))
+            elif sj == "BS":
+                if aid == BS_CASH_ID and cash is None:
+                    cash = to_num(row.get("thstrm_amount"))
+                elif (row.get("account_nm") or "").strip() in DEBT_NAMES:
+                    v = to_num(row.get("thstrm_amount"))
+                    if v is not None:
+                        debt_parts.append(abs(v))
+
+        entry = {}
+        if ocf is not None:
+            entry["operatingCashFlow"] = ocf
+            if capex is not None:
+                # CAPEX 는 유출인데 양수로 오는 회사와 음수로 오는 회사가 섞여 있다.
+                # 절대값으로 통일해서 뺀다.
+                entry["capex"] = abs(capex)
+                entry["freeCashFlow"] = ocf - abs(capex)
+        if cash is not None:
+            entry["cash"] = cash
+        if debt_parts:                      # 못 찾았으면 0 이 아니라 '없음' 으로 남긴다
+            entry["totalDebt"] = sum(debt_parts)
+        if entry:
+            out[ticker] = entry
+    if errors:
+        print(f"[현금흐름] 오류 {sum(errors.values())}건: {dict(list(errors.items())[:4])}")
+    return out
 
 
 def main() -> int:
@@ -258,6 +348,8 @@ def main() -> int:
     parser.add_argument("--push", action="store_true")
     parser.add_argument("--years", default="", help="쉼표 구분. 기본은 최근 2개년.")
     parser.add_argument("--limit", type=int, default=None, help="시총 상위 N종목만(테스트용)")
+    parser.add_argument("--skip-cashflow", action="store_true",
+                        help="현금흐름(종목당 1회, 가장 느림) 단계를 건너뛴다")
     args = parser.parse_args()
 
     this_year = datetime.now(KST).year
@@ -275,24 +367,35 @@ def main() -> int:
         print("DART_API_KEY missing; wrote empty kr earnings payload.")
         return 0
 
-    earnings, errors = build(api_key, years, args.limit)
+    earnings, errors, pairs = build(api_key, years, args.limit)
     if errors:
         print(f"[실적] 오류 응답 {sum(errors.values())}건: {errors}")
     if not earnings and errors:
         print("[실적] 수집 0건 + 오류 발생 — 기존 파일을 덮어쓰지 않고 실패 처리한다.")
         return 1
 
+    cash_flow = {}
+    if not args.skip_cashflow:
+        # 종목당 1회라 가장 비싼 단계다(≈2,600회, 수 분). 값이 분기에만 바뀌므로
+        # 주간 워크플로우에서 도는 걸 전제로 한다.
+        cf_year = str(max(int(y) for y in years) - 1)   # 최신 '연간' 보고서가 있는 해
+        print(f"[현금흐름·EV] {len(pairs)}종목 × 1회 (기준연도 {cf_year})")
+        cash_flow = fetch_cash_flow_and_ev(api_key, pairs, cf_year)
+        print(f"[현금흐름] {len(cash_flow)}종목 수집.")
+
     payload = {
         "updatedAtKst": now_kst(),
-        "source": "DART Open API · 주요계정",
+        "source": "DART Open API · 주요계정 + 전체재무제표(현금흐름)",
         "note": "분기 매출·영업이익·순이익. 연결(CFS) 우선, 없으면 별도(OFS). "
-                "애널리스트 추정치가 없어 서프라이즈는 제공하지 않는다.",
+                "애널리스트 추정치가 없어 서프라이즈는 제공하지 않는다. "
+                "cashFlow 는 최신 연간 기준 FCF(영업활동현금흐름-CAPEX).",
         "years": years,
         "companyCount": len(earnings),
         "earnings": earnings,
+        "cashFlow": cash_flow,
     }
     write_outputs(payload)
-    print(f"[실적] {len(earnings)}종목 기록.")
+    print(f"[실적] {len(earnings)}종목 기록 (현금흐름 {len(cash_flow)}종목).")
 
     if args.push:
         import sec_client as sec

@@ -1422,6 +1422,105 @@ def attach_kr_earnings(payload: dict) -> int:
     return attached
 
 
+def enrich_kr_valuation(payload: dict) -> None:
+    """네이버가 주지 않는 밸류에이션 지표를 이미 가진 값으로 계산해 fundamentals 에 넣는다.
+
+    build_map_fundamentals 는 fundamentals 의 ps/peg 를 그대로 읽어가므로 여기서 채우면
+    히트맵 색상 기준이 살아난다. 없으면 그 지표를 고른 순간 화면이 통째로 중립색이 된다.
+
+    단위: KR 펀더멘털의 *B 는 십억원, marketCapB 는 '조' 다(이름과 달리).
+    삼성전자 marketCapB 1634 = 1,634조, salesB 333,605.9 = 333.6조 로 교차검증했다.
+    """
+    cash_flow: dict = {}
+    earnings_book: dict = {}
+    path = ROOT / "data" / "korea" / "earnings.json"
+    if path.exists():
+        try:
+            book = json.loads(path.read_text(encoding="utf-8"))
+            cash_flow = book.get("cashFlow") or {}
+            earnings_book = book.get("earnings") or {}
+        except Exception:
+            pass
+
+    # DART 가 완제품으로 주는 성장성·안정성 지표(build_kr_indicators.py). 직접 계산하면
+    # 분기/연간 혼동이나 업종별 계정 차이에 다시 걸리므로 DART 값을 그대로 쓴다.
+    indicators: dict = {}
+    ipath = ROOT / "data" / "korea" / "indicators.json"
+    if ipath.exists():
+        try:
+            indicators = json.loads(ipath.read_text(encoding="utf-8")).get("indicators") or {}
+        except Exception:
+            pass
+
+    ps_n = peg_n = pfcf_n = ev_n = idx_n = 0
+    for stock in payload.get("stocks", []):
+        fund = stock.get("fundamentals")
+        if not isinstance(fund, dict):
+            continue
+
+        # P/S = 시총 / 매출
+        cap_jo = stock.get("marketCapT")
+        if not isinstance(cap_jo, (int, float)):
+            cap_jo = stock.get("marketCapB")
+        sales_b = fund.get("salesB")
+        if (isinstance(cap_jo, (int, float)) and cap_jo > 0
+                and isinstance(sales_b, (int, float)) and sales_b > 0
+                and fund.get("ps") is None):
+            fund["ps"] = round(cap_jo * 1000 / sales_b, 2)
+            ps_n += 1
+
+        # PEG = P/E / EPS 성장률(%). DART 는 애널리스트 추정치를 주지 않아 네이버의
+        # epsNextY 를 쓴다. 성장률이 0 이하면 PEG 는 의미가 없으므로 값을 넣지 않는다
+        # (음수 PEG 를 '저평가 초록' 으로 칠하면 정반대로 읽힌다).
+        pe, eps, eps_next = fund.get("pe"), fund.get("eps"), fund.get("epsNextY")
+        if (all(isinstance(x, (int, float)) for x in (pe, eps, eps_next))
+                and pe > 0 and eps > 0 and eps_next > eps and fund.get("peg") is None):
+            growth = (eps_next - eps) / abs(eps) * 100
+            if growth > 0:
+                fund["peg"] = round(pe / growth, 3)
+                peg_n += 1
+
+        # P/FCF = 시총 / FCF. FCF 가 음수면(투자 확대·적자) 비율이 의미를 잃으므로 뺀다.
+        cf = cash_flow.get(str(stock.get("ticker") or "").zfill(6)) or {}
+        fcf = cf.get("freeCashFlow")
+        if (isinstance(cap_jo, (int, float)) and cap_jo > 0
+                and isinstance(fcf, (int, float)) and fcf > 0
+                and fund.get("pfcf") is None):
+            fund["pfcf"] = round(cap_jo * 1e12 / fcf, 2)
+            pfcf_n += 1
+
+        # EV/EBIT = (시총 + 총차입금 - 현금) / 영업이익.
+        # EBITDA 가 아니라 EBIT 인 이유: DART 정형 데이터에 감가상각비가 없다(9%).
+        # totalDebt 가 없으면 '무차입' 인지 '계정명을 못 찾은 것' 인지 알 수 없어
+        # 0 으로 두지 않고 건너뛴다 — EV 를 과소평가해 틀린 색을 칠하느니 회색이 낫다.
+        debt, cash = cf.get("totalDebt"), cf.get("cash")
+        # 반드시 '연간' 영업이익이어야 한다. earningsHistory 의 최신 항목은 분기일 수
+        # 있어서, 연간 EV 를 분기 EBIT 으로 나누면 배수가 4배쯤 왜곡된다.
+        rows_e = earnings_book.get(str(stock.get("ticker") or "").zfill(6)) or []
+        ebit = next((r.get("operatingProfit") for r in reversed(rows_e)
+                     if r.get("annual") and not r.get("cumulativeSuspect")
+                     and isinstance(r.get("operatingProfit"), (int, float))), None)
+        if (isinstance(cap_jo, (int, float)) and cap_jo > 0
+                and isinstance(debt, (int, float)) and isinstance(cash, (int, float))
+                and isinstance(ebit, (int, float)) and ebit > 0
+                and fund.get("evEbit") is None):
+            ev = cap_jo * 1e12 + debt - cash
+            if ev > 0:
+                fund["evEbit"] = round(ev / ebit, 2)
+                ev_n += 1
+
+        # DART 재무지표는 계산 없이 그대로 옮긴다.
+        row = indicators.get(str(stock.get("ticker") or "").zfill(6))
+        if row:
+            for k, v in row.items():
+                if isinstance(v, (int, float)) and fund.get(k) is None:
+                    fund[k] = v
+            idx_n += 1
+
+    print(f"[valuation] P/S {ps_n} · PEG {peg_n} · P/FCF {pfcf_n} · EV/EBIT {ev_n} · "
+          f"DART지표 {idx_n} 종목 산출.")
+
+
 def split_snapshot_details(payload: dict):
     details = {}
     light_stocks = []
@@ -1555,6 +1654,7 @@ def main():
     print("Building Korean market snapshot...")
     snapshot = build_snapshot(limit=args.limit)
     attach_kr_earnings(snapshot)
+    enrich_kr_valuation(snapshot)
     light, details = split_snapshot_details(snapshot)
 
     if args.push:

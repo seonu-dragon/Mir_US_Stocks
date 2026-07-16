@@ -190,6 +190,7 @@
       shortInterest: false,
       whiteHouse: false,
       krDart: true,
+      krOwnership: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

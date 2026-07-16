@@ -4516,6 +4516,20 @@ const MAP_METRIC_CONFIG = {
   pb:        { label: "P/B",            good: "low",  fmt: "num", stops: [1, 2, 3, 6, 10] },
   pfcf:      { label: "P/FCF",          good: "low",  fmt: "num", stops: [15, 25, 40, 60, 90] },
   evEbitda:  { label: "EV/EBITDA",      good: "low",  fmt: "num", stops: [6, 9, 12, 18, 25] },
+  // KR 전용. DART 는 감가상각비를 본문에 싣는 회사가 9% 뿐이라 EBITDA 를 만들 수 없어
+  // 분모를 영업이익(EBIT)으로 둔다. EBITDA 보다 분모가 작아 배수가 높게 나오므로
+  // 구간도 EV/EBITDA 보다 위로 잡는다. 두 지표를 한 옵션으로 합치지 않는 이유는
+  // 감가상각이 큰 업종일수록 둘이 크게 벌어져 같은 이름으로 부를 수 없기 때문이다.
+  evEbit:    { label: "EV/EBIT",        good: "low",  fmt: "num", stops: [8, 12, 16, 24, 35] },
+  // DART 가 완제품으로 주는 지표(KR 전용). 직접 계산하면 분기/연간 혼동과 업종별 계정
+  // 차이에 다시 걸리므로 DART 값을 그대로 쓴다. 미국 상세엔 이 키가 없어서 커버리지
+  // 게이트가 알아서 숨긴다.
+  revenueGrowth:   { label: "매출 성장률(YoY)",   good: "high", fmt: "pct", stops: [-10, 0, 10, 25, 50] },
+  operatingGrowth: { label: "영업이익 성장률(YoY)", good: "high", fmt: "pct", stops: [-20, 0, 15, 40, 80] },
+  netGrowth:       { label: "순이익 성장률(YoY)",  good: "high", fmt: "pct", stops: [-20, 0, 15, 40, 80] },
+  debtRatio:       { label: "부채비율",          good: "low",  fmt: "pct", stops: [50, 100, 150, 250, 400] },
+  currentRatio:    { label: "유동비율",          good: "high", fmt: "pct", stops: [80, 120, 160, 220, 300] },
+  payoutRatio:     { label: "배당성향",          good: "high", fmt: "pct", stops: [0, 10, 20, 35, 55] },
   divYield:  { label: "Dividend Yield", good: "high", fmt: "pct", stops: [0.5, 1, 2, 3, 5] },
   eps:       { label: "EPS",            good: "high", fmt: "usd", stops: [0, 1, 3, 6, 10] },
   roe:       { label: "ROE",            good: "high", fmt: "pct", stops: [0, 5, 10, 17, 25] },
@@ -4552,22 +4566,33 @@ function mapMetricConfig(metric) {
   return stops ? { ...base, stops } : base;
 }
 
-// 값이 이만큼도 없으면 사실상 없는 지표로 본다(오탈자성 잔값 몇 개는 무시).
-const METRIC_MIN_COVERAGE = 20;
+// 지표를 고를 수 있게 하려면 '값이 있는 종목' 이 이 정도는 돼야 한다. 개수만 보면
+// US pfcf(26건)·evEbitda(47건) 처럼 몇십 건 있는 지표가 통과해버린다 — 그건 화면의
+// 99% 가 중립색이라는 뜻이라 없느니만 못하다. 그래서 비율을 함께 본다.
+const METRIC_MIN_COVERAGE = 20;      // 절대 개수 하한(아주 작은 유니버스 보호)
+const METRIC_MIN_COVERAGE_RATIO = 0.1;
 let _metricCoverage = null;
 
 // MAP_FUNDAMENTALS 안에 각 지표가 몇 종목이나 있는지. 시장이 바뀌면 다시 센다.
 function fundamentalMetricCoverage() {
   if (_metricCoverage) return _metricCoverage;
   const counts = {};
-  for (const row of Object.values(window.MAP_FUNDAMENTALS || {})) {
+  const rows = Object.values(window.MAP_FUNDAMENTALS || {});
+  for (const row of rows) {
     if (!row) continue;
     for (const [k, v] of Object.entries(row)) {
       if (Number.isFinite(v)) counts[k] = (counts[k] || 0) + 1;
     }
   }
-  _metricCoverage = counts;
-  return counts;
+  _metricCoverage = { counts, total: rows.length };
+  return _metricCoverage;
+}
+
+function metricHasEnoughData(metric) {
+  const { counts, total } = fundamentalMetricCoverage();
+  const n = counts[metric] || 0;
+  if (!total) return true;            // 아직 로드 전이면 막지 않는다
+  return n >= METRIC_MIN_COVERAGE && n / total >= METRIC_MIN_COVERAGE_RATIO;
 }
 
 // 데이터가 없는 지표를 고르면 히트맵이 통째로 '데이터 없음'(중립색)이 된다. 시장마다
@@ -4577,11 +4602,10 @@ function fundamentalMetricCoverage() {
 function pruneFundamentalMetricOptions(selectId, fallback) {
   const sel = byId(selectId);
   if (!sel) return;
-  const counts = fundamentalMetricCoverage();
   let hidSelected = false;
   sel.querySelectorAll("option").forEach((opt) => {
     if (!MAP_METRIC_CONFIG[opt.value]) return;      // 등락률·점수는 스냅샷에 항상 있다
-    const enough = (counts[opt.value] || 0) >= METRIC_MIN_COVERAGE;
+    const enough = metricHasEnoughData(opt.value);
     opt.hidden = !enough;
     opt.disabled = !enough;
     if (!enough && sel.value === opt.value) hidSelected = true;

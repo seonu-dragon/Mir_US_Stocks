@@ -4,6 +4,18 @@ __pycache__/
 
 # Local secrets (GitHub Actions uses Repository Secrets)
 .env
+.env.bak*
+
+# 로컬 실험·산출물. 여기 새로 생기는 파일은 커밋 대상이 아니다.
+# 주의: 이미 추적 중인 파일은 무시 규칙의 영향을 받지 않는다 —
+#   outputs/ 의 .gitkeep 3개(디렉터리 유지용)와 scratch/ 의 기존 스크립트 37개는
+#   그대로 남는다. 그것들을 저장소에서 빼려면 git rm --cached 로 따로 정리해야 한다.
+scratch/
+outputs/
+terminals/
+
+# Claude Code 로컬 설정(머신마다 다름)
+.claude/settings.local.json
 
 # OS / editor cruft
 .DS_Store

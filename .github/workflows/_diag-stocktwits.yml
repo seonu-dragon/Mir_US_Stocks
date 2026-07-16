@@ -1,0 +1,62 @@
+# 임시 진단용. Stocktwits 트렌드가 Actions 러너에서만 0건인 원인을 확인한다.
+# (로컬 가정용 IP 에서는 200/15건이 정상적으로 오는데, 스냅샷의
+#  social_sentiment.stocktwits 는 2026-06 말부터 계속 0건이었다.)
+#
+# 브리핑 워크플로우로는 진단이 안 된다: main.py 는 --test 를 줘도 Gemini 호출과
+# git 발행(update_market_snapshot)이 그대로 돌아 부작용이 크고, main 브랜치의
+# 스크레이퍼는 아직 200 이 아니면 아무것도 안 찍는 옛 코드다.
+#
+# workflow_dispatch 는 기본 브랜치에 있는 워크플로우만 띄울 수 있어서 push 트리거를 쓴다.
+# 원인 확인이 끝나면 이 파일은 지운다.
+name: _diag stocktwits (temporary)
+
+on:
+  push:
+    branches: [fix/site-audit-and-dart]
+    paths: [".github/workflows/_diag-stocktwits.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Runner egress IP (데이터센터 IP 여부 확인용)
+        run: curl -s --max-time 15 https://api.ipify.org || echo "(ip 조회 실패)"
+
+      - name: Raw HTTP probe
+        run: |
+          echo "--- 헤더 없이 ---"
+          curl -s -o /dev/null -w "status=%{http_code} time=%{time_total}s\n" \
+            --max-time 20 "https://api.stocktwits.com/api/2/trending/symbols.json" || true
+          echo "--- 브라우저 UA 로 (스크레이퍼와 동일) ---"
+          curl -s -D - -o /tmp/body.txt -w "\nstatus=%{http_code}\n" --max-time 20 \
+            -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+            -H "Accept-Language: ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7" \
+            "https://api.stocktwits.com/api/2/trending/symbols.json" | head -40 || true
+          echo "--- 본문 앞 300자 ---"
+          head -c 300 /tmp/body.txt || true
+          echo
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: pip install requests beautifulsoup4
+
+      - name: 실제 스크레이퍼로 재현 (이 브랜치의 수정본)
+        run: |
+          python - <<'PY'
+          import sys
+          sys.path.insert(0, "scripts/briefings/us_close")
+          from scrapers import fetch_stocktwits_trending
+          rows = fetch_stocktwits_trending()
+          print(f"수집 건수: {len(rows)}")
+          for r in rows[:3]:
+              print("  ", r)
+          PY

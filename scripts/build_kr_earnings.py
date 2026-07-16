@@ -61,6 +61,8 @@ NET_NAMES = ("당기순이익(손실)", "당기순이익")
 INTEREST_NET_NAMES = ("순이자손익",)
 INTEREST_INCOME_NAMES = ("이자수익",)
 FEE_NET_NAMES = ("순수수료손익",)
+# 재무상태표에서 총자산. ROA(순이익/총자산) 계산에 쓴다.
+ASSET_NAMES = ("자산총계",)
 
 
 def now_kst() -> str:
@@ -173,11 +175,17 @@ def build(api_key: str, years: list[str], limit: int | None):
                 rows = fetch_batch(chunk, year, reprt, api_key, errors)
                 # 종목·재무제표구분별로 손익계산서만 모은다.
                 grouped: dict[tuple[str, str], list[dict]] = {}
+                # 손익계산서(IS)와 재무상태표(BS)를 같이 모은다. BS 는 자산총계 하나만
+                # 쓰는데, 그게 있어야 build_map_fundamentals 가 ROA(순이익/총자산)를
+                # 계산할 수 있다 — KR 은 assetsB 가 없어서 히트맵 ROA 가 전 종목
+                # '데이터 없음'(중립색)이었다.
+                bs_grouped: dict[tuple[str, str], list[dict]] = {}
                 for r in rows:
-                    if r.get("sj_div") != "IS":
-                        continue
-                    corp = r.get("corp_code")
-                    grouped.setdefault((corp, r.get("fs_div") or ""), []).append(r)
+                    key = (r.get("corp_code"), r.get("fs_div") or "")
+                    if r.get("sj_div") == "IS":
+                        grouped.setdefault(key, []).append(r)
+                    elif r.get("sj_div") == "BS":
+                        bs_grouped.setdefault(key, []).append(r)
                 for (corp, fs_div), items in grouped.items():
                     ticker = by_corp.get(corp)
                     if not ticker:
@@ -211,6 +219,10 @@ def build(api_key: str, years: list[str], limit: int | None):
                         v = pick(items, names)
                         if v is not None:
                             entry[key_name] = v
+                    # 같은 (회사, 연결구분) 의 재무상태표에서 총자산.
+                    assets = pick(bs_grouped.get((corp, fs_div)) or [], ASSET_NAMES)
+                    if assets is not None:
+                        entry["totalAssets"] = assets
                     slot = acc.setdefault(ticker, {})
                     prev = slot.get((year, reprt))
                     # 연결(CFS) 우선. 별도(OFS)는 연결이 없는 회사만.

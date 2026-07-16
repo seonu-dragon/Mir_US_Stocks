@@ -1381,6 +1381,7 @@ def attach_kr_earnings(payload: dict) -> int:
         return 0
 
     attached = 0
+    assets_attached = [0]
     for stock in payload.get("stocks", []):
         ticker = str(stock.get("ticker") or "").replace(".KS", "").replace(".KQ", "").zfill(6)
         rows = book.get(ticker)
@@ -1403,7 +1404,21 @@ def attach_kr_earnings(payload: dict) -> int:
             history.append(item)
         stock["earningsHistory"] = history
         attached += 1
-    print(f"[earnings] {attached}종목에 earningsHistory 부착.")
+
+        # 총자산 → fundamentals.assetsB. build_map_fundamentals 가 이 값으로
+        # ROA(= incomeB / assetsB * 100)를 만든다. 네이버 KR 펀더멘털에는 총자산이
+        # 없어서 히트맵 ROA 가 전 종목 '데이터 없음'(중립색)이었다.
+        # 단위: KR 펀더멘털의 *B 는 십억원이다(삼성전자 salesB 333,605.9 = 333.6조).
+        latest_assets = next(
+            (r["totalAssets"] for r in reversed(rows) if r.get("totalAssets")), None
+        )
+        if latest_assets:
+            fund = stock.setdefault("fundamentals", {})
+            fund.setdefault("assetsB", round(latest_assets / 1e9, 1))
+            assets_attached[0] += 1
+
+    print(f"[earnings] {attached}종목에 earningsHistory 부착 "
+          f"(총자산 {assets_attached[0]}종목).")
     return attached
 
 

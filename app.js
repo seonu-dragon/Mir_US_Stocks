@@ -421,6 +421,8 @@ function loadMapFundamentalsScript(cfg) {
     const globalName = isKr ? "KOREA_MAP_FUNDAMENTALS" : "MAP_FUNDAMENTALS";
     const apply = () => {
       window.MAP_FUNDAMENTALS = window[globalName] || {};
+      // 시장마다 있는 지표가 달라 옵션을 다시 걸러야 한다(KR 은 P/S 가 없는 등).
+      refreshFundamentalMetricOptions();
       resolve(true);
     };
     if (window[globalName] && Object.keys(window[globalName]).length) {
@@ -4548,6 +4550,49 @@ function mapMetricConfig(metric) {
   if (!base || !isKrMarket()) return base;
   const stops = MAP_METRIC_STOPS_KR[metric];
   return stops ? { ...base, stops } : base;
+}
+
+// 값이 이만큼도 없으면 사실상 없는 지표로 본다(오탈자성 잔값 몇 개는 무시).
+const METRIC_MIN_COVERAGE = 20;
+let _metricCoverage = null;
+
+// MAP_FUNDAMENTALS 안에 각 지표가 몇 종목이나 있는지. 시장이 바뀌면 다시 센다.
+function fundamentalMetricCoverage() {
+  if (_metricCoverage) return _metricCoverage;
+  const counts = {};
+  for (const row of Object.values(window.MAP_FUNDAMENTALS || {})) {
+    if (!row) continue;
+    for (const [k, v] of Object.entries(row)) {
+      if (Number.isFinite(v)) counts[k] = (counts[k] || 0) + 1;
+    }
+  }
+  _metricCoverage = counts;
+  return counts;
+}
+
+// 데이터가 없는 지표를 고르면 히트맵이 통째로 '데이터 없음'(중립색)이 된다. 시장마다
+// 커버리지가 달라서 옵션을 HTML 에 하드코딩해두면 그 사실이 화면 어디에도 안 드러난다
+// — KR 은 ROA·P/S 가 아예 없었고, PEG·P/FCF·EV/EBITDA 는 US 에서도 1% 미만이다.
+// 값이 생기면 자동으로 다시 나타나므로 목록을 손으로 관리할 필요가 없다.
+function pruneFundamentalMetricOptions(selectId, fallback) {
+  const sel = byId(selectId);
+  if (!sel) return;
+  const counts = fundamentalMetricCoverage();
+  let hidSelected = false;
+  sel.querySelectorAll("option").forEach((opt) => {
+    if (!MAP_METRIC_CONFIG[opt.value]) return;      // 등락률·점수는 스냅샷에 항상 있다
+    const enough = (counts[opt.value] || 0) >= METRIC_MIN_COVERAGE;
+    opt.hidden = !enough;
+    opt.disabled = !enough;
+    if (!enough && sel.value === opt.value) hidSelected = true;
+  });
+  if (hidSelected) sel.value = fallback;
+}
+
+function refreshFundamentalMetricOptions() {
+  _metricCoverage = null;
+  pruneFundamentalMetricOptions("metricFilter", "changePct");
+  pruneFundamentalMetricOptions("valMetric", "pe");
 }
 
 function itemCapForValuation(item) {

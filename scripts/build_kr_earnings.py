@@ -50,9 +50,17 @@ REPORTS = {                      # reprt_code → (분기라벨, 분기번호)
     "11014": ("3분기", 3),
     "11011": ("연간", 4),         # 사업보고서 — 값은 연간 누계라 별도 취급
 }
+# 업종마다 손익계산서 계정이 다르다. 제조·서비스업은 '매출액' 이지만 은행·보험·증권은
+# 그 계정이 아예 없고 이자·수수료 구조로 낸다(KB금융·삼성생명·삼성화재 확인). 그래서
+# 매출은 '없을 수 있는 값' 으로 다루고, 대신 금융업 지표를 따로 담는다.
 REVENUE_NAMES = ("매출액", "수익(매출액)", "영업수익")
 OPERATING_NAMES = ("영업이익", "영업이익(손실)")
 NET_NAMES = ("당기순이익(손실)", "당기순이익")
+# 금융업 대체 지표. 매출액 자리에 억지로 끼워넣지 않는다 — 이자수익을 매출로 부르면
+# 제조업 매출과 같은 축에 놓이면서 비교가 망가진다.
+INTEREST_NET_NAMES = ("순이자손익",)
+INTEREST_INCOME_NAMES = ("이자수익",)
+FEE_NET_NAMES = ("순수수료손익",)
 
 
 def now_kst() -> str:
@@ -175,7 +183,13 @@ def build(api_key: str, years: list[str], limit: int | None):
                     if not ticker:
                         continue
                     revenue = pick(items, REVENUE_NAMES)
-                    if revenue is None:
+                    operating = pick(items, OPERATING_NAMES)
+                    net = pick(items, NET_NAMES)
+                    # 매출이 없다고 버리면 안 된다. 은행·보험·증권은 '매출액' 계정이
+                    # 없을 뿐 영업이익·순이익은 멀쩡히 낸다 — 예전엔 이 한 줄 때문에
+                    # KB금융(영업이익 8.5조)·삼성생명·삼성화재 같은 금융 대형주가
+                    # 통째로 빠졌다(시총 상위 25개 중 5개).
+                    if revenue is None and operating is None and net is None:
                         continue
                     entry = {
                         "quarter": f"{year}Q{qnum}" if qnum != 4 else f"{year}FY",
@@ -183,11 +197,20 @@ def build(api_key: str, years: list[str], limit: int | None):
                         "date": announce_date(items[0].get("rcept_no")),
                         "period": str(items[0].get("thstrm_dt") or "").strip(),
                         "revenue": revenue,
-                        "operatingProfit": pick(items, OPERATING_NAMES),
-                        "netIncome": pick(items, NET_NAMES),
+                        "operatingProfit": operating,
+                        "netIncome": net,
                         "fsDiv": fs_div,
                         "annual": qnum == 4,
                     }
+                    # 금융업은 매출 대신 이 지표들이 실질 톱라인이다. 있을 때만 싣는다.
+                    for key_name, names in (
+                        ("netInterestIncome", INTEREST_NET_NAMES),
+                        ("interestIncome", INTEREST_INCOME_NAMES),
+                        ("netFeeIncome", FEE_NET_NAMES),
+                    ):
+                        v = pick(items, names)
+                        if v is not None:
+                            entry[key_name] = v
                     slot = acc.setdefault(ticker, {})
                     prev = slot.get((year, reprt))
                     # 연결(CFS) 우선. 별도(OFS)는 연결이 없는 회사만.

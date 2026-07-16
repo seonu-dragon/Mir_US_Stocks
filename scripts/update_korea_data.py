@@ -1341,14 +1341,20 @@ def attach_kr_earnings(payload: dict) -> int:
         rows = book.get(ticker)
         if not rows:
             continue
-        # 누적값 의심 분기는 매출이 왜곡됐을 수 있으니 발표일만 남기고 숫자는 뺀다.
+        # 누적값 의심 분기는 숫자가 왜곡됐을 수 있으니 발표일만 남기고 뺀다.
+        # netInterestIncome 등은 은행·보험·증권에만 있다(그쪽은 '매출액' 계정이 없어
+        # revenue 가 null 이다) — 있는 것만 넘긴다.
+        numeric_keys = (
+            "revenue", "operatingProfit", "netIncome",
+            "netInterestIncome", "interestIncome", "netFeeIncome",
+        )
         history = []
         for r in rows:
             item = {"date": r.get("date"), "label": r.get("label"), "period": r.get("period")}
             if not r.get("cumulativeSuspect"):
-                item["revenue"] = r.get("revenue")
-                item["operatingProfit"] = r.get("operatingProfit")
-                item["netIncome"] = r.get("netIncome")
+                for k in numeric_keys:
+                    if r.get(k) is not None:
+                        item[k] = r[k]
             history.append(item)
         stock["earningsHistory"] = history
         attached += 1

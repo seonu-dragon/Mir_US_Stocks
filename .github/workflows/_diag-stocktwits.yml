@@ -49,29 +49,34 @@ jobs:
       - name: Install deps
         run: pip install requests
 
-      # curl 은 러너에서 200 을 받는다(확인됨). 그러면 IP 차단이 아니다.
-      # 남은 차이는 HTTP 클라이언트다 — Cloudflare 는 TLS 지문으로도 봇을 가른다.
-      # scrapers.py 를 import 하면 yfinance 까지 끌려와 여기서 확인이 안 되므로
-      # 같은 URL·같은 헤더를 requests 로만 직접 때려본다.
-      - name: requests 로 재현 (스크레이퍼와 동일한 헤더)
+      # 확인된 사실: 같은 러너에서 curl 은 200, requests 는 403("Just a moment...").
+      # IP 차단이 아니라 Cloudflare 의 TLS 지문 판정이다.
+      # 이 스텝은 수정본(curl 경유)이 러너에서 실제로 데이터를 가져오는지 본다.
+      # 로컬은 원래 requests 로도 통과하므로 아무것도 증명하지 못한다.
+      - name: 수정본 검증 — requests(403 예상) vs curl 헬퍼(200 기대)
         run: |
           python - <<'PY'
-          import requests, json
+          import sys
+          sys.path.insert(0, "scripts/briefings/common")
+          import requests
+          from http_client import fetch_json_via_curl
+
           URL = "https://api.stocktwits.com/api/2/trending/symbols.json"
           HEADERS = {
               "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                              "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
               "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
           }
-          for label, hdrs in (("스크레이퍼와 동일한 헤더", HEADERS), ("헤더 없음", None)):
-              try:
-                  r = requests.get(URL, headers=hdrs, timeout=15)
-                  print(f"[{label}] status={r.status_code} len={len(r.text)}")
-                  if r.status_code == 200:
-                      syms = r.json().get("symbols", [])
-                      print(f"    symbols={len(syms)}  예: {[s.get('symbol') for s in syms[:3]]}")
-                  else:
-                      print(f"    본문: {r.text[:200]!r}")
-              except Exception as e:
-                  print(f"[{label}] 예외 {type(e).__name__}: {e}")
+
+          r = requests.get(URL, headers=HEADERS, timeout=15)
+          print(f"[before] requests        status={r.status_code}")
+
+          status, data, raw = fetch_json_via_curl(URL, HEADERS, timeout=15)
+          syms = (data or {}).get("symbols", [])
+          print(f"[after ] curl 헬퍼        status={status} symbols={len(syms)}")
+          print(f"         예: {[s.get('symbol') for s in syms[:3]]}")
+          if status != 200 or not syms:
+              print(f"         본문: {raw[:200]!r}")
+              raise SystemExit("수정본이 러너에서 데이터를 못 가져왔다")
+          print("OK — 러너에서 curl 경유로 정상 수집")
           PY

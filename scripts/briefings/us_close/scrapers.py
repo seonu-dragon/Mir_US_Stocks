@@ -14,9 +14,18 @@ import requests
 from bs4 import BeautifulSoup
 import urllib3
 import re
+import sys
 import yfinance as yf
 import feedparser
 from datetime import datetime, timedelta
+from pathlib import Path
+
+# main.py 가 common 을 sys.path 에 넣어주지만, 이 모듈을 단독으로 import 하는 경우
+# (진단 스크립트 등)도 있어 스스로 붙여둔다.
+_COMMON_DIR = Path(__file__).resolve().parent.parent / "common"
+if str(_COMMON_DIR) not in sys.path:
+    sys.path.insert(0, str(_COMMON_DIR))
+from http_client import fetch_json_via_curl  # noqa: E402
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -164,34 +173,29 @@ def fetch_reddit_trending():
 def fetch_stocktwits_trending():
     """Stocktwits 인기 급상승 심볼 수집.
 
-    주의: 이 함수는 2026-06 이후 GitHub Actions 에서 한 번도 데이터를 못 가져왔다
-    (스냅샷의 social_sentiment.stocktwits 가 계속 0건). 같은 코드가 가정용 IP 에서는
-    200 을 받으므로, Stocktwits 가 러너의 데이터센터 IP 를 막는 것으로 보인다.
-    예전엔 200 이 아니면 아무것도 찍지 않고 빈 리스트를 돌려줘서 실패가 로그에조차
-    남지 않았다 — 그래서 몇 주간 아무도 몰랐다. 이제 상태코드를 남긴다.
+    requests 가 아니라 curl 로 때린다. Stocktwits 는 Cloudflare 뒤에 있고, Cloudflare 는
+    python-requests 의 TLS 지문을 봇으로 보고 403("Just a moment...")을 준다. 같은
+    Actions 러너에서 curl 은 200 이 온다 — 실측으로 확인했다(자세한 배경은
+    common/http_client.py 참고).
+
+    이 함수는 2026-06 말부터 Actions 에서 계속 0건이었는데, 200 이 아니면 아무것도
+    찍지 않고 빈 리스트를 돌려줘서 로그에조차 안 남았다. 이제 상태코드를 남긴다.
     """
     url = "https://api.stocktwits.com/api/2/trending/symbols.json"
     results = []
-    try:
-        resp = requests.get(url, headers=HEADERS, timeout=15)
-        if resp.status_code != 200:
-            print(
-                f"  [경고] Stocktwits 트렌드 HTTP {resp.status_code} → 0건. "
-                f"본문: {resp.text[:160]!r}"
-            )
-            return results
-        data = resp.json()
-        for idx, sym in enumerate(data.get("symbols", [])[:15], 1):
-            results.append({
-                "rank": idx,
-                "symbol": sym.get("symbol", ""),
-                "name":   sym.get("title", ""),
-                "watchlist_count": sym.get("watchlist_count", 0),
-            })
-        if not results:
-            print("  [경고] Stocktwits 트렌드 200 이지만 symbols 가 비어 있다 → 응답 형식 변경 의심.")
-    except Exception as e:
-        print(f"  [경고] Stocktwits 트렌드 수집 중 오류: {type(e).__name__}: {e}")
+    status, data, raw = fetch_json_via_curl(url, HEADERS, timeout=15)
+    if status != 200 or data is None:
+        print(f"  [경고] Stocktwits 트렌드 HTTP {status} → 0건. 본문: {raw[:160]!r}")
+        return results
+    for idx, sym in enumerate(data.get("symbols", [])[:15], 1):
+        results.append({
+            "rank": idx,
+            "symbol": sym.get("symbol", ""),
+            "name":   sym.get("title", ""),
+            "watchlist_count": sym.get("watchlist_count", 0),
+        })
+    if not results:
+        print("  [경고] Stocktwits 트렌드 200 이지만 symbols 가 비어 있다 → 응답 형식 변경 의심.")
     return results
 
 

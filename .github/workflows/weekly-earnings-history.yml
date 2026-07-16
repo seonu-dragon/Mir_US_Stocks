@@ -45,3 +45,10 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_earnings.py --push
+
+      # 성장성·안정성 지표. 다중회사 API 라 39회면 끝나지만, 값이 사업보고서에만
+      # 바뀌므로 주간으로 충분하다.
+      - name: KR financial indicators (DART)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_indicators.py --push

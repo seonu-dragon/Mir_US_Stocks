@@ -8810,34 +8810,50 @@ function renderEarningsCalendar(item) {
         <p>${f.epsNextY != null ? `연간 EPS 예상 ${moneyOrDash(f.epsNextY)}` : "Nasdaq/야후 데이터가 있으면 함께 표시됩니다."}</p>
       </article>
     </div>
-    ${history.length ? `
-      <details class="earnings-inline-history">
-        <summary>최근 분기 EPS 기록 <span>${history.length}개 분기</span></summary>
-        <div class="table-wrap compact-table-wrap">
-        <table class="compact-table earnings-table">
-          <thead>
-            <tr>
-              <th>분기</th>
-              <th>실제 EPS</th>
-              <th>예상 EPS</th>
-              <th>서프라이즈</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${history.map((row) => `
+    ${history.length ? renderEarningsHistoryTable(history) : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
+  `;
+}
+
+// 미국(야후)은 EPS 실제/예상/서프라이즈를, 한국(DART)은 실제 손익을 준다. DART 에는
+// 애널리스트 추정치가 없어서, KR 에 EPS 표를 그대로 쓰면 세 칸이 전부 "—" 인 빈 표가
+// 나온다. 그래서 시장에 따라 컬럼을 바꾼다.
+function renderEarningsHistoryTable(history) {
+  const top = isKrMarket() ? krTopLineField(history) : null;
+  const krMode = Boolean(top);
+
+  const head = krMode
+    ? `<tr><th>분기</th><th>${escapeHtml(top.label)}</th><th>영업이익</th><th>순이익</th></tr>`
+    : `<tr><th>분기</th><th>실제 EPS</th><th>예상 EPS</th><th>서프라이즈</th></tr>`;
+
+  const body = history.map((row) => {
+    if (krMode) {
+      return `
+              <tr>
+                <td title="${escapeHtml(row.period || "")}">${escapeHtml(row.label || row.date || "—")}</td>
+                <td>${fmtKrwCompact(row[top.key])}</td>
+                <td class="${cls(Number(row.operatingProfit) || 0)}">${fmtKrwCompact(row.operatingProfit)}</td>
+                <td class="${cls(Number(row.netIncome) || 0)}">${fmtKrwCompact(row.netIncome)}</td>
+              </tr>`;
+    }
+    return `
               <tr>
                 <td>${escapeHtml(row.date || "—")}</td>
                 <td>${row.epsActual != null ? moneyOrDash(row.epsActual) : "—"}</td>
                 <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
                 <td class="${cls(earningsSurprisePct(row) || 0)}">${earningsSurprisePct(row) == null ? "—" : fmtPct(earningsSurprisePct(row))}</td>
-              </tr>
-            `).join("")}
-          </tbody>
+              </tr>`;
+  }).join("");
+
+  return `
+      <details class="earnings-inline-history">
+        <summary>최근 분기 ${krMode ? "실적" : "EPS"} 기록 <span>${history.length}개 분기</span></summary>
+        <div class="table-wrap compact-table-wrap">
+        <table class="compact-table earnings-table">
+          <thead>${head}</thead>
+          <tbody>${body}</tbody>
         </table>
         </div>
-      </details>
-    ` : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
-  `;
+      </details>`;
 }
 
 function earningsSurprisePct(row) {
@@ -9167,9 +9183,38 @@ function normalizeEarningsHistory(item) {
       date: date ? String(date).slice(0, 10) : "",
       epsActual: row.epsActual ?? row.actual ?? row.reportedEPS ?? row.eps,
       epsEstimate: row.epsEstimate ?? row.estimate ?? row.estimatedEPS,
-      revenue: row.revenue ?? row.sales
+      revenue: row.revenue ?? row.sales,
+      // KR(DART) 전용. 미국은 야후에서 EPS·서프라이즈가 오지만 DART 는 추정치를 주지
+      // 않는 대신 실제 손익을 준다. 은행·보험·증권은 '매출액' 계정 자체가 없어서
+      // revenue 가 없고 순이자손익/이자수익이 톱라인이다.
+      label: row.label,
+      period: row.period,
+      operatingProfit: row.operatingProfit,
+      netIncome: row.netIncome,
+      netInterestIncome: row.netInterestIncome,
+      interestIncome: row.interestIncome,
+      netFeeIncome: row.netFeeIncome,
     };
   }).filter((row) => row.date);
+}
+
+// 업종마다 톱라인이 다르다. 제조·서비스업은 매출액이지만 금융업은 그 계정이 없다.
+// 한 종목의 표 전체에 쓸 라벨이라 행이 아니라 히스토리 단위로 고른다.
+function krTopLineField(history) {
+  const has = (k) => history.some((r) => Number.isFinite(Number(r[k])));
+  if (has("revenue")) return { key: "revenue", label: "매출" };
+  if (has("netInterestIncome")) return { key: "netInterestIncome", label: "순이자손익" };
+  if (has("interestIncome")) return { key: "interestIncome", label: "이자수익" };
+  return null;
+}
+
+// DART 금액은 원 단위 정수로 온다(삼성전자 연매출 333,605,900,000,000).
+function fmtKrwCompact(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  const jo = n / 1e12;
+  if (Math.abs(jo) >= 1) return `${jo.toFixed(2)}조`;
+  return `${(jo * 10000).toFixed(0)}억`;
 }
 
 function nearestTradingIndex(rows, date) {
@@ -9212,19 +9257,22 @@ function renderEarningsReaction(item) {
   const box = byId("earningsReaction");
   if (!box || !item) return;
   const rows = earningsReactionRows(item);
+  // DART 에는 애널리스트 추정치가 없어 KR 은 서프라이즈가 항상 null 이다. 컬럼을 두면
+  // 세로로 "-" 만 늘어서므로 계산 가능한 행이 하나라도 있을 때만 보여준다.
+  const showSurprise = rows.some((row) => row.surprise != null);
   box.innerHTML = `
     ${rows.length ? `
       <details class="earnings-inline-reaction">
         <summary>실적 발표 전후 주가 반응 <span>최근 ${Math.min(rows.length, 4)}회</span></summary>
         <div class="table-wrap">
         <table class="compact-table earnings-reaction-table">
-          <thead><tr><th>발표일</th><th>거래일</th><th>EPS 서프라이즈</th><th>-5D→발표</th><th>발표일</th><th>발표→+5D</th></tr></thead>
+          <thead><tr><th>발표일</th><th>거래일</th>${showSurprise ? "<th>EPS 서프라이즈</th>" : ""}<th>-5D→발표</th><th>발표일</th><th>발표→+5D</th></tr></thead>
           <tbody>
             ${rows.slice(0, 4).map((row) => `
               <tr>
                 <td>${escapeHtml(row.date)}</td>
                 <td>${escapeHtml(row.tradingDate)}</td>
-                <td class="${cls(row.surprise || 0)}">${row.surprise == null ? "-" : fmtPct(row.surprise)}</td>
+                ${showSurprise ? `<td class="${cls(row.surprise || 0)}">${row.surprise == null ? "-" : fmtPct(row.surprise)}</td>` : ""}
                 <td class="${cls(row.pre5 || 0)}">${row.pre5 == null ? "-" : fmtPct(row.pre5)}</td>
                 <td class="${cls(row.oneDay || 0)}">${row.oneDay == null ? "-" : fmtPct(row.oneDay)}</td>
                 <td class="${cls(row.post5 || 0)}">${row.post5 == null ? "-" : fmtPct(row.post5)}</td>

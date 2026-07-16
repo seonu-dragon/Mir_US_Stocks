@@ -51,13 +51,17 @@
       })();
     </script>
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css">
-    <link rel="stylesheet" href="styles.css?v=20260702ai18">
-    <script src="build_id.js?v=20260701a"></script>
+    <!-- 가변폰트 dynamic-subset. static/pretendard.css 는 웨이트마다 ~780KB 짜리 한글
+         전체 폰트를 받아서, 이 사이트가 쓰는 6개 웨이트(400~900)면 첫 로드에 ~4.7MB 였다.
+         dynamic-subset 은 unicode-range 로 쪼개져 화면에 실제 나온 글자의 서브셋만
+         받고, 가변폰트라 웨이트 전 구간을 파일 하나로 덮는다. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+    <link rel="stylesheet" href="styles.css?v=83c8fe4eb4">
+    <script src="build_id.js?v=b817dfd9d6"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
-        var v = window.MIR_BUILD_ID || "20260701a";
+        var v = window.MIR_BUILD_ID || "dev";
         navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
           reg.update();
         }).catch(function () {});
@@ -1539,7 +1543,33 @@
           <button class="sub-tab" data-sub="events">📣 주요 공시 8-K</button>
           <button class="sub-tab" data-sub="ipo">🆕 IPO 캘린더</button>
           <button class="sub-tab" data-sub="dart" hidden>📋 DART 공시</button>
+          <button class="sub-tab" data-sub="krown" hidden>🧭 지분 변동</button>
         </nav>
+
+        <div class="sub-panel" id="sub-inst-krown">
+          <div class="section-title">
+            <h2>한국 지분 변동</h2>
+            <p>대량보유(5%룰)와 임원·주요주주 소유 공시의 <b>상세 수치</b>입니다. 공시 목록이 제목만 알려주는 것과 달리, 누가 몇 %를 얼마나 늘리고 줄였는지 보여줍니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>지분공시 해석 주의</strong>
+            <span>보고 의무 발생 후 며칠 지나 제출될 수 있어 실시간이 아닙니다. 보유비율은 보고자 기준이며 특별관계자 합산 여부가 보고서마다 다를 수 있습니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="krOwnMeta"></div>
+          <nav class="sub-tabs" id="krOwnKinds">
+            <button class="sub-tab is-active" data-krown="major">📐 대량보유 5%룰</button>
+            <button class="sub-tab" data-krown="insider">🧑‍💼 임원·주요주주</button>
+          </nav>
+          <div class="institutional-picker">
+            <label class="grow">
+              지분공시 검색
+              <input id="krOwnSearch" type="search" placeholder="종목코드·회사명·보고자" autocomplete="off">
+            </label>
+          </div>
+          <div class="institutional-detail" id="krOwnTable">
+            <p class="muted">지분공시 데이터를 불러오는 중…</p>
+          </div>
+        </div>
 
         <div class="sub-panel" id="sub-inst-dart">
           <div class="section-title">
@@ -2124,19 +2154,19 @@
       </div>
     </div>
 
-    <script src="market_config.js?v=20260701a"></script>
+    <script src="market_config.js?v=14fcaff1f8"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
-    <script src="data/ticker_aliases_ko.js?v=20260618k"></script>
+    <script src="data/ticker_aliases_ko.js?v=ae3dcb1f0f"></script>
     <!-- Feature datasets (13F / congress / insider / activist / events / IPO /
          short / white-house / leveraged-ETF) are loaded on demand after boot by
          preloadFeatureData() in app.js, gated by the active market's features.
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
-    <script src="pattern_detectors_extended.js?v=20260701a"></script>
-    <script src="analysis.js?v=20260701a"></script>
-    <script src="app.js?v=20260702ai19"></script>
-    <script src="ai-cosmos.js?v=20260702cosmos15"></script>
-    <script src="ai-mode-welcome.js?v=20260702ai18"></script>
+    <script src="pattern_detectors_extended.js?v=f819b82793"></script>
+    <script src="analysis.js?v=059e82e7aa"></script>
+    <script src="app.js?v=bb658b02ea"></script>
+    <script src="ai-cosmos.js?v=96d6d1d97f"></script>
+    <script src="ai-mode-welcome.js?v=4efe148106"></script>
   </body>
 </html>

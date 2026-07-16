@@ -162,22 +162,36 @@ def fetch_reddit_trending():
 
 
 def fetch_stocktwits_trending():
-    """Stocktwits 인기 급상승 심볼 수집"""
+    """Stocktwits 인기 급상승 심볼 수집.
+
+    주의: 이 함수는 2026-06 이후 GitHub Actions 에서 한 번도 데이터를 못 가져왔다
+    (스냅샷의 social_sentiment.stocktwits 가 계속 0건). 같은 코드가 가정용 IP 에서는
+    200 을 받으므로, Stocktwits 가 러너의 데이터센터 IP 를 막는 것으로 보인다.
+    예전엔 200 이 아니면 아무것도 찍지 않고 빈 리스트를 돌려줘서 실패가 로그에조차
+    남지 않았다 — 그래서 몇 주간 아무도 몰랐다. 이제 상태코드를 남긴다.
+    """
     url = "https://api.stocktwits.com/api/2/trending/symbols.json"
     results = []
     try:
         resp = requests.get(url, headers=HEADERS, timeout=15)
-        if resp.status_code == 200:
-            data = resp.json()
-            for idx, sym in enumerate(data.get("symbols", [])[:15], 1):
-                results.append({
-                    "rank": idx,
-                    "symbol": sym.get("symbol", ""),
-                    "name":   sym.get("title", ""),
-                    "watchlist_count": sym.get("watchlist_count", 0),
-                })
+        if resp.status_code != 200:
+            print(
+                f"  [경고] Stocktwits 트렌드 HTTP {resp.status_code} → 0건. "
+                f"본문: {resp.text[:160]!r}"
+            )
+            return results
+        data = resp.json()
+        for idx, sym in enumerate(data.get("symbols", [])[:15], 1):
+            results.append({
+                "rank": idx,
+                "symbol": sym.get("symbol", ""),
+                "name":   sym.get("title", ""),
+                "watchlist_count": sym.get("watchlist_count", 0),
+            })
+        if not results:
+            print("  [경고] Stocktwits 트렌드 200 이지만 symbols 가 비어 있다 → 응답 형식 변경 의심.")
     except Exception as e:
-        print(f"  [경고] Stocktwits 트렌드 수집 중 오류: {e}")
+        print(f"  [경고] Stocktwits 트렌드 수집 중 오류: {type(e).__name__}: {e}")
     return results
 
 

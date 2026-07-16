@@ -95,7 +95,7 @@ let usingFallbackSnapshot = false;
 const TICKER_BLOCKLIST = new Set(["SPCX"]);
 
 function featureDataSrc(path) {
-  const v = window.MIR_BUILD_ID || "20260701a";
+  const v = window.MIR_BUILD_ID || "dev";
   return `${path}?v=${v}`;
 }
 
@@ -287,7 +287,10 @@ const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
 const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
-const DEFAULT_VIEW_MODE = "advanced";
+// 첫 방문자 기본값. 탭 10개를 한꺼번에 보여주면 처음 온 사람에겐 과하다. 기존 사용자는
+// setupViewMode 가 localStorage 를 먼저 읽으므로 영향이 없고, 고급 탭으로 들어오는
+// 딥링크(?tab=signals 등)도 거기서 advanced 로 승격되므로 그대로 동작한다.
+const DEFAULT_VIEW_MODE = "basic";
 const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
 const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
@@ -476,6 +479,7 @@ const FEATURE_DATA = {
   whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  path: "data/white_house_schedule.js",  feature: "whiteHouse" },
   leveraged:  { global: "LEVERAGED_ETF_CATALOG", path: "data/leveraged_etf_catalog.js", usOnly: true },
   krDart:     { global: "KR_DISCLOSURES",        path: "data/kr_disclosures.js",        feature: "krDart", krOnly: true },
+  krOwnership:{ global: "KR_OWNERSHIP",          path: "data/kr_ownership.js",          feature: "krOwnership", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -840,19 +844,23 @@ function applyMarketOnlyUi() {
         || (sub === "activist" && cfg.features && !cfg.features.activist)
         || (sub === "events" && cfg.features && !cfg.features.materialEvents)
         || (sub === "ipo" && cfg.features && !cfg.features.ipo)
-        || (sub === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)));
+        || (sub === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))
+        || (sub === "krown" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krOwnership)));
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
     const instFallback = cfg.id === "kr" && cfg.features?.krDart ? "dart" : "events";
-    if (cfg.id === "kr" && cfg.features?.krDart) {
-      const dartBtn = instNav.querySelector('[data-sub="dart"]');
-      if (dartBtn) { dartBtn.hidden = false; dartBtn.style.display = ""; }
-    }
+    ["dart", "krown"].forEach((sub) => {
+      const on = cfg.id === "kr" && cfg.features?.[sub === "dart" ? "krDart" : "krOwnership"];
+      if (!on) return;
+      const btn = instNav.querySelector(`[data-sub="${sub}"]`);
+      if (btn) { btn.hidden = false; btn.style.display = ""; }
+    });
     if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)
       || (institutionalSubTab === "insider" && cfg.features && !cfg.features.insider)
       || (institutionalSubTab === "activist" && cfg.features && !cfg.features.activist)
-      || (institutionalSubTab === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))) {
+      || (institutionalSubTab === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))
+      || (institutionalSubTab === "krown" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krOwnership)))) {
       activateInstitutionalSub(instFallback, { push: false });
     }
   }
@@ -2327,6 +2335,7 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "events") renderWithFeature("events", renderMaterialEvents, "eventsTable", load);
   if (institutionalSubTab === "ipo") renderWithFeature("ipo", renderIpoCalendar, "ipoTable", load);
   if (institutionalSubTab === "dart") renderWithFeature("krDart", renderKrDisclosures, "krDartTable", load);
+  if (institutionalSubTab === "krown") renderWithFeature("krOwnership", renderKrOwnership, "krOwnTable", load);
   if (push) {
     recordNav();
   }
@@ -3463,6 +3472,7 @@ function setupEvents() {
   setupWatchAlertEvents();
   setupCloudSyncEvents();
   setupKrDartEvents();
+  setupKrOwnershipEvents();
   byId("heatmapShare")?.addEventListener("click", shareHeatmapLink);
   byId("pfExportCsv")?.addEventListener("click", exportPortfolioCsv);
   byId("backtestExportCsv")?.addEventListener("click", exportBacktestCsv);
@@ -13797,7 +13807,7 @@ function setupWatchlistUi() {
 const MIR_SW_BUILD_KEY = "mir_sw_build_id_v1";
 
 async function detectHotUpdate() {
-  const current = window.MIR_BUILD_ID || "20260701a";
+  const current = window.MIR_BUILD_ID || "dev";
   let stored = null;
   try { stored = localStorage.getItem(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
   if (stored && stored !== current) {
@@ -15681,7 +15691,15 @@ function renderKrDisclosures() {
     return;
   }
   if (meta) {
-    meta.textContent = `${payload.updatedAtKst || ""} · ${payload.count || 0}건 · ${payload.source || ""}`;
+    // 빌더가 실제 커버 범위(종목수·기간)를 payload 에 싣는다. 예전엔 건수만 보여줘서
+    // 120종목만 훑고 있다는 사실이 화면 어디에도 드러나지 않았다.
+    const parts = [payload.updatedAtKst, `${payload.count || 0}건`];
+    if (payload.companyCount) parts.push(`${payload.companyCount}종목`);
+    if (payload.firstFileDate && payload.lastFileDate) {
+      parts.push(`${payload.firstFileDate} ~ ${payload.lastFileDate}`);
+    }
+    parts.push(payload.source);
+    meta.textContent = parts.filter(Boolean).join(" · ");
   }
   let rows = payload.disclosures || [];
   const q = krDartQuery.trim().toLowerCase();
@@ -15717,6 +15735,99 @@ function renderKrDisclosures() {
 function setupKrDartEvents() {
   const search = byId("krDartSearch");
   if (search) search.addEventListener("input", () => { krDartQuery = search.value; renderKrDisclosures(); });
+}
+
+// ===== KR 지분 변동 (대량보유 5%룰 / 임원·주요주주) =====
+let krOwnQuery = "";
+let krOwnKind = "major";
+
+function krOwnNum(v, digits = 0) {
+  return Number.isFinite(v) ? Number(v).toLocaleString(undefined, { maximumFractionDigits: digits }) : "-";
+}
+
+// 증감은 방향이 핵심이라 색과 부호를 같이 준다(색만으로 구분하지 않게 부호를 반드시 붙인다).
+function krOwnDelta(v, suffix, digits = 0) {
+  if (!Number.isFinite(v) || v === 0) return `<span class="muted">-</span>`;
+  const sign = v > 0 ? "+" : "";
+  return `<span class="${v > 0 ? "pos" : "neg"}">${sign}${krOwnNum(v, digits)}${suffix}</span>`;
+}
+
+function renderKrOwnership() {
+  const meta = byId("krOwnMeta");
+  const table = byId("krOwnTable");
+  if (!table) return;
+  const payload = window.KR_OWNERSHIP;
+  if (!payload) {
+    table.innerHTML = `<p class="muted">지분공시 데이터를 불러오는 중…</p>`;
+    return;
+  }
+  if (meta) {
+    meta.textContent = [
+      payload.updatedAtKst,
+      `최근 ${payload.windowDays || 7}일`,
+      `대량보유 ${payload.majorCount || 0}건`,
+      `임원 ${payload.insiderCount || 0}건`,
+      payload.source,
+    ].filter(Boolean).join(" · ");
+  }
+
+  const isMajor = krOwnKind === "major";
+  let rows = (isMajor ? payload.majorHolders : payload.insiders) || [];
+  const q = krOwnQuery.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter((row) =>
+      [row.ticker, row.company, row.filer, row.position, row.reportType]
+        .some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }
+  if (!rows.length) {
+    table.innerHTML = `<p class="muted">${escapeHtml(payload.note || "표시할 지분공시가 없습니다.")}</p>`;
+    return;
+  }
+
+  const head = isMajor
+    ? `<tr><th>일자</th><th>종목</th><th>회사</th><th>보고자</th><th>보유비율</th><th>증감</th><th>보유주식</th><th>구분</th></tr>`
+    : `<tr><th>일자</th><th>종목</th><th>회사</th><th>보고자</th><th>직위</th><th>소유주식</th><th>증감</th><th>등기</th></tr>`;
+
+  const body = rows.slice(0, 200).map((row) => {
+    const common = `
+      <td>${escapeHtml(row.fileDate || "")}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
+      <td>${escapeHtml(row.company || "")}</td>
+      <td>${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.filer || "-")}</a>` : escapeHtml(row.filer || "-")}</td>`;
+    return isMajor
+      ? `<tr>${common}
+          <td><b>${krOwnNum(row.ratio, 2)}%</b></td>
+          <td>${krOwnDelta(row.ratioChange, "%p", 2)}</td>
+          <td>${krOwnNum(row.shares)}</td>
+          <td>${escapeHtml(row.reportType || "")}</td>
+        </tr>`
+      : `<tr>${common}
+          <td>${escapeHtml(row.position || "-")}</td>
+          <td>${krOwnNum(row.shares)}</td>
+          <td>${krOwnDelta(row.sharesChange, "주")}</td>
+          <td>${escapeHtml(row.registered || "-")}</td>
+        </tr>`;
+  }).join("");
+
+  table.innerHTML = `<table class="insider-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  table.querySelectorAll(".ins-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function setupKrOwnershipEvents() {
+  const search = byId("krOwnSearch");
+  if (search) search.addEventListener("input", () => { krOwnQuery = search.value; renderKrOwnership(); });
+  byId("krOwnKinds")?.querySelectorAll("[data-krown]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      krOwnKind = btn.dataset.krown === "insider" ? "insider" : "major";
+      byId("krOwnKinds").querySelectorAll("[data-krown]").forEach((b) => {
+        b.classList.toggle("is-active", b === btn);
+      });
+      renderKrOwnership();
+    });
+  });
 }
 
 loadData();
@@ -16557,6 +16668,15 @@ async function sendAiChat(queryText = null) {
     aiChatBusy = false;
   }
 }
+
+// ai-mode-welcome.js 가 쓰는 창구. 웰컴 화면이 submit 을 capture 단계에서 가로채므로
+// 폼 경로로는 sendAiChat 에 닿을 수 없다. 종목이 아닌 질문은 웰컴이 여기로 넘긴다.
+// resolveTicker 도 함께 넘겨, 웰컴이 자체 해석기를 따로 두지 않게 한다
+// (자체 해석기는 문자열 전체가 티커일 때만 맞아서 "NVDA 분석해줘" 를 놓쳤다).
+window.MirAiChat = {
+  send: (text) => sendAiChat(text),
+  resolveTicker: (text) => extractStockTickerFromQuery(text),
+};
 
 function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
   const log = byId("aiChatLog");

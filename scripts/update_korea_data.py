@@ -1314,6 +1314,48 @@ def build_snapshot(limit: int | None = None) -> dict:
     }
 
 
+def attach_kr_earnings(payload: dict) -> int:
+    """DART 분기 실적을 각 종목에 earningsHistory 로 붙인다.
+
+    details/*.json 은 이 스냅샷에서 split_snapshot_details 가 매번 새로 만들므로, 실적을
+    details 에 직접 써넣으면 다음 빌드에 지워진다. 그래서 스냅샷 단계에서 붙인다.
+    원본은 build_kr_earnings.py 가 만드는 data/korea/earnings.json (분기마다만 바뀐다).
+
+    app.js 의 normalizeEarningsHistory 가 {date, revenue} 를 그대로 읽는다. DART 는
+    애널리스트 추정치를 주지 않아 epsEstimate 가 없고, 그 경우 UI 는 'EPS 서프라이즈'
+    칸을 '-' 로 두고 주가 반응만 계산한다.
+    """
+    path = ROOT / "data" / "korea" / "earnings.json"
+    if not path.exists():
+        print("[earnings] data/korea/earnings.json 없음 — earningsHistory 없이 진행한다.")
+        return 0
+    try:
+        book = json.loads(path.read_text(encoding="utf-8")).get("earnings") or {}
+    except Exception as exc:
+        print(f"[earnings] 읽기 실패({exc}) — earningsHistory 없이 진행한다.")
+        return 0
+
+    attached = 0
+    for stock in payload.get("stocks", []):
+        ticker = str(stock.get("ticker") or "").replace(".KS", "").replace(".KQ", "").zfill(6)
+        rows = book.get(ticker)
+        if not rows:
+            continue
+        # 누적값 의심 분기는 매출이 왜곡됐을 수 있으니 발표일만 남기고 숫자는 뺀다.
+        history = []
+        for r in rows:
+            item = {"date": r.get("date"), "label": r.get("label"), "period": r.get("period")}
+            if not r.get("cumulativeSuspect"):
+                item["revenue"] = r.get("revenue")
+                item["operatingProfit"] = r.get("operatingProfit")
+                item["netIncome"] = r.get("netIncome")
+            history.append(item)
+        stock["earningsHistory"] = history
+        attached += 1
+    print(f"[earnings] {attached}종목에 earningsHistory 부착.")
+    return attached
+
+
 def split_snapshot_details(payload: dict):
     details = {}
     light_stocks = []
@@ -1428,9 +1470,9 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[ipo_calendar/kr] rebuild skipped: {exc}")
-    # build_kr_short_interest.py is intentionally not run: it fabricates balances
-    # with random.Random(ticker) rather than sourcing KRX, so its output must not
-    # be published. Re-enable only once it reads real disclosures.
+    # No KR short-interest build step: the old builder fabricated balances with
+    # random.Random(ticker) rather than sourcing KRX, so it was removed. KR keeps
+    # shortInterest disabled in market_config.js until a real KRX feed exists.
 
 
 def main():
@@ -1446,6 +1488,7 @@ def main():
 
     print("Building Korean market snapshot...")
     snapshot = build_snapshot(limit=args.limit)
+    attach_kr_earnings(snapshot)
     light, details = split_snapshot_details(snapshot)
 
     if args.push:

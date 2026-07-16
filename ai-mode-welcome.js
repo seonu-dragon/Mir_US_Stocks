@@ -45,7 +45,20 @@
     isStockView = false;
   }
 
+  // app.js 의 해석기를 쓴다. 그쪽은 단어 경계로 티커를 찾고 실제 스냅샷 유니버스로
+  // 검증하며(stockByTicker), 한글 별칭과 회사명까지 훑는다. 아래 fallback 은 app.js 가
+  // 아직 안 붙었을 때만 쓰이며, 문자열 전체가 티커일 때만 맞는다는 한계가 있다 —
+  // 그래서 "NVDA 분석해줘" 같은 입력은 반드시 위쪽 경로로 가야 한다.
   function resolveTickerFromQuery(query) {
+    const shared = window.MirAiChat?.resolveTicker;
+    if (shared) {
+      try {
+        return shared(query) || null;
+      } catch (_) {
+        /* app.js 데이터가 아직 준비 안 된 경우 아래로 폴백 */
+      }
+    }
+
     const text = String(query || "").trim().toLowerCase();
     if (!text) return null;
 
@@ -243,15 +256,32 @@
     hint.classList.toggle("is-error", !!isError);
   }
 
+  // 종목이 아닌 질문("반도체 섹터 흐름 어때?")을 app.js 의 채팅으로 넘긴다. 웰컴 화면이
+  // 감춰둔 채팅 로그·사이드바를 먼저 되살린 뒤 넘겨야 답변이 보인다.
+  async function routeToChat(query) {
+    const send = window.MirAiChat?.send;
+    if (!send) {
+      setInputHint("채팅을 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.", true);
+      return;
+    }
+    setInputHint("", false);
+    exitAiWelcomeView();
+    const input = byId("aiChatInput");
+    if (input) input.value = "";
+    await send(query);
+  }
+
   async function handleStockQuery(query) {
     if (!AI_SERVICE_READY) {
       setInputHint(SERVICE_PREP_MSG, true);
       return;
     }
 
+    // 종목이면 3D 모핑 + 대시보드, 아니면 채팅. 예전엔 여기서 실패 힌트만 띄우는 바람에
+    // 추천 칩 4개가 전부(섹터·관심종목 질문은 물론 "NVDA 분석해줘"까지) 막혀 있었다.
     const ticker = resolveTickerFromQuery(query);
     if (!ticker) {
-      setInputHint("종목을 찾지 못했습니다. 티커(NVDA) 또는 한글명(엔비디아)으로 입력해 보세요.", true);
+      await routeToChat(query);
       return;
     }
 

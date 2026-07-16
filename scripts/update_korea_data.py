@@ -895,6 +895,48 @@ def fetch_kr_etf_universe() -> list[dict]:
     return out
 
 
+def normalize_kr_etf_flags(stocks: list[dict]) -> int:
+    """네이버 ETF 목록을 권위로 삼아 ETF 표시를 바로잡는다.
+
+    유니버스는 네이버 '시세' 페이지에서 오는데 거기엔 액티브 ETF 가 일반 종목처럼
+    섞여 나온다(KoAct·1Q·WON·UNICORN·MIDAS 등). 그래서 sector='기타', market='kospi'
+    로 들어와 코스피 종목 취급을 받았다 — 히트맵·시총버킷·코스피 통계에 ETF 65개가
+    주식으로 끼어 있었다.
+
+    UI 의 isKrEtfLike 는 브랜드 프리픽스 화이트리스트(KODEX/TIGER/…)로 잡는데 저 브랜드들이
+    거기 없다. 이름 패턴을 늘리는 건 계속 새 브랜드가 나올 때마다 지는 싸움이라, 네이버가
+    주는 ETF 목록 자체를 기준으로 쓴다.
+
+    반대 방향(목록에 없으면 ETF 아님)으로는 쓸 수 없다 — 이 목록엔 ETN 이 없고, ETN 은
+    이름으로 이미 잘 잡힌다.
+    """
+    try:
+        codes = {e["code"] for e in fetch_kr_etf_universe()}
+    except Exception as exc:
+        print(f"[warn] ETF 목록 조회 실패 — ETF 표시 정규화를 건너뛴다: {exc}")
+        return 0
+    if not codes:
+        print("[warn] ETF 목록이 비어 있어 ETF 표시 정규화를 건너뛴다.")
+        return 0
+
+    fixed = 0
+    for s in stocks:
+        if s.get("ticker") not in codes or s.get("sector") == "ETF":
+            continue
+        s["sector"] = "ETF"
+        s["market"] = "etf"
+        # KR_ETFS 로 들어온 ETF 와 같은 모양으로 맞춘다. 지수 그룹을 떼지 않으면
+        # groupCounts 와 코스피 통계는 계속 이들을 주식으로 센다.
+        groups = set(s.get("groups") or [])
+        groups -= {"all_kr", "idx_kospi", "idx_kosdaq", "idx_kospi200", "idx_kosdaq150"}
+        groups |= {"all_etf", "all_misc"}
+        s["groups"] = sorted(groups)
+        fixed += 1
+    if fixed:
+        print(f"[etf] 네이버 ETF 목록 기준으로 {fixed}종목의 ETF 표시를 바로잡았다.")
+    return fixed
+
+
 def _num(v):
     try:
         return float(str(v).replace(",", ""))
@@ -1254,6 +1296,9 @@ def build_snapshot(limit: int | None = None) -> dict:
 
     def chg(ticker: str, key: str = "monthChangePct"):
         return lookup.get(ticker, {}).get(key, 0)
+
+    # 집계·통계보다 먼저 돌아야 한다. 안 그러면 ETF 가 코스피 종목으로 집계된다.
+    normalize_kr_etf_flags(stocks)
 
     group_counts: dict[str, int] = {}
     for item in stocks:

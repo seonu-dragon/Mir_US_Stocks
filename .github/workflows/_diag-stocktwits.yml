@@ -47,16 +47,31 @@ jobs:
           python-version: "3.12"
 
       - name: Install deps
-        run: pip install requests beautifulsoup4
+        run: pip install requests
 
-      - name: 실제 스크레이퍼로 재현 (이 브랜치의 수정본)
+      # curl 은 러너에서 200 을 받는다(확인됨). 그러면 IP 차단이 아니다.
+      # 남은 차이는 HTTP 클라이언트다 — Cloudflare 는 TLS 지문으로도 봇을 가른다.
+      # scrapers.py 를 import 하면 yfinance 까지 끌려와 여기서 확인이 안 되므로
+      # 같은 URL·같은 헤더를 requests 로만 직접 때려본다.
+      - name: requests 로 재현 (스크레이퍼와 동일한 헤더)
         run: |
           python - <<'PY'
-          import sys
-          sys.path.insert(0, "scripts/briefings/us_close")
-          from scrapers import fetch_stocktwits_trending
-          rows = fetch_stocktwits_trending()
-          print(f"수집 건수: {len(rows)}")
-          for r in rows[:3]:
-              print("  ", r)
+          import requests, json
+          URL = "https://api.stocktwits.com/api/2/trending/symbols.json"
+          HEADERS = {
+              "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                             "(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
+              "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+          }
+          for label, hdrs in (("스크레이퍼와 동일한 헤더", HEADERS), ("헤더 없음", None)):
+              try:
+                  r = requests.get(URL, headers=hdrs, timeout=15)
+                  print(f"[{label}] status={r.status_code} len={len(r.text)}")
+                  if r.status_code == 200:
+                      syms = r.json().get("symbols", [])
+                      print(f"    symbols={len(syms)}  예: {[s.get('symbol') for s in syms[:3]]}")
+                  else:
+                      print(f"    본문: {r.text[:200]!r}")
+              except Exception as e:
+                  print(f"[{label}] 예외 {type(e).__name__}: {e}")
           PY

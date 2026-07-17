@@ -482,6 +482,9 @@ const FEATURE_DATA = {
   leveraged:  { global: "LEVERAGED_ETF_CATALOG", path: "data/leveraged_etf_catalog.js", usOnly: true },
   krDart:     { global: "KR_DISCLOSURES",        path: "data/kr_disclosures.js",        feature: "krDart", krOnly: true },
   krOwnership:{ global: "KR_OWNERSHIP",          path: "data/kr_ownership.js",          feature: "krOwnership", krOnly: true },
+  // 지분 '상태'(유통물량·자사주·최대주주 지분율). 위 krOwnership 은 최근 지분공시
+  // '이벤트' 라 성격이 다르지만 같은 패널에서 종류 탭으로 나눠 보여준다.
+  krOwnProfile:{ global: "KR_OWNERSHIP_PROFILE",  path: "data/korea/ownership_profile.js", feature: "krOwnership", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -15869,10 +15872,76 @@ function krOwnDelta(v, suffix, digits = 0) {
   return `<span class="${v > 0 ? "pos" : "neg"}">${sign}${krOwnNum(v, digits)}${suffix}</span>`;
 }
 
+// 지배구조·유통물량 — 최근 '이벤트'(대량보유/임원 공시)와 달리 종목별 '상태'다.
+// 데이터가 티커 키 맵이라 회사명·시총은 스냅샷에서 붙인다.
+function renderKrOwnProfile() {
+  const meta = byId("krOwnMeta");
+  const table = byId("krOwnTable");
+  const payload = window.KR_OWNERSHIP_PROFILE;
+  if (!payload) {
+    table.innerHTML = `<p class="muted">지배구조 데이터를 불러오는 중…</p>`;
+    return;
+  }
+  if (meta) {
+    meta.textContent = [
+      payload.updatedAtKst,
+      `${payload.year || ""} 사업보고서 기준`,
+      `${payload.companyCount || 0}종목`,
+      payload.source,
+    ].filter(Boolean).join(" · ");
+  }
+
+  const profiles = payload.profiles || {};
+  const q = krOwnQuery.trim().toLowerCase();
+  let rows = data.stocks
+    .filter((s) => !isStockEtf(s) && profiles[s.ticker])
+    .map((s) => ({ item: s, p: profiles[s.ticker] }));
+  if (q) {
+    rows = rows.filter(({ item, p }) =>
+      [item.ticker, item.company, p.topHolder].some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }
+  // 유통물량이 적을수록 수급이 타이트하다 — 그게 이 표를 보는 이유라 오름차순으로 둔다.
+  rows.sort((a, b) => (a.p.freeFloatPct ?? 999) - (b.p.freeFloatPct ?? 999));
+  if (!rows.length) {
+    table.innerHTML = `<p class="muted">${escapeHtml(payload.note || "표시할 데이터가 없습니다.")}</p>`;
+    return;
+  }
+
+  const pct = (v) => (Number.isFinite(v) ? `${v.toFixed(2)}%` : "—");
+  const num = (v) => (Number.isFinite(v) ? Number(v).toLocaleString() : "—");
+  const body = rows.slice(0, 200).map(({ item, p }) => `
+    <tr>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
+      <td>${escapeHtml(item.company || "")}</td>
+      <td>${escapeHtml(p.topHolder || "—")}</td>
+      <td>${pct(p.ownerStakePct)}</td>
+      <td><b>${pct(p.freeFloatPct)}</b></td>
+      <td>${num(p.treasuryShares)}</td>
+      <td>${num(p.minorityHolders)}</td>
+    </tr>`).join("");
+
+  table.innerHTML = `
+    <table class="insider-table">
+      <thead><tr>
+        <th>종목</th><th>회사</th><th>최대주주</th><th>지분율</th>
+        <th>유통물량</th><th>자기주식</th><th>소액주주 수</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>`;
+  table.querySelectorAll(".ins-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
 function renderKrOwnership() {
   const meta = byId("krOwnMeta");
   const table = byId("krOwnTable");
   if (!table) return;
+  if (krOwnKind === "profile") {
+    renderKrOwnProfile();
+    return;
+  }
   const payload = window.KR_OWNERSHIP;
   if (!payload) {
     table.innerHTML = `<p class="muted">지분공시 데이터를 불러오는 중…</p>`;
@@ -15938,11 +16007,17 @@ function setupKrOwnershipEvents() {
   if (search) search.addEventListener("input", () => { krOwnQuery = search.value; renderKrOwnership(); });
   byId("krOwnKinds")?.querySelectorAll("[data-krown]").forEach((btn) => {
     btn.addEventListener("click", () => {
-      krOwnKind = btn.dataset.krown === "insider" ? "insider" : "major";
+      const kind = btn.dataset.krown;
+      krOwnKind = ["insider", "profile"].includes(kind) ? kind : "major";
       byId("krOwnKinds").querySelectorAll("[data-krown]").forEach((b) => {
         b.classList.toggle("is-active", b === btn);
       });
-      renderKrOwnership();
+      // 지배구조 탭은 다른 데이터셋을 쓴다 — 처음 열 때 받아온다.
+      if (krOwnKind === "profile") {
+        renderWithFeature("krOwnProfile", renderKrOwnership, "krOwnTable");
+      } else {
+        renderWithFeature("krOwnership", renderKrOwnership, "krOwnTable");
+      }
     });
   });
 }

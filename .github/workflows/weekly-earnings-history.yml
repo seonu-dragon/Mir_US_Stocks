@@ -59,3 +59,10 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_ownership_profile.py --push
+
+      # 감사의견. 비적정(의견거절/한정)은 상장폐지 사유라 종목 헤더에 경고로 나간다.
+      # 값이 사업보고서(연 1회)에만 바뀌므로 주간이면 충분하다. 2,600종목 5분.
+      - name: KR audit opinions (DART)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_audit_opinion.py --push

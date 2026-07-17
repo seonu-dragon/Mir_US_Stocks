@@ -487,6 +487,8 @@ const FEATURE_DATA = {
   krOwnProfile:{ global: "KR_OWNERSHIP_PROFILE",  path: "data/korea/ownership_profile.js", feature: "krOwnership", krOnly: true },
   // 공시 제목에 붙일 숫자(증자 희석률·CB 전환가·자사주 금액). rcept_no 로 조인한다.
   krEventDetails:{ global: "KR_EVENT_DETAILS",    path: "data/kr_event_details.js",      feature: "krDart", krOnly: true },
+  // 감사의견. 비적정(의견거절·한정)은 상장폐지 사유라 종목 헤더에 경고로 띄운다.
+  krAudit:    { global: "KR_AUDIT_OPINION",       path: "data/korea/audit_opinion.js",  feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -5263,12 +5265,38 @@ function renderSelected(item) {
   byId("selectedStock").innerHTML = stockFacts(item, "선택 종목");
 }
 
+// 감사의견 경고. 한국에서 '의견거절'·'한정'·'부적정' 은 상장폐지 사유라 가격보다 먼저
+// 봐야 할 정보다. 실측(2,521종목): 비적정 47종목 — 금양·STX·삼부토건 등 지금도 거래 중.
+// 강조사항(계속기업 불확실성 등)은 270종목(11%)이라 경고보다 한 단계 낮게 보여준다.
+function auditOpinionNotice(item) {
+  const book = window.KR_AUDIT_OPINION?.opinions;
+  if (!book || !isKrMarket()) return "";
+  const a = book[item?.ticker];
+  if (!a) return "";
+  if (a.adverse) {
+    return `
+      <p class="audit-notice audit-adverse">
+        <b>⚠️ 감사의견 ${escapeHtml(a.opinion)}</b>
+        <span>${escapeHtml(a.year)} · ${escapeHtml(a.auditor)} · 상장폐지 사유에 해당합니다</span>
+      </p>`;
+  }
+  if (a.emphasis) {
+    return `
+      <p class="audit-notice audit-emphasis">
+        <b>감사보고서 강조사항</b>
+        <span>${escapeHtml(a.emphasis.slice(0, 120))}</span>
+      </p>`;
+  }
+  return "";
+}
+
 function stockFacts(item, title) {
   const isSearchPanel = title === "Search Ticker";
   return `
     <span class="muted">${title}</span>
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker} ${syntheticBadge(item)}</h3>
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
+    ${auditOpinionNotice(item)}
     <div class="facts">
       ${fact("가격", priceOrDash(item.price))}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
@@ -6367,6 +6395,16 @@ function selectTicker(ticker, options = {}) {
 function renderSearch(options = {}) {
   const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
   const item = applyLive(withDetail(base));
+  // 감사의견은 종목 헤더에 경고로 나가므로 여기서 챙긴다. 늦게 와도 목록·차트는
+  // 그대로 나오고, 도착하면 헤더만 다시 그린다.
+  if (isKrMarket() && !window.KR_AUDIT_OPINION) {
+    ensureFeatureData("krAudit").then((ok) => {
+      if (ok && selectedTicker === base.ticker) {
+        const el = byId("searchFacts");
+        if (el) el.innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
+      }
+    });
+  }
   byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
   byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
   drawChart(item);

@@ -52,3 +52,10 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_indicators.py --push
+
+      # 소액주주·자기주식·최대주주. 셋 다 corp_code 가 필수라 벌크가 안 돼
+      # 종목당 3회(≈7,800회, 1시간대)다. 값이 사업보고서에만 바뀌므로 주간이면 충분하다.
+      - name: KR ownership profile (DART)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_ownership_profile.py --push

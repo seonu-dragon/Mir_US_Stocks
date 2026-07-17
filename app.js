@@ -489,6 +489,9 @@ const FEATURE_DATA = {
   krEventDetails:{ global: "KR_EVENT_DETAILS",    path: "data/kr_event_details.js",      feature: "krDart", krOnly: true },
   // 감사의견. 비적정(의견거절·한정)은 상장폐지 사유라 종목 헤더에 경고로 띄운다.
   krAudit:    { global: "KR_AUDIT_OPINION",       path: "data/korea/audit_opinion.js",  feature: "krDart", krOnly: true },
+  // 공시 유형별 과거 주가 반응(5년·55만건). 신호가 아니라 '신호가 아니다' 를 보여주는
+  // 데이터다 — 41개 유형 중 무작위를 이긴 건 0개다(build_kr_disclosure_stats.py).
+  krDiscStats:{ global: "KR_DISCLOSURE_STATS",    path: "data/korea/disclosure_stats.js", feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -15877,6 +15880,60 @@ function krEventDetailLine(row) {
   return `<div class="ins-sub">${parts.join(" · ")}</div>`;
 }
 
+// 공시 유형별 과거 반응. 5년 55만건을 재보니 41개 유형 중 무작위를 이긴 건 0개였다
+// (build_kr_disclosure_stats.py 의 결론 참고).
+//
+// 그래서 이 줄의 목적은 신호를 파는 게 아니라 그 반대다 — "이 공시 뒤에 주가가 어떻게
+// 되나" 라는 질문에 "무작위와 구분되지 않는다" 고 답한다. 판정을 먼저 쓰고 숫자를
+// 뒤에 두는 이유가 그것이다. 숫자를 앞세우면 '+0.27%' 만 읽고 신호로 오해한다.
+//
+// 평균이 아니라 중앙값을 쓴다. 평균은 소형주 급등 몇 건에 끌려간다 — 증자·사채는
+// D0 평균 +0.57% 인데 중앙값은 -0.06% 로 부호가 반대다. 중앙값이 '보통 어땠나' 에 가깝다.
+function krDisclosureStatLine(row) {
+  const book = window.KR_DISCLOSURE_STATS?.stats;
+  const s = book && book[row.typeLabel];
+  if (!s || !s.d1 || !Number.isFinite(s.d1.median)) return "";
+
+  const sign = (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+  const rnd = s.d1.random;
+  const verdict = s.edge
+    ? `<b>무작위와 다름</b>`
+    : `무작위와 구분 안 됨`;
+  const bits = [
+    `과거 ${s.sample.toLocaleString()}건`,
+    `다음날 중앙값 ${sign(s.d1.median)}`,
+  ];
+  if (rnd && Number.isFinite(rnd.median)) bits.push(`무작위 ${sign(rnd.median)}`);
+  // 증자·사채만 해당. 당일 반응은 통계적으로 실재하지만 공시 당일이라 행동할 수 없고,
+  // 공시 전 5일에 이미 올라 있어 역인과로 보인다. 그 사실을 숨기지 않고 그대로 쓴다.
+  const same = s.sameDayOnly ? ` · 당일 반응은 있으나 예측 아님` : "";
+  return `<div class="ins-sub disc-stat">${bits.join(" · ")} · ${verdict}${same}</div>`;
+}
+
+// 방법론을 한 번만, 접어서 설명한다. 행마다 "무작위와 구분 안 됨" 만 반복되면
+// 왜 그런지가 화면 어디에도 없다 — 근거를 볼 수 있어야 결론을 믿거나 반박할 수 있다.
+// 숫자는 데이터에서 읽는다. 여기 하드코딩하면 통계를 다시 돌렸을 때 설명만 옛말이 된다.
+function renderKrDisclosureMethod() {
+  const box = byId("krDartMethodBody");
+  const payload = window.KR_DISCLOSURE_STATS;
+  if (!box) return;
+  const wrap = byId("krDartMethod");
+  if (!payload) { if (wrap) wrap.hidden = true; return; }
+  if (wrap) wrap.hidden = false;
+  const total = payload.typeCount || Object.keys(payload.stats || {}).length;
+  const edges = payload.edgeCount || 0;
+  box.innerHTML = `
+    <p><b>${total}개 유형 중 무작위를 이긴 건 ${edges}개입니다.</b>
+       공시 유형만으로 다음날 주가를 예측할 수 없다는 뜻입니다.</p>
+    <p>같은 종목의 <b>무작위 날짜</b>를 대조군으로 두고 비교합니다. 시장 전체가 오른 날의
+       상승을 호재로 읽지 않도록, 지수(KODEX 200 · 코스닥150) 대비 <b>초과수익</b>으로 잽니다.</p>
+    <p>이벤트를 낱개로 세면 우위가 있는 것처럼 보입니다. 하지만 공시는 제출기한에 몰립니다
+       — 지속가능경영보고서는 712건 중 115건이 2026-06-30 하루에 나왔습니다. 그 115종목의
+       다음날 수익률은 독립된 115개 관측이 아니라 <b>그날 하루</b>입니다. 날짜로 묶어 다시
+       재면 t값 +5.25가 -0.09로 사라집니다.</p>
+    <p class="muted">${escapeHtml(payload.source || "")} · ${escapeHtml(payload.updatedAtKst || "")}</p>`;
+}
+
 function renderKrDisclosures() {
   const meta = byId("krDartMeta");
   const table = byId("krDartTable");
@@ -15897,6 +15954,7 @@ function renderKrDisclosures() {
     parts.push(payload.source);
     meta.textContent = parts.filter(Boolean).join(" · ");
   }
+  renderKrDisclosureMethod();
   let rows = payload.disclosures || [];
   const q = krDartQuery.trim().toLowerCase();
   if (q) {
@@ -15921,6 +15979,7 @@ function renderKrDisclosures() {
             <td>
               ${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}
               ${krEventDetailLine(row)}
+              ${krDisclosureStatLine(row)}
             </td>
           </tr>
         `).join("")}

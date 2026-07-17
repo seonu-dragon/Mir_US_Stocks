@@ -35,5 +35,16 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      # 야후가 못 채우는 peg·pfcf·evEbitda·divYield 를 Finnhub 로 보강한다.
+      # update_data 보다 먼저 돌려야 한다 — 그 안에서 build_map_fundamentals 가
+      # 이 파일을 읽어 병합하므로, 나중에 돌리면 하루 묵은 값이 병합된다.
+      # 무료 티어 레이트리밋(초당 1회) 때문에 1,000종목에 약 18분 걸린다.
+      # 실패해도 스냅샷 갱신은 계속한다 — 키가 없거나 API 가 죽어도 기존 값이 남는다.
+      - name: Refresh Finnhub valuation metrics (US)
+        continue-on-error: true
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: python scripts/build_us_finnhub_metrics.py --push
+
       - name: Update US market snapshot
         run: python scripts/update_data.py --push

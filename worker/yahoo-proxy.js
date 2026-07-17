@@ -190,7 +190,7 @@ export default {
     // Korean stocks get Korean-language headlines from Naver; US stays on Yahoo.
     const kr = isKoreanTicker(ticker);
     const [news, chart, earnings] = await Promise.all([
-      kr ? fetchNaverNews(ticker) : fetchNews(symbol),
+      kr ? fetchNaverNews(ticker) : fetchNews(env, symbol),
       fetchChart(symbol),
       fetchEarnings(symbol),
     ]);
@@ -403,7 +403,9 @@ async function fetchHistoricalNews(env, ticker, company, eventDate) {
     windowDays = 7;
     news = await historicalNewsWindow(env, ticker, company, eventDate, windowDays);
   }
-  const yahoo = await fetchNews(ticker);
+  // 여기선 위에서 이미 Finnhub 를 쓴다(historicalNewsWindow) — 야후는 폴백이 아니라
+  // 추가 소스로 섞고 rankHistoricalNews 가 관련도로 거른다. 그래서 야후를 직접 부른다.
+  const yahoo = await fetchNewsFromYahoo(ticker);
   news = rankHistoricalNews([...news, ...yahoo.map((item) => ({ ...item, provider: "Yahoo" }))], ticker, company, eventDate);
   const providers = [...new Set(news.map((item) => item.provider).filter(Boolean))];
   return { news, providers, windowDays };
@@ -739,7 +741,65 @@ async function fetchNaverNews(ticker) {
   }
 }
 
-async function fetchNews(symbol) {
+// 야후 search 는 종목 뉴스가 아니라 '일반 시장 뉴스' 를 준다. NVDA 를 물으면
+// Abbott·IBM·Buffett 기사가 나와서 8건 중 1건만 관련 있었다.
+//
+// Finnhub company-news 로 바꾸는 것만으론 안 고쳐진다 — 실측해 보니 그쪽도 최근
+// 2일치 신디케이트 피드를 최신순으로 249건 쏟아내서, 앞 8건만 자르면 NVDA 와
+// AAPL 이 똑같은 Buffett 기사를 받는다. 관련 기사는 그 안에 섞여 있다(NVDA 53건).
+// 그래서 정렬이 아니라 '필터' 가 핵심이다.
+//
+// related 필드는 못 쓴다. 249건 전부 related=NVDA 로 와서 신호가 없다.
+// 헤드라인+요약에서 티커를 직접 찾는다. 실측 수확: NVDA 14 · AAPL 33 · JPM 47 ·
+// KO 31 · ETN 14 · CEG 13 — 필요한 8건보다 넉넉하고, 회사명 없이도 된다
+// (일반 뉴스 경로는 company 파라미터를 안 받는다).
+const FINNHUB_NEWS_WANTED = 8;
+
+function tickerMentionRegex(plain) {
+  const esc = plain.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  // KO·GE 같은 2글자 티커는 소문자까지 허용하면 평범한 단어에 걸린다 — 대문자로만 본다.
+  return new RegExp(`\\b${esc}\\b`, plain.length <= 2 ? "" : "i");
+}
+
+async function fetchNewsFromFinnhub(env, symbol) {
+  const token = env && env.FINNHUB_API_KEY;
+  if (!token) return [];
+  const plain = String(symbol || "").replace(/\.(KS|KQ)$/i, "").replace(/-/g, ".");
+  if (!plain) return [];
+  const to = new Date();
+  const from = new Date(to.getTime() - 14 * 86400000);
+  const iso = (d) => d.toISOString().slice(0, 10);
+  try {
+    const r = await fetch(
+      `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(plain)}` +
+        `&from=${iso(from)}&to=${iso(to)}&token=${encodeURIComponent(token)}`,
+      { headers: UA }
+    );
+    if (!r.ok) return [];
+    const rows = await r.json();
+    if (!Array.isArray(rows)) return [];
+    const mapped = rows
+      .map((n) => ({
+        title: n.headline || "",
+        publisher: n.source || "",
+        link: n.url || "",
+        summary: n.summary || "",
+        publishedAt: n.datetime
+          ? new Date(n.datetime * 1000).toISOString().slice(0, 10)
+          : "",
+      }))
+      .filter((n) => n.title && n.link);
+    const re = tickerMentionRegex(plain);
+    const hits = mapped.filter((n) => re.test(`${n.title} ${n.summary}`));
+    // 티커를 한 번도 안 쓰고 회사명만 쓴 기사가 많은 종목이면 수확이 적을 수 있다.
+    // 그럴 땐 거른 것보다 원본 순서가 낫다고 보고 필터를 포기한다(3건 미만일 때만).
+    return (hits.length >= 3 ? hits : mapped).slice(0, FINNHUB_NEWS_WANTED);
+  } catch (e) {
+    return [];
+  }
+}
+
+async function fetchNewsFromYahoo(symbol) {
   try {
     const r = await fetch(
       `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(symbol)}` +
@@ -762,6 +822,12 @@ async function fetchNews(symbol) {
   } catch (e) {
     return [];
   }
+}
+
+async function fetchNews(env, symbol) {
+  const finnhub = await fetchNewsFromFinnhub(env, symbol);
+  if (finnhub.length) return finnhub;
+  return fetchNewsFromYahoo(symbol);
 }
 
 async function fetchEarningsFromVisualization(symbol) {
@@ -1892,7 +1958,7 @@ async function retrieveChatNewsRag(userText, entities, env, market) {
     if (!ent.ticker) continue;
     let batch = [];
     if (isKoreanTicker(ent.ticker)) batch = await fetchNaverNews(ent.ticker);
-    else batch = await fetchNews(ent.ticker.replace(/\./g, "-"));
+    else batch = await fetchNews(env, ent.ticker.replace(/\./g, "-"));
     batch.forEach((item) => {
       pool.push({
         ...item,

@@ -8256,7 +8256,11 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
   font-size: var(--fs-label);
 }
 .krflow-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin-bottom: 6px; }
-.krflow-table { width: 100%; border-collapse: collapse; }
+/* 전역 table 은 min-width:760px 이다(모바일 가로 스크롤용). 이 카드는 482px 사이드
+   컬럼 안에 사니 그 바닥값을 풀어야 한다 — 안 풀면 사이드 컬럼 그리드 트랙(1fr, 즉
+   minmax(auto,1fr))의 auto 최솟값이 760 으로 잡혀 AI 리포트·뉴스 카드까지 816px 로
+   끌려가 패널이 통째로 화면 밖으로 밀려난다. */
+.krflow-table { width: 100%; min-width: 0; border-collapse: collapse; }
 .krflow-table th, .krflow-table td { padding: 3px 4px; text-align: right; font-variant-numeric: tabular-nums; }
 .krflow-table thead th { color: var(--text-muted); font-weight: 500; }
 .krflow-table tbody th { text-align: left; font-weight: 500; color: var(--text-muted); }

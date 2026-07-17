@@ -88,6 +88,41 @@ def extract(fund: dict) -> dict:
     return out
 
 
+def merge_finnhub(market: str, table: dict) -> None:
+    """야후가 못 채우는 미국 지표를 Finnhub 값으로 보강한다(build_us_finnhub_metrics.py).
+
+    야후 기준 커버리지가 peg 0.3% · pfcf 0.5% · evEbitda 0.8% · divYield 1.9% 라서
+    히트맵에서 그 지표를 고르면 화면이 통째로 회색이었다(커버리지 게이트가 숨김).
+
+    야후 값이 이미 있으면 건드리지 않는다 — 비어 있는 칸만 메운다. 소스가 섞이면
+    같은 지표가 종목마다 다른 기준으로 계산돼 비교가 깨질 수 있어서, 보강은
+    '없던 것을 채우는' 데까지만 한다.
+
+    Finnhub 무료 티어는 미국 전용이다(한국은 403). KR 은 이 단계를 건너뛴다.
+    """
+    if market != "us":
+        return
+    path = ROOT / "data" / "us_finnhub_metrics.json"
+    if not path.exists():
+        return
+    try:
+        book = json.loads(path.read_text(encoding="utf-8")).get("metrics") or {}
+    except Exception as exc:
+        print(f"  [경고] us_finnhub_metrics.json 읽기 실패: {exc}")
+        return
+    filled = {}
+    for ticker, rec in book.items():
+        row = table.get(ticker)
+        if row is None:
+            continue                 # 스냅샷에 없는 종목은 지도에 넣지 않는다
+        for k, v in rec.items():
+            if row.get(k) is None and isinstance(v, (int, float)):
+                row[k] = v
+                filled[k] = filled.get(k, 0) + 1
+    if filled:
+        print(f"  finnhub 보강: {filled}")
+
+
 def build_market(market: str) -> None:
     cfg = MARKET_PATHS[market]
     details_dir = cfg["details"]
@@ -105,6 +140,8 @@ def build_market(market: str) -> None:
         metrics = extract(fund)
         if metrics:
             table[ticker] = metrics
+
+    merge_finnhub(market, table)
 
     payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
     cfg["out_json"].parent.mkdir(parents=True, exist_ok=True)

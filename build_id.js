@@ -5,4 +5,4 @@
  * BUILD_ID_FALLBACK 을 함께 스탬프한다.
  *   sw.js — install 시 build_id.js를 읽어 CACHE_NAME 자동 동기화
  */
-window.MIR_BUILD_ID = "0f6c452eee";
+window.MIR_BUILD_ID = "5ab5b81a3e";

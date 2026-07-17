@@ -1246,10 +1246,47 @@ def fetch_sector_charts() -> dict:
     return charts
 
 
+def recent_disclosure_symbols() -> set[str]:
+    """최근 공시를 낸 종목. 이들에게도 야후 일봉을 받아둔다.
+
+    공시가 주가에 어떤 영향을 줬는지 보려면 공시일 전후 일봉이 있어야 하는데,
+    history_priority 는 시총·지수편입으로만 상위 600종목을 고른다. 실측해보니 공시를
+    내는 916종목 중 일봉이 있는 건 178종목(19%)뿐이었다 — 공시 충격이 가장 큰 소형주가
+    통째로 빠져 있었다.
+
+    야후가 소형주를 안 주는 게 아니다(시총 0.01조 헝셩그룹도 1,220봉이 온다). 우리가
+    상한을 걸어 시도조차 안 했을 뿐이다.
+
+    kr_disclosures.json 은 kr-disclosures.yml(15:30)이 만들고 이 빌드는 15:42 에 도니
+    같은 날 것을 읽는다. 없거나 깨져도 조용히 빈 집합을 돌려준다 — 이력이 조금 줄 뿐
+    스냅샷 자체는 나와야 한다.
+    """
+    path = ROOT / "data" / "kr_disclosures.json"
+    if not path.exists():
+        print("[history] kr_disclosures.json 없음 — 공시 종목 이력 확대를 건너뛴다.")
+        return set()
+    try:
+        rows = json.loads(path.read_text(encoding="utf-8")).get("disclosures") or []
+    except Exception as exc:
+        print(f"[history] kr_disclosures.json 읽기 실패({exc}) — 건너뛴다.")
+        return set()
+    out = {str(r.get("ticker") or "").zfill(6) for r in rows}
+    out.discard("000000")
+    return out
+
+
 def build_snapshot(limit: int | None = None) -> dict:
     metas = fetch_all_listed(limit=limit)
     metas.sort(key=history_priority, reverse=True)
     real_symbols = {m["symbol"] for m in metas[:MAX_REAL_HISTORY]}
+
+    # 공시를 낸 종목은 시총과 무관하게 이력을 받는다(공시 반응 분석용).
+    disclosed = recent_disclosure_symbols() & {m["symbol"] for m in metas}
+    added = disclosed - real_symbols
+    if added:
+        real_symbols |= added
+        print(f"[history] 공시 종목 {len(disclosed)}개 중 {len(added)}개를 이력 대상에 추가 "
+              f"(상위 {MAX_REAL_HISTORY} → {len(real_symbols)}종목)")
     # Fundamentals are selected by market cap (not history_priority): index-membership
     # bonuses would otherwise push mid-caps like 무학(시총 ~805위) far down the ranking
     # and out of coverage. Naver covers every stock, so go purely by size.

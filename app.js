@@ -492,6 +492,9 @@ const FEATURE_DATA = {
   // 공시 유형별 과거 주가 반응(5년·55만건). 신호가 아니라 '신호가 아니다' 를 보여주는
   // 데이터다 — 41개 유형 중 무작위를 이긴 건 0개다(build_kr_disclosure_stats.py).
   krDiscStats:{ global: "KR_DISCLOSURE_STATS",    path: "data/korea/disclosure_stats.js", feature: "krDart", krOnly: true },
+  // 수급(외국인·기관·개인 순매수, 외국인 보유율) + 컨센서스 목표주가. 484KB 라
+  // heavy(3~5MB) 는 아니지만 KR 전용이라 미국에선 안 받는다.
+  krFlow:     { global: "KR_INVESTOR_FLOW",       path: "data/korea/investor_flow.js", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -5293,6 +5296,68 @@ function auditOpinionNotice(item) {
   return "";
 }
 
+// 수급·컨센서스 카드(국내 전용). 한국 투자자가 가장 많이 보는 숫자인데 이 사이트엔
+// 시장 합계(브리핑)만 있고 종목별로는 없었다.
+//
+// 신호가 아니라 사실이다. validate_kr_flow.py 로 60거래일을 횡단면 검정했다 — 매일
+// 수급으로 종목을 줄 세워 상위 10% 와 하위 10% 의 다음날 수익률 차이를 낸 결과:
+//     외국인 t=+1.39 · 기관 t=-0.99  → 둘 다 무작위와 구분 안 됨
+// 그래서 '누가 샀나'(사실)만 말하고 '그래서 오른다'(예측)로 팔지 않는다.
+//
+// 컨센서스 목표주가는 뺐다(아래 return 문 위 주석 참고). 검증이 불가능한 데다,
+// 네이버가 주는 목표가 자체가 네이버의 현재가와 모순됐다.
+function krFlowCard(item) {
+  const book = window.KR_INVESTOR_FLOW?.stocks;
+  if (!book || !isKrMarket()) return "";
+  const f = book[item?.ticker];
+  if (!f) return "";
+
+  const shares = (v) => {
+    if (!Number.isFinite(v)) return "-";
+    const s = v < 0 ? "-" : "+";
+    const a = Math.abs(v);
+    if (a >= 1e8) return `${s}${(a / 1e8).toFixed(1)}억주`;
+    if (a >= 1e4) return `${s}${Math.round(a / 1e4).toLocaleString()}만주`;
+    return `${s}${Math.round(a).toLocaleString()}주`;
+  };
+  const cls = (v) => (Number.isFinite(v) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "");
+  // 순매수 '수량' 만 보면 종목 간 비교가 안 된다 — 삼성전자 100만주와 소형주 100만주는
+  // 전혀 다른 얘기다. 20일 거래량 대비 몇 %인지를 같이 보여준다.
+  const pct = (v) => (Number.isFinite(v) ? `${v > 0 ? "+" : ""}${v.toFixed(1)}%` : "-");
+  const row = (label, v5, v20, ratio) => `
+    <tr>
+      <th>${label}</th>
+      <td class="${cls(v5)}">${shares(v5)}</td>
+      <td class="${cls(v20)}">${shares(v20)}</td>
+      <td class="${cls(ratio)}">${pct(ratio)}</td>
+    </tr>`;
+
+  // 컨센서스 목표주가는 싣지 않는다. 네이버가 주는 목표가가 네이버 자신의 현재가와
+  // 안 맞는다 — 삼성전자 255,000원에 목표가 513,958원(2.0배), 콘텐트리중앙 1,493원에
+  // 11,875원(8.0배). 배율이 종목마다 달라 단위 착오도 아니다. 550종목 중 목표가가
+  // 현재가보다 낮은 건 1% 뿐이고 괴리율 중앙값이 +71.7% 였다(실제 국내 시장은 +20~30%대).
+  // 설명도 보정도 못 하는 수치를 '상승여력' 으로 보여주면 그건 지어낸 것과 같다.
+  return `
+    <div class="krflow-card">
+      <div class="krflow-head">
+        <b>수급</b>
+        ${Number.isFinite(f.hold) ? `<span class="muted">외국인 보유율 ${f.hold}%</span>` : ""}
+        ${f.asOf ? `<span class="muted">· ${escapeHtml(String(f.asOf).replace(/(\d{4})(\d{2})(\d{2})/, "$1-$2-$3"))} 기준</span>` : ""}
+      </div>
+      <table class="krflow-table">
+        <thead><tr><th></th><th>5일</th><th>20일</th><th>거래량 대비</th></tr></thead>
+        <tbody>
+          ${row("외국인", f.f5, f.f20, f.fPct)}
+          ${row("기관", f.o5, f.o20, f.oPct)}
+          ${row("개인", f.i5, f.i20, null)}
+        </tbody>
+      </table>
+      <p class="krflow-note">누가 샀는지를 보여줄 뿐, 다음날 주가와는 무관합니다
+         — 외국인·기관 순매수 상위 10%와 하위 10%의 다음날 수익률은 무작위와 구분되지
+         않았습니다(60거래일 검정).</p>
+    </div>`;
+}
+
 function stockFacts(item, title) {
   const isSearchPanel = title === "Search Ticker";
   return `
@@ -5300,6 +5365,7 @@ function stockFacts(item, title) {
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker} ${syntheticBadge(item)}</h3>
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     ${auditOpinionNotice(item)}
+    ${krFlowCard(item)}
     <div class="facts">
       ${fact("가격", priceOrDash(item.price))}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}

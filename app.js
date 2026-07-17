@@ -485,6 +485,8 @@ const FEATURE_DATA = {
   // 지분 '상태'(유통물량·자사주·최대주주 지분율). 위 krOwnership 은 최근 지분공시
   // '이벤트' 라 성격이 다르지만 같은 패널에서 종류 탭으로 나눠 보여준다.
   krOwnProfile:{ global: "KR_OWNERSHIP_PROFILE",  path: "data/korea/ownership_profile.js", feature: "krOwnership", krOnly: true },
+  // 공시 제목에 붙일 숫자(증자 희석률·CB 전환가·자사주 금액). rcept_no 로 조인한다.
+  krEventDetails:{ global: "KR_EVENT_DETAILS",    path: "data/kr_event_details.js",      feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -2339,7 +2341,11 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "activist") renderWithFeature("activist", renderActivistStakes, "activistTable", load);
   if (institutionalSubTab === "events") renderWithFeature("events", renderMaterialEvents, "eventsTable", load);
   if (institutionalSubTab === "ipo") renderWithFeature("ipo", renderIpoCalendar, "ipoTable", load);
-  if (institutionalSubTab === "dart") renderWithFeature("krDart", renderKrDisclosures, "krDartTable", load);
+  if (institutionalSubTab === "dart") {
+    renderWithFeature("krDart", renderKrDisclosures, "krDartTable", load);
+    // 상세 숫자는 따로 온다. 늦게 도착하면 그때 다시 그린다 — 없어도 목록은 나온다.
+    if (load) ensureFeatureData("krEventDetails").then((ok) => { if (ok) renderKrDisclosures(); });
+  }
   if (institutionalSubTab === "krown") renderWithFeature("krOwnership", renderKrOwnership, "krOwnTable", load);
   if (push) {
     recordNav();
@@ -15801,6 +15807,38 @@ function setupCloudSyncEvents() {
 // ===== KR DART disclosures =====
 let krDartQuery = "";
 
+// 공시 제목 밑에 붙는 숫자 한 줄. 이 패널의 오랜 한계가 '제목만 있고 숫자가 없다'
+// 였다 — "유상증자결정" 이 실제로 몇 % 희석인지 알려면 DART 문서를 열어야 했다.
+// data/kr_event_details.js 가 rcept_no 키로 그 숫자를 갖고 있다(build_kr_event_details.py).
+function krEventDetailLine(row) {
+  const map = window.KR_EVENT_DETAILS?.details;
+  if (!map) return "";
+  const m = String(row.link || "").match(/rcpNo=(\d+)/);
+  const d = m && map[m[1]];
+  if (!d) return "";
+
+  const won = (v) => {
+    if (!Number.isFinite(v)) return null;
+    if (Math.abs(v) >= 1e12) return `${(v / 1e12).toFixed(1)}조`;
+    if (Math.abs(v) >= 1e8) return `${(v / 1e8).toLocaleString(undefined, { maximumFractionDigits: 1 })}억`;
+    return `${Math.round(v).toLocaleString()}원`;
+  };
+  const parts = [];
+  // 희석률이 이 공시들의 핵심 숫자다 — 맨 앞에, 강조해서 둔다.
+  if (Number.isFinite(d.dilutionPct)) {
+    const heavy = d.dilutionPct >= 10;
+    parts.push(`<b class="${heavy ? "neg" : ""}">희석 ${d.dilutionPct.toFixed(2)}%</b>`);
+  }
+  if (Number.isFinite(d.amount)) parts.push(escapeHtml(won(d.amount)));
+  if (Number.isFinite(d.convPrice)) parts.push(`전환가 ${d.convPrice.toLocaleString()}원`);
+  if (Number.isFinite(d.couponPct)) parts.push(`표면 ${d.couponPct}%`);
+  if (Number.isFinite(d.shares)) parts.push(`${d.shares.toLocaleString()}주`);
+  if (d.method) parts.push(escapeHtml(d.method));
+  if (d.purpose) parts.push(escapeHtml(d.purpose));
+  if (!parts.length) return "";
+  return `<div class="ins-sub">${parts.join(" · ")}</div>`;
+}
+
 function renderKrDisclosures() {
   const meta = byId("krDartMeta");
   const table = byId("krDartTable");
@@ -15842,7 +15880,10 @@ function renderKrDisclosures() {
             <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
             <td>${escapeHtml(row.company || "")}</td>
             <td>${escapeHtml(row.typeLabel || "")}</td>
-            <td>${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}</td>
+            <td>
+              ${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}
+              ${krEventDetailLine(row)}
+            </td>
           </tr>
         `).join("")}
       </tbody>

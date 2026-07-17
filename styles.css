@@ -8246,6 +8246,29 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
 .ins-value.ins-sell { color: #dc2626; }
 .ins-sub { font-size: var(--fs-cap); color: var(--text-muted); }
 
+/* 공시 유형별 과거 반응. 신호가 아니라 '신호가 아니다' 를 말하는 줄이라 눈에 띄면
+   안 된다 — 희석률 같은 실제 숫자(.ins-sub 기본)보다 한 단계 더 물러나 있게 둔다. */
+.disc-stat { opacity: 0.85; }
+.disc-stat b { color: var(--text); font-weight: 600; }
+
+.disc-method {
+  margin: 0 0 var(--space-3);
+  font-size: var(--fs-label);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+.disc-method > summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  color: var(--text-muted);
+  list-style: revert;   /* 기본 삼각형 유지 — 접힌 상태임이 드러나야 한다 */
+}
+.disc-method > summary:hover { color: var(--text); }
+.disc-method-body { padding: 0 12px 10px; }
+.disc-method-body p { margin: 0 0 8px; line-height: 1.55; }
+.disc-method-body p:last-child { margin-bottom: 0; }
+
 /* 내부자 클러스터 매수 */
 .insider-cluster { margin: 6px 0 14px; }
 .insider-cluster:empty { display: none; }

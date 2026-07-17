@@ -592,6 +592,19 @@ function refreshFeatureViews() {
       }
     }
   }
+  // 종목 요약 패널은 렌더 시점에 피처 전역이 없으면 카드(수급·감사의견)를 "" 로 빼고
+  // 끝이라, 데이터가 늦게 도착하면 그 카드가 영영 안 나온다. 라이브에서 krFlow(484KB)가
+  // 패널 렌더보다 늦게 도착해 수급 카드가 간헐적으로 통째로 빠졌다 — 로컬에선 데이터가
+  // 빨라 거의 안 보이던 경합이다. 패널이 떠 있으면 다시 그린다.
+  if (selectedTicker && data && Array.isArray(data.stocks)) {
+    const base = data.stocks.find((r) => r.ticker === selectedTicker);
+    if (base) {
+      const item = applyLive(withDetail(base));
+      if (byId("selectedStock")) calls.push(() => renderSelected(item));
+      const facts = byId("searchFacts");
+      if (facts) calls.push(() => { facts.innerHTML = stockFacts(item, "Search Ticker"); });
+    }
+  }
   if (byId("sub-etf-lev")?.classList.contains("is-active")) {
     calls.push(() => ensureFeatureData("leveraged").then(() => renderLeveragedEtfPage()));
   }

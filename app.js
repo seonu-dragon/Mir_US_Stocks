@@ -95,7 +95,7 @@ let usingFallbackSnapshot = false;
 const TICKER_BLOCKLIST = new Set(["SPCX"]);
 
 function featureDataSrc(path) {
-  const v = window.MIR_BUILD_ID || "20260701a";
+  const v = window.MIR_BUILD_ID || "dev";
   return `${path}?v=${v}`;
 }
 
@@ -287,7 +287,10 @@ const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
 const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
-const DEFAULT_VIEW_MODE = "advanced";
+// 첫 방문자 기본값. 탭 10개를 한꺼번에 보여주면 처음 온 사람에겐 과하다. 기존 사용자는
+// setupViewMode 가 localStorage 를 먼저 읽으므로 영향이 없고, 고급 탭으로 들어오는
+// 딥링크(?tab=signals 등)도 거기서 advanced 로 승격되므로 그대로 동작한다.
+const DEFAULT_VIEW_MODE = "basic";
 const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
 const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
@@ -418,6 +421,8 @@ function loadMapFundamentalsScript(cfg) {
     const globalName = isKr ? "KOREA_MAP_FUNDAMENTALS" : "MAP_FUNDAMENTALS";
     const apply = () => {
       window.MAP_FUNDAMENTALS = window[globalName] || {};
+      // 시장마다 있는 지표가 달라 옵션을 다시 걸러야 한다(KR 은 P/S 가 없는 등).
+      refreshFundamentalMetricOptions();
       resolve(true);
     };
     if (window[globalName] && Object.keys(window[globalName]).length) {
@@ -476,6 +481,7 @@ const FEATURE_DATA = {
   whitehouse: { global: "WHITE_HOUSE_SCHEDULE",  path: "data/white_house_schedule.js",  feature: "whiteHouse" },
   leveraged:  { global: "LEVERAGED_ETF_CATALOG", path: "data/leveraged_etf_catalog.js", usOnly: true },
   krDart:     { global: "KR_DISCLOSURES",        path: "data/kr_disclosures.js",        feature: "krDart", krOnly: true },
+  krOwnership:{ global: "KR_OWNERSHIP",          path: "data/kr_ownership.js",          feature: "krOwnership", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -840,19 +846,23 @@ function applyMarketOnlyUi() {
         || (sub === "activist" && cfg.features && !cfg.features.activist)
         || (sub === "events" && cfg.features && !cfg.features.materialEvents)
         || (sub === "ipo" && cfg.features && !cfg.features.ipo)
-        || (sub === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)));
+        || (sub === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))
+        || (sub === "krown" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krOwnership)));
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
     const instFallback = cfg.id === "kr" && cfg.features?.krDart ? "dart" : "events";
-    if (cfg.id === "kr" && cfg.features?.krDart) {
-      const dartBtn = instNav.querySelector('[data-sub="dart"]');
-      if (dartBtn) { dartBtn.hidden = false; dartBtn.style.display = ""; }
-    }
+    ["dart", "krown"].forEach((sub) => {
+      const on = cfg.id === "kr" && cfg.features?.[sub === "dart" ? "krDart" : "krOwnership"];
+      if (!on) return;
+      const btn = instNav.querySelector(`[data-sub="${sub}"]`);
+      if (btn) { btn.hidden = false; btn.style.display = ""; }
+    });
     if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)
       || (institutionalSubTab === "insider" && cfg.features && !cfg.features.insider)
       || (institutionalSubTab === "activist" && cfg.features && !cfg.features.activist)
-      || (institutionalSubTab === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))) {
+      || (institutionalSubTab === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))
+      || (institutionalSubTab === "krown" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krOwnership)))) {
       activateInstitutionalSub(instFallback, { push: false });
     }
   }
@@ -2327,6 +2337,7 @@ function activateInstitutionalSub(name, { push = false } = {}) {
   if (institutionalSubTab === "events") renderWithFeature("events", renderMaterialEvents, "eventsTable", load);
   if (institutionalSubTab === "ipo") renderWithFeature("ipo", renderIpoCalendar, "ipoTable", load);
   if (institutionalSubTab === "dart") renderWithFeature("krDart", renderKrDisclosures, "krDartTable", load);
+  if (institutionalSubTab === "krown") renderWithFeature("krOwnership", renderKrOwnership, "krOwnTable", load);
   if (push) {
     recordNav();
   }
@@ -3463,6 +3474,7 @@ function setupEvents() {
   setupWatchAlertEvents();
   setupCloudSyncEvents();
   setupKrDartEvents();
+  setupKrOwnershipEvents();
   byId("heatmapShare")?.addEventListener("click", shareHeatmapLink);
   byId("pfExportCsv")?.addEventListener("click", exportPortfolioCsv);
   byId("backtestExportCsv")?.addEventListener("click", exportBacktestCsv);
@@ -4504,6 +4516,20 @@ const MAP_METRIC_CONFIG = {
   pb:        { label: "P/B",            good: "low",  fmt: "num", stops: [1, 2, 3, 6, 10] },
   pfcf:      { label: "P/FCF",          good: "low",  fmt: "num", stops: [15, 25, 40, 60, 90] },
   evEbitda:  { label: "EV/EBITDA",      good: "low",  fmt: "num", stops: [6, 9, 12, 18, 25] },
+  // KR 전용. DART 는 감가상각비를 본문에 싣는 회사가 9% 뿐이라 EBITDA 를 만들 수 없어
+  // 분모를 영업이익(EBIT)으로 둔다. EBITDA 보다 분모가 작아 배수가 높게 나오므로
+  // 구간도 EV/EBITDA 보다 위로 잡는다. 두 지표를 한 옵션으로 합치지 않는 이유는
+  // 감가상각이 큰 업종일수록 둘이 크게 벌어져 같은 이름으로 부를 수 없기 때문이다.
+  evEbit:    { label: "EV/EBIT",        good: "low",  fmt: "num", stops: [8, 12, 16, 24, 35] },
+  // DART 가 완제품으로 주는 지표(KR 전용). 직접 계산하면 분기/연간 혼동과 업종별 계정
+  // 차이에 다시 걸리므로 DART 값을 그대로 쓴다. 미국 상세엔 이 키가 없어서 커버리지
+  // 게이트가 알아서 숨긴다.
+  revenueGrowth:   { label: "매출 성장률(YoY)",   good: "high", fmt: "pct", stops: [-10, 0, 10, 25, 50] },
+  operatingGrowth: { label: "영업이익 성장률(YoY)", good: "high", fmt: "pct", stops: [-20, 0, 15, 40, 80] },
+  netGrowth:       { label: "순이익 성장률(YoY)",  good: "high", fmt: "pct", stops: [-20, 0, 15, 40, 80] },
+  debtRatio:       { label: "부채비율",          good: "low",  fmt: "pct", stops: [50, 100, 150, 250, 400] },
+  currentRatio:    { label: "유동비율",          good: "high", fmt: "pct", stops: [80, 120, 160, 220, 300] },
+  payoutRatio:     { label: "배당성향",          good: "high", fmt: "pct", stops: [0, 10, 20, 35, 55] },
   divYield:  { label: "Dividend Yield", good: "high", fmt: "pct", stops: [0.5, 1, 2, 3, 5] },
   eps:       { label: "EPS",            good: "high", fmt: "usd", stops: [0, 1, 3, 6, 10] },
   roe:       { label: "ROE",            good: "high", fmt: "pct", stops: [0, 5, 10, 17, 25] },
@@ -4538,6 +4564,59 @@ function mapMetricConfig(metric) {
   if (!base || !isKrMarket()) return base;
   const stops = MAP_METRIC_STOPS_KR[metric];
   return stops ? { ...base, stops } : base;
+}
+
+// 지표를 고를 수 있게 하려면 '값이 있는 종목' 이 이 정도는 돼야 한다. 개수만 보면
+// US pfcf(26건)·evEbitda(47건) 처럼 몇십 건 있는 지표가 통과해버린다 — 그건 화면의
+// 99% 가 중립색이라는 뜻이라 없느니만 못하다. 그래서 비율을 함께 본다.
+const METRIC_MIN_COVERAGE = 20;      // 절대 개수 하한(아주 작은 유니버스 보호)
+const METRIC_MIN_COVERAGE_RATIO = 0.1;
+let _metricCoverage = null;
+
+// MAP_FUNDAMENTALS 안에 각 지표가 몇 종목이나 있는지. 시장이 바뀌면 다시 센다.
+function fundamentalMetricCoverage() {
+  if (_metricCoverage) return _metricCoverage;
+  const counts = {};
+  const rows = Object.values(window.MAP_FUNDAMENTALS || {});
+  for (const row of rows) {
+    if (!row) continue;
+    for (const [k, v] of Object.entries(row)) {
+      if (Number.isFinite(v)) counts[k] = (counts[k] || 0) + 1;
+    }
+  }
+  _metricCoverage = { counts, total: rows.length };
+  return _metricCoverage;
+}
+
+function metricHasEnoughData(metric) {
+  const { counts, total } = fundamentalMetricCoverage();
+  const n = counts[metric] || 0;
+  if (!total) return true;            // 아직 로드 전이면 막지 않는다
+  return n >= METRIC_MIN_COVERAGE && n / total >= METRIC_MIN_COVERAGE_RATIO;
+}
+
+// 데이터가 없는 지표를 고르면 히트맵이 통째로 '데이터 없음'(중립색)이 된다. 시장마다
+// 커버리지가 달라서 옵션을 HTML 에 하드코딩해두면 그 사실이 화면 어디에도 안 드러난다
+// — KR 은 ROA·P/S 가 아예 없었고, PEG·P/FCF·EV/EBITDA 는 US 에서도 1% 미만이다.
+// 값이 생기면 자동으로 다시 나타나므로 목록을 손으로 관리할 필요가 없다.
+function pruneFundamentalMetricOptions(selectId, fallback) {
+  const sel = byId(selectId);
+  if (!sel) return;
+  let hidSelected = false;
+  sel.querySelectorAll("option").forEach((opt) => {
+    if (!MAP_METRIC_CONFIG[opt.value]) return;      // 등락률·점수는 스냅샷에 항상 있다
+    const enough = metricHasEnoughData(opt.value);
+    opt.hidden = !enough;
+    opt.disabled = !enough;
+    if (!enough && sel.value === opt.value) hidSelected = true;
+  });
+  if (hidSelected) sel.value = fallback;
+}
+
+function refreshFundamentalMetricOptions() {
+  _metricCoverage = null;
+  pruneFundamentalMetricOptions("metricFilter", "changePct");
+  pruneFundamentalMetricOptions("valMetric", "pe");
 }
 
 function itemCapForValuation(item) {
@@ -8800,34 +8879,50 @@ function renderEarningsCalendar(item) {
         <p>${f.epsNextY != null ? `연간 EPS 예상 ${moneyOrDash(f.epsNextY)}` : "Nasdaq/야후 데이터가 있으면 함께 표시됩니다."}</p>
       </article>
     </div>
-    ${history.length ? `
-      <details class="earnings-inline-history">
-        <summary>최근 분기 EPS 기록 <span>${history.length}개 분기</span></summary>
-        <div class="table-wrap compact-table-wrap">
-        <table class="compact-table earnings-table">
-          <thead>
-            <tr>
-              <th>분기</th>
-              <th>실제 EPS</th>
-              <th>예상 EPS</th>
-              <th>서프라이즈</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${history.map((row) => `
+    ${history.length ? renderEarningsHistoryTable(history) : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
+  `;
+}
+
+// 미국(야후)은 EPS 실제/예상/서프라이즈를, 한국(DART)은 실제 손익을 준다. DART 에는
+// 애널리스트 추정치가 없어서, KR 에 EPS 표를 그대로 쓰면 세 칸이 전부 "—" 인 빈 표가
+// 나온다. 그래서 시장에 따라 컬럼을 바꾼다.
+function renderEarningsHistoryTable(history) {
+  const top = isKrMarket() ? krTopLineField(history) : null;
+  const krMode = Boolean(top);
+
+  const head = krMode
+    ? `<tr><th>분기</th><th>${escapeHtml(top.label)}</th><th>영업이익</th><th>순이익</th></tr>`
+    : `<tr><th>분기</th><th>실제 EPS</th><th>예상 EPS</th><th>서프라이즈</th></tr>`;
+
+  const body = history.map((row) => {
+    if (krMode) {
+      return `
+              <tr>
+                <td title="${escapeHtml(row.period || "")}">${escapeHtml(row.label || row.date || "—")}</td>
+                <td>${fmtKrwCompact(row[top.key])}</td>
+                <td class="${cls(Number(row.operatingProfit) || 0)}">${fmtKrwCompact(row.operatingProfit)}</td>
+                <td class="${cls(Number(row.netIncome) || 0)}">${fmtKrwCompact(row.netIncome)}</td>
+              </tr>`;
+    }
+    return `
               <tr>
                 <td>${escapeHtml(row.date || "—")}</td>
                 <td>${row.epsActual != null ? moneyOrDash(row.epsActual) : "—"}</td>
                 <td>${row.epsEstimate != null ? moneyOrDash(row.epsEstimate) : "—"}</td>
                 <td class="${cls(earningsSurprisePct(row) || 0)}">${earningsSurprisePct(row) == null ? "—" : fmtPct(earningsSurprisePct(row))}</td>
-              </tr>
-            `).join("")}
-          </tbody>
+              </tr>`;
+  }).join("");
+
+  return `
+      <details class="earnings-inline-history">
+        <summary>최근 분기 ${krMode ? "실적" : "EPS"} 기록 <span>${history.length}개 분기</span></summary>
+        <div class="table-wrap compact-table-wrap">
+        <table class="compact-table earnings-table">
+          <thead>${head}</thead>
+          <tbody>${body}</tbody>
         </table>
         </div>
-      </details>
-    ` : `<p class="muted earnings-empty">최근 분기 실적 히스토리는 프록시 연결 후 자동으로 채워집니다.</p>`}
-  `;
+      </details>`;
 }
 
 function earningsSurprisePct(row) {
@@ -9157,9 +9252,38 @@ function normalizeEarningsHistory(item) {
       date: date ? String(date).slice(0, 10) : "",
       epsActual: row.epsActual ?? row.actual ?? row.reportedEPS ?? row.eps,
       epsEstimate: row.epsEstimate ?? row.estimate ?? row.estimatedEPS,
-      revenue: row.revenue ?? row.sales
+      revenue: row.revenue ?? row.sales,
+      // KR(DART) 전용. 미국은 야후에서 EPS·서프라이즈가 오지만 DART 는 추정치를 주지
+      // 않는 대신 실제 손익을 준다. 은행·보험·증권은 '매출액' 계정 자체가 없어서
+      // revenue 가 없고 순이자손익/이자수익이 톱라인이다.
+      label: row.label,
+      period: row.period,
+      operatingProfit: row.operatingProfit,
+      netIncome: row.netIncome,
+      netInterestIncome: row.netInterestIncome,
+      interestIncome: row.interestIncome,
+      netFeeIncome: row.netFeeIncome,
     };
   }).filter((row) => row.date);
+}
+
+// 업종마다 톱라인이 다르다. 제조·서비스업은 매출액이지만 금융업은 그 계정이 없다.
+// 한 종목의 표 전체에 쓸 라벨이라 행이 아니라 히스토리 단위로 고른다.
+function krTopLineField(history) {
+  const has = (k) => history.some((r) => Number.isFinite(Number(r[k])));
+  if (has("revenue")) return { key: "revenue", label: "매출" };
+  if (has("netInterestIncome")) return { key: "netInterestIncome", label: "순이자손익" };
+  if (has("interestIncome")) return { key: "interestIncome", label: "이자수익" };
+  return null;
+}
+
+// DART 금액은 원 단위 정수로 온다(삼성전자 연매출 333,605,900,000,000).
+function fmtKrwCompact(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "—";
+  const jo = n / 1e12;
+  if (Math.abs(jo) >= 1) return `${jo.toFixed(2)}조`;
+  return `${(jo * 10000).toFixed(0)}억`;
 }
 
 function nearestTradingIndex(rows, date) {
@@ -9202,19 +9326,22 @@ function renderEarningsReaction(item) {
   const box = byId("earningsReaction");
   if (!box || !item) return;
   const rows = earningsReactionRows(item);
+  // DART 에는 애널리스트 추정치가 없어 KR 은 서프라이즈가 항상 null 이다. 컬럼을 두면
+  // 세로로 "-" 만 늘어서므로 계산 가능한 행이 하나라도 있을 때만 보여준다.
+  const showSurprise = rows.some((row) => row.surprise != null);
   box.innerHTML = `
     ${rows.length ? `
       <details class="earnings-inline-reaction">
         <summary>실적 발표 전후 주가 반응 <span>최근 ${Math.min(rows.length, 4)}회</span></summary>
         <div class="table-wrap">
         <table class="compact-table earnings-reaction-table">
-          <thead><tr><th>발표일</th><th>거래일</th><th>EPS 서프라이즈</th><th>-5D→발표</th><th>발표일</th><th>발표→+5D</th></tr></thead>
+          <thead><tr><th>발표일</th><th>거래일</th>${showSurprise ? "<th>EPS 서프라이즈</th>" : ""}<th>-5D→발표</th><th>발표일</th><th>발표→+5D</th></tr></thead>
           <tbody>
             ${rows.slice(0, 4).map((row) => `
               <tr>
                 <td>${escapeHtml(row.date)}</td>
                 <td>${escapeHtml(row.tradingDate)}</td>
-                <td class="${cls(row.surprise || 0)}">${row.surprise == null ? "-" : fmtPct(row.surprise)}</td>
+                ${showSurprise ? `<td class="${cls(row.surprise || 0)}">${row.surprise == null ? "-" : fmtPct(row.surprise)}</td>` : ""}
                 <td class="${cls(row.pre5 || 0)}">${row.pre5 == null ? "-" : fmtPct(row.pre5)}</td>
                 <td class="${cls(row.oneDay || 0)}">${row.oneDay == null ? "-" : fmtPct(row.oneDay)}</td>
                 <td class="${cls(row.post5 || 0)}">${row.post5 == null ? "-" : fmtPct(row.post5)}</td>
@@ -13797,7 +13924,7 @@ function setupWatchlistUi() {
 const MIR_SW_BUILD_KEY = "mir_sw_build_id_v1";
 
 async function detectHotUpdate() {
-  const current = window.MIR_BUILD_ID || "20260701a";
+  const current = window.MIR_BUILD_ID || "dev";
   let stored = null;
   try { stored = localStorage.getItem(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
   if (stored && stored !== current) {
@@ -15681,7 +15808,15 @@ function renderKrDisclosures() {
     return;
   }
   if (meta) {
-    meta.textContent = `${payload.updatedAtKst || ""} · ${payload.count || 0}건 · ${payload.source || ""}`;
+    // 빌더가 실제 커버 범위(종목수·기간)를 payload 에 싣는다. 예전엔 건수만 보여줘서
+    // 120종목만 훑고 있다는 사실이 화면 어디에도 드러나지 않았다.
+    const parts = [payload.updatedAtKst, `${payload.count || 0}건`];
+    if (payload.companyCount) parts.push(`${payload.companyCount}종목`);
+    if (payload.firstFileDate && payload.lastFileDate) {
+      parts.push(`${payload.firstFileDate} ~ ${payload.lastFileDate}`);
+    }
+    parts.push(payload.source);
+    meta.textContent = parts.filter(Boolean).join(" · ");
   }
   let rows = payload.disclosures || [];
   const q = krDartQuery.trim().toLowerCase();
@@ -15717,6 +15852,99 @@ function renderKrDisclosures() {
 function setupKrDartEvents() {
   const search = byId("krDartSearch");
   if (search) search.addEventListener("input", () => { krDartQuery = search.value; renderKrDisclosures(); });
+}
+
+// ===== KR 지분 변동 (대량보유 5%룰 / 임원·주요주주) =====
+let krOwnQuery = "";
+let krOwnKind = "major";
+
+function krOwnNum(v, digits = 0) {
+  return Number.isFinite(v) ? Number(v).toLocaleString(undefined, { maximumFractionDigits: digits }) : "-";
+}
+
+// 증감은 방향이 핵심이라 색과 부호를 같이 준다(색만으로 구분하지 않게 부호를 반드시 붙인다).
+function krOwnDelta(v, suffix, digits = 0) {
+  if (!Number.isFinite(v) || v === 0) return `<span class="muted">-</span>`;
+  const sign = v > 0 ? "+" : "";
+  return `<span class="${v > 0 ? "pos" : "neg"}">${sign}${krOwnNum(v, digits)}${suffix}</span>`;
+}
+
+function renderKrOwnership() {
+  const meta = byId("krOwnMeta");
+  const table = byId("krOwnTable");
+  if (!table) return;
+  const payload = window.KR_OWNERSHIP;
+  if (!payload) {
+    table.innerHTML = `<p class="muted">지분공시 데이터를 불러오는 중…</p>`;
+    return;
+  }
+  if (meta) {
+    meta.textContent = [
+      payload.updatedAtKst,
+      `최근 ${payload.windowDays || 7}일`,
+      `대량보유 ${payload.majorCount || 0}건`,
+      `임원 ${payload.insiderCount || 0}건`,
+      payload.source,
+    ].filter(Boolean).join(" · ");
+  }
+
+  const isMajor = krOwnKind === "major";
+  let rows = (isMajor ? payload.majorHolders : payload.insiders) || [];
+  const q = krOwnQuery.trim().toLowerCase();
+  if (q) {
+    rows = rows.filter((row) =>
+      [row.ticker, row.company, row.filer, row.position, row.reportType]
+        .some((v) => String(v || "").toLowerCase().includes(q))
+    );
+  }
+  if (!rows.length) {
+    table.innerHTML = `<p class="muted">${escapeHtml(payload.note || "표시할 지분공시가 없습니다.")}</p>`;
+    return;
+  }
+
+  const head = isMajor
+    ? `<tr><th>일자</th><th>종목</th><th>회사</th><th>보고자</th><th>보유비율</th><th>증감</th><th>보유주식</th><th>구분</th></tr>`
+    : `<tr><th>일자</th><th>종목</th><th>회사</th><th>보고자</th><th>직위</th><th>소유주식</th><th>증감</th><th>등기</th></tr>`;
+
+  const body = rows.slice(0, 200).map((row) => {
+    const common = `
+      <td>${escapeHtml(row.fileDate || "")}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
+      <td>${escapeHtml(row.company || "")}</td>
+      <td>${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.filer || "-")}</a>` : escapeHtml(row.filer || "-")}</td>`;
+    return isMajor
+      ? `<tr>${common}
+          <td><b>${krOwnNum(row.ratio, 2)}%</b></td>
+          <td>${krOwnDelta(row.ratioChange, "%p", 2)}</td>
+          <td>${krOwnNum(row.shares)}</td>
+          <td>${escapeHtml(row.reportType || "")}</td>
+        </tr>`
+      : `<tr>${common}
+          <td>${escapeHtml(row.position || "-")}</td>
+          <td>${krOwnNum(row.shares)}</td>
+          <td>${krOwnDelta(row.sharesChange, "주")}</td>
+          <td>${escapeHtml(row.registered || "-")}</td>
+        </tr>`;
+  }).join("");
+
+  table.innerHTML = `<table class="insider-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  table.querySelectorAll(".ins-ticker").forEach((btn) => {
+    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
+  });
+}
+
+function setupKrOwnershipEvents() {
+  const search = byId("krOwnSearch");
+  if (search) search.addEventListener("input", () => { krOwnQuery = search.value; renderKrOwnership(); });
+  byId("krOwnKinds")?.querySelectorAll("[data-krown]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      krOwnKind = btn.dataset.krown === "insider" ? "insider" : "major";
+      byId("krOwnKinds").querySelectorAll("[data-krown]").forEach((b) => {
+        b.classList.toggle("is-active", b === btn);
+      });
+      renderKrOwnership();
+    });
+  });
 }
 
 loadData();
@@ -16557,6 +16785,15 @@ async function sendAiChat(queryText = null) {
     aiChatBusy = false;
   }
 }
+
+// ai-mode-welcome.js 가 쓰는 창구. 웰컴 화면이 submit 을 capture 단계에서 가로채므로
+// 폼 경로로는 sendAiChat 에 닿을 수 없다. 종목이 아닌 질문은 웰컴이 여기로 넘긴다.
+// resolveTicker 도 함께 넘겨, 웰컴이 자체 해석기를 따로 두지 않게 한다
+// (자체 해석기는 문자열 전체가 티커일 때만 맞아서 "NVDA 분석해줘" 를 놓쳤다).
+window.MirAiChat = {
+  send: (text) => sendAiChat(text),
+  resolveTicker: (text) => extractStockTickerFromQuery(text),
+};
 
 function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
   const log = byId("aiChatLog");

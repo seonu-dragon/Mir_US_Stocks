@@ -104,7 +104,9 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font-family: "Pretendard", "Pretendard Variable", -apple-system, BlinkMacSystemFont,
+  /* CDN 이 싣는 건 "Pretendard Variable" 이라 이쪽이 먼저. "Pretendard" 는 로컬에
+     설치된 사용자를 위해 남겨둔다. */
+  font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
     "Apple SD Gothic Neo", "Malgun Gothic", Arial, "Noto Sans KR", sans-serif;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;

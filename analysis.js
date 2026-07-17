@@ -2437,6 +2437,30 @@ function analysisTickerKey(ticker) {
   return String(ticker).trim().toUpperCase();
 }
 
+// "엔비디아" → "NVDA". 이 페이지는 입력값을 그대로 대문자로 만들어 <입력>.json 을
+// 찾았기 때문에, 한글명으로 검색하면 무조건 "데이터를 찾을 수 없습니다" 가 떴다.
+// data/ticker_aliases_ko.js 는 한글명 → '미국' 티커 전용(6자리 KR 코드는 0개)이라
+// US 모드에서만 적용한다. 해석 실패 시엔 입력값을 그대로 돌려줘 기존 동작을 유지한다.
+function resolveKoAliasToTicker(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return text;
+  if (window.MirMarket && window.MirMarket.getMode() === "kr") return text;
+  if (/^[A-Za-z0-9.\-]{1,12}$/.test(text)) return text; // 이미 티커꼴
+
+  const aliases = window.TICKER_ALIASES_KO;
+  if (!aliases) return text;
+  const lower = text.toLowerCase();
+  let best = null;
+  for (const [ticker, names] of Object.entries(aliases)) {
+    for (const alias of names) {
+      const a = String(alias).toLowerCase();
+      if (a.length < 2 || !lower.includes(a)) continue;
+      if (!best || a.length > best.len) best = { ticker, len: a.length };
+    }
+  }
+  return best ? best.ticker : text;
+}
+
 function analysisDetailPath(ticker) {
   const key = analysisTickerKey(ticker);
   if (window.MirMarket) return window.MirMarket.detailPath(key);
@@ -2892,7 +2916,7 @@ async function init() {
   const input = $("tickerInput");
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    if (input.value.trim()) runAnalysis(input.value);
+    if (input.value.trim()) runAnalysis(resolveKoAliasToTicker(input.value));
   });
 
   // 시장에 맞는 예시 티커/플레이스홀더 (KR이면 한국 종목으로 교체)
@@ -2922,7 +2946,11 @@ async function init() {
   // URL ?t= 로 진입 시 자동 분석
   const params = new URLSearchParams(window.location.search);
   const t = params.get("t");
-  if (t) { input.value = analysisTickerKey(t); runAnalysis(t); }
+  if (t) {
+    const resolved = resolveKoAliasToTicker(t);
+    input.value = analysisTickerKey(resolved);
+    runAnalysis(resolved);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

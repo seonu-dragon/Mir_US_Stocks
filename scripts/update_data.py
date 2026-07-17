@@ -1053,26 +1053,41 @@ def fetch_sp500_constituents():
     return rows or fallback_sp500_constituents()
 
 
+# NDX 는 100개 '기업' 지수라 복수 클래스(GOOGL/GOOG 등) 때문에 심볼은 103개 안팎이 된다.
+# 이보다 한참 적게 잡히면 소스가 바뀐 것으로 보고 폴백하되, 조용히 넘어가지 않는다.
+NASDAQ_100_MIN_EXPECTED = 90
+
+
 def fetch_nasdaq100_symbols():
-    url = "https://en.wikipedia.org/wiki/Nasdaq-100"
+    """Nasdaq 공식 지수 구성종목 API.
+
+    예전엔 en.wikipedia.org/wiki/Nasdaq-100 의 표를 긁었는데, 위키가 그 문서에서
+    구성종목 표를 통째로 없애면서(2026-07 확인: 문서에 'AAPL' 이 0회 등장) 스크레이퍼가
+    항상 빈 집합을 만들고 29개짜리 NASDAQ_100_FALLBACK 으로 조용히 떨어졌다. 그래서
+    히트맵 'Nasdaq 100' 필터가 29종목만 보여주고 있었고, 아무도 오류를 못 봤다.
+    """
     try:
-        text = request_text(url, timeout=30)
-    except Exception:
+        payload = request_json(
+            "https://api.nasdaq.com/api/quote/list-type/nasdaq100",
+            headers=NASDAQ_HEADERS,
+            timeout=30,
+        )
+        rows = (((payload or {}).get("data") or {}).get("data") or {}).get("rows") or []
+        symbols = {clean_symbol(r.get("symbol")) for r in rows}
+        symbols.discard(None)
+        symbols.discard("")
+    except Exception as exc:
+        print(f"[ndx100] 구성종목 조회 실패 → 폴백 {len(NASDAQ_100_FALLBACK)}종목 사용: {exc}")
         return set(NASDAQ_100_FALLBACK)
 
-    symbols = set()
-    for table_html in re.findall(r"<table[^>]*>(.*?)</table>", text, re.S | re.I):
-        table_plain = " ".join(strip_tags(table_html).split())
-        if not ("Ticker" in table_plain and "Company" in table_plain and "ICB" in table_plain):
-            continue
-        for row_html in re.findall(r"<tr[^>]*>(.*?)</tr>", table_html, re.S | re.I):
-            cells = [strip_tags(cell) for cell in re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", row_html, re.S | re.I)]
-            if not cells or cells[0] in {"Company", "Ticker", "Symbol"}:
-                continue
-            if re.fullmatch(r"[A-Z.]{1,6}", cells[0]):
-                symbols.add(clean_symbol(cells[0]))
+    if len(symbols) < NASDAQ_100_MIN_EXPECTED:
+        print(
+            f"[ndx100] 구성종목이 {len(symbols)}개뿐 (기대 {NASDAQ_100_MIN_EXPECTED}+). "
+            f"소스 형식이 바뀐 것 같다 → 폴백 {len(NASDAQ_100_FALLBACK)}종목 사용."
+        )
+        return set(NASDAQ_100_FALLBACK)
 
-    return symbols or set(NASDAQ_100_FALLBACK)
+    return symbols
 
 
 EXCHANGE_MAP = {"N": "idx_nyse", "A": "idx_amex", "P": "idx_nysearca", "Z": "idx_bats"}
@@ -2061,14 +2076,17 @@ def build_universe():
         }
         universe[symbol] = merge_meta(universe.get(symbol), meta)
 
-    for symbol, (company, sector, industry, bucket, cap) in EXTRA_GROWTH.items():
+    # 튜플의 bucket 은 쓰지 않는다. 시총 버킷은 cap_bucket(marketCapB) 이 계산하는 값이
+    # 정답이고, groups 에 손으로 박아두면 종목이 자라도 안 바뀐다 — 실제로 RKLB(44B)·
+    # IONQ(14B) 가 10B 를 넘은 뒤에도 groups 엔 "1to10b" 가 남아 bucket 필드와 어긋났다.
+    for symbol, (company, sector, industry, _bucket, cap) in EXTRA_GROWTH.items():
         meta = {
             "symbol": symbol,
             "company": company,
             "sector": sector,
             "industry": industry,
             "marketCapB": cap,
-            "groups": {"all_us", bucket, *exchange_groups.get(symbol, set())},
+            "groups": {"all_us", *exchange_groups.get(symbol, set())},
         }
         universe[symbol] = merge_meta(universe.get(symbol), meta)
 
@@ -2441,9 +2459,16 @@ def build_snapshot():
     def change(ticker, key="monthChangePct"):
         return lookup.get(ticker, {}).get(key, 0)
 
+    # 시총 버킷(gte10b/1to10b/lt1b)은 groups 가 아니라 별도 'bucket' 필드에 들어간다.
+    # groups 만 세면 버킷을 groups 에도 넣는 EXTRA_GROWTH 5종목만 잡혀서, 실제 1,264 개인
+    # gte10b 가 3 으로 기록됐다. 런타임 matchBucket 은 bucket 필드를 보므로 필터 UI 는
+    # 멀쩡했고, 그래서 이 집계만 조용히 틀린 채로 남아 있었다.
     group_counts = {}
     for item in stocks:
-        for group in item.get("groups", []):
+        keys = set(item.get("groups") or [])
+        if item.get("bucket"):
+            keys.add(item["bucket"])  # EXTRA_GROWTH 는 양쪽에 다 있으니 set 으로 중복 제거
+        for group in keys:
             group_counts[group] = group_counts.get(group, 0) + 1
 
     return {

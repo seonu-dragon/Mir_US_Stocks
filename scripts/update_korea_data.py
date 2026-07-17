@@ -895,6 +895,48 @@ def fetch_kr_etf_universe() -> list[dict]:
     return out
 
 
+def normalize_kr_etf_flags(stocks: list[dict]) -> int:
+    """네이버 ETF 목록을 권위로 삼아 ETF 표시를 바로잡는다.
+
+    유니버스는 네이버 '시세' 페이지에서 오는데 거기엔 액티브 ETF 가 일반 종목처럼
+    섞여 나온다(KoAct·1Q·WON·UNICORN·MIDAS 등). 그래서 sector='기타', market='kospi'
+    로 들어와 코스피 종목 취급을 받았다 — 히트맵·시총버킷·코스피 통계에 ETF 65개가
+    주식으로 끼어 있었다.
+
+    UI 의 isKrEtfLike 는 브랜드 프리픽스 화이트리스트(KODEX/TIGER/…)로 잡는데 저 브랜드들이
+    거기 없다. 이름 패턴을 늘리는 건 계속 새 브랜드가 나올 때마다 지는 싸움이라, 네이버가
+    주는 ETF 목록 자체를 기준으로 쓴다.
+
+    반대 방향(목록에 없으면 ETF 아님)으로는 쓸 수 없다 — 이 목록엔 ETN 이 없고, ETN 은
+    이름으로 이미 잘 잡힌다.
+    """
+    try:
+        codes = {e["code"] for e in fetch_kr_etf_universe()}
+    except Exception as exc:
+        print(f"[warn] ETF 목록 조회 실패 — ETF 표시 정규화를 건너뛴다: {exc}")
+        return 0
+    if not codes:
+        print("[warn] ETF 목록이 비어 있어 ETF 표시 정규화를 건너뛴다.")
+        return 0
+
+    fixed = 0
+    for s in stocks:
+        if s.get("ticker") not in codes or s.get("sector") == "ETF":
+            continue
+        s["sector"] = "ETF"
+        s["market"] = "etf"
+        # KR_ETFS 로 들어온 ETF 와 같은 모양으로 맞춘다. 지수 그룹을 떼지 않으면
+        # groupCounts 와 코스피 통계는 계속 이들을 주식으로 센다.
+        groups = set(s.get("groups") or [])
+        groups -= {"all_kr", "idx_kospi", "idx_kosdaq", "idx_kospi200", "idx_kosdaq150"}
+        groups |= {"all_etf", "all_misc"}
+        s["groups"] = sorted(groups)
+        fixed += 1
+    if fixed:
+        print(f"[etf] 네이버 ETF 목록 기준으로 {fixed}종목의 ETF 표시를 바로잡았다.")
+    return fixed
+
+
 def _num(v):
     try:
         return float(str(v).replace(",", ""))
@@ -1255,6 +1297,9 @@ def build_snapshot(limit: int | None = None) -> dict:
     def chg(ticker: str, key: str = "monthChangePct"):
         return lookup.get(ticker, {}).get(key, 0)
 
+    # 집계·통계보다 먼저 돌아야 한다. 안 그러면 ETF 가 코스피 종목으로 집계된다.
+    normalize_kr_etf_flags(stocks)
+
     group_counts: dict[str, int] = {}
     for item in stocks:
         for g in item.get("groups", []):
@@ -1312,6 +1357,168 @@ def build_snapshot(limit: int | None = None) -> dict:
             "epsRevScore": "EPS growth proxy from Yahoo fundamentals when available.",
         },
     }
+
+
+def attach_kr_earnings(payload: dict) -> int:
+    """DART 분기 실적을 각 종목에 earningsHistory 로 붙인다.
+
+    details/*.json 은 이 스냅샷에서 split_snapshot_details 가 매번 새로 만들므로, 실적을
+    details 에 직접 써넣으면 다음 빌드에 지워진다. 그래서 스냅샷 단계에서 붙인다.
+    원본은 build_kr_earnings.py 가 만드는 data/korea/earnings.json (분기마다만 바뀐다).
+
+    app.js 의 normalizeEarningsHistory 가 {date, revenue} 를 그대로 읽는다. DART 는
+    애널리스트 추정치를 주지 않아 epsEstimate 가 없고, 그 경우 UI 는 'EPS 서프라이즈'
+    칸을 '-' 로 두고 주가 반응만 계산한다.
+    """
+    path = ROOT / "data" / "korea" / "earnings.json"
+    if not path.exists():
+        print("[earnings] data/korea/earnings.json 없음 — earningsHistory 없이 진행한다.")
+        return 0
+    try:
+        book = json.loads(path.read_text(encoding="utf-8")).get("earnings") or {}
+    except Exception as exc:
+        print(f"[earnings] 읽기 실패({exc}) — earningsHistory 없이 진행한다.")
+        return 0
+
+    attached = 0
+    assets_attached = [0]
+    for stock in payload.get("stocks", []):
+        ticker = str(stock.get("ticker") or "").replace(".KS", "").replace(".KQ", "").zfill(6)
+        rows = book.get(ticker)
+        if not rows:
+            continue
+        # 누적값 의심 분기는 숫자가 왜곡됐을 수 있으니 발표일만 남기고 뺀다.
+        # netInterestIncome 등은 은행·보험·증권에만 있다(그쪽은 '매출액' 계정이 없어
+        # revenue 가 null 이다) — 있는 것만 넘긴다.
+        numeric_keys = (
+            "revenue", "operatingProfit", "netIncome",
+            "netInterestIncome", "interestIncome", "netFeeIncome",
+        )
+        history = []
+        for r in rows:
+            item = {"date": r.get("date"), "label": r.get("label"), "period": r.get("period")}
+            if not r.get("cumulativeSuspect"):
+                for k in numeric_keys:
+                    if r.get(k) is not None:
+                        item[k] = r[k]
+            history.append(item)
+        stock["earningsHistory"] = history
+        attached += 1
+
+        # 총자산 → fundamentals.assetsB. build_map_fundamentals 가 이 값으로
+        # ROA(= incomeB / assetsB * 100)를 만든다. 네이버 KR 펀더멘털에는 총자산이
+        # 없어서 히트맵 ROA 가 전 종목 '데이터 없음'(중립색)이었다.
+        # 단위: KR 펀더멘털의 *B 는 십억원이다(삼성전자 salesB 333,605.9 = 333.6조).
+        latest_assets = next(
+            (r["totalAssets"] for r in reversed(rows) if r.get("totalAssets")), None
+        )
+        if latest_assets:
+            fund = stock.setdefault("fundamentals", {})
+            fund.setdefault("assetsB", round(latest_assets / 1e9, 1))
+            assets_attached[0] += 1
+
+    print(f"[earnings] {attached}종목에 earningsHistory 부착 "
+          f"(총자산 {assets_attached[0]}종목).")
+    return attached
+
+
+def enrich_kr_valuation(payload: dict) -> None:
+    """네이버가 주지 않는 밸류에이션 지표를 이미 가진 값으로 계산해 fundamentals 에 넣는다.
+
+    build_map_fundamentals 는 fundamentals 의 ps/peg 를 그대로 읽어가므로 여기서 채우면
+    히트맵 색상 기준이 살아난다. 없으면 그 지표를 고른 순간 화면이 통째로 중립색이 된다.
+
+    단위: KR 펀더멘털의 *B 는 십억원, marketCapB 는 '조' 다(이름과 달리).
+    삼성전자 marketCapB 1634 = 1,634조, salesB 333,605.9 = 333.6조 로 교차검증했다.
+    """
+    cash_flow: dict = {}
+    earnings_book: dict = {}
+    path = ROOT / "data" / "korea" / "earnings.json"
+    if path.exists():
+        try:
+            book = json.loads(path.read_text(encoding="utf-8"))
+            cash_flow = book.get("cashFlow") or {}
+            earnings_book = book.get("earnings") or {}
+        except Exception:
+            pass
+
+    # DART 가 완제품으로 주는 성장성·안정성 지표(build_kr_indicators.py). 직접 계산하면
+    # 분기/연간 혼동이나 업종별 계정 차이에 다시 걸리므로 DART 값을 그대로 쓴다.
+    indicators: dict = {}
+    ipath = ROOT / "data" / "korea" / "indicators.json"
+    if ipath.exists():
+        try:
+            indicators = json.loads(ipath.read_text(encoding="utf-8")).get("indicators") or {}
+        except Exception:
+            pass
+
+    ps_n = peg_n = pfcf_n = ev_n = idx_n = 0
+    for stock in payload.get("stocks", []):
+        fund = stock.get("fundamentals")
+        if not isinstance(fund, dict):
+            continue
+
+        # P/S = 시총 / 매출
+        cap_jo = stock.get("marketCapT")
+        if not isinstance(cap_jo, (int, float)):
+            cap_jo = stock.get("marketCapB")
+        sales_b = fund.get("salesB")
+        if (isinstance(cap_jo, (int, float)) and cap_jo > 0
+                and isinstance(sales_b, (int, float)) and sales_b > 0
+                and fund.get("ps") is None):
+            fund["ps"] = round(cap_jo * 1000 / sales_b, 2)
+            ps_n += 1
+
+        # PEG = P/E / EPS 성장률(%). DART 는 애널리스트 추정치를 주지 않아 네이버의
+        # epsNextY 를 쓴다. 성장률이 0 이하면 PEG 는 의미가 없으므로 값을 넣지 않는다
+        # (음수 PEG 를 '저평가 초록' 으로 칠하면 정반대로 읽힌다).
+        pe, eps, eps_next = fund.get("pe"), fund.get("eps"), fund.get("epsNextY")
+        if (all(isinstance(x, (int, float)) for x in (pe, eps, eps_next))
+                and pe > 0 and eps > 0 and eps_next > eps and fund.get("peg") is None):
+            growth = (eps_next - eps) / abs(eps) * 100
+            if growth > 0:
+                fund["peg"] = round(pe / growth, 3)
+                peg_n += 1
+
+        # P/FCF = 시총 / FCF. FCF 가 음수면(투자 확대·적자) 비율이 의미를 잃으므로 뺀다.
+        cf = cash_flow.get(str(stock.get("ticker") or "").zfill(6)) or {}
+        fcf = cf.get("freeCashFlow")
+        if (isinstance(cap_jo, (int, float)) and cap_jo > 0
+                and isinstance(fcf, (int, float)) and fcf > 0
+                and fund.get("pfcf") is None):
+            fund["pfcf"] = round(cap_jo * 1e12 / fcf, 2)
+            pfcf_n += 1
+
+        # EV/EBIT = (시총 + 총차입금 - 현금) / 영업이익.
+        # EBITDA 가 아니라 EBIT 인 이유: DART 정형 데이터에 감가상각비가 없다(9%).
+        # totalDebt 가 없으면 '무차입' 인지 '계정명을 못 찾은 것' 인지 알 수 없어
+        # 0 으로 두지 않고 건너뛴다 — EV 를 과소평가해 틀린 색을 칠하느니 회색이 낫다.
+        debt, cash = cf.get("totalDebt"), cf.get("cash")
+        # 반드시 '연간' 영업이익이어야 한다. earningsHistory 의 최신 항목은 분기일 수
+        # 있어서, 연간 EV 를 분기 EBIT 으로 나누면 배수가 4배쯤 왜곡된다.
+        rows_e = earnings_book.get(str(stock.get("ticker") or "").zfill(6)) or []
+        ebit = next((r.get("operatingProfit") for r in reversed(rows_e)
+                     if r.get("annual") and not r.get("cumulativeSuspect")
+                     and isinstance(r.get("operatingProfit"), (int, float))), None)
+        if (isinstance(cap_jo, (int, float)) and cap_jo > 0
+                and isinstance(debt, (int, float)) and isinstance(cash, (int, float))
+                and isinstance(ebit, (int, float)) and ebit > 0
+                and fund.get("evEbit") is None):
+            ev = cap_jo * 1e12 + debt - cash
+            if ev > 0:
+                fund["evEbit"] = round(ev / ebit, 2)
+                ev_n += 1
+
+        # DART 재무지표는 계산 없이 그대로 옮긴다.
+        row = indicators.get(str(stock.get("ticker") or "").zfill(6))
+        if row:
+            for k, v in row.items():
+                if isinstance(v, (int, float)) and fund.get(k) is None:
+                    fund[k] = v
+            idx_n += 1
+
+    print(f"[valuation] P/S {ps_n} · PEG {peg_n} · P/FCF {pfcf_n} · EV/EBIT {ev_n} · "
+          f"DART지표 {idx_n} 종목 산출.")
 
 
 def split_snapshot_details(payload: dict):
@@ -1428,9 +1635,9 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[ipo_calendar/kr] rebuild skipped: {exc}")
-    # build_kr_short_interest.py is intentionally not run: it fabricates balances
-    # with random.Random(ticker) rather than sourcing KRX, so its output must not
-    # be published. Re-enable only once it reads real disclosures.
+    # No KR short-interest build step: the old builder fabricated balances with
+    # random.Random(ticker) rather than sourcing KRX, so it was removed. KR keeps
+    # shortInterest disabled in market_config.js until a real KRX feed exists.
 
 
 def main():
@@ -1446,6 +1653,8 @@ def main():
 
     print("Building Korean market snapshot...")
     snapshot = build_snapshot(limit=args.limit)
+    attach_kr_earnings(snapshot)
+    enrich_kr_valuation(snapshot)
     light, details = split_snapshot_details(snapshot)
 
     if args.push:

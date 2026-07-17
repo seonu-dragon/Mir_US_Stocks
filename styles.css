@@ -8246,6 +8246,32 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
 .ins-value.ins-sell { color: #dc2626; }
 .ins-sub { font-size: var(--fs-cap); color: var(--text-muted); }
 
+/* 수급 카드(국내). 사실 표시라 값은 또렷하게, 대신 '신호 아님' 주석을 반드시 함께. */
+.krflow-card {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+  font-size: var(--fs-label);
+}
+.krflow-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; margin-bottom: 6px; }
+.krflow-table { width: 100%; border-collapse: collapse; }
+.krflow-table th, .krflow-table td { padding: 3px 4px; text-align: right; font-variant-numeric: tabular-nums; }
+.krflow-table thead th { color: var(--text-muted); font-weight: 500; }
+.krflow-table tbody th { text-align: left; font-weight: 500; color: var(--text-muted); }
+.krflow-table .pos { color: #16a34a; }
+.krflow-table .neg { color: #dc2626; }
+.krflow-note,
+.krflow-warn {
+  margin: 6px 0 0;
+  font-size: var(--fs-cap);
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.krflow-cons { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.krflow-cons-main { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+
 /* 공시 유형별 과거 반응. 신호가 아니라 '신호가 아니다' 를 말하는 줄이라 눈에 띄면
    안 된다 — 희석률 같은 실제 숫자(.ins-sub 기본)보다 한 단계 더 물러나 있게 둔다. */
 .disc-stat { opacity: 0.85; }

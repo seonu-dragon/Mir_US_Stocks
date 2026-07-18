@@ -96,6 +96,85 @@
   transform: translateX(-50%) translateY(0);
 }
 
+/* 앱 내 확인/입력 다이얼로그(네이티브 confirm/prompt 대체) */
+.app-dialog {
+  width: min(400px, calc(100vw - 32px));
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.36);
+}
+
+.app-dialog::backdrop {
+  background: rgba(15, 23, 42, 0.52);
+}
+
+.app-dialog-title {
+  margin: 0 0 8px;
+  font-size: var(--fs-stat);
+  font-weight: 800;
+}
+
+.app-dialog-message {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.6;
+  white-space: pre-line;   /* 메시지에 줄바꿈이 들어오는 경우가 있다 */
+}
+
+.app-dialog-input {
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 12px;
+  font-size: 16px;         /* iOS 자동 확대 방지 */
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: 18px;
+}
+
+.app-dialog-btn {
+  padding: 9px 16px;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.app-dialog-btn:hover { background: rgba(148, 163, 184, 0.14); }
+
+.app-dialog-btn.is-primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #fff;
+}
+
+.app-dialog.is-danger .app-dialog-btn.is-primary {
+  border-color: var(--neg);
+  background: var(--neg);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .app-dialog[open] { animation: app-dialog-in 0.16s ease-out; }
+}
+
+@keyframes app-dialog-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 html {
   scroll-padding-bottom: var(--chat-safe-bottom);
 }
@@ -3230,22 +3309,31 @@ footer {
     min-height: 0;
   }
 
+  /* 카드뉴스 원본은 1080x1350(4:5) 세로 이미지다. 모바일에서 통짜로 펼치면
+     360px 뷰포트 기준 높이가 ~425px — 첫 화면을 카드뉴스가 통째로 먹고
+     정작 핵심 기능(종목·AI·포트폴리오)은 스크롤 아래로 밀린다.
+     데스크톱과 같은 crop 방식으로 헤드라인 띠만 보여주는 티저로 축소한다.
+     원본 전체는 탭하면 라이트박스에서 볼 수 있다. */
   .cardnews-carousel {
     flex: 1 1 auto;
     width: auto;
     max-width: 100%;
     align-self: auto;
+    aspect-ratio: 16 / 10;
     height: auto;
+    max-height: 34vh;   /* 세로가 짧은 기기에서도 첫 화면을 가리지 않게 */
     min-height: 0;
   }
 
   .cardnews-carousel img {
-    position: static;
+    position: absolute;
+    inset: 0;
     display: block;
     width: 100%;
-    height: auto;
-    object-fit: contain;
-    object-position: center top;
+    height: 100%;
+    object-fit: cover;
+    /* 헤드라인+부제가 원본의 세로 62~92% 구간에 있어 아래쪽을 보여준다. */
+    object-position: 50% 84%;
   }
 
   .update-card {
@@ -8470,6 +8558,8 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .data-trust-card.trust-stale,
 .data-trust-card.trust-missing { border-top-color: var(--red); }
 .data-trust-card.trust-unknown { border-top-color: var(--muted); }
+.data-trust-card.trust-pending { border-top-color: var(--primary); }
+.trust-pending .data-trust-card-head span { color: var(--primary); }
 .data-trust-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
 .data-trust-card-head strong { min-width: 0; font-size: var(--fs-label); }
 .data-trust-card-head span { flex: 0 0 auto; font-size: var(--fs-cap); font-weight: 800; }
@@ -8484,6 +8574,21 @@ button.agg-label { cursor: pointer; color: var(--accent, #60a5fa); }
 .data-trust-card dd { margin: 1px 0 0; overflow: hidden; color: var(--text); font-size: var(--fs-cap); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .data-trust-card small { display: block; margin-top: var(--space-2); color: var(--muted); font-size: var(--fs-cap); }
 .data-trust-note { margin: 12px 0 0; color: var(--muted); font-size: var(--fs-cap); }
+
+/* 상태별 원인·조치 패널. 카드 기본 dd 는 한 줄 말줄임이라 여기서 되돌린다. */
+.data-trust-detail { margin-top: 9px; border-top: 1px dashed var(--line); padding-top: 8px; }
+.data-trust-detail > summary { color: var(--muted); font-size: var(--fs-cap); font-weight: 700; cursor: pointer; list-style: none; }
+.data-trust-detail > summary::-webkit-details-marker { display: none; }
+.data-trust-detail > summary::before { content: "▸ "; }
+.data-trust-detail[open] > summary::before { content: "▾ "; }
+.data-trust-detail > summary:hover { color: var(--text); }
+.trust-stale .data-trust-detail > summary,
+.trust-missing .data-trust-detail > summary { color: var(--red); }
+.data-trust-detail dl { gap: 7px; margin-top: 8px; }
+.data-trust-detail dd { overflow: visible; font-weight: 500; line-height: 1.5; text-overflow: clip; white-space: normal; }
+.data-trust-detail code { padding: 1px 5px; border-radius: 4px; background: var(--surface-3); font-size: var(--fs-cap); word-break: break-all; }
+.data-trust-link { display: inline-block; margin-top: 10px; color: var(--primary); font-size: var(--fs-cap); font-weight: 700; text-decoration: none; }
+.data-trust-link:hover { text-decoration: underline; }
 
 /* 투자 체크리스트 */
 .investment-checklist-card { padding: 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }

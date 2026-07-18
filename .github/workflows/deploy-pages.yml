@@ -1,4 +1,4 @@
-name: Deploy Pages
+﻿name: Deploy Pages
 
 # 정적 사이트(HTML/JS/CSS + data/)를 GitHub Actions로 직접 배포한다.
 # legacy(브랜치 Jekyll) 자동 배포는 push가 몰릴 때 배포끼리 경합해
@@ -28,7 +28,7 @@ on:
       - "IPO calendar (SEC S-1/424B4)"
       - "Korea close briefing"
       - "Korea premarket briefing"
-      - "KR DART disclosures"
+      - "KR DART disclosures + ownership"
       - "Material events (SEC 8-K)"
       - "Short interest (Nasdaq/FINRA)"
       - "US close briefing"

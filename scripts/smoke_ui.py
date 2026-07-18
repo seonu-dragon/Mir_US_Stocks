@@ -250,6 +250,57 @@ def test_worker_no_client_id_leak(browser, _base: str) -> None:
     page.close()
 
 
+def test_kr_market(browser, base: str) -> None:
+    """KR 로 전환했을 때 데이터가 없는 기능이 닫혀 있고, KR 전용 소스가 감시되는지.
+
+    KR 은 US 와 데이터 구성이 다른데 US 만 보고 넘어가기 쉽다. 실제로
+      - 실적 예정일: KR 소스가 없는데 코드가 US 구조를 흉내내 매번 404 + 빈 화면
+      - 신뢰도 센터: KR DART·지분이 목록에 없어, 그 데이터가 배포 안 되는 동안에도
+        "정상"만 보여줬다
+    둘 다 US 화면에서는 절대 드러나지 않는다.
+    """
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+    bad: list[str] = []
+    page.on("response", lambda r: bad.append(f"{r.status} {r.url}") if r.status >= 400 else None)
+
+    boot(page, base)
+    page.evaluate("() => { window.MirMarket.setMode('kr'); }")
+    page.wait_for_timeout(600)
+
+    boot(page, f"{base}?tab=calendar")
+    check("[KR] 데이터 없는 실적 서브탭은 숨김", page.evaluate("""() => {
+      const b = document.querySelector('#calendarSubTabs [data-sub="earnings"]');
+      return !!b && (b.hidden || getComputedStyle(b).display === 'none');
+    }"""))
+    check("[KR] 없는 파일을 요청하지 않음(404 없음)",
+          not any("earnings_calendar" in x for x in bad),
+          "; ".join(x for x in bad if "earnings_calendar" in x))
+
+    boot(page, f"{base}?tab=calendar&sub=earnings")
+    body = page.locator("#earningsCalendarBody").inner_text()
+    check("[KR] 딥링크로 들어와도 이유를 밝힘",
+          "제공하지 않습니다" in body and "불러오는 중" not in body,
+          body.replace("\n", " ")[:80])
+
+    boot(page, f"{base}?tab=health")
+    try:
+        page.wait_for_function(
+            "() => document.querySelectorAll('.data-trust-card.trust-pending').length === 0",
+            timeout=45000)
+    except Exception:
+        pass
+    page.wait_for_timeout(1000)
+    names = page.evaluate("""() => [...document.querySelectorAll('.data-trust-card')]
+        .map(c => c.querySelector('strong')?.textContent)""")
+    check("[KR] DART 공시·지분 공시가 감시 목록에 있음",
+          "DART 공시" in names and "지분 공시" in names, str(names))
+    check("[KR] 실데이터 없는 공매도는 여전히 미노출", "공매도" not in names)
+    check("[KR] 신뢰도 카드에 결손 없음",
+          page.locator(".data-trust-card.trust-missing").count() == 0)
+    page.close()
+
+
 def test_mobile(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 390, "height": 844})
     watch(page)
@@ -284,7 +335,7 @@ def main() -> int:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             for fn in (test_deeplinks, test_dialogs, test_trust_center,
-                       test_worker_no_client_id_leak, test_mobile):
+                       test_worker_no_client_id_leak, test_kr_market, test_mobile):
                 print(f"\n--- {fn.__name__} ---", flush=True)
                 fn(browser, args.base)
             browser.close()

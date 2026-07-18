@@ -1,0 +1,38 @@
+{
+  "ticker": "VIRT",
+  "name": "Virtu Financial Inc. Class A",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 55.71,
+  "return_period": 55.3,
+  "support_levels": [
+    52.18,
+    48.62
+  ],
+  "resistance_levels": [
+    56.64,
+    64.88
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "price_near_sma60",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 39.7,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 57 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 52 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

@@ -1,0 +1,37 @@
+{
+  "ticker": "006490",
+  "name": "프리티",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 1177.0,
+  "return_period": -68.0,
+  "support_levels": [
+    1085.0
+  ],
+  "resistance_levels": [
+    1215.0,
+    1550.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 0.0,
+    "state": "oversold"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 1,215 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 1,085 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

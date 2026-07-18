@@ -4,29 +4,28 @@
   "market": "US",
   "period": "6M",
   "timeframe": "일봉",
-  "price": 0.29,
-  "return_period": -67.8,
+  "price": 0.2,
+  "return_period": -76.5,
   "support_levels": [
-    0.29,
-    0.22
+    0.18
   ],
   "resistance_levels": [
-    0.35,
-    0.57
+    0.22,
+    0.29
   ],
   "moving_average": {
-    "sma20": "uptrend",
-    "sma60": "uptrend",
+    "sma20": "downtrend",
+    "sma60": "downtrend",
     "sma200": "unknown"
   },
   "rsi": {
     "period": 14,
-    "value": 53.3,
-    "state": "neutral"
+    "value": 40.7,
+    "state": "bearish"
   },
   "volume": {
-    "state": "normal",
-    "comment": "거래량은 평균 수준"
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
   },
   "scenario": {
     "up": "저항 0 돌파와 거래량 동반 시 상승 시나리오 유지",

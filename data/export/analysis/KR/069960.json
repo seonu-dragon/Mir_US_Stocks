@@ -1,0 +1,37 @@
+{
+  "ticker": "069960",
+  "name": "현대백화점",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 153700.0,
+  "return_period": 69.3,
+  "support_levels": [
+    117550.0,
+    99800.0
+  ],
+  "resistance_levels": [
+    222000.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 19.9,
+    "state": "oversold"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 222,000 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 117,550 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

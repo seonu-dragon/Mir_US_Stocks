@@ -92,6 +92,13 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 만들어내면서 docstring 으로는 "사실적인 통계" 라고 주장하고 있었고, 삭제했다. KR 은
 `market_config.js` 에서 `shortInterest: false` 로 막혀 있다 — KRX 실연동 전엔 켜지 말 것.
 
+**없는 데이터는 기능을 끈다.** 빈 화면을 띄우거나 없는 파일을 계속 요청하지 않는다.
+`market_config.js` 의 `features` 로 시장별로 차단한다(키가 없으면 켜진 것으로 본다 —
+판정은 `=== false` 로 할 것. `!features.x` 로 쓰면 키 없는 시장까지 꺼진다).
+현재 KR 에서 꺼 둔 것: `shortInterest`(실데이터 없음), `earningsCalendar`(국내는 실적
+예정일 소스가 없다 — 빌더는 지나간 분기 실적만 만들고 워커도 빈 배열을 준다),
+`breakoutStats`(US 만 산출). 콘솔 404 를 방치하면 진짜 404 를 가린다.
+
 ## 알려진 부채
 
 수치는 2026-07-18 실측.
@@ -104,5 +111,10 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   권장 한도는 1GB.
 - `app.js` 850KB / `styles.css` 340KB / `index.html` 122KB 단일 파일.
   분리 전에 `scripts/smoke_ui.py` 를 안전망으로 쓸 것.
-- `sitemap.xml` 에 URL 2개뿐. 종목 상세 데이터 7,000개에 대한 딥링크 페이지가 없다.
-  (`analysis.html` 이 `?ticker=` 딥링크·canonical·OG 를 이미 갖고 있어 확장 지점이다.)
+- `sitemap.xml` 은 `scripts/build_sitemap.py` 가 생성한다(**직접 고치지 말 것**).
+  홈·분석 + 시가총액 상위 300종목/시장의 `analysis.html?t=` 딥링크 = 602 URL.
+  스냅샷이 크게 바뀌면 다시 돌린다: `py scripts/build_sitemap.py`
+  (`--check` 로 최신 여부만 확인 가능). 전체 1만+ 를 넣지 않은 건 의도적이다 —
+  클라이언트 렌더 페이지를 한꺼번에 올리면 thin content 로 취급되기 쉽다.
+  딥링크가 색인되려면 `analysis.js` 의 `updateAnalysisMeta` 가 종목별 canonical 을
+  써 줘야 한다. 둘 중 하나만 바꾸면 효과가 없다.

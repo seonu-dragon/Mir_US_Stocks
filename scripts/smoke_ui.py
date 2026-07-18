@@ -16,6 +16,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 import traceback
 from pathlib import Path
@@ -190,6 +191,65 @@ def test_trust_center(browser, base: str) -> None:
     page.close()
 
 
+def test_worker_no_client_id_leak(browser, _base: str) -> None:
+    """워커가 남의 clientId 를 응답에 싣지 않는지.
+
+    clientId 는 삭제 권한의 근거라(handleCommunityDelete 의 target.clientId 비교),
+    목록 응답에 실리면 누구나 남의 글·댓글을 지울 수 있다. 워커는 대시보드 수동
+    배포라 여기서 띄울 수 없으므로, 모듈을 브라우저에 import 해 가짜 KV 로
+    fetch() 를 직접 호출하고 응답 본문을 검사한다.
+    """
+    worker_src = (Path(__file__).resolve().parent.parent / "worker" / "yahoo-proxy.js")
+    if not worker_src.exists():
+        check("worker 소스 존재", False, str(worker_src))
+        return
+
+    stored = [
+        {"id": "p1", "author": "나", "content": "내 글", "createdAt": "2026-01-01T00:00:00Z",
+         "clientId": "CID-ME", "likes": ["CID-ME", "CID-OTHER"],
+         "reports": [{"by": "CID-X", "reason": "스팸"}],
+         "comments": [{"id": "c1", "author": "나", "content": "댓글", "clientId": "CID-ME"},
+                      {"id": "c2", "author": "남", "content": "댓글", "clientId": "CID-OTHER"}]},
+        {"id": "p2", "author": "남", "content": "남의 글", "createdAt": "2026-01-01T00:00:00Z",
+         "clientId": "CID-OTHER", "likes": ["CID-OTHER"], "comments": []},
+    ]
+    runner = """
+    async (args) => {
+      const [src, stored, query] = args;
+      const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+      const mod = await import(url);
+      const env = { COMMUNITY_KV: { _v: JSON.stringify(stored),
+        async get() { return this._v; }, async put(k, v) { this._v = v; } } };
+      const req = new Request('https://w.example/community' + query, { method: 'GET' });
+      const resp = await mod.default.fetch(req, env, { waitUntil() {} });
+      return { status: resp.status, body: await resp.text() };
+    }
+    """
+    page = browser.new_page()
+    page.goto("about:blank")
+    src = worker_src.read_text(encoding="utf-8")
+
+    res = page.evaluate(runner, [src, stored, "?clientId=CID-ME"])
+    check("worker 모듈이 로드되고 200 응답", res["status"] == 200, res["status"])
+    body = res["body"]
+    check("응답에 clientId 값이 전혀 없음", "CID-" not in body,
+          "유출!" if "CID-" in body else "")
+    check("신고 이력 미노출", "reports" not in body and "스팸" not in body)
+
+    data = json.loads(body)
+    p1 = next(p for p in data["posts"] if p["id"] == "p1")
+    p2 = next(p for p in data["posts"] if p["id"] == "p2")
+    check("요청자 글만 mine=true", p1["mine"] is True and p2["mine"] is False)
+    check("likes 배열 대신 집계값", "likes" not in p1 and p1["likeCount"] == 2)
+    check("댓글도 mine 으로만 노출",
+          [c["mine"] for c in p1["comments"]] == [True, False]
+          and all("clientId" not in c for c in p1["comments"]))
+
+    anon = json.loads(page.evaluate(runner, [src, stored, ""])["body"])
+    check("익명 요청은 전부 mine=false", all(p["mine"] is False for p in anon["posts"]))
+    page.close()
+
+
 def test_mobile(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 390, "height": 844})
     watch(page)
@@ -223,7 +283,8 @@ def main() -> int:
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
-            for fn in (test_deeplinks, test_dialogs, test_trust_center, test_mobile):
+            for fn in (test_deeplinks, test_dialogs, test_trust_center,
+                       test_worker_no_client_id_leak, test_mobile):
                 print(f"\n--- {fn.__name__} ---", flush=True)
                 fn(browser, args.base)
             browser.close()

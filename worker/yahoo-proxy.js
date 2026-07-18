@@ -1339,11 +1339,33 @@ async function handleCommunityList(url, env) {
   // 신고는 더 이상 전체 공개 목록을 숨기지 않는다(신고자 본인만 클라이언트에서 가림).
   // 응답에는 신고 내역을 노출하지 않는다(관리자 전용 엔드포인트로 분리).
   const filtered = ticker ? posts.filter((p) => p.ticker === ticker) : posts;
+
+  // clientId 는 삭제 권한의 근거다(아래 handleCommunityDelete 의
+  // target.clientId !== clientId). 그래서 목록 응답에 그대로 실으면, 누구나 남의
+  // clientId 를 읽어 그 사람 글·댓글을 지울 수 있다(/community/clear 는 통째로).
+  // likes 배열도 좋아요를 누른 사람들의 clientId 목록이라 같은 유출 경로였다.
+  // → 원본 id 는 서버에만 두고, 요청자 기준으로 계산한 불리언만 내보낸다.
+  const viewer = sanitizeCommunityClientId(url.searchParams.get("clientId"));
+  const isViewer = (id) => Boolean(viewer) && id === viewer;
   const publicPosts = filtered.slice(0, limit).map((p) => {
-    const { reports, ...rest } = p;
-    return rest;
+    const { reports, clientId, likes, comments, ...rest } = p;
+    const likeList = Array.isArray(likes) ? likes : [];
+    return {
+      ...rest,
+      mine: isViewer(clientId),
+      likeCount: likeList.length,
+      liked: likeList.some(isViewer),
+      comments: normalizeCommunityComments(comments).map((c) => {
+        const { clientId: commentClientId, ...commentRest } = c;
+        return { ...commentRest, mine: isViewer(commentClientId) };
+      }),
+    };
   });
-  return json({ posts: publicPosts, total: filtered.length }, 200, 8);
+  const resp = json({ posts: publicPosts, total: filtered.length }, 200, 8);
+  // 요청자별로 mine/liked 가 달라지므로 공유 캐시에 담기면 안 된다. URL 에
+  // clientId 가 들어가 키 자체는 갈리지만, 의도를 헤더로도 못박아 둔다.
+  if (viewer) resp.headers.set("Cache-Control", "private, max-age=8");
+  return resp;
 }
 
 async function handleCommunityCreate(request, env) {

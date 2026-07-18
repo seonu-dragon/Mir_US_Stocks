@@ -49,9 +49,22 @@ def watch(page) -> None:
 
 
 def boot(page, url: str) -> None:
-    """'load' 는 스냅샷 JS·이미지까지 기다리느라 안 끝날 수 있다. 앱 부팅 함수로 판단한다."""
+    """'load' 는 스냅샷 JS·이미지까지 기다리느라 안 끝날 수 있어 쓰지 않는다.
+
+    다만 app.js 가 평가됐다는 것(showAppToast 존재)만으로는 부족하다 — 시장
+    스냅샷은 5.8MB 라 그 뒤로도 한참 더 내려온다. localhost 에서는 순식간이라
+    안 드러나지만 --base 로 라이브를 때리면 아직 빈 화면인 상태로 단언하게 된다.
+    스냅샷 전역과 실제 종목 수까지 확인해야 '준비됨'이다.
+    """
     page.goto(url, wait_until="domcontentloaded", timeout=60000)
     page.wait_for_function("() => typeof window.showAppToast === 'function'", timeout=60000)
+    # 스냅샷은 http 에서 JSON 으로 fetch 되므로 window.MARKET_SNAPSHOT 은 안 채워진다
+    # (그 전역은 file:// 폴백용). 앱 내부 `data` 는 classic script 의 최상위 let 이라
+    # 그냥 이름으로 읽힌다. 부팅 직후에는 fallbackData(소수 종목)가 들어 있으므로,
+    # 실제 스냅샷(수천 종목)으로 교체됐는지를 개수로 가른다.
+    page.wait_for_function(
+        "() => typeof data !== 'undefined' && data && Array.isArray(data.stocks)"
+        " && data.stocks.length > 100", timeout=90000)
     page.wait_for_timeout(2600)
 
 

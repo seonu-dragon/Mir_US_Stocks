@@ -1,0 +1,27 @@
+{
+  "stage": "grok_phase2",
+  "completed_at": "2026-07-18T12:15:00+09:00",
+  "date": "2026-07-18",
+  "topics_analyzed": 5,
+  "external_sources_count": 38,
+  "output": "SNS/Naver/02_daily_work/2026-07-18/02_analysis/02_grok_phase2.md",
+  "input_files": [
+    "SNS/Naver/02_daily_work/2026-07-18/02_analysis/01_gemini_phase1.md",
+    "SNS/Naver/02_daily_work/2026-07-18/01_input/news_collection.json",
+    "SNS/Common/templates/grok/grok_precise_analysis_guide.md"
+  ],
+  "top5_titles": [
+    "반도체주 급락 및 AI 투자 회의론 확산…TSMC 실적 호조에도 투자심리 위축",
+    "한국은행, 기준금리 0.25%p 인상…주담대 8% 육박, 가계 이자 부담 가중",
+    "금융당국, 단일 종목 레버리지 ETF 규제 강화…코스피 급락에 투자자 혼란",
+    "현대차그룹, 보스턴다이내믹스 지분 100% 확보…로봇 상용화 가속",
+    "삼성전자 소액주주, 수십조 성과급 지급에 주주총회 승인 요구…국민연금 압박"
+  ],
+  "key_corrections": [
+    "TSMC 순익 YoY 국내(+23.4%)·해외(+77%대) 불일치 가능성 명시, 애리조나 추가 $100B·총 대미 ~$265B 구체화",
+    "레버리지 예탁금 일정 이원화(8/5 상향, 8/19 현금만), 코스피 7/16 종가 6820.60(-6.37%) 확정",
+    "BD 100%는 풋옵션 후 인수 절차 진행·30조는 추정, 삼성 40조 성과급은 소액주주 추정 상단"
+  ],
+  "agent": "grok",
+  "status": "completed"
+}

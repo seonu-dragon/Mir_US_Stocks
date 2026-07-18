@@ -197,6 +197,9 @@
       // 매 방문마다 4.4초짜리 워커 왕복 뒤 빈 화면만 남았다. 실데이터가 생기기 전엔
       // 닫아 둔다 — 공매도와 같은 판단이다.
       earningsCalendar: false,
+      // 돌파/되돌림 통계(build_breakout_retest.py)는 US 만 산출한다.
+      // 없는 파일을 요청해 콘솔에 404 를 남기지 않도록 꺼 둔다.
+      breakoutStats: false,
       krDart: true,
       krOwnership: true,
     },

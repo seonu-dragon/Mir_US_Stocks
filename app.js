@@ -951,6 +951,7 @@ function boot(options = {}) {
   const initialSub = route.get("sub");
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
+  const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
   if (initialTab) {
     const resolved = normalizeTabRequest(initialTab, initialSub);
     activateTab(resolved.tab, {
@@ -958,13 +959,17 @@ function boot(options = {}) {
       sub: resolved.sub,
       communityTicker: initialCommunityTicker,
     });
-  } else if (route.get("map_bucket") || route.get("map_sector") || route.get("map_metric")) {
+  } else if (mapRoute) {
     activateTab("map", { push: false });
   }
   if (route.get("ticker")) selectTicker(route.get("ticker"));
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
+  // 탭을 지정해 들어온 경우에만 본문으로 내린다. 스크롤은 boot 맨 끝에서 —
+  // 위의 selectTicker/renderAll 이 각자 scrollIntoView 를 부를 수 있어서,
+  // 탭 전환 직후에 스크롤하면 그 뒤에 덮여버린다.
+  if (initialTab || mapRoute) scrollToTabContent();
   // 초기 렌더 이후, 현재 시장에서 활성화된 feature 데이터를 백그라운드로 로드.
   preloadFeatureData();
 }
@@ -2310,6 +2315,92 @@ function showAppToast(message, ms = 2000) {
   showAppToast._timer = setTimeout(() => el.classList.remove("is-visible"), ms);
 }
 
+// ===== 앱 내 확인/입력 다이얼로그 =====
+// 네이티브 alert/confirm/prompt 는 브라우저 크롬 UI 라 사이트 테마와 따로 놀고,
+// 모바일에서는 "이 페이지 내용:" 같은 문구가 앞에 붙는다. <dialog> 로 바꾸면
+// 포커스 트랩·Esc 취소·backdrop·inert 처리를 브라우저가 대신 해준다.
+// 취소는 항상 false(confirm) / null(prompt) 로 떨어진다 — 네이티브와 같은 계약.
+function appDialog({ title, message, defaultValue = null, okLabel = "확인", cancelLabel = "취소", danger = false }) {
+  const isPrompt = defaultValue !== null;
+  return new Promise((resolve) => {
+    const dlg = document.createElement("dialog");
+    dlg.className = "app-dialog" + (danger ? " is-danger" : "");
+
+    const form = document.createElement("form");
+    form.method = "dialog";
+
+    if (title) {
+      const h = document.createElement("h2");
+      h.className = "app-dialog-title";
+      h.textContent = title;
+      dlg.setAttribute("aria-labelledby", (h.id = "appDialogTitle"));
+      form.appendChild(h);
+    }
+
+    const p = document.createElement("p");
+    p.className = "app-dialog-message";
+    p.textContent = message;              // textContent — 메시지에 서버 문자열이 섞여 온다
+    form.appendChild(p);
+
+    let input = null;
+    if (isPrompt) {
+      input = document.createElement("input");
+      input.type = "text";
+      input.className = "app-dialog-input";
+      input.value = defaultValue;
+      input.setAttribute("aria-label", message);
+      form.appendChild(input);
+    }
+
+    const actions = document.createElement("div");
+    actions.className = "app-dialog-actions";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "app-dialog-btn";
+    cancelBtn.textContent = cancelLabel;
+    const okBtn = document.createElement("button");
+    okBtn.type = "submit";
+    okBtn.className = "app-dialog-btn is-primary";
+    okBtn.textContent = okLabel;
+    actions.append(cancelBtn, okBtn);
+    form.appendChild(actions);
+    dlg.appendChild(form);
+    document.body.appendChild(dlg);
+
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value);
+      // close 애니메이션이 끝난 뒤 DOM 에서 걷어낸다.
+      dlg.addEventListener("close", () => dlg.remove(), { once: true });
+      if (dlg.open) dlg.close(); else dlg.remove();
+    };
+
+    const cancelValue = isPrompt ? null : false;
+    cancelBtn.addEventListener("click", () => finish(cancelValue));
+    dlg.addEventListener("cancel", (e) => { e.preventDefault(); finish(cancelValue); });  // Esc
+    // backdrop 클릭 = 취소. 다이얼로그 자신이 이벤트 타깃일 때만(내부 클릭 제외).
+    dlg.addEventListener("click", (e) => { if (e.target === dlg) finish(cancelValue); });
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      finish(isPrompt ? input.value : true);
+    });
+
+    dlg.showModal();
+    (isPrompt ? input : okBtn).focus();
+    if (isPrompt) input.select();
+  });
+}
+
+function showAppConfirm(message, options = {}) {
+  return appDialog({ message, okLabel: "확인", ...options });
+}
+
+function showAppPrompt(message, defaultValue = "", options = {}) {
+  return appDialog({ message, defaultValue: defaultValue ?? "", ...options });
+}
+
 const TAB_REDIRECT = {
   top: { tab: "search", sub: "top" },
   jump: { tab: "search", sub: "jump" },
@@ -3053,6 +3144,49 @@ function updateTabsScrollHints() {
   const maxScroll = tabsEl.scrollWidth - tabsEl.clientWidth;
   wrap.classList.toggle("can-scroll-left", tabsEl.scrollLeft > 4);
   wrap.classList.toggle("can-scroll-right", maxScroll > 4 && tabsEl.scrollLeft < maxScroll - 4);
+}
+
+// 딥링크(?tab=...)로 들어온 사용자를 탭 본문까지 데려간다.
+// 홈 상단은 시장 요약·지수 카드·카드뉴스가 차지하고 있어서, 특정 탭을 지정해
+// 들어와도 첫 뷰포트는 홈과 사실상 같았다 — 목적을 가지고 온 사람이 매번
+// 손으로 스크롤해야 했다. 탭 바가 화면 위쪽에 걸치도록(본문 시작점이 아니라)
+// 맞춰서, 다른 탭으로 갈아탈 여지는 남긴다.
+const TAB_SCROLL_GAP = 8;         // 탭 바 위에 남길 여백
+const TAB_SCROLL_SETTLE_MS = 2400; // 이 시간까지 늦게 도착하는 데이터에 맞춰 재정렬
+
+function scrollToTabContent() {
+  const wrap = byId("tabsScrollWrap");
+  if (!wrap) return;
+
+  // 한 번만 스크롤하면 안 된다. signals/institutional/calendar 처럼 데이터를 늦게
+  // 받는 탭은 스크롤이 끝난 뒤에 위쪽(시장 요약·브리핑) 높이가 자라고, 그만큼
+  // 탭 바가 아래로 밀려 내려가 목적지에 못 미친 화면이 된다. 위치가 안정될
+  // 때까지 짧게 재정렬한다.
+  // 부드러운 스크롤은 애니메이션 중 좌표가 계속 변해 재정렬과 싸우므로 쓰지 않는다.
+  // 짧은 탭(예: 캘린더)은 문서 자체가 뷰포트보다 조금만 길어서 탭 바를 맨 위까지
+  // 올릴 수 없다. 그럴 땐 스크롤 가능한 끝까지가 목표다 — 이 한계를 안 두면
+  // 도달 못 하는 좌표를 향해 재정렬이 끝없이 돈다.
+  const targetY = () => {
+    const want = wrap.getBoundingClientRect().top + window.pageYOffset - TAB_SCROLL_GAP;
+    const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+    return Math.min(Math.max(0, want), max);
+  };
+  const align = () => window.scrollTo({ top: targetY(), behavior: "auto" });
+
+  let timer = null;
+  const stop = () => {
+    if (timer) { clearInterval(timer); timer = null; }
+    ["wheel", "touchstart", "keydown"].forEach((t) => window.removeEventListener(t, stop));
+  };
+  // 사용자가 직접 스크롤을 시작하면 즉시 손을 뗀다 — 읽는 중에 화면이 튀면 안 된다.
+  ["wheel", "touchstart", "keydown"].forEach((t) => window.addEventListener(t, stop, { passive: true }));
+
+  requestAnimationFrame(align);
+  const until = Date.now() + TAB_SCROLL_SETTLE_MS;
+  timer = setInterval(() => {
+    if (Math.abs(window.pageYOffset - targetY()) > 4) align();
+    if (Date.now() > until) stop();
+  }, 150);
 }
 
 function activateTab(name, { push = true, ticker = null, sub = null, communityTicker = null } = {}) {
@@ -11402,7 +11536,11 @@ function trustPayloadCount(payload, keys = []) {
   return 0;
 }
 
-function trustStatus(timestamp, count, maxHours) {
+function trustStatus(timestamp, count, maxHours, pending = false) {
+  // 무거운 데이터셋은 해당 탭을 처음 열 때 로드된다(FEATURE_DATA heavy).
+  // 아직 안 받아온 것을 "데이터 없음"으로 보고하면 멀쩡한 파이프라인을 장애로
+  // 오진하게 된다 — 실제로 신뢰도 센터가 늘 "확인 필요 8" 을 띄우던 원인이었다.
+  if (pending) return { key: "pending", label: "불러오는 중", age: null };
   if (!count) return { key: "missing", label: "데이터 없음", age: null };
   const parsed = parseSnapshotDate(timestamp);
   if (!parsed) return { key: "unknown", label: "시각 확인 필요", age: null };
@@ -11419,14 +11557,118 @@ function trustAgeLabel(hours) {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
+const GITHUB_REPO = "https://github.com/seonu-dragon/Mir_US_Stocks";
+
+// 상태가 나쁠 때 "그래서 뭘 해야 하나"에 답하기 위한 소스별 복구 정보.
+// workflow 는 .github/workflows/*.yml 의 name: 과 정확히 일치해야 한다
+// (deploy-pages.yml 의 workflow_run 목록과 같은 값).
+// script 는 그 워크플로우가 실제로 실행하는 빌더다.
+const TRUST_RECOVERY = {
+  "시장 스냅샷": {
+    us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
+    kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
+    tabs: "홈 시장 요약 · 히트맵 · 종목 검색 · 포트폴리오 평가액",
+  },
+  "펀더멘털": {
+    us: { workflow: "Daily US market snapshot", script: "scripts/build_us_finnhub_metrics.py" },
+    kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
+    tabs: "종목 상세 지표 · 스크리너 · 히트맵 밸류 지표",
+  },
+  "내부자 거래": {
+    us: { workflow: "Insider trades (SEC Form 4)", script: "scripts/build_insider_trades.py" },
+    tabs: "스마트머니 신호",
+  },
+  "주요 공시": {
+    us: { workflow: "Material events (SEC 8-K)", script: "scripts/build_material_events.py" },
+    kr: { workflow: "KR DART disclosures + ownership", script: "scripts/build_kr_disclosures.py" },
+    tabs: "공시 · 액션 보드 · 종목 이벤트",
+  },
+  "대량보유": {
+    us: { workflow: "Activist stakes (SEC 13D/G)", script: "scripts/build_activist_stakes.py" },
+    kr: { workflow: "KR DART disclosures + ownership", script: "scripts/build_kr_ownership.py" },
+    tabs: "지분 변동",
+  },
+  "IPO": {
+    us: { workflow: "IPO calendar (SEC S-1/424B4)", script: "scripts/build_ipo_calendar.py" },
+    tabs: "IPO 캘린더",
+  },
+  "공매도": {
+    us: { workflow: "Short interest (Nasdaq/FINRA)", script: "scripts/build_short_interest.py" },
+    tabs: "공매도 패널",
+  },
+  "기관 13F": {
+    us: { workflow: "Institutional 13F quarterly refresh", script: "scripts/build_13f_snapshot.py" },
+    tabs: "기관 13F · 스마트머니 신호",
+  },
+  "정치인 매매": {
+    us: { workflow: "Congress trades refresh", script: "scripts/build_congress_trades.py" },
+    tabs: "의회 거래 · 스마트머니 신호",
+  },
+  "백악관 일정": {
+    us: { workflow: "White House schedule refresh", script: "scripts/schedule_store.py" },
+    tabs: "백악관 일정",
+  },
+};
+
+// 상태별로 "무슨 일이 일어난 것인지"와 "무엇을 하면 되는지"를 나눠 쓴다.
+// 두 문장이 붙어 있으면 사용자가 원인과 조치를 구분하지 못한다.
+function trustDiagnosis(row) {
+  const key = row.status.key;
+  const wf = row.recovery?.workflow;
+  const runHint = wf
+    ? `GitHub Actions 에서 "${wf}" 워크플로우를 수동 실행(Run workflow)하면 다시 수집한다.`
+    : "해당 빌더 스크립트를 로컬에서 실행하면 다시 수집한다.";
+  if (key === "pending") {
+    return {
+      cause: "무거운 데이터셋이라 필요할 때 내려받는다. 아직 이 브라우저로 받아오는 중이며, 파이프라인 문제가 아니다.",
+      fix: "잠시 후 자동으로 갱신된다. 계속 이 상태면 네트워크나 파일 배포를 확인한다.",
+    };
+  }
+  if (key === "missing") {
+    return {
+      cause: "이 데이터셋이 브라우저에 로드되지 않았다. 빌드가 한 번도 성공하지 않았거나, 이 시장(US/KR)에서 제공하지 않는 소스일 수 있다.",
+      fix: runHint,
+    };
+  }
+  if (key === "unknown") {
+    return {
+      cause: "데이터는 있는데 기준 시각이 비어 있다. 빌더가 updatedAtKst 를 쓰지 않았을 때 나타난다.",
+      fix: "빌더 출력에 기준 시각 필드가 들어가는지 확인한다. " + runHint,
+    };
+  }
+  if (key === "stale") {
+    return {
+      cause: `갱신 주기(${row.cadence})를 넘겼다. 워크플로우가 실패했거나, 커밋은 됐지만 배포가 안 됐을 수 있다.`,
+      fix: `먼저 Actions 실행 이력에서 실패 여부를 본다. 성공했는데도 오래됐다면 배포 쪽 문제다 — 커밋 메시지의 [skip ci] 나 deploy-pages.yml 의 workflow_run 목록에 이 워크플로우 이름이 빠졌는지 확인한다. ${runHint}`,
+    };
+  }
+  if (key === "warn") {
+    return {
+      cause: "아직 유효하지만 다음 갱신 시점이 가까워졌다.",
+      fix: "조치 불필요. 다음 예정 실행 후에도 시각이 그대로면 그때 확인한다.",
+    };
+  }
+  return { cause: "정상 주기 안에서 갱신되고 있다.", fix: "조치 불필요." };
+}
+
 function dataTrustSources() {
   const snapshotTime = data.updatedAtKst || data.updated_at_kst || "";
   const fundamentals = window.MAP_FUNDAMENTALS || {};
   const cfg = marketCfg();
-  const source = (name, provider, payload, keys, maxHours, cadence, fallbackTime = "") => {
+  // 시장별로 워크플로우가 다르다(US/KR). 현재 시장 것만 보여준다.
+  const recoveryFor = (name) => {
+    const meta = TRUST_RECOVERY[name];
+    if (!meta) return null;
+    const perMarket = meta[cfg.id] || meta.us || null;
+    return perMarket ? { ...perMarket, tabs: meta.tabs } : null;
+  };
+  const source = (name, provider, payload, keys, maxHours, cadence, featureKey = "", fallbackTime = "") => {
     const count = trustPayloadCount(payload, keys);
     const timestamp = payload?.updatedAtKst || payload?.updated_at_kst || payload?.updated || fallbackTime;
-    return { name, provider, count, timestamp, maxHours, cadence, status: trustStatus(timestamp, count, maxHours) };
+    // 이 시장에서 쓰는 데이터셋인데 전역이 아직 비어 있으면 = 로딩 전(장애 아님).
+    const meta = FEATURE_DATA[featureKey];
+    const pending = Boolean(meta && featureDataEnabled(meta, cfg) && !window[meta.global]);
+    return { name, provider, count, timestamp, maxHours, cadence, featureKey, recovery: recoveryFor(name), status: trustStatus(timestamp, count, maxHours, pending) };
   };
   const rows = [
     {
@@ -11436,6 +11678,7 @@ function dataTrustSources() {
       timestamp: snapshotTime,
       maxHours: 36,
       cadence: cfg.snapshotCadence || "매일 06:00 KST",
+      recovery: recoveryFor("시장 스냅샷"),
       status: trustStatus(snapshotTime, (data.stocks || []).length, 36),
     },
     {
@@ -11445,32 +11688,58 @@ function dataTrustSources() {
       timestamp: snapshotTime,
       maxHours: 36,
       cadence: "시장 스냅샷과 동시",
+      recovery: recoveryFor("펀더멘털"),
       status: trustStatus(snapshotTime, Object.keys(fundamentals).length, 36),
     },
   ];
-  if (cfg.features?.insider !== false) rows.push(source("내부자 거래", "SEC Form 4", window.INSIDER_TRADES, ["trades"], 72, "영업일 기준 수집"));
-  if (cfg.features?.materialEvents !== false) rows.push(source("주요 공시", cfg.id === "kr" ? "DART · 공시" : "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일"));
-  if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주"));
-  if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주"));
-  if (cfg.features?.shortInterest !== false) rows.push(source("공매도", "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], 1080, "월 2회"));
-  if (cfg.features?.sec13f !== false) rows.push(source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후"));
-  if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집"));
-  if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시"));
+  if (cfg.features?.insider !== false) rows.push(source("내부자 거래", "SEC Form 4", window.INSIDER_TRADES, ["trades"], 72, "영업일 기준 수집", "insider"));
+  if (cfg.features?.materialEvents !== false) rows.push(source("주요 공시", cfg.id === "kr" ? "DART · 공시" : "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일", "events"));
+  if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주", "activist"));
+  if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
+  if (cfg.features?.shortInterest !== false) rows.push(source("공매도", "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], 1080, "월 2회", "short"));
+  if (cfg.features?.sec13f !== false) rows.push(source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f"));
+  if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집", "congress"));
+  if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시", "whitehouse"));
   return rows;
 }
+
+// 신뢰도 센터가 로드를 시도해 본 feature 키(성공/실패 무관). 재요청 폭주 방지용.
+const trustLoadAttempted = new Set();
 
 function renderDataTrustCenter() {
   const grid = byId("dataTrustGrid");
   const summary = byId("dataTrustSummary");
   if (!grid || !summary) return;
   const sources = dataTrustSources();
+
+  // 아직 안 받아온 지연 로딩 데이터셋은 여기서 직접 받아온다. 신뢰도 센터가
+  // 로드도 안 된 데이터를 "없음"이라고 보고하면 안 되기 때문이다.
+  // 한 번 시도한 키는 다시 요청하지 않는다 — 성공 시 재렌더가 다시 이 코드를
+  // 타는데, 실패한 키는 계속 pending 으로 남아 무한 재요청이 되기 때문이다.
+  // (ensureFeatureData 는 script error 시 캐시를 지워 재요청을 허용한다.)
+  sources.filter((row) => row.status.key === "pending" && !trustLoadAttempted.has(row.featureKey))
+    .forEach((row) => {
+      trustLoadAttempted.add(row.featureKey);
+      ensureFeatureData(row.featureKey).then((ok) => {
+        // 실패했으면 다시 그려도 pending 그대로다. 성공했을 때만 갱신한다.
+        if (ok && byId("dataTrustGrid")) renderDataTrustCenter();
+      });
+    });
+
   const counts = sources.reduce((acc, row) => { acc[row.status.key] = (acc[row.status.key] || 0) + 1; return acc; }, {});
   summary.innerHTML = `
     <div><span>정상</span><strong class="pos">${counts.good || 0}</strong></div>
     <div><span>주의·지연</span><strong class="warn">${(counts.warn || 0) + (counts.stale || 0)}</strong></div>
     <div><span>확인 필요</span><strong>${(counts.missing || 0) + (counts.unknown || 0)}</strong></div>
-    <div><span>마지막 점검</span><strong>${escapeHtml(formatKstDateTime().slice(5))}</strong></div>`;
-  grid.innerHTML = sources.map((row) => `
+    <div><span>${counts.pending ? "불러오는 중" : "마지막 점검"}</span><strong>${counts.pending ? counts.pending : escapeHtml(formatKstDateTime().slice(5))}</strong></div>`;
+  grid.innerHTML = sources.map((row) => {
+    const { cause, fix } = trustDiagnosis(row);
+    // pending 은 곧 스스로 해소되므로 경고처럼 펼쳐두지 않는다.
+    const needsAction = !["good", "warn", "pending"].includes(row.status.key);
+    const wf = row.recovery?.workflow;
+    // 실행 이력 링크: 워크플로우 파일명을 모르니 name 으로 검색되는 Actions 목록으로 보낸다.
+    const actionsHref = `${GITHUB_REPO}/actions${wf ? `?query=${encodeURIComponent(wf)}` : ""}`;
+    return `
     <article class="data-trust-card trust-${row.status.key}">
       <div class="data-trust-card-head"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status.label)}</span></div>
       <p>${escapeHtml(row.provider)}</p>
@@ -11480,11 +11749,27 @@ function renderDataTrustCenter() {
         <div><dt>갱신 정책</dt><dd>${escapeHtml(row.cadence)}</dd></div>
       </dl>
       <small>${escapeHtml(trustAgeLabel(row.status.age))}</small>
-    </article>`).join("");
+      <details class="data-trust-detail"${needsAction ? " open" : ""}>
+        <summary>${needsAction ? "왜 이 상태인가 · 어떻게 고치나" : "상세"}</summary>
+        <dl>
+          ${row.recovery?.tabs ? `<div><dt>영향받는 화면</dt><dd>${escapeHtml(row.recovery.tabs)}</dd></div>` : ""}
+          <div><dt>원인</dt><dd>${escapeHtml(cause)}</dd></div>
+          <div><dt>조치</dt><dd>${escapeHtml(fix)}</dd></div>
+          ${wf ? `<div><dt>갱신 워크플로우</dt><dd><code>${escapeHtml(wf)}</code></dd></div>` : ""}
+          ${row.recovery?.script ? `<div><dt>빌더</dt><dd><code>${escapeHtml(row.recovery.script)}</code></dd></div>` : ""}
+        </dl>
+        <a class="data-trust-link" href="${escapeHtml(actionsHref)}" target="_blank" rel="noopener">실행 이력 보기 →</a>
+      </details>
+    </article>`;
+  }).join("");
   const refresh = byId("dataTrustRefresh");
   if (refresh && !refresh.dataset.bound) {
     refresh.dataset.bound = "1";
-    refresh.addEventListener("click", () => { renderDataTrustCenter(); showAppToast("로드된 데이터 상태를 다시 확인했습니다"); });
+    refresh.addEventListener("click", () => {
+      trustLoadAttempted.clear();   // 수동 재확인은 실패했던 로드도 다시 시도한다
+      renderDataTrustCenter();
+      showAppToast("데이터 상태를 다시 확인했습니다");
+    });
   }
 }
 
@@ -12871,7 +13156,11 @@ function communityAvatarHtml(name) {
 // ----- 신고: 신고자 본인 화면에서만 가림 + 관리자에게 신고 로그 전송 -----
 async function reportCommunityPost(postId) {
   if (!postId) return;
-  const reason = prompt("신고 사유를 적어주세요(선택). 신고한 글은 내 화면에서 가려지고, 관리자가 검토합니다.", "");
+  const reason = await showAppPrompt(
+    "신고 사유를 적어주세요(선택). 신고한 글은 내 화면에서 가려지고, 관리자가 검토합니다.",
+    "",
+    { title: "글 신고", okLabel: "신고" },
+  );
   if (reason === null) return; // 취소
   addCommunityHiddenId(postId);
   renderCommunityBoard();
@@ -12990,10 +13279,10 @@ async function submitCommunityVote() {
   const tickerInput = byId("communityVoteTicker");
   const raw = (tickerInput?.value || "").trim();
   const ticker = raw ? resolveCommunityTickerInput(raw) : "";
-  if (!ticker) { alert("투표할 종목을 입력해주세요."); return; }
-  if (!communityVoteSelectedChoice) { alert("매수 또는 매도를 선택해주세요."); return; }
+  if (!ticker) { showAppToast("투표할 종목을 입력해주세요."); return; }
+  if (!communityVoteSelectedChoice) { showAppToast("매수 또는 매도를 선택해주세요."); return; }
   const url = communityApiUrl("/community/vote");
-  if (!url) { alert("투표 기능을 사용할 수 없습니다."); return; }
+  if (!url) { showAppToast("투표 기능을 사용할 수 없습니다."); return; }
   const btn = byId("communityVoteSubmit");
   if (btn) btn.disabled = true;
   try {
@@ -13004,14 +13293,14 @@ async function submitCommunityVote() {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.message || data.error || "투표 실패");
+      showAppToast(data.message || data.error || "투표 실패", 3200);
       return;
     }
     communityVoteSelectedChoice = null;
     if (tickerInput) tickerInput.value = "";
     renderCommunityVote();
   } catch (err) {
-    alert((err && err.message) || "투표에 실패했습니다.");
+    showAppToast((err && err.message) || "투표에 실패했습니다.", 3200);
   } finally {
     if (btn) btn.disabled = false;
   }
@@ -13063,7 +13352,8 @@ async function renderCommunityAdminPanel() {
 }
 
 async function adminDeleteCommunityPost(id) {
-  if (!id || !confirm("이 글을 삭제할까요? (관리자 권한)")) return;
+  if (!id) return;
+  if (!await showAppConfirm("이 글을 삭제할까요?", { title: "관리자 삭제", okLabel: "삭제", danger: true })) return;
   const url = communityApiUrl("/community");
   if (!url) return;
   try {
@@ -13073,11 +13363,11 @@ async function adminDeleteCommunityPost(id) {
       body: JSON.stringify({ id, clientId: getCommunityClientId(), adminKey: getCommunityAdminKey() }),
     });
     const data = await res.json();
-    if (!res.ok) { alert(data.error || "삭제 실패"); return; }
+    if (!res.ok) { showAppToast(data.error || "삭제 실패", 3200); return; }
     await fetchCommunityPosts({ silent: true });
     renderCommunityAdminPanel();
   } catch (err) {
-    alert((err && err.message) || "삭제 실패");
+    showAppToast((err && err.message) || "삭제 실패", 3200);
   }
 }
 
@@ -13135,7 +13425,7 @@ async function toggleCommunityLike(postId) {
   if (!postId) return;
   const url = communityApiUrl("/community/like");
   if (!url) {
-    alert("게시판을 일시적으로 사용할 수 없습니다.");
+    showAppToast("게시판을 일시적으로 사용할 수 없습니다.");
     return;
   }
   const clientId = getCommunityClientId();
@@ -13156,7 +13446,7 @@ async function toggleCommunityLike(postId) {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.error || "공감 처리 실패"));
+      showAppToast(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.error || "공감 처리 실패"), 3200);
     }
     await fetchCommunityPosts({ silent: true });
   } catch (err) {
@@ -13539,12 +13829,12 @@ async function postCommunityMessage() {
   const ticker = rawTicker ? resolveCommunityTickerInput(rawTicker) : "";
   const content = (contentInput?.value || "").trim();
   if (!content || content.length < 2) {
-    alert("의견을 2자 이상 입력해주세요.");
+    showAppToast("의견을 2자 이상 입력해주세요.");
     return;
   }
   const url = communityApiUrl("/community");
   if (!url) {
-    alert("게시판을 일시적으로 사용할 수 없습니다.");
+    showAppToast("게시판을 일시적으로 사용할 수 없습니다.");
     return;
   }
   if (postBtn) postBtn.disabled = true;
@@ -13564,7 +13854,7 @@ async function postCommunityMessage() {
       const msg = data.error === "no_community_kv"
         ? "게시판을 일시적으로 사용할 수 없습니다."
         : (data.message || data.error || "등록 실패");
-      alert(msg);
+      showAppToast(msg, 3200);
       return;
     }
     if (contentInput) contentInput.value = "";
@@ -13583,7 +13873,7 @@ async function postCommunityMessage() {
     await fetchCommunityPosts();
     if (data.post && data.post.id) communityHighlightPost(data.post.id);
   } catch (err) {
-    alert((err && err.message) || "글 등록에 실패했습니다.");
+    showAppToast((err && err.message) || "글 등록에 실패했습니다.", 3200);
   } finally {
     if (postBtn) postBtn.disabled = false;
   }
@@ -13592,7 +13882,7 @@ async function postCommunityMessage() {
 async function postCommunityComment(postId, rawContent) {
   const content = String(rawContent || "").trim();
   if (!postId || content.length < 2) {
-    alert("댓글을 2자 이상 입력해주세요.");
+    showAppToast("댓글을 2자 이상 입력해주세요.");
     return;
   }
   const nickInput = byId("communityNickname");
@@ -13600,7 +13890,7 @@ async function postCommunityComment(postId, rawContent) {
   setCommunityNickname(author);
   const url = communityApiUrl("/community/comment");
   if (!url) {
-    alert("게시판을 일시적으로 사용할 수 없습니다.");
+    showAppToast("게시판을 일시적으로 사용할 수 없습니다.");
     return;
   }
   try {
@@ -13616,19 +13906,20 @@ async function postCommunityComment(postId, rawContent) {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.message || data.error || "댓글 등록 실패"));
+      showAppToast(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.message || data.error || "댓글 등록 실패"), 3200);
       return;
     }
     communityReplyPostId = null;
     communityBoardError = "";
     await fetchCommunityPosts();
   } catch (err) {
-    alert((err && err.message) || "댓글 등록에 실패했습니다.");
+    showAppToast((err && err.message) || "댓글 등록에 실패했습니다.", 3200);
   }
 }
 
 async function deleteCommunityComment(postId, commentId) {
-  if (!postId || !commentId || !confirm("이 댓글을 삭제할까요?")) return;
+  if (!postId || !commentId) return;
+  if (!await showAppConfirm("이 댓글을 삭제할까요?", { title: "댓글 삭제", okLabel: "삭제", danger: true })) return;
   const url = communityApiUrl("/community/comment");
   if (!url) return;
   try {
@@ -13643,17 +13934,18 @@ async function deleteCommunityComment(postId, commentId) {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.error === "forbidden" ? "본인 댓글만 삭제할 수 있습니다." : (data.error || "삭제 실패"));
+      showAppToast(data.error === "forbidden" ? "본인 댓글만 삭제할 수 있습니다." : (data.error || "삭제 실패"), 3200);
       return;
     }
     await fetchCommunityPosts();
   } catch (err) {
-    alert((err && err.message) || "댓글 삭제에 실패했습니다.");
+    showAppToast((err && err.message) || "댓글 삭제에 실패했습니다.", 3200);
   }
 }
 
 async function deleteCommunityPost(id) {
-  if (!id || !confirm("이 글을 삭제할까요?")) return;
+  if (!id) return;
+  if (!await showAppConfirm("이 글을 삭제할까요?", { title: "글 삭제", okLabel: "삭제", danger: true })) return;
   const url = communityApiUrl("/community");
   if (!url) return;
   try {
@@ -13664,17 +13956,17 @@ async function deleteCommunityPost(id) {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.error === "forbidden" ? "본인 글만 삭제할 수 있습니다." : (data.error || "삭제 실패"));
+      showAppToast(data.error === "forbidden" ? "본인 글만 삭제할 수 있습니다." : (data.error || "삭제 실패"), 3200);
       return;
     }
     await fetchCommunityPosts();
   } catch (err) {
-    alert((err && err.message) || "삭제에 실패했습니다.");
+    showAppToast((err && err.message) || "삭제에 실패했습니다.", 3200);
   }
 }
 
 async function clearCommunityPostsMine() {
-  if (!confirm("이 브라우저에서 작성한 글을 모두 삭제할까요?")) return;
+  if (!await showAppConfirm("이 브라우저에서 작성한 글을 모두 삭제할까요? 되돌릴 수 없습니다.", { title: "내 글 전체 삭제", okLabel: "모두 삭제", danger: true })) return;
   const url = communityApiUrl("/community/clear");
   if (!url) return;
   try {
@@ -13685,12 +13977,12 @@ async function clearCommunityPostsMine() {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.message || data.error || "삭제 실패");
+      showAppToast(data.message || data.error || "삭제 실패", 3200);
       return;
     }
     await fetchCommunityPosts();
   } catch (err) {
-    alert((err && err.message) || "삭제에 실패했습니다.");
+    showAppToast((err && err.message) || "삭제에 실패했습니다.", 3200);
   }
 }
 
@@ -15811,7 +16103,7 @@ function downloadCsv(filename, rows) {
 }
 
 function exportPortfolioCsv() {
-  if (!portfolio.length) { alert("보낼 보유 종목이 없습니다."); return; }
+  if (!portfolio.length) { showAppToast("보낼 보유 종목이 없습니다."); return; }
   const fmt = marketCfg().formatMoney;
   const rows = [["티커", "종목명", "수량", "평단", "현재가", "평가액", "손익%", "섹터"]];
   portfolio.forEach((p) => {
@@ -15837,7 +16129,7 @@ function exportPortfolioCsv() {
 let lastBacktestExportPayload = null;
 
 function exportBacktestCsv() {
-  if (!lastBacktestExportPayload) { alert("먼저 시뮬레이션을 실행해 주세요."); return; }
+  if (!lastBacktestExportPayload) { showAppToast("먼저 시뮬레이션을 실행해 주세요."); return; }
   const p = lastBacktestExportPayload;
   const rows = [
     ["포트폴리오 수익률%", p.totalReturn],
@@ -16726,10 +17018,10 @@ function renderAiHistoryList() {
       
       const deleteBtn = menu.querySelector(".context-delete-btn");
       if (deleteBtn) {
-        deleteBtn.addEventListener("click", (e) => {
+        deleteBtn.addEventListener("click", async (e) => {
           e.stopPropagation();
           menu.classList.remove("is-open");
-          if (confirm("이 대화 기록을 삭제하시겠습니까?")) {
+          if (await showAppConfirm("이 대화 기록을 삭제하시겠습니까?", { title: "대화 기록 삭제", okLabel: "삭제", danger: true })) {
             deleteAiChatSession(id);
           }
         });
@@ -17727,7 +18019,7 @@ async function exportWidgetAsImage(widget, ticker) {
     document.body.removeChild(link);
     
   } catch (err) {
-    alert("이미지 캡처 중 오류가 발생했습니다: " + err.message);
+    showAppToast("이미지 캡처 중 오류가 발생했습니다: " + err.message, 3200);
   } finally {
     if (shareBtn) {
       shareBtn.textContent = prevText;

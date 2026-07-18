@@ -13087,12 +13087,24 @@ function formatCommunityTime(iso) {
   }
 }
 
+// 서버는 더 이상 clientId(=삭제 권한의 근거)나 좋아요 누른 사람 목록을 내려주지
+// 않는다. 요청자 기준으로 계산된 mine/liked/likeCount 만 온다.
+// `?? ` 폴백은 아직 옛 워커가 떠 있는 동안 UI 가 죽지 않게 하는 임시 경로다 —
+// 워커를 재배포하면 응답에 likes/clientId 자체가 없어 자연히 새 경로만 탄다.
 function communityLikeCount(post) {
+  if (post && typeof post.likeCount === "number") return post.likeCount;
   return Array.isArray(post && post.likes) ? post.likes.length : 0;
 }
 
 function communityLikedByMe(post) {
+  if (post && typeof post.liked === "boolean") return post.liked;
   return Array.isArray(post && post.likes) && post.likes.includes(getCommunityClientId());
+}
+
+// 이 글/댓글이 내 것인가. 서버 판정(mine)을 우선한다.
+function communityIsMine(item) {
+  if (item && typeof item.mine === "boolean") return item.mine;
+  return Boolean(item) && item.clientId === getCommunityClientId();
 }
 
 function communityCommentCount(post) {
@@ -13429,13 +13441,14 @@ async function toggleCommunityLike(postId) {
     return;
   }
   const clientId = getCommunityClientId();
-  // 낙관적 업데이트(서버 응답 전 즉시 반영)
+  // 낙관적 업데이트(서버 응답 전 즉시 반영). 서버가 좋아요 누른 사람 목록을
+  // 더 이상 내려주지 않으므로 집계값(likeCount/liked)만 뒤집는다.
   const cached = communityPostsCache.find((p) => p.id === postId);
   if (cached) {
-    const likes = Array.isArray(cached.likes) ? cached.likes.slice() : [];
-    const i = likes.indexOf(clientId);
-    if (i >= 0) likes.splice(i, 1); else likes.push(clientId);
-    cached.likes = likes;
+    const liked = communityLikedByMe(cached);
+    cached.liked = !liked;
+    cached.likeCount = Math.max(0, communityLikeCount(cached) + (liked ? -1 : 1));
+    delete cached.likes;   // 옛 워커가 준 배열이 남아 있으면 판정이 엇갈린다
     renderCommunityBoard();
   }
   try {
@@ -13517,7 +13530,7 @@ function filterCommunityPostsView(posts) {
   const hidden = getCommunityHiddenIds();
   let filtered = posts.filter((p) => !hidden.has(p.id));
   if (filterMode === "mine") {
-    filtered = filtered.filter((p) => p.clientId === clientId);
+    filtered = filtered.filter((p) => communityIsMine(p));
   } else if (filterMode === "watchlist") {
     const set = new Set((Array.isArray(watchlist) ? watchlist : []).map((t) => String(t).toUpperCase()));
     filtered = filtered.filter((p) => p.ticker && set.has(String(p.ticker).toUpperCase()));
@@ -13592,7 +13605,7 @@ function renderCommunityBoard() {
 
   feed.innerHTML = pagePosts.map((post) => {
     const stock = post.ticker ? stockByTicker(post.ticker) : null;
-    const canDelete = post.clientId === clientId;
+    const canDelete = communityIsMine(post);
     const comments = Array.isArray(post.comments) ? post.comments : [];
     const replyOpen = communityReplyPostId === post.id;
     return `
@@ -13611,7 +13624,7 @@ function renderCommunityBoard() {
         ${comments.length ? `
           <div class="community-comments">
             ${comments.map((comment) => {
-              const canDeleteComment = comment.clientId === clientId;
+              const canDeleteComment = communityIsMine(comment);
               return `
                 <div class="community-comment" data-comment-id="${escapeHtml(comment.id)}">
                   <div class="community-comment-head">
@@ -13788,7 +13801,10 @@ async function fetchCommunityPosts({ silent = false } = {}) {
 
   communityFetchPromise = (async () => {
     try {
-      const res = await fetch(url, { cache: "no-store" });
+      // 서버가 "이 글이 요청자 것인가"를 판정할 수 있게 내 clientId 를 보낸다.
+      // 응답에는 남의 clientId 가 실리지 않고 mine/liked 불리언만 온다.
+      const listUrl = `${url}${url.includes("?") ? "&" : "?"}clientId=${encodeURIComponent(getCommunityClientId())}`;
+      const res = await fetch(listUrl, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok && data.error !== "no_community_kv") {
         throw new Error(data.message || data.error || `HTTP ${res.status}`);

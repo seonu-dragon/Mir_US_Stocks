@@ -373,6 +373,9 @@ function updateDataLoadedAt(date = new Date()) {
 // market is ever loaded, so we never download the other market's snapshot.
 function loadEarningsCalendarSnapshot(cfg) {
   return new Promise((resolve) => {
+    // 이 시장에 실적 예정일 데이터가 없으면 아예 요청하지 않는다. KR 은 해당
+    // 파일이 존재한 적이 없어 부팅 때마다 404 를 냈다(market_config 주석 참고).
+    if (cfg.features && cfg.features.earningsCalendar === false) { resolve(false); return; }
     const isKr = cfg.id === "kr";
     const src = isKr ? "data/korea/earnings_calendar.js" : "data/earnings_calendar.js";
     const globalName = isKr ? "KOREA_EARNINGS_CALENDAR" : "EARNINGS_CALENDAR_SNAPSHOT";
@@ -902,6 +905,20 @@ function applyMarketOnlyUi() {
     });
     if (searchSubTab === "short" && cfg.features && !cfg.features.shortInterest) {
       activateSearchSub("analysis", { push: false });
+    }
+  }
+  const calendarNav = byId("calendarSubTabs");
+  if (calendarNav) {
+    // 키가 없는 시장(US)은 켜진 것으로 본다 — 이 파일의 다른 기능 판정과 같은 규칙.
+    // 처음에 !cfg.features.earningsCalendar 로 썼다가 US 실적 탭까지 숨겼다.
+    const earningsOff = cfg.features && cfg.features.earningsCalendar === false;
+    calendarNav.querySelectorAll(".sub-tab").forEach((btn) => {
+      const hidden = (btn.dataset.sub === "earnings" && earningsOff);
+      btn.hidden = hidden;
+      btn.style.display = hidden ? "none" : "";
+    });
+    if (calendarSubTab === "earnings" && earningsOff) {
+      activateCalendarSub("macro", { push: false });
     }
   }
   const calKr = document.querySelector('[data-cal-country="korea"]');
@@ -11608,6 +11625,14 @@ const TRUST_RECOVERY = {
     us: { workflow: "White House schedule refresh", script: "scripts/schedule_store.py" },
     tabs: "백악관 일정",
   },
+  "DART 공시": {
+    kr: { workflow: "KR DART disclosures + ownership", script: "scripts/build_kr_disclosures.py" },
+    tabs: "공시 · 액션 보드 · 종목 이벤트",
+  },
+  "지분 공시": {
+    kr: { workflow: "KR DART disclosures + ownership", script: "scripts/build_kr_ownership.py" },
+    tabs: "지분 변동 · 대량보유",
+  },
 };
 
 // 상태별로 "무슨 일이 일어난 것인지"와 "무엇을 하면 되는지"를 나눠 쓴다.
@@ -11700,6 +11725,10 @@ function dataTrustSources() {
   if (cfg.features?.sec13f !== false) rows.push(source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f"));
   if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집", "congress"));
   if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시", "whitehouse"));
+  // KR 전용 소스. 이게 빠져 있어서 2026-07-17 에 DART 데이터가 배포 트리거 끊김으로
+  // 사이트에 안 나가는 동안에도 신뢰도 센터는 "정상"만 보여줬다.
+  if (cfg.features?.krDart) rows.push(source("DART 공시", "DART Open API", window.KR_DISCLOSURES, ["disclosures"], 48, "매일", "krDart"));
+  if (cfg.features?.krOwnership) rows.push(source("지분 공시", "DART Open API", window.KR_OWNERSHIP, ["majorHolders", "insiders"], 72, "매일", "krOwnership"));
   return rows;
 }
 
@@ -15102,6 +15131,14 @@ function sp500TopTickers(limit = 50) {
 function loadEarningsCalendar(force = false) {
   const body = byId("earningsCalendarBody");
   if (!body) return;
+  const cfg = marketCfg();
+  if (cfg.features && cfg.features.earningsCalendar === false) {
+    // 서브탭 자체를 숨기지만(setupMarketMode), 딥링크로 직접 들어오는 경로가 있어
+    // 여기서도 막는다. 빈 표 대신 이유를 밝힌다 — 로딩 중으로 오해하지 않도록.
+    body.innerHTML = `<p class="muted">국내는 실적 발표 예정일을 제공하는 공개 데이터 소스가 없어 이 표를 제공하지 않습니다.
+      지나간 분기 실적은 종목 상세에서 확인할 수 있습니다.</p>`;
+    return;
+  }
   if (earningsCalendarCache && !force) {
     renderEarningsCalendarMarket(earningsCalendarCache);
     return;

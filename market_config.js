@@ -189,6 +189,14 @@
       // 공시처럼 노출하지 않도록 패널을 닫아 둔다.
       shortInterest: false,
       whiteHouse: false,
+      // 국내는 '실적 발표 예정일' 소스가 없다. build_kr_earnings.py 가 만드는 건
+      // 지나간 분기 실적(매출·영업이익)이고, 그 빌더도 "애널리스트 추정치가 없어
+      // 서프라이즈는 제공하지 않는다"고 적어 두었다. 워커의 Yahoo 조회도 KR 티커에
+      // 대해 빈 배열을 준다(005930.KS 등 4종 실측 → {"earnings":[]}).
+      // 있지도 않은 data/korea/earnings_calendar.js 를 계속 요청해 404 를 냈고,
+      // 매 방문마다 4.4초짜리 워커 왕복 뒤 빈 화면만 남았다. 실데이터가 생기기 전엔
+      // 닫아 둔다 — 공매도와 같은 판단이다.
+      earningsCalendar: false,
       krDart: true,
       krOwnership: true,
     },

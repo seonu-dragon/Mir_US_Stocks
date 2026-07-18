@@ -18,6 +18,15 @@ Usage:
   --merge   also writes cardNews into data/market_snapshot.{json,js} immediately
             (no network), so the gallery goes live without a full market rebuild.
             update_data.py also injects/preserves this manifest on its daily run.
+
+Retention:
+  Each run also prunes data/content/ down to the last KEEP_DAYS dates. The site
+  only ever reads today's deck, but this directory used to grow ~13MB per
+  publish and never shrink (222MB by 2026-07-18 — 40% of the deploy artifact).
+  Pruned days stay recoverable from git history.
+
+      python scripts/build_today_content.py --prune-only --dry-run
+      python scripts/build_today_content.py --prune-only --keep-days 7
 """
 
 import argparse
@@ -25,7 +34,9 @@ import json
 import os
 import re
 import shutil
+import stat
 import tempfile
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -60,6 +71,10 @@ OUT_MANIFEST = ROOT / "data" / "today_content.json"
 OUT_JSON = ROOT / "data" / "market_snapshot.json"
 OUT_JS = ROOT / "data" / "market_snapshot.js"
 CONTENT_ASSETS = ROOT / "data" / "content"
+
+# data/content/ 에 남겨둘 날짜 수. 사이트는 오늘 덱만 참조하므로 원래 1일이면
+# 충분하지만, 빌드 실패 시 되돌릴 여지와 KST/UTC 시차 경계를 위해 여유를 둔다.
+KEEP_DAYS = 3
 
 
 def kst_today():
@@ -197,6 +212,68 @@ def build_payload(date):
     return payload
 
 
+def _rmtree_resilient(path, attempts=5):
+    """OneDrive 동기화 폴더에서도 지워지게 재시도한다.
+
+    이 레포는 OneDrive 아래에 있어서, 파일을 지운 직후 동기화 클라이언트가
+    디렉터리 핸들을 잠깐 붙들고 있으면 rmdir 이 WinError 5 로 실패한다
+    (파일은 지워졌는데 빈 디렉터리만 남는 상태). 읽기전용 속성도 함께 푼다.
+    """
+    def on_error(func, target, _exc):
+        os.chmod(target, stat.S_IWRITE)
+        func(target)
+
+    last = None
+    for i in range(attempts):
+        try:
+            shutil.rmtree(path, onexc=on_error)
+            return True
+        except OSError as exc:
+            last = exc
+            time.sleep(0.3 * (i + 1))
+    print(f"  ! {path.name} 삭제 실패: {last}")
+    return False
+
+
+def prune_old_content(keep_days, today, dry_run=False):
+    """data/content/ 에서 보존 기간을 넘긴 날짜 디렉터리를 지운다.
+
+    사이트는 '오늘' 덱만 참조한다(market_snapshot.cardNews / today_content.json).
+    지난 카드뉴스를 보는 화면은 없다. 그런데 이 디렉터리는 발행일마다 ~13MB 씩
+    쌓이기만 해서, 2026-07-18 기준 222MB / 배포 아티팩트의 40% 를 차지했다.
+    GitHub Pages 발행 사이트 권장 한도가 1GB 라 방치하면 언젠가 배포가 막힌다.
+
+    지운 파일은 git 이력에 남으므로 필요하면 되살릴 수 있다:
+        git log --all -- data/content/<날짜>
+        git checkout <commit> -- data/content/<날짜>
+    """
+    if not CONTENT_ASSETS.is_dir():
+        return []
+    cutoff = (datetime.strptime(today, "%Y-%m-%d") - timedelta(days=keep_days - 1)).date()
+    removed = []
+    for child in sorted(CONTENT_ASSETS.iterdir()):
+        if not child.is_dir():
+            continue
+        try:
+            stamp = datetime.strptime(child.name, "%Y-%m-%d").date()
+        except ValueError:
+            continue                      # 날짜 형식이 아닌 디렉터리는 건드리지 않는다
+        if stamp >= cutoff:
+            continue
+        size = sum(f.stat().st_size for f in child.rglob("*") if f.is_file())
+        if not dry_run and not _rmtree_resilient(child):
+            continue                      # 못 지운 건 삭제했다고 보고하지 않는다
+        removed.append((child.name, size))
+    if removed:
+        total = sum(s for _, s in removed) / 1024 / 1024
+        verb = "지울 대상" if dry_run else "삭제"
+        print(f"[prune] {verb} {len(removed)}개 디렉터리, {total:.1f}MB "
+              f"(보존 {keep_days}일: {cutoff} 이후)")
+        for name, size in removed:
+            print(f"  - {name}  {size / 1024 / 1024:.1f}MB")
+    return removed
+
+
 def atomic_write(path, text):
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(prefix=path.stem + "_", suffix=path.suffix, dir=str(path.parent))
@@ -234,7 +311,17 @@ def main():
     parser.add_argument("--date", default=kst_today(), help="YYYY-MM-DD (default: today KST)")
     parser.add_argument("--merge", action="store_true",
                         help="Also inject into market_snapshot.{json,js} immediately.")
+    parser.add_argument("--keep-days", type=int, default=KEEP_DAYS,
+                        help=f"data/content/ 보존 일수 (기본 {KEEP_DAYS}, 0이면 정리 안 함)")
+    parser.add_argument("--prune-only", action="store_true",
+                        help="덱은 빌드하지 않고 오래된 content 디렉터리만 정리한다.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="--prune-only 와 함께: 지울 대상만 출력한다.")
     args = parser.parse_args()
+
+    if args.prune_only:
+        prune_old_content(args.keep_days, args.date, dry_run=args.dry_run)
+        return
 
     payload = build_payload(args.date)
 
@@ -246,6 +333,10 @@ def main():
             print(f"  [{variant}] {len(deck['images'])} page(s): {deck['title'][:48]}")
         else:
             print(f"  [{variant}] (없음)")
+
+    # 오늘 덱을 만든 뒤에 정리한다 — 순서가 반대면 보존 계산에 오늘 것이 안 잡힌다.
+    if args.keep_days > 0:
+        prune_old_content(args.keep_days, args.date)
 
     if args.merge:
         merge_into_snapshot(payload)

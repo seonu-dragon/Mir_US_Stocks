@@ -19,6 +19,8 @@ import argparse
 import json
 import sys
 import traceback
+import urllib.parse
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 try:
@@ -314,6 +316,127 @@ def test_kr_market(browser, base: str) -> None:
     page.close()
 
 
+def test_tab_a11y(browser, base: str) -> None:
+    """탭이 WAI-ARIA tablist 로 읽히고 키보드로 다닐 수 있는지.
+
+    원래 role/aria-selected 가 하나도 없어서 스크린리더에는 버튼 더미로 읽혔다.
+    """
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+    boot(page, base)
+
+    navs = page.evaluate("""() => ['mainTabs','sectorSubTabs','searchSubTabs',
+      'institutionalSubTabs','calendarSubTabs','communitySubTabs'].map(id => {
+        const n = document.getElementById(id);
+        if (!n) return { id, missing: true };
+        const btns = [...n.querySelectorAll('[role=tab]')];
+        return { id, role: n.getAttribute('role'), tabs: btns.length,
+          wired: btns.length > 0 && btns.every(b => {
+            const p = document.getElementById(b.getAttribute('aria-controls') || '');
+            return b.hasAttribute('aria-selected') && p
+              && p.getAttribute('role') === 'tabpanel'
+              && p.getAttribute('aria-labelledby') === b.id;
+          }),
+          selected: btns.filter(b => b.getAttribute('aria-selected') === 'true').length,
+          roving: btns.filter(b => b.tabIndex === 0).length };
+      })""")
+    for n in navs:
+        if n.get("missing"):
+            check(f"{n['id']} 존재", False)
+            continue
+        check(f"{n['id']} tablist/tab/tabpanel 연결",
+              n["role"] == "tablist" and n["wired"], f"{n['tabs']}개 탭")
+        check(f"{n['id']} 선택 1개 · roving tabindex 1개",
+              n["selected"] == 1 and n["roving"] == 1,
+              f"selected={n['selected']} roving={n['roving']}")
+
+    # 화살표 이동. 리스너가 중복 등록되면 한 번에 두 칸씩 넘어간다(실제로 그랬다).
+    page.evaluate("() => setViewMode('advanced')")
+    page.wait_for_timeout(1200)
+    order = page.evaluate("""() => [...document.querySelectorAll('#mainTabs [role=tab]')]
+        .filter(b => !b.hidden && b.offsetParent !== null).map(b => b.dataset.tab)""")
+    page.evaluate("() => document.querySelector('#mainTabs [role=tab]').focus()")
+    seq = [page.evaluate("() => document.activeElement.dataset.tab")]
+    for _ in range(3):
+        page.keyboard.press("ArrowRight")
+        page.wait_for_timeout(400)
+        seq.append(page.evaluate("() => document.activeElement.dataset.tab"))
+    steps = [order.index(seq[i + 1]) - order.index(seq[i]) for i in range(len(seq) - 1)]
+    check("→ 는 정확히 한 칸씩 이동", steps == [1, 1, 1], f"{' → '.join(seq)} {steps}")
+    check("이동한 탭의 패널이 열림", page.evaluate("""() => {
+      const b = document.activeElement;
+      const p = document.getElementById(b.getAttribute('aria-controls'));
+      return !!p && p.classList.contains('is-active')
+        && b.getAttribute('aria-selected') === 'true';
+    }"""))
+    page.keyboard.press("End")
+    page.wait_for_timeout(400)
+    check("End 로 마지막 탭",
+          page.evaluate("() => document.activeElement.dataset.tab") == order[-1], order[-1])
+    page.close()
+
+
+def test_ticker_deeplink_seo(browser, base: str) -> None:
+    """종목 딥링크가 색인 가능한 형태인지 + sitemap 이 그 URL 들과 맞는지.
+
+    canonical 이 쿼리 없는 analysis.html 로 고정돼 있으면 ?t= URL 을 sitemap 에
+    올려도 검색엔진은 전부 중복으로 보고 버린다. 둘은 같이 맞아야 의미가 있다.
+    """
+    root = Path(__file__).resolve().parent.parent
+    sitemap = root / "sitemap.xml"
+    if not sitemap.exists():
+        check("sitemap.xml 존재", False)
+        return
+
+    ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
+    locs = [u.findtext("s:loc", namespaces=ns)
+            for u in ET.parse(sitemap).findall("s:url", ns)]
+    check("sitemap 에 종목 딥링크 수록", sum("?t=" in (l or "") for l in locs) > 0,
+          f"{len(locs)} URL")
+    check("sitemap 이중 이스케이프 없음", not any("&amp;" in (l or "") for l in locs))
+    check("sitemap 중복 URL 없음", len(locs) == len(set(locs)))
+
+    missing = []
+    for loc in locs:
+        if "?t=" not in loc:
+            continue
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)
+        ticker = q.get("t", [""])[0]
+        kr = q.get("market", [""])[0] == "kr"
+        path = (root / "data" / "korea" / "details" / f"{ticker}.json") if kr \
+            else (root / "data" / "details" / f"{ticker}.json")
+        if not path.exists():
+            missing.append(ticker)
+    check("딥링크 종목에 상세 데이터 존재", not missing, f"누락 {missing[:5]}")
+
+    analysis = base.replace("index.html", "analysis.html")
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+
+    def meta(sel, attr="content"):
+        return page.evaluate(
+            "([s, a]) => { const e = document.head.querySelector(s);"
+            " return e ? e.getAttribute(a) : null; }", [sel, attr])
+
+    page.goto(f"{analysis}?t=NVDA", wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_function("() => document.title.includes('NVDA')", timeout=60000)
+    page.wait_for_timeout(1200)
+    canon = meta('link[rel="canonical"]', "href") or ""
+    check("종목 페이지 canonical 이 그 종목", canon.endswith("analysis.html?t=NVDA"), canon)
+    check("제목·OG 도 종목별",
+          "NVDA" in page.title() and "NVDA" in (meta('meta[property="og:title"]') or ""),
+          page.title())
+    check("분석이 실제로 렌더", page.evaluate(
+        "() => document.body.innerText.includes('확률')"
+        " && !document.body.innerText.includes('찾을 수 없습니다')"))
+
+    page.goto(analysis, wait_until="domcontentloaded", timeout=60000)
+    page.wait_for_timeout(3000)
+    base_canon = meta('link[rel="canonical"]', "href") or ""
+    check("종목 미지정이면 기본 canonical", base_canon.endswith("/analysis.html"), base_canon)
+    page.close()
+
+
 def test_mobile(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 390, "height": 844})
     watch(page)
@@ -348,7 +471,8 @@ def main() -> int:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             for fn in (test_deeplinks, test_dialogs, test_trust_center,
-                       test_worker_no_client_id_leak, test_kr_market, test_mobile):
+                       test_worker_no_client_id_leak, test_kr_market,
+                       test_tab_a11y, test_ticker_deeplink_seo, test_mobile):
                 print(f"\n--- {fn.__name__} ---", flush=True)
                 fn(browser, args.base)
             browser.close()

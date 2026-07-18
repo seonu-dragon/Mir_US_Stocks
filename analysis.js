@@ -2412,6 +2412,11 @@ async function loadPatternStats() {
 }
 
 async function loadBreakoutStats() {
+  // 돌파/되돌림 통계는 US 만 만들어 둔다(build_breakout_retest.py).
+  // 없는 걸 알면서 요청하면 콘솔에 404 가 남는데, 그 노이즈가 진짜 404 를 가린다
+  // — 실제로 KR 실적 캘린더가 존재하지 않는 파일을 계속 부르던 걸 한동안 놓쳤다.
+  // fetch 는 실패해도 아래에서 조용히 넘어가므로 기능상 차이는 없다.
+  if (!marketHasBreakoutStats()) { breakoutStats = null; return null; }
   try {
     const res = await fetch(`${statsBasePath()}/breakout_retest_stats.json`, { cache: "no-cache" });
     if (res.ok) breakoutStats = await res.json();
@@ -2419,6 +2424,11 @@ async function loadBreakoutStats() {
     breakoutStats = null;
   }
   return breakoutStats;
+}
+
+function marketHasBreakoutStats() {
+  const cfg = window.MirMarket && window.MirMarket.getConfig && window.MirMarket.getConfig();
+  return !(cfg && cfg.features && cfg.features.breakoutStats === false);
 }
 
 // 통계는 한 번만 받아 캐시한다(대시보드/standalone 공용). 시장 전환 시 경로가 바뀌므로 캐시를 비운다.
@@ -2891,6 +2901,7 @@ async function runAnalysis(ticker) {
     const url = new URL(window.location);
     url.searchParams.set("t", analysisTickerKey(ticker));
     window.history.replaceState({}, "", url);
+    updateAnalysisMeta(ticker, detail && detail.company);
   } catch (e) {
     const hint = (window.MirMarket && window.MirMarket.getMode() === "kr") ? "005930, 000660" : "NVDA, AAPL, TSLA";
     el.innerHTML = `<div class="notice err">"${escapeHtml(ticker)}" 종목 데이터를 찾을 수 없습니다. 티커를 정확히 입력했는지 확인해 주세요. (예: ${hint})</div>`;
@@ -2901,6 +2912,39 @@ function rerenderHorizon() {
   if (!currentDetail) return;
   const result = analyzeTicker(currentDetail, currentHorizon);
   renderResult(result);
+}
+
+// ===== 종목별 메타태그 =====
+// sitemap 에 analysis.html?t=NVDA 를 올려도, canonical 이 쿼리 없는 analysis.html 로
+// 고정돼 있으면 검색엔진은 전부 같은 페이지의 중복으로 보고 색인하지 않는다.
+// 종목이 지정된 동안에는 canonical·제목·설명·OG 를 그 종목 것으로 바꿔 준다.
+const ANALYSIS_BASE_URL = "https://seonu-dragon.github.io/Mir_US_Stocks/analysis.html";
+
+function setMetaContent(selector, value) {
+  const el = document.head.querySelector(selector);
+  if (el) el.setAttribute("content", value);
+}
+
+function updateAnalysisMeta(ticker, company) {
+  const key = ticker ? analysisTickerKey(ticker) : "";
+  const link = document.head.querySelector('link[rel="canonical"]');
+  if (!key) {
+    // 검색 화면(종목 미지정)으로 돌아온 경우 원래 메타로 되돌린다.
+    if (link) link.setAttribute("href", ANALYSIS_BASE_URL);
+    setMetaContent('meta[property="og:url"]', ANALYSIS_BASE_URL);
+    return;
+  }
+  const label = company ? `${company}(${key})` : key;
+  const title = `${label} 상승/하락 확률 분석 | 미르의 미국 주식`;
+  const desc = `${label} 의 차트 패턴·지지저항·과거 유사 구간을 기반으로 한 상승/하락 확률 추정.`;
+  const url = `${ANALYSIS_BASE_URL}?t=${encodeURIComponent(key)}`;
+
+  document.title = title;
+  if (link) link.setAttribute("href", url);
+  setMetaContent('meta[name="description"]', desc);
+  setMetaContent('meta[property="og:title"]', title);
+  setMetaContent('meta[property="og:description"]', desc);
+  setMetaContent('meta[property="og:url"]', url);
 }
 
 async function init() {

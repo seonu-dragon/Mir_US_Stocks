@@ -953,6 +953,7 @@ function boot(options = {}) {
   renderSummary();
   setupViewMode(route.get("tab"));
   setupTabs();
+  setupTabSemantics();
   setupFilters();
   applyHeatmapRoute(route);
   setupTickerSearchHelpers();
@@ -3239,6 +3240,95 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     });
   }
   if (push) recordNav();
+}
+
+// ===== 탭 접근성(WAI-ARIA tablist 패턴) =====
+// 탭이 <button> 이라 클릭은 되지만, 스크린리더에는 그냥 버튼 10개로 읽혔다
+// (role/aria-selected 가 하나도 없었다). 무엇이 선택됐는지, 몇 개 중 몇 번째인지,
+// 어느 패널을 제어하는지 알 수 없다.
+//
+// 마크업을 손으로 고치지 않고 여기서 입힌다: 탭 순서가 드래그로 바뀌고(setupTabReorder)
+// 시장에 따라 숨겨지는 탭도 있어서, 정적 HTML 로는 상태를 따라갈 수 없다.
+// 활성 상태는 어차피 `is-active` 클래스로 관리되므로 그 변화를 관찰해 동기화한다 —
+// 그래야 activateTab/activateXSub 다섯 함수를 건드리지 않고도 항상 맞는다.
+const TABLIST_SPECS = [
+  { nav: "mainTabs", attr: "data-tab", panelId: (v) => `tab-${v}` },
+  { nav: "sectorSubTabs", attr: "data-sub", panelId: (v) => `sub-${v}` },
+  { nav: "searchSubTabs", attr: "data-sub", panelId: (v) => `sub-${v}` },
+  { nav: "institutionalSubTabs", attr: "data-sub", panelId: (v) => `sub-inst-${v}` },
+  { nav: "calendarSubTabs", attr: "data-sub", panelId: (v) => `sub-${v}` },
+  { nav: "communitySubTabs", attr: "data-sub", panelId: (v) => `sub-community-${v}` },
+];
+
+function tablistButtons(nav, attr) {
+  return [...nav.querySelectorAll(`[${attr}]`)];
+}
+
+// 숨겨진 탭은 키보드 순회에서 빼야 한다(KR 의 실적 일정, 공매도 등).
+function visibleTablistButtons(nav, attr) {
+  return tablistButtons(nav, attr).filter((b) => !b.hidden && b.offsetParent !== null);
+}
+
+function syncTablist(nav, attr) {
+  const btns = tablistButtons(nav, attr);
+  const active = btns.find((b) => b.classList.contains("is-active"));
+  btns.forEach((btn) => {
+    const on = btn === active;
+    btn.setAttribute("aria-selected", on ? "true" : "false");
+    // roving tabindex: 탭 묶음은 Tab 키 한 번으로 들어오고, 안에서는 화살표로 이동한다.
+    btn.tabIndex = on ? 0 : -1;
+  });
+  // 활성 탭이 하나도 없으면(초기 렌더 등) 첫 번째를 Tab 진입점으로 남긴다.
+  if (!active && btns.length) btns[0].tabIndex = 0;
+}
+
+function onTablistKeydown(event, nav, attr) {
+  const keys = ["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"];
+  if (!keys.includes(event.key)) return;
+  const btns = visibleTablistButtons(nav, attr);
+  if (btns.length < 2) return;
+  const current = btns.indexOf(document.activeElement);
+  if (current < 0) return;
+  let next;
+  if (event.key === "Home") next = 0;
+  else if (event.key === "End") next = btns.length - 1;
+  else {
+    const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+    next = (current + (forward ? 1 : -1) + btns.length) % btns.length;
+  }
+  event.preventDefault();
+  btns[next].focus();
+  btns[next].click();   // 이 앱의 탭은 포커스 이동 즉시 전환한다(automatic activation)
+}
+
+function setupTabSemantics() {
+  TABLIST_SPECS.forEach((spec) => {
+    const nav = byId(spec.nav);
+    if (!nav) return;
+    // boot() 은 한 번만 도는 게 아니다(스냅샷 로드 경로에 따라 재진입한다).
+    // 가드가 없으면 keydown 핸들러가 두 번 붙어 화살표 한 번에 두 칸씩 넘어간다.
+    if (nav.dataset.tablistBound) { syncTablist(nav, spec.attr); return; }
+    nav.dataset.tablistBound = "1";
+    nav.setAttribute("role", "tablist");
+    tablistButtons(nav, spec.attr).forEach((btn) => {
+      const value = btn.getAttribute(spec.attr);
+      btn.setAttribute("role", "tab");
+      if (!btn.id) btn.id = `tab-btn-${spec.nav}-${value}`;
+      const panel = byId(spec.panelId(value));
+      if (!panel) return;
+      btn.setAttribute("aria-controls", panel.id);
+      panel.setAttribute("role", "tabpanel");
+      panel.setAttribute("aria-labelledby", btn.id);
+      // 패널 안이 스크롤될 수 있어 키보드 사용자가 패널 자체에 포커스할 수 있어야 한다.
+      if (!panel.hasAttribute("tabindex")) panel.tabIndex = 0;
+    });
+    nav.addEventListener("keydown", (e) => onTablistKeydown(e, nav, spec.attr));
+    // is-active/hidden 이 바뀔 때마다 aria 를 맞춘다. aria-selected·tabindex 만 쓰므로
+    // 이 관찰자가 자기 변경으로 다시 깨어나지 않는다(attributeFilter 참고).
+    new MutationObserver(() => syncTablist(nav, spec.attr))
+      .observe(nav, { attributes: true, subtree: true, attributeFilter: ["class", "hidden"] });
+    syncTablist(nav, spec.attr);
+  });
 }
 
 function setupTabs() {

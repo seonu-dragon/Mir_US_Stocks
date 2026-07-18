@@ -33,6 +33,18 @@ styles.css 는 index/analysis 가 서로 다른 캐시 키로 서빙). 이제 �
 `sw.js` 는 `?v=` 가 붙은 요청을 **불변으로 보고 cacheFirst** 한다. 스탬프를 건너뛰고
 자산을 바꾸면 사용자는 옛 파일을 계속 캐시에서 받는다.
 
+UI 를 건드렸으면 브라우저에서 실제로 열어볼 것. 이 사이트의 사고는 단위 검증으로
+안 잡히는 종류가 많다(피처 데이터가 패널 렌더보다 늦게 도착, 배포는 됐는데 반영 안 됨).
+
+```powershell
+py -m http.server 8099 --bind 127.0.0.1   # 별도 창, 레포 루트에서
+py scripts/smoke_ui.py                     # 탭 딥링크·다이얼로그·신뢰도센터·모바일
+py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index.html
+```
+
+머지 후 라이브에 대고 한 번 더 돌릴 것 — 로컬 PASS 는 증거가 못 된다.
+(playwright 필요: `py -m pip install playwright && py -m playwright install chromium`)
+
 ## 데이터 파이프라인
 
 - `scripts/build_*.py` 각각이 `data/<name>.json` 과 `data/<name>.js` 를 **둘 다** 쓴다.
@@ -46,6 +58,13 @@ styles.css 는 index/analysis 가 서로 다른 캐시 키로 서빙). 이제 �
 - `repository_publish_lock` (`scripts/briefing_store.py`): 스냅샷 writer 와 git
   commit/push 를 이 머신에서 직렬화한다. 락 소유권을 **환경변수로 자식에게 상속**시켜,
   락 안에서 띄운 subprocess 빌더가 자기 부모를 기다리다 죽지 않게 한다.
+- `data/content/` (카드뉴스 이미지)는 **최근 3일치만** 남긴다
+  (`build_today_content.py` 의 `KEEP_DAYS`, 매 실행 시 자동 정리). 사이트는
+  `market_snapshot.cardNews` 로 **오늘 덱만** 참조하고 지난 카드뉴스를 보는 화면은
+  없는데, 이 폴더는 발행일마다 ~13MB 씩 쌓이기만 해서 222MB(배포분의 40%)까지
+  갔었다. 지난 덱이 필요하면 원본은 `AI/카드뉴스/daily/`(폴백 `AI/temp/카드뉴스/daily/`)
+  에 있고, 더 오래된 건 git 이력에서 꺼낸다:
+  `git checkout <commit> -- data/content/<날짜>`.
 
 ## Actions 주의
 
@@ -58,6 +77,14 @@ styles.css 는 index/analysis 가 서로 다른 캐시 키로 서빙). 이제 �
   따로** 확인할 것.
 - `data/market_snapshot.json` 이 pretty ↔ compact 로 재포맷되면서 수십만 줄 diff 가
   뜰 수 있다. 데이터 손실이 아니라 포맷 변화이므로 키 단위로 비교해 확인할 것.
+- 워크플로우의 `name:` 을 바꾸면 `deploy-pages.yml` 의 `workflow_run` 참조가 **조용히
+  끊긴다**(문자열로 지목하기 때문). 실패가 아니라 '아무 일도 안 일어남'이라 Actions 가
+  전부 초록색인 채로 데이터만 사이트에 안 나간다 — 2026-07-17 에 `KR DART disclosures`
+  → `+ ownership` 리네임으로 실제로 끊겼다. 이름을 건드렸으면 반드시:
+
+  ```powershell
+  py scripts/check_deploy_triggers.py   # 실제 이름 vs 트리거 목록 vs app.js 안내
+  ```
 
 ## 데이터 정직성
 
@@ -67,6 +94,15 @@ styles.css 는 index/analysis 가 서로 다른 캐시 키로 서빙). 이제 �
 
 ## 알려진 부채
 
-- `.git` 이 2.2GB 를 넘었다(데이터 커밋 하루 ~22개). 계속 커진다.
-- `app.js` 800KB / `styles.css` 318KB / `index.html` 120KB 단일 파일.
+수치는 2026-07-18 실측.
+
+- `.git` 이 1.0GB(pack 878MB). 데이터 커밋이 하루 ~22개라 계속 커진다.
+  줄이려면 이력을 다시 써야 하므로(`git filter-repo` + 강제 푸시) 아직 손대지 않았다.
+  **배포 아티팩트와는 별개다** — Pages 한도에 걸리는 쪽은 아래 추적 파일 총량이다.
+- 배포 아티팩트(추적 파일) 404MB. `deploy-pages.yml` 이 `path: '.'` 로 레포 전체를
+  올리고, 데이터 워크플로우 19개가 각각 배포를 트리거한다. GitHub Pages 발행 사이트
+  권장 한도는 1GB.
+- `app.js` 850KB / `styles.css` 340KB / `index.html` 122KB 단일 파일.
+  분리 전에 `scripts/smoke_ui.py` 를 안전망으로 쓸 것.
 - `sitemap.xml` 에 URL 2개뿐. 종목 상세 데이터 7,000개에 대한 딥링크 페이지가 없다.
+  (`analysis.html` 이 `?ticker=` 딥링크·canonical·OG 를 이미 갖고 있어 확장 지점이다.)

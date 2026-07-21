@@ -2842,12 +2842,34 @@ function setupShortControls() {
   const s = byId("shortSearch");
   if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { shortQuery = s.value; renderShortInterest(); }); }
 }
+// KR(KRX)은 'Days to Cover'가 없다. 잔고비중(공매도잔고÷상장주식수)을 1차 지표로
+// 쓰며, 빌더가 payload.metric="balance" 로 표시한다. US 는 종전대로 잔고일수.
+function shortIsBalance() { return ((window.SHORT_INTEREST || {}).metric) === "balance"; }
+
+// 정적 HTML(설명·정렬버튼·지연안내)은 US 문구라, KR 잔고비중 모드일 때 갈아끼운다.
+function applyShortLabels(isBal) {
+  const panel = byId("sub-short");
+  if (!panel) return;
+  const p = panel.querySelector(".section-title p");
+  if (p) p.innerHTML = isBal
+    ? `KRX 공매도 종합포털 기반. <b>잔고비중</b>(미상환 공매도 잔고 ÷ 상장주식수)이 높을수록 공매도 압력이 큽니다. <b>T+2 공시</b>라 기준일은 이틀 전입니다.`
+    : `FINRA 격주 공시(Nasdaq) 기반. <b>잔고일수(Days to Cover)</b>가 높을수록 숏 커버에 오래 걸려 스퀴즈 가능성이 큽니다. <b>Nasdaq 상장 종목 한정</b>.`;
+  const disc = panel.querySelector(".data-disclaimer span");
+  if (disc) disc.textContent = isBal
+    ? "공매도 잔고는 매 거래일 T+2 로 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다."
+    : "공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다.";
+  const dtcBtn = panel.querySelector('#shortSort button[data-sort="dtc"]');
+  if (dtcBtn) dtcBtn.textContent = isBal ? "잔고비중 높은순" : "잔고일수 높은순";
+}
+
 function renderShortInterest() {
   setupShortControls();
   const wrap = byId("shortTable");
   const meta = byId("shortMeta");
   if (!wrap) return;
   const payload = window.SHORT_INTEREST;
+  const isBal = shortIsBalance();
+  applyShortLabels(isBal);
   if (!payload || !Array.isArray(payload.rows) || !payload.rows.length) {
     if (meta) meta.innerHTML = "";
     wrap.innerHTML = `<p class="muted">아직 공매도 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
@@ -2857,21 +2879,27 @@ function renderShortInterest() {
   const q = shortQuery.trim().toLowerCase();
   let rows = payload.rows.slice();
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
-  rows.sort((a, b) => (shortSort === "dtc" ? (b.daysToCover || 0) - (a.daysToCover || 0) : (b.changePct ?? -999) - (a.changePct ?? -999)));
+  const primaryKey = isBal ? "balanceRatio" : "daysToCover";
+  rows.sort((a, b) => (shortSort === "change" ? (b.changePct ?? -999) - (a.changePct ?? -999) : (b[primaryKey] || 0) - (a[primaryKey] || 0)));
   const shown = rows.slice(0, 200);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
   const body = shown.map((r, i) => {
     const chg = Number.isFinite(r.changePct) ? `${r.changePct > 0 ? "+" : ""}${r.changePct.toFixed(1)}%` : "—";
     const chgCls = r.changePct > 0 ? "ins-sell" : r.changePct < 0 ? "ins-buy" : "";
+    const primary = isBal ? `${Number(r.balanceRatio || 0).toFixed(2)}%` : Number(r.daysToCover || 0).toFixed(2);
+    const mainLabel = isBal ? (r.company || r.ticker) : r.ticker;
+    const subLabel = isBal ? r.ticker : (r.company || "");
     return `<tr>
       <td class="ins-date">${i + 1}</td>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
-      <td class="ins-num"><strong>${Number(r.daysToCover || 0).toFixed(2)}</strong></td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(mainLabel)}</button><div class="ins-sub">${escapeHtml(subLabel)}</div></td>
+      <td class="ins-num"><strong>${primary}</strong></td>
       <td class="ins-num">${insiderFmtShares(r.shortShares)}</td>
       <td class="ins-num ${chgCls}">${chg}</td>
     </tr>`;
   }).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">잔고일수</th><th class="ins-num">공매도 주식수</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  const primaryHdr = isBal ? "잔고비중" : "잔고일수";
+  const sharesHdr = isBal ? "공매도 잔고" : "공매도 주식수";
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th><th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -9194,7 +9222,7 @@ async function buildStockChatContext(userText) {
     const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((r) => r.ticker === item.ticker);
     if (act.length) smLines.push(`대량보유13D/G ${act.length}건(액티비스트 ${act.filter((a) => a.kind === "activist").length})`);
     const si = ((window.SHORT_INTEREST || {}).rows || []).find((r) => r.ticker === item.ticker);
-    if (si) smLines.push(`공매도 잔고일수 ${Number(si.daysToCover || 0).toFixed(1)}일${Number.isFinite(si.changePct) ? `(전기대비 ${si.changePct > 0 ? "+" : ""}${si.changePct.toFixed(1)}%)` : ""}`);
+    if (si) smLines.push(`${shortIsBalance() ? `공매도 잔고비중 ${Number(si.balanceRatio || 0).toFixed(2)}%` : `공매도 잔고일수 ${Number(si.daysToCover || 0).toFixed(1)}일`}${Number.isFinite(si.changePct) ? `(전기대비 ${si.changePct > 0 ? "+" : ""}${si.changePct.toFixed(1)}%)` : ""}`);
     const evs = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => String(e.ticker || "").toUpperCase() === item.ticker);
     if (evs.length) {
       const labels = (evs[0].items || []).map((x) => x.label).filter(Boolean).slice(0, 3).join(", ") || "8-K";
@@ -11701,6 +11729,7 @@ const TRUST_RECOVERY = {
   },
   "공매도": {
     us: { workflow: "Short interest (Nasdaq/FINRA)", script: "scripts/build_short_interest.py" },
+    kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
   },
   "기관 13F": {
@@ -11811,7 +11840,7 @@ function dataTrustSources() {
   if (cfg.features?.materialEvents !== false) rows.push(source("주요 공시", cfg.id === "kr" ? "DART · 공시" : "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일", "events"));
   if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주", "activist"));
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
-  if (cfg.features?.shortInterest !== false) rows.push(source("공매도", "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], 1080, "월 2회", "short"));
+  if (cfg.features?.shortInterest !== false) rows.push(source("공매도", cfg.id === "kr" ? "KRX 공매도 종합포털" : "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], cfg.id === "kr" ? 120 : 1080, cfg.id === "kr" ? "T+2 매 거래일" : "월 2회", "short"));
   if (cfg.features?.sec13f !== false) rows.push(source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f"));
   if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집", "congress"));
   if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시", "whitehouse"));
@@ -17687,7 +17716,7 @@ function aiSmartMoneyEvidence(item) {
   const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((row) => row.ticker === t);
   if (act.length) bits.push(`대량보유 ${act.length}건`);
   const shortRow = ((window.SHORT_INTEREST || {}).rows || []).find((row) => row.ticker === t);
-  if (shortRow) bits.push(`공매도 DTC ${Number(shortRow.daysToCover || 0).toFixed(1)}일`);
+  if (shortRow) bits.push(shortIsBalance() ? `공매도 잔고비중 ${Number(shortRow.balanceRatio || 0).toFixed(2)}%` : `공매도 DTC ${Number(shortRow.daysToCover || 0).toFixed(1)}일`);
 
   return aiEvidenceCard(
     "스마트머니",
@@ -17884,10 +17913,14 @@ function aiInstitutionalPanel(item) {
 function aiShortInterestPanel(item) {
   const shortRow = ((window.SHORT_INTEREST || {}).rows || []).find((row) => row.ticker === item.ticker);
   if (!shortRow) return aiModePanel("공매도", "숏 인터레스트", `<p class="muted ai-mode-empty">공매도 데이터가 없습니다.</p>`);
+  const isBal = shortIsBalance();
+  const shares = isBal ? shortRow.shortShares : shortRow.shortInterest;
   return aiModePanel("공매도", "숏 인터레스트", aiMetricGrid([
-    { label: "Days To Cover", value: Number(shortRow.daysToCover || 0).toFixed(1) },
+    isBal
+      ? { label: "잔고비중", value: `${Number(shortRow.balanceRatio || 0).toFixed(2)}%` }
+      : { label: "Days To Cover", value: Number(shortRow.daysToCover || 0).toFixed(1) },
     { label: "변화율", value: Number.isFinite(Number(shortRow.changePct)) ? fmtPct(shortRow.changePct) : "-", tone: cls(shortRow.changePct) },
-    { label: "공매도 수량", value: shortRow.shortInterest ? Number(shortRow.shortInterest).toLocaleString() : "-" },
+    { label: isBal ? "공매도 잔고" : "공매도 수량", value: shares ? Number(shares).toLocaleString() : "-" },
     { label: "기준일", value: shortRow.settlementDate || shortRow.date || "-" },
   ]));
 }

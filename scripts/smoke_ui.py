@@ -310,9 +310,23 @@ def test_kr_market(browser, base: str) -> None:
         .map(c => c.querySelector('strong')?.textContent)""")
     check("[KR] DART 공시·지분 공시가 감시 목록에 있음",
           "DART 공시" in names and "지분 공시" in names, str(names))
-    check("[KR] 실데이터 없는 공매도는 여전히 미노출", "공매도" not in names)
+    # 2026-07-21 KRX 공매도 잔고 실연동. 예전엔 실데이터가 없어 '미노출'이 정답이었지만
+    # 이제는 감시 목록에 있어야 하고, 패널도 잔고비중으로 실제 렌더돼야 한다.
+    check("[KR] 공매도가 감시 목록에 있음(KRX 실연동)", "공매도" in names, str(names))
     check("[KR] 신뢰도 카드에 결손 없음",
           page.locator(".data-trust-card.trust-missing").count() == 0)
+
+    boot(page, f"{base}?tab=search&sub=short")
+    page.wait_for_function("() => !!document.querySelector('#shortTable table')", timeout=30000)
+    hdr = page.locator("#shortTable thead").inner_text()
+    check("[KR] 공매도 패널 헤더가 '잔고비중'", "잔고비중" in hdr, hdr.replace("\n", " "))
+    n_rows = page.evaluate("() => document.querySelectorAll('#shortTable tbody tr').length")
+    check("[KR] 공매도 실데이터 행 렌더", n_rows > 10, f"{n_rows}행")
+    ratio_ok = page.evaluate(
+        "() => /%$/.test((document.querySelector('#shortTable tbody tr td.ins-num strong')"
+        "?.textContent || '').trim())")
+    check("[KR] 1차 지표가 퍼센트(잔고비중)", ratio_ok)
+    check("[KR] 공매도 기준일 표기", "기준일" in page.locator("#shortMeta").inner_text())
     page.close()
 
 

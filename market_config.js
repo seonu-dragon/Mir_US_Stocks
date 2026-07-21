@@ -185,9 +185,12 @@
       activist: false,
       materialEvents: false,
       ipo: true,
-      // KRX 공매도 잔고를 수집하는 실데이터 소스가 아직 없다. 지어낸 수치를
-      // 공시처럼 노출하지 않도록 패널을 닫아 둔다.
-      shortInterest: false,
+      // KRX 공매도 잔고 실연동(2026-07-21). build_kr_short_interest.py 가 pykrx 포크로
+      // KRX 회원 로그인(KRX_ID/KRX_PW) 후 종목별 잔고비중을 수집한다. 국내는 US 의
+      // 'Days to Cover' 가 없어 잔고비중(잔고÷상장주식수)을 1차 지표로 쓴다
+      // (payload.metric="balance"). 자격증명이 없으면 빌더가 0건으로 끝나 파일이 안 생기고,
+      // 그때는 이 패널이 '데이터 없음'을 표시한다.
+      shortInterest: true,
       whiteHouse: false,
       // 국내는 '실적 발표 예정일' 소스가 없다. build_kr_earnings.py 가 만드는 건
       // 지나간 분기 실적(매출·영업이익)이고, 그 빌더도 "애널리스트 추정치가 없어

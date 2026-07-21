@@ -1672,9 +1672,18 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[ipo_calendar/kr] rebuild skipped: {exc}")
-    # No KR short-interest build step: the old builder fabricated balances with
-    # random.Random(ticker) rather than sourcing KRX, so it was removed. KR keeps
-    # shortInterest disabled in market_config.js until a real KRX feed exists.
+    # KRX 공매도 잔고(실데이터). pykrx 포크가 KRX_ID/KRX_PW(Actions Secrets / 로컬 .env)로
+    # 로그인해 수집한다. --push 없이 파일만 쓰고, 상위 update_korea_data 가 data/korea/ 를
+    # 커밋할 때 함께 올라간다. 자격증명이 없으면 빌더가 0건으로 조용히 끝나 기존 파일을 유지.
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_short_interest.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[short_interest/kr] rebuild skipped: {exc}")
 
 
 def main():

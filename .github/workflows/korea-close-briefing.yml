@@ -36,8 +36,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       # 장마감 스냅샷(15:40) 전용 워크플로가 스케줄 누락되는 경우가 있어
-      # 장마감 브리핑 job에서 함께 갱신한다.
+      # 장마감 브리핑 job에서 함께 갱신한다. 이게 KR 스냅샷의 실제 일일 실행 경로다.
       - name: Update Korea market snapshot
+        # KRX 공매도 잔고(build_kr_short_interest.py, 서브프로세스)용 로그인 자격증명.
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
         run: python scripts/update_korea_data.py --push
 
       - name: Run Korea close briefing

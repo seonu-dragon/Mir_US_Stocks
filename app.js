@@ -899,11 +899,14 @@ function applyMarketOnlyUi() {
   if (searchNav) {
     searchNav.querySelectorAll(".sub-tab").forEach((btn) => {
       const sub = btn.dataset.sub;
-      const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest);
+      const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest)
+        || (sub === "buyback" && !(cfg.features && cfg.features.krDart));
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
-    if (searchSubTab === "short" && cfg.features && !cfg.features.shortInterest) {
+    const shortOff = searchSubTab === "short" && cfg.features && !cfg.features.shortInterest;
+    const buybackOff = searchSubTab === "buyback" && !(cfg.features && cfg.features.krDart);
+    if (shortOff || buybackOff) {
       activateSearchSub("analysis", { push: false });
     }
   }
@@ -2449,6 +2452,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "screener") renderScreener();
   if (searchSubTab === "valuation") renderValuation();
   if (searchSubTab === "short") renderShortInterest();
+  if (searchSubTab === "buyback") renderBuyback();
   if (searchSubTab === "analysis") renderSearch();
   if (push) recordNav();
 }
@@ -2900,6 +2904,96 @@ function renderShortInterest() {
   const primaryHdr = isBal ? "잔고비중" : "잔고일수";
   const sharesHdr = isBal ? "공매도 잔고" : "공매도 주식수";
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th><th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 자사주 매입·소각 트래커 (KR 전용) =====
+// 새 DART 호출 없이 KR_DISCLOSURES(공시 이벤트) + KR_EVENT_DETAILS(취득/처분 주요정보
+// 숫자) + 시장 스냅샷(시총)을 조합한다. '결정' 은 규모 숫자가 있고(event_details 가
+// tsstkAqDecsn 등을 붙인다), 신탁해지·결과보고는 숫자 없이 사실만 표시한다.
+let buybackSort = "size", buybackType = "all", buybackQuery = "", _buybackTried = false;
+
+function buybackCategory(title) {
+  const t = title || "";
+  if (!t.includes("자기주식")) return null;
+  if (t.includes("소각")) return { key: "buy", label: "소각", cls: "ins-buy" };
+  if (t.includes("취득신탁계약해지")) return { key: "sell", label: "신탁해지", cls: "ins-sell" };
+  if (t.includes("취득신탁계약체결")) return { key: "buy", label: "신탁취득", cls: "ins-buy" };
+  if (t.includes("자기주식취득")) return { key: "buy", label: "취득", cls: "ins-buy" };
+  if (t.includes("자기주식처분")) return { key: "sell", label: "처분", cls: "ins-sell" };
+  return null;
+}
+
+function setupBuybackControls() {
+  const bind = (id, apply) => {
+    const el = byId(id);
+    if (el && !el.dataset.bound) {
+      el.dataset.bound = "1";
+      el.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+        apply(b); el.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b)); renderBuyback();
+      }));
+    }
+  };
+  bind("buybackSort", (b) => { buybackSort = b.dataset.sort; });
+  bind("buybackType", (b) => { buybackType = b.dataset.type; });
+  const s = byId("buybackSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { buybackQuery = s.value; renderBuyback(); }); }
+}
+
+function renderBuyback() {
+  setupBuybackControls();
+  const wrap = byId("buybackTable");
+  const meta = byId("buybackMeta");
+  if (!wrap) return;
+  if (!window.KR_DISCLOSURES && !_buybackTried) {
+    _buybackTried = true;
+    wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    Promise.all([ensureFeatureData("krDart"), ensureFeatureData("krEventDetails")]).then(renderBuyback);
+    return;
+  }
+  const disc = ((window.KR_DISCLOSURES || {}).disclosures) || [];
+  const details = (window.KR_EVENT_DETAILS || {}).details || {};
+  const capByTicker = {};
+  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  stocks.forEach((s) => { if (s.ticker) capByTicker[s.ticker] = Number(s.marketCapT ?? s.marketCapB ?? 0); });
+  const rcpt = (link) => { const m = /rcpNo=(\d+)/.exec(link || ""); return m ? m[1] : ""; };
+
+  let rows = [];
+  for (const d of disc) {
+    const cat = buybackCategory(d.title);
+    if (!cat) continue;
+    const det = details[rcpt(d.link)] || {};
+    const amount = Number(det.amount) || null;          // 원
+    const capT = capByTicker[d.ticker] || null;         // 조원
+    rows.push({
+      ticker: d.ticker, company: d.company || d.ticker, date: d.fileDate || "",
+      type: cat.label, typeKey: cat.key, cls: cat.cls,
+      shares: Number(det.shares) || null, amount,
+      capPct: (amount && capT) ? (amount / (capT * 1e12) * 100) : null,
+      purpose: det.purpose || "",
+    });
+  }
+  if (buybackType !== "all") rows = rows.filter((r) => r.typeKey === buybackType);
+  const q = buybackQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  if (buybackSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  else rows.sort((a, b) => (b.capPct ?? -1) - (a.capPct ?? -1));
+
+  const buyN = rows.filter((r) => r.typeKey === "buy").length;
+  const sellN = rows.length - buyN;
+  if (meta) meta.innerHTML = rows.length
+    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건`
+    : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 자사주 취득·처분 공시가 없습니다.</p>`; return; }
+  const body = rows.slice(0, 200).map((r) => `<tr>
+    <td class="ins-date">${escapeHtml(r.date)}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}${r.purpose ? ` · ${escapeHtml(r.purpose)}` : ""}</div></td>
+    <td class="ins-sub ${r.cls}">${escapeHtml(r.type)}</td>
+    <td class="ins-num"><strong>${r.capPct != null ? `${r.capPct.toFixed(2)}%` : "—"}</strong></td>
+    <td class="ins-num">${r.amount != null ? `${(r.amount / 1e8).toLocaleString(undefined, { maximumFractionDigits: 0 })}억` : "—"}</td>
+    <td class="ins-num">${r.shares != null ? insiderFmtShares(r.shares) : "—"}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th class="ins-num">주식수</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

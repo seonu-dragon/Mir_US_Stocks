@@ -127,6 +127,36 @@ def merge_finnhub(market: str, table: dict) -> None:
         print(f"  finnhub 보강: {filled}")
 
 
+def add_value_score(table: dict) -> None:
+    """저평가 종합 백분위. PER·PBR 는 낮을수록, 배당수익률은 높을수록 '싸다'고 보고 각
+    지표의 시장 내 백분위를 매겨 평균한다(가진 지표만, 최소 2개). 0=고평가 ~ 100=저평가.
+    예측 신호가 아니라 '여러 멀티플에서 상대적으로 싼가'의 투명한 요약이다(가중치 없음).
+    """
+    def pct_rank(key: str, low_is_cheap: bool) -> dict:
+        pairs = [(t, m[key]) for t, m in table.items()
+                 if isinstance(m.get(key), (int, float)) and m[key] > 0]
+        if len(pairs) < 20:
+            return {}
+        pairs.sort(key=lambda x: x[1])  # 오름차순(낮은 값이 앞)
+        n = len(pairs)
+        out = {}
+        for i, (t, _) in enumerate(pairs):
+            low_pctile = i / (n - 1) * 100          # 0 = 가장 낮은 값
+            out[t] = round(100 - low_pctile if low_is_cheap else low_pctile)
+        return out
+
+    pe = pct_rank("pe", True)
+    pb = pct_rank("pb", True)
+    dv = pct_rank("divYield", False)
+    n = 0
+    for t, m in table.items():
+        comps = [d[t] for d in (pe, pb, dv) if t in d]
+        if len(comps) >= 2:
+            m["valueScore"] = round(sum(comps) / len(comps))
+            n += 1
+    print(f"  valueScore(저평가 종합): {n}")
+
+
 def build_market(market: str) -> None:
     cfg = MARKET_PATHS[market]
     details_dir = cfg["details"]
@@ -146,6 +176,7 @@ def build_market(market: str) -> None:
             table[ticker] = metrics
 
     merge_finnhub(market, table)
+    add_value_score(table)
 
     payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
     cfg["out_json"].parent.mkdir(parents=True, exist_ok=True)

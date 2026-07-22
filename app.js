@@ -2235,7 +2235,7 @@ function renderCalendar(events) {
 let currentTab = "map";
 let searchSubTab = "analysis";
 // KR 전용(krDart) 종목검색 서브탭 — US 에선 가시성 게이트가 숨긴다.
-const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract"]);
+const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract", "dilution"]);
 let calendarSubTab = "macro";
 let communitySubTab = "trending";
 let communityCardnewsView = "us";
@@ -2463,6 +2463,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "earnreact") renderEarningsReactions();
   if (searchSubTab === "dividend") renderDividends();
   if (searchSubTab === "contract") renderContracts();
+  if (searchSubTab === "dilution") renderDilution();
   if (searchSubTab === "analysis") renderSearch();
   if (push) recordNav();
 }
@@ -2906,7 +2907,14 @@ function renderShortInterest() {
     wrap.innerHTML = `<p class="muted">아직 공매도 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
     return;
   }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${Number(payload.count || 0).toLocaleString()}종목 · 기준일 ${escapeHtml(payload.settlementDate || "")}${isBal && payload.tradingDate ? ` · 거래일 ${escapeHtml(payload.tradingDate)}` : ""}`;
+  let invStr = "";
+  const inv = payload.investorShort;
+  if (isBal && inv && typeof inv === "object") {
+    const total = Object.values(inv).reduce((a, b) => a + (Number(b) || 0), 0);
+    const parts = ["외국인", "기관", "개인"].filter((k) => inv[k]).map((k) => `${k} ${Math.round(inv[k] / total * 100)}%`);
+    if (total > 0 && parts.length) invStr = ` · 시장 공매도 주체(거래대금) ${parts.join(" · ")}`;
+  }
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${Number(payload.count || 0).toLocaleString()}종목 · 기준일 ${escapeHtml(payload.settlementDate || "")}${isBal && payload.tradingDate ? ` · 거래일 ${escapeHtml(payload.tradingDate)}` : ""}${invStr}`;
   const q = shortQuery.trim().toLowerCase();
   let rows = payload.rows.slice();
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
@@ -3158,6 +3166,68 @@ function renderContracts() {
   </tr>`;
   }).join("");
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목 · 계약상대</th><th class="ins-num">매출대비</th><th class="ins-num">계약금액</th><th>공시일 · 기간</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 증자·CB 희석(오버행) 트래커 (KR 전용) =====
+// 자사주(매입=환원)의 정반대 리스크. KR_DISCLOSURES(유상증자·CB·BW·EB 발행결정) +
+// KR_EVENT_DETAILS(희석률·전환가·발행금액, build_kr_event_details.py 가 이미 파싱) +
+// 시총을 프론트에서 조합한다. 새 백엔드 0.
+let dilutionSort = "dilution", dilutionQuery = "", _dilutionTried = false;
+function dilutionCategory(title) {
+  const t = title || "";
+  if (t.includes("유상증자결정")) return { key: "증자", label: "유상증자" };
+  if (t.includes("전환사채권발행")) return { key: "CB", label: "전환사채(CB)" };
+  if (t.includes("신주인수권부사채권발행")) return { key: "BW", label: "신주인수권부사채(BW)" };
+  if (t.includes("교환사채권발행")) return { key: "EB", label: "교환사채(EB)" };
+  return null;
+}
+function renderDilution() {
+  bindListControls("dilutionSort", "dilutionSearch", (v) => dilutionSort = v, (v) => dilutionQuery = v, renderDilution);
+  const wrap = byId("dilutionTable"); const meta = byId("dilutionMeta");
+  if (!wrap) return;
+  if ((!window.KR_DISCLOSURES || !window.KR_EVENT_DETAILS) && !_dilutionTried) {
+    _dilutionTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    Promise.all([ensureFeatureData("krDart"), ensureFeatureData("krEventDetails")]).then(renderDilution); return;
+  }
+  const disc = ((window.KR_DISCLOSURES || {}).disclosures) || [];
+  const details = (window.KR_EVENT_DETAILS || {}).details || {};
+  const capByTicker = {};
+  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  stocks.forEach((s) => { if (s.ticker) capByTicker[s.ticker] = Number(s.marketCapT ?? s.marketCapB ?? 0); });
+  const rcpt = (link) => { const m = /rcpNo=(\d+)/.exec(link || ""); return m ? m[1] : ""; };
+
+  let rows = [];
+  for (const d of disc) {
+    const cat = dilutionCategory(d.title);
+    if (!cat) continue;
+    const det = details[rcpt(d.link)] || {};
+    if (det.dilutionPct == null && det.amount == null) continue; // 숫자 없으면 제외
+    rows.push({
+      ticker: d.ticker, company: d.company || d.ticker, date: d.fileDate || "",
+      type: cat.label, typeKey: cat.key,
+      dilutionPct: Number(det.dilutionPct) || null,
+      amount: Number(det.amount) || null,
+      convPrice: Number(det.convPrice) || null,
+      method: det.method || "",
+    });
+  }
+  const q = dilutionQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  if (dilutionSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  else if (dilutionSort === "amount") rows.sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1));
+  else rows.sort((a, b) => (b.dilutionPct ?? -1) - (a.dilutionPct ?? -1));
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · ${rows.length}건` : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 증자·사채 발행이 없습니다.</p>`; return; }
+  const body = rows.slice(0, 200).map((r) => `<tr>
+    <td class="ins-date">${escapeHtml(r.date)}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}${r.method ? ` · ${escapeHtml(r.method)}` : ""}</div></td>
+    <td class="ins-sub ins-sell">${escapeHtml(r.type)}</td>
+    <td class="ins-num"><strong>${r.dilutionPct != null ? `${r.dilutionPct.toFixed(1)}%` : "—"}</strong></td>
+    <td class="ins-num">${krMoneyEok(r.amount)}</td>
+    <td class="ins-num">${r.convPrice != null ? `₩${Number(r.convPrice).toLocaleString()}` : "—"}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">희석률</th><th class="ins-num">발행금액</th><th class="ins-num">전환·행사가</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -5097,6 +5167,9 @@ const MAP_METRIC_CONFIG = {
   // 가치판단이 아니라 외국인 관심/여력을 초록으로 읽는 관례적 방향이다.
   foreignPct:        { label: "외국인 지분율",     good: "high", fmt: "pct", stops: [3, 8, 15, 25, 40] },
   foreignExhaustion: { label: "외국인 한도소진율",  good: "high", fmt: "pct", stops: [10, 25, 45, 65, 85] },
+  // 저평가 종합(멀티플 백분위 평균, build_map_fundamentals.add_value_score). 100=저평가.
+  // 예측 점수가 아니라 PER·PBR·배당수익률 상 상대적으로 싼지를 한 값으로 요약한 것.
+  valueScore:        { label: "저평가 종합(멀티플)", good: "high", fmt: "num", stops: [30, 45, 55, 70, 85] },
 };
 const MAP_METRIC_STOPS_KR = {
   pe: [8, 12, 18, 28, 45],

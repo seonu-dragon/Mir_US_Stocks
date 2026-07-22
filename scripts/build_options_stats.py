@@ -106,8 +106,31 @@ def parse_leg(rows: list) -> list:
             continue
         oi = r.get("openInterest") or 0
         vol = r.get("volume") or 0
-        out.append({"strike": k, "oi": float(oi or 0), "vol": float(vol or 0)})
+        bid, ask = r.get("bid"), r.get("ask")
+        if isinstance(bid, (int, float)) and isinstance(ask, (int, float)) and ask > 0:
+            price = (bid + ask) / 2
+        else:
+            lp = r.get("lastPrice")
+            price = float(lp) if isinstance(lp, (int, float)) else None
+        out.append({"strike": k, "oi": float(oi or 0), "vol": float(vol or 0), "price": price})
     return out
+
+
+def expected_move_pct(calls: list, puts: list, spot: float) -> float | None:
+    """ATM 스트래들(= 등가격 콜+풋 프리미엄)로 만기까지 시장이 반영한 예상 변동폭%.
+    옵션시장이 '이 만기까지 대략 ±이만큼 움직일 것'으로 값을 매긴 크기다."""
+    if not (spot and spot > 0):
+        return None
+
+    def nearest(leg):
+        cand = [o for o in leg if o.get("price") and o["price"] > 0]
+        return min(cand, key=lambda o: abs(o["strike"] - spot)) if cand else None
+    c = nearest(calls)
+    p = nearest(puts)
+    if not c or not p:
+        return None
+    straddle = c["price"] + p["price"]
+    return round(straddle / spot * 100, 1)
 
 
 def build(top: int) -> dict | None:
@@ -145,6 +168,7 @@ def build(top: int) -> dict | None:
             continue
         mp = max_pain(calls, puts)
         price = (res.get("quote") or {}).get("regularMarketPrice")
+        em = expected_move_pct(calls, puts, float(price)) if price else None
         exp_ts = exp.get("expirationDate")
         exp_date = datetime.fromtimestamp(exp_ts, timezone.utc).strftime("%Y-%m-%d") if exp_ts else ""
         as_of = max(as_of, exp_date)
@@ -152,6 +176,7 @@ def build(top: int) -> dict | None:
             "putCallOI": round(put_oi / call_oi, 2) if call_oi else None,
             "putCallVol": round(put_vol / call_vol, 2) if call_vol else None,
             "maxPain": mp,
+            "expectedMovePct": em,
             "price": round(float(price), 2) if price else None,
             "expiry": exp_date,
             "callOI": int(call_oi),

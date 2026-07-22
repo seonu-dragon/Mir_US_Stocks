@@ -18581,12 +18581,107 @@ function aiFinancialsPanel(item) {
   return aiModePanel("다년 재무", `연간 추이 · ${sorted[sorted.length - 1].y}~${sorted[0].y} (DART)`, `<div class="insider-table-wrap">${table}</div>`);
 }
 
+// 위험 프로파일 — 가격 이력(getChartRows)으로 연율변동성·최대낙폭·1년수익률 + 월별
+// 시즈널리티. 예측이 아니라 과거 위험/계절 패턴 요약.
+function seasonalitySvg(monthly) {
+  const W = 250, H = 54, n = 12, bw = W / n;
+  const vals = monthly.map((v) => (Number.isFinite(v) ? v : 0));
+  const mx = Math.max(1, ...vals.map(Math.abs));
+  const mid = H / 2;
+  let bars = "", labels = "";
+  const M = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
+  for (let i = 0; i < n; i++) {
+    const v = vals[i]; const h = Math.abs(v) / mx * (H / 2 - 3);
+    const y = v >= 0 ? mid - h : mid; const col = v >= 0 ? "#30a46c" : "#e5484d";
+    bars += `<rect x="${(i * bw + 3).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw - 6).toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" fill="${col}" rx="1.5"/>`;
+    labels += `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 9}" font-size="8" fill="var(--muted)" text-anchor="middle">${M[i]}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H + 12}" width="100%" height="${H + 12}"><line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--muted)" stroke-opacity="0.2"/>${bars}${labels}</svg>`;
+}
+function aiRiskPanel(item) {
+  const rows = getChartRows(item);
+  if (!Array.isArray(rows) || rows.length < 60) return "";
+  const closes = rows.map((r) => Number(r.c)).filter((c) => c > 0);
+  if (closes.length < 60) return "";
+  const rets = [];
+  for (let i = 1; i < closes.length; i++) rets.push(closes[i] / closes[i - 1] - 1);
+  const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
+  const varc = rets.reduce((a, b) => a + (b - mean) ** 2, 0) / rets.length;
+  const vol = Math.sqrt(varc) * Math.sqrt(252) * 100;
+  let peak = closes[0], mdd = 0;
+  for (const c of closes) { if (c > peak) peak = c; const dd = c / peak - 1; if (dd < mdd) mdd = dd; }
+  const oneY = closes.length > 252 ? (closes[closes.length - 1] / closes[closes.length - 252] - 1) * 100 : null;
+  const byMonth = Array.from({ length: 12 }, () => []);
+  for (let i = 1; i < rows.length && i < closes.length; i++) {
+    const d = rows[i] && rows[i].d; if (!d) continue;
+    const m = Number(String(d).slice(5, 7)) - 1;
+    if (m >= 0 && m < 12 && closes[i] && closes[i - 1]) byMonth[m].push(closes[i] / closes[i - 1] - 1);
+  }
+  const seasonal = byMonth.map((a) => a.length ? (a.reduce((x, y) => x + y, 0) / a.length) * 21 * 100 : null);
+  const grid = aiMetricGrid([
+    { label: "연율 변동성", value: Number.isFinite(vol) ? `${vol.toFixed(0)}%` : "—", tone: vol > 45 ? "warn" : "" },
+    { label: "최대 낙폭", value: Number.isFinite(mdd) ? `${(mdd * 100).toFixed(0)}%` : "—", tone: "warn" },
+    { label: "1년 수익률", value: oneY != null ? `${oneY > 0 ? "+" : ""}${oneY.toFixed(0)}%` : "—", tone: cls(oneY) },
+    { label: "표본", value: `${closes.length}일` },
+  ]);
+  const body = grid + `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">월별 시즈널리티 (평균 수익률)</div>${seasonalitySvg(seasonal)}`;
+  return aiModePanel("위험 · 시즈널리티", "가격 이력 기반 · 참고용", body);
+}
+
+// 팩터 스코어 — 시장 내 백분위(밸류·모멘텀·퀄리티·성장·규모). 스노우플레이크의 정량
+// 상대평가 버전. 예측이 아니라 '동종 대비 위치'.
+function factorPercentiles(item) {
+  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  if (stocks.length < 30) return null;
+  const mfFor = (t) => ((typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(t) : null) || {});
+  const cols = { value: [], momentum: [], quality: [], growth: [], size: [] };
+  const push = (arr, t, v) => { if (Number.isFinite(v)) arr.push([t, v]); };
+  for (const s of stocks) {
+    const mf = mfFor(s.ticker);
+    const val = Number.isFinite(mf.valueScore) ? mf.valueScore
+      : (mf.pe > 0 && mf.pb > 0 ? -(mf.pe + mf.pb * 8) : NaN); // 높을수록 저평가
+    push(cols.value, s.ticker, val);
+    push(cols.momentum, s.ticker, Number(s.threeMonthChangePct));
+    const roe = Number(mf.roe), nm = Number(mf.netMargin), dr = Number(mf.debtRatio);
+    if (Number.isFinite(roe) || Number.isFinite(nm)) push(cols.quality, s.ticker, (roe || 0) + (nm || 0) - (Number.isFinite(dr) ? dr / 5 : 0));
+    push(cols.growth, s.ticker, Number.isFinite(mf.revenueGrowth) ? mf.revenueGrowth : Number(s.rsScore));
+    push(cols.size, s.ticker, Number(s.marketCapB));
+  }
+  const pct = (arr) => {
+    if (arr.length < 20) return null;
+    const sorted = arr.slice().sort((a, b) => a[1] - b[1]);
+    const idx = sorted.findIndex((x) => x[0] === item.ticker);
+    return idx < 0 ? null : Math.round(idx / (sorted.length - 1) * 100);
+  };
+  return { value: pct(cols.value), momentum: pct(cols.momentum), quality: pct(cols.quality), growth: pct(cols.growth), size: pct(cols.size) };
+}
+function aiFactorPanel(item) {
+  const f = factorPercentiles(item);
+  if (!f) return "";
+  const axes = [["밸류", f.value], ["모멘텀", f.momentum], ["퀄리티", f.quality], ["성장", f.growth], ["규모", f.size]];
+  if (axes.filter(([_, v]) => v != null).length < 3) return "";
+  const bar = (name, v) => {
+    const col = v == null ? "var(--muted)" : v >= 70 ? "#30a46c" : v >= 40 ? "#5b8def" : "#d98a2b";
+    const w = v == null ? 0 : v;
+    return `<div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+      <span style="width:44px;font-size:12px;color:var(--muted)">${name}</span>
+      <div style="flex:1;height:7px;border-radius:4px;background:var(--panel-soft);overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div>
+      <span style="width:34px;text-align:right;font-size:12px;font-weight:600">${v == null ? "—" : v}</span>
+    </div>`;
+  };
+  const body = axes.map(([n, v]) => bar(n, v)).join("")
+    + `<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">시장 내 백분위(0~100). 밸류=저평가·모멘텀=3개월 상대강세·퀄리티=ROE·마진·저부채·성장=매출성장/RS·규모=시총. 예측이 아니라 동종 대비 위치입니다.</div>`;
+  return aiModePanel("팩터 스코어", "시장 내 백분위", body);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
       ${aiTechnicalPanel(item)}
       ${aiSnowflakePanel(item)}
       ${aiDcfPanel(item)}
+      ${aiFactorPanel(item)}
+      ${aiRiskPanel(item)}
       ${aiFundamentalPanel(item)}
       ${aiFinancialsPanel(item)}
       ${aiNewsPanel(item)}

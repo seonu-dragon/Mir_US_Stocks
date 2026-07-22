@@ -498,6 +498,8 @@ const FEATURE_DATA = {
   // 수급(외국인·기관·개인 순매수, 외국인 보유율) + 컨센서스 목표주가. 484KB 라
   // heavy(3~5MB) 는 아니지만 KR 전용이라 미국에선 안 받는다.
   krFlow:     { global: "KR_INVESTOR_FLOW",       path: "data/korea/investor_flow.js", krOnly: true },
+  // 잠정실적 발표 + 발표일·익일 주가반응(build_kr_earnings_reactions.py). KR 전용.
+  krEarningsReact:{ global: "KR_EARNINGS_REACTIONS", path: "data/korea/earnings_reactions.js", feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -899,14 +901,15 @@ function applyMarketOnlyUi() {
   if (searchNav) {
     searchNav.querySelectorAll(".sub-tab").forEach((btn) => {
       const sub = btn.dataset.sub;
-      const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest)
-        || (sub === "buyback" && !(cfg.features && cfg.features.krDart));
+      const krDartOnly = (sub === "buyback" || sub === "earnreact") && !(cfg.features && cfg.features.krDart);
+      const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest) || krDartOnly;
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
     const shortOff = searchSubTab === "short" && cfg.features && !cfg.features.shortInterest;
-    const buybackOff = searchSubTab === "buyback" && !(cfg.features && cfg.features.krDart);
-    if (shortOff || buybackOff) {
+    const krDartSubOff = (searchSubTab === "buyback" || searchSubTab === "earnreact")
+      && !(cfg.features && cfg.features.krDart);
+    if (shortOff || krDartSubOff) {
       activateSearchSub("analysis", { push: false });
     }
   }
@@ -2453,6 +2456,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "valuation") renderValuation();
   if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "buyback") renderBuyback();
+  if (searchSubTab === "earnreact") renderEarningsReactions();
   if (searchSubTab === "analysis") renderSearch();
   if (push) recordNav();
 }
@@ -3021,6 +3025,54 @@ function renderBuyback() {
     <td class="ins-num">${r.shares != null ? insiderFmtShares(r.shares) : "—"}</td>
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th class="ins-num">주식수</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 실적 발표(잠정) · 주가반응 (KR 전용) =====
+// build_kr_earnings_reactions.py 가 만든 KR_EARNINGS_REACTIONS(잠정실적 공시 + 발표일·
+// 익일 등락률)를 그대로 표로 보여준다. 예측 신호가 아니라 사실 피드다.
+let earnReactSort = "date", earnReactQuery = "", _earnReactTried = false;
+
+function setupEarnReactControls() {
+  const sort = byId("earnReactSort");
+  if (sort && !sort.dataset.bound) {
+    sort.dataset.bound = "1";
+    sort.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      earnReactSort = b.dataset.sort; sort.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b)); renderEarningsReactions();
+    }));
+  }
+  const s = byId("earnReactSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { earnReactQuery = s.value; renderEarningsReactions(); }); }
+}
+
+function renderEarningsReactions() {
+  setupEarnReactControls();
+  const wrap = byId("earnReactTable");
+  const meta = byId("earnReactMeta");
+  if (!wrap) return;
+  if (!window.KR_EARNINGS_REACTIONS && !_earnReactTried) {
+    _earnReactTried = true;
+    wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    ensureFeatureData("krEarningsReact").then(renderEarningsReactions);
+    return;
+  }
+  const payload = window.KR_EARNINGS_REACTIONS || {};
+  let rows = (payload.rows || []).slice();
+  const q = earnReactQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  if (earnReactSort === "react") rows.sort((a, b) => Math.abs(b.dayPct ?? 0) - Math.abs(a.dayPct ?? 0));
+  else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 발표` : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 잠정실적 발표가 없습니다.</p>`; return; }
+  // 주가 상승=초록(ins-buy)·하락=빨강(ins-sell). 공매도 패널과 방향이 반대인 데 주의.
+  const pct = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
+  const body = rows.slice(0, 200).map((r) => `<tr>
+    <td class="ins-date">${escapeHtml(r.date)}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)} · ${r.consolidated ? "연결" : "별도"}</div></td>
+    <td class="ins-num">${pct(r.dayPct)}</td>
+    <td class="ins-num">${pct(r.nextPct)}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th class="ins-num">공시일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

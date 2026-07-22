@@ -46,5 +46,11 @@ jobs:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: python scripts/build_us_finnhub_metrics.py --push
 
+      # FRED 국채 수익률 곡선(키 불필요). 실패해도 스냅샷 갱신은 계속한다.
+      # 파일만 쓰고, 아래 update_data 의 git add data/ 가 함께 커밋·배포한다.
+      - name: Build US Treasury yield curve (FRED)
+        continue-on-error: true
+        run: python scripts/build_yield_curve.py
+
       - name: Update US market snapshot
         run: python scripts/update_data.py --push

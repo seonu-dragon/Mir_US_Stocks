@@ -18514,11 +18514,49 @@ function aiSnowflakePanel(item) {
   return aiModePanel("종목 체력", "스노우플레이크 · 재무 체크", body);
 }
 
+// DCF 적정주가(Simply Wall St 벤치마크). 2단계(10년 성장 + 영구성장) 현금흐름 할인.
+// 가정(성장률·할인율·영구성장)에 매우 민감해 '정답'이 아니라 한 참고 앵커다 — 라벨로 명시.
+function computeDcf(f, price) {
+  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+  const pfcf = n(f.pfcf), eps = n(f.epsTtm ?? f.eps), pe = n(f.pe), peg = n(f.peg);
+  const rg = n(f.revenueGrowth), og = n(f.operatingGrowth);
+  const fcfps = (pfcf > 0 && price > 0) ? price / pfcf : (eps > 0 ? eps : null); // FCF/주 우선, 없으면 EPS
+  if (!(fcfps > 0) || !(price > 0)) return null;
+  let g = rg != null ? rg : (og != null ? og : (peg > 0 && pe > 0 ? pe / peg : 6));
+  g = Math.max(-2, Math.min(18, g)) / 100;          // 과도한 가정 방지(-2%~18%)
+  const r = 0.09, tg = 0.025;                        // 할인율 9% · 영구성장 2.5%
+  let pv = 0, ff = fcfps;
+  for (let t = 1; t <= 10; t++) { ff *= (1 + g); pv += ff / Math.pow(1 + r, t); }
+  pv += (ff * (1 + tg) / (r - tg)) / Math.pow(1 + r, 10);
+  return { fair: pv, upside: pv / price - 1, growth: g * 100, basedOn: pfcf > 0 ? "FCF" : "EPS" };
+}
+
+function aiDcfPanel(item) {
+  const mf = (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(item.ticker) : null) || {};
+  const norm = normalizedFundamentalsForItem(item) || {};
+  const f = { ...mf };
+  for (const k in norm) if (norm[k] != null) f[k] = norm[k];
+  const price = Number(item.price ?? f.price);
+  const d = computeDcf(f, price);
+  if (!d) return "";
+  const cfg = marketCfg();
+  const up = d.upside * 100;
+  const tone = up > 15 ? "good" : up < -15 ? "warn" : "";
+  const body = aiMetricGrid([
+    { label: "적정주가", value: cfg.formatPrice(d.fair) },
+    { label: "현재가", value: cfg.formatPrice(price) },
+    { label: "상/하방", value: `${up > 0 ? "+" : ""}${up.toFixed(0)}%`, tone },
+    { label: "가정 성장률", value: `${d.growth.toFixed(0)}%` },
+  ]) + `<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">2단계 DCF · ${d.basedOn} 기준 · 할인율 9% · 영구성장 2.5%. <b>가정에 매우 민감</b>해 정답이 아니라 참고 앵커입니다.</div>`;
+  return aiModePanel("적정주가 DCF", "현금흐름 할인 · 참고용", body);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
       ${aiTechnicalPanel(item)}
       ${aiSnowflakePanel(item)}
+      ${aiDcfPanel(item)}
       ${aiFundamentalPanel(item)}
       ${aiNewsPanel(item)}
       ${aiEventsPanel(item)}

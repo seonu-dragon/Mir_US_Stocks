@@ -3284,6 +3284,17 @@ function renderKrHighlights() {
     .sort((a, b) => Math.abs(b.dayPct) - Math.abs(a.dayPct))[0];
   if (er) add("📊", "실적 반응", er, `공시일 ${er.dayPct > 0 ? "+" : ""}${er.dayPct.toFixed(1)}%`, er.dayPct >= 0 ? "good" : "warn");
 
+  // 중대 리스크 공시 종목이 있으면 맨 앞에 경고로(상장폐지·불성실·중대 거래정지·횡령).
+  for (const d of ((window.KR_DISCLOSURES || {}).disclosures || [])) {
+    const tt = d.title || "";
+    let lbl = null;
+    if (tt.includes("상장폐지")) lbl = "상장폐지 사유";
+    else if (tt.includes("불성실공시")) lbl = "불성실공시";
+    else if (tt.includes("횡령") || tt.includes("배임")) lbl = "횡령·배임";
+    else if (tt.includes("거래정지") && /상장폐지|불성실|감사의견|횡령/.test(tt)) lbl = "거래정지(중대)";
+    if (lbl && d.ticker) { items.unshift({ icon: "⚠️", label: "리스크", ticker: d.ticker, company: d.company || d.ticker, extra: lbl, tone: "warn" }); break; }
+  }
+
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
   const chip = (it) => `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:8px 12px;border:1px solid var(--border,#2a3342);border-radius:10px;background:var(--panel-2,#141a24);cursor:pointer;min-width:120px">
@@ -18377,10 +18388,29 @@ function aiDataQualityPanel(item) {
 
 // KR 전용 — 흩어진 공시·수급 신호를 종목 하나로 모은다(공매도추세·자사주·증자·배당·
 // 외국인·실적반응·수주). 전부 이미 로드된 전역에서 조합, 없으면 그 줄만 뺀다.
+// 중대 리스크 공시만 골라낸다(DART 공시). 거래정지는 병합·스팩 등 루틴이 많아 사유가
+// 중대할 때만(상장폐지·불성실·감사의견·횡령) 잡는다 — 루틴을 리스크로 오탐하지 않는다.
+function krRiskFlags(ticker) {
+  const flags = [];
+  for (const d of ((window.KR_DISCLOSURES || {}).disclosures || [])) {
+    if (d.ticker !== ticker) continue;
+    const t = d.title || "";
+    if (t.includes("상장폐지")) flags.push("상장폐지 사유");
+    else if (t.includes("불성실공시")) flags.push("불성실공시 지정");
+    else if (t.includes("관리종목")) flags.push("관리종목(우려)");
+    else if (t.includes("횡령") || t.includes("배임")) flags.push("횡령·배임");
+    else if (t.includes("자본잠식")) flags.push("자본잠식");
+    else if (t.includes("거래정지") && /상장폐지|불성실|감사의견|횡령|배임/.test(t)) flags.push("거래정지(중대)");
+  }
+  return [...new Set(flags)];
+}
+
 function aiKrEventsPanel(item) {
   if (typeof isKrMarket === "function" ? !isKrMarket() : (marketCfg().id !== "kr")) return "";
   const t = item.ticker;
   const bits = [];
+  const risks = krRiskFlags(t);
+  if (risks.length) bits.push({ label: "⚠️ 리스크 공시", value: risks.join(" · "), tone: "warn" });
   const si = ((window.SHORT_INTEREST || {}).rows || []).find((r) => r.ticker === t);
   if (si && Number.isFinite(si.balanceRatio)) {
     let trend = "";

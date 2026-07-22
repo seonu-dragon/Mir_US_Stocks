@@ -18674,6 +18674,44 @@ function aiFactorPanel(item) {
   return aiModePanel("팩터 스코어", "시장 내 백분위", body);
 }
 
+// 유사종목 비교 — 같은 산업군(폴백 섹터) 시총 상위 피어 표. stockanalysis·Simply Wall St
+// 공통 기능. 예측이 아니라 동종 기업과의 밸류·수익성·모멘텀 나란히 보기.
+function aiPeerPanel(item) {
+  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  if (stocks.length < 10 || !item || !item.ticker) return "";
+  const sameInd = stocks.filter((s) => s.ticker !== item.ticker && item.industry && s.industry === item.industry);
+  const pool = sameInd.length >= 3 ? sameInd
+    : stocks.filter((s) => s.ticker !== item.ticker && item.sector && s.sector === item.sector);
+  if (!pool.length) return "";
+  const basis = sameInd.length >= 3 ? "같은 산업군" : "같은 섹터";
+  const peers = pool.slice().sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0)).slice(0, 6);
+  const list = [item, ...peers];
+  const mf = (t) => (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(t) : null) || {};
+  const num = (v, d = 1) => Number.isFinite(Number(v)) ? Number(v).toFixed(d) : "—";
+  const rows = list.map((s) => {
+    const f = mf(s.ticker);
+    const self = s.ticker === item.ticker;
+    const tkCell = self
+      ? `<strong>${escapeHtml(s.ticker)}</strong>`
+      : `<strong class="ticker-link" onclick="selectTicker('${s.ticker}');document.querySelector('[data-tab=search]').click()">${escapeHtml(s.ticker)}</strong>`;
+    const chg = Number(s.threeMonthChangePct);
+    const rt = "text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap";
+    return `<tr style="${self ? "background:var(--panel-soft)" : ""}">
+      <td style="overflow:hidden">${tkCell}<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(s.company || "")}</div></td>
+      <td style="${rt}">${fmtBillions(s.marketCapB)}</td>
+      <td style="${rt}">${num(f.pe)}</td>
+      <td style="${rt}">${num(f.pb)}</td>
+      <td style="${rt}" class="${Number.isFinite(chg) ? cls(chg) : ""}">${Number.isFinite(chg) ? fmtPct(chg) : "—"}</td>
+    </tr>`;
+  }).join("");
+  const body = `<div class="ai-mode-table-wrap"><table class="ai-mode-table" style="table-layout:fixed;width:100%;min-width:0">
+    <colgroup><col style="width:34%"><col style="width:18%"><col style="width:13%"><col style="width:13%"><col style="width:22%"></colgroup>
+    <thead><tr><th>종목</th><th style="text-align:right">시총</th><th style="text-align:right">PER</th><th style="text-align:right">PBR</th><th style="text-align:right">3개월</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">${basis} 시총 상위 비교(강조행이 현재 종목). 종목명을 누르면 해당 분석으로 이동합니다.</div>`;
+  return aiModePanel("유사종목 비교", basis + " · 시총순", body);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
@@ -18682,6 +18720,7 @@ function renderAiModeDataBoard(item) {
       ${aiDcfPanel(item)}
       ${aiFactorPanel(item)}
       ${aiRiskPanel(item)}
+      ${aiPeerPanel(item)}
       ${aiFundamentalPanel(item)}
       ${aiFinancialsPanel(item)}
       ${aiNewsPanel(item)}

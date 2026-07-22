@@ -1558,6 +1558,66 @@ def enrich_kr_valuation(payload: dict) -> None:
           f"DART지표 {idx_n} 종목 산출.")
 
 
+def build_krx_metrics() -> None:
+    """KRX 공식 지표(외국인 지분율/한도소진율 + 밸류에이션)를 서브프로세스로 수집한다.
+    pykrx 로그인이 필요하므로 별 프로세스에서 돌린다(KRX_ID/KRX_PW 는 env 상속). 실패해도
+    스냅샷은 진행 — 그 경우 attach_krx_metrics 가 조용히 건너뛴다."""
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_krx_metrics.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[krx] 지표 빌더 실행 실패: {exc}")
+
+
+def attach_krx_metrics(payload: dict) -> None:
+    """krx_metrics.json 을 fundamentals 에 붙인다. build_map_fundamentals 가 이 값을 읽어
+    히트맵으로 만드므로 split_snapshot_details 전에 불러야 한다.
+
+    - foreignPct/foreignExhaustion: 새 지표(항상 공식값으로 채운다).
+    - divYield/pe/pb(pbr)/dps: 네이버가 못 채운 종목만 공식값으로 보강(교차검증) —
+      기존 값을 덮어쓰지 않아 소스 혼선을 막는다.
+    """
+    path = ROOT / "data" / "korea" / "krx_metrics.json"
+    if not path.exists():
+        print("[krx] krx_metrics.json 없음 — 외국인/공식밸류 부착 건너뜀.")
+        return
+    try:
+        metrics = json.loads(path.read_text(encoding="utf-8")).get("metrics") or {}
+    except Exception as exc:
+        print(f"[krx] krx_metrics.json 읽기 실패({exc}) — 건너뜀.")
+        return
+
+    fgn_n = val_n = 0
+    for stock in payload.get("stocks", []):
+        code = str(stock.get("ticker") or "").zfill(6)
+        m = metrics.get(code)
+        if not m:
+            continue
+        fund = stock.setdefault("fundamentals", {})
+        if not isinstance(fund, dict):
+            continue
+        if m.get("fgnPct") is not None:
+            fund["foreignPct"] = m["fgnPct"]
+            fgn_n += 1
+        if m.get("fgnExh") is not None:
+            fund["foreignExhaustion"] = m["fgnExh"]
+        # 공식 밸류에이션 보강 — 네이버 결측(None)일 때만.
+        if m.get("per") and fund.get("pe") is None:
+            fund["pe"] = m["per"]
+            val_n += 1
+        if m.get("pbr") and fund.get("pb") is None:
+            fund["pb"] = fund["pbr"] = m["pbr"]
+        if m.get("div") is not None and fund.get("divYield") is None:
+            fund["divYield"] = m["div"]
+        if m.get("dps") is not None and fund.get("dps") is None:
+            fund["dps"] = m["dps"]
+    print(f"[krx] 외국인 {fgn_n}종목 · 공식밸류 보강 {val_n}종목.")
+
+
 def split_snapshot_details(payload: dict):
     details = {}
     light_stocks = []
@@ -1701,6 +1761,8 @@ def main():
     snapshot = build_snapshot(limit=args.limit)
     attach_kr_earnings(snapshot)
     enrich_kr_valuation(snapshot)
+    build_krx_metrics()          # KRX 공식 외국인/밸류에이션 수집(서브프로세스)
+    attach_krx_metrics(snapshot)  # → fundamentals (split 전에 붙여야 히트맵에 반영)
     light, details = split_snapshot_details(snapshot)
 
     if args.push:

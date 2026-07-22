@@ -508,10 +508,16 @@ const FEATURE_DATA = {
   // 미국 국채 수익률 곡선(FRED). 매크로 컨텍스트라 두 시장 모두에서 로드(미국 금리는
   // 글로벌 위험자산에 공통 영향). 시그널 탭 상단에 곡선·장단기 스프레드로 표시.
   yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
+  // FRED 매크로 지표(인플레·고용·금리·신용스프레드·소비심리). 두 시장 모두 로드.
+  macro: { global: "MACRO_INDICATORS", path: "data/macro_indicators.js" },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
   federalContracts: { global: "FEDERAL_CONTRACTS", path: "data/federal_contracts.js", usOnly: true },
+  // 애널리스트 컨센서스(Finnhub 추천·실적 서프라이즈). 무료 티어가 미국만이라 US 전용.
+  analystConsensus: { global: "ANALYST_CONSENSUS", path: "data/analyst_consensus.js", usOnly: true },
+  // FINRA 일일 공매도 거래량(통합). 미국만 공개라 US 전용.
+  finraShort: { global: "FINRA_SHORT_VOLUME", path: "data/finra_short_volume.js", usOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -638,6 +644,8 @@ function ensureAnalysisFeatureData() {
     ensureFeatureData("short"),
     ensureFeatureData("optionsStats"),
     ensureFeatureData("federalContracts"),
+    ensureFeatureData("analystConsensus"),
+    ensureFeatureData("finraShort"),
   ]);
 }
 
@@ -3442,7 +3450,36 @@ function seasonalitySvgLine(vals) {
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none"><line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--muted)" stroke-opacity="0.3" stroke-dasharray="2 2"/><path d="${line}" fill="none" stroke="${lastCol}" stroke-width="1.4"/></svg>`;
 }
 
+// FRED 매크로 지표 — 인플레·고용·금리·신용스프레드·소비심리. 현재값 + 전월/전주 대비.
+// tone 으로 '오르는 게 나쁜' 지표(인플레·실업·스프레드)는 상승을 red 로 칠한다.
+function renderMacroIndicators() {
+  const host = byId("macroIndicators");
+  if (!host) return;
+  const m = window.MACRO_INDICATORS;
+  if (!m || !Array.isArray(m.indicators) || !m.indicators.length) { host.innerHTML = ""; return; }
+  const tile = (it) => {
+    const ch = Number(it.change);
+    let col = "var(--muted)";
+    if (Number.isFinite(ch) && ch !== 0 && it.tone !== "neutral") {
+      const goodUp = it.tone === "down"; // "down" tone = 높을수록 좋음
+      const positive = goodUp ? ch > 0 : ch < 0;
+      col = positive ? "var(--green)" : "var(--red)";
+    }
+    const arrow = Number.isFinite(ch) && ch !== 0 ? (ch > 0 ? "▲" : "▼") : "";
+    return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
+      <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${it.value}${escapeHtml(it.unit || "")}</div>
+      <div style="font-size:11px;color:${col};font-variant-numeric:tabular-nums;margin-top:3px">${arrow} ${Number.isFinite(ch) ? (ch > 0 ? "+" : "") + ch + (it.unit || "") : "—"} <span style="color:var(--muted)">· ${escapeHtml(String(it.date || "").slice(0, 7))}</span></div>
+    </article>`;
+  };
+  host.innerHTML = `
+    <div class="section-title"><h2>매크로 지표</h2>
+      <p>FRED 기준 핵심 거시지표입니다. 화살표 색은 방향의 좋고 나쁨(인플레·실업·신용스프레드는 상승이 부정적). 예측이 아니라 현재값·직전 대비입니다.</p></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:8px">${m.indicators.map(tile).join("")}</div>`;
+}
+
 function renderSignals() {
+  renderMacroIndicators();
   renderYieldCurve();
   const el = byId("signalsGrid");
   if (!el) return;
@@ -3751,6 +3788,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "signals") {
     renderSignals();
     ensureFeatureData("yieldCurve").then((ok) => { if (ok && currentTab === "signals") renderYieldCurve(); });
+    ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") renderMacroIndicators(); });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
     // first visit (they're excluded from the boot prefetch) and re-render as each lands.
     ["insider", "congress", "inst13f"].forEach((k) => {
@@ -18862,6 +18900,71 @@ function aiPeerPanel(item) {
   return aiModePanel("유사종목 비교", basis + " · 시총순", body);
 }
 
+// 일일 공매도 거래량(FINRA) — 격주 공매도잔고를 보완하는 매일 지표. 공매도량/총거래량
+// 비율 + 10일 추이. MM 헤지·데이트레이딩도 포함되니 '포지션'이 아니라 '참여도'다(참고용).
+function aiShortVolumePanel(item) {
+  const fs = window.FINRA_SHORT_VOLUME;
+  if (!fs || !fs.stocks || !item || !item.ticker) return "";
+  const s = fs.stocks[String(item.ticker).toUpperCase()];
+  if (!s || !Number.isFinite(Number(s.ratio))) return "";
+  const ratio = Number(s.ratio);
+  const mkt = Number(fs.market && fs.market.avgShortRatio);
+  const hist = Array.isArray(s.hist) ? s.hist.map(Number).filter(Number.isFinite) : [];
+  const vsMkt = Number.isFinite(mkt) ? ratio - mkt : null;
+  const spark = hist.length > 3 ? sparklineSvg(hist, { width: 240, height: 44, color: ratio >= (mkt || 50) ? "#e5484d" : "#5b8def" }) : "";
+  const grid = aiMetricGrid([
+    { label: "공매도 거래량 비율", value: `${ratio.toFixed(1)}%`, tone: Number.isFinite(vsMkt) && vsMkt > 8 ? "warn" : "",
+      detail: fs.asOf ? String(fs.asOf) : "" },
+    { label: "시장 평균 대비", value: vsMkt != null ? `${vsMkt > 0 ? "+" : ""}${vsMkt.toFixed(1)}%p` : "—",
+      detail: Number.isFinite(mkt) ? `평균 ${mkt.toFixed(1)}%` : "" },
+    { label: `${hist.length}일 범위`, value: hist.length ? `${Math.min(...hist).toFixed(0)}~${Math.max(...hist).toFixed(0)}%` : "—" },
+  ]);
+  const body = grid + (spark ? `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 ${hist.length}일 추이</div>${spark}` : "")
+    + `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">FINRA 규정 SHO 통합 공매도 거래량 ÷ 총거래량. 마켓메이커 헤지·데이트레이딩도 포함되어 시장 평균이 ~50% 안팎으로 높습니다. 공매도 '잔고(포지션)'가 아니라 그날 매도 흐름의 '참여도'이며, 예측·매매 신호가 아닙니다.</p>`;
+  return aiModePanel("일일 공매도량", `FINRA · ${fs.asOf || ""}`, body);
+}
+
+// 애널리스트 컨센서스 — 추천 분포(강력매수~강력매도) + 분기 EPS 서프라이즈(Finnhub).
+// 목표주가는 무료 티어 제외. 참고용이며 예측·매매 신호가 아니다.
+function aiAnalystPanel(item) {
+  const ac = window.ANALYST_CONSENSUS;
+  if (!ac || !ac.stocks || !item || !item.ticker) return "";
+  const s = ac.stocks[String(item.ticker).toUpperCase()];
+  if (!s) return "";
+  const rec = s.rec;
+  let recHtml = "";
+  if (rec && rec.total > 0) {
+    const segs = [
+      ["강력매수", rec.strongBuy, "#1a7f4b"], ["매수", rec.buy, "#30a46c"],
+      ["보유", rec.hold, "#8a8f98"], ["매도", rec.sell, "#d98a2b"], ["강력매도", rec.strongSell, "#e5484d"],
+    ];
+    const bar = segs.map(([, n, c]) => n > 0 ? `<div style="width:${(n / rec.total * 100).toFixed(1)}%;background:${c}" title="${n}"></div>` : "").join("");
+    // 가중 컨센서스: 강매+2 매수+1 보유0 매도-1 강매도-2
+    const score = (rec.strongBuy * 2 + rec.buy - rec.sell - rec.strongSell * 2) / rec.total;
+    const label = score >= 1 ? "강력 매수" : score >= 0.4 ? "매수 우위" : score > -0.4 ? "중립" : score > -1 ? "매도 우위" : "매도";
+    const lcol = score >= 0.4 ? "var(--green)" : score <= -0.4 ? "var(--red)" : "var(--muted)";
+    const legend = segs.filter(([, n]) => n > 0).map(([lbl, n, c]) =>
+      `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-right:10px"><i style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></i>${lbl} ${n}</span>`).join("");
+    recHtml = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--muted)">애널리스트 ${rec.total}명${rec.period ? ` · ${escapeHtml(String(rec.period).slice(0, 7))}` : ""}</span>
+        <strong style="color:${lcol}">${label}</strong></div>
+      <div style="display:flex;height:12px;border-radius:6px;overflow:hidden;background:var(--panel-soft)">${bar}</div>
+      <div style="margin-top:8px">${legend}</div>`;
+  }
+  let earnHtml = "";
+  const earn = Array.isArray(s.earnings) ? s.earnings.filter((e) => Number.isFinite(Number(e.surprisePercent))).slice(0, 4) : [];
+  if (earn.length) {
+    const pills = earn.map((e) => {
+      const sp = Number(e.surprisePercent); const beat = sp >= 0;
+      return `<span style="display:inline-block;font-size:11px;padding:3px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--panel-soft);color:${beat ? "var(--green)" : "var(--red)"};font-variant-numeric:tabular-nums">${escapeHtml(String(e.period || "").slice(2, 7))} ${beat ? "+" : ""}${sp.toFixed(1)}%</span>`;
+    }).join("");
+    earnHtml = `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 EPS 서프라이즈 (추정 대비)</div><div>${pills}</div>`;
+  }
+  if (!recHtml && !earnHtml) return "";
+  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">Finnhub 애널리스트 추천 분포와 분기 EPS 서프라이즈입니다. 목표주가는 무료 데이터에 없어 제외했습니다. 참고용이며 예측·매매 신호가 아닙니다.</p>`;
+  return aiModePanel("애널리스트 컨센서스", "추천 분포 · EPS 서프라이즈", recHtml + earnHtml + note);
+}
+
 // 옵션 심리 — 풋/콜 비율(미결제약정) + 맥스페인. 둘 다 참고용 심리·수급 지표이지 매매
 // 신호가 아니다(맥스페인 '끌림'설은 논쟁적, 풋콜은 헤지·베팅이 섞여 해석이 갈린다).
 function aiOptionsPanel(item) {
@@ -18916,6 +19019,7 @@ function renderAiModeDataBoard(item) {
       ${aiRiskPanel(item)}
       ${aiPeerPanel(item)}
       ${aiFundamentalPanel(item)}
+      ${aiAnalystPanel(item)}
       ${aiFinancialsPanel(item)}
       ${aiNewsPanel(item)}
       ${aiEventsPanel(item)}
@@ -18925,6 +19029,7 @@ function renderAiModeDataBoard(item) {
       ${aiCongressPanel(item)}
       ${aiInstitutionalPanel(item)}
       ${aiShortInterestPanel(item)}
+      ${aiShortVolumePanel(item)}
       ${aiOptionsPanel(item)}
       ${aiFederalContractsPanel(item)}
       ${aiEarningsPanel(item)}

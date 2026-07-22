@@ -315,7 +315,9 @@ const TOP_PRESETS = {
   pullback: { metric: "rsScore", minRs: 80, minEps: 60, minVolume: 0, minMarketCap: 5, newHigh: "5-10%", recency: "All" },
   growth: { metric: "epsRevScore", minRs: 70, minEps: 80, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" },
   value: { metric: "forwardPE", minRs: 50, minEps: 50, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
-  lows: { metric: "low52Dist", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 1, newHigh: "All", recency: "All" }
+  lows: { metric: "low52Dist", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 1, newHigh: "All", recency: "All" },
+  volsurge: { metric: "volumeRatio", minRs: 0, minEps: 0, minVolume: 3, minMarketCap: 1, newHigh: "All", recency: "All" },
+  oversold: { metric: "rsi14", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" }
 };
 
 // 52주 저가 대비 상승률(%) — MAP_FUNDAMENTALS.low52 + 스냅샷 price 로 계산.
@@ -7033,6 +7035,8 @@ function topPresetMatches(item, preset) {
     return item.marketCapB >= 10 && Number.isFinite(pe) && pe > 0 && pe <= 25;
   }
   if (preset === "lows") { const d = low52DistPct(item); return Number.isFinite(d) && d <= 15; }
+  if (preset === "volsurge") return Number(item.volumeRatio) >= 3;
+  if (preset === "oversold") { const r = Number(item.rsi14); return Number.isFinite(r) && r <= 30; }
   return true;
 }
 
@@ -12051,10 +12055,18 @@ function renderMarketBreadth() {
   const upPctOf = (key) => (stocks.filter((s) => Number(s[key]) > 0).length / n) * 100;
   const weekUp = upPctOf("weekChangePct");
   const monthUp = upPctOf("monthChangePct");
+  const quarterUp = upPctOf("threeMonthChangePct");
 
   const strong = stocks.filter((s) => Number(s.rsScore) >= 80).length;
   const weak = stocks.filter((s) => Number(s.rsScore) <= 20).length;
   const strongPct = (strong / n) * 100;
+
+  // RSI 과매수/과매도 분포 — 단기 쏠림. rsi14 결측 종목은 분모에서 제외해 비율 왜곡 방지.
+  const rsiN = stocks.filter((s) => Number.isFinite(Number(s.rsi14))).length;
+  const overbought = stocks.filter((s) => Number(s.rsi14) >= 70).length;
+  const oversold = stocks.filter((s) => Number(s.rsi14) <= 30).length;
+  const obPct = rsiN ? (overbought / rsiN) * 100 : null;
+  const osPct = rsiN ? (oversold / rsiN) * 100 : null;
 
   const nearHigh = stocks.filter((s) => Number(s.newHighDistancePct) <= 2).length;
   const nearLow = stocks.filter((s) => { const d = low52DistPct(s); return Number.isFinite(d) && d <= 5; }).length;
@@ -12098,11 +12110,13 @@ function renderMarketBreadth() {
       <article><span>RS 강세(≥80)</span><strong class="pos">${strong.toLocaleString()}</strong><em class="muted">약세(≤20) ${weak}</em></article>
       <article><span>거래량 동반 상승</span><strong>${volAdv.toLocaleString()}</strong><em class="muted">상승종목의 ${volAdvPct.toFixed(0)}%</em></article>
       <article><span>당일 상승 비율</span><strong class="${advPct >= 50 ? "pos" : "neg"}">${advPct.toFixed(0)}%</strong><em class="muted">참여도</em></article>
+      <article><span>과매수 / 과매도</span><strong><b class="pos">${overbought.toLocaleString()}</b> / <b class="neg">${oversold.toLocaleString()}</b></strong><em class="muted">RSI≥70 / ≤30${obPct != null ? ` · ${obPct.toFixed(0)}% / ${osPct.toFixed(0)}%` : ""}</em></article>
     </div>
     <div class="breadth-bars">
       ${breadthBar("당일 상승 비율", advPct, `${adv} / ${n}개 상승`)}
       ${breadthBar("1주 상승 비율", weekUp, "주간 추세 참여도")}
       ${breadthBar("1개월 상승 비율", monthUp, "중기 추세 참여도")}
+      ${breadthBar("3개월 상승 비율", quarterUp, "분기 추세 참여도")}
       ${breadthBar("RS 강세 비율", strongPct, "상대강도 80 이상")}
     </div>
     <div class="breadth-sectors">

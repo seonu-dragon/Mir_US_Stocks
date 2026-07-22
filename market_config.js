@@ -27,8 +27,8 @@
     formatTicker: (t) => String(t || "").toUpperCase(),
     yahooTicker: (t) => String(t || "").toUpperCase().replace(/\./g, "-"),
     buckets: [
-      ["watchlist", "⭐ 내 관심종목"],
-      ["portfolio", "💼 내 보유종목"],
+      ["watchlist", "내 관심종목"],
+      ["portfolio", "내 보유종목"],
       ["all", "All US Stocks"],
       ["all_with_etf", "All incl. ETFs"],
       ["idx_sp500", "S&P 500"],
@@ -136,8 +136,8 @@
       return `${code}.KS`;
     },
     buckets: [
-      ["watchlist", "⭐ 내 관심종목"],
-      ["portfolio", "💼 내 보유종목"],
+      ["watchlist", "내 관심종목"],
+      ["portfolio", "내 보유종목"],
       ["all", "전체 한국 주식"],
       ["all_with_etf", "ETF 포함 전체"],
       ["idx_kospi_stock", "코스피 개별 종목"],

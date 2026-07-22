@@ -580,7 +580,7 @@ function scheduleFeatureViewRefresh() {
 
 // Re-render only the on-screen surfaces that read feature globals (no network).
 function refreshFeatureViews() {
-  const calls = [renderSignals, renderActionBoard];
+  const calls = [renderSignals, renderActionBoard, renderKrHighlights];
   if (currentTab === "institutional") {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {
@@ -3229,6 +3229,59 @@ function renderDilution() {
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">희석률</th><th class="ins-num">발행금액</th><th class="ins-num">전환·행사가</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 홈: 오늘의 KR 공시 하이라이트 (KR 전용) =====
+// 13개 서브탭에 흩어진 이벤트를 홈에서 한눈에. 탭은 그대로 두고 발견성만 더한다.
+// 각 유형의 대표 1건씩(공매도 최고·자사주 최대·희석 최고·수주 최대·배당 임박·실적 반응).
+function renderKrHighlights() {
+  const el = byId("krHighlights");
+  if (!el) return;
+  const isKr = (typeof isKrMarket === "function") ? isKrMarket() : (marketCfg().id === "kr");
+  if (!isKr) { el.hidden = true; el.innerHTML = ""; return; }
+  const items = [];
+  const add = (icon, label, r, extra, tone) => { if (r && r.ticker) items.push({ icon, label, ticker: r.ticker, company: r.company || r.ticker, extra, tone }); };
+
+  const si = ((window.SHORT_INTEREST || {}).rows || []).filter((r) => Number.isFinite(r.balanceRatio))
+    .sort((a, b) => b.balanceRatio - a.balanceRatio)[0];
+  if (si) add("🩳", "공매도 최고", si, `잔고 ${si.balanceRatio.toFixed(1)}%`, "warn");
+
+  // 자사주 최대 취득 · 최고 희석 증자 — 공시+상세 조합.
+  const disc = (window.KR_DISCLOSURES || {}).disclosures || [];
+  const det = (window.KR_EVENT_DETAILS || {}).details || {};
+  const rcpt = (l) => { const m = /rcpNo=(\d+)/.exec(l || ""); return m ? m[1] : ""; };
+  let topBuy = null, topDil = null;
+  for (const d of disc) {
+    const dt = det[rcpt(d.link)] || {};
+    if ((d.title || "").includes("자기주식취득") && dt.amount && (!topBuy || dt.amount > topBuy.amt)) topBuy = { ticker: d.ticker, company: d.company, amt: dt.amount };
+    const cat = dilutionCategory(d.title);
+    if (cat && dt.dilutionPct != null && (!topDil || dt.dilutionPct > topDil.dil)) topDil = { ticker: d.ticker, company: d.company, dil: dt.dilutionPct, label: cat.label };
+  }
+  if (topBuy) add("🏦", "자사주 매입", topBuy, `${Math.round(topBuy.amt / 1e8).toLocaleString()}억`, "good");
+  if (topDil) add("💧", `${topDil.label} 희석`, topDil, `희석 ${topDil.dil.toFixed(1)}%`, "warn");
+
+  const ct = ((window.KR_CONTRACTS || {}).rows || []).filter((r) => Number.isFinite(r.salesRatio))
+    .sort((a, b) => b.salesRatio - a.salesRatio)[0];
+  if (ct) add("📝", "대형 수주", ct, `매출대비 ${ct.salesRatio.toFixed(0)}%`, "good");
+
+  const dv = ((window.KR_DIVIDENDS || {}).rows || []).filter((r) => r.recordDate)
+    .sort((a, b) => a.recordDate.localeCompare(b.recordDate))[0];
+  if (dv) add("💵", "배당 임박", dv, `${dv.recordDate}${Number.isFinite(dv.yieldPct) ? ` · ${dv.yieldPct.toFixed(1)}%` : ""}`, "");
+
+  const er = ((window.KR_EARNINGS_REACTIONS || {}).rows || []).filter((r) => Number.isFinite(r.dayPct))
+    .sort((a, b) => Math.abs(b.dayPct) - Math.abs(a.dayPct))[0];
+  if (er) add("📊", "실적 반응", er, `공시일 ${er.dayPct > 0 ? "+" : ""}${er.dayPct.toFixed(1)}%`, er.dayPct >= 0 ? "good" : "warn");
+
+  if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
+  el.hidden = false;
+  const chip = (it) => `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:8px 12px;border:1px solid var(--border,#2a3342);border-radius:10px;background:var(--panel-2,#141a24);cursor:pointer;min-width:120px">
+      <span style="font-size:13px"><span style="margin-right:4px">${it.icon}</span><b>${escapeHtml(it.company)}</b></span>
+      <span class="muted" style="font-size:11px">${escapeHtml(it.label)}</span>
+      <span style="font-size:12px" class="${it.tone === "good" ? "ins-buy" : it.tone === "warn" ? "ins-sell" : ""}">${escapeHtml(it.extra || "")}</span>
+    </button>`;
+  el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>흩어진 공시·수급을 종목별 서브탭에서 한눈에</p></div>
+    <div class="kr-hl-chips" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">${items.map(chip).join("")}</div>`;
+  el.querySelectorAll(".kr-hl-chip").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
 // ===== #6 13F 변동 하이라이트 =====

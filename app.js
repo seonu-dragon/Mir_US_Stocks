@@ -4955,6 +4955,11 @@ const MAP_METRIC_CONFIG = {
   roe:       { label: "ROE",            good: "high", fmt: "pct", stops: [0, 5, 10, 17, 25] },
   roa:       { label: "ROA",            good: "high", fmt: "pct", stops: [0, 3, 6, 10, 15] },
   netMargin: { label: "Net Margin",     good: "high", fmt: "pct", stops: [0, 5, 10, 20, 30] },
+  // KRX 공식(build_kr_krx_metrics.py) — KR 전용. 한도소진율은 외국인 보유한도가 있는
+  // 통신·유틸 외엔 지분율과 같다(SKT 지분 38% vs 한도소진 78%). '높을수록 초록'은
+  // 가치판단이 아니라 외국인 관심/여력을 초록으로 읽는 관례적 방향이다.
+  foreignPct:        { label: "외국인 지분율",     good: "high", fmt: "pct", stops: [3, 8, 15, 25, 40] },
+  foreignExhaustion: { label: "외국인 한도소진율",  good: "high", fmt: "pct", stops: [10, 25, 45, 65, 85] },
 };
 const MAP_METRIC_STOPS_KR = {
   pe: [8, 12, 18, 28, 45],

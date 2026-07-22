@@ -11249,6 +11249,7 @@ function renderPortfolio() {
     renderKrwPortfolio();
     renderBenchmarkAttribution();
     renderInvestmentJournal();
+    renderPortfolioXray();
     return;
   }
   const rows = portfolio.map((p) => {
@@ -11330,6 +11331,55 @@ function renderPortfolio() {
   renderKrwPortfolio();
   renderBenchmarkAttribution();
   renderInvestmentJournal();
+  renderPortfolioXray();
+}
+
+// 포트폴리오 X-ray — 보유 비중 가중 팩터 노출(밸류·모멘텀·퀄리티·성장·규모 시장 백분위)
+// + 집중도(HHI·상위3비중·유효종목수). 섹터 분산은 도넛, 배당 인컴은 배당 캘린더가 커버.
+function renderPortfolioXray() {
+  const host = byId("pfXrayBody");
+  const card = byId("pfXrayCard");
+  if (!host) return;
+  const rows = portfolioDetailRows().filter((r) => r.value > 0);
+  if (rows.length < 2) {
+    if (card) card.style.display = "none";
+    host.innerHTML = "";
+    return;
+  }
+  if (card) card.style.display = "";
+  const total = rows.reduce((s, r) => s + r.value, 0);
+  // 가중 팩터 노출: Σ(비중 × 종목 팩터 백분위) / Σ비중(백분위 있는 것만)
+  const axes = [["밸류", "value"], ["모멘텀", "momentum"], ["퀄리티", "quality"], ["성장", "growth"], ["규모", "size"]];
+  const acc = {}; const wsum = {};
+  for (const [, k] of axes) { acc[k] = 0; wsum[k] = 0; }
+  for (const r of rows) {
+    const f = (typeof factorPercentiles === "function") ? factorPercentiles({ ticker: r.ticker }) : null;
+    if (!f) continue;
+    for (const [, k] of axes) {
+      if (Number.isFinite(f[k])) { acc[k] += r.value * f[k]; wsum[k] += r.value; }
+    }
+  }
+  const bar = (name, v) => {
+    const col = v == null ? "var(--muted)" : v >= 70 ? "#30a46c" : v >= 40 ? "#5b8def" : "#d98a2b";
+    return `<div style="display:flex;align-items:center;gap:8px;margin:5px 0">
+      <span style="width:44px;font-size:12px;color:var(--muted)">${name}</span>
+      <div style="flex:1;height:7px;border-radius:4px;background:var(--panel-soft);overflow:hidden"><div style="width:${v == null ? 0 : v}%;height:100%;background:${col}"></div></div>
+      <span style="width:34px;text-align:right;font-size:12px;font-weight:600">${v == null ? "—" : v}</span>
+    </div>`;
+  };
+  const factorBars = axes.map(([label, k]) => bar(label, wsum[k] > 0 ? Math.round(acc[k] / wsum[k]) : null)).join("");
+  // 집중도: HHI(비중 제곱합), 상위3 비중, 유효 종목수(1/HHI)
+  const weights = rows.map((r) => r.value / total).sort((a, b) => b - a);
+  const hhi = weights.reduce((s, w) => s + w * w, 0);
+  const top3 = weights.slice(0, 3).reduce((s, w) => s + w, 0) * 100;
+  const effN = hhi > 0 ? 1 / hhi : 0;
+  const concGrid = aiMetricGrid([
+    { label: "HHI 집중도", value: hhi.toFixed(3), tone: hhi > 0.25 ? "warn" : "", detail: hhi > 0.25 ? "높음" : hhi > 0.15 ? "보통" : "분산" },
+    { label: "상위 3종목 비중", value: `${top3.toFixed(0)}%`, tone: top3 > 60 ? "warn" : "" },
+    { label: "유효 종목수", value: effN.toFixed(1), detail: `보유 ${rows.length}종목` },
+  ]);
+  host.innerHTML = `<div style="font-size:12px;color:var(--muted);margin:2px 0 4px">팩터 노출 (비중 가중 백분위)</div>${factorBars}
+    <div style="font-size:12px;color:var(--muted);margin:14px 0 6px">집중도</div>${concGrid}`;
 }
 
 function renderBulk() {

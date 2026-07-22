@@ -510,6 +510,8 @@ const FEATURE_DATA = {
   yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
+  // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
+  federalContracts: { global: "FEDERAL_CONTRACTS", path: "data/federal_contracts.js", usOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -635,6 +637,7 @@ function ensureAnalysisFeatureData() {
     ensureFeatureData("insider"),
     ensureFeatureData("short"),
     ensureFeatureData("optionsStats"),
+    ensureFeatureData("federalContracts"),
   ]);
 }
 
@@ -18885,6 +18888,24 @@ function aiOptionsPanel(item) {
   return aiModePanel("옵션 심리", `풋/콜 · 맥스페인 · 만기 ${escapeHtml(s.expiry || "")}`, grid + note);
 }
 
+// 연방 계약(USASpending) — 정부 매출이 큰 종목만. 최근 12개월 prime award 규모·건수.
+// 계약 '사실'이지 예측·매매 신호가 아니다(참고용 alt-data).
+function aiFederalContractsPanel(item) {
+  const fc = window.FEDERAL_CONTRACTS;
+  if (!fc || !fc.stocks || !item || !item.ticker) return "";
+  const s = fc.stocks[String(item.ticker).toUpperCase()];
+  if (!s || !(Number(s.total) > 0)) return "";
+  const usd = (n) => { n = Number(n) || 0; return n >= 1e9 ? `$${(n / 1e9).toFixed(1)}B` : n >= 1e6 ? `$${(n / 1e6).toFixed(0)}M` : `$${n.toLocaleString()}`; };
+  const approx = !!s.approx;
+  const grid = aiMetricGrid([
+    { label: "연방 집행액", value: usd(s.total), detail: approx ? "최근 12개월 · 근사" : "최근 12개월" },
+    { label: "최대 단일 집행", value: usd(s.top) },
+    { label: "집행 건수", value: `${(Number(s.count) || 0).toLocaleString()}${approx ? "+" : ""}건` },
+  ]);
+  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">USASpending.gov 계약(A/B/C/D) 트랜잭션의 <b>실제 집행액(obligation)</b> 합입니다. 다년 계약 상한이 아니라 그 기간에 집행된 금액이며, 금액 큰 순 상위만 합산해 총액은 근사치입니다. 정부라는 '고객'의 규모를 보여주는 참고용 대체 데이터로 예측·매매 신호가 아닙니다. 기간 ${escapeHtml(fc.windowStart || "")}~${escapeHtml(fc.windowEnd || "")}.</p>`;
+  return aiModePanel("연방 계약", "USASpending · 최근 12개월 집행액", grid + note);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
@@ -18905,6 +18926,7 @@ function renderAiModeDataBoard(item) {
       ${aiInstitutionalPanel(item)}
       ${aiShortInterestPanel(item)}
       ${aiOptionsPanel(item)}
+      ${aiFederalContractsPanel(item)}
       ${aiEarningsPanel(item)}
       ${aiDataQualityPanel(item)}
     </div>

@@ -136,6 +136,56 @@ def find_previous(stock, settle_date: str, max_back: int = 10):
     return None, {}
 
 
+def trading_by_ticker(stock, date: str, market: str) -> dict[str, float]:
+    """{티커: 당일 공매도 거래비중(%)}. 잔고(T+2)와 별개인 '거래' 지표라 더 최신일이 있다."""
+    try:
+        df = stock.get_shorting_volume_by_ticker(date, market)
+    except Exception:
+        return {}
+    out = {}
+    for ticker, row in df.iterrows():
+        try:
+            out[str(ticker).zfill(6)] = round(float(row["비중"]), 3)
+        except (KeyError, ValueError, TypeError):
+            continue
+    return out
+
+
+def find_trading(stock, start_back: int = 1, max_back: int = 10):
+    """최신 가용 공매도 거래일(거래비중용). 거래는 T+1 이라 잔고일보다 최신이다."""
+    today = datetime.date.today()
+    for back in range(start_back, max_back + 1):
+        d = (today - datetime.timedelta(days=back)).strftime("%Y%m%d")
+        merged = {}
+        for market in MARKETS:
+            merged.update(trading_by_ticker(stock, d, market))
+        if merged:
+            print(f"  최신 가용 거래일(거래비중): {d} ({len(merged)}종목)")
+            return d, merged
+    return None, {}
+
+
+def balance_history(stock, ticker: str, settle: str, days: int = 45) -> list[dict]:
+    """종목별 공매도 잔고비중 시계열. 잔고÷상장주식수로 직접 계산해 float16 반올림을 피한다.
+    반환 [{d:'MMDD', r:비중%}], 최근 30개."""
+    base = datetime.datetime.strptime(settle, "%Y%m%d").date()
+    frm = (base - datetime.timedelta(days=days)).strftime("%Y%m%d")
+    try:
+        df = stock.get_shorting_balance_by_date(frm, settle, ticker)
+    except Exception:
+        return []
+    out = []
+    for dt, row in df.iterrows():
+        try:
+            shares = float(row["공매도잔고"])
+            listed = float(row["상장주식수"])
+        except (KeyError, ValueError, TypeError):
+            continue
+        if listed > 0:
+            out.append({"d": str(dt)[5:10].replace("-", ""), "r": round(shares / listed * 100, 3)})
+    return out[-30:]
+
+
 def build():
     stock = _import_pykrx_stock()
     universe = load_universe()
@@ -168,17 +218,36 @@ def build():
 
     # 잔고비중 높은 순(공매도 압력이 큰 종목이 위로).
     rows.sort(key=lambda r: (r.get("balanceRatio") or 0), reverse=True)
+
+    # (a) 당일 공매도 거래비중 병합(거래는 T+1 이라 잔고보다 최신일이 있다).
+    trade_date, trading = find_trading(stock)
+    for r in rows:
+        tr = trading.get(r["ticker"])
+        if tr is not None:
+            r["tradingRatio"] = tr
+
+    # (b) 상위 종목만 잔고비중 시계열 부착(스냅샷 → 추세). 종목당 1콜이라 상위로 제한한다.
+    hist_top = 120
+    hist_n = 0
+    for r in rows[:hist_top]:
+        hist = balance_history(stock, r["ticker"], settle)
+        if len(hist) >= 3:
+            r["history"] = hist
+            hist_n += 1
+    trade_n = sum(1 for r in rows if "tradingRatio" in r)
+
     payload = {
         "updatedAtKst": sec.kst_now_str(),
         "settlementDate": _fmt_date(settle),
+        "tradingDate": _fmt_date(trade_date),
         "count": len(rows),
         "metric": "balance",  # US=days-to-cover, KR=balance-ratio 구분용
         "source": "KRX 공매도 종합포털 (data.krx.co.kr)",
-        "note": "공매도 잔고비중 = 미상환 공매도 잔고수량 ÷ 상장주식수. T+2 공시라 "
-                "이틀 전 기준일이 최신이다. 전기대비는 직전 공시일 잔고수량 변화율.",
+        "note": "공매도 잔고비중 = 미상환 공매도 잔고수량 ÷ 상장주식수(T+2 공시). "
+                "거래비중 = 당일 공매도 거래량 ÷ 전체 거래량(T+1). 추이는 상위 종목의 잔고비중 시계열.",
         "rows": rows,
     }
-    print(f"  완료: {len(rows)}종목 (기준일 {_fmt_date(settle)})")
+    print(f"  완료: {len(rows)}종목 (기준일 {_fmt_date(settle)}) · 거래비중 {trade_n} · 잔고추이 {hist_n}")
     return payload
 
 

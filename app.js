@@ -2864,6 +2864,23 @@ function applyShortLabels(isBal) {
     : "공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다.";
   const dtcBtn = panel.querySelector('#shortSort button[data-sort="dtc"]');
   if (dtcBtn) dtcBtn.textContent = isBal ? "잔고비중 높은순" : "잔고일수 높은순";
+  // 거래비중 정렬은 KR(잔고 모드)에만 있는 지표라 US 에선 숨긴다.
+  const tradeBtn = panel.querySelector('#shortSort button[data-sort="trade"]');
+  if (tradeBtn) { tradeBtn.hidden = !isBal; tradeBtn.style.display = isBal ? "" : "none"; }
+}
+
+// KR 상위 종목의 공매도 잔고비중 시계열(빌더가 history 로 부착). 잔고 증가=공매도 압력↑
+// 이라 상승 추세를 빨강으로 그린다. 없으면 빈 문자열.
+function shortSparkline(hist) {
+  if (!Array.isArray(hist) || hist.length < 3) return "";
+  const vals = hist.map((p) => Number(p.r)).filter(Number.isFinite);
+  if (vals.length < 3) return "";
+  const min = Math.min(...vals), max = Math.max(...vals), range = (max - min) || 1;
+  const W = 62, H = 18, n = vals.length;
+  const pts = vals.map((v, i) => `${(i / (n - 1) * W).toFixed(1)},${(H - (v - min) / range * H).toFixed(1)}`).join(" ");
+  const col = vals[vals.length - 1] >= vals[0] ? "#e5484d" : "#30a46c";
+  return `<svg class="short-spark" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">`
+    + `<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
 }
 
 function renderShortInterest() {
@@ -2879,12 +2896,16 @@ function renderShortInterest() {
     wrap.innerHTML = `<p class="muted">아직 공매도 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
     return;
   }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${Number(payload.count || 0).toLocaleString()}종목 · 기준일 ${escapeHtml(payload.settlementDate || "")}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${Number(payload.count || 0).toLocaleString()}종목 · 기준일 ${escapeHtml(payload.settlementDate || "")}${isBal && payload.tradingDate ? ` · 거래일 ${escapeHtml(payload.tradingDate)}` : ""}`;
   const q = shortQuery.trim().toLowerCase();
   let rows = payload.rows.slice();
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   const primaryKey = isBal ? "balanceRatio" : "daysToCover";
-  rows.sort((a, b) => (shortSort === "change" ? (b.changePct ?? -999) - (a.changePct ?? -999) : (b[primaryKey] || 0) - (a[primaryKey] || 0)));
+  rows.sort((a, b) => {
+    if (shortSort === "change") return (b.changePct ?? -999) - (a.changePct ?? -999);
+    if (shortSort === "trade") return (b.tradingRatio ?? -1) - (a.tradingRatio ?? -1);
+    return (b[primaryKey] || 0) - (a[primaryKey] || 0);
+  });
   const shown = rows.slice(0, 200);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
   const body = shown.map((r, i) => {
@@ -2893,17 +2914,23 @@ function renderShortInterest() {
     const primary = isBal ? `${Number(r.balanceRatio || 0).toFixed(2)}%` : Number(r.daysToCover || 0).toFixed(2);
     const mainLabel = isBal ? (r.company || r.ticker) : r.ticker;
     const subLabel = isBal ? r.ticker : (r.company || "");
+    const extra = isBal
+      ? `<td class="ins-num short-spark-cell">${shortSparkline(r.history)}</td>`
+        + `<td class="ins-num">${Number.isFinite(r.tradingRatio) ? `${r.tradingRatio.toFixed(2)}%` : "—"}</td>`
+      : "";
     return `<tr>
       <td class="ins-date">${i + 1}</td>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(mainLabel)}</button><div class="ins-sub">${escapeHtml(subLabel)}</div></td>
       <td class="ins-num"><strong>${primary}</strong></td>
+      ${extra}
       <td class="ins-num">${insiderFmtShares(r.shortShares)}</td>
       <td class="ins-num ${chgCls}">${chg}</td>
     </tr>`;
   }).join("");
   const primaryHdr = isBal ? "잔고비중" : "잔고일수";
   const sharesHdr = isBal ? "공매도 잔고" : "공매도 주식수";
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th><th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  const extraHdr = isBal ? `<th class="ins-num">잔고추이(6주)</th><th class="ins-num">거래비중</th>` : "";
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th>${extraHdr}<th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

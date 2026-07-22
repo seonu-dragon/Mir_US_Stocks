@@ -3297,11 +3297,14 @@ function renderKrHighlights() {
 
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
-  const chip = (it) => `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:8px 12px;border:1px solid var(--border,#2a3342);border-radius:10px;background:var(--panel-2,#141a24);cursor:pointer;min-width:120px">
-      <span style="font-size:13px"><span style="margin-right:4px">${it.icon}</span><b>${escapeHtml(it.company)}</b></span>
-      <span class="muted" style="font-size:11px">${escapeHtml(it.label)}</span>
-      <span style="font-size:12px" class="${it.tone === "good" ? "ins-buy" : it.tone === "warn" ? "ins-sell" : ""}">${escapeHtml(it.extra || "")}</span>
+  const chip = (it) => {
+    const c = it.tone === "good" ? "#30a46c" : it.tone === "warn" ? "#e5484d" : "var(--accent,#5b8def)";
+    return `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px;align-items:flex-start;padding:9px 13px;border:1px solid var(--border,#2a3342);border-left:3px solid ${c};border-radius:8px;background:var(--panel-2,#141a24);cursor:pointer;white-space:nowrap">
+      <span style="font-size:11px;opacity:.6">${escapeHtml(it.label)}</span>
+      <span style="font-size:14px;font-weight:600">${escapeHtml(it.company)}</span>
+      <span style="font-size:12px;color:${c}">${escapeHtml(it.extra || "")}</span>
     </button>`;
+  };
   el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>흩어진 공시·수급을 종목별 서브탭에서 한눈에</p></div>
     <div class="kr-hl-chips" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">${items.map(chip).join("")}</div>`;
   el.querySelectorAll(".kr-hl-chip").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
@@ -18410,7 +18413,7 @@ function aiKrEventsPanel(item) {
   const t = item.ticker;
   const bits = [];
   const risks = krRiskFlags(t);
-  if (risks.length) bits.push({ label: "⚠️ 리스크 공시", value: risks.join(" · "), tone: "warn" });
+  if (risks.length) bits.push({ label: "리스크 공시", value: risks.join(" · "), tone: "warn" });
   const si = ((window.SHORT_INTEREST || {}).rows || []).find((r) => r.ticker === t);
   if (si && Number.isFinite(si.balanceRatio)) {
     let trend = "";

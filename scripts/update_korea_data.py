@@ -1744,6 +1744,16 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[short_interest/kr] rebuild skipped: {exc}")
+    # 잠정실적 발표 + 주가반응(kr_disclosures + 야후 일봉). 공시 빌더가 먼저 돌아야 한다.
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_earnings_reactions.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[earnings_reactions/kr] rebuild skipped: {exc}")
 
 
 def main():

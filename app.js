@@ -3450,6 +3450,74 @@ function seasonalitySvgLine(vals) {
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none"><line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--muted)" stroke-opacity="0.3" stroke-dasharray="2 2"/><path d="${line}" fill="none" stroke="${lastCol}" stroke-width="1.4"/></svg>`;
 }
 
+// 시장 심리 종합지수 (Fear & Greed) — 이미 수집하는 지표를 0~100 으로 종합. CNN 스타일의
+// 구성요소별 정규화 평균. 예측이 아니라 '지금 시장이 공포인가 탐욕인가'의 상태 요약.
+function fearGreedComponents() {
+  const stocks = (data && Array.isArray(data.stocks) ? data.stocks : []).filter((s) => !isStockEtf(s));
+  const comps = [];
+  const clamp = (v) => Math.max(0, Math.min(100, v));
+  if (stocks.length >= 20) {
+    const up = stocks.filter((s) => Number(s.changePct) > 0).length;
+    const down = stocks.filter((s) => Number(s.changePct) < 0).length;
+    if (up + down > 0) comps.push({ key: "시장 폭", score: clamp(up / (up + down) * 100), detail: "상승/하락 종목" });
+    let posM = 0, totM = 0;
+    for (const s of stocks) { const v = Number(s.monthChangePct); if (Number.isFinite(v)) { totM++; if (v > 0) posM++; } }
+    if (totM > 0) comps.push({ key: "모멘텀", score: clamp(posM / totM * 100), detail: "1개월 상승 비율" });
+    const highs = stocks.filter((s) => Number(s.newHighDistancePct) <= 2).length;
+    const lows = stocks.filter((s) => { const d = (typeof low52DistPct === "function") ? low52DistPct(s) : NaN; return Number.isFinite(d) && d <= 5; }).length;
+    if (highs + lows > 0) comps.push({ key: "주가 강도", score: clamp(highs / (highs + lows) * 100), detail: "신고가 vs 신저가" });
+  }
+  const os = window.OPTIONS_STATS;
+  const pc = os && os.market && Number(os.market.putCallOI);
+  if (Number.isFinite(pc)) comps.push({ key: "옵션 (풋/콜)", score: clamp((1.25 - pc) / (1.25 - 0.65) * 100), detail: `풋콜 ${pc.toFixed(2)}` });
+  const macro = window.MACRO_INDICATORS;
+  if (macro && Array.isArray(macro.indicators)) {
+    const hy = macro.indicators.find((i) => i.id === "BAMLH0A0HYM2");
+    if (hy && Number.isFinite(Number(hy.value))) comps.push({ key: "정크본드 수요", score: clamp((6 - Number(hy.value)) / (6 - 2.5) * 100), detail: `HY 스프레드 ${hy.value}%p` });
+  }
+  return comps;
+}
+
+function fearGreedLabel(v) {
+  return v < 25 ? { t: "극단적 공포", c: "#e5484d" } : v < 45 ? { t: "공포", c: "#e5894d" }
+    : v <= 55 ? { t: "중립", c: "#c2a63a" } : v <= 75 ? { t: "탐욕", c: "#57a83a" } : { t: "극단적 탐욕", c: "#30a46c" };
+}
+
+function renderFearGreed() {
+  const host = byId("fearGreed");
+  if (!host) return;
+  const comps = fearGreedComponents();
+  if (comps.length < 2) { host.innerHTML = ""; return; }
+  const value = Math.round(comps.reduce((a, c) => a + c.score, 0) / comps.length);
+  const lab = fearGreedLabel(value);
+  // 그라디언트 바 + 마커
+  const bar = `<div style="position:relative;height:14px;border-radius:8px;background:linear-gradient(90deg,#e5484d,#e5894d,#c2a63a,#57a83a,#30a46c)">
+      <div style="position:absolute;left:${value}%;top:-4px;transform:translateX(-50%);width:4px;height:22px;background:var(--text);border-radius:2px;box-shadow:0 0 0 2px var(--panel)"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px"><span>공포 0</span><span>중립 50</span><span>탐욕 100</span></div>`;
+  const subs = comps.map((c) => {
+    const cl = fearGreedLabel(c.score);
+    return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0">
+      <span style="width:88px;font-size:11.5px;color:var(--muted)">${escapeHtml(c.key)}</span>
+      <div style="flex:1;height:6px;border-radius:3px;background:var(--panel-soft);overflow:hidden"><div style="width:${c.score}%;height:100%;background:${cl.c}"></div></div>
+      <span style="width:82px;text-align:right;font-size:10.5px;color:var(--muted)">${escapeHtml(c.detail)}</span>
+    </div>`;
+  }).join("");
+  host.innerHTML = `
+    <div class="section-title"><h2>시장 심리 종합지수</h2>
+      <p>이미 수집하는 지표(시장 폭·모멘텀·주가 강도·옵션 풋콜·신용스프레드)를 0~100으로 종합했습니다. 예측이 아니라 현재 공포/탐욕 상태의 요약입니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
+        <strong style="font-size:34px;font-variant-numeric:tabular-nums;color:${lab.c}">${value}</strong>
+        <strong style="font-size:16px;color:${lab.c}">${lab.t}</strong>
+        <span style="font-size:11px;color:var(--muted);margin-left:auto">${comps.length}개 요소 평균</span>
+      </div>
+      ${bar}
+      <div style="margin-top:14px">${subs}</div>
+      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">각 요소를 0(공포)~100(탐욕)으로 정규화해 단순 평균했습니다. 극단값에서 되돌림이 잦다는 해석이 있으나 시점 신호로 쓰긴 어렵습니다.</p>
+    </div>`;
+}
+
 // FRED 매크로 지표 — 인플레·고용·금리·신용스프레드·소비심리. 현재값 + 전월/전주 대비.
 // tone 으로 '오르는 게 나쁜' 지표(인플레·실업·스프레드)는 상승을 red 로 칠한다.
 function renderMacroIndicators() {
@@ -3479,6 +3547,7 @@ function renderMacroIndicators() {
 }
 
 function renderSignals() {
+  renderFearGreed();
   renderMacroIndicators();
   renderYieldCurve();
   const el = byId("signalsGrid");
@@ -3788,7 +3857,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "signals") {
     renderSignals();
     ensureFeatureData("yieldCurve").then((ok) => { if (ok && currentTab === "signals") renderYieldCurve(); });
-    ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") renderMacroIndicators(); });
+    ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") { renderMacroIndicators(); renderFearGreed(); } });
+    ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
     // first visit (they're excluded from the boot prefetch) and re-render as each lands.
     ["insider", "congress", "inst13f"].forEach((k) => {

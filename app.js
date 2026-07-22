@@ -508,6 +508,8 @@ const FEATURE_DATA = {
   // 미국 국채 수익률 곡선(FRED). 매크로 컨텍스트라 두 시장 모두에서 로드(미국 금리는
   // 글로벌 위험자산에 공통 영향). 시그널 탭 상단에 곡선·장단기 스프레드로 표시.
   yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
+  // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
+  optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -632,6 +634,7 @@ function ensureAnalysisFeatureData() {
     ensureFeatureData("inst13f"),
     ensureFeatureData("insider"),
     ensureFeatureData("short"),
+    ensureFeatureData("optionsStats"),
   ]);
 }
 
@@ -18856,6 +18859,32 @@ function aiPeerPanel(item) {
   return aiModePanel("유사종목 비교", basis + " · 시총순", body);
 }
 
+// 옵션 심리 — 풋/콜 비율(미결제약정) + 맥스페인. 둘 다 참고용 심리·수급 지표이지 매매
+// 신호가 아니다(맥스페인 '끌림'설은 논쟁적, 풋콜은 헤지·베팅이 섞여 해석이 갈린다).
+function aiOptionsPanel(item) {
+  const os = window.OPTIONS_STATS;
+  if (!os || !os.stocks || !item || !item.ticker) return "";
+  const s = os.stocks[normalizeTickerKey(item.ticker)] || os.stocks[String(item.ticker).toUpperCase()];
+  if (!s) return "";
+  const price = Number(item.price) || Number(s.price);
+  const mp = Number(s.maxPain);
+  const dist = (Number.isFinite(mp) && price > 0) ? (mp - price) / price * 100 : null;
+  const pcOI = Number(s.putCallOI);
+  const pcVol = Number(s.putCallVol);
+  const pcTone = (v) => Number.isFinite(v) ? (v >= 1.2 ? "warn" : v <= 0.7 ? "up" : "") : "";
+  const kfmt = (n) => { n = Number(n) || 0; return n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}K` : `${n}`; };
+  const grid = aiMetricGrid([
+    { label: "맥스페인", value: Number.isFinite(mp) ? `$${mp.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "—",
+      detail: dist != null ? `현재가 대비 ${dist > 0 ? "+" : ""}${dist.toFixed(1)}%` : "" },
+    { label: "풋/콜 (미결제)", value: Number.isFinite(pcOI) ? pcOI.toFixed(2) : "—", tone: pcTone(pcOI),
+      detail: Number.isFinite(pcOI) ? (pcOI >= 1 ? "풋 우위" : "콜 우위") : "" },
+    { label: "풋/콜 (거래량)", value: Number.isFinite(pcVol) ? pcVol.toFixed(2) : "—", tone: pcTone(pcVol) },
+    { label: "미결제약정", value: `${kfmt(s.callOI)} C / ${kfmt(s.putOI)} P` },
+  ]);
+  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">최근접 만기 ${escapeHtml(s.expiry || "")} 기준. 맥스페인=만기에 옵션 매수자 총손실이 최대가 되는 행사가(‘주가가 그쪽으로 끌린다’는 속설은 논쟁적). 풋/콜은 심리 지표로 헤지·방향성 베팅이 섞여 있습니다. 예측·매매 신호가 아닙니다. 출처: Yahoo.</p>`;
+  return aiModePanel("옵션 심리", `풋/콜 · 맥스페인 · 만기 ${escapeHtml(s.expiry || "")}`, grid + note);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
@@ -18875,6 +18904,7 @@ function renderAiModeDataBoard(item) {
       ${aiCongressPanel(item)}
       ${aiInstitutionalPanel(item)}
       ${aiShortInterestPanel(item)}
+      ${aiOptionsPanel(item)}
       ${aiEarningsPanel(item)}
       ${aiDataQualityPanel(item)}
     </div>

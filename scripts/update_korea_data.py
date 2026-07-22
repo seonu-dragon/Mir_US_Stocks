@@ -1618,12 +1618,35 @@ def attach_krx_metrics(payload: dict) -> None:
     print(f"[krx] 외국인 {fgn_n}종목 · 공식밸류 보강 {val_n}종목.")
 
 
+def attach_kr_financials_history(payload: dict) -> None:
+    """다년 재무(build_kr_financials_history.py)를 각 종목 detail 에 financialsHistory 로 붙인다.
+    데이터는 주간 갱신(연간 재무라 매일 바뀌지 않음)이라 여기선 파일을 읽어 붙이기만 한다.
+    split_snapshot_details 전에 불러야 details 에 들어간다."""
+    path = ROOT / "data" / "korea" / "financials_history.json"
+    if not path.exists():
+        print("[재무이력] financials_history.json 없음 — 붙이지 않고 진행.")
+        return
+    try:
+        book = json.loads(path.read_text(encoding="utf-8")).get("financials") or {}
+    except Exception as exc:
+        print(f"[재무이력] 읽기 실패({exc}) — 건너뜀.")
+        return
+    n = 0
+    for stock in payload.get("stocks", []):
+        t = str(stock.get("ticker") or "").replace(".KS", "").replace(".KQ", "").zfill(6)
+        rows = book.get(t)
+        if rows:
+            stock["financialsHistory"] = rows
+            n += 1
+    print(f"[재무이력] {n}종목에 financialsHistory 부착.")
+
+
 def split_snapshot_details(payload: dict):
     details = {}
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "fundamentals", "news", "earningsHistory"]:
+        for key in ["chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
             if key in stock:
                 detail[key] = stock[key]
         if detail:
@@ -1637,7 +1660,7 @@ def split_snapshot_details(payload: dict):
             details[stock["ticker"]] = detail
         light_stocks.append({
             k: v for k, v in stock.items()
-            if k not in {"chartSeries", "fundamentals", "news", "earningsHistory"}
+            if k not in {"chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"}
         })
     light = dict(payload)
     light["stocks"] = light_stocks
@@ -1783,6 +1806,7 @@ def main():
     enrich_kr_valuation(snapshot)
     build_krx_metrics()          # KRX 공식 외국인/밸류에이션 수집(서브프로세스)
     attach_krx_metrics(snapshot)  # → fundamentals (split 전에 붙여야 히트맵에 반영)
+    attach_kr_financials_history(snapshot)  # 다년 재무 → 종목 detail (주간 갱신 파일을 읽어 부착)
     light, details = split_snapshot_details(snapshot)
 
     if args.push:

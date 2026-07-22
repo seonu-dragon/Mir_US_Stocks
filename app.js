@@ -18442,10 +18442,83 @@ function aiKrEventsPanel(item) {
   return aiModePanel("KR 이벤트·수급", "공시 종합", aiMetricGrid(bits));
 }
 
+// 종목 체력 스노우플레이크(Simply Wall St 벤치마크). 5축(밸류·성장·건전성·과거성과·배당)
+// 각각을 6개 재무 체크 통과 개수(0~6)로 채운다. 블랙박스 점수가 아니라 '통과한 체크'를
+// 그대로 보여주는 게 핵심 — Mir 정직성 원칙과 맞다. 예측 신호가 아니라 재무 체크 요약.
+function computeSnowflake(f) {
+  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+  const asRatio = (v) => (v == null ? null : (v > 10 ? v / 100 : v)); // %로 오면 배수로
+  const pe = n(f.pe), fpe = n(f.forwardPE), pb = n(f.pb ?? f.pbr), ps = n(f.ps), peg = n(f.peg);
+  const dy = n(f.divYield), payout = n(f.payoutRatio);
+  const roe = n(f.roe), roa = n(f.roa), nm = n(f.netMargin ?? f.profitMargin);
+  const debt = asRatio(n(f.debtEq)) ?? (n(f.debtRatio) != null ? n(f.debtRatio) / 100 : null);
+  const cur = asRatio(n(f.currentRatio)) ?? asRatio(n(f.quickRatio));
+  const rg = n(f.revenueGrowth), og = n(f.operatingGrowth), ng = n(f.netGrowth);
+  const eps = n(f.epsTtm ?? f.eps), epsN = n(f.epsNextY);
+  const axis = (checks) => {
+    let pass = 0, ev = 0;
+    for (const [has, ok] of checks) { if (has) { ev++; if (ok) pass++; } }
+    return { pass, ev, score: ev > 0 ? pass : null };
+  };
+  return {
+    value: axis([[pe > 0, pe < 15], [pe > 0, pe < 25], [pb > 0, pb < 1.5], [pb > 0, pb < 3], [ps > 0, ps < 2], [peg > 0, peg > 0 && peg < 1.5]]),
+    growth: axis([[peg > 0, peg < 1], [peg > 0, peg < 1.5], [pe > 0 && fpe > 0, fpe < pe], [rg != null, rg > 10], [rg != null, rg > 0], [og != null || ng != null, (og != null ? og > 0 : ng > 0)]]),
+    health: axis([[debt != null, debt < 0.5], [debt != null, debt < 1], [cur != null, cur > 1.5], [cur != null, cur > 1], [nm != null, nm > 5], [nm != null, nm > 0]]),
+    past: axis([[roe != null, roe > 15], [roe != null, roe > 8], [roa != null, roa > 5], [nm != null, nm > 10], [nm != null, nm > 0], [eps != null, eps > 0]]),
+    dividend: axis([[dy != null, dy > 0], [dy != null, dy > 2], [dy != null, dy > 3.5], [payout != null, payout > 0 && payout < 80], [payout != null, payout > 0 && payout < 60], [dy != null, dy > 0 && dy < 12]]),
+  };
+}
+
+function snowflakeSvg(sf) {
+  const axes = [["밸류", sf.value], ["성장", sf.growth], ["건전성", sf.health], ["과거성과", sf.past], ["배당", sf.dividend]];
+  const cx = 96, cy = 100, R = 62, N = 5;
+  const ang = (i) => (-Math.PI / 2) + i * (2 * Math.PI / N);
+  const pt = (i, r) => [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))];
+  let grid = "";
+  for (const g of [2, 4, 6]) grid += `<polygon points="${axes.map((_, i) => pt(i, g / 6 * R).map((v) => v.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--muted)" stroke-opacity="0.16" stroke-width="1"/>`;
+  let spokes = "", labels = "";
+  axes.forEach(([name], i) => {
+    const [x, y] = pt(i, R);
+    spokes += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--muted)" stroke-opacity="0.16"/>`;
+    const [lx, ly] = pt(i, R + 14);
+    const anchor = Math.abs(lx - cx) < 6 ? "middle" : (lx > cx ? "start" : "end");
+    labels += `<text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" font-size="11" fill="var(--muted)" text-anchor="${anchor}">${name}</text>`;
+  });
+  const dp = axes.map(([_, a], i) => pt(i, (a.score ?? 0) / 6 * R).map((v) => v.toFixed(1)).join(",")).join(" ");
+  const total = axes.reduce((s, [_, a]) => s + (a.score ?? 0), 0);
+  const col = total >= 20 ? "#2fa25f" : total >= 12 ? "#5b8def" : "#d98a2b";
+  const dots = axes.map(([_, a], i) => { const [x, y] = pt(i, (a.score ?? 0) / 6 * R); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}"/>`; }).join("");
+  return `<svg viewBox="0 0 192 206" width="180" height="192" role="img" aria-label="종목 체력 레이더">${grid}${spokes}<polygon points="${dp}" fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/>${dots}${labels}</svg>`;
+}
+
+function aiSnowflakePanel(item) {
+  // 소스: 종목 상세 fundamentals + 지도 펀더멘털(MAP_FUNDAMENTALS)을 결측 보완으로 병합.
+  // 홈의 light 종목은 fundamentals 가 비어 있어 map 이 주 소스가 된다.
+  const mf = (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(item.ticker) : null) || {};
+  const norm = normalizedFundamentalsForItem(item) || {};
+  const f = { ...mf };
+  for (const k in norm) if (norm[k] != null) f[k] = norm[k];
+  const sf = computeSnowflake(f);
+  const axes = [["밸류", sf.value], ["성장", sf.growth], ["건전성", sf.health], ["과거성과", sf.past], ["배당", sf.dividend]];
+  if (axes.filter(([_, a]) => a.ev > 0).length < 2) return ""; // 데이터 부족하면 숨김
+  const total = axes.reduce((s, [_, a]) => s + (a.score ?? 0), 0);
+  const checks = axes.map(([name, a]) => `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:var(--muted)">${name}</span><b>${a.ev > 0 ? `${a.pass}/${a.ev}` : "—"}</b></div>`).join("");
+  const body = `<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+    ${snowflakeSvg(sf)}
+    <div style="flex:1;min-width:150px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">종합 <b style="color:var(--text)">${total}/30</b> · 통과한 재무 체크</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;font-size:12px">${checks}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">각 축 = PER·PBR·성장·부채·ROE·배당 등 최대 6개 체크 중 통과 개수. 예측 점수가 아니라 재무 상태 요약입니다.</div>
+    </div>
+  </div>`;
+  return aiModePanel("종목 체력", "스노우플레이크 · 재무 체크", body);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
       ${aiTechnicalPanel(item)}
+      ${aiSnowflakePanel(item)}
       ${aiFundamentalPanel(item)}
       ${aiNewsPanel(item)}
       ${aiEventsPanel(item)}

@@ -1,0 +1,37 @@
+{
+  "ticker": "NOC",
+  "name": "Northrop Grumman Corporation",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 512.29,
+  "return_period": -22.1,
+  "support_levels": [
+    493.84
+  ],
+  "resistance_levels": [
+    525.73,
+    558.75
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 51.4,
+    "state": "neutral"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 526 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 494 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

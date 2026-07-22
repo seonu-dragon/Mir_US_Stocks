@@ -505,6 +505,9 @@ const FEATURE_DATA = {
   // 배당·공급계약 공시 원문 파싱(build_kr_corp_disclosures.py). KR 전용.
   krDividends:{ global: "KR_DIVIDENDS", path: "data/korea/dividends.js", feature: "krDart", krOnly: true },
   krContracts:{ global: "KR_CONTRACTS", path: "data/korea/contracts.js", feature: "krDart", krOnly: true },
+  // 미국 국채 수익률 곡선(FRED). 매크로 컨텍스트라 두 시장 모두에서 로드(미국 금리는
+  // 글로벌 위험자산에 공통 영향). 시그널 탭 상단에 곡선·장단기 스프레드로 표시.
+  yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
 };
 const _featureDataPromises = {};
 
@@ -3360,7 +3363,81 @@ function signalCard(title, items, note) {
     : `<li class="muted">해당 신호 없음</li>`;
   return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul></div>`;
 }
+// ===== 미국 국채 수익률 곡선 (FRED) =====
+// 매크로 컨텍스트: 곡선 모양과 장단기 스프레드. 역전(음수)은 역사적으로 경기침체를
+// 앞서 나타난 적이 많지만 시점은 들쭉날쭉 — 신호가 아니라 현재 상태 요약이다.
+function yieldCurveSvg(curve) {
+  const W = 320, H = 96, padL = 28, padR = 10, padT = 10, padB = 20;
+  const pts = curve.filter((c) => Number.isFinite(Number(c.y)));
+  if (pts.length < 3) return "";
+  const ys = pts.map((c) => c.y);
+  const ymin = Math.floor(Math.min(...ys) * 2) / 2 - 0.25;
+  const ymax = Math.ceil(Math.max(...ys) * 2) / 2 + 0.25;
+  const span = Math.max(0.5, ymax - ymin);
+  const x = (i) => padL + (W - padL - padR) * (pts.length === 1 ? 0.5 : i / (pts.length - 1));
+  const y = (v) => padT + (H - padT - padB) * (1 - (v - ymin) / span);
+  const line = pts.map((c, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(c.y).toFixed(1)}`).join(" ");
+  const dots = pts.map((c, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(c.y).toFixed(1)}" r="2.4" fill="#5b8def"/>`).join("");
+  const labels = pts.map((c, i) => (i % 2 === 0 || i === pts.length - 1)
+    ? `<text x="${x(i).toFixed(1)}" y="${H - 6}" font-size="8" fill="var(--muted)" text-anchor="middle">${c.m}</text>` : "").join("");
+  const gy = [ymin, (ymin + ymax) / 2, ymax];
+  const grid = gy.map((v) => `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-opacity="0.5"/><text x="2" y="${(y(v) + 3).toFixed(1)}" font-size="8" fill="var(--muted)">${v.toFixed(1)}</text>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">${grid}<path d="${line}" fill="none" stroke="#5b8def" stroke-width="1.6"/>${dots}${labels}</svg>`;
+}
+
+function renderYieldCurve() {
+  const host = byId("yieldCurve");
+  if (!host) return;
+  const yc = window.YIELD_CURVE;
+  if (!yc || !Array.isArray(yc.curve) || yc.curve.length < 3) { host.innerHTML = ""; return; }
+  const sp = yc.spreads || {};
+  const spTile = (label, v, sub) => {
+    if (!Number.isFinite(Number(v))) return "";
+    const inv = v < 0;
+    const col = inv ? "var(--red)" : "var(--green)";
+    return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;min-width:120px">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">${label}</div>
+      <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:${col}">${v > 0 ? "+" : ""}${Number(v).toFixed(2)}%p</div>
+      <div style="font-size:10.5px;color:${inv ? "var(--red)" : "var(--muted)"}">${inv ? "역전(단기>장기)" : sub}</div>
+    </article>`;
+  };
+  const spark = Array.isArray(yc.spreadHistory) && yc.spreadHistory.length > 5
+    ? seasonalitySvgLine(yc.spreadHistory.map((h) => h.v)) : "";
+  const last10 = (yc.curve.find((c) => c.m === "10Y") || {}).y;
+  host.innerHTML = `
+    <div class="section-title"><h2>미국 국채 수익률 곡선</h2>
+      <p>FRED 기준 ${escapeHtml(yc.asOf || "")} · 지수·종목만으로 안 보이는 '돈의 값(금리)'과 장단기 스프레드입니다. 예측이 아니라 현재 상태 요약입니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1;min-width:240px">${yieldCurveSvg(yc.curve)}</div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          ${Number.isFinite(Number(last10)) ? `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;min-width:120px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">10년물</div><div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${Number(last10).toFixed(2)}%</div><div style="font-size:10.5px;color:var(--muted)">기준 만기</div></article>` : ""}
+          ${spTile("10Y − 2Y", sp.t10y2y, "정상(우상향)")}
+          ${spTile("10Y − 3M", sp.t10y3m, "정상(우상향)")}
+        </div>
+      </div>
+      ${spark ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">10Y − 2Y 스프레드 · 최근 1년</div>${spark}</div>` : ""}
+      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">장단기 금리 역전(스프레드 음수)은 과거 경기침체를 앞서 나타난 적이 많지만 시점 차이가 커 매매 신호로 쓰기 어렵습니다. 출처: ${escapeHtml(yc.source || "FRED")}.</p>
+    </div>`;
+}
+
+// 스프레드 추이용 라인 스파크라인(0 기준선 + 음영). seasonalitySvg 가 막대라 별도.
+function seasonalitySvgLine(vals) {
+  const nums = vals.map(Number).filter(Number.isFinite);
+  if (nums.length < 2) return "";
+  const W = 320, H = 40, pad = 3;
+  const mn = Math.min(...nums, 0), mx = Math.max(...nums, 0);
+  const span = Math.max(0.01, mx - mn);
+  const x = (i) => pad + (W - pad * 2) * i / (nums.length - 1);
+  const y = (v) => pad + (H - pad * 2) * (1 - (v - mn) / span);
+  const line = nums.map((v, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const zeroY = y(0).toFixed(1);
+  const lastCol = nums[nums.length - 1] < 0 ? "#e5484d" : "#30a46c";
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none"><line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--muted)" stroke-opacity="0.3" stroke-dasharray="2 2"/><path d="${line}" fill="none" stroke="${lastCol}" stroke-width="1.4"/></svg>`;
+}
+
 function renderSignals() {
+  renderYieldCurve();
   const el = byId("signalsGrid");
   if (!el) return;
   const cards = [];
@@ -3667,6 +3744,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "map") renderTreemap();
   if (name === "signals") {
     renderSignals();
+    ensureFeatureData("yieldCurve").then((ok) => { if (ok && currentTab === "signals") renderYieldCurve(); });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
     // first visit (they're excluded from the boot prefetch) and re-render as each lands.
     ["insider", "congress", "inst13f"].forEach((k) => {

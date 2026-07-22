@@ -1754,6 +1754,16 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[earnings_reactions/kr] rebuild skipped: {exc}")
+    # 배당·공급계약 공시 원문 파싱(DART document.xml). 공시 빌더가 먼저 돌아야 한다.
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_corp_disclosures.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[corp_disclosures/kr] rebuild skipped: {exc}")
 
 
 def main():

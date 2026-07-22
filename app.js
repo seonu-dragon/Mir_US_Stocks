@@ -518,6 +518,8 @@ const FEATURE_DATA = {
   analystConsensus: { global: "ANALYST_CONSENSUS", path: "data/analyst_consensus.js", usOnly: true },
   // FINRA 일일 공매도 거래량(통합). 미국만 공개라 US 전용.
   finraShort: { global: "FINRA_SHORT_VOLUME", path: "data/finra_short_volume.js", usOnly: true },
+  // 배당 + 다음 실적 예정일(Yahoo). US 전용(KR 은 별도 배당 트래커가 있음).
+  usCalendar: { global: "US_STOCK_CALENDAR", path: "data/us_calendar.js", usOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -646,6 +648,7 @@ function ensureAnalysisFeatureData() {
     ensureFeatureData("federalContracts"),
     ensureFeatureData("analystConsensus"),
     ensureFeatureData("finraShort"),
+    ensureFeatureData("usCalendar"),
   ]);
 }
 
@@ -18994,6 +18997,26 @@ function aiShortVolumePanel(item) {
   return aiModePanel("일일 공매도량", `FINRA · ${fs.asOf || ""}`, body);
 }
 
+// US 배당 — 배당수익률·주당배당·배당성향·배당락일·5년평균(Yahoo). 배당주만.
+function aiDividendPanel(item) {
+  const cal = window.US_STOCK_CALENDAR;
+  if (!cal || !cal.stocks || !item || !item.ticker) return "";
+  const s = cal.stocks[String(item.ticker).toUpperCase()];
+  if (!s || !Number.isFinite(Number(s.divYield)) || Number(s.divYield) <= 0) return "";
+  const y = Number(s.divYield);
+  const avg = Number(s.avg5yYield);
+  const vsAvg = Number.isFinite(avg) && avg > 0 ? y - avg : null;
+  const grid = aiMetricGrid([
+    { label: "배당수익률", value: `${y.toFixed(2)}%`, detail: Number.isFinite(avg) ? `5년평균 ${avg.toFixed(2)}%` : "" },
+    { label: "주당 배당", value: Number.isFinite(Number(s.divRate)) ? `$${Number(s.divRate).toFixed(2)}` : "—" },
+    { label: "배당성향", value: Number.isFinite(Number(s.payout)) ? `${Number(s.payout).toFixed(0)}%` : "—",
+      tone: Number(s.payout) > 80 ? "warn" : "" },
+    { label: "배당락일", value: s.exDate ? escapeHtml(s.exDate) : "—" },
+  ]);
+  const cmp = vsAvg != null ? `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--green)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}. 배당성향이 높을수록 이익 대비 배당 부담이 큽니다. 참고용입니다.</p>` : "";
+  return aiModePanel("배당", "Yahoo · 연간 기준", grid + cmp);
+}
+
 // 애널리스트 컨센서스 — 추천 분포(강력매수~강력매도) + 분기 EPS 서프라이즈(Finnhub).
 // 목표주가는 무료 티어 제외. 참고용이며 예측·매매 신호가 아니다.
 function aiAnalystPanel(item) {
@@ -19030,9 +19053,13 @@ function aiAnalystPanel(item) {
     }).join("");
     earnHtml = `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 EPS 서프라이즈 (추정 대비)</div><div>${pills}</div>`;
   }
-  if (!recHtml && !earnHtml) return "";
-  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">Finnhub 애널리스트 추천 분포와 분기 EPS 서프라이즈입니다. 목표주가는 무료 데이터에 없어 제외했습니다. 참고용이며 예측·매매 신호가 아닙니다.</p>`;
-  return aiModePanel("애널리스트 컨센서스", "추천 분포 · EPS 서프라이즈", recHtml + earnHtml + note);
+  // 다음 실적 예정일(US_STOCK_CALENDAR)
+  const cal = window.US_STOCK_CALENDAR;
+  const nextE = cal && cal.stocks && cal.stocks[String(item.ticker).toUpperCase()] && cal.stocks[String(item.ticker).toUpperCase()].nextEarnings;
+  const nextHtml = nextE ? `<div style="background:var(--panel-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span style="color:var(--muted)">다음 실적 발표 예정</span> <strong style="margin-left:6px">${escapeHtml(nextE)}</strong></div>` : "";
+  if (!recHtml && !earnHtml && !nextHtml) return "";
+  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">Finnhub 애널리스트 추천 분포·분기 EPS 서프라이즈와 예정 실적일(Yahoo)입니다. 목표주가는 무료 데이터에 없어 제외했습니다. 참고용이며 예측·매매 신호가 아닙니다.</p>`;
+  return aiModePanel("애널리스트 컨센서스", "추천 분포 · EPS 서프라이즈", nextHtml + recHtml + earnHtml + note);
 }
 
 // 옵션 심리 — 풋/콜 비율(미결제약정) + 맥스페인. 둘 다 참고용 심리·수급 지표이지 매매
@@ -19093,6 +19120,7 @@ function renderAiModeDataBoard(item) {
       ${aiPeerPanel(item)}
       ${aiFundamentalPanel(item)}
       ${aiAnalystPanel(item)}
+      ${aiDividendPanel(item)}
       ${aiFinancialsPanel(item)}
       ${aiNewsPanel(item)}
       ${aiEventsPanel(item)}

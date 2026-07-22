@@ -67,6 +67,11 @@ jobs:
         continue-on-error: true
         run: python scripts/build_options_stats.py --top 80
 
+      # 배당 + 다음 실적 예정일(Yahoo). 실패해도 계속.
+      - name: Build US dividends & earnings calendar (Yahoo)
+        continue-on-error: true
+        run: python scripts/build_us_dividends_calendar.py --top 200
+
       # 연방 계약(USASpending, 무료). 정부계약사 12개월 집행액. 실패해도 계속.
       - name: Build US federal contracts (USASpending)
         continue-on-error: true

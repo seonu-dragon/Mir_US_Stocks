@@ -52,6 +52,16 @@ jobs:
         continue-on-error: true
         run: python scripts/build_yield_curve.py
 
+      # FRED 매크로 지표(인플레·고용·금리·신용스프레드·소비심리). 키 불필요.
+      - name: Build macro indicators (FRED)
+        continue-on-error: true
+        run: python scripts/build_macro_indicators.py
+
+      # FINRA 일일 공매도 거래량(무료). 격주 공매도잔고 보완.
+      - name: Build FINRA daily short volume
+        continue-on-error: true
+        run: python scripts/build_finra_short_volume.py
+
       # 옵션 심리(풋콜·맥스페인, Yahoo 크럼). 실패해도 스냅샷 갱신 계속.
       - name: Build US options stats (Yahoo)
         continue-on-error: true
@@ -61,6 +71,13 @@ jobs:
       - name: Build US federal contracts (USASpending)
         continue-on-error: true
         run: python scripts/build_federal_contracts.py
+
+      # 애널리스트 컨센서스(Finnhub 추천·서프라이즈). 무료 티어, 미국만. 실패해도 계속.
+      - name: Build US analyst consensus (Finnhub)
+        continue-on-error: true
+        env:
+          FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
+        run: python scripts/build_us_analyst_consensus.py --top 200
 
       - name: Update US market snapshot
         run: python scripts/update_data.py --push

@@ -18554,6 +18554,15 @@ function aiDcfPanel(item) {
 // 다년 재무 추이(stockanalysis.com 벤치마크). build_kr_financials_history.py 가 DART 연간
 // 주요계정을 모아 종목 detail 의 financialsHistory 로 붙인다(현재 KR 만). 연도별 매출·
 // 영업이익·순이익·영업이익률 테이블.
+function finMoney(v) {
+  // KR 재무는 원(→조/억), US 재무는 달러(→$B/$M). 통화별로 포맷.
+  if (!Number.isFinite(Number(v))) return "—";
+  if (isKrMarket()) return krMoneyEok(v);
+  const n = Number(v), a = Math.abs(n);
+  if (a >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (a >= 1e6) return `$${(n / 1e6).toFixed(0)}M`;
+  return `$${n.toLocaleString()}`;
+}
 function aiFinancialsPanel(item) {
   const rows = item && item.financialsHistory;
   if (!Array.isArray(rows) || rows.length < 2) return "";
@@ -18562,9 +18571,9 @@ function aiFinancialsPanel(item) {
     const margin = (r.op != null && r.rev > 0) ? (r.op / r.rev * 100) : null;
     return `<tr>
       <td class="ins-date">${r.y}</td>
-      <td class="ins-num">${krMoneyEok(r.rev)}</td>
-      <td class="ins-num ${r.op < 0 ? "ins-sell" : ""}">${krMoneyEok(r.op)}</td>
-      <td class="ins-num ${r.net < 0 ? "ins-sell" : ""}">${krMoneyEok(r.net)}</td>
+      <td class="ins-num">${finMoney(r.rev)}</td>
+      <td class="ins-num ${r.op < 0 ? "ins-sell" : ""}">${finMoney(r.op)}</td>
+      <td class="ins-num ${r.net < 0 ? "ins-sell" : ""}">${finMoney(r.net)}</td>
       <td class="ins-num">${margin != null ? `${margin.toFixed(1)}%` : "—"}</td>
     </tr>`;
   }).join("");

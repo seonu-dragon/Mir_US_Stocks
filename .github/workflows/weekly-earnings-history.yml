@@ -73,3 +73,7 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_financials_history.py --push
+
+      # 미국 다년 재무(SEC EDGAR XBRL). API 키 불필요, User-Agent 만 필요.
+      - name: US financials history (SEC)
+        run: python scripts/build_us_financials_history.py --push

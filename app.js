@@ -18577,8 +18577,10 @@ function aiFinancialsPanel(item) {
       <td class="ins-num">${margin != null ? `${margin.toFixed(1)}%` : "—"}</td>
     </tr>`;
   }).join("");
-  const table = `<table class="insider-table"><thead><tr><th>연도</th><th class="ins-num">매출</th><th class="ins-num">영업이익</th><th class="ins-num">순이익</th><th class="ins-num">영업이익률</th></tr></thead><tbody>${body}</tbody></table>`;
-  return aiModePanel("다년 재무", `연간 추이 · ${sorted[sorted.length - 1].y}~${sorted[0].y} (DART)`, `<div class="insider-table-wrap">${table}</div>`);
+  const table = `<table class="insider-table" style="table-layout:fixed;width:100%;min-width:0">
+    <colgroup><col style="width:14%"><col style="width:24%"><col style="width:22%"><col style="width:22%"><col style="width:18%"></colgroup>
+    <thead><tr><th>연도</th><th class="ins-num">매출</th><th class="ins-num">영업이익</th><th class="ins-num">순이익</th><th class="ins-num">이익률</th></tr></thead><tbody>${body}</tbody></table>`;
+  return aiModePanel("다년 재무", `연간 추이 · ${sorted[sorted.length - 1].y}~${sorted[0].y} (${isKrMarket() ? "DART" : "SEC"})`, `<div class="insider-table-wrap">${table}</div>`);
 }
 
 // 위험 프로파일 — 가격 이력(getChartRows)으로 연율변동성·최대낙폭·1년수익률 + 월별

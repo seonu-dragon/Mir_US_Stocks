@@ -3477,6 +3477,8 @@ function fearGreedComponents() {
   if (macro && Array.isArray(macro.indicators)) {
     const hy = macro.indicators.find((i) => i.id === "BAMLH0A0HYM2");
     if (hy && Number.isFinite(Number(hy.value))) comps.push({ key: "정크본드 수요", score: clamp((6 - Number(hy.value)) / (6 - 2.5) * 100), detail: `HY 스프레드 ${hy.value}%p` });
+    const vix = macro.indicators.find((i) => i.id === "VIXCLS");
+    if (vix && Number.isFinite(Number(vix.value))) comps.push({ key: "변동성 (VIX)", score: clamp((30 - Number(vix.value)) / (30 - 12) * 100), detail: `VIX ${vix.value}` });
   }
   return comps;
 }

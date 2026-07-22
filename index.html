@@ -57,7 +57,7 @@
          받고, 가변폰트라 웨이트 전 구간을 파일 하나로 덮는다. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
     <link rel="stylesheet" href="styles.css?v=4539ef077a">
-    <script src="build_id.js?v=c4327b6447"></script>
+    <script src="build_id.js?v=81a258b3d0"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -683,6 +683,8 @@
           <button class="sub-tab" data-sub="short">🩳 공매도</button>
           <button class="sub-tab" data-sub="buyback">🏦 자사주</button>
           <button class="sub-tab" data-sub="earnreact">📊 실적발표</button>
+          <button class="sub-tab" data-sub="dividend">💵 배당</button>
+          <button class="sub-tab" data-sub="contract">📝 수주</button>
         </nav>
 
         <div class="sub-panel" id="sub-scanner">
@@ -1312,6 +1314,46 @@
           </div>
           <div class="institutional-meta" id="earnReactMeta"></div>
           <div class="insider-table-wrap" id="earnReactTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-dividend">
+          <div class="section-title">
+            <h2>배당 캘린더</h2>
+            <p>DART '현금·현물배당결정' 공시 원문에서 파싱. <b>시가배당률·주당배당금</b>과 <b>배당기준일(배당락 근거)·지급예정일</b>입니다. 공시된 사실이며 투자 권유가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 사실</strong>
+            <span>최근 공시분만 표시합니다. 배당기준일 전전영업일이 배당락일입니다. 공시 원문 파싱이라 일부 값이 비어 있을 수 있습니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="dividendSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="record" class="is-active">배당기준일 임박순</button>
+              <button type="button" data-sort="yield">시가배당률 높은순</button>
+            </div>
+            <label class="grow">검색<input id="dividendSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="dividendMeta"></div>
+          <div class="insider-table-wrap" id="dividendTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-contract">
+          <div class="section-title">
+            <h2>공급계약 · 수주</h2>
+            <p>DART '단일판매·공급계약체결' 공시 원문에서 파싱. <b>계약금액</b>과 <b>최근 매출액 대비 비중</b>(클수록 실적 영향 큼)입니다. 예측 신호가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 사실</strong>
+            <span>최근 공시분만 표시합니다. 조건부·미공개로 규모를 알 수 없는 계약은 제외됩니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="contractSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="ratio" class="is-active">매출대비 큰순</button>
+              <button type="button" data-sort="date">최신순</button>
+            </div>
+            <label class="grow">검색<input id="contractSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="contractMeta"></div>
+          <div class="insider-table-wrap" id="contractTable"></div>
         </div>
       </section>
 
@@ -2234,7 +2276,7 @@
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="pattern_detectors_extended.js?v=f819b82793"></script>
     <script src="analysis.js?v=2ecab27725"></script>
-    <script src="app.js?v=743010f714"></script>
+    <script src="app.js?v=a0d29d49d7"></script>
     <script src="ai-cosmos.js?v=96d6d1d97f"></script>
     <script src="ai-mode-welcome.js?v=36ca8fdc85"></script>
   </body>

@@ -12007,14 +12007,17 @@ function trustPayloadCount(payload, keys = []) {
   return 0;
 }
 
-function trustStatus(timestamp, count, maxHours, pending = false) {
+function trustStatus(timestamp, count, maxHours, pending = false, allowEmpty = false) {
   // 무거운 데이터셋은 해당 탭을 처음 열 때 로드된다(FEATURE_DATA heavy).
   // 아직 안 받아온 것을 "데이터 없음"으로 보고하면 멀쩡한 파이프라인을 장애로
   // 오진하게 된다 — 실제로 신뢰도 센터가 늘 "확인 필요 8" 을 띄우던 원인이었다.
   if (pending) return { key: "pending", label: "불러오는 중", age: null };
-  if (!count) return { key: "missing", label: "데이터 없음", age: null };
+  // allowEmpty: 배당·공급계약·실적발표처럼 비수기엔 0건이 정상인 이벤트 피드. 0건이어도
+  // timestamp 가 최신이면(=빌더가 최근 돌았음) 정상으로 본다. timestamp 조차 없으면 결손.
+  if (!count && !allowEmpty) return { key: "missing", label: "데이터 없음", age: null };
   const parsed = parseSnapshotDate(timestamp);
-  if (!parsed) return { key: "unknown", label: "시각 확인 필요", age: null };
+  if (!parsed) return count ? { key: "unknown", label: "시각 확인 필요", age: null }
+    : { key: "missing", label: "데이터 없음", age: null };
   const age = Math.max(0, (Date.now() - parsed.getTime()) / 36e5);
   if (age > maxHours) return { key: "stale", label: "갱신 지연", age };
   if (age > maxHours * 0.72) return { key: "warn", label: "갱신 임박", age };
@@ -12067,6 +12070,18 @@ const TRUST_RECOVERY = {
     us: { workflow: "Short interest (Nasdaq/FINRA)", script: "scripts/build_short_interest.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_short_interest.py" },
     tabs: "공매도 패널",
+  },
+  "배당 결정": {
+    kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_corp_disclosures.py" },
+    tabs: "종목검색 · 배당 서브탭",
+  },
+  "공급계약": {
+    kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_corp_disclosures.py" },
+    tabs: "종목검색 · 수주 서브탭",
+  },
+  "실적발표 반응": {
+    kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_earnings_reactions.py" },
+    tabs: "종목검색 · 실적발표 서브탭",
   },
   "기관 13F": {
     us: { workflow: "Institutional 13F quarterly refresh", script: "scripts/build_13f_snapshot.py" },
@@ -12142,13 +12157,13 @@ function dataTrustSources() {
     const perMarket = meta[cfg.id] || meta.us || null;
     return perMarket ? { ...perMarket, tabs: meta.tabs } : null;
   };
-  const source = (name, provider, payload, keys, maxHours, cadence, featureKey = "", fallbackTime = "") => {
+  const source = (name, provider, payload, keys, maxHours, cadence, featureKey = "", fallbackTime = "", allowEmpty = false) => {
     const count = trustPayloadCount(payload, keys);
     const timestamp = payload?.updatedAtKst || payload?.updated_at_kst || payload?.updated || fallbackTime;
     // 이 시장에서 쓰는 데이터셋인데 전역이 아직 비어 있으면 = 로딩 전(장애 아님).
     const meta = FEATURE_DATA[featureKey];
     const pending = Boolean(meta && featureDataEnabled(meta, cfg) && !window[meta.global]);
-    return { name, provider, count, timestamp, maxHours, cadence, featureKey, recovery: recoveryFor(name), status: trustStatus(timestamp, count, maxHours, pending) };
+    return { name, provider, count, timestamp, maxHours, cadence, featureKey, recovery: recoveryFor(name), status: trustStatus(timestamp, count, maxHours, pending, allowEmpty) };
   };
   const rows = [
     {
@@ -12184,6 +12199,13 @@ function dataTrustSources() {
   // 사이트에 안 나가는 동안에도 신뢰도 센터는 "정상"만 보여줬다.
   if (cfg.features?.krDart) rows.push(source("DART 공시", "DART Open API", window.KR_DISCLOSURES, ["disclosures"], 48, "매일", "krDart"));
   if (cfg.features?.krOwnership) rows.push(source("지분 공시", "DART Open API", window.KR_OWNERSHIP, ["majorHolders", "insiders"], 72, "매일", "krOwnership"));
+  // 파생 이벤트 피드 — 비수기엔 0건이 정상이라 allowEmpty(0건+최신이면 정상). 빌더가 안
+  // 돌아 timestamp 가 낡으면 그때 '갱신 지연'으로 잡힌다.
+  if (cfg.features?.krDart) {
+    rows.push(source("배당 결정", "DART 원문 파싱", window.KR_DIVIDENDS, ["rows"], 72, "매일", "krDividends", "", true));
+    rows.push(source("공급계약", "DART 원문 파싱", window.KR_CONTRACTS, ["rows"], 72, "매일", "krContracts", "", true));
+    rows.push(source("실적발표 반응", "DART · Yahoo", window.KR_EARNINGS_REACTIONS, ["rows"], 72, "매일", "krEarningsReact", "", true));
+  }
   return rows;
 }
 
@@ -18288,6 +18310,40 @@ function aiDataQualityPanel(item) {
   ]));
 }
 
+// KR 전용 — 흩어진 공시·수급 신호를 종목 하나로 모은다(공매도추세·자사주·증자·배당·
+// 외국인·실적반응·수주). 전부 이미 로드된 전역에서 조합, 없으면 그 줄만 뺀다.
+function aiKrEventsPanel(item) {
+  if (typeof isKrMarket === "function" ? !isKrMarket() : (marketCfg().id !== "kr")) return "";
+  const t = item.ticker;
+  const bits = [];
+  const si = ((window.SHORT_INTEREST || {}).rows || []).find((r) => r.ticker === t);
+  if (si && Number.isFinite(si.balanceRatio)) {
+    let trend = "";
+    if (Array.isArray(si.history) && si.history.length >= 2) {
+      const dlt = si.history[si.history.length - 1].r - si.history[0].r;
+      trend = ` ${dlt > 0 ? "▲" : "▼"}${Math.abs(dlt).toFixed(1)}p`;
+    }
+    bits.push({ label: "공매도 잔고비중", value: `${si.balanceRatio.toFixed(2)}%${trend}`, tone: si.balanceRatio > 5 ? "warn" : "" });
+  }
+  const mf = (window.MAP_FUNDAMENTALS || {})[String(t).padStart(6, "0")] || (window.MAP_FUNDAMENTALS || {})[t];
+  if (mf && Number.isFinite(mf.foreignPct)) bits.push({ label: "외국인 지분율", value: `${mf.foreignPct.toFixed(1)}%` });
+  const disc = ((window.KR_DISCLOSURES || {}).disclosures || []).filter((d) => d.ticker === t);
+  const details = (window.KR_EVENT_DETAILS || {}).details || {};
+  const rcpt = (l) => { const m = /rcpNo=(\d+)/.exec(l || ""); return m ? m[1] : ""; };
+  const buy = disc.find((d) => (d.title || "").includes("자기주식취득"));
+  if (buy) { const dt = details[rcpt(buy.link)] || {}; bits.push({ label: "자사주 취득", value: dt.amount ? `${Math.round(dt.amount / 1e8).toLocaleString()}억` : "공시" }); }
+  const dil = disc.find((d) => dilutionCategory(d.title));
+  if (dil) { const dt = details[rcpt(dil.link)] || {}; const cat = dilutionCategory(dil.title); bits.push({ label: `${cat.label}(희석)`, value: dt.dilutionPct != null ? `희석 ${dt.dilutionPct.toFixed(1)}%` : "공시", tone: "warn" }); }
+  const dv = ((window.KR_DIVIDENDS || {}).rows || []).find((r) => r.ticker === t);
+  if (dv) bits.push({ label: "배당", value: Number.isFinite(dv.yieldPct) ? `${dv.yieldPct.toFixed(2)}% · 기준일 ${dv.recordDate || "-"}` : `기준일 ${dv.recordDate || "-"}` });
+  const ct = ((window.KR_CONTRACTS || {}).rows || []).find((r) => r.ticker === t);
+  if (ct && Number.isFinite(ct.salesRatio)) bits.push({ label: "수주", value: `매출대비 ${ct.salesRatio.toFixed(1)}%` });
+  const er = ((window.KR_EARNINGS_REACTIONS || {}).rows || []).find((r) => r.ticker === t);
+  if (er) bits.push({ label: "실적발표", value: `${er.date} · 공시일 ${fmtPct(er.dayPct)} · 익일 ${fmtPct(er.nextPct)}`, tone: cls(er.dayPct) });
+  if (!bits.length) return aiModePanel("KR 이벤트·수급", "공시 종합", `<p class="muted ai-mode-empty">최근 공시·수급 이벤트가 없습니다.</p>`);
+  return aiModePanel("KR 이벤트·수급", "공시 종합", aiMetricGrid(bits));
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
@@ -18295,6 +18351,7 @@ function renderAiModeDataBoard(item) {
       ${aiFundamentalPanel(item)}
       ${aiNewsPanel(item)}
       ${aiEventsPanel(item)}
+      ${aiKrEventsPanel(item)}
       ${aiSectorPanel(item)}
       ${aiInsiderPanel(item)}
       ${aiCongressPanel(item)}

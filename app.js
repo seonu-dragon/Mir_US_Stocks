@@ -3299,10 +3299,10 @@ function renderKrHighlights() {
   el.hidden = false;
   const chip = (it) => {
     const c = it.tone === "good" ? "#30a46c" : it.tone === "warn" ? "#e5484d" : "var(--accent,#5b8def)";
-    return `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="flex:0 0 auto;display:flex;flex-direction:column;gap:3px;align-items:flex-start;padding:9px 13px;border:1px solid var(--border,#2a3342);border-left:3px solid ${c};border-radius:8px;background:var(--panel-2,#141a24);cursor:pointer;white-space:nowrap">
-      <span style="font-size:11px;opacity:.6">${escapeHtml(it.label)}</span>
-      <span style="font-size:14px;font-weight:600">${escapeHtml(it.company)}</span>
-      <span style="font-size:12px;color:${c}">${escapeHtml(it.extra || "")}</span>
+    return `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:3px 7px;padding:7px 12px;border-left:3px solid ${c};border-radius:8px;background:var(--panel-soft);color:var(--text);cursor:pointer;text-align:left;line-height:1.4;height:auto;min-height:0">
+      <span style="font-size:14px;font-weight:600;color:var(--text)">${escapeHtml(it.company)}</span>
+      <span style="font-size:11px;color:var(--muted)">${escapeHtml(it.label)}</span>
+      <span style="font-size:12px;color:${c};font-weight:600">${escapeHtml(it.extra || "")}</span>
     </button>`;
   };
   el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>흩어진 공시·수급을 종목별 서브탭에서 한눈에</p></div>

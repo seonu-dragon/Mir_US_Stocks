@@ -61,6 +61,10 @@ DIRECT = {
     "profitMargin": "netMargin",
     "week52Low": "low52",
     "week52High": "high52",
+    # KRX 공식 외국인 지표(build_kr_krx_metrics.py → attach_krx_metrics). KR 전용이라
+    # 미국 상세엔 이 키가 없어 커버리지 게이트가 알아서 숨긴다.
+    "foreignPct": "foreignPct",
+    "foreignExhaustion": "foreignExhaustion",
 }
 
 

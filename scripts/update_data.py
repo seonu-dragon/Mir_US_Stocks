@@ -2542,12 +2542,33 @@ def write_js(payload):
             os.unlink(temp_name)
 
 
+def attach_us_financials_history(payload):
+    """다년 재무(build_us_financials_history.py, SEC)를 각 종목 detail 에 financialsHistory
+    로 붙인다. 주간 갱신 파일을 읽어 붙이기만 하며 split 전에 호출해야 details 에 들어간다."""
+    path = ROOT / "data" / "us_financials_history.json"
+    if not path.exists():
+        print("[US재무] us_financials_history.json 없음 — 붙이지 않고 진행.")
+        return
+    try:
+        book = json.loads(path.read_text(encoding="utf-8")).get("financials") or {}
+    except Exception as exc:
+        print(f"[US재무] 읽기 실패({exc}) — 건너뜀.")
+        return
+    n = 0
+    for stock in payload.get("stocks", []):
+        rows = book.get(str(stock.get("ticker") or "").upper())
+        if rows:
+            stock["financialsHistory"] = rows
+            n += 1
+    print(f"[US재무] {n}종목에 financialsHistory 부착.")
+
+
 def split_snapshot_details(payload):
     details = {}
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "fundamentals", "news", "earningsHistory"]:
+        for key in ["chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
             if key in stock:
                 detail[key] = stock[key]
         if detail:
@@ -2560,7 +2581,7 @@ def split_snapshot_details(payload):
         light_stocks.append({
             key: value
             for key, value in stock.items()
-            if key not in {"chartSeries", "fundamentals", "news", "earningsHistory"}
+            if key not in {"chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"}
         })
     light_payload = dict(payload)
     light_payload["stocks"] = light_stocks
@@ -2726,6 +2747,7 @@ def main():
     # Network-heavy collection runs without the publish lock. Only the final
     # read/merge/write/commit phase is serialized with the briefing jobs.
     snapshot = build_snapshot()
+    attach_us_financials_history(snapshot)  # 다년 재무(SEC) → 종목 detail (주간 갱신 파일 읽기)
     light_snapshot, details = split_snapshot_details(snapshot)
     write_details(details)
 

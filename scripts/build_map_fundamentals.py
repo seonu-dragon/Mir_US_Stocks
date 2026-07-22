@@ -1,0 +1,209 @@
+#!/usr/bin/env python3
+"""시장지도 색상 기준용 펀더멘털 요약 빌드.
+
+data/details/*.json 의 fundamentals 를 읽어 시장지도가 동기적으로 색칠할 수 있는
+compact lookup(data/map_fundamentals.js / .json)을 만든다.
+
+지도에서 쓰는 12개 지표 키:
+  pe, forwardPE, peg, ps, pb, pfcf, evEbitda, divYield, eps, roe, roa, netMargin
+
+- pe/forwardPE/ps/pb/roe 는 fundamentals 동일 키.
+- netMargin = profitMargin, eps = epsTtm.
+- roa = incomeB / assetsB * 100 (둘 다 있을 때 산출).
+- peg/pfcf/evEbitda/divYield 는 update_data.py 가 수집하면 fundamentals 에 채워지며,
+  아직 없으면 생략(지도에서 '데이터 없음' 처리).
+"""
+
+from __future__ import annotations
+
+import glob
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MARKET_PATHS = {
+    "us": {
+        "details": ROOT / "data" / "details",
+        "out_js": ROOT / "data" / "map_fundamentals.js",
+        "out_json": ROOT / "data" / "map_fundamentals.json",
+        "global": "MAP_FUNDAMENTALS",
+        "ticker_key": lambda t: str(t).upper(),
+    },
+    "kr": {
+        "details": ROOT / "data" / "korea" / "details",
+        "out_js": ROOT / "data" / "korea" / "map_fundamentals.js",
+        "out_json": ROOT / "data" / "korea" / "map_fundamentals.json",
+        "global": "KOREA_MAP_FUNDAMENTALS",
+        "ticker_key": lambda t: str(t).zfill(6),
+    },
+}
+
+# fundamentals 키 -> 지도 키 (직접 매핑)
+DIRECT = {
+    "pe": "pe",
+    "forwardPE": "forwardPE",
+    "peg": "peg",
+    "ps": "ps",
+    "pb": "pb",
+    "pfcf": "pfcf",
+    "evEbitda": "evEbitda",
+    "evEbit": "evEbit",
+    # DART 재무지표(build_kr_indicators.py). KR 전용 — 미국 상세엔 없어서 자동으로 빠진다.
+    "revenueGrowth": "revenueGrowth",
+    "operatingGrowth": "operatingGrowth",
+    "netGrowth": "netGrowth",
+    "debtRatio": "debtRatio",
+    "currentRatio": "currentRatio",
+    "payoutRatio": "payoutRatio",
+    "divYield": "divYield",
+    "epsTtm": "eps",
+    "roe": "roe",
+    "profitMargin": "netMargin",
+    "week52Low": "low52",
+    "week52High": "high52",
+    # KRX 공식 외국인 지표(build_kr_krx_metrics.py → attach_krx_metrics). KR 전용이라
+    # 미국 상세엔 이 키가 없어 커버리지 게이트가 알아서 숨긴다.
+    "foreignPct": "foreignPct",
+    "foreignExhaustion": "foreignExhaustion",
+}
+
+
+def num(v):
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    if f != f:  # NaN
+        return None
+    return round(f, 4)
+
+
+def extract(fund: dict) -> dict:
+    out = {}
+    for src, dst in DIRECT.items():
+        val = num(fund.get(src))
+        if val is not None:
+            out[dst] = val
+    # ROA = 순이익 / 총자산
+    income = num(fund.get("incomeB"))
+    assets = num(fund.get("assetsB"))
+    if income is not None and assets and assets > 0:
+        out["roa"] = round(income / assets * 100, 2)
+    return out
+
+
+def merge_finnhub(market: str, table: dict) -> None:
+    """야후가 못 채우는 미국 지표를 Finnhub 값으로 보강한다(build_us_finnhub_metrics.py).
+
+    야후 기준 커버리지가 peg 0.3% · pfcf 0.5% · evEbitda 0.8% · divYield 1.9% 라서
+    히트맵에서 그 지표를 고르면 화면이 통째로 회색이었다(커버리지 게이트가 숨김).
+
+    야후 값이 이미 있으면 건드리지 않는다 — 비어 있는 칸만 메운다. 소스가 섞이면
+    같은 지표가 종목마다 다른 기준으로 계산돼 비교가 깨질 수 있어서, 보강은
+    '없던 것을 채우는' 데까지만 한다.
+
+    Finnhub 무료 티어는 미국 전용이다(한국은 403). KR 은 이 단계를 건너뛴다.
+    """
+    if market != "us":
+        return
+    path = ROOT / "data" / "us_finnhub_metrics.json"
+    if not path.exists():
+        return
+    try:
+        book = json.loads(path.read_text(encoding="utf-8")).get("metrics") or {}
+    except Exception as exc:
+        print(f"  [경고] us_finnhub_metrics.json 읽기 실패: {exc}")
+        return
+    filled = {}
+    for ticker, rec in book.items():
+        row = table.get(ticker)
+        if row is None:
+            continue                 # 스냅샷에 없는 종목은 지도에 넣지 않는다
+        for k, v in rec.items():
+            if row.get(k) is None and isinstance(v, (int, float)):
+                row[k] = v
+                filled[k] = filled.get(k, 0) + 1
+    if filled:
+        print(f"  finnhub 보강: {filled}")
+
+
+def add_value_score(table: dict) -> None:
+    """저평가 종합 백분위. PER·PBR 는 낮을수록, 배당수익률은 높을수록 '싸다'고 보고 각
+    지표의 시장 내 백분위를 매겨 평균한다(가진 지표만, 최소 2개). 0=고평가 ~ 100=저평가.
+    예측 신호가 아니라 '여러 멀티플에서 상대적으로 싼가'의 투명한 요약이다(가중치 없음).
+    """
+    def pct_rank(key: str, low_is_cheap: bool) -> dict:
+        pairs = [(t, m[key]) for t, m in table.items()
+                 if isinstance(m.get(key), (int, float)) and m[key] > 0]
+        if len(pairs) < 20:
+            return {}
+        pairs.sort(key=lambda x: x[1])  # 오름차순(낮은 값이 앞)
+        n = len(pairs)
+        out = {}
+        for i, (t, _) in enumerate(pairs):
+            low_pctile = i / (n - 1) * 100          # 0 = 가장 낮은 값
+            out[t] = round(100 - low_pctile if low_is_cheap else low_pctile)
+        return out
+
+    pe = pct_rank("pe", True)
+    pb = pct_rank("pb", True)
+    dv = pct_rank("divYield", False)
+    n = 0
+    for t, m in table.items():
+        comps = [d[t] for d in (pe, pb, dv) if t in d]
+        if len(comps) >= 2:
+            m["valueScore"] = round(sum(comps) / len(comps))
+            n += 1
+    print(f"  valueScore(저평가 종합): {n}")
+
+
+def build_market(market: str) -> None:
+    cfg = MARKET_PATHS[market]
+    details_dir = cfg["details"]
+    table = {}
+    files = glob.glob(str(details_dir / "*.json"))
+    for path in files:
+        try:
+            detail = json.loads(Path(path).read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        ticker = cfg["ticker_key"](detail.get("ticker") or Path(path).stem)
+        fund = detail.get("fundamentals") or {}
+        if not ticker or not fund:
+            continue
+        metrics = extract(fund)
+        if metrics:
+            table[ticker] = metrics
+
+    merge_finnhub(market, table)
+    add_value_score(table)
+
+    payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
+    cfg["out_json"].parent.mkdir(parents=True, exist_ok=True)
+    cfg["out_json"].write_text(payload, encoding="utf-8")
+    cfg["out_js"].write_text(f"window.{cfg['global']} = {payload};\n", encoding="utf-8")
+
+    counts = {}
+    for metrics in table.values():
+        for key in metrics:
+            counts[key] = counts.get(key, 0) + 1
+    print(f"map_fundamentals[{market}]: {len(table)} tickers")
+    for key in ("pe", "forwardPE", "peg", "ps", "pb", "pfcf",
+                "evEbitda", "divYield", "eps", "roe", "roa", "netMargin"):
+        print(f"  {key}: {counts.get(key, 0)}")
+
+
+def main(markets=None) -> None:
+    targets = markets or ["us", "kr"]
+    for market in targets:
+        if market not in MARKET_PATHS:
+            raise SystemExit(f"unknown market: {market}")
+        if not MARKET_PATHS[market]["details"].is_dir():
+            print(f"map_fundamentals[{market}]: skipped (no details dir)")
+            continue
+        build_market(market)
+
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv[1:] or None)

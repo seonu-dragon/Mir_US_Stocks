@@ -1,0 +1,39 @@
+name: Daily earnings calendar
+
+on:
+  schedule:
+    - cron: "30 20 * * *"  # 05:30 KST (UTC+9) — 매일 US 스냅샷(05:05) 직후 갱신
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  earnings-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build US earnings calendar
+        run: python scripts/build_earnings_calendar.py --limit 120 --push

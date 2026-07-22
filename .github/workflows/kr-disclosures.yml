@@ -1,0 +1,56 @@
+name: KR DART disclosures + ownership
+
+on:
+  schedule:
+    - cron: "30 6 * * 1-5"  # 15:30 KST weekdays
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build KR disclosures
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_disclosures.py --push
+
+      # 지분 상세는 공시 목록을 다시 벌크 조회해 대상 종목을 스스로 추리므로 위 단계에
+      # 의존하지 않는다. 다만 같은 concurrency 그룹이라 한 워크플로우 안에서 순차로 돈다
+      # (별도 워크플로우로 띄우면 대기 run 이 조용히 cancelled 된다).
+      - name: Build KR ownership (대량보유 · 임원소유)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_ownership.py --push
+
+      # 공시 제목에 숫자를 붙인다(증자 희석률·CB 전환가·자사주 금액). 위 공시 목록을
+      # 읽어 해당 유형을 낸 종목만 호출하므로 200회 안팎이면 끝난다.
+      - name: Build KR event details (주요사항보고서 상세)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_event_details.py --push

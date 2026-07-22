@@ -1,0 +1,41 @@
+name: Weekly edge stats (S/R · breakout)
+
+# 확률 엔진(analysis.js)이 쓰는 오프라인 엣지 통계를 갱신한다.
+# data/details/*.json 만 읽는 순수 백테스트라 외부 API·시크릿이 필요 없다.
+# 수동 실행만 가능했던 탓에 2026-06-23/24 이후 3주간 방치돼 있었다.
+
+on:
+  schedule:
+    - cron: "20 19 * * 6"  # 일요일 04:20 KST (UTC 토요일 19:20) — 주간 실적 이력 갱신 뒤
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build S/R respect stats
+        run: python scripts/build_sr_stats.py --push
+
+      - name: Build breakout/retest stats
+        run: python scripts/build_breakout_retest.py --push

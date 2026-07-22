@@ -1,0 +1,52 @@
+name: Daily Korea market snapshot
+
+on:
+  # Primary path: korea-close-briefing.yml runs this script at 15:42 KST.
+  # Keep manual trigger for recovery when the afternoon schedule is missed.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Update Korea market snapshot
+        # KRX_ID/KRX_PW: update_korea_data 가 서브프로세스로 부르는
+        # build_kr_short_interest.py 가 pykrx 로 KRX 로그인해 공매도 잔고를 받는다.
+        # 없으면 그 빌더만 0건으로 조용히 끝나고 스냅샷은 정상 진행.
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+        run: python scripts/update_korea_data.py --push
+
+      # 종목별 수급(외국인·기관·개인) + 컨센서스 목표주가. 스냅샷 뒤에 돌린다 —
+      # 종목 목록을 market_snapshot.json 에서 읽으므로 그게 먼저 갱신돼야 한다.
+      # 종목당 2콜 · 초당 8회로 약 11분. 실패해도 스냅샷은 이미 커밋됐다.
+      - name: Build KR investor flow + consensus
+        continue-on-error: true
+        run: python scripts/build_kr_investor_flow.py --push

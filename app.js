@@ -500,6 +500,9 @@ const FEATURE_DATA = {
   krFlow:     { global: "KR_INVESTOR_FLOW",       path: "data/korea/investor_flow.js", krOnly: true },
   // 잠정실적 발표 + 발표일·익일 주가반응(build_kr_earnings_reactions.py). KR 전용.
   krEarningsReact:{ global: "KR_EARNINGS_REACTIONS", path: "data/korea/earnings_reactions.js", feature: "krDart", krOnly: true },
+  // 배당·공급계약 공시 원문 파싱(build_kr_corp_disclosures.py). KR 전용.
+  krDividends:{ global: "KR_DIVIDENDS", path: "data/korea/dividends.js", feature: "krDart", krOnly: true },
+  krContracts:{ global: "KR_CONTRACTS", path: "data/korea/contracts.js", feature: "krDart", krOnly: true },
 };
 const _featureDataPromises = {};
 
@@ -901,14 +904,13 @@ function applyMarketOnlyUi() {
   if (searchNav) {
     searchNav.querySelectorAll(".sub-tab").forEach((btn) => {
       const sub = btn.dataset.sub;
-      const krDartOnly = (sub === "buyback" || sub === "earnreact") && !(cfg.features && cfg.features.krDart);
+      const krDartOnly = KR_DART_SUBTABS.has(sub) && !(cfg.features && cfg.features.krDart);
       const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest) || krDartOnly;
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
     const shortOff = searchSubTab === "short" && cfg.features && !cfg.features.shortInterest;
-    const krDartSubOff = (searchSubTab === "buyback" || searchSubTab === "earnreact")
-      && !(cfg.features && cfg.features.krDart);
+    const krDartSubOff = KR_DART_SUBTABS.has(searchSubTab) && !(cfg.features && cfg.features.krDart);
     if (shortOff || krDartSubOff) {
       activateSearchSub("analysis", { push: false });
     }
@@ -2232,6 +2234,8 @@ function renderCalendar(events) {
 
 let currentTab = "map";
 let searchSubTab = "analysis";
+// KR 전용(krDart) 종목검색 서브탭 — US 에선 가시성 게이트가 숨긴다.
+const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract"]);
 let calendarSubTab = "macro";
 let communitySubTab = "trending";
 let communityCardnewsView = "us";
@@ -2457,6 +2461,8 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "buyback") renderBuyback();
   if (searchSubTab === "earnreact") renderEarningsReactions();
+  if (searchSubTab === "dividend") renderDividends();
+  if (searchSubTab === "contract") renderContracts();
   if (searchSubTab === "analysis") renderSearch();
   if (push) recordNav();
 }
@@ -3073,6 +3079,85 @@ function renderEarningsReactions() {
     <td class="ins-num">${pct(r.nextPct)}</td>
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th class="ins-num">공시일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 배당 캘린더 (KR 전용) =====
+// build_kr_corp_disclosures.py 가 배당결정 공시 원문에서 파싱한 KR_DIVIDENDS
+// (1주당 배당금·시가배당률·배당기준일·지급예정일)를 그대로 표로 보여준다.
+let dividendSort = "record", dividendQuery = "", _dividendTried = false;
+function bindListControls(sortId, searchId, setSort, setQuery, rerender) {
+  const sort = byId(sortId);
+  if (sort && !sort.dataset.bound) {
+    sort.dataset.bound = "1";
+    sort.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      setSort(b.dataset.sort); sort.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b)); rerender();
+    }));
+  }
+  const s = byId(searchId);
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { setQuery(s.value); rerender(); }); }
+}
+function krMoneyEok(won) {
+  const n = Number(won);
+  if (!Number.isFinite(n) || n === 0) return "—";
+  if (Math.abs(n) >= 1e12) return `${(n / 1e12).toFixed(2)}조`;
+  return `${Math.round(n / 1e8).toLocaleString()}억`;
+}
+function renderDividends() {
+  bindListControls("dividendSort", "dividendSearch", (v) => dividendSort = v, (v) => dividendQuery = v, renderDividends);
+  const wrap = byId("dividendTable"); const meta = byId("dividendMeta");
+  if (!wrap) return;
+  if (!window.KR_DIVIDENDS && !_dividendTried) {
+    _dividendTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    ensureFeatureData("krDividends").then(renderDividends); return;
+  }
+  const payload = window.KR_DIVIDENDS || {};
+  let rows = (payload.rows || []).slice();
+  const q = dividendQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  if (dividendSort === "yield") rows.sort((a, b) => (b.yieldPct ?? -1) - (a.yieldPct ?? -1));
+  else rows.sort((a, b) => (a.recordDate || "9999").localeCompare(b.recordDate || "9999")); // 배당락 임박순
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건` : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 배당 결정이 없습니다.</p>`; return; }
+  const body = rows.slice(0, 200).map((r) => `<tr>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)} · ${escapeHtml(r.divKind || "배당")}</div></td>
+    <td class="ins-num"><strong>${Number.isFinite(r.yieldPct) ? `${r.yieldPct.toFixed(2)}%` : "—"}</strong></td>
+    <td class="ins-num">${Number.isFinite(r.dps) ? `₩${Number(r.dps).toLocaleString()}` : "—"}</td>
+    <td class="ins-date">${escapeHtml(r.recordDate || "—")}</td>
+    <td class="ins-date">${escapeHtml(r.payDate || "—")}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">시가배당률</th><th class="ins-num">주당배당금</th><th>배당기준일</th><th>지급예정일</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+// ===== 공급계약(수주) 트래커 (KR 전용) =====
+let contractSort = "ratio", contractQuery = "", _contractTried = false;
+function renderContracts() {
+  bindListControls("contractSort", "contractSearch", (v) => contractSort = v, (v) => contractQuery = v, renderContracts);
+  const wrap = byId("contractTable"); const meta = byId("contractMeta");
+  if (!wrap) return;
+  if (!window.KR_CONTRACTS && !_contractTried) {
+    _contractTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    ensureFeatureData("krContracts").then(renderContracts); return;
+  }
+  const payload = window.KR_CONTRACTS || {};
+  let rows = (payload.rows || []).slice();
+  const q = contractQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  if (contractSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  else rows.sort((a, b) => (b.salesRatio ?? -1) - (a.salesRatio ?? -1));
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건` : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 공급계약이 없습니다.</p>`; return; }
+  const body = rows.slice(0, 200).map((r) => {
+    const period = (r.startDate || r.endDate) ? `${escapeHtml(r.startDate || "")}~${escapeHtml(r.endDate || "")}` : "";
+    return `<tr>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}${r.counterparty ? ` · ${escapeHtml(r.counterparty)}` : ""}</div></td>
+    <td class="ins-num"><strong>${Number.isFinite(r.salesRatio) ? `${r.salesRatio.toFixed(1)}%` : "—"}</strong></td>
+    <td class="ins-num">${krMoneyEok(r.amount)}</td>
+    <td class="ins-date">${escapeHtml(r.date || "")}<div class="ins-sub">${period}</div></td>
+  </tr>`;
+  }).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목 · 계약상대</th><th class="ins-num">매출대비</th><th class="ins-num">계약금액</th><th>공시일 · 기간</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

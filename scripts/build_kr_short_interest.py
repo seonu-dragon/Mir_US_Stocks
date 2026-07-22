@@ -165,6 +165,30 @@ def find_trading(stock, start_back: int = 1, max_back: int = 10):
     return None, {}
 
 
+def investor_short(stock, date: str) -> dict:
+    """시장 전체 공매도 '주체' — 외국인/기관/개인 공매도 거래대금(원). 종목별이 아니라
+    시장 단위 지표라 패널 상단 요약으로 쓴다. KOSPI+KOSDAQ 합산."""
+    agg = {"외국인": 0.0, "기관": 0.0, "개인": 0.0, "기타": 0.0}
+    got = False
+    for market in MARKETS:
+        try:
+            df = stock.get_shorting_investor_value_by_date(date, date, market)
+        except Exception:
+            continue
+        if df is None or not len(df):
+            continue
+        row = df.iloc[-1]
+        for k in agg:
+            try:
+                agg[k] += float(row.get(k) or 0)
+            except (TypeError, ValueError):
+                pass
+        got = True
+    if not got:
+        return {}
+    return {k: round(v) for k, v in agg.items() if v}
+
+
 def balance_history(stock, ticker: str, settle: str, days: int = 45) -> list[dict]:
     """종목별 공매도 잔고비중 시계열. 잔고÷상장주식수로 직접 계산해 float16 반올림을 피한다.
     반환 [{d:'MMDD', r:비중%}], 최근 30개."""
@@ -226,6 +250,9 @@ def build():
         if tr is not None:
             r["tradingRatio"] = tr
 
+    # (c) 시장 공매도 주체(외국인/기관/개인 거래대금) — 종목별 아닌 시장 요약.
+    investor = investor_short(stock, trade_date) if trade_date else {}
+
     # (b) 상위 종목만 잔고비중 시계열 부착(스냅샷 → 추세). 종목당 1콜이라 상위로 제한한다.
     hist_top = 120
     hist_n = 0
@@ -240,6 +267,7 @@ def build():
         "updatedAtKst": sec.kst_now_str(),
         "settlementDate": _fmt_date(settle),
         "tradingDate": _fmt_date(trade_date),
+        "investorShort": investor,  # 시장 공매도 주체(거래대금): 외국인/기관/개인/기타
         "count": len(rows),
         "metric": "balance",  # US=days-to-cover, KR=balance-ratio 구분용
         "source": "KRX 공매도 종합포털 (data.krx.co.kr)",

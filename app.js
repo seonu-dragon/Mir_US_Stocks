@@ -1320,7 +1320,7 @@ function setupChatbot() {
     adjustForKeyboard();
     if (!greeted) {
       greeted = true;
-      addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법·투자 용어는 물론, 그냥 편하게 말 걸어 주셔도 좋아요. 😊");
+      addChatMessage("bot", "안녕하세요! 미르 도우미예요. 사이트 사용법·투자 용어는 물론, 그냥 편하게 말 걸어 주셔도 좋아요. ");
     }
   }
 
@@ -1685,7 +1685,7 @@ function watchlistSummaryCardHtml() {
   const items = watchlist.map((t) => stockByTicker(t)).filter(Boolean);
   if (!items.length) {
     return `<div class="summary-card hx-card watchlist-summary-card">
-      <span>⭐ 관심종목</span>
+      <span>관심종목</span>
       <div class="hx-row"><span class="muted">종목 옆 ★를 눌러 추가하세요</span></div>
     </div>`;
   }
@@ -1696,7 +1696,7 @@ function watchlistSummaryCardHtml() {
       <em class="${cls(s.changePct)}">${actionPct(s.changePct)}</em>
     </button>`).join("");
   return `<div class="summary-card hx-card watchlist-summary-card">
-    <span>⭐ 관심종목 <b>${items.length}</b></span>
+    <span>관심종목 <b>${items.length}</b></span>
     ${rows}
   </div>`;
 }
@@ -2613,7 +2613,7 @@ function renderInsiderCluster() {
     .slice(0, 12);
   if (!clusters.length) { el.innerHTML = ""; return; }
   el.innerHTML = `
-    <div class="cluster-head">🟢 클러스터 매수 <span>보관 기간 내 2인 이상 임원이 공개시장 매수(P)한 종목 — 강한 내부자 신뢰 신호</span></div>
+    <div class="cluster-head">클러스터 매수 <span>보관 기간 내 2인 이상 임원이 공개시장 매수(P)한 종목 — 강한 내부자 신뢰 신호</span></div>
     <div class="cluster-grid">
       ${clusters.map((g) => `
         <button type="button" class="cluster-card" data-ticker="${escapeHtml(g.ticker)}" title="${g.owners.size}명 매수 · ${g.count}건">
@@ -3256,7 +3256,7 @@ function renderKrHighlights() {
 
   const si = ((window.SHORT_INTEREST || {}).rows || []).filter((r) => Number.isFinite(r.balanceRatio))
     .sort((a, b) => b.balanceRatio - a.balanceRatio)[0];
-  if (si) add("🩳", "공매도 최고", si, `잔고 ${si.balanceRatio.toFixed(1)}%`, "warn");
+  if (si) add("", "공매도 최고", si, `잔고 ${si.balanceRatio.toFixed(1)}%`, "warn");
 
   // 자사주 최대 취득 · 최고 희석 증자 — 공시+상세 조합.
   const disc = (window.KR_DISCLOSURES || {}).disclosures || [];
@@ -3269,20 +3269,20 @@ function renderKrHighlights() {
     const cat = dilutionCategory(d.title);
     if (cat && dt.dilutionPct != null && (!topDil || dt.dilutionPct > topDil.dil)) topDil = { ticker: d.ticker, company: d.company, dil: dt.dilutionPct, label: cat.label };
   }
-  if (topBuy) add("🏦", "자사주 매입", topBuy, `${Math.round(topBuy.amt / 1e8).toLocaleString()}억`, "good");
-  if (topDil) add("💧", `${topDil.label} 희석`, topDil, `희석 ${topDil.dil.toFixed(1)}%`, "warn");
+  if (topBuy) add("", "자사주 매입", topBuy, `${Math.round(topBuy.amt / 1e8).toLocaleString()}억`, "good");
+  if (topDil) add("", `${topDil.label} 희석`, topDil, `희석 ${topDil.dil.toFixed(1)}%`, "warn");
 
   const ct = ((window.KR_CONTRACTS || {}).rows || []).filter((r) => Number.isFinite(r.salesRatio))
     .sort((a, b) => b.salesRatio - a.salesRatio)[0];
-  if (ct) add("📝", "대형 수주", ct, `매출대비 ${ct.salesRatio.toFixed(0)}%`, "good");
+  if (ct) add("", "대형 수주", ct, `매출대비 ${ct.salesRatio.toFixed(0)}%`, "good");
 
   const dv = ((window.KR_DIVIDENDS || {}).rows || []).filter((r) => r.recordDate)
     .sort((a, b) => a.recordDate.localeCompare(b.recordDate))[0];
-  if (dv) add("💵", "배당 임박", dv, `${dv.recordDate}${Number.isFinite(dv.yieldPct) ? ` · ${dv.yieldPct.toFixed(1)}%` : ""}`, "");
+  if (dv) add("", "배당 임박", dv, `${dv.recordDate}${Number.isFinite(dv.yieldPct) ? ` · ${dv.yieldPct.toFixed(1)}%` : ""}`, "");
 
   const er = ((window.KR_EARNINGS_REACTIONS || {}).rows || []).filter((r) => Number.isFinite(r.dayPct))
     .sort((a, b) => Math.abs(b.dayPct) - Math.abs(a.dayPct))[0];
-  if (er) add("📊", "실적 반응", er, `공시일 ${er.dayPct > 0 ? "+" : ""}${er.dayPct.toFixed(1)}%`, er.dayPct >= 0 ? "good" : "warn");
+  if (er) add("", "실적 반응", er, `공시일 ${er.dayPct > 0 ? "+" : ""}${er.dayPct.toFixed(1)}%`, er.dayPct >= 0 ? "good" : "warn");
 
   // 중대 리스크 공시 종목이 있으면 맨 앞에 경고로(상장폐지·불성실·중대 거래정지·횡령).
   for (const d of ((window.KR_DISCLOSURES || {}).disclosures || [])) {
@@ -3292,7 +3292,7 @@ function renderKrHighlights() {
     else if (tt.includes("불성실공시")) lbl = "불성실공시";
     else if (tt.includes("횡령") || tt.includes("배임")) lbl = "횡령·배임";
     else if (tt.includes("거래정지") && /상장폐지|불성실|감사의견|횡령/.test(tt)) lbl = "거래정지(중대)";
-    if (lbl && d.ticker) { items.unshift({ icon: "⚠️", label: "리스크", ticker: d.ticker, company: d.company || d.ticker, extra: lbl, tone: "warn" }); break; }
+    if (lbl && d.ticker) { items.unshift({ icon: "", label: "리스크", ticker: d.ticker, company: d.company || d.ticker, extra: lbl, tone: "warn" }); break; }
   }
 
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
@@ -3332,8 +3332,8 @@ function render13fHighlights() {
   if (!newBuys.length && !soldOut.length) { el.innerHTML = ""; return; }
   const list = (arr, c) => arr.map((x) => `<button type="button" class="hl-chip ${c}" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(x.ticker)} <em>${x.n}</em></button>`).join("");
   el.innerHTML = `
-    <div class="hl-col"><h4>🟢 분기 신규 매수 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(newBuys, "hl-buy")}</div></div>
-    <div class="hl-col"><h4>🔴 분기 전량 매도 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(soldOut, "hl-sell")}</div></div>`;
+    <div class="hl-col"><h4>분기 신규 매수 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(newBuys, "hl-buy")}</div></div>
+    <div class="hl-col"><h4>분기 전량 매도 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(soldOut, "hl-sell")}</div></div>`;
   el.querySelectorAll(".hl-chip").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -3374,23 +3374,23 @@ function renderSignals() {
       g.owners.add(r.owner || "?"); g.v += Number(r.value) || 0;
     }
     const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
-    cards.push(signalCard("🟢 내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
+    cards.push(signalCard("내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
   }
   // 52주 신고가 근접 — 합성 이력은 52주 고점 자체가 랜덤워크가 만든 값이라 제외한다.
   const highs = data.stocks.filter((s) => !isStockEtf(s) && !isSyntheticHistory(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= minCapForHighs)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
-  cards.push(signalCard("🚀 52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
+  cards.push(signalCard("52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
   if (cfg.features?.materialEvents !== false) {
     const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
-    cards.push(signalCard("📣 주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
+    cards.push(signalCard("주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
   }
   if (!isKrMarket()) {
     const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((a) => a.kind === "activist").slice(0, 8);
-    cards.push(signalCard("📐 액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" }))));
+    cards.push(signalCard("액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" }))));
   }
   if (cfg.features?.ipo !== false) {
     const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
-    cards.push(signalCard("🆕 신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
+    cards.push(signalCard("신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
   }
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => {
@@ -3429,7 +3429,7 @@ function renderAggregateInsights() {
     if (net > 0) netByT.push({ ticker: t, label: t, value: net });
   }
   netByT.sort((a, b) => b.value - a.value);
-  cards.push(`<div class="agg-card"><h3>🏛 의원 순매수 TOP5</h3>${netByT.length ? aggBars(netByT.slice(0, 5), usd, "#3b82f6") : '<p class="muted">최근 30일 순매수 데이터 없음</p>'}</div>`);
+  cards.push(`<div class="agg-card"><h3>의원 순매수 TOP5</h3>${netByT.length ? aggBars(netByT.slice(0, 5), usd, "#3b82f6") : '<p class="muted">최근 30일 순매수 데이터 없음</p>'}</div>`);
   // 내부자 매수 거래대금 섹터 랭킹 (30일)
   const ins = (window.INSIDER_TRADES || {}).trades || [];
   const bySec = {};
@@ -3440,7 +3440,7 @@ function renderAggregateInsights() {
     bySec[st.sector] = (bySec[st.sector] || 0) + (Number(r.value) || 0);
   }
   const secRows = Object.entries(bySec).map(([s, v]) => ({ label: s, value: v })).sort((a, b) => b.value - a.value).slice(0, 8);
-  cards.push(`<div class="agg-card"><h3>🧑‍💼 내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "#16a34a") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
+  cards.push(`<div class="agg-card"><h3>‍내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "#16a34a") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker[data-ticker]").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
@@ -4541,7 +4541,7 @@ function buildChartProbPanel(result) {
   const statsBtns = [["population", "전체 통계"], ["individual", "종목 실측"]].map(([k, l]) =>
     `<button type="button" class="cprob-hz cprob-stats-btn${k === chartProbStatsMode ? " is-active" : ""}" data-cpstats="${k}">${l}</button>`).join("");
   const toolbar = `<div class="cprob-toolbar">
-      <span class="cprob-title">📊 상승확률 분석</span>
+      <span class="cprob-title">상승확률 분석</span>
       <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
       <div class="cprob-hz-group" role="group" aria-label="패턴 통계 기준">${statsBtns}</div>
     </div>
@@ -5422,7 +5422,7 @@ function renderTreemap() {
   if (!all.length) {
     const bucket = byId("bucketFilter").value;
     let emptyMsg = "조건에 맞는 종목이 없습니다.";
-    if (bucket === "watchlist") emptyMsg = "관심종목이 없습니다. 종목 분석에서 ⭐를 눌러 관심종목에 추가해 보세요.";
+    if (bucket === "watchlist") emptyMsg = "관심종목이 없습니다. 종목 분석에서 를 눌러 관심종목에 추가해 보세요.";
     else if (bucket === "portfolio") emptyMsg = "보유종목이 없습니다. 포트폴리오 탭에서 보유 종목을 추가해 보세요.";
     map.innerHTML = `<div class="heatmap-empty">${escapeHtml(emptyMsg)}</div>`;
     zoomView = null;
@@ -5456,7 +5456,7 @@ function renderTreemap() {
     const industryRects = squarify(industries, inner, (item) => item.weight);
     return `
       <section class="sector-box" data-sector="${escapeHtml(sector.sector)}" style="${rectStyle(rect)}">
-        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(sector.sector)} 확대">${sector.sector} · ${fmtMetric(sector.change, metric)} 🔍</div>
+        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(sector.sector)} 확대">${sector.sector} · ${fmtMetric(sector.change, metric)} </div>
         ${industryRects.map(({ item: industry, rect: industryRect }) => industryBox(sector.sector, industry, industryRect, metric, sizeMetric, query)).join("")}
       </section>
     `;
@@ -5979,7 +5979,7 @@ function auditOpinionNotice(item) {
   if (a.adverse) {
     return `
       <p class="audit-notice audit-adverse">
-        <b>⚠️ 감사의견 ${escapeHtml(a.opinion)}</b>
+        <b>감사의견 ${escapeHtml(a.opinion)}</b>
         <span>${escapeHtml(a.year)} · ${escapeHtml(a.auditor)} · 상장폐지 사유에 해당합니다</span>
       </p>`;
   }
@@ -6616,8 +6616,8 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     
     tooltip.innerHTML = `
       <strong>${formattedDate}</strong>
-      <div class="item"><span style="width:120px;display:inline-block">📈 ${sectorTicker}:</span><b>${closestPoint.r >= 0 ? "+" : ""}${closestPoint.r.toFixed(2)}%</b></div>
-      <div class="item"><span style="width:120px;display:inline-block">📊 ${benchmarkTicker}:</span><b>${benchmarkPoint.r >= 0 ? "+" : ""}${benchmarkPoint.r.toFixed(2)}%</b></div>
+      <div class="item"><span style="width:120px;display:inline-block">${sectorTicker}:</span><b>${closestPoint.r >= 0 ? "+" : ""}${closestPoint.r.toFixed(2)}%</b></div>
+      <div class="item"><span style="width:120px;display:inline-block">${benchmarkTicker}:</span><b>${benchmarkPoint.r >= 0 ? "+" : ""}${benchmarkPoint.r.toFixed(2)}%</b></div>
       <div class="item" style="margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 4px;">
         <span>상대 수익률:</span><strong class="${diffClass}" style="margin-left:8px">${diffText}</strong>
       </div>
@@ -7504,13 +7504,13 @@ function renderSmartMoney(item) {
   const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((r) => r.ticker === t);
 
   if (!(ins.length || cg || f || act.length)) {
-    el.innerHTML = `<h3>🐳 스마트머니 종합</h3><p class="muted">이 종목에 대한 내부자·의회·기관·대량보유 신호가 없습니다.</p>`;
+    el.innerHTML = `<h3>스마트머니 종합</h3><p class="muted">이 종목에 대한 내부자·의회·기관·대량보유 신호가 없습니다.</p>`;
     return;
   }
   const row = (label, val, tone) => `<div class="sm-row"><span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong></div>`;
   const insTone = insBuy > insSell ? "ins-buy" : insSell > insBuy ? "ins-sell" : "";
   el.innerHTML = `
-    <h3>🐳 스마트머니 종합 · ${escapeHtml(t)}</h3>
+    <h3>스마트머니 종합 · ${escapeHtml(t)}</h3>
     ${row("내부자 (Form 4)", ins.length ? `매수 ${insBuy} · 매도 ${insSell}` : "—", insTone)}
     ${row("의회 매매", cg ? `매수 ${cg.netBuys} · 매도 ${cg.netSells} · ${cg.politicianCount}명` : "—")}
     ${row("기관 13F 보유", f ? `${f.holders}곳 · $${(f.valueM / 1000).toFixed(1)}B` : "—")}
@@ -7624,7 +7624,7 @@ function renderNews(item) {
   if (!box) return;
   const news = Array.isArray(item.news) ? item.news : [];
   const estimate = isSyntheticChart(item)
-    ? `<p class="news-note">⚠ 실시간 야후 가격 이력이 없어 차트는 <strong>추정(합성) 차트</strong>입니다. 데이터 갱신 시 실제 차트로 채워집니다.</p>`
+    ? `<p class="news-note">실시간 야후 가격 이력이 없어 차트는 <strong>추정(합성) 차트</strong>입니다. 데이터 갱신 시 실제 차트로 채워집니다.</p>`
     : "";
 
   if (!news.length) {
@@ -7658,7 +7658,7 @@ function newsSummaryHtml(item) {
     const paras = item.newsSummary.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean);
     return `
       <div class="news-summary">
-        <div class="news-summary-head">🧠 한국어 요약</div>
+        <div class="news-summary-head">한국어 요약</div>
         ${paras.map((p) => `<p>${escapeHtml(p)}</p>`).join("")}
       </div>
     `;
@@ -7668,7 +7668,7 @@ function newsSummaryHtml(item) {
   if (LIVE_DATA_PROXY && !liveDone[item.ticker] && !isKrMarket()) {
     return `
       <div class="news-summary is-pending">
-        <div class="news-summary-head">🧠 한국어 요약</div>
+        <div class="news-summary-head">한국어 요약</div>
         <p class="muted">요약을 생성하는 중…</p>
       </div>
     `;
@@ -9773,13 +9773,13 @@ function stockEventCommunityCardHtml(item) {
   const ctaLabel = `${count}개의 의견 보기`;
   return `
     <article class="event-card event-card-community event-info">
-      <span class="event-type"><i aria-hidden="true">💬</i>커뮤니티</span>
+      <span class="event-type"><i aria-hidden="true"></i>커뮤니티</span>
       <strong>커뮤니티</strong>
       <b>${loading ? "불러오는 중…" : (count ? `${count}개 의견` : "의견 없음")}</b>
       ${previewHtml}
       <div class="event-community-actions">
         <button type="button" class="event-action event-community-cta" data-community-board="${escapeHtml(item.ticker)}">${escapeHtml(ctaLabel)}</button>
-        <button type="button" class="event-action event-community-write" data-community-write="${escapeHtml(item.ticker)}">✏️ 글쓰기</button>
+        <button type="button" class="event-action event-community-write" data-community-write="${escapeHtml(item.ticker)}">글쓰기</button>
       </div>
     </article>
   `;
@@ -9889,12 +9889,12 @@ function stockEventRows(item) {
 }
 
 const EVENT_META = {
-  Earnings: { icon: "📅", ko: "실적" },
+  Earnings: { icon: "", ko: "실적" },
   Options:  { icon: "⏱️", ko: "옵션 만기" },
-  Target:   { icon: "🎯", ko: "목표가" },
-  Dividend: { icon: "💵", ko: "배당" },
-  News:     { icon: "📰", ko: "뉴스" },
-  Move:     { icon: "⚡", ko: "가격 이벤트" },
+  Target:   { icon: "", ko: "목표가" },
+  Dividend: { icon: "", ko: "배당" },
+  News:     { icon: "", ko: "뉴스" },
+  Move:     { icon: "", ko: "가격 이벤트" },
 };
 
 function eventTypeLabel(type) {
@@ -12535,7 +12535,7 @@ function etfRsCardHtml(item, period, benchmark) {
         ${etfRsSecondaryStatsHtml(item, period)}
       </div>
       <div class="peer-list">${peers}</div>
-      <p class="drilldown-hint">👆 클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
+      <p class="drilldown-hint">클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
     </article>
   `;
 }
@@ -12588,7 +12588,7 @@ function getSectorEtfRows() {
 
 function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
   const rankBadge = rankIdx < 3
-    ? `<span class="rank-medal rank-${rankIdx + 1}">${["🥇", "🥈", "🥉"][rankIdx]}</span>`
+    ? `<span class="rank-medal rank-${rankIdx + 1}">${["", "", ""][rankIdx]}</span>`
     : `<span class="rank-num">${rankIdx + 1}</span>`;
   const sortedPeers = (item.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
   const totalPeers = sortedPeers.length;
@@ -12617,7 +12617,7 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
         ${etfRsSecondaryStatsHtml(item, period)}
       </div>
       <div class="peer-list">${peerChips}</div>
-      <p class="drilldown-hint">👆 클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
+      <p class="drilldown-hint">클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
     </article>
   `;
 }
@@ -13179,7 +13179,7 @@ function showConstituentPanel(categoryName, period) {
     const spyRel = peer[`rel_${bench1}`]?.[period] ?? (row.relative?.[bench1]?.[period] ?? 0);
     const qqqRel = peer[`rel_${bench2}`]?.[period] ?? (row.relative?.[bench2]?.[period] ?? 0);
     const pct = peer[period] ?? 0;
-    const rankIcon = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `${idx + 1}`;
+    const rankIcon = idx === 0 ? "" : idx === 1 ? "" : idx === 2 ? "" : `${idx + 1}`;
     return `
       <tr>
         <td><strong>${rankIcon}</strong></td>
@@ -13828,13 +13828,13 @@ function communityVoteRankColHtml(rows, kind) {
   if (!rows.length) {
     return `
       <div class="community-vote-rank-col">
-        <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "📈" : "📉"} ${meta.label} 순위</h3>
+        <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "" : ""} ${meta.label} 순위</h3>
         <div class="community-empty">아직 ${meta.label} 투표가 없습니다.</div>
       </div>`;
   }
   return `
     <div class="community-vote-rank-col">
-      <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "📈" : "📉"} ${meta.label} 순위</h3>
+      <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "" : ""} ${meta.label} 순위</h3>
       <div class="community-vote-rank-list">
         ${rows.map((row, i) => {
           const stock = stockByTicker(row.ticker);
@@ -13915,14 +13915,14 @@ async function renderCommunityAdminPanel() {
     const data = await res.json();
     if (!res.ok) {
       panel.hidden = false;
-      panel.innerHTML = `<div class="community-admin-head"><strong>🛡 관리자 · 신고 내역</strong></div><p class="muted">권한 확인 실패(키를 확인하세요).</p>`;
+      panel.innerHTML = `<div class="community-admin-head"><strong>관리자 · 신고 내역</strong></div><p class="muted">권한 확인 실패(키를 확인하세요).</p>`;
       return;
     }
     const posts = data.posts || [];
     panel.hidden = false;
     panel.innerHTML = `
       <div class="community-admin-head">
-        <strong>🛡 관리자 · 신고 내역 ${posts.length}건</strong>
+        <strong>관리자 · 신고 내역 ${posts.length}건</strong>
         <button type="button" class="ghost compact-btn" id="communityAdminRefresh">새로고침</button>
       </div>
       ${posts.length ? posts.map((p) => `
@@ -14006,7 +14006,7 @@ function communityUpdateNewBanner(posts) {
   const banner = byId("communityNewBanner");
   if (banner && communityNewCount > 0) {
     banner.hidden = false;
-    banner.textContent = `🔔 새 소식 ${communityNewCount}건 · 맨 위로`;
+    banner.textContent = `새 소식 ${communityNewCount}건 · 맨 위로`;
   }
   communitySeenPostIds = postIds;
   communitySeenCommentIds = commentIds;
@@ -14085,7 +14085,7 @@ function renderCommunityHotTickersPanel() {
   const activeTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
   box.hidden = false;
   box.innerHTML = `
-    <span class="community-hot-tickers-label">🔥 인기 종목</span>
+    <span class="community-hot-tickers-label">인기 종목</span>
     ${top.map(([ticker, count]) => `
       <button type="button" class="community-hot-ticker${activeTicker === ticker ? " is-active" : ""}" data-ticker="${escapeHtml(ticker)}">
         ${escapeHtml(ticker)}<em>${count}</em>
@@ -14227,12 +14227,12 @@ function renderCommunityBoard() {
           </div>
         ` : ""}
         <div class="community-post-actions">
-          <button type="button" class="ghost compact-btn community-post-like${communityLikedByMe(post) ? " is-liked" : ""}" data-post-id="${escapeHtml(post.id)}" aria-pressed="${communityLikedByMe(post)}">👍 <span class="community-like-count">${communityLikeCount(post)}</span></button>
+          <button type="button" class="ghost compact-btn community-post-like${communityLikedByMe(post) ? " is-liked" : ""}" data-post-id="${escapeHtml(post.id)}" aria-pressed="${communityLikedByMe(post)}"><span class="community-like-count">${communityLikeCount(post)}</span></button>
           <button type="button" class="ghost compact-btn community-post-reply" data-post-id="${escapeHtml(post.id)}">${comments.length ? `댓글 ${comments.length}개 · 답글` : "댓글 달기"}</button>
           ${post.ticker ? `<button type="button" class="ghost compact-btn community-post-analyze" data-ticker="${escapeHtml(post.ticker)}">종목 분석</button>` : ""}
           ${canDelete
             ? `<button type="button" class="ghost compact-btn community-post-delete" data-id="${escapeHtml(post.id)}">삭제</button>`
-            : `<button type="button" class="ghost compact-btn community-post-report" data-post-id="${escapeHtml(post.id)}" title="부적절한 글 신고">🚩 신고</button>`}
+            : `<button type="button" class="ghost compact-btn community-post-report" data-post-id="${escapeHtml(post.id)}" title="부적절한 글 신고">신고</button>`}
         </div>
         ${replyOpen ? `
           <div class="community-reply-form">
@@ -15447,7 +15447,7 @@ function applyTheme(theme) {
   const btn = byId("themeToggle");
   if (btn) {
     const dark = theme === "dark";
-    btn.textContent = dark ? "☀️ 라이트" : "🌙 다크";
+    btn.textContent = dark ? "라이트" : "다크";
     btn.setAttribute("aria-pressed", dark ? "true" : "false");
   }
 }
@@ -15794,7 +15794,7 @@ function renderEarningsCalendarMarket(rows) {
     .slice(0, 6);
   const highlightHtml = highlights.length ? `
     <div class="earn-highlight">
-      <span class="earn-highlight-label">🔥 이번 주 주목</span>
+      <span class="earn-highlight-label">이번 주 주목</span>
       <div class="earn-highlight-chips">
         ${highlights.map((it) => {
           const d = localDateFromIso(it.date);
@@ -16221,7 +16221,7 @@ function renderBacktestResults(payload) {
   const warnHtml = warnings.length
     ? `<p class="backtest-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>`
     : "";
-  const disclaimerHtml = `<p class="backtest-disclaimer muted">⚠ <strong>면책:</strong> 본 백테스트는 현재 스냅샷에 포함된 종목만 사용합니다. 기간 중 상장폐지·합병된 종목은 제외되어 <strong>생존 편향(survivorship bias)</strong>으로 실제 수익률보다 높게 나올 수 있습니다. 거래비용·세금·슬리피지는 반영되지 않은 총수익(buy-and-hold) 기준입니다.</p>`;
+  const disclaimerHtml = `<p class="backtest-disclaimer muted"><strong>면책:</strong> 본 백테스트는 현재 스냅샷에 포함된 종목만 사용합니다. 기간 중 상장폐지·합병된 종목은 제외되어 <strong>생존 편향(survivorship bias)</strong>으로 실제 수익률보다 높게 나올 수 있습니다. 거래비용·세금·슬리피지는 반영되지 않은 총수익(buy-and-hold) 기준입니다.</p>`;
   renderPortfolioRiskPanel({
     stockReturns,
     portfolioSeries,
@@ -17189,7 +17189,7 @@ function updateOnlineStatus() {
     if (banner) {
       banner.innerHTML = `
         <div class="offline-banner-content">
-          <span class="offline-icon">⚠️</span>
+          <span class="offline-icon"></span>
           <strong>${reason}</strong>
           <span>${detail}</span>
         </div>`;
@@ -17588,8 +17588,8 @@ function renderAiHistoryList() {
       <div class="session-menu-wrapper">
         <button class="session-menu-trigger" title="대화방 옵션" aria-label="대화방 옵션">⋯</button>
         <div class="session-context-menu">
-          <button class="context-rename-btn">✏️ 이름 변경</button>
-          <button class="context-delete-btn">🗑️ 삭제</button>
+          <button class="context-rename-btn">이름 변경</button>
+          <button class="context-delete-btn">삭제</button>
         </div>
       </div>
     `;
@@ -17834,22 +17834,22 @@ function generateAiBadges(text) {
   
   // 1. 호재/악재 감지
   if (lower.includes("호재") || lower.includes("긍정") || lower.includes("상승") || lower.includes("매수 신호") || lower.includes("강세")) {
-    badges.push('<span class="ai-badge-tag bullish">✦ 종합: 호재</span>');
+    badges.push('<span class="ai-badge-tag bullish">종합: 호재</span>');
   } else if (lower.includes("악재") || lower.includes("경계") || lower.includes("하락") || lower.includes("위험") || lower.includes("우려")) {
-    badges.push('<span class="ai-badge-tag bearish">⚠ 종합: 경계</span>');
+    badges.push('<span class="ai-badge-tag bearish">종합: 경계</span>');
   } else {
-    badges.push('<span class="ai-badge-tag neutral">✦ 종합: 중립</span>');
+    badges.push('<span class="ai-badge-tag neutral">종합: 중립</span>');
   }
   
   // 2. 테마 감지
   if (lower.includes("반도체") || lower.includes("hbm") || lower.includes("메모리") || lower.includes("삼성전자") || lower.includes("하이닉스") || lower.includes("nvda") || lower.includes("엔비디아")) {
-    badges.push('<span class="ai-badge-tag neutral">⚙ 테마: 반도체</span>');
+    badges.push('<span class="ai-badge-tag neutral">테마: 반도체</span>');
   } else if (lower.includes("금리") || lower.includes("연준") || lower.includes("fomc") || lower.includes("인플레이션")) {
-    badges.push('<span class="ai-badge-tag neutral">📉 매크로: 금리</span>');
+    badges.push('<span class="ai-badge-tag neutral">매크로: 금리</span>');
   } else if (lower.includes("수출") || lower.includes("수입") || lower.includes("무역")) {
-    badges.push('<span class="ai-badge-tag neutral">🚢 실물: 수출</span>');
+    badges.push('<span class="ai-badge-tag neutral">실물: 수출</span>');
   } else if (lower.includes("부동산") || lower.includes("규제") || lower.includes("동탄") || lower.includes("기흥")) {
-    badges.push('<span class="ai-badge-tag neutral">🏢 자산: 부동산</span>');
+    badges.push('<span class="ai-badge-tag neutral">자산: 부동산</span>');
   }
   
   if (badges.length > 0) {
@@ -18004,7 +18004,7 @@ function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
       ${badgesHtml}
       <div class="msg-bubble">
         ${parsedContent}
-        ${role === "bot" && htmlOrText ? `<button class="copy-msg-btn" title="답변 복사" aria-label="답변 복사">📋</button>` : ""}
+        ${role === "bot" && htmlOrText ? `<button class="copy-msg-btn" title="답변 복사" aria-label="답변 복사">복사</button>` : ""}
       </div>
     `;
     
@@ -18022,7 +18022,7 @@ function appendAiChatMessage(role, htmlOrText, isMarkdown = false) {
             copyBtn.textContent = "✓";
             copyBtn.classList.add("copied");
             setTimeout(() => {
-              copyBtn.textContent = "📋";
+              copyBtn.textContent = "복사";
               copyBtn.classList.remove("copied");
             }, 1500);
           }).catch(err => {
@@ -18635,10 +18635,10 @@ function toggleAiWidgetFullscreen(widget) {
 
 async function exportWidgetAsImage(widget, ticker) {
   const shareBtn = widget.querySelector(".widget-share-btn");
-  const prevText = shareBtn ? shareBtn.textContent : "💾 공유";
+  const prevText = shareBtn ? shareBtn.textContent : "공유";
   
   if (shareBtn) {
-    shareBtn.textContent = "💾 캡처 중...";
+    shareBtn.textContent = "캡처 중...";
     shareBtn.disabled = true;
   }
   
@@ -18930,7 +18930,7 @@ function aiProbabilityHero(result) {
 
   const analog = base && base.samples ? `
     <div class="ai-prob-analog">
-      <div class="ai-prob-analog-head">📅 지금 차트, 과거엔 어땠나 <span>지난 5년 · ${hzLabel} 뒤</span></div>
+      <div class="ai-prob-analog-head">지금 차트, 과거엔 어땠나 <span>지난 5년 · ${hzLabel} 뒤</span></div>
       <p>지금과 비슷했던 <b>${base.samples}회</b> 중
          <b style="color:${scanProbColor(base.upProb)}">${Math.round(base.upProb)}%</b>가 ${hzLabel} 뒤 상승했어요.</p>
       <div class="ai-prob-analog-grid">
@@ -19006,7 +19006,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
   widgetContainer.innerHTML = `
     <div class="widget-assembly-overlay">
       <div class="ai-assembly-orb">
-        <span class="ai-orb-core">✦</span>
+        <span class="ai-orb-core"></span>
         <span class="ai-orb-ring"></span>
         <span class="ai-orb-ring is-2"></span>
       </div>
@@ -19023,7 +19023,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
           </div>
           <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
             <div class="ai-dropdown-wrapper">
-              <button type="button" class="ai-dropdown-trigger-btn" title="차트 분석 레이어 설정">지표 설정 ⚙</button>
+              <button type="button" class="ai-dropdown-trigger-btn" title="차트 분석 레이어 설정">지표 설정 </button>
               <div class="ai-indicators-dropdown">
                 <label><input type="checkbox" data-indicator="trendlines" checked> 자동 추세선</label>
                 <label><input type="checkbox" data-indicator="support" checked> 지지/저항선</label>
@@ -19046,7 +19046,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <button type="button" data-ai-chart-action="pan-right" title="다음 구간">›</button>
             <button type="button" data-ai-chart-action="reset" title="초기화">Reset</button>
             <button type="button" data-ai-chart-action="fullscreen" title="풀스크린 분석" class="fullscreen-toggle-btn">⤢</button>
-            <button type="button" class="widget-share-btn" data-ai-chart-action="share" title="리포트 이미지 저장">💾 공유</button>
+            <button type="button" class="widget-share-btn" data-ai-chart-action="share" title="리포트 이미지 저장">공유</button>
           </div>
         </div>
         <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(initialItem.ticker)} interactive chart"></svg>
@@ -19188,7 +19188,7 @@ async function renderAiStockDashboard(ticker) {
       <aside class="ai-dash-col ai-dash-col-right">
         <section class="ai-dash-panel ai-dash-verdict-panel ai-block animate-reveal" id="aiDashVerdict"></section>
         <section class="ai-dash-panel ai-block animate-reveal" id="aiDashNews">
-          <h4 class="ai-dash-h">📰 관련 소식</h4>
+          <h4 class="ai-dash-h">관련 소식</h4>
           <div class="ai-dash-news-list"></div>
         </section>
       </aside>
@@ -19243,8 +19243,8 @@ async function renderAiStockDashboard(ticker) {
   const paint = (item) => {
     if (seq !== aiDashSeq) return; // 새 종목 요청이 들어오면 이전 렌더 중단
     const card = byId("aiDashCard"); if (card) card.innerHTML = aiDashCardHtml(item);
-    const metrics = byId("aiDashMetrics"); if (metrics) metrics.innerHTML = `<h4 class="ai-dash-h">🔍 핵심 신호 · 이벤트</h4>${renderAiEvidenceGrid(item)}`;
-    const dataB = byId("aiDashData"); if (dataB) dataB.innerHTML = `<h4 class="ai-dash-h">📊 기술 지표 · 밸류에이션</h4>${renderAiModeDataBoard(item)}`;
+    const metrics = byId("aiDashMetrics"); if (metrics) metrics.innerHTML = `<h4 class="ai-dash-h">핵심 신호 · 이벤트</h4>${renderAiEvidenceGrid(item)}`;
+    const dataB = byId("aiDashData"); if (dataB) dataB.innerHTML = `<h4 class="ai-dash-h">기술 지표 · 밸류에이션</h4>${renderAiModeDataBoard(item)}`;
     const verdict = byId("aiDashVerdict"); if (verdict) verdict.innerHTML = aiVerdictPanel(item);
     const newsList = host.querySelector("#aiDashNews .ai-dash-news-list");
     if (newsList) newsList.innerHTML = aiDashNewsHtml(item);
@@ -19381,7 +19381,7 @@ function aiVerdictPanel(item) {
 
   return `
     <div class="ai-verdict-head">
-      <h4 class="ai-dash-h">🤖 AI 투자 의견</h4>
+      <h4 class="ai-dash-h">AI 투자 의견</h4>
       <span class="ai-verdict-badge ai-verdict-${vcls}">${verdict}</span>
     </div>
     <div class="ai-verdict-conf">
@@ -19392,17 +19392,17 @@ function aiVerdictPanel(item) {
     <p class="ai-verdict-comment">${comment}</p>
     <div class="ai-verdict-cols">
       <div class="ai-verdict-pts">
-        <span class="ai-verdict-pts-h up">👍 강점</span>
+        <span class="ai-verdict-pts-h up">강점</span>
         <ul>${li(strengths, "특이 강점 신호 없음")}</ul>
       </div>
       <div class="ai-verdict-pts">
-        <span class="ai-verdict-pts-h down">⚠️ 리스크</span>
+        <span class="ai-verdict-pts-h down">리스크</span>
         <ul>${li(risks, "특이 리스크 신호 없음")}</ul>
       </div>
     </div>
     <div class="ai-verdict-llm" id="aiDashLlm"></div>
     <div class="ai-dash-chips" aria-label="후속 질문">
-      <span class="ai-dash-chips-h">💬 이어서 묻기</span>
+      <span class="ai-dash-chips-h">이어서 묻기</span>
       ${AI_DASH_CHIPS.map((c) => `<button type="button" data-dash-q="${escapeHtml(c.q)}" data-dash-l="${escapeHtml(c.l)}">${escapeHtml(c.l)}</button>`).join("")}
     </div>
     <small class="ai-verdict-disc">규칙 기반 참고 지표 · 투자 조언이 아닙니다</small>`;
@@ -19423,7 +19423,7 @@ async function fetchAiDashLlmComment(item, seq, opts) {
   const slot = byId("aiDashLlm");
   if (!slot) return;
   const custom = opts && opts.query;
-  const headLabel = custom ? `💬 ${escapeHtml(opts.label || "질문")}` : "✦ AI 심층 코멘트";
+  const headLabel = custom ? `${escapeHtml(opts.label || "질문")}` : "AI 심층 코멘트";
   if (!LIVE_DATA_PROXY) {
     if (custom) slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">AI 답변은 서버(Worker) 연결 후 이용할 수 있습니다.</p>`;
     return;

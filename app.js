@@ -3306,7 +3306,7 @@ function renderKrHighlights() {
     </button>`;
   };
   el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>흩어진 공시·수급을 종목별 서브탭에서 한눈에</p></div>
-    <div class="kr-hl-chips" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px">${items.map(chip).join("")}</div>`;
+    <div class="kr-hl-chips" style="display:flex;flex-wrap:wrap;gap:8px">${items.map(chip).join("")}</div>`;
   el.querySelectorAll(".kr-hl-chip").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

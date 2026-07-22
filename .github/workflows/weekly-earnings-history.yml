@@ -66,3 +66,10 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_audit_opinion.py --push
+
+      # 다년 재무(DART 연간 주요계정) 10년. 연간 데이터라 주간이면 충분.
+      # update_korea_data 의 attach_kr_financials_history 가 매일 이 파일을 읽어 detail 에 붙인다.
+      - name: KR financials history (DART)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        run: python scripts/build_kr_financials_history.py --push

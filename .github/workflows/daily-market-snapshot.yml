@@ -52,5 +52,10 @@ jobs:
         continue-on-error: true
         run: python scripts/build_yield_curve.py
 
+      # 옵션 심리(풋콜·맥스페인, Yahoo 크럼). 실패해도 스냅샷 갱신 계속.
+      - name: Build US options stats (Yahoo)
+        continue-on-error: true
+        run: python scripts/build_options_stats.py --top 80
+
       - name: Update US market snapshot
         run: python scripts/update_data.py --push

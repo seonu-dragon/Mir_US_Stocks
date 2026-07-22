@@ -812,7 +812,7 @@ function srSummary(rows) {
 }
 
 // ===== 차트 패턴 감지 (scripts/pattern_lib.py 의 브라우저 포팅본) =====
-// ⚠️ 아래 상수/알고리즘은 pattern_lib.py 와 1:1로 동일해야 한다.
+// 아래 상수/알고리즘은 pattern_lib.py 와 1:1로 동일해야 한다.
 //    (그래야 오프라인으로 만든 data/pattern_stats.json 의 과거 성공률 조회가 유효하다.)
 const PAT = {
   PIVOT_WIN: 5,
@@ -2519,7 +2519,7 @@ function renderPatternCard(result) {
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 과거 실측: <b>${c.indyStat.n}회</b> 발생 중 <b>${c.indyStat.up_rate.toFixed(0)}%</b> 상승 (평균 <b>${c.indyStat.avg_ret >= 0 ? "+" : ""}${c.indyStat.avg_ret.toFixed(1)}%</b>)</span>` : "";
     const failStr = c.failed ? `<span class="pat-tag" style="background:var(--tint-neg);color:var(--tint-neg-fg);border-color:var(--neg)">패턴 실패</span>` : "";
     const targetStr = c.measuredMove && Number.isFinite(c.measuredMove.target) ?
-      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">🎯 목표가 추정: <b>$${c.measuredMove.target.toFixed(2)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">목표가 추정: <b>$${c.measuredMove.target.toFixed(2)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
     return `<div class="pat-item">
       <div class="pat-head">
         <span class="pat-name">${escapeHtml(c.label)}</span>
@@ -2608,10 +2608,10 @@ function generateBriefing(result) {
 
   let coreBrief = "";
   if (supportReasons.length > 0) {
-    coreBrief += `<li>🟢 <strong>호재 요인:</strong> ${supportReasons.slice(0, 3).join(" ")}</li>`;
+    coreBrief += `<li><strong>호재 요인:</strong> ${supportReasons.slice(0, 3).join(" ")}</li>`;
   }
   if (riskReasons.length > 0) {
-    coreBrief += `<li>🔴 <strong>리스크 요인:</strong> ${riskReasons.slice(0, 3).join(" ")}</li>`;
+    coreBrief += `<li><strong>리스크 요인:</strong> ${riskReasons.slice(0, 3).join(" ")}</li>`;
   }
 
   const sr = result.sr || {};
@@ -2636,11 +2636,11 @@ function generateBriefing(result) {
 
   return `
     <div class="cprob-briefing">
-      <p class="cprob-briefing-opinion">💡 ${opinion}</p>
+      <p class="cprob-briefing-opinion">${opinion}</p>
       <ul class="cprob-briefing-reasons" style="margin: 8px 0 12px; padding-left: 20px; list-style-type: none;">
         ${coreBrief}
       </ul>
-      <p class="cprob-briefing-strategy" style="margin: 10px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; font-size: 13px;">🎯 <strong>대응 전략:</strong> ${strategy}</p>
+      <p class="cprob-briefing-strategy" style="margin: 10px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; font-size: 13px;"><strong>대응 전략:</strong> ${strategy}</p>
     </div>
   `;
 }
@@ -2714,7 +2714,7 @@ function buildResultHTML(result) {
     </div>
 
     <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
-      <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">💡 AI 기술적 요약 브리핑</h3>
+      <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">AI 기술적 요약 브리핑</h3>
       ${briefingHtml}
     </div>
 
@@ -2757,7 +2757,7 @@ function buildResultHTML(result) {
     </div>
 
     <div class="disclaimer">
-      ⚠️ 이 수치는 <b>과거 가격 패턴에 기반한 기술적 추정</b>일 뿐이며 미래 수익을 보장하지 않습니다.
+      이 수치는 <b>과거 가격 패턴에 기반한 기술적 추정</b>일 뿐이며 미래 수익을 보장하지 않습니다.
       실적·금리·뉴스 등 펀더멘털 변수는 반영되지 않습니다. 투자 판단과 책임은 본인에게 있습니다.
     </div>
   `;
@@ -2768,26 +2768,26 @@ function renderTechnicalLevelsCard(result) {
   if (!tl) return "";
   const parts = [];
   if (tl.atr) {
-    parts.push(`<p class="pat-stat">🛡 <b>ATR 손절</b> (2ATR): <b style="color:var(--neg)">$${tl.atr.stop.toFixed(2)}</b> · 
+    parts.push(`<p class="pat-stat"><b>ATR 손절</b> (2ATR): <b style="color:var(--neg)">$${tl.atr.stop.toFixed(2)}</b> · 
       <b>목표</b> (1R): <b style="color:var(--pos)">$${tl.atr.target.toFixed(2)}</b> · 
       <b>목표</b> (2R): <b style="color:var(--pos)">$${tl.atr.target2.toFixed(2)}</b>
       <span class="muted"> (리스크 ${tl.atr.riskPct.toFixed(1)}%)</span></p>`);
   }
   if (tl.pivots) {
     const p = tl.pivots;
-    parts.push(`<p class="pat-stat">📍 <b>피벗</b> P $${p.pivot.toFixed(2)} · R1 $${p.r1.toFixed(2)} · R2 $${p.r2.toFixed(2)} · S1 $${p.s1.toFixed(2)} · S2 $${p.s2.toFixed(2)}</p>`);
+    parts.push(`<p class="pat-stat"><b>피벗</b> P $${p.pivot.toFixed(2)} · R1 $${p.r1.toFixed(2)} · R2 $${p.r2.toFixed(2)} · S1 $${p.s1.toFixed(2)} · S2 $${p.s2.toFixed(2)}</p>`);
   }
   if (tl.fib && tl.fib.levels) {
     const f = Object.entries(tl.fib.levels).map(([k, v]) => `${k} $${v.toFixed(2)}`).join(" · ");
-    parts.push(`<p class="pat-stat">📐 <b>피보나치</b> (60봉) ${f}</p>`);
+    parts.push(`<p class="pat-stat"><b>피보나치</b> (60봉) ${f}</p>`);
   }
   if (tl.linreg) {
-    parts.push(`<p class="pat-stat">📈 <b>선형회귀</b> 상단 $${tl.linreg.upper.toFixed(2)} · 중심 $${tl.linreg.mid.toFixed(2)} · 하단 $${tl.linreg.lower.toFixed(2)}</p>`);
+    parts.push(`<p class="pat-stat"><b>선형회귀</b> 상단 $${tl.linreg.upper.toFixed(2)} · 중심 $${tl.linreg.mid.toFixed(2)} · 하단 $${tl.linreg.lower.toFixed(2)}</p>`);
   }
   if (tl.psar && tl.psar.values) {
     const ps = tl.psar.values[tl.psar.values.length - 1];
     if (ps != null) {
-      parts.push(`<p class="pat-stat">🔶 <b>Parabolic SAR</b> $${ps.toFixed(2)} · ${tl.psar.bullish ? "상승 추세" : "하락 추세"}</p>`);
+      parts.push(`<p class="pat-stat"><b>Parabolic SAR</b> $${ps.toFixed(2)} · ${tl.psar.bullish ? "상승 추세" : "하락 추세"}</p>`);
     }
   }
   if (!parts.length) return "";

@@ -57,7 +57,7 @@
          받고, 가변폰트라 웨이트 전 구간을 파일 하나로 덮는다. -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
     <link rel="stylesheet" href="styles.css?v=4539ef077a">
-    <script src="build_id.js?v=392d364b29"></script>
+    <script src="build_id.js?v=c4327b6447"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -682,6 +682,7 @@
           <button class="sub-tab" data-sub="valuation">💰 밸류에이션</button>
           <button class="sub-tab" data-sub="short">🩳 공매도</button>
           <button class="sub-tab" data-sub="buyback">🏦 자사주</button>
+          <button class="sub-tab" data-sub="earnreact">📊 실적발표</button>
         </nav>
 
         <div class="sub-panel" id="sub-scanner">
@@ -1291,6 +1292,26 @@
           </div>
           <div class="institutional-meta" id="buybackMeta"></div>
           <div class="insider-table-wrap" id="buybackTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-earnreact">
+          <div class="section-title">
+            <h2>실적 발표(잠정) · 주가반응</h2>
+            <p>DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외. 예측 신호가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>사실 피드</strong>
+            <span>공시 유형별 과거 반응은 무작위와 구분되지 않습니다(잠정실적 포함). 발표 후 주가 움직임을 보여줄 뿐 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="earnReactSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="date" class="is-active">최신순</button>
+              <button type="button" data-sort="react">발표 반응 큰순</button>
+            </div>
+            <label class="grow">검색<input id="earnReactSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="earnReactMeta"></div>
+          <div class="insider-table-wrap" id="earnReactTable"></div>
         </div>
       </section>
 
@@ -2213,7 +2234,7 @@
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="pattern_detectors_extended.js?v=f819b82793"></script>
     <script src="analysis.js?v=2ecab27725"></script>
-    <script src="app.js?v=2f88024152"></script>
+    <script src="app.js?v=743010f714"></script>
     <script src="ai-cosmos.js?v=96d6d1d97f"></script>
     <script src="ai-mode-welcome.js?v=36ca8fdc85"></script>
   </body>

@@ -32,6 +32,9 @@ SERIES = [
     {"id": "BAMLH0A0HYM2", "label": "하이일드 신용스프레드", "unit": "%p", "tone": "up"},
     {"id": "UMCSENT", "label": "소비자심리", "unit": "", "tone": "down"},
     {"id": "ICSA", "label": "신규 실업수당 청구", "unit": "천건", "tone": "up", "scale": 0.001},
+    {"id": "VIXCLS", "label": "VIX 변동성", "unit": "", "tone": "up"},
+    {"id": "DCOILWTICO", "label": "WTI 유가 ($/bbl)", "unit": "", "tone": "neutral"},
+    {"id": "DTWEXBGS", "label": "달러지수 (브로드)", "unit": "", "tone": "neutral"},
 ]
 
 

@@ -191,6 +191,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* 프리미엄 폴리시: 모든 수치를 등폭으로 정렬(자릿수가 딱 맞음 — 금융 대시보드 표준).
+     기존엔 일부 컴포넌트에만 적용돼 있었다. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* 제목 자간을 살짝 좁혀 밀도 있는 프리미엄 헤드라인. */
+h1, h2, h3, .section-title h2, .daily-action-head h2 {
+  letter-spacing: -0.015em;
 }
 
 button,

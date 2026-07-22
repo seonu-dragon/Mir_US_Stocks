@@ -18979,7 +18979,10 @@ function aiOptionsPanel(item) {
   const pcVol = Number(s.putCallVol);
   const pcTone = (v) => Number.isFinite(v) ? (v >= 1.2 ? "warn" : v <= 0.7 ? "up" : "") : "";
   const kfmt = (n) => { n = Number(n) || 0; return n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : n >= 1e3 ? `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}K` : `${n}`; };
+  const em = Number(s.expectedMovePct);
   const grid = aiMetricGrid([
+    { label: "예상 변동폭", value: Number.isFinite(em) ? `±${em.toFixed(1)}%` : "—",
+      detail: s.expiry ? `만기 ${escapeHtml(String(s.expiry).slice(5))}까지` : "" },
     { label: "맥스페인", value: Number.isFinite(mp) ? `$${mp.toLocaleString(undefined, { maximumFractionDigits: 1 })}` : "—",
       detail: dist != null ? `현재가 대비 ${dist > 0 ? "+" : ""}${dist.toFixed(1)}%` : "" },
     { label: "풋/콜 (미결제)", value: Number.isFinite(pcOI) ? pcOI.toFixed(2) : "—", tone: pcTone(pcOI),
@@ -18987,7 +18990,7 @@ function aiOptionsPanel(item) {
     { label: "풋/콜 (거래량)", value: Number.isFinite(pcVol) ? pcVol.toFixed(2) : "—", tone: pcTone(pcVol) },
     { label: "미결제약정", value: `${kfmt(s.callOI)} C / ${kfmt(s.putOI)} P` },
   ]);
-  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">최근접 만기 ${escapeHtml(s.expiry || "")} 기준. 맥스페인=만기에 옵션 매수자 총손실이 최대가 되는 행사가(‘주가가 그쪽으로 끌린다’는 속설은 논쟁적). 풋/콜은 심리 지표로 헤지·방향성 베팅이 섞여 있습니다. 예측·매매 신호가 아닙니다. 출처: Yahoo.</p>`;
+  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">최근접 만기 ${escapeHtml(s.expiry || "")} 기준. 예상 변동폭=등가격 스트래들 프리미엄이 시사하는 만기까지의 ±변동 크기(만기가 가까우면 작습니다). 맥스페인=만기에 옵션 매수자 총손실이 최대가 되는 행사가(‘주가가 그쪽으로 끌린다’는 속설은 논쟁적). 풋/콜은 헤지·방향성 베팅이 섞인 심리 지표입니다. 예측·매매 신호가 아닙니다. 출처: Yahoo.</p>`;
   return aiModePanel("옵션 심리", `풋/콜 · 맥스페인 · 만기 ${escapeHtml(s.expiry || "")}`, grid + note);
 }
 

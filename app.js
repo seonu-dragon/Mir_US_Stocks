@@ -18551,6 +18551,27 @@ function aiDcfPanel(item) {
   return aiModePanel("적정주가 DCF", "현금흐름 할인 · 참고용", body);
 }
 
+// 다년 재무 추이(stockanalysis.com 벤치마크). build_kr_financials_history.py 가 DART 연간
+// 주요계정을 모아 종목 detail 의 financialsHistory 로 붙인다(현재 KR 만). 연도별 매출·
+// 영업이익·순이익·영업이익률 테이블.
+function aiFinancialsPanel(item) {
+  const rows = item && item.financialsHistory;
+  if (!Array.isArray(rows) || rows.length < 2) return "";
+  const sorted = rows.slice().sort((a, b) => b.y - a.y).slice(0, 10);
+  const body = sorted.map((r) => {
+    const margin = (r.op != null && r.rev > 0) ? (r.op / r.rev * 100) : null;
+    return `<tr>
+      <td class="ins-date">${r.y}</td>
+      <td class="ins-num">${krMoneyEok(r.rev)}</td>
+      <td class="ins-num ${r.op < 0 ? "ins-sell" : ""}">${krMoneyEok(r.op)}</td>
+      <td class="ins-num ${r.net < 0 ? "ins-sell" : ""}">${krMoneyEok(r.net)}</td>
+      <td class="ins-num">${margin != null ? `${margin.toFixed(1)}%` : "—"}</td>
+    </tr>`;
+  }).join("");
+  const table = `<table class="insider-table"><thead><tr><th>연도</th><th class="ins-num">매출</th><th class="ins-num">영업이익</th><th class="ins-num">순이익</th><th class="ins-num">영업이익률</th></tr></thead><tbody>${body}</tbody></table>`;
+  return aiModePanel("다년 재무", `연간 추이 · ${sorted[sorted.length - 1].y}~${sorted[0].y} (DART)`, `<div class="insider-table-wrap">${table}</div>`);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
@@ -18558,6 +18579,7 @@ function renderAiModeDataBoard(item) {
       ${aiSnowflakePanel(item)}
       ${aiDcfPanel(item)}
       ${aiFundamentalPanel(item)}
+      ${aiFinancialsPanel(item)}
       ${aiNewsPanel(item)}
       ${aiEventsPanel(item)}
       ${aiKrEventsPanel(item)}

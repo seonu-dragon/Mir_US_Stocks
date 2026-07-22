@@ -2958,6 +2958,18 @@ function renderShortInterest() {
 // tsstkAqDecsn 등을 붙인다), 신탁해지·결과보고는 숫자 없이 사실만 표시한다.
 let buybackSort = "size", buybackType = "all", buybackQuery = "", _buybackTried = false;
 
+// 정직성 검증: build_kr_disclosure_stats.py 가 5년치로 공시유형별 '발표 후 초과수익 vs
+// 무작위'를 검정해뒀다(41유형 중 무작위 이긴 것 0). 각 트래커 메타에 해당 유형 결과를
+// 붙여, '예측 아님'을 문구가 아니라 데이터로 뒷받침한다. 데이터 없으면 빈 문자열.
+function krDiscStatNote(type) {
+  const st = ((window.KR_DISCLOSURE_STATS || {}).stats || {})[type];
+  if (!st || !st.d1 || !Number.isFinite(st.d1.mean)) return "";
+  const ev = st.d1.mean;
+  const rnd = st.d1.random && Number.isFinite(st.d1.random.mean) ? st.d1.random.mean : null;
+  const n = st.sample || st.d1.n || 0;
+  return ` · <span class="muted">5년 ${Number(n).toLocaleString()}건 백테스트: 발표 후 D+1 초과수익 ${ev > 0 ? "+" : ""}${ev.toFixed(2)}%${rnd != null ? ` vs 무작위 ${rnd > 0 ? "+" : ""}${rnd.toFixed(2)}%` : ""} — 유의미한 우위 없음</span>`;
+}
+
 function buybackCategory(title) {
   const t = title || "";
   if (!t.includes("자기주식")) return null;
@@ -2993,7 +3005,7 @@ function renderBuyback() {
   if (!window.KR_DISCLOSURES && !_buybackTried) {
     _buybackTried = true;
     wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
-    Promise.all([ensureFeatureData("krDart"), ensureFeatureData("krEventDetails")]).then(renderBuyback);
+    Promise.all([ensureFeatureData("krDart"), ensureFeatureData("krEventDetails"), ensureFeatureData("krDiscStats")]).then(renderBuyback);
     return;
   }
   const disc = ((window.KR_DISCLOSURES || {}).disclosures) || [];
@@ -3027,7 +3039,7 @@ function renderBuyback() {
   const buyN = rows.filter((r) => r.typeKey === "buy").length;
   const sellN = rows.length - buyN;
   if (meta) meta.innerHTML = rows.length
-    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건`
+    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건${krDiscStatNote("자기주식")}`
     : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 자사주 취득·처분 공시가 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
@@ -3067,7 +3079,7 @@ function renderEarningsReactions() {
   if (!window.KR_EARNINGS_REACTIONS && !_earnReactTried) {
     _earnReactTried = true;
     wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
-    ensureFeatureData("krEarningsReact").then(renderEarningsReactions);
+    Promise.all([ensureFeatureData("krEarningsReact"), ensureFeatureData("krDiscStats")]).then(renderEarningsReactions);
     return;
   }
   const payload = window.KR_EARNINGS_REACTIONS || {};
@@ -3076,7 +3088,7 @@ function renderEarningsReactions() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (earnReactSort === "react") rows.sort((a, b) => Math.abs(b.dayPct ?? 0) - Math.abs(a.dayPct ?? 0));
   else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 발표` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 발표${krDiscStatNote("잠정실적")}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 잠정실적 발표가 없습니다.</p>`; return; }
   // 주가 상승=초록(ins-buy)·하락=빨강(ins-sell). 공매도 패널과 방향이 반대인 데 주의.
   const pct = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
@@ -3117,7 +3129,7 @@ function renderDividends() {
   if (!wrap) return;
   if (!window.KR_DIVIDENDS && !_dividendTried) {
     _dividendTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
-    ensureFeatureData("krDividends").then(renderDividends); return;
+    Promise.all([ensureFeatureData("krDividends"), ensureFeatureData("krDiscStats")]).then(renderDividends); return;
   }
   const payload = window.KR_DIVIDENDS || {};
   let rows = (payload.rows || []).slice();
@@ -3125,7 +3137,7 @@ function renderDividends() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (dividendSort === "yield") rows.sort((a, b) => (b.yieldPct ?? -1) - (a.yieldPct ?? -1));
   else rows.sort((a, b) => (a.recordDate || "9999").localeCompare(b.recordDate || "9999")); // 배당락 임박순
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("배당")}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 배당 결정이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)} · ${escapeHtml(r.divKind || "배당")}</div></td>
@@ -3146,7 +3158,7 @@ function renderContracts() {
   if (!wrap) return;
   if (!window.KR_CONTRACTS && !_contractTried) {
     _contractTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
-    ensureFeatureData("krContracts").then(renderContracts); return;
+    Promise.all([ensureFeatureData("krContracts"), ensureFeatureData("krDiscStats")]).then(renderContracts); return;
   }
   const payload = window.KR_CONTRACTS || {};
   let rows = (payload.rows || []).slice();
@@ -3154,7 +3166,7 @@ function renderContracts() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (contractSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else rows.sort((a, b) => (b.salesRatio ?? -1) - (a.salesRatio ?? -1));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("공급계약")}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 공급계약이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => {
     const period = (r.startDate || r.endDate) ? `${escapeHtml(r.startDate || "")}~${escapeHtml(r.endDate || "")}` : "";
@@ -3188,7 +3200,7 @@ function renderDilution() {
   if (!wrap) return;
   if ((!window.KR_DISCLOSURES || !window.KR_EVENT_DETAILS) && !_dilutionTried) {
     _dilutionTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
-    Promise.all([ensureFeatureData("krDart"), ensureFeatureData("krEventDetails")]).then(renderDilution); return;
+    Promise.all([ensureFeatureData("krDart"), ensureFeatureData("krEventDetails"), ensureFeatureData("krDiscStats")]).then(renderDilution); return;
   }
   const disc = ((window.KR_DISCLOSURES || {}).disclosures) || [];
   const details = (window.KR_EVENT_DETAILS || {}).details || {};
@@ -3217,7 +3229,7 @@ function renderDilution() {
   if (dilutionSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else if (dilutionSort === "amount") rows.sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1));
   else rows.sort((a, b) => (b.dilutionPct ?? -1) - (a.dilutionPct ?? -1));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · ${rows.length}건` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("증자·사채")}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 증자·사채 발행이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>

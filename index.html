@@ -1,0 +1,2326 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <!-- Google Search Console 소유권 확인. 제거하면 확인이 풀린다. -->
+    <meta name="google-site-verification" content="3SAVvDOSaHZDHWR2N7e-n-DQkp8tnYRjkl5kkE26a8w">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="미르 주식">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
+    <link rel="canonical" href="https://seonu-dragon.github.io/Mir_US_Stocks/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="미르의 미국 주식">
+    <meta property="og:title" content="미르의 미국 주식">
+    <meta property="og:description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
+    <meta property="og:url" content="https://seonu-dragon.github.io/Mir_US_Stocks/">
+    <meta property="og:image" content="https://seonu-dragon.github.io/Mir_US_Stocks/assets/og-cover.png?v=4">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="미르의 미국 주식">
+    <meta name="twitter:description" content="미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드">
+    <meta name="twitter:image" content="https://seonu-dragon.github.io/Mir_US_Stocks/assets/og-cover.png?v=4">
+    <title>미르의 미국 주식</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "미르의 미국 주식",
+        "alternateName": "Mir US Stocks",
+        "url": "https://seonu-dragon.github.io/Mir_US_Stocks/",
+        "description": "미국·국내 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드",
+        "inLanguage": "ko"
+      }
+    </script>
+    <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png?v=5">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=5">
+    <script>
+      // 테마·밀도 즉시 적용 (FOUC 방지)
+      (function () {
+        try {
+          var p = JSON.parse(localStorage.getItem("mir_ui_prefs_v1")) || {};
+          var theme = p.theme || ((window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light");
+          document.documentElement.setAttribute("data-theme", theme);
+          document.documentElement.setAttribute("data-density", p.density || "comfortable");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <!-- 가변폰트 dynamic-subset. static/pretendard.css 는 웨이트마다 ~780KB 짜리 한글
+         전체 폰트를 받아서, 이 사이트가 쓰는 6개 웨이트(400~900)면 첫 로드에 ~4.7MB 였다.
+         dynamic-subset 은 unicode-range 로 쪼개져 화면에 실제 나온 글자의 서브셋만
+         받고, 가변폰트라 웨이트 전 구간을 파일 하나로 덮는다. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+    <link rel="stylesheet" href="styles.css?v=e4f8162cda">
+    <script src="build_id.js?v=bc12a9091f"></script>
+    <script>
+      (function () {
+        if (!("serviceWorker" in navigator)) return;
+        var v = window.MIR_BUILD_ID || "dev";
+        navigator.serviceWorker.register("./sw.js?v=" + v, { updateViaCache: "none" }).then(function (reg) {
+          reg.update();
+        }).catch(function () {});
+      })();
+    </script>
+  </head>
+  <body>
+    <header class="topbar">
+     <div class="topbar-left">
+      <div class="brand-lockup" id="brandHome" role="button" tabindex="0" aria-label="맨 위로 이동" title="맨 위로">
+        <div class="brand-text">
+          <p class="eyebrow">Financial Visualizations / US Stock Market Analysis</p>
+          <h1>미르의 <span class="brand-accent">미국 주식</span></h1>
+        </div>
+      </div>
+      <!-- AI 모드 토글 버튼 -->
+      <button type="button" class="ai-mode-btn" id="aiModeToggle" aria-label="AI 모드 전환">
+        <span class="ai-sparkle-icon"></span> AI 모드
+      </button>
+     </div>
+
+      <!-- SNS 채널 (헤더 중앙으로 이동) -->
+      <nav class="social-links" aria-label="미르 SNS 채널">
+        <div class="social-link-wrap">
+          <a class="social-link sl-instagram" href="https://www.instagram.com/seonu_dragon/" target="_blank" rel="noopener" aria-label="Instagram: 매일 정리된 카드뉴스를 보고 싶을 때!">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="#f1f5f9"><path d="M12 2.2c3.2 0 3.6 0 4.85.07 1.17.05 1.8.25 2.23.41.56.22.96.48 1.38.9.42.42.68.82.9 1.38.16.42.36 1.06.41 2.23.06 1.27.07 1.65.07 4.85s0 3.58-.07 4.85c-.05 1.17-.25 1.8-.41 2.23-.22.56-.48.96-.9 1.38-.42.42-.82.68-1.38.9-.42.16-1.06.36-2.23.41-1.27.06-1.65.07-4.85.07s-3.58 0-4.85-.07c-1.17-.05-1.8-.25-2.23-.41a3.7 3.7 0 0 1-1.38-.9 3.7 3.7 0 0 1-.9-1.38c-.16-.42-.36-1.06-.41-2.23C2.2 15.58 2.2 15.2 2.2 12s0-3.58.07-4.85c.05-1.17.25-1.8.41-2.23.22-.56.48-.96.9-1.38.42-.42.82-.68 1.38-.9.42-.16 1.06-.36 2.23-.41C8.42 2.2 8.8 2.2 12 2.2Zm0 1.8c-3.15 0-3.5 0-4.74.07-.9.04-1.38.2-1.7.32-.43.17-.74.37-1.06.69-.32.32-.52.63-.69 1.06-.12.32-.28.8-.32 1.7C3.42 9.08 3.4 9.43 3.4 12s0 2.92.07 4.16c.04.9.2 1.38.32 1.7.17.43.37.74.69 1.06.32.32.63.52 1.06.69.32.12.8.28 1.7.32 1.24.07 1.59.07 4.74.07s3.5 0 4.74-.07c.9-.04 1.38-.2 1.7-.32.43-.17.74-.37 1.06-.69.32-.32.52-.63.69-1.06.12-.32.28-.8.32-1.7.07-1.24.07-1.59.07-4.16s0-2.92-.07-4.16c-.04-.9-.2-1.38-.32-1.7a2.86 2.86 0 0 0-.69-1.06 2.86 2.86 0 0 0-1.06-.69c-.32-.12-.8-.28-1.7-.32C15.5 4 15.15 4 12 4Zm0 3.05a4.95 4.95 0 1 1 0 9.9 4.95 4.95 0 0 1 0-9.9Zm0 1.8a3.15 3.15 0 1 0 0 6.3 3.15 3.15 0 0 0 0-6.3Zm5.15-1.45a1.15 1.15 0 1 1 0 2.3 1.15 1.15 0 0 1 0-2.3Z"/></svg>
+          </a>
+          <span class="social-tooltip">매일 정리된 카드뉴스를 보고 싶을 때!</span>
+        </div>
+        <div class="social-link-wrap">
+          <a class="social-link sl-x" href="https://x.com/dragon_seonu" target="_blank" rel="noopener" aria-label="X: 장 전·후 핵심 포인트를 빠르게 볼 때!">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="#f1f5f9"><path d="M17.53 3h3.02l-6.6 7.54L21.75 21h-6.08l-4.76-6.22L5.46 21H2.44l7.06-8.07L2.25 3h6.24l4.3 5.69L17.53 3Zm-1.06 16.2h1.67L7.6 4.7H5.8l10.67 14.5Z"/></svg>
+          </a>
+          <span class="social-tooltip">장 전·후 핵심 포인트를 빠르게 볼 때!</span>
+        </div>
+        <div class="social-link-wrap">
+          <a class="social-link sl-threads" href="https://www.threads.com/@seonu_dragon" target="_blank" rel="noopener" aria-label="Threads: 짧은 시장 코멘트와 소식을 받아볼 때!">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="#f1f5f9"><path d="M16.2 11.17c-.09-.04-.18-.08-.27-.12-.16-2.93-1.76-4.6-4.45-4.62h-.04c-1.6 0-2.94.69-3.76 1.94l1.48 1.01c.61-.93 1.57-1.13 2.28-1.13h.03c.88.01 1.55.27 1.98.76.31.36.52.86.63 1.49a11.4 11.4 0 0 0-2.55-.12c-2.57.15-4.22 1.65-4.11 3.74.06 1.06.59 1.97 1.49 2.57.76.5 1.74.75 2.76.69 1.35-.07 2.41-.59 3.15-1.53.56-.72.92-1.65 1.08-2.83.64.39 1.12.9 1.38 1.52.45 1.05.47 2.78-.93 4.18-1.23 1.23-2.7 1.76-4.93 1.78-2.47-.02-4.34-.81-5.56-2.36C4.7 16.27 4.12 14.2 4.1 12c.02-2.2.6-4.27 1.74-5.62C7.06 4.83 8.93 4.04 11.4 4.02c2.5.02 4.4.82 5.66 2.37.62.77 1.08 1.74 1.39 2.87l1.74-.47c-.37-1.39-.96-2.6-1.76-3.6C17.8 3.16 15.36 2.12 12.2 2.1h-.01c-3.15.02-5.57 1.06-7.18 3.1C3.55 7.04 2.82 9.5 2.8 11.99v.02c.02 2.49.75 4.95 2.21 6.79 1.61 2.04 4.03 3.08 7.18 3.1h.01c2.8-.02 4.78-.75 6.4-2.38 2.13-2.12 2.06-4.79 1.36-6.43-.5-1.18-1.46-2.13-2.77-2.74Zm-4.6 4.65c-1.13.06-2.3-.45-2.36-1.52-.04-.8.57-1.69 2.43-1.8.21-.01.42-.02.63-.02.67 0 1.3.07 1.87.2-.21 2.66-1.46 3.08-2.57 3.14Z"/></svg>
+          </a>
+          <span class="social-tooltip">짧은 시장 코멘트와 소식을 받아볼 때!</span>
+        </div>
+        <div class="social-link-wrap">
+          <a class="social-link sl-naver" href="https://blog.naver.com/ted_inc" target="_blank" rel="noopener" aria-label="네이버 블로그: 더 자세한 시장 분석 글이 필요할 때!">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="#f1f5f9"><path d="M5 4h4.4l5.05 7.3V4H19v16h-4.4L9.55 12.7V20H5V4Z"/></svg>
+          </a>
+          <span class="social-tooltip">더 자세한 시장 분석 글이 필요할 때!</span>
+        </div>
+        <div class="social-link-wrap">
+          <button type="button" class="social-link sl-install" id="installApp" hidden aria-label="앱 설치: 홈 화면에 바로 추가">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1Zm-7 14a1 1 0 0 1 1 1v1h12v-1a1 1 0 1 1 2 0v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1Z"/></svg>
+          </button>
+          <span class="social-tooltip">앱 설치 · 홈 화면에 추가</span>
+        </div>
+      </nav>
+
+     <div class="topbar-right">
+      <!-- 카드뉴스 라벨 + 버전 스위치(미국 뉴스 / 국내 뉴스) -->
+      <div class="cardnews-switch" id="cardnewsSwitch" hidden>
+        <span class="cardnews-label">카드뉴스 →</span>
+        <div class="cardnews-tabs">
+          <button type="button" data-cn="us">미국 뉴스</button>
+          <button type="button" data-cn="kr">국내 뉴스</button>
+        </div>
+      </div>
+
+      <!-- 오늘의 카드뉴스 미니 캐러셀 (자동 전환 · 스와이프/화살표 · 클릭 시 크게 보기) -->
+      <div class="cardnews-carousel-host" id="cardnewsHost" hidden>
+        <button class="cardnews-nav cardnews-prev" id="cardnewsPrev" type="button"
+                aria-label="이전 카드뉴스" title="이전">‹</button>
+        <button class="cardnews-carousel" id="contentBand" type="button"
+                aria-label="오늘의 카드뉴스 크게 보기" title="클릭하면 크게 보기">
+          <img id="cardnewsCarouselImg" alt="오늘의 카드뉴스" loading="lazy">
+        </button>
+        <button class="cardnews-nav cardnews-next" id="cardnewsNext" type="button"
+                aria-label="다음 카드뉴스" title="다음">›</button>
+      </div>
+
+      <div class="update-card">
+        <span>데이터 기준</span>
+        <strong id="updatedAt">불러오는 중</strong>
+        <small id="snapshotCadenceNote">주식 데이터는 매일 06:00 KST 스냅샷 · 일부 보조 데이터는 별도 조회</small>
+      </div>
+     </div>
+    </header>
+
+    <main>
+      <!-- AI 모드 전용 챗 대화방 -->
+      <section class="panel" id="tab-ai-chat" hidden>
+        <div id="aiCosmos" class="ai-cosmos" aria-hidden="true"></div>
+        <!-- JARVIS 종목 대시보드: 티커 입력 시 배경 차트 위로 패널이 페이드인 -->
+        <div id="aiStockDashboard" class="ai-dash" aria-hidden="true"></div>
+        <div class="ai-chat-input-wrapper">
+          <div class="ai-autocomplete" id="aiAutoComplete" hidden></div>
+          <form class="ai-chat-form" id="aiChatForm" role="search">
+            <input id="aiChatInput" type="text" placeholder="종목 분석 또는 투자 질문을 입력하세요..." autocomplete="off">
+            <button type="button" class="ai-voice-btn" id="aiVoiceBtn" aria-label="음성 인식 질문" title="말로 질문하기">
+              <span class="ai-voice-glyph" aria-hidden="true"></span>
+            </button>
+            <button type="submit" class="ai-send-btn" aria-label="질문 전송" title="질문 전송">
+              <span class="ai-send-glyph" aria-hidden="true">↑</span>
+            </button>
+          </form>
+        </div>
+        <div class="ai-chat-layout">
+          <!-- 좌측 사이드바 (대화 기록) -->
+          <aside class="ai-chat-sidebar" id="aiChatSidebar" aria-label="AI 대화 이력">
+            <div class="sidebar-header">
+              <h3>분석 기록</h3>
+              <button type="button" class="new-chat-btn" id="newChatBtn" title="새 대화 시작">
+                <span>+</span> 새 대화
+              </button>
+            </div>
+            <div class="sidebar-scroll">
+              <ul class="ai-history-list" id="aiHistoryList">
+                <!-- 동적으로 분석 기록 렌더링 -->
+              </ul>
+            </div>
+          </aside>
+
+          <!-- 우측 메인 채팅방 -->
+          <div class="ai-chat-container" aria-label="미르 AI 채팅">
+            <div class="ai-chat-header">
+              <div class="ai-chat-branding">
+                <span class="ai-sparkle-large"></span>
+                <div>
+                  <h2>미르 AI 어시스턴트</h2>
+                  <p class="muted">실시간 데이터 기반 심층 시장 분석 및 리서치</p>
+                </div>
+              </div>
+              <div class="ai-header-controls">
+                <button type="button" class="sidebar-toggle-btn" id="sidebarToggleBtn" aria-label="사이드바 토글" title="기록 보기">
+                  ☰
+                </button>
+                <button type="button" class="ghost exit-ai-btn" id="exitAiModeBtn" aria-label="AI 모드 종료">
+                  종료
+                </button>
+              </div>
+            </div>
+
+            <div class="ai-chat-log" id="aiChatLog" aria-live="polite">
+              <!-- 웰컴 상태 UI -->
+              <div class="ai-chat-welcome" id="aiChatWelcome">
+                <div class="welcome-icon"></div>
+                <h2>무엇을 분석해 드릴까요?</h2>
+                <p class="muted">미국 및 한국 주식 시장의 실시간 데이터를 기반으로 기업 정보, 차트 기술적 분석, 실적 지표를 대화하듯 점검해 드립니다.</p>
+                
+                <div class="welcome-suggestions">
+                  <button type="button" class="ai-chat-suggest-card" data-query="NVDA 분석해줘">
+                    <strong>NVDA 분석해줘</strong>
+                    <span>엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.</span>
+                  </button>
+                  <button type="button" class="ai-chat-suggest-card" data-query="반도체 섹터 흐름 어때?">
+                    <strong>반도체 섹터 흐름 어때?</strong>
+                    <span>오늘 반도체 관련 섹터의 흐름과 피어 상대강도를 비교 분석합니다.</span>
+                  </button>
+                  <button type="button" class="ai-chat-suggest-card" data-query="현재 가장 강한 섹터는?">
+                    <strong>현재 가장 강한 섹터는?</strong>
+                    <span>시장 지도 및 섹터 등락률 기준 가장 두드러진 강세 섹터를 찾아줍니다.</span>
+                  </button>
+                  <button type="button" class="ai-chat-suggest-card" data-query="나의 관심종목 브리핑해줘">
+                    <strong>나의 관심종목 브리핑해줘</strong>
+                    <span>등록된 관심종목의 오늘 변동 사항과 주요 뉴스를 한번에 요약합니다.</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+
+      <div class="home-zone-head">
+        <span class="daily-action-kicker">TODAY'S MARKET</span>
+        <h2>오늘의 시장</h2>
+        <p>지수 · 국면 · 심리 · 환율을 한눈에</p>
+      </div>
+      <section class="summary-band" id="marketSummary"></section>
+      <section class="index-strip" id="indexStrip"></section>
+      <section class="kr-highlights" id="krHighlights" hidden></section>
+      <section class="watchlist-bar" id="watchlistBar" hidden>
+        <div class="watchlist-head">
+          <div>
+            <strong>관심종목</strong>
+            <span class="muted" id="watchlistSummary">0개</span>
+          </div>
+          <div class="watchlist-head-actions">
+            <button type="button" class="ghost compact-btn" id="watchlistOpenBulk">리스트 관리</button>
+            <button type="button" class="ghost compact-btn" id="watchlistShare">링크 공유</button>
+          </div>
+        </div>
+        <div class="watchlist-chips" id="watchlistChips"></div>
+      </section>
+
+      <section class="daily-action-board" id="dailyActionBoard" aria-labelledby="dailyActionTitle">
+        <div class="daily-action-head">
+          <div>
+            <span class="daily-action-kicker">MY DAILY DESK</span>
+            <h2 id="dailyActionTitle">오늘의 액션 보드</h2>
+            <p>관심종목, 포트폴리오, 일정과 새 공시 중 지금 확인할 항목만 모았습니다.</p>
+          </div>
+          <div class="daily-action-meta">
+            <div class="action-mode-switch" id="actionModeSwitch" role="group" aria-label="액션 보드 / 오늘의 뉴스 전환">
+              <button type="button" data-action-mode="actions">액션 보드</button>
+              <button type="button" data-action-mode="news" class="is-active">오늘의 뉴스</button>
+            </div>
+            <span id="dailyActionCount" class="daily-action-count">확인 중</span>
+            <button type="button" class="ghost compact-btn" id="dailyActionRefresh">새로고침</button>
+          </div>
+        </div>
+        <div class="daily-action-grid" id="dailyActionGrid" aria-live="polite" hidden>
+          <p class="muted">오늘의 확인 항목을 정리하는 중입니다.</p>
+        </div>
+        <div class="daily-action-news" id="dailyActionNews"></div>
+      </section>
+
+      <div class="navigation-mode-bar">
+        <div>
+          <strong>핵심 탐색</strong>
+          <span>시장 · 종목 · 내 투자 중심으로 보고, 필요할 때 고급 기능을 펼치세요.</span>
+        </div>
+        <div class="navigation-mode-actions">
+          <div class="market-mode-switch" id="marketModeSwitch" role="group" aria-label="시장 모드">
+            <button type="button" data-market-mode="us" class="is-active" aria-pressed="true">미국 주식</button>
+            <button type="button" data-market-mode="kr" aria-pressed="false">한국 주식</button>
+          </div>
+          <div class="view-mode-switch" id="viewModeSwitch" role="group" aria-label="탐색 모드">
+            <button type="button" data-view-mode="basic" aria-pressed="false">기본 모드</button>
+            <button type="button" data-view-mode="advanced" class="is-active" aria-pressed="true">고급 모드</button>
+          </div>
+          <div class="ui-pref-toggles" role="group" aria-label="화면 설정">
+            <button type="button" class="ui-pref-btn" id="themeToggle" aria-pressed="false" title="라이트/다크 모드">다크</button>
+            <button type="button" class="ui-pref-btn" id="densityToggle" aria-pressed="false" title="화면 밀도">↕ 넓게</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabs-scroll-wrap" id="tabsScrollWrap">
+        <nav class="tabs" id="mainTabs" aria-label="Dashboard sections">
+          <button class="tab is-active" data-tab="map">시장</button>
+          <button class="tab" data-tab="search">종목</button>
+          <button class="tab" data-tab="bulk">내 투자</button>
+          <button class="tab" data-tab="sector" data-advanced="true">섹터 흐름</button>
+          <button class="tab" data-tab="signals" data-advanced="true">시그널</button>
+          <button class="tab" data-tab="institutional" data-advanced="true">거장 포트폴리오</button>
+          <button class="tab" data-tab="health" data-advanced="true">마켓 데이터</button>
+          <button class="tab" data-tab="calendar" data-advanced="true">경제 캘린더</button>
+          <button class="tab" data-tab="ai-briefing" data-advanced="true">AI 브리핑</button>
+          <button class="tab" data-tab="community" data-advanced="true">커뮤니티</button>
+        </nav>
+      </div>
+
+      <!-- ==================== 시장 지도 탭 ==================== -->
+      <section class="panel is-active" id="tab-map">
+        <div class="toolbar heatmap-toolbar">
+          <label>
+            지수/그룹
+            <select id="bucketFilter"></select>
+          </label>
+          <label>
+            섹터
+            <select id="sectorFilter"></select>
+          </label>
+          <label>
+            색상 기준
+            <select id="metricFilter">
+              <optgroup label="등락률·기술">
+                <option value="changePct">당일 등락률</option>
+                <option value="weekChangePct">이번 주 등락률</option>
+                <option value="monthChangePct">1개월 등락률</option>
+                <option value="threeMonthChangePct">3개월 등락률</option>
+                <option value="ytdChangePct">YTD 등락률</option>
+                <option value="rsScore">RS 점수</option>
+                <option value="epsRevScore">EPS 추정 점수</option>
+                <option value="stochK">StochK 14</option>
+              </optgroup>
+              <optgroup label="밸류에이션 (낮을수록 초록)">
+                <option value="pe">P/E</option>
+                <option value="forwardPE">Forward P/E</option>
+                <option value="peg">PEG</option>
+                <option value="ps">P/S</option>
+                <option value="pb">P/B</option>
+                <option value="pfcf">P/FCF</option>
+                <option value="evEbitda">EV/EBITDA</option>
+                <option value="evEbit">EV/EBIT</option>
+              </optgroup>
+              <optgroup label="종합 (높을수록 초록)">
+                <option value="valueScore">저평가 종합 (멀티플)</option>
+              </optgroup>
+              <optgroup label="수익성·배당 (높을수록 초록)">
+                <option value="divYield">Dividend Yield</option>
+                <option value="eps">EPS</option>
+                <option value="roe">ROE</option>
+                <option value="roa">ROA</option>
+                <option value="netMargin">Net Margin</option>
+                <option value="payoutRatio">배당성향</option>
+              </optgroup>
+              <optgroup label="성장성 (높을수록 초록)">
+                <option value="revenueGrowth">매출 성장률(YoY)</option>
+                <option value="operatingGrowth">영업이익 성장률(YoY)</option>
+                <option value="netGrowth">순이익 성장률(YoY)</option>
+              </optgroup>
+              <optgroup label="재무 건전성">
+                <option value="debtRatio">부채비율 (낮을수록 초록)</option>
+                <option value="currentRatio">유동비율 (높을수록 초록)</option>
+              </optgroup>
+              <optgroup label="외국인 (높을수록 초록) · KRX 공식">
+                <option value="foreignPct">외국인 지분율</option>
+                <option value="foreignExhaustion">외국인 한도소진율</option>
+              </optgroup>
+            </select>
+          </label>
+          <label>
+            타일 크기
+            <select id="tileSizeFilter">
+              <option value="marketCapB">시가총액</option>
+              <option value="equal">동일 크기</option>
+              <option value="volumeRatio">거래량 배율</option>
+              <option value="rsScore">RS 점수</option>
+            </select>
+          </label>
+          <label class="grow">
+            종목 찾기
+            <input id="heatmapSearch" placeholder="한국어·티커·영문 (예: 테슬라, NVIDIA)" autocomplete="off">
+          </label>
+          <button id="resetFilters" class="ghost">초기화</button>
+          <button type="button" id="heatmapShare" class="ghost" title="현재 히트맵 필터를 URL로 공유">링크 공유</button>
+        </div>
+        <div class="heatmap-legend" id="heatmapLegend" aria-label="Heatmap color legend"></div>
+        <div class="workspace heatmap-layout">
+          <div>
+            <div class="section-title">
+              <h2>Market Heatmap</h2>
+              <p>섹터별 영역 안에서 타일 크기는 선택한 크기 기준, 색상은 선택한 지표를 의미합니다.</p>
+            </div>
+            <div class="treemap" id="stockTreemap"></div>
+          </div>
+          <aside class="detail-panel" id="selectedStock"></aside>
+        </div>
+      </section>
+
+      <!-- ==================== 섹터 흐름 탭 ==================== -->
+      <section class="panel" id="tab-sector">
+        <!-- Sub-tab navigation -->
+        <nav class="sub-tabs" id="sectorSubTabs" aria-label="Sector sub-sections">
+          <button class="sub-tab is-active" data-sub="chart">섹터 차트 비교</button>
+          <button class="sub-tab" data-sub="etf-rs">ETF 상대강도 순위</button>
+          <button class="sub-tab" data-sub="rrg">RRG 회전</button>
+          <button class="sub-tab" data-sub="etf-lev">레버리지·인버스 ETF</button>
+        </nav>
+
+        <!-- Sub-panel 1: 섹터 차트 비교 -->
+        <div class="sub-panel is-active" id="sub-chart">
+          <div class="workspace two-col sector-workspace">
+            <!-- Left: Sector Cards -->
+            <aside class="sector-scroll-panel">
+              <div class="panel-header-sticky">
+                <div class="toolbar compact-toolbar">
+                  <label>
+                    정렬 기준
+                    <select id="sectorSort">
+                      <option value="avg">당일 평균 등락률</option>
+                      <option value="avg1w">1주일 평균 등락률</option>
+                      <option value="avg1m">1개월 평균 등락률</option>
+                      <option value="avg3m">3개월 평균 등락률</option>
+                      <option value="rs">평균 상대강도 (RS)</option>
+                      <option value="upPct">상승 종목 비중</option>
+                    </select>
+                  </label>
+                </div>
+                <div class="section-title compact-title">
+                  <h2>Sector Chart</h2>
+                  <p>ETF를 선택하고 벤치마크 대비 차트를 비교하세요.</p>
+                </div>
+              </div>
+              <div class="sector-flow-list" id="sectorList"></div>
+            </aside>
+
+            <!-- Right: Chart Detail -->
+            <main class="sector-chart-panel">
+              <div class="chart-header">
+                <div class="title-area">
+                  <span class="ticker-pill" id="sectorDetailEtf">XLK</span>
+                  <h2 id="sectorDetailTitle">정보기술 섹터</h2>
+                  <p class="muted" id="sectorDetailDesc">Technology Select Sector SPDR</p>
+                </div>
+                <div class="sector-badge-stats">
+                  <div class="stat-pill">
+                    <span>RS 점수</span>
+                    <strong id="sectorDetailRs">85</strong>
+                  </div>
+                  <div class="stat-pill">
+                    <span>상승비율</span>
+                    <strong id="sectorDetailUpPct">65%</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chart-card">
+                <div class="chart-controls-row">
+                  <div class="segmented" id="sectorTimeframeControls">
+                    <button type="button" class="is-active" data-range="1D">1D (5m)</button>
+                    <button type="button" data-range="1W">1W (30m)</button>
+                    <button type="button" data-range="1M">1M (1h)</button>
+                    <button type="button" data-range="3M">3M (1d)</button>
+                  </div>
+                  <div class="comparison-selectors">
+                    <label>
+                      비교 벤치마크
+                      <select id="sectorBenchmarkSelect">
+                        <option value="SPY">SPY (S&amp;P 500)</option>
+                        <option value="QQQ">QQQ (Nasdaq 100)</option>
+                        <option value="TQQQ">TQQQ (3x Nasdaq)</option>
+                        <option value="DIA">DIA (Dow Jones)</option>
+                        <option value="IWM">IWM (Russell 2000)</option>
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <div class="comparison-chart-container" style="position: relative;">
+                  <svg id="sectorComparisonChart" viewBox="0 0 860 420" role="img" aria-label="Sector and Benchmark relative return comparison chart"></svg>
+                  <div id="chartTooltip" class="custom-chart-tooltip" style="display: none; position: absolute; pointer-events: none; z-index: 10;"></div>
+                </div>
+                <div class="chart-legend-summary">
+                  <div class="legend-items">
+                    <div class="legend-item"><span class="legend-color sector-color"></span><span id="legendSectorLabel">정보기술 (XLK)</span></div>
+                    <div class="legend-item"><span class="legend-color benchmark-color"></span><span id="legendBenchmarkLabel">S&amp;P 500 (SPY)</span></div>
+                  </div>
+                  <div class="relative-perf-summary" id="relativePerfSummary">
+                    상대 수익률: <strong class="pos" id="relativePerfValue">+0.0%</strong>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Constituents table -->
+              <div class="sector-constituents-card">
+                <div class="card-title-row">
+                  <h3>섹터 내 주요 종목 현황</h3>
+                  <span class="muted" id="sectorConstituentsCount">0개 종목</span>
+                </div>
+                <div class="table-wrap compact-table-wrap">
+                  <table class="compact-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>티커</th>
+                        <th>회사명</th>
+                        <th>현재가</th>
+                        <th>당일 등락률</th>
+                        <th>1주 등락률</th>
+                        <th>1달 등락률</th>
+                        <th>RS 점수</th>
+                      </tr>
+                    </thead>
+                    <tbody id="sectorConstituentsBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </main>
+          </div>
+        </div>
+
+        <!-- Sub-panel 2: ETF 상대강도 순위 (시장 체력에서 이관) -->
+        <div class="sub-panel" id="sub-etf-rs">
+          <div class="etf-rs-controls-bar">
+            <div class="etf-rs-controls-row">
+              <label>
+                비교 기준
+                <select id="sectorEtfRsBenchmark">
+                  <option value="SPY">SPY (S&amp;P 500) 대비</option>
+                  <option value="QQQ">QQQ (Nasdaq 100) 대비</option>
+                  <option value="TQQQ">TQQQ (3x Nasdaq) 대비</option>
+                  <option value="DIA">DIA (Dow Jones) 대비</option>
+                  <option value="IWM">IWM (Russell 2000) 대비</option>
+                </select>
+              </label>
+              <label>
+                기간
+                <select id="sectorEtfRsPeriod">
+                  <option value="changePct">당일 등락률</option>
+                  <option value="monthChangePct" selected>1개월 수익률</option>
+                  <option value="threeMonthChangePct">3개월 수익률</option>
+                  <option value="ytdChangePct">YTD 수익률</option>
+                </select>
+              </label>
+              <label>
+                섹터 그룹
+                <select id="sectorEtfRsGroup">
+                  <option value="All">전체 그룹</option>
+                </select>
+              </label>
+              <label>
+                정렬 기준
+                <select id="sectorEtfRsSort">
+                  <option value="relative">벤치 대비 초과수익순</option>
+                  <option value="return">절대 수익률순</option>
+                  <option value="rs">RS 점수순</option>
+                </select>
+              </label>
+            </div>
+            <div class="etf-rs-meta-bar">
+              <span id="sectorEtfRsMeta" class="muted"></span>
+            </div>
+          </div>
+          <div class="sector-etf-rs-scroll" id="sectorEtfRsScroll">
+            <div class="rotation-board" id="sectorRotationBoard"></div>
+            <div class="rank-grid sector-etf-rs-grid" id="sectorEtfGrid"></div>
+            <div class="sector-etf-rs-footer" id="sectorEtfRsFooter"></div>
+          </div>
+
+          <!-- Right slide-in drawer with the ETF constituents -->
+          <div class="constituent-backdrop" id="constituentBackdrop"></div>
+          <div class="constituent-expansion-panel" id="constituentPanel">
+            <div class="constituent-panel-header">
+              <div class="constituent-panel-title">
+                <span class="ticker-pill" id="constituentPanelTicker"></span>
+                <h3 id="constituentPanelName"></h3>
+                <span class="muted" id="constituentPanelCount"></span>
+              </div>
+              <button class="ghost" id="constituentPanelClose">✕ 닫기</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>티커</th>
+                    <th>회사명</th>
+                    <th id="constituentPeriodHeader">1개월 수익률</th>
+                    <th id="constituentBench1Header">SPY 대비</th>
+                    <th id="constituentBench2Header">QQQ 대비</th>
+                  </tr>
+                </thead>
+                <tbody id="constituentPanelBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sub-panel 3: 레버리지·인버스·옵션형 ETF -->
+        <div class="sub-panel" id="sub-etf-lev">
+          <div class="lev-etf-controls-bar">
+            <div class="section-title compact-title">
+              <h2>레버리지·인버스·옵션형 ETF</h2>
+              <p>섹터·지수·개별종목의 레버리지/인버스/커버드콜·변동성 ETF를 한곳에서 정리했습니다. 일일 스냅샷 업데이트 후 시세·RS가 표시됩니다.</p>
+            </div>
+            <div class="lev-etf-controls-row">
+              <label>
+                유형
+                <select id="levEtfType">
+                  <option value="All">전체 유형</option>
+                  <option value="leveraged">레버리지 (롱)</option>
+                  <option value="inverse">인버스 (숏)</option>
+                  <option value="covered-call">커버드콜·옵션인컴</option>
+                  <option value="volatility">변동성 (VIX)</option>
+                  <option value="buffer">버퍼·디파인드</option>
+                </select>
+              </label>
+              <label>
+                범위
+                <select id="levEtfScope">
+                  <option value="All">전체 범위</option>
+                  <option value="index">지수</option>
+                  <option value="sector">섹터</option>
+                  <option value="single-stock">개별종목</option>
+                  <option value="commodity">원자재</option>
+                  <option value="international">국제</option>
+                  <option value="thematic">테마</option>
+                </select>
+              </label>
+              <label>
+                정렬
+                <select id="levEtfSort">
+                  <option value="group">그룹 · 티커순</option>
+                  <option value="change">당일 등락률</option>
+                  <option value="month">1개월 수익률</option>
+                  <option value="underlying">기초자산순</option>
+                </select>
+              </label>
+              <label class="lev-etf-search-label">
+                검색
+                <input id="levEtfSearch" type="search" placeholder="티커·이름·기초자산" autocomplete="off">
+              </label>
+            </div>
+            <div class="lev-etf-meta-bar">
+              <span id="levEtfMeta" class="muted"></span>
+            </div>
+          </div>
+          <div id="levEtfGroups" class="lev-etf-groups"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-rrg">
+          <div class="section-title">
+            <h2>RRG · 섹터 상대회전 그래프</h2>
+            <p>벤치마크 대비 각 섹터 ETF의 상대강도(가로)와 상대 모멘텀(세로)을 사분면으로 표시합니다. 시계 방향(주도→둔화→소외→회복)으로 순환합니다.</p>
+          </div>
+          <div class="rrg-controls">
+            <label>주기
+              <select id="rrgTail">
+                <option value="1">현재 위치</option>
+                <option value="5" selected>최근 5일 꼬리</option>
+                <option value="10">최근 10일 꼬리</option>
+              </select>
+            </label>
+            <span class="muted" id="rrgMeta"></span>
+          </div>
+          <div class="rrg-wrap" id="rrgWrap"></div>
+          <div class="rrg-legend" id="rrgLegend"></div>
+          <p class="muted rrg-note">상대강도·모멘텀은 벤치마크 대비 종가 비율을 정규화(기준 100)해 계산한 근사치입니다. 투자 권유가 아닙니다.</p>
+        </div>
+      </section>
+
+      <!-- ==================== 종목 분석 탭 (하위: 분석·상위·비교·급등·스크리너) ==================== -->
+      <section class="panel" id="tab-search">
+        <nav class="sub-tabs" id="searchSubTabs" aria-label="Stock analysis sub-sections">
+          <button class="sub-tab is-active" data-sub="analysis">종목 분석</button>
+          <button class="sub-tab" data-sub="scanner">상승확률 스캐너</button>
+          <button class="sub-tab" data-sub="top">상위 종목</button>
+          <button class="sub-tab" data-sub="compare">종목 비교</button>
+          <button class="sub-tab" data-sub="jump">급등/거래량</button>
+          <button class="sub-tab" data-sub="screener">스크리너</button>
+          <button class="sub-tab" data-sub="valuation">밸류에이션</button>
+          <button class="sub-tab" data-sub="short">공매도</button>
+          <button class="sub-tab" data-sub="buyback">자사주</button>
+          <button class="sub-tab" data-sub="earnreact">실적발표</button>
+          <button class="sub-tab" data-sub="dividend">배당</button>
+          <button class="sub-tab" data-sub="contract">수주</button>
+          <button class="sub-tab" data-sub="dilution">증자·CB</button>
+        </nav>
+
+        <div class="sub-panel" id="sub-scanner">
+          <div class="top-stocks-filters">
+            <div class="toolbar">
+              <label>
+                대상 범위
+                <select id="scanBucket"></select>
+              </label>
+              <label>
+                섹터
+                <select id="scanSector"></select>
+              </label>
+              <label>
+                예측 기간
+                <select id="scanHorizon">
+                  <option value="1">1일 (1거래일)</option>
+                  <option value="3">3일 (3거래일)</option>
+                  <option value="5">1주 (5거래일)</option>
+                  <option value="10">2주 (10거래일)</option>
+                  <option value="20" selected>1개월 (20거래일)</option>
+                  <option value="60">3개월 (60거래일)</option>
+                </select>
+              </label>
+              <label>
+                표시 개수
+                <select id="scanLimit">
+                  <option value="12">12</option>
+                  <option value="24" selected>24</option>
+                  <option value="48">48</option>
+                  <option value="96">96</option>
+                </select>
+              </label>
+              <label class="scan-deep-toggle">
+                정밀 분석
+                <input id="scanDeep" type="checkbox" checked>
+              </label>
+              <button type="button" class="ghost" id="scanRefresh">새로고침</button>
+            </div>
+          </div>
+          <div class="section-title compact-title">
+            <h2>상승확률 스캐너</h2>
+            <p id="scannerMeta">기술적 지표를 종합해 상승 확률이 높은 종목을 순위로 보여줍니다.</p>
+          </div>
+          <div class="rank-grid scanner-grid" id="scannerCards"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-top">
+        <div class="top-stocks-filters">
+        <div class="toolbar">
+          <label>
+            Metric
+            <select id="topMetric">
+              <option value="changePct">당일 등락률</option>
+              <option value="weekChangePct">이번 주 등락률</option>
+              <option value="monthChangePct">1개월 등락률</option>
+              <option value="threeMonthChangePct">3개월 등락률</option>
+              <option value="ytdChangePct">YTD 등락률</option>
+              <option value="rsScore">RS 점수</option>
+              <option value="epsRevScore">EPS 추정 점수</option>
+              <option value="rsi14">RSI 14</option>
+              <option value="stochK">StochK 14</option>
+              <option value="volumeRatio">거래량 배율</option>
+              <option value="marketCapB">시가총액</option>
+              <option value="pe">P/E</option>
+              <option value="forwardPE">Forward P/E</option>
+              <option value="ps">Price to Sales</option>
+              <option value="pb">Price to Book</option>
+              <option value="newHighDistancePct">고점 대비 하락폭</option>
+              <option value="low52Dist">52주 저가 대비</option>
+            </select>
+          </label>
+          <label>
+            지수/그룹
+            <select id="topBucket"></select>
+          </label>
+          <label>
+            Sector
+            <select id="topSector"></select>
+          </label>
+          <label>
+            New High Recency 4W
+            <select id="topNewHighRecency">
+              <option value="All">All</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="None">None</option>
+            </select>
+          </label>
+          <label>
+            New high (1Y)
+            <select id="topNewHigh">
+              <option value="All">All</option>
+              <option value="New_High">New High</option>
+              <option value="0-2%">0-2%</option>
+              <option value="2-5%">2-5%</option>
+              <option value="5-10%">5-10%</option>
+              <option value="10-20%">10-20%</option>
+              <option value="20+%">20+%</option>
+              <option value="NA">NA</option>
+            </select>
+          </label>
+        </div>
+        <div class="toolbar">
+          <label>
+            Preset
+            <select id="topPreset">
+              <option value="custom">Custom</option>
+              <option value="leaders">강한 추세 리더</option>
+              <option value="breakout">신고가 근접 + 거래량</option>
+              <option value="pullback">강한 종목 눌림목</option>
+              <option value="growth">EPS 추정 상향</option>
+              <option value="value">저평가 대형주</option>
+              <option value="lows">52주 신저가 근접</option>
+              <option value="volsurge">거래량 급증</option>
+              <option value="oversold">과매도 (RSI≤30)</option>
+            </select>
+          </label>
+          <label>
+            Min RS
+            <input id="topMinRs" type="number" min="0" max="100" placeholder="0">
+          </label>
+          <label>
+            Min EPS
+            <input id="topMinEps" type="number" min="0" max="100" placeholder="0">
+          </label>
+          <label>
+            Vol Ratio
+            <input id="topMinVolume" type="number" min="0" step="0.1" placeholder="0">
+          </label>
+          <label>
+            <span id="topMinMarketCapLabelText">Min MktCap($B)</span>
+            <input id="topMinMarketCap" type="number" min="0" step="1" placeholder="0">
+          </label>
+          <label>
+            Limit
+            <select id="topLimit">
+              <option value="12">12</option>
+              <option value="24" selected>24</option>
+              <option value="48">48</option>
+              <option value="96">96</option>
+            </select>
+          </label>
+          <button type="button" class="ghost" id="topResetFilters">Reset</button>
+        </div>
+        </div>
+        <div class="section-title compact-title">
+          <h2>Top Stocks</h2>
+          <p id="topStocksMeta">조건에 맞는 상위 종목입니다.</p>
+        </div>
+        <div class="rank-grid" id="topStocks"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-jump">
+        <div class="toolbar">
+          <label>
+            카테고리
+            <select id="jumpCategory">
+              <option value="rsVolume">RS 신고가 + 거래량</option>
+              <option value="volume">거래량 급증</option>
+              <option value="move">당일 급등</option>
+            </select>
+          </label>
+          <label>
+            정렬
+            <select id="jumpSort">
+              <option value="marketCapB">시가총액</option>
+              <option value="changePct">당일 등락률</option>
+              <option value="volumeRatio">거래량 배율</option>
+            </select>
+          </label>
+        </div>
+        <div class="card-grid" id="jumpGrid"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-compare">
+        <div class="section-title">
+          <h2>종목 비교 보드</h2>
+          <p>최대 6개 종목의 핵심 지표를 한 표에서 비교합니다.</p>
+        </div>
+        <div class="toolbar">
+          <label class="grow">
+            비교 종목
+            <input id="compareInput" placeholder="한국어·티커·영문 (예: 테슬라, Apple)" autocomplete="off">
+          </label>
+          <button type="button" id="compareRun">비교</button>
+          <button type="button" class="ghost" id="compareFromWatchlist">관심종목 불러오기</button>
+        </div>
+        <div class="table-wrap compare-table-wrap">
+          <table class="compare-board" id="compareBoard"></table>
+        </div>
+        </div>
+
+        <div class="sub-panel is-active" id="sub-analysis">
+        <!-- AI 데이터 조립 오버레이 -->
+        <div id="aiAssemblyOverlay" class="ai-assembly-overlay" hidden>
+          <div class="ai-assembly-content">
+            <div class="ai-assembly-logo"></div>
+            <h3 id="aiAssemblyStatusTitle">엔비디아 (NVDA) 분석 보고서 조립 중</h3>
+            <div class="ai-assembly-steps">
+              <div class="assembly-step" id="stepChart">기술적 차트 생성 완료</div>
+              <div class="assembly-step" id="stepFund">기본 재무제표 및 밸류에이션 로드 완료</div>
+              <div class="assembly-step" id="stepNews">수급 및 실시간 뉴스 데이터 매핑 완료</div>
+              <div class="assembly-step" id="stepReport">AI 투자 진단 리포트 요약 중...</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="toolbar">
+          <label class="grow">
+            티커 검색
+            <input id="tickerSearch" placeholder="한국어·티커·영문 (예: 테슬라, NVDA, Apple)" autocomplete="off">
+          </label>
+          <button id="searchButton">분석</button>
+        </div>
+        <div class="workspace two-col stock-analysis-top">
+          <div class="chart-card animate-reveal">
+            <div class="section-title">
+              <h2 id="chartTitle">종목 차트</h2>
+              <p>스냅샷에 저장된 최근 가격 흐름입니다.</p>
+            </div>
+            <div class="chart-command-bar" aria-label="Chart controls">
+              <div class="chart-command-main">
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">기간</span>
+                  <div class="segmented" id="rangeControls">
+                    <button type="button" data-range="5Y">5Y</button>
+                    <button type="button" class="is-active" data-range="1Y">1Y</button>
+                    <button type="button" data-range="6M">6M</button>
+                    <button type="button" data-range="3M">3M</button>
+                    <button type="button" data-range="1M">1M</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">봉</span>
+                  <div class="segmented" id="barTimeframeControls" title="봉 종류">
+                    <button type="button" class="is-active" data-tf="D">일</button>
+                    <button type="button" data-tf="W">주</button>
+                    <button type="button" data-tf="M">월</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group" id="chartViewGroup">
+                  <span class="control-caption">보기</span>
+                  <div class="icon-controls">
+                    <button type="button" id="chartPanLeft" title="왼쪽으로 이동">‹</button>
+                    <button type="button" id="chartZoomOut" title="축소">−</button>
+                    <button type="button" id="chartZoomIn" title="확대">+</button>
+                    <button type="button" id="chartPanRight" title="오른쪽으로 이동">›</button>
+                    <button type="button" id="chartReset" title="초기화">Reset</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">유형</span>
+                  <div class="segmented" id="chartTypeControls" title="차트 유형">
+                    <button type="button" class="is-active" data-ctype="candle">캔들</button>
+                    <button type="button" data-ctype="heikin">헤이킨</button>
+                    <button type="button" data-ctype="line">라인</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">그리기</span>
+                  <div class="icon-controls" id="chartDrawControls" title="추세선·피보나치 (차트에서 드래그)">
+                    <button type="button" data-draw="trend" title="추세선">╱</button>
+                    <button type="button" data-draw="fib" title="피보나치 되돌림">≣</button>
+                    <button type="button" id="chartDrawClear" title="그린 선 지우기">✕</button>
+                  </div>
+                </div>
+                <div class="control-group compact-control-group">
+                  <span class="control-caption">분석</span>
+                  <button type="button" id="chartProbBtn" class="chart-prob-btn" title="이동평균선·지지/저항을 차트에 표시하고 상승 확률을 계산합니다">상승확률 분석</button>
+                </div>
+              </div>
+              <div class="chart-compare-bar">
+                <label class="grow">
+                  비교 종목
+                  <input id="chartCompareInput" list="tickerOptions" placeholder="예: SPY, QQQ, SOXX" autocomplete="off">
+                  <datalist id="tickerOptions"></datalist>
+                </label>
+                <button type="button" class="ghost" id="chartCompareAdd">추가</button>
+                <div class="compare-chip-list" id="chartCompareList"></div>
+              </div>
+              <details class="chart-settings-panel">
+                <summary>
+                  <span>차트 설정</span>
+                  <strong>이동평균 · 보조지표</strong>
+                </summary>
+                <div class="chart-preset-bar">
+                  <span class="control-caption">빠른 프리셋</span>
+                  <div class="segmented" id="chartBuiltinPresets"></div>
+                  <label>
+                    프리셋
+                    <select id="chartPresetSelect"></select>
+                  </label>
+                  <button type="button" class="ghost" id="chartPresetApply">적용</button>
+                  <button type="button" class="ghost" id="chartPresetSave">현재 설정 저장</button>
+                  <button type="button" class="ghost" id="chartPresetDelete">삭제</button>
+                </div>
+                <div class="chart-settings-grid">
+                  <fieldset>
+                    <legend>이동평균선</legend>
+                    <label class="check-label"><input id="showSma5" type="checkbox"> SMA5</label>
+                    <label class="check-label"><input id="showSma10" type="checkbox"> SMA10</label>
+                    <label class="check-label"><input id="showSma20" type="checkbox" checked> SMA20</label>
+                    <label class="check-label"><input id="showSma60" type="checkbox" checked> SMA60</label>
+                    <label class="check-label"><input id="showSma120" type="checkbox"> SMA120</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>추세/밴드</legend>
+                    <label class="check-label"><input id="showEma20" type="checkbox"> EMA20</label>
+                    <label class="check-label"><input id="showEma60" type="checkbox"> EMA60</label>
+                    <label class="check-label"><input id="showBoll" type="checkbox"> 볼린저</label>
+                    <label class="check-label"><input id="showVwap" type="checkbox"> VWAP</label>
+                    <label class="check-label"><input id="showSupertrend" type="checkbox"> Supertrend</label>
+                    <label class="check-label"><input id="showIchimoku" type="checkbox"> Ichimoku</label>
+                    <label class="check-label"><input id="showKeltner" type="checkbox"> Keltner</label>
+                    <label class="check-label"><input id="showDonchian" type="checkbox"> Donchian</label>
+                    <label class="check-label"><input id="showSupportResistance" type="checkbox"> 지지/저항</label>
+                    <label class="check-label"><input id="showTechLevels" type="checkbox"> 기술 레벨선</label>
+                    <label class="check-label"><input id="showPatterns" type="checkbox"> 차트 패턴</label>
+                    <label class="check-label"><input id="showVolumeProfile" type="checkbox"> VP(POC/HVN)</label>
+                    <label class="check-label"><input id="showTrendlines" type="checkbox"> 추세선</label>
+                    <label class="check-label"><input id="showMarketStructure" type="checkbox"> 시장구조(HH/HL)</label>
+                    <label class="check-label"><input id="showChandelier" type="checkbox"> Chandelier</label>
+                    <label class="check-label"><input id="showAnchoredVwap" type="checkbox"> 앵커 VWAP</label>
+                    <label class="check-label"><input id="showGapZones" type="checkbox"> 갭 존</label>
+                    <label class="check-label"><input id="showTtmSqueeze" type="checkbox"> TTM Squeeze</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>거래량/수급</legend>
+                    <label class="check-label"><input id="showVolume" type="checkbox" checked> Volume</label>
+                    <label class="check-label"><input id="showVolMa20" type="checkbox"> Vol MA20</label>
+                    <label class="check-label"><input id="showVolumeRatio" type="checkbox"> Volume Ratio</label>
+                    <label class="check-label"><input id="showObv" type="checkbox"> OBV</label>
+                    <label class="check-label"><input id="showAd" type="checkbox"> A/D</label>
+                    <label class="check-label"><input id="showCmf" type="checkbox"> CMF</label>
+                    <label class="check-label"><input id="showMfi" type="checkbox"> MFI</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>모멘텀/강도</legend>
+                    <label class="check-label"><input id="showRsi" type="checkbox" checked> RSI(14)</label>
+                    <label class="check-label"><input id="showMacd" type="checkbox"> MACD</label>
+                    <label class="check-label"><input id="showStoch" type="checkbox"> Stoch</label>
+                    <label class="check-label"><input id="showRoc" type="checkbox"> ROC</label>
+                    <label class="check-label"><input id="showMomentum" type="checkbox"> Momentum</label>
+                    <label class="check-label"><input id="showWilliams" type="checkbox"> Williams %R</label>
+                    <label class="check-label"><input id="showAtr" type="checkbox"> ATR</label>
+                    <label class="check-label"><input id="showAdx" type="checkbox"> ADX/+DI/-DI</label>
+                    <label class="check-label"><input id="showCci" type="checkbox"> CCI</label>
+                  </fieldset>
+                  <fieldset>
+                    <legend>상대강도</legend>
+                    <label class="check-label"><input id="showRsSpy" type="checkbox"> RS vs SPY</label>
+                    <label class="check-label"><input id="showRsQqq" type="checkbox"> RS vs QQQ</label>
+                    <label class="check-label"><input id="showRsSector" type="checkbox"> RS vs Sector ETF</label>
+                    <label class="check-label"><input id="showMansfield" type="checkbox"> Mansfield RS</label>
+                  </fieldset>
+                </div>
+              </details>
+            </div>
+            <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
+          </div>
+          <div class="search-side-col">
+            <!-- AI 투자 진단 리포트 -->
+            <section class="ai-report-card animate-reveal" id="analysisAiReportCard">
+              <div class="ai-report-header">
+                <div>
+                  <span class="ai-report-kicker">AI DEEP REPORT</span>
+                  <h3 class="ai-report-title">AI 투자 분석 진단</h3>
+                </div>
+                <button type="button" class="ghost compact-btn" id="analysisAiReportRefresh" title="리포트 다시 불러오기">갱신</button>
+              </div>
+              <div class="ai-report-body" id="analysisAiReportBody">
+                <p class="muted">종목을 선택하거나 검색창에 질문하면 AI가 수집된 지표를 진단하여 심층 리포트를 작성합니다.</p>
+              </div>
+            </section>
+
+            <aside class="detail-panel animate-reveal" id="searchFacts"></aside>
+            <section class="range52-card animate-reveal" id="range52Bar"></section>
+            <section class="news-card animate-reveal" id="searchNews"></section>
+          </div>
+          <div class="fundamental-table analysis-fundamentals animate-reveal" id="fundamentalTable"></div>
+        </div>
+        <div id="chartProbPanel" class="cprob" hidden></div>
+        <div class="analysis-balanced-grid analysis-insight-grid">
+          <section class="move-explanation-card animate-reveal" id="moveExplanation" aria-live="polite"></section>
+          <section class="investment-checklist-card animate-reveal" id="investmentChecklist" aria-live="polite"></section>
+        </div>
+        <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
+        <section class="stock-events-card animate-reveal" id="stockEvents"></section>
+        <div class="analysis-balanced-grid analysis-quality-grid">
+          <section class="data-quality-card animate-reveal" id="dataQualityPanel"></section>
+          <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
+        </div>
+        </div>
+
+        <div class="sub-panel" id="sub-screener">
+        <div class="section-title">
+          <h2>종목 스크리너</h2>
+          <p>조건에 맞는 종목을 표로 검색합니다. 결과에서 ★를 눌러 관심종목에 추가할 수 있습니다.</p>
+        </div>
+        <section class="nl-screener" aria-labelledby="nlScreenerTitle">
+          <div class="nl-screener-head">
+            <span class="daily-action-kicker">AI 자연어 검색</span>
+            <h3 id="nlScreenerTitle">문장으로 종목 찾기</h3>
+            <p>조건을 한국어/영어 문장으로 입력하면 자동 해석해 검색합니다. 예: "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주".</p>
+          </div>
+          <div class="nl-screener-bar">
+            <input id="nlQuery" type="search" placeholder="예: RSI 30 이하 반도체 RS 70 이상" autocomplete="off">
+            <button type="button" id="nlRun">검색</button>
+            <button type="button" class="ghost" id="nlClear">지움</button>
+          </div>
+          <div class="nl-examples" id="nlExamples"></div>
+          <div class="nl-chips" id="nlChips" aria-live="polite"></div>
+          <p class="muted nl-meta" id="nlMeta">문장을 입력하고 검색을 눌러보세요.</p>
+          <div class="table-wrap" id="nlResultsWrap" hidden>
+            <table class="compact-table screener-table">
+              <thead>
+                <tr><th></th><th>티커</th><th>회사</th><th>섹터</th><th>당일</th><th>1M</th><th>RS</th><th>RSI</th><th>PER</th><th>시총</th><th>신호</th></tr>
+              </thead>
+              <tbody id="nlResults"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="saved-screener-panel" aria-labelledby="savedScreenerTitle">
+          <div class="saved-screener-head">
+            <div>
+              <h3 id="savedScreenerTitle">저장형 스크리너</h3>
+              <p>현재 조건을 저장하고 새 스냅샷에서 신규 편입·이탈 종목을 확인합니다.</p>
+            </div>
+            <span class="saved-screener-badge" id="savedScreenerBadge">저장 0개</span>
+          </div>
+          <div class="saved-screener-controls">
+            <label class="grow">저장 조건<select id="savedScreenerSelect"><option value="">저장된 조건 선택</option></select></label>
+            <label class="grow">이름<input id="savedScreenerName" type="text" maxlength="30" placeholder="예: 강한 추세 + 거래량"></label>
+            <button type="button" id="savedScreenerSave">현재 조건 저장</button>
+            <button type="button" class="ghost" id="savedScreenerDelete" disabled>삭제</button>
+          </div>
+          <div class="saved-screener-delta" id="savedScreenerDelta" aria-live="polite">
+            <p class="muted">조건을 저장하면 다음 스냅샷부터 편입·이탈을 비교합니다.</p>
+          </div>
+        </section>
+        <div class="toolbar screener-toolbar">
+          <label>
+            유니버스
+            <select id="scrBucket"></select>
+          </label>
+          <label>
+            섹터
+            <select id="scrSector"></select>
+          </label>
+          <label>
+            프리셋
+            <select id="scrPreset">
+              <option value="custom">Custom</option>
+              <option value="leaders">강한 추세 리더</option>
+              <option value="breakout">신고가 + 거래량</option>
+              <option value="pullback">강한 종목 눌림목</option>
+              <option value="growth">EPS 추정 상향</option>
+              <option value="value">저평가 대형주</option>
+              <option value="lows">52주 신저가 근접</option>
+              <option value="volsurge">거래량 급증</option>
+              <option value="oversold">과매도 (RSI≤30)</option>
+            </select>
+          </label>
+          <label>
+            정렬
+            <select id="scrMetric">
+              <option value="rsScore">RS 점수</option>
+              <option value="changePct">당일 등락률</option>
+              <option value="monthChangePct">1개월</option>
+              <option value="volumeRatio">거래량 배율</option>
+              <option value="rsi14">RSI 14</option>
+              <option value="epsRevScore">EPS Rev</option>
+              <option value="marketCapB">시가총액</option>
+              <option value="newHighDistancePct">고점 대비 하락폭</option>
+              <option value="low52Dist">52주 저가 대비</option>
+            </select>
+          </label>
+          <label>Min RS <input id="scrMinRs" type="number" min="0" max="100" placeholder="0"></label>
+          <label>Min EPS <input id="scrMinEps" type="number" min="0" max="100" placeholder="0"></label>
+          <label>Vol <input id="scrMinVol" type="number" min="0" step="0.1" placeholder="0"></label>
+          <label><span id="scrMinCapLabelText">Cap($B)</span> <input id="scrMinCap" type="number" min="0" step="1" placeholder="0"></label>
+          <label>
+            Limit
+            <select id="scrLimit">
+              <option value="50">50</option>
+              <option value="100" selected>100</option>
+              <option value="200">200</option>
+            </select>
+          </label>
+          <label>
+            차트 패턴
+            <select id="scrPattern">
+              <option value="any">전체</option>
+              <option value="double">쌍바닥/쌍천장</option>
+              <option value="hns">헤드앤숄더</option>
+              <option value="triangle">삼각수렴</option>
+              <option value="cup">컵앤핸들</option>
+              <option value="breakout">지지/저항 돌파</option>
+              <option value="candle">캔들 패턴</option>
+              <option value="gap">갭</option>
+              <option value="trap">가짜 돌파</option>
+            </select>
+          </label>
+          <button type="button" id="scrRun">검색</button>
+          <button type="button" class="ghost" id="scrReset">초기화</button>
+        </div>
+        <p class="muted screener-meta" id="screenerMeta">조건을 설정하고 검색을 눌러주세요.</p>
+        <div class="table-wrap">
+          <table class="compact-table screener-table">
+            <thead>
+              <tr>
+                <th></th>
+                <th>티커</th>
+                <th>회사</th>
+                <th>섹터</th>
+                <th>당일</th>
+                <th>1M</th>
+                <th>RS</th>
+                <th>EPS</th>
+                <th>Vol</th>
+                <th>시총</th>
+                <th>신호</th>
+              </tr>
+            </thead>
+            <tbody id="screenerTable"></tbody>
+          </table>
+        </div>
+        </div>
+
+        <div class="sub-panel" id="sub-valuation">
+          <div class="section-title">
+            <h2>밸류에이션 랭킹</h2>
+            <p>추적 종목을 지표별로 정렬합니다. P/E·P/S 등은 낮을수록 저평가, ROE·배당은 높을수록 우수. (펀더멘털 보유 종목 한정)</p>
+          </div>
+          <div class="insider-controls">
+            <label>지표
+              <select id="valMetric">
+                <option value="pe">P/E</option>
+                <option value="forwardPE">Forward P/E</option>
+                <option value="peg">PEG</option>
+                <option value="ps">P/S</option>
+                <option value="pb">P/B</option>
+                <option value="evEbitda">EV/EBITDA</option>
+                <option value="evEbit">EV/EBIT</option>
+                <option value="roe">ROE</option>
+                <option value="roa">ROA</option>
+                <option value="netMargin">Net Margin</option>
+                <option value="divYield">Dividend Yield</option>
+                <option value="valueScore">저평가 종합 (멀티플)</option>
+              </select>
+            </label>
+            <label>섹터<select id="valSector"></select></label>
+            <label>시총
+              <select id="valCap">
+                <option value="all">전체</option>
+                <option value="gte10b">대형(10B+)</option>
+                <option value="1to10b">중형(1~10B)</option>
+                <option value="lt1b">소형(&lt;1B)</option>
+              </select>
+            </label>
+            <div class="insider-filter" id="valOrder" role="group" aria-label="정렬 방향">
+              <button type="button" data-order="asc" class="is-active">낮은순</button>
+              <button type="button" data-order="desc">높은순</button>
+            </div>
+            <label class="grow">검색<input id="valSearch" type="search" placeholder="티커·회사" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="valMeta"></div>
+          <div class="insider-table-wrap" id="valuationTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-short">
+          <div class="section-title">
+            <h2>공매도 잔고 · 숏스퀴즈 후보</h2>
+            <p>FINRA 격주 공시(Nasdaq) 기반. <b>잔고일수(Days to Cover)</b>가 높을수록 숏 커버에 오래 걸려 스퀴즈 가능성이 큽니다. <b>Nasdaq 상장 종목 한정</b>.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>지연 주의</strong>
+            <span>공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="shortSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="dtc" class="is-active">잔고일수 높은순</button>
+              <button type="button" data-sort="trade">거래비중 높은순</button>
+              <button type="button" data-sort="change">증가율 높은순</button>
+            </div>
+            <label class="grow">검색<input id="shortSearch" type="search" placeholder="티커·회사" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="shortMeta"></div>
+          <div class="insider-table-wrap" id="shortTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-buyback">
+          <div class="section-title">
+            <h2>자사주 매입 · 소각 트래커</h2>
+            <p>DART 주요사항보고 기반. 회사가 <b>자기주식을 취득</b>(주주환원·주가부양)하거나 처분·소각한 <b>공시 사실</b>입니다. 규모는 <b>시가총액 대비</b>로 비교합니다. 예측 신호가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 사실</strong>
+            <span>최근 공시분만 표시하며 실시간이 아닙니다. 취득 '결정'이 매입 완료를 뜻하지 않습니다(신탁·장내 취득은 기간에 걸쳐 집행). 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="buybackSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="size" class="is-active">규모(시총대비) 높은순</button>
+              <button type="button" data-sort="date">최신순</button>
+            </div>
+            <div class="insider-filter" id="buybackType" role="group" aria-label="유형">
+              <button type="button" data-type="all" class="is-active">전체</button>
+              <button type="button" data-type="buy">매입/소각</button>
+              <button type="button" data-type="sell">처분/해지</button>
+            </div>
+            <label class="grow">검색<input id="buybackSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="buybackMeta"></div>
+          <div class="insider-table-wrap" id="buybackTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-earnreact">
+          <div class="section-title">
+            <h2>실적 발표(잠정) · 주가반응</h2>
+            <p>DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외. 예측 신호가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>사실 피드</strong>
+            <span>공시 유형별 과거 반응은 무작위와 구분되지 않습니다(잠정실적 포함). 발표 후 주가 움직임을 보여줄 뿐 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="earnReactSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="date" class="is-active">최신순</button>
+              <button type="button" data-sort="react">발표 반응 큰순</button>
+            </div>
+            <label class="grow">검색<input id="earnReactSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="earnReactMeta"></div>
+          <div class="insider-table-wrap" id="earnReactTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-dividend">
+          <div class="section-title">
+            <h2>배당 캘린더</h2>
+            <p>DART '현금·현물배당결정' 공시 원문에서 파싱. <b>시가배당률·주당배당금</b>과 <b>배당기준일(배당락 근거)·지급예정일</b>입니다. 공시된 사실이며 투자 권유가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 사실</strong>
+            <span>최근 공시분만 표시합니다. 배당기준일 전전영업일이 배당락일입니다. 공시 원문 파싱이라 일부 값이 비어 있을 수 있습니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="dividendSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="record" class="is-active">배당기준일 임박순</button>
+              <button type="button" data-sort="yield">시가배당률 높은순</button>
+            </div>
+            <label class="grow">검색<input id="dividendSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="dividendMeta"></div>
+          <div class="insider-table-wrap" id="dividendTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-contract">
+          <div class="section-title">
+            <h2>공급계약 · 수주</h2>
+            <p>DART '단일판매·공급계약체결' 공시 원문에서 파싱. <b>계약금액</b>과 <b>최근 매출액 대비 비중</b>(클수록 실적 영향 큼)입니다. 예측 신호가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 사실</strong>
+            <span>최근 공시분만 표시합니다. 조건부·미공개로 규모를 알 수 없는 계약은 제외됩니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="contractSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="ratio" class="is-active">매출대비 큰순</button>
+              <button type="button" data-sort="date">최신순</button>
+            </div>
+            <label class="grow">검색<input id="contractSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="contractMeta"></div>
+          <div class="insider-table-wrap" id="contractTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-dilution">
+          <div class="section-title">
+            <h2>증자 · 사채 발행 (희석 · 오버행)</h2>
+            <p>DART 주요사항보고 기반. 유상증자·전환사채(CB)·신주인수권부사채(BW)·교환사채(EB) 발행으로 <b>주식수가 늘어 기존 주주가 희석</b>되는 공시입니다. <b>희석률</b>이 클수록 영향이 큽니다. 자사주 매입의 반대편 리스크이며, 예측 신호가 아닙니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 사실</strong>
+            <span>최근 공시분만 표시합니다. 전환·행사가는 CB/BW의 잠재 희석 기준입니다. 발행 '결정'이며 최종 발행·전환 규모는 달라질 수 있습니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="dilutionSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="dilution" class="is-active">희석률 높은순</button>
+              <button type="button" data-sort="amount">발행금액 큰순</button>
+              <button type="button" data-sort="date">최신순</button>
+            </div>
+            <label class="grow">검색<input id="dilutionSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="dilutionMeta"></div>
+          <div class="insider-table-wrap" id="dilutionTable"></div>
+        </div>
+      </section>
+
+      <!-- ==================== 관심 리스트 탭 ==================== -->
+      <section class="panel" id="tab-bulk">
+        <div class="section-title">
+          <h2>관심 리스트</h2>
+          <p>브라우저에 저장됩니다. 상단 관심종목 바와 동기화됩니다.</p>
+        </div>
+
+        <section class="portfolio-card" id="portfolioCard">
+          <div class="pf-head">
+            <h3>가상 포트폴리오</h3>
+            <span class="muted">평단가·수량을 입력해 손익·섹터 분산·일간 기여도를 확인하세요. (이 브라우저에 저장)</span>
+          </div>
+          <div class="pf-input">
+            <input id="pfTicker" placeholder="티커 (예: NVDA)" autocomplete="off">
+            <input id="pfQty" type="number" min="0" step="any" placeholder="수량">
+            <input id="pfCost" type="number" min="0" step="any" placeholder="평단가 $">
+            <button type="button" id="pfAdd">추가</button>
+            <button type="button" class="ghost" id="pfClear">초기화</button>
+            <button type="button" class="ghost" id="pfExportCsv">CSV보내기</button>
+          </div>
+          <div class="pf-summary" id="pfSummary"></div>
+          <div class="pf-body">
+            <div class="pf-table-wrap" id="pfTable"></div>
+            <div class="pf-pie" id="pfPie"></div>
+          </div>
+        </section>
+
+        <div class="portfolio-extension-grid">
+          <section class="portfolio-tool-card" id="pfXrayCard">
+            <div class="portfolio-tool-head">
+              <div><span>X-RAY</span><h3>팩터 노출 · 집중도</h3></div>
+            </div>
+            <p class="muted">보유 비중으로 가중한 시장 내 팩터 백분위와 집중도(HHI)입니다. 예측이 아니라 포트폴리오의 성향·쏠림을 보여줍니다.</p>
+            <div id="pfXrayBody"></div>
+          </section>
+
+          <section class="portfolio-tool-card" id="dividendPlannerCard">
+            <div class="portfolio-tool-head">
+              <div><span>INCOME PLAN</span><h3>배당 캘린더 · 현금흐름</h3></div>
+              <strong id="dividendPlannerTotal">연 $0</strong>
+            </div>
+            <p class="muted">보유 수량과 연간 주당배당금을 기준으로 향후 12개월 현금흐름을 계산합니다.</p>
+            <div class="portfolio-tool-summary" id="dividendPlannerSummary"></div>
+            <div class="portfolio-tool-table" id="dividendPlannerTable"></div>
+            <div class="dividend-month-grid" id="dividendMonthGrid"></div>
+          </section>
+
+          <section class="portfolio-tool-card" id="rebalanceCard">
+            <div class="portfolio-tool-head">
+              <div><span>ALLOCATION</span><h3>포트폴리오 리밸런싱</h3></div>
+              <div class="portfolio-tool-actions">
+                <button type="button" class="ghost compact-btn" id="rebalanceEqual">동일 비중</button>
+                <button type="button" class="ghost compact-btn" id="rebalanceNormalize">100% 맞춤</button>
+              </div>
+            </div>
+            <p class="muted">현재 평가금액을 유지한다고 가정해 목표 비중별 매수·매도 수량을 계산합니다.</p>
+            <div class="portfolio-tool-summary" id="rebalanceSummary"></div>
+            <div class="portfolio-tool-table" id="rebalanceTable"></div>
+          </section>
+
+          <section class="portfolio-tool-card" id="stressTestCard">
+            <div class="portfolio-tool-head">
+              <div><span>RISK SCENARIO</span><h3>포트폴리오 스트레스 테스트</h3></div>
+              <select id="stressScenario" aria-label="스트레스 시나리오">
+                <option value="market">시장 급락</option>
+                <option value="tech">기술주 조정</option>
+                <option value="recession">경기침체</option>
+                <option value="rates">금리 급등</option>
+                <option value="custom">직접 입력</option>
+              </select>
+            </div>
+            <p class="muted">종목별 가정 충격률을 적용해 예상 평가손실과 스트레스 후 비중을 계산합니다.</p>
+            <div class="portfolio-tool-summary" id="stressSummary"></div>
+            <div class="portfolio-tool-table" id="stressTable"></div>
+          </section>
+
+          <section class="portfolio-tool-card" id="positionSizeCard">
+            <div class="portfolio-tool-head">
+              <div><span>RISK BUDGET</span><h3>포지션 크기 계산기</h3></div>
+              <strong>롱 포지션 기준</strong>
+            </div>
+            <p class="muted">손절 시 허용 손실과 최대 투자비중 중 더 보수적인 기준으로 매수 수량을 계산합니다.</p>
+            <div class="position-size-form">
+              <label>종목<input id="positionTicker" list="tickerOptions" placeholder="NVDA" autocomplete="off"></label>
+              <label>투자금<input id="positionCapital" type="number" min="1" step="100" value="10000"></label>
+              <label>진입가<input id="positionEntry" type="number" min="0" step="any" placeholder="현재가"></label>
+              <label>손절가<input id="positionStop" type="number" min="0" step="any" placeholder="손절가"></label>
+              <label>허용 손실<input id="positionRiskPct" type="number" min="0.1" max="100" step="0.1" value="1"><em>%</em></label>
+              <label>최대 비중<input id="positionMaxPct" type="number" min="1" max="100" step="1" value="20"><em>%</em></label>
+              <button type="button" id="positionCalculate">계산</button>
+            </div>
+            <div class="position-size-result" id="positionSizeResult"></div>
+          </section>
+
+          <section class="portfolio-tool-card portfolio-wide-card" id="krwPortfolioCard">
+            <div class="portfolio-tool-head">
+              <div><span>KRW VIEW</span><h3>원화 기준 포트폴리오</h3></div>
+              <strong id="krwCurrentRate">USD/KRW 로딩 중</strong>
+            </div>
+            <p class="muted">종목별 매입 환율을 입력하면 원화 평가손익을 주가 효과와 환율 효과로 분리합니다.</p>
+            <div class="portfolio-tool-summary krw-portfolio-summary" id="krwPortfolioSummary"></div>
+            <div class="portfolio-tool-table" id="krwPortfolioTable"></div>
+          </section>
+
+          <section class="portfolio-tool-card portfolio-wide-card" id="benchmarkAttributionCard">
+            <div class="portfolio-tool-head">
+              <div><span>RELATIVE RETURN</span><h3>벤치마크 성과 · 기여도</h3></div>
+              <div class="portfolio-tool-actions benchmark-controls">
+                <select id="portfolioBenchmark" aria-label="비교 벤치마크"><option value="SPY">SPY</option><option value="QQQ">QQQ</option><option value="DIA">DIA</option><option value="IWM">IWM</option></select>
+                <select id="portfolioBenchmarkPeriod" aria-label="성과 비교 기간"><option value="22">1개월</option><option value="63" selected>3개월</option><option value="252">1년</option></select>
+              </div>
+            </div>
+            <p class="muted">현재 포트폴리오 비중을 기준으로 기간 수익률과 벤치마크 대비 종목별 초과수익 기여도를 계산합니다.</p>
+            <div class="portfolio-tool-summary benchmark-summary" id="benchmarkAttributionSummary"></div>
+            <p class="portfolio-tool-status muted" id="benchmarkAttributionStatus"></p>
+            <div class="portfolio-tool-table" id="benchmarkAttributionTable"></div>
+          </section>
+
+          <section class="portfolio-tool-card investment-journal-card" id="investmentJournalCard">
+            <div class="portfolio-tool-head">
+              <div><span>DECISION LOG</span><h3>투자 아이디어 · 매매일지</h3></div>
+              <strong id="journalCount">0건</strong>
+            </div>
+            <div class="journal-form">
+              <input id="journalTicker" placeholder="티커" autocomplete="off">
+              <select id="journalStatus" aria-label="진행 상태"><option value="idea">검토</option><option value="open">보유</option><option value="closed">종료</option></select>
+              <input id="journalEntry" type="number" min="0" step="any" placeholder="진입가">
+              <input id="journalTarget" type="number" min="0" step="any" placeholder="목표가">
+              <input id="journalStop" type="number" min="0" step="any" placeholder="손절가">
+              <input id="journalDate" type="date" aria-label="기록일">
+              <textarea id="journalThesis" rows="2" placeholder="매수 근거, 촉매, 핵심 리스크를 기록하세요."></textarea>
+              <button type="button" id="journalSave">기록 저장</button>
+            </div>
+            <div class="journal-list" id="journalList"></div>
+          </section>
+        </div>
+
+        <section class="corr-card" id="corrCard">
+          <div class="corr-head">
+            <div>
+              <h3>관심종목 상관관계</h3>
+              <p class="muted">관심종목 간 일간 수익률 상관계수입니다. 빨강=같이 움직임(분산효과 낮음), 파랑=반대로 움직임. 값이 낮을수록 분산투자에 유리합니다.</p>
+            </div>
+            <span class="muted" id="corrMeta"></span>
+          </div>
+          <div class="corr-wrap" id="corrMatrix"></div>
+        </section>
+
+        <div class="watchlist-stats" id="watchlistStats"></div>
+        <div class="watch-alert-panel" id="watchAlertPanel">
+          <div class="watch-alert-head">
+            <div>
+              <h3>관심종목 조건 감지</h3>
+              <p class="muted">조건에 맞는 관심종목을 이 화면에서 바로 표시합니다. 설정은 이 브라우저에 저장됩니다.</p>
+            </div>
+            <span class="event-badge" id="watchAlertCount">0</span>
+          </div>
+          <div class="watch-alert-controls">
+            <label><input id="alertUseRs" type="checkbox" checked><span>RS</span><input id="alertMinRs" type="number" min="0" max="100" value="80"></label>
+            <label><input id="alertUseEps" type="checkbox"><span>EPS</span><input id="alertMinEps" type="number" min="0" max="100" value="75"></label>
+            <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3" aria-label="52주 신고가 근접 기준 퍼센트"><em>%</em></label>
+            <label><input id="alertUseVol" type="checkbox" checked><span>거래량 배율</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2" aria-label="거래량 배율 기준"><em>x</em></label>
+            <label class="watch-alert-toggle-only"><input id="alertUseSma20" type="checkbox"><span>SMA 20 위 회복</span></label>
+            <label><input id="alertUsePattern" type="checkbox"><span>차트 패턴</span>
+              <select id="alertPatternCat">
+                <option value="any">전체</option>
+                <option value="double">쌍바닥/쌍천장</option>
+                <option value="hns">헤드앤숄더</option>
+                <option value="breakout">돌파</option>
+                <option value="candle">캔들</option>
+              </select>
+            </label>
+          </div>
+          <div class="watch-alert-results" id="watchAlertResults"></div>
+          <div class="cloud-sync-panel">
+            <div class="cloud-sync-head">
+              <strong>클라우드 동기화</strong>
+              <span class="muted" id="cloudSyncStatus"></span>
+            </div>
+            <p class="muted">관심종목·포트폴리오·알림 조건을 다른 기기와 공유합니다.</p>
+            <div class="cloud-sync-actions">
+              <button type="button" class="ghost compact-btn" id="cloudSyncPull">불러오기</button>
+              <button type="button" class="ghost compact-btn" id="cloudSyncPush">저장하기</button>
+            </div>
+          </div>
+        </div>
+        <div class="toolbar">
+          <label class="grow">
+            Tickers
+            <input id="bulkInput" placeholder="한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)" autocomplete="off">
+          </label>
+          <label>
+            최소 RS
+            <input id="bulkRs" type="number" min="0" max="100" value="0">
+          </label>
+          <button type="button" id="bulkSave">저장</button>
+          <button type="button" id="bulkRun">분석</button>
+          <button type="button" class="ghost" id="bulkCompare">비교 탭</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th>Ticker</th>
+                <th>Company</th>
+                <th>Sector</th>
+                <th>Change</th>
+                <th>RS</th>
+                <th>EPS Rev</th>
+                <th>Volume</th>
+                <th>Signal</th>
+              </tr>
+            </thead>
+            <tbody id="bulkTable"></tbody>
+          </table>
+        </div>
+
+        <div class="backtest-panel" id="backtestPanel">
+          <div class="section-title compact-title">
+            <h2>포트폴리오 시뮬레이터</h2>
+            <p>설정한 비중으로 매수 후 보유(buy-and-hold)했을 때의 수익률입니다. 일봉 종가 기준, 리밸런싱 없음.</p>
+          </div>
+          <div class="toolbar backtest-toolbar backtest-ticker-toolbar">
+            <label class="grow">
+              종목 추가
+              <div class="backtest-ticker-add">
+                <input id="backtestTickerInput" placeholder="한국어·티커 검색 (예: 테슬라)" autocomplete="off">
+                <button type="button" id="backtestTickerAdd">추가</button>
+              </div>
+            </label>
+          </div>
+          <div class="backtest-chip-list compare-chip-list" id="backtestTickerList"></div>
+          <div class="toolbar backtest-toolbar">
+            <label>
+              기간
+              <select id="backtestPeriod">
+                <option value="252">1년</option>
+                <option value="756" selected>3년</option>
+                <option value="1260">5년</option>
+                <option value="custom">직접 설정</option>
+              </select>
+            </label>
+            <label id="backtestStartWrap">
+              시작일
+              <input id="backtestStartDate" type="date">
+            </label>
+            <label id="backtestEndWrap">
+              종료일
+              <input id="backtestEndDate" type="date">
+            </label>
+            <label>
+              벤치마크
+              <select id="backtestBenchmark"></select>
+            </label>
+            <label>
+              투자금 (USD)
+              <input id="backtestInvestment" type="number" min="1" step="100" value="10000">
+            </label>
+            <button type="button" id="backtestRun">시뮬레이션</button>
+            <button type="button" class="ghost" id="backtestFromWatchlist">관심종목 불러오기</button>
+            <button type="button" class="ghost" id="backtestExportCsv">CSV보내기</button>
+          </div>
+          <div class="toolbar backtest-toolbar">
+            <label>
+              비중
+              <select id="backtestWeightMode">
+                <option value="equal">동일 비중</option>
+                <option value="custom">직접 입력</option>
+              </select>
+            </label>
+            <label class="grow" id="backtestWeightsWrap" hidden>
+              비중 (%)
+              <input id="backtestWeights" placeholder="20,20,20,20,20 (티커 순서, 합계 100)">
+            </label>
+          </div>
+          <p class="backtest-status muted" id="backtestStatus"></p>
+          <div class="backtest-results" id="backtestResults" hidden>
+            <div class="backtest-summary" id="backtestSummary"></div>
+            <div class="portfolio-risk-panel" id="portfolioRiskPanel"></div>
+            <div class="backtest-chart-wrap">
+              <svg id="backtestChart" viewBox="0 0 800 260" role="img" aria-label="누적 수익 차트"></svg>
+            </div>
+            <div class="table-wrap">
+              <table class="backtest-table" id="backtestTable"></table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 거장 포트폴리오 탭 (13F + 정치인 매매) ==================== -->
+      <section class="panel" id="tab-institutional">
+        <nav class="sub-tabs" id="institutionalSubTabs" aria-label="Institutional sub-sections">
+          <button class="sub-tab is-active" data-sub="13f">13F 포트폴리오</button>
+          <button class="sub-tab" data-sub="congress">정치인 매매</button>
+          <button class="sub-tab" data-sub="insider">‍내부자 거래</button>
+          <button class="sub-tab" data-sub="activist">액티비스트 13D/G</button>
+          <button class="sub-tab" data-sub="events">주요 공시 8-K</button>
+          <button class="sub-tab" data-sub="ipo">IPO 캘린더</button>
+          <button class="sub-tab" data-sub="dart" hidden>DART 공시</button>
+          <button class="sub-tab" data-sub="krown" hidden>지분 변동</button>
+        </nav>
+
+        <div class="sub-panel" id="sub-inst-krown">
+          <div class="section-title">
+            <h2>한국 지분 변동</h2>
+            <p>대량보유(5%룰)와 임원·주요주주 소유 공시의 <b>상세 수치</b>입니다. 공시 목록이 제목만 알려주는 것과 달리, 누가 몇 %를 얼마나 늘리고 줄였는지 보여줍니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>지분공시 해석 주의</strong>
+            <span>보고 의무 발생 후 며칠 지나 제출될 수 있어 실시간이 아닙니다. 보유비율은 보고자 기준이며 특별관계자 합산 여부가 보고서마다 다를 수 있습니다. 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="krOwnMeta"></div>
+          <nav class="sub-tabs" id="krOwnKinds">
+            <button class="sub-tab is-active" data-krown="major">대량보유 5%룰</button>
+            <button class="sub-tab" data-krown="insider">‍임원·주요주주</button>
+            <button class="sub-tab" data-krown="profile">지배구조·유통물량</button>
+          </nav>
+          <div class="institutional-picker">
+            <label class="grow">
+              지분공시 검색
+              <input id="krOwnSearch" type="search" placeholder="종목코드·회사명·보고자" autocomplete="off">
+            </label>
+          </div>
+          <div class="institutional-detail" id="krOwnTable">
+            <p class="muted">지분공시 데이터를 불러오는 중…</p>
+          </div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-dart">
+          <div class="section-title">
+            <h2>한국 DART 공시</h2>
+            <p>코스피·코스닥 추적 종목의 실적·지분·주요사항 공시입니다. DART Open API로 수집합니다.</p>
+          </div>
+          <div class="institutional-meta" id="krDartMeta"></div>
+          <details class="disc-method" id="krDartMethod">
+            <summary>공시 유형별 과거 반응은 왜 '신호' 가 아닌가</summary>
+            <div class="disc-method-body" id="krDartMethodBody"></div>
+          </details>
+          <div class="institutional-picker">
+            <label class="grow">
+              공시 검색
+              <input id="krDartSearch" type="search" placeholder="종목코드·회사명·제목" autocomplete="off">
+            </label>
+          </div>
+          <div class="institutional-detail" id="krDartTable">
+            <p class="muted">공시 데이터를 불러오는 중…</p>
+          </div>
+        </div>
+
+        <div class="sub-panel is-active" id="sub-inst-13f">
+          <div class="section-title">
+            <h2>거장 포트폴리오 · 13F</h2>
+            <p>대형 헤지펀드·자산운용사 100곳의 SEC 13F-HR 분기 공시입니다. 최근 10분기 보유 변화를 비교할 수 있으며, 데이터는 분기 공시 후에만 갱신합니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>13F 해석 주의</strong>
+            <span>공시일 기준 최대 45일 지연될 수 있고, 미국 상장 롱 포지션 중심입니다. 매도·공매도·해외주식·파생상품 전체 노출은 반영되지 않을 수 있습니다.</span>
+          </div>
+          <div class="institutional-meta" id="institutionalMeta"></div>
+          <div class="inst-13f-highlights" id="inst13fHighlights"></div>
+          <div class="institutional-picker">
+            <label class="grow">
+              기관 검색
+              <input id="institutionalSearch" type="search" placeholder="버크셔, 시타델, 블랙록…" autocomplete="off">
+            </label>
+            <label>
+              기관 선택
+              <select id="institutionalSelect" size="1"></select>
+            </label>
+          </div>
+          <div class="institutional-layout">
+            <aside class="institutional-nav" id="institutionalNav" aria-label="기관 목록" hidden></aside>
+            <div class="institutional-detail" id="institutionalDetail">
+              <p class="muted">기관을 선택하면 상위 보유 종목이 표시됩니다.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-congress">
+          <div class="section-title">
+            <h2>미국 의회 주식 매매</h2>
+            <p>상원·하원 금융 공시(PTR) 기반 의원별 매매 기록, 추정 수익률 랭킹, 상임위원회×업종 크로스 분석입니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 지연 주의</strong>
+            <span>거래 후 최대 45일 내 공시되며 실시간 매매가 아닙니다. 수익률은 최근 매수 거래의 추정값이며 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="congressMeta"></div>
+          <div class="congress-layout">
+            <section class="congress-rankings" id="congressRankings"></section>
+            <section class="congress-matrix" id="congressMatrix"></section>
+          </div>
+          <div class="institutional-picker">
+            <label class="grow">
+              의원 검색
+              <input id="congressSearch" type="search" placeholder="Pelosi, Tuberville, Wyden…" autocomplete="off">
+            </label>
+            <label>
+              의원 선택
+              <select id="congressSelect" size="1"></select>
+            </label>
+          </div>
+          <div class="institutional-detail" id="congressDetail">
+            <p class="muted">의원을 선택하면 최근 매매 내역이 표시됩니다.</p>
+          </div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-insider">
+          <div class="section-title">
+            <h2>미국 기업 내부자 거래</h2>
+            <p>SEC Form 4 공시 기반 임원·이사·10%+ 주주의 매매입니다. <b>P=공개시장 매수</b>, <b>S=매도</b>. 추적 종목 한정, 비파생(직접 보유) 거래만 표시합니다.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>공시 지연 주의</strong>
+            <span>거래 후 2영업일 내 공시가 원칙이나 지연될 수 있고 실시간이 아닙니다. 옵션 행사(M)·세금정산(F)·부여(A)·증여(G)도 함께 표시되며 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="insiderMeta"></div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="insiderKindFilter" role="group" aria-label="거래 유형 필터">
+              <button type="button" data-kind="all" class="is-active">전체</button>
+              <button type="button" data-kind="buy">매수 P</button>
+              <button type="button" data-kind="sell">매도 S</button>
+            </div>
+            <label class="grow">
+              검색
+              <input id="insiderSearch" type="search" placeholder="티커·회사·인물 (예: NVDA, Huang)" autocomplete="off">
+            </label>
+          </div>
+          <div class="insider-cluster" id="insiderCluster"></div>
+          <div class="insider-table-wrap" id="insiderTable">
+            <p class="muted">내부자 거래 데이터를 불러오는 중입니다…</p>
+          </div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-activist">
+          <div class="section-title">
+            <h2>액티비스트 · 대량보유 공시 (13D/G)</h2>
+            <p>5% 이상 지분 취득 시 의무 공시입니다. <b>13D=경영참여(액티비스트)</b>, <b>13G=단순투자(수동)</b>, /A=정정. 추적 종목 한정.</p>
+          </div>
+          <div class="data-disclaimer">
+            <strong>해석 주의</strong>
+            <span>13D는 행동주의 개입 신호일 수 있으나, 13G는 대형 패시브 펀드의 5% 돌파인 경우가 많습니다. 공시 지연이 있으며 투자 권유가 아닙니다.</span>
+          </div>
+          <div class="institutional-meta" id="activistMeta"></div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="activistKindFilter" role="group" aria-label="유형 필터">
+              <button type="button" data-kind="all" class="is-active">전체</button>
+              <button type="button" data-kind="activist">13D 액티비스트</button>
+              <button type="button" data-kind="passive">13G 수동</button>
+            </div>
+            <label class="grow">검색<input id="activistSearch" type="search" placeholder="티커·기업·신고자" autocomplete="off"></label>
+          </div>
+          <div class="insider-table-wrap" id="activistTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-events">
+          <div class="section-title">
+            <h2>주요 공시 피드 (8-K)</h2>
+            <p>중대 이벤트 발생 시 제출하는 8-K입니다. 실적 발표·임원 변동·M&A·계약 등을 item 기준으로 분류해 보여줍니다. 추적 종목 한정.</p>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="eventsHotFilter" role="group" aria-label="중요도 필터">
+              <button type="button" data-hot="all" class="is-active">전체</button>
+              <button type="button" data-hot="hot">주요만</button>
+            </div>
+            <label class="grow">검색<input id="eventsSearch" type="search" placeholder="티커·기업·이벤트" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="eventsMeta"></div>
+          <div class="insider-table-wrap" id="eventsTable"></div>
+        </div>
+
+        <div class="sub-panel" id="sub-inst-ipo">
+          <div class="section-title">
+            <h2>IPO · 신규상장 캘린더</h2>
+            <p><b>424B4=가격확정(상장 임박/직후)</b>, <b>S-1=등록 신청</b>, S-1/A=정정. SEC 등록서류 기반입니다.</p>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="ipoStageFilter" role="group" aria-label="단계 필터">
+              <button type="button" data-stage="all" class="is-active">전체</button>
+              <button type="button" data-stage="priced">상장(가격확정)</button>
+              <button type="button" data-stage="filed">등록 신청</button>
+            </div>
+            <label class="grow">검색<input id="ipoSearch" type="search" placeholder="회사·티커" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="ipoMeta"></div>
+          <div class="insider-table-wrap" id="ipoTable"></div>
+        </div>
+      </section>
+
+      <!-- ==================== 시그널 대시보드 탭 ==================== -->
+      <section class="panel" id="tab-signals">
+        <div id="fearGreed"></div>
+        <div id="macroIndicators"></div>
+        <div id="yieldCurve"></div>
+        <div class="section-title">
+          <h2>오늘의 시그널</h2>
+          <p>내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.</p>
+        </div>
+        <div class="signals-grid" id="signalsGrid"></div>
+        <div class="section-title" style="margin-top:24px">
+          <h2>집계 인사이트</h2>
+          <p>개별 거래를 종합한 매크로 트렌드입니다 (최근 30일 기준).</p>
+        </div>
+        <div class="agg-grid" id="aggInsights"></div>
+      </section>
+
+      <!-- ==================== 마켓 데이터 탭 ==================== -->
+      <section class="panel" id="tab-health">
+        <div class="section-title">
+          <h2>마켓 데이터</h2>
+          <p>주요 지수·국가·채권·원자재·환율을 한눈에 봅니다. 지수/ETF는 하루 1회 스냅샷, 환율은 실시간으로 가져옵니다.</p>
+        </div>
+        <section class="breadth-card" id="marketBreadthCard" aria-label="시장 폭 지표"></section>
+        <section class="data-trust-center" aria-labelledby="dataTrustTitle">
+          <div class="data-trust-head">
+            <div>
+              <span class="daily-action-kicker">DATA TRUST</span>
+              <h2 id="dataTrustTitle">데이터 신뢰도 센터</h2>
+              <p>출처별 기준 시각, 지연 가능성과 현재 연결 상태를 한곳에서 확인합니다.</p>
+            </div>
+            <button type="button" class="ghost compact-btn" id="dataTrustRefresh">상태 다시 확인</button>
+          </div>
+          <div class="data-trust-summary" id="dataTrustSummary"></div>
+          <div class="data-trust-grid" id="dataTrustGrid" aria-live="polite"></div>
+          <p class="data-trust-note">상태는 브라우저에 로드된 최신 파일을 기준으로 계산합니다. 실시간 원본 장애 여부를 직접 보장하지는 않습니다.</p>
+        </section>
+        <div class="markets-tables" id="marketsTables"></div>
+      </section>
+
+      <!-- ==================== 경제 캘린더 탭 (하위: 경제지표·실적) ==================== -->
+      <section class="panel" id="tab-calendar">
+        <nav class="sub-tabs" id="calendarSubTabs" aria-label="Calendar sub-sections">
+          <button class="sub-tab is-active" data-sub="macro">경제 캘린더</button>
+          <button class="sub-tab" data-sub="earnings">실적 일정</button>
+        </nav>
+
+        <div class="sub-panel is-active" id="sub-macro">
+          <div class="section-title">
+            <h2>경제 캘린더</h2>
+            <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 통합 표시합니다. 백악관 일정은 06·16·21시에 갱신됩니다.</p>
+          </div>
+          <div class="calendar-filters" id="calendarFilters">
+            <fieldset class="calendar-filter-group">
+              <legend>국가·출처</legend>
+              <label class="check-label"><input type="checkbox" id="calFilterKorea" checked> 한국</label>
+              <label class="check-label"><input type="checkbox" id="calFilterUs" checked> 미국</label>
+              <label class="check-label"><input type="checkbox" id="calFilterWhiteHouse" checked> 백악관</label>
+            </fieldset>
+            <fieldset class="calendar-filter-group">
+              <legend>중요성</legend>
+              <label class="check-label"><input type="checkbox" id="calFilterHigh" checked> 높음</label>
+              <label class="check-label"><input type="checkbox" id="calFilterMedium" checked> 보통</label>
+              <label class="check-label"><input type="checkbox" id="calFilterLow" checked> 낮음</label>
+            </fieldset>
+          </div>
+          <div class="calendar-legend">
+            <span><b class="imp imp-3">●●●</b> 높음</span>
+            <span><b class="imp imp-2">●●</b><span class="imp-dim">●</span> 보통</span>
+            <span><b class="imp imp-1">●</b><span class="imp-dim">●●</span> 낮음</span>
+          </div>
+          <div id="calendarBody"><p class="muted">경제 캘린더를 불러오는 중…</p></div>
+        </div>
+
+        <div class="sub-panel" id="sub-earnings">
+          <div class="section-title">
+            <h2>시장 실적 캘린더</h2>
+            <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
+          </div>
+          <div class="toolbar earnings-toolbar">
+            <label>
+              기간
+              <select id="earnHorizon">
+                <option value="7">이번 주 (7일)</option>
+                <option value="14" selected>2주</option>
+                <option value="30">1개월</option>
+              </select>
+            </label>
+            <label>
+              범위
+              <select id="earnScope">
+                <option value="watchlist">관심종목</option>
+                <option value="watchlist+top" selected>관심 + 대형주</option>
+                <option value="sp500">S&amp;P 500 상위</option>
+              </select>
+            </label>
+            <label>
+              섹터
+              <select id="earnSector">
+                <option value="all">전체</option>
+                <option value="TECHNOLOGY">정보기술</option>
+                <option value="HEALTHCARE">헬스케어</option>
+                <option value="FINANCIAL">금융</option>
+                <option value="CONSUMER CYCLICAL">임의소비재</option>
+                <option value="CONSUMER DEFENSIVE">필수소비재</option>
+                <option value="INDUSTRIALS">산업재</option>
+                <option value="ENERGY">에너지</option>
+                <option value="UTILITIES">유틸리티</option>
+                <option value="REAL ESTATE">부동산</option>
+                <option value="BASIC MATERIALS">소재</option>
+                <option value="COMMUNICATION SERVICES">커뮤니케이션</option>
+              </select>
+            </label>
+            <label>
+              정렬
+              <select id="earnSort">
+                <option value="date">날짜순</option>
+                <option value="cap">시총순</option>
+                <option value="rs">RS순</option>
+              </select>
+            </label>
+            <label class="earn-check"><input type="checkbox" id="earnWatchOnly"> 관심종목만</label>
+            <div class="earn-view-toggle" id="earnViewToggle" role="group" aria-label="실적 캘린더 보기 전환">
+              <button type="button" data-earn-view="calendar" class="is-active">캘린더</button>
+              <button type="button" data-earn-view="list">☰ 목록</button>
+            </div>
+            <button type="button" id="earnRefresh">새로고침</button>
+          </div>
+          <div id="earningsCalendarBody"><p class="muted">실적 일정을 불러오는 중…</p></div>
+        </div>
+      </section>
+
+      <!-- ==================== AI 브리핑 탭 ==================== -->
+      <section class="panel" id="tab-ai-briefing">
+        <div class="section-title">
+          <h2>AI Market Briefing &amp; Social Sentiment</h2>
+          <p>국내 장마감 시황 분석, 미국 장전 프리마켓 브리핑, 그리고 소셜 미디어 트렌딩 종목을 취합해 모아봅니다. 각 블록의 기준 시각을 함께 확인하세요.</p>
+        </div>
+        <div class="data-disclaimer" id="aiDataStatus"></div>
+        <div class="briefing-schedule" aria-label="AI 브리핑 업데이트 일정">
+          <p class="briefing-schedule-title">AI 브리핑 업데이트 일정 <span>(한국 표준시 KST)</span></p>
+          <ul class="briefing-schedule-list">
+            <li><strong>미국 장마감 시황 브리핑</strong> 업데이트 시간: <time>06:00</time></li>
+            <li><strong>국내 개장 전 심층 보고서</strong> 업데이트 시간: <time>07:00</time></li>
+            <li><strong>국내 장마감 시황 브리핑</strong> 업데이트 시간: <time>16:00</time></li>
+            <li><strong>미국 개장 전 심층 보고서</strong> 업데이트 시간: <time>21:00</time></li>
+          </ul>
+        </div>
+        <div class="ai-briefing-grid">
+          <div class="briefing-box">
+            <div class="briefing-header">
+              <span class="badge badge-korea">KOR</span>
+              <div class="briefing-toggle" data-side="kor">
+                <button type="button" data-key="korea_premarket">개장 전 심층</button>
+                <button type="button" data-key="korea_close" class="is-active">장마감 시황</button>
+              </div>
+            </div>
+            <div id="koreaBriefingContent" class="briefing-content"></div>
+          </div>
+          <div class="briefing-box">
+            <div class="briefing-header">
+              <span class="badge badge-us">USA</span>
+              <div class="briefing-toggle" data-side="us">
+                <button type="button" data-key="us_premarket" class="is-active">개장 전 심층</button>
+                <button type="button" data-key="us_close">장마감 시황</button>
+              </div>
+            </div>
+            <div id="usBriefingContent" class="briefing-content"></div>
+          </div>
+          <div class="briefing-box social-box">
+            <div class="briefing-header">
+              <span class="badge badge-social">SOCIAL</span>
+              <h3>실시간 미국 소셜 언급 및 트렌딩 종목</h3>
+            </div>
+            <div class="social-sentiment-tables">
+              <div class="social-table-wrapper">
+                <h4>Reddit (r/wallstreetbets) 언급 순위</h4>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>순위</th><th>티커</th><th>사명</th><th>언급수</th><th>변동(24h)</th></tr>
+                    </thead>
+                    <tbody id="socialRedditTable">
+                      <tr><td colspan="5" class="text-center">데이터 없음</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="social-table-wrapper">
+                <h4>Stocktwits 실시간 급상승 순위</h4>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>순위</th><th>티커</th><th>사명</th><th>관심등록수</th></tr>
+                    </thead>
+                    <tbody id="socialStocktwitsTable">
+                      <tr><td colspan="4" class="text-center">데이터 없음</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="social-table-wrapper">
+                <h4>Yahoo Finance 인기 검색 순위</h4>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr><th>순위</th><th>티커</th><th>사명</th><th>현재가</th></tr>
+                    </thead>
+                    <tbody id="socialYahooTable">
+                      <tr><td colspan="4" class="text-center">데이터 없음</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 커뮤니티 탭 ==================== -->
+      <section class="panel" id="tab-community">
+        <nav class="sub-tabs" id="communitySubTabs" aria-label="Community sub-sections">
+          <button class="sub-tab is-active" data-sub="trending">트렌딩</button>
+          <button class="sub-tab" data-sub="board">종목 토론</button>
+          <button class="sub-tab" data-sub="news">오늘의 뉴스</button>
+          <button class="sub-tab" data-sub="vote">투표</button>
+        </nav>
+
+        <div class="sub-panel" id="sub-community-news">
+          <div class="section-title">
+            <h2>오늘의 뉴스</h2>
+            <p>미국·국내 시장 카드뉴스를 순서대로 확인하세요. 카드를 누르면 크게 볼 수 있습니다.</p>
+          </div>
+          <section class="community-cardnews-block" id="communityCardnewsBlock" aria-label="오늘의 카드뉴스">
+            <div class="community-cardnews-toolbar">
+              <div class="cardnews-tabs community-cardnews-tabs" id="communityCardnewsSwitch">
+                <button type="button" data-cn="us">미국 뉴스</button>
+                <button type="button" data-cn="kr">국내 뉴스</button>
+              </div>
+            </div>
+            <p class="community-cardnews-title" id="communityCardnewsTitle"></p>
+            <div class="community-cardnews-gallery" id="communityCardnewsGallery"></div>
+          </section>
+          <div class="community-sns-section">
+            <h3 class="community-sns-section-title">SNS 채널</h3>
+            <div class="community-sns-grid" id="communitySnsGrid"></div>
+          </div>
+          <div class="community-cta-strip">
+            <p>시장 데이터는 이 사이트에서, 토론과 소식은 SNS에서 이어가세요.</p>
+          </div>
+        </div>
+
+        <div class="sub-panel is-active" id="sub-community-trending">
+          <div class="section-title">
+            <h2>실시간 소셜 트렌드</h2>
+            <p>Reddit WSB, Stocktwits, Yahoo Finance에서 지금 주목받는 종목입니다. 티커를 누르면 종목 분석으로 이동합니다.</p>
+          </div>
+          <div class="community-hot-topics" id="communityHotTopics"></div>
+          <div class="social-sentiment-tables community-trend-tables">
+            <div class="social-table-wrapper">
+              <h4>Reddit (r/wallstreetbets) 언급 순위</h4>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr><th>순위</th><th>티커</th><th>사명</th><th>언급수</th><th>변동(24h)</th></tr>
+                  </thead>
+                  <tbody id="communityRedditTable">
+                    <tr><td colspan="5" class="text-center">데이터 없음</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="social-table-wrapper">
+              <h4>Stocktwits 실시간 급상승 순위</h4>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr><th>순위</th><th>티커</th><th>사명</th><th>관심등록수</th></tr>
+                  </thead>
+                  <tbody id="communityStocktwitsTable">
+                    <tr><td colspan="4" class="text-center">데이터 없음</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="social-table-wrapper">
+              <h4>Yahoo Finance 인기 검색 순위</h4>
+              <div class="table-scroll">
+                <table>
+                  <thead>
+                    <tr><th>순위</th><th>티커</th><th>사명</th><th>현재가</th></tr>
+                  </thead>
+                  <tbody id="communityYahooTable">
+                    <tr><td colspan="4" class="text-center">데이터 없음</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-panel" id="sub-community-board">
+          <div class="section-title">
+            <h2>종목 토론</h2>
+            <p>모든 방문자와 실시간으로 의견을 나눕니다. 종목은 선택 사항이며, 투자 권유·확정적 매매 추천은 삼가주세요.</p>
+          </div>
+          <div class="community-compose" id="communityCompose">
+            <div class="community-compose-row">
+              <label>
+                <span class="community-field-label">닉네임</span>
+                <input id="communityNickname" type="text" maxlength="20" placeholder="예: 미르팬" autocomplete="off">
+              </label>
+              <label>
+                <span class="community-field-label">종목 <span class="muted community-optional">(선택)</span></span>
+                <input id="communityTicker" type="text" placeholder="티커·한국어 (예: NVDA, 테슬라)" autocomplete="off">
+              </label>
+            </div>
+            <label class="community-compose-body">
+              의견
+              <textarea id="communityContent" rows="4" placeholder="시장 전망, 종목 관전 포인트, 리스크 등 자유롭게 적어주세요."></textarea>
+            </label>
+            <div class="community-compose-actions">
+              <button type="button" id="communityPost">글 등록</button>
+              <button type="button" class="ghost" id="communityRefresh">새로고침</button>
+            </div>
+          </div>
+          <div class="toolbar community-board-toolbar">
+            <label>
+              필터
+              <select id="communityFilter">
+                <option value="all">전체 글</option>
+                <option value="mine">내 글만</option>
+                <option value="watchlist">관심종목</option>
+              </select>
+            </label>
+            <label>
+              정렬
+              <select id="communitySort">
+                <option value="latest">최신순</option>
+                <option value="popular">인기순</option>
+                <option value="comments">댓글순</option>
+              </select>
+            </label>
+            <label class="grow">
+              종목 검색
+              <input id="communityFilterTicker" type="search" placeholder="티커로 필터 (비우면 전체)" autocomplete="off">
+            </label>
+            <label class="community-toggle">
+              <input type="checkbox" id="communityMiniChartToggle" checked>
+              <span>미니 차트</span>
+            </label>
+            <button type="button" class="ghost" id="communityClearMine">내 글 전체 삭제</button>
+          </div>
+          <div class="community-hot-tickers" id="communityHotTickers" hidden></div>
+          <button type="button" class="community-new-banner" id="communityNewBanner" hidden></button>
+          <div class="community-admin" id="communityAdminPanel" hidden></div>
+          <p class="muted community-board-meta" id="communityBoardMeta">글을 불러오는 중…</p>
+          <div class="community-feed" id="communityFeed"></div>
+          <div class="community-pagination" id="communityPagination" hidden></div>
+        </div>
+
+        <div class="sub-panel" id="sub-community-vote">
+          <div class="section-title">
+            <h2>종목 투표</h2>
+            <p>오늘의 한 종목에 매수 또는 매도를 투표하세요. 하루 한 표만 행사할 수 있으며, 매수·매도 순위를 일간·주간·월간으로 집계합니다.</p>
+          </div>
+          <div class="community-vote-compose">
+            <label class="grow">
+              종목
+              <input id="communityVoteTicker" type="search" placeholder="티커·한국어 (예: NVDA, 테슬라)" autocomplete="off">
+            </label>
+            <div class="community-vote-choices" id="communityVoteChoices" role="group" aria-label="투표 선택">
+              <button type="button" class="community-vote-choice" data-choice="buy">매수</button>
+              <button type="button" class="community-vote-choice" data-choice="sell">매도</button>
+            </div>
+            <button type="button" id="communityVoteSubmit">투표하기</button>
+          </div>
+          <p class="muted community-vote-mine" id="communityVoteMine"></p>
+          <div class="community-rank-tabs" id="communityVoteRankTabs">
+            <button type="button" class="community-rank-tab is-active" data-period="day">일간</button>
+            <button type="button" class="community-rank-tab" data-period="week">주간</button>
+            <button type="button" class="community-rank-tab" data-period="month">월간</button>
+          </div>
+          <div class="community-vote-ranking" id="communityVoteRanking"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span>이 사이트는 하루 1회 저장된 스냅샷 데이터를 사용합니다.</span>
+      <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
+    </footer>
+    <div class="chat-page-spacer" aria-hidden="true"></div>
+
+    <!-- 카드뉴스 크게 보기 -->
+    <div class="lightbox" id="lightbox" hidden>
+      <button class="lightbox-close" id="lightboxClose" type="button" aria-label="닫기">✕</button>
+      <button class="lightbox-prev" id="lightboxPrev" type="button" aria-label="이전">‹</button>
+      <img id="lightboxImg" alt="카드뉴스 크게 보기">
+      <button class="lightbox-next" id="lightboxNext" type="button" aria-label="다음">›</button>
+    </div>
+
+    <!-- 사이트 도우미 챗봇 -->
+    <div class="chatbot" id="chatbot">
+      <div class="chat-panel" id="chatPanel" hidden>
+        <div class="chat-head">
+          <div>
+            <strong>미르 도우미</strong>
+            <span class="chat-sub">사이트 사용법 · 용어 설명</span>
+          </div>
+          <button class="chat-close" id="chatClose" type="button" aria-label="닫기">✕</button>
+        </div>
+        <div class="chat-log" id="chatLog"></div>
+        <div class="chat-suggest" id="chatSuggest"></div>
+        <form class="chat-form" id="chatForm">
+          <input id="chatInput" type="text" autocomplete="off"
+                 placeholder="예: PER이 뭐야? / 히트맵 보는 법">
+          <button type="submit" aria-label="전송">↑</button>
+        </form>
+      </div>
+      <div class="chat-fab-wrap">
+        <button class="chat-fab" id="chatToggle" type="button" aria-label="미르 AI 챗봇 열기">
+          <span class="chat-bubble">미르 AI 챗봇 <b>Click!</b></span>
+          <img class="chat-mascot" src="assets/mir-mascot.png?v=1" alt="미르 캐릭터">
+        </button>
+        <button class="chat-dismiss" id="chatDismiss" type="button" aria-label="챗봇 숨기기" title="챗봇 숨기기">✕</button>
+      </div>
+    </div>
+
+    <script src="market_config.js?v=9874c86d94"></script>
+    <!-- Market snapshots are loaded on demand by loadData() for the active market only
+         (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
+    <!-- map_fundamentals loaded on demand per market in loadData() -->
+    <script src="data/ticker_aliases_ko.js?v=ae3dcb1f0f"></script>
+    <!-- Feature datasets (13F / congress / insider / activist / events / IPO /
+         short / white-house / leveraged-ETF) are loaded on demand after boot by
+         preloadFeatureData() in app.js, gated by the active market's features.
+         KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
+    <script src="pattern_detectors_extended.js?v=f819b82793"></script>
+    <script src="analysis.js?v=60e85c3e5c"></script>
+    <script src="app.js?v=a2dbeeef4a"></script>
+    <script src="ai-cosmos.js?v=96d6d1d97f"></script>
+    <script src="ai-mode-welcome.js?v=36ca8fdc85"></script>
+  </body>
+</html>

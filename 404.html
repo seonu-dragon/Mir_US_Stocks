@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>페이지를 찾을 수 없습니다 | 미르의 미국 주식</title>
+    <!-- 검색 결과에 오류 페이지가 잡히면 안 된다. -->
+    <meta name="robots" content="noindex">
+    <link rel="icon" href="assets/favicon.ico?v=5" sizes="any">
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f7f9;
+        --card: #ffffff;
+        --text: #172033;
+        --muted: #667085;
+        --line: #d9dee7;
+        --link: #1d4ed8;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0f172a;
+          --card: #1e293b;
+          --text: #e2e8f0;
+          --muted: #94a3b8;
+          --line: #334155;
+          --link: #60a5fa;
+        }
+      }
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+        line-height: 1.6;
+        text-align: center;
+      }
+      main { max-width: 420px; }
+      .code { font-size: 3.5rem; font-weight: 800; letter-spacing: -0.03em; }
+      h1 { margin-top: 8px; font-size: 1.25rem; font-weight: 700; }
+      p { margin-top: 8px; color: var(--muted); font-size: 0.95rem; }
+      .actions { margin-top: 28px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+      a.btn {
+        padding: 11px 20px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--card);
+        color: var(--link);
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      a.btn:hover { border-color: var(--link); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="code">404</div>
+      <h1>페이지를 찾을 수 없습니다</h1>
+      <p>주소가 바뀌었거나 잘못 입력되었을 수 있습니다.</p>
+      <div class="actions">
+        <a class="btn" href="/Mir_US_Stocks/">대시보드로 가기</a>
+        <a class="btn" href="/Mir_US_Stocks/analysis.html">차트 확률 분석</a>
+      </div>
+    </main>
+  </body>
+</html>

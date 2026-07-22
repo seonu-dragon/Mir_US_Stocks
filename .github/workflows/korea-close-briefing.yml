@@ -1,0 +1,53 @@
+name: Korea close briefing
+
+on:
+  schedule:
+    - cron: "42 6 * * *"  # 15:42 KST (UTC+9)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-data-publish
+  cancel-in-progress: false
+
+jobs:
+  briefing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # 장마감 스냅샷(15:40) 전용 워크플로가 스케줄 누락되는 경우가 있어
+      # 장마감 브리핑 job에서 함께 갱신한다. 이게 KR 스냅샷의 실제 일일 실행 경로다.
+      - name: Update Korea market snapshot
+        # KRX 공매도 잔고(build_kr_short_interest.py, 서브프로세스)용 로그인 자격증명.
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+        run: python scripts/update_korea_data.py --push
+
+      - name: Run Korea close briefing
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        working-directory: scripts/briefings/korea_close
+        run: python main.py

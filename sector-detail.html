@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="refresh" content="0;url=index.html?tab=sector">
+    <title>리다이렉트 중…</title>
+    <script>
+      (function () {
+        var q = window.location.search || "";
+        var params = new URLSearchParams(q);
+        params.set("tab", "sector");
+        window.location.replace("index.html?" + params.toString());
+      })();
+    </script>
+  </head>
+  <body>
+    <p><a href="index.html?tab=sector">섹터 흐름 탭으로 이동</a></p>
+  </body>
+</html>

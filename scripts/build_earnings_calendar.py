@@ -55,10 +55,29 @@ def load_tickers(market: str, limit: int) -> list[str]:
     return tickers or DEFAULT_US[:limit]
 
 
+_KR_YAHOO_MAP: dict | None = None
+
+
+def _kr_yahoo_map() -> dict:
+    """KR 스냅샷의 yahooSymbol 맵(코스닥 .KQ 포함). 무조건 .KS 를 붙이면
+    코스닥 종목이 전부 조회 실패한다."""
+    global _KR_YAHOO_MAP
+    if _KR_YAHOO_MAP is None:
+        _KR_YAHOO_MAP = {}
+        try:
+            snap = json.loads((ROOT / "data" / "korea" / "market_snapshot.json").read_text(encoding="utf-8"))
+            for s in snap.get("stocks", []):
+                if s.get("ticker") and s.get("yahooSymbol"):
+                    _KR_YAHOO_MAP[str(s["ticker"]).zfill(6)] = s["yahooSymbol"]
+        except Exception:
+            pass
+    return _KR_YAHOO_MAP
+
+
 def yahoo_symbol(ticker: str, market: str) -> str:
     if market == "kr":
         code = str(ticker).zfill(6)
-        return f"{code}.KS"
+        return _kr_yahoo_map().get(code) or f"{code}.KS"
     return str(ticker).upper().replace(".", "-")
 
 
@@ -95,6 +114,9 @@ def fetch_next_earnings(ticker: str, market: str) -> dict | None:
             frame = None
         if frame is not None and not getattr(frame, "empty", True):
             today = date.today()
+            # earnings_dates 는 날짜 내림차순이라 앞에서 break 하면 "가장 먼"
+            # 미래 분기를 잡는다. 미래 후보를 모아 가장 가까운 날을 쓴다.
+            future = []
             for idx, row in frame.iterrows():
                 reported = row.get("Reported EPS")
                 if reported is None or (hasattr(reported, "__float__") and str(reported) == "nan"):
@@ -103,14 +125,15 @@ def fetch_next_earnings(ticker: str, market: str) -> dict | None:
                     except Exception:
                         continue
                     if d >= today:
-                        next_date = d
-                        est = row.get("EPS Estimate")
-                        if est is not None and str(est) != "nan":
-                            try:
-                                eps_estimate = round(float(est), 4)
-                            except (TypeError, ValueError):
-                                pass
-                        break
+                        future.append((d, row))
+            if future:
+                next_date, row = min(future, key=lambda pair: pair[0])
+                est = row.get("EPS Estimate")
+                if est is not None and str(est) != "nan":
+                    try:
+                        eps_estimate = round(float(est), 4)
+                    except (TypeError, ValueError):
+                        pass
     if not next_date:
         return None
     if hasattr(next_date, "isoformat"):

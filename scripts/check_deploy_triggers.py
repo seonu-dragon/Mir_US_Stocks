@@ -21,6 +21,12 @@ import re
 import sys
 from pathlib import Path
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 성공 메시지의 U+2014 가 UnicodeEncodeError 로 죽어
+    # 검사 통과가 exit 1 로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 WORKFLOW_DIR = ROOT / ".github" / "workflows"
 DEPLOY = WORKFLOW_DIR / "deploy-pages.yml"

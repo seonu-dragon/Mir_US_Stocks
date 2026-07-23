@@ -39,6 +39,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import pattern_lib as pl  # noqa: E402
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 MARKET_PATHS = {
     "us": (ROOT / "data" / "details", ROOT / "data" / "pattern_stats.json"),
@@ -94,6 +95,11 @@ def main():
         try:
             d = json.loads(fp.read_text(encoding="utf-8"))
         except Exception:
+            skipped += 1
+            continue
+        # 합성 랜덤워크(historySource != yahoo)는 통계를 오염시킨다 —
+        # build_sr_stats·build_breakout_retest 와 같은 필터.
+        if d.get("historySource") not in ("yahoo", "yahoo-cache"):
             skipped += 1
             continue
         rows = pl.rows_from_chart_series(d.get("chartSeries") or [])
@@ -154,7 +160,7 @@ def main():
         "patterns": patterns,
     }
     out_json.parent.mkdir(parents=True, exist_ok=True)
-    out_json.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(out_json, json.dumps(out, ensure_ascii=False, indent=2))
 
     print(f"\n완료: {scanned}종목 스캔, {event_total}개 패턴 이벤트 → {out_json}")
     print(f"기준선(20일) 상승률: {baseline.get('20', {}).get('up_rate')}%")

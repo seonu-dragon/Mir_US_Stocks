@@ -565,7 +565,19 @@ def fetch_yahoo_history_kr(yahoo_symbol: str):
         "https://query1.finance.yahoo.com/v8/finance/chart/"
         f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}?range=5y&interval=1d"
     )
-    payload = UD.request_json(url, timeout=12)
+    # 일시 스로틀(429)은 짧은 지터 백오프 2회로 흡수한다 — 그래도 실패하면
+    # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다. US(update_data)와 동일 전략.
+    last_error = None
+    for attempt in range(3):
+        try:
+            payload = UD.request_json(url, timeout=12)
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1) + UD.stable_unit(f"{yahoo_symbol}:{attempt}") * 1.5)
+    else:
+        raise RuntimeError(f"history fetch failed after 3 attempts: {last_error}")
     result = payload["chart"]["result"][0]
     quote = result["indicators"]["quote"][0]
     opens = quote.get("open", [])
@@ -761,6 +773,34 @@ def backfill_change_from_history(stock: dict, rows: list) -> None:
         stock["changePct"] = round((closes[-1] / closes[-2] - 1) * 100, 1)
 
 
+def load_cached_history(symbol: str):
+    """직전 발행된 KR detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
+
+    실측(yahoo/yahoo-cache)만 재사용 — 합성 이력이 캐시를 타고 영속하면 안 된다.
+    """
+    try:
+        safe = re.sub(r"[^0-9A-Z._-]", "_", str(symbol).upper())
+        with open(DETAILS_DIR / f"{safe}.json", encoding="utf-8") as handle:
+            detail = json.load(handle)
+        if detail.get("historySource") not in {"yahoo", "yahoo-cache"}:
+            return None
+        rows = []
+        for entry in detail.get("chartSeries") or []:
+            if not entry or len(entry) < 6 or entry[5] is None:
+                continue
+            rows.append({
+                "date": entry[5],
+                "open": float(entry[0]),
+                "high": float(entry[1]),
+                "low": float(entry[2]),
+                "close": float(entry[3]),
+                "volume": float(entry[4] or 0),
+            })
+        return rows if len(rows) >= 30 else None
+    except Exception:
+        return None
+
+
 def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
@@ -778,14 +818,21 @@ def build_one(meta: dict):
             )
             meta["historySource"] = "snapshot"
     except Exception as exc:
-        rows = UD.synthetic_history(
-            symbol,
-            meta.get("quotePrice"),
-            meta.get("quoteChangePct"),
-            meta.get("quoteVolume"),
-        )
-        meta["historySource"] = "snapshot"
-        error = f"{symbol}: {exc}"
+        # 실측 fetch 실패 시 합성 대신 직전 실측 이력을 재사용한다(데이터 정직성).
+        cached = load_cached_history(symbol) if meta.get("preferHistory") else None
+        if cached:
+            rows = cached
+            meta["historySource"] = "yahoo-cache"
+            error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
+        else:
+            rows = UD.synthetic_history(
+                symbol,
+                meta.get("quotePrice"),
+                meta.get("quoteChangePct"),
+                meta.get("quoteVolume"),
+            )
+            meta["historySource"] = "snapshot"
+            error = f"{symbol}: {exc}"
 
     if meta.get("preferFundamentals"):
         # Naver covers every listed Korean stock; Yahoo's .KS fundamentals are sparse
@@ -1320,6 +1367,21 @@ def build_snapshot(limit: int | None = None) -> dict:
             if err:
                 errors.append(err)
 
+    # 데이터 정직성 게이트(US update_data 와 동일): preferHistory 인데 실측도
+    # 직전 실측 재사용도 못 하고 합성으로 남은 수가 임계를 넘으면 발행 중단.
+    prefer_total = sum(1 for m in metas if m.get("preferHistory"))
+    cached_count = sum(1 for s in stocks if s.get("historySource") == "yahoo-cache")
+    fabricated = sum(
+        1 for s in stocks
+        if "chartSeries" in s and s.get("historySource") not in {"yahoo", "yahoo-cache"}
+    )
+    print(f"[이력] preferHistory {prefer_total} · 실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    if prefer_total and fabricated > max(30, int(prefer_total * 0.05)):
+        raise SystemExit(
+            f"[중단] 합성 이력 {fabricated}/{prefer_total} 이 임계(max(30, 5%)) 초과 — "
+            "야후 대규모 스로틀 의심. 직전 스냅샷을 유지하기 위해 발행하지 않는다."
+        )
+
     # Korean ETF relative-strength + leveraged catalog (ETF RS / RRG / 레버리지 pages).
     etf_relative, lev_stocks, lev_catalog = build_kr_etf_section()
     existing_tickers = {s["ticker"] for s in stocks}
@@ -1383,6 +1445,7 @@ def build_snapshot(limit: int | None = None) -> dict:
             {"symbol": "^KQ11", "name": "코스닥", "ticker": "229200", "changePct": kosdaq[0]["changePct"] if kosdaq else 0},
         ],
         "errors": errors[:80],
+        "historyFallback": {"cached": cached_count, "fabricated": fabricated},
         "universeCount": len(metas),
         "groupCounts": group_counts,
         "historyPolicy": {

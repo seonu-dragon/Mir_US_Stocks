@@ -35,7 +35,14 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Build S/R respect stats
+        continue-on-error: true
         run: python scripts/build_sr_stats.py --push
 
       - name: Build breakout/retest stats
+        continue-on-error: true
         run: python scripts/build_breakout_retest.py --push
+
+      # 참고: data/korea/disclosure_stats.json (신뢰도 센터 소비)은 CI 에 편입할 수
+      # 없다 — build_kr_disclosure_stats.py 는 gitignore 된 로컬 아카이브
+      # (data/korea/_archive, 5년 공시+일봉 백필)를 입력으로 쓴다. 로컬에서
+      # 분기 1회쯤 수동 갱신: py scripts/build_kr_disclosure_stats.py --push

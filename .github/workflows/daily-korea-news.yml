@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: mir-data-publish
+  group: mir-publish-${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:
@@ -53,4 +53,15 @@ jobs:
             exit 0
           fi
           git commit -m "chore: add ${DATE_KST} Korea news Top 5"
-          git push
+          # 워크플로우별 concurrency 그룹 분리 후에는 다른 데이터 워크플로우와
+          # push 가 경합할 수 있다. 이 잡의 커밋은 날짜 폴더의 신규 파일뿐이라
+          # rebase 충돌은 사실상 없고, 재시도만 있으면 된다.
+          for attempt in 1 2 3; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            echo "push attempt ${attempt} failed; retrying in 10s"
+            sleep 10
+          done
+          exit 1

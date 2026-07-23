@@ -54,7 +54,12 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 | (주간) | 실적 이력 | `weekly-earnings-history.yml` |
 | (일정) | 국내 카드뉴스 | `daily-korea-news.yml` |
 
-모든 job은 `mir-data-publish` concurrency 그룹을 공유해 git push 충돌을 방지합니다.
+각 워크플로우는 **자기만의 concurrency 그룹**(`mir-publish-${{ github.workflow }}`)을 갖습니다.
+같은 워크플로우의 중복 실행만 직렬화하고, 서로 다른 워크플로우는 병렬로 돕니다 —
+git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` 재시도가 흡수합니다.
+(과거에는 전부 `mir-data-publish` 하나를 공유했는데, GitHub 은 그룹당 **대기 슬롯이 1개**뿐이라
+크론 밀집 시간대에 뒤에 온 run 이 앞의 대기 run 을 조용히 cancel 했습니다.
+2026-07-17~22 사이 earnings calendar 6일 연속, US/KR 마감 브리핑 다수가 이렇게 미발행됐습니다.)
 
 ### 최초 설정 (한 번만)
 

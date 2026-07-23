@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: mir-data-publish
+  group: mir-publish-${{ github.workflow }}
   cancel-in-progress: false
 
 jobs:

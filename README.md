@@ -1,6 +1,10 @@
 # 미르의 미국 주식
 
-미국 주식 시장을 빠르게 훑어보는 정적 대시보드입니다. 웹사이트는 저장된 `data/market_snapshot.json`만 읽고, 데이터 갱신은 별도 스크립트가 하루 한 번만 수행합니다.
+미국·국내 주식 시장을 빠르게 훑어보는 정적 대시보드입니다. 웹사이트는 커밋된
+스냅샷(`data/market_snapshot.json` 등)만 읽고, 데이터 갱신은 GitHub Actions
+워크플로우 19개가 하루 여러 차례 수행해 `data/` 를 커밋·배포합니다
+(스케줄 전체는 `DEPLOY.md` 참고). 실시간 시세·뉴스 일부는 Cloudflare Worker
+프록시(`worker/`)를 통합니다.
 
 ## 실행
 
@@ -16,24 +20,20 @@ http://localhost:8080
 
 ## 데이터 업데이트 정책
 
-- 웹사이트는 실시간으로 외부 데이터를 가져오지 않습니다.
-- `scripts/update_data.py`가 `data/market_snapshot.json`을 갱신합니다.
-- 스냅샷에는 S&P 500, Nasdaq 100, Nasdaq/NYSE 상장 보통주, 주요 ETF가 포함됩니다.
-- 핵심 대형주/지수 구성 종목은 Yahoo 1년 가격 이력을 사용하고, 그 외 종목은 Nasdaq 스냅샷 가격/등락률을 기준으로 가벼운 미니차트를 생성합니다.
-- 권장 갱신 시각: 한국 시간 매일 오전 6시.
-- 장중 자동 새로고침은 의도적으로 넣지 않았습니다. 속도를 위해 하루 스냅샷 방식으로 동작합니다.
-
-## Windows 작업 스케줄러 등록
-
-PowerShell에서 실행합니다.
-
-```powershell
-.\scripts\register_daily_update.ps1
-```
-
-등록 후 매일 오전 6시에 `scripts/update_data.py`가 실행됩니다. PC가 꺼져 있으면 해당 시각 작업은 실행되지 않을 수 있습니다.
-
-스크립트는 `py`, `python`, Codex 번들 Python 순서로 실행 파일을 찾습니다. 모두 없으면 Python을 설치한 뒤 다시 실행하면 됩니다.
+- 웹사이트는 브라우저에서 원천 API 를 직접 호출하지 않습니다(워커 프록시 경유
+  실시간 시세·뉴스 요약 제외).
+- US 스냅샷은 `scripts/update_data.py`(05:05 KST), KR 스냅샷은
+  `scripts/update_korea_data.py`(15:42 KST, korea-close-briefing 안에서)가
+  GitHub Actions 에서 갱신합니다. 그 외 공시·수급·옵션·매크로 등 개별
+  데이터셋은 각자의 워크플로우가 갱신합니다 — 전체 표는 `DEPLOY.md`.
+- 스냅샷에는 S&P 500, Nasdaq 100, Nasdaq/NYSE 상장 보통주, 주요 ETF(US)와
+  KOSPI/KOSDAQ 전 종목(KR)이 포함됩니다.
+- 핵심 대형주/지수 구성 종목은 Yahoo 5년 가격 이력을 사용하고, 그 외 종목은
+  스냅샷 가격/등락률 기준의 가벼운 미니차트를 생성합니다. 이력 fetch 가
+  실패하면 직전 실측 이력을 재사용하며(yahoo-cache), 합성 이력이 임계를
+  넘으면 발행 자체를 중단합니다(데이터 정직성).
+- 로컬에서 수동 갱신이 필요하면 각 스크립트를 직접 실행하거나 Actions 를
+  `Run workflow` 로 dispatch 합니다.
 
 ## 파일 구조
 
@@ -42,7 +42,7 @@ PowerShell에서 실행합니다.
 - `app.js`: 대시보드 상호작용
 - `data/market_snapshot.json`: 사이트가 읽는 하루 스냅샷 데이터
 - `scripts/update_data.py`: 하루 1회 데이터 수집/저장 스크립트
-- `scripts/register_daily_update.ps1`: Windows 작업 스케줄러 등록 스크립트
+- `.github/workflows/`: 데이터 갱신·배포 워크플로우(스케줄은 DEPLOY.md)
 - `analysis.html` / `analysis.js`: 차트 확률 분석 페이지(티커 → 상승/하락 확률 추정)
 - `scripts/pattern_lib.py`: 차트 패턴 감지 공용 라이브러리(브라우저 analysis.js 와 동일 알고리즘)
 - `scripts/build_pattern_stats.py`: 전 종목 패턴 과거 성공률 집계 → `data/pattern_stats.json`

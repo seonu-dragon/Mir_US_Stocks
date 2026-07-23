@@ -46,3 +46,25 @@ jobs:
       # 없다 — build_kr_disclosure_stats.py 는 gitignore 된 로컬 아카이브
       # (data/korea/_archive, 5년 공시+일봉 백필)를 입력으로 쓴다. 로컬에서
       # 분기 1회쯤 수동 갱신: py scripts/build_kr_disclosure_stats.py --push
+
+      # 시총 상위 300 종목 셋이 바뀌면 sitemap 이 낡는다(2026-07-18 이후 방치돼
+      # --check 실패 상태였다). 주간 재생성으로 자동화.
+      - name: Rebuild sitemap
+        continue-on-error: true
+        shell: bash
+        run: |
+          python scripts/build_sitemap.py
+          if git diff --quiet sitemap.xml; then
+            echo "sitemap unchanged"
+            exit 0
+          fi
+          git add sitemap.xml
+          git commit -m "Auto-update sitemap (weekly)"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep 10
+          done
+          exit 1

@@ -22,6 +22,7 @@ import time
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -147,19 +148,21 @@ def main() -> int:
     key = load_key()
     if not key:
         print("[analyst] FINNHUB_API_KEY 없음 — 기존 파일 유지")
-        return 0
+        return 1
     print(f"=== 애널리스트 컨센서스 수집 (Finnhub, 상위 {args.top}) ===")
     try:
         payload = build(args.top, key)
     except Exception as e:  # noqa: BLE001
         print(f"[analyst] 수집 실패({type(e).__name__}: {e}) — 기존 파일 유지")
-        return 0
+        return 1
     if not payload:
         print("[analyst] 유효 데이터 없음 — 기존 파일 유지")
-        return 0
+        return 1
+    from sec_client import merge_previous_stocks
+    payload = merge_previous_stocks(payload, OUT_JSON, "analyst")
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    OUT_JSON.write_text(compact, encoding="utf-8")
-    OUT_JS.write_text(f"window.ANALYST_CONSENSUS = {compact};\n", encoding="utf-8")
+    atomic_write_text(OUT_JSON, compact)
+    atomic_write_text(OUT_JS, f"window.ANALYST_CONSENSUS = {compact};\n")
     print(f"수집 {len(payload['stocks'])}종목")
     print(f"Wrote {OUT_JSON.name}, {OUT_JS.name}")
     return 0

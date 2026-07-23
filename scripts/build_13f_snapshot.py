@@ -210,7 +210,7 @@ def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
 
 
 def write_files(payload: dict) -> None:
-    OUT_JSON.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(OUT_JSON, json.dumps(payload, ensure_ascii=False, indent=2))
     OUT_JS.write_text(
         "window.INSTITUTIONAL_13F = "
         + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

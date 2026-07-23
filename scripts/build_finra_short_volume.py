@@ -21,6 +21,7 @@ import sys
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -116,13 +117,13 @@ def main() -> int:
         payload = build()
     except Exception as e:  # noqa: BLE001
         print(f"[finra] 수집 실패({type(e).__name__}: {e}) — 기존 파일 유지")
-        return 0
+        return 1
     if not payload:
         print("[finra] 유효 데이터 없음 — 기존 파일 유지")
-        return 0
+        return 1
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    OUT_JSON.write_text(compact, encoding="utf-8")
-    OUT_JS.write_text(f"window.FINRA_SHORT_VOLUME = {compact};\n", encoding="utf-8")
+    atomic_write_text(OUT_JSON, compact)
+    atomic_write_text(OUT_JS, f"window.FINRA_SHORT_VOLUME = {compact};\n")
     print(f"as_of={payload['asOf']} · {payload['days']}일 · {payload['market']['tickers']}종목 "
           f"· 시장평균 공매도비율 {payload['market']['avgShortRatio']}%")
     print(f"Wrote {OUT_JSON.name}, {OUT_JS.name}")

@@ -216,10 +216,15 @@ def main() -> int:
 
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        for kind, note in (("dividends", "DART_API_KEY 미설정"), ("contracts", "DART_API_KEY 미설정")):
-            write(kind, [], note)
-        print("DART_API_KEY missing; wrote empty payloads.")
-        return 0
+        # 키가 없다고 기존 산출물을 0건으로 덮어쓰면 사이트의 배당·수주 탭이
+        # 통째로 빈다(2026-07-22 실제 사고 — 워크플로우 env 누락). 파일이 아예
+        # 없을 때만 빈 스켈레톤을 만들고, 있으면 그대로 두고 비-0 종료한다.
+        for kind in ("dividends", "contracts"):
+            out_json = OUT[kind][0]
+            if not out_json.exists():
+                write(kind, [], "DART_API_KEY 미설정")
+        print("DART_API_KEY missing; kept existing payloads.")
+        return 1
     if not DISCLOSURES.exists():
         print("[공시파싱] kr_disclosures.json 없음 — 공시 빌더 먼저.")
         return 0

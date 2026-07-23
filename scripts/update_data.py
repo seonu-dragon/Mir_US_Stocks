@@ -1348,7 +1348,20 @@ def build_etf_catalog():
 
 def fetch_yahoo_history(symbol):
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range=5y&interval=1d"
-    payload = request_json(url, timeout=12)
+    # 32스레드가 동시에 때리므로 스로틀(429)에 한 번은 걸릴 수 있다.
+    # 짧은 지터 백오프 2회로 일시 스로틀을 흡수한다 — 그래도 실패하면
+    # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다.
+    last_error = None
+    for attempt in range(3):
+        try:
+            payload = request_json(url, timeout=12)
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt < 2:
+                time.sleep(1.5 * (attempt + 1) + stable_unit(f"{symbol}:{attempt}") * 1.5)
+    else:
+        raise RuntimeError(f"history fetch failed after 3 attempts: {last_error}")
     result = payload["chart"]["result"][0]
     quote = result["indicators"]["quote"][0]
     opens = quote.get("open", [])
@@ -2192,6 +2205,42 @@ def build_summary(stocks):
     }
 
 
+def _detail_safe_name(ticker):
+    safe = re.sub(r"[^A-Z0-9._-]", "_", str(ticker).upper())
+    if safe.split(".")[0] in {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"}:
+        safe = f"_{safe}"
+    return safe
+
+
+def load_cached_history(symbol):
+    """직전 발행된 detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
+
+    실측(yahoo/yahoo-cache) 이력만 재사용한다 — 합성 이력을 재사용하면
+    가짜 데이터가 캐시를 타고 영속하기 때문.
+    """
+    try:
+        path = DETAILS_DIR / f"{_detail_safe_name(symbol)}.json"
+        with open(path, encoding="utf-8") as handle:
+            detail = json.load(handle)
+        if detail.get("historySource") not in {"yahoo", "yahoo-cache"}:
+            return None
+        rows = []
+        for entry in detail.get("chartSeries") or []:
+            if not entry or len(entry) < 6 or entry[5] is None:
+                continue
+            rows.append({
+                "date": entry[5],
+                "open": float(entry[0]),
+                "high": float(entry[1]),
+                "low": float(entry[2]),
+                "close": float(entry[3]),
+                "volume": float(entry[4] or 0),
+            })
+        return rows if len(rows) >= 30 else None
+    except Exception:
+        return None
+
+
 def build_one(meta):
     symbol = meta["symbol"]
     try:
@@ -2203,9 +2252,19 @@ def build_one(meta):
             meta["historySource"] = "snapshot"
         error = None
     except Exception as exc:
-        rows = synthetic_history(symbol, meta.get("quotePrice"), meta.get("quoteChangePct"), meta.get("quoteVolume"))
-        meta["historySource"] = "snapshot"
-        error = f"{symbol}: {exc}"
+        # 실패했다고 합성 랜덤워크를 실측처럼 발행하면 안 된다("데이터 정직성").
+        # 직전 발행분의 실측 이력이 있으면 그걸 재사용하고(yahoo-cache),
+        # 그것마저 없을 때만 합성으로 남긴다 — 합성 비율은 build_snapshot 이
+        # 임계 초과 시 발행을 중단시킨다.
+        cached = load_cached_history(symbol) if meta.get("preferHistory") else None
+        if cached:
+            rows = cached
+            meta["historySource"] = "yahoo-cache"
+            error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
+        else:
+            rows = synthetic_history(symbol, meta.get("quotePrice"), meta.get("quoteChangePct"), meta.get("quoteVolume"))
+            meta["historySource"] = "snapshot"
+            error = f"{symbol}: {exc}"
     if meta.get("preferFundamentals"):
         try:
             price_hint = meta.get("quotePrice") or (rows[-1]["close"] if rows else None)
@@ -2454,6 +2513,23 @@ def build_snapshot():
             if error:
                 errors.append(error)
 
+    # 데이터 정직성 게이트: preferHistory 종목인데 실측(yahoo)도 직전 실측
+    # 재사용(yahoo-cache)도 못 하고 합성으로 남은 수가 임계를 넘으면 발행을
+    # 중단한다(직전 스냅샷 유지). 야후가 대규모로 스로틀하는 날 수백 종목의
+    # 차트가 한꺼번에 가짜로 바뀌어 발행되는 사고를 막는 마지막 관문.
+    prefer_total = sum(1 for meta in universe if meta.get("preferHistory"))
+    cached_count = sum(1 for item in stocks if item.get("historySource") == "yahoo-cache")
+    fabricated = sum(
+        1 for item in stocks
+        if "chartSeries" in item and item.get("historySource") not in {"yahoo", "yahoo-cache"}
+    )
+    print(f"[이력] preferHistory {prefer_total} · 실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    if prefer_total and fabricated > max(30, int(prefer_total * 0.05)):
+        raise SystemExit(
+            f"[중단] 합성 이력 {fabricated}/{prefer_total} 이 임계(max(30, 5%)) 초과 — "
+            "야후 대규모 스로틀 의심. 직전 스냅샷을 유지하기 위해 발행하지 않는다."
+        )
+
     stocks.sort(key=lambda item: item["marketCapB"], reverse=True)
     lookup = {item["ticker"]: item for item in stocks}
 
@@ -2502,6 +2578,7 @@ def build_snapshot():
             "etfRelative": build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_count),
         },
         "errors": errors[:80],
+        "historyFallback": {"cached": cached_count, "fabricated": fabricated},
         "universeCount": len(universe),
         "leveragedEtfCount": lev_etf_count,
         "exchangeBackfillCount": exchange_backfill_count,
@@ -2624,9 +2701,7 @@ def write_details(details):
             saved = preserved_earnings.get(str(ticker).upper())
             if saved:
                 detail["earningsHistory"] = saved
-        safe = re.sub(r"[^A-Z0-9._-]", "_", ticker.upper())
-        if safe.split(".")[0] in {"CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8", "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"}:
-            safe = f"_{safe}"
+        safe = _detail_safe_name(ticker)
         json_path = DETAILS_DIR / f"{safe}.json"
         fd, temp_name = tempfile.mkstemp(prefix=f"{safe}_", suffix=".json", dir=str(DETAILS_DIR))
         try:

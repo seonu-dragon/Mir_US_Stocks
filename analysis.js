@@ -1742,7 +1742,16 @@ function patternSignals(rows, horizon, stats, opts) {
     const indyStat = analyzeIndividualPatternPerformance(rows, ev.pattern, horizon);
     const useIndy = opts.statsMode === "individual" && indyStat;
     const displayStat = useIndy ? { ...indyStat, edge: s.edge, n: indyStat.n, _source: "individual" } : { ...s, _source: "population" };
+    // 레짐 조건부 통계 — 빌더가 벤치마크(SPY/KODEX 200) 종가 vs 200일 SMA 로 이벤트를
+    // 분류해 regimes.{above200|below200} 에 같은 스키마로 담고, 빌드 시점의
+    // currentRegime 을 함께 준다. 표본이 얇으면(n<30) 노이즈라 숨긴다.
+    const regimeBlock = stats.currentRegime && stats.regimes && stats.regimes[stats.currentRegime];
+    const regimePat = regimeBlock && regimeBlock.patterns && regimeBlock.patterns[ev.pattern];
+    const regimeRaw = regimePat && regimePat[hKey];
+    const regimeStat = regimeRaw && regimeRaw.n >= 30 ? regimeRaw : null;
     result.cards.push({
+      regimeStat,
+      regimeKey: regimeStat ? stats.currentRegime : null,
       pattern: ev.pattern,
       label: PATTERN_LABELS[ev.pattern] || ev.pattern,
       nominalDir: ev.dir,
@@ -2537,6 +2546,9 @@ function renderPatternCard(result) {
     const failStr = c.failed ? `<span class="pat-tag" style="background:var(--tint-neg);color:var(--tint-neg-fg);border-color:var(--neg)">패턴 실패</span>` : "";
     const targetStr = c.measuredMove && Number.isFinite(c.measuredMove.target) ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">목표가 추정: <b>${fmtPrice(c.measuredMove.target)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
+    // 현재 레짐(벤치마크 200일선 상회/하회) 조건부 성공률 — n>=30 일 때만 한 줄.
+    const regimeStr = c.regimeStat ?
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">현재 레짐(200일선 ${c.regimeKey === "above200" ? "상회" : "하회"}) 기준: 상승확률 <b style="color:${gaugeColor(c.regimeStat.up_rate)}">${c.regimeStat.up_rate.toFixed(0)}%</b> (n=${c.regimeStat.n.toLocaleString()})</span>` : "";
     return `<div class="pat-item">
       <div class="pat-head">
         <span class="pat-name">${escapeHtml(c.label)}</span>
@@ -2549,6 +2561,7 @@ function renderPatternCard(result) {
         <b style="color:${gaugeColor(up)}">${up.toFixed(0)}%</b>가 ${result.horizon}거래일 뒤 상승
         · 평균 <b style="color:${c.stat.avg_ret >= 0 ? "var(--pos)" : "var(--neg)"}">${c.stat.avg_ret >= 0 ? "+" : ""}${c.stat.avg_ret.toFixed(1)}%</b>
         ${edgeStr}
+        ${regimeStr}
         ${indyStr}
         ${targetStr}
       </p>

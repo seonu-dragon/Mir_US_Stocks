@@ -22,6 +22,13 @@ base-rate 를 만든다.
 * up_rate: 확정 후 H봉 뒤 종가가 오른 비율(%).
 * edge: up_rate - baseline.up_rate (그 기간 시장 평균 대비 초과 상승확률, %p).
 
+레짐 조건부 통계(2026-07-23 추가): 각 이벤트 날짜를 벤치마크(us=SPY, kr=KODEX 200
+069500) 종가 vs 200일 SMA 로 above200/below200 으로 분류해, 기존 키는 그대로 두고
+다음을 추가한다(벤치마크 detail 이 없으면 조용히 생략):
+  "regimes": {"above200": {"baseline": {...}, "patterns": {...동일 스키마...}},
+              "below200": {...}},
+  "currentRegime": "above200"|"below200"   # 빌드 시점 벤치마크 최신 종가 기준
+
 실행:  py scripts/build_pattern_stats.py            (전체)
        py scripts/build_pattern_stats.py --limit 300   (빠른 표본 테스트)
 """
@@ -45,6 +52,13 @@ MARKET_PATHS = {
     "us": (ROOT / "data" / "details", ROOT / "data" / "pattern_stats.json"),
     "kr": (ROOT / "data" / "korea" / "details", ROOT / "data" / "korea" / "pattern_stats.json"),
 }
+# 레짐 분류 벤치마크: 그 날짜의 벤치마크 종가가 자기 200일 SMA 위인가 아래인가.
+BENCHMARK_PATHS = {
+    "us": ROOT / "data" / "details" / "SPY.json",
+    "kr": ROOT / "data" / "korea" / "details" / "069500.json",  # KODEX 200
+}
+SMA_WIN = 200
+REGIME_KEYS = ("above200", "below200")
 MIN_BARS = 250            # 전방 수익률 측정 여유를 위해 최소 봉 수
 BASELINE_STRIDE = 10      # 기준선 표본 추출 간격(모든 봉을 쓰면 과다)
 KST = timezone(timedelta(hours=9))
@@ -60,6 +74,36 @@ def fwd_return(rows, idx, h):
     return (rows[j]["c"] - c0) / c0
 
 
+def load_benchmark_regimes(market):
+    """벤치마크 종가 vs 200일 SMA 로 날짜별 레짐 맵을 만든다.
+
+    반환: (regime_by_date, current_regime). 벤치마크 detail 이 없거나 봉이 모자라면
+    (None, None) — 호출부는 레짐 분리를 조용히 생략한다(기존 집계는 그대로).
+    """
+    fp = BENCHMARK_PATHS.get(market)
+    if not fp or not fp.exists():
+        return None, None
+    try:
+        d = json.loads(fp.read_text(encoding="utf-8"))
+    except Exception:
+        return None, None
+    rows = pl.rows_from_chart_series(d.get("chartSeries") or [])
+    if len(rows) < SMA_WIN + 5:
+        return None, None
+    regime_by_date = {}
+    current = None
+    running = 0.0
+    for i, r in enumerate(rows):
+        running += r["c"]
+        if i >= SMA_WIN:
+            running -= rows[i - SMA_WIN]["c"]
+        if i >= SMA_WIN - 1 and r.get("d"):
+            sma = running / SMA_WIN
+            current = "above200" if r["c"] >= sma else "below200"
+            regime_by_date[r["d"]] = current
+    return regime_by_date, current
+
+
 def summarize(returns):
     if not returns:
         return None
@@ -73,6 +117,11 @@ def summarize(returns):
 
 
 def main():
+    if sys.platform == "win32":
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except Exception:
+            pass
     ap = argparse.ArgumentParser()
     ap.add_argument("--market", choices=("us", "kr"), default="us", help="대상 시장 (us|kr)")
     ap.add_argument("--limit", type=int, default=0, help="처리할 종목 수 제한(테스트용)")
@@ -87,6 +136,12 @@ def main():
     pat_rets = {p: {h: [] for h in pl.HORIZONS} for p in pl.PATTERN_LABELS}
     pat_dir = {}
     base_rets = {h: [] for h in pl.HORIZONS}
+
+    # 레짐(벤치마크 200일선 상회/하회) 조건부 누적 — 벤치마크 detail 없으면 생략
+    regime_by_date, current_regime = load_benchmark_regimes(args.market)
+    reg_pat_rets = {reg: {p: {h: [] for h in pl.HORIZONS} for p in pl.PATTERN_LABELS}
+                    for reg in REGIME_KEYS}
+    reg_base_rets = {reg: {h: [] for h in pl.HORIZONS} for reg in REGIME_KEYS}
 
     scanned = 0
     skipped = 0
@@ -110,44 +165,55 @@ def main():
 
         # 기준선: 일정 간격 봉의 전방 수익률
         for k in range(pl.PIVOT_WIN, len(rows), BASELINE_STRIDE):
+            # 레짐: 그 봉 날짜의 벤치마크 상태(벤치마크에 없는 날짜면 분리 생략)
+            reg = regime_by_date.get(rows[k].get("d")) if regime_by_date else None
             for h in pl.HORIZONS:
                 r = fwd_return(rows, k, h)
                 if r is not None:
                     base_rets[h].append(r)
+                    if reg:
+                        reg_base_rets[reg][h].append(r)
 
         # 패턴 확정 이벤트의 전방 수익률
         for ev in pl.detect_confirmations(rows):
             event_total += 1
             pat_dir[ev["pattern"]] = ev["dir"]
+            reg = regime_by_date.get(rows[ev["confirm_idx"]].get("d")) if regime_by_date else None
             for h in pl.HORIZONS:
                 r = fwd_return(rows, ev["confirm_idx"], h)
                 if r is not None:
                     pat_rets[ev["pattern"]][h].append(r)
+                    if reg:
+                        reg_pat_rets[reg][ev["pattern"]][h].append(r)
 
         if (i + 1) % 500 == 0:
             print(f"  …{i + 1}/{len(files)} 처리 (scanned={scanned}, events={event_total})",
                   file=sys.stderr)
 
-    baseline = {}
-    for h in pl.HORIZONS:
-        s = summarize(base_rets[h])
-        if s:
-            baseline[str(h)] = s
-
-    patterns = {}
-    for p, label in pl.PATTERN_LABELS.items():
-        entry = {"label": label, "dir": pat_dir.get(p, 0)}
-        any_h = False
+    def build_stats_block(base_dict, pat_dict):
+        """(기준선, 패턴별) 수익률 풀 → 출력 스키마 블록. 전체/레짐별에 공용."""
+        baseline = {}
         for h in pl.HORIZONS:
-            s = summarize(pat_rets[p][h])
+            s = summarize(base_dict[h])
             if s:
-                base_up = baseline.get(str(h), {}).get("up_rate")
-                if base_up is not None:
-                    s["edge"] = round(s["up_rate"] - base_up, 1)
-                entry[str(h)] = s
-                any_h = True
-        if any_h:
-            patterns[p] = entry
+                baseline[str(h)] = s
+        patterns = {}
+        for p, label in pl.PATTERN_LABELS.items():
+            entry = {"label": label, "dir": pat_dir.get(p, 0)}
+            any_h = False
+            for h in pl.HORIZONS:
+                s = summarize(pat_dict[p][h])
+                if s:
+                    base_up = baseline.get(str(h), {}).get("up_rate")
+                    if base_up is not None:
+                        s["edge"] = round(s["up_rate"] - base_up, 1)
+                    entry[str(h)] = s
+                    any_h = True
+            if any_h:
+                patterns[p] = entry
+        return baseline, patterns
+
+    baseline, patterns = build_stats_block(base_rets, pat_rets)
 
     out = {
         "generated": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
@@ -159,11 +225,28 @@ def main():
         "baseline": baseline,
         "patterns": patterns,
     }
+
+    # 레짐 조건부 통계 — 기존 키는 그대로 두고(분석 페이지·카드가 소비) 추가만 한다.
+    # 벤치마크 detail 이 없으면 레짐 키 자체를 넣지 않는다(소비자는 없으면 생략).
+    if regime_by_date and current_regime:
+        regimes = {}
+        for reg in REGIME_KEYS:
+            r_base, r_pats = build_stats_block(reg_base_rets[reg], reg_pat_rets[reg])
+            regimes[reg] = {"baseline": r_base, "patterns": r_pats}
+        out["regimes"] = regimes
+        out["currentRegime"] = current_regime
+        out["regimeBenchmark"] = BENCHMARK_PATHS[args.market].stem
     out_json.parent.mkdir(parents=True, exist_ok=True)
     atomic_write_text(out_json, json.dumps(out, ensure_ascii=False, indent=2))
 
     print(f"\n완료: {scanned}종목 스캔, {event_total}개 패턴 이벤트 → {out_json}")
     print(f"기준선(20일) 상승률: {baseline.get('20', {}).get('up_rate')}%")
+    if out.get("currentRegime"):
+        reg_base = out["regimes"][out["currentRegime"]]["baseline"].get("20", {})
+        print(f"현재 레짐: {out['currentRegime']} (벤치마크 {out['regimeBenchmark']}) — "
+              f"레짐 기준선(20일) 상승률: {reg_base.get('up_rate')}% (n={reg_base.get('n')})")
+    else:
+        print("레짐 분리 생략: 벤치마크 detail 없음/봉 부족")
     print("패턴별 20일 up_rate / edge:")
     for p, e in sorted(patterns.items(), key=lambda kv: -(kv[1].get('20', {}).get('n', 0))):
         h20 = e.get("20")

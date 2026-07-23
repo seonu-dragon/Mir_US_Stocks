@@ -1,1 +1,1 @@
-window.KR_CONTRACTS = {"updatedAtKst":"2026-07-22 22:01 KST","source":"DART 공시 원문(document.xml) 파싱","note":"DART_API_KEY 미설정","count":0,"rows":[]};
+window.KR_CONTRACTS = {"updatedAtKst":"2026-07-23 18:28 KST","source":"DART 공시 원문(document.xml) 파싱","note":"DART_API_KEY 미설정","count":0,"rows":[]};

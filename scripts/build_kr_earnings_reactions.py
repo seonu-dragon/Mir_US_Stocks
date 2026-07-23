@@ -2,9 +2,12 @@
 """국내 실적(잠정) 발표 + 주가반응 — 파싱 없이 공시일·시세로만.
 
 DART 공시목록(kr_disclosures.json)의 '영업(잠정)실적(공정공시)' 이벤트를 모아, 각
-발표의 **공시일 등락률**과 **익일 등락률**을 야후 일봉으로 계산한다. 잠정 매출·영업이익
-'숫자'는 공시 본문에만 있어(구조화 API 없음) 여기선 다루지 않는다 — 발표가 언제 있었고
-그 뒤 주가가 어떻게 움직였는지(사실)만 보여준다.
+발표의 **D0 등락률**과 **익일 등락률**을 야후 일봉으로 계산한다(D0 = 공시일이
+거래일이면 그 날, 아니면 다음 거래일). dayPct·nextPct 는 시장수익률을 빼지 않은
+원(raw) 등락률이고, 코스피/코스닥 지수 동일일 수익률을 뺀 초과수익률은
+dayExPct·nextExPct 로 따로 담는다. 잠정 매출·영업이익 '숫자'는 공시 본문에만
+있어(구조화 API 없음) 여기선 다루지 않는다 — 발표가 언제 있었고 그 뒤 주가가
+어떻게 움직였는지(사실)만 보여준다.
 
 주의(정직성): 공시 유형별 과거 주가반응은 이미 검정됐고 잠정실적을 포함해 무작위를
 이긴 유형은 없었다(build_kr_disclosure_stats.py, 41유형 중 0). 그래서 이건 '예측 신호'가
@@ -76,17 +79,24 @@ def yahoo_daily(ysym: str):
 
 
 def reactions(series, file_date: str):
-    """공시일(file_date) 기준 공시일·익일 종가 등락률(%). 시세 부족 시 (None, None)."""
-    if not series:
+    """공시일(file_date) 기준 D0·D+1 종가 등락률(%). 시세 부족 시 (None, None).
+
+    D0 귀속: 공시일이 거래일이면 그 날, 아니면(주말·휴일 접수) 다음 거래일.
+    예전에는 '공시일 이하의 마지막 거래일'을 썼는데, 휴일 접수 공시가 공시 '이전'
+    거래일의 수익률을 반응으로 뒤집어쓰는 오류였다.
+
+    한계(정직성): DART 공시목록에는 접수 시각이 없어(rcpNo 뒷자리는 일련번호),
+    장마감(15:30) 후 접수 건을 다음 거래일로 넘기는 보정은 불가능하다. 그런 건은
+    dayPct 가 발표 전 수익률일 수 있으므로 nextPct(익일)와 함께 봐야 한다.
+    """
+    if not series or not file_date:
         return None, None
     dates = [d for d, _ in series]
-    # 공시일 이하의 마지막 거래일 인덱스
-    idx = None
-    for i, d in enumerate(dates):
-        if d <= file_date:
-            idx = i
-        else:
-            break
+    if file_date in dates:
+        idx = dates.index(file_date)
+    else:
+        # 거래일이 아닌 날 접수 → 다음 거래일에 귀속
+        idx = next((i for i, d in enumerate(dates) if d > file_date), None)
     if idx is None:
         return None, None
     day = None
@@ -98,6 +108,17 @@ def reactions(series, file_date: str):
     return day, nxt
 
 
+# 시장수익률 차감용 지수. 야후에서 스톡과 같은 방식으로 받는다.
+INDEX_SYMBOLS = {"kospi": "^KS11", "kosdaq": "^KQ11"}
+
+
+def _excess(stock_pct, index_pct):
+    """지수 동일일 수익률을 뺀 초과수익률(%p). 어느 한쪽이 없으면 None(추정치 조작 금지)."""
+    if stock_pct is None or index_pct is None:
+        return None
+    return round(stock_pct - index_pct, 2)
+
+
 def build():
     if not DISCLOSURES.exists():
         raise SystemExit("[실적반응] kr_disclosures.json 없음 — 공시 빌더 먼저.")
@@ -105,22 +126,30 @@ def build():
     events = [r for r in rows if "(잠정)실적" in (r.get("title") or "")]
     print(f"[실적반응] 잠정실적 공시 {len(events)}건")
     ymap = yahoo_symbol_map()
-    # 종목별 시세는 한 번만 받는다.
+    # 종목별 시세는 한 번만 받는다. 지수(코스피/코스닥)도 각각 한 번만.
     cache: dict[str, list] = {}
+    index_series = {m: yahoo_daily(sym) for m, sym in INDEX_SYMBOLS.items()}
     out = []
     for r in events:
         ticker = str(r.get("ticker") or "").zfill(6)
         ysym = ymap.get(ticker) or f"{ticker}.KS"
         if ticker not in cache:
             cache[ticker] = yahoo_daily(ysym)
-        day, nxt = reactions(cache[ticker], r.get("fileDate") or "")
+        file_date = r.get("fileDate") or ""
+        day, nxt = reactions(cache[ticker], file_date)
+        # 초과수익률: 같은 D0 귀속 규칙으로 지수 수익률을 구해 차감. dayPct/nextPct 는
+        # 기존 계약(원수익률) 그대로 두고 별도 필드로 얹는다(app.js 호환).
+        market = "kosdaq" if ysym.endswith(".KQ") else "kospi"
+        idx_day, idx_nxt = reactions(index_series.get(market) or [], file_date)
         out.append({
             "ticker": ticker,
             "company": r.get("company") or ticker,
-            "date": r.get("fileDate") or "",
+            "date": file_date,
             "consolidated": "연결" in (r.get("title") or ""),
             "dayPct": day,
             "nextPct": nxt,
+            "dayExPct": _excess(day, idx_day),
+            "nextExPct": _excess(nxt, idx_nxt),
             "link": r.get("link") or "",
         })
     out.sort(key=lambda x: x["date"], reverse=True)
@@ -128,8 +157,12 @@ def build():
     payload = {
         "updatedAtKst": now_kst(),
         "source": "DART 공시(영업잠정실적) + Yahoo 일봉",
-        "note": "잠정실적 '발표 사실'과 발표 전후 주가 등락률. 잠정 매출·영업이익 숫자는 "
-                "공시 본문에만 있어 제외. 예측 신호가 아니다(공시유형 반응은 무작위와 무차별).",
+        "note": "잠정실적 '발표 사실'과 발표 전후 주가 등락률. dayPct·nextPct 는 시장수익률을 "
+                "빼지 않은 원(raw) 등락률, dayExPct·nextExPct 는 코스피/코스닥 지수 동일일 "
+                "수익률을 뺀 초과수익률(%p). D0 는 공시일이 거래일이 아니면 다음 거래일로 귀속. "
+                "DART 목록에 접수 시각이 없어 장마감 후 접수 건의 당일/익일 구분은 불가. "
+                "잠정 매출·영업이익 숫자는 공시 본문에만 있어 제외. 예측 신호가 아니다"
+                "(공시유형 반응은 무작위와 무차별).",
         "count": len(out),
         "rows": out,
     }

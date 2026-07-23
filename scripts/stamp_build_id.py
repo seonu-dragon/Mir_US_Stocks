@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 # ?v= 를 스탬프할 HTML. 로컬 .js/.css 참조만 대상이고 이미지(favicon 등)는 건드리지 않는다.
-HTML_FILES = ["index.html", "analysis.html"]
+HTML_FILES = ["index.html", "analysis.html", "chart_capture.html"]
 STAMPABLE_SUFFIXES = {".js", ".css"}
 
 # (src|href)="<path>?v=<something>" 에서 path 와 기존 버전을 분리한다.

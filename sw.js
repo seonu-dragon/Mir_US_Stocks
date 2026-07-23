@@ -1,4 +1,4 @@
-const BUILD_ID_FALLBACK = "e3a25b8e3a";
+const BUILD_ID_FALLBACK = "2a1734908a";
 let ACTIVE_CACHE_NAME = null;
 
 // 내비게이션 셸만 미리 받는다. app.js/styles.css 같은 자산은 페이지가 ?v=<내용해시>

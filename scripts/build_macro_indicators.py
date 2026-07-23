@@ -17,6 +17,7 @@ import sys
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "macro_indicators.json"
@@ -111,13 +112,13 @@ def main() -> int:
         payload = build()
     except Exception as e:  # noqa: BLE001
         print(f"[macro] 수집 실패({type(e).__name__}: {e}) — 기존 파일 유지")
-        return 0
+        return 1
     if not payload:
         print("[macro] 유효 데이터 없음 — 기존 파일 유지")
-        return 0
+        return 1
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    OUT_JSON.write_text(compact, encoding="utf-8")
-    OUT_JS.write_text(f"window.MACRO_INDICATORS = {compact};\n", encoding="utf-8")
+    atomic_write_text(OUT_JSON, compact)
+    atomic_write_text(OUT_JS, f"window.MACRO_INDICATORS = {compact};\n")
     for it in payload["indicators"]:
         print(f"  {it['label']}: {it['value']}{it['unit']} (Δ{it['change']}) {it['date']}")
     print(f"Wrote {OUT_JSON.name}, {OUT_JS.name}")

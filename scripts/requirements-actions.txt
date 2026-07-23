@@ -1,9 +1,13 @@
-requests>=2.31.0
-beautifulsoup4>=4.12.0
-urllib3>=2.0.0
-yfinance>=0.2.40
-feedparser>=6.0.0
-python-dotenv>=1.0.0
+# == 로 고정한다 (2026-07-23, 당시 성공 run 의 해석 버전 그대로).
+# >= 하한만 걸면 매일 최신판이 프로덕션에 직행한다 — yfinance 는 상류 파손이
+# 잦은 라이브러리라 특히 위험하다. 버전을 올릴 땐 수동으로 범프하고
+# daily-market-snapshot 을 dispatch 해 확인할 것.
+requests==2.34.2
+beautifulsoup4==4.15.0
+urllib3==2.7.0
+yfinance==1.5.1
+feedparser==6.0.12
+python-dotenv==1.2.2
 # KRX 공매도 잔고(build_kr_short_interest.py). 1.2.x 에서 KRX 회원 로그인
 # (KRX_ID/KRX_PW)이 추가됐다 — 1.0.x 로 내려가면 로그인이 없어 LOGOUT 만 받는다.
-pykrx>=1.2.8
+pykrx==1.2.8

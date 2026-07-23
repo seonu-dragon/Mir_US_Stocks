@@ -22,6 +22,7 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -147,13 +148,15 @@ def main() -> int:
         payload = build(args.top)
     except Exception as e:  # noqa: BLE001
         print(f"[calendar] 수집 실패({type(e).__name__}: {e}) — 기존 파일 유지")
-        return 0
+        return 1
     if not payload:
         print("[calendar] 유효 데이터 없음 — 기존 파일 유지")
-        return 0
+        return 1
+    from sec_client import merge_previous_stocks
+    payload = merge_previous_stocks(payload, OUT_JSON, "calendar")
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    OUT_JSON.write_text(compact, encoding="utf-8")
-    OUT_JS.write_text(f"window.US_STOCK_CALENDAR = {compact};\n", encoding="utf-8")
+    atomic_write_text(OUT_JSON, compact)
+    atomic_write_text(OUT_JS, f"window.US_STOCK_CALENDAR = {compact};\n")
     div = sum(1 for v in payload["stocks"].values() if "divYield" in v)
     ern = sum(1 for v in payload["stocks"].values() if "nextEarnings" in v)
     print(f"수집 {len(payload['stocks'])}종목 (배당 {div} · 실적일 {ern})")

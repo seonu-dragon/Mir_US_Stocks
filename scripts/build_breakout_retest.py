@@ -31,6 +31,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import pattern_lib as pl  # noqa: E402
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 DETAILS_DIR = ROOT / "data" / "details"
 OUT_JSON = ROOT / "data" / "breakout_retest_stats.json"

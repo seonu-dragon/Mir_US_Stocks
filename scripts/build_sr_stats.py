@@ -31,6 +31,7 @@ import random
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 ROOT = Path(__file__).resolve().parents[1]
 DETAILS_DIR = ROOT / "data" / "details"

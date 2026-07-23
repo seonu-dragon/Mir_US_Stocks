@@ -217,3 +217,29 @@ def git_publish(paths, label):
                 print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
                 time.sleep(10)
     return False
+
+
+def merge_previous_stocks(payload, out_json, label, key="stocks"):
+    """이번 실행에서 못 받은 종목은 직전 산출물 값을 유지한다(패널 깜빡임 방지).
+
+    build_us_finnhub_metrics 의 prev-merge 전략과 동일 — 429 로 몇 종목 놓친
+    실행이 기존 결과를 통째로 날리면 실행마다 종목이 나타났다 사라진다.
+    payload[key] 는 티커→레코드 dict 여야 한다.
+    """
+    try:
+        if not out_json.exists():
+            return payload
+        prev = json.loads(out_json.read_text(encoding="utf-8")).get(key) or {}
+        cur = payload.get(key)
+        if cur is None:
+            return payload
+        kept = 0
+        for ticker, rec in prev.items():
+            if ticker not in cur:
+                cur[ticker] = rec
+                kept += 1
+        if kept:
+            print(f"[{label}] 이번에 못 받은 {kept}종목은 이전 값 유지")
+    except Exception as exc:
+        print(f"[{label}] 이전 파일 병합 실패(무시): {exc}")
+    return payload

@@ -86,3 +86,9 @@ jobs:
 
       - name: Update US market snapshot
         run: python scripts/update_data.py --push
+
+      # 마지막 관문: 위 스텝들은 소스가 죽어도 "기존 파일 유지" 후
+      # continue-on-error 로 넘어가므로 영원히 초록일 수 있다. 산출물의
+      # 타임스탬프가 허용 나이를 넘으면 여기서 워크플로우를 빨갛게 만든다.
+      - name: Check data freshness (US)
+        run: python scripts/check_data_freshness.py --group us

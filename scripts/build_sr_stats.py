@@ -281,7 +281,7 @@ def main():
         # 들어가면 안 된다 — 랜덤워크는 정의상 지지/저항 엣지가 없어 결과를 희석시킨다.
         # 지금은 합성이 260봉이라 MIN_BARS(300) 에 우연히 걸러지지만, 봉수가 바뀌면
         # 조용히 섞이므로 출처로 명시해 막는다.
-        if d.get("historySource") != "yahoo":
+        if d.get("historySource") not in ("yahoo", "yahoo-cache"):
             continue
         cs = d.get("chartSeries") or []
         rows = [{"o": r[0], "h": r[1], "l": r[2], "c": r[3], "v": (r[4] or 0)} for r in cs
@@ -351,7 +351,7 @@ def main():
         "params": {"STEP": STEP, "HOLD": HOLD, "REACTW": REACTW, "REACT": REACT, "BREAK": BREAK},
         "methods": report,
     }
-    OUT_JSON.write_text(json.dumps(out, ensure_ascii=False, indent=2), encoding="utf-8")
+    atomic_write_text(OUT_JSON, json.dumps(out, ensure_ascii=False, indent=2))
 
     print(f"\n완료: {scanned}종목 → {OUT_JSON}\n")
     print(f"{'method':10s} {'drawn':>8s} {'tested':>8s} {'reach%':>7s} {'respect%':>9s} {'vs랜덤':>7s}")

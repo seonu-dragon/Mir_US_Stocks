@@ -39,9 +39,12 @@ jobs:
       # 장마감 브리핑 job에서 함께 갱신한다. 이게 KR 스냅샷의 실제 일일 실행 경로다.
       - name: Update Korea market snapshot
         # KRX 공매도 잔고(build_kr_short_interest.py, 서브프로세스)용 로그인 자격증명.
+        # DART_API_KEY: 서브프로세스 build_kr_corp_disclosures.py(배당·수주 원문 파싱)가
+        # 쓴다 — 빠뜨리면 배당·수주 탭이 0건이 된다(2026-07-22 사고).
         env:
           KRX_ID: ${{ secrets.KRX_ID }}
           KRX_PW: ${{ secrets.KRX_PW }}
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/update_korea_data.py --push
 
       - name: Run Korea close briefing
@@ -51,3 +54,8 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         working-directory: scripts/briefings/korea_close
         run: python main.py
+
+      # 마지막 관문: 산출물 타임스탬프·0건 함정(예: DART 키 누락으로 배당 0건)을
+      # 여기서 잡아 워크플로우를 빨갛게 만든다.
+      - name: Check data freshness (KR)
+        run: python scripts/check_data_freshness.py --group kr

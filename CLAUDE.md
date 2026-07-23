@@ -68,9 +68,14 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 
 ## Actions 주의
 
-- 데이터 워크플로우는 전부 `concurrency: group: mir-data-publish` 를 공유한다.
-  연속으로 dispatch 하면 대기 중인 run 이 조용히 cancelled 된다 — **하나씩 watch 하며**
-  실행할 것.
+- 데이터 워크플로우의 concurrency 그룹은 **워크플로우별로 분리**되어 있다
+  (`mir-publish-${{ github.workflow }}`, 2026-07-23). 서로 다른 워크플로우는 병렬로
+  돌고 push 경합은 빌더의 rebase 재시도가 흡수하므로 연속 dispatch 해도 된다.
+  과거처럼 `mir-data-publish` 단일 그룹으로 **되돌리지 말 것** — GitHub 은 그룹당
+  대기 슬롯이 1개라 크론 밀집대(20:05~21:06 UTC 등)에서 뒤에 온 run 이 앞의 대기
+  run 을 조용히 cancel 한다. 07-17~22 에 earnings calendar 6일 연속, US 마감 브리핑
+  4일, KR 마감 브리핑(=KR 스냅샷) 2일이 이렇게 초록 화면 뒤에서 미발행됐다.
+  같은 워크플로우의 중복 실행만 여전히 직렬(대기 1개)이다.
 - 커밋 메시지에 `[skip ci]` 를 넣지 말 것. Pages 배포가 워크플로우(`deploy-pages.yml`)
   방식이라 `[skip ci]` 가 배포까지 막는다. 이것 때문에 12일간 자동 데이터가 사이트에
   반영되지 않은 적이 있다 — "데이터가 안 바뀐다" 는 증상이면 **레포와 라이브 사이트를

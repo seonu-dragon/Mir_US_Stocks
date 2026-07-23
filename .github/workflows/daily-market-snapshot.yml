@@ -87,6 +87,13 @@ jobs:
       - name: Update US market snapshot
         run: python scripts/update_data.py --push
 
+      # 공포탐욕·환율·매크로 일일 히스토리 적립(스파크라인용 시계열).
+      # 방금 갱신된 스냅샷·매크로 파일에서 오늘 레코드 1개를 계산해 쌓는다.
+      # 히스토리 실패가 스냅샷 발행을 막으면 안 되므로 continue-on-error.
+      - name: Append market history (fear/greed - macro)
+        continue-on-error: true
+        run: python scripts/build_market_history.py --push
+
       # 마지막 관문: 위 스텝들은 소스가 죽어도 "기존 파일 유지" 후
       # continue-on-error 로 넘어가므로 영원히 초록일 수 있다. 산출물의
       # 타임스탬프가 허용 나이를 넘으면 여기서 워크플로우를 빨갛게 만든다.

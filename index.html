@@ -232,7 +232,25 @@
         </div>
       </section>
 
-
+      <!-- 홈 자연어 검색: 종목명·질문을 입력하면 분석 뷰 + AI 리포트로 연결.
+           바인딩은 app.js setupAiSearchEvents(), 티커 해석은 handleHomeSearch. -->
+      <section class="home-search-section" aria-label="자연어 종목 검색">
+        <div class="home-search-inner">
+          <span class="home-search-kicker">MIR INTELLIGENCE</span>
+          <h2 class="home-search-title">무엇이 궁금하신가요?</h2>
+          <p class="home-search-subtitle">종목명이나 질문을 입력하면 데이터를 조립해 분석 리포트로 안내합니다.</p>
+          <form class="home-search-bar" id="homeSearchForm" role="search">
+            <input id="homeSearchInput" type="text" placeholder="예: 삼성전자 지금 사도 될까? / NVDA 분석해줘" autocomplete="off" aria-label="종목·질문 검색">
+            <button type="submit">분석</button>
+          </form>
+          <div class="home-search-suggestions" aria-label="추천 검색">
+            <button type="button" class="search-suggest-chip" data-query="NVDA 분석해줘">NVDA 분석해줘</button>
+            <button type="button" class="search-suggest-chip" data-query="삼성전자 어때?">삼성전자 어때?</button>
+            <button type="button" class="search-suggest-chip" data-query="테슬라 최근 흐름 알려줘">테슬라 최근 흐름</button>
+            <button type="button" class="search-suggest-chip" data-query="반도체 섹터 흐름 어때?">반도체 섹터 흐름</button>
+          </div>
+        </div>
+      </section>
 
       <div class="home-zone-head">
         <span class="daily-action-kicker">TODAY'S MARKET</span>

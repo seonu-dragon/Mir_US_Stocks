@@ -147,7 +147,6 @@ function liveProxyTicker(itemOrTicker) {
 }
 let selectedTicker = (window.MirMarket && window.MirMarket.getInitialMode() === "kr") ? "005930" : "NVDA";
 let chatFocusTicker = selectedTicker;
-let selectedEtfRsCategory = null;
 let scoreHelpOpen = null;
 function getSectorEtfs() {
   const cfg = marketCfg();
@@ -283,7 +282,14 @@ let chartState = {
 };
 
 let compareTickers = [];
-const WATCHLIST_STORAGE_KEY = "mir_watchlist_v1";
+// 관심종목은 시장별로 따로 저장한다. 예전엔 US/KR 이 mir_watchlist_v1 하나를 공유했고
+// persistWatchlist 가 현재 시장 스냅샷 기준으로 필터해 저장했기 때문에, 시장을 전환하는
+// 순간 반대 시장 목록이 통째로 지워졌다(클라우드 동기화로 유실이 전파되기까지 했다).
+const WATCHLIST_LEGACY_KEY = "mir_watchlist_v1"; // 마이그레이션 전용
+function watchlistStorageKey(marketId) {
+  const id = marketId || (isKrMarket() ? "kr" : "us");
+  return id === "kr" ? "mir_watchlist_kr" : "mir_watchlist_us";
+}
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
 const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
@@ -338,7 +344,18 @@ function krDisplayChangePct(value) {
   return Math.max(-KR_PRICE_LIMIT_PCT, Math.min(KR_PRICE_LIMIT_PCT, n));
 }
 
+// 범용 %포맷 — 클램프 없음. 1주·1개월·YTD 같은 기간 수익률은 KR 에서도 ±30% 를
+// 정상적으로 넘을 수 있으므로 여기로 온다. (예전엔 모든 %가 krDisplayChangePct 를
+// 거쳐 기간 수익률까지 "(상하한)" 으로 잘려 나갔다.)
 const fmtPct = (value) => {
+  const n = Number(value) || 0;
+  const marker = n > 0 ? "▲ " : n < 0 ? "▼ " : "";
+  return `${marker}${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+};
+
+// 당일 등락률 전용 — KR 은 가격제한폭(±30%) 을 넘을 수 없으므로, 넘는 값은 데이터
+// 오류(전일종가 어긋남 등)로 보고 상하한으로 클램프하고 "(상하한)" 을 표시한다.
+const fmtDailyPct = (value) => {
   const raw = Number(value) || 0;
   const n = isKrMarket() ? krDisplayChangePct(raw) : raw;
   const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
@@ -830,6 +847,20 @@ function populateEtfRsBenchmarkSelect(cfg) {
 function applyMarketOnlyUi() {
   const cfg = marketCfg();
   document.title = cfg.pageTitle;
+  // SEO·공유 메타도 시장에 맞춘다 — 타이틀만 바뀌고 description/og:* 가 "미국 주식"
+  // 으로 남으면 KR 모드에서 공유 카드·검색 스니펫이 어긋난다.
+  const metaDesc = cfg.id === "kr"
+    ? "국내 주식(코스피·코스닥) 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드"
+    : "미국 주식 시장 트리맵, 섹터 흐름, 급등주, 관심 종목 분석 대시보드";
+  const setMeta = (selector, content) => {
+    const el = document.querySelector(selector);
+    if (el) el.setAttribute("content", content);
+  };
+  setMeta('meta[name="description"]', metaDesc);
+  setMeta('meta[property="og:title"]', cfg.pageTitle);
+  setMeta('meta[property="og:description"]', metaDesc);
+  setMeta('meta[name="twitter:title"]', cfg.pageTitle);
+  setMeta('meta[name="twitter:description"]', metaDesc);
   const search = byId("heatmapSearch");
   if (search) search.placeholder = cfg.searchPlaceholder;
   // Hide tabs with no data in this market (KR: 거장 포트폴리오는 미국 전용 데이터).
@@ -1197,9 +1228,14 @@ function lightboxStep(delta) {
   updateLightboxImg();
 }
 
+let lightboxBound = false;
 function setupLightbox() {
   const lb = byId("lightbox");
   if (!lb) return;
+  // boot() 은 시장 전환·오프라인 복구로 재진입한다. #lightbox 는 고정 DOM 이라
+  // 두 번 붙으면 화살표 한 번에 두 장씩 넘어간다.
+  if (lightboxBound) return;
+  lightboxBound = true;
   const close = byId("lightboxClose");
   const prev = byId("lightboxPrev");
   const next = byId("lightboxNext");
@@ -1241,6 +1277,7 @@ function updateChatSafeArea() {
   document.documentElement.style.setProperty("--chat-safe-bottom", `${safe}px`);
 }
 
+let chatbotBound = false;
 function setupChatbot() {
   const panel = byId("chatPanel");
   const toggle = byId("chatToggle");
@@ -1250,6 +1287,9 @@ function setupChatbot() {
   const log = byId("chatLog");
   const suggest = byId("chatSuggest");
   if (!panel || !toggle || !form || !input || !log) return;
+  // 재부팅 시 재바인딩 금지 — 제안 칩이 중복 생성되고 submit 이 두 번 나간다.
+  if (chatbotBound) return;
+  chatbotBound = true;
 
   const chatRoot = byId("chatbot");
   const dismissBtn = byId("chatDismiss");
@@ -1550,36 +1590,6 @@ function gaugeArc(cx, cy, r, startDeg, endDeg, color, w) {
   return `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r} ${r} 0 0 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="${color}" stroke-width="${w}"></path>`;
 }
 
-function fngCardHtml() {
-  const score = fngScore();
-  const live = Number.isFinite(score);
-  const gaugeScore = live ? score : 50;
-  const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "CNN 연결 실패" : "CNN 지수 로딩 중");
-  const color = live ? fngColor(score) : "#94a3b8";
-  const cx = 100, cy = 96, r = 76, w = 16;
-  // score 0 -> 180deg (left), 100 -> 0deg (right)
-  const deg = (s) => 180 - (s / 100) * 180;
-  const arcs =
-    gaugeArc(cx, cy, r, deg(0), deg(25), "#dc2626", w) +
-    gaugeArc(cx, cy, r, deg(25), deg(45), "#f97316", w) +
-    gaugeArc(cx, cy, r, deg(45), deg(55), "#eab308", w) +
-    gaugeArc(cx, cy, r, deg(55), deg(75), "#84cc16", w) +
-    gaugeArc(cx, cy, r, deg(75), deg(100), "#16a34a", w);
-  const [nx, ny] = gaugePolar(cx, cy, r - 6, deg(gaugeScore));
-  return `
-    <div class="summary-card fng-card">
-      <span>CNN Fear &amp; Greed</span>
-      <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
-        ${arcs}
-        <line x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke="#0f172a" stroke-width="3" stroke-linecap="round"></line>
-        <circle cx="${cx}" cy="${cy}" r="5" fill="#0f172a"></circle>
-        <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
-      </svg>
-      <strong class="fng-label" style="color:${color}">${label}</strong>
-    </div>
-  `;
-}
-
 function sectorTopCardHtml(title, list, strong) {
   const rows = (list || []).map((s, i) => `
     <div class="hx-row">
@@ -1635,34 +1645,6 @@ function computeMarketRegime() {
     return { label: "Risk-Off", ko: "리스크 오프", tone: "off", desc: "방어주 선호, 시장 심리·브레드스가 약한 구간", fng, upPct, growthLead };
   }
   return { label: "Mixed", ko: "혼조", tone: "mixed", desc: "섹터 간 격차와 심리가 엇갈리는 구간", fng, upPct, growthLead };
-}
-
-function marketRegimeCardHtml() {
-  const regime = computeMarketRegime();
-  const fngLive = !!(marketHeader.fng && Number.isFinite(marketHeader.fng.score));
-  const fngNote = fngLive ? "CNN Fear &amp; Greed Index" : "CNN 지수를 불러오는 중입니다";
-  return `
-    <div class="summary-card regime-card regime-${regime.tone}">
-      <span>시장 국면</span>
-      <strong class="regime-label">${regime.label}</strong>
-      <em class="regime-ko">${regime.ko}</em>
-      <p class="regime-desc">${regime.desc}</p>
-      <div class="regime-stats">
-        <span class="regime-stat" title="${fngNote}">
-          <b>공포탐욕</b>
-          <em>${fngLive ? regime.fng : "--"}</em>
-        </span>
-        <span class="regime-stat" title="당일 상승한 종목 비율">
-          <b>상승 비중</b>
-          <em>${Math.round(regime.upPct * 100)}%</em>
-        </span>
-        <span class="regime-stat" title="${isKrMarket() ? "성장 섹터 ETF(반도체·KODEX200·2차전지) − 방어 섹터 ETF(은행·자동차·바이오) 1개월 수익률 차이" : "성장 ETF(XLK·QQQ·SOXX) − 방어 ETF(XLU·XLP·XLV) 1개월 수익률 차이"}">
-          <b>성장-방어</b>
-          <em>${fmtPct(regime.growthLead)}</em>
-        </span>
-      </div>
-    </div>
-  `;
 }
 
 // 시장 국면 + CNN 공포탐욕을 하나의 카드로 병합
@@ -2319,7 +2301,12 @@ function disarmBackExit() {
 }
 
 // 히스토리에는 [base][sentinel] 두 칸만 유지하고, 뒤로가기 판단은 navStack으로 한다.
+let backGuardBound = false;
 function setupBackGuard() {
+  // 재부팅 시 popstate 가 중복되면 뒤로가기 한 번에 navStack 이 두 칸씩 빠지고,
+  // 센티넬 pushState 가 쌓여 히스토리가 오염된다.
+  if (backGuardBound) return;
+  backGuardBound = true;
   history.replaceState({ _app: true }, "");
   history.pushState({ _sentinel: true }, "");
   window.addEventListener("popstate", () => {
@@ -2456,6 +2443,7 @@ const TAB_REDIRECT = {
   jump: { tab: "search", sub: "jump" },
   compare: { tab: "search", sub: "compare" },
   screener: { tab: "search", sub: "screener" },
+  scanner: { tab: "search", sub: "scanner" },
   earnings: { tab: "calendar", sub: "earnings" },
 };
 
@@ -2554,7 +2542,7 @@ function setupInsiderControls() {
   const search = byId("insiderSearch");
   if (search && !search.dataset.bound) {
     search.dataset.bound = "1";
-    search.addEventListener("input", () => { insiderQuery = search.value; renderInsiderTrades(); });
+    search.addEventListener("input", debounce(() => { insiderQuery = search.value; renderInsiderTrades(); }, 300));
   }
 }
 
@@ -2662,7 +2650,7 @@ function setupActivistControls() {
     }));
   }
   const s = byId("activistSearch");
-  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { activistQuery = s.value; renderActivistStakes(); }); }
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { activistQuery = s.value; renderActivistStakes(); }, 300)); }
 }
 function renderActivistStakes() {
   setupActivistControls();
@@ -2711,7 +2699,7 @@ function setupEventsControls() {
     }));
   }
   const s = byId("eventsSearch");
-  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { eventsQuery = s.value; renderMaterialEvents(); }); }
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { eventsQuery = s.value; renderMaterialEvents(); }, 300)); }
 }
 function renderMaterialEvents() {
   setupEventsControls();
@@ -2859,7 +2847,7 @@ function renderValuation() {
     <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
     <td class="ins-num"><strong>${fmtv(r.value)}</strong></td>
     <td class="ins-num">${fmtBillions(itemCapForValuation(r.item))}</td>
-    <td class="ins-num ${cls(krDisplayChangePct(r.item.changePct))}">${fmtPct(r.item.changePct)}</td>
+    <td class="ins-num ${cls(krDisplayChangePct(r.item.changePct))}">${fmtDailyPct(r.item.changePct)}</td>
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">${isKrMarket() ? "시총(조)" : "시총"}</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
@@ -3274,11 +3262,11 @@ function renderKrHighlights() {
   const isKr = (typeof isKrMarket === "function") ? isKrMarket() : (marketCfg().id === "kr");
   if (!isKr) { el.hidden = true; el.innerHTML = ""; return; }
   const items = [];
-  const add = (icon, label, r, extra, tone) => { if (r && r.ticker) items.push({ icon, label, ticker: r.ticker, company: r.company || r.ticker, extra, tone }); };
+  const add = (label, r, extra, tone) => { if (r && r.ticker) items.push({ label, ticker: r.ticker, company: r.company || r.ticker, extra, tone }); };
 
   const si = ((window.SHORT_INTEREST || {}).rows || []).filter((r) => Number.isFinite(r.balanceRatio))
     .sort((a, b) => b.balanceRatio - a.balanceRatio)[0];
-  if (si) add("", "공매도 최고", si, `잔고 ${si.balanceRatio.toFixed(1)}%`, "warn");
+  if (si) add("공매도 최고", si, `잔고 ${si.balanceRatio.toFixed(1)}%`, "warn");
 
   // 자사주 최대 취득 · 최고 희석 증자 — 공시+상세 조합.
   const disc = (window.KR_DISCLOSURES || {}).disclosures || [];
@@ -3291,20 +3279,20 @@ function renderKrHighlights() {
     const cat = dilutionCategory(d.title);
     if (cat && dt.dilutionPct != null && (!topDil || dt.dilutionPct > topDil.dil)) topDil = { ticker: d.ticker, company: d.company, dil: dt.dilutionPct, label: cat.label };
   }
-  if (topBuy) add("", "자사주 매입", topBuy, `${Math.round(topBuy.amt / 1e8).toLocaleString()}억`, "good");
-  if (topDil) add("", `${topDil.label} 희석`, topDil, `희석 ${topDil.dil.toFixed(1)}%`, "warn");
+  if (topBuy) add("자사주 매입", topBuy, `${Math.round(topBuy.amt / 1e8).toLocaleString()}억`, "good");
+  if (topDil) add(`${topDil.label} 희석`, topDil, `희석 ${topDil.dil.toFixed(1)}%`, "warn");
 
   const ct = ((window.KR_CONTRACTS || {}).rows || []).filter((r) => Number.isFinite(r.salesRatio))
     .sort((a, b) => b.salesRatio - a.salesRatio)[0];
-  if (ct) add("", "대형 수주", ct, `매출대비 ${ct.salesRatio.toFixed(0)}%`, "good");
+  if (ct) add("대형 수주", ct, `매출대비 ${ct.salesRatio.toFixed(0)}%`, "good");
 
   const dv = ((window.KR_DIVIDENDS || {}).rows || []).filter((r) => r.recordDate)
     .sort((a, b) => a.recordDate.localeCompare(b.recordDate))[0];
-  if (dv) add("", "배당 임박", dv, `${dv.recordDate}${Number.isFinite(dv.yieldPct) ? ` · ${dv.yieldPct.toFixed(1)}%` : ""}`, "");
+  if (dv) add("배당 임박", dv, `${dv.recordDate}${Number.isFinite(dv.yieldPct) ? ` · ${dv.yieldPct.toFixed(1)}%` : ""}`, "");
 
   const er = ((window.KR_EARNINGS_REACTIONS || {}).rows || []).filter((r) => Number.isFinite(r.dayPct))
     .sort((a, b) => Math.abs(b.dayPct) - Math.abs(a.dayPct))[0];
-  if (er) add("", "실적 반응", er, `공시일 ${er.dayPct > 0 ? "+" : ""}${er.dayPct.toFixed(1)}%`, er.dayPct >= 0 ? "good" : "warn");
+  if (er) add("실적 반응", er, `공시일 ${er.dayPct > 0 ? "+" : ""}${er.dayPct.toFixed(1)}%`, er.dayPct >= 0 ? "good" : "warn");
 
   // 중대 리스크 공시 종목이 있으면 맨 앞에 경고로(상장폐지·불성실·중대 거래정지·횡령).
   for (const d of ((window.KR_DISCLOSURES || {}).disclosures || [])) {
@@ -3314,7 +3302,7 @@ function renderKrHighlights() {
     else if (tt.includes("불성실공시")) lbl = "불성실공시";
     else if (tt.includes("횡령") || tt.includes("배임")) lbl = "횡령·배임";
     else if (tt.includes("거래정지") && /상장폐지|불성실|감사의견|횡령/.test(tt)) lbl = "거래정지(중대)";
-    if (lbl && d.ticker) { items.unshift({ icon: "", label: "리스크", ticker: d.ticker, company: d.company || d.ticker, extra: lbl, tone: "warn" }); break; }
+    if (lbl && d.ticker) { items.unshift({ label: "리스크", ticker: d.ticker, company: d.company || d.ticker, extra: lbl, tone: "warn" }); break; }
   }
 
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
@@ -3575,7 +3563,7 @@ function renderSignals() {
   // 52주 신고가 근접 — 합성 이력은 52주 고점 자체가 랜덤워크가 만든 값이라 제외한다.
   const highs = data.stocks.filter((s) => !isStockEtf(s) && !isSyntheticHistory(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= minCapForHighs)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
-  cards.push(signalCard("52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtPct(s.changePct)}` })), "고점 0.5% 이내"));
+  cards.push(signalCard("52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtDailyPct(s.changePct)}` })), "고점 0.5% 이내"));
   if (cfg.features?.materialEvents !== false) {
     const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
     cards.push(signalCard("주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
@@ -3724,9 +3712,13 @@ function setupViewMode(requestedTab) {
   const requestedButton = requestedTab ? document.querySelector(`[data-tab="${requestedTab}"]`) : null;
   if (requestedButton?.dataset.advanced === "true") saved = "advanced";
   setViewMode(saved, { persist: false });
-  byId("viewModeSwitch")?.querySelectorAll("[data-view-mode]").forEach((button) => {
-    button.addEventListener("click", () => setViewMode(button.dataset.viewMode));
-  });
+  const modeSwitch = byId("viewModeSwitch");
+  if (modeSwitch && !modeSwitch.dataset.bound) {
+    modeSwitch.dataset.bound = "1";
+    modeSwitch.querySelectorAll("[data-view-mode]").forEach((button) => {
+      button.addEventListener("click", () => setViewMode(button.dataset.viewMode));
+    });
+  }
 }
 
 const MOBILE_TABS_MQ = "(max-width: 960px)";
@@ -3965,8 +3957,12 @@ function setupTabSemantics() {
   });
 }
 
+let tabsBound = false;
 function setupTabs() {
   const tabsEl = byId("mainTabs");
+  // 탭 버튼은 고정 DOM — 재부팅 시 click/scroll/resize 가 겹으로 붙는 것을 막는다.
+  if (tabsBound) return;
+  tabsBound = true;
   if (tabsEl) applySavedTabOrder(tabsEl);
 
   document.querySelectorAll(".tab").forEach((tab) => {
@@ -4160,17 +4156,6 @@ function setupFilters() {
 
   const etfRows = data.health?.etfRelative?.rows || [];
   const etfGroups = ["All", ...[...new Set(etfRows.map((item) => item.group).filter(Boolean))].sort()];
-  const etfRsGroupSel = byId("etfRsGroup");
-  if (etfRsGroupSel) etfRsGroupSel.innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
-  const benchmarks = data.health?.etfRelative?.benchmarks?.length
-    ? data.health.etfRelative.benchmarks
-    : (cfg.etfBenchmarks || ["SPY", "QQQ", "TQQQ", "DIA", "IWM"]);
-  const etfRsBenchSel = byId("etfRsBenchmark");
-  if (etfRsBenchSel) etfRsBenchSel.innerHTML = benchmarks
-    .map((ticker) => `<option value="${ticker}">${ticker} 대비</option>`)
-    .join("");
-
-  // Also populate sectorEtfRsGroup (same groups as etfRsGroup)
   byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
 
   const scrBucket = byId("scrBucket");
@@ -4184,9 +4169,20 @@ function setupFilters() {
   if (scanSector) scanSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
 }
 
+let eventsBound = false;
 function setupEvents() {
+  // 여기 리스너는 전부 index.html 고정 요소·document·window 대상이다. boot() 재진입
+  // (시장 전환, 오프라인 복구)마다 다시 붙으면 관심종목 ★ 토글이 두 번 실행돼 무효가
+  // 되는 식으로 깨진다. 데이터 의존 초기화만 재실행하고 바인딩은 1회로 제한한다.
+  if (eventsBound) {
+    populateBacktestBenchmarks();  // 시장별 벤치마크 목록 갱신
+    initBacktestDateRange();       // 스냅샷 기준 날짜 범위 갱신
+    return;
+  }
+  eventsBound = true;
   ["bucketFilter", "sectorFilter", "metricFilter", "tileSizeFilter"].forEach((id) => byId(id).addEventListener("change", renderTreemap));
-  byId("heatmapSearch").addEventListener("input", renderTreemap);
+  // 5천 타일 트리맵을 키 입력마다 다시 그리지 않도록 디바운스.
+  byId("heatmapSearch").addEventListener("input", debounce(renderTreemap, 150));
   byId("resetFilters").addEventListener("click", () => {
     byId("bucketFilter").value = marketCfg().defaultBucket || "idx_sp500";
     byId("sectorFilter").value = "All";
@@ -4213,20 +4209,6 @@ function setupEvents() {
   });
   const scanRefresh = byId("scanRefresh");
   if (scanRefresh) scanRefresh.addEventListener("click", renderScanner);
-  ["etfRsBenchmark", "etfRsPeriod", "etfRsGroup"].forEach((id) => {
-    const el = byId(id);
-    if (el) el.addEventListener("change", () => {
-      if (id === "etfRsGroup") selectedEtfRsCategory = null;
-      renderEtfRelativeStrength();
-    });
-  });
-  const etfRsGrid = byId("etfRelativeStrength");
-  if (etfRsGrid) etfRsGrid.addEventListener("click", (event) => {
-    const card = event.target.closest(".etf-rs-card");
-    if (!card) return;
-    showConstituentPanel(card.dataset.category, byId("etfRsPeriod").value);
-  });
-
   // Sector tab sub-tab switching
   byId("sectorSubTabs").querySelectorAll(".sub-tab").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -5206,8 +5188,8 @@ function setupChartPresetControls() {
       btn.addEventListener("click", () => applyBuiltinOverlayPreset(btn.dataset.bpreset));
     });
   }
-  byId("chartPresetSave")?.addEventListener("click", () => {
-    const name = window.prompt("저장할 차트 프리셋 이름", "내 차트 설정");
+  byId("chartPresetSave")?.addEventListener("click", async () => {
+    const name = await showAppPrompt("저장할 차트 프리셋 이름", "내 차트 설정", { title: "차트 프리셋 저장", okLabel: "저장" });
     if (!name || !name.trim()) return;
     chartPresets[name.trim()] = currentChartPreset();
     saveChartPresets();
@@ -5952,7 +5934,7 @@ function stockTooltip(item) {
       </div>
       <div class="tooltip-price">
         <b>${priceOrDash(item.price)}</b>
-        <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+        <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
       </div>
     </div>
     ${sparklineSvg(item.closeSeries, { width: 260, height: 76, color: item.changePct >= 0 ? "#22c55e" : "#ef4444" })}
@@ -6006,7 +5988,7 @@ function peerTooltipRow(item) {
       <strong>${escapeHtml(item.ticker)}</strong>
       ${sparklineSvg(item.closeSeries, { width: 76, height: 20, color: item.changePct >= 0 ? "#22c55e" : "#ef4444" })}
       <span>${priceOrDash(item.price)}</span>
-      <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+      <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
     </div>
   `;
 }
@@ -6051,6 +6033,8 @@ function fmtMetric(value, metric) {
   if (metric.includes("Score") || metric === "stochK" || metric === "rsi14") {
     return `${Math.round(Number(value) || 0)}`;
   }
+  // 당일 등락률만 KR 상하한 클램프 대상 — 기간 수익률은 그대로.
+  if (metric === "changePct") return fmtDailyPct(value || 0);
   return fmtPct(value || 0);
 }
 
@@ -6264,7 +6248,7 @@ function stockFacts(item, title) {
     ${krFlowCard(item)}
     <div class="facts">
       ${fact("가격", priceOrDash(item.price))}
-      ${fact("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
+      ${fact("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
       ${fact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
       ${isSearchPanel ? scoreFact("RS", item.rsScore, "rs") : fact("RS", item.rsScore)}
       ${isSearchPanel ? scoreFact("EPS Rev", item.epsRevScore, "eps") : fact("EPS Rev", item.epsRevScore)}
@@ -6425,7 +6409,7 @@ function renderSectors() {
             ${item.topLeaders.map(stock => `
               <span class="leader-chip" data-ticker="${stock.ticker}">
                 <strong class="ticker">${stock.ticker}</strong>
-                <span class="change ${cls(stock.changePct)}">${fmtPct(stock.changePct)}</span>
+                <span class="change ${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</span>
               </span>
             `).join("")}
           </div>
@@ -6481,7 +6465,7 @@ function renderSectorDetail() {
       <td><strong>${stock.ticker}</strong></td>
       <td>${stock.company}</td>
       <td>${marketCfg().formatPrice(stock.price)}</td>
-      <td class="${cls(stock.changePct)}">${fmtPct(stock.changePct)}</td>
+      <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
       <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
       <td class="${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
       <td><span class="rs-badge">${stock.rsScore}</span></td>
@@ -6736,7 +6720,9 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
   const benchmarkDot = svg.querySelector("#benchmarkTrackerDot");
   
   // Event logic for hover tracking
-  svg.addEventListener("mousemove", (event) => {
+  // #sectorComparisonChart 는 고정 SVG 라 렌더마다 addEventListener 를 쓰면 옛 시리즈를
+  // 물고 있는 핸들러가 계속 쌓인다. on* 속성 할당은 이전 핸들러를 대체한다.
+  svg.onmousemove = ((event) => {
     const rect = svg.getBoundingClientRect();
     const scaleX = width / rect.width;
     const scaleY = height / rect.height;
@@ -6834,10 +6820,10 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     summaryValueEl.className = relDiff >= 0 ? "pos" : "neg";
   });
   
-  svg.addEventListener("mouseleave", () => {
+  svg.onmouseleave = (() => {
     hideHover();
   });
-  
+
   function hideHover() {
     trackerLine.style.display = "none";
     sectorDot.style.display = "none";
@@ -6913,7 +6899,7 @@ function renderTopStocks() {
       <p>${escapeHtml(item.sector)} · ${escapeHtml(item.industry)}</p>
       <div class="mini-facts">
         ${miniMetric("가격", priceOrDash(item.price))}
-        ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
+        ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
         ${miniMetric("RS", item.rsScore)}
         ${miniMetric("EPS", item.epsRevScore)}
         ${miniMetric("거래량", `${Number(item.volumeRatio || 0).toFixed(1)}x`)}
@@ -7064,7 +7050,7 @@ function scanCardHtml(entry, rank) {
       </div>
       <div class="scanner-spark">${spark}</div>
       <div class="mini-facts">
-        ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtPct(item.changePct)}</span>`)}
+        ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
         ${miniMetric("RS", Number.isFinite(item.rsScore) ? item.rsScore : "—")}
         ${miniMetric("RSI", Number.isFinite(item.rsi14) ? item.rsi14 : "—")}
         ${miniMetric("거래량", `${Number(item.volumeRatio || 0).toFixed(1)}x`)}
@@ -7257,6 +7243,7 @@ function formatMetricValue(value, metric) {
   if (metric === "low52Dist") return `저가 +${Number(value).toFixed(1)}%`;
   if (["rsScore", "epsRevScore", "rsi14", "stochK"].includes(metric)) return `${Math.round(value)}`;
   if (["pe", "forwardPE", "ps", "pb"].includes(metric)) return fmtMultiple(value);
+  if (metric === "changePct") return fmtDailyPct(value);
   return fmtPct(value);
 }
 
@@ -7308,7 +7295,7 @@ function renderJump() {
     <article class="stock-card jump-stock-card" data-ticker="${item.ticker}" style="cursor: pointer;">
       <h3>${item.ticker}</h3>
       <p class="muted">${item.company}</p>
-      <p><strong class="${cls(item.changePct)}">${fmtPct(item.changePct)}</strong> · Vol ${item.volumeRatio.toFixed(1)}x</p>
+      <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · Vol ${item.volumeRatio.toFixed(1)}x</p>
       <p>RS ${item.rsScore} · EPS ${item.epsRevScore}</p>
     </article>
   `).join("");
@@ -7440,7 +7427,7 @@ function renderMoveExplanation(item) {
   const sectorAvg = peers.length ? peers.reduce((sum, row) => sum + Number(row.changePct), 0) / peers.length : 0;
   const relative = change - sectorAvg;
   const evidence = [];
-  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtPct(change)} · 섹터 평균 ${fmtPct(sectorAvg)} · 차이 ${relative >= 0 ? "+" : ""}${relative.toFixed(1)}%p`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
+  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtDailyPct(change)} · 섹터 평균 ${fmtPct(sectorAvg)} · 차이 ${relative >= 0 ? "+" : ""}${relative.toFixed(1)}%p`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
 
   const volume = Number(item.volumeRatio || 0);
   if (volume > 0) {
@@ -7479,7 +7466,7 @@ function renderMoveExplanation(item) {
   box.innerHTML = `
     <div class="move-explanation-head">
       <div><span>WHY IT MOVED</span><h3>왜 ${direction}했나?</h3></div>
-      <strong class="${cls(change)}">${fmtPct(change)}</strong>
+      <strong class="${cls(change)}">${fmtDailyPct(change)}</strong>
     </div>
     <p class="move-explanation-summary">${escapeHtml(item.ticker)}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
     <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
@@ -8618,15 +8605,6 @@ function stochArrays(rows, kPeriod, dPeriod) {
   return { k, d };
 }
 
-function smaArray(values, period) {
-  const out = Array(values.length).fill(null);
-  for (let i = period - 1; i < values.length; i += 1) {
-    const chunk = values.slice(i - period + 1, i + 1);
-    out[i] = chunk.reduce((sum, value) => sum + value, 0) / period;
-  }
-  return out;
-}
-
 function vwapArray(rows) {
   const out = Array(rows.length).fill(null);
   let pv = 0;
@@ -8940,13 +8918,6 @@ function buildTickerSearchIndex() {
       marketCapB: Number(s.marketCapB) || 0,
     })),
   };
-}
-
-function tickerKoHaystack(ticker) {
-  const stock = stockByTicker(ticker);
-  if (!stock) return "";
-  const aliases = (window.TICKER_ALIASES_KO || {})[ticker] || [];
-  return `${stock.ticker} ${stock.company} ${aliases.join(" ")}`;
 }
 
 function heatmapItemMatchesQuery(item, rawQuery) {
@@ -9285,7 +9256,7 @@ function mansfieldSeries(rows, benchmarkRows) {
 // ----- Indicator panels -----
 function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW) {
   const volumes = rows.map((row) => row.v || 0);
-  const ma20 = smaArray(volumes, 20);
+  const ma20 = smaSeries(volumes, 20);
   const maxSource = chartState.showVolMa20 ? volumes.concat(ma20.filter((v) => v != null)) : volumes;
   const volMax = Math.max(...maxSource, 1);
   const yFor = (value) => top + height - (value / volMax) * height;
@@ -9634,18 +9605,6 @@ function chartAnalysisContextRows(allRows) {
 // 차트 오버레이는 보이는 봉(rows) 기준 — 이동·확대 시 선이 따라 갱신된다.
 // 확률 패널 숫자는 분석 시점 전체 일봉 기준(srSummary)을 유지한다.
 
-function averagePath(values, period, xFor, yFor, color) {
-  const points = values.map((_, index) => {
-    if (index < period - 1) return null;
-    const chunk = values.slice(index - period + 1, index + 1);
-    const avg = chunk.reduce((sum, value) => sum + value, 0) / chunk.length;
-    return [xFor(index), yFor(avg)];
-  }).filter(Boolean);
-  if (points.length < 2) return "";
-  const path = points.map(([x, y], index) => `${index ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
-  return `<path d="${path}" fill="none" stroke="${color}" stroke-width="1.8" stroke-linecap="round"></path>`;
-}
-
 function renderRsiPanel(closes, xFor, x1, x2, top, height, visN) {
   const values = lastN(rsiSeries(closes, 14), visN);
   const yFor = (value) => top + ((100 - value) / 100) * height;
@@ -9812,7 +9771,7 @@ async function buildStockChatContext(userText) {
     }
 
     lines.push(
-      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량비율:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
+      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtDailyPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량비율:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
       (f.pe ? ` · PER:${fmtMultiple(f.pe)}` : "") +
       (f.forwardPE ? ` · FwdPER:${fmtMultiple(f.forwardPE)}` : "") +
       (f.ps ? ` · P/S:${fmtMultiple(f.ps)}` : "") +
@@ -9874,7 +9833,10 @@ function renderEarningsCalendar(item) {
   const nextDate = live.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
   const epsEstimate = live.epsEstimate ?? f.epsNextQ ?? null;
   const history = normalizeEarningsHistory(item).slice(-4).reverse();
-  const daysUntil = nextDate ? Math.ceil((new Date(nextDate) - snapshotBaseDate()) / 86400000) : null;
+  // new Date("YYYY-MM-DD") 는 UTC 자정으로 파싱돼 로컬 자정 기준인 snapshotBaseDate 와
+  // 섞이면 KST 에서 하루가 어긋난다 — 로컬 자정으로 통일(localDateFromIso).
+  const nextDateLocal = nextDate ? (localDateFromIso(nextDate) || new Date(nextDate)) : null;
+  const daysUntil = nextDateLocal ? Math.ceil((nextDateLocal - snapshotBaseDate()) / 86400000) : null;
 
   box.innerHTML = `
     <div class="earnings-inline-head">
@@ -10091,7 +10053,7 @@ function stockEventRows(item) {
 
 const EVENT_META = {
   Earnings: { icon: "", ko: "실적" },
-  Options:  { icon: "⏱️", ko: "옵션 만기" },
+  Options:  { icon: "", ko: "옵션 만기" },
   Target:   { icon: "", ko: "목표가" },
   Dividend: { icon: "", ko: "배당" },
   News:     { icon: "", ko: "뉴스" },
@@ -10637,7 +10599,7 @@ function renderEtfConstituents(item) {
               <td><strong>${escapeHtml(s.ticker)}</strong></td>
               <td>${escapeHtml(s.name || "")}</td>
               <td><span class="rs-badge">${Math.round(s.rsScore || 0)}</span></td>
-              <td class="${cls(s.changePct)}">${s.changePct != null ? fmtPct(s.changePct) : "-"}</td>
+              <td class="${cls(s.changePct)}">${s.changePct != null ? fmtDailyPct(s.changePct) : "-"}</td>
               <td class="${cls(s.monthChangePct)}">${s.monthChangePct != null ? fmtPct(s.monthChangePct) : "-"}</td>
             </tr>
           `).join("")}
@@ -10648,10 +10610,6 @@ function renderEtfConstituents(item) {
   box.querySelectorAll(".etf-con-row").forEach((tr) => {
     tr.addEventListener("click", () => selectTicker(tr.dataset.ticker, { openSearch: true }));
   });
-}
-
-function metricPair(label, value) {
-  return `<th>${escapeHtml(label)}</th><td>${valueWithClass(value)}</td>`;
 }
 
 function valueWithClass(value) {
@@ -11601,7 +11559,7 @@ function renderBulk() {
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
       <td>${escapeHtml(item.company)}</td>
       <td>${escapeHtml(item.sector)}</td>
-      <td class="${cls(item.changePct)}">${fmtPct(item.changePct)}</td>
+      <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td>${item.rsScore}</td>
       <td>${item.epsRevScore}</td>
       <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
@@ -12665,7 +12623,7 @@ function marketTableHtml(title, rows) {
                 <td>${escapeHtml(name)}</td>
                 <td><strong>${escapeHtml(ticker)}</strong></td>
                 <td>${priceOrDash(s.price)}</td>
-                <td class="${cls(s.changePct)}">${fmtPct(s.changePct)}</td>
+                <td class="${cls(s.changePct)}">${fmtDailyPct(s.changePct)}</td>
                 <td class="${cls(s.weekChangePct)}">${fmtPct(s.weekChangePct)}</td>
                 <td class="${cls(s.monthChangePct)}">${fmtPct(s.monthChangePct)}</td>
                 <td class="${cls(s.threeMonthChangePct)}">${fmtPct(s.threeMonthChangePct)}</td>
@@ -12716,7 +12674,7 @@ function loadCurrencies() {
                   <tr>
                     <td>${escapeHtml(f.name || f.symbol)}</td>
                     <td><strong>${price.toFixed(decimals)}</strong></td>
-                    <td class="${cls(f.changePct)}">${fmtPct(f.changePct)}</td>
+                    <td class="${cls(f.changePct)}">${fmtDailyPct(f.changePct)}</td>
                     <td class="${cls(f.monthChangePct)}">${fmtPct(f.monthChangePct)}</td>
                   </tr>
                 `;
@@ -12766,66 +12724,6 @@ function etfRsSecondaryStatsHtml(item, period) {
   }).join("");
 }
 
-function etfRsCardHtml(item, period, benchmark) {
-  // Show all peers (no limit) sorted by period return descending
-  const sortedPeers = (item.peers || [])
-    .slice()
-    .sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
-  const peers = sortedPeers.map((peer) => `
-    <span class="peer-chip ${cls(peer[period])}">
-      ${peer.ticker} ${fmtPct(peer[period] ?? 0)}
-    </span>
-  `).join("");
-  const totalPeers = sortedPeers.length;
-  return `
-    <article class="etf-rs-card" data-category="${item.category}" title="클릭해서 전체 ${totalPeers}개 구성 종목 보기">
-      <div class="etf-rs-topline">
-        <span class="group-badge">${item.group}</span>
-        <strong class="${cls(item.activeRelative)}">${benchmark} 대비 ${fmtPct(item.activeRelative)}</strong>
-      </div>
-      <h4>${item.category}</h4>
-      <div class="etf-rs-main">
-        <div>
-          <span class="ticker-pill">${item.representative}</span>
-          <strong>${item.name}</strong>
-        </div>
-        <div class="etf-rs-score ${cls(item.rsScore - 50)}">${item.rsScore}</div>
-      </div>
-      <div class="etf-rs-stats">
-        <span>${periodLabel(period)} 수익률 <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
-        ${etfRsSecondaryStatsHtml(item, period)}
-      </div>
-      <div class="peer-list">${peers}</div>
-      <p class="drilldown-hint">클릭해서 전체 ${totalPeers}개 종목 상세 보기</p>
-    </article>
-  `;
-}
-
-function renderEtfRelativeStrength() {
-  const container = byId("etfRelativeStrength");
-  const payload = data.health?.etfRelative || { rows: [], universeCount: 0, method: "" };
-  const benchmark = byId("etfRsBenchmark")?.value || "SPY";
-  const period = byId("etfRsPeriod")?.value || "monthChangePct";
-  const group = byId("etfRsGroup")?.value || "All";
-  const rows = (payload.rows || [])
-    .filter((item) => group === "All" || item.group === group)
-    .map((item) => ({
-      ...item,
-      activeRelative: item.relative?.[benchmark]?.[period] ?? 0,
-      activeReturn: item[period] ?? 0
-    }))
-    .sort((a, b) => b.activeRelative - a.activeRelative);
-
-  byId("etfRsMeta").textContent = `${payload.universeCount || 0}개 ETF 기반 · ${rows.length}개 세부 그룹`;
-  byId("etfRsMethod").textContent = payload.method || "";
-
-  if (!rows.length) {
-    container.innerHTML = `<div class="empty-state">ETF 상대강도 데이터가 없습니다. 스냅샷을 다시 생성해 주세요.</div>`;
-    return;
-  }
-  container.innerHTML = rows.map((item) => etfRsCardHtml(item, period, benchmark)).join("");
-}
-
 function getSectorEtfRows() {
   const payload = data.health?.etfRelative || { rows: [], universeCount: 0, method: "" };
   const benchmark = byId("sectorEtfRsBenchmark")?.value || "SPY";
@@ -12849,7 +12747,7 @@ function getSectorEtfRows() {
 
 function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
   const rankBadge = rankIdx < 3
-    ? `<span class="rank-medal rank-${rankIdx + 1}">${["", "", ""][rankIdx]}</span>`
+    ? `<span class="rank-medal rank-${rankIdx + 1}"></span>`
     : `<span class="rank-num">${rankIdx + 1}</span>`;
   const sortedPeers = (item.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
   const totalPeers = sortedPeers.length;
@@ -13101,7 +12999,7 @@ function levEtfCardHtml(item) {
   const live = levEtfLiveRow(item.ticker);
   const hasLive = !!live;
   const price = hasLive ? priceOrDash(live.price) : "—";
-  const chg = hasLive ? fmtPct(live.changePct) : "—";
+  const chg = hasLive ? fmtDailyPct(live.changePct) : "—";
   const chgCls = hasLive ? cls(live.changePct) : "";
   const month = hasLive && Number.isFinite(live.monthChangePct) ? fmtPct(live.monthChangePct) : "—";
   const monthCls = hasLive ? cls(live.monthChangePct) : "";
@@ -13509,6 +13407,9 @@ function renderBriefingSide(side) {
 
 function setupBriefingToggles() {
   document.querySelectorAll(".briefing-toggle").forEach((group) => {
+    // 고정 DOM — 재부팅 시 중복 바인딩 방지 (dataset 가드)
+    if (group.dataset.bound) return;
+    group.dataset.bound = "1";
     group.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", () => {
         briefingSel[group.dataset.side] = btn.dataset.key;
@@ -13613,7 +13514,7 @@ function renderSocialSentimentTables(tableIds) {
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
         <td>${escapeHtml(item.name || "")}</td>
-        <td class="${cls(item.changePct || 0)}">${escapeHtml(item.price || "-")}${item.changePct ? ` (${fmtPct(item.changePct)})` : ""}</td>
+        <td class="${cls(item.changePct || 0)}">${escapeHtml(item.price || "-")}${item.changePct ? ` (${fmtDailyPct(item.changePct)})` : ""}</td>
       </tr>
     `).join("");
   } else {
@@ -13798,7 +13699,7 @@ function renderCommunityHotTopics() {
             <div class="community-hot-top">
               <span class="community-hot-rank">#${idx + 1}</span>
               <span class="community-hot-ticker">${escapeHtml(topic.ticker)}</span>
-              <span class="community-hot-change ${change == null ? "" : cls(change)}">${change == null ? "—" : fmtPct(change)}</span>
+              <span class="community-hot-change ${change == null ? "" : cls(change)}">${change == null ? "—" : fmtDailyPct(change)}</span>
             </div>
             <span class="community-hot-name" title="${escapeHtml(stock ? stock.company : "")}">${escapeHtml(stock ? stock.company : "—")}</span>
             <span class="community-hot-sources">${escapeHtml(sources)}</span>
@@ -14089,13 +13990,13 @@ function communityVoteRankColHtml(rows, kind) {
   if (!rows.length) {
     return `
       <div class="community-vote-rank-col">
-        <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "" : ""} ${meta.label} 순위</h3>
+        <h3 class="community-vote-rank-title community-vote-${kind}">${meta.label} 순위</h3>
         <div class="community-empty">아직 ${meta.label} 투표가 없습니다.</div>
       </div>`;
   }
   return `
     <div class="community-vote-rank-col">
-      <h3 class="community-vote-rank-title community-vote-${kind}">${kind === "buy" ? "" : ""} ${meta.label} 순위</h3>
+      <h3 class="community-vote-rank-title community-vote-${kind}">${meta.label} 순위</h3>
       <div class="community-vote-rank-list">
         ${rows.map((row, i) => {
           const stock = stockByTicker(row.ticker);
@@ -14464,7 +14365,7 @@ function renderCommunityBoard() {
           <span class="community-post-author">${escapeHtml(post.author || "익명")}</span>
           <time class="muted">${escapeHtml(formatCommunityTime(post.createdAt))}</time>
         </div>
-        ${stock ? `<p class="community-post-company muted">${escapeHtml(stock.company)} · 당일 ${fmtPct(stock.changePct)}</p>` : ""}
+        ${stock ? `<p class="community-post-company muted">${escapeHtml(stock.company)} · 당일 ${fmtDailyPct(stock.changePct)}</p>` : ""}
         ${post.ticker ? communityMiniChartHtml(post.ticker) : ""}
         <p class="community-post-body">${highlightCommunityMentions(escapeHtml(post.content))}</p>
         ${comments.length ? `
@@ -14936,9 +14837,30 @@ function setupCommunityBoard() {
 }
 
 // ===== 관심종목 (localStorage) =====
-function initWatchlist(urlList) {
+// 구형 공유 키(mir_watchlist_v1)를 시장별 키로 1회 이관한다. 옛 목록엔 두 시장의
+// 티커가 섞여 있을 수 있으므로 6자리 숫자(KR 종목코드) 패턴으로 나눠 각각 넣는다.
+function migrateLegacyWatchlist() {
+  let legacy = null;
+  try { legacy = JSON.parse(localStorage.getItem(WATCHLIST_LEGACY_KEY) || "null"); } catch (e) { /* ignore */ }
+  if (!Array.isArray(legacy)) return;
+  const norm = [...new Set(legacy.map((t) => String(t || "").trim().toUpperCase()).filter(Boolean))];
+  const kr = norm.filter((t) => /^\d{6}$/.test(t));
+  const us = norm.filter((t) => !/^\d{6}$/.test(t));
   try {
-    const saved = JSON.parse(localStorage.getItem(WATCHLIST_STORAGE_KEY) || "[]");
+    if (us.length && !localStorage.getItem(watchlistStorageKey("us"))) {
+      localStorage.setItem(watchlistStorageKey("us"), JSON.stringify(us));
+    }
+    if (kr.length && !localStorage.getItem(watchlistStorageKey("kr"))) {
+      localStorage.setItem(watchlistStorageKey("kr"), JSON.stringify(kr));
+    }
+    localStorage.removeItem(WATCHLIST_LEGACY_KEY);
+  } catch (e) { /* ignore */ }
+}
+
+function initWatchlist(urlList) {
+  migrateLegacyWatchlist();
+  try {
+    const saved = JSON.parse(localStorage.getItem(watchlistStorageKey()) || "[]");
     watchlist = Array.isArray(saved) ? saved.map((t) => normalizeTickerKey(t)).filter(Boolean) : [];
   } catch (e) {
     watchlist = [];
@@ -14953,8 +14875,10 @@ function initWatchlist(urlList) {
 }
 
 function persistWatchlist() {
-  watchlist = [...new Set(watchlist.filter((t) => stockByTicker(t)))];
-  try { localStorage.setItem(WATCHLIST_STORAGE_KEY, JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
+  // 스냅샷에 없는 티커도 버리지 않는다 — 저장 시점 필터는 시장 전환/스냅샷 누락 때
+  // 목록을 조용히 갉아먹는다. 화면에 뿌릴 때만 stockByTicker 로 거른다.
+  watchlist = [...new Set(watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))];
+  try { localStorage.setItem(watchlistStorageKey(), JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
   const input = byId("bulkInput");
   if (input) input.value = watchlist.join(", ");
   scheduleCloudSyncPush();
@@ -15021,7 +14945,7 @@ function renderWatchlistBar() {
   chips.innerHTML = items.map((item) => `
     <button type="button" class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
       <strong>${escapeHtml(item.ticker)}</strong>
-      <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+      <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
       <span class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거">×</span>
     </button>
   `).join("");
@@ -15116,7 +15040,7 @@ function sma20Recovered(item) {
   const rows = getChartRows(item);
   if (rows.length < 22) return false;
   const closes = rows.map((row) => row.c);
-  const sma = smaArray(closes, 20);
+  const sma = smaSeries(closes, 20);
   const last = rows.length - 1;
   const prev = last - 1;
   return rows[prev].c <= sma[prev] && rows[last].c > sma[last];
@@ -15160,7 +15084,7 @@ function renderWatchAlerts() {
       <button type="button" class="watch-alert-item" data-ticker="${escapeHtml(item.ticker)}">
         <strong>${escapeHtml(item.ticker)}</strong>
         <span>${reasons.map(escapeHtml).join(" · ")}</span>
-        <em class="${cls(item.changePct)}">${fmtPct(item.changePct)}</em>
+        <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
       </button>
     `).join("")
     : `<p class="muted">현재 조건에 걸린 관심종목이 없습니다.</p>`;
@@ -15231,7 +15155,11 @@ async function detectHotUpdate() {
   return false;
 }
 
+let pwaBound = false;
 function setupPwa() {
+  // 재부팅 시 controllerchange/updatefound/beforeinstallprompt 가 중복되지 않게 1회만.
+  if (pwaBound) return;
+  pwaBound = true;
   if ("serviceWorker" in navigator) {
     detectHotUpdate().catch(() => {});
     let refreshing = false;
@@ -15490,7 +15418,7 @@ function renderScreener({ trackSaved = false } = {}) {
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
       <td>${escapeHtml(item.company)}</td>
       <td>${escapeHtml(item.sector)}</td>
-      <td class="${cls(item.changePct)}">${fmtPct(item.changePct)}</td>
+      <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</td>
       <td>${item.rsScore}</td>
       <td>${item.epsRevScore}</td>
@@ -15681,7 +15609,7 @@ function runNlScreener() {
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(it.ticker)}">${escapeHtml(it.ticker)}</button></td>
       <td>${escapeHtml(it.company)}</td>
       <td>${escapeHtml(it.sector)}</td>
-      <td class="${cls(it.changePct)}">${fmtPct(it.changePct)}</td>
+      <td class="${cls(it.changePct)}">${fmtDailyPct(it.changePct)}</td>
       <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>
       <td>${it.rsScore}</td>
       <td>${Number.isFinite(Number(it.rsi14)) ? it.rsi14 : "-"}</td>
@@ -15772,18 +15700,35 @@ function setupNlScreener() {
 async function scanPatternsForScreener(candidates) {
   if (!window.MirProb) return;
   await window.MirProb.ensureStats();
-  const list = candidates.slice(0, 80);
-  for (const item of list) {
-    if (patternScreenerCache.has(item.ticker)) continue;
+  // 최대 80개 상세 JSON — 순차 await 는 수십 초가 걸린다. runDeepScan 과 같은
+  // 방식으로 동시 6개 펌프를 돌려 병렬화한다.
+  const queue = candidates.slice(0, 80).filter((item) => !patternScreenerCache.has(item.ticker));
+  const CONCURRENCY = 6;
+  let idx = 0, active = 0, done = 0;
+  const scanOne = async (item) => {
     try {
       const res = await fetch((window.MirMarket && window.MirMarket.detailPath(item.ticker)) || `data/details/${encodeURIComponent(item.ticker)}.json`, { cache: "no-cache" });
-      if (!res.ok) continue;
+      if (!res.ok) return;
       const detail = await res.json();
       const rows = (detail.chartSeries || []).map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
       const cur = window.MirProb.detectCurrentPatterns(rows);
       patternScreenerCache.set(item.ticker, cur.map((p) => p.pattern));
     } catch (e) { /* skip */ }
-  }
+  };
+  await new Promise((resolve) => {
+    const pump = () => {
+      if (done >= queue.length) return resolve();
+      while (active < CONCURRENCY && idx < queue.length) {
+        const item = queue[idx++];
+        active++;
+        scanOne(item).finally(() => {
+          active--; done++;
+          pump();
+        });
+      }
+    };
+    pump();
+  });
 }
 
 function setupScreenerEvents() {
@@ -15857,7 +15802,7 @@ function setupScreenerEvents() {
 // ===== 종목 비교 =====
 const COMPARE_METRICS = [
   ["가격", (i) => priceOrDash(i.price)],
-  ["당일", (i) => fmtPct(i.changePct), (i) => cls(i.changePct)],
+  ["당일", (i) => fmtDailyPct(i.changePct), (i) => cls(i.changePct)],
   ["1주", (i) => fmtPct(i.weekChangePct), (i) => cls(i.weekChangePct)],
   ["1개월", (i) => fmtPct(i.monthChangePct), (i) => cls(i.monthChangePct)],
   ["3개월", (i) => fmtPct(i.threeMonthChangePct), (i) => cls(i.threeMonthChangePct)],
@@ -16805,7 +16750,9 @@ function applyBacktestPresetDates() {
   const endInput = byId("backtestEndDate");
   if (!startInput || !endInput) return;
   const end = backtestSnapshotEndDate();
-  const min = "2021-06-17";
+  // 상세 JSON 의 가격 이력은 스냅샷 기준 약 5년 롤링 윈도우다. 하한을 고정 날짜로
+  // 박아두면 시간이 갈수록 실제 데이터 시작일과 어긋난다 — 스냅샷 날짜에서 유도.
+  const min = shiftIsoDateByYears(end, -5);
   startInput.min = min;
   endInput.min = min;
   startInput.max = end;
@@ -17020,9 +16967,23 @@ function exportBacktestCsv() {
 // ===== Cloud sync (watchlist + portfolio + alerts) =====
 const CLOUD_SYNC_KEY = "mir_cloud_sync_v1";
 
+// 반대 시장의 저장분을 읽는다(현재 시장은 메모리의 watchlist 가 최신).
+function storedWatchlist(marketId) {
+  const current = isKrMarket() ? "kr" : "us";
+  if (marketId === current) return watchlist.slice();
+  try {
+    const saved = JSON.parse(localStorage.getItem(watchlistStorageKey(marketId)) || "[]");
+    return Array.isArray(saved) ? saved.filter(Boolean) : [];
+  } catch (e) { return []; }
+}
+
 function cloudSyncPayload() {
   return {
+    // legacy `watchlist`(현재 시장 목록)는 구형 클라이언트 호환용으로 남긴다.
+    // 시장별 필드를 따로 실어 한쪽 시장 사용이 다른 쪽 목록을 덮어쓰지 않게 한다.
     watchlist,
+    watchlistUs: storedWatchlist("us"),
+    watchlistKr: storedWatchlist("kr"),
     portfolio,
     alertSettings: watchAlertSettings(),
     updatedAt: Date.now(),
@@ -17054,9 +17015,28 @@ async function pullCloudSync() {
     const payload = await res.json();
     const prefs = payload && payload.prefs;
     if (!prefs) return;
-    if (Array.isArray(prefs.watchlist) && prefs.watchlist.length) {
-      watchlist = [...new Set(prefs.watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))].slice(0, 80);
+    const marketId = isKrMarket() ? "kr" : "us";
+    const scoped = marketId === "kr" ? prefs.watchlistKr : prefs.watchlistUs;
+    const other = marketId === "kr" ? prefs.watchlistUs : prefs.watchlistKr;
+    if (Array.isArray(scoped) && scoped.length) {
+      watchlist = [...new Set(scoped.map((t) => normalizeTickerKey(t)).filter(Boolean))].slice(0, 80);
       persistWatchlist();
+    } else if (!Array.isArray(scoped) && Array.isArray(prefs.watchlist) && prefs.watchlist.length) {
+      // 시장별 필드가 없는 구형 payload: 현재 시장 패턴(KR=6자리 숫자)에 맞는 것만 취한다.
+      const mine = prefs.watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean)
+        .filter((t) => (marketId === "kr") === /^\d{6}$/.test(t));
+      if (mine.length) {
+        watchlist = [...new Set(mine)].slice(0, 80);
+        persistWatchlist();
+      }
+    }
+    // 반대 시장 목록은 저장소만 갱신한다(값이 실려 온 경우에만 — 빈 값으로 지우지 않는다).
+    if (Array.isArray(other) && other.length) {
+      const otherId = marketId === "kr" ? "us" : "kr";
+      try {
+        localStorage.setItem(watchlistStorageKey(otherId),
+          JSON.stringify([...new Set(other.map((t) => String(t || "").trim().toUpperCase()).filter(Boolean))].slice(0, 80)));
+      } catch (e) { /* ignore */ }
     }
     if (Array.isArray(prefs.portfolio) && prefs.portfolio.length) {
       portfolio = prefs.portfolio.filter((p) => p && p.ticker).slice(0, 60);
@@ -17794,9 +17774,30 @@ let aiChatSessions = {}; // Structure: { [sessionId]: { name: string, history: A
 let currentSessionId = null;
 
 // 로컬스토리지 대화 기록 저장
+// localStorage 는 ~5MB 한도가 있다. 세션·메시지를 무한히 쌓으면 언젠가
+// setItem 이 QuotaExceededError 로 터지고, 그 뒤로는 아무 것도 저장되지 않는다.
+const AI_SESSIONS_MAX = 30;          // 최신 30개 세션만 보관
+const AI_SESSION_MESSAGES_MAX = 200; // 세션당 최신 200개 메시지만 보관
+
+function pruneAiSessions() {
+  const entries = Object.entries(aiChatSessions)
+    .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
+  entries.slice(AI_SESSIONS_MAX).forEach(([id]) => {
+    if (id !== currentSessionId) delete aiChatSessions[id];
+  });
+  Object.values(aiChatSessions).forEach((session) => {
+    if (Array.isArray(session.history) && session.history.length > AI_SESSION_MESSAGES_MAX) {
+      session.history.splice(0, session.history.length - AI_SESSION_MESSAGES_MAX);
+    }
+  });
+}
+
 function saveAiSessionsToStorage() {
-  localStorage.setItem("mir_ai_sessions", JSON.stringify(aiChatSessions));
-  localStorage.setItem("mir_ai_current_session", currentSessionId);
+  pruneAiSessions();
+  try {
+    localStorage.setItem("mir_ai_sessions", JSON.stringify(aiChatSessions));
+    localStorage.setItem("mir_ai_current_session", currentSessionId);
+  } catch (e) { /* 쿼터 초과 등 — 저장 실패해도 화면 동작은 유지 */ }
 }
 
 // 대화 기록 불러오기 및 사이드바 렌더링
@@ -17898,14 +17899,21 @@ function renderAiHistoryList() {
       }
     }
     
-    document.addEventListener("click", (e) => {
-      if (menu && !menu.contains(e.target) && e.target !== trigger) {
-        menu.classList.remove("is-open");
-      }
-    });
-    
     historyList.appendChild(item);
   });
+
+  // 바깥 클릭 시 컨텍스트 메뉴 닫기 — 세션×렌더 횟수만큼 document 리스너가
+  // 쌓이던 것을 위임 리스너 1개로 대체한다.
+  if (!renderAiHistoryList._outsideBound) {
+    renderAiHistoryList._outsideBound = true;
+    document.addEventListener("click", (e) => {
+      document.querySelectorAll(".session-context-menu.is-open").forEach((m) => {
+        if (!m.contains(e.target) && !e.target.closest(".session-menu-trigger")) {
+          m.classList.remove("is-open");
+        }
+      });
+    });
+  }
 }
 
 // 인라인 세션 이름 편집 실행 헬퍼
@@ -17999,11 +18007,13 @@ function getPersonalizedWelcomeData() {
   let bestName = "엔비디아";
   let maxChange = 0;
   
-  if (window.watchlist && window.watchlist.length > 0) {
-    window.watchlist.forEach(t => {
+  // 모듈 변수 watchlist 를 직접 참조한다 — window.watchlist 는 존재하지 않고,
+  // 스냅샷의 등락률 필드명은 changePercent 가 아니라 changePct 다.
+  if (Array.isArray(watchlist) && watchlist.length > 0) {
+    watchlist.forEach(t => {
       const stock = stockByTicker(t);
-      if (stock && stock.changePercent != null) {
-        const absChange = Math.abs(parseFloat(stock.changePercent));
+      if (stock && stock.changePct != null) {
+        const absChange = Math.abs(parseFloat(stock.changePct));
         if (absChange > maxChange) {
           maxChange = absChange;
           bestTicker = t;
@@ -18049,7 +18059,7 @@ function startNewAiChatSession() {
         const cardStrong = firstCard.querySelector("strong");
         const cardSpan = firstCard.querySelector("span");
         if (cardStrong) cardStrong.textContent = `${welcomeData.ticker} 분석해줘`;
-        if (cardSpan) cardSpan.textContent = `${escapeHtml(welcomeData.name)}의 핵심 기술 지표, 실적 상황을 종합 점검합니다.`;
+        if (cardSpan) cardSpan.textContent = `${welcomeData.name}의 핵심 기술 지표, 실적 상황을 종합 점검합니다.`; // textContent 라 escape 불필요(이중 이스케이프 방지)
       }
     }
   }
@@ -18390,7 +18400,7 @@ function aiSectorEvidence(item) {
   return aiEvidenceCard(
     "섹터 흐름",
     `${item.sector || "섹터"} ${rel >= 0 ? "대비 강함" : "대비 약함"}`,
-    `섹터 평균 ${fmtPct(sectorAvg)} · 종목 ${fmtPct(item.changePct)} · RS 순위 ${rank || "-"}/${ranked.length || "-"}`,
+    `섹터 평균 ${fmtPct(sectorAvg)} · 종목 ${fmtDailyPct(item.changePct)} · RS 순위 ${rank || "-"}/${ranked.length || "-"}`,
     rel >= 0 ? "is-positive" : "is-negative"
   );
 }
@@ -18562,7 +18572,7 @@ function aiSectorPanel(item) {
     `${index + 1}`,
     `<strong>${escapeHtml(row.ticker)}</strong>`,
     escapeHtml(row.company || ""),
-    `<span class="${cls(row.changePct)}">${fmtPct(row.changePct)}</span>`,
+    `<span class="${cls(row.changePct)}">${fmtDailyPct(row.changePct)}</span>`,
     `${Math.round(Number(row.rsScore || 0))}`,
   ]);
   return aiModePanel("섹터 흐름", `${item.sector || "-"} 상대강도`, aiMiniTable(["#", "티커", "회사", "당일", "RS"], rows, "동일 섹터 비교 데이터가 없습니다."));
@@ -19267,10 +19277,11 @@ function drawAiWidgetChart(item, svg, state, metaEl) {
         svg.appendChild(tooltip);
       }
 
-      const priceVal = isKrMarket() ? `${parseFloat(targetBar.close || 0).toLocaleString()}원` : `$${parseFloat(targetBar.close || 0).toFixed(2)}`;
-      const volVal = `거래량: ${parseFloat(targetBar.volume || 0).toLocaleString()}`;
-      
-      tooltip.querySelector(".tip-date").textContent = targetBar.time || "";
+      // 바는 {o,h,l,c,v,d} 구조다 — .close/.volume/.time 으로 읽으면 항상 0/빈값이 나온다.
+      const priceVal = isKrMarket() ? `${parseFloat(targetBar.c || 0).toLocaleString()}원` : `$${parseFloat(targetBar.c || 0).toFixed(2)}`;
+      const volVal = `거래량: ${parseFloat(targetBar.v || 0).toLocaleString()}`;
+
+      tooltip.querySelector(".tip-date").textContent = targetBar.d || "";
       tooltip.querySelector(".tip-price").textContent = `종가: ${priceVal}`;
       tooltip.querySelector(".tip-volume").textContent = volVal;
 
@@ -19389,12 +19400,19 @@ function setupAiWidgetChartControls(widget, item, state) {
       e.stopPropagation();
       dropdownMenu.classList.toggle("is-open");
     });
-    
-    document.addEventListener("click", (e) => {
-      if (!dropdownMenu.contains(e.target) && e.target !== dropdownTrigger) {
-        dropdownMenu.classList.remove("is-open");
-      }
-    });
+
+    // 외부 클릭 닫기는 위임 리스너 1개로 — 위젯이 만들어질 때마다 document 에
+    // 리스너를 더하면 사라진 위젯의 메뉴 참조가 계속 쌓인다.
+    if (!setupAiWidgetChartControls._outsideBound) {
+      setupAiWidgetChartControls._outsideBound = true;
+      document.addEventListener("click", (e) => {
+        document.querySelectorAll(".ai-indicators-dropdown.is-open").forEach((menu) => {
+          if (!menu.contains(e.target) && !e.target.closest(".ai-dropdown-trigger-btn")) {
+            menu.classList.remove("is-open");
+          }
+        });
+      });
+    }
   }
 
   // 지표 체크박스 바인딩
@@ -19809,7 +19827,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
         if (item.news && item.news.length > 0) {
           newsContainer.innerHTML = item.news.slice(0, 3).map(n => `
             <div class="widget-news-item">
-              <a href="${n.url}" target="_blank" rel="noopener">${escapeHtml(n.title)}</a>
+              <a href="${escapeHtml(n.url || "#")}" target="_blank" rel="noopener">${escapeHtml(n.title)}</a>
               <small>${escapeHtml(n.source)} · ${escapeHtml(n.time || "")}</small>
             </div>
           `).join("");
@@ -19968,7 +19986,7 @@ function aiDashCardHtml(item) {
       </div>
       <div class="ai-dash-price">
         <b>${priceOrDash(item.price)}</b>
-        <span class="${chgCls}">${fmtPct(chg)}</span>
+        <span class="${chgCls}">${fmtDailyPct(chg)}</span>
       </div>
     </div>
     <div class="ai-dash-stats">
@@ -20205,7 +20223,20 @@ function setupAiChatModeEvents() {
   if (form && input && popup) {
     let activeIndex = -1;
     let results = [];
-    
+
+    // 시장 배지 — 6자리 숫자를 무조건 KOSPI, 나머지를 NASDAQ 으로 찍으면
+    // 코스닥 종목·NYSE 종목이 전부 오표기된다. 스냅샷의 market/groups 를 우선
+    // 사용하고, 알 수 없으면 중립 라벨(KRX/US)로 둔다.
+    const autocompleteMarketBadge = (s) => {
+      const market = String(s.market || "").toLowerCase();
+      if (market === "kospi") return "KOSPI";
+      if (market === "kosdaq") return "KOSDAQ";
+      const groups = s.groups || [];
+      if (groups.includes("idx_nasdaq") || groups.includes("idx_ndx100")) return "NASDAQ";
+      if (groups.includes("idx_nyse")) return "NYSE";
+      return /^\d{6}$/.test(s.ticker) ? "KRX" : "US";
+    };
+
     // 자동완성 추천 입력 리스너
     input.addEventListener("input", () => {
       const value = input.value.trim().toLowerCase();
@@ -20231,7 +20262,7 @@ function setupAiChatModeEvents() {
              <span class="ticker-badge">${escapeHtml(s.ticker)}</span>
              <span class="company-name">${escapeHtml(s.company)}</span>
            </div>
-           <span class="market-badge">${/^\d{6}$/.test(s.ticker) ? "KOSPI" : "NASDAQ"}</span>
+           <span class="market-badge">${escapeHtml(autocompleteMarketBadge(s))}</span>
          </div>
        `).join("");
        popup.hidden = false;

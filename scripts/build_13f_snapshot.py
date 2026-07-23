@@ -24,6 +24,7 @@ if str(SCRIPTS) not in sys.path:
 
 from briefing_store import repository_publish_lock  # noqa: E402
 from institutions_13f_registry import UNIQUE_INSTITUTIONS  # noqa: E402
+from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
 
 OUT_JSON = ROOT / "data" / "institutional_13f.json"
 OUT_JS = ROOT / "data" / "institutional_13f.js"

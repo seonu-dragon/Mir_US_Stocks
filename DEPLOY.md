@@ -11,10 +11,15 @@
 
 ## 캐시 버전
 
-`build_id.js`의 `MIR_BUILD_ID`가 단일 기준입니다. 버전을 올릴 때 함께 갱신하세요.
+**손으로 갱신하지 마세요.** 자산(app.js/styles.css 등)을 바꿨으면 배포 전에 한 번:
 
-- `index.html`, `analysis.html` — `?v=` 쿼리
-- `sw.js` — `BUILD_ID` / `CACHE_NAME`
+```powershell
+py scripts/stamp_build_id.py     # ?v= 를 파일 내용 md5 로, MIR_BUILD_ID·sw.js 폴백까지 일괄 스탬프
+py scripts/stamp_build_id.py --check   # CI 용: 어긋남만 확인
+```
+
+과거 수동 갱신 시절 `?v=` 값이 5가지로 갈라진 채 2주간 방치된 사고가 있었습니다
+(상세는 CLAUDE.md "배포 전 반드시" 참고).
 
 ## 배포 선택지
 
@@ -36,23 +41,25 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 
 | KST | 작업 | 워크플로 |
 |---|---|---|
-| 05:05 | 미국 시장 스냅샷 | `daily-market-snapshot.yml` |
-| 06:00 | 미국 장마감 브리핑 | `us-close-briefing.yml` |
-| 07:00 | 국내 개장 전 브리핑 | `korea-premarket-briefing.yml` |
-| 15:30 | KR DART 공시 | `kr-disclosures.yml` |
-| 15:40 | 국내 시장 스냅샷 | `daily-korea-market-snapshot.yml` |
-| 15:42 | 국내 장마감 브리핑 | `korea-close-briefing.yml` |
-| 21:00 | 미국 개장 전 브리핑 | `us-premarket-briefing.yml` |
-| (일정) | 미국 내부자 거래 | `insider-trades.yml` |
-| (일정) | 미국 의회 매매 | `congress-trades.yml` |
-| (분기) | 13F 포트폴리오 | `13f-quarterly-refresh.yml` |
-| (일정) | 공매도 | `short-interest.yml` |
-| (일정) | 액티비스트 13D/G | `activist-stakes.yml` |
-| (일정) | 8-K 주요 공시 | `material-events.yml` |
-| (일정) | IPO 캘린더 | `ipo-calendar.yml` |
-| (일정) | 백악관 일정 | `white-house-schedule.yml` |
-| (주간) | 실적 이력 | `weekly-earnings-history.yml` |
-| (일정) | 국내 카드뉴스 | `daily-korea-news.yml` |
+| 04:43 | 국내 뉴스 Top 5 | `daily-korea-news.yml` |
+| 05:05 | 미국 시장 스냅샷(+매크로·옵션·배당·컨센서스) | `daily-market-snapshot.yml` |
+| 05:30 | 미국 실적 캘린더 | `daily-earnings-calendar.yml` |
+| 05:34 | 미국 장마감 브리핑 | `us-close-briefing.yml` |
+| 06:00 | 백악관 일정 | `white-house-schedule.yml` |
+| 06:06 | 국내 개장 전 브리핑 | `korea-premarket-briefing.yml` |
+| 13:17 | 미국 내부자 거래 | `insider-trades.yml` |
+| 13:23 | 8-K 주요 공시 | `material-events.yml` |
+| 13:28 | 액티비스트 13D/G | `activist-stakes.yml` |
+| 13:33 | IPO 캘린더 | `ipo-calendar.yml` |
+| 13:38 | 미국 의회 매매 | `congress-trades.yml` |
+| 14:47 화·금 | 공매도 잔고 | `short-interest.yml` |
+| 15:30 평일 | KR DART 공시 | `kr-disclosures.yml` |
+| 15:42 | 국내 장마감 브리핑 + **KR 스냅샷(실제 일일 경로)** | `korea-close-briefing.yml` |
+| 21:07 | 미국 개장 전 브리핑 | `us-premarket-briefing.yml` |
+| 일요일 03:02 | 실적 이력(주간) | `weekly-earnings-history.yml` |
+| 일요일 04:20 | S/R·돌파 통계 + sitemap(주간) | `weekly-edge-stats.yml` |
+| 매월 5일 등 | 13F 포트폴리오(분기성) | `13f-quarterly-refresh.yml` |
+| (dispatch 전용) | 국내 시장 스냅샷 단독 실행 | `daily-korea-market-snapshot.yml` |
 
 각 워크플로우는 **자기만의 concurrency 그룹**(`mir-publish-${{ github.workflow }}`)을 갖습니다.
 같은 워크플로우의 중복 실행만 직렬화하고, 서로 다른 워크플로우는 병렬로 돕니다 —
@@ -67,21 +74,21 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - GitHub Pro가 없으면 Private 저장소에서 Pages를 공개로 유지할 수 없습니다.
    - 현재 저장소는 Public이며, API 키는 **Repository Secrets**에만 저장됩니다.
 
-2. **Repository Secrets 등록**
+2. **Repository Secrets 등록** (워크플로우가 실제 참조하는 전체 목록)
    - Settings → Secrets and variables → Actions → New repository secret
-   - `GEMINI_API_KEY` (필수, 브리핑)
-   - `DART_API_KEY` (선택, KR DART 공시)
-   - `TELEGRAM_BOT_TOKEN` (선택, 관심종목 알림·진행 알림)
-   - `TELEGRAM_CHAT_ID` (선택, 진행 알림용)
-   - `NOTION_TOKEN` (키움 파이프라인, Notion Integration Secret)
-   - `NOTION_DATABASE_ID` (키움 파이프라인, `cc26d8ab4b524db19cda74797c01e430`)
-   - `SITE_BASE_URL` (키움 파이프라인, `https://seonu-dragon.github.io/Mir_US_Stocks`)
+   - `GEMINI_API_KEY` (브리핑·뉴스 Top 5)
+   - `DART_API_KEY` (KR 공시·배당·수주·실적 계열 전반)
+   - `FINNHUB_API_KEY` (US 밸류에이션 지표·애널리스트 컨센서스)
+   - `KRX_ID` / `KRX_PW` (KRX 회원 로그인 — 국내 공매도 잔고)
+   - `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` (국내 뉴스 검색)
+   - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` (브리핑 진행 알림)
 
-   일괄 등록: `gh auth login` 후 `.\scripts\setup_kiwoom_secrets.ps1`
-
-3. **Cloudflare Worker Secrets** (커뮤니티·동기화·텔레그램)
-   - `TELEGRAM_BOT_TOKEN` — `/alerts/telegram` 엔드포인트
-   - `COMMUNITY_KV` — 커뮤니티 + 클라우드 동기화 KV 바인딩
+3. **Cloudflare Worker 바인딩** (`worker/yahoo-proxy.js` 가 실제 사용하는 목록.
+   워커는 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포)
+   - Secrets: `GEMINI_API_KEY`, `FINNHUB_API_KEY`, `NAVER_CLIENT_ID`,
+     `NAVER_CLIENT_SECRET`, `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`
+   - KV: `COMMUNITY_KV` (커뮤니티+클라우드 동기화), `MOVE_CACHE` (시세 캐시)
+   - Workers AI 바인딩: `AI`
 
 4. **Actions 권한 확인**
    - Settings → Actions → General → Workflow permissions → **Read and write permissions**
@@ -90,27 +97,17 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - Actions 탭에서 각 워크플로를 `Run workflow`로 수동 테스트
    - 성공하면 GitHub Pages에 자동 반영됩니다.
 
-### 키움 커뮤니티 파이프라인 (Kiwoom Content Pipeline)
+### 키움 커뮤니티 글쓰기 (로컬 CLI)
 
-| KST | 배치 | 워크플로 |
-|---|---|---|
-| 07:00 | 국내 상승확률 스캐너 상위 5개 | `kiwoom_content_pipeline.yml` |
-| 13:00 | 해외 스캐너 10 + 커뮤니티 언급 5 | `kiwoom_content_pipeline.yml` |
-
-**Notion DB:** [Kiwoom Supporters Daily Posts](https://www.notion.so/cc26d8ab4b524db19cda74797c01e430)
-
-**Notion Integration (최초 1회)**
-
-1. [Notion Integrations](https://www.notion.so/my-integrations) → New integration → Internal
-2. Secret 복사 → `.env`에 `NOTION_TOKEN="secret_..."` 추가
-3. 위 Notion DB 페이지 → `...` → 연결 → Integration 추가
-
-**로컬 테스트**
+GitHub Actions 파이프라인(`kiwoom_content_pipeline.yml`)은 2026-07-07 에 폐기했고,
+지금은 **로컬 CLI** 로 돌립니다. 시작 프롬프트는
+`SNS/Gemini_첫_프롬프트.md` Section 4, 흐름은 prepare_targets → AI 작성 →
+publish_to_notion 입니다. Notion 연동(`NOTION_TOKEN` 등)은 레포 Secrets 가 아니라
+로컬 `.env` 에만 필요합니다.
 
 ```powershell
 python scripts/build_kiwoom_exports.py
 python automation/main.py --batch domestic_morning
-python automation/record_engagement.py --ticker NVDA --posted-url "https://..." --likes 5 --status "업로드 완료"
 ```
 
 ### 로컬 개발

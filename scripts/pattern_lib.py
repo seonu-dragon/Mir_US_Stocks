@@ -31,7 +31,6 @@ CONFIRM_MAX_BARS = 40  # 마지막 피벗 후 넥라인 돌파까지 허용하�
 FLAT_SLOPE = 0.0006    # 삼각형: 봉당 평균 대비 기울기 |s| < 이 값이면 "수평"
 TRI_LOOKBACK = 90      # 삼각형 판정에 쓰는 최근 피벗 시간 창(봉)
 SR_LOOKBACK = 120      # 지지/저항 수평선 산출 창
-SR_TOL = 0.02          # 지지/저항 수평선 군집 허용 오차
 
 HORIZONS = (1, 3, 5, 10, 20, 60)   # 전방 수익률 측정 기간(거래일)
 RECENT_WINDOW = 10       # 브라우저: 최근 N봉 내 확정된 패턴을 "현재 패턴"으로 본다
@@ -55,8 +54,11 @@ PATTERN_LABELS = {
     "triple_top": "삼중 천장형",
     "triple_bottom": "삼중 바닥형",
     "broadening_triangle": "확산형 삼각수렴",
-    "diamond_top": "다이아몬드 천장형",
-    "diamond_bottom": "다이아몬드 바닥형",
+    # 다이아몬드 type 문자열은 돌파 방향 기준(diamond_top=상방 돌파 +1). pattern_stats.json
+    # 키가 이 기준으로 축적돼 있어 type 은 유지하고 표시 라벨만 방향과 일치시킨다
+    # (analysis.js PATTERN_LABELS 와 동일해야 한다).
+    "diamond_top": "다이아몬드 상방 돌파",
+    "diamond_bottom": "다이아몬드 하방 이탈",
     "rounding_bottom": "라운딩 바닥형(U자형)",
     "complex_hns": "복합 헤드앤숄더",
     "cup_and_handle": "컵 앤 핸들",

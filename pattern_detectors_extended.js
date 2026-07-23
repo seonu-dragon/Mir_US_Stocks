@@ -1,14 +1,11 @@
 /* Extended chart pattern detectors — keep in sync with scripts/pattern_detectors_extended.py */
 (function (global) {
-  const BOX_LOOKBACK = 50;
-  const BOX_FLAT_SLOPE = 0.003;
-  const WEDGE_SLOPE_TOL = 0.001;
-  const FLAGPOLE_MIN = 0.10;
+  // 웨지·박스·깃발·라운딩 감지기는 analysis.js 본체에 있어 그쪽 상수를 쓴다.
+  // (BOX_*/WEDGE_*/FLAGPOLE_MIN/CUP_WIN 은 py 포팅본에만 필요 — 여기서는 미사용이라 제거)
   const PENNANT_POLE_MIN = 0.05;
   const PENNANT_POLE_MAX = 0.15;
   const GAP_MIN_PCT = 0.02;
   const FAKE_BREAK_WIN = 10;
-  const CUP_WIN = 40;
   const HANDLE_MAX_PULLBACK = 0.15;
 
   function push(out, pattern, dir, confirm_idx, neckline, extra) {
@@ -196,8 +193,10 @@
       let avg = 0;
       for (let i = k - 20; i < k; i += 1) avg += rows[i].v || 0;
       avg /= 20;
+      if (!avg) avg = 1; // py 포팅본과 동일: 20봉 평균 거래량 0이면 1로 치환
       if ((rows[k].v || 0) < avg * 2.5) continue;
-      const ret = (rows[k].c - rows[k - 1].c) / rows[k - 1].c;
+      const prevC = rows[k - 1].c;
+      const ret = prevC ? (rows[k].c - prevC) / prevC : 0; // py와 동일한 0나눗셈 가드
       if (ret > 0.02) push(out, "volume_climax_up", +1, k, rows[k].c);
       else if (ret < -0.02) push(out, "volume_climax_down", -1, k, rows[k].c);
     }

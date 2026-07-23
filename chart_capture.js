@@ -130,12 +130,13 @@
     return `<path d="${d.trim()}" fill="none" stroke="${color}" stroke-width="${width}" stroke-dasharray="${dash || ""}"></path>`;
   }
 
+  // 지지/저항 계산용 컨텍스트: 보이는 구간(periodBars) 앞쪽 이력을 붙여 최소 252봉을
+  // 확보한다(app.js chartAnalysisContextRows 와 동일한 의미). 이전 구현은 이미
+  // periodBars 로 자른 base 안에서 다시 잘라 확장이 무효였다 — 1M 캡처가 22봉만으로
+  // S/R 을 계산하는 no-op 이었다.
   function chartAnalysisContextRows(allRows, periodBars) {
-    const base = allRows.slice(-periodBars);
-    const windowSize = base.length;
-    const end = base.length;
-    const ctxStart = Math.max(0, end - Math.max(252, windowSize + 80));
-    return base.slice(ctxStart, end);
+    const ctx = Math.max(252, periodBars + 80);
+    return allRows.slice(Math.max(0, allRows.length - ctx));
   }
 
   function renderSupportResistance(levels, rows, xFor, yFor, padL, plotW, min, max, market) {

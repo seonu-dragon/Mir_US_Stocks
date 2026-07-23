@@ -69,7 +69,12 @@
     </div>
     <p class="status" id="captureStatus">준비 중</p>
   </div>
-  <script src="analysis.js"></script>
-  <script src="chart_capture.js"></script>
+  <!-- pattern_detectors_extended.js 는 analysis.js 보다 먼저 — 없으면 MirPatternExt 가
+       비어 확장 패턴 40여 종이 캡처에서 조용히 빠진다(analysis.html 과 같은 순서).
+       ?v= 는 stamp_build_id.py 가 인식하는 캐시버스터 형식의 자리표시자다(현재 이 파일은
+       스탬프 대상 HTML_FILES 에 없어 값은 비워 둔다). -->
+  <script src="pattern_detectors_extended.js?v="></script>
+  <script src="analysis.js?v="></script>
+  <script src="chart_capture.js?v="></script>
 </body>
 </html>

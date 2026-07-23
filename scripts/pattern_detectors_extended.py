@@ -176,6 +176,9 @@ def detect_broadening(rows, z):
 
 
 def detect_diamond(rows, z):
+    # 주의: diamond_top/diamond_bottom 은 '돌파 방향' 기준 이름이다(top=상방 돌파 +1,
+    # bottom=하방 이탈 -1). 교과서의 위치 기준(천장/바닥)과 다르지만 pattern_stats.json
+    # 키가 이 기준으로 축적돼 있어 이름은 유지한다. JS(analysis.js detectDiamond)와 동일.
     out = []
     for i in range(len(z) - 6):
         p = z[i : i + 7]
@@ -221,10 +224,19 @@ def detect_rounding_bottom(rows):
         det = s * (sum_x2 * sum_x4 - sum_x3 * sum_x3) - sum_x * (sum_x * sum_x4 - sum_x2 * sum_x3) + sum_x2 * (sum_x * sum_x3 - sum_x2 * sum_x2)
         if abs(det) < 1e-5:
             continue
-        a = (sum_y * (sum_x2 * sum_x4 - sum_x3 * sum_x3) - sum_x * (sum_xy * sum_x4 - sum_x2y * sum_x3) + sum_x2 * (sum_xy * sum_x3 - sum_x2y * sum_x2)) / det
-        b = (s * (sum_xy * sum_x4 - sum_x2y * sum_x3) - sum_y * (sum_x * sum_x4 - sum_x2 * sum_x3) + sum_x2 * (sum_x * sum_x2y - sum_xy * sum_x2)) / det
-        axis = -b / (2 * a) if a else 0
-        if a > 0.005 and win * 0.35 < axis < win * 0.65:
+        # 2차 회귀 y = c0 + c1·x + c2·x² 의 크래머 공식. 예전 코드는 1열 치환(= 절편
+        # c0 ≈ 주가 수준)을 곡률로 착각해 'a > 0.005' 가 사실상 항상 참이었고, 축 위치도
+        # 절편으로 나눠 무의미했다. 곡률은 x² 계수(c2 = 3열 치환)다.
+        c1 = (s * (sum_xy * sum_x4 - sum_x2y * sum_x3) - sum_y * (sum_x * sum_x4 - sum_x2 * sum_x3) + sum_x2 * (sum_x * sum_x2y - sum_xy * sum_x2)) / det
+        c2 = (s * (sum_x2 * sum_x2y - sum_xy * sum_x3) - sum_x * (sum_x * sum_x2y - sum_xy * sum_x2) + sum_y * (sum_x * sum_x3 - sum_x2 * sum_x2)) / det
+        if not c2 > 0:  # 위로 볼록(천장)이나 직선이면 바닥형이 아니다
+            continue
+        axis = -c1 / (2 * c2)
+        # 곡률 c2 는 절대 가격 단위라 고정 임계값은 가격대에 따라 감도가 뒤틀린다.
+        # 평균가로 정규화해 $50 종목 기준(0.005/50 = 1e-4)의 감도를 모든 가격대에
+        # 동일하게 적용한다(JS detectRoundingBottom 과 반드시 동일하게 유지).
+        mean_y = sum_y / s
+        if mean_y > 0 and c2 / mean_y > 1e-4 and win * 0.35 < axis < win * 0.65:
             cup_lip = max(ys[0], ys[-1])
             ci = pl._confirm_break(rows, k - 1, cup_lip, +1, None)
             if ci is not None and ci >= k:

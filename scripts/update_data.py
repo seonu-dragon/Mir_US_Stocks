@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import tempfile
+import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -2716,12 +2717,35 @@ def git_push_updates(updated_at_kst):
             text=True,
             check=True,
         ).stdout.strip() or "main"
-        subprocess.run(["git", "fetch", "origin", branch], cwd=ROOT, check=True)
-        subprocess.run(["git", "pull", "--rebase", "origin", branch], cwd=ROOT, check=True)
-        subprocess.run(["git", "push", "origin", branch], cwd=ROOT, check=True)
-        print("[Git] Pushed market data to remote.")
     except subprocess.CalledProcessError as exc:
-        print(f"[Git] Push failed: {exc}")
+        print(f"[Git] Commit failed: {exc}")
+        raise SystemExit(1)
+
+    # concurrency 그룹이 워크플로우별로 분리되어(2026-07-23) 다른 데이터
+    # 워크플로우와 push 가 병렬로 경합할 수 있다. sec_client.git_publish 와
+    # 같은 전략: 이 스크립트는 매 실행마다 스냅샷을 통째로 재생성하므로
+    # 충돌 시 방금 만든 우리 버전을 채택한다(-X theirs 는 rebase 에서
+    # replay 중인 로컬 커밋을 가리킨다). 끝내 실패하면 비-0 종료 —
+    # 초록 CI 뒤에서 하루치 스냅샷이 조용히 미발행되는 것을 막는다.
+    for attempt in range(1, 4):
+        try:
+            subprocess.run(["git", "fetch", "origin", branch], cwd=ROOT, check=True)
+            subprocess.run(
+                ["git", "pull", "--rebase", "-X", "theirs", "origin", branch],
+                cwd=ROOT, check=True,
+            )
+            subprocess.run(["git", "push", "origin", branch], cwd=ROOT, check=True)
+            print("[Git] Pushed market data to remote.")
+            return
+        except subprocess.CalledProcessError as exc:
+            subprocess.run(
+                ["git", "rebase", "--abort"],
+                cwd=ROOT, capture_output=True, text=True, check=False,
+            )
+            print(f"[Git] Push attempt {attempt} failed: {exc}")
+            if attempt < 3:
+                time.sleep(10)
+    raise SystemExit(1)
 
 
 # Sections produced by a separate generator (not by this script). Carry them over from

@@ -51,10 +51,15 @@ concurrency:
 
 jobs:
   deploy:
+    # cancelled 로 끝난 run(같은 워크플로우의 대기 교체 등)까지 배포를 돌리면
+    # 아티팩트 수백 MB 업로드만 낭비된다. 부분 push 를 놓칠 수 있는 failure 는
+    # 배포한다(success 만 거르면 안 됨).
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion != 'cancelled'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,10 +67,32 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(~68MB, 2026-07-23 실측).
+      # 레포에는 그대로 남는다 — 여기서 지우는 건 이 러너의 체크아웃뿐이다.
+      # 주의: data/ 의 .js/.json 쌍은 파일마다 브라우저가 읽는 쪽이 다르다.
+      #  - market_snapshot 은 브라우저가 .json 을 fetch (.js 는 file:// 폴백 전용)
+      #  - insider/congress/13f 는 브라우저가 .js 를 로드 (.json 은 증분 빌더 상태)
+      #  - korea/earnings·indicators 는 브라우저 소비자가 없다(빌더 입력 전용)
+      # 목록을 바꾸기 전에 app.js 의 FEATURE_DATA / fetch 경로를 확인할 것.
+      - name: Prune non-site files from artifact
+        run: |
+          rm -rf SNS mir_design scratch scripts automation worker prompts \
+                 terminals mcps agent-tools outputs \
+                 "data/export" "data/참고" \
+                 README.md CLAUDE.md DEPLOY.md AI_MODE_VISION.md FEATURES.md
+          rm -f  data/market_snapshot.js data/korea/market_snapshot.js \
+                 data/insider_trades.json data/congress_trades.json \
+                 data/institutional_13f.json \
+                 data/korea/earnings.js data/korea/earnings.json \
+                 data/korea/indicators.js data/korea/indicators.json \
+                 data/korea/financials_history.json data/korea/krx_metrics.json \
+                 data/us_financials_history.json
+          echo "size after prune:" && du -sh . | cut -f1
+
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 추적 파일 전체(루트) = 기존 legacy 빌드와 동일한 서빙 내용.
+          # 추적 파일 전체(루트)에서 위 프루닝만 제외한 것 = 서빙 내용.
           path: '.'
 
       - name: Deploy to GitHub Pages

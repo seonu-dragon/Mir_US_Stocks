@@ -29,6 +29,11 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 from zoneinfo import ZoneInfo
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 U+2014 출력이 UnicodeEncodeError 로 죽는다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parent.parent
 BASE = "https://seonu-dragon.github.io/Mir_US_Stocks"
 OUT = ROOT / "sitemap.xml"

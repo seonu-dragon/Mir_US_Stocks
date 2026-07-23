@@ -26,6 +26,40 @@
 
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
+
+// LLM 엔드포인트(/chat, move_analysis)는 뉴런·Gemini 쿼터를 태우므로 아무
+// 사이트에서나 못 부르게 Origin 을 제한한다. 데이터 프록시는 계속 개방(*).
+// Origin 이 아예 없는 요청(비브라우저)은 통과시키되 아래 IP 리밋으로만 제한 —
+// 로컬 캡처 스크립트(chart_capture)와 스모크 테스트가 이 경로를 쓴다.
+const LLM_ALLOWED_ORIGINS = new Set([
+  "https://seonu-dragon.github.io",
+  "http://localhost:8080", "http://localhost:8090", "http://localhost:8888", "http://localhost:8099",
+  "http://127.0.0.1:8080", "http://127.0.0.1:8090", "http://127.0.0.1:8888", "http://127.0.0.1:8099",
+]);
+
+function llmOriginAllowed(request) {
+  const origin = request.headers.get("Origin") || "";
+  if (!origin) return true;
+  return LLM_ALLOWED_ORIGINS.has(origin);
+}
+
+// KV 고정창 카운터 기반의 소프트 IP 리밋. KV 는 엣지 간 최종 일관성이라
+// 정확하진 않지만, 쿼터를 태우는 봇 루프를 끊는 데는 충분하다.
+async function ipRateLimited(request, env, bucket, limit, windowSec) {
+  try {
+    const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
+    if (!kv) return false;
+    const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+    const slot = Math.floor(Date.now() / (windowSec * 1000));
+    const key = `rl:${bucket}:${ip}:${slot}`;
+    const n = Number(await kv.get(key)) || 0;
+    if (n >= limit) return true;
+    await kv.put(key, String(n + 1), { expirationTtl: Math.max(60, windowSec * 2) });
+    return false;
+  } catch {
+    return false;
+  }
+}
 // Workers AI text models tried in order for the Korean summary (first that works wins).
 // Larger / newer models follow Korean instructions far better than the small ones.
 const SUMMARY_MODELS = [
@@ -42,12 +76,27 @@ const CHAT_MODELS = [
 
 export default {
   async fetch(request, env) {
+    // 최상위 try/catch: 내부 예외가 CORS 헤더 없는 500 으로 나가면 브라우저에선
+    // 원인 불명의 CORS 오류로만 보인다. 항상 CORS 붙은 JSON 오류로 응답한다.
+    try {
+      return await handleFetch(request, env);
+    } catch (err) {
+      return cors(json({ error: "internal", detail: String((err && err.message) || err).slice(0, 200) }, 500, 0));
+    }
+  },
+};
+
+async function handleFetch(request, env) {
     if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
 
     const url = new URL(request.url);
 
     // Site help chatbot (POST /chat): explains how to use the site + finance terms.
     if (request.method === "POST" && url.pathname === "/chat") {
+      if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+      if (await ipRateLimited(request, env, "chat", 10, 60)) {
+        return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
+      }
       return cors(await handleChat(request, env));
     }
 
@@ -148,6 +197,11 @@ export default {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
         if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
       }
+      // 캐시 미스일 때만 LLM 이 돌므로 여기서 게이트한다(캐시 히트는 무제한).
+      if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+      if (await ipRateLimited(request, env, "move", 6, 60)) {
+        return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
+      }
       const kr = isKoreanTicker(ticker);
       // Benchmarks: Korean stocks compare against KOSPI/KOSDAQ, US against S&P/Nasdaq.
       const benchmarks = kr
@@ -199,8 +253,7 @@ export default {
     const { text: summary, error: summaryError, model: summaryModel } =
       await summarizeKorean(env, ticker, news, modelOverride, kr);
     return cors(json({ ticker, news, chart, earnings, summary, summaryError, summaryModel, newsSource: kr ? "naver" : "yahoo" }));
-  },
-};
+}
 
 function chartMoveContext(chart, eventDate) {
   if (!Array.isArray(chart) || !eventDate) return null;
@@ -1383,6 +1436,11 @@ async function handleCommunityCreate(request, env) {
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
   const spam = communitySpamReason(content);
   if (spam) return json({ error: spam, message: "스팸으로 의심되는 내용이 포함되어 등록할 수 없습니다." }, 400, 0);
+  // clientId 쿨다운은 매 요청 새 id 를 지어내면 우회된다(400포스트 캡이라 기존
+  // 글 밀어내기 가능). IP 기준 보조 리밋을 함께 건다.
+  if (await ipRateLimited(request, env, "post", 3, 60)) {
+    return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
+  }
   const ticker = sanitizeCommunityTicker(body && body.ticker);
   const posts = await loadCommunityPostsKv(env);
   const now = Date.now();
@@ -1442,6 +1500,10 @@ async function handleCommunityCommentCreate(request, env) {
   const content = sanitizeCommunityCommentContent(body && body.content);
   if (!postId) return json({ error: "missing_post_id" }, 400, 30);
   if (content.length < 2) return json({ error: "content_too_short" }, 400, 30);
+  // 글쓰기와 같은 이유의 IP 보조 리밋(clientId 는 위조 가능).
+  if (await ipRateLimited(request, env, "comment", 6, 60)) {
+    return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
+  }
   const author = sanitizeCommunityAuthor(body && body.author);
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
@@ -2056,7 +2118,8 @@ async function handleChat(request, env) {
   if (env && env.GEMINI_API_KEY) {
     try {
       const geminiModel = env.GEMINI_MODEL || "gemini-1.5-flash";
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${env.GEMINI_API_KEY}`;
+      // 키는 URL 쿼리가 아니라 헤더로 — 쿼리는 로그에 남는 노출면이다.
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`;
       
       const contents = history.map((m) => ({
         role: m.role === "assistant" ? "model" : "user",
@@ -2076,7 +2139,7 @@ async function handleChat(request, env) {
       
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify(payload)
       });
       

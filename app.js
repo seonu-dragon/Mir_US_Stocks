@@ -956,15 +956,11 @@ function applyMarketOnlyUi() {
   const searchNav = byId("searchSubTabs");
   if (searchNav) {
     searchNav.querySelectorAll(".sub-tab").forEach((btn) => {
-      const sub = btn.dataset.sub;
-      const krDartOnly = KR_DART_SUBTABS.has(sub) && !(cfg.features && cfg.features.krDart);
-      const hidden = (sub === "short" && cfg.features && !cfg.features.shortInterest) || krDartOnly;
+      const hidden = searchSubTabHidden(btn.dataset.sub, cfg);
       btn.hidden = hidden;
       btn.style.display = hidden ? "none" : "";
     });
-    const shortOff = searchSubTab === "short" && cfg.features && !cfg.features.shortInterest;
-    const krDartSubOff = KR_DART_SUBTABS.has(searchSubTab) && !(cfg.features && cfg.features.krDart);
-    if (shortOff || krDartSubOff) {
+    if (searchSubTabHidden(searchSubTab, cfg)) {
       activateSearchSub("analysis", { push: false });
     }
   }
@@ -1857,6 +1853,86 @@ function filingActionRows() {
   });
 }
 
+// ===== 이번 주 내 종목 이벤트 (관심 + 보유 종목의 D-7 일정 통합) =====
+// US: 배당락·다음 실적(us_calendar) + 내부자 매수 클러스터(로드된 경우만 — heavy 라
+// 이 카드가 3MB 를 당기지는 않는다). KR: 최근 2일 DART 공시. 데이터 전역이 늦게
+// 도착해도 renderActionBoard 가 refreshFeatureViews 목록에 있어 다시 그려진다.
+function myEventDday(iso, today) {
+  const d = Math.round((new Date(`${iso}T00:00:00`) - new Date(`${today}T00:00:00`)) / 86400000);
+  return Number.isFinite(d) ? d : null;
+}
+
+function myEventBadge(dd) {
+  if (dd == null) return "";
+  if (dd === 0) return "D-DAY";
+  if (dd > 0) return `D-${dd}`;
+  return `${-dd}일 전`;
+}
+
+function myStockEventRows() {
+  const tickers = [...new Set([
+    ...watchlist,
+    ...portfolio.map((p) => p.ticker),
+  ].map((t) => normalizeTickerKey(t)).filter(Boolean))];
+  if (!tickers.length) return [];
+  const today = formatKstDateTime().slice(0, 10);
+  const events = [];
+  if (!isKrMarket()) {
+    const cal = (window.US_STOCK_CALENDAR || {}).stocks || {};
+    tickers.forEach((t) => {
+      const c = cal[t];
+      if (!c) return;
+      if (c.exDate && c.exDate >= today) {
+        const dd = myEventDday(c.exDate, today);
+        if (dd != null && dd <= 7) {
+          const amt = Number.isFinite(Number(c.divRate)) ? ` $${c.divRate}` : "";
+          events.push({ ticker: t, dd, label: `배당락${amt}`, tone: "info" });
+        }
+      }
+      if (c.nextEarnings && c.nextEarnings >= today) {
+        const dd = myEventDday(c.nextEarnings, today);
+        if (dd != null && dd <= 7) events.push({ ticker: t, dd, label: "실적 발표", tone: dd <= 1 ? "warn" : "info" });
+      }
+    });
+    // 내부자 매수 클러스터: INSIDER_TRADES 가 이미 로드돼 있을 때만(7일 · 매수 2건 이상)
+    const trades = (window.INSIDER_TRADES || {}).trades;
+    if (Array.isArray(trades) && trades.length) {
+      const weekAgo = new Date(new Date(`${today}T00:00:00`).getTime() - 7 * 86400000).toISOString().slice(0, 10);
+      const buyCount = {};
+      trades.forEach((r) => {
+        if (r.kind === "buy" && (r.fileDate || "") >= weekAgo && tickers.includes(r.ticker)) {
+          buyCount[r.ticker] = (buyCount[r.ticker] || 0) + 1;
+        }
+      });
+      Object.entries(buyCount).forEach(([t, n]) => {
+        if (n >= 2) events.push({ ticker: t, dd: 0, label: `내부자 매수 ${n}건 · 7일`, tone: "warn", badge: "클러스터" });
+      });
+    }
+  } else {
+    const disc = (window.KR_DISCLOSURES || {}).disclosures || [];
+    const cutoff = new Date(new Date(`${today}T00:00:00`).getTime() - 2 * 86400000).toISOString().slice(0, 10);
+    const seen = {};
+    disc.forEach((d) => {
+      if (!tickers.includes(d.ticker) || (d.fileDate || "") < cutoff) return;
+      const key = `${d.ticker}|${d.typeLabel || d.title}`;
+      if (seen[key]) return;
+      seen[key] = true;
+      events.push({ ticker: d.ticker, dd: myEventDday(d.fileDate, today) ?? 0, label: d.typeLabel || d.title || "공시", tone: "info", badge: "공시" });
+    });
+  }
+  events.sort((a, b) => a.dd - b.dd || a.ticker.localeCompare(b.ticker));
+  // 4건 상한 — 다른 카드와 같은 높이를 유지해, 늦게 도착해도 그리드 행 높이를 안 바꾼다.
+  return events.slice(0, 4).map((ev) => {
+    const item = stockByTicker(ev.ticker);
+    const name = isKrMarket() ? (item?.company || ev.ticker) : ev.ticker;
+    const sub = isKrMarket() ? ev.label : `${item?.company ? `${item.company} · ` : ""}${ev.label}`;
+    return `<button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(ev.ticker)}">
+      <span><strong>${escapeHtml(name)}</strong><small>${escapeHtml(sub)}</small></span>
+      <em class="${ev.tone}">${escapeHtml(ev.badge || myEventBadge(ev.dd))}</em>
+    </button>`;
+  });
+}
+
 function renderActionBoard() {
   const grid = byId("dailyActionGrid");
   if (!grid) return;
@@ -1868,17 +1944,25 @@ function renderActionBoard() {
   const scheduleRows = upcomingActionRows();
   const showFilings = marketCfg().features?.materialEvents !== false;
   const filingRows = showFilings ? filingActionRows() : [];
+  const myEventRows = myStockEventRows();
   const attentionCount = alerts.length + scheduleRows.length + filingRows.filter((row) => row.includes('class="warn"')).length;
   const count = byId("dailyActionCount");
   if (count) count.textContent = attentionCount ? `우선 확인 ${attentionCount}건` : "새 긴급 항목 없음";
   const alertOrPortfolio = alerts.length
     ? alerts.map(({ item, reasons }) => actionStockRow(item, reasons.join(" · ")))
     : portfolioRows;
+  // 이벤트 카드가 늦게(usCalendar·krDart 는 idle 프리로드) 도착해도 그리드가 한 줄을
+  // 넘지 않게 총 5칸을 유지한다: US 는 이벤트 카드가 생기면 일정 카드를 1칸으로 줄이고
+  // (1+1+1+1+1), 공시 카드가 없는 KR 은 일정 2칸을 유지한다(1+1+2+1). 새 행이 생기면
+  // 딥링크 스크롤(scrollToTabContent) 뒤에 본문이 밀리는 레이아웃 시프트가 난다.
+  const scheduleWide = !myEventRows.length || !showFilings;
   grid.innerHTML =
     actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
     actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? "저장한 조건에 맞는 종목" : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
-    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, "is-wide") +
-    (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "");
+    actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, scheduleWide ? "is-wide" : "") +
+    (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "") +
+    // 이벤트가 하나도 없으면 카드 자체를 그리지 않는다 — 빈 껍데기 금지.
+    (myEventRows.length ? actionBoardCard("이번 주 내 종목 이벤트", isKrMarket() ? "관심·보유 종목 최근 2일 공시" : "관심·보유 종목 D-7 일정", myEventRows, "", { tab: "calendar" }) : "");
   grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
   grid.querySelectorAll("[data-action-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.actionTab, { sub: button.dataset.actionSub || null })));
 }
@@ -2240,6 +2324,15 @@ let currentTab = "map";
 let searchSubTab = "analysis";
 // KR 전용(krDart) 종목검색 서브탭 — US 에선 가시성 게이트가 숨긴다.
 const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract", "dilution"]);
+// dividend·earnreact 는 US 자체 데이터(us_calendar·analyst_consensus+details)가 생겨
+// 양시장 탭이 됐다. US 에선 항상 표시, KR 에선 종전대로 krDart 게이트를 따른다.
+const DUAL_MARKET_SUBTABS = new Set(["dividend", "earnreact"]);
+function searchSubTabHidden(sub, cfg) {
+  if (sub === "short") return !!(cfg.features && !cfg.features.shortInterest);
+  if (!KR_DART_SUBTABS.has(sub)) return false;
+  if (DUAL_MARKET_SUBTABS.has(sub) && cfg.id === "us") return false;
+  return !(cfg.features && cfg.features.krDart);
+}
 let calendarSubTab = "macro";
 let communitySubTab = "trending";
 let communityCardnewsView = "us";
@@ -3081,8 +3174,117 @@ function setupEarnReactControls() {
   if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { earnReactQuery = s.value; renderEarningsReactions(); }); }
 }
 
+// 정적 HTML(sub-earnreact)은 KR·DART 문구라, US 모드에선 갈아끼운다.
+function applyEarnReactPanelLabels(isUs) {
+  const panel = byId("sub-earnreact");
+  if (!panel) return;
+  const h2 = panel.querySelector(".section-title h2");
+  if (h2) h2.textContent = isUs ? "실적 발표 · 주가반응" : "실적 발표(잠정) · 주가반응";
+  const p = panel.querySelector(".section-title p");
+  if (p) p.innerHTML = isUs
+    ? `Yahoo 실적 이력 기반. 시총 상위 종목의 <b>EPS 서프라이즈</b>와 <b>발표일(D0)·익일(D+1) 종가 등락률</b>입니다. 장 마감 후 발표는 반응이 주로 익일에 나타납니다. 예측 신호가 아닙니다.`
+    : `DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외. 예측 신호가 아닙니다.`;
+  const disc = panel.querySelector(".data-disclaimer span");
+  if (disc) disc.textContent = isUs
+    ? "발표일·등락률은 저장된 일봉 종가 기준이며 실시간이 아닙니다. 과거 반응이 반복된다는 보장은 없습니다. 투자 권유가 아닙니다."
+    : "공시 유형별 과거 반응은 무작위와 구분되지 않습니다(잠정실적 포함). 발표 후 주가 움직임을 보여줄 뿐 투자 권유가 아닙니다.";
+}
+
+// ===== US 실적발표 반응 트래커 =====
+// ANALYST_CONSENSUS 로 '최근에 실적을 낸 시총 상위 종목' 50개를 고르고, 각 종목의
+// 상세파일(earningsHistory=실제 발표일 + chartSeries=일봉)에서 발표일(D0)·익일(D+1)
+// 종가 등락률을 계산한다. 컨센서스의 period 는 분기말이라 발표일이 아니다 —
+// 실제 발표일은 상세파일 earningsHistory.date 를 쓴다. 동시요청 6개 제한, 메모리 캐시.
+let _usEarnReactRows = null;
+let _usEarnReactLoading = false;
+
+async function buildUsEarnReactRows() {
+  await ensureFeatureData("analystConsensus");
+  const stocks = (window.ANALYST_CONSENSUS || {}).stocks || {};
+  const capOf = (t) => Number(stockByTicker(t)?.marketCapB) || 0;
+  const cands = Object.keys(stocks)
+    .map((t) => { const e = (stocks[t].earnings || [])[0]; return e && e.period ? { t, period: e.period } : null; })
+    .filter(Boolean)
+    .sort((a, b) => b.period.localeCompare(a.period) || capOf(b.t) - capOf(a.t))
+    .slice(0, 50);
+  const today = formatKstDateTime().slice(0, 10);
+  const cutoff = new Date(new Date(`${today}T00:00:00`).getTime() - 210 * 86400000).toISOString().slice(0, 10);
+  const rows = [];
+  let idx = 0;
+  const worker = async () => {
+    while (idx < cands.length) {
+      const { t } = cands[idx++];
+      let det = null;
+      try { det = await loadStockDetail(t); } catch (_) { det = null; }
+      const hist = det && det.earningsHistory;
+      const series = det && det.chartSeries;
+      if (!Array.isArray(hist) || !Array.isArray(series) || series.length < 3) continue;
+      hist.slice(-2).forEach((e) => {
+        if (!e.date || e.date > today || e.date < cutoff) return;
+        // 발표일 이후 첫 거래일(D0) 종가 대 전일 종가, 그다음 거래일(D+1) — 종가 대 종가
+        const i0 = series.findIndex((r) => (r[5] || "") >= e.date);
+        if (i0 <= 0) return;
+        const close = (k) => Number(series[k] && series[k][3]);
+        const d0 = Number.isFinite(close(i0)) && close(i0 - 1) ? (close(i0) / close(i0 - 1) - 1) * 100 : null;
+        const d1 = Number.isFinite(close(i0 + 1)) && close(i0) ? (close(i0 + 1) / close(i0) - 1) * 100 : null;
+        rows.push({
+          ticker: t,
+          company: det.company || stockByTicker(t)?.company || "",
+          date: e.date,
+          surprise: Number.isFinite(Number(e.surprisePct)) ? Number(e.surprisePct) : null,
+          d0, d1,
+        });
+      });
+    }
+  };
+  await Promise.all(Array.from({ length: 6 }, worker));
+  rows.sort((a, b) => b.date.localeCompare(a.date));
+  return rows;
+}
+
+function renderUsEarningsReactions() {
+  const wrap = byId("earnReactTable");
+  const meta = byId("earnReactMeta");
+  if (!wrap) return;
+  applyEarnReactPanelLabels(true);
+  if (!_usEarnReactRows) {
+    if (!_usEarnReactLoading) {
+      _usEarnReactLoading = true;
+      if (meta) meta.innerHTML = "";
+      wrap.innerHTML = '<p class="muted">최근 실적을 발표한 시총 상위 종목의 주가 데이터를 불러오는 중… (최대 50종목)</p>';
+      buildUsEarnReactRows().then((rows) => {
+        _usEarnReactRows = rows;
+        _usEarnReactLoading = false;
+        if (!isKrMarket() && searchSubTab === "earnreact") renderUsEarningsReactions();
+      });
+    }
+    return;
+  }
+  let rows = _usEarnReactRows.slice();
+  const q = earnReactQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => r.ticker.toLowerCase().includes(q) || r.company.toLowerCase().includes(q));
+  if (earnReactSort === "react") rows.sort((a, b) => Math.max(Math.abs(b.d0 ?? 0), Math.abs(b.d1 ?? 0)) - Math.max(Math.abs(a.d0 ?? 0), Math.abs(a.d1 ?? 0)));
+  else rows.sort((a, b) => b.date.localeCompare(a.date));
+  if (meta) meta.innerHTML = rows.length
+    ? `업데이트 ${escapeHtml((window.ANALYST_CONSENSUS || {}).updatedAtKst || "")} · 최근 발표 ${rows.length}건 · 시총 상위 50종목 · 종가 기준`
+    : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 실적 발표 데이터가 없습니다.</p>`; return; }
+  const pctCell = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
+  const body = rows.slice(0, 100).map((r) => `<tr>
+    <td class="ins-date">${escapeHtml(r.date)}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company)}</div></td>
+    <td class="ins-num">${r.surprise != null ? `<strong class="${r.surprise > 0 ? "ins-buy" : r.surprise < 0 ? "ins-sell" : ""}">${r.surprise > 0 ? "+" : ""}${r.surprise.toFixed(1)}%</strong>` : "—"}</td>
+    <td class="ins-num">${pctCell(r.d0)}</td>
+    <td class="ins-num">${pctCell(r.d1)}</td>
+  </tr>`).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">EPS 서프라이즈</th><th class="ins-num">발표일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
 function renderEarningsReactions() {
   setupEarnReactControls();
+  if (!isKrMarket()) { renderUsEarningsReactions(); return; }
+  applyEarnReactPanelLabels(false);
   const wrap = byId("earnReactTable");
   const meta = byId("earnReactMeta");
   if (!wrap) return;
@@ -3133,8 +3335,90 @@ function krMoneyEok(won) {
   if (Math.abs(n) >= 1e12) return `${(n / 1e12).toFixed(2)}조`;
   return `${Math.round(n / 1e8).toLocaleString()}억`;
 }
+// 정적 HTML(sub-dividend)은 KR·DART 문구라, US 모드에선 갈아끼운다(applyShortLabels 패턴).
+function applyDividendPanelLabels(isUs) {
+  const panel = byId("sub-dividend");
+  if (!panel) return;
+  const p = panel.querySelector(".section-title p");
+  if (p) p.innerHTML = isUs
+    ? `Yahoo 배당 캘린더 기반. <b>배당수익률·연간 배당금</b>과 <b>배당락일(Ex-Date)</b>·배당성향입니다. 배당락일 전일까지 매수해야 해당 배당을 받습니다. 공시된 사실이며 투자 권유가 아닙니다.`
+    : `DART '현금·현물배당결정' 공시 원문에서 파싱. <b>시가배당률·주당배당금</b>과 <b>배당기준일(배당락 근거)·지급예정일</b>입니다. 공시된 사실이며 투자 권유가 아닙니다.`;
+  const disc = panel.querySelector(".data-disclaimer span");
+  if (disc) disc.textContent = isUs
+    ? "시가총액 상위 종목만 수집합니다. 배당락일·다음 실적일은 예정일이며 변경될 수 있습니다. 투자 권유가 아닙니다."
+    : "최근 공시분만 표시합니다. 배당기준일 전전영업일이 배당락일입니다. 공시 원문 파싱이라 일부 값이 비어 있을 수 있습니다.";
+  const recordBtn = panel.querySelector('#dividendSort button[data-sort="record"]');
+  if (recordBtn) recordBtn.textContent = isUs ? "배당락일 임박순" : "배당기준일 임박순";
+  const yieldBtn = panel.querySelector('#dividendSort button[data-sort="yield"]');
+  if (yieldBtn) yieldBtn.textContent = isUs ? "배당수익률 높은순" : "시가배당률 높은순";
+}
+
+// ===== US 배당 캘린더 =====
+// us_calendar.js(US_STOCK_CALENDAR)의 배당수익률·연간배당금·배당락일·배당성향을
+// D-day 순으로 나열한다. KR 배당(DART) 탭과 같은 자리·같은 컨트롤을 공유한다.
+let _usDividendTried = false;
+function renderUsDividends() {
+  const wrap = byId("dividendTable"); const meta = byId("dividendMeta");
+  if (!wrap) return;
+  applyDividendPanelLabels(true);
+  if (!window.US_STOCK_CALENDAR && !_usDividendTried) {
+    _usDividendTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+    ensureFeatureData("usCalendar").then(renderUsDividends); return;
+  }
+  const payload = window.US_STOCK_CALENDAR || {};
+  const stocks = payload.stocks || {};
+  const today = formatKstDateTime().slice(0, 10);
+  let rows = Object.entries(stocks)
+    .filter(([, c]) => Number.isFinite(Number(c.divYield)) || c.exDate)
+    .map(([t, c]) => {
+      const item = stockByTicker(t);
+      const future = c.exDate && c.exDate >= today;
+      return {
+        ticker: t, company: item?.company || "",
+        divYield: Number(c.divYield), divRate: Number(c.divRate), payout: Number(c.payout),
+        exDate: c.exDate || "", future,
+        dd: future ? myEventDday(c.exDate, today) : null,
+        nextEarnings: c.nextEarnings || "",
+      };
+    });
+  const q = dividendQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => r.ticker.toLowerCase().includes(q) || r.company.toLowerCase().includes(q));
+  if (dividendSort === "yield") rows.sort((a, b) => (Number.isFinite(b.divYield) ? b.divYield : -1) - (Number.isFinite(a.divYield) ? a.divYield : -1));
+  else rows.sort((a, b) => {
+    // 다가오는 배당락 D-day 임박순 → 그다음 지난 배당락 최신순 → 배당락 없는 종목
+    if (a.future !== b.future) return a.future ? -1 : 1;
+    if (a.future) return a.exDate.localeCompare(b.exDate);
+    if (!!a.exDate !== !!b.exDate) return a.exDate ? -1 : 1;
+    return b.exDate.localeCompare(a.exDate);
+  });
+  const upcoming = rows.filter((r) => r.future).length;
+  if (meta) meta.innerHTML = rows.length
+    ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}종목 · 다가오는 배당락 ${upcoming}건`
+    : "";
+  if (!rows.length) { wrap.innerHTML = `<p class="muted">배당 데이터가 있는 종목이 없습니다.</p>`; return; }
+  const body = rows.slice(0, 200).map((r) => {
+    const ex = r.exDate
+      ? (r.future
+        ? `${escapeHtml(r.exDate)} <span class="ins-code ins-buy">${escapeHtml(myEventBadge(r.dd))}</span>`
+        : `${escapeHtml(r.exDate)} <span class="ins-sub">지남</span>`)
+      : "—";
+    return `<tr>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company)}</div></td>
+    <td class="ins-num"><strong>${Number.isFinite(r.divYield) ? `${r.divYield.toFixed(2)}%` : "—"}</strong></td>
+    <td class="ins-num">${Number.isFinite(r.divRate) ? `$${r.divRate.toFixed(2)}` : "—"}</td>
+    <td class="ins-date">${ex}</td>
+    <td class="ins-num">${Number.isFinite(r.payout) ? `${r.payout.toFixed(1)}%` : "—"}</td>
+    <td class="ins-date">${escapeHtml(r.nextEarnings || "—")}</td>
+  </tr>`;
+  }).join("");
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">배당수익률</th><th class="ins-num">연간 배당금</th><th>배당락일</th><th class="ins-num">배당성향</th><th>다음 실적</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
 function renderDividends() {
   bindListControls("dividendSort", "dividendSearch", (v) => dividendSort = v, (v) => dividendQuery = v, renderDividends);
+  if (!isKrMarket()) { renderUsDividends(); return; }
+  applyDividendPanelLabels(false);
   const wrap = byId("dividendTable"); const meta = byId("dividendMeta");
   if (!wrap) return;
   if (!window.KR_DIVIDENDS && !_dividendTried) {
@@ -3793,9 +4077,10 @@ function updateTabsScrollHints() {
 // 손으로 스크롤해야 했다. 탭 바가 화면 위쪽에 걸치도록(본문 시작점이 아니라)
 // 맞춰서, 다른 탭으로 갈아탈 여지는 남긴다.
 const TAB_SCROLL_GAP = 8;         // 탭 바 위에 남길 여백
-// 라이브에서는 히어로 검색·카드뉴스 이미지가 2.4초보다 늦게 레이아웃을 키워
-// 딥링크 스크롤이 328px 못 미쳤다(2026-07-23 smoke 실측). 재정렬은 목표와 4px
-// 이상 어긋났을 때만 발동하므로 창을 길게 잡아도 화면이 튀지 않는다.
+// 라이브에서는 히어로 검색·카드뉴스 이미지가, 그리고 idle 프리로드(2500ms) 피처
+// 데이터가 액션 보드 카드를 늦게 추가하는 경우가 2.4초보다 늦게 레이아웃을 키워
+// 딥링크 스크롤이 목적지에 못 미쳤다(2026-07-23 smoke 실측 328px). 재정렬은
+// 목표와 4px 이상 어긋났을 때만 발동하므로 창을 길게 잡아도 화면이 튀지 않는다.
 const TAB_SCROLL_SETTLE_MS = 6000; // 이 시간까지 늦게 도착하는 데이터에 맞춰 재정렬
 
 function scrollToTabContent() {
@@ -7709,6 +7994,91 @@ function renderSmartMoney(item) {
     <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
 
+// ===== 기관 보유 변화(13F QoQ) — 종목 분석 뷰 패널 =====
+// institutional_13f 의 기관별 quarters(최근 10분기, 각 분기 상위 25종목)에서 이 종목의
+// 최근 분기 vs 직전 분기 보유주식·기관수를 합산한다. 상위 25종목 요약 공시라 순위권
+// 밖으로 밀린 종목은 '전량 매도'와 구분되지 않는다 — 표본 한계를 패널에 명시한다.
+function inst13fQoqFor(ticker) {
+  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
+  const agg = {
+    curShares: 0, curValueM: 0, curHolders: 0,
+    prevShares: 0, prevHolders: 0,
+    added: 0, exited: 0, increased: 0, decreased: 0,
+    reportDate: "",
+  };
+  for (const inst of insts) {
+    const quarters = (inst.quarters || []).filter((qq) => (qq.status || "ok") === "ok" && Array.isArray(qq.holdings));
+    const q0 = quarters[0];
+    const q1 = quarters[1];
+    const h0 = q0 && q0.holdings.find((h) => h.ticker === ticker);
+    const h1 = q1 && q1.holdings.find((h) => h.ticker === ticker);
+    if (h0) {
+      agg.curHolders += 1;
+      agg.curShares += Number(h0.shares) || 0;
+      agg.curValueM += Number(h0.valueM) || 0;
+      if (q0.reportDate > agg.reportDate) agg.reportDate = q0.reportDate;
+    }
+    if (h1) {
+      agg.prevHolders += 1;
+      agg.prevShares += Number(h1.shares) || 0;
+    }
+    if (h0 && !h1 && q1) agg.added += 1;
+    else if (!h0 && h1 && q0) agg.exited += 1;
+    else if (h0 && h1) {
+      const diff = (Number(h0.shares) || 0) - (Number(h1.shares) || 0);
+      if (diff > 0) agg.increased += 1;
+      else if (diff < 0) agg.decreased += 1;
+    }
+  }
+  return agg;
+}
+
+function renderInst13fChange(item) {
+  const el = byId("stockInst13f");
+  if (!el || !item) return;
+  if (isKrMarket() || (marketCfg().features && marketCfg().features.sec13f === false)) {
+    el.hidden = true;
+    el.innerHTML = "";
+    return;
+  }
+  el.hidden = false;
+  const t = item.ticker;
+  if (!window.INSTITUTIONAL_13F) {
+    // 13F 는 3MB heavy 데이터 — 종목 뷰가 자동으로 당기지 않고 버튼으로 연다.
+    el.innerHTML = `
+      <h3>기관 보유 변화 · 13F</h3>
+      <p class="muted">추적 중인 주요 기관들의 분기별 보유 변화를 보려면 13F 데이터를 불러오세요.</p>
+      <button type="button" class="event-action" id="inst13fLoadBtn">13F 데이터 불러오기 (약 3MB)</button>`;
+    const btn = byId("inst13fLoadBtn");
+    if (btn) btn.addEventListener("click", () => {
+      btn.disabled = true;
+      btn.textContent = "불러오는 중…";
+      ensureFeatureData("inst13f").then(() => { _inst13fIndex = null; renderInst13fChange(item); });
+    });
+    return;
+  }
+  const agg = inst13fQoqFor(t);
+  if (!agg.curHolders && !agg.prevHolders) {
+    el.innerHTML = `<h3>기관 보유 변화 · 13F</h3><p class="muted">추적 중인 기관들의 상위 보유 종목(분기별 상위 25개)에 ${escapeHtml(t)}가 없습니다.</p>`;
+    return;
+  }
+  const row = (label, val, tone) => `<div class="sm-row"><span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong></div>`;
+  const qoqPct = agg.prevShares > 0 ? ((agg.curShares / agg.prevShares) - 1) * 100 : null;
+  const qoqText = qoqPct != null ? `${qoqPct > 0 ? "+" : ""}${qoqPct.toFixed(1)}%` : "직전 분기 표본 없음";
+  const qoqTone = qoqPct != null ? (qoqPct > 0 ? "ins-buy" : qoqPct < 0 ? "ins-sell" : "") : "";
+  const flowText = `신규 ${agg.added} · 증가 ${agg.increased} · 감소 ${agg.decreased} · 이탈 ${agg.exited}`;
+  const flowTone = (agg.added + agg.increased) > (agg.exited + agg.decreased) ? "ins-buy"
+    : (agg.added + agg.increased) < (agg.exited + agg.decreased) ? "ins-sell" : "";
+  el.innerHTML = `
+    <h3>기관 보유 변화 · ${escapeHtml(t)}</h3>
+    ${row("보유 기관", `${agg.curHolders}곳${agg.prevHolders ? ` (직전 ${agg.prevHolders}곳)` : ""}`)}
+    ${row("합산 보유주식", `${insiderFmtShares(agg.curShares)}주`)}
+    ${row("직전 분기 대비", qoqText, qoqTone)}
+    ${row("합산 평가액", agg.curValueM ? `$${(agg.curValueM / 1000).toFixed(1)}B` : "—")}
+    ${row("기관 수 흐름", flowText, flowTone)}
+    <p class="sm-note">추적 기관 ${Number((window.INSTITUTIONAL_13F || {}).institutionCount) || ((window.INSTITUTIONAL_13F || {}).institutions || []).length}곳의 분기별 상위 보유 종목 요약(${escapeHtml(agg.reportDate || "최근 분기")}) 기준 — 순위 밖 보유분은 집계에서 빠질 수 있습니다.</p>`;
+}
+
 // Merge any live (proxy-fetched) chart/news over the snapshot+detail data.
 function applyLive(item) {
   if (!item) return item;
@@ -9985,6 +10355,7 @@ function renderStockEvents(item) {
     <div class="event-grid">
       ${earningsEvent ? eventCardHtml(earningsEvent) : ""}
       <section class="smart-money-card event-card-smart" id="stockSmartMoney"></section>
+      <section class="smart-money-card event-card-smart" id="stockInst13f"></section>
       ${restEvents.map(eventCardHtml).join("")}
       ${stockEventCommunityCardHtml(item)}
     </div>
@@ -9993,6 +10364,7 @@ function renderStockEvents(item) {
   renderEarningsCalendar(item);
   renderEarningsReaction(item);
   renderSmartMoney(item);
+  renderInst13fChange(item);
 }
 
 function stockEventRows(item) {
@@ -12937,16 +13309,20 @@ const LEV_ETF_DISCOVER_PATTERNS = [
 
 function inferLeveragedEtfMeta(stock) {
   const name = `${stock.company || ""} ${stock.industry || ""}`;
+  // KR 스냅샷 자동 발견분은 한국어 상품명이라 한국어 패턴도 본다("…인버스"가
+  // 레버리지로 배지되던 문제). 인버스2X 같은 복합명은 인버스 우선.
   let type = "leveraged";
-  if (/inverse|short|bear/i.test(name)) type = "inverse";
-  else if (/covered call|buywrite|option income|premium income/i.test(name)) type = "covered-call";
-  else if (/vix|volatility/i.test(name)) type = "volatility";
+  if (/inverse|short|bear|인버스|곱버스/i.test(name)) type = "inverse";
+  else if (/covered call|buywrite|option income|premium income|커버드콜/i.test(name)) type = "covered-call";
+  else if (/vix|volatility|변동성/i.test(name)) type = "volatility";
   else if (/buffer|defined outcome/i.test(name)) type = "buffer";
   let leverage = "—";
-  const levMatch = name.match(/(\d+(?:\.\d+)?)\s*x/i);
+  const levMatch = name.match(/(\d+(?:\.\d+)?)\s*[x배]/i);
   if (levMatch) leverage = `${levMatch[1]}x`;
   else if (/ultrapro/i.test(name)) leverage = "3x";
   else if (/ultra(?!pro)/i.test(name)) leverage = "2x";
+  else if (/레버리지/.test(name)) leverage = "2x"; // 국내 '레버리지' 표기는 2배가 표준
+  const krIssuer = (stock.company || "").match(/^(KODEX|TIGER|ACE|RISE|KBSTAR|SOL|ARIRANG|HANARO|KIWOOM|PLUS|WON|UNICORN|TIMEFOLIO)\b/i);
   return {
     ticker: stock.ticker,
     name: stock.company || stock.ticker,
@@ -12957,7 +13333,7 @@ function inferLeveragedEtfMeta(stock) {
     underlyingLabel: "미분류",
     scope: "thematic",
     group: "스냅샷 자동 분류",
-    issuer: "—",
+    issuer: krIssuer ? krIssuer[1].toUpperCase() : "—",
     discovered: true,
   };
 }
@@ -12978,10 +13354,19 @@ function isLeveragedOptionEtfStock(stock) {
 
 function leveragedEtfCatalogItems() {
   // KR ships a curated catalog inside the snapshot; US uses the LEVERAGED_ETF_CATALOG global.
-  const catalog = (isKrMarket() && data.leveragedEtfCatalog?.items)
+  const krCatalog = isKrMarket() && data.leveragedEtfCatalog?.items;
+  const catalog = krCatalog
     || (window.LEVERAGED_ETF_CATALOG && window.LEVERAGED_ETF_CATALOG.items)
     || [];
-  const byTicker = new Map(catalog.map((item) => [item.ticker, { ...item }]));
+  const byTicker = new Map(catalog.map((item) => {
+    const copy = { ...item };
+    // KR 카탈로그는 underlying 이 "—", underlyingLabel 이 scope 영문값("index" 등)으로
+    // 온다. 카드에 영문 코드가 그대로 노출되지 않게 한국어 범위 라벨로 바꾼다.
+    if (krCatalog && (LEV_ETF_SCOPE_LABEL[copy.underlyingLabel] || copy.underlyingLabel === copy.scope)) {
+      copy.underlyingLabel = LEV_ETF_SCOPE_LABEL[copy.scope] || copy.scope || "";
+    }
+    return [copy.ticker, copy];
+  }));
   (data.stocks || []).forEach((stock) => {
     if (!isLeveragedOptionEtfStock(stock)) return;
     if (!byTicker.has(stock.ticker)) byTicker.set(stock.ticker, inferLeveragedEtfMeta(stock));
@@ -13296,6 +13681,10 @@ function renderLeveragedEtfPage() {
       if (!map.has(g)) { map.set(g, []); groups.push(g); }
       map.get(g).push(item);
     });
+    // 자동 발견분(메타 빈약)은 큐레이션 그룹 뒤로 — KR 에서 '스'가 '한'보다 앞서
+    // 카탈로그(한국 레버리지·인버스)를 밀어내던 문제.
+    const autoIdx = groups.indexOf("스냅샷 자동 분류");
+    if (autoIdx >= 0) groups.push(groups.splice(autoIdx, 1)[0]);
     host.innerHTML = groups.map((group) => `
       <section class="lev-etf-section">
         <div class="lev-etf-section-head">

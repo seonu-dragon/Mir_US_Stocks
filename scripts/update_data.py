@@ -2513,20 +2513,31 @@ def build_snapshot():
             if error:
                 errors.append(error)
 
-    # 데이터 정직성 게이트: preferHistory 종목인데 실측(yahoo)도 직전 실측
-    # 재사용(yahoo-cache)도 못 하고 합성으로 남은 수가 임계를 넘으면 발행을
-    # 중단한다(직전 스냅샷 유지). 야후가 대규모로 스로틀하는 날 수백 종목의
-    # 차트가 한꺼번에 가짜로 바뀌어 발행되는 사고를 막는 마지막 관문.
+    # 데이터 정직성 게이트: 실측 이력(yahoo/yahoo-cache) 종목 수가 직전
+    # 스냅샷보다 10% 이상 급감하면 발행을 중단한다(직전 스냅샷 유지). 야후가
+    # 대규모로 스로틀하는 날 수백 종목 차트가 한꺼번에 합성으로 바뀌어 발행되는
+    # 사고를 막는 마지막 관문. 절대 임계(합성 5%)로 걸었더니 KR 에서 평상시
+    # 실패분(야후에 아예 없는 초소형 종목 ~380개)에 오탐했다(2026-07-23) —
+    # 평상시 수준은 정상으로 보고, "어제보다 급감"만 이상으로 본다.
     prefer_total = sum(1 for meta in universe if meta.get("preferHistory"))
     cached_count = sum(1 for item in stocks if item.get("historySource") == "yahoo-cache")
+    fresh_real = sum(
+        1 for item in stocks if item.get("historySource") in {"yahoo", "yahoo-cache"}
+    )
     fabricated = sum(
         1 for item in stocks
         if "chartSeries" in item and item.get("historySource") not in {"yahoo", "yahoo-cache"}
     )
-    print(f"[이력] preferHistory {prefer_total} · 실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
-    if prefer_total and fabricated > max(30, int(prefer_total * 0.05)):
+    prev = load_existing_snapshot() or {}
+    prev_real = sum(
+        1 for item in prev.get("stocks") or []
+        if item.get("historySource") in {"yahoo", "yahoo-cache"}
+    )
+    print(f"[이력] preferHistory {prefer_total} · 실측 {fresh_real}(직전 {prev_real}) · "
+          f"실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    if prev_real >= 100 and fresh_real < prev_real * 0.9:
         raise SystemExit(
-            f"[중단] 합성 이력 {fabricated}/{prefer_total} 이 임계(max(30, 5%)) 초과 — "
+            f"[중단] 실측 이력 {fresh_real} < 직전 {prev_real}의 90% — "
             "야후 대규모 스로틀 의심. 직전 스냅샷을 유지하기 위해 발행하지 않는다."
         )
 

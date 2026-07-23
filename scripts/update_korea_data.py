@@ -1367,18 +1367,31 @@ def build_snapshot(limit: int | None = None) -> dict:
             if err:
                 errors.append(err)
 
-    # 데이터 정직성 게이트(US update_data 와 동일): preferHistory 인데 실측도
-    # 직전 실측 재사용도 못 하고 합성으로 남은 수가 임계를 넘으면 발행 중단.
+    # 데이터 정직성 게이트(US update_data 와 동일): 실측 이력(yahoo/yahoo-cache)
+    # 종목 수가 직전 스냅샷보다 10% 이상 급감하면 발행 중단. 절대 임계(합성 5%)는
+    # KR 평상시 실패분(야후에 아예 없는 초소형·공시추가 종목 ~380개)에
+    # 오탐했다(2026-07-23) — "어제보다 급감"만 이상으로 본다.
     prefer_total = sum(1 for m in metas if m.get("preferHistory"))
     cached_count = sum(1 for s in stocks if s.get("historySource") == "yahoo-cache")
+    fresh_real = sum(1 for s in stocks if s.get("historySource") in {"yahoo", "yahoo-cache"})
     fabricated = sum(
         1 for s in stocks
         if "chartSeries" in s and s.get("historySource") not in {"yahoo", "yahoo-cache"}
     )
-    print(f"[이력] preferHistory {prefer_total} · 실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
-    if prefer_total and fabricated > max(30, int(prefer_total * 0.05)):
+    prev_real = 0
+    try:
+        prev = json.loads(OUT.read_text(encoding="utf-8"))
+        prev_real = sum(
+            1 for s in prev.get("stocks") or []
+            if s.get("historySource") in {"yahoo", "yahoo-cache"}
+        )
+    except Exception:
+        pass
+    print(f"[이력] preferHistory {prefer_total} · 실측 {fresh_real}(직전 {prev_real}) · "
+          f"실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    if prev_real >= 100 and fresh_real < prev_real * 0.9:
         raise SystemExit(
-            f"[중단] 합성 이력 {fabricated}/{prefer_total} 이 임계(max(30, 5%)) 초과 — "
+            f"[중단] 실측 이력 {fresh_real} < 직전 {prev_real}의 90% — "
             "야후 대규모 스로틀 의심. 직전 스냅샷을 유지하기 위해 발행하지 않는다."
         )
 

@@ -34,6 +34,17 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # JS(analysis.js)와 PY(pattern_lib.py) 패턴 감지기는 1:1 동일이 계약이다.
+      # 2026-07-23 감사에서 실제로 조용한 드리프트(emaArray 시드, volume-climax 0 처리)가
+      # 발견됐다 — 어긋난 채 통계를 갱신하면 base-rate 조회가 오염되므로, 여기서
+      # 빨갛게 실패시킨다(continue-on-error 금지).
+      - name: Check JS-PY pattern parity
+        run: python scripts/check_pattern_parity.py
+
       - name: Build S/R respect stats
         continue-on-error: true
         run: python scripts/build_sr_stats.py --push

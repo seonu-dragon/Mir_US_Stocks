@@ -3793,7 +3793,10 @@ function updateTabsScrollHints() {
 // 손으로 스크롤해야 했다. 탭 바가 화면 위쪽에 걸치도록(본문 시작점이 아니라)
 // 맞춰서, 다른 탭으로 갈아탈 여지는 남긴다.
 const TAB_SCROLL_GAP = 8;         // 탭 바 위에 남길 여백
-const TAB_SCROLL_SETTLE_MS = 2400; // 이 시간까지 늦게 도착하는 데이터에 맞춰 재정렬
+// 라이브에서는 히어로 검색·카드뉴스 이미지가 2.4초보다 늦게 레이아웃을 키워
+// 딥링크 스크롤이 328px 못 미쳤다(2026-07-23 smoke 실측). 재정렬은 목표와 4px
+// 이상 어긋났을 때만 발동하므로 창을 길게 잡아도 화면이 튀지 않는다.
+const TAB_SCROLL_SETTLE_MS = 6000; // 이 시간까지 늦게 도착하는 데이터에 맞춰 재정렬
 
 function scrollToTabContent() {
   const wrap = byId("tabsScrollWrap");

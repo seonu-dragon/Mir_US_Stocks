@@ -1,4 +1,4 @@
-const BUILD_ID_FALLBACK = "e0c7183be2";
+const BUILD_ID_FALLBACK = "e3a25b8e3a";
 let ACTIVE_CACHE_NAME = null;
 
 // 내비게이션 셸만 미리 받는다. app.js/styles.css 같은 자산은 페이지가 ?v=<내용해시>
@@ -9,6 +9,7 @@ let ACTIVE_CACHE_NAME = null;
 const OFFLINE_ASSETS = [
   "./",
   "./index.html",
+  "./analysis.html",
   "./manifest.webmanifest",
   "./assets/favicon.ico",
   "./assets/favicon-32.png",
@@ -84,7 +85,12 @@ async function staleWhileRevalidate(request, cacheName) {
       return response;
     })
     .catch(() => null);
-  return cached || network || fetch(request);
+  if (cached) return cached;
+  const response = await network;
+  if (response) return response;
+  // network 는 Promise 라 || 폴백이 절대 발동하지 않았고, 실패 시 null 이
+  // respondWith 로 흘러갔다. 명시적 오프라인 응답으로 대체.
+  return new Response("offline", { status: 503 });
 }
 
 self.addEventListener("install", (event) => {

@@ -1,0 +1,38 @@
+{
+  "ticker": "RGEN",
+  "name": "Repligen Corporation",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 137.6,
+  "return_period": -18.1,
+  "support_levels": [
+    130.31,
+    124.85
+  ],
+  "resistance_levels": [
+    141.46,
+    149.98
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 42.8,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 141 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 130 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

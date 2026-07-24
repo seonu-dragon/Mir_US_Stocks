@@ -1,66 +1,68 @@
 {
-  "generated_at": "2026-07-22T08:53:43+09:00",
+  "generated_at": "2026-07-24T08:50:37+09:00",
   "market": "US",
   "items": [
     {
-      "ticker": "GREE",
-      "name": "Greenidge Generation Holdings Inc. Class A",
-      "probability_score": 79.5,
-      "trend_score": 92.3,
+      "ticker": "MEDP",
+      "name": "Medpace Holdings Inc.",
+      "probability_score": 79.3,
+      "trend_score": 84.3,
       "volume_score": 90,
       "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
-      "issue_score": 5.5,
+      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
+      "issue_score": 6.5,
       "hard_catalyst": true,
       "issue_tags": [
-        "행동주의 지분공시",
+        "주요 공시 이벤트",
         "거래량 급증",
-        "주간 변동성 큼"
+        "주간 변동성 큼",
+        "신고가 근접"
       ],
       "rank": 1
     },
     {
-      "ticker": "VYNE",
-      "name": "VYNE Therapeutics Inc.",
-      "probability_score": 77.8,
-      "trend_score": 85.3,
-      "volume_score": 90,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
-      "issue_score": 5.5,
+      "ticker": "VICR",
+      "name": "Vicor Corporation",
+      "probability_score": 76.9,
+      "trend_score": 75.2,
+      "volume_score": 50.0,
+      "rsi_state": "bullish",
+      "reason": "단기 추세 강세 · 신고가 근접",
+      "issue_score": 6.0,
       "hard_catalyst": true,
       "issue_tags": [
+        "주요 공시 이벤트",
         "행동주의 지분공시",
-        "거래량 급증",
-        "주간 변동성 큼"
+        "신고가 근접"
       ],
       "rank": 2
     },
     {
-      "ticker": "HAS",
-      "name": "Hasbro Inc.",
-      "probability_score": 59.5,
-      "trend_score": 57.7,
-      "volume_score": 90,
+      "ticker": "WAB",
+      "name": "Westinghouse Air Brake Technologies Corporation",
+      "probability_score": 77.7,
+      "trend_score": 78.2,
+      "volume_score": 78.0,
       "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
-      "issue_score": 5.5,
+      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
+      "issue_score": 5.9,
       "hard_catalyst": true,
       "issue_tags": [
-        "행동주의 지분공시",
-        "거래량 급증",
-        "주간 변동성 큼"
+        "주요 공시 이벤트",
+        "거래량 증가",
+        "주간 변동성 큼",
+        "신고가 근접"
       ],
       "rank": 3
     },
     {
-      "ticker": "SPRY",
-      "name": "ARS Pharmaceuticals Inc.",
-      "probability_score": 21.6,
-      "trend_score": 27.8,
+      "ticker": "THRM",
+      "name": "Gentherm Inc",
+      "probability_score": 75.7,
+      "trend_score": 82.4,
       "volume_score": 90,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 동반",
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
       "issue_score": 5.5,
       "hard_catalyst": true,
       "issue_tags": [
@@ -71,28 +73,196 @@
       "rank": 4
     },
     {
-      "ticker": "BANC",
-      "name": "Banc of California Inc.",
-      "probability_score": 78.7,
-      "trend_score": 77.8,
+      "ticker": "TMDE",
+      "name": "TMD Energy Limited Ordinary Shares",
+      "probability_score": 59.2,
+      "trend_score": 63.2,
+      "volume_score": 90,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 5
+    },
+    {
+      "ticker": "EVH",
+      "name": "Evolent Health Inc Class A",
+      "probability_score": 52.6,
+      "trend_score": 62.3,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 6
+    },
+    {
+      "ticker": "TSLA",
+      "name": "Tesla Inc.",
+      "probability_score": 28.0,
+      "trend_score": 26.4,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 7
+    },
+    {
+      "ticker": "ROL",
+      "name": "Rollins Inc.",
+      "probability_score": 24.9,
+      "trend_score": 33.2,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 8
+    },
+    {
+      "ticker": "BXBL",
+      "name": "BOXABL Inc. Common stock",
+      "probability_score": 17.7,
+      "trend_score": 23.4,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 9
+    },
+    {
+      "ticker": "IPW",
+      "name": "iPower Inc.",
+      "probability_score": 17.5,
+      "trend_score": 20.5,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 10
+    },
+    {
+      "ticker": "NVVE",
+      "name": "Nuvve Holding Corp.",
+      "probability_score": 17.5,
+      "trend_score": 23.5,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 5.5,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 급증",
+        "주간 변동성 큼"
+      ],
+      "rank": 11
+    },
+    {
+      "ticker": "CSX",
+      "name": "CSX Corporation",
+      "probability_score": 80.2,
+      "trend_score": 82.8,
       "volume_score": 90,
       "rsi_state": "overbought",
       "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
       "issue_score": 5.0,
       "hard_catalyst": true,
       "issue_tags": [
-        "행동주의 지분공시",
+        "주요 공시 이벤트",
         "거래량 급증",
         "신고가 근접"
       ],
-      "rank": 5
+      "rank": 12
     },
     {
-      "ticker": "ETSY",
-      "name": "Etsy Inc.",
-      "probability_score": 70.1,
-      "trend_score": 76.2,
-      "volume_score": 46.5,
+      "ticker": "URI",
+      "name": "United Rentals",
+      "probability_score": 76.7,
+      "trend_score": 77.1,
+      "volume_score": 90,
+      "rsi_state": "bullish",
+      "reason": "단기 추세 강세 · 신고가 근접 · 거래량 동반",
+      "issue_score": 5.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증",
+        "신고가 근접"
+      ],
+      "rank": 13
+    },
+    {
+      "ticker": "WRB",
+      "name": "W.R. Berkley Corporation",
+      "probability_score": 67.3,
+      "trend_score": 64.9,
+      "volume_score": 43.0,
+      "rsi_state": "bullish",
+      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · RSI 중립권",
+      "issue_score": 5.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "행동주의 지분공시"
+      ],
+      "rank": 14
+    },
+    {
+      "ticker": "MS",
+      "name": "Morgan Stanley",
+      "probability_score": 57.5,
+      "trend_score": 64.0,
+      "volume_score": 43.0,
+      "rsi_state": "neutral",
+      "reason": "단기 조정 구간 · 저항선 재돌파 시도 · RSI 중립권",
+      "issue_score": 5.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "행동주의 지분공시"
+      ],
+      "rank": 15
+    },
+    {
+      "ticker": "HAS",
+      "name": "Hasbro Inc.",
+      "probability_score": 57.2,
+      "trend_score": 53.9,
+      "volume_score": 50.0,
       "rsi_state": "overbought",
       "reason": "단기 추세 강세 · RSI 과열 주의",
       "issue_score": 5.0,
@@ -101,97 +271,164 @@
         "주요 공시 이벤트",
         "행동주의 지분공시"
       ],
-      "rank": 6
+      "rank": 16
     },
     {
-      "ticker": "MS",
-      "name": "Morgan Stanley",
-      "probability_score": 58.6,
-      "trend_score": 65.5,
-      "volume_score": 53.5,
-      "rsi_state": "bullish",
-      "reason": "저항선 재돌파 시도 · RSI 중립권",
+      "ticker": "AEP",
+      "name": "American Electric Power Company Inc.",
+      "probability_score": 56.1,
+      "trend_score": 58.0,
+      "volume_score": 39.5,
+      "rsi_state": "bearish",
+      "reason": "신고가 근접",
       "issue_score": 5.0,
       "hard_catalyst": true,
       "issue_tags": [
         "주요 공시 이벤트",
-        "행동주의 지분공시"
+        "숏스퀴즈 가능(공매도 커버 부담)",
+        "신고가 근접"
       ],
-      "rank": 7
+      "rank": 17
     },
     {
-      "ticker": "NUAI",
-      "name": "New Era Energy & Digital Inc.",
-      "probability_score": 66.7,
-      "trend_score": 71.7,
+      "ticker": "FIVN",
+      "name": "Five9 Inc.",
+      "probability_score": 62.0,
+      "trend_score": 68.6,
+      "volume_score": 78.0,
+      "rsi_state": "oversold",
+      "reason": "단기 추세 강세 · 거래량 동반",
+      "issue_score": 4.9,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 증가",
+        "주간 변동성 큼"
+      ],
+      "rank": 18
+    },
+    {
+      "ticker": "SMCI",
+      "name": "Super Micro Computer Inc.",
+      "probability_score": 54.1,
+      "trend_score": 51.2,
+      "volume_score": 78.0,
+      "rsi_state": "overbought",
+      "reason": "단기 조정 구간 · RSI 과열 주의 · 거래량 동반",
+      "issue_score": 4.9,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 증가",
+        "주간 변동성 큼"
+      ],
+      "rank": 19
+    },
+    {
+      "ticker": "MSCI",
+      "name": "MSCI Inc.",
+      "probability_score": 36.5,
+      "trend_score": 38.9,
       "volume_score": 74.5,
       "rsi_state": "oversold",
       "reason": "단기 조정 구간 · 거래량 동반",
       "issue_score": 4.9,
       "hard_catalyst": true,
       "issue_tags": [
-        "행동주의 지분공시",
+        "주요 공시 이벤트",
         "거래량 증가",
         "주간 변동성 큼"
       ],
-      "rank": 8
+      "rank": 20
     },
     {
-      "ticker": "VICR",
-      "name": "Vicor Corporation",
-      "probability_score": 44.7,
-      "trend_score": 54.0,
-      "volume_score": 81.5,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 동반",
-      "issue_score": 4.9,
+      "ticker": "KN",
+      "name": "Knowles Corporation",
+      "probability_score": 65.9,
+      "trend_score": 71.5,
+      "volume_score": 90,
+      "rsi_state": "bullish",
+      "reason": "단기 조정 구간 · 저항선 재돌파 시도 · 거래량 동반",
+      "issue_score": 4.8,
       "hard_catalyst": true,
       "issue_tags": [
         "행동주의 지분공시",
-        "거래량 증가",
-        "주간 변동성 큼"
+        "거래량 급증"
       ],
-      "rank": 9
+      "rank": 21
     },
     {
-      "ticker": "CCK",
-      "name": "Crown Holdings Inc.",
-      "probability_score": 74.6,
-      "trend_score": 73.9,
-      "volume_score": 90,
+      "ticker": "NBIS",
+      "name": "Nebius Group N.V. Class A Ordinary Shares",
+      "probability_score": 63.3,
+      "trend_score": 67.5,
+      "volume_score": 43.0,
       "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · 거래량 동반",
+      "reason": "단기 조정 구간 · RSI 중립권",
+      "issue_score": 4.8,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "공매도 커버 부담",
+        "주간 변동성 큼"
+      ],
+      "rank": 22
+    },
+    {
+      "ticker": "GL",
+      "name": "Globe Life Inc.",
+      "probability_score": 54.8,
+      "trend_score": 61.7,
+      "volume_score": 90,
+      "rsi_state": "bearish",
+      "reason": "저항선 재돌파 시도 · 거래량 동반",
       "issue_score": 4.8,
       "hard_catalyst": true,
       "issue_tags": [
         "주요 공시 이벤트",
         "거래량 급증"
       ],
-      "rank": 10
+      "rank": 23
     },
     {
-      "ticker": "CTAS",
-      "name": "Cintas Corporation",
-      "probability_score": 67.7,
-      "trend_score": 66.0,
-      "volume_score": 53.5,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · RSI 과열 주의",
+      "ticker": "RGEN",
+      "name": "Repligen Corporation",
+      "probability_score": 53.0,
+      "trend_score": 56.6,
+      "volume_score": 90,
+      "rsi_state": "bearish",
+      "reason": "단기 추세 강세 · 거래량 동반",
       "issue_score": 4.8,
       "hard_catalyst": true,
       "issue_tags": [
         "주요 공시 이벤트",
-        "숏스퀴즈 가능(공매도 커버 부담)"
+        "거래량 급증"
       ],
-      "rank": 11
+      "rank": 24
     },
     {
-      "ticker": "RDGT",
-      "name": "Ridgetech Inc. Ordinary Shares",
-      "probability_score": 33.0,
-      "trend_score": 40.5,
+      "ticker": "LUV",
+      "name": "Southwest Airlines Company",
+      "probability_score": 52.1,
+      "trend_score": 56.6,
+      "volume_score": 85.0,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 4.8,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증"
+      ],
+      "rank": 25
+    },
+    {
+      "ticker": "TASK",
+      "name": "TaskUs Inc. Class A",
+      "probability_score": 40.8,
+      "trend_score": 46.6,
       "volume_score": 90,
-      "rsi_state": "bearish",
+      "rsi_state": "bullish",
       "reason": "단기 추세 강세 · 거래량 동반",
       "issue_score": 4.8,
       "hard_catalyst": true,
@@ -199,7 +436,72 @@
         "행동주의 지분공시",
         "거래량 급증"
       ],
-      "rank": 12
+      "rank": 26
+    },
+    {
+      "ticker": "GOOGL",
+      "name": "Alphabet Inc. Class A",
+      "probability_score": 35.8,
+      "trend_score": 44.0,
+      "volume_score": 88.5,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 4.8,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증"
+      ],
+      "rank": 27
+    },
+    {
+      "ticker": "FCFS",
+      "name": "FirstCash Holdings Inc.",
+      "probability_score": 34.4,
+      "trend_score": 43.7,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 4.8,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증"
+      ],
+      "rank": 28
+    },
+    {
+      "ticker": "NOW",
+      "name": "ServiceNow Inc.",
+      "probability_score": 33.2,
+      "trend_score": 32.3,
+      "volume_score": 90,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 4.8,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증"
+      ],
+      "rank": 29
+    },
+    {
+      "ticker": "PAG",
+      "name": "Penske Automotive Group Inc.",
+      "probability_score": 70.3,
+      "trend_score": 70.7,
+      "volume_score": 50.0,
+      "rsi_state": "bullish",
+      "reason": "단기 추세 강세 · 신고가 근접 · RSI 중립권",
+      "issue_score": 4.7,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "행동주의 지분공시",
+        "신고가 근접"
+      ],
+      "rank": 30
     },
     {
       "ticker": "PLMK",
@@ -216,40 +518,23 @@
         "행동주의 지분공시",
         "신고가 근접"
       ],
-      "rank": 13
+      "rank": 31
     },
     {
-      "ticker": "ELV",
-      "name": "Elevance Health Inc.",
-      "probability_score": 57.7,
-      "trend_score": 64.1,
-      "volume_score": 43.0,
-      "rsi_state": "bullish",
-      "reason": "RSI 중립권",
+      "ticker": "NWSA",
+      "name": "News Corporation Class A",
+      "probability_score": 48.2,
+      "trend_score": 48.7,
+      "volume_score": 50.0,
+      "rsi_state": "neutral",
+      "reason": "단기 추세 강세 · RSI 중립권",
       "issue_score": 4.5,
       "hard_catalyst": true,
       "issue_tags": [
         "주요 공시 이벤트",
-        "내부자 매수"
+        "행동주의 지분공시"
       ],
-      "rank": 14
-    },
-    {
-      "ticker": "HXL",
-      "name": "Hexcel Corporation",
-      "probability_score": 78.8,
-      "trend_score": 81.5,
-      "volume_score": 71.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 4.4,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "거래량 증가",
-        "신고가 근접"
-      ],
-      "rank": 15
+      "rank": 32
     },
     {
       "ticker": "CTAA",
@@ -266,7 +551,7 @@
         "거래량 증가",
         "신고가 근접"
       ],
-      "rank": 16
+      "rank": 33
     },
     {
       "ticker": "MYX",
@@ -283,7 +568,7 @@
         "거래량 증가",
         "신고가 근접"
       ],
-      "rank": 17
+      "rank": 34
     },
     {
       "ticker": "AEAQ",
@@ -300,14 +585,30 @@
         "거래량 증가",
         "신고가 근접"
       ],
-      "rank": 18
+      "rank": 35
+    },
+    {
+      "ticker": "HXL",
+      "name": "Hexcel Corporation",
+      "probability_score": 78.9,
+      "trend_score": 82.0,
+      "volume_score": 60.5,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
+      "issue_score": 4.3,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "신고가 근접"
+      ],
+      "rank": 36
     },
     {
       "ticker": "TRV",
       "name": "The Travelers Companies Inc.",
-      "probability_score": 75.7,
-      "trend_score": 80.9,
-      "volume_score": 53.5,
+      "probability_score": 76.2,
+      "trend_score": 81.0,
+      "volume_score": 57.0,
       "rsi_state": "overbought",
       "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
       "issue_score": 4.3,
@@ -316,78 +617,193 @@
         "주요 공시 이벤트",
         "신고가 근접"
       ],
-      "rank": 19
+      "rank": 37
     },
     {
-      "ticker": "GLOO",
-      "name": "Gloo Holdings Inc. Class A",
-      "probability_score": 71.4,
-      "trend_score": 69.9,
+      "ticker": "TTE",
+      "name": "TotalEnergies SE Ordinary Shares",
+      "probability_score": 69.7,
+      "trend_score": 69.4,
+      "volume_score": 81.5,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · RSI 과열 주의",
+      "issue_score": 4.2,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "거래량 증가"
+      ],
+      "rank": 38
+    },
+    {
+      "ticker": "MOH",
+      "name": "Molina Healthcare Inc",
+      "probability_score": 58.2,
+      "trend_score": 58.9,
+      "volume_score": 81.5,
+      "rsi_state": "oversold",
+      "reason": "거래량 동반",
+      "issue_score": 4.2,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 증가"
+      ],
+      "rank": 39
+    },
+    {
+      "ticker": "DHI",
+      "name": "D.R. Horton Inc.",
+      "probability_score": 32.9,
+      "trend_score": 33.6,
+      "volume_score": 78.0,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간 · 거래량 동반",
+      "issue_score": 4.2,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 증가"
+      ],
+      "rank": 40
+    },
+    {
+      "ticker": "NVEC",
+      "name": "NVE Corporation",
+      "probability_score": 85.1,
+      "trend_score": 89.4,
+      "volume_score": 90,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
+      "issue_score": 4.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "거래량 급증",
+        "주간 변동성 큼",
+        "신고가 근접"
+      ],
+      "rank": 41
+    },
+    {
+      "ticker": "IKT",
+      "name": "Inhibikase Therapeutics Inc.",
+      "probability_score": 75.7,
+      "trend_score": 79.6,
+      "volume_score": 57.0,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
+      "issue_score": 4.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "주간 변동성 큼"
+      ],
+      "rank": 42
+    },
+    {
+      "ticker": "OII",
+      "name": "Oceaneering International Inc.",
+      "probability_score": 74.9,
+      "trend_score": 82.3,
+      "volume_score": 90,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
+      "issue_score": 4.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "거래량 급증",
+        "주간 변동성 큼",
+        "신고가 근접"
+      ],
+      "rank": 43
+    },
+    {
+      "ticker": "UTZ",
+      "name": "Utz Brands Inc Class A",
+      "probability_score": 74.1,
+      "trend_score": 92.0,
+      "volume_score": 64.0,
+      "rsi_state": "overbought",
+      "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
+      "issue_score": 4.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "주간 변동성 큼"
+      ],
+      "rank": 44
+    },
+    {
+      "ticker": "IMAX",
+      "name": "Imax Corporation",
+      "probability_score": 71.5,
+      "trend_score": 75.1,
+      "volume_score": 90,
+      "rsi_state": "overbought",
+      "reason": "신고가 근접 · RSI 과열 주의 · 거래량 동반",
+      "issue_score": 4.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "거래량 급증",
+        "주간 변동성 큼",
+        "신고가 근접"
+      ],
+      "rank": 45
+    },
+    {
+      "ticker": "NNBR",
+      "name": "NN Inc.",
+      "probability_score": 70.1,
+      "trend_score": 77.4,
+      "volume_score": 22.0,
+      "rsi_state": "bearish",
+      "reason": "단기 추세 강세 · 거래량 둔화",
+      "issue_score": 4.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "주간 변동성 큼"
+      ],
+      "rank": 46
+    },
+    {
+      "ticker": "NUAI",
+      "name": "New Era Energy & Digital Inc.",
+      "probability_score": 67.1,
+      "trend_score": 70.7,
+      "volume_score": 39.5,
+      "rsi_state": "overbought",
+      "reason": "단기 조정 구간 · RSI 과열 주의",
+      "issue_score": 4.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시",
+        "주간 변동성 큼"
+      ],
+      "rank": 47
+    },
+    {
+      "ticker": "CTAS",
+      "name": "Cintas Corporation",
+      "probability_score": 66.6,
+      "trend_score": 66.2,
       "volume_score": 50.0,
       "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 4.3,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 20
-    },
-    {
-      "ticker": "ISRG",
-      "name": "Intuitive Surgical Inc.",
-      "probability_score": 26.2,
-      "trend_score": 33.7,
-      "volume_score": 67.5,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 동반",
-      "issue_score": 4.2,
+      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · RSI 과열 주의",
+      "issue_score": 4.0,
       "hard_catalyst": true,
       "issue_tags": [
         "주요 공시 이벤트",
-        "거래량 증가"
+        "숏스퀴즈 가능(공매도 커버 부담)"
       ],
-      "rank": 21
+      "rank": 48
     },
     {
-      "ticker": "CELH",
-      "name": "Celsius Holdings Inc.",
-      "probability_score": 24.6,
-      "trend_score": 33.4,
-      "volume_score": 71.0,
-      "rsi_state": "bearish",
-      "reason": "단기 조정 구간 · 거래량 동반",
-      "issue_score": 4.2,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 증가"
-      ],
-      "rank": 22
-    },
-    {
-      "ticker": "NBIS",
-      "name": "Nebius Group N.V. Class A Ordinary Shares",
-      "probability_score": 61.4,
-      "trend_score": 65.7,
-      "volume_score": 64.0,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 동반",
-      "issue_score": 4.1,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "공매도 커버 부담"
-      ],
-      "rank": 23
-    },
-    {
-      "ticker": "ATAI",
-      "name": "AtaiBeckley Inc.",
-      "probability_score": 77.4,
-      "trend_score": 90.3,
-      "volume_score": 36.0,
+      "ticker": "AGEN",
+      "name": "Agenus Inc.",
+      "probability_score": 66.4,
+      "trend_score": 87.6,
+      "volume_score": 22.0,
       "rsi_state": "overbought",
       "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 둔화",
       "issue_score": 4.0,
@@ -396,13 +812,13 @@
         "행동주의 지분공시",
         "주간 변동성 큼"
       ],
-      "rank": 24
+      "rank": 49
     },
     {
-      "ticker": "PATH",
-      "name": "UiPath Inc. Class A",
-      "probability_score": 66.4,
-      "trend_score": 62.4,
+      "ticker": "OSK",
+      "name": "Oshkosh Corporation (Holding Company)Common Stock",
+      "probability_score": 65.1,
+      "trend_score": 61.4,
       "volume_score": 90,
       "rsi_state": "overbought",
       "reason": "단기 추세 강세 · RSI 과열 주의 · 거래량 동반",
@@ -412,15 +828,15 @@
         "행동주의 지분공시",
         "거래량 급증"
       ],
-      "rank": 25
+      "rank": 50
     },
     {
-      "ticker": "STTK",
-      "name": "Shattuck Labs Inc.",
-      "probability_score": 65.8,
-      "trend_score": 78.8,
+      "ticker": "PSNL",
+      "name": "Personalis Inc.",
+      "probability_score": 64.3,
+      "trend_score": 74.3,
       "volume_score": 36.0,
-      "rsi_state": "bullish",
+      "rsi_state": "oversold",
       "reason": "단기 추세 강세 · 거래량 둔화",
       "issue_score": 4.0,
       "hard_catalyst": true,
@@ -428,125 +844,45 @@
         "행동주의 지분공시",
         "주간 변동성 큼"
       ],
-      "rank": 26
+      "rank": 51
     },
     {
-      "ticker": "ZION",
-      "name": "Zions Bancorporation N.A.",
-      "probability_score": 63.0,
-      "trend_score": 65.5,
-      "volume_score": 90,
-      "rsi_state": "neutral",
-      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · RSI 중립권",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 급증"
-      ],
-      "rank": 27
-    },
-    {
-      "ticker": "SLGN",
-      "name": "Silgan Holdings Inc.",
-      "probability_score": 61.5,
-      "trend_score": 60.8,
-      "volume_score": 85.0,
-      "rsi_state": "bearish",
-      "reason": "단기 추세 강세 · RSI 중립권 · 거래량 동반",
+      "ticker": "VSH",
+      "name": "Vishay Intertechnology Inc.",
+      "probability_score": 63.8,
+      "trend_score": 66.2,
+      "volume_score": 39.5,
+      "rsi_state": "oversold",
+      "reason": "단기 조정 구간",
       "issue_score": 4.0,
       "hard_catalyst": true,
       "issue_tags": [
         "행동주의 지분공시",
-        "거래량 급증"
-      ],
-      "rank": 28
-    },
-    {
-      "ticker": "WTFC",
-      "name": "Wintrust Financial Corporation",
-      "probability_score": 60.6,
-      "trend_score": 61.3,
-      "volume_score": 90,
-      "rsi_state": "neutral",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 중립권",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 급증"
-      ],
-      "rank": 29
-    },
-    {
-      "ticker": "ABT",
-      "name": "Abbott Laboratories",
-      "probability_score": 60.4,
-      "trend_score": 55.4,
-      "volume_score": 46.5,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · RSI 과열 주의",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
         "주간 변동성 큼"
       ],
-      "rank": 30
+      "rank": 52
     },
     {
-      "ticker": "BHF",
-      "name": "Brighthouse Financial Inc.",
-      "probability_score": 59.8,
-      "trend_score": 59.0,
+      "ticker": "WST",
+      "name": "West Pharmaceutical Services Inc.",
+      "probability_score": 62.7,
+      "trend_score": 71.0,
       "volume_score": 90,
-      "rsi_state": "neutral",
-      "reason": "신고가 근접 · RSI 중립권 · 거래량 동반",
+      "rsi_state": "bearish",
+      "reason": "단기 추세 강세 · 거래량 동반",
       "issue_score": 4.0,
       "hard_catalyst": true,
       "issue_tags": [
-        "행동주의 지분공시",
+        "주요 공시 이벤트",
         "거래량 급증"
       ],
-      "rank": 31
+      "rank": 53
     },
     {
       "ticker": "CLSK",
       "name": "CleanSpark Inc.",
-      "probability_score": 59.2,
-      "trend_score": 66.4,
-      "volume_score": 57.0,
-      "rsi_state": "bullish",
-      "reason": "단기 조정 구간 · 거래량 동반",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "주간 변동성 큼"
-      ],
-      "rank": 32
-    },
-    {
-      "ticker": "PENG",
-      "name": "Penguin Solutions Inc.",
-      "probability_score": 57.9,
-      "trend_score": 65.2,
-      "volume_score": 36.0,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 둔화",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "주간 변동성 큼"
-      ],
-      "rank": 33
-    },
-    {
-      "ticker": "RYAM",
-      "name": "Rayonier Advanced Materials Inc.",
-      "probability_score": 57.5,
-      "trend_score": 62.0,
+      "probability_score": 61.3,
+      "trend_score": 66.6,
       "volume_score": 50.0,
       "rsi_state": "overbought",
       "reason": "단기 조정 구간 · RSI 과열 주의",
@@ -556,30 +892,46 @@
         "행동주의 지분공시",
         "주간 변동성 큼"
       ],
-      "rank": 34
+      "rank": 54
     },
     {
-      "ticker": "BFLY",
-      "name": "Butterfly Network Inc. Class A",
-      "probability_score": 57.1,
-      "trend_score": 63.3,
-      "volume_score": 32.5,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 둔화",
+      "ticker": "WAL",
+      "name": "Western Alliance Bancorporation (DE)",
+      "probability_score": 61.2,
+      "trend_score": 56.7,
+      "volume_score": 90,
+      "rsi_state": "bullish",
+      "reason": "RSI 중립권 · 거래량 동반",
+      "issue_score": 4.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증"
+      ],
+      "rank": 55
+    },
+    {
+      "ticker": "COCO",
+      "name": "The Vita Coco Company Inc.",
+      "probability_score": 60.2,
+      "trend_score": 66.2,
+      "volume_score": 90,
+      "rsi_state": "bullish",
+      "reason": "단기 조정 구간 · 거래량 동반",
       "issue_score": 4.0,
       "hard_catalyst": true,
       "issue_tags": [
         "행동주의 지분공시",
-        "주간 변동성 큼"
+        "거래량 급증"
       ],
-      "rank": 35
+      "rank": 56
     },
     {
-      "ticker": "CELC",
-      "name": "Celcuity Inc.",
-      "probability_score": 44.6,
-      "trend_score": 59.9,
-      "volume_score": 53.5,
+      "ticker": "FLYW",
+      "name": "Flywire Corporation Voting",
+      "probability_score": 59.4,
+      "trend_score": 66.6,
+      "volume_score": 39.5,
       "rsi_state": "oversold",
       "reason": "단기 추세 강세",
       "issue_score": 4.0,
@@ -588,13 +940,29 @@
         "행동주의 지분공시",
         "주간 변동성 큼"
       ],
-      "rank": 36
+      "rank": 57
     },
     {
-      "ticker": "PSA",
-      "name": "Public Storage",
-      "probability_score": 40.1,
-      "trend_score": 45.9,
+      "ticker": "PNFP",
+      "name": "Pinnacle Financial Partners Inc. Common stock",
+      "probability_score": 55.0,
+      "trend_score": 53.6,
+      "volume_score": 90,
+      "rsi_state": "neutral",
+      "reason": "단기 추세 강세 · RSI 중립권 · 거래량 동반",
+      "issue_score": 4.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 급증"
+      ],
+      "rank": 58
+    },
+    {
+      "ticker": "KNX",
+      "name": "Knight-Swift Transportation Holdings Inc.",
+      "probability_score": 54.5,
+      "trend_score": 62.9,
       "volume_score": 90,
       "rsi_state": "bearish",
       "reason": "거래량 동반",
@@ -604,373 +972,21 @@
         "주요 공시 이벤트",
         "거래량 급증"
       ],
-      "rank": 37
-    },
-    {
-      "ticker": "QNT",
-      "name": "Quantinuum Inc. Class A",
-      "probability_score": 37.8,
-      "trend_score": 38.8,
-      "volume_score": 29.0,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간 · 거래량 둔화",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "주간 변동성 큼"
-      ],
-      "rank": 38
-    },
-    {
-      "ticker": "MNTN",
-      "name": "MNTN Inc. Class A",
-      "probability_score": 36.0,
-      "trend_score": 31.4,
-      "volume_score": 46.5,
-      "rsi_state": "bearish",
-      "reason": "단기 추세 강세",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "주간 변동성 큼"
-      ],
-      "rank": 39
-    },
-    {
-      "ticker": "LIMN",
-      "name": "Liminatus Pharma Inc. Class A",
-      "probability_score": 34.8,
-      "trend_score": 41.0,
-      "volume_score": 20,
-      "rsi_state": "overbought",
-      "reason": "RSI 과열 주의 · 거래량 둔화",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "주간 변동성 큼"
-      ],
-      "rank": 40
-    },
-    {
-      "ticker": "TEM",
-      "name": "Tempus AI Inc. Class A",
-      "probability_score": 32.5,
-      "trend_score": 31.0,
-      "volume_score": 43.0,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "주간 변동성 큼"
-      ],
-      "rank": 41
-    },
-    {
-      "ticker": "PNR",
-      "name": "Pentair plc. Ordinary Share",
-      "probability_score": 25.9,
-      "trend_score": 33.0,
-      "volume_score": 43.0,
-      "rsi_state": "oversold",
-      "reason": "단기 조정 구간",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "주간 변동성 큼"
-      ],
-      "rank": 42
-    },
-    {
-      "ticker": "SHOE",
-      "name": "Shoe Station Group Inc.",
-      "probability_score": 24.2,
-      "trend_score": 22.0,
-      "volume_score": 90,
-      "rsi_state": "bearish",
-      "reason": "단기 조정 구간 · RSI 중립권 · 거래량 동반",
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "거래량 급증"
-      ],
-      "rank": 43
-    },
-    {
-      "ticker": "CCXI",
-      "name": "Churchill Capital Corp XI - Class A Ordinary Shares",
-      "probability_score": 60.1,
-      "trend_score": 60.9,
-      "volume_score": 53.5,
-      "rsi_state": "bullish",
-      "reason": "신고가 근접",
-      "issue_score": 3.7,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "행동주의 지분공시"
-      ],
-      "rank": 44
-    },
-    {
-      "ticker": "NWSA",
-      "name": "News Corporation Class A",
-      "probability_score": 58.9,
-      "trend_score": 58.2,
-      "volume_score": 39.5,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 저항선 재돌파 시도 · RSI 과열 주의",
-      "issue_score": 3.7,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "행동주의 지분공시"
-      ],
-      "rank": 45
-    },
-    {
-      "ticker": "KAI",
-      "name": "Kadant Inc",
-      "probability_score": 80.0,
-      "trend_score": 80.6,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 신고가 근접",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 46
-    },
-    {
-      "ticker": "MAMA",
-      "name": "Mama's Creations Inc.",
-      "probability_score": 79.9,
-      "trend_score": 82.2,
-      "volume_score": 50.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 47
-    },
-    {
-      "ticker": "AEIS",
-      "name": "Advanced Energy Industries Inc.",
-      "probability_score": 78.9,
-      "trend_score": 81.1,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 중립권",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 48
-    },
-    {
-      "ticker": "NYC",
-      "name": "American Strategic Investment Co. Class A",
-      "probability_score": 78.7,
-      "trend_score": 81.1,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 신고가 근접",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 49
-    },
-    {
-      "ticker": "OPXS",
-      "name": "Optex Systems Holdings Inc.",
-      "probability_score": 78.6,
-      "trend_score": 81.1,
-      "volume_score": 50.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 50
-    },
-    {
-      "ticker": "NPB",
-      "name": "Northpointe Bancshares Inc.",
-      "probability_score": 78.2,
-      "trend_score": 79.1,
-      "volume_score": 50.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 51
-    },
-    {
-      "ticker": "QSEA",
-      "name": "Quartzsea Acquisition Corporation - Ordinary Shares",
-      "probability_score": 77.3,
-      "trend_score": 80.7,
-      "volume_score": 57.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 52
-    },
-    {
-      "ticker": "VPG",
-      "name": "Vishay Precision Group Inc.",
-      "probability_score": 77.3,
-      "trend_score": 75.6,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 신고가 근접",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 53
-    },
-    {
-      "ticker": "JBHT",
-      "name": "J.B. Hunt Transport Services Inc.",
-      "probability_score": 77.1,
-      "trend_score": 80.0,
-      "volume_score": 50.0,
-      "rsi_state": "neutral",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 중립권",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "신고가 근접"
-      ],
-      "rank": 54
-    },
-    {
-      "ticker": "ECG",
-      "name": "Everus Construction Group Inc.",
-      "probability_score": 77.0,
-      "trend_score": 80.1,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 신고가 근접",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 55
-    },
-    {
-      "ticker": "ZUMZ",
-      "name": "Zumiez Inc.",
-      "probability_score": 77.0,
-      "trend_score": 77.8,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "신고가 근접 · RSI 중립권",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 56
-    },
-    {
-      "ticker": "THRY",
-      "name": "Thryv Holdings Inc.",
-      "probability_score": 76.8,
-      "trend_score": 79.7,
-      "volume_score": 50.0,
-      "rsi_state": "bullish",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 중립권",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 57
-    },
-    {
-      "ticker": "BCBP",
-      "name": "BCB Bancorp Inc. (NJ)",
-      "probability_score": 76.4,
-      "trend_score": 79.9,
-      "volume_score": 50.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
-      "rank": 58
-    },
-    {
-      "ticker": "ALTG",
-      "name": "Alta Equipment Group Inc. Class A",
-      "probability_score": 76.0,
-      "trend_score": 79.1,
-      "volume_score": 50.0,
-      "rsi_state": "neutral",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 중립권",
-      "issue_score": 3.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
-      ],
       "rank": 59
     },
     {
-      "ticker": "SNTI",
-      "name": "Senti Biosciences Holdings Inc.",
-      "probability_score": 76.0,
-      "trend_score": 79.2,
-      "volume_score": 50.0,
-      "rsi_state": "overbought",
-      "reason": "단기 추세 강세 · 신고가 근접 · RSI 과열 주의",
-      "issue_score": 3.5,
+      "ticker": "EQR",
+      "name": "Equity Residential Common Shares of Beneficial Interest",
+      "probability_score": 53.4,
+      "trend_score": 56.4,
+      "volume_score": 85.0,
+      "rsi_state": "bearish",
+      "reason": "단기 추세 강세 · 거래량 동반",
+      "issue_score": 4.0,
       "hard_catalyst": true,
       "issue_tags": [
-        "행동주의 지분공시",
-        "신고가 근접"
+        "주요 공시 이벤트",
+        "거래량 급증"
       ],
       "rank": 60
     }

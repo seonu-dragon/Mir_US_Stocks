@@ -895,7 +895,7 @@ async function buildStockChatContext(userText) {
     }
 
     lines.push(
-      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtDailyPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RS:${item.rsScore} · EPS점수:${item.epsRevScore} · 거래량비율:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
+      `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtDailyPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RSI:${fmtRsi(item)} · EPS:${fmtEps(item)} · 거래량비율:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
       (f.pe ? ` · PER:${fmtMultiple(f.pe)}` : "") +
       (f.forwardPE ? ` · FwdPER:${fmtMultiple(f.forwardPE)}` : "") +
       (f.ps ? ` · P/S:${fmtMultiple(f.ps)}` : "") +
@@ -1653,7 +1653,7 @@ function renderFundamentals(item) {
     { title: "가격", wide: true, metrics: [
       ["Price", priceOrDash(displayPrice)], ["Prev Close", priceOrDash(f.prevClose)],
       ["52W High", priceOrDash(f.week52High)], ["52W Low", priceOrDash(f.week52Low)],
-      ["RS Score", item.rsScore ?? "-"], ["Index", indexLabel(item)],
+      ["RSI (14)", fmtRsi(item)], ["EPS (TTM)", fmtEps(item)], ["Index", indexLabel(item)],
     ] },
   ];
 
@@ -1697,7 +1697,7 @@ function etfConstituentStocks(ticker) {
     return {
       name: meta.name,
       list: getSectorStocks(meta).map((s) => ({
-        ticker: s.ticker, name: s.company, rsScore: s.rsScore,
+        ticker: s.ticker, name: s.company, rsi14: s.rsi14,
         changePct: s.changePct, monthChangePct: s.monthChangePct
       }))
     };
@@ -1707,24 +1707,24 @@ function etfConstituentStocks(ticker) {
 
 function renderEtfConstituents(item) {
   const result = etfConstituentStocks(item.ticker);
-  const head = `<div class="fundamental-head"><h3>구성 종목 (상대강도순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
+  const head = `<div class="fundamental-head"><h3>구성 종목 (1개월 모멘텀순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
   const box = byId("fundamentalTable");
   if (!result || !result.list.length) {
     box.innerHTML = head + `<p class="muted" style="padding:12px;">이 ETF의 구성 종목 데이터가 없습니다.</p>`;
     return;
   }
-  const list = result.list.slice().sort((a, b) => (b.rsScore || 0) - (a.rsScore || 0));
+  const list = result.list.slice().sort((a, b) => (Number(b.monthChangePct) || -Infinity) - (Number(a.monthChangePct) || -Infinity));
   box.innerHTML = head + `
     <div class="table-wrap">
       <table class="etf-constituents-table">
-        <thead><tr><th>#</th><th>티커</th><th>회사명</th><th>RS</th><th>당일</th><th>1개월</th></tr></thead>
+        <thead><tr><th>#</th><th>티커</th><th>회사명</th><th>RSI</th><th>당일</th><th>1개월</th></tr></thead>
         <tbody>
           ${list.map((s, i) => `
             <tr class="etf-con-row" data-ticker="${escapeHtml(s.ticker)}" style="cursor:pointer;">
               <td class="rank-cell">${i + 1}</td>
               <td><strong>${escapeHtml(s.ticker)}</strong></td>
               <td>${escapeHtml(s.name || "")}</td>
-              <td><span class="rs-badge">${Math.round(s.rsScore || 0)}</span></td>
+              <td><span class="rs-badge">${fmtRsi(stockByTicker(s.ticker) || s)}</span></td>
               <td class="${cls(s.changePct)}">${s.changePct != null ? fmtDailyPct(s.changePct) : "-"}</td>
               <td class="${cls(s.monthChangePct)}">${s.monthChangePct != null ? fmtPct(s.monthChangePct) : "-"}</td>
             </tr>

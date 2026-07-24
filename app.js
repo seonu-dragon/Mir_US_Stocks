@@ -76,6 +76,7 @@ function stock(ticker, company, industry, sector, bucket, price, changePct, week
     rsScore,
     epsRevScore,
     rsi14: Math.round((rsScore + stochK) / 2),
+    epsTtm: Math.round(price * 0.04 * 100) / 100, // 데모 전용(실측은 스냅샷 빌더가 채움)
     stochK,
     newHighDistancePct,
     newHighRecency4w: newHighDistancePct < 2 ? 1 : newHighDistancePct < 5 ? 2 : "None",
@@ -127,6 +128,35 @@ function marketCfg() {
   };
 }
 function isKrMarket() { return marketCfg().id === "kr"; }
+
+// ===== 실측 RSI(14) · EPS(TTM) 표시 헬퍼 =====
+// RS/EPS 합성 점수를 전면 제거하고, 빌더가 light 스냅샷에 심는 실측값만 노출한다.
+//  - rsi14: 실측 Wilder RSI(14). 합성 히스토리(가짜 가격) 종목은 null → 정렬/필터 제외 + "—".
+//  - epsTtm: 실측 TTM EPS(음수 가능). 펀더멘털이 없으면 null → "—".
+function rsiValue(item) {
+  // 합성 히스토리(가짜 가격) 종목은 실측 RSI 가 없다. light 스냅샷은 null 이지만
+  // 상세 JSON 병합(withDetail)이 옛 rsi14 를 덮어쓸 수 있어 소스로 한 번 더 차단한다.
+  if (!item || isSyntheticHistory(item)) return null;
+  const v = Number(item.rsi14);
+  return Number.isFinite(v) ? v : null;
+}
+function epsTtmValue(item) {
+  const v = Number(item && item.epsTtm);
+  return Number.isFinite(v) ? v : null;
+}
+function fmtRsi(item) {
+  const v = rsiValue(item);
+  return v == null ? "—" : String(Math.round(v));
+}
+// 시장별 통화로 EPS 포맷. KR 은 원(정수), US 는 달러(소수 2자리). 음수도 자연 처리.
+function fmtEpsValue(v) {
+  if (!Number.isFinite(Number(v))) return "—";
+  const n = Number(v);
+  return isKrMarket() ? `₩${Math.round(n).toLocaleString("ko-KR")}` : `$${n.toFixed(2)}`;
+}
+function fmtEps(item) {
+  return fmtEpsValue(epsTtmValue(item));
+}
 function isStockEtf(item) {
   if (!item) return false;
   if (isKrMarket()) {
@@ -147,7 +177,6 @@ function liveProxyTicker(itemOrTicker) {
 }
 let selectedTicker = (window.MirMarket && window.MirMarket.getInitialMode() === "kr") ? "005930" : "NVDA";
 let chatFocusTicker = selectedTicker;
-let scoreHelpOpen = null;
 function getSectorEtfs() {
   const cfg = marketCfg();
   return (cfg.sectorEtfs && cfg.sectorEtfs.length) ? cfg.sectorEtfs : SECTOR_ETFS;
@@ -315,15 +344,17 @@ let earnWatchOnly = false;
 let deferredInstallPrompt = null;
 let estimateHistoryStore = null;
 
+// RS/EPS 합성 점수를 제거하고 실측 신호(모멘텀·신고가·거래량·RSI)로 재정의.
+// minRsi / maxRsi 는 RSI(14) 범위 필터(0 = 미설정). 실제 종목 선별은 topPresetMatches() 가 담당.
 const TOP_PRESETS = {
-  leaders: { metric: "rsScore", minRs: 85, minEps: 70, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
-  breakout: { metric: "volumeRatio", minRs: 75, minEps: 0, minVolume: 1.5, minMarketCap: 1, newHigh: "0-2%", recency: "All" },
-  pullback: { metric: "rsScore", minRs: 80, minEps: 60, minVolume: 0, minMarketCap: 5, newHigh: "5-10%", recency: "All" },
-  growth: { metric: "epsRevScore", minRs: 70, minEps: 80, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" },
-  value: { metric: "forwardPE", minRs: 50, minEps: 50, minVolume: 0, minMarketCap: 10, newHigh: "All", recency: "All" },
-  lows: { metric: "low52Dist", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 1, newHigh: "All", recency: "All" },
-  volsurge: { metric: "volumeRatio", minRs: 0, minEps: 0, minVolume: 3, minMarketCap: 1, newHigh: "All", recency: "All" },
-  oversold: { metric: "rsi14", minRs: 0, minEps: 0, minVolume: 0, minMarketCap: 2, newHigh: "All", recency: "All" }
+  leaders:  { metric: "threeMonthChangePct", minRsi: 50, maxRsi: 0,  minVolume: 0,   minMarketCap: 10, newHigh: "All",   recency: "All" },
+  breakout: { metric: "volumeRatio",         minRsi: 0,  maxRsi: 0,  minVolume: 1.5, minMarketCap: 1,  newHigh: "0-2%",  recency: "All" },
+  pullback: { metric: "monthChangePct",      minRsi: 0,  maxRsi: 55, minVolume: 0,   minMarketCap: 5,  newHigh: "5-10%", recency: "All" },
+  growth:   { metric: "monthChangePct",      minRsi: 50, maxRsi: 0,  minVolume: 0,   minMarketCap: 2,  newHigh: "All",   recency: "All" },
+  value:    { metric: "forwardPE",           minRsi: 0,  maxRsi: 0,  minVolume: 0,   minMarketCap: 10, newHigh: "All",   recency: "All" },
+  lows:     { metric: "low52Dist",           minRsi: 0,  maxRsi: 0,  minVolume: 0,   minMarketCap: 1,  newHigh: "All",   recency: "All" },
+  volsurge: { metric: "volumeRatio",         minRsi: 0,  maxRsi: 0,  minVolume: 3,   minMarketCap: 1,  newHigh: "All",   recency: "All" },
+  oversold: { metric: "rsi14",               minRsi: 0,  maxRsi: 30, minVolume: 0,   minMarketCap: 2,  newHigh: "All",   recency: "All" }
 };
 
 // 52주 저가 대비 상승률(%) — MAP_FUNDAMENTALS.low52 + 스냅샷 price 로 계산.
@@ -3769,16 +3800,6 @@ function setupEvents() {
   setupBacktestEvents();
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
-    const scoreButton = event.target.closest("[data-score-help]");
-    if (scoreButton) {
-      event.preventDefault();
-      event.stopPropagation();
-      const kind = scoreButton.dataset.scoreHelp;
-      scoreHelpOpen = scoreHelpOpen === kind ? null : kind;
-      const base = data.stocks.find((row) => row.ticker === selectedTicker);
-      if (base) byId("searchFacts").innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
-      return;
-    }
     const moveButton = event.target.closest("[data-move-analysis]");
     if (moveButton) {
       event.preventDefault();
@@ -5009,6 +5030,8 @@ function mapMetricValue(item, metric) {
     return Number.isFinite(v) ? v : null;
   }
   const v = Number(item[metric]);
+  // RSI·EPS 는 결측 시 0 이 아니라 null(→ 중립색·"—")로 취급해 색을 칠하지 않는다.
+  if (metric === "rsi14" || metric === "epsTtm") return Number.isFinite(v) ? v : null;
   return Number.isFinite(v) ? v : 0;
 }
 
@@ -5030,8 +5053,36 @@ function metricColor(value, metric) {
     const num = (value === null || value === undefined || value === "") ? NaN : Number(value);
     return fundamentalColor(num, cfg);
   }
+  // RSI(14): 발산형 색상 — 과매도(<30) 초록(반등 여지) ↔ 과매수(>70) 빨강(과열), 50 중립.
+  if (metric === "rsi14") {
+    const r = (value === null || value === undefined || value === "") ? NaN : Number(value);
+    if (!Number.isFinite(r)) return MAP_NODATA_COLOR; // 합성 히스토리 등 결측 → 중립
+    if (r >= 80) return "#9f2f2f";
+    if (r >= 70) return "#b6463f";
+    if (r >= 60) return "#a86933";
+    if (r > 40) return "#7a8088";
+    if (r > 30) return "#5ca044";
+    if (r > 20) return "#159447";
+    return "#007a3d";
+  }
+  // EPS(TTM): 높을수록 초록, 적자(≤0)는 빨강. 통화 스케일이 시장마다 달라 구간을 분리.
+  if (metric === "epsTtm") {
+    const e = (value === null || value === undefined || value === "") ? NaN : Number(value);
+    if (!Number.isFinite(e)) return MAP_NODATA_COLOR;
+    if (e <= 0) return "#9f2f2f";
+    if (isKrMarket()) {
+      if (e >= 3000) return "#006b35";
+      if (e >= 1000) return "#159447";
+      if (e >= 300) return "#5ca044";
+      return "#7a8088";
+    }
+    if (e >= 5) return "#006b35";
+    if (e >= 2) return "#159447";
+    if (e >= 0.5) return "#5ca044";
+    return "#7a8088";
+  }
   const v = Number(value);
-  if (metric === "rsScore" || metric === "epsRevScore" || metric === "stochK") {
+  if (metric === "stochK") {
     if (v >= 85) return "#007a3d";
     if (v >= 70) return "#159447";
     if (v >= 55) return "#5ca044";
@@ -5274,7 +5325,23 @@ function renderLegend(metric) {
     legend.innerHTML = cells.join("");
     return;
   }
-  const cells = metric.includes("Score") || metric === "stochK"
+  if (metric === "rsi14") {
+    const cells = [["과매도 ≤30", 25], ["30", 32], ["40", 40], ["50", 50], ["60", 62], ["70", 72], ["과매수 ≥80", 82]];
+    legend.innerHTML = cells.map(([label, value]) => (
+      `<div class="legend-cell" style="background:${metricColor(value, metric)}">${label}</div>`
+    )).join("") + `<div class="legend-cell" style="background:${MAP_NODATA_COLOR}">데이터없음</div>`;
+    return;
+  }
+  if (metric === "epsTtm") {
+    const cells = isKrMarket()
+      ? [["적자", -1], ["≥0", 1], ["≥300", 300], ["≥1천", 1000], ["≥3천", 3000]]
+      : [["적자", -1], ["≥0", 0.1], ["≥0.5", 0.5], ["≥2", 2], ["≥5", 5]];
+    legend.innerHTML = cells.map(([label, value]) => (
+      `<div class="legend-cell" style="background:${metricColor(value, metric)}">${label}</div>`
+    )).join("") + `<div class="legend-cell" style="background:${MAP_NODATA_COLOR}">데이터없음</div>`;
+    return;
+  }
+  const cells = metric === "stochK"
     ? [
         ["0", 10], ["30", 30], ["45", 45], ["55", 55], ["70", 70], ["85", 85], ["100", 100]
       ]
@@ -5501,7 +5568,13 @@ function fmtMetric(value, metric) {
     if (cfg.fmt === "usd") return `$${n.toFixed(2)}`;
     return n.toFixed(n >= 100 ? 0 : 1); // 배수(P/E 등)
   }
-  if (metric.includes("Score") || metric === "stochK" || metric === "rsi14") {
+  if (metric === "rsi14") {
+    return Number.isFinite(Number(value)) ? `${Math.round(Number(value))}` : "—";
+  }
+  if (metric === "epsTtm") {
+    return fmtEpsValue(value);
+  }
+  if (metric === "stochK") {
     return `${Math.round(Number(value) || 0)}`;
   }
   // 당일 등락률만 KR 상하한 클램프 대상 — 기간 수익률은 그대로.
@@ -5810,7 +5883,6 @@ function krConsensusCard(item) {
 }
 
 function stockFacts(item, title) {
-  const isSearchPanel = title === "Search Ticker";
   return `
     <span class="muted">${title}</span>
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker} ${syntheticBadge(item)}</h3>
@@ -5822,8 +5894,8 @@ function stockFacts(item, title) {
       ${fact("가격", priceOrDash(item.price))}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
       ${fact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
-      ${isSearchPanel ? scoreFact("RS", item.rsScore, "rs") : fact("RS", item.rsScore)}
-      ${isSearchPanel ? scoreFact("EPS Rev", item.epsRevScore, "eps") : fact("EPS Rev", item.epsRevScore)}
+      ${fact("RSI", fmtRsi(item))}
+      ${fact("EPS", fmtEps(item))}
       ${fact("거래량", `${item.volumeRatio.toFixed(1)}x`)}
       ${fact("StochK", item.stochK)}
       ${fact("신고가 거리", fmtPct(-item.newHighDistancePct))}
@@ -5833,31 +5905,6 @@ function stockFacts(item, title) {
 
 function fact(label, value) {
   return `<div class="fact"><span>${label}</span><strong>${value}</strong></div>`;
-}
-
-function scoreFact(label, value, kind) {
-  const active = scoreHelpOpen === kind;
-  return `
-    <div class="fact fact-score${active ? " is-active" : ""}">
-      <span>${label}</span>
-      <strong>${value ?? "-"}</strong>
-      <button type="button" class="score-help-button" data-score-help="${kind}" aria-expanded="${active}" title="${label} 산정 기준">!</button>
-      ${active ? scoreHelpHtml(kind) : ""}
-    </div>
-  `;
-}
-
-function scoreHelpHtml(kind) {
-  const title = kind === "eps" ? "EPS 추정 점수" : "RS 점수";
-  const body = kind === "eps"
-    ? "EPS Next Y, EPS TTM, Forward PER 등 이익 전망과 밸류에이션 데이터를 우선 반영합니다. 재무 데이터가 부족한 소형주는 가격 모멘텀으로 일부 보완될 수 있어, 점수는 선별용 참고 지표로 봐야 합니다."
-    : "3개월, 6개월, 1년 가격 모멘텀을 가중해 0~100점으로 환산한 상대강도 지표입니다. 높을수록 최근 중기 추세가 강하다는 뜻이며, 절대 수익률 보장은 아닙니다.";
-  return `
-    <div class="score-help-popover">
-      <strong>${title}</strong>
-      <p>${body}</p>
-    </div>
-  `;
 }
 
 function getSectorStocks(meta) {
@@ -5909,22 +5956,25 @@ function renderSectors() {
     const avg1w = rows.length ? rows.reduce((sum, item) => sum + (item.weekChangePct || 0), 0) / rows.length : 0;
     const avg1m = rows.length ? rows.reduce((sum, item) => sum + (item.monthChangePct || 0), 0) / rows.length : 0;
     const avg3m = rows.length ? rows.reduce((sum, item) => sum + (item.threeMonthChangePct || 0), 0) / rows.length : 0;
-    const rs = rows.length ? rows.reduce((sum, item) => sum + item.rsScore, 0) / rows.length : 50;
-    
+    // 평균 RSI(14) — 실측값만 평균(합성/결측 제외). 값이 없으면 null.
+    const rsiVals = rows.map((item) => rsiValue(item)).filter((v) => v != null);
+    const rs = rsiVals.length ? rsiVals.reduce((sum, v) => sum + v, 0) / rsiVals.length : null;
+
     const upCount = rows.filter((item) => item.changePct > 0).length;
     const downCount = rows.filter((item) => item.changePct < 0).length;
     const upPct = rows.length ? (upCount / rows.length) * 100 : 0;
-    
-    // Top 3 sector leaders by RS Score
+
+    // Top 3 sector leaders by 3-month momentum (RS 합성 점수 대체)
     const topLeaders = [...rows]
-      .sort((a, b) => b.rsScore - a.rsScore)
+      .sort((a, b) => (Number(b.threeMonthChangePct) || 0) - (Number(a.threeMonthChangePct) || 0))
       .slice(0, 3);
       
     return { ...meta, avg, avg1w, avg1m, avg3m, rs, upCount, downCount, upPct, count: rows.length, topLeaders };
   });
 
-  // Sort groups
-  groups.sort((a, b) => b[sortBy] - a[sortBy]);
+  // Sort groups (평균 RSI 는 결측 시 null → 맨 뒤로)
+  const sortKey = (g) => (Number.isFinite(Number(g[sortBy])) ? Number(g[sortBy]) : -Infinity);
+  groups.sort((a, b) => sortKey(b) - sortKey(a));
 
   byId("sectorList").innerHTML = groups.map((item) => {
     const isActive = item.ticker === selectedSectorEtf;
@@ -5969,14 +6019,14 @@ function renderSectors() {
             <span class="tf-val ${cls(item.avg3m)}">${fmtPct(item.avg3m)}</span>
           </div>
           <div class="tf-col">
-            <span class="tf-lbl">평균 RS</span>
-            <span class="tf-val rs-badge">${Math.round(item.rs)}</span>
+            <span class="tf-lbl">평균 RSI</span>
+            <span class="tf-val rs-badge">${item.rs == null ? "—" : Math.round(item.rs)}</span>
           </div>
         </div>
         
         <!-- Sector Leaders list -->
         <div class="sector-leaders-section">
-          <span class="lbl-sub">주도주 (RS 순)</span>
+          <span class="lbl-sub">주도주 (3개월 모멘텀순)</span>
           <div class="leader-chips">
             ${item.topLeaders.map(stock => `
               <span class="leader-chip" data-ticker="${stock.ticker}">
@@ -6021,16 +6071,17 @@ function renderSectorDetail() {
   byId("sectorDetailTitle").textContent = meta.name;
   byId("sectorDetailDesc").textContent = meta.desc;
   
-  const avgRs = rows.length ? rows.reduce((sum, item) => sum + item.rsScore, 0) / rows.length : 50;
+  const rsiVals = rows.map((item) => rsiValue(item)).filter((v) => v != null);
+  const avgRsi = rsiVals.length ? rsiVals.reduce((sum, v) => sum + v, 0) / rsiVals.length : null;
   const upCount = rows.filter((item) => item.changePct > 0).length;
   const upPct = rows.length ? (upCount / rows.length) * 100 : 0;
-  
-  byId("sectorDetailRs").textContent = Math.round(avgRs);
+
+  byId("sectorDetailRs").textContent = avgRsi == null ? "—" : Math.round(avgRsi);
   byId("sectorDetailUpPct").textContent = `${Math.round(upPct)}%`;
   byId("sectorConstituentsCount").textContent = `${rows.length}개 종목`;
-  
-  // Render constituents table
-  const sortedRows = [...rows].sort((a, b) => b.rsScore - a.rsScore);
+
+  // Render constituents table — RSI(14) 내림차순(결측은 뒤로)
+  const sortedRows = [...rows].sort((a, b) => (rsiValue(b) ?? -Infinity) - (rsiValue(a) ?? -Infinity));
   byId("sectorConstituentsBody").innerHTML = sortedRows.map((stock, index) => `
     <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
       <td class="rank-cell">${index + 1}</td>
@@ -6040,10 +6091,10 @@ function renderSectorDetail() {
       <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
       <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
       <td class="${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
-      <td><span class="rs-badge">${stock.rsScore}</span></td>
+      <td><span class="rs-badge">${fmtRsi(stock)}</span></td>
     </tr>
   `).join("");
-  
+
   // Setup click events for table rows
   byId("sectorConstituentsBody").querySelectorAll(".constituent-row").forEach((row) => {
     row.addEventListener("click", () => {
@@ -6422,8 +6473,8 @@ function renderTopStocks() {
   const sector = byId("topSector").value;
   const recency = byId("topNewHighRecency").value;
   const newHigh = byId("topNewHigh").value;
-  const minRs = numberInputValue("topMinRs", 0);
-  const minEps = numberInputValue("topMinEps", 0);
+  const minRsi = numberInputValue("topMinRs", 0);
+  const maxRsi = numberInputValue("topMinEps", 0);
   const minVolume = numberInputValue("topMinVolume", 0);
   const minMarketCap = numberInputValue("topMinMarketCap", 0);
   const limit = Math.max(1, numberInputValue("topLimit", 24));
@@ -6433,8 +6484,8 @@ function renderTopStocks() {
     .filter((item) => sector === "All" || item.sector === sector)
     .filter((item) => recency === "All" || String(item.newHighRecency4w) === recency)
     .filter((item) => newHighMatches(item, newHigh))
-    .filter((item) => (Number(item.rsScore) || 0) >= minRs)
-    .filter((item) => (Number(item.epsRevScore) || 0) >= minEps)
+    .filter((item) => { if (minRsi <= 0) return true; const r = rsiValue(item); return r != null && r >= minRsi; })
+    .filter((item) => { if (maxRsi <= 0) return true; const r = rsiValue(item); return r != null && r <= maxRsi; })
     .filter((item) => (Number(item.volumeRatio) || 0) >= minVolume)
     .filter((item) => (Number(item.marketCapB) || 0) >= minMarketCap)
     .filter((item) => topPresetMatches(item, preset))
@@ -6448,8 +6499,8 @@ function renderTopStocks() {
     sector,
     labelForSelect("topMetric"),
     preset !== "custom" ? labelForSelect("topPreset") : "",
-    minRs ? `RS >= ${minRs}` : "",
-    minEps ? `EPS >= ${minEps}` : "",
+    minRsi ? `RSI >= ${minRsi}` : "",
+    maxRsi ? `RSI <= ${maxRsi}` : "",
     minVolume ? `Vol >= ${minVolume}x` : "",
     minMarketCap ? (isKrMarket() ? `시총 >= ${minMarketCap}조` : `MktCap >= $${minMarketCap}B`) : ""
   ].filter(Boolean).join(" · ");
@@ -6472,8 +6523,8 @@ function renderTopStocks() {
       <div class="mini-facts">
         ${miniMetric("가격", priceOrDash(item.price))}
         ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
-        ${miniMetric("RS", item.rsScore)}
-        ${miniMetric("EPS", item.epsRevScore)}
+        ${miniMetric("RSI", fmtRsi(item))}
+        ${miniMetric("EPS", fmtEps(item))}
         ${miniMetric("거래량", `${Number(item.volumeRatio || 0).toFixed(1)}x`)}
         ${miniMetric("신고가", newHighLabel(item))}
       </div>
@@ -6560,12 +6611,11 @@ function scanQuickProb(item, horizon) {
   const signals = [];
   const push = (bias, weight) => { if (Number.isFinite(bias)) signals.push([bias, weight]); };
 
-  if (Number.isFinite(item.rsScore)) push(scanClamp((item.rsScore - 50) / 45, -1, 1), 1.4);
-  if (Number.isFinite(item.epsRevScore)) push(scanClamp((item.epsRevScore - 50) / 45, -1, 1), 1.0);
-  if (Number.isFinite(item.threeMonthChangePct)) push(scanTanh(item.threeMonthChangePct / 15), 1.2 * longW);
+  // RS/EPS 합성 점수 기여항 제거 — 실측 모멘텀·RSI(scanRsiBias) 로 대체.
+  if (Number.isFinite(item.threeMonthChangePct)) push(scanTanh(item.threeMonthChangePct / 15), 1.4 * longW);
   if (Number.isFinite(item.monthChangePct)) push(scanTanh(item.monthChangePct / 8), 0.9);
   if (Number.isFinite(item.weekChangePct)) push(scanTanh(item.weekChangePct / 4), 0.6 * shortW);
-  push(scanRsiBias(Number(item.rsi14)), 0.7 * shortW);
+  push(scanRsiBias(rsiValue(item) ?? NaN), 1.0 * shortW);
   if (Number.isFinite(item.stochK)) push(scanClamp((item.stochK - 50) / 45, -1, 1) * 0.8, 0.4 * shortW);
 
   // 거래량 확인: 추세 방향과 거래량 증가가 같은 방향이면 강화
@@ -6623,8 +6673,8 @@ function scanCardHtml(entry, rank) {
       <div class="scanner-spark">${spark}</div>
       <div class="mini-facts">
         ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
-        ${miniMetric("RS", Number.isFinite(item.rsScore) ? item.rsScore : "—")}
-        ${miniMetric("RSI", Number.isFinite(item.rsi14) ? item.rsi14 : "—")}
+        ${miniMetric("EPS", fmtEps(item))}
+        ${miniMetric("RSI", fmtRsi(item))}
         ${miniMetric("거래량", `${Number(item.volumeRatio || 0).toFixed(1)}x`)}
       </div>
     </article>`;
@@ -6759,8 +6809,8 @@ function applyTopPreset() {
   byId("topMetric").value = preset.metric;
   byId("topNewHigh").value = preset.newHigh;
   byId("topNewHighRecency").value = preset.recency;
-  byId("topMinRs").value = preset.minRs || "";
-  byId("topMinEps").value = preset.minEps || "";
+  byId("topMinRs").value = preset.minRsi || "";
+  byId("topMinEps").value = preset.maxRsi || "";
   byId("topMinVolume").value = preset.minVolume || "";
   byId("topMinMarketCap").value = preset.minMarketCap || "";
   renderTopStocks();
@@ -6781,25 +6831,42 @@ function resetTopScreener() {
 function topPresetMatches(item, preset) {
   if (!preset || preset === "custom") return true;
   const distance = Number(item.newHighDistancePct);
-  if (preset === "leaders") return item.rsScore >= 85 && item.monthChangePct > 0;
-  if (preset === "breakout") return item.rsScore >= 75 && item.volumeRatio >= 1.5 && Number.isFinite(distance) && distance <= 5;
-  if (preset === "pullback") return item.rsScore >= 80 && item.monthChangePct > 0 && item.changePct < 1 && Number.isFinite(distance) && distance >= 3;
-  if (preset === "growth") return item.epsRevScore >= 80 && item.rsScore >= 65;
+  const rsi = rsiValue(item);
+  const m1 = Number(item.monthChangePct);
+  const m3 = Number(item.threeMonthChangePct);
+  // 강한 추세 리더: 3개월·1개월 모멘텀 양(+) + 52주 신고가 10% 이내 + RSI 과열(>85) 아님.
+  if (preset === "leaders") return m3 > 0 && m1 > 0 && Number.isFinite(distance) && distance <= 10 && (rsi == null || rsi <= 85);
+  // 신고가 근접 돌파: 거래량 1.5배↑ + 신고가 5% 이내 + 1개월 상승.
+  if (preset === "breakout") return Number(item.volumeRatio) >= 1.5 && Number.isFinite(distance) && distance <= 5 && m1 > 0;
+  // 강한 종목 눌림목: 중기(3개월) 상승추세 + 당일 눌림 + 신고가에서 3%+ 벌어짐 + RSI 과매수 아님(≤55).
+  if (preset === "pullback") return m3 > 0 && Number(item.changePct) < 1 && Number.isFinite(distance) && distance >= 3 && (rsi == null || rsi <= 55);
+  // 성장주: 중기 상승추세 + (내년 EPS 추정 > TTM EPS) 또는 (흑자 + 1개월 상승).
+  if (preset === "growth") {
+    const eps = epsTtmValue(item);
+    const epsN = Number(item.epsNextY);
+    return m3 > 0 && ((Number.isFinite(epsN) && eps != null && epsN > eps) || (eps != null && eps > 0 && m1 > 0));
+  }
   if (preset === "value") {
-    const pe = Number(item.fundamentals?.forwardPE ?? item.fundamentals?.pe);
-    return item.marketCapB >= 10 && Number.isFinite(pe) && pe > 0 && pe <= 25;
+    // 라이트 스냅샷엔 fundamentals 가 인라인되지 않으므로 MAP_FUNDAMENTALS 도 함께 조회.
+    const mf = mapFundamentalsFor(item.ticker) || {};
+    const pe = Number(item.fundamentals?.forwardPE ?? item.fundamentals?.pe ?? mf.forwardPE ?? mf.pe);
+    const capOk = isKrMarket() ? Number(item.marketCapT ?? item.marketCapB) >= 1 : Number(item.marketCapB) >= 10;
+    return capOk && Number.isFinite(pe) && pe > 0 && pe <= 25;
   }
   if (preset === "lows") { const d = low52DistPct(item); return Number.isFinite(d) && d <= 15; }
   if (preset === "volsurge") return Number(item.volumeRatio) >= 3;
-  if (preset === "oversold") { const r = Number(item.rsi14); return Number.isFinite(r) && r <= 30; }
+  if (preset === "oversold") { const r = rsiValue(item); return r != null && r <= 30; }
   return true;
 }
 
 function metricValue(item, metric) {
-  if (metric === "pe") return Number(item.fundamentals?.pe);
-  if (metric === "forwardPE") return Number(item.fundamentals?.forwardPE);
-  if (metric === "ps") return Number(item.fundamentals?.ps);
-  if (metric === "pb") return Number(item.fundamentals?.pb);
+  // 라이트 스냅샷엔 fundamentals 가 인라인되지 않아 MAP_FUNDAMENTALS 를 함께 조회한다
+  // (없으면 forwardPE 등으로 정렬하는 옵션·프리셋이 통째로 비어 버린다).
+  const f = item.fundamentals || mapFundamentalsFor(item.ticker) || {};
+  if (metric === "pe") return Number(f.pe);
+  if (metric === "forwardPE") return Number(f.forwardPE);
+  if (metric === "ps") return Number(f.ps);
+  if (metric === "pb") return Number(f.pb);
   if (metric === "low52Dist") return low52DistPct(item);
   return Number(item[metric]);
 }
@@ -6813,14 +6880,15 @@ function formatMetricValue(value, metric) {
   if (metric === "volumeRatio") return `${Number(value).toFixed(1)}x`;
   if (metric === "newHighDistancePct") return `${Number(value).toFixed(1)}%↓`;
   if (metric === "low52Dist") return `저가 +${Number(value).toFixed(1)}%`;
-  if (["rsScore", "epsRevScore", "rsi14", "stochK"].includes(metric)) return `${Math.round(value)}`;
+  if (metric === "epsTtm") return fmtEpsValue(value);
+  if (["rsi14", "stochK"].includes(metric)) return `${Math.round(value)}`;
   if (["pe", "forwardPE", "ps", "pb"].includes(metric)) return fmtMultiple(value);
   if (metric === "changePct") return fmtDailyPct(value);
   return fmtPct(value);
 }
 
 function metricClass(value, metric) {
-  if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio", "low52Dist"].includes(metric)) return "";
+  if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio", "low52Dist", "rsi14", "stochK", "epsTtm"].includes(metric)) return "";
   if (metric === "newHighDistancePct") return "neg";
   return cls(value);
 }
@@ -6858,7 +6926,7 @@ function renderJump() {
   const category = byId("jumpCategory").value;
   const sort = byId("jumpSort").value;
   const rows = data.stocks.filter((item) => {
-    if (category === "rsVolume") return item.rsScore >= 85 && item.volumeRatio >= 1.5;
+    if (category === "rsVolume") return Number.isFinite(Number(item.newHighDistancePct)) && Number(item.newHighDistancePct) <= 5 && item.volumeRatio >= 1.5;
     if (category === "volume") return item.volumeRatio >= 1.5;
     return item.changePct >= 2;
   }).sort((a, b) => b[sort] - a[sort]).slice(0, 12);
@@ -6868,7 +6936,7 @@ function renderJump() {
       <h3>${item.ticker}</h3>
       <p class="muted">${item.company}</p>
       <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · Vol ${item.volumeRatio.toFixed(1)}x</p>
-      <p>RS ${item.rsScore} · EPS ${item.epsRevScore}</p>
+      <p>RSI ${fmtRsi(item)} · EPS ${fmtEps(item)}</p>
     </article>
   `).join("");
 
@@ -6902,7 +6970,6 @@ function selectTicker(ticker, options = {}) {
   let found = data.stocks.find((item) => normalizeTickerKey(item.ticker) === resolved);
   if (!found) found = createLiveSearchStub(resolved);
   if (!found) return;
-  if (found.ticker !== selectedTicker) scoreHelpOpen = null;
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
@@ -7008,10 +7075,10 @@ function renderMoveExplanation(item) {
   }
 
   const technical = [];
-  if (Number(item.rsScore) >= 80) technical.push(`RS ${item.rsScore}`);
   if (Number(item.newHighDistancePct) <= 3) technical.push(`52주 고점 ${Number(item.newHighDistancePct).toFixed(1)}% 이내`);
-  if (Number(item.rsi14) >= 70) technical.push(`RSI ${Math.round(item.rsi14)} 과열권`);
-  else if (Number(item.rsi14) <= 30) technical.push(`RSI ${Math.round(item.rsi14)} 침체권`);
+  const rsiMove = rsiValue(item);
+  if (rsiMove != null && rsiMove >= 70) technical.push(`RSI ${Math.round(rsiMove)} 과열권`);
+  else if (rsiMove != null && rsiMove <= 30) technical.push(`RSI ${Math.round(rsiMove)} 침체권`);
   if (technical.length) evidence.push(moveEvidenceRow("기술", "가격·모멘텀 신호", technical.join(" · "), { icon: "T", tone: "info" }));
 
   const filing = ((window.MATERIAL_EVENTS || {}).events || []).find((event) => String(event.ticker || "").toUpperCase() === item.ticker);
@@ -7072,12 +7139,15 @@ function investmentChecklistResults(item) {
   const closes = rows.map((row) => Number(row.c)).filter(Number.isFinite);
   const last = closes[closes.length - 1] || Number(item.price || 0);
   const sma20 = closes.length >= 20 ? closes.slice(-20).reduce((sum, value) => sum + value, 0) / 20 : null;
-  const trendPass = Number(item.monthChangePct) > 0 && Number(item.rsScore) >= 70 && (sma20 == null || last >= sma20);
+  // 추세: 1개월·3개월 모멘텀 양(+) + SMA20 위 (RS 합성 점수 대체)
+  const trendPass = Number(item.monthChangePct) > 0 && Number(item.threeMonthChangePct) > 0 && (sma20 == null || last >= sma20);
   const trendWarn = Number(item.monthChangePct) < 0 || (sma20 != null && last < sma20);
 
-  const epsScore = Number(item.epsRevScore || 0);
-  const earningsKnown = epsScore > 0 || f.epsNextY != null || f.epsTtm != null;
-  const earningsPass = epsScore >= 70 || (Number(f.epsNextY) > Number(f.epsTtm) && Number.isFinite(Number(f.epsTtm)));
+  // 실적: 실측 EPS(TTM) 흑자 + 내년 추정 EPS 가 TTM 이상 (감소 아님)
+  const epsTtmVal = epsTtmValue(item) ?? (Number.isFinite(Number(f.epsTtm)) ? Number(f.epsTtm) : null);
+  const epsNextYVal = Number.isFinite(Number(item.epsNextY)) ? Number(item.epsNextY) : (Number.isFinite(Number(f.epsNextY)) ? Number(f.epsNextY) : null);
+  const earningsKnown = epsTtmVal != null || epsNextYVal != null;
+  const earningsPass = epsTtmVal != null && epsTtmVal > 0 && (epsNextYVal == null || epsNextYVal >= epsTtmVal);
 
   const forwardPe = Number(f.forwardPE);
   const sectorMedian = sectorForwardPeMedian(item);
@@ -7092,17 +7162,17 @@ function investmentChecklistResults(item) {
   const flowPass = volume >= 1.2 || buys > sells;
   const flowWarn = volume < 0.7 || sells > buys + 2;
 
-  const rsi = Number(item.rsi14);
+  const rsi = rsiValue(item);
   const debtEq = Number(f.debtEq);
   const highDistance = Number(item.newHighDistancePct);
   const riskFlags = [];
-  if (Number.isFinite(rsi) && rsi >= 75) riskFlags.push(`RSI ${Math.round(rsi)} 과열`);
+  if (rsi != null && rsi >= 75) riskFlags.push(`RSI ${Math.round(rsi)} 과열`);
   if (Number.isFinite(debtEq) && debtEq > 2) riskFlags.push(`부채비율 ${debtEq.toFixed(1)}배`);
   if (Number.isFinite(highDistance) && highDistance > 30) riskFlags.push(`52주 고점 대비 ${highDistance.toFixed(0)}% 하락`);
 
   return [
-    { label: "추세", status: trendPass ? "pass" : trendWarn ? "warn" : "check", detail: `1개월 ${fmtPct(item.monthChangePct)} · RS ${item.rsScore}${sma20 != null ? ` · SMA20 ${last >= sma20 ? "위" : "아래"}` : ""}` },
-    { label: "실적·추정", status: !earningsKnown ? "check" : earningsPass ? "pass" : epsScore < 45 ? "warn" : "check", detail: earningsKnown ? `EPS 추정 점수 ${Math.round(epsScore)}${f.epsNextY != null ? ` · EPS Next Y ${moneyOrDash(f.epsNextY)}` : ""}` : "EPS 추정 데이터가 부족합니다." },
+    { label: "추세", status: trendPass ? "pass" : trendWarn ? "warn" : "check", detail: `1개월 ${fmtPct(item.monthChangePct)} · RSI ${fmtRsi(item)}${sma20 != null ? ` · SMA20 ${last >= sma20 ? "위" : "아래"}` : ""}` },
+    { label: "실적·추정", status: !earningsKnown ? "check" : earningsPass ? "pass" : (epsTtmVal != null && epsTtmVal <= 0) ? "warn" : "check", detail: earningsKnown ? `EPS(TTM) ${fmtEpsValue(epsTtmVal)}${epsNextYVal != null ? ` · 내년 추정 ${fmtEpsValue(epsNextYVal)}` : ""}` : "EPS 데이터가 부족합니다." },
     { label: "밸류에이션", status: !valuationKnown || sectorMedian == null ? "check" : valuationPass ? "pass" : valuationWarn ? "warn" : "check", detail: valuationKnown ? `Forward P/E ${forwardPe.toFixed(1)}${sectorMedian != null ? ` · 섹터 중앙값 ${sectorMedian.toFixed(1)}` : " · 섹터 비교값 없음"}` : "Forward P/E 데이터가 없습니다." },
     { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volume.toFixed(1)}배${isKrMarket() ? "" : ` · 내부자 매수 ${buys} / 매도 ${sells}`}` },
     { label: "리스크", status: riskFlags.length ? "warn" : "pass", detail: riskFlags.length ? riskFlags.join(" · ") : "현재 규칙에서 과열·부채·낙폭 경고가 없습니다." }
@@ -7145,7 +7215,6 @@ function currentEstimateSnapshot(item) {
   return {
     date: formatKstDateTime().slice(0, 10),
     savedAt: Date.now(),
-    epsScore: firstFinite(item.epsRevScore),
     epsNextQ: firstFinite(f.epsNextQ, item.epsNextQ),
     epsNextY: firstFinite(f.epsNextY, item.epsNextY),
     revenueNextQ: firstFinite(f.revenueEstimateNextQ, f.revenueNextQ, item.revenueEstimateNextQ),
@@ -7157,7 +7226,7 @@ function currentEstimateSnapshot(item) {
 function recordEstimateSnapshot(item) {
   const store = loadEstimateHistoryStore();
   const snapshot = currentEstimateSnapshot(item);
-  const hasEstimate = [snapshot.epsScore, snapshot.epsNextQ, snapshot.epsNextY, snapshot.revenueNextQ, snapshot.revenueNextY, snapshot.targetPrice].some(Number.isFinite);
+  const hasEstimate = [snapshot.epsNextQ, snapshot.epsNextY, snapshot.revenueNextQ, snapshot.revenueNextY, snapshot.targetPrice].some(Number.isFinite);
   if (!hasEstimate) return [];
   const rows = Array.isArray(store[item.ticker]) ? store[item.ticker] : [];
   const index = rows.findIndex((row) => row.date === snapshot.date);
@@ -7207,7 +7276,6 @@ function renderEstimateRevision(item) {
   const week = estimateBaseline(rows, 7);
   const month = estimateBaseline(rows, 30);
   const metrics = [
-    { key: "epsScore", label: "EPS 추정 점수", kind: "score" },
     { key: "epsNextQ", label: "다음 분기 EPS", kind: "money" },
     { key: "epsNextY", label: "향후 1년 EPS", kind: "money" },
     { key: "revenueNextQ", label: "다음 분기 매출", kind: "revenue", optional: true },
@@ -9281,14 +9349,15 @@ function renderMarketBreadth() {
   const monthUp = upPctOf("monthChangePct");
   const quarterUp = upPctOf("threeMonthChangePct");
 
-  const strong = stocks.filter((s) => Number(s.rsScore) >= 80).length;
-  const weak = stocks.filter((s) => Number(s.rsScore) <= 20).length;
+  // 3개월 모멘텀 기준 강세/약세 (RS 합성 점수 대체)
+  const strong = stocks.filter((s) => Number(s.threeMonthChangePct) >= 10).length;
+  const weak = stocks.filter((s) => Number(s.threeMonthChangePct) <= -10).length;
   const strongPct = (strong / n) * 100;
 
   // RSI 과매수/과매도 분포 — 단기 쏠림. rsi14 결측 종목은 분모에서 제외해 비율 왜곡 방지.
-  const rsiN = stocks.filter((s) => Number.isFinite(Number(s.rsi14))).length;
-  const overbought = stocks.filter((s) => Number(s.rsi14) >= 70).length;
-  const oversold = stocks.filter((s) => Number(s.rsi14) <= 30).length;
+  const rsiN = stocks.filter((s) => rsiValue(s) != null).length;
+  const overbought = stocks.filter((s) => { const r = rsiValue(s); return r != null && r >= 70; }).length;
+  const oversold = stocks.filter((s) => { const r = rsiValue(s); return r != null && r <= 30; }).length;
   const obPct = rsiN ? (overbought / rsiN) * 100 : null;
   const osPct = rsiN ? (oversold / rsiN) * 100 : null;
 
@@ -9331,7 +9400,7 @@ function renderMarketBreadth() {
       <article><span>상승 / 하락</span><strong><b class="pos">${adv.toLocaleString()}</b> / <b class="neg">${dec.toLocaleString()}</b></strong><em class="muted">보합 ${unch}</em></article>
       <article><span>52주 신고가 근접</span><strong class="pos">${nearHigh.toLocaleString()}</strong><em class="muted">≤ 2%</em></article>
       <article><span>52주 신저가 근접</span><strong class="neg">${nearLow.toLocaleString()}</strong><em class="muted">≤ 5%</em></article>
-      <article><span>RS 강세(≥80)</span><strong class="pos">${strong.toLocaleString()}</strong><em class="muted">약세(≤20) ${weak}</em></article>
+      <article><span>3개월 강세(≥+10%)</span><strong class="pos">${strong.toLocaleString()}</strong><em class="muted">약세(≤-10%) ${weak}</em></article>
       <article><span>거래량 동반 상승</span><strong>${volAdv.toLocaleString()}</strong><em class="muted">상승종목의 ${volAdvPct.toFixed(0)}%</em></article>
       <article><span>당일 상승 비율</span><strong class="${advPct >= 50 ? "pos" : "neg"}">${advPct.toFixed(0)}%</strong><em class="muted">참여도</em></article>
       <article><span>과매수 / 과매도</span><strong><b class="pos">${overbought.toLocaleString()}</b> / <b class="neg">${oversold.toLocaleString()}</b></strong><em class="muted">RSI≥70 / ≤30${obPct != null ? ` · ${obPct.toFixed(0)}% / ${osPct.toFixed(0)}%` : ""}</em></article>
@@ -9341,13 +9410,13 @@ function renderMarketBreadth() {
       ${breadthBar("1주 상승 비율", weekUp, "주간 추세 참여도")}
       ${breadthBar("1개월 상승 비율", monthUp, "중기 추세 참여도")}
       ${breadthBar("3개월 상승 비율", quarterUp, "분기 추세 참여도")}
-      ${breadthBar("RS 강세 비율", strongPct, "상대강도 80 이상")}
+      ${breadthBar("3개월 강세 비율", strongPct, "3개월 +10% 이상")}
     </div>
     <div class="breadth-sectors">
       <div class="breadth-sectors-title">섹터별 상승 비율</div>
       ${sectorHtml}
     </div>
-    <p class="breadth-note">참여도가 넓을수록(상승 비율·RS 강세 높을수록) 추세가 건강합니다. 지수만 오르고 폭이 좁으면(소수 종목 주도) 되돌림 위험을 함께 봐야 합니다.</p>
+    <p class="breadth-note">참여도가 넓을수록(상승 비율·모멘텀 강세 높을수록) 추세가 건강합니다. 지수만 오르고 폭이 좁으면(소수 종목 주도) 되돌림 위험을 함께 봐야 합니다.</p>
   `;
 }
 
@@ -9808,7 +9877,6 @@ function getSectorEtfRows() {
     }))
     .sort((a, b) => {
       if (sort === "return") return b.activeReturn - a.activeReturn;
-      if (sort === "rs") return b.rsScore - a.rsScore;
       return b.activeRelative - a.activeRelative;
     });
   return { rows, payload, benchmark, period };
@@ -9838,7 +9906,7 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
           <span class="ticker-pill">${item.representative}</span>
           <strong>${item.name}</strong>
         </div>
-        <div class="etf-rs-score ${cls(item.rsScore - 50)}">${item.rsScore}</div>
+        <div class="etf-rs-score ${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</div>
       </div>
       <div class="etf-rs-stats">
         <span>${periodLabel(period)} <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
@@ -10085,7 +10153,7 @@ function levEtfCardHtml(item) {
   const chgCls = hasLive ? cls(live.changePct) : "";
   const month = hasLive && Number.isFinite(live.monthChangePct) ? fmtPct(live.monthChangePct) : "—";
   const monthCls = hasLive ? cls(live.monthChangePct) : "";
-  const rs = hasLive ? live.rsScore : "—";
+  const rs = hasLive && Number.isFinite(Number(live.rsi14)) ? Math.round(Number(live.rsi14)) : "—";
   const scopeLabel = LEV_ETF_SCOPE_LABEL[item.scope] || item.scope;
   return `
     <article class="lev-etf-card ${hasLive ? "has-live" : "no-live"}" data-ticker="${escapeHtml(item.ticker)}" tabindex="0" role="button">
@@ -10108,7 +10176,7 @@ function levEtfCardHtml(item) {
         <span>가격 <strong>${price}</strong></span>
         <span>당일 <strong class="${chgCls}">${chg}</strong></span>
         <span>1M <strong class="${monthCls}">${month}</strong></span>
-        <span>RS <strong>${rs}</strong></span>
+        <span>RSI <strong>${rs}</strong></span>
       </div>
       ${hasLive ? "" : `<p class="lev-etf-note muted">스냅샷 미포함 · 카탈로그 참고용</p>`}
     </article>
@@ -10746,22 +10814,22 @@ function renderWatchlistStats(rows) {
   const items = rows || watchlist.map((t) => stockByTicker(t)).filter(Boolean);
   if (!items.length) { box.innerHTML = ""; return; }
   const up = items.filter((s) => Number(s.changePct) > 0).length;
-  const avgRs = items.reduce((sum, s) => sum + Number(s.rsScore || 0), 0) / items.length;
+  const rsiVals = items.map((s) => rsiValue(s)).filter((v) => v != null);
+  const avgRsi = rsiVals.length ? rsiVals.reduce((sum, v) => sum + v, 0) / rsiVals.length : null;
   const avgChg = items.reduce((sum, s) => sum + Number(s.changePct || 0), 0) / items.length;
   box.innerHTML = `
     <article class="watch-stat-card"><span>종목 수</span><strong>${items.length}</strong></article>
     <article class="watch-stat-card"><span>상승 비중</span><strong>${Math.round((up / items.length) * 100)}%</strong></article>
-    <article class="watch-stat-card"><span>평균 RS</span><strong>${avgRs.toFixed(0)}</strong></article>
+    <article class="watch-stat-card"><span>평균 RSI</span><strong>${avgRsi == null ? "—" : avgRsi.toFixed(0)}</strong></article>
     <article class="watch-stat-card"><span>평균 당일</span><strong class="${cls(avgChg)}">${fmtPct(avgChg)}</strong></article>
   `;
 }
 
 function watchAlertSettings() {
   const defaults = {
-    useRs: true,
-    minRs: 80,
-    useEps: false,
-    minEps: 75,
+    useRs: true,       // RSI ≥ 조건 (키 이름은 저장 호환 위해 유지)
+    minRs: 60,
+    useEps: false,     // 흑자(EPS TTM > 0) 조건
     useHigh: true,
     highDist: 3,
     useVol: true,
@@ -10783,9 +10851,8 @@ function saveWatchAlertSettings(settings) {
 function readWatchAlertSettingsFromUi() {
   return {
     useRs: Boolean(byId("alertUseRs")?.checked),
-    minRs: numberInputValue("alertMinRs", 80),
+    minRs: numberInputValue("alertMinRs", 60),
     useEps: Boolean(byId("alertUseEps")?.checked),
-    minEps: numberInputValue("alertMinEps", 75),
     useHigh: Boolean(byId("alertUseHigh")?.checked),
     highDist: numberInputValue("alertHighDist", 3),
     useVol: Boolean(byId("alertUseVol")?.checked),
@@ -10799,7 +10866,7 @@ function readWatchAlertSettingsFromUi() {
 function applyWatchAlertSettingsToUi(settings) {
   const pairs = [
     ["alertUseRs", "useRs"], ["alertMinRs", "minRs"],
-    ["alertUseEps", "useEps"], ["alertMinEps", "minEps"],
+    ["alertUseEps", "useEps"],
     ["alertUseHigh", "useHigh"], ["alertHighDist", "highDist"],
     ["alertUseVol", "useVol"], ["alertMinVol", "minVol"],
     ["alertUseSma20", "useSma20"],
@@ -10825,8 +10892,10 @@ function sma20Recovered(item) {
 
 function watchAlertReasons(item, settings) {
   const reasons = [];
-  if (settings.useRs && Number(item.rsScore || 0) >= settings.minRs) reasons.push(`RS ${item.rsScore}`);
-  if (settings.useEps && Number(item.epsRevScore || 0) >= settings.minEps) reasons.push(`EPS ${item.epsRevScore}`);
+  const rsi = rsiValue(item);
+  if (settings.useRs && rsi != null && rsi >= settings.minRs) reasons.push(`RSI ${Math.round(rsi)}`);
+  const eps = epsTtmValue(item);
+  if (settings.useEps && eps != null && eps > 0) reasons.push(`흑자 EPS ${fmtEps(item)}`);
   if (settings.useHigh && Number.isFinite(Number(item.newHighDistancePct)) && Number(item.newHighDistancePct) <= settings.highDist) {
     reasons.push(`신고가 ${Number(item.newHighDistancePct).toFixed(1)}% 이내`);
   }
@@ -11087,7 +11156,7 @@ function enrichEarningsRow(row) {
   return {
     ticker: t, date: row.nextDate, company: stock.company || t,
     sector: stock.sector || "", sectorKo: isKrMarket() ? (stock.sector || "") : (SECTOR_KO[stock.sector] || stock.sector || ""),
-    marketCapB: capB, capTier, rsScore: (stock.rsScore ?? null),
+    marketCapB: capB, capTier, rsi14: (stock.rsi14 ?? null),
     price, changePct: Number.isFinite(Number(stock.changePct)) ? Number(stock.changePct) : null,
     epsEstimate: (row.epsEstimate != null ? Number(row.epsEstimate) : null),
     target, upside, watch: isInWatchlist(t),
@@ -11211,7 +11280,7 @@ function earningsListView(items, today) {
               <span class="earn-row-eps"><i>EPS 예상</i>${it.epsEstimate != null ? moneyOrDash(it.epsEstimate) : "—"}</span>
               <span class="earn-row-target"><i>목표 여력</i>${it.upside != null ? `<b class="${cls(it.upside)}">${fmtPct(it.upside)}</b>` : "—"}</span>
               <span class="earn-row-cap"><i>시총</i>${fmtBillions(it.marketCapB)}${it.capTier ? ` <em class="earn-tier earn-tier-${it.capTier === "메가" ? "mega" : it.capTier === "대형" ? "large" : "mid"}">${escapeHtml(it.capTier)}</em>` : ""}</span>
-              <span class="earn-row-rs"><i>RS</i>${it.rsScore ?? "—"}</span>
+              <span class="earn-row-rs"><i>RSI</i>${Number.isFinite(Number(it.rsi14)) ? Math.round(Number(it.rsi14)) : "—"}</span>
             </button>`).join("")}
         </div>
       </section>`;
@@ -11220,7 +11289,7 @@ function earningsListView(items, today) {
 
 function earnSortCmp(a, b) {
   if (earnSort === "cap") return (b.marketCapB || 0) - (a.marketCapB || 0);
-  if (earnSort === "rs") return (Number(b.rsScore) || 0) - (Number(a.rsScore) || 0);
+  if (earnSort === "rs") return (rsiValue(b) ?? -Infinity) - (rsiValue(a) ?? -Infinity);
   // date sort → within a day, keep biggest first
   return (b.marketCapB || 0) - (a.marketCapB || 0);
 }

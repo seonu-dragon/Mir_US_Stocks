@@ -4904,6 +4904,19 @@ function setupEvents() {
   ["bucketFilter", "sectorFilter", "metricFilter", "tileSizeFilter"].forEach((id) => byId(id).addEventListener("change", renderTreemap));
   // 5천 타일 트리맵을 키 입력마다 다시 그리지 않도록 디바운스.
   byId("heatmapSearch").addEventListener("input", debounce(renderTreemap, 150));
+  // 히트맵 검색도 크로스마켓: 현재 시장에 없는 반대 시장 종목이면(Enter)
+  // 시장을 전환한 뒤 트리맵에서 해당 종목을 포커스한다.
+  byId("heatmapSearch").addEventListener("keydown", async (event) => {
+    if (event.key !== "Enter") return;
+    const q = byId("heatmapSearch").value.trim();
+    if (!q || resolveTickerQuery(q)) return; // 현재 시장에서 찾으면 기존 흐름 유지
+    const target = classifyQueryMarket(q);
+    if (!target || target === marketCfg().id) return;
+    event.preventDefault();
+    await switchMarketMode(target);
+    const ticker = extractStockTickerFromQuery(q) || resolveTickerQuery(q);
+    if (ticker) focusTreemapTicker(ticker, { push: false, openMap: true });
+  });
   byId("resetFilters").addEventListener("click", () => {
     byId("bucketFilter").value = marketCfg().defaultBucket || "idx_sp500";
     byId("sectorFilter").value = "All";
@@ -5852,7 +5865,12 @@ function currentChartPreset() {
   return {
     range: chartState.range,
     barTf: chartState.barTf,
+    chartType: chartState.chartType,
     settings,
+    // 체크박스 그룹 상태도 함께 저장해야 프리셋이 완전히 복원된다
+    // (마스터 토글만 저장하면 기술레벨·패턴 세부 선택이 유실).
+    techLevelTypes: { ...chartState.techLevelTypes },
+    patternTypes: { ...chartState.patternTypes },
     compareTickers: compareTickers.slice()
   };
 }
@@ -5872,10 +5890,15 @@ function syncChartControlUi() {
   byId("barTimeframeControls")?.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tf === chartState.barTf);
   });
+  byId("chartTypeControls")?.querySelectorAll("button").forEach((button) => {
+    button.classList.toggle("is-active", (button.dataset.ctype || "candle") === chartState.chartType);
+  });
   chartSettingIds().forEach((id) => {
     const el = byId(id);
     if (el) el.checked = Boolean(chartState[id]);
   });
+  // 기술레벨·패턴 체크박스 그룹(상승확률 패널 칩)도 프리셋 상태로 맞춘다.
+  syncCprobChartControlChips();
 }
 
 function applyChartPreset(name) {
@@ -5885,10 +5908,19 @@ function applyChartPreset(name) {
     ...chartState,
     range: preset.range || chartState.range,
     barTf: preset.barTf || chartState.barTf,
+    chartType: preset.chartType || chartState.chartType,
     zoom: 1,
     offset: 0,
     ...(preset.settings || {})
   };
+  // 구버전 프리셋(그룹 키 없음)과의 하위호환: 키가 없으면 현재 상태 유지,
+  // 있으면 저장된 그룹 상태로 통째로 교체(빠진 세부키는 현재값 유지).
+  if (preset.techLevelTypes && typeof preset.techLevelTypes === "object") {
+    chartState.techLevelTypes = { ...chartState.techLevelTypes, ...preset.techLevelTypes };
+  }
+  if (preset.patternTypes && typeof preset.patternTypes === "object") {
+    chartState.patternTypes = { ...chartState.patternTypes, ...preset.patternTypes };
+  }
   compareTickers = Array.isArray(preset.compareTickers)
     ? preset.compareTickers.filter((ticker) => stockByTicker(ticker)).slice(0, 5)
     : [];
@@ -8742,11 +8774,102 @@ function loadStockDetail(ticker) {
 
 // ===== 차트 드로잉(추세선·피보나치 되돌림) =====
 let lastChartGeom = null;
-const chartDrawings = {};          // ticker -> [{type, x1,p1,x2,p2}]  (x: 플롯 가로비율 0~1, p: 가격)
+// ticker -> [{type, t1,p1,t2,p2}]  (t: 봉 날짜 기반 타임스탬프 ms, p: 가격).
+// 날짜+가격 앵커라 기간·줌·타임프레임을 바꿔도 같은 자리에 다시 그려진다.
+// (드래그 중 미리보기만 화면비율 x1/x2 를 임시로 쓴다.)
+const chartDrawings = {};
 let drawTool = null;               // null | "trend" | "fib"
 let drawStart = null;
 let drawPreview = null;
 const FIB_LEVELS = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1];
+
+// ----- 드로잉 영속화: 시장:티커별 localStorage, 최근에 그린 50개 종목만 보관 -----
+const CHART_DRAWINGS_STORAGE_KEY = "mir_chart_drawings_v1";
+const CHART_DRAWINGS_MAX_TICKERS = 50;
+
+function chartDrawStorageKey(ticker) {
+  return `${isKrMarket() ? "kr" : "us"}:${ticker}`;
+}
+
+function loadStoredChartDrawings() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(CHART_DRAWINGS_STORAGE_KEY) || "{}");
+    return raw && typeof raw === "object" ? raw : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+function persistChartDrawings(ticker) {
+  if (!ticker) return;
+  const store = loadStoredChartDrawings();
+  const key = chartDrawStorageKey(ticker);
+  // 날짜 앵커가 있는 항목만 저장(미리보기·비정상 좌표 제외)
+  const items = (chartDrawings[ticker] || []).filter((d) => d && Number.isFinite(d.t1) && Number.isFinite(d.t2));
+  if (items.length) store[key] = { at: Date.now(), items };
+  else delete store[key];
+  const keys = Object.keys(store);
+  if (keys.length > CHART_DRAWINGS_MAX_TICKERS) {
+    keys.sort((a, b) => ((store[b] && store[b].at) || 0) - ((store[a] && store[a].at) || 0))
+      .slice(CHART_DRAWINGS_MAX_TICKERS)
+      .forEach((k) => delete store[k]);
+  }
+  try { localStorage.setItem(CHART_DRAWINGS_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* quota */ }
+}
+
+function hydrateChartDrawings(ticker) {
+  if (!ticker || Object.prototype.hasOwnProperty.call(chartDrawings, ticker)) return;
+  const entry = loadStoredChartDrawings()[chartDrawStorageKey(ticker)];
+  chartDrawings[ticker] = entry && Array.isArray(entry.items)
+    ? entry.items.filter((d) => d && Number.isFinite(d.t1) && Number.isFinite(d.t2))
+    : [];
+}
+
+// 날짜(ms) ↔ 플롯 가로비율(0~1). 보이는 봉 날짜 배열(geom.times)로 변환하고,
+// 범위 밖 날짜는 가장자리 봉 간격으로 선형 외삽한다(렌더 시 clipPath 로 잘림).
+function chartXnFromTime(g, ts) {
+  const t = g && g.times;
+  const n = t ? t.length : 0;
+  if (!n || !Number.isFinite(ts)) return null;
+  if (n === 1) return 0;
+  if (ts <= t[0]) {
+    const step = (t[1] - t[0]) || 1;
+    return -((t[0] - ts) / step) / (n - 1);
+  }
+  if (ts >= t[n - 1]) {
+    const step = (t[n - 1] - t[n - 2]) || 1;
+    return 1 + ((ts - t[n - 1]) / step) / (n - 1);
+  }
+  let lo = 0, hi = n - 1;
+  while (hi - lo > 1) {
+    const mid = (lo + hi) >> 1;
+    if (t[mid] <= ts) lo = mid; else hi = mid;
+  }
+  const frac = (ts - t[lo]) / ((t[hi] - t[lo]) || 1);
+  return (lo + frac) / (n - 1);
+}
+
+function chartTimeFromXn(g, xn) {
+  const t = g && g.times;
+  const n = t ? t.length : 0;
+  if (!n || !Number.isFinite(xn)) return null;
+  if (n === 1) return t[0];
+  const fidx = Math.max(0, Math.min(n - 1, xn * (n - 1)));
+  const lo = Math.floor(fidx);
+  const hi = Math.min(n - 1, lo + 1);
+  return Math.round(t[lo] + (t[hi] - t[lo]) * (fidx - lo));
+}
+
+// 저장 항목(날짜 앵커) 또는 미리보기(비율 좌표)를 현재 화면 비율로 통일한다.
+function drawingScreenXn(g, d) {
+  if (Number.isFinite(d.t1) || Number.isFinite(d.t2)) {
+    const x1 = chartXnFromTime(g, d.t1);
+    const x2 = chartXnFromTime(g, d.t2);
+    if (x1 == null || x2 == null) return null;
+    return { x1, x2 };
+  }
+  return { x1: d.x1, x2: d.x2 };
+}
 
 function renderChartDrawings() {
   const g = lastChartGeom;
@@ -8758,11 +8881,13 @@ function renderChartDrawings() {
   const pxY = (price) => g.padT + ((g.max - price) / g.range) * g.plotH;
   let out = "";
   for (const d of items) {
+    const xs = drawingScreenXn(g, d);
+    if (!xs) continue;
     if (d.type === "trend") {
-      out += `<line x1="${pxX(d.x1).toFixed(1)}" y1="${pxY(d.p1).toFixed(1)}" x2="${pxX(d.x2).toFixed(1)}" y2="${pxY(d.p2).toFixed(1)}" class="draw-line"></line>`;
+      out += `<line x1="${pxX(xs.x1).toFixed(1)}" y1="${pxY(d.p1).toFixed(1)}" x2="${pxX(xs.x2).toFixed(1)}" y2="${pxY(d.p2).toFixed(1)}" class="draw-line"></line>`;
     } else if (d.type === "fib") {
       const hi = Math.max(d.p1, d.p2), lo = Math.min(d.p1, d.p2), span = hi - lo || 1;
-      const xa = pxX(Math.min(d.x1, d.x2)), xb = pxX(Math.max(d.x1, d.x2));
+      const xa = pxX(Math.min(xs.x1, xs.x2)), xb = pxX(Math.max(xs.x1, xs.x2));
       out += FIB_LEVELS.map((lv) => {
         const price = hi - span * lv;
         const y = pxY(price);
@@ -8825,7 +8950,10 @@ function setupChartDrawing() {
     drawCtl.dataset.bound = "1";
     drawCtl.querySelectorAll("button[data-draw]").forEach((b) => b.addEventListener("click", () => setDrawTool(b.dataset.draw)));
     byId("chartDrawClear")?.addEventListener("click", () => {
-      if (lastChartGeom) chartDrawings[lastChartGeom.ticker] = [];
+      if (lastChartGeom) {
+        chartDrawings[lastChartGeom.ticker] = [];
+        persistChartDrawings(lastChartGeom.ticker); // 삭제도 저장소에 반영
+      }
       drawPreview = null; updateDrawLayer();
     });
   }
@@ -8850,7 +8978,15 @@ function setupChartDrawing() {
       const p = chartPointToData(e);
       const t = lastChartGeom && lastChartGeom.ticker;
       if (p && t && (Math.abs(p.xn - drawStart.xn) > 0.005 || Math.abs(p.price - drawStart.price) > 1e-9)) {
-        (chartDrawings[t] = chartDrawings[t] || []).push({ type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price });
+        // 화면비율 → 봉 날짜 앵커로 변환해 저장(줌·기간 변경에도 유지)
+        const t1 = chartTimeFromXn(lastChartGeom, drawStart.xn);
+        const t2 = chartTimeFromXn(lastChartGeom, p.xn);
+        (chartDrawings[t] = chartDrawings[t] || []).push(
+          Number.isFinite(t1) && Number.isFinite(t2)
+            ? { type: drawTool, t1, p1: drawStart.price, t2, p2: p.price }
+            : { type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price },
+        );
+        persistChartDrawings(t);
       }
       drawStart = null; drawPreview = null; updateDrawLayer();
     });
@@ -9250,8 +9386,13 @@ function drawChart(item, options = {}) {
   const chartChange = pctFrom(last.c, first.c);
   const tfLabel = { D: "일봉", W: "주봉", M: "월봉" }[chartState.barTf] || "일봉";
 
-  // 드로잉(추세선/피보) 좌표 매핑용 지오메트리 저장.
-  lastChartGeom = { padL, plotW, padT, plotH, min, max, range, width, height, ticker: item.ticker };
+  // 드로잉(추세선/피보) 좌표 매핑용 지오메트리 저장. times 는 날짜 앵커 ↔ 화면비율
+  // 변환용(보이는 봉들의 타임스탬프, 오름차순).
+  hydrateChartDrawings(item.ticker); // 저장된 드로잉 복원(최초 1회)
+  lastChartGeom = {
+    padL, plotW, padT, plotH, min, max, range, width, height, ticker: item.ticker,
+    times: rows.map((r) => Date.parse(r.d)),
+  };
   const isLine = chartState.chartType === "line";
   const isHeikin = chartState.chartType === "heikin";
 
@@ -9273,7 +9414,8 @@ function drawChart(item, options = {}) {
     ${chandelierSvg}
     ${patSvg}
     ${techLevelSvg}
-    <g id="chartDrawLayer">${renderChartDrawings()}</g>
+    <clipPath id="chartDrawClip"><rect x="${padL}" y="0" width="${(width - padL).toFixed(1)}" height="${(padT + plotH + 2).toFixed(1)}"></rect></clipPath>
+    <g id="chartDrawLayer" clip-path="url(#chartDrawClip)">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
     ${dateLabels}
@@ -15180,8 +15322,15 @@ function renderCommunityBoard() {
     const canDelete = communityIsMine(post);
     const comments = Array.isArray(post.comments) ? post.comments : [];
     const replyOpen = communityReplyPostId === post.id;
+    // 신고 누적 자동 숨김: 서버(hiddenByReports)가 작성자 본인에게만 이 마커를 실어
+    // 준다 — 다른 사용자 목록에서는 글 자체가 빠지므로, 본인에게 상태를 안내한다.
+    const hiddenByReports = Number(post.hiddenByReports) || 0;
     return `
-      <article class="community-post" data-id="${escapeHtml(post.id)}">
+      <article class="community-post${hiddenByReports ? " community-post-hidden" : ""}" data-id="${escapeHtml(post.id)}">
+        ${hiddenByReports ? `
+          <p class="muted" style="margin:0 0 6px;font-size:12px;padding:6px 10px;border:1px solid rgba(245,158,11,.35);border-radius:8px;background:rgba(245,158,11,.08);">
+            신고 누적으로 숨김 처리됨 (신고 ${hiddenByReports}건) · 이 글은 작성자에게만 보입니다.
+          </p>` : ""}
         <div class="community-post-head">
           ${post.ticker
             ? `<button type="button" class="ticker-pill community-post-ticker" data-ticker="${escapeHtml(post.ticker)}" title="이 종목 글만 보기">${escapeHtml(post.ticker)}</button>`
@@ -15197,8 +15346,10 @@ function renderCommunityBoard() {
           <div class="community-comments">
             ${comments.map((comment) => {
               const canDeleteComment = communityIsMine(comment);
+              const commentHidden = Number(comment.hiddenByReports) || 0;
               return `
                 <div class="community-comment" data-comment-id="${escapeHtml(comment.id)}">
+                  ${commentHidden ? `<p class="muted" style="margin:0 0 4px;font-size:11px;">신고 누적으로 숨김 처리됨 (신고 ${commentHidden}건) · 작성자에게만 보입니다.</p>` : ""}
                   <div class="community-comment-head">
                     <span class="community-comment-author">${escapeHtml(comment.author || "익명")}</span>
                     <time class="muted">${escapeHtml(formatCommunityTime(comment.createdAt))}</time>
@@ -18249,15 +18400,26 @@ function updateOnlineStatus() {
       const banner = document.createElement("div");
       banner.id = "offlineBanner";
       banner.className = "offline-banner";
+      // fixed+left:50% 의 shrink-to-fit 은 가용폭을 절반으로 잡아 모바일에서 글자가
+      // 세로로 흘렀다. max-content 로 펴고 화면폭 안에서만 줄바꿈하게 한다.
+      banner.style.width = "max-content";
+      banner.style.maxWidth = "calc(100vw - 24px)";
+      // 재렌더마다 innerHTML 이 갈리므로 리스너는 배너 자체에 1회만 위임 바인딩.
+      banner.addEventListener("click", (event) => {
+        if (event.target.closest("#offlineRetryBtn")) retryOnlineRecovery();
+      });
       document.body.appendChild(banner);
     }
     const banner = byId("offlineBanner");
     if (banner) {
       banner.innerHTML = `
-        <div class="offline-banner-content">
+        <div class="offline-banner-content" style="flex-wrap:wrap;justify-content:center;">
           <span class="offline-icon"></span>
           <strong>${reason}</strong>
           <span>${detail}</span>
+          <button type="button" id="offlineRetryBtn" ${offlineRetryBusy ? "disabled" : ""}
+            style="margin-left:6px;padding:4px 12px;border-radius:20px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;opacity:${offlineRetryBusy ? ".6" : "1"};white-space:nowrap;">${offlineRetryBusy ? `${OFFLINE_RETRY_SPINNER_SVG}재시도 중` : "재시도"}</button>
+          <span id="offlineRetryMsg" class="muted" style="font-size:12px;" hidden></span>
         </div>`;
     }
     return;
@@ -18270,6 +18432,41 @@ function updateOnlineStatus() {
     }
   }
 }
+// 재시도 버튼용 스피너(장식 이모지 금지 — 얇은 SVG, SMIL 회전이라 CSS 불필요)
+const OFFLINE_RETRY_SPINNER_SVG = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-dasharray="42" stroke-dashoffset="14" opacity="0.9"><animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/></circle></svg>`;
+let offlineRetryBusy = false;
+
+// 오프라인 배너의 재시도: 온라인 복구 경로(loadData → updateOnlineStatus)를 그대로
+// 다시 태운다. 성공하면 updateOnlineStatus 가 배너를 제거하고 복구 토스트를 띄우며,
+// 여전히 오프라인이면 배너 안에 조용한 피드백만 남긴다.
+async function retryOnlineRecovery() {
+  if (offlineRetryBusy) return;
+  offlineRetryBusy = true;
+  updateOnlineStatus(); // 버튼을 스피너·비활성 상태로 재렌더
+  // 실제로 닿는지 가벼운 HEAD 프로브로 먼저 확인한다. 안 닿는데 loadData 를 태우면
+  // 스냅샷 fetch 실패 → fallback 데모 데이터로 화면이 격하되는 부작용이 있다.
+  let reachable = false;
+  if (navigator.onLine) {
+    try {
+      const probe = await fetch(marketCfg().snapshotPath, { method: "HEAD", cache: "no-store" });
+      reachable = probe.ok;
+    } catch (_) { reachable = false; }
+  }
+  try {
+    if (reachable) await loadData({ preserveRoute: true });
+  } catch (_) { /* 아래 상태 재판정으로 흡수 */ }
+  offlineRetryBusy = false;
+  updateOnlineStatus();
+  const status = window.MirDataStatus || refreshMirDataStatus();
+  if (status.showBanner) {
+    const msg = byId("offlineRetryMsg");
+    if (msg) {
+      msg.textContent = status.isOffline ? "아직 연결되지 않았습니다." : "아직 최신 데이터를 받지 못했습니다.";
+      msg.hidden = false;
+    }
+  }
+}
+
 window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
@@ -18398,11 +18595,58 @@ async function loadAiDeepReport(ticker, customQuery = null) {
   }
 }
 
-function handleHomeSearch(query) {
+// ===== 크로스마켓 검색 =====
+// 검색어를 시장(us/kr)으로 사전 분류한다. 현재 시장 스냅샷에서 못 찾은 쿼리가
+// 반대 시장 종목이면(US 모드에서 "삼성전자", KR 모드에서 "NVDA") 시장을 전환해
+// 이어서 해석하기 위한 힌트다. 확신이 없으면 null.
+function classifyQueryMarket(query) {
+  const q = String(query || "").trim();
+  if (!q) return null;
+  if (/^\d{6}$/.test(q)) return "kr"; // 6자리 국내 종목코드
+  const compact = q.replace(/\s+/g, "");
+  // 국내 주요 종목 닉네임(스냅샷 없이도 아는 하드코딩 맵)
+  for (const aliases of Object.values(KR_TICKER_NICKNAMES)) {
+    if ((aliases || []).some((a) => a && compact.includes(String(a).replace(/\s+/g, "")))) return "kr";
+  }
+  // 한국어 별칭 → 미국 티커 맵(data/ticker_aliases_ko.js). "엔비디아" 등은 US.
+  // 한 글자 별칭("델" 등)은 국내 종목명 오탐이 잦아 2자 이상만 본다.
+  for (const aliases of Object.values(window.TICKER_ALIASES_KO || {})) {
+    if ((aliases || []).some((a) => {
+      const alias = String(a || "").replace(/\s+/g, "");
+      return alias.length >= 2 && compact.includes(alias);
+    })) return "us";
+  }
+  if (/^[A-Za-z][A-Za-z0-9.\-]{0,5}$/.test(q)) return "us"; // US 티커 형태
+  // 공백 없는 짧은 한글은 국내 종목명일 가능성(문장형 질문은 챗봇 폴백으로 남긴다)
+  if (/^[가-힣0-9]{2,12}$/.test(q)) return "kr";
+  return null;
+}
+
+// 현재 시장에서 해석을 시도하고, 실패하면 분류된 반대 시장으로 전환한 뒤
+// 새 스냅샷 로드가 끝난 다음(await — 경쟁 금지) 다시 해석한다.
+// 전환했는데도 종목이 안 나오면(분류 오판) 원래 시장으로 되돌린다.
+async function resolveTickerAcrossMarkets(query) {
+  const q = String(query || "").trim();
+  if (!q) return null;
+  const direct = extractStockTickerFromQuery(q);
+  if (direct) return direct;
+  const target = classifyQueryMarket(q);
+  const origin = marketCfg().id;
+  if (!target || target === origin) return null;
+  await switchMarketMode(target); // loadData(스냅샷 교체·인덱스 재구축)까지 대기
+  const resolved = extractStockTickerFromQuery(q) || resolveTickerQuery(q);
+  if (!resolved) {
+    await switchMarketMode(origin);
+    return null;
+  }
+  return resolved;
+}
+
+async function handleHomeSearch(query) {
   const q = String(query || "").trim();
   if (!q) return;
 
-  const matchedTicker = extractStockTickerFromQuery(q);
+  const matchedTicker = await resolveTickerAcrossMarkets(q);
   if (matchedTicker) {
     const stock = stockByTicker(matchedTicker);
     if (stock) {

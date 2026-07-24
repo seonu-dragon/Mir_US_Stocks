@@ -11811,7 +11811,12 @@ function refreshMirDataStatus() {
   const isOnline = navigator.onLine;
   const snapshotTime = getSnapshotTimestamp();
   const ageHours = snapshotAgeHours();
-  const isStale = ageHours != null && ageHours > 30;
+  // 첫 로드 순간엔 data 가 아직 fallbackData(6월 하드코딩 타임스탬프)라 나이가
+  // 41일로 잡혀 "로컬 과거 데이터 표시 중" 배너가 번쩍 떴다가 실제 스냅샷이
+  // 오면 사라졌다. fallback 상태에선 stale 판정을 억제한다 — fetch 실패로
+  // 진짜 fallback 에 머무는 경우는 별도의 "데모 데이터 표시 중" 배너가 담당.
+  const usingFallback = (data === fallbackData);
+  const isStale = !usingFallback && ageHours != null && ageHours > 30;
   window.MirDataStatus = {
     isOnline,
     isOffline: !isOnline,

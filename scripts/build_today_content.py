@@ -334,6 +334,18 @@ def main():
         else:
             print(f"  [{variant}] (없음)")
 
+    # today_content.json 을 쓴 직후 경량 카드뉴스 파일(data/cardnews.*)도 함께
+    # 갱신한다. 예전엔 이걸 다음 스냅샷 워크플로우가 갱신하도록 맡겼는데, KR
+    # 스냅샷이 카드뉴스 발행보다 먼저 도는 날이면 국내 덱이 지난 날짜에
+    # 고착됐다(2026-07-24 실측: US 스냅샷만 07-24 를 잡고 KR 은 07-22 고착).
+    # 발행 시점에 us·kr 을 모두 써 두면 스냅샷 타이밍과 무관해진다.
+    try:
+        import update_data as _UD
+        for variant in VARIANTS:
+            _UD.write_cardnews_file(variant, payload.get(variant))
+    except Exception as exc:
+        print(f"[cardnews] 경량 파일 갱신 실패(매니페스트는 정상): {exc}")
+
     # 오늘 덱을 만든 뒤에 정리한다 — 순서가 반대면 보존 계산에 오늘 것이 안 잡힌다.
     if args.keep_days > 0:
         prune_old_content(args.keep_days, args.date)

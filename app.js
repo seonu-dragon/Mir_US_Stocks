@@ -2840,10 +2840,50 @@ function seasonalitySvgLine(vals) {
 // ===== 매크로 히스토리 스파크라인 (MARKET_HISTORY) =====
 // 일일 1레코드씩 적립되는 자체 시계열(data/history/market_history.js). 5일 미만이면
 // 선이 의미가 없어 "적립 중 (n일차)" 안내로 대신한다. 축 없는 1.5px currentColor 라인.
+// 시리즈별 메타(라벨·단위·소수자리·천단위콤마 여부). 타일/상세 팝업이 공유해
+// 포매팅을 한 곳에서 관리한다. cpiYoY·unemployment 는 이미 레코드에 있으나
+// 미노출이던 것을 추가(각각 %).
+const HISTORY_SERIES = {
+  usdKrw:       { label: "원/달러 환율", unit: "원", digits: 1, group: true },
+  t10y2y:       { label: "장단기 금리차 (10Y−2Y)", unit: "%p", digits: 2 },
+  hySpread:     { label: "하이일드 스프레드", unit: "%p", digits: 2 },
+  cpiYoY:       { label: "CPI 물가 (YoY)", unit: "%", digits: 1 },
+  unemployment: { label: "실업률", unit: "%", digits: 1 },
+};
+
+function fmtHist(key, v) {
+  const s = HISTORY_SERIES[key];
+  if (!s || !Number.isFinite(v)) return String(v);
+  const n = s.group ? v.toLocaleString(undefined, { maximumFractionDigits: s.digits }) : v.toFixed(s.digits);
+  return `${n}${s.unit}`;
+}
+
+// 첫 기록 대비 변화량. 부호(+/−)를 붙이고 단위는 값과 동일하게 맞춘다.
+function fmtHistDelta(key, d) {
+  const s = HISTORY_SERIES[key];
+  if (!s || !Number.isFinite(d)) return "—";
+  const sign = d > 0 ? "+" : d < 0 ? "−" : "";
+  const a = Math.abs(d);
+  const n = s.group ? a.toLocaleString(undefined, { maximumFractionDigits: s.digits }) : a.toFixed(s.digits);
+  return `${sign}${n}${s.unit}`;
+}
+
 function historySeries(key) {
   const recs = (window.MARKET_HISTORY || {}).records;
   if (!Array.isArray(recs)) return [];
   return recs.map((r) => Number(r && r[key])).filter(Number.isFinite);
+}
+
+// 값과 날짜를 함께 뽑는다(상세 팝업의 min/max/최신 라벨용). 유한값만.
+function historyRecords(key) {
+  const recs = (window.MARKET_HISTORY || {}).records;
+  if (!Array.isArray(recs)) return [];
+  const out = [];
+  for (const r of recs) {
+    const v = Number(r && r[key]);
+    if (Number.isFinite(v)) out.push({ date: String((r && r.date) || ""), value: v });
+  }
+  return out;
 }
 
 function historySparkSvg(vals, w = 130, h = 34) {
@@ -2860,18 +2900,109 @@ function historySparkSvg(vals, w = 130, h = 34) {
     + `<circle cx="${lx}" cy="${ly}" r="2" fill="currentColor"/></svg>`;
 }
 
+// 상세용 큰 스파크라인 — 선 + 최소/최대/최신 지점 강조. 축 없는 얇은 라인 기조 유지.
+function historyDetailSvg(recs, w = 400, h = 96) {
+  if (!Array.isArray(recs) || recs.length < 2) return "";
+  const vals = recs.map((r) => r.value);
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const span = (max - min) || Math.abs(max) * 0.01 || 1;
+  const pad = 8;
+  const x = (i) => pad + (w - pad * 2) * i / (vals.length - 1);
+  const y = (v) => pad + (h - pad * 2) * (1 - (v - min) / span);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const iMin = vals.indexOf(min), iMax = vals.indexOf(max), iLast = vals.length - 1;
+  const dot = (i, r, fill, op) => `<circle cx="${x(i).toFixed(1)}" cy="${y(vals[i]).toFixed(1)}" r="${r}" fill="${fill}"${op ? ` fill-opacity="${op}"` : ""}/>`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" aria-hidden="true" style="display:block;max-width:100%">`
+    + `<polyline points="${pts}" fill="none" stroke="currentColor" stroke-opacity="0.5" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>`
+    + dot(iMax, 2.4, "#30a46c") + dot(iMin, 2.4, "#e5484d") + dot(iLast, 3, "currentColor")
+    + `</svg>`;
+}
+
 // 히스토리 타일: 현재값 + (5일치부터) 스파크라인. 그 전엔 적립 안내만.
-function historyTile(label, key, fmt) {
+// 2레코드 이상이면 클릭/키보드로 상세 팝업을 연다(data-hist-key 로 위임 배선).
+function historyTile(key) {
+  const s = HISTORY_SERIES[key];
+  if (!s) return "";
   const vals = historySeries(key);
   if (!vals.length) return "";
   const last = vals[vals.length - 1];
   const body = vals.length >= 5
     ? historySparkSvg(vals)
     : `<div style="font-size:10.5px;color:var(--muted)">히스토리 적립 중 (${vals.length}일차)</div>`;
-  return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;color:var(--text)">
-    <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px">${escapeHtml(label)}</div>
-    <div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:6px">${fmt(last)}</div>
+  const clickable = vals.length >= 2;
+  const attrs = clickable
+    ? ` role="button" tabindex="0" data-hist-key="${escapeHtml(key)}" aria-label="${escapeHtml(s.label)} 추이 자세히 보기" style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;color:var(--text);cursor:pointer"`
+    : ` style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;color:var(--text)"`;
+  return `<article${attrs}>
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+      <span style="font-size:11.5px;color:var(--muted)">${escapeHtml(s.label)}</span>
+      ${clickable ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="color:var(--muted);opacity:.7;margin-left:auto;flex-shrink:0" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>` : ""}
+    </div>
+    <div style="font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;margin-bottom:6px">${fmtHist(key, last)}</div>
     ${body}</article>`;
+}
+
+// 히스토리 타일 클릭 → 상세 팝업. 앱 공용 <dialog>(.app-dialog) 스타일을 재사용해
+// 테마·backdrop·포커스트랩·Esc 를 그대로 얻는다(appDialog 는 textContent 전용이라
+// SVG 를 못 담아 전용 함수로 분리). 큰 스파크라인 + 최소/최대/최신/변화 통계.
+function openHistoryDetail(key) {
+  const s = HISTORY_SERIES[key];
+  if (!s) return;
+  const recs = historyRecords(key);
+  if (!recs.length) return;
+  const vals = recs.map((r) => r.value);
+  const enough = vals.length >= 2;
+  const min = Math.min(...vals), max = Math.max(...vals);
+  const iMin = vals.indexOf(min), iMax = vals.indexOf(max);
+  const first = recs[0], latest = recs[recs.length - 1];
+  const change = latest.value - first.value;
+  const changeCol = change > 0 ? "var(--green,#30a46c)" : change < 0 ? "var(--red,#e5484d)" : "var(--muted)";
+  const dateTxt = (d) => escapeHtml(String(d || "").slice(5)) || "—";
+
+  const chart = enough
+    ? `<div style="color:var(--text);margin:6px 0 4px">${historyDetailSvg(recs)}</div>
+       <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-bottom:12px">
+         <span>${dateTxt(first.date)}</span><span>${dateTxt(latest.date)}</span></div>`
+    : "";
+  const note = vals.length < 5
+    ? `<div style="font-size:11px;color:var(--muted);margin-bottom:12px">히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이가 뚜렷해집니다.</div>`
+    : "";
+
+  const statRow = (lbl, val, sub, col) => `<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
+      <span style="font-size:10.5px;color:var(--muted)">${escapeHtml(lbl)}</span>
+      <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:${col || "var(--text)"}">${val}</span>
+      ${sub ? `<span style="font-size:10px;color:var(--muted)">${sub}</span>` : ""}
+    </div>`;
+  const stats = enough
+    ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+        ${statRow("최신", fmtHist(key, latest.value), dateTxt(latest.date))}
+        ${statRow("첫 기록 대비", fmtHistDelta(key, change), `${fmtHist(key, first.value)} → ${fmtHist(key, latest.value)}`, changeCol)}
+        ${statRow("최고", fmtHist(key, max), dateTxt(recs[iMax] && recs[iMax].date), "var(--green,#30a46c)")}
+        ${statRow("최저", fmtHist(key, min), dateTxt(recs[iMin] && recs[iMin].date), "var(--red,#e5484d)")}
+      </div>`
+    : `<div>${statRow("현재값", fmtHist(key, latest.value), dateTxt(latest.date))}</div>`;
+
+  const dlg = document.createElement("dialog");
+  dlg.className = "app-dialog";
+  dlg.style.width = "min(440px, calc(100vw - 32px))";
+  dlg.setAttribute("aria-label", `${s.label} 추이`);
+  dlg.innerHTML = `
+    <h2 class="app-dialog-title">${escapeHtml(s.label)}</h2>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">최근 ${vals.length}일 자체 적립 히스토리</div>
+    ${chart}${note}${stats}
+    <div class="app-dialog-actions"><button type="button" class="app-dialog-btn is-primary" data-hist-close>닫기</button></div>`;
+  document.body.appendChild(dlg);
+
+  const close = () => {
+    dlg.addEventListener("close", () => dlg.remove(), { once: true });
+    if (dlg.open) dlg.close(); else dlg.remove();
+  };
+  dlg.querySelector("[data-hist-close]").addEventListener("click", close);
+  dlg.addEventListener("cancel", (e) => { e.preventDefault(); close(); });     // Esc
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) close(); });     // backdrop
+  dlg.showModal();
+  const btn = dlg.querySelector("[data-hist-close]");
+  if (btn) btn.focus();
 }
 
 // 시장 심리 종합지수 (Fear & Greed) — 이미 수집하는 지표를 0~100 으로 종합. CNN 스타일의
@@ -2985,12 +3116,10 @@ function renderMacroIndicators() {
       <div style="font-size:11px;color:${col};font-variant-numeric:tabular-nums;margin-top:3px">${arrow} ${Number.isFinite(ch) ? (ch > 0 ? "+" : "") + ch + (it.unit || "") : "—"} <span style="color:var(--muted)">· ${escapeHtml(String(it.date || "").slice(0, 7))}</span></div>
     </article>`;
   };
-  // 자체 적립 히스토리(MARKET_HISTORY)가 있으면 환율·금리차·신용스프레드 추이를 붙인다.
-  const histTiles = [
-    historyTile("원/달러 환율", "usdKrw", (v) => `${v.toLocaleString(undefined, { maximumFractionDigits: 1 })}원`),
-    historyTile("장단기 금리차 (10Y−2Y)", "t10y2y", (v) => `${v.toFixed(2)}%p`),
-    historyTile("하이일드 스프레드", "hySpread", (v) => `${v.toFixed(2)}%p`),
-  ].filter(Boolean).join("");
+  // 자체 적립 히스토리(MARKET_HISTORY)가 있으면 환율·금리차·신용스프레드·CPI·실업률
+  // 추이를 붙인다. 타일 클릭 시 상세 팝업(min/max/변화)을 연다.
+  const histTiles = ["usdKrw", "t10y2y", "hySpread", "cpiYoY", "unemployment"]
+    .map(historyTile).filter(Boolean).join("");
   const histBlock = histTiles
     ? `<div class="section-title" style="margin-top:6px"><h2>매크로 추이</h2>
         <p>일일 스냅샷을 적립한 자체 히스토리입니다 (하루 1회 기록). 5일치부터 추이 선을 그립니다.</p></div>
@@ -3001,6 +3130,14 @@ function renderMacroIndicators() {
       <p>FRED 기준 핵심 거시지표입니다. 화살표 색은 방향의 좋고 나쁨(인플레·실업·신용스프레드는 상승이 부정적). 예측이 아니라 현재값·직전 대비입니다.</p></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:8px">${m.indicators.map(tile).join("")}</div>
     ${histBlock}`;
+  // 히스토리 타일 클릭/키보드 → 상세 팝업(위임 대신 직접 배선; 타일 수가 적다).
+  host.querySelectorAll("[data-hist-key]").forEach((el) => {
+    const key = el.getAttribute("data-hist-key");
+    el.addEventListener("click", () => openHistoryDetail(key));
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openHistoryDetail(key); }
+    });
+  });
 }
 
 function renderSignals() {

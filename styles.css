@@ -10963,6 +10963,36 @@ body.ai-dash-collapsed .ai-dash-collapse { right: 14px; }
 .ai-dash-rangebar button.is-active { background: var(--accent); color: #fff; }
 body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
 
+/* 차트 캔들 유형 선택 (캔들·라인·헤이킨아시) — 기간 탭과 동일한 필 스타일, 차트 좌상단 */
+.ai-dash-stylebar {
+  position: absolute;
+  top: 78px;
+  left: 14px;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(13, 20, 38, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(120, 160, 255, 0.16);
+  pointer-events: auto;
+  z-index: 4;
+  transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.ai-dash-stylebar button {
+  height: auto;
+  border: 0;
+  background: transparent;
+  color: #9fb0cc;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.ai-dash-stylebar button.is-active { background: var(--accent); color: #fff; }
+
 .ai-dash-stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -11090,6 +11120,9 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
   }
   .ai-dash-rangebar,
   body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
+  /* 좁은 화면: 캔들 유형 바를 기간 탭 아래 줄로 내려 겹치지 않게 */
+  .ai-dash-stylebar,
+  body.ai-dash-collapsed .ai-dash-stylebar { top: 120px; left: 10px; }
   /* 접힘: 하단 시트를 아래로 내리고 차트를 전체 높이로 */
   body.ai-dash-collapsed .ai-dash-grid { transform: translateY(calc(100% + 24px)); }
   body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { bottom: 0; right: 0; }
@@ -13577,6 +13610,12 @@ body.ai-mode-active .ai-input-hint:empty {
     right: calc(var(--ai-right-w) + 32px);
   }
   body.ai-dash-collapsed.ai-mode-active .ai-dash-collapse { right: 14px; }
+  /* 캔들 유형 선택: 차트 영역(좌 사이드바 제외) 좌상단 */
+  body.ai-mode-active .ai-dash-stylebar {
+    top: 158px;
+    left: calc(var(--ai-left-w) + 32px);
+  }
+  body.ai-dash-collapsed.ai-mode-active .ai-dash-stylebar { left: 14px; }
 
   /* 참고 레이아웃: 종목 화면에서는 채팅 입력이 상단 */
   body.ai-mode-active.ai-stock-analysis-view .ai-chat-input-wrapper {

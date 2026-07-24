@@ -1,9 +1,9 @@
 {
-  "updatedAtKst": "2026-07-24 09:00 KST",
+  "updatedAtKst": "2026-07-24 12:42 KST",
   "lastFileDate": "2026-07-23",
   "count": 776,
   "source": "SEC EDGAR S-1 / 424B4",
-  "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(주당 공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다.",
+  "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
     {
       "company": "Innovative Eyewear Inc  (LUCY, LUCYW)",
@@ -154,7 +154,9 @@
       "fileDate": "2026-07-22",
       "accession": "0001477932-26-004453:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004453/kidz_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "resale"
     },
     {
       "company": "Pinnacle Acquisition Corp",
@@ -265,7 +267,9 @@
       "fileDate": "2026-07-21",
       "accession": "0001929980-26-000373:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2116230/000192998026000373/sxgc_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "ARC Group Securities Acquisition II",
@@ -326,7 +330,9 @@
       "fileDate": "2026-07-21",
       "accession": "0001193125-26-310471:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2131350/000119312526310471/d112816d424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "BOA Acquisition Corp. II",
@@ -377,7 +383,9 @@
       "fileDate": "2026-07-21",
       "accession": "0001140361-26-029135:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1472091/000114036126029135/ny20077374x3_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "resale"
     },
     {
       "company": "RZ Wellness Ltd",
@@ -458,7 +466,7 @@
       "fileDate": "2026-07-20",
       "accession": "0001213900-26-079442:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2060016/000121390026079442/ea0295913-424b4_agencia.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "FreeCast, Inc.",
@@ -730,7 +738,8 @@
       "accession": "0001213900-26-079231:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2110119/000121390026079231/ea0274132-05.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "NuvOx Therapeutics, Inc.",
@@ -781,7 +790,8 @@
       "fileDate": "2026-07-17",
       "accession": "0001193125-26-306867:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1814215/000119312526306867/buru_s-1_7.10.26_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.1555
     },
     {
       "company": "BlossomHill Therapeutics, Inc.",
@@ -873,7 +883,7 @@
       "accession": "0001213900-26-078747:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2086716/000121390026078747/ea0276071-13.htm",
       "offerPrice": 15.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Phalanx Acquisition Corp I",
@@ -925,7 +935,7 @@
       "accession": "0001104659-26-084293:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2105398/000110465926084293/tm264837-15_424b4.htm",
       "offerPrice": 21.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Braveheart Bio, Inc.",
@@ -966,7 +976,9 @@
       "fileDate": "2026-07-15",
       "accession": "0001437749-26-023622:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2084026/000143774926023622/quma20260714_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "direct-listing"
     },
     {
       "company": "authID Inc.",
@@ -1018,7 +1030,8 @@
       "accession": "0001213900-26-078066:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2129056/000121390026078066/ea0285792-05.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Jones Ventures INTL Acquisition1 Corp",
@@ -1029,7 +1042,9 @@
       "fileDate": "2026-07-15",
       "accession": "0001213900-26-078062:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2129056/000121390026078062/ea0285792-06.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Vogenx, Inc.",
@@ -1070,7 +1085,8 @@
       "fileDate": "2026-07-15",
       "accession": "0001104659-26-083680:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1837607/000110465926083680/tm2615250-5_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.3221
     },
     {
       "company": "QUANTUM CORP /DE/",
@@ -1241,7 +1257,7 @@
       "fileDate": "2026-07-13",
       "accession": "0001493152-26-032975:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2015691/000149315226032975/form424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Starton Holdings, Inc.",
@@ -1313,7 +1329,7 @@
       "accession": "0001193125-26-301373:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2137777/000119312526301373/d160806d424b4.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Ionic Digital Inc.",
@@ -1505,7 +1521,8 @@
       "accession": "0001213900-26-076921:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2106436/000121390026076921/ea0277572-06.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Market Technology Acquisition Corp",
@@ -1587,7 +1604,7 @@
       "accession": "0001193125-26-299963:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2120882/000119312526299963/d32785d424b4.htm",
       "offerPrice": 149.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "UNIVERSAL SAFETY PRODUCTS, INC.",
@@ -1729,7 +1746,7 @@
       "accession": "0001193125-26-299756:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2069785/000119312526299756/project_grace_ii_-_424b4.htm",
       "offerPrice": 3.25,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "BOA Acquisition Corp. II",
@@ -1770,7 +1787,9 @@
       "fileDate": "2026-07-09",
       "accession": "0001185185-26-002864:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2123471/000118518526002864/columbus3424b4070826.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Columbus Circle Capital Corp III",
@@ -1782,7 +1801,8 @@
       "accession": "0001185185-26-002862:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2123471/000118518526002862/columbus3424b4070826.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "GridAI Technologies Corp.",
@@ -1914,7 +1934,8 @@
       "accession": "0001213900-26-076386:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2129659/000121390026076386/ea0288648-03.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Evolution Metals & Technologies Corp.",
@@ -2075,7 +2096,8 @@
       "fileDate": "2026-07-07",
       "accession": "0001213900-26-075881:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2018529/000121390026075881/ea0291199-05.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.79
     },
     {
       "company": "Bleichroeder Acquisition Corp. III",
@@ -2087,7 +2109,8 @@
       "accession": "0001213900-26-075753:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2128045/000121390026075753/ea0290849-03.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Standard Nuclear, Inc.",
@@ -2118,7 +2141,9 @@
       "fileDate": "2026-07-07",
       "accession": "0001193125-26-297648:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1818643/000119312526297648/d125339d424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "debt"
     },
     {
       "company": "Idaho Copper Corp  (COPR, COPR-WT)",
@@ -2130,7 +2155,7 @@
       "accession": "0001493152-26-032040:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1263364/000149315226032040/form424b4.htm",
       "offerPrice": 4.85,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Catheter Precision, Inc.",
@@ -2201,7 +2226,9 @@
       "fileDate": "2026-07-06",
       "accession": "0001213900-26-075135:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2139246/000121390026075135/ea0293867-05.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Syntiant Corp.",
@@ -2312,7 +2339,8 @@
       "fileDate": "2026-07-02",
       "accession": "0001628280-26-046635:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026046635/neutronholdingsinc-424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 25.0
     },
     {
       "company": "Gold Mountain Acquisition Corp.",
@@ -2394,7 +2422,8 @@
       "accession": "0001213900-26-074446:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2113481/000121390026074446/ea0279881-04.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Forgent Power Solutions, Inc.",
@@ -2405,7 +2434,8 @@
       "fileDate": "2026-07-02",
       "accession": "0001193125-26-294982:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2080126/000119312526294982/olympus_iv_-_form_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 49.0
     },
     {
       "company": "B&R Technology Merger Corp.",
@@ -2467,7 +2497,7 @@
       "accession": "0001193125-26-292853:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2110117/000119312526292853/d103576d424b4.htm",
       "offerPrice": 16.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Meridian3 Industrials Acquisition Corp",
@@ -2478,7 +2508,9 @@
       "fileDate": "2026-07-02",
       "accession": "0001104659-26-080405:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2136530/000110465926080405/tmb-20260622x424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Cyber Enviro-Tech, Inc.",
@@ -2580,7 +2612,7 @@
       "accession": "0001493152-26-031463:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2078037/000149315226031463/form424b4.htm",
       "offerPrice": 1.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "VARSAL TECH, INC.",
@@ -2692,7 +2724,7 @@
       "accession": "0001104659-26-079884:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2004711/000110465926079884/tm2613674-14_424b4.htm",
       "offerPrice": 29.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Encore Medical, Inc.",
@@ -2813,7 +2845,8 @@
       "fileDate": "2026-06-30",
       "accession": "0001213900-26-073848:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1560293/000121390026073848/ea0296419-424b4_tenon.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.38
     },
     {
       "company": "Game Your Game Inc.",
@@ -2895,7 +2928,8 @@
       "accession": "0001104659-26-079331:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2128115/000110465926079331/tm2611527-11_424b4.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Factorial Energy Inc.  (FAC, CGCT, FACWW)",
@@ -2957,7 +2991,7 @@
       "accession": "0001493152-26-031078:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2030954/000149315226031078/form424b4.htm",
       "offerPrice": 1.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "KIDZ AI Inc.  (KIDZ, KIDZW)",
@@ -3099,7 +3133,7 @@
       "accession": "0001140361-26-026625:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2096861/000114036126026625/ny20063495x12_424b4.htm",
       "offerPrice": 12.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Exyn Technologies, Inc.  (EXYN, EXYNW)",
@@ -3140,7 +3174,9 @@
       "fileDate": "2026-06-26",
       "accession": "0001829126-26-006890:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2116105/000182912626006890/futurewaveacq_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Akari Therapeutics Plc",
@@ -3282,7 +3318,7 @@
       "accession": "0001213900-26-072276:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1966041/000121390026072276/ea0200059-38.htm",
       "offerPrice": 17.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "ITG, Inc./DE/",
@@ -3344,7 +3380,7 @@
       "accession": "0001104659-26-077968:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2107018/000110465926077968/tm269965-19_424b4.htm",
       "offerPrice": 33.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "MobbQuest Inc.",
@@ -3575,7 +3611,9 @@
       "fileDate": "2026-06-25",
       "accession": "0001213900-26-072089:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2125551/000121390026072089/ea0285166-04.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Cardinal Infrastructure Group Inc.",
@@ -3587,7 +3625,7 @@
       "accession": "0001213900-26-072043:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2079999/000121390026072043/ea0293882-04.htm",
       "offerPrice": 73.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Cryptex Digital Market Cap ETF",
@@ -3658,7 +3696,8 @@
       "fileDate": "2026-06-25",
       "accession": "0001193125-26-281376:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1500412/000119312526281376/d152097d424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 78.0
     },
     {
       "company": "Cartesian Growth Corp IV",
@@ -3670,7 +3709,8 @@
       "accession": "0001185185-26-002653:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2126043/000118518526002653/cgciv424b4062426.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Reformation Inc.",
@@ -3871,7 +3911,9 @@
       "fileDate": "2026-06-23",
       "accession": "0001493152-26-029830:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2096362/000149315226029830/form424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "supplement"
     },
     {
       "company": "TEN Holdings, Inc.",
@@ -3903,7 +3945,8 @@
       "accession": "0001193125-26-279710:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2086438/000119312526279710/d14537d424b4.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Sinda Ltd.",
@@ -4065,7 +4108,8 @@
       "accession": "0001213900-26-070283:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2101470/000121390026070283/ea0272227-04.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Gloo Holdings, Inc.",
@@ -4226,7 +4270,8 @@
       "fileDate": "2026-06-18",
       "accession": "0001493152-26-029327:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1527613/000149315226029327/form424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.015
     },
     {
       "company": "HCW Biologics Inc.",
@@ -4258,7 +4303,7 @@
       "accession": "0001493152-26-029206:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1712762/000149315226029206/form424b4.htm",
       "offerPrice": 0.8,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "AIM ImmunoTech Inc.",
@@ -4280,7 +4325,8 @@
       "accession": "0001213900-26-070224:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2096755/000121390026070224/ea0268724-05.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Bleichroeder Acquisition Corp. III",
@@ -4312,7 +4358,7 @@
       "accession": "0001193125-26-276096:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2123613/000119312526276096/d107928d424b4.htm",
       "offerPrice": 16.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "First Carolina Financial Services, Inc.",
@@ -4324,7 +4370,7 @@
       "accession": "0001140361-26-025790:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1531193/000114036126025790/ny20062301x10_424b4.htm",
       "offerPrice": 12.5,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Morgan Stanley Solana Trust",
@@ -4376,7 +4422,7 @@
       "accession": "0001104659-26-075763:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1918102/000110465926075763/tm2612179-14_424b4.htm",
       "offerPrice": 16.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Albatross Acquisition Corp",
@@ -4398,7 +4444,8 @@
       "accession": "0001683168-26-004899:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1557798/000168316826004899/tianci_424b4.htm",
       "offerPrice": 0.81,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Pattern Group Inc.",
@@ -4410,7 +4457,7 @@
       "accession": "0001628280-26-043986:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1811935/000162828026043986/pattern424june2026.htm",
       "offerPrice": 19.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Idaho Copper Corp",
@@ -4442,7 +4489,7 @@
       "accession": "0001213900-26-069612:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2087965/000121390026069612/ea0261707-07.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Perceptive Capital Solutions Corp",
@@ -4454,7 +4501,7 @@
       "accession": "0001140361-26-025588:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2017526/000114036126025588/ny20061080x17_424b4.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "ConnectM Technology Solutions, Inc.",
@@ -4635,7 +4682,9 @@
       "fileDate": "2026-06-16",
       "accession": "0001104659-26-074584:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2130386/000110465926074584/tm2614044-6_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Boumarang Inc.",
@@ -4847,7 +4896,7 @@
       "accession": "0001628280-26-042639:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1181412/000162828026042639/spaceexplorationtechnologi.htm",
       "offerPrice": 135.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "bioAffinity Technologies, Inc.  (BIAF, BIAFW)",
@@ -5059,7 +5108,7 @@
       "accession": "0001628280-26-042580:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1925062/000162828026042580/forbright-424b.htm",
       "offerPrice": 18.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "ENTRATA, INC.",
@@ -5131,7 +5180,8 @@
       "accession": "0001213900-26-067558:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2104879/000121390026067558/ea0273487-05.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Kardigan, Inc.",
@@ -5163,7 +5213,8 @@
       "accession": "0001493152-26-028056:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1926314/000149315226028056/form424b4.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "OFA Group",
@@ -5225,7 +5276,8 @@
       "accession": "0001213900-26-067360:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2128739/000121390026067360/ea0285899-07.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "American Ventures Acquisition Corp. I",
@@ -5247,7 +5299,7 @@
       "accession": "0001193125-26-265983:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1657677/000119312526265983/pbls_424b4.htm",
       "offerPrice": 20.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "ERock, Inc.",
@@ -5259,7 +5311,7 @@
       "accession": "0001193125-26-265898:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2110029/000119312526265898/d12401d424b4.htm",
       "offerPrice": 21.5,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Swarmer, Inc",
@@ -5301,7 +5353,8 @@
       "accession": "0001493152-26-027814:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1983324/000149315226027814/form424b4.htm",
       "offerPrice": 0.7,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Pharmaceutical Resource Technology, Inc.",
@@ -5333,7 +5386,8 @@
       "accession": "0001213900-26-066805:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2123475/000121390026066805/ea0285163-03.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Texas Ventures Acquisition IV Corp",
@@ -5415,7 +5469,7 @@
       "accession": "0001193125-26-264014:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1921603/000119312526264014/d86452d424b4.htm",
       "offerPrice": 26.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Eloxx Pharmaceuticals, Inc.",
@@ -5427,7 +5481,7 @@
       "accession": "0001193125-26-263914:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1035354/000119312526263914/d35071d424b4.htm",
       "offerPrice": 11.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "WOLFSPEED, INC.",
@@ -5599,7 +5653,7 @@
       "accession": "0001213900-26-065972:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2070542/000121390026065972/ea0293489-424b4_blockchain.htm",
       "offerPrice": 1.65,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Research Alliance Corp IV",
@@ -5630,7 +5684,8 @@
       "fileDate": "2026-06-08",
       "accession": "0001140361-26-024372:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1506492/000114036126024372/ny20073226x4_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.3
     },
     {
       "company": "First Carolina Financial Services, Inc.",
@@ -5682,7 +5737,7 @@
       "accession": "0001628280-26-041003:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2110105/000162828026041003/quantinuum-424b4.htm",
       "offerPrice": 60.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "East West Ave Acquisition Corp.",
@@ -5754,7 +5809,7 @@
       "accession": "0001437749-26-019738:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1307579/000143774926019738/liqt20260605_424b4.htm",
       "offerPrice": 1.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "FutureCorp Space Acquisition 1",
@@ -5766,7 +5821,8 @@
       "accession": "0001213900-26-065927:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2131853/000121390026065927/ea0288862-06.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Alpex Acquisition Corp",
@@ -5907,7 +5963,8 @@
       "fileDate": "2026-06-05",
       "accession": "0001193125-26-258295:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2096300/000119312526258295/d147986d424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 27.0
     },
     {
       "company": "Sinda Ltd.",
@@ -5929,7 +5986,7 @@
       "accession": "0001140361-26-024037:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2091017/000114036126024037/ny20061035x7_424b4.htm",
       "offerPrice": 13.5,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Yorkville International Capital Corp.",
@@ -5990,7 +6047,9 @@
       "fileDate": "2026-06-04",
       "accession": "0001683168-26-004516:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1590418/000168316826004516/focus_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "resale"
     },
     {
       "company": "Idaho Copper Corp",
@@ -6041,7 +6100,9 @@
       "fileDate": "2026-06-04",
       "accession": "0001493152-26-027278:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/923601/000149315226027278/form424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "resale"
     },
     {
       "company": "SHF Holdings, Inc.  (SHFS, SHFSW)",
@@ -6102,7 +6163,9 @@
       "fileDate": "2026-06-04",
       "accession": "0001213900-26-065344:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2104177/000121390026065344/ea0272676-05.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "InterPrivate Investment Partners V, Inc.",
@@ -6114,7 +6177,8 @@
       "accession": "0001213900-26-065230:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2105274/000121390026065230/ea0274206-08.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Eloxx Pharmaceuticals, Inc.",
@@ -6146,7 +6210,7 @@
       "accession": "0001193125-26-257410:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1850351/000119312526257410/iron_424b4_round_2.htm",
       "offerPrice": 23.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "INNIO N.V.",
@@ -6158,7 +6222,7 @@
       "accession": "0001193125-26-256992:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2109150/000119312526256992/liberty_-_424b4.htm",
       "offerPrice": 27.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Parabilis Medicines, Inc.",
@@ -6190,7 +6254,7 @@
       "accession": "0001193125-26-256356:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2118195/000119312526256356/d25758d424b4.htm",
       "offerPrice": 20.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Nuwellis, Inc.",
@@ -6301,7 +6365,9 @@
       "fileDate": "2026-06-03",
       "accession": "0001493152-26-027037:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2082526/000149315226027037/form424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "East West Ave Acquisition Corp.",
@@ -6372,7 +6438,9 @@
       "fileDate": "2026-06-03",
       "accession": "0001213900-26-064746:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2102771/000121390026064746/ea0272937-06.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "BlockchAIn Digital Infrastructure, Inc.",
@@ -6444,7 +6512,8 @@
       "accession": "0001185185-26-002324:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2101393/000118518526002324/acac424b4053126.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Janus Living, Inc.",
@@ -6456,7 +6525,7 @@
       "accession": "0001104659-26-070188:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2100805/000110465926070188/tm2614872-10_424b4.htm",
       "offerPrice": 25.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Futurewave Acquisition Corp",
@@ -6657,7 +6726,8 @@
       "fileDate": "2026-06-02",
       "accession": "0001104659-26-069201:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1868275/000110465926069201/tm2615509-1_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 281.0
     },
     {
       "company": "Veri MedTech Holdings, Inc.",
@@ -6809,7 +6879,7 @@
       "accession": "0001213900-26-063256:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1785566/000121390026063256/ea0292844-424b4_zhongchao.htm",
       "offerPrice": 0.54,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Tribeca Strategic Acquisition Corp.",
@@ -6821,7 +6891,8 @@
       "accession": "0001213900-26-063058:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2094919/000121390026063058/ea0264237-09.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Eloxx Pharmaceuticals, Inc.",
@@ -6862,7 +6933,8 @@
       "fileDate": "2026-06-01",
       "accession": "0001193125-26-250992:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1651721/000119312526250992/gipr-20260601.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 0.21
     },
     {
       "company": "Grayscale Hyperliquid Staking ETF",
@@ -6933,7 +7005,8 @@
       "fileDate": "2026-06-01",
       "accession": "0001193125-26-249223:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2080126/000119312526249223/olympus_iii_424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 47.0
     },
     {
       "company": "Firefly Aerospace Inc.",
@@ -6945,7 +7018,7 @@
       "accession": "0001193125-26-249159:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/1860160/000119312526249159/d104612d424b4.htm",
       "offerPrice": 48.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "INNIO Holding GmbH",
@@ -7196,7 +7269,8 @@
       "fileDate": "2026-05-29",
       "accession": "0001193125-26-248671:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2065636/000119312526248671/d150146d424b4.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 36.0
     },
     {
       "company": "Liftoff Mobile, Inc.",
@@ -7227,7 +7301,9 @@
       "fileDate": "2026-05-29",
       "accession": "0001193125-26-247269:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/886982/000119312526247269/gs-20260529.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "debt"
     },
     {
       "company": "CTT PHARMACEUTICAL HOLDINGS, INC.",
@@ -7399,7 +7475,8 @@
       "accession": "0001185185-26-002141:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2111038/000118518526002141/dgac424b4052726.htm",
       "offerPrice": 10.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Dravica Corp",
@@ -7690,7 +7767,9 @@
       "fileDate": "2026-05-26",
       "accession": "0001213900-26-060733:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2098707/000121390026060733/ea0265624-03.htm",
-      "offerPriceChecked": true
+      "offerPriceChecked": 2,
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit"
     },
     {
       "company": "Collab Z Inc.",
@@ -7782,7 +7861,7 @@
       "accession": "0001193125-26-239247:424B4",
       "link": "https://www.sec.gov/Archives/edgar/data/2046386/000119312526239247/d68812d424b4.htm",
       "offerPrice": 37.0,
-      "offerPriceChecked": true
+      "offerPriceChecked": 2
     },
     {
       "company": "Safepoint Holdings, Inc.",

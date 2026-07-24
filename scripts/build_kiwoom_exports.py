@@ -75,13 +75,18 @@ def scan_quick_prob(item: dict, horizon: int = DEFAULT_HORIZON) -> dict:
         if bias is not None and math.isfinite(bias):
             signals.append((bias, weight))
 
-    rs = item.get("rsScore")
-    if isinstance(rs, (int, float)) and math.isfinite(rs):
-        push(scan_clamp((rs - 50) / 45, -1, 1), 1.4)
-
-    eps = item.get("epsRevScore")
-    if isinstance(eps, (int, float)) and math.isfinite(eps):
-        push(scan_clamp((eps - 50) / 45, -1, 1), 1.0)
+    # EPS 성장 신호 — 예상 EPS(다음해)가 TTM EPS 대비 얼마나 늘어나는지.
+    # (구 EPS 리비전 합성점수 자리 대체: 실측 epsTtm/epsNextY 둘 다 유한하고 epsTtm>0 일 때만.)
+    eps_ttm = item.get("epsTtm")
+    eps_next = item.get("epsNextY")
+    if (
+        isinstance(eps_ttm, (int, float))
+        and isinstance(eps_next, (int, float))
+        and math.isfinite(eps_ttm)
+        and math.isfinite(eps_next)
+        and eps_ttm > 0
+    ):
+        push(scan_tanh((eps_next / eps_ttm - 1) * 1.5), 1.0)
 
     three_m = item.get("threeMonthChangePct")
     if isinstance(three_m, (int, float)) and math.isfinite(three_m):
@@ -95,7 +100,9 @@ def scan_quick_prob(item: dict, horizon: int = DEFAULT_HORIZON) -> dict:
     if isinstance(week, (int, float)) and math.isfinite(week):
         push(scan_tanh(week / 4), 0.6 * short_w)
 
-    push(scan_rsi_bias(item.get("rsi14")), 0.7 * short_w)
+    # RSI-14(실측 Wilder). 구 RS 합성점수 제거 후 유일한 모멘텀 강도 지표라
+    # 가중치를 상향(구 RS 항 1.4 를 보완). 3M/1M/주간 모멘텀 항과 균형 유지.
+    push(scan_rsi_bias(item.get("rsi14")), 1.3 * short_w)
 
     stoch = item.get("stochK")
     if isinstance(stoch, (int, float)) and math.isfinite(stoch):
@@ -140,8 +147,15 @@ def rsi_state(value: float | None) -> str:
 def trend_score(item: dict) -> float:
     prob = scan_quick_prob(item)
     month = item.get("monthChangePct") or 0
-    rs = item.get("rsScore") or 50
-    return round(scan_clamp(prob["up"] * 0.6 + rs * 0.25 + (50 + month) * 0.15, 0, 100), 1)
+    # 구 RS 합성점수(0~100) 자리를 실측 RSI-14 로 대체. 합성이력 종목은 rsi14=None →
+    # 가짜 50 을 넣지 않고 항을 빼고 남은 가중치를 재정규화한다.
+    parts: list[tuple[float, float]] = [(prob["up"], 0.6), (50 + month, 0.15)]
+    rsi = item.get("rsi14")
+    if isinstance(rsi, (int, float)) and math.isfinite(rsi):
+        parts.append((rsi, 0.25))
+    total_w = sum(w for _, w in parts) or 1.0
+    value = sum(v * w for v, w in parts) / total_w
+    return round(scan_clamp(value, 0, 100), 1)
 
 
 def volume_score(item: dict) -> float:

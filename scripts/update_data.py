@@ -1,4 +1,5 @@
 import argparse
+import bisect
 import hashlib
 import html
 import importlib.util
@@ -1921,7 +1922,12 @@ def fetch_fundamentals_backfill(symbol, price_hint=None, market_cap_b=None, min_
     return merged
 
 
-def make_stock(meta, rows):
+def make_stock(meta, rows, expose_raw=False):
+    # expose_raw: US 빌드(build_one)만 True 로 호출한다. True 면 RS/EPS 의 미클램프
+    # raw 모멘텀 값을 임시 키(_rsRaw/_epsRaw/_epsHasFund)로 실어, build_snapshot 의
+    # finalize_scores 후처리가 실측 이력 종목끼리 백분위 순위로 환산하고 합성 종목을
+    # 중립 50 으로 눌러 준다(그 후 임시 키는 제거). 기본 False 는 KR 빌드가 UD.make_stock
+    # 을 그대로 쓰기 때문 — 그 경로는 예전처럼 절대 모멘텀을 클램프한 정수 점수만 낸다.
     closes = [row["close"] for row in rows]
     volumes = [row["volume"] for row in rows]
     price = float(meta.get("quotePrice") or closes[-1])
@@ -1988,12 +1994,20 @@ def make_stock(meta, rows):
         stock["fundamentals"] = fundamentals
     if meta.get("news"):
         stock["news"] = meta["news"]
+    if expose_raw:
+        # 후처리(finalize_scores)용 임시 필드. rsScore/epsRevScore 는 위에서 이미
+        # 예전 방식(클램프 정수)으로 채워 두어 후처리가 건너뛰더라도 프론트가 null 을
+        # 보지 않게 한다. 후처리가 이 값들을 백분위로 덮고, 아래 임시 키는 제거한다.
+        eps_raw, eps_has_fund = calc_eps_raw(price, closes, fundamentals)
+        stock["_rsRaw"] = calc_rs_raw(price, closes)
+        stock["_epsRaw"] = eps_raw
+        stock["_epsHasFund"] = eps_has_fund
     return stock
 
 
-def calc_rs_score(price, closes):
-    # Relative strength proxy: weighted medium/long-term price momentum.
-    return clamp(
+def calc_rs_raw(price, closes):
+    # 미클램프 RS 모멘텀(음수 가능). calc_rs_score 는 이 값을 [0,100] 으로 클램프한다.
+    return (
         50
         + pct(price, lookback(closes, 63)) * 0.9
         + pct(price, lookback(closes, 126)) * 0.6
@@ -2001,15 +2015,82 @@ def calc_rs_score(price, closes):
     )
 
 
-def calc_eps_score(price, closes, fundamentals):
+def calc_eps_raw(price, closes, fundamentals):
+    # (미클램프 EPS raw, 펀더멘털 기반 여부) 를 돌려준다. 펀더멘털(epsTtm>0·epsNextY)이
+    # 있으면 성장/밸류에이션 공식, 없으면 최근 모멘텀 폴백(has_fund=False).
     eps_ttm = fundamentals.get("epsTtm")
     eps_next = fundamentals.get("epsNextY")
     if eps_ttm and eps_ttm > 0 and eps_next:
         growth = ((eps_next / eps_ttm) - 1) * 100
         forward_pe = fundamentals.get("forwardPE") or 0
         valuation_penalty = max(0, min(30, (forward_pe - 35) * 0.4)) if forward_pe else 0
-        return clamp(50 + growth * 0.8 - valuation_penalty)
-    return clamp(50 + pct(price, lookback(closes, 42)) * 0.9)
+        return (50 + growth * 0.8 - valuation_penalty, True)
+    return (50 + pct(price, lookback(closes, 42)) * 0.9, False)
+
+
+def calc_rs_score(price, closes):
+    # Relative strength proxy: weighted medium/long-term price momentum.
+    return clamp(calc_rs_raw(price, closes))
+
+
+def calc_eps_score(price, closes, fundamentals):
+    return clamp(calc_eps_raw(price, closes, fundamentals)[0])
+
+
+def percentile_rank(sorted_basis, value):
+    # IBD RS-Rating 스타일 1..99 백분위. 동점 처리는 '평균 순위(mid-rank)':
+    # 동점 블록이 차지하는 순위들의 평균 위치 = (미만 개수 + 초과·이하 경계)/2 를 N 으로
+    # 나눈 분수. bisect_left(=미만 개수), bisect_right(=이하 개수)의 중점이라 동점끼리
+    # 같은 점수를 받는다. 분수를 1..99 로 선형 사상한다(최저 ~1, 최고 ~99).
+    n = len(sorted_basis)
+    if n == 0:
+        return 50
+    lo = bisect.bisect_left(sorted_basis, value)
+    hi = bisect.bisect_right(sorted_basis, value)
+    frac = (lo + hi) / (2.0 * n)
+    return max(1, min(99, int(round(frac * 98)) + 1))
+
+
+def finalize_scores(stocks):
+    # 후처리 랭킹. make_stock(expose_raw=True) 이 심은 _rsRaw/_epsRaw/_epsHasFund 를
+    # 사용한다.
+    #  - 백분위 기준(basis)은 실측 이력(yahoo/yahoo-cache) 종목만으로 만든다. 합성
+    #    랜덤워크(synthetic_history)로 나온 모멘텀은 신뢰할 수 없어 기준에서 배제한다.
+    #  - 실측 이력 종목의 rsScore 는 그 실측 분포 안에서의 백분위(1..99)로 바꾼다.
+    #    → 절대 모멘텀 클램프의 100 쏠림이 사라지고 RS 가 진짜 '상대' 값이 된다.
+    #  - 합성 이력 종목은 rsScore=50(중립)으로 눌러 leaders(minRs 85)/pullback(minRs 80)
+    #    프리셋에 끼지 못하게 하고 scoreBasis="estimated" 마커를 단다. 50 은 강한 신호를
+    #    지어내지 않으면서(정직성) 이들을 리더에서 뺀다.
+    #  - EPS 도 같은 처리. 단 백분위 기준은 '실측 이력 AND 펀더멘털 기반' raw 만 쓴다.
+    #    펀더멘털 없는 모멘텀 폴백이거나 합성이면 EPS 점수는 중립 50 — 펀더멘털 없는 EPS
+    #    '점수'는 의미가 없기 때문이다.
+    #  scoreBasis 는 '이력(=RS) 신뢰도' 마커로 한정한다: 합성이면 estimated, 실측이면
+    #  없음(=measured). 실측인데 펀더멘털만 없는 종목은 RS 가 진짜 측정값이므로 estimated
+    #  로 강등하지 않는다(그렇게 하면 EPS 추정치만 없는 실측 강세 리더가 리더에서 가려짐).
+    #  프론트는 scoreBasis 를 읽지 않으므로 임계값(rsScore>=85 등)의 의미는 그대로다.
+    REAL = {"yahoo", "yahoo-cache"}
+    rs_basis = sorted(
+        item["_rsRaw"] for item in stocks
+        if item.get("historySource") in REAL and item.get("_rsRaw") is not None
+    )
+    eps_basis = sorted(
+        item["_epsRaw"] for item in stocks
+        if item.get("historySource") in REAL
+        and item.get("_epsHasFund") and item.get("_epsRaw") is not None
+    )
+    for item in stocks:
+        real = item.get("historySource") in REAL
+        if real and item.get("_rsRaw") is not None:
+            item["rsScore"] = percentile_rank(rs_basis, item["_rsRaw"])
+        else:
+            item["rsScore"] = 50
+            item["scoreBasis"] = "estimated"
+        if real and item.get("_epsHasFund") and item.get("_epsRaw") is not None:
+            item["epsRevScore"] = percentile_rank(eps_basis, item["_epsRaw"])
+        else:
+            item["epsRevScore"] = 50
+        for key in ("_rsRaw", "_epsRaw", "_epsHasFund"):
+            item.pop(key, None)
 
 
 def lookback(values, periods):
@@ -2488,7 +2569,7 @@ def build_one(meta):
         news = fetch_news(symbol)
         if news:
             meta["news"] = news
-    return make_stock(meta, rows), error
+    return make_stock(meta, rows, expose_raw=True), error
 
 
 def health(ticker, name, change, note):
@@ -2750,6 +2831,11 @@ def build_snapshot():
             "야후 대규모 스로틀 의심. 직전 스냅샷을 유지하기 위해 발행하지 않는다."
         )
 
+    # RS/EPS 점수 후처리: 실측 이력 분포 안에서 백분위 순위로 환산 + 합성/펀더멘털
+    # 없는 종목은 중립 50. 임시 _rs*/_eps* 키도 여기서 제거된다. lookup/정렬/리더보드
+    # 산출보다 먼저 돌려 downstream 이 최종 정수 점수를 보게 한다.
+    finalize_scores(stocks)
+
     stocks.sort(key=lambda item: item["marketCapB"], reverse=True)
     lookup = {item["ticker"]: item for item in stocks}
 
@@ -2808,8 +2894,9 @@ def build_snapshot():
             "note": "Core symbols use Yahoo 5Y daily OHLCV history; the rest use Nasdaq snapshot quote with generated mini-chart.",
         },
         "scorePolicy": {
-            "rsScore": "Weighted price momentum proxy using roughly 3M, 6M, and 1Y returns.",
-            "epsRevScore": "Uses EPS Next Y vs EPS TTM and Forward P/E when fundamentals are available; otherwise falls back to recent price momentum.",
+            "rsScore": "IBD-style relative strength: weighted 3M/6M/1Y price momentum ranked into a 1-99 percentile within the real-history (Yahoo) universe only. Ties share the average (mid-rank) percentile. Synthetic-history stocks are neutralized to 50 (scoreBasis=estimated) so their untrustworthy generated momentum cannot masquerade as leaders.",
+            "epsRevScore": "EPS growth/valuation score (EPS Next Y vs EPS TTM, Forward P/E) ranked into a 1-99 percentile among real-history stocks that have fundamentals. Stocks without fundamentals or with synthetic history are neutralized to 50 (a fundamentals-less EPS score is not meaningful).",
+            "scoreBasis": "Absent = measured from real Yahoo history. \"estimated\" = synthetic history; rsScore forced to neutral 50.",
         },
     }
 
@@ -2879,7 +2966,9 @@ def split_snapshot_details(payload):
         light_stocks.append({
             key: value
             for key, value in stock.items()
+            # 상세로 분리하는 무거운 키 + finalize_scores 가 지웠어야 할 임시 _* 키(안전망)
             if key not in {"chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"}
+            and not key.startswith("_")
         })
     light_payload = dict(payload)
     light_payload["stocks"] = light_stocks

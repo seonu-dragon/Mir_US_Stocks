@@ -285,6 +285,7 @@
       return;
     }
 
+    document.body.classList.remove("ai-conversation-view"); // 대화 뷰 → 차트 모핑 전환
     setInputHint("차트 데이터를 불러오는 중…", false);
 
     const detail = await loadTickerDetail(ticker);
@@ -351,6 +352,7 @@
     const tabChat = byId("tab-ai-chat");
 
     if (active) {
+      document.body.classList.remove("ai-conversation-view"); // 이전 세션 잔여 뷰 제거
       document.documentElement.dataset.aiMode = "1";
       if (!document.documentElement.dataset.aiPrevTheme) {
         document.documentElement.dataset.aiPrevTheme =
@@ -385,7 +387,7 @@
       document.documentElement.setAttribute("data-theme", prevTheme);
       delete document.documentElement.dataset.aiPrevTheme;
     }
-    document.body.classList.remove("ai-mode-active", "ai-mode-entering", "ai-stock-analysis-view");
+    document.body.classList.remove("ai-mode-active", "ai-mode-entering", "ai-stock-analysis-view", "ai-conversation-view");
     window.MirDash?.hide?.();
     exitAiWelcomeView();
     window.MirCosmos?.stop?.();

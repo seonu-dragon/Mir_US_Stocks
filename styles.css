@@ -13406,3 +13406,286 @@ body.ai-mode-active .ai-input-hint:empty {
 .audit-emphasis {
   color: var(--tint-warn-fg); background: var(--tint-warn);
 }
+
+/* =============================================================================
+   AI 모드 완성 (참고 레이아웃 1.png) — 종목 대시보드 3열 + 하단 그리드,
+   대화 뷰, 스트리밍 중단 버튼, Ctrl+K 커맨드 팔레트
+   ============================================================================= */
+
+/* ── 종목 대시보드: 좌(종목카드) · 중앙(차트=cosmos) · 우(AI 의견+뉴스) · 하단(데이터 그리드) ── */
+@media (min-width: 901px) {
+  body.ai-mode-active .ai-dash-grid {
+    position: absolute;
+    top: 126px;              /* 상단 입력 바 아래 */
+    left: 14px;
+    right: 14px;
+    bottom: 10px;
+    width: auto;
+    display: grid;
+    grid-template-columns: 264px minmax(0, 1fr) 352px;
+    grid-template-rows: minmax(0, 1fr) minmax(180px, 30%);
+    grid-template-areas:
+      "left center right"
+      "bottom bottom bottom";
+    gap: 12px;
+    overflow: visible;
+    pointer-events: none;
+  }
+  body.ai-mode-active .ai-dash-card-panel {
+    grid-area: left;
+    overflow-y: auto;
+    min-height: 0;
+    align-self: start;
+    max-height: 100%;
+  }
+  body.ai-mode-active .ai-dash-card-panel .ai-dash-stats {
+    grid-template-columns: 1fr; /* 참고 레이아웃처럼 세로 리스트 */
+  }
+  body.ai-mode-active .ai-dash-card-panel .ai-dash-stat {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+  body.ai-mode-active .ai-dash-col-right {
+    grid-area: right;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+    overflow-y: auto;
+    pointer-events: auto;
+  }
+  body.ai-mode-active .ai-dash-bottom {
+    grid-area: bottom;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  body.ai-mode-active .ai-dash-bottom .ai-mode-data-board {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  body.ai-mode-active .ai-dash-bottom .ai-evidence-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 10px;
+  }
+  /* 접힘: 패널 전체 페이드아웃, 차트 전체 화면 */
+  body.ai-dash-collapsed.ai-mode-active .ai-dash-grid {
+    transform: none;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  /* cosmos(차트 캔버스)를 중앙 셀에 맞춰 인셋 */
+  body.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
+    top: 120px;
+    left: 288px;
+    right: 376px;
+    bottom: calc(30% + 8px);
+    width: auto;
+    height: auto;
+  }
+  body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
+    top: 120px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
+  /* 기간 탭: 중앙 차트 영역 상단 */
+  /* 입력 래퍼가 넓게 깔려 클릭을 가로채지 않도록 래퍼는 통과, 내용만 잡는다 */
+  body.ai-mode-active .ai-chat-input-wrapper { pointer-events: none !important; }
+  body.ai-mode-active .ai-chat-input-wrapper .ai-chat-form,
+  body.ai-mode-active .ai-chat-input-wrapper .ai-autocomplete,
+  body.ai-mode-active .ai-input-hint { pointer-events: auto; }
+
+  body.ai-mode-active .ai-dash-rangebar {
+    top: 158px;
+    left: calc(288px + (100% - 288px - 376px) / 2);
+  }
+  body.ai-dash-collapsed.ai-mode-active .ai-dash-rangebar { left: 50%; top: 158px; }
+  body.ai-mode-active .ai-dash-collapse {
+    top: 158px;
+    right: 384px;
+  }
+  body.ai-dash-collapsed.ai-mode-active .ai-dash-collapse { right: 14px; }
+
+  /* 참고 레이아웃: 종목 화면에서는 채팅 입력이 상단 */
+  body.ai-mode-active.ai-stock-analysis-view .ai-chat-input-wrapper {
+    top: 64px;
+    bottom: auto;
+  }
+  body.ai-mode-active.ai-stock-analysis-view .ai-chat-input-wrapper::before { display: none; }
+  body.ai-mode-active.ai-stock-analysis-view .ai-autocomplete {
+    top: calc(100% + 8px);
+    bottom: auto;
+  }
+  body.ai-mode-active.ai-stock-analysis-view .ai-input-hint { text-align: center; }
+}
+
+/* ── AI 모드 대화 뷰: 임머시브에서 감춰둔 대화 로그를 되살린다 ── */
+body.ai-mode-active.ai-conversation-view #aiChatLog {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
+  position: fixed;
+  top: 76px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(760px, calc(100vw - 28px));
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  bottom: 118px;
+  margin: 0 !important;
+  padding: 8px 6px 18px !important;
+  overflow-y: auto !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  z-index: 18; /* 입력창(25) 아래 */
+  background: transparent !important;
+  border: none !important;
+}
+body.ai-mode-active.ai-conversation-view #aiChatLog .ai-chat-welcome { display: none !important; }
+body.ai-mode-active.ai-conversation-view #aiChatLog .chat-msg.bot .msg-bubble {
+  background: rgba(13, 20, 38, 0.78);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  border: 1px solid rgba(120, 160, 255, 0.14);
+}
+
+/* 스트리밍 중 커서 + 부드러운 blur-in */
+.chat-msg.is-streaming .msg-bubble { animation: aiStreamIn 0.5s ease both; }
+.chat-msg.is-streaming .msg-bubble::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  margin-left: 3px;
+  vertical-align: -2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.7;
+  animation: aiStreamCursor 0.9s steps(2, start) infinite;
+}
+.ai-verdict-llm-body.is-streaming::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 12px;
+  margin-left: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.7;
+  animation: aiStreamCursor 0.9s steps(2, start) infinite;
+}
+@keyframes aiStreamCursor { 50% { opacity: 0; } }
+@keyframes aiStreamIn {
+  from { opacity: 0.4; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0); }
+}
+.ai-abort-note { font-size: 11px; font-weight: 700; opacity: 0.75; margin-left: 4px; }
+
+/* 전송 → 중단 버튼 모핑 */
+.ai-send-btn.is-stop {
+  background: rgba(244, 63, 94, 0.16) !important;
+  border-color: rgba(244, 63, 94, 0.45) !important;
+  color: #fb7185 !important;
+}
+.ai-send-btn.is-stop .ai-send-glyph {
+  font-size: 12px;
+  line-height: 1;
+}
+
+/* ── Ctrl+K 커맨드 팔레트 ── */
+.cmdk-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: min(18vh, 160px);
+  background: rgba(8, 11, 20, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.cmdk-overlay[hidden] { display: none; }
+.cmdk {
+  width: min(560px, calc(100vw - 32px));
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg, 14px);
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  animation: aiStreamIn 0.18s ease both;
+}
+body.ai-mode-active .cmdk {
+  background: rgba(13, 20, 38, 0.92);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border-color: rgba(120, 160, 255, 0.18);
+  color: #eaf0fb;
+}
+.cmdk-input-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.cmdk-glyph { font-size: 13px; opacity: 0.55; }
+.cmdk-input-row input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+}
+.cmdk-input-row input::placeholder { color: var(--muted); font-weight: 500; }
+.cmdk-input-row kbd {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--muted);
+  background: transparent;
+}
+.cmdk-list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  max-height: min(46vh, 380px);
+  overflow-y: auto;
+}
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 11px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.cmdk-item.is-active { background: rgba(120, 160, 255, 0.14); }
+.cmdk-label { font-size: 13.5px; font-weight: 700; }
+.cmdk-hint { font-size: 11px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+.cmdk-empty { padding: 18px 12px; text-align: center; font-size: 12.5px; }
+.cmdk-foot {
+  display: flex;
+  gap: 14px;
+  justify-content: flex-end;
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--muted);
+}

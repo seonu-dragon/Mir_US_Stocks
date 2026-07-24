@@ -1288,6 +1288,8 @@ const COMMUNITY_COMMENT_COOLDOWN_MS = 6000;
 const COMMUNITY_DUP_WINDOW_MS = 600000;
 const COMMUNITY_MAX_LINKS = 2;
 const COMMUNITY_BANNED_PATTERNS = [/viagra|카지노|토토사이트|먹튀|불법대출/i];
+// 신고가 이 건수 이상 쌓인 글·댓글은 공개 목록에서 자동 숨김(작성자 본인·관리자 제외).
+const COMMUNITY_REPORT_HIDE_THRESHOLD = 3;
 
 // 투표(별도 KV) — 하루 1표, 35일 보관
 const COMMUNITY_VOTES_KV_KEY = "community:v1:votes";
@@ -1389,8 +1391,6 @@ async function handleCommunityList(url, env) {
   const posts = await loadCommunityPostsKv(env);
   const ticker = sanitizeCommunityTicker(url.searchParams.get("ticker"));
   const limit = Math.min(100, Math.max(1, Number(url.searchParams.get("limit")) || 80));
-  // 신고는 더 이상 전체 공개 목록을 숨기지 않는다(신고자 본인만 클라이언트에서 가림).
-  // 응답에는 신고 내역을 노출하지 않는다(관리자 전용 엔드포인트로 분리).
   const filtered = ticker ? posts.filter((p) => p.ticker === ticker) : posts;
 
   // clientId 는 삭제 권한의 근거다(아래 handleCommunityDelete 의
@@ -1400,21 +1400,38 @@ async function handleCommunityList(url, env) {
   // → 원본 id 는 서버에만 두고, 요청자 기준으로 계산한 불리언만 내보낸다.
   const viewer = sanitizeCommunityClientId(url.searchParams.get("clientId"));
   const isViewer = (id) => Boolean(viewer) && id === viewer;
-  const publicPosts = filtered.slice(0, limit).map((p) => {
+  const isAdmin = communityAdminOk(env, url.searchParams.get("adminKey"));
+
+  // 신고 누적 자동 숨김: 신고 3건 이상이면 공개 목록에서 제외한다.
+  // 단, 작성자 본인과 관리자에게는 보이고(본인 글에는 hiddenByReports 마커를 실어
+  // 클라이언트가 "신고 누적으로 숨김 처리됨" 상태를 안내), 신고 내역(reports 배열,
+  // clientId 포함)은 계속 서버에만 남긴다.
+  const reportCountOf = (row) => (Array.isArray(row && row.reports) ? row.reports.length : 0);
+  const isHidden = (row) => reportCountOf(row) >= COMMUNITY_REPORT_HIDE_THRESHOLD;
+  const visible = filtered.filter((p) => !isHidden(p) || isAdmin || isViewer(p.clientId));
+  const publicPosts = visible.slice(0, limit).map((p) => {
     const { reports, clientId, likes, comments, ...rest } = p;
     const likeList = Array.isArray(likes) ? likes : [];
-    return {
+    const out = {
       ...rest,
       mine: isViewer(clientId),
       likeCount: likeList.length,
       liked: likeList.some(isViewer),
-      comments: normalizeCommunityComments(comments).map((c) => {
-        const { clientId: commentClientId, ...commentRest } = c;
-        return { ...commentRest, mine: isViewer(commentClientId) };
-      }),
+      comments: normalizeCommunityComments(comments)
+        .filter((c) => !isHidden(c) || isAdmin || isViewer(c.clientId))
+        .map((c) => {
+          const { clientId: commentClientId, reports: commentReports, ...commentRest } = c;
+          const commentOut = { ...commentRest, mine: isViewer(commentClientId) };
+          if (isHidden(c) && (isViewer(commentClientId) || isAdmin)) {
+            commentOut.hiddenByReports = reportCountOf(c);
+          }
+          return commentOut;
+        }),
     };
+    if (isHidden(p) && (isViewer(clientId) || isAdmin)) out.hiddenByReports = reportCountOf(p);
+    return out;
   });
-  const resp = json({ posts: publicPosts, total: filtered.length }, 200, 8);
+  const resp = json({ posts: publicPosts, total: visible.length }, 200, 8);
   // 요청자별로 mine/liked 가 달라지므로 공유 캐시에 담기면 안 된다. URL 에
   // clientId 가 들어가 키 자체는 갈리지만, 의도를 헤더로도 못박아 둔다.
   if (viewer) resp.headers.set("Cache-Control", "private, max-age=8");

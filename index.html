@@ -2348,6 +2348,11 @@
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="pattern_detectors_extended.js?v=5039873cc3"></script>
     <script src="analysis.js?v=4b18a8b702"></script>
+    <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
+         로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
+    <script src="chart-indicators.js?v=dev"></script>
+    <script src="community.js?v=dev"></script>
+    <script src="ai-mode.js?v=dev"></script>
     <script src="app.js?v=9e7386da94"></script>
     <script src="ai-cosmos.js?v=61867c918d"></script>
     <script src="ai-mode-welcome.js?v=6321790c2c"></script>

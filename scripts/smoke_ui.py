@@ -84,15 +84,30 @@ def test_deeplinks(browser, base: str) -> None:
 
     for tab in TABS:
         boot(page, f"{base}?tab={tab}")
+        # 단발 샘플은 레이스다: idle 프리로드 피처가 boot 직후(~2.5초+네트워크)
+        # 상단 레이아웃을 키우면 앱의 재정렬(interval 6s + ResizeObserver 20s)이
+        # 잡기 전 순간을 찍어 위양성 FAIL 이 났다(라이브에서만 간헐 재현).
+        # "일정 시간 안에 정렬 상태에 도달"을 검증하는 폴링으로 바꾼다.
+        cond = """() => {
+          const wrap = document.getElementById('tabsScrollWrap');
+          if (!wrap) return false;
+          const y = window.pageYOffset;
+          const top = wrap.getBoundingClientRect().top;
+          const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+          const atEnd = Math.abs(y - max) <= 4;
+          return y > 100 && ((top > -20 && top < 60) || atEnd);
+        }"""
+        try:
+            page.wait_for_function(cond, timeout=9000)
+            ok = True
+        except Exception:
+            ok = False
         st = page.evaluate("""() => ({
           y: window.pageYOffset,
           top: document.getElementById('tabsScrollWrap').getBoundingClientRect().top,
           max: Math.max(0, document.documentElement.scrollHeight - window.innerHeight),
           active: document.querySelector('.tab.is-active')?.dataset.tab,
         })""")
-        # 탭 바가 상단에 오거나(정상), 페이지가 짧아 더 못 내려가면(캘린더 등) 통과.
-        at_end = abs(st["y"] - st["max"]) <= 4
-        ok = st["y"] > 100 and (-20 < st["top"] < 60 or at_end)
         check(f"?tab={tab} 딥링크가 본문으로 이동", ok,
               f"y={st['y']:.0f}/max={st['max']:.0f} 탭바top={st['top']:.0f} active={st['active']}")
     page.close()

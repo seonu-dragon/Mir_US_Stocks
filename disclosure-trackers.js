@@ -261,14 +261,64 @@ function ipoNormDate(s) {
   return String(s || "").trim().replace(/\./g, "-").replace(/-+$/, "");
 }
 
+// 공모가 없음(리세일·직상장·채권 등) 사유 라벨. 원문 코드 → 한국어.
+function ipoNoneReasonLabel(reason) {
+  const map = {
+    resale: "리세일",
+    "direct-listing": "직상장",
+    direct: "직상장",
+    debt: "채권",
+    atm: "ATM",
+    shelf: "일괄등록",
+    supplement: "보충서",
+  };
+  const key = String(reason || "").toLowerCase();
+  return map[key] || (reason ? String(reason) : "");
+}
+
+// 일정(list) 보기에서 각 행의 공모가 상태를 한 줄로 요약한다.
+//  · offerPriceNone   → "공모가 없음 (사유)"  (성과 산정 불가)
+//  · offerPricePending→ "희망 공모가 X~Y원"   (수요예측 전, 확정가 아님)
+//  · offerPriceKind=unit → "공모가 $10/unit · 유닛 IPO"
+//  · 그 외 확정 offerPrice → "공모가 X"
+function ipoOfferNote(r, cfg) {
+  if (r.offerPriceNone) {
+    const reason = ipoNoneReasonLabel(r.offerPriceNoneReason);
+    return `<div class="ins-sub">공모가 없음${reason ? ` · ${escapeHtml(reason)}` : ""}</div>`;
+  }
+  if (r.offerPricePending && Array.isArray(r.offerPriceBand) && r.offerPriceBand.length === 2) {
+    const lo = Number(r.offerPriceBand[0]);
+    const hi = Number(r.offerPriceBand[1]);
+    if (Number.isFinite(lo) && Number.isFinite(hi) && lo > 0 && hi > 0) {
+      return lo === hi
+        ? `<div class="ins-sub">희망 공모가 ${cfg.formatMoney(lo)} <span class="muted">(수요예측 전)</span></div>`
+        : `<div class="ins-sub">희망 공모가 ${cfg.formatMoney(lo)}~${cfg.formatMoney(hi)} <span class="muted">(수요예측 전)</span></div>`;
+    }
+  }
+  const offer = Number(r.offerPrice);
+  if (Number.isFinite(offer) && offer > 0) {
+    const isUnit = r.offerPriceKind === "unit";
+    return `<div class="ins-sub">공모가 ${cfg.formatMoney(offer)}${isUnit ? "/unit · 유닛 IPO" : ""}</div>`;
+  }
+  return "";
+}
+
 // 공모가 성과 행: offerPrice 가 있고 스냅샷에서 현재가가 잡히는 종목만.
 // 같은 티커의 정정 제출이 여러 건이라 최신 제출 1건으로 dedupe 한다.
+//
+// 유닛 IPO(offerPriceKind="unit", SPAC 등)는 수익률 순위에서 뺀다 — 공모가 $10 은
+// 유닛(주식+워런트)당 가격이고 상장 후 둘로 분리되므로, 현재 '주가' 하나와 $10 을
+// 직접 비교하면 손익이 왜곡된다. 순위 대신 raw 비교만 별도 섹션에 참고로 보여준다.
+// offerPriceNone(공모가 자체가 없는 공시)·offerPricePending(수요예측 전)은
+// 확정 공모가가 없어 성과 산정에서 완전히 제외한다(일정 보기에만 남는다).
 function ipoPerfRows(payload) {
-  const out = [];
+  const ranked = [];
+  const units = [];
   const seen = new Set();
   const rows = (payload.ipos || []).slice()
     .sort((a, b) => ipoNormDate(b.fileDate).localeCompare(ipoNormDate(a.fileDate)));
   for (const r of rows) {
+    if (r.offerPriceNone || r.offerPricePending) continue;
     const offer = Number(r.offerPrice);
     if (!Number.isFinite(offer) || offer <= 0 || !r.ticker) continue;
     if (seen.has(r.ticker)) continue;
@@ -276,44 +326,76 @@ function ipoPerfRows(payload) {
     const price = Number(item && item.price);
     if (!item || !Number.isFinite(price) || price <= 0) continue;
     seen.add(r.ticker);
-    out.push({
+    const base = {
       ticker: r.ticker,
       company: r.company || item.company || "",
       listDate: ipoNormDate(r.fileDate),
       offer,
       price,
-      retPct: (price / offer - 1) * 100,
-    });
+    };
+    if (r.offerPriceKind === "unit") {
+      units.push(base);
+    } else {
+      base.retPct = (price / offer - 1) * 100;
+      ranked.push(base);
+    }
   }
-  out.sort((a, b) => b.retPct - a.retPct); // 공모가 대비 수익률이 기본 정렬
-  return out;
+  ranked.sort((a, b) => b.retPct - a.retPct); // 공모가 대비 수익률이 기본 정렬
+  units.sort((a, b) => ipoNormDate(b.listDate).localeCompare(ipoNormDate(a.listDate)));
+  return { ranked, units };
 }
 
-function renderIpoPerformance(rows, wrap, meta, payload) {
+function renderIpoPerformance(perf, wrap, meta, payload) {
   const cfg = marketCfg();
   const q = ipoQuery.trim().toLowerCase();
-  let list = rows;
-  if (q) list = list.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 공모가 확인 ${rows.length}종목 · 공모가 대비 수익률순`;
-  if (!list.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
+  const match = (r) => !q || (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q);
+  const list = perf.ranked.filter(match);
+  const unitList = perf.units.filter(match);
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 공모가 확인 ${perf.ranked.length}종목 · 공모가 대비 수익률순`;
+  if (!list.length && !unitList.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
   const todayMs = Date.parse(formatKstDateTime().slice(0, 10));
-  const body = list.slice(0, 200).map((r) => {
-    const listMs = Date.parse(r.listDate);
-    const days = (Number.isFinite(listMs) && Number.isFinite(todayMs) && todayMs >= listMs)
+  const dPlus = (listDate) => {
+    const listMs = Date.parse(listDate);
+    return (Number.isFinite(listMs) && Number.isFinite(todayMs) && todayMs >= listMs)
       ? Math.round((todayMs - listMs) / 86400000) : null;
-    const cls = r.retPct > 0 ? "ins-buy" : r.retPct < 0 ? "ins-sell" : "";
+  };
+  const nameCell = (r) => {
     const main = isKrMarket() ? (r.company || r.ticker) : r.ticker;
     const sub = isKrMarket() ? r.ticker : (r.company || "");
+    return `<td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(main)}</button><div class="ins-sub">${escapeHtml(sub)}</div></td>`;
+  };
+  const body = list.slice(0, 200).map((r) => {
+    const days = dPlus(r.listDate);
+    const cls = r.retPct > 0 ? "ins-buy" : r.retPct < 0 ? "ins-sell" : "";
     return `<tr>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(main)}</button><div class="ins-sub">${escapeHtml(sub)}</div></td>
+      ${nameCell(r)}
       <td class="ins-date">${escapeHtml(r.listDate)}${days != null ? ` <span class="ins-sub">D+${days}</span>` : ""}</td>
       <td class="ins-num">${cfg.formatMoney(r.offer)}</td>
       <td class="ins-num">${cfg.formatMoney(r.price)}</td>
       <td class="ins-num"><strong class="${cls}">${r.retPct > 0 ? "+" : ""}${r.retPct.toFixed(1)}%</strong></td>
     </tr>`;
   }).join("");
-  wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}종목 중 ${Math.min(list.length, 200).toLocaleString()}종목</div>
-    <table class="insider-table"><thead><tr><th>종목</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  let html = "";
+  if (list.length) {
+    html += `<div class="insider-count">${perf.ranked.length.toLocaleString()}종목 중 ${Math.min(list.length, 200).toLocaleString()}종목</div>
+      <table class="insider-table"><thead><tr><th>종목</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  }
+  // 유닛 IPO: 수익률 순위 제외. raw 공모가↔현재가만 참고로, '공모가 대비' 칸은 —.
+  if (unitList.length) {
+    const ubody = unitList.slice(0, 100).map((r) => {
+      const days = dPlus(r.listDate);
+      return `<tr>
+        ${nameCell(r)}
+        <td class="ins-date">${escapeHtml(r.listDate)}${days != null ? ` <span class="ins-sub">D+${days}</span>` : ""}</td>
+        <td class="ins-num">${cfg.formatMoney(r.offer)}<span class="ins-sub">/unit</span></td>
+        <td class="ins-num">${cfg.formatMoney(r.price)}</td>
+        <td class="ins-num muted">—</td>
+      </tr>`;
+    }).join("");
+    html += `<p class="krflow-note" style="margin-top:14px">유닛 IPO ${unitList.length.toLocaleString()}종목 — 공모가는 유닛(주식+워런트)당 가격이라 상장 후 분리되면 현재 주가와 직접 비교할 수 없습니다. 수익률 순위에서 제외했습니다.</p>
+      <table class="insider-table"><thead><tr><th>종목(유닛 IPO)</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${ubody}</tbody></table>`;
+  }
+  wrap.innerHTML = html;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -330,10 +412,11 @@ function renderIpoCalendar() {
   }
   // 성과 보기: 공모가(offerPrice)가 붙은 데이터가 하나라도 있어야 토글이 나타난다.
   // 아직 파이프라인이 offerPrice 를 안 실어 주면 토글 없이 종전 일정 보기만 남는다.
-  const perfRows = ipoPerfRows(payload);
+  const perf = ipoPerfRows(payload);
   const vt = byId("ipoViewToggle");
   if (vt) {
-    const show = perfRows.length > 0;
+    // 순위 낼 확정 공모가가 하나라도 있어야 '성과' 토글이 뜬다(유닛 IPO만으론 순위 불가).
+    const show = perf.ranked.length > 0;
     vt.hidden = !show;
     vt.style.display = show ? "" : "none";
     if (!show && ipoView !== "list") {
@@ -342,9 +425,9 @@ function renderIpoCalendar() {
     }
   }
   const stageFilter = byId("ipoStageFilter");
-  const perfActive = ipoView === "perf" && perfRows.length > 0;
+  const perfActive = ipoView === "perf" && perf.ranked.length > 0;
   if (stageFilter) stageFilter.style.display = perfActive ? "none" : "";
-  if (perfActive) { renderIpoPerformance(perfRows, wrap, meta, payload); return; }
+  if (perfActive) { renderIpoPerformance(perf, wrap, meta, payload); return; }
   if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC S-1/424B4")}`;
   const q = ipoQuery.trim().toLowerCase();
   let rows = payload.ipos;
@@ -352,13 +435,14 @@ function renderIpoCalendar() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   const shown = rows.slice(0, 300);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 IPO가 없습니다.</p>`; return; }
+  const cfg = marketCfg();
   const body = shown.map((r) => {
     const sc = r.stage === "priced" ? "ins-buy" : "ins-neutral";
     return `<tr>
       <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
       <td><span class="ins-code ${sc}">${escapeHtml(r.stageLabel || "")}</span></td>
       <td>${escapeHtml(r.ticker || "—")}</td>
-      <td>${escapeHtml(r.company || "")}</td>
+      <td>${escapeHtml(r.company || "")}${ipoOfferNote(r, cfg)}</td>
       <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");

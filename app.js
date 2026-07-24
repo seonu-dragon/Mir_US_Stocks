@@ -517,6 +517,11 @@ const FEATURE_DATA = {
   // 수급(외국인·기관·개인 순매수, 외국인 보유율) + 컨센서스 목표주가. 484KB 라
   // heavy(3~5MB) 는 아니지만 KR 전용이라 미국에선 안 받는다.
   krFlow:     { global: "KR_INVESTOR_FLOW",       path: "data/korea/investor_flow.js", krOnly: true },
+  // 애널리스트 컨센서스(FnGuide·네이버 리포트) — 종목별 목표주가·투자의견·추정 실적.
+  // 국내 셀사이드 목표가는 구조적 낙관 편향(중앙값 +67.6%)이라 '상승여력' 을 매매
+  // 신호로 쓰지 않고 참고용으로만, estimateCount·lastReportDate 를 함께 강조해 보여준다.
+  // krFlow 처럼 KR 전용 경량 프리로드(207KB)라 미국 모드에선 받지 않는다.
+  krConsensus:{ global: "KR_CONSENSUS",           path: "data/korea/consensus.js",     krOnly: true },
   // 잠정실적 발표 + 발표일·익일 주가반응(build_kr_earnings_reactions.py). KR 전용.
   krEarningsReact:{ global: "KR_EARNINGS_REACTIONS", path: "data/korea/earnings_reactions.js", feature: "krDart", krOnly: true },
   // 배당·공급계약 공시 원문 파싱(build_kr_corp_disclosures.py). KR 전용.
@@ -5704,6 +5709,106 @@ function krFlowCard(item) {
     </div>`;
 }
 
+// opinionScore(1~5) → 라벨. opinionScale: 1=매도·2=비중축소·3=중립·4=매수·5=적극매수.
+function krOpinionLabel(score) {
+  if (!Number.isFinite(score)) return "";
+  if (score >= 4.5) return "적극매수";
+  if (score >= 3.5) return "매수";
+  if (score >= 2.5) return "중립";
+  if (score >= 1.5) return "비중축소";
+  return "매도";
+}
+
+// 애널리스트 컨센서스 카드(국내 전용). US 는 Finnhub(ANALYST_CONSENSUS, ai-mode
+// aiAnalystPanel)로 추천분포·EPS 서프라이즈를 보여주고, 국내는 이 카드가 그 거울이다.
+//
+// 정직성 원칙: 국내 셀사이드 목표주가는 구조적으로 현재가보다 높다(이번 스냅샷 시장
+// 중앙값 +67.6%). 그래서 '상승여력' 을 초록색 매수 신호로 칠하지 않고 중립 톤 참고
+// 수치로만 두고, 추정기관수(estimateCount)와 최근 리포트일(lastReportDate)을 눈에 잘
+// 띄게 올려 1개 기관의 낡은 목표가가 '강한 컨센서스' 로 오인되지 않게 한다.
+// KR_CONSENSUS 는 466종목만 커버 — 없는 종목은 카드를 통째로 숨긴다(빈 껍데기 금지).
+function krConsensusCard(item) {
+  const book = window.KR_CONSENSUS?.stocks;
+  if (!book || !isKrMarket()) return "";
+  const c = book[item?.ticker];
+  if (!c) return "";
+  const cfg = marketCfg();
+
+  const tp = Number(c.targetPrice);
+  const up = Number(c.upsidePct);
+  const cnt = Number(c.estimateCount);
+  const score = Number(c.opinionScore);
+  const opLabel = krOpinionLabel(score);
+  const lastDate = c.lastReportDate ? String(c.lastReportDate) : "";
+
+  // 리포트가 오래되면 목표가는 그때 주가 기준이라 낡았다 — priceAtWrite 로 확인 가능.
+  const todayMs = Date.parse(formatKstDateTime().slice(0, 10));
+  const lastMs = lastDate ? Date.parse(lastDate) : NaN;
+  const staleDays = (Number.isFinite(lastMs) && Number.isFinite(todayMs) && todayMs >= lastMs)
+    ? Math.round((todayMs - lastMs) / 86400000) : null;
+  const isStale = staleDays != null && staleDays > 120;
+  const thin = Number.isFinite(cnt) && cnt > 0 && cnt <= 2;
+
+  const head = `<div class="krflow-head">
+    <b>애널리스트 컨센서스</b>
+    ${Number.isFinite(cnt) && cnt > 0 ? `<span class="muted">추정 ${cnt}개 기관</span>` : ""}
+    ${lastDate ? `<span class="muted">· 최근 리포트 ${escapeHtml(lastDate)}${staleDays != null ? ` (${staleDays}일 전)` : ""}</span>` : ""}
+  </div>`;
+
+  // 목표가·상승여력·투자의견 요약. 상승여력은 중립 톤(muted) — 매수 신호 아님.
+  const fmtEok = (v) => {  // 억원 단위 값(매출·영업이익). 1조↑는 조로.
+    const n = Number(v);
+    if (!Number.isFinite(n)) return "—";
+    if (Math.abs(n) >= 10000) return `${(n / 10000).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}조원`;
+    return `${Math.round(n).toLocaleString("ko-KR")}억원`;
+  };
+  const rows = [];
+  if (Number.isFinite(tp) && tp > 0) rows.push(["목표주가", cfg.formatMoney(tp)]);
+  if (Number.isFinite(up)) rows.push(["상승여력<span class=\"muted\"> (참고)</span>", `<span class="muted">${up > 0 ? "+" : ""}${up.toFixed(1)}%</span>`]);
+  if (opLabel) rows.push(["투자의견", `${escapeHtml(opLabel)}${Number.isFinite(score) ? `<span class="muted"> · ${score.toFixed(2)}/5</span>` : ""}`]);
+  if (Number.isFinite(Number(c.epsEstimate))) rows.push([`추정 EPS${c.estimateFy ? `<span class="muted"> (${escapeHtml(String(c.estimateFy))})</span>` : ""}`, cfg.formatMoney(Number(c.epsEstimate))]);
+  if (Number.isFinite(Number(c.revenueEstimate))) rows.push(["추정 매출", fmtEok(c.revenueEstimate)]);
+  if (Number.isFinite(Number(c.operatingEstimate))) rows.push(["추정 영업이익", fmtEok(c.operatingEstimate)]);
+
+  const rowsHtml = rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("");
+
+  // 최근 리포트 목록: 증권사 · 목표가 · 투자의견 · 작성일(작성 당시 주가).
+  let reportsHtml = "";
+  const reports = Array.isArray(c.reports) ? c.reports.slice(0, 5) : [];
+  if (reports.length) {
+    const items = reports.map((r) => {
+      const rt = Number(r.target);
+      const paw = Number(r.priceAtWrite);
+      const parts = [];
+      if (Number.isFinite(rt) && rt > 0) parts.push(cfg.formatMoney(rt));
+      if (r.opinion) parts.push(escapeHtml(String(r.opinion)));
+      return `<li style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline;padding:3px 0;font-variant-numeric:tabular-nums">
+        <span style="font-weight:500">${escapeHtml(String(r.broker || "—"))}</span>
+        <span>${parts.join(" · ")}</span>
+        <span class="muted" style="font-size:var(--fs-cap)">${escapeHtml(String(r.date || ""))}${Number.isFinite(paw) && paw > 0 ? ` · 작성 당시 ${cfg.formatMoney(paw)}` : ""}</span>
+      </li>`;
+    }).join("");
+    reportsHtml = `<div class="muted" style="margin:8px 0 2px;font-size:var(--fs-cap)">최근 리포트</div>
+      <ul style="list-style:none;margin:0;padding:0;font-size:var(--fs-label)">${items}</ul>`;
+  }
+
+  const caveats = [];
+  caveats.push("국내 증권사 목표주가는 구조적으로 낙관 편향이 있습니다(시장 중앙값 +67.6%). 참고용이며 매매 신호가 아닙니다.");
+  if (thin) caveats.push(`추정 기관이 ${cnt}곳뿐이라 사실상 개별 의견에 가깝습니다.`);
+  if (isStale) caveats.push("최근 리포트가 오래되어 목표가가 작성 당시 주가 기준으로 낡았을 수 있습니다.");
+  const caveatHtml = `<p class="krflow-note">${caveats.map(escapeHtml).join(" ")}</p>`;
+
+  return `
+    <div class="krflow-card">
+      ${head}
+      <table class="krflow-table">
+        <tbody>${rowsHtml}</tbody>
+      </table>
+      ${reportsHtml}
+      ${caveatHtml}
+    </div>`;
+}
+
 function stockFacts(item, title) {
   const isSearchPanel = title === "Search Ticker";
   return `
@@ -5712,6 +5817,7 @@ function stockFacts(item, title) {
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     ${auditOpinionNotice(item)}
     ${krFlowCard(item)}
+    ${krConsensusCard(item)}
     <div class="facts">
       ${fact("가격", priceOrDash(item.price))}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}

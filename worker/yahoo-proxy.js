@@ -2070,6 +2070,85 @@ function formatChatNewsRagBlock(news) {
   return `\n\n[검색된 최근 뉴스 근거 — 아래 내용만 사실로 사용하고, 없는 내용은 지어내지 마세요]\n${lines.join("\n")}\n\n뉴스 답변 규칙:\n- 위 기사에 나온 사실만 바탕으로 설명하세요.\n- 답변 말미에 참고한 기사 제목·날짜를 짧게 언급하세요.\n- 근거가 부족하면 "확인된 뉴스가 충분하지 않다"고 솔직히 말하세요.\n- 매수/매도/목표가 추천은 하지 마세요.`;
 }
 
+// ── /chat 스트리밍(SSE) 지원 ──────────────────────────────────────────────
+// 업스트림(Gemini alt=sse 또는 Workers AI stream:true)의 SSE 를 라인 단위로 파싱해
+// `data: {"delta":"..."}` 형태의 우리 포맷으로 재송출한다. 마지막에 done 메타 +
+// [DONE] 센티널을 보낸다. 클라이언트는 Content-Type 으로 신/구 워커를 감지한다.
+function chatSseResponse(upstream, pickDelta, meta) {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  let buf = "";
+  const transform = new TransformStream({
+    transform(chunk, controller) {
+      buf += decoder.decode(chunk, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).replace(/\r$/, "").trim();
+        buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const payload = line.slice(5).trim();
+        if (!payload || payload === "[DONE]") continue;
+        try {
+          const delta = pickDelta(JSON.parse(payload));
+          if (delta) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+        } catch (e) { /* 파싱 불가 청크는 건너뜀 */ }
+      }
+    },
+    flush(controller) {
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, ...(meta || {}) })}\n\n`));
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+    },
+  });
+  return new Response(upstream.pipeThrough(transform), {
+    status: 200,
+    headers: {
+      "Content-Type": "text/event-stream; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Accel-Buffering": "no",
+    },
+  });
+}
+
+function pickGeminiDelta(data) {
+  const parts = data && data.candidates && data.candidates[0]
+    && data.candidates[0].content && data.candidates[0].content.parts;
+  if (!Array.isArray(parts)) return "";
+  return parts.map((p) => (typeof p.text === "string" ? p.text : "")).join("");
+}
+
+function pickWorkersAiDelta(data) {
+  return data && typeof data.response === "string" ? data.response : "";
+}
+
+async function geminiStreamChat(env, systemContent, history, ragMeta) {
+  const geminiModel = env.GEMINI_MODEL || "gemini-1.5-flash";
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
+  const contents = history.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [{ text: m.content }],
+  }));
+  const payload = {
+    contents,
+    systemInstruction: { parts: [{ text: systemContent }] },
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
+  };
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok || !res.body) {
+      console.error("Gemini stream error:", res.status);
+      return null; // 비스트리밍 경로로 폴백
+    }
+    return chatSseResponse(res.body, pickGeminiDelta, { model: geminiModel, ...(ragMeta || {}) });
+  } catch (e) {
+    console.error("Gemini stream call failed:", e);
+    return null;
+  }
+}
+
 async function handleChat(request, env) {
   let body;
   try {
@@ -2091,6 +2170,7 @@ async function handleChat(request, env) {
     return json({ reply: "지금은 도우미를 사용할 수 없어요. 잠시 후 다시 시도해 주세요.", error: "no_ai_binding" });
   }
 
+  const wantStream = body.stream === true; // 구 클라이언트는 이 플래그가 없어 JSON 경로 유지
   const userText = history[history.length - 1].content;
   const stockContext = typeof body.stockContext === "string" ? body.stockContext.trim().slice(0, 4000) : "";
   const snapshotContext = typeof body.snapshotContext === "string" ? body.snapshotContext.trim().slice(0, 2500) : "";
@@ -2114,8 +2194,17 @@ async function handleChat(request, env) {
   }
   if (newsRagBlock) systemContent += newsRagBlock;
 
+  const ragMeta = newsSources.length
+    ? { rag: { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } }
+    : {};
+
   // 만약 환경 변수에 GEMINI_API_KEY가 존재하면 Google Gemini API를 호출하여 성능을 대폭 향상합니다.
   if (env && env.GEMINI_API_KEY) {
+    if (wantStream) {
+      const streamResp = await geminiStreamChat(env, systemContent, history, ragMeta);
+      if (streamResp) return streamResp;
+      // 스트리밍 실패 시 아래 비스트리밍 Gemini → Workers AI 순으로 폴백
+    }
     try {
       const geminiModel = env.GEMINI_MODEL || "gemini-1.5-flash";
       // 키는 URL 쿼리가 아니라 헤더로 — 쿼리는 로그에 남는 노출면이다.
@@ -2165,6 +2254,25 @@ async function handleChat(request, env) {
 
   const messages = [{ role: "system", content: systemContent }, ...history];
   let lastError = "no_model";
+
+  // Workers AI 스트리밍 (stream:true 는 SSE 바이트의 ReadableStream 을 돌려준다)
+  if (wantStream) {
+    for (const model of CHAT_MODELS) {
+      try {
+        const stream = await env.AI.run(model, { messages, max_tokens: 768, temperature: 0.3, stream: true });
+        if (stream && typeof stream.pipeThrough === "function") {
+          return chatSseResponse(stream, pickWorkersAiDelta, { model, ...ragMeta });
+        }
+        // 런타임이 스트림 대신 객체를 준 경우: 즉시 완성 응답으로 처리
+        const text = String((stream && stream.response) || "").trim();
+        if (text) return json({ reply: text, model, rag: ragMeta.rag || null });
+      } catch (e) {
+        lastError = `${model}: ${(e && e.message) || e}`;
+      }
+    }
+    // 스트리밍이 전부 실패하면 아래 비스트리밍 경로로 마지막 시도
+  }
+
   for (const model of CHAT_MODELS) {
     try {
       const result = await env.AI.run(model, { messages, max_tokens: 768, temperature: 0.3 });

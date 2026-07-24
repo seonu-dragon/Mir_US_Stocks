@@ -55,7 +55,10 @@
          전체 폰트를 받아서, 이 사이트가 쓰는 6개 웨이트(400~900)면 첫 로드에 ~4.7MB 였다.
          dynamic-subset 은 unicode-range 로 쪼개져 화면에 실제 나온 글자의 서브셋만
          받고, 가변폰트라 웨이트 전 구간을 파일 하나로 덮는다. -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css">
+    <!-- media="print" + onload 스왑: 외부 CDN CSS 가 첫 페인트를 막지 않게 한다.
+         폰트는 시스템 폰트로 먼저 그려지고 로드 완료 시 Pretendard 로 스왑된다. -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"></noscript>
     <link rel="stylesheet" href="styles.css?v=e4f8162cda">
     <script src="build_id.js?v=c45b04c171"></script>
     <script>

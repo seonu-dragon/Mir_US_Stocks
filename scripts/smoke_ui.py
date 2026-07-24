@@ -201,12 +201,24 @@ def test_trust_center(browser, base: str) -> None:
           page.locator(".data-trust-card.trust-missing").count() <= 2,
           f"missing={page.locator('.data-trust-card.trust-missing').count()}")
 
+    # 이 검사의 목적은 "같은 파일을 무한 재요청"(과거 404 루프류) 검출이다.
+    # before == after 로 걸면 라이브에서 idle 프리로드 꼬리 1~3건이 3초 창에
+    # 걸릴 때마다 위양성이 난다(app.js 분할 후 파싱 타이밍 이동으로 표면화).
+    # 진짜 병리만 잡는다: 같은 URL 3회 이상 또는 창 안 신규 6건 이상.
     before = page.evaluate("() => performance.getEntriesByType('resource')"
                            ".filter(r => /data\\/.*\\.js/.test(r.name)).length")
     page.wait_for_timeout(3000)
-    after = page.evaluate("() => performance.getEntriesByType('resource')"
-                          ".filter(r => /data\\/.*\\.js/.test(r.name)).length")
-    check("데이터 재요청이 폭주하지 않음", before == after, f"{before} → {after}")
+    stats = page.evaluate("""() => {
+      const names = performance.getEntriesByType('resource')
+        .filter(r => /data\\/.*\\.js/.test(r.name)).map(r => r.name);
+      const counts = {};
+      for (const n of names) counts[n] = (counts[n] || 0) + 1;
+      const maxDup = Math.max(0, ...Object.values(counts));
+      return { total: names.length, maxDup };
+    }""")
+    delta = stats["total"] - before
+    check("데이터 재요청이 폭주하지 않음", delta < 6 and stats["maxDup"] < 3,
+          f"{before} → {stats['total']} (동일 URL 최다 {stats['maxDup']}회)")
 
     cards.first.locator("summary").click()
     page.wait_for_timeout(250)

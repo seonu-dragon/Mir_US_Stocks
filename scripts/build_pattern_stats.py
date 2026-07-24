@@ -64,14 +64,13 @@ BASELINE_STRIDE = 10      # 기준선 표본 추출 간격(모든 봉을 쓰면 
 KST = timezone(timedelta(hours=9))
 
 
-def fwd_return(rows, idx, h):
-    j = idx + h
-    if j >= len(rows):
-        return None
-    c0 = rows[idx]["c"]
-    if not c0:
-        return None
-    return (rows[j]["c"] - c0) / c0
+def fwd_return(rows, idx, h, div_cum=None):
+    """전방 수익률 — detail 에 배당(dividends)이 있으면 배당 포함 총수익 기준.
+
+    div_cum 은 pattern_lib.dividend_cum_from_detail 산출물. None 이면(배당 미수집
+    detail — 당분간의 정상 상태) 기존 가격 수익률과 완전히 동일하게 동작한다.
+    """
+    return pl.total_fwd_return(rows, idx, idx + h, div_cum)
 
 
 def load_benchmark_regimes(market):
@@ -162,13 +161,15 @@ def main():
             skipped += 1
             continue
         scanned += 1
+        # 배당 포함 총수익용 누적 배당(없으면 None → 기존 가격 수익률 그대로).
+        div_cum = pl.dividend_cum_from_detail(rows, d.get("dividends"))
 
         # 기준선: 일정 간격 봉의 전방 수익률
         for k in range(pl.PIVOT_WIN, len(rows), BASELINE_STRIDE):
             # 레짐: 그 봉 날짜의 벤치마크 상태(벤치마크에 없는 날짜면 분리 생략)
             reg = regime_by_date.get(rows[k].get("d")) if regime_by_date else None
             for h in pl.HORIZONS:
-                r = fwd_return(rows, k, h)
+                r = fwd_return(rows, k, h, div_cum)
                 if r is not None:
                     base_rets[h].append(r)
                     if reg:
@@ -180,7 +181,7 @@ def main():
             pat_dir[ev["pattern"]] = ev["dir"]
             reg = regime_by_date.get(rows[ev["confirm_idx"]].get("d")) if regime_by_date else None
             for h in pl.HORIZONS:
-                r = fwd_return(rows, ev["confirm_idx"], h)
+                r = fwd_return(rows, ev["confirm_idx"], h, div_cum)
                 if r is not None:
                     pat_rets[ev["pattern"]][h].append(r)
                     if reg:
@@ -222,6 +223,7 @@ def main():
         "events_total": event_total,
         "horizons": list(pl.HORIZONS),
         "min_bars": MIN_BARS,
+        "return_basis": "total (dividends included when detail has them)",
         "baseline": baseline,
         "patterns": patterns,
     }

@@ -121,6 +121,65 @@ def rows_from_chart_series(chart_series):
 
 
 # ----------------------------------------------------------------------------
+# 0-1. 배당 포함 총수익 헬퍼 (통계 빌더 공용)
+# ----------------------------------------------------------------------------
+def dividend_cum_from_detail(rows, dividends):
+    """detail 의 dividends([["YYYY-MM-DD", amount], ...]) → 봉별 누적 배당액 리스트.
+
+    cum[i] = rows[i]["d"] 이하 ex-date 배당의 합. 전방 총수익률은
+    (c_j + cum[j] - cum[i]) / c_i - 1 로 계산한다(ex-date ∈ (d_i, d_j]) —
+    i 봉 종가 매수자는 그 다음 날 이후가 ex-date 인 배당만 받는다.
+
+    dividends 가 없거나 형식이 깨졌으면 None — 호출부는 기존(가격만) 수익률로
+    동작해야 한다(배당 미수집 detail 과의 혼재가 당분간의 정상 상태다).
+    패턴 '기하'(감지)는 원시 OHLC 그대로 두고, 수익률 측정에만 쓴다.
+    """
+    if not dividends:
+        return None
+    divs = []
+    for entry in dividends:
+        if not isinstance(entry, (list, tuple)) or len(entry) < 2:
+            continue
+        try:
+            date = str(entry[0])
+            amount = float(entry[1])
+        except (TypeError, ValueError):
+            continue
+        if date and amount > 0:
+            divs.append((date, amount))
+    if not divs:
+        return None
+    divs.sort()
+    cum = []
+    total = 0.0
+    di = 0
+    for r in rows:
+        d = r.get("d")
+        if d:
+            while di < len(divs) and divs[di][0] <= d:
+                total += divs[di][1]
+                di += 1
+        cum.append(total)
+    return cum
+
+
+def total_fwd_return(rows, i, j, div_cum=None):
+    """i봉 → j봉 전방 수익률. div_cum 이 있으면 배당 포함 총수익 기준.
+
+    div_cum=None 이면 (c_j - c_i) / c_i — 기존 동작과 완전히 동일하다.
+    """
+    if j >= len(rows) or i < 0:
+        return None
+    c0 = rows[i]["c"]
+    if not c0:
+        return None
+    cj = rows[j]["c"]
+    if div_cum is not None:
+        cj += div_cum[j] - div_cum[i]
+    return (cj - c0) / c0
+
+
+# ----------------------------------------------------------------------------
 # 1. 스윙 피벗 + 지그재그
 # ----------------------------------------------------------------------------
 def find_pivots(rows, win=PIVOT_WIN):

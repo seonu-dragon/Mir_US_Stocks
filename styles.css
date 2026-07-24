@@ -10868,6 +10868,8 @@ body.ai-dash-collapsed .ai-dash-grid {
   color: #e8edf7;
 }
 .ai-dash-subpanel { width: 100%; }
+/* 리사이즈 핸들은 데스크톱(4구역 그리드)에서만 노출 — 기본은 숨김(모바일 스택 레이아웃 보호) */
+.ai-dash-handle { display: none; }
 
 /* 차트 전용 영역 확보: 우측 사이드바 폭만큼 cosmos를 좁힌다 (canvas는 컨테이너에 맞춰 재렌더).
    width:auto 로 base의 width:100vw 를 무효화해야 right 값이 실제로 폭을 줄인다. */
@@ -13415,6 +13417,13 @@ body.ai-mode-active .ai-input-hint:empty {
 
 /* ── 종목 대시보드: 좌(종목카드) · 중앙(차트=cosmos) · 우(AI 의견+뉴스) · 하단(데이터 그리드) ── */
 @media (min-width: 901px) {
+  /* 4개 구역 트랙 크기: 드래그 핸들이 이 커스텀 프로퍼티들을 갱신한다(ai-mode.js).
+     center(차트)는 1fr 이라 좌/우가 커지면 자연히 줄고, bottom(%)이 커지면 위 행이 줄어든다. */
+  body.ai-mode-active {
+    --ai-left-w: 264px;
+    --ai-right-w: 352px;
+    --ai-bottom-h: 40%;
+  }
   body.ai-mode-active .ai-dash-grid {
     position: absolute;
     top: 126px;              /* 상단 입력 바 아래 */
@@ -13423,8 +13432,8 @@ body.ai-mode-active .ai-input-hint:empty {
     bottom: 10px;
     width: auto;
     display: grid;
-    grid-template-columns: 264px minmax(0, 1fr) 352px;
-    grid-template-rows: minmax(0, 1fr) minmax(230px, 40%); /* 차트 축소·하단 데이터 확대(30%→40%) */
+    grid-template-columns: var(--ai-left-w) minmax(0, 1fr) var(--ai-right-w);
+    grid-template-rows: minmax(0, 1fr) var(--ai-bottom-h); /* 차트 축소·하단 데이터 확대(30%→40%) */
     grid-template-areas:
       "left center right"
       "bottom bottom bottom";
@@ -13432,6 +13441,60 @@ body.ai-mode-active .ai-input-hint:empty {
     overflow: visible;
     pointer-events: none;
   }
+  /* ── 구역 사이 드래그 핸들(데스크톱 전용) ── */
+  body.ai-mode-active .ai-dash-handle {
+    display: block;
+    position: absolute;
+    z-index: 6;
+    pointer-events: auto;
+    touch-action: none;
+    opacity: 0;
+    transition: opacity 0.14s ease;
+  }
+  body.ai-mode-active .ai-dash-handle::after {
+    content: "";
+    position: absolute;
+    background: var(--accent, #4f8cff);
+    border-radius: 3px;
+    box-shadow: 0 0 10px rgba(79, 140, 255, 0.5);
+  }
+  body.ai-mode-active .ai-dash-handle:hover,
+  body.ai-mode-active .ai-dash-handle.is-dragging { opacity: 0.9; }
+  body.ai-mode-active .ai-dash-handle-col {
+    top: 0;
+    bottom: calc(var(--ai-bottom-h) + 6px);
+    width: 14px;
+    cursor: col-resize;
+  }
+  body.ai-mode-active .ai-dash-handle-col::after {
+    top: 40%; bottom: 40%; left: 50%;
+    width: 4px; transform: translateX(-50%);
+  }
+  body.ai-mode-active .ai-dash-handle-row {
+    left: 0; right: 0;
+    height: 14px;
+    cursor: row-resize;
+  }
+  body.ai-mode-active .ai-dash-handle-row::after {
+    left: 46%; right: 46%; top: 50%;
+    height: 4px; transform: translateY(-50%);
+  }
+  body.ai-mode-active .ai-dash-handle-left {
+    left: calc(var(--ai-left-w) + 6px);
+    transform: translateX(-50%);
+  }
+  body.ai-mode-active .ai-dash-handle-right {
+    right: calc(var(--ai-right-w) + 6px);
+    transform: translateX(50%);
+  }
+  body.ai-mode-active .ai-dash-handle-bottom {
+    bottom: calc(var(--ai-bottom-h) + 6px);
+    transform: translateY(50%);
+  }
+  /* 접힘/리사이즈 중 상태 */
+  body.ai-dash-collapsed.ai-mode-active .ai-dash-handle { display: none; }
+  body.ai-dash-resizing { cursor: inherit; user-select: none; -webkit-user-select: none; }
+  body.ai-dash-resizing .ai-cosmos-canvas { pointer-events: none; }
   body.ai-mode-active .ai-dash-card-panel {
     grid-area: left;
     overflow-y: auto;
@@ -13481,12 +13544,12 @@ body.ai-mode-active .ai-input-hint:empty {
     pointer-events: none;
   }
 
-  /* cosmos(차트 캔버스)를 중앙 셀에 맞춰 인셋 */
+  /* cosmos(차트 캔버스)를 중앙 셀에 맞춰 인셋. 좌/우/하단 트랙 크기 변수를 따라간다. */
   body.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
     top: 120px;
-    left: 288px;
-    right: 376px;
-    bottom: calc(40% + 8px); /* 하단 데이터 행(40%)에 맞춰 차트 축소 */
+    left: calc(var(--ai-left-w) + 24px);
+    right: calc(var(--ai-right-w) + 24px);
+    bottom: calc(var(--ai-bottom-h) + 8px); /* 하단 데이터 행에 맞춰 차트 축소 */
     width: auto;
     height: auto;
   }
@@ -13506,12 +13569,12 @@ body.ai-mode-active .ai-input-hint:empty {
 
   body.ai-mode-active .ai-dash-rangebar {
     top: 158px;
-    left: calc(288px + (100% - 288px - 376px) / 2);
+    left: calc((var(--ai-left-w) + 24px) + (100% - (var(--ai-left-w) + 24px) - (var(--ai-right-w) + 24px)) / 2);
   }
   body.ai-dash-collapsed.ai-mode-active .ai-dash-rangebar { left: 50%; top: 158px; }
   body.ai-mode-active .ai-dash-collapse {
     top: 158px;
-    right: 384px;
+    right: calc(var(--ai-right-w) + 32px);
   }
   body.ai-dash-collapsed.ai-mode-active .ai-dash-collapse { right: 14px; }
 

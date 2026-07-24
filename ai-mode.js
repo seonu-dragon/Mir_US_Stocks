@@ -2256,6 +2256,92 @@ function aiCosmosRelayoutSoon() {
   requestAnimationFrame(relayout);
   setTimeout(relayout, 200);
 }
+// ===== 4구역 드래그 리사이즈 =====
+// 좌/우 열 폭과 하단 행 높이를 CSS 커스텀 프로퍼티(--ai-left-w/--ai-right-w/--ai-bottom-h)로
+// 조절한다. 중앙(차트)은 1fr 트랙이라 좌/우가 커지면 자연히 줄고, 하단이 커지면 위 행이 준다.
+// 크기는 localStorage 에 저장돼 재진입에도 유지, 핸들 더블클릭으로 해당 축만 초기화한다.
+const AI_DASH_LS_KEY = "mir_ai_dash_layout";
+const AI_DASH_DEFAULTS = { left: 264, right: 352, bottomPct: 40 };
+const AI_DASH_CLAMP = { leftMin: 180, leftMax: 420, rightMin: 240, rightMax: 520, bottomMin: 20, bottomMax: 70 };
+function aiDashClampNum(v, min, max, dflt) {
+  v = Number(v);
+  if (!Number.isFinite(v)) return dflt;
+  return Math.min(max, Math.max(min, v));
+}
+function readAiDashLayout() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem(AI_DASH_LS_KEY) || "null") || {}; } catch (_) { s = {}; }
+  return {
+    left: aiDashClampNum(s.left, AI_DASH_CLAMP.leftMin, AI_DASH_CLAMP.leftMax, AI_DASH_DEFAULTS.left),
+    right: aiDashClampNum(s.right, AI_DASH_CLAMP.rightMin, AI_DASH_CLAMP.rightMax, AI_DASH_DEFAULTS.right),
+    bottomPct: aiDashClampNum(s.bottomPct, AI_DASH_CLAMP.bottomMin, AI_DASH_CLAMP.bottomMax, AI_DASH_DEFAULTS.bottomPct),
+  };
+}
+function writeAiDashLayout(l) {
+  try { localStorage.setItem(AI_DASH_LS_KEY, JSON.stringify(l)); } catch (_) { /* 저장 실패 무시 */ }
+}
+function applyAiDashLayout(l) {
+  const s = document.body.style;
+  s.setProperty("--ai-left-w", `${l.left}px`);
+  s.setProperty("--ai-right-w", `${l.right}px`);
+  s.setProperty("--ai-bottom-h", `${l.bottomPct}%`);
+}
+function bindAiDashResize(host) {
+  const grid = host.querySelector(".ai-dash-grid");
+  if (!grid) return;
+  grid.querySelectorAll(".ai-dash-handle").forEach((h) => {
+    const axis = h.dataset.axis; // "left" | "right" | "bottom"
+    h.addEventListener("pointerdown", (e) => {
+      if (document.body.classList.contains("ai-dash-collapsed")) return;
+      if (!window.matchMedia("(min-width: 901px)").matches) return; // 데스크톱 전용
+      e.preventDefault();
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startL = readAiDashLayout();
+      const gridH = grid.getBoundingClientRect().height || 1;
+      let pending = { ...startL };
+      let raf = 0;
+      try { h.setPointerCapture(e.pointerId); } catch (_) {}
+      h.classList.add("is-dragging");
+      document.body.classList.add("ai-dash-resizing");
+      const onMove = (ev) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        const next = { ...startL };
+        if (axis === "left") next.left = aiDashClampNum(startL.left + dx, AI_DASH_CLAMP.leftMin, AI_DASH_CLAMP.leftMax, startL.left);
+        else if (axis === "right") next.right = aiDashClampNum(startL.right - dx, AI_DASH_CLAMP.rightMin, AI_DASH_CLAMP.rightMax, startL.right);
+        else if (axis === "bottom") next.bottomPct = aiDashClampNum(startL.bottomPct - (dy / gridH) * 100, AI_DASH_CLAMP.bottomMin, AI_DASH_CLAMP.bottomMax, startL.bottomPct);
+        pending = next;
+        applyAiDashLayout(next);
+        if (!raf) raf = requestAnimationFrame(() => { raf = 0; aiCosmosRelayoutSoon(); });
+      };
+      const onUp = () => {
+        h.classList.remove("is-dragging");
+        document.body.classList.remove("ai-dash-resizing");
+        h.removeEventListener("pointermove", onMove);
+        h.removeEventListener("pointerup", onUp);
+        h.removeEventListener("pointercancel", onUp);
+        try { h.releasePointerCapture(e.pointerId); } catch (_) {}
+        writeAiDashLayout(pending);
+        aiCosmosRelayoutSoon();
+      };
+      h.addEventListener("pointermove", onMove);
+      h.addEventListener("pointerup", onUp);
+      h.addEventListener("pointercancel", onUp);
+    });
+    // 더블클릭: 해당 축만 기본값으로 초기화
+    h.addEventListener("dblclick", () => {
+      const l = readAiDashLayout();
+      if (axis === "left") l.left = AI_DASH_DEFAULTS.left;
+      else if (axis === "right") l.right = AI_DASH_DEFAULTS.right;
+      else if (axis === "bottom") l.bottomPct = AI_DASH_DEFAULTS.bottomPct;
+      applyAiDashLayout(l);
+      writeAiDashLayout(l);
+      aiCosmosRelayoutSoon();
+    });
+  });
+}
+
 async function renderAiStockDashboard(ticker) {
   const host = byId("aiStockDashboard");
   if (!host) return false;
@@ -2281,6 +2367,9 @@ async function renderAiStockDashboard(ticker) {
         <section class="ai-dash-subpanel" id="aiDashMetrics"></section>
         <section class="ai-dash-subpanel" id="aiDashData"></section>
       </div>
+      <div class="ai-dash-handle ai-dash-handle-col ai-dash-handle-left" data-axis="left" title="드래그하여 좌측 폭 조절 · 더블클릭 초기화"></div>
+      <div class="ai-dash-handle ai-dash-handle-col ai-dash-handle-right" data-axis="right" title="드래그하여 우측 폭 조절 · 더블클릭 초기화"></div>
+      <div class="ai-dash-handle ai-dash-handle-row ai-dash-handle-bottom" data-axis="bottom" title="드래그하여 하단 높이 조절 · 더블클릭 초기화"></div>
     </div>
     <div class="ai-dash-rangebar" id="aiDashRange">
       ${["1M", "3M", "6M", "1Y", "5Y"].map((r) => `<button type="button" data-range="${r}"${r === "6M" ? ' class="is-active"' : ""}>${r}</button>`).join("")}
@@ -2297,6 +2386,9 @@ async function renderAiStockDashboard(ticker) {
     syncCollapseGlyph();
     aiCosmosRelayoutSoon();
   });
+  // 저장된 4구역 크기를 복원하고 드래그 핸들을 바인딩(핸들은 매 렌더마다 새로 생성되므로 리스너 누적 없음).
+  applyAiDashLayout(readAiDashLayout());
+  bindAiDashResize(host);
   // 사이드바가 차트 폭을 줄였으니 cosmos 캔버스를 새 영역에 맞춰 다시 그린다.
   aiCosmosRelayoutSoon();
   const rangeKo = { "1M": "1개월", "3M": "3개월", "6M": "6개월", "1Y": "1년", "5Y": "5년" };

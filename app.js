@@ -357,6 +357,27 @@ const TOP_PRESETS = {
   oversold: { metric: "rsi14",               minRsi: 0,  maxRsi: 30, minVolume: 0,   minMarketCap: 2,  newHigh: "All",   recency: "All" }
 };
 
+// 프리셋의 minMarketCap 은 미국 기준 "달러 10억($B)" 단위다(US 스냅샷 marketCapB).
+// KR 스냅샷의 시총은 marketCapT = "조 원" 단위여서 같은 숫자를 그대로 비교하면
+// 스케일이 어긋난다(예: oversold 하한 2 → "2조" 로 읽혀 과매도 소형주 88종목이 전멸).
+// 게다가 KR 은 시장 전체가 소형주 편중이라 단순 FX 환산이 아니라 KR 시총 분포에
+// 맞춘 별도 하한을 둔다(값 단위 = 조 원):
+//   · 대형주 지향(leaders·value): 1조 → 상위 ~10%. value 프리셋 술어의 기존 KR 하한(1조)과 정합.
+//   · 눌림목(pullback): 0.5조,  성장(growth): 0.2조 → 중대형.
+//   · 기술·역추세(breakout·lows·volsurge·oversold): 0.05조(≈500억) → 페니/초소형만 배제하고
+//     중소형주를 폭넓게 허용(US 에서 이 프리셋들이 $1~2B 하한으로 사실상 나노캡만 걸러내던 의도와 동일).
+const TOP_PRESET_MIN_CAP_KR = {
+  leaders: 1, breakout: 0.05, pullback: 0.5, growth: 0.2,
+  value: 1, lows: 0.05, volsurge: 0.05, oversold: 0.05,
+};
+// 현재 시장에 맞는 프리셋 시총 하한. US 는 설정값($B) 그대로, KR 은 조 원 하한.
+function presetMinMarketCap(key) {
+  const p = TOP_PRESETS[key];
+  if (!p) return 0;
+  if (isKrMarket()) return TOP_PRESET_MIN_CAP_KR[key] ?? p.minMarketCap ?? 0;
+  return p.minMarketCap ?? 0;
+}
+
 // 52주 저가 대비 상승률(%) — MAP_FUNDAMENTALS.low52 + 스냅샷 price 로 계산.
 function low52DistPct(item) {
   const f = (window.MAP_FUNDAMENTALS || {})[item?.ticker];
@@ -6487,7 +6508,9 @@ function renderTopStocks() {
     .filter((item) => { if (minRsi <= 0) return true; const r = rsiValue(item); return r != null && r >= minRsi; })
     .filter((item) => { if (maxRsi <= 0) return true; const r = rsiValue(item); return r != null && r <= maxRsi; })
     .filter((item) => (Number(item.volumeRatio) || 0) >= minVolume)
-    .filter((item) => (Number(item.marketCapB) || 0) >= minMarketCap)
+    // 시총 하한 비교는 시장별 단위로: US=marketCapB($B), KR=marketCapT(조 원).
+    // itemCapForValuation 이 그 시장별 값을 돌려준다(US 결과는 기존과 동일).
+    .filter((item) => itemCapForValuation(item) >= minMarketCap)
     .filter((item) => topPresetMatches(item, preset))
     .map((item) => ({ item, value: metricValue(item, metric) }))
     .filter(({ value }) => Number.isFinite(value))
@@ -6502,7 +6525,7 @@ function renderTopStocks() {
     minRsi ? `RSI >= ${minRsi}` : "",
     maxRsi ? `RSI <= ${maxRsi}` : "",
     minVolume ? `Vol >= ${minVolume}x` : "",
-    minMarketCap ? (isKrMarket() ? `시총 >= ${minMarketCap}조` : `MktCap >= $${minMarketCap}B`) : ""
+    minMarketCap ? (isKrMarket() ? `시총 >= ${marketCfg().formatMarketCap(minMarketCap)}` : `MktCap >= $${minMarketCap}B`) : ""
   ].filter(Boolean).join(" · ");
   byId("topStocksMeta").textContent = `${filterText} · ${rows.length}개`;
 
@@ -6812,7 +6835,7 @@ function applyTopPreset() {
   byId("topMinRs").value = preset.minRsi || "";
   byId("topMinEps").value = preset.maxRsi || "";
   byId("topMinVolume").value = preset.minVolume || "";
-  byId("topMinMarketCap").value = preset.minMarketCap || "";
+  byId("topMinMarketCap").value = presetMinMarketCap(key) || "";
   renderTopStocks();
 }
 

@@ -174,7 +174,9 @@ function screenerRows() {
     .filter((item) => { if (minRsi <= 0) return true; const r = rsiValue(item); return r != null && r >= minRsi; })
     .filter((item) => { if (maxRsi <= 0) return true; const r = rsiValue(item); return r != null && r <= maxRsi; })
     .filter((item) => (Number(item.volumeRatio) || 0) >= minVol)
-    .filter((item) => (Number(item.marketCapB) || 0) >= minCap)
+    // 시총 하한은 시장별 단위로 비교: US=marketCapB($B), KR=marketCapT(조 원).
+    // itemCapForValuation(app.js) 이 그 시장별 값을 돌려준다(US 결과는 기존과 동일).
+    .filter((item) => itemCapForValuation(item) >= minCap)
     .filter((item) => topPresetMatches(item, preset))
     .filter((item) => {
       if (patternCat === "any") return true;
@@ -549,7 +551,7 @@ function setupScreenerEvents() {
       byId("scrMinRs").value = p.minRsi || "";
       byId("scrMinEps").value = p.maxRsi || "";
       byId("scrMinVol").value = p.minVolume || "";
-      byId("scrMinCap").value = p.minMarketCap || "";
+      byId("scrMinCap").value = presetMinMarketCap(key) || "";
     }
     if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }
     run(false);

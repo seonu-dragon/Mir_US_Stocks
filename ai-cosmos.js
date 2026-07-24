@@ -43,7 +43,7 @@
   const MORPH_CRISP_START = 0.52;
   const MORPH_MESH_FADE_START = 0.6;
   const REVEAL_EDGE = 0.34;
-  const RANGE_BARS = { "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504 };
+  const RANGE_BARS = { "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504, "5Y": 1260 };
   const CHART_TARGET_YAW = 0;
   const CHART_TARGET_PITCH = 1.12;
   const CHART_TARGET_ROLL = 0;
@@ -308,6 +308,183 @@
     return out;
   }
 
+  function computeRsi(bars, period = 14) {
+    const out = new Array(bars.length).fill(null);
+    if (bars.length <= period) return out;
+    let gain = 0;
+    let loss = 0;
+    for (let i = 1; i <= period; i += 1) {
+      const d = bars[i].c - bars[i - 1].c;
+      if (d >= 0) gain += d; else loss -= d;
+    }
+    let avgG = gain / period;
+    let avgL = loss / period;
+    out[period] = avgL === 0 ? 100 : 100 - 100 / (1 + avgG / avgL);
+    for (let i = period + 1; i < bars.length; i += 1) {
+      const d = bars[i].c - bars[i - 1].c;
+      avgG = (avgG * (period - 1) + Math.max(0, d)) / period;
+      avgL = (avgL * (period - 1) + Math.max(0, -d)) / period;
+      out[i] = avgL === 0 ? 100 : 100 - 100 / (1 + avgG / avgL);
+    }
+    return out;
+  }
+
+  function computeMacd(bars, fast = 12, slow = 26, sig = 9) {
+    const n = bars.length;
+    const macd = new Array(n).fill(null);
+    const signal = new Array(n).fill(null);
+    if (n < slow + sig) return { macd, signal };
+    const ema = (period) => {
+      const k = 2 / (period + 1);
+      const out = new Array(n).fill(null);
+      let prev = bars[0].c;
+      for (let i = 0; i < n; i += 1) {
+        prev = i === 0 ? bars[0].c : bars[i].c * k + prev * (1 - k);
+        if (i >= period - 1) out[i] = prev;
+      }
+      return out;
+    };
+    const eFast = ema(fast);
+    const eSlow = ema(slow);
+    for (let i = 0; i < n; i += 1) {
+      if (eFast[i] != null && eSlow[i] != null) macd[i] = eFast[i] - eSlow[i];
+    }
+    const k = 2 / (sig + 1);
+    let prev = null;
+    for (let i = 0; i < n; i += 1) {
+      if (macd[i] == null) continue;
+      prev = prev == null ? macd[i] : macd[i] * k + prev * (1 - k);
+      signal[i] = prev;
+    }
+    return { macd, signal };
+  }
+
+  // RSI(14)·MACD 서브차트 — 참고 레이아웃의 보조지표 카드 2개를 캔버스 하단에 그린다.
+  function drawIndicatorPanels(w, h, layout, alpha) {
+    if (!layout.indH || !chartBars.length || alpha <= 0) return;
+    const { padL, padT, plotH, volH, indH, gap, plotW } = layout;
+    const n = chartBars.length;
+    const top = padT + plotH + gap + volH + gap;
+    const boxGap = 10;
+    const boxW = (plotW - boxGap) / 2;
+    const xAt = (i, x0, wBox) => x0 + (i / Math.max(1, n - 1)) * wBox;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    const panelBox = (x0) => {
+      ctx.fillStyle = "rgba(11, 17, 32, 0.55)";
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.14)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x0, top, boxW, indH, 8);
+      else ctx.rect(x0, top, boxW, indH);
+      ctx.fill();
+      ctx.stroke();
+    };
+
+    // ── RSI (좌) ──
+    const rsi = computeRsi(chartBars, 14);
+    const rsiX0 = padL;
+    panelBox(rsiX0);
+    const innerT = top + 20;
+    const innerH = indH - 28;
+    const rsiY = (v) => innerT + (1 - clamp(v, 0, 100) / 100) * innerH;
+    for (const lvl of [70, 30]) {
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.18)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(rsiX0 + 6, rsiY(lvl));
+      ctx.lineTo(rsiX0 + boxW - 6, rsiY(lvl));
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.strokeStyle = "rgba(167, 139, 250, 0.9)";
+    ctx.lineWidth = 1.3;
+    ctx.beginPath();
+    let started = false;
+    let lastRsi = null;
+    for (let i = 0; i < n; i += 1) {
+      if (rsi[i] == null) continue;
+      lastRsi = rsi[i];
+      const x = xAt(i, rsiX0 + 6, boxW - 12);
+      const y = rsiY(rsi[i]);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    ctx.font = "700 10.5px Pretendard, system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillStyle = "rgba(203, 213, 225, 0.85)";
+    ctx.fillText("RSI (14)", rsiX0 + 8, top + 13);
+    if (lastRsi != null) {
+      ctx.fillStyle = lastRsi >= 70 ? "#f87171" : lastRsi <= 30 ? "#4ade80" : "rgba(196, 181, 253, 0.95)";
+      ctx.fillText(lastRsi.toFixed(1), rsiX0 + 58, top + 13);
+    }
+
+    // ── MACD (우) ──
+    const { macd, signal } = computeMacd(chartBars);
+    const mX0 = padL + boxW + boxGap;
+    panelBox(mX0);
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (let i = 0; i < n; i += 1) {
+      if (macd[i] != null) { lo = Math.min(lo, macd[i]); hi = Math.max(hi, macd[i]); }
+      if (signal[i] != null) { lo = Math.min(lo, signal[i]); hi = Math.max(hi, signal[i]); }
+    }
+    let lastMacd = null;
+    if (Number.isFinite(lo) && Number.isFinite(hi) && hi > lo) {
+      const span = hi - lo;
+      const mY = (v) => innerT + (1 - (v - lo) / span) * innerH;
+      if (lo < 0 && hi > 0) {
+        ctx.strokeStyle = "rgba(148, 163, 184, 0.18)";
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(mX0 + 6, mY(0));
+        ctx.lineTo(mX0 + boxW - 6, mY(0));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      // 히스토그램(MACD-Signal)
+      const barW = Math.max(1, (boxW - 12) / Math.max(1, n) * 0.6);
+      for (let i = 0; i < n; i += 1) {
+        if (macd[i] == null || signal[i] == null) continue;
+        const hVal = macd[i] - signal[i];
+        const x = xAt(i, mX0 + 6, boxW - 12);
+        const base0 = clamp(0, lo, hi);
+        const y0 = mY(base0);
+        const y1 = mY(clamp(base0 + hVal, lo, hi));
+        ctx.fillStyle = hVal >= 0 ? "rgba(34, 197, 94, 0.35)" : "rgba(239, 68, 68, 0.35)";
+        ctx.fillRect(x - barW / 2, Math.min(y0, y1), barW, Math.max(1, Math.abs(y1 - y0)));
+      }
+      const line = (series, color) => {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        let on = false;
+        for (let i = 0; i < n; i += 1) {
+          if (series[i] == null) continue;
+          const x = xAt(i, mX0 + 6, boxW - 12);
+          const y = mY(series[i]);
+          if (!on) { ctx.moveTo(x, y); on = true; } else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      };
+      line(macd, "rgba(56, 189, 248, 0.95)");
+      line(signal, "rgba(251, 146, 60, 0.9)");
+      for (let i = n - 1; i >= 0; i -= 1) {
+        if (macd[i] != null) { lastMacd = macd[i]; break; }
+      }
+    }
+    ctx.fillStyle = "rgba(203, 213, 225, 0.85)";
+    ctx.fillText("MACD (12·26·9)", mX0 + 8, top + 13);
+    if (lastMacd != null) {
+      ctx.fillStyle = lastMacd >= 0 ? "#4ade80" : "#f87171";
+      ctx.fillText(lastMacd >= 100 ? lastMacd.toFixed(0) : lastMacd.toFixed(2), mX0 + 92, top + 13);
+    }
+
+    ctx.restore();
+  }
+
   function updateChartBounds() {
     if (!chartBars.length) return;
     let lo = Infinity;
@@ -407,11 +584,13 @@
     const padR = Math.max(56, w * 0.07);
     const padT = Math.max(44, h * 0.07);
     const padB = Math.max(36, h * 0.06);
-    const volH = Math.max(48, h * 0.14);
+    const volH = Math.max(44, h * 0.11);
+    // RSI·MACD 보조지표 스트립 — 참고 레이아웃(1.png)의 서브차트. 높이가 낮으면 생략.
+    const indH = h >= 430 && w >= 520 ? Math.min(120, Math.max(72, h * 0.15)) : 0;
     const gap = 8;
     const plotW = w - padL - padR;
-    const plotH = h - padT - padB - volH - gap;
-    return { padL, padR, padT, padB, volH, gap, plotW, plotH, w, h };
+    const plotH = h - padT - padB - volH - gap - (indH ? indH + gap : 0);
+    return { padL, padR, padT, padB, volH, indH, gap, plotW, plotH, w, h };
   }
 
   function layoutHelpers(layout) {
@@ -602,6 +781,7 @@
     drawCrispCandles(w, h, layout, a, true);
     drawChartOverlays(w, h, layout, a);
     drawChartChrome(w, h, layout, a);
+    drawIndicatorPanels(w, h, layout, a);
   }
 
   // 지지/저항·추세선·기하학적 차트 패턴을 2D 차트 위에 그린다(종목 분석 탭과 동일 로직).
@@ -1367,7 +1547,10 @@
       drawRevealScanline(w, h, layout, crispPhase);
       // labels/axes settle in once the sweep is mostly done
       const chromeA = smoothstep(clamp((crispPhase - 0.4) / 0.6, 0, 1));
-      if (chromeA > 0.02) drawChartChrome(w, h, layout, chromeA);
+      if (chromeA > 0.02) {
+        drawChartChrome(w, h, layout, chromeA);
+        drawIndicatorPanels(w, h, layout, chromeA);
+      }
     }
   }
 

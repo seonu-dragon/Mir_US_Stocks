@@ -19217,6 +19217,96 @@ function typeWriterMarkdown(element, rawText, onComplete) {
   }, 16);
 }
 
+// ===== AI 챗 스트리밍 · 중단 인프라 =====
+// 워커 /chat 이 SSE(text/event-stream)를 지원하면 토큰 단위로 받아 점진 렌더하고,
+// 옛 워커(JSON 응답)가 아직 배포돼 있으면 Content-Type 으로 감지해 기존 비스트리밍
+// 경로로 자동 폴백한다(워커 배포는 수동이라 신구 혼재 기간이 반드시 생긴다).
+const aiActiveStreams = new Set();
+
+function syncAiSendButton() {
+  const btn = document.querySelector("#aiChatForm .ai-send-btn");
+  if (!btn) return;
+  const streaming = aiActiveStreams.size > 0;
+  btn.classList.toggle("is-stop", streaming);
+  const glyph = btn.querySelector(".ai-send-glyph");
+  if (glyph) glyph.textContent = streaming ? "■" : "↑";
+  const label = streaming ? "생성 중단" : "질문 전송";
+  btn.title = label;
+  btn.setAttribute("aria-label", label);
+}
+
+function aiStreamBegin() {
+  const controller = new AbortController();
+  aiActiveStreams.add(controller);
+  syncAiSendButton();
+  return controller;
+}
+
+function aiStreamEnd(controller) {
+  aiActiveStreams.delete(controller);
+  syncAiSendButton();
+}
+
+function aiAbortAllStreams() {
+  aiActiveStreams.forEach((controller) => {
+    try { controller.abort(); } catch (_) { /* ignore */ }
+  });
+}
+
+// /chat 호출 공용 헬퍼. stream:true 를 요청하되, 응답이 JSON 이면(구 워커) 그대로
+// 파싱해 비스트리밍으로 처리한다. 중단(abort) 시에도 지금까지 받은 부분 텍스트를 돌려준다.
+async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
+  const res = await fetch(endpoint || `${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...payload, stream: true }),
+    signal,
+  });
+  const ctype = (res.headers.get("Content-Type") || "").toLowerCase();
+  if (!ctype.includes("text/event-stream")) {
+    const data = await res.json();
+    return { reply: (data && data.reply) || "", streamed: false, aborted: false };
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  let full = "";
+  let aborted = false;
+  const consume = (block) => {
+    for (const rawLine of block.split("\n")) {
+      const line = rawLine.trim();
+      if (!line.startsWith("data:")) continue;
+      const data = line.slice(5).trim();
+      if (!data || data === "[DONE]") continue;
+      try {
+        const parsed = JSON.parse(data);
+        if (typeof parsed.delta === "string" && parsed.delta) {
+          full += parsed.delta;
+          if (onDelta) onDelta(parsed.delta, full);
+        }
+      } catch (_) { /* 불완전 청크는 무시 */ }
+    }
+  };
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      let sep;
+      while ((sep = buf.indexOf("\n\n")) >= 0) {
+        consume(buf.slice(0, sep));
+        buf = buf.slice(sep + 2);
+      }
+    }
+    if (buf.trim()) consume(buf);
+  } catch (err) {
+    if (err && err.name === "AbortError") aborted = true;
+    else if (!full) throw err; // 아무것도 못 받았으면 실제 오류로 전파
+  }
+  return { reply: full, streamed: true, aborted };
+}
+
 async function sendAiChat(queryText = null) {
   if (aiChatBusy) return;
   
@@ -19228,20 +19318,33 @@ async function sendAiChat(queryText = null) {
     input.value = "";
   }
   
+  // 임머시브 AI 모드에서는 app.js 쪽 toggle(세션 로드)이 welcome 스크립트에 가로채여
+  // 실행되지 않는다 — 첫 채팅 시점에 세션이 없으면 여기서 만들어 준다(내보내기·이력 저장용).
+  if (!currentSessionId || !aiChatSessions[currentSessionId]) {
+    loadAndRenderAiHistory(); // 저장된 세션을 먼저 불러와야 새 세션 저장 때 덮어쓰지 않는다
+    startNewAiChatSession();
+  }
+
   const log = byId("aiChatLog");
   const welcome = byId("aiChatWelcome");
   if (welcome) {
     welcome.style.display = "none";
   }
-  
+
+  // AI 모드(임머시브)에서는 대화 로그가 CSS 로 감춰져 있으므로,
+  // 채팅 답변이 시작되면 대화 뷰 클래스를 붙여 로그를 화면에 되살린다.
+  if (document.body.classList.contains("ai-mode-active")) {
+    document.body.classList.add("ai-conversation-view");
+  }
+
   // 첫 질문 시 대화 세션명 업데이트
   if (aiChatSessions[currentSessionId] && aiChatSessions[currentSessionId].name === "새로운 대화") {
     aiChatSessions[currentSessionId].name = text;
   }
-  
+
   // 1. Add User Message bubble
   appendAiChatMessage("user", text);
-  aiChatHistory.push({ role: "user", content: text });
+  aiChatHistory.push({ role: "user", content: text, ts: Date.now() });
   
   aiChatBusy = true;
   
@@ -19265,56 +19368,89 @@ async function sendAiChat(queryText = null) {
   
   if (log) log.scrollTop = log.scrollHeight;
   
+  const controller = aiStreamBegin();
   try {
     if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
-    
+
     const stockContext = matchedTicker ? await buildStockChatContext(matchedTicker) : "";
-    const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: aiChatHistory.slice(-10),
-        stockContext,
-        snapshotContext: buildMarketChatContext(),
-        market: isKrMarket() ? "kr" : "us",
-        searchHints: matchedTicker ? { tickers: [matchedTicker], companies: [stockByTicker(matchedTicker).company] } : {},
-      }),
-    });
-    
-    const payload = await res.json();
-    const reply = (payload && payload.reply) || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-    
-    typingBubble.classList.remove("typing");
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
-    
-    // 타이핑 라이터 효과 실행
-    typeWriterMarkdown(bubbleDiv, reply, () => {
-      aiChatHistory.push({ role: "assistant", content: reply });
-      
-      // 오토 태그 바인딩
-      const badgesHtml = generateAiBadges(reply);
+
+    // 답변 확정(스트리밍/타이핑 종료) 시 공통 마무리: 이력 저장 + 배지 부착
+    const finalizeReply = (replyText, abortedMark) => {
+      aiChatHistory.push({ role: "assistant", content: replyText, ts: Date.now() });
+      // 로딩 문구 기준으로 미리 붙은 배지는 걷어내고 실제 답변 기준으로 다시 단다
+      typingBubble.querySelectorAll(".ai-badge-tags-container").forEach((el) => el.remove());
+      const badgesHtml = generateAiBadges(replyText);
       if (badgesHtml) {
         const tempDiv = document.createElement("div");
         tempDiv.innerHTML = badgesHtml;
         typingBubble.insertBefore(tempDiv.firstChild, bubbleDiv);
       }
-      
-      // 로컬스토리지 저장 및 사이드바 갱신
+      if (abortedMark && bubbleDiv) {
+        bubbleDiv.insertAdjacentHTML("beforeend", `<span class="ai-abort-note muted">(중단됨)</span>`);
+      }
       if (aiChatSessions[currentSessionId]) {
         aiChatSessions[currentSessionId].history = aiChatHistory;
         aiChatSessions[currentSessionId].timestamp = new Date().toISOString();
         saveAiSessionsToStorage();
         renderAiHistoryList();
       }
-    });
-    
+    };
+
+    // 스트리밍 점진 렌더 — rAF 로 스로틀해 매 토큰마다 파싱 폭주를 막는다.
+    let streamStarted = false;
+    let paintQueued = false;
+    let latestFull = "";
+    const paintStream = () => {
+      paintQueued = false;
+      if (bubbleDiv) bubbleDiv.innerHTML = formatMarkdownToHtml(latestFull);
+      if (log) log.scrollTop = log.scrollHeight;
+    };
+    const onDelta = (_delta, full) => {
+      latestFull = full;
+      if (!streamStarted) {
+        streamStarted = true;
+        typingBubble.classList.remove("typing");
+        typingBubble.classList.add("is-streaming");
+      }
+      if (!paintQueued) {
+        paintQueued = true;
+        requestAnimationFrame(paintStream);
+      }
+    };
+
+    const result = await requestAiChatReply({
+      messages: aiChatHistory.slice(-10).map(({ role, content }) => ({ role, content })),
+      stockContext,
+      snapshotContext: buildMarketChatContext(),
+      market: isKrMarket() ? "kr" : "us",
+      searchHints: matchedTicker ? { tickers: [matchedTicker], companies: [stockByTicker(matchedTicker).company] } : {},
+    }, { signal: controller.signal, onDelta });
+
+    typingBubble.classList.remove("typing", "is-streaming");
+
+    if (result.streamed) {
+      const reply = result.reply || (result.aborted ? "" : "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+      if (bubbleDiv) bubbleDiv.innerHTML = reply ? formatMarkdownToHtml(reply) : `<span class="muted">답변이 중단되었습니다.</span>`;
+      if (reply) finalizeReply(reply, result.aborted);
+      else if (result.aborted && bubbleDiv) bubbleDiv.insertAdjacentHTML("beforeend", ` <span class="ai-abort-note muted">(중단됨)</span>`);
+    } else {
+      // 구 워커(JSON) 폴백 — 오늘과 동일한 타이핑 라이터 렌더 유지
+      const reply = result.reply || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
+      typeWriterMarkdown(bubbleDiv, reply, () => finalizeReply(reply, false));
+    }
   } catch (err) {
-    typingBubble.classList.remove("typing");
+    typingBubble.classList.remove("typing", "is-streaming");
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
     if (bubbleDiv) {
-      bubbleDiv.innerHTML = `연결 실패: ${err.message || err}`;
+      if (err && err.name === "AbortError") {
+        bubbleDiv.innerHTML = `<span class="muted">답변 생성을 중단했습니다. <span class="ai-abort-note">(중단됨)</span></span>`;
+      } else {
+        bubbleDiv.innerHTML = `연결 실패: ${escapeHtml(String((err && err.message) || err))}`;
+      }
     }
   } finally {
+    aiStreamEnd(controller);
     aiChatBusy = false;
   }
 }
@@ -20950,6 +21086,7 @@ function aiCosmosRelayoutSoon() {
 async function renderAiStockDashboard(ticker) {
   const host = byId("aiStockDashboard");
   if (!host) return false;
+  document.body.classList.remove("ai-conversation-view"); // 대화 뷰 → 종목 대시보드 전환
   const t = normalizeTickerKey(ticker);
   const base = stockByTicker(t) || data.stocks.find((r) => r.ticker === t);
   if (!base) return false;
@@ -20959,9 +21096,7 @@ async function renderAiStockDashboard(ticker) {
 
   host.innerHTML = `
     <div class="ai-dash-grid">
-      <aside class="ai-dash-col ai-dash-col-left">
-        <section class="ai-dash-panel ai-block animate-reveal" id="aiDashCard"></section>
-      </aside>
+      <section class="ai-dash-panel ai-dash-card-panel ai-block animate-reveal" id="aiDashCard"></section>
       <aside class="ai-dash-col ai-dash-col-right">
         <section class="ai-dash-panel ai-dash-verdict-panel ai-block animate-reveal" id="aiDashVerdict"></section>
         <section class="ai-dash-panel ai-block animate-reveal" id="aiDashNews">
@@ -21020,7 +21155,7 @@ async function renderAiStockDashboard(ticker) {
   const paint = (item) => {
     if (seq !== aiDashSeq) return; // 새 종목 요청이 들어오면 이전 렌더 중단
     const card = byId("aiDashCard"); if (card) card.innerHTML = aiDashCardHtml(item);
-    const metrics = byId("aiDashMetrics"); if (metrics) metrics.innerHTML = `<h4 class="ai-dash-h">핵심 신호 · 이벤트</h4>${renderAiEvidenceGrid(item)}`;
+    const metrics = byId("aiDashMetrics"); if (metrics) metrics.innerHTML = `<h4 class="ai-dash-h">핵심 신호 · 이벤트</h4><div class="ai-evidence-grid">${renderAiEvidenceGrid(item)}</div>`;
     const dataB = byId("aiDashData"); if (dataB) dataB.innerHTML = `<h4 class="ai-dash-h">기술 지표 · 밸류에이션</h4>${renderAiModeDataBoard(item)}`;
     const verdict = byId("aiDashVerdict"); if (verdict) verdict.innerHTML = aiVerdictPanel(item);
     const newsList = host.querySelector("#aiDashNews .ai-dash-news-list");
@@ -21138,39 +21273,40 @@ function aiVerdictPanel(item) {
   const strengths = sig.filter((x) => x.k === "strength").sort((a, b) => b.s - a.s);
   const risks = sig.filter((x) => x.k === "risk").sort((a, b) => a.s - b.s);
 
+  // 사이트 정책: 매수/매도/목표가 추천 금지 — 방향 판정 대신 신호 관찰 요약만 보여준다.
   let verdict, vcls;
-  if (total >= 3.5) { verdict = "적극 매수"; vcls = "buy"; }
-  else if (total >= 1.5) { verdict = "매수 우위"; vcls = "buy"; }
-  else if (total > -1.5) { verdict = "중립 · 관망"; vcls = "hold"; }
-  else if (total > -3.5) { verdict = "비중 축소"; vcls = "sell"; }
-  else { verdict = "매도 우위"; vcls = "sell"; }
+  if (total >= 3.5) { verdict = "긍정 신호 뚜렷"; vcls = "buy"; }
+  else if (total >= 1.5) { verdict = "긍정 신호 우세"; vcls = "buy"; }
+  else if (total > -1.5) { verdict = "중립 · 혼조"; vcls = "hold"; }
+  else if (total > -3.5) { verdict = "부정 신호 우세"; vcls = "sell"; }
+  else { verdict = "부정 신호 뚜렷"; vcls = "sell"; }
 
   const absSum = sig.reduce((a, x) => a + Math.abs(x.s), 0) || 1;
   const agree = Math.abs(total) / absSum;
   const conf = sig.length ? Math.round(Math.min(94, 42 + sig.length * 7 + agree * 22)) : 30;
 
   const name = item.company || item.ticker;
-  const dir = vcls === "buy" ? "매수 우위 신호가 우세합니다" : vcls === "sell" ? "하방 리스크 신호가 우세합니다" : "뚜렷한 방향성이 약해 관망이 유효합니다";
+  const dir = vcls === "buy" ? "긍정 신호가 우세합니다" : vcls === "sell" ? "부정 신호가 우세합니다" : "신호가 엇갈려 뚜렷한 방향성이 약합니다";
   const comment = `${escapeHtml(name)}은(는) 현재 ${dir}.` +
-    (strengths[0] ? ` 핵심 강점은 ${escapeHtml(strengths[0].t)}` + (risks[0] ? `이며, 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : `입니다.`) : (risks[0] ? ` 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : ""));
+    (strengths[0] ? ` 눈에 띄는 신호는 ${escapeHtml(strengths[0].t)}` + (risks[0] ? `이며, 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : `입니다.`) : (risks[0] ? ` 유의할 점은 ${escapeHtml(risks[0].t)}입니다.` : ""));
 
   const li = (arr, empty) => arr.length ? arr.slice(0, 3).map((x) => `<li>${escapeHtml(x.t)}</li>`).join("") : `<li class="muted">${empty}</li>`;
 
   return `
     <div class="ai-verdict-head">
-      <h4 class="ai-dash-h">AI 투자 의견</h4>
+      <h4 class="ai-dash-h">AI 의견</h4>
       <span class="ai-verdict-badge ai-verdict-${vcls}">${verdict}</span>
     </div>
     <div class="ai-verdict-conf">
-      <span>신뢰도</span>
+      <span>신호 합의도</span>
       <div class="ai-verdict-gauge"><i class="ai-verdict-${vcls}" style="width:${conf}%"></i></div>
       <b>${conf}%</b>
     </div>
     <p class="ai-verdict-comment">${comment}</p>
     <div class="ai-verdict-cols">
       <div class="ai-verdict-pts">
-        <span class="ai-verdict-pts-h up">강점</span>
-        <ul>${li(strengths, "특이 강점 신호 없음")}</ul>
+        <span class="ai-verdict-pts-h up">관찰 포인트</span>
+        <ul>${li(strengths, "특이 긍정 신호 없음")}</ul>
       </div>
       <div class="ai-verdict-pts">
         <span class="ai-verdict-pts-h down">리스크</span>
@@ -21182,58 +21318,89 @@ function aiVerdictPanel(item) {
       <span class="ai-dash-chips-h">이어서 묻기</span>
       ${AI_DASH_CHIPS.map((c) => `<button type="button" data-dash-q="${escapeHtml(c.q)}" data-dash-l="${escapeHtml(c.l)}">${escapeHtml(c.l)}</button>`).join("")}
     </div>
-    <small class="ai-verdict-disc">규칙 기반 참고 지표 · 투자 조언이 아닙니다</small>`;
+    <small class="ai-verdict-disc">규칙 기반 참고 지표 · 매수/매도 추천이 아닙니다</small>`;
 }
 
 const AI_DASH_CHIPS = [
-  { l: "매수 타이밍?", q: "지금 매수하기 좋은 시점인지 기술적·펀더멘탈 근거와 함께 판단해줘" },
+  { l: "기술적 위치", q: "현재 주가의 기술적 위치(추세·지지/저항·모멘텀)를 매수/매도 추천 없이 짚어줘" },
   { l: "핵심 리스크", q: "이 종목의 핵심 하방 리스크 요인을 짚어줘" },
   { l: "동종업체 비교", q: "주요 동종업체 대비 강점과 약점을 비교해줘" },
   { l: "실적 전망", q: "다가오는 실적과 향후 실적 전망을 정리해줘" },
-  { l: "적정 매수가", q: "기술적 지지선과 밸류에이션을 고려한 매수 고려 가격대를 알려줘" },
+  { l: "밸류에이션 점검", q: "현재 밸류에이션이 과거 평균·동종업체 대비 어느 수준인지 매수/매도 추천 없이 점검해줘" },
 ];
 
 // 워커 LLM(/chat)으로 자연어 코멘트/후속답변을 받아 verdict 패널의 슬롯에 채운다.
 // opts.query가 있으면 후속 질문 답변(Q&A), 없으면 자동 심층 코멘트.
 // 프록시가 없거나 실패하면: 자동 코멘트는 조용히 비우고, 후속 질문은 안내 메시지를 표시.
+let aiDashLlmController = null;
+
 async function fetchAiDashLlmComment(item, seq, opts) {
   const slot = byId("aiDashLlm");
   if (!slot) return;
   const custom = opts && opts.query;
-  const headLabel = custom ? `${escapeHtml(opts.label || "질문")}` : "AI 심층 코멘트";
+  const headLabel = custom ? `${escapeHtml(opts.label || "질문")}` : "AI 요약 의견";
   if (!LIVE_DATA_PROXY) {
     if (custom) slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">AI 답변은 서버(Worker) 연결 후 이용할 수 있습니다.</p>`;
     return;
   }
   slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body ai-verdict-llm-loading">작성 중…</p>`;
+  // 이전 요청이 아직 흐르고 있으면 끊는다(종목 이동·칩 연타 대비)
+  if (aiDashLlmController) {
+    try { aiDashLlmController.abort(); } catch (_) { /* ignore */ }
+    aiStreamEnd(aiDashLlmController);
+  }
+  const controller = aiStreamBegin();
+  aiDashLlmController = controller;
   try {
-    const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 2~3문장의 간결한 한국어 투자 코멘트를 작성해줘. 매수/매도 단정은 피하고 핵심 포인트와 주의점 위주로. 마크다운 없이 평문으로.`;
+    // 참고 레이아웃(1.png)의 AI 의견 카드: 요약 + 포인트/리스크 불릿.
+    // 단, 사이트 정책상 매수/매도/목표가 추천은 절대 하지 않는다.
+    const query = custom || `${item.company || item.ticker}(${item.ticker})의 현재 차트·펀더멘탈·수급을 종합해 아래 형식의 한국어 요약 의견을 작성해줘.\n형식:\n(2문장 이내의 종합 요약)\n**관찰 포인트**\n- (2~3개, 각 1줄)\n**리스크**\n- (2~3개, 각 1줄)\n규칙: 매수/매도/목표가 추천·단정 금지, 제공된 데이터에 있는 사실만 사용, 형식 외 다른 머리말 금지.`;
     const stockContext = await buildStockChatContext(item.ticker);
     if (seq !== aiDashSeq) return; // 사용자가 다른 종목으로 이동함
-    const res = await fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messages: [{ role: "user", content: query }],
-        stockContext,
-        snapshotContext: (typeof buildMarketChatContext === "function" ? buildMarketChatContext() : ""),
-        market: isKrMarket() ? "kr" : "us",
-        searchHints: { tickers: [item.ticker], companies: [item.company].filter(Boolean) },
-      }),
-    });
+
+    const paint = (text, loading) => {
+      const cur = byId("aiDashLlm");
+      if (!cur || seq !== aiDashSeq) return;
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body${loading ? " is-streaming" : ""}">${formatMarkdownToHtml(text)}</div>`;
+    };
+    let paintQueued = false;
+    let latestFull = "";
+    const onDelta = (_d, full) => {
+      latestFull = full;
+      if (paintQueued) return;
+      paintQueued = true;
+      requestAnimationFrame(() => { paintQueued = false; paint(latestFull, true); });
+    };
+
+    const result = await requestAiChatReply({
+      messages: [{ role: "user", content: query }],
+      stockContext,
+      snapshotContext: (typeof buildMarketChatContext === "function" ? buildMarketChatContext() : ""),
+      market: isKrMarket() ? "kr" : "us",
+      searchHints: { tickers: [item.ticker], companies: [item.company].filter(Boolean) },
+    }, { signal: controller.signal, onDelta });
+
     if (seq !== aiDashSeq) return;
-    const payload = await res.json();
-    const reply = (payload && payload.reply || "").trim();
+    const reply = (result.reply || "").trim();
     const cur = byId("aiDashLlm");
-    if (!cur || seq !== aiDashSeq) return;
+    if (!cur) return;
     if (reply) {
-      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body">${formatMarkdownToHtml(reply)}</p>`;
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${formatMarkdownToHtml(reply)}${result.aborted ? ` <span class="ai-abort-note muted">(중단됨)</span>` : ""}</div>`;
+    } else if (result.aborted) {
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">(중단됨)</p>`;
     } else {
       cur.innerHTML = custom ? `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">답변을 받지 못했습니다.</p>` : "";
     }
-  } catch (_) {
+  } catch (err) {
     const cur = byId("aiDashLlm");
-    if (cur && seq === aiDashSeq) cur.innerHTML = custom ? `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">지금은 답변을 불러올 수 없습니다.</p>` : "";
+    if (cur && seq === aiDashSeq) {
+      cur.innerHTML = (err && err.name === "AbortError")
+        ? `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">(중단됨)</p>`
+        : (custom ? `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">지금은 답변을 불러올 수 없습니다.</p>` : "");
+    }
+  } finally {
+    aiStreamEnd(controller);
+    if (aiDashLlmController === controller) aiDashLlmController = null;
   }
 }
 
@@ -21460,3 +21627,282 @@ function setupAiChatModeEvents() {
 
 // Initialize AI Chat Mode Events
 setupAiChatModeEvents();
+
+// ===== 스트리밍 중단 버튼 (전송 버튼 ⇄ ■) =====
+// 스트리밍 중 전송 버튼 클릭은 폼 제출로 흐르기 전에 capture 단계에서 가로채 중단한다.
+function setupAiStreamStopEvents() {
+  if (setupAiStreamStopEvents._bound) return;
+  setupAiStreamStopEvents._bound = true;
+  const btn = document.querySelector("#aiChatForm .ai-send-btn");
+  if (!btn) return;
+  btn.addEventListener("click", (e) => {
+    if (!aiActiveStreams.size) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    aiAbortAllStreams();
+  }, true);
+}
+setupAiStreamStopEvents();
+
+// ===== 대화 .md 내보내기 =====
+function exportAiChatMarkdown() {
+  const session = aiChatSessions[currentSessionId]
+    || { name: "MIR AI 대화", history: aiChatHistory, timestamp: new Date().toISOString() };
+  const history = Array.isArray(session.history) ? session.history : [];
+  if (!history.length) {
+    if (typeof showAppToast === "function") showAppToast("내보낼 대화가 없습니다.", 2400);
+    return false;
+  }
+  const fmtTs = (v) => {
+    const d = v instanceof Date ? v : new Date(v);
+    return Number.isFinite(d.getTime()) ? d.toLocaleString("ko-KR", { hour12: false }) : "";
+  };
+  const lines = [
+    `# ${session.name || "MIR AI 대화"}`,
+    "",
+    `- 세션 시각: ${fmtTs(session.timestamp || Date.now())}`,
+    `- 내보낸 시각: ${fmtTs(Date.now())}`,
+    `- 메시지 수: ${history.length}`,
+    "",
+    "---",
+    "",
+  ];
+  history.forEach((msg) => {
+    const who = msg.role === "user" ? "사용자" : "MIR AI";
+    const when = msg.ts ? ` · ${fmtTs(msg.ts)}` : "";
+    lines.push(`## ${who}${when}`, "", String(msg.content || "").trim(), "");
+  });
+  const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, "");
+  a.href = url;
+  a.download = `mir_ai_chat_${stamp}.md`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 4000);
+  if (typeof showAppToast === "function") showAppToast("대화를 Markdown 파일로 저장했습니다.", 2400);
+  return true;
+}
+
+// ===== Ctrl+K 커맨드 팔레트 =====
+// 앱 다이얼로그(app-dialog)와 같은 디자인 토큰의 오버레이 팔레트.
+// Ctrl+K(또는 AI 모드에서 입력 중이 아닐 때 /)로 열고, ↑↓ + Enter, Esc 로 조작.
+const cmdkState = { open: false, index: 0, items: [] };
+
+function cmdkEnsureDom() {
+  let overlay = byId("cmdkOverlay");
+  if (overlay) return overlay;
+  overlay = document.createElement("div");
+  overlay.id = "cmdkOverlay";
+  overlay.className = "cmdk-overlay";
+  overlay.hidden = true;
+  overlay.innerHTML = `
+    <div class="cmdk" role="dialog" aria-modal="true" aria-label="커맨드 팔레트">
+      <div class="cmdk-input-row">
+        <span class="cmdk-glyph" aria-hidden="true">⌘</span>
+        <input id="cmdkInput" type="text" placeholder="명령 또는 종목 검색  (예: 새 대화, NVDA, 삼성전자)" autocomplete="off" spellcheck="false">
+        <kbd>Esc</kbd>
+      </div>
+      <ul id="cmdkList" class="cmdk-list" role="listbox"></ul>
+      <div class="cmdk-foot"><span>↑↓ 이동</span><span>Enter 실행</span><span>Ctrl+K 닫기</span></div>
+    </div>`;
+  document.body.appendChild(overlay);
+  overlay.addEventListener("mousedown", (e) => {
+    if (e.target === overlay) cmdkClose();
+  });
+  const input = overlay.querySelector("#cmdkInput");
+  input.addEventListener("input", () => cmdkRender(input.value));
+  return overlay;
+}
+
+function cmdkIsAiActive() {
+  return !!(window.MirAI && typeof window.MirAI.isActive === "function"
+    ? window.MirAI.isActive()
+    : document.body.classList.contains("ai-mode-active"));
+}
+
+// 부분일치 > 순차(subsequence) 일치 순의 단순 퍼지 점수. 0 이면 탈락.
+function cmdkFuzzyScore(label, query) {
+  const l = label.toLowerCase();
+  const q = query.toLowerCase().trim();
+  if (!q) return 1;
+  const idx = l.indexOf(q);
+  if (idx >= 0) return 100 - idx;
+  let li = 0;
+  for (let qi = 0; qi < q.length; qi += 1) {
+    const ch = q[qi];
+    if (ch === " ") continue;
+    li = l.indexOf(ch, li);
+    if (li < 0) return 0;
+    li += 1;
+  }
+  return 10;
+}
+
+function cmdkBuildActions(query) {
+  const aiActive = cmdkIsAiActive();
+  const actions = [];
+
+  // 종목 검색 (티커·회사명·한글 별칭) — AI 모드면 AI 질문, 아니면 분석 탭 이동
+  const q = String(query || "").trim();
+  if (q.length >= 1) {
+    const seen = new Set();
+    const pushStock = (row) => {
+      if (!row || seen.has(row.ticker) || seen.size >= 5) return;
+      seen.add(row.ticker);
+      actions.push({
+        label: `${row.ticker} · ${row.company || ""}`,
+        hint: aiActive ? "AI 모드 분석" : "종목 분석 이동",
+        keep: true, // 종목은 퍼지 재필터 없이 그대로 노출
+        run: () => {
+          if (aiActive && window.MirAI?.queryStock) {
+            const input = byId("aiChatInput");
+            if (input) input.value = `${row.ticker} 분석해줘`;
+            window.MirAI.queryStock(`${row.ticker} 분석해줘`);
+          } else {
+            navigateToStockAnalysis(row.ticker, `${row.ticker} 분석`);
+          }
+        },
+      });
+    };
+    try {
+      const resolved = extractStockTickerFromQuery(q);
+      if (resolved) pushStock(stockByTicker(resolved));
+    } catch (_) { /* ignore */ }
+    const ql = q.toLowerCase();
+    ((data && data.stocks) || []).some((row) => {
+      if (String(row.ticker || "").toLowerCase().startsWith(ql)
+        || String(row.company || "").toLowerCase().includes(ql)) pushStock(row);
+      return seen.size >= 5;
+    });
+  }
+
+  actions.push({ label: "새 대화 시작", hint: "AI 모드", run: () => {
+    if (!aiActive) window.MirAI?.toggle?.(true);
+    document.body.classList.remove("ai-conversation-view");
+    startNewAiChatSession();
+  } });
+  actions.push({ label: "대화 내보내기 (.md)", hint: "현재 세션", run: () => exportAiChatMarkdown() });
+  actions.push({ label: "테마 전환 (다크/라이트)", hint: "화면", run: () => byId("themeToggle")?.click() });
+  if (aiActive) {
+    actions.push({ label: "AI 모드 나가기", hint: "Esc", run: () => window.MirAI?.exit?.() });
+  } else {
+    actions.push({ label: "AI 모드 열기", hint: "임머시브 리서치", run: () => window.MirAI?.toggle?.(true) });
+  }
+
+  // 주요 탭 이동
+  document.querySelectorAll("#mainTabs .tab, .tabs .tab").forEach((btn) => {
+    const name = (btn.textContent || "").trim();
+    if (!name || !btn.dataset.tab) return;
+    if (actions.some((a) => a.label === `탭 이동: ${name}`)) return;
+    actions.push({ label: `탭 이동: ${name}`, hint: "탭", run: () => {
+      if (cmdkIsAiActive()) window.MirAI?.exit?.();
+      btn.click();
+    } });
+  });
+
+  // 퍼지 필터 (종목 결과는 이미 질의로 골라졌으므로 keep)
+  return actions
+    .map((a) => ({ ...a, _s: a.keep ? 1000 : cmdkFuzzyScore(a.label, q) }))
+    .filter((a) => a._s > 0)
+    .sort((a, b) => b._s - a._s)
+    .slice(0, 12);
+}
+
+function cmdkRender(query) {
+  const list = byId("cmdkList");
+  if (!list) return;
+  cmdkState.items = cmdkBuildActions(query);
+  cmdkState.index = Math.min(cmdkState.index, Math.max(0, cmdkState.items.length - 1));
+  if (!cmdkState.items.length) {
+    list.innerHTML = `<li class="cmdk-empty muted">일치하는 명령이 없습니다.</li>`;
+    return;
+  }
+  list.innerHTML = cmdkState.items.map((a, i) => `
+    <li class="cmdk-item${i === cmdkState.index ? " is-active" : ""}" role="option" aria-selected="${i === cmdkState.index}" data-index="${i}">
+      <span class="cmdk-label">${escapeHtml(a.label)}</span>
+      <span class="cmdk-hint">${escapeHtml(a.hint || "")}</span>
+    </li>`).join("");
+  list.querySelectorAll(".cmdk-item").forEach((el) => {
+    el.addEventListener("click", () => cmdkRun(Number(el.dataset.index)));
+    el.addEventListener("mousemove", () => {
+      const i = Number(el.dataset.index);
+      if (i !== cmdkState.index) { cmdkState.index = i; cmdkHighlight(); }
+    });
+  });
+}
+
+function cmdkHighlight() {
+  const list = byId("cmdkList");
+  if (!list) return;
+  list.querySelectorAll(".cmdk-item").forEach((el) => {
+    const on = Number(el.dataset.index) === cmdkState.index;
+    el.classList.toggle("is-active", on);
+    el.setAttribute("aria-selected", on ? "true" : "false");
+    if (on) el.scrollIntoView({ block: "nearest" });
+  });
+}
+
+function cmdkRun(index) {
+  const action = cmdkState.items[index];
+  if (!action) return;
+  cmdkClose();
+  try { action.run(); } catch (_) { /* ignore */ }
+}
+
+function cmdkOpen() {
+  const overlay = cmdkEnsureDom();
+  overlay.hidden = false;
+  cmdkState.open = true;
+  cmdkState.index = 0;
+  const input = overlay.querySelector("#cmdkInput");
+  input.value = "";
+  cmdkRender("");
+  requestAnimationFrame(() => input.focus());
+}
+
+function cmdkClose() {
+  const overlay = byId("cmdkOverlay");
+  if (overlay) overlay.hidden = true;
+  cmdkState.open = false;
+}
+
+function setupCommandPalette() {
+  if (setupCommandPalette._bound) return; // 부팅 재진입 가드
+  setupCommandPalette._bound = true;
+  document.addEventListener("keydown", (e) => {
+    // 팔레트가 열려 있을 때의 키 조작 (capture 로 다른 전역 핸들러보다 먼저)
+    if (cmdkState.open) {
+      if (e.key === "Escape") {
+        e.preventDefault(); e.stopPropagation(); cmdkClose(); return;
+      }
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault(); e.stopPropagation();
+        const n = cmdkState.items.length;
+        if (!n) return;
+        cmdkState.index = (cmdkState.index + (e.key === "ArrowDown" ? 1 : n - 1)) % n;
+        cmdkHighlight();
+        return;
+      }
+      if (e.key === "Enter") {
+        e.preventDefault(); e.stopPropagation(); cmdkRun(cmdkState.index); return;
+      }
+      if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+        e.preventDefault(); e.stopPropagation(); cmdkClose(); return;
+      }
+      return;
+    }
+    // 열기: Ctrl+K 어디서나, / 는 AI 모드에서 입력 중이 아닐 때
+    if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
+      e.preventDefault(); e.stopPropagation(); cmdkOpen(); return;
+    }
+    if (e.key === "/" && cmdkIsAiActive()) {
+      const el = document.activeElement;
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
+      if (!typing) { e.preventDefault(); e.stopPropagation(); cmdkOpen(); }
+    }
+  }, true);
+}
+setupCommandPalette();

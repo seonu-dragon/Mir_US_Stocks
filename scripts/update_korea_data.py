@@ -560,11 +560,14 @@ def yahoo_quote_symbol(yahoo_symbol: str) -> str:
     return UD.yahoo_symbol(yahoo_symbol)
 
 
-def fetch_yahoo_history_kr(yahoo_symbol: str):
-    """5년 일봉 + 배당 이벤트. 반환: (rows, dividends) — US 쪽과 동일 형태."""
+def fetch_yahoo_history_kr(yahoo_symbol: str, range_: str = "5y"):
+    """일봉 + 배당 이벤트. 반환: (rows, dividends) — US 쪽과 동일 형태.
+
+    range_ 는 야후 chart API 의 range 파라미터("5y" 전체 / "1y" 증분).
+    """
     url = (
         "https://query1.finance.yahoo.com/v8/finance/chart/"
-        f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}?range=5y&interval=1d&events=div"
+        f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}?range={range_}&interval=1d&events=div"
     )
     # 일시 스로틀(429)은 짧은 지터 백오프 2회로 흡수한다 — 그래도 실패하면
     # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다. US(update_data)와 동일 전략.
@@ -808,13 +811,35 @@ def load_cached_history(symbol: str):
         return None
 
 
+# 증분 이력 수집 상태(US update_data 와 동일 설계 — 헬퍼는 UD.* 재사용).
+FORCE_FULL_HISTORY = False  # --full-history 플래그(수동 복구용)
+_history_stats = {"incremental": 0, "full": 0, "mismatch": 0}
+_history_stats_lock = threading.Lock()
+
+
+def _note_history_mode(mode: str):
+    with _history_stats_lock:
+        if mode == "incremental":
+            _history_stats["incremental"] += 1
+        else:
+            _history_stats["full"] += 1
+            if mode == "full-mismatch":
+                _history_stats["mismatch"] += 1
+
+
 def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
     error = None
     try:
         if meta.get("preferHistory"):
-            rows, dividends = fetch_yahoo_history_kr(ysym)
+            rows, dividends, mode = UD.fetch_history_smart(
+                symbol,
+                lambda range_: fetch_yahoo_history_kr(ysym, range_=range_),
+                lambda: load_cached_history(symbol),
+                force_full=FORCE_FULL_HISTORY,
+            )
+            _note_history_mode(mode)
             meta["historySource"] = "yahoo"
             if dividends:
                 meta["dividends"] = dividends
@@ -1402,6 +1427,7 @@ def build_snapshot(limit: int | None = None) -> dict:
         pass
     print(f"[이력] preferHistory {prefer_total} · 실측 {fresh_real}(직전 {prev_real}) · "
           f"실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    print(UD.history_fetch_summary(_history_stats, _history_stats_lock))
     if prev_real >= 100 and fresh_real < prev_real * 0.9:
         raise SystemExit(
             f"[중단] 실측 이력 {fresh_real} < 직전 {prev_real}의 90% — "
@@ -1903,7 +1929,15 @@ def main():
         default=False,
         help="Commit and push data/korea/ to the git remote after updating.",
     )
+    parser.add_argument(
+        "--full-history",
+        action="store_true",
+        help="증분 병합을 끄고 모든 preferHistory 종목을 range=5y 전체로 재수집한다(수동 복구용).",
+    )
     args = parser.parse_args()
+
+    global FORCE_FULL_HISTORY
+    FORCE_FULL_HISTORY = args.full_history
 
     print("Building Korean market snapshot...")
     snapshot = build_snapshot(limit=args.limit)

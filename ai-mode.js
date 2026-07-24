@@ -769,7 +769,7 @@ function aiSectorEvidence(item) {
   const sectorAvg = peers.length
     ? peers.reduce((sum, row) => sum + Number(row.changePct || 0), 0) / peers.length
     : 0;
-  const ranked = peers.concat(item).sort((a, b) => Number(b.rsScore || 0) - Number(a.rsScore || 0));
+  const ranked = peers.concat(item).sort((a, b) => (Number(rsiValue(b)) || 0) - (Number(rsiValue(a)) || 0));
   const rank = ranked.findIndex((row) => row.ticker === item.ticker) + 1;
   const rel = Number(item.changePct || 0) - sectorAvg;
   return aiEvidenceCard(
@@ -887,7 +887,7 @@ function aiTechnicalPanel(item) {
   return aiModePanel("기술 지표", "추세·모멘텀·이평", aiMetricGrid([
     { label: "현재가", value: priceOrDash(last || item.price) },
     { label: "1개월", value: fmtPct(item.monthChangePct), tone: cls(item.monthChangePct) },
-    { label: "RS 점수", value: item.rsScore ?? "-", detail: "상대강도" },
+    { label: "RSI", value: fmtRsi(item), detail: "상대강도지수(14)" },
     { label: "거래량", value: `${Number(item.volumeRatio || 0).toFixed(1)}x`, detail: "평균 대비" },
     { label: "RSI(14)", value: rsi == null ? "-" : rsi.toFixed(1), tone: rsi >= 70 ? "warn" : rsi <= 30 ? "pos" : "" },
     { label: "MACD", value: macd == null ? "-" : macd.toFixed(2), detail: signal == null ? "" : `Signal ${signal.toFixed(2)}`, tone: macd != null && signal != null ? cls(macd - signal) : "" },
@@ -940,17 +940,18 @@ function aiEventsPanel(item) {
 }
 
 function aiSectorPanel(item) {
+  // 점수 대신 3개월 모멘텀으로 섹터 내 순위를 매기고 RSI 를 함께 보여준다.
   const peers = (data.stocks || [])
     .filter((row) => row.sector === item.sector)
-    .sort((a, b) => Number(b.rsScore || 0) - Number(a.rsScore || 0));
+    .sort((a, b) => (Number(b.threeMonthChangePct) || 0) - (Number(a.threeMonthChangePct) || 0));
   const rows = peers.slice(0, 8).map((row, index) => [
     `${index + 1}`,
     `<strong>${escapeHtml(row.ticker)}</strong>`,
     escapeHtml(row.company || ""),
     `<span class="${cls(row.changePct)}">${fmtDailyPct(row.changePct)}</span>`,
-    `${Math.round(Number(row.rsScore || 0))}`,
+    fmtRsi(row),
   ]);
-  return aiModePanel("섹터 흐름", `${item.sector || "-"} 상대강도`, aiMiniTable(["#", "티커", "회사", "당일", "RS"], rows, "동일 섹터 비교 데이터가 없습니다."));
+  return aiModePanel("섹터 흐름", `${item.sector || "-"} 3개월 강도`, aiMiniTable(["#", "티커", "회사", "당일", "RSI"], rows, "동일 섹터 비교 데이터가 없습니다."));
 }
 
 function aiInsiderPanel(item) {
@@ -1018,7 +1019,7 @@ function aiEarningsPanel(item) {
   const next = aiMetricGrid([
     { label: "다음 실적", value: earnings.nextDate || "-" },
     { label: "EPS 예상", value: earnings.epsEstimate ?? "-" },
-    { label: "EPS 점수", value: item.epsRevScore ?? "-" },
+    { label: "EPS", value: fmtEps(item) },
   ]);
   return aiModePanel("실적", "캘린더·반응", next + aiMiniTable(["발표일", "EPS 서프라이즈", "발표 후 5D"], reactions, "실적 발표 반응 데이터가 부족합니다."));
 }
@@ -1292,7 +1293,9 @@ function factorPercentiles(item) {
     push(cols.momentum, s.ticker, Number(s.threeMonthChangePct));
     const roe = Number(mf.roe), nm = Number(mf.netMargin), dr = Number(mf.debtRatio);
     if (Number.isFinite(roe) || Number.isFinite(nm)) push(cols.quality, s.ticker, (roe || 0) + (nm || 0) - (Number.isFinite(dr) ? dr / 5 : 0));
-    push(cols.growth, s.ticker, Number.isFinite(mf.revenueGrowth) ? mf.revenueGrowth : Number(s.rsScore));
+    push(cols.growth, s.ticker, Number.isFinite(mf.revenueGrowth) ? mf.revenueGrowth
+      : ((Number.isFinite(Number(s.epsNextY)) && Number.isFinite(Number(s.epsTtm)) && Number(s.epsTtm) > 0)
+          ? (Number(s.epsNextY) / Number(s.epsTtm) - 1) * 100 : NaN));
     push(cols.size, s.ticker, Number(s.marketCapB));
   }
   const pct = (arr) => {
@@ -2378,7 +2381,7 @@ function aiDashCardHtml(item) {
       ${stat("목표주가", targetVal)}
       ${stat("PER", fmtMultiple(f.pe))}
       ${stat("Fwd PER", fmtMultiple(f.forwardPE))}
-      ${stat("RS 점수", item.rsScore ?? "—")}
+      ${stat("RSI", fmtRsi(item))}
       ${stat("기관 보유(13F)", instVal)}
       ${stat("52주 고", priceOrDash(f.week52High))}
       ${stat("52주 저", priceOrDash(f.week52Low))}
@@ -2402,12 +2405,14 @@ function aiVerdictPanel(item) {
   const price = Number(item.price) || Number(f.prevClose);
   const sig = []; // {s: score, k: 'strength'|'risk'|'neutral', t: text}
 
-  const rs = Number(item.rsScore);
-  if (Number.isFinite(rs)) {
-    if (rs >= 80) sig.push({ s: 2, k: "strength", t: `RS ${rs} · 시장 상위 강세` });
-    else if (rs >= 60) sig.push({ s: 1, k: "strength", t: `RS ${rs} · 평균 이상 강세` });
-    else if (rs <= 30) sig.push({ s: -2, k: "risk", t: `RS ${rs} · 시장 대비 약세` });
-    else if (rs <= 45) sig.push({ s: -1, k: "risk", t: `RS ${rs} · 상대적 부진` });
+  // RS 점수(백분위) 대신 실측 RSI(14) 로 판정 — 스케일이 달라 임계도 RSI 기준.
+  // 55~70=건강한 상승 모멘텀, >70=과매수 경계, 45~55=중립, <30=과매도(약세/반등).
+  const rsi = rsiValue(item);
+  if (rsi != null) {
+    if (rsi > 70) sig.push({ s: -1, k: "risk", t: `RSI ${Math.round(rsi)} · 과매수 구간` });
+    else if (rsi >= 55) sig.push({ s: 1, k: "strength", t: `RSI ${Math.round(rsi)} · 상승 모멘텀` });
+    else if (rsi < 30) sig.push({ s: -2, k: "risk", t: `RSI ${Math.round(rsi)} · 과매도·약세` });
+    else if (rsi < 45) sig.push({ s: -1, k: "risk", t: `RSI ${Math.round(rsi)} · 모멘텀 둔화` });
   }
   const m3 = Number(item.threeMonthChangePct);
   if (Number.isFinite(m3)) {

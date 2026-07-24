@@ -850,7 +850,8 @@ function renderBulk() {
   const rows = tickers
     .map((ticker) => stockByTicker(ticker))
     .filter(Boolean)
-    .filter((item) => item.rsScore >= minRs);
+    // RSI 필터: 값이 없는(합성 이력) 종목은 임계 0 일 때만 통과.
+    .filter((item) => { const r = rsiValue(item); return r == null ? minRs <= 0 : r >= minRs; });
   renderWatchlistStats(rows);
   byId("bulkTable").innerHTML = rows.length ? rows.map((item) => `
     <tr>
@@ -859,8 +860,8 @@ function renderBulk() {
       <td>${escapeHtml(item.company)}</td>
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
-      <td>${item.rsScore}</td>
-      <td>${item.epsRevScore}</td>
+      <td>${fmtRsi(item)}</td>
+      <td>${fmtEps(item)}</td>
       <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
       <td>${signalFor(item)}</td>
     </tr>
@@ -871,9 +872,15 @@ function renderBulk() {
 }
 
 function signalFor(item) {
-  if (item.rsScore >= 85 && item.epsRevScore >= 75 && item.changePct > 0) return "강한 상승 후보";
-  if (item.rsScore >= 70 && item.changePct > 0) return "상승 추세";
-  if (item.stochK < 30) return "과매도 관찰";
+  // 점수 대신 실측 신호(3개월·1개월 모멘텀 + RSI)로 판정. RSI 없는(합성) 종목은
+  // 모멘텀만 본다.
+  const rsi = rsiValue(item);
+  const m3 = Number(item.threeMonthChangePct);
+  const m1 = Number(item.monthChangePct);
+  const day = Number(item.changePct);
+  if (m3 > 15 && m1 > 0 && day > 0 && (rsi == null || rsi <= 80)) return "강한 상승 후보";
+  if (m1 > 0 && day > 0) return "상승 추세";
+  if (rsi != null && rsi <= 30) return "과매도 관찰";
   return "중립";
 }
 

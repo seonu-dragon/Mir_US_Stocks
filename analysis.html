@@ -120,6 +120,24 @@
 
       .disclaimer { margin-top: 16px; padding: 12px 14px; font-size: 12.5px; line-height: 1.6;
         color: var(--tint-warn-fg); background: var(--tint-warn); border-radius: var(--r-md); }
+
+      /* 상세 분석 접이식(네이티브 <details>) — JS 없이 접힘/펼침 */
+      .cprob-more { margin: 14px 0 0; }
+      .cprob-more > summary { list-style: none; cursor: pointer; user-select: none;
+        display: flex; align-items: center; gap: 10px; width: 100%; box-sizing: border-box;
+        padding: 13px 16px; font-size: 14px; font-weight: 700; color: var(--text);
+        background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg);
+        box-shadow: var(--shadow-sm); }
+      .cprob-more > summary::-webkit-details-marker { display: none; }
+      .cprob-more > summary:hover { border-color: var(--chip-border); }
+      .cprob-more-caret { flex: 0 0 auto; width: 8px; height: 8px; border-right: 2px solid var(--muted);
+        border-bottom: 2px solid var(--muted); transform: rotate(-45deg); margin-left: 2px;
+        transition: transform .2s ease; }
+      .cprob-more[open] > summary .cprob-more-caret { transform: rotate(45deg); }
+      .cprob-more[open] > summary { border-radius: var(--r-lg) var(--r-lg) 0 0; border-bottom-color: transparent; }
+      .cprob-more-body { padding-top: 14px; }
+      .cprob-more-body > .grid2:last-child,
+      .cprob-more-body > .card:last-child { margin-bottom: 0; }
     </style>
   </head>
   <body>

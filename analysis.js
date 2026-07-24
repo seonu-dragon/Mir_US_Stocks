@@ -2794,28 +2794,11 @@ function buildResultHTML(result) {
       <span>저항선 <b>${sr.resistance ? fmtPrice(sr.resistance) : "—"}</b></span>
     </div>`;
 
-  return `
-    <div class="head-card">
-      <div class="head-meta">
-        <h2>${escapeHtml(result.ticker)} <span class="muted">${escapeHtml(result.company || "")}</span></h2>
-        <p class="muted">기준일 ${escapeHtml(result.lastDate)} · 종가 ${fmtPrice(result.price)} · 분석 봉 ${result.bars}개</p>
-      </div>
-      <div class="verdict" style="color:${color}">${verdictText(up)}</div>
-    </div>
-
-    <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
-      <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">AI 기술적 요약 브리핑</h3>
-      ${briefingHtml}
-    </div>
-
-    <div class="prob-wrap">
-      <div class="prob-bar">
-        <div class="prob-up" style="width:${up.toFixed(1)}%">상승 ${up.toFixed(0)}%</div>
-        <div class="prob-down" style="width:${down.toFixed(1)}%">하락 ${down.toFixed(0)}%</div>
-      </div>
-      <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 신호 합의 ${result.consensus.up.toFixed(0)}%${result.base ? ` / 과거 실측 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건)` : ""}</p>
-    </div>
-
+  // 상세(접이식) 섹션: 기본 화면에는 브리핑·확률·지지/저항만 노출하고,
+  // 나머지(신호 합의·과거유사·다중TF·갭·옵션·수급·패턴 중첩·숏스퀴즈·차트패턴·돌파)는
+  // 네이티브 <details>로 접어 둔다. JS 없이 접힘/펼침이 동작하므로 app.js 대시보드
+  // 뷰에서 재사용될 때도 별도 처리가 필요 없다.
+  const moreInner = `
     <div class="grid2 cprob-top-grid">
       <div class="card">
         <h3>① 신호 합의 <span class="muted">(추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
@@ -2839,12 +2822,46 @@ function buildResultHTML(result) {
 
     ${patternHtml}
 
-    ${breakoutHtml}
+    ${breakoutHtml}`;
+
+  // 접이식 안의 내용이 모두 비어 있으면(예외적 데이터 결손) 요약 행 자체를 숨긴다.
+  const hasMore = moreInner.replace(/\s+/g, "").length > 0;
+  const moreHtml = hasMore ? `
+    <details class="cprob-more">
+      <summary><span class="cprob-more-caret" aria-hidden="true"></span>상세 분석 더보기</summary>
+      <div class="cprob-more-body">
+        ${moreInner}
+      </div>
+    </details>` : "";
+
+  return `
+    <div class="head-card">
+      <div class="head-meta">
+        <h2>${escapeHtml(result.ticker)} <span class="muted">${escapeHtml(result.company || "")}</span></h2>
+        <p class="muted">기준일 ${escapeHtml(result.lastDate)} · 종가 ${fmtPrice(result.price)} · 분석 봉 ${result.bars}개</p>
+      </div>
+      <div class="verdict" style="color:${color}">${verdictText(up)}</div>
+    </div>
+
+    <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
+      <h3 style="margin: 0 0 10px; font-size: var(--fs-h3);">AI 기술적 요약 브리핑</h3>
+      ${briefingHtml}
+    </div>
+
+    <div class="prob-wrap">
+      <div class="prob-bar">
+        <div class="prob-up" style="width:${up.toFixed(1)}%">상승 ${up.toFixed(0)}%</div>
+        <div class="prob-down" style="width:${down.toFixed(1)}%">하락 ${down.toFixed(0)}%</div>
+      </div>
+      <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 신호 합의 ${result.consensus.up.toFixed(0)}%${result.base ? ` / 과거 실측 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건)` : ""}</p>
+    </div>
 
     <div class="card">
       <h3>지지 / 저항</h3>
       ${srHtml}
     </div>
+
+    ${moreHtml}
 
     <div class="disclaimer">
       이 수치는 <b>과거 가격 패턴에 기반한 기술적 추정</b>일 뿐이며 미래 수익을 보장하지 않습니다.

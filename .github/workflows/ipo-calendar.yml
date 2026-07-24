@@ -29,3 +29,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Build IPO calendar
         run: python scripts/build_ipo_calendar.py --backfill-days 30 --push
+      - name: Build US dilution tracker
+        continue-on-error: true
+        run: python scripts/build_us_dilution.py --backfill-days 45 --push

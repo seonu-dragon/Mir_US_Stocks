@@ -1,10 +1,1585 @@
 {
-  "updatedAtKst": "2026-07-23 15:42 KST",
-  "lastFileDate": "2026-07-22",
-  "count": 757,
+  "updatedAtKst": "2026-07-24 09:00 KST",
+  "lastFileDate": "2026-07-23",
+  "count": 836,
   "source": "SEC EDGAR 8-K",
-  "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조.",
+  "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만.",
   "events": [
+    {
+      "ticker": "PSKY",
+      "company": "Paramount Skydance Corp  (PSKY)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0002041610-26-000043",
+      "link": "https://www.sec.gov/Archives/edgar/data/2041610/000204161026000043/psky-20260720.htm"
+    },
+    {
+      "ticker": "GEHC",
+      "company": "GE HealthCare Technologies Inc.  (GEHC)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001932393-26-000039",
+      "link": "https://www.sec.gov/Archives/edgar/data/1932393/000193239326000039/gehc-20260721.htm"
+    },
+    {
+      "ticker": "DOW",
+      "company": "DOW INC.  (DOW)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001751788-26-000144",
+      "link": "https://www.sec.gov/Archives/edgar/data/1751788/000175178826000144/dow-20260723.htm"
+    },
+    {
+      "ticker": "COIN",
+      "company": "Coinbase Global, Inc.  (COIN)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001679788-26-000080",
+      "link": "https://www.sec.gov/Archives/edgar/data/1679788/000167978826000080/coin-20260722.htm"
+    },
+    {
+      "ticker": "KNSL",
+      "company": "Kinsale Capital Group, Inc.  (KNSL)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001669162-26-000039",
+      "link": "https://www.sec.gov/Archives/edgar/data/1669162/000166916226000039/knsl-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "IOT",
+      "company": "Samsara Inc.  (IOT)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001628280-26-049446",
+      "link": "https://www.sec.gov/Archives/edgar/data/1642896/000162828026049446/iot-20260722.htm"
+    },
+    {
+      "ticker": "PAG",
+      "company": "PENSKE AUTOMOTIVE GROUP, INC.  (PAG)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001628280-26-049400",
+      "link": "https://www.sec.gov/Archives/edgar/data/1019849/000162828026049400/pag-20260723.htm"
+    },
+    {
+      "ticker": "ELS",
+      "company": "EQUITY LIFESTYLE PROPERTIES INC  (ELS)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001628280-26-049302",
+      "link": "https://www.sec.gov/Archives/edgar/data/895417/000162828026049302/els-20260722.htm"
+    },
+    {
+      "ticker": "LMT",
+      "company": "LOCKHEED MARTIN CORP  (LMT)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001628280-26-049277",
+      "link": "https://www.sec.gov/Archives/edgar/data/936468/000162828026049277/lmt-20260723.htm"
+    },
+    {
+      "ticker": "CMCSA",
+      "company": "COMCAST CORP  (CCZ, CMCSA)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001628280-26-049274",
+      "link": "https://www.sec.gov/Archives/edgar/data/1166691/000162828026049274/cmcsa-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "JHX",
+      "company": "James Hardie Industries plc  (JHX, JHIUF)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001628280-26-049246",
+      "link": "https://www.sec.gov/Archives/edgar/data/1159152/000162828026049246/jhx-20260722.htm"
+    },
+    {
+      "ticker": "SMMT",
+      "company": "Summit Therapeutics Inc.  (SMMT)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001599298-26-000067",
+      "link": "https://www.sec.gov/Archives/edgar/data/1599298/000159929826000067/smmt-20260723.htm"
+    },
+    {
+      "ticker": "ALLE",
+      "company": "Allegion plc  (ALLE)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001579241-26-000026",
+      "link": "https://www.sec.gov/Archives/edgar/data/1579241/000157924126000026/alle-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "REXR",
+      "company": "Rexford Industrial Realty, Inc.  (REXR, REXR-PB, REXR-PC)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001571283-26-000037",
+      "link": "https://www.sec.gov/Archives/edgar/data/1571283/000157128326000037/rexr-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001564708-26-000158",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000158/nws-20260722.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "CAPN",
+      "company": "Cayson Acquisition Corp  (CAPN, CAPNR, CAPNU)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001493152-26-034317",
+      "link": "https://www.sec.gov/Archives/edgar/data/2024203/000149315226034317/form8-k.htm"
+    },
+    {
+      "ticker": "ENS",
+      "company": "EnerSys  (ENS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001289308-26-000014",
+      "link": "https://www.sec.gov/Archives/edgar/data/1289308/000128930826000014/ens-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "MXL",
+      "company": "MAXLINEAR, INC  (MXL)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001288469-26-000050",
+      "link": "https://www.sec.gov/Archives/edgar/data/1288469/000128846926000050/mxl-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "TMUS",
+      "company": "T-Mobile US, Inc.  (TMUS, TMUSI, TMUSL, TMUSZ)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001283699-26-000100",
+      "link": "https://www.sec.gov/Archives/edgar/data/1283699/000128369926000100/tmus-20260723.htm"
+    },
+    {
+      "ticker": "LSTR",
+      "company": "LANDSTAR SYSTEM INC  (LSTR)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314490",
+      "link": "https://www.sec.gov/Archives/edgar/data/853816/000119312526314490/d66119d8k.htm"
+    },
+    {
+      "ticker": "OVV",
+      "company": "Ovintiv Inc.  (OVV)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314272",
+      "link": "https://www.sec.gov/Archives/edgar/data/1792580/000119312526314272/ovv-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "BNY",
+      "company": "Bank of New York Mellon Corp  (BNY, BNY-PK)",
+      "items": [
+        {
+          "code": "3.03",
+          "label": "주주 권리 변경"
+        },
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314242",
+      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000119312526314242/d126055d8k.htm"
+    },
+    {
+      "ticker": "SMMT",
+      "company": "Summit Therapeutics Inc.  (SMMT)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314214",
+      "link": "https://www.sec.gov/Archives/edgar/data/1599298/000119312526314214/d143170d8k.htm"
+    },
+    {
+      "ticker": "SBAC",
+      "company": "SBA COMMUNICATIONS CORP  (SBAC)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314131",
+      "link": "https://www.sec.gov/Archives/edgar/data/1034054/000119312526314131/d146754d8k.htm"
+    },
+    {
+      "ticker": "JPM",
+      "company": "JPMORGAN CHASE & CO  (JPM, AMJB, VYLD, JPM-PC, JPM-PD, JPM-PJ, JPM-PK, JPM-PL, JPM-PM)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314128",
+      "link": "https://www.sec.gov/Archives/edgar/data/19617/000119312526314128/d103985d8k.htm"
+    },
+    {
+      "ticker": "STT",
+      "company": "STATE STREET CORP  (STT, STT-PG)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314120",
+      "link": "https://www.sec.gov/Archives/edgar/data/93751/000119312526314120/d861832d8k.htm"
+    },
+    {
+      "ticker": "ADM",
+      "company": "Archer-Daniels-Midland Co  (ADM)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314103",
+      "link": "https://www.sec.gov/Archives/edgar/data/7084/000119312526314103/d168542d8k.htm"
+    },
+    {
+      "ticker": "SSNC",
+      "company": "SS&C Technologies Holdings Inc  (SSNC)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-314097",
+      "link": "https://www.sec.gov/Archives/edgar/data/1402436/000119312526314097/ssnc-20260723.htm"
+    },
+    {
+      "ticker": "TFC",
+      "company": "TRUIST FINANCIAL CORP  (TFC, TFC-PI, TFC-PO, TFC-PR)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-313404",
+      "link": "https://www.sec.gov/Archives/edgar/data/92230/000119312526313404/d307505d8k.htm"
+    },
+    {
+      "ticker": "NSC",
+      "company": "NORFOLK SOUTHERN CORP  (NSC)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-313393",
+      "link": "https://www.sec.gov/Archives/edgar/data/702165/000119312526313393/nsc-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "BPOP",
+      "company": "POPULAR, INC.  (BPOP, BPOPM, BPOPO)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-313376",
+      "link": "https://www.sec.gov/Archives/edgar/data/763901/000119312526313376/d174958d8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "BPOP",
+      "company": "POPULAR, INC.  (BPOP, BPOPM, BPOPO)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-313373",
+      "link": "https://www.sec.gov/Archives/edgar/data/763901/000119312526313373/d863137d8k.htm"
+    },
+    {
+      "ticker": "BX",
+      "company": "Blackstone Inc.  (BX)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-313250",
+      "link": "https://www.sec.gov/Archives/edgar/data/1393818/000119312526313250/d153439d8k.htm"
+    },
+    {
+      "ticker": "PKG",
+      "company": "PACKAGING CORP OF AMERICA  (PKG)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001193125-26-312651",
+      "link": "https://www.sec.gov/Archives/edgar/data/75677/000119312526312651/pkg-20260722.htm"
+    },
+    {
+      "ticker": "BAM",
+      "company": "Brookfield Asset Management Ltd.  (BAM)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001171843-26-004839",
+      "link": "https://www.sec.gov/Archives/edgar/data/1937926/000117184326004839/f8k_072226.htm"
+    },
+    {
+      "ticker": "NEM",
+      "company": "NEWMONT Corp /DE/  (NEM, NEMCL)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001164727-26-000034",
+      "link": "https://www.sec.gov/Archives/edgar/data/1164727/000116472726000034/nem-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "NDAQ",
+      "company": "NASDAQ, INC.  (NDAQ)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001120193-26-000011",
+      "link": "https://www.sec.gov/Archives/edgar/data/1120193/000112019326000011/ndaq-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "DOCN",
+      "company": "DigitalOcean Holdings, Inc.  (DOCN)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001104659-26-086342",
+      "link": "https://www.sec.gov/Archives/edgar/data/1582961/000110465926086342/tm2621138d2_8k.htm"
+    },
+    {
+      "ticker": "QXO",
+      "company": "QXO, Inc.  (QXO, QXO-PB)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001104659-26-086330",
+      "link": "https://www.sec.gov/Archives/edgar/data/1236275/000110465926086330/tm2621160d1_8k.htm"
+    },
+    {
+      "ticker": "CHTR",
+      "company": "CHARTER COMMUNICATIONS, INC. /MO/  (CHTR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0001104659-26-086302",
+      "link": "https://www.sec.gov/Archives/edgar/data/1091667/000110465926086302/tm2621145d1_8k.htm"
+    },
+    {
+      "ticker": "SSB",
+      "company": "SouthState Bank Corp  (SSB)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001104659-26-086278",
+      "link": "https://www.sec.gov/Archives/edgar/data/764038/000110465926086278/ssb-20260723x8k.htm"
+    },
+    {
+      "ticker": "DLR",
+      "company": "DIGITAL REALTY TRUST, INC.  (DLR, DLR-PJ, DLR-PK, DLR-PL)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001104659-26-086270",
+      "link": "https://www.sec.gov/Archives/edgar/data/1297996/000110465926086270/dlr-20260723x8k.htm"
+    },
+    {
+      "ticker": "FIX",
+      "company": "COMFORT SYSTEMS USA INC  (FIX)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001104659-26-086255",
+      "link": "https://www.sec.gov/Archives/edgar/data/1035983/000110465926086255/fix-20260723x8k.htm"
+    },
+    {
+      "ticker": "EW",
+      "company": "Edwards Lifesciences Corp  (EW)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001099800-26-000038",
+      "link": "https://www.sec.gov/Archives/edgar/data/1099800/000109980026000038/ew-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "DGX",
+      "company": "QUEST DIAGNOSTICS INC  (DGX)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001022079-26-000067",
+      "link": "https://www.sec.gov/Archives/edgar/data/1022079/000102207926000067/dgx-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "VRSN",
+      "company": "VERISIGN INC/CA  (VRSN)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001014473-26-000026",
+      "link": "https://www.sec.gov/Archives/edgar/data/1014473/000101447326000026/vrsn-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "PCG",
+      "company": "PG&E Corp  (PCG, PCG-PA, PCG-PB, PCG-PC, PCG-PD, PCG-PE, PCG-PG, PCG-PH, PCG-PI, PCG-PX)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0001004980-26-000047",
+      "link": "https://www.sec.gov/Archives/edgar/data/1004980/000100498026000047/pcg-20260723.htm"
+    },
+    {
+      "ticker": "VIRT",
+      "company": "Virtu Financial, Inc.  (VIRT)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000950142-26-002156",
+      "link": "https://www.sec.gov/Archives/edgar/data/1592386/000095014226002156/eh260810393_8k.htm"
+    },
+    {
+      "ticker": "TSCO",
+      "company": "TRACTOR SUPPLY CO /DE/  (TSCO)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000916365-26-000052",
+      "link": "https://www.sec.gov/Archives/edgar/data/916365/000091636526000052/tsco-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "ALB",
+      "company": "ALBEMARLE CORP  (ALB, ALB-PA)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000915913-26-000095",
+      "link": "https://www.sec.gov/Archives/edgar/data/915913/000091591326000095/alb-20260721.htm"
+    },
+    {
+      "ticker": "AVB",
+      "company": "AVALONBAY COMMUNITIES INC  (AVB)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000915912-26-000018",
+      "link": "https://www.sec.gov/Archives/edgar/data/915912/000091591226000018/avb-20260722.htm"
+    },
+    {
+      "ticker": "DECK",
+      "company": "DECKERS OUTDOOR CORP  (DECK)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000910521-26-000015",
+      "link": "https://www.sec.gov/Archives/edgar/data/910521/000091052126000015/deck-20260723.htm"
+    },
+    {
+      "ticker": "NVR",
+      "company": "NVR INC  (NVR)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000906163-26-000086",
+      "link": "https://www.sec.gov/Archives/edgar/data/906163/000090616326000086/nvr-20260723.htm"
+    },
+    {
+      "ticker": "COLB",
+      "company": "COLUMBIA BANKING SYSTEM, INC.  (COLB)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000887343-26-000165",
+      "link": "https://www.sec.gov/Archives/edgar/data/887343/000088734326000165/colb-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "ROP",
+      "company": "ROPER TECHNOLOGIES INC  (ROP)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000882835-26-000031",
+      "link": "https://www.sec.gov/Archives/edgar/data/882835/000088283526000031/rop-20260723.htm"
+    },
+    {
+      "ticker": "ODFL",
+      "company": "OLD DOMINION FREIGHT LINE, INC.  (ODFL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0000878927-26-000019",
+      "link": "https://www.sec.gov/Archives/edgar/data/878927/000087892726000019/odfl-20260723.htm"
+    },
+    {
+      "ticker": "HIG",
+      "company": "HARTFORD INSURANCE GROUP, INC.  (HIG, HIG-PG)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000874766-26-000059",
+      "link": "https://www.sec.gov/Archives/edgar/data/874766/000087476626000059/hig-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "FCFS",
+      "company": "FirstCash Holdings, Inc.  (FCFS)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000840489-26-000082",
+      "link": "https://www.sec.gov/Archives/edgar/data/840489/000084048926000082/fcfs-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "FCX",
+      "company": "FREEPORT-MCMORAN INC  (FCX)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000831259-26-000033",
+      "link": "https://www.sec.gov/Archives/edgar/data/831259/000083125926000033/fcx-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "AMP",
+      "company": "AMERIPRISE FINANCIAL INC  (AMP)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000820027-26-000038",
+      "link": "https://www.sec.gov/Archives/edgar/data/820027/000082002726000038/amp-20260723.htm"
+    },
+    {
+      "ticker": "FCNCA",
+      "company": "FIRST CITIZENS BANCSHARES INC /DE/  (FCNCA, FCNCB, FCNCN, FCNCO, FCNCP)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000798941-26-000027",
+      "link": "https://www.sec.gov/Archives/edgar/data/798941/000079894126000027/fcnca-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "HON",
+      "company": "HONEYWELL INTERNATIONAL INC  (HON)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000773840-26-000120",
+      "link": "https://www.sec.gov/Archives/edgar/data/773840/000077384026000120/hon-20260723.htm"
+    },
+    {
+      "ticker": "BPOP",
+      "company": "POPULAR, INC.  (BPOP, BPOPM, BPOPO)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000763901-26-000013",
+      "link": "https://www.sec.gov/Archives/edgar/data/763901/000076390126000013/bpop-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "VLY",
+      "company": "VALLEY NATIONAL BANCORP  (VLY, VLYPN, VLYPO, VLYPP)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000714310-26-000036",
+      "link": "https://www.sec.gov/Archives/edgar/data/714310/000071431026000036/vly-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "WST",
+      "company": "WEST PHARMACEUTICAL SERVICES INC  (WST)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000105770-26-000097",
+      "link": "https://www.sec.gov/Archives/edgar/data/105770/000010577026000097/wst-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "RTX",
+      "company": "RTX Corp  (RTX)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000101829-26-000025",
+      "link": "https://www.sec.gov/Archives/edgar/data/101829/000010182926000025/rtx-20260723.htm"
+    },
+    {
+      "ticker": "UNP",
+      "company": "UNION PACIFIC CORP  (UNP)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000100885-26-000249",
+      "link": "https://www.sec.gov/Archives/edgar/data/100885/000010088526000249/unp-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "TMO",
+      "company": "THERMO FISHER SCIENTIFIC INC.  (TMO)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000097745-26-000138",
+      "link": "https://www.sec.gov/Archives/edgar/data/97745/000009774526000138/tmo-20260723.htm"
+    },
+    {
+      "ticker": "SNA",
+      "company": "Snap-on Inc  (SNA)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000091440-26-000141",
+      "link": "https://www.sec.gov/Archives/edgar/data/91440/000009144026000141/sna-20260723.htm"
+    },
+    {
+      "ticker": "R",
+      "company": "RYDER SYSTEM INC  (R)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000085961-26-000020",
+      "link": "https://www.sec.gov/Archives/edgar/data/85961/000008596126000020/r-20260723.htm"
+    },
+    {
+      "ticker": "ORI",
+      "company": "OLD REPUBLIC INTERNATIONAL CORP  (ORI)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000074260-26-000087",
+      "link": "https://www.sec.gov/Archives/edgar/data/74260/000007426026000087/ori-20260723.htm"
+    },
+    {
+      "ticker": "THC",
+      "company": "TENET HEALTHCARE CORP  (THC)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000070318-26-000032",
+      "link": "https://www.sec.gov/Archives/edgar/data/70318/000007031826000032/thc-20260723.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "INTC",
+      "company": "INTEL CORP  (INTC)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000050863-26-000155",
+      "link": "https://www.sec.gov/Archives/edgar/data/50863/000005086326000155/intc-20260723.htm"
+    },
+    {
+      "ticker": "HBAN",
+      "company": "HUNTINGTON BANCSHARES INC /MD/  (HBAN, HBANL, HBANM, HBANP, HBANZ)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0000049196-26-000062",
+      "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000062/hban-20260723.htm"
+    },
+    {
+      "ticker": "HBAN",
+      "company": "HUNTINGTON BANCSHARES INC /MD/  (HBAN, HBANL, HBANM, HBANP, HBANZ)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000049196-26-000060",
+      "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000060/hban-20260723.htm"
+    },
+    {
+      "ticker": "BEN",
+      "company": "FRANKLIN RESOURCES INC  (BEN)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000038777-26-000194",
+      "link": "https://www.sec.gov/Archives/edgar/data/38777/000003877726000194/ben-20260721.htm"
+    },
+    {
+      "ticker": "DOV",
+      "company": "DOVER Corp  (DOV)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000029905-26-000026",
+      "link": "https://www.sec.gov/Archives/edgar/data/29905/000002990526000026/dov-20260723.htm"
+    },
+    {
+      "ticker": "JPM",
+      "company": "JPMORGAN CHASE & CO  (JPM, AMJB, VYLD, JPM-PC, JPM-PD, JPM-PJ, JPM-PK, JPM-PL, JPM-PM)",
+      "items": [
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-07-23",
+      "accession": "0000019617-26-000288",
+      "link": "https://www.sec.gov/Archives/edgar/data/19617/000001961726000288/jpm-20260721.htm"
+    },
+    {
+      "ticker": "AAL",
+      "company": "American Airlines Group Inc.  (AAL)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-07-23",
+      "accession": "0000006201-26-000051",
+      "link": "https://www.sec.gov/Archives/edgar/data/6201/000000620126000051/aal-20260723.htm"
+    },
     {
       "ticker": "PNFP",
       "company": "Pinnacle Financial Partners, Inc.  (PNFP, PNFP-PA, PNFP-PB, PNFP-PC)",
@@ -43,7 +1618,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001996810-26-000147",
-      "link": "https://www.sec.gov/Archives/edgar/data/1996810/000199681026000147/gev-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1996810/000199681026000147/gev-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "GLXY",
@@ -111,7 +1688,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001668397-26-000023",
-      "link": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000023/medp-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1668397/000166839726000023/medp-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "GOOGL",
@@ -317,7 +1896,10 @@
       "hot": false,
       "fileDate": "2026-07-22",
       "accession": "0001564708-26-000157",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000157/nws-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000157/nws-20260721.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "GWRE",
@@ -407,7 +1989,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001300514-26-000078",
-      "link": "https://www.sec.gov/Archives/edgar/data/1300514/000130051426000078/lvs-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1300514/000130051426000078/lvs-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "APXT",
@@ -525,7 +2109,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001193125-26-312445",
-      "link": "https://www.sec.gov/Archives/edgar/data/906107/000119312526312445/eqr-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/906107/000119312526312445/eqr-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "AHR",
@@ -639,7 +2225,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001193125-26-311276",
-      "link": "https://www.sec.gov/Archives/edgar/data/110621/000119312526311276/d141573d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/110621/000119312526311276/d141573d8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "MOH",
@@ -697,7 +2285,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001171843-26-004833",
-      "link": "https://www.sec.gov/Archives/edgar/data/861884/000117184326004833/f8k_072226.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/861884/000117184326004833/f8k_072226.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "CME",
@@ -915,7 +2505,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0001067701-26-000028",
-      "link": "https://www.sec.gov/Archives/edgar/data/1067701/000106770126000028/uri-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1067701/000106770126000028/uri-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "CCI",
@@ -1085,7 +2677,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0000350894-26-000044",
-      "link": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000044/seic-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/350894/000035089426000044/seic-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "GL",
@@ -1103,7 +2697,10 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0000320335-26-000203",
-      "link": "https://www.sec.gov/Archives/edgar/data/320335/000032033526000203/gl-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/320335/000032033526000203/gl-20260722.htm",
+      "kind": "buyback",
+      "amountUsd": 175000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "RRC",
@@ -1121,7 +2718,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0000315852-26-000018",
-      "link": "https://www.sec.gov/Archives/edgar/data/315852/000031585226000018/rrc-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/315852/000031585226000018/rrc-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "CSX",
@@ -1175,7 +2774,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0000092380-26-000074",
-      "link": "https://www.sec.gov/Archives/edgar/data/92380/000009238026000074/luv-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/92380/000009238026000074/luv-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "ROL",
@@ -1215,7 +2816,9 @@
       "hot": true,
       "fileDate": "2026-07-22",
       "accession": "0000073124-26-000043",
-      "link": "https://www.sec.gov/Archives/edgar/data/73124/000007312426000043/ntrs-20260722.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/73124/000007312426000043/ntrs-20260722.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "IBM",
@@ -1337,7 +2940,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0001628280-26-049001",
-      "link": "https://www.sec.gov/Archives/edgar/data/1212545/000162828026049001/wal-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1212545/000162828026049001/wal-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "PNC",
@@ -1355,7 +2960,9 @@
       "hot": false,
       "fileDate": "2026-07-21",
       "accession": "0001628280-26-048994",
-      "link": "https://www.sec.gov/Archives/edgar/data/713676/000162828026048994/pnc-20260716.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/713676/000162828026048994/pnc-20260716.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "SYF",
@@ -1409,7 +3016,10 @@
       "hot": false,
       "fileDate": "2026-07-21",
       "accession": "0001564708-26-000156",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000156/nws-20260720.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000156/nws-20260720.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "VOYA",
@@ -1473,7 +3083,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0001408198-26-000044",
-      "link": "https://www.sec.gov/Archives/edgar/data/1408198/000140819826000044/msci-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1408198/000140819826000044/msci-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "IBKR",
@@ -1609,7 +3221,9 @@
       "hot": false,
       "fileDate": "2026-07-21",
       "accession": "0001193125-26-310413",
-      "link": "https://www.sec.gov/Archives/edgar/data/36270/000119312526310413/d127076d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/36270/000119312526310413/d127076d8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "GS",
@@ -1807,7 +3421,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0001069157-26-000041",
-      "link": "https://www.sec.gov/Archives/edgar/data/1069157/000106915726000041/ewbc-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1069157/000106915726000041/ewbc-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "FDX",
@@ -2055,7 +3671,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0000091576-26-000017",
-      "link": "https://www.sec.gov/Archives/edgar/data/91576/000009157626000017/key-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/91576/000009157626000017/key-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "MLI",
@@ -2145,7 +3763,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0000046080-26-000044",
-      "link": "https://www.sec.gov/Archives/edgar/data/46080/000004608026000044/has-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/46080/000004608026000044/has-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "HAL",
@@ -2167,7 +3787,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0000045012-26-000057",
-      "link": "https://www.sec.gov/Archives/edgar/data/45012/000004501226000057/hal-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/45012/000004501226000057/hal-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "GPC",
@@ -2221,7 +3843,9 @@
       "hot": true,
       "fileDate": "2026-07-21",
       "accession": "0000033185-26-000024",
-      "link": "https://www.sec.gov/Archives/edgar/data/33185/000003318526000024/efx-20260721.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/33185/000003318526000024/efx-20260721.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "AEP",
@@ -2307,7 +3931,10 @@
       "hot": false,
       "fileDate": "2026-07-20",
       "accession": "0001564708-26-000155",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000155/nws-20260717.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000155/nws-20260717.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "DTSQ",
@@ -2355,7 +3982,9 @@
       "hot": true,
       "fileDate": "2026-07-20",
       "accession": "0001493152-26-033912",
-      "link": "https://www.sec.gov/Archives/edgar/data/1780312/000149315226033912/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1780312/000149315226033912/form8-k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "BMNR",
@@ -2373,7 +4002,9 @@
       "hot": false,
       "fileDate": "2026-07-20",
       "accession": "0001493152-26-033855",
-      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226033855/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226033855/form8-k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "AGNC",
@@ -2459,7 +4090,9 @@
       "hot": false,
       "fileDate": "2026-07-20",
       "accession": "0001213900-26-079407",
-      "link": "https://www.sec.gov/Archives/edgar/data/2064953/000121390026079407/ea0298500-8k425_solstice.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2064953/000121390026079407/ea0298500-8k425_solstice.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "MTZ",
@@ -2563,7 +4196,9 @@
       "hot": false,
       "fileDate": "2026-07-20",
       "accession": "0001193125-26-308369",
-      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526308369/mstr-20260720.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526308369/mstr-20260720.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "IREN",
@@ -2635,7 +4270,9 @@
       "hot": false,
       "fileDate": "2026-07-20",
       "accession": "0001104659-26-084905",
-      "link": "https://www.sec.gov/Archives/edgar/data/1590714/000110465926084905/tm2620849d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1590714/000110465926084905/tm2620849d1_8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "HUT",
@@ -2653,7 +4290,9 @@
       "hot": false,
       "fileDate": "2026-07-20",
       "accession": "0001104659-26-084862",
-      "link": "https://www.sec.gov/Archives/edgar/data/1964789/000110465926084862/tm2620835d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1964789/000110465926084862/tm2620835d1_8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "WTFC",
@@ -2801,7 +4440,9 @@
       "hot": true,
       "fileDate": "2026-07-17",
       "accession": "0001628280-26-048676",
-      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000162828026048676/avtr-20260714.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000162828026048676/avtr-20260714.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "CRH",
@@ -2833,7 +4474,10 @@
       "hot": false,
       "fileDate": "2026-07-17",
       "accession": "0001564708-26-000154",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000154/nws-20260716.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000154/nws-20260716.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "ALIS",
@@ -2949,7 +4593,9 @@
       "hot": true,
       "fileDate": "2026-07-17",
       "accession": "0001193125-26-306698",
-      "link": "https://www.sec.gov/Archives/edgar/data/1034670/000119312526306698/alv-20260717.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1034670/000119312526306698/alv-20260717.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "TRGP",
@@ -3067,7 +4713,9 @@
       "hot": true,
       "fileDate": "2026-07-17",
       "accession": "0000086312-26-000143",
-      "link": "https://www.sec.gov/Archives/edgar/data/86312/000008631226000143/trv-20260717.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/86312/000008631226000143/trv-20260717.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "IP",
@@ -3107,7 +4755,10 @@
       "hot": true,
       "fileDate": "2026-07-17",
       "accession": "0000035527-26-000193",
-      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000193/fitb-20260717.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000193/fitb-20260717.htm",
+      "kind": "buyback",
+      "amountUsd": 933000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "CBSH",
@@ -3125,7 +4776,9 @@
       "hot": true,
       "fileDate": "2026-07-17",
       "accession": "0000022356-26-000179",
-      "link": "https://www.sec.gov/Archives/edgar/data/22356/000002235626000179/cbsh-20260716.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/22356/000002235626000179/cbsh-20260716.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "SBEV",
@@ -3257,7 +4910,10 @@
       "hot": false,
       "fileDate": "2026-07-16",
       "accession": "0001564708-26-000153",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000153/nws-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000153/nws-20260715.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "UBER",
@@ -3701,7 +5357,9 @@
       "hot": true,
       "fileDate": "2026-07-16",
       "accession": "0000731766-26-000191",
-      "link": "https://www.sec.gov/Archives/edgar/data/731766/000073176626000191/unh-20260716.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/731766/000073176626000191/unh-20260716.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "STT",
@@ -3723,7 +5381,9 @@
       "hot": true,
       "fileDate": "2026-07-16",
       "accession": "0000093751-26-000387",
-      "link": "https://www.sec.gov/Archives/edgar/data/93751/000009375126000387/stt-20260716.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/93751/000009375126000387/stt-20260716.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "GE",
@@ -3781,7 +5441,9 @@
       "hot": true,
       "fileDate": "2026-07-16",
       "accession": "0000022356-26-000176",
-      "link": "https://www.sec.gov/Archives/edgar/data/22356/000002235626000176/cbsh-20260716.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/22356/000002235626000176/cbsh-20260716.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "ACA",
@@ -3859,7 +5521,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0001628280-26-048244",
-      "link": "https://www.sec.gov/Archives/edgar/data/713676/000162828026048244/pnc-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/713676/000162828026048244/pnc-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "NWSA",
@@ -3877,7 +5541,10 @@
       "hot": false,
       "fileDate": "2026-07-15",
       "accession": "0001564708-26-000152",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000152/nws-20260714.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000152/nws-20260714.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "FWONA",
@@ -3979,7 +5646,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0001437749-26-023629",
-      "link": "https://www.sec.gov/Archives/edgar/data/728535/000143774926023629/jbht20260714_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/728535/000143774926023629/jbht20260714_8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "V",
@@ -4019,7 +5688,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0001390777-26-000071",
-      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000139077726000071/bk-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000139077726000071/bk-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "PSBD",
@@ -4245,7 +5916,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0001156039-26-000058",
-      "link": "https://www.sec.gov/Archives/edgar/data/1156039/000115603926000058/elv-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1156039/000115603926000058/elv-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "PCSC",
@@ -4381,7 +6054,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0000895421-26-000207",
-      "link": "https://www.sec.gov/Archives/edgar/data/895421/000089542126000207/ms-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/895421/000089542126000207/ms-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "HIG",
@@ -4453,7 +6128,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0000100517-26-000135",
-      "link": "https://www.sec.gov/Archives/edgar/data/100517/000010051726000135/ual-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/100517/000010051726000135/ual-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "PGR",
@@ -4511,7 +6188,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0000036966-26-000143",
-      "link": "https://www.sec.gov/Archives/edgar/data/36966/000003696626000143/fhn-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/36966/000003696626000143/fhn-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "MTB",
@@ -4533,7 +6212,9 @@
       "hot": true,
       "fileDate": "2026-07-15",
       "accession": "0000036270-26-000046",
-      "link": "https://www.sec.gov/Archives/edgar/data/36270/000003627026000046/mbt-20260715.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/36270/000003627026000046/mbt-20260715.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "CAG",
@@ -4687,7 +6368,10 @@
       "hot": true,
       "fileDate": "2026-07-14",
       "accession": "0001628280-26-048078",
-      "link": "https://www.sec.gov/Archives/edgar/data/19617/000162828026048078/jpm-20260714.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/19617/000162828026048078/jpm-20260714.htm",
+      "kind": "buyback",
+      "amountUsd": 50000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "TLN",
@@ -4741,7 +6425,10 @@
       "hot": false,
       "fileDate": "2026-07-14",
       "accession": "0001564708-26-000151",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000151/nws-20260713.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000151/nws-20260713.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "DPZ",
@@ -4951,7 +6638,9 @@
       "hot": true,
       "fileDate": "2026-07-14",
       "accession": "0001104659-26-083383",
-      "link": "https://www.sec.gov/Archives/edgar/data/831001/000110465926083383/c-20260714x8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/831001/000110465926083383/c-20260714x8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "EQIX",
@@ -5013,7 +6702,9 @@
       "hot": true,
       "fileDate": "2026-07-14",
       "accession": "0000886982-26-000294",
-      "link": "https://www.sec.gov/Archives/edgar/data/886982/000088698226000294/gs-20260714.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/886982/000088698226000294/gs-20260714.htm",
+      "kind": "buyback",
+      "buybackChecked": true
     },
     {
       "ticker": "FAST",
@@ -5303,7 +6994,10 @@
       "hot": false,
       "fileDate": "2026-07-13",
       "accession": "0001564708-26-000150",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000150/nws-20260710.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000150/nws-20260710.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
     },
     {
       "ticker": "FANG",
@@ -5581,7 +7275,8 @@
       "hot": false,
       "fileDate": "2026-07-13",
       "accession": "0001193125-26-301483",
-      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526301483/mstr-20260713.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526301483/mstr-20260713.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "PSA",
@@ -5683,7 +7378,8 @@
       "hot": true,
       "fileDate": "2026-07-13",
       "accession": "0001057352-26-000054",
-      "link": "https://www.sec.gov/Archives/edgar/data/1057352/000105735226000054/csgp-20260707.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1057352/000105735226000054/csgp-20260707.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "BMRN",
@@ -5783,7 +7479,8 @@
       "hot": false,
       "fileDate": "2026-07-10",
       "accession": "0001564708-26-000149",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000149/nws-20260709.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000149/nws-20260709.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "SRV",
@@ -6221,7 +7918,8 @@
       "hot": false,
       "fileDate": "2026-07-09",
       "accession": "0001564708-26-000148",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000148/nws-20260708.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000148/nws-20260708.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "SNAP",
@@ -6713,7 +8411,8 @@
       "hot": false,
       "fileDate": "2026-07-08",
       "accession": "0001564708-26-000147",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000147/nws-20260707.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000147/nws-20260707.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "VOYA",
@@ -7057,7 +8756,8 @@
       "hot": true,
       "fileDate": "2026-07-08",
       "accession": "0000094845-26-000038",
-      "link": "https://www.sec.gov/Archives/edgar/data/94845/000009484526000038/levi-20260708.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/94845/000009484526000038/levi-20260708.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "XOM",
@@ -7157,7 +8857,8 @@
       "hot": false,
       "fileDate": "2026-07-07",
       "accession": "0001564708-26-000146",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000146/nws-20260706.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000146/nws-20260706.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "FIGR",
@@ -7237,7 +8938,8 @@
       "hot": true,
       "fileDate": "2026-07-07",
       "accession": "0001193125-26-297658",
-      "link": "https://www.sec.gov/Archives/edgar/data/943819/000119312526297658/d88958d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/943819/000119312526297658/d88958d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "PSA",
@@ -7487,7 +9189,8 @@
       "hot": false,
       "fileDate": "2026-07-06",
       "accession": "0001564708-26-000145",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000145/nws-20260702.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000145/nws-20260702.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "ABBV",
@@ -7611,7 +9314,8 @@
       "hot": true,
       "fileDate": "2026-07-06",
       "accession": "0001213900-26-075470",
-      "link": "https://www.sec.gov/Archives/edgar/data/2000410/000121390026075470/ea0296613-8k_eureka.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2000410/000121390026075470/ea0296613-8k_eureka.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "SOLS",
@@ -7877,7 +9581,8 @@
       "hot": true,
       "fileDate": "2026-07-06",
       "accession": "0001193125-26-295586",
-      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526295586/mstr-20260706.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "UYSC",
@@ -8395,7 +10100,8 @@
       "hot": false,
       "fileDate": "2026-07-02",
       "accession": "0001564708-26-000144",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000144/nws-20260701.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000144/nws-20260701.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "COPR",
@@ -8469,7 +10175,8 @@
       "hot": true,
       "fileDate": "2026-07-02",
       "accession": "0001213900-26-074998",
-      "link": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026074998/ea0296438-8k425_columbus2.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026074998/ea0296438-8k425_columbus2.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "IDAC",
@@ -8615,7 +10322,8 @@
       "hot": true,
       "fileDate": "2026-07-02",
       "accession": "0001140361-26-027445",
-      "link": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126027445/ef20077282_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1743881/000114036126027445/ef20077282_8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "VNOM",
@@ -8763,7 +10471,8 @@
       "hot": false,
       "fileDate": "2026-07-02",
       "accession": "0000935703-26-000075",
-      "link": "https://www.sec.gov/Archives/edgar/data/935703/000093570326000075/dltr-20260701.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/935703/000093570326000075/dltr-20260701.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "ADC",
@@ -8911,7 +10620,8 @@
       "hot": true,
       "fileDate": "2026-07-01",
       "accession": "0001773383-26-000023",
-      "link": "https://www.sec.gov/Archives/edgar/data/1773383/000177338326000023/dt-20260630.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1773383/000177338326000023/dt-20260630.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "AAOI",
@@ -8981,7 +10691,8 @@
       "hot": true,
       "fileDate": "2026-07-01",
       "accession": "0001628280-26-046338",
-      "link": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026046338/fds-20260701.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026046338/fds-20260701.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "GIS",
@@ -8999,7 +10710,8 @@
       "hot": true,
       "fileDate": "2026-07-01",
       "accession": "0001628280-26-046337",
-      "link": "https://www.sec.gov/Archives/edgar/data/40704/000162828026046337/gis-20260701.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/40704/000162828026046337/gis-20260701.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "DELL",
@@ -9043,7 +10755,8 @@
       "hot": false,
       "fileDate": "2026-07-01",
       "accession": "0001564708-26-000143",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000143/nws-20260630.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000143/nws-20260630.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "MQ",
@@ -9181,7 +10894,8 @@
       "hot": true,
       "fileDate": "2026-07-01",
       "accession": "0001193125-26-292736",
-      "link": "https://www.sec.gov/Archives/edgar/data/315293/000119312526292736/d76205d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/315293/000119312526292736/d76205d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "NDAQ",
@@ -9207,7 +10921,8 @@
       "hot": true,
       "fileDate": "2026-07-01",
       "accession": "0001193125-26-292723",
-      "link": "https://www.sec.gov/Archives/edgar/data/1120193/000119312526292723/d146997d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1120193/000119312526292723/d146997d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "PEG",
@@ -9417,7 +11132,8 @@
       "hot": true,
       "fileDate": "2026-07-01",
       "accession": "0001193125-26-291561",
-      "link": "https://www.sec.gov/Archives/edgar/data/1451809/000119312526291561/d71116d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1451809/000119312526291561/d71116d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "PB",
@@ -9931,7 +11647,8 @@
       "hot": false,
       "fileDate": "2026-06-30",
       "accession": "0001564708-26-000142",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000142/nws-20260629.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000142/nws-20260629.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "NET",
@@ -10417,7 +12134,8 @@
       "hot": true,
       "fileDate": "2026-06-30",
       "accession": "0000016918-26-000028",
-      "link": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000028/stz-20260630.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/16918/000001691826000028/stz-20260630.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "PSKY",
@@ -10565,7 +12283,8 @@
       "hot": false,
       "fileDate": "2026-06-29",
       "accession": "0001564708-26-000141",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000141/nws-20260626.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000141/nws-20260626.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "MPC",
@@ -10851,7 +12570,8 @@
       "hot": false,
       "fileDate": "2026-06-29",
       "accession": "0001193125-26-286871",
-      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526286871/mstr-20260629.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526286871/mstr-20260629.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "VZ",
@@ -11317,7 +13037,8 @@
       "hot": false,
       "fileDate": "2026-06-26",
       "accession": "0001564708-26-000140",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000140/nws-20260625.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000140/nws-20260625.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "APLD",
@@ -11429,7 +13150,8 @@
       "hot": false,
       "fileDate": "2026-06-26",
       "accession": "0001326380-26-000035",
-      "link": "https://www.sec.gov/Archives/edgar/data/1326380/000132638026000035/form8-kxguidance.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1326380/000132638026000035/form8-kxguidance.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "CHAR",
@@ -11507,7 +13229,8 @@
       "hot": true,
       "fileDate": "2026-06-26",
       "accession": "0001193125-26-283773",
-      "link": "https://www.sec.gov/Archives/edgar/data/2080126/000119312526283773/na-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2080126/000119312526283773/na-20260623.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "VRSN",
@@ -11811,7 +13534,8 @@
       "hot": false,
       "fileDate": "2026-06-26",
       "accession": "0000310764-26-000041",
-      "link": "https://www.sec.gov/Archives/edgar/data/310764/000031076426000041/syk-20260626.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/310764/000031076426000041/syk-20260626.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "HPQ",
@@ -11931,7 +13655,8 @@
       "hot": true,
       "fileDate": "2026-06-25",
       "accession": "0001783879-26-000077",
-      "link": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000077/hood-20260622.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000077/hood-20260622.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "KNTK",
@@ -12109,7 +13834,8 @@
       "hot": false,
       "fileDate": "2026-06-25",
       "accession": "0001564708-26-000139",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000139/nws-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000139/nws-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "KO",
@@ -12421,7 +14147,8 @@
       "hot": true,
       "fileDate": "2026-06-25",
       "accession": "0001193125-26-281968",
-      "link": "https://www.sec.gov/Archives/edgar/data/2035644/000119312526281968/d124915d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2035644/000119312526281968/d124915d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "KYMR",
@@ -12541,7 +14268,8 @@
       "hot": true,
       "fileDate": "2026-06-25",
       "accession": "0001140361-26-026395",
-      "link": "https://www.sec.gov/Archives/edgar/data/1097864/000114036126026395/ef20076747_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1097864/000114036126026395/ef20076747_8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "SCCO",
@@ -12669,7 +14397,8 @@
       "hot": true,
       "fileDate": "2026-06-25",
       "accession": "0001057352-26-000048",
-      "link": "https://www.sec.gov/Archives/edgar/data/1057352/000105735226000048/csgp-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1057352/000105735226000048/csgp-20260623.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "DRI",
@@ -12691,7 +14420,8 @@
       "hot": true,
       "fileDate": "2026-06-25",
       "accession": "0000940944-26-000016",
-      "link": "https://www.sec.gov/Archives/edgar/data/940944/000094094426000016/dri-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/940944/000094094426000016/dri-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "AIT",
@@ -12727,7 +14457,8 @@
       "hot": false,
       "fileDate": "2026-06-25",
       "accession": "0000106535-26-000007",
-      "link": "https://www.sec.gov/Archives/edgar/data/106535/000010653526000007/wy-20260625.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/106535/000010653526000007/wy-20260625.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "MKC",
@@ -12803,7 +14534,8 @@
       "hot": true,
       "fileDate": "2026-06-25",
       "accession": "0000022444-26-000038",
-      "link": "https://www.sec.gov/Archives/edgar/data/22444/000002244426000038/cmc-20260625.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/22444/000002244426000038/cmc-20260625.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "JPM",
@@ -12907,7 +14639,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0001628280-26-045167",
-      "link": "https://www.sec.gov/Archives/edgar/data/19617/000162828026045167/jpm-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/19617/000162828026045167/jpm-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "CAVA",
@@ -12947,7 +14680,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0001564708-26-000138",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000138/nws-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000138/nws-20260623.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "SRXH",
@@ -13053,7 +14787,8 @@
       "hot": true,
       "fileDate": "2026-06-24",
       "accession": "0001213900-26-071287",
-      "link": "https://www.sec.gov/Archives/edgar/data/2074973/000121390026071287/ea0295484-8k425_church11.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2074973/000121390026071287/ea0295484-8k425_church11.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "BNY",
@@ -13067,7 +14802,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0001193125-26-281160",
-      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000119312526281160/d137058d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000119312526281160/d137058d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "GS",
@@ -13165,7 +14901,8 @@
       "hot": true,
       "fileDate": "2026-06-24",
       "accession": "0001193125-26-281042",
-      "link": "https://www.sec.gov/Archives/edgar/data/1766502/000119312526281042/d43042d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1766502/000119312526281042/d43042d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "PFN",
@@ -13351,7 +15088,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0001193125-26-279862",
-      "link": "https://www.sec.gov/Archives/edgar/data/1060391/000119312526279862/d168156d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1060391/000119312526279862/d168156d8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "KMX",
@@ -13481,7 +15219,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0000950103-26-009448",
-      "link": "https://www.sec.gov/Archives/edgar/data/895421/000095010326009448/dp248866_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/895421/000095010326009448/dp248866_8k.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "MU",
@@ -13499,7 +15238,8 @@
       "hot": true,
       "fileDate": "2026-06-24",
       "accession": "0000723125-26-000013",
-      "link": "https://www.sec.gov/Archives/edgar/data/723125/000072312526000013/mu-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/723125/000072312526000013/mu-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "RJF",
@@ -13535,7 +15275,8 @@
       "hot": true,
       "fileDate": "2026-06-24",
       "accession": "0000096223-26-000021",
-      "link": "https://www.sec.gov/Archives/edgar/data/96223/000009622326000021/jef-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/96223/000009622326000021/jef-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "USB",
@@ -13553,7 +15294,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0000036104-26-000035",
-      "link": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000035/usb-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/36104/000003610426000035/usb-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "CMC",
@@ -13571,7 +15313,8 @@
       "hot": false,
       "fileDate": "2026-06-24",
       "accession": "0000022444-26-000035",
-      "link": "https://www.sec.gov/Archives/edgar/data/22444/000002244426000035/cmc-20260624.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/22444/000002244426000035/cmc-20260624.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "CNM",
@@ -13639,7 +15382,8 @@
       "hot": false,
       "fileDate": "2026-06-23",
       "accession": "0001783879-26-000074",
-      "link": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000074/hood-20260622.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1783879/000178387926000074/hood-20260622.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "OKTA",
@@ -13733,7 +15477,8 @@
       "hot": true,
       "fileDate": "2026-06-23",
       "accession": "0001628280-26-044797",
-      "link": "https://www.sec.gov/Archives/edgar/data/2083785/000162828026044797/snblt-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2083785/000162828026044797/snblt-20260623.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "NWSA",
@@ -13751,7 +15496,8 @@
       "hot": false,
       "fileDate": "2026-06-23",
       "accession": "0001564708-26-000137",
-      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000137/nws-20260622.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000137/nws-20260622.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "CAPN",
@@ -13783,7 +15529,8 @@
       "hot": false,
       "fileDate": "2026-06-23",
       "accession": "0001467373-26-000035",
-      "link": "https://www.sec.gov/Archives/edgar/data/1467373/000146737326000035/acn-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1467373/000146737326000035/acn-20260623.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "GME",
@@ -14267,7 +16014,8 @@
       "hot": true,
       "fileDate": "2026-06-23",
       "accession": "0000815097-26-000086",
-      "link": "https://www.sec.gov/Archives/edgar/data/815097/000081509726000086/ccl-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/815097/000081509726000086/ccl-20260623.htm",
+      "kind": "buyback"
     },
     {
       "ticker": "NKE",
@@ -14361,7 +16109,8 @@
       "hot": false,
       "fileDate": "2026-06-23",
       "accession": "0000049938-26-000029",
-      "link": "https://www.sec.gov/Archives/edgar/data/49938/000004993826000029/imo-20260623.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/49938/000004993826000029/imo-20260623.htm",
+      "kind": "buyback"
     }
   ]
 }

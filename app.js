@@ -4510,8 +4510,10 @@ function scrollToTabContent() {
   const align = () => window.scrollTo({ top: targetY(), behavior: "auto" });
 
   let timer = null;
+  let resizeObs = null;
   const stop = () => {
     if (timer) { clearInterval(timer); timer = null; }
+    if (resizeObs) { resizeObs.disconnect(); resizeObs = null; }
     ["wheel", "touchstart", "keydown"].forEach((t) => window.removeEventListener(t, stop));
   };
   // 사용자가 직접 스크롤을 시작하면 즉시 손을 뗀다 — 읽는 중에 화면이 튀면 안 된다.
@@ -4523,6 +4525,20 @@ function scrollToTabContent() {
     if (Math.abs(window.pageYOffset - targetY()) > 4) align();
     if (Date.now() > until) stop();
   }, 150);
+
+  // 고정 시간창(위 interval)만으로는 부족하다 — idle 프리로드 피처(액션 보드
+  // 이벤트 카드·매크로 추이 행 등)가 느린 네트워크에서 창이 닫힌 뒤에 상단
+  // 레이아웃을 키우면 탭 바가 다시 밀려 내려간다(상수를 2.4s→6s 로 늘려도
+  // 라이브에서 재발한 이력, 2026-07-24). 문서 높이가 실제로 바뀔 때만 재정렬
+  // 하도록 ResizeObserver 를 추가로 건다. 사용자 입력 시 위 stop 이 함께 끊고,
+  // 관찰은 최장 20초 뒤 자동 해제한다.
+  if (typeof ResizeObserver === "function") {
+    resizeObs = new ResizeObserver(() => {
+      if (Math.abs(window.pageYOffset - targetY()) > 4) align();
+    });
+    resizeObs.observe(document.body);
+    setTimeout(() => { if (resizeObs) { resizeObs.disconnect(); resizeObs = null; } }, 20000);
+  }
 }
 
 function activateTab(name, { push = true, ticker = null, sub = null, communityTicker = null } = {}) {

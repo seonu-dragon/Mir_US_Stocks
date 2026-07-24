@@ -2834,15 +2834,21 @@ function fearGreedComponents() {
     const lows = stocks.filter((s) => { const d = (typeof low52DistPct === "function") ? low52DistPct(s) : NaN; return Number.isFinite(d) && d <= 5; }).length;
     if (highs + lows > 0) comps.push({ key: "주가 강도", score: clamp(highs / (highs + lows) * 100), detail: "신고가 vs 신저가" });
   }
-  const os = window.OPTIONS_STATS;
-  const pc = os && os.market && Number(os.market.putCallOI);
-  if (Number.isFinite(pc)) comps.push({ key: "옵션 (풋/콜)", score: clamp((1.25 - pc) / (1.25 - 0.65) * 100), detail: `풋콜 ${pc.toFixed(2)}` });
-  const macro = window.MACRO_INDICATORS;
-  if (macro && Array.isArray(macro.indicators)) {
-    const hy = macro.indicators.find((i) => i.id === "BAMLH0A0HYM2");
-    if (hy && Number.isFinite(Number(hy.value))) comps.push({ key: "정크본드 수요", score: clamp((6 - Number(hy.value)) / (6 - 2.5) * 100), detail: `HY 스프레드 ${hy.value}%p` });
-    const vix = macro.indicators.find((i) => i.id === "VIXCLS");
-    if (vix && Number.isFinite(Number(vix.value))) comps.push({ key: "변동성 (VIX)", score: clamp((30 - Number(vix.value)) / (30 - 12) * 100), detail: `VIX ${vix.value}` });
+  // 옵션 풋콜·신용스프레드·VIX 는 US 전용 데이터(OPTIONS_STATS·MACRO_INDICATORS
+  // 는 미국 시장만 수집). KR 모드에서 이걸 섞으면 미국이 탐욕일 때 국내 주식이
+  // 공포여도 종합이 탐욕으로 끌려간다(2026-07-24 사용자 지적). KR 은 시장 자체
+  // 지표(시장 폭·모멘텀·주가 강도)만으로 심리를 구성한다.
+  if (!isKrMarket()) {
+    const os = window.OPTIONS_STATS;
+    const pc = os && os.market && Number(os.market.putCallOI);
+    if (Number.isFinite(pc)) comps.push({ key: "옵션 (풋/콜)", score: clamp((1.25 - pc) / (1.25 - 0.65) * 100), detail: `풋콜 ${pc.toFixed(2)}` });
+    const macro = window.MACRO_INDICATORS;
+    if (macro && Array.isArray(macro.indicators)) {
+      const hy = macro.indicators.find((i) => i.id === "BAMLH0A0HYM2");
+      if (hy && Number.isFinite(Number(hy.value))) comps.push({ key: "정크본드 수요", score: clamp((6 - Number(hy.value)) / (6 - 2.5) * 100), detail: `HY 스프레드 ${hy.value}%p` });
+      const vix = macro.indicators.find((i) => i.id === "VIXCLS");
+      if (vix && Number.isFinite(Number(vix.value))) comps.push({ key: "변동성 (VIX)", score: clamp((30 - Number(vix.value)) / (30 - 12) * 100), detail: `VIX ${vix.value}` });
+    }
   }
   return comps;
 }
@@ -2886,7 +2892,7 @@ function renderFearGreed() {
   }).join("");
   host.innerHTML = `
     <div class="section-title"><h2>시장 심리 종합지수</h2>
-      <p>이미 수집하는 지표(시장 폭·모멘텀·주가 강도·옵션 풋콜·신용스프레드)를 0~100으로 종합했습니다. 예측이 아니라 현재 공포/탐욕 상태의 요약입니다.</p></div>
+      <p>${isKrMarket() ? "국내 시장 지표(시장 폭·모멘텀·주가 강도)를" : "이미 수집하는 지표(시장 폭·모멘텀·주가 강도·옵션 풋콜·신용스프레드)를"} 0~100으로 종합했습니다. 예측이 아니라 현재 공포/탐욕 상태의 요약입니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
         <strong style="font-size:34px;font-variant-numeric:tabular-nums;color:${lab.c}">${value}</strong>

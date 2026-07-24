@@ -356,8 +356,8 @@
                 <option value="monthChangePct">1개월 등락률</option>
                 <option value="threeMonthChangePct">3개월 등락률</option>
                 <option value="ytdChangePct">YTD 등락률</option>
-                <option value="rsScore">RS 점수</option>
-                <option value="epsRevScore">EPS 추정 점수</option>
+                <option value="rsi14">RSI (14)</option>
+                <option value="epsTtm">EPS (TTM)</option>
                 <option value="stochK">StochK 14</option>
               </optgroup>
               <optgroup label="밸류에이션 (낮을수록 초록)">
@@ -402,7 +402,6 @@
               <option value="marketCapB">시가총액</option>
               <option value="equal">동일 크기</option>
               <option value="volumeRatio">거래량 배율</option>
-              <option value="rsScore">RS 점수</option>
             </select>
           </label>
           <label class="grow">
@@ -449,7 +448,7 @@
                       <option value="avg1w">1주일 평균 등락률</option>
                       <option value="avg1m">1개월 평균 등락률</option>
                       <option value="avg3m">3개월 평균 등락률</option>
-                      <option value="rs">평균 상대강도 (RS)</option>
+                      <option value="rs">평균 RSI</option>
                       <option value="upPct">상승 종목 비중</option>
                     </select>
                   </label>
@@ -472,8 +471,8 @@
                 </div>
                 <div class="sector-badge-stats">
                   <div class="stat-pill">
-                    <span>RS 점수</span>
-                    <strong id="sectorDetailRs">85</strong>
+                    <span>평균 RSI</span>
+                    <strong id="sectorDetailRs">—</strong>
                   </div>
                   <div class="stat-pill">
                     <span>상승비율</span>
@@ -535,7 +534,7 @@
                         <th>당일 등락률</th>
                         <th>1주 등락률</th>
                         <th>1달 등락률</th>
-                        <th>RS 점수</th>
+                        <th>RSI</th>
                       </tr>
                     </thead>
                     <tbody id="sectorConstituentsBody"></tbody>
@@ -580,7 +579,6 @@
                 <select id="sectorEtfRsSort">
                   <option value="relative">벤치 대비 초과수익순</option>
                   <option value="return">절대 수익률순</option>
-                  <option value="rs">RS 점수순</option>
                 </select>
               </label>
             </div>
@@ -770,9 +768,8 @@
               <option value="monthChangePct">1개월 등락률</option>
               <option value="threeMonthChangePct">3개월 등락률</option>
               <option value="ytdChangePct">YTD 등락률</option>
-              <option value="rsScore">RS 점수</option>
-              <option value="epsRevScore">EPS 추정 점수</option>
               <option value="rsi14">RSI 14</option>
+              <option value="epsTtm">EPS (TTM)</option>
               <option value="stochK">StochK 14</option>
               <option value="volumeRatio">거래량 배율</option>
               <option value="marketCapB">시가총액</option>
@@ -823,7 +820,7 @@
               <option value="leaders">강한 추세 리더</option>
               <option value="breakout">신고가 근접 + 거래량</option>
               <option value="pullback">강한 종목 눌림목</option>
-              <option value="growth">EPS 추정 상향</option>
+              <option value="growth">성장주 (EPS 개선)</option>
               <option value="value">저평가 대형주</option>
               <option value="lows">52주 신저가 근접</option>
               <option value="volsurge">거래량 급증</option>
@@ -831,11 +828,11 @@
             </select>
           </label>
           <label>
-            Min RS
+            RSI ≥
             <input id="topMinRs" type="number" min="0" max="100" placeholder="0">
           </label>
           <label>
-            Min EPS
+            RSI ≤
             <input id="topMinEps" type="number" min="0" max="100" placeholder="0">
           </label>
           <label>
@@ -870,7 +867,7 @@
           <label>
             카테고리
             <select id="jumpCategory">
-              <option value="rsVolume">RS 신고가 + 거래량</option>
+              <option value="rsVolume">신고가 근접 + 거래량</option>
               <option value="volume">거래량 급증</option>
               <option value="move">당일 급등</option>
             </select>
@@ -1129,7 +1126,7 @@
           <div class="table-wrap" id="nlResultsWrap" hidden>
             <table class="compact-table screener-table">
               <thead>
-                <tr><th></th><th>티커</th><th>회사</th><th>섹터</th><th>당일</th><th>1M</th><th>RS</th><th>RSI</th><th>PER</th><th>시총</th><th>신호</th></tr>
+                <tr><th></th><th>티커</th><th>회사</th><th>섹터</th><th>당일</th><th>1M</th><th>EPS</th><th>RSI</th><th>PER</th><th>시총</th><th>신호</th></tr>
               </thead>
               <tbody id="nlResults"></tbody>
             </table>
@@ -1169,7 +1166,7 @@
               <option value="leaders">강한 추세 리더</option>
               <option value="breakout">신고가 + 거래량</option>
               <option value="pullback">강한 종목 눌림목</option>
-              <option value="growth">EPS 추정 상향</option>
+              <option value="growth">성장주 (EPS 개선)</option>
               <option value="value">저평가 대형주</option>
               <option value="lows">52주 신저가 근접</option>
               <option value="volsurge">거래량 급증</option>
@@ -1179,19 +1176,18 @@
           <label>
             정렬
             <select id="scrMetric">
-              <option value="rsScore">RS 점수</option>
+              <option value="rsi14">RSI 14</option>
+              <option value="epsTtm">EPS (TTM)</option>
               <option value="changePct">당일 등락률</option>
               <option value="monthChangePct">1개월</option>
               <option value="volumeRatio">거래량 배율</option>
-              <option value="rsi14">RSI 14</option>
-              <option value="epsRevScore">EPS Rev</option>
               <option value="marketCapB">시가총액</option>
               <option value="newHighDistancePct">고점 대비 하락폭</option>
               <option value="low52Dist">52주 저가 대비</option>
             </select>
           </label>
-          <label>Min RS <input id="scrMinRs" type="number" min="0" max="100" placeholder="0"></label>
-          <label>Min EPS <input id="scrMinEps" type="number" min="0" max="100" placeholder="0"></label>
+          <label>RSI ≥ <input id="scrMinRs" type="number" min="0" max="100" placeholder="0"></label>
+          <label>RSI ≤ <input id="scrMinEps" type="number" min="0" max="100" placeholder="0"></label>
           <label>Vol <input id="scrMinVol" type="number" min="0" step="0.1" placeholder="0"></label>
           <label><span id="scrMinCapLabelText">Cap($B)</span> <input id="scrMinCap" type="number" min="0" step="1" placeholder="0"></label>
           <label>
@@ -1230,7 +1226,7 @@
                 <th>섹터</th>
                 <th>당일</th>
                 <th>1M</th>
-                <th>RS</th>
+                <th>RSI</th>
                 <th>EPS</th>
                 <th>Vol</th>
                 <th>시총</th>
@@ -1573,8 +1569,8 @@
             <span class="event-badge" id="watchAlertCount">0</span>
           </div>
           <div class="watch-alert-controls">
-            <label><input id="alertUseRs" type="checkbox" checked><span>RS</span><input id="alertMinRs" type="number" min="0" max="100" value="80"></label>
-            <label><input id="alertUseEps" type="checkbox"><span>EPS</span><input id="alertMinEps" type="number" min="0" max="100" value="75"></label>
+            <label><input id="alertUseRs" type="checkbox" checked><span>RSI ≥</span><input id="alertMinRs" type="number" min="0" max="100" value="60"></label>
+            <label><input id="alertUseEps" type="checkbox"><span>흑자 (EPS&gt;0)</span></label>
             <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3" aria-label="52주 신고가 근접 기준 퍼센트"><em>%</em></label>
             <label><input id="alertUseVol" type="checkbox" checked><span>거래량 배율</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2" aria-label="거래량 배율 기준"><em>x</em></label>
             <label class="watch-alert-toggle-only"><input id="alertUseSma20" type="checkbox"><span>SMA 20 위 회복</span></label>
@@ -2027,7 +2023,7 @@
               <select id="earnSort">
                 <option value="date">날짜순</option>
                 <option value="cap">시총순</option>
-                <option value="rs">RS순</option>
+                <option value="rs">RSI순</option>
               </select>
             </label>
             <label class="earn-check"><input type="checkbox" id="earnWatchOnly"> 관심종목만</label>

@@ -1646,11 +1646,54 @@ function detectCurrentPatterns(rows) {
   return evs;
 }
 
+// ===== 배당 포함 총수익 헬퍼 =====
+// detail.dividends([["YYYY-MM-DD", amount], ...])가 있으면 실측 전방 수익률을
+// (미래 종가 + 구간 배당합) / 현재 종가 - 1 로 계산한다(총수익 기준, 파이썬
+// pattern_lib.total_fwd_return 과 동일). 차트 표시·패턴 감지는 원시 가격 그대로.
+// 배당 데이터가 없는 종목은 기존과 완전히 동일하게 동작한다.
+const _divCumCache = new WeakMap();
+
+function buildDividendCum(rows, dividends) {
+  if (!Array.isArray(dividends) || !dividends.length) return null;
+  const divs = [];
+  for (const entry of dividends) {
+    if (!Array.isArray(entry) || entry.length < 2) continue;
+    const date = String(entry[0] || "");
+    const amount = Number(entry[1]);
+    if (date && Number.isFinite(amount) && amount > 0) divs.push([date, amount]);
+  }
+  if (!divs.length) return null;
+  divs.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  const cum = new Array(rows.length);
+  let total = 0;
+  let di = 0;
+  for (let i = 0; i < rows.length; i += 1) {
+    const d = rows[i].d;
+    if (d) {
+      while (di < divs.length && divs[di][0] <= d) {
+        total += divs[di][1];
+        di += 1;
+      }
+    }
+    cum[i] = total;
+  }
+  return cum;
+}
+
+function fwdReturnTotal(rows, i, j) {
+  const c0 = rows[i].c;
+  if (!c0) return null;
+  let cj = rows[j].c;
+  const cum = _divCumCache.get(rows);
+  if (cum) cj += cum[j] - cum[i];
+  return (cj - c0) / c0;
+}
+
 function analyzeIndividualPatternPerformance(cleanRows, patternName, horizon) {
   const n = cleanRows.length;
   const allEvents = detectConfirmations(cleanRows);
   const matchedEvents = allEvents.filter((e) => e.pattern === patternName);
-  
+
   let totalCount = 0;
   let upCount = 0;
   let returnsSum = 0;
@@ -1658,9 +1701,8 @@ function analyzeIndividualPatternPerformance(cleanRows, patternName, horizon) {
   for (const ev of matchedEvents) {
     const idx = ev.confirm_idx;
     if (idx + horizon < n) {
-      const priceNow = cleanRows[idx].c;
-      const priceFuture = cleanRows[idx + horizon].c;
-      const ret = (priceFuture - priceNow) / priceNow;
+      const ret = fwdReturnTotal(cleanRows, idx, idx + horizon);
+      if (ret == null) continue;
       totalCount += 1;
       if (ret > 0) upCount += 1;
       returnsSum += ret;
@@ -2256,7 +2298,9 @@ function backtestBaseRate(rows, horizon) {
     let dist = 0;
     for (let k = 0; k < cur.length; k += 1) dist += (st[k] - cur[k]) * (st[k] - cur[k]);
     dist = Math.sqrt(dist);
-    const fwd = (closes[i + horizon] - closes[i]) / closes[i];
+    // 배당 데이터가 있으면 총수익 기준(없으면 기존 가격 수익률과 동일).
+    const fwd = fwdReturnTotal(rows, i, i + horizon);
+    if (fwd == null) continue;
     cand.push({ dist, fwd, idx: i });
   }
   if (cand.length < 30) return null;
@@ -2306,6 +2350,11 @@ function analyzeRows(rows, horizon, meta) {
   if (clean.length < 60) {
     return { error: "insufficient", bars: clean.length };
   }
+
+  // 배당 이벤트(detail.dividends)가 있으면 실측 수익률(패턴 종목 실측·과거 유사
+  // 실측)을 배당 포함 총수익 기준으로 계산한다. 없으면 기존과 동일.
+  const divCum = buildDividendCum(clean, meta.dividends);
+  if (divCum) _divCumCache.set(clean, divCum);
 
   const price = clean[clean.length - 1].c;
   const { signals, adxVal } = buildSignals(clean);
@@ -2397,7 +2446,11 @@ function analyzeRows(rows, horizon, meta) {
 function analyzeTicker(detail, horizon) {
   const rows = (detail.chartSeries || [])
     .map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
-  return analyzeRows(rows, horizon, { ticker: detail.ticker, company: detail.company });
+  return analyzeRows(rows, horizon, {
+    ticker: detail.ticker,
+    company: detail.company,
+    dividends: detail.dividends, // 있으면 실측 수익률을 배당 포함 총수익으로
+  });
 }
 
 // ===== UI =====
@@ -2572,6 +2625,7 @@ function renderPatternCard(result) {
     ${rows}
     <p class="pat-note muted">※ 고전 패턴은 통계적으로 '약한 우위'에 그칩니다. 방향은 교과서 정의가 아니라 <b>과거 실측 상승률</b>로 표시했습니다.</p>
     <p class="pat-note muted">※ 패턴 통계는 현재 상장 중인 종목만으로 집계되어, 상장폐지된 종목이 빠진 생존 편향이 있습니다.</p>
+    <p class="pat-note muted">※ 수익률 통계는 배당을 포함한 총수익 기준입니다(배당 데이터가 있는 종목).</p>
   </div>`;
 }
 

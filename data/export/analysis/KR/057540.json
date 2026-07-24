@@ -1,0 +1,38 @@
+{
+  "ticker": "057540",
+  "name": "옴니시스템",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 812.0,
+  "return_period": 3.8,
+  "support_levels": [
+    803.0,
+    767.8
+  ],
+  "resistance_levels": [
+    857.5,
+    929.5
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 44.1,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 858 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 803 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

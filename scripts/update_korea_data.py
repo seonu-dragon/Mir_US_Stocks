@@ -1122,7 +1122,7 @@ def minimal_naver_etf_row(info: dict) -> dict | None:
         "ytdChangePct": round(chg * 3.3, 1),
         "marketCapT": cap_t, "marketCapB": cap_t,
         "groups": ["all_etf", "all_misc"], "bucket": "all_misc",
-        "rsScore": 50, "historySource": "naver",
+        "historySource": "naver",
     }
 
 
@@ -1503,10 +1503,6 @@ def build_snapshot(limit: int | None = None) -> dict:
         "historyPolicy": {
             "realHistoryMax": MAX_REAL_HISTORY,
             "note": "Top symbols use Yahoo 5Y daily OHLCV; others use Naver snapshot mini-chart.",
-        },
-        "scorePolicy": {
-            "rsScore": "Weighted price momentum (3M/6M/1Y) — same engine as US mode.",
-            "epsRevScore": "EPS growth proxy from Yahoo fundamentals when available.",
         },
     }
 

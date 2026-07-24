@@ -918,9 +918,9 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5078c7d2d6" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5078c7d2d6"></noscript>
-    <script src="build_id.js?v=228f8373ae"></script>
+    <link rel="preload" href="styles.css?v=50e17d273f" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=50e17d273f"></noscript>
+    <script src="build_id.js?v=df76036f35"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3209,13 +3209,13 @@ html[data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="chart-indicators.js?v=25e88f9403"></script>
     <script src="community.js?v=b571156c0f"></script>
-    <script src="ai-mode.js?v=2f7334144a"></script>
+    <script src="ai-mode.js?v=0ea934afeb"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=f1b6545f8c"></script>
     <script src="portfolio.js?v=2def2424fc"></script>
     <script src="screener.js?v=1640a9ebc1"></script>
-    <script src="app.js?v=cf88e89855"></script>
-    <script src="ai-cosmos.js?v=d13566d41a"></script>
+    <script src="app.js?v=ce4057a5ed"></script>
+    <script src="ai-cosmos.js?v=bb75140cb9"></script>
     <script src="ai-mode-welcome.js?v=6321790c2c"></script>
   </body>
 </html>

@@ -371,7 +371,16 @@ def fetch_report(entry: dict) -> dict | None:
 # 삼성전자 영업이익률 52%, SK하이닉스 77%, 402340 590% 처럼 물리적으로 불가능한 값이
 # 섞여 온다. 2023~2025 실적 컬럼은 정상이라 파싱 버그가 아니라 소스가 이 값을 내려준다.
 # 목표주가·투자의견·추정기관수·리포트는 다른 소스(consensusInfo/wisereport/리포트 원문)라
-# 영향이 없으므로 그대로 두고, **추정 재무 3필드만** 아래 규칙에 걸리면 통째로 뺀다.
+# 영향이 없으므로 그대로 두고, 오염된 **추정 재무 필드만** 아래 규칙에 걸리면 뺀다.
+#
+# EPS 는 매출·영업이익과 독립으로 판정한다(2026-07-24 커버리지 복구).
+# 매출·영업이익 컬럼이 오염돼 영업이익률이 밴드를 벗어나도, **컨센서스 EPS 자체는**
+# 자기 P/E 밴드와 전년비를 통과하면 멀쩡한 경우가 많다(예: 지주·고마진주). 오염된
+# 영업이익률 때문에 정상 EPS 까지 버리면 커버리지만 줄고 얻는 정직성은 없다. 그래서
+# revYoY·opYoY·margin 은 revenueEstimate/operatingEstimate 만 떨어뜨리고,
+# epsYoY·pe 는 epsEstimate 만 떨어뜨린다. estimateFy 는 셋 다 빠졌을 때만 제거한다.
+# 진짜 오염 종목(삼성 46,664=전년 7.1배, 하이닉스 5.3배)은 EPS 자체가 epsYoY 로 걸려
+# 여전히 빠진다 — 독립 판정이 오염 EPS 를 되살리지는 않는다.
 #
 # 임계값(2026-07-24 실측 캘리브레이션):
 #   MARGIN_MAX 0.40  영업이익률 상한. 라이브 데이터에서 전년비가 안정적인(=정상) 국내
@@ -391,8 +400,9 @@ def fetch_report(entry: dict) -> dict | None:
 #   EPS_YOY_MAX 3.0  2026E EPS > 최근 실적 최고치 3배면 오염으로 본다.
 #   PE_MIN 2 / PE_MAX 500  커밋된 스냅샷 주가 대비 P/E 밴드. 밖이면 EPS 추정이 어긋난 것.
 #
-# 한 규칙이라도 걸리면 revenueEstimate/operatingEstimate/epsEstimate/estimateFy 를 뺀다
-# (셋은 같은 컬럼에서 왔으니 함께 신뢰불가로 취급). perEstimate 는 epsEstimate 가 없으면
+# margin·revYoY·opYoY 중 하나라도 걸리면 revenueEstimate·operatingEstimate 를 뺀다.
+# epsYoY·pe 중 하나라도 걸리면 epsEstimate(+perEstimate)를 뺀다. 둘은 서로 독립이다.
+# 세 추정치가 모두 빠지면 estimateFy 도 뺀다. perEstimate 는 epsEstimate 가 없으면
 # 애초에 계산되지 않는다.
 EST_MARGIN_MAX = 0.40
 EST_MARGIN_MIN = -0.30
@@ -403,14 +413,14 @@ EST_PE_MIN = 2.0
 EST_PE_MAX = 500.0
 
 
-def sanity_reject_reasons(est: dict, price) -> list[str]:
-    """추정 재무가 물리적으로 말이 되는지 검사. 걸린 규칙 이유 목록(비면 통과)."""
+def revop_reject_reasons(est: dict, price) -> list[str]:
+    """추정 매출·영업이익이 물리적으로 말이 되는지 검사(EPS 와 무관).
+
+    margin(영업이익률 밴드), opYoY, revYoY 를 본다. 걸린 규칙 목록(비면 통과)."""
     rev = est.get("revenueEstimate")
     op = est.get("operatingEstimate")
-    eps = est.get("epsEstimate")
     rev_prev = est.get("_revenuePrev")
     op_prev = est.get("_operatingPrev")
-    eps_prev = est.get("_epsPrev")
     reasons: list[str] = []
 
     if isinstance(rev, (int, float)) and rev > 0 and isinstance(op, (int, float)):
@@ -428,6 +438,19 @@ def sanity_reject_reasons(est: dict, price) -> list[str]:
             and rev_prev > 0 and rev / rev_prev > EST_REV_YOY_MAX):
         reasons.append(f"revYoY={rev / rev_prev:.1f}x")
 
+    return reasons
+
+
+def eps_reject_reasons(est: dict, price) -> list[str]:
+    """추정 EPS 가 물리적으로 말이 되는지 검사(매출·영업이익과 무관).
+
+    epsYoY(전년 실적 최고치 대비)와 P/E 밴드(커밋 스냅샷 주가 기준)를 본다.
+    영업이익률이 오염돼도 EPS 자체가 이 둘을 통과하면 신뢰할 수 있다고 본다.
+    걸린 규칙 목록(비면 통과)."""
+    eps = est.get("epsEstimate")
+    eps_prev = est.get("_epsPrev")
+    reasons: list[str] = []
+
     if (isinstance(eps, (int, float)) and isinstance(eps_prev, (int, float))
             and eps_prev > 0 and eps / eps_prev > EST_EPS_YOY_MAX):
         reasons.append(f"epsYoY={eps / eps_prev:.1f}x")
@@ -441,6 +464,8 @@ def sanity_reject_reasons(est: dict, price) -> list[str]:
 
 
 _EST_PRIVATE = ("_revenuePrev", "_operatingPrev", "_epsPrev")
+_REVOP_FIELDS = ("revenueEstimate", "operatingEstimate")
+_EST_VALUE_FIELDS = ("revenueEstimate", "operatingEstimate", "epsEstimate")
 _EST_FIELDS = ("revenueEstimate", "operatingEstimate", "epsEstimate", "estimateFy")
 
 
@@ -504,26 +529,38 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
         print(f"  2/4 추정기관수 {ok}/{len(have)}종목 (교차검증 불일치 {mismatch}건, {time.time() - t0:.0f}초)")
 
     fwd = run_pool(fetch_forward_financials, have, workers)
-    got = est_dropped = 0
+    got_revop = got_eps = revop_dropped = eps_dropped = 0
     for code, result in zip(have, fwd):
         if not result:
             continue
         price = prices.get(code)
-        reasons = sanity_reject_reasons(result, price)
+        revop_bad = revop_reject_reasons(result, price)      # margin·revYoY·opYoY
+        eps_bad = eps_reject_reasons(result, price)          # epsYoY·pe (독립)
         for k in _EST_PRIVATE:                 # 전년 실적은 검증용 임시필드 — 저장 안 함
             result.pop(k, None)
-        if reasons:
-            for k in _EST_FIELDS:              # 오염 추정 3필드(+연도) 통째로 제거
+        had_revop = any(result.get(k) is not None for k in _REVOP_FIELDS)
+        had_eps = result.get("epsEstimate") is not None
+        if revop_bad and had_revop:            # 오염 매출·영업이익만 제거(EPS 는 남길 수 있음)
+            for k in _REVOP_FIELDS:
                 result.pop(k, None)
-            est_dropped += 1
-            if code in ("005930", "000660", "402340"):
-                print(f"      [추정 제외] {code}: {', '.join(reasons)}")
+            revop_dropped += 1
+        if eps_bad and had_eps:                # 오염 EPS 만 제거(매출·영업이익과 무관)
+            result.pop("epsEstimate", None)
+            eps_dropped += 1
+        # 세 추정치가 모두 빠졌을 때만 연도 라벨도 뺀다.
+        if not any(result.get(k) is not None for k in _EST_VALUE_FIELDS):
+            result.pop("estimateFy", None)
+        if code in ("005930", "000660", "402340") and (revop_bad or eps_bad):
+            print(f"      [추정 제외] {code}: revop={revop_bad or '-'} eps={eps_bad or '-'}")
         if result:
             stocks[code].update(result)
-            if not reasons:
-                got += 1
-    print(f"  3/4 추정 실적 {got}/{len(have)}종목 채택, {est_dropped}종목 오염 제외 "
-          f"({time.time() - t0:.0f}초)")
+            if had_revop and not revop_bad:
+                got_revop += 1
+            if had_eps and not eps_bad:
+                got_eps += 1
+    est_dropped = revop_dropped                # payload.estimateDropped = 오염 재무 종목 수
+    print(f"  3/4 추정 실적 채택: 매출·영업이익 {got_revop}종목(오염 {revop_dropped}제외) · "
+          f"EPS {got_eps}종목(오염 {eps_dropped}제외) ({time.time() - t0:.0f}초)")
 
     if with_reports:
         targets = []
@@ -627,23 +664,34 @@ def carry_stage_fields(payload: dict) -> None:
 
 
 def enforce_margin_guard(payload: dict) -> int:
-    """병합 후 최종 안전망: 저장된 추정 매출·영업이익만으로 영업이익률이 밴드를 벗어나면
-    추정 3필드를 뺀다. merge_previous_stocks 가 (이번에 재수집 못 한 종목의) 예전 오염
-    추정치를 통째로 이어올 수 있어, 전년비 재료가 없는 승계분까지 여기서 한 번 더 거른다.
-    반환: 추가로 제거한 종목 수."""
-    dropped = 0
+    """병합 후 최종 안전망: 승계분(merge_previous_stocks)은 전년비 재료(_prev)가 없어
+    stage-3 필터를 다시 못 돌린다. 저장된 값만으로 다시 한 번 거른다 — 매출·영업이익은
+    영업이익률 밴드로, EPS 는 저장 주가 대비 P/E 밴드로 **독립** 판정한다(오염된
+    영업이익률 때문에 정상 EPS 까지 버리지 않는다). 반환: 추가로 손댄 종목 수."""
+    touched = 0
     for rec in (payload.get("stocks") or {}).values():
+        changed = False
         rev = rec.get("revenueEstimate")
         op = rec.get("operatingEstimate")
-        if not (isinstance(rev, (int, float)) and rev > 0 and isinstance(op, (int, float))):
-            continue
-        margin = op / rev
-        if margin > EST_MARGIN_MAX or margin < EST_MARGIN_MIN:
-            for k in _EST_FIELDS:
-                rec.pop(k, None)
-            rec.pop("perEstimate", None)
-            dropped += 1
-    return dropped
+        if isinstance(rev, (int, float)) and rev > 0 and isinstance(op, (int, float)):
+            margin = op / rev
+            if margin > EST_MARGIN_MAX or margin < EST_MARGIN_MIN:
+                for k in _REVOP_FIELDS:
+                    rec.pop(k, None)
+                changed = True
+        eps = rec.get("epsEstimate")
+        price = rec.get("price")
+        if isinstance(eps, (int, float)) and eps > 0 and isinstance(price, (int, float)) and price > 0:
+            pe = price / eps
+            if pe < EST_PE_MIN or pe > EST_PE_MAX:
+                rec.pop("epsEstimate", None)
+                rec.pop("perEstimate", None)
+                changed = True
+        if not any(rec.get(k) is not None for k in _EST_VALUE_FIELDS):
+            rec.pop("estimateFy", None)
+        if changed:
+            touched += 1
+    return touched
 
 
 def main() -> int:

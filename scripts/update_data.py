@@ -4,6 +4,7 @@ import hashlib
 import html
 import importlib.util
 import json
+import math
 import os
 import re
 import subprocess
@@ -912,6 +913,51 @@ def pct(now, then):
 
 def clamp(value, low=0, high=100):
     return max(low, min(high, int(round(value))))
+
+
+def wilder_rsi(closes, period=14):
+    # analysis.js 의 rsiSeries/rsiValue(Wilder 평활) 를 그대로 포팅해 마지막 인덱스의
+    # RSI(14) 를 돌려준다. period 개 초과(≥15) 종가가 있어야 값을 내고, 그 미만이면
+    # None(프론트에서 "—"). 상승분·하락분이 모두 0 인 완전 횡보는 100 이 아니라 중립 50
+    # 으로 본다(rsiValue 규칙, avgLoss==0 && avgGain==0 → 50).
+    if not closes or len(closes) <= period:
+        return None
+
+    def rsi_value(avg_gain, avg_loss):
+        if not avg_loss:
+            return 100.0 if avg_gain else 50.0
+        rs = avg_gain / avg_loss
+        return 100.0 - (100.0 / (1.0 + rs))
+
+    gain = 0.0
+    loss = 0.0
+    for i in range(1, period + 1):
+        change = closes[i] - closes[i - 1]
+        gain += max(0.0, change)
+        loss += max(0.0, -change)
+    gain /= period
+    loss /= period
+    value = rsi_value(gain, loss)
+    for i in range(period + 1, len(closes)):
+        change = closes[i] - closes[i - 1]
+        gain = (gain * (period - 1) + max(0.0, change)) / period
+        loss = (loss * (period - 1) + max(0.0, -change)) / period
+        value = rsi_value(gain, loss)
+    return round(value, 2)
+
+
+def real_rsi14(rows, price, history_source, bar_cap=1260):
+    # 실측 이력(yahoo/yahoo-cache)에서만 진짜 RSI(14) 를 낸다. 합성 랜덤워크 가격의
+    # RSI 는 무의미하므로 None. 종가는 detail 의 chartSeries 와 동일하게 마지막 bar_cap
+    # 개를 2자리로 반올림하고 마지막 종가를 실시간 시세(price)로 덮어, make_stock 과 시드
+    # 후처리(committed chartSeries 를 읽는 경로)가 완전히 같은 입력을 쓰게 한다.
+    if history_source not in {"yahoo", "yahoo-cache"}:
+        return None
+    rsi_closes = [round(row["close"], 2) for row in rows[-bar_cap:]]
+    if not rsi_closes:
+        return None
+    rsi_closes[-1] = round(price, 2)
+    return wilder_rsi(rsi_closes, 14)
 
 
 def stable_unit(text):
@@ -1941,6 +1987,8 @@ def make_stock(meta, rows, expose_raw=False):
     rs_score = calc_rs_score(price, closes)
     fundamentals = meta.get("fundamentals") or {}
     eps_score = calc_eps_score(price, closes, fundamentals)
+    history_source = meta.get("historySource", "synthetic")
+    rsi14 = real_rsi14(rows, price, history_source)
     stoch = clamp((price - low_52w) / max(0.01, high_52w - low_52w) * 100)
     market_cap_b = fundamentals.get("marketCapB") or meta.get("marketCapB") or synthetic_cap(meta["symbol"], meta["sector"])
     quote_volume = meta.get("quoteVolume")
@@ -1964,13 +2012,23 @@ def make_stock(meta, rows, expose_raw=False):
         "volumeRatio": round(max(0.1, volume_ratio), 1),
         "rsScore": rs_score,
         "epsRevScore": eps_score,
-        "rsi14": clamp(50 + pct(price, lookback(closes, 15)) * 3),
+        # 진짜 Wilder RSI(14). 실측 이력(yahoo/yahoo-cache)+종가 ≥15 개일 때만 채우고,
+        # 합성 랜덤워크 종목은 None(프론트 "—"). 예전엔 모멘텀 근사치를 RSI 로 위장했다.
+        "rsi14": rsi14,
         "stochK": stoch,
         "newHighDistancePct": round((1 - price / high_52w) * 100, 1),
         "newHighRecency4w": 1 if price >= high_52w * 0.99 else (2 if price >= high_52w * 0.96 else "None"),
         "closeSeries": [round(value, 2) for value in closes[-40:-1]] + [round(price, 2)],
-        "historySource": meta.get("historySource", "synthetic"),
+        "historySource": history_source,
     }
+    # 실측 EPS(TTM) 를 라이트 스냅샷에 노출한다(테이블이 읽는 곳). 유한한 실수일 때만.
+    # 예전엔 합성 가능한 epsRevScore 점수만 있었다. epsNextY 는 있으면 성장 참고용으로 함께.
+    eps_ttm = fundamentals.get("epsTtm")
+    if isinstance(eps_ttm, (int, float)) and not isinstance(eps_ttm, bool) and math.isfinite(eps_ttm):
+        stock["epsTtm"] = round(float(eps_ttm), 2)
+    eps_next = fundamentals.get("epsNextY")
+    if isinstance(eps_next, (int, float)) and not isinstance(eps_next, bool) and math.isfinite(eps_next):
+        stock["epsNextY"] = round(float(eps_next), 2)
     if meta.get("etfCategory"):
         stock["etfCategory"] = meta["etfCategory"]
     if meta.get("preferHistory"):

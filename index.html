@@ -1289,6 +1289,10 @@
             <span>공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다.</span>
           </div>
           <div class="insider-controls">
+            <div class="insider-filter" id="shortMetricToggle" role="group" aria-label="지표 전환" hidden style="display:none">
+              <button type="button" data-metric="balance" class="is-active">잔고 (T+2)</button>
+              <button type="button" data-metric="volume">일일 거래비중</button>
+            </div>
             <div class="insider-filter" id="shortSort" role="group" aria-label="정렬">
               <button type="button" data-sort="dtc" class="is-active">잔고일수 높은순</button>
               <button type="button" data-sort="trade">거래비중 높은순</button>
@@ -1885,6 +1889,10 @@
             <p><b>424B4=가격확정(상장 임박/직후)</b>, <b>S-1=등록 신청</b>, S-1/A=정정. SEC 등록서류 기반입니다.</p>
           </div>
           <div class="insider-controls">
+            <div class="insider-filter" id="ipoViewToggle" role="group" aria-label="보기 전환" hidden style="display:none">
+              <button type="button" data-view="list" class="is-active">전체 일정</button>
+              <button type="button" data-view="perf">공모가 성과</button>
+            </div>
             <div class="insider-filter" id="ipoStageFilter" role="group" aria-label="단계 필터">
               <button type="button" data-stage="all" class="is-active">전체</button>
               <button type="button" data-stage="priced">상장(가격확정)</button>

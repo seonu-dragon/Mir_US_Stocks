@@ -2372,7 +2372,10 @@ async function renderAiStockDashboard(ticker) {
       <div class="ai-dash-handle ai-dash-handle-row ai-dash-handle-bottom" data-axis="bottom" title="드래그하여 하단 높이 조절 · 더블클릭 초기화"></div>
     </div>
     <div class="ai-dash-rangebar" id="aiDashRange">
-      ${["1M", "3M", "6M", "1Y", "5Y"].map((r) => `<button type="button" data-range="${r}"${r === "6M" ? ' class="is-active"' : ""}>${r}</button>`).join("")}
+      ${["1W", "1M", "3M", "6M", "YTD", "1Y", "5Y"].map((r) => `<button type="button" data-range="${r}"${r === "6M" ? ' class="is-active"' : ""}>${r}</button>`).join("")}
+    </div>
+    <div class="ai-dash-stylebar" id="aiDashStyle" role="group" aria-label="차트 캔들 유형">
+      ${[["candle", "캔들", "캔들(OHLC)"], ["line", "라인", "종가 라인"], ["heikin", "헤이킨", "헤이킨아시(Heikin-Ashi)"]].map(([k, label, title]) => `<button type="button" data-style="${k}" title="${title}">${label}</button>`).join("")}
     </div>
     <button type="button" class="ai-dash-collapse" id="aiDashCollapse" aria-label="정보 패널 접기/펼치기" title="정보 패널 접기/펼치기"></button>`;
   host.classList.add("is-active");
@@ -2391,7 +2394,7 @@ async function renderAiStockDashboard(ticker) {
   bindAiDashResize(host);
   // 사이드바가 차트 폭을 줄였으니 cosmos 캔버스를 새 영역에 맞춰 다시 그린다.
   aiCosmosRelayoutSoon();
-  const rangeKo = { "1M": "1개월", "3M": "3개월", "6M": "6개월", "1Y": "1년", "5Y": "5년" };
+  const rangeKo = { "1W": "1주(5거래일)", "1M": "1개월", "3M": "3개월", "6M": "6개월", "YTD": "연초이후", "1Y": "1년", "5Y": "5년" };
   const rangeBar = byId("aiDashRange");
   if (rangeBar) rangeBar.querySelectorAll("[data-range]").forEach((btn) => {
     btn.addEventListener("click", () => {
@@ -2403,6 +2406,19 @@ async function renderAiStockDashboard(ticker) {
       }
     });
   });
+  // 캔들 유형 선택(캔들·라인·헤이킨아시). 저장된 유형을 활성 표시하고, 클릭 시 cosmos 에 반영.
+  const styleBar = byId("aiDashStyle");
+  if (styleBar) {
+    const cur = window.MirCosmos?.getChartStyle?.() || "candle";
+    styleBar.querySelectorAll("[data-style]").forEach((b) => b.classList.toggle("is-active", b.dataset.style === cur));
+    styleBar.querySelectorAll("[data-style]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (window.MirCosmos?.setChartStyle?.(btn.dataset.style)) {
+          styleBar.querySelectorAll("[data-style]").forEach((b) => b.classList.toggle("is-active", b === btn));
+        }
+      });
+    });
+  }
 
   // 후속 질문 칩(위임): 리페인트에도 살아남도록 host에 한 번만 바인딩
   host.addEventListener("click", (e) => {

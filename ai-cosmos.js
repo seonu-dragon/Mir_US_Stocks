@@ -43,7 +43,20 @@
   const MORPH_CRISP_START = 0.52;
   const MORPH_MESH_FADE_START = 0.6;
   const REVEAL_EDGE = 0.34;
-  const RANGE_BARS = { "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504, "5Y": 1260 };
+  // 고정 봉수 기간. "1W"=최근 5거래일(일봉만 있어 진짜 인트라데이는 없음, 정직하게 5거래일).
+  // "YTD"(연초이후)는 봉수가 아니라 날짜로 잘라야 해서 여기엔 없고 sliceBarsByRange 에서 특수 처리한다.
+  const RANGE_BARS = { "1W": 5, "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504, "5Y": 1260 };
+  // 차트 캔들 유형 — candle(캔들)·line(종가선)·heikin(헤이킨아시). localStorage 에 유지.
+  const CHART_STYLE_LS_KEY = "mir_ai_chart_style";
+  const CHART_STYLES = new Set(["candle", "line", "heikin"]);
+  let chartStyle = (() => {
+    try {
+      const s = localStorage.getItem(CHART_STYLE_LS_KEY);
+      return CHART_STYLES.has(s) ? s : "candle";
+    } catch (_) {
+      return "candle";
+    }
+  })();
   const PATTERN_MAX_FULL = 60; // 캐시에 유지할 최대 패턴 수(초과 시 시간축 고르게 샘플)
   const PATTERN_MAX_RENDER = 6; // 한 화면(가시 구간)에 그릴 최대 패턴 수(가독성)
   const CHART_TARGET_YAW = 0;
@@ -292,8 +305,48 @@
   }
 
   function sliceBarsByRange(bars, range) {
+    // YTD = 올해 1월 1일 이후. 봉수 고정이 아니라 날짜(bar.d="YYYY-MM-DD")로 잘라
+    // "연초부터 지금까지"의 실제 거래일 수를 그때그때 구한다.
+    if (range === "YTD") {
+      const yr = new Date().getFullYear();
+      let idx = -1;
+      for (let i = 0; i < bars.length; i += 1) {
+        const y = parseInt(String((bars[i] && bars[i].d) || "").slice(0, 4), 10);
+        if (Number.isFinite(y) && y >= yr) { idx = i; break; }
+      }
+      if (idx >= 0) {
+        const sliced = bars.slice(idx);
+        if (sliced.length) return sliced;
+      }
+      // 올해 봉이 없으면(휴장 직후 등) 6M 로 폴백.
+      const n6 = RANGE_BARS["6M"];
+      return bars.length <= n6 ? bars.slice() : bars.slice(-n6);
+    }
     const n = RANGE_BARS[range] || RANGE_BARS["6M"];
     return bars.length <= n ? bars.slice() : bars.slice(-n);
+  }
+
+  // 헤이킨아시 봉 시퀀스 계산: HA종가=(O+H+L+C)/4, HA시가=(직전HA시가+직전HA종가)/2,
+  // HA고가=max(고가,HA시가,HA종가), HA저가=min(저가,HA시가,HA종가). 첫 봉은 시가=(O+C)/2 로 시드.
+  function computeHeikinAshi(bars) {
+    const out = new Array(bars.length);
+    let prevO = null;
+    let prevC = null;
+    for (let i = 0; i < bars.length; i += 1) {
+      const b = bars[i];
+      const o = +b.o;
+      const h = +b.h;
+      const l = +b.l;
+      const c = +b.c;
+      const haC = (o + h + l + c) / 4;
+      const haO = prevO == null ? (o + c) / 2 : (prevO + prevC) / 2;
+      const haH = Math.max(h, haO, haC);
+      const haL = Math.min(l, haO, haC);
+      out[i] = { o: haO, h: haH, l: haL, c: haC, v: b.v, d: b.d };
+      prevO = haO;
+      prevC = haC;
+    }
+    return out;
   }
 
   // 전체 히스토리 차트 패턴 검출.
@@ -703,31 +756,65 @@
     drawMaLine(sma20, "rgba(56, 189, 248, 0.9)");
     drawMaLine(sma5, "rgba(251, 146, 60, 0.9)");
 
-    for (let i = 0; i < n; i += 1) {
-      const r = revAt(i);
-      if (r <= 0.01) continue;
-      const bar = chartBars[i];
-      const x = xAt(i);
-      const up = bar.c >= bar.o;
-      const color = up ? "#22c55e" : "#ef4444";
-      // candles sprout from the close-price line outward as they reveal
-      const grow = rev ? smoothstep(r) : 1;
-      const baseY = yAt(bar.c);
-      const bodyTop = lerp(baseY, yAt(Math.max(bar.o, bar.c)), grow);
-      const bodyBot = lerp(baseY, yAt(Math.min(bar.o, bar.c)), grow);
-      const wickTop = lerp(baseY, yAt(bar.h), grow);
-      const wickBot = lerp(baseY, yAt(bar.l), grow);
-      const bodyH = Math.max(1, bodyBot - bodyTop);
+    if (chartStyle === "line") {
+      // 종가선(+영역): 실제 종가를 잇는 라인. reveal 전선까지만 그린다.
+      let frontIdx = -1;
+      for (let i = 0; i < n; i += 1) {
+        if (revAt(i) > 0.5) frontIdx = i; else break;
+      }
+      if (frontIdx >= 0) {
+        const up = chartBars[frontIdx].c >= chartBars[0].c;
+        const lineColor = up ? "#22c55e" : "#ef4444";
+        const areaGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
+        areaGrad.addColorStop(0, up ? "rgba(34, 197, 94, 0.20)" : "rgba(239, 68, 68, 0.20)");
+        areaGrad.addColorStop(1, up ? "rgba(34, 197, 94, 0)" : "rgba(239, 68, 68, 0)");
+        // 영역 채우기
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.moveTo(xAt(0), padT + plotH);
+        for (let i = 0; i <= frontIdx; i += 1) ctx.lineTo(xAt(i), yAt(chartBars[i].c));
+        ctx.lineTo(xAt(frontIdx), padT + plotH);
+        ctx.closePath();
+        ctx.fillStyle = areaGrad;
+        ctx.fill();
+        // 라인
+        ctx.beginPath();
+        ctx.moveTo(xAt(0), yAt(chartBars[0].c));
+        for (let i = 1; i <= frontIdx; i += 1) ctx.lineTo(xAt(i), yAt(chartBars[i].c));
+        ctx.strokeStyle = lineColor;
+        ctx.lineWidth = 1.8;
+        ctx.lineJoin = "round";
+        ctx.stroke();
+      }
+    } else {
+      // 캔들 / 헤이킨아시 — 봉 소스만 다르고 그리는 방식은 같다.
+      const styleBars = chartStyle === "heikin" ? computeHeikinAshi(chartBars) : chartBars;
+      for (let i = 0; i < n; i += 1) {
+        const r = revAt(i);
+        if (r <= 0.01) continue;
+        const bar = styleBars[i];
+        const x = xAt(i);
+        const up = bar.c >= bar.o;
+        const color = up ? "#22c55e" : "#ef4444";
+        // candles sprout from the close-price line outward as they reveal
+        const grow = rev ? smoothstep(r) : 1;
+        const baseY = yAt(bar.c);
+        const bodyTop = lerp(baseY, yAt(Math.max(bar.o, bar.c)), grow);
+        const bodyBot = lerp(baseY, yAt(Math.min(bar.o, bar.c)), grow);
+        const wickTop = lerp(baseY, yAt(bar.h), grow);
+        const wickBot = lerp(baseY, yAt(bar.l), grow);
+        const bodyH = Math.max(1, bodyBot - bodyTop);
 
-      ctx.globalAlpha = alpha * r;
-      ctx.strokeStyle = color;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(x, wickTop);
-      ctx.lineTo(x, wickBot);
-      ctx.stroke();
-      ctx.fillStyle = color;
-      ctx.fillRect(x - candleW * 0.5, bodyTop, candleW, bodyH);
+        ctx.globalAlpha = alpha * r;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(x, wickTop);
+        ctx.lineTo(x, wickBot);
+        ctx.stroke();
+        ctx.fillStyle = color;
+        ctx.fillRect(x - candleW * 0.5, bodyTop, candleW, bodyH);
+      }
     }
     ctx.globalAlpha = alpha;
 
@@ -2058,15 +2145,29 @@
     resize();
   }
 
+  // 캔들 유형 전환: 재-morph 없이 현재 차트를 새 유형으로 즉시 다시 그린다. localStorage 유지.
+  function setChartStyle(style) {
+    if (!CHART_STYLES.has(style)) return false;
+    chartStyle = style;
+    try { localStorage.setItem(CHART_STYLE_LS_KEY, style); } catch (_) { /* 저장 실패 무시 */ }
+    if (running && renderMode === "chart") {
+      cancelAnimationFrame(raf);
+      draw();
+    }
+    return true;
+  }
+
   window.MirCosmos = {
     init,
     start,
     stop,
     morphToChart,
     setChartRange,
+    setChartStyle,
+    getChartStyle: () => chartStyle,
     resetToLandscape,
     relayout,
     getMode: () => renderMode,
-    getChartMeta: () => ({ ...chartMeta, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length, visiblePatterns: countVisiblePatterns(), renderedPatterns: countRenderedPatterns(), overlays: chartOverlays ? { sr: (chartOverlays.sr || []).length, trendlines: (chartOverlays.trendlines || []).length, patterns: (chartOverlays.patterns || []).length } : null }),
+    getChartMeta: () => ({ ...chartMeta, style: chartStyle, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length, visiblePatterns: countVisiblePatterns(), renderedPatterns: countRenderedPatterns(), overlays: chartOverlays ? { sr: (chartOverlays.sr || []).length, trendlines: (chartOverlays.trendlines || []).length, patterns: (chartOverlays.patterns || []).length } : null }),
   };
 })();

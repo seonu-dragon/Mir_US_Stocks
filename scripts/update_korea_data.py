@@ -561,9 +561,10 @@ def yahoo_quote_symbol(yahoo_symbol: str) -> str:
 
 
 def fetch_yahoo_history_kr(yahoo_symbol: str):
+    """5년 일봉 + 배당 이벤트. 반환: (rows, dividends) — US 쪽과 동일 형태."""
     url = (
         "https://query1.finance.yahoo.com/v8/finance/chart/"
-        f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}?range=5y&interval=1d"
+        f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}?range=5y&interval=1d&events=div"
     )
     # 일시 스로틀(429)은 짧은 지터 백오프 2회로 흡수한다 — 그래도 실패하면
     # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다. US(update_data)와 동일 전략.
@@ -602,7 +603,9 @@ def fetch_yahoo_history_kr(yahoo_symbol: str):
             })
     if len(rows) < 30:
         raise RuntimeError(f"Not enough rows for {yahoo_symbol}")
-    return rows[-1260:]
+    rows = rows[-1260:]
+    dividends = UD.parse_yahoo_dividends(result, first_date=rows[0]["date"])
+    return rows, dividends
 
 
 def history_priority(meta):
@@ -777,6 +780,8 @@ def load_cached_history(symbol: str):
     """직전 발행된 KR detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
 
     실측(yahoo/yahoo-cache)만 재사용 — 합성 이력이 캐시를 타고 영속하면 안 된다.
+    반환: (rows, dividends) 또는 None. 배당도 함께 이월해 fetch 실패가 배당을
+    지우지 않게 한다(US load_cached_history 와 동일).
     """
     try:
         safe = re.sub(r"[^0-9A-Z._-]", "_", str(symbol).upper())
@@ -796,7 +801,9 @@ def load_cached_history(symbol: str):
                 "close": float(entry[3]),
                 "volume": float(entry[4] or 0),
             })
-        return rows if len(rows) >= 30 else None
+        if len(rows) < 30:
+            return None
+        return rows, UD._cached_dividends(detail)
     except Exception:
         return None
 
@@ -807,8 +814,10 @@ def build_one(meta: dict):
     error = None
     try:
         if meta.get("preferHistory"):
-            rows = fetch_yahoo_history_kr(ysym)
+            rows, dividends = fetch_yahoo_history_kr(ysym)
             meta["historySource"] = "yahoo"
+            if dividends:
+                meta["dividends"] = dividends
         else:
             rows = UD.synthetic_history(
                 symbol,
@@ -821,8 +830,10 @@ def build_one(meta: dict):
         # 실측 fetch 실패 시 합성 대신 직전 실측 이력을 재사용한다(데이터 정직성).
         cached = load_cached_history(symbol) if meta.get("preferHistory") else None
         if cached:
-            rows = cached
+            rows, cached_divs = cached
             meta["historySource"] = "yahoo-cache"
+            if cached_divs:
+                meta["dividends"] = cached_divs
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
             rows = UD.synthetic_history(
@@ -1049,7 +1060,9 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
         "preferHistory": True,
     }
     try:
-        rows = fetch_yahoo_history_kr(ysym)
+        rows, dividends = fetch_yahoo_history_kr(ysym)
+        if dividends:
+            meta["dividends"] = dividends
     except Exception:
         return None
     stock = UD.make_stock(meta, rows)
@@ -1722,7 +1735,7 @@ def split_snapshot_details(payload: dict):
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
+        for key in ["chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
             if key in stock:
                 detail[key] = stock[key]
         if detail:
@@ -1736,7 +1749,7 @@ def split_snapshot_details(payload: dict):
             details[stock["ticker"]] = detail
         light_stocks.append({
             k: v for k, v in stock.items()
-            if k not in {"chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"}
+            if k not in {"chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"}
         })
     light = dict(payload)
     light["stocks"] = light_stocks
@@ -1843,6 +1856,22 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[short_interest/kr] rebuild skipped: {exc}")
+    # 일일 공매도 거래비중(잔고와 별개, T+1). 같은 KRX_ID/KRX_PW 로그인 자격증명을 쓴다.
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_short_volume.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[short_volume/kr] rebuild skipped: {exc}")
+    # 카드뉴스 경량 파일(data/cardnews.*) — KR 키만 갱신, US 키는 보존.
+    try:
+        deck = (UD.load_today_content() or {}).get("kr")
+        UD.write_cardnews_file("kr", deck)
+    except Exception as exc:
+        print(f"[cardnews/kr] 경량 파일 갱신 실패(스냅샷은 계속): {exc}")
     # 잠정실적 발표 + 주가반응(kr_disclosures + 야후 일봉). 공시 빌더가 먼저 돌아야 한다.
     try:
         import subprocess
@@ -1893,7 +1922,11 @@ def main():
 
         with repository_publish_lock(ROOT):
             persist_snapshot(snapshot, light, details)
-            if not git_publish(["data/korea/"], "Korea market snapshot"):
+            # data/cardnews.* 는 data/korea/ 밖이라 명시적으로 함께 올린다.
+            if not git_publish(
+                ["data/korea/", "data/cardnews.json", "data/cardnews.js"],
+                "Korea market snapshot",
+            ):
                 raise SystemExit(1)
     else:
         persist_snapshot(snapshot, light, details)

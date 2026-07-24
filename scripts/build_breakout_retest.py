@@ -44,12 +44,19 @@ BASE_STRIDE = 10
 BREAKOUT_PATTERNS = {"resistance_breakout": +1, "support_breakdown": -1}
 
 
-def fwd(closes, i, h):
+def fwd(closes, i, h, div_cum=None):
+    """전방 수익률 — div_cum(누적 배당)이 있으면 배당 포함 총수익 기준.
+    div_cum=None(배당 미수집 detail)이면 기존 가격 수익률과 동일하다."""
     j = i + h
     if j >= len(closes):
         return None
     c0 = closes[i]
-    return (closes[j] - c0) / c0 if c0 else None
+    if not c0:
+        return None
+    cj = closes[j]
+    if div_cum is not None:
+        cj += div_cum[j] - div_cum[i]
+    return (cj - c0) / c0
 
 
 def summarize_dir(rets, direction):
@@ -98,10 +105,12 @@ def main():
             continue
         scanned += 1
         closes = [r["c"] for r in rows]
+        # 배당 포함 총수익용 누적 배당(없으면 None → 기존 가격 수익률 그대로).
+        div_cum = pl.dividend_cum_from_detail(rows, d.get("dividends"))
 
         for k in range(pl.PIVOT_WIN, n, BASE_STRIDE):
             for h in HORIZONS:
-                r = fwd(closes, k, h)
+                r = fwd(closes, k, h, div_cum)
                 if r is not None:
                     base[h].append(r)
 
@@ -113,7 +122,7 @@ def main():
             L = ev["neckline"]
             breakout_total[direction] += 1
             for h in HORIZONS:
-                r = fwd(closes, b, h)
+                r = fwd(closes, b, h, div_cum)
                 if r is not None:
                     rets[direction]["breakout"][h].append(r)
             # 되돌림: b 이후 RETEST_WIN봉 안에서 L 재접촉
@@ -125,7 +134,7 @@ def main():
             if r_idx is not None:
                 retest_occurred[direction] += 1
                 for h in HORIZONS:
-                    r = fwd(closes, r_idx, h)
+                    r = fwd(closes, r_idx, h, div_cum)
                     if r is not None:
                         rets[direction]["retest"][h].append(r)
 

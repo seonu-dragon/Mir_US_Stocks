@@ -143,8 +143,8 @@ function renderDetail() {
       <td>${leader.industry}</td>
       <td class="${cls(leader.activeReturn)}">${fmtPct(leader.activeReturn)}</td>
       <td class="${cls(leader.activeRelative)}">${fmtPct(leader.activeRelative)}</td>
-      <td>${leader.rsScore}</td>
-      <td>${leader.epsRevScore}</td>
+      <td>${Number.isFinite(Number(leader.rsi14)) ? Math.round(Number(leader.rsi14)) : "—"}</td>
+      <td>${Number.isFinite(Number(leader.epsTtm)) ? (isKrMarket() ? "₩" + Math.round(Number(leader.epsTtm)).toLocaleString("ko-KR") : "$" + Number(leader.epsTtm).toFixed(2)) : "—"}</td>
       <td>${Number(leader.volumeRatio || 0).toFixed(1)}x</td>
     </tr>
   `).join("");

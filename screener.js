@@ -17,7 +17,7 @@ function currentScreenerConfig() {
     bucket: byId("scrBucket")?.value || marketCfg().defaultBucket || "idx_sp500",
     sector: byId("scrSector")?.value || "All",
     preset: byId("scrPreset")?.value || "custom",
-    metric: byId("scrMetric")?.value || "rsScore",
+    metric: byId("scrMetric")?.value || "rsi14",
     minRs: numberInputValue("scrMinRs", 0),
     minEps: numberInputValue("scrMinEps", 0),
     minVol: numberInputValue("scrMinVol", 0),
@@ -160,10 +160,10 @@ function screenerRows() {
   const bucket = byId("scrBucket")?.value || marketCfg().defaultBucket || "idx_sp500";
   const sector = byId("scrSector")?.value || "All";
   const preset = byId("scrPreset")?.value || "custom";
-  const metric = byId("scrMetric")?.value || "rsScore";
+  const metric = byId("scrMetric")?.value || "rsi14";
   const patternCat = byId("scrPattern")?.value || "any";
-  const minRs = numberInputValue("scrMinRs", 0);
-  const minEps = numberInputValue("scrMinEps", 0);
+  const minRsi = numberInputValue("scrMinRs", 0);
+  const maxRsi = numberInputValue("scrMinEps", 0);
   const minVol = numberInputValue("scrMinVol", 0);
   const minCap = numberInputValue("scrMinCap", 0);
   const limit = Math.max(1, numberInputValue("scrLimit", 100));
@@ -171,8 +171,8 @@ function screenerRows() {
     .filter((item) => !isStockEtf(item))
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
-    .filter((item) => (Number(item.rsScore) || 0) >= minRs)
-    .filter((item) => (Number(item.epsRevScore) || 0) >= minEps)
+    .filter((item) => { if (minRsi <= 0) return true; const r = rsiValue(item); return r != null && r >= minRsi; })
+    .filter((item) => { if (maxRsi <= 0) return true; const r = rsiValue(item); return r != null && r <= maxRsi; })
     .filter((item) => (Number(item.volumeRatio) || 0) >= minVol)
     .filter((item) => (Number(item.marketCapB) || 0) >= minCap)
     .filter((item) => topPresetMatches(item, preset))
@@ -206,8 +206,8 @@ function renderScreener({ trackSaved = false } = {}) {
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</td>
-      <td>${item.rsScore}</td>
-      <td>${item.epsRevScore}</td>
+      <td>${fmtRsi(item)}</td>
+      <td>${fmtEps(item)}</td>
       <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
       <td>${fmtBillions(item.marketCapB)}</td>
       <td>${signalFor(item)}</td>
@@ -245,31 +245,30 @@ const NL_SECTORS = [
 ];
 
 const NL_FLAGS = [
-  { kw: ["과매도", "oversold"], label: "과매도 RSI≤30", test: (it) => Number(it.rsi14) <= 30 },
-  { kw: ["과매수", "overbought"], label: "과매수 RSI≥70", test: (it) => Number(it.rsi14) >= 70 },
+  { kw: ["과매도", "oversold"], label: "과매도 RSI≤30", test: (it) => { const r = rsiValue(it); return r != null && r <= 30; } },
+  { kw: ["과매수", "overbought"], label: "과매수 RSI≥70", test: (it) => { const r = rsiValue(it); return r != null && r >= 70; } },
   { kw: ["신고가", "new high", "고점 근접"], label: "신고가 근접", test: (it) => Number(it.newHighDistancePct) <= 2 },
   { kw: ["신저가", "저점 근접", "52주 저가"], label: "신저가 근접", test: (it) => { const d = low52DistPct(it); return Number.isFinite(d) && d <= 10; } },
   { kw: ["급등"], label: "당일 급등 ≥5%", test: (it) => Number(it.changePct) >= 5 },
   { kw: ["급락"], label: "당일 급락 ≤-5%", test: (it) => Number(it.changePct) <= -5 },
   { kw: ["대형주", "large cap", "largecap"], label: "대형주", test: (it) => Number(it.marketCapB) >= 10 },
   { kw: ["소형주", "중소형", "스몰캡", "small cap"], label: "소형주", test: (it) => isKrMarket() ? Number(it.marketCapB) < 0.1 : Number(it.marketCapB) <= 2 },
-  { kw: ["주도주", "강세주", "리더", "leader"], label: "주도주 RS≥80", test: (it) => Number(it.rsScore) >= 80 },
+  { kw: ["주도주", "강세주", "리더", "leader"], label: "주도주 (3개월 +15%↑)", test: (it) => Number(it.threeMonthChangePct) >= 15 },
   { kw: ["저평가", "value"], label: "저평가 PER≤15", test: (it, f) => Number(f.pe) > 0 && Number(f.pe) <= 15 },
 ];
 
 const NL_METRICS = [
-  { keys: ["rsi"], label: "RSI", unit: "", get: (it) => Number(it.rsi14), dir: "max" },
+  { keys: ["rsi"], label: "RSI", unit: "", get: (it) => rsiValue(it) ?? NaN, dir: "max" },
   { keys: ["per", "pe", "p/e", "주가수익"], label: "PER", unit: "", get: (it, f) => Number(f.pe != null ? f.pe : f.forwardPE), dir: "max" },
   { keys: ["pbr", "pb", "p/b"], label: "PBR", unit: "", get: (it, f) => Number(f.pb), dir: "max" },
   { keys: ["psr", "ps", "p/s"], label: "PSR", unit: "", get: (it, f) => Number(f.ps), dir: "max" },
   { keys: ["roe", "자기자본"], label: "ROE", unit: "%", get: (it, f) => Number(f.roe), dir: "min" },
   { keys: ["시총", "시가총액", "market cap", "marketcap"], label: "시총", unit: "B", get: (it) => itemCapForValuation(it), dir: "min", cap: true },
   { keys: ["거래량", "volume", "vol"], label: "거래량", unit: "x", get: (it) => Number(it.volumeRatio), dir: "min" },
-  { keys: ["eps점수", "eps추정", "eps rev"], label: "EPS점수", unit: "", get: (it) => Number(it.epsRevScore), dir: "min" },
+  { keys: ["eps", "주당순이익"], label: "EPS", unit: "", get: (it) => epsTtmValue(it), dir: "min" },
   { keys: ["당일", "오늘"], label: "당일등락", unit: "%", get: (it) => Number(it.changePct), dir: "min" },
   { keys: ["1개월", "한달", "월간"], label: "1개월", unit: "%", get: (it) => Number(it.monthChangePct), dir: "min" },
   { keys: ["1주", "주간"], label: "1주", unit: "%", get: (it) => Number(it.weekChangePct), dir: "min" },
-  { keys: ["rs"], label: "RS", unit: "", get: (it) => Number(it.rsScore), dir: "min" },
 ];
 
 function nlScaleCap(v, unit) {
@@ -381,7 +380,7 @@ function runNlScreener() {
       return sorter.sortDir === "max" ? an - bn : bn - an;
     });
   } else {
-    rows.sort((a, b) => Number(b.rsScore) - Number(a.rsScore));
+    rows.sort((a, b) => (rsiValue(b) ?? -Infinity) - (rsiValue(a) ?? -Infinity));
   }
   const total = rows.length;
   rows = rows.slice(0, 100);
@@ -397,8 +396,8 @@ function runNlScreener() {
       <td>${escapeHtml(it.sector)}</td>
       <td class="${cls(it.changePct)}">${fmtDailyPct(it.changePct)}</td>
       <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>
-      <td>${it.rsScore}</td>
-      <td>${Number.isFinite(Number(it.rsi14)) ? it.rsi14 : "-"}</td>
+      <td>${fmtEps(it)}</td>
+      <td>${Number.isFinite(Number(it.rsi14)) ? Math.round(Number(it.rsi14)) : "—"}</td>
       <td>${Number.isFinite(pe) ? pe.toFixed(1) : "-"}</td>
       <td>${fmtBillions(it.marketCapB)}</td>
       <td>${signalFor(it)}</td>
@@ -547,8 +546,8 @@ function setupScreenerEvents() {
     const p = TOP_PRESETS[key];
     if (p) {
       byId("scrMetric").value = p.metric;
-      byId("scrMinRs").value = p.minRs || "";
-      byId("scrMinEps").value = p.minEps || "";
+      byId("scrMinRs").value = p.minRsi || "";
+      byId("scrMinEps").value = p.maxRsi || "";
       byId("scrMinVol").value = p.minVolume || "";
       byId("scrMinCap").value = p.minMarketCap || "";
     }
@@ -562,7 +561,7 @@ function setupScreenerEvents() {
     byId("scrPreset").value = "custom";
     byId("scrBucket").value = marketCfg().defaultBucket || "idx_sp500";
     byId("scrSector").value = "All";
-    byId("scrMetric").value = "rsScore";
+    byId("scrMetric").value = "rsi14";
     ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
     selectedSavedScreenerId = "";
     renderSavedScreenerPicker();
@@ -592,8 +591,8 @@ const COMPARE_METRICS = [
   ["1주", (i) => fmtPct(i.weekChangePct), (i) => cls(i.weekChangePct)],
   ["1개월", (i) => fmtPct(i.monthChangePct), (i) => cls(i.monthChangePct)],
   ["3개월", (i) => fmtPct(i.threeMonthChangePct), (i) => cls(i.threeMonthChangePct)],
-  ["RS", (i) => String(i.rsScore)],
-  ["EPS Rev", (i) => String(i.epsRevScore)],
+  ["RSI", (i) => fmtRsi(i)],
+  ["EPS", (i) => fmtEps(i)],
   ["거래량", (i) => `${Number(i.volumeRatio || 0).toFixed(1)}x`],
   ["시총", (i) => fmtBillions(i.marketCapB)],
   ["신고가 거리", (i) => fmtPct(-i.newHighDistancePct)],

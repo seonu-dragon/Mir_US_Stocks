@@ -12000,9 +12000,125 @@ async function resolveTickerAcrossMarkets(query) {
   return resolved;
 }
 
+// ===== 홈 검색 인텐트 라우터 =====
+// MIR INTELLIGENCE 검색창은 "질문에 답하는 챗봇"이 아니라 "질문에 답할 수 있는
+// 화면으로 데려다주는 라우터"다. 티커가 잡히면(precedence 최우선) 종목 분석으로,
+// 아니면 아래 키워드 표로 해당 탭/서브탭을 연다. 어디에도 안 걸리면 종목 검색으로.
+// 규칙: 한국어+영어, 대소문자 무시, "가장 긴(구체적인) 키워드"가 이긴다.
+const HOME_ROUTE_RULES = [
+  // 시장 지도 / 히트맵 — 페이지 전용어(preempt): 티커 퍼지매칭(코스피→KOSS)보다 먼저 라우팅.
+  { tab: "map", preempt: true, keywords: ["히트맵", "트리맵", "시장 지도", "시장지도", "시장 전체", "전체 흐름", "시장 지금", "시장 맵", "heatmap", "treemap", "market map"] },
+  // 섹터 흐름 (섹터명 포함)
+  { tab: "sector", keywords: ["섹터 흐름", "섹터흐름", "섹터", "업종", "반도체", "2차전지", "이차전지", "배터리", "바이오", "제약", "자동차", "금융", "은행", "방산", "조선", "화학", "인터넷", "게임", "엔터", "sector", "industry"] },
+  // 스크리너 (조건 검색) — 페이지 전용어(preempt)
+  { tab: "search", sub: "screener", preempt: true, keywords: ["스크리너", "스크리닝", "조건 검색", "조건검색", "종목 발굴", "발굴", "골라줘", "골라", "찾아줘", "필터링", "필터", "screener", "screening"] },
+  // 상승확률 스캐너
+  { tab: "search", sub: "scanner", keywords: ["상승확률", "상승 확률", "오를 종목", "오를까", "오를", "스캐너", "상승 가능성", "상승가능성", "scanner"] },
+  // 주도주 / 상위 / 신고가
+  { tab: "search", sub: "top", keywords: ["주도주", "강한 종목", "강한 주식", "강한", "리더", "상위 종목", "상위", "신고가", "모멘텀 강", "leader", "strongest"] },
+  // 급등 / 거래량 급증
+  { tab: "search", sub: "jump", keywords: ["급등주", "급등", "거래량 급증", "거래량 터", "거래량터", "거래량 폭발", "surge", "gainers"] },
+  // 종목 비교
+  { tab: "search", sub: "compare", keywords: ["비교", "대비", " vs ", "vs.", "versus", "compare"] },
+  // 저평가 / 밸류
+  { tab: "search", sub: "valuation", keywords: ["저평가", "밸류에이션", "밸류", "싼 종목", "싼 주식", "per", "pbr", "valuation", "undervalued"] },
+  // 공매도
+  { tab: "search", sub: "short", keywords: ["공매도", "숏", "short interest", "short"] },
+  // 배당
+  { tab: "search", sub: "dividend", keywords: ["배당주", "배당금", "배당", "dividend"] },
+  // 자사주 / 바이백
+  { tab: "search", sub: "buyback", keywords: ["자사주", "바이백", "buyback", "repurchase"] },
+  // 증자 / 희석
+  { tab: "search", sub: "dilution", keywords: ["유상증자", "증자", "희석", "dilution"] },
+  // IPO / 신규 상장
+  { tab: "search", sub: "ipo", keywords: ["신규 상장", "신규상장", "공모주", "공모", "따상", "ipo"] },
+  // 실적 발표 반응
+  { tab: "search", sub: "earnreact", keywords: ["실적 발표 후", "실적발표 후", "실적 반응", "어닝 반응", "실적 서프라이즈", "earnings reaction"] },
+  // 공시 / DART
+  { tab: "search", sub: "dart", keywords: ["공시", "dart", "전자공시"] },
+  // 뉴스
+  { tab: "search", sub: "news", keywords: ["뉴스", "헤드라인", "news", "headline"] },
+  // 차트 / 기술적
+  { tab: "search", sub: "chart", keywords: ["차트", "기술적", "캔들", "candle", "chart"] },
+  // 실적 일정 (캘린더) — 실적 "반응"과 구분되도록 긴 키워드 우선
+  { tab: "calendar", sub: "earnings", keywords: ["실적 발표 일정", "실적발표 일정", "실적 발표일", "실적발표일", "실적 일정", "어닝 일정", "실적 캘린더", "실적 발표 언제", "earnings calendar", "earnings date"] },
+  // 경제 캘린더 / 지표
+  { tab: "calendar", keywords: ["경제 지표", "경제지표", "경제 캘린더", "일정", "캘린더", "fomc", "cpi", "지표 발표", "calendar", "economic"] },
+  // 매크로 / 마켓 데이터
+  { tab: "health", keywords: ["금리", "환율", "매크로", "vix", "국채", "달러", "채권", "인플레이션", "macro", "yield", "rates", "fx"] },
+  // AI 브리핑 — 페이지 전용어(preempt): "AI" 티커(C3.ai) 오탐 방지
+  { tab: "ai-briefing", preempt: true, keywords: ["ai 브리핑", "브리핑", "오늘 요약", "시장 요약", "오늘의 시장 요약", "briefing"] },
+  // 커뮤니티 — 페이지 전용어(preempt)
+  { tab: "community", preempt: true, keywords: ["커뮤니티", "토론", "게시판", "인기글", "의견", "투표", "community"] },
+  // 시그널
+  { tab: "signals", keywords: ["매매 신호", "매매신호", "시그널", "신호", "signal"] },
+  // 포트폴리오 / 내 투자
+  { tab: "bulk", keywords: ["포트폴리오", "내 투자", "내투자", "수익률", "손익", "리밸런싱", "자산 배분", "자산배분", "보유 종목", "보유종목", "portfolio", "holdings"] },
+  // 내부자
+  { tab: "institutional", sub: "insider", keywords: ["내부자", "insider"] },
+  // 의회 / 정치인
+  { tab: "institutional", sub: "congress", keywords: ["의회", "정치인", "congress", "senator", "pelosi"] },
+  // 액티비스트 / 행동주의
+  { tab: "institutional", sub: "activist", keywords: ["액티비스트", "행동주의", "13d", "activist"] },
+  // 기관 / 거장 / 13F
+  { tab: "institutional", sub: "13f", keywords: ["기관 보유", "기관보유", "기관", "큰손", "13f", "거장", "버핏", "buffett", "guru"] },
+];
+
+// 가장 긴 매칭 키워드를 가진 규칙을 고른다(= 가장 구체적인 규칙 우선).
+// preemptOnly=true 면 페이지 전용어(preempt:true) 규칙만 본다 — 티커 해석보다 먼저
+// 돌려서 코스피→KOSS, AI→C3.ai 같은 퍼지 티커 오탐을 막는다.
+function routeQueryToPage(query, { preemptOnly = false } = {}) {
+  const q = String(query || "").toLowerCase();
+  if (!q) return null;
+  let best = null;
+  let bestLen = 0;
+  for (const rule of HOME_ROUTE_RULES) {
+    if (preemptOnly && !rule.preempt) continue;
+    for (const kw of rule.keywords) {
+      const k = kw.toLowerCase();
+      if (q.includes(k) && k.trim().length > bestLen) {
+        bestLen = k.trim().length;
+        best = { tab: rule.tab, sub: rule.sub || null };
+      }
+    }
+  }
+  return best;
+}
+
+// 라우팅 목적지가 현재 시장에서 숨겨졌는지 판정한다. 숨겨졌으면 종목 검색으로 폴백.
+// (activateTab 은 hiddenTabs 는 스스로 search 로 폴백하지만, 시장별로 숨는 서브탭까지는
+// 검사하지 않으므로 여기서 미리 걸러낸다 — 예: KR 의 기관/내부자/의회 서브탭.)
+function homeRouteHidden(tab, sub, cfg = marketCfg()) {
+  const norm = normalizeTabRequest(tab, sub);
+  tab = norm.tab;
+  sub = norm.sub;
+  if (tab === "search" && sub) return searchSubTabHidden(sub, cfg);
+  if (tab === "institutional" && sub) {
+    if ((cfg.hiddenInstitutionalSubs || []).includes(sub)) return true;
+    const f = cfg.features || {};
+    if (sub === "congress" && f.congress === false) return true;
+    if (sub === "13f" && f.sec13f === false) return true;
+    if (sub === "insider" && f.insider === false) return true;
+    if (sub === "activist" && f.activist === false) return true;
+  }
+  if (tab === "calendar" && sub === "earnings") {
+    const f = cfg.features || {};
+    if (f.earningsCalendar === false) return true;
+  }
+  return false;
+}
+
 async function handleHomeSearch(query) {
   const q = String(query || "").trim();
   if (!q) return;
+
+  // 페이지 전용어(히트맵·브리핑·스크리너·커뮤니티 등)는 특정 종목 의도가 아니므로
+  // 티커 퍼지매칭보다 먼저 라우팅한다(코스피→KOSS, AI→C3.ai 오탐 차단).
+  const preempt = routeQueryToPage(q, { preemptOnly: true });
+  if (preempt && !homeRouteHidden(preempt.tab, preempt.sub)) {
+    activateTab(preempt.tab, { sub: preempt.sub || null });
+    return;
+  }
 
   const matchedTicker = await resolveTickerAcrossMarkets(q);
   if (matchedTicker) {
@@ -12010,7 +12126,7 @@ async function handleHomeSearch(query) {
     if (stock) {
       const isKr = stock.market === "kospi" || stock.market === "kosdaq";
       const targetMarket = isKr ? "kr" : "us";
-      
+
       if (marketCfg().id !== targetMarket) {
         switchMarketMode(targetMarket).then(() => {
           navigateToStockAnalysis(matchedTicker, q);
@@ -12019,21 +12135,31 @@ async function handleHomeSearch(query) {
         navigateToStockAnalysis(matchedTicker, q);
       }
     }
-  } else {
-    // If no stock matched, open floating chatbot and ask it!
-    const panel = byId("chatPanel");
-    const input = byId("chatInput");
-    if (panel) {
-      panel.hidden = false;
-      if (input) {
-        input.value = q;
-        // Trigger chatbot submit
-        const form = byId("chatForm");
-        if (form) {
-          form.dispatchEvent(new Event("submit"));
-        }
-      }
-    }
+    return;
+  }
+
+  // 티커가 안 잡히면 인텐트 라우터로 "답할 수 있는 화면"을 연다. 챗봇은 더 이상 열지 않는다.
+  const route = routeQueryToPage(q);
+  if (route && !homeRouteHidden(route.tab, route.sub)) {
+    activateTab(route.tab, { sub: route.sub || null });
+    return;
+  }
+
+  // 어디에도 안 걸리거나 목적지가 이 시장에서 숨겨졌으면 → 종목 검색(분석)으로 폴백.
+  navigateHomeSearchFallback(q);
+}
+
+// 라우팅 실패 시 종목 검색 화면으로 안내한다. 티커가 없으므로 조립 애니메이션 대신
+// 현재 선택 종목의 분석을 보여주고, 사용자가 입력한 질문은 종목 검색 입력창에 남긴다.
+function navigateHomeSearchFallback(query) {
+  activateTab("search", { sub: "analysis" });
+  const input = byId("tickerSearch");
+  if (input && query) {
+    input.value = query;
+  }
+  const panel = byId("sub-analysis");
+  if (panel) {
+    setTimeout(() => panel.scrollIntoView({ behavior: "smooth", block: "start" }), 150);
   }
 }
 

@@ -15331,12 +15331,38 @@ updateOnlineStatus();
 let currentActiveReportTicker = null;
 let aiReportBusy = false;
 
+// 지표·용어 약어 중 실제 티커와 겹치는 것들 — 2026-07-24 스냅샷 실측.
+// RSI=Rush Street Interactive, PBR=Petrobras, ATR=AptarGroup, EMA=Emera …
+// 이것 때문에 "RSI 지표가 뭐야" 같은 용어 질문이 종목 조회로 잡혀 엉뚱한
+// 대시보드가 떴다. SPY·QQQ 처럼 사용자가 실제로 그 종목을 묻는 쪽이 자연스러운
+// 티커는 일부러 뺐다.
+const TERM_TICKER_COLLISIONS = new Set([
+  "RSI", "ATR", "ADX", "CCI", "MFI", "SMA", "EMA", "ROC", "PBR", "PEG",
+  "FCF", "ETN", "AI", "PMI", "USD", "DTI", "CAC", "MSCI",
+]);
+const TERM_QUESTION_RE = /(뭐|뭔|무엇|뜻|의미|설명|알려\s*줘|어떻게|어떤|왜|차이|방법|용어|개념|정의|계산|보는\s*법|읽는\s*법|활용|기준|what\s+is|how\s+to|explain|meaning)/i;
+const TERM_CONTEXT_RE = /(지표|지수|보조\s*지표|인디케이터|개념|용어)/;
+// "관련주"·"테마"는 일부러 뺐다 — 특정 종목이 아니라 테마 질문이라
+// ("AI 관련주 알려줘") 티커로 못박으면 C3.ai 대시보드가 뜬다.
+const STOCK_INTENT_RE = /(주가|차트|종목|실적|분석해|매수|매도|배당|시총|시가총액|목표주가|공매도|수급|전망|얼마|사도|팔아)/;
+
+// 용어 질문일 때만 충돌 약어를 후보에서 뺀다. 종목 의도가 함께 보이면
+// ("RSI 주가 어때") 그대로 티커로 본다. 후보를 통째로 버리지 않고 걸러내므로
+// "엔비디아 RSI 뭐야" 는 RSI 만 빠지고 별칭 단계에서 NVDA 로 해석된다.
+function filterTermCollisions(candidates, query) {
+  if (!candidates || !candidates.length) return candidates;
+  const text = String(query || "");
+  if (STOCK_INTENT_RE.test(text)) return candidates;
+  if (!TERM_QUESTION_RE.test(text) && !TERM_CONTEXT_RE.test(text)) return candidates;
+  return candidates.filter((c) => !TERM_TICKER_COLLISIONS.has(String(c).toUpperCase()));
+}
+
 function extractStockTickerFromQuery(query) {
   const text = String(query || "").trim().toLowerCase();
   if (!text) return null;
-  
+
   // 1. Try exact ticker match candidate
-  const candidates = extractTickerCandidates(query);
+  const candidates = filterTermCollisions(extractTickerCandidates(query), query);
   if (candidates && candidates.length > 0) {
     return candidates[0];
   }

@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import tempfile
+import threading
 import time
 import urllib.parse
 import urllib.request
@@ -1373,12 +1374,13 @@ def parse_yahoo_dividends(result, first_date=None):
     return dividends
 
 
-def fetch_yahoo_history(symbol):
-    """5년 일봉 + 배당 이벤트. 반환: (rows, dividends).
+def fetch_yahoo_history(symbol, range_="5y"):
+    """일봉 + 배당 이벤트. 반환: (rows, dividends).
 
+    range_ 는 야후 chart API 의 range 파라미터("5y" 전체 / "1y" 증분).
     dividends 는 [["YYYY-MM-DD", amount], ...] — 비어 있을 수 있다.
     """
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range=5y&interval=1d&events=div"
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range={range_}&interval=1d&events=div"
     # 32스레드가 동시에 때리므로 스로틀(429)에 한 번은 걸릴 수 있다.
     # 짧은 지터 백오프 2회로 일시 스로틀을 흡수한다 — 그래도 실패하면
     # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다.
@@ -2298,11 +2300,156 @@ def load_cached_history(symbol):
         return None
 
 
+# ===================== 증분 이력 수집(range=1y 병합) =====================
+# 매일 ~3,200 preferHistory 종목의 5y 이력을 통째로 다시 받는 대신, 캐시된
+# detail 이 신선하면 range=1y 만 받아 캐시 꼬리에 병합한다. KR 파이프라인
+# (update_korea_data)도 아래 헬퍼들을 UD.* 로 그대로 재사용한다.
+
+FORCE_FULL_HISTORY = False        # --full-history 플래그(수동 복구용)
+HISTORY_BAR_CAP = 1260            # 5y 일봉 상한(기존 rows[-1260:] 과 동일)
+INCREMENTAL_RANGE = "1y"
+INCREMENTAL_MIN_BARS = 750        # 캐시가 이보다 짧으면 5y 전체 수집
+INCREMENTAL_MAX_AGE_DAYS = 7      # 캐시 마지막 봉이 이보다 오래되면 전체 수집
+INCREMENTAL_OVERLAP_CHECK = 3     # 겹침 구간에서 비교할 최근 봉 수
+INCREMENTAL_OVERLAP_TOL = 0.005   # 종가 상대 오차 허용치(0.5%)
+FULL_REFRESH_FRACTION = 1 / 30    # 매일 결정론적으로 전체 재수집할 비율
+
+
+def should_force_full_refresh(symbol, today):
+    """롤링 전체갱신: 매일 약 1/30 종목을 결정론적으로 5y 전체 재수집한다.
+
+    증분 병합의 미세 드리프트(재조정·정정)가 한 달 이상 누적되지 않게 하는
+    안전장치. random 금지 — KST 날짜의 일(day-of-month)과 심볼 해시로 고정.
+    """
+    return stable_unit(f"{symbol}:full:{today.day}") < FULL_REFRESH_FRACTION
+
+
+def history_cache_usable(rows, today):
+    """캐시가 증분 병합 기반으로 쓸 만한가: 충분히 길고(≥750봉) 최신(≤7일)."""
+    if not rows or len(rows) < INCREMENTAL_MIN_BARS:
+        return False
+    try:
+        last = datetime.strptime(str(rows[-1].get("date")), "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return False
+    age = (today - last).days
+    return 0 <= age <= INCREMENTAL_MAX_AGE_DAYS
+
+
+def history_overlap_ok(cached_rows, fresh_rows):
+    """분할/재조정 가드. 야후 raw OHLC 는 분할 시 과거 전체가 소급 조정되므로
+    분할 직후엔 캐시 꼬리와 새 1y 구간의 겹치는 종가가 어긋난다. 겹치는 최근
+    3개 날짜의 종가가 하나라도 0.5% 넘게 다르거나, 겹침 날짜가 서로 안 맞으면
+    (드문 달력 불일치) 캐시를 버리고 5y 전체를 다시 받아야 한다 → False.
+
+    단, 캐시의 '마지막' 봉은 비교에서 제외한다: 스냅샷이 세션 중(KR 15:42)이나
+    확정 전 스텁 상태에서 저장한 미확정 봉일 수 있어 정상인데도 어긋난다
+    (실측 2026-07-24: SPY 1.2%·005930 3.2%). 그 봉은 병합에서 어차피 fresh 로
+    교체되므로 제외해도 무해하고, 분할은 과거 전체를 조정하므로 그 직전
+    3봉만으로 충분히 잡힌다."""
+    if not fresh_rows or not cached_rows:
+        return False
+    fresh_close = {row["date"]: row["close"] for row in fresh_rows}
+    first_fresh = fresh_rows[0]["date"]
+    overlap = [row for row in cached_rows if row["date"] >= first_fresh]
+    recent = overlap[:-1][-INCREMENTAL_OVERLAP_CHECK:]
+    if len(recent) < INCREMENTAL_OVERLAP_CHECK:
+        return False
+    for row in recent:
+        fresh = fresh_close.get(row["date"])
+        cached = row.get("close")
+        if fresh is None or not cached:
+            return False
+        if abs(fresh - cached) / abs(cached) > INCREMENTAL_OVERLAP_TOL:
+            return False
+    return True
+
+
+def merge_history_rows(cached_rows, fresh_rows, cap=HISTORY_BAR_CAP):
+    """새 구간 시작일 이전의 캐시 봉 + 새 봉. 날짜 중복 없음·오름차순 보장."""
+    first_fresh = fresh_rows[0]["date"]
+    merged = [row for row in cached_rows if row["date"] < first_fresh]
+    merged.extend(fresh_rows)
+    return merged[-cap:]
+
+
+def merge_dividend_events(cached_divs, fresh_divs):
+    """날짜 기준 합집합(같은 날짜는 fresh 우선), 정렬. 캐시는 1년 이전 구간을,
+    fresh(1y)는 최근 1년을 커버하므로 합집합이 5y 배당 집합을 보존한다."""
+    by_date = {}
+    for entry in cached_divs or []:
+        try:
+            by_date[str(entry[0])] = [str(entry[0]), float(entry[1])]
+        except (TypeError, ValueError, IndexError):
+            continue
+    for entry in fresh_divs or []:
+        try:
+            by_date[str(entry[0])] = [str(entry[0]), float(entry[1])]
+        except (TypeError, ValueError, IndexError):
+            continue
+    return [by_date[date] for date in sorted(by_date)]
+
+
+def fetch_history_smart(symbol, fetch_fn, load_cache_fn, force_full=False, today=None):
+    """preferHistory 이력 수집 진입점: 캐시가 신선하면 range=1y 증분 + 병합.
+
+    fetch_fn(range_str) -> (rows, dividends), load_cache_fn() -> (rows, dividends)|None.
+    반환 (rows, dividends, mode); mode ∈ {"incremental", "full", "full-mismatch"}.
+    병합 결과도 오늘 실측이므로 호출부는 historySource 를 "yahoo" 로 둔다
+    (정직성 게이트의 실측 집계 의미 유지). fetch 예외는 그대로 전파해
+    기존 yahoo-cache/합성 폴백 경로가 오늘과 동일하게 동작한다.
+    """
+    if today is None:
+        today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    if not force_full and not should_force_full_refresh(symbol, today):
+        cached = load_cache_fn()
+        if cached and history_cache_usable(cached[0], today):
+            fresh_rows, fresh_divs = fetch_fn(INCREMENTAL_RANGE)
+            if history_overlap_ok(cached[0], fresh_rows):
+                rows = merge_history_rows(cached[0], fresh_rows)
+                divs = merge_dividend_events(cached[1], fresh_divs)
+                # 병합 후 차트 시작일 이전 배당은 잘라낸다(전체 수집과 동일 규칙).
+                divs = [d for d in divs if d[0] >= rows[0]["date"]]
+                return rows, divs, "incremental"
+            # 겹침 종가 불일치 → 분할/재조정 의심, 캐시 폐기 후 전체 재수집.
+            rows, divs = fetch_fn("5y")
+            return rows, divs, "full-mismatch"
+    rows, divs = fetch_fn("5y")
+    return rows, divs, "full"
+
+
+_history_stats = {"incremental": 0, "full": 0, "mismatch": 0}
+_history_stats_lock = threading.Lock()
+
+
+def _note_history_mode(mode):
+    with _history_stats_lock:
+        if mode == "incremental":
+            _history_stats["incremental"] += 1
+        else:
+            _history_stats["full"] += 1
+            if mode == "full-mismatch":
+                _history_stats["mismatch"] += 1
+
+
+def history_fetch_summary(stats, lock):
+    with lock:
+        snap = dict(stats)
+    return (f"[이력수집] 증분 {snap['incremental']} · 전체 {snap['full']} · "
+            f"오버랩 불일치 {snap['mismatch']}")
+
+
 def build_one(meta):
     symbol = meta["symbol"]
     try:
         if meta.get("preferHistory"):
-            rows, dividends = fetch_yahoo_history(symbol)
+            rows, dividends, mode = fetch_history_smart(
+                symbol,
+                lambda range_: fetch_yahoo_history(symbol, range_=range_),
+                lambda: load_cached_history(symbol),
+                force_full=FORCE_FULL_HISTORY,
+            )
+            _note_history_mode(mode)
             meta["historySource"] = "yahoo"
             if dividends:
                 meta["dividends"] = dividends
@@ -2596,6 +2743,7 @@ def build_snapshot():
     )
     print(f"[이력] preferHistory {prefer_total} · 실측 {fresh_real}(직전 {prev_real}) · "
           f"실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    print(history_fetch_summary(_history_stats, _history_stats_lock))
     if prev_real >= 100 and fresh_real < prev_real * 0.9:
         raise SystemExit(
             f"[중단] 실측 이력 {fresh_real} < 직전 {prev_real}의 90% — "
@@ -2950,7 +3098,15 @@ def main():
         action="store_true",
         help="Skip git push even when --push is set (for wrapper scripts).",
     )
+    parser.add_argument(
+        "--full-history",
+        action="store_true",
+        help="증분 병합을 끄고 모든 preferHistory 종목을 range=5y 전체로 재수집한다(수동 복구용).",
+    )
     args = parser.parse_args()
+
+    global FORCE_FULL_HISTORY
+    FORCE_FULL_HISTORY = args.full_history
 
     # Network-heavy collection runs without the publish lock. Only the final
     # read/merge/write/commit phase is serialized with the briefing jobs.

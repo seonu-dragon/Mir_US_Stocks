@@ -779,6 +779,34 @@ def backfill_change_from_history(stock: dict, rows: list) -> None:
         stock["changePct"] = round((closes[-1] / closes[-2] - 1) * 100, 1)
 
 
+def attach_week52_from_history(stock: dict, rows: list) -> None:
+    """실측 이력(yahoo/yahoo-cache) 종목의 52주 최고/최저를 최근 ~252 거래일 실측
+    종가에서 직접 산출해 fundamentals 에 붙인다. '52주'가 정확히 이 창(약 252 거래일)의
+    min/max 이므로 추가 조회가 필요 없고, build_map_fundamentals 가 week52Low→low52 ·
+    week52High→high52 로 그대로 매핑한다(프론트 '저가대비' 프리셋이 읽는 필드).
+
+    합성(snapshot) 시계열에는 붙이지 않는다 — 가짜 종가에서 만든 52주값은 정직하지
+    않다(데이터 정직성). fundamentals 가 없던 실측 종목엔 이 값만 담은 dict 를 새로
+    만들어 지도 테이블에 편입시킨다."""
+    if stock.get("historySource") not in {"yahoo", "yahoo-cache"}:
+        return
+    window = rows[-252:] if rows else []
+    closes = [r.get("close") for r in window
+              if isinstance(r.get("close"), (int, float)) and not isinstance(r.get("close"), bool) and r["close"] > 0]
+    if len(closes) < 20:
+        return  # 실측 종가가 너무 적으면 52주값이 무의미 — 비워 둔다(정직)
+    hi, lo = max(closes), min(closes)
+    price = stock.get("price")
+    if isinstance(price, (int, float)) and not isinstance(price, bool) and price > 0:
+        hi, lo = max(hi, price), min(lo, price)  # 현재가를 포함해 low ≤ 현재가 ≤ high 보장
+    fund = stock.get("fundamentals")
+    if not isinstance(fund, dict):
+        fund = {}
+        stock["fundamentals"] = fund
+    fund["week52High"] = round(float(hi), 2)
+    fund["week52Low"] = round(float(lo), 2)
+
+
 def load_cached_history(symbol: str):
     """직전 발행된 KR detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
 
@@ -890,6 +918,7 @@ def build_one(meta: dict):
     stock = UD.make_stock(meta, rows)
     if meta.get("historySource") == "yahoo":
         backfill_change_from_history(stock, rows)
+    attach_week52_from_history(stock, rows)
     stock["ticker"] = symbol
     stock["market"] = meta.get("market")
     stock["yahooSymbol"] = ysym

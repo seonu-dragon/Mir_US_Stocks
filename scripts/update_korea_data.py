@@ -1918,6 +1918,18 @@ def persist_snapshot(snapshot, light, details):
         )
     except Exception as exc:
         print(f"[corp_disclosures/kr] rebuild skipped: {exc}")
+    # 애널리스트 컨센서스(FnGuide 목표주가·투자의견·추정기관수 + 증권사 리포트 원문).
+    # 시총 상위 종목을 스냅샷에서 읽으므로 스냅샷을 쓴 뒤에 돌아야 한다. 인증 없는
+    # 공개 소스만 쓰고 실패하면 기존 파일을 유지한 채 종료한다.
+    try:
+        import subprocess
+        import sys
+        subprocess.run(
+            [sys.executable, str(ROOT / "scripts" / "build_kr_consensus.py")],
+            check=False,
+        )
+    except Exception as exc:
+        print(f"[consensus/kr] rebuild skipped: {exc}")
 
 
 def main():

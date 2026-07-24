@@ -44,6 +44,8 @@
   const MORPH_MESH_FADE_START = 0.6;
   const REVEAL_EDGE = 0.34;
   const RANGE_BARS = { "1M": 22, "3M": 66, "6M": 126, "1Y": 252, "2Y": 504, "5Y": 1260 };
+  const PATTERN_MAX_FULL = 60; // 캐시에 유지할 최대 패턴 수(초과 시 시간축 고르게 샘플)
+  const PATTERN_MAX_RENDER = 6; // 한 화면(가시 구간)에 그릴 최대 패턴 수(가독성)
   const CHART_TARGET_YAW = 0;
   const CHART_TARGET_PITCH = 1.12;
   const CHART_TARGET_ROLL = 0;
@@ -292,6 +294,43 @@
   function sliceBarsByRange(bars, range) {
     const n = RANGE_BARS[range] || RANGE_BARS["6M"];
     return bars.length <= n ? bars.slice() : bars.slice(-n);
+  }
+
+  // 전체 히스토리 차트 패턴 검출.
+  // app.js의 MirChartOverlays는 최근 3개 패턴만 남기고(.slice(0,3)) 잘라서 넘겨주므로
+  // AI 모드 차트에는 "6개월 안쪽 패턴"만 보인다. 여기서는 전체 bars(chartFullBars, 최대 5Y)로
+  // 직접 재검출해 오래된 패턴까지 포함시키고, 실제 그리기는 drawChartOverlays가 가시 구간만 클립한다.
+  // (검출은 종목 로드 시 1회만 — morphToChart에서 호출하고 결과를 chartOverlays.patterns에 캐시.
+  //  기간 탭 전환은 재검출 없이 chartViewStart 기준 재클립만 한다.)
+  function computeFullHistoryPatterns(bars) {
+    try {
+      const P = window.MirProb;
+      if (!P || typeof P.detectConfirmations !== "function") return null;
+      if (!Array.isArray(bars) || bars.length < 12) return null;
+      const labels = P.patternLabels || {};
+      const catFn = typeof window.patternCategory === "function" ? window.patternCategory : null;
+      const enabled = (window.chartState && window.chartState.patternTypes) || {};
+      const all = (P.detectConfirmations(bars) || [])
+        .filter((p) => p && (p.points || p.lines)) // 기하학적 도형이 있는 것만(캔들패턴 제외)
+        .filter((p) => { if (!catFn) return true; const c = catFn(p.pattern); return c && enabled[c] !== false; })
+        .sort((a, b) => (a.confirm_idx || 0) - (b.confirm_idx || 0)); // 시간순
+      // 초과분은 최근 것만 남기지 않고 시간축으로 고르게 샘플 → 6개월 이전 패턴도 캐시에 보존.
+      let sel = all;
+      if (all.length > PATTERN_MAX_FULL) {
+        sel = [];
+        const step = all.length / PATTERN_MAX_FULL;
+        for (let i = 0; i < PATTERN_MAX_FULL; i += 1) sel.push(all[Math.min(all.length - 1, Math.floor(i * step))]);
+      }
+      return sel.map((p) => ({
+        dir: p.dir,
+        pattern: p.pattern,
+        name: labels[p.pattern] || p.pattern,
+        points: p.points || [],
+        lines: p.lines || [],
+        necklinePts: p.necklinePts || null,
+        confirm_idx: p.confirm_idx,
+      }));
+    } catch (_) { return null; }
   }
 
   function computeSma(bars, period) {
@@ -784,6 +823,37 @@
     drawIndicatorPanels(w, h, layout, a);
   }
 
+  // 패턴의 대표 인덱스(라벨/정렬 기준) — confirm_idx 우선, 없으면 도형 인덱스 범위의 우측.
+  function patternIdxRange(pat) {
+    let lo = Infinity, hi = -Infinity;
+    (pat.points || []).forEach((q) => { if (q && Number.isFinite(q.idx)) { lo = Math.min(lo, q.idx); hi = Math.max(hi, q.idx); } });
+    (pat.lines || []).forEach((l) => (l.pts || []).forEach((q) => { if (q && Number.isFinite(q.idx)) { lo = Math.min(lo, q.idx); hi = Math.max(hi, q.idx); } }));
+    if (hi < lo) return null;
+    return { lo, hi, anchor: Number.isFinite(pat.confirm_idx) ? pat.confirm_idx : hi };
+  }
+
+  // 가시 구간과 겹치는 패턴을 가독성 있게 추린다:
+  // 최근 것부터 훑되 최소 간격(가시 봉수/PATTERN_MAX_RENDER)을 두고 골라 라벨이 겹치지 않게,
+  // 그리고 시간축으로 퍼지도록 한다. → 6M은 최근 몇 개, 5Y는 과거까지 고르게 노출.
+  function selectVisiblePatterns(start, n) {
+    const end = start + n - 1;
+    const cand = [];
+    (chartOverlays.patterns || []).forEach((pat) => {
+      const r = patternIdxRange(pat);
+      if (!r) return;
+      if (r.hi < start || r.lo > end) return; // 윈도우 밖
+      cand.push({ pat, anchor: r.anchor });
+    });
+    cand.sort((a, b) => b.anchor - a.anchor); // 최근 우선
+    const minGap = Math.max(6, Math.round(n / PATTERN_MAX_RENDER));
+    const picked = [];
+    for (const c of cand) {
+      if (picked.length >= PATTERN_MAX_RENDER) break;
+      if (picked.every((p) => Math.abs(p.anchor - c.anchor) >= minGap)) picked.push(c);
+    }
+    return picked.map((p) => p.pat);
+  }
+
   // 지지/저항·추세선·기하학적 차트 패턴을 2D 차트 위에 그린다(종목 분석 탭과 동일 로직).
   function drawChartOverlays(w, h, layout, alpha) {
     if (!chartOverlays || alpha <= 0 || !chartBars.length) return;
@@ -839,7 +909,8 @@
     });
 
     // 차트 패턴: 기하학적 도형(추세선/윤곽선/목선/피벗+라벨) (분석 탭과 동일)
-    (chartOverlays.patterns || []).forEach((pat) => {
+    // 가시 구간에서 가독성 있게 추린 부분집합만 그린다(전체 검출은 유지, 화면만 정리).
+    selectVisiblePatterns(start, n).forEach((pat) => {
       const color = pat.dir > 0 ? "#0ea5e9" : "#a855f7";
       let anchor = null;
       (pat.lines || []).forEach((lnp) => {
@@ -1849,6 +1920,13 @@
 
     chartFullBars = bars;
     chartOverlays = payload.overlays || null;
+    // 전체 히스토리 패턴으로 교체(가능하면). 검출 입력=전체 bars, 렌더=가시 구간만 클립.
+    const fullPats = computeFullHistoryPatterns(bars);
+    if (fullPats && fullPats.length) {
+      chartOverlays = chartOverlays
+        ? { ...chartOverlays, patterns: fullPats, totalBars: bars.length }
+        : { sr: [], trendlines: [], patterns: fullPats, totalBars: bars.length };
+    }
     chartBars = sliceBarsByRange(bars, payload.range || "6M");
     resetChartWindow();
     chartMeta = {
@@ -1955,6 +2033,24 @@
     return ensureCanvas();
   }
 
+  // 현재 가시 구간과 겹치는(=검출된) 패턴 수. 렌더 시 추려도 이 값은 전체 검출 기준(검증·디버그용).
+  function countVisiblePatterns() {
+    if (!chartOverlays || !chartOverlays.patterns || !chartBars.length) return 0;
+    const start = Math.round(chartViewStart);
+    const end = start + chartBars.length - 1;
+    let c = 0;
+    for (const pat of chartOverlays.patterns) {
+      const r = patternIdxRange(pat);
+      if (r && r.hi >= start && r.lo <= end) c += 1;
+    }
+    return c;
+  }
+  // 실제로 화면에 그려지는(추려진) 패턴 수.
+  function countRenderedPatterns() {
+    if (!chartOverlays || !chartOverlays.patterns || !chartBars.length) return 0;
+    return selectVisiblePatterns(Math.round(chartViewStart), chartBars.length).length;
+  }
+
   function relayout() {
     if (!root) return;
     lastLayoutKey = "";
@@ -1971,6 +2067,6 @@
     resetToLandscape,
     relayout,
     getMode: () => renderMode,
-    getChartMeta: () => ({ ...chartMeta, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length, overlays: chartOverlays ? { sr: (chartOverlays.sr || []).length, trendlines: (chartOverlays.trendlines || []).length, patterns: (chartOverlays.patterns || []).length } : null }),
+    getChartMeta: () => ({ ...chartMeta, visibleBars: chartBars.length, viewStart: Math.round(chartViewStart), totalBars: chartFullBars.length, visiblePatterns: countVisiblePatterns(), renderedPatterns: countRenderedPatterns(), overlays: chartOverlays ? { sr: (chartOverlays.sr || []).length, trendlines: (chartOverlays.trendlines || []).length, patterns: (chartOverlays.patterns || []).length } : null }),
   };
 })();

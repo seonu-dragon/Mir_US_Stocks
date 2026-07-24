@@ -1033,7 +1033,10 @@ function boot(options = {}) {
     renderWatchAlerts();
   });
   loadPortfolioExtensions();
-  document.documentElement.removeAttribute("data-theme");
+  // 여기서 data-theme 을 지우면 head 인라인 스크립트가 미리 적용한 다크 테마가
+  // setupUiPrefs() 가 다시 붙일 때까지 라이트로 떨어져 화면이 번쩍인다(시장
+  // 전환 시마다 재발). "다크모드 임시 제거" 시절(bec3096cce)의 잔재라 삭제했다 —
+  // 테마는 head 스크립트와 setupUiPrefs 만 만진다.
   setupPwa();
   updateDataLoadedAt();
   renderCardNews();

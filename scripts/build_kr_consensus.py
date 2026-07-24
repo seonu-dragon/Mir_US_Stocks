@@ -211,10 +211,6 @@ def fetch_consensus(code: str) -> dict | None:
     info = data.get("consensusInfo") or {}
     target = num(info.get("priceTargetMean"))
     opinion = num(info.get("recommMean"))
-    totals = {}
-    for item in data.get("totalInfos") or []:
-        if isinstance(item, dict) and item.get("code"):
-            totals[item["code"]] = item.get("value")
 
     rec: dict = {}
     if target and target > 0:
@@ -224,11 +220,12 @@ def fetch_consensus(code: str) -> dict | None:
     as_of = str(info.get("createDate") or "").strip()
     if re.fullmatch(r"\d{4}-\d{2}-\d{2}", as_of):
         rec["asOf"] = as_of
-    eps = num(totals.get("cnsEps"))
-    if eps is not None:
-        rec["epsEstimate"] = round(eps)
-    # cnsPer 는 네이버가 '조회 시점 실시간 주가'로 나눈 값이라 커밋된 스냅샷과 어긋난다.
-    # 그대로 싣지 않고 아래에서 스냅샷 주가로 다시 계산한다.
+    # epsEstimate 는 여기(totalInfos.cnsEps)서 싣지 않는다. 모듈 docstring 이 명시하듯
+    # cnsEps 는 회계연도(FY)인지 12개월 forward 인지 표기가 없어 estimateFy 를 붙일 수
+    # 없고, 오염된 2026E 컨센서스와 같은 값을 실어 온다(삼성전자 46,664 = 2025 실적의
+    # 7.1배). epsEstimate 는 estimateFy 가 명시되고 sanity 필터를 통과하는 3번 경로
+    # (fetch_forward_financials)에서만 채운다 — 그래야 오염 EPS 가 새지 않는다.
+    # cnsPer 도 '조회 시점 실시간 주가' 기준이라 싣지 않고 스냅샷 주가로 다시 계산한다.
 
     pending = []
     for item in data.get("researches") or []:
@@ -283,7 +280,14 @@ def fetch_estimate_count(code: str) -> dict | None:
 # ------------------------------------------------- 3) 추정 매출액·영업이익(컨센서스 연도)
 
 def fetch_forward_financials(code: str) -> dict | None:
-    """네이버 finance/annual 의 isConsensus=Y 컬럼 → 추정 매출액·영업이익·EPS."""
+    """네이버 finance/annual 의 isConsensus=Y 컬럼 → 추정 매출액·영업이익·EPS.
+
+    최근 실적연도(최대 3년)의 최고 실적도 _revenuePrev/_operatingPrev/_epsPrev 로 함께
+    실어 온다. 이건 sanity_reject_reasons 의 전년비 검증에만 쓰는 임시 필드이고,
+    산출물에는 저장하지 않는다(build 에서 pop). 네이버 2026E 컨센 컬럼이
+    일부 종목에서 오염돼(영업이익률 50~590% 등 물리적으로 불가능) 그대로 실으면
+    데이터 정직성을 깬다 — 전년 실적 대비 배수로 오염분을 걸러내기 위한 재료다.
+    """
     data = get_json(f"https://m.stock.naver.com/api/stock/{code}/finance/annual")
     info = (data or {}).get("financeInfo") or {}
     titles = info.get("trTitleList") or []
@@ -292,17 +296,28 @@ def fetch_forward_financials(code: str) -> dict | None:
     if not forward or not rows:
         return None
     col = forward[-1]
+    # 전년비 검증의 분모는 '직전 1년'이 아니라 '최근 실적연도들의 최고치'로 잡는다.
+    # 정유·반도체·지주처럼 2025 가 경기 저점이면 직전 1년 대비 배수가 (오염이 아니어도)
+    # 폭증해 정상 회복 추정치를 오검출한다. 최근 실적연도 최고치를 기준으로 삼으면
+    # 저점회복은 통과하고(예: S-Oil 2026E 는 2024 정상년의 ~2.7배), 진짜 오염은
+    # 최고치 대비로도 3배를 넘어 그대로 걸린다(예: 삼성전자 383조는 최고 실적년의 8.8배).
+    actual = [t for t in titles if t.get("isConsensus") != "Y" and t.get("key")][-3:]
 
-    def value(title):
+    def value(title, c):
         for row in rows:
             if row.get("title") == title:
-                return num(((row.get("columns") or {}).get(col["key"]) or {}).get("value"))
+                return num(((row.get("columns") or {}).get(c["key"]) or {}).get("value"))
         return None
 
+    def peak(title):
+        vals = [value(title, c) for c in actual]
+        vals = [v for v in vals if isinstance(v, (int, float))]
+        return max(vals) if vals else None
+
     out: dict = {}
-    revenue = value("매출액")
-    operating = value("영업이익")
-    eps = value("EPS")
+    revenue = value("매출액", col)
+    operating = value("영업이익", col)
+    eps = value("EPS", col)
     if revenue is not None:
         out["revenueEstimate"] = round(revenue)          # 억원
     if operating is not None:
@@ -312,6 +327,15 @@ def fetch_forward_financials(code: str) -> dict | None:
     if not out:
         return None
     out["estimateFy"] = str(col.get("title") or col.get("key")).rstrip(".")
+    rev_peak = peak("매출액")
+    op_peak = peak("영업이익")
+    eps_peak = peak("EPS")
+    if rev_peak is not None:
+        out["_revenuePrev"] = round(rev_peak)
+    if op_peak is not None:
+        out["_operatingPrev"] = round(op_peak)
+    if eps_peak is not None:
+        out["_epsPrev"] = round(eps_peak)
     return out
 
 
@@ -339,6 +363,85 @@ def fetch_report(entry: dict) -> dict | None:
         else:
             _unmapped_opinions.add(raw_opinion)
     return out if len(out) > 2 else None
+
+
+# ------------------------------------------------- 추정치 정합성 필터(2026E 오염 대응)
+#
+# 네이버 finance/annual 의 2026E 컨센서스 컬럼이 종목 일부에서 오염돼 있다(source-side).
+# 삼성전자 영업이익률 52%, SK하이닉스 77%, 402340 590% 처럼 물리적으로 불가능한 값이
+# 섞여 온다. 2023~2025 실적 컬럼은 정상이라 파싱 버그가 아니라 소스가 이 값을 내려준다.
+# 목표주가·투자의견·추정기관수·리포트는 다른 소스(consensusInfo/wisereport/리포트 원문)라
+# 영향이 없으므로 그대로 두고, **추정 재무 3필드만** 아래 규칙에 걸리면 통째로 뺀다.
+#
+# 임계값(2026-07-24 실측 캘리브레이션):
+#   MARGIN_MAX 0.40  영업이익률 상한. 라이브 데이터에서 전년비가 안정적인(=정상) 국내
+#                    고마진주들이 30~40% 대에 몰려 있다(셀트리온 33%, 하나마이크론류 등).
+#                    40% 초과 15종목을 개별 확인한 결과 (가) 삼성/하이닉스/402340/458870 은
+#                    전년비 3.9~8.8배로 명백한 오염이고 (나) 리노공업 48%·삼성바이오 45%·
+#                    LX홀딩스 69% 등은 전년비 안정적인 진짜 고마진이지만, 절대 마진만으로
+#                    둘을 가를 안전한 컷이 없다. 데이터 정직성상 '틀린 52%'를 내보내느니
+#                    '진짜 48%'를 빼는 쪽이 옳아 40% 를 상한으로 잡는다(추정 재무만 빠지고
+#                    목표주가·투자의견은 남는다).
+#   MARGIN_MIN -0.30 영업적자율 하한. 지주·금융처럼 매출이 비교대상이 아니거나 음수-양수
+#                    조합으로 어긋난 케이스를 거른다.
+#   OP_YOY_MAX 3.0   2026E 영업이익 > 최근 실적 최고치 3배(그 최고치가 양수일 때만)면
+#                    오염으로 본다. 분모는 직전 1년이 아니라 최근 3개 실적연도의 최고치다
+#                    (fetch_forward_financials 의 peak — 경기저점 회복 오검출 방지).
+#   REV_YOY_MAX 2.0  2026E 매출 > 최근 실적 최고치 2배면 오염으로 본다.
+#   EPS_YOY_MAX 3.0  2026E EPS > 최근 실적 최고치 3배면 오염으로 본다.
+#   PE_MIN 2 / PE_MAX 500  커밋된 스냅샷 주가 대비 P/E 밴드. 밖이면 EPS 추정이 어긋난 것.
+#
+# 한 규칙이라도 걸리면 revenueEstimate/operatingEstimate/epsEstimate/estimateFy 를 뺀다
+# (셋은 같은 컬럼에서 왔으니 함께 신뢰불가로 취급). perEstimate 는 epsEstimate 가 없으면
+# 애초에 계산되지 않는다.
+EST_MARGIN_MAX = 0.40
+EST_MARGIN_MIN = -0.30
+EST_OP_YOY_MAX = 3.0
+EST_REV_YOY_MAX = 2.0
+EST_EPS_YOY_MAX = 3.0
+EST_PE_MIN = 2.0
+EST_PE_MAX = 500.0
+
+
+def sanity_reject_reasons(est: dict, price) -> list[str]:
+    """추정 재무가 물리적으로 말이 되는지 검사. 걸린 규칙 이유 목록(비면 통과)."""
+    rev = est.get("revenueEstimate")
+    op = est.get("operatingEstimate")
+    eps = est.get("epsEstimate")
+    rev_prev = est.get("_revenuePrev")
+    op_prev = est.get("_operatingPrev")
+    eps_prev = est.get("_epsPrev")
+    reasons: list[str] = []
+
+    if isinstance(rev, (int, float)) and rev > 0 and isinstance(op, (int, float)):
+        margin = op / rev
+        if margin > EST_MARGIN_MAX:
+            reasons.append(f"margin={margin * 100:.0f}%")
+        elif margin < EST_MARGIN_MIN:
+            reasons.append(f"margin={margin * 100:.0f}%")
+
+    if (isinstance(op, (int, float)) and isinstance(op_prev, (int, float))
+            and op_prev > 0 and op / op_prev > EST_OP_YOY_MAX):
+        reasons.append(f"opYoY={op / op_prev:.1f}x")
+
+    if (isinstance(rev, (int, float)) and isinstance(rev_prev, (int, float))
+            and rev_prev > 0 and rev / rev_prev > EST_REV_YOY_MAX):
+        reasons.append(f"revYoY={rev / rev_prev:.1f}x")
+
+    if (isinstance(eps, (int, float)) and isinstance(eps_prev, (int, float))
+            and eps_prev > 0 and eps / eps_prev > EST_EPS_YOY_MAX):
+        reasons.append(f"epsYoY={eps / eps_prev:.1f}x")
+
+    if isinstance(eps, (int, float)) and eps > 0 and isinstance(price, (int, float)) and price > 0:
+        pe = price / eps
+        if pe < EST_PE_MIN or pe > EST_PE_MAX:
+            reasons.append(f"pe={pe:.1f}")
+
+    return reasons
+
+
+_EST_PRIVATE = ("_revenuePrev", "_operatingPrev", "_epsPrev")
+_EST_FIELDS = ("revenueEstimate", "operatingEstimate", "epsEstimate", "estimateFy")
 
 
 # ------------------------------------------------------------------------- 빌드
@@ -401,13 +504,26 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
         print(f"  2/4 추정기관수 {ok}/{len(have)}종목 (교차검증 불일치 {mismatch}건, {time.time() - t0:.0f}초)")
 
     fwd = run_pool(fetch_forward_financials, have, workers)
-    got = 0
+    got = est_dropped = 0
     for code, result in zip(have, fwd):
         if not result:
             continue
-        stocks[code].update(result)
-        got += 1
-    print(f"  3/4 추정 실적 {got}/{len(have)}종목 ({time.time() - t0:.0f}초)")
+        price = prices.get(code)
+        reasons = sanity_reject_reasons(result, price)
+        for k in _EST_PRIVATE:                 # 전년 실적은 검증용 임시필드 — 저장 안 함
+            result.pop(k, None)
+        if reasons:
+            for k in _EST_FIELDS:              # 오염 추정 3필드(+연도) 통째로 제거
+                result.pop(k, None)
+            est_dropped += 1
+            if code in ("005930", "000660", "402340"):
+                print(f"      [추정 제외] {code}: {', '.join(reasons)}")
+        if result:
+            stocks[code].update(result)
+            if not reasons:
+                got += 1
+    print(f"  3/4 추정 실적 {got}/{len(have)}종목 채택, {est_dropped}종목 오염 제외 "
+          f"({time.time() - t0:.0f}초)")
 
     if with_reports:
         targets = []
@@ -452,6 +568,7 @@ def build(top: int, reports_top: int, workers: int, with_counts: bool, with_repo
         "source": "FnGuide 컨센서스(네이버 금융 m.stock / navercomp.wisereport) + 네이버 증권사 리포트",
         "count": len(stocks),
         "universe": len(codes),
+        "estimateDropped": est_dropped,
     }
     if as_of:
         payload["asOf"] = as_of
@@ -509,6 +626,26 @@ def carry_stage_fields(payload: dict) -> None:
         print(f"[컨센서스] 보조 단계 결측 {filled}개 필드는 이전 값 승계")
 
 
+def enforce_margin_guard(payload: dict) -> int:
+    """병합 후 최종 안전망: 저장된 추정 매출·영업이익만으로 영업이익률이 밴드를 벗어나면
+    추정 3필드를 뺀다. merge_previous_stocks 가 (이번에 재수집 못 한 종목의) 예전 오염
+    추정치를 통째로 이어올 수 있어, 전년비 재료가 없는 승계분까지 여기서 한 번 더 거른다.
+    반환: 추가로 제거한 종목 수."""
+    dropped = 0
+    for rec in (payload.get("stocks") or {}).values():
+        rev = rec.get("revenueEstimate")
+        op = rec.get("operatingEstimate")
+        if not (isinstance(rev, (int, float)) and rev > 0 and isinstance(op, (int, float))):
+            continue
+        margin = op / rev
+        if margin > EST_MARGIN_MAX or margin < EST_MARGIN_MIN:
+            for k in _EST_FIELDS:
+                rec.pop(k, None)
+            rec.pop("perEstimate", None)
+            dropped += 1
+    return dropped
+
+
 def main() -> int:
     if sys.platform == "win32":
         try:
@@ -546,6 +683,10 @@ def main() -> int:
     from sec_client import merge_previous_stocks
     payload = merge_previous_stocks(payload, OUT_JSON, "컨센서스")
     carry_stage_fields(payload)
+    extra = enforce_margin_guard(payload)
+    if extra:
+        payload["estimateDropped"] = payload.get("estimateDropped", 0) + extra
+        print(f"[컨센서스] 승계분 최종 안전망: 오염 추정 {extra}종목 추가 제외")
     payload["count"] = len(payload["stocks"])
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     atomic_write_text(OUT_JSON, text)

@@ -1346,8 +1346,39 @@ def build_etf_catalog():
     return metas, category_map, len(screener_rows)
 
 
+def parse_yahoo_dividends(result, first_date=None):
+    """야후 chart 응답의 events.dividends({ts: {amount, date}})를
+    [["YYYY-MM-DD", amount], ...] (ex-date 오름차순)으로 정규화한다.
+
+    수익률 통계를 '배당 포함 총수익' 기준으로 만들기 위한 원천 데이터.
+    first_date 를 주면 그 이전(트리밍된 이력 밖) 배당은 버린다.
+    """
+    raw = ((result.get("events") or {}).get("dividends")) or {}
+    dividends = []
+    for key, item in raw.items():
+        if not isinstance(item, dict):
+            continue
+        try:
+            ts = int(item.get("date") or key)
+            amount = float(item.get("amount") or 0)
+        except (TypeError, ValueError):
+            continue
+        if amount <= 0:
+            continue
+        date = datetime.fromtimestamp(ts, tz=ZoneInfo("UTC")).date().isoformat()
+        if first_date and date < first_date:
+            continue
+        dividends.append([date, round(amount, 6)])
+    dividends.sort()
+    return dividends
+
+
 def fetch_yahoo_history(symbol):
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range=5y&interval=1d"
+    """5년 일봉 + 배당 이벤트. 반환: (rows, dividends).
+
+    dividends 는 [["YYYY-MM-DD", amount], ...] — 비어 있을 수 있다.
+    """
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range=5y&interval=1d&events=div"
     # 32스레드가 동시에 때리므로 스로틀(429)에 한 번은 걸릴 수 있다.
     # 짧은 지터 백오프 2회로 일시 스로틀을 흡수한다 — 그래도 실패하면
     # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다.
@@ -1384,7 +1415,9 @@ def fetch_yahoo_history(symbol):
             })
     if len(rows) < 30:
         raise RuntimeError(f"Not enough rows for {symbol}")
-    return rows[-1260:]
+    rows = rows[-1260:]
+    dividends = parse_yahoo_dividends(result, first_date=rows[0]["date"])
+    return rows, dividends
 
 
 def synthetic_history(symbol, price_hint=None, change_hint=None, volume_hint=None):
@@ -1945,6 +1978,10 @@ def make_stock(meta, rows):
             ]
             for index, row in enumerate(history_rows)
         ]
+        # 배당 이벤트(ex-date, 주당 금액). 실측 이력 fetch/캐시에서만 채워지며,
+        # 통계 빌더·analysis.js 가 '배당 포함 총수익' 전방 수익률에 쓴다.
+        if meta.get("dividends"):
+            stock["dividends"] = meta["dividends"]
     if fundamentals:
         stock["fundamentals"] = fundamentals
     if meta.get("news"):
@@ -2212,11 +2249,29 @@ def _detail_safe_name(ticker):
     return safe
 
 
+def _cached_dividends(detail):
+    """detail 의 dividends([["YYYY-MM-DD", amount], ...])를 검증해 돌려준다.
+    yahoo-cache 폴백 시 배당도 함께 이월되어야 fetch 실패가 배당을 지우지 않는다."""
+    out = []
+    for entry in detail.get("dividends") or []:
+        if not isinstance(entry, (list, tuple)) or len(entry) < 2:
+            continue
+        try:
+            date = str(entry[0])
+            amount = float(entry[1])
+        except (TypeError, ValueError):
+            continue
+        if date and amount > 0:
+            out.append([date, amount])
+    out.sort()
+    return out
+
+
 def load_cached_history(symbol):
     """직전 발행된 detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
 
     실측(yahoo/yahoo-cache) 이력만 재사용한다 — 합성 이력을 재사용하면
-    가짜 데이터가 캐시를 타고 영속하기 때문.
+    가짜 데이터가 캐시를 타고 영속하기 때문. 반환: (rows, dividends) 또는 None.
     """
     try:
         path = DETAILS_DIR / f"{_detail_safe_name(symbol)}.json"
@@ -2236,7 +2291,9 @@ def load_cached_history(symbol):
                 "close": float(entry[3]),
                 "volume": float(entry[4] or 0),
             })
-        return rows if len(rows) >= 30 else None
+        if len(rows) < 30:
+            return None
+        return rows, _cached_dividends(detail)
     except Exception:
         return None
 
@@ -2245,8 +2302,10 @@ def build_one(meta):
     symbol = meta["symbol"]
     try:
         if meta.get("preferHistory"):
-            rows = fetch_yahoo_history(symbol)
+            rows, dividends = fetch_yahoo_history(symbol)
             meta["historySource"] = "yahoo"
+            if dividends:
+                meta["dividends"] = dividends
         else:
             rows = synthetic_history(symbol, meta.get("quotePrice"), meta.get("quoteChangePct"), meta.get("quoteVolume"))
             meta["historySource"] = "snapshot"
@@ -2258,8 +2317,10 @@ def build_one(meta):
         # 임계 초과 시 발행을 중단시킨다.
         cached = load_cached_history(symbol) if meta.get("preferHistory") else None
         if cached:
-            rows = cached
+            rows, cached_divs = cached
             meta["historySource"] = "yahoo-cache"
+            if cached_divs:
+                meta["dividends"] = cached_divs
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
             rows = synthetic_history(symbol, meta.get("quotePrice"), meta.get("quoteChangePct"), meta.get("quoteVolume"))
@@ -2657,7 +2718,7 @@ def split_snapshot_details(payload):
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
+        for key in ["chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
             if key in stock:
                 detail[key] = stock[key]
         if detail:
@@ -2670,7 +2731,7 @@ def split_snapshot_details(payload):
         light_stocks.append({
             key: value
             for key, value in stock.items()
-            if key not in {"chartSeries", "fundamentals", "news", "earningsHistory", "financialsHistory"}
+            if key not in {"chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"}
         })
     light_payload = dict(payload)
     light_payload["stocks"] = light_stocks
@@ -2759,6 +2820,43 @@ def load_today_content():
         if isinstance(deck, dict) and isinstance(deck.get("images"), list) and deck["images"]:
             card_news[variant] = {"title": deck.get("title") or "", "images": deck["images"]}
     return card_news or None
+
+
+CARDNEWS_JSON = ROOT / "data" / "cardnews.json"
+CARDNEWS_JS = ROOT / "data" / "cardnews.js"
+
+
+def write_cardnews_file(market_key, deck):
+    """카드뉴스 경량 파일(data/cardnews.json + .js)을 merge-write 한다.
+
+    KR 모드 홈이 카드뉴스 하나를 채우려고 US market_snapshot.json(~11MB) 전체를
+    받아오던 것을 없애기 위한 소형 파일. 스키마(프론트 계약):
+      {updatedAtKst, us: {title, images: [...]}|null, kr: {...}|null}
+    각 스냅샷 빌더는 자기 시장 키만 갱신하고 상대 시장 키는 기존 파일 값을
+    보존한다. deck 이 없으면(오늘 덱 미발행) 기존 값을 유지한다 — 빈 날이
+    지난 덱 참조를 지우지 않게.
+    """
+    from briefing_store import atomic_write_text
+
+    existing = {}
+    try:
+        loaded = json.loads(CARDNEWS_JSON.read_text(encoding="utf-8"))
+        if isinstance(loaded, dict):
+            existing = loaded
+    except Exception:
+        existing = {}
+    payload = {
+        "updatedAtKst": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST"),
+        "us": existing.get("us"),
+        "kr": existing.get("kr"),
+    }
+    if isinstance(deck, dict) and isinstance(deck.get("images"), list) and deck["images"]:
+        payload[market_key] = {"title": deck.get("title") or "", "images": deck["images"]}
+    body = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    atomic_write_text(CARDNEWS_JSON, body + "\n")
+    atomic_write_text(CARDNEWS_JS, f"window.MIR_CARDNEWS = {body};\n")
+    print(f"[cardnews] {market_key} 갱신 → {CARDNEWS_JSON.name} "
+          f"(us={'O' if payload.get('us') else 'X'}, kr={'O' if payload.get('kr') else 'X'})")
 
 
 def git_push_updates(updated_at_kst):
@@ -2883,6 +2981,12 @@ def main():
             print(f"[content] Injected cardNews versions: {', '.join(card_news.keys())}")
         elif "cardNews" in existing:
             light_snapshot["cardNews"] = existing["cardNews"]
+
+        # 카드뉴스 경량 파일(data/cardnews.*) — US 키만 갱신, KR 키는 보존.
+        try:
+            write_cardnews_file("us", (light_snapshot.get("cardNews") or {}).get("us"))
+        except Exception as exc:
+            print(f"[cardnews] 경량 파일 갱신 실패(스냅샷은 계속): {exc}")
 
         write_json(light_snapshot)
         write_js(light_snapshot)

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import urllib.request
 import urllib.parse
@@ -63,6 +64,19 @@ def find_ticker(name: str, comp_map: dict[str, str]) -> str | None:
     return None
 
 
+def parse_offer_price(text: str) -> int | None:
+    """공모가 셀 → 원 단위 정수. '21,500' 처럼 명확한 단일 숫자일 때만 값을 준다.
+
+    '-'(미확정), 빈칸, '16,500~19,500'(희망밴드) 같은 범위는 추측하지 않고 None —
+    frontend 계약 필드명은 offerPrice, 값이 확실할 때만 싣는다.
+    """
+    t = str(text or "").replace(",", "").strip()
+    if not re.fullmatch(r"\d+", t):
+        return None
+    value = int(t)
+    return value if value > 0 else None
+
+
 def fetch_soup(url: str):
     try:
         req = urllib.request.Request(url, headers=HEADERS)
@@ -108,7 +122,7 @@ def parse_bidding_table(soup, comp_map: dict[str, str]) -> list[dict]:
                 start_date = date_str.split("~")[0].strip()
                 
                 ticker = find_ticker(name, comp_map)
-                ipos.append({
+                row = {
                     "company": name,
                     "ticker": ticker,
                     "stage": "filed",
@@ -117,7 +131,12 @@ def parse_bidding_table(soup, comp_map: dict[str, str]) -> list[dict]:
                     "fileDate": start_date,
                     "accession": f"kr-ipo-bidding-{name}",
                     "link": URL_BIDDING
-                })
+                }
+                # cols[2] = 확정공모가 (미확정이면 '-'; 희망밴드 cols[3] 은 범위라 싣지 않는다)
+                offer = parse_offer_price(cols[2]) if len(cols) > 2 else None
+                if offer is not None:
+                    row["offerPrice"] = offer
+                ipos.append(row)
             break
     return ipos
 
@@ -149,7 +168,7 @@ def parse_listing_table(soup, comp_map: dict[str, str]) -> list[dict]:
                 clean_date = date_str.replace("/", ".").strip()
                 
                 ticker = find_ticker(name, comp_map)
-                ipos.append({
+                row = {
                     "company": name,
                     "ticker": ticker,
                     "stage": "priced",
@@ -158,7 +177,12 @@ def parse_listing_table(soup, comp_map: dict[str, str]) -> list[dict]:
                     "fileDate": clean_date,
                     "accession": f"kr-ipo-listed-{name}",
                     "link": URL_LISTING
-                })
+                }
+                # cols[4] = 공모가(원) — 확정 숫자일 때만 싣는다
+                offer = parse_offer_price(cols[4]) if len(cols) > 4 else None
+                if offer is not None:
+                    row["offerPrice"] = offer
+                ipos.append(row)
             break
     return ipos
 

@@ -115,7 +115,9 @@ def main() -> int:
         s = info[t]
         ysym = s.get("yahooSymbol") or yahoo_ticker(t, s.get("market"))
         try:
-            rows = fetch_yahoo_history_kr(ysym) or []
+            # fetch_yahoo_history_kr 는 (rows, dividends) 를 돌려준다 — 여기선 봉만 쓴다.
+            rows, _divs = fetch_yahoo_history_kr(ysym)
+            rows = rows or []
         except Exception:
             rows = []
         if len(rows) < MIN_BARS:

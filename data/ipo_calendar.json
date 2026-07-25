@@ -1,10 +1,213 @@
 {
-  "updatedAtKst": "2026-07-24 16:13 KST",
-  "lastFileDate": "2026-07-23",
-  "count": 776,
+  "updatedAtKst": "2026-07-25 15:58 KST",
+  "lastFileDate": "2026-07-24",
+  "count": 796,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Canary Staked TRX ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001999371-26-015859:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2064768/000199937126015859/canary-s1a_072426.htm"
+    },
+    {
+      "company": "Canary Staked TRX ETF",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001999371-26-015859:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2064768/000199937126015859/canary-s1a_072426.htm"
+    },
+    {
+      "company": "Pelican Acquisition II Corp",
+      "ticker": "PLCI",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-07-24",
+      "accession": "0001829126-26-007833:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2122392/000182912626007833/pelicanacq2_424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "POWERDYNE INTERNATIONAL, INC.",
+      "ticker": "PWDY",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-24",
+      "accession": "0001493152-26-034628:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1435617/000149315226034628/forms-1.htm"
+    },
+    {
+      "company": "INVO Fertility, Inc.",
+      "ticker": "IVF",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-24",
+      "accession": "0001493152-26-034621:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1417926/000149315226034621/forms-1.htm"
+    },
+    {
+      "company": "AEI CapForce II Investment Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001493152-26-034547:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1875655/000149315226034547/forms-1a.htm"
+    },
+    {
+      "company": "AEI CapForce II Investment Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001493152-26-034547:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1875655/000149315226034547/forms-1a.htm"
+    },
+    {
+      "company": "EvoAir Holdings Inc.",
+      "ticker": "EVOH",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001493152-26-034502:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1700844/000149315226034502/forms-1a.htm"
+    },
+    {
+      "company": "EvoAir Holdings Inc.",
+      "ticker": "EVOH",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001493152-26-034502:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1700844/000149315226034502/forms-1a.htm"
+    },
+    {
+      "company": "K2 Capital Acquisition II Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-24",
+      "accession": "0001213900-26-081485:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2145384/000121390026081485/ea0299025-01.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001213900-26-081379:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026081379/ea0299142-s1a2_cryptex.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001213900-26-081379:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026081379/ea0299142-s1a2_cryptex.htm"
+    },
+    {
+      "company": "Little West Holdings Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001213900-26-081199:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2065821/000121390026081199/ea0297925-s1a7_littlewest.htm"
+    },
+    {
+      "company": "Little West Holdings Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001213900-26-081199:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2065821/000121390026081199/ea0297925-s1a7_littlewest.htm"
+    },
+    {
+      "company": "SunPower Inc.  (SPWR, SPWRW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-24",
+      "accession": "0001213900-26-081056:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1838987/000121390026081056/ea0297324-s1_sunpower.htm"
+    },
+    {
+      "company": "Jaguar Health, Inc.",
+      "ticker": "JAGX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001193125-26-315711:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1585608/000119312526315711/d47881ds1a.htm"
+    },
+    {
+      "company": "Jaguar Health, Inc.",
+      "ticker": "JAGX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001193125-26-315711:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1585608/000119312526315711/d47881ds1a.htm"
+    },
+    {
+      "company": "CTT PHARMACEUTICAL HOLDINGS, INC.",
+      "ticker": "CTTH",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001171520-26-000192:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1035422/000117152026000192/eps12702_ctth.htm"
+    },
+    {
+      "company": "CTT PHARMACEUTICAL HOLDINGS, INC.",
+      "ticker": "CTTH",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-24",
+      "accession": "0001171520-26-000192:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1035422/000117152026000192/eps12702_ctth.htm"
+    },
+    {
+      "company": "Bluerock Acquisition Corp. II",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-24",
+      "accession": "0001104659-26-086682:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2098410/000110465926086682/tmb-20260724xs1.htm"
+    },
     {
       "company": "Innovative Eyewear Inc  (LUCY, LUCYW)",
       "ticker": null,

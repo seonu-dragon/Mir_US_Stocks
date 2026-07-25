@@ -1,6 +1,6 @@
 {
-  "generated": "2026-07-23 22:40 KST",
-  "tickers_scanned": 2614,
+  "generated": "2026-07-26 05:22 KST",
+  "tickers_scanned": 2584,
   "params": {
     "STEP": 20,
     "HOLD": 60,
@@ -10,52 +10,52 @@
   },
   "methods": {
     "OLD": {
-      "drawn": 218776,
-      "tested_decisive": 179707,
-      "reach_rate": 82.1,
-      "respect_rate": 55.1,
-      "edge_vs_random": -5.8
+      "drawn": 216206,
+      "tested_decisive": 178437,
+      "reach_rate": 82.5,
+      "respect_rate": 55.0,
+      "edge_vs_random": -5.7
     },
     "NEW_top1": {
-      "drawn": 230913,
-      "tested_decisive": 133778,
-      "reach_rate": 57.9,
-      "respect_rate": 57.1,
-      "edge_vs_random": -3.8
+      "drawn": 228004,
+      "tested_decisive": 132446,
+      "reach_rate": 58.1,
+      "respect_rate": 57.0,
+      "edge_vs_random": -3.7
     },
     "NEW_all": {
-      "drawn": 655574,
-      "tested_decisive": 334259,
-      "reach_rate": 51.0,
-      "respect_rate": 58.6,
-      "edge_vs_random": -2.3
-    },
-    "NEW_lowmom": {
-      "drawn": 655574,
-      "tested_decisive": 98453,
-      "reach_rate": 15.0,
-      "respect_rate": 59.5,
-      "edge_vs_random": -1.4
-    },
-    "STRONG_lm": {
-      "drawn": 230913,
-      "tested_decisive": 46955,
-      "reach_rate": 20.3,
-      "respect_rate": 58.7,
+      "drawn": 647367,
+      "tested_decisive": 330516,
+      "reach_rate": 51.1,
+      "respect_rate": 58.5,
       "edge_vs_random": -2.2
     },
+    "NEW_lowmom": {
+      "drawn": 647367,
+      "tested_decisive": 96250,
+      "reach_rate": 14.9,
+      "respect_rate": 59.9,
+      "edge_vs_random": -0.8
+    },
+    "STRONG_lm": {
+      "drawn": 228004,
+      "tested_decisive": 45939,
+      "reach_rate": 20.1,
+      "respect_rate": 59.1,
+      "edge_vs_random": -1.6
+    },
     "RETEST": {
-      "drawn": 132506,
-      "tested_decisive": 103846,
-      "reach_rate": 78.4,
-      "respect_rate": 54.9,
-      "edge_vs_random": -6.0
+      "drawn": 130694,
+      "tested_decisive": 102218,
+      "reach_rate": 78.2,
+      "respect_rate": 55.0,
+      "edge_vs_random": -5.7
     },
     "RANDOM": {
-      "drawn": 240662,
-      "tested_decisive": 141171,
+      "drawn": 237848,
+      "tested_decisive": 139527,
       "reach_rate": 58.7,
-      "respect_rate": 60.9,
+      "respect_rate": 60.7,
       "edge_vs_random": 0.0
     }
   }

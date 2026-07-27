@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-07-26 18:10 KST",
+  "updatedAtKst": "2026-07-27 19:39 KST",
   "lastFileDate": "2026.09.16",
-  "count": 31,
+  "count": 30,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다).",
   "ipos": [
@@ -51,6 +51,36 @@
       ]
     },
     {
+      "company": "니어스랩",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "삼성증권",
+      "fileDate": "2026.08.24",
+      "accession": "kr-ipo-listed-니어스랩",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        30000,
+        41200
+      ]
+    },
+    {
+      "company": "인제니아테라퓨틱스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "삼성증권",
+      "fileDate": "2026.08.18",
+      "accession": "kr-ipo-listed-인제니아테라퓨틱스",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        12000,
+        14500
+      ]
+    },
+    {
       "company": "케이앤에스아이앤씨",
       "ticker": "052860",
       "stage": "filed",
@@ -62,7 +92,7 @@
       "offerPricePending": true,
       "offerPriceBand": [
         9000,
-        9000
+        11000
       ]
     },
     {
@@ -96,21 +126,6 @@
       ]
     },
     {
-      "company": "니어스랩",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "삼성증권",
-      "fileDate": "2026.08.12",
-      "accession": "kr-ipo-bidding-니어스랩",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        30000,
-        41200
-      ]
-    },
-    {
       "company": "해치텍",
       "ticker": null,
       "stage": "filed",
@@ -126,6 +141,21 @@
       ]
     },
     {
+      "company": "딜리셔스",
+      "ticker": "131180",
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "한국투자증권",
+      "fileDate": "2026.08.12",
+      "accession": "kr-ipo-listed-딜리셔스",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        5000,
+        7000
+      ]
+    },
+    {
       "company": "기도산업",
       "ticker": null,
       "stage": "filed",
@@ -138,36 +168,6 @@
       "offerPriceBand": [
         24800,
         28400
-      ]
-    },
-    {
-      "company": "딜리셔스",
-      "ticker": "131180",
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "한국투자증권",
-      "fileDate": "2026.08.03",
-      "accession": "kr-ipo-bidding-딜리셔스",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        5000,
-        7000
-      ]
-    },
-    {
-      "company": "인제니아테라퓨틱스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "삼성증권",
-      "fileDate": "2026.07.30",
-      "accession": "kr-ipo-bidding-인제니아테라퓨틱스",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        12000,
-        14500
       ]
     },
     {
@@ -349,34 +349,23 @@
     {
       "company": "인벤테라",
       "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
       "form": "NH투자증권,유진투자증권",
-      "fileDate": "2026.04.02",
-      "accession": "kr-ipo-listed-인벤테라",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "fileDate": "2026.03.23",
+      "accession": "kr-ipo-bidding-인벤테라",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
       "offerPrice": 16600
     },
     {
       "company": "교보스팩20호",
       "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
       "form": "교보증권",
-      "fileDate": "2026.04.02",
-      "accession": "kr-ipo-listed-교보스팩20호",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 2000
-    },
-    {
-      "company": "신한스팩17호",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.04.01",
-      "accession": "kr-ipo-listed-신한스팩17호",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "fileDate": "2026.03.23",
+      "accession": "kr-ipo-bidding-교보스팩20호",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
       "offerPrice": 2000
     },
     {

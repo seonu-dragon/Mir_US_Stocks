@@ -98,6 +98,9 @@ def load_json(path):
 #   kr -> 카드뉴스/daily/<D>
 VARIANTS = ("us", "kr")
 
+# us 덱을 D-1 에서 못 찾았을 때 거슬러 올라갈 최대 일수(연휴 낀 주말까지 커버).
+US_DECK_LOOKBACK_DAYS = 5
+
 
 def variant_card_date(date, variant):
     """홈페이지 빌드 날짜(date=D)에 대해 각 버전이 사용할 카드뉴스 폴더 날짜.
@@ -118,11 +121,30 @@ def variant_folder_name(date, variant):
     return f"{card_date}-us" if variant == "us" else card_date
 
 
-def variant_card_dir(date, variant):
-    candidate = CARD_DAILY / variant_folder_name(date, variant)
+def _deck_at(folder_name):
+    candidate = CARD_DAILY / folder_name
     out = candidate / "out"
     if out.is_dir() and any(out.glob("*.png")):
         return candidate
+    return None
+
+
+def variant_card_dir(date, variant):
+    deck = _deck_at(variant_folder_name(date, variant))
+    if deck or variant != "us":
+        return deck
+    # 미국장은 주말·휴장이 있어 D-1 세션이 없는 날이 생긴다(월요일이 대표적).
+    # 그 경우 D-1 에서 며칠 더 거슬러 올라가 가장 최근 세션 덱을 싣는다.
+    # 이 폴백이 없으면 금요일 미국장 덱이 홈 띠에 영영 못 올라간다.
+    try:
+        base = datetime.strptime(date, "%Y-%m-%d")
+    except ValueError:
+        return None
+    for back in range(2, US_DECK_LOOKBACK_DAYS + 1):
+        stamp = (base - timedelta(days=back)).strftime("%Y-%m-%d")
+        deck = _deck_at(f"{stamp}-us")
+        if deck:
+            return deck
     return None
 
 

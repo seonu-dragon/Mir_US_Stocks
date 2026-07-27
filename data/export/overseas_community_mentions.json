@@ -1,19 +1,17 @@
 {
-  "generated_at": "2026-07-24T08:50:37+09:00",
+  "generated_at": "2026-07-27T08:37:00+09:00",
   "market": "US",
   "items": [
     {
-      "rank": 1,
-      "ticker": "GOOG",
-      "name": "GOOG",
-      "mention_count": 2912,
-      "mention_change_rate": 376.3,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits · Yahoo 언급 급증",
+      "rank": 2,
+      "ticker": "SPCX",
+      "name": "SPCX",
+      "mention_count": 1122,
+      "mention_change_rate": -68.3,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
-        "reddit",
-        "stocktwits",
-        "yahoo"
+        "reddit"
       ],
       "issue_score": 0.0,
       "hard_catalyst": false,
@@ -21,80 +19,31 @@
       "source": "community_mentions"
     },
     {
-      "rank": 2,
-      "ticker": "TSLA",
-      "name": "Tesla Inc.",
-      "mention_count": 2888,
-      "mention_change_rate": 443.5,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits · Yahoo 언급 급증",
-      "sources": [
-        "reddit",
-        "stocktwits",
-        "yahoo"
-      ],
-      "issue_score": 5.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 급증",
-        "주간 변동성 큼"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 3,
-      "ticker": "GOOGL",
-      "name": "Alphabet Inc. Class A",
-      "mention_count": 2792,
-      "mention_change_rate": 405.3,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits · Yahoo 언급 급증",
-      "sources": [
-        "reddit",
-        "stocktwits",
-        "yahoo"
-      ],
-      "issue_score": 4.8,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 급증"
-      ],
-      "source": "community_mentions"
-    },
-    {
       "rank": 4,
-      "ticker": "NOW",
-      "name": "ServiceNow Inc.",
-      "mention_count": 1952,
-      "mention_change_rate": 588.6,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits · Yahoo 언급 급증",
+      "ticker": "SHIB.X",
+      "name": "SHIB.X",
+      "mention_count": 1000,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits 종합 언급 상위",
       "sources": [
-        "reddit",
-        "stocktwits",
-        "yahoo"
+        "stocktwits"
       ],
-      "issue_score": 4.8,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 급증"
-      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
       "source": "community_mentions"
     },
     {
       "rank": 5,
-      "ticker": "SPCX",
-      "name": "SPCX",
-      "mention_count": 1386,
-      "mention_change_rate": 177.6,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits 언급 급증",
+      "ticker": "DTE",
+      "name": "DTE Energy Company",
+      "mention_count": 922,
+      "mention_change_rate": -50.6,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
-        "reddit",
-        "stocktwits"
+        "reddit"
       ],
       "issue_score": 0.0,
       "hard_catalyst": false,
@@ -103,14 +52,14 @@
     },
     {
       "rank": 6,
-      "ticker": "MU",
-      "name": "Micron Technology Inc.",
-      "mention_count": 1191,
-      "mention_change_rate": -19.2,
-      "sentiment_hint": "bearish",
-      "reason": "Reddit 언급 감소",
+      "ticker": "SG",
+      "name": "Sweetgreen Inc. Class A",
+      "mention_count": 900,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits 종합 언급 상위",
       "sources": [
-        "reddit"
+        "stocktwits"
       ],
       "issue_score": 1.5,
       "hard_catalyst": false,
@@ -120,9 +69,96 @@
       "source": "community_mentions"
     },
     {
+      "rank": 7,
+      "ticker": "MSFT",
+      "name": "Microsoft Corporation",
+      "mention_count": 821,
+      "mention_change_rate": -57.6,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
+      "sources": [
+        "reddit"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
       "rank": 8,
-      "ticker": "LMT",
-      "name": "Lockheed Martin Corporation",
+      "ticker": "CURLF",
+      "name": "CURLF",
+      "mention_count": 800,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits 종합 언급 상위",
+      "sources": [
+        "stocktwits"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 9,
+      "ticker": "MMM",
+      "name": "3M Company",
+      "mention_count": 800,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
+      ],
+      "issue_score": 4.3,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "신고가 근접"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 10,
+      "ticker": "TSLA",
+      "name": "Tesla Inc.",
+      "mention_count": 718,
+      "mention_change_rate": -76.9,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
+      "sources": [
+        "reddit"
+      ],
+      "issue_score": 4.9,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 증가",
+        "주간 변동성 큼"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 11,
+      "ticker": "BB.TSX",
+      "name": "BB.TSX",
+      "mention_count": 700,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits 종합 언급 상위",
+      "sources": [
+        "stocktwits"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 12,
+      "ticker": "ABBV",
+      "name": "AbbVie Inc.",
       "mention_count": 700,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
@@ -131,134 +167,25 @@
         "stocktwits",
         "yahoo"
       ],
-      "issue_score": 2.3,
+      "issue_score": 1.0,
       "hard_catalyst": false,
       "issue_tags": [
-        "거래량 급증"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 9,
-      "ticker": "MSFT",
-      "name": "Microsoft Corporation",
-      "mention_count": 614,
-      "mention_change_rate": 33.5,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
-      "sources": [
-        "reddit"
-      ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 10,
-      "ticker": "NOK",
-      "name": "Nokia Corporation Sponsored American Depositary Shares",
-      "mention_count": 600,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits 종합 언급 상위",
-      "sources": [
-        "stocktwits"
-      ],
-      "issue_score": 1.5,
-      "hard_catalyst": false,
-      "issue_tags": [
-        "거래량 급증"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 11,
-      "ticker": "QS",
-      "name": "QuantumScape Corporation Class A",
-      "mention_count": 500,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits 종합 언급 상위",
-      "sources": [
-        "stocktwits"
-      ],
-      "issue_score": 3.0,
-      "hard_catalyst": false,
-      "issue_tags": [
-        "거래량 급증",
-        "주간 변동성 큼"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 12,
-      "ticker": "CLF",
-      "name": "Cleveland-Cliffs Inc.",
-      "mention_count": 500,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits · Yahoo 종합 언급 상위",
-      "sources": [
-        "stocktwits",
-        "yahoo"
-      ],
-      "issue_score": 3.0,
-      "hard_catalyst": false,
-      "issue_tags": [
-        "거래량 급증",
-        "주간 변동성 큼"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 13,
-      "ticker": "NVDA",
-      "name": "NVIDIA Corporation",
-      "mention_count": 491,
-      "mention_change_rate": 133.3,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
-      "sources": [
-        "reddit"
-      ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 14,
-      "ticker": "RTX",
-      "name": "RTX Corporation",
-      "mention_count": 400,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits · Yahoo 종합 언급 상위",
-      "sources": [
-        "stocktwits",
-        "yahoo"
-      ],
-      "issue_score": 3.3,
-      "hard_catalyst": false,
-      "issue_tags": [
-        "거래량 급증",
         "신고가 근접"
       ],
       "source": "community_mentions"
     },
     {
-      "rank": 15,
-      "ticker": "IBM",
-      "name": "International Business Machines Corporation",
-      "mention_count": 376,
-      "mention_change_rate": 168.4,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "rank": 13,
+      "ticker": "GOOGL",
+      "name": "Alphabet Inc. Class A",
+      "mention_count": 700,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
       "sources": [
-        "reddit"
+        "yahoo"
       ],
-      "issue_score": 2.5,
+      "issue_score": 3.3,
       "hard_catalyst": true,
       "issue_tags": [
         "주요 공시 이벤트"
@@ -266,69 +193,97 @@
       "source": "community_mentions"
     },
     {
-      "rank": 17,
-      "ticker": "AAL",
-      "name": "American Airlines Group Inc.",
-      "mention_count": 200,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits · Yahoo 종합 언급 상위",
-      "sources": [
-        "stocktwits",
-        "yahoo"
-      ],
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "주간 변동성 큼"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 18,
-      "ticker": "RDDT",
-      "name": "Reddit Inc. Class A",
-      "mention_count": 144,
-      "mention_change_rate": 114.6,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "rank": 14,
+      "ticker": "MU",
+      "name": "Micron Technology Inc.",
+      "mention_count": 613,
+      "mention_change_rate": -86.8,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
         "reddit"
       ],
       "issue_score": 0.8,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 15,
+      "ticker": "DIS",
+      "name": "Walt Disney Company (The)",
+      "mention_count": 600,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 17,
+      "ticker": "ZEC.X",
+      "name": "ZEC.X",
+      "mention_count": 500,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits 종합 언급 상위",
+      "sources": [
+        "stocktwits"
+      ],
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 18,
+      "ticker": "BABA",
+      "name": "Alibaba Group Holding Limited American Depositary Shares each representing eight Ordinary share",
+      "mention_count": 500,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
+      ],
+      "issue_score": 0.0,
       "hard_catalyst": false,
       "issue_tags": [],
       "source": "community_mentions"
     },
     {
       "rank": 19,
-      "ticker": "AMD",
-      "name": "Advanced Micro Devices Inc.",
-      "mention_count": 140,
-      "mention_change_rate": -5.8,
+      "ticker": "GOOG",
+      "name": "GOOG",
+      "mention_count": 411,
+      "mention_change_rate": -61.1,
       "sentiment_hint": "bearish",
-      "reason": "Reddit 종합 언급 상위",
+      "reason": "Reddit 언급 감소",
       "sources": [
         "reddit"
       ],
-      "issue_score": 0.8,
+      "issue_score": 0.0,
       "hard_catalyst": false,
       "issue_tags": [],
       "source": "community_mentions"
     },
     {
       "rank": 20,
-      "ticker": "META",
-      "name": "Meta Platforms Inc. Class A",
-      "mention_count": 140,
-      "mention_change_rate": 138.2,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "ticker": "LTC.X",
+      "name": "LTC.X",
+      "mention_count": 400,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits 종합 언급 상위",
       "sources": [
-        "reddit"
+        "stocktwits"
       ],
-      "issue_score": 0.8,
+      "issue_score": 0.0,
       "hard_catalyst": false,
       "issue_tags": [],
       "source": "community_mentions"

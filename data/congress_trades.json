@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-07-28 06:44:07 KST",
+  "updatedAtKst": "2026-07-28 16:24:26 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7613,
+  "tradeCount": 7612,
   "politicianCount": 165,
   "rankings": [
     {
@@ -60,7 +60,7 @@
       "name": "Tim Walberg",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 42.8,
+      "estReturnPct": 45.43,
       "buyCount": 13,
       "sellCount": 2,
       "tradeCount": 15,
@@ -196,7 +196,7 @@
       "name": "Julie Johnson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 22.07,
+      "estReturnPct": 21.59,
       "buyCount": 44,
       "sellCount": 125,
       "tradeCount": 170,
@@ -366,7 +366,7 @@
       "name": "David J. Taylor",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 2.39,
+      "estReturnPct": 1.93,
       "buyCount": 55,
       "sellCount": 45,
       "tradeCount": 100,
@@ -4742,7 +4742,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 22.07
+      "estReturnPct": 21.59
     },
     {
       "id": "house-marjorie-taylor-greene",
@@ -5107,8 +5107,8 @@
       "party": "D",
       "committees": [],
       "district": "FL22",
-      "tradeCount": 147,
-      "buyCount": 81,
+      "tradeCount": 146,
+      "buyCount": 80,
       "sellCount": 66,
       "recentTrades": [
         {
@@ -7576,7 +7576,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 2.39
+      "estReturnPct": 1.93
     },
     {
       "id": "house-bruce-westerman",
@@ -25864,7 +25864,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 42.8
+      "estReturnPct": 45.43
     },
     {
       "id": "house-victoria-spartz",
@@ -92870,7 +92870,7 @@
     },
     "DD": {
       "ticker": "DD",
-      "netBuys": 6,
+      "netBuys": 5,
       "netSells": 2,
       "politicianCount": 3,
       "trades": [
@@ -92989,23 +92989,6 @@
           "disclosureDate": "12/29/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020112.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "DD",
-          "asset": "DuPont de Nemours, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-07-29",
-          "disclosureDate": "08/16/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019346.pdf",
           "district": "FL21",
           "source": "house_ptr",
           "party": "D"

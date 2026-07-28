@@ -526181,6 +526181,10 @@ window.MARKET_SNAPSHOT = {
           "c": 738.18
         },
         {
+          "t": 1784899800,
+          "c": 738.93
+        },
+        {
           "t": 1785159000,
           "c": 739.09
         }
@@ -527577,6 +527581,10 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1784813400,
           "c": 691.96
+        },
+        {
+          "t": 1784899800,
+          "c": 684.23
         },
         {
           "t": 1785159000,
@@ -528977,6 +528985,10 @@ window.MARKET_SNAPSHOT = {
           "c": 178.45
         },
         {
+          "t": 1784899800,
+          "c": 175.88
+        },
+        {
           "t": 1785159000,
           "c": 174.3
         }
@@ -530373,6 +530385,10 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1784813400,
           "c": 551.24
+        },
+        {
+          "t": 1784899800,
+          "c": 527.01
         },
         {
           "t": 1785159000,
@@ -531773,6 +531789,10 @@ window.MARKET_SNAPSHOT = {
           "c": 55.83
         },
         {
+          "t": 1784899800,
+          "c": 56.31
+        },
+        {
           "t": 1785159000,
           "c": 56.88
         }
@@ -533169,6 +533189,10 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1784813400,
           "c": 59.38
+        },
+        {
+          "t": 1784899800,
+          "c": 59.62
         },
         {
           "t": 1785159000,
@@ -534569,6 +534593,10 @@ window.MARKET_SNAPSHOT = {
           "c": 161.44
         },
         {
+          "t": 1784899800,
+          "c": 162.57
+        },
+        {
           "t": 1785159000,
           "c": 163.4
         }
@@ -535967,6 +535995,10 @@ window.MARKET_SNAPSHOT = {
           "c": 46.19
         },
         {
+          "t": 1784899800,
+          "c": 46.29
+        },
+        {
           "t": 1785159000,
           "c": 45.68
         }
@@ -537363,6 +537395,10 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1784813400,
           "c": 181.94
+        },
+        {
+          "t": 1784899800,
+          "c": 182.66
         },
         {
           "t": 1785159000,
@@ -544355,6 +544391,10 @@ window.MARKET_SNAPSHOT = {
           "c": 152.23
         },
         {
+          "t": 1784899800,
+          "c": 150.48
+        },
+        {
           "t": 1785159000,
           "c": 150.59
         }
@@ -545753,6 +545793,10 @@ window.MARKET_SNAPSHOT = {
           "c": 75.15
         },
         {
+          "t": 1784899800,
+          "c": 75.73
+        },
+        {
           "t": 1785159000,
           "c": 75.52
         }
@@ -545760,7 +545804,7 @@ window.MARKET_SNAPSHOT = {
     }
   },
   "ai_briefing": {
-    "korea_close": "<b>📊 [국내 증시 마감 데이터 리포트] - 2026년 07월 27일 20시 26분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 국내 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6755.75 (+65.13, +0.97%)<br>  - <b>코스닥 (KOSDAQ):</b> 764.86 (+16.64, +2.22%)<br><br><b>👥 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: +19,788, 외국인: -28,811, 기관: +8,595<br>  - <b>코스닥:</b> 개인: -1,550, 외국인: -1,422, 기관: +2,731<br><br><b>📰 당일 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.hankyung.com/article/2026072789521'>교보증권, 결식 아동 식사키트 지원</a> [Hankyung] <br>  2. <a href='https://www.hankyung.com/article/2026072789281'>'주주환원' 하나금융 목표가 줄상향</a> [Hankyung] <br>  3. <a href='https://www.hankyung.com/article/2026072789341'>계열사 티웨이 주가 부진…IPO 앞둔 소노 '속앓이'</a> [Hankyung] <br>  4. <a href='https://www.hankyung.com/article/2026072789931'>1조 자사주도 소각…겹호재에 뛴 네이버</a> [Hankyung] <br>  5. <a href='https://www.hankyung.com/article/2026072789821'>곱버스만이 아니다…하락장에서도 수익 낸 ETF [한경 프리미엄9 TODAY]</a> [Hankyung] <br>  6. <a href='https://www.mk.co.kr/news/stock/12108728'>개미들 몰린 ‘2배 ETF’ 더 손본다?…여당 “투자문턱 더 높일 수도”</a> [Maekyung] <br>  7. <a href='https://www.mk.co.kr/news/stock/12108695'>빅테크 AI패권 경쟁 속 투자 과열 우려도 커져</a> [Maekyung] <br>  8. <a href='https://www.mk.co.kr/news/stock/12108693'>하나證, 홍콩 푸투證 손잡고 외국인 통합계좌거래 개시</a> [Maekyung] <br>  9. <a href='https://www.mk.co.kr/news/stock/12108692'>금융위, 금융사 제재때 외부전문가 참여시킨다</a> [Maekyung] <br>  10. <a href='https://www.mk.co.kr/news/stock/12108652'>두산에너빌, 中서도 원전용 부품 영토 확장</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 장마감 시황 심층 브리핑]</b><br><br><pre><br>📈 <b>오늘의 코스피 &amp; 코스닥 시황 요약</b><br>├─ <b>코스피:</b> 외국인의 대규모 매도 공세에도 불구하고 기관과 개인 투자자의 강력한 매수세에 힘입어 0.97% 상승하며 6,700선 위에서 견조하게 마감했습니다. 이는 특정 대형주 섹터에 대한 국내 투자자들의 강한 매수 의지를 보여주는 대목입니다.<br>└─ <b>코스닥:</b> 기관의 집중적인 매수세가 지수 상승을 견인하며 2.22% 급등해 코스피 대비 훨씬 큰 폭의 오름세를 기록했습니다. AI, 반도체 등 성장주 중심의 기관 매매가 두드러지며 시장 활력을 불어넣었습니다.<br><br>👥 <b>투자 주체별 수급 동향 해설</b><br>├─ <b>수급 상황:</b> 금일 코스피 시장에서는 외국인이 약 2.8조원 규모의 순매도를 기록했음에도 불구하고, 기관이 8,500억원 이상, 개인이 약 2조원 가까이 순매수하며 외국인 물량을 성공적으로 흡수, 지수를 방어하며 상승 전환시켰습니다. 코스닥은 기관이 2,700억원 이상 순매수하며 지수를 이끌었고, 개인과 외국인은 동반 순매도했습니다.<br>└─ <b>매매 특징:</b> 기관은 코스피 시장에서 주주환원 확대 기대감이 있는 금융주(하나금융)와 자사주 소각 등 호재가 부각된 IT 대형주(네이버)에 매수세를 집중한 것으로 분석됩니다. 코스닥에서는 AI, 반도체 등 미래 성장성이 높은 기술주에 대한 선별적 매수가 유입되며 시장의 주도력을 확보했습니다.<br><br>📰 <b>오늘의 핵심 뉴스 &amp; 주도 테마 분석</b><br>├─ <b>주요 이슈:</b> 기업들의 주주환원 정책 강화(하나금융, 네이버) 흐름이 시장 전반에 긍정적인 투자 심리를 형성했습니다. 동시에 빅테크 기업들의 AI 패권 경쟁 심화와 이에 따른 투자 과열 우려, 그리고 고위험 레버리지 ETF에 대한 규제 강화 가능성도 부각되며 시장의 양면성을 보여주었습니다.<br>└─ <b>주도 테마:</b> 기업 가치 제고 노력과 주주환원 기대감에 힘입어 은행 등 금융주와 NAVER와 같은 IT 대형주가 시장의 관심을 받았습니다. 또한, AI 기술 경쟁 심화 소식에 관련 반도체 및 소프트웨어 섹터, 그리고 두산에너빌리티의 해외 사업 확장 소식에 원전 관련 에너지 테마주도 기관 매수세에 힘입어 강세를 보였습니다.<br><br>🎯 <b>내일의 증시 전략 및 대응 가이드</b><br>├─ <b>전략 포인트:</b> 견조한 실적과 더불어 적극적인 주주환원 정책을 발표하거나 기대되는 기업들을 중심으로 한 포트폴리오 비중 확대 전략이 유효합니다. 코스닥 시장에서는 기관의 수급이 뚜렷하게 유입되는 AI, 반도체 등 성장 섹터 내에서도 실적 기반의 옥석 가리기가 중요하겠습니다.<br>└─ <b>유의 사항:</b> 금일 밤 발표될 미국 고용보고서 등 주요 경제 지표와 연준 인사들의 발언에 촉각을 곤두세우며, 글로벌 유동성 및 금리 변화 추이를 면밀히 주시해야 합니다. 외국인 투자자들의 매매 동향 변화와 원/달러 환율의 변동성이 확대될 가능성에도 대비하며 리스크 관리에 만전을 기하시기 바랍니다.<br></pre><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 당일 시장의 수급과 뉴스를 기반으로 AI가 분석한 보고서로 투자 권유를 뜻하지 않습니다.</i>",
+    "korea_close": "<b>📊 [국내 증시 마감 데이터 리포트] - 2026년 07월 28일 18시 41분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 국내 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6023.66 (-732.09, -10.84%)<br>  - <b>코스닥 (KOSDAQ):</b> 705.85 (-59.01, -7.72%)<br><br><b>👥 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: +43,152, 외국인: -45,009, 기관: +1,830<br>  - <b>코스닥:</b> 개인: +480, 외국인: +860, 기관: -1,345<br><br><b>📰 당일 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.hankyung.com/article/2026072812701'>아마존, 저궤도위성 5000기 띄운다</a> [Hankyung] <br>  2. <a href='https://www.hankyung.com/article/2026072812851'>AI 빚투 경쟁에 빅테크간 자금 돌려막기까지…시장 임계점 왔나</a> [Hankyung] <br>  3. <a href='https://www.hankyung.com/article/2026072812931'>\"추격 매수 말고 조정 때 담아라\" [한경 프리미엄9 TODAY]</a> [Hankyung] <br>  4. <a href='https://www.hankyung.com/article/202607289356i'>'본전까지는 버티자'는 심리...포트폴리오에는 독이다</a> [Hankyung] <br>  5. <a href='https://www.hankyung.com/article/2026072812811'>'AI 지각생' 애플의 반전…엔비디아 제치고 시총 1위 탈환</a> [Hankyung] <br>  6. <a href='https://www.mk.co.kr/news/stock/12109731'>햄버거·치킨 M&A, ‘체급’ 다른 이유 왜?</a> [Maekyung] <br>  7. <a href='https://www.mk.co.kr/news/stock/12109715'>러셀2000 반란 이끈 주도주, 상위리그 승격이 되레 독</a> [Maekyung] <br>  8. <a href='https://www.mk.co.kr/news/stock/12109674'>폭염·열대야 겹쳤는데 … 주가 녹아내린 빙과株</a> [Maekyung] <br>  9. <a href='https://www.mk.co.kr/news/stock/12109673'>최대 200개 종목에 '저PBR 꼬리표' 달린다</a> [Maekyung] <br>  10. <a href='https://www.mk.co.kr/news/stock/12109665'>코스피 장중 6000 붕괴 … 이달 시총 2000조 증발</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 장마감 시황 심층 브리핑]</b><br><br><b>📈 오늘의 코스피 & 코스닥 시황 요약</b><br>├─ <b>코스피:</b> 금일 코스피는 무려 -10.84% 급락하며 6000선이 장중 붕괴되는 초유의 사태를 맞았습니다. 외국인의 대규모 매도세가 지수 전반을 끌어내렸고, 월간 시가총액 2000조 원 증발이라는 암울한 기록 속에 투자 심리가 완전히 얼어붙었습니다.<br>└─ <b>코스닥:</b> 코스닥 역시 -7.72% 하락하며 700선 겨우 지켜냈지만, 전반적인 시장의 공포 심리에서 벗어나지 못했습니다. 성장주 중심의 매도세가 출회되며 대형주, 중소형주 할 것 없이 광범위한 하락세를 보였습니다.<br><br><b>👥 투자 주체별 수급 동향 해설</b><br>├─ <b>수급 상황:</b> 금일 코스피 시장에서는 외국인이 홀로 45조 원이 넘는 대규모 순매도를 쏟아내며 시장 붕괴의 주범이 되었습니다. 이에 맞서 개인 투자자들은 43조 원 넘게 순매수하며 저가 매수에 나섰지만 역부족이었고, 기관은 1조 8천억 원가량 순매수하며 소극적인 방어에 그쳤습니다. 코스닥 시장에서는 외국인이 소폭 순매수했으나, 기관의 매도세와 개인의 제한적인 순매수로 지수 방어에는 한계가 있었습니다.<br>└─ <b>매매 특징:</b> 외국인의 압도적인 매도세는 최근 과열 양상을 보이던 AI 및 빅테크 관련 기술주에서의 차익 실현과 함께, 글로벌 경기 둔화 우려 및 환율 변동성 확대 등 거시경제적 요인이 복합적으로 작용한 것으로 풀이됩니다. 개인 투자자들의 막대한 순매수는 '본전까지는 버티자'는 심리와 함께 저가 매수 기회를 노린 것으로 보이나, 시장 전체의 하락을 막기에는 역부족이었습니다.<br><br><b>📰 오늘의 핵심 뉴스 & 주도 테마 분석</b><br>├─ <b>주요 이슈:</b> 오늘 시장의 핵심은 'AI 빚투 경쟁'과 '빅테크간 자금 돌려막기'로 인한 시장 임계점 도달 가능성 경고였습니다. 애플이 엔비디아를 제치고 시총 1위에 오르며 AI 주도주 변화 가능성을 시사했지만, 동시에 전체 시장의 과열과 밸류에이션 부담이 최고조에 달했다는 인식이 확산된 것이 결정적이었습니다. 코스피 6000선 붕괴와 월간 시총 2000조 원 증발이라는 소식이 투자 심리를 극도로 위축시켰습니다.<br>└─ <b>주도 테마:</b> 극심한 투매장세 속에서 뚜렷한 주도 상승 테마는 찾아보기 어려웠습니다. 시장 전반의 위험회피 심리가 지배적이었으며, 특히 고밸류에이션 논란이 있던 인공지능(AI) 관련 기술주 및 성장주들이 가장 큰 타격을 받았습니다. 다만, '저PBR 꼬리표' 종목들에 대한 관심은 여전하여 향후 저평가 가치주에 대한 투자심리 변화를 예고하는 뉴스도 있었습니다.<br><br><b>🎯 내일의 증시 전략 및 대응 가이드</b><br>├─ <b>전략 포인트:</b> 현 시점에서는 공격적인 저가 매수보다는 철저한 리스크 관리와 현금 비중 확보가 최우선입니다. '추격 매수 말고 조정 때 담으라'는 조언처럼, 시장의 패닉 셀링이 진정되고 확실한 바닥 신호가 나올 때까지는 관망세를 유지하는 것이 현명합니다. 중장기적으로는 견고한 펀더멘털을 갖춘 기업 중 과도하게 하락한 종목들에 대한 분할 매수 접근을 고려할 수 있으나, 매우 신중해야 합니다.<br>└─ <b>유의 사항:</b> 오늘 밤 미 증시의 움직임과 내일 발표될 주요 경제 지표(특히 물가 및 고용 지표)에 따라 국내 증시의 변동성이 더욱 확대될 수 있습니다. 원/달러 환율 추이와 글로벌 금리 변동성 역시 외국인 수급에 결정적인 영향을 미칠 수 있으니 면밀히 주시해야 합니다. 단기적인 반등 시도보다는 시장의 근본적인 안정화 여부를 확인하는 것이 중요합니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 당일 시장의 수급과 뉴스를 기반으로 AI가 분석한 보고서로 투자 권유를 뜻하지 않습니다.</i>",
     "us_premarket": "<b>📊 [미국 증시 개장 전 데이터 리포트] - 2026년 07월 28일 00시 09분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 프리마켓(Premarket) 상승 특징주</b><br>  1. <a href='https://stockanalysis.com/stocks/edbl/'>EDBL</a> (Edible Garden AG Incorporated) $7.85 | +150.00%<br>  2. <a href='https://stockanalysis.com/stocks/lghl/'>LGHL</a> (Lion Group Holding Ltd.) $2 | +119.66%<br>  3. <a href='https://stockanalysis.com/stocks/dfns/'>DFNS</a> (T3 Defense Inc.) $7.04 | +61.84%<br>  4. <a href='https://stockanalysis.com/stocks/biya/'>BIYA</a> (Baiya International Group Inc.) $2.94 | +52.07%<br>  5. <a href='https://stockanalysis.com/stocks/entx/'>ENTX</a> (Entera Bio Ltd.) $2.99 | +45.85%<br><br><b>💬 Reddit (r/wallstreetbets) 인기 Tickers</b><br>  - <b>MU</b> (Micron Technology): 언급 216회 (+189 24h)<br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 164회 (+91 24h)<br>  - <b>SPCX</b> (SpaceX): 언급 140회 (+95 24h)<br>  - <b>NVDA</b> (NVIDIA): 언급 105회 (+91 24h)<br>  - <b>MSFT</b> (Microsoft): 언급 98회 (+56 24h)<br><br><b>🐦 Stocktwits 인기 급상승 Tickers</b><br>  - <b>CAPR</b> (Capricor Therapeutics Inc): Watchlist 30615회<br>  - <b>SPCX</b> (SpaceX): Watchlist 94161회<br>  - <b>INTC</b> (Intel Corp): Watchlist 206046회<br>  - <b>NVDA</b> (NVIDIA Corp): Watchlist 654846회<br>  - <b>AMD</b> (Advanced Micro Devices Inc): Watchlist 561435회<br><br><b>🔥 Yahoo Finance 실시간 Trending Tickers</b><br>  - <b>QBTS</b>, <b>DFNS</b>, <b>CAPR</b>, <b>EDBL</b>, <b>RGTI</b><br><br><b>📰 미국 현지 경제/증권 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/markets/stocks/articles/80-stores-close-63-old-150700367.html'>After 80 stores close, 63-year-old chain gives Chapter 11 warning</a> [Yahoo Business] <br>  2. <a href='https://finance.yahoo.com/markets/article/semiconductor-stock-charts-just-formed-this-bearish-shape-that-signals-more-potential-losses-145440205.html'>Semiconductor stock charts just formed this bearish shape that signals more potential losses</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/markets/article/d-wave-leads-quantum-stocks-higher-as-att-expands-computing-deal-131336800.html'>D-Wave leads quantum stocks higher as AT&T expands computing deal</a> [Yahoo Business] <br>  4. <a href='https://finance.yahoo.com/markets/stocks/articles/ptc-ptc-mispriced-opportunity-144841368.html'>PTC (PTC): A Mispriced Opportunity?</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/markets/live/stock-market-today-monday-july-27-dow-sp-500-nasdaq-080412540.html'>Stock market today: S&P 500 and Nasdaq slip as chip stocks tumble, oil prices fall</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/07/24/moodys-ai-spending-credit-quality-amazon-meta-alphabet.html'>Moody's says 'unprecedented' AI spending threatens credit quality of Amazon, Meta, Alphabet and others</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/07/24/china-ai-open-source-apec.html'>U.S., other nations back open-source AI with 'strong security' at China summit</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/07/23/fed-interest-rate-odds-oil-jobless-claims.html'>Odds of Federal Reserve rate hike surge as oil prices rip higher</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/07/23/jpmorgan-dramatic-jump-in-ai-etfs-despite-rough-quarter.html'>JPMorgan report finds dramatic jump in AI-themed ETFs — despite rough quarter</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/07/23/short-sighted-stock-market-can-no-longer-brush-off-war-investors-say.html'>Shortsighted stock market can no longer brush off war: 'It's too hard to ignore $100 oil'</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 개장 전 심층 브리핑]</b><br><br><pre>📰 <b>미국 장전 주요 경제/거시 뉴스 분석</b><br>├─ <b>매크로 분석:</b> 유가 상승세가 지속되며 연방준비제도(Fed)의 금리 인상 가능성을 다시 높이고 있습니다. 이는 전반적인 시장 센티먼트에 부담으로 작용하며, 특히 반도체 섹터는 기술적 약세 신호와 함께 기업들의 AI 투자로 인한 신용 등급 하락 우려까지 겹쳐 압박을 받을 것으로 예상됩니다.<br>└─ <b>개장 전 전망:</b> 거시적 불확실성 속에서도 양자 컴퓨팅, 특정 바이오테크 등 테마성 재료를 가진 개별 종목들은 강한 투기적 매수세를 보일 것입니다. 그러나 전반적인 시장은 금리 인상 압박과 지정학적 리스크 노출로 인해 제한적인 상승세를 보이거나 관망세로 출발할 가능성이 높습니다.<br><br>📈 <b>프리마켓(Premarket) 상승/거래량 상위 특징주</b><br>├─ <b>주요 종목:</b> 오늘 프리마켓에서는 <a href=\"https://finance.yahoo.com/quote/EDBL\">EDBL</a> (Edible Garden AG), <a href=\"https://finance.yahoo.com/quote/LGHL\">LGHL</a> (Lion Group Holding), <a href=\"https://finance.yahoo.com/quote/DFNS\">DFNS</a> (T3 Defense) 등이 50% 이상의 폭발적인 상승률을 기록하며 시장의 주목을 받고 있습니다. 특히 <a href=\"https://finance.yahoo.com/quote/EDBL\">EDBL</a>과 <a href=\"https://finance.yahoo.com/quote/DFNS\">DFNS</a>는 야후 파이낸스 트렌딩에서도 상위권을 차지하며 개인 투자자들의 높은 관심을 반영합니다.<br>└─ <b>상승 배경:</b> 이들 종목은 대부분 시가총액이 낮은 소형주(Micro-cap)로, 프리마켓에서의 급등은 특정 호재성 뉴스(미공개 계약, 신제품 출시, M&A 루머 등)나 강력한 숏스퀴즈 움직임에 기인하는 경우가 많습니다. <a href=\"https://finance.yahoo.com/quote/DFNS\">DFNS</a>의 경우 \"Defense\"라는 이름이 현 지정학적 불안감과 연관된 테마성 매수로 이어졌을 가능성도 배제할 수 없습니다.<br><br>💬 <b>SNS/커뮤니티 인기 급상승 종목 & 찌라시 분석</b><br>├─ <b>소셜 미디어 동향:</b> 레딧, 스탁트윗, 야후 트렌딩에서 <a href=\"https://finance.yahoo.com/quote/QBTS\">QBTS</a> (D-Wave Quantum)가 양자 컴퓨팅 테마를 주도하며 압도적인 관심을 받고 있습니다. 반도체 섹터에서는 <a href=\"https://finance.yahoo.com/quote/MU\">MU</a> (Micron Technology), <a href=\"https://finance.yahoo.com/quote/NVDA\">NVDA</a> (NVIDIA), <a href=\"https://finance.yahoo.com/quote/AMD\">AMD</a>, <a href=\"https://finance.yahoo.com/quote/INTC\">INTC</a>, 그리고 <a href=\"https://finance.yahoo.com/quote/SNDK\">SNDK</a> (Sandisk) 등이 여전히 높은 언급량을 보이고 있으며, 바이오테크 <a href=\"https://finance.yahoo.com/quote/CAPR\">CAPR</a> (Capricor Therapeutics) 또한 스탁트윗과 야후 트렌딩에서 급부상했습니다.<br>└─ <b>루머 & 바이럴 요인:</b> <a href=\"https://finance.yahoo.com/quote/QBTS\">QBTS</a>의 급등은 AT&T와의 컴퓨팅 딜 확장이라는 구체적인 뉴스에 기반한 것으로, 양자 컴퓨팅 산업 전반에 대한 기대를 불러일으키고 있습니다. <a href=\"https://finance.yahoo.com/quote/CAPR\">CAPR</a>은 임상 시험 결과 발표 또는 FDA 승인 관련 루머가 바이럴되고 있을 가능성이 높으며, 반도체 섹터는 전반적인 AI 모멘텀과 함께 메모리 반도체 업황 개선 기대감이 <a href=\"https://finance.yahoo.com/quote/MU\">MU</a>와 <a href=\"https://finance.yahoo.com/quote/SNDK\">SNDK</a>에 대한 관심을 증폭시키는 것으로 분석됩니다.<br><br>🎯 <b>오늘 밤 미국 본장 관전 포인트 및 대응 가이드</b><br>├─ <b>본장 주목 섹터:</b> 오늘 본장에서는 <a href=\"https://finance.yahoo.com/quote/QBTS\">QBTS</a>의 강세로 촉발된 양자 컴퓨팅 관련주(<a href=\"https://finance.yahoo.com/quote/RGTI\">RGTI</a>, <a href=\"https://finance.yahoo.com/quote/IONQ\">IONQ</a> 등)들이 개장 초 수급을 강하게 받을 것으로 예상됩니다. 또한, <a href=\"https://finance.yahoo.com/quote/CAPR\">CAPR</a>을 필두로 한 바이오테크 테마성 움직임과 소셜 미디어에서 꾸준히 언급되는 메모리/반도체 대형주들(<a href=\"https://finance.yahoo.com/quote/MU\">MU</a>, <a href=\"https://finance.yahoo.com/quote/NVDA\">NVDA</a>, <a href=\"https://finance.yahoo.com/quote/AMD\">AMD</a>)의 흐름도 주시해야 합니다.<br>└─ <b>리스크 및 대응:</b> 프리마켓에서 급등한 소형주들은 본장 개시 후 변동성이 극도로 심화되고 급락할 위험이 높습니다. 펀더멘털 분석 없이 루머와 소셜 미디어 언급에만 의존한 추격 매수는 지양해야 하며, 높은 유가와 연준의 금리 인상 가능성이라는 매크로 리스크를 인지하고 현금 비중을 유지하며 보수적으로 접근하는 전략이 유효합니다.</pre><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 본 자료는 미국 프리마켓 및 다각도 소셜 커뮤니티 트렌드를 취합해 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>",
     "korea_premarket": "<b>📊 [국내 증시 개장 전 데이터 리포트] - 2026년 07월 28일 07시 15분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 전 거래일 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6755.75 (+65.13, +0.97%)<br>  - <b>코스닥 (KOSDAQ):</b> 764.86 (+16.64, +2.22%)<br><br><b>👥 전 거래일 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: +19,788, 외국인: -28,811, 기관: +8,595<br>  - <b>코스닥:</b> 개인: -1,550, 외국인: -1,422, 기관: +2,731<br><br><b>📰 최근 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.hankyung.com/article/2026072893216'>유가 급락에도 반도체주 '와르르'…나스닥 약세 [뉴욕증시 브리핑]</a> [Hankyung] <br>  2. <a href='https://www.hankyung.com/article/2026072780786'>공포 휩싸인 개미들…\"지금 '보물' 찾아라\" 매력 높아진 종목 [한경우의 케이스스터디]</a> [Hankyung] <br>  3. <a href='https://www.hankyung.com/article/2026072789261'>'일단 잘 먹고 갑니다'…삼전닉스 팔아치운 외국인 이유 있었다</a> [Hankyung] <br>  4. <a href='https://www.hankyung.com/article/2026072786316'>\"1등 시간 문제\" 파격 전망까지…삼전닉스 위협하는 中 CXMT [분석+]</a> [Hankyung] <br>  5. <a href='https://www.hankyung.com/article/2026072789521'>교보증권, 결식 아동 식사키트 지원</a> [Hankyung] <br>  6. <a href='https://www.mk.co.kr/news/stock/12109008'>“머스크형 리딩 믿고 따라간 30조”…서학개미 ‘최애’ 두 종목, 풍비박산</a> [Maekyung] <br>  7. <a href='https://www.mk.co.kr/news/stock/12108452'>“내년 2분기 반도체 공급 폭탄 카운트다운” … 삼전닉스 주가의 진짜 변수</a> [Maekyung] <br>  8. <a href='https://www.mk.co.kr/news/stock/12108816'>“코스피, 상승 판가름 날까”…이번 주 삼전닉스·빅테크 실적발표</a> [Maekyung] <br>  9. <a href='https://www.mk.co.kr/news/stock/12108792'>레버리지 투자, 야수의 심장 아니라 겁쟁이들이 더 낫다고 [너드의 투자법]</a> [Maekyung] <br>  10. <a href='https://www.mk.co.kr/news/stock/12108728'>개미들 몰린 ‘2배 ETF’ 더 손본다?…여당 “투자문턱 더 높일 수도”</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 개장 전 심층 분석 브리핑]</b><br><br><b>⭐ 개장 전 심층 분석: 글로벌 매크로와 국내 증시 전망 ⭐</b><br><br>🌙 <b>간밤 글로벌 시장 & 매크로 점검</b><br>├─ <b>미국 증시:</b> 간밤 뉴욕 증시는 유가 급락에도 불구하고 기술주, 특히 반도체주의 약세에 나스닥을 중심으로 하락 마감했습니다. 이는 최근 외국인 매도세와 공급 과잉 우려에 시달리는 국내 대형 기술주 섹터에 상당한 하방 압력으로 작용할 전망입니다.<br>└─ <b>환율·금리·원자재:</b> 반도체 경기 둔화 우려 및 전반적인 위험회피 심리가 확산되며 원/달러 환율은 상승 압력을 받을 수 있습니다. 미국채 금리는 안전자산 선호에 따른 하락 압력과 인플레이션 경계감 속 혼조세를 보일 수 있으며, 유가는 글로벌 경기 둔화 우려 속에 하락 기조를 이어갈 가능성이 높습니다.<br><br>📊 <b>전 거래일 국내 증시 복기</b><br>├─ <b>지수·수급:</b> 전 거래일 코스피는 +0.97%, 코스닥은 +2.22% 상승하며 양호한 흐름을 보였습니다. 코스피에서는 개인이 +1.9조원 넘게 대규모 순매수했으나, 외국인은 -2.8조원 이상 순매도하며 이를 상쇄했습니다. 코스닥은 기관이 +2,731억원 순매수하며 지수 상승을 주도했습니다. 외국인의 대규모 코스피 매도는 '삼전닉스' 등 대형 반도체주 중심이었을 것으로 추정됩니다.<br>└─ <b>주도 업종:</b> 코스피는 외국인 매도세에도 불구하고 상승했으며, 코스닥은 기관 매수세에 힘입어 큰 폭으로 상승했습니다. 이는 반도체 섹터 외 다른 성장주 또는 중소형주에서 수급 개선이 있었음을 시사합니다. 다만, 간밤 글로벌 반도체 약세 흐름과 외국인 매도 포지션을 감안할 때, 전일 국내 증시의 상승은 특정 섹터에 국한되었거나 대형 반도체주의 부담이 이미 반영되기 시작했음을 의미할 수 있습니다.<br><br>🎯 <b>오늘의 개장 전 전략 가이드</b><br>├─ <b>예상 시나리오:</b> 간밤 미국 나스닥과 반도체주의 하락은 오늘 국내 증시, 특히 대형 반도체주에 상당한 부담을 줄 것으로 예상됩니다. 코스피는 하락 출발이 유력하며, 외국인 매도세가 지속될 경우 지수 전반의 약세가 이어질 수 있습니다. 코스닥 역시 전일 기관 매수세의 지속 여부에 따라 변동성이 확대될 수 있으나, 상대적 선방 가능성도 있습니다. 전체적으로는 혼조세 내지 약세 흐름이 우세할 것으로 전망됩니다.<br>└─ <b>관심 포인트:</b> 투자자들은 대형 기술주 및 반도체 섹터의 추가 하락 가능성에 대비하고, 간밤의 흐름과 무관하게 견조한 흐름을 보일 수 있는 비(非)반도체 성장 섹터(예: 이차전지, 바이오)의 기관 순매수 흐름을 주시해야 합니다. 이번 주 예정된 주요 기업 실적 발표 결과에 따라 시장 방향성이 결정될 수 있으므로, 단기적 변동성 관리와 함께 중장기적인 관점에서 접근하는 보수적인 전략이 필요합니다.<br><br>⚠️ <b>오늘 장중 유의 사항</b><br>└─ <b>리스크 점검:</b> 금주 예정된 국내외 주요 기업들의 실적 발표, 특히 '삼전닉스' 및 미국 빅테크 기업들의 가이던스는 시장의 변동성을 키우는 핵심 요인입니다. 또한, 글로벌 경기 침체 우려와 인플레이션 지표, 주요국 중앙은행의 매파적 스탠스 유지 가능성 등 매크로 변수를 지속적으로 체크해야 하며, 국내 여당의 레버리지 ETF 투자 문턱 상향 검토 소식도 개인 투자 심리에 영향을 미칠 수 있습니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 전 거래일 수급·뉴스와 간밤 글로벌 흐름을 기반으로 AI가 분석한 개장 전 리포트로 투자 권유를 뜻하지 않습니다.</i>",
     "us_close": "<b>📊 [미국 증시 장마감 데이터 리포트] - 2026년 07월 27일 06시 29분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>🇺🇸 미국 주요 지수 종가</b><br>  - <b>S&P 500:</b> 7,411.98 (+3.68, +0.05%)<br>  - <b>Nasdaq:</b> 24,975.82 (-161.87, -0.64%)<br>  - <b>Dow Jones:</b> 51,947.25 (+235.60, +0.46%)<br>  - <b>Russell 2000:</b> 2,930.00 (-10.16, -0.35%)<br><br><b>📈 거시 지표</b><br>  - <b>VIX (공포지수):</b> 18.58 (-0.12, -0.64%)<br>  - <b>US 10Y 국채수익률:</b> 4.68 (-0.02, -0.51%)<br>  - <b>WTI 원유:</b> 89.31 (-2.88, -3.12%)<br><br><b>📊 SPDR 섹터 ETF 등락률</b><br>  - <b>XLK (정보기술):</b> -1.44%<br>  - <b>XLF (금융):</b> +0.86%<br>  - <b>XLE (에너지):</b> +0.40%<br>  - <b>XLV (헬스케어):</b> +0.70%<br>  - <b>XLI (산업재):</b> +0.40%<br>  - <b>XLY (경기소비재):</b> +0.60%<br>  - <b>XLP (필수소비재):</b> +1.11%<br>  - <b>XLC (통신서비스):</b> +0.87%<br>  - <b>XLRE (부동산):</b> +2.22%<br>  - <b>XLU (유틸리티):</b> +0.22%<br>  - <b>XLB (소재):</b> +1.93%<br><br><b>💬 소셜 트렌드 (상위 5)</b><br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 69회 (-8 24h)<br>  - <b>MSFT</b> (Microsoft): 언급 43회 (-3 24h)<br>  - <b>MU</b> (Micron Technology): 언급 43회 (-12 24h)<br>  - <b>SPCX</b> (SpaceX): 언급 41회 (-31 24h)<br>  - <b>GOOG</b> (Alphabet (Google)): 언급 30회 (+2 24h)<br><br><b>📰 미국 현지 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/markets/stocks/articles/80-stores-close-63-old-150700367.html'>After 80 stores close, 63-year-old chain gives Chapter 11 warning</a> [Yahoo Business] <br>  2. <a href='https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-apple-earnings-iran-news-fed-meeting-ai-stocks/?src=A00220&yptr=yahoo'>Dow Jones Futures: U.S., Iran Seek Deal; Apple Leads Earnings Wave, Fed Meeting Ahead</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/energy/articles/argentina-oil-production-soars-vaca-190000618.html'>Argentina’s Oil Production Soars as Vaca Muerta Breaks New Records</a> [Yahoo Business] <br>  4. <a href='https://finance.yahoo.com/small-business/articles/arizona-state-launches-degree-becoming-180000860.html'>Arizona State launches degree on becoming an influencer — exactly the career more than half of Gen Z adults dream of</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/real-estate/articles/25-000-home-repair-could-170000821.html'>A $25,000 home repair could wipe out her $27,000 emergency fund — experts say there's a smarter move</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/07/24/moodys-ai-spending-credit-quality-amazon-meta-alphabet.html'>Moody's says 'unprecedented' AI spending threatens credit quality of Amazon, Meta, Alphabet and others</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/07/24/china-ai-open-source-apec.html'>U.S., other nations back open-source AI with 'strong security' at China summit</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/07/23/fed-interest-rate-odds-oil-jobless-claims.html'>Odds of Federal Reserve rate hike surge as oil prices rip higher</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/07/23/jpmorgan-dramatic-jump-in-ai-etfs-despite-rough-quarter.html'>JPMorgan report finds dramatic jump in AI-themed ETFs — despite rough quarter</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/07/23/short-sighted-stock-market-can-no-longer-brush-off-war-investors-say.html'>Shortsighted stock market can no longer brush off war: 'It's too hard to ignore $100 oil'</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 장마감 시황 심층 브리핑]</b><br><br>🇺🇸 <b>미국 증시 장마감 4대 지수 요약</b><br>├─ <b>S&P 500 / 나스닥:</b> 혼조세로 마감하며 투자자들의 고민을 드러냈습니다. S&P 500은 미미하게 상승(+0.05%)했으나, 기술주 비중이 높은 나스닥은 무디스의 AI 지출 경고에 -0.64% 급락하며 시장의 우려를 반영했습니다.<br>└─ <b>다우 / 러셀:</b> 다우존스 산업평균지수는 가치주와 경기방어주의 강세에 힘입어 +0.46% 상승 마감한 반면, 중소형주 중심의 러셀 2000은 기술주의 동반 하락으로 -0.35% 약세를 보이며 시장 전반의 위험회피 심리가 확산되었음을 시사했습니다.<br><br>📊 <b>섹터별 ETF 강약 분석</b><br>├─ <b>강세 섹터:</b> 부동산(XLRE +2.22%)과 소재(XLB +1.93%) 섹터가 두드러진 강세를 보였고, 필수소비재(XLP +1.11%)와 금융(XLF +0.86%)도 견조한 흐름을 나타내며 시장의 방어적 성격과 함께 특정 산업군의 강한 모멘텀을 보여주었습니다.<br>└─ <b>약세 섹터:</b> 정보기술(XLK -1.44%) 섹터가 유일하게 큰 폭으로 하락하며 나스닥 지수 하락을 주도했습니다. 이는 무디스의 AI 관련 신용등급 경고와 대형 기술주들에 대한 차익 실현 압박이 집중된 결과로 풀이됩니다.<br><br>📈 <b>거시 지표 및 리스크 요인</b><br>├─ <b>변동성/금리:</b> VIX 공포지수는 소폭 하락(-0.64%)하며 시장 전반의 극단적인 공포는 진정되는 모습이었고, 10년물 국채수익률도 미미하게 하락(-0.51%)하며 일부 성장주에 대한 부담을 덜어주는 요인으로 작용했습니다.<br>└─ <b>원자재/유가:</b> WTI 국제유가는 아르헨티나의 원유 생산량 증가 소식 등에 힘입어 3.12% 급락하며 인플레이션 압력 완화에 대한 기대감을 높였습니다. 그러나 에너지(XLE +0.40%) 섹터는 유가 하락에도 불구하고 견고한 흐름을 유지, 단기적인 변동성에 대한 시장의 내성을 보여줬습니다.<br><br>💬 <b>소셜 미디어 특이 종목 & 뉴스 해설</b><br>├─ <b>주요 이슈:</b> 무디스(Moody's)의 \"AI 지출이 아마존, 메타, 알파벳 등 주요 기술 기업의 신용도를 위협할 수 있다\"는 경고가 금일 기술주 하락의 핵심 트리거로 작용했습니다. 또한, WTI 유가 급락은 인플레이션 우려를 부분적으로 해소했지만, 전반적인 시장 심리는 여전히 경계감을 유지했습니다.<br>└─ <b>소셜 동향:</b> 레딧(Reddit)에서는 마이크로소프트(MSFT), 마이크론(MU), 구글(GOOG) 등 주요 기술주와 반도체 관련 종목들이 언급 빈도 상위를 차지하며 하락장에서도 여전히 높은 투자자들의 관심을 받았습니다. 스톡트윗(Stocktwits)에서는 '트럼프 미디어(DJT)'가 압도적인 관심 속에 급등하며 밈 주식 열풍을 재확인시켰습니다.<br><br>🎯 <b>내일 장전 전략 및 아시아 증시 영향 전망</b><br>├─ <b>내일 전망:</b> 무디스 발(發) 기술주 불안감이 지속될지, 아니면 저가 매수세 유입으로 반등할지가 관건입니다. 다가오는 어닝 시즌과 연준 회의를 앞두고 관망세가 짙어지며 섹터 로테이션 장세가 이어질 가능성이 높습니다.<br>└─ <b>아시아 영향:</b> 금일 미국 증시의 기술주 약세는 아시아 시장의 기술 및 반도체 섹터에 부정적인 영향을 미칠 수 있습니다. 반면, 유가 하락은 에너지 수입국들에게 긍정적이며, 방어주 강세는 시장 전반의 리스크 관리에 대한 경각심을 높일 것으로 예상됩니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 미국 장 마감 후 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>"
@@ -546029,7 +546073,7 @@ window.MARKET_SNAPSHOT = {
     ]
   },
   "briefing_meta": {
-    "korea_close": "2026-07-27 20:26:28 KST",
+    "korea_close": "2026-07-28 18:41:48 KST",
     "us_premarket": "2026-07-28 00:10:29 KST",
     "korea_premarket": "2026-07-28 07:16:22 KST",
     "us_close": "2026-07-27 06:29:34 KST"

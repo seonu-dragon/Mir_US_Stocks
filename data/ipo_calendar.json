@@ -1,10 +1,155 @@
 {
-  "updatedAtKst": "2026-07-27 17:05 KST",
-  "lastFileDate": "2026-07-24",
+  "updatedAtKst": "2026-07-28 16:20 KST",
+  "lastFileDate": "2026-07-27",
   "count": 747,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Watu Metals Acquisition Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001829126-26-007852:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115659/000182912626007852/watumetalsacq_s1a.htm"
+    },
+    {
+      "company": "Watu Metals Acquisition Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001829126-26-007852:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115659/000182912626007852/watumetalsacq_s1a.htm"
+    },
+    {
+      "company": "Karman Line Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-27",
+      "accession": "0001829126-26-007847:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2134856/000182912626007847/karmanlineacq_s1.htm"
+    },
+    {
+      "company": "Spin AI Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001683168-26-005776:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2139511/000168316826005776/spinai_s1a2.htm"
+    },
+    {
+      "company": "Spin AI Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001683168-26-005776:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2139511/000168316826005776/spinai_s1a2.htm"
+    },
+    {
+      "company": "Sensei Harbor Corp.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001683168-26-005775:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826005775/sensei_s1a3.htm"
+    },
+    {
+      "company": "Sensei Harbor Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001683168-26-005775:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826005775/sensei_s1a3.htm"
+    },
+    {
+      "company": "AIxCrypto Holdings, Inc.",
+      "ticker": "AIXC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-27",
+      "accession": "0001493152-26-034816:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226034816/forms-1.htm"
+    },
+    {
+      "company": "Market Technology Acquisition Corp",
+      "ticker": "MTAK",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-07-27",
+      "accession": "0001213900-26-081597:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133136/000121390026081597/ea0294553-05.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "BOA Acquisition Corp. II",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001193125-26-318212:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2080216/000119312526318212/d820212ds1a.htm"
+    },
+    {
+      "company": "BOA Acquisition Corp. II",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001193125-26-318212:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2080216/000119312526318212/d820212ds1a.htm"
+    },
+    {
+      "company": "Apnimed, Inc.",
+      "ticker": "APMD",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001193125-26-316811:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526316811/apni-20260727.htm"
+    },
+    {
+      "company": "Apnimed, Inc.",
+      "ticker": "APMD",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-27",
+      "accession": "0001193125-26-316811:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1745648/000119312526316811/apni-20260727.htm"
+    },
+    {
+      "company": "Scribe Therapeutics, Inc.",
+      "ticker": "SCTX",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-07-27",
+      "accession": "0001193125-26-316503:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1853921/000119312526316503/d21355d424b4.htm",
+      "offerPrice": 15.0,
+      "offerPriceChecked": 2
+    },
     {
       "company": "Canary Staked TRX ETF",
       "ticker": null,
@@ -7567,149 +7712,6 @@
       "fileDate": "2026-05-29",
       "accession": "0001104659-26-067933:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1279704/000110465926067933/tm2614975d2_s1a.htm"
-    },
-    {
-      "company": "Sensei Harbor Corp.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001683168-26-004336:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826004336/sensei_s1a1.htm"
-    },
-    {
-      "company": "Sensei Harbor Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001683168-26-004336:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826004336/sensei_s1a1.htm"
-    },
-    {
-      "company": "ENTRATA, INC.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-05-28",
-      "accession": "0001628280-26-038608:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2028464/000162828026038608/entrata-sx1.htm"
-    },
-    {
-      "company": "Youmi Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-05-28",
-      "accession": "0001520138-26-000188:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000188/youmi-202605_s1.htm"
-    },
-    {
-      "company": "LIQTECH INTERNATIONAL INC",
-      "ticker": "LIQT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001437749-26-018645:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1307579/000143774926018645/liqt20260527c_s1a.htm"
-    },
-    {
-      "company": "LIQTECH INTERNATIONAL INC",
-      "ticker": "LIQT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001437749-26-018645:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1307579/000143774926018645/liqt20260527c_s1a.htm"
-    },
-    {
-      "company": "Keystone Acquisition Corp.",
-      "ticker": "KEYY",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001213900-26-062203:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2102771/000121390026062203/ea0272937-05.htm"
-    },
-    {
-      "company": "Keystone Acquisition Corp.",
-      "ticker": "KEYY",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001213900-26-062203:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2102771/000121390026062203/ea0272937-05.htm"
-    },
-    {
-      "company": "Grayscale Hyperliquid Staking ETF",
-      "ticker": "GHYP",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001193125-26-243167:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2107730/000119312526243167/hype_s-1_amendment_4.htm"
-    },
-    {
-      "company": "Grayscale Hyperliquid Staking ETF",
-      "ticker": "GHYP",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001193125-26-243167:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2107730/000119312526243167/hype_s-1_amendment_4.htm"
-    },
-    {
-      "company": "DISCIPLINED GROWTH ACQUISITION Corp",
-      "ticker": "DGAC",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-05-28",
-      "accession": "0001185185-26-002141:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2111038/000118518526002141/dgac424b4052726.htm",
-      "offerPrice": 10.0,
-      "offerPriceChecked": 2,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Dravica Corp",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001171520-26-000115:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2106607/000117152026000115/eps12626_drav.htm"
-    },
-    {
-      "company": "Dravica Corp",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-05-28",
-      "accession": "0001171520-26-000115:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2106607/000117152026000115/eps12626_drav.htm"
-    },
-    {
-      "company": "GridAI Technologies Corp.",
-      "ticker": "GRDX",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-05-28",
-      "accession": "0001104659-26-067071:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1604191/000110465926067071/tm2615795d1_s1.htm"
     }
   ]
 }

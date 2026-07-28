@@ -1,0 +1,37 @@
+{
+  "ticker": "PAYX",
+  "name": "Paychex Inc.",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 115.48,
+  "return_period": 8.7,
+  "support_levels": [
+    103.11,
+    96.3
+  ],
+  "resistance_levels": [
+    117.72
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 65.8,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 118 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 103 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

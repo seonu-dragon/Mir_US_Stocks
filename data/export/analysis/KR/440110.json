@@ -4,15 +4,15 @@
   "market": "KR",
   "period": "6M",
   "timeframe": "일봉",
-  "price": 72600.0,
-  "return_period": 241.6,
+  "price": 56300.0,
+  "return_period": 164.9,
   "support_levels": [
-    59900.0,
-    45700.0
+    45700.0,
+    21250.0
   ],
   "resistance_levels": [
-    74800.0,
-    89500.0
+    61900.0,
+    78050.0
   ],
   "moving_average": {
     "sma20": "downtrend",
@@ -21,19 +21,18 @@
   },
   "rsi": {
     "period": 14,
-    "value": 33.6,
+    "value": 41.3,
     "state": "bearish"
   },
   "volume": {
-    "state": "low",
-    "comment": "최근 고점 구간 대비 거래량은 둔화"
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
   },
   "scenario": {
-    "up": "저항 74,800 돌파와 거래량 동반 시 상승 시나리오 유지",
-    "down": "지지 59,900 및 단기 추세선 이탈 시 관망 필요"
+    "up": "저항 61,900 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 45,700 및 단기 추세선 이탈 시 관망 필요"
   },
   "risk_points": [
-    "저항선 돌파 실패 시 단기 조정 가능성",
-    "거래량 없는 반등은 신뢰도 낮음"
+    "저항선 돌파 실패 시 단기 조정 가능성"
   ]
 }

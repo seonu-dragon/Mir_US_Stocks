@@ -1,31 +1,32 @@
 {
-  "generated_at": "2026-07-29T05:48:41+09:00",
+  "generated_at": "2026-07-30T06:21:57+09:00",
   "market": "US",
   "items": [
     {
       "rank": 1,
       "ticker": "SNDK",
       "name": "Sandisk Corporation",
-      "mention_count": 2286,
-      "mention_change_rate": 472.3,
+      "mention_count": 2122,
+      "mention_change_rate": 20.7,
       "sentiment_hint": "bullish",
       "reason": "Reddit · Stocktwits 언급 급증",
       "sources": [
         "reddit",
         "stocktwits"
       ],
-      "issue_score": 1.7,
+      "issue_score": 2.4,
       "hard_catalyst": false,
       "issue_tags": [
-        "거래량 증가"
+        "거래량 증가",
+        "주간 변동성 큼"
       ],
       "source": "community_mentions"
     },
     {
       "rank": 2,
-      "ticker": "GLW",
-      "name": "Corning Incorporated",
-      "mention_count": 1700,
+      "ticker": "SOFI",
+      "name": "SoFi Technologies Inc.",
+      "mention_count": 1800,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
       "reason": "Stocktwits · Yahoo 종합 언급 상위",
@@ -42,8 +43,26 @@
       "rank": 3,
       "ticker": "MU",
       "name": "Micron Technology Inc.",
-      "mention_count": 1615,
-      "mention_change_rate": 162.2,
+      "mention_count": 1543,
+      "mention_change_rate": 56.6,
+      "sentiment_hint": "bullish",
+      "reason": "Reddit 언급 급증",
+      "sources": [
+        "reddit"
+      ],
+      "issue_score": 1.5,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "주간 변동성 큼"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 4,
+      "ticker": "BE",
+      "name": "Bloom Energy Corporation Class A",
+      "mention_count": 1444,
+      "mention_change_rate": 456.2,
       "sentiment_hint": "bullish",
       "reason": "Reddit · Stocktwits · Yahoo 언급 급증",
       "sources": [
@@ -51,49 +70,21 @@
         "stocktwits",
         "yahoo"
       ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 4,
-      "ticker": "SPCX",
-      "name": "SPCX",
-      "mention_count": 1186,
-      "mention_change_rate": 35.2,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits 언급 급증",
-      "sources": [
-        "reddit",
-        "stocktwits"
+      "issue_score": 8.0,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "행동주의 지분공시",
+        "거래량 급증",
+        "주간 변동성 큼"
       ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
       "source": "community_mentions"
     },
     {
-      "rank": 6,
-      "ticker": "NVDA",
-      "name": "NVIDIA Corporation",
-      "mention_count": 1058,
-      "mention_change_rate": 322.7,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
-      "sources": [
-        "reddit"
-      ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 7,
-      "ticker": "KO",
-      "name": "Coca-Cola Company (The)",
-      "mention_count": 900,
+      "rank": 5,
+      "ticker": "VRT",
+      "name": "Vertiv Holdings LLC Class A",
+      "mention_count": 1400,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
       "reason": "Stocktwits · Yahoo 종합 언급 상위",
@@ -101,10 +92,29 @@
         "stocktwits",
         "yahoo"
       ],
-      "issue_score": 1.0,
+      "issue_score": 1.7,
       "hard_catalyst": false,
       "issue_tags": [
-        "신고가 근접"
+        "거래량 증가"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 7,
+      "ticker": "LMND",
+      "name": "Lemonade Inc.",
+      "mention_count": 1100,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Stocktwits · Yahoo 종합 언급 상위",
+      "sources": [
+        "stocktwits",
+        "yahoo"
+      ],
+      "issue_score": 3.3,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "행동주의 지분공시"
       ],
       "source": "community_mentions"
     },
@@ -112,8 +122,8 @@
       "rank": 8,
       "ticker": "MSFT",
       "name": "Microsoft Corporation",
-      "mention_count": 895,
-      "mention_change_rate": 111.1,
+      "mention_count": 1008,
+      "mention_change_rate": 11.3,
       "sentiment_hint": "bullish",
       "reason": "Reddit 언급 급증",
       "sources": [
@@ -125,35 +135,15 @@
       "source": "community_mentions"
     },
     {
-      "rank": 9,
-      "ticker": "APLD",
-      "name": "Applied Digital Corporation",
-      "mention_count": 830,
-      "mention_change_rate": 900.0,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit · Stocktwits 언급 급증",
-      "sources": [
-        "reddit",
-        "stocktwits"
-      ],
-      "issue_score": 5.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "행동주의 지분공시"
-      ],
-      "source": "community_mentions"
-    },
-    {
       "rank": 10,
-      "ticker": "PLTR",
-      "name": "Palantir Technologies Inc. Class A",
-      "mention_count": 800,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits 종합 언급 상위",
+      "ticker": "SPCX",
+      "name": "SPCX",
+      "mention_count": 770,
+      "mention_change_rate": -20.3,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
-        "stocktwits"
+        "reddit"
       ],
       "issue_score": 0.0,
       "hard_catalyst": false,
@@ -161,9 +151,9 @@
       "source": "community_mentions"
     },
     {
-      "rank": 12,
-      "ticker": "BA",
-      "name": "Boeing Company (The)",
+      "rank": 11,
+      "ticker": "F",
+      "name": "Ford Motor Company",
       "mention_count": 700,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
@@ -172,21 +162,24 @@
         "stocktwits",
         "yahoo"
       ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
+      "issue_score": 3.4,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 증가"
+      ],
       "source": "community_mentions"
     },
     {
-      "rank": 13,
-      "ticker": "HOOD",
-      "name": "Robinhood Markets Inc. Class A",
-      "mention_count": 600,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits 종합 언급 상위",
+      "rank": 12,
+      "ticker": "NVDA",
+      "name": "NVIDIA Corporation",
+      "mention_count": 666,
+      "mention_change_rate": -60.4,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit 언급 감소",
       "sources": [
-        "stocktwits"
+        "reddit"
       ],
       "issue_score": 0.0,
       "hard_catalyst": false,
@@ -194,15 +187,55 @@
       "source": "community_mentions"
     },
     {
+      "rank": 13,
+      "ticker": "STX",
+      "name": "Seagate Technology Holdings PLC Ordinary Shares (Ireland)",
+      "mention_count": 655,
+      "mention_change_rate": 816.7,
+      "sentiment_hint": "bullish",
+      "reason": "Reddit · Stocktwits 언급 급증",
+      "sources": [
+        "reddit",
+        "stocktwits"
+      ],
+      "issue_score": 4.9,
+      "hard_catalyst": true,
+      "issue_tags": [
+        "주요 공시 이벤트",
+        "거래량 증가",
+        "주간 변동성 큼"
+      ],
+      "source": "community_mentions"
+    },
+    {
       "rank": 14,
+      "ticker": "PG",
+      "name": "Procter & Gamble Company (The)",
+      "mention_count": 500,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
+      ],
+      "issue_score": 0.9,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "거래량 증가"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 15,
       "ticker": "AAPL",
       "name": "Apple Inc.",
-      "mention_count": 575,
-      "mention_change_rate": 525.0,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
+      "mention_count": 443,
+      "mention_change_rate": -43.0,
+      "sentiment_hint": "bearish",
+      "reason": "Reddit · Stocktwits 언급 감소",
       "sources": [
-        "reddit"
+        "reddit",
+        "stocktwits"
       ],
       "issue_score": 1.8,
       "hard_catalyst": false,
@@ -213,50 +246,17 @@
       "source": "community_mentions"
     },
     {
-      "rank": 15,
-      "ticker": "UPS",
-      "name": "United Parcel Service",
-      "mention_count": 500,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits · Yahoo 종합 언급 상위",
-      "sources": [
-        "stocktwits",
-        "yahoo"
-      ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 16,
-      "ticker": "PYPL",
-      "name": "PayPal Holdings Inc.",
-      "mention_count": 500,
+      "rank": 17,
+      "ticker": "APH",
+      "name": "Amphenol Corporation",
+      "mention_count": 400,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
       "reason": "Yahoo 종합 언급 상위",
       "sources": [
         "yahoo"
       ],
-      "issue_score": 0.0,
-      "hard_catalyst": false,
-      "issue_tags": [],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 17,
-      "ticker": "ASML",
-      "name": "ASML Holding N.V. New York Registry Shares",
-      "mention_count": 450,
-      "mention_change_rate": 1566.7,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
-      "sources": [
-        "reddit"
-      ],
-      "issue_score": 0.9,
+      "issue_score": 1.7,
       "hard_catalyst": false,
       "issue_tags": [
         "거래량 증가"
@@ -265,46 +265,8 @@
     },
     {
       "rank": 18,
-      "ticker": "CLS",
-      "name": "Celestica Inc.",
-      "mention_count": 400,
-      "mention_change_rate": 0.0,
-      "sentiment_hint": "mixed",
-      "reason": "Stocktwits 종합 언급 상위",
-      "sources": [
-        "stocktwits"
-      ],
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "거래량 급증"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 19,
-      "ticker": "TSLA",
-      "name": "Tesla Inc.",
-      "mention_count": 347,
-      "mention_change_rate": 70.9,
-      "sentiment_hint": "bullish",
-      "reason": "Reddit 언급 급증",
-      "sources": [
-        "reddit"
-      ],
-      "issue_score": 4.0,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "주요 공시 이벤트",
-        "주간 변동성 큼"
-      ],
-      "source": "community_mentions"
-    },
-    {
-      "rank": 20,
-      "ticker": "AAOI",
-      "name": "Applied Optoelectronics Inc.",
+      "ticker": "VRRM",
+      "name": "Verra Mobility Corporation Class A",
       "mention_count": 300,
       "mention_change_rate": 0.0,
       "sentiment_hint": "mixed",
@@ -312,11 +274,43 @@
       "sources": [
         "stocktwits"
       ],
-      "issue_score": 2.5,
-      "hard_catalyst": true,
-      "issue_tags": [
-        "행동주의 지분공시"
+      "issue_score": 0.0,
+      "hard_catalyst": false,
+      "issue_tags": [],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 19,
+      "ticker": "NCRA",
+      "name": "Nocera Inc.",
+      "mention_count": 300,
+      "mention_change_rate": 0.0,
+      "sentiment_hint": "mixed",
+      "reason": "Yahoo 종합 언급 상위",
+      "sources": [
+        "yahoo"
       ],
+      "issue_score": 1.0,
+      "hard_catalyst": false,
+      "issue_tags": [
+        "신고가 근접"
+      ],
+      "source": "community_mentions"
+    },
+    {
+      "rank": 20,
+      "ticker": "META",
+      "name": "Meta Platforms Inc. Class A",
+      "mention_count": 241,
+      "mention_change_rate": 43.9,
+      "sentiment_hint": "bullish",
+      "reason": "Reddit 언급 급증",
+      "sources": [
+        "reddit"
+      ],
+      "issue_score": 0.8,
+      "hard_catalyst": false,
+      "issue_tags": [],
       "source": "community_mentions"
     }
   ]

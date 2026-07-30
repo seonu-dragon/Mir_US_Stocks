@@ -1,10 +1,195 @@
 {
-  "updatedAtKst": "2026-07-29 16:24 KST",
-  "lastFileDate": "2026-07-28",
-  "count": 732,
+  "updatedAtKst": "2026-07-30 16:19 KST",
+  "lastFileDate": "2026-07-29",
+  "count": 750,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "SIERRA INTERNATIONAL NETWORK INC",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0002011617-26-000016:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2011617/000201161726000016/siniss2.htm"
+    },
+    {
+      "company": "Global Interactive Technologies, Inc.",
+      "ticker": "GITS",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035245:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1911545/000149315226035245/forms-1.htm"
+    },
+    {
+      "company": "Beneficient  (BENF, BENFW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035225:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1775734/000149315226035225/forms-1.htm"
+    },
+    {
+      "company": "IMC Rare Earths Ltd",
+      "ticker": "IMC",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035207:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2098395/000149315226035207/form424b4.htm",
+      "offerPrice": 5.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "FullPAC, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035201:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2076148/000149315226035201/forms-1a.htm"
+    },
+    {
+      "company": "FullPAC, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035201:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2076148/000149315226035201/forms-1a.htm"
+    },
+    {
+      "company": "ARC Group Securities Acquisition I",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035157:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2094712/000149315226035157/forms-1a.htm"
+    },
+    {
+      "company": "ARC Group Securities Acquisition I",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001493152-26-035157:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2094712/000149315226035157/forms-1a.htm"
+    },
+    {
+      "company": "ECOMINAS CORP.",
+      "ticker": "ILXP",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001477932-26-004590:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226004590/ilxp_s1.htm"
+    },
+    {
+      "company": "Moleculin Biotech, Inc.",
+      "ticker": "MBRX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001437749-26-024774:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1659617/000143774926024774/mbrx20260716_s1.htm"
+    },
+    {
+      "company": "BioStem Technologies, Inc.",
+      "ticker": "BSEM",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001213900-26-082719:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1658678/000121390026082719/ea0299458-s1_biostem.htm"
+    },
+    {
+      "company": "PBT Land & Minerals, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001213900-26-082502:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026082502/ea0299258-01.htm"
+    },
+    {
+      "company": "Game Your Game Inc.",
+      "ticker": "GYGY",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-07-29",
+      "accession": "0001213900-26-082494:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2111846/000121390026082494/ea0275919-11.htm",
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "direct-listing",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Teamshares Inc  (TMS, TMSWW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-29",
+      "accession": "0001193125-26-324170:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2048951/000119312526324170/d58823ds1.htm"
+    },
+    {
+      "company": "Attovia Therapeutics, Inc.",
+      "ticker": "ATTO",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001193125-26-323618:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2058707/000119312526323618/d40469ds1a.htm"
+    },
+    {
+      "company": "Attovia Therapeutics, Inc.",
+      "ticker": "ATTO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001193125-26-323618:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2058707/000119312526323618/d40469ds1a.htm"
+    },
+    {
+      "company": "Vogenx, Inc.",
+      "ticker": "VOGX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001185185-26-003162:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1903784/000118518526003162/vogenxs1a1072526.htm"
+    },
+    {
+      "company": "Vogenx, Inc.",
+      "ticker": "VOGX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-29",
+      "accession": "0001185185-26-003162:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1903784/000118518526003162/vogenxs1a1072526.htm"
+    },
     {
       "company": "Sadot Group Inc.",
       "ticker": "SDOT",

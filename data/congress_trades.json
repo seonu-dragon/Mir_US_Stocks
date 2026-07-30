@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-07-30 16:21:04 KST",
+  "updatedAtKst": "2026-07-31 06:48:20 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 7611,
@@ -12,7 +12,7 @@
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 90.47,
+      "estReturnPct": 106.82,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
@@ -24,7 +24,7 @@
       "name": "Terri A. Sewell",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 76.89,
+      "estReturnPct": 81.57,
       "buyCount": 1,
       "sellCount": 1,
       "tradeCount": 2,
@@ -36,7 +36,7 @@
       "name": "Tim Moore",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 62.71,
+      "estReturnPct": 67.92,
       "buyCount": 49,
       "sellCount": 27,
       "tradeCount": 76,
@@ -44,107 +44,83 @@
     },
     {
       "rank": 4,
-      "id": "house-tim-walberg",
-      "name": "Tim Walberg",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 42.9,
-      "buyCount": 13,
-      "sellCount": 2,
-      "tradeCount": 15,
-      "committees": []
-    },
-    {
-      "rank": 5,
       "id": "house-dwight-evans",
       "name": "Dwight Evans",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 42.23,
+      "estReturnPct": 41.82,
       "buyCount": 9,
       "sellCount": 15,
       "tradeCount": 24,
       "committees": []
     },
     {
+      "rank": 5,
+      "id": "house-tim-walberg",
+      "name": "Tim Walberg",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 41.67,
+      "buyCount": 13,
+      "sellCount": 2,
+      "tradeCount": 15,
+      "committees": []
+    },
+    {
       "rank": 6,
-      "id": "house-robert-e-latta",
-      "name": "Robert E. Latta",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 40.12,
-      "buyCount": 21,
-      "sellCount": 0,
-      "tradeCount": 21,
-      "committees": []
-    },
-    {
-      "rank": 7,
-      "id": "house-debbie-dingell",
-      "name": "Debbie Dingell",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 34.83,
-      "buyCount": 7,
-      "sellCount": 3,
-      "tradeCount": 16,
-      "committees": []
-    },
-    {
-      "rank": 8,
-      "id": "house-jared-moskowitz",
-      "name": "Jared Moskowitz",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 34.68,
-      "buyCount": 128,
-      "sellCount": 57,
-      "tradeCount": 185,
-      "committees": []
-    },
-    {
-      "rank": 9,
-      "id": "house-ed-case",
-      "name": "Ed Case",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 32.3,
-      "buyCount": 5,
-      "sellCount": 1,
-      "tradeCount": 6,
-      "committees": []
-    },
-    {
-      "rank": 10,
-      "id": "house-bruce-westerman",
-      "name": "Bruce Westerman",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 31.91,
-      "buyCount": 51,
-      "sellCount": 47,
-      "tradeCount": 98,
-      "committees": []
-    },
-    {
-      "rank": 11,
       "id": "house-jefferson-shreve",
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 31.68,
+      "estReturnPct": 41.57,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
       "committees": []
     },
     {
-      "rank": 12,
+      "rank": 7,
+      "id": "house-jared-moskowitz",
+      "name": "Jared Moskowitz",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 38.71,
+      "buyCount": 128,
+      "sellCount": 57,
+      "tradeCount": 185,
+      "committees": []
+    },
+    {
+      "rank": 8,
+      "id": "house-robert-e-latta",
+      "name": "Robert E. Latta",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 33.21,
+      "buyCount": 21,
+      "sellCount": 0,
+      "tradeCount": 21,
+      "committees": []
+    },
+    {
+      "rank": 9,
+      "id": "house-bruce-westerman",
+      "name": "Bruce Westerman",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 33.2,
+      "buyCount": 51,
+      "sellCount": 47,
+      "tradeCount": 98,
+      "committees": []
+    },
+    {
+      "rank": 10,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 29.05,
+      "estReturnPct": 32.69,
       "buyCount": 12,
       "sellCount": 3,
       "tradeCount": 17,
@@ -153,12 +129,36 @@
       ]
     },
     {
+      "rank": 11,
+      "id": "house-debbie-dingell",
+      "name": "Debbie Dingell",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 31.15,
+      "buyCount": 7,
+      "sellCount": 3,
+      "tradeCount": 16,
+      "committees": []
+    },
+    {
+      "rank": 12,
+      "id": "house-ed-case",
+      "name": "Ed Case",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 30.44,
+      "buyCount": 5,
+      "sellCount": 1,
+      "tradeCount": 6,
+      "committees": []
+    },
+    {
       "rank": 13,
       "id": "house-rob-bresnahan",
       "name": "Rob Bresnahan",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 25.89,
+      "estReturnPct": 27.06,
       "buyCount": 111,
       "sellCount": 165,
       "tradeCount": 276,
@@ -166,71 +166,23 @@
     },
     {
       "rank": 14,
-      "id": "house-julie-johnson",
-      "name": "Julie Johnson",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 22.12,
-      "buyCount": 44,
-      "sellCount": 125,
-      "tradeCount": 170,
-      "committees": []
-    },
-    {
-      "rank": 15,
       "id": "house-valerie-hoyle",
       "name": "Valerie Hoyle",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 20.86,
+      "estReturnPct": 24.61,
       "buyCount": 97,
       "sellCount": 89,
       "tradeCount": 186,
       "committees": []
     },
     {
-      "rank": 16,
-      "id": "house-scott-scott-franklin",
-      "name": "Scott Scott Franklin",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 19.76,
-      "buyCount": 21,
-      "sellCount": 13,
-      "tradeCount": 34,
-      "committees": []
-    },
-    {
-      "rank": 17,
-      "id": "house-thomas-h-kean",
-      "name": "Thomas H. Kean",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 19.73,
-      "buyCount": 36,
-      "sellCount": 14,
-      "tradeCount": 61,
-      "committees": []
-    },
-    {
-      "rank": 18,
-      "id": "house-kelly-louise-morrison",
-      "name": "Kelly Louise Morrison",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 18.75,
-      "buyCount": 6,
-      "sellCount": 13,
-      "tradeCount": 21,
-      "committees": []
-    },
-    {
-      "rank": 19,
+      "rank": 15,
       "id": "house-josh-gottheimer",
       "name": "Josh Gottheimer",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 18.72,
+      "estReturnPct": 24.0,
       "buyCount": 422,
       "sellCount": 144,
       "tradeCount": 567,
@@ -239,12 +191,60 @@
       ]
     },
     {
+      "rank": 16,
+      "id": "house-julie-johnson",
+      "name": "Julie Johnson",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 23.08,
+      "buyCount": 44,
+      "sellCount": 125,
+      "tradeCount": 170,
+      "committees": []
+    },
+    {
+      "rank": 17,
+      "id": "house-thomas-h-kean",
+      "name": "Thomas H. Kean",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 21.46,
+      "buyCount": 36,
+      "sellCount": 14,
+      "tradeCount": 61,
+      "committees": []
+    },
+    {
+      "rank": 18,
+      "id": "house-scott-scott-franklin",
+      "name": "Scott Scott Franklin",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 19.64,
+      "buyCount": 21,
+      "sellCount": 13,
+      "tradeCount": 34,
+      "committees": []
+    },
+    {
+      "rank": 19,
+      "id": "house-lisa-mcclain",
+      "name": "Lisa McClain",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 18.68,
+      "buyCount": 332,
+      "sellCount": 332,
+      "tradeCount": 664,
+      "committees": []
+    },
+    {
       "rank": 20,
       "id": "house-byron-donalds",
       "name": "Byron Donalds",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 14.69,
+      "estReturnPct": 16.24,
       "buyCount": 38,
       "sellCount": 34,
       "tradeCount": 72,
@@ -252,23 +252,11 @@
     },
     {
       "rank": 21,
-      "id": "house-lisa-mcclain",
-      "name": "Lisa McClain",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 14.48,
-      "buyCount": 332,
-      "sellCount": 332,
-      "tradeCount": 664,
-      "committees": []
-    },
-    {
-      "rank": 22,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 13.12,
+      "estReturnPct": 14.19,
       "buyCount": 149,
       "sellCount": 5,
       "tradeCount": 154,
@@ -277,27 +265,39 @@
       ]
     },
     {
-      "rank": 23,
-      "id": "house-richard-dean-dr-mccormick",
-      "name": "Richard Dean Dr McCormick",
+      "rank": 22,
+      "id": "house-kelly-louise-morrison",
+      "name": "Kelly Louise Morrison",
       "chamber": "House",
-      "party": "R",
-      "estReturnPct": 10.61,
-      "buyCount": 30,
-      "sellCount": 1,
-      "tradeCount": 31,
+      "party": "D",
+      "estReturnPct": 13.87,
+      "buyCount": 6,
+      "sellCount": 13,
+      "tradeCount": 21,
       "committees": []
     },
     {
-      "rank": 24,
+      "rank": 23,
       "id": "house-cleo-fields",
       "name": "Cleo Fields",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 10.23,
+      "estReturnPct": 13.14,
       "buyCount": 103,
       "sellCount": 6,
       "tradeCount": 109,
+      "committees": []
+    },
+    {
+      "rank": 24,
+      "id": "house-richard-dean-dr-mccormick",
+      "name": "Richard Dean Dr McCormick",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 9.96,
+      "buyCount": 30,
+      "sellCount": 1,
+      "tradeCount": 31,
       "committees": []
     },
     {
@@ -306,7 +306,7 @@
       "name": "Rick Larsen",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 8.54,
+      "estReturnPct": 5.72,
       "buyCount": 19,
       "sellCount": 17,
       "tradeCount": 37,
@@ -318,7 +318,7 @@
       "name": "Gilbert Cisneros",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 7.16,
+      "estReturnPct": 5.45,
       "buyCount": 452,
       "sellCount": 109,
       "tradeCount": 564,
@@ -326,26 +326,26 @@
     },
     {
       "rank": 27,
-      "id": "house-jonathan-jackson",
-      "name": "Jonathan Jackson",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 4.01,
-      "buyCount": 51,
-      "sellCount": 36,
-      "tradeCount": 87,
-      "committees": []
-    },
-    {
-      "rank": 28,
       "id": "house-dan-newhouse",
       "name": "Dan Newhouse",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 3.93,
+      "estReturnPct": 4.03,
       "buyCount": 57,
       "sellCount": 15,
       "tradeCount": 72,
+      "committees": []
+    },
+    {
+      "rank": 28,
+      "id": "house-david-j-taylor",
+      "name": "David J. Taylor",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 3.5,
+      "buyCount": 55,
+      "sellCount": 45,
+      "tradeCount": 100,
       "committees": []
     },
     {
@@ -354,7 +354,7 @@
       "name": "Lloyd Doggett",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 3.25,
+      "estReturnPct": 1.86,
       "buyCount": 69,
       "sellCount": 0,
       "tradeCount": 69,
@@ -362,38 +362,38 @@
     },
     {
       "rank": 30,
-      "id": "house-david-j-taylor",
-      "name": "David J. Taylor",
+      "id": "house-jonathan-jackson",
+      "name": "Jonathan Jackson",
       "chamber": "House",
-      "party": "R",
-      "estReturnPct": 2.53,
-      "buyCount": 55,
-      "sellCount": 45,
-      "tradeCount": 100,
+      "party": "D",
+      "estReturnPct": 1.75,
+      "buyCount": 51,
+      "sellCount": 36,
+      "tradeCount": 87,
       "committees": []
     },
     {
       "rank": 31,
-      "id": "house-james-french-hill",
-      "name": "James French Hill",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 1.52,
-      "buyCount": 6,
-      "sellCount": 10,
-      "tradeCount": 16,
-      "committees": []
-    },
-    {
-      "rank": 32,
       "id": "house-maria-elvira-salazar",
       "name": "Maria Elvira Salazar",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -1.81,
+      "estReturnPct": -1.7,
       "buyCount": 37,
       "sellCount": 10,
       "tradeCount": 49,
+      "committees": []
+    },
+    {
+      "rank": 32,
+      "id": "house-james-french-hill",
+      "name": "James French Hill",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": -4.97,
+      "buyCount": 6,
+      "sellCount": 10,
+      "tradeCount": 16,
       "committees": []
     },
     {
@@ -402,7 +402,7 @@
       "name": "Carol Devine Miller",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -3.48,
+      "estReturnPct": -5.7,
       "buyCount": 16,
       "sellCount": 10,
       "tradeCount": 26,
@@ -410,50 +410,50 @@
     },
     {
       "rank": 34,
-      "id": "house-cliff-bentz",
-      "name": "Cliff Bentz",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": -7.68,
-      "buyCount": 1,
-      "sellCount": 1,
-      "tradeCount": 2,
-      "committees": []
-    },
-    {
-      "rank": 35,
       "id": "house-april-mcclain-delaney",
       "name": "April McClain Delaney",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -8.06,
+      "estReturnPct": -6.67,
       "buyCount": 100,
       "sellCount": 6,
       "tradeCount": 106,
       "committees": []
     },
     {
-      "rank": 36,
-      "id": "house-sheri-biggs",
-      "name": "Sheri Biggs",
+      "rank": 35,
+      "id": "house-cliff-bentz",
+      "name": "Cliff Bentz",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -13.13,
+      "estReturnPct": -9.03,
       "buyCount": 1,
-      "sellCount": 37,
-      "tradeCount": 38,
+      "sellCount": 1,
+      "tradeCount": 2,
       "committees": []
     },
     {
-      "rank": 37,
+      "rank": 36,
       "id": "house-richard-w-allen",
       "name": "Richard W. Allen",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -13.69,
+      "estReturnPct": -10.06,
       "buyCount": 14,
       "sellCount": 31,
       "tradeCount": 45,
+      "committees": []
+    },
+    {
+      "rank": 37,
+      "id": "house-sheri-biggs",
+      "name": "Sheri Biggs",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": -11.44,
+      "buyCount": 1,
+      "sellCount": 37,
+      "tradeCount": 38,
       "committees": []
     },
     {
@@ -462,7 +462,7 @@
       "name": "John McGuire",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -22.02,
+      "estReturnPct": -19.46,
       "buyCount": 8,
       "sellCount": 0,
       "tradeCount": 8,
@@ -470,26 +470,26 @@
     },
     {
       "rank": 39,
-      "id": "house-daniel-meuser",
-      "name": "Daniel Meuser",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": -41.53,
-      "buyCount": 1,
-      "sellCount": 5,
-      "tradeCount": 6,
-      "committees": []
-    },
-    {
-      "rank": 40,
       "id": "house-brandon-gill",
       "name": "Brandon Gill",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -42.63,
+      "estReturnPct": -41.51,
       "buyCount": 1,
       "sellCount": 0,
       "tradeCount": 1,
+      "committees": []
+    },
+    {
+      "rank": 40,
+      "id": "house-daniel-meuser",
+      "name": "Daniel Meuser",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": -41.71,
+      "buyCount": 1,
+      "sellCount": 5,
+      "tradeCount": 6,
       "committees": []
     }
   ],
@@ -846,7 +846,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 14.48
+      "estReturnPct": 18.68
     },
     {
       "id": "house-josh-gottheimer",
@@ -1202,7 +1202,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 18.72
+      "estReturnPct": 24.0
     },
     {
       "id": "house-gilbert-cisneros",
@@ -1556,7 +1556,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 7.16
+      "estReturnPct": 5.45
     },
     {
       "id": "house-daniel-goldman",
@@ -2264,7 +2264,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 25.89
+      "estReturnPct": 27.06
     },
     {
       "id": "house-jefferson-shreve",
@@ -2618,7 +2618,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 31.68
+      "estReturnPct": 41.57
     },
     {
       "id": "house-kevin-hern",
@@ -4034,7 +4034,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 20.86
+      "estReturnPct": 24.61
     },
     {
       "id": "house-jared-moskowitz",
@@ -4388,7 +4388,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 34.68
+      "estReturnPct": 38.71
     },
     {
       "id": "house-julie-johnson",
@@ -4742,7 +4742,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 22.12
+      "estReturnPct": 23.08
     },
     {
       "id": "house-marjorie-taylor-greene",
@@ -5098,7 +5098,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 13.12
+      "estReturnPct": 14.19
     },
     {
       "id": "house-lois-frankel",
@@ -6514,7 +6514,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 10.23
+      "estReturnPct": 13.14
     },
     {
       "id": "house-april-mcclain-delaney",
@@ -6868,7 +6868,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -8.06
+      "estReturnPct": -6.67
     },
     {
       "id": "house-julia-letlow",
@@ -7222,7 +7222,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 90.47
+      "estReturnPct": 106.82
     },
     {
       "id": "house-david-j-taylor",
@@ -7576,7 +7576,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 2.53
+      "estReturnPct": 3.5
     },
     {
       "id": "house-bruce-westerman",
@@ -7930,7 +7930,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 31.91
+      "estReturnPct": 33.2
     },
     {
       "id": "house-greg-stanton",
@@ -8638,7 +8638,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 4.01
+      "estReturnPct": 1.75
     },
     {
       "id": "house-mark-dr-green",
@@ -9700,7 +9700,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 62.71
+      "estReturnPct": 67.92
     },
     {
       "id": "house-dan-newhouse",
@@ -10054,7 +10054,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 3.93
+      "estReturnPct": 4.03
     },
     {
       "id": "house-byron-donalds",
@@ -10408,7 +10408,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 14.69
+      "estReturnPct": 16.24
     },
     {
       "id": "house-greg-landsman",
@@ -11116,7 +11116,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 3.25
+      "estReturnPct": 1.86
     },
     {
       "id": "house-susie-lee",
@@ -12532,7 +12532,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 19.73
+      "estReturnPct": 21.46
     },
     {
       "id": "house-marjorie-taylor-mrs-greene",
@@ -15010,7 +15010,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -1.81
+      "estReturnPct": -1.7
     },
     {
       "id": "house-richard-w-allen",
@@ -15364,7 +15364,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -13.69
+      "estReturnPct": -10.06
     },
     {
       "id": "house-alan-s-lowenthal",
@@ -16426,7 +16426,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -13.13
+      "estReturnPct": -11.44
     },
     {
       "id": "house-rick-larsen",
@@ -16780,7 +16780,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 8.54
+      "estReturnPct": 5.72
     },
     {
       "id": "house-marie-newman",
@@ -17488,7 +17488,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 19.76
+      "estReturnPct": 19.64
     },
     {
       "id": "house-patrick-fallon",
@@ -18196,7 +18196,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 10.61
+      "estReturnPct": 9.96
     },
     {
       "id": "house-donald-sternoff-beyer",
@@ -19612,7 +19612,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -3.48
+      "estReturnPct": -5.7
     },
     {
       "id": "house-donald-sternoff-honorable-beyer",
@@ -21028,7 +21028,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 42.23
+      "estReturnPct": 41.82
     },
     {
       "id": "house-austin-scott",
@@ -22444,7 +22444,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 40.12
+      "estReturnPct": 33.21
     },
     {
       "id": "house-kelly-louise-morrison",
@@ -22798,7 +22798,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 18.75
+      "estReturnPct": 13.87
     },
     {
       "id": "house-blake-moore",
@@ -24451,7 +24451,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 29.05
+      "estReturnPct": 32.69
     },
     {
       "id": "house-kim-dr-schrier",
@@ -25040,7 +25040,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 34.83
+      "estReturnPct": 31.15
     },
     {
       "id": "house-james-french-hill",
@@ -25326,7 +25326,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 1.52
+      "estReturnPct": -4.97
     },
     {
       "id": "house-steve-cohen",
@@ -25864,7 +25864,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 42.9
+      "estReturnPct": 41.67
     },
     {
       "id": "house-victoria-spartz",
@@ -28433,7 +28433,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -22.02
+      "estReturnPct": -19.46
     },
     {
       "id": "house-mike-kelly",
@@ -29582,7 +29582,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -41.53
+      "estReturnPct": -41.71
     },
     {
       "id": "house-ed-case",
@@ -29698,7 +29698,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 32.3
+      "estReturnPct": 30.44
     },
     {
       "id": "house-brian-babin",
@@ -31816,7 +31816,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -7.68
+      "estReturnPct": -9.03
     },
     {
       "id": "house-terri-a-sewell",
@@ -31864,7 +31864,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 76.89
+      "estReturnPct": 81.57
     },
     {
       "id": "house-jake-auchincloss",
@@ -32581,7 +32581,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -42.63
+      "estReturnPct": -41.51
     },
     {
       "id": "house-linda-t-sanchez",

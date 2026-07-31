@@ -1,10 +1,182 @@
 {
-  "updatedAtKst": "2026-07-30 16:19 KST",
-  "lastFileDate": "2026-07-29",
-  "count": 750,
+  "updatedAtKst": "2026-07-31 16:26 KST",
+  "lastFileDate": "2026-07-30",
+  "count": 767,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "MobbQuest Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0002109817-26-000008:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109817/000210981726000008/mobq_s1a.htm"
+    },
+    {
+      "company": "MobbQuest Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0002109817-26-000008:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109817/000210981726000008/mobq_s1a.htm"
+    },
+    {
+      "company": "Hall Chadwick Acquisition Corp II",
+      "ticker": "HCAX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001829126-26-008117:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130219/000182912626008117/hallchadwickacq2_s1a.htm"
+    },
+    {
+      "company": "Hall Chadwick Acquisition Corp II",
+      "ticker": "HCAX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001829126-26-008117:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130219/000182912626008117/hallchadwickacq2_s1a.htm"
+    },
+    {
+      "company": "Braveheart Bio, Inc.",
+      "ticker": "BRVE",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001628280-26-050756:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131524/000162828026050756/braveheartbioinc-sx1a.htm"
+    },
+    {
+      "company": "Braveheart Bio, Inc.",
+      "ticker": "BRVE",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001628280-26-050756:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131524/000162828026050756/braveheartbioinc-sx1a.htm"
+    },
+    {
+      "company": "POWERDYNE INTERNATIONAL, INC.",
+      "ticker": "PWDY",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001493152-26-035488:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1435617/000149315226035488/forms-1a.htm"
+    },
+    {
+      "company": "POWERDYNE INTERNATIONAL, INC.",
+      "ticker": "PWDY",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001493152-26-035488:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1435617/000149315226035488/forms-1a.htm"
+    },
+    {
+      "company": "Gold Mountain Acquisition Corp.",
+      "ticker": "GDMT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001493152-26-035448:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2105318/000149315226035448/forms-1a.htm"
+    },
+    {
+      "company": "Gold Mountain Acquisition Corp.",
+      "ticker": "GDMT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001493152-26-035448:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2105318/000149315226035448/forms-1a.htm"
+    },
+    {
+      "company": "Laser Photonics Corp",
+      "ticker": "LASE",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-30",
+      "accession": "0001493152-26-035437:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226035437/forms-1.htm"
+    },
+    {
+      "company": "Moleculin Biotech, Inc.",
+      "ticker": "MBRX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001437749-26-025100:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1659617/000143774926025100/mbrx20260730_s1a.htm"
+    },
+    {
+      "company": "Moleculin Biotech, Inc.",
+      "ticker": "MBRX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001437749-26-025100:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1659617/000143774926025100/mbrx20260730_s1a.htm"
+    },
+    {
+      "company": "PRESIDIO PRODUCTION Co  (FTW, FTW-WT)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-07-30",
+      "accession": "0001213900-26-082963:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2083125/000121390026082963/ea0298363-s1_presidio.htm"
+    },
+    {
+      "company": "Neuro Spectrum Insights, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001213900-26-082953:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2034588/000121390026082953/ea0212248-14.htm"
+    },
+    {
+      "company": "Neuro Spectrum Insights, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-07-30",
+      "accession": "0001213900-26-082953:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2034588/000121390026082953/ea0212248-14.htm"
+    },
+    {
+      "company": "Reformation Inc.",
+      "ticker": "REF",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-07-30",
+      "accession": "0001104659-26-088733:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1787117/000110465926088733/tm2513004-17_424b4.htm",
+      "offerPrice": 15.0,
+      "offerPriceChecked": 2
+    },
     {
       "company": "SIERRA INTERNATIONAL NETWORK INC",
       "ticker": null,

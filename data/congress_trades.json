@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-08-03 06:30:59 KST",
+  "updatedAtKst": "2026-08-03 17:08:38 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7603,
+  "tradeCount": 7600,
   "politicianCount": 165,
   "rankings": [
     {
@@ -171,9 +171,9 @@
       "chamber": "House",
       "party": "D",
       "estReturnPct": 23.89,
-      "buyCount": 422,
+      "buyCount": 421,
       "sellCount": 144,
-      "tradeCount": 567,
+      "tradeCount": 566,
       "committees": [
         "Financial Services"
       ]
@@ -845,8 +845,8 @@
         "Financial Services"
       ],
       "district": "NJ05",
-      "tradeCount": 567,
-      "buyCount": 422,
+      "tradeCount": 566,
+      "buyCount": 421,
       "sellCount": 144,
       "recentTrades": [
         {
@@ -5095,8 +5095,8 @@
       "party": "D",
       "committees": [],
       "district": "FL22",
-      "tradeCount": 146,
-      "buyCount": 80,
+      "tradeCount": 144,
+      "buyCount": 78,
       "sellCount": 66,
       "recentTrades": [
         {
@@ -55749,7 +55749,7 @@
     },
     "AMD": {
       "ticker": "AMD",
-      "netBuys": 21,
+      "netBuys": 20,
       "netSells": 5,
       "politicianCount": 12,
       "trades": [
@@ -69260,7 +69260,7 @@
     },
     "MKL": {
       "ticker": "MKL",
-      "netBuys": 13,
+      "netBuys": 12,
       "netSells": 1,
       "politicianCount": 4,
       "trades": [
@@ -69481,23 +69481,6 @@
           "disclosureDate": "10/28/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019707.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "MKL",
-          "asset": "Markel Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-04",
-          "disclosureDate": "08/16/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019346.pdf",
           "district": "FL21",
           "source": "house_ptr",
           "party": "D"
@@ -158484,7 +158467,7 @@
     },
     "GXO": {
       "ticker": "GXO",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 1,
       "politicianCount": 1,
       "trades": [
@@ -158501,23 +158484,6 @@
           "disclosureDate": "08/30/2022",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021618.pdf",
-          "district": "FL21",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Lois Frankel",
-          "chamber": "House",
-          "ticker": "GXO",
-          "asset": "GXO Logistics, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-04",
-          "disclosureDate": "08/16/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019346.pdf",
           "district": "FL21",
           "source": "house_ptr",
           "party": "D"
@@ -164378,7 +164344,7 @@
         "Real Estate",
         "Technology"
       ],
-      "buyCount": 434,
+      "buyCount": 433,
       "sellCount": 147,
       "topTickers": [
         {
@@ -164406,18 +164372,18 @@
           "count": 8
         },
         {
-          "ticker": "AMD",
+          "ticker": "NOW",
           "count": 6
         },
         {
-          "ticker": "NOW",
+          "ticker": "V",
           "count": 6
         }
       ],
       "topPoliticians": [
         {
           "name": "Josh Gottheimer",
-          "count": 422
+          "count": 421
         },
         {
           "name": "Nancy Pelosi",

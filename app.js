@@ -1144,7 +1144,9 @@ function boot(options = {}) {
   } else if (mapRoute) {
     activateTab("map", { push: false });
   }
-  if (route.get("ticker")) selectTicker(route.get("ticker"));
+  // ?ticker= 단독 딥링크는 종목 리서치 화면(종목 탭)으로 바로 연다 — 원페이지 허브 URL.
+  // tab= 이 함께 명시되면 그 탭을 존중한다.
+  if (route.get("ticker")) selectTicker(route.get("ticker"), { openSearch: !initialTab });
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
@@ -4191,6 +4193,25 @@ function setupEvents() {
   setupKrOwnershipEvents();
   byId("heatmapShare")?.addEventListener("click", shareHeatmapLink);
   byId("pfExportCsv")?.addEventListener("click", exportPortfolioCsv);
+  byId("pfImportCsv")?.addEventListener("click", () => byId("pfImportFile")?.click());
+  byId("pfImportFile")?.addEventListener("change", (e) => {
+    const file = e.target.files && e.target.files[0];
+    e.target.value = "";
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => importPortfolioCsv(String(reader.result || ""));
+    reader.readAsText(file);
+  });
+  byId("shareTickerLink")?.addEventListener("click", () => {
+    if (!selectedTicker) { showAppToast("먼저 종목을 선택하세요."); return; }
+    const url = new URL(window.location.href);
+    url.search = "";
+    url.searchParams.set("market", marketCfg().id);
+    url.searchParams.set("ticker", selectedTicker);
+    navigator.clipboard?.writeText(url.toString())
+      .then(() => showAppToast("종목 링크를 복사했습니다."))
+      .catch(() => showAppToast("복사에 실패했습니다 — 주소창 URL을 사용하세요."));
+  });
   byId("backtestExportCsv")?.addEventListener("click", exportBacktestCsv);
   window.addEventListener("resize", debounce(renderTreemap, 120));
   window.addEventListener("resize", syncCardNewsHeight);
@@ -9830,6 +9851,13 @@ const GITHUB_REPO = "https://github.com/seonu-dragon/Mir_US_Stocks";
 // (deploy-pages.yml 의 workflow_run 목록과 같은 값).
 // script 는 그 워크플로우가 실제로 실행하는 빌더다.
 const TRUST_RECOVERY = {
+  "COT 포지셔닝": { us: { workflow: "Daily US market snapshot", script: "scripts/build_cftc_cot.py" }, tabs: "시그널 탭 · 선물 투기 포지셔닝" },
+  "국채 경매": { us: { workflow: "Daily US market snapshot", script: "scripts/build_treasury_auctions.py" }, tabs: "시그널 탭 · 국채 경매 수요" },
+  "리테일 관심도": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wiki_attention.py" }, tabs: "시그널 탭 · 리테일 관심도(위키)" },
+  "외부 공포탐욕": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sentiment_gauges.py" }, tabs: "시그널 탭 · 심리지수 비교 타일" },
+  "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
+  "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
+  "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
@@ -9997,6 +10025,18 @@ function dataTrustSources() {
     rows.push(source("배당 결정", "DART 원문 파싱", window.KR_DIVIDENDS, ["rows"], 72, "매일", "krDividends", "", true));
     rows.push(source("공급계약", "DART 원문 파싱", window.KR_CONTRACTS, ["rows"], 72, "매일", "krContracts", "", true));
     rows.push(source("실적발표 반응", "DART · Yahoo", window.KR_EARNINGS_REACTIONS, ["rows"], 72, "매일", "krEarningsReact", "", true));
+  }
+  // 2026-08-06 신규 무키 피드 — 등록하지 않으면 신뢰도 센터의 감시 사각지대가 된다.
+  rows.push(source("COT 포지셔닝", "CFTC", window.COT_POSITIONING, ["markets"], 336, "매주 금요일 발표", "cotPositioning"));
+  rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
+  rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));
+  rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
+  if (cfg.id === "us") {
+    rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
+    rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
+  }
+  if (cfg.id === "kr") {
+    rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));
   }
   return rows;
 }
@@ -11787,6 +11827,43 @@ function downloadCsv(filename, rows) {
   URL.revokeObjectURL(link.href);
 }
 
+// CSV 가져오기 — 내보내기 포맷(티커,종목명,수량,평단,…) 또는 최소 3열(티커,수량,평단)을
+// 받는다. 현재 시장 스냅샷에 없는 티커는 건너뛰고 결과를 토스트로 요약한다.
+function importPortfolioCsv(text) {
+  const lines = String(text || "").replace(/^﻿/, "").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (!lines.length) { showAppToast("빈 파일입니다."); return; }
+  const delim = lines[0].includes("\t") ? "\t" : ",";
+  let rows = lines.map((l) => l.split(delim).map((c) => c.trim().replace(/^"|"$/g, "")));
+  // 헤더 감지: 첫 행에 숫자 열이 없으면 헤더로 보고 버린다.
+  const looksHeader = rows[0].every((c) => !Number.isFinite(parseFloat(c.replace(/,/g, ""))));
+  const header = looksHeader ? rows[0].map((c) => c.toLowerCase()) : null;
+  if (looksHeader) rows = rows.slice(1);
+  // 내보내기 포맷이면 수량=3열째·평단=4열째, 아니면 2·3열째.
+  const exportShape = header && (header[0].includes("티커") || header[0].includes("ticker")) && header.length >= 4
+    && (header[2].includes("수량") || header[2].includes("qty") || header[2].includes("quantity"));
+  const qtyCol = exportShape ? 2 : 1;
+  const costCol = exportShape ? 3 : 2;
+  const num = (v) => parseFloat(String(v || "").replace(/,/g, ""));
+  let added = 0, updated = 0, skipped = 0;
+  rows.forEach((cols) => {
+    const t = normalizeTickerKey(cols[0] || "");
+    const qty = num(cols[qtyCol]);
+    const cost = num(cols[costCol]);
+    if (!t || !Number.isFinite(qty) || qty <= 0 || !Number.isFinite(cost) || cost <= 0 || !stockByTicker(t)) { skipped += 1; return; }
+    const existing = portfolio.find((p) => p.ticker === t);
+    if (existing) { existing.qty = qty; existing.avgCost = cost; updated += 1; }
+    else if (portfolio.length < 60) { portfolio.push({ ticker: t, qty, avgCost: cost }); added += 1; }
+    else skipped += 1;
+  });
+  if (added || updated) {
+    savePortfolio();
+    renderPortfolio();
+    showAppToast(`가져오기 완료 — 추가 ${added} · 갱신 ${updated}${skipped ? ` · 건너뜀 ${skipped}` : ""}`);
+  } else {
+    showAppToast(`가져온 항목이 없습니다${skipped ? ` (건너뜀 ${skipped} — 티커·수량·평단 확인)` : ""}.`);
+  }
+}
+
 function exportPortfolioCsv() {
   if (!portfolio.length) { showAppToast("보낼 보유 종목이 없습니다."); return; }
   const fmt = marketCfg().formatMoney;
@@ -12988,6 +13065,7 @@ function cmdkBuildActions(query) {
   } });
   actions.push({ label: "대화 내보내기 (.md)", hint: "현재 세션", run: () => exportAiChatMarkdown() });
   actions.push({ label: "테마 전환 (다크/라이트)", hint: "화면", run: () => byId("themeToggle")?.click() });
+  if (selectedTicker) actions.push({ label: `종목 링크 복사 (${selectedTicker})`, hint: "공유", run: () => byId("shareTickerLink")?.click() });
   if (aiActive) {
     actions.push({ label: "AI 모드 나가기", hint: "Esc", run: () => window.MirAI?.exit?.() });
   } else {

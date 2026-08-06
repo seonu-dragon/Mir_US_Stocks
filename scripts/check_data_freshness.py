@@ -45,6 +45,11 @@ CHECKS = {
         ("data/federal_contracts.json", 10, False),
         ("data/pattern_stats.json", 10, False),
         ("data/breakout_retest_stats.json", 12, False),
+        # COT 는 주간(금요일 발표·최대 10일 시차), 경매는 주 단위 불규칙 — 여유 있게.
+        ("data/cot_positioning.json", 14, False),
+        ("data/treasury_auctions.json", 14, False),
+        # FTD 는 반월 파일이 약 2주 지연 발행이라 정상 상태도 한 달쯤 늙어 보인다.
+        ("data/sec_ftd.json", 45, False),
     ],
     "kr": [
         ("data/korea/market_snapshot.json", 2, False),

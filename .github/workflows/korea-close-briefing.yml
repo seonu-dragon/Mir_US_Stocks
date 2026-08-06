@@ -64,6 +64,13 @@ jobs:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python scripts/build_kr_ecos_macro.py
 
+      # 나라장터 낙찰(정부수주) — 상장사 매칭분만 발행(2026-08-07 추가).
+      - name: Build KR gov contracts (나라장터)
+        continue-on-error: true
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python scripts/build_kr_gov_contracts.py
+
       - name: Run Korea close briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

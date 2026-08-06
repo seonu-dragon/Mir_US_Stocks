@@ -67,6 +67,7 @@ CHECKS = {
         # 다만 빌더가 0건이면 기존 파일을 덮지 않으므로 실제로는 나이 쪽이 먼저 운다.
         ("data/korea/consensus.json", 5, True),
         ("data/korea/ecos_macro.json", 6, False),
+        ("data/korea/gov_contracts.json", 8, False),
     ],
 }
 

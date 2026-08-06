@@ -143,7 +143,17 @@ def fetch_usd_krw():
                 last = float(v)
             except ValueError:
                 continue
-        return round(last, 2) if last else None
+        if last:
+            return round(last, 2)
+    except Exception:
+        pass
+    # 폴백: Frankfurter(ECB 소스, 키·리밋 없음). FRED 가 휴일·장애로 비면 여기로.
+    try:
+        req = urllib.request.Request(
+            "https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW", headers=UA)
+        with urllib.request.urlopen(req, timeout=30) as r:
+            v = json.loads(r.read().decode("utf-8")).get("rates", {}).get("KRW")
+        return round(float(v), 2) if v else None
     except Exception:
         return None
 

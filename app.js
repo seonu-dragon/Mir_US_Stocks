@@ -591,6 +591,12 @@ const FEATURE_DATA = {
   treasuryAuctions: { global: "TREASURY_AUCTIONS", path: "data/treasury_auctions.js" },
   // SEC 결제 불이행(FTD, 반월 파일). 공매도 서브탭에서만 쓰는 US 전용 lazy.
   secFtd: { global: "SEC_FTD", path: "data/sec_ftd.js", usOnly: true, lazy: true },
+  // 위키 조회수 리테일 관심도(영어/한국어 위키). 시장별 목록이 한 파일에 있어 둘 다 로드.
+  wikiAttention: { global: "WIKI_ATTENTION", path: "data/wiki_attention.js" },
+  // 외부 공포탐욕 게이지(크립토 공식 + CNN 비공식). 심리지수 비교용 — 둘 다 로드.
+  sentimentGauges: { global: "SENTIMENT_GAUGES", path: "data/sentiment_gauges.js" },
+  // WSB 댓글 감성(Tradestie). AI 브리핑 탭 소셜 표 전용 — US 전용 lazy.
+  wsbSentiment: { global: "WSB_SENTIMENT", path: "data/wsb_sentiment.js", usOnly: true, lazy: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -2923,6 +2929,38 @@ function renderCotPositioning() {
     </div>`;
 }
 
+// ===== 리테일 관심도 — 위키 조회수 (WIKI_ATTENTION) =====
+// 최근 7일 평균 조회수가 직전 30일 평균의 몇 배인지. 검색량·멘션과 달리
+// '실제로 찾아본 사람 수'라 리테일 관심의 프록시로 쓴다. 시장별 목록.
+function renderWikiAttention() {
+  const host = byId("wikiAttention");
+  if (!host) return;
+  const wa = window.WIKI_ATTENTION;
+  const list = wa && (isKrMarket() ? wa.kr : wa.us);
+  if (!Array.isArray(list) || list.length < 5) { host.innerHTML = ""; return; }
+  const rows = list.slice(0, 10).map((r, i) => {
+    const hot = r.ratio >= 1.5;
+    const col = hot ? "var(--green)" : r.ratio < 0.7 ? "var(--red)" : "var(--muted)";
+    const spark = Array.isArray(r.series) && r.series.length > 5 ? seasonalitySvgLine(r.series) : "";
+    return `<tr>
+      <td class="ins-date">${i + 1}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(r.t)}</div></td>
+      <td class="ins-num"><strong style="color:${col}">x${Number(r.ratio).toFixed(2)}</strong>${hot ? `<div style="font-size:9.5px;color:var(--green)">급증</div>` : ""}</td>
+      <td class="ins-num">${Number(r.avg7).toLocaleString()}</td>
+      <td class="ins-num">${Number(r.avg30).toLocaleString()}</td>
+      <td style="min-width:110px">${spark}</td>
+    </tr>`;
+  }).join("");
+  host.innerHTML = `
+    <div class="section-title"><h2>리테일 관심도 (위키 조회수)</h2>
+      <p>${isKrMarket() ? "한국어" : "영어"} 위키피디아 회사 문서의 최근 7일 평균 조회수를 직전 30일 평균과 비교했습니다. 관심이 몰리는 곳의 프록시일 뿐 방향 신호가 아닙니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">배율</th><th class="ins-num">7일 평균</th><th class="ins-num">직전 30일</th><th>30일 추이</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">봇 트래픽 제외(user). 사명→문서 매핑이 검증된 종목만 싣습니다. 출처: ${escapeHtml(wa.source || "Wikimedia")} · ${escapeHtml(wa.updatedAtKst || "")}.</p>
+    </div>`;
+  host.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
 // ===== 매크로 히스토리 스파크라인 (MARKET_HISTORY) =====
 // 일일 1레코드씩 적립되는 자체 시계열(data/history/market_history.js). 5일 미만이면
 // 선이 의미가 없어 "적립 중 (n일차)" 안내로 대신한다. 축 없는 1.5px currentColor 라인.
@@ -3144,6 +3182,30 @@ function fgHistBlock() {
     <span style="font-size:11px;flex-shrink:0">최근 ${vals.length}일</span>${historySparkSvg(vals, 180, 36)}</div>`;
 }
 
+// 자체 심리지수 아래 붙는 외부 게이지 비교(SENTIMENT_GAUGES). 데이터 없으면 "".
+// CNN 은 비공식 수집이라 언제든 빠질 수 있고, 그때는 크립토만 남는다.
+function externalGaugesHtml() {
+  const g = window.SENTIMENT_GAUGES;
+  if (!g || (!g.cnn && !g.crypto)) return "";
+  const tile = (name, v, label) => {
+    if (!Number.isFinite(Number(v))) return "";
+    const lab = fearGreedLabel(Number(v));
+    return `<article style="background:var(--panel-soft);border-radius:12px;padding:10px 14px;min-width:150px">
+      <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px">${name}</div>
+      <div style="display:flex;align-items:baseline;gap:8px"><strong style="font-size:20px;font-variant-numeric:tabular-nums;color:${lab.c}">${Math.round(v)}</strong><span style="font-size:11px;color:${lab.c}">${escapeHtml(label || lab.t)}</span></div>
+    </article>`;
+  };
+  const tiles = [
+    g.cnn ? tile("CNN Fear & Greed (미국 주식)", g.cnn.value, "") : "",
+    g.crypto ? tile("크립토 공포탐욕", g.crypto.value, "") : "",
+  ].filter(Boolean).join("");
+  if (!tiles) return "";
+  return `<div style="margin-top:14px">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">외부 게이지 비교 · ${escapeHtml(g.updatedAtKst || "")}</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">${tiles}</div>
+  </div>`;
+}
+
 function renderFearGreed() {
   const host = byId("fearGreed");
   if (!host) return;
@@ -3176,6 +3238,7 @@ function renderFearGreed() {
       ${bar}
       ${fgHistBlock()}
       <div style="margin-top:14px">${subs}</div>
+      ${externalGaugesHtml()}
       <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">각 요소를 0(공포)~100(탐욕)으로 정규화해 단순 평균했습니다. 극단값에서 되돌림이 잦다는 해석이 있으나 시점 신호로 쓰긴 어렵습니다.</p>
     </div>`;
 }
@@ -3232,6 +3295,7 @@ function renderSignals() {
   renderYieldCurve();
   renderTreasuryAuctions();
   renderCotPositioning();
+  renderWikiAttention();
   const el = byId("signalsGrid");
   if (!el) return;
   const cards = [];
@@ -3572,6 +3636,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") { renderMacroIndicators(); renderFearGreed(); } });
     ensureFeatureData("cotPositioning").then((ok) => { if (ok && currentTab === "signals") renderCotPositioning(); });
     ensureFeatureData("treasuryAuctions").then((ok) => { if (ok && currentTab === "signals") renderTreasuryAuctions(); });
+    ensureFeatureData("wikiAttention").then((ok) => { if (ok && currentTab === "signals") renderWikiAttention(); });
+    ensureFeatureData("sentimentGauges").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     ensureFeatureData("marketHistory").then((ok) => { if (ok && currentTab === "signals") { renderFearGreed(); renderMacroIndicators(); } });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
@@ -10927,8 +10993,37 @@ function renderSocialSentimentTables(tableIds) {
   bindSocialSentimentClicks(ids);
 }
 
+let _wsbTried = false;
+function renderWsbSentimentTable() {
+  const el = byId("socialWsbTable");
+  if (!el) return;
+  const rows = (window.WSB_SENTIMENT && window.WSB_SENTIMENT.rows) || [];
+  if (!rows.length) {
+    el.innerHTML = `<tr><td colspan="5" class="text-center" style="padding: 20px; text-align: center; color: var(--text-muted);">데이터 없음</td></tr>`;
+    return;
+  }
+  el.innerHTML = rows.slice(0, 15).map((r, i) => {
+    const bull = r.sentiment === "Bullish";
+    const col = bull ? "var(--green)" : "var(--red)";
+    return `<tr class="social-row" data-ticker="${escapeHtml(r.t)}">
+      <td>${i + 1}</td>
+      <td>${socialTickerCell(r.t)}</td>
+      <td>${escapeHtml(r.company || "")}</td>
+      <td>${Number(r.comments || 0).toLocaleString()}</td>
+      <td style="color:${col}">${bull ? "강세" : "약세"}${Number.isFinite(r.score) ? ` ${r.score > 0 ? "+" : ""}${r.score}` : ""}</td>
+    </tr>`;
+  }).join("");
+}
+
 function renderSocialSentiment() {
   renderSocialSentimentTables();
+  // WSB 감성(Tradestie)은 별도 파일 — 탭 첫 진입 때 한 번만 로드 시도.
+  if (!window.WSB_SENTIMENT && !_wsbTried) {
+    _wsbTried = true;
+    ensureFeatureData("wsbSentiment").then((ok) => { if (ok) renderWsbSentimentTable(); });
+  } else {
+    renderWsbSentimentTable();
+  }
 }
 
 // ===== 관심종목 (localStorage) =====

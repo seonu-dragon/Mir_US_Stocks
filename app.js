@@ -599,6 +599,8 @@ const FEATURE_DATA = {
   wsbSentiment: { global: "WSB_SENTIMENT", path: "data/wsb_sentiment.js", usOnly: true, lazy: true },
   // 한국은행 ECOS 매크로(기준금리·국고채·신용스프레드·환율·CPI·뉴스심리). KR 전용.
   ecosMacro: { global: "KR_ECOS_MACRO", path: "data/korea/ecos_macro.js", krOnly: true },
+  // 관세청 품목별 수출 모멘텀(반도체·자동차·배터리 등 월간 수출액·YoY). KR 전용.
+  tradeExports: { global: "KR_TRADE_EXPORTS", path: "data/korea/trade_exports.js", krOnly: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -3001,6 +3003,37 @@ function renderEcosMacro() {
     </div>`;
 }
 
+// ===== 수출 모멘텀 — 관세청 (KR_TRADE_EXPORTS) =====
+// 반도체·자동차·배터리 등 주력 품목의 월간 수출액과 YoY. 수출주 실적의 선행
+// 컨텍스트로, KR 모드에서만 ECOS 매크로 아래에 뜬다.
+function renderTradeExports() {
+  const host = byId("tradeExports");
+  if (!host) return;
+  const t = window.KR_TRADE_EXPORTS;
+  if (!isKrMarket() || !t || !Array.isArray(t.items) || !t.items.length) { host.innerHTML = ""; return; }
+  const tiles = t.items.map((it) => {
+    const yoy = Number(it.yoyPct);
+    const col = Number.isFinite(yoy) ? (yoy > 0 ? "var(--green)" : yoy < 0 ? "var(--red)" : "var(--muted)") : "var(--muted)";
+    const spark = Array.isArray(it.series) && it.series.length > 5 ? seasonalitySvgLine(it.series) : "";
+    return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <strong style="font-size:19px;font-variant-numeric:tabular-nums">$${Number(it.latestB).toLocaleString()}억</strong>
+        <span style="font-size:11.5px;font-weight:600;color:${col};font-variant-numeric:tabular-nums">${Number.isFinite(yoy) ? `${yoy > 0 ? "+" : ""}${yoy}%` : "—"}</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml((it.latestYm || "").replace(/^(\d{4})(\d{2})$/, "$1-$2"))} 월 수출 · 전년동월비</div>
+      ${spark ? `<div style="margin-top:6px">${spark}</div>` : ""}
+    </article>`;
+  }).join("");
+  host.innerHTML = `
+    <div class="section-title"><h2>수출 모멘텀 (관세청)</h2>
+      <p>주력 품목의 월간 수출액과 전년동월비입니다. 반도체·자동차 같은 수출주에게 실적 발표보다 앞서는 컨텍스트이며, 매월 15일경 전월 확정치가 반영됩니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">${tiles}</div>
+      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">금액은 미달러 기준(억달러), 24개월 추이. 출처: ${escapeHtml(t.source || "관세청")} · 기준월 ${escapeHtml(t.asOf || "")}.</p>
+    </div>`;
+}
+
 // ===== 매크로 히스토리 스파크라인 (MARKET_HISTORY) =====
 // 일일 1레코드씩 적립되는 자체 시계열(data/history/market_history.js). 5일 미만이면
 // 선이 의미가 없어 "적립 중 (n일차)" 안내로 대신한다. 축 없는 1.5px currentColor 라인.
@@ -3334,6 +3367,7 @@ function renderSignals() {
   renderMacroIndicators();
   renderYieldCurve();
   renderEcosMacro();
+  renderTradeExports();
   renderTreasuryAuctions();
   renderCotPositioning();
   renderWikiAttention();
@@ -3680,6 +3714,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     ensureFeatureData("wikiAttention").then((ok) => { if (ok && currentTab === "signals") renderWikiAttention(); });
     ensureFeatureData("sentimentGauges").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     ensureFeatureData("ecosMacro").then((ok) => { if (ok && currentTab === "signals") renderEcosMacro(); });
+    ensureFeatureData("tradeExports").then((ok) => { if (ok && currentTab === "signals") renderTradeExports(); });
     ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     ensureFeatureData("marketHistory").then((ok) => { if (ok && currentTab === "signals") { renderFearGreed(); renderMacroIndicators(); } });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on

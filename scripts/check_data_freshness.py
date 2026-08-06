@@ -68,6 +68,7 @@ CHECKS = {
         ("data/korea/consensus.json", 5, True),
         ("data/korea/ecos_macro.json", 6, False),
         ("data/korea/gov_contracts.json", 8, False),
+        ("data/korea/trade_exports.json", 8, False),
     ],
 }
 

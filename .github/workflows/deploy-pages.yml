@@ -67,33 +67,47 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(~68MB, 2026-07-23 실측).
-      # 레포에는 그대로 남는다 — 여기서 지우는 건 이 러너의 체크아웃뿐이다.
+      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(제외 ~74MB, 2026-08-06 실측
+      # — 추적 424MB 중 아티팩트 ~350MB). 예전엔 체크아웃에서 rm 으로 지운 뒤 path: '.'
+      # 를 올렸는데, 2026-08-06 부터 rsync 로 _site/ 스테이징 사본을 만들어 올린다 —
+      # 체크아웃이 온전히 남아 이후 스텝이 레포 파일을 참조해도 안전하고, 실수로
+      # 제외를 빼먹으면 배포가 커질 뿐 체크아웃을 파괴하는 사고가 없다.
+      # 제외 대상은 빌드 전용(스크립트·워크플로우·디자인 원본·SNS 산출물·문서)뿐이다.
+      # 루트 *.html/*.js/*.css, manifest.webmanifest, sw.js, build_id.js, sitemap.xml,
+      # robots.txt, assets/, data/ 는 반드시 남는다.
       # 주의: data/ 의 .js/.json 쌍은 파일마다 브라우저가 읽는 쪽이 다르다.
       #  - market_snapshot 은 브라우저가 .json 을 fetch (.js 는 file:// 폴백 전용)
       #  - insider/congress/13f 는 브라우저가 .js 를 로드 (.json 은 증분 빌더 상태)
       #  - korea/earnings·indicators 는 브라우저 소비자가 없다(빌더 입력 전용)
       # 목록을 바꾸기 전에 app.js 의 FEATURE_DATA / fetch 경로를 확인할 것.
-      - name: Prune non-site files from artifact
+      - name: Stage site artifact (exclude build-only files)
         run: |
-          rm -rf SNS mir_design scratch scripts automation worker prompts \
-                 terminals mcps agent-tools outputs \
-                 "data/export" "data/참고" \
-                 README.md CLAUDE.md DEPLOY.md AI_MODE_VISION.md FEATURES.md
-          rm -f  data/market_snapshot.js data/korea/market_snapshot.js \
-                 data/insider_trades.json data/congress_trades.json \
-                 data/institutional_13f.json \
-                 data/korea/earnings.js data/korea/earnings.json \
-                 data/korea/indicators.js data/korea/indicators.json \
-                 data/korea/financials_history.json data/korea/krx_metrics.json \
-                 data/us_financials_history.json
-          echo "size after prune:" && du -sh . | cut -f1
+          rsync -a \
+            --exclude='_site' \
+            --exclude='.git' --exclude='.github' --exclude='.claude' \
+            --exclude='__pycache__' \
+            --exclude='/SNS' --exclude='/mir_design' --exclude='/scratch' \
+            --exclude='/scripts' --exclude='/automation' --exclude='/worker' \
+            --exclude='/prompts' --exclude='/terminals' --exclude='/mcps' \
+            --exclude='/agent-tools' --exclude='/outputs' \
+            --exclude='/data/export' --exclude='/data/참고' \
+            --exclude='/README.md' --exclude='/CLAUDE.md' --exclude='/DEPLOY.md' \
+            --exclude='/AI_MODE_VISION.md' --exclude='/FEATURES.md' \
+            ./ _site/
+          rm -f  _site/data/market_snapshot.js _site/data/korea/market_snapshot.js \
+                 _site/data/insider_trades.json _site/data/congress_trades.json \
+                 _site/data/institutional_13f.json \
+                 _site/data/korea/earnings.js _site/data/korea/earnings.json \
+                 _site/data/korea/indicators.js _site/data/korea/indicators.json \
+                 _site/data/korea/financials_history.json _site/data/korea/krx_metrics.json \
+                 _site/data/us_financials_history.json
+          echo "artifact size:" && du -sh _site | cut -f1
 
       - name: Upload site artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # 추적 파일 전체(루트)에서 위 프루닝만 제외한 것 = 서빙 내용.
-          path: '.'
+          # 스테이징 사본 = 서빙 내용. 체크아웃 루트가 아니라 _site 만 올린다.
+          path: '_site'
 
       - name: Deploy to GitHub Pages
         id: deployment

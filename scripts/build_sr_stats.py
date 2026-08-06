@@ -21,6 +21,10 @@ respect_rate = respected / (respected + broken). RANDOM 대비 높을수록 '진
 실행:  py scripts/build_sr_stats.py --limit 600       (표본)
        py scripts/build_sr_stats.py                    (전체)
 산출:  data/sr_stats.json + 콘솔 비교표
+
+2026-08-06 부로 주간 스케줄(weekly-edge-stats.yml)에서 제외 — 결론이 '무작위
+대비 엣지 없음'이라 확률 엔진·UI 어디서도 data/sr_stats.json 을 읽지 않는다.
+스크립트와 기존 산출물은 검증 이력으로 남기며, 필요 시 수동 실행만 한다.
 """
 
 from __future__ import annotations

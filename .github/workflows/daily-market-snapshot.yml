@@ -91,6 +91,19 @@ jobs:
         continue-on-error: true
         run: python scripts/build_sec_ftd.py
 
+      # 무키 피드 2차(2026-08-06): 위키 관심도·WSB 감성·외부 공포탐욕 게이지.
+      - name: Build wiki attention (US+KR)
+        continue-on-error: true
+        run: python scripts/build_wiki_attention.py
+
+      - name: Build WSB sentiment (Tradestie)
+        continue-on-error: true
+        run: python scripts/build_wsb_sentiment.py
+
+      - name: Build sentiment gauges (crypto/CNN F&G)
+        continue-on-error: true
+        run: python scripts/build_sentiment_gauges.py
+
       # 애널리스트 컨센서스(Finnhub 추천·서프라이즈). 무료 티어, 미국만. 실패해도 계속.
       - name: Build US analyst consensus (Finnhub)
         continue-on-error: true

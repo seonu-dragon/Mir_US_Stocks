@@ -1,10 +1,135 @@
 {
-  "updatedAtKst": "2026-08-05 16:19 KST",
-  "lastFileDate": "2026-08-04",
-  "count": 697,
+  "updatedAtKst": "2026-08-06 16:21 KST",
+  "lastFileDate": "2026-08-05",
+  "count": 709,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "VERDE RESOURCES, INC.",
+      "ticker": "VRDR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001493152-26-036178:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1506929/000149315226036178/forms-1a.htm"
+    },
+    {
+      "company": "VERDE RESOURCES, INC.",
+      "ticker": "VRDR",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001493152-26-036178:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1506929/000149315226036178/forms-1a.htm"
+    },
+    {
+      "company": "ARC Group Securities Acquisition I",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-05",
+      "accession": "0001493152-26-036100:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2094712/000149315226036100/form424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "SPECTRAL CAPITAL Corp",
+      "ticker": "FCCN",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001213900-26-085798:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1131903/000121390026085798/ea0299843-s1a1_spectral.htm"
+    },
+    {
+      "company": "SPECTRAL CAPITAL Corp",
+      "ticker": "FCCN",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001213900-26-085798:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1131903/000121390026085798/ea0299843-s1a1_spectral.htm"
+    },
+    {
+      "company": "Pinnacle Acquisition Corp",
+      "ticker": "PNAQ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001213900-26-085313:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2123955/000121390026085313/ea0295579-03.htm"
+    },
+    {
+      "company": "Pinnacle Acquisition Corp",
+      "ticker": "PNAQ",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001213900-26-085313:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2123955/000121390026085313/ea0295579-03.htm"
+    },
+    {
+      "company": "Leader's Advantage Acquisition Corp.",
+      "ticker": "LEDR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001213900-26-085297:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109823/000121390026085297/ea0286599-03.htm"
+    },
+    {
+      "company": "Leader's Advantage Acquisition Corp.",
+      "ticker": "LEDR",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-05",
+      "accession": "0001213900-26-085297:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109823/000121390026085297/ea0286599-03.htm"
+    },
+    {
+      "company": "Attovia Therapeutics, Inc.",
+      "ticker": "ATTO",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-05",
+      "accession": "0001193125-26-334997:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2058707/000119312526334997/d40469d424b4.htm",
+      "offerPrice": 17.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Gravity Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-05",
+      "accession": "0001185185-26-003277:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2123380/000118518526003277/gravityacqs1080426.htm"
+    },
+    {
+      "company": "BNB PLUS CORP.",
+      "ticker": "BNBX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-05",
+      "accession": "0001104659-26-091228:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/744452/000110465926091228/tmb-20260331xs1.htm"
+    },
     {
       "company": "Hall Chadwick Acquisition Corp II",
       "ticker": "HCAX",

@@ -50,6 +50,9 @@ CHECKS = {
         ("data/treasury_auctions.json", 14, False),
         # FTD 는 반월 파일이 약 2주 지연 발행이라 정상 상태도 한 달쯤 늙어 보인다.
         ("data/sec_ftd.json", 45, False),
+        ("data/wiki_attention.json", 6, False),
+        ("data/wsb_sentiment.json", 6, False),
+        ("data/sentiment_gauges.json", 6, False),
     ],
     "kr": [
         ("data/korea/market_snapshot.json", 2, False),

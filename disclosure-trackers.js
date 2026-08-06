@@ -1198,6 +1198,11 @@ function renderContracts() {
     _contractTried = true; wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
     Promise.all([ensureFeatureData("krContracts"), ensureFeatureData("krDiscStats")]).then(renderContracts); return;
   }
+  // 나라장터 정부수주(별도 파일)도 lazy — 없으면 섹션이 안 뜬다.
+  if (!window.KR_GOV_CONTRACTS && !_govContractsTried) {
+    _govContractsTried = true;
+    ensureFeatureData("krGovContracts").then((ok) => { if (ok && searchSubTab === "contract") renderContracts(); });
+  }
   const payload = window.KR_CONTRACTS || {};
   let rows = (payload.rows || []).slice();
   const q = contractQuery.trim().toLowerCase();
@@ -1215,8 +1220,39 @@ function renderContracts() {
     <td class="ins-date">${escapeHtml(r.date || "")}<div class="ins-sub">${period}</div></td>
   </tr>`;
   }).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목 · 계약상대</th><th class="ins-num">매출대비</th><th class="ins-num">계약금액</th><th>공시일 · 기간</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목 · 계약상대</th><th class="ins-num">매출대비</th><th class="ins-num">계약금액</th><th>공시일 · 기간</th></tr></thead><tbody>${body}</tbody></table>${govContractsSectionHtml()}`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+}
+
+let _govContractsTried = false;
+
+// 수주 탭 하단에 붙는 나라장터 정부조달 낙찰 섹션. DART 공급계약 공시(의무공시 대형
+// 계약)와 달리 공시 문턱 아래의 정부 계약까지 잡힌다. 상장사 상호 정확 일치분만
+// 발행(빌더에서 필터) — 데이터 없으면 "".
+function govContractsSectionHtml() {
+  const gov = window.KR_GOV_CONTRACTS;
+  if (!gov || !Array.isArray(gov.byTicker) || !gov.byTicker.length) return "";
+  const topRows = gov.byTicker.slice(0, 12).map((r, i) => `<tr>
+    <td class="ins-date">${i + 1}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company || r.ticker)}</button><div class="ins-sub">${escapeHtml(r.ticker)}</div></td>
+    <td class="ins-num"><strong>${Number(r.totalB).toLocaleString()}억</strong></td>
+    <td class="ins-num">${Number(r.count).toLocaleString()}건</td>
+    <td class="ins-date">${escapeHtml(r.lastDate || "")}</td>
+  </tr>`).join("");
+  const recent = (gov.awards || []).slice(0, 10).map((a) => `<tr>
+    <td class="ins-date">${escapeHtml(a.date || "")}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(a.ticker)}">${escapeHtml(a.company || a.ticker)}</button><div class="ins-sub">${escapeHtml(a.agency || "")}</div></td>
+    <td>${escapeHtml((a.title || "").slice(0, 46))}${(a.title || "").length > 46 ? "…" : ""}</td>
+    <td class="ins-num">${Number.isFinite(a.amountB) ? `${Number(a.amountB).toLocaleString()}억` : "—"}</td>
+  </tr>`).join("");
+  return `<div style="margin-top:22px">
+    <h3 style="font-size:14px;margin:0 0 4px">정부조달 낙찰 (나라장터) <span style="font-weight:400;font-size:11.5px;color:var(--muted)">최근 90일 · 상장사 매칭분 · ${escapeHtml(gov.updatedAtKst || "")}</span></h3>
+    <p style="font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.5">공시 의무 문턱 아래의 정부 계약까지 잡힙니다. 상호가 정확히 일치하는 상장사만 실으므로 영문·한글 표기가 다른 일부 대기업 건은 빠질 수 있습니다.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+      <div style="overflow-x:auto"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">누적 수주 상위</div><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">누적 낙찰액</th><th class="ins-num">건수</th><th>최근</th></tr></thead><tbody>${topRows}</tbody></table></div>
+      <div style="overflow-x:auto"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">최근 낙찰</div><table class="insider-table" style="min-width:0"><thead><tr><th>낙찰일</th><th>종목 · 발주기관</th><th>사업명</th><th class="ins-num">금액</th></tr></thead><tbody>${recent}</tbody></table></div>
+    </div>
+  </div>`;
 }
 
 // ===== 증자·CB 희석(오버행) 트래커 (KR 전용) =====

@@ -71,6 +71,13 @@ jobs:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
         run: python scripts/build_kr_gov_contracts.py
 
+      # 관세청 품목별 수출 모멘텀(2026-08-07 추가) — 시그널 탭 KR 수출 패널.
+      - name: Build KR trade exports (관세청)
+        continue-on-error: true
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python scripts/build_kr_trade_exports.py
+
       - name: Run Korea close briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

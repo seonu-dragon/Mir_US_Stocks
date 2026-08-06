@@ -68,6 +68,8 @@ CHECKS = {
         ("data/korea/consensus.json", 5, True),
         ("data/korea/ecos_macro.json", 6, False),
         ("data/korea/gov_contracts.json", 8, False),
+        # trade_exports 는 관세청 서비스 활성화 후 첫 데이터가 커밋되면 여기 등록할 것
+        # — 파일이 생기기 전에 등록하면 '파일 없음'으로 매일 빨개진다.
     ],
 }
 

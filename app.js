@@ -597,6 +597,8 @@ const FEATURE_DATA = {
   sentimentGauges: { global: "SENTIMENT_GAUGES", path: "data/sentiment_gauges.js" },
   // WSB 댓글 감성(Tradestie). AI 브리핑 탭 소셜 표 전용 — US 전용 lazy.
   wsbSentiment: { global: "WSB_SENTIMENT", path: "data/wsb_sentiment.js", usOnly: true, lazy: true },
+  // 한국은행 ECOS 매크로(기준금리·국고채·신용스프레드·환율·CPI·뉴스심리). KR 전용.
+  ecosMacro: { global: "KR_ECOS_MACRO", path: "data/korea/ecos_macro.js", krOnly: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -2961,6 +2963,42 @@ function renderWikiAttention() {
   host.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
+// ===== 한국 매크로 — 한국은행 ECOS (KR_ECOS_MACRO) =====
+// 미국 FRED 패널의 한국판. KR 모드에서만 시장 심리지수 바로 아래에 뜬다.
+// tone: "up"=오르면 나쁨(물가·환율·신용스프레드), "down"=오르면 좋음(뉴스심리).
+function renderEcosMacro() {
+  const host = byId("ecosMacro");
+  if (!host) return;
+  const m = window.KR_ECOS_MACRO;
+  if (!isKrMarket() || !m || !Array.isArray(m.indicators) || !m.indicators.length) { host.innerHTML = ""; return; }
+  const tiles = m.indicators.map((it) => {
+    const ch = Number(it.change);
+    let col = "var(--muted)";
+    if (Number.isFinite(ch) && ch !== 0 && it.tone !== "neutral") {
+      const positive = it.tone === "down" ? ch > 0 : ch < 0;
+      col = positive ? "var(--green)" : "var(--red)";
+    }
+    const arrow = Number.isFinite(ch) && ch !== 0 ? (ch > 0 ? "▲" : "▼") : "";
+    const spark = Array.isArray(it.series) && it.series.length > 5 ? seasonalitySvgLine(it.series) : "";
+    return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
+      <div style="display:flex;align-items:baseline;gap:8px">
+        <strong style="font-size:19px;font-variant-numeric:tabular-nums">${Number(it.value).toLocaleString()}${escapeHtml(it.unit || "")}</strong>
+        <span style="font-size:11px;color:${col};font-variant-numeric:tabular-nums">${arrow} ${Number.isFinite(ch) ? Math.abs(ch).toLocaleString() : ""}</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(it.changeLabel || "")}</div>
+      ${spark ? `<div style="margin-top:6px">${spark}</div>` : ""}
+    </article>`;
+  }).join("");
+  host.innerHTML = `
+    <div class="section-title"><h2>한국 매크로 (한국은행 ECOS)</h2>
+      <p>기준금리·국고채 커브·신용스프레드·환율·물가·뉴스심리를 한 줄로 요약했습니다. 예측이 아니라 현재 상태의 요약입니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">${tiles}</div>
+      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">뉴스심리지수는 한국은행 실험적 통계(100=중립)입니다. 출처: ${escapeHtml(m.source || "한국은행 ECOS")} · 기준 ${escapeHtml(m.asOf || "")}.</p>
+    </div>`;
+}
+
 // ===== 매크로 히스토리 스파크라인 (MARKET_HISTORY) =====
 // 일일 1레코드씩 적립되는 자체 시계열(data/history/market_history.js). 5일 미만이면
 // 선이 의미가 없어 "적립 중 (n일차)" 안내로 대신한다. 축 없는 1.5px currentColor 라인.
@@ -3293,6 +3331,7 @@ function renderSignals() {
   renderFearGreed();
   renderMacroIndicators();
   renderYieldCurve();
+  renderEcosMacro();
   renderTreasuryAuctions();
   renderCotPositioning();
   renderWikiAttention();
@@ -3638,6 +3677,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     ensureFeatureData("treasuryAuctions").then((ok) => { if (ok && currentTab === "signals") renderTreasuryAuctions(); });
     ensureFeatureData("wikiAttention").then((ok) => { if (ok && currentTab === "signals") renderWikiAttention(); });
     ensureFeatureData("sentimentGauges").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
+    ensureFeatureData("ecosMacro").then((ok) => { if (ok && currentTab === "signals") renderEcosMacro(); });
     ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     ensureFeatureData("marketHistory").then((ok) => { if (ok && currentTab === "signals") { renderFearGreed(); renderMacroIndicators(); } });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on

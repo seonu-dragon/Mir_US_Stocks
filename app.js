@@ -600,7 +600,10 @@ const FEATURE_DATA = {
   // 한국은행 ECOS 매크로(기준금리·국고채·신용스프레드·환율·CPI·뉴스심리). KR 전용.
   ecosMacro: { global: "KR_ECOS_MACRO", path: "data/korea/ecos_macro.js", krOnly: true },
   // 관세청 품목별 수출 모멘텀(반도체·자동차·배터리 등 월간 수출액·YoY). KR 전용.
-  tradeExports: { global: "KR_TRADE_EXPORTS", path: "data/korea/trade_exports.js", krOnly: true },
+  // lazy: 관세청 서비스 활성화 전엔 파일이 없다 — 시그널 탭에서만 시도해 404 소음 최소화.
+  tradeExports: { global: "KR_TRADE_EXPORTS", path: "data/korea/trade_exports.js", krOnly: true, lazy: true },
+  // 나라장터 낙찰(정부수주, 상장사 매칭분). 수주 서브탭에서만 쓰는 KR 전용 lazy.
+  krGovContracts: { global: "KR_GOV_CONTRACTS", path: "data/korea/gov_contracts.js", krOnly: true, lazy: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -9893,6 +9896,8 @@ const TRUST_RECOVERY = {
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
+  "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
+  "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
@@ -10072,6 +10077,8 @@ function dataTrustSources() {
   }
   if (cfg.id === "kr") {
     rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));
+    rows.push(source("정부조달 낙찰", "나라장터 (data.go.kr)", window.KR_GOV_CONTRACTS, ["awards"], 192, "매일 15:42", "krGovContracts"));
+    rows.push(source("수출 모멘텀", "관세청 (data.go.kr)", window.KR_TRADE_EXPORTS, ["items"], 192, "매일 15:42 · 월 단위 데이터", "tradeExports"));
   }
   return rows;
 }

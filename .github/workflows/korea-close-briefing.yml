@@ -47,6 +47,16 @@ jobs:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/update_korea_data.py --push
 
+      # 종목별 수급(외국인·기관·개인) + 컨센서스. update_korea_data.py 는 이 빌더를
+      # 부르지 않고, 전용 워크플로(daily-korea-market-snapshot.yml)는 dispatch 전용이라
+      # 여기 없으면 매일 갱신 경로가 아예 없다 — 2026-07-24 이후 13일간 얼어붙어
+      # 신선도 게이트가 매일 실패했다. 종목 목록을 market_snapshot.json 에서 읽으므로
+      # 반드시 스냅샷 갱신 뒤에 돈다(약 11분). 일시 실패는 브리핑을 막지 않는다 —
+      # 5일 넘게 얼면 아래 신선도 게이트가 잡는다.
+      - name: Build KR investor flow + consensus
+        continue-on-error: true
+        run: python scripts/build_kr_investor_flow.py --push
+
       - name: Run Korea close briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

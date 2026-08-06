@@ -45,9 +45,11 @@ jobs:
       - name: Check JS-PY pattern parity
         run: python scripts/check_pattern_parity.py
 
-      - name: Build S/R respect stats
-        continue-on-error: true
-        run: python scripts/build_sr_stats.py --push
+      # 참고: S/R 존중률 통계(build_sr_stats.py → data/sr_stats.json)는 2026-08-06
+      # 부로 주간 스케줄에서 뺐다 — 결론이 '무작위 대비 엣지 없음'이라 확률 엔진도
+      # UI 도 이 파일을 읽지 않는다(전 프론트 grep 0건 확인). 스크립트와 기존
+      # data/sr_stats.json 은 검증 이력으로 남긴다. 필요하면 로컬 수동 실행:
+      # py scripts/build_sr_stats.py
 
       - name: Build breakout/retest stats
         continue-on-error: true

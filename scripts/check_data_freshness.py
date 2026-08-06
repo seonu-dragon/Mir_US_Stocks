@@ -66,6 +66,7 @@ CHECKS = {
         # 컨센서스는 FnGuide/네이버 스크랩이라 소스가 바뀌면 조용히 0건이 될 수 있다.
         # 다만 빌더가 0건이면 기존 파일을 덮지 않으므로 실제로는 나이 쪽이 먼저 운다.
         ("data/korea/consensus.json", 5, True),
+        ("data/korea/ecos_macro.json", 6, False),
     ],
 }
 

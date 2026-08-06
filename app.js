@@ -584,6 +584,13 @@ const FEATURE_DATA = {
   yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
   // FRED 매크로 지표(인플레·고용·금리·신용스프레드·소비심리). 두 시장 모두 로드.
   macro: { global: "MACRO_INDICATORS", path: "data/macro_indicators.js" },
+  // CFTC COT 투기 포지셔닝(주간, 무키 공식 API). 미국 선물이지만 지수·금리·환율·
+  // 원자재 쏠림은 글로벌 위험자산 공통 컨텍스트라 두 시장 모두 로드.
+  cotPositioning: { global: "COT_POSITIONING", path: "data/cot_positioning.js" },
+  // 미 국채 경매 수요(bid-to-cover, FiscalData). 금리곡선 패널과 짝 — 두 시장 모두.
+  treasuryAuctions: { global: "TREASURY_AUCTIONS", path: "data/treasury_auctions.js" },
+  // SEC 결제 불이행(FTD, 반월 파일). 공매도 서브탭에서만 쓰는 US 전용 lazy.
+  secFtd: { global: "SEC_FTD", path: "data/sec_ftd.js", usOnly: true, lazy: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -2837,6 +2844,85 @@ function seasonalitySvgLine(vals) {
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="none"><line x1="0" y1="${zeroY}" x2="${W}" y2="${zeroY}" stroke="var(--muted)" stroke-opacity="0.3" stroke-dasharray="2 2"/><path d="${line}" fill="none" stroke="${lastCol}" stroke-width="1.4"/></svg>`;
 }
 
+// ===== 미 국채 경매 수요 (TREASURY_AUCTIONS, FiscalData) =====
+// 금리곡선이 '가격'이라면 경매는 '수요의 체력'. bid-to-cover 를 같은 만기의
+// 직전 6회 평균과 비교해 이번 경매가 평소보다 강했는지/약했는지 보여준다.
+function renderTreasuryAuctions() {
+  const host = byId("treasuryAuctions");
+  if (!host) return;
+  const ta = window.TREASURY_AUCTIONS;
+  if (!ta || !Array.isArray(ta.recent) || !ta.recent.length) { host.innerHTML = ""; return; }
+  const rows = ta.recent.map((r) => {
+    const delta = Number.isFinite(r.btc) && Number.isFinite(r.btcAvg6) ? r.btc - r.btcAvg6 : null;
+    const dCol = delta == null ? "var(--muted)" : delta >= 0 ? "var(--green)" : "var(--red)";
+    const dTxt = delta == null ? "—" : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta).toFixed(2)}`;
+    return `<tr>
+      <td class="ins-date">${escapeHtml(r.date || "")}</td>
+      <td><strong>${escapeHtml(r.term || "")}</strong> <span style="color:var(--muted);font-size:11px">${escapeHtml(r.type || "")}</span></td>
+      <td class="ins-num"><strong>${Number.isFinite(r.btc) ? r.btc.toFixed(2) : "—"}</strong></td>
+      <td class="ins-num" style="color:${dCol}">${dTxt}</td>
+      <td class="ins-num">${Number.isFinite(r.highYield) ? `${r.highYield.toFixed(3)}%` : "—"}</td>
+      <td class="ins-num">${Number.isFinite(r.offeringB) ? `$${r.offeringB}B` : "—"}</td>
+      <td class="ins-num">${Number.isFinite(r.indirectPct) ? `${r.indirectPct.toFixed(0)}%` : "—"}</td>
+    </tr>`;
+  }).join("");
+  const coming = Array.isArray(ta.upcoming) && ta.upcoming.length
+    ? `<p style="font-size:11px;color:var(--muted);margin:10px 0 0">다가오는 경매: ${ta.upcoming.map((u) => `${escapeHtml(u.date || "")} ${escapeHtml(u.term || "")}${Number.isFinite(u.offeringB) ? ` $${u.offeringB}B` : ""}`).join(" · ")}</p>` : "";
+  host.innerHTML = `
+    <div class="section-title"><h2>미 국채 경매 수요</h2>
+      <p>응찰배수(bid-to-cover)가 같은 만기 직전 6회 평균 대비 얼마나 강했는지입니다. 입찰 부진은 장기금리 급등의 단골 트리거라 위 수익률 곡선과 함께 봅니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>경매일</th><th>만기</th><th class="ins-num">응찰배수</th><th class="ins-num">vs 직전6회</th><th class="ins-num">낙찰금리</th><th class="ins-num">규모</th><th class="ins-num">간접낙찰</th></tr></thead><tbody>${rows}</tbody></table></div>
+      ${coming}
+      <p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">간접낙찰 비중은 해외 중앙은행·실수요 계열 수요의 프록시입니다. 출처: ${escapeHtml(ta.source || "US Treasury FiscalData")} · 기준 ${escapeHtml(ta.asOf || "")}.</p>
+    </div>`;
+}
+
+// ===== CFTC COT 투기 포지셔닝 (COT_POSITIONING) =====
+// 헤지펀드(Leveraged Funds)·운용사(Managed Money)의 순포지션이 3년 범위에서
+// 어디쯤인지(백분위)를 본다. 극단 쏠림의 '위치' 요약이지 방향 신호가 아니다.
+function renderCotPositioning() {
+  const host = byId("cotPositioning");
+  if (!host) return;
+  const cot = window.COT_POSITIONING;
+  if (!cot || !Array.isArray(cot.markets) || !cot.markets.length) { host.innerHTML = ""; return; }
+  const fmtNet = (v) => {
+    if (!Number.isFinite(v)) return "—";
+    const a = Math.abs(v);
+    const s = a >= 1e6 ? `${(a / 1e6).toFixed(2)}M` : a >= 1e3 ? `${(a / 1e3).toFixed(0)}K` : String(a);
+    return `${v > 0 ? "+" : v < 0 ? "−" : ""}${s}`;
+  };
+  const cards = cot.markets.map((m) => {
+    const col = m.specNet > 0 ? "var(--green)" : m.specNet < 0 ? "var(--red)" : "var(--muted)";
+    const chg = Number.isFinite(m.specChg1w) ? `${m.specChg1w > 0 ? "+" : m.specChg1w < 0 ? "−" : ""}${Math.abs(m.specChg1w).toLocaleString()}` : "—";
+    const pct = Number.isFinite(m.pct3y) ? Math.max(0, Math.min(100, m.pct3y)) : null;
+    const spark = Array.isArray(m.history) && m.history.length > 5
+      ? seasonalitySvgLine(m.history.map((h) => h.v)) : "";
+    return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <div style="font-size:12.5px;font-weight:600">${escapeHtml(m.label)}</div>
+        <div style="font-size:10px;color:var(--muted)">${escapeHtml(m.group || "")}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${col}">${fmtNet(m.specNet)}</div>
+        <div style="font-size:10.5px;color:var(--muted)">1주 ${chg}</div>
+      </div>
+      ${pct == null ? "" : `<div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px"><span>3년 범위 내 위치</span><span style="font-variant-numeric:tabular-nums">${pct}%</span></div>
+        <div style="height:4px;background:var(--line);border-radius:2px;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${col};opacity:0.55;border-radius:2px"></div><div style="position:absolute;left:calc(${pct}% - 2px);top:-2px;width:4px;height:8px;background:${col};border-radius:1px"></div></div>
+      </div>`}
+      ${spark ? `<div style="margin-top:2px">${spark}</div>` : ""}
+    </article>`;
+  }).join("");
+  host.innerHTML = `
+    <div class="section-title"><h2>선물 투기 포지셔닝 (CFTC COT)</h2>
+      <p>헤지펀드·운용사의 순포지션(계약수)과 그 값이 최근 3년 범위에서 어디쯤인지입니다. 0%·100% 근처는 쏠림이 붐빈다는 뜻이지 방향 신호가 아닙니다.</p></div>
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">${cards}</div>
+      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">지수·금리·통화는 Leveraged Funds(헤지펀드), 원자재는 Managed Money 기준. 매주 금요일 발표(화요일 기준)라 최대 열흘 늦을 수 있습니다. 출처: ${escapeHtml(cot.source || "CFTC")} · 기준 ${escapeHtml(cot.asOf || "")}.</p>
+    </div>`;
+}
+
 // ===== 매크로 히스토리 스파크라인 (MARKET_HISTORY) =====
 // 일일 1레코드씩 적립되는 자체 시계열(data/history/market_history.js). 5일 미만이면
 // 선이 의미가 없어 "적립 중 (n일차)" 안내로 대신한다. 축 없는 1.5px currentColor 라인.
@@ -3144,6 +3230,8 @@ function renderSignals() {
   renderFearGreed();
   renderMacroIndicators();
   renderYieldCurve();
+  renderTreasuryAuctions();
+  renderCotPositioning();
   const el = byId("signalsGrid");
   if (!el) return;
   const cards = [];
@@ -3482,6 +3570,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     renderSignals();
     ensureFeatureData("yieldCurve").then((ok) => { if (ok && currentTab === "signals") renderYieldCurve(); });
     ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") { renderMacroIndicators(); renderFearGreed(); } });
+    ensureFeatureData("cotPositioning").then((ok) => { if (ok && currentTab === "signals") renderCotPositioning(); });
+    ensureFeatureData("treasuryAuctions").then((ok) => { if (ok && currentTab === "signals") renderTreasuryAuctions(); });
     ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
     ensureFeatureData("marketHistory").then((ok) => { if (ok && currentTab === "signals") { renderFearGreed(); renderMacroIndicators(); } });
     // Smart-money signals read the heavy 13F/congress/insider datasets; load them on

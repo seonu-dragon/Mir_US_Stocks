@@ -77,6 +77,20 @@ jobs:
         continue-on-error: true
         run: python scripts/build_federal_contracts.py
 
+      # 무키 공공 피드 3종(2026-08-06 추가). 전부 '기존 파일 유지 후 exit 1' 규약이라
+      # continue-on-error 로 넘기고, 신선도 감시가 마지막 관문으로 잡는다.
+      - name: Build CFTC COT positioning
+        continue-on-error: true
+        run: python scripts/build_cftc_cot.py
+
+      - name: Build US Treasury auction demand (FiscalData)
+        continue-on-error: true
+        run: python scripts/build_treasury_auctions.py
+
+      - name: Build SEC fails-to-deliver
+        continue-on-error: true
+        run: python scripts/build_sec_ftd.py
+
       # 애널리스트 컨센서스(Finnhub 추천·서프라이즈). 무료 티어, 미국만. 실패해도 계속.
       - name: Build US analyst consensus (Finnhub)
         continue-on-error: true

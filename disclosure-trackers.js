@@ -527,6 +527,37 @@ let shortSort = "dtc";
 let shortQuery = "";
 let shortMetricView = "balance"; // balance=잔고(T+2) · volume=일일 거래비중(KR_SHORT_VOLUME)
 let _krShortVolTried = false;
+let _ftdTried = false;
+
+// US 공매도 보기 하단에 붙는 SEC 결제 불이행(FTD) 섹션. 데이터가 없으면 "" —
+// 없는 데이터는 화면을 만들지 않는다(정직성).
+function ftdSectionHtml() {
+  const ftd = window.SEC_FTD;
+  if (isKrMarket() || !ftd || !Array.isArray(ftd.top) || !ftd.top.length) return "";
+  const rows = ftd.top.slice(0, 15).map((r, i) => {
+    const prev = Number(r.prevMaxFails);
+    let trend = `<span style="color:var(--muted)">신규</span>`;
+    if (Number.isFinite(prev) && prev > 0) {
+      const d = (r.maxFails - prev) / prev * 100;
+      const col = d > 0 ? "var(--red)" : "var(--green)"; // FTD 증가 = 결제 압박 심화
+      trend = `<span style="color:${col}">${d > 0 ? "+" : ""}${d.toFixed(0)}%</span>`;
+    }
+    return `<tr>
+      <td class="ins-date">${i + 1}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(r.t)}</div></td>
+      <td class="ins-num"><strong>${Number.isFinite(r.pctShares) ? `${r.pctShares.toFixed(2)}%` : "—"}</strong></td>
+      <td class="ins-num">${Number(r.maxFails).toLocaleString()}주</td>
+      <td class="ins-num">${Number.isFinite(r.valueM) ? `$${r.valueM.toLocaleString()}M` : "—"}</td>
+      <td class="ins-num">${trend}</td>
+    </tr>`;
+  }).join("");
+  const period = ftd.period ? `${ftd.period.from} ~ ${ftd.period.to}` : "";
+  return `<div style="margin-top:22px">
+    <h3 style="font-size:14px;margin:0 0 4px">결제 불이행(FTD) 상위 <span style="font-weight:400;font-size:11.5px;color:var(--muted)">SEC CNS · ${escapeHtml(period)} · 약 2주 지연</span></h3>
+    <p style="font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.5">결제가 실제로 밀린 물량입니다. 급증은 대차 물량 고갈(스퀴즈 압력) 논의에 등장하지만 지연 발행이라 사후 컨텍스트로만 보세요. 발행주식수 대비 %는 시총÷주가 근사값입니다.</p>
+    <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">발행주식 대비</th><th class="ins-num">최대 FTD</th><th class="ins-num">금액</th><th class="ins-num">직전 반월 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
+  </div>`;
+}
 function setupShortControls() {
   const sort = byId("shortSort");
   if (sort && !sort.dataset.bound) {
@@ -627,6 +658,11 @@ function renderShortInterest() {
     _krShortVolTried = true;
     ensureFeatureData("krShortVolume").then((ok) => { if (ok && searchSubTab === "short") renderShortInterest(); });
   }
+  // US 결제 불이행(FTD)도 lazy — 파일이 아직 없으면 조용히 실패하고 섹션이 안 뜬다.
+  if (!isKrMarket() && !window.SEC_FTD && !_ftdTried) {
+    _ftdTried = true;
+    ensureFeatureData("secFtd").then((ok) => { if (ok && searchSubTab === "short") renderShortInterest(); });
+  }
   const volPayload = window.KR_SHORT_VOLUME;
   const hasVol = isKrMarket() && isBal && !!(volPayload && Array.isArray(volPayload.rows) && volPayload.rows.length);
   const mtg = byId("shortMetricToggle");
@@ -688,7 +724,7 @@ function renderShortInterest() {
   const primaryHdr = isBal ? "잔고비중" : "잔고일수";
   const sharesHdr = isBal ? "공매도 잔고" : "공매도 주식수";
   const extraHdr = isBal ? `<th class="ins-num">잔고추이(6주)</th><th class="ins-num">거래비중</th>` : "";
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th>${extraHdr}<th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th>${extraHdr}<th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>${ftdSectionHtml()}`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

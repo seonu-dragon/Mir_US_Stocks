@@ -606,6 +606,8 @@ const FEATURE_DATA = {
   krGovContracts: { global: "KR_GOV_CONTRACTS", path: "data/korea/gov_contracts.js", krOnly: true, lazy: true },
   // 국민연금 종목별 보유내역(연 1회 공시). 종목 카드 지분율 표시용 — KR 전용.
   krNps: { global: "KR_NPS_HOLDINGS", path: "data/korea/nps_holdings.js", krOnly: true },
+  // 공정위 대기업집단 소속 상장사 매핑(연 1회 지정). 종목 카드 그룹사 카드용 — KR 전용.
+  krCorpGroups: { global: "KR_CORP_GROUPS", path: "data/korea/corp_groups.js", krOnly: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -4253,6 +4255,11 @@ function setupEvents() {
       .catch(() => showAppToast("복사에 실패했습니다 — 주소창 URL을 사용하세요."));
   });
   byId("backtestExportCsv")?.addEventListener("click", exportBacktestCsv);
+  // 기업집단 계열사 칩 — stockFacts 는 여러 곳에서 innerHTML 로 갈리므로 위임 바인딩.
+  document.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-group-ticker]");
+    if (chip) selectTicker(chip.dataset.groupTicker, { openSearch: true });
+  });
   window.addEventListener("resize", debounce(renderTreemap, 120));
   window.addEventListener("resize", syncCardNewsHeight);
   // 폰트가 늦게 로드되면 데이터박스 높이가 바뀔 수 있어 한 번 더 맞춤
@@ -6297,6 +6304,25 @@ function krConsensusCard(item) {
     </div>`;
 }
 
+// 기업집단(공정위 대기업집단 지정) 카드 — 같은 그룹의 다른 상장 계열사로 바로
+// 이동하는 칩을 붙인다. 늦은 도착은 refreshFeatureViews facts 재렌더가 처리.
+function krGroupCard(item) {
+  if (!isKrMarket()) return "";
+  const cg = window.KR_CORP_GROUPS;
+  if (!cg || !cg.byTicker || !Array.isArray(cg.groups)) return "";
+  const gname = cg.byTicker[item?.ticker];
+  if (!gname) return "";
+  const g = cg.groups.find((x) => x.name === gname);
+  if (!g) return "";
+  const siblings = (g.listed || []).filter((s) => s.ticker !== item.ticker).slice(0, 10);
+  const chips = siblings.map((s) => `<button type="button" data-group-ticker="${escapeHtml(s.ticker)}" style="font-size:var(--fs-cap);padding:2px 8px;border:1px solid var(--line);border-radius:999px;background:var(--panel-soft);color:var(--text);cursor:pointer">${escapeHtml(s.company)}</button>`).join(" ");
+  return `
+    <div class="krflow-card" data-group-card>
+      <div style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline"><strong>기업집단 · ${escapeHtml(g.name)}</strong><span class="muted" style="font-size:var(--fs-cap)">${g.chief ? `동일인 ${escapeHtml(g.chief)} · ` : ""}상장 계열사 ${Number(g.listedCount || (g.listed || []).length)}개 · 공정위 ${escapeHtml((cg.asOf || "").slice(0, 7))} 지정</span></div>
+      ${chips ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">${chips}</div>` : ""}
+    </div>`;
+}
+
 // 국민연금 보유 카드 — 연 1회 공시(전년도 말 기준)라 '현재 보유'가 아니라
 // '최근 공시 시점 보유'다. 캐비앗을 카드에 명시한다. 데이터가 늦게 도착하면
 // refreshFeatureViews 의 facts 재렌더가 다시 그린다.
@@ -6336,6 +6362,7 @@ function stockFacts(item, title) {
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     ${auditOpinionNotice(item)}
     ${krFlowCard(item)}
+    ${krGroupCard(item)}
     ${krNpsCard(item)}
     ${krConsensusCard(item)}
     <div class="facts">

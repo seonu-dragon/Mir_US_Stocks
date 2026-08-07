@@ -80,6 +80,15 @@ jobs:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_financials_history.py --push
 
+      # 국민연금 종목별 보유내역(공공데이터포털 파일데이터). 연 1회(연말 기준)
+      # 갱신 데이터라 주간이면 차고 넘친다 — 실행이 저비용이라 여기 실어 둔다.
+      # 파일데이터는 키 불필요(env 는 만일의 API 폴백 대비, 현재 경로에선 안 쓴다).
+      - name: KR NPS holdings (공공데이터포털)
+        continue-on-error: true
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python scripts/build_kr_nps_holdings.py --push
+
       # 미국 다년 재무(SEC EDGAR XBRL). API 키 불필요, User-Agent 만 필요.
       - name: US financials history (SEC)
         continue-on-error: true

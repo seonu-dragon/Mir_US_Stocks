@@ -89,6 +89,14 @@ jobs:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
         run: python scripts/build_kr_nps_holdings.py --push
 
+      # 공정위 공시대상기업집단 소속회사 → 그룹사 매핑(기업집단포털 오픈API).
+      # 연 1회(5/1 지정) 갱신 데이터라 주간이면 차고 넘친다 — 실행이 저비용이라 여기 실어 둔다.
+      - name: KR corp groups (공정위 기업집단)
+        continue-on-error: true
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python scripts/build_kr_corp_groups.py --push
+
       # 미국 다년 재무(SEC EDGAR XBRL). API 키 불필요, User-Agent 만 필요.
       - name: US financials history (SEC)
         continue-on-error: true

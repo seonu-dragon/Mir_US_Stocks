@@ -57,6 +57,15 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_event_details.py --push
+
+      # 한국예탁결제원 기업정보서비스_GW — 배당·증자·감자를 구조화 필드로 받는 정식
+      # 소스(DART 원문 파싱과 별개 산출물). 시총 상위 500종목 × 회사단위 조회라
+      # 10분 안팎 걸린다. 키는 data.go.kr 개인키(DATA_GO_KR_KEY, URL 디코딩형).
+      - name: Build KR KSD corp actions (예탁결제원 배당·증자)
+        continue-on-error: true
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python scripts/build_kr_ksd_actions.py --push
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

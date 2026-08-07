@@ -604,6 +604,8 @@ const FEATURE_DATA = {
   tradeExports: { global: "KR_TRADE_EXPORTS", path: "data/korea/trade_exports.js", krOnly: true, lazy: true },
   // 나라장터 낙찰(정부수주, 상장사 매칭분). 수주 서브탭에서만 쓰는 KR 전용 lazy.
   krGovContracts: { global: "KR_GOV_CONTRACTS", path: "data/korea/gov_contracts.js", krOnly: true, lazy: true },
+  // 국민연금 종목별 보유내역(연 1회 공시). 종목 카드 지분율 표시용 — KR 전용.
+  krNps: { global: "KR_NPS_HOLDINGS", path: "data/korea/nps_holdings.js", krOnly: true },
   // 옵션 심리(풋콜비율·맥스페인, Yahoo). 미국 대형주만 옵션이 있어 US 전용.
   optionsStats: { global: "OPTIONS_STATS", path: "data/options_stats.js", usOnly: true },
   // 연방 계약(USASpending). 정부 매출이 큰 방산·IT·헬스 종목만 있어 US 전용 alt-data.
@@ -6295,6 +6297,38 @@ function krConsensusCard(item) {
     </div>`;
 }
 
+// 국민연금 보유 카드 — 연 1회 공시(전년도 말 기준)라 '현재 보유'가 아니라
+// '최근 공시 시점 보유'다. 캐비앗을 카드에 명시한다. 데이터가 늦게 도착하면
+// refreshFeatureViews 의 facts 재렌더가 다시 그린다.
+let _npsByTicker = null;
+function krNpsCard(item) {
+  if (!isKrMarket()) return "";
+  const nps = window.KR_NPS_HOLDINGS;
+  if (!nps || !Array.isArray(nps.holdings)) return "";
+  if (!_npsByTicker) {
+    _npsByTicker = {};
+    nps.holdings.forEach((h) => { if (h && h.ticker) _npsByTicker[h.ticker] = h; });
+  }
+  const h = _npsByTicker[item?.ticker];
+  if (!h) return "";
+  const fmtVal = (b) => {
+    const n = Number(b);
+    if (!Number.isFinite(n)) return "—";
+    return n >= 10000 ? `${(n / 10000).toLocaleString("ko-KR", { maximumFractionDigits: 1 })}조원` : `${Math.round(n).toLocaleString("ko-KR")}억원`;
+  };
+  const rows = [];
+  if (Number.isFinite(Number(h.stakePct))) rows.push(["지분율", `${Number(h.stakePct).toFixed(2)}%`]);
+  if (Number.isFinite(Number(h.valueB))) rows.push(["평가액", fmtVal(h.valueB)]);
+  if (Number.isFinite(Number(h.weightPct))) rows.push(["연기금 국내주식 내 비중", `${Number(h.weightPct).toFixed(2)}%`]);
+  if (!rows.length) return "";
+  return `
+    <div class="krflow-card">
+      <div style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline"><strong>국민연금 보유</strong><span class="muted" style="font-size:var(--fs-cap)">기준 ${escapeHtml(nps.asOf || "")} · 연 1회 공시</span></div>
+      <table class="krflow-table"><tbody>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>
+      <p class="krflow-note">연말 기준 연 1회 공시라 현재 보유와 다를 수 있습니다. 참고용 컨텍스트입니다.</p>
+    </div>`;
+}
+
 function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
@@ -6302,6 +6336,7 @@ function stockFacts(item, title) {
     <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
     ${auditOpinionNotice(item)}
     ${krFlowCard(item)}
+    ${krNpsCard(item)}
     ${krConsensusCard(item)}
     <div class="facts">
       ${fact("가격", priceOrDash(item.price))}

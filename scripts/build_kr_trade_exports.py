@@ -33,7 +33,10 @@ OUT_JSON = ROOT / "data" / "korea" / "trade_exports.json"
 OUT_JS = ROOT / "data" / "korea" / "trade_exports.js"
 
 API = "http://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList"
-UA = {"User-Agent": "Mir US Stocks research (dydtjsdn@gmail.com)"}
+# 로컬(Git Bash)에서 돌릴 때 주의: 키가 '/'로 시작해 MSYS 가 Windows 경로로
+# 변조한다(C:/Program Files/Git/... → 403). PowerShell 이나
+# MSYS2_ENV_CONV_EXCL=DATA_GO_KR_KEY 로 실행할 것. Actions(Linux)는 무관.
+UA: dict[str, str] = {}
 KST = timezone(timedelta(hours=9))
 
 # (HS 코드, 라벨) — 코스피 주도 수출 품목
@@ -67,28 +70,46 @@ def ym_range() -> tuple[str, str]:
 
 
 def fetch_item(key: str, hs: str) -> dict[str, float]:
-    """월별 수출금액($) 합계. 국가별 행이 오면 월 단위로 합산한다."""
+    """월별 수출금액($) 합계. 국가별 행이 오면 월 단위로 합산한다.
+
+    이 API 는 기간이 연도를 넘으면 오류 없이 0건을 준다(2026-08-07 실측) —
+    반드시 연 단위로 쪼개 요청한다.
+    """
     start, end = ym_range()
-    params = urllib.parse.urlencode({
-        "serviceKey": key, "strtYymm": start, "endYymm": end, "hsSgn": hs,
-    })
-    req = urllib.request.Request(f"{API}?{params}", headers=UA)
-    with urllib.request.urlopen(req, timeout=45) as r:
-        text = r.read().decode("utf-8", "replace")
-    root = ET.fromstring(text)
-    err = root.findtext(".//returnReasonCode")
-    if err and err != "00":
-        raise RuntimeError(f"API 오류 {err}: {root.findtext('.//returnAuthMsg')}")
     monthly: dict[str, float] = {}
-    for it in root.iter("item"):
-        ym = (it.findtext("year") or "").replace(".", "").strip()
-        if not ym or len(ym) != 6 or not ym.isdigit():
-            continue  # '총계' 요약 행 등
-        exp = it.findtext("expDlr")
-        try:
-            monthly[ym] = monthly.get(ym, 0.0) + float(exp)
-        except (TypeError, ValueError):
-            continue
+    for year in range(int(start[:4]), int(end[:4]) + 1):
+        s = start if year == int(start[:4]) else f"{year}01"
+        e = end if year == int(end[:4]) else f"{year}12"
+        params = urllib.parse.urlencode({
+            "serviceKey": key, "strtYymm": s, "endYymm": e, "hsSgn": hs,
+        })
+        # 게이트웨이가 간헐적으로 연결 리셋/403 을 던진다(2026-08-07 실측, 같은 요청이
+        # 몇 초 뒤 성공) — 지수 백오프로 3회 재시도.
+        text = ""
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request(f"{API}?{params}", headers=UA)
+                with urllib.request.urlopen(req, timeout=45) as r:
+                    text = r.read().decode("utf-8", "replace")
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+                time.sleep(5 * (attempt + 1))
+        root = ET.fromstring(text)
+        err = root.findtext(".//returnReasonCode")
+        if err and err != "00":
+            raise RuntimeError(f"API 오류 {err}: {root.findtext('.//returnAuthMsg')}")
+        for it in root.iter("item"):
+            ym = (it.findtext("year") or "").replace(".", "").strip()
+            if not ym or len(ym) != 6 or not ym.isdigit():
+                continue  # '총계' 요약 행 등
+            exp = it.findtext("expDlr")
+            try:
+                monthly[ym] = monthly.get(ym, 0.0) + float(exp)
+            except (TypeError, ValueError):
+                continue
+        time.sleep(1.5)  # 버스트가 순간 차단을 유발한다(2026-08-07 실측) — 여유 간격 필수
     return monthly
 
 
@@ -101,7 +122,7 @@ def build(key: str) -> dict | None:
         except Exception as e:  # noqa: BLE001
             print(f"[trade] {label} 실패({type(e).__name__}: {e}) — 건너뜀")
             continue
-        time.sleep(0.15)
+        time.sleep(1.5)
         yms = sorted(monthly)
         if len(yms) < 14:
             print(f"[trade] {label}: 월 {len(yms)}개(<14) — 건너뜀")

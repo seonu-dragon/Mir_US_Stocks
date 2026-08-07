@@ -1,10 +1,164 @@
 {
-  "updatedAtKst": "2026-08-06 16:21 KST",
-  "lastFileDate": "2026-08-05",
-  "count": 709,
+  "updatedAtKst": "2026-08-07 14:58 KST",
+  "lastFileDate": "2026-08-06",
+  "count": 724,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Braveheart Bio, Inc.",
+      "ticker": "BRVE",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-06",
+      "accession": "0001628280-26-054354:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131524/000162828026054354/braveheartbioinc-sx1a2.htm",
+      "offerPrice": 18.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "BIOVIE INC.  (BIVI, BIVIW)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001520138-26-000313:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1580149/000152013826000313/bivi_s1a2.htm"
+    },
+    {
+      "company": "BIOVIE INC.  (BIVI, BIVIW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001520138-26-000313:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1580149/000152013826000313/bivi_s1a2.htm"
+    },
+    {
+      "company": "JONES SODA CO.",
+      "ticker": "JSDA",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036411:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1083522/000149315226036411/forms-1.htm"
+    },
+    {
+      "company": "Ambitious Entertainment, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036294:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1900851/000149315226036294/forms-1a.htm"
+    },
+    {
+      "company": "Ambitious Entertainment, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036294:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1900851/000149315226036294/forms-1a.htm"
+    },
+    {
+      "company": "Global Interactive Technologies, Inc.",
+      "ticker": "GITS",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036273:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1911545/000149315226036273/forms-1a.htm"
+    },
+    {
+      "company": "Global Interactive Technologies, Inc.",
+      "ticker": "GITS",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036273:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1911545/000149315226036273/forms-1a.htm"
+    },
+    {
+      "company": "AfterNext Acquisition I Corp.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036233:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2087035/000149315226036233/forms-1a.htm"
+    },
+    {
+      "company": "AfterNext Acquisition I Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001493152-26-036233:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2087035/000149315226036233/forms-1a.htm"
+    },
+    {
+      "company": "Alternus Clean Energy, Inc.  (ALCE, ACLEW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-06",
+      "accession": "0001437749-26-025994:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1883984/000143774926025994/alce20260729_s1.htm"
+    },
+    {
+      "company": "Thunder Bridge Capital Partners V, Ltd.",
+      "ticker": "TBCV",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001213900-26-085876:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2140030/000121390026085876/ea0294207-02.htm"
+    },
+    {
+      "company": "Thunder Bridge Capital Partners V, Ltd.",
+      "ticker": "TBCV",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-06",
+      "accession": "0001213900-26-085876:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2140030/000121390026085876/ea0294207-02.htm"
+    },
+    {
+      "company": "TCGX Acquisition Corp.",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-06",
+      "accession": "0001193125-26-336098:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2137965/000119312526336098/d85347d424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Rainier Acquisition Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-06",
+      "accession": "0001104659-26-092088:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2147219/000110465926092088/tmb-20260806xs1.htm"
+    },
     {
       "company": "VERDE RESOURCES, INC.",
       "ticker": "VRDR",

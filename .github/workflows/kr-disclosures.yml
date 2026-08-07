@@ -59,6 +59,16 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_event_details.py --push
+
+      # 한국예탁결제원 기업정보서비스_GW — 배당·증자·감자를 구조화 필드로 받는 정식
+      # 소스(DART 원문 파싱과 별개 산출물). 시총 상위 500종목 × 회사단위 조회라
+      # 10분 안팎 걸린다. 키는 data.go.kr 개인키(DATA_GO_KR_KEY, URL 디코딩형).
+      - name: Build KR KSD corp actions (예탁결제원 배당·증자)
+        continue-on-error: true
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python scripts/build_kr_ksd_actions.py --push
+
       # 위 빌더 스텝은 continue-on-error 라 소스가 영구히 죽어도 워크플로우는 초록이다.
       # 산출물의 타임스탬프 나이로 마지막 관문을 세운다(scripts/check_data_freshness.py).
       - name: Data freshness gate

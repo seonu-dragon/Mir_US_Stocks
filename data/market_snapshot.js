@@ -547557,193 +547557,181 @@ window.MARKET_SNAPSHOT = {
   },
   "ai_briefing": {
     "korea_close": "<b>📊 [국내 증시 마감 데이터 리포트] - 2026년 08월 09일 18시 30분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 국내 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6258.77 (-37.61, -0.60%)<br>  - <b>코스닥 (KOSDAQ):</b> 798.81 (-2.86, -0.36%)<br><br><b>👥 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: +2,675, 외국인: -8,651, 기관: +5,854<br>  - <b>코스닥:</b> 개인: +3,402, 외국인: -2,522, 기관: -1,044<br><br><b>📰 당일 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.mk.co.kr/news/stock/12122232'>70년 국밥배당까지 끊겼다…주가 80% 폭락한 거인 [오찬종의 매일뉴욕]</a> [Maekyung] <br>  2. <a href='https://www.mk.co.kr/news/stock/12122192'>현대차 주가 약세에도 …'배당 안전판' 우선주는 선방</a> [Maekyung] <br>  3. <a href='https://www.mk.co.kr/news/stock/12122159'>[미국 주식 돋보기] AI서버 투자 붐…美 HPE 올 주가 120%↑</a> [Maekyung] <br>  4. <a href='https://www.mk.co.kr/news/stock/12122158'>버핏 떠난 버크셔, 3년만에 주식 순매수</a> [Maekyung] <br>  5. <a href='https://www.mk.co.kr/news/stock/12122156'>고점서 반토막 난 코닝 … 트럼프 규제에 힘받나</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 장마감 시황 심층 브리핑]</b><br><br><pre><br>📈 <b>오늘의 코스피 & 코스닥 시황 요약</b><br>├─ <b>코스피:</b> 금일 코스피는 외국인 투자자들의 대규모 순매도세에 밀려 0.60% 하락하며 6200선 초반에서 마감했습니다. 기관의 매수세가 유입되었으나 외국인의 강한 매도 압력을 상쇄하기에는 역부족이었습니다.<br>└─ <b>코스닥:</b> 코스닥 또한 소폭 하락(-0.36%)했으나, 개인 투자자들의 적극적인 순매수 유입으로 낙폭이 상대적으로 제한적인 흐름을 보였습니다. 790선 후반대를 지지하며 선방했습니다.<br><br>👥 <b>투자 주체별 수급 동향 해설</b><br>├─ <b>수급 상황:</b> 코스피 시장에서는 외국인이 홀로 8,651억원에 달하는 순매도 폭탄을 쏟아내며 지수 하락을 주도했습니다. 반면 개인은 2,675억원, 기관은 5,854억원을 순매수하며 방어에 나섰습니다. 코스닥 시장에서는 개인이 3,402억원을 순매수하며 지수 하단을 지탱했으나, 외국인과 기관은 각각 2,522억원, 1,044억원을 순매도하며 차익 실현에 나서는 모습이었습니다.<br>└─ <b>매매 특징:</b> 외국인은 글로벌 경기 둔화 우려 및 위험 회피 심리로 인해 대형 수출주나 시가총액 상위주 위주의 차익 실현에 나섰을 것으로 추정됩니다. 기관은 일부 저가 매수나 포트폴리오 조정 차원에서 대응했으나, 코스닥에서는 기관마저도 매도 우위를 보이며 시장의 전반적인 매도 압력을 더했습니다. 개인은 지수 하락 시 저점 매수의 기회로 판단한 것으로 보입니다.<br><br>📰 <b>오늘의 핵심 뉴스 & 주도 테마 분석</b><br>├─ <b>주요 이슈:</b> 글로벌 증시에서는 AI 서버 투자 붐으로 인한 미국 HPE의 주가 급등 소식이 AI 관련 기술주에 대한 지속적인 관심을 부각시켰습니다. 국내에서는 현대차의 우선주가 본주 약세에도 불구하고 '배당 안전판'으로서 선방하며, 불확실한 시장 상황 속에서 안정적인 배당 수익을 기대하는 심리가 작용했음을 시사했습니다. 또한, 버크셔 해서웨이의 주식 순매수 전환 소식은 장기적인 관점에서 시장의 바닥 신호를 탐색하는 계기가 될 수 있습니다.<br>└─ <b>주도 테마:</b> AI 서버 및 관련 하드웨어 인프라 섹터는 글로벌 투자 트렌드와 맞물려 꾸준한 시장의 관심을 받고 있습니다. 더불어 시장 변동성이 커질 때마다 주목받는 고배당 우선주와 같은 방어적인 성격의 종목군이 상대적으로 견조한 흐름을 보였을 가능성이 높습니다. 전반적으로 개별 이슈에 따른 차별화된 움직임이 나타난 하루였습니다.<br><br>🎯 <b>내일의 증시 전략 및 대응 가이드</b><br>├─ <b>전략 포인트:</b> 외국인 수급의 불안정성이 지속될 수 있으므로, 단기적으로는 보수적인 포지션을 유지하는 것이 현명합니다. 다만, 글로벌 AI 트렌드와 연계된 국내 반도체/IT 섹터의 펀더멘탈 강한 종목은 지속적인 관심을 가지고 접근하되, 분할 매수 전략을 고려해야 합니다. 또한, 변동성이 큰 시기에는 안정적인 실적과 배당 매력을 겸비한 가치주나 우선주에 대한 재평가 가능성도 염두에 두시길 바랍니다.<br>└─ <b>유의 사항:</b> 오늘 밤 예정된 미국 증시의 흐름과 주요 경제 지표 발표 결과가 내일 국내 증시에 미칠 영향에 주목해야 합니다. 특히, 장 마감 후 발표될 수 있는 기업 실적과 더불어 원/달러 환율의 급변동 가능성, 그리고 글로벌 금리 동향 변화가 시장의 주요 변수로 작용할 수 있으니 면밀한 모니터링이 필요합니다.<br></pre><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 당일 시장의 수급과 뉴스를 기반으로 AI가 분석한 보고서로 투자 권유를 뜻하지 않습니다.</i>",
-    "us_premarket": "<b>📊 [미국 증시 개장 전 데이터 리포트] - 2026년 08월 08일 22시 10분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 프리마켓(Premarket) 상승 특징주</b><br>  1. <a href='https://stockanalysis.com/stocks/mb/'>MB</a> (MasterBeef Group) $14.3 | +281.33%<br>  2. <a href='https://stockanalysis.com/stocks/nami/'>NAMI</a> (Jinxin Technology Holding Company) $8.75 | +200.69%<br>  3. <a href='https://stockanalysis.com/stocks/docs/'>DOCS</a> (Doximity, Inc.) $38.86 | +88.07%<br>  4. <a href='https://stockanalysis.com/stocks/dsy/'>DSY</a> (Big Tree Cloud Holdings Limited) $6 | +73.91%<br>  5. <a href='https://stockanalysis.com/stocks/vate/'>VATE</a> (INNOVATE Corp.) $11.33 | +52.90%<br><br><b>💬 Reddit (r/wallstreetbets) 인기 Tickers</b><br>  - <b>HTZ</b> (Hertz): 언급 1223회 (-899 24h)<br>  - <b>SPCX</b> (SpaceX): 언급 353회 (+11 24h)<br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 302회 (-78 24h)<br>  - <b>MU</b> (Micron Technology): 언급 196회 (-21 24h)<br>  - <b>SNDK</b> (Sandisk): 언급 119회 (-62 24h)<br><br><b>🐦 Stocktwits 인기 급상승 Tickers</b><br>  - <b>BRK.B</b> (Berkshire Hathaway Inc. - Ordinary Shares - Class B): Watchlist 47213회<br>  - <b>CRO.X</b> (Crypto.com Coin): Watchlist 37131회<br>  - <b>LOW</b> (Lowe's Companies, Inc.): Watchlist 18978회<br>  - <b>CRVS</b> (Corvus Pharmaceuticals Inc): Watchlist 6751회<br>  - <b>LASR</b> (nLIGHT Inc): Watchlist 2858회<br><br><b>🔥 Yahoo Finance 실시간 Trending Tickers</b><br>  - <b>WWR</b>, <b>PLTR</b>, <b>BRK-B</b>, <b>ABCL</b>, <b>TEM</b><br><br><b>📰 미국 현지 경제/증권 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/markets/stocks/articles/palantir-ceo-drops-11-word-160300224.html'>Palantir CEO drops 11-word bombshell for stock market investors</a> [Yahoo Business] <br>  2. <a href='https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-warren-buffett-cisco-lumentum-earnings/?src=A00220&yptr=yahoo'>Dow Jones Futures: What To Do As Stock Market Revs Up; Warren Buffett's Berkshire Beats Views</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/markets/stocks/articles/analyst-wall-street-thinks-cpu-125533234.html'>This Analyst On Wall Street Thinks The CPU Trade Is Overdone, Should You Sell ARM (ARM) Stock?</a> [Yahoo Business] <br>  4. <a href='https://www.investors.com/news/berkshire-hathaway-earnings-buybacks-cash-hoard-warren-buffett/?src=A00220&yptr=yahoo'>Berkshire Hathaway Beats Earnings Views, Ups Buybacks, Cuts Cash Hoard</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/real-estate/articles/nearly-75-homeowners-spend-10-121000808.html'>Nearly 75% of new homeowners spend $10,000 on surprise repairs within 2 years — and some never budgeted for them</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/08/07/odds-the-fed-hikes-in-september-tumble-following-big-july-jobs-miss.html'>Odds the Fed will hike in September tumble following big July jobs miss</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/08/06/copper-jumps-to-its-highest-level-ever-what-the-metal-is-telling-us-.html'>Copper jumps to its highest level ever. What the metal is telling us</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/08/06/united-wholesale-mortgage-plunges-40percent-suspends-dividend-raises-capital-.html'>United Wholesale Mortgage plunges 35% after suspending dividend and raising capital</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/08/06/traders-on-kalshi-say-its-likely-sp-500-will-hit-8000-in-2026.html'>Traders on Kalshi now think it's likely that the S&P 500 will hit 8,000 in 2026</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/08/05/fed-governor-cook-says-shes-prepared-to-act-on-rate-hike-to-address-inflation.html'>Fed Governor Cook says she's 'prepared to act' on rate hike to address inflation</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 개장 전 심층 브리핑]</b><br><br>📰 <b>미국 장전 주요 경제/거시 뉴스 분석</b><br>├─ <b>매크로 분석:</b> 7월 고용 지표 부진으로 9월 연준 금리 인상 가능성이 급락했으나, 연준 이사의 매파적 발언은 여전히 상존하여 통화정책 불확실성이 지속됩니다. 그럼에도 불구하고, 버크셔 해서웨이의 견조한 실적 발표와 구리 가격의 사상 최고치 경신은 경제의 내재된 강도와 인플레이션 압력의 지속 가능성을 동시에 시사합니다.<br>└─ <b>개장 전 전망:</b> 금리 인상 부담 완화 기대감과 기업 실적 호조가 맞물려, 오늘 본장은 비교적 긍정적인 분위기 속에서 출발할 것으로 예상됩니다. 다만, 연준의 매파적 스탠스는 언제든 시장 변동성을 유발할 수 있어 주의가 필요합니다.<br><br>📈 <b>프리마켓(Premarket) 상승/거래량 상위 특징주</b><br>├─ <b>주요 종목:</b> 프리마켓에서는 MB(MasterBeef Group, +281.33%)와 NAMI(Jinxin Technology Holding Company, +200.69%)가 초소형주 특유의 극심한 변동성을 보이며 폭등 중입니다. 이와 함께 디지털 헬스케어 플랫폼 DOCS(Doximity, Inc., +88.07%)와 엔터프라이즈 소프트웨어 기업 TEAM(Atlassian Corporation, +32.37%)도 견조한 상승세를 기록하며 주목받고 있습니다.<br>└─ <b>상승 배경:</b> MB와 NAMI는 특정 뉴스 없이 저유동성 주식의 투기적 매수 또는 숏 스퀴즈 가능성이 높습니다. DOCS는 미디어에 아직 공개되지 않은 강력한 실적 발표 또는 중대한 파트너십 루머가 주가에 반영되고 있을 것으로 보이며, Atlassian(TEAM)은 시장 예상치를 뛰어넘는 실적 발표로 인한 강한 매수세로 분석됩니다.<br><br>💬 <b>SNS/커뮤니티 인기 급상승 종목 & 찌라시 분석</b><br>├─ <b>소셜 미디어 동향:</b> 레딧(r/wallstreetbets)과 야후 파이낸스 트렌딩에서 PLTR(Palantir)이 공통적으로 높은 언급량을 보이며 강력한 관심을 끌고 있습니다. BRK.B(Berkshire Hathaway) 또한 스탁트윗과 야후 트렌딩에서 실적 발표 이후 큰 주목을 받고 있습니다. 흥미롭게도 HTZ(Hertz)는 레딧에서 언급량은 높지만 24시간 변동량은 감소하며 모멘텀 약화를 시사합니다. 한편, SOUN(SoundHound AI)을 비롯한 AI 및 우주 산업 관련 소형주(SPCX, RKLB, ASTS)에 대한 레딧의 관심이 증가하는 추세입니다.<br>└─ <b>루머 & 바이럴 요인:</b> PLTR은 CEO의 \"11-word bombshell\"이라는 야후 뉴스 헤드라인처럼, 팔란티어의 미래 전망에 대한 극도로 낙관적인 발언이 시장의 기대를 증폭시키고 있습니다. 이는 단순한 찌라시를 넘어 회사 내부자의 확신에 기반한 바이럴 요인으로 작용하며 실현 가능성이 높게 점쳐집니다. BRK.B는 워런 버핏의 가치 투자 전략이 건재함을 입증하는 실적 호조와 자사주 매입 증가 소식으로 투자자들의 신뢰를 얻고 있으며, HTZ는 여전히 밈 주식으로의 잔류 가능성이 있지만, 언급량 감소는 과거와 같은 숏 스퀴즈 유발 동력은 약해졌음을 암시합니다.<br><br>🎯 <b>오늘 밤 미국 본장 관전 포인트 및 대응 가이드</b><br>├─ <b>본장 주목 섹터:</b> 팔란티어의 강세와 레딧에서의 AI 관련주 언급 증가로 AI 및 소프트웨어 섹터에 대한 지속적인 수급 유입이 예상됩니다. 또한, 버크셔의 호실적은 가치주 및 금융 섹터에 긍정적인 영향을 미칠 수 있으며, 구리 가격 상승은 원자재 및 산업재 섹터에 대한 관심을 높일 수 있습니다. 디지털 헬스케어 관련주의 강세도 주목할 만합니다.<br>└─ <b>리스크 및 대응:</b> 프리마켓에서 수백 퍼센트 급등한 MB, NAMI 같은 저유동성 종목은 본장 개시 후 극심한 변동성으로 급락할 가능성이 높으므로 추격 매수는 지양해야 합니다. 연준의 매파적 스탠스 가능성이 잔존하는 만큼, 매크로 지표 발표 시 시장의 변동성에 대비하고, 촉매가 명확한 기업(PLTR, TEAM) 위주로 접근하며 포지션 비중을 철저히 관리하는 보수적인 전략이 필요합니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 본 자료는 미국 프리마켓 및 다각도 소셜 커뮤니티 트렌드를 취합해 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>",
+    "us_premarket": "<b>📊 [미국 증시 개장 전 데이터 리포트] - 2026년 08월 09일 22시 12분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 프리마켓(Premarket) 상승 특징주</b><br>  1. <a href='https://stockanalysis.com/stocks/mb/'>MB</a> (MasterBeef Group) $14.3 | +281.33%<br>  2. <a href='https://stockanalysis.com/stocks/nami/'>NAMI</a> (Jinxin Technology Holding Company) $8.75 | +200.69%<br>  3. <a href='https://stockanalysis.com/stocks/docs/'>DOCS</a> (Doximity, Inc.) $38.86 | +88.07%<br>  4. <a href='https://stockanalysis.com/stocks/dsy/'>DSY</a> (Big Tree Cloud Holdings Limited) $6 | +73.91%<br>  5. <a href='https://stockanalysis.com/stocks/vate/'>VATE</a> (INNOVATE Corp.) $11.33 | +52.90%<br><br><b>💬 Reddit (r/wallstreetbets) 인기 Tickers</b><br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 75회 (-242 24h)<br>  - <b>SPCX</b> (SpaceX): 언급 66회 (-292 24h)<br>  - <b>DTE</b> (DTE Energy): 언급 59회 (-17 24h)<br>  - <b>MU</b> (Micron Technology): 언급 53회 (-146 24h)<br>  - <b>NVDA</b> (NVIDIA): 언급 41회 (-41 24h)<br><br><b>🐦 Stocktwits 인기 급상승 Tickers</b><br>  - <b>CASHCAT.X</b> (Cash Cat): Watchlist 169회<br>  - <b>UUP</b> (Invesco DB US Dollar Index Bullish Fund): Watchlist 6490회<br>  - <b>VELO</b> (Velo3D Inc): Watchlist 8511회<br>  - <b>SNDQ</b> (Tradr 2X Short SNDK Daily ETF): Watchlist 1001회<br>  - <b>SNDU</b> (ETF Opportunities Trust - T-REX 2X Long SNDK Daily Target ETF): Watchlist 325회<br><br><b>🔥 Yahoo Finance 실시간 Trending Tickers</b><br>  - <b>BRK-B</b>, <b>BRK-A</b>, <b>SMCI</b>, <b>LMT</b>, <b>PANW</b><br><br><b>📰 미국 현지 경제/증권 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/real-estate/articles/real-cost-retiring-las-vegas-112248486.html'>The Real Cost of Retiring in Las Vegas on Social Security and a Small Pension</a> [Yahoo Business] <br>  2. <a href='https://finance.yahoo.com/markets/stocks/articles/robert-kiyosaki-warned-americans-own-113000295.html'>Robert Kiyosaki warned Americans who own 401(k)s that the US could be on the brink of ‘Great Depression.’ Prepare now</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/markets/article/the-ai-boom-ripples-into-regional-banks-as-lending-picks-up-112917906.html'>The AI boom ripples into regional banks as lending picks up</a> [Yahoo Business] <br>  4. <a href='https://finance.yahoo.com/markets/article/the-ai-boom-is-creating-jobs-far-from-silicon-valley-chart-of-the-day-112914747.html'>The AI boom is creating jobs far from Silicon Valley: Chart of the Day</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/markets/stocks/articles/palantir-pltr-posted-record-93-113953926.html'>Palantir (PLTR) Posted Record 93% Growth, Here’s Why Analysts Think It Won’t Last</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/08/08/rate-uncertainty-sparking-demand-for-clo-exposure-among-etfs-vettafi.html'>Next big push in ETF industry? Why these risk assets are gaining traction as interest rate uncertainty persists</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/08/08/berkshire-hathaway-earnings-q2-2026.html'>Berkshire earnings rose last quarter and CEO Greg Abel is starting to deploy Buffett's massive cash hoard</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/08/07/odds-the-fed-hikes-in-september-tumble-following-big-july-jobs-miss.html'>Odds the Fed will hike in September tumble following big July jobs miss</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/08/06/copper-jumps-to-its-highest-level-ever-what-the-metal-is-telling-us-.html'>Copper jumps to its highest level ever. What the metal is telling us</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/08/06/united-wholesale-mortgage-plunges-40percent-suspends-dividend-raises-capital-.html'>United Wholesale Mortgage plunges 35% after suspending dividend and raising capital</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 개장 전 심층 브리핑]</b><br><br><pre><br>📰 <b>미국 장전 주요 경제/거시 뉴스 분석</b><br>├─ <b>매크로 분석:</b> 최근 7월 고용 지표 부진으로 9월 연방준비제도(Fed)의 금리 인상 가능성이 급격히 낮아지면서 시장의 금리 부담이 완화되는 분위기입니다. 구리 가격의 사상 최고치 경신은 견조한 글로벌 수요 또는 공급 제약의 신호로, 인플레이션 압력을 주시해야 합니다. AI 붐은 실리콘밸리를 넘어 지역 은행 대출 증가와 일자리 창출로 이어지며 경제 전반의 긍정적 흐름을 뒷받침하고 있습니다.<br>└─ <b>개장 전 전망:</b> 비둘기파적 연준 스탠스 예상과 AI 관련 경제 활성화 소식은 시장에 긍정적인 모멘텀을 제공할 것으로 보입니다. 그러나 일부 월스트리트 은행들의 X사(구 트위터) 대출 매각 준비 소식과 로버트 기요사키의 경기 침체 경고는 잠재적인 신용 시장 불안과 투자 심리 위축 가능성이라는 리스크 요인으로 작용할 수 있어, 개장 초 혼조세 이후 기술주 중심으로의 수급 쏠림이 예상됩니다.<br><br>📈 <b>프리마켓(Premarket) 상승/거래량 상위 특징주</b><br>├─ <b>주요 종목:</b> 프리마켓에서 MB(MasterBeef Group)가 +281%, NAMI(Jinxin Technology Holding)가 +200% 이상 폭등하며 극심한 변동성을 보이고 있습니다. 비교적 시가총액이 큰 DOCS(Doximity) 또한 +88% 급등하며 시장의 주목을 받고 있습니다. FIGS와 TEAM도 각각 +33%, +32%의 상당한 상승률을 기록하며 강세를 보입니다.<br>└─ <b>상승 배경:</b> MB와 NAMI 같은 극단적인 프리마켓 급등주는 대개 소형주로서 유통 주식 수가 적고, 인수 합병(M&A), 대규모 공급 계약, 또는 임상 시험 결과 발표 등 특정 호재성 뉴스에 대한 단기적이고 투기적인 반응으로 해석됩니다. DOCS(Doximity)의 경우 의료기술 플랫폼 기업으로서, 실적 서프라이즈 발표나 예상치 못한 대형 파트너십 발표가 상승의 직접적인 재료로 작용했을 가능성이 큽니다.<br><br>💬 <b>SNS/커뮤니티 인기 급상승 종목 & 찌라시 분석</b><br>├─ <b>소셜 미디어 동향:</b> Reddit에서는 SPY, QQQ 등 대형 ETF의 언급량이 전반적으로 감소했으나, SMCI(Super Micro Computer)는 Reddit과 Yahoo Trending 양쪽에서 동시에 언급되며 강력한 관심이 포착됩니다. ONDS(Ondas Holdings) 역시 Reddit과 Yahoo Trending에 동시에 등장했으며, 특히 Reddit에서 언급량이 소폭 증가했습니다. Stocktwits에서는 UUP(달러 강세 ETF)와 GDX(금광 ETF)가 높은 워치리스트 등록 수를 보이며 위험 회피 또는 헤징 심리를 반영하고 있습니다.<br>└─ <b>루머 & 바이럴 요인:</b> SMCI는 ‘AI 붐’ 뉴스 흐름과 완벽하게 일치하며 AI 인프라 핵심 기업으로서 투자자들의 관심이 폭증하고 있는 것으로 보입니다. 특정 루머보다는 AI 시대의 핵심 수혜주라는 인식이 강합니다. ONDS는 산업용 드론 및 사설 무선 네트워크 솔루션 기업으로, Reddit 등에서 차세대 기술 관련 '숨겨진 보석'으로 언급되거나 소규모 계약 소식에 대한 기대로 숏스퀴즈 타겟팅이 있을 수 있습니다. BRK-A/B(버크셔 해서웨이)는 CNBC와 Yahoo Trending에서 모두 언급되며 최근 실적 발표와 CEO의 현금 운용 전략에 대한 관심이 집중되고 있습니다.<br><br>🎯 <b>오늘 밤 미국 본장 관전 포인트 및 대응 가이드</b><br>├─ <b>본장 주목 섹터:</b> 금리 인상 불확실성 완화 및 AI 경제 효과 확산에 힘입어 인공지능(AI) 관련 반도체 및 인프라(SMCI, NVDA, AMAT, TSM), 그리고 소프트웨어(GOOGL, TEAM) 섹터로의 수급 유입이 지속될 것으로 예상됩니다. 또한, 구리 가격 상승과 달러 강세 압력이 맞물려 원자재 및 금광 관련주(GDX), 방산주(LMT, RTX) 또한 주목할 필요가 있습니다.<br>└─ <b>리스크 및 대응:</b> 프리마켓에서 극심한 변동성을 보인 소형주(MB, NAMI)는 본장 개장 후 과도한 투기 심리 및 급격한 차익 실현 매물로 인해 급락할 위험이 크므로 추격 매수는 지양해야 합니다. 금리 인상 둔화 기대감은 긍정적이나, 특정 신용 시장 불안정성 보도와 경제 비관론은 잠재적 위험으로 상존합니다. 검증된 실적과 명확한 성장 동력을 가진 대형 기술주 및 AI 수혜주 중심으로 포트폴리오를 구성하고, 충분한 위험 관리를 통해 시장의 기회를 포착해야 합니다.<br></pre><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 본 자료는 미국 프리마켓 및 다각도 소셜 커뮤니티 트렌드를 취합해 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>",
     "korea_premarket": "<b>📊 [국내 증시 개장 전 데이터 리포트] - 2026년 08월 09일 06시 42분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 전 거래일 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6258.77 (-37.61, -0.60%)<br>  - <b>코스닥 (KOSDAQ):</b> 798.81 (-2.86, -0.36%)<br><br><b>👥 전 거래일 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: +2,675, 외국인: -8,651, 기관: +5,854<br>  - <b>코스닥:</b> 개인: +3,402, 외국인: -2,522, 기관: -1,044<br><br><b>📰 최근 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.mk.co.kr/news/stock/12121820'>“반도체 몰빵 투자 이젠 안통해”…절반 덜어내고 ‘바이오’ 담으라는데 [여의도란도란]</a> [Maekyung] <br>  2. <a href='https://www.mk.co.kr/news/stock/12121783'>블랙스톤·워버그핀커스 참전…달아오른 S&I 매각전 ‘1조 딜’ 될까 [M&A복덕방]</a> [Maekyung] <br>  3. <a href='https://www.mk.co.kr/news/stock/12121695'>60% 빠졌던 효성중공업의 반전…주가 되살린 ‘12조 수주’의 힘 [이주의 Bull기둥]</a> [Maekyung] <br>  4. <a href='https://www.mk.co.kr/news/stock/12121684'>거래소 “단일종목 레버리지 ETF 심사 단축은 사실무근”</a> [Maekyung] <br>  5. <a href='https://www.mk.co.kr/news/stock/12121680'>“반도체 폭락은 일단락됐다”…전문가가 꼽은 ‘8월 반등’ 시그널</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 개장 전 심층 분석 브리핑]</b><br><br><pre><br>안녕하십니까, 여의도 증권가에서 가장 신뢰받는 여러분의 투자 파트너입니다.<br>개장 전, 오늘 장에 대비하는 심층 분석 리포트를 전달드립니다.<br></pre><br><br><p>🌙 <b>간밤 글로벌 시장 & 매크로 점검</b></p><br>├─ <b>미국 증시:</b> 간밤 뉴욕 증시는 다소 혼조세를 보였습니다. 다우존스와 S&P500은 소폭 상승 마감했지만, 나스닥은 약보합세를 기록하며 기술주 전반의 모멘텀은 제한적이었습니다. 전반적으로 인플레이션 우려와 고금리 장기화 가능성에 대한 경계심이 여전히 존재하며, 특정 빅테크 기업을 제외한 시장 전반의 방향성을 결정할 강한 모멘텀은 부재했습니다.<br>└─ <b>환율·금리·원자재:</b> 원/달러 환율은 역외 시장에서 전일 대비 소폭 상승하며 1,380원대 초반에서 등락했습니다. 이는 외국인 자금 이탈 우려를 지속시키는 요인으로 작용할 수 있습니다. 미국 10년물 국채 금리는 4.2%대에서 안정적인 흐름을 보였으나, 유가 등 원자재 가격은 지정학적 불확실성 속에서 등락을 거듭하며 시장의 부담으로 작용할 수 있습니다.<br><br><p>📊 <b>전 거래일 국내 증시 복기</b></p><br>├─ <b>지수·수급:</b> 전 거래일 코스피는 외국인의 대규모 매도세(-8,651억원)에 기관(+5,854억원)의 적극적인 방어적 매수 대응에도 불구하고 0.60% 하락했습니다. 코스닥 역시 외국인(-2,522억원)과 기관(-1,044억원)의 동반 매도에 개인이 3,402억원 순매수하며 지수를 방어했으나, 0.36% 하락 마감했습니다. 시장 전반적으로 외국인 자금 이탈이 두드러진 하루였으며, 특히 코스피 시장의 외국인 순매도는 부담으로 작용했습니다.<br>└─ <b>주도 업종:</b> 전일 외국인 매도세 속에서도 기관 매수가 유입된 일부 대형주와 개별 모멘텀이 있는 섹터는 상대적 강세를 보였습니다. 뉴스에서 언급된 바와 같이, 반도체 업황의 불확실성이 일부 해소될 조짐이 보이지만, 무조건적인 '몰빵' 투자보다는 선별적 접근이 필요하다는 인식이 확산되는 모습입니다. 반면, '바이오' 섹터는 새로운 투자 대안으로 부각되는 움직임이 감지되었습니다. 효성중공업과 같은 개별 수주 모멘텀을 가진 종목들은 강세를 보였습니다.<br><br><p>🎯 <b>오늘의 개장 전 전략 가이드</b></p><br>├─ <b>예상 시나리오:</b> 간밤 뉴욕 증시의 혼조세와 전일 국내 증시의 외국인 대규모 매도세를 감안할 때, 오늘 국내 증시는 보합권 출발 후 종목별 차별화 장세가 펼쳐질 가능성이 높습니다. 외국인 매도세의 지속 여부가 관건이며, 기관 투자자의 방어적 매수가 유입되는 업종 위주로 제한적인 반등 시도가 나타날 수 있습니다. 코스피는 기관의 대형주 방어에 힘입어 상대적으로 견조할 수 있으나, 코스닥은 수급 불안정성이 이어질 수 있습니다.<br>└─ <b>관심 포인트:</b> 개인 투자자는 뉴스에서 언급된 ‘반도체’ 섹터 내에서도 옥석 가리기가 필요하며, ‘바이오’ 섹터의 수급 개선 여부를 주목해야 합니다. 또한, 견조한 실적 모멘텀이 있거나, 대규모 수주 뉴스가 부각되는 개별 종목(예: 효성중공업)과 2차전지, 인공지능 등 성장 테마주의 기술적 반등 가능성도 함께 확인하는 전략이 유효합니다.<br><br><p>⚠️ <b>오늘 장중 유의 사항</b></p><br>└─ <b>리스크 점검:</b> 오늘은 특별한 국내외 주요 경제지표 발표는 없지만, 간밤 미국 시장에서 불확실성이 완전히 해소되지 않은 만큼, FOMC 위원들의 발언이나 예상치 못한 지정학적 이슈 발생 시 시장 변동성이 확대될 수 있습니다. 특히 외국인 선물 수급과 원/달러 환율의 1,380원대 돌파 여부를 면밀히 주시하며 대응해야 합니다.<br><br><pre><br>투자에 도움이 되셨기를 바랍니다. 성투하십시오.<br></pre><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 전 거래일 수급·뉴스와 간밤 글로벌 흐름을 기반으로 AI가 분석한 개장 전 리포트로 투자 권유를 뜻하지 않습니다.</i>",
     "us_close": "<b>📊 [미국 증시 장마감 데이터 리포트] - 2026년 08월 08일 06시 13분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>🇺🇸 미국 주요 지수 종가</b><br>  - <b>S&P 500:</b> 7,757.64 (+47.68, +0.62%)<br>  - <b>Nasdaq:</b> 26,690.62 (+342.27, +1.30%)<br>  - <b>Dow Jones:</b> 54,036.93 (+151.83, +0.28%)<br>  - <b>Russell 2000:</b> 3,034.49 (+32.94, +1.10%)<br><br><b>📈 거시 지표</b><br>  - <b>VIX (공포지수):</b> 14.90 (-0.25, -1.65%)<br>  - <b>US 10Y 국채수익률:</b> 4.66 (-0.01, -0.21%)<br>  - <b>WTI 원유:</b> 77.08 (-0.21, -0.27%)<br><br><b>📊 SPDR 섹터 ETF 등락률</b><br>  - <b>XLK (정보기술):</b> +1.42%<br>  - <b>XLF (금융):</b> -0.36%<br>  - <b>XLE (에너지):</b> -1.13%<br>  - <b>XLV (헬스케어):</b> +0.75%<br>  - <b>XLI (산업재):</b> +0.23%<br>  - <b>XLY (경기소비재):</b> +1.49%<br>  - <b>XLP (필수소비재):</b> +0.01%<br>  - <b>XLC (통신서비스):</b> +0.06%<br>  - <b>XLRE (부동산):</b> +0.38%<br>  - <b>XLU (유틸리티):</b> +0.53%<br>  - <b>XLB (소재):</b> +1.32%<br><br><b>💬 소셜 트렌드 (상위 5)</b><br>  - <b>HTZ</b> (Hertz): 언급 2592회 (+1888 24h)<br>  - <b>SPCX</b> (SpaceX): 언급 376회 (-37 24h)<br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 346회 (-127 24h)<br>  - <b>MU</b> (Micron Technology): 언급 235회 (-54 24h)<br>  - <b>SNDK</b> (Sandisk): 언급 145회 (-373 24h)<br><br><b>📰 미국 현지 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/markets/stocks/articles/veteran-manager-buys-2-etfs-020300490.html'>Veteran manager buys 2 ETFs as market shifts</a> [Yahoo Business] <br>  2. <a href='https://finance.yahoo.com/markets/stocks/articles/abbott-stock-wall-street-bullish-134718950.html'>Abbott Stock: Is Wall Street Bullish or Bearish?</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/markets/stocks/articles/wall-street-analysts-predicting-applied-134226835.html'>Are Wall Street Analysts Predicting Applied Materials Stock Will Climb or Sink?</a> [Yahoo Business] <br>  4. <a href='https://finance.yahoo.com/markets/stocks/articles/spacex-shares-slip-lockup-expiry-134116613.html'>SpaceX stock climbs as shares available for trading more than double</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/technology/ai/articles/deepseek-invests-20-8-million-134424315.html'>DeepSeek invests $20.8 million in Unitree's Shanghai IPO</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/08/07/odds-the-fed-hikes-in-september-tumble-following-big-july-jobs-miss.html'>Odds the Fed will hike in September tumble following big July jobs miss</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/08/06/copper-jumps-to-its-highest-level-ever-what-the-metal-is-telling-us-.html'>Copper jumps to its highest level ever. What the metal is telling us</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/08/06/united-wholesale-mortgage-plunges-40percent-suspends-dividend-raises-capital-.html'>United Wholesale Mortgage plunges 35% after suspending dividend and raising capital</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/08/06/traders-on-kalshi-say-its-likely-sp-500-will-hit-8000-in-2026.html'>Traders on Kalshi now think it's likely that the S&P 500 will hit 8,000 in 2026</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/08/05/fed-governor-cook-says-shes-prepared-to-act-on-rate-hike-to-address-inflation.html'>Fed Governor Cook says she's 'prepared to act' on rate hike to address inflation</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 장마감 시황 심층 브리핑]</b><br><br>🇺🇸 <b>미국 증시 장마감 4대 지수 요약</b><br>├─ <b>S&P 500 / 나스닥:</b> 오늘 시장은 기술주와 성장주가 주도하는 뚜렷한 상승세를 보였습니다. 나스닥 종합지수가 +1.30%로 가장 강력한 랠리를 펼치며 S&P 500 지수(+0.62%)를 상회했고, 이는 연방준비제도(Fed)의 9월 금리 인상 가능성이 크게 낮아졌다는 CNBC 보도와 함께 기술주의 매력도를 높였습니다.<br>└─ <b>다우 / 러셀:</b> 다우존스 산업평균지수는 +0.28% 상승하며 대형 가치주 중심의 상대적 약세를 보였으나, 러셀 2000 지수는 +1.10% 오르며 중소형주 역시 강한 회복세를 나타냈습니다. 이는 전반적인 시장의 위험 선호 심리 개선과 함께 광범위한 상승 기조가 확산되었음을 시사합니다.<br><br>📊 <b>섹터별 ETF 강약 분석</b><br>├─ <b>강세 섹터:</b> 경기소비재(XLY, +1.49%)와 정보기술(XLK, +1.42%) 섹터가 나스닥의 강세를 이끌며 시장의 성장주 선호 흐름을 명확히 보여줬습니다. 특히 소재(XLB, +1.32%) 섹터도 강세를 보였는데, CNBC에서 구리 가격이 사상 최고치를 기록했다는 소식이 긍정적인 영향을 미친 것으로 풀이됩니다.<br>└─ <b>약세 섹터:</b> 에너지(XLE, -1.13%) 섹터가 유가 하락 폭(-0.27%) 대비 크게 하락하며 가장 부진했습니다. 금융(XLF, -0.36%) 섹터 역시 United Wholesale Mortgage의 배당 중단 및 자본 조달 소식과 월스트리트 은행들의 대규모 X론 매각 준비 소식 등 개별 이슈로 인해 소폭 약세를 보였습니다.<br><br>📈 <b>거시 지표 및 리스크 요인</b><br>├─ <b>변동성/금리:</b> VIX 공포지수는 14.90으로 -1.65% 하락하며 시장의 불안감이 완화되었음을 반영했습니다. 미국 10년물 국채수익률은 4.66으로 -0.01% 소폭 하락하며 기술주 등 성장주에 우호적인 환경을 조성했고, 이는 '7월 고용 지표 부진으로 Fed 9월 금리 인상 확률 하락' 뉴스에 힘입어 더욱 명확해졌습니다.<br>└─ <b>원자재/유가:</b> WTI 국제유가는 77.08로 -0.27% 미미하게 하락하며 인플레이션 압력 완화에 기여했습니다. 이는 에너지 섹터 ETF(XLE)의 약세 요인 중 하나였지만, 전반적인 시장의 위험 선호 심리에는 긍정적으로 작용하며 인플레이션 우려를 덜어냈습니다.<br><br>💬 <b>소셜 미디어 특이 종목 & 뉴스 해설</b><br>├─ <b>주요 이슈:</b> 오늘 시장의 핵심 동인은 '7월 고용 지표 부진에 따른 Fed의 9월 금리 인상 확률 급락' 뉴스였습니다. 이는 곧장 국채수익률 하락과 VIX 지수 안정, 그리고 기술주 및 성장주 중심의 강력한 랠리로 이어지는 중요한 촉매제 역할을 했습니다. 또한 구리 가격 사상 최고치 소식은 소재 섹터의 강세를 설명하는 배경이 되었습니다.<br>└─ <b>소셜 동향:</b> Reddit에서는 HTZ(Hertz)가 언급량 1위와 함께 언급 변동량이 +1888로 폭발적인 증가를 보이며 개인 투자자들의 투기적 관심이 집중되었음을 알 수 있습니다. SpaceX(SPCX) 또한 언급량이 크게 늘었으며, 실제 주식시장에서도 상승했다는 뉴스 보도와 연결됩니다. Stocktwits에서는 UAMY(United States Antimony Corp.), DOCS(Doximity), CIFR(Cipher Digital) 등 소형주와 바이오, 암호화폐 관련주들이 대규모 관심 종목으로 포착되며 개인 투자자들의 광범위한 투기 심리가 확인되었습니다.<br><br>🎯 <b>내일 장전 전략 및 아시아 증시 영향 전망</b><br>├─ <b>내일 전망:</b> 오늘 장마감 후에도 Fed의 통화정책 방향에 대한 시장의 해석과 고용 및 인플레이션 관련 추가 지표 발표가 중요한 변수가 될 것입니다. 기술주와 중소형주의 랠리가 지속될지, 아니면 단기 과열에 대한 경계감이 나타날지 주목해야 하며, 구리 등 원자재 가격 추이도 면밀히 살펴야 합니다.<br>└─ <b>아시아 영향:</b> 미국 증시의 기술주 및 중소형주 중심의 강세 마감과 금리 인상 우려 완화는 내일 한국을 비롯한 아시아 증시에 긍정적인 심리적 영향을 미칠 것으로 예상됩니다. 특히 아시아 기술주, 반도체 관련주들이 투자 심리 개선에 힘입어 상승 탄력을 받을 가능성이 높습니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 미국 장 마감 후 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>"
   },
   "social_sentiment": {
     "reddit": [
       {
-        "ticker": "HTZ",
-        "name": "Hertz",
-        "mentions": 1223,
-        "change24h": -42.36569274269557
+        "ticker": "SPY",
+        "name": "SPDR S&amp;P 500 ETF Trust",
+        "mentions": 75,
+        "change24h": -76.34069400630915
       },
       {
         "ticker": "SPCX",
         "name": "SpaceX",
-        "mentions": 353,
-        "change24h": 3.216374269005848
-      },
-      {
-        "ticker": "SPY",
-        "name": "SPDR S&amp;P 500 ETF Trust",
-        "mentions": 302,
-        "change24h": -20.526315789473685
-      },
-      {
-        "ticker": "MU",
-        "name": "Micron Technology",
-        "mentions": 196,
-        "change24h": -9.67741935483871
-      },
-      {
-        "ticker": "SNDK",
-        "name": "Sandisk",
-        "mentions": 119,
-        "change24h": -34.25414364640884
-      },
-      {
-        "ticker": "SOUN",
-        "name": "SoundHound AI",
-        "mentions": 99,
-        "change24h": 115.21739130434783
-      },
-      {
-        "ticker": "NBIS",
-        "name": "Nebius Group",
-        "mentions": 96,
-        "change24h": 17.073170731707318
-      },
-      {
-        "ticker": "PLTR",
-        "name": "Palantir",
-        "mentions": 91,
-        "change24h": 468.75
-      },
-      {
-        "ticker": "RKLB",
-        "name": "Rocket Lab USA",
-        "mentions": 89,
-        "change24h": 111.90476190476191
-      },
-      {
-        "ticker": "NVDA",
-        "name": "NVIDIA",
-        "mentions": 82,
-        "change24h": -40.14598540145985
-      },
-      {
-        "ticker": "QQQ",
-        "name": "Invesco QQQ ETF",
-        "mentions": 76,
-        "change24h": -36.134453781512605
+        "mentions": 66,
+        "change24h": -81.56424581005587
       },
       {
         "ticker": "DTE",
         "name": "DTE Energy",
-        "mentions": 75,
-        "change24h": -23.46938775510204
+        "mentions": 59,
+        "change24h": -22.36842105263158
       },
       {
-        "ticker": "ASTS",
-        "name": "AST SpaceMobile",
-        "mentions": 71,
-        "change24h": 54.347826086956516
+        "ticker": "MU",
+        "name": "Micron Technology",
+        "mentions": 53,
+        "change24h": -73.36683417085426
       },
       {
-        "ticker": "MSFT",
-        "name": "Microsoft",
-        "mentions": 67,
-        "change24h": -44.62809917355372
+        "ticker": "NVDA",
+        "name": "NVIDIA",
+        "mentions": 41,
+        "change24h": -50.0
       },
       {
-        "ticker": "AMD",
-        "name": "AMD",
-        "mentions": 64,
-        "change24h": 42.22222222222222
+        "ticker": "HTZ",
+        "name": "Hertz",
+        "mentions": 37,
+        "change24h": -97.11838006230529
+      },
+      {
+        "ticker": "RKLB",
+        "name": "Rocket Lab USA",
+        "mentions": 35,
+        "change24h": -60.67415730337079
+      },
+      {
+        "ticker": "NBIS",
+        "name": "Nebius Group",
+        "mentions": 29,
+        "change24h": -70.70707070707071
+      },
+      {
+        "ticker": "QQQ",
+        "name": "Invesco QQQ ETF",
+        "mentions": 26,
+        "change24h": -68.67469879518072
+      },
+      {
+        "ticker": "VOO",
+        "name": "Vanguard S&amp;P 500 ETF",
+        "mentions": 24,
+        "change24h": -20.0
+      },
+      {
+        "ticker": "SNDK",
+        "name": "Sandisk",
+        "mentions": 23,
+        "change24h": -81.14754098360656
+      },
+      {
+        "ticker": "GOOGL",
+        "name": "Alphabet (Google)",
+        "mentions": 21,
+        "change24h": -61.111111111111114
+      },
+      {
+        "ticker": "ONDS",
+        "name": "Ondas Holdings",
+        "mentions": 20,
+        "change24h": 33.33333333333333
+      },
+      {
+        "ticker": "SMCI",
+        "name": "Supermicro",
+        "mentions": 18,
+        "change24h": 0.0
+      },
+      {
+        "ticker": "SOUN",
+        "name": "SoundHound AI",
+        "mentions": 17,
+        "change24h": -82.82828282828282
       }
     ],
     "stocktwits": [
       {
-        "ticker": "BRK.B",
-        "name": "Berkshire Hathaway Inc. - Ordinary Shares - Class B",
-        "watchlist_count": 47213
+        "ticker": "CASHCAT.X",
+        "name": "Cash Cat",
+        "watchlist_count": 169
       },
       {
-        "ticker": "CRO.X",
-        "name": "Crypto.com Coin",
-        "watchlist_count": 37131
+        "ticker": "UUP",
+        "name": "Invesco DB US Dollar Index Bullish Fund",
+        "watchlist_count": 6490
       },
       {
-        "ticker": "LOW",
-        "name": "Lowe's Companies, Inc.",
-        "watchlist_count": 18978
+        "ticker": "VELO",
+        "name": "Velo3D Inc",
+        "watchlist_count": 8511
       },
       {
-        "ticker": "CRVS",
-        "name": "Corvus Pharmaceuticals Inc",
-        "watchlist_count": 6751
+        "ticker": "SNDQ",
+        "name": "Tradr 2X Short SNDK Daily ETF",
+        "watchlist_count": 1001
       },
       {
-        "ticker": "LASR",
-        "name": "nLIGHT Inc",
-        "watchlist_count": 2858
+        "ticker": "SNDU",
+        "name": "ETF Opportunities Trust - T-REX 2X Long SNDK Daily Target ETF",
+        "watchlist_count": 325
       },
       {
-        "ticker": "RILY",
-        "name": "B. Riley Financial Inc",
-        "watchlist_count": 6516
+        "ticker": "DJIA",
+        "name": "Global X Dow 30 Covered Call ETF",
+        "watchlist_count": 84418
       },
       {
-        "ticker": "HD",
-        "name": "Home Depot, Inc.",
-        "watchlist_count": 45678
+        "ticker": "ALM",
+        "name": "Almonty Industries Inc",
+        "watchlist_count": 1047
       },
       {
-        "ticker": "UAA",
-        "name": "Under Armour Inc Class A",
-        "watchlist_count": 46581
+        "ticker": "JACK",
+        "name": "Jack In The Box, Inc.",
+        "watchlist_count": 3774
       },
       {
-        "ticker": "BIDU",
-        "name": "Baidu Inc - ADR",
-        "watchlist_count": 66207
+        "ticker": "AVGO",
+        "name": "Broadcom Inc",
+        "watchlist_count": 70894
       },
       {
-        "ticker": "JBLU",
-        "name": "Jetblue Airways Corp",
-        "watchlist_count": 26963
+        "ticker": "HROW",
+        "name": "Harrow Health Inc",
+        "watchlist_count": 3452
       },
       {
-        "ticker": "BROS",
-        "name": "Dutch Bros Inc",
-        "watchlist_count": 11968
+        "ticker": "LHX",
+        "name": "L3Harris Technologies Inc",
+        "watchlist_count": 4360
       },
       {
-        "ticker": "LQDA",
-        "name": "Liquidia Corp",
-        "watchlist_count": 4388
+        "ticker": "PENGU.X",
+        "name": "Pudgy Penguins",
+        "watchlist_count": 4571
       },
       {
-        "ticker": "BFLY",
-        "name": "Butterfly Network Inc",
-        "watchlist_count": 9671
+        "ticker": "ABCL",
+        "name": "AbCellera Biologics Inc",
+        "watchlist_count": 8964
       },
       {
-        "ticker": "ANET",
-        "name": "Arista Networks Inc",
-        "watchlist_count": 20615
+        "ticker": "ABNB",
+        "name": "Airbnb Inc",
+        "watchlist_count": 55093
       },
       {
-        "ticker": "LWLG",
-        "name": "Lightwave Logic Inc",
-        "watchlist_count": 5742
+        "ticker": "GDX",
+        "name": "VanEck Gold Miners ETF",
+        "watchlist_count": 29951
       }
     ],
     "yahoo": [
-      {
-        "ticker": "WWR",
-        "name": "Westwater Resources, Inc.",
-        "price": "",
-        "changePct": -44.83
-      },
-      {
-        "ticker": "PLTR",
-        "name": "Palantir Technologies Inc.",
-        "price": "",
-        "changePct": -6.97
-      },
       {
         "ticker": "BRK-B",
         "name": "Berkshire Hathaway Inc.",
@@ -547751,82 +547739,94 @@ window.MARKET_SNAPSHOT = {
         "changePct": -0.15
       },
       {
-        "ticker": "ABCL",
-        "name": "AbCellera Biologics Inc.",
+        "ticker": "BRK-A",
+        "name": "Berkshire Hathaway Inc.",
         "price": "",
-        "changePct": -4.62
+        "changePct": 0.76
       },
       {
-        "ticker": "TEM",
-        "name": "Tempus AI, Inc.",
+        "ticker": "SMCI",
+        "name": "Super Micro Computer, Inc.",
         "price": "",
-        "changePct": -8.57
+        "changePct": -3.89
       },
       {
-        "ticker": "NNE",
-        "name": "NANO Nuclear Energy Inc.",
+        "ticker": "LMT",
+        "name": "Lockheed Martin Corporation",
         "price": "",
-        "changePct": -4.08
+        "changePct": -1.01
       },
       {
-        "ticker": "KO",
-        "name": "The Coca-Cola Company",
+        "ticker": "PANW",
+        "name": "Palo Alto Networks, Inc.",
         "price": "",
-        "changePct": -0.48
+        "changePct": 0.59
       },
       {
-        "ticker": "MPT",
-        "name": "Medical Properties Trust, Inc.",
+        "ticker": "GOOGL",
+        "name": "Alphabet Inc.",
         "price": "",
-        "changePct": -1.7
+        "changePct": 0.75
       },
       {
-        "ticker": "PLUG",
-        "name": "Plug Power Inc.",
+        "ticker": "RTX",
+        "name": "RTX Corporation",
         "price": "",
-        "changePct": -2.29
+        "changePct": -0.06
       },
       {
-        "ticker": "QS",
-        "name": "QuantumScape Corporation",
+        "ticker": "NKE",
+        "name": "NIKE, Inc.",
         "price": "",
-        "changePct": -6.24
+        "changePct": 1.1
       },
       {
-        "ticker": "DJT",
-        "name": "Trump Media & Technology Group Corp.",
+        "ticker": "AMAT",
+        "name": "Applied Materials, Inc.",
         "price": "",
-        "changePct": -2.45
+        "changePct": -0.12
       },
       {
-        "ticker": "PG",
-        "name": "The Procter & Gamble Company",
+        "ticker": "BABA",
+        "name": "Alibaba Group Holding Limited",
         "price": "",
-        "changePct": -0.36
+        "changePct": -0.71
       },
       {
-        "ticker": "BTG",
-        "name": "B2Gold Corp.",
+        "ticker": "TSM",
+        "name": "Taiwan Semiconductor Manufacturing Company Limited",
         "price": "",
-        "changePct": -13.32
+        "changePct": 0.79
       },
       {
-        "ticker": "AVAV",
-        "name": "AeroVironment, Inc.",
+        "ticker": "LLY",
+        "name": "Eli Lilly and Company",
         "price": "",
-        "changePct": -7.89
+        "changePct": 0.45
       },
       {
-        "ticker": "ARCC",
-        "name": "Ares Capital Corporation",
+        "ticker": "RIVN",
+        "name": "Rivian Automotive, Inc.",
         "price": "",
-        "changePct": -1.95
+        "changePct": -2.25
+      },
+      {
+        "ticker": "NIO",
+        "name": "NIO Inc.",
+        "price": "",
+        "changePct": -1.49
+      },
+      {
+        "ticker": "ONDS",
+        "name": "Ondas Inc.",
+        "price": "",
+        "changePct": -1.76
       }
     ]
   },
   "briefing_meta": {
     "korea_close": "2026-08-09 18:30:31 KST",
-    "us_premarket": "2026-08-08 22:10:36 KST",
+    "us_premarket": "2026-08-09 22:13:16 KST",
     "korea_premarket": "2026-08-09 06:43:04 KST",
     "us_close": "2026-08-08 06:13:43 KST"
   },

@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-08-11 06:23:23 KST",
+  "updatedAtKst": "2026-08-11 14:41:49 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7660,
+  "tradeCount": 7659,
   "politicianCount": 163,
   "rankings": [
     {
@@ -12,7 +12,7 @@
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 108.63,
+      "estReturnPct": 108.64,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
@@ -48,7 +48,7 @@
       "name": "Dwight Evans",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 53.38,
+      "estReturnPct": 53.62,
       "buyCount": 9,
       "sellCount": 15,
       "tradeCount": 24,
@@ -60,7 +60,7 @@
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 50.52,
+      "estReturnPct": 50.54,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
@@ -98,7 +98,7 @@
       "name": "Bruce Westerman",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 38.79,
+      "estReturnPct": 38.81,
       "buyCount": 51,
       "sellCount": 47,
       "tradeCount": 98,
@@ -172,7 +172,7 @@
       "name": "Thomas H. Kean",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 30.24,
+      "estReturnPct": 30.25,
       "buyCount": 36,
       "sellCount": 14,
       "tradeCount": 61,
@@ -232,7 +232,7 @@
       "name": "Cleo Fields",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 18.22,
+      "estReturnPct": 18.23,
       "buyCount": 104,
       "sellCount": 6,
       "tradeCount": 110,
@@ -244,7 +244,7 @@
       "name": "Ed Case",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 18.02,
+      "estReturnPct": 18.12,
       "buyCount": 5,
       "sellCount": 1,
       "tradeCount": 6,
@@ -282,7 +282,7 @@
       "name": "David J. Taylor",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 12.79,
+      "estReturnPct": 12.8,
       "buyCount": 60,
       "sellCount": 47,
       "tradeCount": 107,
@@ -318,7 +318,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 7.56,
+      "estReturnPct": 7.79,
       "buyCount": 51,
       "sellCount": 36,
       "tradeCount": 87,
@@ -338,6 +338,18 @@
     },
     {
       "rank": 28,
+      "id": "house-lloyd-doggett",
+      "name": "Lloyd Doggett",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 4.91,
+      "buyCount": 70,
+      "sellCount": 0,
+      "tradeCount": 70,
+      "committees": []
+    },
+    {
+      "rank": 29,
       "id": "house-julie-johnson",
       "name": "Julie Johnson",
       "chamber": "House",
@@ -349,24 +361,12 @@
       "committees": []
     },
     {
-      "rank": 29,
-      "id": "house-lloyd-doggett",
-      "name": "Lloyd Doggett",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 4.64,
-      "buyCount": 70,
-      "sellCount": 0,
-      "tradeCount": 70,
-      "committees": []
-    },
-    {
       "rank": 30,
       "id": "house-maria-elvira-salazar",
       "name": "Maria Elvira Salazar",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 1.65,
+      "estReturnPct": 1.71,
       "buyCount": 37,
       "sellCount": 10,
       "tradeCount": 49,
@@ -2606,7 +2606,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 50.52
+      "estReturnPct": 50.54
     },
     {
       "id": "house-julie-johnson",
@@ -6502,7 +6502,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 18.22
+      "estReturnPct": 18.23
     },
     {
       "id": "house-david-j-taylor",
@@ -6856,7 +6856,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 12.79
+      "estReturnPct": 12.8
     },
     {
       "id": "house-julia-letlow",
@@ -7210,7 +7210,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 108.63
+      "estReturnPct": 108.64
     },
     {
       "id": "house-bruce-westerman",
@@ -7564,7 +7564,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 38.79
+      "estReturnPct": 38.81
     },
     {
       "id": "house-greg-stanton",
@@ -8626,7 +8626,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 7.56
+      "estReturnPct": 7.79
     },
     {
       "id": "house-mark-dr-green",
@@ -11104,7 +11104,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 4.64
+      "estReturnPct": 4.91
     },
     {
       "id": "house-susie-lee",
@@ -12520,7 +12520,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 30.24
+      "estReturnPct": 30.25
     },
     {
       "id": "house-marjorie-taylor-mrs-greene",
@@ -12883,8 +12883,8 @@
       "party": "R",
       "committees": [],
       "district": "UT03",
-      "tradeCount": 56,
-      "buyCount": 23,
+      "tradeCount": 55,
+      "buyCount": 22,
       "sellCount": 33,
       "recentTrades": [
         {
@@ -14644,7 +14644,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 1.65
+      "estReturnPct": 1.71
     },
     {
       "id": "house-thomas-suozzi",
@@ -20662,7 +20662,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 53.38
+      "estReturnPct": 53.62
     },
     {
       "id": "house-debbie-wasserman-schultz",
@@ -29686,7 +29686,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 18.02
+      "estReturnPct": 18.12
     },
     {
       "id": "house-brian-babin",
@@ -67405,7 +67405,7 @@
     },
     "SHW": {
       "ticker": "SHW",
-      "netBuys": 13,
+      "netBuys": 12,
       "netSells": 9,
       "politicianCount": 12,
       "trades": [
@@ -67765,23 +67765,6 @@
           "district": "CA19",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "John Curtis",
-          "chamber": "House",
-          "ticker": "SHW",
-          "asset": "Sherwin-Williams Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-12",
-          "disclosureDate": "09/01/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019415.pdf",
-          "district": "UT03",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },

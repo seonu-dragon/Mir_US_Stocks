@@ -1,10 +1,993 @@
 {
-  "updatedAtKst": "2026-08-10 14:46 KST",
-  "lastFileDate": "2026-08-07",
-  "count": 1348,
+  "updatedAtKst": "2026-08-11 14:31 KST",
+  "lastFileDate": "2026-08-10",
+  "count": 1402,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만.",
   "events": [
+    {
+      "ticker": "FERG",
+      "company": "Ferguson Enterprises Inc. /DE/  (FERG)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0002011641-26-000038",
+      "link": "https://www.sec.gov/Archives/edgar/data/2011641/000201164126000038/ferg-20260810.htm"
+    },
+    {
+      "ticker": "QETA",
+      "company": "Quetta Acquisition Corp  (QETA, QETAR, QETAU)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001829126-26-008534",
+      "link": "https://www.sec.gov/Archives/edgar/data/1978528/000182912626008534/quettaacq_8k.htm"
+    },
+    {
+      "ticker": "RKLB",
+      "company": "Rocket Lab Corp  (RKLB)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001819994-26-000061",
+      "link": "https://www.sec.gov/Archives/edgar/data/1819994/000181999426000061/rklb-20260810.htm"
+    },
+    {
+      "ticker": "HIMS",
+      "company": "Hims & Hers Health, Inc.  (HIMS)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001773751-26-000161",
+      "link": "https://www.sec.gov/Archives/edgar/data/1773751/000177375126000161/hims-20260810.htm"
+    },
+    {
+      "ticker": "CRWV",
+      "company": "CoreWeave, Inc.  (CRWV)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001769628-26-000357",
+      "link": "https://www.sec.gov/Archives/edgar/data/1769628/000176962826000357/crwv-20260807.htm"
+    },
+    {
+      "ticker": "BBIO",
+      "company": "BridgeBio Pharma, Inc.  (BBIO)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001743881-26-000026",
+      "link": "https://www.sec.gov/Archives/edgar/data/1743881/000174388126000026/bbio-20260810.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "PAG",
+      "company": "PENSKE AUTOMOTIVE GROUP, INC.  (PAG)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001628280-26-055334",
+      "link": "https://www.sec.gov/Archives/edgar/data/1019849/000162828026055334/pag-20260810.htm"
+    },
+    {
+      "ticker": "QSR",
+      "company": "Restaurant Brands International Inc.  (QSR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001618756-26-000047",
+      "link": "https://www.sec.gov/Archives/edgar/data/1618756/000161875626000047/qsr-20260810.htm"
+    },
+    {
+      "ticker": "NCL",
+      "company": "Northann Corp.  (NCL)",
+      "items": [
+        {
+          "code": "3.01",
+          "label": "상장폐지·규정 미준수"
+        },
+        {
+          "code": "4.01",
+          "label": "회계법인 변경"
+        },
+        {
+          "code": "4.02",
+          "label": "과거 재무제표 신뢰불가"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001575872-26-000562",
+      "link": "https://www.sec.gov/Archives/edgar/data/1923780/000157587226000562/ncl121_8k.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001564708-26-000176",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000176/nws-20260807.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "BEN",
+      "company": "FRANKLIN RESOURCES INC  (BEN)",
+      "items": [
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001552781-26-000423",
+      "link": "https://www.sec.gov/Archives/edgar/data/38777/000155278126000423/e26341_ben-8k.htm"
+    },
+    {
+      "ticker": "KMI",
+      "company": "KINDER MORGAN, INC.  (KMI, EP-PC)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001506307-26-000111",
+      "link": "https://www.sec.gov/Archives/edgar/data/1506307/000150630726000111/kmi-20260807.htm"
+    },
+    {
+      "ticker": "BMNR",
+      "company": "BITMINE IMMERSION TECHNOLOGIES, INC.  (BMNP, BMNR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001493152-26-036757",
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226036757/form8-k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "CCXI",
+      "company": "Churchill Capital Corp XI  (CCXI, CCXIU, CCXIW)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001213900-26-086928",
+      "link": "https://www.sec.gov/Archives/edgar/data/2074973/000121390026086928/ea0301196-8k_church11.htm"
+    },
+    {
+      "ticker": "JAZZ",
+      "company": "Jazz Pharmaceuticals plc  (JAZZ)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342667",
+      "link": "https://www.sec.gov/Archives/edgar/data/1232524/000119312526342667/d151973d8k.htm"
+    },
+    {
+      "ticker": "ADM",
+      "company": "Archer-Daniels-Midland Co  (ADM)",
+      "items": [
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342579",
+      "link": "https://www.sec.gov/Archives/edgar/data/7084/000119312526342579/d102470d8k.htm"
+    },
+    {
+      "ticker": "ASTS",
+      "company": "AST SpaceMobile, Inc.  (ASTS)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342540",
+      "link": "https://www.sec.gov/Archives/edgar/data/1780312/000119312526342540/asts-20260810.htm"
+    },
+    {
+      "ticker": "PSA",
+      "company": "Public Storage  (PSA, PSA-PF, PSA-PG, PSA-PH, PSA-PI, PSA-PJ, PSA-PK, PSA-PL, PSA-PM, PSA-PN, PSA-PO, PSA-PP, PSA-PU)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342525",
+      "link": "https://www.sec.gov/Archives/edgar/data/1393311/000119312526342525/d131031d8k.htm"
+    },
+    {
+      "ticker": "MTZ",
+      "company": "MASTEC INC  (MTZ)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342507",
+      "link": "https://www.sec.gov/Archives/edgar/data/15615/000119312526342507/d165744d8k.htm",
+      "kind": "buyback",
+      "amountUsd": 250000000.0,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "GOOGL",
+      "company": "Alphabet Inc.  (GOOG, GOOGL, GOOGM, GOOGN)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342390",
+      "link": "https://www.sec.gov/Archives/edgar/data/1652044/000119312526342390/d171253d8k.htm"
+    },
+    {
+      "ticker": "TER",
+      "company": "TERADYNE, INC  (TER)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342367",
+      "link": "https://www.sec.gov/Archives/edgar/data/97210/000119312526342367/ter-20260807.htm"
+    },
+    {
+      "ticker": "AHR",
+      "company": "American Healthcare REIT, Inc.  (AHR)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342358",
+      "link": "https://www.sec.gov/Archives/edgar/data/1632970/000119312526342358/ahr-20260810.htm"
+    },
+    {
+      "ticker": "ROP",
+      "company": "ROPER TECHNOLOGIES INC  (ROP)",
+      "items": [
+        {
+          "code": "5.04",
+          "label": "Item 5.04"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-342309",
+      "link": "https://www.sec.gov/Archives/edgar/data/882835/000119312526342309/d124069d8k.htm"
+    },
+    {
+      "ticker": "MLM",
+      "company": "MARTIN MARIETTA MATERIALS INC  (MLM)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341412",
+      "link": "https://www.sec.gov/Archives/edgar/data/916076/000119312526341412/d129878d8k.htm"
+    },
+    {
+      "ticker": "MOS",
+      "company": "MOSAIC CO  (MOS)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341391",
+      "link": "https://www.sec.gov/Archives/edgar/data/1285785/000119312526341391/d319503d8k.htm"
+    },
+    {
+      "ticker": "ONTO",
+      "company": "ONTO INNOVATION INC.  (ONTO)",
+      "items": [
+        {
+          "code": "2.01",
+          "label": "자산 인수·처분"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341337",
+      "link": "https://www.sec.gov/Archives/edgar/data/704532/000119312526341337/d125405d8k.htm"
+    },
+    {
+      "ticker": "MSTR",
+      "company": "Strategy Inc  (MSTR, STRC, STRD, STRF, STRK)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341297",
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526341297/mstr-20260810.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "JAZZ",
+      "company": "Jazz Pharmaceuticals plc  (JAZZ)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341270",
+      "link": "https://www.sec.gov/Archives/edgar/data/1232524/000119312526341270/d106596d8k.htm"
+    },
+    {
+      "ticker": "APGE",
+      "company": "Apogee Therapeutics, Inc.  (APGE)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341239",
+      "link": "https://www.sec.gov/Archives/edgar/data/1974640/000119312526341239/apge-20260810.htm"
+    },
+    {
+      "ticker": "AXSM",
+      "company": "Axsome Therapeutics, Inc.  (AXSM)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341206",
+      "link": "https://www.sec.gov/Archives/edgar/data/1579428/000119312526341206/axsm-20260810.htm"
+    },
+    {
+      "ticker": "FOXA",
+      "company": "Fox Corp  (FOX, FOXA)",
+      "items": [
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341200",
+      "link": "https://www.sec.gov/Archives/edgar/data/1754301/000119312526341200/d133486d8ka.htm"
+    },
+    {
+      "ticker": "LNC",
+      "company": "LINCOLN NATIONAL CORP  (LNC, LNC-PD)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341190",
+      "link": "https://www.sec.gov/Archives/edgar/data/59558/000119312526341190/d104957d8k.htm"
+    },
+    {
+      "ticker": "BRO",
+      "company": "BROWN & BROWN, INC.  (BRO)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341162",
+      "link": "https://www.sec.gov/Archives/edgar/data/79282/000119312526341162/bro-20260810.htm"
+    },
+    {
+      "ticker": "ATO",
+      "company": "ATMOS ENERGY CORP  (ATO)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-341096",
+      "link": "https://www.sec.gov/Archives/edgar/data/731802/000119312526341096/d138079d8k.htm"
+    },
+    {
+      "ticker": "PRMB",
+      "company": "Primo Brands Corp  (PRMB)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001193125-26-340542",
+      "link": "https://www.sec.gov/Archives/edgar/data/2042694/000119312526340542/d117342d8k.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "UYSC",
+      "company": "UY Scuti Acquisition Corp.  (UYSC, UYSCR, UYSCU)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001185185-26-003361",
+      "link": "https://www.sec.gov/Archives/edgar/data/2036973/000118518526003361/uysc8k042826.htm"
+    },
+    {
+      "ticker": "TSN",
+      "company": "TYSON FOODS, INC.  (TSN)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001140361-26-031947",
+      "link": "https://www.sec.gov/Archives/edgar/data/100493/000114036126031947/ef20079811_8k.htm"
+    },
+    {
+      "ticker": "UGI",
+      "company": "UGI CORP /PA/  (UGI)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-093478",
+      "link": "https://www.sec.gov/Archives/edgar/data/884614/000110465926093478/ugi-20260804x8k.htm"
+    },
+    {
+      "ticker": "ACM",
+      "company": "AECOM  (ACM)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-093421",
+      "link": "https://www.sec.gov/Archives/edgar/data/868857/000110465926093421/tm2622489d1_8k.htm"
+    },
+    {
+      "ticker": "RIOT",
+      "company": "Riot Platforms, Inc.  (RIOT)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-093406",
+      "link": "https://www.sec.gov/Archives/edgar/data/1167419/000110465926093406/riot-20260810x8k.htm"
+    },
+    {
+      "ticker": "SPG",
+      "company": "SIMON PROPERTY GROUP INC.  (SPG, SPG-PJ)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-093361",
+      "link": "https://www.sec.gov/Archives/edgar/data/1063761/000110465926093361/tm2620726d2_8k.htm",
+      "kind": "buyback",
+      "amountUsd": 211400000.0,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "SWKS",
+      "company": "SKYWORKS SOLUTIONS, INC.  (SWKS)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-093355",
+      "link": "https://www.sec.gov/Archives/edgar/data/4127/000110465926093355/tm2622643d1_8k.htm"
+    },
+    {
+      "ticker": "FWONA",
+      "company": "Liberty Media Corp  (FWONA, FWONB, FWONK)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-093023",
+      "link": "https://www.sec.gov/Archives/edgar/data/1560385/000110465926093023/tm2622631d1_8k.htm"
+    },
+    {
+      "ticker": "RHP",
+      "company": "Ryman Hospitality Properties, Inc.  (RHP)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0001104659-26-092958",
+      "link": "https://www.sec.gov/Archives/edgar/data/1040829/000110465926092958/tm2622522d4_8k.htm"
+    },
+    {
+      "ticker": "TDY",
+      "company": "TELEDYNE TECHNOLOGIES INC  (TDY)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0001094285-26-000047",
+      "link": "https://www.sec.gov/Archives/edgar/data/1094285/000109428526000047/tdy-20260810.htm"
+    },
+    {
+      "ticker": "BWA",
+      "company": "BORGWARNER INC  (BWA)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0000908255-26-000054",
+      "link": "https://www.sec.gov/Archives/edgar/data/908255/000090825526000054/bwa-20260810.htm"
+    },
+    {
+      "ticker": "AAON",
+      "company": "AAON, INC.  (AAON)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0000824142-26-000052",
+      "link": "https://www.sec.gov/Archives/edgar/data/824142/000082414226000052/aaon-20260810.htm"
+    },
+    {
+      "ticker": "NKE",
+      "company": "NIKE, Inc.  (NKE)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0000320187-26-000112",
+      "link": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000112/nke-20260804.htm"
+    },
+    {
+      "ticker": "LUV",
+      "company": "SOUTHWEST AIRLINES CO  (LUV)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0000092380-26-000093",
+      "link": "https://www.sec.gov/Archives/edgar/data/92380/000009238026000093/luv-20260810.htm"
+    },
+    {
+      "ticker": "MLI",
+      "company": "MUELLER INDUSTRIES INC  (MLI)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-10",
+      "accession": "0000089439-26-000036",
+      "link": "https://www.sec.gov/Archives/edgar/data/89439/000008943926000036/mli-20260806.htm"
+    },
+    {
+      "ticker": "PGR",
+      "company": "PROGRESSIVE CORP/OH/  (PGR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-10",
+      "accession": "0000080661-26-000310",
+      "link": "https://www.sec.gov/Archives/edgar/data/80661/000008066126000310/pgr-20260807.htm"
+    },
     {
       "ticker": "SARO",
       "company": "StandardAero, Inc.  (SARO)",
@@ -1243,6 +2226,24 @@
       "fileDate": "2026-08-06",
       "accession": "0001628280-26-054314",
       "link": "https://www.sec.gov/Archives/edgar/data/2082247/000162828026054314/fdxf-20260806.htm"
+    },
+    {
+      "ticker": "TXG",
+      "company": "10x Genomics, Inc.  (TXG)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-06",
+      "accession": "0001628280-26-054273",
+      "link": "https://www.sec.gov/Archives/edgar/data/1770787/000162828026054273/txg-20260806.htm"
     },
     {
       "ticker": "RL",
@@ -5290,6 +6291,30 @@
       "link": "https://www.sec.gov/Archives/edgar/data/899051/000089905126000117/all-20260805.htm"
     },
     {
+      "ticker": "SM",
+      "company": "SM Energy Co  (SM)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-05",
+      "accession": "0000893538-26-000119",
+      "link": "https://www.sec.gov/Archives/edgar/data/893538/000089353826000119/sm-20260805.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
       "ticker": "CGNX",
       "company": "COGNEX CORP  (CGNX)",
       "items": [
@@ -5930,6 +6955,34 @@
       "fileDate": "2026-08-04",
       "accession": "0001628280-26-052563",
       "link": "https://www.sec.gov/Archives/edgar/data/52988/000162828026052563/j-20260804.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "HNGE",
+      "company": "Hinge Health, Inc.  (HNGE)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-04",
+      "accession": "0001628280-26-052558",
+      "link": "https://www.sec.gov/Archives/edgar/data/1673743/000162828026052558/hnge-20260729.htm",
       "kind": "buyback",
       "buybackChecked": true
     },

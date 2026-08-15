@@ -1,10 +1,42 @@
 {
-  "updatedAtKst": "2026-08-14 15:02 KST",
-  "lastFileDate": "2026-08-13",
-  "count": 718,
+  "updatedAtKst": "2026-08-15 14:00 KST",
+  "lastFileDate": "2026-08-14",
+  "count": 709,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "BIOVIE INC.  (BIVI, BIVIW)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-14",
+      "accession": "0001520138-26-000350:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1580149/000152013826000350/bivi_s1a3-3.htm"
+    },
+    {
+      "company": "BIOVIE INC.  (BIVI, BIVIW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-14",
+      "accession": "0001520138-26-000350:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1580149/000152013826000350/bivi_s1a3-3.htm"
+    },
+    {
+      "company": "Londian Wason New Energy Tech Inc.",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-14",
+      "accession": "0001193125-26-351136:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2006960/000119312526351136/d476818d424b4.htm",
+      "offerPrice": 22.0,
+      "offerPriceChecked": 2
+    },
     {
       "company": "BayFirst Financial Corp.",
       "ticker": "BAFN",
@@ -7288,126 +7320,6 @@
       "fileDate": "2026-06-16",
       "accession": "0001096906-26-000960:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2034161/000109690626000960/boum_s1z.htm"
-    },
-    {
-      "company": "DarkPulse, Inc.",
-      "ticker": "DPLS",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-15",
-      "accession": "0001683168-26-004839:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/866439/000168316826004839/darkpulse_s1.htm"
-    },
-    {
-      "company": "Pattern Group Inc.",
-      "ticker": "PTRN",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-15",
-      "accession": "0001628280-26-043014:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1811935/000162828026043014/patterns-1june2026.htm"
-    },
-    {
-      "company": "AMERICAN BATTERY MATERIALS, INC.",
-      "ticker": "BLTH",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-15",
-      "accession": "0001493152-26-028620:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1487718/000149315226028620/forms-1a.htm"
-    },
-    {
-      "company": "AMERICAN BATTERY MATERIALS, INC.",
-      "ticker": "BLTH",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-15",
-      "accession": "0001493152-26-028620:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1487718/000149315226028620/forms-1a.htm"
-    },
-    {
-      "company": "Osprey Acquisition Corp. III",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-15",
-      "accession": "0001213900-26-068811:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2113481/000121390026068811/ea0279881-02.htm"
-    },
-    {
-      "company": "Bridge III Acquisition Ltd",
-      "ticker": "BDDD",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-15",
-      "accession": "0001213900-26-068607:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133836/000121390026068607/ea0294142-s1a1_bridge3.htm"
-    },
-    {
-      "company": "Bridge III Acquisition Ltd",
-      "ticker": "BDDD",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-15",
-      "accession": "0001213900-26-068607:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133836/000121390026068607/ea0294142-s1a1_bridge3.htm"
-    },
-    {
-      "company": "Leader's Advantage Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-15",
-      "accession": "0001213900-26-068419:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2109823/000121390026068419/ea0286599-02.htm"
-    },
-    {
-      "company": "Hadron Energy, Inc.  (HDRN, HDRNW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-15",
-      "accession": "0001193125-26-271293:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2023730/000119312526271293/d141496ds1.htm"
-    },
-    {
-      "company": "Decoy Therapeutics Inc.",
-      "ticker": "DCOY",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-15",
-      "accession": "0001193125-26-269891:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1615219/000119312526269891/dcoy-20260612.htm"
-    },
-    {
-      "company": "DPC Holdings Ltd",
-      "ticker": "DPC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-15",
-      "accession": "0001104659-26-073752:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2107018/000110465926073752/tm269965-6_s1a.htm"
-    },
-    {
-      "company": "DPC Holdings Ltd",
-      "ticker": "DPC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-15",
-      "accession": "0001104659-26-073752:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2107018/000110465926073752/tm269965-6_s1a.htm"
     }
   ]
 }

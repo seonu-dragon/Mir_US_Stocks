@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-08-16 05:53:47 KST",
+  "updatedAtKst": "2026-08-16 14:06:58 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7705,
+  "tradeCount": 7703,
   "politicianCount": 165,
   "rankings": [
     {
@@ -355,9 +355,9 @@
       "chamber": "House",
       "party": "D",
       "estReturnPct": 4.74,
-      "buyCount": 70,
+      "buyCount": 69,
       "sellCount": 0,
-      "tradeCount": 70,
+      "tradeCount": 69,
       "committees": []
     },
     {
@@ -10783,8 +10783,8 @@
       "party": "D",
       "committees": [],
       "district": "TX37",
-      "tradeCount": 70,
-      "buyCount": 70,
+      "tradeCount": 69,
+      "buyCount": 69,
       "sellCount": 0,
       "recentTrades": [
         {
@@ -11137,9 +11137,9 @@
       "party": "D",
       "committees": [],
       "district": "NV03",
-      "tradeCount": 69,
+      "tradeCount": 68,
       "buyCount": 15,
-      "sellCount": 54,
+      "sellCount": 53,
       "recentTrades": [
         {
           "politician": "Susie Lee",
@@ -68576,7 +68576,7 @@
     },
     "PG": {
       "ticker": "PG",
-      "netBuys": 40,
+      "netBuys": 39,
       "netSells": 12,
       "politicianCount": 26,
       "trades": [
@@ -113305,8 +113305,8 @@
     "DELL": {
       "ticker": "DELL",
       "netBuys": 3,
-      "netSells": 3,
-      "politicianCount": 5,
+      "netSells": 2,
+      "politicianCount": 4,
       "trades": [
         {
           "politician": "Lisa McClain",
@@ -113392,23 +113392,6 @@
           "district": "GA14",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Susie Lee",
-          "chamber": "House",
-          "ticker": "DELL",
-          "asset": "Dell Technologies Inc. Class C",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-17",
-          "disclosureDate": "09/01/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019426.pdf",
-          "district": "NV03",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },

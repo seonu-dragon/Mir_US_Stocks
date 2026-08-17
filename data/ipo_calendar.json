@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-08-16 14:03 KST",
+  "updatedAtKst": "2026-08-17 14:19 KST",
   "lastFileDate": "2026-08-14",
-  "count": 691,
+  "count": 682,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
@@ -7038,105 +7038,6 @@
       "link": "https://www.sec.gov/Archives/edgar/data/1918102/000110465926075763/tm2612179-14_424b4.htm",
       "offerPrice": 16.0,
       "offerPriceChecked": 2
-    },
-    {
-      "company": "Albatross Acquisition Corp",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-17",
-      "accession": "0001829126-26-006553:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2135163/000182912626006553/albatrossacq_s1.htm"
-    },
-    {
-      "company": "Tianci International, Inc.",
-      "ticker": "CIIT",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-17",
-      "accession": "0001683168-26-004899:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1557798/000168316826004899/tianci_424b4.htm",
-      "offerPrice": 0.81,
-      "offerPriceChecked": 2,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Pattern Group Inc.",
-      "ticker": "PTRN",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-17",
-      "accession": "0001628280-26-043986:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1811935/000162828026043986/pattern424june2026.htm",
-      "offerPrice": 19.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Idaho Copper Corp",
-      "ticker": "COPR",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-17",
-      "accession": "0001493152-26-029066:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1263364/000149315226029066/forms-1a.htm"
-    },
-    {
-      "company": "Idaho Copper Corp",
-      "ticker": "COPR",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-17",
-      "accession": "0001493152-26-029066:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1263364/000149315226029066/forms-1a.htm"
-    },
-    {
-      "company": "Cantor Equity Partners VII, Inc.",
-      "ticker": "CAES",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-17",
-      "accession": "0001213900-26-069612:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2087965/000121390026069612/ea0261707-07.htm",
-      "offerPrice": 10.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Perceptive Capital Solutions Corp",
-      "ticker": "PCSC",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-17",
-      "accession": "0001140361-26-025588:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2017526/000114036126025588/ny20061080x17_424b4.htm",
-      "offerPrice": 10.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "ConnectM Technology Solutions, Inc.",
-      "ticker": "CNTM",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-17",
-      "accession": "0001104659-26-074787:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926074787/cntm-20260331xs1a.htm"
-    },
-    {
-      "company": "ConnectM Technology Solutions, Inc.",
-      "ticker": "CNTM",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-17",
-      "accession": "0001104659-26-074787:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926074787/cntm-20260331xs1a.htm"
     }
   ]
 }

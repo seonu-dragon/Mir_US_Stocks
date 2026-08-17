@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-08-16 14:03 KST",
+  "updatedAtKst": "2026-08-17 14:19 KST",
   "lastFileDate": "2026-08-14",
-  "count": 727,
+  "count": 717,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
@@ -589,6 +589,15 @@
       "title": "Core AI Holdings, Inc.  (CHAI)",
       "url": "https://www.sec.gov/Archives/edgar/data/1649009/000149315226037195/form424b5.htm",
       "accession": "0001493152-26-037195"
+    },
+    {
+      "ticker": "PARA",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-08-11",
+      "title": "Banzai International, Inc.  (BNZI, BNZIW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1826011/000149315226037107/form424b5.htm",
+      "accession": "0001493152-26-037107"
     },
     {
       "ticker": "EDBL",
@@ -6448,105 +6457,6 @@
       "title": "GCT Semiconductor Holding, Inc.  (GCTS, GCTS-WT)",
       "url": "https://www.sec.gov/Archives/edgar/data/1851961/000092963826002280/a424b5.htm",
       "accession": "0000929638-26-002280"
-    },
-    {
-      "ticker": "FAMI",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "Farmmi, Inc.  (FAMI)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1701261/000147793226003903/fami_424b5.htm",
-      "accession": "0001477932-26-003903"
-    },
-    {
-      "ticker": "BJDX",
-      "formType": "S-3",
-      "formLabel": "일괄신고 등록(Shelf)",
-      "fileDate": "2026-06-17",
-      "title": "Bluejay Diagnostics, Inc.  (BJDX)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1704287/000121390026069727/ea0294889-s3_bluejay.htm",
-      "accession": "0001213900-26-069727"
-    },
-    {
-      "ticker": "SOPH",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "SOPHiA GENETICS SA  (SOPH)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1840706/000119312526274381/d121659d424b5.htm",
-      "accession": "0001193125-26-274381"
-    },
-    {
-      "ticker": "MX",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "MAGNACHIP SEMICONDUCTOR Corp  (MX)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1325702/000119312526274353/d78862d424b5.htm",
-      "accession": "0001193125-26-274353"
-    },
-    {
-      "ticker": "LEGN",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "Legend Biotech Corp  (LEGN)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1801198/000119312526274318/d150521d424b5.htm",
-      "accession": "0001193125-26-274318"
-    },
-    {
-      "ticker": "FISV",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "FISERV INC  (FISV)",
-      "url": "https://www.sec.gov/Archives/edgar/data/798354/000119312526274268/d102503d424b5.htm",
-      "accession": "0001193125-26-274268"
-    },
-    {
-      "ticker": "CBL",
-      "formType": "S-3ASR",
-      "formLabel": "자동 일괄신고(WKSI)",
-      "fileDate": "2026-06-17",
-      "title": "CBL & ASSOCIATES PROPERTIES INC  (CBL)",
-      "url": "https://www.sec.gov/Archives/edgar/data/910612/000119312526273916/cbl-20260617.htm",
-      "accession": "0001193125-26-273916"
-    },
-    {
-      "ticker": "NVDA",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "NVIDIA CORP  (NVDA)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1045810/000119312526273139/d118718d424b5.htm",
-      "accession": "0001193125-26-273139"
-    },
-    {
-      "ticker": "DE",
-      "formType": "S-3ASR",
-      "formLabel": "자동 일괄신고(WKSI)",
-      "fileDate": "2026-06-17",
-      "title": "DEERE & CO  (DE)",
-      "url": "https://www.sec.gov/Archives/edgar/data/315189/000110465926075222/tm2617548d1_s3asr.htm",
-      "accession": "0001104659-26-075222"
-    },
-    {
-      "ticker": "VOD",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "VODAFONE GROUP PUBLIC LTD CO  (VOD, VODPF)",
-      "url": "https://www.sec.gov/Archives/edgar/data/839923/000110465926074960/tm2617025-3_424b5.htm",
-      "accession": "0001104659-26-074960"
-    },
-    {
-      "ticker": "DUOT",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-06-17",
-      "title": "DUOS TECHNOLOGIES GROUP, INC.  (DUOT)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1396536/000107997326000846/duot_424b5.htm",
-      "accession": "0001079973-26-000846"
     }
   ]
 }

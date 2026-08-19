@@ -1,10 +1,153 @@
 {
-  "updatedAtKst": "2026-08-18 14:05 KST",
-  "lastFileDate": "2026-08-17",
-  "count": 679,
+  "updatedAtKst": "2026-08-19 14:06 KST",
+  "lastFileDate": "2026-08-18",
+  "count": 693,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Karman Line Acquisition Corp.",
+      "ticker": "XTER",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-18",
+      "accession": "0001829126-26-009017:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2134856/000182912626009017/karmanlineacq_424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Sensei Harbor Corp.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001683168-26-006561:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826006561/sensei_s1a4.htm"
+    },
+    {
+      "company": "Sensei Harbor Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001683168-26-006561:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2112634/000168316826006561/sensei_s1a4.htm"
+    },
+    {
+      "company": "iPower Inc.",
+      "ticker": "IPW",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001683168-26-006558:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1830072/000168316826006558/ipower_s1a1.htm"
+    },
+    {
+      "company": "iPower Inc.",
+      "ticker": "IPW",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001683168-26-006558:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1830072/000168316826006558/ipower_s1a1.htm"
+    },
+    {
+      "company": "Jaovi Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001683168-26-006549:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2144182/000168316826006549/jaovi_s1a1.htm"
+    },
+    {
+      "company": "Jaovi Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001683168-26-006549:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2144182/000168316826006549/jaovi_s1a1.htm"
+    },
+    {
+      "company": "AIxCrypto Holdings, Inc.",
+      "ticker": "AIXC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001493152-26-039049:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226039049/forms-1a.htm"
+    },
+    {
+      "company": "AIxCrypto Holdings, Inc.",
+      "ticker": "AIXC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001493152-26-039049:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226039049/forms-1a.htm"
+    },
+    {
+      "company": "SharonAI Holdings Inc.  (SHAZ, SHAZW)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001493152-26-039014:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2068385/000149315226039014/forms-1a.htm"
+    },
+    {
+      "company": "SharonAI Holdings Inc.  (SHAZ, SHAZW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001493152-26-039014:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2068385/000149315226039014/forms-1a.htm"
+    },
+    {
+      "company": "Aptera Motors Corp",
+      "ticker": "SEV",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001493152-26-038839:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1786471/000149315226038839/forms-1a.htm"
+    },
+    {
+      "company": "Aptera Motors Corp",
+      "ticker": "SEV",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-18",
+      "accession": "0001493152-26-038839:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1786471/000149315226038839/forms-1a.htm"
+    },
+    {
+      "company": "Freenome, Inc.",
+      "ticker": "FRNM",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-18",
+      "accession": "0001140361-26-033585:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2017526/000114036126033585/ny20080283x1_s1.htm"
+    },
     {
       "company": "VARSAL TECH, INC.",
       "ticker": "VAT",

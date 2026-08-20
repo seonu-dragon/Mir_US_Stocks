@@ -1,10 +1,97 @@
 {
-  "updatedAtKst": "2026-08-19 14:06 KST",
-  "lastFileDate": "2026-08-18",
-  "count": 693,
+  "updatedAtKst": "2026-08-20 14:06 KST",
+  "lastFileDate": "2026-08-19",
+  "count": 701,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Canary Staked TRX ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-19",
+      "accession": "0001999371-26-018236:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2064768/000199937126018236/trx-s1a_081926.htm"
+    },
+    {
+      "company": "Canary Staked TRX ETF",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-19",
+      "accession": "0001999371-26-018236:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2064768/000199937126018236/trx-s1a_081926.htm"
+    },
+    {
+      "company": "Southern Cross Acquisition II Corp.",
+      "ticker": "SCAT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-19",
+      "accession": "0001929980-26-000479:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133239/000192998026000479/scacii_s1a.htm"
+    },
+    {
+      "company": "Southern Cross Acquisition II Corp.",
+      "ticker": "SCAT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-19",
+      "accession": "0001929980-26-000479:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133239/000192998026000479/scacii_s1a.htm"
+    },
+    {
+      "company": "XCF Global, Inc.",
+      "ticker": "SAFX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-19",
+      "accession": "0001493152-26-039112:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2019793/000149315226039112/forms-1.htm"
+    },
+    {
+      "company": "NorthStrive Acquisition Corp I.  (NSAI, NSAIU)",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-19",
+      "accession": "0001213900-26-091457:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133719/000121390026091457/ea0298151-04.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Lyntris Inc.",
+      "ticker": "LYNX",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-19",
+      "accession": "0001193125-26-356916:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2132582/000119312526356916/d23330d424b4.htm",
+      "offerPrice": 17.5,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Alliance Laundry Holdings Inc.",
+      "ticker": "ALH",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-19",
+      "accession": "0001104659-26-098828:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1317685/000110465926098828/tm2613541-7_424b4.htm",
+      "offerPrice": 23.5,
+      "offerPriceChecked": 2
+    },
     {
       "company": "Karman Line Acquisition Corp.",
       "ticker": "XTER",

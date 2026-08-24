@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-08-24 05:54:07 KST",
+  "updatedAtKst": "2026-08-24 14:25:55 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7721,
+  "tradeCount": 7715,
   "politicianCount": 165,
   "rankings": [
     {
@@ -2993,8 +2993,8 @@
       "party": "R",
       "committees": [],
       "district": "OK01",
-      "tradeCount": 234,
-      "buyCount": 170,
+      "tradeCount": 229,
+      "buyCount": 165,
       "sellCount": 57,
       "recentTrades": [
         {
@@ -19279,9 +19279,9 @@
       "party": "R",
       "committees": [],
       "district": "TX04",
-      "tradeCount": 28,
+      "tradeCount": 27,
       "buyCount": 10,
-      "sellCount": 18,
+      "sellCount": 17,
       "recentTrades": [
         {
           "politician": "Patrick Fallon",
@@ -41046,7 +41046,7 @@
     },
     "COST": {
       "ticker": "COST",
-      "netBuys": 23,
+      "netBuys": 22,
       "netSells": 11,
       "politicianCount": 21,
       "trades": [
@@ -57823,7 +57823,7 @@
     },
     "CB": {
       "ticker": "CB",
-      "netBuys": 11,
+      "netBuys": 10,
       "netSells": 5,
       "politicianCount": 13,
       "trades": [
@@ -58081,23 +58081,6 @@
           "district": "NC06",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "CB",
-          "asset": "Chubb limited",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-08-25",
-          "disclosureDate": "08/26/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019490.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -87460,7 +87443,7 @@
     },
     "TXN": {
       "ticker": "TXN",
-      "netBuys": 24,
+      "netBuys": 23,
       "netSells": 10,
       "politicianCount": 15,
       "trades": [
@@ -107320,7 +107303,7 @@
     },
     "LMT": {
       "ticker": "LMT",
-      "netBuys": 20,
+      "netBuys": 19,
       "netSells": 4,
       "politicianCount": 12,
       "trades": [
@@ -107714,23 +107697,6 @@
           "district": "NC06",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "LMT",
-          "asset": "lockheed Martin Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001",
-          "amountMid": 100001,
-          "transactionDate": "2021-08-25",
-          "disclosureDate": "08/26/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019490.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -115863,8 +115829,8 @@
     "DE": {
       "ticker": "DE",
       "netBuys": 6,
-      "netSells": 11,
-      "politicianCount": 14,
+      "netSells": 10,
+      "politicianCount": 13,
       "trades": [
         {
           "politician": "Julie Johnson",
@@ -116135,23 +116101,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023020.pdf",
           "district": "WA04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "DE",
-          "asset": "Deere & Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001",
-          "amountMid": 100001,
-          "transactionDate": "2021-08-25",
-          "disclosureDate": "08/25/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019418.pdf",
-          "district": "TX04",
           "source": "house_ptr",
           "party": "R"
         }
@@ -155522,7 +155471,7 @@
     },
     "AHCO": {
       "ticker": "AHCO",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 3,
       "politicianCount": 2,
       "trades": [
@@ -155573,23 +155522,6 @@
           "disclosureDate": "04/23/2022",
           "owner": "Dependent Child",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020995.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "AHCO",
-          "asset": "AdaptHealth Corp.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-08-25",
-          "disclosureDate": "08/26/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019490.pdf",
           "district": "OK01",
           "source": "house_ptr",
           "party": "R"

@@ -1,10 +1,469 @@
 {
-  "updatedAtKst": "2026-08-24 14:05 KST",
-  "lastFileDate": "2026-08-21",
-  "count": 1320,
+  "updatedAtKst": "2026-08-25 13:57 KST",
+  "lastFileDate": "2026-08-24",
+  "count": 1343,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만.",
   "events": [
+    {
+      "ticker": "APO",
+      "company": "Apollo Global Management, Inc.  (APO, APOS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001858681-26-000048",
+      "link": "https://www.sec.gov/Archives/edgar/data/1858681/000185868126000048/apo-20260824.htm"
+    },
+    {
+      "ticker": "AAOI",
+      "company": "APPLIED OPTOELECTRONICS, INC.  (AAOI)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001683168-26-006693",
+      "link": "https://www.sec.gov/Archives/edgar/data/1158114/000168316826006693/aaoi_8k.htm"
+    },
+    {
+      "ticker": "PM",
+      "company": "Philip Morris International Inc.  (PM)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001628280-26-058513",
+      "link": "https://www.sec.gov/Archives/edgar/data/1413329/000162828026058513/pm-20260824.htm"
+    },
+    {
+      "ticker": "ZG",
+      "company": "ZILLOW GROUP, INC.  (Z, ZG)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001617640-26-000056",
+      "link": "https://www.sec.gov/Archives/edgar/data/1617640/000161764026000056/z-20260822.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001564708-26-000186",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000186/nws-20260821.htm",
+      "kind": "buyback",
+      "amountUsd": 1000000000.0,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "BMNR",
+      "company": "BITMINE IMMERSION TECHNOLOGIES, INC.  (BMNP, BMNR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001493152-26-039789",
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226039789/form8-k.htm"
+    },
+    {
+      "ticker": "BAH",
+      "company": "Booz Allen Hamilton Holding Corp  (BAH)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001443646-26-000058",
+      "link": "https://www.sec.gov/Archives/edgar/data/1443646/000144364626000058/bah-20260824.htm"
+    },
+    {
+      "ticker": "EXR",
+      "company": "Extra Space Storage Inc.  (EXR)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001289490-26-000058",
+      "link": "https://www.sec.gov/Archives/edgar/data/1289490/000128949026000058/exr-20260824.htm"
+    },
+    {
+      "ticker": "PGAC",
+      "company": "PANTAGES CAPITAL ACQUISITION Corp  (PGAC, PGACR, PGACU)",
+      "items": [
+        {
+          "code": "3.01",
+          "label": "상장폐지·규정 미준수"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001213900-26-093072",
+      "link": "https://www.sec.gov/Archives/edgar/data/2030829/000121390026093072/ea0303095-8k_pantages.htm"
+    },
+    {
+      "ticker": "PFGC",
+      "company": "Performance Food Group Co  (PFGC)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001193125-26-363739",
+      "link": "https://www.sec.gov/Archives/edgar/data/1618673/000119312526363739/pfgc-20260824.htm"
+    },
+    {
+      "ticker": "EVRG",
+      "company": "Evergy, Inc.  (EVRG)",
+      "items": [
+        {
+          "code": "1.02",
+          "label": "중요계약 종료"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001193125-26-363625",
+      "link": "https://www.sec.gov/Archives/edgar/data/1711269/000119312526363625/d417229d8k.htm"
+    },
+    {
+      "ticker": "AHR",
+      "company": "American Healthcare REIT, Inc.  (AHR)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001193125-26-363616",
+      "link": "https://www.sec.gov/Archives/edgar/data/1632970/000119312526363616/ahr-20260820.htm"
+    },
+    {
+      "ticker": "UHAL",
+      "company": "U-Haul Holding Co /NV/  (UHAL, UHAL-B)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001193125-26-363558",
+      "link": "https://www.sec.gov/Archives/edgar/data/4457/000119312526363558/uhal-20260820.htm"
+    },
+    {
+      "ticker": "MSTR",
+      "company": "Strategy Inc  (MSTR, STRC, STRD, STRF, STRK)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001193125-26-361845",
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526361845/mstr-20260824.htm",
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "AMRZ",
+      "company": "Amrize Ltd  (AMRZ)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001140361-26-034208",
+      "link": "https://www.sec.gov/Archives/edgar/data/2035989/000114036126034208/ef20080964_8k.htm"
+    },
+    {
+      "ticker": "TSN",
+      "company": "TYSON FOODS, INC.  (TSN)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001140361-26-034204",
+      "link": "https://www.sec.gov/Archives/edgar/data/100493/000114036126034204/ef20080899_8k.htm"
+    },
+    {
+      "ticker": "TSN",
+      "company": "TYSON FOODS, INC.  (TSN)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001140361-26-034195",
+      "link": "https://www.sec.gov/Archives/edgar/data/100493/000114036126034195/ef20080885_8k.htm"
+    },
+    {
+      "ticker": "CHTR",
+      "company": "CHARTER COMMUNICATIONS, INC. /MO/  (CHTR, CHTRP)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0001104659-26-100328",
+      "link": "https://www.sec.gov/Archives/edgar/data/1091667/000110465926100328/tm2623853d1_8k.htm"
+    },
+    {
+      "ticker": "AEE",
+      "company": "AMEREN CORP  (AEE)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-08-24",
+      "accession": "0001104659-26-100236",
+      "link": "https://www.sec.gov/Archives/edgar/data/1002910/000110465926100236/tm2623767d1_8k.htm"
+    },
+    {
+      "ticker": "MLM",
+      "company": "MARTIN MARIETTA MATERIALS INC  (MLM)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.01",
+          "label": "자산 인수·처분"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0000950157-26-000946",
+      "link": "https://www.sec.gov/Archives/edgar/data/916076/000095015726000946/form8-k.htm"
+    },
+    {
+      "ticker": "QXO",
+      "company": "QXO, Inc.  (QXO, QXO-PB)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0000950142-26-002421",
+      "link": "https://www.sec.gov/Archives/edgar/data/1236275/000095014226002421/eh260822995_8k.htm"
+    },
+    {
+      "ticker": "JKHY",
+      "company": "JACK HENRY & ASSOCIATES INC  (JKHY)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0000779152-26-000060",
+      "link": "https://www.sec.gov/Archives/edgar/data/779152/000077915226000060/jkhy-20260820.htm"
+    },
+    {
+      "ticker": "HRL",
+      "company": "HORMEL FOODS CORP /DE/  (HRL)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-08-24",
+      "accession": "0000048465-26-000049",
+      "link": "https://www.sec.gov/Archives/edgar/data/48465/000004846526000049/hrl-20260824.htm"
+    },
     {
       "ticker": "Q",
       "company": "Qnity Electronics, Inc.  (Q)",

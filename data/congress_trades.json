@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-08-25 06:03:44 KST",
+  "updatedAtKst": "2026-08-25 14:18:38 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7715,
+  "tradeCount": 7714,
   "politicianCount": 165,
   "rankings": [
     {
@@ -12,7 +12,7 @@
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 111.65,
+      "estReturnPct": 128.66,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
@@ -32,14 +32,14 @@
     },
     {
       "rank": 3,
-      "id": "house-tim-moore",
-      "name": "Tim Moore",
+      "id": "house-bruce-westerman",
+      "name": "Bruce Westerman",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 64.76,
-      "buyCount": 49,
-      "sellCount": 28,
-      "tradeCount": 77,
+      "estReturnPct": 74.32,
+      "buyCount": 51,
+      "sellCount": 47,
+      "tradeCount": 98,
       "committees": []
     },
     {
@@ -68,14 +68,14 @@
     },
     {
       "rank": 6,
-      "id": "house-bruce-westerman",
-      "name": "Bruce Westerman",
+      "id": "house-tim-moore",
+      "name": "Tim Moore",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 36.31,
-      "buyCount": 51,
-      "sellCount": 47,
-      "tradeCount": 98,
+      "estReturnPct": 36.41,
+      "buyCount": 49,
+      "sellCount": 28,
+      "tradeCount": 77,
       "committees": []
     },
     {
@@ -96,7 +96,7 @@
       "name": "Jared Moskowitz",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 34.72,
+      "estReturnPct": 34.03,
       "buyCount": 128,
       "sellCount": 57,
       "tradeCount": 185,
@@ -178,32 +178,6 @@
     },
     {
       "rank": 15,
-      "id": "house-josh-gottheimer",
-      "name": "Josh Gottheimer",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 19.91,
-      "buyCount": 426,
-      "sellCount": 148,
-      "tradeCount": 575,
-      "committees": [
-        "Financial Services"
-      ]
-    },
-    {
-      "rank": 16,
-      "id": "house-lisa-mcclain",
-      "name": "Lisa McClain",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 19.1,
-      "buyCount": 332,
-      "sellCount": 332,
-      "tradeCount": 664,
-      "committees": []
-    },
-    {
-      "rank": 17,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
@@ -214,6 +188,32 @@
       "tradeCount": 152,
       "committees": [
         "Homeland Security"
+      ]
+    },
+    {
+      "rank": 16,
+      "id": "house-lisa-mcclain",
+      "name": "Lisa McClain",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 18.54,
+      "buyCount": 332,
+      "sellCount": 332,
+      "tradeCount": 664,
+      "committees": []
+    },
+    {
+      "rank": 17,
+      "id": "house-josh-gottheimer",
+      "name": "Josh Gottheimer",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 17.29,
+      "buyCount": 426,
+      "sellCount": 148,
+      "tradeCount": 575,
+      "committees": [
+        "Financial Services"
       ]
     },
     {
@@ -278,6 +278,18 @@
     },
     {
       "rank": 23,
+      "id": "house-carol-devine-miller",
+      "name": "Carol Devine Miller",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 13.79,
+      "buyCount": 16,
+      "sellCount": 14,
+      "tradeCount": 30,
+      "committees": []
+    },
+    {
+      "rank": 24,
       "id": "house-david-j-taylor",
       "name": "David J. Taylor",
       "chamber": "House",
@@ -289,7 +301,7 @@
       "committees": []
     },
     {
-      "rank": 24,
+      "rank": 25,
       "id": "house-gilbert-cisneros",
       "name": "Gilbert Cisneros",
       "chamber": "House",
@@ -301,7 +313,7 @@
       "committees": []
     },
     {
-      "rank": 25,
+      "rank": 26,
       "id": "house-dan-newhouse",
       "name": "Dan Newhouse",
       "chamber": "House",
@@ -313,7 +325,7 @@
       "committees": []
     },
     {
-      "rank": 26,
+      "rank": 27,
       "id": "house-rick-larsen",
       "name": "Rick Larsen",
       "chamber": "House",
@@ -325,7 +337,7 @@
       "committees": []
     },
     {
-      "rank": 27,
+      "rank": 28,
       "id": "house-sheri-biggs",
       "name": "Sheri Biggs",
       "chamber": "House",
@@ -337,7 +349,7 @@
       "committees": []
     },
     {
-      "rank": 28,
+      "rank": 29,
       "id": "house-michael-rulli",
       "name": "Michael Rulli",
       "chamber": "House",
@@ -349,7 +361,7 @@
       "committees": []
     },
     {
-      "rank": 29,
+      "rank": 30,
       "id": "house-lloyd-doggett",
       "name": "Lloyd Doggett",
       "chamber": "House",
@@ -358,18 +370,6 @@
       "buyCount": 69,
       "sellCount": 0,
       "tradeCount": 69,
-      "committees": []
-    },
-    {
-      "rank": 30,
-      "id": "house-jonathan-jackson",
-      "name": "Jonathan Jackson",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 5.9,
-      "buyCount": 51,
-      "sellCount": 36,
-      "tradeCount": 87,
       "committees": []
     },
     {
@@ -398,6 +398,18 @@
     },
     {
       "rank": 33,
+      "id": "house-jonathan-jackson",
+      "name": "Jonathan Jackson",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 0.89,
+      "buyCount": 51,
+      "sellCount": 36,
+      "tradeCount": 87,
+      "committees": []
+    },
+    {
+      "rank": 34,
       "id": "house-april-mcclain-delaney",
       "name": "April McClain Delaney",
       "chamber": "House",
@@ -406,18 +418,6 @@
       "buyCount": 129,
       "sellCount": 6,
       "tradeCount": 136,
-      "committees": []
-    },
-    {
-      "rank": 34,
-      "id": "house-carol-devine-miller",
-      "name": "Carol Devine Miller",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": -2.69,
-      "buyCount": 16,
-      "sellCount": 14,
-      "tradeCount": 30,
       "committees": []
     },
     {
@@ -858,7 +858,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 19.1
+      "estReturnPct": 18.54
     },
     {
       "id": "house-josh-gottheimer",
@@ -1214,7 +1214,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 19.91
+      "estReturnPct": 17.29
     },
     {
       "id": "house-gilbert-cisneros",
@@ -4754,7 +4754,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 34.72
+      "estReturnPct": 34.03
     },
     {
       "id": "house-marjorie-taylor-greene",
@@ -7234,7 +7234,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 111.65
+      "estReturnPct": 128.66
     },
     {
       "id": "house-bruce-westerman",
@@ -7588,7 +7588,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 36.31
+      "estReturnPct": 74.32
     },
     {
       "id": "house-greg-stanton",
@@ -8650,7 +8650,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 5.9
+      "estReturnPct": 0.89
     },
     {
       "id": "house-christopher-l-jacobs",
@@ -9358,7 +9358,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 64.76
+      "estReturnPct": 36.41
     },
     {
       "id": "house-mark-dr-green",
@@ -15025,360 +15025,6 @@
       "estReturnPct": -9.0
     },
     {
-      "id": "house-thomas-suozzi",
-      "name": "Thomas Suozzi",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "NY03",
-      "tradeCount": 48,
-      "buyCount": 23,
-      "sellCount": 25,
-      "recentTrades": [
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-02-18",
-          "disclosureDate": "02/19/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034188.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "URI",
-          "asset": "United Rentals, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-02-18",
-          "disclosureDate": "02/19/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034188.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "NEE",
-          "asset": "NextEra Energy, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-10-14",
-          "disclosureDate": "10/16/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033321.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "WY",
-          "asset": "Weyerhaeuser Company Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-10-14",
-          "disclosureDate": "10/16/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033321.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "GIC",
-          "asset": "Global Industrial Company Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-03-31",
-          "disclosureDate": "04/01/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030188.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "CVS",
-          "asset": "CVS Health Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-11-29",
-          "disclosureDate": "11/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021165.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "VZ",
-          "asset": "Verizon Communications Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-11-10",
-          "disclosureDate": "11/21/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021165.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "GS",
-          "asset": "Goldman Sachs Group, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-05-16",
-          "disclosureDate": "05/17/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "UPST",
-          "asset": "Upstart Holdings, Inc. - Common stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-05-16",
-          "disclosureDate": "05/17/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "GNRC",
-          "asset": "Generac Holdlings Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-05-05",
-          "disclosureDate": "05/15/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "PPG",
-          "asset": "PPG Industries, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 -",
-          "amountMid": 15001,
-          "transactionDate": "2022-05-05",
-          "disclosureDate": "05/15/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "UPST",
-          "asset": "Upstart Holdings, Inc. - Common stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-05-05",
-          "disclosureDate": "05/15/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "AFRM",
-          "asset": "Affirm Holdings, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-03-04",
-          "disclosureDate": "03/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "BA",
-          "asset": "Boeing Company",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-03-04",
-          "disclosureDate": "03/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "GNRC",
-          "asset": "Generac Holdlings Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-03-04",
-          "disclosureDate": "03/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "GFS",
-          "asset": "GlobalFoundries Inc. - Ordinary Share",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-03-04",
-          "disclosureDate": "03/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "NVDA",
-          "asset": "NVIDIA Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-03-04",
-          "disclosureDate": "03/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "RH",
-          "asset": "RH",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-03-04",
-          "disclosureDate": "03/30/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "DOW",
-          "asset": "Dow Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-01-07",
-          "disclosureDate": "01/15/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020253.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "TJX",
-          "asset": "TJX Companies, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2022-01-07",
-          "disclosureDate": "01/15/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020253.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-pete-sessions",
       "name": "Pete Sessions",
       "chamber": "House",
@@ -15728,6 +15374,360 @@
           "district": "TX17",
           "source": "house_ptr",
           "party": "R"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-thomas-suozzi",
+      "name": "Thomas Suozzi",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "NY03",
+      "tradeCount": 47,
+      "buyCount": 22,
+      "sellCount": 25,
+      "recentTrades": [
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-02-18",
+          "disclosureDate": "02/19/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034188.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "URI",
+          "asset": "United Rentals, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-02-18",
+          "disclosureDate": "02/19/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034188.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "NEE",
+          "asset": "NextEra Energy, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-10-14",
+          "disclosureDate": "10/16/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033321.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "WY",
+          "asset": "Weyerhaeuser Company Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-10-14",
+          "disclosureDate": "10/16/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033321.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "GIC",
+          "asset": "Global Industrial Company Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-03-31",
+          "disclosureDate": "04/01/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030188.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "CVS",
+          "asset": "CVS Health Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-11-29",
+          "disclosureDate": "11/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021165.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "VZ",
+          "asset": "Verizon Communications Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-11-10",
+          "disclosureDate": "11/21/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021165.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "GS",
+          "asset": "Goldman Sachs Group, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-05-16",
+          "disclosureDate": "05/17/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "UPST",
+          "asset": "Upstart Holdings, Inc. - Common stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-05-16",
+          "disclosureDate": "05/17/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "GNRC",
+          "asset": "Generac Holdlings Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-05-05",
+          "disclosureDate": "05/15/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "PPG",
+          "asset": "PPG Industries, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 -",
+          "amountMid": 15001,
+          "transactionDate": "2022-05-05",
+          "disclosureDate": "05/15/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "UPST",
+          "asset": "Upstart Holdings, Inc. - Common stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-05-05",
+          "disclosureDate": "05/15/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "AFRM",
+          "asset": "Affirm Holdings, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-03-04",
+          "disclosureDate": "03/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "BA",
+          "asset": "Boeing Company",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-03-04",
+          "disclosureDate": "03/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "GNRC",
+          "asset": "Generac Holdlings Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-03-04",
+          "disclosureDate": "03/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "GFS",
+          "asset": "GlobalFoundries Inc. - Ordinary Share",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-03-04",
+          "disclosureDate": "03/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "NVDA",
+          "asset": "NVIDIA Corporation",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-03-04",
+          "disclosureDate": "03/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "RH",
+          "asset": "RH",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-03-04",
+          "disclosureDate": "03/30/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020732.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "DOW",
+          "asset": "Dow Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-01-07",
+          "disclosureDate": "01/15/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020253.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Thomas Suozzi",
+          "chamber": "House",
+          "ticker": "TJX",
+          "asset": "TJX Companies, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2022-01-07",
+          "disclosureDate": "01/15/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020253.pdf",
+          "district": "NY03",
+          "source": "house_ptr",
+          "party": "D"
         }
       ],
       "estReturnPct": null
@@ -18562,7 +18562,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -2.69
+      "estReturnPct": 13.79
     },
     {
       "id": "house-donald-sternoff-beyer",
@@ -59980,7 +59980,7 @@
     },
     "SPOT": {
       "ticker": "SPOT",
-      "netBuys": 4,
+      "netBuys": 3,
       "netSells": 4,
       "politicianCount": 7,
       "trades": [
@@ -60099,23 +60099,6 @@
           "disclosureDate": "12/31/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020195.pdf",
-          "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Thomas Suozzi",
-          "chamber": "House",
-          "ticker": "SPOT",
-          "asset": "Spotify Technology S.A. Ordinary Shares",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-08-26",
-          "disclosureDate": "08/31/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019379.pdf",
           "district": "NY03",
           "source": "house_ptr",
           "party": "D"

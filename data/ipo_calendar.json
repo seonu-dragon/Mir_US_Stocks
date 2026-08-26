@@ -1,10 +1,100 @@
 {
-  "updatedAtKst": "2026-08-25 14:08 KST",
-  "lastFileDate": "2026-08-24",
-  "count": 671,
+  "updatedAtKst": "2026-08-26 14:08 KST",
+  "lastFileDate": "2026-08-25",
+  "count": 659,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Sadot Group Inc.",
+      "ticker": "SDOT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-25",
+      "accession": "0001731122-26-001141:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1701756/000173112226001141/e7895_s-1a.htm"
+    },
+    {
+      "company": "Sadot Group Inc.",
+      "ticker": "SDOT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-25",
+      "accession": "0001731122-26-001141:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1701756/000173112226001141/e7895_s-1a.htm"
+    },
+    {
+      "company": "Ocean Power Technologies, Inc.",
+      "ticker": "OPTT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-25",
+      "accession": "0001493152-26-040052:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1378140/000149315226040052/forms-1.htm"
+    },
+    {
+      "company": "QDM International Inc.",
+      "ticker": "QDMI",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-25",
+      "accession": "0001213900-26-093210:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1094032/000121390026093210/ea0213156-10.htm"
+    },
+    {
+      "company": "QDM International Inc.",
+      "ticker": "QDMI",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-25",
+      "accession": "0001213900-26-093210:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1094032/000121390026093210/ea0213156-10.htm"
+    },
+    {
+      "company": "Change Agents Corporation.",
+      "ticker": "CHGA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-25",
+      "accession": "0001213900-26-093149:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1630212/000121390026093149/ea0302304-s1a1_change.htm"
+    },
+    {
+      "company": "Change Agents Corporation.",
+      "ticker": "CHGA",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-25",
+      "accession": "0001213900-26-093149:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1630212/000121390026093149/ea0302304-s1a1_change.htm"
+    },
+    {
+      "company": "Enhanced Group Inc.",
+      "ticker": "ENHA",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-25",
+      "accession": "0001193125-26-364151:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1956439/000119312526364151/d38462ds1.htm"
+    },
+    {
+      "company": "Haymaker Acquisition Corp V",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-25",
+      "accession": "0001193125-26-363922:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2111838/000119312526363922/d86766ds1.htm"
+    },
     {
       "company": "Polar Power, Inc.",
       "ticker": "POLA",
@@ -6711,223 +6801,6 @@
       "fileDate": "2026-06-29",
       "accession": "0001104659-26-078781:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2136530/000110465926078781/tmb-20260622xs1a.htm"
-    },
-    {
-      "company": "Futurewave Acquisition Corp",
-      "ticker": "FWAC",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-26",
-      "accession": "0001829126-26-006890:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2116105/000182912626006890/futurewaveacq_424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 10.0,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Akari Therapeutics Plc",
-      "ticker": "AKTX",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001493152-26-030330:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1541157/000149315226030330/forms-1a.htm"
-    },
-    {
-      "company": "Akari Therapeutics Plc",
-      "ticker": "AKTX",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001493152-26-030330:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1541157/000149315226030330/forms-1a.htm"
-    },
-    {
-      "company": "JUPITER NEUROSCIENCES, INC.",
-      "ticker": "JUNS",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-26",
-      "accession": "0001493152-26-030312:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1679628/000149315226030312/forms-1.htm"
-    },
-    {
-      "company": "Idaho Copper Corp",
-      "ticker": "COPR",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001493152-26-030213:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1263364/000149315226030213/forms-1a.htm"
-    },
-    {
-      "company": "Idaho Copper Corp",
-      "ticker": "COPR",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001493152-26-030213:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1263364/000149315226030213/forms-1a.htm"
-    },
-    {
-      "company": "CREATIVE MEDICAL TECHNOLOGY HOLDINGS, INC.",
-      "ticker": "CELZ",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001477932-26-004044:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1187953/000147793226004044/celz_s1a.htm"
-    },
-    {
-      "company": "CREATIVE MEDICAL TECHNOLOGY HOLDINGS, INC.",
-      "ticker": "CELZ",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001477932-26-004044:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1187953/000147793226004044/celz_s1a.htm"
-    },
-    {
-      "company": "Professional Diversity Network, Inc.",
-      "ticker": "IPDN",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-26",
-      "accession": "0001437749-26-021738:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1546296/000143774926021738/ipdn20260623_s1.htm"
-    },
-    {
-      "company": "AMR Resources Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-26",
-      "accession": "0001213900-26-072712:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2110119/000121390026072712/ea0274132-02.htm"
-    },
-    {
-      "company": "Alopexx, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001213900-26-072480:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1880995/000121390026072480/ea0231844-03.htm"
-    },
-    {
-      "company": "Alopexx, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001213900-26-072480:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1880995/000121390026072480/ea0231844-03.htm"
-    },
-    {
-      "company": "Tenon Medical, Inc.  (TNON, TNONW)",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001213900-26-072460:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1560293/000121390026072460/ea0295959-s1a1_tenon.htm"
-    },
-    {
-      "company": "Tenon Medical, Inc.  (TNON, TNONW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001213900-26-072460:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1560293/000121390026072460/ea0295959-s1a1_tenon.htm"
-    },
-    {
-      "company": "DSC Holdings Ltd.",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-26",
-      "accession": "0001213900-26-072276:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1966041/000121390026072276/ea0200059-38.htm",
-      "offerPrice": 17.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "ITG, Inc./DE/",
-      "ticker": "ITG",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001193125-26-285598:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2110117/000119312526285598/d103576ds1a.htm"
-    },
-    {
-      "company": "ITG, Inc./DE/",
-      "ticker": "ITG",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001193125-26-285598:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2110117/000119312526285598/d103576ds1a.htm"
-    },
-    {
-      "company": "Columbus Circle Capital Corp III",
-      "ticker": "CCCT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001185185-26-002689:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2123471/000118518526002689/columbus3s1a1062626.htm"
-    },
-    {
-      "company": "Columbus Circle Capital Corp III",
-      "ticker": "CCCT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-06-26",
-      "accession": "0001185185-26-002689:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2123471/000118518526002689/columbus3s1a1062626.htm"
-    },
-    {
-      "company": "Z Squared Inc.",
-      "ticker": "ZSQR",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-06-26",
-      "accession": "0001185185-26-002685:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1759186/000118518526002685/zsquareds1062626.htm"
-    },
-    {
-      "company": "DPC Holdings Ltd",
-      "ticker": "DPC",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-06-26",
-      "accession": "0001104659-26-077968:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2107018/000110465926077968/tm269965-19_424b4.htm",
-      "offerPrice": 33.0,
-      "offerPriceChecked": 2
     }
   ]
 }

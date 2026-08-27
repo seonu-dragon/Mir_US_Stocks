@@ -1,10 +1,40 @@
 {
-  "updatedAtKst": "2026-08-23 16:46 KST",
-  "lastFileDate": "2026.10.01",
-  "count": 31,
+  "updatedAtKst": "2026-08-28 00:24 KST",
+  "lastFileDate": "2026.10.15",
+  "count": 32,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다).",
   "ipos": [
+    {
+      "company": "SK증권스팩14호",
+      "ticker": "034730",
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "SK증권",
+      "fileDate": "2026.10.15",
+      "accession": "kr-ipo-bidding-SK증권스팩14호",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        2000,
+        2000
+      ]
+    },
+    {
+      "company": "래블업",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "NH투자증권",
+      "fileDate": "2026.10.12",
+      "accession": "kr-ipo-bidding-래블업",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        20000,
+        23000
+      ]
+    },
     {
       "company": "멜콘(구.에스앤에프솔루션)",
       "ticker": null,
@@ -18,6 +48,36 @@
       "offerPriceBand": [
         10700,
         12300
+      ]
+    },
+    {
+      "company": "엘리스그룹",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "미래에셋증권,삼성증권",
+      "fileDate": "2026.09.18",
+      "accession": "kr-ipo-bidding-엘리스그룹",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        70400,
+        90500
+      ]
+    },
+    {
+      "company": "브릴스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "IBK투자증권",
+      "fileDate": "2026.09.17",
+      "accession": "kr-ipo-bidding-브릴스",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        16500,
+        19500
       ]
     },
     {
@@ -81,6 +141,21 @@
       ]
     },
     {
+      "company": "NH스팩34호",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "NH투자증권",
+      "fileDate": "2026.09.11",
+      "accession": "kr-ipo-listed-NH스팩34호",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        2000,
+        2000
+      ]
+    },
+    {
       "company": "네오사피엔스",
       "ticker": null,
       "stage": "filed",
@@ -126,55 +201,21 @@
       ]
     },
     {
-      "company": "브릴스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "IBK투자증권",
-      "fileDate": "2026.09.08",
-      "accession": "kr-ipo-bidding-브릴스",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        16500,
-        19500
-      ]
-    },
-    {
-      "company": "NH스팩34호",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "NH투자증권",
-      "fileDate": "2026.09.01",
-      "accession": "kr-ipo-bidding-NH스팩34호",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        2000,
-        2000
-      ]
-    },
-    {
       "company": "스카이랩스",
       "ticker": null,
       "stage": "filed",
-      "stageLabel": "공모 청약 예정",
+      "stageLabel": "신규 상장 예정",
       "form": "한국투자증권",
-      "fileDate": "2026.08.26",
-      "accession": "kr-ipo-bidding-스카이랩스",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        13000,
-        16000
-      ]
+      "fileDate": "2026.09.04",
+      "accession": "kr-ipo-listed-스카이랩스",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 10000
     },
     {
       "company": "해치텍",
       "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "DB증권",
       "fileDate": "2026.08.25",
       "accession": "kr-ipo-listed-해치텍",
@@ -183,9 +224,9 @@
     },
     {
       "company": "니어스랩",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "신규 상장 예정",
+      "ticker": "417030",
+      "stage": "priced",
+      "stageLabel": "신규 상장 완료",
       "form": "삼성증권",
       "fileDate": "2026.08.24",
       "accession": "kr-ipo-listed-니어스랩",
@@ -351,7 +392,7 @@
       "ticker": "477850",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "미래에셋증권,현대차증권",
+      "form": "",
       "fileDate": "2026.05.20",
       "accession": "kr-ipo-listed-마키나락스",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -362,33 +403,11 @@
       "ticker": "487580",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "NH투자증권",
+      "form": "",
       "fileDate": "2026.05.14",
       "accession": "kr-ipo-listed-폴레드",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 5000
-    },
-    {
-      "company": "코스모로보틱스(구.엑소아틀레트아시아)",
-      "ticker": "439960",
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "유진투자증권,NH투자증권,유안타증권",
-      "fileDate": "2026.05.11",
-      "accession": "kr-ipo-listed-코스모로보틱스(구.엑소아틀레트아시아)",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 6000
-    },
-    {
-      "company": "신한스팩18호",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.04.30",
-      "accession": "kr-ipo-listed-신한스팩18호",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 2000
     }
   ]
 }

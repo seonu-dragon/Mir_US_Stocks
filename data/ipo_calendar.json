@@ -1,10 +1,107 @@
 {
-  "updatedAtKst": "2026-08-26 14:08 KST",
-  "lastFileDate": "2026-08-25",
-  "count": 659,
+  "updatedAtKst": "2026-08-28 00:29 KST",
+  "lastFileDate": "2026-08-27",
+  "count": 668,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Check-Cap Ltd",
+      "ticker": "MBAI",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-27",
+      "accession": "0001213900-26-094129:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1610590/000121390026094129/ea0303478-424b4_checkcap.htm",
+      "offerPrice": 6.5,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "RZ Wellness Ltd",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-26",
+      "accession": "0002130959-26-000007:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130959/000213095926000007/rz_s1a1.htm"
+    },
+    {
+      "company": "RZ Wellness Ltd",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-26",
+      "accession": "0002130959-26-000007:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130959/000213095926000007/rz_s1a1.htm"
+    },
+    {
+      "company": "Southern Cross Acquisition II Corp.",
+      "ticker": "SCAT",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-26",
+      "accession": "0001929980-26-000507:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133239/000192998026000507/scacii_424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Dare Bioscience, Inc.",
+      "ticker": "DARE",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-26",
+      "accession": "0001493152-26-040265:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1401914/000149315226040265/forms-1.htm"
+    },
+    {
+      "company": "Velos Acquisition I Corp.  (VLOS, VLOSU, VLOSW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-26",
+      "accession": "0001213900-26-094011:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2016072/000121390026094011/ea0302640-s1_velos1.htm"
+    },
+    {
+      "company": "JATT III Acquisition Corp",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-26",
+      "accession": "0001213900-26-093949:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2145659/000121390026093949/ea0302980-424b4_jatt3.htm",
+      "offerPrice": 10.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Starfighters Space, Inc.",
+      "ticker": "FJET",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-26",
+      "accession": "0001062993-26-004648:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1947016/000106299326004648/forms1a.htm"
+    },
+    {
+      "company": "Starfighters Space, Inc.",
+      "ticker": "FJET",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-26",
+      "accession": "0001062993-26-004648:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1947016/000106299326004648/forms1a.htm"
+    },
     {
       "company": "Sadot Group Inc.",
       "ticker": "SDOT",

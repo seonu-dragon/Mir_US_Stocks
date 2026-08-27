@@ -872,30 +872,14 @@ def build_one(meta: dict):
             if dividends:
                 meta["dividends"] = dividends
         else:
-            rows = UD.synthetic_history(
-                symbol,
-                meta.get("quotePrice"),
-                meta.get("quoteChangePct"),
-                meta.get("quoteVolume"),
-            )
-            meta["historySource"] = "snapshot"
+            # 공시 7일 창에서 내려간 종목도 직전 실측이 있으면 합성으로 덮지 않는다.
+            rows = UD.history_from_cache_or_synthetic(symbol, meta, load_cached_history)
     except Exception as exc:
         # 실측 fetch 실패 시 합성 대신 직전 실측 이력을 재사용한다(데이터 정직성).
-        cached = load_cached_history(symbol) if meta.get("preferHistory") else None
-        if cached:
-            rows, cached_divs = cached
-            meta["historySource"] = "yahoo-cache"
-            if cached_divs:
-                meta["dividends"] = cached_divs
+        rows = UD.history_from_cache_or_synthetic(symbol, meta, load_cached_history)
+        if meta.get("historySource") == "yahoo-cache":
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
-            rows = UD.synthetic_history(
-                symbol,
-                meta.get("quotePrice"),
-                meta.get("quoteChangePct"),
-                meta.get("quoteVolume"),
-            )
-            meta["historySource"] = "snapshot"
             error = f"{symbol}: {exc}"
 
     if meta.get("preferFundamentals"):
@@ -1434,34 +1418,19 @@ def build_snapshot(limit: int | None = None) -> dict:
             if err:
                 errors.append(err)
 
-    # 데이터 정직성 게이트(US update_data 와 동일): 실측 이력(yahoo/yahoo-cache)
-    # 종목 수가 직전 스냅샷보다 10% 이상 급감하면 발행 중단. 절대 임계(합성 5%)는
-    # KR 평상시 실패분(야후에 아예 없는 초소형·공시추가 종목 ~380개)에
-    # 오탐했다(2026-07-23) — "어제보다 급감"만 이상으로 본다.
-    prefer_total = sum(1 for m in metas if m.get("preferHistory"))
-    cached_count = sum(1 for s in stocks if s.get("historySource") == "yahoo-cache")
-    fresh_real = sum(1 for s in stocks if s.get("historySource") in {"yahoo", "yahoo-cache"})
-    fabricated = sum(
-        1 for s in stocks
-        if "chartSeries" in s and s.get("historySource") not in {"yahoo", "yahoo-cache"}
-    )
-    prev_real = 0
+    # 데이터 정직성 게이트: 오늘 preferHistory 티커만 직전과 비교한다.
+    # 스냅샷 전체 실측 수와 비교하면 공시 창이 줄어든 날을 야후 스로틀로
+    # 오인해 발행이 잠긴다(2026-08-24~26: 1842 vs 전체 3047, 대상은 2226).
+    prev_stocks = []
     try:
-        prev = json.loads(OUT.read_text(encoding="utf-8"))
-        prev_real = sum(
-            1 for s in prev.get("stocks") or []
-            if s.get("historySource") in {"yahoo", "yahoo-cache"}
-        )
+        prev_stocks = json.loads(OUT.read_text(encoding="utf-8")).get("stocks") or []
     except Exception:
         pass
-    print(f"[이력] preferHistory {prefer_total} · 실측 {fresh_real}(직전 {prev_real}) · "
-          f"실측 재사용 {cached_count} · 합성 잔존 {fabricated}")
+    prefer_tickers = {m["symbol"] for m in metas if m.get("preferHistory")}
+    honesty = UD.enforce_history_honesty_gate(stocks, prefer_tickers, prev_stocks)
     print(UD.history_fetch_summary(_history_stats, _history_stats_lock))
-    if prev_real >= 100 and fresh_real < prev_real * 0.9:
-        raise SystemExit(
-            f"[중단] 실측 이력 {fresh_real} < 직전 {prev_real}의 90% — "
-            "야후 대규모 스로틀 의심. 직전 스냅샷을 유지하기 위해 발행하지 않는다."
-        )
+    cached_count = honesty["cached_count"]
+    fabricated = honesty["fabricated"]
 
     # Korean ETF relative-strength + leveraged catalog (ETF RS / RRG / 레버리지 pages).
     etf_relative, lev_stocks, lev_catalog = build_kr_etf_section()

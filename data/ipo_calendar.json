@@ -1,10 +1,82 @@
 {
-  "updatedAtKst": "2026-08-28 00:29 KST",
-  "lastFileDate": "2026-08-27",
-  "count": 668,
+  "updatedAtKst": "2026-08-29 01:54 KST",
+  "lastFileDate": "2026-08-28",
+  "count": 679,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Amaero Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-28",
+      "accession": "0001193125-26-372368:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141616/000119312526372368/ck0002141616-20260828.htm"
+    },
+    {
+      "company": "Youmi Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-27",
+      "accession": "0001520138-26-000375:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000375/youmi-20260826_s1a3.htm"
+    },
+    {
+      "company": "Youmi Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-27",
+      "accession": "0001520138-26-000375:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2137360/000152013826000375/youmi-20260826_s1a3.htm"
+    },
+    {
+      "company": "Reliance Global Group, Inc.",
+      "ticker": "EZRA",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-27",
+      "accession": "0001493152-26-040436:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1812727/000149315226040436/forms-1.htm"
+    },
+    {
+      "company": "FullPAC, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-27",
+      "accession": "0001493152-26-040434:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2076148/000149315226040434/forms-1a.htm"
+    },
+    {
+      "company": "FullPAC, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-27",
+      "accession": "0001493152-26-040434:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2076148/000149315226040434/forms-1a.htm"
+    },
+    {
+      "company": "Republic Power Group Ltd",
+      "ticker": "RPGL",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-27",
+      "accession": "0001213900-26-094237:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1912884/000121390026094237/ea0303554-424b4_republic.htm",
+      "offerPrice": 4.0,
+      "offerPriceChecked": 2
+    },
     {
       "company": "Check-Cap Ltd",
       "ticker": "MBAI",
@@ -16,6 +88,50 @@
       "link": "https://www.sec.gov/Archives/edgar/data/1610590/000121390026094129/ea0303478-424b4_checkcap.htm",
       "offerPrice": 6.5,
       "offerPriceChecked": 2
+    },
+    {
+      "company": "Rainier Acquisition Corp",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-27",
+      "accession": "0001104659-26-102498:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2147219/000110465926102498/tmb-20260821x424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "COLONY BANKCORP INC",
+      "ticker": "CBAN",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-27",
+      "accession": "0001104659-26-102490:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/711669/000110465926102490/tm2622961-7_424b4.htm",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "USBC, Inc.",
+      "ticker": "USBC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-27",
+      "accession": "0001074828-26-000074:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000074/usbc-20260827.htm"
+    },
+    {
+      "company": "USBC, Inc.",
+      "ticker": "USBC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-27",
+      "accession": "0001074828-26-000074:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000074/usbc-20260827.htm"
     },
     {
       "company": "RZ Wellness Ltd",

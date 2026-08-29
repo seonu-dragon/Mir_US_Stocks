@@ -1,1 +1,1 @@
-window.KR_CONTRACTS = {"updatedAtKst":"2026-08-29 04:37 KST","source":"DART 공시 원문(document.xml) 파싱","note":"단일판매ㆍ공급계약 공시 원문에서 계약금액·최근 매출액 대비 비중을 파싱. 조건부·미공개는 제외.","count":0,"rows":[]};
+window.KR_CONTRACTS = {"updatedAtKst":"2026-08-30 00:32 KST","source":"DART 공시 원문(document.xml) 파싱","note":"단일판매ㆍ공급계약 공시 원문에서 계약금액·최근 매출액 대비 비중을 파싱. 조건부·미공개는 제외.","count":0,"rows":[]};

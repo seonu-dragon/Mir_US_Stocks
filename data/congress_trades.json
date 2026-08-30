@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-08-30 07:49:49 KST",
+  "updatedAtKst": "2026-08-30 19:08:34 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7719,
+  "tradeCount": 7713,
   "politicianCount": 165,
   "rankings": [
     {
@@ -221,9 +221,9 @@
       "chamber": "House",
       "party": "R",
       "estReturnPct": 18.67,
-      "buyCount": 147,
+      "buyCount": 142,
       "sellCount": 5,
-      "tradeCount": 152,
+      "tradeCount": 147,
       "committees": [
         "Homeland Security"
       ]
@@ -4765,8 +4765,8 @@
         "Homeland Security"
       ],
       "district": "GA14",
-      "tradeCount": 152,
-      "buyCount": 147,
+      "tradeCount": 147,
+      "buyCount": 142,
       "sellCount": 5,
       "recentTrades": [
         {
@@ -30930,105 +30930,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-suzan-k-delbene",
-      "name": "Suzan K. DelBene",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "WA01",
-      "tradeCount": 5,
-      "buyCount": 1,
-      "sellCount": 4,
-      "recentTrades": [
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-08-31",
-          "disclosureDate": "08/31/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025768.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-02-29",
-          "disclosureDate": "02/29/2024",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024581.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$250,001 - $500,000",
-          "amountMid": 375000,
-          "transactionDate": "2023-08-30",
-          "disclosureDate": "08/30/2023",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023610.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$5,000,001 - $25,000,000",
-          "amountMid": 15000000,
-          "transactionDate": "2021-09-03",
-          "disclosureDate": "09/03/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019571.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$5,000,001",
-          "amountMid": 5000001,
-          "transactionDate": "2021-08-31",
-          "disclosureDate": "08/31/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019414.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-christian-d-menefee",
       "name": "Christian D. Menefee",
       "chamber": "House",
@@ -31268,6 +31169,88 @@
           "owner": "Spouse",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026756.pdf",
           "district": "WA06",
+          "source": "house_ptr",
+          "party": "D"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-suzan-k-delbene",
+      "name": "Suzan K. DelBene",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "WA01",
+      "tradeCount": 4,
+      "buyCount": 0,
+      "sellCount": 4,
+      "recentTrades": [
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-08-31",
+          "disclosureDate": "08/31/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025768.pdf",
+          "district": "WA01",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-02-29",
+          "disclosureDate": "02/29/2024",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024581.pdf",
+          "district": "WA01",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$250,001 - $500,000",
+          "amountMid": 375000,
+          "transactionDate": "2023-08-30",
+          "disclosureDate": "08/30/2023",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023610.pdf",
+          "district": "WA01",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$5,000,001 - $25,000,000",
+          "amountMid": 15000000,
+          "transactionDate": "2021-09-03",
+          "disclosureDate": "09/03/2021",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019571.pdf",
+          "district": "WA01",
           "source": "house_ptr",
           "party": "D"
         }
@@ -35652,7 +35635,7 @@
     },
     "MSFT": {
       "ticker": "MSFT",
-      "netBuys": 77,
+      "netBuys": 76,
       "netSells": 29,
       "politicianCount": 40,
       "trades": [
@@ -49891,7 +49874,7 @@
     },
     "DIS": {
       "ticker": "DIS",
-      "netBuys": 15,
+      "netBuys": 14,
       "netSells": 19,
       "politicianCount": 23,
       "trades": [
@@ -51358,7 +51341,7 @@
     },
     "AMAT": {
       "ticker": "AMAT",
-      "netBuys": 11,
+      "netBuys": 10,
       "netSells": 4,
       "politicianCount": 11,
       "trades": [
@@ -51599,23 +51582,6 @@
           "district": "CA19",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Marjorie Taylor Greene",
-          "chamber": "House",
-          "ticker": "AMAT",
-          "asset": "Applied Materials, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-31",
-          "disclosureDate": "09/02/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019421.pdf",
-          "district": "GA14",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -78044,7 +78010,7 @@
     },
     "V": {
       "ticker": "V",
-      "netBuys": 32,
+      "netBuys": 31,
       "netSells": 11,
       "politicianCount": 22,
       "trades": [
@@ -136335,9 +136301,9 @@
     },
     "ALB": {
       "ticker": "ALB",
-      "netBuys": 2,
+      "netBuys": 1,
       "netSells": 2,
-      "politicianCount": 4,
+      "politicianCount": 3,
       "trades": [
         {
           "politician": "Jefferson Shreve",
@@ -136389,23 +136355,6 @@
           "district": "NY10",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Marjorie Taylor Greene",
-          "chamber": "House",
-          "ticker": "ALB",
-          "asset": "Albemarle Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-31",
-          "disclosureDate": "09/02/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019421.pdf",
-          "district": "GA14",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -164027,7 +163976,7 @@
     },
     "SFTBY": {
       "ticker": "SFTBY",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 1,
       "politicianCount": 1,
       "trades": [
@@ -164044,23 +163993,6 @@
           "disclosureDate": "12/20/2021",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020046.pdf",
-          "district": "GA14",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Marjorie Taylor Greene",
-          "chamber": "House",
-          "ticker": "SFTBY",
-          "asset": "Softbank Corp unsponsored ADR",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-08-31",
-          "disclosureDate": "09/02/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019421.pdf",
           "district": "GA14",
           "source": "house_ptr",
           "party": "R"
@@ -166128,7 +166060,7 @@
         "Industrials",
         "Technology"
       ],
-      "buyCount": 147,
+      "buyCount": 142,
       "sellCount": 5,
       "topTickers": [
         {
@@ -166152,22 +166084,22 @@
           "count": 4
         },
         {
-          "ticker": "AMAT",
-          "count": 4
-        },
-        {
           "ticker": "JPM",
           "count": 4
         },
         {
           "ticker": "NFLX",
           "count": 3
+        },
+        {
+          "ticker": "AMZN",
+          "count": 3
         }
       ],
       "topPoliticians": [
         {
           "name": "Marjorie Taylor Greene",
-          "count": 147
+          "count": 142
         }
       ]
     }

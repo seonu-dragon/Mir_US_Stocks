@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-08-30 21:46 KST",
+  "updatedAtKst": "2026-08-31 23:44 KST",
   "lastFileDate": "2026.10.15",
-  "count": 33,
+  "count": 34,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다).",
   "ipos": [
@@ -33,6 +33,21 @@
       "offerPriceBand": [
         20000,
         23000
+      ]
+    },
+    {
+      "company": "엠비디",
+      "ticker": "461030",
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "하나증권",
+      "fileDate": "2026.10.06",
+      "accession": "kr-ipo-bidding-엠비디",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        9400,
+        11500
       ]
     },
     {
@@ -381,7 +396,7 @@
       "ticker": "039840",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "NH투자증권,미래에셋증권",
+      "form": "",
       "fileDate": "2026.06.08",
       "accession": "kr-ipo-listed-피스피스스튜디오",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",

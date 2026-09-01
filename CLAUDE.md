@@ -80,6 +80,14 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   방식이라 `[skip ci]` 가 배포까지 막는다. 이것 때문에 12일간 자동 데이터가 사이트에
   반영되지 않은 적이 있다 — "데이터가 안 바뀐다" 는 증상이면 **레포와 라이브 사이트를
   따로** 확인할 것.
+- Deploy Pages 가 `pending` 인데 job 이 하나도 없으면 **좀비 queued run** 이
+  `concurrency: pages` 를 잡고 있는 것이다. 2026-08-08 에 그렇게 굳은 run 하나가
+  25일간 모든 배포를 pending → cancelled 로 만들었고(라이브는 07-30 에 정지), 데이터
+  워크플로우는 다 초록색이라 아무도 몰랐다. `gh run list --status queued` 로 찾아
+  `gh run cancel <id>`. 안전망: `pages-queue-watchdog.yml`(매시간 2시간↑ queued 취소)과
+  `scripts/verify_pages_deploy.py`(`publish_today.ps1` 끝에서 자동 — 좀비 정리·배포
+  대기·라이브 `today_content.json` date 확인). 발행 뒤에는 레포가 아니라 이 출력으로
+  라이브를 확인한다.
 - `data/market_snapshot.json` 이 pretty ↔ compact 로 재포맷되면서 수십만 줄 diff 가
   뜰 수 있다. 데이터 손실이 아니라 포맷 변화이므로 키 단위로 비교해 확인할 것.
 - 워크플로우의 `name:` 을 바꾸면 `deploy-pages.yml` 의 `workflow_run` 참조가 **조용히

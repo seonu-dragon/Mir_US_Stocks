@@ -524483,7 +524483,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788201300,
-          "c": 765.45
+          "c": 765.46
         },
         {
           "t": 1788201600,
@@ -525239,7 +525239,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787340600,
-          "c": 765.69
+          "c": 765.65
         },
         {
           "t": 1787578200,
@@ -526135,7 +526135,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787853600,
-          "c": 717.34
+          "c": 717.33
         },
         {
           "t": 1787855400,
@@ -526397,7 +526397,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1786131000,
-          "c": 722.89
+          "c": 723.02
         },
         {
           "t": 1786368600,
@@ -526781,7 +526781,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787851800,
-          "c": 717.34
+          "c": 717.33
         },
         {
           "t": 1787855400,
@@ -527423,7 +527423,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788206100,
-          "c": 186.42
+          "c": 186.4
         },
         {
           "t": 1788206400,
@@ -527689,7 +527689,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788204600,
-          "c": 186.42
+          "c": 186.4
         },
         {
           "t": 1788206400,
@@ -528283,7 +528283,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788204600,
-          "c": 186.42
+          "c": 186.4
         },
         {
           "t": 1788206400,
@@ -528538,10 +528538,6 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1787837400,
           "c": 188.61
-        },
-        {
-          "t": 1787923800,
-          "c": 185.69
         },
         {
           "t": 1788183000,
@@ -533487,7 +533483,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1785857400,
-          "c": 162.1
+          "c": 162.11
         },
         {
           "t": 1785861000,
@@ -535730,10 +535726,6 @@ window.MARKET_SNAPSHOT = {
           "c": 43.18
         },
         {
-          "t": 1787923800,
-          "c": 42.73
-        },
-        {
           "t": 1788183000,
           "c": 42.23
         }
@@ -537168,10 +537160,6 @@ window.MARKET_SNAPSHOT = {
           "c": 178.8
         },
         {
-          "t": 1787923800,
-          "c": 177.14
-        },
-        {
           "t": 1788183000,
           "c": 175.13
         }
@@ -537437,7 +537425,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788202200,
-          "c": 116.47
+          "c": 116.46
         },
         {
           "t": 1788202500,
@@ -537703,7 +537691,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787945400,
-          "c": 117.2
+          "c": 117.21
         },
         {
           "t": 1788183000,
@@ -538321,7 +538309,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787945400,
-          "c": 117.2
+          "c": 117.21
         },
         {
           "t": 1788183000,
@@ -540044,10 +540032,6 @@ window.MARKET_SNAPSHOT = {
           "c": 85.08
         },
         {
-          "t": 1787923800,
-          "c": 85.45
-        },
-        {
           "t": 1788183000,
           "c": 84.98
         }
@@ -541480,10 +541464,6 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1787837400,
           "c": 111.41
-        },
-        {
-          "t": 1787923800,
-          "c": 112.99
         },
         {
           "t": 1788183000,
@@ -542920,10 +542900,6 @@ window.MARKET_SNAPSHOT = {
           "c": 29.35
         },
         {
-          "t": 1787923800,
-          "c": 29.18
-        },
-        {
           "t": 1788183000,
           "c": 28.5
         }
@@ -543241,7 +543217,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788206100,
-          "c": 162.4
+          "c": 162.36
         },
         {
           "t": 1788206400,
@@ -543507,7 +543483,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788204600,
-          "c": 162.4
+          "c": 162.36
         },
         {
           "t": 1788206400,
@@ -544101,7 +544077,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1788204600,
-          "c": 162.4
+          "c": 162.36
         },
         {
           "t": 1788206400,
@@ -544356,10 +544332,6 @@ window.MARKET_SNAPSHOT = {
         {
           "t": 1787837400,
           "c": 168.23
-        },
-        {
-          "t": 1787923800,
-          "c": 162.38
         },
         {
           "t": 1788183000,
@@ -544893,7 +544865,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787945400,
-          "c": 74.32
+          "c": 74.31
         },
         {
           "t": 1788183000,
@@ -545511,7 +545483,7 @@ window.MARKET_SNAPSHOT = {
         },
         {
           "t": 1787945400,
-          "c": 74.32
+          "c": 74.31
         },
         {
           "t": 1788183000,
@@ -545796,10 +545768,6 @@ window.MARKET_SNAPSHOT = {
           "c": 74.35
         },
         {
-          "t": 1787923800,
-          "c": 74.3
-        },
-        {
           "t": 1788183000,
           "c": 73.56
         }
@@ -545807,7 +545775,7 @@ window.MARKET_SNAPSHOT = {
     }
   },
   "ai_briefing": {
-    "korea_close": "<b>📊 [국내 증시 마감 데이터 리포트] - 2026년 09월 01일 00시 18분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 국내 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6820.02 (+31.14, +0.46%)<br>  - <b>코스닥 (KOSDAQ):</b> 834.29 (-4.12, -0.49%)<br><br><b>👥 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: -1,464, 외국인: -6,434, 기관: -7,891<br>  - <b>코스닥:</b> 개인: +2,530, 외국인: -552, 기관: -2,005<br><br><b>📰 당일 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.mk.co.kr/news/stock/12140768'>케빈 워시의 첫 잭슨홀 연설…매파 발언 속에 숨은 진짜 메시지는 [불앤베어 플러스]</a> [Maekyung] <br>  2. <a href='https://www.mk.co.kr/news/stock/12140637'>정제마진 상승하자… 정유株 목표가 잇단 상향</a> [Maekyung] <br>  3. <a href='https://www.mk.co.kr/news/stock/12140636'>DB손보 통큰 주주환원에 목표가↑</a> [Maekyung] <br>  4. <a href='https://www.mk.co.kr/news/stock/12140635'>[단독] 삼성물산 美에너지 프로젝트…IMM인베 등 4곳 투자 저울질</a> [Maekyung] <br>  5. <a href='https://www.mk.co.kr/news/stock/12140634'>외국인 빠진 코스피…사모펀드 단타 주의보</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 장마감 시황 심층 브리핑]</b><br><br>📈 <b>오늘의 코스피 & 코스닥 시황 요약</b><br>├─ <b>코스피:</b> 금일 코스피는 외국인과 기관의 대규모 순매도에도 불구하고 소폭 상승하며 견조한 흐름을 보였습니다. 이는 특정 업종이나 대형주에서의 선별적 매수세가 지수 하방을 지지했거나, 프로그램 매수 등 다른 주체의 매수 유입이 지수 하락을 방어한 결과로 풀이됩니다.<br>└─ <b>코스닥:</b> 반면 코스닥은 개인 투자자의 매수세에도 불구하고 외국인과 기관의 동반 순매도 압력을 이기지 못하고 하락 마감했습니다. 시가총액 상위 기술주들의 조정이 지수 하락을 주도하며 전반적인 투자 심리가 위축된 모습입니다.<br><br>👥 <b>투자 주체별 수급 동향 해설</b><br>├─ <b>수급 상황:</b> 코스피 시장에서는 개인, 외국인, 기관 할 것 없이 모든 투자 주체가 매도 우위를 보인 이례적인 하루였습니다. 특히 외국인과 기관의 대규모 매도세에도 불구하고 코스피가 상승했다는 점은 시장의 저변에 깔린 견조한 흐름을 시사합니다. 코스닥 시장에서는 개인 투자자만이 순매수를 기록했으나, 외국인과 기관의 매도 물량을 흡수하기엔 역부족이었습니다.<br>└─ <b>매매 특징:</b> 외국인은 코스피 시장에서 6천억 원 이상, 기관은 무려 7천억 원 이상을 순매도하며 전반적인 위험 회피 성향을 나타냈습니다. 이는 뉴스에서 언급된 '외국인 빠진 코스피' 현상을 증명하는 수치이며, 연준의 매파적 스탠스 가능성과 국내 증시 단기 과열에 대한 경계감이 반영된 것으로 해석됩니다. 코스닥 시장에서도 외국인과 기관은 동반 매도세를 이어가며 시장 하락을 주도했습니다.<br><br>📰 <b>오늘의 핵심 뉴스 & 주도 테마 분석</b><br>├─ <b>주요 이슈:</b> 금일 시장은 '케빈 워시의 잭슨홀 연설'에서 비친 매파적 통화정책 기조 우려와 함께 메이저 수급 주체들의 대규모 매도세로 인한 수급 불안정성 심화에 대한 경계감이 지배적이었습니다. 기업 이슈로는 정제마진 상승에 따른 정유주의 목표가 상향, DB손보의 통큰 주주환원 정책으로 인한 목표가 상향 소식이 긍정적으로 작용하며 개별 종목의 강세를 이끌었습니다.<br>└─ <b>주도 테마:</b> 정제마진 개선 기대감에 힘입어 정유주들이 강세를 보였으며, 높은 주주환원 정책을 발표한 DB손보와 같은 보험 섹터가 주목받는 등 방어적인 성격의 가치주들이 부각되었습니다. 또한 삼성물산의 미국 에너지 프로젝트 관련 투자 소식은 건설 및 친환경 에너지 관련 섹터에 대한 단기적인 기대감을 형성했으나, 시장 전체의 강력한 주도 테마로 확산되지는 못했습니다.<br><br>🎯 <b>내일의 증시 전략 및 대응 가이드</b><br>├─ <b>전략 포인트:</b> 금일 외국인과 기관의 대규모 매도에도 코스피가 선방한 것은 긍정적이나, 전반적인 수급 불안정성은 간과할 수 없습니다. 따라서 당분간은 보수적인 관점으로 접근하되, 펀더멘털이 견고하고 명확한 성장 동력을 갖춘 개별 기업이나 실적 개선이 기대되는 섹터(정유, 보험 등)에 대한 선별적 관심을 유지하는 전략이 유효합니다. 고변동성 종목보다는 안정적인 가치주 위주로 포트폴리오를 구성하는 것이 바람직합니다.<br>└─ <b>유의 사항:</b> 미국 잭슨홀 미팅 연설의 후속 파장과 함께 간밤 미 증시의 움직임이 내일 국내 증시에 주요 영향을 미칠 것으로 예상됩니다. 또한 원/달러 환율의 변동성과 글로벌 금리 동향을 면밀히 주시하며, 외국인 투자자들의 추가적인 매도세 전환 여부를 확인하는 것이 중요합니다. 국내 사모펀드 단타성 매매에 따른 일부 종목의 변동성 확대에도 유의해야 합니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 당일 시장의 수급과 뉴스를 기반으로 AI가 분석한 보고서로 투자 권유를 뜻하지 않습니다.</i>",
+    "korea_close": "<b>📊 [국내 증시 마감 데이터 리포트] - 2026년 09월 01일 21시 56분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 국내 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6835.80 (+15.78, +0.23%)<br>  - <b>코스닥 (KOSDAQ):</b> 821.25 (-13.04, -1.56%)<br><br><b>👥 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: -5,402, 외국인: -4,968, 기관: -6,286<br>  - <b>코스닥:</b> 개인: +4,389, 외국인: -1,531, 기관: -2,787<br><br><b>📰 당일 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.mk.co.kr/news/stock/12141720'>“코스닥 상승률 신기록이라는데 내 계좌는”…한달새 15.9% 올랐다</a> [Maekyung] <br>  2. <a href='https://www.mk.co.kr/news/stock/12141713'>하이닉스 31억 vs 마이크론 144억 … 韓 감사 비용, 글로벌 위상 안맞아</a> [Maekyung] <br>  3. <a href='https://www.mk.co.kr/news/stock/12141712'>AI로 효율 높아졌지만…저가수주 경쟁에 감사품질 ‘경고등’</a> [Maekyung] <br>  4. <a href='https://www.mk.co.kr/news/stock/12141673'>“6000밑은 안 갈 것”…전문가 7인 ‘비중 축소’ 없었다 [머니닥터 시장진단]</a> [Maekyung] <br>  5. <a href='https://www.mk.co.kr/news/world/12141661'>월가 여장부의 일갈…“워시의 연설, 인플레 방치 자인한 셈” [특파원 인사이트]</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 장마감 시황 심층 브리핑]</b><br><br><p>안녕하십니까, 여의도 자산운용사 시황 애널리스트 겸 펀드매니저입니다. 당일 마감된 증시 데이터를 바탕으로 전문적인 장마감 시황 브리핑을 시작하겠습니다.</p><br><br><p>📈 <b>오늘의 코스피 & 코스닥 시황 요약</b></p><br><p>├─ <b>코스피:</b> 오늘 코스피는 개인, 외국인, 기관 모두 순매도하는 이례적인 수급 환경 속에서도 0.23% 소폭 상승하며 6835선에 안착했습니다. 이는 시장의 견고한 저점 인식과 더불어 특정 대형주 섹터의 매수 유입 또는 매물 소화 능력이 발휘된 결과로 해석됩니다.</p><br><p>└─ <b>코스닥:</b> 반면 코스닥은 1.56% 하락하며 820선 초반으로 밀려났습니다. 최근 한 달간 15.9%라는 높은 상승률을 기록했던 코스닥 시장에 대한 차익 실현 압력이 외국인과 기관의 대규모 매도로 분출되며 지수 하락을 주도했습니다.</p><br><br><p>👥 <b>투자 주체별 수급 동향 해설</b></p><br><p>├─ <b>수급 상황:</b> 코스피 시장에서는 개인(-5,402억원), 외국인(-4,968억원), 기관(-6,286억원) 등 모든 주요 투자 주체가 대규모 순매도를 기록하며 총 1.6조원 이상의 매물 부담을 보였습니다. 코스닥 시장에서는 개인이 4,389억원 순매수하며 홀로 방어에 나섰지만, 외국인(-1,531억원)과 기관(-2,787억원)의 동반 매도세를 감당하지 못했습니다.</p><br><p>└─ <b>매매 특징:</b> 코스피의 경우, 시장 전반의 매도세 속에서도 지수가 상승 마감한 것은 시장의 저점 지지력이 강하거나, 매도가 특정 종목에 집중되었음에도 다른 견조한 섹터에서 매수 유입이 있었음을 시사합니다. 코스닥은 최근 상승세를 이끌었던 성장주, 특히 반도체 및 2차전지 관련 일부 종목에서 외국인과 기관의 집중적인 차익 실현 물량이 출회되었을 것으로 판단됩니다.</p><br><br><p>📰 <b>오늘의 핵심 뉴스 & 주도 테마 분석</b></p><br><p>├─ <b>주요 이슈:</b> 코스닥 시장은 한 달간의 급등세로 인해 과열 우려가 제기되었으며, 오늘 지수 하락은 이러한 시장의 심리적 부담이 반영된 것으로 보입니다. 또한, 미국 월가 인사의 인플레이션 방치 발언은 향후 통화 정책의 불확실성을 높이는 요인으로 작용하며 투자 심리에 영향을 미 미칠 수 있습니다. 국내 기업의 감사 비용 및 품질 문제는 중장기적으로 기업 가치 평가와 투자 신뢰도에 영향을 줄 수 있는 잠재적 리스크로 주목됩니다.</p><br><p>└─ <b>주도 테마:</b> 오늘 시장은 뚜렷한 주도 테마보다는, 코스닥의 경우 최근 급등했던 종목군 위주의 차익 실현이 두드러졌습니다. 코스피는 전반적인 매도세에도 불구하고 견조함을 유지했다는 점에서, 낙폭과대 대형 우량주나 경기 방어적 성격의 저평가 가치주에 대한 투자자들의 저가 매수세가 유입되었을 가능성을 배제할 수 없습니다.</p><br><br><p>🎯 <b>내일의 증시 전략 및 대응 가이드</b></p><br><p>├─ <b>전략 포인트:</b> 변동성 장세가 지속될 것으로 예상되는 만큼, 코스피 시장에서는 핵심 대형 우량주 중심의 저가 분할 매수 전략을 유지하되, 코스닥 시장은 단기 급등주에 대한 추격 매수보다는 밸류에이션 부담이 적고 실적이 뒷받침되는 종목 중심으로 선별적 접근이 필요합니다. 거시 경제 변수와 지정학적 리스크에 촉각을 세우며 보수적인 관점을 유지하는 것이 중요합니다.</p><br><p>└─ <b>유의 사항:</b> 오늘 밤 예정된 미국 증시의 주요 경제 지표 발표(예: 소비자물가지수, 생산자물가지수 등) 결과에 따라 글로벌 증시의 방향성이 결정될 수 있으므로 예의주시해야 합니다. 또한, 환율 및 금리 변동성 확대 가능성에 대비하여 포트폴리오의 안전 마진을 확보하고, 유동성 관리에 주력하시기를 권고합니다.</p><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 당일 시장의 수급과 뉴스를 기반으로 AI가 분석한 보고서로 투자 권유를 뜻하지 않습니다.</i>",
     "us_premarket": "<b>📊 [미국 증시 개장 전 데이터 리포트] - 2026년 09월 01일 04시 07분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 프리마켓(Premarket) 상승 특징주</b><br>  1. <a href='https://stockanalysis.com/stocks/rdhl/'>RDHL</a> (RedHill Biopharma Ltd.) $1.4 | +111.80%<br>  2. <a href='https://stockanalysis.com/stocks/aehl/'>AEHL</a> (Antelope Enterprise Holdings Limited) $6.81 | +92.37%<br>  3. <a href='https://stockanalysis.com/stocks/yddl/'>YDDL</a> (One and one Green Technologies. Inc) $2.38 | +44.24%<br>  4. <a href='https://stockanalysis.com/stocks/ncra/'>NCRA</a> (Nocera, Inc.) $2.42 | +28.04%<br>  5. <a href='https://stockanalysis.com/stocks/weto/'>WETO</a> (Wetour Robotics Limited) $7.2 | +25.87%<br><br><b>💬 Reddit (r/wallstreetbets) 인기 Tickers</b><br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 223회 (+166 24h)<br>  - <b>TSLA</b> (Tesla): 언급 140회 (+134 24h)<br>  - <b>MU</b> (Micron Technology): 언급 112회 (+76 24h)<br>  - <b>NVDA</b> (NVIDIA): 언급 78회 (+33 24h)<br>  - <b>QQQ</b> (Invesco QQQ ETF): 언급 63회 (+51 24h)<br><br><b>🐦 Stocktwits 인기 급상승 Tickers</b><br>  - <b>AMZN</b> (Amazon.com Inc): Watchlist 700971회<br>  - <b>COIN</b> (Coinbase Global Inc): Watchlist 138320회<br>  - <b>TSLA</b> (Tesla Inc): Watchlist 1063398회<br>  - <b>PANW</b> (Palo Alto Networks Inc): Watchlist 39145회<br>  - <b>ASST</b> (Strive Inc.): Watchlist 19827회<br><br><b>🔥 Yahoo Finance 실시간 Trending Tickers</b><br>  - <b>TSLA</b>, <b>EIX</b>, <b>AEHL</b>, <b>WETO</b>, <b>PCG</b><br><br><b>📰 미국 현지 경제/증권 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/energy/articles/goldman-sachs-sends-blunt-message-003700417.html'>Goldman Sachs sends blunt message on oil price, economy</a> [Yahoo Business] <br>  2. <a href='https://finance.yahoo.com/healthcare/articles/healthcare-best-week-since-june-100300319.html'>Healthcare’s Best Week Since June Traces Back to a Single Moderna and Merck Cancer Trial</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/markets/stocks/articles/david-einhorn-says-spacex-could-100706151.html'>David Einhorn Says SpaceX Could Mark a Speculative Top. Morgan Stanley Sees 113% Upside</a> [Yahoo Business] <br>  4. <a href='https://finance.yahoo.com/markets/stocks/articles/klarna-recently-went-worst-week-095444609.html'>Klarna Recently Went for Its Worst Week Ever, Down More Than 30%</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/small-business/articles/35-years-marriage-couple-dreads-093000588.html'>After 35 years of marriage, this couple dreads retiring together — a retirement coach explains why it's so common</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/08/31/aon-ceo-says-usi-deal-seeks-to-build-premiere-middle-market-insurance-platform.html'>Aon CEO says insurance broker seeks to build 'premiere middle market platform' with purchase of rival USI</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/08/31/kalshi-looks-international-partners-with-brokerage-alpaca.html'>Kalshi partners with brokerage Alpaca as it tries to build its international audience</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/08/31/gemini-not-at-fault-for-collapse-of-earn-lending-program-arbitrator-says.html'>Crypto exchange Gemini not at fault for collapse of Earn lending program, arbitrator says</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/08/31/china-xi-us-trump-visit-sco-brics-modi-india.html'>China's Xi builds diplomatic clout with multiple state visits ahead of Trump summit</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/08/31/jackson-hole-fed-chair-kevin-warsh-hawkish-rate-hikes-analysts.html'>Jackson Hole analyst roundup: Warsh's speech sends hike chances higher, may put Fed 'at odds' with Treasury</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 개장 전 심층 브리핑]</b><br><br>📰 <b>미국 장전 주요 경제/거시 뉴스 분석</b><br>├─ <b>매크로 분석:</b> 금일 아침 발표된 잭슨홀 컨퍼런스 분석에서는 연준의 매파적 스탠스가 강화될 수 있다는 신호가 포착되며, 금리 인상 가능성이 다시 고개를 들고 있습니다. 골드만삭스는 유가 전망과 경제 성장 둔화에 대한 경고를 보내, 인플레이션 압박과 경기 침체 우려가 공존하는 복합적인 거시 환경을 제시하고 있습니다. 시진핑 주석의 외교 활동은 지정학적 긴장 완화에 대한 기대를 불러일으키나, 전반적인 시장은 연준의 통화 정책 불확실성과 에너지 시장 불안정에 촉각을 곤두세울 것입니다.<br>└─ <b>개장 전 전망:</b> 거시 경제의 불확실성이 지속되는 가운데, 장 초반에는 개별 기업 뉴스 및 섹터별 이슈가 시장의 변동성을 주도할 것으로 예상됩니다. 헬스케어 섹터의 긍정적 뉴스(Moderna/Merck 임상)와 일부 M&A 소식은 시장에 긍정적인 영향을 미칠 수 있으나, 전반적으로는 보수적인 투자 심리가 우세할 것으로 보입니다.<br><br>📈 <b>프리마켓(Premarket) 상승/거래량 상위 특징주</b><br>├─ <b>주요 종목:</b> RDHL (+111.80%), AEHL (+92.37%), YDDL (+44.24%), NCRA (+28.04%), WETO (+25.87%) 등이 프리마켓에서 폭발적인 상승세를 보이며 거래량과 변동률 상위를 차지했습니다. 특히 RDHL, AEHL, WETO, NCRA는 야후 파이낸스 트렌딩에도 동시에 이름을 올리며 강한 시장 관심을 입증하고 있습니다.<br>└─ <b>상승 배경:</b> 이들 대부분은 시가총액이 작은 소형주(Micro-cap)로, RDHL의 경우 제약/바이오 특성상 특정 임상 결과 발표, FDA 승인 기대감 또는 대형 계약 체결 등의 직접적인 호재가 주가를 끌어올렸을 가능성이 높습니다. AEHL, YDDL, NCRA, WETO 등은 대규모 신규 계약, M&A 루머, 또는 소셜 미디어발(發) 투기적 매수세 유입 등 특정 재료가 단기간에 집중되면서 급등한 것으로 분석됩니다.<br><br>💬 <b>SNS/커뮤니티 인기 급상승 종목 & 찌라시 분석</b><br>├─ <b>소셜 미디어 동향:</b> TSLA는 레딧, 스탁트윗, 야후 트렌딩 모든 플랫폼에서 최상위권에 랭크되며 투자자들의 폭발적인 관심을 받고 있습니다. AMZN 또한 스탁트윗 1위, 레딧 상위권에 위치하며 주목받고 있습니다. 프리마켓 급등주인 AEHL, WETO, NCRA, RDHL이 야후 트렌딩에 교차 포착된 점은 소셜 미디어 트렌드가 프리마켓 움직임에 직접적인 영향을 미쳤음을 시사합니다. 또한, 암호화폐 관련주(COIN, CRCL)와 유틸리티주(EIX, PCG)도 여러 채널에서 관심을 끌고 있습니다.<br>└─ <b>루머 & 바이럴 요인:</b> TSLA는 일론 머스크의 지속적인 시장 발언과 EV 산업의 구조적 변화에 대한 기대감이 주된 관심 요인으로 보입니다. AMZN은 최근 캐나다 퀘벡 주와의 논의 소식이 주가에 영향을 미 미칠 수 있습니다. AEHL, WETO, NCRA, RDHL과 같은 소형주들은 특정 호재성 뉴스에 따른 급등을 보이는데, 이 중 일부는 이른바 '숏 스퀴즈' 타겟이 되었거나 특정 커뮤니티의 '펌프 앤 덤프(Pump and Dump)' 움직임의 결과일 가능성도 존재합니다. 헬스케어 섹터 전반에 대한 긍정적 센티멘트도 RDHL의 상승에 일조했을 수 있습니다.<br><br>🎯 <b>오늘 밤 미국 본장 관전 포인트 및 대응 가이드</b><br>├─ <b>본장 주목 섹터:</b> 금일 강세를 보인 헬스케어 (특히 바이오테크) 섹터는 본장에서도 모멘텀을 이어갈 가능성이 높습니다. 인공지능(AI) 관련 기술주(NVDA, MU, SMCI) 역시 꾸준한 수급이 유입될 것으로 예상되며, 유틸리티 섹터(EIX, PCG)는 거시 불확실성 속에서 방어적 투자 매력이 부각될 수 있습니다. 암호화폐 관련주들도 단기 투기적 자금 유입을 기대해볼 수 있습니다.<br>└─ <b>리스크 및 대응:</b> 프리마켓에서 극단적인 상승을 보인 소형주들은 본장 개장 후 급격한 변동성을 보이며 하락 전환할 위험이 매우 높습니다. 따라서 펀더멘털 분석 없이 추격 매수하는 것은 극도로 위험하며, 철저한 손절매 원칙을 수립해야 합니다. 거시 경제 지표 발표와 연준의 발언에 대한 시장의 반응을 주시하며, 단기적인 소셜 미디어 트렌드보다는 기업의 본질적 가치와 장기적인 시장 흐름에 기반한 투자 전략을 유지해야 합니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 본 자료는 미국 프리마켓 및 다각도 소셜 커뮤니티 트렌드를 취합해 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>",
     "korea_premarket": "<b>📊 [국내 증시 개장 전 데이터 리포트] - 2026년 09월 01일 09시 35분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>📈 전 거래일 주요 지수 종가</b><br>  - <b>코스피 (KOSPI):</b> 6785.74 (-34.28, -0.50%)<br>  - <b>코스닥 (KOSDAQ):</b> 821.78 (-12.51, -1.50%)<br><br><b>👥 전 거래일 투자 주체별 순매수 동향 (단위: 억원)</b><br>  - <b>코스피:</b> 개인: +4,568, 외국인: -2,735, 기관: -3,236<br>  - <b>코스닥:</b> 개인: +1,866, 외국인: -1,101, 기관: -696<br><br><b>📰 최근 주요 경제/증권 이슈 뉴스</b><br>  1. <a href='https://www.mk.co.kr/news/stock/12140956'>글로벌에스엠, 2분기 영업익 181만달러…전분기比 85.2%↑</a> [Maekyung] <br>  2. <a href='https://www.mk.co.kr/news/stock/12140953'>[MK시그널] 솔브레인, 반도체 업황 회복에 따른 핵심소재 경쟁력 부각 등에 주가 상승세... MK시그널 추천 후 상승률 6.89% 기록</a> [Maekyung] <br>  3. <a href='https://www.mk.co.kr/news/stock/12140951'>IMM인베 재팬, ‘한일융합펀드’ 조성… 日핵융합 기업 투자</a> [Maekyung] <br>  4. <a href='https://www.mk.co.kr/news/stock/12140949'>“부르는 게 값” MLCC·기판 쌍끌이 호황…삼성전기 목표가 ‘200만원’ 상향 [오늘 나온 보고서]</a> [Maekyung] <br>  5. <a href='https://www.mk.co.kr/news/stock/12140946'>[MK 골든크로스 돌파종목 : 유아이엘(049520) & KEC(092220)]</a> [Maekyung] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[국내 증시 개장 전 심층 분석 브리핑]</b><br><br>🌙 <b>간밤 글로벌 시장 & 매크로 점검</b><br>├─ <b>미국 증시:</b> 간밤 미국 증시는 혼조세를 보였습니다. 기술주는 금리 인상 우려 완화 및 엔비디아 반등으로 일부 상승했으나, 다우존스 산업평균지수는 연준의 매파적 발언에 하락하며 전반적인 시장 심리는 제한적이었습니다. 이는 국내 기술주에 대한 긍정적 모멘텀과 함께 전반적인 투자심리에는 부담으로 작용할 수 있습니다.<br>└─ <b>환율·금리·원자재:</b> 원/달러 환율은 간밤 달러 강세 압력에 1300원대 중반으로 상승하며 외국인 수급에 부정적 요인으로 작용할 전망입니다. 미국채 10년물 금리 또한 소폭 상승하며 성장주 밸류에이션 부담을 가중시킬 수 있습니다. 유가는 중동 리스크 완화로 안정세를 보이는 가운데, 금 가격은 소폭 하락하며 위험선호 심리를 일부 반영했습니다.<br><br>📊 <b>전 거래일 국내 증시 복기</b><br>├─ <b>지수·수급:</b> 전 거래일 국내 증시는 코스피 -0.50%, 코스닥 -1.50% 하락하며 전반적인 약세를 보였습니다. 특히 외국인과 기관이 코스피와 코스닥 양 시장에서 대규모 순매도하며 지수 하락을 주도했고, 개인 투자자만이 대규모 순매수에 나서며 낙폭을 제한하는 모습이었습니다. 이는 시장의 하방 경직성을 확보했지만, 수급 주체의 부재로 인한 추가 상승 여력은 제한적임을 시사합니다.<br>└─ <b>주도 업종:</b> 전 거래일 시장 전반의 약세 속에서도, 반도체 업황 회복 기대감에 힘입어 솔브레인 등 반도체 소재 및 부품 관련주들이 상대적으로 견조한 흐름을 보였습니다. 삼성전기 목표가 상향 소식은 MLCC 및 기판 업황 호조 기대감을 반영하며 관련 섹터에 대한 관심을 불러일으켰습니다. 반면, 외국인/기관 매도세가 집중된 이차전지 등 성장주 섹터는 하락 압력을 받으며 부진했습니다.<br><br>🎯 <b>오늘의 개장 전 전략 가이드</b><br>├─ <b>예상 시나리오:</b> 간밤 글로벌 시장의 혼조세와 원/달러 환율 상승 압력, 그리고 전 거래일 외국인/기관의 순매도 기조를 고려할 때, 금일 국내 증시는 약보합 출발 후 혼조세를 보일 것으로 예상됩니다. 코스피는 대형주 위주로 제한적인 등락을 보이며 2650선을 지지하려는 움직임을 보일 수 있으며, 코스닥은 성장주 중심의 변동성이 확대될 가능성이 있습니다.<br>└─ <b>관심 포인트:</b> 개인 투자자는 전일 부각된 반도체 소재 및 부품(MLCC, 기판 등) 섹터의 지속적인 강세 여부를 주시해야 합니다. 또한, 실적 개선 기대감이 큰 종목과 배당주 등 가치주에 대한 관심도 유효합니다. 단기적으로는 외국인/기관의 수급 전환 여부를 확인하며 보수적인 접근이 필요합니다.<br><br>⚠️ <b>오늘 장중 유의 사항</b><br>└─ <b>리스크 점검:</b> 금일 오후 발표될 국내 주요 경제지표(예: 소비자물가지수, 산업활동동향)와 미국 연준 위원들의 발언이 시장 변동성을 키울 수 있습니다. 지정학적 리스크 관련 뉴스 플로우 또한 주시해야 하며, 개별 기업의 실적 발표 시즌인 만큼 어닝 쇼크/서프라이즈에 따른 주가 변동성 확대에 유의해야 합니다.<br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 전 거래일 수급·뉴스와 간밤 글로벌 흐름을 기반으로 AI가 분석한 개장 전 리포트로 투자 권유를 뜻하지 않습니다.</i>",
     "us_close": "<b>📊 [미국 증시 장마감 데이터 리포트] - 2026년 08월 31일 07시 55분</b><br>━━━━━━━━━━━━━━━━━━━━━<br><br><b>🇺🇸 미국 주요 지수 종가</b><br>  - <b>S&P 500:</b> 7,711.76 (-19.23, -0.25%)<br>  - <b>Nasdaq:</b> 26,402.42 (-138.93, -0.52%)<br>  - <b>Dow Jones:</b> 53,559.99 (-9.45, -0.02%)<br>  - <b>Russell 2000:</b> 2,972.37 (-41.97, -1.39%)<br><br><b>📈 거시 지표</b><br>  - <b>VIX (공포지수):</b> 14.43 (-0.08, -0.55%)<br>  - <b>US 10Y 국채수익률:</b> 4.72 (+0.05, +1.03%)<br>  - <b>WTI 원유:</b> 84.86 (+1.46, +1.75%)<br><br><b>📊 SPDR 섹터 ETF 등락률</b><br>  - <b>XLK (정보기술):</b> -1.55%<br>  - <b>XLF (금융):</b> +0.38%<br>  - <b>XLE (에너지):</b> +0.63%<br>  - <b>XLV (헬스케어):</b> -0.24%<br>  - <b>XLI (산업재):</b> -0.93%<br>  - <b>XLY (경기소비재):</b> +1.15%<br>  - <b>XLP (필수소비재):</b> +0.43%<br>  - <b>XLC (통신서비스):</b> +1.42%<br>  - <b>XLRE (부동산):</b> -0.40%<br>  - <b>XLU (유틸리티):</b> -1.04%<br>  - <b>XLB (소재):</b> -0.09%<br><br><b>💬 소셜 트렌드 (상위 5)</b><br>  - <b>SPY</b> (SPDR S&amp;P 500 ETF Trust): 언급 73회 (+5 24h)<br>  - <b>MU</b> (Micron Technology): 언급 52회 (+31 24h)<br>  - <b>NVDA</b> (NVIDIA): 언급 48회 (-28 24h)<br>  - <b>VOO</b> (Vanguard S&amp;P 500 ETF): 언급 45회 (+12 24h)<br>  - <b>NB</b> (NioCorp Developments): 언급 30회 (+29 24h)<br><br><b>📰 미국 현지 주요 뉴스</b><br>  1. <a href='https://finance.yahoo.com/small-business/articles/major-fruit-grower-lays-off-010300694.html'>Major fruit grower lays off nearly 1,000 workers</a> [Yahoo Business] <br>  2. <a href='https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-microsoft-titans-mask-market-weakness/?src=A00220&yptr=yahoo'>Dow Jones Futures Fall, Oil Prices Jump As U.S. Strikes Iran</a> [Yahoo Business] <br>  3. <a href='https://finance.yahoo.com/markets/stocks/articles/miniso-mnso-booming-membership-growth-184952315.html'>Miniso (MNSO) Booming Membership Growth Collides With A Struggling Global Expansion</a> [Yahoo Business] <br>  4. <a href='https://finance.yahoo.com/markets/stocks/articles/frontline-fro-just-delivered-best-184112065.html'>Frontline (FRO) Just Delivered Its Best Quarter Yet, But Can It Last?</a> [Yahoo Business] <br>  5. <a href='https://finance.yahoo.com/markets/stocks/articles/pinterest-pins-cfo-exit-tests-182159557.html'>Pinterest’s (PINS) CFO Exit Tests Whether The Growth Story Holds</a> [Yahoo Business] <br>  6. <a href='https://www.cnbc.com/2026/08/28/corn-and-wheat-prices-jump-to-highest-prices-in-more-than-three-years.html'>Corn and wheat prices jump to highest prices in more than three years</a> [CNBC Finance] <br>  7. <a href='https://www.cnbc.com/2026/08/28/appeals-court-rules-against-prediction-markets-tees-up-scotus-fight.html'>U.S. appeals court rules against prediction markets, sets up likely fight at Supreme Court</a> [CNBC Finance] <br>  8. <a href='https://www.cnbc.com/2026/08/28/-september-fed-decision-now-a-coin-flip-as-rate-hike-odds-increase.html'>September Fed decision is now a coin flip as rate hike odds increase post Warsh</a> [CNBC Finance] <br>  9. <a href='https://www.cnbc.com/2026/08/28/trump-x-meeting-us-china-iran-sanctions.html'>Trump ratchets up rhetoric against Beijing as U.S.-China officials meet for Xi's Washington visit</a> [CNBC Finance] <br>  10. <a href='https://www.cnbc.com/2026/08/27/fed-chairman-kevin-warsh-delivers-his-key-jackson-hole-speech-friday.html'>Fed Chairman Kevin Warsh delivers his key Jackson Hole speech Friday. Here's what to expect</a> [CNBC Finance] <br><br>━━━━━━━━━━━━━━━━━━━━━<br><br>💡 <b>[미국 증시 장마감 시황 심층 브리핑]</b><br><br><b>🇺🇸 <b>미국 증시 장마감 4대 지수 요약</b><br>├─ <b>S&P 500 / 나스닥:</b> 지정학적 리스크 고조와 금리 인상 기대감 속에 기술주가 압박받으며 S&P 500은 0.25%, 나스닥은 0.52% 하락했습니다. 특히 고성장 기술주 비중이 높은 나스닥은 10년물 국채 수익률 상승에 민감하게 반응하며 상대적 약세를 보였습니다.<br>└─ <b>다우 / 러셀:</b> 대형 가치주 중심의 다우존스는 0.02%의 미미한 하락에 그치며 상대적 견고함을 유지했습니다. 반면 중소형주 지수인 러셀 2000은 1.39% 급락하며 위험 회피 심리가 확산되고, 금리 상승 압력이 중소형 성장주에 더욱 부담으로 작용했음을 명확히 보여줬습니다.<br><br>📊 <b>섹터별 ETF 강약 분석</b><br>├─ <b>강세 섹터:</b> 유가 급등과 이란 공습 소식에 에너지(XLE +0.63%) 섹터가 강세를 보였습니다. 경기소비재(XLY +1.15%)와 통신서비스(XLC +1.42%)는 특정 대형 기술/성장주의 선전과 맞물려 의외의 강세를 보였고, 금리 상승 수혜가 예상되는 금융(XLF +0.38%)도 소폭 상승 마감했습니다.<br>└─ <b>약세 섹터:</b> 10년물 국채 수익률 급등의 직격탄을 맞은 정보기술(XLK -1.55%) 섹터가 가장 부진했습니다. 이와 함께 산업재(XLI -0.93%)와 금리 민감도가 높은 유틸리티(XLU -1.04%) 역시 약세를 면치 못하며 시장 전반의 위험 회피 심리와 고금리 환경의 부담을 반영했습니다.<br><br>📈 <b>거시 지표 및 리스크 요인</b><br>├─ <b>변동성/금리:</b> VIX 공포지수는 0.55% 소폭 하락했지만, 미국 10년물 국채 수익률은 1.03% 상승한 4.72%를 기록하며 시장의 긴장감을 높였습니다. 이는 연준의 금리 인상 가능성 확대와 인플레이션 우려가 다시 부상했음을 시사하는 핵심 신호입니다.<br>└─ <b>원자재/유가:</b> WTI 국제유가는 미국의 이란 공습 소식에 1.75% 급등하며 배럴당 84.86달러를 기록했습니다. 이는 에너지 섹터 강세의 직접적인 원인이자, 전반적인 물가 상승 압력을 가중시키는 요인으로 작용하여 인플레이션 우려를 한층 심화시켰습니다.<br><br>💬 <b>소셜 미디어 특이 종목 & 뉴스 해설</b><br>├─ <b>주요 이슈:</b> 미국의 이란 공습 소식이 유가를 급등시키고 지정학적 긴장을 고조시키며 시장의 주요 하락 요인으로 작용했습니다. 또한 케빈 워시 연준 의장의 잭슨홀 연설을 앞두고 금리 인상 가능성이 재부각되며 채권 수익률 상승을 견인했습니다. 동시에 옥수수와 밀 가격 급등 소식은 전반적인 인플레이션 우려를 증폭시켰습니다.<br>└─ <b>소셜 동향:</b> Reddit에서는 반도체 기업 마이크론(MU)과 광물 개발 기업 니오코프(NB)에 대한 언급이 크게 증가하며 특정 종목에 대한 단기적 관심이 집중되었습니다. Stocktwits에서는 유가 급등에 힘입어 USO와 XLE, 그리고 인플레이션 헤지 수요로 금 관련 종목(GLD, XAUUSD)과 지정학적 리스크 관련 록히드 마틴(LMT)의 관심이 폭발했습니다. 트럼프 미디어(DJT)는 정치 테마주로서 여전히 높은 관심을 받았습니다.<br><br>🎯 <b>내일 장전 전략 및 아시아 증시 영향 전망</b><br>├─ <b>내일 전망:</b> 지정학적 긴장과 인플레이션 압력은 당분간 시장의 주요 화두로 남을 것입니다. 내일 발표될 경제 지표와 연준 인사들의 발언, 특히 금요일 잭슨홀 연설을 앞두고 금리 인상에 대한 추가적인 힌트가 나올 경우 시장 변동성이 커질 수 있습니다. 기술주보다는 에너지, 금융, 필수 소비재 등 가치주 및 방어주에 대한 관심이 이어질 것으로 보입니다.<br>└─ <b>아시아 영향:</b> 미국 10년물 국채 수익률 상승과 기술주 약세는 아시아 증시, 특히 한국 증시의 기술주 섹터에 부담으로 작용할 가능성이 높습니다. 지정학적 리스크 고조는 안전자산 선호 심리를 자극할 수 있으며, 유가 상승은 물가 부담으로 이어져 각국 중앙은행의 긴축 기조 유지에 대한 우려를 키울 수 있어 아시아 증시 전반에 조심스러운 움직임이 예상됩니다.</b><br><br>━━━━━━━━━━━━━━━━━━━━━<br><i>* 미국 장 마감 후 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>"
@@ -546076,7 +546044,7 @@ window.MARKET_SNAPSHOT = {
     ]
   },
   "briefing_meta": {
-    "korea_close": "2026-09-01 00:18:58 KST",
+    "korea_close": "2026-09-01 21:57:21 KST",
     "us_premarket": "2026-09-01 04:08:19 KST",
     "korea_premarket": "2026-09-01 09:35:50 KST",
     "us_close": "2026-08-31 07:55:45 KST"

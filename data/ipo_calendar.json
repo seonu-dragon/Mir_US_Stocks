@@ -1,10 +1,20 @@
 {
-  "updatedAtKst": "2026-08-31 20:06 KST",
+  "updatedAtKst": "2026-09-01 18:35 KST",
   "lastFileDate": "2026-08-31",
-  "count": 636,
+  "count": 630,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "La Beaute Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-31",
+      "accession": "0002151905-26-000001:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2151905/000215190526000001/labeaute-s1prospectus-20.htm"
+    },
     {
       "company": "Xiasan Dynasty Co",
       "ticker": null,
@@ -14,6 +24,152 @@
       "fileDate": "2026-08-31",
       "accession": "0002149773-26-000008:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2149773/000214977326000008/forms1new2.txt"
+    },
+    {
+      "company": "LOGOOM TECHNOLOGIES, INC.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-31",
+      "accession": "0001640334-26-001434:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2124913/000164033426001434/logoom_s1.htm"
+    },
+    {
+      "company": "Wella Co",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-31",
+      "accession": "0001628280-26-059572:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2125056/000162828026059572/wellaoperations-sx1.htm"
+    },
+    {
+      "company": "TECOGEN INC.",
+      "ticker": "TGEN",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001537435-26-000071:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1537435/000153743526000071/tgenpeano3tos-1.htm"
+    },
+    {
+      "company": "TECOGEN INC.",
+      "ticker": "TGEN",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001537435-26-000071:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1537435/000153743526000071/tgenpeano3tos-1.htm"
+    },
+    {
+      "company": "First Breach, Inc.",
+      "ticker": "FBDT",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-31",
+      "accession": "0001493152-26-040850:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1892704/000149315226040850/form424b4.htm",
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "supplement",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "StableCoinX Inc.  (USDE, USDEW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-31",
+      "accession": "0001213900-26-095808:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2080215/000121390026095808/ea0303782-s1_stable.htm"
+    },
+    {
+      "company": "Tailored Brands, Inc. / DE",
+      "ticker": "MENW",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001213900-26-095715:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2045151/000121390026095715/ea0285017-07.htm"
+    },
+    {
+      "company": "Tailored Brands, Inc. / DE",
+      "ticker": "MENW",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001213900-26-095715:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2045151/000121390026095715/ea0285017-07.htm"
+    },
+    {
+      "company": "Onconetix, Inc.",
+      "ticker": "ONCO",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001213900-26-095703:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026095703/ea0303846-s1a1_onconetix.htm"
+    },
+    {
+      "company": "Onconetix, Inc.",
+      "ticker": "ONCO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001213900-26-095703:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1782107/000121390026095703/ea0303846-s1a1_onconetix.htm"
+    },
+    {
+      "company": "Inflection Point Acquisition Corp. VIII",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-08-31",
+      "accession": "0001213900-26-095396:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2146310/000121390026095396/ea0300623-04.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Syntiant Corp.",
+      "ticker": "SYTN",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001193125-26-376166:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1718728/000119312526376166/ck0001718728-20260831.htm"
+    },
+    {
+      "company": "Syntiant Corp.",
+      "ticker": "SYTN",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-08-31",
+      "accession": "0001193125-26-376166:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1718728/000119312526376166/ck0001718728-20260831.htm"
+    },
+    {
+      "company": "GRAYBAR ELECTRIC CO INC",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-08-31",
+      "accession": "0000205402-26-000041:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/205402/000020540226000041/c402-20260831xs1.htm"
     },
     {
       "company": "Sunshine Biopharma Inc.  (SBFM, SBFMW)",
@@ -6351,228 +6507,6 @@
       "fileDate": "2026-07-06",
       "accession": "0001074828-26-000044:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000044/usbc-20260706.htm"
-    },
-    {
-      "company": "Dear Industrial Gas Inc",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0002134914-26-000001:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2134914/000213491426000001/kfde-s-1prospectus-20260.htm"
-    },
-    {
-      "company": "TRIC Global, Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-02",
-      "accession": "0002124122-26-000012:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2124122/000212412226000012/tric_s1a2.htm"
-    },
-    {
-      "company": "TRIC Global, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-02",
-      "accession": "0002124122-26-000012:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2124122/000212412226000012/tric_s1a2.htm"
-    },
-    {
-      "company": "Neutron Holdings, Inc.",
-      "ticker": "LIME",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-02",
-      "accession": "0001628280-26-046635:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1699963/000162828026046635/neutronholdingsinc-424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 25.0
-    },
-    {
-      "company": "Gold Mountain Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001493152-26-031978:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2105318/000149315226031978/forms-1.htm"
-    },
-    {
-      "company": "Cycurion, Inc.  (CYCU, CYCUW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001493152-26-031976:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1868419/000149315226031976/forms-1.htm"
-    },
-    {
-      "company": "Boost Run Inc.  (BRUN, BRUNW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001493152-26-031923:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2090646/000149315226031923/forms-1.htm"
-    },
-    {
-      "company": "Laris Growth Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001213900-26-075107:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2140589/000121390026075107/ea0294724-01.htm"
-    },
-    {
-      "company": "Peraso Inc.",
-      "ticker": "PRSO",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001213900-26-075105:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/890394/000121390026075105/ea0296400-s1_peraso.htm"
-    },
-    {
-      "company": "Mercator Acquisition Corp.",
-      "ticker": "MRCO",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-02",
-      "accession": "0001213900-26-074947:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2106436/000121390026074947/ea0277572-04.htm"
-    },
-    {
-      "company": "Mercator Acquisition Corp.",
-      "ticker": "MRCO",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-02",
-      "accession": "0001213900-26-074947:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2106436/000121390026074947/ea0277572-04.htm"
-    },
-    {
-      "company": "Osprey Acquisition Corp. III  (OSPR, OSPRU)",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-02",
-      "accession": "0001213900-26-074446:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2113481/000121390026074446/ea0279881-04.htm",
-      "offerPrice": 10.0,
-      "offerPriceChecked": 2,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Forgent Power Solutions, Inc.",
-      "ticker": "FPS",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-294982:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2080126/000119312526294982/olympus_iv_-_form_424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 49.0
-    },
-    {
-      "company": "B&R Technology Merger Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-294964:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2131350/000119312526294964/d112816ds1.htm"
-    },
-    {
-      "company": "Scribe Therapeutics, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-294804:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1853921/000119312526294804/d21355ds1.htm"
-    },
-    {
-      "company": "Jersey Mike's Subs Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-293830:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2127043/000119312526293830/ck0002127043-20260702.htm"
-    },
-    {
-      "company": "Bitwise NEAR ETF",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-293745:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2067111/000119312526293745/bitwise_near_-_s-1_am_2.htm"
-    },
-    {
-      "company": "Bitwise NEAR ETF",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-293745:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2067111/000119312526293745/bitwise_near_-_s-1_am_2.htm"
-    },
-    {
-      "company": "ITG, Inc./DE/",
-      "ticker": "ITG",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-02",
-      "accession": "0001193125-26-292853:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2110117/000119312526292853/d103576d424b4.htm",
-      "offerPrice": 16.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Meridian3 Industrials Acquisition Corp",
-      "ticker": "MIAC",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-02",
-      "accession": "0001104659-26-080405:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2136530/000110465926080405/tmb-20260622x424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 10.0,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Cyber Enviro-Tech, Inc.",
-      "ticker": "CETI",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-02",
-      "accession": "0001079973-26-000891:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1935092/000107997326000891/ceti_s1.htm"
     }
   ]
 }

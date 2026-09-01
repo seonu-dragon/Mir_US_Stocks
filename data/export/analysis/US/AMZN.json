@@ -1,0 +1,38 @@
+{
+  "ticker": "AMZN",
+  "name": "Amazon.com Inc.",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 266.43,
+  "return_period": 27.9,
+  "support_levels": [
+    256.63,
+    249.71
+  ],
+  "resistance_levels": [
+    276.65,
+    287.2
+  ],
+  "moving_average": {
+    "sma20": "price_near_sma20",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 38.7,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 277 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 257 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

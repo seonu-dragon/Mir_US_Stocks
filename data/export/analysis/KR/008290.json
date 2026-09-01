@@ -1,0 +1,38 @@
+{
+  "ticker": "008290",
+  "name": "원풍물산",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 535.0,
+  "return_period": -34.9,
+  "support_levels": [
+    435.0,
+    315.5
+  ],
+  "resistance_levels": [
+    591.33,
+    823.92
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 66.7,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 591 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 435 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

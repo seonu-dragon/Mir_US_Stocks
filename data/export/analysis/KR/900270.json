@@ -1,0 +1,39 @@
+{
+  "ticker": "900270",
+  "name": "헝셩그룹",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 3325.0,
+  "return_period": -51.8,
+  "support_levels": [
+    3050.0,
+    2740.0
+  ],
+  "resistance_levels": [
+    4715.0,
+    5225.0
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 86.8,
+    "state": "overbought"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량 비교 데이터 부족"
+  },
+  "scenario": {
+    "up": "저항 4,715 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 3,050 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성",
+    "RSI 과열 구간 — 눌림 확인 필요"
+  ]
+}

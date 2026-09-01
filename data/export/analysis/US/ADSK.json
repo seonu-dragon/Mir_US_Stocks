@@ -4,37 +4,34 @@
   "market": "US",
   "period": "6M",
   "timeframe": "일봉",
-  "price": 218.35,
-  "return_period": -16.7,
+  "price": 260.66,
+  "return_period": 5.6,
   "support_levels": [
-    215.62,
-    198.01
+    251.37,
+    243.06
   ],
   "resistance_levels": [
-    227.17,
-    250.5
+    260.74
   ],
   "moving_average": {
     "sma20": "uptrend",
-    "sma60": "downtrend",
+    "sma60": "uptrend",
     "sma200": "unknown"
   },
   "rsi": {
     "period": 14,
-    "value": 71.5,
-    "state": "overbought"
+    "value": 53.0,
+    "state": "neutral"
   },
   "volume": {
-    "state": "low",
-    "comment": "최근 고점 구간 대비 거래량은 둔화"
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
   },
   "scenario": {
-    "up": "저항 227 돌파와 거래량 동반 시 상승 시나리오 유지",
-    "down": "지지 216 및 단기 추세선 이탈 시 관망 필요"
+    "up": "저항 261 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 251 및 단기 추세선 이탈 시 관망 필요"
   },
   "risk_points": [
-    "저항선 돌파 실패 시 단기 조정 가능성",
-    "거래량 없는 반등은 신뢰도 낮음",
-    "RSI 과열 구간 — 눌림 확인 필요"
+    "저항선 돌파 실패 시 단기 조정 가능성"
   ]
 }

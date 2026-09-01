@@ -4,35 +4,36 @@
   "market": "US",
   "period": "6M",
   "timeframe": "일봉",
-  "price": 28.09,
-  "return_period": -5.2,
+  "price": 31.59,
+  "return_period": 37.2,
   "support_levels": [
-    27.54,
-    21.53
+    30.17,
+    27.54
   ],
   "resistance_levels": [
-    30.17,
-    31.85
+    31.85,
+    36.84
   ],
   "moving_average": {
-    "sma20": "downtrend",
-    "sma60": "downtrend",
+    "sma20": "price_near_sma20",
+    "sma60": "uptrend",
     "sma200": "unknown"
   },
   "rsi": {
     "period": 14,
-    "value": 21.6,
-    "state": "oversold"
+    "value": 47.8,
+    "state": "neutral"
   },
   "volume": {
-    "state": "normal",
-    "comment": "거래량은 평균 수준"
+    "state": "low",
+    "comment": "최근 고점 구간 대비 거래량은 둔화"
   },
   "scenario": {
-    "up": "저항 30 돌파와 거래량 동반 시 상승 시나리오 유지",
-    "down": "지지 28 및 단기 추세선 이탈 시 관망 필요"
+    "up": "저항 32 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 30 및 단기 추세선 이탈 시 관망 필요"
   },
   "risk_points": [
-    "저항선 돌파 실패 시 단기 조정 가능성"
+    "저항선 돌파 실패 시 단기 조정 가능성",
+    "거래량 없는 반등은 신뢰도 낮음"
   ]
 }

@@ -1,0 +1,40 @@
+name: Pages queue watchdog
+
+# 2026-08-08 에 `queued` 로 굳은 Deploy Pages run 하나가 concurrency group=pages 를
+# 25일간 점유해 모든 배포가 pending → cancelled 됐다(사이트는 07-30 데이터로 정지).
+# 정상 큐 대기는 몇 분이므로, 2시간 넘게 queued 인 채 job 도 없는 run 은 좀비로 보고
+# 매시간 취소한다. 취소되면 그 뒤에 대기하던 최신 run 이 바로 시작된다.
+# 이 워크플로우는 deploy-pages.yml 의 workflow_run 목록에 넣지 않는다(배포 트리거 아님).
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: write
+
+jobs:
+  sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel Deploy Pages runs stuck in queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          MAX_AGE_SEC: "7200"
+        run: |
+          now=$(date +%s)
+          gh api "repos/$REPO/actions/workflows/deploy-pages.yml/runs?status=queued&per_page=50" \
+            --jq '.workflow_runs[] | "\(.id) \(.created_at)"' | while read -r id created; do
+            [ -z "$id" ] && continue
+            age=$(( now - $(date -d "$created" +%s) ))
+            jobs=$(gh api "repos/$REPO/actions/runs/$id/jobs" --jq '.jobs | length')
+            if [ "$age" -gt "$MAX_AGE_SEC" ] && [ "$jobs" = "0" ]; then
+              echo "zombie run $id queued for ${age}s with no job -> cancel"
+              gh api -X POST "repos/$REPO/actions/runs/$id/cancel" \
+                || gh api -X POST "repos/$REPO/actions/runs/$id/force-cancel"
+            else
+              echo "run $id queued ${age}s jobs=$jobs -> keep"
+            fi
+          done

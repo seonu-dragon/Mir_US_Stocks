@@ -1,4 +1,4 @@
-<#
+﻿<#
   publish_today.ps1 — 오늘의 콘텐츠를 빌드해 GitHub로 발행합니다.
 
   순서: 카드뉴스 6장 + SNS 원고가 모두 완성된 뒤, 아침 루틴의 *마지막 단계*로 실행하세요.
@@ -12,6 +12,8 @@
     powershell -ExecutionPolicy Bypass -File scripts/publish_today.ps1 -Date 2026-06-16
     powershell -ExecutionPolicy Bypass -File scripts/publish_today.ps1 -Date 2026-06-16 -SkipVerify
 #>
+# 이 파일은 UTF-8 BOM 으로 저장한다. BOM 이 없으면 Windows PowerShell 5.1 이 cp949 로 읽어
+# 아래 한글 문자열(커밋 메시지 포함)이 mojibake 가 된다 — 09-02 에 -F 로 바꿔도 깨진 원인.
 param(
   [string]$Date = "",
   [switch]$SkipVerify

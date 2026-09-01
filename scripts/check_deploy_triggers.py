@@ -33,7 +33,8 @@ DEPLOY = WORKFLOW_DIR / "deploy-pages.yml"
 APP_JS = ROOT / "app.js"
 
 # 배포 트리거가 필요 없는(=데이터를 커밋하지 않는) 워크플로우.
-NOT_DATA_WORKFLOWS = {"Deploy Pages"}
+# "Pages queue watchdog" 는 좀비 queued 배포 run 을 취소만 한다(커밋 없음, 2026-09-02).
+NOT_DATA_WORKFLOWS = {"Deploy Pages", "Pages queue watchdog"}
 
 
 def workflow_names() -> dict[str, str]:

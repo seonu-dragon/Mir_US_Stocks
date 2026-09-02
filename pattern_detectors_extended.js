@@ -132,36 +132,42 @@
       const lo = Math.max(0, k - H.PAT.SR_LOOKBACK);
       let res = -Infinity, sup = Infinity;
       for (let i = lo; i < k; i += 1) { res = Math.max(res, rows[i].h); sup = Math.min(sup, rows[i].l); }
+      // 확정 인덱스는 '실패가 확인된 봉'(j) — 돌파 봉(k)으로 잡으면 k+1..k+10 의 미래 종가로
+      // 판정한 결과를 k 시점에 알았던 것처럼 되어 룩어헤드가 된다(py 포팅본과 동일).
       if (prev <= res && res < price) {
-        let failed = false;
-        for (let j = k + 1; j < Math.min(n, k + 1 + FAKE_BREAK_WIN); j += 1) if (rows[j].c < res) { failed = true; break; }
-        if (failed) push(out, "bull_trap", -1, k, res);
+        let failedAt = -1;
+        for (let j = k + 1; j < Math.min(n, k + 1 + FAKE_BREAK_WIN); j += 1) if (rows[j].c < res) { failedAt = j; break; }
+        if (failedAt >= 0) push(out, "bull_trap", -1, failedAt, res);
       }
       if (prev >= sup && sup > price) {
-        let failed = false;
-        for (let j = k + 1; j < Math.min(n, k + 1 + FAKE_BREAK_WIN); j += 1) if (rows[j].c > sup) { failed = true; break; }
-        if (failed) push(out, "bear_trap", +1, k, sup);
+        let failedAt = -1;
+        for (let j = k + 1; j < Math.min(n, k + 1 + FAKE_BREAK_WIN); j += 1) if (rows[j].c > sup) { failedAt = j; break; }
+        if (failedAt >= 0) push(out, "bear_trap", +1, failedAt, sup);
       }
     }
     return out;
   }
 
+  // 갭 분류는 '갭 이전 추세' 로: 같은 방향으로 이미 크게(≥GAP_TREND_MIN) 달린 뒤의 갭은
+  // 소진형(exhaustion), 아니면 이탈형(breakaway). 예전엔 배열 위치(k<30)로 갈랐는데,
+  // 그건 데이터 파일 안의 위치일 뿐 차트 의미가 없다. 추세 창(GAP_TREND_WIN)이 안 되는
+  // 초반 봉은 분류 불가라 건너뛴다(py 포팅본과 동일).
+  const GAP_TREND_WIN = 20;
+  const GAP_TREND_MIN = 0.10;
   function detectGaps(rows) {
     const out = [];
-    for (let k = 1; k < rows.length; k += 1) {
+    for (let k = GAP_TREND_WIN + 1; k < rows.length; k += 1) {
       const prev = rows[k - 1], cur = rows[k];
       const gapUp = cur.l > prev.h * (1 + GAP_MIN_PCT);
       const gapDn = cur.h < prev.l * (1 - GAP_MIN_PCT);
-      if (gapUp) push(out, k < 30 || cur.c > prev.c * 1.05 ? "breakaway_gap_up" : "exhaustion_gap_up", +1, k, prev.h);
-      if (gapDn) push(out, k < 30 || cur.c < prev.c * 0.95 ? "breakaway_gap_down" : "exhaustion_gap_down", -1, k, prev.l);
-      if (gapUp && k >= 2) {
-        const p2 = rows[k - 2];
-        if (p2.h < cur.l && rows[k - 1].l > p2.h) push(out, "island_reversal", -1, k, cur.l);
-      }
-      if (gapDn && k >= 2) {
-        const p2 = rows[k - 2];
-        if (p2.l > cur.h && rows[k - 1].h < p2.l) push(out, "island_reversal", +1, k, cur.h);
-      }
+      if (!gapUp && !gapDn) continue;
+      const base = rows[k - 1 - GAP_TREND_WIN].c;
+      const priorRet = base ? (prev.c - base) / base : 0;
+      if (gapUp) push(out, priorRet >= GAP_TREND_MIN ? "exhaustion_gap_up" : "breakaway_gap_up", +1, k, prev.h);
+      if (gapDn) push(out, priorRet <= -GAP_TREND_MIN ? "exhaustion_gap_down" : "breakaway_gap_down", -1, k, prev.l);
+      const p2 = rows[k - 2];
+      if (gapUp && p2.h < cur.l && rows[k - 1].l > p2.h) push(out, "island_reversal", -1, k, cur.l);
+      if (gapDn && p2.l > cur.h && rows[k - 1].h < p2.l) push(out, "island_reversal", +1, k, cur.h);
     }
     return out;
   }
@@ -210,18 +216,19 @@
       const rng = rows[k].h - rows[k].l;
       let isNr4 = rng > 0;
       for (let i = k - 4; i < k; i += 1) if (rng >= rows[i].h - rows[i].l) isNr4 = false;
+      // NR4/인사이드바의 기준 봉 k 는 완성된 봉이라 피벗 지연(lag)이 없다 → lag=0.
       if (isNr4) {
-        const ciUp = H.confirmBreak(rows, k, rows[k].h, +1, rows[k].l);
+        const ciUp = H.confirmBreak(rows, k, rows[k].h, +1, rows[k].l, 0);
         if (ciUp != null) push(out, "nr4_breakout_up", +1, ciUp, rows[k].h);
-        const ciDn = H.confirmBreak(rows, k, rows[k].l, -1, rows[k].h);
+        const ciDn = H.confirmBreak(rows, k, rows[k].l, -1, rows[k].h, 0);
         if (ciDn != null) push(out, "nr4_breakout_down", -1, ciDn, rows[k].l);
       }
-      if (k >= 2) {
+      {
         const prev = rows[k - 1], cur = rows[k];
         if (cur.h <= prev.h && cur.l >= prev.l) {
-          const ciUp = H.confirmBreak(rows, k, prev.h, +1, cur.l);
+          const ciUp = H.confirmBreak(rows, k, prev.h, +1, cur.l, 0);
           if (ciUp != null) push(out, "inside_bar_breakout_up", +1, ciUp, prev.h);
-          const ciDn = H.confirmBreak(rows, k, prev.l, -1, cur.h);
+          const ciDn = H.confirmBreak(rows, k, prev.l, -1, cur.h, 0);
           if (ciDn != null) push(out, "inside_bar_breakout_down", -1, ciDn, prev.l);
         }
       }
@@ -264,14 +271,11 @@
       if (lower > bodyC * 2 && upper < bodyC && c.c < a.c) push(out, "hammer", +1, k, c.c);
       if (upper > bodyC * 2 && lower < bodyC && c.c > a.c) push(out, "shooting_star", -1, k, c.c);
       if (bodyC < rngC * 0.1) push(out, "doji", 0, k, c.c);
-      const m1 = rows[k - 2], m2 = rows[k - 1], m3 = rows[k];
-      if (body(m2) < range(m2) * 0.25 && m1.c < m1.o && m3.c > m3.o && m3.c > (m1.o + m1.c) / 2) push(out, "morning_star", +1, k, m3.c);
-      if (body(m2) < range(m2) * 0.25 && m1.c > m1.o && m3.c < m3.o && m3.c < (m1.o + m1.c) / 2) push(out, "evening_star", -1, k, m3.c);
-      if (k >= 2) {
-        const r1 = rows[k - 2], r2 = rows[k - 1], r3 = rows[k];
-        if (r1.c > r1.o && r2.c > r2.o && r3.c > r3.o && r2.c > r1.c && r3.c > r2.c) push(out, "three_white_soldiers", +1, k, r3.c);
-        if (r1.c < r1.o && r2.c < r2.o && r3.c < r3.o && r2.c < r1.c && r3.c < r2.c) push(out, "three_black_crows", -1, k, r3.c);
-      }
+      // 3봉 패턴: a=k-2, b=k-1, c=k (루프가 k>=2 에서 시작하므로 별도 가드 불필요)
+      if (body(b) < range(b) * 0.25 && a.c < a.o && c.c > c.o && c.c > (a.o + a.c) / 2) push(out, "morning_star", +1, k, c.c);
+      if (body(b) < range(b) * 0.25 && a.c > a.o && c.c < c.o && c.c < (a.o + a.c) / 2) push(out, "evening_star", -1, k, c.c);
+      if (a.c > a.o && b.c > b.o && c.c > c.o && b.c > a.c && c.c > b.c) push(out, "three_white_soldiers", +1, k, c.c);
+      if (a.c < a.o && b.c < b.o && c.c < c.o && b.c < a.c && c.c < b.c) push(out, "three_black_crows", -1, k, c.c);
       if (c.c > c.o && b.c < b.o && c.c > (b.o + b.c) / 2 && c.o < b.c) push(out, "piercing_line", +1, k, c.c);
       if (c.c < c.o && b.c > b.o && c.c < (b.o + b.c) / 2 && c.o > b.c) push(out, "dark_cloud_cover", -1, k, c.c);
     }

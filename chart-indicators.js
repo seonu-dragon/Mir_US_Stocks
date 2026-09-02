@@ -108,8 +108,15 @@ function macdSeries(values) {
   return { macd, signal, hist };
 }
 
+// 종가만으로 시고저를 합성한 행(getChartRows 의 closeSeries 폴백)인지. 행 객체의
+// synthetic 표식을 보므로 slice/filter 를 거쳐도 유지된다(analysis.js 도 같은 규약).
+function isSyntheticRows(rows) {
+  return Array.isArray(rows) && rows.length > 0 && rows[rows.length - 1] != null && rows[rows.length - 1].synthetic === true;
+}
+
 function stochArrays(rows, kPeriod, dPeriod) {
   const k = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return { k, d: Array(rows.length).fill(null) };
   for (let i = kPeriod - 1; i < rows.length; i += 1) {
     let hi = -Infinity;
     let lo = Infinity;
@@ -167,10 +174,15 @@ function wilderArray(values, period) {
 }
 
 function atrArray(rows, period = 14) {
+  if (isSyntheticRows(rows)) return Array(rows.length).fill(null);
   return wilderArray(trueRangeArray(rows), period);
 }
 
 function keltnerChannels(rows, period = 20, mult = 2) {
+  if (isSyntheticRows(rows)) {
+    const nulls = () => Array(rows.length).fill(null);
+    return { mid: nulls(), upper: nulls(), lower: nulls() };
+  }
   const closes = rows.map((row) => row.c);
   const mid = emaArray(closes, period);
   const atr = atrArray(rows, period);
@@ -185,6 +197,7 @@ function donchianChannels(rows, period = 20) {
   const upper = Array(rows.length).fill(null);
   const lower = Array(rows.length).fill(null);
   const mid = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return { upper, lower, mid };
   for (let i = period - 1; i < rows.length; i += 1) {
     const slice = rows.slice(i - period + 1, i + 1);
     upper[i] = Math.max(...slice.map((row) => row.h));
@@ -194,10 +207,18 @@ function donchianChannels(rows, period = 20) {
   return { upper, lower, mid };
 }
 
+// 선행스팬 A/B 는 정의상 26봉 앞으로 옮겨 그린다(analysis.js 와 동일). 배열 인덱스 i 의
+// spanA/spanB 는 "i-26 시점에 계산돼 i 봉에 적용되는 구름" 이다. 배열 길이는 rows 와
+// 같으므로 app.js 의 tailObj/lastN 슬라이스가 그대로 보이는 구간에 정렬된다
+// (미래 26봉 투영은 x축이 없어 생략). 합성 H/L(closeSeries 폴백)이면 전부 null.
+const ICHIMOKU_SHIFT = 26;
 function ichimokuArrays(rows) {
+  const n = rows.length;
+  const nulls = () => Array(n).fill(null);
+  if (isSyntheticRows(rows)) return { tenkan: nulls(), kijun: nulls(), spanA: nulls(), spanB: nulls() };
   const midRange = (period) => {
-    const out = Array(rows.length).fill(null);
-    for (let i = period - 1; i < rows.length; i += 1) {
+    const out = nulls();
+    for (let i = period - 1; i < n; i += 1) {
       const slice = rows.slice(i - period + 1, i + 1);
       out[i] = (Math.max(...slice.map((row) => row.h)) + Math.min(...slice.map((row) => row.l))) / 2;
     }
@@ -205,14 +226,20 @@ function ichimokuArrays(rows) {
   };
   const tenkan = midRange(9);
   const kijun = midRange(26);
-  const spanB = midRange(52);
-  const spanA = tenkan.map((v, i) => (v == null || kijun[i] == null ? null : (v + kijun[i]) / 2));
-  return { tenkan, kijun, spanA, spanB };
+  const spanBRaw = midRange(52);
+  const spanARaw = tenkan.map((v, i) => (v == null || kijun[i] == null ? null : (v + kijun[i]) / 2));
+  const shift = (arr) => {
+    const out = nulls();
+    for (let i = ICHIMOKU_SHIFT; i < n; i += 1) out[i] = arr[i - ICHIMOKU_SHIFT];
+    return out;
+  };
+  return { tenkan, kijun, spanA: shift(spanARaw), spanB: shift(spanBRaw) };
 }
 
 function supertrendArray(rows, period = 10, mult = 3) {
-  const atr = atrArray(rows, period);
   const out = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return out;
+  const atr = atrArray(rows, period);
   const upper = Array(rows.length).fill(null);
   const lower = Array(rows.length).fill(null);
   let trendUp = true;
@@ -273,6 +300,7 @@ function momentumArray(values, period = 10) {
 
 function williamsArray(rows, period = 14) {
   const out = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return out;
   for (let i = period - 1; i < rows.length; i += 1) {
     const slice = rows.slice(i - period + 1, i + 1);
     const hi = Math.max(...slice.map((row) => row.h));
@@ -283,6 +311,10 @@ function williamsArray(rows, period = 14) {
 }
 
 function adxArrays(rows, period = 14) {
+  if (isSyntheticRows(rows)) {
+    const nulls = () => Array(rows.length).fill(null);
+    return { adx: nulls(), plusDi: nulls(), minusDi: nulls() };
+  }
   const plusDm = Array(rows.length).fill(0);
   const minusDm = Array(rows.length).fill(0);
   for (let i = 1; i < rows.length; i += 1) {
@@ -306,8 +338,9 @@ function adxArrays(rows, period = 14) {
 }
 
 function cciArray(rows, period = 20) {
-  const typical = rows.map((row) => (row.h + row.l + row.c) / 3);
   const out = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return out;
+  const typical = rows.map((row) => (row.h + row.l + row.c) / 3);
   for (let i = period - 1; i < rows.length; i += 1) {
     const chunk = typical.slice(i - period + 1, i + 1);
     const avg = chunk.reduce((sum, value) => sum + value, 0) / period;
@@ -371,8 +404,17 @@ function renderLinePanel(series, xFor, x1, x2, top, height, title, options = {})
   `;
 }
 
+// 티커 → 스냅샷 종목. 부팅 중 수천만 번 불리므로 app.js 가 loadData/resetMarketCaches 에서
+// 만드는 window.MirStockIndex(Map<normalizeTickerKey(ticker), item>) 를 먼저 본다.
+// 키는 양쪽 모두 app.js 의 normalizeTickerKey(= marketCfg().formatTicker) 로 정규화한다.
+// Map 이 없거나(빌드 전) 미스면 기존 선형 탐색으로 폴백해 동작은 동일하다.
 function stockByTicker(ticker) {
   const key = normalizeTickerKey(ticker);
+  const index = window.MirStockIndex;
+  if (index && typeof index.get === "function") {
+    const hit = index.get(key);
+    if (hit) return hit;
+  }
   return (data.stocks || []).find((row) => normalizeTickerKey(row.ticker) === key) || null;
 }
 
@@ -442,6 +484,7 @@ function cmfArray(rows, period = 20) {
   const fn = window.MirProb && window.MirProb.cmfArray;
   if (fn) return fn(rows, period);
   const out = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return out;
   const mfv = rows.map((r) => {
     const range = r.h - r.l;
     const m = range ? (((r.c - r.l) - (r.h - r.c)) / range) : 0;
@@ -458,11 +501,16 @@ function cmfArray(rows, period = 20) {
 function mfiArray(rows, period = 14) {
   const fn = window.MirProb && window.MirProb.mfiArray;
   if (fn) return fn(rows, period);
+  if (isSyntheticRows(rows)) return Array(rows.length).fill(null);
   const tp = rows.map((r) => (r.h + r.l + r.c) / 3);
+  // 정의: 전형가격(tp)이 전일보다 오르면 양의 자금흐름, 내리면 음. (예전엔 자금흐름
+  // 크기(tp×거래량)끼리 비교해 거래량 급증일이 무조건 '유입' 으로 잡혔다.)
   const rmf = rows.map((r, i) => {
     const raw = tp[i] * (r.v || 0);
     if (!i) return { pos: 0, neg: 0 };
-    return raw > tp[i - 1] * (rows[i - 1].v || 0) ? { pos: raw, neg: 0 } : { pos: 0, neg: raw };
+    if (tp[i] > tp[i - 1]) return { pos: raw, neg: 0 };
+    if (tp[i] < tp[i - 1]) return { pos: 0, neg: raw };
+    return { pos: 0, neg: 0 };
   });
   const out = Array(rows.length).fill(null);
   for (let i = period; i < rows.length; i += 1) {
@@ -663,12 +711,16 @@ function getChartRows(item) {
     }).filter((row) => Number.isFinite(row.c));
   } else {
     const closes = item.closeSeries || [];
+    // 종가만 있는 종목: 시고저를 합성한다. 이 H/L 은 가짜라서 H/L 에 의존하는 지표
+    // (ATR·스토캐스틱·켈트너·슈퍼트렌드·샹들리에·일목·캔들/패턴)는 각 함수가
+    // isSyntheticRows() 로 판별해 null/빈 결과를 돌려준다. 행 객체에 표식을 두는 이유:
+    // slice/filter 로 잘려도 살아남아야 해서(배열 프로퍼티는 slice 에서 사라진다).
     rows = closes.map((close, index) => {
       const previous = Number(closes[Math.max(0, index - 1)] || close);
       const c = Number(close);
       const high = Math.max(previous, c) * 1.004;
       const low = Math.min(previous, c) * 0.996;
-      return { o: previous, h: high, l: low, c, v: 1, d: null };
+      return { o: previous, h: high, l: low, c, v: 1, d: null, synthetic: true };
     });
   }
   // When the data carries no dates (older detail files / synthetic series), infer
@@ -757,18 +809,23 @@ function rsiSeries(values, period) {
   }
   gain /= period;
   loss /= period;
-  out[period] = rsiValue(gain, loss);
+  out[period] = rsiFromAverages(gain, loss);
   for (let i = period + 1; i < values.length; i += 1) {
     const change = values[i] - values[i - 1];
     gain = (gain * (period - 1) + Math.max(0, change)) / period;
     loss = (loss * (period - 1) + Math.max(0, -change)) / period;
-    out[i] = rsiValue(gain, loss);
+    out[i] = rsiFromAverages(gain, loss);
   }
   return out;
 }
 
-function rsiValue(avgGain, avgLoss) {
-  if (!avgLoss) return 100;
+// 평균 상승분/하락분 → RSI. 이름 주의: app.js 에 `rsiValue(item)`(스냅샷의 실측 rsi14 를
+// 읽는 함수)이 전역으로 있고 app.js 가 이 파일보다 뒤에 로드되므로, 여기서 같은 이름을
+// 쓰면 뒤 선언이 덮어써 rsiSeries 가 전부 null 이 됐다(RSI(14) 패널·AI 컨텍스트 공백).
+// 전역 이름 충돌은 scripts/check_global_name_collisions.py 가 잡는다.
+function rsiFromAverages(avgGain, avgLoss) {
+  // 완전 횡보(상승분·하락분 모두 0)는 과매수(100)가 아니라 중립(50) — analysis.js 와 동일.
+  if (!avgLoss) return avgGain ? 100 : 50;
   const rs = avgGain / avgLoss;
   return 100 - (100 / (1 + rs));
 }
@@ -1388,19 +1445,39 @@ function fmtKrwCompact(value) {
   return `${(jo * 10000).toFixed(0)}억`;
 }
 
+// 두 날짜 사이의 평일(월~금) 수 — 거래일 근사(휴장일은 세지 않는다).
+function weekdaysBetween(a, b) {
+  let from = Math.min(a, b);
+  const to = Math.max(a, b);
+  let count = 0;
+  const DAY = 86400000;
+  for (; from < to; from += DAY) {
+    const dow = new Date(from).getDay();
+    if (dow !== 0 && dow !== 6) count += 1;
+  }
+  return count;
+}
+
+// 이벤트 날짜에 가장 가까운 거래일 인덱스. 5거래일보다 멀면 -1 — 이력 범위 밖의
+// 날짜(5년 전 실적, 미래 예정일)가 첫/마지막 봉에 붙어 엉뚱한 반응률을 만들지 않게.
+const NEAREST_TRADING_MAX_DAYS = 5;
 function nearestTradingIndex(rows, date) {
   const target = new Date(`${date}T00:00:00`).getTime();
   if (!Number.isFinite(target)) return -1;
   let best = -1;
   let bestDist = Infinity;
+  let bestT = null;
   rows.forEach((row, index) => {
     const t = new Date(`${row.d}T00:00:00`).getTime();
     const dist = Math.abs(t - target);
     if (dist < bestDist) {
       best = index;
       bestDist = dist;
+      bestT = t;
     }
   });
+  if (best < 0 || bestT == null) return -1;
+  if (weekdaysBetween(bestT, target) > NEAREST_TRADING_MAX_DAYS) return -1;
   return best;
 }
 

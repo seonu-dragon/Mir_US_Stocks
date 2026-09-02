@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-09-02 07:48:46 KST",
+  "updatedAtKst": "2026-09-02 18:04:19 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7670,
+  "tradeCount": 7667,
   "politicianCount": 165,
   "rankings": [
     {
@@ -48,7 +48,7 @@
       "name": "Tim Moore",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 63.32,
+      "estReturnPct": 63.5,
       "buyCount": 49,
       "sellCount": 28,
       "tradeCount": 77,
@@ -72,7 +72,7 @@
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 47.18,
+      "estReturnPct": 47.2,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
@@ -108,7 +108,7 @@
       "name": "Rob Bresnahan",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 30.11,
+      "estReturnPct": 30.13,
       "buyCount": 111,
       "sellCount": 165,
       "tradeCount": 276,
@@ -120,7 +120,7 @@
       "name": "Jared Moskowitz",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 28.29,
+      "estReturnPct": 28.4,
       "buyCount": 129,
       "sellCount": 58,
       "tradeCount": 187,
@@ -168,7 +168,7 @@
       "name": "Thomas H. Kean",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 19.73,
+      "estReturnPct": 19.79,
       "buyCount": 40,
       "sellCount": 14,
       "tradeCount": 65,
@@ -190,11 +190,23 @@
     },
     {
       "rank": 16,
+      "id": "house-lisa-mcclain",
+      "name": "Lisa McClain",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 17.85,
+      "buyCount": 332,
+      "sellCount": 332,
+      "tradeCount": 664,
+      "committees": []
+    },
+    {
+      "rank": 17,
       "id": "house-josh-gottheimer",
       "name": "Josh Gottheimer",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 17.81,
+      "estReturnPct": 17.84,
       "buyCount": 425,
       "sellCount": 146,
       "tradeCount": 572,
@@ -203,24 +215,12 @@
       ]
     },
     {
-      "rank": 17,
-      "id": "house-lisa-mcclain",
-      "name": "Lisa McClain",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 17.8,
-      "buyCount": 332,
-      "sellCount": 332,
-      "tradeCount": 664,
-      "committees": []
-    },
-    {
       "rank": 18,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 17.72,
+      "estReturnPct": 17.74,
       "buyCount": 142,
       "sellCount": 5,
       "tradeCount": 147,
@@ -258,7 +258,7 @@
       "name": "Richard Dean Dr McCormick",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 13.24,
+      "estReturnPct": 13.28,
       "buyCount": 30,
       "sellCount": 25,
       "tradeCount": 55,
@@ -318,7 +318,7 @@
       "name": "Rick Larsen",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 7.38,
+      "estReturnPct": 7.44,
       "buyCount": 19,
       "sellCount": 17,
       "tradeCount": 37,
@@ -342,7 +342,7 @@
       "name": "Maria Elvira Salazar",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 5.07,
+      "estReturnPct": 5.11,
       "buyCount": 39,
       "sellCount": 12,
       "tradeCount": 53,
@@ -378,7 +378,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -1.49,
+      "estReturnPct": -1.48,
       "buyCount": 51,
       "sellCount": 36,
       "tradeCount": 87,
@@ -390,7 +390,7 @@
       "name": "April McClain Delaney",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -5.69,
+      "estReturnPct": -5.67,
       "buyCount": 129,
       "sellCount": 6,
       "tradeCount": 136,
@@ -846,7 +846,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 17.8
+      "estReturnPct": 17.85
     },
     {
       "id": "house-josh-gottheimer",
@@ -1202,7 +1202,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 17.81
+      "estReturnPct": 17.84
     },
     {
       "id": "house-gilbert-cisneros",
@@ -2264,7 +2264,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 30.11
+      "estReturnPct": 30.13
     },
     {
       "id": "house-jefferson-shreve",
@@ -2618,7 +2618,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 47.18
+      "estReturnPct": 47.2
     },
     {
       "id": "house-julie-johnson",
@@ -3335,8 +3335,8 @@
       "party": "R",
       "committees": [],
       "district": "OK01",
-      "tradeCount": 221,
-      "buyCount": 157,
+      "tradeCount": 220,
+      "buyCount": 156,
       "sellCount": 57,
       "recentTrades": [
         {
@@ -4388,7 +4388,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 28.29
+      "estReturnPct": 28.4
     },
     {
       "id": "house-valerie-hoyle",
@@ -5098,7 +5098,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 17.72
+      "estReturnPct": 17.74
     },
     {
       "id": "house-lois-frankel",
@@ -5806,7 +5806,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -5.69
+      "estReturnPct": -5.67
     },
     {
       "id": "house-john-james",
@@ -8284,7 +8284,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -1.49
+      "estReturnPct": -1.48
     },
     {
       "id": "house-christopher-l-jacobs",
@@ -8992,7 +8992,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 63.32
+      "estReturnPct": 63.5
     },
     {
       "id": "house-dan-newhouse",
@@ -11824,7 +11824,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 19.73
+      "estReturnPct": 19.79
     },
     {
       "id": "house-ritchie-john-torres",
@@ -13240,7 +13240,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 13.24
+      "estReturnPct": 13.28
     },
     {
       "id": "house-john-curtis",
@@ -13948,7 +13948,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 5.07
+      "estReturnPct": 5.11
     },
     {
       "id": "house-john-rutherford",
@@ -17134,7 +17134,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 7.38
+      "estReturnPct": 7.44
     },
     {
       "id": "house-scott-scott-franklin",
@@ -22447,360 +22447,6 @@
       "estReturnPct": 35.41
     },
     {
-      "id": "house-austin-scott",
-      "name": "Austin Scott",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "GA08",
-      "tradeCount": 21,
-      "buyCount": 6,
-      "sellCount": 14,
-      "recentTrades": [
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-02-17",
-          "disclosureDate": "02/17/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20032279.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-06-16",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GE",
-          "asset": "GE Aerospace Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-23",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-14",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GE",
-          "asset": "GE Aerospace Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-03-04",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GE",
-          "asset": "GE Aerospace Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-12-13",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "F",
-          "asset": "Ford Motor Company Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-10-02",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLT",
-          "asset": "Katapult Holdings, Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-07-31",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "BE",
-          "asset": "Bloom Energy Corporation Class A Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-07-15",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEHC",
-          "asset": "GE HealthCare Technologies Inc.",
-          "side": "exchange",
-          "type": "Exchange",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-01-04",
-          "disclosureDate": "01/09/2023",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022312.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLTW",
-          "asset": "Katapult Holdings, Inc. - Warrant",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-30",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019915.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLTW",
-          "asset": "Katapult Holdings, Inc. - Warrant",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-24",
-          "disclosureDate": "11/24/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019877.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "BE",
-          "asset": "Bloom Energy Corporation Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-21",
-          "disclosureDate": "10/21/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019670.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "PLUG",
-          "asset": "Plug Power, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "10/15/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "BE",
-          "asset": "Bloom Energy Corporation Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-14",
-          "disclosureDate": "09/14/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLTW",
-          "asset": "Katapult Holdings, Inc. - Warrant",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-14",
-          "disclosureDate": "09/14/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "JNJ",
-          "asset": "Johnson & Johnson",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-09-10",
-          "disclosureDate": "09/10/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019633.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-09-08",
-          "disclosureDate": "09/08/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019633.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "F",
-          "asset": "Ford Motor Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-08",
-          "disclosureDate": "09/08/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019633.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "FCEL",
-          "asset": "FuelCell Energy, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-07",
-          "disclosureDate": "09/07/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -23155,6 +22801,360 @@
         }
       ],
       "estReturnPct": 18.99
+    },
+    {
+      "id": "house-austin-scott",
+      "name": "Austin Scott",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "GA08",
+      "tradeCount": 20,
+      "buyCount": 5,
+      "sellCount": 14,
+      "recentTrades": [
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-02-17",
+          "disclosureDate": "02/17/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20032279.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-06-16",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GE",
+          "asset": "GE Aerospace Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-23",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-14",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GE",
+          "asset": "GE Aerospace Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-03-04",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GE",
+          "asset": "GE Aerospace Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-12-13",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "F",
+          "asset": "Ford Motor Company Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-10-02",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLT",
+          "asset": "Katapult Holdings, Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-07-31",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "BE",
+          "asset": "Bloom Energy Corporation Class A Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-07-15",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEHC",
+          "asset": "GE HealthCare Technologies Inc.",
+          "side": "exchange",
+          "type": "Exchange",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-01-04",
+          "disclosureDate": "01/09/2023",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022312.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLTW",
+          "asset": "Katapult Holdings, Inc. - Warrant",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-30",
+          "disclosureDate": "11/30/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019915.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLTW",
+          "asset": "Katapult Holdings, Inc. - Warrant",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-24",
+          "disclosureDate": "11/24/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019877.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "BE",
+          "asset": "Bloom Energy Corporation Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-21",
+          "disclosureDate": "10/21/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019670.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "PLUG",
+          "asset": "Plug Power, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-15",
+          "disclosureDate": "10/15/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "BE",
+          "asset": "Bloom Energy Corporation Class A",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-09-14",
+          "disclosureDate": "09/14/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLTW",
+          "asset": "Katapult Holdings, Inc. - Warrant",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-09-14",
+          "disclosureDate": "09/14/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "JNJ",
+          "asset": "Johnson & Johnson",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2021-09-10",
+          "disclosureDate": "09/10/2021",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019633.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "T",
+          "asset": "AT&T Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2021-09-08",
+          "disclosureDate": "09/08/2021",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019633.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "F",
+          "asset": "Ford Motor Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-09-08",
+          "disclosureDate": "09/08/2021",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019633.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "FCEL",
+          "asset": "FuelCell Energy, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-09-07",
+          "disclosureDate": "09/07/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": null
     },
     {
       "id": "house-blake-moore",
@@ -31147,88 +31147,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-suzan-k-delbene",
-      "name": "Suzan K. DelBene",
-      "chamber": "House",
-      "party": "D",
-      "committees": [],
-      "district": "WA01",
-      "tradeCount": 4,
-      "buyCount": 0,
-      "sellCount": 4,
-      "recentTrades": [
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-08-31",
-          "disclosureDate": "08/31/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025768.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-02-29",
-          "disclosureDate": "02/29/2024",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024581.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$250,001 - $500,000",
-          "amountMid": 375000,
-          "transactionDate": "2023-08-30",
-          "disclosureDate": "08/30/2023",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023610.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Suzan K. DelBene",
-          "chamber": "House",
-          "ticker": "MSFT",
-          "asset": "Microsoft Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$5,000,001 - $25,000,000",
-          "amountMid": 15000000,
-          "transactionDate": "2021-09-03",
-          "disclosureDate": "09/03/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019571.pdf",
-          "district": "WA01",
-          "source": "house_ptr",
-          "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-brian-mast",
       "name": "Brian Mast",
       "chamber": "House",
@@ -31795,6 +31713,71 @@
           "district": "TN06",
           "source": "house_ptr",
           "party": "R"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-suzan-k-delbene",
+      "name": "Suzan K. DelBene",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "WA01",
+      "tradeCount": 3,
+      "buyCount": 0,
+      "sellCount": 3,
+      "recentTrades": [
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-08-31",
+          "disclosureDate": "08/31/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025768.pdf",
+          "district": "WA01",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-02-29",
+          "disclosureDate": "02/29/2024",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024581.pdf",
+          "district": "WA01",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Suzan K. DelBene",
+          "chamber": "House",
+          "ticker": "MSFT",
+          "asset": "Microsoft Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$250,001 - $500,000",
+          "amountMid": 375000,
+          "transactionDate": "2023-08-30",
+          "disclosureDate": "08/30/2023",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023610.pdf",
+          "district": "WA01",
+          "source": "house_ptr",
+          "party": "D"
         }
       ],
       "estReturnPct": null
@@ -35607,7 +35590,7 @@
     "MSFT": {
       "ticker": "MSFT",
       "netBuys": 76,
-      "netSells": 29,
+      "netSells": 28,
       "politicianCount": 40,
       "trades": [
         {
@@ -53737,9 +53720,9 @@
     },
     "HON": {
       "ticker": "HON",
-      "netBuys": 5,
+      "netBuys": 4,
       "netSells": 12,
-      "politicianCount": 13,
+      "politicianCount": 12,
       "trades": [
         {
           "politician": "Dan Newhouse",
@@ -54012,23 +53995,6 @@
           "district": "MA05",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Kevin Hern",
-          "chamber": "House",
-          "ticker": "HON",
-          "asset": "Honeywell International Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-03",
-          "disclosureDate": "09/06/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019594.pdf",
-          "district": "OK01",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -165396,31 +165362,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019435.pdf",
           "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "BLDP": {
-      "ticker": "BLDP",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "BLDP",
-          "asset": "Ballard Power Systems, Inc. - Common Shares",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-03",
-          "disclosureDate": "09/03/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
           "source": "house_ptr",
           "party": "R"
         }

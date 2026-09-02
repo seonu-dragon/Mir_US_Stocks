@@ -930,9 +930,9 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=50e17d273f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=50e17d273f"></noscript>
-    <script src="build_id.js?v=a395d62cf1"></script>
+    <link rel="preload" href="styles.css?v=3026f9e73b" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=3026f9e73b"></noscript>
+    <script src="build_id.js?v=ce306c8716"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3234,7 +3234,7 @@ html[data-theme="dark"] {
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
-    <script src="data/ticker_aliases_ko.js?v=f232823929"></script>
+    <script src="data/ticker_aliases_ko.js?v=ae3dcb1f0f"></script>
     <!-- Feature datasets (13F / congress / insider / activist / events / IPO /
          short / white-house / leveraged-ETF) are loaded on demand after boot by
          preloadFeatureData() in app.js, gated by the active market's features.

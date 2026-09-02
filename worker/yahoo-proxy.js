@@ -22,14 +22,22 @@
 //   4) Copy the deployed URL (e.g. https://mir-yahoo.<name>.workers.dev).
 //   5) Put that URL into app.js -> LIVE_DATA_PROXY.
 // (Optional) restrict ALLOW_ORIGIN below to your site for a little extra safety.
+//
+// 이 파일은 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포다
+// (DEPLOY.md "Cloudflare Worker 바인딩"). 바인딩: AI, MOVE_CACHE(KV), COMMUNITY_KV(KV),
+// Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_CLIENT_ID/SECRET, COMMUNITY_ADMIN_KEY,
+// (선택) GEMINI_MODEL, IP_HASH_SALT.
 // =============================================================================
 
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 
-// LLM 엔드포인트(/chat, move_analysis)는 뉴런·Gemini 쿼터를 태우므로 아무
-// 사이트에서나 못 부르게 Origin 을 제한한다. 데이터 프록시는 계속 개방(*).
-// Origin 이 아예 없는 요청(비브라우저)은 통과시키되 아래 IP 리밋으로만 제한 —
+// LLM 을 태우는 경로 — /chat, move_analysis, 그리고 ?ticker= 응답의 한국어
+// 요약(summary) 단계 — 는 뉴런·Gemini 쿼터를 소모하므로 아무 사이트에서나 못
+// 부르게 Origin 을 제한하고 IP 리밋을 건다. ?ticker= 의 뉴스·차트·실적 자체와
+// 나머지 데이터 프록시는 계속 개방(*)이다. 요약은 종목·날짜 단위로 KV 에 1시간
+// 캐시되므로 캐시 히트는 게이트를 타지 않는다.
+// Origin 이 아예 없는 요청(비브라우저)은 통과시키되 IP 리밋으로만 제한 —
 // 로컬 캡처 스크립트(chart_capture)와 스모크 테스트가 이 경로를 쓴다.
 const LLM_ALLOWED_ORIGINS = new Set([
   "https://seonu-dragon.github.io",
@@ -60,6 +68,57 @@ async function ipRateLimited(request, env, bucket, limit, windowSec) {
     return false;
   }
 }
+
+// 모든 업스트림 fetch 의 공통 타임아웃. 헤더가 올 때까지만 재는 "헤더 타임아웃"
+// 이다 — 응답이 도착하면 타이머를 풀어 스트리밍 바디(Gemini SSE 등)는 끊지 않는다.
+// 야후·구글 뉴스·investing.com 중 하나가 멈추면 Promise.all 전체가 워커의
+// CPU/wall 한도까지 매달려 있던 것을 막는다.
+const FETCH_TIMEOUT_MS = 8000;
+async function fetchT(url, init = {}, ms = FETCH_TIMEOUT_MS) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  try {
+    return await fetch(url, { ...init, signal: ctrl.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function sha256Hex(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(text)));
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// 비밀값 비교는 해시 후 고정 길이로 XOR — 길이·앞글자 일치로 시간이 갈리지 않는다.
+async function timingSafeEqual(a, b) {
+  const [ha, hb] = await Promise.all([sha256Hex(a), sha256Hex(b)]);
+  let diff = 0;
+  for (let i = 0; i < ha.length; i += 1) diff |= ha.charCodeAt(i) ^ hb.charCodeAt(i);
+  return diff === 0;
+}
+
+function clientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || "unknown";
+}
+
+// 신고·투표 중복 판정용. 원본 IP 는 KV 에 남기지 않고 솔트 해시 16자만 저장한다.
+async function hashedIp(request, env) {
+  const salt = (env && env.IP_HASH_SALT) || "mir-community-v1";
+  return (await sha256Hex(`${salt}:${clientIp(request)}`)).slice(0, 16);
+}
+
+// 관리자 키는 X-Admin-Key 헤더가 정식이다. 쿼리/바디의 adminKey 는 GET URL 이
+// 브라우저 히스토리·로그·Referer 에 남는 노출면이라 한 릴리스만 폴백으로 받는다.
+async function communityAdminOk(env, request, fallbackKey) {
+  const adminKey = env && env.COMMUNITY_ADMIN_KEY;
+  if (!adminKey) return false;
+  const supplied = (request && request.headers && request.headers.get("X-Admin-Key")) || fallbackKey || "";
+  if (!supplied) return false;
+  return timingSafeEqual(String(supplied), String(adminKey));
+}
+
+// earnings_calendar 배치는 티커마다 야후 quoteSummary 를 부른다(20개 = 20회).
+const EARNINGS_CALENDAR_MAX_TICKERS = 20;
 // Workers AI text models tried in order for the Korean summary (first that works wins).
 // Larger / newer models follow Korean instructions far better than the small ones.
 const SUMMARY_MODELS = [
@@ -73,6 +132,11 @@ const CHAT_MODELS = [
   "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "@cf/mistralai/mistral-small-3.1-24b-instruct",
 ];
+// /chat 이 GEMINI_API_KEY 가 있을 때 쓰는 기본 모델(env.GEMINI_MODEL 로 덮어쓴다).
+// 스트리밍·비스트리밍 두 경로가 같은 값을 봐야 하므로 한 곳에만 둔다.
+const GEMINI_DEFAULT_MODEL = "gemini-1.5-flash";
+// Gemini 는 응답 생성 후 헤더를 보내는 경우가 있어 기본 8초보다 길게 잡는다.
+const GEMINI_TIMEOUT_MS = 25000;
 
 export default {
   async fetch(request, env) {
@@ -81,7 +145,9 @@ export default {
     try {
       return await handleFetch(request, env);
     } catch (err) {
-      return cors(json({ error: "internal", detail: String((err && err.message) || err).slice(0, 200) }, 500, 0));
+      // 내부 메시지(업스트림 URL·키 이름 등)는 로그로만. 클라이언트엔 코드만 준다.
+      console.error("worker internal error:", err);
+      return cors(json({ error: "internal" }, 500, 0));
     }
   },
 };
@@ -102,7 +168,7 @@ async function handleFetch(request, env) {
 
     // Shared community board (KV binding COMMUNITY_KV required).
     if (url.pathname === "/community") {
-      if (request.method === "GET") return cors(await handleCommunityList(url, env));
+      if (request.method === "GET") return cors(await handleCommunityList(url, env, request));
       if (request.method === "POST") return cors(await handleCommunityCreate(request, env));
       if (request.method === "DELETE") return cors(await handleCommunityDelete(request, env));
     }
@@ -117,7 +183,7 @@ async function handleFetch(request, env) {
       return cors(await handleCommunityReport(request, env));
     }
     if (request.method === "GET" && url.pathname === "/community/reports") {
-      return cors(await handleCommunityReportsList(url, env));
+      return cors(await handleCommunityReportsList(url, env, request));
     }
     if (request.method === "POST" && url.pathname === "/community/vote") {
       return cors(await handleCommunityVote(request, env));
@@ -172,7 +238,7 @@ async function handleFetch(request, env) {
         .split(",")
         .map((t) => t.trim().toUpperCase().replace(/[^A-Z0-9.\-]/g, ""))
         .filter(Boolean)
-        .slice(0, 60);
+        .slice(0, EARNINGS_CALENDAR_MAX_TICKERS);
       const earnings = await fetchEarningsCalendar(raw);
       return cors(json({ earnings }));
     }
@@ -185,44 +251,61 @@ async function handleFetch(request, env) {
     // Korean tickers must keep the dot for Yahoo (005930.KS); US class shares use
     // dashes (BRK.B -> BRK-B).
     const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
+    const kr = isKoreanTicker(ticker);
+    // ?model= 은 A/B 용인데 아무나 넘길 수 있으면 임의 모델(대형·유료)로 뉴런을
+    // 태우는 경로가 된다. 관리자 키가 있을 때만 존중한다.
+    const isAdmin = await communityAdminOk(env, request, url.searchParams.get("adminKey"));
+    const modelOverride = isAdmin ? String(url.searchParams.get("model") || "").slice(0, 120) : "";
+
     // Price-event analysis is intentionally opt-in: the static site calls this
     // only after the visitor clicks "원인 분석" on a recent price event.
     if (url.searchParams.get("move_analysis")) {
       const eventDate = String(url.searchParams.get("date") || "").slice(0, 10);
-      const eventChange = Number(url.searchParams.get("change") || 0);
-      const company = String(url.searchParams.get("company") || ticker).replace(/[<>]/g, "").slice(0, 120);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return cors(json({ error: "invalid date" }, 400));
-      const cacheKey = `move:v3:${ticker}:${eventDate}`;
+      // 등락률은 호출자가 주는 값이라 프롬프트에 그대로 들어간다. 범위를 자르고
+      // 소수 2자리로 고정해 키 공간을 제한한 뒤, 캐시 키에 해시로 넣는다 —
+      // 예전엔 ticker:date 만으로 키를 잡아서, 아무 값이나 넣은 첫 호출이 30일간
+      // 모든 방문자에게 그 결과를 보여 줬다(캐시 오염).
+      const rawChange = Number(url.searchParams.get("change") || 0);
+      const eventChange = Number.isFinite(rawChange)
+        ? Math.round(Math.max(-100, Math.min(1000, rawChange)) * 100) / 100
+        : 0;
+      const promptHash = (await sha256Hex(`${eventChange}|${modelOverride}`)).slice(0, 12);
+      const cacheKey = `move:v4:${ticker}:${eventDate}:${promptHash}`;
       if (env && env.MOVE_CACHE) {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
         if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
       }
       // 캐시 미스일 때만 LLM 이 돌므로 여기서 게이트한다(캐시 히트는 무제한).
-      if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+      const originOk = llmOriginAllowed(request);
+      if (!originOk) return cors(json({ error: "forbidden_origin" }, 403, 0));
       if (await ipRateLimited(request, env, "move", 6, 60)) {
         return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
       }
-      const kr = isKoreanTicker(ticker);
       // Benchmarks: Korean stocks compare against KOSPI/KOSDAQ, US against S&P/Nasdaq.
       const benchmarks = kr
         ? [["^KS11", "KOSPI"], ["^KQ11", "KOSDAQ"]]
         : [["SPY", "S&P 500"], ["QQQ", "Nasdaq 100"]];
-      const [newsResult, chart, ...benchCharts] = await Promise.all([
-        kr ? fetchHistoricalNewsKorean(env, ticker, company, eventDate)
-           : fetchHistoricalNews(env, ticker, company, eventDate),
+      // 회사명은 호출자 입력이 아니라 서버가 정한다(야후/네이버 종목명). 예전엔
+      // ?company= 가 검색어와 프롬프트에 그대로 들어가 "NVDA(아무 문구)" 로 캐시됐다.
+      const [company, chart, ...benchCharts] = await Promise.all([
+        resolveCompanyName(ticker, symbol, kr),
         fetchChart(symbol),
         ...benchmarks.map(([sym]) => fetchChart(sym)),
       ]);
+      const companyLabel = company || ticker;
+      const newsResult = kr
+        ? await fetchHistoricalNewsKorean(env, ticker, companyLabel, eventDate)
+        : await fetchHistoricalNews(env, ticker, companyLabel, eventDate);
       const benchLabels = Object.fromEntries(benchmarks);
       const marketContext = {};
       benchmarks.forEach(([sym], i) => { marketContext[sym] = chartMoveContext(benchCharts[i], eventDate); });
-      const modelOverride = url.searchParams.get("model");
       const confidence = evidenceConfidence(newsResult.news, eventDate);
       const { text: analysis, error: analysisError, model: analysisModel } =
-        await summarizeMoveAnalysisKorean(env, ticker, company, eventDate, eventChange, newsResult.news, chart, marketContext, confidence, modelOverride, { isKr: kr, benchLabels });
+        await summarizeMoveAnalysisKorean(env, ticker, companyLabel, eventDate, eventChange, newsResult.news, chart, marketContext, confidence, modelOverride || null, { isKr: kr, benchLabels });
       const payload = {
         ticker,
-        company,
+        company: companyLabel,
         date: eventDate,
         changePct: eventChange,
         chartContext: chartMoveContext(chart, eventDate),
@@ -235,24 +318,81 @@ async function handleFetch(request, env) {
         newsProviders: newsResult.providers,
         searchWindowDays: newsResult.windowDays,
       };
-      if (analysis && env && env.MOVE_CACHE) {
+      // 허용 Origin 이 만든 결과만 30일 캐시에 넣는다(위 게이트를 통과했으니 항상
+      // 참이지만, 게이트가 옮겨져도 저장 조건은 남도록 명시).
+      if (analysis && originOk && env && env.MOVE_CACHE) {
         await env.MOVE_CACHE.put(cacheKey, JSON.stringify(payload), { expirationTtl: 2592000 });
       }
       return cors(json(payload, 200, analysis ? 2592000 : 900));
     }
 
     // Korean stocks get Korean-language headlines from Naver; US stays on Yahoo.
-    const kr = isKoreanTicker(ticker);
     const [news, chart, earnings] = await Promise.all([
       kr ? fetchNaverNews(ticker) : fetchNews(env, symbol),
       fetchChart(symbol),
       fetchEarnings(symbol),
     ]);
-    // Optional ?model=... overrides the model list (for quick A/B testing).
-    const modelOverride = url.searchParams.get("model");
-    const { text: summary, error: summaryError, model: summaryModel } =
-      await summarizeKorean(env, ticker, news, modelOverride, kr);
-    return cors(json({ ticker, news, chart, earnings, summary, summaryError, summaryModel, newsSource: kr ? "naver" : "yahoo" }));
+    const { text: summary, error: summaryError, model: summaryModel, cached: summaryCached } =
+      await cachedTickerSummary(request, env, ticker, news, kr, modelOverride);
+    return cors(json({
+      ticker, news, chart, earnings, summary, summaryError, summaryModel,
+      summaryCached: Boolean(summaryCached), newsSource: kr ? "naver" : "yahoo",
+    }));
+}
+
+// ?ticker= 의 한국어 요약. 예전엔 요청마다 70B 모델을 돌렸고 Origin·IP 제한도
+// 캐시도 없었다 — 아무 스크립트나 루프를 돌리면 뉴런 예산이 그대로 새는 경로였다.
+// 종목·날짜(UTC) 키로 KV 에 1시간 캐시하고, 캐시 미스일 때만 게이트를 지나 LLM 을 부른다.
+// 게이트에 걸리면 뉴스·차트는 그대로 주고 summary 만 비운다.
+async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverride) {
+  if (!news || !news.length) return { text: "", error: "no_news" };
+  const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
+  const day = new Date().toISOString().slice(0, 10);
+  const cacheKey = `summary:v1:${ticker}:${day}`;
+  // 모델 오버라이드(관리자 A/B)는 기본 캐시를 읽지도 쓰지도 않는다.
+  if (kv && !modelOverride) {
+    try {
+      const cached = await kv.get(cacheKey, "json");
+      if (cached && cached.text) return { text: cached.text, error: "", model: cached.model || "", cached: true };
+    } catch (_) { /* KV 장애는 캐시 미스로 취급 */ }
+  }
+  if (!llmOriginAllowed(request)) return { text: "", error: "forbidden_origin" };
+  if (await ipRateLimited(request, env, "summary", 10, 60)) return { text: "", error: "rate_limited" };
+  const result = await summarizeKorean(env, ticker, news, modelOverride || null, isKr);
+  if (result.text && kv && !modelOverride) {
+    try {
+      await kv.put(cacheKey, JSON.stringify({ text: result.text, model: result.model || "" }), { expirationTtl: 3600 });
+    } catch (_) { /* 캐시 실패는 응답에 영향 없음 */ }
+  }
+  return result;
+}
+
+// move_analysis 프롬프트·뉴스 검색어에 들어갈 회사명. KR 은 네이버 종목 기본정보,
+// US 는 야후 차트 meta(longName/shortName). 못 찾으면 "" — 호출자는 티커로 대체한다.
+async function resolveCompanyName(ticker, symbol, isKr) {
+  try {
+    if (isKr) {
+      const code = String(ticker || "").replace(/\.(KS|KQ)$/i, "").replace(/[^0-9A-Za-z]/g, "");
+      if (!code) return "";
+      const r = await fetchT(
+        `https://m.stock.naver.com/api/stock/${encodeURIComponent(code)}/basic`,
+        { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" } },
+      );
+      if (!r.ok) return "";
+      const data = await r.json();
+      return String((data && data.stockName) || "").replace(/[<>]/g, "").trim().slice(0, 120);
+    }
+    const r = await fetchT(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=1d`,
+      { headers: UA },
+    );
+    if (!r.ok) return "";
+    const data = await r.json();
+    const meta = data?.chart?.result?.[0]?.meta || {};
+    return String(meta.longName || meta.shortName || "").replace(/[<>]/g, "").trim().slice(0, 120);
+  } catch (_) {
+    return "";
+  }
 }
 
 function chartMoveContext(chart, eventDate) {
@@ -334,8 +474,8 @@ async function fetchFinnhubNews(env, ticker, from, to) {
   const token = env && env.FINNHUB_API_KEY;
   if (!token) return [];
   try {
-    const endpoint = `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(ticker)}&from=${from}&to=${to}&token=${encodeURIComponent(token)}`;
-    const response = await fetch(endpoint, { headers: UA });
+    const endpoint = `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(ticker)}&from=${from}&to=${to}`;
+    const response = await fetchT(endpoint, { headers: { ...UA, "X-Finnhub-Token": token } });
     if (!response.ok) return [];
     const rows = await response.json();
     return (Array.isArray(rows) ? rows : []).map((item) => ({
@@ -393,7 +533,7 @@ async function fetchGoogleNewsRss(ticker, company, from, to, isKr = false) {
       const term = companyTerm || ticker;
       const query = `\"${term}\" 주가 after:${after} before:${before}`;
       const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
-      const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
+      const response = await fetchT(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
       if (!response.ok) return [];
       return parseGoogleNewsRss(await response.text());
     }
@@ -402,7 +542,7 @@ async function fetchGoogleNewsRss(ticker, company, from, to, isKr = false) {
       : `\"${ticker}\"`;
     const query = `${identity} stock after:${after} before:${before}`;
     const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-    const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
+    const response = await fetchT(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
     if (!response.ok) return [];
     return parseGoogleNewsRss(await response.text());
   } catch (error) {
@@ -418,7 +558,7 @@ async function fetchGdeltNews(ticker, company, from, to) {
     const startdatetime = `${from.replace(/-/g, "")}000000`;
     const enddatetime = `${to.replace(/-/g, "")}235959`;
     const endpoint = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=75&format=json&sort=HybridRel&startdatetime=${startdatetime}&enddatetime=${enddatetime}`;
-    const response = await fetch(endpoint, { headers: UA });
+    const response = await fetchT(endpoint, { headers: UA });
     if (!response.ok) return [];
     const payload = await response.json();
     return (payload.articles || []).map((item) => ({
@@ -661,13 +801,13 @@ async function bootstrapYahooSessionBasic() {
   let cookie = "";
   for (const url of ["https://fc.yahoo.com", "https://finance.yahoo.com/"]) {
     try {
-      const response = await fetch(url, { headers: UA, redirect: "follow" });
+      const response = await fetchT(url, { headers: UA, redirect: "follow" });
       cookie = mergeCookieHeader(cookie, response);
       if (cookie) break;
     } catch (_) { /* try next bootstrap URL */ }
   }
   if (!cookie) return null;
-  const crumbResponse = await fetch("https://query1.finance.yahoo.com/v1/test/getcrumb", {
+  const crumbResponse = await fetchT("https://query1.finance.yahoo.com/v1/test/getcrumb", {
     headers: { ...UA, Cookie: cookie },
     redirect: "follow",
   });
@@ -679,7 +819,7 @@ async function bootstrapYahooSessionBasic() {
 async function bootstrapYahooSessionCsrf() {
   let cookie = "";
   try {
-    const consent = await fetch("https://guce.yahoo.com/consent", { headers: UA, redirect: "follow" });
+    const consent = await fetchT("https://guce.yahoo.com/consent", { headers: UA, redirect: "follow" });
     cookie = mergeCookieHeader(cookie, consent);
     const body = await consent.text();
     const csrfMatch = body.match(/name="csrfToken"\s+value="([^"]+)"/);
@@ -693,26 +833,26 @@ async function bootstrapYahooSessionCsrf() {
         originalDoneUrl: "https://finance.yahoo.com/",
         namespace: "yahoo",
       });
-      const post = await fetch(`https://consent.yahoo.com/v2/collectConsent?sessionId=${encodeURIComponent(sessionMatch[1])}`, {
+      const post = await fetchT(`https://consent.yahoo.com/v2/collectConsent?sessionId=${encodeURIComponent(sessionMatch[1])}`, {
         method: "POST",
         headers: { ...UA, Cookie: cookie, "Content-Type": "application/x-www-form-urlencoded" },
         body: form.toString(),
         redirect: "follow",
       });
       cookie = mergeCookieHeader(cookie, post);
-      const copy = await fetch(`https://guce.yahoo.com/copyConsent?sessionId=${encodeURIComponent(sessionMatch[1])}`, {
+      const copy = await fetchT(`https://guce.yahoo.com/copyConsent?sessionId=${encodeURIComponent(sessionMatch[1])}`, {
         headers: { ...UA, Cookie: cookie },
         redirect: "follow",
       });
       cookie = mergeCookieHeader(cookie, copy);
     }
-    const finance = await fetch("https://finance.yahoo.com/", { headers: { ...UA, Cookie: cookie }, redirect: "follow" });
+    const finance = await fetchT("https://finance.yahoo.com/", { headers: { ...UA, Cookie: cookie }, redirect: "follow" });
     cookie = mergeCookieHeader(cookie, finance);
   } catch (_) {
     return null;
   }
   if (!cookie) return null;
-  const crumbResponse = await fetch("https://query2.finance.yahoo.com/v1/test/getcrumb", {
+  const crumbResponse = await fetchT("https://query2.finance.yahoo.com/v1/test/getcrumb", {
     headers: { ...UA, Cookie: cookie },
     redirect: "follow",
   });
@@ -748,11 +888,11 @@ async function yahooAuthedFetch(url, { forceAuth = false, method = "GET", body =
   if (!session.crumb) return null;
   const joiner = url.includes("?") ? "&" : "?";
   const authedUrl = `${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`;
-  let response = await fetch(authedUrl, yahooAuthedInit(session, method, body));
+  let response = await fetchT(authedUrl, yahooAuthedInit(session, method, body));
   if (response.status === 401 || response.status === 403) {
     session = await ensureYahooSession(true);
     if (!session.crumb) return response;
-    response = await fetch(
+    response = await fetchT(
       `${url}${joiner}crumb=${encodeURIComponent(session.crumb)}`,
       yahooAuthedInit(session, method, body),
     );
@@ -767,7 +907,7 @@ async function fetchNaverNews(ticker) {
   const code = String(ticker || "").replace(/\.(KS|KQ)$/i, "").replace(/[^0-9A-Za-z]/g, "");
   if (!code) return [];
   try {
-    const r = await fetch(
+    const r = await fetchT(
       `https://m.stock.naver.com/api/news/stock/${encodeURIComponent(code)}?pageSize=8&page=1`,
       { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" } }
     );
@@ -823,10 +963,10 @@ async function fetchNewsFromFinnhub(env, symbol) {
   const from = new Date(to.getTime() - 14 * 86400000);
   const iso = (d) => d.toISOString().slice(0, 10);
   try {
-    const r = await fetch(
+    const r = await fetchT(
       `https://finnhub.io/api/v1/company-news?symbol=${encodeURIComponent(plain)}` +
-        `&from=${iso(from)}&to=${iso(to)}&token=${encodeURIComponent(token)}`,
-      { headers: UA }
+        `&from=${iso(from)}&to=${iso(to)}`,
+      { headers: { ...UA, "X-Finnhub-Token": token } }
     );
     if (!r.ok) return [];
     const rows = await r.json();
@@ -854,7 +994,7 @@ async function fetchNewsFromFinnhub(env, symbol) {
 
 async function fetchNewsFromYahoo(symbol) {
   try {
-    const r = await fetch(
+    const r = await fetchT(
       `https://query1.finance.yahoo.com/v1/finance/search?q=${encodeURIComponent(symbol)}` +
         `&newsCount=8&quotesCount=0&enableFuzzyQuery=false`,
       { headers: UA }
@@ -1002,7 +1142,7 @@ async function fetchEarningsCalendar(tickers) {
 
 async function fetchChart(symbol) {
   try {
-    const r = await fetch(
+    const r = await fetchT(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}` +
         `?range=5y&interval=1d`,
       { headers: UA }
@@ -1038,7 +1178,7 @@ const round = (v) => Math.round(Number(v) * 100) / 100;
 // 이번 주 + 다음 주를 함께 가져와 합쳐서 다음 주 일정까지 표시.
 async function fetchCalendarTab(tab) {
   try {
-    const r = await fetch("https://kr.investing.com/economic-calendar/Service/getCalendarFilteredData", {
+    const r = await fetchT("https://kr.investing.com/economic-calendar/Service/getCalendarFilteredData", {
       method: "POST",
       headers: {
         ...UA,
@@ -1118,7 +1258,7 @@ const FX_LIST = [
 // CNN Fear & Greed index (server-side fetch avoids browser CORS).
 async function fetchFng() {
   try {
-    const r = await fetch("https://production.dataviz.cnn.io/index/fearandgreed/graphdata", {
+    const r = await fetchT("https://production.dataviz.cnn.io/index/fearandgreed/graphdata", {
       headers: {
         ...UA,
         Accept: "application/json, text/plain, */*",
@@ -1163,7 +1303,7 @@ const KR_INDICES = new Set(["^KS11", "^KQ11"]);
 
 async function fetchPrevDailyClose(symbol) {
   try {
-    const r = await fetch(
+    const r = await fetchT(
       `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=7d&interval=1d`,
       { headers: UA }
     );
@@ -1186,7 +1326,7 @@ async function fetchIndices() {
   const out = [];
   await Promise.all(INDEX_LIST.map(async ([symbol, name]) => {
     try {
-      const r = await fetch(
+      const r = await fetchT(
         `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m`,
         { headers: UA }
       );
@@ -1224,7 +1364,7 @@ async function fetchFx() {
   const out = [];
   await Promise.all(FX_LIST.map(async ([symbol, name]) => {
     try {
-      const r = await fetch(
+      const r = await fetchT(
         `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1mo&interval=1d`,
         { headers: UA }
       );
@@ -1268,7 +1408,7 @@ function cors(resp) {
   const r = new Response(resp.body, resp);
   r.headers.set("Access-Control-Allow-Origin", ALLOW_ORIGIN);
   r.headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  r.headers.set("Access-Control-Allow-Headers", "Content-Type");
+  r.headers.set("Access-Control-Allow-Headers", "Content-Type, X-Admin-Key");
   return r;
 }
 
@@ -1297,6 +1437,9 @@ const COMMUNITY_VOTE_CHOICES = ["buy", "sell"];
 const COMMUNITY_MAX_VOTES = 8000;
 const COMMUNITY_VOTE_RETENTION_MS = 35 * 24 * 60 * 60 * 1000;
 
+// /sync/prefs PUT 바디 상한. 워치리스트 80 + 포트폴리오 60 + 알림 설정이면 수 KB 다.
+const SYNC_PREFS_MAX_BODY_BYTES = 32 * 1024;
+
 function communityLinkCount(text) {
   return (String(text || "").match(/https?:\/\/|www\./gi) || []).length;
 }
@@ -1307,31 +1450,8 @@ function communitySpamReason(content) {
   return null;
 }
 
-function communityAdminOk(env, key) {
-  const adminKey = env && env.COMMUNITY_ADMIN_KEY;
-  return Boolean(adminKey) && String(key || "") === String(adminKey);
-}
-
 function communityDayKey(ms) {
   return new Date(ms).toISOString().slice(0, 10); // YYYY-MM-DD (UTC)
-}
-
-async function loadCommunityVotesKv(env) {
-  const raw = await env.COMMUNITY_KV.get(COMMUNITY_VOTES_KV_KEY);
-  if (!raw) return [];
-  try {
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-async function saveCommunityVotesKv(env, votes) {
-  const cutoff = Date.now() - COMMUNITY_VOTE_RETENTION_MS;
-  const pruned = votes.filter((v) => Date.parse(v.at) >= cutoff).slice(-COMMUNITY_MAX_VOTES);
-  await env.COMMUNITY_KV.put(COMMUNITY_VOTES_KV_KEY, JSON.stringify(pruned));
-  return pruned;
 }
 
 function communityKvMissing() {
@@ -1342,19 +1462,74 @@ function communityKvMissing() {
   }, 503, 30);
 }
 
-async function loadCommunityPostsKv(env) {
-  const raw = await env.COMMUNITY_KV.get(COMMUNITY_KV_KEY);
-  if (!raw) return [];
+// ── KV 단일 키 읽기-수정-쓰기 ────────────────────────────────────────────────
+// 게시글 전체가 키 하나에 배열로 들어 있어, 두 요청이 겹치면 늦게 쓴 쪽이 먼저
+// 쓴 쪽을 통째로 덮는다(글이 조용히 사라짐). KV 에는 CAS 가 없어 완전한 해결은
+// Durable Object(직렬화된 단일 writer)로 옮기는 것뿐이다 — 아래는 그 전까지의
+// 최소 완화: 값에 version/stamp 를 붙여 쓰고, 쓴 직후 다시 읽어 내 stamp 가
+// 남아 있는지 확인한다. 같은 엣지에서는 read-after-write 가 보이므로, 그 사이
+// 다른 쓰기가 끼어들었으면 stamp 가 달라지고 최신 상태 위에 변경을 다시 적용한다
+// (최대 3회). mutate 는 재실행돼도 안전해야 한다(id 는 밖에서 만들어 넘길 것).
+//
+// 저장 형식: { version, stamp, items } — 구형 값(배열 그대로)도 읽는다.
+function parseVersionedList(raw) {
+  if (!raw) return { items: [], version: 0, stamp: "" };
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
+    if (Array.isArray(parsed)) return { items: parsed, version: 0, stamp: "" };
+    if (parsed && Array.isArray(parsed.items)) {
+      return { items: parsed.items, version: Number(parsed.version) || 0, stamp: String(parsed.stamp || "") };
+    }
+  } catch { /* 깨진 값은 빈 목록으로 */ }
+  return { items: [], version: 0, stamp: "" };
 }
 
-async function saveCommunityPostsKv(env, posts) {
-  await env.COMMUNITY_KV.put(COMMUNITY_KV_KEY, JSON.stringify(posts.slice(0, COMMUNITY_MAX_POSTS)));
+async function loadVersionedList(env, key) {
+  return parseVersionedList(await env.COMMUNITY_KV.get(key));
+}
+
+// mutate(items) → { items: next, response } 이면 next 를 쓰고 response 를 돌려준다.
+//                 { response } 만 주면 쓰지 않고 그대로 응답한다(404·403·쿨다운 등).
+// 반환값은 항상 Response 다.
+async function mutateVersionedList(env, key, mutate, maxItems) {
+  const finish = (outcome) => (outcome && outcome.response ? outcome.response : json({ error: "internal" }, 500, 0));
+  let outcome = null;
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    const state = await loadVersionedList(env, key);
+    outcome = await mutate(state.items, attempt);
+    if (!outcome || !Array.isArray(outcome.items)) return finish(outcome);
+    const stamp = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+    const items = maxItems ? outcome.items.slice(0, maxItems) : outcome.items;
+    await env.COMMUNITY_KV.put(key, JSON.stringify({ version: state.version + 1, stamp, items }));
+    const check = await loadVersionedList(env, key);
+    if (check.stamp === stamp) return finish(outcome);
+    console.warn(`kv write conflict on ${key} (attempt ${attempt}) — retrying`);
+  }
+  // 3회 모두 겹쳤다. 마지막 쓰기는 KV 에 들어갔지만 곧바로 덮였을 수 있다 —
+  // 요청 자체는 성공으로 답한다(클라이언트가 재시도하면 중복이 더 나쁘다).
+  return finish(outcome);
+}
+
+async function loadCommunityPostsKv(env) {
+  return (await loadVersionedList(env, COMMUNITY_KV_KEY)).items;
+}
+
+function mutateCommunityPosts(env, mutate) {
+  return mutateVersionedList(env, COMMUNITY_KV_KEY, mutate, COMMUNITY_MAX_POSTS);
+}
+
+async function loadCommunityVotesKv(env) {
+  return (await loadVersionedList(env, COMMUNITY_VOTES_KV_KEY)).items;
+}
+
+function pruneCommunityVotes(votes) {
+  const cutoff = Date.now() - COMMUNITY_VOTE_RETENTION_MS;
+  return votes.filter((v) => Date.parse(v.at) >= cutoff).slice(-COMMUNITY_MAX_VOTES);
+}
+
+function mutateCommunityVotes(env, mutate) {
+  // 투표는 오래된 것부터 잘라야 하므로(뒤가 최신) maxItems 대신 prune 을 mutate 안에서 건다.
+  return mutateVersionedList(env, COMMUNITY_VOTES_KV_KEY, mutate, 0);
 }
 
 function sanitizeCommunityTicker(raw) {
@@ -1386,7 +1561,19 @@ function newCommunityPostId() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-async function handleCommunityList(url, env) {
+function rateLimitedResponse() {
+  return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
+}
+
+async function readJsonBody(request) {
+  try {
+    return { body: await request.json() };
+  } catch {
+    return { response: json({ error: "bad_json" }, 400, 30) };
+  }
+}
+
+async function handleCommunityList(url, env, request) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
   const posts = await loadCommunityPostsKv(env);
   const ticker = sanitizeCommunityTicker(url.searchParams.get("ticker"));
@@ -1400,7 +1587,7 @@ async function handleCommunityList(url, env) {
   // → 원본 id 는 서버에만 두고, 요청자 기준으로 계산한 불리언만 내보낸다.
   const viewer = sanitizeCommunityClientId(url.searchParams.get("clientId"));
   const isViewer = (id) => Boolean(viewer) && id === viewer;
-  const isAdmin = communityAdminOk(env, url.searchParams.get("adminKey"));
+  const isAdmin = await communityAdminOk(env, request, url.searchParams.get("adminKey"));
 
   // 신고 누적 자동 숨김: 신고 3건 이상이면 공개 목록에서 제외한다.
   // 단, 작성자 본인과 관리자에게는 보이고(본인 글에는 hiddenByReports 마커를 실어
@@ -1440,12 +1627,8 @@ async function handleCommunityList(url, env) {
 
 async function handleCommunityCreate(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const content = sanitizeCommunityContent(body && body.content);
   if (content.length < 2) return json({ error: "content_too_short" }, 400, 30);
   const author = sanitizeCommunityAuthor(body && body.author);
@@ -1455,22 +1638,8 @@ async function handleCommunityCreate(request, env) {
   if (spam) return json({ error: spam, message: "스팸으로 의심되는 내용이 포함되어 등록할 수 없습니다." }, 400, 0);
   // clientId 쿨다운은 매 요청 새 id 를 지어내면 우회된다(400포스트 캡이라 기존
   // 글 밀어내기 가능). IP 기준 보조 리밋을 함께 건다.
-  if (await ipRateLimited(request, env, "post", 3, 60)) {
-    return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
-  }
+  if (await ipRateLimited(request, env, "post", 3, 60)) return rateLimitedResponse();
   const ticker = sanitizeCommunityTicker(body && body.ticker);
-  const posts = await loadCommunityPostsKv(env);
-  const now = Date.now();
-  const lastByClient = posts.find((p) => p.clientId === clientId);
-  if (lastByClient) {
-    const dt = now - Date.parse(lastByClient.createdAt);
-    if (dt >= 0 && dt < COMMUNITY_POST_COOLDOWN_MS) {
-      return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
-    }
-  }
-  const isDuplicate = posts.some((p) =>
-    p.clientId === clientId && p.content === content && (now - Date.parse(p.createdAt)) < COMMUNITY_DUP_WINDOW_MS);
-  if (isDuplicate) return json({ error: "duplicate", message: "같은 내용을 방금 등록했습니다." }, 409, 0);
   const post = {
     id: newCommunityPostId(),
     author,
@@ -1479,70 +1648,53 @@ async function handleCommunityCreate(request, env) {
     content,
     createdAt: new Date().toISOString(),
   };
-  posts.unshift(post);
-  await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, post }, 201, 0);
+  return mutateCommunityPosts(env, (posts) => {
+    // 재시도에서 이미 들어간 글이면 다시 넣지 않는다.
+    if (posts.some((p) => p.id === post.id)) return { response: json({ ok: true, post }, 201, 0) };
+    const now = Date.now();
+    const lastByClient = posts.find((p) => p.clientId === clientId);
+    if (lastByClient) {
+      const dt = now - Date.parse(lastByClient.createdAt);
+      if (dt >= 0 && dt < COMMUNITY_POST_COOLDOWN_MS) return { response: rateLimitedResponse() };
+    }
+    const isDuplicate = posts.some((p) =>
+      p.clientId === clientId && p.content === content && (now - Date.parse(p.createdAt)) < COMMUNITY_DUP_WINDOW_MS);
+    if (isDuplicate) return { response: json({ error: "duplicate", message: "같은 내용을 방금 등록했습니다." }, 409, 0) };
+    return { items: [post, ...posts], response: json({ ok: true, post }, 201, 0) };
+  });
 }
 
 async function handleCommunityDelete(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const id = String(body && body.id || "").trim();
   const clientId = sanitizeCommunityClientId(body && body.clientId);
-  const isAdmin = communityAdminOk(env, body && body.adminKey);
+  const isAdmin = await communityAdminOk(env, request, body && body.adminKey);
   if (!id || (!clientId && !isAdmin)) return json({ error: "missing_fields" }, 400, 30);
-  const posts = await loadCommunityPostsKv(env);
-  const target = posts.find((p) => p.id === id);
-  if (!target) return json({ error: "not_found" }, 404, 30);
-  if (!isAdmin && target.clientId !== clientId) return json({ error: "forbidden" }, 403, 30);
-  const next = posts.filter((p) => p.id !== id);
-  await saveCommunityPostsKv(env, next);
-  return json({ ok: true, deleted: id }, 200, 0);
+  return mutateCommunityPosts(env, (posts) => {
+    const target = posts.find((p) => p.id === id);
+    if (!target) return { response: json({ error: "not_found" }, 404, 30) };
+    if (!isAdmin && target.clientId !== clientId) return { response: json({ error: "forbidden" }, 403, 30) };
+    return { items: posts.filter((p) => p.id !== id), response: json({ ok: true, deleted: id }, 200, 0) };
+  });
 }
 
 async function handleCommunityCommentCreate(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const postId = String(body && body.postId || "").trim();
   const content = sanitizeCommunityCommentContent(body && body.content);
   if (!postId) return json({ error: "missing_post_id" }, 400, 30);
   if (content.length < 2) return json({ error: "content_too_short" }, 400, 30);
   // 글쓰기와 같은 이유의 IP 보조 리밋(clientId 는 위조 가능).
-  if (await ipRateLimited(request, env, "comment", 6, 60)) {
-    return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
-  }
+  if (await ipRateLimited(request, env, "comment", 6, 60)) return rateLimitedResponse();
   const author = sanitizeCommunityAuthor(body && body.author);
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
   const spam = communitySpamReason(content);
   if (spam) return json({ error: spam, message: "스팸으로 의심되는 내용이 포함되어 등록할 수 없습니다." }, 400, 0);
-  const posts = await loadCommunityPostsKv(env);
-  const post = posts.find((p) => p.id === postId);
-  if (!post) return json({ error: "not_found" }, 404, 30);
-  const now = Date.now();
-  let lastCommentAt = 0;
-  for (const p of posts) {
-    for (const c of (Array.isArray(p.comments) ? p.comments : [])) {
-      if (c.clientId === clientId) {
-        const t = Date.parse(c.createdAt);
-        if (Number.isFinite(t) && t > lastCommentAt) lastCommentAt = t;
-      }
-    }
-  }
-  if (lastCommentAt && (now - lastCommentAt) < COMMUNITY_COMMENT_COOLDOWN_MS) {
-    return json({ error: "too_fast", message: "잠시 후 다시 시도해 주세요." }, 429, 0);
-  }
-  const comments = normalizeCommunityComments(post.comments);
   const comment = {
     id: newCommunityPostId(),
     author,
@@ -1550,71 +1702,88 @@ async function handleCommunityCommentCreate(request, env) {
     content,
     createdAt: new Date().toISOString(),
   };
-  comments.push(comment);
-  post.comments = comments.slice(-COMMUNITY_MAX_COMMENTS_PER_POST);
-  await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, postId, comment }, 201, 0);
+  return mutateCommunityPosts(env, (posts) => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return { response: json({ error: "not_found" }, 404, 30) };
+    const existing = normalizeCommunityComments(post.comments);
+    if (existing.some((c) => c.id === comment.id)) {
+      return { response: json({ ok: true, postId, comment }, 201, 0) };
+    }
+    const now = Date.now();
+    let lastCommentAt = 0;
+    for (const p of posts) {
+      for (const c of (Array.isArray(p.comments) ? p.comments : [])) {
+        if (c.clientId === clientId) {
+          const t = Date.parse(c.createdAt);
+          if (Number.isFinite(t) && t > lastCommentAt) lastCommentAt = t;
+        }
+      }
+    }
+    if (lastCommentAt && (now - lastCommentAt) < COMMUNITY_COMMENT_COOLDOWN_MS) {
+      return { response: rateLimitedResponse() };
+    }
+    post.comments = [...existing, comment].slice(-COMMUNITY_MAX_COMMENTS_PER_POST);
+    return { items: posts, response: json({ ok: true, postId, comment }, 201, 0) };
+  });
 }
 
 async function handleCommunityLike(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const postId = String(body && body.postId || "").trim();
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!postId) return json({ error: "missing_post_id" }, 400, 30);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
-  const posts = await loadCommunityPostsKv(env);
-  const post = posts.find((p) => p.id === postId);
-  if (!post) return json({ error: "not_found" }, 404, 30);
-  const likes = Array.isArray(post.likes) ? post.likes : [];
-  const idx = likes.indexOf(clientId);
-  let liked;
-  if (idx >= 0) {
-    likes.splice(idx, 1);
-    liked = false;
-  } else {
-    likes.push(clientId);
-    liked = true;
-  }
-  post.likes = likes;
-  await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, postId, likeCount: likes.length, liked }, 200, 0);
+  // 좋아요 토글 루프는 KV 쓰기(=유료 한도)와 posts 키 경합만 늘린다.
+  if (await ipRateLimited(request, env, "like", 30, 60)) return rateLimitedResponse();
+  return mutateCommunityPosts(env, (posts) => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return { response: json({ error: "not_found" }, 404, 30) };
+    const likes = Array.isArray(post.likes) ? post.likes : [];
+    const idx = likes.indexOf(clientId);
+    let liked;
+    if (idx >= 0) {
+      likes.splice(idx, 1);
+      liked = false;
+    } else {
+      likes.push(clientId);
+      liked = true;
+    }
+    post.likes = likes;
+    return { items: posts, response: json({ ok: true, postId, likeCount: likes.length, liked }, 200, 0) };
+  });
 }
 
 async function handleCommunityReport(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const postId = String(body && body.postId || "").trim();
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!postId) return json({ error: "missing_post_id" }, 400, 30);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  // 신고 3건이면 자동 숨김이라, clientId 만 바꿔 가며 세 번 부르면 아무 글이나
+  // 내릴 수 있었다. IP 리밋 + 해시 IP 중복 판정으로 막는다.
+  if (await ipRateLimited(request, env, "report", 5, 60)) return rateLimitedResponse();
+  const ipHash = await hashedIp(request, env);
   const reason = String(body && body.reason || "").trim().slice(0, 200);
-  const posts = await loadCommunityPostsKv(env);
-  const post = posts.find((p) => p.id === postId);
-  if (!post) return json({ error: "not_found" }, 404, 30);
-  const reports = Array.isArray(post.reports) ? post.reports : [];
-  if (!reports.some((r) => (r && r.clientId) === clientId)) {
-    reports.push({ clientId, reason, at: new Date().toISOString() });
-  }
-  post.reports = reports;
-  await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, postId, reportCount: reports.length }, 200, 0);
+  return mutateCommunityPosts(env, (posts) => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return { response: json({ error: "not_found" }, 404, 30) };
+    const reports = Array.isArray(post.reports) ? post.reports : [];
+    const already = reports.some((r) => r && (r.clientId === clientId || (r.ipHash && r.ipHash === ipHash)));
+    if (already) return { response: json({ ok: true, postId, reportCount: reports.length }, 200, 0) };
+    reports.push({ clientId, ipHash, reason, at: new Date().toISOString() });
+    post.reports = reports;
+    return { items: posts, response: json({ ok: true, postId, reportCount: reports.length }, 200, 0) };
+  });
 }
 
-// 관리자 전용: 신고된 글 목록 + 신고 내역(adminKey 필요)
-async function handleCommunityReportsList(url, env) {
+// 관리자 전용: 신고된 글 목록 + 신고 내역(X-Admin-Key 헤더, 구형 adminKey 쿼리 폴백)
+async function handleCommunityReportsList(url, env, request) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  if (!communityAdminOk(env, url.searchParams.get("adminKey"))) {
+  if (!(await communityAdminOk(env, request, url.searchParams.get("adminKey")))) {
     return json({ error: "forbidden" }, 403, 0);
   }
   const posts = await loadCommunityPostsKv(env);
@@ -1634,31 +1803,29 @@ async function handleCommunityReportsList(url, env) {
 }
 
 // 투표: 하루 1표(같은 날 재투표 시 교체). 게시글이 아니라 종목 대상.
+// clientId 는 위조 가능하므로 해시 IP 기준으로도 하루 1표다.
 async function handleCommunityVote(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   const ticker = sanitizeCommunityTicker(body && body.ticker);
   const choice = String(body && body.choice || "").trim().toLowerCase();
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
   if (!ticker) return json({ error: "missing_ticker" }, 400, 30);
   if (!COMMUNITY_VOTE_CHOICES.includes(choice)) return json({ error: "bad_choice" }, 400, 30);
-  const votes = await loadCommunityVotesKv(env);
-  const today = communityDayKey(Date.now());
-  const existingIdx = votes.findIndex((v) => v.clientId === clientId && communityDayKey(Date.parse(v.at)) === today);
-  if (existingIdx >= 0) {
-    // 하루 1표 — 같은 날 표는 새 선택으로 교체
-    votes.splice(existingIdx, 1);
-  }
-  const vote = { clientId, ticker, choice, at: new Date().toISOString() };
-  votes.push(vote);
-  await saveCommunityVotesKv(env, votes);
-  return json({ ok: true, vote }, 200, 0);
+  if (await ipRateLimited(request, env, "vote", 5, 60)) return rateLimitedResponse();
+  const ipHash = await hashedIp(request, env);
+  const vote = { clientId, ipHash, ticker, choice, at: new Date().toISOString() };
+  return mutateCommunityVotes(env, (votes) => {
+    const today = communityDayKey(Date.now());
+    const sameDay = (v) => communityDayKey(Date.parse(v.at)) === today;
+    // 하루 1표 — 같은 날 표(같은 clientId 또는 같은 IP)는 새 선택으로 교체
+    const kept = votes.filter((v) => !(sameDay(v) && (v.clientId === clientId || (v.ipHash && v.ipHash === ipHash))));
+    kept.push(vote);
+    const { ipHash: _omit, ...publicVote } = vote;
+    return { items: pruneCommunityVotes(kept), response: json({ ok: true, vote: publicVote }, 200, 0) };
+  });
 }
 
 // 투표 순위: ?period=day|week|month, ?clientId= (내 오늘 투표 표시용)
@@ -1682,34 +1849,31 @@ async function handleCommunityVotesList(url, env) {
   const buyRanking = rows.filter((r) => r.buy > 0).sort((a, b) => b.buy - a.buy || b.total - a.total).slice(0, 20);
   const sellRanking = rows.filter((r) => r.sell > 0).sort((a, b) => b.sell - a.sell || b.total - a.total).slice(0, 20);
   const today = communityDayKey(Date.now());
-  const myToday = clientId
+  const mine = clientId
     ? (votes.find((v) => v.clientId === clientId && communityDayKey(Date.parse(v.at)) === today) || null)
     : null;
+  const myToday = mine ? { clientId: mine.clientId, ticker: mine.ticker, choice: mine.choice, at: mine.at } : null;
   return json({ period, buyRanking, sellRanking, totalVotes: inRange.length, myToday }, 200, 8);
 }
 
 async function handleCommunityCommentDelete(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const postId = String(body && body.postId || "").trim();
   const commentId = String(body && body.commentId || "").trim();
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!postId || !commentId || !clientId) return json({ error: "missing_fields" }, 400, 30);
-  const posts = await loadCommunityPostsKv(env);
-  const post = posts.find((p) => p.id === postId);
-  if (!post) return json({ error: "not_found" }, 404, 30);
-  const comments = normalizeCommunityComments(post.comments);
-  const target = comments.find((c) => c.id === commentId);
-  if (!target) return json({ error: "comment_not_found" }, 404, 30);
-  if (target.clientId !== clientId) return json({ error: "forbidden" }, 403, 30);
-  post.comments = comments.filter((c) => c.id !== commentId);
-  await saveCommunityPostsKv(env, posts);
-  return json({ ok: true, postId, deleted: commentId }, 200, 0);
+  return mutateCommunityPosts(env, (posts) => {
+    const post = posts.find((p) => p.id === postId);
+    if (!post) return { response: json({ error: "not_found" }, 404, 30) };
+    const comments = normalizeCommunityComments(post.comments);
+    const target = comments.find((c) => c.id === commentId);
+    if (!target) return { response: json({ error: "comment_not_found" }, 404, 30) };
+    if (target.clientId !== clientId) return { response: json({ error: "forbidden" }, 403, 30) };
+    post.comments = comments.filter((c) => c.id !== commentId);
+    return { items: posts, response: json({ ok: true, postId, deleted: commentId }, 200, 0) };
+  });
 }
 
 // =============================================================================
@@ -1720,26 +1884,39 @@ function syncKvKey(clientId) {
   return `sync:prefs:${clientId}`;
 }
 
+// 개인 설정은 clientId 가 곧 자격증명이다. 공유 캐시(CDN·프록시)에 남으면 안 된다.
+function privateJson(obj, status = 200) {
+  const r = json(obj, status, 0);
+  r.headers.set("Cache-Control", "private, no-store");
+  return r;
+}
+
 async function handleSyncPrefsGet(url, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
   const clientId = sanitizeCommunityClientId(url.searchParams.get("clientId"));
-  if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
+  if (!clientId) return privateJson({ error: "missing_client_id" }, 400);
   const raw = await env.COMMUNITY_KV.get(syncKvKey(clientId));
-  if (!raw) return json({ prefs: null }, 200, 30);
+  if (!raw) return privateJson({ prefs: null });
   try {
-    return json({ prefs: JSON.parse(raw) }, 200, 30);
+    return privateJson({ prefs: JSON.parse(raw) });
   } catch {
-    return json({ prefs: null }, 200, 30);
+    return privateJson({ prefs: null });
   }
 }
 
 async function handleSyncPrefsPut(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  if (await ipRateLimited(request, env, "sync_put", 10, 60)) return rateLimitedResponse();
+  const declared = Number(request.headers.get("Content-Length") || 0);
+  if (declared > SYNC_PREFS_MAX_BODY_BYTES) return privateJson({ error: "payload_too_large" }, 413);
+  let text;
+  try { text = await request.text(); } catch { return privateJson({ error: "bad_json" }, 400); }
+  if (text.length > SYNC_PREFS_MAX_BODY_BYTES) return privateJson({ error: "payload_too_large" }, 413);
   let body;
-  try { body = await request.json(); } catch { return json({ error: "bad_json" }, 400, 30); }
+  try { body = JSON.parse(text); } catch { return privateJson({ error: "bad_json" }, 400); }
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   const prefs = body && body.prefs;
-  if (!clientId || !prefs || typeof prefs !== "object") return json({ error: "missing_fields" }, 400, 30);
+  if (!clientId || !prefs || typeof prefs !== "object") return privateJson({ error: "missing_fields" }, 400);
   const payload = {
     watchlist: Array.isArray(prefs.watchlist) ? prefs.watchlist.slice(0, 80) : [],
     portfolio: Array.isArray(prefs.portfolio) ? prefs.portfolio.slice(0, 60) : [],
@@ -1747,33 +1924,33 @@ async function handleSyncPrefsPut(request, env) {
     updatedAt: Number(prefs.updatedAt) || Date.now(),
   };
   await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload));
-  return json({ ok: true, updatedAt: payload.updatedAt }, 200, 0);
+  return privateJson({ ok: true, updatedAt: payload.updatedAt });
 }
 
 async function handleCommunityClear(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return json({ error: "bad_json" }, 400, 30);
-  }
+  const { body, response: bad } = await readJsonBody(request);
+  if (bad) return bad;
   const clientId = sanitizeCommunityClientId(body && body.clientId);
   if (!clientId) return json({ error: "missing_client_id" }, 400, 30);
-  const posts = await loadCommunityPostsKv(env);
-  const next = posts
-    .filter((p) => p.clientId !== clientId)
-    .map((p) => ({
-      ...p,
-      comments: normalizeCommunityComments(p.comments).filter((c) => c.clientId !== clientId),
-    }));
-  const removedPosts = posts.length - next.length;
-  const removedComments = posts.reduce((sum, post) => {
-    const comments = normalizeCommunityComments(post.comments);
-    return sum + comments.filter((c) => c.clientId === clientId).length;
-  }, 0);
-  await saveCommunityPostsKv(env, next);
-  return json({ ok: true, removed: removedPosts, removedComments }, 200, 0);
+  if (await ipRateLimited(request, env, "clear", 2, 60)) return rateLimitedResponse();
+  return mutateCommunityPosts(env, (posts) => {
+    const next = posts
+      .filter((p) => p.clientId !== clientId)
+      .map((p) => ({
+        ...p,
+        comments: normalizeCommunityComments(p.comments).filter((c) => c.clientId !== clientId),
+      }));
+    const removedPosts = posts.length - next.length;
+    const removedComments = posts.reduce((sum, post) => {
+      const comments = normalizeCommunityComments(post.comments);
+      return sum + comments.filter((c) => c.clientId === clientId).length;
+    }, 0);
+    if (!removedPosts && !removedComments) {
+      return { response: json({ ok: true, removed: 0, removedComments: 0 }, 200, 0) };
+    }
+    return { items: next, response: json({ ok: true, removed: removedPosts, removedComments }, 200, 0) };
+  });
 }
 
 // =============================================================================
@@ -1969,7 +2146,7 @@ async function fetchNaverNewsOpenApi(query, env, display = 10) {
   if (!clientId || !clientSecret || !query) return null;
   try {
     const url = `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(query)}&display=${Math.min(Math.max(display, 1), 20)}&start=1&sort=date`;
-    const response = await fetch(url, {
+    const response = await fetchT(url, {
       headers: {
         "X-Naver-Client-Id": clientId,
         "X-Naver-Client-Secret": clientSecret,
@@ -1997,7 +2174,7 @@ async function fetchGoogleNewsRecent(query, isKr = true) {
   try {
     const rssQuery = `${query} when:7d`;
     const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(rssQuery)}&hl=${isKr ? "ko" : "en-US"}&gl=${isKr ? "KR" : "US"}&ceid=${isKr ? "KR:ko" : "US:en"}`;
-    const response = await fetch(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
+    const response = await fetchT(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
     if (!response.ok) return [];
     return parseGoogleNewsRss(await response.text()).map((item) => ({
       ...item,
@@ -2138,7 +2315,7 @@ function pickWorkersAiDelta(data) {
 }
 
 async function geminiStreamChat(env, systemContent, history, ragMeta) {
-  const geminiModel = env.GEMINI_MODEL || "gemini-1.5-flash";
+  const geminiModel = env.GEMINI_MODEL || GEMINI_DEFAULT_MODEL;
   const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
   const contents = history.map((m) => ({
     role: m.role === "assistant" ? "model" : "user",
@@ -2150,11 +2327,11 @@ async function geminiStreamChat(env, systemContent, history, ragMeta) {
     generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
   };
   try {
-    const res = await fetch(endpoint, {
+    const res = await fetchT(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
       body: JSON.stringify(payload),
-    });
+    }, GEMINI_TIMEOUT_MS);
     if (!res.ok || !res.body) {
       console.error("Gemini stream error:", res.status);
       return null; // 비스트리밍 경로로 폴백
@@ -2223,7 +2400,7 @@ async function handleChat(request, env) {
       // 스트리밍 실패 시 아래 비스트리밍 Gemini → Workers AI 순으로 폴백
     }
     try {
-      const geminiModel = env.GEMINI_MODEL || "gemini-1.5-flash";
+      const geminiModel = env.GEMINI_MODEL || GEMINI_DEFAULT_MODEL;
       // 키는 URL 쿼리가 아니라 헤더로 — 쿼리는 로그에 남는 노출면이다.
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`;
       
@@ -2243,11 +2420,11 @@ async function handleChat(request, env) {
         }
       };
       
-      const res = await fetch(endpoint, {
+      const res = await fetchT(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
         body: JSON.stringify(payload)
-      });
+      }, GEMINI_TIMEOUT_MS);
       
       if (res.ok) {
         const data = await res.json();

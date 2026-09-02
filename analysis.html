@@ -5,7 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="종목 차트 분석 기반 상승/하락 확률 추정">
     <title>차트 확률 분석 | 미르의 미국 주식</title>
-    <!-- ?ticker= 등 쿼리스트링이 붙어도 한 페이지로 취급되게 한다. -->
+    <!-- 종목 미지정 상태의 기본 canonical. ?t=TICKER 로 종목이 지정되면 analysis.js 의
+         updateAnalysisMeta 가 종목별 canonical(analysis.html?t=…)·제목·OG 로 바꿔 쓴다
+         (sitemap 의 종목 딥링크와 짝). 옛 ?ticker= 파라미터는 더 이상 쓰지 않는다. -->
     <link rel="canonical" href="https://seonu-dragon.github.io/Mir_US_Stocks/analysis.html">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="미르의 미국 주식">
@@ -381,20 +383,6 @@ main {
 /* 모든 카드 높이를 동일하게(가장 큰 = F&G 게이지 기준) + 내용으로 채워 빈공간 제거 */
 .summary-band { align-items: stretch; }
 .summary-band .summary-card { padding: 9px 11px; }
-/* critical: index-strip + tabs + panel */
-.index-strip {
-  display: grid;
-  grid-template-columns: repeat(8, minmax(0, 1fr));
-  gap: var(--space-2);
-  margin-bottom: var(--space-4);
-}
-.index-card {
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  padding: 8px 10px;
-  box-shadow: var(--shadow);
-}
 
 .index-card-clickable {
   cursor: pointer;
@@ -407,78 +395,6 @@ main {
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.12);
   outline: none;
   transform: translateY(-1px);
-}
-.index-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 6px;
-}
-.index-head strong { font-size: var(--fs-label); }
-.index-head em { font-style: normal; font-weight: 700; font-size: var(--fs-cap); }
-.index-price { font-size: var(--fs-body); font-weight: 700; margin: 2px 0 4px; }
-.spark { width: 100%; height: 40px; display: block; }
-.spark-empty { height: 40px; }
-
-@media (max-width: 1040px) {
-  .index-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-}
-@media (max-width: 640px) {
-  .index-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
-.tabs-scroll-wrap {
-  margin-bottom: 10px;
-}
-
-.tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tabs .tab {
-  flex: 1 1 88px;
-  min-width: max-content;
-}
-
-.tab {
-  min-height: 40px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--panel);
-  color: var(--muted);
-  cursor: pointer;
-  font-weight: 700;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-
-.tab.is-active {
-  border-color: var(--blue);
-  background: var(--blue);
-  color: #fff;
-}
-
-/* 탭 순서 변경(드래그) */
-.tab.is-dragging {
-  opacity: 0.96;
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.32);
-  cursor: grabbing;
-}
-
-.tabs.is-reordering {
-  cursor: grabbing;
-}
-
-/* 그랩한 탭이 놓일 빈 자리 */
-.tab-placeholder {
-  flex: 0 0 auto;
-  box-sizing: border-box;
-  border: 1px dashed var(--blue);
-  border-radius: var(--r-md);
-  background: rgba(29, 78, 216, 0.08);
 }
 
 .panel {
@@ -613,11 +529,7 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
   box-shadow: var(--shadow-sm);
 }
 
-#mainTabs[data-view-mode="basic"] .tab[data-advanced="true"] {
-  display: none;
-}
-/* critical: focus/hover/tab states */
-.tab:focus-visible,
+/* critical: focus/hover states */
 button:focus-visible {
   outline: 2px solid #2563eb;
   outline-offset: 2px;
@@ -631,14 +543,6 @@ button[disabled] { opacity: 0.5; cursor: not-allowed; filter: none; transform: n
 button:disabled:hover,
 button[disabled]:hover { filter: none; }
 button.ghost:hover { border-color: #c7d2fe; background: var(--panel-soft); }
-
-/* 4) 메인 탭 호버/활성 강조 */
-.tab:hover:not(.is-active) {
-  border-color: #c7d2fe;
-  color: var(--text);
-  background: var(--panel-soft);
-}
-.tab.is-active { box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25); }
 
 /* 5) 입력/셀렉트 호버·포커스 (테두리 + 부드러운 링) */
 select:hover,
@@ -709,181 +613,6 @@ html[data-theme="dark"] {
 .daily-action-board { margin: var(--space-5) 0 var(--space-4); }
 /* 오늘의 액션 보드 = 개인 히어로: 더 또렷한 입체감 */
 .daily-action-board { box-shadow: var(--shadow-lg); }
-
-/* ============================================================
-   상단 탭 고정 (sticky) — 스크롤해도 섹션 전환 가능
-   ============================================================ */
-.tabs-scroll-wrap {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  padding: 8px 0 6px;
-  margin: 0 0 10px;
-  background: var(--bg);
-}
-
-/* critical: home-search hero */
-.home-search-section {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 40px 20px;
-  background: radial-gradient(circle at top, rgba(30, 41, 59, 0.4) 0%, transparent 70%);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.05);
-  margin-bottom: 20px;
-}
-
-[data-theme="light"] .home-search-section {
-  background: radial-gradient(circle at top, rgba(219, 234, 254, 0.4) 0%, transparent 70%);
-  border-bottom: 1px solid rgba(15, 23, 42, 0.05);
-}
-
-.home-search-inner {
-  max-width: 720px;
-  width: 100%;
-  text-align: center;
-}
-
-.home-search-kicker {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.15em;
-  color: var(--brand);
-  text-transform: uppercase;
-  display: inline-block;
-  margin-bottom: 8px;
-}
-
-.home-search-title {
-  font-size: 28px;
-  font-weight: 800;
-  color: var(--text);
-  margin: 0 0 8px 0;
-  letter-spacing: -0.02em;
-}
-
-.home-search-subtitle {
-  font-size: 14px;
-  color: var(--muted);
-  margin: 0 0 24px 0;
-}
-
-.home-search-bar {
-  display: flex;
-  background: rgba(30, 41, 59, 0.5);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(226, 232, 240, 0.1);
-  padding: 6px;
-  border-radius: 40px;
-  box-shadow: var(--shadow-md);
-  transition: border-color 0.2s, box-shadow 0.2s;
-  margin-bottom: 16px;
-}
-
-[data-theme="light"] .home-search-bar {
-  background: rgba(255, 255, 255, 0.8);
-  border: 1px solid rgba(15, 23, 42, 0.1);
-}
-
-.home-search-bar:focus-within {
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
-}
-
-.home-search-bar input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  padding: 10px 18px;
-  color: var(--text);
-  font-size: 15px;
-}
-
-.home-search-bar input::placeholder {
-  color: var(--muted);
-}
-
-.home-search-bar button {
-  background: var(--brand);
-  color: #ffffff;
-  border: none;
-  padding: 10px 24px;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 30px;
-  cursor: pointer;
-  transition: opacity 0.2s, transform 0.1s;
-}
-
-.home-search-bar button:hover {
-  opacity: 0.95;
-}
-
-.home-search-bar button:active {
-  transform: scale(0.98);
-}
-
-.home-search-suggestions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  font-size: 12px;
-}
-
-.search-suggest-chip {
-  background: var(--panel-soft);
-  border: 1px solid rgba(226, 232, 240, 0.08);
-  color: var(--text-soft);
-  padding: 6px 14px;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background 0.2s, border-color 0.2s, color 0.2s;
-}
-
-.search-suggest-chip:hover {
-  background: rgba(99, 102, 241, 0.1);
-  border-color: var(--brand);
-  color: var(--brand);
-}
-
-/* critical: ai-mode-btn */
-.ai-mode-btn {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.15) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.3);
-  color: #c084fc;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  margin-left: 12px;
-}
-
-[data-theme="light"] .ai-mode-btn {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.08) 100%);
-  border: 1px solid rgba(99, 102, 241, 0.2);
-  color: #7c3aed;
-}
-
-.ai-mode-btn:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 0 12px rgba(139, 92, 246, 0.25);
-  border-color: var(--brand);
-}
-
-.ai-mode-btn.active {
-  background: var(--brand);
-  color: #fff;
-  border-color: var(--brand);
-  box-shadow: 0 0 15px rgba(99, 102, 241, 0.4);
-}
 
 /* critical: hidden guard */
 [hidden]{display:none !important}
@@ -1020,13 +749,8 @@ html[data-theme="dark"] {
         <input id="tickerInput" type="text" placeholder="티커 입력 (예: NVDA)" aria-label="티커" inputmode="latin" />
         <button type="submit">분석</button>
       </form>
-      <div class="ca-examples">
-        예시:
-        <button type="button" onclick="document.getElementById('tickerInput').value='NVDA';document.getElementById('searchForm').requestSubmit()">NVDA</button>
-        <button type="button" onclick="document.getElementById('tickerInput').value='AAPL';document.getElementById('searchForm').requestSubmit()">AAPL</button>
-        <button type="button" onclick="document.getElementById('tickerInput').value='TSLA';document.getElementById('searchForm').requestSubmit()">TSLA</button>
-        <button type="button" onclick="document.getElementById('tickerInput').value='MSFT';document.getElementById('searchForm').requestSubmit()">MSFT</button>
-      </div>
+      <!-- 예시 버튼은 analysis.js init() 이 시장(US/KR)에 맞춰 채운다(인라인 onclick 없음). -->
+      <div class="ca-examples"></div>
 
       <div class="ca-hz" role="group" aria-label="예측 기간">
         <button type="button" class="hz-btn" data-hz="5">1주</button>

@@ -103,6 +103,18 @@
   --r-md: 8px;
   --r-lg: 12px;
   --r-pill: 999px;
+  /* 히어로·AI 레이어(styles.css 10078~)가 참조하던 미정의 토큰의 별칭.
+     정의가 없어 계산값이 투명/0 이 되면서 홈 "분석" 버튼이 라이트 테마에서
+     보이지 않았다(2026-09-03 전수조사). 새 이름을 만들지 말고 본체 토큰을 쓸 것. */
+  --brand: var(--primary);
+  --text-soft: var(--text-muted);
+  --radius: var(--r-lg);
+  --radius-sm: var(--r-sm);
+  --shadow-md: var(--shadow);
+  --panel-bg: var(--panel);
+  --border-color: var(--border, var(--surface-3));
+  --tint-danger: var(--tint-neg);
+  --tint-danger-fg: var(--tint-neg-fg);
 
   /* ── 그림자(고도) 스케일 ── */
   --shadow-sm: 0 2px 8px rgba(20, 30, 50, 0.06);

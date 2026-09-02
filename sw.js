@@ -128,7 +128,14 @@ self.addEventListener("fetch", (event) => {
 
   event.respondWith(
     ensureCacheName().then((cacheName) => {
-      // 내용해시로 버전이 박힌 자산은 불변으로 취급 → 캐시 우선.
+      // data/ 아래 피처 데이터(insider·congress·13F·게이지…)는 ?v= 가 붙어 있어도
+      // 불변이 아니다. app.js 의 featureDataSrc 가 ?v=MIR_BUILD_ID 를 붙이는데 이 ID 는
+      // 코드 배포 때만 바뀌므로, cacheFirst 로 두면 재방문자는 다음 코드 배포까지
+      // 처음 본 날짜의 데이터를 계속 본다(2026-08-07~09-03 실제 발생). 항상 네트워크 우선.
+      if (url.pathname.includes("/data/")) {
+        return networkFirst(req, cacheName);
+      }
+      // 내용해시로 버전이 박힌 자산(app.js·styles.css 등)은 불변으로 취급 → 캐시 우선.
       if (url.searchParams.has("v")) {
         return cacheFirst(req, cacheName);
       }

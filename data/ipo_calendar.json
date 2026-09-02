@@ -1,10 +1,105 @@
 {
-  "updatedAtKst": "2026-09-01 18:35 KST",
-  "lastFileDate": "2026-08-31",
-  "count": 630,
+  "updatedAtKst": "2026-09-02 18:00 KST",
+  "lastFileDate": "2026-09-01",
+  "count": 639,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "ENTRATA, INC.",
+      "ticker": "ENT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-01",
+      "accession": "0001628280-26-059692:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2028464/000162828026059692/entrata-sx1a2.htm"
+    },
+    {
+      "company": "ENTRATA, INC.",
+      "ticker": "ENT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-01",
+      "accession": "0001628280-26-059692:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2028464/000162828026059692/entrata-sx1a2.htm"
+    },
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-01",
+      "accession": "0001628280-26-059639:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026059639/sbenergy-sx1.htm"
+    },
+    {
+      "company": "FingerMotion, Inc.",
+      "ticker": "FNGR",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-01",
+      "accession": "0001493152-26-041059:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1602409/000149315226041059/forms-1.htm"
+    },
+    {
+      "company": "Advance JV Group Ltd",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-01",
+      "accession": "0001493152-26-040933:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2089447/000149315226040933/form424b4.htm",
+      "offerPrice": 2.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "CYABRA, INC.",
+      "ticker": "CYAB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-01",
+      "accession": "0001213900-26-096300:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2032341/000121390026096300/ea0304131-s1a1_cyabra.htm"
+    },
+    {
+      "company": "CYABRA, INC.",
+      "ticker": "CYAB",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-01",
+      "accession": "0001213900-26-096300:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2032341/000121390026096300/ea0304131-s1a1_cyabra.htm"
+    },
+    {
+      "company": "RainRock Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-01",
+      "accession": "0001213900-26-095969:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2089787/000121390026095969/ea0271266-02.htm"
+    },
+    {
+      "company": "Three Lions Acquisition Corp.",
+      "ticker": "TLAC",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-01",
+      "accession": "0001193125-26-378248:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2128462/000119312526378248/d142823d424b4.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
     {
       "company": "La Beaute Inc.",
       "ticker": null,

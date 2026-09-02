@@ -227,25 +227,34 @@ def zigzag(pivots):
 # ----------------------------------------------------------------------------
 # 2. 확정(넥라인 돌파) 탐색 헬퍼
 # ----------------------------------------------------------------------------
-def _confirm_break(rows, start_idx, level, direction, invalidate_level):
+def _confirm_break(rows, start_idx, level, direction, invalidate_level, lag=PIVOT_WIN):
     """start_idx 다음 봉부터 종가가 level 을 direction 방향으로 돌파하는 첫 봉을 찾는다.
     direction=-1: 종가 < level (하향 돌파) / +1: 종가 > level.
     그 전에 invalidate_level 을 반대로 크게 벗어나면 무효(None).
+
+    lag: start_idx 가 프랙탈 피벗이면 그 피벗은 PIVOT_WIN 봉 뒤에야 알 수 있다. 그 전에
+    돌파가 나면 실전에서는 알 수 없었던 시점이므로 확정 인덱스를 start_idx+lag 이후로
+    민다(룩어헤드 방지). 완성된 봉에서 시작하는 감지기(NR4·인사이드바·라운딩)는 lag=0.
+    analysis.js confirmBreak 와 1:1 로 동일해야 한다.
     """
     n = len(rows)
     end = min(n, start_idx + 1 + CONFIRM_MAX_BARS)
     for k in range(start_idx + 1, end):
         c = rows[k]["c"]
+        hit = False
         if direction < 0:
             if invalidate_level is not None and c > invalidate_level:
                 return None
             if c < level:
-                return k
+                hit = True
         else:
             if invalidate_level is not None and c < invalidate_level:
                 return None
             if c > level:
-                return k
+                hit = True
+        if hit:
+            ci = max(k, start_idx + lag)
+            return ci if ci < n else None
     return None
 
 

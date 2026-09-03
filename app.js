@@ -3158,19 +3158,8 @@ function setupEvents() {
   ["bucketFilter", "sectorFilter", "metricFilter", "tileSizeFilter"].forEach((id) => byId(id).addEventListener("change", renderTreemap));
   // 5천 타일 트리맵을 키 입력마다 다시 그리지 않도록 디바운스.
   byId("heatmapSearch").addEventListener("input", debounce(renderTreemap, 150));
-  // 히트맵 검색도 크로스마켓: 현재 시장에 없는 반대 시장 종목이면(Enter)
-  // 시장을 전환한 뒤 트리맵에서 해당 종목을 포커스한다.
-  byId("heatmapSearch").addEventListener("keydown", async (event) => {
-    if (event.key !== "Enter") return;
-    const q = byId("heatmapSearch").value.trim();
-    if (!q || resolveTickerQuery(q)) return; // 현재 시장에서 찾으면 기존 흐름 유지
-    const target = classifyQueryMarket(q);
-    if (!target || target === marketCfg().id) return;
-    event.preventDefault();
-    await switchMarketMode(target);
-    const ticker = extractStockTickerFromQuery(q) || resolveTickerQuery(q);
-    if (ticker) focusTreemapTicker(ticker, { push: false, openMap: true });
-  });
+  // Enter 확정(현재 시장에서 찾으면 타일 포커스, 못 찾으면 반대 시장까지)은
+  // setupTickerSearchHelpers 의 공용 자동완성이 처리한다.
   byId("resetFilters").addEventListener("click", () => {
     byId("bucketFilter").value = marketCfg().defaultBucket || "idx_sp500";
     byId("sectorFilter").value = "All";
@@ -3306,10 +3295,8 @@ function setupEvents() {
   byId("jumpCategory").addEventListener("change", renderJump);
   byId("jumpSort").addEventListener("change", renderJump);
   byId("sectorSort").addEventListener("change", renderSectors);
+  // Enter 는 공용 자동완성(setupTickerSearchHelpers)이 확정한다 — 버튼만 여기서 묶는다.
   byId("searchButton").addEventListener("click", () => selectTicker(byId("tickerSearch").value));
-  byId("tickerSearch").addEventListener("keydown", (event) => {
-    if (event.key === "Enter") selectTicker(event.target.value);
-  });
   byId("bulkRun").addEventListener("click", renderBulk);
   const bulkSave = byId("bulkSave");
   if (bulkSave) bulkSave.addEventListener("click", () => {
@@ -4559,10 +4546,7 @@ function selectTicker(ticker, options = {}) {
   }
   if (!found) {
     // 여러 후보로 갈리는 질의(resolveTickerQuery 가 null) — 첫 후보를 몰래 고르지 않고 알린다.
-    const hits = raw ? searchTickerSuggestions(raw, 4) : [];
-    if (hits.length >= 2 && typeof showAppToast === "function") {
-      showAppToast(`'${raw}' 후보 ${hits.length}개: ${hits.map((h) => h.ticker).join(", ")} — 목록에서 선택하세요`);
-    }
+    notifyAmbiguousTicker(raw);
     return false;
   }
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
@@ -5367,6 +5351,44 @@ function resolveTickerListInput(text) {
   )];
 }
 
+// ===== 티커 입력 단일화 =====
+// 티커를 '입력받는' 상자(히어로 검색과 ⌘K 팔레트 제외)는 전부 아래 경로만 지난다.
+//   해석  : resolveTickerEntry  → resolveTickerQuery (정규화·한국어 별칭·모호성 판정)
+//   입력UI: setupTickerAutocomplete (같은 후보 목록, 같은 ↑/↓ + Enter 키보드 모델)
+// 예전엔 상자마다 제 나름의 keydown 핸들러가 있어 동작이 갈렸다 — chartCompareInput 은
+// 자동완성이 아예 없고 toUpperCase() 만 해서 '삼전' 같은 별칭이 조용히 무시됐고,
+// heatmapSearch 는 현재 시장에서 찾히는 질의면 Enter 를 눌러도 아무 일이 없었다.
+function resolveTickerEntry(raw) {
+  const q = String(raw || "").trim();
+  if (!q) return { query: "", ticker: null, hits: [] };
+  const ticker = resolveTickerQuery(q);
+  if (ticker) return { query: q, ticker: normalizeTickerKey(ticker), hits: [] };
+  // resolveTickerQuery 가 null = 후보가 여럿이라 모호하다. 첫 후보를 몰래 고르지 않는다.
+  return { query: q, ticker: null, hits: searchTickerSuggestions(q, 4) };
+}
+
+// 모호한 질의를 사용자에게 알린다. 후보가 1개 이하면(= 그냥 없는 티커) 조용히 넘긴다.
+function notifyAmbiguousTicker(raw, hits = null) {
+  const q = String(raw || "").trim();
+  const list = hits && hits.length ? hits : (q ? searchTickerSuggestions(q, 4) : []);
+  if (list.length >= 2 && typeof showAppToast === "function") {
+    showAppToast(`'${q}' 후보 ${list.length}개: ${list.map((h) => h.ticker).join(", ")} — 목록에서 선택하세요`);
+  }
+  return list;
+}
+
+// 현재 시장에서 해석되지 않은 질의를 반대 시장에서 찾아 트리맵으로 데려간다.
+async function focusTickerAcrossMarkets(raw) {
+  const q = String(raw || "").trim();
+  if (!q) return;
+  const target = classifyQueryMarket(q);
+  if (!target || target === marketCfg().id) { notifyAmbiguousTicker(q); return; }
+  await switchMarketMode(target);
+  const ticker = extractStockTickerFromQuery(q) || resolveTickerQuery(q);
+  if (ticker) focusTreemapTicker(ticker, { push: false, openMap: true });
+  else notifyAmbiguousTicker(q);
+}
+
 function tickerInputActiveToken(input) {
   const val = input.value;
   const pos = input.selectionStart ?? val.length;
@@ -5385,6 +5407,12 @@ function setupTickerAutocomplete(inputId, options = {}) {
   if (!input || input.dataset.tickerAcReady) return;
   input.dataset.tickerAcReady = "1";
   const multi = Boolean(options.multi);
+  // 확정(commit) 훅. 목록에서 고르든 그냥 Enter 를 치든 같은 함수로 들어온다.
+  const onCommit = typeof options.onCommit === "function" ? options.onCommit : null;
+  // 해석 실패(모호하거나 스냅샷 밖) 시의 상자별 처리. 없으면 후보 토스트만 띄운다.
+  const onUnresolved = typeof options.onUnresolved === "function" ? options.onUnresolved : null;
+  // 소유 모듈이 이미 Enter 를 처리하는 상자(#backtestTickerInput)만 false.
+  const submitOnEnter = options.submitOnEnter !== false;
   const label = input.closest("label");
   let wrap = input.parentElement;
   if (label && label.parentElement) {
@@ -5419,8 +5447,8 @@ function setupTickerAutocomplete(inputId, options = {}) {
     if (!multi) {
       input.value = ticker;
       closeList();
-      if (typeof options.onSelect === "function") options.onSelect(ticker);
       input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (onCommit) onCommit(ticker);
       return;
     }
     const { start, end, val } = tickerInputActiveToken(input);
@@ -5451,6 +5479,35 @@ function setupTickerAutocomplete(inputId, options = {}) {
     });
   }
 
+  // 목록에서 고르지 않고 그대로 Enter — 해석은 항상 공용 리졸버를 지난다.
+  function commitTyped() {
+    if (multi) {
+      const list = resolveTickerListInput(input.value);
+      if (!list.length) {
+        if (onUnresolved) onUnresolved(input.value.trim(), []);
+        else notifyAmbiguousTicker(input.value.trim());
+        return;
+      }
+      input.value = list.join(", ");
+      closeList();
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+      if (onCommit) onCommit(list);
+      return;
+    }
+    const { query, ticker, hits } = resolveTickerEntry(input.value);
+    if (!query) return;
+    if (!ticker) {
+      closeList();
+      if (onUnresolved) onUnresolved(query, hits);
+      else notifyAmbiguousTicker(query, hits);
+      return;
+    }
+    input.value = ticker;
+    closeList();
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+    if (onCommit) onCommit(ticker);
+  }
+
   function refresh() {
     const token = multi ? tickerInputActiveToken(input).token : input.value.trim();
     if (token.length < 1) {
@@ -5470,7 +5527,14 @@ function setupTickerAutocomplete(inputId, options = {}) {
   });
   input.addEventListener("keydown", (event) => {
     const items = [...list.querySelectorAll(".ticker-ac-item")];
-    if (!items.length) return;
+    if (!items.length) {
+      // 목록이 없을 때도 키보드 모델은 같다 — Enter 는 입력한 글자를 그대로 확정한다.
+      if (event.key === "Enter" && submitOnEnter) {
+        event.preventDefault();
+        commitTyped();
+      }
+      return;
+    }
     if (event.key === "ArrowDown") {
       event.preventDefault();
       activeIdx = (activeIdx + 1) % items.length;
@@ -5479,9 +5543,15 @@ function setupTickerAutocomplete(inputId, options = {}) {
       event.preventDefault();
       activeIdx = activeIdx <= 0 ? items.length - 1 : activeIdx - 1;
       items.forEach((el, i) => el.classList.toggle("is-active", i === activeIdx));
-    } else if (event.key === "Enter" && activeIdx >= 0) {
-      event.preventDefault();
-      applySuggestion(items[activeIdx].dataset.ticker);
+    } else if (event.key === "Enter") {
+      // ↑/↓ 로 고른 게 있으면 그것, 없으면 입력한 글자를 확정한다.
+      if (activeIdx >= 0) {
+        event.preventDefault();
+        applySuggestion(items[activeIdx].dataset.ticker);
+      } else if (submitOnEnter) {
+        event.preventDefault();
+        commitTyped();
+      }
     } else if (event.key === "Escape") {
       closeList();
     }
@@ -5492,16 +5562,27 @@ function setupTickerAutocomplete(inputId, options = {}) {
   });
 }
 
+// 티커를 '입력받는' 상자는 전부 여기서 한 구현(setupTickerAutocomplete)에 물린다.
+// 히어로 검색(#homeSearchInput)과 ⌘K 팔레트는 라우팅까지 하는 별도 표면이라 예외다.
+// 표(공시 패널)의 #*Search 들은 티커 입력이 아니라 필터라서 여기 없다.
 function setupTickerSearchHelpers() {
   buildTickerSearchIndex();
-  setupTickerAutocomplete("tickerSearch");
-  setupTickerAutocomplete("bulkInput", { multi: true });
-  setupTickerAutocomplete("compareInput", { multi: true });
-  setupTickerAutocomplete("backtestTickerInput");
+  // 종목 분석: 스냅샷에 없는 티커는 selectTicker 가 실시간 스텁으로 받아 준다.
+  setupTickerAutocomplete("tickerSearch", {
+    onCommit: (ticker) => selectTicker(ticker),
+    onUnresolved: (raw) => selectTicker(raw),
+  });
+  setupTickerAutocomplete("bulkInput", { multi: true, onCommit: () => renderBulk() });
+  setupTickerAutocomplete("compareInput", { multi: true, onCommit: () => renderCompareBoard() });
+  // 백테스트 입력은 portfolio.js 가 Enter 를 이미 처리한다(같은 resolveTickerListInput
+  // 을 쓴다) — 여기서 또 확정하면 같은 티커를 두 번 넣는다.
+  setupTickerAutocomplete("backtestTickerInput", { submitOnEnter: false });
   setupTickerAutocomplete("communityTicker");
-  setupTickerAutocomplete("communityFilterTicker");
+  setupTickerAutocomplete("communityFilterTicker", { submitOnEnter: false });
   setupTickerAutocomplete("heatmapSearch", {
-    onSelect: (ticker) => focusTreemapTicker(ticker, { push: false, openMap: false }),
+    onCommit: (ticker) => focusTreemapTicker(ticker, { push: false, openMap: false }),
+    // 현재 시장에서 못 찾으면 반대 시장까지 본다(예전 heatmapSearch 전용 keydown 이 하던 일).
+    onUnresolved: (raw) => focusTickerAcrossMarkets(raw),
   });
 }
 

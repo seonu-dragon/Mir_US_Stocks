@@ -748,7 +748,7 @@ function scheduleFeatureViewRefresh() {
 function refreshFeatureViews() {
   // applySearchSubVisibility: US 자사주·증자희석 탭은 데이터(8-K kind / US_DILUTION)가
   // 늦게 도착하면 그때 나타나야 한다 — 부팅 시점엔 전역이 없어 숨겨져 있다.
-  const calls = [renderSignals, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility()];
+  const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility()];
   if (currentTab === "institutional") {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {
@@ -1205,19 +1205,25 @@ function boot(options = {}) {
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
   const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
-  if (initialTab) {
-    const resolved = normalizeTabRequest(initialTab, initialSub);
-    activateTab(resolved.tab, {
+  const routeTicker = route.get("ticker");
+  const resolvedStart = initialTab ? normalizeTabRequest(initialTab, initialSub) : null;
+  // 탭 콘텐츠는 여기서 처음 그린다(renderAll 은 탭 무관 표면만). 딥링크 탭이 없으면 현재 탭
+  // (부팅 시 map, 시장 전환 시 보던 탭)만 그리고 나머지는 첫 진입 때 그린다.
+  let activated = false;
+  if (routeTicker && !initialTab) {
+    // ?ticker= 단독 딥링크는 종목 리서치 화면(종목 탭)으로 바로 연다 — 원페이지 허브 URL.
+    // selectTicker 가 탭 전환·렌더까지 한 번에 처리한다. tab= 이 함께 오면 그 탭을 존중한다.
+    activated = selectTicker(routeTicker, { openSearch: true }) === true;
+  } else if (routeTicker) {
+    selectTicker(routeTicker, { openSearch: false, skipRender: true }); // 상태만 — 렌더는 아래 activateTab
+  }
+  if (!activated) {
+    activateTab(resolvedStart ? resolvedStart.tab : (mapRoute ? "map" : currentTab), {
       push: false,
-      sub: resolved.sub,
+      sub: resolvedStart ? resolvedStart.sub : null,
       communityTicker: initialCommunityTicker,
     });
-  } else if (mapRoute) {
-    activateTab("map", { push: false });
   }
-  // ?ticker= 단독 딥링크는 종목 리서치 화면(종목 탭)으로 바로 연다 — 원페이지 허브 URL.
-  // tab= 이 함께 명시되면 그 탭을 존중한다.
-  if (route.get("ticker")) selectTicker(route.get("ticker"), { openSearch: !initialTab });
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
@@ -2582,7 +2588,7 @@ function recordNav() {
 
 function applyNavState(state) {
   if (!state) return;
-  if (state.ticker) selectTicker(state.ticker, { openSearch: false });
+  if (state.ticker) selectTicker(state.ticker, { openSearch: false, skipRender: true }); // 렌더는 아래 activateTab 이 한 번
   if (state.communityTicker != null) applyCommunityBoardTickerFilter(state.communityTicker);
   activateTab(state.tab || "map", {
     push: false,
@@ -2750,7 +2756,7 @@ function normalizeTabRequest(name, sub) {
   return { tab: name, sub: sub || null };
 }
 
-function activateSearchSub(name, { push = false } = {}) {
+function activateSearchSub(name, { push = false, skipRender = false, renderOptions = null } = {}) {
   searchSubTab = name || "analysis";
   const nav = byId("searchSubTabs");
   if (nav) {
@@ -2771,7 +2777,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "dividend") renderDividends();
   if (searchSubTab === "contract") renderContracts();
   if (searchSubTab === "dilution") renderDilution();
-  if (searchSubTab === "analysis") renderSearch();
+  if (searchSubTab === "analysis" && !skipRender) renderSearch(renderOptions || {});
   if (push) recordNav();
 }
 
@@ -3431,6 +3437,26 @@ function renderMacroIndicators() {
   });
 }
 
+// 시그널 탭은 피처 데이터셋이 도착할 때마다(refreshFeatureViews) 다시 그려졌다 — 탭이 숨어
+// 있어도. 보일 때만 그리고, 숨어 있으면 dirty 로 표시해 다음 진입 때 한 번 그린다.
+let signalsDirty = true;
+const SIGNALS_FEATURE_KEYS = [
+  "yieldCurve", "macro", "cotPositioning", "treasuryAuctions", "wikiAttention", "sentimentGauges",
+  "ecosMacro", "tradeExports", "optionsStats", "marketHistory",
+  // Smart-money signals read the heavy 13F/congress/insider datasets; they're excluded from
+  // the boot prefetch and load on first visit.
+  "insider", "congress", "inst13f",
+];
+function renderSignalsIfVisible() {
+  if (currentTab === "signals") {
+    renderSignals();
+    signalsDirty = false;
+    tabRendered.signals = true;
+  } else {
+    signalsDirty = true;
+  }
+}
+
 function renderSignals() {
   renderFearGreed();
   renderMacroIndicators();
@@ -3747,7 +3773,7 @@ function scrollToTabContent() {
   }
 }
 
-function activateTab(name, { push = true, ticker = null, sub = null, communityTicker = null } = {}) {
+function activateTab(name, { push = true, ticker = null, sub = null, communityTicker = null, skipRender = false, renderOptions = null } = {}) {
   const resolved = normalizeTabRequest(name, sub);
   name = resolved.tab;
   sub = resolved.sub;
@@ -3759,40 +3785,31 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
   document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
-  byId(`tab-${name}`).classList.add("is-active");
+  byId(`tab-${name}`)?.classList.add("is-active");
   scrollTabIntoView(tabBtn);
   currentTab = name;
+  // 첫 진입 탭은 여기서 처음 그린다(부팅 때 전 탭을 그리지 않는다 — renderAll 참고).
+  renderTabContent(name);
   // US 증자·희석 데이터는 종목검색 서브탭에서만 쓰므로 탭 첫 진입 때 한 번만 시도.
   // 파일이 아직 배포 전이면 조용히 실패하고 서브탭이 숨은 채 유지된다.
   if (name === "search" && !isKrMarket() && !window.US_DILUTION && FEATURE_DATA.usDilution && !FEATURE_DATA.usDilution.tried) {
     FEATURE_DATA.usDilution.tried = true;
     ensureFeatureData("usDilution").then((ok) => { if (ok) applySearchSubVisibility(); });
   }
-  if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
+  if (name === "search") activateSearchSub(sub || searchSubTab, { push: false, skipRender, renderOptions });
   if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
   if (name === "institutional") activateInstitutionalSub(sub || institutionalSubTab, { push: false });
   if (name === "community") activateCommunitySub(sub || communitySubTab, { push: false, communityTicker });
   if (name !== "community") stopCommunityPolling();
   if (name === "map") renderTreemap();
   if (name === "signals") {
-    renderSignals();
-    ensureFeatureData("yieldCurve").then((ok) => { if (ok && currentTab === "signals") renderYieldCurve(); });
-    ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") { renderMacroIndicators(); renderFearGreed(); } });
-    ensureFeatureData("cotPositioning").then((ok) => { if (ok && currentTab === "signals") renderCotPositioning(); });
-    ensureFeatureData("treasuryAuctions").then((ok) => { if (ok && currentTab === "signals") renderTreasuryAuctions(); });
-    ensureFeatureData("wikiAttention").then((ok) => { if (ok && currentTab === "signals") renderWikiAttention(); });
-    ensureFeatureData("sentimentGauges").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
-    ensureFeatureData("ecosMacro").then((ok) => { if (ok && currentTab === "signals") renderEcosMacro(); });
-    ensureFeatureData("tradeExports").then((ok) => { if (ok && currentTab === "signals") renderTradeExports(); });
-    ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
-    ensureFeatureData("marketHistory").then((ok) => { if (ok && currentTab === "signals") { renderFearGreed(); renderMacroIndicators(); } });
-    // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
-    // first visit (they're excluded from the boot prefetch) and re-render as each lands.
-    ["insider", "congress", "inst13f"].forEach((k) => {
+    // 한 번만 그린다(예전엔 진입마다 renderSignals + 데이터셋별 .then 렌더 ~10개 = 최대 15회).
+    if (signalsDirty || !tabRendered.signals) renderSignalsIfVisible();
+    // 아직 안 온 데이터셋만 요청하고, 도착은 refreshFeatureViews(250ms 디바운스) 한 번으로 합쳐 그린다.
+    SIGNALS_FEATURE_KEYS.forEach((k) => {
       const meta = FEATURE_DATA[k];
-      if (meta && featureDataEnabled(meta, marketCfg()) && !window[meta.global]) {
-        ensureFeatureData(k).then((ok) => { if (ok && currentTab === "signals") renderSignals(); });
-      }
+      if (!meta || window[meta.global] || _featureDataFailed[k] || !featureDataEnabled(meta, marketCfg())) return;
+      ensureFeatureData(k).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
     });
   }
   if (push) recordNav();
@@ -4290,6 +4307,7 @@ function setupEvents() {
   });
   byId("stockTreemap").addEventListener("mousemove", handleHeatmapPointer);
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
+  byId("stockTreemap").addEventListener("click", handleHeatmapClick);
   setupChartControls();
   setupWatchAlertEvents();
   setupCloudSyncEvents();
@@ -5343,22 +5361,33 @@ function setupChartInteractions() {
   });
 }
 
+// 탭별 첫 렌더 플래그. 예전 renderAll 은 부팅 때 9개 탭을 전부 동기로 그렸다(기본 종목의
+// 워커 실시간 조회까지 부팅에 딸려 들어갔다). 이제 탭과 무관한 표면만 그리고, 탭 콘텐츠는
+// 첫 진입(activateTab → renderTabContent) 때 그린다. 시장 전환(boot 재실행)마다 리셋된다.
+const tabRendered = {};
+const TAB_RENDERERS = {
+  sector: () => renderSectors(),
+  bulk: () => renderBulk(),
+  health: () => renderHealth(),
+  "ai-briefing": () => { renderAiBriefing(); renderSocialSentiment(); },
+  // map(폭 의존이라 진입마다)·signals(dirty 플래그)·search/institutional/calendar/community
+  // (서브탭 활성화가 그림)는 activateTab 이 직접 처리한다.
+};
+function renderTabContent(name, { force = false } = {}) {
+  if (!force && tabRendered[name]) return;
+  tabRendered[name] = true;
+  const fn = TAB_RENDERERS[name];
+  if (fn) fn();
+}
+
 function renderAll() {
-  renderTreemap();
-  renderSectors();
-  renderTopStocks();
-  renderJump();
-  renderSearch();
-  renderBulk();
+  Object.keys(tabRendered).forEach((k) => delete tabRendered[k]);
+  signalsDirty = true;
+  // 탭과 무관하게 항상 보이는 표면
   renderWatchlistBar();
   renderWatchAlerts();
   renderActionBoard();
-  renderHealth();
-  activateInstitutionalSub(institutionalSubTab, { push: false });
   renderDataFreshnessStatus();
-  renderAiBriefing();
-  renderSocialSentiment();
-  renderCommunityNews();
 }
 
 function filteredStocks() {
@@ -5599,6 +5628,29 @@ function metricColor(value, metric) {
 let zoomView = null; // null | { sector } | { sector, industry }
 let treemapFocusTicker = null;
 let treemapFocusTimer = null;
+// 툴팁 피어 목록(산업군/섹터별, 시총순) — 스냅샷당 한 번만 만든다. 예전엔 마우스가 움직일
+// 때마다 전 종목을 두 번씩 필터했다.
+let _treemapPeerIndex = null;
+function treemapPeerIndex() {
+  if (_treemapPeerIndex) return _treemapPeerIndex;
+  const byIndustry = new Map();
+  const bySector = new Map();
+  (data.stocks || []).slice()
+    .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
+    .forEach((s) => {
+      const ind = s.industry || "Other";
+      const sec = s.sector || "Other";
+      if (!byIndustry.has(ind)) byIndustry.set(ind, []);
+      byIndustry.get(ind).push(s);
+      if (!bySector.has(sec)) bySector.set(sec, []);
+      bySector.get(sec).push(s);
+    });
+  _treemapPeerIndex = { byIndustry, bySector };
+  return _treemapPeerIndex;
+}
+// 마지막으로 hover 한 대상 키("t:티커" | "i:섹터|산업" | "s:섹터"). 같은 대상 위에서 움직이면
+// 툴팁 위치만 옮기고 패널·툴팁 HTML 은 다시 만들지 않는다.
+let _lastHoverKey = null;
 
 function renderTreemap() {
   const metric = byId("metricFilter").value;
@@ -5615,6 +5667,8 @@ function renderTreemap() {
   const height = map.clientHeight || 720;
 
   renderLegend(metric);
+  treemapPeerIndex();
+  _lastHoverKey = null;
 
   const all = filteredStocks();
   if (!all.length) {
@@ -5624,7 +5678,8 @@ function renderTreemap() {
     else if (bucket === "portfolio") emptyMsg = "보유종목이 없습니다. 포트폴리오 탭에서 보유 종목을 추가해 보세요.";
     map.innerHTML = `<div class="heatmap-empty">${escapeHtml(emptyMsg)}</div>`;
     zoomView = null;
-    renderSelected(data.stocks[0]);
+    const fallback = selectedBaseRow() || data.stocks[0];
+    if (fallback) renderSelected(fallback);
     return;
   }
 
@@ -5659,23 +5714,7 @@ function renderTreemap() {
       </section>
     `;
   }).join("");
-
-  // Click an industry box (e.g. Semiconductors) -> zoom it to fill the heatmap.
-  map.querySelectorAll(".industry-box").forEach((box) => {
-    box.addEventListener("click", (event) => {
-      event.stopPropagation();
-      zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
-      renderTreemap();
-    });
-  });
-  // Click a sector title -> zoom the whole sector.
-  map.querySelectorAll(".sector-title[data-zoom-sector]").forEach((title) => {
-    title.addEventListener("click", (event) => {
-      event.stopPropagation();
-      zoomView = { sector: title.dataset.zoomSector };
-      renderTreemap();
-    });
-  });
+  // 클릭(타일 선택 / 산업·섹터 확대 / 전체 보기)은 handleHeatmapClick 이 위임으로 처리한다.
 
   renderSelected(stocks.find((item) => item.ticker === selectedTicker) || stocks[0] || data.stocks[0]);
   pulseTreemapFocusTile();
@@ -5705,7 +5744,8 @@ function pulseTreemapFocusTile() {
     if (tile) tile.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     treemapFocusTimer = setTimeout(() => {
       treemapFocusTicker = null;
-      if (currentTab === "map") renderTreemap();
+      // 클래스 하나 떼려고 지도를 통째로 다시 그리지 않는다.
+      byId("stockTreemap")?.querySelectorAll(".heat-tile.is-focus-pulse").forEach((el) => el.classList.remove("is-focus-pulse"));
     }, 3200);
   }, 60);
 }
@@ -5725,24 +5765,13 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
     const sorted = scoped.slice().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
     const rects = squarify(sorted, inner, (item) => sizeWeight(item, sizeMetric));
     map.innerHTML = header + rects.map(({ item, rect }) => heatTile(item, rect, metric, query)).join("");
-    map.querySelectorAll(".heat-tile").forEach((tile) => {
-      tile.addEventListener("click", () => selectTicker(tile.dataset.ticker, { openSearch: true }));
-    });
   } else {
     const industries = groupIndustries(scoped, metric, sizeMetric);
     const industryRects = squarify(industries, inner, (item) => item.weight);
     map.innerHTML = header + industryRects
       .map(({ item: industry, rect }) => industryBox(zoomView.sector, industry, rect, metric, sizeMetric, query)).join("");
-    map.querySelectorAll(".industry-box").forEach((box) => {
-      box.addEventListener("click", (event) => {
-        event.stopPropagation();
-        zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
-        renderTreemap();
-      });
-    });
   }
-
-  byId("treemapBack").addEventListener("click", () => { zoomView = null; renderTreemap(); });
+  // 클릭은 handleHeatmapClick(위임) 이 처리한다.
   renderSelected(scoped.find((item) => item.ticker === selectedTicker) || scoped[0]);
   pulseTreemapFocusTile();
 }
@@ -5869,7 +5898,7 @@ function heatTile(item, rect, metric, query) {
     <button
       class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
       style="${rectStyle(rect)} background:${metricColor(value, metric)}"
-      data-ticker="${item.ticker}"
+      data-ticker="${escapeHtml(item.ticker)}"
       data-sector="${escapeHtml(item.sector)}"
       data-industry="${escapeHtml(item.industry)}"
       title="${escapeHtml(titleText)}"
@@ -5885,8 +5914,11 @@ function handleHeatmapPointer(event) {
   const map = byId("stockTreemap");
   const tile = event.target.closest(".heat-tile");
   if (tile && map.contains(tile)) {
-    const item = data.stocks.find((stockItem) => stockItem.ticker === tile.dataset.ticker);
+    const key = `t:${tile.dataset.ticker}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    const item = stockByTicker(tile.dataset.ticker);
     if (item) {
+      _lastHoverKey = key;
       renderSelected(item);
       showHeatmapTooltip(stockTooltip(item), event);
     }
@@ -5895,6 +5927,9 @@ function handleHeatmapPointer(event) {
 
   const industry = event.target.closest(".industry-box");
   if (industry && map.contains(industry)) {
+    const key = `i:${industry.dataset.sector}|${industry.dataset.industry}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    _lastHoverKey = key;
     showHeatmapTooltip(groupTooltip({
       type: "industry",
       sector: industry.dataset.sector,
@@ -5905,6 +5940,9 @@ function handleHeatmapPointer(event) {
 
   const sector = event.target.closest(".sector-box");
   if (sector && map.contains(sector)) {
+    const key = `s:${sector.dataset.sector}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    _lastHoverKey = key;
     showHeatmapTooltip(groupTooltip({
       type: "sector",
       sector: sector.dataset.sector
@@ -5913,6 +5951,38 @@ function handleHeatmapPointer(event) {
   }
 
   hideHeatmapTooltip();
+}
+
+// 지도 클릭 위임(렌더마다 리스너를 다시 붙이지 않는다). 타일 = 종목 선택(터치에서도 한 번에),
+// 산업 상자/제목·섹터 제목 = 확대, ← 전체 보기 = 확대 해제.
+function handleHeatmapClick(event) {
+  const map = byId("stockTreemap");
+  if (!map) return;
+  const tile = event.target.closest(".heat-tile");
+  if (tile && map.contains(tile)) {
+    event.stopPropagation();
+    selectTicker(tile.dataset.ticker, { openSearch: true });
+    return;
+  }
+  if (event.target.closest("#treemapBack")) {
+    event.stopPropagation();
+    zoomView = null;
+    renderTreemap();
+    return;
+  }
+  const title = event.target.closest(".sector-title[data-zoom-sector]");
+  if (title && map.contains(title)) {
+    event.stopPropagation();
+    zoomView = { sector: title.dataset.zoomSector };
+    renderTreemap();
+    return;
+  }
+  const box = event.target.closest(".industry-box");
+  if (box && map.contains(box)) {
+    event.stopPropagation();
+    zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
+    renderTreemap();
+  }
 }
 
 function ensureHeatmapTooltip() {
@@ -5930,6 +6000,11 @@ function ensureHeatmapTooltip() {
 function showHeatmapTooltip(html, event) {
   const tooltip = ensureHeatmapTooltip();
   tooltip.innerHTML = html;
+  positionHeatmapTooltip(event);
+}
+
+function positionHeatmapTooltip(event) {
+  const tooltip = ensureHeatmapTooltip();
   tooltip.classList.add("is-visible");
 
   const gap = 16;
@@ -5943,6 +6018,7 @@ function showHeatmapTooltip(html, event) {
 }
 
 function hideHeatmapTooltip() {
+  _lastHoverKey = null;
   const tooltip = byId("heatmapTooltip");
   if (tooltip) tooltip.classList.remove("is-visible");
 }
@@ -5950,14 +6026,10 @@ function hideHeatmapTooltip() {
 function stockTooltip(item) {
   const metric = byId("metricFilter").value;
   const metricCfg = MAP_METRIC_CONFIG[metric];
-  const peers = data.stocks
-    .filter((stockItem) => stockItem.ticker !== item.ticker && stockItem.industry === item.industry)
-    .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
-    .slice(0, 6);
-  const peerRows = peers.length ? peers : data.stocks
-    .filter((stockItem) => stockItem.ticker !== item.ticker && stockItem.sector === item.sector)
-    .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
-    .slice(0, 6);
+  const idx = treemapPeerIndex();
+  const notSelf = (rows) => (rows || []).filter((stockItem) => stockItem.ticker !== item.ticker).slice(0, 6);
+  const peers = notSelf(idx.byIndustry.get(item.industry || "Other"));
+  const peerRows = peers.length ? peers : notSelf(idx.bySector.get(item.sector || "Other"));
 
   return `
     <div class="tooltip-head">
@@ -5975,7 +6047,7 @@ function stockTooltip(item) {
       ${miniFact("Sector", item.sector)}
       ${miniFact("Industry", item.industry)}
       ${miniFact(metricCfg ? metricCfg.label : "Metric", fmtMetric(mapMetricValue(item, metric), metric))}
-      ${miniFact("Volume", `${Number(item.volumeRatio).toFixed(1)}x`)}
+      ${miniFact("Volume", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
     </div>
     <div class="tooltip-peers">
       <span>같은 산업군 / 주요 비교 종목</span>
@@ -7534,16 +7606,19 @@ function selectTicker(ticker, options = {}) {
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
-  renderTreemap();
-  renderSearch(options);
   chatFocusTicker = found.ticker;
-  if (options.openSearch !== false) {
-    if (currentTab !== "search" || searchSubTab !== "analysis") {
-      activateTab("search", { sub: "analysis", ticker: selectedTicker, push: true });
-    } else {
-      history.replaceState({ tab: "search", sub: "analysis", ticker: selectedTicker }, "");
-    }
+  // 지도는 보일 때만(숨은 탭은 폭 0 이라 어차피 그리지 못한다 — 진입 때 다시 그린다).
+  if (currentTab === "map") renderTreemap();
+  const wantsSearch = options.openSearch !== false;
+  if (wantsSearch && (currentTab !== "search" || searchSubTab !== "analysis")) {
+    // activateTab → activateSearchSub("analysis") 가 renderSearch 를 한 번만 부른다
+    // (예전엔 여기서 한 번, activateTab 에서 또 한 번 그렸다).
+    activateTab("search", { sub: "analysis", ticker: selectedTicker, push: true, renderOptions: options });
+  } else {
+    if (!options.skipRender) renderSearch(options);
+    if (wantsSearch) history.replaceState({ tab: "search", sub: "analysis", ticker: selectedTicker }, "");
   }
+  return true;
 }
 
 // 스냅샷에도 실시간 스텁에도 없는 티커 — 첫 종목으로 떨어뜨리지 않고 상태를 그대로 보여준다.

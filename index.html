@@ -932,7 +932,7 @@ html[data-theme="dark"] {
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
     <link rel="preload" href="styles.css?v=4f5d73150a" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="styles.css?v=4f5d73150a"></noscript>
-    <script src="build_id.js?v=ff3f16189c"></script>
+    <script src="build_id.js?v=3e2c68cfdc"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1705,7 +1705,7 @@ html[data-theme="dark"] {
           </label>
           <label>
             RSI ≤
-            <input id="topMinEps" type="number" min="0" max="100" placeholder="0">
+            <input id="topMaxRsi" type="number" min="0" max="100" placeholder="0">
           </label>
           <label>
             Vol Ratio
@@ -3243,15 +3243,15 @@ html[data-theme="dark"] {
     <script src="analysis.js?v=7dc3d95843"></script>
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
-    <script src="chart-indicators.js?v=8965b0e729"></script>
+    <script src="chart-indicators.js?v=dfb74c9a6d"></script>
     <script src="storage.js?v=20425e8d72"></script>
     <script src="community.js?v=d532e3c631"></script>
     <script src="ai-mode.js?v=a46dd051e8"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=3ed67b8869"></script>
+    <script src="disclosure-trackers.js?v=25413dcd69"></script>
     <script src="portfolio.js?v=1cc8d29f00"></script>
     <script src="screener.js?v=905203e8c0"></script>
-    <script src="app.js?v=3299ace858"></script>
+    <script src="app.js?v=e2dc9b3cec"></script>
     <script src="ai-cosmos.js?v=b6789c9f0a"></script>
     <script src="ai-mode-welcome.js?v=27756a7066"></script>
   </body>

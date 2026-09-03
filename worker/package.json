@@ -1,0 +1,9 @@
+{
+  "name": "mir-worker",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker 소스. 배포는 대시보드 붙여넣기(수동)이고, 이 파일은 worker/test_worker.mjs 가 yahoo-proxy.js 를 ES 모듈로 import 하기 위한 것이다.",
+  "scripts": {
+    "test": "node test_worker.mjs"
+  }
+}

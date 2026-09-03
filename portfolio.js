@@ -901,7 +901,7 @@ function renderPortfolio() {
     <td class="ins-num ${cls(r.pl)}">${fmtPct(r.plPct)}</td>
     <td class="ins-num"><button type="button" class="pf-del" data-ticker="${escapeHtml(r.ticker)}" title="삭제">✕</button></td>
   </tr>`).join("");
-  tableEl.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">현재 스냅샷에 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
+  tableEl.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">현재 스냅샷에 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
   tableEl.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
   tableEl.querySelectorAll(".pf-del").forEach((b) => b.addEventListener("click", () => {
     portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker); savePortfolio(); renderPortfolio();

@@ -87,7 +87,7 @@ function renderInsiderTrades() {
   }).join("");
   wrap.innerHTML = `
     <div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건 표시${rows.length > 300 ? " (검색으로 좁혀보세요)" : ""}</div>
-    <table class="insider-table">
+    <table class="insider-table table-wide">
       <thead><tr>
         <th>거래일</th><th>종목</th><th>보고자 / 직책</th><th>유형</th>
         <th class="ins-num">수량</th><th class="ins-num">단가</th><th class="ins-num">금액</th>
@@ -177,7 +177,7 @@ function renderActivistStakes() {
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
-    <table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th>신고자</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
+    <table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th>신고자</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -225,7 +225,7 @@ function renderMaterialEvents() {
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
-    <table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>이벤트</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
+    <table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>이벤트</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -378,7 +378,7 @@ function renderIpoPerformance(perf, wrap, meta, payload) {
   let html = "";
   if (list.length) {
     html += `<div class="insider-count">${perf.ranked.length.toLocaleString()}종목 중 ${Math.min(list.length, 200).toLocaleString()}종목</div>
-      <table class="insider-table"><thead><tr><th>종목</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${body}</tbody></table>`;
+      <table class="insider-table table-wide"><thead><tr><th>종목</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${body}</tbody></table>`;
   }
   // 유닛 IPO: 수익률 순위 제외. raw 공모가↔현재가만 참고로, '공모가 대비' 칸은 —.
   if (unitList.length) {
@@ -393,7 +393,7 @@ function renderIpoPerformance(perf, wrap, meta, payload) {
       </tr>`;
     }).join("");
     html += `<p class="krflow-note" style="margin-top:14px">유닛 IPO ${unitList.length.toLocaleString()}종목 — 공모가는 유닛(주식+워런트)당 가격이라 상장 후 분리되면 현재 주가와 직접 비교할 수 없습니다. 수익률 순위에서 제외했습니다.</p>
-      <table class="insider-table"><thead><tr><th>종목(유닛 IPO)</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${ubody}</tbody></table>`;
+      <table class="insider-table table-wide"><thead><tr><th>종목(유닛 IPO)</th><th>상장일</th><th class="ins-num">공모가</th><th class="ins-num">현재가</th><th class="ins-num">공모가 대비</th></tr></thead><tbody>${ubody}</tbody></table>`;
   }
   wrap.innerHTML = html;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
@@ -447,7 +447,7 @@ function renderIpoCalendar() {
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
-    <table class="insider-table"><thead><tr><th>제출일</th><th>단계</th><th>티커</th><th>회사</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
+    <table class="insider-table table-wide"><thead><tr><th>제출일</th><th>단계</th><th>티커</th><th>회사</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 // ===== #3 밸류에이션 랭킹 =====
@@ -518,7 +518,7 @@ function renderValuation() {
     <td class="ins-num">${fmtBillions(itemCapForValuation(r.item))}</td>
     <td class="ins-num ${cls(krDisplayChangePct(r.item.changePct))}">${fmtDailyPct(r.item.changePct)}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">${isKrMarket() ? "시총(조)" : "시총"}</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>#</th><th>종목</th><th>섹터</th><th class="ins-num">${escapeHtml(cfg.label || metric)}</th><th class="ins-num">${isKrMarket() ? "시총(조)" : "시총"}</th><th class="ins-num">당일</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -640,7 +640,7 @@ function renderKrShortVolume(payload, wrap, meta) {
     <td class="ins-num">${krMoneyEok(r.shortValue)}</td>
     <td>${overheated.has(r.ticker) ? `<span class="ins-code ins-sell">과열</span>` : ""}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">거래비중</th><th class="ins-num">공매도 거래대금</th><th>과열</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>#</th><th>종목</th><th class="ins-num">거래비중</th><th class="ins-num">공매도 거래대금</th><th>과열</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -724,7 +724,7 @@ function renderShortInterest() {
   const primaryHdr = isBal ? "잔고비중" : "잔고일수";
   const sharesHdr = isBal ? "공매도 잔고" : "공매도 주식수";
   const extraHdr = isBal ? `<th class="ins-num">잔고추이(6주)</th><th class="ins-num">거래비중</th>` : "";
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th>${extraHdr}<th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>${ftdSectionHtml()}`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>#</th><th>종목</th><th class="ins-num">${primaryHdr}</th>${extraHdr}<th class="ins-num">${sharesHdr}</th><th class="ins-num">전기대비</th></tr></thead><tbody>${body}</tbody></table>${ftdSectionHtml()}`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -838,7 +838,7 @@ function renderUsBuybacks() {
     <td class="ins-num">${r.amount != null ? insiderFmtUsd(r.amount) : "—"}</td>
     <td><a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -897,7 +897,7 @@ function renderBuyback() {
     <td class="ins-num">${r.amount != null ? `${(r.amount / 1e8).toLocaleString(undefined, { maximumFractionDigits: 0 })}억` : "—"}</td>
     <td class="ins-num">${r.shares != null ? insiderFmtShares(r.shares) : "—"}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th class="ins-num">주식수</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th class="ins-num">주식수</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1027,7 +1027,7 @@ function renderUsEarningsReactions() {
     <td class="ins-num">${pctCell(r.d0)}</td>
     <td class="ins-num">${pctCell(r.d1)}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">EPS 서프라이즈</th><th class="ins-num">발표일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">EPS 서프라이즈</th><th class="ins-num">발표일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1060,7 +1060,7 @@ function renderEarningsReactions() {
     <td class="ins-num">${pct(r.dayPct)}</td>
     <td class="ins-num">${pct(r.nextPct)}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th class="ins-num">공시일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th class="ins-num">공시일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1161,7 +1161,7 @@ function renderUsDividends() {
     <td class="ins-date">${escapeHtml(r.nextEarnings || "—")}</td>
   </tr>`;
   }).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">배당수익률</th><th class="ins-num">연간 배당금</th><th>배당락일</th><th class="ins-num">배당성향</th><th>다음 실적</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목</th><th class="ins-num">배당수익률</th><th class="ins-num">연간 배당금</th><th>배당락일</th><th class="ins-num">배당성향</th><th>다음 실적</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1190,7 +1190,7 @@ function renderDividends() {
     <td class="ins-date">${escapeHtml(r.recordDate || "—")}</td>
     <td class="ins-date">${escapeHtml(r.payDate || "—")}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">시가배당률</th><th class="ins-num">주당배당금</th><th>배당기준일</th><th>지급예정일</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목</th><th class="ins-num">시가배당률</th><th class="ins-num">주당배당금</th><th>배당기준일</th><th>지급예정일</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1226,7 +1226,7 @@ function renderContracts() {
     <td class="ins-date">${escapeHtml(r.date || "")}<div class="ins-sub">${period}</div></td>
   </tr>`;
   }).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>종목 · 계약상대</th><th class="ins-num">매출대비</th><th class="ins-num">계약금액</th><th>공시일 · 기간</th></tr></thead><tbody>${body}</tbody></table>${govContractsSectionHtml()}`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목 · 계약상대</th><th class="ins-num">매출대비</th><th class="ins-num">계약금액</th><th>공시일 · 기간</th></tr></thead><tbody>${body}</tbody></table>${govContractsSectionHtml()}`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1336,7 +1336,7 @@ function renderUsDilution() {
     <td class="ins-num">${r.amount != null ? insiderFmtUsd(r.amount) : "—"}</td>
     <td><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>제출일</th><th>종목</th><th>서류</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>제출일</th><th>종목</th><th>서류</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 
@@ -1387,7 +1387,7 @@ function renderDilution() {
     <td class="ins-num">${krMoneyEok(r.amount)}</td>
     <td class="ins-num">${r.convPrice != null ? `₩${Number(r.convPrice).toLocaleString()}` : "—"}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">희석률</th><th class="ins-num">발행금액</th><th class="ins-num">전환·행사가</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">희석률</th><th class="ins-num">발행금액</th><th class="ins-num">전환·행사가</th></tr></thead><tbody>${body}</tbody></table>`;
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
 

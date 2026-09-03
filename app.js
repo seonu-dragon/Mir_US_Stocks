@@ -2586,7 +2586,7 @@ function renderCalendar(events) {
     <div class="cal-day">
       <h3>${escapeHtml(calendarDayLabel(g.key, g.rows))}</h3>
       <div class="table-wrap">
-        <table class="cal-table">
+        <table class="cal-table table-wide">
           <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th>실제</th><th>예측</th><th>이전</th></tr></thead>
           <tbody>
             ${g.rows.map((e) => `
@@ -9903,7 +9903,7 @@ function renderInstitutional13f() {
     </div>
     ${quarterTabs}
     <div class="table-wrap">
-      <table class="inst-holdings-table">
+      <table class="inst-holdings-table table-wide">
         <thead>
           <tr>
             <th>#</th>
@@ -10052,7 +10052,7 @@ function renderCongressTrades() {
         <p class="congress-section-note">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>
       </div>
       <div class="table-wrap">
-        <table class="congress-rank-table">
+        <table class="congress-rank-table table-wide">
           <thead>
             <tr><th>#</th><th>의원</th><th>의회</th><th>정당</th><th>추정 수익률</th><th>매수</th><th>매도</th></tr>
           </thead>
@@ -10697,7 +10697,7 @@ function marketTableHtml(title, rows) {
     <div class="market-section">
       <h3>${escapeHtml(title)}</h3>
       <div class="table-wrap">
-        <table class="market-table">
+        <table class="market-table table-wide">
           <thead>
             <tr>
               <th>이름</th><th>티커</th><th>현재가</th><th>당일</th>
@@ -10751,7 +10751,7 @@ function loadCurrencies() {
       }
       wrap.innerHTML = `
         <div class="table-wrap">
-          <table class="market-table">
+          <table class="market-table table-wide">
             <thead><tr><th>통화쌍</th><th>현재가</th><th>당일</th><th>1개월</th></tr></thead>
             <tbody>
               ${fx.map((f) => {
@@ -12703,7 +12703,7 @@ function renderKrDisclosures() {
     return;
   }
   table.innerHTML = `
-    <table class="insider-table">
+    <table class="insider-table table-wide">
       <thead><tr><th>일자</th><th>종목</th><th>회사</th><th>유형</th><th>제목</th></tr></thead>
       <tbody>
         ${rows.slice(0, 200).map((row) => `
@@ -12796,7 +12796,7 @@ function renderKrOwnProfile() {
     </tr>`).join("");
 
   table.innerHTML = `
-    <table class="insider-table">
+    <table class="insider-table table-wide">
       <thead><tr>
         <th>종목</th><th>회사</th><th>최대주주</th><th>지분율</th>
         <th>유통물량</th><th>자기주식</th><th>소액주주 수</th>
@@ -12870,7 +12870,7 @@ function renderKrOwnership() {
         </tr>`;
   }).join("");
 
-  table.innerHTML = `<table class="insider-table"><thead>${head}</thead><tbody>${body}</tbody></table>`;
+  table.innerHTML = `<table class="insider-table table-wide"><thead>${head}</thead><tbody>${body}</tbody></table>`;
   table.querySelectorAll(".ins-ticker").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });

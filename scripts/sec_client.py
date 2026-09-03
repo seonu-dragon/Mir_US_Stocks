@@ -171,15 +171,69 @@ def et_today():
     return datetime.now(ET_TZ).date()
 
 
-def write_data(out_json, out_js, js_var, payload, *, indent=2):
+SKIP_ROW_KEYS = frozenset({
+    "note", "source", "policy", "detailPolicy", "updatedAtKst", "generatedAtKst",
+    "generated", "updatedAt", "asOf", "count",
+})
+
+
+def payload_row_count(payload):
+    """페이로드가 담고 있는 '건수'. 셀 수 없으면 None.
+
+    count 키가 있으면 그것을, 없으면 최상위 list/dict 값 중 가장 큰 길이를 쓴다.
+    빌더마다 rows/ipos/events/stocks... 로 키 이름이 달라 이 방식이 가장 안전하다.
+    """
+    if not isinstance(payload, dict):
+        return None
+    count = payload.get("count")
+    if isinstance(count, int) and not isinstance(count, bool):
+        return count
+    best = None
+    for key, value in payload.items():
+        if key in SKIP_ROW_KEYS or not isinstance(value, (list, dict)):
+            continue
+        best = len(value) if best is None else max(best, len(value))
+    return best
+
+
+def assert_not_emptying(out_json, payload):
+    """수집 0건인 페이로드로 **내용이 있던** 파일을 덮으려 하면 비정상 종료한다.
+
+    소스가 죽은 날 빈 파일을 발행하면 사이트에서 그 기능이 통째로 사라지고, 워크플로우는
+    continue-on-error 라 초록으로 끝나 아무도 모른다. 기존 파일이 없거나 원래 0건이면
+    (정상적으로 비어 있는 데이터셋) 막지 않는다 — 좋은 → 빈 회귀만 잡는다.
+    """
+    fresh = payload_row_count(payload)
+    if fresh is None or fresh > 0:
+        return
+    path = Path(out_json)
+    if not path.exists():
+        return
+    try:
+        prev = payload_row_count(json.loads(path.read_text(encoding="utf-8")))
+    except Exception:
+        return
+    if prev and prev > 0:
+        raise SystemExit(
+            f"[중단] {path.name}: 이번 실행 0건인데 기존 파일은 {prev}건 — "
+            "빈 파일로 덮지 않는다. 소스를 확인할 것"
+            "(정상적으로 비는 데이터면 allow_empty=True 로 명시)."
+        )
+
+
+def write_data(out_json, out_js, js_var, payload, *, indent=2, allow_empty=False):
     """.json(빌더 상태) + .js(브라우저 전역) 쌍을 원자적으로 쓴다.
 
     indent=None 이면 .json 도 compact 로 쓴다 — KR DART 계열처럼 수 MB 짜리는
     pretty 로 부풀리지 않는다. .js 는 항상 compact.
+
+    allow_empty=False(기본)이면 0건 페이로드로 기존 비어 있지 않은 파일을 덮지 않는다.
     """
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     from briefing_store import atomic_write_text
+    if not allow_empty:
+        assert_not_emptying(out_json, payload)
     if indent is None:
         json_text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     else:

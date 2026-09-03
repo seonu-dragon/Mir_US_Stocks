@@ -1967,6 +1967,27 @@ def fetch_fundamentals_backfill(symbol, price_hint=None, market_cap_b=None, min_
     return merged
 
 
+CHART_UNAVAILABLE_NOT_TARGETED = (
+    "실측 일봉 수집 대상(시총 상위·ETF·최근 공시·백필 쿼터) 밖이라 아직 야후 일봉을 "
+    "받은 적이 없다. 소스가 없는 게 아니라 우리가 아직 안 받은 것이다."
+)
+CHART_UNAVAILABLE_FETCH_FAILED = (
+    "이번 실행에서 야후 일봉 수집에 실패했고 재사용할 직전 실측 이력도 없다. "
+    "합성 시계열은 차트로 발행하지 않는다."
+)
+
+
+def history_unavailable_reason(meta):
+    """chartSeries 를 비워 발행할 때 그 사유를 한 줄로 남긴다.
+
+    UI 가 빈 분석 화면을 그리는 대신 이유를 말할 수 있게 하고, 감시(freshness gate)가
+    '차트 없는 종목 비율' 을 셀 수 있게 한다.
+    """
+    if meta.get("preferHistory"):
+        return CHART_UNAVAILABLE_FETCH_FAILED
+    return CHART_UNAVAILABLE_NOT_TARGETED
+
+
 def make_stock(meta, rows):
     closes = [row["close"] for row in rows]
     volumes = [row["volume"] for row in rows]
@@ -2021,7 +2042,16 @@ def make_stock(meta, rows):
         stock["epsNextY"] = round(float(eps_next), 2)
     if meta.get("etfCategory"):
         stock["etfCategory"] = meta["etfCategory"]
-    if meta.get("preferHistory"):
+    # chartSeries 는 **실측 이력일 때만** 발행한다. 예전엔 preferHistory 로 갈랐는데
+    # 그 조건은 두 방향으로 다 틀렸다(2026-09-03 수정):
+    #  (1) preferHistory 에서 하루라도 빠지면, 캐시로 되살린 실측 rows 가 있어도
+    #      chartSeries 를 안 써서 다음 실행의 load_cached_history 가 빈손이 되고
+    #      historySource 가 yahoo-cache → snapshot 으로 영구 강등됐다. KR 국내
+    #      3,774 종목 중 1,322 개(35%)가 이렇게 차트를 잃었다.
+    #  (2) 반대로 preferHistory 인데 fetch 도 캐시도 실패한 종목은 합성 랜덤워크
+    #      OHLC 를 차트로 발행하고 있었다(KR 기준 390 종목). "지어낸 수치를
+    #      발행하지 않는다" 에 정면으로 어긋난다 — rsi14 와 같은 기준으로 맞춘다.
+    if history_source in REAL_HISTORY_SOURCES:
         history_rows = rows[-1260:]
         stock["chartSeries"] = [
             [
@@ -2038,6 +2068,11 @@ def make_stock(meta, rows):
         # 통계 빌더·analysis.js 가 '배당 포함 총수익' 전방 수익률에 쓴다.
         if meta.get("dividends"):
             stock["dividends"] = meta["dividends"]
+    else:
+        # 없는 데이터는 기능을 끈다 — 빈 배열 + 사유를 명시해 UI 가 "데이터 부족" 대신
+        # 이유를 말할 수 있게 하고, 정직성 게이트가 셀 수 있게 한다.
+        stock["chartSeries"] = []
+        stock["chartUnavailableReason"] = history_unavailable_reason(meta)
     if fundamentals:
         stock["fundamentals"] = fundamentals
     if meta.get("news"):
@@ -2522,10 +2557,16 @@ def history_honesty_counts(stocks, prefer_tickers, prev_stocks):
             if item.get("historySource") in REAL_HISTORY_SOURCES
         ),
         "cached_count": sum(1 for item in stocks if item.get("historySource") == "yahoo-cache"),
+        # 합성 잔존 = 실측이 아닌데도 **내용이 있는** chartSeries 를 발행한 종목.
+        # 빈 배열(chartSeries: [] + chartUnavailableReason)은 "없다고 밝힌 것"이므로
+        # 지어낸 수치가 아니다 — 여기에 세면 안 된다.
         "fabricated": sum(
             1 for item in stocks
-            if "chartSeries" in item and item.get("historySource") not in REAL_HISTORY_SOURCES
+            if item.get("chartSeries") and item.get("historySource") not in REAL_HISTORY_SOURCES
         ),
+        # 차트가 없는 종목 수(사유를 밝힌 쪽). 신선도 감시가 비율로 본다.
+        "no_chart": sum(1 for item in stocks if not item.get("chartSeries")),
+        "total": len(stocks),
     }
 
 
@@ -2536,7 +2577,8 @@ def enforce_history_honesty_gate(stocks, prefer_tickers, prev_stocks):
         f"[이력] preferHistory {counts['prefer_total']} · "
         f"실측 {counts['fresh_real']}"
         f"(직전 동일대상 {counts['prev_in_scope']}, 전체 {counts['prev_real_all']}) · "
-        f"실측 재사용 {counts['cached_count']} · 합성 잔존 {counts['fabricated']}"
+        f"실측 재사용 {counts['cached_count']} · 합성 잔존 {counts['fabricated']} · "
+        f"차트 없음 {counts['no_chart']}/{counts['total']}"
     )
     prev_in_scope = counts["prev_in_scope"]
     fresh_real = counts["fresh_real"]
@@ -2941,15 +2983,26 @@ def attach_us_financials_history(payload):
     print(f"[US재무] {n}종목에 financialsHistory 부착.")
 
 
+DETAIL_KEYS = [
+    "chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory",
+]
+# 값이 비어도 그대로 옮겨야 하는 메타 키(사유 표기). 이것만으로는 detail 파일을 만들지 않는다.
+DETAIL_META_KEYS = ["chartUnavailableReason"]
+
+
 def split_snapshot_details(payload):
     details = {}
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
+        for key in DETAIL_KEYS:
             if key in stock:
                 detail[key] = stock[key]
-        if detail:
+        # chartSeries 가 빈 배열뿐이면 detail 파일을 새로 만들지 않는다(배포 용량).
+        if any(detail.get(key) for key in DETAIL_KEYS):
+            for key in DETAIL_META_KEYS:
+                if key in stock:
+                    detail[key] = stock[key]
             detail.update({
                 "ticker": stock["ticker"],
                 "company": stock["company"],
@@ -2960,7 +3013,7 @@ def split_snapshot_details(payload):
             key: value
             for key, value in stock.items()
             # 상세로 분리하는 무거운 키 + 혹시 남은 임시 _* 키(안전망)
-            if key not in {"chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"}
+            if key not in set(DETAIL_KEYS) | set(DETAIL_META_KEYS)
             and not key.startswith("_")
         })
     light_payload = dict(payload)

@@ -1,0 +1,68 @@
+name: CI
+
+# PR 마다 도는 최소 검사. 데이터를 커밋하지 않으므로 deploy-pages.yml 의 트리거
+# 목록에 넣지 않는다(scripts/check_deploy_triggers.py 의 NOT_DATA_WORKFLOWS 참조).
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt pytest pyyaml
+
+      # 워크플로우 name: 이 deploy-pages.yml 의 workflow_run 참조·app.js 안내와 맞는지.
+      # 어긋나면 데이터가 레포에만 쌓이고 사이트는 멈춘다(2026-07-17 실제 사고).
+      - name: Workflow trigger names
+        run: python scripts/check_deploy_triggers.py
+
+      # ?v= 캐시버스터·MIR_BUILD_ID·sw.js 폴백이 자산 내용 해시와 맞는지.
+      # 체크아웃 EOL(CRLF/LF) 정규화 수정이 별도 PR 로 들어오기 전엔 리눅스 러너에서
+      # 해시가 어긋날 수 있어 당분간 경고만 — 그 PR 이 머지되면 continue-on-error 를 지울 것.
+      - name: Build id stamps (?v= / MIR_BUILD_ID / sw.js)
+        continue-on-error: true
+        run: python scripts/stamp_build_id.py --check
+
+      - name: Global name collisions (if the checker exists)
+        run: |
+          if [ -f scripts/check_global_name_collisions.py ]; then
+            python scripts/check_global_name_collisions.py
+          else
+            echo "scripts/check_global_name_collisions.py 없음 — 건너뜀"
+          fi
+
+      - name: JS syntax (root *.js + worker)
+        run: |
+          set -e
+          for f in *.js worker/*.js; do node --check "$f"; done
+
+      - name: Workflow YAML parses
+        run: python -c "import yaml,glob;[yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"
+
+      - name: Python byte-compile (scripts/)
+        run: python -m compileall -q scripts
+
+      - name: pytest
+        run: python -m pytest -q scripts/test_history_honesty_gate.py scripts/test_git_publish.py

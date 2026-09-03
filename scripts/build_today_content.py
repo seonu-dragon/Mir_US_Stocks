@@ -37,11 +37,17 @@ import shutil
 import stat
 import tempfile
 import time
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from briefing_store import apply_briefing_fragments, repository_publish_lock
+
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글·U+2014 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parents[1]            # Mir_US_Stocks/
 AI_ROOT = ROOT.parent                                  # AI/

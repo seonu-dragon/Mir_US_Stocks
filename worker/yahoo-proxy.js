@@ -160,6 +160,10 @@ const GEMINI_DEFAULT_MODEL = "gemini-1.5-flash";
 // Gemini 는 응답 생성 후 헤더를 보내는 경우가 있어 기본 8초보다 길게 잡는다.
 const GEMINI_TIMEOUT_MS = 25000;
 
+// 런타임이 보는 진입점은 default export 하나다. 아래 named export 들
+// (handleFetch·llmOriginAllowed·CommunityStore 등)은 worker/test_worker.mjs 가
+// 네트워크 없이 부르기 위한 것이고, Workers 모듈 포맷에서 무시된다.
+// (CommunityStore 만은 예외 — DO 클래스는 반드시 named export 여야 한다.)
 export default {
   async fetch(request, env) {
     // 최상위 try/catch: 내부 예외가 CORS 헤더 없는 500 으로 나가면 브라우저에선
@@ -174,7 +178,7 @@ export default {
   },
 };
 
-async function handleFetch(request, env) {
+export async function handleFetch(request, env) {
     if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
 
     const url = new URL(request.url);

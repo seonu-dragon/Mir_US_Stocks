@@ -869,25 +869,32 @@ function setupChartCompareControls() {
   const add = byId("chartCompareAdd");
   if (!input || !add) return;
   add.addEventListener("click", () => addChartCompareTicker(input.value));
-  input.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      addChartCompareTicker(input.value);
-    }
-  });
+  // 비교 입력도 다른 티커 입력 상자와 같은 자동완성·같은 리졸버·같은 키보드 모델을 쓴다.
+  // 예전엔 여기만 자동완성이 없고 toUpperCase() 만 해서 '삼전' 같은 한국어 별칭이
+  // 조용히 무시됐다.
+  setupTickerAutocomplete("chartCompareInput", { onCommit: (ticker) => addChartCompareTicker(ticker) });
   renderCompareChips();
 }
 
 function addChartCompareTicker(raw) {
-  const ticker = String(raw || "").trim().toUpperCase();
-  if (!ticker || ticker === selectedTicker || compareTickers.includes(ticker)) return;
+  const input = byId("chartCompareInput");
+  const { query, ticker, hits } = resolveTickerEntry(raw);
+  if (!query) return;
+  if (!ticker) {
+    notifyAmbiguousTicker(query, hits);
+    if (input) input.value = "";
+    return;
+  }
+  if (ticker === selectedTicker || compareTickers.includes(ticker)) {
+    if (input) input.value = "";
+    return;
+  }
   if (!stockByTicker(ticker)) {
-    const input = byId("chartCompareInput");
+    notifyAmbiguousTicker(query, hits);
     if (input) input.value = "";
     return;
   }
   compareTickers = compareTickers.concat(ticker).slice(-5);
-  const input = byId("chartCompareInput");
   if (input) input.value = "";
   loadStockDetail(ticker).finally(() => {
     renderCompareChips();

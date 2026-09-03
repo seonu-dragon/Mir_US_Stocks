@@ -35,20 +35,30 @@ const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 // LLM 을 태우는 경로 — /chat, move_analysis, 그리고 ?ticker= 응답의 한국어
 // 요약(summary) 단계 — 는 뉴런·Gemini 쿼터를 소모하므로 아무 사이트에서나 못
 // 부르게 Origin 을 제한하고 IP 리밋을 건다. ?ticker= 의 뉴스·차트·실적 자체와
-// 나머지 데이터 프록시는 계속 개방(*)이다. 요약은 종목·날짜 단위로 KV 에 1시간
-// 캐시되므로 캐시 히트는 게이트를 타지 않는다.
-// Origin 이 아예 없는 요청(비브라우저)은 통과시키되 IP 리밋으로만 제한 —
-// 로컬 캡처 스크립트(chart_capture)와 스모크 테스트가 이 경로를 쓴다.
+// 나머지 데이터 프록시(fx·fng·indices·calendar 등)는 계속 개방(*)이다.
+//
+// Origin 이 없는 요청은 **거부**한다. 예전엔 "로컬 캡처 스크립트와 스모크
+// 테스트가 이 경로를 쓴다" 는 이유로 통과시켰는데 사실이 아니었다 —
+// chart_capture.js 는 로컬 detailPath(...) 만 읽고 워커를 부르지 않고,
+// smoke_ui.py 는 http://127.0.0.1:<port> 로 서빙된 페이지를 브라우저로 몰아서
+// Origin 이 반드시 붙는다. 그 결과 Origin 없는 curl 한 줄이면 캐시에 없는
+// 티커마다 LLM 이 새로 돌았다(2026-09-03 라이브 확인).
+//
+// 로컬 개발·스모크는 포트가 매번 달라지므로(8099/8101/8103/8106…) 고정 목록
+// 대신 정규식으로 localhost / 127.0.0.1 의 모든 포트를 받는다.
+// Origin: null (file:// 로 연 페이지, 샌드박스 iframe)은 받지 않는다 —
+// 레포에서 file:// 로 워커를 부르는 경로를 찾지 못했고(scratch 테스트는
+// index.html 만 연다), null 은 누구나 위조할 수 있는 값이다.
 const LLM_ALLOWED_ORIGINS = new Set([
   "https://seonu-dragon.github.io",
-  "http://localhost:8080", "http://localhost:8090", "http://localhost:8888", "http://localhost:8099",
-  "http://127.0.0.1:8080", "http://127.0.0.1:8090", "http://127.0.0.1:8888", "http://127.0.0.1:8099",
 ]);
+const LLM_LOCAL_ORIGIN_RE = /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d{1,5})?$/;
 
-function llmOriginAllowed(request) {
-  const origin = request.headers.get("Origin") || "";
-  if (!origin) return true;
-  return LLM_ALLOWED_ORIGINS.has(origin);
+export function llmOriginAllowed(request) {
+  const origin = (request && request.headers && request.headers.get("Origin")) || "";
+  if (!origin) return false;
+  if (LLM_ALLOWED_ORIGINS.has(origin)) return true;
+  return LLM_LOCAL_ORIGIN_RE.test(origin);
 }
 
 // KV 고정창 카운터 기반의 소프트 IP 리밋. KV 는 엣지 간 최종 일관성이라
@@ -115,6 +125,16 @@ async function communityAdminOk(env, request, fallbackKey) {
   const supplied = (request && request.headers && request.headers.get("X-Admin-Key")) || fallbackKey || "";
   if (!supplied) return false;
   return timingSafeEqual(String(supplied), String(adminKey));
+}
+
+// ?model= 은 A/B 용인데 아무나 넘길 수 있으면 임의 모델(대형·유료)로 뉴런을
+// 태우는 경로가 된다. 관리자 키(X-Admin-Key, 구형 ?adminKey= 폴백)가 있을 때만
+// 존중하고, 그 외에는 빈 문자열 = 기본 모델이다.
+export async function resolveModelOverride(env, request, url) {
+  const raw = String(url.searchParams.get("model") || "").slice(0, 120);
+  if (!raw) return "";
+  const isAdmin = await communityAdminOk(env, request, url.searchParams.get("adminKey"));
+  return isAdmin ? raw : "";
 }
 
 // earnings_calendar 배치는 티커마다 야후 quoteSummary 를 부른다(20개 = 20회).
@@ -252,10 +272,7 @@ async function handleFetch(request, env) {
     // dashes (BRK.B -> BRK-B).
     const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
     const kr = isKoreanTicker(ticker);
-    // ?model= 은 A/B 용인데 아무나 넘길 수 있으면 임의 모델(대형·유료)로 뉴런을
-    // 태우는 경로가 된다. 관리자 키가 있을 때만 존중한다.
-    const isAdmin = await communityAdminOk(env, request, url.searchParams.get("adminKey"));
-    const modelOverride = isAdmin ? String(url.searchParams.get("model") || "").slice(0, 120) : "";
+    const modelOverride = await resolveModelOverride(env, request, url);
 
     // Price-event analysis is intentionally opt-in: the static site calls this
     // only after the visitor clicks "원인 분석" on a recent price event.
@@ -272,13 +289,15 @@ async function handleFetch(request, env) {
         : 0;
       const promptHash = (await sha256Hex(`${eventChange}|${modelOverride}`)).slice(0, 12);
       const cacheKey = `move:v4:${ticker}:${eventDate}:${promptHash}`;
+      // 게이트는 캐시 읽기보다 **앞**이다. 예전엔 캐시 히트를 무제한 공개했는데,
+      // 허용되지 않은 호출자에게 결과를 주는 경로 자체를 남길 이유가 없다
+      // (LLM 비용은 어차피 캐시 미스에서만 난다).
+      const originOk = llmOriginAllowed(request);
+      if (!originOk) return cors(json({ error: "forbidden_origin" }, 403, 0));
       if (env && env.MOVE_CACHE) {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
         if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
       }
-      // 캐시 미스일 때만 LLM 이 돌므로 여기서 게이트한다(캐시 히트는 무제한).
-      const originOk = llmOriginAllowed(request);
-      if (!originOk) return cors(json({ error: "forbidden_origin" }, 403, 0));
       if (await ipRateLimited(request, env, "move", 6, 60)) {
         return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
       }
@@ -342,9 +361,13 @@ async function handleFetch(request, env) {
 
 // ?ticker= 의 한국어 요약. 예전엔 요청마다 70B 모델을 돌렸고 Origin·IP 제한도
 // 캐시도 없었다 — 아무 스크립트나 루프를 돌리면 뉴런 예산이 그대로 새는 경로였다.
-// 종목·날짜(UTC) 키로 KV 에 1시간 캐시하고, 캐시 미스일 때만 게이트를 지나 LLM 을 부른다.
-// 게이트에 걸리면 뉴스·차트는 그대로 주고 summary 만 비운다.
-async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverride) {
+// 종목·날짜(UTC) 키로 KV 에 1시간 캐시한다. 게이트는 캐시 읽기 앞에 있어
+// 캐시 히트도 허용 Origin 에서만 나간다. 게이트에 걸리면 뉴스·차트는 그대로 주고
+// summary 만 비운다.
+export async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverride) {
+  // 게이트가 캐시 읽기보다 앞이다 — 캐시 히트라도 허용되지 않은 Origin 에는
+  // 요약을 주지 않는다(뉴스·차트는 그대로 나간다).
+  if (!llmOriginAllowed(request)) return { text: "", error: "forbidden_origin" };
   if (!news || !news.length) return { text: "", error: "no_news" };
   const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
   const day = new Date().toISOString().slice(0, 10);
@@ -356,7 +379,6 @@ async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverri
       if (cached && cached.text) return { text: cached.text, error: "", model: cached.model || "", cached: true };
     } catch (_) { /* KV 장애는 캐시 미스로 취급 */ }
   }
-  if (!llmOriginAllowed(request)) return { text: "", error: "forbidden_origin" };
   if (await ipRateLimited(request, env, "summary", 10, 60)) return { text: "", error: "rate_limited" };
   const result = await summarizeKorean(env, ticker, news, modelOverride || null, isKr);
   if (result.text && kv && !modelOverride) {

@@ -3,8 +3,22 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
+// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
+// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
+if (!window.safeStorage) {
+  window.safeStorage = {
+    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
+    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
+    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
+    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
+    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
+  };
+}
+
 // ===== 가상 포트폴리오 시뮬레이터 (#24) =====
-const PORTFOLIO_KEY = "mir_portfolio_v1";
+// 포지션은 시장별 키(mir_portfolio_v1:us / :kr)에 나눠 저장한다. 한 키에 섞어 두면
+// 반대 시장 티커가 스냅샷에 없어 $0·-100% 행이 생기고 KRW 원가가 USD 합계에 더해졌다.
+const PORTFOLIO_KEY_LEGACY = "mir_portfolio_v1";
 const DIVIDEND_PLAN_KEY = "mir_dividend_plan_v1";
 const INVESTMENT_JOURNAL_KEY = "mir_investment_journal_v1";
 const REBALANCE_TARGET_KEY = "mir_rebalance_targets_v1";
@@ -22,34 +36,97 @@ let portfolioEntryFx = {};
 let benchmarkAttributionRequest = 0;
 const PIE_COLORS = ["#3b82f6", "#22c55e", "#f59e0b", "#ef4444", "#a855f7", "#06b6d4", "#ec4899", "#84cc16", "#f97316", "#64748b", "#14b8a6", "#eab308"];
 
-function loadPortfolio() {
-  try {
-    const saved = JSON.parse(localStorage.getItem(PORTFOLIO_KEY));
-    portfolio = Array.isArray(saved) ? saved.filter((p) => p && p.ticker) : [];
-  } catch (e) { portfolio = []; }
+function portfolioStorageKey(marketId) {
+  const id = marketId || (isKrMarket() ? "kr" : "us");
+  return `${PORTFOLIO_KEY_LEGACY}:${id === "kr" ? "kr" : "us"}`;
 }
+
+function portfolioMarketOf(ticker) {
+  return /^\d{6}$/.test(String(ticker || "").replace(/\.(KS|KQ)$/i, "")) ? "kr" : "us";
+}
+
+function storedPortfolio(marketId) {
+  const list = window.safeStorage.getJSON(portfolioStorageKey(marketId), []);
+  return Array.isArray(list) ? list.filter((p) => p && p.ticker) : [];
+}
+
+// 옛 단일 키(mir_portfolio_v1)에 US·KR 포지션이 섞여 있던 것을 시장별 키로 한 번만 나눈다.
+// 6자리 숫자 티커는 KR, 나머지는 US. 새 키가 이미 있으면 덮지 않는다.
+function migrateLegacyPortfolio() {
+  const legacy = window.safeStorage.getJSON(PORTFOLIO_KEY_LEGACY, null);
+  if (!Array.isArray(legacy)) return;
+  const split = { us: [], kr: [] };
+  legacy.filter((p) => p && p.ticker).forEach((p) => split[portfolioMarketOf(p.ticker)].push(p));
+  ["us", "kr"].forEach((id) => {
+    if (Array.isArray(window.safeStorage.getJSON(portfolioStorageKey(id), null))) return;
+    window.safeStorage.setJSON(portfolioStorageKey(id), split[id]);
+  });
+  window.safeStorage.remove(PORTFOLIO_KEY_LEGACY);
+}
+
+function loadPortfolio() {
+  migrateLegacyPortfolio();
+  portfolio = storedPortfolio();
+}
+
 function savePortfolio() {
-  try { localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(portfolio)); } catch (e) { /* ignore */ }
+  const cur = isKrMarket() ? "kr" : "us";
+  const other = cur === "kr" ? "us" : "kr";
+  // 클라우드 pull(app.js pullCloudSync)이 두 시장이 섞인 목록을 `portfolio` 에 통째로 넣을 수
+  // 있다. 반대 시장 포지션은 그쪽 키에 병합(티커 기준 upsert)하고 현재 목록에서는 뺀다.
+  const list = Array.isArray(portfolio) ? portfolio.filter((p) => p && p.ticker) : [];
+  const mine = list.filter((p) => portfolioMarketOf(p.ticker) === cur);
+  const foreign = list.filter((p) => portfolioMarketOf(p.ticker) !== cur);
+  if (foreign.length) {
+    const merged = storedPortfolio(other);
+    foreign.forEach((p) => {
+      const i = merged.findIndex((x) => x.ticker === p.ticker);
+      if (i >= 0) merged[i] = p; else merged.push(p);
+    });
+    window.safeStorage.setJSON(portfolioStorageKey(other), merged);
+  }
+  // 반대 시장 포지션만 들어온 경우(구형 클라이언트가 그쪽 시장에서 push 한 payload)엔
+  // 현재 시장 목록을 비우지 않는다. 사용자가 비운 경우(둘 다 0건)는 그대로 반영.
+  if (mine.length || !foreign.length) {
+    portfolio = mine;
+    window.safeStorage.setJSON(portfolioStorageKey(cur), mine);
+  } else {
+    portfolio = storedPortfolio(cur);
+  }
   scheduleCloudSyncPush();
 }
 
+// 클라우드 동기화 payload — 두 시장을 합친 평면 목록(기존 `portfolio` 와 같은 shape).
+// app.js cloudSyncPayload() 가 `portfolio` 대신 이것을 실어야 KR 에서 push 해도 US 목록이
+// 서버에서 지워지지 않는다.
+function portfolioCloudPayload() {
+  return [...storedPortfolio("us"), ...storedPortfolio("kr")].slice(0, 120);
+}
+
+// 클라우드에서 받은 평면 목록을 두 시장 키에 나눠 넣고 현재 시장 목록을 다시 읽는다.
+// app.js pullCloudSync() 의 `portfolio = prefs.portfolio...; savePortfolio()` 를 이걸로 바꾼다.
+function applyCloudPortfolio(list) {
+  if (!Array.isArray(list) || !list.length) return;
+  const split = { us: [], kr: [] };
+  list.filter((p) => p && p.ticker).slice(0, 120).forEach((p) => split[portfolioMarketOf(p.ticker)].push(p));
+  ["us", "kr"].forEach((id) => window.safeStorage.setJSON(portfolioStorageKey(id), split[id]));
+  portfolio = storedPortfolio();
+}
+
 function loadPortfolioExtensions() {
-  try { dividendPlan = JSON.parse(localStorage.getItem(DIVIDEND_PLAN_KEY) || "{}") || {}; } catch (_) { dividendPlan = {}; }
-  try {
-    const rows = JSON.parse(localStorage.getItem(INVESTMENT_JOURNAL_KEY) || "[]");
-    investmentJournal = Array.isArray(rows) ? rows : [];
-  } catch (_) { investmentJournal = []; }
-  try { rebalanceTargets = JSON.parse(localStorage.getItem(REBALANCE_TARGET_KEY) || "{}") || {}; } catch (_) { rebalanceTargets = {}; }
-  try { portfolioDonutMode = localStorage.getItem(PORTFOLIO_DONUT_MODE_KEY) === "stock" ? "stock" : "sector"; } catch (_) { portfolioDonutMode = "sector"; }
-  try {
-    const saved = JSON.parse(localStorage.getItem(STRESS_TEST_KEY) || "{}");
-    stressTestState = { scenario: saved.scenario || "market", overrides: saved.overrides || {} };
-  } catch (_) { stressTestState = { scenario: "market", overrides: {} }; }
-  try { portfolioEntryFx = JSON.parse(localStorage.getItem(PORTFOLIO_FX_KEY) || "{}") || {}; } catch (_) { portfolioEntryFx = {}; }
+  const obj = (key) => { const v = window.safeStorage.getJSON(key, {}); return v && typeof v === "object" && !Array.isArray(v) ? v : {}; };
+  dividendPlan = obj(DIVIDEND_PLAN_KEY);
+  const rows = window.safeStorage.getJSON(INVESTMENT_JOURNAL_KEY, []);
+  investmentJournal = Array.isArray(rows) ? rows : [];
+  rebalanceTargets = obj(REBALANCE_TARGET_KEY);
+  portfolioDonutMode = window.safeStorage.get(PORTFOLIO_DONUT_MODE_KEY) === "stock" ? "stock" : "sector";
+  const stress = obj(STRESS_TEST_KEY);
+  stressTestState = { scenario: stress.scenario || "market", overrides: stress.overrides || {} };
+  portfolioEntryFx = obj(PORTFOLIO_FX_KEY);
 }
 
 function savePortfolioExtension(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch (_) { /* ignore */ }
+  window.safeStorage.setJSON(key, value);
 }
 
 function portfolioDetailRows() {
@@ -386,7 +463,7 @@ function syncPositionTickerPrice() {
   const stock = stockByTicker(ticker);
   if (!stock) return;
   byId("positionTicker").value = ticker;
-  byId("positionEntry").value = Number(stock.price).toFixed(2);
+  byId("positionEntry").value = marketCfg().priceInputValue(stock.price); // KRW 는 정수, USD 는 센트
   renderPositionSizeCalculator(false);
 }
 
@@ -483,19 +560,74 @@ function renderKrwPortfolio() {
   }));
 }
 
-async function renderBenchmarkAttribution() {
+// 벤치마크 셀렉트(#portfolioBenchmark)는 정적 HTML 이 SPY/QQQ/DIA/IWM 고정이라 KR 에서
+// normalizeTickerKey("SPY")→"000SPY" 로 korea/details/000SPY.json 404 를 냈다. 시장별
+// 옵션(market_config backtestBenchmarks)으로 채우고, 스냅샷에 없는 값이면 기본 ETF 로.
+function populatePortfolioBenchmarks() {
+  const sel = byId("portfolioBenchmark");
+  if (!sel) return;
+  const cfg = marketCfg();
+  if (sel.dataset.market === cfg.id) return;
+  const options = (cfg.backtestBenchmarks || []).filter(([t]) => stockByTicker(t));
+  if (!options.length) return; // 스냅샷 준비 전엔 손대지 않는다
+  const prev = sel.value;
+  sel.innerHTML = options.map(([t, label]) => `<option value="${escapeHtml(t)}">${escapeHtml(t)} · ${escapeHtml(label)}</option>`).join("");
+  sel.value = options.some(([t]) => t === prev) ? prev : options[0][0];
+  sel.dataset.market = cfg.id;
+}
+
+function portfolioBenchmarkTicker() {
+  populatePortfolioBenchmarks();
+  const cfg = marketCfg();
+  const raw = String(byId("portfolioBenchmark")?.value || "");
+  const t = raw ? normalizeTickerKey(raw) : "";
+  if (t && stockByTicker(t)) return t;
+  return (cfg.etfBenchmarks || []).find((x) => stockByTicker(x)) || (cfg.etfBenchmarks || [])[0] || "SPY";
+}
+
+// renderPortfolio() 가 부를 때마다 보유종목 전부의 상세 파일을 다시 받았다(도넛 모드
+// 토글·환율 갱신에도). 250ms 디바운스 + (보유목록, 기간, 벤치마크, 스냅샷) 키 캐시.
+let benchmarkAttributionTimer = 0;
+const benchmarkAttributionCache = new Map(); // key → { summary, table, status }
+const BENCHMARK_ATTRIBUTION_CACHE_MAX = 8;
+
+function renderBenchmarkAttribution() {
+  clearTimeout(benchmarkAttributionTimer);
+  benchmarkAttributionTimer = setTimeout(() => { renderBenchmarkAttributionNow(); }, 250);
+}
+
+function paintBenchmarkAttribution(summary, table, status, result) {
+  summary.innerHTML = result.summary;
+  table.innerHTML = result.table;
+  status.textContent = result.status;
+  table.querySelectorAll("[data-benchmark-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.benchmarkTicker, { openSearch: true })));
+}
+
+async function renderBenchmarkAttributionNow() {
   const summary = byId("benchmarkAttributionSummary");
   const table = byId("benchmarkAttributionTable");
   const status = byId("benchmarkAttributionStatus");
   if (!summary || !table || !status) return;
   const positions = portfolioDetailRows();
-  const benchmarkTicker = normalizeTickerKey(byId("portfolioBenchmark")?.value || (isKrMarket() ? "069500" : "SPY"));
+  const benchmarkTicker = portfolioBenchmarkTicker();
   const periodBars = Number(byId("portfolioBenchmarkPeriod")?.value || 63);
   const requestId = ++benchmarkAttributionRequest;
   if (!positions.length) {
     summary.innerHTML = "";
     table.innerHTML = `<p class="muted">보유 종목을 추가하면 벤치마크 대비 성과를 계산할 수 있습니다.</p>`;
     status.textContent = "";
+    return;
+  }
+  const cacheKey = JSON.stringify({
+    m: marketCfg().id,
+    snap: String((data && (data.updatedAtKst || data.updated_at_kst)) || ""),
+    b: benchmarkTicker,
+    p: periodBars,
+    h: positions.map((p) => [p.ticker, Number(p.qty) || 0]),
+  });
+  const cached = benchmarkAttributionCache.get(cacheKey);
+  if (cached) {
+    paintBenchmarkAttribution(summary, table, status, cached);
     return;
   }
   status.textContent = "가격 이력을 불러오는 중입니다.";
@@ -543,16 +675,22 @@ async function renderBenchmarkAttribution() {
     });
     const portfolioReturn = rows.reduce((sum, row) => sum + row.contribution, 0);
     const alpha = portfolioReturn - benchmarkReturn;
-    summary.innerHTML = `
+    const excluded = positions.length - valid.length;
+    const result = {
+      summary: `
       <div><span>포트폴리오</span><strong class="${cls(portfolioReturn)}">${fmtPct(portfolioReturn)}</strong></div>
       <div><span>${escapeHtml(benchmarkTicker)}</span><strong class="${cls(benchmarkReturn)}">${fmtPct(benchmarkReturn)}</strong></div>
       <div><span>초과수익</span><strong class="${cls(alpha)}">${fmtPct(alpha)}</strong></div>
-      <div><span>비교 기간</span><strong>${escapeHtml(startDate)} ~ ${escapeHtml(endDate)}</strong></div>`;
-    table.innerHTML = `<table><thead><tr><th>종목</th><th>현재 비중</th><th>기간 수익률</th><th>수익 기여도</th><th>${escapeHtml(benchmarkTicker)} 대비 기여도</th></tr></thead><tbody>${rows.sort((a, b) => b.alphaContribution - a.alphaContribution).map((row) => `
-      <tr><td><button type="button" class="benchmark-ticker" data-benchmark-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td><td>${row.weightPct.toFixed(1)}%</td><td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td><td class="${cls(row.contribution)}">${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(2)}%p</td><td class="${cls(row.alphaContribution)}"><strong>${row.alphaContribution >= 0 ? "+" : ""}${row.alphaContribution.toFixed(2)}%p</strong></td></tr>`).join("")}</tbody></table>`;
-    table.querySelectorAll("[data-benchmark-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.benchmarkTicker, { openSearch: true })));
-    const excluded = positions.length - valid.length;
-    status.textContent = excluded ? `가격 이력이 부족한 ${excluded}개 종목은 제외했습니다. 현재 비중을 유효 종목에 다시 배분한 근사치입니다.` : "현재 비중을 기간 시작점에 적용한 근사 기여도입니다.";
+      <div><span>비교 기간</span><strong>${escapeHtml(startDate)} ~ ${escapeHtml(endDate)}</strong></div>`,
+      table: `<table><thead><tr><th>종목</th><th>현재 비중</th><th>기간 수익률</th><th>수익 기여도</th><th>${escapeHtml(benchmarkTicker)} 대비 기여도</th></tr></thead><tbody>${rows.sort((a, b) => b.alphaContribution - a.alphaContribution).map((row) => `
+      <tr><td><button type="button" class="benchmark-ticker" data-benchmark-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td><td>${row.weightPct.toFixed(1)}%</td><td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td><td class="${cls(row.contribution)}">${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(2)}%p</td><td class="${cls(row.alphaContribution)}"><strong>${row.alphaContribution >= 0 ? "+" : ""}${row.alphaContribution.toFixed(2)}%p</strong></td></tr>`).join("")}</tbody></table>`,
+      status: excluded ? `가격 이력이 부족한 ${excluded}개 종목은 제외했습니다. 현재 비중을 유효 종목에 다시 배분한 근사치입니다.` : "현재 비중을 기간 시작점에 적용한 근사 기여도입니다.",
+    };
+    benchmarkAttributionCache.set(cacheKey, result);
+    if (benchmarkAttributionCache.size > BENCHMARK_ATTRIBUTION_CACHE_MAX) {
+      benchmarkAttributionCache.delete(benchmarkAttributionCache.keys().next().value);
+    }
+    paintBenchmarkAttribution(summary, table, status, result);
   } catch (_) {
     if (requestId === benchmarkAttributionRequest) status.textContent = "벤치마크 분석 데이터를 불러오지 못했습니다.";
   }
@@ -631,7 +769,7 @@ function renderInvestmentJournal() {
   list.innerHTML = investmentJournal.map((row) => `
     <article class="journal-entry">
       <button type="button" class="journal-ticker" data-journal-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
-      <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? `$${Number(row.entry).toFixed(2)}` : "-"} · 목표 ${row.target ? `$${Number(row.target).toFixed(2)}` : "-"} · 손절 ${row.stop ? `$${Number(row.stop).toFixed(2)}` : "-"}</small></div>
+      <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? marketCfg().formatPrice(row.entry) : "-"} · 목표 ${row.target ? marketCfg().formatPrice(row.target) : "-"} · 손절 ${row.stop ? marketCfg().formatPrice(row.stop) : "-"}</small></div>
       <select data-journal-status="${escapeHtml(row.id)}" aria-label="${escapeHtml(row.ticker)} 기록 상태">${Object.entries(labels).map(([value, label]) => `<option value="${value}"${row.status === value ? " selected" : ""}>${label}</option>`).join("")}</select>
       <button type="button" class="journal-delete" data-journal-delete="${escapeHtml(row.id)}" aria-label="기록 삭제">삭제</button>
     </article>`).join("");
@@ -710,6 +848,8 @@ function renderPortfolio() {
     renderPortfolioXray();
     return;
   }
+  // 현재 스냅샷에 없는 티커(상장폐지·시장 불일치)는 합계에서 뺀다 — 넣으면 $0 행과
+  // -100% 손익이 생기고, 예전엔 KRW 원가가 USD 합계에 더해졌다(portfolioDetailRows 와 동일 규칙).
   const rows = portfolio.map((p) => {
     const stock = stockByTicker(p.ticker);
     const price = stock ? Number(stock.price) : 0;
@@ -718,7 +858,22 @@ function renderPortfolio() {
     const pl = value - cost;
     const plPct = cost > 0 ? (pl / cost) * 100 : 0;
     return { ...p, stock, price, value, cost, pl, plPct, sector: stock?.sector || "기타", changePct: Number(stock?.changePct) || 0 };
-  });
+  }).filter((r) => r.stock);
+  const missing = portfolio.length - rows.length;
+  if (!rows.length) {
+    if (summaryEl) summaryEl.innerHTML = "";
+    tableEl.innerHTML = `<p class="muted">저장된 ${portfolio.length}개 종목이 현재 시장 스냅샷에 없습니다. 티커를 확인하거나 시장을 전환해 보세요.</p>`;
+    if (pieEl) pieEl.innerHTML = "";
+    renderDividendPlanner();
+    renderRebalanceCalculator();
+    renderStressTest();
+    renderPositionSizeCalculator(false);
+    renderKrwPortfolio();
+    renderBenchmarkAttribution();
+    renderInvestmentJournal();
+    renderPortfolioXray();
+    return;
+  }
   const totalValue = rows.reduce((s, r) => s + r.value, 0);
   const totalCost = rows.reduce((s, r) => s + r.cost, 0);
   const totalPL = totalValue - totalCost;
@@ -746,7 +901,7 @@ function renderPortfolio() {
     <td class="ins-num ${cls(r.pl)}">${fmtPct(r.plPct)}</td>
     <td class="ins-num"><button type="button" class="pf-del" data-ticker="${escapeHtml(r.ticker)}" title="삭제">✕</button></td>
   </tr>`).join("");
-  tableEl.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>`;
+  tableEl.innerHTML = `<table class="insider-table"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">현재 스냅샷에 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
   tableEl.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
   tableEl.querySelectorAll(".pf-del").forEach((b) => b.addEventListener("click", () => {
     portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker); savePortfolio(); renderPortfolio();
@@ -777,7 +932,7 @@ function renderPortfolio() {
       ${donutSvg(slices)}<div class="pf-legend">${legend}</div>`;
     pieEl.querySelectorAll("[data-pie-mode]").forEach((button) => button.addEventListener("click", () => {
       portfolioDonutMode = button.dataset.pieMode === "stock" ? "stock" : "sector";
-      try { localStorage.setItem(PORTFOLIO_DONUT_MODE_KEY, portfolioDonutMode); } catch (_) { /* ignore */ }
+      window.safeStorage.set(PORTFOLIO_DONUT_MODE_KEY, portfolioDonutMode);
       renderPortfolio();
     }));
     pieEl.querySelectorAll("[data-pie-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.pieTicker, { openSearch: true })));
@@ -889,16 +1044,11 @@ function signalFor(item) {
 // ===== 포트폴리오 시뮬레이터 (buy-and-hold) =====
 const BACKTEST_MAX_TICKERS = 10;
 let backtestTickers = [];
-const BACKTEST_BENCHMARK_OPTIONS = [
-  ["SPY", "S&P 500"],
-  ["QQQ", "Nasdaq 100"],
-  ["DIA", "다우존스"],
-  ["IWM", "러셀 2000"],
-  ["VTI", "전체 시장"],
-  ["VOO", "S&P 500 (VOO)"],
-  ["XLK", "기술 섹터"],
-  ["SOXX", "반도체"],
-];
+// 벤치마크 옵션은 시장별(market_config backtestBenchmarks). KR 에서 SPY 를 기본으로 두면
+// korea/details/SPY.json 404 였다.
+function backtestBenchmarkOptions() {
+  return marketCfg().backtestBenchmarks || [];
+}
 let backtestRunning = false;
 let backtestDatesProgrammatic = false;
 
@@ -1002,27 +1152,34 @@ function backtestCustomEndDate() {
   return /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
 }
 
-function backtestInvestmentUsd() {
+function backtestInvestmentAmount() {
   const value = Number(byId("backtestInvestment")?.value);
-  return Number.isFinite(value) && value > 0 ? value : 10000;
+  return Number.isFinite(value) && value > 0 ? value : (marketCfg().backtestDefaultInvestment || 10000);
+}
+
+function backtestDefaultBenchmark() {
+  const cfg = marketCfg();
+  const cands = [...backtestBenchmarkOptions().map(([t]) => t), ...(cfg.etfBenchmarks || [])];
+  return cands.find((t) => stockByTicker(t)) || cands[0] || "SPY";
 }
 
 function backtestBenchmarkTicker() {
   const sel = byId("backtestBenchmark");
-  const value = String(sel?.value || "SPY").toUpperCase();
-  return stockByTicker(value) ? value : "SPY";
+  const value = String(sel?.value || "").toUpperCase();
+  return value && stockByTicker(value) ? value : backtestDefaultBenchmark();
 }
 
 function backtestBenchmarkLabel(ticker) {
-  const found = BACKTEST_BENCHMARK_OPTIONS.find(([t]) => t === ticker);
+  const found = backtestBenchmarkOptions().find(([t]) => t === ticker);
   if (found) return found[1];
   const stock = stockByTicker(ticker);
   return stock?.company ? `${ticker} · ${stock.company}` : ticker;
 }
 
-function fmtBacktestUsd(value) {
+// 백테스트 금액은 시장 통화로(정수). 예전엔 KR 에서도 USD 로 찍혔다.
+function fmtBacktestMoney(value) {
   if (!Number.isFinite(value)) return "—";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value);
+  return marketCfg().formatMoneyWhole(value);
 }
 
 function backtestWeightsForTickers(tickers) {
@@ -1185,11 +1342,11 @@ function renderBacktestResults(payload) {
   summary.innerHTML = `
     <article class="backtest-metric"><span>포트폴리오 수익률</span><strong class="${cls(totalReturn)}">${fmtPct(totalReturn)}</strong></article>
     <article class="backtest-metric"><span>연환산</span><strong class="${cls(annReturn)}">${annReturn == null ? "—" : fmtPct(annReturn)}</strong></article>
-    <article class="backtest-metric"><span>투자금</span><strong class="is-money">${fmtBacktestUsd(investment)}</strong></article>
-    <article class="backtest-metric"><span>최종 평가액</span><strong class="is-money ${cls(totalReturn)}">${fmtBacktestUsd(finalValue)}</strong></article>
+    <article class="backtest-metric"><span>투자금</span><strong class="is-money">${fmtBacktestMoney(investment)}</strong></article>
+    <article class="backtest-metric"><span>최종 평가액</span><strong class="is-money ${cls(totalReturn)}">${fmtBacktestMoney(finalValue)}</strong></article>
     <article class="backtest-metric"><span>${escapeHtml(benchmarkTicker)} (${escapeHtml(benchmarkLabel)})</span><strong class="${cls(benchmarkReturn)}">${benchmarkReturn == null ? "—" : fmtPct(benchmarkReturn)}</strong></article>
     <article class="backtest-metric"><span>초과 수익 (α)</span><strong class="${cls(alpha)}">${alpha == null ? "—" : fmtPct(alpha)}</strong></article>
-    <article class="backtest-metric"><span>수익금</span><strong class="is-money ${cls(profit)}">${profit >= 0 ? "+" : ""}${fmtBacktestUsd(profit)}</strong></article>
+    <article class="backtest-metric"><span>수익금</span><strong class="is-money ${cls(profit)}">${profit >= 0 ? "+" : ""}${fmtBacktestMoney(profit)}</strong></article>
   `;
   const warnHtml = warnings.length
     ? `<p class="backtest-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>`
@@ -1216,8 +1373,8 @@ function renderBacktestResults(payload) {
           <td>${priceOrDash(row.endPrice)}</td>
           <td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td>
           <td>${row.weightPct.toFixed(1)}%</td>
-          <td>${fmtBacktestUsd(row.invested)}</td>
-          <td class="${cls(row.returnPct)}">${fmtBacktestUsd(row.finalValue)}</td>
+          <td>${fmtBacktestMoney(row.invested)}</td>
+          <td class="${cls(row.returnPct)}">${fmtBacktestMoney(row.finalValue)}</td>
         </tr>
       `).join("")}
     </tbody>
@@ -1361,7 +1518,7 @@ async function runPortfolioBacktest() {
     return;
   }
   const weights = weightResult.weights;
-  const investment = backtestInvestmentUsd();
+  const investment = backtestInvestmentAmount();
   const benchmarkTicker = backtestBenchmarkTicker();
   const benchmarkLabel = backtestBenchmarkLabel(benchmarkTicker);
   backtestRunning = true;
@@ -1482,14 +1639,25 @@ async function runPortfolioBacktest() {
 function populateBacktestBenchmarks() {
   const sel = byId("backtestBenchmark");
   if (!sel) return;
+  const cfg = marketCfg();
   const fromHealth = data.health?.etfRelative?.benchmarks || [];
-  const merged = [...new Set([...BACKTEST_BENCHMARK_OPTIONS.map(([t]) => t), ...fromHealth])]
+  const merged = [...new Set([...backtestBenchmarkOptions().map(([t]) => t), ...fromHealth])]
     .filter((t) => stockByTicker(t));
   sel.innerHTML = merged.map((ticker) => {
     const label = backtestBenchmarkLabel(ticker);
     return `<option value="${escapeHtml(ticker)}">${escapeHtml(ticker)} · ${escapeHtml(label)}</option>`;
   }).join("");
-  if (!sel.value) sel.value = "SPY";
+  if (!sel.value) sel.value = backtestDefaultBenchmark();
+  // 투자금 입력(정적 HTML 기본 10000)은 시장 전환 시 통화 기본값으로 바꾼다 — 사용자가
+  // 직접 넣은 값(다른 시장 기본값과 다름)은 건드리지 않는다.
+  const inv = byId("backtestInvestment");
+  if (inv && inv.dataset.market !== cfg.id) {
+    const otherDefault = (cfg.id === "kr" ? window.MirMarket?.US : window.MirMarket?.KR)?.backtestDefaultInvestment;
+    if (!inv.value || Number(inv.value) === Number(otherDefault) || Number(inv.value) === 10000) inv.value = String(cfg.backtestDefaultInvestment || 10000);
+    inv.dataset.market = cfg.id;
+  }
+  // 벤치마크 기여도 셀렉트도 같은 시점에 시장별로 다시 채운다.
+  populatePortfolioBenchmarks();
 }
 
 function backtestSnapshotEndDate() {

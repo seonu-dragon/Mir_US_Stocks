@@ -92,6 +92,37 @@ let data = fallbackData;
 let cardNewsBackup = null;
 let usingFallbackSnapshot = false;
 
+// ===== 티커 → 스냅샷 row 인덱스 =====
+// normalizeTickerKey(= marketCfg().formatTicker) 로 정규화한 키. chart-indicators.js 의
+// stockByTicker 가 이 Map 을 먼저 보고(O(1)), 없을 때만 배열을 훑는다. 스냅샷이 바뀌는
+// 곳(loadData·시장 전환·폴백)마다 rebuildStockIndex() 로 다시 채운다.
+window.MirStockIndex = new Map();
+function rebuildStockIndex() {
+  const idx = window.MirStockIndex;
+  idx.clear();
+  (data && Array.isArray(data.stocks) ? data.stocks : []).forEach((row) => {
+    const key = normalizeTickerKey(row && row.ticker);
+    if (key && !idx.has(key)) idx.set(key, row);
+  });
+  // 스냅샷 파생 캐시는 전부 무효화한다.
+  _issuerTickerIndex = null;
+  _issuerResolveCache.clear();
+  _chartItemCache = null;
+  _treemapPeerIndex = null;
+  liveStubs.clear();
+}
+// 스냅샷에 없는 티커를 실시간(워커)으로만 볼 때 쓰는 대체 row. 스냅샷 배열과 섞지 않고
+// 따로 둔다 — 예전엔 못 찾으면 data.stocks[0] 로 조용히 떨어져 엉뚱한 종목이 나왔다.
+const liveStubs = new Map();
+function liveStubFor(ticker) {
+  return liveStubs.get(normalizeTickerKey(ticker)) || null;
+}
+// 선택 종목의 렌더 대상 row(스냅샷 우선, 없으면 실시간 스텁). 없으면 null — 폴백 없음.
+function selectedBaseRow(ticker = selectedTicker) {
+  if (!ticker) return null;
+  return stockByTicker(ticker) || liveStubFor(ticker);
+}
+
 // Tickers with bad/synthetic snapshot data (e.g. pre-IPO placeholders).
 const TICKER_BLOCKLIST = new Set(["SPCX"]);
 
@@ -629,6 +660,12 @@ const FEATURE_DATA = {
   marketHistory: { global: "MARKET_HISTORY", path: "data/history/market_history.js" },
 };
 const _featureDataPromises = {};
+// 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
+// 같은 404 를 반복 요청했다. 시장 전환(resetMarketCaches)이나 수동 재확인 때만 비운다.
+const _featureDataFailed = {};
+function clearFeatureDataFailures() {
+  Object.keys(_featureDataFailed).forEach((k) => delete _featureDataFailed[k]);
+}
 
 function featureDataEnabled(meta, cfg) {
   if (meta.usOnly) return cfg.id === "us";
@@ -645,6 +682,7 @@ function ensureFeatureData(key) {
   if (!meta) return Promise.resolve(false);
   if (window[meta.global]) return Promise.resolve(true);
   if (!featureDataEnabled(meta, marketCfg())) return Promise.resolve(false);
+  if (_featureDataFailed[key]) return Promise.resolve(false);
   if (_featureDataPromises[key]) return _featureDataPromises[key];
 
   let path = meta.path;
@@ -659,7 +697,11 @@ function ensureFeatureData(key) {
     script.async = true;
     script.dataset.featureData = key;
     script.addEventListener("load", () => resolve(!!window[meta.global]), { once: true });
-    script.addEventListener("error", () => { delete _featureDataPromises[key]; resolve(false); }, { once: true });
+    script.addEventListener("error", () => {
+      delete _featureDataPromises[key];
+      _featureDataFailed[key] = { failedAt: Date.now() };
+      resolve(false);
+    }, { once: true });
     document.head.appendChild(script);
   });
   return _featureDataPromises[key];
@@ -717,7 +759,7 @@ function refreshFeatureViews() {
     } else if (searchSubTab === "dilution") {
       calls.push(renderDilution);
     } else if (selectedTicker && data && Array.isArray(data.stocks)) {
-      const base = data.stocks.find((r) => r.ticker === selectedTicker);
+      const base = selectedBaseRow();
       if (base) {
         const item = applyLive(withDetail(base));
         calls.push(
@@ -735,7 +777,7 @@ function refreshFeatureViews() {
   // 패널 렌더보다 늦게 도착해 수급 카드가 간헐적으로 통째로 빠졌다 — 로컬에선 데이터가
   // 빨라 거의 안 보이던 경합이다. 패널이 떠 있으면 다시 그린다.
   if (selectedTicker && data && Array.isArray(data.stocks)) {
-    const base = data.stocks.find((r) => r.ticker === selectedTicker);
+    const base = selectedBaseRow();
     if (base) {
       const item = applyLive(withDetail(base));
       if (byId("selectedStock")) calls.push(() => renderSelected(item));
@@ -818,6 +860,7 @@ async function loadData(options = {}) {
     data = fallbackData;
     usingFallbackSnapshot = true;
   }
+  rebuildStockIndex();
 
   await loadMapFundamentalsScript(cfg);
   loadEarningsCalendarSnapshot(cfg);
@@ -878,11 +921,30 @@ function showFallbackBanner() {
 }
 
 function resetMarketCaches() {
-  Object.keys(detailCache).forEach((k) => delete detailCache[k]);
-  Object.keys(detailPromises).forEach((k) => delete detailPromises[k]);
+  const clearObj = (o) => Object.keys(o).forEach((k) => delete o[k]);
+  clearObj(detailCache);
+  clearObj(detailPromises);
   tickerKoAliasIndex = null;
   tickerKoAliasEntries = null;
   tickerSearchIndex = null;
+  // 종목별 실시간 캐시 — 티커 체계가 다른 시장으로 넘어가면 전부 무효.
+  [liveNewsCache, liveChartCache, liveEarningsCache, liveSummaryCache, liveNewsSourceCache, liveFetched, liveDone].forEach(clearObj);
+  liveStubs.clear();
+  _chartItemCache = null;
+  _inst13fIndex = null;
+  _inst13fIndexSrc = null;
+  _issuerTickerIndex = null;
+  _issuerResolveCache.clear();
+  _treemapPeerIndex = null;
+  earningsCalendarCache = null;
+  trustLoadAttempted.clear();
+  clearFeatureDataFailures();
+  _wsbTried = false;
+  if (FEATURE_DATA.usDilution) FEATURE_DATA.usDilution.tried = false;
+  signalsDirty = true;
+  marketHeader.indices = [];
+  marketHeader.indicesSource = null;
+  if (typeof window.resetDisclosureTrackerCaches === "function") window.resetDisclosureTrackerCaches();
 
   // Clear market-specific feature globals and promises so they reload for the new market!
   Object.keys(FEATURE_DATA).forEach((key) => {
@@ -3702,8 +3764,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   currentTab = name;
   // US 증자·희석 데이터는 종목검색 서브탭에서만 쓰므로 탭 첫 진입 때 한 번만 시도.
   // 파일이 아직 배포 전이면 조용히 실패하고 서브탭이 숨은 채 유지된다.
-  if (name === "search" && !isKrMarket() && !window.US_DILUTION && !_usDilutionLoadTried) {
-    _usDilutionLoadTried = true;
+  if (name === "search" && !isKrMarket() && !window.US_DILUTION && FEATURE_DATA.usDilution && !FEATURE_DATA.usDilution.tried) {
+    FEATURE_DATA.usDilution.tried = true;
     ensureFeatureData("usDilution").then((ok) => { if (ok) applySearchSubVisibility(); });
   }
   if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
@@ -4282,9 +4344,20 @@ function setupEvents() {
 }
 
 // Re-derive the currently shown stock (snapshot + detail + live data).
+// 팬/줌 프레임마다 불리므로 (base row · 상세 · 실시간 캐시) 참조가 그대로면 캐시를 돌려준다.
+// 상세/실시간 데이터는 도착 시 캐시 객체가 교체되므로 참조 비교만으로 자동 무효화된다.
+let _chartItemCache = null;
 function currentChartItem() {
-  const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
-  return applyLive(withDetail(base));
+  const base = selectedBaseRow();
+  if (!base) return null;
+  const t = base.ticker;
+  const detailRef = detailCache[safeTicker(t)] || detailCache[t] || null;
+  const live = [liveChartCache[t], liveNewsCache[t], liveEarningsCache[t], liveSummaryCache[t], liveNewsSourceCache[t]];
+  const c = _chartItemCache;
+  if (c && c.base === base && c.detailRef === detailRef && c.live.every((v, i) => v === live[i])) return c.item;
+  const item = applyLive(withDetail(base));
+  _chartItemCache = { base, detailRef, live, item };
+  return item;
 }
 
 // Redraw only the price chart (no news/facts re-render) — used by zoom/pan/wheel/drag.
@@ -7443,10 +7516,21 @@ function createLiveSearchStub(resolved) {
 }
 
 function selectTicker(ticker, options = {}) {
-  const resolved = normalizeTickerKey(resolveTickerQuery(ticker) || String(ticker || "").trim());
-  let found = data.stocks.find((item) => normalizeTickerKey(item.ticker) === resolved);
-  if (!found) found = createLiveSearchStub(resolved);
-  if (!found) return;
+  const raw = String(ticker || "").trim();
+  const resolved = normalizeTickerKey(resolveTickerQuery(raw) || raw);
+  let found = stockByTicker(resolved) || liveStubFor(resolved);
+  if (!found) {
+    found = createLiveSearchStub(resolved);
+    if (found) liveStubs.set(resolved, found);
+  }
+  if (!found) {
+    // 여러 후보로 갈리는 질의(resolveTickerQuery 가 null) — 첫 후보를 몰래 고르지 않고 알린다.
+    const hits = raw ? searchTickerSuggestions(raw, 4) : [];
+    if (hits.length >= 2 && typeof showAppToast === "function") {
+      showAppToast(`'${raw}' 후보 ${hits.length}개: ${hits.map((h) => h.ticker).join(", ")} — 목록에서 선택하세요`);
+    }
+    return false;
+  }
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
@@ -7462,8 +7546,32 @@ function selectTicker(ticker, options = {}) {
   }
 }
 
+// 스냅샷에도 실시간 스텁에도 없는 티커 — 첫 종목으로 떨어뜨리지 않고 상태를 그대로 보여준다.
+function renderSearchMissing(ticker) {
+  const t = escapeHtml(ticker || "");
+  const title = byId("chartTitle");
+  if (title) title.textContent = `${ticker || "—"} · 스냅샷에 없는 종목`;
+  const facts = byId("searchFacts");
+  if (facts) {
+    facts.innerHTML = `
+      <span class="muted">Search Ticker</span>
+      <h3 class="stock-facts-head">${t}</h3>
+      <p class="muted">스냅샷에 없는 종목입니다. 티커·종목명을 다시 확인하거나 자동완성 목록에서 선택해 주세요.</p>`;
+  }
+  const chart = byId("priceChart");
+  if (chart) chart.innerHTML = "";
+  const news = byId("searchNews");
+  if (news) news.innerHTML = `<span class="muted">주요 뉴스</span><p class="news-empty">스냅샷에 없는 종목이라 뉴스를 불러오지 않습니다.</p>`;
+}
+
+function renderSearchFacts(item) {
+  const el = byId("searchFacts");
+  if (el && item) el.innerHTML = stockFacts(item, "Search Ticker");
+}
+
 function renderSearch(options = {}) {
-  const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
+  const base = selectedBaseRow();
+  if (!base) { renderSearchMissing(selectedTicker); return; }
   const item = applyLive(withDetail(base));
   // 감사의견은 종목 헤더에 경고로 나가므로 여기서 챙긴다. 늦게 와도 목록·차트는
   // 그대로 나오고, 도착하면 헤더만 다시 그린다.
@@ -7776,11 +7884,15 @@ function renderEstimateRevision(item) {
 }
 
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
+// 페이로드 객체 자체를 캐시 키로 쓴다 — INSTITUTIONAL_13F 가 늦게 도착해도(heavy lazy)
+// 빈 {} 를 영영 돌려주지 않는다.
 let _inst13fIndex = null;
+let _inst13fIndexSrc = null;
 function inst13fIndex() {
-  if (_inst13fIndex) return _inst13fIndex;
+  const src = window.INSTITUTIONAL_13F || null;
+  if (_inst13fIndex && _inst13fIndexSrc === src) return _inst13fIndex;
   const idx = {};
-  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
+  const insts = (src || {}).institutions || [];
   for (const inst of insts) {
     for (const h of (inst.holdings || [])) {
       const t = h.ticker;
@@ -7791,6 +7903,7 @@ function inst13fIndex() {
     }
   }
   _inst13fIndex = idx;
+  _inst13fIndexSrc = src;
   return idx;
 }
 
@@ -7953,8 +8066,9 @@ function maybeFetchLiveData(base) {
       if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;
       liveDone[ticker] = true;
       if (selectedTicker !== ticker) return;
-      const refreshedBase = data.stocks.find((row) => row.ticker === ticker) || base;
+      const refreshedBase = stockByTicker(ticker) || base;
       const merged = applyLive(withDetail(refreshedBase));
+      if (base.__liveStub) renderSearchFacts(merged);
       drawChart(merged);
       renderEarningsCalendar(merged);
       renderStockEvents(merged);
@@ -7970,6 +8084,7 @@ function maybeFetchLiveData(base) {
       liveDone[ticker] = true;
       if (selectedTicker === ticker) {
         const merged = applyLive(withDetail(base));
+        if (base.__liveStub) renderSearchFacts(merged);
         renderNews(merged);
         renderMoveExplanation(merged);
         renderInvestmentChecklist(merged);
@@ -8843,7 +8958,9 @@ function buildTickerKoAliasIndex() {
   }
   tickerKoAliasIndex = byKo;
   tickerKoAliasEntries = [];
-  byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers }));
+  byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers, aliasLower: alias.toLowerCase() }));
+  // 긴(구체적인) 별칭이 먼저 — extractStockTickerFromQuery 가 매 호출 정렬하던 것을 여기서 한 번만.
+  tickerKoAliasEntries.sort((a, b) => b.alias.length - a.alias.length);
 }
 
 function buildTickerSearchIndex() {
@@ -9274,16 +9391,44 @@ function normalizeIssuerName(name) {
     .trim();
 }
 
+// 스냅샷당 한 번만 회사명을 정규화해 둔다(13F 행 × 종목 × 키 입력마다 정규화하던 것).
+let _issuerTickerIndex = null;
+const _issuerResolveCache = new Map();
+function issuerTickerIndex() {
+  if (_issuerTickerIndex) return _issuerTickerIndex;
+  const byNorm = new Map();
+  const byFirst = new Map();
+  const entries = [];
+  (data.stocks || []).forEach((stock) => {
+    const norm = normalizeIssuerName(stock.company);
+    if (!norm) return;
+    if (!byNorm.has(norm)) byNorm.set(norm, stock.ticker);
+    const first = norm.split(" ")[0];
+    if (first && !byFirst.has(first)) byFirst.set(first, stock.ticker);
+    entries.push([norm, stock.ticker]);
+  });
+  _issuerTickerIndex = { byNorm, byFirst, entries };
+  return _issuerTickerIndex;
+}
 function resolveIssuerTicker(issuer) {
   const upper = String(issuer || "").toUpperCase().trim();
   if (ISSUER_TICKER_HINTS[upper]) return ISSUER_TICKER_HINTS[upper];
+  if (_issuerResolveCache.has(upper)) return _issuerResolveCache.get(upper);
+  const idx = issuerTickerIndex();
   const norm = normalizeIssuerName(issuer);
-  const byCompany = data.stocks.find((stock) => normalizeIssuerName(stock.company) === norm);
-  if (byCompany) return byCompany.ticker;
-  const first = norm.split(" ")[0];
-  if (!first || first.length < 3) return null;
-  const fuzzy = data.stocks.find((stock) => normalizeIssuerName(stock.company).startsWith(first));
-  return fuzzy?.ticker || null;
+  let out = idx.byNorm.get(norm) || null;
+  if (!out) {
+    const first = norm.split(" ")[0];
+    if (first && first.length >= 3) {
+      out = idx.byFirst.get(first) || null;
+      if (!out) {
+        const hit = idx.entries.find(([n]) => n.startsWith(first));
+        out = hit ? hit[1] : null;
+      }
+    }
+  }
+  _issuerResolveCache.set(upper, out);
+  return out;
 }
 
 function institutional13fData() {
@@ -10209,6 +10354,7 @@ function renderDataTrustCenter() {
     refresh.dataset.bound = "1";
     refresh.addEventListener("click", () => {
       trustLoadAttempted.clear();   // 수동 재확인은 실패했던 로드도 다시 시도한다
+      clearFeatureDataFailures();
       renderDataTrustCenter();
       showAppToast("데이터 상태를 다시 확인했습니다");
     });
@@ -11291,7 +11437,7 @@ function toggleWatchlist(ticker) {
   });
   const facts = byId("searchFacts");
   if (facts && selectedTicker === t) {
-    const base = data.stocks.find((row) => row.ticker === t);
+    const base = selectedBaseRow(t);
     if (base) facts.innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
   }
 }
@@ -12591,9 +12737,8 @@ function extractStockTickerFromQuery(query) {
   
   // 2. Try Korean nickname / alias lookup
   if (tickerKoAliasEntries) {
-    const sorted = [...tickerKoAliasEntries].sort((a, b) => b.alias.length - a.alias.length);
-    for (const entry of sorted) {
-      if (text.includes(entry.alias.toLowerCase())) {
+    for (const entry of tickerKoAliasEntries) {
+      if (text.includes(entry.aliasLower ?? entry.alias.toLowerCase())) {
         if (entry.tickers && entry.tickers.length > 0) {
           return entry.tickers[0];
         }

@@ -64,5 +64,10 @@ jobs:
       - name: Python byte-compile (scripts/)
         run: python -m compileall -q scripts
 
-      - name: pytest
-        run: python -m pytest -q scripts/test_history_honesty_gate.py scripts/test_git_publish.py
+      # 빌더 계약(55개) · 증분 병합 · briefing_store · git_publish · 신선도 게이트 ·
+      # KR 차트 결측 회귀 · JS↔PY 패리티. 전부 오프라인·결정적이라 1분 안에 끝난다.
+      - name: pytest (scripts)
+        run: python -m pytest -q scripts
+
+      - name: pytest (automation)
+        run: python -m pytest -q automation/tests

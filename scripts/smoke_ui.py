@@ -30,8 +30,22 @@ except ImportError:
           file=sys.stderr)
     raise SystemExit(2)
 
-TABS = ["map", "search", "bulk", "sector", "signals", "institutional",
-        "health", "calendar", "community"]
+# 2026-09 IA 재편: 상단 탭 4개(today/market/search/bulk) + 숨은 community. 옛 이름은
+# 별칭으로 남아 있어야 한다(?tab=signals → 시장/시그널 등).
+TABS = ["today", "market", "search", "bulk", "map", "sector", "signals", "institutional",
+        "health", "calendar", "community", "ai-briefing"]
+# 옛 딥링크 → (상단 탭, 활성 잎/서브) 기대값
+LEGACY_LINKS = {
+    "?tab=signals": ("market", "signals"),
+    "?tab=sector": ("market", "sector"),
+    "?tab=breadth": ("market", "health"),
+    "?tab=marketdata": ("market", "health"),
+    "?tab=calendar": ("today", "calendar"),
+    "?tab=briefing": ("today", "ai-briefing"),
+    "?tab=institutional&sub=congress": ("search", "congress"),
+    "?tab=search&sub=analysis&ticker=AAPL": ("search", "analysis"),
+    "?tab=community": ("community", "community"),
+}
 
 fails: list[str] = []
 errors: list[str] = []
@@ -95,7 +109,8 @@ def test_deeplinks(browser, base: str) -> None:
           const top = wrap.getBoundingClientRect().top;
           const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
           const atEnd = Math.abs(y - max) <= 4;
-          return y > 100 && ((top > -20 && top < 60) || atEnd);
+          // 문서가 뷰포트보다 짧으면(내 투자 빈 상태 등) 스크롤할 곳이 없다 — 그건 통과.
+          return (y > 100 || max < 100) && ((top > -20 && top < 60) || atEnd);
         }"""
         try:
             page.wait_for_function(cond, timeout=9000)
@@ -110,6 +125,20 @@ def test_deeplinks(browser, base: str) -> None:
         })""")
         check(f"?tab={tab} 딥링크가 본문으로 이동", ok,
               f"y={st['y']:.0f}/max={st['max']:.0f} 탭바top={st['top']:.0f} active={st['active']}")
+
+    for query, (tab, leaf) in LEGACY_LINKS.items():
+        boot(page, f"{base}{query}")
+        page.wait_for_timeout(600)
+        st = page.evaluate("""() => ({
+          tab: document.querySelector('#mainTabs .tab.is-active')?.dataset.tab,
+          cur: currentTab, sub: typeof searchSubTab === 'string' ? searchSubTab : null,
+          panel: document.querySelector('main > .panel.is-active')?.id,
+          ticker: typeof selectedTicker === 'string' ? selectedTicker : null,
+        })""")
+        ok = st["tab"] == tab and (st["cur"] == leaf or st["sub"] == leaf)
+        if "ticker=AAPL" in query:
+            ok = ok and st["ticker"] == "AAPL"
+        check(f"옛 딥링크 {query} → {tab}/{leaf}", ok, str(st))
     page.close()
 
 
@@ -185,6 +214,9 @@ def test_trust_center(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 1280, "height": 900})
     watch(page)
     boot(page, f"{base}?tab=health")
+    page.evaluate("() => openDataTrustCenter()")
+    check("신뢰도 센터가 다이얼로그로 열림",
+          page.evaluate("() => document.getElementById('dataTrustDialog').open === true"))
 
     # 지연 로딩 데이터셋이 도착하기 전에는 '데이터 없음'이 아니라 '불러오는 중'이어야 하고,
     # 도착하면 실제 상태로 바뀌어야 한다.
@@ -326,6 +358,7 @@ def test_kr_market(browser, base: str) -> None:
           body.replace("\n", " ")[:80])
 
     boot(page, f"{base}?tab=health")
+    page.evaluate("() => openDataTrustCenter()")
     try:
         page.wait_for_function(
             "() => document.querySelectorAll('.data-trust-card.trust-pending').length === 0",
@@ -366,7 +399,8 @@ def test_tab_a11y(browser, base: str) -> None:
     watch(page)
     boot(page, base)
 
-    navs = page.evaluate("""() => ['mainTabs','sectorSubTabs','searchSubTabs',
+    navs = page.evaluate("""() => ['mainTabs','todaySubTabs','marketSubTabs','bulkSubTabs',
+      'findModeSeg','discSubTabs','sectorSubTabs','searchSubTabs',
       'institutionalSubTabs','calendarSubTabs','communitySubTabs'].map(id => {
         const n = document.getElementById(id);
         if (!n) return { id, missing: true };
@@ -376,7 +410,7 @@ def test_tab_a11y(browser, base: str) -> None:
             const p = document.getElementById(b.getAttribute('aria-controls') || '');
             return b.hasAttribute('aria-selected') && p
               && p.getAttribute('role') === 'tabpanel'
-              && p.getAttribute('aria-labelledby') === b.id;
+              && (p.getAttribute('aria-labelledby') || '').split(' ').includes(b.id);
           }),
           selected: btns.filter(b => b.getAttribute('aria-selected') === 'true').length,
           roving: btns.filter(b => b.tabIndex === 0).length };
@@ -482,17 +516,20 @@ def test_mobile(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 390, "height": 844})
     watch(page)
     boot(page, base)
+    # 헤더 캐러셀은 IA 재편으로 삭제 — 카드뉴스는 오늘 탭의 카드 1장(+더 보기)뿐이다.
+    check("헤더 카드뉴스 캐러셀이 없음", page.locator(".cardnews-carousel").count() == 0)
     box = page.evaluate("""() => {
-      const e = document.querySelector('.cardnews-carousel');
+      const e = document.querySelector('#todayNews .ia-today-news-hero');
       if (!e) return null;
       const r = e.getBoundingClientRect();
-      return { w: r.width, h: r.height };
+      return { w: r.width, h: r.height, hidden: document.getElementById('todayNews').hidden };
     }""")
-    check("모바일 카드뉴스 렌더", box is not None)
-    if box:
-        # 원본이 4:5 세로 이미지라 그대로 펼치면 첫 화면을 통째로 먹는다.
-        check("카드뉴스가 첫 화면의 1/3 이하", box["h"] <= 844 / 3,
-              f"{box['w']:.0f}x{box['h']:.0f}, viewport h=844")
+    check("모바일 오늘의 뉴스 카드 렌더", box is not None and not box["hidden"])
+    check("본문 가로 스크롤 없음",
+          page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"))
+    tabs_h = page.evaluate("() => Math.min(...[...document.querySelectorAll('#mainTabs .tab, .ia-sub-tabs .sub-tab')]"
+                           ".filter(b => b.offsetParent).map(b => b.getBoundingClientRect().height))")
+    check("탭·서브탭 터치 타깃 44px 이상", tabs_h >= 44, f"min={tabs_h:.0f}px")
     shoot(page, "mobile-home")
     page.close()
 

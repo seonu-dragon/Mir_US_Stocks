@@ -169,12 +169,19 @@
     cardnewsDefault: "kr",
     snapshotCadence: "매일 15:40 KST",
     liveTickerSuffix: ".KS",
-    formatTicker: (t) => String(t || "").replace(/\.(KS|KQ)$/i, "").padStart(6, "0"),
+    formatTicker: (t) => {
+      // 국내 코드(005930)는 6자리로 채우되, 숫자가 아닌 티커는 그대로 둔다.
+      // 무조건 padStart 하면 국내 모드에서 열린 미국 딥링크가 "AAPL" → "00AAPL"
+      // 로 변형돼 analysis.html?t=AAPL 이 "데이터를 찾을 수 없습니다" 가 됐다.
+      const raw = String(t || "").replace(/\.(KS|KQ)$/i, "");
+      return /^\d{1,6}$/.test(raw) ? raw.padStart(6, "0") : raw.toUpperCase();
+    },
     yahooTicker(itemOrTicker, market) {
       const raw = typeof itemOrTicker === "object"
         ? (itemOrTicker.yahooSymbol || itemOrTicker.ticker)
         : itemOrTicker;
-      const code = String(raw || "").replace(/\.(KS|KQ)$/i, "").padStart(6, "0");
+      const rawCode = String(raw || "").replace(/\.(KS|KQ)$/i, "");
+      const code = /^\d{1,6}$/.test(rawCode) ? rawCode.padStart(6, "0") : rawCode;
       if (String(raw).includes(".KQ") || market === "kosdaq") return `${code}.KQ`;
       if (String(raw).includes(".KS") || market === "kospi" || market === "etf") return `${code}.KS`;
       return `${code}.KS`;

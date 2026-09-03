@@ -2284,8 +2284,38 @@ async function loadDetail(ticker) {
   const key = analysisTickerKey(ticker);
   if (!key) return null;
   const res = await fetch(analysisDetailPath(key), { cache: "no-cache" });
-  if (!res.ok) throw new Error("not_found");
-  return res.json();
+  if (res.ok) return res.json();
+  // 저장된 시장이 반대쪽이면(국내 모드에서 sitemap 의 미국 딥링크를 여는 등)
+  // 여기서 끝내지 않고 반대 시장 상세를 한 번 더 본다. 찾으면 그 시장으로
+  // 전환해 통화·라벨까지 맞춘다.
+  const other = await loadDetailFromOtherMarket(ticker);
+  if (other) return other;
+  throw new Error("not_found");
+}
+
+async function loadDetailFromOtherMarket(ticker) {
+  const MM = window.MirMarket;
+  if (!MM || typeof MM.getMode !== "function") return null;
+  const other = MM.getMode() === "kr" ? "us" : "kr";
+  const raw = String(ticker || "").trim();
+  if (!raw) return null;
+  // 반대 시장의 표기 규칙으로 키를 만든다(국내는 6자리 0-패딩).
+  const key = other === "kr"
+    ? (/^\d{1,6}$/.test(raw) ? raw.padStart(6, "0") : null)
+    : raw.toUpperCase();
+  if (!key) return null;
+  const path = other === "kr"
+    ? `data/korea/details/${encodeURIComponent(key)}.json`
+    : `data/details/${encodeURIComponent(key)}.json`;
+  try {
+    const res = await fetch(path, { cache: "no-cache" });
+    if (!res.ok) return null;
+    const payload = await res.json();
+    if (typeof MM.setMode === "function") MM.setMode(other);
+    return payload;
+  } catch (_) {
+    return null;
+  }
 }
 
 function gaugeColor(up) {

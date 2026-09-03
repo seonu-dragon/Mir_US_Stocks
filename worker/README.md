@@ -98,3 +98,42 @@ Worker → **Settings → Variables and Secrets**에 아래를 추가하면 국�
 ```js
 const ALLOW_ORIGIN = "https://seonu-dragon.github.io";
 ```
+
+## LLM 경로 Origin 게이트
+
+`/chat`, `?move_analysis=`, `?ticker=` 응답의 한국어 요약(summary) — 즉 **뉴런·Gemini
+쿼터를 태우는 단계만** Origin 으로 막습니다. 시세·뉴스·차트·환율 등 나머지 데이터
+프록시는 그대로 공개(`ALLOW_ORIGIN = "*"`)입니다.
+
+- 허용: `https://seonu-dragon.github.io`, 그리고 **모든 포트**의
+  `http://localhost:<port>` / `http://127.0.0.1:<port>`(로컬 서버·스모크 테스트).
+- 거부: **Origin 헤더가 없는 요청**(curl 등 비브라우저), `Origin: null`(file://·
+  샌드박스 iframe), 그 외 모든 사이트 → `403 {"error":"forbidden_origin"}`.
+- 캐시(KV) 히트도 게이트 **뒤**에 있습니다. 허용되지 않은 호출자는 캐시된 요약도
+  받지 못합니다.
+- 예전에는 Origin 이 없으면 통과시켰고, 그래서 `curl` 한 줄로 캐시에 없는 티커마다
+  LLM 이 새로 돌았습니다(2026-09-03 확인 후 수정).
+
+## 커뮤니티 동시성 — Durable Object (선택)
+
+게시글은 KV 키 하나(`community:v1:posts`)에 배열로 들어 있어, 두 요청이 겹치면 늦게
+쓴 쪽이 먼저 쓴 쪽을 덮습니다. 완전한 해결은 단일 writer 인 Durable Object 입니다.
+
+- 바인딩 이름 **`COMMUNITY_DO`** → 클래스 **`CommunityStore`**.
+- **바인딩이 없으면 지금까지와 완전히 동일하게** KV + 버전 스탬프 재시도로 동작합니다
+  (붙여넣기만 하고 DO 를 안 만들어도 아무것도 깨지지 않습니다).
+- DO 는 **Workers 유료 플랜**이 필요하고, 클래스 생성이 `wrangler.toml` 의
+  `[[migrations]]` 로만 되기 때문에 최초 1회는 `wrangler deploy` 가 필요합니다
+  (`worker/wrangler.toml` 참고).
+- 켜면 `/community*` 읽기·쓰기가 전부 인스턴스 하나로 직렬화되고, 첫 요청 때 기존 KV
+  값을 DO storage 로 한 번 복사해 옵니다(기존 글 유지).
+
+## 자체 검증
+
+```bash
+node --check worker/yahoo-proxy.js
+node worker/test_worker.mjs      # Node 18+, 네트워크 없이 도는 30개 케이스
+```
+
+Origin 게이트·캐시 우회·`?model=` 관리자 제한·IP 리밋·DO/KV 동등성·동시 글쓰기를
+인메모리 모의 env 로 확인합니다. 대시보드에 붙여넣기 전에 돌려 보세요.

@@ -94,6 +94,23 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
      IP 리밋 카운터)
    - Workers AI 바인딩: `AI`
    - 관리자 호출은 `X-Admin-Key` 헤더로(쿼리 `adminKey=` 는 한 릴리스만 폴백 유지)
+   - (선택) Durable Object: `COMMUNITY_DO` → class `CommunityStore`.
+     **없어도 된다** — 없으면 커뮤니티는 지금까지처럼 `COMMUNITY_KV` 를 직접
+     읽고 쓴다(동작 동일). 붙이면 `/community*` 전 요청이 인스턴스 하나로
+     직렬화돼 동시 글쓰기가 서로를 덮어쓰지 않는다.
+     · **Workers 유료 플랜($5/월)이 필요하고, 대시보드만으로는 만들 수 없다.**
+       DO 클래스는 `wrangler.toml` 의 `[[migrations]]` 로만 생성되므로 최초 1회는
+       `wrangler deploy` 가 필요하다(`worker/wrangler.toml` 에 스니펫이 있다).
+     · 처음 요청 때 기존 `COMMUNITY_KV` 의 `community:v1:posts` / `:votes` 를
+       DO storage 로 한 번 복사해 온다 — 기존 글은 유지된다.
+     · 그 뒤로 정본은 DO storage 다. 바인딩을 다시 떼면 DO 로 들어간 글은
+       사라진 것처럼 보이고 KV 스냅샷 시점으로 돌아간다(되돌리려면 그 점을 감안할 것).
+
+   워커 자체 검증(네트워크 없이, 붙여넣기 전에 돌려 볼 것):
+
+   ```powershell
+   node worker/test_worker.mjs   # Node 18+
+   ```
 
 4. **Actions 권한 확인**
    - Settings → Actions → General → Workflow permissions → **Read and write permissions**

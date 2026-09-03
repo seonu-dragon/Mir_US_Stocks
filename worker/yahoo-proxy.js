@@ -25,6 +25,8 @@
 //
 // 이 파일은 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포다
 // (DEPLOY.md "Cloudflare Worker 바인딩"). 바인딩: AI, MOVE_CACHE(KV), COMMUNITY_KV(KV),
+// (선택) COMMUNITY_DO(Durable Object, class CommunityStore — 유료 플랜 + wrangler 필요.
+// 없으면 커뮤니티는 KV 경로로 그대로 동작한다),
 // Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_CLIENT_ID/SECRET, COMMUNITY_ADMIN_KEY,
 // (선택) GEMINI_MODEL, IP_HASH_SALT.
 // =============================================================================
@@ -35,20 +37,30 @@ const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
 // LLM 을 태우는 경로 — /chat, move_analysis, 그리고 ?ticker= 응답의 한국어
 // 요약(summary) 단계 — 는 뉴런·Gemini 쿼터를 소모하므로 아무 사이트에서나 못
 // 부르게 Origin 을 제한하고 IP 리밋을 건다. ?ticker= 의 뉴스·차트·실적 자체와
-// 나머지 데이터 프록시는 계속 개방(*)이다. 요약은 종목·날짜 단위로 KV 에 1시간
-// 캐시되므로 캐시 히트는 게이트를 타지 않는다.
-// Origin 이 아예 없는 요청(비브라우저)은 통과시키되 IP 리밋으로만 제한 —
-// 로컬 캡처 스크립트(chart_capture)와 스모크 테스트가 이 경로를 쓴다.
+// 나머지 데이터 프록시(fx·fng·indices·calendar 등)는 계속 개방(*)이다.
+//
+// Origin 이 없는 요청은 **거부**한다. 예전엔 "로컬 캡처 스크립트와 스모크
+// 테스트가 이 경로를 쓴다" 는 이유로 통과시켰는데 사실이 아니었다 —
+// chart_capture.js 는 로컬 detailPath(...) 만 읽고 워커를 부르지 않고,
+// smoke_ui.py 는 http://127.0.0.1:<port> 로 서빙된 페이지를 브라우저로 몰아서
+// Origin 이 반드시 붙는다. 그 결과 Origin 없는 curl 한 줄이면 캐시에 없는
+// 티커마다 LLM 이 새로 돌았다(2026-09-03 라이브 확인).
+//
+// 로컬 개발·스모크는 포트가 매번 달라지므로(8099/8101/8103/8106…) 고정 목록
+// 대신 정규식으로 localhost / 127.0.0.1 의 모든 포트를 받는다.
+// Origin: null (file:// 로 연 페이지, 샌드박스 iframe)은 받지 않는다 —
+// 레포에서 file:// 로 워커를 부르는 경로를 찾지 못했고(scratch 테스트는
+// index.html 만 연다), null 은 누구나 위조할 수 있는 값이다.
 const LLM_ALLOWED_ORIGINS = new Set([
   "https://seonu-dragon.github.io",
-  "http://localhost:8080", "http://localhost:8090", "http://localhost:8888", "http://localhost:8099",
-  "http://127.0.0.1:8080", "http://127.0.0.1:8090", "http://127.0.0.1:8888", "http://127.0.0.1:8099",
 ]);
+const LLM_LOCAL_ORIGIN_RE = /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d{1,5})?$/;
 
-function llmOriginAllowed(request) {
-  const origin = request.headers.get("Origin") || "";
-  if (!origin) return true;
-  return LLM_ALLOWED_ORIGINS.has(origin);
+export function llmOriginAllowed(request) {
+  const origin = (request && request.headers && request.headers.get("Origin")) || "";
+  if (!origin) return false;
+  if (LLM_ALLOWED_ORIGINS.has(origin)) return true;
+  return LLM_LOCAL_ORIGIN_RE.test(origin);
 }
 
 // KV 고정창 카운터 기반의 소프트 IP 리밋. KV 는 엣지 간 최종 일관성이라
@@ -117,6 +129,16 @@ async function communityAdminOk(env, request, fallbackKey) {
   return timingSafeEqual(String(supplied), String(adminKey));
 }
 
+// ?model= 은 A/B 용인데 아무나 넘길 수 있으면 임의 모델(대형·유료)로 뉴런을
+// 태우는 경로가 된다. 관리자 키(X-Admin-Key, 구형 ?adminKey= 폴백)가 있을 때만
+// 존중하고, 그 외에는 빈 문자열 = 기본 모델이다.
+export async function resolveModelOverride(env, request, url) {
+  const raw = String(url.searchParams.get("model") || "").slice(0, 120);
+  if (!raw) return "";
+  const isAdmin = await communityAdminOk(env, request, url.searchParams.get("adminKey"));
+  return isAdmin ? raw : "";
+}
+
 // earnings_calendar 배치는 티커마다 야후 quoteSummary 를 부른다(20개 = 20회).
 const EARNINGS_CALENDAR_MAX_TICKERS = 20;
 // Workers AI text models tried in order for the Korean summary (first that works wins).
@@ -138,6 +160,10 @@ const GEMINI_DEFAULT_MODEL = "gemini-1.5-flash";
 // Gemini 는 응답 생성 후 헤더를 보내는 경우가 있어 기본 8초보다 길게 잡는다.
 const GEMINI_TIMEOUT_MS = 25000;
 
+// 런타임이 보는 진입점은 default export 하나다. 아래 named export 들
+// (handleFetch·llmOriginAllowed·CommunityStore 등)은 worker/test_worker.mjs 가
+// 네트워크 없이 부르기 위한 것이고, Workers 모듈 포맷에서 무시된다.
+// (CommunityStore 만은 예외 — DO 클래스는 반드시 named export 여야 한다.)
 export default {
   async fetch(request, env) {
     // 최상위 try/catch: 내부 예외가 CORS 헤더 없는 500 으로 나가면 브라우저에선
@@ -152,7 +178,7 @@ export default {
   },
 };
 
-async function handleFetch(request, env) {
+export async function handleFetch(request, env) {
     if (request.method === "OPTIONS") return cors(new Response(null, { status: 204 }));
 
     const url = new URL(request.url);
@@ -166,34 +192,11 @@ async function handleFetch(request, env) {
       return cors(await handleChat(request, env));
     }
 
-    // Shared community board (KV binding COMMUNITY_KV required).
-    if (url.pathname === "/community") {
-      if (request.method === "GET") return cors(await handleCommunityList(url, env, request));
-      if (request.method === "POST") return cors(await handleCommunityCreate(request, env));
-      if (request.method === "DELETE") return cors(await handleCommunityDelete(request, env));
-    }
-    if (url.pathname === "/community/comment") {
-      if (request.method === "POST") return cors(await handleCommunityCommentCreate(request, env));
-      if (request.method === "DELETE") return cors(await handleCommunityCommentDelete(request, env));
-    }
-    if (request.method === "POST" && url.pathname === "/community/like") {
-      return cors(await handleCommunityLike(request, env));
-    }
-    if (request.method === "POST" && url.pathname === "/community/report") {
-      return cors(await handleCommunityReport(request, env));
-    }
-    if (request.method === "GET" && url.pathname === "/community/reports") {
-      return cors(await handleCommunityReportsList(url, env, request));
-    }
-    if (request.method === "POST" && url.pathname === "/community/vote") {
-      return cors(await handleCommunityVote(request, env));
-    }
-    if (request.method === "GET" && url.pathname === "/community/votes") {
-      return cors(await handleCommunityVotesList(url, env));
-    }
-    if (request.method === "POST" && url.pathname === "/community/clear") {
-      return cors(await handleCommunityClear(request, env));
-    }
+    // Shared community board.
+    // COMMUNITY_DO(Durable Object)가 있으면 전 요청을 그 객체로 몰아 직렬화하고,
+    // 없으면 지금까지처럼 COMMUNITY_KV 를 직접 읽고 쓴다(아래 dispatchCommunity).
+    const communityHandler = communityHandlerFor(request.method, url.pathname);
+    if (communityHandler) return cors(await dispatchCommunity(request, url, env, communityHandler));
 
     if (url.pathname === "/sync/prefs") {
       if (request.method === "GET") return cors(await handleSyncPrefsGet(url, env));
@@ -252,10 +255,7 @@ async function handleFetch(request, env) {
     // dashes (BRK.B -> BRK-B).
     const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
     const kr = isKoreanTicker(ticker);
-    // ?model= 은 A/B 용인데 아무나 넘길 수 있으면 임의 모델(대형·유료)로 뉴런을
-    // 태우는 경로가 된다. 관리자 키가 있을 때만 존중한다.
-    const isAdmin = await communityAdminOk(env, request, url.searchParams.get("adminKey"));
-    const modelOverride = isAdmin ? String(url.searchParams.get("model") || "").slice(0, 120) : "";
+    const modelOverride = await resolveModelOverride(env, request, url);
 
     // Price-event analysis is intentionally opt-in: the static site calls this
     // only after the visitor clicks "원인 분석" on a recent price event.
@@ -272,13 +272,15 @@ async function handleFetch(request, env) {
         : 0;
       const promptHash = (await sha256Hex(`${eventChange}|${modelOverride}`)).slice(0, 12);
       const cacheKey = `move:v4:${ticker}:${eventDate}:${promptHash}`;
+      // 게이트는 캐시 읽기보다 **앞**이다. 예전엔 캐시 히트를 무제한 공개했는데,
+      // 허용되지 않은 호출자에게 결과를 주는 경로 자체를 남길 이유가 없다
+      // (LLM 비용은 어차피 캐시 미스에서만 난다).
+      const originOk = llmOriginAllowed(request);
+      if (!originOk) return cors(json({ error: "forbidden_origin" }, 403, 0));
       if (env && env.MOVE_CACHE) {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
         if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
       }
-      // 캐시 미스일 때만 LLM 이 돌므로 여기서 게이트한다(캐시 히트는 무제한).
-      const originOk = llmOriginAllowed(request);
-      if (!originOk) return cors(json({ error: "forbidden_origin" }, 403, 0));
       if (await ipRateLimited(request, env, "move", 6, 60)) {
         return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
       }
@@ -342,9 +344,13 @@ async function handleFetch(request, env) {
 
 // ?ticker= 의 한국어 요약. 예전엔 요청마다 70B 모델을 돌렸고 Origin·IP 제한도
 // 캐시도 없었다 — 아무 스크립트나 루프를 돌리면 뉴런 예산이 그대로 새는 경로였다.
-// 종목·날짜(UTC) 키로 KV 에 1시간 캐시하고, 캐시 미스일 때만 게이트를 지나 LLM 을 부른다.
-// 게이트에 걸리면 뉴스·차트는 그대로 주고 summary 만 비운다.
-async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverride) {
+// 종목·날짜(UTC) 키로 KV 에 1시간 캐시한다. 게이트는 캐시 읽기 앞에 있어
+// 캐시 히트도 허용 Origin 에서만 나간다. 게이트에 걸리면 뉴스·차트는 그대로 주고
+// summary 만 비운다.
+export async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverride) {
+  // 게이트가 캐시 읽기보다 앞이다 — 캐시 히트라도 허용되지 않은 Origin 에는
+  // 요약을 주지 않는다(뉴스·차트는 그대로 나간다).
+  if (!llmOriginAllowed(request)) return { text: "", error: "forbidden_origin" };
   if (!news || !news.length) return { text: "", error: "no_news" };
   const kv = env && (env.MOVE_CACHE || env.COMMUNITY_KV);
   const day = new Date().toISOString().slice(0, 10);
@@ -356,7 +362,6 @@ async function cachedTickerSummary(request, env, ticker, news, isKr, modelOverri
       if (cached && cached.text) return { text: cached.text, error: "", model: cached.model || "", cached: true };
     } catch (_) { /* KV 장애는 캐시 미스로 취급 */ }
   }
-  if (!llmOriginAllowed(request)) return { text: "", error: "forbidden_origin" };
   if (await ipRateLimited(request, env, "summary", 10, 60)) return { text: "", error: "rate_limited" };
   const result = await summarizeKorean(env, ticker, news, modelOverride || null, isKr);
   if (result.text && kv && !modelOverride) {
@@ -1413,6 +1418,145 @@ function cors(resp) {
 }
 
 // =============================================================================
+// 커뮤니티 라우팅 — KV 직접 경로 / Durable Object 경로
+// =============================================================================
+//
+// 게시글은 KV 키 하나에 배열로 들어 있어서, 두 요청이 겹치면 늦게 쓴 쪽이 먼저
+// 쓴 쪽을 통째로 덮는다(글이 조용히 사라진다). KV 에는 CAS 가 없어 아래
+// mutateVersionedList 의 version/stamp + 3회 재시도는 어디까지나 완화책이고,
+// 진짜 해결은 단일 writer 로 직렬화하는 Durable Object 다.
+//
+// 다만 DO 는 (1) Workers **유료 플랜**이 필요하고 (2) wrangler.toml 의 migrations
+// 로만 만들 수 있는데, 이 워커는 대시보드 붙여넣기로 배포한다. 그래서 바인딩
+// 유무로 갈리는 **능력 검사**로 넣는다:
+//   env.COMMUNITY_DO 있음 → 모든 /community* 요청을 DO 인스턴스 한 개로 몰아
+//                            직렬 실행(데이터는 DO storage).
+//   env.COMMUNITY_DO 없음 → 지금까지의 KV + version 재시도 경로 그대로(동작 불변).
+// 두 경로는 같은 핸들러 코드를 쓴다 — DO 안에서는 COMMUNITY_KV 자리에 DO storage
+// 를 감싼 shim 을 끼워 넣을 뿐이다.
+const COMMUNITY_DO_NAME = "community:v1";
+
+// 메서드+경로 → 핸들러. 엣지와 DO 안에서 같은 표를 본다(라우팅이 갈라지지 않게).
+// 표에 없으면 null → 커뮤니티 경로가 아니므로 나머지 라우팅으로 넘어간다.
+export function communityHandlerFor(method, pathname) {
+  switch (`${method} ${pathname}`) {
+    case "GET /community": return (request, url, env) => handleCommunityList(url, env, request);
+    case "POST /community": return (request, url, env) => handleCommunityCreate(request, env);
+    case "DELETE /community": return (request, url, env) => handleCommunityDelete(request, env);
+    case "POST /community/comment": return (request, url, env) => handleCommunityCommentCreate(request, env);
+    case "DELETE /community/comment": return (request, url, env) => handleCommunityCommentDelete(request, env);
+    case "POST /community/like": return (request, url, env) => handleCommunityLike(request, env);
+    case "POST /community/report": return (request, url, env) => handleCommunityReport(request, env);
+    case "GET /community/reports": return (request, url, env) => handleCommunityReportsList(url, env, request);
+    case "POST /community/vote": return (request, url, env) => handleCommunityVote(request, env);
+    case "GET /community/votes": return (request, url, env) => handleCommunityVotesList(url, env);
+    case "POST /community/clear": return (request, url, env) => handleCommunityClear(request, env);
+    default: return null;
+  }
+}
+
+// 읽기까지 DO 로 보내는 이유: 쓰기만 DO 로 보내면 데이터는 DO storage 에 쌓이는데
+// 목록은 KV 를 읽어 게시판이 멈춘 것처럼 보인다. 한 곳에서만 읽고 쓴다.
+async function dispatchCommunity(request, url, env, handler) {
+  if (env && env.COMMUNITY_DO) {
+    try {
+      const stub = env.COMMUNITY_DO.get(env.COMMUNITY_DO.idFromName(COMMUNITY_DO_NAME));
+      return await stub.fetch(request);
+    } catch (err) {
+      // KV 로 조용히 되돌리지 않는다 — 두 저장소가 갈라지면 글이 반쪽씩 남는다.
+      console.error("community DO dispatch failed:", err);
+      return json({
+        posts: [],
+        error: "community_do_unavailable",
+        message: "커뮤니티 저장소에 접근하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      }, 503, 0);
+    }
+  }
+  return handler(request, url, env);
+}
+
+// DO storage 를 KV 인터페이스(get/put/delete)로 감싼다. 핸들러 코드가 KV 인지
+// DO 인지 몰라도 되게 하는 어댑터다.
+//  - 값은 { v, e } 봉투로 저장한다(e = 만료 epoch ms, 0 이면 무기한).
+//    KV 의 expirationTtl 을 흉내내야 IP 리밋 카운터가 영원히 남지 않는다.
+//  - seedKv 가 있으면 키를 처음 읽을 때 기존 KV 값을 한 번 복사해 온다
+//    (DO 를 켜는 순간 기존 게시글이 사라지지 않게 하는 이관 경로).
+function durableKvShim(storage, seedKv) {
+  const seeded = new Set();
+  const decode = (raw, type) => {
+    if (raw == null) return null;
+    return type === "json" ? JSON.parse(raw) : raw;
+  };
+  return {
+    async get(key, type) {
+      const entry = await storage.get(key);
+      if (entry && typeof entry === "object") {
+        if (entry.e && Date.now() > entry.e) {
+          await storage.delete(key);
+          return null;
+        }
+        return decode(entry.v, type);
+      }
+      if (!seedKv || seeded.has(key)) return null;
+      seeded.add(key);
+      try {
+        const fromKv = await seedKv.get(key);
+        if (fromKv == null) return null;
+        await storage.put(key, { v: String(fromKv), e: 0 });
+        return decode(String(fromKv), type);
+      } catch (err) {
+        console.error("community DO seed from KV failed:", err);
+        return null;
+      }
+    },
+    async put(key, value, options) {
+      const ttl = options && Number(options.expirationTtl);
+      await storage.put(key, { v: String(value), e: ttl ? Date.now() + ttl * 1000 : 0 });
+    },
+    async delete(key) {
+      await storage.delete(key);
+    },
+  };
+}
+
+// 커뮤니티 문서를 소유하는 단일 writer.
+// wrangler.toml (DEPLOY.md 참고):
+//   [[durable_objects.bindings]] name = "COMMUNITY_DO" class_name = "CommunityStore"
+//   [[migrations]] tag = "v1" new_classes = ["CommunityStore"]
+export class CommunityStore {
+  constructor(state, env) {
+    this.state = state;
+    this.env = {
+      ...(env || {}),
+      // 핸들러가 보는 COMMUNITY_KV 를 DO storage 로 바꾼다. 기존 KV 는 seed 용으로만.
+      COMMUNITY_KV: durableKvShim(state.storage, env && env.COMMUNITY_KV),
+      // 재귀 디스패치 방지(DO 안에서 다시 DO 로 보내지 않는다).
+      COMMUNITY_DO: null,
+      // 아래 mutateVersionedList 에 "이미 직렬화돼 있다"고 알린다 —
+      // KV 용 write-then-verify 재시도를 건너뛰고 한 번만 읽고 쓴다.
+      COMMUNITY_SERIALIZED: true,
+    };
+    this.chain = Promise.resolve();
+  }
+
+  // DO 는 스레드가 하나지만 await 지점마다 다른 요청이 끼어들 수 있다
+  // (Cloudflare 의 input gate 는 storage 대기 구간만 막는다). 읽기-수정-쓰기가
+  // 통째로 겹치지 않도록 요청을 명시적 큐로 한 번에 하나씩만 돌린다.
+  serialize(task) {
+    const run = this.chain.then(task, task);
+    this.chain = run.then(() => {}, () => {});
+    return run;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const handler = communityHandlerFor(request.method, url.pathname);
+    if (!handler) return json({ error: "not_found" }, 404, 0);
+    return this.serialize(() => handler(request, url, this.env));
+  }
+}
+
+// =============================================================================
 // Shared community board (Cloudflare KV: COMMUNITY_KV)
 // =============================================================================
 
@@ -1464,9 +1608,9 @@ function communityKvMissing() {
 
 // ── KV 단일 키 읽기-수정-쓰기 ────────────────────────────────────────────────
 // 게시글 전체가 키 하나에 배열로 들어 있어, 두 요청이 겹치면 늦게 쓴 쪽이 먼저
-// 쓴 쪽을 통째로 덮는다(글이 조용히 사라짐). KV 에는 CAS 가 없어 완전한 해결은
-// Durable Object(직렬화된 단일 writer)로 옮기는 것뿐이다 — 아래는 그 전까지의
-// 최소 완화: 값에 version/stamp 를 붙여 쓰고, 쓴 직후 다시 읽어 내 stamp 가
+// 쓴 쪽을 통째로 덮는다(글이 조용히 사라짐). KV 에는 CAS 가 없다 — 완전한 해결은
+// 위의 Durable Object(COMMUNITY_DO) 경로이고, 아래는 그 바인딩이 없을 때의
+// 최소 완화다(같은 코드가 DO storage 위에서도 그대로 돈다): 값에 version/stamp 를 붙여 쓰고, 쓴 직후 다시 읽어 내 stamp 가
 // 남아 있는지 확인한다. 같은 엣지에서는 read-after-write 가 보이므로, 그 사이
 // 다른 쓰기가 끼어들었으면 stamp 가 달라지고 최신 상태 위에 변경을 다시 적용한다
 // (최대 3회). mutate 는 재실행돼도 안전해야 한다(id 는 밖에서 만들어 넘길 것).
@@ -1491,16 +1635,36 @@ async function loadVersionedList(env, key) {
 // mutate(items) → { items: next, response } 이면 next 를 쓰고 response 를 돌려준다.
 //                 { response } 만 주면 쓰지 않고 그대로 응답한다(404·403·쿨다운 등).
 // 반환값은 항상 Response 다.
+function newVersionStamp() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 async function mutateVersionedList(env, key, mutate, maxItems) {
   const finish = (outcome) => (outcome && outcome.response ? outcome.response : json({ error: "internal" }, 500, 0));
+  const capped = (items) => (maxItems ? items.slice(0, maxItems) : items);
+
+  // Durable Object 안에서는 이 함수 자체가 이미 한 번에 하나씩만 돈다
+  // (CommunityStore.serialize). 쓰고 다시 읽어 확인할 이유가 없다 — 한 번의
+  // 읽기-수정-쓰기로 끝낸다. 재시도 루프를 여기서도 돌리면 storage 왕복만 3배다.
+  if (env && env.COMMUNITY_SERIALIZED) {
+    const state = await loadVersionedList(env, key);
+    const outcome = await mutate(state.items, 1);
+    if (!outcome || !Array.isArray(outcome.items)) return finish(outcome);
+    await env.COMMUNITY_KV.put(key, JSON.stringify({
+      version: state.version + 1,
+      stamp: newVersionStamp(),
+      items: capped(outcome.items),
+    }));
+    return finish(outcome);
+  }
+
   let outcome = null;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     const state = await loadVersionedList(env, key);
     outcome = await mutate(state.items, attempt);
     if (!outcome || !Array.isArray(outcome.items)) return finish(outcome);
-    const stamp = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-    const items = maxItems ? outcome.items.slice(0, maxItems) : outcome.items;
-    await env.COMMUNITY_KV.put(key, JSON.stringify({ version: state.version + 1, stamp, items }));
+    const stamp = newVersionStamp();
+    await env.COMMUNITY_KV.put(key, JSON.stringify({ version: state.version + 1, stamp, items: capped(outcome.items) }));
     const check = await loadVersionedList(env, key);
     if (check.stamp === stamp) return finish(outcome);
     console.warn(`kv write conflict on ${key} (attempt ${attempt}) — retrying`);

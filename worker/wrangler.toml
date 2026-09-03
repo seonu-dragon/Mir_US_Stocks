@@ -1,0 +1,49 @@
+# =============================================================================
+# Mir US Stocks — Cloudflare Worker 설정(참고용)
+# =============================================================================
+#
+# 이 워커의 **정식 배포 경로는 대시보드 붙여넣기**다(DEPLOY.md 참고).
+# 이 파일은 두 가지 용도로만 둔다:
+#   1) 현재 바인딩 목록의 문서화 — 대시보드에서 손으로 만든 것과 이름이 같아야 한다.
+#   2) Durable Object(COMMUNITY_DO)를 쓰려는 경우의 마이그레이션 정의 —
+#      DO 클래스는 대시보드에서 만들 수 없고 `wrangler deploy` 로 한 번은 올려야 한다.
+#      DO 는 **Workers 유료 플랜**($5/월)에서만 동작한다.
+#
+# 이 파일로 배포하려면(선택):
+#   npm i -g wrangler
+#   wrangler kv namespace create MOVE_CACHE      # 출력된 id 를 아래에 붙여넣기
+#   wrangler kv namespace create COMMUNITY_KV
+#   wrangler secret put FINNHUB_API_KEY          # GEMINI_API_KEY, NAVER_*, COMMUNITY_ADMIN_KEY, IP_HASH_SALT 도 동일
+#   wrangler deploy
+#
+# COMMUNITY_DO 바인딩이 없으면 커뮤니티는 지금까지처럼 COMMUNITY_KV +
+# version/stamp 재시도 경로로 동작한다(코드가 바인딩 유무로 갈린다).
+
+name = "mir-yahoo"
+main = "yahoo-proxy.js"
+compatibility_date = "2026-09-01"
+
+[ai]
+binding = "AI"
+
+# --- KV -----------------------------------------------------------------------
+# id 는 `wrangler kv namespace list` 로 확인해 채운다(대시보드에서 만든 것과 동일 이름).
+[[kv_namespaces]]
+binding = "MOVE_CACHE"
+id = "REPLACE_WITH_MOVE_CACHE_NAMESPACE_ID"
+
+[[kv_namespaces]]
+binding = "COMMUNITY_KV"
+id = "REPLACE_WITH_COMMUNITY_KV_NAMESPACE_ID"
+
+# --- Durable Object (선택, 유료 플랜) -------------------------------------------
+# 켜면 /community* 전 요청이 CommunityStore 인스턴스 하나로 직렬화된다.
+# 첫 요청 때 기존 COMMUNITY_KV 값(community:v1:posts / :votes)을 DO storage 로
+# 한 번 복사해 오므로 기존 글은 유지된다.
+[[durable_objects.bindings]]
+name = "COMMUNITY_DO"
+class_name = "CommunityStore"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["CommunityStore"]

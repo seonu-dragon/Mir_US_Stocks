@@ -35,3 +35,14 @@ data/market_snapshot.js
 # 테스트·에이전트 잔여물
 .pytest_cache/
 .claude/worktrees/
+
+# 2026-09-03 전수조사: 사이트가 서빙하지 않는 바이너리는 추적하지 않는다.
+# 이미 커밋된 것은 이력에 남아 있어 `git checkout <sha> -- <경로>` 로 꺼낼 수 있다.
+# 원본은 AI/SNS(및 카드뉴스는 AI/카드뉴스/daily)에 그대로 있고, 여기 사본은
+# 하루 ~15MB 씩 pack 만 불렸다. 텍스트 산출물(05_final·기사·대장)은 계속 커밋한다.
+SNS/**/05_generated_images/
+SNS/**/07_card_news_final/
+SNS/**/*.png
+SNS/**/*.jpg
+data/참고/
+scripts/update_log.txt

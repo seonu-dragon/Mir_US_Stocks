@@ -151,6 +151,12 @@ UNMONITORED_BY_DESIGN = {
     "data/market_snapshot.json": "us 그룹이 감시",
     # 5년 일봉 아카이브(주간). 스냅샷이 신선하면 이 파일도 같이 갱신된다.
     "data/history/market_history.json": "market_snapshot 과 같은 실행에서 갱신",
+    # 2026-08-06 에 "무작위 대비 엣지 없음" 결론으로 주간 스케줄에서 뺐다.
+    # 확률 엔진도 UI 도 읽지 않는다(프론트 grep 0건) — 검증 이력으로만 남긴 파일.
+    "data/sr_stats.json": "주간 스케줄에서 제외된 검증 이력(소비처 없음)",
+    # 입력이 gitignore 된 로컬 아카이브(data/korea/_archive, 5년 공시+일봉)라
+    # CI 에서 만들 수 없다. 분기 1회쯤 로컬에서 수동 갱신한다.
+    "data/korea/disclosure_stats.json": "로컬 아카이브 입력이라 CI 산출 불가(수동)",
 }
 
 

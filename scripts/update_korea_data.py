@@ -24,7 +24,7 @@ import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -860,6 +860,11 @@ def _note_history_mode(mode: str):
                 _history_stats["mismatch"] += 1
 
 
+# 이번 실행에서 야후가 404 를 준 종목(= 시계열 자체가 없음). build_snapshot 끝에서
+# history_no_source.json 에 기록해 다음 실행의 백필 쿼터에서 뺀다.
+_NO_SOURCE_THIS_RUN: set[str] = set()
+
+
 def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
@@ -882,6 +887,9 @@ def build_one(meta: dict):
     except Exception as exc:
         # 실측 fetch 실패 시 합성 대신 직전 실측 이력을 재사용한다(데이터 정직성).
         rows = UD.history_from_cache_or_synthetic(symbol, meta, load_cached_history)
+        if "404" in str(exc):
+            # 야후에 시계열이 아예 없는 종목(ELW·ETN 등). 매 실행 쿼터를 먹지 않도록 표시.
+            _NO_SOURCE_THIS_RUN.add(str(symbol))
         if meta.get("historySource") == "yahoo-cache":
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
@@ -1401,9 +1409,54 @@ def history_backfill_symbols(metas: list[dict], prev_stocks: list[dict], quota: 
         for item in prev_stocks
         if item.get("historySource") in UD.REAL_HISTORY_SOURCES
     }
-    missing = [m for m in metas if m["symbol"] not in real]
+    dead = load_no_source_tickers()
+    missing = [m for m in metas if m["symbol"] not in real and m["symbol"] not in dead]
     missing.sort(key=lambda m: m.get("marketCapT") or 0, reverse=True)
+    if dead:
+        print(f"[history] 야후 미수록으로 확인된 {len(dead)}개는 쿼터에서 제외")
     return {m["symbol"] for m in missing[:quota]}
+
+
+# 야후가 시계열 자체를 주지 않는 종목(404). 2026-09-03 실측: 수집 실패 384건 중
+# 329건이 5·6 으로 시작하는 ELW/ETN 등 파생상품이었고, 표본 40개를 직접 조회하니
+# 40개 전부 404 였다(.KS/.KQ 양쪽 모두). 이들이 매 실행 백필 쿼터를 먹어서 481개를
+# 배정해도 실제 회복은 99개뿐이었다. 한 번 404 로 확인되면 재확인 주기까지 건너뛴다.
+NO_SOURCE_PATH = Path(__file__).resolve().parent.parent / "data" / "korea" / "history_no_source.json"
+NO_SOURCE_RECHECK_DAYS = 30
+
+
+def load_no_source_tickers() -> set[str]:
+    """최근 NO_SOURCE_RECHECK_DAYS 안에 '소스 없음'으로 확인된 종목."""
+    try:
+        payload = json.loads(NO_SOURCE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return set()
+    cutoff = (datetime.now(ZoneInfo("Asia/Seoul")) - timedelta(days=NO_SOURCE_RECHECK_DAYS)).date().isoformat()
+    return {t for t, seen in (payload.get("tickers") or {}).items() if str(seen) >= cutoff}
+
+
+def save_no_source_tickers(newly_dead: set[str]) -> None:
+    """404 로 확인된 종목을 오늘 날짜로 기록한다(재확인 주기가 지나면 자동 해제)."""
+    if not newly_dead:
+        return
+    try:
+        payload = json.loads(NO_SOURCE_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        payload = {}
+    tickers = payload.get("tickers") or {}
+    today = datetime.now(ZoneInfo("Asia/Seoul")).date().isoformat()
+    for ticker in newly_dead:
+        tickers[str(ticker)] = today
+    payload["tickers"] = tickers
+    payload["updatedAtKst"] = datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST")
+    payload["note"] = (
+        "야후 chart API 가 404 를 준 종목. 백필 쿼터에서 "
+        f"{NO_SOURCE_RECHECK_DAYS}일간 제외한다. 신규 상장 등으로 나중에 생길 수 있어 만료를 둔다."
+    )
+    NO_SOURCE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    from briefing_store import atomic_write_text
+    atomic_write_text(NO_SOURCE_PATH, json.dumps(payload, ensure_ascii=False, indent=2) + chr(10))
+    print(f"[history] 야후 미수록 {len(newly_dead)}개 기록 (누적 {len(tickers)})")
 
 
 def build_snapshot(limit: int | None = None) -> dict:
@@ -1490,6 +1543,9 @@ def build_snapshot(limit: int | None = None) -> dict:
     kospi = [s for s in stocks if s.get("market") == "kospi"]
     kosdaq = [s for s in stocks if s.get("market") == "kosdaq"]
     sector_charts = fetch_sector_charts()
+
+    # 이번 실행에서 야후가 404 를 준 종목을 기록해 다음 실행의 백필 쿼터에서 뺀다.
+    save_no_source_tickers(_NO_SOURCE_THIS_RUN)
 
     return {
         "market": "kr",

@@ -33,6 +33,12 @@ styles.css 는 index/analysis 가 서로 다른 캐시 키로 서빙). 이제 �
 `sw.js` 는 `?v=` 가 붙은 요청을 **불변으로 보고 cacheFirst** 한다. 스탬프를 건너뛰고
 자산을 바꾸면 사용자는 옛 파일을 계속 캐시에서 받는다.
 
+단, **`/data/` 아래 URL 은 `?v=` 가 붙어 있어도 절대 cacheFirst 하면 안 된다.** 데이터
+파일은 하루 수십 번 같은 경로로 내용만 바뀌고 빌드 스탬프와 무관하게 갱신되므로,
+SW 가 한 번 캐시하면 사용자는 새 배포 뒤에도 옛 스냅샷을 계속 본다("배포는 됐는데
+반영 안 됨"의 한 원인). `/data/` 는 network-first(실패 시에만 캐시 폴백)로 두고,
+`sw.js` 의 캐시 전략을 고칠 때 이 규칙을 깨지 말 것.
+
 UI 를 건드렸으면 브라우저에서 실제로 열어볼 것. 이 사이트의 사고는 단위 검증으로
 안 잡히는 종류가 많다(피처 데이터가 패널 렌더보다 늦게 도착, 배포는 됐는데 반영 안 됨).
 
@@ -114,14 +120,19 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 
 ## 알려진 부채
 
-수치는 2026-07-18 실측.
+수치는 2026-09-03 실측.
 
-- `.git` 이 1.0GB(pack 878MB). 데이터 커밋이 하루 ~22개라 계속 커진다.
-  줄이려면 이력을 다시 써야 하므로(`git filter-repo` + 강제 푸시) 아직 손대지 않았다.
-  **배포 아티팩트와는 별개다** — Pages 한도에 걸리는 쪽은 아래 추적 파일 총량이다.
-- 배포 아티팩트(추적 파일) 404MB. `deploy-pages.yml` 이 `path: '.'` 로 레포 전체를
-  올리고, 데이터 워크플로우 19개가 각각 배포를 트리거한다. GitHub Pages 발행 사이트
-  권장 한도는 1GB.
+- `.git` pack 이 2.5GB(`git count-objects -vH` size-pack 2.57GiB; 07-18 엔 878MB 였다).
+  데이터 커밋이 하루 ~22개라 계속 커진다. 줄이려면 이력을 다시 써야 하므로
+  (`git filter-repo` + 강제 푸시) 아직 손대지 않았다. 완화: Actions 는 `fetch-depth: 1`
+  로 받아 run 마다 이 pack 을 내려받지 않고, 6MB 짜리 `data/market_snapshot.js` 는
+  더 이상 커밋하지 않는다(file:// 폴백용으로 로컬 생성만). **배포 아티팩트와는
+  별개다** — Pages 한도에 걸리는 쪽은 아래 서빙 파일 총량이다.
+- 배포 아티팩트 ≈330MB. `deploy-pages.yml` 이 rsync 로 `_site/` 스테이징 사본을 만들어
+  (빌드 전용 경로·브라우저가 안 읽는 .js/.json 짝 제외) 그것만 올린다 — 예전의
+  `path: '.'` 전체 업로드가 아니다. 데이터 워크플로우가 각각 배포를 트리거하지만,
+  마지막 성공 배포 이후 서빙 경로에 변경이 없으면 게이트 스텝이 건너뛴다.
+  GitHub Pages 발행 사이트 권장 한도는 1GB.
 - `app.js` 850KB / `styles.css` 340KB / `index.html` 122KB 단일 파일.
   분리 전에 `scripts/smoke_ui.py` 를 안전망으로 쓸 것.
 - `sitemap.xml` 은 `scripts/build_sitemap.py` 가 생성한다(**직접 고치지 말 것**).

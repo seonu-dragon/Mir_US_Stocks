@@ -7,8 +7,11 @@
 나이를 넘으면 exit 1 로 워크플로우를 빨갛게 만든다.
 
 사용법:
-    py scripts/check_data_freshness.py --group us   # daily-market-snapshot 말미
-    py scripts/check_data_freshness.py --group kr   # korea-close-briefing 말미
+    py scripts/check_data_freshness.py --group us       # daily-market-snapshot 말미
+    py scripts/check_data_freshness.py --group kr       # korea-close-briefing 말미
+    py scripts/check_data_freshness.py --group kr-dart  # kr-disclosures 말미
+    py scripts/check_data_freshness.py --group weekly   # weekly-earnings-history 말미
+    py scripts/check_data_freshness.py --group ipo      # ipo-calendar 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -69,6 +72,31 @@ CHECKS = {
         ("data/korea/ecos_macro.json", 6, False),
         ("data/korea/gov_contracts.json", 8, False),
         ("data/korea/trade_exports.json", 8, False),
+    ],
+    # kr-disclosures.yml(평일 15:30) — 세 빌더 모두 continue-on-error 라 DART 키가
+    # 죽어도 초록이었다. 주말·연휴를 감안해 4~5일.
+    "kr-dart": [
+        ("data/kr_disclosures.json", 4, False),
+        ("data/kr_ownership.json", 5, False),
+        ("data/kr_event_details.json", 5, False),
+    ],
+    # weekly-earnings-history.yml(일요일 03:02 KST). 매주 같은 시각에 도니 정상이면
+    # 나이 0일, 한 번 실패하면 7일 — 6일로 잡아야 실패 1회를 바로 잡는다.
+    "weekly": [
+        ("data/earnings_history_meta.json", 6, False),
+        ("data/korea/earnings.json", 6, False),
+        ("data/korea/indicators.json", 6, False),
+        ("data/korea/ownership_profile.json", 6, False),
+        ("data/korea/audit_opinion.json", 6, False),
+        ("data/korea/financials_history.json", 6, True),
+        ("data/korea/nps_holdings.json", 6, True),
+        ("data/korea/corp_groups.json", 6, False),
+        ("data/us_financials_history.json", 6, True),
+    ],
+    # ipo-calendar.yml(매일 13:33 KST) — 희석 트래커가 continue-on-error.
+    "ipo": [
+        ("data/ipo_calendar.json", 4, False),
+        ("data/us_dilution.json", 5, False),
     ],
 }
 

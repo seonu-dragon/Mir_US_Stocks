@@ -24,3 +24,14 @@ Thumbs.db
 # DART 공시 5년 백필 원본(76만건). 통계 산출용 중간 산출물이라 커밋하지 않는다 —
 # 브라우저는 집계 파일만 읽고, 필요하면 backfill_kr_disclosures.py 가 다시 만든다.
 data/korea/_archive/
+
+# US 스냅샷의 .js 사본(~6MB). 브라우저는 .json 을 fetch 하고 deploy-pages.yml 도 이
+# 파일을 아티팩트에서 지운다 — 유일한 용도는 file:// 로 index.html 을 직접 열 때의
+# 폴백(app.js loadSnapshotScript)이라 update_data.py 가 로컬에 계속 만들되 커밋은
+# 하지 않는다(2026-09-03, 하루 ~20커밋 × 6MB 가 .git 을 키우던 주범).
+# KR 쪽(data/korea/market_snapshot.js, 3.3MB)도 같은 구조인데 아직 추적 중이다.
+data/market_snapshot.js
+
+# 테스트·에이전트 잔여물
+.pytest_cache/
+.claude/worktrees/

@@ -31,6 +31,8 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+from briefing_store import atomic_write_text  # noqa: E402  중단 시 잘린 파일 방지
+
 KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 OUT_DIR = ROOT / "data" / "korea" / "_archive" / "flow"
 HEADERS = {
@@ -138,8 +140,8 @@ def main() -> int:
             no_flow += 1
         if rec["targetPrice"] is None:
             no_cons += 1
-        (OUT_DIR / f"{t}.json").write_text(
-            json.dumps(rec, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        atomic_write_text(OUT_DIR / f"{t}.json",
+                          json.dumps(rec, ensure_ascii=False, separators=(",", ":")))
         ok += 1
 
     print(f"[수급] 저장 {ok}/{len(stocks)} · 수급없음 {no_flow} · 컨센서스없음 {no_cons} "

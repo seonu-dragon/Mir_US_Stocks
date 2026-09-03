@@ -41,7 +41,15 @@ sys.path.insert(0, str(ROOT / "scripts"))
 import pattern_lib as pl  # noqa: E402
 
 # 로컬(win32) 폴백: playwright 동봉 node — CI(ubuntu)에는 PATH 의 node 가 있다.
+# 버전 폴더가 바뀌어도 잡히도록 glob 으로 찾고, 예전 고정 경로는 마지막 폴백.
 WIN_NODE_FALLBACK = "C:/Users/user/AppData/Local/ms-playwright-go/1.57.0/node.exe"
+
+
+def _win_node_fallbacks():
+    import glob
+    home = Path.home()
+    found = sorted(glob.glob(str(home / "AppData" / "Local" / "ms-playwright-go" / "*" / "node.exe")), reverse=True)
+    return [*found, WIN_NODE_FALLBACK]
 
 
 # ----------------------------------------------------------------------------
@@ -118,8 +126,10 @@ def find_node(cli_arg):
     for cand in (cli_arg, os.environ.get("MIR_NODE_BIN"), shutil.which("node")):
         if cand and Path(cand).exists():
             return cand
-    if sys.platform == "win32" and Path(WIN_NODE_FALLBACK).exists():
-        return WIN_NODE_FALLBACK
+    if sys.platform == "win32":
+        for cand in _win_node_fallbacks():
+            if Path(cand).exists():
+                return cand
     return None
 
 

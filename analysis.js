@@ -2035,22 +2035,10 @@ function backtestBaseRate(rows, horizon) {
   };
 }
 
-// ===== 종합 =====
-// 코어: OHLCV 행 배열({o,h,l,c,v,d})을 받아 분석 결과를 만든다.
-// app.js(대시보드 차트)는 이미 같은 형식의 행을 갖고 있으므로 이 함수를 직접 부른다.
-function analyzeRows(rows, horizon, meta) {
-  meta = meta || {};
-  const clean = (rows || []).filter((r) => r && Number.isFinite(r.c) && r.c > 0);
-  if (clean.length < 60) {
-    return { error: "insufficient", bars: clean.length };
-  }
-
-  // 배당 이벤트(detail.dividends)가 있으면 실측 수익률(패턴 종목 실측·과거 유사
-  // 실측)을 배당 포함 총수익 기준으로 계산한다. 없으면 기존과 동일.
-  const divCum = buildDividendCum(clean, meta.dividends);
-  if (divCum) _divCumCache.set(clean, divCum);
-
-  const price = clean[clean.length - 1].c;
+// 기술 점수(신호 합의)까지의 계산 경로. analyzeRows 와 오프라인 캘리브레이션
+// (scripts/build_prob_calibration.py)이 **같은 코드**를 타도록 떼어냈다 — 화면에 뜨는
+// '기술 점수' 는 여기서 나오는 consensus.up 하나뿐이다.
+function computeConsensusBundle(clean, horizon, meta) {
   const { signals, adxVal } = buildSignals(clean);
   const pat = patternSignals(clean, horizon, patternStats, meta);
   for (const s of pat.signals) signals.push(s);
@@ -2089,6 +2077,48 @@ function analyzeRows(rows, horizon, meta) {
   // 다중 타임프레임은 위에서 이미 가중 신호로 합의에 들어간다. 예전의 ±2.5%p 사후
   // 보정은 같은 정보를 두 번 반영(이중 계상)하는 것이라 제거했다.
   const consensus = consensusProbability(signals, adxVal);
+  return { signals, adxVal, pat, mtf, shortData, shortSqueeze, consensus };
+}
+
+// 오프라인 워크포워드 평가용 최소 진입점. analyzeRows 와 동일한 신호·합의 경로를 타되,
+// 화면 전용 무거운 계산(과거 유사 실측·지지저항·갭·레벨)은 건너뛴다. 전달된 rows 까지만
+// 보므로 룩어헤드가 없다 — 호출부가 봉을 잘라서 준다.
+function technicalScoreRows(rows, horizon, meta) {
+  meta = meta || {};
+  const clean = (rows || []).filter((r) => r && Number.isFinite(r.c) && r.c > 0);
+  if (clean.length < 60) return null;
+  const divCum = buildDividendCum(clean, meta.dividends);
+  if (divCum) _divCumCache.set(clean, divCum);
+  const bundle = computeConsensusBundle(clean, horizon, meta);
+  return {
+    up: bundle.consensus.up,
+    net: bundle.consensus.net,
+    conf: bundle.consensus.conf,
+    adxVal: bundle.adxVal,
+    bars: clean.length,
+    lastDate: clean[clean.length - 1].d,
+  };
+}
+
+// ===== 종합 =====
+// 코어: OHLCV 행 배열({o,h,l,c,v,d})을 받아 분석 결과를 만든다.
+// app.js(대시보드 차트)는 이미 같은 형식의 행을 갖고 있으므로 이 함수를 직접 부른다.
+function analyzeRows(rows, horizon, meta) {
+  meta = meta || {};
+  const clean = (rows || []).filter((r) => r && Number.isFinite(r.c) && r.c > 0);
+  if (clean.length < 60) {
+    return { error: "insufficient", bars: clean.length };
+  }
+
+  // 배당 이벤트(detail.dividends)가 있으면 실측 수익률(패턴 종목 실측·과거 유사
+  // 실측)을 배당 포함 총수익 기준으로 계산한다. 없으면 기존과 동일.
+  const divCum = buildDividendCum(clean, meta.dividends);
+  if (divCum) _divCumCache.set(clean, divCum);
+
+  const price = clean[clean.length - 1].c;
+  const { signals, adxVal, pat, mtf, shortData, shortSqueeze, consensus }
+    = computeConsensusBundle(clean, horizon, meta);
+
 
   const base = clean.length >= 250 ? backtestBaseRate(clean, horizon) : null;
   const sr = srSummary(clean);
@@ -2445,6 +2475,110 @@ function generateBriefing(result) {
 }
 
 // 결과 → HTML 문자열(순수 함수). analysis.html 과 대시보드 패널이 동일 마크업을 공유한다.
+// ===== 기술 점수 캘리브레이션 (data/prob_calibration.json) =====
+// scripts/build_prob_calibration.py 가 만든 워크포워드 실측표. "이 점수 구간이 과거에
+// 실제로 몇 % 올랐나" 를 표본 수·윌슨 구간과 함께 보여준다. 결과가 시장 평균과 다르지
+// 않으면 그대로 "차이 없습니다" 라고 쓴다 — 약한 결과를 포장하지 않는다.
+let calibrationPromise = null;
+let calibrationMissing = false; // 파일이 없거나 못 받았을 때 — '불러오는 중' 을 영원히 띄우지 않는다
+
+function calibrationData() {
+  return (typeof window !== "undefined" && window.PROB_CALIBRATION) || null;
+}
+
+// 대시보드(app.js)와 standalone 양쪽에서 쓰이므로 이 파일이 직접 받는다. 한 파일에
+// US·KR 이 모두 들어 있어 시장이 바뀌어도 다시 받지 않는다.
+function ensureCalibration() {
+  if (typeof window === "undefined" || typeof fetch !== "function") return Promise.resolve(null);
+  if (window.PROB_CALIBRATION) return Promise.resolve(window.PROB_CALIBRATION);
+  if (!calibrationPromise) {
+    calibrationPromise = fetch("data/prob_calibration.json", { cache: "no-cache" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (json) {
+          window.PROB_CALIBRATION = json;
+          fillCalibrationSlots(); // 렌더보다 늦게 도착해도 그때 채운다(피처 데이터 경합)
+        }
+        return json;
+      })
+      .catch(() => null)
+      .then((json) => { if (!json) { calibrationMissing = true; fillCalibrationSlots(); } return json; });
+  }
+  return calibrationPromise;
+}
+
+// 점수가 속한 버킷을 찾는다. 상한(88)은 마지막 버킷에 포함.
+function calibrationBucket(score, horizon, market) {
+  const data = calibrationData();
+  const blk = data && data.markets && data.markets[market] && data.markets[market][String(horizon)];
+  if (!blk || !Array.isArray(blk.buckets) || !blk.buckets.length) return null;
+  const rows = blk.buckets;
+  const hit = rows.find((b) => score >= b.lo && score < b.hi)
+    || (score >= rows[rows.length - 1].hi ? rows[rows.length - 1] : null)
+    || (score < rows[0].lo ? rows[0] : null);
+  return hit ? { row: hit, block: blk, meta: data } : null;
+}
+
+function calibrationInnerHtml(score, horizon) {
+  const market = isKrAnalysisMode() ? "kr" : "us";
+  if (!calibrationData()) {
+    return calibrationMissing
+      ? `<span class="muted">과거 적중률 표가 아직 산출되지 않았습니다 (scripts/build_prob_calibration.py).</span>`
+      : `<span class="muted">과거 적중률 표를 불러오는 중…</span>`;
+  }
+  const hit = calibrationBucket(score, horizon, market);
+  if (!hit) {
+    return `<span class="muted">이 점수 구간은 표본이 없어 과거 적중률을 말할 수 없습니다.</span>`;
+  }
+  const { row, block, meta } = hit;
+  const diff = row.upRate - block.baseRate;
+  // 정직성: 구간이 시장 평균을 품고 있으면 "우위" 라고 말하지 않는다.
+  const verdict = row.differsFromBase
+    ? `<b style="color:${diff >= 0 ? "var(--pos)" : "var(--neg)"}">시장 평균과 유의한 차이 ${diff >= 0 ? "+" : ""}${diff.toFixed(1)}%p</b>`
+    : `<b>이 구간은 시장 평균과 차이가 없습니다</b>`;
+  const range = meta.barRange && meta.barRange.first
+    ? `${meta.barRange.first}~${meta.barRange.last}` : "";
+  const sample = meta.sample || {};
+  return `
+    <div style="display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline;">
+      <span>점수 <b>${row.lo}~${row.hi}</b> 구간 · ${horizon}거래일 뒤 상승
+        <b style="color:${gaugeColor(row.upRate)}">${row.upRate.toFixed(1)}%</b></span>
+      <span class="muted">95% 구간 ${row.ciLow.toFixed(0)}~${row.ciHigh.toFixed(0)}%</span>
+      <span class="muted">표본 ${row.n.toLocaleString()}건(유효 ${Math.round(row.nEff).toLocaleString()}건)</span>
+      <span class="muted">평균 ${row.avgReturn >= 0 ? "+" : ""}${row.avgReturn.toFixed(1)}%</span>
+    </div>
+    <div style="margin-top:4px;">${verdict}
+      <span class="muted">— 같은 시장·기간 전체 평균 상승률 ${block.baseRate.toFixed(1)}% (표본 ${block.baseN.toLocaleString()}건)</span>
+    </div>
+    ${block.significantBuckets === 0 ? `<div style="margin-top:4px;">이 시장·${horizon}거래일 기준으로는 <b>어떤 점수 구간도 시장 평균과 유의하게 다르지 않았습니다</b> — 점수가 방향을 맞힌다는 근거가 없습니다.</div>` : ""}
+    <div class="muted" style="margin-top:4px;font-size:11px;">
+      ${sample.stocks ? `${sample.stocks}종목 ` : ""}${range ? `${range} ` : ""}워크포워드 실측 ·
+      겹치는 표본을 감안한 유효표본수로 구간을 계산했고, 종목 간 상관은 보정하지 않았습니다(구간이 실제보다 좁을 수 있음).
+    </div>`;
+}
+
+// 렌더된 슬롯(들)을 현재 데이터로 채운다. 데이터가 늦게 와도 여기서 다시 채워지므로
+// 패널이 영영 비어 있는 일이 없다.
+function fillCalibrationSlots() {
+  if (typeof document === "undefined") return;
+  const slots = document.querySelectorAll("[data-calib-score]");
+  slots.forEach((el) => {
+    const score = Number(el.getAttribute("data-calib-score"));
+    const horizon = Number(el.getAttribute("data-calib-horizon"));
+    if (!Number.isFinite(score) || !Number.isFinite(horizon)) return;
+    el.innerHTML = calibrationInnerHtml(score, horizon);
+  });
+}
+
+function calibrationSlotHtml(score, horizon) {
+  ensureCalibration(); // 결과가 처음 그려질 때 받는다(대시보드는 init 을 타지 않는다)
+  return `<div class="calib-box" data-calib-score="${score.toFixed(2)}" data-calib-horizon="${horizon}"
+    style="margin:0 0 10px;padding:8px 10px;border:1px solid var(--line,#d9dee7);border-radius:8px;font-size:12px;line-height:1.55;">
+    <div class="muted" style="font-size:11px;margin-bottom:4px;">이 점수의 과거 적중률</div>
+    ${calibrationInnerHtml(score, horizon)}
+  </div>`;
+}
+
 function buildResultHTML(result) {
   if (result.error === "insufficient") {
     return `<div class="notice">이 종목은 차트 데이터가 부족합니다(${result.bars}봉). 대형주·주요 종목을 입력해 주세요.</div>`;
@@ -2522,6 +2656,7 @@ function buildResultHTML(result) {
       <div class="card">
         <h3>① 기술 점수 <b>${result.consensus.up.toFixed(0)}</b><span class="muted">/100 · 신호 합의 (추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
         <p class="muted" style="margin:0 0 8px;font-size:12px;">기술 점수는 지표 투표의 가중 합산을 0~100 으로 환산한 값이며 확률이 아닙니다. 실측 확률은 ② 를 보세요.</p>
+        ${calibrationSlotHtml(result.consensus.up, result.horizon)}
         ${bullSignals.length ? `<div class="sig-group"><h4 class="bull">강세 신호</h4>${bullSignals.map(signalRow).join("")}</div>` : ""}
         ${bearSignals.length ? `<div class="sig-group"><h4 class="bear">약세 신호</h4>${bearSignals.map(signalRow).join("")}</div>` : ""}
         ${neutralSignals.length ? `<div class="sig-group"><h4 class="neu">중립</h4>${neutralSignals.map(signalRow).join("")}</div>` : ""}
@@ -2726,6 +2861,7 @@ function renderResult(result) {
   const el = $("result");
   if (!el) return;
   el.innerHTML = buildResultHTML(result);
+  ensureCalibration(); // 이미 있으면 즉시 resolve, 늦게 오면 fillCalibrationSlots 가 채운다
 }
 
 // standalone 페이지 전용: 실측 옵션 지표(data/options_stats.json). 대시보드에서는 app.js 가
@@ -2825,6 +2961,7 @@ async function init() {
     if (input.value.trim()) runAnalysis(resolveKoAliasToTicker(input.value));
   });
   ensureStats();
+  ensureCalibration();
   standaloneDataPromise = loadOptionsStatsStandalone();
 
   // 시장에 맞는 예시 티커/플레이스홀더 (KR이면 한국 종목으로 교체)
@@ -2863,9 +3000,18 @@ async function init() {
 
 document.addEventListener("DOMContentLoaded", init);
 
+// 브라우저에서는 ensureStats() 가 fetch 로 채우지만, 노드(오프라인 빌더)에는 fetch 대상이
+// 없으므로 같은 파일을 읽어 여기로 주입한다. 화면과 동일한 통계 테이블을 쓰기 위한 것.
+function setOfflineStats(patterns, breakouts) {
+  patternStats = patterns || null;
+  breakoutStats = breakouts || null;
+}
+
 // ===== 외부 노출 (대시보드 app.js 등에서 재사용) =====
 window.MirProb = {
   analyzeRows,
+  technicalScoreRows,   // 오프라인 캘리브레이션이 쓰는 기술 점수 단독 계산
+  setOfflineStats,      // 노드 환경에서 pattern/breakout 통계를 주입
   analyzeTicker,
   buildResultHTML,
   supportResistanceLevels,
@@ -2889,7 +3035,10 @@ window.MirProb = {
   chandelierExitArray,
   buildMultiTimeframeContext,
   ensureStats,
+  ensureCalibration,
+  calibrationBucket,
   gaugeColor,
   verdictText,
 };
+if (typeof module !== "undefined" && module.exports) module.exports = window.MirProb;
 })();

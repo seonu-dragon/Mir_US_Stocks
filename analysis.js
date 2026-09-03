@@ -206,21 +206,13 @@ function emaArray(values, period) {
   return out;
 }
 
-function vwapArray(rows) {
-  const out = Array(rows.length).fill(null);
-  let pv = 0;
-  let vol = 0;
-  for (let i = 0; i < rows.length; i += 1) {
-    const typical = (rows[i].h + rows[i].l + rows[i].c) / 3;
-    const v = rows[i].v || 0;
-    pv += typical * v;
-    vol += v;
-    out[i] = vol ? pv / vol : typical;
-  }
-  return out;
+// 종가만으로 시고저를 합성한 행(chart-indicators.js getChartRows 의 closeSeries 폴백)인지.
+// 그런 행의 H/L 은 가짜라서 ATR·샹들리에·캔들/패턴 감지는 빈 결과를 돌려준다.
+function isSyntheticRows(rows) {
+  return Array.isArray(rows) && rows.length > 0 && rows[rows.length - 1] != null && rows[rows.length - 1].synthetic === true;
 }
 
-// 롤링 N일 거래량가중평균가(VWAP). 전체 누적 VWAP(vwapArray)은 오래된 데이터에
+// 롤링 N일 거래량가중평균가(VWAP). 전체 누적 VWAP은 오래된 데이터에
 // 지배돼 현재 신호로 의미가 약하므로, 신호용은 최근 구간만 보는 롤링 VWAP을 쓴다.
 function rollingVwap(rows, period = 20) {
   const out = Array(rows.length).fill(null);
@@ -252,10 +244,18 @@ function keltnerChannels(rows, period = 20, mult = 2) {
   };
 }
 
+// 선행스팬 A/B 는 정의상 26봉 앞으로 옮긴다: 배열 인덱스 i 의 spanA/spanB 는 "i-26 시점에
+// 계산돼 i 봉에 적용되는 구름" 이다(앞 26개는 null). 그래서 last(spanA/spanB) 가 곧
+// 현재가와 비교할 구름이다. 예전엔 옮기지 않아 '오늘 계산한 값' 과 비교했다.
+// chart-indicators.js 의 동명 함수와 같은 정의를 유지할 것.
+const ICHIMOKU_SHIFT = 26;
 function ichimokuArrays(rows) {
+  const n = rows.length;
+  const nulls = () => Array(n).fill(null);
+  if (isSyntheticRows(rows)) return { tenkan: nulls(), kijun: nulls(), spanA: nulls(), spanB: nulls() };
   const midRange = (period) => {
-    const out = Array(rows.length).fill(null);
-    for (let i = period - 1; i < rows.length; i += 1) {
+    const out = nulls();
+    for (let i = period - 1; i < n; i += 1) {
       const slice = rows.slice(i - period + 1, i + 1);
       out[i] = (Math.max(...slice.map((r) => r.h)) + Math.min(...slice.map((r) => r.l))) / 2;
     }
@@ -263,9 +263,14 @@ function ichimokuArrays(rows) {
   };
   const tenkan = midRange(9);
   const kijun = midRange(26);
-  const spanB = midRange(52);
-  const spanA = tenkan.map((v, i) => (v == null || kijun[i] == null ? null : (v + kijun[i]) / 2));
-  return { tenkan, kijun, spanA, spanB };
+  const spanBRaw = midRange(52);
+  const spanARaw = tenkan.map((v, i) => (v == null || kijun[i] == null ? null : (v + kijun[i]) / 2));
+  const shift = (arr) => {
+    const out = nulls();
+    for (let i = ICHIMOKU_SHIFT; i < n; i += 1) out[i] = arr[i - ICHIMOKU_SHIFT];
+    return out;
+  };
+  return { tenkan, kijun, spanA: shift(spanARaw), spanB: shift(spanBRaw) };
 }
 
 function supertrendState(rows, period = 10, mult = 3) {
@@ -304,11 +309,16 @@ function cmfArray(rows, period = 20) {
 }
 
 function mfiArray(rows, period = 14) {
+  if (isSyntheticRows(rows)) return Array(rows.length).fill(null);
   const tp = rows.map((r) => (r.h + r.l + r.c) / 3);
+  // 정의: 전형가격(tp)이 전일보다 오르면 양의 자금흐름, 내리면 음, 같으면 제외.
+  // (예전엔 자금흐름 크기(tp×거래량)끼리 비교해 거래량 급증일이 무조건 '유입'으로 잡혔다.)
   const rmf = rows.map((r, i) => {
     const raw = tp[i] * (r.v || 0);
     if (!i) return { pos: 0, neg: 0 };
-    return raw > tp[i - 1] * (rows[i - 1].v || 0) ? { pos: raw, neg: 0 } : { pos: 0, neg: raw };
+    if (tp[i] > tp[i - 1]) return { pos: raw, neg: 0 };
+    if (tp[i] < tp[i - 1]) return { pos: 0, neg: raw };
+    return { pos: 0, neg: 0 };
   });
   const out = Array(rows.length).fill(null);
   for (let i = period; i < rows.length; i += 1) {
@@ -466,9 +476,11 @@ function aggregateMonthly(rows) {
   return months;
 }
 
-function tfTrendState(closes) {
-  const sma20 = smaArray(closes, 20);
-  const sma60 = smaArray(closes, 60);
+// 이평 정배열/역배열 판정. 일·주봉은 20/60, 월봉은 6/12 — 5년 이력은 월봉이 60개뿐이라
+// 60개월 SMA 를 요구하면 항상 "데이터 부족" 이 된다(월봉 12개 이상이면 판정 가능).
+function tfTrendState(closes, fast = 20, slow = 60) {
+  const sma20 = smaArray(closes, fast);
+  const sma60 = smaArray(closes, slow);
   const n = closes.length - 1;
   const s20 = sma20[n];
   const s60 = sma60[n];
@@ -495,33 +507,47 @@ function computeGapFillStats(rows, maxFillBars = 40, minPct = 0.003) {
     for (let j = i + 1; j < Math.min(rows.length, i + maxFillBars); j += 1) {
       if (rows[j].l <= zone.hi && rows[j].h >= zone.lo) { filled = true; fillBars = j - i; break; }
     }
-    samples.push({ ...zone, filled, fillBars });
+    // 우측 절단(right-censoring): 관찰 창(maxFillBars)이 아직 다 지나지 않은 최근 갭은
+    // '안 메워짐' 으로 확정할 수 없다. 비율 분모에서 빼고 목록에는 '관찰 중' 으로 남긴다.
+    const censored = !filled && (i + maxFillBars > rows.length);
+    samples.push({ ...zone, filled, fillBars, censored });
   }
-  const n = samples.length;
-  const filledN = samples.filter((s) => s.filled).length;
+  const resolved = samples.filter((s) => !s.censored);
+  const n = resolved.length;
+  const filledN = resolved.filter((s) => s.filled).length;
   const recent = samples.slice(-3).reverse();
   return {
     samples: n,
+    pending: samples.length - n,
     fillRate: n ? (filledN / n) * 100 : null,
-    avgFillBars: filledN ? samples.filter((s) => s.filled && s.fillBars != null).reduce((a, s) => a + s.fillBars, 0) / filledN : null,
+    avgFillBars: filledN ? resolved.filter((s) => s.filled && s.fillBars != null).reduce((a, s) => a + s.fillBars, 0) / filledN : null,
     recent,
   };
 }
 
-function estimateOptionsContext(price, rows) {
-  const step = price >= 200 ? 10 : price >= 50 ? 5 : price >= 10 ? 2.5 : 1;
-  const strike = Math.round(price / step) * step;
-  const nodes = volumeProfileNodes(rows || []);
-  const sorted = nodes.slice().sort((a, b) => b.vol - a.vol);
-  const magnet = sorted[0] ? sorted[0].price : strike;
-  const maxPain = Math.abs(magnet - price) < step * 2 ? magnet : strike;
-  return {
-    maxPain,
-    callWall: strike + step,
-    putWall: Math.max(0.01, strike - step),
-    gammaZone: [strike - step, strike + step],
-    note: "옵션 OI 미연동 · VP·행사가 그리드 기반 추정",
+// 실측 옵션 지표(data/options_stats.js, window.OPTIONS_STATS — 야후 최근월물 OI 기준).
+// 예전의 '맥스페인/콜월/풋월/감마 추정' 카드는 옵션 데이터 없이 행사가 그리드로 산수만
+// 한 것이라 삭제했다. 빌더가 수집한 종목(약 76개)만 값이 있고, 없으면 카드를 내지 않는다.
+function optionsStatsForTicker(ticker) {
+  if (!ticker || typeof window === "undefined") return null;
+  const os = window.OPTIONS_STATS;
+  if (!os || !os.stocks) return null;
+  const row = os.stocks[String(ticker).toUpperCase()];
+  if (!row) return null;
+  const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+  const out = {
+    putCallOI: num(row.putCallOI),
+    putCallVol: num(row.putCallVol),
+    maxPain: num(row.maxPain),
+    expectedMovePct: num(row.expectedMovePct),
+    expiry: row.expiry || null,
+    callOI: num(row.callOI),
+    putOI: num(row.putOI),
+    source: os.source || "options_stats",
+    updatedAtKst: os.updatedAtKst || null,
   };
+  if (out.putCallOI == null && out.maxPain == null) return null;
+  return out;
 }
 
 function institutionalFlowForTicker(ticker) {
@@ -548,8 +574,9 @@ function institutionalFlowForTicker(ticker) {
 }
 
 function chandelierExitArray(rows, period = 22, mult = 3) {
-  const atr = atrArray(rows, period);
   const out = Array(rows.length).fill(null);
+  if (isSyntheticRows(rows)) return out;
+  const atr = atrArray(rows, period);
   for (let i = period - 1; i < rows.length; i += 1) {
     const slice = rows.slice(Math.max(0, i - period + 1), i + 1);
     const hi = Math.max(...slice.map((r) => r.h));
@@ -597,7 +624,7 @@ function buildMultiTimeframeContext(rows) {
   const monthly = aggregateMonthly(rows);
   if (weekly.length < 20) return { alignment: 0, bias: 0, label: "주봉 데이터 부족", daily, weekly: null, monthly: null };
   const wTrend = tfTrendState(weekly.map((r) => r.c));
-  const mTrend = monthly.length >= 12 ? tfTrendState(monthly.map((r) => r.c)) : { bull: false, bear: false, label: "월봉 부족" };
+  const mTrend = monthly.length >= 12 ? tfTrendState(monthly.map((r) => r.c), 6, 12) : { bull: false, bear: false, label: "월봉 부족" };
   let score = 0;
   if (daily.bull) score += 1; else if (daily.bear) score -= 1;
   if (wTrend.bull) score += 1.2; else if (wTrend.bear) score -= 1.2;
@@ -636,7 +663,7 @@ function slopePct(values, lookback) {
 // ===== 캔들 패턴 (최근 봉 기준) =====
 function detectCandlePatterns(rows) {
   const n = rows.length;
-  if (n < 3) return [];
+  if (n < 3 || isSyntheticRows(rows)) return [];
   const a = rows[n - 3];
   const b = rows[n - 2];
   const c = rows[n - 1];
@@ -919,17 +946,28 @@ function zigzagPivots(pivots) {
   return seq;
 }
 
-function confirmBreak(rows, startIdx, level, direction, invalidateLevel) {
+// startIdx 다음 봉부터 종가가 level 을 direction 방향으로 돌파하는 첫 봉(확정 인덱스).
+// lag: startIdx 가 프랙탈 피벗(좌우 PIVOT_WIN 봉 비교)이면 그 피벗은 PIVOT_WIN 봉 뒤에야
+// 알 수 있다. 그 전에 돌파가 나면 실전에서는 알 수 없었던 시점이므로 확정 인덱스를
+// startIdx+lag 이후로 민다(룩어헤드 방지 — 전방 수익률은 확정 인덱스부터 잰다).
+// 피벗이 아니라 완성된 봉(NR4·인사이드바·라운딩 창 끝)에서 시작하는 감지기는 lag=0.
+// scripts/pattern_lib.py _confirm_break 와 1:1 로 동일해야 한다.
+function confirmBreak(rows, startIdx, level, direction, invalidateLevel, lag = PAT.PIVOT_WIN) {
   const n = rows.length;
   const end = Math.min(n, startIdx + 1 + PAT.CONFIRM_MAX_BARS);
   for (let k = startIdx + 1; k < end; k += 1) {
     const c = rows[k].c;
+    let hit = false;
     if (direction < 0) {
       if (invalidateLevel != null && c > invalidateLevel) return null;
-      if (c < level) return k;
+      if (c < level) hit = true;
     } else {
       if (invalidateLevel != null && c < invalidateLevel) return null;
-      if (c > level) return k;
+      if (c > level) hit = true;
+    }
+    if (hit) {
+      const ci = Math.max(k, startIdx + lag);
+      return ci < n ? ci : null;
     }
   }
   return null;
@@ -1521,7 +1559,7 @@ function detectRoundingBottom(rows) {
       const endPrice = ys[WIN - 1];
       const cupLip = Math.max(startPrice, endPrice);
 
-      const ci = confirmBreak(rows, k - 1, cupLip, +1, null);
+      const ci = confirmBreak(rows, k - 1, cupLip, +1, null, 0); // 창 끝 봉은 완성된 봉 — 피벗 지연 없음
       if (ci != null && ci >= k) {
         const pts = [];
         for (let i = 0; i < WIN; i += 10) {
@@ -1605,7 +1643,7 @@ function detectComplexHns(rows, z) {
 const _confirmationsCache = new WeakMap();
 
 function detectConfirmations(rows) {
-  if (rows.length < PAT.PIVOT_WIN * 2 + 5) return [];
+  if (rows.length < PAT.PIVOT_WIN * 2 + 5 || isSyntheticRows(rows)) return [];
   const cached = _confirmationsCache.get(rows);
   if (cached && cached.n === rows.length) return cached.events;
   const pivots = findPivots(rows);
@@ -1762,6 +1800,17 @@ function computeConfluence(cards) {
   return { score, bull, bear, label };
 }
 
+// 캔들 계열 패턴 — 신호 합의에서는 buildSignals 의 '캔들' family(detectCandlePatterns)가
+// 이미 한 표를 던지므로 여기서는 카드로만 보여 주고 신호로는 넣지 않는다(이중 계상 방지).
+const CANDLE_PATTERN_KEYS = new Set([
+  "bullish_engulfing", "bearish_engulfing", "hammer", "shooting_star", "doji", "morning_star",
+  "evening_star", "three_white_soldiers", "three_black_crows", "piercing_line", "dark_cloud_cover",
+]);
+// 패턴 신호 채택 기준: 표본이 얇거나(n<200) 기준선 대비 우위(edge)가 1%p 미만이면
+// 노이즈라 신호를 내지 않는다. 방향 크기는 원시 상승률이 아니라 기준선 대비 edge 로.
+const PATTERN_SIGNAL_MIN_N = 200;
+const PATTERN_SIGNAL_MIN_EDGE = 1.0;
+
 // 감지된 현재 패턴 + 과거 통계 → 신호 + 카드 정보
 function patternSignals(rows, horizon, stats, opts) {
   opts = opts || {};
@@ -1774,13 +1823,19 @@ function patternSignals(rows, horizon, stats, opts) {
     if (!pstat || !pstat[hKey]) continue;
     const s = pstat[hKey];
     const barsAgo = rows.length - 1 - ev.confirm_idx;
-    const dir = Math.max(-1, Math.min(1, (s.up_rate - 50) / 8));
-    result.signals.push({
-      label: `패턴: ${PATTERN_LABELS[ev.pattern] || ev.pattern}`,
-      dir,
-      weight: 1.0,
-      detail: `과거 ${s.n.toLocaleString()}건 중 ${s.up_rate.toFixed(0)}% 상승 (${barsAgo === 0 ? "오늘" : barsAgo + "봉 전"} 확정)`,
-    });
+    const edge = Number.isFinite(s.edge) ? s.edge : null;
+    const eligible = !CANDLE_PATTERN_KEYS.has(ev.pattern)
+      && edge != null && Math.abs(edge) >= PATTERN_SIGNAL_MIN_EDGE
+      && (s.n || 0) >= PATTERN_SIGNAL_MIN_N;
+    if (eligible) {
+      const dir = Math.max(-1, Math.min(1, edge / 8));
+      result.signals.push({
+        label: `패턴: ${PATTERN_LABELS[ev.pattern] || ev.pattern}`,
+        dir,
+        weight: 1.0,
+        detail: `과거 ${s.n.toLocaleString()}건 · 시장 대비 ${edge >= 0 ? "+" : ""}${edge.toFixed(1)}%p (${barsAgo === 0 ? "오늘" : barsAgo + "봉 전"} 확정)`,
+      });
+    }
     const indyStat = analyzeIndividualPatternPerformance(rows, ev.pattern, horizon);
     const useIndy = opts.statsMode === "individual" && indyStat;
     const displayStat = useIndy ? { ...indyStat, edge: s.edge, n: indyStat.n, _source: "individual" } : { ...s, _source: "population" };
@@ -1898,14 +1953,17 @@ function buildSignals(rows) {
     const rsi = last(rsiSeries(closes, 14));
     let dir = 0;
     let detail = "중립";
+    // state 는 브리핑 문구용 명시 상태. 예전엔 dir<-0.4 를 '과매수' 로 읽어 RSI 31~46
+    // (하락 우위)에도 "과매수 구간 진입" 이 찍혔다.
+    let state = "neutral";
     if (rsi != null) {
-      if (rsi >= 70) { dir = -0.5; detail = `과매수 ${rsi.toFixed(0)} (단기 부담)`; }
-      else if (rsi <= 30) { dir = 0.6; detail = `과매도 ${rsi.toFixed(0)} (반등 기대)`; }
-      else if (rsi >= 55) { dir = 0.5; detail = `${rsi.toFixed(0)} (상승 우위)`; }
-      else if (rsi <= 45) { dir = -0.5; detail = `${rsi.toFixed(0)} (하락 우위)`; }
+      if (rsi >= 70) { dir = -0.5; state = "overbought"; detail = `과매수 ${rsi.toFixed(0)} (단기 부담)`; }
+      else if (rsi <= 30) { dir = 0.6; state = "oversold"; detail = `과매도 ${rsi.toFixed(0)} (반등 기대)`; }
+      else if (rsi >= 55) { dir = 0.5; state = "bullish"; detail = `${rsi.toFixed(0)} (상승 우위)`; }
+      else if (rsi <= 45) { dir = -0.5; state = "bearish"; detail = `${rsi.toFixed(0)} (하락 우위)`; }
       else { dir = (rsi - 50) / 10; detail = `${rsi.toFixed(0)} (중립권)`; }
     }
-    signals.push({ label: "RSI(14)", dir, weight: 1.0, detail });
+    signals.push({ label: "RSI(14)", dir, weight: 1.0, detail, state, value: rsi });
   }
 
   // 5. 스토캐스틱
@@ -2104,13 +2162,15 @@ function buildSignals(rows) {
   {
     const sq = ttmSqueezeState(rows);
     let dir = 0;
-    let detail = sq.squeezed ? "수축 중 (변동성 폭발 대기)" : "수축 해제";
+    // 기본(수축도 해제도 아님)은 '스퀴즈 없음'. 예전 기본값 "수축 해제" 는 브리핑이
+    // '해제' 문자열로 판정해 스퀴즈가 없던 종목 전부에 "변동성 확대 국면" 을 붙였다.
+    let detail = sq.squeezed ? "수축 중 (변동성 폭발 대기)" : "스퀴즈 없음";
     if (sq.fired) {
       const mom = last(rocArray(closes, 12));
       dir = mom != null && mom > 0 ? 0.55 : mom != null && mom < 0 ? -0.55 : 0;
       detail = "스퀴즈 해제 + 모멘텀 " + (mom >= 0 ? "상승" : "하락");
     } else if (sq.squeezed) dir = 0.1;
-    signals.push({ label: "TTM Squeeze", dir, weight: sq.fired ? 1.0 : 0.5, detail });
+    signals.push({ label: "TTM Squeeze", dir, weight: sq.fired ? 1.0 : 0.5, detail, fired: !!sq.fired, squeezed: !!sq.squeezed });
   }
 
   // 19. CMF / MFI
@@ -2321,24 +2381,46 @@ function backtestBaseRate(rows, horizon) {
 
   let upCount = 0;
   let sumFwd = 0;
+  let sumDist = 0;
   let best = -Infinity;
   let worst = Infinity;
   for (const m of top) {
     if (m.fwd > 0) upCount += 1;
     sumFwd += m.fwd;
+    sumDist += m.dist;
     best = Math.max(best, m.fwd);
     worst = Math.min(worst, m.fwd);
   }
+  const nTop = top.length;
+  const ci = wilsonInterval(upCount, nTop);
+  // 상태 벡터 5축이 각각 [-1,1] 이므로 최대 거리 = sqrt(20). 평균 거리를 0~1 유사도로 환산.
+  const avgDist = sumDist / nTop;
+  const similarity = Math.max(0, Math.min(1, 1 - avgDist / Math.sqrt(20)));
   return {
-    samples: top.length, // 시간적으로 독립인 유효 표본 수
-    upProb: (upCount / top.length) * 100, // 내부 블렌딩용 원시 비율(가중 로직은 그대로)
+    samples: nTop, // 시간적으로 독립인 유효 표본 수
+    upProb: (upCount / nTop) * 100, // 내부 블렌딩용 원시 비율(가중 로직은 그대로)
     // 표시용 라플라스 평활 (wins+1)/(n+2): 표본 12건 12승 같은 극단이 100%로 보이는
     // 과신을 막는다. 화면에는 이 값을 표본 수와 함께 보여준다.
-    upProbSmoothed: ((upCount + 1) / (top.length + 2)) * 100,
-    avgReturn: (sumFwd / top.length) * 100,
+    upProbSmoothed: ((upCount + 1) / (nTop + 2)) * 100,
+    ciLow: ci.low * 100,   // 윌슨 95% 신뢰구간(표본 수 기준) — 12건이면 ±25%p 가 넘는다
+    ciHigh: ci.high * 100,
+    avgDist,               // 이웃과의 평균 상태 거리(작을수록 비슷)
+    similarity,            // 0~1
+    avgReturn: (sumFwd / nTop) * 100,
     best: best * 100,
     worst: worst * 100,
   };
+}
+
+// 이항 비율의 윌슨 95% 신뢰구간(정규 근사보다 작은 n·극단 비율에서 안정적).
+function wilsonInterval(successes, n, z = 1.96) {
+  if (!n) return { low: 0, high: 1 };
+  const p = successes / n;
+  const z2 = z * z;
+  const denom = 1 + z2 / n;
+  const center = (p + z2 / (2 * n)) / denom;
+  const half = (z * Math.sqrt((p * (1 - p)) / n + z2 / (4 * n * n))) / denom;
+  return { low: Math.max(0, center - half), high: Math.min(1, center + half) };
 }
 
 // ===== 종합 =====
@@ -2401,7 +2483,7 @@ function analyzeRows(rows, horizon, meta) {
   const breakout = detectBreakoutRetest(clean, horizon, breakoutStats);
   const techLevels = computeTechnicalLevels(clean, price);
   const gapFill = computeGapFillStats(clean);
-  const optionsContext = isKrAnalysisMode() ? null : estimateOptionsContext(price, clean);
+  const optionsStats = (!isKrAnalysisMode() && meta.ticker) ? optionsStatsForTicker(meta.ticker) : null;
   const institutionalFlow = (!isKrAnalysisMode() && meta.ticker) ? institutionalFlowForTicker(meta.ticker) : null;
 
   // 실측(과거 유사 상황) 가중치는 독립 표본 수에 비례 — 표본이 많을수록 신뢰.
@@ -2435,7 +2517,7 @@ function analyzeRows(rows, horizon, meta) {
     shortSqueeze,
     shortData,
     gapFill,
-    optionsContext,
+    optionsStats,
     institutionalFlow,
     headlineUp,
     headlineDown: 100 - headlineUp,
@@ -2629,21 +2711,39 @@ function renderPatternCard(result) {
   </div>`;
 }
 
+// 기술 점수(신호 합의)와 과거 유사 실측의 방향 일치 여부. 둘 다 있고 같은 방향일 때만
+// "일관되게" 라고 말할 수 있다. 0 = 중립대(45~55), null = 실측 표본 없음.
+function directionBand(value) {
+  if (value == null || !Number.isFinite(value)) return null;
+  if (value >= 55) return 1;
+  if (value <= 45) return -1;
+  return 0;
+}
+
 function generateBriefing(result) {
   const up = result.headlineUp;
   const price = result.price;
   const signals = result.signals || [];
-  
+
+  const sigDir = directionBand(result.consensus ? result.consensus.up : null);
+  const baseUp = result.base ? (result.base.upProbSmoothed != null ? result.base.upProbSmoothed : result.base.upProb) : null;
+  const baseDir = directionBand(baseUp);
+  const agree = sigDir != null && baseDir != null && sigDir !== 0 && sigDir === baseDir;
+  let consistency = "";
+  if (baseDir == null) consistency = "과거 유사 상황 표본이 부족해 기술 신호만으로 판단한 결과이며, 실측 검증은 빠져 있습니다.";
+  else if (agree) consistency = "기술 신호(기술 점수)와 과거 유사 상황 실측이 일관되게 같은 방향을 가리키고 있습니다.";
+  else consistency = `다만 기술 점수(${result.consensus.up.toFixed(0)})와 과거 유사 상황 실측(상승 ${baseUp.toFixed(0)}%)의 방향이 엇갈려, 확신도는 낮게 보아야 합니다.`;
+
   let opinion = "";
-  if (up >= 65) opinion = `종합 분석 결과 <strong>상승 우위 국면</strong>입니다. 기술적 지표와 과거 통계가 일관되게 긍정적인 방향을 가리키고 있습니다.`;
-  else if (up >= 55) opinion = `종합 분석 결과 <strong>약한 상승 우위</strong> 상태입니다. 전반적인 추세는 우상향이나 단기 매물 소화 과정이 관찰됩니다.`;
+  if (up >= 65) opinion = `종합 분석 결과 <strong>상승 우위 국면</strong>입니다. ${consistency}`;
+  else if (up >= 55) opinion = `종합 분석 결과 <strong>약한 상승 우위</strong> 상태입니다. 전반적인 추세는 우상향이나 단기 매물 소화 과정이 관찰됩니다. ${consistency}`;
   else if (up > 45) opinion = `종합 분석 결과 <strong>방향성이 불분명한 혼조 국면</strong>입니다. 주요 신호들이 서로 엇갈리고 있어 무리한 추격 매수보다는 관망이 유리할 수 있습니다.`;
-  else if (up > 35) opinion = `종합 분석 결과 <strong>약한 하락 우위</strong> 상태입니다. 매수세가 점차 약해지고 있어 보수적인 리스크 관리가 필요합니다.`;
-  else opinion = `종합 분석 결과 <strong>하락 우위 국면</strong>입니다. 추세 이탈 신호가 다수 감지되어 기술적 반등 시 비중을 조절하는 전략을 권장합니다.`;
+  else if (up > 35) opinion = `종합 분석 결과 <strong>약한 하락 우위</strong> 상태입니다. 매수세가 점차 약해지고 있어 보수적인 리스크 관리가 필요합니다. ${consistency}`;
+  else opinion = `종합 분석 결과 <strong>하락 우위 국면</strong>입니다. 추세 이탈 신호가 다수 감지되어 기술적 반등 시 비중을 조절하는 전략을 권장합니다. ${consistency}`;
 
   let supportReasons = [];
   let riskReasons = [];
-  
+
   const maSig = signals.find(s => s.label === "이동평균선 배열");
   const rsiSig = signals.find(s => s.label.includes("RSI"));
   const macdSig = signals.find(s => s.label === "MACD");
@@ -2653,10 +2753,12 @@ function generateBriefing(result) {
     if (maSig.dir > 0.5) supportReasons.push("이동평균선이 정배열되어 탄탄한 상승 추세를 지지하고 있습니다.");
     else if (maSig.dir < -0.5) riskReasons.push("이평선이 역배열 상태로 상단에 강한 저항 매물이 쌓여 있습니다.");
   }
-  
+
   if (rsiSig) {
-    if (rsiSig.dir < -0.4) riskReasons.push("RSI 지표가 과매수 구간에 진입하여 단기 조정 리스크가 존재합니다.");
-    else if (rsiSig.dir > 0.5) supportReasons.push("RSI 지표가 과매도(침체)권에 있어 기술적 반등 가능성이 높습니다.");
+    // 명시 상태(state)로 판정 — dir 부호로 읽으면 '하락 우위(31~45)' 가 과매수로 오인된다.
+    if (rsiSig.state === "overbought") riskReasons.push("RSI 지표가 과매수 구간에 진입하여 단기 조정 리스크가 존재합니다.");
+    else if (rsiSig.state === "oversold") supportReasons.push("RSI 지표가 과매도(침체)권에 있어 기술적 반등 가능성이 높습니다.");
+    else if (rsiSig.state === "bearish") riskReasons.push(`RSI ${Math.round(rsiSig.value)}로 하락 우위권에 머물러 매수 모멘텀이 약합니다.`);
   }
 
   if (macdSig) {
@@ -2686,7 +2788,7 @@ function generateBriefing(result) {
   if (ichiSig && ichiSig.dir > 0.5) supportReasons.push("일목균형표상 구름 위 강세 구간입니다.");
   else if (ichiSig && ichiSig.dir < -0.5) riskReasons.push("일목균형표상 구름 아래 약세 구간입니다.");
   const sqSig = signals.find((s) => s.label === "TTM Squeeze");
-  if (sqSig && sqSig.detail.includes("해제")) supportReasons.push("볼린저·켈트너 수축 해제로 변동성 확대 국면에 진입했습니다.");
+  if (sqSig && sqSig.fired === true) supportReasons.push("볼린저·켈트너 수축 해제로 변동성 확대 국면에 진입했습니다.");
   if (result.mtf && result.mtf.bias > 0.5) supportReasons.push(`주봉 추세와 일봉이 일치합니다 (${result.mtf.label}).`);
   else if (result.mtf && result.mtf.bias < -0.5) riskReasons.push(`주봉·일봉 추세가 하락 방향으로 일치합니다.`);
   if (result.shortSqueeze) supportReasons.push(`공매도 커버 ${result.shortSqueeze.daysToCover.toFixed(1)}일 + 강세 패턴으로 숏 스퀴즈 셋업이 관찰됩니다.`);
@@ -2759,12 +2861,17 @@ function buildResultHTML(result) {
   const baseUpDisplay = result.base
     ? (result.base.upProbSmoothed != null ? result.base.upProbSmoothed : result.base.upProb)
     : null;
+  const ciStr = (result.base && result.base.ciLow != null)
+    ? `95% 구간 ${result.base.ciLow.toFixed(0)}~${result.base.ciHigh.toFixed(0)}%` : "";
+  const simStr = (result.base && result.base.similarity != null)
+    ? `이웃 유사도 ${(result.base.similarity * 100).toFixed(0)}% (평균 거리 ${result.base.avgDist.toFixed(2)})` : "";
   const baseHtml = result.base ? `
     <div class="card">
       <h3>② 과거 유사 상황 실측 <span class="muted">(${result.horizon}거래일 뒤)</span></h3>
       <p class="base-line">지난 5년 중 <b>지금과 비슷한 기술적 상태</b>였던 <b>${result.base.samples}회</b> 가운데
         <b style="color:${gaugeColor(baseUpDisplay)}">${baseUpDisplay.toFixed(0)}%</b>가 ${result.horizon}거래일 뒤 상승했습니다
-        <span class="muted">(표본 ${result.base.samples}건 · 평활 보정)</span></p>
+        <span class="muted">(표본 ${result.base.samples}건 · 평활 보정${ciStr ? " · " + ciStr : ""})</span></p>
+      ${simStr ? `<p class="muted" style="margin:0 0 6px;font-size:12px;">${simStr} · 표본이 적을수록 구간이 넓습니다</p>` : ""}
       <div class="base-stats">
         <div><span class="muted">평균 수익률</span><b style="color:${result.base.avgReturn >= 0 ? "var(--pos)" : "var(--neg)"}">${result.base.avgReturn >= 0 ? "+" : ""}${result.base.avgReturn.toFixed(1)}%</b></div>
         <div><span class="muted">최고</span><b style="color:var(--pos)">+${result.base.best.toFixed(0)}%</b></div>
@@ -2801,7 +2908,8 @@ function buildResultHTML(result) {
   const moreInner = `
     <div class="grid2 cprob-top-grid">
       <div class="card">
-        <h3>① 신호 합의 <span class="muted">(추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
+        <h3>① 기술 점수 <b>${result.consensus.up.toFixed(0)}</b><span class="muted">/100 · 신호 합의 (추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
+        <p class="muted" style="margin:0 0 8px;font-size:12px;">기술 점수는 지표 투표의 가중 합산을 0~100 으로 환산한 값이며 확률이 아닙니다. 실측 확률은 ② 를 보세요.</p>
         ${bullSignals.length ? `<div class="sig-group"><h4 class="bull">강세 신호</h4>${bullSignals.map(signalRow).join("")}</div>` : ""}
         ${bearSignals.length ? `<div class="sig-group"><h4 class="bear">약세 신호</h4>${bearSignals.map(signalRow).join("")}</div>` : ""}
         ${neutralSignals.length ? `<div class="sig-group"><h4 class="neu">중립</h4>${neutralSignals.map(signalRow).join("")}</div>` : ""}
@@ -2853,7 +2961,7 @@ function buildResultHTML(result) {
         <div class="prob-up" style="width:${up.toFixed(1)}%">상승 ${up.toFixed(0)}%</div>
         <div class="prob-down" style="width:${down.toFixed(1)}%">하락 ${down.toFixed(0)}%</div>
       </div>
-      <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 신호 합의 ${result.consensus.up.toFixed(0)}%${result.base ? ` / 과거 실측 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건)` : ""}</p>
+      <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 기술 점수 ${result.consensus.up.toFixed(0)}/100${result.base ? ` / 과거 실측 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건${result.base.ciLow != null ? `, 95% ${result.base.ciLow.toFixed(0)}~${result.base.ciHigh.toFixed(0)}%` : ""})` : " / 과거 실측 표본 부족"}</p>
     </div>
 
     <div class="card">
@@ -2926,24 +3034,34 @@ function renderGapFillCard(result) {
   const avg = g.avgFillBars != null ? `${g.avgFillBars.toFixed(0)}봉` : "—";
   const recent = (g.recent || []).map((z) => {
     const word = z.type === "up" ? "상승갭" : "하락갭";
-    const st = z.filled ? `메움(${z.fillBars}봉)` : "미체결";
+    const st = z.filled ? `메움(${z.fillBars}봉)` : z.censored ? "관찰 중(40봉 미경과)" : "미체결";
     return `<li>${word} ${fmtPrice(z.lo)}~${fmtPrice(z.hi)} · ${st}</li>`;
   }).join("");
+  const pending = g.pending ? ` <span class="muted">(관찰 중 ${g.pending}건 제외)</span>` : "";
   return `<div class="card gap-fill-card">
     <h3>갭 메우기 통계</h3>
-    <p class="base-line">과거 <b>${g.samples}</b>건 중 <b style="color:var(--primary)">${rate}</b>가 40봉 내 메워짐 · 평균 <b>${avg}</b></p>
+    <p class="base-line">과거 <b>${g.samples}</b>건 중 <b style="color:var(--primary)">${rate}</b>가 40봉 내 메워짐 · 평균 <b>${avg}</b>${pending}</p>
     ${recent ? `<ul class="muted" style="margin:8px 0 0;padding-left:18px;font-size:12px;">${recent}</ul>` : ""}
   </div>`;
 }
 
+// 실측 옵션 카드 — data/options_stats.js 에 그 종목이 있을 때만(없으면 카드 없음).
 function renderOptionsContextCard(result) {
   if (isKrAnalysisMode()) return "";
-  const o = result.optionsContext;
+  const o = result.optionsStats;
   if (!o) return "";
+  const parts = [];
+  if (o.putCallOI != null) parts.push(`풋/콜 OI <b>${o.putCallOI.toFixed(2)}</b>`);
+  if (o.putCallVol != null) parts.push(`풋/콜 거래량 <b>${o.putCallVol.toFixed(2)}</b>`);
+  if (o.maxPain != null) parts.push(`맥스페인 <b>${fmtPrice(o.maxPain)}</b>`);
+  if (o.expectedMovePct != null) parts.push(`예상 변동폭 <b>±${o.expectedMovePct.toFixed(1)}%</b>`);
+  if (!parts.length) return "";
+  const oi = (o.callOI != null && o.putOI != null)
+    ? ` · 콜 OI ${Math.round(o.callOI).toLocaleString()} / 풋 OI ${Math.round(o.putOI).toLocaleString()}` : "";
   return `<div class="card options-card">
-    <h3>옵션 맥스페인 · 감마 (추정)</h3>
-    <p class="base-line">맥스페인 <b>${fmtPrice(o.maxPain)}</b> · 콜월 <b>${fmtPrice(o.callWall)}</b> · 풋월 <b>${fmtPrice(o.putWall)}</b></p>
-    <p class="muted" style="margin:0;font-size:12px;">${escapeHtml(o.note)}</p>
+    <h3>옵션 포지셔닝 <span class="muted">(실측${o.expiry ? ` · 만기 ${escapeHtml(o.expiry)}` : ""})</span></h3>
+    <p class="base-line">${parts.join(" · ")}</p>
+    <p class="muted" style="margin:0;font-size:12px;">출처: ${escapeHtml(o.source)}${o.updatedAtKst ? ` · ${escapeHtml(o.updatedAtKst)}` : ""}${oi}</p>
   </div>`;
 }
 
@@ -2998,11 +3116,32 @@ function renderResult(result) {
   el.innerHTML = buildResultHTML(result);
 }
 
+// standalone 페이지 전용: 실측 옵션 지표(data/options_stats.json). 대시보드에서는 app.js 가
+// FEATURE_DATA(optionsStats)로 window.OPTIONS_STATS 를 채우므로 여기서는 받지 않는다.
+let standaloneDataPromise = null;
+async function loadOptionsStatsStandalone() {
+  if (typeof window === "undefined" || window.OPTIONS_STATS) return window.OPTIONS_STATS || null;
+  if (isKrAnalysisMode()) return null; // US 전용 데이터 — KR 에서 없는 파일을 부르지 않는다
+  try {
+    const res = await fetch("data/options_stats.json", { cache: "no-cache" });
+    if (res.ok) window.OPTIONS_STATS = await res.json();
+  } catch (e) { /* 없으면 옵션 카드만 생략 */ }
+  return window.OPTIONS_STATS || null;
+}
+
+// 요청 순서 보장: 빠르게 연달아 검색하면 먼저 보낸 요청의 응답이 나중에 도착해
+// 마지막 검색 결과를 덮어쓸 수 있다. 요청마다 id 를 올리고, 응답 시점에 최신이 아니면 버린다.
+let analysisRequestSeq = 0;
+
 async function runAnalysis(ticker) {
   const el = $("result");
+  const reqId = ++analysisRequestSeq;
   el.innerHTML = `<div class="notice">분석 중…</div>`;
   try {
+    await ensureStats(); // 통계가 아직 안 왔으면 기다린다(첫 검색을 stats 로드보다 먼저 눌러도 안전)
+    if (standaloneDataPromise) await standaloneDataPromise;
     const detail = await loadDetail(ticker);
+    if (reqId !== analysisRequestSeq) return; // 더 새로운 요청이 있음 — 이 응답은 버린다
     currentDetail = detail;
     const result = analyzeTicker(detail, currentHorizon);
     renderResult(result);
@@ -3011,6 +3150,7 @@ async function runAnalysis(ticker) {
     window.history.replaceState({}, "", url);
     updateAnalysisMeta(ticker, detail && detail.company);
   } catch (e) {
+    if (reqId !== analysisRequestSeq) return;
     const hint = (window.MirMarket && window.MirMarket.getMode() === "kr") ? "005930, 000660" : "NVDA, AAPL, TSLA";
     el.innerHTML = `<div class="notice err">"${escapeHtml(ticker)}" 종목 데이터를 찾을 수 없습니다. 티커를 정확히 입력했는지 확인해 주세요. (예: ${hint})</div>`;
   }
@@ -3064,12 +3204,16 @@ async function init() {
     window.MirMarket.setMode(market === "kr" ? "kr" : window.MirMarket.getInitialMode());
     document.title = window.MirMarket.getConfig().pageTitle + " · 차트 확률 분석";
   }
-  await ensureStats();
+  // submit 바인딩을 통계 로드보다 먼저 건다. 예전엔 await ensureStats() 뒤에 바인딩해,
+  // 통계가 오기 전에 Enter 를 치면 preventDefault 가 없어 폼이 네이티브 GET 으로 페이지를
+  // 다시 불러왔다. runAnalysis 가 스스로 ensureStats() 를 기다리므로 순서가 바뀌어도 안전.
   const input = $("tickerInput");
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     if (input.value.trim()) runAnalysis(resolveKoAliasToTicker(input.value));
   });
+  ensureStats();
+  standaloneDataPromise = loadOptionsStatsStandalone();
 
   // 시장에 맞는 예시 티커/플레이스홀더 (KR이면 한국 종목으로 교체)
   const krMode = window.MirMarket && window.MirMarket.getMode() === "kr";
@@ -3126,8 +3270,10 @@ window.MirProb = {
   cmfArray,
   mfiArray,
   computeGapFillStats,
-  estimateOptionsContext,
+  optionsStatsForTicker,
   institutionalFlowForTicker,
+  rsiSeries,        // Wilder RSI — chart_capture.js 가 대시보드와 같은 정의를 쓰도록 노출
+  isSyntheticRows,
   chandelierExitArray,
   buildMultiTimeframeContext,
   ensureStats,

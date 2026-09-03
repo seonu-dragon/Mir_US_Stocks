@@ -10,6 +10,8 @@ FLAGPOLE_MIN = 0.10
 PENNANT_POLE_MIN = 0.05
 PENNANT_POLE_MAX = 0.15
 GAP_MIN_PCT = 0.02
+GAP_TREND_WIN = 20      # 갭 이전 추세 측정 창(봉)
+GAP_TREND_MIN = 0.10    # 이 이상 같은 방향으로 달린 뒤의 갭 = 소진형
 FAKE_BREAK_WIN = 10
 CUP_WIN = 40
 HANDLE_MAX_PULLBACK = 0.15
@@ -238,7 +240,7 @@ def detect_rounding_bottom(rows):
         mean_y = sum_y / s
         if mean_y > 0 and c2 / mean_y > 1e-4 and win * 0.35 < axis < win * 0.65:
             cup_lip = max(ys[0], ys[-1])
-            ci = pl._confirm_break(rows, k - 1, cup_lip, +1, None)
+            ci = pl._confirm_break(rows, k - 1, cup_lip, +1, None, lag=0)  # 창 끝 봉은 완성된 봉 — 피벗 지연 없음
             if ci is not None and ci >= k:
                 _append(out, "rounding_bottom", +1, ci, cup_lip)
     return out
@@ -353,39 +355,46 @@ def detect_fake_breakout(rows):
         lo = max(0, k - pl.SR_LOOKBACK)
         res = max(rows[i]["h"] for i in range(lo, k))
         sup = min(rows[i]["l"] for i in range(lo, k))
+        # 확정 인덱스는 '실패가 확인된 봉'(j) — 돌파 봉(k)으로 잡으면 k+1..k+10 의 미래
+        # 종가로 판정한 결과를 k 시점에 알았던 것처럼 되어 룩어헤드가 된다(JS 와 동일).
         if prev <= res < price:
-            failed = any(rows[j]["c"] < res for j in range(k + 1, min(n, k + 1 + FAKE_BREAK_WIN)))
-            if failed:
-                _append(out, "bull_trap", -1, k, res)
+            failed_at = next((j for j in range(k + 1, min(n, k + 1 + FAKE_BREAK_WIN)) if rows[j]["c"] < res), None)
+            if failed_at is not None:
+                _append(out, "bull_trap", -1, failed_at, res)
         if prev >= sup > price:
-            failed = any(rows[j]["c"] > sup for j in range(k + 1, min(n, k + 1 + FAKE_BREAK_WIN)))
-            if failed:
-                _append(out, "bear_trap", +1, k, sup)
+            failed_at = next((j for j in range(k + 1, min(n, k + 1 + FAKE_BREAK_WIN)) if rows[j]["c"] > sup), None)
+            if failed_at is not None:
+                _append(out, "bear_trap", +1, failed_at, sup)
     return out
 
 
 def detect_gaps(rows):
+    """갭 분류는 '갭 이전 추세' 로: 같은 방향으로 이미 크게(>=GAP_TREND_MIN) 달린 뒤의 갭은
+    소진형(exhaustion), 아니면 이탈형(breakaway). 예전엔 배열 위치(k<30)로 갈랐는데 그건
+    데이터 파일 안의 위치일 뿐 차트 의미가 없다. 추세 창이 안 되는 초반 봉은 건너뛴다(JS 동일).
+    """
     out = []
     n = len(rows)
-    for k in range(1, n):
+    for k in range(GAP_TREND_WIN + 1, n):
         prev = rows[k - 1]
         cur = rows[k]
         gap_up = cur["l"] > prev["h"] * (1 + GAP_MIN_PCT)
         gap_dn = cur["h"] < prev["l"] * (1 - GAP_MIN_PCT)
+        if not gap_up and not gap_dn:
+            continue
+        base = rows[k - 1 - GAP_TREND_WIN]["c"]
+        prior_ret = (prev["c"] - base) / base if base else 0
         if gap_up:
-            pat = "breakaway_gap_up" if k < 30 or cur["c"] > prev["c"] * 1.05 else "exhaustion_gap_up"
+            pat = "exhaustion_gap_up" if prior_ret >= GAP_TREND_MIN else "breakaway_gap_up"
             _append(out, pat, +1, k, prev["h"])
         if gap_dn:
-            pat = "breakaway_gap_down" if k < 30 or cur["c"] < prev["c"] * 0.95 else "exhaustion_gap_down"
+            pat = "exhaustion_gap_down" if prior_ret <= -GAP_TREND_MIN else "breakaway_gap_down"
             _append(out, pat, -1, k, prev["l"])
-        if gap_up and k >= 2:
-            p2 = rows[k - 2]
-            if p2["h"] < cur["l"] and rows[k - 1]["l"] > p2["h"]:
-                _append(out, "island_reversal", -1, k, cur["l"])
-        if gap_dn and k >= 2:
-            p2 = rows[k - 2]
-            if p2["l"] > cur["h"] and rows[k - 1]["h"] < p2["l"]:
-                _append(out, "island_reversal", +1, k, cur["h"])
+        p2 = rows[k - 2]
+        if gap_up and p2["h"] < cur["l"] and rows[k - 1]["l"] > p2["h"]:
+            _append(out, "island_reversal", -1, k, cur["l"])
+        if gap_dn and p2["l"] > cur["h"] and rows[k - 1]["h"] < p2["l"]:
+            _append(out, "island_reversal", +1, k, cur["h"])
     return out
 
 
@@ -431,22 +440,22 @@ def detect_nr_inside(rows):
     for k in range(5, n):
         rng = rows[k]["h"] - rows[k]["l"]
         prior = [rows[i]["h"] - rows[i]["l"] for i in range(k - 4, k)]
+        # NR4/인사이드바의 기준 봉 k 는 완성된 봉이라 피벗 지연(lag)이 없다 → lag=0.
         if rng > 0 and all(rng < r for r in prior):
-            ci_up = pl._confirm_break(rows, k, rows[k]["h"], +1, rows[k]["l"])
+            ci_up = pl._confirm_break(rows, k, rows[k]["h"], +1, rows[k]["l"], lag=0)
             if ci_up is not None:
                 _append(out, "nr4_breakout_up", +1, ci_up, rows[k]["h"])
-            ci_dn = pl._confirm_break(rows, k, rows[k]["l"], -1, rows[k]["h"])
+            ci_dn = pl._confirm_break(rows, k, rows[k]["l"], -1, rows[k]["h"], lag=0)
             if ci_dn is not None:
                 _append(out, "nr4_breakout_down", -1, ci_dn, rows[k]["l"])
-        if k >= 2:
-            prev, cur = rows[k - 1], rows[k]
-            if cur["h"] <= prev["h"] and cur["l"] >= prev["l"]:
-                ci_up = pl._confirm_break(rows, k, prev["h"], +1, cur["l"])
-                if ci_up is not None:
-                    _append(out, "inside_bar_breakout_up", +1, ci_up, prev["h"])
-                ci_dn = pl._confirm_break(rows, k, prev["l"], -1, cur["h"])
-                if ci_dn is not None:
-                    _append(out, "inside_bar_breakout_down", -1, ci_dn, prev["l"])
+        prev, cur = rows[k - 1], rows[k]
+        if cur["h"] <= prev["h"] and cur["l"] >= prev["l"]:
+            ci_up = pl._confirm_break(rows, k, prev["h"], +1, cur["l"], lag=0)
+            if ci_up is not None:
+                _append(out, "inside_bar_breakout_up", +1, ci_up, prev["h"])
+            ci_dn = pl._confirm_break(rows, k, prev["l"], -1, cur["h"], lag=0)
+            if ci_dn is not None:
+                _append(out, "inside_bar_breakout_down", -1, ci_dn, prev["l"])
     return out
 
 
@@ -504,18 +513,15 @@ def detect_candle_patterns(rows):
             _append(out, "shooting_star", -1, k, c["c"])
         if body_c < rng_c * 0.1:
             _append(out, "doji", 0, k, c["c"])
-        if k >= 2:
-            m1, m2, m3 = rows[k - 2], rows[k - 1], rows[k]
-            if _body(m2) < _range(m2) * 0.25 and m1["c"] < m1["o"] and m3["c"] > m3["o"] and m3["c"] > (m1["o"] + m1["c"]) / 2:
-                _append(out, "morning_star", +1, k, m3["c"])
-            if _body(m2) < _range(m2) * 0.25 and m1["c"] > m1["o"] and m3["c"] < m3["o"] and m3["c"] < (m1["o"] + m1["c"]) / 2:
-                _append(out, "evening_star", -1, k, m3["c"])
-        if k >= 2:
-            r1, r2, r3 = rows[k - 2], rows[k - 1], rows[k]
-            if all(r["c"] > r["o"] for r in (r1, r2, r3)) and r2["c"] > r1["c"] and r3["c"] > r2["c"]:
-                _append(out, "three_white_soldiers", +1, k, r3["c"])
-            if all(r["c"] < r["o"] for r in (r1, r2, r3)) and r2["c"] < r1["c"] and r3["c"] < r2["c"]:
-                _append(out, "three_black_crows", -1, k, r3["c"])
+        # 3봉 패턴: a=k-2, b=k-1, c=k (루프가 k>=2 에서 시작하므로 별도 가드 불필요)
+        if body_b < _range(b) * 0.25 and a["c"] < a["o"] and c["c"] > c["o"] and c["c"] > (a["o"] + a["c"]) / 2:
+            _append(out, "morning_star", +1, k, c["c"])
+        if body_b < _range(b) * 0.25 and a["c"] > a["o"] and c["c"] < c["o"] and c["c"] < (a["o"] + a["c"]) / 2:
+            _append(out, "evening_star", -1, k, c["c"])
+        if all(r["c"] > r["o"] for r in (a, b, c)) and b["c"] > a["c"] and c["c"] > b["c"]:
+            _append(out, "three_white_soldiers", +1, k, c["c"])
+        if all(r["c"] < r["o"] for r in (a, b, c)) and b["c"] < a["c"] and c["c"] < b["c"]:
+            _append(out, "three_black_crows", -1, k, c["c"])
         if c["c"] > c["o"] and b["c"] < b["o"] and c["c"] > (b["o"] + b["c"]) / 2 and c["o"] < b["c"]:
             _append(out, "piercing_line", +1, k, c["c"])
         if c["c"] < c["o"] and b["c"] > b["o"] and c["c"] < (b["o"] + b["c"]) / 2 and c["o"] > b["c"]:

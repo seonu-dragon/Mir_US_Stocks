@@ -183,34 +183,6 @@ function setTabHidden(btn, hidden) {
   btn.style.display = hidden ? "none" : "";
 }
 
-// ===== 실측 RSI(14) · EPS(TTM) 표시 헬퍼 =====
-// RS/EPS 합성 점수를 전면 제거하고, 빌더가 light 스냅샷에 심는 실측값만 노출한다.
-//  - rsi14: 실측 Wilder RSI(14). 합성 히스토리(가짜 가격) 종목은 null → 정렬/필터 제외 + "—".
-//  - epsTtm: 실측 TTM EPS(음수 가능). 펀더멘털이 없으면 null → "—".
-function rsiValue(item) {
-  // 합성 히스토리(가짜 가격) 종목은 실측 RSI 가 없다. light 스냅샷은 null 이지만
-  // 상세 JSON 병합(withDetail)이 옛 rsi14 를 덮어쓸 수 있어 소스로 한 번 더 차단한다.
-  if (!item || isSyntheticHistory(item)) return null;
-  const v = Number(item.rsi14);
-  return Number.isFinite(v) ? v : null;
-}
-function epsTtmValue(item) {
-  const v = Number(item && item.epsTtm);
-  return Number.isFinite(v) ? v : null;
-}
-function fmtRsi(item) {
-  const v = rsiValue(item);
-  return v == null ? "—" : String(Math.round(v));
-}
-// 시장별 통화로 EPS 포맷. KR 은 원(정수), US 는 달러(소수 2자리). 음수도 자연 처리.
-function fmtEpsValue(v) {
-  if (!Number.isFinite(Number(v))) return "—";
-  const n = Number(v);
-  return isKrMarket() ? `₩${Math.round(n).toLocaleString("ko-KR")}` : `$${n.toFixed(2)}`;
-}
-function fmtEps(item) {
-  return fmtEpsValue(epsTtmValue(item));
-}
 function isStockEtf(item) {
   if (!item) return false;
   if (isKrMarket()) {
@@ -441,55 +413,6 @@ function low52DistPct(item) {
   return (price / low - 1) * 100;
 }
 
-const KR_PRICE_LIMIT_PCT = 30;
-
-function krDisplayChangePct(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return 0;
-  if (!isKrMarket()) return n;
-  return Math.max(-KR_PRICE_LIMIT_PCT, Math.min(KR_PRICE_LIMIT_PCT, n));
-}
-
-// 범용 %포맷 — 클램프 없음. 1주·1개월·YTD 같은 기간 수익률은 KR 에서도 ±30% 를
-// 정상적으로 넘을 수 있으므로 여기로 온다. (예전엔 모든 %가 krDisplayChangePct 를
-// 거쳐 기간 수익률까지 "(상하한)" 으로 잘려 나갔다.)
-// 부호 붙은 %(0 은 부호 없음). fmtPct(▲▼ 마커)·fmtDailyPct(KR 상하한 클램프)·actionPct(마커
-// 없음)가 전부 여기로 온다 — 예전엔 같은 식이 8곳에 흩어져 있었다.
-const fmtSignedPct = (value, digits = 1, suffix = "%") => {
-  const n = Number(value) || 0;
-  return `${n > 0 ? "+" : ""}${n.toFixed(digits)}${suffix}`;
-};
-const pctMarker = (n) => (n > 0 ? "▲ " : n < 0 ? "▼ " : "");
-const fmtPct = (value) => {
-  const n = Number(value) || 0;
-  return `${pctMarker(n)}${fmtSignedPct(n)}`;
-};
-
-// 당일 등락률 전용 — KR 은 가격제한폭(±30%) 을 넘을 수 없으므로, 넘는 값은 데이터
-// 오류(전일종가 어긋남 등)로 보고 상하한으로 클램프하고 "(상하한)" 을 표시한다.
-const fmtDailyPct = (value) => {
-  const raw = Number(value) || 0;
-  const n = isKrMarket() ? krDisplayChangePct(raw) : raw;
-  const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
-  const suffix = atLimit ? " (상하한)" : "";
-  return `${pctMarker(n)}${fmtSignedPct(n)}${suffix}`;
-};
-const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
-const byId = (id) => document.getElementById(id);
-
-function formatKstDateTime(date = new Date()) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(date);
-  const get = (type) => parts.find((p) => p.type === type)?.value || "";
-  return `${get("year")}-${get("month")}-${get("day")} ${get("hour")}:${get("minute")} KST`;
-}
 
 function updateDataLoadedAt(date = new Date()) {
   const el = byId("updatedAt");
@@ -1977,10 +1900,6 @@ function actionBoardCard(title, hint, rows, emptyText, target, extraClass = "") 
     </article>`;
 }
 
-// 액션보드 컴팩트 등락률: 화살표 없이 부호+숫자만(색으로 방향 표시) → 좁은 카드에서도 안 잘림
-function actionPct(value) {
-  return fmtSignedPct(value);
-}
 
 function actionStockRow(item, note) {
   return `
@@ -6510,41 +6429,6 @@ function layoutRow(row, box, out) {
   return { x: box.x, y: box.y + rowHeight, w: box.w, h: Math.max(0, box.h - rowHeight) };
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "\"": "&quot;",
-    "'": "&#39;"
-  })[char]);
-}
-
-// 외부 소스 텍스트(브리핑 파이프라인·소셜·LLM 답변)의 이모지/픽토그램 제거. 사이트는 장식
-// 이모지를 쓰지 않는다(기능 심볼 ★☆✓▲▼ 등은 유지). 국기(지역 지시자)·피부색 수정자·
-// 변이 선택자·ZWJ·키캡까지 걷어낸다.
-const EMOJI_KEEP = new Set(["★", "☆", "✓", "✔", "▲", "▼", "▶", "◀", "©", "®", "™", "↑", "↓", "→", "←", "↔", "•"]);
-const EMOJI_RE = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|[\u{E0020}-\u{E007F}]|[\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu;
-function stripEmoji(text) {
-  return String(text ?? "").replace(EMOJI_RE, (ch) => (EMOJI_KEEP.has(ch) ? ch : ""));
-}
-// 브리핑 HTML: 이모지를 떼고 "📊 [제목] - 날짜" 굵은 첫 줄을 제목/날짜로 바꾼다.
-function sanitizeBriefingHtml(html) {
-  let out = stripEmoji(html);
-  out = out.replace(/<b>\s*\[([^\]<]+)\]\s*-?\s*([^<]*?)\s*<\/b>/, (m, title, date) =>
-    `<strong class="briefing-title">${title.trim()}</strong>${date.trim() ? ` <span class="muted">${date.trim()}</span>` : ""}`);
-  // 이모지가 빠진 자리의 앞 공백 정리("<b> 제목" → "<b>제목")
-  out = out.replace(/(<(?:b|strong|h[1-6])(?:\s[^>]*)?>)\s+/g, "$1");
-  return out;
-}
-
-function debounce(fn, delay) {
-  let id;
-  return (...args) => {
-    clearTimeout(id);
-    id = setTimeout(() => fn(...args), delay);
-  };
-}
 
 function renderSelected(item) {
   byId("selectedStock").innerHTML = stockFacts(item, "선택 종목");

@@ -142,3 +142,18 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   클라이언트 렌더 페이지를 한꺼번에 올리면 thin content 로 취급되기 쉽다.
   딥링크가 색인되려면 `analysis.js` 의 `updateAnalysisMeta` 가 종목별 canonical 을
   써 줘야 한다. 둘 중 하나만 바꾸면 효과가 없다.
+
+## Cloudflare Worker (worker/)
+
+- **머지해도 배포되지 않는다** — 대시보드에 붙여넣는 수동 배포다(DEPLOY.md 3번).
+  라이브가 안 바뀌면 먼저 이걸 의심할 것.
+- LLM 경로(`/chat`, `move_analysis`, `?ticker=` 의 summary)는 **Origin 이 있어야**
+  돈다. 허용: `https://seonu-dragon.github.io` + 모든 `http://localhost:<port>` /
+  `http://127.0.0.1:<port>`(스모크 포트가 매번 달라진다). Origin 없는 요청·`null`
+  Origin 은 거부다 — 예전엔 통과시켜서 curl 한 줄로 LLM 이 돌았다. 캐시 히트도
+  게이트 뒤에 있다. `?fx=`·`?indices=`·뉴스/차트 같은 데이터 프록시는 계속 개방.
+- 커뮤니티는 `env.COMMUNITY_DO`(Durable Object, 유료 플랜) 유무로 갈린다:
+  있으면 `/community*` 를 인스턴스 하나로 직렬화, 없으면 기존 KV + 재시도 경로.
+  바인딩을 안 넣어도 아무것도 깨지지 않는다.
+- 워커를 고쳤으면: `node --check worker/yahoo-proxy.js` + `node worker/test_worker.mjs`
+  (네트워크 없이 게이트·저장소 계층만 검증).

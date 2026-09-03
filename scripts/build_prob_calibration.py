@@ -49,7 +49,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from briefing_store import atomic_write_text  # noqa: E402  중단 시 잘린 JSON 방지
+# 산출물 기록은 공유 경로로. write_data 가 .json/.js 쌍을 원자적으로 쓰고
+# (briefing_store.atomic_write_text), 0건 페이로드로 기존 표를 덮는 것을 막는다.
+from sec_client import write_data  # noqa: E402
 
 WORKER = ROOT / "scripts" / "prob_calibration_worker.js"
 OUT_JSON = ROOT / "data" / "prob_calibration.json"
@@ -296,9 +298,8 @@ def main() -> int:
         print(f"\n(dry-run) {elapsed:.0f}초 — 파일을 쓰지 않았습니다.")
         return 0
 
-    compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    atomic_write_text(OUT_JSON, compact)
-    atomic_write_text(OUT_JS, f"window.PROB_CALIBRATION = {compact};\n")
+    # indent=None → .json 도 compact(표가 작아 pretty 로 부풀릴 이유가 없다).
+    write_data(OUT_JSON, OUT_JS, "PROB_CALIBRATION", payload, indent=None)
     print(f"\nWrote {OUT_JSON.name}, {OUT_JS.name} ({elapsed:.0f}초, 평가 {merged_meta['evals']}건)")
     return 0
 

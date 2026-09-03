@@ -628,8 +628,9 @@ def load_json(path: Path) -> dict:
 
 
 def save_json(path: Path, payload: dict) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+    # 원자적 쓰기(빌더 규약). 예전엔 write_text 라 중간에 죽으면 반쪽 JSON 이 남았다.
+    from briefing_store import atomic_write_text
+    atomic_write_text(path, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
 def detail_path(market: str, ticker: str) -> Path:

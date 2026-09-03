@@ -1,3 +1,4 @@
+/* === critical:start === */
 :root {
   color-scheme: light;
   --bg: #f6f7f9;
@@ -104,6 +105,7 @@ html[data-density="compact"] {
 * {
   box-sizing: border-box;
 }
+/* === critical:end === */
 
 /* 앱 토스트(예: '한 번 더 뒤로 가기하면 종료됩니다') */
 .app-toast {
@@ -210,6 +212,7 @@ html[data-density="compact"] {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* === critical:start === */
 html {
   scroll-padding-bottom: var(--chat-safe-bottom);
 }
@@ -255,6 +258,7 @@ select {
   color: var(--topbar-fg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
+/* === critical:end === */
 
 /* ===== 브랜드 로고 락업 ===== */
 .brand-lockup {
@@ -687,6 +691,7 @@ h1 {
 .lightbox-prev { left: 18px; }
 .lightbox-next { right: 18px; }
 
+/* === critical:start === */
 main {
   width: min(1440px, 100%);
   margin: 0 auto;
@@ -735,6 +740,7 @@ main {
 
 /* ===== Top header: Fear&Greed gauge / sector TOP5 / FX ===== */
 .summary-band .summary-card { padding: 9px 11px; }
+/* === critical:end === */
 
 .regime-card {
   display: flex;
@@ -886,6 +892,7 @@ main {
   .index-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* === critical:start === */
 .tabs-scroll-wrap {
   position: sticky;
   top: 0;
@@ -928,6 +935,19 @@ main {
   box-shadow: inset 0 -2px 0 0 var(--primary);
 }
 
+.panel {
+  display: none;
+  background: var(--panel);
+  border: none;
+  border-radius: var(--r-lg);
+  padding: var(--space-4);
+}
+
+.panel.is-active {
+  display: block;
+}
+/* === critical:end === */
+
 /* 탭 순서 변경(드래그) */
 .tab.is-dragging {
   opacity: 0.96;
@@ -948,17 +968,6 @@ main {
   background: color-mix(in srgb, var(--primary) 8%, transparent);
 }
 
-.panel {
-  display: none;
-  background: var(--panel);
-  border: none;
-  border-radius: var(--r-lg);
-  padding: var(--space-4);
-}
-
-.panel.is-active {
-  display: block;
-}
 
 .toolbar {
   display: flex;
@@ -8728,6 +8737,7 @@ a:hover { text-decoration: underline; }
 /* ============================================================
    다크 모드 (토큰 기반 · 라이트 모드는 변경 없음)
    ============================================================ */
+/* === critical:start === */
 html[data-theme="dark"] {
   color-scheme: dark;
   --bg: #0b1220;
@@ -8772,6 +8782,7 @@ html[data-theme="dark"] {
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.6);
 }
+/* === critical:end === */
 /* 장식용 라이트 그라데이션 → 다크에서 평면 다크 표면 */
 html[data-theme="dark"] .event-card-community,
 html[data-theme="dark"] .community-cardnews-block,

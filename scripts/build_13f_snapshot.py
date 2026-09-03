@@ -25,6 +25,7 @@ if str(SCRIPTS) not in sys.path:
 from briefing_store import repository_publish_lock  # noqa: E402
 from institutions_13f_registry import UNIQUE_INSTITUTIONS  # noqa: E402
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+from sec_client import git_publish  # noqa: E402
 
 OUT_JSON = ROOT / "data" / "institutional_13f.json"
 OUT_JS = ROOT / "data" / "institutional_13f.js"
@@ -212,45 +213,17 @@ def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
 
 def write_files(payload: dict) -> None:
     atomic_write_text(OUT_JSON, json.dumps(payload, ensure_ascii=False, indent=2))
-    OUT_JS.write_text(
+    # 브라우저가 읽는 쪽. write_text 는 중단 시 잘린 파일을 남긴다 — .json 과 같이 원자적으로.
+    atomic_write_text(
+        OUT_JS,
         "window.INSTITUTIONAL_13F = "
         + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
         + ";\n",
-        encoding="utf-8",
     )
 
 
-def _run_git(args, **kwargs):
-    return subprocess.run(["git", *args], cwd=ROOT, **kwargs)
-
-
 def publish() -> bool:
-    paths = ["data/institutional_13f.json", "data/institutional_13f.js"]
-    remotes = _run_git(["remote"], capture_output=True, text=True, check=True)
-    if not remotes.stdout.strip():
-        print("  [Git] 원격 없음 — 푸시 생략")
-        return True
-    branch = _run_git(["branch", "--show-current"], capture_output=True, text=True, check=True).stdout.strip()
-    if not branch:
-        raise RuntimeError("detached HEAD")
-    _run_git(["add", "--", *paths], check=True)
-    status = _run_git(["status", "--porcelain", "--", *paths], capture_output=True, text=True, check=True)
-    if status.stdout.strip():
-        stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        msg = f"Auto-update institutional 13F: {stamp}"
-        _run_git(["commit", "-m", msg, "--", *paths], check=True)
-    for attempt in range(1, 4):
-        try:
-            _run_git(["fetch", "origin", branch], check=True)
-            _run_git(["pull", "--rebase", "origin", branch], check=True)
-            _run_git(["push", "origin", branch], check=True)
-            print(f"  [Git] origin/{branch} institutional 13F 푸시 완료")
-            return True
-        except Exception as error:
-            if attempt < 3:
-                print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
-                time.sleep(10)
-    return False
+    return git_publish(["data/institutional_13f.json", "data/institutional_13f.js"], "institutional 13F")
 
 
 def main() -> None:

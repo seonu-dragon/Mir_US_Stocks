@@ -18,9 +18,18 @@ from __future__ import annotations
 
 import glob
 import json
+import sys
 from pathlib import Path
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글·U+2014 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from briefing_store import atomic_write_text  # noqa: E402  중단 시 잘린 파일 방지
+
 MARKET_PATHS = {
     "us": {
         "details": ROOT / "data" / "details",
@@ -179,9 +188,8 @@ def build_market(market: str) -> None:
     add_value_score(table)
 
     payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))
-    cfg["out_json"].parent.mkdir(parents=True, exist_ok=True)
-    cfg["out_json"].write_text(payload, encoding="utf-8")
-    cfg["out_js"].write_text(f"window.{cfg['global']} = {payload};\n", encoding="utf-8")
+    atomic_write_text(cfg["out_json"], payload)
+    atomic_write_text(cfg["out_js"], f"window.{cfg['global']} = {payload};\n")
 
     counts = {}
     for metrics in table.values():

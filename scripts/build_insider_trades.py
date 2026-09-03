@@ -18,7 +18,6 @@ from __future__ import annotations
 import argparse
 import gzip
 import json
-import subprocess
 import sys
 import time
 import urllib.parse
@@ -34,6 +33,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from sec_client import git_publish  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 ET_TZ = ZoneInfo("America/New_York")
@@ -337,37 +337,8 @@ def write_files(payload):
     )
 
 
-def _run_git(args, **kw):
-    return subprocess.run(["git", *args], cwd=ROOT, **kw)
-
-
 def publish():
-    paths = ["data/insider_trades.json", "data/insider_trades.js"]
-    remotes = _run_git(["remote"], capture_output=True, text=True, check=True)
-    if not remotes.stdout.strip():
-        print("  [Git] 원격 없음 — 푸시 생략")
-        return True
-    branch = _run_git(["branch", "--show-current"], capture_output=True, text=True, check=True).stdout.strip()
-    if not branch:
-        raise RuntimeError("detached HEAD")
-    _run_git(["add", "--", *paths], check=True)
-    status = _run_git(["status", "--porcelain", "--", *paths], capture_output=True, text=True, check=True)
-    if status.stdout.strip():
-        stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        msg = f"Auto-update insider trades: {stamp}"
-        _run_git(["commit", "-m", msg, "--", *paths], check=True)
-    for attempt in range(1, 4):
-        try:
-            _run_git(["fetch", "origin", branch], check=True)
-            _run_git(["pull", "--rebase", "origin", branch], check=True)
-            _run_git(["push", "origin", branch], check=True)
-            print(f"  [Git] origin/{branch} insider trades 푸시 완료")
-            return True
-        except Exception as error:
-            if attempt < 3:
-                print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
-                time.sleep(10)
-    return False
+    return git_publish(["data/insider_trades.json", "data/insider_trades.js"], "insider trades")
 
 
 def main():

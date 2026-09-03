@@ -1172,7 +1172,6 @@ function renderStockEvents(item) {
   renderEarningsCalendar(item);
   renderEarningsReaction(item);
   renderSmartMoney(item);
-  renderInst13fChange(item);
 }
 
 function stockEventRows(item) {

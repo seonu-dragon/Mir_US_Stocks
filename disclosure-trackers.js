@@ -1265,7 +1265,7 @@ function govContractsSectionHtml() {
 // 자사주(매입=환원)의 정반대 리스크. KR_DISCLOSURES(유상증자·CB·BW·EB 발행결정) +
 // KR_EVENT_DETAILS(희석률·전환가·발행금액, build_kr_event_details.py 가 이미 파싱) +
 // 시총을 프론트에서 조합한다. 새 백엔드 0.
-let dilutionSort = "dilution", dilutionQuery = "", _dilutionTried = false, _usDilutionLoadTried = false;
+let dilutionSort = "dilution", dilutionQuery = "", _dilutionTried = false;
 function dilutionCategory(title) {
   const t = title || "";
   if (t.includes("유상증자결정")) return { key: "증자", label: "유상증자" };
@@ -1473,7 +1473,6 @@ window.resetDisclosureTrackerCaches = function resetDisclosureTrackerCaches() {
   _contractTried = false;
   _govContractsTried = false;
   _dilutionTried = false;
-  _usDilutionLoadTried = false;
   _usEarnReactCache = null;
   _usEarnReactLoading = false;
 };

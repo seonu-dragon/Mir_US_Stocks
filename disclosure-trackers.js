@@ -939,8 +939,13 @@ function applyEarnReactPanelLabels(isUs) {
 // 상세파일(earningsHistory=실제 발표일 + chartSeries=일봉)에서 발표일(D0)·익일(D+1)
 // 종가 등락률을 계산한다. 컨센서스의 period 는 분기말이라 발표일이 아니다 —
 // 실제 발표일은 상세파일 earningsHistory.date 를 쓴다. 동시요청 6개 제한, 메모리 캐시.
-let _usEarnReactRows = null;
+// 스냅샷 날짜로 키를 잡는다 — 페이지를 안 닫고 다음날 스냅샷이 갱신되면(장기 세션·PWA)
+// 어제 결과가 그대로 남던 것을 막는다.
+let _usEarnReactCache = null; // { key: 스냅샷 날짜, rows }
 let _usEarnReactLoading = false;
+function usEarnReactCacheKey() {
+  return `us:${String((data && (data.updatedAtKst || data.updated_at_kst)) || "")}`;
+}
 
 async function buildUsEarnReactRows() {
   await ensureFeatureData("analystConsensus");
@@ -991,20 +996,21 @@ function renderUsEarningsReactions() {
   const meta = byId("earnReactMeta");
   if (!wrap) return;
   applyEarnReactPanelLabels(true);
-  if (!_usEarnReactRows) {
+  const cacheKey = usEarnReactCacheKey();
+  if (!_usEarnReactCache || _usEarnReactCache.key !== cacheKey) {
     if (!_usEarnReactLoading) {
       _usEarnReactLoading = true;
       if (meta) meta.innerHTML = "";
       wrap.innerHTML = '<p class="muted">최근 실적을 발표한 시총 상위 종목의 주가 데이터를 불러오는 중… (최대 50종목)</p>';
       buildUsEarnReactRows().then((rows) => {
-        _usEarnReactRows = rows;
+        _usEarnReactCache = { key: cacheKey, rows };
         _usEarnReactLoading = false;
         if (!isKrMarket() && searchSubTab === "earnreact") renderUsEarningsReactions();
-      });
+      }).catch(() => { _usEarnReactLoading = false; });
     }
     return;
   }
-  let rows = _usEarnReactRows.slice();
+  let rows = _usEarnReactCache.rows.slice();
   const q = earnReactQuery.trim().toLowerCase();
   if (q) rows = rows.filter((r) => r.ticker.toLowerCase().includes(q) || r.company.toLowerCase().includes(q));
   if (earnReactSort === "react") rows.sort((a, b) => Math.max(Math.abs(b.d0 ?? 0), Math.abs(b.d1 ?? 0)) - Math.max(Math.abs(a.d0 ?? 0), Math.abs(a.d1 ?? 0)));
@@ -1451,3 +1457,23 @@ function renderKrHighlights() {
     <div class="kr-hl-chips" style="display:flex;flex-wrap:wrap;gap:8px">${items.map(chip).join("")}</div>`;
   el.querySelectorAll(".kr-hl-chip").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
+
+// ===== 시장 전환 시 lazy 로드 플래그 초기화 =====
+// 위의 _*Tried 플래그는 "이 탭에서 한 번 시도했다"를 기억해 같은 파일을 반복 요청하지
+// 않게 하는데, 시장별 데이터라 한 번 true 가 되면 반대 시장으로 바꿔도 영원히 재시도하지
+// 않는다(KR→US→KR 이면 배당·공급계약·희석이 빈 화면). app.js 의 resetMarketCaches() 가
+// 피처 전역을 지울 때 이것도 함께 불러야 한다.
+window.resetDisclosureTrackerCaches = function resetDisclosureTrackerCaches() {
+  _krShortVolTried = false;
+  _ftdTried = false;
+  _buybackTried = false;
+  _earnReactTried = false;
+  _dividendTried = false;
+  _usDividendTried = false;
+  _contractTried = false;
+  _govContractsTried = false;
+  _dilutionTried = false;
+  _usDilutionLoadTried = false;
+  _usEarnReactCache = null;
+  _usEarnReactLoading = false;
+};

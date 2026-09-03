@@ -3,10 +3,38 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
+// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
+// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
+if (!window.safeStorage) {
+  window.safeStorage = {
+    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
+    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
+    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
+    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
+    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
+  };
+}
+
 // ===== 스크리너 =====
 let savedScreeners = [];
 let selectedSavedScreenerId = "";
 let applyingSavedScreener = false;
+
+// RSI 범위 입력의 DOM id. 원래 id(scrMinRs/scrMinEps)는 예전 'RS ≥ / EPS' 필터 시절
+// 이름이라 오해를 부른다(실제 의미는 RSI 하한/상한). index.html 이 scrMinRsi/scrMaxRsi 로
+// 바뀌면 그쪽을 우선 쓰고, 그때까지는 옛 id 로 폴백한다.
+function scrRsiMinId() { return byId("scrMinRsi") ? "scrMinRsi" : "scrMinRs"; }
+function scrRsiMaxId() { return byId("scrMaxRsi") ? "scrMaxRsi" : "scrMinEps"; }
+
+// 저장 스크리너 config 의 옛 키(minRs/minEps → RSI 하한/상한)를 새 키로 옮긴다.
+function migrateScreenerConfig(config) {
+  if (!config || typeof config !== "object") return config;
+  if (config.minRsi == null && config.minRs != null) config.minRsi = config.minRs;
+  if (config.maxRsi == null && config.minEps != null) config.maxRsi = config.minEps;
+  delete config.minRs;
+  delete config.minEps;
+  return config;
+}
 
 function screenerSnapshotKey() {
   return String(data.updatedAtKst || data.updated_at_kst || "unknown");
@@ -18,8 +46,8 @@ function currentScreenerConfig() {
     sector: byId("scrSector")?.value || "All",
     preset: byId("scrPreset")?.value || "custom",
     metric: byId("scrMetric")?.value || "rsi14",
-    minRs: numberInputValue("scrMinRs", 0),
-    minEps: numberInputValue("scrMinEps", 0),
+    minRsi: numberInputValue(scrRsiMinId(), 0),
+    maxRsi: numberInputValue(scrRsiMaxId(), 0),
     minVol: numberInputValue("scrMinVol", 0),
     minCap: numberInputValue("scrMinCap", 0),
     limit: Math.max(1, numberInputValue("scrLimit", 100))
@@ -28,14 +56,15 @@ function currentScreenerConfig() {
 
 function applyScreenerConfig(config) {
   if (!config) return;
+  migrateScreenerConfig(config);
   applyingSavedScreener = true;
   const values = {
     scrBucket: config.bucket,
     scrSector: config.sector,
     scrPreset: config.preset,
     scrMetric: config.metric,
-    scrMinRs: config.minRs || "",
-    scrMinEps: config.minEps || "",
+    [scrRsiMinId()]: config.minRsi || "",
+    [scrRsiMaxId()]: config.maxRsi || "",
     scrMinVol: config.minVol || "",
     scrMinCap: config.minCap || "",
     scrLimit: config.limit || 100
@@ -45,14 +74,13 @@ function applyScreenerConfig(config) {
 }
 
 function loadSavedScreeners() {
-  try {
-    const rows = JSON.parse(localStorage.getItem(SAVED_SCREENER_STORAGE_KEY) || "[]");
-    savedScreeners = Array.isArray(rows) ? rows.filter((row) => row && row.id && row.name && row.config) : [];
-  } catch (_) { savedScreeners = []; }
+  const rows = window.safeStorage.getJSON(SAVED_SCREENER_STORAGE_KEY, []);
+  savedScreeners = Array.isArray(rows) ? rows.filter((row) => row && row.id && row.name && row.config) : [];
+  savedScreeners.forEach((row) => migrateScreenerConfig(row.config));
 }
 
 function persistSavedScreeners() {
-  try { localStorage.setItem(SAVED_SCREENER_STORAGE_KEY, JSON.stringify(savedScreeners)); } catch (_) {}
+  window.safeStorage.setJSON(SAVED_SCREENER_STORAGE_KEY, savedScreeners);
 }
 
 function savedScreenerById(id = selectedSavedScreenerId) {
@@ -162,8 +190,8 @@ function screenerRows() {
   const preset = byId("scrPreset")?.value || "custom";
   const metric = byId("scrMetric")?.value || "rsi14";
   const patternCat = byId("scrPattern")?.value || "any";
-  const minRsi = numberInputValue("scrMinRs", 0);
-  const maxRsi = numberInputValue("scrMinEps", 0);
+  const minRsi = numberInputValue(scrRsiMinId(), 0);
+  const maxRsi = numberInputValue(scrRsiMaxId(), 0);
   const minVol = numberInputValue("scrMinVol", 0);
   const minCap = numberInputValue("scrMinCap", 0);
   const limit = Math.max(1, numberInputValue("scrLimit", 100));
@@ -411,12 +439,13 @@ function runNlScreener() {
 // ===== 화면 설정 (테마 · 밀도) 토글 =====
 const UI_PREFS_KEY = "mir_ui_prefs_v1";
 function getUiPrefs() {
-  try { return JSON.parse(localStorage.getItem(UI_PREFS_KEY)) || {}; } catch (e) { return {}; }
+  const p = window.safeStorage.getJSON(UI_PREFS_KEY, {});
+  return p && typeof p === "object" ? p : {};
 }
 function setUiPref(key, val) {
   const p = getUiPrefs();
   p[key] = val;
-  try { localStorage.setItem(UI_PREFS_KEY, JSON.stringify(p)); } catch (e) { /* ignore */ }
+  window.safeStorage.setJSON(UI_PREFS_KEY, p);
 }
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
@@ -548,8 +577,8 @@ function setupScreenerEvents() {
     const p = TOP_PRESETS[key];
     if (p) {
       byId("scrMetric").value = p.metric;
-      byId("scrMinRs").value = p.minRsi || "";
-      byId("scrMinEps").value = p.maxRsi || "";
+      byId(scrRsiMinId()).value = p.minRsi || "";
+      byId(scrRsiMaxId()).value = p.maxRsi || "";
       byId("scrMinVol").value = p.minVolume || "";
       byId("scrMinCap").value = presetMinMarketCap(key) || "";
     }
@@ -564,13 +593,13 @@ function setupScreenerEvents() {
     byId("scrBucket").value = marketCfg().defaultBucket || "idx_sp500";
     byId("scrSector").value = "All";
     byId("scrMetric").value = "rsi14";
-    ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
+    [scrRsiMinId(), scrRsiMaxId(), "scrMinVol", "scrMinCap"].forEach((id) => { const el = byId(id); if (el) el.value = ""; });
     selectedSavedScreenerId = "";
     renderSavedScreenerPicker();
     renderSavedScreenerDelta(null);
     run(false);
   });
-  ["scrMinRs", "scrMinEps", "scrMinVol", "scrMinCap"].forEach((id) => byId(id)?.addEventListener("change", () => {
+  [scrRsiMinId(), scrRsiMaxId(), "scrMinVol", "scrMinCap"].forEach((id) => byId(id)?.addEventListener("change", () => {
     if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }
   }));
   byId("savedScreenerSelect")?.addEventListener("change", (event) => {

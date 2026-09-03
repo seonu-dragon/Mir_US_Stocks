@@ -32,22 +32,19 @@
       .replace(/"/g, "&quot;");
   }
 
-  function smaSeries(values, period) {
-    const out = new Array(values.length).fill(null);
-    for (let i = period - 1; i < values.length; i += 1) {
-      const slice = values.slice(i - period + 1, i + 1);
-      out[i] = slice.reduce((s, v) => s + v, 0) / period;
-    }
-    return out;
+  // 지표 수학은 indicators.js(window.MirIndicators) 한 곳에만 있다. 예전엔 이 파일이 SMA 를
+  // 따로 구현하고 RSI 는 단순 평균(Cutler)으로 계산해 대시보드·분석 페이지의 RSI(14) 와
+  // 값이 달랐다. chart_capture.html 이 indicators.js 를 먼저 싣는다.
+  function MirInd() {
+    const m = window.MirIndicators;
+    if (!m) throw new Error("indicators.js 미로드 — <script src=\"indicators.js\"> 를 먼저 두세요.");
+    return m;
   }
 
-  // RSI 는 analysis.js(window.MirProb.rsiSeries)의 Wilder 정의를 그대로 쓴다. 예전엔 여기서
-  // 단순 평균(Cutler) RSI 를 따로 계산해 대시보드·분석 페이지의 RSI(14) 와 값이 달랐다.
-  function rsiSeries(closes, period = 14) {
-    const fn = window.MirProb && window.MirProb.rsiSeries;
-    if (fn) return fn(closes, period);
-    return new Array(closes.length).fill(null);
-  }
+  function smaSeries(values, period) { return MirInd().smaArray(values, period); }
+
+  // Wilder RSI (대시보드·분석 페이지와 같은 정의).
+  function rsiSeries(closes, period = 14) { return MirInd().rsiSeries(closes, period); }
 
   // 지표는 컨텍스트(보이는 구간 + 앞쪽 이력)로 계산한 뒤 보이는 구간만 잘라 그린다.
   // 보이는 행만으로 계산하면 좌측 워밍업 구간(SMA60 이면 59봉)이 비고, 1M 캡처는

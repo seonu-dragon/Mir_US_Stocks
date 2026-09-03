@@ -115,9 +115,13 @@ CHECKS = {
         ("data/short_interest.json", 10, True),
     ],
     # weekly-edge-stats.yml(일요일 04:20 KST).
+    # weekly-edge-stats.yml 이 실제로 CI 에서 굽는 산출물은 breakout/retest 뿐이다.
+    # sr_stats.json 은 2026-08-06 에 "엣지 없음"으로 주간 스케줄에서 뺐고(프론트 참조 0건),
+    # korea/disclosure_stats.json 은 gitignore 된 로컬 아카이브를 입력으로 써 CI 에서
+    # 만들 수 없다(분기 1회 수동). 둘 다 의도된 정지 상태라 감시 대상이 아니다 —
+    # 넣어 두면 매주 워크플로우를 빨갛게 만들어 진짜 고장을 가린다.
     "edge-stats": [
-        ("data/sr_stats.json", 10, False),
-        ("data/korea/disclosure_stats.json", 10, False),
+        ("data/breakout_retest_stats.json", 10, False),
     ],
     # 13f-quarterly-refresh.yml — 분기 공시(45일 시차)라 정상 상태도 오래 늙어 보인다.
     "13f": [

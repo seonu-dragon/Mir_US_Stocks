@@ -23,11 +23,13 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 240  # 실측 45분~2시간45분(2026-08-31 이력 확장 시)이라 120 은 위험
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
+          # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
+          fetch-depth: 1
 
       # 신선도 가드 — 백업 스케줄(22:00 KST) 전용. 본선(korea-close-briefing,
       # 15:42 KST)이 이미 오늘 KST 날짜의 스냅샷을 발행했으면 fresh=true 를 내고

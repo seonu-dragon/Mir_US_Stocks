@@ -19,7 +19,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
+          # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:
@@ -57,6 +59,10 @@ jobs:
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_event_details.py --push
+      # 위 빌더 스텝은 continue-on-error 라 소스가 영구히 죽어도 워크플로우는 초록이다.
+      # 산출물의 타임스탬프 나이로 마지막 관문을 세운다(scripts/check_data_freshness.py).
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group kr-dart
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

@@ -11,6 +11,9 @@
 # 갱신을 사이트에 반영하려면 각 워크플로우의 완료를 workflow_run 으로 받아야
 # 한다 — 이 목록이 비면 데이터가 레포에만 쌓이고 사이트는 멈춘다.
 # 데이터 워크플로우를 새로 추가하면 여기에도 그 name: 을 넣을 것.
+# (SNS/ 처럼 아래 rsync 제외 경로에만 커밋하는 워크플로우는 넣지 않는다 —
+# "Daily Korea News Top 5" 가 그 예. scripts/check_deploy_triggers.py 의
+# NOT_DATA_WORKFLOWS 와 짝이다.)
 on:
   push:
     branches: [main]
@@ -22,7 +25,6 @@ on:
       - "Congress trades refresh"
       - "Daily earnings calendar"
       - "Daily Korea market snapshot"
-      - "Daily Korea News Top 5"
       - "Daily US market snapshot"
       - "Insider trades (SEC Form 4)"
       - "IPO calendar (SEC S-1/424B4)"
@@ -64,11 +66,64 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # 같은 내용을 여러 번 올리지 않는다. 데이터 워크플로우가 각각 완료마다 배포를
+      # 트리거하는데, 그중 다수는 앞선 배포가 이미 올린 커밋을 다시 올리거나 서빙하지
+      # 않는 경로만 바꾼다(아티팩트 ~330MB 업로드 낭비 + 큐 점유). 마지막 성공 배포의
+      # 커밋과 지금 커밋 사이에 서빙 경로 변경이 없으면 건너뛴다.
+      # 비교 대상은 workflow_run.head_sha 가 아니라 github.sha 다 — head_sha 는 데이터
+      # 워크플로우가 체크아웃한 커밋(= 그 run 이 push 하기 *전*)이라 그걸로 비교하면
+      # 방금 push 된 데이터가 항상 "변경 없음" 으로 보인다. workflow_run 이벤트의
+      # github.sha 는 기본 브랜치의 최신 커밋(= 체크아웃된 HEAD)이다.
+      # 제외 목록은 아래 rsync --exclude 및 rm -f 와 같아야 한다.
+      - name: Skip when nothing site-affecting changed since the last deploy
+        id: gate
+        if: github.event_name == 'workflow_run'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          CUR="${{ github.sha }}"
+          LAST="$(gh run list --workflow deploy-pages.yml --status success --limit 1 --json headSha --jq '.[0].headSha // empty' 2>/dev/null || true)"
+          if [ -z "$LAST" ]; then
+            echo "no previous successful deploy — deploying"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if [ "$LAST" = "$CUR" ]; then
+            echo "commit $CUR is already deployed — skipping"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if ! git fetch --quiet --depth=1 origin "$LAST"; then
+            echo "cannot fetch last deployed commit $LAST — deploying"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --quiet "$LAST" "$CUR" -- . \
+               ':(exclude).github' ':(exclude).claude' ':(exclude)SNS' ':(exclude)mir_design' \
+               ':(exclude)scratch' ':(exclude)scripts' ':(exclude)automation' ':(exclude)worker' \
+               ':(exclude)prompts' ':(exclude)terminals' ':(exclude)mcps' ':(exclude)agent-tools' \
+               ':(exclude)outputs' ':(exclude)data/export' ':(exclude)data/참고' \
+               ':(exclude)README.md' ':(exclude)CLAUDE.md' ':(exclude)DEPLOY.md' \
+               ':(exclude)AI_MODE_VISION.md' ':(exclude)FEATURES.md' \
+               ':(exclude)data/market_snapshot.js' ':(exclude)data/korea/market_snapshot.js' \
+               ':(exclude)data/insider_trades.json' ':(exclude)data/congress_trades.json' \
+               ':(exclude)data/institutional_13f.json' \
+               ':(exclude)data/korea/earnings.js' ':(exclude)data/korea/earnings.json' \
+               ':(exclude)data/korea/indicators.js' ':(exclude)data/korea/indicators.json' \
+               ':(exclude)data/korea/financials_history.json' ':(exclude)data/korea/krx_metrics.json' \
+               ':(exclude)data/us_financials_history.json'; then
+            echo "no site-affecting change between $LAST and $CUR — skipping"
+            echo "deploy=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "site-affecting change since $LAST — deploying"
+            echo "deploy=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Configure Pages
+        if: steps.gate.outputs.deploy != 'false'
         uses: actions/configure-pages@v5
 
-      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(제외 ~74MB, 2026-08-06 실측
-      # — 추적 424MB 중 아티팩트 ~350MB). 예전엔 체크아웃에서 rm 으로 지운 뒤 path: '.'
+      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(2026-09-03 기준 아티팩트
+      # ≈330MB; 2026-08-06 실측 땐 추적 424MB 중 ~350MB). 예전엔 체크아웃에서 rm 으로 지운 뒤 path: '.'
       # 를 올렸는데, 2026-08-06 부터 rsync 로 _site/ 스테이징 사본을 만들어 올린다 —
       # 체크아웃이 온전히 남아 이후 스텝이 레포 파일을 참조해도 안전하고, 실수로
       # 제외를 빼먹으면 배포가 커질 뿐 체크아웃을 파괴하는 사고가 없다.
@@ -81,6 +136,7 @@ jobs:
       #  - korea/earnings·indicators 는 브라우저 소비자가 없다(빌더 입력 전용)
       # 목록을 바꾸기 전에 app.js 의 FEATURE_DATA / fetch 경로를 확인할 것.
       - name: Stage site artifact (exclude build-only files)
+        if: steps.gate.outputs.deploy != 'false'
         run: |
           rsync -a \
             --exclude='_site' \
@@ -104,12 +160,14 @@ jobs:
           echo "artifact size:" && du -sh _site | cut -f1
 
       - name: Upload site artifact
+        if: steps.gate.outputs.deploy != 'false'
         uses: actions/upload-pages-artifact@v3
         with:
           # 스테이징 사본 = 서빙 내용. 체크아웃 루트가 아니라 _site 만 올린다.
           path: '_site'
 
       - name: Deploy to GitHub Pages
+        if: steps.gate.outputs.deploy != 'false'
         id: deployment
         uses: actions/deploy-pages@v4
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도

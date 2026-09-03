@@ -6,8 +6,10 @@
 
   let isAiChatMode = false;
   let isStockView = false;
-  const AI_SERVICE_READY = true;
-  const SERVICE_PREP_MSG = "서비스 준비 중입니다.";
+  // AI 모드 안에서 사용자가 테마를 직접 바꿨는지(data-theme 변이) 추적 — 나갈 때
+  // 진입 전 테마로 되돌릴지, 지금 고른 테마를 유지할지 결정한다.
+  let aiThemeTouched = false;
+  let aiThemeObserver = null;
 
   function byId(id) {
     return document.getElementById(id);
@@ -177,16 +179,6 @@
     return { __fetchError: lastStatus ? `http-${lastStatus}` : "unknown" };
   }
 
-  function submitAiChatForm() {
-    const form = byId("aiChatForm");
-    if (!form) return;
-    if (typeof form.requestSubmit === "function") {
-      form.requestSubmit();
-      return;
-    }
-    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-  }
-
   function isMobileViewport() {
     return window.matchMedia("(max-width: 768px)").matches;
   }
@@ -272,11 +264,6 @@
   }
 
   async function handleStockQuery(query) {
-    if (!AI_SERVICE_READY) {
-      setInputHint(SERVICE_PREP_MSG, true);
-      return;
-    }
-
     // 종목이면 3D 모핑 + 대시보드, 아니면 채팅. 예전엔 여기서 실패 힌트만 띄우는 바람에
     // 추천 칩 4개가 전부(섹터·관심종목 질문은 물론 "NVDA 분석해줘"까지) 막혀 있었다.
     const ticker = resolveTickerFromQuery(query);
@@ -300,7 +287,7 @@
       const inKr = window.MirMarket?.getMode?.() === "kr";
       setInputHint(
         inKr && !/^\d{6}$/.test(ticker)
-          ? `${ticker}는 미국 종목입니다. 상단에서 🇺🇸 미국 주식 모드로 전환한 뒤 다시 시도해 보세요.`
+          ? `${ticker}는 미국 종목입니다. 상단에서 미국 주식 모드로 전환한 뒤 다시 시도해 보세요.`
           : `${ticker} 차트를 불러오지 못했습니다. 네트워크·프록시 설정을 확인해 주세요.`,
         true,
       );
@@ -346,6 +333,35 @@
     }
   }
 
+  // 단일 진입점 — 폼 제출/Enter, 자동완성 선택, 음성 인식, Ctrl+K, 유사종목 클릭이 전부
+  // 여기로 온다. 차트 모드에서 새 질문이 오면 먼저 풍경(웰컴)으로 되돌린 뒤 처리한다.
+  async function submitQuery(rawQuery) {
+    const query = String(rawQuery || "").trim();
+    if (!query) return;
+    if (isStockView && window.MirCosmos?.getMode?.() === "chart") {
+      window.MirCosmos.resetToLandscape?.();
+      window.MirDash?.hide?.();
+      document.body.classList.remove("ai-stock-analysis-view");
+      document.body.classList.add("ai-welcome-view");
+      const container = byId("tab-ai-chat")?.querySelector(".ai-chat-container");
+      container?.classList.add("is-welcome-view");
+      isStockView = false;
+    }
+    await handleStockQuery(query);
+  }
+
+  function watchThemeWhileActive() {
+    aiThemeTouched = false;
+    if (aiThemeObserver || typeof MutationObserver !== "function") return;
+    aiThemeObserver = new MutationObserver(() => { aiThemeTouched = true; });
+    aiThemeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  }
+
+  function unwatchTheme() {
+    if (aiThemeObserver) aiThemeObserver.disconnect();
+    aiThemeObserver = null;
+  }
+
   function toggleAiChatMode(active) {
     isAiChatMode = active;
     const toggleBtn = byId("aiModeToggle");
@@ -359,6 +375,8 @@
           document.documentElement.getAttribute("data-theme") || "dark";
       }
       document.documentElement.setAttribute("data-theme", "dark");
+      // observe() 는 위 setAttribute 이후에 시작하므로 우리가 건 다크는 변이로 잡히지 않는다.
+      watchThemeWhileActive();
       document.body.classList.add("ai-mode-active", "ai-mode-entering");
       setTimeout(() => document.body.classList.remove("ai-mode-entering"), 600);
       toggleBtn?.classList.add("active");
@@ -382,11 +400,14 @@
 
     clearMobileVisualViewport();
     delete document.documentElement.dataset.aiMode;
+    unwatchTheme();
     const prevTheme = document.documentElement.dataset.aiPrevTheme;
-    if (prevTheme) {
+    // AI 모드 안에서 테마를 직접 바꿨다면 그 선택을 존중한다(진입 전 테마로 되돌리지 않음).
+    if (prevTheme && !aiThemeTouched) {
       document.documentElement.setAttribute("data-theme", prevTheme);
-      delete document.documentElement.dataset.aiPrevTheme;
     }
+    delete document.documentElement.dataset.aiPrevTheme;
+    aiThemeTouched = false;
     document.body.classList.remove("ai-mode-active", "ai-mode-entering", "ai-stock-analysis-view", "ai-conversation-view");
     window.MirDash?.hide?.();
     exitAiWelcomeView();
@@ -447,21 +468,8 @@
     byId("aiChatForm")?.addEventListener("submit", async (e) => {
       e.preventDefault();
       e.stopImmediatePropagation();
-      const input = byId("aiChatInput");
-      const query = input?.value?.trim();
-      if (!query) return;
-
-      if (isStockView && window.MirCosmos?.getMode?.() === "chart") {
-        window.MirCosmos.resetToLandscape?.();
-        window.MirDash?.hide?.();
-        document.body.classList.remove("ai-stock-analysis-view");
-        document.body.classList.add("ai-welcome-view");
-        const container = byId("tab-ai-chat")?.querySelector(".ai-chat-container");
-        container?.classList.add("is-welcome-view");
-        isStockView = false;
-      }
-
-      await handleStockQuery(query);
+      window.MirAiChat?.autocomplete?.hide?.();
+      await submitQuery(byId("aiChatInput")?.value);
     }, true);
 
     const bindSuggestQuery = (el) => {
@@ -472,23 +480,28 @@
         e.stopImmediatePropagation();
         const input = byId("aiChatInput");
         if (input) input.value = query;
-        await handleStockQuery(query);
+        await submitQuery(query);
       }, true);
     };
 
     document.querySelectorAll(".ai-chat-suggest-card").forEach(bindSuggestQuery);
 
+    // Enter: 자동완성에 하이라이트된 항목이 있으면 그 종목을(입력창 원문이 아니라), 없으면
+    // 입력창 내용을 보낸다. ai-mode.js 의 자동완성은 ↑↓/Esc 만 다루고 Enter 는 여기 하나다.
     byId("aiChatInput")?.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" || e.shiftKey) return;
+      if (e.key !== "Enter" || e.shiftKey || e.isComposing) return;
       e.preventDefault();
       e.stopImmediatePropagation();
-      const query = e.target.value?.trim();
-      if (!query) return;
-      if (!AI_SERVICE_READY) {
-        setInputHint(SERVICE_PREP_MSG, true);
-        return;
+      const ac = window.MirAiChat?.autocomplete;
+      const highlighted = ac?.highlightedTicker?.();
+      let query = e.target.value?.trim();
+      if (highlighted) {
+        query = `${highlighted} 분석해줘`;
+        e.target.value = query;
       }
-      submitAiChatForm();
+      ac?.hide?.();
+      if (!query) return;
+      submitQuery(query);
     }, true);
 
     byId("aiChatInput")?.addEventListener("input", () => {
@@ -502,6 +515,6 @@
     toggle: toggleAiChatMode,
     exit: () => toggleAiChatMode(false),
     isActive: () => isAiChatMode,
-    queryStock: handleStockQuery,
+    queryStock: submitQuery,
   };
 })();

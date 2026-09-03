@@ -49,14 +49,18 @@
   // 차트 캔들 유형 — candle(캔들)·line(종가선)·heikin(헤이킨아시). localStorage 에 유지.
   const CHART_STYLE_LS_KEY = "mir_ai_chart_style";
   const CHART_STYLES = new Set(["candle", "line", "heikin"]);
+  // storage.js/market_config.js 가 window.safeStorage 를 보장하지만, 단독 로드 대비 최소 폴백.
+  const storage = window.safeStorage || {
+    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
+    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
+  };
   let chartStyle = (() => {
-    try {
-      const s = localStorage.getItem(CHART_STYLE_LS_KEY);
-      return CHART_STYLES.has(s) ? s : "candle";
-    } catch (_) {
-      return "candle";
-    }
+    const s = storage.get(CHART_STYLE_LS_KEY);
+    return CHART_STYLES.has(s) ? s : "candle";
   })();
+  // 차트 모드는 정적이라 60fps 루프를 돌리지 않는다. 별 반짝임만 ≤10fps 타이머로 살린다.
+  const CHART_TWINKLE_MS = 120;
+  let chartTwinkleTimer = 0;
   const PATTERN_MAX_FULL = 60; // 캐시에 유지할 최대 패턴 수(초과 시 시간축 고르게 샘플)
   const PATTERN_MAX_RENDER = 6; // 한 화면(가시 구간)에 그릴 최대 패턴 수(가독성)
   const CHART_TARGET_YAW = 0;
@@ -326,9 +330,35 @@
     return bars.length <= n ? bars.slice() : bars.slice(-n);
   }
 
+  // 지표 메모이제이션 — bars 배열 정체성(WeakMap) + 파라미터 키. chartBars 는 윈도우·기간이
+  // 바뀔 때마다 새 slice 가 되므로 정체성이 곧 (구간, 기간) 키다. 예전엔 차트 모드가 매
+  // 프레임 SMA×3·RSI·MACD·헤이킨아시를 전부 다시 계산했다(60fps × 최대 1,260봉).
+  const indicatorMemo = new WeakMap();
+  function memoIndicator(bars, key, compute) {
+    if (!bars || typeof bars !== "object") return compute();
+    let bucket = indicatorMemo.get(bars);
+    if (!bucket) { bucket = new Map(); indicatorMemo.set(bars, bucket); }
+    if (bucket.has(key)) return bucket.get(key);
+    const value = compute();
+    bucket.set(key, value);
+    return value;
+  }
+  function computeHeikinAshi(bars) {
+    return memoIndicator(bars, "heikin", () => computeHeikinAshiRaw(bars));
+  }
+  function computeSma(bars, period) {
+    return memoIndicator(bars, `sma:${period}`, () => computeSmaRaw(bars, period));
+  }
+  function computeRsi(bars, period = 14) {
+    return memoIndicator(bars, `rsi:${period}`, () => computeRsiRaw(bars, period));
+  }
+  function computeMacd(bars, fast = 12, slow = 26, sig = 9) {
+    return memoIndicator(bars, `macd:${fast}:${slow}:${sig}`, () => computeMacdRaw(bars, fast, slow, sig));
+  }
+
   // 헤이킨아시 봉 시퀀스 계산: HA종가=(O+H+L+C)/4, HA시가=(직전HA시가+직전HA종가)/2,
   // HA고가=max(고가,HA시가,HA종가), HA저가=min(저가,HA시가,HA종가). 첫 봉은 시가=(O+C)/2 로 시드.
-  function computeHeikinAshi(bars) {
+  function computeHeikinAshiRaw(bars) {
     const out = new Array(bars.length);
     let prevO = null;
     let prevC = null;
@@ -386,7 +416,7 @@
     } catch (_) { return null; }
   }
 
-  function computeSma(bars, period) {
+  function computeSmaRaw(bars, period) {
     const out = [];
     for (let i = 0; i < bars.length; i += 1) {
       if (i < period - 1) {
@@ -400,7 +430,7 @@
     return out;
   }
 
-  function computeRsi(bars, period = 14) {
+  function computeRsiRaw(bars, period = 14) {
     const out = new Array(bars.length).fill(null);
     if (bars.length <= period) return out;
     let gain = 0;
@@ -421,7 +451,7 @@
     return out;
   }
 
-  function computeMacd(bars, fast = 12, slow = 26, sig = 9) {
+  function computeMacdRaw(bars, fast = 12, slow = 26, sig = 9) {
     const n = bars.length;
     const macd = new Array(n).fill(null);
     const signal = new Array(n).fill(null);
@@ -1462,6 +1492,11 @@
     canvas.style.height = `${height}px`;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     applyViewportLayout(width, height);
+    // 차트 모드는 rAF 루프가 없어 canvas 크기 변경으로 지워진 화면을 직접 다시 그린다.
+    if (running && renderMode === "chart") {
+      cancelAnimationFrame(raf);
+      draw();
+    }
   }
 
   function drawOptimizer(zMin, zMax, w, h) {
@@ -1769,7 +1804,8 @@
 
     if (renderMode === "chart") {
       drawChart2D(w, h, 1);
-      raf = requestAnimationFrame(draw);
+      raf = 0;
+      scheduleChartTwinkle();
       return;
     }
 
@@ -1784,6 +1820,24 @@
     trackAdaptiveGrid(typeof now === "number" ? now : performance.now(), dt);
     drawLandscape(w, h, dt);
     raf = requestAnimationFrame(draw);
+  }
+
+  function clearChartTwinkle() {
+    if (chartTwinkleTimer) {
+      clearTimeout(chartTwinkleTimer);
+      chartTwinkleTimer = 0;
+    }
+  }
+
+  // 차트 모드 프레임 예약: 60fps 대신 ≈8fps(별 반짝임용). reduced-motion 이면 정적.
+  function scheduleChartTwinkle() {
+    clearChartTwinkle();
+    if (reducedMotion) return;
+    chartTwinkleTimer = setTimeout(() => {
+      chartTwinkleTimer = 0;
+      if (!running || renderMode !== "chart" || document.hidden || raf) return;
+      raf = requestAnimationFrame(draw);
+    }, CHART_TWINKLE_MS);
   }
 
   function isZoomModifier(e) {
@@ -1968,6 +2022,7 @@
     if (document.hidden) {
       cancelAnimationFrame(raf);
       raf = 0;
+      clearChartTwinkle();
     } else if (running) {
       cancelAnimationFrame(raf);
       draw();
@@ -2046,12 +2101,20 @@
       }
     }
 
-    if (!running) start();
+    if (!running) {
+      start();
+    } else {
+      // 차트 모드에는 rAF 루프가 없으므로 모핑 루프를 여기서 다시 시동한다.
+      clearChartTwinkle();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(draw);
+    }
     return true;
   }
 
   function resetToLandscape() {
     resetLandscapeState();
+    clearChartTwinkle();
     if (running) {
       cancelAnimationFrame(raf);
       draw();
@@ -2108,6 +2171,7 @@
     starsSizeKey = "";
     cancelAnimationFrame(raf);
     raf = 0;
+    clearChartTwinkle();
     unbindPointer();
     document.removeEventListener("visibilitychange", onVisibility);
     resizeObs?.disconnect();
@@ -2149,7 +2213,7 @@
   function setChartStyle(style) {
     if (!CHART_STYLES.has(style)) return false;
     chartStyle = style;
-    try { localStorage.setItem(CHART_STYLE_LS_KEY, style); } catch (_) { /* 저장 실패 무시 */ }
+    storage.set(CHART_STYLE_LS_KEY, style);
     if (running && renderMode === "chart") {
       cancelAnimationFrame(raf);
       draw();

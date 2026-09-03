@@ -21,7 +21,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # 얕은 체크아웃으로 충분하다 — 빌더의 fetch → pull --rebase → push 는 depth 1
+          # 에서도 동작하고, 2.5GB 짜리 .git pack 을 run 마다 받지 않는다.
+          fetch-depth: 1
 
       - uses: actions/setup-python@v5
         with:

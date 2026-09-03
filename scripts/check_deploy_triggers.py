@@ -32,9 +32,12 @@ WORKFLOW_DIR = ROOT / ".github" / "workflows"
 DEPLOY = WORKFLOW_DIR / "deploy-pages.yml"
 APP_JS = ROOT / "app.js"
 
-# 배포 트리거가 필요 없는(=데이터를 커밋하지 않는) 워크플로우.
-# "Pages queue watchdog" 는 좀비 queued 배포 run 을 취소만 한다(커밋 없음, 2026-09-02).
-NOT_DATA_WORKFLOWS = {"Deploy Pages", "Pages queue watchdog"}
+# 배포 트리거가 필요 없는(=사이트가 서빙하는 파일을 커밋하지 않는) 워크플로우.
+# - "Pages queue watchdog": 좀비 queued 배포 run 을 취소만 한다(커밋 없음, 2026-09-02).
+# - "Daily Korea News Top 5": SNS/Naver/ 아래에만 커밋하는데 deploy-pages.yml 이 SNS/ 를
+#   rsync 제외하므로 배포해도 사이트는 그대로다(2026-09-03 트리거에서 제거).
+# - "CI": PR 검사만.
+NOT_DATA_WORKFLOWS = {"Deploy Pages", "Pages queue watchdog", "Daily Korea News Top 5", "CI"}
 
 
 def workflow_names() -> dict[str, str]:

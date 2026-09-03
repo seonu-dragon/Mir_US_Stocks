@@ -92,6 +92,37 @@ let data = fallbackData;
 let cardNewsBackup = null;
 let usingFallbackSnapshot = false;
 
+// ===== 티커 → 스냅샷 row 인덱스 =====
+// normalizeTickerKey(= marketCfg().formatTicker) 로 정규화한 키. chart-indicators.js 의
+// stockByTicker 가 이 Map 을 먼저 보고(O(1)), 없을 때만 배열을 훑는다. 스냅샷이 바뀌는
+// 곳(loadData·시장 전환·폴백)마다 rebuildStockIndex() 로 다시 채운다.
+window.MirStockIndex = new Map();
+function rebuildStockIndex() {
+  const idx = window.MirStockIndex;
+  idx.clear();
+  (data && Array.isArray(data.stocks) ? data.stocks : []).forEach((row) => {
+    const key = normalizeTickerKey(row && row.ticker);
+    if (key && !idx.has(key)) idx.set(key, row);
+  });
+  // 스냅샷 파생 캐시는 전부 무효화한다.
+  _issuerTickerIndex = null;
+  _issuerResolveCache.clear();
+  _chartItemCache = null;
+  _treemapPeerIndex = null;
+  liveStubs.clear();
+}
+// 스냅샷에 없는 티커를 실시간(워커)으로만 볼 때 쓰는 대체 row. 스냅샷 배열과 섞지 않고
+// 따로 둔다 — 예전엔 못 찾으면 data.stocks[0] 로 조용히 떨어져 엉뚱한 종목이 나왔다.
+const liveStubs = new Map();
+function liveStubFor(ticker) {
+  return liveStubs.get(normalizeTickerKey(ticker)) || null;
+}
+// 선택 종목의 렌더 대상 row(스냅샷 우선, 없으면 실시간 스텁). 없으면 null — 폴백 없음.
+function selectedBaseRow(ticker = selectedTicker) {
+  if (!ticker) return null;
+  return stockByTicker(ticker) || liveStubFor(ticker);
+}
+
 // Tickers with bad/synthetic snapshot data (e.g. pre-IPO placeholders).
 const TICKER_BLOCKLIST = new Set(["SPCX"]);
 
@@ -128,6 +159,29 @@ function marketCfg() {
   };
 }
 function isKrMarket() { return marketCfg().id === "kr"; }
+// 기능 판정은 항상 `=== false` — 키가 없는 시장은 켜진 것으로 본다(CLAUDE.md '데이터 정직성').
+// `!features.x` 로 쓰면 키 없는 시장까지 꺼진다.
+function featureOff(key, cfg = marketCfg()) {
+  return !!(cfg && cfg.features && cfg.features[key] === false);
+}
+// 거장 포트폴리오 서브탭 → 기능 키. dart/krown 은 KR 전용.
+const INST_SUB_FEATURE = {
+  congress: "congress", "13f": "sec13f", insider: "insider", activist: "activist",
+  events: "materialEvents", ipo: "ipo", dart: "krDart", krown: "krOwnership",
+};
+const INST_SUB_KR_ONLY = new Set(["dart", "krown"]);
+function instSubHidden(sub, cfg = marketCfg()) {
+  if ((cfg.hiddenInstitutionalSubs || []).includes(sub)) return true;
+  if (INST_SUB_KR_ONLY.has(sub) && cfg.id !== "kr") return true;
+  const key = INST_SUB_FEATURE[sub];
+  return key ? featureOff(key, cfg) : false;
+}
+// 탭 버튼 숨김/표시(hidden 속성 + display 를 같이 만진다 — CSS 가 display 를 덮어쓰는 곳이 있다).
+function setTabHidden(btn, hidden) {
+  if (!btn) return;
+  btn.hidden = hidden;
+  btn.style.display = hidden ? "none" : "";
+}
 
 // ===== 실측 RSI(14) · EPS(TTM) 표시 헬퍼 =====
 // RS/EPS 합성 점수를 전면 제거하고, 빌더가 light 스냅샷에 심는 실측값만 노출한다.
@@ -399,10 +453,16 @@ function krDisplayChangePct(value) {
 // 범용 %포맷 — 클램프 없음. 1주·1개월·YTD 같은 기간 수익률은 KR 에서도 ±30% 를
 // 정상적으로 넘을 수 있으므로 여기로 온다. (예전엔 모든 %가 krDisplayChangePct 를
 // 거쳐 기간 수익률까지 "(상하한)" 으로 잘려 나갔다.)
+// 부호 붙은 %(0 은 부호 없음). fmtPct(▲▼ 마커)·fmtDailyPct(KR 상하한 클램프)·actionPct(마커
+// 없음)가 전부 여기로 온다 — 예전엔 같은 식이 8곳에 흩어져 있었다.
+const fmtSignedPct = (value, digits = 1, suffix = "%") => {
+  const n = Number(value) || 0;
+  return `${n > 0 ? "+" : ""}${n.toFixed(digits)}${suffix}`;
+};
+const pctMarker = (n) => (n > 0 ? "▲ " : n < 0 ? "▼ " : "");
 const fmtPct = (value) => {
   const n = Number(value) || 0;
-  const marker = n > 0 ? "▲ " : n < 0 ? "▼ " : "";
-  return `${marker}${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+  return `${pctMarker(n)}${fmtSignedPct(n)}`;
 };
 
 // 당일 등락률 전용 — KR 은 가격제한폭(±30%) 을 넘을 수 없으므로, 넘는 값은 데이터
@@ -411,9 +471,8 @@ const fmtDailyPct = (value) => {
   const raw = Number(value) || 0;
   const n = isKrMarket() ? krDisplayChangePct(raw) : raw;
   const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
-  const marker = n > 0 ? "▲ " : n < 0 ? "▼ " : "";
   const suffix = atLimit ? " (상하한)" : "";
-  return `${marker}${n > 0 ? "+" : ""}${n.toFixed(1)}%${suffix}`;
+  return `${pctMarker(n)}${fmtSignedPct(n)}${suffix}`;
 };
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
 const byId = (id) => document.getElementById(id);
@@ -629,6 +688,12 @@ const FEATURE_DATA = {
   marketHistory: { global: "MARKET_HISTORY", path: "data/history/market_history.js" },
 };
 const _featureDataPromises = {};
+// 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
+// 같은 404 를 반복 요청했다. 시장 전환(resetMarketCaches)이나 수동 재확인 때만 비운다.
+const _featureDataFailed = {};
+function clearFeatureDataFailures() {
+  Object.keys(_featureDataFailed).forEach((k) => delete _featureDataFailed[k]);
+}
 
 function featureDataEnabled(meta, cfg) {
   if (meta.usOnly) return cfg.id === "us";
@@ -645,6 +710,7 @@ function ensureFeatureData(key) {
   if (!meta) return Promise.resolve(false);
   if (window[meta.global]) return Promise.resolve(true);
   if (!featureDataEnabled(meta, marketCfg())) return Promise.resolve(false);
+  if (_featureDataFailed[key]) return Promise.resolve(false);
   if (_featureDataPromises[key]) return _featureDataPromises[key];
 
   let path = meta.path;
@@ -659,7 +725,11 @@ function ensureFeatureData(key) {
     script.async = true;
     script.dataset.featureData = key;
     script.addEventListener("load", () => resolve(!!window[meta.global]), { once: true });
-    script.addEventListener("error", () => { delete _featureDataPromises[key]; resolve(false); }, { once: true });
+    script.addEventListener("error", () => {
+      delete _featureDataPromises[key];
+      _featureDataFailed[key] = { failedAt: Date.now() };
+      resolve(false);
+    }, { once: true });
     document.head.appendChild(script);
   });
   return _featureDataPromises[key];
@@ -706,7 +776,7 @@ function scheduleFeatureViewRefresh() {
 function refreshFeatureViews() {
   // applySearchSubVisibility: US 자사주·증자희석 탭은 데이터(8-K kind / US_DILUTION)가
   // 늦게 도착하면 그때 나타나야 한다 — 부팅 시점엔 전역이 없어 숨겨져 있다.
-  const calls = [renderSignals, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility()];
+  const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility()];
   if (currentTab === "institutional") {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {
@@ -717,7 +787,7 @@ function refreshFeatureViews() {
     } else if (searchSubTab === "dilution") {
       calls.push(renderDilution);
     } else if (selectedTicker && data && Array.isArray(data.stocks)) {
-      const base = data.stocks.find((r) => r.ticker === selectedTicker);
+      const base = selectedBaseRow();
       if (base) {
         const item = applyLive(withDetail(base));
         calls.push(
@@ -735,7 +805,7 @@ function refreshFeatureViews() {
   // 패널 렌더보다 늦게 도착해 수급 카드가 간헐적으로 통째로 빠졌다 — 로컬에선 데이터가
   // 빨라 거의 안 보이던 경합이다. 패널이 떠 있으면 다시 그린다.
   if (selectedTicker && data && Array.isArray(data.stocks)) {
-    const base = data.stocks.find((r) => r.ticker === selectedTicker);
+    const base = selectedBaseRow();
     if (base) {
       const item = applyLive(withDetail(base));
       if (byId("selectedStock")) calls.push(() => renderSelected(item));
@@ -818,6 +888,7 @@ async function loadData(options = {}) {
     data = fallbackData;
     usingFallbackSnapshot = true;
   }
+  rebuildStockIndex();
 
   await loadMapFundamentalsScript(cfg);
   loadEarningsCalendarSnapshot(cfg);
@@ -878,11 +949,30 @@ function showFallbackBanner() {
 }
 
 function resetMarketCaches() {
-  Object.keys(detailCache).forEach((k) => delete detailCache[k]);
-  Object.keys(detailPromises).forEach((k) => delete detailPromises[k]);
+  const clearObj = (o) => Object.keys(o).forEach((k) => delete o[k]);
+  clearObj(detailCache);
+  clearObj(detailPromises);
   tickerKoAliasIndex = null;
   tickerKoAliasEntries = null;
   tickerSearchIndex = null;
+  // 종목별 실시간 캐시 — 티커 체계가 다른 시장으로 넘어가면 전부 무효.
+  [liveNewsCache, liveChartCache, liveEarningsCache, liveSummaryCache, liveNewsSourceCache, liveFetched, liveDone].forEach(clearObj);
+  liveStubs.clear();
+  _chartItemCache = null;
+  _inst13fIndex = null;
+  _inst13fIndexSrc = null;
+  _issuerTickerIndex = null;
+  _issuerResolveCache.clear();
+  _treemapPeerIndex = null;
+  earningsCalendarCache = null;
+  trustLoadAttempted.clear();
+  clearFeatureDataFailures();
+  _wsbTried = false;
+  if (FEATURE_DATA.usDilution) FEATURE_DATA.usDilution.tried = false;
+  signalsDirty = true;
+  marketHeader.indices = [];
+  marketHeader.indicesSource = null;
+  if (typeof window.resetDisclosureTrackerCaches === "function") window.resetDisclosureTrackerCaches();
 
   // Clear market-specific feature globals and promises so they reload for the new market!
   Object.keys(FEATURE_DATA).forEach((key) => {
@@ -1047,32 +1137,9 @@ function applyMarketOnlyUi() {
   }
   const instNav = byId("institutionalSubTabs");
   if (instNav) {
-    instNav.querySelectorAll(".sub-tab").forEach((btn) => {
-      const sub = btn.dataset.sub;
-      const hidden = (cfg.hiddenInstitutionalSubs || []).includes(sub)
-        || (sub === "congress" && cfg.features && !cfg.features.congress)
-        || (sub === "13f" && cfg.features && !cfg.features.sec13f)
-        || (sub === "insider" && cfg.features && !cfg.features.insider)
-        || (sub === "activist" && cfg.features && !cfg.features.activist)
-        || (sub === "events" && cfg.features && !cfg.features.materialEvents)
-        || (sub === "ipo" && cfg.features && !cfg.features.ipo)
-        || (sub === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))
-        || (sub === "krown" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krOwnership)));
-      btn.hidden = hidden;
-      btn.style.display = hidden ? "none" : "";
-    });
-    const instFallback = cfg.id === "kr" && cfg.features?.krDart ? "dart" : "events";
-    ["dart", "krown"].forEach((sub) => {
-      const on = cfg.id === "kr" && cfg.features?.[sub === "dart" ? "krDart" : "krOwnership"];
-      if (!on) return;
-      const btn = instNav.querySelector(`[data-sub="${sub}"]`);
-      if (btn) { btn.hidden = false; btn.style.display = ""; }
-    });
-    if ((cfg.hiddenInstitutionalSubs || []).includes(institutionalSubTab)
-      || (institutionalSubTab === "insider" && cfg.features && !cfg.features.insider)
-      || (institutionalSubTab === "activist" && cfg.features && !cfg.features.activist)
-      || (institutionalSubTab === "dart" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krDart)))
-      || (institutionalSubTab === "krown" && (cfg.id !== "kr" || (cfg.features && !cfg.features.krOwnership)))) {
+    instNav.querySelectorAll(".sub-tab").forEach((btn) => setTabHidden(btn, instSubHidden(btn.dataset.sub, cfg)));
+    const instFallback = !instSubHidden("dart", cfg) ? "dart" : "events";
+    if (instSubHidden(institutionalSubTab, cfg)) {
       activateInstitutionalSub(instFallback, { push: false });
     }
   }
@@ -1081,12 +1148,8 @@ function applyMarketOnlyUi() {
   if (calendarNav) {
     // 키가 없는 시장(US)은 켜진 것으로 본다 — 이 파일의 다른 기능 판정과 같은 규칙.
     // 처음에 !cfg.features.earningsCalendar 로 썼다가 US 실적 탭까지 숨겼다.
-    const earningsOff = cfg.features && cfg.features.earningsCalendar === false;
-    calendarNav.querySelectorAll(".sub-tab").forEach((btn) => {
-      const hidden = (btn.dataset.sub === "earnings" && earningsOff);
-      btn.hidden = hidden;
-      btn.style.display = hidden ? "none" : "";
-    });
+    const earningsOff = featureOff("earningsCalendar", cfg);
+    calendarNav.querySelectorAll(".sub-tab").forEach((btn) => setTabHidden(btn, btn.dataset.sub === "earnings" && earningsOff));
     if (calendarSubTab === "earnings" && earningsOff) {
       activateCalendarSub("macro", { push: false });
     }
@@ -1123,7 +1186,7 @@ function boot(options = {}) {
   renderCardNews();
   setupLightbox();
   setupChatbot();
-  renderSummary();
+  applyMarketHeader();
   setupViewMode(route.get("tab"));
   setupTabs();
   setupTabSemantics();
@@ -1143,19 +1206,25 @@ function boot(options = {}) {
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
   const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
-  if (initialTab) {
-    const resolved = normalizeTabRequest(initialTab, initialSub);
-    activateTab(resolved.tab, {
+  const routeTicker = route.get("ticker");
+  const resolvedStart = initialTab ? normalizeTabRequest(initialTab, initialSub) : null;
+  // 탭 콘텐츠는 여기서 처음 그린다(renderAll 은 탭 무관 표면만). 딥링크 탭이 없으면 현재 탭
+  // (부팅 시 map, 시장 전환 시 보던 탭)만 그리고 나머지는 첫 진입 때 그린다.
+  let activated = false;
+  if (routeTicker && !initialTab) {
+    // ?ticker= 단독 딥링크는 종목 리서치 화면(종목 탭)으로 바로 연다 — 원페이지 허브 URL.
+    // selectTicker 가 탭 전환·렌더까지 한 번에 처리한다. tab= 이 함께 오면 그 탭을 존중한다.
+    activated = selectTicker(routeTicker, { openSearch: true }) === true;
+  } else if (routeTicker) {
+    selectTicker(routeTicker, { openSearch: false, skipRender: true }); // 상태만 — 렌더는 아래 activateTab
+  }
+  if (!activated) {
+    activateTab(resolvedStart ? resolvedStart.tab : (mapRoute ? "map" : currentTab), {
       push: false,
-      sub: resolved.sub,
+      sub: resolvedStart ? resolvedStart.sub : null,
       communityTicker: initialCommunityTicker,
     });
-  } else if (mapRoute) {
-    activateTab("map", { push: false });
   }
-  // ?ticker= 단독 딥링크는 종목 리서치 화면(종목 탭)으로 바로 연다 — 원페이지 허브 URL.
-  // tab= 이 함께 명시되면 그 탭을 존중한다.
-  if (route.get("ticker")) selectTicker(route.get("ticker"), { openSearch: !initialTab });
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
@@ -1532,8 +1601,9 @@ function setupChatbot() {
           searchHints: buildChatSearchHints(text),
         }),
       });
+      if (!res.ok) throw new Error(`chat ${res.status}`);
       const payload = await res.json();
-      const reply = (payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.";
+      const reply = stripEmoji((payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.");
       typing.classList.remove("typing");
       typing.textContent = reply;
       chatHistory.push({ role: "assistant", content: reply });
@@ -1644,7 +1714,56 @@ function setupChatbot() {
 }
 
 const CNN_FNG_URL = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
-const marketHeader = { fng: null, fngStatus: "loading", fx: [] };
+// 홈 상단(공포탐욕·환율·지수 스트립) 상태. 렌더는 항상 applyMarketHeader() 한 곳에서 이 상태로
+// 그린다 — 예전엔 fx/fng/indices 응답이 각자 renderSummary/renderIndexStrip 를 불러 늦게 온
+// 응답이 먼저 그린 것을 덮거나(스트립 2/8), 카드가 "불러오는 중…" 에 멈췄다.
+const marketHeader = { fng: null, fngStatus: "loading", fx: [], fxStatus: "loading", indices: [], indicesSource: null };
+
+function applyMarketHeader() {
+  renderSummary();
+  renderIndexStrip(marketHeader.indices);
+}
+
+// 지수 스트립 병합. 워커(US 8종)가 기준이고 스냅샷(KR 코스피·코스닥)은 심볼이 겹치지 않는
+// 것만 더한다. 스냅샷은 워커가 이미 채운 비어있지 않은 목록을 절대 덮어쓰지 않는다.
+function setHeaderIndices(list, source) {
+  const rows = (Array.isArray(list) ? list : []).filter((ix) => ix && ix.name);
+  const merge = (primary, extra) => {
+    const have = new Set(primary.map((ix) => ix.symbol));
+    return primary.concat(extra.filter((ix) => !have.has(ix.symbol)));
+  };
+  if (source === "worker") {
+    if (rows.length) {
+      const snapshotRows = marketHeader.indicesSource === "snapshot" ? marketHeader.indices : [];
+      marketHeader.indices = merge(rows, snapshotRows);
+      marketHeader.indicesSource = "worker";
+    }
+  } else if (marketHeader.indicesSource === "worker" && marketHeader.indices.length) {
+    marketHeader.indices = merge(marketHeader.indices, rows);
+  } else if (rows.length) {
+    marketHeader.indices = rows;
+    marketHeader.indicesSource = "snapshot";
+  }
+  renderIndexStrip(marketHeader.indices);
+}
+
+// CNN 이 막혔을 때({"fng":null}) 스냅샷 게이지(data/sentiment_gauges.js 의 cnn)로 대체한다.
+function snapshotFngFallback() {
+  const g = window.SENTIMENT_GAUGES;
+  const cnn = g && g.cnn;
+  const score = Number(cnn && cnn.value);
+  if (!Number.isFinite(score)) return null;
+  const m = String(g.updatedAtKst || "").match(/(\d{2}):(\d{2})/);
+  return {
+    score: Math.round(score),
+    rawScore: score,
+    rating: String(cnn.label || ""),
+    timestamp: null,
+    previousClose: Number.isFinite(Number(cnn.prevClose)) ? Number(cnn.prevClose) : null,
+    source: "snapshot",
+    asOf: m ? `${m[1]}:${m[2]}` : "",
+  };
+}
 
 const SECTOR_KO = {
   "TECHNOLOGY": "정보기술", "HEALTHCARE": "헬스케어", "FINANCIAL": "금융",
@@ -1716,9 +1835,15 @@ function sectorTopCardHtml(title, list, strong) {
 
 function fxCardHtml() {
   const find = (sym) => (marketHeader.fx || []).find((f) => f.symbol === sym);
-  const row = (label, f, dec, suffix = "") => f
-    ? `<div class="hx-row"><span>${label}</span><strong>${Number(f.price).toFixed(dec)}${suffix}</strong><em class="${cls(f.changePct)}">${actionPct(f.changePct)}</em></div>`
-    : `<div class="hx-row"><span>${label}</span><strong class="muted">불러오는 중…</strong></div>`;
+  const row = (label, f, dec, suffix = "") => {
+    const price = Number(f && f.price);
+    if (!f || !Number.isFinite(price)) {
+      const text = marketHeader.fxStatus === "error" ? "연결 실패" : "불러오는 중…";
+      return `<div class="hx-row"><span>${label}</span><strong class="muted">${text}</strong></div>`;
+    }
+    const chg = Number(f.changePct);
+    return `<div class="hx-row"><span>${label}</span><strong>${price.toFixed(dec)}${suffix}</strong><em class="${cls(chg)}">${Number.isFinite(chg) ? actionPct(chg) : "—"}</em></div>`;
+  };
   return `
     <div class="summary-card hx-card fx-card">
       <span>환율 · 금 · 금리</span>
@@ -1768,6 +1893,7 @@ function regimeFngCardHtml() {
   const live = Number.isFinite(score);
   const gaugeScore = live ? score : 50;
   const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "연결 실패" : "로딩 중");
+  const asOf = live && marketHeader.fng.source === "snapshot" && marketHeader.fng.asOf ? ` · 스냅샷 기준 ${marketHeader.fng.asOf}` : "";
   const color = live ? fngColor(score) : "#94a3b8";
   const cx = 100, cy = 96, r = 76, w = 16;
   const deg = (s) => 180 - (s / 100) * 180;
@@ -1792,7 +1918,7 @@ function regimeFngCardHtml() {
         <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
       </svg>
       <div class="rf-foot">
-        <span class="rf-fng" style="color:${color}">${escapeHtml(label)}</span>
+        <span class="rf-fng" style="color:${color}">${escapeHtml(label)}${escapeHtml(asOf)}</span>
         <span class="rf-stat" title="당일 상승 종목 비율">상승 ${Math.round(regime.upPct * 100)}%</span>
       </div>
     </div>`;
@@ -1847,8 +1973,7 @@ function actionBoardCard(title, hint, rows, emptyText, target, extraClass = "") 
 
 // 액션보드 컴팩트 등락률: 화살표 없이 부호+숫자만(색으로 방향 표시) → 좁은 카드에서도 안 잘림
 function actionPct(value) {
-  const n = Number(value) || 0;
-  return `${n > 0 ? "+" : ""}${n.toFixed(1)}%`;
+  return fmtSignedPct(value);
 }
 
 function actionStockRow(item, note) {
@@ -1993,6 +2118,7 @@ function myStockEventRows() {
     ...portfolio.map((p) => p.ticker),
   ].map((t) => normalizeTickerKey(t)).filter(Boolean))];
   if (!tickers.length) return [];
+  const tickerSet = new Set(tickers);
   const today = formatKstDateTime().slice(0, 10);
   const events = [];
   if (!isKrMarket()) {
@@ -2018,7 +2144,7 @@ function myStockEventRows() {
       const weekAgo = new Date(new Date(`${today}T00:00:00`).getTime() - 7 * 86400000).toISOString().slice(0, 10);
       const buyCount = {};
       trades.forEach((r) => {
-        if (r.kind === "buy" && (r.fileDate || "") >= weekAgo && tickers.includes(r.ticker)) {
+        if (r.kind === "buy" && (r.fileDate || "") >= weekAgo && tickerSet.has(r.ticker)) {
           buyCount[r.ticker] = (buyCount[r.ticker] || 0) + 1;
         }
       });
@@ -2031,7 +2157,7 @@ function myStockEventRows() {
     const cutoff = new Date(new Date(`${today}T00:00:00`).getTime() - 2 * 86400000).toISOString().slice(0, 10);
     const seen = {};
     disc.forEach((d) => {
-      if (!tickers.includes(d.ticker) || (d.fileDate || "") < cutoff) return;
+      if (!tickerSet.has(d.ticker) || (d.fileDate || "") < cutoff) return;
       const key = `${d.ticker}|${d.typeLabel || d.title}`;
       if (seen[key]) return;
       seen[key] = true;
@@ -2132,15 +2258,17 @@ function renderSnapshotIndices() {
   if (!isKrMarket() || !Array.isArray(data.indices)) return;
   const items = data.indices.map((ix) => {
     const proxy = stockByTicker(ix.ticker);
+    const price = Number(proxy?.price);
     return {
       symbol: ix.symbol,
       name: ix.name,
-      price: proxy?.price || 0,
+      // 0 은 '가격 없음' 이다 — 0 으로 찍지 말고 null → "—".
+      price: Number.isFinite(price) && price > 0 ? price : null,
       changePct: ix.changePct ?? proxy?.changePct ?? 0,
       series: proxy?.closeSeries || [],
     };
   }).filter((ix) => ix.name);
-  if (items.length) renderIndexStrip(items);
+  if (items.length) setHeaderIndices(items, "snapshot");
 }
 
 function renderIndexStrip(indices) {
@@ -2164,7 +2292,7 @@ function renderIndexStrip(indices) {
         <strong>${escapeHtml(ix.name)}</strong>
         <em class="${cls(ix.changePct)}">${fmtPct(ix.changePct)}</em>
       </div>
-      <div class="index-price">${Number(ix.price).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+      <div class="index-price">${Number.isFinite(Number(ix.price)) && ix.price != null ? Number(ix.price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</div>
       ${indexSparkline(ix.series, ix.changePct >= 0)}
     </div>
   `;
@@ -2220,21 +2348,44 @@ async function fetchCnnFng(base) {
 }
 
 function fetchMarketHeader() {
-  if (!LIVE_DATA_PROXY) { renderIndexStrip([]); return; }
+  if (!LIVE_DATA_PROXY) { applyMarketHeader(); return; }
   const base = LIVE_DATA_PROXY.replace(/\/$/, "");
+  const marketId = marketCfg().id; // 응답이 도착했을 때 시장이 바뀌어 있으면 버린다
   const fngReq = fetchCnnFng(base).then((fng) => {
-    marketHeader.fng = fng;
-    marketHeader.fngStatus = fng ? "loaded" : "error";
-    renderSummary();
+    if (marketCfg().id !== marketId) return;
+    if (fng) {
+      marketHeader.fng = fng;
+      marketHeader.fngStatus = "loaded";
+      applyMarketHeader();
+      return;
+    }
+    const applyFallback = () => {
+      const fb = snapshotFngFallback();
+      marketHeader.fng = fb;
+      marketHeader.fngStatus = fb ? "snapshot" : "error";
+      applyMarketHeader();
+    };
+    if (window.SENTIMENT_GAUGES) { applyFallback(); return; }
+    marketHeader.fngStatus = "error";
+    applyMarketHeader();
+    ensureFeatureData("sentimentGauges").then((ok) => { if (ok && !marketHeader.fng) applyFallback(); });
   });
   const fxReq = fetch(`${base}/?fx=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
-    if (p && Array.isArray(p.fx)) { marketHeader.fx = p.fx; renderSummary(); renderPortfolio(); }
-  }).catch(() => {});
+    if (p && Array.isArray(p.fx) && p.fx.length) {
+      marketHeader.fx = p.fx;
+      marketHeader.fxStatus = "loaded";
+      renderPortfolio();
+    } else if (!marketHeader.fx.length) {
+      marketHeader.fxStatus = "error";
+    }
+    applyMarketHeader();
+  }).catch(() => { if (!marketHeader.fx.length) marketHeader.fxStatus = "error"; applyMarketHeader(); });
   // KR mode renders KOSPI/KOSDAQ from the snapshot (renderSnapshotIndices); worker indices are US-only.
   const idxReq = isKrMarket()
     ? Promise.resolve()
     : fetch(`${base}/?indices=1`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((p) => {
-        if (p && Array.isArray(p.indices)) renderIndexStrip(p.indices);
+        if (marketCfg().id !== marketId) return;
+        if (p && Array.isArray(p.indices)) setHeaderIndices(p.indices, "worker");
       }).catch(() => {});
   Promise.allSettled([fngReq, fxReq, idxReq]).then(() => updateDataLoadedAt());
 }
@@ -2322,14 +2473,11 @@ function calendarDayLabel(isoKey, rows) {
 }
 
 function mergeCalendarEvents(macroEvents, whEvents) {
-  const merged = [...(macroEvents || []), ...(whEvents || [])];
-  merged.sort((a, b) => {
-    const ad = calendarIsoFromEvent(a);
-    const bd = calendarIsoFromEvent(b);
-    if (ad !== bd) return ad.localeCompare(bd);
-    return String(a.time || "").localeCompare(String(b.time || ""));
-  });
-  return merged;
+  // 비교자 안에서 매번 날짜를 파싱하지 않도록 키를 한 번만 만든다(n log n 회 → n 회).
+  const keyed = [...(macroEvents || []), ...(whEvents || [])]
+    .map((ev) => ({ ev, iso: calendarIsoFromEvent(ev), time: String(ev.time || "") }));
+  keyed.sort((a, b) => (a.iso !== b.iso ? a.iso.localeCompare(b.iso) : a.time.localeCompare(b.time)));
+  return keyed.map((k) => k.ev);
 }
 
 function calendarEventPassesFilters(event) {
@@ -2451,14 +2599,15 @@ function usBuybackRows() {
   return ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e && e.kind === "buyback");
 }
 function searchSubTabHidden(sub, cfg) {
-  if (sub === "short") return !!(cfg.features && !cfg.features.shortInterest);
+  if (sub === "short") return featureOff("shortInterest", cfg);
   if (!KR_DART_SUBTABS.has(sub)) return false;
   if (DUAL_MARKET_SUBTABS.has(sub) && cfg.id === "us") {
     if (sub === "buyback") return !usBuybackRows().length;
     if (sub === "dilution") return !((window.US_DILUTION || {}).rows || []).length;
     return false;
   }
-  return !(cfg.features && cfg.features.krDart);
+  // 나머지는 KR DART 전용 — US 에선 언제나 숨긴다.
+  return cfg.id !== "kr" || featureOff("krDart", cfg);
 }
 
 // 종목검색 서브탭 표시/숨김을 현재 데이터 상태로 다시 적용한다. 부팅(시장 전환)과
@@ -2466,11 +2615,7 @@ function searchSubTabHidden(sub, cfg) {
 function applySearchSubVisibility(cfg = marketCfg()) {
   const searchNav = byId("searchSubTabs");
   if (!searchNav) return;
-  searchNav.querySelectorAll(".sub-tab").forEach((btn) => {
-    const hidden = searchSubTabHidden(btn.dataset.sub, cfg);
-    btn.hidden = hidden;
-    btn.style.display = hidden ? "none" : "";
-  });
+  searchNav.querySelectorAll(".sub-tab").forEach((btn) => setTabHidden(btn, searchSubTabHidden(btn.dataset.sub, cfg)));
   if (searchSubTabHidden(searchSubTab, cfg)) {
     activateSearchSub("analysis", { push: false });
   }
@@ -2520,7 +2665,7 @@ function recordNav() {
 
 function applyNavState(state) {
   if (!state) return;
-  if (state.ticker) selectTicker(state.ticker, { openSearch: false });
+  if (state.ticker) selectTicker(state.ticker, { openSearch: false, skipRender: true }); // 렌더는 아래 activateTab 이 한 번
   if (state.communityTicker != null) applyCommunityBoardTickerFilter(state.communityTicker);
   activateTab(state.tab || "map", {
     push: false,
@@ -2592,6 +2737,7 @@ function showAppToast(message, ms = 2000) {
 // 모바일에서는 "이 페이지 내용:" 같은 문구가 앞에 붙는다. <dialog> 로 바꾸면
 // 포커스 트랩·Esc 취소·backdrop·inert 처리를 브라우저가 대신 해준다.
 // 취소는 항상 false(confirm) / null(prompt) 로 떨어진다 — 네이티브와 같은 계약.
+let _appDialogSeq = 0; // 다이얼로그가 겹칠 수 있어 제목 id 를 고유하게
 function appDialog({ title, message, defaultValue = null, okLabel = "확인", cancelLabel = "취소", danger = false }) {
   const isPrompt = defaultValue !== null;
   return new Promise((resolve) => {
@@ -2605,7 +2751,7 @@ function appDialog({ title, message, defaultValue = null, okLabel = "확인", ca
       const h = document.createElement("h2");
       h.className = "app-dialog-title";
       h.textContent = title;
-      dlg.setAttribute("aria-labelledby", (h.id = "appDialogTitle"));
+      dlg.setAttribute("aria-labelledby", (h.id = `appDialogTitle-${++_appDialogSeq}`));
       form.appendChild(h);
     }
 
@@ -2688,7 +2834,7 @@ function normalizeTabRequest(name, sub) {
   return { tab: name, sub: sub || null };
 }
 
-function activateSearchSub(name, { push = false } = {}) {
+function activateSearchSub(name, { push = false, skipRender = false, renderOptions = null } = {}) {
   searchSubTab = name || "analysis";
   const nav = byId("searchSubTabs");
   if (nav) {
@@ -2709,7 +2855,7 @@ function activateSearchSub(name, { push = false } = {}) {
   if (searchSubTab === "dividend") renderDividends();
   if (searchSubTab === "contract") renderContracts();
   if (searchSubTab === "dilution") renderDilution();
-  if (searchSubTab === "analysis") renderSearch();
+  if (searchSubTab === "analysis" && !skipRender) renderSearch(renderOptions || {});
   if (push) recordNav();
 }
 
@@ -3341,7 +3487,7 @@ function renderMacroIndicators() {
     const arrow = Number.isFinite(ch) && ch !== 0 ? (ch > 0 ? "▲" : "▼") : "";
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
-      <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${it.value}${escapeHtml(it.unit || "")}</div>
+      <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${escapeHtml(it.value ?? "")}${escapeHtml(it.unit || "")}</div>
       <div style="font-size:11px;color:${col};font-variant-numeric:tabular-nums;margin-top:3px">${arrow} ${Number.isFinite(ch) ? (ch > 0 ? "+" : "") + ch + (it.unit || "") : "—"} <span style="color:var(--muted)">· ${escapeHtml(String(it.date || "").slice(0, 7))}</span></div>
     </article>`;
   };
@@ -3367,6 +3513,26 @@ function renderMacroIndicators() {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openHistoryDetail(key); }
     });
   });
+}
+
+// 시그널 탭은 피처 데이터셋이 도착할 때마다(refreshFeatureViews) 다시 그려졌다 — 탭이 숨어
+// 있어도. 보일 때만 그리고, 숨어 있으면 dirty 로 표시해 다음 진입 때 한 번 그린다.
+let signalsDirty = true;
+const SIGNALS_FEATURE_KEYS = [
+  "yieldCurve", "macro", "cotPositioning", "treasuryAuctions", "wikiAttention", "sentimentGauges",
+  "ecosMacro", "tradeExports", "optionsStats", "marketHistory",
+  // Smart-money signals read the heavy 13F/congress/insider datasets; they're excluded from
+  // the boot prefetch and load on first visit.
+  "insider", "congress", "inst13f",
+];
+function renderSignalsIfVisible() {
+  if (currentTab === "signals") {
+    renderSignals();
+    signalsDirty = false;
+    tabRendered.signals = true;
+  } else {
+    signalsDirty = true;
+  }
 }
 
 function renderSignals() {
@@ -3685,7 +3851,7 @@ function scrollToTabContent() {
   }
 }
 
-function activateTab(name, { push = true, ticker = null, sub = null, communityTicker = null } = {}) {
+function activateTab(name, { push = true, ticker = null, sub = null, communityTicker = null, skipRender = false, renderOptions = null } = {}) {
   const resolved = normalizeTabRequest(name, sub);
   name = resolved.tab;
   sub = resolved.sub;
@@ -3697,40 +3863,31 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
   document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
-  byId(`tab-${name}`).classList.add("is-active");
+  byId(`tab-${name}`)?.classList.add("is-active");
   scrollTabIntoView(tabBtn);
   currentTab = name;
+  // 첫 진입 탭은 여기서 처음 그린다(부팅 때 전 탭을 그리지 않는다 — renderAll 참고).
+  renderTabContent(name);
   // US 증자·희석 데이터는 종목검색 서브탭에서만 쓰므로 탭 첫 진입 때 한 번만 시도.
   // 파일이 아직 배포 전이면 조용히 실패하고 서브탭이 숨은 채 유지된다.
-  if (name === "search" && !isKrMarket() && !window.US_DILUTION && !_usDilutionLoadTried) {
-    _usDilutionLoadTried = true;
+  if (name === "search" && !isKrMarket() && !window.US_DILUTION && FEATURE_DATA.usDilution && !FEATURE_DATA.usDilution.tried) {
+    FEATURE_DATA.usDilution.tried = true;
     ensureFeatureData("usDilution").then((ok) => { if (ok) applySearchSubVisibility(); });
   }
-  if (name === "search") activateSearchSub(sub || searchSubTab, { push: false });
+  if (name === "search") activateSearchSub(sub || searchSubTab, { push: false, skipRender, renderOptions });
   if (name === "calendar") activateCalendarSub(sub || calendarSubTab, { push: false });
   if (name === "institutional") activateInstitutionalSub(sub || institutionalSubTab, { push: false });
   if (name === "community") activateCommunitySub(sub || communitySubTab, { push: false, communityTicker });
   if (name !== "community") stopCommunityPolling();
   if (name === "map") renderTreemap();
   if (name === "signals") {
-    renderSignals();
-    ensureFeatureData("yieldCurve").then((ok) => { if (ok && currentTab === "signals") renderYieldCurve(); });
-    ensureFeatureData("macro").then((ok) => { if (ok && currentTab === "signals") { renderMacroIndicators(); renderFearGreed(); } });
-    ensureFeatureData("cotPositioning").then((ok) => { if (ok && currentTab === "signals") renderCotPositioning(); });
-    ensureFeatureData("treasuryAuctions").then((ok) => { if (ok && currentTab === "signals") renderTreasuryAuctions(); });
-    ensureFeatureData("wikiAttention").then((ok) => { if (ok && currentTab === "signals") renderWikiAttention(); });
-    ensureFeatureData("sentimentGauges").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
-    ensureFeatureData("ecosMacro").then((ok) => { if (ok && currentTab === "signals") renderEcosMacro(); });
-    ensureFeatureData("tradeExports").then((ok) => { if (ok && currentTab === "signals") renderTradeExports(); });
-    ensureFeatureData("optionsStats").then((ok) => { if (ok && currentTab === "signals") renderFearGreed(); });
-    ensureFeatureData("marketHistory").then((ok) => { if (ok && currentTab === "signals") { renderFearGreed(); renderMacroIndicators(); } });
-    // Smart-money signals read the heavy 13F/congress/insider datasets; load them on
-    // first visit (they're excluded from the boot prefetch) and re-render as each lands.
-    ["insider", "congress", "inst13f"].forEach((k) => {
+    // 한 번만 그린다(예전엔 진입마다 renderSignals + 데이터셋별 .then 렌더 ~10개 = 최대 15회).
+    if (signalsDirty || !tabRendered.signals) renderSignalsIfVisible();
+    // 아직 안 온 데이터셋만 요청하고, 도착은 refreshFeatureViews(250ms 디바운스) 한 번으로 합쳐 그린다.
+    SIGNALS_FEATURE_KEYS.forEach((k) => {
       const meta = FEATURE_DATA[k];
-      if (meta && featureDataEnabled(meta, marketCfg()) && !window[meta.global]) {
-        ensureFeatureData(k).then((ok) => { if (ok && currentTab === "signals") renderSignals(); });
-      }
+      if (!meta || window[meta.global] || _featureDataFailed[k] || !featureDataEnabled(meta, marketCfg())) return;
+      ensureFeatureData(k).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
     });
   }
   if (push) recordNav();
@@ -3940,6 +4097,10 @@ function setupTabReorder(nav) {
     dragEl = tab; pointerId = e.pointerId; startX = e.clientX;
     dragging = false; moved = false;
     clearLongPress();
+    // 누르고 있는 동안만 window 에 붙인다 — 상시 pointermove 리스너는 스크롤마다 불렸다.
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     if (e.pointerType === "touch") {
       longPressTimer = setTimeout(() => { if (dragEl && !moved) beginDrag(); }, LONG_PRESS_MS);
     }
@@ -3987,14 +4148,14 @@ function setupTabReorder(nav) {
     clearLongPress();
     if (dragging) finishDrag();
     dragEl = null; pointerId = null; dragging = false; moved = false;
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
   }
 
   // 모바일 롱프레스 시 뜨는 컨텍스트 메뉴/선택 방지
   nav.addEventListener("contextmenu", (e) => { if (dragging) e.preventDefault(); });
   nav.addEventListener("pointerdown", onDown);
-  window.addEventListener("pointermove", onMove, { passive: false });
-  window.addEventListener("pointerup", onUp);
-  window.addEventListener("pointercancel", onUp);
 }
 
 function setupFilters() {
@@ -4072,7 +4233,7 @@ function setupEvents() {
     byId("heatmapSearch").value = "";
     renderTreemap();
   });
-  ["topMetric", "topBucket", "topSector", "topNewHighRecency", "topNewHigh", "topMinRs", "topMinEps", "topMinVolume", "topMinMarketCap", "topLimit"].forEach((id) => {
+  ["topMetric", "topBucket", "topSector", "topNewHighRecency", "topNewHigh", "topMinRs", topMaxRsiInputId(), "topMinVolume", "topMinMarketCap", "topLimit"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", () => {
       const preset = byId("topPreset");
@@ -4228,6 +4389,8 @@ function setupEvents() {
   });
   byId("stockTreemap").addEventListener("mousemove", handleHeatmapPointer);
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
+  byId("stockTreemap").addEventListener("click", handleHeatmapClick);
+  setupTreemapVisibilityWatch();
   setupChartControls();
   setupWatchAlertEvents();
   setupCloudSyncEvents();
@@ -4282,9 +4445,20 @@ function setupEvents() {
 }
 
 // Re-derive the currently shown stock (snapshot + detail + live data).
+// 팬/줌 프레임마다 불리므로 (base row · 상세 · 실시간 캐시) 참조가 그대로면 캐시를 돌려준다.
+// 상세/실시간 데이터는 도착 시 캐시 객체가 교체되므로 참조 비교만으로 자동 무효화된다.
+let _chartItemCache = null;
 function currentChartItem() {
-  const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
-  return applyLive(withDetail(base));
+  const base = selectedBaseRow();
+  if (!base) return null;
+  const t = base.ticker;
+  const detailRef = detailCache[safeTicker(t)] || detailCache[t] || null;
+  const live = [liveChartCache[t], liveNewsCache[t], liveEarningsCache[t], liveSummaryCache[t], liveNewsSourceCache[t]];
+  const c = _chartItemCache;
+  if (c && c.base === base && c.detailRef === detailRef && c.live.every((v, i) => v === live[i])) return c.item;
+  const item = applyLive(withDetail(base));
+  _chartItemCache = { base, detailRef, live, item };
+  return item;
 }
 
 // Redraw only the price chart (no news/facts re-render) — used by zoom/pan/wheel/drag.
@@ -5270,22 +5444,33 @@ function setupChartInteractions() {
   });
 }
 
+// 탭별 첫 렌더 플래그. 예전 renderAll 은 부팅 때 9개 탭을 전부 동기로 그렸다(기본 종목의
+// 워커 실시간 조회까지 부팅에 딸려 들어갔다). 이제 탭과 무관한 표면만 그리고, 탭 콘텐츠는
+// 첫 진입(activateTab → renderTabContent) 때 그린다. 시장 전환(boot 재실행)마다 리셋된다.
+const tabRendered = {};
+const TAB_RENDERERS = {
+  sector: () => renderSectors(),
+  bulk: () => renderBulk(),
+  health: () => renderHealth(),
+  "ai-briefing": () => { renderAiBriefing(); renderSocialSentiment(); },
+  // map(폭 의존이라 진입마다)·signals(dirty 플래그)·search/institutional/calendar/community
+  // (서브탭 활성화가 그림)는 activateTab 이 직접 처리한다.
+};
+function renderTabContent(name, { force = false } = {}) {
+  if (!force && tabRendered[name]) return;
+  tabRendered[name] = true;
+  const fn = TAB_RENDERERS[name];
+  if (fn) fn();
+}
+
 function renderAll() {
-  renderTreemap();
-  renderSectors();
-  renderTopStocks();
-  renderJump();
-  renderSearch();
-  renderBulk();
+  Object.keys(tabRendered).forEach((k) => delete tabRendered[k]);
+  signalsDirty = true;
+  // 탭과 무관하게 항상 보이는 표면
   renderWatchlistBar();
   renderWatchAlerts();
   renderActionBoard();
-  renderHealth();
-  activateInstitutionalSub(institutionalSubTab, { push: false });
   renderDataFreshnessStatus();
-  renderAiBriefing();
-  renderSocialSentiment();
-  renderCommunityNews();
 }
 
 function filteredStocks() {
@@ -5526,6 +5711,40 @@ function metricColor(value, metric) {
 let zoomView = null; // null | { sector } | { sector, industry }
 let treemapFocusTicker = null;
 let treemapFocusTimer = null;
+// 툴팁 피어 목록(산업군/섹터별, 시총순) — 스냅샷당 한 번만 만든다. 예전엔 마우스가 움직일
+// 때마다 전 종목을 두 번씩 필터했다.
+let _treemapPeerIndex = null;
+function treemapPeerIndex() {
+  if (_treemapPeerIndex) return _treemapPeerIndex;
+  const byIndustry = new Map();
+  const bySector = new Map();
+  (data.stocks || []).slice()
+    .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
+    .forEach((s) => {
+      const ind = s.industry || "Other";
+      const sec = s.sector || "Other";
+      if (!byIndustry.has(ind)) byIndustry.set(ind, []);
+      byIndustry.get(ind).push(s);
+      if (!bySector.has(sec)) bySector.set(sec, []);
+      bySector.get(sec).push(s);
+    });
+  _treemapPeerIndex = { byIndustry, bySector };
+  return _treemapPeerIndex;
+}
+// 폭 0 이라 못 그린 렌더 요청. 지도가 보이게 되면(폭 > 0) 한 번 그린다.
+let _treemapPending = false;
+function setupTreemapVisibilityWatch() {
+  const map = byId("stockTreemap");
+  if (!map || map.dataset.visWatch || typeof ResizeObserver === "undefined") return;
+  map.dataset.visWatch = "1";
+  new ResizeObserver((entries) => {
+    const w = entries[0]?.contentRect?.width || 0;
+    if (w > 0 && _treemapPending && currentTab === "map") renderTreemap();
+  }).observe(map);
+}
+// 마지막으로 hover 한 대상 키("t:티커" | "i:섹터|산업" | "s:섹터"). 같은 대상 위에서 움직이면
+// 툴팁 위치만 옮기고 패널·툴팁 HTML 은 다시 만들지 않는다.
+let _lastHoverKey = null;
 
 function renderTreemap() {
   const metric = byId("metricFilter").value;
@@ -5533,15 +5752,19 @@ function renderTreemap() {
   const query = byId("heatmapSearch").value.trim();
   const map = byId("stockTreemap");
   const width = map.clientWidth;
-  // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음.
-  // 지도 탭이 보이는데도 일시적으로 0이면 다음 프레임에 다시 시도.
+  // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음. 예전엔 지도 탭이
+  // current 인 채로 가려진 상태(AI 모드 차트 뷰)에서 rAF 로 초당 ~80회 재시도했다. 이제 '그려야
+  // 함' 만 표시하고, 폭이 생기는 순간(ResizeObserver, setupTreemapVisibilityWatch) 한 번 그린다.
   if (!width) {
-    if (currentTab === "map") requestAnimationFrame(renderTreemap);
+    _treemapPending = true;
     return;
   }
+  _treemapPending = false;
   const height = map.clientHeight || 720;
 
   renderLegend(metric);
+  treemapPeerIndex();
+  _lastHoverKey = null;
 
   const all = filteredStocks();
   if (!all.length) {
@@ -5551,7 +5774,8 @@ function renderTreemap() {
     else if (bucket === "portfolio") emptyMsg = "보유종목이 없습니다. 포트폴리오 탭에서 보유 종목을 추가해 보세요.";
     map.innerHTML = `<div class="heatmap-empty">${escapeHtml(emptyMsg)}</div>`;
     zoomView = null;
-    renderSelected(data.stocks[0]);
+    const fallback = selectedBaseRow() || data.stocks[0];
+    if (fallback) renderSelected(fallback);
     return;
   }
 
@@ -5581,28 +5805,12 @@ function renderTreemap() {
     const industryRects = squarify(industries, inner, (item) => item.weight);
     return `
       <section class="sector-box" data-sector="${escapeHtml(sector.sector)}" style="${rectStyle(rect)}">
-        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(sector.sector)} 확대">${sector.sector} · ${fmtMetric(sector.change, metric)} </div>
+        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(sector.sector)} 확대">${escapeHtml(sector.sector)} · ${fmtMetric(sector.change, metric)} </div>
         ${industryRects.map(({ item: industry, rect: industryRect }) => industryBox(sector.sector, industry, industryRect, metric, sizeMetric, query)).join("")}
       </section>
     `;
   }).join("");
-
-  // Click an industry box (e.g. Semiconductors) -> zoom it to fill the heatmap.
-  map.querySelectorAll(".industry-box").forEach((box) => {
-    box.addEventListener("click", (event) => {
-      event.stopPropagation();
-      zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
-      renderTreemap();
-    });
-  });
-  // Click a sector title -> zoom the whole sector.
-  map.querySelectorAll(".sector-title[data-zoom-sector]").forEach((title) => {
-    title.addEventListener("click", (event) => {
-      event.stopPropagation();
-      zoomView = { sector: title.dataset.zoomSector };
-      renderTreemap();
-    });
-  });
+  // 클릭(타일 선택 / 산업·섹터 확대 / 전체 보기)은 handleHeatmapClick 이 위임으로 처리한다.
 
   renderSelected(stocks.find((item) => item.ticker === selectedTicker) || stocks[0] || data.stocks[0]);
   pulseTreemapFocusTile();
@@ -5632,7 +5840,8 @@ function pulseTreemapFocusTile() {
     if (tile) tile.scrollIntoView({ block: "nearest", inline: "nearest", behavior: "smooth" });
     treemapFocusTimer = setTimeout(() => {
       treemapFocusTicker = null;
-      if (currentTab === "map") renderTreemap();
+      // 클래스 하나 떼려고 지도를 통째로 다시 그리지 않는다.
+      byId("stockTreemap")?.querySelectorAll(".heat-tile.is-focus-pulse").forEach((el) => el.classList.remove("is-focus-pulse"));
     }, 3200);
   }, 60);
 }
@@ -5652,24 +5861,13 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
     const sorted = scoped.slice().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
     const rects = squarify(sorted, inner, (item) => sizeWeight(item, sizeMetric));
     map.innerHTML = header + rects.map(({ item, rect }) => heatTile(item, rect, metric, query)).join("");
-    map.querySelectorAll(".heat-tile").forEach((tile) => {
-      tile.addEventListener("click", () => selectTicker(tile.dataset.ticker, { openSearch: true }));
-    });
   } else {
     const industries = groupIndustries(scoped, metric, sizeMetric);
     const industryRects = squarify(industries, inner, (item) => item.weight);
     map.innerHTML = header + industryRects
       .map(({ item: industry, rect }) => industryBox(zoomView.sector, industry, rect, metric, sizeMetric, query)).join("");
-    map.querySelectorAll(".industry-box").forEach((box) => {
-      box.addEventListener("click", (event) => {
-        event.stopPropagation();
-        zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
-        renderTreemap();
-      });
-    });
   }
-
-  byId("treemapBack").addEventListener("click", () => { zoomView = null; renderTreemap(); });
+  // 클릭은 handleHeatmapClick(위임) 이 처리한다.
   renderSelected(scoped.find((item) => item.ticker === selectedTicker) || scoped[0]);
   pulseTreemapFocusTile();
 }
@@ -5796,7 +5994,7 @@ function heatTile(item, rect, metric, query) {
     <button
       class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
       style="${rectStyle(rect)} background:${metricColor(value, metric)}"
-      data-ticker="${item.ticker}"
+      data-ticker="${escapeHtml(item.ticker)}"
       data-sector="${escapeHtml(item.sector)}"
       data-industry="${escapeHtml(item.industry)}"
       title="${escapeHtml(titleText)}"
@@ -5812,8 +6010,11 @@ function handleHeatmapPointer(event) {
   const map = byId("stockTreemap");
   const tile = event.target.closest(".heat-tile");
   if (tile && map.contains(tile)) {
-    const item = data.stocks.find((stockItem) => stockItem.ticker === tile.dataset.ticker);
+    const key = `t:${tile.dataset.ticker}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    const item = stockByTicker(tile.dataset.ticker);
     if (item) {
+      _lastHoverKey = key;
       renderSelected(item);
       showHeatmapTooltip(stockTooltip(item), event);
     }
@@ -5822,6 +6023,9 @@ function handleHeatmapPointer(event) {
 
   const industry = event.target.closest(".industry-box");
   if (industry && map.contains(industry)) {
+    const key = `i:${industry.dataset.sector}|${industry.dataset.industry}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    _lastHoverKey = key;
     showHeatmapTooltip(groupTooltip({
       type: "industry",
       sector: industry.dataset.sector,
@@ -5832,6 +6036,9 @@ function handleHeatmapPointer(event) {
 
   const sector = event.target.closest(".sector-box");
   if (sector && map.contains(sector)) {
+    const key = `s:${sector.dataset.sector}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    _lastHoverKey = key;
     showHeatmapTooltip(groupTooltip({
       type: "sector",
       sector: sector.dataset.sector
@@ -5840,6 +6047,38 @@ function handleHeatmapPointer(event) {
   }
 
   hideHeatmapTooltip();
+}
+
+// 지도 클릭 위임(렌더마다 리스너를 다시 붙이지 않는다). 타일 = 종목 선택(터치에서도 한 번에),
+// 산업 상자/제목·섹터 제목 = 확대, ← 전체 보기 = 확대 해제.
+function handleHeatmapClick(event) {
+  const map = byId("stockTreemap");
+  if (!map) return;
+  const tile = event.target.closest(".heat-tile");
+  if (tile && map.contains(tile)) {
+    event.stopPropagation();
+    selectTicker(tile.dataset.ticker, { openSearch: true });
+    return;
+  }
+  if (event.target.closest("#treemapBack")) {
+    event.stopPropagation();
+    zoomView = null;
+    renderTreemap();
+    return;
+  }
+  const title = event.target.closest(".sector-title[data-zoom-sector]");
+  if (title && map.contains(title)) {
+    event.stopPropagation();
+    zoomView = { sector: title.dataset.zoomSector };
+    renderTreemap();
+    return;
+  }
+  const box = event.target.closest(".industry-box");
+  if (box && map.contains(box)) {
+    event.stopPropagation();
+    zoomView = { sector: box.dataset.sector, industry: box.dataset.industry };
+    renderTreemap();
+  }
 }
 
 function ensureHeatmapTooltip() {
@@ -5857,6 +6096,11 @@ function ensureHeatmapTooltip() {
 function showHeatmapTooltip(html, event) {
   const tooltip = ensureHeatmapTooltip();
   tooltip.innerHTML = html;
+  positionHeatmapTooltip(event);
+}
+
+function positionHeatmapTooltip(event) {
+  const tooltip = ensureHeatmapTooltip();
   tooltip.classList.add("is-visible");
 
   const gap = 16;
@@ -5870,6 +6114,7 @@ function showHeatmapTooltip(html, event) {
 }
 
 function hideHeatmapTooltip() {
+  _lastHoverKey = null;
   const tooltip = byId("heatmapTooltip");
   if (tooltip) tooltip.classList.remove("is-visible");
 }
@@ -5877,14 +6122,10 @@ function hideHeatmapTooltip() {
 function stockTooltip(item) {
   const metric = byId("metricFilter").value;
   const metricCfg = MAP_METRIC_CONFIG[metric];
-  const peers = data.stocks
-    .filter((stockItem) => stockItem.ticker !== item.ticker && stockItem.industry === item.industry)
-    .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
-    .slice(0, 6);
-  const peerRows = peers.length ? peers : data.stocks
-    .filter((stockItem) => stockItem.ticker !== item.ticker && stockItem.sector === item.sector)
-    .sort((a, b) => sizeWeight(b, "marketCapB") - sizeWeight(a, "marketCapB"))
-    .slice(0, 6);
+  const idx = treemapPeerIndex();
+  const notSelf = (rows) => (rows || []).filter((stockItem) => stockItem.ticker !== item.ticker).slice(0, 6);
+  const peers = notSelf(idx.byIndustry.get(item.industry || "Other"));
+  const peerRows = peers.length ? peers : notSelf(idx.bySector.get(item.sector || "Other"));
 
   return `
     <div class="tooltip-head">
@@ -5902,7 +6143,7 @@ function stockTooltip(item) {
       ${miniFact("Sector", item.sector)}
       ${miniFact("Industry", item.industry)}
       ${miniFact(metricCfg ? metricCfg.label : "Metric", fmtMetric(mapMetricValue(item, metric), metric))}
-      ${miniFact("Volume", `${Number(item.volumeRatio).toFixed(1)}x`)}
+      ${miniFact("Volume", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
     </div>
     <div class="tooltip-peers">
       <span>같은 산업군 / 주요 비교 종목</span>
@@ -6105,6 +6346,24 @@ function escapeHtml(value) {
   })[char]);
 }
 
+// 외부 소스 텍스트(브리핑 파이프라인·소셜·LLM 답변)의 이모지/픽토그램 제거. 사이트는 장식
+// 이모지를 쓰지 않는다(기능 심볼 ★☆✓▲▼ 등은 유지). 국기(지역 지시자)·피부색 수정자·
+// 변이 선택자·ZWJ·키캡까지 걷어낸다.
+const EMOJI_KEEP = new Set(["★", "☆", "✓", "✔", "▲", "▼", "▶", "◀", "©", "®", "™", "↑", "↓", "→", "←", "↔", "•"]);
+const EMOJI_RE = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|[\u{E0020}-\u{E007F}]|[\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu;
+function stripEmoji(text) {
+  return String(text ?? "").replace(EMOJI_RE, (ch) => (EMOJI_KEEP.has(ch) ? ch : ""));
+}
+// 브리핑 HTML: 이모지를 떼고 "📊 [제목] - 날짜" 굵은 첫 줄을 제목/날짜로 바꾼다.
+function sanitizeBriefingHtml(html) {
+  let out = stripEmoji(html);
+  out = out.replace(/<b>\s*\[([^\]<]+)\]\s*-?\s*([^<]*?)\s*<\/b>/, (m, title, date) =>
+    `<strong class="briefing-title">${title.trim()}</strong>${date.trim() ? ` <span class="muted">${date.trim()}</span>` : ""}`);
+  // 이모지가 빠진 자리의 앞 공백 정리("<b> 제목" → "<b>제목")
+  out = out.replace(/(<(?:b|strong|h[1-6])(?:\s[^>]*)?>)\s+/g, "$1");
+  return out;
+}
+
 function debounce(fn, delay) {
   let id;
   return (...args) => {
@@ -6166,16 +6425,17 @@ function krFlowCard(item) {
     if (a >= 1e4) return `${s}${Math.round(a / 1e4).toLocaleString()}만주`;
     return `${s}${Math.round(a).toLocaleString()}주`;
   };
-  const cls = (v) => (Number.isFinite(v) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "");
+  // 전역 cls 와 이름이 겹치던 지역 함수 — tone 으로 바꿔 섀도잉을 없앤다.
+  const tone = (v) => (Number.isFinite(v) ? (v > 0 ? "pos" : v < 0 ? "neg" : "") : "");
   // 순매수 '수량' 만 보면 종목 간 비교가 안 된다 — 삼성전자 100만주와 소형주 100만주는
   // 전혀 다른 얘기다. 20일 거래량 대비 몇 %인지를 같이 보여준다.
-  const pct = (v) => (Number.isFinite(v) ? `${v > 0 ? "+" : ""}${v.toFixed(1)}%` : "-");
+  const pct = (v) => (Number.isFinite(v) ? fmtSignedPct(v) : "-");
   const row = (label, v5, v20, ratio) => `
     <tr>
       <th>${label}</th>
-      <td class="${cls(v5)}">${shares(v5)}</td>
-      <td class="${cls(v20)}">${shares(v20)}</td>
-      <td class="${cls(ratio)}">${pct(ratio)}</td>
+      <td class="${tone(v5)}">${shares(v5)}</td>
+      <td class="${tone(v20)}">${shares(v20)}</td>
+      <td class="${tone(ratio)}">${pct(ratio)}</td>
     </tr>`;
 
   // 컨센서스 목표주가는 싣지 않는다. 네이버가 주는 목표가가 네이버 자신의 현재가와
@@ -6259,7 +6519,7 @@ function krConsensusCard(item) {
   };
   const rows = [];
   if (Number.isFinite(tp) && tp > 0) rows.push(["목표주가", cfg.formatMoney(tp)]);
-  if (Number.isFinite(up)) rows.push(["상승여력<span class=\"muted\"> (참고)</span>", `<span class="muted">${up > 0 ? "+" : ""}${up.toFixed(1)}%</span>`]);
+  if (Number.isFinite(up)) rows.push(["상승여력<span class=\"muted\"> (참고)</span>", `<span class="muted">${fmtSignedPct(up)}</span>`]);
   if (opLabel) rows.push(["투자의견", `${escapeHtml(opLabel)}${Number.isFinite(score) ? `<span class="muted"> · ${score.toFixed(2)}/5</span>` : ""}`]);
   if (Number.isFinite(Number(c.epsEstimate))) rows.push([`추정 EPS${c.estimateFy ? `<span class="muted"> (${escapeHtml(String(c.estimateFy))})</span>` : ""}`, cfg.formatMoney(Number(c.epsEstimate))]);
   if (Number.isFinite(Number(c.revenueEstimate))) rows.push(["추정 매출", fmtEok(c.revenueEstimate)]);
@@ -6358,8 +6618,9 @@ function krNpsCard(item) {
 function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
-    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${item.ticker} ${syntheticBadge(item)}</h3>
-    <p class="muted">${item.company} · ${item.sector} · ${item.industry}</p>
+    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(item.ticker)} ${syntheticBadge(item)}</h3>
+    <p class="muted">${escapeHtml(item.company ?? "")} · ${escapeHtml(item.sector ?? "")} · ${escapeHtml(item.industry ?? "")}</p>
+    ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
     ${krFlowCard(item)}
     ${krGroupCard(item)}
@@ -6371,9 +6632,9 @@ function stockFacts(item, title) {
       ${fact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
       ${fact("RSI", fmtRsi(item))}
       ${fact("EPS", fmtEps(item))}
-      ${fact("거래량", `${item.volumeRatio.toFixed(1)}x`)}
-      ${fact("StochK", item.stochK)}
-      ${fact("신고가 거리", fmtPct(-item.newHighDistancePct))}
+      ${fact("거래량", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
+      ${fact("StochK", Number.isFinite(Number(item.stochK)) ? Math.round(Number(item.stochK)) : "—")}
+      ${fact("신고가 거리", Number.isFinite(Number(item.newHighDistancePct)) ? fmtPct(-Number(item.newHighDistancePct)) : "—")}
     </div>
   `;
 }
@@ -6505,7 +6766,7 @@ function renderSectors() {
           <div class="leader-chips">
             ${item.topLeaders.map(stock => `
               <span class="leader-chip" data-ticker="${stock.ticker}">
-                <strong class="ticker">${stock.ticker}</strong>
+                <strong class="ticker">${escapeHtml(stock.ticker)}</strong>
                 <span class="change ${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</span>
               </span>
             `).join("")}
@@ -6560,8 +6821,8 @@ function renderSectorDetail() {
   byId("sectorConstituentsBody").innerHTML = sortedRows.map((stock, index) => `
     <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
       <td class="rank-cell">${index + 1}</td>
-      <td><strong>${stock.ticker}</strong></td>
-      <td>${stock.company}</td>
+      <td><strong>${escapeHtml(stock.ticker)}</strong></td>
+      <td>${escapeHtml(stock.company ?? "")}</td>
       <td>${marketCfg().formatPrice(stock.price)}</td>
       <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
       <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
@@ -6933,7 +7194,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     if (lastS && lastB) {
       const relDiff = lastS.r - lastB.r;
       const summaryValueEl = byId("relativePerfValue");
-      summaryValueEl.textContent = `${relDiff >= 0 ? "+" : ""}${relDiff.toFixed(2)}%p`;
+      summaryValueEl.textContent = fmtSignedPct(relDiff, 2, "%p");
       summaryValueEl.className = relDiff >= 0 ? "pos" : "neg";
     }
   }
@@ -6949,7 +7210,7 @@ function renderTopStocks() {
   const recency = byId("topNewHighRecency").value;
   const newHigh = byId("topNewHigh").value;
   const minRsi = numberInputValue("topMinRs", 0);
-  const maxRsi = numberInputValue("topMinEps", 0);
+  const maxRsi = numberInputValue(topMaxRsiInputId(), 0);
   const minVolume = numberInputValue("topMinVolume", 0);
   const minMarketCap = numberInputValue("topMinMarketCap", 0);
   const limit = Math.max(1, numberInputValue("topLimit", 24));
@@ -6989,10 +7250,10 @@ function renderTopStocks() {
   }
 
   byId("topStocks").innerHTML = rows.map(({ item, value }, index) => `
-    <article class="stock-card top-stock-card" data-ticker="${item.ticker}">
+    <article class="stock-card top-stock-card" data-ticker="${escapeHtml(item.ticker)}">
       <div class="rank-line">
         <span>${index + 1}</span>
-        <strong>${item.ticker}</strong>
+        <strong>${escapeHtml(item.ticker)}</strong>
         <em class="${metricClass(value, metric)}">${formatMetricValue(value, metric)}</em>
       </div>
       <p class="muted">${escapeHtml(item.company)}</p>
@@ -7271,6 +7532,11 @@ function renderScanner() {
   if (deep && window.MirProb) runDeepScan(scored, horizon, runId);
 }
 
+// 주도주 필터 'RSI 상한' 입력. index.html 의 id 가 아직 topMinEps(옛 EPS 필터 시절 이름)라
+// 새 id(topMaxRsi)가 생기면 그쪽을 먼저 본다 — 마크업이 바뀌어도 여기는 그대로.
+function topMaxRsiInputId() {
+  return byId("topMaxRsi") ? "topMaxRsi" : "topMinEps";
+}
 function numberInputValue(id, fallback = 0) {
   const value = Number(byId(id)?.value);
   return Number.isFinite(value) ? value : fallback;
@@ -7287,7 +7553,7 @@ function applyTopPreset() {
   byId("topNewHigh").value = preset.newHigh;
   byId("topNewHighRecency").value = preset.recency;
   byId("topMinRs").value = preset.minRsi || "";
-  byId("topMinEps").value = preset.maxRsi || "";
+  byId(topMaxRsiInputId()).value = preset.maxRsi || "";
   byId("topMinVolume").value = preset.minVolume || "";
   byId("topMinMarketCap").value = presetMinMarketCap(key) || "";
   renderTopStocks();
@@ -7300,7 +7566,7 @@ function resetTopScreener() {
   byId("topSector").value = "All";
   byId("topNewHighRecency").value = "All";
   byId("topNewHigh").value = "All";
-  ["topMinRs", "topMinEps", "topMinVolume", "topMinMarketCap"].forEach((id) => { byId(id).value = ""; });
+  ["topMinRs", topMaxRsiInputId(), "topMinVolume", "topMinMarketCap"].forEach((id) => { byId(id).value = ""; });
   byId("topLimit").value = "24";
   renderTopStocks();
 }
@@ -7402,17 +7668,18 @@ function miniMetric(label, value) {
 function renderJump() {
   const category = byId("jumpCategory").value;
   const sort = byId("jumpSort").value;
+  const vol = (item) => Number(item.volumeRatio);
   const rows = data.stocks.filter((item) => {
-    if (category === "rsVolume") return Number.isFinite(Number(item.newHighDistancePct)) && Number(item.newHighDistancePct) <= 5 && item.volumeRatio >= 1.5;
-    if (category === "volume") return item.volumeRatio >= 1.5;
-    return item.changePct >= 2;
-  }).sort((a, b) => b[sort] - a[sort]).slice(0, 12);
+    if (category === "rsVolume") return Number.isFinite(Number(item.newHighDistancePct)) && Number(item.newHighDistancePct) <= 5 && vol(item) >= 1.5;
+    if (category === "volume") return vol(item) >= 1.5;
+    return Number(item.changePct) >= 2;
+  }).sort((a, b) => (Number(b[sort]) || 0) - (Number(a[sort]) || 0)).slice(0, 12);
 
   byId("jumpGrid").innerHTML = rows.map((item) => `
-    <article class="stock-card jump-stock-card" data-ticker="${item.ticker}" style="cursor: pointer;">
-      <h3>${item.ticker}</h3>
-      <p class="muted">${item.company}</p>
-      <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · Vol ${item.volumeRatio.toFixed(1)}x</p>
+    <article class="stock-card jump-stock-card" data-ticker="${escapeHtml(item.ticker)}" style="cursor: pointer;">
+      <h3>${escapeHtml(item.ticker)}</h3>
+      <p class="muted">${escapeHtml(item.company ?? "")}</p>
+      <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · Vol ${Number.isFinite(vol(item)) ? `${vol(item).toFixed(1)}x` : "—"}</p>
       <p>RSI ${fmtRsi(item)} · EPS ${fmtEps(item)}</p>
     </article>
   `).join("");
@@ -7443,27 +7710,65 @@ function createLiveSearchStub(resolved) {
 }
 
 function selectTicker(ticker, options = {}) {
-  const resolved = normalizeTickerKey(resolveTickerQuery(ticker) || String(ticker || "").trim());
-  let found = data.stocks.find((item) => normalizeTickerKey(item.ticker) === resolved);
-  if (!found) found = createLiveSearchStub(resolved);
-  if (!found) return;
+  const raw = String(ticker || "").trim();
+  const resolved = normalizeTickerKey(resolveTickerQuery(raw) || raw);
+  let found = stockByTicker(resolved) || liveStubFor(resolved);
+  if (!found) {
+    found = createLiveSearchStub(resolved);
+    if (found) liveStubs.set(resolved, found);
+  }
+  if (!found) {
+    // 여러 후보로 갈리는 질의(resolveTickerQuery 가 null) — 첫 후보를 몰래 고르지 않고 알린다.
+    const hits = raw ? searchTickerSuggestions(raw, 4) : [];
+    if (hits.length >= 2 && typeof showAppToast === "function") {
+      showAppToast(`'${raw}' 후보 ${hits.length}개: ${hits.map((h) => h.ticker).join(", ")} — 목록에서 선택하세요`);
+    }
+    return false;
+  }
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
   byId("tickerSearch").value = selectedTicker;
-  renderTreemap();
-  renderSearch(options);
   chatFocusTicker = found.ticker;
-  if (options.openSearch !== false) {
-    if (currentTab !== "search" || searchSubTab !== "analysis") {
-      activateTab("search", { sub: "analysis", ticker: selectedTicker, push: true });
-    } else {
-      history.replaceState({ tab: "search", sub: "analysis", ticker: selectedTicker }, "");
-    }
+  // 지도는 보일 때만(숨은 탭은 폭 0 이라 어차피 그리지 못한다 — 진입 때 다시 그린다).
+  if (currentTab === "map") renderTreemap();
+  const wantsSearch = options.openSearch !== false;
+  if (wantsSearch && (currentTab !== "search" || searchSubTab !== "analysis")) {
+    // activateTab → activateSearchSub("analysis") 가 renderSearch 를 한 번만 부른다
+    // (예전엔 여기서 한 번, activateTab 에서 또 한 번 그렸다).
+    activateTab("search", { sub: "analysis", ticker: selectedTicker, push: true, renderOptions: options });
+  } else {
+    if (!options.skipRender) renderSearch(options);
+    if (wantsSearch) history.replaceState({ tab: "search", sub: "analysis", ticker: selectedTicker }, "");
   }
+  return true;
+}
+
+// 스냅샷에도 실시간 스텁에도 없는 티커 — 첫 종목으로 떨어뜨리지 않고 상태를 그대로 보여준다.
+function renderSearchMissing(ticker) {
+  const t = escapeHtml(ticker || "");
+  const title = byId("chartTitle");
+  if (title) title.textContent = `${ticker || "—"} · 스냅샷에 없는 종목`;
+  const facts = byId("searchFacts");
+  if (facts) {
+    facts.innerHTML = `
+      <span class="muted">Search Ticker</span>
+      <h3 class="stock-facts-head">${t}</h3>
+      <p class="muted">스냅샷에 없는 종목입니다. 티커·종목명을 다시 확인하거나 자동완성 목록에서 선택해 주세요.</p>`;
+  }
+  const chart = byId("priceChart");
+  if (chart) chart.innerHTML = "";
+  const news = byId("searchNews");
+  if (news) news.innerHTML = `<span class="muted">주요 뉴스</span><p class="news-empty">스냅샷에 없는 종목이라 뉴스를 불러오지 않습니다.</p>`;
+}
+
+function renderSearchFacts(item) {
+  const el = byId("searchFacts");
+  if (el && item) el.innerHTML = stockFacts(item, "Search Ticker");
 }
 
 function renderSearch(options = {}) {
-  const base = data.stocks.find((row) => row.ticker === selectedTicker) || data.stocks[0];
+  const base = selectedBaseRow();
+  if (!base) { renderSearchMissing(selectedTicker); return; }
   const item = applyLive(withDetail(base));
   // 감사의견은 종목 헤더에 경고로 나가므로 여기서 챙긴다. 늦게 와도 목록·차트는
   // 그대로 나오고, 도착하면 헤더만 다시 그린다.
@@ -7524,7 +7829,7 @@ function renderSearch(options = {}) {
   // first of selectTicker's two render passes — firing here would waste an LLM /chat
   // call on every visit and force-load the heavy 13F/insider/congress datasets.
   // The natural-language search path issues its own loadAiDeepReport with a custom query.
-  if (currentTab === "search" && !options.fromAiSearch) loadAiDeepReport(item.ticker);
+  if (currentTab === "search" && !options.fromAiSearch && !options.skipAiReport) loadAiDeepReport(item.ticker);
 }
 
 function moveEvidenceRow(kind, title, detail, options = {}) {
@@ -7543,7 +7848,7 @@ function renderMoveExplanation(item) {
   const sectorAvg = peers.length ? peers.reduce((sum, row) => sum + Number(row.changePct), 0) / peers.length : 0;
   const relative = change - sectorAvg;
   const evidence = [];
-  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtDailyPct(change)} · 섹터 평균 ${fmtPct(sectorAvg)} · 차이 ${relative >= 0 ? "+" : ""}${relative.toFixed(1)}%p`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
+  evidence.push(moveEvidenceRow("시장", `${item.sector} 대비 ${relative >= 0 ? "강함" : "약함"}`, `종목 ${fmtDailyPct(change)} · 섹터 평균 ${fmtPct(sectorAvg)} · 차이 ${fmtSignedPct(relative, 1, "%p")}`, { icon: "M", tone: relative >= 0 ? "pos" : "neg" }));
 
   const volume = Number(item.volumeRatio || 0);
   if (volume > 0) {
@@ -7707,8 +8012,16 @@ function recordEstimateSnapshot(item) {
   if (!hasEstimate) return [];
   const rows = Array.isArray(store[item.ticker]) ? store[item.ticker] : [];
   const index = rows.findIndex((row) => row.date === snapshot.date);
-  if (index >= 0) rows[index] = snapshot;
-  else rows.push(snapshot);
+  if (index >= 0) {
+    // 같은 날 같은 값이면 쓰지 않는다 — 렌더마다 localStorage 직렬화를 하던 것.
+    const prev = rows[index];
+    const same = ["epsNextQ", "epsNextY", "revenueNextQ", "revenueNextY", "targetPrice"]
+      .every((k) => (prev[k] ?? null) === (snapshot[k] ?? null));
+    if (same) return rows;
+    rows[index] = snapshot;
+  } else {
+    rows.push(snapshot);
+  }
   rows.sort((a, b) => String(a.date).localeCompare(String(b.date)));
   store[item.ticker] = rows.slice(-45);
   try { localStorage.setItem(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
@@ -7742,7 +8055,7 @@ function estimateChange(current, baseline, kind) {
   }
   if (before === 0) return { text: "비교 불가", tone: "muted" };
   const pct = (now / before - 1) * 100;
-  return { text: `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%`, tone: cls(pct) };
+  return { text: fmtSignedPct(pct), tone: cls(pct) };
 }
 
 function renderEstimateRevision(item) {
@@ -7776,11 +8089,15 @@ function renderEstimateRevision(item) {
 }
 
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
+// 페이로드 객체 자체를 캐시 키로 쓴다 — INSTITUTIONAL_13F 가 늦게 도착해도(heavy lazy)
+// 빈 {} 를 영영 돌려주지 않는다.
 let _inst13fIndex = null;
+let _inst13fIndexSrc = null;
 function inst13fIndex() {
-  if (_inst13fIndex) return _inst13fIndex;
+  const src = window.INSTITUTIONAL_13F || null;
+  if (_inst13fIndex && _inst13fIndexSrc === src) return _inst13fIndex;
   const idx = {};
-  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
+  const insts = (src || {}).institutions || [];
   for (const inst of insts) {
     for (const h of (inst.holdings || [])) {
       const t = h.ticker;
@@ -7791,6 +8108,7 @@ function inst13fIndex() {
     }
   }
   _inst13fIndex = idx;
+  _inst13fIndexSrc = src;
   return idx;
 }
 
@@ -7823,90 +8141,9 @@ function renderSmartMoney(item) {
     <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
 
-// ===== 기관 보유 변화(13F QoQ) — 종목 분석 뷰 패널 =====
-// institutional_13f 의 기관별 quarters(최근 10분기, 각 분기 상위 25종목)에서 이 종목의
-// 최근 분기 vs 직전 분기 보유주식·기관수를 합산한다. 상위 25종목 요약 공시라 순위권
-// 밖으로 밀린 종목은 '전량 매도'와 구분되지 않는다 — 표본 한계를 패널에 명시한다.
-function inst13fQoqFor(ticker) {
-  const insts = (window.INSTITUTIONAL_13F || {}).institutions || [];
-  const agg = {
-    curShares: 0, curValueM: 0, curHolders: 0,
-    prevShares: 0, prevHolders: 0,
-    added: 0, exited: 0, increased: 0, decreased: 0,
-    reportDate: "",
-  };
-  for (const inst of insts) {
-    const quarters = (inst.quarters || []).filter((qq) => (qq.status || "ok") === "ok" && Array.isArray(qq.holdings));
-    const q0 = quarters[0];
-    const q1 = quarters[1];
-    const h0 = q0 && q0.holdings.find((h) => h.ticker === ticker);
-    const h1 = q1 && q1.holdings.find((h) => h.ticker === ticker);
-    if (h0) {
-      agg.curHolders += 1;
-      agg.curShares += Number(h0.shares) || 0;
-      agg.curValueM += Number(h0.valueM) || 0;
-      if (q0.reportDate > agg.reportDate) agg.reportDate = q0.reportDate;
-    }
-    if (h1) {
-      agg.prevHolders += 1;
-      agg.prevShares += Number(h1.shares) || 0;
-    }
-    if (h0 && !h1 && q1) agg.added += 1;
-    else if (!h0 && h1 && q0) agg.exited += 1;
-    else if (h0 && h1) {
-      const diff = (Number(h0.shares) || 0) - (Number(h1.shares) || 0);
-      if (diff > 0) agg.increased += 1;
-      else if (diff < 0) agg.decreased += 1;
-    }
-  }
-  return agg;
-}
-
-function renderInst13fChange(item) {
-  const el = byId("stockInst13f");
-  if (!el || !item) return;
-  if (isKrMarket() || (marketCfg().features && marketCfg().features.sec13f === false)) {
-    el.hidden = true;
-    el.innerHTML = "";
-    return;
-  }
-  el.hidden = false;
-  const t = item.ticker;
-  if (!window.INSTITUTIONAL_13F) {
-    // 13F 는 3MB heavy 데이터 — 종목 뷰가 자동으로 당기지 않고 버튼으로 연다.
-    el.innerHTML = `
-      <h3>기관 보유 변화 · 13F</h3>
-      <p class="muted">추적 중인 주요 기관들의 분기별 보유 변화를 보려면 13F 데이터를 불러오세요.</p>
-      <button type="button" class="event-action" id="inst13fLoadBtn">13F 데이터 불러오기 (약 3MB)</button>`;
-    const btn = byId("inst13fLoadBtn");
-    if (btn) btn.addEventListener("click", () => {
-      btn.disabled = true;
-      btn.textContent = "불러오는 중…";
-      ensureFeatureData("inst13f").then(() => { _inst13fIndex = null; renderInst13fChange(item); });
-    });
-    return;
-  }
-  const agg = inst13fQoqFor(t);
-  if (!agg.curHolders && !agg.prevHolders) {
-    el.innerHTML = `<h3>기관 보유 변화 · 13F</h3><p class="muted">추적 중인 기관들의 상위 보유 종목(분기별 상위 25개)에 ${escapeHtml(t)}가 없습니다.</p>`;
-    return;
-  }
-  const row = (label, val, tone) => `<div class="sm-row"><span>${label}</span><strong${tone ? ` class="${tone}"` : ""}>${val}</strong></div>`;
-  const qoqPct = agg.prevShares > 0 ? ((agg.curShares / agg.prevShares) - 1) * 100 : null;
-  const qoqText = qoqPct != null ? `${qoqPct > 0 ? "+" : ""}${qoqPct.toFixed(1)}%` : "직전 분기 표본 없음";
-  const qoqTone = qoqPct != null ? (qoqPct > 0 ? "ins-buy" : qoqPct < 0 ? "ins-sell" : "") : "";
-  const flowText = `신규 ${agg.added} · 증가 ${agg.increased} · 감소 ${agg.decreased} · 이탈 ${agg.exited}`;
-  const flowTone = (agg.added + agg.increased) > (agg.exited + agg.decreased) ? "ins-buy"
-    : (agg.added + agg.increased) < (agg.exited + agg.decreased) ? "ins-sell" : "";
-  el.innerHTML = `
-    <h3>기관 보유 변화 · ${escapeHtml(t)}</h3>
-    ${row("보유 기관", `${agg.curHolders}곳${agg.prevHolders ? ` (직전 ${agg.prevHolders}곳)` : ""}`)}
-    ${row("합산 보유주식", `${insiderFmtShares(agg.curShares)}주`)}
-    ${row("직전 분기 대비", qoqText, qoqTone)}
-    ${row("합산 평가액", agg.curValueM ? `$${(agg.curValueM / 1000).toFixed(1)}B` : "—")}
-    ${row("기관 수 흐름", flowText, flowTone)}
-    <p class="sm-note">추적 기관 ${Number((window.INSTITUTIONAL_13F || {}).institutionCount) || ((window.INSTITUTIONAL_13F || {}).institutions || []).length}곳의 분기별 상위 보유 종목 요약(${escapeHtml(agg.reportDate || "최근 분기")}) 기준 — 순위 밖 보유분은 집계에서 빠질 수 있습니다.</p>`;
-}
+// 기관 보유 변화(13F QoQ) 패널은 index.html 에 대상 요소(#stockInst13f)가 없어 죽은 코드였다
+// (85줄 삭제). chart-indicators.js 의 renderStockEvents 가 아직 호출하므로 빈 스텁만 남긴다.
+function renderInst13fChange() {}
 
 // Merge any live (proxy-fetched) chart/news over the snapshot+detail data.
 function applyLive(item) {
@@ -7953,8 +8190,9 @@ function maybeFetchLiveData(base) {
       if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;
       liveDone[ticker] = true;
       if (selectedTicker !== ticker) return;
-      const refreshedBase = data.stocks.find((row) => row.ticker === ticker) || base;
+      const refreshedBase = stockByTicker(ticker) || base;
       const merged = applyLive(withDetail(refreshedBase));
+      if (base.__liveStub) renderSearchFacts(merged);
       drawChart(merged);
       renderEarningsCalendar(merged);
       renderStockEvents(merged);
@@ -7970,6 +8208,7 @@ function maybeFetchLiveData(base) {
       liveDone[ticker] = true;
       if (selectedTicker === ticker) {
         const merged = applyLive(withDetail(base));
+        if (base.__liveStub) renderSearchFacts(merged);
         renderNews(merged);
         renderMoveExplanation(merged);
         renderInvestmentChecklist(merged);
@@ -8288,11 +8527,15 @@ function setDrawTool(tool) {
   if (svg) svg.classList.toggle("is-drawing", Boolean(drawTool));
 }
 
+// 축·지지저항·피보·손절/목표·헤더 가격 라벨. US 는 가격대별 소수 자리(<$10 → 2, <$100 → 1,
+// 그 외 0) — 정수로 반올림하면 $10 미만 2,300여 종목이 "$3/$4" 로만 찍혔다. KR 은 원 단위 정수.
 function chartPriceLabel(value) {
   const n = Number(value);
   if (!Number.isFinite(n)) return "-";
-  const text = Math.round(n).toLocaleString(isKrMarket() ? "ko-KR" : undefined, { maximumFractionDigits: 0 });
-  return isKrMarket() ? text : `$${text}`;
+  if (isKrMarket()) return Math.round(n).toLocaleString("ko-KR", { maximumFractionDigits: 0 });
+  const abs = Math.abs(n);
+  const dec = abs < 10 ? 2 : abs < 100 ? 1 : 0;
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 }
 
 function setupChartDrawing() {
@@ -8843,7 +9086,9 @@ function buildTickerKoAliasIndex() {
   }
   tickerKoAliasIndex = byKo;
   tickerKoAliasEntries = [];
-  byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers }));
+  byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers, aliasLower: alias.toLowerCase() }));
+  // 긴(구체적인) 별칭이 먼저 — extractStockTickerFromQuery 가 매 호출 정렬하던 것을 여기서 한 번만.
+  tickerKoAliasEntries.sort((a, b) => b.alias.length - a.alias.length);
 }
 
 function buildTickerSearchIndex() {
@@ -8934,7 +9179,8 @@ function resolveTickerQuery(raw) {
   if (exactKo) return exactKo.ticker;
   if (hits.length === 1) return hits[0].ticker;
   if (hits[0].score - (hits[1]?.score || 0) >= 180) return hits[0].ticker;
-  return hits[0].ticker;
+  // 점수 차가 작으면(< 180) 모호한 질의 — 첫 후보를 몰래 고르지 않고 null. 호출부(selectTicker)가 후보를 알린다.
+  return null;
 }
 
 function resolveTickerListInput(text) {
@@ -9274,16 +9520,44 @@ function normalizeIssuerName(name) {
     .trim();
 }
 
+// 스냅샷당 한 번만 회사명을 정규화해 둔다(13F 행 × 종목 × 키 입력마다 정규화하던 것).
+let _issuerTickerIndex = null;
+const _issuerResolveCache = new Map();
+function issuerTickerIndex() {
+  if (_issuerTickerIndex) return _issuerTickerIndex;
+  const byNorm = new Map();
+  const byFirst = new Map();
+  const entries = [];
+  (data.stocks || []).forEach((stock) => {
+    const norm = normalizeIssuerName(stock.company);
+    if (!norm) return;
+    if (!byNorm.has(norm)) byNorm.set(norm, stock.ticker);
+    const first = norm.split(" ")[0];
+    if (first && !byFirst.has(first)) byFirst.set(first, stock.ticker);
+    entries.push([norm, stock.ticker]);
+  });
+  _issuerTickerIndex = { byNorm, byFirst, entries };
+  return _issuerTickerIndex;
+}
 function resolveIssuerTicker(issuer) {
   const upper = String(issuer || "").toUpperCase().trim();
   if (ISSUER_TICKER_HINTS[upper]) return ISSUER_TICKER_HINTS[upper];
+  if (_issuerResolveCache.has(upper)) return _issuerResolveCache.get(upper);
+  const idx = issuerTickerIndex();
   const norm = normalizeIssuerName(issuer);
-  const byCompany = data.stocks.find((stock) => normalizeIssuerName(stock.company) === norm);
-  if (byCompany) return byCompany.ticker;
-  const first = norm.split(" ")[0];
-  if (!first || first.length < 3) return null;
-  const fuzzy = data.stocks.find((stock) => normalizeIssuerName(stock.company).startsWith(first));
-  return fuzzy?.ticker || null;
+  let out = idx.byNorm.get(norm) || null;
+  if (!out) {
+    const first = norm.split(" ")[0];
+    if (first && first.length >= 3) {
+      out = idx.byFirst.get(first) || null;
+      if (!out) {
+        const hit = idx.entries.find(([n]) => n.startsWith(first));
+        out = hit ? hit[1] : null;
+      }
+    }
+  }
+  _issuerResolveCache.set(upper, out);
+  return out;
 }
 
 function institutional13fData() {
@@ -10209,6 +10483,7 @@ function renderDataTrustCenter() {
     refresh.dataset.bound = "1";
     refresh.addEventListener("click", () => {
       trustLoadAttempted.clear();   // 수동 재확인은 실패했던 로드도 다시 시도한다
+      clearFeatureDataFailures();
       renderDataTrustCenter();
       showAppToast("데이터 상태를 다시 확인했습니다");
     });
@@ -10311,7 +10586,7 @@ function loadCurrencies() {
                 return `
                   <tr>
                     <td>${escapeHtml(f.name || f.symbol)}</td>
-                    <td><strong>${price.toFixed(decimals)}</strong></td>
+                    <td><strong>${Number.isFinite(price) ? price.toFixed(decimals) : "—"}</strong></td>
                     <td class="${cls(f.changePct)}">${fmtDailyPct(f.changePct)}</td>
                     <td class="${cls(f.monthChangePct)}">${fmtPct(f.monthChangePct)}</td>
                   </tr>
@@ -10391,20 +10666,20 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
   const peersToShow = sortedPeers.slice(0, 8);
   const remainCount = totalPeers - peersToShow.length;
   const peerChips = peersToShow.map((peer) => `
-    <span class="peer-chip ${cls(peer[period])}">${peer.ticker} ${fmtPct(peer[period] ?? 0)}</span>
+    <span class="peer-chip ${cls(peer[period])}">${escapeHtml(peer.ticker)} ${fmtPct(peer[period] ?? 0)}</span>
   `).join("") + (remainCount > 0 ? `<span class="peer-more">+${remainCount}개 더</span>` : "");
   return `
-    <article class="etf-rs-card" data-category="${item.category}" title="클릭해서 전체 ${totalPeers}개 구성 종목 보기">
+    <article class="etf-rs-card" data-category="${escapeHtml(item.category)}" title="클릭해서 전체 ${totalPeers}개 구성 종목 보기">
       <div class="etf-rs-topline">
         ${rankBadge}
-        <span class="group-badge">${item.group}</span>
-        <strong class="${cls(item.activeRelative)}">${benchmark} 대비 ${fmtPct(item.activeRelative)}</strong>
+        <span class="group-badge">${escapeHtml(item.group ?? "")}</span>
+        <strong class="${cls(item.activeRelative)}">${escapeHtml(benchmark)} 대비 ${fmtPct(item.activeRelative)}</strong>
       </div>
-      <h4>${item.category}</h4>
+      <h4>${escapeHtml(item.category)}</h4>
       <div class="etf-rs-main">
         <div>
-          <span class="ticker-pill">${item.representative}</span>
-          <strong>${item.name}</strong>
+          <span class="ticker-pill">${escapeHtml(item.representative ?? "")}</span>
+          <strong>${escapeHtml(item.name ?? "")}</strong>
         </div>
         <div class="etf-rs-score ${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</div>
       </div>
@@ -10992,12 +11267,11 @@ function showConstituentPanel(categoryName, period) {
     const spyRel = peer[`rel_${bench1}`]?.[period] ?? (row.relative?.[bench1]?.[period] ?? 0);
     const qqqRel = peer[`rel_${bench2}`]?.[period] ?? (row.relative?.[bench2]?.[period] ?? 0);
     const pct = peer[period] ?? 0;
-    const rankIcon = idx === 0 ? "" : idx === 1 ? "" : idx === 2 ? "" : `${idx + 1}`;
     return `
       <tr>
-        <td><strong>${rankIcon}</strong></td>
-        <td><strong class="ticker-link" onclick="selectTicker('${peer.ticker}');document.querySelector('[data-tab=search]').click()">${peer.ticker}</strong></td>
-        <td>${peer.name || ""}</td>
+        <td><strong>${idx + 1}</strong></td>
+        <td><strong class="ticker-link" data-ticker="${escapeHtml(peer.ticker)}" role="button" tabindex="0">${escapeHtml(peer.ticker)}</strong></td>
+        <td>${escapeHtml(peer.name || "")}</td>
         <td class="${cls(pct)}"><strong>${fmtPct(pct)}</strong></td>
         <td class="${cls(spyRel)}">${fmtPct(spyRel)}</td>
         <td class="${cls(qqqRel)}">${fmtPct(qqqRel)}</td>
@@ -11005,6 +11279,20 @@ function showConstituentPanel(categoryName, period) {
     `;
   }).join("");
 
+  const body = byId("constituentPanelBody");
+  if (body && !body.dataset.bound) {
+    body.dataset.bound = "1";
+    const open = (event) => {
+      const link = event.target.closest(".ticker-link[data-ticker]");
+      if (!link) return;
+      if (event.type === "keydown" && event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      closeConstituentPanel();
+      selectTicker(link.dataset.ticker, { openSearch: true });
+    };
+    body.addEventListener("click", open);
+    body.addEventListener("keydown", open);
+  }
   panel.classList.add("is-open");
   byId("constituentBackdrop").classList.add("is-open");
 }
@@ -11046,7 +11334,7 @@ function renderBriefingSide(side) {
     </div>`;
   // Snapshot ai_briefing (US) → standalone file fallback (KR 스냅샷엔 ai_briefing이 없음).
   const inline = (data.ai_briefing || {})[key] || briefingFileCache[key];
-  if (inline) { el.innerHTML = inline; return; }
+  if (inline) { el.innerHTML = sanitizeBriefingHtml(inline); return; }
   el.innerHTML = `<div class="empty-briefing"><strong>${BRIEFING_LABELS[key]}</strong><br>브리핑을 불러오는 중…</div>`;
   fetch(`data/briefings/${key}.json`, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : null))
@@ -11054,7 +11342,7 @@ function renderBriefingSide(side) {
       const html = b && b.html;
       if (html) briefingFileCache[key] = html;
       if (briefingSel[side] !== key) return; // user toggled away while loading
-      el.innerHTML = html || emptyHtml;
+      el.innerHTML = html ? sanitizeBriefingHtml(html) : emptyHtml;
     })
     .catch(() => { if (briefingSel[side] === key) el.innerHTML = emptyHtml; });
 }
@@ -11138,7 +11426,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(item.name || "")}</td>
+        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
         <td>${Number(item.mentions || 0).toLocaleString()}</td>
         <td class="${cls(item.change24h || 0)}">${fmtPct(item.change24h || 0)}</td>
       </tr>
@@ -11153,7 +11441,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(item.name || "")}</td>
+        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
         <td>${Number(item.watchlist_count || 0).toLocaleString()}</td>
       </tr>
     `).join("");
@@ -11167,7 +11455,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(item.name || "")}</td>
+        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
         <td class="${cls(item.changePct || 0)}">${escapeHtml(item.price || "-")}${item.changePct ? ` (${fmtDailyPct(item.changePct)})` : ""}</td>
       </tr>
     `).join("");
@@ -11192,7 +11480,7 @@ function renderWsbSentimentTable() {
     return `<tr class="social-row" data-ticker="${escapeHtml(r.t)}">
       <td>${i + 1}</td>
       <td>${socialTickerCell(r.t)}</td>
-      <td>${escapeHtml(r.company || "")}</td>
+      <td>${escapeHtml(stripEmoji(r.company || ""))}</td>
       <td>${Number(r.comments || 0).toLocaleString()}</td>
       <td style="color:${col}">${bull ? "강세" : "약세"}${Number.isFinite(r.score) ? ` ${r.score > 0 ? "+" : ""}${r.score}` : ""}</td>
     </tr>`;
@@ -11291,7 +11579,7 @@ function toggleWatchlist(ticker) {
   });
   const facts = byId("searchFacts");
   if (facts && selectedTicker === t) {
-    const base = data.stocks.find((row) => row.ticker === t);
+    const base = selectedBaseRow(t);
     if (base) facts.innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
   }
 }
@@ -11472,7 +11760,7 @@ function setupWatchAlertEvents() {
   const panel = byId("watchAlertPanel");
   if (!panel) return;
   applyWatchAlertSettingsToUi(watchAlertSettings());
-  ["alertUseRs", "alertMinRs", "alertUseEps", "alertMinEps", "alertUseHigh", "alertHighDist", "alertUseVol", "alertMinVol", "alertUseSma20", "alertUsePattern", "alertPatternCat"].forEach((id) => {
+  ["alertUseRs", "alertMinRs", "alertUseEps", "alertUseHigh", "alertHighDist", "alertUseVol", "alertMinVol", "alertUseSma20", "alertUsePattern", "alertPatternCat"].forEach((id) => {
     const el = byId(id);
     if (!el) return;
     el.addEventListener("change", () => {
@@ -11856,7 +12144,7 @@ function buildMarketChatContext() {
   const stockCount = Array.isArray(data.stocks) ? data.stocks.length : 0;
   const majors = (data.health?.major || []).slice(0, 6).map((row) => {
     const chg = Number(row.changePct);
-    const chgText = Number.isFinite(chg) ? `${chg >= 0 ? "+" : ""}${chg.toFixed(1)}%` : "-";
+    const chgText = Number.isFinite(chg) ? fmtSignedPct(chg) : "-";
     return `${row.ticker || row.name}: ${chgText}`;
   }).join(", ");
   return [
@@ -12033,7 +12321,7 @@ function cloudSyncPayload() {
     watchlist,
     watchlistUs: storedWatchlist("us"),
     watchlistKr: storedWatchlist("kr"),
-    portfolio,
+    portfolio: typeof portfolioCloudPayload === "function" ? portfolioCloudPayload() : portfolio,
     alertSettings: watchAlertSettings(),
     updatedAt: Date.now(),
   };
@@ -12088,8 +12376,12 @@ async function pullCloudSync() {
       } catch (e) { /* ignore */ }
     }
     if (Array.isArray(prefs.portfolio) && prefs.portfolio.length) {
-      portfolio = prefs.portfolio.filter((p) => p && p.ticker).slice(0, 60);
-      savePortfolio();
+      if (typeof applyCloudPortfolio === "function") {
+        applyCloudPortfolio(prefs.portfolio); // portfolio.js: 시장별 저장 키까지 반영
+      } else {
+        portfolio = prefs.portfolio.filter((p) => p && p.ticker).slice(0, 60);
+        savePortfolio();
+      }
     }
     if (prefs.alertSettings && typeof prefs.alertSettings === "object") {
       saveWatchAlertSettings({ ...watchAlertSettings(), ...prefs.alertSettings });
@@ -12164,7 +12456,7 @@ function krDisclosureStatLine(row) {
   const s = book && book[row.typeLabel];
   if (!s || !s.d1 || !Number.isFinite(s.d1.median)) return "";
 
-  const sign = (v) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+  const sign = (v) => fmtSignedPct(v, 2);
   const rnd = s.d1.random;
   const verdict = s.edge
     ? `<b>무작위와 다름</b>`
@@ -12591,9 +12883,8 @@ function extractStockTickerFromQuery(query) {
   
   // 2. Try Korean nickname / alias lookup
   if (tickerKoAliasEntries) {
-    const sorted = [...tickerKoAliasEntries].sort((a, b) => b.alias.length - a.alias.length);
-    for (const entry of sorted) {
-      if (text.includes(entry.alias.toLowerCase())) {
+    for (const entry of tickerKoAliasEntries) {
+      if (text.includes(entry.aliasLower ?? entry.alias.toLowerCase())) {
         if (entry.tickers && entry.tickers.length > 0) {
           return entry.tickers[0];
         }
@@ -12640,6 +12931,35 @@ function formatMarkdownToHtml(md) {
   return html;
 }
 
+// 종목 AI 리포트 12시간 캐시(localStorage). 키 = 시장·티커·스냅샷 날짜·질의 — 종목을 열 때마다
+// LLM 을 부르지 않는다. 스냅샷이 바뀌면(날짜) 자연히 새 키가 된다.
+const AI_REPORT_CACHE_KEY = "mir_ai_report_cache_v1";
+const AI_REPORT_CACHE_TTL_MS = 12 * 3600 * 1000;
+const AI_REPORT_CACHE_MAX = 40;
+function aiReportCacheKey(ticker, customQuery) {
+  const snapDate = String((data && (data.updatedAtKst || data.updated_at_kst)) || "").slice(0, 10);
+  return `${marketCfg().id}|${normalizeTickerKey(ticker)}|${snapDate}|${customQuery || ""}`;
+}
+function readAiReportCache(key) {
+  try {
+    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const hit = store[key];
+    if (hit && typeof hit.reply === "string" && Date.now() - Number(hit.at || 0) < AI_REPORT_CACHE_TTL_MS) return hit.reply;
+  } catch (_) { /* ignore */ }
+  return null;
+}
+function writeAiReportCache(key, reply) {
+  try {
+    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const now = Date.now();
+    Object.keys(store).forEach((k) => { if (now - Number(store[k]?.at || 0) >= AI_REPORT_CACHE_TTL_MS) delete store[k]; });
+    store[key] = { at: now, reply };
+    const keys = Object.keys(store).sort((a, b) => Number(store[a].at) - Number(store[b].at));
+    while (keys.length > AI_REPORT_CACHE_MAX) delete store[keys.shift()];
+    localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store));
+  } catch (_) { /* quota 등 — 캐시는 있으면 좋은 것 */ }
+}
+
 async function loadAiDeepReport(ticker, customQuery = null) {
   const stock = stockByTicker(ticker);
   if (!stock) return;
@@ -12651,6 +12971,15 @@ async function loadAiDeepReport(ticker, customQuery = null) {
   if (card) card.style.display = "flex";
 
   currentActiveReportTicker = ticker;
+
+  const cacheKey = aiReportCacheKey(ticker, customQuery);
+  const cached = readAiReportCache(cacheKey);
+  if (cached) {
+    body.innerHTML = formatMarkdownToHtml(stripEmoji(cached));
+    if (customQuery) body.dataset.lastQuery = customQuery;
+    else delete body.dataset.lastQuery;
+    return;
+  }
 
   // Show shimmer loading skeleton
   body.innerHTML = `
@@ -12679,13 +13008,16 @@ async function loadAiDeepReport(ticker, customQuery = null) {
       }),
     });
     
+    if (!res.ok) throw new Error(`report ${res.status}`);
     const payload = await res.json();
-    
+
     // Check if the ticker has changed during the request
     if (currentActiveReportTicker !== ticker) return;
-    
-    const reply = (payload && payload.reply) || "리포트를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
-    body.innerHTML = formatMarkdownToHtml(reply);
+
+    const rawReply = payload && typeof payload.reply === "string" ? payload.reply.trim() : "";
+    if (rawReply) writeAiReportCache(cacheKey, rawReply);
+    const reply = rawReply || "리포트를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    body.innerHTML = formatMarkdownToHtml(stripEmoji(reply));
     
     if (customQuery) {
       body.dataset.lastQuery = customQuery;
@@ -12694,7 +13026,7 @@ async function loadAiDeepReport(ticker, customQuery = null) {
     }
   } catch (err) {
     if (currentActiveReportTicker === ticker) {
-      body.innerHTML = `<p class="muted">분석 리포트 로딩 실패: ${err.message || err}</p>`;
+      body.innerHTML = `<p class="muted">분석 리포트 로딩 실패: ${escapeHtml(err && err.message ? err.message : String(err))}</p>`;
     }
   }
 }
@@ -12868,19 +13200,9 @@ async function handleHomeSearch(query) {
 
   const matchedTicker = await resolveTickerAcrossMarkets(q);
   if (matchedTicker) {
-    const stock = stockByTicker(matchedTicker);
-    if (stock) {
-      const isKr = stock.market === "kospi" || stock.market === "kosdaq";
-      const targetMarket = isKr ? "kr" : "us";
-
-      if (marketCfg().id !== targetMarket) {
-        switchMarketMode(targetMarket).then(() => {
-          navigateToStockAnalysis(matchedTicker, q);
-        });
-      } else {
-        navigateToStockAnalysis(matchedTicker, q);
-      }
-    }
+    // resolveTickerAcrossMarkets 가 필요하면 이미 시장을 바꿔 두었다 — 현재 시장이 곧 대상 시장.
+    // (예전 `stock.market === "kospi" || "kosdaq"` 은 항상 참이라 KR ETF(market "etf")가 US 로 넘어갔다.)
+    if (stockByTicker(matchedTicker)) navigateToStockAnalysis(matchedTicker, q);
     return;
   }
 
@@ -12909,28 +13231,21 @@ function navigateHomeSearchFallback(query) {
   }
 }
 
-function navigateToStockAnalysis(ticker, query) {
-  // 1. Switch main tab to "search"
-  const tabButton = document.querySelector('.tab[data-tab="search"]');
-  if (tabButton) {
-    tabButton.click();
-  }
-  
-  // 2. Select sub-tab "analysis"
-  const subTabButton = document.querySelector('.sub-tab[data-sub="analysis"]');
-  if (subTabButton) {
-    subTabButton.click();
-  }
-  
-  // 3. Scroll smoothly to the analysis sub-panel first
+function navigateToStockAnalysis(ticker, query, { animate = true } = {}) {
+  // 탭 버튼 .click() 흉내(히스토리 2회 push) 대신 직접 활성화. 종목 렌더는 아래 selectTicker 가 한 번.
+  activateTab("search", { sub: "analysis", push: currentTab !== "search" || searchSubTab !== "analysis", skipRender: true });
   const analysisPanel = byId("sub-analysis");
   if (analysisPanel) {
     setTimeout(() => {
       analysisPanel.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 150);
   }
-
-  // 4. Run the visual assembly animation
+  if (!animate) {
+    // 명령 팔레트 등 즉시 이동: 조립 애니메이션 없이 렌더 + 리포트(자동 리포트는 건너뛰고 질의로 1회).
+    selectTicker(ticker, { skipAiReport: true });
+    loadAiDeepReport(ticker, query);
+    return;
+  }
   runAiReportAssemblyAnimation(ticker, () => {
     // Callback loads data and report once overlay transitions
     selectTicker(ticker, { fromAiSearch: true });
@@ -13145,7 +13460,7 @@ function cmdkBuildActions(query) {
             if (input) input.value = `${row.ticker} 분석해줘`;
             window.MirAI.queryStock(`${row.ticker} 분석해줘`);
           } else {
-            navigateToStockAnalysis(row.ticker, `${row.ticker} 분석`);
+            navigateToStockAnalysis(row.ticker, `${row.ticker} 분석`, { animate: false });
           }
         },
       });

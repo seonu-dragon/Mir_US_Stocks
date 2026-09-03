@@ -41,23 +41,19 @@
     return out;
   }
 
+  // RSI 는 analysis.js(window.MirProb.rsiSeries)의 Wilder 정의를 그대로 쓴다. 예전엔 여기서
+  // 단순 평균(Cutler) RSI 를 따로 계산해 대시보드·분석 페이지의 RSI(14) 와 값이 달랐다.
   function rsiSeries(closes, period = 14) {
-    const out = new Array(closes.length).fill(null);
-    if (closes.length < period + 1) return out;
-    for (let i = period; i < closes.length; i += 1) {
-      let gain = 0;
-      let loss = 0;
-      for (let j = i - period + 1; j <= i; j += 1) {
-        const diff = closes[j] - closes[j - 1];
-        gain += Math.max(diff, 0);
-        loss += Math.max(-diff, 0);
-      }
-      const avgGain = gain / period;
-      const avgLoss = loss / period;
-      if (avgLoss === 0) out[i] = 100;
-      else out[i] = 100 - 100 / (1 + avgGain / avgLoss);
-    }
-    return out;
+    const fn = window.MirProb && window.MirProb.rsiSeries;
+    if (fn) return fn(closes, period);
+    return new Array(closes.length).fill(null);
+  }
+
+  // 지표는 컨텍스트(보이는 구간 + 앞쪽 이력)로 계산한 뒤 보이는 구간만 잘라 그린다.
+  // 보이는 행만으로 계산하면 좌측 워밍업 구간(SMA60 이면 59봉)이 비고, 1M 캡처는
+  // SMA60·RSI 가 아예 없었다.
+  function tailOf(arr, n) {
+    return arr.slice(Math.max(0, arr.length - n));
   }
 
   function patternCategory(p) {
@@ -275,9 +271,11 @@
     const yFor = (v) => padT + ((max - v) / range) * priceH;
     const candleW = Math.max(2, Math.min(9, (plotW / rows.length) * 0.55));
 
-    const sma20 = smaSeries(closes, 20);
-    const sma60 = smaSeries(closes, 60);
-    const rsi = rsiSeries(closes);
+    const ctxCloses = ctxRows.map((r) => r.c);
+    const visN = rows.length;
+    const sma20 = tailOf(smaSeries(ctxCloses, 20), visN);
+    const sma60 = tailOf(smaSeries(ctxCloses, 60), visN);
+    const rsi = tailOf(rsiSeries(ctxCloses), visN);
     const volumes = rows.map((r) => r.v || 0);
     const maxVol = Math.max(1, ...volumes);
 

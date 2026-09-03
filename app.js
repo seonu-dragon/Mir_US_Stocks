@@ -776,8 +776,8 @@ function scheduleFeatureViewRefresh() {
 function refreshFeatureViews() {
   // applySearchSubVisibility: US 자사주·증자희석 탭은 데이터(8-K kind / US_DILUTION)가
   // 늦게 도착하면 그때 나타나야 한다 — 부팅 시점엔 전역이 없어 숨겨져 있다.
-  const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility()];
-  if (currentTab === "institutional") {
+  const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility(), renderTodayRegime];
+  if (currentTab === "search" && INST_SUBS.includes(searchSubTab)) {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {
     if (searchSubTab === "short") {
@@ -1079,9 +1079,13 @@ function applyMarketOnlyUi() {
   // Hide tabs with no data in this market (KR: 거장 포트폴리오는 미국 전용 데이터).
   const hiddenTabs = cfg.hiddenTabs || [];
   document.querySelectorAll("#mainTabs .tab[data-tab]").forEach((btn) => {
-    const hide = hiddenTabs.includes(btn.dataset.tab);
+    // 커뮤니티는 IA 재편 후 숨은 5번째 탭 — 메뉴·⌘K·?tab=community 로만 연다.
+    const hide = hiddenTabs.includes(btn.dataset.tab) || btn.dataset.tab === "community";
     btn.hidden = hide;
     btn.style.display = hide ? "none" : "";
+  });
+  document.querySelectorAll("#todaySubTabs .sub-tab[data-sub], #marketSubTabs .sub-tab[data-sub]").forEach((btn) => {
+    setTabHidden(btn, hiddenTabs.includes(btn.dataset.sub));
   });
   if (currentTab && hiddenTabs.includes(currentTab)) activateTab("search", { push: false });
   // Market-aware placeholders + signal sections that have no KR data.
@@ -1091,16 +1095,16 @@ function applyMarketOnlyUi() {
   setPh("pfTicker", krMode ? "티커 (예: 005930)" : "티커 (예: NVDA)");
   setPh("pfCost", `평단가 ${cfg.currencySymbol || "$"}`);
   setPh("positionTicker", krMode ? "005930" : "NVDA");
-  const sigIntro = document.querySelector("#tab-signals .section-title p");
+  const sigIntro = byId("signalsIntro");
   if (sigIntro) {
     sigIntro.textContent = krMode
       ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다."
       : "내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.";
   }
   // 집계 인사이트(의회·내부자 종합)는 미국 전용 데이터 → KR에서는 빈 섹션이 되므로 숨긴다.
-  const sigTitles = document.querySelectorAll("#tab-signals .section-title");
+  const aggFold = byId("fold-aggInsights");
   const aggInsights = byId("aggInsights");
-  if (sigTitles[1]) sigTitles[1].style.display = krMode ? "none" : "";
+  if (aggFold) aggFold.hidden = krMode;
   if (aggInsights) aggInsights.style.display = krMode ? "none" : "";
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
@@ -1190,6 +1194,7 @@ function boot(options = {}) {
   setupViewMode(route.get("tab"));
   setupTabs();
   setupTabSemantics();
+  setupIaShell();
   setupFilters();
   applyHeatmapRoute(route);
   setupTickerSearchHelpers();
@@ -1957,6 +1962,7 @@ function renderSummary() {
     watchlistSummaryCardHtml();
   el.querySelectorAll(".watch-summary-row").forEach((row) =>
     row.addEventListener("click", () => selectTicker(row.dataset.ticker, { openSearch: true })));
+  renderTodayRegime();
 }
 
 function actionBoardCard(title, hint, rows, emptyText, target, extraClass = "") {
@@ -2024,7 +2030,7 @@ function upcomingActionRows() {
 }
 
 // ===== 액션 보드 ↔ 오늘의 뉴스 전환 (웹) =====
-let actionBoardMode = "news";
+let actionBoardMode = "actions"; // 뉴스 모드 DOM 은 남아 있지만 카드뉴스는 오늘 탭(renderTodayNews) 한 곳에서 보여준다
 let actionBoardMqBound = false;
 
 function renderActionNews() {
@@ -2081,7 +2087,7 @@ function setActionBoardMode(mode) {
   if (grid) grid.hidden = isNews;
   if (news) news.hidden = !isNews;
   if (board) board.classList.toggle("is-news", isNews);
-  if (title) title.textContent = isNews ? "오늘의 뉴스" : "오늘의 액션 보드";
+  if (title) title.textContent = isNews ? "오늘의 뉴스" : "내 종목 이벤트";
   if (isNews) renderActionNews();
 }
 
@@ -2271,10 +2277,20 @@ function renderSnapshotIndices() {
   if (items.length) setHeaderIndices(items, "snapshot");
 }
 
+// 오늘 탭에는 지수 3개(S&P·Nasdaq·KOSPI, KR 은 KOSPI·KOSDAQ·S&P)만, 시장/시장 폭에는 전부.
+const TODAY_INDEX_ORDER = { us: ["^GSPC", "^IXIC", "^KS11"], kr: ["^KS11", "^KQ11", "^GSPC"] };
+function pickTodayIndices(indices) {
+  const order = TODAY_INDEX_ORDER[isKrMarket() ? "kr" : "us"];
+  const picked = order.map((sym) => indices.find((ix) => ix.symbol === sym)).filter(Boolean);
+  indices.forEach((ix) => { if (picked.length < 3 && !picked.includes(ix)) picked.push(ix); });
+  return picked.slice(0, 3);
+}
+
 function renderIndexStrip(indices) {
   const el = byId("indexStrip");
   if (!el) return;
-  if (!indices || !indices.length) { el.innerHTML = ""; return; }
+  const full = byId("indexStripFull");
+  if (!indices || !indices.length) { el.innerHTML = ""; if (full) full.innerHTML = ""; return; }
   // In KR mode, lead with KOSPI/KOSDAQ; the worker's index list is US-first.
   if (isKrMarket()) {
     const krOrder = ["^KS11", "^KQ11"];
@@ -2283,6 +2299,11 @@ function renderIndexStrip(indices) {
       return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
     });
   }
+  if (full) renderIndexStripInto(full, indices);
+  renderIndexStripInto(el, pickTodayIndices(indices));
+}
+
+function renderIndexStripInto(el, indices) {
   el.innerHTML = indices.map((ix) => {
     const analysisTicker = indexAnalysisTicker(ix.symbol);
     const clickable = !!analysisTicker;
@@ -2586,8 +2607,57 @@ function renderCalendar(events) {
   `).join("");
 }
 
-let currentTab = "map";
+// ===== 2026-09 IA 재편: 상단 탭 4개(오늘·시장·종목·내 투자) + 숨은 커뮤니티 =====
+// currentTab 은 여전히 '잎(leaf)' 이름(map/sector/health/signals/calendar/ai-briefing/…)을
+// 가진다 — 렌더러·피처 게이트·딥링크가 전부 이 이름을 보기 때문이다. 상단 탭 버튼은
+// 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
+const TAB_GROUP_OF = {
+  today: "today", calendar: "today", "ai-briefing": "today",
+  map: "market", sector: "market", health: "market", signals: "market",
+  search: "search", bulk: "bulk", community: "community",
+};
+const GROUP_LEAVES = {
+  today: ["today", "ai-briefing", "calendar"],
+  market: ["map", "sector", "health", "signals"],
+};
+// 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
+const lastGroupLeaf = { today: "today", market: "map" };
+function leafPanelId(name) {
+  return name === "today" ? "tab-today-summary" : `tab-${name}`;
+}
+// 잎/그룹 이름으로 실제 버튼(상단 탭 또는 그룹 안 서브탭)을 찾는다 — data-advanced 판정용.
+function tabButtonFor(name) {
+  const group = TAB_GROUP_OF[name] || name;
+  const leafBtn = GROUP_LEAVES[group] ? document.querySelector(`#${group}SubTabs [data-sub="${name}"]`) : null;
+  return leafBtn || document.querySelector(`#mainTabs [data-tab="${group}"]`);
+}
+let currentTab = "today";
 let searchSubTab = "analysis";
+// 종목 탭 서브탭은 4개(분석·찾기·비교·공시)지만 searchSubTab 은 잎 이름(top/screener/…/13f/…)을
+// 유지한다 — 렌더 분기와 ?tab=search&sub= 딥링크가 그 이름을 쓴다. 그룹은 여기서 계산한다.
+const FIND_SUBS = ["top", "screener", "scanner", "jump", "valuation"];
+const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short"];
+const INST_SUBS = ["13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
+// 공시 세그먼트 표시 순서(자사주 … IPO, KR: DART·5%룰·임원·지배구조)
+const DISC_ORDER = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
+let lastFindSub = "top";
+let lastDiscSub = null;
+let discKrownKind = "major";
+function searchSubGroup(sub) {
+  if (FIND_SUBS.includes(sub)) return "find";
+  if (DISC_SEARCH_SUBS.includes(sub) || INST_SUBS.includes(sub)) return "disclosures";
+  if (sub === "compare") return "compare";
+  return "analysis";
+}
+function discSubHidden(sub, cfg = marketCfg()) {
+  return INST_SUBS.includes(sub) ? instSubHidden(sub, cfg) : searchSubTabHidden(sub, cfg);
+}
+function defaultDiscSub(cfg = marketCfg()) {
+  return DISC_ORDER.find((s) => !discSubHidden(s, cfg)) || "events";
+}
+function disclosureViewActive() {
+  return currentTab === "search" && INST_SUBS.includes(searchSubTab) && searchSubTab === institutionalSubTab;
+}
 // KR 전용(krDart) 종목검색 서브탭 — US 에선 가시성 게이트가 숨긴다.
 const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract", "dilution"]);
 // dividend·earnreact 는 US 자체 데이터(us_calendar·analyst_consensus+details)가 생겨
@@ -2615,8 +2685,16 @@ function searchSubTabHidden(sub, cfg) {
 function applySearchSubVisibility(cfg = marketCfg()) {
   const searchNav = byId("searchSubTabs");
   if (!searchNav) return;
-  searchNav.querySelectorAll(".sub-tab").forEach((btn) => setTabHidden(btn, searchSubTabHidden(btn.dataset.sub, cfg)));
-  if (searchSubTabHidden(searchSubTab, cfg)) {
+  // 공시 세그먼트: 검색 소유(자사주·배당…)와 SEC/DART 소유(13F·정치인…)를 한 줄에서 게이트한다.
+  const disc = byId("discSubTabs");
+  if (disc) {
+    disc.querySelectorAll("[data-disc]").forEach((btn) => setTabHidden(btn, discSubHidden(btn.dataset.disc, cfg)));
+    setTabHidden(searchNav.querySelector('[data-sub="disclosures"]'), !DISC_ORDER.some((s) => !discSubHidden(s, cfg)));
+  }
+  if (searchSubGroup(searchSubTab) === "disclosures" && discSubHidden(searchSubTab, cfg)) {
+    lastDiscSub = null;
+    activateSearchSub("disclosures", { push: false });
+  } else if (searchSubTabHidden(searchSubTab, cfg)) {
     activateSearchSub("analysis", { push: false });
   }
 }
@@ -2635,6 +2713,7 @@ function navCurrentSub(tab) {
   if (tab === "search") return searchSubTab;
   if (tab === "calendar") return calendarSubTab;
   if (tab === "community") return communitySubTab;
+  if (tab === "bulk") return bulkSubTab;
   if (tab === "institutional") return (typeof institutionalSubTab !== "undefined" ? institutionalSubTab : null);
   return null;
 }
@@ -2826,22 +2905,62 @@ const TAB_REDIRECT = {
   screener: { tab: "search", sub: "screener" },
   scanner: { tab: "search", sub: "scanner" },
   earnings: { tab: "calendar", sub: "earnings" },
+  // 구 URL 별칭 — 예전 10탭 이름은 전부 새 IA 의 잎으로 떨어진다.
+  institutional: { tab: "search", sub: "disclosures" },
+  disclosures: { tab: "search", sub: "disclosures" },
+  find: { tab: "search", sub: "find" },
+  breadth: { tab: "health", sub: null },
+  marketdata: { tab: "health", sub: null },
+  heatmap: { tab: "map", sub: null },
+  briefing: { tab: "ai-briefing", sub: null },
+  stocks: { tab: "search", sub: null },
+  portfolio: { tab: "bulk", sub: null },
+  tools: { tab: "bulk", sub: "tools" },
 };
 
 function normalizeTabRequest(name, sub) {
   const redirect = TAB_REDIRECT[name];
   if (redirect) return { tab: redirect.tab, sub: sub || redirect.sub };
+  // 그룹 탭(today/market): ?sub= 가 그 그룹의 잎이면 그 잎으로, 아니면 마지막 잎으로.
+  if (GROUP_LEAVES[name]) {
+    if (sub && GROUP_LEAVES[name].includes(sub)) return { tab: sub, sub: null };
+    if (sub && TAB_REDIRECT[sub] && GROUP_LEAVES[name].includes(TAB_REDIRECT[sub].tab)) return { tab: TAB_REDIRECT[sub].tab, sub: null };
+    return { tab: lastGroupLeaf[name] || GROUP_LEAVES[name][0], sub: sub || null };
+  }
   return { tab: name, sub: sub || null };
 }
 
-function activateSearchSub(name, { push = false, skipRender = false, renderOptions = null } = {}) {
+function activateSearchSub(name, { push = false, skipRender = false, renderOptions = null, krownKind = null } = {}) {
+  // 그룹 이름으로 오면 그 그룹의 마지막 잎으로 푼다(찾기→상위 종목, 공시→첫 가시 공시).
+  if (name === "find") name = lastFindSub;
+  if (name === "disclosures") name = lastDiscSub || defaultDiscSub();
+  if (name && name.startsWith("krown:")) { krownKind = name.slice(6); name = "krown"; }
   searchSubTab = name || "analysis";
+  const group = searchSubGroup(searchSubTab);
+  if (group === "find") lastFindSub = searchSubTab;
+  if (group === "disclosures") lastDiscSub = searchSubTab;
+  if (searchSubTab === "krown" && krownKind) discKrownKind = krownKind;
   const nav = byId("searchSubTabs");
   if (nav) {
-    nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === searchSubTab));
+    nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === group));
     document.querySelectorAll("#tab-search .sub-panel").forEach((panel) => panel.classList.remove("is-active"));
-    const panel = byId(`sub-${searchSubTab}`);
-    if (panel) panel.classList.add("is-active");
+    byId(`sub-${group}`)?.classList.add("is-active");
+    if (group !== "analysis" && group !== "compare") byId(`sub-${searchSubTab}`)?.classList.add("is-active");
+    byId("findModeSeg")?.querySelectorAll("[data-find]").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.find === searchSubTab));
+    byId("discSubTabs")?.querySelectorAll("[data-disc]").forEach((btn) => {
+      const on = btn.dataset.disc === searchSubTab && (searchSubTab !== "krown" || (btn.dataset.krownKind || "major") === discKrownKind);
+      btn.classList.toggle("is-active", on);
+    });
+    if (typeof syncFindPreset === "function") syncFindPreset();
+  }
+  if (INST_SUBS.includes(searchSubTab)) {
+    activateInstitutionalSub(searchSubTab, { push: false });
+    if (searchSubTab === "krown") {
+      const kindBtn = byId("krOwnKinds")?.querySelector(`[data-krown="${discKrownKind}"]`);
+      if (kindBtn && !kindBtn.classList.contains("is-active")) kindBtn.click();
+    }
+    if (push) recordNav();
+    return;
   }
   if (searchSubTab === "scanner") renderScanner();
   if (searchSubTab === "top") renderTopStocks();
@@ -2868,9 +2987,9 @@ function activateInstitutionalSub(name, { push = false } = {}) {
     const panel = byId(`sub-inst-${institutionalSubTab}`) || byId("sub-inst-13f");
     if (panel) panel.classList.add("is-active");
   }
-  // Only fetch the (often multi-MB) dataset when the institutional tab is actually
-  // active — not during the boot pre-render (renderAll), where currentTab is "map".
-  const load = currentTab === "institutional";
+  // Only fetch the (often multi-MB) dataset when the 공시 view is actually
+  // active — not during the boot pre-render (renderAll) or a hidden fallback.
+  const load = disclosureViewActive();
   if (institutionalSubTab === "13f") renderWithFeature("inst13f", renderInstitutional13f, "institutionalDetail", load);
   if (institutionalSubTab === "congress") renderWithFeature("congress", renderCongressTrades, "congressRankings", load);
   if (institutionalSubTab === "insider") renderWithFeature("insider", renderInsiderTrades, "insiderTable", load);
@@ -3582,6 +3701,8 @@ function renderSignals() {
     if (b.dataset.ticker && b.dataset.ticker !== "—") selectTicker(b.dataset.ticker, { openSearch: true });
   }));
   renderAggregateInsights();
+  renderSignalsSummary();
+  syncSignalFolds();
 }
 
 // ===== 집계 인사이트 (의회·내부자 종합) =====
@@ -3659,7 +3780,8 @@ function applyCommunityBoardTickerFilter(ticker) {
 }
 
 function activateCommunitySub(name, { push = false, communityTicker = null } = {}) {
-  if (name === "sns") name = "news";
+  // '오늘의 뉴스' 서브탭은 IA 재편으로 삭제(카드뉴스는 오늘 탭 한 곳) — 옛 링크는 트렌딩으로.
+  if (name === "sns" || name === "news") name = "trending";
   communitySubTab = name || "trending";
   if (communityTicker != null) applyCommunityBoardTickerFilter(communityTicker);
   const nav = byId("communitySubTabs");
@@ -3672,6 +3794,8 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
   if (communitySubTab === "trending") {
     stopCommunityPolling();
     renderCommunityTrending();
+    // WSB 댓글 감성 표는 AI 브리핑에서 커뮤니티 트렌딩으로 옮겨 왔다(소셜 표 한 벌만 유지).
+    renderSocialSentiment();
   }
   if (communitySubTab === "board") {
     communityClearNewBanner();
@@ -3710,7 +3834,7 @@ function setViewMode(mode, { persist = true } = {}) {
 function setupViewMode(requestedTab) {
   let saved = DEFAULT_VIEW_MODE;
   try { saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
-  const requestedButton = requestedTab ? document.querySelector(`[data-tab="${requestedTab}"]`) : null;
+  const requestedButton = requestedTab ? tabButtonFor(normalizeTabRequest(requestedTab, null).tab) : null;
   if (requestedButton?.dataset.advanced === "true") saved = "advanced";
   setViewMode(saved, { persist: false });
   const modeSwitch = byId("viewModeSwitch");
@@ -3857,15 +3981,28 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   sub = resolved.sub;
   // Tabs hidden for this market (e.g. KR 거장 포트폴리오) fall back to 종목 검색.
   if ((marketCfg().hiddenTabs || []).includes(name)) { name = "search"; sub = null; }
-  const tabBtn = document.querySelector(`[data-tab="${name}"]`);
+  const group = TAB_GROUP_OF[name] || name;
+  const tabBtn = document.querySelector(`#mainTabs [data-tab="${group}"]`);
   if (!tabBtn) return;
-  if (tabBtn.dataset.advanced === "true" && currentViewMode !== "advanced") setViewMode("advanced");
-  document.querySelectorAll(".tab").forEach((item) => item.classList.remove("is-active"));
-  document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("is-active"));
+  const leafBtn = tabButtonFor(name);
+  if ((tabBtn.dataset.advanced === "true" || leafBtn?.dataset.advanced === "true") && currentViewMode !== "advanced") setViewMode("advanced");
+  document.querySelectorAll("#mainTabs .tab").forEach((item) => item.classList.remove("is-active"));
+  document.querySelectorAll("main > .panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
-  byId(`tab-${name}`)?.classList.add("is-active");
+  const groupPanel = byId(`tab-${group}`);
+  groupPanel?.classList.add("is-active");
+  // 그룹 안의 잎 전환(오늘: 요약/브리핑/캘린더, 시장: 트리맵/섹터/시장폭/시그널)
+  if (GROUP_LEAVES[group]) {
+    lastGroupLeaf[group] = name;
+    groupPanel?.querySelectorAll(":scope > .tab-leaf").forEach((leaf) => leaf.classList.remove("is-active"));
+    byId(leafPanelId(name))?.classList.add("is-active");
+    byId(`${group}SubTabs`)?.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === name));
+  }
   scrollTabIntoView(tabBtn);
   currentTab = name;
+  if (name === "sector" && sub) byId("sectorSubTabs")?.querySelector(`[data-sub="${sub}"]`)?.click();
+  if (name === "bulk") activateBulkSub(sub || bulkSubTab, { push: false });
+  if (name === "health") renderIndexStrip(marketHeader.indices);
   // 첫 진입 탭은 여기서 처음 그린다(부팅 때 전 탭을 그리지 않는다 — renderAll 참고).
   renderTabContent(name);
   // US 증자·희석 데이터는 종목검색 서브탭에서만 쓰므로 탭 첫 진입 때 한 번만 시도.
@@ -3904,6 +4041,11 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
 // 그래야 activateTab/activateXSub 다섯 함수를 건드리지 않고도 항상 맞는다.
 const TABLIST_SPECS = [
   { nav: "mainTabs", attr: "data-tab", panelId: (v) => `tab-${v}` },
+  { nav: "todaySubTabs", attr: "data-sub", panelId: leafPanelId },
+  { nav: "marketSubTabs", attr: "data-sub", panelId: leafPanelId },
+  { nav: "bulkSubTabs", attr: "data-sub", panelId: (v) => `sub-bulk-${v}` },
+  { nav: "findModeSeg", attr: "data-find", panelId: (v) => `sub-${v}` },
+  { nav: "discSubTabs", attr: "data-disc", panelId: (v) => (INST_SUBS.includes(v) ? `sub-inst-${v}` : `sub-${v}`) },
   { nav: "sectorSubTabs", attr: "data-sub", panelId: (v) => `sub-${v}` },
   { nav: "searchSubTabs", attr: "data-sub", panelId: (v) => `sub-${v}` },
   { nav: "institutionalSubTabs", attr: "data-sub", panelId: (v) => `sub-inst-${v}` },
@@ -3969,7 +4111,11 @@ function setupTabSemantics() {
       if (!panel) return;
       btn.setAttribute("aria-controls", panel.id);
       panel.setAttribute("role", "tabpanel");
-      panel.setAttribute("aria-labelledby", btn.id);
+      // 한 패널을 여러 탭이 가리킬 수 있다(공시 세그먼트의 5%룰·임원·지배구조 → sub-inst-krown).
+      // aria-labelledby 는 id 목록을 허용하므로 덮어쓰지 않고 붙인다.
+      const labelled = (panel.getAttribute("aria-labelledby") || "").split(/\s+/).filter(Boolean);
+      if (!labelled.includes(btn.id)) labelled.push(btn.id);
+      panel.setAttribute("aria-labelledby", labelled.join(" "));
       // 패널 안이 스크롤될 수 있어 키보드 사용자가 패널 자체에 포커스할 수 있어야 한다.
       if (!panel.hasAttribute("tabindex")) panel.tabIndex = 0;
     });
@@ -4015,7 +4161,7 @@ function setupTabs() {
 }
 
 // ===== 메인 탭 순서 변경(드래그) =====
-const TAB_ORDER_KEY = "mir_tab_order_v1";
+const TAB_ORDER_KEY = "mir_tab_order_v2"; // v1 은 10탭 시절 이름 — 4탭 IA 와 섞이지 않게 키를 올렸다
 let tabDragJustHappened = false;
 
 function saveTabOrder(nav) {
@@ -4290,11 +4436,35 @@ function setupEvents() {
   if (institutionalSubTabs) {
     institutionalSubTabs.querySelectorAll(".sub-tab").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (currentTab !== "institutional") activateTab("institutional", { push: false });
-        activateInstitutionalSub(btn.dataset.sub, { push: true });
+        if (currentTab !== "search") activateTab("search", { push: false });
+        activateSearchSub(btn.dataset.sub, { push: true });
       });
     });
   }
+  // IA 재편 그룹 서브탭(오늘·시장·내 투자) + 종목 안 찾기 세그먼트·공시 세그먼트
+  ["today", "market"].forEach((group) => {
+    byId(`${group}SubTabs`)?.querySelectorAll(".sub-tab").forEach((btn) => {
+      btn.addEventListener("click", () => activateTab(btn.dataset.sub, { push: btn.dataset.sub !== currentTab }));
+    });
+  });
+  byId("bulkSubTabs")?.querySelectorAll(".sub-tab").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentTab !== "bulk") activateTab("bulk", { push: false });
+      activateBulkSub(btn.dataset.sub, { push: true });
+    });
+  });
+  byId("findModeSeg")?.querySelectorAll("[data-find]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentTab !== "search") activateTab("search", { push: false });
+      activateSearchSub(btn.dataset.find, { push: true });
+    });
+  });
+  byId("discSubTabs")?.querySelectorAll("[data-disc]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (currentTab !== "search") activateTab("search", { push: false });
+      activateSearchSub(btn.dataset.disc, { push: true, krownKind: btn.dataset.krownKind || null });
+    });
+  });
 
   const communitySubTabs = byId("communitySubTabs");
   if (communitySubTabs) {
@@ -5450,9 +5620,9 @@ function setupChartInteractions() {
 const tabRendered = {};
 const TAB_RENDERERS = {
   sector: () => renderSectors(),
-  bulk: () => renderBulk(),
+  bulk: () => { renderBulk(); renderMyInvestSummary(); },
   health: () => renderHealth(),
-  "ai-briefing": () => { renderAiBriefing(); renderSocialSentiment(); },
+  "ai-briefing": () => renderAiBriefing(),
   // map(폭 의존이라 진입마다)·signals(dirty 플래그)·search/institutional/calendar/community
   // (서브탭 활성화가 그림)는 activateTab 이 직접 처리한다.
 };
@@ -5471,6 +5641,10 @@ function renderAll() {
   renderWatchAlerts();
   renderActionBoard();
   renderDataFreshnessStatus();
+  // 오늘 탭 요약(국면 한 문장·카드뉴스 1장)은 부팅 탭이라 여기서 그린다.
+  renderTodayRegime();
+  renderTodayNews();
+  renderMyInvestSummary();
 }
 
 function filteredStocks() {
@@ -12722,6 +12896,434 @@ function setupKrOwnershipEvents() {
   });
 }
 
+// =====================================================================================
+// 2026-09 IA 재편 — 셸(헤더 설정 팝오버·검색 버튼·푸터 링크), 오늘 탭 요약, 시그널 요약,
+// 내 투자 빈 상태/4숫자, 찾기 프리셋 미러, 트리맵 색상 세그먼트, 차트 설정 버튼, 챗봇 FAB.
+// 기존 렌더러는 그대로 두고(id 유지) 이 블록이 새 표면만 그린다.
+// =====================================================================================
+
+// ----- 내 투자 서브탭(보유·관심 / 도구) -----
+let bulkSubTab = "holdings";
+function activateBulkSub(name, { push = false } = {}) {
+  bulkSubTab = name === "tools" ? "tools" : "holdings";
+  byId("bulkSubTabs")?.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === bulkSubTab));
+  document.querySelectorAll("#tab-bulk > #myInvestBody > .sub-panel").forEach((p) => p.classList.remove("is-active"));
+  byId(`sub-bulk-${bulkSubTab}`)?.classList.add("is-active");
+  if (push) recordNav();
+}
+
+// ----- 오늘 탭: 국면 한 문장 -----
+// computeMarketRegime(리스크온/오프/혼조) + 강한·약한 섹터 1개씩 → "혼조 · 에너지 강세, 소재 약세".
+function renderTodayRegime() {
+  const el = byId("todayRegime");
+  if (!el || !data || !Array.isArray(data.stocks) || !data.stocks.length) return;
+  let regime = null;
+  let sectors = { strong: [], weak: [] };
+  try { regime = computeMarketRegime(); sectors = computeSectorRanks(); } catch (_) { return; }
+  const strong = sectors.strong?.[0];
+  const weak = sectors.weak?.[0];
+  const parts = [];
+  if (strong && Number.isFinite(Number(strong.avg))) parts.push(`${strong.ko} 강세`);
+  if (weak && Number.isFinite(Number(weak.avg))) parts.push(`${weak.ko} 약세`);
+  const fng = Number.isFinite(regime.fng) ? ` · 심리 ${Math.round(regime.fng)}` : "";
+  const up = Number.isFinite(regime.upPct) ? ` · 상승 종목 ${Math.round(regime.upPct * 100)}%` : "";
+  el.innerHTML = `<strong class="ia-regime-tone ia-regime-${escapeHtml(regime.tone)}">${escapeHtml(regime.ko)}</strong>` +
+    (parts.length ? ` <span class="ia-regime-sep">·</span> ${escapeHtml(parts.join(", "))}` : "") +
+    `<span class="ia-regime-meta">${escapeHtml(fng + up)}</span>`;
+  el.title = regime.desc || "";
+}
+
+// ----- 오늘 탭: 카드뉴스 1장 + 더 보기 -----
+let todayNewsView = null;
+let todayNewsExpanded = false;
+function renderTodayNews() {
+  const box = byId("todayNews");
+  if (!box) return;
+  const cn = (data && data.cardNews) || {};
+  const sets = {
+    us: cn.us && Array.isArray(cn.us.images) && cn.us.images.length ? cn.us : null,
+    kr: cn.kr && Array.isArray(cn.kr.images) && cn.kr.images.length ? cn.kr : null,
+  };
+  if (!sets.us && !sets.kr) { box.hidden = true; box.innerHTML = ""; return; }
+  if (!todayNewsView) todayNewsView = isKrMarket() ? "kr" : "us";
+  if (!sets[todayNewsView]) todayNewsView = sets.us ? "us" : "kr";
+  const active = sets[todayNewsView];
+  const imgs = active.images;
+  const rest = imgs.slice(1);
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="ia-today-news-head">
+      <div>
+        <h2>오늘의 뉴스</h2>
+        <p class="muted">${escapeHtml(active.title || "오늘의 카드뉴스")}</p>
+      </div>
+      ${sets.us && sets.kr ? `<div class="segmented ia-seg ia-seg-sm" role="group" aria-label="카드뉴스 시장">
+        <button type="button" data-cn="us" class="${todayNewsView === "us" ? "is-active" : ""}">미국</button>
+        <button type="button" data-cn="kr" class="${todayNewsView === "kr" ? "is-active" : ""}">국내</button>
+      </div>` : ""}
+    </div>
+    <button type="button" class="ia-today-news-hero" data-news-idx="0" title="크게 보기">
+      <img src="${escapeHtml(imgs[0])}" alt="오늘의 카드뉴스 1" loading="lazy" decoding="async">
+    </button>
+    ${rest.length ? `<button type="button" class="ghost compact-btn ia-today-news-more" id="todayNewsMore" aria-expanded="${todayNewsExpanded}">${todayNewsExpanded ? "접기" : `더 보기 (${rest.length}장)`}</button>
+    <div class="ia-today-news-grid" id="todayNewsGrid"${todayNewsExpanded ? "" : " hidden"}>
+      ${rest.map((src, i) => `<button type="button" class="ia-today-news-thumb" data-news-idx="${i + 1}" title="크게 보기"><img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 2}" loading="lazy" decoding="async"></button>`).join("")}
+    </div>` : ""}`;
+  box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
+    if (btn.dataset.cn === todayNewsView) return;
+    todayNewsView = btn.dataset.cn;
+    renderTodayNews();
+  }));
+  box.querySelectorAll("[data-news-idx]").forEach((btn) => btn.addEventListener("click", () => openLightbox(imgs, Number(btn.dataset.newsIdx))));
+  byId("todayNewsMore")?.addEventListener("click", () => {
+    todayNewsExpanded = !todayNewsExpanded;
+    renderTodayNews();
+  });
+}
+
+// ----- 시장/시그널: 오늘의 시그널 3개(절대 변화가 큰 순) -----
+function signalCandidates() {
+  const out = [];
+  const g = window.SENTIMENT_GAUGES;
+  if (g?.cnn && Number.isFinite(Number(g.cnn.value))) {
+    const v = Number(g.cnn.value);
+    const prev = Number(g.cnn.prevClose);
+    const d = Number.isFinite(prev) ? v - prev : 0;
+    out.push({ key: "fng", label: "공포·탐욕 (CNN)", value: `${Math.round(v)}`, unit: "", delta: d, deltaText: Number.isFinite(prev) ? `${d > 0 ? "+" : ""}${Math.round(d)} (전일 ${Math.round(prev)})` : "", norm: Math.abs(d) / 8, note: fearGreedLabel(v).t, tone: d > 0 ? "pos" : d < 0 ? "neg" : "muted" });
+  }
+  const yc = window.YIELD_CURVE;
+  if (yc?.spreads && Number.isFinite(Number(yc.spreads.t10y2y))) {
+    const v = Number(yc.spreads.t10y2y);
+    const hist = Array.isArray(yc.spreadHistory) ? yc.spreadHistory.map((h) => Number(h.v)).filter(Number.isFinite) : [];
+    const prev = hist.length >= 2 ? hist[hist.length - 2] : null;
+    const d = prev != null ? v - prev : 0;
+    out.push({ key: "yc", label: "10Y − 2Y 스프레드", value: `${v > 0 ? "+" : ""}${v.toFixed(2)}`, unit: "%p", delta: d, deltaText: prev != null ? `${d > 0 ? "+" : ""}${d.toFixed(2)}%p` : "", norm: Math.abs(d) / 0.08, note: v < 0 ? "역전(단기>장기)" : "정상(우상향)", tone: v < 0 ? "neg" : "pos" });
+  }
+  const m = window.MACRO_INDICATORS;
+  const macro = (id, label, scale, noteFn) => {
+    const it = (m?.indicators || []).find((x) => x.id === id);
+    if (!it || !Number.isFinite(Number(it.value))) return;
+    const v = Number(it.value);
+    const d = Number(it.change) || 0;
+    const goodUp = it.tone === "down";
+    const tone = d === 0 || it.tone === "neutral" ? "muted" : ((goodUp ? d > 0 : d < 0) ? "pos" : "neg");
+    out.push({ key: id, label, value: `${v}`, unit: it.unit || "", delta: d, deltaText: `${d > 0 ? "+" : ""}${d}${it.unit || ""} · ${String(it.date || "").slice(0, 7)}`, norm: Math.abs(d) / scale, note: noteFn ? noteFn(v, d) : "", tone });
+  };
+  macro("VIXCLS", "VIX 변동성", 1.5, (v) => (v >= 25 ? "불안 구간" : v <= 15 ? "안정 구간" : "보통"));
+  macro("BAMLH0A0HYM2", "하이일드 스프레드", 0.12, (v) => (v >= 4 ? "신용 경계" : "신용 양호"));
+  macro("DCOILWTICO", "WTI 유가", 3, null);
+  macro("DTWEXBGS", "달러지수", 0.8, null);
+  // 시장 폭: 상승 종목 비중이 50% 에서 얼마나 벗어났나
+  const stocks = (data?.stocks || []).filter((s) => s && s.sector && !isStockEtf(s) && Number.isFinite(Number(s.changePct)));
+  if (stocks.length >= 20) {
+    const adv = stocks.filter((s) => Number(s.changePct) > 0).length;
+    const pct = (adv / stocks.length) * 100;
+    const d = pct - 50;
+    out.push({ key: "breadth", label: "상승 종목 비중", value: `${pct.toFixed(0)}`, unit: "%", delta: d, deltaText: `${adv.toLocaleString()} / ${stocks.length.toLocaleString()} 종목`, norm: Math.abs(d) / 12, note: pct >= 60 ? "강세 우위" : pct <= 40 ? "약세 우위" : "혼조", tone: pct >= 55 ? "pos" : pct <= 45 ? "neg" : "muted" });
+  }
+  return out;
+}
+function renderSignalsSummary() {
+  const host = byId("signalsSummary");
+  if (!host) return;
+  const top = signalCandidates().sort((a, b) => b.norm - a.norm).slice(0, 3);
+  if (!top.length) { host.innerHTML = ""; host.hidden = true; return; }
+  host.hidden = false;
+  host.innerHTML = `
+    <div class="section-title"><h2>오늘의 시그널 3개</h2><p>수집한 지표 중 오늘 변화가 가장 큰 세 가지입니다. 예측이 아니라 현재 상태 요약입니다.</p></div>
+    <div class="ia-signal-grid">
+      ${top.map((s) => `<article class="ia-signal-card ${escapeHtml(s.tone)}">
+        <span class="ia-signal-label">${escapeHtml(s.label)}</span>
+        <strong class="ia-signal-value">${escapeHtml(s.value)}<small>${escapeHtml(s.unit)}</small></strong>
+        <span class="ia-signal-delta">${s.delta > 0 ? "▲" : s.delta < 0 ? "▼" : ""} ${escapeHtml(s.deltaText)}</span>
+        ${s.note ? `<span class="ia-signal-note">${escapeHtml(s.note)}</span>` : ""}
+      </article>`).join("")}
+    </div>`;
+}
+// 데이터가 없어 비어 있는 위젯 폴드는 껍데기만 남기지 않는다.
+function syncSignalFolds() {
+  document.querySelectorAll("#tab-signals .ia-widget-fold").forEach((fold) => {
+    const body = fold.querySelector(":scope > div");
+    fold.hidden = !(body && body.innerHTML.trim());
+  });
+}
+
+// ----- 내 투자: 빈 상태 + 4숫자 요약 -----
+function watchlistIsSeed() {
+  const seed = (typeof defaultWatchlist === "function" ? defaultWatchlist() : []) || [];
+  if (!Array.isArray(watchlist) || watchlist.length !== seed.length) return false;
+  const set = new Set(seed);
+  return watchlist.every((t) => set.has(t));
+}
+function renderMyInvestSummary() {
+  const empty = byId("myInvestEmpty");
+  const body = byId("myInvestBody");
+  const box = byId("myInvestSummary");
+  if (!empty || !body) return;
+  const hasPortfolio = Array.isArray(portfolio) && portfolio.length > 0;
+  // 관심종목은 비면 기본 목록(defaultWatchlist)이 자동으로 채워진다 — 손대지 않은 기본
+  // 목록은 '아직 내 종목이 없다' 로 본다. 그래야 첫 방문자에게 빈 상태가 보인다.
+  const hasWatch = Array.isArray(watchlist) && watchlist.length > 0 && !watchlistIsSeed();
+  const isEmpty = !hasPortfolio && !hasWatch;
+  empty.hidden = !isEmpty;
+  body.hidden = isEmpty;
+  if (!box) return;
+  if (!hasPortfolio) {
+    box.innerHTML = hasWatch
+      ? `<p class="muted">관심종목 ${watchlist.length}개를 추적 중입니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`
+      : `<p class="muted">기본 관심종목을 보고 있습니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`;
+    return;
+  }
+  const rows = portfolio.map((p) => {
+    const stock = stockByTicker(p.ticker);
+    if (!stock) return null;
+    const price = Number(stock.price) || 0;
+    const value = Number(p.qty) * price;
+    const cost = Number(p.qty) * Number(p.avgCost);
+    return { value, cost, changePct: Number(stock.changePct) || 0 };
+  }).filter(Boolean);
+  if (!rows.length) { box.innerHTML = `<p class="muted">저장된 ${portfolio.length}개 종목이 현재 시장 스냅샷에 없습니다.</p>`; return; }
+  const totalValue = rows.reduce((s, r) => s + r.value, 0);
+  const totalCost = rows.reduce((s, r) => s + r.cost, 0);
+  const pl = totalValue - totalCost;
+  const plPct = totalCost > 0 ? (pl / totalCost) * 100 : 0;
+  const today = rows.reduce((s, r) => s + (totalValue > 0 ? (r.value / totalValue) * r.changePct : 0), 0);
+  const fmt = (v) => marketCfg().formatMoney(v);
+  const divTotal = (byId("dividendPlannerTotal")?.textContent || "").trim();
+  box.innerHTML = `
+    <article class="ia-stat"><span>평가금액</span><strong>${fmt(totalValue)}</strong></article>
+    <article class="ia-stat"><span>평가손익</span><strong class="${cls(pl)}">${pl >= 0 ? "+" : "-"}${fmt(Math.abs(pl))} <small>${fmtPct(plPct)}</small></strong></article>
+    <article class="ia-stat"><span>오늘</span><strong class="${cls(today)}">${fmtPct(today)}</strong></article>
+    <article class="ia-stat"><span>배당 예상</span><strong>${escapeHtml(divTotal || "—")}</strong></article>`;
+}
+
+// ----- 찾기: #topPreset ↔ #scrPreset 값 미러(둘 다 살아 있어야 기존 핸들러가 동작) -----
+function syncFindPreset(source) {
+  const top = byId("topPreset");
+  const scr = byId("scrPreset");
+  if (!top || !scr) return;
+  if (source === scr) { if (top.value !== scr.value) top.value = scr.value; return; }
+  if (scr.value !== top.value) {
+    scr.value = top.value;
+    if (source === top && searchSubTab === "screener") scr.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+}
+
+// ----- 트리맵 색상: 세그먼트(등락률·밸류·수익성) + 세부 select → #metricFilter 미러 -----
+const METRIC_GROUP_SELECT = { change: "metricSelChange", value: "metricSelValue", profit: "metricSelProfit" };
+function metricGroupOf(value) {
+  for (const [g, id] of Object.entries(METRIC_GROUP_SELECT)) {
+    if (byId(id)?.querySelector(`option[value="${value}"]`)) return g;
+  }
+  return "change";
+}
+function syncMetricSeg() {
+  const master = byId("metricFilter");
+  const seg = byId("metricSeg");
+  if (!master || !seg) return;
+  // 스냅샷에 데이터가 부족해 master 에서 숨긴 지표는 세부 select 에서도 숨긴다.
+  Object.values(METRIC_GROUP_SELECT).forEach((id) => {
+    byId(id)?.querySelectorAll("option").forEach((opt) => {
+      const src = master.querySelector(`option[value="${opt.value}"]`);
+      const off = !src || src.hidden || src.disabled;
+      opt.hidden = off;
+      opt.disabled = off;
+    });
+  });
+  const group = metricGroupOf(master.value);
+  seg.querySelectorAll("[data-metric-group]").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.metricGroup === group));
+  Object.entries(METRIC_GROUP_SELECT).forEach(([g, id]) => {
+    const sel = byId(id);
+    if (!sel) return;
+    sel.hidden = g !== group;
+    if (g === group && sel.value !== master.value) sel.value = master.value;
+  });
+}
+function setupMetricSeg() {
+  const master = byId("metricFilter");
+  const seg = byId("metricSeg");
+  if (!master || !seg || seg.dataset.bound) return;
+  seg.dataset.bound = "1";
+  const commit = (value) => {
+    if (!value || master.value === value) return;
+    master.value = value;
+    master.dispatchEvent(new Event("change", { bubbles: true }));
+  };
+  seg.querySelectorAll("[data-metric-group]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const sel = byId(METRIC_GROUP_SELECT[btn.dataset.metricGroup]);
+      if (!sel) return;
+      const first = [...sel.options].find((o) => !o.hidden && !o.disabled);
+      const pick = (!sel.selectedOptions[0] || sel.selectedOptions[0].hidden) ? first : sel.selectedOptions[0];
+      if (pick) { sel.value = pick.value; commit(pick.value); }
+      syncMetricSeg();
+    });
+  });
+  Object.values(METRIC_GROUP_SELECT).forEach((id) => byId(id)?.addEventListener("change", (e) => { commit(e.target.value); syncMetricSeg(); }));
+  const legendBtn = byId("heatmapLegendBtn");
+  const legendWrap = legendBtn?.closest(".ia-legend-wrap");
+  if (legendBtn && legendWrap) {
+    const set = (open) => { legendWrap.classList.toggle("is-open", open); legendBtn.setAttribute("aria-expanded", String(open)); };
+    legendBtn.addEventListener("click", () => set(!legendWrap.classList.contains("is-open")));
+    legendWrap.addEventListener("mouseenter", () => set(true));
+    legendWrap.addEventListener("mouseleave", () => set(false));
+    document.addEventListener("click", (e) => { if (!legendWrap.contains(e.target)) set(false); });
+  }
+  syncMetricSeg();
+}
+
+// ----- 차트 설정(⋯) 버튼: 기존 <details class="chart-settings-panel"> 를 연다 -----
+function setupChartSettingsButton() {
+  const btn = byId("chartSettingsBtn");
+  const panel = byId("chartSettingsPanel");
+  if (!btn || !panel || btn.dataset.bound) return;
+  btn.dataset.bound = "1";
+  const sync = () => { btn.setAttribute("aria-expanded", String(panel.open)); btn.classList.toggle("is-active", panel.open); };
+  btn.addEventListener("click", () => { panel.open = !panel.open; sync(); });
+  panel.addEventListener("toggle", sync);
+  sync();
+}
+
+// ----- 헤더: 설정 팝오버 · 검색 버튼 · data-open 링크(커뮤니티/신뢰도 센터/시장 폭) -----
+function setupSettingsPopover() {
+  const btn = byId("settingsToggle");
+  const pop = byId("settingsPopover");
+  if (!btn || !pop || btn.dataset.bound) return;
+  btn.dataset.bound = "1";
+  const set = (open) => { pop.hidden = !open; btn.setAttribute("aria-expanded", String(open)); };
+  btn.addEventListener("click", (e) => { e.stopPropagation(); set(pop.hidden); });
+  document.addEventListener("click", (e) => { if (!pop.hidden && !pop.contains(e.target) && e.target !== btn) set(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !pop.hidden) set(false); });
+  // 팝오버 안의 이동 항목을 누르면 닫는다(토글류는 열어 둔다).
+  pop.querySelectorAll("[data-open], .social-link").forEach((el) => el.addEventListener("click", () => set(false)));
+}
+function setupHeaderSearch() {
+  const btn = byId("headerSearchBtn");
+  if (!btn || btn.dataset.bound) return;
+  btn.dataset.bound = "1";
+  btn.addEventListener("click", () => {
+    if (typeof cmdkOpen === "function") { cmdkOpen(); return; }
+    const input = byId("homeSearchInput");
+    if (input) { input.scrollIntoView({ block: "center", behavior: "smooth" }); input.focus(); }
+  });
+}
+function openDataTrustCenter() {
+  const dlg = byId("dataTrustDialog");
+  if (!dlg) return;
+  renderDataTrustCenter();
+  if (!dlg.open) dlg.showModal();
+}
+function setupDataTrustDialog() {
+  const dlg = byId("dataTrustDialog");
+  if (!dlg || dlg.dataset.bound) return;
+  dlg.dataset.bound = "1";
+  byId("dataTrustClose")?.addEventListener("click", () => dlg.close());
+  dlg.addEventListener("click", (e) => { if (e.target === dlg) dlg.close(); });
+}
+function setupOpenLinks() {
+  if (document.body.dataset.iaOpenBound) return;
+  document.body.dataset.iaOpenBound = "1";
+  document.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-open]");
+    if (!el) return;
+    const what = el.dataset.open;
+    if (what === "trust") { openDataTrustCenter(); return; }
+    if (what === "community") {
+      if (window.MirAI?.isActive?.()) window.MirAI.exit();
+      activateTab("community", { sub: el.dataset.openSub || null });
+      scrollToTabContent();
+      return;
+    }
+    if (what === "health" || what === "signals" || what === "map" || what === "sector") {
+      activateTab(what);
+      scrollToTabContent();
+    }
+  });
+}
+
+// ----- 내 투자 빈 상태 폼 + 포트폴리오 표 변화 감시 -----
+function setupMyInvestEmpty() {
+  const form = byId("myInvestEmptyForm");
+  const input = byId("myInvestEmptyInput");
+  if (form && input && !form.dataset.bound) {
+    form.dataset.bound = "1";
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const raw = input.value.trim();
+      if (!raw) return;
+      const resolved = normalizeTickerKey(resolveTickerQuery(raw) || raw);
+      if (!stockByTicker(resolved)) { showAppToast(`'${raw}' 을(를) 찾지 못했습니다. 티커나 종목명을 확인해 주세요.`); return; }
+      // 손대지 않은 기본 목록이면 그 자리를 내 첫 종목으로 바꾼다(기본 5개에 섞이지 않게).
+      if (watchlistIsSeed()) {
+        watchlist = [resolved];
+        persistWatchlist();
+        renderWatchlistBar();
+        renderActionBoard();
+      } else if (!watchlist.includes(resolved)) {
+        toggleWatchlist(resolved);
+      }
+      input.value = "";
+      renderMyInvestSummary();
+      renderTabContent("bulk", { force: true });
+      showAppToast(`${resolved} 을(를) 관심종목에 추가했습니다`);
+    });
+  }
+  const pfTable = byId("pfTable");
+  if (pfTable && !pfTable.dataset.iaObserved && typeof MutationObserver === "function") {
+    pfTable.dataset.iaObserved = "1";
+    new MutationObserver(() => renderMyInvestSummary()).observe(pfTable, { childList: true });
+  }
+}
+
+// ----- 챗봇 FAB: 첫 방문 1회 말풍선 + 푸터와 겹치지 않게 -----
+const CHAT_BUBBLE_SEEN_KEY = "mir_chat_bubble_seen_v1";
+function setupChatFabIa() {
+  const chat = byId("chatbot");
+  const bubble = byId("chatBubble");
+  if (!chat || chat.dataset.iaBound) return;
+  chat.dataset.iaBound = "1";
+  const store = window.safeStorage;
+  if (bubble && store && !store.get(CHAT_BUBBLE_SEEN_KEY)) {
+    bubble.hidden = false;
+    store.set(CHAT_BUBBLE_SEEN_KEY, "1");
+    setTimeout(() => { bubble.hidden = true; updateChatSafeArea(); }, 9000);
+  }
+  const footer = document.querySelector("footer");
+  if (footer && typeof IntersectionObserver === "function") {
+    new IntersectionObserver((entries) => {
+      const en = entries[0];
+      // 드래그로 옮긴 뒤(left/top 지정)에는 손대지 않는다.
+      if (chat.style.left || chat.style.top || chat.classList.contains("is-chat-open")) return;
+      const lift = en.isIntersecting ? Math.ceil(en.intersectionRect.height) : 0;
+      chat.style.setProperty("--ia-chat-lift", `${lift}px`);
+      chat.classList.toggle("is-footer-lift", lift > 0);
+    }, { threshold: [0, 0.25, 0.5, 0.75, 1] }).observe(footer);
+  }
+}
+
+// ----- 셸 부팅(boot 에서 setupTabs 뒤에 한 번; 재부팅은 각 함수의 bound 플래그가 막는다) -----
+function setupIaShell() {
+  setupSettingsPopover();
+  setupHeaderSearch();
+  setupDataTrustDialog();
+  setupOpenLinks();
+  setupMetricSeg();
+  setupChartSettingsButton();
+  setupMyInvestEmpty();
+  setupChatFabIa();
+  const topPreset = byId("topPreset");
+  const scrPreset = byId("scrPreset");
+  if (topPreset && !topPreset.dataset.iaMirror) {
+    topPreset.dataset.iaMirror = "1";
+    topPreset.addEventListener("change", () => syncFindPreset(topPreset));
+  }
+  if (scrPreset && !scrPreset.dataset.iaMirror) {
+    scrPreset.dataset.iaMirror = "1";
+    scrPreset.addEventListener("change", () => syncFindPreset(scrPreset));
+  }
+}
+
+
 loadData();
 
 // ===== PWA Offline / Stale Snapshot Banner =====
@@ -13491,16 +14093,31 @@ function cmdkBuildActions(query) {
     actions.push({ label: "AI 모드 열기", hint: "임머시브 리서치", run: () => window.MirAI?.toggle?.(true) });
   }
 
-  // 주요 탭 이동
-  document.querySelectorAll("#mainTabs .tab, .tabs .tab").forEach((btn) => {
-    const name = (btn.textContent || "").trim();
-    if (!name || !btn.dataset.tab) return;
-    if (actions.some((a) => a.label === `탭 이동: ${name}`)) return;
-    actions.push({ label: `탭 이동: ${name}`, hint: "탭", run: () => {
-      if (cmdkIsAiActive()) window.MirAI?.exit?.();
-      btn.click();
-    } });
-  });
+  // 주요 화면 이동 — 4탭 IA 의 잎(서브탭)까지 포함해 ⌘K 로 어디든 간다.
+  const goto = (label, tab, sub = null) => actions.push({ label: `이동: ${label}`, hint: "화면", run: () => {
+    if (cmdkIsAiActive()) window.MirAI?.exit?.();
+    activateTab(tab, { sub });
+    scrollToTabContent();
+  } });
+  goto("오늘 · 요약", "today");
+  goto("오늘 · AI 브리핑", "ai-briefing");
+  goto("오늘 · 캘린더", "calendar");
+  goto("시장 · 트리맵", "map");
+  goto("시장 · 섹터 흐름", "sector");
+  goto("시장 · 시장 폭", "health");
+  goto("시장 · 시그널", "signals");
+  goto("종목 · 분석", "search", "analysis");
+  goto("종목 · 찾기 (스크리너·스캐너)", "search", "find");
+  goto("종목 · 비교", "search", "compare");
+  goto("종목 · 공시 (13F·정치인·내부자·DART)", "search", "disclosures");
+  goto("내 투자 · 보유·관심", "bulk", "holdings");
+  goto("내 투자 · 도구", "bulk", "tools");
+  goto("커뮤니티 · 트렌딩", "community", "trending");
+  goto("커뮤니티 · 종목 토론", "community", "board");
+  goto("커뮤니티 · 투표", "community", "vote");
+  actions.push({ label: "데이터 신뢰도 센터", hint: "데이터 상태", run: () => openDataTrustCenter() });
+  actions.push({ label: "설정 (테마·밀도·고급 모드)", hint: "헤더", run: () => byId("settingsToggle")?.click() });
+  actions.push({ label: "고급 모드 전환", hint: "설정", run: () => setViewMode(currentViewMode === "advanced" ? "basic" : "advanced") });
 
   // 퍼지 필터 (종목 결과는 이미 질의로 골라졌으므로 keep)
   return actions

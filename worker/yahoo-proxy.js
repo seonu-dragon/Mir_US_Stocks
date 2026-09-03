@@ -25,6 +25,8 @@
 //
 // 이 파일은 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포다
 // (DEPLOY.md "Cloudflare Worker 바인딩"). 바인딩: AI, MOVE_CACHE(KV), COMMUNITY_KV(KV),
+// (선택) COMMUNITY_DO(Durable Object, class CommunityStore — 유료 플랜 + wrangler 필요.
+// 없으면 커뮤니티는 KV 경로로 그대로 동작한다),
 // Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_CLIENT_ID/SECRET, COMMUNITY_ADMIN_KEY,
 // (선택) GEMINI_MODEL, IP_HASH_SALT.
 // =============================================================================
@@ -186,34 +188,11 @@ async function handleFetch(request, env) {
       return cors(await handleChat(request, env));
     }
 
-    // Shared community board (KV binding COMMUNITY_KV required).
-    if (url.pathname === "/community") {
-      if (request.method === "GET") return cors(await handleCommunityList(url, env, request));
-      if (request.method === "POST") return cors(await handleCommunityCreate(request, env));
-      if (request.method === "DELETE") return cors(await handleCommunityDelete(request, env));
-    }
-    if (url.pathname === "/community/comment") {
-      if (request.method === "POST") return cors(await handleCommunityCommentCreate(request, env));
-      if (request.method === "DELETE") return cors(await handleCommunityCommentDelete(request, env));
-    }
-    if (request.method === "POST" && url.pathname === "/community/like") {
-      return cors(await handleCommunityLike(request, env));
-    }
-    if (request.method === "POST" && url.pathname === "/community/report") {
-      return cors(await handleCommunityReport(request, env));
-    }
-    if (request.method === "GET" && url.pathname === "/community/reports") {
-      return cors(await handleCommunityReportsList(url, env, request));
-    }
-    if (request.method === "POST" && url.pathname === "/community/vote") {
-      return cors(await handleCommunityVote(request, env));
-    }
-    if (request.method === "GET" && url.pathname === "/community/votes") {
-      return cors(await handleCommunityVotesList(url, env));
-    }
-    if (request.method === "POST" && url.pathname === "/community/clear") {
-      return cors(await handleCommunityClear(request, env));
-    }
+    // Shared community board.
+    // COMMUNITY_DO(Durable Object)가 있으면 전 요청을 그 객체로 몰아 직렬화하고,
+    // 없으면 지금까지처럼 COMMUNITY_KV 를 직접 읽고 쓴다(아래 dispatchCommunity).
+    const communityHandler = communityHandlerFor(request.method, url.pathname);
+    if (communityHandler) return cors(await dispatchCommunity(request, url, env, communityHandler));
 
     if (url.pathname === "/sync/prefs") {
       if (request.method === "GET") return cors(await handleSyncPrefsGet(url, env));
@@ -1435,6 +1414,145 @@ function cors(resp) {
 }
 
 // =============================================================================
+// 커뮤니티 라우팅 — KV 직접 경로 / Durable Object 경로
+// =============================================================================
+//
+// 게시글은 KV 키 하나에 배열로 들어 있어서, 두 요청이 겹치면 늦게 쓴 쪽이 먼저
+// 쓴 쪽을 통째로 덮는다(글이 조용히 사라진다). KV 에는 CAS 가 없어 아래
+// mutateVersionedList 의 version/stamp + 3회 재시도는 어디까지나 완화책이고,
+// 진짜 해결은 단일 writer 로 직렬화하는 Durable Object 다.
+//
+// 다만 DO 는 (1) Workers **유료 플랜**이 필요하고 (2) wrangler.toml 의 migrations
+// 로만 만들 수 있는데, 이 워커는 대시보드 붙여넣기로 배포한다. 그래서 바인딩
+// 유무로 갈리는 **능력 검사**로 넣는다:
+//   env.COMMUNITY_DO 있음 → 모든 /community* 요청을 DO 인스턴스 한 개로 몰아
+//                            직렬 실행(데이터는 DO storage).
+//   env.COMMUNITY_DO 없음 → 지금까지의 KV + version 재시도 경로 그대로(동작 불변).
+// 두 경로는 같은 핸들러 코드를 쓴다 — DO 안에서는 COMMUNITY_KV 자리에 DO storage
+// 를 감싼 shim 을 끼워 넣을 뿐이다.
+const COMMUNITY_DO_NAME = "community:v1";
+
+// 메서드+경로 → 핸들러. 엣지와 DO 안에서 같은 표를 본다(라우팅이 갈라지지 않게).
+// 표에 없으면 null → 커뮤니티 경로가 아니므로 나머지 라우팅으로 넘어간다.
+export function communityHandlerFor(method, pathname) {
+  switch (`${method} ${pathname}`) {
+    case "GET /community": return (request, url, env) => handleCommunityList(url, env, request);
+    case "POST /community": return (request, url, env) => handleCommunityCreate(request, env);
+    case "DELETE /community": return (request, url, env) => handleCommunityDelete(request, env);
+    case "POST /community/comment": return (request, url, env) => handleCommunityCommentCreate(request, env);
+    case "DELETE /community/comment": return (request, url, env) => handleCommunityCommentDelete(request, env);
+    case "POST /community/like": return (request, url, env) => handleCommunityLike(request, env);
+    case "POST /community/report": return (request, url, env) => handleCommunityReport(request, env);
+    case "GET /community/reports": return (request, url, env) => handleCommunityReportsList(url, env, request);
+    case "POST /community/vote": return (request, url, env) => handleCommunityVote(request, env);
+    case "GET /community/votes": return (request, url, env) => handleCommunityVotesList(url, env);
+    case "POST /community/clear": return (request, url, env) => handleCommunityClear(request, env);
+    default: return null;
+  }
+}
+
+// 읽기까지 DO 로 보내는 이유: 쓰기만 DO 로 보내면 데이터는 DO storage 에 쌓이는데
+// 목록은 KV 를 읽어 게시판이 멈춘 것처럼 보인다. 한 곳에서만 읽고 쓴다.
+async function dispatchCommunity(request, url, env, handler) {
+  if (env && env.COMMUNITY_DO) {
+    try {
+      const stub = env.COMMUNITY_DO.get(env.COMMUNITY_DO.idFromName(COMMUNITY_DO_NAME));
+      return await stub.fetch(request);
+    } catch (err) {
+      // KV 로 조용히 되돌리지 않는다 — 두 저장소가 갈라지면 글이 반쪽씩 남는다.
+      console.error("community DO dispatch failed:", err);
+      return json({
+        posts: [],
+        error: "community_do_unavailable",
+        message: "커뮤니티 저장소에 접근하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      }, 503, 0);
+    }
+  }
+  return handler(request, url, env);
+}
+
+// DO storage 를 KV 인터페이스(get/put/delete)로 감싼다. 핸들러 코드가 KV 인지
+// DO 인지 몰라도 되게 하는 어댑터다.
+//  - 값은 { v, e } 봉투로 저장한다(e = 만료 epoch ms, 0 이면 무기한).
+//    KV 의 expirationTtl 을 흉내내야 IP 리밋 카운터가 영원히 남지 않는다.
+//  - seedKv 가 있으면 키를 처음 읽을 때 기존 KV 값을 한 번 복사해 온다
+//    (DO 를 켜는 순간 기존 게시글이 사라지지 않게 하는 이관 경로).
+function durableKvShim(storage, seedKv) {
+  const seeded = new Set();
+  const decode = (raw, type) => {
+    if (raw == null) return null;
+    return type === "json" ? JSON.parse(raw) : raw;
+  };
+  return {
+    async get(key, type) {
+      const entry = await storage.get(key);
+      if (entry && typeof entry === "object") {
+        if (entry.e && Date.now() > entry.e) {
+          await storage.delete(key);
+          return null;
+        }
+        return decode(entry.v, type);
+      }
+      if (!seedKv || seeded.has(key)) return null;
+      seeded.add(key);
+      try {
+        const fromKv = await seedKv.get(key);
+        if (fromKv == null) return null;
+        await storage.put(key, { v: String(fromKv), e: 0 });
+        return decode(String(fromKv), type);
+      } catch (err) {
+        console.error("community DO seed from KV failed:", err);
+        return null;
+      }
+    },
+    async put(key, value, options) {
+      const ttl = options && Number(options.expirationTtl);
+      await storage.put(key, { v: String(value), e: ttl ? Date.now() + ttl * 1000 : 0 });
+    },
+    async delete(key) {
+      await storage.delete(key);
+    },
+  };
+}
+
+// 커뮤니티 문서를 소유하는 단일 writer.
+// wrangler.toml (DEPLOY.md 참고):
+//   [[durable_objects.bindings]] name = "COMMUNITY_DO" class_name = "CommunityStore"
+//   [[migrations]] tag = "v1" new_classes = ["CommunityStore"]
+export class CommunityStore {
+  constructor(state, env) {
+    this.state = state;
+    this.env = {
+      ...(env || {}),
+      // 핸들러가 보는 COMMUNITY_KV 를 DO storage 로 바꾼다. 기존 KV 는 seed 용으로만.
+      COMMUNITY_KV: durableKvShim(state.storage, env && env.COMMUNITY_KV),
+      // 재귀 디스패치 방지(DO 안에서 다시 DO 로 보내지 않는다).
+      COMMUNITY_DO: null,
+      // 아래 mutateVersionedList 에 "이미 직렬화돼 있다"고 알린다 —
+      // KV 용 write-then-verify 재시도를 건너뛰고 한 번만 읽고 쓴다.
+      COMMUNITY_SERIALIZED: true,
+    };
+    this.chain = Promise.resolve();
+  }
+
+  // DO 는 스레드가 하나지만 await 지점마다 다른 요청이 끼어들 수 있다
+  // (Cloudflare 의 input gate 는 storage 대기 구간만 막는다). 읽기-수정-쓰기가
+  // 통째로 겹치지 않도록 요청을 명시적 큐로 한 번에 하나씩만 돌린다.
+  serialize(task) {
+    const run = this.chain.then(task, task);
+    this.chain = run.then(() => {}, () => {});
+    return run;
+  }
+
+  async fetch(request) {
+    const url = new URL(request.url);
+    const handler = communityHandlerFor(request.method, url.pathname);
+    if (!handler) return json({ error: "not_found" }, 404, 0);
+    return this.serialize(() => handler(request, url, this.env));
+  }
+}
+
+// =============================================================================
 // Shared community board (Cloudflare KV: COMMUNITY_KV)
 // =============================================================================
 
@@ -1486,9 +1604,9 @@ function communityKvMissing() {
 
 // ── KV 단일 키 읽기-수정-쓰기 ────────────────────────────────────────────────
 // 게시글 전체가 키 하나에 배열로 들어 있어, 두 요청이 겹치면 늦게 쓴 쪽이 먼저
-// 쓴 쪽을 통째로 덮는다(글이 조용히 사라짐). KV 에는 CAS 가 없어 완전한 해결은
-// Durable Object(직렬화된 단일 writer)로 옮기는 것뿐이다 — 아래는 그 전까지의
-// 최소 완화: 값에 version/stamp 를 붙여 쓰고, 쓴 직후 다시 읽어 내 stamp 가
+// 쓴 쪽을 통째로 덮는다(글이 조용히 사라짐). KV 에는 CAS 가 없다 — 완전한 해결은
+// 위의 Durable Object(COMMUNITY_DO) 경로이고, 아래는 그 바인딩이 없을 때의
+// 최소 완화다(같은 코드가 DO storage 위에서도 그대로 돈다): 값에 version/stamp 를 붙여 쓰고, 쓴 직후 다시 읽어 내 stamp 가
 // 남아 있는지 확인한다. 같은 엣지에서는 read-after-write 가 보이므로, 그 사이
 // 다른 쓰기가 끼어들었으면 stamp 가 달라지고 최신 상태 위에 변경을 다시 적용한다
 // (최대 3회). mutate 는 재실행돼도 안전해야 한다(id 는 밖에서 만들어 넘길 것).
@@ -1513,16 +1631,36 @@ async function loadVersionedList(env, key) {
 // mutate(items) → { items: next, response } 이면 next 를 쓰고 response 를 돌려준다.
 //                 { response } 만 주면 쓰지 않고 그대로 응답한다(404·403·쿨다운 등).
 // 반환값은 항상 Response 다.
+function newVersionStamp() {
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 async function mutateVersionedList(env, key, mutate, maxItems) {
   const finish = (outcome) => (outcome && outcome.response ? outcome.response : json({ error: "internal" }, 500, 0));
+  const capped = (items) => (maxItems ? items.slice(0, maxItems) : items);
+
+  // Durable Object 안에서는 이 함수 자체가 이미 한 번에 하나씩만 돈다
+  // (CommunityStore.serialize). 쓰고 다시 읽어 확인할 이유가 없다 — 한 번의
+  // 읽기-수정-쓰기로 끝낸다. 재시도 루프를 여기서도 돌리면 storage 왕복만 3배다.
+  if (env && env.COMMUNITY_SERIALIZED) {
+    const state = await loadVersionedList(env, key);
+    const outcome = await mutate(state.items, 1);
+    if (!outcome || !Array.isArray(outcome.items)) return finish(outcome);
+    await env.COMMUNITY_KV.put(key, JSON.stringify({
+      version: state.version + 1,
+      stamp: newVersionStamp(),
+      items: capped(outcome.items),
+    }));
+    return finish(outcome);
+  }
+
   let outcome = null;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     const state = await loadVersionedList(env, key);
     outcome = await mutate(state.items, attempt);
     if (!outcome || !Array.isArray(outcome.items)) return finish(outcome);
-    const stamp = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-    const items = maxItems ? outcome.items.slice(0, maxItems) : outcome.items;
-    await env.COMMUNITY_KV.put(key, JSON.stringify({ version: state.version + 1, stamp, items }));
+    const stamp = newVersionStamp();
+    await env.COMMUNITY_KV.put(key, JSON.stringify({ version: state.version + 1, stamp, items: capped(outcome.items) }));
     const check = await loadVersionedList(env, key);
     if (check.stamp === stamp) return finish(outcome);
     console.warn(`kv write conflict on ${key} (attempt ${attempt}) — retrying`);

@@ -86,6 +86,9 @@ jobs:
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)
+      # 빌더 스텝이 실패를 삼켜도 산출물 나이로 마지막 관문을 세운다.
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group edge-stats
       - name: Notify failure (Telegram)
         if: failure()
         continue-on-error: true

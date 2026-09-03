@@ -4390,6 +4390,7 @@ function setupEvents() {
   byId("stockTreemap").addEventListener("mousemove", handleHeatmapPointer);
   byId("stockTreemap").addEventListener("mouseleave", hideHeatmapTooltip);
   byId("stockTreemap").addEventListener("click", handleHeatmapClick);
+  setupTreemapVisibilityWatch();
   setupChartControls();
   setupWatchAlertEvents();
   setupCloudSyncEvents();
@@ -5730,6 +5731,17 @@ function treemapPeerIndex() {
   _treemapPeerIndex = { byIndustry, bySector };
   return _treemapPeerIndex;
 }
+// 폭 0 이라 못 그린 렌더 요청. 지도가 보이게 되면(폭 > 0) 한 번 그린다.
+let _treemapPending = false;
+function setupTreemapVisibilityWatch() {
+  const map = byId("stockTreemap");
+  if (!map || map.dataset.visWatch || typeof ResizeObserver === "undefined") return;
+  map.dataset.visWatch = "1";
+  new ResizeObserver((entries) => {
+    const w = entries[0]?.contentRect?.width || 0;
+    if (w > 0 && _treemapPending && currentTab === "map") renderTreemap();
+  }).observe(map);
+}
 // 마지막으로 hover 한 대상 키("t:티커" | "i:섹터|산업" | "s:섹터"). 같은 대상 위에서 움직이면
 // 툴팁 위치만 옮기고 패널·툴팁 HTML 은 다시 만들지 않는다.
 let _lastHoverKey = null;
@@ -5740,12 +5752,14 @@ function renderTreemap() {
   const query = byId("heatmapSearch").value.trim();
   const map = byId("stockTreemap");
   const width = map.clientWidth;
-  // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음.
-  // 지도 탭이 보이는데도 일시적으로 0이면 다음 프레임에 다시 시도.
+  // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음. 예전엔 지도 탭이
+  // current 인 채로 가려진 상태(AI 모드 차트 뷰)에서 rAF 로 초당 ~80회 재시도했다. 이제 '그려야
+  // 함' 만 표시하고, 폭이 생기는 순간(ResizeObserver, setupTreemapVisibilityWatch) 한 번 그린다.
   if (!width) {
-    if (currentTab === "map") requestAnimationFrame(renderTreemap);
+    _treemapPending = true;
     return;
   }
+  _treemapPending = false;
   const height = map.clientHeight || 720;
 
   renderLegend(metric);
@@ -12307,7 +12321,7 @@ function cloudSyncPayload() {
     watchlist,
     watchlistUs: storedWatchlist("us"),
     watchlistKr: storedWatchlist("kr"),
-    portfolio,
+    portfolio: typeof portfolioCloudPayload === "function" ? portfolioCloudPayload() : portfolio,
     alertSettings: watchAlertSettings(),
     updatedAt: Date.now(),
   };
@@ -12362,8 +12376,12 @@ async function pullCloudSync() {
       } catch (e) { /* ignore */ }
     }
     if (Array.isArray(prefs.portfolio) && prefs.portfolio.length) {
-      portfolio = prefs.portfolio.filter((p) => p && p.ticker).slice(0, 60);
-      savePortfolio();
+      if (typeof applyCloudPortfolio === "function") {
+        applyCloudPortfolio(prefs.portfolio); // portfolio.js: 시장별 저장 키까지 반영
+      } else {
+        portfolio = prefs.portfolio.filter((p) => p && p.ticker).slice(0, 60);
+        savePortfolio();
+      }
     }
     if (prefs.alertSettings && typeof prefs.alertSettings === "object") {
       saveWatchAlertSettings({ ...watchAlertSettings(), ...prefs.alertSettings });

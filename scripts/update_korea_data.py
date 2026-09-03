@@ -34,6 +34,11 @@ OUT_JS = ROOT / "data" / "korea" / "market_snapshot.js"
 DETAILS_DIR = ROOT / "data" / "korea" / "details"
 
 MAX_REAL_HISTORY = 600
+# 실측 일봉이 아직 없는 종목을 매 실행 이만큼 추가로 받아 메운다(백필 쿼터).
+# 상위 600 상한만으로는 소형주가 영원히 차트 없이 남는다. make_stock 이 실측을
+# chartSeries 로 보존하도록 고쳐졌으므로(2026-09-03) 한 번 받으면 계속 유지되고,
+# 이 쿼터만큼 커버리지가 매 실행 단조 증가한다. 0 으로 두면 백필을 끈다.
+HISTORY_BACKFILL_PER_RUN = int(os.environ.get("KR_HISTORY_BACKFILL", "500") or 0)
 # Naver fundamentals are cheap (1 JSON call) and cover all listed stocks, so we
 # fetch them far wider than Yahoo did — every mid/small cap gets financials too.
 MAX_FUNDAMENTALS = 1600
@@ -1373,10 +1378,43 @@ def recent_disclosure_symbols() -> set[str]:
     return out
 
 
+def load_previous_stocks() -> list[dict]:
+    """직전 라이트 스냅샷의 stocks. 없거나 깨졌으면 빈 리스트."""
+    try:
+        return json.loads(OUT.read_text(encoding="utf-8")).get("stocks") or []
+    except Exception:
+        return []
+
+
+def history_backfill_symbols(metas: list[dict], prev_stocks: list[dict], quota: int) -> set[str]:
+    """실측 일봉이 없는 종목을 시총 순으로 quota 개 골라 이번 실행의 이력 대상에 넣는다.
+
+    2026-09-03 실측: 국내 3,774 종목 중 1,322 개(35%)가 chartSeries 가 비어 분석 화면이
+    '데이터 부족' 으로 떨어졌다. 야후에 데이터가 없어서가 아니다 — 무작위 50종목을
+    다시 받아 보니 50/50(100%)이 1,200봉 넘게 돌아왔다. 상한을 걸어 시도조차 안 했고,
+    make_stock 이 캐시로 되살린 실측마저 버려서 영구 강등된 결과였다.
+    """
+    if quota <= 0:
+        return set()
+    real = {
+        str(item.get("ticker") or "")
+        for item in prev_stocks
+        if item.get("historySource") in UD.REAL_HISTORY_SOURCES
+    }
+    missing = [m for m in metas if m["symbol"] not in real]
+    missing.sort(key=lambda m: m.get("marketCapT") or 0, reverse=True)
+    return {m["symbol"] for m in missing[:quota]}
+
+
 def build_snapshot(limit: int | None = None) -> dict:
     metas = fetch_all_listed(limit=limit)
     metas.sort(key=history_priority, reverse=True)
     real_symbols = {m["symbol"] for m in metas[:MAX_REAL_HISTORY]}
+    prev_stocks = load_previous_stocks()
+    backfill = history_backfill_symbols(metas, prev_stocks, HISTORY_BACKFILL_PER_RUN) - real_symbols
+    if backfill:
+        real_symbols |= backfill
+        print(f"[history] 실측 이력이 없는 종목 {len(backfill)}개를 백필 쿼터로 추가")
 
     # 공시를 낸 종목은 시총과 무관하게 이력을 받는다(공시 반응 분석용).
     disclosed = recent_disclosure_symbols() & {m["symbol"] for m in metas}
@@ -1421,11 +1459,6 @@ def build_snapshot(limit: int | None = None) -> dict:
     # 데이터 정직성 게이트: 오늘 preferHistory 티커만 직전과 비교한다.
     # 스냅샷 전체 실측 수와 비교하면 공시 창이 줄어든 날을 야후 스로틀로
     # 오인해 발행이 잠긴다(2026-08-24~26: 1842 vs 전체 3047, 대상은 2226).
-    prev_stocks = []
-    try:
-        prev_stocks = json.loads(OUT.read_text(encoding="utf-8")).get("stocks") or []
-    except Exception:
-        pass
     prefer_tickers = {m["symbol"] for m in metas if m.get("preferHistory")}
     honesty = UD.enforce_history_honesty_gate(stocks, prefer_tickers, prev_stocks)
     print(UD.history_fetch_summary(_history_stats, _history_stats_lock))
@@ -1496,6 +1529,17 @@ def build_snapshot(limit: int | None = None) -> dict:
         ],
         "errors": errors[:80],
         "historyFallback": {"cached": cached_count, "fabricated": fabricated},
+        # 차트(실측 일봉) 커버리지. check_data_freshness.py 가 비율로 감시한다 —
+        # 2026-09-03 이전엔 35% 가 조용히 빈 차트였고 아무도 알림을 받지 못했다.
+        "historyCoverage": {
+            "total": len(stocks),
+            "withChart": sum(1 for s_ in stocks if s_.get("chartSeries")),
+            "noChart": sum(1 for s_ in stocks if not s_.get("chartSeries")),
+            "ratio": round(
+                sum(1 for s_ in stocks if s_.get("chartSeries")) / max(1, len(stocks)), 4
+            ),
+            "backfillQuota": HISTORY_BACKFILL_PER_RUN,
+        },
         "universeCount": len(metas),
         "groupCounts": group_counts,
         "historyPolicy": {
@@ -1755,10 +1799,14 @@ def split_snapshot_details(payload: dict):
     light_stocks = []
     for stock in payload.get("stocks", []):
         detail = {}
-        for key in ["chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"]:
+        for key in UD.DETAIL_KEYS:
             if key in stock:
                 detail[key] = stock[key]
-        if detail:
+        # chartSeries 가 빈 배열뿐이면 detail 파일을 새로 만들지 않는다(배포 용량).
+        if any(detail.get(key) for key in UD.DETAIL_KEYS):
+            for key in UD.DETAIL_META_KEYS:
+                if key in stock:
+                    detail[key] = stock[key]
             detail.update({
                 "ticker": stock["ticker"],
                 "company": stock["company"],
@@ -1769,7 +1817,7 @@ def split_snapshot_details(payload: dict):
             details[stock["ticker"]] = detail
         light_stocks.append({
             k: v for k, v in stock.items()
-            if k not in {"chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory"}
+            if k not in set(UD.DETAIL_KEYS) | set(UD.DETAIL_META_KEYS)
         })
     light = dict(payload)
     light["stocks"] = light_stocks

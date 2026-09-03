@@ -1,10 +1,55 @@
 {
-  "updatedAtKst": "2026-09-02 18:00 KST",
-  "lastFileDate": "2026-09-01",
-  "count": 636,
+  "updatedAtKst": "2026-09-03 18:08 KST",
+  "lastFileDate": "2026-09-02",
+  "count": 641,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
+    {
+      "ticker": "ALRS",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-09-02",
+      "title": "ALERUS FINANCIAL CORP  (ALRS)",
+      "url": "https://www.sec.gov/Archives/edgar/data/903419/000143774926029509/alrs20260828_s3.htm",
+      "accession": "0001437749-26-029509"
+    },
+    {
+      "ticker": "TNON",
+      "formType": "S-3/A",
+      "formLabel": "일괄신고 정정",
+      "fileDate": "2026-09-02",
+      "title": "Tenon Medical, Inc.  (TNON, TNONW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1560293/000121390026096754/ea0302903-s3a2_tenon.htm",
+      "accession": "0001213900-26-096754"
+    },
+    {
+      "ticker": "QNME",
+      "formType": "S-3/A",
+      "formLabel": "일괄신고 정정",
+      "fileDate": "2026-09-02",
+      "title": "Quanome Technologies, Inc.  (QNME)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1996192/000121390026096587/ea0304189-s3a2_quanome.htm",
+      "accession": "0001213900-26-096587"
+    },
+    {
+      "ticker": "PMVP",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-02",
+      "title": "PMV Pharmaceuticals, Inc.  (PMVP)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1699382/000119312526378780/d95425d424b5.htm",
+      "accession": "0001193125-26-378780"
+    },
+    {
+      "ticker": "SSM",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-02",
+      "title": "Sono Group N.V.  (SSM)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1840416/000117184326005852/f424b5_090126.htm",
+      "accession": "0001171843-26-005852"
+    },
     {
       "ticker": "GMM",
       "formType": "424B5",

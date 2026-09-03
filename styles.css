@@ -753,8 +753,8 @@ main {
 .regime-card.regime-off { border-left-color: var(--neg); }
 .regime-card.regime-mixed { border-left-color: #f59e0b; }
 
-.regime-label {
-  font-size: var(--fs-h2) !important;
+strong.regime-label {
+  font-size: var(--fs-h2);
   line-height: 1.1;
 }
 
@@ -4973,7 +4973,7 @@ footer {
   }
 
   .chatbot.is-chat-open .chat-fab {
-    display: none !important;
+    display: none;
   }
 
   .chatbot.is-chat-open .chat-panel {
@@ -5807,8 +5807,8 @@ footer {
 }
 
 .compact-btn {
-  padding: 4px 8px !important;
-  font-size: var(--fs-cap) !important;
+  padding: 4px 8px;
+  font-size: var(--fs-cap);
 }
 
 .watchlist-chips {
@@ -8270,9 +8270,9 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 }
 
 /* 종목 분석 균형 레이아웃 */
-.stock-analysis-top {
-  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr) !important;
-  align-items: stretch !important;
+.workspace.stock-analysis-top {
+  grid-template-columns: minmax(0, 1.55fr) minmax(320px, 0.85fr);
+  align-items: stretch;
 }
 .stock-analysis-top > .chart-card,
 .stock-analysis-top > .search-side-col {
@@ -8386,17 +8386,17 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 .event-card-earnings .earnings-reaction-empty { margin: 8px 0 0; padding: 8px 0 0; border-top: 1px solid var(--line); font-size: var(--fs-cap); }
 
 @media (max-width: 1200px) {
-  .stock-analysis-top { grid-template-columns: minmax(0, 1fr) 320px !important; }
+  .workspace.stock-analysis-top { grid-template-columns: minmax(0, 1fr) 320px; }
 }
 @media (max-width: 900px) {
-  .stock-analysis-top,
-  .analysis-balanced-grid { grid-template-columns: 1fr !important; }
+  .workspace.stock-analysis-top,
+  .analysis-balanced-grid { grid-template-columns: 1fr; }
   /* 모바일: 차트 → 종목정보(가격·RS) → Fundamentals 순으로 스택 */
   .stock-analysis-top > .chart-card,
   .stock-analysis-top > .search-side-col,
   .stock-analysis-top > .analysis-fundamentals {
-    grid-column: 1 !important;
-    grid-row: auto !important;
+    grid-column: 1;
+    grid-row: auto;
   }
   .event-card-earnings,
   .event-card-smart { grid-column: span 2; }
@@ -8977,7 +8977,7 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
   flex-wrap: wrap;
   gap: 6px;
 }
-.rf-head .regime-label { font-size: var(--fs-h3) !important; line-height: 1.1; }
+.rf-head .regime-label { font-size: var(--fs-h3); line-height: 1.1; }
 .rf-head .regime-ko { color: var(--muted); font-size: var(--fs-cap); font-style: normal; font-weight: 600; }
 .regime-fng-card .fng-gauge { width: 100%; max-width: 132px; height: auto; margin: 3px auto 0; }
 .regime-fng-card .fng-score { font-size: var(--fs-h2); font-weight: 700; }
@@ -9104,16 +9104,16 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 /* 웹: 헤더 카드뉴스 캐러셀 숨김(액션 보드로 이동) */
 @media (min-width: 901px) {
   #cardnewsHost,
-  #cardnewsSwitch { display: none !important; }
+  #cardnewsSwitch { display: none; }
 }
 /* 모바일: 액션 보드는 기존대로 — 모드 스위치/뉴스 숨김(헤더 캐러셀 유지) */
 @media (max-width: 900px) {
   .action-mode-switch { display: none; }
-  .daily-action-news { display: none !important; }
+  .daily-action-news { display: none; }
 }
 .daily-action-board.is-news .daily-action-head p { display: none; }
 /* 오늘의 뉴스 모드: 액션 보드 그리드를 숨기고 그 자리에 뉴스만 표시 */
-.daily-action-board.is-news .daily-action-grid { display: none !important; }
+.daily-action-board.is-news .daily-action-grid { display: none; }
 .daily-action-board.is-news .daily-action-count { display: none; }
 
 /* Portfolio decision tools */
@@ -9323,10 +9323,10 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 /* 모바일: 뉴스 모드(웹 전용)가 켜진 채로 들어와도 액션 보드가 빈 채로
    남지 않도록 항상 액션 그리드를 표시한다. (뉴스 영역/전환 UI는 모바일 비노출) */
 @media (max-width: 900px) {
-  .daily-action-board.is-news .daily-action-grid { display: grid !important; }
+  .daily-action-board.is-news .daily-action-grid { display: grid; }
   .daily-action-board.is-news .daily-action-head p { display: block; }
   .daily-action-board.is-news .daily-action-count { display: inline-flex; }
-  .daily-action-board.is-news .daily-action-news { display: none !important; }
+  .daily-action-board.is-news .daily-action-news { display: none; }
 }
 
 /* SNS 채널: 헤더 중앙 배치 */
@@ -9540,8 +9540,8 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 .squeeze-card h3 { color: var(--tint-neg-fg); }
 
 /* AI 기술적 요약 브리핑 스타일 */
-.briefing-card {
-  border-left: 4px solid var(--primary) !important;
+.card.briefing-card {
+  border-left: 4px solid var(--primary);
 }
 .cprob-briefing {
   font-size: var(--fs-sub);
@@ -9600,7 +9600,7 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 /* 모바일: '보기' 버튼 그룹(‹ − + › Reset)을 차트 바로 아래 큰 터치 바로 배치.
    (JS가 640px 이하에서 차트 SVG 다음으로 이동시키며 .chart-view-mobile 부여) */
 .chart-view-mobile {
-  display: flex !important;
+  display: flex;
   align-items: center;
   gap: 8px;
   width: 100%;
@@ -9627,8 +9627,8 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 }
 
 /* ===== 상승확률 스캐너 ===== */
-.scan-deep-toggle {
-  flex-direction: row !important;
+label.scan-deep-toggle {
+  flex-direction: row;
   align-items: center;
   gap: 6px;
 }
@@ -10097,7 +10097,7 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 
 /* AI Chat Mode styles */
 .ai-mode-btn {
-  background: color-mix(in srgb;
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--accent);
   padding: 8px 16px;
@@ -10113,7 +10113,7 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 }
 
 [data-theme="light"] .ai-mode-btn {
-  background: color-mix(in srgb;
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
   border: 1px solid color-mix(in srgb, var(--accent) 20%, transparent);
   color: var(--accent);
 }
@@ -10217,25 +10217,25 @@ body.ai-mode-active .ai-mode-btn {
 }
 
 body.ai-mode-active main {
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 
 body.ai-mode-active #tab-ai-chat {
-  display: block !important;
+  display: block;
   position: fixed;
   inset: 0;
   width: 100vw;
   height: 100dvh;
   min-height: 0;
-  padding: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0!important;
-  box-shadow: none !important;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
   animation: none;
   overflow: hidden;
   isolation: isolate;
@@ -10317,72 +10317,6 @@ body.ai-mode-active.ai-stock-analysis-view .ai-cosmos {
   inset: 0;
   opacity: 1;
   pointer-events: auto;
-}
-
-body.ai-welcome-view .ai-chat-layout,
-body.ai-stock-analysis-view .ai-chat-layout,
-body.ai-mode-active .ai-chat-layout {
-  display: contents !important;
-  max-width: none !important;
-  width: auto !important;
-  height: auto !important;
-  gap: 0 !important;
-  overflow: visible;
-  pointer-events: none;
-}
-
-body.ai-welcome-view .ai-chat-sidebar,
-body.ai-stock-analysis-view .ai-chat-sidebar,
-body.ai-mode-active .ai-chat-sidebar {
-  display: none !important;
-}
-
-body.ai-welcome-view .ai-chat-container,
-body.ai-welcome-view .ai-chat-container.is-welcome-view,
-body.ai-stock-analysis-view .ai-chat-container,
-body.ai-mode-active .ai-chat-container {
-  display: contents !important;
-  max-width: none !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: 0 !important;
-  margin: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0!important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  overflow: visible;
-  pointer-events: none;
-}
-
-body.ai-welcome-view .ai-chat-log,
-body.ai-welcome-view .ai-chat-welcome,
-body.ai-welcome-view .ai-chat-header,
-body.ai-stock-analysis-view .ai-chat-log,
-body.ai-stock-analysis-view .ai-chat-welcome,
-body.ai-stock-analysis-view .ai-chat-header,
-body.ai-mode-active .ai-chat-log,
-body.ai-mode-active .ai-chat-welcome,
-body.ai-mode-active .ai-chat-header {
-  display: none !important;
-}
-
-body.ai-welcome-view .ai-chat-input-wrapper,
-body.ai-stock-analysis-view .ai-chat-input-wrapper,
-body.ai-mode-active .ai-chat-input-wrapper {
-  position: fixed;
-  left: 50%;
-  bottom: max(24px, env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
-  width: min(700px, calc(100vw - 36px));
-  z-index: 25;
-  pointer-events: auto;
-  padding: 0 0 4px !important;
-  margin: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 /* ===== JARVIS 종목 대시보드 오버레이 ===== */
@@ -10676,7 +10610,7 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
 .ai-dash-chips button.is-active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* 대시보드는 전용 뉴스 패널(우상단)이 있어 재사용 컴포넌트의 중복 뉴스는 숨긴다 */
-.ai-dash .ai-news-dup { display: none !important; }
+#aiStockDashboard .ai-news-dup { display: none; }
 
 .ai-dash-news-list { display: flex; flex-direction: column; gap: 8px; }
 .ai-dash-news-item {
@@ -10711,36 +10645,6 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
   body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { bottom: 0; right: 0; }
   .ai-dash-collapse,
   body.ai-dash-collapsed .ai-dash-collapse { top: auto; bottom: 92px; right: 14px; }
-}
-
-body.ai-welcome-view .ai-chat-input-wrapper::before,
-body.ai-stock-analysis-view .ai-chat-input-wrapper::before,
-body.ai-mode-active .ai-chat-input-wrapper::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -20px;
-  transform: translateX(-50%);
-  width: min(820px, 110vw);
-  height: 160px;
-  background: radial-gradient(
-    ellipse 68% 82% at 50% 100%,
-    rgba(3, 5, 10, 0.42) 0%,
-    rgba(3, 5, 10, 0.14) 48%,
-    transparent 74%
-  );
-  pointer-events: none;
-  z-index: -1;
-}
-
-body.ai-welcome-view .ai-chat-form,
-body.ai-stock-analysis-view .ai-chat-form,
-body.ai-mode-active .ai-chat-form {
-  width: 100%;
-}
-
-body.ai-mode-active .ai-input-hint:empty {
-  display: none;
 }
 
 body.ai-stock-analysis-view .ai-cosmos {
@@ -11768,12 +11672,12 @@ body.ai-stock-analysis-view .ai-cosmos {
 
 .ai-chat-form input {
   flex: 1;
-  min-width: 0 !important;
-  height: auto !important;
+  min-width: 0;
+  height: auto;
   margin: 0;
-  background: transparent !important;
-  border: none !important;
-  border-radius: 0!important;
+  background: transparent;
+  border: none;
+  border-radius: 0;
   appearance: none;
   -webkit-appearance: none;
   padding: 12px 10px 12px 0;
@@ -11793,23 +11697,23 @@ body.ai-stock-analysis-view .ai-cosmos {
 
 .ai-chat-form .ai-voice-btn,
 .ai-chat-form .ai-send-btn {
-  height: 34px !important;
+  height: 34px;
   min-height: 0;
   min-width: 0;
-  padding: 0 !important;
+  padding: 0;
   font-weight: 400;
   line-height: 1;
   cursor: pointer;
-  border: none !important;
-  background: transparent !important;
+  border: none;
+  background: transparent;
 }
 
 .ai-chat-form .ai-voice-btn {
   width: 34px;
   flex: 0 0 34px;
-  border: none !important;
-  border-radius: 50%!important;
-  background: transparent !important;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
   color: rgba(148, 163, 184, 0.45);
 }
 
@@ -11821,9 +11725,9 @@ body.ai-stock-analysis-view .ai-cosmos {
 .ai-send-btn {
   width: 34px;
   flex: 0 0 34px;
-  border: none !important;
-  border-radius: 0!important;
-  background: transparent !important;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   color: rgba(203, 213, 225, 0.58);
   display: inline-flex;
   align-items: center;
@@ -11875,18 +11779,6 @@ body.ai-stock-analysis-view .ai-cosmos {
   gap: 20px;
   align-self: center;
   overflow: hidden;
-}
-
-body.ai-mode-active .ai-chat-layout {
-  display: contents !important;
-  max-width: none !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: 0 !important;
-  align-self: stretch !important;
-  gap: 0 !important;
-  overflow: visible !important;
-  pointer-events: none;
 }
 
 .ai-chat-sidebar {
@@ -12187,17 +12079,17 @@ body.ai-mode-active .ai-chat-layout {
 
 .chat-msg-widget.is-fullscreen-modal {
   position: fixed;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) scale(1) !important;
-  width: min(1080px, 92vw) !important;
-  max-height: 85vh !important;
-  z-index: 10000 !important;
-  margin: 0 !important;
-  border: 1px solid rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5) !important;
-  animation: modalZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both !important;
-  overflow-y: auto !important;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(1);
+  width: min(1080px, 92vw);
+  max-height: 85vh;
+  z-index: 10000;
+  margin: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
+  animation: modalZoomIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow-y: auto;
 }
 
 @keyframes modalZoomIn {
@@ -12332,19 +12224,20 @@ body.ai-mode-active .ai-chat-layout {
   opacity: 0.6;
 }
 
-.copy-msg-btn:hover {
-  opacity: 1 !important;
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: var(--text) !important;
+/* .msg-bubble prefix: same specificity as `.msg-bubble:hover .copy-msg-btn` above, later in source → wins */
+.msg-bubble .copy-msg-btn:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
 }
 
-[data-theme="light"] .copy-msg-btn:hover {
-  background: rgba(15, 23, 42, 0.05) !important;
+[data-theme="light"] .msg-bubble .copy-msg-btn:hover {
+  background: rgba(15, 23, 42, 0.05);
 }
 
-.copy-msg-btn.copied {
-  color: var(--pos) !important;
-  opacity: 1 !important;
+.msg-bubble .copy-msg-btn.copied {
+  color: var(--pos);
+  opacity: 1;
 }
 
 /* 5. 세션 이름 인라인 수정 */
@@ -12372,30 +12265,31 @@ body.ai-mode-active .ai-chat-layout {
   display: inline-block;
 }
 
-.ai-dropdown-trigger-btn {
-  font-size: var(--fs-cap) !important;
-  font-weight: 600 !important;
-  padding: 4px 8px !important;
-  border-radius: var(--r-md)!important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  background: rgba(255, 255, 255, 0.03) !important;
-  color: var(--muted) !important;
+/* .ai-dropdown-wrapper prefix (0,2,0) beats `.ai-widget-chart-tools button` (0,1,1) */
+.ai-dropdown-wrapper .ai-dropdown-trigger-btn {
+  font-size: var(--fs-cap);
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: var(--r-md);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--muted);
   cursor: pointer;
   transition: all 0.25s;
 }
 
-.ai-dropdown-trigger-btn:hover {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: var(--text) !important;
+.ai-dropdown-wrapper .ai-dropdown-trigger-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
 }
 
-[data-theme="light"] .ai-dropdown-trigger-btn {
-  border: 1px solid rgba(15, 23, 42, 0.08) !important;
-  background: rgba(15, 23, 42, 0.03) !important;
+[data-theme="light"] .ai-dropdown-wrapper .ai-dropdown-trigger-btn {
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: rgba(15, 23, 42, 0.03);
 }
 
-[data-theme="light"] .ai-dropdown-trigger-btn:hover {
-  background: rgba(15, 23, 42, 0.06) !important;
+[data-theme="light"] .ai-dropdown-wrapper .ai-dropdown-trigger-btn:hover {
+  background: rgba(15, 23, 42, 0.06);
 }
 
 .ai-indicators-dropdown {
@@ -12483,8 +12377,8 @@ body.ai-mode-active .ai-chat-layout {
   transform: translateX(0);
 }
 
-.session-menu-trigger:hover {
-  opacity: 1 !important;
+.ai-history-item .session-menu-trigger:hover {
+  opacity: 1;
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
 }
@@ -12575,31 +12469,203 @@ body.ai-mode-active .ai-chat-layout {
   to { transform: rotate(360deg); }
 }
 
-/* AI immersive — final overrides (wins over premium sidebar block below) */
-body.ai-mode-active .ai-chat-container {
-  display: contents !important;
-  background: transparent !important;
-  border: none !important;
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-  min-height: 0 !important;
+/* 감사의견 경고. 한국에서 '의견거절'·'한정'은 상장폐지 사유라 가격보다 먼저 보여야 한다.
+   강조사항(계속기업 불확실성 등)은 11% 종목에 있어 경고보다 한 단계 낮게 처리한다. */
+.audit-notice {
+  display: flex; flex-direction: column; gap: 2px;
+  margin: 8px 0 0; padding: 8px 10px;
+  border-radius: var(--r-md); font-size: var(--fs-sub); line-height: 1.5;
+}
+.audit-notice b { font-size: var(--fs-sub); }
+.audit-notice span { opacity: .85; }
+.audit-adverse {
+  color: var(--tint-danger-fg);
+  background: var(--tint-danger);
+  border: 1px solid var(--neg);
+}
+.audit-emphasis {
+  color: var(--tint-warn-fg); background: var(--tint-warn);
 }
 
+/* 스트리밍 중 커서 + 부드러운 blur-in */
+.chat-msg.is-streaming .msg-bubble { animation: aiStreamIn 0.5s ease both; }
+.chat-msg.is-streaming .msg-bubble::after {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 14px;
+  margin-left: 3px;
+  vertical-align: -2px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.7;
+  animation: aiStreamCursor 0.9s steps(2, start) infinite;
+}
+.ai-verdict-llm-body.is-streaming::after {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 12px;
+  margin-left: 3px;
+  border-radius: 2px;
+  background: currentColor;
+  opacity: 0.7;
+  animation: aiStreamCursor 0.9s steps(2, start) infinite;
+}
+@keyframes aiStreamCursor { 50% { opacity: 0; } }
+@keyframes aiStreamIn {
+  from { opacity: 0.4; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0); }
+}
+.ai-abort-note { font-size: var(--fs-cap); font-weight: 500; opacity: 0.75; margin-left: 4px; }
+
+/* 전송 → 중단 버튼 모핑 */
+/* (0,3,0): beats `.ai-chat-form .ai-send-btn` by order and `.ai-send-btn:not(:disabled):hover` by order */
+.ai-chat-form .ai-send-btn.is-stop {
+  background: color-mix(in srgb, var(--neg) 16%, transparent);
+  border-color: color-mix(in srgb, var(--neg) 45%, transparent);
+  color: #fb7185;
+}
+.ai-send-btn.is-stop .ai-send-glyph {
+  font-size: var(--fs-cap);
+  line-height: 1;
+}
+
+/* =============================================================================
+   AI immersive state layer — the ONE place that reshapes the chat panel for
+   body.ai-mode-active / body.ai-welcome-view / body.ai-stock-analysis-view.
+   Source order inside the layer: immersive (this block) → mobile @media →
+   stock-dashboard @media → conversation view. Everything here wins over the
+   base .ai-chat-* rules above by specificity (body.<state> prefix) or by order;
+   !important is used only where an inline style written by JS must lose.
+   ============================================================================= */
+
+/* 1. Panel = full-bleed fixed stage (see body.ai-mode-active #tab-ai-chat above);
+      layout + container boxes dissolve so the chat bar can float on the cosmos */
+body.ai-mode-active #tab-ai-chat.panel,
+body.ai-welcome-view #tab-ai-chat.panel,
+body.ai-stock-analysis-view #tab-ai-chat.panel {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+body.ai-mode-active .ai-chat-layout,
+body.ai-welcome-view .ai-chat-layout,
+body.ai-stock-analysis-view .ai-chat-layout,
+body.ai-mode-active .ai-chat-container,
+body.ai-welcome-view .ai-chat-container,
+body.ai-stock-analysis-view .ai-chat-container {
+  display: contents;
+  width: auto;
+  max-width: none;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+body.ai-mode-active .ai-chat-layout,
+body.ai-welcome-view .ai-chat-layout,
+body.ai-stock-analysis-view .ai-chat-layout {
+  gap: 0;
+}
+
+body.ai-mode-active .ai-chat-layout {
+  align-self: stretch;
+}
+
+body.ai-welcome-view .ai-chat-container.is-welcome-view {
+  height: auto;
+}
+
+/* 2. Chrome hidden in immersive mode: log, header, welcome, sidebar.
+      ai-mode-welcome.js mirrors this with inline display:none / "" (never a
+      conflicting value), so specificity alone is enough here. */
 body.ai-mode-active .ai-chat-log,
-body.ai-mode-active .ai-chat-welcome,
+body.ai-welcome-view .ai-chat-log,
+body.ai-stock-analysis-view .ai-chat-log,
 body.ai-mode-active .ai-chat-header,
-body.ai-mode-active .ai-chat-sidebar {
+body.ai-welcome-view .ai-chat-header,
+body.ai-stock-analysis-view .ai-chat-header,
+body.ai-mode-active .ai-chat-welcome,
+body.ai-welcome-view .ai-chat-welcome,
+body.ai-stock-analysis-view .ai-chat-welcome,
+body.ai-mode-active .ai-chat-sidebar,
+body.ai-welcome-view .ai-chat-sidebar,
+body.ai-stock-analysis-view .ai-chat-sidebar {
+  display: none;
+  height: 0;
+  min-height: 0;
+  max-height: 0;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+  flex: none;
+}
+
+/* ai-mode.js startNewAiChatSession() writes welcome.style.display = "block" inline;
+   the welcome card must stay hidden in immersive mode regardless. */
+body.ai-mode-active .ai-chat-welcome,
+body.ai-welcome-view .ai-chat-welcome,
+body.ai-stock-analysis-view .ai-chat-welcome {
   display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  overflow: hidden !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
+}
+
+/* 3. Floating chat bar (input wrapper → glass form → autocomplete → hint) */
+body.ai-mode-active .ai-chat-input-wrapper,
+body.ai-welcome-view .ai-chat-input-wrapper,
+body.ai-stock-analysis-view .ai-chat-input-wrapper {
+  position: fixed;
+  left: 50%;
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(700px, calc(100vw - 36px));
+  z-index: 25;
+  pointer-events: auto;
+  margin: 0;
+  padding: 0 0 4px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.ai-mode-active .ai-chat-input-wrapper::before,
+body.ai-welcome-view .ai-chat-input-wrapper::before,
+body.ai-stock-analysis-view .ai-chat-input-wrapper::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -20px;
+  transform: translateX(-50%);
+  width: min(820px, 110vw);
+  height: 160px;
+  background: radial-gradient(
+    ellipse 68% 82% at 50% 100%,
+    rgba(3, 5, 10, 0.42) 0%,
+    rgba(3, 5, 10, 0.14) 48%,
+    transparent 74%
+  );
+  pointer-events: none;
+  z-index: -1;
 }
 
 body.ai-mode-active .ai-chat-form,
 body.ai-welcome-view .ai-chat-form,
 body.ai-stock-analysis-view .ai-chat-form {
+  width: 100%;
   background: rgba(8, 10, 18, 0.34);
   backdrop-filter: blur(36px) saturate(1.12);
   -webkit-backdrop-filter: blur(36px) saturate(1.12);
@@ -12624,93 +12690,11 @@ body.ai-stock-analysis-view .ai-autocomplete {
   box-shadow: 0 24px 52px rgba(0, 0, 0, 0.42);
 }
 
-/* AI immersive — absolute final overrides (chat bar only, no dock strip) */
-body.ai-mode-active #tab-ai-chat.panel,
-body.ai-welcome-view #tab-ai-chat.panel,
-body.ai-stock-analysis-view #tab-ai-chat.panel {
-  background: transparent !important;
-  border: none !important;
-  padding: 0 !important;
-}
-
-body.ai-mode-active .ai-chat-layout,
-body.ai-welcome-view .ai-chat-layout,
-body.ai-stock-analysis-view .ai-chat-layout,
-body.ai-mode-active .ai-chat-container,
-body.ai-welcome-view .ai-chat-container,
-body.ai-stock-analysis-view .ai-chat-container {
-  display: contents !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  background: transparent !important;
-  border: none !important;
-  overflow: hidden !important;
-}
-
-body.ai-mode-active #aiChatLog,
-body.ai-welcome-view #aiChatLog,
-body.ai-stock-analysis-view #aiChatLog,
-body.ai-mode-active .ai-chat-header,
-body.ai-welcome-view .ai-chat-header,
-body.ai-stock-analysis-view .ai-chat-header,
-body.ai-mode-active .ai-chat-welcome,
-body.ai-welcome-view .ai-chat-welcome,
-body.ai-stock-analysis-view .ai-chat-welcome,
-body.ai-mode-active .ai-chat-sidebar,
-body.ai-welcome-view .ai-chat-sidebar,
-body.ai-stock-analysis-view .ai-chat-sidebar {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  overflow: hidden !important;
-  visibility: hidden !important;
-  pointer-events: none !important;
-  flex: none !important;
-}
-
-body.ai-mode-active .ai-chat-input-wrapper,
-body.ai-welcome-view .ai-chat-input-wrapper,
-body.ai-stock-analysis-view .ai-chat-input-wrapper {
-  border: none !important;
-  border-top: none !important;
-  background: transparent !important;
-  padding: 0 0 4px !important;
-  margin: 0 !important;
-}
-
-body.ai-mode-active .ai-chat-input-wrapper::before,
-body.ai-welcome-view .ai-chat-input-wrapper::before,
-body.ai-stock-analysis-view .ai-chat-input-wrapper::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -20px;
-  transform: translateX(-50%);
-  width: min(820px, 110vw);
-  height: 160px;
-  background: radial-gradient(
-    ellipse 68% 82% at 50% 100%,
-    rgba(3, 5, 10, 0.42) 0%,
-    rgba(3, 5, 10, 0.14) 48%,
-    transparent 74%
-  );
-  pointer-events: none;
-  z-index: -1;
-}
-
 body.ai-mode-active .ai-input-hint:empty {
-  display: none !important;
-  height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
+  display: none;
+  height: 0;
+  margin: 0;
+  padding: 0;
 }
 
 /* AI mode — mobile optimization */
@@ -12818,8 +12802,8 @@ body.ai-mode-active .ai-input-hint:empty {
     max-width: none;
     top: auto;
     bottom: max(10px, env(safe-area-inset-bottom, 0px));
-    padding-left: max(0px, env(safe-area-inset-left, 0px)) !important;
-    padding-right: max(0px, env(safe-area-inset-right, 0px)) !important;
+    padding-left: max(0px, env(safe-area-inset-left, 0px));
+    padding-right: max(0px, env(safe-area-inset-right, 0px));
   }
 
   body.ai-keyboard-open.ai-mode-active .ai-chat-input-wrapper {
@@ -12841,9 +12825,9 @@ body.ai-mode-active .ai-input-hint:empty {
 
   .ai-chat-form .ai-voice-btn,
   .ai-chat-form .ai-send-btn {
-    width: 44px !important;
-    height: 44px !important;
-    flex: 0 0 44px !important;
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
   }
 
   .ai-send-glyph {
@@ -12890,24 +12874,6 @@ body.ai-mode-active .ai-input-hint:empty {
   body.ai-stock-analysis-view .ai-chat-form {
     padding-left: 12px;
   }
-}
-
-/* 감사의견 경고. 한국에서 '의견거절'·'한정'은 상장폐지 사유라 가격보다 먼저 보여야 한다.
-   강조사항(계속기업 불확실성 등)은 11% 종목에 있어 경고보다 한 단계 낮게 처리한다. */
-.audit-notice {
-  display: flex; flex-direction: column; gap: 2px;
-  margin: 8px 0 0; padding: 8px 10px;
-  border-radius: var(--r-md); font-size: var(--fs-sub); line-height: 1.5;
-}
-.audit-notice b { font-size: var(--fs-sub); }
-.audit-notice span { opacity: .85; }
-.audit-adverse {
-  color: var(--tint-danger-fg);
-  background: var(--tint-danger);
-  border: 1px solid var(--neg);
-}
-.audit-emphasis {
-  color: var(--tint-warn-fg); background: var(--tint-warn);
 }
 
 /* =============================================================================
@@ -13062,7 +13028,7 @@ body.ai-mode-active .ai-input-hint:empty {
 
   /* 기간 탭: 중앙 차트 영역 상단 */
   /* 입력 래퍼가 넓게 깔려 클릭을 가로채지 않도록 래퍼는 통과, 내용만 잡는다 */
-  body.ai-mode-active .ai-chat-input-wrapper { pointer-events: none !important; }
+  body.ai-mode-active .ai-chat-input-wrapper { pointer-events: none; }
   body.ai-mode-active .ai-chat-input-wrapper .ai-chat-form,
   body.ai-mode-active .ai-chat-input-wrapper .ai-autocomplete,
   body.ai-mode-active .ai-input-hint { pointer-events: auto; }
@@ -13099,7 +13065,7 @@ body.ai-mode-active .ai-input-hint:empty {
 
 /* ── AI 모드 대화 뷰: 임머시브에서 감춰둔 대화 로그를 되살린다 ── */
 body.ai-mode-active.ai-conversation-view #aiChatLog {
-  display: flex !important;
+  display: flex;
   flex-direction: column;
   gap: 14px;
   position: fixed;
@@ -13107,68 +13073,26 @@ body.ai-mode-active.ai-conversation-view #aiChatLog {
   left: 50%;
   transform: translateX(-50%);
   width: min(760px, calc(100vw - 28px));
-  height: auto !important;
-  min-height: 0 !important;
-  max-height: none !important;
+  height: auto;
+  min-height: 0;
+  max-height: none;
   bottom: 118px;
-  margin: 0 !important;
-  padding: 8px 6px 18px !important;
-  overflow-y: auto !important;
-  visibility: visible !important;
-  pointer-events: auto !important;
+  margin: 0;
+  padding: 8px 6px 18px;
+  overflow-y: auto;
+  visibility: visible;
+  pointer-events: auto;
   z-index: 18; /* 입력창(25) 아래 */
-  background: transparent !important;
-  border: none !important;
+  background: transparent;
+  border: none;
 }
+/* ai-mode.js startNewAiChatSession() writes welcome.style.display = "block" inline; !important beats it */
 body.ai-mode-active.ai-conversation-view #aiChatLog .ai-chat-welcome { display: none !important; }
 body.ai-mode-active.ai-conversation-view #aiChatLog .chat-msg.bot .msg-bubble {
   background: rgba(13, 20, 38, 0.78);
   backdrop-filter: blur(14px) saturate(1.15);
   -webkit-backdrop-filter: blur(14px) saturate(1.15);
   border: 1px solid rgba(120, 160, 255, 0.14);
-}
-
-/* 스트리밍 중 커서 + 부드러운 blur-in */
-.chat-msg.is-streaming .msg-bubble { animation: aiStreamIn 0.5s ease both; }
-.chat-msg.is-streaming .msg-bubble::after {
-  content: "";
-  display: inline-block;
-  width: 7px;
-  height: 14px;
-  margin-left: 3px;
-  vertical-align: -2px;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: 0.7;
-  animation: aiStreamCursor 0.9s steps(2, start) infinite;
-}
-.ai-verdict-llm-body.is-streaming::after {
-  content: "";
-  display: inline-block;
-  width: 6px;
-  height: 12px;
-  margin-left: 3px;
-  border-radius: 2px;
-  background: currentColor;
-  opacity: 0.7;
-  animation: aiStreamCursor 0.9s steps(2, start) infinite;
-}
-@keyframes aiStreamCursor { 50% { opacity: 0; } }
-@keyframes aiStreamIn {
-  from { opacity: 0.4; filter: blur(4px); }
-  to { opacity: 1; filter: blur(0); }
-}
-.ai-abort-note { font-size: var(--fs-cap); font-weight: 500; opacity: 0.75; margin-left: 4px; }
-
-/* 전송 → 중단 버튼 모핑 */
-.ai-send-btn.is-stop {
-  background: color-mix(in srgb, var(--neg) 16%, transparent) !important;
-  border-color: color-mix(in srgb, var(--neg) 45%, transparent) !important;
-  color: #fb7185 !important;
-}
-.ai-send-btn.is-stop .ai-send-glyph {
-  font-size: var(--fs-cap);
-  line-height: 1;
 }
 
 /* ── Ctrl+K 커맨드 팔레트 ── */

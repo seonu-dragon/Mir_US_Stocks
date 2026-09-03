@@ -6,6 +6,19 @@
   const STORAGE_KEY = "mir_market_mode_v2";
   const DEFAULT_MARKET_MODE = "us";
 
+  // storage.js 가 index.html 에 아직 안 붙었을 때의 최소 폴백(동일 API). 이 파일이
+  // 모듈 중 가장 먼저 로드되므로 뒤 파일들도 여기서 보장된 window.safeStorage 를 쓴다.
+  if (!window.safeStorage) {
+    window.safeStorage = {
+      get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
+      set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
+      remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
+      getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
+      setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
+    };
+  }
+  const storage = window.safeStorage;
+
   const US = {
     id: "us",
     label: "미국",
@@ -59,6 +72,19 @@
       { ticker: "XLU", name: "유틸리티 (Utilities)", desc: "Utilities Select Sector SPDR ETF", sectorName: "UTILITIES" },
     ],
     etfBenchmarks: ["SPY", "QQQ", "TQQQ", "DIA", "IWM"],
+    // 포트폴리오 벤치마크 비교·백테스트 셀렉트 옵션([티커, 라벨]). 시장별로 다르다 —
+    // KR 모드에서 SPY 를 기본값으로 두면 korea/details/SPY.json 404 가 난다.
+    backtestBenchmarks: [
+      ["SPY", "S&P 500"],
+      ["QQQ", "Nasdaq 100"],
+      ["DIA", "다우존스"],
+      ["IWM", "러셀 2000"],
+      ["VTI", "전체 시장"],
+      ["VOO", "S&P 500 (VOO)"],
+      ["XLK", "기술 섹터"],
+      ["SOXX", "반도체"],
+    ],
+    backtestDefaultInvestment: 10000,
     indexAnalysisMap: {
       "^DJI": "DIA",
       "^IXIC": "QQQ",
@@ -76,6 +102,8 @@
       ipo: true,
       shortInterest: true,
       whiteHouse: true,
+      finraShortVolume: true,
+      earningsCalendar: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -93,10 +121,26 @@
     formatPrice(value) {
       const n = Number(value);
       if (!Number.isFinite(n)) return "-";
+      // 주가는 $1,000 미만이면 센트까지 고정(예: $12.50 이 "$12.5" 로 찍히지 않게).
+      const digits = Math.abs(n) < 1000 ? 2 : 0;
+      return `$${n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: 2 })}`;
+    },
+    // 금액(평가액·손익 등): 소수는 있으면 최대 2자리, 없으면 생략.
+    formatMoney(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return "-";
       return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
     },
-    formatMoney(value) {
-      return this.formatPrice(value);
+    // 큰 금액(백테스트 투자금·평가액): 정수 달러.
+    formatMoneyWhole(value) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return "-";
+      return `$${Math.round(n).toLocaleString("en-US")}`;
+    },
+    // 가격 입력칸(type=number)에 넣을 값. KRW 는 정수, USD 는 센트까지.
+    priceInputValue(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n.toFixed(2) : "";
     },
     formatMarketCap(value) {
       const num = Number(value);
@@ -172,6 +216,13 @@
       { ticker: "244580", name: "KODEX 바이오", desc: "바이오 섹터 ETF", sectorName: "헬스케어" },
     ],
     etfBenchmarks: ["069500", "102110", "091160"],
+    backtestBenchmarks: [
+      ["069500", "KODEX 200"],
+      ["102110", "TIGER 200"],
+      ["229200", "KODEX 코스닥150"],
+      ["091160", "KODEX 반도체"],
+    ],
+    backtestDefaultInvestment: 10000000,
     indexAnalysisMap: {
       "^KS11": "069500",
       "^KQ11": "229200",
@@ -203,6 +254,8 @@
       // 돌파/되돌림 통계(build_breakout_retest.py)는 US 만 산출한다.
       // 없는 파일을 요청해 콘솔에 404 를 남기지 않도록 꺼 둔다.
       breakoutStats: false,
+      // FINRA 일일 공매도 거래량은 US 전용 데이터(finraShort, usOnly). AI 모드 패널 게이트용.
+      finraShortVolume: false,
       krDart: true,
       krOwnership: true,
     },
@@ -213,7 +266,9 @@
       if (bucket === "all") return stockOnly;
       if (bucket === "all_with_etf") return true;
       if (bucket === "idx_kospi_stock") return stockOnly && item.market === "kospi";
-      const capT = Number(item.marketCapT ?? item.marketCapB ?? 0);
+      // marketCapT 만 쓴다. marketCapB 는 US 스냅샷에선 '십억 달러', KR 빌더에선
+      // marketCapT 의 별칭(조원)이라 폴백으로 섞으면 단위가 뒤바뀐다.
+      const capT = Number(item.marketCapT ?? 0);
       if (bucket === "gte10t") return stockOnly && capT >= 10;
       if (bucket === "gte1t") return stockOnly && capT >= 1 && capT < 10;
       if (bucket === "gte100b") return stockOnly && capT >= 0.1 && capT < 1;
@@ -230,6 +285,13 @@
     },
     formatMoney(value) {
       return this.formatPrice(value);
+    },
+    formatMoneyWhole(value) {
+      return this.formatPrice(value);
+    },
+    priceInputValue(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? String(Math.round(n)) : "";
     },
     formatMarketCap(value) {
       const num = Number(value);
@@ -261,7 +323,7 @@
       const params = new URLSearchParams(window.location.search);
       const q = params.get("market");
       if (q === "kr" || q === "us") return q;
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const saved = storage.get(STORAGE_KEY);
       if (saved === "kr" || saved === "us") return saved;
     } catch (_) {}
     return DEFAULT_MARKET_MODE;
@@ -270,7 +332,7 @@
   function setMode(mode, options) {
     const next = mode === "kr" ? "kr" : "us";
     window.MIR_MARKET_MODE = next;
-    try { localStorage.setItem(STORAGE_KEY, next); } catch (_) {}
+    storage.set(STORAGE_KEY, next);
     document.documentElement.setAttribute("data-market", next);
     const cfg = getConfig(next);
     document.title = cfg.pageTitle;
@@ -308,6 +370,6 @@
   window.MIR_MARKET_MODE = getInitialMode();
   document.documentElement.setAttribute("data-market", window.MIR_MARKET_MODE);
   if (window.MIR_MARKET_MODE === DEFAULT_MARKET_MODE) {
-    try { localStorage.setItem(STORAGE_KEY, DEFAULT_MARKET_MODE); } catch (_) {}
+    storage.set(STORAGE_KEY, DEFAULT_MARKET_MODE);
   }
 })();

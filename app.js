@@ -1601,8 +1601,9 @@ function setupChatbot() {
           searchHints: buildChatSearchHints(text),
         }),
       });
+      if (!res.ok) throw new Error(`chat ${res.status}`);
       const payload = await res.json();
-      const reply = (payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.";
+      const reply = stripEmoji((payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.");
       typing.classList.remove("typing");
       typing.textContent = reply;
       chatHistory.push({ role: "assistant", content: reply });
@@ -2117,6 +2118,7 @@ function myStockEventRows() {
     ...portfolio.map((p) => p.ticker),
   ].map((t) => normalizeTickerKey(t)).filter(Boolean))];
   if (!tickers.length) return [];
+  const tickerSet = new Set(tickers);
   const today = formatKstDateTime().slice(0, 10);
   const events = [];
   if (!isKrMarket()) {
@@ -2142,7 +2144,7 @@ function myStockEventRows() {
       const weekAgo = new Date(new Date(`${today}T00:00:00`).getTime() - 7 * 86400000).toISOString().slice(0, 10);
       const buyCount = {};
       trades.forEach((r) => {
-        if (r.kind === "buy" && (r.fileDate || "") >= weekAgo && tickers.includes(r.ticker)) {
+        if (r.kind === "buy" && (r.fileDate || "") >= weekAgo && tickerSet.has(r.ticker)) {
           buyCount[r.ticker] = (buyCount[r.ticker] || 0) + 1;
         }
       });
@@ -2155,7 +2157,7 @@ function myStockEventRows() {
     const cutoff = new Date(new Date(`${today}T00:00:00`).getTime() - 2 * 86400000).toISOString().slice(0, 10);
     const seen = {};
     disc.forEach((d) => {
-      if (!tickers.includes(d.ticker) || (d.fileDate || "") < cutoff) return;
+      if (!tickerSet.has(d.ticker) || (d.fileDate || "") < cutoff) return;
       const key = `${d.ticker}|${d.typeLabel || d.title}`;
       if (seen[key]) return;
       seen[key] = true;
@@ -2471,14 +2473,11 @@ function calendarDayLabel(isoKey, rows) {
 }
 
 function mergeCalendarEvents(macroEvents, whEvents) {
-  const merged = [...(macroEvents || []), ...(whEvents || [])];
-  merged.sort((a, b) => {
-    const ad = calendarIsoFromEvent(a);
-    const bd = calendarIsoFromEvent(b);
-    if (ad !== bd) return ad.localeCompare(bd);
-    return String(a.time || "").localeCompare(String(b.time || ""));
-  });
-  return merged;
+  // 비교자 안에서 매번 날짜를 파싱하지 않도록 키를 한 번만 만든다(n log n 회 → n 회).
+  const keyed = [...(macroEvents || []), ...(whEvents || [])]
+    .map((ev) => ({ ev, iso: calendarIsoFromEvent(ev), time: String(ev.time || "") }));
+  keyed.sort((a, b) => (a.iso !== b.iso ? a.iso.localeCompare(b.iso) : a.time.localeCompare(b.time)));
+  return keyed.map((k) => k.ev);
 }
 
 function calendarEventPassesFilters(event) {
@@ -2738,6 +2737,7 @@ function showAppToast(message, ms = 2000) {
 // 모바일에서는 "이 페이지 내용:" 같은 문구가 앞에 붙는다. <dialog> 로 바꾸면
 // 포커스 트랩·Esc 취소·backdrop·inert 처리를 브라우저가 대신 해준다.
 // 취소는 항상 false(confirm) / null(prompt) 로 떨어진다 — 네이티브와 같은 계약.
+let _appDialogSeq = 0; // 다이얼로그가 겹칠 수 있어 제목 id 를 고유하게
 function appDialog({ title, message, defaultValue = null, okLabel = "확인", cancelLabel = "취소", danger = false }) {
   const isPrompt = defaultValue !== null;
   return new Promise((resolve) => {
@@ -2751,7 +2751,7 @@ function appDialog({ title, message, defaultValue = null, okLabel = "확인", ca
       const h = document.createElement("h2");
       h.className = "app-dialog-title";
       h.textContent = title;
-      dlg.setAttribute("aria-labelledby", (h.id = "appDialogTitle"));
+      dlg.setAttribute("aria-labelledby", (h.id = `appDialogTitle-${++_appDialogSeq}`));
       form.appendChild(h);
     }
 
@@ -4097,6 +4097,10 @@ function setupTabReorder(nav) {
     dragEl = tab; pointerId = e.pointerId; startX = e.clientX;
     dragging = false; moved = false;
     clearLongPress();
+    // 누르고 있는 동안만 window 에 붙인다 — 상시 pointermove 리스너는 스크롤마다 불렸다.
+    window.addEventListener("pointermove", onMove, { passive: false });
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
     if (e.pointerType === "touch") {
       longPressTimer = setTimeout(() => { if (dragEl && !moved) beginDrag(); }, LONG_PRESS_MS);
     }
@@ -4144,14 +4148,14 @@ function setupTabReorder(nav) {
     clearLongPress();
     if (dragging) finishDrag();
     dragEl = null; pointerId = null; dragging = false; moved = false;
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", onUp);
   }
 
   // 모바일 롱프레스 시 뜨는 컨텍스트 메뉴/선택 방지
   nav.addEventListener("contextmenu", (e) => { if (dragging) e.preventDefault(); });
   nav.addEventListener("pointerdown", onDown);
-  window.addEventListener("pointermove", onMove, { passive: false });
-  window.addEventListener("pointerup", onUp);
-  window.addEventListener("pointercancel", onUp);
 }
 
 function setupFilters() {
@@ -6328,6 +6332,24 @@ function escapeHtml(value) {
   })[char]);
 }
 
+// 외부 소스 텍스트(브리핑 파이프라인·소셜·LLM 답변)의 이모지/픽토그램 제거. 사이트는 장식
+// 이모지를 쓰지 않는다(기능 심볼 ★☆✓▲▼ 등은 유지). 국기(지역 지시자)·피부색 수정자·
+// 변이 선택자·ZWJ·키캡까지 걷어낸다.
+const EMOJI_KEEP = new Set(["★", "☆", "✓", "✔", "▲", "▼", "▶", "◀", "©", "®", "™", "↑", "↓", "→", "←", "↔", "•"]);
+const EMOJI_RE = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{1F3FF}]|[\u{E0020}-\u{E007F}]|[\u{FE0E}\u{FE0F}\u{200D}\u{20E3}]/gu;
+function stripEmoji(text) {
+  return String(text ?? "").replace(EMOJI_RE, (ch) => (EMOJI_KEEP.has(ch) ? ch : ""));
+}
+// 브리핑 HTML: 이모지를 떼고 "📊 [제목] - 날짜" 굵은 첫 줄을 제목/날짜로 바꾼다.
+function sanitizeBriefingHtml(html) {
+  let out = stripEmoji(html);
+  out = out.replace(/<b>\s*\[([^\]<]+)\]\s*-?\s*([^<]*?)\s*<\/b>/, (m, title, date) =>
+    `<strong class="briefing-title">${title.trim()}</strong>${date.trim() ? ` <span class="muted">${date.trim()}</span>` : ""}`);
+  // 이모지가 빠진 자리의 앞 공백 정리("<b> 제목" → "<b>제목")
+  out = out.replace(/(<(?:b|strong|h[1-6])(?:\s[^>]*)?>)\s+/g, "$1");
+  return out;
+}
+
 function debounce(fn, delay) {
   let id;
   return (...args) => {
@@ -7976,8 +7998,16 @@ function recordEstimateSnapshot(item) {
   if (!hasEstimate) return [];
   const rows = Array.isArray(store[item.ticker]) ? store[item.ticker] : [];
   const index = rows.findIndex((row) => row.date === snapshot.date);
-  if (index >= 0) rows[index] = snapshot;
-  else rows.push(snapshot);
+  if (index >= 0) {
+    // 같은 날 같은 값이면 쓰지 않는다 — 렌더마다 localStorage 직렬화를 하던 것.
+    const prev = rows[index];
+    const same = ["epsNextQ", "epsNextY", "revenueNextQ", "revenueNextY", "targetPrice"]
+      .every((k) => (prev[k] ?? null) === (snapshot[k] ?? null));
+    if (same) return rows;
+    rows[index] = snapshot;
+  } else {
+    rows.push(snapshot);
+  }
   rows.sort((a, b) => String(a.date).localeCompare(String(b.date)));
   store[item.ticker] = rows.slice(-45);
   try { localStorage.setItem(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
@@ -11290,7 +11320,7 @@ function renderBriefingSide(side) {
     </div>`;
   // Snapshot ai_briefing (US) → standalone file fallback (KR 스냅샷엔 ai_briefing이 없음).
   const inline = (data.ai_briefing || {})[key] || briefingFileCache[key];
-  if (inline) { el.innerHTML = inline; return; }
+  if (inline) { el.innerHTML = sanitizeBriefingHtml(inline); return; }
   el.innerHTML = `<div class="empty-briefing"><strong>${BRIEFING_LABELS[key]}</strong><br>브리핑을 불러오는 중…</div>`;
   fetch(`data/briefings/${key}.json`, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : null))
@@ -11298,7 +11328,7 @@ function renderBriefingSide(side) {
       const html = b && b.html;
       if (html) briefingFileCache[key] = html;
       if (briefingSel[side] !== key) return; // user toggled away while loading
-      el.innerHTML = html || emptyHtml;
+      el.innerHTML = html ? sanitizeBriefingHtml(html) : emptyHtml;
     })
     .catch(() => { if (briefingSel[side] === key) el.innerHTML = emptyHtml; });
 }
@@ -11382,7 +11412,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(item.name || "")}</td>
+        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
         <td>${Number(item.mentions || 0).toLocaleString()}</td>
         <td class="${cls(item.change24h || 0)}">${fmtPct(item.change24h || 0)}</td>
       </tr>
@@ -11397,7 +11427,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(item.name || "")}</td>
+        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
         <td>${Number(item.watchlist_count || 0).toLocaleString()}</td>
       </tr>
     `).join("");
@@ -11411,7 +11441,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(item.name || "")}</td>
+        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
         <td class="${cls(item.changePct || 0)}">${escapeHtml(item.price || "-")}${item.changePct ? ` (${fmtDailyPct(item.changePct)})` : ""}</td>
       </tr>
     `).join("");
@@ -11436,7 +11466,7 @@ function renderWsbSentimentTable() {
     return `<tr class="social-row" data-ticker="${escapeHtml(r.t)}">
       <td>${i + 1}</td>
       <td>${socialTickerCell(r.t)}</td>
-      <td>${escapeHtml(r.company || "")}</td>
+      <td>${escapeHtml(stripEmoji(r.company || ""))}</td>
       <td>${Number(r.comments || 0).toLocaleString()}</td>
       <td style="color:${col}">${bull ? "강세" : "약세"}${Number.isFinite(r.score) ? ` ${r.score > 0 ? "+" : ""}${r.score}` : ""}</td>
     </tr>`;
@@ -12883,6 +12913,35 @@ function formatMarkdownToHtml(md) {
   return html;
 }
 
+// 종목 AI 리포트 12시간 캐시(localStorage). 키 = 시장·티커·스냅샷 날짜·질의 — 종목을 열 때마다
+// LLM 을 부르지 않는다. 스냅샷이 바뀌면(날짜) 자연히 새 키가 된다.
+const AI_REPORT_CACHE_KEY = "mir_ai_report_cache_v1";
+const AI_REPORT_CACHE_TTL_MS = 12 * 3600 * 1000;
+const AI_REPORT_CACHE_MAX = 40;
+function aiReportCacheKey(ticker, customQuery) {
+  const snapDate = String((data && (data.updatedAtKst || data.updated_at_kst)) || "").slice(0, 10);
+  return `${marketCfg().id}|${normalizeTickerKey(ticker)}|${snapDate}|${customQuery || ""}`;
+}
+function readAiReportCache(key) {
+  try {
+    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const hit = store[key];
+    if (hit && typeof hit.reply === "string" && Date.now() - Number(hit.at || 0) < AI_REPORT_CACHE_TTL_MS) return hit.reply;
+  } catch (_) { /* ignore */ }
+  return null;
+}
+function writeAiReportCache(key, reply) {
+  try {
+    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const now = Date.now();
+    Object.keys(store).forEach((k) => { if (now - Number(store[k]?.at || 0) >= AI_REPORT_CACHE_TTL_MS) delete store[k]; });
+    store[key] = { at: now, reply };
+    const keys = Object.keys(store).sort((a, b) => Number(store[a].at) - Number(store[b].at));
+    while (keys.length > AI_REPORT_CACHE_MAX) delete store[keys.shift()];
+    localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store));
+  } catch (_) { /* quota 등 — 캐시는 있으면 좋은 것 */ }
+}
+
 async function loadAiDeepReport(ticker, customQuery = null) {
   const stock = stockByTicker(ticker);
   if (!stock) return;
@@ -12894,6 +12953,15 @@ async function loadAiDeepReport(ticker, customQuery = null) {
   if (card) card.style.display = "flex";
 
   currentActiveReportTicker = ticker;
+
+  const cacheKey = aiReportCacheKey(ticker, customQuery);
+  const cached = readAiReportCache(cacheKey);
+  if (cached) {
+    body.innerHTML = formatMarkdownToHtml(stripEmoji(cached));
+    if (customQuery) body.dataset.lastQuery = customQuery;
+    else delete body.dataset.lastQuery;
+    return;
+  }
 
   // Show shimmer loading skeleton
   body.innerHTML = `
@@ -12922,13 +12990,16 @@ async function loadAiDeepReport(ticker, customQuery = null) {
       }),
     });
     
+    if (!res.ok) throw new Error(`report ${res.status}`);
     const payload = await res.json();
-    
+
     // Check if the ticker has changed during the request
     if (currentActiveReportTicker !== ticker) return;
-    
-    const reply = (payload && payload.reply) || "리포트를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
-    body.innerHTML = formatMarkdownToHtml(reply);
+
+    const rawReply = payload && typeof payload.reply === "string" ? payload.reply.trim() : "";
+    if (rawReply) writeAiReportCache(cacheKey, rawReply);
+    const reply = rawReply || "리포트를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    body.innerHTML = formatMarkdownToHtml(stripEmoji(reply));
     
     if (customQuery) {
       body.dataset.lastQuery = customQuery;
@@ -12937,7 +13008,7 @@ async function loadAiDeepReport(ticker, customQuery = null) {
     }
   } catch (err) {
     if (currentActiveReportTicker === ticker) {
-      body.innerHTML = `<p class="muted">분석 리포트 로딩 실패: ${err.message || err}</p>`;
+      body.innerHTML = `<p class="muted">분석 리포트 로딩 실패: ${escapeHtml(err && err.message ? err.message : String(err))}</p>`;
     }
   }
 }

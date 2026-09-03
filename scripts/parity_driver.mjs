@@ -1,7 +1,7 @@
 // JS 패턴 감지 패리티 드라이버 (parity_driver.mjs)
 // ==================================================
 // check_pattern_parity.py 가 만든 합성 OHLCV 픽스처(JSON)를 읽어, 브라우저용
-// analysis.js + pattern_detectors_extended.js 의 detectConfirmations 를 node 에서
+// indicators.js + analysis.js + pattern_detectors_extended.js 의 detectConfirmations 를 node 에서
 // 실행하고 이벤트 목록(pattern, dir, confirm_idx)을 JSON 으로 쓴다.
 //
 // analysis.js 는 브라우저 전역(window/document) 스타일이라 최소 shim 을 깔고
@@ -58,6 +58,7 @@ function loadScript(rel) {
   const code = fs.readFileSync(p, "utf-8");
   vm.runInThisContext(code, { filename: rel });
 }
+loadScript("indicators.js"); // 지표 수학 단일 구현 — analysis.js 가 window.MirIndicators 를 쓴다
 loadScript("pattern_detectors_extended.js");
 loadScript("analysis.js");
 

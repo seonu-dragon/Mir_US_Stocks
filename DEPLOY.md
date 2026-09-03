@@ -4,10 +4,10 @@
 
 ## 권장 구조
 
-- `data/market_snapshot.js`: 첫 화면용 가벼운 시장 데이터
+- `data/market_snapshot.json`: 첫 화면용 시장 데이터(브라우저가 fetch)
 - `data/details/{TICKER}.json`: 종목 분석에서 필요할 때만 불러오는 상세 데이터
 
-현재 구조에서는 첫 화면이 `market_snapshot.js`만 읽고, 종목 분석을 열 때 해당 종목의 JSON 상세 파일만 추가로 불러옵니다. 로컬 확인도 `file://` 직접 열기보다 `scripts/serve.ps1` 같은 로컬 서버 실행을 권장합니다.
+현재 구조에서는 첫 화면이 `market_snapshot.json`만 읽고, 종목 분석을 열 때 해당 종목의 JSON 상세 파일만 추가로 불러옵니다. `data/market_snapshot.js`는 `file://`로 직접 열 때의 폴백일 뿐이라 커밋하지 않습니다(로컬에서 `update_data.py`가 만들어 둡니다). 로컬 확인도 `file://` 직접 열기보다 `scripts/serve.ps1` 같은 로컬 서버 실행을 권장합니다.
 
 ## 캐시 버전
 
@@ -81,14 +81,19 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - `FINNHUB_API_KEY` (US 밸류에이션 지표·애널리스트 컨센서스)
    - `KRX_ID` / `KRX_PW` (KRX 회원 로그인 — 국내 공매도 잔고)
    - `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` (국내 뉴스 검색)
-   - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` (브리핑 진행 알림)
+   - `ECOS_API_KEY` (한국은행 ECOS 매크로 — korea-close-briefing)
+   - `DATA_GO_KR_KEY` (공공데이터포털 — NPS 보유·기업집단·나라장터·관세청 계열)
+   - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` (브리핑 진행 알림 + 실패 통지)
 
 3. **Cloudflare Worker 바인딩** (`worker/yahoo-proxy.js` 가 실제 사용하는 목록.
    워커는 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포)
    - Secrets: `GEMINI_API_KEY`, `FINNHUB_API_KEY`, `NAVER_CLIENT_ID`,
-     `NAVER_CLIENT_SECRET`, `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`
-   - KV: `COMMUNITY_KV` (커뮤니티+클라우드 동기화), `MOVE_CACHE` (시세 캐시)
+     `NAVER_CLIENT_SECRET`, `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`,
+     (선택) `IP_HASH_SALT` — 신고·투표 중복 판정용 IP 해시 솔트(없으면 고정 기본값)
+   - KV: `COMMUNITY_KV` (커뮤니티+클라우드 동기화), `MOVE_CACHE` (원인 분석·요약 캐시,
+     IP 리밋 카운터)
    - Workers AI 바인딩: `AI`
+   - 관리자 호출은 `X-Admin-Key` 헤더로(쿼리 `adminKey=` 는 한 릴리스만 폴백 유지)
 
 4. **Actions 권한 확인**
    - Settings → Actions → General → Workflow permissions → **Read and write permissions**

@@ -239,9 +239,11 @@ def publish_briefing(project_dir, key, html, commit_label, mutate=None, attempts
     js_path = project_dir / "data" / "market_snapshot.js"
     fragment_path = project_dir / "data" / "briefings" / f"{key}.json"
     formatted_html = str(html).replace("\n", "<br>")
+    # market_snapshot.js 는 file:// 폴백 전용이라 커밋하지 않는다(.gitignore, 2026-09-03).
+    # 로컬 갱신용으로 계속 쓰기는 하되 git 경로 목록에는 넣지 않는다 — 무시된 파일을
+    # add 에 명시하면 git 이 에러로 죽는다.
     paths = [
         "data/market_snapshot.json",
-        "data/market_snapshot.js",
         f"data/briefings/{key}.json",
     ]
 

@@ -3,6 +3,18 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
+// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
+// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
+if (!window.safeStorage) {
+  window.safeStorage = {
+    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
+    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
+    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
+    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
+    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
+  };
+}
+
 const COMMUNITY_SNS_CHANNELS = [
   {
     id: "instagram",
@@ -211,7 +223,7 @@ let communitySortMode = "latest";
 const COMMUNITY_PAGE_SIZE = 10;
 let communityBoardPage = 1;
 const COMMUNITY_MINICHART_KEY = "mir_community_minichart_v1";
-let communityShowMiniChart = localStorage.getItem(COMMUNITY_MINICHART_KEY) !== "0";
+let communityShowMiniChart = window.safeStorage.get(COMMUNITY_MINICHART_KEY) !== "0";
 // 새 글/댓글 배너용 — 마지막으로 본 글·댓글 id 집합(null이면 첫 로드 전).
 let communitySeenPostIds = null;
 let communitySeenCommentIds = null;
@@ -221,30 +233,36 @@ const COMMUNITY_ADMIN_KEY_LS = "mir_community_admin_key_v1";
 let communityVotePeriod = "day";
 
 function getCommunityHiddenIds() {
-  try {
-    const arr = JSON.parse(localStorage.getItem(COMMUNITY_HIDDEN_KEY) || "[]");
-    return new Set(Array.isArray(arr) ? arr : []);
-  } catch (_) {
-    return new Set();
-  }
+  const arr = window.safeStorage.getJSON(COMMUNITY_HIDDEN_KEY, []);
+  return new Set(Array.isArray(arr) ? arr : []);
 }
 
 function addCommunityHiddenId(id) {
   const set = getCommunityHiddenIds();
   set.add(id);
-  localStorage.setItem(COMMUNITY_HIDDEN_KEY, JSON.stringify([...set]));
+  window.safeStorage.setJSON(COMMUNITY_HIDDEN_KEY, [...set]);
 }
 
 function clearCommunityHiddenIds() {
-  localStorage.removeItem(COMMUNITY_HIDDEN_KEY);
+  window.safeStorage.remove(COMMUNITY_HIDDEN_KEY);
 }
 
 function getCommunityAdminKey() {
-  return localStorage.getItem(COMMUNITY_ADMIN_KEY_LS) || "";
+  return window.safeStorage.get(COMMUNITY_ADMIN_KEY_LS, "") || "";
 }
 
 function setCommunityAdminKey(key) {
-  if (key) localStorage.setItem(COMMUNITY_ADMIN_KEY_LS, String(key));
+  if (key) window.safeStorage.set(COMMUNITY_ADMIN_KEY_LS, String(key));
+}
+
+// 관리자 요청 공통 헤더. 키는 URL 이 아니라 헤더로 보낸다(쿼리스트링은 프록시·브라우저
+// 이력·접근로그에 남는다). 워커가 X-Admin-Key 를 받도록 갱신되는 중이라, 한 릴리스 동안은
+// 구 방식(쿼리/본문 adminKey)도 폴백으로 함께 유지한다.
+function communityAdminHeaders(extra) {
+  const headers = { "Content-Type": "application/json", ...(extra || {}) };
+  const key = getCommunityAdminKey();
+  if (key) headers["X-Admin-Key"] = key;
+  return headers;
 }
 
 function isCommunityAdmin() {
@@ -252,18 +270,21 @@ function isCommunityAdmin() {
 }
 
 function getCommunityNickname() {
-  return (localStorage.getItem(COMMUNITY_NICKNAME_KEY) || "").trim();
+  return String(window.safeStorage.get(COMMUNITY_NICKNAME_KEY, "") || "").trim();
 }
 
 function setCommunityNickname(name) {
-  localStorage.setItem(COMMUNITY_NICKNAME_KEY, String(name || "").trim().slice(0, 20));
+  window.safeStorage.set(COMMUNITY_NICKNAME_KEY, String(name || "").trim().slice(0, 20));
 }
 
+// 저장소가 막힌 브라우저에서는 세션 동안만 유지되는 임시 id 를 쓴다(매 호출마다 새 id 를
+// 만들면 본인 글 삭제·좋아요 판정이 전부 어긋난다).
+let _communityEphemeralClientId = "";
 function getCommunityClientId() {
-  let id = localStorage.getItem(COMMUNITY_CLIENT_KEY);
+  let id = window.safeStorage.get(COMMUNITY_CLIENT_KEY, "") || _communityEphemeralClientId;
   if (!id) {
     id = `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-    localStorage.setItem(COMMUNITY_CLIENT_KEY, id);
+    if (!window.safeStorage.set(COMMUNITY_CLIENT_KEY, id)) _communityEphemeralClientId = id;
   }
   return id;
 }
@@ -432,7 +453,7 @@ function renderCommunityVote() {
   const mine = byId("communityVoteMine");
   if (mine) {
     mine.textContent = communityVoteMyToday
-      ? `오늘 내 투표: ${escapeHtml(communityVoteMyToday.ticker)} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
+      ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
       : "오늘은 아직 투표하지 않았습니다.";
   }
   fetchCommunityVotes();
@@ -546,10 +567,15 @@ async function renderCommunityAdminPanel() {
   const panel = byId("communityAdminPanel");
   if (!panel) return;
   if (!isCommunityAdmin()) { panel.hidden = true; panel.innerHTML = ""; return; }
-  const url = communityApiUrl(`/community/reports?adminKey=${encodeURIComponent(getCommunityAdminKey())}`);
+  const url = communityApiUrl("/community/reports");
   if (!url) { panel.hidden = true; return; }
   try {
-    const res = await fetch(url, { cache: "no-store" });
+    // 새 워커: POST + X-Admin-Key 헤더. 구 워커(GET 만 라우팅)는 POST 를 모르는 경로로
+    // 흘려보내므로 403 이 아닌 실패면 한 릴리스 동안 쿼리스트링 방식으로 폴백한다.
+    let res = await fetch(url, { method: "POST", headers: communityAdminHeaders(), body: "{}", cache: "no-store" });
+    if (!res.ok && res.status !== 403) {
+      res = await fetch(`${url}?adminKey=${encodeURIComponent(getCommunityAdminKey())}`, { cache: "no-store" });
+    }
     const data = await res.json();
     if (!res.ok) {
       panel.hidden = false;
@@ -594,7 +620,8 @@ async function adminDeleteCommunityPost(id) {
   try {
     const res = await fetch(url, {
       method: "DELETE",
-      headers: { "Content-Type": "application/json" },
+      headers: communityAdminHeaders(),
+      // body.adminKey 는 구 워커 폴백(한 릴리스 유지). 새 워커는 X-Admin-Key 헤더를 본다.
       body: JSON.stringify({ id, clientId: getCommunityClientId(), adminKey: getCommunityAdminKey() }),
     });
     const data = await res.json();
@@ -1285,7 +1312,7 @@ function setupCommunityBoard() {
     miniToggle.checked = communityShowMiniChart;
     miniToggle.addEventListener("change", () => {
       communityShowMiniChart = miniToggle.checked;
-      localStorage.setItem(COMMUNITY_MINICHART_KEY, communityShowMiniChart ? "1" : "0");
+      window.safeStorage.set(COMMUNITY_MINICHART_KEY, communityShowMiniChart ? "1" : "0");
       renderCommunityBoard();
     });
   }

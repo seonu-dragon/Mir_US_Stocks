@@ -1,10 +1,25 @@
 {
-  "updatedAtKst": "2026-09-03 02:07 KST",
-  "lastFileDate": "2026.10.15",
-  "count": 34,
+  "updatedAtKst": "2026-09-03 20:54 KST",
+  "lastFileDate": "2026.10.20",
+  "count": 35,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다).",
   "ipos": [
+    {
+      "company": "티앤이코리아",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "신한투자증권",
+      "fileDate": "2026.10.20",
+      "accession": "kr-ipo-bidding-티앤이코리아",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        12600,
+        15300
+      ]
+    },
     {
       "company": "SK증권스팩14호",
       "ticker": "034730",
@@ -385,7 +400,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "메리츠증권",
+      "form": "",
       "fileDate": "2026.06.19",
       "accession": "kr-ipo-listed-메리츠스팩2호",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",

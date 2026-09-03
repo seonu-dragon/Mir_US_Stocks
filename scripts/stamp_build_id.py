@@ -32,8 +32,18 @@ STAMPABLE_SUFFIXES = {".js", ".css"}
 ASSET_RE = re.compile(r'(?P<attr>\b(?:src|href)=")(?P<path>[^"?#]+)\?v=(?P<ver>[^"#]*)(?P<tail>")')
 
 
+def normalized_bytes(path: Path) -> bytes:
+    """줄바꿈을 LF 로 정규화한 바이트.
+
+    git 은 LF 로 저장하고(core.autocrlf=true) Windows 작업트리는 CRLF 로 체크아웃되므로,
+    날바이트를 해시하면 같은 커밋인데도 Windows 와 CI(LF)의 ?v= 가 서로 어긋난다 —
+    한쪽에서 스탬프하면 다른 쪽 --check 가 항상 실패했다. 해시는 CRLF→LF 정규화본으로.
+    """
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
 def file_hash(path: Path) -> str:
-    return hashlib.md5(path.read_bytes()).hexdigest()[:10]
+    return hashlib.md5(normalized_bytes(path)).hexdigest()[:10]
 
 
 def stampable(path_str: str) -> bool:
@@ -71,7 +81,7 @@ def combined_id(assets: list[Path]) -> str:
         if path.name == "build_id.js":
             continue
         h.update(path.name.encode())
-        h.update(hashlib.md5(path.read_bytes()).digest())
+        h.update(hashlib.md5(normalized_bytes(path)).digest())
     return h.hexdigest()[:10]
 
 

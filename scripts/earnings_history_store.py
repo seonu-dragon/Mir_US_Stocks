@@ -6,7 +6,6 @@ from __future__ import annotations
 import argparse
 import json
 import re
-import subprocess
 import sys
 import time
 from datetime import datetime
@@ -19,11 +18,15 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from sec_client import git_publish  # noqa: E402
 from update_data import DETAILS_DIR, fetch_earnings_history  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
 CHECKPOINT = ROOT / "scratch" / "earnings_refresh_checkpoint.json"
+# 신선도 감시용 스탬프. data/details/*.json 에는 실행 시각이 없어 이 빌더가 죽어도
+# 알 길이 없었다 — 매 실행 결과를 여기 남기고 details 와 함께 커밋한다.
+META = ROOT / "data" / "earnings_history_meta.json"
 MAX_QUARTERS = 12
 
 
@@ -76,10 +79,9 @@ def load_checkpoint() -> set[str]:
 
 
 def save_checkpoint(done: set[str]) -> None:
-    CHECKPOINT.parent.mkdir(parents=True, exist_ok=True)
-    CHECKPOINT.write_text(
+    atomic_write_text(
+        CHECKPOINT,
         json.dumps({"done": sorted(done), "updatedAt": datetime.now(KST).isoformat()}, indent=2),
-        encoding="utf-8",
     )
 
 
@@ -139,50 +141,20 @@ def refresh_all_incremental(
     return {"updated": updated, "skipped": skipped, "failed": failed, "total": len(targets)}
 
 
-def _run_git(project_dir: Path, args, **kwargs):
-    return subprocess.run(["git", *args], cwd=project_dir, **kwargs)
+def write_meta(stats: dict[str, int]) -> None:
+    atomic_write_text(META, json.dumps({
+        "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
+        "source": "yahoo earningsHistory (incremental)",
+        **{k: int(v) for k, v in stats.items()},
+    }, ensure_ascii=False, indent=2) + "\n")
 
 
 def publish_detail_changes(project_dir: Path, commit_label: str = "Earnings Refresh") -> bool:
-    paths = ["data/details"]
-    remotes = _run_git(project_dir, ["remote"], capture_output=True, text=True, check=True)
-    if not remotes.stdout.strip():
-        return True
-    branch = _run_git(
-        project_dir,
-        ["branch", "--show-current"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.strip()
-    if not branch:
-        raise RuntimeError("detached HEAD")
-
-    _run_git(project_dir, ["add", "--", *paths], check=True)
-    status = _run_git(
-        project_dir,
-        ["status", "--porcelain", "--", *paths],
-        capture_output=True,
-        text=True,
-        check=True,
+    return git_publish(
+        ["data/details", "data/earnings_history_meta.json"],
+        f"earnings history ({commit_label})",
+        cwd=project_dir,
     )
-    if status.stdout.strip():
-        stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
-        msg = f"Auto-update earnings history ({commit_label}): {stamp}"
-        _run_git(project_dir, ["commit", "-m", msg, "--", *paths], check=True)
-
-    for attempt in range(1, 4):
-        try:
-            _run_git(project_dir, ["fetch", "origin", branch], check=True)
-            _run_git(project_dir, ["pull", "--rebase", "origin", branch], check=True)
-            _run_git(project_dir, ["push", "origin", branch], check=True)
-            print(f"  [Git] origin/{branch} earnings history 푸시 완료")
-            return True
-        except Exception as error:
-            if attempt < 3:
-                print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
-                time.sleep(10)
-    return False
 
 
 def main() -> None:
@@ -203,7 +175,9 @@ def main() -> None:
             f"updated={stats['updated']} skipped={stats['skipped']} "
             f"failed={stats['failed']} total={stats['total']}"
         )
-        if not args.no_push and stats["updated"] > 0:
+        write_meta(stats)
+        # 갱신 0건이어도 스탬프는 올린다 — 그래야 신선도 감시가 "돌긴 돌았다" 를 안다.
+        if not args.no_push:
             publish_detail_changes(ROOT)
 
 

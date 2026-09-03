@@ -35,6 +35,8 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "scripts"))
+from briefing_store import atomic_write_text  # noqa: E402  중단 시 잘린 파일 방지
 BASE = "https://seonu-dragon.github.io/Mir_US_Stocks"
 OUT = ROOT / "sitemap.xml"
 KST = ZoneInfo("Asia/Seoul")
@@ -154,7 +156,7 @@ def main() -> int:
         print(f"OK — sitemap.xml 최신 ({count} URL)")
         return 0
 
-    OUT.write_text(xml, encoding="utf-8")
+    atomic_write_text(OUT, xml)
     print(f"Wrote {OUT.relative_to(ROOT)} — {count} URL")
     return 0
 

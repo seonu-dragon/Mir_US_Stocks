@@ -27,12 +27,18 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글·U+2014 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from sec_client import write_data  # noqa: E402
 from build_kr_disclosures import (  # noqa: E402
     dart_get,
     fetch_disclosures,
@@ -86,10 +92,8 @@ def load_json(path: Path, default):
 
 
 def write_outputs(payload: dict) -> None:
-    OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    atomic_write_text(OUT_JSON, text)
-    atomic_write_text(OUT_JS, "window.KR_OWNERSHIP = " + text + ";")
+    # .json 은 빌더 상태(compact 유지), .js 는 브라우저 전역 — sec_client.write_data 로 통일.
+    write_data(OUT_JSON, OUT_JS, "KR_OWNERSHIP", payload, indent=None)
 
 
 def fetch_detail(api: str, corp_code: str, api_key: str, errors: dict) -> list[dict]:

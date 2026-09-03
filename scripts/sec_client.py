@@ -171,22 +171,41 @@ def et_today():
     return datetime.now(ET_TZ).date()
 
 
-def write_data(out_json, out_js, js_var, payload):
+def write_data(out_json, out_js, js_var, payload, *, indent=2):
+    """.json(빌더 상태) + .js(브라우저 전역) 쌍을 원자적으로 쓴다.
+
+    indent=None 이면 .json 도 compact 로 쓴다 — KR DART 계열처럼 수 MB 짜리는
+    pretty 로 부풀리지 않는다. .js 는 항상 compact.
+    """
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     from briefing_store import atomic_write_text
-    atomic_write_text(out_json, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
+    if indent is None:
+        json_text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+    else:
+        json_text = json.dumps(payload, ensure_ascii=False, indent=indent)
+    atomic_write_text(out_json, json_text + "\n")
     atomic_write_text(
         out_js,
         f"window.{js_var} = " + json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + ";\n",
     )
 
 
-def git_publish(paths, label):
-    """data 경로들을 커밋·푸시. paths: 레포 루트 기준 상대경로 리스트."""
+def git_publish(paths, label, *, cwd=None, attempts=3, sleep_s=10.0):
+    """data 경로들을 커밋·푸시. paths: 레포 루트 기준 상대경로 리스트.
+
+    모든 빌더가 공유하는 유일한 publish 경로다(2026-09-03 통일). 예전엔 13F·내부자·
+    의회·실적이력 빌더가 각자 복사본을 들고 있었고, 그 복사본들은 실패한 rebase 를
+    정리하지 않아(rebase --abort 없음) 재시도가 "unmerged files" 로 전부 죽었고,
+    -X theirs 도 없어 스냅샷 충돌 시 세 번 다 실패했다.
+
+    cwd: 레포 루트(기본 ROOT). 테스트가 임시 레포를 넘긴다.
+    attempts/sleep_s: 재시도 횟수와 간격(테스트는 0 으로).
+    """
     import subprocess
+    repo = Path(cwd) if cwd else ROOT
     def run(args, **kw):
-        return subprocess.run(["git", *args], cwd=ROOT, **kw)
+        return subprocess.run(["git", *args], cwd=repo, **kw)
     if not run(["remote"], capture_output=True, text=True, check=True).stdout.strip():
         print("  [Git] 원격 없음 — 푸시 생략")
         return True
@@ -198,7 +217,7 @@ def git_publish(paths, label):
     if status.stdout.strip():
         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
         run(["commit", "-m", f"Auto-update {label}: {stamp}", "--", *paths], check=True)
-    for attempt in range(1, 4):
+    for attempt in range(1, attempts + 1):
         try:
             run(["fetch", "origin", branch], check=True)
             # 이 헬퍼를 쓰는 빌더는 모두 매 실행마다 데이터 파일을 통째로
@@ -213,9 +232,10 @@ def git_publish(paths, label):
             # 실패한 rebase 가 중간 상태로 남으면 다음 시도의 pull 이
             # "unmerged files" 로 죽어 재시도가 전부 무의미해진다. 정리 후 재시도.
             run(["rebase", "--abort"], capture_output=True, text=True, check=False)
-            if attempt < 3:
+            if attempt < attempts:
                 print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
-                time.sleep(10)
+                if sleep_s:
+                    time.sleep(sleep_s)
     return False
 
 

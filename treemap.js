@@ -636,15 +636,22 @@ function showHeatmapTooltip(html, event) {
 function positionHeatmapTooltip(event) {
   const tooltip = ensureHeatmapTooltip();
   tooltip.classList.add("is-visible");
+  const margin = 8;
 
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
   const gap = 16;
   const rect = tooltip.getBoundingClientRect();
   let left = event.clientX + gap;
   let top = event.clientY + gap;
-  if (left + rect.width > window.innerWidth - 8) left = event.clientX - rect.width - gap;
-  if (top + rect.height > window.innerHeight - 8) top = event.clientY - rect.height - gap;
-  tooltip.style.left = `${Math.max(8, left)}px`;
-  tooltip.style.top = `${Math.max(8, top)}px`;
+  // 오른쪽 끝에 닿으면 커서 왼쪽으로, 아래 끝에 닿으면 위로 반전
+  if (left + rect.width > vw - margin) left = event.clientX - rect.width - gap;
+  if (top + rect.height > vh - margin) top = event.clientY - rect.height - gap;
+  // 반전해도 넘치는 좁은 화면에서는 뷰포트 안으로 클램프(잘림 방지)
+  left = Math.min(Math.max(margin, left), Math.max(margin, vw - rect.width - margin));
+  top = Math.min(Math.max(margin, top), Math.max(margin, vh - rect.height - margin));
+  tooltip.style.left = `${Math.round(left)}px`;
+  tooltip.style.top = `${Math.round(top)}px`;
 }
 
 function hideHeatmapTooltip() {

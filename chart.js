@@ -32,6 +32,12 @@ function redrawChart() {
   if (item) drawChart(item);
 }
 
+// 줌·오프셋 초기화. '초기화' 버튼, 차트 더블클릭, 터치 더블탭이 모두 이 함수를 부른다.
+function resetChartView() {
+  chartState = { ...chartState, zoom: 1, offset: 0 };
+  redrawChart();
+}
+
 let chartPanActive = false;
 let chartPanRafId = 0;
 let patternConfirmCache = { ticker: "", len: 0, lastD: "", data: null };
@@ -672,10 +678,7 @@ function setupChartControls() {
     chartState.offset = Math.max(0, chartState.offset - Math.max(5, Math.round(12 / chartState.zoom)));
     redrawChart();
   });
-  byId("chartReset").addEventListener("click", () => {
-    chartState = { ...chartState, zoom: 1, offset: 0 };
-    redrawChart();
-  });
+  byId("chartReset").addEventListener("click", resetChartView);
   const tfControls = byId("barTimeframeControls");
   if (tfControls) {
     tfControls.querySelectorAll("button").forEach((btn) => {
@@ -940,10 +943,15 @@ function setupChartInteractions() {
 
   let dragPointerId = null;
   let startX = 0;
+  let startY = 0;
   let startOffset = 0;
   let dragN = 0;
   let dragWindow = 0;
   let dragPlotPx = 1;
+  // 더블탭(터치) → 초기화. 마우스는 dblclick 이벤트로 같은 동작.
+  let lastTapAt = 0;
+  let lastTapX = 0;
+  let lastTapY = 0;
 
   const beginPan = (event) => {
     if (drawTool) return;
@@ -953,6 +961,7 @@ function setupChartInteractions() {
     dragPointerId = event.pointerId;
     chartPanActive = true;
     startX = event.clientX;
+    startY = event.clientY;
     startOffset = chartState.offset;
     dragN = chartBaseLength(item);
     dragWindow = Math.max(16, Math.floor(dragN / chartState.zoom));
@@ -982,6 +991,26 @@ function setupChartInteractions() {
     dragPointerId = null;
     svg.classList.remove("is-dragging");
     try { svg.releasePointerCapture(event.pointerId); } catch (e) { /* ignore */ }
+    // 터치 더블탭 감지: 거의 움직이지 않은 탭이 350ms 안에 같은 자리에서 두 번.
+    // 판정은 리드로우(endChartPan, 수백 ms) 앞에서 이벤트 타임스탬프로 한다 — 리드로우 뒤에 Date.now()
+    // 로 재면 첫 탭의 리드로우 시간이 간격에 더해져 실제 더블탭을 놓친다.
+    let doubleTap = false;
+    if (event.type === "pointerup" && event.pointerType === "touch" && !touchMode) {
+      const moved = Math.hypot(event.clientX - startX, event.clientY - startY);
+      const now = event.timeStamp || Date.now();
+      if (moved < 12) {
+        const near = Math.hypot(event.clientX - lastTapX, event.clientY - lastTapY) < 40;
+        if (now - lastTapAt < 350 && near) {
+          lastTapAt = 0;
+          doubleTap = true;
+        } else {
+          lastTapAt = now; lastTapX = event.clientX; lastTapY = event.clientY;
+        }
+      } else {
+        lastTapAt = 0;
+      }
+    }
+    if (doubleTap) chartState = { ...chartState, zoom: 1, offset: 0 }; // resetChartView 와 같은 상태; 리드로우는 아래 한 번
     endChartPan();
   };
 
@@ -989,6 +1018,12 @@ function setupChartInteractions() {
   document.addEventListener("pointermove", movePan);
   document.addEventListener("pointerup", endPan);
   document.addEventListener("pointercancel", endPan);
+  // 마우스 더블클릭 → 초기화(상단 '초기화' 버튼과 동일). 드로잉 중엔 무시.
+  svg.addEventListener("dblclick", (event) => {
+    if (drawTool) return;
+    event.preventDefault();
+    resetChartView();
+  });
 
   let touchMode = null;
   let pinchStartDist = 0;
@@ -1170,7 +1205,12 @@ function setDrawTool(tool) {
   drawStart = null; drawPreview = null;
   byId("chartDrawControls")?.querySelectorAll("button[data-draw]").forEach((b) => b.classList.toggle("is-active", b.dataset.draw === drawTool));
   const svg = byId("priceChart");
-  if (svg) svg.classList.toggle("is-drawing", Boolean(drawTool));
+  if (svg) {
+    svg.classList.toggle("is-drawing", Boolean(drawTool));
+    // 드로잉 중엔 브라우저 터치 제스처(스크롤·핀치줌)를 확실히 끈다. 끝나면 인라인 값을 지워
+    // 스타일시트의 #priceChart 규칙으로 되돌린다.
+    svg.style.touchAction = drawTool ? "none" : "";
+  }
 }
 
 // 축·지지저항·피보·손절/목표·헤더 가격 라벨. US 는 가격대별 소수 자리(<$10 → 2, <$100 → 1,
@@ -1214,20 +1254,37 @@ function setupChartDrawing() {
   const svg = byId("priceChart");
   if (svg && !svg.dataset.drawBound) {
     svg.dataset.drawBound = "1";
-    svg.addEventListener("mousedown", (e) => {
+    // 포인터 이벤트(마우스·터치·펜 공통). 예전엔 mousedown/mousemove/mouseup 이라 모바일에서
+    // 추세선·피보를 그릴 수 없었다(터치는 팬 제스처·스크롤에 먹혔다). 드로잉 도구가 켜져 있으면
+    // 팬(beginPan)은 pointerdown 에서 스스로 물러나므로(drawTool 가드) 여기서 우선권을 가진다.
+    let drawPointerId = null;
+    const cancelDraw = () => {
+      drawPointerId = null;
+      drawStart = null; drawPreview = null; updateDrawLayer();
+    };
+    svg.addEventListener("pointerdown", (e) => {
       if (!drawTool) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (drawPointerId != null) return; // 두 번째 손가락은 무시(핀치는 touch 핸들러가 처리)
       e.preventDefault();
-      drawStart = chartPointToData(e);
+      const start = chartPointToData(e);
+      if (!start) return;
+      drawPointerId = e.pointerId;
+      drawStart = start;
+      try { svg.setPointerCapture(e.pointerId); } catch (_) { /* ignore */ }
     });
-    svg.addEventListener("mousemove", (e) => {
-      if (!drawTool || !drawStart) return;
+    const moveDraw = (e) => {
+      if (!drawTool || !drawStart || drawPointerId == null || e.pointerId !== drawPointerId) return;
       const p = chartPointToData(e);
       if (!p) return;
       drawPreview = { type: drawTool, x1: drawStart.xn, p1: drawStart.price, x2: p.xn, p2: p.price };
       updateDrawLayer();
-    });
-    window.addEventListener("mouseup", (e) => {
-      if (!drawTool || !drawStart) return;
+      e.preventDefault();
+    };
+    const endDraw = (e) => {
+      if (drawPointerId == null || e.pointerId !== drawPointerId) return;
+      try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+      if (!drawTool || !drawStart) { cancelDraw(); return; }
       const p = chartPointToData(e);
       const t = lastChartGeom && lastChartGeom.ticker;
       if (p && t && (Math.abs(p.xn - drawStart.xn) > 0.005 || Math.abs(p.price - drawStart.price) > 1e-9)) {
@@ -1241,7 +1298,16 @@ function setupChartDrawing() {
         );
         persistChartDrawings(t);
       }
-      drawStart = null; drawPreview = null; updateDrawLayer();
+      cancelDraw();
+    };
+    // 캡처가 실패해도(구형 브라우저) SVG 밖에서 뗀 포인터를 놓치지 않도록 document 에서 받는다
+    // (SVG 에서 시작한 이벤트도 버블링으로 여기 도착하므로 SVG 에 따로 달지 않는다).
+    document.addEventListener("pointermove", moveDraw);
+    document.addEventListener("pointerup", endDraw);
+    document.addEventListener("pointercancel", (e) => {
+      if (drawPointerId == null || e.pointerId !== drawPointerId) return;
+      try { svg.releasePointerCapture(e.pointerId); } catch (_) { /* ignore */ }
+      cancelDraw();
     });
   }
 }

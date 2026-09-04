@@ -881,6 +881,10 @@ function heatmapItemMatchesQuery(item, rawQuery) {
   const q = String(rawQuery || "").trim();
   if (!q) return true;
   const hayUpper = `${item.ticker} ${item.company} ${item.sector} ${item.industry}`.toUpperCase();
+  // 초성 질의(ㅅㅅㅈㅈ): 회사명·별칭의 초성열과 대조(app.js 의 hangulChosung, 호출 시점에 존재)
+  if (typeof isChosungQuery === "function" && isChosungQuery(q)) {
+    return hangulChosung(item.company).includes(q) || aliases.some((alias) => hangulChosung(alias).includes(q));
+  }
   if (hayUpper.includes(q.toUpperCase())) return true;
   const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
   return aliases.some((alias) => alias.includes(q) || q.includes(alias));

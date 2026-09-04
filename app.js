@@ -5245,6 +5245,22 @@ const KR_TICKER_NICKNAMES = {
 let tickerKoAliasIndex = null;
 let tickerKoAliasEntries = null;
 let tickerSearchIndex = null;
+// 초성 검색 인덱스: [{ name, cho, tickers }] — KR 회사명·별칭의 초성열. buildTickerKoAliasIndex 가 채운다.
+let tickerChosungEntries = null;
+const HANGUL_CHOSUNG = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+// 한글 음절만 초성으로 바꾸고 나머지(영문·숫자·공백·기호)는 버린다: "삼성전자" → "ㅅㅅㅈㅈ", "LG전자" → "ㅈㅈ".
+function hangulChosung(str) {
+  let out = "";
+  for (const ch of String(str || "")) {
+    const code = ch.charCodeAt(0) - 0xac00;
+    if (code >= 0 && code < 11172) out += HANGUL_CHOSUNG[Math.floor(code / 588)];
+  }
+  return out;
+}
+// 질의가 초성(호환 자모 ㄱ-ㅎ)만으로 이뤄졌을 때만 초성 검색을 탄다("삼성" 같은 완성형은 기존 경로).
+function isChosungQuery(q) {
+  return /^[ㄱ-ㅎ]+$/.test(String(q || "").trim());
+}
 
 function buildTickerKoAliasIndex() {
   const byKo = new Map();
@@ -5280,6 +5296,14 @@ function buildTickerKoAliasIndex() {
   byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers, aliasLower: alias.toLowerCase() }));
   // 긴(구체적인) 별칭이 먼저 — extractStockTickerFromQuery 가 매 호출 정렬하던 것을 여기서 한 번만.
   tickerKoAliasEntries.sort((a, b) => b.alias.length - a.alias.length);
+  // 초성 인덱스(KR 전용 — 회사명·별칭 중 한글이 있는 것만). "ㅅㅅㅈㅈ" → 삼성전자.
+  tickerChosungEntries = [];
+  if (isKrMarket()) {
+    byKo.forEach((tickers, alias) => {
+      const cho = hangulChosung(alias);
+      if (cho) tickerChosungEntries.push({ name: alias, cho, tickers });
+    });
+  }
 }
 
 function buildTickerSearchIndex() {
@@ -5306,15 +5330,26 @@ function searchTickerSuggestions(query, limit = 8) {
   const scored = [];
   const seen = new Set();
 
-  function push(ticker, score, hint) {
+  function push(ticker, score, hint, exact = false) {
     const stock = stockByTicker(ticker);
     if (!stock || seen.has(stock.ticker)) return;
     seen.add(stock.ticker);
-    scored.push({ ticker: stock.ticker, company: stock.company, hint: hint || null, score });
+    scored.push({ ticker: stock.ticker, company: stock.company, hint: hint || null, score, exact: Boolean(exact) });
   }
 
   const exactTicker = stockByTicker(kr ? qTickerKey : qUpper);
   if (exactTicker) push(exactTicker.ticker, 1000, "티커");
+
+  // 초성 질의(ㅅㅅㅈㅈ): 회사명·별칭의 초성열과 대조. 완전 일치는 별칭 완전 일치와 같은 점수(980)+exact.
+  if (kr && isChosungQuery(q) && tickerChosungEntries) {
+    tickerChosungEntries.forEach(({ name, cho, tickers }) => {
+      let score = 0;
+      if (cho === q) score = 980;
+      else if (cho.startsWith(q)) score = 900 - cho.length;
+      else if (cho.includes(q)) score = 760 - cho.length;
+      if (score > 0) tickers.forEach((t) => push(t, score, name, score === 980));
+    });
+  }
 
   (tickerKoAliasEntries || []).forEach(({ alias, tickers }) => {
     let score = 0;
@@ -5358,7 +5393,7 @@ function resolveTickerQuery(raw) {
   if (direct) return direct.ticker;
   const hits = searchTickerSuggestions(q, 6);
   if (!hits.length) return null;
-  const exactKo = hits.find((h) => h.hint === q);
+  const exactKo = hits.find((h) => h.hint === q || h.exact); // exact: 초성 완전 일치
   if (exactKo) return exactKo.ticker;
   if (hits.length === 1) return hits[0].ticker;
   if (hits[0].score - (hits[1]?.score || 0) >= 180) return hits[0].ticker;
@@ -7133,6 +7168,8 @@ function filterTermCollisions(candidates, query) {
 function extractStockTickerFromQuery(query) {
   const text = String(query || "").trim().toLowerCase();
   if (!text) return null;
+  // 0. 초성만 있는 질의(ㅅㅅㅈㅈ)는 초성 인덱스로(KR 모드에서만 채워진다)
+  if (isChosungQuery(text)) return resolveTickerQuery(text);
 
   // 1. Try exact ticker match candidate
   const candidates = filterTermCollisions(extractTickerCandidates(query), query);
@@ -7163,6 +7200,11 @@ function extractStockTickerFromQuery(query) {
   return null;
 }
 
+// AI 답변 마크다운 → HTML. **이스케이프가 먼저**(& < > ") 이고 변환은 그 뒤다 — 모델 출력에 섞인
+// 태그·속성이 그대로 DOM 에 들어가지 않는다(순서를 바꾸지 말 것). 지원: 굵게, 제목(#~######→h4),
+// 글머리(- * •)·번호(1. 1)) 목록, 인라인 코드, ``` 펜스 코드블록, 링크([텍스트](http(s)://…) 만 —
+// 새 창 + noopener), 파이프 표(| a | b | + 구분행). 빈 줄은 예전처럼 <br><br>(블록 요소 옆에선 생략).
+// 브라우저 콘솔에서 formatMarkdownToHtml.__selftest() 로 회귀 확인(true/false).
 function formatMarkdownToHtml(md) {
   const escapeMd = (s) => String(s)
     .replace(/&/g, "&amp;")
@@ -7256,6 +7298,30 @@ function formatMarkdownToHtml(md) {
   return html;
 }
 
+// 회귀 자가검사(브라우저 콘솔: formatMarkdownToHtml.__selftest()). 실패 항목은 console.warn 으로.
+formatMarkdownToHtml.__selftest = function selftest() {
+  const f = formatMarkdownToHtml;
+  const cases = [
+    ["escape", () => { const h = f("<script>alert(1)</script> **b**"); return !h.includes("<script") && h.includes("&lt;script&gt;") && h.includes("<strong>b</strong>"); }],
+    ["link", () => f("[삼성](https://example.com/a?b=1&c=2)") === '<a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noopener noreferrer">삼성</a>'],
+    ["link-scheme", () => !f("[x](javascript:alert(1)) [y](ftp://a.b)").includes("<a ")],
+    ["link-attr-breakout", () => { const h = f('[x](https://e.com/" onmouseover="alert(1))'); return !h.includes("<a ") && !h.includes('onmouseover="'); }],
+    ["inline-code", () => { const h = f("a `**x**` b"); return h.includes("<code>**x**</code>") && !h.includes("<strong>"); }],
+    ["fence", () => f("```\n**x** <b>\n```") === "<pre><code>**x** &lt;b&gt;</code></pre>"],
+    ["ol", () => f("1. a\n2. b") === "<ol><li>a</li><li>b</li></ol>"],
+    ["ul", () => f("- a\n* b") === "<ul><li>a</li><li>b</li></ul>"],
+    ["table", () => { const h = f("| 지표 | 값 |\n|---|---:|\n| PER | 12.3 |"); return h.includes("<th>지표</th>") && h.includes('<td style="text-align:right">12.3</td>') && h.startsWith('<div class="md-table-wrap"><table class="md-table">'); }],
+    ["table-needs-sep", () => !f("| a | b |\n| c | d |").includes("<table")],
+    ["heading", () => f("### T **b**") === "<h4>T <strong>b</strong></h4>"],
+    ["para-break", () => f("a\n\nb") === "a<br><br>b"],
+    ["single-newline", () => f("a\nb") === "a\nb"],
+    ["block-no-extra-br", () => f("- a\n\ntext") === "<ul><li>a</li></ul>text"],
+  ];
+  const failed = cases.filter(([, fn]) => { try { return !fn(); } catch (e) { return true; } }).map(([name]) => name);
+  if (failed.length) console.warn("formatMarkdownToHtml selftest 실패:", failed.join(", "));
+  return failed.length === 0;
+};
+
 // 종목 AI 리포트 12시간 캐시(localStorage). 키 = 시장·티커·스냅샷 날짜·질의 — 종목을 열 때마다
 // LLM 을 부르지 않는다. 스냅샷이 바뀌면(날짜) 자연히 새 키가 된다.
 const AI_REPORT_CACHE_KEY = "mir_ai_report_cache_v1";
@@ -7266,11 +7332,6 @@ function aiReportCacheKey(ticker, customQuery) {
   return `${marketCfg().id}|${normalizeTickerKey(ticker)}|${snapDate}|${customQuery || ""}`;
 }
 function readAiReportCache(key) {
-// AI 답변 마크다운 → HTML. **이스케이프가 먼저**(& < > ") 이고 변환은 그 뒤다 — 모델 출력에 섞인
-// 태그·속성이 그대로 DOM 에 들어가지 않는다(순서를 바꾸지 말 것). 지원: 굵게, 제목(#~######→h4),
-// 글머리(- * •)·번호(1. 1)) 목록, 인라인 코드, ``` 펜스 코드블록, 링크([텍스트](http(s)://…) 만 —
-// 새 창 + noopener), 파이프 표(| a | b | + 구분행). 빈 줄은 예전처럼 <br><br>(블록 요소 옆에선 생략).
-// 브라우저 콘솔에서 formatMarkdownToHtml.__selftest() 로 회귀 확인(true/false).
   try {
     const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
     const hit = store[key];
@@ -7298,30 +7359,6 @@ function writeAiReportCache(key, reply) {
 }
 
 async function loadAiDeepReport(ticker, customQuery = null) {
-// 회귀 자가검사(브라우저 콘솔: formatMarkdownToHtml.__selftest()). 실패 항목은 console.warn 으로.
-formatMarkdownToHtml.__selftest = function selftest() {
-  const f = formatMarkdownToHtml;
-  const cases = [
-    ["escape", () => { const h = f("<script>alert(1)</script> **b**"); return !h.includes("<script") && h.includes("&lt;script&gt;") && h.includes("<strong>b</strong>"); }],
-    ["link", () => f("[삼성](https://example.com/a?b=1&c=2)") === '<a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noopener noreferrer">삼성</a>'],
-    ["link-scheme", () => !f("[x](javascript:alert(1)) [y](ftp://a.b)").includes("<a ")],
-    ["link-attr-breakout", () => { const h = f('[x](https://e.com/" onmouseover="alert(1))'); return !h.includes("<a ") && !h.includes('onmouseover="'); }],
-    ["inline-code", () => { const h = f("a `**x**` b"); return h.includes("<code>**x**</code>") && !h.includes("<strong>"); }],
-    ["fence", () => f("```\n**x** <b>\n```") === "<pre><code>**x** &lt;b&gt;</code></pre>"],
-    ["ol", () => f("1. a\n2. b") === "<ol><li>a</li><li>b</li></ol>"],
-    ["ul", () => f("- a\n* b") === "<ul><li>a</li><li>b</li></ul>"],
-    ["table", () => { const h = f("| 지표 | 값 |\n|---|---:|\n| PER | 12.3 |"); return h.includes("<th>지표</th>") && h.includes('<td style="text-align:right">12.3</td>') && h.startsWith('<div class="md-table-wrap"><table class="md-table">'); }],
-    ["table-needs-sep", () => !f("| a | b |\n| c | d |").includes("<table")],
-    ["heading", () => f("### T **b**") === "<h4>T <strong>b</strong></h4>"],
-    ["para-break", () => f("a\n\nb") === "a<br><br>b"],
-    ["single-newline", () => f("a\nb") === "a\nb"],
-    ["block-no-extra-br", () => f("- a\n\ntext") === "<ul><li>a</li></ul>text"],
-  ];
-  const failed = cases.filter(([, fn]) => { try { return !fn(); } catch (e) { return true; } }).map(([name]) => name);
-  if (failed.length) console.warn("formatMarkdownToHtml selftest 실패:", failed.join(", "));
-  return failed.length === 0;
-};
-
   const stock = stockByTicker(ticker);
   if (!stock) return;
 

@@ -26,7 +26,6 @@
           var p = JSON.parse(localStorage.getItem("mir_ui_prefs_v1")) || {};
           var theme = p.theme || ((window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches) ? "dark" : "light");
           document.documentElement.setAttribute("data-theme", theme);
-          document.documentElement.setAttribute("data-density", p.density || "comfortable");
         } catch (e) {}
       })();
     </script>
@@ -71,6 +70,7 @@
   --z-ai-chatlog: 18;
   --z-popover: 20;
   --z-ai-input: 25;
+  --z-topbar: 30;
   --z-legend-pop: 40;
   --z-ai-topbar: 50;
   --z-drawer-backdrop: 60;
@@ -140,10 +140,6 @@
   --fw-bold: 700;
   --control-h: 44px;
   --control-h-sm: 40px;
-}
-html[data-density="compact"] {
-  --control-h: 36px;
-  --control-h-sm: 32px;
 }
 * {
   box-sizing: border-box;

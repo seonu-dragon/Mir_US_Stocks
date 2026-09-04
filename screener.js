@@ -444,37 +444,30 @@ function applyTheme(theme) {
     btn.setAttribute("aria-pressed", dark ? "true" : "false");
   }
 }
-function applyDensity(density) {
-  document.documentElement.setAttribute("data-density", density);
-  const btn = byId("densityToggle");
-  if (btn) {
-    const compact = density === "compact";
-    btn.textContent = compact ? "↕ 넓게" : "↕ 컴팩트";
-    btn.setAttribute("aria-pressed", compact ? "true" : "false");
-  }
-}
 function setupUiPrefs() {
   const prefs = getUiPrefs();
   const theme = prefs.theme || (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   applyTheme(theme);
-  applyDensity(prefs.density || "comfortable");
+  // 밀도(컴팩트/넓게) 토글은 2026-09-04 에 제거했다. 예전 저장값이 남아 있어도 적용하지 않는다.
+  document.documentElement.removeAttribute("data-density");
   byId("themeToggle")?.addEventListener("click", () => {
     const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     setUiPref("theme", next);
     applyTheme(next);
   });
-  byId("densityToggle")?.addEventListener("click", () => {
-    const next = document.documentElement.getAttribute("data-density") === "compact" ? "comfortable" : "compact";
-    setUiPref("density", next);
-    applyDensity(next);
-  });
+  // 로고(미르의 미국 주식 / 한국 주식) 클릭 = 처음 화면: '오늘' 탭의 첫 서브탭으로 돌아가고 맨 위로.
   const brandHome = byId("brandHome");
   if (brandHome && !brandHome.dataset.bound) {
     brandHome.dataset.bound = "1";
-    const goTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
-    brandHome.addEventListener("click", goTop);
+    const goHome = () => {
+      try {
+        if (typeof activateTab === "function") activateTab("today");
+      } catch (_) {}
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+    brandHome.addEventListener("click", goHome);
     brandHome.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goTop(); }
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); goHome(); }
     });
   }
 }

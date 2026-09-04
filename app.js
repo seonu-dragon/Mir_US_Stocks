@@ -347,7 +347,8 @@ const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
 // 첫 방문자 기본값. 탭 10개를 한꺼번에 보여주면 처음 온 사람에겐 과하다. 기존 사용자는
 // setupViewMode 가 localStorage 를 먼저 읽으므로 영향이 없고, 고급 탭으로 들어오는
 // 딥링크(?tab=signals 등)도 거기서 advanced 로 승격되므로 그대로 동작한다.
-const DEFAULT_VIEW_MODE = "basic";
+// 2026-09-04: 기본/고급 구분을 없앴다. 모든 탭이 항상 보이고(고급), 저장된 옛 값은 무시한다.
+const DEFAULT_VIEW_MODE = "advanced";
 const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
 const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
@@ -2631,12 +2632,9 @@ function setViewMode(mode, { persist = true } = {}) {
   requestAnimationFrame(layoutMobileTabs);
 }
 
-function setupViewMode(requestedTab) {
-  let saved = DEFAULT_VIEW_MODE;
-  try { saved = window.safeStorage.get(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
-  const requestedButton = requestedTab ? tabButtonFor(normalizeTabRequest(requestedTab, null).tab) : null;
-  if (requestedButton?.dataset.advanced === "true") saved = "advanced";
-  setViewMode(saved, { persist: false });
+function setupViewMode() {
+  // 기본/고급 스위치는 사라졌다 — 항상 고급(전체 탭). 예전에 '기본'을 저장한 브라우저도 덮는다.
+  setViewMode(DEFAULT_VIEW_MODE, { persist: true });
   const modeSwitch = byId("viewModeSwitch");
   if (modeSwitch && !modeSwitch.dataset.bound) {
     modeSwitch.dataset.bound = "1";
@@ -8107,8 +8105,7 @@ function cmdkBuildActions(query) {
   goto("커뮤니티 · 종목 토론", "community", "board");
   goto("커뮤니티 · 투표", "community", "vote");
   actions.push({ label: "데이터 신뢰도 센터", hint: "데이터 상태", run: () => openDataTrustCenter() });
-  actions.push({ label: "설정 (테마·밀도·고급 모드)", hint: "헤더", run: () => byId("settingsToggle")?.click() });
-  actions.push({ label: "고급 모드 전환", hint: "설정", run: () => setViewMode(currentViewMode === "advanced" ? "basic" : "advanced") });
+  actions.push({ label: "설정 (테마·커뮤니티·신뢰도)", hint: "헤더", run: () => byId("settingsToggle")?.click() });
 
   // 퍼지 필터 (종목 결과는 이미 질의로 골라졌으므로 keep)
   return actions

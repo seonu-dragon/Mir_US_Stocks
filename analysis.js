@@ -2581,7 +2581,7 @@ function calibrationInnerHtml(score, horizon) {
       <span class="muted">— 같은 시장·기간 전체 평균 상승률 ${block.baseRate.toFixed(1)}% (표본 ${block.baseN.toLocaleString()}건)</span>
     </div>
     ${block.significantBuckets === 0 ? `<div style="margin-top:4px;">이 시장·${horizon}거래일 기준으로는 <b>어떤 점수 구간도 시장 평균과 유의하게 다르지 않았습니다</b> — 점수가 방향을 맞힌다는 근거가 없습니다.</div>` : ""}
-    <div class="muted" style="margin-top:4px;font-size:11px;">
+    <div class="muted" style="margin-top:4px;font-size:var(--fs-cap);">
       ${sample.stocks ? `${sample.stocks}종목 ` : ""}${range ? `${range} ` : ""}워크포워드 실측 ·
       겹치는 표본을 감안한 유효표본수로 구간을 계산했고, 종목 간 상관은 보정하지 않았습니다(구간이 실제보다 좁을 수 있음).
     </div>`;
@@ -2604,7 +2604,7 @@ function calibrationSlotHtml(score, horizon) {
   ensureCalibration(); // 결과가 처음 그려질 때 받는다(대시보드는 init 을 타지 않는다)
   return `<div class="calib-box" data-calib-score="${score.toFixed(2)}" data-calib-horizon="${horizon}"
     style="margin:0 0 10px;padding:8px 10px;border:1px solid var(--line,#d9dee7);border-radius:8px;font-size:12px;line-height:1.55;">
-    <div class="muted" style="font-size:11px;margin-bottom:4px;">이 점수의 과거 적중률</div>
+    <div class="muted" style="font-size:var(--fs-cap);margin-bottom:4px;">이 점수의 과거 적중률</div>
     ${calibrationInnerHtml(score, horizon)}
   </div>`;
 }

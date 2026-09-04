@@ -248,8 +248,8 @@ function renderYieldCurve() {
           ${spTile("10Y − 3M", sp.t10y3m, "정상(우상향)")}
         </div>
       </div>
-      ${spark ? `<div style="margin-top:12px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">10Y − 2Y 스프레드 · 최근 1년</div>${spark}</div>` : ""}
-      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">장단기 금리 역전(스프레드 음수)은 과거 경기침체를 앞서 나타난 적이 많지만 시점 차이가 커 매매 신호로 쓰기 어렵습니다. 출처: ${escapeHtml(yc.source || "FRED")}.</p>
+      ${spark ? `<div style="margin-top:12px"><div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">10Y − 2Y 스프레드 · 최근 1년</div>${spark}</div>` : ""}
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">장단기 금리 역전(스프레드 음수)은 과거 경기침체를 앞서 나타난 적이 많지만 시점 차이가 커 매매 신호로 쓰기 어렵습니다. 출처: ${escapeHtml(yc.source || "FRED")}.</p>
     </div>`;
 }
 
@@ -282,7 +282,7 @@ function renderTreasuryAuctions() {
     const dTxt = delta == null ? "—" : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta).toFixed(2)}`;
     return `<tr>
       <td class="ins-date">${escapeHtml(r.date || "")}</td>
-      <td><strong>${escapeHtml(r.term || "")}</strong> <span style="color:var(--muted);font-size:11px">${escapeHtml(r.type || "")}</span></td>
+      <td><strong>${escapeHtml(r.term || "")}</strong> <span style="color:var(--muted);font-size:var(--fs-cap)">${escapeHtml(r.type || "")}</span></td>
       <td class="ins-num"><strong>${Number.isFinite(r.btc) ? r.btc.toFixed(2) : "—"}</strong></td>
       <td class="ins-num" style="color:${dCol}">${dTxt}</td>
       <td class="ins-num">${Number.isFinite(r.highYield) ? `${r.highYield.toFixed(3)}%` : "—"}</td>
@@ -291,14 +291,14 @@ function renderTreasuryAuctions() {
     </tr>`;
   }).join("");
   const coming = Array.isArray(ta.upcoming) && ta.upcoming.length
-    ? `<p style="font-size:11px;color:var(--muted);margin:10px 0 0">다가오는 경매: ${ta.upcoming.map((u) => `${escapeHtml(u.date || "")} ${escapeHtml(u.term || "")}${Number.isFinite(u.offeringB) ? ` $${u.offeringB}B` : ""}`).join(" · ")}</p>` : "";
+    ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0">다가오는 경매: ${ta.upcoming.map((u) => `${escapeHtml(u.date || "")} ${escapeHtml(u.term || "")}${Number.isFinite(u.offeringB) ? ` $${u.offeringB}B` : ""}`).join(" · ")}</p>` : "";
   host.innerHTML = `
     <div class="section-title"><h2>미 국채 경매 수요</h2>
       <p>응찰배수(bid-to-cover)가 같은 만기 직전 6회 평균 대비 얼마나 강했는지입니다. 입찰 부진은 장기금리 급등의 단골 트리거라 위 수익률 곡선과 함께 봅니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>경매일</th><th>만기</th><th class="ins-num">응찰배수</th><th class="ins-num">vs 직전6회</th><th class="ins-num">낙찰금리</th><th class="ins-num">규모</th><th class="ins-num">간접낙찰</th></tr></thead><tbody>${rows}</tbody></table></div>
       ${coming}
-      <p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">간접낙찰 비중은 해외 중앙은행·실수요 계열 수요의 프록시입니다. 출처: ${escapeHtml(ta.source || "US Treasury FiscalData")} · 기준 ${escapeHtml(ta.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">간접낙찰 비중은 해외 중앙은행·실수요 계열 수요의 프록시입니다. 출처: ${escapeHtml(ta.source || "US Treasury FiscalData")} · 기준 ${escapeHtml(ta.asOf || "")}.</p>
     </div>`;
 }
 
@@ -325,14 +325,14 @@ function renderCotPositioning() {
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
         <div style="font-size:12.5px;font-weight:600">${escapeHtml(m.label)}</div>
-        <div style="font-size:10px;color:var(--muted)">${escapeHtml(m.group || "")}</div>
+        <div style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(m.group || "")}</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
         <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${col}">${fmtNet(m.specNet)}</div>
         <div style="font-size:10.5px;color:var(--muted)">1주 ${chg}</div>
       </div>
       ${pct == null ? "" : `<div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px"><span>3년 범위 내 위치</span><span style="font-variant-numeric:tabular-nums">${pct}%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--muted);margin-bottom:3px"><span>3년 범위 내 위치</span><span style="font-variant-numeric:tabular-nums">${pct}%</span></div>
         <div style="height:4px;background:var(--line);border-radius:2px;position:relative"><div style="position:absolute;left:0;top:0;bottom:0;width:${pct}%;background:${col};opacity:0.55;border-radius:2px"></div><div style="position:absolute;left:calc(${pct}% - 2px);top:-2px;width:4px;height:8px;background:${col};border-radius:1px"></div></div>
       </div>`}
       ${spark ? `<div style="margin-top:2px">${spark}</div>` : ""}
@@ -343,7 +343,7 @@ function renderCotPositioning() {
       <p>헤지펀드·운용사의 순포지션(계약수)과 그 값이 최근 3년 범위에서 어디쯤인지입니다. 0%·100% 근처는 쏠림이 붐빈다는 뜻이지 방향 신호가 아닙니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">${cards}</div>
-      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">지수·금리·통화는 Leveraged Funds(헤지펀드), 원자재는 Managed Money 기준. 매주 금요일 발표(화요일 기준)라 최대 열흘 늦을 수 있습니다. 출처: ${escapeHtml(cot.source || "CFTC")} · 기준 ${escapeHtml(cot.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">지수·금리·통화는 Leveraged Funds(헤지펀드), 원자재는 Managed Money 기준. 매주 금요일 발표(화요일 기준)라 최대 열흘 늦을 수 있습니다. 출처: ${escapeHtml(cot.source || "CFTC")} · 기준 ${escapeHtml(cot.asOf || "")}.</p>
     </div>`;
 }
 
@@ -374,7 +374,7 @@ function renderWikiAttention() {
       <p>${isKrMarket() ? "한국어" : "영어"} 위키피디아 회사 문서의 최근 7일 평균 조회수를 직전 30일 평균과 비교했습니다. 관심이 몰리는 곳의 프록시일 뿐 방향 신호가 아닙니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">배율</th><th class="ins-num">7일 평균</th><th class="ins-num">직전 30일</th><th>30일 추이</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">봇 트래픽 제외(user). 사명→문서 매핑이 검증된 종목만 싣습니다. 출처: ${escapeHtml(wa.source || "Wikimedia")} · ${escapeHtml(wa.updatedAtKst || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">봇 트래픽 제외(user). 사명→문서 매핑이 검증된 종목만 싣습니다. 출처: ${escapeHtml(wa.source || "Wikimedia")} · ${escapeHtml(wa.updatedAtKst || "")}.</p>
     </div>`;
   host.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
@@ -400,9 +400,9 @@ function renderEcosMacro() {
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
       <div style="display:flex;align-items:baseline;gap:8px">
         <strong style="font-size:19px;font-variant-numeric:tabular-nums">${Number(it.value).toLocaleString()}${escapeHtml(it.unit || "")}</strong>
-        <span style="font-size:11px;color:${col};font-variant-numeric:tabular-nums">${arrow} ${Number.isFinite(ch) ? Math.abs(ch).toLocaleString() : ""}</span>
+        <span style="font-size:var(--fs-cap);color:${col};font-variant-numeric:tabular-nums">${arrow} ${Number.isFinite(ch) ? Math.abs(ch).toLocaleString() : ""}</span>
       </div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml(it.changeLabel || "")}</div>
+      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:2px">${escapeHtml(it.changeLabel || "")}</div>
       ${spark ? `<div style="margin-top:6px">${spark}</div>` : ""}
     </article>`;
   }).join("");
@@ -411,7 +411,7 @@ function renderEcosMacro() {
       <p>기준금리·국고채 커브·신용스프레드·환율·물가·뉴스심리를 한 줄로 요약했습니다. 예측이 아니라 현재 상태의 요약입니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">${tiles}</div>
-      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">뉴스심리지수는 한국은행 실험적 통계(100=중립)입니다. 출처: ${escapeHtml(m.source || "한국은행 ECOS")} · 기준 ${escapeHtml(m.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">뉴스심리지수는 한국은행 실험적 통계(100=중립)입니다. 출처: ${escapeHtml(m.source || "한국은행 ECOS")} · 기준 ${escapeHtml(m.asOf || "")}.</p>
     </div>`;
 }
 
@@ -433,7 +433,7 @@ function renderTradeExports() {
         <strong style="font-size:19px;font-variant-numeric:tabular-nums">$${Number(it.latestB).toLocaleString()}억</strong>
         <span style="font-size:11.5px;font-weight:600;color:${col};font-variant-numeric:tabular-nums">${Number.isFinite(yoy) ? `${yoy > 0 ? "+" : ""}${yoy}%` : "—"}</span>
       </div>
-      <div style="font-size:10px;color:var(--muted);margin-top:2px">${escapeHtml((it.latestYm || "").replace(/^(\d{4})(\d{2})$/, "$1-$2"))} 월 수출 · 전년동월비</div>
+      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:2px">${escapeHtml((it.latestYm || "").replace(/^(\d{4})(\d{2})$/, "$1-$2"))} 월 수출 · 전년동월비</div>
       ${spark ? `<div style="margin-top:6px">${spark}</div>` : ""}
     </article>`;
   }).join("");
@@ -442,7 +442,7 @@ function renderTradeExports() {
       <p>주력 품목의 월간 수출액과 전년동월비입니다. 반도체·자동차 같은 수출주에게 실적 발표보다 앞서는 컨텍스트이며, 매월 15일경 전월 확정치가 반영됩니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">${tiles}</div>
-      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">금액은 미달러 기준(억달러), 24개월 추이. 출처: ${escapeHtml(t.source || "관세청")} · 기준월 ${escapeHtml(t.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">금액은 미달러 기준(억달러), 24개월 추이. 출처: ${escapeHtml(t.source || "관세청")} · 기준월 ${escapeHtml(t.asOf || "")}.</p>
     </div>`;
 }
 
@@ -574,13 +574,13 @@ function openHistoryDetail(key) {
          <span>${dateTxt(first.date)}</span><span>${dateTxt(latest.date)}</span></div>`
     : "";
   const note = vals.length < 5
-    ? `<div style="font-size:11px;color:var(--muted);margin-bottom:12px">히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이가 뚜렷해집니다.</div>`
+    ? `<div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:12px">히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이가 뚜렷해집니다.</div>`
     : "";
 
   const statRow = (lbl, val, sub, col) => `<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
       <span style="font-size:10.5px;color:var(--muted)">${escapeHtml(lbl)}</span>
       <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:${col || "var(--text)"}">${val}</span>
-      ${sub ? `<span style="font-size:10px;color:var(--muted)">${sub}</span>` : ""}
+      ${sub ? `<span style="font-size:var(--fs-cap);color:var(--muted)">${sub}</span>` : ""}
     </div>`;
   const stats = enough
     ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
@@ -597,7 +597,7 @@ function openHistoryDetail(key) {
   dlg.setAttribute("aria-label", `${s.label} 추이`);
   dlg.innerHTML = `
     <h2 class="app-dialog-title">${escapeHtml(s.label)}</h2>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">최근 ${vals.length}일 자체 적립 히스토리</div>
+    <div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:10px">최근 ${vals.length}일 자체 적립 히스토리</div>
     ${chart}${note}${stats}
     <div class="app-dialog-actions"><button type="button" class="app-dialog-btn is-primary" data-hist-close>닫기</button></div>`;
   document.body.appendChild(dlg);
@@ -661,10 +661,10 @@ function fgHistBlock() {
   const vals = historySeries("fearGreed");
   if (!vals.length) return "";
   if (vals.length < 5) {
-    return `<div style="margin-top:10px;font-size:11px;color:var(--muted)">지수 히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이를 그립니다.</div>`;
+    return `<div style="margin-top:10px;font-size:var(--fs-cap);color:var(--muted)">지수 히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이를 그립니다.</div>`;
   }
   return `<div style="display:flex;align-items:center;gap:10px;margin-top:12px;color:var(--muted)">
-    <span style="font-size:11px;flex-shrink:0">최근 ${vals.length}일</span>${historySparkSvg(vals, 180, 36)}</div>`;
+    <span style="font-size:var(--fs-cap);flex-shrink:0">최근 ${vals.length}일</span>${historySparkSvg(vals, 180, 36)}</div>`;
 }
 
 // 자체 심리지수 아래 붙는 외부 게이지 비교(SENTIMENT_GAUGES). 데이터 없으면 "".
@@ -677,7 +677,7 @@ function externalGaugesHtml() {
     const lab = fearGreedLabel(Number(v));
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:10px 14px;min-width:150px">
       <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px">${name}</div>
-      <div style="display:flex;align-items:baseline;gap:8px"><strong style="font-size:20px;font-variant-numeric:tabular-nums;color:${lab.c}">${Math.round(v)}</strong><span style="font-size:11px;color:${lab.c}">${escapeHtml(label || lab.t)}</span></div>
+      <div style="display:flex;align-items:baseline;gap:8px"><strong style="font-size:20px;font-variant-numeric:tabular-nums;color:${lab.c}">${Math.round(v)}</strong><span style="font-size:var(--fs-cap);color:${lab.c}">${escapeHtml(label || lab.t)}</span></div>
     </article>`;
   };
   const tiles = [
@@ -686,7 +686,7 @@ function externalGaugesHtml() {
   ].filter(Boolean).join("");
   if (!tiles) return "";
   return `<div style="margin-top:14px">
-    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">외부 게이지 비교 · ${escapeHtml(g.updatedAtKst || "")}</div>
+    <div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:6px">외부 게이지 비교 · ${escapeHtml(g.updatedAtKst || "")}</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">${tiles}</div>
   </div>`;
 }
@@ -702,7 +702,7 @@ function renderFearGreed() {
   const bar = `<div style="position:relative;height:14px;border-radius:8px;background:linear-gradient(90deg,#e5484d,#e5894d,#c2a63a,#57a83a,#30a46c)">
       <div style="position:absolute;left:${value}%;top:-4px;transform:translateX(-50%);width:4px;height:22px;background:var(--text);border-radius:2px;box-shadow:0 0 0 2px var(--panel)"></div>
     </div>
-    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-top:4px"><span>공포 0</span><span>중립 50</span><span>탐욕 100</span></div>`;
+    <div style="display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--muted);margin-top:4px"><span>공포 0</span><span>중립 50</span><span>탐욕 100</span></div>`;
   const subs = comps.map((c) => {
     const cl = fearGreedLabel(c.score);
     return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0">
@@ -718,13 +718,13 @@ function renderFearGreed() {
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
         <strong style="font-size:34px;font-variant-numeric:tabular-nums;color:${lab.c}">${value}</strong>
         <strong style="font-size:16px;color:${lab.c}">${lab.t}</strong>
-        <span style="font-size:11px;color:var(--muted);margin-left:auto">${comps.length}개 요소 평균</span>
+        <span style="font-size:var(--fs-cap);color:var(--muted);margin-left:auto">${comps.length}개 요소 평균</span>
       </div>
       ${bar}
       ${fgHistBlock()}
       <div style="margin-top:14px">${subs}</div>
       ${externalGaugesHtml()}
-      <p style="font-size:11px;color:var(--muted);margin:12px 0 0;line-height:1.5">각 요소를 0(공포)~100(탐욕)으로 정규화해 단순 평균했습니다. 극단값에서 되돌림이 잦다는 해석이 있으나 시점 신호로 쓰긴 어렵습니다.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">각 요소를 0(공포)~100(탐욕)으로 정규화해 단순 평균했습니다. 극단값에서 되돌림이 잦다는 해석이 있으나 시점 신호로 쓰긴 어렵습니다.</p>
     </div>`;
 }
 
@@ -747,7 +747,7 @@ function renderMacroIndicators() {
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
       <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${escapeHtml(it.value ?? "")}${escapeHtml(it.unit || "")}</div>
-      <div style="font-size:11px;color:${col};font-variant-numeric:tabular-nums;margin-top:3px">${arrow} ${Number.isFinite(ch) ? (ch > 0 ? "+" : "") + ch + (it.unit || "") : "—"} <span style="color:var(--muted)">· ${escapeHtml(String(it.date || "").slice(0, 7))}</span></div>
+      <div style="font-size:var(--fs-cap);color:${col};font-variant-numeric:tabular-nums;margin-top:3px">${arrow} ${Number.isFinite(ch) ? (ch > 0 ? "+" : "") + ch + (it.unit || "") : "—"} <span style="color:var(--muted)">· ${escapeHtml(String(it.date || "").slice(0, 7))}</span></div>
     </article>`;
   };
   // 자체 적립 히스토리(MARKET_HISTORY)가 있으면 환율·금리차·신용스프레드·CPI·실업률

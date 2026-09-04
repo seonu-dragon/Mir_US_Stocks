@@ -554,7 +554,7 @@ function ftdSectionHtml() {
   const period = ftd.period ? `${ftd.period.from} ~ ${ftd.period.to}` : "";
   return `<div style="margin-top:22px">
     <h3 style="font-size:14px;margin:0 0 4px">결제 불이행(FTD) 상위 <span style="font-weight:400;font-size:11.5px;color:var(--muted)">SEC CNS · ${escapeHtml(period)} · 약 2주 지연</span></h3>
-    <p style="font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.5">결제가 실제로 밀린 물량입니다. 급증은 대차 물량 고갈(스퀴즈 압력) 논의에 등장하지만 지연 발행이라 사후 컨텍스트로만 보세요. 발행주식수 대비 %는 시총÷주가 근사값입니다.</p>
+    <p style="font-size:var(--fs-cap);color:var(--muted);margin:0 0 8px;line-height:1.65">결제가 실제로 밀린 물량입니다. 급증은 대차 물량 고갈(스퀴즈 압력) 논의에 등장하지만 지연 발행이라 사후 컨텍스트로만 보세요. 발행주식수 대비 %는 시총÷주가 근사값입니다.</p>
     <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">발행주식 대비</th><th class="ins-num">최대 FTD</th><th class="ins-num">금액</th><th class="ins-num">직전 반월 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
   </div>`;
 }
@@ -1253,10 +1253,10 @@ function govContractsSectionHtml() {
   </tr>`).join("");
   return `<div style="margin-top:22px">
     <h3 style="font-size:14px;margin:0 0 4px">정부조달 낙찰 (나라장터) <span style="font-weight:400;font-size:11.5px;color:var(--muted)">최근 90일 · 상장사 매칭분 · ${escapeHtml(gov.updatedAtKst || "")}</span></h3>
-    <p style="font-size:11px;color:var(--muted);margin:0 0 8px;line-height:1.5">공시 의무 문턱 아래의 정부 계약까지 잡힙니다. 상호가 정확히 일치하는 상장사만 실으므로 영문·한글 표기가 다른 일부 대기업 건은 빠질 수 있습니다.</p>
+    <p style="font-size:var(--fs-cap);color:var(--muted);margin:0 0 8px;line-height:1.65">공시 의무 문턱 아래의 정부 계약까지 잡힙니다. 상호가 정확히 일치하는 상장사만 실으므로 영문·한글 표기가 다른 일부 대기업 건은 빠질 수 있습니다.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
-      <div style="overflow-x:auto"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">누적 수주 상위</div><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">누적 낙찰액</th><th class="ins-num">건수</th><th>최근</th></tr></thead><tbody>${topRows}</tbody></table></div>
-      <div style="overflow-x:auto"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">최근 낙찰</div><table class="insider-table" style="min-width:0"><thead><tr><th>낙찰일</th><th>종목 · 발주기관</th><th>사업명</th><th class="ins-num">금액</th></tr></thead><tbody>${recent}</tbody></table></div>
+      <div style="overflow-x:auto"><div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">누적 수주 상위</div><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">누적 낙찰액</th><th class="ins-num">건수</th><th>최근</th></tr></thead><tbody>${topRows}</tbody></table></div>
+      <div style="overflow-x:auto"><div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">최근 낙찰</div><table class="insider-table" style="min-width:0"><thead><tr><th>낙찰일</th><th>종목 · 발주기관</th><th>사업명</th><th class="ins-num">금액</th></tr></thead><tbody>${recent}</tbody></table></div>
     </div>
   </div>`;
 }
@@ -1449,7 +1449,7 @@ function renderKrHighlights() {
     const c = it.tone === "good" ? "#30a46c" : it.tone === "warn" ? "#e5484d" : "var(--accent,#5b8def)";
     return `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:3px 7px;padding:7px 12px;border-left:3px solid ${c};border-radius:8px;background:var(--panel-soft);color:var(--text);cursor:pointer;text-align:left;line-height:1.4;height:auto;min-height:0">
       <span style="font-size:14px;font-weight:600;color:var(--text)">${escapeHtml(it.company)}</span>
-      <span style="font-size:11px;color:var(--muted)">${escapeHtml(it.label)}</span>
+      <span style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(it.label)}</span>
       <span style="font-size:12px;color:${c};font-weight:600">${escapeHtml(it.extra || "")}</span>
     </button>`;
   };

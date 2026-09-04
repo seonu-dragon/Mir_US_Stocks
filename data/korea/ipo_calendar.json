@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-09-04 01:59 KST",
+  "updatedAtKst": "2026-09-04 21:37 KST",
   "lastFileDate": "2026.10.20",
-  "count": 35,
+  "count": 36,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다).",
   "ipos": [
@@ -18,6 +18,21 @@
       "offerPriceBand": [
         12600,
         15300
+      ]
+    },
+    {
+      "company": "크리에이츠",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "삼성증권",
+      "fileDate": "2026.10.20",
+      "accession": "kr-ipo-bidding-크리에이츠",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        15000,
+        18000
       ]
     },
     {
@@ -243,7 +258,7 @@
     },
     {
       "company": "스카이랩스",
-      "ticker": null,
+      "ticker": "386380",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
       "form": "한국투자증권",
@@ -389,7 +404,7 @@
       "ticker": "153890",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "삼성증권",
+      "form": "",
       "fileDate": "2026.06.29",
       "accession": "kr-ipo-listed-져스텍",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",

@@ -3622,6 +3622,9 @@ function renderSectors() {
   renderSectorDetail();
 }
 
+let sectorConstituentsLimit = 50;
+let sectorConstituentsLimitEtf = null;
+
 function renderSectorDetail() {
   const meta = getSectorEtfs().find((item) => item.ticker === selectedSectorEtf) || getSectorEtfs()[0];
   // Keep the selection in sync with the resolved ETF so the comparison chart/legend
@@ -3645,7 +3648,12 @@ function renderSectorDetail() {
 
   // Render constituents table — RSI(14) 내림차순(결측은 뒤로)
   const sortedRows = [...rows].sort((a, b) => (rsiValue(b) ?? -Infinity) - (rsiValue(a) ?? -Infinity));
-  byId("sectorConstituentsBody").innerHTML = sortedRows.map((stock, index) => `
+  // 2026-09-04 실측: 716행을 한 번에 그려 모바일 패널이 36,600px 였다. 50행씩 편다.
+  if (sectorConstituentsLimitEtf !== selectedSectorEtf) { sectorConstituentsLimit = 50; sectorConstituentsLimitEtf = selectedSectorEtf; }
+  const visibleRows = sortedRows.slice(0, sectorConstituentsLimit);
+  byId("sectorConstituentsCount").textContent = sortedRows.length > visibleRows.length
+    ? `${sortedRows.length}개 종목 · 상위 ${visibleRows.length}개 표시` : `${sortedRows.length}개 종목`;
+  byId("sectorConstituentsBody").innerHTML = visibleRows.map((stock, index) => `
     <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
       <td class="rank-cell">${index + 1}</td>
       <td><strong>${escapeHtml(stock.ticker)}</strong></td>
@@ -3664,6 +3672,21 @@ function renderSectorDetail() {
       selectTicker(row.dataset.ticker, { openSearch: true });
     });
   });
+  // '더 보기' — 표 바로 아래에 두고, 남은 행이 없으면 지운다.
+  const constituentsCard = byId("sectorConstituentsBody").closest(".sector-constituents-card") || byId("sectorConstituentsBody").closest(".table-wrap")?.parentElement;
+  let moreBtn = byId("sectorConstituentsMore");
+  const remainRows = sortedRows.length - visibleRows.length;
+  if (remainRows > 0) {
+    if (!moreBtn && constituentsCard) {
+      moreBtn = document.createElement("button");
+      moreBtn.type = "button"; moreBtn.id = "sectorConstituentsMore"; moreBtn.className = "ghost compact-btn list-more-btn";
+      constituentsCard.appendChild(moreBtn);
+      moreBtn.addEventListener("click", () => { sectorConstituentsLimit += 100; renderSectorDetail(); });
+    }
+    if (moreBtn) moreBtn.textContent = `더 보기 (남은 ${remainRows}개)`;
+  } else if (moreBtn) {
+    moreBtn.remove();
+  }
   
   // Draw comparison chart
   drawSectorComparisonChart(selectedSectorEtf, selectedSectorRange, selectedSectorBenchmark);
@@ -4575,7 +4598,7 @@ function renderSearchMissing(ticker) {
   const facts = byId("searchFacts");
   if (facts) {
     facts.innerHTML = `
-      <span class="muted">Search Ticker</span>
+      <span class="muted">선택 종목</span>
       <h3 class="stock-facts-head">${t}</h3>
       <p class="muted">스냅샷에 없는 종목입니다. 티커·종목명을 다시 확인하거나 자동완성 목록에서 선택해 주세요.</p>`;
   }
@@ -4587,7 +4610,7 @@ function renderSearchMissing(ticker) {
 
 function renderSearchFacts(item) {
   const el = byId("searchFacts");
-  if (el && item) el.innerHTML = stockFacts(item, "Search Ticker");
+  if (el && item) el.innerHTML = stockFacts(item, "선택 종목");
 }
 
 function renderSearch(options = {}) {
@@ -4600,12 +4623,12 @@ function renderSearch(options = {}) {
     ensureFeatureData("krAudit").then((ok) => {
       if (ok && selectedTicker === base.ticker) {
         const el = byId("searchFacts");
-        if (el) el.innerHTML = stockFacts(applyLive(withDetail(base)), "Search Ticker");
+        if (el) el.innerHTML = stockFacts(applyLive(withDetail(base)), "선택 종목");
       }
     });
   }
   byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
-  byId("searchFacts").innerHTML = stockFacts(item, "Search Ticker");
+  byId("searchFacts").innerHTML = stockFacts(item, "선택 종목");
   drawChart(item);
   renderEarningsCalendar(item);
   renderCongressTradesForTicker(item);
@@ -4625,7 +4648,7 @@ function renderSearch(options = {}) {
     if (!detail || selectedTicker !== item.ticker) return;
     const refreshed = applyLive(withDetail(base));
     byId("chartTitle").textContent = `${refreshed.ticker} · ${refreshed.company}`;
-    byId("searchFacts").innerHTML = stockFacts(refreshed, "Search Ticker");
+    byId("searchFacts").innerHTML = stockFacts(refreshed, "선택 종목");
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
     renderCongressTradesForTicker(refreshed);
@@ -4710,7 +4733,7 @@ function renderMoveExplanation(item) {
   const magnitude = Math.abs(change) >= 5 ? "큰 폭" : Math.abs(change) >= 2 ? "뚜렷한" : "제한적인";
   box.innerHTML = `
     <div class="move-explanation-head">
-      <div><span>WHY IT MOVED</span><h3>왜 ${direction}했나?</h3></div>
+      <div><h3>왜 ${direction}했나?</h3></div>
       <strong class="${cls(change)}">${fmtDailyPct(change)}</strong>
     </div>
     <p class="move-explanation-summary">${escapeHtml(item.ticker)}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
@@ -4793,7 +4816,7 @@ function renderInvestmentChecklist(item) {
   const warned = results.filter((row) => row.status === "warn").length;
   box.innerHTML = `
     <div class="investment-check-head">
-      <div><span>DECISION CHECK</span><h3>투자 체크리스트</h3></div>
+      <div><h3>투자 체크리스트</h3></div>
       <strong>${passed}/${results.length} 통과</strong>
     </div>
     <div class="investment-check-progress"><i style="width:${(passed / results.length) * 100}%"></i></div>
@@ -6567,11 +6590,13 @@ function renderTodayRegime() {
   const parts = [];
   if (strong && Number.isFinite(Number(strong.avg))) parts.push(`${strong.ko} 강세`);
   if (weak && Number.isFinite(Number(weak.avg))) parts.push(`${weak.ko} 약세`);
-  const fng = Number.isFinite(regime.fng) ? ` · 심리 ${Math.round(regime.fng)}` : "";
-  const up = Number.isFinite(regime.upPct) ? ` · 상승 종목 ${Math.round(regime.upPct * 100)}%` : "";
+  // 보조 수치는 아래 줄 캡션이라(2026-09-04) 앞에 구분점을 붙이지 않는다.
+  const metaParts = [];
+  if (Number.isFinite(regime.fng)) metaParts.push(`심리 ${Math.round(regime.fng)}`);
+  if (Number.isFinite(regime.upPct)) metaParts.push(`상승 종목 ${Math.round(regime.upPct * 100)}%`);
   el.innerHTML = `<strong class="ia-regime-tone ia-regime-${escapeHtml(regime.tone)}">${escapeHtml(regime.ko)}</strong>` +
     (parts.length ? ` <span class="ia-regime-sep">·</span> ${escapeHtml(parts.join(", "))}` : "") +
-    `<span class="ia-regime-meta">${escapeHtml(fng + up)}</span>`;
+    (metaParts.length ? `<span class="ia-regime-meta">${escapeHtml(metaParts.join(" · "))}</span>` : "");
   el.title = regime.desc || "";
 }
 

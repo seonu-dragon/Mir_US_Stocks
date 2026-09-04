@@ -57,6 +57,29 @@ jobs:
         continue-on-error: true
         run: python scripts/build_breakout_retest.py --push
 
+      # 상승확률 스캐너 순위 기준의 5년 워크포워드 검증(순수 Node, data/details 만 읽음).
+      # 스캐너의 "순위 기준" 셀렉트는 여기서 validated: true 인 팩터만 올린다 —
+      # 파일이 낡으면 검증 문구가 현재 공식과 어긋나므로 freshness 게이트(10일)에 등록.
+      - name: Build factor validation (scanner ranking)
+        continue-on-error: true
+        shell: bash
+        run: |
+          node scripts/build_factor_validation.mjs
+          if git diff --quiet data/factor_validation.json data/factor_validation.js; then
+            echo "factor validation unchanged"
+            exit 0
+          fi
+          git add data/factor_validation.json data/factor_validation.js
+          git commit -m "Auto-update factor validation (weekly)"
+          for attempt in 1 2 3; do
+            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "${GITHUB_REF_NAME}"; then
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep 10
+          done
+          exit 1
+
       # 참고: data/korea/disclosure_stats.json (신뢰도 센터 소비)은 CI 에 편입할 수
       # 없다 — build_kr_disclosure_stats.py 는 gitignore 된 로컬 아카이브
       # (data/korea/_archive, 5년 공시+일봉 백필)를 입력으로 쓴다. 로컬에서

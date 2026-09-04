@@ -1,0 +1,38 @@
+{
+  "ticker": "054940",
+  "name": "엑사이엔씨",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 738.0,
+  "return_period": 11.5,
+  "support_levels": [
+    695.0,
+    641.0
+  ],
+  "resistance_levels": [
+    750.0,
+    852.5
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 60.5,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 750 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 695 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

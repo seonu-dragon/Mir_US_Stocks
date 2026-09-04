@@ -1,0 +1,38 @@
+{
+  "ticker": "229640",
+  "name": "LS에코에너지",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 42850.0,
+  "return_period": 20.4,
+  "support_levels": [
+    38300.0
+  ],
+  "resistance_levels": [
+    47900.0,
+    72400.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 36.3,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "low",
+    "comment": "최근 고점 구간 대비 거래량은 둔화"
+  },
+  "scenario": {
+    "up": "저항 47,900 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 38,300 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성",
+    "거래량 없는 반등은 신뢰도 낮음"
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "ticker": "ROP",
+  "name": "Roper Technologies Inc.",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 390.92,
+  "return_period": -4.3,
+  "support_levels": [
+    384.0,
+    375.99
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 60.6,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 384 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "변동성 확대 시 방향성 재확인 필요"
+  ]
+}

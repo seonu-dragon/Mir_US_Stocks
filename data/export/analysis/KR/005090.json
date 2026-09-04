@@ -1,0 +1,38 @@
+{
+  "ticker": "005090",
+  "name": "SGC에너지",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 49300.0,
+  "return_period": 137.0,
+  "support_levels": [
+    45600.0,
+    38100.0
+  ],
+  "resistance_levels": [
+    49883.33,
+    57066.67
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "price_near_sma60",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 60.3,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 49,883 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 45,600 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "ticker": "032830",
+  "name": "삼성생명",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 326000.0,
+  "return_period": 101.2,
+  "support_levels": [
+    261000.0,
+    243500.0
+  ],
+  "resistance_levels": [
+    342000.0,
+    485000.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 27.3,
+    "state": "oversold"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 342,000 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 261,000 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

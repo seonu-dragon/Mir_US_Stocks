@@ -1,0 +1,35 @@
+{
+  "ticker": "ONTO",
+  "name": "Onto Innovation Inc.",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 378.45,
+  "return_period": 275.0,
+  "support_levels": [
+    250.21,
+    147.35
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "uptrend"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 70.2,
+    "state": "overbought"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 250 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "RSI 과열 구간 — 눌림 확인 필요"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "ticker": "ASTS",
+  "name": "AST SpaceMobile Inc. Class A",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 71.94,
+  "return_period": -29.3,
+  "support_levels": [
+    63.58,
+    53.06
+  ],
+  "resistance_levels": [
+    74.17,
+    95.91
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 66.1,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 74 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 64 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

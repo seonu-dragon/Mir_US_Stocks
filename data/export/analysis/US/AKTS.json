@@ -1,0 +1,35 @@
+{
+  "ticker": "AKTS",
+  "name": "Aktis Oncology Inc. Common stock",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 32.23,
+  "return_period": 43.9,
+  "support_levels": [
+    23.09,
+    20.93
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 83.2,
+    "state": "overbought"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 23 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "RSI 과열 구간 — 눌림 확인 필요"
+  ]
+}

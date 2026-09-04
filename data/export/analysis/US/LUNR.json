@@ -1,0 +1,35 @@
+{
+  "ticker": "LUNR",
+  "name": "Intuitive Machines Inc. Class A",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 13.52,
+  "return_period": -30.7,
+  "support_levels": [],
+  "resistance_levels": [
+    15.54,
+    21.21
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 17.4,
+    "state": "oversold"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 16 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "단기 이평선 및 지지선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

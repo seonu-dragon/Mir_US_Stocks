@@ -1,0 +1,37 @@
+{
+  "ticker": "021240",
+  "name": "코웨이",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 94200.0,
+  "return_period": 18.6,
+  "support_levels": [
+    92000.0,
+    84025.0
+  ],
+  "resistance_levels": [
+    99200.0
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 60.3,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 99,200 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 92,000 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

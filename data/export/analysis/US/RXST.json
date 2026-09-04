@@ -1,0 +1,38 @@
+{
+  "ticker": "RXST",
+  "name": "RxSight Inc.",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 6.38,
+  "return_period": -19.4,
+  "support_levels": [
+    5.91,
+    5.37
+  ],
+  "resistance_levels": [
+    6.53,
+    7.22
+  ],
+  "moving_average": {
+    "sma20": "price_near_sma20",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 56.6,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 7 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 6 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

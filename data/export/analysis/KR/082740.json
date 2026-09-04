@@ -1,0 +1,37 @@
+{
+  "ticker": "082740",
+  "name": "한화엔진",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 46200.0,
+  "return_period": 5.4,
+  "support_levels": [
+    43166.67
+  ],
+  "resistance_levels": [
+    51200.0,
+    59825.0
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 39.4,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 51,200 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 43,167 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

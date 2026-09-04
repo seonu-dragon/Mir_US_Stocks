@@ -1,0 +1,35 @@
+{
+  "ticker": "ASMU",
+  "name": "Direxion Daily ASML Bull 2X ETF",
+  "market": "US",
+  "period": "1Y",
+  "timeframe": "일봉",
+  "price": 42.49,
+  "return_period": 64.4,
+  "support_levels": [
+    42.0,
+    30.06
+  ],
+  "resistance_levels": [],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 60.6,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항선 재돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 42 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "변동성 확대 시 방향성 재확인 필요"
+  ]
+}

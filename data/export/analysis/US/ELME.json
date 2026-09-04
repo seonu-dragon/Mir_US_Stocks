@@ -1,0 +1,37 @@
+{
+  "ticker": "ELME",
+  "name": "Elme Communities",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 1.51,
+  "return_period": -47.2,
+  "support_levels": [
+    1.26
+  ],
+  "resistance_levels": [
+    1.62,
+    2.07
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "downtrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 27.0,
+    "state": "oversold"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 2 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 1 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

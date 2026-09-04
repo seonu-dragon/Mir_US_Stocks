@@ -1,0 +1,62 @@
+{
+  "generated": "2026-08-02 05:22 KST",
+  "tickers_scanned": 2730,
+  "params": {
+    "STEP": 20,
+    "HOLD": 60,
+    "REACTW": 20,
+    "REACT": 1.0,
+    "BREAK": 0.5
+  },
+  "methods": {
+    "OLD": {
+      "drawn": 230309,
+      "tested_decisive": 190790,
+      "reach_rate": 82.8,
+      "respect_rate": 55.1,
+      "edge_vs_random": -5.5
+    },
+    "NEW_top1": {
+      "drawn": 242180,
+      "tested_decisive": 140937,
+      "reach_rate": 58.2,
+      "respect_rate": 56.9,
+      "edge_vs_random": -3.7
+    },
+    "NEW_all": {
+      "drawn": 687458,
+      "tested_decisive": 352168,
+      "reach_rate": 51.2,
+      "respect_rate": 58.6,
+      "edge_vs_random": -2.0
+    },
+    "NEW_lowmom": {
+      "drawn": 687458,
+      "tested_decisive": 101464,
+      "reach_rate": 14.8,
+      "respect_rate": 59.9,
+      "edge_vs_random": -0.7
+    },
+    "STRONG_lm": {
+      "drawn": 242180,
+      "tested_decisive": 48481,
+      "reach_rate": 20.0,
+      "respect_rate": 58.8,
+      "edge_vs_random": -1.8
+    },
+    "RETEST": {
+      "drawn": 139916,
+      "tested_decisive": 108819,
+      "reach_rate": 77.8,
+      "respect_rate": 54.9,
+      "edge_vs_random": -5.7
+    },
+    "RANDOM": {
+      "drawn": 252352,
+      "tested_decisive": 148845,
+      "reach_rate": 59.0,
+      "respect_rate": 60.6,
+      "edge_vs_random": 0.0
+    }
+  }
+}

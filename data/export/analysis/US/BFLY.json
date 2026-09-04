@@ -1,0 +1,38 @@
+{
+  "ticker": "BFLY",
+  "name": "Butterfly Network Inc. Class A",
+  "market": "US",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 6.82,
+  "return_period": 65.1,
+  "support_levels": [
+    5.72,
+    4.38
+  ],
+  "resistance_levels": [
+    8.94,
+    9.69
+  ],
+  "moving_average": {
+    "sma20": "downtrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 33.0,
+    "state": "bearish"
+  },
+  "volume": {
+    "state": "normal",
+    "comment": "거래량은 평균 수준"
+  },
+  "scenario": {
+    "up": "저항 9 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 6 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "ticker": "179530",
+  "name": "애드바이오텍",
+  "market": "KR",
+  "period": "6M",
+  "timeframe": "일봉",
+  "price": 2560.0,
+  "return_period": 55.2,
+  "support_levels": [
+    2417.5,
+    2055.0
+  ],
+  "resistance_levels": [
+    2658.33,
+    2825.0
+  ],
+  "moving_average": {
+    "sma20": "uptrend",
+    "sma60": "uptrend",
+    "sma200": "unknown"
+  },
+  "rsi": {
+    "period": 14,
+    "value": 65.2,
+    "state": "bullish"
+  },
+  "volume": {
+    "state": "high",
+    "comment": "최근 구간 거래량이 평균 대비 증가"
+  },
+  "scenario": {
+    "up": "저항 2,658 돌파와 거래량 동반 시 상승 시나리오 유지",
+    "down": "지지 2,418 및 단기 추세선 이탈 시 관망 필요"
+  },
+  "risk_points": [
+    "저항선 돌파 실패 시 단기 조정 가능성"
+  ]
+}

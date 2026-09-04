@@ -3,17 +3,10 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
-// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
-// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
-if (!window.safeStorage) {
-  window.safeStorage = {
-    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
-    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
-    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
-    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
-    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
-  };
-}
+// 저장소 접근은 storage.js 의 window.safeStorage 하나만 거친다(index.html 에서 이 파일보다
+// 먼저 로드). 예전엔 여기에도 같은 7줄 폴백이 복사돼 있었다(WEBSITE_INSPECTION_REPORT §5-①).
+// 혹시 빠졌을 때 파일 전체가 ReferenceError 로 죽지 않도록 무동작 스텁만 한 줄로 둔다.
+if (!window.safeStorage) window.safeStorage = { get(_, f = null) { return f; }, set() { return false; }, remove() { return false; }, getJSON(_, f = null) { return f; }, setJSON() { return false; } };
 
 const COMMUNITY_SNS_CHANNELS = [
   {
@@ -232,6 +225,105 @@ const COMMUNITY_HIDDEN_KEY = "mir_community_hidden_v1";
 const COMMUNITY_ADMIN_KEY_LS = "mir_community_admin_key_v1";
 let communityVotePeriod = "day";
 
+// ----- 낙관적 반영(WEBSITE_INSPECTION_REPORT §4-③) -----
+// COMMUNITY_DO 가 없는 KV 폴백 환경에선 글·댓글·좋아요가 서버에서 201 로 받아들여져도
+// 곧바로 목록을 다시 읽으면 엣지 동기화 지연(최종 일관성)으로 직전 상태가 올 수 있다.
+// 그래서 (1) 서버가 돌려준 항목을 로컬 목록에 즉시 병합해 그리고, (2) 그 항목을
+// 오버레이에 TTL 과 함께 적어 두었다가 이후 poll 응답에 아직 없으면 다시 얹는다.
+// 서버 목록에 나타나면(수렴) 오버레이에서 지운다. 모든 병합은 id 로 dedupe 하므로
+// poll 이 몇 번을 돌아도 같은 글이 두 번 들어가지 않는다.
+const COMMUNITY_OVERLAY_TTL_MS = 90000;
+const communityOverlay = { posts: new Map(), comments: new Map(), likes: new Map() };
+
+// 서버 create 응답의 post/comment 는 원본(clientId 포함)이다 → 목록 응답과 같은 공개 모양으로.
+function communityPublicPost(post) {
+  const { clientId, likes, reports, ...rest } = post || {};
+  return { ...rest, mine: true, likeCount: 0, liked: false, comments: [] };
+}
+
+function communityPublicComment(comment) {
+  const { clientId, reports, ...rest } = comment || {};
+  return { ...rest, mine: true };
+}
+
+function communityPruneOverlay(now = Date.now()) {
+  for (const map of [communityOverlay.posts, communityOverlay.likes]) {
+    for (const [k, v] of map) if (v.until <= now) map.delete(k);
+  }
+  for (const [postId, byCid] of communityOverlay.comments) {
+    for (const [k, v] of byCid) if (v.until <= now) byCid.delete(k);
+    if (!byCid.size) communityOverlay.comments.delete(postId);
+  }
+}
+
+// 서버 목록 위에 오버레이를 얹는다(멱등). 서버가 이미 반영한 항목은 오버레이에서 지운다.
+function communityApplyOverlay(serverPosts) {
+  communityPruneOverlay();
+  const posts = (Array.isArray(serverPosts) ? serverPosts : [])
+    .map((p) => ({ ...p, comments: Array.isArray(p.comments) ? [...p.comments] : [] }));
+  const byId = new Map(posts.map((p) => [p.id, p]));
+  for (const [id, entry] of communityOverlay.posts) {
+    if (byId.has(id)) { communityOverlay.posts.delete(id); continue; }
+    posts.unshift(entry.post);
+    byId.set(id, entry.post);
+  }
+  for (const [postId, byCid] of communityOverlay.comments) {
+    const post = byId.get(postId);
+    if (!post) continue;
+    const have = new Set(post.comments.map((c) => c.id));
+    for (const [cid, entry] of byCid) {
+      if (have.has(cid)) { byCid.delete(cid); continue; }
+      post.comments.push(entry.comment);
+    }
+    if (!byCid.size) communityOverlay.comments.delete(postId);
+  }
+  for (const [postId, entry] of communityOverlay.likes) {
+    const post = byId.get(postId);
+    if (!post) continue;
+    if (post.liked === entry.liked && communityLikeCount(post) === entry.likeCount) {
+      communityOverlay.likes.delete(postId);
+      continue;
+    }
+    post.liked = entry.liked;
+    post.likeCount = entry.likeCount;
+    delete post.likes;
+  }
+  return posts;
+}
+
+function communityMergePost(post) {
+  if (!post || !post.id) return;
+  const pub = communityPublicPost(post);
+  communityOverlay.posts.set(pub.id, { post: pub, until: Date.now() + COMMUNITY_OVERLAY_TTL_MS });
+  if (!communityPostsCache.some((p) => p.id === pub.id)) communityPostsCache = [pub, ...communityPostsCache];
+  if (communitySeenPostIds) communitySeenPostIds.add(pub.id); // 내 글이 "새 소식" 배너로 잡히지 않게
+}
+
+function communityMergeComment(postId, comment) {
+  if (!postId || !comment || !comment.id) return;
+  const pub = communityPublicComment(comment);
+  let byCid = communityOverlay.comments.get(postId);
+  if (!byCid) { byCid = new Map(); communityOverlay.comments.set(postId, byCid); }
+  byCid.set(pub.id, { comment: pub, until: Date.now() + COMMUNITY_OVERLAY_TTL_MS });
+  const post = communityPostsCache.find((p) => p.id === postId);
+  if (post) {
+    const list = Array.isArray(post.comments) ? post.comments : [];
+    if (!list.some((c) => c.id === pub.id)) post.comments = [...list, pub];
+  }
+  if (communitySeenCommentIds) communitySeenCommentIds.add(pub.id);
+}
+
+function communityMergeLike(postId, likeCount, liked) {
+  if (!postId || typeof likeCount !== "number") return;
+  communityOverlay.likes.set(postId, { likeCount, liked: liked === true, until: Date.now() + COMMUNITY_OVERLAY_TTL_MS });
+  const post = communityPostsCache.find((p) => p.id === postId);
+  if (post) {
+    post.likeCount = likeCount;
+    post.liked = liked === true;
+    delete post.likes;
+  }
+}
+
 function getCommunityHiddenIds() {
   const arr = window.safeStorage.getJSON(COMMUNITY_HIDDEN_KEY, []);
   return new Set(Array.isArray(arr) ? arr : []);
@@ -434,13 +526,49 @@ async function reportCommunityPost(postId) {
 // ===== 투표 페이지 (하루 1표 · 일/주/월 순위) =====
 let communityVoteSelectedChoice = null;
 let communityVoteMyToday = null;
+// 마지막으로 받은 순위(낙관적 반영의 바탕)와, 방금 던진 내 표(서버가 아직 안 보여주면 TTL 동안 얹는다).
+let communityVoteRankingCache = null;
+let communityVoteLocal = null;
+
+// 서버 순위 위에 내 표를 얹는다: 오늘 이미 던진 표(prev)가 있었으면 그 칸을 빼고 새 표를 더한다.
+// (하루 1표 교체 규칙이라 일/주/월 어느 기간에도 오늘 표는 포함된다.)
+function communityApplyVoteLocal(rank) {
+  if (!communityVoteLocal || communityVoteLocal.until <= Date.now()) { communityVoteLocal = null; return rank; }
+  const rows = new Map();
+  for (const row of [...(rank.buyRanking || []), ...(rank.sellRanking || [])]) {
+    if (!rows.has(row.ticker)) rows.set(row.ticker, { ticker: row.ticker, total: row.total || 0, buy: row.buy || 0, sell: row.sell || 0 });
+  }
+  const bump = (v, delta) => {
+    if (!v || !v.ticker || !COMMUNITY_VOTE_META[v.choice]) return;
+    if (!rows.has(v.ticker)) rows.set(v.ticker, { ticker: v.ticker, total: 0, buy: 0, sell: 0 });
+    const row = rows.get(v.ticker);
+    row.total = Math.max(0, row.total + delta);
+    row[v.choice] = Math.max(0, row[v.choice] + delta);
+  };
+  bump(communityVoteLocal.prev, -1);
+  bump(communityVoteLocal.vote, +1);
+  const all = [...rows.values()];
+  return {
+    buyRanking: all.filter((r) => r.buy > 0).sort((a, b) => b.buy - a.buy || b.total - a.total).slice(0, 20),
+    sellRanking: all.filter((r) => r.sell > 0).sort((a, b) => b.sell - a.sell || b.total - a.total).slice(0, 20),
+    totalVotes: Math.max(0, (rank.totalVotes || 0) + (communityVoteLocal.prev ? 0 : 1)),
+  };
+}
+
+function renderCommunityVoteMine() {
+  const mine = byId("communityVoteMine");
+  if (!mine) return;
+  mine.textContent = communityVoteMyToday
+    ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
+    : "오늘은 아직 투표하지 않았습니다.";
+}
 
 const COMMUNITY_VOTE_META = {
   buy: { label: "매수", color: "var(--green)" },
   sell: { label: "매도", color: "var(--red)" },
 };
 
-function renderCommunityVote() {
+function renderCommunityVote({ optimistic = false } = {}) {
   const choicesBox = byId("communityVoteChoices");
   if (choicesBox) {
     choicesBox.querySelectorAll(".community-vote-choice").forEach((btn) => {
@@ -450,35 +578,40 @@ function renderCommunityVote() {
   byId("communityVoteRankTabs")?.querySelectorAll(".community-rank-tab").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.period === communityVotePeriod);
   });
-  const mine = byId("communityVoteMine");
-  if (mine) {
-    mine.textContent = communityVoteMyToday
-      ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
-      : "오늘은 아직 투표하지 않았습니다.";
+  renderCommunityVoteMine();
+  if (optimistic && communityVoteRankingCache) {
+    // 방금 던진 표를 직전 순위 위에 얹어 즉시 그리고, 서버 확인은 조용히 뒤따른다.
+    const shown = communityApplyVoteLocal(communityVoteRankingCache);
+    renderCommunityVoteRanking(shown.buyRanking, shown.sellRanking, shown.totalVotes);
+    fetchCommunityVotes({ silent: true });
+    return;
   }
   fetchCommunityVotes();
 }
 
-async function fetchCommunityVotes() {
+async function fetchCommunityVotes({ silent = false } = {}) {
   const box = byId("communityVoteRanking");
   if (!box) return;
   const url = communityApiUrl(`/community/votes?period=${encodeURIComponent(communityVotePeriod)}&clientId=${encodeURIComponent(getCommunityClientId())}`);
   if (!url) { box.innerHTML = `<div class="community-empty">투표 기능을 사용할 수 없습니다.</div>`; return; }
-  box.innerHTML = `<div class="community-empty">순위를 불러오는 중…</div>`;
+  if (!silent) box.innerHTML = `<div class="community-empty">순위를 불러오는 중…</div>`;
   try {
     const res = await fetch(url, { cache: "no-store" });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || "load_failed");
-    communityVoteMyToday = data.myToday || null;
-    const mine = byId("communityVoteMine");
-    if (mine) {
-      mine.textContent = communityVoteMyToday
-        ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
-        : "오늘은 아직 투표하지 않았습니다.";
+    communityVoteRankingCache = { buyRanking: data.buyRanking || [], sellRanking: data.sellRanking || [], totalVotes: data.totalVotes || 0 };
+    const serverMine = data.myToday || null;
+    const local = communityVoteLocal && communityVoteLocal.until > Date.now() ? communityVoteLocal : null;
+    if (local && serverMine && serverMine.ticker === local.vote.ticker && serverMine.choice === local.vote.choice) {
+      communityVoteLocal = null; // 서버가 내 표를 반영했다(수렴)
     }
-    renderCommunityVoteRanking(data.buyRanking || [], data.sellRanking || [], data.totalVotes || 0);
+    // KV 지연으로 서버가 아직 직전 상태를 주면 TTL 동안은 내 표를 유지한다.
+    communityVoteMyToday = communityVoteLocal ? communityVoteLocal.vote : serverMine;
+    renderCommunityVoteMine();
+    const shown = communityApplyVoteLocal(communityVoteRankingCache);
+    renderCommunityVoteRanking(shown.buyRanking, shown.sellRanking, shown.totalVotes);
   } catch (err) {
-    box.innerHTML = `<div class="community-empty">순위를 불러오지 못했습니다.</div>`;
+    if (!silent) box.innerHTML = `<div class="community-empty">순위를 불러오지 못했습니다.</div>`;
   }
 }
 
@@ -552,9 +685,14 @@ async function submitCommunityVote() {
       showAppToast(data.message || data.error || "투표 실패", 3200);
       return;
     }
+    // 서버가 받아준 표를 즉시 반영(§4-③). 서버 응답의 vote 가 없으면 보낸 값으로.
+    const accepted = data.vote && data.vote.ticker ? data.vote : { ticker, choice: communityVoteSelectedChoice, at: new Date().toISOString() };
+    const prev = communityVoteMyToday ? { ticker: communityVoteMyToday.ticker, choice: communityVoteMyToday.choice } : null;
+    communityVoteMyToday = { ticker: accepted.ticker, choice: accepted.choice, at: accepted.at };
+    communityVoteLocal = { vote: communityVoteMyToday, prev, until: Date.now() + COMMUNITY_OVERLAY_TTL_MS };
     communityVoteSelectedChoice = null;
     if (tickerInput) tickerInput.value = "";
-    renderCommunityVote();
+    renderCommunityVote({ optimistic: true });
   } catch (err) {
     showAppToast((err && err.message) || "투표에 실패했습니다.", 3200);
   } finally {
@@ -710,8 +848,13 @@ async function toggleCommunityLike(postId) {
     const data = await res.json();
     if (!res.ok) {
       showAppToast(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.error || "공감 처리 실패"), 3200);
+      await fetchCommunityPosts({ silent: true }); // 실패면 서버 상태로 되돌린다
+      return;
     }
-    await fetchCommunityPosts({ silent: true });
+    // 서버 집계값(likeCount/liked)을 즉시 병합해 그린다. 바로 다시 읽으면 KV 지연으로
+    // 되돌아갈 수 있으므로 재조회는 poll 에 맡기고, poll 이 옛값을 줘도 오버레이가 덮는다.
+    communityMergeLike(postId, data.likeCount, data.liked);
+    renderCommunityBoard();
   } catch (err) {
     await fetchCommunityPosts({ silent: true });
   }
@@ -1069,7 +1212,8 @@ async function fetchCommunityPosts({ silent = false } = {}) {
         throw new Error(data.message || data.error || `HTTP ${res.status}`);
       }
       communityBoardError = data.error === "no_community_kv" ? "no_community_kv" : "";
-      communityPostsCache = Array.isArray(data.posts) ? data.posts : [];
+      // 서버 목록 위에 아직 수렴 안 된 내 글·댓글·좋아요를 얹는다(id dedupe → 멱등).
+      communityPostsCache = communityApplyOverlay(Array.isArray(data.posts) ? data.posts : []);
       communityUpdateNewBanner(communityPostsCache);
     } catch (err) {
       if (!silent) communityBoardError = (err && err.message) || "네트워크 오류";
@@ -1145,8 +1289,12 @@ async function postCommunityMessage() {
     communitySortMode = "latest";
     communityBoardPage = 1;
     communityClearNewBanner();
-    await fetchCommunityPosts();
+    // 서버가 돌려준 글을 즉시 병합해 그린다(§4-③) — KV 폴백에선 곧바로 다시 읽어도
+    // 안 보일 수 있다. 재조회는 조용히 뒤따르고, 옛 목록이 와도 오버레이가 글을 유지한다.
+    if (data.post && data.post.id) communityMergePost(data.post);
+    renderCommunityBoard();
     if (data.post && data.post.id) communityHighlightPost(data.post.id);
+    fetchCommunityPosts({ silent: true });
   } catch (err) {
     showAppToast((err && err.message) || "글 등록에 실패했습니다.", 3200);
   } finally {
@@ -1186,7 +1334,9 @@ async function postCommunityComment(postId, rawContent) {
     }
     communityReplyPostId = null;
     communityBoardError = "";
-    await fetchCommunityPosts();
+    if (data.comment && data.comment.id) communityMergeComment(data.postId || postId, data.comment);
+    renderCommunityBoard();
+    fetchCommunityPosts({ silent: true });
   } catch (err) {
     showAppToast((err && err.message) || "댓글 등록에 실패했습니다.", 3200);
   }

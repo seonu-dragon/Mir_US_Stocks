@@ -727,7 +727,7 @@ html[data-theme="dark"] {
               <option value="ytdChangePct">YTD 등락률</option>
               <option value="rsi14">RSI (14)</option>
               <option value="epsTtm">EPS (TTM)</option>
-              <option value="stochK">StochK 14</option>
+              <option value="stochK">52주 레인지 위치</option>
             </select>
             <select id="metricSelValue" class="ia-metric-select" aria-label="밸류에이션 세부 지표" hidden>
               <option value="pe">P/E</option>
@@ -773,7 +773,7 @@ html[data-theme="dark"] {
                 <option value="ytdChangePct">YTD 등락률</option>
                 <option value="rsi14">RSI (14)</option>
                 <option value="epsTtm">EPS (TTM)</option>
-                <option value="stochK">StochK 14</option>
+                <option value="stochK">52주 레인지 위치</option>
               </optgroup>
               <optgroup label="밸류에이션 (낮을수록 초록)">
                 <option value="pe">P/E</option>
@@ -1447,7 +1447,7 @@ html[data-theme="dark"] {
               <option value="ytdChangePct">YTD 등락률</option>
               <option value="rsi14">RSI 14</option>
               <option value="epsTtm">EPS (TTM)</option>
-              <option value="stochK">StochK 14</option>
+              <option value="stochK">52주 레인지 위치</option>
               <option value="volumeRatio">거래량 배율</option>
               <option value="marketCapB">시가총액</option>
               <option value="pe">P/E</option>
@@ -1658,7 +1658,15 @@ html[data-theme="dark"] {
 
         <div class="sub-panel" id="sub-scanner">
           <div class="ia-find-head">
-            <p class="muted" id="scannerMeta">기술적 지표를 종합해 상승 확률이 높은 종목을 순위로 보여줍니다.</p>
+            <p class="muted" id="scannerMeta">기술적 지표를 종합한 모멘텀 점수로 종목을 순위화합니다. 확률이 아니라 점수이며, 과거 5년 검증을 통과한 순위 기준만 아래 셀렉트에 올라옵니다.</p>
+            <p class="muted scan-evidence-line" id="scannerEvidence" hidden></p>
+          </div>
+          <div class="scan-rank-row">
+            <label>
+              순위 기준
+              <select id="scanRank"><option value="quick">모멘텀 점수(기존)</option></select>
+            </label>
+            <p class="muted scan-rank-note" id="scannerRankNote" hidden></p>
           </div>
           <details class="ia-fold ia-adv">
             <summary>고급 필터</summary>
@@ -1692,8 +1700,8 @@ html[data-theme="dark"] {
                   <option value="96">96</option>
                 </select>
               </label>
-              <label class="scan-deep-toggle">
-                정밀 분석
+              <label class="scan-deep-toggle" title="표시된 종목만 5년 일봉을 받아 차트 확률 엔진의 기술 점수로 다시 정렬합니다. 이 점수도 과거 검증에서 기저율과 유의차가 없습니다.">
+                차트 기술 점수로 재정렬
                 <input id="scanDeep" type="checkbox" checked>
               </label>
               <button type="button" class="ghost" id="scanRefresh">새로고침</button>

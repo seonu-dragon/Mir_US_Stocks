@@ -338,11 +338,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5182eff888" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5182eff888"></noscript>
+    <link rel="preload" href="styles.css?v=ed5a31e87c" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=ed5a31e87c"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=5cca8fb19e"></script>
+    <script src="build_id.js?v=21d87fa83c"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2779,19 +2779,19 @@ html[data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=a09225e20e"></script>
     <script src="portfolio.js?v=6da14c46c5"></script>
-    <script src="screener.js?v=428f41c881"></script>
+    <script src="screener.js?v=09f85e8137"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=667899cb20"></script>
     <script src="feature-data.js?v=24bc98ba70"></script>
     <script src="treemap.js?v=28bd59877f"></script>
     <script src="signals.js?v=74f9dcf1e8"></script>
-    <script src="chart.js?v=e2ddd48dd9"></script>
+    <script src="chart.js?v=352eaa8d5d"></script>
     <script src="institutional.js?v=dbc43a51e7"></script>
     <script src="markets-etf.js?v=90b03e3b32"></script>
     <script src="kr-panels.js?v=600059f917"></script>
-    <script src="watchlist.js?v=6ed7e1887e"></script>
-    <script src="app.js?v=2ff8f3e72e"></script>
+    <script src="watchlist.js?v=84147da410"></script>
+    <script src="app.js?v=81c2c05c94"></script>
     <script src="ai-cosmos.js?v=34ae1c62ad"></script>
     <script src="ai-mode-welcome.js?v=27756a7066"></script>
   </body>

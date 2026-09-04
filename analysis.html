@@ -109,9 +109,6 @@
   --fs-body: 15px;
   --fs-sub: 13px;
   --fs-cap: 12px;
-  --fs-stat: var(--fs-h3);
-  --fs-stat-sm: var(--fs-h3);
-  --fs-table: var(--fs-sub);
   --fs-label: var(--fs-cap);
   --fw-semibold: 600;
   --fw-bold: 700;
@@ -132,6 +129,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
+  font-size: var(--fs-body);
   font-family: "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
     "Apple SD Gothic Neo", "Malgun Gothic", Arial, "Noto Sans KR", sans-serif;
   line-height: 1.5;
@@ -298,7 +296,7 @@ html[data-theme="dark"] {
     <noscript><link rel="stylesheet" href="styles.css?v=322fd0333a"></noscript>
     <style>
       .ca-main { max-width: 960px; margin: 0 auto; padding: 16px 16px 80px; }
-      .ca-intro { color: var(--muted); font-size: var(--fs-body); line-height: 1.6; margin: 4px 0 18px; }
+      .ca-intro { color: var(--muted); font-size: var(--fs-body); line-height: 1.65; margin: 4px 0 18px; }
       .ca-search { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
       .ca-search input { flex: 1 1 220px; padding: 0 14px; font-size: var(--fs-h3); border: 1px solid var(--line);
         border-radius: var(--r-md); background: var(--panel); color: var(--text); }
@@ -318,7 +316,7 @@ html[data-theme="dark"] {
       .head-card { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
         padding: 16px 18px; background: var(--panel); border-radius: var(--r-lg); margin-bottom: 14px; }
       .head-card h2 { margin: 0 0 4px; font-size: var(--fs-h2); }
-      .head-card .muted { font-weight: 500; font-size: var(--fs-body); }
+      .head-card .muted { font-weight: 400; font-size: var(--fs-body); }
       .head-card p { margin: 0; font-size: var(--fs-sub); }
       .verdict { font-size: var(--fs-h3); font-weight: 700; white-space: nowrap; }
 
@@ -338,9 +336,9 @@ html[data-theme="dark"] {
       .cprob-rstack > .card { margin-bottom: 0; }
       .card { background: var(--panel); border-radius: var(--r-lg); padding: 14px 16px; }
       .card h3 { margin: 0 0 12px; font-size: var(--fs-h3); }
-      .card h3 .muted { font-weight: 500; font-size: var(--fs-cap); }
+      .card h3 .muted { font-weight: 400; font-size: var(--fs-cap); }
       .sig-group { margin-bottom: 12px; }
-      .sig-group h4 { margin: 0 0 6px; font-size: var(--fs-cap); font-weight: 500; }
+      .sig-group h4 { margin: 0 0 6px; font-size: var(--fs-sub); font-weight: 600; }
       .sig-group h4.bull { color: var(--pos); }
       .sig-group h4.bear { color: var(--neg); }
       .sig-group h4.neu { color: var(--muted); }
@@ -352,10 +350,10 @@ html[data-theme="dark"] {
       .sig-row.is-bear .sig-arrow { color: var(--neg); }
       .sig-row.is-neutral .sig-arrow { color: var(--muted); }
       .sig-label { font-weight: 600; }
-      .sig-detail { color: var(--muted); font-size: var(--fs-cap); }
+      .sig-detail { color: var(--muted); font-size: var(--fs-sub); }
       .sig-strength { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 
-      .base-line { font-size: var(--fs-body); line-height: 1.6; margin: 0 0 12px; }
+      .base-line { font-size: var(--fs-body); line-height: 1.65; margin: 0 0 12px; }
       .base-stats { display: flex; gap: 16px; flex-wrap: wrap; }
       .base-stats > div { display: flex; flex-direction: column; }
       .base-stats span { font-size: var(--fs-cap); }
@@ -368,17 +366,17 @@ html[data-theme="dark"] {
       .pat-tag { font-size: var(--fs-cap); padding: 1px 7px; border-radius: var(--r-pill);
         background: var(--chip-bg); color: var(--primary); border: 1px solid var(--chip-border); }
       .pat-when { font-size: var(--fs-cap); }
-      .pat-stat { margin: 0; font-size: var(--fs-sub); line-height: 1.6; }
-      .pat-edge { margin-left: 6px; font-size: var(--fs-cap); font-weight: 700; }
+      .pat-stat { margin: 0; font-size: var(--fs-sub); line-height: 1.65; }
+      .pat-edge { margin-left: 6px; font-size: var(--fs-sub); font-weight: 700; }
       .pat-edge.pos { color: var(--pos); }
       .pat-edge.neg { color: var(--neg); }
-      .pat-note { font-size: var(--fs-cap); line-height: 1.5; margin: 10px 0 0; }
+      .pat-note { font-size: var(--fs-sub); line-height: 1.65; margin: 10px 0 0; }
 
       .sr-line { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-body); gap: 8px; }
       .sr-line b { font-size: var(--fs-h3); }
       .sr-cur b { color: var(--primary); }
 
-      .disclaimer { margin-top: 16px; padding: 12px 14px; font-size: var(--fs-cap); line-height: 1.6;
+      .disclaimer { margin-top: 16px; padding: 12px 14px; font-size: var(--fs-sub); line-height: 1.65;
         color: var(--tint-warn-fg); background: var(--tint-warn); border-radius: var(--r-md); }
 
       /* 상세 분석 접이식(네이티브 <details>) — JS 없이 접힘/펼침 */

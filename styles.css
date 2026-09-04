@@ -9388,13 +9388,25 @@ html[data-density="compact"] .insider-table td { padding-top: 5px; padding-botto
 /* 차트 상승확률 분석 패널 (.cprob) — 대시보드 종목 차트 아래에 표시.        */
 /* analysis.html 의 결과 마크업과 동일 구조를 .cprob 로 스코프해 공유한다.   */
 /* ===================================================================== */
+/* 상승확률 분석은 차트 화면의 주요 기능이다. 예전엔 "⋯ 차트 설정" 아코디언 안에
+   있어 열어야만 보였다(2026-09-04 지시) — 명령 바에 채움 버튼으로 둔다. */
 .chart-prob-btn {
-  padding: 6px 12px; font-size: var(--fs-sub); font-weight: 700; cursor: pointer;
+  margin-left: auto; min-height: 36px; padding: 6px 14px;
+  font-size: var(--fs-sub); font-weight: 600; cursor: pointer; white-space: nowrap;
   border: 1px solid var(--primary); border-radius: var(--r-pill);
-  background: var(--chip-bg); color: var(--primary); white-space: nowrap;
+  background: var(--primary); color: #fff;
 }
-.chart-prob-btn:hover { background: var(--primary); color: #fff; }
-.chart-prob-btn.is-active { background: var(--primary); color: #fff; }
+.chart-prob-btn:hover { filter: brightness(1.06); }
+.chart-prob-btn.is-active { background: var(--panel); color: var(--primary); }
+.cprob-chart-toggles { margin-top: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); }
+.cprob-chart-toggles > summary { cursor: pointer; padding: 10px 14px; font-size: var(--fs-sub); font-weight: 600; list-style: none; display: flex; align-items: center; gap: 8px; }
+.cprob-chart-toggles > summary::-webkit-details-marker { display: none; }
+.cprob-chart-toggles > summary::before { content: '›'; display: inline-block; transition: transform 0.15s; color: var(--muted); }
+.cprob-chart-toggles[open] > summary::before { transform: rotate(90deg); }
+.cprob-chart-toggles > summary .muted { font-weight: 400; }
+.cprob-chart-toggles[open] > summary { border-bottom: 1px solid var(--line); }
+.cprob-chart-toggles .cprob-chart-toggle { padding: 10px 14px 0; }
+.cprob-chart-toggles .cprob-chart-toggle:last-child { padding-bottom: 12px; }
 
 #chartProbPanel.cprob {
   margin-top: 14px;
@@ -13394,7 +13406,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 #krOwnKinds { display: none; }
 .ia-chart-bar { margin-bottom: 8px; }
 .ia-chart-main { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.ia-chart-settings-btn { margin-left: auto; min-height: 36px; }
+.ia-chart-settings-btn { margin-left: 0; min-height: 36px; }
 .ia-chart-settings-btn.is-active { border-color: var(--blue); color: var(--blue); }
 .ia-chart-settings { margin-top: 10px; }
 .ia-chart-settings > summary { display: none; }

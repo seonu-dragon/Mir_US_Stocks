@@ -316,9 +316,9 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=e0f131c723" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=e0f131c723"></noscript>
-    <script src="build_id.js?v=b2f74f6889"></script>
+    <link rel="preload" href="styles.css?v=ffc4e8bd2c" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=ffc4e8bd2c"></noscript>
+    <script src="build_id.js?v=b3897320cb"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1235,6 +1235,7 @@ html[data-theme="dark"] {
                   <span class="control-caption">프리셋</span>
                   <div class="segmented ia-builtin" id="chartBuiltinPresets"></div>
                 </div>
+                <button type="button" id="chartProbBtn" class="primary chart-prob-btn" title="이동평균선·지지/저항을 차트에 표시하고 상승 확률을 계산합니다">상승확률 분석</button>
                 <button type="button" class="ghost compact-btn ia-chart-settings-btn" id="chartSettingsBtn" aria-expanded="false" aria-controls="chartSettingsPanel">⋯ 차트 설정</button>
               </div>
               <details class="chart-settings-panel ia-chart-settings" id="chartSettingsPanel">
@@ -1273,10 +1274,6 @@ html[data-theme="dark"] {
                     <button type="button" data-draw="fib" title="피보나치 되돌림">≣</button>
                     <button type="button" id="chartDrawClear" title="그린 선 지우기">✕</button>
                   </div>
-                </div>
-                <div class="control-group compact-control-group">
-                  <span class="control-caption">분석</span>
-                  <button type="button" id="chartProbBtn" class="chart-prob-btn" title="이동평균선·지지/저항을 차트에 표시하고 상승 확률을 계산합니다">상승확률 분석</button>
                 </div>
                 </div>
               <div class="chart-compare-bar">
@@ -2777,7 +2774,7 @@ html[data-theme="dark"] {
     <script src="feature-data.js?v=d344de1db3"></script>
     <script src="treemap.js?v=213b789e37"></script>
     <script src="signals.js?v=74f9dcf1e8"></script>
-    <script src="chart.js?v=46e6766868"></script>
+    <script src="chart.js?v=0b0e9e42ca"></script>
     <script src="institutional.js?v=dbc43a51e7"></script>
     <script src="markets-etf.js?v=90b03e3b32"></script>
     <script src="kr-panels.js?v=8bfb92cc2e"></script>

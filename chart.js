@@ -359,9 +359,11 @@ function buildChartProbPanel(result) {
       <span class="cprob-title">상승확률 분석</span>
       <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
       <div class="cprob-hz-group" role="group" aria-label="패턴 통계 기준">${statsBtns}</div>
-    </div>
-    <div id="cprobChartControls"></div>`;
-  return toolbar + window.MirProb.buildResultHTML(result);
+    </div>`;
+  // 결론(판정·브리핑·확률)이 먼저 보여야 한다. 차트에 무엇을 그릴지 고르는 토글
+  // 51개는 결과 아래 접힌 섹션으로 둔다(2026-09-04: 토글이 결론 위에 3줄로
+  // 나열돼 주요 기능이 설정 화면처럼 보였다).
+  return toolbar + window.MirProb.buildResultHTML(result) + `<div id="cprobChartControls"></div>`;
 }
 
 function bindChartProbHorizon() {
@@ -482,7 +484,9 @@ function fillCprobChartControls() {
   const pt = chartState.patternTypes;
   const patternBoxes = PATTERN_TYPE_LABELS.map(([k, l]) =>
     `<label class="cprob-chip"><input type="checkbox" data-pt="${k}"${pt[k] ? " checked" : ""}><span>${l}</span></label>`).join("");
-  host.innerHTML = `<div class="cprob-chart-toggle">
+  host.innerHTML = `<details class="cprob-chart-toggles">
+    <summary>차트에 표시할 요소 <span class="muted">오버레이 · 레벨선 · 패턴</span></summary>
+    <div class="cprob-chart-toggle">
       <span class="cprob-toggle-title">차트 오버레이</span>
       <div class="cprob-checkbox-group" role="group" aria-label="차트 오버레이">${overlayBoxes}</div>
     </div>
@@ -493,7 +497,8 @@ function fillCprobChartControls() {
     <div class="cprob-chart-toggle">
       <span class="cprob-toggle-title">차트 패턴</span>
       <div class="cprob-checkbox-group" role="group" aria-label="차트 패턴">${patternBoxes}</div>
-    </div>`;
+    </div>
+  </details>`;
   host.querySelectorAll("input[data-overlay]").forEach((cb) => {
     cb.addEventListener("change", (e) => {
       const id = e.target.dataset.overlay;

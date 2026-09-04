@@ -1179,7 +1179,7 @@ function aiSnowflakePanel(item) {
     <div style="flex:1;min-width:150px">
       <div style="font-size:13px;color:var(--muted);margin-bottom:8px">종합 <b style="color:var(--text)">${total}/30</b> · 통과한 재무 체크</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;font-size:12px">${checks}</div>
-      <div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">각 축 = PER·PBR·성장·부채·ROE·배당 등 최대 6개 체크 중 통과 개수. 예측 점수가 아니라 재무 상태 요약입니다.</div>
+      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">각 축 = PER·PBR·성장·부채·ROE·배당 등 최대 6개 체크 중 통과 개수. 예측 점수가 아니라 재무 상태 요약입니다.</div>
     </div>
   </div>`;
   return aiModePanel("종목 체력", "스노우플레이크 · 재무 체크", body);
@@ -1218,7 +1218,7 @@ function aiDcfPanel(item) {
     { label: "현재가", value: cfg.formatPrice(price) },
     { label: "상/하방", value: `${up > 0 ? "+" : ""}${up.toFixed(0)}%`, tone },
     { label: "가정 성장률", value: `${d.growth.toFixed(0)}%` },
-  ]) + `<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.5">2단계 DCF · ${d.basedOn} 기준 · 할인율 9% · 영구성장 2.5%. <b>가정에 매우 민감</b>해 정답이 아니라 참고 앵커입니다.</div>`;
+  ]) + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">2단계 DCF · ${d.basedOn} 기준 · 할인율 9% · 영구성장 2.5%. <b>가정에 매우 민감</b>해 정답이 아니라 참고 앵커입니다.</div>`;
   return aiModePanel("적정주가 DCF", "현금흐름 할인 · 참고용", body);
 }
 
@@ -1345,7 +1345,7 @@ function aiFactorPanel(item) {
     </div>`;
   };
   const body = axes.map(([n, v]) => bar(n, v)).join("")
-    + `<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5">시장 내 백분위(0~100). 밸류=저평가·모멘텀=3개월 상대강세·퀄리티=ROE·마진·저부채·성장=매출성장/RS·규모=시총. 예측이 아니라 동종 대비 위치입니다.</div>`;
+    + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">시장 내 백분위(0~100). 밸류=저평가·모멘텀=3개월 상대강세·퀄리티=ROE·마진·저부채·성장=매출성장/RS·규모=시총. 예측이 아니라 동종 대비 위치입니다.</div>`;
   return aiModePanel("팩터 스코어", "시장 내 백분위", body);
 }
 
@@ -1372,7 +1372,7 @@ function aiPeerPanel(item) {
     const chg = Number(s.threeMonthChangePct);
     const rt = "text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap";
     return `<tr style="${self ? "background:var(--panel-soft)" : ""}">
-      <td style="overflow:hidden">${tkCell}<div style="font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(s.company || "")}</div></td>
+      <td style="overflow:hidden">${tkCell}<div style="font-size:var(--fs-cap);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(s.company || "")}</div></td>
       <td style="${rt}">${fmtBillions(s.marketCapB)}</td>
       <td style="${rt}">${num(f.pe)}</td>
       <td style="${rt}">${num(f.pb)}</td>
@@ -1383,7 +1383,7 @@ function aiPeerPanel(item) {
     <colgroup><col style="width:34%"><col style="width:18%"><col style="width:13%"><col style="width:13%"><col style="width:22%"></colgroup>
     <thead><tr><th>종목</th><th style="text-align:right">시총</th><th style="text-align:right">PER</th><th style="text-align:right">PBR</th><th style="text-align:right">3개월</th></tr></thead>
     <tbody>${rows}</tbody></table></div>
-    <div style="font-size:11px;color:var(--muted);margin-top:8px">${basis} 시총 상위 비교(강조행이 현재 종목). 종목명을 누르면 해당 분석으로 이동합니다.</div>`;
+    <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px">${basis} 시총 상위 비교(강조행이 현재 종목). 종목명을 누르면 해당 분석으로 이동합니다.</div>`;
   return aiModePanel("유사종목 비교", basis + " · 시총순", body);
 }
 
@@ -1429,7 +1429,7 @@ function aiShortVolumePanel(item) {
     { label: `${hist.length}일 범위`, value: hist.length ? `${Math.min(...hist).toFixed(0)}~${Math.max(...hist).toFixed(0)}%` : "—" },
   ]);
   const body = grid + (spark ? `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 ${hist.length}일 추이</div>${spark}` : "")
-    + `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">FINRA 규정 SHO 통합 공매도 거래량 ÷ 총거래량. 마켓메이커 헤지·데이트레이딩도 포함되어 시장 평균이 ~50% 안팎으로 높습니다. 공매도 '잔고(포지션)'가 아니라 그날 매도 흐름의 '참여도'이며, 예측·매매 신호가 아닙니다.</p>`;
+    + `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">FINRA 규정 SHO 통합 공매도 거래량 ÷ 총거래량. 마켓메이커 헤지·데이트레이딩도 포함되어 시장 평균이 ~50% 안팎으로 높습니다. 공매도 '잔고(포지션)'가 아니라 그날 매도 흐름의 '참여도'이며, 예측·매매 신호가 아닙니다.</p>`;
   return aiModePanel("일일 공매도량", `FINRA · ${fs.asOf || ""}`, body);
 }
 
@@ -1449,7 +1449,7 @@ function aiDividendPanel(item) {
       tone: Number(s.payout) > 80 ? "warn" : "" },
     { label: "배당락일", value: s.exDate ? escapeHtml(s.exDate) : "—" },
   ]);
-  const cmp = vsAvg != null ? `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--green)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}. 배당성향이 높을수록 이익 대비 배당 부담이 큽니다. 참고용입니다.</p>` : "";
+  const cmp = vsAvg != null ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--green)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}. 배당성향이 높을수록 이익 대비 배당 부담이 큽니다. 참고용입니다.</p>` : "";
   return aiModePanel("배당", "Yahoo · 연간 기준", grid + cmp);
 }
 
@@ -1473,7 +1473,7 @@ function aiAnalystPanel(item) {
     const label = score >= 1 ? "강력 매수" : score >= 0.4 ? "매수 우위" : score > -0.4 ? "중립" : score > -1 ? "매도 우위" : "매도";
     const lcol = score >= 0.4 ? "var(--green)" : score <= -0.4 ? "var(--red)" : "var(--muted)";
     const legend = segs.filter(([, n]) => n > 0).map(([lbl, n, c]) =>
-      `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);margin-right:10px"><i style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></i>${lbl} ${n}</span>`).join("");
+      `<span style="display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-cap);color:var(--muted);margin-right:10px"><i style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></i>${lbl} ${n}</span>`).join("");
     recHtml = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
         <span style="font-size:12px;color:var(--muted)">애널리스트 ${rec.total}명${rec.period ? ` · ${escapeHtml(String(rec.period).slice(0, 7))}` : ""}</span>
         <strong style="color:${lcol}">${label}</strong></div>
@@ -1485,7 +1485,7 @@ function aiAnalystPanel(item) {
   if (earn.length) {
     const pills = earn.map((e) => {
       const sp = Number(e.surprisePercent); const beat = sp >= 0;
-      return `<span style="display:inline-block;font-size:11px;padding:3px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--panel-soft);color:${beat ? "var(--green)" : "var(--red)"};font-variant-numeric:tabular-nums">${escapeHtml(String(e.period || "").slice(2, 7))} ${beat ? "+" : ""}${sp.toFixed(1)}%</span>`;
+      return `<span style="display:inline-block;font-size:var(--fs-cap);padding:3px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--panel-soft);color:${beat ? "var(--green)" : "var(--red)"};font-variant-numeric:tabular-nums">${escapeHtml(String(e.period || "").slice(2, 7))} ${beat ? "+" : ""}${sp.toFixed(1)}%</span>`;
     }).join("");
     earnHtml = `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 EPS 서프라이즈 (추정 대비)</div><div>${pills}</div>`;
   }
@@ -1494,7 +1494,7 @@ function aiAnalystPanel(item) {
   const nextE = cal && cal.stocks && cal.stocks[String(item.ticker).toUpperCase()] && cal.stocks[String(item.ticker).toUpperCase()].nextEarnings;
   const nextHtml = nextE ? `<div style="background:var(--panel-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span style="color:var(--muted)">다음 실적 발표 예정</span> <strong style="margin-left:6px">${escapeHtml(nextE)}</strong></div>` : "";
   if (!recHtml && !earnHtml && !nextHtml) return "";
-  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">Finnhub 애널리스트 추천 분포·분기 EPS 서프라이즈와 예정 실적일(Yahoo)입니다. 목표주가는 무료 데이터에 없어 제외했습니다. 참고용이며 예측·매매 신호가 아닙니다.</p>`;
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">Finnhub 애널리스트 추천 분포·분기 EPS 서프라이즈와 예정 실적일(Yahoo)입니다. 목표주가는 무료 데이터에 없어 제외했습니다. 참고용이며 예측·매매 신호가 아닙니다.</p>`;
   return aiModePanel("애널리스트 컨센서스", "추천 분포 · EPS 서프라이즈", nextHtml + recHtml + earnHtml + note);
 }
 
@@ -1523,7 +1523,7 @@ function aiOptionsPanel(item) {
     { label: "풋/콜 (거래량)", value: Number.isFinite(pcVol) ? pcVol.toFixed(2) : "—", tone: pcTone(pcVol) },
     { label: "미결제약정", value: `${kfmt(s.callOI)} C / ${kfmt(s.putOI)} P` },
   ]);
-  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">최근접 만기 ${escapeHtml(s.expiry || "")} 기준. 예상 변동폭=등가격 스트래들 프리미엄이 시사하는 만기까지의 ±변동 크기(만기가 가까우면 작습니다). 맥스페인=만기에 옵션 매수자 총손실이 최대가 되는 행사가(‘주가가 그쪽으로 끌린다’는 속설은 논쟁적). 풋/콜은 헤지·방향성 베팅이 섞인 심리 지표입니다. 예측·매매 신호가 아닙니다. 출처: Yahoo.</p>`;
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">최근접 만기 ${escapeHtml(s.expiry || "")} 기준. 예상 변동폭=등가격 스트래들 프리미엄이 시사하는 만기까지의 ±변동 크기(만기가 가까우면 작습니다). 맥스페인=만기에 옵션 매수자 총손실이 최대가 되는 행사가(‘주가가 그쪽으로 끌린다’는 속설은 논쟁적). 풋/콜은 헤지·방향성 베팅이 섞인 심리 지표입니다. 예측·매매 신호가 아닙니다. 출처: Yahoo.</p>`;
   return aiModePanel("옵션 심리", `풋/콜 · 맥스페인 · 만기 ${escapeHtml(s.expiry || "")}`, grid + note);
 }
 
@@ -1541,7 +1541,7 @@ function aiFederalContractsPanel(item) {
     { label: "최대 단일 집행", value: usd(s.top) },
     { label: "집행 건수", value: `${(Number(s.count) || 0).toLocaleString()}${approx ? "+" : ""}건` },
   ]);
-  const note = `<p style="font-size:11px;color:var(--muted);margin:10px 0 0;line-height:1.5">USASpending.gov 계약(A/B/C/D) 트랜잭션의 <b>실제 집행액(obligation)</b> 합입니다. 다년 계약 상한이 아니라 그 기간에 집행된 금액이며, 금액 큰 순 상위만 합산해 총액은 근사치입니다. 정부라는 '고객'의 규모를 보여주는 참고용 대체 데이터로 예측·매매 신호가 아닙니다. 기간 ${escapeHtml(fc.windowStart || "")}~${escapeHtml(fc.windowEnd || "")}.</p>`;
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">USASpending.gov 계약(A/B/C/D) 트랜잭션의 <b>실제 집행액(obligation)</b> 합입니다. 다년 계약 상한이 아니라 그 기간에 집행된 금액이며, 금액 큰 순 상위만 합산해 총액은 근사치입니다. 정부라는 '고객'의 규모를 보여주는 참고용 대체 데이터로 예측·매매 신호가 아닙니다. 기간 ${escapeHtml(fc.windowStart || "")}~${escapeHtml(fc.windowEnd || "")}.</p>`;
   return aiModePanel("연방 계약", "USASpending · 최근 12개월 집행액", grid + note);
 }
 

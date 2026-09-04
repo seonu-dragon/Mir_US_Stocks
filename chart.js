@@ -756,7 +756,7 @@ function chartSettingIds() {
 
 function loadChartPresets() {
   try {
-    const raw = JSON.parse(localStorage.getItem(CHART_PRESET_STORAGE_KEY) || "{}");
+    const raw = JSON.parse(window.safeStorage.get(CHART_PRESET_STORAGE_KEY) || "{}");
     chartPresets = raw && typeof raw === "object" ? raw : {};
   } catch (e) {
     chartPresets = {};
@@ -764,7 +764,7 @@ function loadChartPresets() {
 }
 
 function saveChartPresets() {
-  try { localStorage.setItem(CHART_PRESET_STORAGE_KEY, JSON.stringify(chartPresets)); } catch (e) { /* ignore */ }
+  try { window.safeStorage.set(CHART_PRESET_STORAGE_KEY, JSON.stringify(chartPresets)); } catch (e) { /* ignore */ }
 }
 
 function currentChartPreset() {
@@ -1077,7 +1077,7 @@ function chartDrawStorageKey(ticker) {
 
 function loadStoredChartDrawings() {
   try {
-    const raw = JSON.parse(localStorage.getItem(CHART_DRAWINGS_STORAGE_KEY) || "{}");
+    const raw = JSON.parse(window.safeStorage.get(CHART_DRAWINGS_STORAGE_KEY) || "{}");
     return raw && typeof raw === "object" ? raw : {};
   } catch (_) {
     return {};
@@ -1098,7 +1098,7 @@ function persistChartDrawings(ticker) {
       .slice(CHART_DRAWINGS_MAX_TICKERS)
       .forEach((k) => delete store[k]);
   }
-  try { localStorage.setItem(CHART_DRAWINGS_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* quota */ }
+  try { window.safeStorage.set(CHART_DRAWINGS_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* quota */ }
 }
 
 function hydrateChartDrawings(ticker) {

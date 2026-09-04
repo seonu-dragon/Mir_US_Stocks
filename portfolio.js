@@ -3,17 +3,7 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
-// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
-// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
-if (!window.safeStorage) {
-  window.safeStorage = {
-    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
-    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
-    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
-    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
-    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
-  };
-}
+// 이 파일의 모든 저장소 접근은 window.safeStorage(storage.js — index.html 첫 스크립트) 를 거친다.
 
 // ===== 가상 포트폴리오 시뮬레이터 (#24) =====
 // 포지션은 시장별 키(mir_portfolio_v1:us / :kr)에 나눠 저장한다. 한 키에 섞어 두면
@@ -1228,6 +1218,16 @@ function backtestResolveDates(seriesList, periodBars, customStart, customEnd) {
     }
     dates = allDates.filter((d) => d >= first && d <= endDate);
   } else {
+    const endIdx = allDates.indexOf(endDate);
+    const startIdx = Math.max(0, endIdx - periodBars + 1);
+    dates = allDates.slice(startIdx, endIdx + 1);
+  }
+  if (dates.length < 22) {
+    return { dates: [], error: `공통 거래일이 부족합니다 (${dates.length}일). 기간을 줄이거나 종목을 바꿔 보세요.` };
+  }
+  return { dates, startDate: dates[0], endDate: dates[dates.length - 1] };
+}
+
 // 유효(양수·유한) 종가인지. 0·null·NaN 은 결측으로 본다.
 function backtestValidPrice(p) {
   return Number.isFinite(p) && p > 0;
@@ -1248,16 +1248,6 @@ function backtestFilledPrices(series, dates) {
   });
   prices.filledCount = filled;
   return prices;
-}
-
-    const endIdx = allDates.indexOf(endDate);
-    const startIdx = Math.max(0, endIdx - periodBars + 1);
-    dates = allDates.slice(startIdx, endIdx + 1);
-  }
-  if (dates.length < 22) {
-    return { dates: [], error: `공통 거래일이 부족합니다 (${dates.length}일). 기간을 줄이거나 종목을 바꿔 보세요.` };
-  }
-  return { dates, startDate: dates[0], endDate: dates[dates.length - 1] };
 }
 
 function backtestPortfolioSeries(seriesList, dates, weights) {
@@ -1595,6 +1585,16 @@ async function runPortfolioBacktest() {
         Math.min(periodBars, valid.reduce((m, s) => Math.min(m, s.dateMap.size), Infinity)),
         null,
         null,
+      );
+    }
+    if (!dateResult.dates.length) {
+      setBacktestStatus(dateResult.error || "시뮬레이션 기간을 계산하지 못했습니다.");
+      return;
+    }
+    const { dates, startDate, endDate } = dateResult;
+    if (periodMode === "preset" && periodBars && dates.length < periodBars * 0.6) {
+      warnings.push(`선택 종목 중 가격 이력이 짧은 종목이 있어 공통으로 겹치는 ${dates.length}거래일만 시뮬레이션했습니다.`);
+    }
     // 시작일에 유효 종가가 없는 종목(거래정지·상장 전·0원)은 단위수를 못 구하므로 제외하고 알린다.
     // 중간 결측일은 직전 종가로 채운다(backtestFilledPrices) — NaN 을 만들지 않는다.
     const noStart = valid.filter((s) => !backtestValidPrice(s.dateMap.get(startDate)));
@@ -1611,21 +1611,11 @@ async function runPortfolioBacktest() {
       const filledCount = backtestFilledPrices(s, dates).filledCount;
       if (filledCount > 0) warnings.push(`${s.ticker}: 결측 ${filledCount}거래일은 직전 종가로 보간했습니다.`);
     });
-      );
+    const portfolioRaw = backtestPortfolioSeries(valid, dates, activeWeights);
     if (!backtestValidPrice(portfolioRaw[0]?.v)) {
       setBacktestStatus("시작일 포트폴리오 가치를 계산하지 못했습니다. 종목·기간을 바꿔 보세요.");
       return;
     }
-    }
-    if (!dateResult.dates.length) {
-      setBacktestStatus(dateResult.error || "시뮬레이션 기간을 계산하지 못했습니다.");
-      return;
-    }
-    const { dates, startDate, endDate } = dateResult;
-    if (periodMode === "preset" && periodBars && dates.length < periodBars * 0.6) {
-      warnings.push(`선택 종목 중 가격 이력이 짧은 종목이 있어 공통으로 겹치는 ${dates.length}거래일만 시뮬레이션했습니다.`);
-    }
-    const portfolioRaw = backtestPortfolioSeries(valid, dates, activeWeights);
     const portfolioSeries = portfolioRaw.map((p) => ({ d: p.d, v: (p.v / portfolioRaw[0].v) * 100 }));
     const benchStock = stockByTicker(benchmarkTicker);
     const benchDetail = await loadStockDetail(benchmarkTicker);

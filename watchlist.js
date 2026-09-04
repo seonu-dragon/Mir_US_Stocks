@@ -14,26 +14,26 @@
 // 티커가 섞여 있을 수 있으므로 6자리 숫자(KR 종목코드) 패턴으로 나눠 각각 넣는다.
 function migrateLegacyWatchlist() {
   let legacy = null;
-  try { legacy = JSON.parse(localStorage.getItem(WATCHLIST_LEGACY_KEY) || "null"); } catch (e) { /* ignore */ }
+  try { legacy = JSON.parse(window.safeStorage.get(WATCHLIST_LEGACY_KEY) || "null"); } catch (e) { /* ignore */ }
   if (!Array.isArray(legacy)) return;
   const norm = [...new Set(legacy.map((t) => String(t || "").trim().toUpperCase()).filter(Boolean))];
   const kr = norm.filter((t) => /^\d{6}$/.test(t));
   const us = norm.filter((t) => !/^\d{6}$/.test(t));
   try {
-    if (us.length && !localStorage.getItem(watchlistStorageKey("us"))) {
-      localStorage.setItem(watchlistStorageKey("us"), JSON.stringify(us));
+    if (us.length && !window.safeStorage.get(watchlistStorageKey("us"))) {
+      window.safeStorage.set(watchlistStorageKey("us"), JSON.stringify(us));
     }
-    if (kr.length && !localStorage.getItem(watchlistStorageKey("kr"))) {
-      localStorage.setItem(watchlistStorageKey("kr"), JSON.stringify(kr));
+    if (kr.length && !window.safeStorage.get(watchlistStorageKey("kr"))) {
+      window.safeStorage.set(watchlistStorageKey("kr"), JSON.stringify(kr));
     }
-    localStorage.removeItem(WATCHLIST_LEGACY_KEY);
+    window.safeStorage.remove(WATCHLIST_LEGACY_KEY);
   } catch (e) { /* ignore */ }
 }
 
 function initWatchlist(urlList) {
   migrateLegacyWatchlist();
   try {
-    const saved = JSON.parse(localStorage.getItem(watchlistStorageKey()) || "[]");
+    const saved = JSON.parse(window.safeStorage.get(watchlistStorageKey()) || "[]");
     watchlist = Array.isArray(saved) ? saved.map((t) => normalizeTickerKey(t)).filter(Boolean) : [];
   } catch (e) {
     watchlist = [];
@@ -51,7 +51,7 @@ function persistWatchlist() {
   // 스냅샷에 없는 티커도 버리지 않는다 — 저장 시점 필터는 시장 전환/스냅샷 누락 때
   // 목록을 조용히 갉아먹는다. 화면에 뿌릴 때만 stockByTicker 로 거른다.
   watchlist = [...new Set(watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))];
-  try { localStorage.setItem(watchlistStorageKey(), JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
+  try { window.safeStorage.set(watchlistStorageKey(), JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
   const input = byId("bulkInput");
   if (input) input.value = watchlist.join(", ");
   scheduleCloudSyncPush();
@@ -165,14 +165,14 @@ function watchAlertSettings() {
     useSma20: false
   };
   try {
-    return { ...defaults, ...(JSON.parse(localStorage.getItem(WATCH_ALERT_STORAGE_KEY) || "{}") || {}) };
+    return { ...defaults, ...(JSON.parse(window.safeStorage.get(WATCH_ALERT_STORAGE_KEY) || "{}") || {}) };
   } catch (e) {
     return defaults;
   }
 }
 
 function saveWatchAlertSettings(settings) {
-  try { localStorage.setItem(WATCH_ALERT_STORAGE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
+  try { window.safeStorage.set(WATCH_ALERT_STORAGE_KEY, JSON.stringify(settings)); } catch (e) { /* ignore */ }
   scheduleCloudSyncPush();
 }
 
@@ -561,7 +561,7 @@ function storedWatchlist(marketId) {
   const current = isKrMarket() ? "kr" : "us";
   if (marketId === current) return watchlist.slice();
   try {
-    const saved = JSON.parse(localStorage.getItem(watchlistStorageKey(marketId)) || "[]");
+    const saved = JSON.parse(window.safeStorage.get(watchlistStorageKey(marketId)) || "[]");
     return Array.isArray(saved) ? saved.filter(Boolean) : [];
   } catch (e) { return []; }
 }
@@ -589,7 +589,7 @@ async function pushCloudSync() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clientId: getCommunityClientId(), prefs: cloudSyncPayload() }),
     });
-    localStorage.setItem(CLOUD_SYNC_KEY, String(Date.now()));
+    window.safeStorage.set(CLOUD_SYNC_KEY, String(Date.now()));
     updateCloudSyncStatus("저장됨");
   } catch (e) { /* ignore */ }
 }
@@ -623,7 +623,7 @@ async function pullCloudSync() {
     if (Array.isArray(other) && other.length) {
       const otherId = marketId === "kr" ? "us" : "kr";
       try {
-        localStorage.setItem(watchlistStorageKey(otherId),
+        window.safeStorage.set(watchlistStorageKey(otherId),
           JSON.stringify([...new Set(other.map((t) => String(t || "").trim().toUpperCase()).filter(Boolean))].slice(0, 80)));
       } catch (e) { /* ignore */ }
     }

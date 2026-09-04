@@ -1167,7 +1167,7 @@ function setupChatbot() {
   const chatRoot = byId("chatbot");
   const dismissBtn = byId("chatDismiss");
   // 이전 버전에서 영구 숨김으로 저장된 값은 제거 (새로고침 시 챗봇 복구)
-  try { localStorage.removeItem("mir_chatbot_hidden_v1"); } catch (e) { /* ignore */ }
+  try { window.safeStorage.remove("mir_chatbot_hidden_v1"); } catch (e) { /* ignore */ }
   if (dismissBtn) {
     dismissBtn.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -2626,14 +2626,14 @@ function setViewMode(mode, { persist = true } = {}) {
     button.setAttribute("aria-pressed", String(active));
   });
   if (persist) {
-    try { localStorage.setItem(VIEW_MODE_STORAGE_KEY, currentViewMode); } catch (_) {}
+    try { window.safeStorage.set(VIEW_MODE_STORAGE_KEY, currentViewMode); } catch (_) {}
   }
   requestAnimationFrame(layoutMobileTabs);
 }
 
 function setupViewMode(requestedTab) {
   let saved = DEFAULT_VIEW_MODE;
-  try { saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
+  try { saved = window.safeStorage.get(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
   const requestedButton = requestedTab ? tabButtonFor(normalizeTabRequest(requestedTab, null).tab) : null;
   if (requestedButton?.dataset.advanced === "true") saved = "advanced";
   setViewMode(saved, { persist: false });
@@ -2966,12 +2966,12 @@ let tabDragJustHappened = false;
 
 function saveTabOrder(nav) {
   const order = [...nav.querySelectorAll(".tab")].map((t) => t.dataset.tab);
-  try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch (_) {}
+  try { window.safeStorage.set(TAB_ORDER_KEY, JSON.stringify(order)); } catch (_) {}
 }
 
 function applySavedTabOrder(nav) {
   let order = null;
-  try { order = JSON.parse(localStorage.getItem(TAB_ORDER_KEY) || "null"); } catch (_) { order = null; }
+  try { order = JSON.parse(window.safeStorage.get(TAB_ORDER_KEY) || "null"); } catch (_) { order = null; }
   if (!Array.isArray(order)) return;
   const all = [...nav.querySelectorAll(".tab")];
   const byName = new Map(all.map((t) => [t.dataset.tab, t]));
@@ -4826,7 +4826,7 @@ function renderInvestmentChecklist(item) {
 
 function loadEstimateHistoryStore() {
   if (estimateHistoryStore) return estimateHistoryStore;
-  try { estimateHistoryStore = JSON.parse(localStorage.getItem(ESTIMATE_HISTORY_STORAGE_KEY) || "{}") || {}; }
+  try { estimateHistoryStore = JSON.parse(window.safeStorage.get(ESTIMATE_HISTORY_STORAGE_KEY) || "{}") || {}; }
   catch (_) { estimateHistoryStore = {}; }
   return estimateHistoryStore;
 }
@@ -4871,7 +4871,7 @@ function recordEstimateSnapshot(item) {
   }
   rows.sort((a, b) => String(a.date).localeCompare(String(b.date)));
   store[item.ticker] = rows.slice(-45);
-  try { localStorage.setItem(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
+  try { window.safeStorage.set(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
   return store[item.ticker];
 }
 
@@ -6349,7 +6349,7 @@ const MIR_SW_BUILD_KEY = "mir_sw_build_id_v1";
 async function detectHotUpdate() {
   const current = window.MIR_BUILD_ID || "dev";
   let stored = null;
-  try { stored = localStorage.getItem(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
+  try { stored = window.safeStorage.get(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
   if (stored && stored !== current) {
     try {
       if ("caches" in window) {
@@ -6362,12 +6362,12 @@ async function detectHotUpdate() {
         await reg.update();
       }
     } catch (_) { /* ignore */ }
-    try { localStorage.setItem(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
+    try { window.safeStorage.set(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
     showAppToast("새 버전이 배포되었습니다. 최신 파일을 불러옵니다.", 2800);
     window.setTimeout(() => window.location.reload(), 700);
     return true;
   }
-  try { localStorage.setItem(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
+  try { window.safeStorage.set(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
   return false;
 }
 
@@ -7201,7 +7201,7 @@ function aiReportCacheKey(ticker, customQuery) {
 }
 function readAiReportCache(key) {
   try {
-    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
     const hit = store[key];
     if (hit && typeof hit.reply === "string" && Date.now() - Number(hit.at || 0) < AI_REPORT_CACHE_TTL_MS) return hit.reply;
   } catch (_) { /* ignore */ }
@@ -7209,20 +7209,20 @@ function readAiReportCache(key) {
 }
 function deleteAiReportCache(key) {
   try {
-    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
-    if (key in store) { delete store[key]; localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store)); }
+    const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
+    if (key in store) { delete store[key]; window.safeStorage.set(AI_REPORT_CACHE_KEY, JSON.stringify(store)); }
   } catch (_) { /* ignore */ }
 }
 
 function writeAiReportCache(key, reply) {
   try {
-    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
     const now = Date.now();
     Object.keys(store).forEach((k) => { if (now - Number(store[k]?.at || 0) >= AI_REPORT_CACHE_TTL_MS) delete store[k]; });
     store[key] = { at: now, reply };
     const keys = Object.keys(store).sort((a, b) => Number(store[a].at) - Number(store[b].at));
     while (keys.length > AI_REPORT_CACHE_MAX) delete store[keys.shift()];
-    localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store));
+    window.safeStorage.set(AI_REPORT_CACHE_KEY, JSON.stringify(store));
   } catch (_) { /* quota 등 — 캐시는 있으면 좋은 것 */ }
 }
 

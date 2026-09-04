@@ -1,4 +1,5 @@
-/**
+  // storage.js(첫 스크립트) 가 window.safeStorage 를 보장한다.
+  const storage = window.safeStorage;/**
  * AI mode — multi loss-landscape backdrop (3D terrains + physics ball)
  * morphs into a 2D stock chart when the user requests a ticker.
  */
@@ -49,11 +50,8 @@
   // 차트 캔들 유형 — candle(캔들)·line(종가선)·heikin(헤이킨아시). localStorage 에 유지.
   const CHART_STYLE_LS_KEY = "mir_ai_chart_style";
   const CHART_STYLES = new Set(["candle", "line", "heikin"]);
-  // storage.js/market_config.js 가 window.safeStorage 를 보장하지만, 단독 로드 대비 최소 폴백.
-  const storage = window.safeStorage || {
-    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
-    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
-  };
+  // storage.js(첫 스크립트) 가 window.safeStorage 를 보장한다.
+  const storage = window.safeStorage;
   let chartStyle = (() => {
     const s = storage.get(CHART_STYLE_LS_KEY);
     return CHART_STYLES.has(s) ? s : "candle";

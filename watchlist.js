@@ -162,7 +162,10 @@ function watchAlertSettings() {
     highDist: 3,
     useVol: true,
     minVol: 2,
-    useSma20: false
+    useSma20: false,
+    // 아래 둘이 빠져 있으면 select.value = undefined 가 되어 '차트 패턴' 셀렉트가 빈 칸으로 보였다.
+    usePattern: false,
+    patternCat: "any"
   };
   try {
     return { ...defaults, ...(JSON.parse(window.safeStorage.get(WATCH_ALERT_STORAGE_KEY) || "{}") || {}) };

@@ -275,10 +275,33 @@ function anchoredVwapOverlays(allRows, item) {
   }));
 }
 
+// 내장 프리셋(스윙·데이·수급)은 토글이다: 같은 버튼을 다시 누르면 프리셋을 적용하기
+// 직전의 오버레이 상태로 되돌리고 활성 표시를 끈다. 다른 프리셋을 누르면 먼저 되돌린 뒤
+// 새 프리셋을 얹는다(프리셋끼리 설정이 겹쳐 쌓이지 않도록).
+let activeBuiltinPreset = null;
+let builtinPresetRestore = null;
+
+function syncBuiltinPresetButtons() {
+  byId("chartBuiltinPresets")?.querySelectorAll("[data-bpreset]").forEach((btn) => {
+    const active = btn.dataset.bpreset === activeBuiltinPreset;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-pressed", String(active));
+  });
+}
+
 function applyBuiltinOverlayPreset(key) {
   const preset = BUILTIN_OVERLAY_PRESETS[key];
   if (!preset) return;
-  Object.assign(chartState, preset.settings);
+  const wasActive = activeBuiltinPreset === key;
+  if (activeBuiltinPreset && builtinPresetRestore) Object.assign(chartState, builtinPresetRestore);
+  activeBuiltinPreset = null;
+  builtinPresetRestore = null;
+  if (!wasActive) {
+    builtinPresetRestore = Object.fromEntries(Object.keys(preset.settings).map((k) => [k, chartState[k]]));
+    Object.assign(chartState, preset.settings);
+    activeBuiltinPreset = key;
+  }
+  syncBuiltinPresetButtons();
   syncChartControlUi();
   syncCprobChartControlChips();
   redrawChart();
@@ -844,7 +867,7 @@ function setupChartPresetControls() {
   if (builtinBar && !builtinBar.dataset.bound) {
     builtinBar.dataset.bound = "1";
     builtinBar.innerHTML = Object.entries(BUILTIN_OVERLAY_PRESETS).map(([k, p]) =>
-      `<button type="button" class="ghost chart-builtin-preset" data-bpreset="${k}">${escapeHtml(p.label)}</button>`).join("");
+      `<button type="button" class="ghost chart-builtin-preset" data-bpreset="${k}" aria-pressed="false">${escapeHtml(p.label)}</button>`).join("");
     builtinBar.querySelectorAll("[data-bpreset]").forEach((btn) => {
       btn.addEventListener("click", () => applyBuiltinOverlayPreset(btn.dataset.bpreset));
     });

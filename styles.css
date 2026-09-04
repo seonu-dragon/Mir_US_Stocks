@@ -26,7 +26,7 @@
      값은 예전 리터럴을 그대로 옮긴 것이라 쌓임 순서가 바뀌지 않았다. 새 규칙은 리터럴 대신 토큰을 쓸 것.
      매핑(옛 값 → 토큰): -1 behind · 0 base · 1/2/4/5/6 layer-N(컴포넌트 내부 쌓임: 섹터 제목·타일·탑바·배너)
      · 10 sticky(고정 헤더·복사 버튼·위젯 오버레이) · 18 ai-chatlog · 20 popover(툴팁·탭 스크롤·도움말)
-     · 25 ai-input · 40 legend-pop · 50 ai-topbar · 60/61 drawer-backdrop/drawer(구성종목 패널)
+     · 25 ai-input · 30 topbar(설정 팝오버가 sticky 탭 위에 뜨도록) · 40 legend-pop · 50 ai-topbar · 60/61 drawer-backdrop/drawer(구성종목 패널)
      · 80 ia-popover · 90 cmdk · 100 dropdown(AI 자동완성) · 120 autocomplete(티커 자동완성)
      · 900 fab(챗봇) · 1000 modal/lightbox(라이트박스·히트맵 툴팁·지표 드롭다운·세션 메뉴)
      · 2000 assembly(AI 조립 오버레이) · 9999 toast(앱 토스트·AI 모달) · 10000 fullscreen(위젯 전체화면)
@@ -42,6 +42,7 @@
   --z-ai-chatlog: 18;
   --z-popover: 20;
   --z-ai-input: 25;
+  --z-topbar: 30;
   --z-legend-pop: 40;
   --z-ai-topbar: 50;
   --z-drawer-backdrop: 60;
@@ -128,11 +129,6 @@
   /* ── 터치 타깃 ── */
   --control-h: 44px;
   --control-h-sm: 40px;
-}
-
-html[data-density="compact"] {
-  --control-h: 36px;
-  --control-h-sm: 32px;
 }
 
 * {
@@ -6009,6 +6005,20 @@ footer {
   grid-template-columns: 16px minmax(0, 1fr);
 }
 
+/* 차트 패턴 조건: 셀렉트가 76px 숫자 칸에 억지로 들어가 박스 밖으로 튀어나오던 문제.
+   체크박스 · 라벨 · 셀렉트(남는 폭 전부) 세 칸으로 따로 잡는다. */
+.watch-alert-controls label.watch-alert-with-select {
+  grid-template-columns: 16px auto minmax(0, 1fr);
+}
+.watch-alert-controls label.watch-alert-with-select select {
+  width: 100%;
+  min-width: 0;
+  height: 30px;
+  min-height: 0;
+  padding: 0 8px;
+  font-size: var(--fs-cap);
+}
+
 .watch-alert-controls input[type="checkbox"] {
   appearance: auto;
   width: 14px;
@@ -8932,23 +8942,6 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 /* ============================================================
    상단 탭 고정 (sticky) — 스크롤해도 섹션 전환 가능
    ============================================================ */
-/* ============================================================
-   밀도 토글 (컴팩트 모드)
-   ============================================================ */
-html[data-density="compact"] .panel { padding: 10px; }
-html[data-density="compact"] .summary-card { padding: 7px 9px; }
-html[data-density="compact"] .daily-action-card { padding: 10px; }
-html[data-density="compact"] .breadth-card,
-html[data-density="compact"] .corr-card,
-html[data-density="compact"] .nl-screener { padding: var(--space-3); }
-html[data-density="compact"] .toolbar { gap: var(--space-2); margin-bottom: 10px; }
-html[data-density="compact"] .section-title { margin-bottom: var(--space-2); }
-html[data-density="compact"] .event-grid { gap: 6px; padding: var(--space-2); }
-html[data-density="compact"] .daily-action-grid { gap: var(--space-2); }
-html[data-density="compact"] .compact-table th,
-html[data-density="compact"] .compact-table td,
-html[data-density="compact"] .insider-table th,
-html[data-density="compact"] .insider-table td { padding-top: 5px; padding-bottom: 5px; }
 
 /* ============================================================
    UI 설정 토글 버튼 (탐색 모드 바)
@@ -13310,7 +13303,8 @@ body.ai-mode-active .cmdk {
 html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 
 /* --- 헤더 --- */
-.ia-topbar { padding: 10px 20px; gap: 12px; }
+/* 설정 팝오버가 sticky 탭 바(z 20) 아래로 깔려 하단(SNS 줄)이 잘리던 문제: 헤더 자체를 탭 바 위에 둔다. */
+.ia-topbar { padding: 10px 20px; gap: 12px; z-index: var(--z-topbar); }
 .ia-topbar-left { gap: 14px; }
 .ia-topbar .brand-text h1 { font-size: var(--fs-h3); line-height: 1.5; }
 .ia-topbar-right { display: flex; align-items: center; gap: 8px; }

@@ -122,6 +122,8 @@ CHECKS = {
     # 넣어 두면 매주 워크플로우를 빨갛게 만들어 진짜 고장을 가린다.
     "edge-stats": [
         ("data/breakout_retest_stats.json", 10, False),
+        # 스캐너 순위 기준 검증(build_factor_validation.mjs, Node). 주간 갱신.
+        ("data/factor_validation.json", 10, False),
     ],
     # 13f-quarterly-refresh.yml — 분기 공시(45일 시차)라 정상 상태도 오래 늙어 보인다.
     "13f": [

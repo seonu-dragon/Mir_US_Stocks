@@ -1,10 +1,95 @@
 {
-  "updatedAtKst": "2026-09-03 18:08 KST",
-  "lastFileDate": "2026-09-02",
-  "count": 646,
+  "updatedAtKst": "2026-09-04 18:01 KST",
+  "lastFileDate": "2026-09-03",
+  "count": 655,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Nexalin Technology, Inc.",
+      "ticker": "NXL",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-03",
+      "accession": "0001829126-26-009723:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1527352/000182912626009723/nexalintech_s1.htm"
+    },
+    {
+      "company": "WeShop Holdings Ltd",
+      "ticker": "WSHP",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-03",
+      "accession": "0001493152-26-041390:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2048271/000149315226041390/form424b4.htm",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "T3 Defense Inc.  (DFNS, DFNSW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-03",
+      "accession": "0001213900-26-097287:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1787518/000121390026097287/ea0304078-s1_t3defense.htm"
+    },
+    {
+      "company": "VenHub Global, Inc.",
+      "ticker": "VHUB",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-03",
+      "accession": "0001213900-26-097253:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1972234/000121390026097253/ea0303955-s1_venhub.htm"
+    },
+    {
+      "company": "Lianhe Sowell International Group Ltd",
+      "ticker": "LHSW",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-03",
+      "accession": "0001213900-26-096975:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2004024/000121390026096975/ea0304365-424b4_lianhe.htm",
+      "offerPrice": 1.44,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Oura Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-03",
+      "accession": "0001193125-26-381855:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133022/000119312526381855/d119865ds1.htm"
+    },
+    {
+      "company": "Aptevo Therapeutics Inc.",
+      "ticker": "APVO",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-03",
+      "accession": "0001193125-26-381149:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1671584/000119312526381149/apvo-august_2026-424b4.htm",
+      "offerPrice": 428.4,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "T3 Defense Inc.  (DFNS, DFNSW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-03",
+      "accession": "0001185185-26-003839:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1787518/000118518526003839/dfnss1090126.htm"
+    },
     {
       "company": "Sensei Harbor Corp.",
       "ticker": null,
@@ -54,6 +139,16 @@
       "fileDate": "2026-09-02",
       "accession": "0001628280-26-060083:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2141406/000162828026060083/accelevationllc-sx1publicf.htm"
+    },
+    {
+      "company": "First Breach, Inc.",
+      "ticker": "FBDT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-02",
+      "accession": "0001493152-26-041268:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1892704/000149315226041268/forms-1.htm"
     },
     {
       "company": "Haymaker Acquisition Corp V",

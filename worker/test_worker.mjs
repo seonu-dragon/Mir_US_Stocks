@@ -10,10 +10,12 @@
 //   · ?model= 은 관리자 키가 있을 때만
 //   · 커뮤니티: DO 경로와 KV 폴백이 같은 결과, DO 경로는 동시 글쓰기를 잃지 않음
 //   · 이전 하드닝 회귀(IP 리밋·X-Admin-Key·private no-store·fetchT 일원화)
+//   · stale-if-error: fx·fng·indices·calendar 가 업스트림 실패 시 KV 직전값을 stale 로 서빙, 7일 캡
+//   · Gemini 모델 체인: env.GEMINI_MODEL → 2.0-flash → 1.5-flash, 404/400 만 다음 모델로
 //
 // env 는 전부 인메모리 모의다: KV 는 Map, AI 는 고정 문자열, DO 는 CommunityStore
-// 인스턴스를 직접 감싼 스텁. 업스트림(야후·네이버·Gemini)을 부르는 경로는
-// 테스트하지 않는다 — 이 파일은 게이트와 저장소 계층만 본다.
+// 인스턴스를 직접 감싼 스텁. [8]·[9] 만 globalThis.fetch 를 잠깐 바꿔 업스트림
+// (야후·CNN·investing.com·Gemini)의 성공/실패를 흉내 낸다 — 실제 네트워크는 없다.
 // =============================================================================
 
 import { createHash } from "node:crypto";
@@ -23,9 +25,12 @@ import {
   CommunityStore,
   cachedTickerSummary,
   communityHandlerFor,
+  geminiModelChain,
+  geminiModelUnavailable,
   handleFetch,
   llmOriginAllowed,
   resolveModelOverride,
+  withLastGood,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -512,6 +517,278 @@ await test("LLM 게이트가 데이터 프록시(fx·indices·calendar)까지 �
   for (const marker of ['url.searchParams.get("fx")', 'url.searchParams.get("indices")', 'url.searchParams.get("calendar")']) {
     ok(src.includes(marker), `${marker} 경로가 사라졌다`);
   }
+});
+
+// ── 8. stale-if-error (withLastGood) — fx·fng·indices·calendar ───────────────
+//
+// globalThis.fetch 를 잠깐 바꿔 업스트림 성공 → 실패를 흉내 낸다. fetchT 는 호출
+// 시점의 전역 fetch 를 쓰므로 모듈을 다시 읽을 필요가 없다.
+
+console.log("\n[8] stale-if-error (직전 정상값 서빙)");
+
+const realFetch = globalThis.fetch;
+function withMockFetch(handler, fn) {
+  const calls = [];
+  globalThis.fetch = async (url, init = {}) => {
+    calls.push({ url: String(url), init });
+    return handler(String(url), init, calls.length);
+  };
+  return Promise.resolve()
+    .then(() => fn(calls))
+    .finally(() => { globalThis.fetch = realFetch; });
+}
+const jsonResp = (obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { "Content-Type": "application/json" } });
+const failResp = () => { throw new TypeError("upstream down"); };
+
+// 야후 v8 chart 응답 최소형 — fetchFx / fetchIndices 가 읽는 필드만.
+function yahooChart(closes, extraMeta = {}) {
+  return jsonResp({ chart: { result: [{ meta: { regularMarketPrice: closes[closes.length - 1], chartPreviousClose: closes[0], ...extraMeta }, indicators: { quote: [{ close: closes }] } }] } });
+}
+const cnnBody = { fear_and_greed: { score: 44.77, rating: "fear", timestamp: "2026-09-04T08:21:31+00:00", previous_close: 35.2 } };
+// investing.com getCalendarFilteredData 의 data(HTML) 최소형 — parseCalendar 가 읽는 마커만.
+const calendarHtml = (event) => `<tr><td class="theDay">2026년 9월 7일 월요일</td></tr>`
+  + `<tr class="js-event-item" data-event-datetime="2026/09/07 08:00:00"><td class="first left time">08:00</td>`
+  + `<td class="flagCur"><span class="ceFlags South_Korea"></span></td><td class="left event">${event}</td></tr>`;
+
+await test("fx: 업스트림 성공 응답은 예전 모양 그대로(stale 키 없음)이고 KV 에 lastgood:fx 를 남긴다", async () => {
+  const env = kvEnv();
+  await withMockFetch(() => yahooChart([1300, 1310, 1320]), async () => {
+    const res = await handleFetch(req("https://w/?fx=1"), env);
+    eq(res.status, 200, "status");
+    const data = await res.json();
+    ok(Array.isArray(data.fx) && data.fx.length > 0, "fx 배열");
+    ok(!("stale" in data) && !("warning" in data), "신선한 응답엔 stale/warning 이 없어야");
+    eq(res.headers.get("Warning"), null, "Warning 헤더 없음");
+  });
+  const saved = JSON.parse(env.MOVE_CACHE.map.get("lastgood:fx"));
+  ok(typeof saved.storedAt === "string" && Array.isArray(saved.value) && saved.value.length > 0, "KV lastgood:fx { storedAt, value }");
+});
+
+await test("fx: 성공 뒤 업스트림이 죽으면 직전값을 stale:true + storedAt + warning 으로 준다", async () => {
+  const env = kvEnv();
+  let fresh;
+  await withMockFetch(() => yahooChart([1300, 1310, 1320]), async () => {
+    fresh = await (await handleFetch(req("https://w/?fx=1"), env)).json();
+  });
+  await withMockFetch(failResp, async () => {
+    const res = await handleFetch(req("https://w/?fx=1"), env);
+    eq(res.status, 200, "status");
+    const data = await res.json();
+    deepEq(data.fx, fresh.fx, "직전 정상값 그대로");
+    eq(data.stale, true, "stale 마커");
+    ok(typeof data.storedAt === "string" && !Number.isNaN(Date.parse(data.storedAt)), "storedAt ISO");
+    ok(typeof data.warning === "string" && data.warning.includes("last good"), "warning 문구");
+    ok(/Response is Stale/.test(res.headers.get("Warning") || ""), "Warning 헤더");
+    ok(/max-age=120/.test(res.headers.get("Cache-Control") || ""), "낡은 응답은 짧게 캐시");
+    eq(res.headers.get("Access-Control-Allow-Origin"), "*", "CORS 유지");
+  });
+});
+
+await test("fx: 직전값이 없으면 실패 시 기존처럼 빈 배열(stale 없음)", async () => {
+  await withMockFetch(failResp, async () => {
+    const data = await (await handleFetch(req("https://w/?fx=1"), kvEnv())).json();
+    deepEq(data, { fx: [] }, "기존 빈 응답");
+  });
+});
+
+await test("fx: KV 바인딩이 없으면 계층이 통과되어 기존 동작 그대로", async () => {
+  const env = { AI: stubAi() };
+  await withMockFetch(() => yahooChart([1, 2, 3]), async () => {
+    ok((await (await handleFetch(req("https://w/?fx=1"), env)).json()).fx.length > 0, "성공");
+  });
+  await withMockFetch(failResp, async () => {
+    deepEq(await (await handleFetch(req("https://w/?fx=1"), env)).json(), { fx: [] }, "실패 → 빈 배열");
+  });
+});
+
+await test("fng: 브라우저 UA 로 CNN 을 부르고(418 회피) 실패 시 직전 지수를 stale 로 준다", async () => {
+  const env = kvEnv();
+  await withMockFetch((url, init) => {
+    ok(url.includes("dataviz.cnn.io"), "CNN 호출");
+    const ua = init.headers["User-Agent"];
+    ok(/AppleWebKit|Chrome\//.test(ua), `짧은 UA 는 418 을 받는다: ${ua}`);
+    ok(/edition\.cnn\.com/.test(init.headers.Referer), "Referer 유지");
+    return jsonResp(cnnBody);
+  }, async () => {
+    const data = await (await handleFetch(req("https://w/?fng=1"), env)).json();
+    eq(data.fng.score, 45, "score");
+    eq(data.fng.source, "CNN", "source");
+    ok(!("stale" in data), "신선");
+  });
+  await withMockFetch(() => new Response("I'm a teapot", { status: 418 }), async () => {
+    const data = await (await handleFetch(req("https://w/?fng=1"), env)).json();
+    eq(data.stale, true, "stale");
+    eq(data.fng.score, 45, "직전 지수");
+    eq(data.fng.rating, "fear", "rating");
+  });
+});
+
+await test("fng: 직전값이 7일 캡을 넘으면 버리고 기존처럼 {fng:null}", async () => {
+  const env = kvEnv();
+  const eightDaysAgo = new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString();
+  await env.MOVE_CACHE.put("lastgood:fng", JSON.stringify({ storedAt: eightDaysAgo, value: { score: 70, rating: "greed", source: "CNN" } }));
+  await withMockFetch(failResp, async () => {
+    const data = await (await handleFetch(req("https://w/?fng=1"), env)).json();
+    deepEq(data, { fng: null }, "캡 초과 → 빈 응답");
+  });
+});
+
+await test("fng: 7일 이내(6일)면 여전히 stale 로 서빙된다", async () => {
+  const env = kvEnv();
+  const sixDaysAgo = new Date(Date.now() - 6 * 24 * 3600 * 1000).toISOString();
+  await env.MOVE_CACHE.put("lastgood:fng", JSON.stringify({ storedAt: sixDaysAgo, value: { score: 70, rating: "greed", source: "CNN" } }));
+  await withMockFetch(failResp, async () => {
+    const data = await (await handleFetch(req("https://w/?fng=1"), env)).json();
+    eq(data.stale, true, "stale");
+    eq(data.storedAt, sixDaysAgo, "storedAt 은 저장 시각");
+    eq(data.fng.score, 70, "score");
+  });
+});
+
+await test("withLastGood: 빈 배열·null·예외는 전부 '실패'로 보고, 저장된 값이 깨져 있으면 빈 값", async () => {
+  const env = kvEnv();
+  const now = Date.parse("2026-09-04T00:00:00Z");
+  const first = await withLastGood(env, "t", async () => [1, 2], [], { now });
+  deepEq(first, { value: [1, 2], stale: false, storedAt: null }, "성공");
+  const empty = await withLastGood(env, "t", async () => [], [], { now: now + 1000 });
+  eq(empty.stale, true, "빈 배열 → 직전값");
+  deepEq(empty.value, [1, 2], "직전값");
+  eq(empty.storedAt, "2026-09-04T00:00:00.000Z", "storedAt");
+  const thrown = await withLastGood(env, "t", async () => { throw new Error("x"); }, [], { now: now + 2000 });
+  eq(thrown.stale, true, "예외 → 직전값");
+  const nul = await withLastGood(env, "t", async () => null, null, { now: now + 3000 });
+  eq(nul.stale, true, "null → 직전값");
+  // 캡 경계: 7일 + 1ms 는 버린다
+  const capped = await withLastGood(env, "t", async () => [], [], { now: now + 7 * 24 * 3600 * 1000 + 1 });
+  deepEq(capped, { value: [], stale: false, storedAt: null }, "캡 초과");
+  // 깨진 저장값
+  await env.MOVE_CACHE.put("lastgood:broken", "not json");
+  deepEq(await withLastGood(env, "broken", async () => null, null), { value: null, stale: false, storedAt: null }, "파싱 실패 → 빈 값");
+});
+
+await test("indices: 성공 후 실패하면 직전 지수 시리즈를 stale 로 준다", async () => {
+  const env = kvEnv();
+  await withMockFetch(() => yahooChart([100, 101, 102]), async () => {
+    const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
+    ok(data.indices.length > 0 && Array.isArray(data.indices[0].series), "indices 시리즈");
+    ok(!("stale" in data), "신선");
+  });
+  await withMockFetch(failResp, async () => {
+    const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
+    eq(data.stale, true, "stale");
+    ok(data.indices.length > 0, "직전 시리즈");
+  });
+});
+
+await test("calendar: 탭별로 보관하고, 한 탭만 죽어도 그 탭만 낡은 값으로 채우며 stale 을 표시한다", async () => {
+  const env = kvEnv();
+  const tabOf = (init) => (/currentTab=(\w+)/.exec(String(init.body)) || [])[1];
+  await withMockFetch((url, init) => jsonResp({ data: calendarHtml(tabOf(init) === "thisWeek" ? "이번주 지표" : "다음주 지표") }), async () => {
+    const data = await (await handleFetch(req("https://w/?calendar=1"), env)).json();
+    deepEq(data.calendar.map((e) => e.event), ["이번주 지표", "다음주 지표"], "두 탭 합침");
+    ok(!("stale" in data), "신선");
+  });
+  ok(env.MOVE_CACHE.map.has("lastgood:calendar:thisWeek") && env.MOVE_CACHE.map.has("lastgood:calendar:nextWeek"), "탭별 KV 키");
+  // nextWeek 만 실패
+  await withMockFetch((url, init) => (tabOf(init) === "nextWeek" ? new Response("blocked", { status: 403 }) : jsonResp({ data: calendarHtml("이번주 지표") })), async () => {
+    const data = await (await handleFetch(req("https://w/?calendar=1"), env)).json();
+    deepEq(data.calendar.map((e) => e.event), ["이번주 지표", "다음주 지표"], "죽은 탭은 직전값으로");
+    eq(data.stale, true, "부분 stale 도 표시");
+    ok(typeof data.storedAt === "string", "storedAt");
+  });
+  // 둘 다 실패
+  await withMockFetch(failResp, async () => {
+    const data = await (await handleFetch(req("https://w/?calendar=1"), env)).json();
+    eq(data.calendar.length, 2, "전부 직전값");
+    eq(data.stale, true, "stale");
+  });
+  // 직전값이 전혀 없으면 기존처럼 빈 배열
+  await withMockFetch(failResp, async () => {
+    deepEq(await (await handleFetch(req("https://w/?calendar=1"), kvEnv())).json(), { calendar: [] }, "기존 빈 응답");
+  });
+});
+
+// ── 9. Gemini 모델 체인 ──────────────────────────────────────────────────────
+
+console.log("\n[9] Gemini 모델 체인 (env.GEMINI_MODEL → 2.0-flash → 1.5-flash)");
+
+await test("geminiModelChain: 기본 순서, env 우선, 중복 제거", () => {
+  deepEq(geminiModelChain({}), ["gemini-2.0-flash", "gemini-1.5-flash"], "기본");
+  deepEq(geminiModelChain({ GEMINI_MODEL: "gemini-2.5-flash" }), ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"], "env 우선");
+  deepEq(geminiModelChain({ GEMINI_MODEL: " gemini-1.5-flash " }), ["gemini-1.5-flash", "gemini-2.0-flash"], "중복 제거 + trim");
+  deepEq(geminiModelChain({ GEMINI_MODEL: "" }), ["gemini-2.0-flash", "gemini-1.5-flash"], "빈 문자열은 무시");
+});
+
+await test("geminiModelUnavailable: 404 는 항상, 400 은 모델 문구가 있을 때만, 그 외는 아님", () => {
+  eq(geminiModelUnavailable(404, ""), true, "404");
+  eq(geminiModelUnavailable(400, '{"error":{"message":"models/gemini-1.5-flash is not found for API version v1beta","status":"NOT_FOUND"}}'), true, "400 model not found");
+  eq(geminiModelUnavailable(400, '{"error":{"message":"API key not valid"}}'), false, "400 키 오류");
+  eq(geminiModelUnavailable(429, "quota"), false, "429");
+  eq(geminiModelUnavailable(500, "model"), false, "500");
+});
+
+const geminiUrlModel = (url) => (/models\/([^:]+):/.exec(url) || [])[1];
+const geminiChatEnv = () => kvEnv({ GEMINI_API_KEY: "test-key" });
+
+await test("/chat: 첫 모델이 404 면 다음 모델을 한 번 더 시도하고 답한 모델명을 돌려준다", async () => {
+  await withMockFetch((url) => {
+    if (geminiUrlModel(url) === "gemini-2.0-flash") return jsonResp({ error: { message: "not found" } }, 404);
+    return jsonResp({ candidates: [{ content: { parts: [{ text: "제미나이 답변" }] } }] });
+  }, async (calls) => {
+    const res = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: chatBody }), geminiChatEnv());
+    const data = await res.json();
+    eq(data.reply, "제미나이 답변", "reply");
+    eq(data.model, "gemini-1.5-flash", "답한 모델");
+    deepEq(calls.map((c) => geminiUrlModel(c.url)), ["gemini-2.0-flash", "gemini-1.5-flash"], "시도 순서");
+    ok(calls.every((c) => c.init.headers["x-goog-api-key"] === "test-key" && !c.url.includes("key=")), "키는 헤더로만");
+  });
+});
+
+await test("/chat: env.GEMINI_MODEL 이 있으면 그 모델부터 시도한다", async () => {
+  await withMockFetch(() => jsonResp({ candidates: [{ content: { parts: [{ text: "ok" }] } }] }), async (calls) => {
+    const data = await (await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: chatBody }), kvEnv({ GEMINI_API_KEY: "k", GEMINI_MODEL: "gemini-2.5-flash" }))).json();
+    eq(data.model, "gemini-2.5-flash", "env 모델");
+    eq(calls.length, 1, "한 번에 성공");
+  });
+});
+
+await test("/chat: 체인이 전부 404 면 Workers AI 로 폴백한다(모델당 1회만)", async () => {
+  await withMockFetch(() => jsonResp({ error: { message: "not found" } }, 404), async (calls) => {
+    const data = await (await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: chatBody }), geminiChatEnv())).json();
+    eq(data.reply, "테스트 응답입니다.", "Workers AI 답");
+    ok(String(data.model).startsWith("@cf/"), `Workers AI 모델: ${data.model}`);
+    eq(calls.length, 2, "Gemini 는 모델당 한 번씩만");
+  });
+});
+
+await test("/chat: 429(쿼터)·키 오류처럼 모델 문제가 아니면 다음 모델로 넘어가지 않고 바로 Workers AI", async () => {
+  await withMockFetch(() => jsonResp({ error: { message: "Resource has been exhausted" } }, 429), async (calls) => {
+    const data = await (await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: chatBody }), geminiChatEnv())).json();
+    eq(data.reply, "테스트 응답입니다.", "Workers AI 답");
+    eq(calls.length, 1, "Gemini 1회");
+  });
+});
+
+await test("/chat stream: 스트리밍 경로도 같은 체인을 타고 SSE 로 델타를 흘린다", async () => {
+  const sse = `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: "안녕" }] } }] })}\n\n`;
+  await withMockFetch((url) => {
+    ok(url.includes("streamGenerateContent"), "스트리밍 엔드포인트");
+    if (geminiUrlModel(url) === "gemini-2.0-flash") return jsonResp({ error: { message: "not found" } }, 404);
+    return new Response(sse, { status: 200, headers: { "Content-Type": "text/event-stream" } });
+  }, async (calls) => {
+    const res = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: { ...chatBody, stream: true } }), geminiChatEnv());
+    ok(/text\/event-stream/.test(res.headers.get("Content-Type") || ""), "SSE");
+    const text = await res.text();
+    ok(text.includes('"delta":"안녕"'), `델타: ${text}`);
+    ok(text.includes('"model":"gemini-1.5-flash"'), "답한 모델 메타");
+    deepEq(calls.map((c) => geminiUrlModel(c.url)), ["gemini-2.0-flash", "gemini-1.5-flash"], "시도 순서");
+  });
+});
+
+await test("GEMINI_DEFAULT_MODEL 하드코딩이 소스에서 사라졌다", () => {
+  const src = readFileSync(WORKER_SRC, "utf8");
+  ok(!src.includes("GEMINI_DEFAULT_MODEL"), "GEMINI_DEFAULT_MODEL 잔존");
+  ok(src.includes('"gemini-2.0-flash", "gemini-1.5-flash"'), "기본 체인");
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

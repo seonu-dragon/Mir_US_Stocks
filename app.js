@@ -3180,7 +3180,7 @@ function setupEvents() {
   if (topPreset) topPreset.addEventListener("change", applyTopPreset);
   const topReset = byId("topResetFilters");
   if (topReset) topReset.addEventListener("click", resetTopScreener);
-  ["scanBucket", "scanSector", "scanHorizon", "scanLimit", "scanDeep"].forEach((id) => {
+  ["scanBucket", "scanSector", "scanHorizon", "scanLimit", "scanDeep", "scanRank"].forEach((id) => {
     const el = byId(id);
     if (el) el.addEventListener("change", renderScanner);
   });
@@ -3460,7 +3460,7 @@ function stockFacts(item, title) {
       ${fact("RSI", fmtRsi(item))}
       ${fact("EPS", fmtEps(item))}
       ${fact("거래량", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
-      ${fact("StochK", Number.isFinite(Number(item.stochK)) ? Math.round(Number(item.stochK)) : "—")}
+      ${fact("52주 위치", Number.isFinite(Number(item.stochK)) ? Math.round(Number(item.stochK)) : "—")}
       ${fact("신고가 거리", Number.isFinite(Number(item.newHighDistancePct)) ? fmtPct(-Number(item.newHighDistancePct)) : "—")}
     </div>
   `;
@@ -4124,9 +4124,14 @@ function renderTopStocks() {
   });
 }
 
-// ===== 상승확률 스캐너 =====
-// 전 종목을 스냅샷 지표(추세·모멘텀·상대강도·거래량 등)로 빠르게 점수화해 상승확률 순위를 매기고,
-// "정밀 분석" 옵션을 켜면 화면에 보이는 상위 종목만 5년 일봉을 받아 차트 확률 엔진(window.MirProb)으로 재계산한다.
+/// ===== 모멘텀 스캐너 (구 '상승확률 스캐너') =====
+// 전 종목을 스냅샷 지표(추세·모멘텀·RSI·거래량 등)로 점수화해 순위를 매긴다.
+// 2026-09-04 검증(scripts/build_factor_validation.mjs → data/factor_validation.json): 이 점수의
+// 상위 24개가 실제로 오른 비율은 5년 워크포워드에서 전체 기저율과 다르지 않았다
+// (US 20일 51.8% vs 51.4%, KR 41.4% vs 44.3%). 그래서 '상승확률' 이 아니라 '모멘텀 점수' 로
+// 부르고, '순위 기준' 셀렉트에는 검증을 통과한(validated) 팩터만 실측 수치와 함께 올린다.
+// "차트 기술 점수로 재정렬" 옵션은 상위 종목만 5년 일봉을 받아 차트 확률 엔진(window.MirProb)
+// 의 기술 점수로 다시 정렬한다 — 이 점수도 보정표(prob_calibration)상 기저율과 유의차가 없다.
 let scannerRunId = 0;
 
 const scanMean = (arr) => (arr.length ? arr.reduce((s, x) => s + x, 0) / arr.length : 0);
@@ -4190,7 +4195,8 @@ function enrichScanMomentum(item) {
   return Object.keys(patch).length ? { ...item, ...patch } : item;
 }
 
-// 스냅샷 지표만으로 빠르게 추정하는 상승확률(12~88%).
+// 스냅샷 지표만으로 만드는 모멘텀 점수(12~88). 확률이 아니다 — 위 검증 참고.
+// scripts/build_factor_validation.mjs 의 scanQuickProb 와 1:1 이어야 한다(바꾸면 같이 바꿀 것).
 function scanQuickProb(item, horizon) {
   item = enrichScanMomentum(item);
   // 예측 기간에 따라 단기/장기 신호 가중을 조절한다.
@@ -4204,7 +4210,7 @@ function scanQuickProb(item, horizon) {
   if (Number.isFinite(item.monthChangePct)) push(scanTanh(item.monthChangePct / 8), 0.9);
   if (Number.isFinite(item.weekChangePct)) push(scanTanh(item.weekChangePct / 4), 0.6 * shortW);
   push(scanRsiBias(rsiValue(item) ?? NaN), 1.0 * shortW);
-  if (Number.isFinite(item.stochK)) push(scanClamp((item.stochK - 50) / 45, -1, 1) * 0.8, 0.4 * shortW);
+  // stochK 항은 2026-09-04 제거: 신고가 거리와 같은 고점에서 나온 값이라 같은 신호를 두 번 셌다.
 
   // 거래량 확인: 추세 방향과 거래량 증가가 같은 방향이면 강화
   const trendSign = Math.sign(Number(item.monthChangePct) || Number(item.weekChangePct) || 0);
@@ -4223,40 +4229,182 @@ function scanQuickProb(item, horizon) {
   return { up, z };
 }
 
-function scanVerdict(up) {
-  if (window.MirProb && window.MirProb.verdictText) return window.MirProb.verdictText(up);
-  if (up >= 60) return "상승 우위";
-  if (up <= 40) return "하락 우위";
-  return "중립";
+// ---- 검증 데이터(data/factor_validation.js) 지연 로드 ----
+// FEATURE_DATA 레지스트리(feature-data.js)에 넣지 않고 스캐너가 처음 열릴 때만 받는다(45KB).
+let _factorValidationPromise = null;
+let _factorValidationTried = false;
+function ensureFactorValidation() {
+  if (window.FACTOR_VALIDATION) return Promise.resolve(true);
+  if (_factorValidationPromise) return _factorValidationPromise;
+  _factorValidationPromise = new Promise((resolve) => {
+    const script = document.createElement("script");
+    script.src = featureDataSrc("data/factor_validation.js");
+    script.async = true;
+    script.addEventListener("load", () => { _factorValidationTried = true; resolve(!!window.FACTOR_VALIDATION); }, { once: true });
+    script.addEventListener("error", () => { _factorValidationTried = true; resolve(false); }, { once: true });
+    document.head.appendChild(script);
+  });
+  return _factorValidationPromise;
 }
 
-function scanProbColor(up) {
-  if (up >= 60) return "var(--pos, #138a4d)";
-  if (up <= 40) return "var(--neg, #c03535)";
-  return "var(--amber, #b7791f)";
+// 현재 시장·기간의 검증표. 없으면 null(1·3·10일은 검증하지 않았다).
+function scanValidationFor(horizon) {
+  const fv = window.FACTOR_VALIDATION;
+  const market = fv && fv.markets && fv.markets[isKrMarket() ? "kr" : "us"];
+  const table = market && market.horizons && market.horizons[String(horizon)];
+  if (!table) return null;
+  return { fv, market, table };
 }
 
-function scanBadgeText(mode) {
-  return mode === "deep" ? "정밀" : mode === "loading" ? "분석중" : "빠른";
+// 검증에서 통과한 팩터를 라이트 스냅샷 필드로 다시 계산하는 법. 정의는
+// build_factor_validation.mjs 의 factorValues 와 같아야 한다(클수록 상위).
+function scanStdev20(series) {
+  const s = (Array.isArray(series) ? series : []).map(Number).filter(Number.isFinite).slice(-21);
+  if (s.length < 21) return null;
+  const rets = [];
+  for (let i = 1; i < s.length; i++) if (s[i - 1]) rets.push(s[i] / s[i - 1] - 1);
+  const m = scanMean(rets);
+  return Math.sqrt(scanMean(rets.map((r) => (r - m) ** 2))) * 100;
+}
+const scanNum = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+const SCAN_FACTOR_RUNTIME = {
+  rev_1m: {
+    value: (item) => { const v = scanNum(enrichScanMomentum(item).monthChangePct); return v == null ? null : -v; },
+    text: (item) => `1개월 ${fmtPct(enrichScanMomentum(item).monthChangePct)}`,
+  },
+  mom_3m: {
+    value: (item) => scanNum(enrichScanMomentum(item).threeMonthChangePct),
+    text: (item) => `3개월 ${fmtPct(enrichScanMomentum(item).threeMonthChangePct)}`,
+  },
+  vol_shock: {
+    value: (item) => scanNum(item.volumeRatio),
+    text: (item) => `거래량 ${Number(item.volumeRatio).toFixed(1)}x`,
+  },
+  high52_prox: {
+    value: (item) => { const v = scanNum(item.newHighDistancePct); return v == null ? null : -v; },
+    text: (item) => `52주 고점 대비 ${Number(item.newHighDistancePct).toFixed(1)}%↓`,
+    // 검증은 252봉 고점 기준인데 2026-09-04 이전 스냅샷의 newHighDistancePct 는 5년 고점 기준이다.
+    // 수정된 빌더가 만든 스냅샷(newHighDistance5yPct 동반)에서만 같은 정의가 된다.
+    available: (stocks) => stocks.some((s) => s && Object.prototype.hasOwnProperty.call(s, "newHighDistance5yPct")),
+    unavailableNote: "52주 신고가 근접은 다음 스냅샷 갱신 뒤 사용 가능합니다(현재 스냅샷의 신고가 거리는 5년 고점 기준).",
+  },
+  low_vol: {
+    value: (item) => { const sd = scanStdev20(item.closeSeries); return sd == null ? null : -sd; },
+    text: (item) => { const sd = scanStdev20(item.closeSeries); return sd == null ? "—" : `20일 변동성 ${sd.toFixed(1)}%`; },
+  },
+  rsi14_low: {
+    value: (item) => { const v = rsiValue(item); return v == null ? null : -v; },
+    text: (item) => `RSI ${fmtRsi(item)}`,
+  },
+};
+
+const scanPct = (v) => (Number.isFinite(v) ? `${(v * 100).toFixed(1)}%` : "—");
+const scanSignedPct = (v) => (Number.isFinite(v) ? `${v > 0 ? "+" : ""}${v.toFixed(1)}%` : "—");
+
+// 순위 기준 셀렉트 옵션. 기존 점수 + 이 시장·기간에서 validated 인 팩터(실측 수치 라벨).
+function scanRankOptions(horizon, stocks) {
+  const opts = [{ value: "quick", label: "모멘텀 점수(기존)" }];
+  const notes = [];
+  const v = scanValidationFor(horizon);
+  if (!v) {
+    if (window.FACTOR_VALIDATION) notes.push(`${scanHorizonLabel(horizon)}은 과거 검증을 하지 않았습니다(검증은 1주·1개월·3개월) — 아래 순위는 참고용 모멘텀 점수입니다.`);
+    return { opts, notes };
+  }
+  const base = v.table.base || {};
+  let validatedCount = 0;
+  Object.entries(v.table.factors || {}).forEach(([key, f]) => {
+    if (!f || !f.validated) return;
+    validatedCount++;
+    const rt = SCAN_FACTOR_RUNTIME[key];
+    const cat = (v.fv.factors || {})[key] || {};
+    if (!rt) return;
+    if (rt.available && !rt.available(stocks)) { notes.push(rt.unavailableNote); return; }
+    opts.push({
+      value: key,
+      label: `${cat.label || key} · 검증됨: 상위 24개 실제 상승률 ${scanPct(f.top24.upRate)} (전체 ${scanPct(base.upRate)})`,
+    });
+  });
+  if (!validatedCount) notes.push("이 시장·기간에서는 과거 5년 검증을 통과한 순위 기준이 없습니다 — 아래 순위는 참고용 모멘텀 점수입니다.");
+  return { opts, notes };
+}
+
+function syncScanRankSelect(horizon, stocks) {
+  const select = byId("scanRank");
+  if (!select) return { basis: "quick", notes: [] };
+  const { opts, notes } = scanRankOptions(horizon, stocks);
+  const prev = select.value || "quick";
+  select.innerHTML = opts.map((o) => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join("");
+  select.value = opts.some((o) => o.value === prev) ? prev : "quick";
+  const note = byId("scannerRankNote");
+  if (note) {
+    note.textContent = notes.join(" ");
+    note.hidden = !notes.length;
+  }
+  return { basis: select.value, notes };
+}
+
+// 검증 근거 한 줄(#scannerEvidence). 파일이 없거나 이 기간 검증이 없으면 비운다.
+function scanEvidenceText(basis, horizon) {
+  const v = scanValidationFor(horizon);
+  if (!v) return "";
+  const key = basis === "quick" ? "quick_score" : basis;
+  const f = (v.table.factors || {})[key];
+  const base = v.table.base || {};
+  if (!f || !f.top24) return "";
+  const s = v.market.sample || {};
+  const span = s.firstEvalDate && s.lastEvalDate ? `${s.firstEvalDate.slice(0, 7)}~${s.lastEvalDate.slice(0, 7)}` : "5년";
+  const who = isKrMarket() ? "KR" : "US";
+  return `과거 5년 검증(${who} ${span}, ${s.tickers || "—"}종목): 이 순위 상위 24개의 실제 상승률 ${scanPct(f.top24.upRate)} (전체 ${scanPct(base.upRate)})`
+    + ` · 평균 수익 ${scanSignedPct(f.top24.meanRetPct)} (전체 ${scanSignedPct(base.meanRetPct)})`
+    + ` · 연도별 부호 일치 ${f.sameSignYears ?? "—"}/${f.yearsCounted ?? "—"}`
+    + (f.validated ? " · 검증 통과" : " · 검증 미통과");
+}
+
+function scanBasisLabel(basis) {
+  if (basis === "quick") return "모멘텀 점수";
+  const cat = window.FACTOR_VALIDATION && window.FACTOR_VALIDATION.factors && window.FACTOR_VALIDATION.factors[basis];
+  return (cat && cat.label) || basis;
+}
+
+function scanBadgeText(entry) {
+  const mode = entry.mode;
+  // 팩터 순위에서는 카드 머리에 팩터 값을 남기고 기술 점수는 배지에 숫자로 넣는다.
+  if (mode === "deep") return entry.basis !== "quick" && Number.isFinite(entry.deep) ? `기술 점수 ${Math.round(entry.deep)}` : "기술 점수";
+  return mode === "loading" ? "분석중" : "스냅샷";
+}
+
+// 카드 머리(주 수치). 기술 점수(deep) > 모멘텀 점수 > 팩터 값 순으로 보여 준다.
+function scanHeadHtml(entry) {
+  if (entry.basis === "quick" && entry.mode === "deep" && Number.isFinite(entry.deep)) {
+    const s = Math.round(entry.deep);
+    return { label: "기술 점수", value: `${s}`, bar: s };
+  }
+  if (entry.basis === "quick") {
+    const s = Math.round(entry.score);
+    return { label: "모멘텀 점수", value: `${s}`, bar: s };
+  }
+  return { label: scanBasisLabel(entry.basis), value: entry.text || "—", bar: null };
 }
 
 function scanCardHtml(entry, rank) {
   const item = entry.item;
-  const up = Math.round(entry.prob);
-  const color = scanProbColor(entry.prob);
+  const head = scanHeadHtml(entry);
   const spark = sparklineSvg(item.closeSeries, { width: 240, height: 56, color: (item.changePct || 0) >= 0 ? "#22c55e" : "#ef4444" });
+  const stats = entry.stats
+    ? `<div class="scan-evidence">${escapeHtml(entry.stats)}</div>`
+    : "";
   return `
     <article class="stock-card scanner-card" data-ticker="${escapeHtml(item.ticker)}">
       <div class="rank-line">
         <span>${rank}</span>
         <strong>${escapeHtml(item.ticker)}</strong>
-        <em class="scan-badge scan-badge-${entry.mode}">${scanBadgeText(entry.mode)}</em>
+        <em class="scan-badge scan-badge-${entry.mode}">${scanBadgeText(entry)}</em>
       </div>
       <p class="muted">${escapeHtml(item.company || "")}</p>
-      <div class="scan-prob">
-        <div class="scan-prob-head"><span>상승확률</span><b style="color:${color}">${up}%</b></div>
-        <div class="scan-prob-bar"><div class="scan-prob-fill" style="width:${up}%;background:${color}"></div></div>
-        <div class="scan-verdict">${scanVerdict(entry.prob)}</div>
+      <div class="scan-prob scan-score">
+        <div class="scan-prob-head"><span>${escapeHtml(head.label)}</span><b>${escapeHtml(head.value)}</b></div>
+        <div class="scan-prob-bar scan-score-bar"${head.bar == null ? " hidden" : ""}><div class="scan-prob-fill scan-score-fill" style="width:${head.bar == null ? 0 : head.bar}%"></div></div>
+        ${stats}
       </div>
       <div class="scanner-spark">${spark}</div>
       <div class="mini-facts">
@@ -4268,11 +4416,21 @@ function scanCardHtml(entry, rank) {
     </article>`;
 }
 
+// 정렬: 기술 점수가 있는 항목이 위(점수 내림차순), 없는 항목은 기준값 순으로 그 아래.
+function scanSortEntries(entries) {
+  return entries.slice().sort((a, b) => {
+    const ad = a.mode === "deep" && Number.isFinite(a.deep);
+    const bd = b.mode === "deep" && Number.isFinite(b.deep);
+    if (ad && bd) return b.deep - a.deep;
+    if (ad !== bd) return ad ? -1 : 1;
+    return b.score - a.score;
+  });
+}
+
 function renderScannerCards(entries) {
   const grid = byId("scannerCards");
   if (!grid) return;
-  const sorted = entries.slice().sort((a, b) => b.prob - a.prob);
-  grid.innerHTML = sorted.map((entry, i) => scanCardHtml(entry, i + 1)).join("");
+  grid.innerHTML = scanSortEntries(entries).map((entry, i) => scanCardHtml(entry, i + 1)).join("");
   grid.querySelectorAll(".scanner-card").forEach((card) => {
     card.addEventListener("click", () => selectTicker(card.dataset.ticker, { openSearch: true }));
   });
@@ -4283,16 +4441,17 @@ function updateScanCardInPlace(entry) {
   if (!grid) return;
   const card = grid.querySelector(`.scanner-card[data-ticker="${escapeHtml(entry.item.ticker)}"]`);
   if (!card) return;
-  const up = Math.round(entry.prob);
-  const color = scanProbColor(entry.prob);
+  const head = scanHeadHtml(entry);
+  const label = card.querySelector(".scan-prob-head span");
+  if (label) label.textContent = head.label;
   const b = card.querySelector(".scan-prob-head b");
-  if (b) { b.textContent = `${up}%`; b.style.color = color; }
-  const fill = card.querySelector(".scan-prob-fill");
-  if (fill) { fill.style.width = `${up}%`; fill.style.background = color; }
-  const v = card.querySelector(".scan-verdict");
-  if (v) v.textContent = scanVerdict(entry.prob);
+  if (b) b.textContent = head.value;
+  const bar = card.querySelector(".scan-score-bar");
+  if (bar) bar.hidden = head.bar == null;
+  const fill = card.querySelector(".scan-score-fill");
+  if (fill) fill.style.width = `${head.bar == null ? 0 : head.bar}%`;
   const badge = card.querySelector(".scan-badge");
-  if (badge) { badge.textContent = scanBadgeText(entry.mode); badge.className = `scan-badge scan-badge-${entry.mode}`; }
+  if (badge) { badge.textContent = scanBadgeText(entry); badge.className = `scan-badge scan-badge-${entry.mode}`; }
 }
 
 async function deepAnalyzeEntry(entry, horizon) {
@@ -4303,7 +4462,7 @@ async function deepAnalyzeEntry(entry, horizon) {
     const rows = series.map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4] || 0, d: r[5] }));
     const res = window.MirProb.analyzeRows(rows, horizon, { ticker: entry.item.ticker, company: entry.item.company });
     if (res && Number.isFinite(res.headlineUp)) {
-      entry.prob = res.headlineUp;
+      entry.deep = res.headlineUp;
       entry.mode = "deep";
     } else {
       entry.mode = "quick";
@@ -4340,9 +4499,9 @@ async function runDeepScan(entries, horizon, runId) {
     pump();
   });
   if (runId !== scannerRunId) return;
-  renderScannerCards(entries);  // 정밀 확률 기준으로 최종 재정렬
+  renderScannerCards(entries);  // 기술 점수 기준으로 최종 재정렬
   const meta = byId("scannerMeta");
-  if (meta) meta.textContent = meta.textContent.replace(/· 정밀 분석 적용 중…$/, "· 정밀 분석 완료");
+  if (meta) meta.textContent = meta.textContent.replace(/· 차트 기술 점수로 재정렬 중…$/, "· 차트 기술 점수로 재정렬됨");
 }
 
 function renderScanner() {
@@ -4353,24 +4512,54 @@ function renderScanner() {
   const horizon = Number(byId("scanHorizon").value) || 20;
   const limit = Math.max(1, Number(byId("scanLimit").value) || 24);
   const deep = byId("scanDeep").checked;
-  const runId = ++scannerRunId;  // 진행 중이던 이전 정밀 분석은 무효화
+  const runId = ++scannerRunId;  // 진행 중이던 이전 재정렬은 무효화
 
-  const scored = data.stocks
+  // 검증표를 아직 안 받았으면 먼저 받고 다시 그린다(실패해도 한 번만 시도).
+  if (!window.FACTOR_VALIDATION && !_factorValidationTried) {
+    const meta0 = byId("scannerMeta");
+    if (meta0) meta0.textContent = "검증 데이터를 불러오는 중…";
+    ensureFactorValidation().then(() => { if (runId === scannerRunId) renderScanner(); });
+    return;
+  }
+
+  const universe = data.stocks
     .filter((item) => bucketMatches(item, item.groups || [item.bucket].filter(Boolean), bucket))
     .filter((item) => sector === "All" || item.sector === sector)
     .filter((item) => bucket === "watchlist" || bucket === "portfolio" || !isStockEtf(item))
-    // 합성 이력에서 뽑은 확률은 랜덤워크의 성질일 뿐이다. 순위 자체가 무의미하므로 제외한다.
+    // 합성 이력에서 뽑은 점수는 랜덤워크의 성질일 뿐이다. 순위 자체가 무의미하므로 제외한다.
     .filter((item) => !isSyntheticHistory(item))
-    .filter((item) => Array.isArray(item.closeSeries) && item.closeSeries.length >= 20)
-    .map((item) => ({ item, prob: scanQuickProb(item, horizon).up, mode: "quick" }))
-    .sort((a, b) => b.prob - a.prob)
+    .filter((item) => Array.isArray(item.closeSeries) && item.closeSeries.length >= 20);
+
+  const { basis } = syncScanRankSelect(horizon, universe);
+  const runtime = basis !== "quick" ? SCAN_FACTOR_RUNTIME[basis] : null;
+  const v = scanValidationFor(horizon);
+  const f = v && runtime && v.table.factors && v.table.factors[basis];
+  const stats = f && f.top24 ? `검증 상승률 ${scanPct(f.top24.upRate)} · 전체 ${scanPct((v.table.base || {}).upRate)} · 평균 ${scanSignedPct(f.top24.meanRetPct)}` : "";
+
+  const scored = universe
+    .map((item) => {
+      if (runtime) {
+        const value = runtime.value(item);
+        return value == null ? null : { item, score: value, text: runtime.text(item), basis, stats, mode: "quick" };
+      }
+      return { item, score: scanQuickProb(item, horizon).up, basis: "quick", mode: "quick" };
+    })
+    .filter(Boolean)
+    .sort((a, b) => b.score - a.score)
     .slice(0, limit);
 
   const scope = labelForSelect("scanBucket");
   const meta = byId("scannerMeta");
   if (meta) {
-    meta.textContent = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 상위 ${scored.length}개`
-      + (deep && window.MirProb ? " · 정밀 분석 적용 중…" : " · 빠른 스캔");
+    meta.textContent = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 실측 이력 ${universe.length.toLocaleString()}종목 기준 · 상위 ${scored.length}개 · 순위: ${scanBasisLabel(basis)}`
+      // 검증된 팩터 순위는 그 팩터 값으로만 정렬한다 — 기술 점수 재정렬은 모멘텀 점수일 때만.
+      + (deep && window.MirProb && basis === "quick" ? " · 차트 기술 점수로 재정렬 중…" : "");
+  }
+  const evidence = byId("scannerEvidence");
+  if (evidence) {
+    const text = scanEvidenceText(basis, horizon);
+    evidence.textContent = text;
+    evidence.hidden = !text;
   }
 
   if (!scored.length) {
@@ -4379,7 +4568,7 @@ function renderScanner() {
   }
 
   renderScannerCards(scored);
-  if (deep && window.MirProb) runDeepScan(scored, horizon, runId);
+  if (deep && window.MirProb && basis === "quick") runDeepScan(scored, horizon, runId);
 }
 
 // 주도주 필터 'RSI 상한' 입력. index.html 의 id 가 아직 topMinEps(옛 EPS 필터 시절 이름)라
@@ -5092,7 +5281,7 @@ function isSyntheticHistory(item) {
 
 function syntheticBadge(item) {
   if (!isSyntheticHistory(item)) return "";
-  return `<span class="synth-badge" title="야후 실시간 가격 이력이 없어 이력 기반 지표(1개월·StochK·신고가 거리 등)는 추정값입니다. 가격과 당일 등락률은 실제입니다.">추정</span>`;
+  return `<span class="synth-badge" title="야후 실시간 가격 이력이 없어 이력 기반 지표(1개월·52주 위치·신고가 거리 등)는 추정값입니다. 가격과 당일 등락률은 실제입니다.">추정</span>`;
 }
 
 function renderNews(item) {

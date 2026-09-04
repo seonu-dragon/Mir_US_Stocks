@@ -60,6 +60,32 @@
   --chip-bg: #eff6ff;
   --chip-border: #bfdbfe;
   --chat-safe-bottom: 61px;
+  --z-behind: -1;
+  --z-base: 0;
+  --z-layer-1: 1;
+  --z-layer-2: 2;
+  --z-layer-4: 4;
+  --z-layer-5: 5;
+  --z-layer-6: 6;
+  --z-sticky: 10;
+  --z-ai-chatlog: 18;
+  --z-popover: 20;
+  --z-ai-input: 25;
+  --z-legend-pop: 40;
+  --z-ai-topbar: 50;
+  --z-drawer-backdrop: 60;
+  --z-drawer: 61;
+  --z-ia-popover: 80;
+  --z-cmdk: 90;
+  --z-dropdown: 100;
+  --z-autocomplete: 120;
+  --z-fab: 900;
+  --z-modal: 1000;
+  --z-lightbox: 1000;
+  --z-assembly: 2000;
+  --z-toast: 9999;
+  --z-fullscreen: 10000;
+  --z-offline: 99999;
   --text-muted: #667085;
   --accent: #1d4ed8;
   --pos: #0f7a3f;
@@ -155,7 +181,7 @@ select {
   justify-content: space-between;
   gap: var(--space-4);
   padding: 18px 24px 12px;
-  z-index: 5;
+  z-index: var(--z-layer-5);
   background: var(--topbar-bg);
   color: var(--topbar-fg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -202,7 +228,7 @@ main {
 .tabs-scroll-wrap {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--z-popover);
   padding: 8px 0 6px;
   margin: 0 0 10px;
   background: var(--bg);
@@ -292,8 +318,8 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=db5e698140" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=db5e698140"></noscript>
+    <link rel="preload" href="styles.css?v=5182eff888" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=5182eff888"></noscript>
     <style>
       .ca-main { max-width: 960px; margin: 0 auto; padding: 16px 16px 80px; }
       .ca-intro { color: var(--muted); font-size: var(--fs-body); line-height: 1.65; margin: 4px 0 18px; }
@@ -435,14 +461,14 @@ html[data-theme="dark"] {
       <span>투자 판단과 책임은 본인에게 있습니다.</span>
     </footer>
 
-    <script src="storage.js?v=20425e8d72"></script>
-    <script src="build_id.js?v=fe323d639e"></script>
-    <script src="market_config.js?v=eeb0967918"></script>
+    <script src="storage.js?v=dff414d117"></script>
+    <script src="build_id.js?v=5cca8fb19e"></script>
+    <script src="market_config.js?v=950a20f7b6"></script>
     <!-- 한글명 검색("엔비디아")용. analysis.js 의 resolveKoAliasToTicker 가 읽으므로
          반드시 analysis.js 보다 먼저 와야 한다. -->
     <script src="data/ticker_aliases_ko.js?v=0920b74e86"></script>
     <script src="indicators.js?v=68dcdb850f"></script>
     <script src="pattern_detectors_extended.js?v=28fb087e10"></script>
-    <script src="analysis.js?v=247ee108af"></script>
+    <script src="analysis.js?v=15ae8ed092"></script>
   </body>
 </html>

@@ -1997,12 +1997,21 @@ def make_stock(meta, rows):
     if change_pct is None:
         change_pct = pct(price, prev)
     volume_avg = sum(volumes[-21:-1]) / max(1, len(volumes[-21:-1]))
-    high_52w = max(max(closes), price)
-    low_52w = min(min(closes), price)
+    # 52주 = 최근 252 거래일 + 현재가. 2026-09-04 이전엔 rows 전체(최대 1,260봉 ≈ 5년)의
+    # 고저를 "52주" 라고 불렀다 — 표본 132 종목 중 131 개가 5년 고점과 일치했고 252봉
+    # 고점과 일치한 건 63 개뿐이었다. 5년 범위는 별도 필드(*5y*)로 남긴다.
+    closes_52w = closes[-WEEKS_52_BARS:]
+    high_52w = max(max(closes_52w), price)
+    low_52w = min(min(closes_52w), price)
+    high_all = max(max(closes), price)
+    low_all = min(min(closes), price)
     fundamentals = meta.get("fundamentals") or {}
     history_source = meta.get("historySource", "synthetic")
     rsi14 = real_rsi14(rows, price, history_source)
+    # 52주 레인지 안의 위치(0=52주 저가, 100=52주 고가). 이름은 stochK 이지만 14일
+    # 스토캐스틱이 아니다(프론트 라벨 "52주 레인지 위치").
     stoch = clamp((price - low_52w) / max(0.01, high_52w - low_52w) * 100)
+    range_pos_5y = clamp((price - low_all) / max(0.01, high_all - low_all) * 100)
     market_cap_b = fundamentals.get("marketCapB") or meta.get("marketCapB") or synthetic_cap(meta["symbol"], meta["sector"])
     quote_volume = meta.get("quoteVolume")
     volume_ratio = (quote_volume / volume_avg) if quote_volume and volume_avg else (volumes[-1] / volume_avg if volume_avg else 1.0)
@@ -2029,6 +2038,9 @@ def make_stock(meta, rows):
         "stochK": stoch,
         "newHighDistancePct": round((1 - price / high_52w) * 100, 1),
         "newHighRecency4w": 1 if price >= high_52w * 0.99 else (2 if price >= high_52w * 0.96 else "None"),
+        # 전체 이력(최대 5년) 기준 — 예전 stochK/newHighDistancePct 가 실제로 재던 값.
+        "rangePos5yPct": range_pos_5y,
+        "newHighDistance5yPct": round((1 - price / high_all) * 100, 1),
         "closeSeries": [round(value, 2) for value in closes[-40:-1]] + [round(price, 2)],
         "historySource": history_source,
     }
@@ -2078,6 +2090,10 @@ def make_stock(meta, rows):
     if meta.get("news"):
         stock["news"] = meta["news"]
     return stock
+
+
+# 52주 = 252 거래일(make_stock 의 high_52w/low_52w/stochK/newHighDistancePct 창).
+WEEKS_52_BARS = 252
 
 
 def lookback(values, periods):

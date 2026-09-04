@@ -524,20 +524,18 @@ function heatTile(item, rect, metric, query) {
   const titleText = kr
     ? `${item.company} · ${label} · ${marketCfg().formatPrice(item.price)}`
     : `${item.ticker} · ${item.company} · ${label} · ${priceOrDash(item.price)}`;
-  return `
-    <button
-      class="heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}"
-      style="${rectStyle(rect)} background:${metricColor(value, metric)}"
-      data-ticker="${escapeHtml(item.ticker)}"
-      data-sector="${escapeHtml(item.sector)}"
-      data-industry="${escapeHtml(item.industry)}"
-      title="${escapeHtml(titleText)}"
-    >
-      ${showPrimary ? `<strong>${escapeHtml(primaryText)}</strong>` : ""}
-      ${showCompanySub ? `<span>${escapeHtml(item.company)}</span>` : ""}
-      ${showMetric ? `<small>${label}</small>` : ""}
-    </button>
-  `;
+  const classAttr = `heat-tile${sizeClass}${isSelected ? " is-selected" : ""}${isFocused ? " is-focus-pulse" : ""}${isMatch ? " is-match" : ""}${isDimmed ? " is-dimmed" : ""}`;
+  const dataAttrs = `data-ticker="${escapeHtml(item.ticker)}" data-sector="${escapeHtml(item.sector)}" data-industry="${escapeHtml(item.industry)}"`;
+  // 극소 타일(가로 <12px 또는 세로 <14px): 글자를 넣어도 보이지 않으므로 자식·title 없이 빈 버튼만.
+  // S&P 500·전체 보통주 뷰에서 수백 개가 이 크기라 DOM 노드 수를 줄인다. 접근성은 aria-label 로.
+  if (rect.w < 12 || rect.h < 14) {
+    return `<button class="${classAttr} is-micro" style="${rectStyle(rect)} background:${metricColor(value, metric)}" ${dataAttrs} aria-label="${escapeHtml(titleText)}"></button>`;
+  }
+  // 공백 텍스트 노드가 생기지 않도록 자식 사이에 줄바꿈을 두지 않는다.
+  const children = (showPrimary ? `<strong>${escapeHtml(primaryText)}</strong>` : "")
+    + (showCompanySub ? `<span>${escapeHtml(item.company)}</span>` : "")
+    + (showMetric ? `<small>${label}</small>` : "");
+  return `<button class="${classAttr}" style="${rectStyle(rect)} background:${metricColor(value, metric)}" ${dataAttrs} title="${escapeHtml(titleText)}">${children}</button>`;
 }
 
 function handleHeatmapPointer(event) {
@@ -636,12 +634,12 @@ function showHeatmapTooltip(html, event) {
 function positionHeatmapTooltip(event) {
   const tooltip = ensureHeatmapTooltip();
   tooltip.classList.add("is-visible");
-  const margin = 8;
 
+  const gap = 16;
+  const margin = 8;
+  const rect = tooltip.getBoundingClientRect();
   const vw = window.innerWidth;
   const vh = window.innerHeight;
-  const gap = 16;
-  const rect = tooltip.getBoundingClientRect();
   let left = event.clientX + gap;
   let top = event.clientY + gap;
   // 오른쪽 끝에 닿으면 커서 왼쪽으로, 아래 끝에 닿으면 위로 반전
@@ -881,12 +879,12 @@ function heatmapItemMatchesQuery(item, rawQuery) {
   const q = String(rawQuery || "").trim();
   if (!q) return true;
   const hayUpper = `${item.ticker} ${item.company} ${item.sector} ${item.industry}`.toUpperCase();
+  if (hayUpper.includes(q.toUpperCase())) return true;
+  const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
   // 초성 질의(ㅅㅅㅈㅈ): 회사명·별칭의 초성열과 대조(app.js 의 hangulChosung, 호출 시점에 존재)
   if (typeof isChosungQuery === "function" && isChosungQuery(q)) {
     return hangulChosung(item.company).includes(q) || aliases.some((alias) => hangulChosung(alias).includes(q));
   }
-  if (hayUpper.includes(q.toUpperCase())) return true;
-  const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
   return aliases.some((alias) => alias.includes(q) || q.includes(alias));
 }
 

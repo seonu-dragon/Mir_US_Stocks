@@ -1253,6 +1253,7 @@ button.ghost {
 }
 
 .heat-tile:hover,
+  content-visibility: auto; /* 화면 밖 박스는 렌더 생략(크기는 인라인 style 고정) */
 .heat-tile.is-selected,
 .heat-tile.is-match {
   z-index: 4;

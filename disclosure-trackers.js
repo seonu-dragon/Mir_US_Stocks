@@ -829,18 +829,33 @@ function renderUsBuybacks() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (buybackSort === "size") rows.sort((a, b) => (b.capPct ?? -1) - (a.capPct ?? -1));
   else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml((window.MATERIAL_EVENTS || {}).updatedAtKst || "")} · 자사주 발표 ${rows.length}건 · 출처 SEC 8-K`;
-  if (!rows.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 발표가 없습니다.</p>`; return; }
-  const body = rows.slice(0, 200).map((r) => `<tr>
+  // 2026-09-04 실측: 190건 중 144건이 금액을 못 뽑은 8-K(제목도 '실적 발표…' 같은
+  // 일반 항목)라 표가 '—' 로 가득했다. 금액이 확인된 발표만 기본으로 보이고,
+  // 미확인분은 건수를 밝힌 뒤 원하면 펼친다. 한 번에 50행, 나머지는 '더 보기'.
+  const withAmt = rows.filter((r) => r.amount != null);
+  const noAmt = rows.length - withAmt.length;
+  const shownRows = buybackShowAll ? rows : withAmt;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml((window.MATERIAL_EVENTS || {}).updatedAtKst || "")} · 금액 확인 ${withAmt.length}건`
+    + (noAmt ? ` · 금액 미확인 ${noAmt}건 <button type="button" class="link-btn" id="buybackToggleAll">${buybackShowAll ? "숨기기" : "포함해 보기"}</button>` : "")
+    + ` · 출처 SEC 8-K`;
+  byId("buybackToggleAll")?.addEventListener("click", () => { buybackShowAll = !buybackShowAll; buybackLimit = 50; renderUsBuybacks(); });
+  if (!shownRows.length) { wrap.innerHTML = `<p class="muted">${withAmt.length ? "조건에 맞는 발표가 없습니다." : "금액이 확인된 자사주 발표가 없습니다. 위에서 미확인분을 펼쳐 볼 수 있습니다."}</p>`; return; }
+  const body = shownRows.slice(0, buybackLimit).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company)}</div></td>
     <td class="ins-num"><strong>${r.capPct != null ? `${r.capPct.toFixed(2)}%` : "—"}</strong></td>
     <td class="ins-num">${r.amount != null ? insiderFmtUsd(r.amount) : "—"}</td>
     <td><a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`;
+  const remain = shownRows.length - buybackLimit;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`
+    + (remain > 0 ? `<button type="button" class="ghost compact-btn list-more-btn" id="buybackMore">더 보기 (남은 ${remain}건)</button>` : "");
   wrap.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+  byId("buybackMore")?.addEventListener("click", () => { buybackLimit += 100; renderUsBuybacks(); });
 }
+
+let buybackShowAll = false;
+let buybackLimit = 50;
 
 function renderBuyback() {
   setupBuybackControls();

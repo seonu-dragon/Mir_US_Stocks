@@ -516,15 +516,24 @@ def test_mobile(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 390, "height": 844})
     watch(page)
     boot(page, base)
-    # 헤더 캐러셀은 IA 재편으로 삭제 — 카드뉴스는 오늘 탭의 카드 1장(+더 보기)뿐이다.
+    # 헤더 캐러셀은 IA 재편으로 삭제 — 카드뉴스는 오늘 탭에 같은 크기로 한 줄이다.
     check("헤더 카드뉴스 캐러셀이 없음", page.locator(".cardnews-carousel").count() == 0)
     box = page.evaluate("""() => {
-      const e = document.querySelector('#todayNews .ia-today-news-hero');
-      if (!e) return null;
-      const r = e.getBoundingClientRect();
-      return { w: r.width, h: r.height, hidden: document.getElementById('todayNews').hidden };
+      const cards = [...document.querySelectorAll('#todayNews .ia-today-news-card')];
+      if (!cards.length) return null;
+      const rects = cards.map((c) => c.getBoundingClientRect());
+      const widths = rects.map((r) => Math.round(r.width));
+      const tops = rects.map((r) => Math.round(r.top));
+      return {
+        n: cards.length,
+        hidden: document.getElementById('todayNews').hidden,
+        equalWidth: Math.max(...widths) - Math.min(...widths) <= 1,
+        oneRow: Math.max(...tops) - Math.min(...tops) <= 1,
+      };
     }""")
     check("모바일 오늘의 뉴스 카드 렌더", box is not None and not box["hidden"])
+    check("카드뉴스가 모두 같은 너비", box is not None and box["equalWidth"], f"{box['n']}장" if box else "없음")
+    check("카드뉴스가 한 줄", box is not None and box["oneRow"])
     check("본문 가로 스크롤 없음",
           page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"))
     tabs_h = page.evaluate("() => Math.min(...[...document.querySelectorAll('#mainTabs .tab, .ia-sub-tabs .sub-tab')]"

@@ -3496,6 +3496,24 @@ footer {
   max-width: 100%;
 }
 
+/* 브리핑 원본 HTML 은 본문을 <pre> 로 감싸고 줄바꿈은 <br> 로 한다. <pre> 의 브라우저
+   기본값이 monospace 라 본문 82곳이 사이트 폰트와 다른 글꼴로 렌더되고 있었다
+   (2026-09-04 실측). 줄바꿈을 <br> 가 담당하므로 고정폭이 필요 없다 — 본문 폰트를
+   물려받고, 들여쓰기 공백만 pre-wrap 으로 보존한다. */
+.briefing-content pre,
+.briefing-content code,
+.briefing-content samp {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+  margin: 0;
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+}
+
 .briefing-content b {
   color: var(--link); /* 테마 대응: 라이트=진파랑, 다크=밝은 파랑 */
   font-weight: 700;
@@ -13286,13 +13304,16 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 }
 
 /* --- 오늘 탭 --- */
-.ia-regime { margin: 2px 0 14px; font-size: var(--fs-h3); line-height: 1.5; color: var(--text); }
+/* 국면 한 줄. 예전엔 한 문장 안에 17px/600 → 17px/400 → 13px 세 가지가 섞여
+   글꼴이 바뀐 것처럼 보였다(2026-09-04). 문장은 한 크기·한 굵기로 두고, 국면
+   단어만 색으로 구분하며, 보조 수치는 아래 줄 캡션으로 내린다. */
+.ia-regime { margin: 2px 0 14px; font-size: var(--fs-h3); font-weight: 500; line-height: 1.5; color: var(--text); }
 .ia-regime-tone { font-weight: 600; }
 .ia-regime-on { color: var(--green); }
 .ia-regime-off { color: var(--red); }
 .ia-regime-mixed { color: #b45309; }
 .ia-regime-sep { color: var(--muted); margin: 0 2px; }
-.ia-regime-meta { margin-left: 8px; font-size: var(--fs-sub); color: var(--muted); }
+.ia-regime-meta { display: block; margin: 2px 0 0; font-size: var(--fs-sub); font-weight: 400; line-height: 1.5; color: var(--muted); }
 .index-strip.ia-index-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .ia-more-line { margin: 6px 0 14px; font-size: var(--fs-cap); }
 .ia-link { background: none; border: 0; padding: 0; margin: 0; color: var(--blue); font: inherit; font-size: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
@@ -13301,12 +13322,27 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-today-news-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .ia-today-news-head h2 { margin: 0 0 2px; font-size: var(--fs-body); }
 .ia-today-news-head p { margin: 0; font-size: var(--fs-sub); }
-.ia-today-news-hero { display: block; width: min(100%, 360px); height: auto; min-height: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; background: var(--panel-soft); cursor: zoom-in; }
-.ia-today-news-hero img { display: block; width: 100%; height: auto; }
-.ia-today-news-more { margin-top: 10px; }
-.ia-today-news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
-.ia-today-news-thumb { height: auto; min-height: 0; padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); overflow: hidden; background: var(--panel-soft); cursor: zoom-in; }
-.ia-today-news-thumb img { display: block; width: 100%; height: auto; }
+/* 카드뉴스는 한 줄에 같은 크기로 편다. 예전엔 첫 장만 360px 히어로이고 나머지는
+   '더 보기' 뒤 격자에 숨어 크기가 제각각이었다(2026-09-04 지시). */
+.ia-today-news-grid {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 10px;
+  margin-top: 12px;
+}
+.ia-today-news-card {
+  height: auto;
+  min-height: 0;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--panel-soft);
+  cursor: zoom-in;
+}
+.ia-today-news-card img { display: block; width: 100%; height: auto; }
 #tab-today .daily-action-board { margin: 16px 0 0; }
 #tab-today .watchlist-bar { margin: 0 0 12px; }
 
@@ -13438,7 +13474,14 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .ia-stat-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ia-empty-form { flex-direction: column; }
   .ia-regime { font-size: var(--fs-body); }
-  .ia-today-news-hero { width: min(100%, 300px); margin: 0 auto; }
+  /* 좁은 화면에서도 '한 줄'을 유지한다 — 줄을 접지 않고 가로 스크롤로 넘긴다. */
+  .ia-today-news-grid {
+    grid-auto-columns: minmax(150px, 1fr);
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    padding-bottom: 4px;
+  }
+  .ia-today-news-card { scroll-snap-align: start; }
   .ia-heatmap-color .ia-legend-wrap { margin-left: 0; }
   .ia-legend-wrap .heatmap-legend.ia-legend-pop { left: 0; right: auto; }
   .ia-footer { flex-direction: column; align-items: flex-start; }

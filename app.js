@@ -6575,9 +6575,8 @@ function renderTodayRegime() {
   el.title = regime.desc || "";
 }
 
-// ----- 오늘 탭: 카드뉴스 1장 + 더 보기 -----
+// ----- 오늘 탭: 카드뉴스 한 줄(모두 같은 크기) -----
 let todayNewsView = null;
-let todayNewsExpanded = false;
 function renderTodayNews() {
   const box = byId("todayNews");
   if (!box) return;
@@ -6591,7 +6590,6 @@ function renderTodayNews() {
   if (!sets[todayNewsView]) todayNewsView = sets.us ? "us" : "kr";
   const active = sets[todayNewsView];
   const imgs = active.images;
-  const rest = imgs.slice(1);
   box.hidden = false;
   box.innerHTML = `
     <div class="ia-today-news-head">
@@ -6604,23 +6602,15 @@ function renderTodayNews() {
         <button type="button" data-cn="kr" class="${todayNewsView === "kr" ? "is-active" : ""}">국내</button>
       </div>` : ""}
     </div>
-    <button type="button" class="ia-today-news-hero" data-news-idx="0" title="크게 보기">
-      <img src="${escapeHtml(imgs[0])}" alt="오늘의 카드뉴스 1" loading="lazy" decoding="async">
-    </button>
-    ${rest.length ? `<button type="button" class="ghost compact-btn ia-today-news-more" id="todayNewsMore" aria-expanded="${todayNewsExpanded}">${todayNewsExpanded ? "접기" : `더 보기 (${rest.length}장)`}</button>
-    <div class="ia-today-news-grid" id="todayNewsGrid"${todayNewsExpanded ? "" : " hidden"}>
-      ${rest.map((src, i) => `<button type="button" class="ia-today-news-thumb" data-news-idx="${i + 1}" title="크게 보기"><img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 2}" loading="lazy" decoding="async"></button>`).join("")}
-    </div>` : ""}`;
+    <div class="ia-today-news-grid" id="todayNewsGrid">
+      ${imgs.map((src, i) => `<button type="button" class="ia-today-news-card" data-news-idx="${i}" title="크게 보기"><img src="${escapeHtml(src)}" alt="오늘의 카드뉴스 ${i + 1}" loading="lazy" decoding="async"></button>`).join("")}
+    </div>`;
   box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
     if (btn.dataset.cn === todayNewsView) return;
     todayNewsView = btn.dataset.cn;
     renderTodayNews();
   }));
   box.querySelectorAll("[data-news-idx]").forEach((btn) => btn.addEventListener("click", () => openLightbox(imgs, Number(btn.dataset.newsIdx))));
-  byId("todayNewsMore")?.addEventListener("click", () => {
-    todayNewsExpanded = !todayNewsExpanded;
-    renderTodayNews();
-  });
 }
 
 // ----- 시장/시그널: 오늘의 시그널 3개(절대 변화가 큰 순) -----

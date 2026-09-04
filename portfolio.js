@@ -1228,6 +1228,28 @@ function backtestResolveDates(seriesList, periodBars, customStart, customEnd) {
     }
     dates = allDates.filter((d) => d >= first && d <= endDate);
   } else {
+// 유효(양수·유한) 종가인지. 0·null·NaN 은 결측으로 본다.
+function backtestValidPrice(p) {
+  return Number.isFinite(p) && p > 0;
+}
+
+// dates 순서대로 종가를 뽑되 결측일은 직전 유효 종가로 채운다(forward-fill).
+// 첫 유효가가 나오기 전까지는 null — 시작일에 가격이 없는 종목은 호출부가 제외한다.
+// 예전엔 dateMap.get(d) 가 undefined 인 날 하나만 있어도 NaN 이 전체 누적값을 오염시켜
+// 차트가 백지가 되고 수익률이 NaN% 로 찍혔다(한·미 휴장일 불일치, 거래정지, 신규상장).
+function backtestFilledPrices(series, dates) {
+  let last = null;
+  let filled = 0;
+  const prices = dates.map((d) => {
+    const p = series.dateMap.get(d);
+    if (backtestValidPrice(p)) last = p;
+    else if (last != null) filled += 1;
+    return last;
+  });
+  prices.filledCount = filled;
+  return prices;
+}
+
     const endIdx = allDates.indexOf(endDate);
     const startIdx = Math.max(0, endIdx - periodBars + 1);
     dates = allDates.slice(startIdx, endIdx + 1);
@@ -1239,22 +1261,28 @@ function backtestResolveDates(seriesList, periodBars, customStart, customEnd) {
 }
 
 function backtestPortfolioSeries(seriesList, dates, weights) {
-  const startDate = dates[0];
-  const startPrices = seriesList.map((s) => s.dateMap.get(startDate));
-  const units = startPrices.map((p, i) => (weights[i] / 100) / p);
-  return dates.map((d) => {
+  const filled = seriesList.map((s) => backtestFilledPrices(s, dates));
+  // 시작일에 유효가가 없는 종목은 units=0 (기여 없음). 호출부가 미리 걸러 알린다.
+  const units = filled.map((prices, i) => {
+    const p0 = prices[0];
+    return backtestValidPrice(p0) ? (weights[i] / 100) / p0 : 0;
+  });
+  return dates.map((d, k) => {
     let value = 0;
-    seriesList.forEach((s, i) => {
-      value += units[i] * s.dateMap.get(d);
+    filled.forEach((prices, i) => {
+      if (!units[i]) return;
+      const p = prices[k];
+      if (backtestValidPrice(p)) value += units[i] * p;
     });
     return { d, v: value };
   });
 }
 
 function backtestIndexedSeries(dateMap, dates) {
-  const start = dateMap.get(dates[0]);
-  if (!start) return [];
-  return dates.map((d) => ({ d, v: (dateMap.get(d) / start) * 100 }));
+  const filled = backtestFilledPrices({ dateMap }, dates);
+  const start = filled[0];
+  if (!backtestValidPrice(start)) return [];
+  return dates.map((d, k) => ({ d, v: (filled[k] / start) * 100 }));
 }
 
 function backtestAnnualizedPct(startVal, endVal, tradingDays) {
@@ -1543,19 +1571,23 @@ async function runPortfolioBacktest() {
     invalid.forEach((s) => {
       warnings.push(`${s.ticker}: 실제 일봉 이력 없음 — 제외됨.`);
     });
-    const valid = loaded.filter((s) => !s.synthetic && s.dateMap.size >= 30);
+    let valid = loaded.filter((s) => !s.synthetic && s.dateMap.size >= 30);
     if (valid.length < 2) {
       setBacktestStatus("실제 가격 이력이 있는 종목이 2개 이상 필요합니다. (상위 ~1,400종목 지원)");
       return;
     }
     const weightByTicker = new Map(tickers.map((ticker, index) => [ticker, weights[index]]));
-    let activeWeights = valid.map((s) => weightByTicker.get(s.ticker) || 0);
-    const weightSum = activeWeights.reduce((sum, w) => sum + w, 0);
-    if (weightSum <= 0) {
+    // 유효 종목 집합이 바뀔 때마다(이력 없음 → 시작일 결측) 비중을 다시 정규화한다.
+    const normalizeActiveWeights = () => {
+      const raw = valid.map((s) => weightByTicker.get(s.ticker) || 0);
+      const sum = raw.reduce((acc, w) => acc + w, 0);
+      return sum > 0 ? raw.map((w) => (w / sum) * 100) : null;
+    };
+    let activeWeights = normalizeActiveWeights();
+    if (!activeWeights) {
       setBacktestStatus("유효 종목에 적용할 비중이 없습니다.");
       return;
     }
-    activeWeights = activeWeights.map((w) => (w / weightSum) * 100);
     let dateResult = backtestResolveDates(valid, periodBars, customStart, customEnd);
     if (!dateResult.dates.length && periodMode === "preset" && periodBars) {
       dateResult = backtestResolveDates(
@@ -1563,7 +1595,27 @@ async function runPortfolioBacktest() {
         Math.min(periodBars, valid.reduce((m, s) => Math.min(m, s.dateMap.size), Infinity)),
         null,
         null,
+    // 시작일에 유효 종가가 없는 종목(거래정지·상장 전·0원)은 단위수를 못 구하므로 제외하고 알린다.
+    // 중간 결측일은 직전 종가로 채운다(backtestFilledPrices) — NaN 을 만들지 않는다.
+    const noStart = valid.filter((s) => !backtestValidPrice(s.dateMap.get(startDate)));
+    if (noStart.length) {
+      noStart.forEach((s) => warnings.push(`${s.ticker}: 시작일(${startDate})에 유효한 종가가 없어 제외됨.`));
+      valid = valid.filter((s) => !noStart.includes(s));
+      activeWeights = valid.length ? normalizeActiveWeights() : null;
+      if (valid.length < 1 || !activeWeights) {
+        setBacktestStatus(`시작일(${startDate})에 가격이 있는 종목이 없습니다. 시작일을 바꿔 보세요.`);
+        return;
+      }
+    }
+    valid.forEach((s) => {
+      const filledCount = backtestFilledPrices(s, dates).filledCount;
+      if (filledCount > 0) warnings.push(`${s.ticker}: 결측 ${filledCount}거래일은 직전 종가로 보간했습니다.`);
+    });
       );
+    if (!backtestValidPrice(portfolioRaw[0]?.v)) {
+      setBacktestStatus("시작일 포트폴리오 가치를 계산하지 못했습니다. 종목·기간을 바꿔 보세요.");
+      return;
+    }
     }
     if (!dateResult.dates.length) {
       setBacktestStatus(dateResult.error || "시뮬레이션 기간을 계산하지 못했습니다.");
@@ -1595,8 +1647,9 @@ async function runPortfolioBacktest() {
       alpha = totalReturn - benchmarkReturn;
     }
     const stockReturns = valid.map((s, i) => {
-      const startPrice = s.dateMap.get(startDate);
-      const endPrice = s.dateMap.get(endDate);
+      const filledPrices = backtestFilledPrices(s, dates);
+      const startPrice = filledPrices[0];
+      const endPrice = filledPrices[filledPrices.length - 1];
       const returnPct = (endPrice / startPrice - 1) * 100;
       const weightPct = activeWeights[i];
       const invested = investment * (weightPct / 100);

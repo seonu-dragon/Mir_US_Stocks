@@ -4552,7 +4552,8 @@ function renderScanner() {
   const meta = byId("scannerMeta");
   if (meta) {
     meta.textContent = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 실측 이력 ${universe.length.toLocaleString()}종목 기준 · 상위 ${scored.length}개 · 순위: ${scanBasisLabel(basis)}`
-      + (deep && window.MirProb ? " · 차트 기술 점수로 재정렬 중…" : "");
+      // 검증된 팩터 순위는 그 팩터 값으로만 정렬한다 — 기술 점수 재정렬은 모멘텀 점수일 때만.
+      + (deep && window.MirProb && basis === "quick" ? " · 차트 기술 점수로 재정렬 중…" : "");
   }
   const evidence = byId("scannerEvidence");
   if (evidence) {
@@ -4567,7 +4568,7 @@ function renderScanner() {
   }
 
   renderScannerCards(scored);
-  if (deep && window.MirProb) runDeepScan(scored, horizon, runId);
+  if (deep && window.MirProb && basis === "quick") runDeepScan(scored, horizon, runId);
 }
 
 // 주도주 필터 'RSI 상한' 입력. index.html 의 id 가 아직 topMinEps(옛 EPS 필터 시절 이름)라

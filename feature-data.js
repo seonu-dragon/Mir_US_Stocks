@@ -221,7 +221,7 @@ function refreshFeatureViews() {
       const item = applyLive(withDetail(base));
       if (byId("selectedStock")) calls.push(() => renderSelected(item));
       const facts = byId("searchFacts");
-      if (facts) calls.push(() => { facts.innerHTML = stockFacts(item, "Search Ticker"); });
+      if (facts) calls.push(() => { facts.innerHTML = stockFacts(item, "선택 종목"); });
     }
   }
   if (byId("sub-etf-lev")?.classList.contains("is-active")) {

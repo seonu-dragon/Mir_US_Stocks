@@ -2802,7 +2802,8 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     }, { signal: controller.signal, onDelta });
 
     if (seq !== aiDashSeq) return;
-    const reply = (result.reply || "").trim();
+    let reply = (result.reply || "").trim();
+    if (reply && typeof isDegenerateLlmText === "function" && isDegenerateLlmText(reply)) reply = ""; // 깨진 답변은 버린다
     const cur = byId("aiDashLlm");
     if (!cur) return;
     if (reply) {

@@ -2507,6 +2507,27 @@ async function geminiStreamChat(env, systemContent, history, ragMeta) {
   }
 }
 
+// 한국어 답변인데 한글이 거의 없거나 같은 3-gram 이 20% 넘게 반복되면 깨진 출력으로 본다.
+// expectKorean: 사용자 질문에 한글이 있을 때만 한글 비율을 본다(영어 질문에는 영어 답이 정상).
+function looksDegenerateReply(text, expectKorean = true) {
+  const s = String(text || "").trim();
+  if (s.length < 40) return false;
+  const letters = (s.match(/[A-Za-z\uAC00-\uD7A3]/g) || []).length;
+  const hangul = (s.match(/[\uAC00-\uD7A3]/g) || []).length;
+  if (expectKorean && letters >= 80 && hangul / letters < 0.15) return true;
+  const words = s.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length >= 30) {
+    const tri = new Map();
+    for (let i = 0; i + 2 < words.length; i += 1) {
+      const k = `${words[i]} ${words[i + 1]} ${words[i + 2]}`;
+      tri.set(k, (tri.get(k) || 0) + 1);
+    }
+    let top = 0; tri.forEach((v) => { if (v > top) top = v; });
+    if (top / (words.length - 2) > 0.2) return true;
+  }
+  return false;
+}
+
 async function handleChat(request, env) {
   let body;
   try {
@@ -2635,6 +2656,11 @@ async function handleChat(request, env) {
     try {
       const result = await env.AI.run(model, { messages, max_tokens: 768, temperature: 0.3 });
       const text = String((result && result.response) || "").trim();
+      if (text && looksDegenerateReply(text, /[\uAC00-\uD7A3]/.test(userText))) {
+        // 2026-09-04: 한 모델이 ". of the the of the the …" 만 반복한 답을 냈다. 다음 모델로.
+        lastError = `degenerate_response:${model}`;
+        continue;
+      }
       if (text) {
         return json({
           reply: text,

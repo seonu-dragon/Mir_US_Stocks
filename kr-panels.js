@@ -386,9 +386,7 @@ function renderKrDisclosures() {
         `).join("")}
       </tbody>
     </table>`;
-  table.querySelectorAll(".ins-ticker").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(table, ".ins-ticker");
 }
 
 function setupKrDartEvents() {
@@ -468,9 +466,7 @@ function renderKrOwnProfile() {
       </tr></thead>
       <tbody>${body}</tbody>
     </table>`;
-  table.querySelectorAll(".ins-ticker").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(table, ".ins-ticker");
 }
 
 function renderKrOwnership() {
@@ -536,9 +532,7 @@ function renderKrOwnership() {
   }).join("");
 
   table.innerHTML = `<table class="insider-table table-wide"><thead>${head}</thead><tbody>${body}</tbody></table>`;
-  table.querySelectorAll(".ins-ticker").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(table, ".ins-ticker");
 }
 
 function setupKrOwnershipEvents() {

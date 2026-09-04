@@ -262,9 +262,7 @@ function renderWatchAlerts() {
       </button>
     `).join("")
     : `<p class="muted">현재 조건에 걸린 관심종목이 없습니다.</p>`;
-  results.querySelectorAll(".watch-alert-item").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(results, ".watch-alert-item");
 }
 
 function setupWatchAlertEvents() {
@@ -448,9 +446,7 @@ function renderEarningsCalendarMarket(rows) {
   const body_html = earnView === "calendar" ? earningsCalendarGrid(items, today) : earningsListView(items, today);
   body.innerHTML = highlightHtml + body_html;
 
-  body.querySelectorAll("[data-ticker]").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(body, "[data-ticker]");
 }
 
 // Small colored change/EPS bits reused by both views.

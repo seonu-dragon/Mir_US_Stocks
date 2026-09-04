@@ -112,7 +112,7 @@ function renderSavedScreenerDelta(record) {
     return;
   }
   box.innerHTML = savedScreenerDeltaHtml(record);
-  box.querySelectorAll("[data-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.ticker, { openSearch: true })));
+  delegateTickerClicks(box, "[data-ticker]");
 }
 
 function compareSavedScreener(record, tickers) {
@@ -233,9 +233,7 @@ function renderScreener({ trackSaved = false } = {}) {
       <td>${signalFor(item)}</td>
     </tr>
   `).join("");
-  body.querySelectorAll(".ticker-link").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(body, ".ticker-link");
 }
 
 // ===== AI 자연어 스크리너 (규칙 기반 파서 · 백엔드 불필요) =====
@@ -423,7 +421,7 @@ function runNlScreener() {
       <td>${signalFor(it)}</td>
     </tr>`;
   }).join("");
-  body.querySelectorAll(".ticker-link").forEach((btn) => btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true })));
+  delegateTickerClicks(body, ".ticker-link");
 }
 
 // ===== 화면 설정 (테마 · 밀도) 토글 =====
@@ -648,9 +646,7 @@ function renderCompareBoard() {
   });
   html += "</tbody>";
   table.innerHTML = html;
-  table.querySelectorAll(".ticker-link").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(table, ".ticker-link");
   tickers.forEach((t) => {
     const key = safeTicker(t);
     if (detailCache[key]) return;

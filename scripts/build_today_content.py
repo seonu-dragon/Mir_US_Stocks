@@ -183,17 +183,39 @@ def plain_text(value):
     return " ".join(re.sub(r"<[^>]*>", " ", value or "").split())
 
 
+def blog_headline(date, variant):
+    """그날 블로그 H1 의 헤드라인부. `[오늘의 경제 뉴스 09/04] X` → `X`.
+
+    옛 `SNS/Production/<date>/naver_blog.txt` 레이아웃은 폐기됐고 실제 원고는
+    `SNS/Naver/02_daily_work/<date>/[us_market_close/]05_final/` 에 있다."""
+    base = AI_ROOT / "SNS" / "Naver" / "02_daily_work" / date
+    if variant == "us":
+        base = base / "us_market_close"
+    finals = sorted((base / "05_final").glob(f"{date}_*_final.txt")) if (base / "05_final").is_dir() else []
+    if not finals:  # 옛 레이아웃 폴백
+        legacy = find_draft(SNS_PROD / date, "naver_blog")
+        finals = [legacy] if legacy else []
+    for path in finals:
+        heading = plain_text(first_heading(path))
+        if heading:
+            return heading.split("] ", 1)[1].strip() if "] " in heading else heading
+    return None
+
+
 def deck_title(date, card_dir, variant):
-    # 국내 버전은 그날 네이버 블로그 헤드라인이 가장 자연스러움
-    if variant == "kr":
-        naver_path = find_draft(SNS_PROD / date, "naver_blog")
-        if naver_path:
-            heading = plain_text(first_heading(naver_path))
-            if heading:
-                return heading[:90].strip()
-    cover = next((c for c in load_json(card_dir / "cards.json").get("cards", [])
-                  if c.get("type") == "cover"), {})
-    parts = [cover.get("headlineLine1"), cover.get("accentText"), cover.get("headlineTail")]
+    # 1순위: 그 덱의 블로그 헤드라인이 가장 자연스럽다(표지 카드를 없앤 뒤의 기본 경로).
+    # 미국장은 직전 거래일 덱을 쓸 수 있으므로 today 가 아니라 덱 폴더의 날짜로 찾는다.
+    deck_date = card_dir.name[:-3] if card_dir.name.endswith("-us") else card_dir.name
+    heading = blog_headline(deck_date, variant)
+    if heading:
+        return heading[:90].strip()
+    cards = load_json(card_dir / "cards.json").get("cards", [])
+    # 2순위: 표지 카드(있는 덱만) → 3순위: 첫 주제 카드
+    cover = next((c for c in cards if c.get("type") == "cover"), None)
+    src = cover or next((c for c in cards if c.get("type") == "topic"), {})
+    keys = (("headlineLine1", "accentText", "headlineTail") if cover
+            else ("accentText", "headlineTail", "headlineLine2"))
+    parts = [src.get(k) for k in keys]
     fallback = "미국장 마감 카드뉴스" if variant == "us" else "국내 뉴스 카드뉴스"
     return (plain_text(" ".join(p for p in parts if p)) or fallback)[:90].strip()
 
@@ -204,14 +226,20 @@ def build_deck(date, variant):
         return None
 
     pages = sorted((card_dir / "out").glob("*.png"))
-    # Drop the cover (first page). Drop the last page only if it is a closing card
-    # (legacy 7-card decks). 6-card decks (cover + 5 topics, no closing) keep all topics.
+    # Expose only the body (topic) pages. Decks changed shape over time:
+    #   7-card legacy : cover + 5 topics + closing
+    #   6-card        : cover + 5 topics
+    #   5-card (now)  : 5 topics, no cover  -> keep every page
+    # Drive this off cards.json instead of assuming page 1 is always a cover.
     cards = load_json(card_dir / "cards.json").get("cards", [])
+    has_cover = bool(cards) and cards[0].get("type") == "cover"
     has_closing = bool(cards) and cards[-1].get("type") == "closing"
-    if len(pages) > 2:
-        body = pages[1:-1] if has_closing else pages[1:]
+    if not cards:                      # cards.json 없음 → 옛 동작(첫 장=표지) 유지
+        body = pages[1:] if len(pages) > 2 else pages
     else:
-        body = pages
+        body = pages[1:] if has_cover else pages[:]
+        if has_closing and len(body) > 1:
+            body = body[:-1]
 
     dest_dir = CONTENT_ASSETS / date / variant
     dest_dir.mkdir(parents=True, exist_ok=True)

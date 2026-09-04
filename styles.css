@@ -232,12 +232,32 @@ body {
   /* 프리미엄 폴리시: 모든 수치를 등폭으로 정렬(자릿수가 딱 맞음 — 금융 대시보드 표준).
      기존엔 일부 컴포넌트에만 적용돼 있었다. */
   font-variant-numeric: tabular-nums;
+  /* 한글 조판 기본값. 한국어는 단어(어절) 중간에서 끊으면 안 읽힌다 — keep-all 로
+     어절 단위 줄바꿈을 강제하고, 상자보다 긴 한 덩어리만 overflow-wrap 으로 흘린다.
+     긴 URL·티커 토큰처럼 반드시 아무데서나 끊어야 하는 곳만 overflow-wrap: anywhere. */
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 
-/* 제목 자간을 살짝 좁혀 밀도 있는 프리미엄 헤드라인. */
+/* 한글은 자소가 이미 조밀해 음수 자간을 주면 뭉쳐 보인다. 제목에도 자간을 좁히지
+   않는다(음수 트래킹은 큰 숫자/라틴 표시값에만, -0.01em 상한으로 개별 지정). */
 h1, h2, h3, .section-title h2, .daily-action-head h2 {
-  letter-spacing: -0.015em;
+  letter-spacing: normal;
+  line-height: 1.4;
   text-wrap: balance;
+}
+
+/* UA 기본값은 b/strong 이 font-weight: bolder 라, 700 안에 중첩되면 900 까지 간다.
+   웨이트는 400 본문 / 600 제목 / 700 숫자 세 단계로 고정한다. */
+b, strong {
+  font-weight: 700;
+}
+
+/* small 은 부모의 0.8em 이라 12px 카드 안에서 10px 한글이 된다(스케일 최소 12px 위반).
+   역할상 캡션이므로 캡션 단계로 고정한다. */
+small {
+  font-size: var(--fs-cap);
+  line-height: 1.5;
 }
 
 button,
@@ -2564,8 +2584,8 @@ button.ghost {
 
   #sub-inst-congress .inst-detail-head > p {
     width: 100%;
-    word-break: break-word;
-    line-height: 1.45;
+    overflow-wrap: break-word;
+    line-height: 1.6;
   }
 
   .congress-rank-pagination {
@@ -4893,7 +4913,7 @@ footer {
   font-size: var(--fs-sub);
   line-height: 1.5;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;   /* 사용자 입력: 긴 URL 만 강제로 끊는다(어절 단위 keep-all 은 유지) */
 }
 
 .chat-log .chat-msg.bot {
@@ -5413,7 +5433,7 @@ footer {
 .risk-grid strong {
   display: block;
   font-size: var(--fs-body);
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .quality-grid em,
@@ -7300,7 +7320,7 @@ span.community-hot-ticker {
   margin: 0 0 10px;
   line-height: 1.65;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;   /* 사용자 입력: 긴 URL 만 강제로 끊는다(어절 단위 keep-all 은 유지) */
 }
 
 .community-post-actions {
@@ -7337,7 +7357,7 @@ span.community-hot-ticker {
   font-size: var(--fs-sub);
   line-height: 1.55;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;   /* 사용자 입력: 긴 URL 만 강제로 끊는다(어절 단위 keep-all 은 유지) */
 }
 
 .community-comment-actions {
@@ -7607,7 +7627,7 @@ button.community-hot-ticker {
 .community-admin-item-body {
   margin: 6px 0 4px;
   white-space: pre-wrap;
-  word-break: break-word;
+  overflow-wrap: anywhere;   /* 사용자 입력: 긴 URL 만 강제로 끊는다(어절 단위 keep-all 은 유지) */
 }
 
 .community-admin-reasons {

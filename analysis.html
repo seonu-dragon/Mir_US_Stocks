@@ -139,10 +139,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   font-variant-numeric: tabular-nums;
+  word-break: keep-all;
+  overflow-wrap: break-word;
 }
 h1, h2, h3, .section-title h2, .daily-action-head h2 {
-  letter-spacing: -0.015em;
+  letter-spacing: normal;
+  line-height: 1.4;
   text-wrap: balance;
+}
+b, strong {
+  font-weight: 700;
+}
+small {
+  font-size: var(--fs-cap);
+  line-height: 1.5;
 }
 button,
 input,

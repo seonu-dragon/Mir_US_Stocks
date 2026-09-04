@@ -3,17 +3,7 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
-// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
-// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
-if (!window.safeStorage) {
-  window.safeStorage = {
-    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
-    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
-    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
-    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
-    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
-  };
-}
+// 이 파일의 모든 저장소 접근은 window.safeStorage(storage.js — index.html 첫 스크립트) 를 거친다.
 
 // ===== 스크리너 =====
 let savedScreeners = [];
@@ -122,7 +112,7 @@ function renderSavedScreenerDelta(record) {
     return;
   }
   box.innerHTML = savedScreenerDeltaHtml(record);
-  box.querySelectorAll("[data-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.ticker, { openSearch: true })));
+  delegateTickerClicks(box, "[data-ticker]");
 }
 
 function compareSavedScreener(record, tickers) {
@@ -243,9 +233,7 @@ function renderScreener({ trackSaved = false } = {}) {
       <td>${signalFor(item)}</td>
     </tr>
   `).join("");
-  body.querySelectorAll(".ticker-link").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(body, ".ticker-link");
 }
 
 // ===== AI 자연어 스크리너 (규칙 기반 파서 · 백엔드 불필요) =====
@@ -433,7 +421,7 @@ function runNlScreener() {
       <td>${signalFor(it)}</td>
     </tr>`;
   }).join("");
-  body.querySelectorAll(".ticker-link").forEach((btn) => btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true })));
+  delegateTickerClicks(body, ".ticker-link");
 }
 
 // ===== 화면 설정 (테마 · 밀도) 토글 =====
@@ -658,9 +646,7 @@ function renderCompareBoard() {
   });
   html += "</tbody>";
   table.innerHTML = html;
-  table.querySelectorAll(".ticker-link").forEach((btn) => {
-    btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
-  });
+  delegateTickerClicks(table, ".ticker-link");
   tickers.forEach((t) => {
     const key = safeTicker(t);
     if (detailCache[key]) return;

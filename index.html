@@ -316,9 +316,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=7026d7f0b5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=7026d7f0b5"></noscript>
-    <script src="build_id.js?v=20b7d39c2b"></script>
+    <link rel="preload" href="styles.css?v=db5e698140" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=db5e698140"></noscript>
+    <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
+    <script src="storage.js?v=20425e8d72"></script>
+    <script src="build_id.js?v=fe323d639e"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -727,7 +729,7 @@ html[data-theme="dark"] {
               <option value="ytdChangePct">YTD 등락률</option>
               <option value="rsi14">RSI (14)</option>
               <option value="epsTtm">EPS (TTM)</option>
-              <option value="stochK">52주 레인지 위치</option>
+              <option value="stochK">StochK 14</option>
             </select>
             <select id="metricSelValue" class="ia-metric-select" aria-label="밸류에이션 세부 지표" hidden>
               <option value="pe">P/E</option>
@@ -773,7 +775,7 @@ html[data-theme="dark"] {
                 <option value="ytdChangePct">YTD 등락률</option>
                 <option value="rsi14">RSI (14)</option>
                 <option value="epsTtm">EPS (TTM)</option>
-                <option value="stochK">52주 레인지 위치</option>
+                <option value="stochK">StochK 14</option>
               </optgroup>
               <optgroup label="밸류에이션 (낮을수록 초록)">
                 <option value="pe">P/E</option>
@@ -889,7 +891,7 @@ html[data-theme="dark"] {
             </aside>
 
             <!-- Right: Chart Detail -->
-            <main class="sector-chart-panel">
+            <div class="sector-chart-panel">
               <div class="chart-header">
                 <div class="title-area">
                   <span class="ticker-pill" id="sectorDetailEtf">XLK</span>
@@ -968,7 +970,7 @@ html[data-theme="dark"] {
                   </table>
                 </div>
               </div>
-            </main>
+            </div>
           </div>
         </div>
 
@@ -1447,7 +1449,7 @@ html[data-theme="dark"] {
               <option value="ytdChangePct">YTD 등락률</option>
               <option value="rsi14">RSI 14</option>
               <option value="epsTtm">EPS (TTM)</option>
-              <option value="stochK">52주 레인지 위치</option>
+              <option value="stochK">StochK 14</option>
               <option value="volumeRatio">거래량 배율</option>
               <option value="marketCapB">시가총액</option>
               <option value="pe">P/E</option>
@@ -1658,15 +1660,7 @@ html[data-theme="dark"] {
 
         <div class="sub-panel" id="sub-scanner">
           <div class="ia-find-head">
-            <p class="muted" id="scannerMeta">기술적 지표를 종합한 모멘텀 점수로 종목을 순위화합니다. 확률이 아니라 점수이며, 과거 5년 검증을 통과한 순위 기준만 아래 셀렉트에 올라옵니다.</p>
-            <p class="muted scan-evidence-line" id="scannerEvidence" hidden></p>
-          </div>
-          <div class="scan-rank-row">
-            <label>
-              순위 기준
-              <select id="scanRank"><option value="quick">모멘텀 점수(기존)</option></select>
-            </label>
-            <p class="muted scan-rank-note" id="scannerRankNote" hidden></p>
+            <p class="muted" id="scannerMeta">기술적 지표를 종합해 상승 확률이 높은 종목을 순위로 보여줍니다.</p>
           </div>
           <details class="ia-fold ia-adv">
             <summary>고급 필터</summary>
@@ -1700,8 +1694,8 @@ html[data-theme="dark"] {
                   <option value="96">96</option>
                 </select>
               </label>
-              <label class="scan-deep-toggle" title="표시된 종목만 5년 일봉을 받아 차트 확률 엔진의 기술 점수로 다시 정렬합니다. 이 점수도 과거 검증에서 기저율과 유의차가 없습니다.">
-                차트 기술 점수로 재정렬
+              <label class="scan-deep-toggle">
+                정밀 분석
                 <input id="scanDeep" type="checkbox" checked>
               </label>
               <button type="button" class="ghost" id="scanRefresh">새로고침</button>
@@ -2769,8 +2763,7 @@ html[data-theme="dark"] {
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="chart-indicators.js?v=2b900cd91f"></script>
-    <script src="storage.js?v=20425e8d72"></script>
-    <script src="community.js?v=55ac620639"></script>
+    <script src="community.js?v=09694e5d77"></script>
     <script src="ai-mode.js?v=d85cc81b46"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=1eabf355a4"></script>
@@ -2787,7 +2780,7 @@ html[data-theme="dark"] {
     <script src="markets-etf.js?v=90b03e3b32"></script>
     <script src="kr-panels.js?v=8bfb92cc2e"></script>
     <script src="watchlist.js?v=420331153a"></script>
-    <script src="app.js?v=650d4e8be1"></script>
+    <script src="app.js?v=60af3e333f"></script>
     <script src="ai-cosmos.js?v=b6789c9f0a"></script>
     <script src="ai-mode-welcome.js?v=27756a7066"></script>
   </body>

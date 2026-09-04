@@ -6,17 +6,7 @@
 // setupAiChatModeEvents()/setupAiStreamStopEvents() 호출만 app.js 에 남김(로드 시점에 app.js 의 byId 등이 필요).
 // AI 모드 진입/종료(toggle)와 입력 제출은 ai-mode-welcome.js(window.MirAI)가 단일 창구다.
 
-// storage.js 미로드 폴백(동일 API). localStorage 는 SecurityError 로 파일 전체를 죽일 수 있어
-// 이 파일의 모든 저장소 접근은 window.safeStorage 를 거친다.
-if (!window.safeStorage) {
-  window.safeStorage = {
-    get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
-    set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
-    remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
-    getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
-    setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
-  };
-}
+// 이 파일의 모든 저장소 접근은 window.safeStorage(storage.js — index.html 첫 스크립트) 를 거친다.
 
 // ===== Dedicated AI Chat Mode Handler =====
 let aiChatBusy = false;

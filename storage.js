@@ -6,8 +6,8 @@
  * 그 한 줄 때문에 파일 전체가 평가되지 않아 부팅이 죽었다(community.js 사례).
  * 모든 파일은 이 객체만 쓰고, 실패는 fallback 값으로 조용히 흡수한다.
  *
- * index.html 에서 market_config.js 앞(또는 community.js 앞)에 로드한다. 각 파일은
- * 이 파일이 아직 안 붙었을 때를 대비해 같은 API 의 인라인 폴백을 갖고 있다.
+ * index.html·analysis.html 의 **첫 외부 스크립트**로 로드한다(2026-09-04). 예전엔 각 파일이
+ * 같은 API 의 인라인 폴백을 복사해 갖고 있었는데 중복이라 제거했다. 아래 한 줄 가드만 남긴다.
  */
 (function () {
   if (window.safeStorage) return;

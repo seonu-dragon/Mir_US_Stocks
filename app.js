@@ -1167,7 +1167,7 @@ function setupChatbot() {
   const chatRoot = byId("chatbot");
   const dismissBtn = byId("chatDismiss");
   // 이전 버전에서 영구 숨김으로 저장된 값은 제거 (새로고침 시 챗봇 복구)
-  try { localStorage.removeItem("mir_chatbot_hidden_v1"); } catch (e) { /* ignore */ }
+  try { window.safeStorage.remove("mir_chatbot_hidden_v1"); } catch (e) { /* ignore */ }
   if (dismissBtn) {
     dismissBtn.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -2626,14 +2626,14 @@ function setViewMode(mode, { persist = true } = {}) {
     button.setAttribute("aria-pressed", String(active));
   });
   if (persist) {
-    try { localStorage.setItem(VIEW_MODE_STORAGE_KEY, currentViewMode); } catch (_) {}
+    try { window.safeStorage.set(VIEW_MODE_STORAGE_KEY, currentViewMode); } catch (_) {}
   }
   requestAnimationFrame(layoutMobileTabs);
 }
 
 function setupViewMode(requestedTab) {
   let saved = DEFAULT_VIEW_MODE;
-  try { saved = localStorage.getItem(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
+  try { saved = window.safeStorage.get(VIEW_MODE_STORAGE_KEY) || DEFAULT_VIEW_MODE; } catch (_) {}
   const requestedButton = requestedTab ? tabButtonFor(normalizeTabRequest(requestedTab, null).tab) : null;
   if (requestedButton?.dataset.advanced === "true") saved = "advanced";
   setViewMode(saved, { persist: false });
@@ -2966,12 +2966,12 @@ let tabDragJustHappened = false;
 
 function saveTabOrder(nav) {
   const order = [...nav.querySelectorAll(".tab")].map((t) => t.dataset.tab);
-  try { localStorage.setItem(TAB_ORDER_KEY, JSON.stringify(order)); } catch (_) {}
+  try { window.safeStorage.set(TAB_ORDER_KEY, JSON.stringify(order)); } catch (_) {}
 }
 
 function applySavedTabOrder(nav) {
   let order = null;
-  try { order = JSON.parse(localStorage.getItem(TAB_ORDER_KEY) || "null"); } catch (_) { order = null; }
+  try { order = JSON.parse(window.safeStorage.get(TAB_ORDER_KEY) || "null"); } catch (_) { order = null; }
   if (!Array.isArray(order)) return;
   const all = [...nav.querySelectorAll(".tab")];
   const byName = new Map(all.map((t) => [t.dataset.tab, t]));
@@ -5015,7 +5015,7 @@ function renderInvestmentChecklist(item) {
 
 function loadEstimateHistoryStore() {
   if (estimateHistoryStore) return estimateHistoryStore;
-  try { estimateHistoryStore = JSON.parse(localStorage.getItem(ESTIMATE_HISTORY_STORAGE_KEY) || "{}") || {}; }
+  try { estimateHistoryStore = JSON.parse(window.safeStorage.get(ESTIMATE_HISTORY_STORAGE_KEY) || "{}") || {}; }
   catch (_) { estimateHistoryStore = {}; }
   return estimateHistoryStore;
 }
@@ -5060,7 +5060,7 @@ function recordEstimateSnapshot(item) {
   }
   rows.sort((a, b) => String(a.date).localeCompare(String(b.date)));
   store[item.ticker] = rows.slice(-45);
-  try { localStorage.setItem(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
+  try { window.safeStorage.set(ESTIMATE_HISTORY_STORAGE_KEY, JSON.stringify(store)); } catch (_) { /* ignore */ }
   return store[item.ticker];
 }
 
@@ -5434,6 +5434,22 @@ const KR_TICKER_NICKNAMES = {
 let tickerKoAliasIndex = null;
 let tickerKoAliasEntries = null;
 let tickerSearchIndex = null;
+// 초성 검색 인덱스: [{ name, cho, tickers }] — KR 회사명·별칭의 초성열. buildTickerKoAliasIndex 가 채운다.
+let tickerChosungEntries = null;
+const HANGUL_CHOSUNG = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
+// 한글 음절만 초성으로 바꾸고 나머지(영문·숫자·공백·기호)는 버린다: "삼성전자" → "ㅅㅅㅈㅈ", "LG전자" → "ㅈㅈ".
+function hangulChosung(str) {
+  let out = "";
+  for (const ch of String(str || "")) {
+    const code = ch.charCodeAt(0) - 0xac00;
+    if (code >= 0 && code < 11172) out += HANGUL_CHOSUNG[Math.floor(code / 588)];
+  }
+  return out;
+}
+// 질의가 초성(호환 자모 ㄱ-ㅎ)만으로 이뤄졌을 때만 초성 검색을 탄다("삼성" 같은 완성형은 기존 경로).
+function isChosungQuery(q) {
+  return /^[ㄱ-ㅎ]+$/.test(String(q || "").trim());
+}
 
 function buildTickerKoAliasIndex() {
   const byKo = new Map();
@@ -5469,6 +5485,14 @@ function buildTickerKoAliasIndex() {
   byKo.forEach((tickers, alias) => tickerKoAliasEntries.push({ alias, tickers, aliasLower: alias.toLowerCase() }));
   // 긴(구체적인) 별칭이 먼저 — extractStockTickerFromQuery 가 매 호출 정렬하던 것을 여기서 한 번만.
   tickerKoAliasEntries.sort((a, b) => b.alias.length - a.alias.length);
+  // 초성 인덱스(KR 전용 — 회사명·별칭 중 한글이 있는 것만). "ㅅㅅㅈㅈ" → 삼성전자.
+  tickerChosungEntries = [];
+  if (isKrMarket()) {
+    byKo.forEach((tickers, alias) => {
+      const cho = hangulChosung(alias);
+      if (cho) tickerChosungEntries.push({ name: alias, cho, tickers });
+    });
+  }
 }
 
 function buildTickerSearchIndex() {
@@ -5495,15 +5519,26 @@ function searchTickerSuggestions(query, limit = 8) {
   const scored = [];
   const seen = new Set();
 
-  function push(ticker, score, hint) {
+  function push(ticker, score, hint, exact = false) {
     const stock = stockByTicker(ticker);
     if (!stock || seen.has(stock.ticker)) return;
     seen.add(stock.ticker);
-    scored.push({ ticker: stock.ticker, company: stock.company, hint: hint || null, score });
+    scored.push({ ticker: stock.ticker, company: stock.company, hint: hint || null, score, exact: Boolean(exact) });
   }
 
   const exactTicker = stockByTicker(kr ? qTickerKey : qUpper);
   if (exactTicker) push(exactTicker.ticker, 1000, "티커");
+
+  // 초성 질의(ㅅㅅㅈㅈ): 회사명·별칭의 초성열과 대조. 완전 일치는 별칭 완전 일치와 같은 점수(980)+exact.
+  if (kr && isChosungQuery(q) && tickerChosungEntries) {
+    tickerChosungEntries.forEach(({ name, cho, tickers }) => {
+      let score = 0;
+      if (cho === q) score = 980;
+      else if (cho.startsWith(q)) score = 900 - cho.length;
+      else if (cho.includes(q)) score = 760 - cho.length;
+      if (score > 0) tickers.forEach((t) => push(t, score, name, score === 980));
+    });
+  }
 
   (tickerKoAliasEntries || []).forEach(({ alias, tickers }) => {
     let score = 0;
@@ -5547,7 +5582,7 @@ function resolveTickerQuery(raw) {
   if (direct) return direct.ticker;
   const hits = searchTickerSuggestions(q, 6);
   if (!hits.length) return null;
-  const exactKo = hits.find((h) => h.hint === q);
+  const exactKo = hits.find((h) => h.hint === q || h.exact); // exact: 초성 완전 일치
   if (exactKo) return exactKo.ticker;
   if (hits.length === 1) return hits[0].ticker;
   if (hits[0].score - (hits[1]?.score || 0) >= 180) return hits[0].ticker;
@@ -6538,7 +6573,7 @@ const MIR_SW_BUILD_KEY = "mir_sw_build_id_v1";
 async function detectHotUpdate() {
   const current = window.MIR_BUILD_ID || "dev";
   let stored = null;
-  try { stored = localStorage.getItem(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
+  try { stored = window.safeStorage.get(MIR_SW_BUILD_KEY); } catch (_) { /* ignore */ }
   if (stored && stored !== current) {
     try {
       if ("caches" in window) {
@@ -6551,12 +6586,12 @@ async function detectHotUpdate() {
         await reg.update();
       }
     } catch (_) { /* ignore */ }
-    try { localStorage.setItem(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
+    try { window.safeStorage.set(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
     showAppToast("새 버전이 배포되었습니다. 최신 파일을 불러옵니다.", 2800);
     window.setTimeout(() => window.location.reload(), 700);
     return true;
   }
-  try { localStorage.setItem(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
+  try { window.safeStorage.set(MIR_SW_BUILD_KEY, current); } catch (_) { /* ignore */ }
   return false;
 }
 
@@ -7322,6 +7357,8 @@ function filterTermCollisions(candidates, query) {
 function extractStockTickerFromQuery(query) {
   const text = String(query || "").trim().toLowerCase();
   if (!text) return null;
+  // 0. 초성만 있는 질의(ㅅㅅㅈㅈ)는 초성 인덱스로(KR 모드에서만 채워진다)
+  if (isChosungQuery(text)) return resolveTickerQuery(text);
 
   // 1. Try exact ticker match candidate
   const candidates = filterTermCollisions(extractTickerCandidates(query), query);
@@ -7352,32 +7389,127 @@ function extractStockTickerFromQuery(query) {
   return null;
 }
 
+// AI 답변 마크다운 → HTML. **이스케이프가 먼저**(& < > ") 이고 변환은 그 뒤다 — 모델 출력에 섞인
+// 태그·속성이 그대로 DOM 에 들어가지 않는다(순서를 바꾸지 말 것). 지원: 굵게, 제목(#~######→h4),
+// 글머리(- * •)·번호(1. 1)) 목록, 인라인 코드, ``` 펜스 코드블록, 링크([텍스트](http(s)://…) 만 —
+// 새 창 + noopener), 파이프 표(| a | b | + 구분행). 빈 줄은 예전처럼 <br><br>(블록 요소 옆에선 생략).
+// 브라우저 콘솔에서 formatMarkdownToHtml.__selftest() 로 회귀 확인(true/false).
 function formatMarkdownToHtml(md) {
-  let html = String(md || "")
+  const escapeMd = (s) => String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
-    
-  // Format bold **text** -> <strong>text</strong>
-  html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  
-  // Format headers ### title -> <h4>title</h4>
-  html = html.replace(/^###\s+(.*?)$/gm, "<h4>$1</h4>");
-  html = html.replace(/^##\s+(.*?)$/gm, "<h4>$1</h4>");
-  html = html.replace(/^#\s+(.*?)$/gm, "<h4>$1</h4>");
-  
-  // Format bullet points
-  html = html.replace(/^\s*[-*]\s+(.*?)$/gm, "<li>$1</li>");
-  
-  // Wrap list items in <ul> groups
-  html = html.replace(/(<li>.*?<\/li>)/gs, "<ul>$1</ul>");
-  html = html.replace(/<\/ul>\s*<ul>/g, "");
-
-  // Convert double newlines to breaks
-  html = html.replace(/\n\n/g, "<br><br>");
-  
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  // 인라인 변환(입력은 이미 이스케이프된 문자열). 코드 스팬은 먼저 떼어 두어 안의 * [ 가 안 바뀌게.
+  const inline = (escaped) => {
+    const codes = [];
+    let s = escaped.replace(/`([^`\n]+)`/g, (_, c) => {
+      codes.push(`<code>${c}</code>`);
+      return `\u0000${codes.length - 1}\u0000`;
+    });
+    // http/https 만. 이스케이프 뒤라 URL 안의 " 는 &quot; 로 바뀌어 속성 밖으로 나올 수 없다.
+    s = s.replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    return s.replace(/\u0000(\d+)\u0000/g, (_, i) => codes[Number(i)]);
+  };
+  const isTableRow = (l) => /^\s*\|.*\|\s*$/.test(l);
+  const isTableSep = (l) => /^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)*\|?\s*$/.test(l);
+  const splitCells = (l) => {
+    let t = l.trim();
+    if (t.startsWith("|")) t = t.slice(1);
+    if (t.endsWith("|")) t = t.slice(0, -1);
+    return t.split("|").map((c) => c.trim());
+  };
+  const BLOCK_RE = /^<(h4|ul|ol|pre|div class="md-table)/;
+  const lines = String(md || "").replace(/\r\n?/g, "\n").split("\n");
+  const out = [];
+  let para = [];
+  let listType = null;
+  const flushPara = () => { if (para.length) { out.push(para.map(inline).join("\n")); para = []; } };
+  const closeList = () => { if (listType) { out[out.length - 1] += `</${listType}>`; listType = null; } };
+  let i = 0;
+  while (i < lines.length) {
+    const raw = lines[i];
+    if (/^\s*```/.test(raw)) {
+      flushPara(); closeList();
+      const buf = [];
+      i += 1;
+      while (i < lines.length && !/^\s*```/.test(lines[i])) { buf.push(escapeMd(lines[i])); i += 1; }
+      i += 1;
+      out.push(`<pre><code>${buf.join("\n")}</code></pre>`);
+      continue;
+    }
+    if (!raw.trim()) { flushPara(); closeList(); out.push(""); i += 1; continue; }
+    const line = escapeMd(raw);
+    if (isTableRow(raw) && i + 1 < lines.length && isTableSep(lines[i + 1])) {
+      flushPara(); closeList();
+      const head = splitCells(line);
+      const aligns = splitCells(lines[i + 1]).map((c) => (/^:-+:$/.test(c) ? "center" : /-+:$/.test(c) ? "right" : ""));
+      i += 2;
+      const rows = [];
+      while (i < lines.length && isTableRow(lines[i])) { rows.push(splitCells(escapeMd(lines[i]))); i += 1; }
+      const cell = (tag, c, k) => `<${tag}${aligns[k] ? ` style="text-align:${aligns[k]}"` : ""}>${inline(c)}</${tag}>`;
+      out.push(`<div class="md-table-wrap"><table class="md-table"><thead><tr>${head.map((c, k) => cell("th", c, k)).join("")}</tr></thead>`
+        + (rows.length ? `<tbody>${rows.map((r) => `<tr>${head.map((_, k) => cell("td", r[k] ?? "", k)).join("")}</tr>`).join("")}</tbody>` : "")
+        + "</table></div>");
+      continue;
+    }
+    const heading = line.match(/^#{1,6}\s+(.*?)\s*#*\s*$/);
+    if (heading) { flushPara(); closeList(); out.push(`<h4>${inline(heading[1])}</h4>`); i += 1; continue; }
+    const ol = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const ul = ol ? null : line.match(/^\s*[-*•]\s+(.*)$/);
+    if (ol || ul) {
+      flushPara();
+      const type = ol ? "ol" : "ul";
+      if (listType !== type) { closeList(); out.push(`<${type}>`); listType = type; }
+      out[out.length - 1] += `<li>${inline((ol || ul)[1])}</li>`;
+      i += 1;
+      continue;
+    }
+    closeList();
+    para.push(line);
+    i += 1;
+  }
+  flushPara(); closeList();
+  // 빈 줄 → <br><br>(예전 동작). 블록 요소(표·목록·제목·코드) 앞뒤의 빈 줄은 여백이 겹치므로 생략.
+  let html = "";
+  let pendingBreak = false;
+  out.forEach((cur) => {
+    if (cur === "") { pendingBreak = true; return; }
+    if (html) {
+      const prevIsBlock = /<\/(ul|ol|h4|pre|div)>$/.test(html);
+      const curIsBlock = BLOCK_RE.test(cur);
+      if (!prevIsBlock && !curIsBlock) html += pendingBreak ? "<br><br>" : "\n";
+    }
+    pendingBreak = false;
+    html += cur;
+  });
   return html;
 }
+
+// 회귀 자가검사(브라우저 콘솔: formatMarkdownToHtml.__selftest()). 실패 항목은 console.warn 으로.
+formatMarkdownToHtml.__selftest = function selftest() {
+  const f = formatMarkdownToHtml;
+  const cases = [
+    ["escape", () => { const h = f("<script>alert(1)</script> **b**"); return !h.includes("<script") && h.includes("&lt;script&gt;") && h.includes("<strong>b</strong>"); }],
+    ["link", () => f("[삼성](https://example.com/a?b=1&c=2)") === '<a href="https://example.com/a?b=1&amp;c=2" target="_blank" rel="noopener noreferrer">삼성</a>'],
+    ["link-scheme", () => !f("[x](javascript:alert(1)) [y](ftp://a.b)").includes("<a ")],
+    ["link-attr-breakout", () => { const h = f('[x](https://e.com/" onmouseover="alert(1))'); return !h.includes("<a ") && !h.includes('onmouseover="'); }],
+    ["inline-code", () => { const h = f("a `**x**` b"); return h.includes("<code>**x**</code>") && !h.includes("<strong>"); }],
+    ["fence", () => f("```\n**x** <b>\n```") === "<pre><code>**x** &lt;b&gt;</code></pre>"],
+    ["ol", () => f("1. a\n2. b") === "<ol><li>a</li><li>b</li></ol>"],
+    ["ul", () => f("- a\n* b") === "<ul><li>a</li><li>b</li></ul>"],
+    ["table", () => { const h = f("| 지표 | 값 |\n|---|---:|\n| PER | 12.3 |"); return h.includes("<th>지표</th>") && h.includes('<td style="text-align:right">12.3</td>') && h.startsWith('<div class="md-table-wrap"><table class="md-table">'); }],
+    ["table-needs-sep", () => !f("| a | b |\n| c | d |").includes("<table")],
+    ["heading", () => f("### T **b**") === "<h4>T <strong>b</strong></h4>"],
+    ["para-break", () => f("a\n\nb") === "a<br><br>b"],
+    ["single-newline", () => f("a\nb") === "a\nb"],
+    ["block-no-extra-br", () => f("- a\n\ntext") === "<ul><li>a</li></ul>text"],
+  ];
+  const failed = cases.filter(([, fn]) => { try { return !fn(); } catch (e) { return true; } }).map(([name]) => name);
+  if (failed.length) console.warn("formatMarkdownToHtml selftest 실패:", failed.join(", "));
+  return failed.length === 0;
+};
 
 // 종목 AI 리포트 12시간 캐시(localStorage). 키 = 시장·티커·스냅샷 날짜·질의 — 종목을 열 때마다
 // LLM 을 부르지 않는다. 스냅샷이 바뀌면(날짜) 자연히 새 키가 된다.
@@ -7390,7 +7522,7 @@ function aiReportCacheKey(ticker, customQuery) {
 }
 function readAiReportCache(key) {
   try {
-    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
     const hit = store[key];
     if (hit && typeof hit.reply === "string" && Date.now() - Number(hit.at || 0) < AI_REPORT_CACHE_TTL_MS) return hit.reply;
   } catch (_) { /* ignore */ }
@@ -7398,20 +7530,20 @@ function readAiReportCache(key) {
 }
 function deleteAiReportCache(key) {
   try {
-    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
-    if (key in store) { delete store[key]; localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store)); }
+    const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
+    if (key in store) { delete store[key]; window.safeStorage.set(AI_REPORT_CACHE_KEY, JSON.stringify(store)); }
   } catch (_) { /* ignore */ }
 }
 
 function writeAiReportCache(key, reply) {
   try {
-    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    const store = JSON.parse(window.safeStorage.get(AI_REPORT_CACHE_KEY) || "{}");
     const now = Date.now();
     Object.keys(store).forEach((k) => { if (now - Number(store[k]?.at || 0) >= AI_REPORT_CACHE_TTL_MS) delete store[k]; });
     store[key] = { at: now, reply };
     const keys = Object.keys(store).sort((a, b) => Number(store[a].at) - Number(store[b].at));
     while (keys.length > AI_REPORT_CACHE_MAX) delete store[keys.shift()];
-    localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store));
+    window.safeStorage.set(AI_REPORT_CACHE_KEY, JSON.stringify(store));
   } catch (_) { /* quota 등 — 캐시는 있으면 좋은 것 */ }
 }
 

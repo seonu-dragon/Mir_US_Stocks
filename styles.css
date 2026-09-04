@@ -22,6 +22,42 @@
   --chip-border: #bfdbfe;
   --chat-safe-bottom: 61px;
 
+  /* ── z-index 스택 토큰 (2026-09-04) ──
+     값은 예전 리터럴을 그대로 옮긴 것이라 쌓임 순서가 바뀌지 않았다. 새 규칙은 리터럴 대신 토큰을 쓸 것.
+     매핑(옛 값 → 토큰): -1 behind · 0 base · 1/2/4/5/6 layer-N(컴포넌트 내부 쌓임: 섹터 제목·타일·탑바·배너)
+     · 10 sticky(고정 헤더·복사 버튼·위젯 오버레이) · 18 ai-chatlog · 20 popover(툴팁·탭 스크롤·도움말)
+     · 25 ai-input · 40 legend-pop · 50 ai-topbar · 60/61 drawer-backdrop/drawer(구성종목 패널)
+     · 80 ia-popover · 90 cmdk · 100 dropdown(AI 자동완성) · 120 autocomplete(티커 자동완성)
+     · 900 fab(챗봇) · 1000 modal/lightbox(라이트박스·히트맵 툴팁·지표 드롭다운·세션 메뉴)
+     · 2000 assembly(AI 조립 오버레이) · 9999 toast(앱 토스트·AI 모달) · 10000 fullscreen(위젯 전체화면)
+     · 99999 offline(오프라인 배너) */
+  --z-behind: -1;
+  --z-base: 0;
+  --z-layer-1: 1;
+  --z-layer-2: 2;
+  --z-layer-4: 4;
+  --z-layer-5: 5;
+  --z-layer-6: 6;
+  --z-sticky: 10;
+  --z-ai-chatlog: 18;
+  --z-popover: 20;
+  --z-ai-input: 25;
+  --z-legend-pop: 40;
+  --z-ai-topbar: 50;
+  --z-drawer-backdrop: 60;
+  --z-drawer: 61;
+  --z-ia-popover: 80;
+  --z-cmdk: 90;
+  --z-dropdown: 100;
+  --z-autocomplete: 120;
+  --z-fab: 900;
+  --z-modal: 1000;
+  --z-lightbox: 1000;
+  --z-assembly: 2000;
+  --z-toast: 9999;
+  --z-fullscreen: 10000;
+  --z-offline: 99999;
+
   /* ── 의미 색 (단일 브랜드 색 = primary, 등락 = pos/neg) ── */
   --text-muted: #667085;   /* 보조 텍스트 (12px 에서도 4.5:1) */
   --accent: #1d4ed8;       /* = primary. 히어로·AI 레이어의 인디고/보라도 이 값 하나로 */
@@ -118,7 +154,7 @@ html[data-density="compact"] {
   font-size: var(--fs-body);
   font-weight: 600;
   text-align: center;
-  z-index: 9999;
+  z-index: var(--z-toast);
   opacity: 0;
   pointer-events: none;
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
@@ -258,7 +294,7 @@ select {
   justify-content: space-between;
   gap: var(--space-4);
   padding: 18px 24px 12px;
-  z-index: 5;
+  z-index: var(--z-layer-5);
   background: var(--topbar-bg);
   color: var(--topbar-fg);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
@@ -391,7 +427,7 @@ h1 {
   pointer-events: none;
   transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease,
     background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  z-index: 20;
+  z-index: var(--z-popover);
 }
 
 .social-tooltip::before {
@@ -671,7 +707,7 @@ h1 {
 .lightbox {
   position: fixed;
   inset: 0;
-  z-index: 1000;
+  z-index: var(--z-lightbox);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -933,7 +969,7 @@ strong.regime-label {
 .tabs-scroll-wrap {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: var(--z-popover);
   padding: 8px 0 6px;
   margin: 0 0 10px;
   background: var(--bg);
@@ -1164,7 +1200,7 @@ button.ghost {
   top: 4px;
   left: 7px;
   right: 7px;
-  z-index: 2;
+  z-index: var(--z-layer-2);
   overflow: hidden;
   color: #d7deea;
   font-size: var(--fs-cap);
@@ -1183,7 +1219,7 @@ button.ghost {
   left: 0;
   right: 0;
   height: 34px;
-  z-index: 6;
+  z-index: var(--z-layer-6);
   display: flex;
   align-items: center;
   gap: var(--space-3);
@@ -1217,6 +1253,7 @@ button.ghost {
   border: 1px solid rgba(255, 255, 255, 0.10);
   background: rgba(0, 0, 0, 0.18);
   overflow: hidden;
+  content-visibility: auto; /* 화면 밖 박스는 렌더 생략(크기는 인라인 style 고정) */
 }
 
 .industry-title {
@@ -1224,7 +1261,7 @@ button.ghost {
   top: 2px;
   left: 4px;
   right: 4px;
-  z-index: 2;
+  z-index: var(--z-layer-2);
   overflow: hidden;
   color: #c6ceda;
   font-size: var(--fs-cap);
@@ -1255,7 +1292,7 @@ button.ghost {
 .heat-tile:hover,
 .heat-tile.is-selected,
 .heat-tile.is-match {
-  z-index: 4;
+  z-index: var(--z-layer-4);
   border-color: #fff;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55), 0 8px 20px rgba(0, 0, 0, 0.35);
 }
@@ -1265,7 +1302,7 @@ button.ghost {
 }
 
 .heat-tile.is-focus-pulse {
-  z-index: 6;
+  z-index: var(--z-layer-6);
   animation: heatmap-focus-pulse 1.1s ease-in-out 2;
   box-shadow: 0 0 0 3px #fff, 0 0 0 6px color-mix(in srgb, var(--primary) 85%, transparent), 0 10px 24px rgba(0, 0, 0, 0.35);
 }
@@ -1319,7 +1356,7 @@ button.ghost {
 
 .heatmap-tooltip {
   position: fixed;
-  z-index: 1000;
+  z-index: var(--z-modal);
   width: 304px;
   max-width: calc(100vw - 16px);
   padding: 10px;
@@ -2363,7 +2400,7 @@ button.ghost {
 
 .congress-help-popover {
   position: absolute;
-  z-index: 20;
+  z-index: var(--z-popover);
   top: 34px;
   left: 0;
   right: 0;
@@ -2955,7 +2992,7 @@ footer {
   right: 0;
   top: 100%;
   margin-top: var(--space-1);
-  z-index: 120;
+  z-index: var(--z-autocomplete);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -3161,7 +3198,7 @@ footer {
     bottom: 4px;
     width: 28px;
     pointer-events: none;
-    z-index: 1;
+    z-index: var(--z-layer-1);
     opacity: 0;
     transition: opacity 0.2s ease;
   }
@@ -3662,7 +3699,7 @@ footer {
 .panel-header-sticky {
   flex-shrink: 0;
   background: var(--panel-soft);
-  z-index: 10;
+  z-index: var(--z-sticky);
   padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
   margin-bottom: var(--space-2);
@@ -4549,7 +4586,7 @@ footer {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.45);
-  z-index: 60;
+  z-index: var(--z-drawer-backdrop);
   display: none;
 }
 .constituent-backdrop.is-open {
@@ -4568,7 +4605,7 @@ footer {
   background: var(--panel);
   border-left: 2px solid var(--blue);
   box-shadow: -16px 0 40px rgba(15, 23, 42, 0.22);
-  z-index: 61;
+  z-index: var(--z-drawer);
   display: none;
   overflow-y: auto;
 }
@@ -4591,7 +4628,7 @@ footer {
   color: #fff;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: var(--z-layer-1);
 }
 
 @media (max-width: 900px) {
@@ -4657,7 +4694,7 @@ footer {
   top: 0;
   background: var(--surface-2);
   font-size: var(--fs-cap);
-  z-index: 1;
+  z-index: var(--z-layer-1);
   padding: 8px 12px;
   border-bottom: 1px solid var(--line);
 }
@@ -4771,7 +4808,7 @@ footer {
   position: fixed;
   right: 20px;
   bottom: 24px;
-  z-index: 900;
+  z-index: var(--z-fab);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -4804,7 +4841,7 @@ footer {
   color: var(--muted);
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  z-index: 2;
+  z-index: var(--z-layer-2);
 }
 .chat-dismiss:hover { background: var(--neg); color: #fff; border-color: var(--neg); }
 .chatbot.dragging .chat-dismiss,
@@ -6517,7 +6554,7 @@ footer {
   bottom: 4px;
   width: 28px;
   pointer-events: none;
-  z-index: 2;
+  z-index: var(--z-layer-2);
   opacity: 0;
   transition: opacity 0.2s ease;
 }
@@ -7526,7 +7563,7 @@ button.community-hot-ticker {
 .community-vote-label,
 .community-vote-num {
   position: relative;
-  z-index: 1;
+  z-index: var(--z-layer-1);
   font-size: var(--fs-cap);
   font-weight: 600;
 }
@@ -7559,7 +7596,7 @@ button.community-hot-ticker {
 .community-new-banner {
   position: sticky;
   top: 8px;
-  z-index: 5;
+  z-index: var(--z-layer-5);
   display: block;
   width: fit-content;
   margin: 0 auto 12px;
@@ -9784,7 +9821,7 @@ label.scan-deep-toggle {
   padding: 12px 20px;
   border-radius: var(--r-pill);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
-  z-index: 99999;
+  z-index: var(--z-offline);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -10079,7 +10116,7 @@ label.scan-deep-toggle {
   min-height: 800px;
   background: rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(20px);
-  z-index: 2000;
+  z-index: var(--z-assembly);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -10251,7 +10288,7 @@ body.ai-mode-active .topbar {
   top: 0;
   left: 0;
   right: 0;
-  z-index: 50;
+  z-index: var(--z-ai-topbar);
   padding: 12px 24px 10px;
   background: rgba(5, 7, 13, 0.38);
   backdrop-filter: blur(20px) saturate(1.4);
@@ -10309,7 +10346,7 @@ body.ai-mode-active #tab-ai-chat {
   animation: none;
   overflow: hidden;
   isolation: isolate;
-  z-index: 1;
+  z-index: var(--z-layer-1);
 }
 
 /* Chat container styles */
@@ -10328,7 +10365,7 @@ body.ai-mode-active #tab-ai-chat {
 .ai-cosmos {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: var(--z-base);
   pointer-events: none;
   opacity: 0;
   transition: opacity 520ms ease, filter 520ms ease;
@@ -10341,7 +10378,7 @@ body.ai-mode-active .ai-cosmos {
   width: 100vw;
   height: 100dvh;
   opacity: 1;
-  z-index: 0;
+  z-index: var(--z-base);
 }
 
 .ai-cosmos.is-stock-mode {
@@ -10393,7 +10430,7 @@ body.ai-mode-active.ai-stock-analysis-view .ai-cosmos {
 .ai-dash {
   position: absolute;
   inset: 0;
-  z-index: 10; /* cosmos 배경 위, 입력창(25) 아래 */
+  z-index: var(--z-sticky); /* cosmos 배경 위, 입력창(25) 아래 */
   pointer-events: none;
   opacity: 0;
   display: none;
@@ -10471,7 +10508,7 @@ body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right:
   position: absolute;
   top: 80px;
   right: 430px;
-  z-index: 4;
+  z-index: var(--z-layer-4);
   width: 26px;
   height: 40px;
   padding: 0;
@@ -10534,7 +10571,7 @@ body.ai-dash-collapsed .ai-dash-collapse { right: 14px; }
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(120, 160, 255, 0.16);
   pointer-events: auto;
-  z-index: 2;
+  z-index: var(--z-layer-2);
 }
 .ai-dash-rangebar button {
   height: auto;
@@ -10564,7 +10601,7 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(120, 160, 255, 0.16);
   pointer-events: auto;
-  z-index: 4;
+  z-index: var(--z-layer-4);
   transition: left 0.32s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .ai-dash-stylebar button {
@@ -10756,7 +10793,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   background: rgba(15, 23, 42, 0.2);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  z-index: 10;
+  z-index: var(--z-sticky);
 }
 
 [data-theme="light"] .ai-chat-header {
@@ -10873,7 +10910,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   width: 200px;
   height: 200px;
   background: transparent;
-  z-index: -1;
+  z-index: var(--z-behind);
   pointer-events: none;
   filter: blur(20px);
   animation: auroraFlow 8s infinite alternate ease-in-out;
@@ -11034,6 +11071,17 @@ body.ai-stock-analysis-view .ai-cosmos {
   border: 1px solid rgba(15, 23, 42, 0.06);
 }
 
+/* AI 답변 마크다운(formatMarkdownToHtml): 표·코드·번호 목록·링크. 테마 무관 반투명 톤. */
+.msg-bubble .md-table-wrap, .ai-verdict-llm-body .md-table-wrap, #analysisAiReportBody .md-table-wrap { overflow-x: auto; margin: 8px 0; }
+.md-table { width: auto; min-width: 0; border-collapse: collapse; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.md-table th, .md-table td { padding: 4px 10px; border: 1px solid rgba(127, 127, 127, 0.35); text-align: left; vertical-align: top; white-space: nowrap; }
+.md-table th { font-weight: 600; background: rgba(127, 127, 127, 0.14); }
+.msg-bubble code, .ai-verdict-llm-body code, #analysisAiReportBody code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; padding: 1px 5px; border-radius: var(--r-xs); background: rgba(127, 127, 127, 0.16); }
+.msg-bubble pre, .ai-verdict-llm-body pre, #analysisAiReportBody pre { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border-radius: var(--r-md); background: rgba(127, 127, 127, 0.14); font-size: var(--fs-sub); line-height: 1.5; }
+.msg-bubble pre code, .ai-verdict-llm-body pre code, #analysisAiReportBody pre code { padding: 0; background: none; font-size: inherit; }
+.msg-bubble ol, .ai-verdict-llm-body ol, #analysisAiReportBody ol { margin: 6px 0; padding-left: 1.4em; }
+.msg-bubble a, .ai-verdict-llm-body a, #analysisAiReportBody a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+
 /* Rich Inline Dashboard Widget */
 .chat-msg-widget {
   margin-top: 4px;
@@ -11062,7 +11110,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 10;
+  z-index: var(--z-sticky);
   transition: opacity 0.4s ease;
 }
 
@@ -11224,7 +11272,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 .ai-orb-core {
   font-size: var(--fs-h1); color: var(--brand);
   animation: pulseSparkle 1.4s infinite alternate;
-  z-index: 2;
+  z-index: var(--z-layer-2);
 }
 .ai-orb-ring {
   position: absolute; inset: 0;
@@ -11582,7 +11630,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 .ai-mode-table th {
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: var(--z-layer-1);
   background: var(--panel-soft);
   color: var(--muted);
   font-size: var(--fs-cap);
@@ -11837,7 +11885,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 /* 1. 사이드바 레이아웃 */
 .ai-chat-layout {
   position: relative;
-  z-index: 2;
+  z-index: var(--z-layer-2);
   display: flex;
   width: 100%;
   max-width: min(1320px, calc(100vw - 32px));
@@ -12033,7 +12081,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   border-radius: var(--r-lg);
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.3);
   overflow: hidden;
-  z-index: 100;
+  z-index: var(--z-dropdown);
   display: flex;
   flex-direction: column;
   padding: 6px;
@@ -12149,7 +12197,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   transform: translate(-50%, -50%) scale(1);
   width: min(1080px, 92vw);
   max-height: 85vh;
-  z-index: 10000;
+  z-index: var(--z-fullscreen);
   margin: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 50px 100px rgba(0, 0, 0, 0.5);
@@ -12172,7 +12220,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   background: rgba(10, 15, 30, 0.6);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  z-index: 9999;
+  z-index: var(--z-toast);
   animation: fadeInOverlay 0.25s ease;
 }
 
@@ -12282,7 +12330,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   opacity: 0;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   color: var(--muted);
-  z-index: 10;
+  z-index: var(--z-sticky);
 }
 
 .msg-bubble:hover .copy-msg-btn {
@@ -12371,7 +12419,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   flex-direction: column;
   gap: 8px;
   min-width: 140px;
-  z-index: 1000;
+  z-index: var(--z-modal);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   opacity: 0;
   pointer-events: none;
@@ -12466,7 +12514,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   flex-direction: column;
   gap: 2px;
   min-width: 100px;
-  z-index: 1000;
+  z-index: var(--z-modal);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
   opacity: 0;
   pointer-events: none;
@@ -12698,7 +12746,7 @@ body.ai-stock-analysis-view .ai-chat-input-wrapper {
   bottom: max(24px, env(safe-area-inset-bottom, 0px));
   transform: translateX(-50%);
   width: min(700px, calc(100vw - 36px));
-  z-index: 25;
+  z-index: var(--z-ai-input);
   pointer-events: auto;
   margin: 0;
   padding: 0 0 4px;
@@ -12724,7 +12772,7 @@ body.ai-stock-analysis-view .ai-chat-input-wrapper::before {
     transparent 74%
   );
   pointer-events: none;
-  z-index: -1;
+  z-index: var(--z-behind);
 }
 
 body.ai-mode-active .ai-chat-form,
@@ -12846,7 +12894,7 @@ body.ai-mode-active .ai-input-hint:empty {
     height: 100dvh;
     height: 100svh;
     opacity: 1;
-    z-index: 0;
+    z-index: var(--z-base);
   }
 
   body.ai-keyboard-open.ai-mode-active #tab-ai-chat,
@@ -12976,7 +13024,7 @@ body.ai-mode-active .ai-input-hint:empty {
   body.ai-mode-active .ai-dash-handle {
     display: block;
     position: absolute;
-    z-index: 6;
+    z-index: var(--z-layer-6);
     pointer-events: auto;
     touch-action: none;
     opacity: 0;
@@ -13147,7 +13195,7 @@ body.ai-mode-active.ai-conversation-view #aiChatLog {
   overflow-y: auto;
   visibility: visible;
   pointer-events: auto;
-  z-index: 18; /* 입력창(25) 아래 */
+  z-index: var(--z-ai-chatlog); /* 입력창(25) 아래 */
   background: transparent;
   border: none;
 }
@@ -13164,7 +13212,7 @@ body.ai-mode-active.ai-conversation-view #aiChatLog .chat-msg.bot .msg-bubble {
 .cmdk-overlay {
   position: fixed;
   inset: 0;
-  z-index: 90;
+  z-index: var(--z-cmdk);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -13277,7 +13325,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-gear-btn { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: var(--r-pill); background: rgba(255, 255, 255, 0.08); color: #e2e8f0; cursor: pointer; }
 .ia-gear-btn:hover, .ia-gear-btn[aria-expanded="true"] { background: rgba(255, 255, 255, 0.16); }
 .ia-gear-btn svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-.ia-popover { position: absolute; right: 0; top: calc(100% + 8px); z-index: 80; min-width: 280px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22); }
+.ia-popover { position: absolute; right: 0; top: calc(100% + 8px); z-index: var(--z-ia-popover); min-width: 280px; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); color: var(--text); box-shadow: 0 18px 40px rgba(15, 23, 42, 0.22); }
 .ia-popover-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 4px 8px; font-size: var(--fs-sub); }
 .ia-popover-row > span { color: var(--muted); }
 .ia-popover .ui-pref-btn { min-height: 32px; padding: 0 12px; border-radius: var(--r-md); font-size: var(--fs-sub); }
@@ -13367,7 +13415,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-heatmap-color .control-caption { font-size: var(--fs-cap); color: var(--muted); }
 .ia-metric-select { min-height: 36px; }
 .ia-legend-wrap { position: relative; margin-left: auto; }
-.ia-legend-wrap .heatmap-legend.ia-legend-pop { display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: 40; min-width: 280px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18); }
+.ia-legend-wrap .heatmap-legend.ia-legend-pop { display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: var(--z-legend-pop); min-width: 280px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18); }
 .ia-legend-wrap.is-open .heatmap-legend.ia-legend-pop { display: flex; flex-wrap: wrap; gap: 6px 10px; }
 .ia-heatmap-toolbar { margin-bottom: 0; }
 .ia-footnote { margin: 14px 0 0; font-size: var(--fs-sub); color: var(--muted); }

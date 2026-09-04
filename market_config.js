@@ -6,17 +6,7 @@
   const STORAGE_KEY = "mir_market_mode_v2";
   const DEFAULT_MARKET_MODE = "us";
 
-  // storage.js 가 index.html 에 아직 안 붙었을 때의 최소 폴백(동일 API). 이 파일이
-  // 모듈 중 가장 먼저 로드되므로 뒤 파일들도 여기서 보장된 window.safeStorage 를 쓴다.
-  if (!window.safeStorage) {
-    window.safeStorage = {
-      get(k, f = null) { try { const v = localStorage.getItem(k); return v == null ? f : v; } catch (_) { return f; } },
-      set(k, v) { try { localStorage.setItem(k, String(v)); return true; } catch (_) { return false; } },
-      remove(k) { try { localStorage.removeItem(k); return true; } catch (_) { return false; } },
-      getJSON(k, f = null) { try { const r = localStorage.getItem(k); if (r == null) return f; const p = JSON.parse(r); return p == null ? f : p; } catch (_) { return f; } },
-      setJSON(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (_) { return false; } },
-    };
-  }
+  // storage.js(첫 스크립트) 가 보장하는 window.safeStorage 를 쓴다. 인라인 폴백은 제거(2026-09-04).
   const storage = window.safeStorage;
 
   const US = {

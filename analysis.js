@@ -37,22 +37,23 @@ function fmtPrice(value) {
 // 사본을 갖고 있었고 이미 값이 어긋나 있었다(RSI 시드·Cutler/Wilder, OBV 시드, MFI 비교
 // 기준, 슈퍼트렌드 초기 추세 시드, 합성봉 가드 유무).
 //
-// 로드 순서: indicators.js 는 이 파일보다 먼저 실행돼야 한다. analysis.html·
-// chart_capture.html 에는 <script src="indicators.js"> 를 넣었다. index.html 에 아직 태그가
-// 없는 과도기에는 아래 부트스트랩이 파서를 막고 동기 로드한다(문서 파싱 중에만 동작).
-// 태그가 추가되면 window.MirIndicators 가 이미 있어 부트스트랩은 무동작이 된다.
-if (typeof document !== "undefined" && typeof window !== "undefined"
-    && !window.MirIndicators && document.readyState === "loading"
-    && document.currentScript && !document.querySelector('script[src^="indicators.js"]')) {
-  document.write('<scr' + 'ipt src="indicators.js"><\/scr' + 'ipt>');
-}
+// 로드 순서: indicators.js 는 이 파일보다 먼저 실행돼야 한다. index.html·analysis.html·
+// chart_capture.html 모두 <script src="indicators.js"> 를 이 파일 앞에 명시한다.
+// (예전엔 index.html 에 태그가 없던 과도기용 document.write 부트스트랩이 있었다 — Chrome 이
+// 느린 연결에서 document.write 스크립트 주입을 차단하므로 제거. 2026-09-04)
 
-// 지표 모듈은 **호출 시점에** 찾는다. 위 부트스트랩이 주입한 스크립트는 이 파일의 나머지가
-// 다 실행된 뒤에 실행되므로, 로드 시점에 참조를 잡아두면 안 된다.
+// 지표 모듈은 **호출 시점에** 찾는다(로드 시점 참조를 잡아두지 않는다).
+let _miWarned = false;
 function MI() {
   const m = (typeof window !== "undefined" && window.MirIndicators)
     || (typeof globalThis !== "undefined" && globalThis.MirIndicators);
-  if (!m) throw new Error("indicators.js 미로드 — <script src=\"indicators.js\"> 를 analysis.js 앞에 두세요.");
+  if (!m) {
+    if (!_miWarned && typeof console !== "undefined") {
+      _miWarned = true;
+      console.warn("indicators.js 미로드 — <script src=\"indicators.js\"> 를 analysis.js 앞에 두세요.");
+    }
+    throw new Error("indicators.js 미로드 — <script src=\"indicators.js\"> 를 analysis.js 앞에 두세요.");
+  }
   return m;
 }
 

@@ -885,7 +885,7 @@ function renderCommunityBoard() {
               const commentHidden = Number(comment.hiddenByReports) || 0;
               return `
                 <div class="community-comment" data-comment-id="${escapeHtml(comment.id)}">
-                  ${commentHidden ? `<p class="muted" style="margin:0 0 4px;font-size:11px;">신고 누적으로 숨김 처리됨 (신고 ${commentHidden}건) · 작성자에게만 보입니다.</p>` : ""}
+                  ${commentHidden ? `<p class="muted" style="margin:0 0 4px;font-size:var(--fs-cap);">신고 누적으로 숨김 처리됨 (신고 ${commentHidden}건) · 작성자에게만 보입니다.</p>` : ""}
                   <div class="community-comment-head">
                     <span class="community-comment-author">${escapeHtml(comment.author || "익명")}</span>
                     <time class="muted">${escapeHtml(formatCommunityTime(comment.createdAt))}</time>

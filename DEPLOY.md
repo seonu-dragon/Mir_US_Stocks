@@ -90,8 +90,15 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - Secrets: `GEMINI_API_KEY`, `FINNHUB_API_KEY`, `NAVER_CLIENT_ID`,
      `NAVER_CLIENT_SECRET`, `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`,
      (선택) `IP_HASH_SALT` — 신고·투표 중복 판정용 IP 해시 솔트(없으면 고정 기본값)
+   - `GEMINI_MODEL` (선택, 변수·시크릿 어느 쪽이든): `/chat` 이 쓸 Gemini 모델 이름.
+     지정하면 그 모델을 **맨 앞에** 두고, 없거나 그 모델이 404/400 "model not found"
+     를 주면 기본 체인 `gemini-2.0-flash` → `gemini-1.5-flash` 순으로 한 번씩 더
+     시도한다(그 외 오류 — 쿼터·키 — 는 바로 Workers AI 폴백). 새 모델로 바꿀 땐
+     이 변수만 고치면 되고 코드 재배포는 필요 없다. 예: `gemini-2.5-flash`.
    - KV: `COMMUNITY_KV` (커뮤니티+클라우드 동기화), `MOVE_CACHE` (원인 분석·요약 캐시,
-     IP 리밋 카운터)
+     IP 리밋 카운터, `lastgood:*` — fx·fng·indices·calendar 의 직전 정상값.
+     업스트림(야후·CNN·investing.com)이 죽으면 7일 이내 값을 `stale: true, storedAt`
+     마커와 함께 서빙한다. `MOVE_CACHE` 가 없으면 `COMMUNITY_KV` 를 대신 쓴다)
    - Workers AI 바인딩: `AI`
    - 관리자 호출은 `X-Admin-Key` 헤더로(쿼리 `adminKey=` 는 한 릴리스만 폴백 유지)
    - (선택) Durable Object: `COMMUNITY_DO` → class `CommunityStore`.

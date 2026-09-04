@@ -33,6 +33,9 @@
 
 const ALLOW_ORIGIN = "*"; // e.g. "https://seonu-dragon.github.io"
 const UA = { "User-Agent": "Mozilla/5.0", Accept: "application/json" };
+// CNN dataviz 는 짧은 "Mozilla/5.0" UA 를 봇으로 보고 418(I'm a teapot)을 준다
+// (2026-09-04 확인: 짧은 UA → 418, 브라우저 UA + Referer/Origin → 200).
+const BROWSER_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36";
 
 // LLM 을 태우는 경로 — /chat, move_analysis, 그리고 ?ticker= 응답의 한국어
 // 요약(summary) 단계 — 는 뉴런·Gemini 쿼터를 소모하므로 아무 사이트에서나 못
@@ -96,6 +99,75 @@ async function fetchT(url, init = {}, ms = FETCH_TIMEOUT_MS) {
   }
 }
 
+// =============================================================================
+// stale-if-error — 스크래핑·야후 프록시의 "직전 정상값" 캐시
+//
+// investing.com XHR·CNN Fear&Greed·야후 차트는 봇 차단·헤더 정책 변경 한 번에
+// 통째로 비어 버리는 단일 장애점이다(WEBSITE_INSPECTION_REPORT §4-①). 업스트림이
+// 성공할 때마다 KV(MOVE_CACHE, 없으면 COMMUNITY_KV)에 `lastgood:<name>` 으로
+// { storedAt, value } 를 적어 두고, 실패(예외·non-2xx·빈 결과)하면 그 값을
+// `stale: true, storedAt` 마커와 함께 돌려준다. 7일보다 오래된 값은 버리고
+// 지금까지처럼 빈 결과를 준다(너무 낡은 공포지수·환율은 없느니만 못하다).
+// KV 바인딩이 없으면 이 계층은 조용히 통과한다(동작 불변).
+// =============================================================================
+const LASTGOOD_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const LASTGOOD_KV_TTL_SEC = 8 * 24 * 60 * 60; // 캡보다 하루 길게 — 만료 판정은 storedAt 으로
+const LASTGOOD_STALE_CACHE_SEC = 120;         // 낡은 응답은 짧게만 캐시해 곧 재시도되게
+
+function lastGoodKv(env) {
+  return (env && (env.MOVE_CACHE || env.COMMUNITY_KV)) || null;
+}
+
+function lastGoodEmpty(value) {
+  return value == null || (Array.isArray(value) && value.length === 0);
+}
+
+// fetcher() 가 비어 있지 않은 값을 주면 KV 에 저장하고 { value, stale:false } 를,
+// 비었거나 던지면 KV 의 직전값(캡 이내)을 { value, stale:true, storedAt } 로 돌려준다.
+// 직전값도 없으면 { value: emptyValue, stale:false } — 기존 빈 응답 그대로.
+export async function withLastGood(env, name, fetcher, emptyValue, { maxAgeMs = LASTGOOD_MAX_AGE_MS, now = Date.now() } = {}) {
+  const kv = lastGoodKv(env);
+  const key = `lastgood:${name}`;
+  let fresh = emptyValue;
+  try {
+    fresh = await fetcher();
+  } catch (e) {
+    fresh = emptyValue;
+  }
+  if (!lastGoodEmpty(fresh)) {
+    if (kv) {
+      try {
+        await kv.put(key, JSON.stringify({ storedAt: new Date(now).toISOString(), value: fresh }), { expirationTtl: LASTGOOD_KV_TTL_SEC });
+      } catch (e) { /* 저장 실패는 응답에 영향 없음 */ }
+    }
+    return { value: fresh, stale: false, storedAt: null };
+  }
+  if (!kv) return { value: emptyValue, stale: false, storedAt: null };
+  try {
+    const saved = await kv.get(key, "json");
+    const storedAt = saved && saved.storedAt ? Date.parse(saved.storedAt) : NaN;
+    if (!saved || lastGoodEmpty(saved.value) || !Number.isFinite(storedAt)) return { value: emptyValue, stale: false, storedAt: null };
+    if (now - storedAt > maxAgeMs) return { value: emptyValue, stale: false, storedAt: null };
+    return { value: saved.value, stale: true, storedAt: saved.storedAt };
+  } catch (e) {
+    return { value: emptyValue, stale: false, storedAt: null };
+  }
+}
+
+// { <field>: value } 응답. stale 이면 stale/storedAt/warning 필드와 Warning 헤더를
+// 덧붙이고 캐시를 짧게 잡는다. 신선하면 응답 모양은 예전과 완전히 같다.
+function staleAwareJson(field, result) {
+  if (!result.stale) return json({ [field]: result.value });
+  const resp = json({
+    [field]: result.value,
+    stale: true,
+    storedAt: result.storedAt,
+    warning: `upstream unavailable; serving last good ${field} from ${result.storedAt}`,
+  }, 200, LASTGOOD_STALE_CACHE_SEC);
+  resp.headers.set("Warning", '110 - "Response is Stale"');
+  return resp;
+}
+
 async function sha256Hex(text) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(String(text)));
   return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -154,9 +226,28 @@ const CHAT_MODELS = [
   "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
   "@cf/mistralai/mistral-small-3.1-24b-instruct",
 ];
-// /chat 이 GEMINI_API_KEY 가 있을 때 쓰는 기본 모델(env.GEMINI_MODEL 로 덮어쓴다).
-// 스트리밍·비스트리밍 두 경로가 같은 값을 봐야 하므로 한 곳에만 둔다.
-const GEMINI_DEFAULT_MODEL = "gemini-1.5-flash";
+// /chat 이 GEMINI_API_KEY 가 있을 때 쓰는 모델 체인. env.GEMINI_MODEL 이 있으면
+// 그것을 맨 앞에 두고, 이어서 아래 기본 순서를 붙인다. 한 모델이 404/400
+// "model not found" 를 주면 다음 모델을 **한 번씩만** 시도한다(WEBSITE_INSPECTION_REPORT
+// §4-②: 1.5-flash 하드코딩 → 2.0-flash 우선, 폐기 대비 폴백). 스트리밍·비스트리밍
+// 두 경로가 같은 체인을 봐야 하므로 한 곳에만 둔다.
+const GEMINI_FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
+
+export function geminiModelChain(env) {
+  const chain = [];
+  const override = env && typeof env.GEMINI_MODEL === "string" ? env.GEMINI_MODEL.trim() : "";
+  if (override) chain.push(override);
+  for (const m of GEMINI_FALLBACK_MODELS) if (!chain.includes(m)) chain.push(m);
+  return chain;
+}
+
+// 404 는 models/<name> 경로가 없다는 뜻이라 그대로 "모델 없음". 400 은 인자 오류
+// 전반이라 본문에 모델 관련 문구가 있을 때만 다음 모델로 넘어간다.
+export function geminiModelUnavailable(status, bodyText) {
+  if (status === 404) return true;
+  if (status === 400) return /model|not found|not supported|NOT_FOUND/i.test(String(bodyText || ""));
+  return false;
+}
 // Gemini 는 응답 생성 후 헤더를 보내는 경우가 있어 기본 8초보다 길게 잡는다.
 const GEMINI_TIMEOUT_MS = 25000;
 
@@ -205,20 +296,22 @@ export async function handleFetch(request, env) {
 
 
     // Live FX rates (incl. USD/KRW) for the 마켓 데이터 tab + top header.
+    // 네 경로 모두 stale-if-error(withLastGood): 업스트림이 죽으면 KV 의 직전
+    // 정상값을 stale:true 마커와 함께 준다. 신선할 땐 응답 모양이 예전과 같다.
     if (url.searchParams.get("fx")) {
-      return cors(json({ fx: await fetchFx() }));
+      return cors(staleAwareJson("fx", await withLastGood(env, "fx", fetchFx, [])));
     }
     // CNN Fear & Greed index for the top header gauge.
     if (url.searchParams.get("fng")) {
-      return cors(json({ fng: await fetchFng() }));
+      return cors(staleAwareJson("fng", await withLastGood(env, "fng", fetchFng, null)));
     }
     // Intraday index mini-charts (Finviz-style strip).
     if (url.searchParams.get("indices")) {
-      return cors(json({ indices: await fetchIndices() }));
+      return cors(staleAwareJson("indices", await withLastGood(env, "indices", fetchIndices, [])));
     }
     // Economic calendar (Korea + US) via investing.com XHR endpoint.
     if (url.searchParams.get("calendar")) {
-      return cors(json({ calendar: await fetchCalendar() }));
+      return cors(staleAwareJson("calendar", await fetchCalendar(env)));
     }
     if (url.searchParams.get("earnings_probe")) {
       const session = await bootstrapYahooSessionBasic();
@@ -1202,18 +1295,25 @@ async function fetchCalendarTab(tab) {
   }
 }
 
-async function fetchCalendar() {
+// 탭(thisWeek/nextWeek) 단위로 직전 정상값을 따로 보관한다 — 한 탭만 죽어도
+// 그 탭만 낡은 값으로 채우고, 하나라도 낡았으면 합친 응답에 stale 을 표시한다
+// (storedAt 은 낡은 탭 중 가장 오래된 것).
+async function fetchCalendar(env) {
   const [thisWeek, nextWeek] = await Promise.all([
-    fetchCalendarTab("thisWeek"),
-    fetchCalendarTab("nextWeek"),
+    withLastGood(env, "calendar:thisWeek", () => fetchCalendarTab("thisWeek"), []),
+    withLastGood(env, "calendar:nextWeek", () => fetchCalendarTab("nextWeek"), []),
   ]);
   const seen = new Set();
-  return [...thisWeek, ...nextWeek].filter((ev) => {
+  const merged = [...thisWeek.value, ...nextWeek.value].filter((ev) => {
     const key = `${ev.datetime || ev.day || ""}|${ev.event || ""}|${ev.country || ""}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
   });
+  const staleParts = [thisWeek, nextWeek].filter((p) => p.stale);
+  if (!staleParts.length) return { value: merged, stale: false, storedAt: null };
+  const storedAt = staleParts.map((p) => p.storedAt).sort()[0];
+  return { value: merged, stale: true, storedAt };
 }
 
 function parseCalendar(htmlStr) {
@@ -1265,7 +1365,7 @@ async function fetchFng() {
   try {
     const r = await fetchT("https://production.dataviz.cnn.io/index/fearandgreed/graphdata", {
       headers: {
-        ...UA,
+        "User-Agent": BROWSER_UA,
         Accept: "application/json, text/plain, */*",
         Referer: "https://edition.cnn.com/markets/fear-and-greed",
         Origin: "https://edition.cnn.com",
@@ -2478,33 +2578,43 @@ function pickWorkersAiDelta(data) {
   return data && typeof data.response === "string" ? data.response : "";
 }
 
-async function geminiStreamChat(env, systemContent, history, ragMeta) {
-  const geminiModel = env.GEMINI_MODEL || GEMINI_DEFAULT_MODEL;
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
-  const contents = history.map((m) => ({
-    role: m.role === "assistant" ? "model" : "user",
-    parts: [{ text: m.content }],
-  }));
-  const payload = {
-    contents,
+function geminiRequestPayload(systemContent, history) {
+  return {
+    contents: history.map((m) => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }],
+    })),
     systemInstruction: { parts: [{ text: systemContent }] },
     generationConfig: { temperature: 0.3, maxOutputTokens: 1024 },
   };
-  try {
-    const res = await fetchT(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-      body: JSON.stringify(payload),
-    }, GEMINI_TIMEOUT_MS);
-    if (!res.ok || !res.body) {
-      console.error("Gemini stream error:", res.status);
-      return null; // 비스트리밍 경로로 폴백
+}
+
+async function geminiStreamChat(env, systemContent, history, ragMeta) {
+  const payload = geminiRequestPayload(systemContent, history);
+  for (const geminiModel of geminiModelChain(env)) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
+    try {
+      const res = await fetchT(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        body: JSON.stringify(payload),
+      }, GEMINI_TIMEOUT_MS);
+      if (!res.ok || !res.body) {
+        const errText = res.ok ? "" : await res.text().catch(() => "");
+        if (geminiModelUnavailable(res.status, errText)) {
+          console.error("Gemini stream: model unavailable, trying next:", geminiModel, res.status);
+          continue; // 다음 모델을 한 번 더
+        }
+        console.error("Gemini stream error:", res.status);
+        return null; // 비스트리밍 경로로 폴백
+      }
+      return chatSseResponse(res.body, pickGeminiDelta, { model: geminiModel, ...(ragMeta || {}) });
+    } catch (e) {
+      console.error("Gemini stream call failed:", e);
+      return null;
     }
-    return chatSseResponse(res.body, pickGeminiDelta, { model: geminiModel, ...(ragMeta || {}) });
-  } catch (e) {
-    console.error("Gemini stream call failed:", e);
-    return null;
   }
+  return null; // 체인의 모델이 전부 없음 → 비스트리밍 Gemini(같은 판정) → Workers AI
 }
 
 // 한국어 답변인데 한글이 거의 없거나 같은 3-gram 이 20% 넘게 반복되면 깨진 출력으로 본다.
@@ -2585,45 +2695,31 @@ async function handleChat(request, env) {
       // 스트리밍 실패 시 아래 비스트리밍 Gemini → Workers AI 순으로 폴백
     }
     try {
-      const geminiModel = env.GEMINI_MODEL || GEMINI_DEFAULT_MODEL;
-      // 키는 URL 쿼리가 아니라 헤더로 — 쿼리는 로그에 남는 노출면이다.
-      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`;
-      
-      const contents = history.map((m) => ({
-        role: m.role === "assistant" ? "model" : "user",
-        parts: [{ text: m.content }]
-      }));
-      
-      const payload = {
-        contents,
-        systemInstruction: {
-          parts: [{ text: systemContent }]
-        },
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1024
+      const payload = geminiRequestPayload(systemContent, history);
+      for (const geminiModel of geminiModelChain(env)) {
+        // 키는 URL 쿼리가 아니라 헤더로 — 쿼리는 로그에 남는 노출면이다.
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent`;
+        const res = await fetchT(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+          body: JSON.stringify(payload)
+        }, GEMINI_TIMEOUT_MS);
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = String(data.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+          if (text) {
+            return json({
+              reply: text,
+              model: geminiModel,
+              rag: newsSources.length ? { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } : null,
+            });
+          }
+          break; // 빈 답 — 모델 문제가 아니므로 Workers AI 로
         }
-      };
-      
-      const res = await fetchT(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-        body: JSON.stringify(payload)
-      }, GEMINI_TIMEOUT_MS);
-      
-      if (res.ok) {
-        const data = await res.json();
-        const text = String(data.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
-        if (text) {
-          return json({
-            reply: text,
-            model: geminiModel,
-            rag: newsSources.length ? { newsCount: newsSources.length, sources: newsSources.map((n) => n.title).slice(0, 6) } : null,
-          });
-        }
-      } else {
         const errText = await res.text();
-        console.error("Gemini API Error Response:", errText);
+        console.error("Gemini API Error Response:", res.status, errText.slice(0, 300));
+        if (!geminiModelUnavailable(res.status, errText)) break; // 쿼터·키 오류 등은 다음 모델로 안 넘어감
       }
     } catch (e) {
       console.error("Gemini API Call Failed:", e);

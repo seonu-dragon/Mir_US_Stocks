@@ -7207,6 +7207,13 @@ function readAiReportCache(key) {
   } catch (_) { /* ignore */ }
   return null;
 }
+function deleteAiReportCache(key) {
+  try {
+    const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
+    if (key in store) { delete store[key]; localStorage.setItem(AI_REPORT_CACHE_KEY, JSON.stringify(store)); }
+  } catch (_) { /* ignore */ }
+}
+
 function writeAiReportCache(key, reply) {
   try {
     const store = JSON.parse(localStorage.getItem(AI_REPORT_CACHE_KEY) || "{}");
@@ -7232,7 +7239,8 @@ async function loadAiDeepReport(ticker, customQuery = null) {
   currentActiveReportTicker = ticker;
 
   const cacheKey = aiReportCacheKey(ticker, customQuery);
-  const cached = readAiReportCache(cacheKey);
+  let cached = readAiReportCache(cacheKey);
+  if (cached && isDegenerateLlmText(cached)) { deleteAiReportCache(cacheKey); cached = null; } // 예전에 캐시된 깨진 답변 정리
   if (cached) {
     body.innerHTML = formatMarkdownToHtml(stripEmoji(cached));
     if (customQuery) body.dataset.lastQuery = customQuery;
@@ -7273,9 +7281,13 @@ async function loadAiDeepReport(ticker, customQuery = null) {
     // Check if the ticker has changed during the request
     if (currentActiveReportTicker !== ticker) return;
 
-    const rawReply = payload && typeof payload.reply === "string" ? payload.reply.trim() : "";
+    let rawReply = payload && typeof payload.reply === "string" ? payload.reply.trim() : "";
+    if (rawReply && isDegenerateLlmText(rawReply)) {
+      // 모델이 깨진 텍스트를 낸 경우 — 캐시에 넣지 않고 다시 시도하게 안내한다.
+      rawReply = "";
+    }
     if (rawReply) writeAiReportCache(cacheKey, rawReply);
-    const reply = rawReply || "리포트를 불러오는 데 실패했습니다. 잠시 후 다시 시도해 주세요.";
+    const reply = rawReply || "리포트 생성이 제대로 되지 않았습니다. 오른쪽 위 '갱신'을 눌러 다시 시도해 주세요.";
     body.innerHTML = formatMarkdownToHtml(stripEmoji(reply));
     
     if (customQuery) {
@@ -7630,6 +7642,7 @@ function setupAiSearchEvents() {
       if (selectedTicker) {
         const body = byId("analysisAiReportBody");
         const lastQuery = body ? body.dataset.lastQuery : null;
+        deleteAiReportCache(aiReportCacheKey(selectedTicker, lastQuery)); // '갱신'은 캐시를 버리고 새로 받는다
         loadAiDeepReport(selectedTicker, lastQuery);
       }
     });

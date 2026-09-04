@@ -117,6 +117,30 @@ function sanitizeBriefingHtml(html) {
   return out;
 }
 
+// ===== LLM 답변 품질 검증 =====
+// 2026-09-04 새벽, 워커 LLM 이 ". of the the of the the …" 만 800자 반복한 답변을 한 번
+// 냈고 클라이언트가 그대로 12시간 캐시해 '분석 리포트' 카드가 하루 종일 깨져 보였다.
+// 한국어 리포트인데 한글이 거의 없거나, 같은 토큰 뭉치가 지나치게 반복되면 실패로 본다.
+function isDegenerateLlmText(text, expectKorean = true) {
+  const s = String(text || "").trim();
+  if (s.length < 40) return false; // 짧은 답은 판단 보류
+  const letters = (s.match(/[A-Za-z\uAC00-\uD7A3]/g) || []).length;
+  const hangul = (s.match(/[\uAC00-\uD7A3]/g) || []).length;
+  // 한국어 답이 기대되는 자리(리포트·대시보드 코멘트)에서 한글이 15% 미만이면 실패.
+  if (expectKorean && letters >= 80 && hangul / letters < 0.15) return true;
+  const words = s.toLowerCase().split(/\s+/).filter(Boolean);
+  if (words.length >= 30) {
+    const tri = new Map();
+    for (let i = 0; i + 2 < words.length; i += 1) {
+      const k = words[i] + " " + words[i + 1] + " " + words[i + 2];
+      tri.set(k, (tri.get(k) || 0) + 1);
+    }
+    let top = 0; tri.forEach((v) => { if (v > top) top = v; });
+    if (top / (words.length - 2) > 0.2) return true; // 3-gram 하나가 20% 넘게 반복
+  }
+  return false;
+}
+
 function debounce(fn, delay) {
   let id;
   return (...args) => {

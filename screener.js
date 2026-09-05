@@ -461,7 +461,8 @@ function setupUiPrefs() {
     brandHome.dataset.bound = "1";
     const goHome = () => {
       try {
-        if (typeof activateTab === "function") activateTab("today");
+        // sub 를 명시해야 '요약' 잎으로 간다 — 그룹 이름만 주면 마지막 잎(캘린더 등)에 머문다.
+        if (typeof activateTab === "function") activateTab("today", { sub: "today" });
       } catch (_) {}
       window.scrollTo({ top: 0, behavior: "smooth" });
     };

@@ -159,6 +159,21 @@ jobs:
                  _site/data/us_financials_history.json
           echo "artifact size:" && du -sh _site | cut -f1
 
+      # 배포본만 번들: _site/ 의 index/analysis/chart_capture.html 이 읽는 classic script 들을
+      # 같은 순서로 이어붙여 esbuild 로 압축한 dist/<page>.bundle.js?v=<해시> 하나로 바꾼다.
+      # 레포의 HTML 은 그대로(로컬은 빌드 없이 서브). 자세한 건 scripts/build_bundle.mjs 머리말.
+      - name: Setup Node (bundle)
+        if: steps.gate.outputs.deploy != 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Bundle page scripts (esbuild minify)
+        if: steps.gate.outputs.deploy != 'false'
+        run: |
+          npx --yes esbuild@0.24.2 --version
+          node scripts/build_bundle.mjs --root _site --apply --minify --esbuild "npx --yes esbuild@0.24.2"
+          echo "artifact size (bundled):" && du -sh _site | cut -f1
+
       - name: Upload site artifact
         if: steps.gate.outputs.deploy != 'false'
         uses: actions/upload-pages-artifact@v3

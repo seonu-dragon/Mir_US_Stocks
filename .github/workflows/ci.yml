@@ -58,6 +58,12 @@ jobs:
           set -e
           for f in *.js worker/*.js; do node --check "$f"; done
 
+      # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
+      - name: Bundle build (dry run, minified)
+        run: |
+          npx --yes esbuild@0.24.2 --version
+          node scripts/build_bundle.mjs --check --minify --esbuild "npx --yes esbuild@0.24.2"
+
       - name: Workflow YAML parses
         run: python -c "import yaml,glob;[yaml.safe_load(open(f,encoding='utf-8')) for f in glob.glob('.github/workflows/*.yml')]"
 

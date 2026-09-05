@@ -51,6 +51,26 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 머지 후 라이브에 대고 한 번 더 돌릴 것 — 로컬 PASS 는 증거가 못 된다.
 (playwright 필요: `py -m pip install playwright && py -m playwright install chromium`)
 
+## 배포 번들(2026-09-06)
+
+레포의 HTML 은 여전히 classic script 25개를 순서대로 읽는다 — **로컬은 빌드 없이** 그대로
+서브한다. 번들은 배포 때만 만든다: `deploy-pages.yml` 이 `_site/` 를 만든 뒤
+`node scripts/build_bundle.mjs --root _site --apply --minify` 로 index/analysis/chart_capture.html
+의 코드 태그를 같은 순서로 이어붙여 esbuild 로 압축한 `dist/<page>.bundle.js?v=<해시>` 하나로
+바꾼다(index 1.5MB → 1.0MB, 요청 23개 → 1개). `data/*.js`·`build_id.js` 태그는 그대로 남는다.
+
+- ESM(import/export) 전환이 아니다. 전역 1,400여 개를 공유하는 classic script 라 IIFE 로 감싸면
+  `window.*` 참조가 끊기므로 `--bundle` 없이 `--minify` 만 쓴다(최상위 이름 보존). 파일을 ESM
+  으로 옮기고 싶으면 파일 단위로 옮기되 이 파이프라인은 그대로 쓴다.
+- 새 스크립트 태그를 HTML 에 넣을 때: 루트 `*.js` 면 자동으로 번들에 포함된다. 로드 시점에
+  다른 파일의 실행 결과를 기대하는 코드(파일 맨 위에서 다른 파일 함수 호출)는 순서만 맞으면
+  번들에서도 같다. 데이터/외부 스크립트는 `data/` 아래나 하위 폴더에 두면 번들에서 빠진다.
+- CI 가 `node scripts/build_bundle.mjs --check --minify` 로 매 PR 마다 번들이 만들어지고 한
+  스크립트로 파싱되는지 본다. 라이브에서 "코드는 바꿨는데 반영이 안 됨"이면 먼저
+  `curl -s <live>/index.html | grep bundle.js` 로 번들 해시가 바뀌었는지 볼 것.
+- 배포된 번들의 소스맵(`dist/*.bundle.js.map`)이 함께 올라가므로 브라우저 개발자 도구에서
+  원본 파일 이름·줄로 디버깅할 수 있다.
+
 ## 데이터 파이프라인
 
 - `scripts/build_*.py` 각각이 `data/<name>.json` 과 `data/<name>.js` 를 **둘 다** 쓴다.

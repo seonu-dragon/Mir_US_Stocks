@@ -2724,7 +2724,7 @@ function buildResultHTML(result) {
     <div class="head-card">
       <div class="head-meta">
         <h2>${escapeHtml(analysisHeadLabels(result).main)} <span class="muted">${escapeHtml(analysisHeadLabels(result).sub)}</span></h2>
-        <p class="muted">기준일 ${escapeHtml(result.lastDate)} · 종가 ${fmtPrice(result.price)} · 분석 봉 ${result.bars}개</p>
+        <p class="muted"><span class="nowrap">기준일 ${escapeHtml(result.lastDate)}</span> · <span class="nowrap">종가 ${fmtPrice(result.price)}</span> · <span class="nowrap">분석 봉 ${result.bars}개</span></p>
       </div>
       <div class="verdict" style="color:${color}">${verdictText(up)}</div>
     </div>
@@ -2972,7 +2972,9 @@ function updateAnalysisMeta(ticker, company) {
     return;
   }
   const label = company ? `${company}(${key})` : key;
-  const title = `${label} 상승/하락 확률 분석 | 미르의 미국 주식`;
+  // 사이트명은 시장을 따른다 — 국내 종목을 열어도 '미르의 미국 주식'으로 나오던 문제(09-06).
+  const siteName = (window.MirMarket && window.MirMarket.getConfig && window.MirMarket.getConfig().pageTitle) || "미르의 미국 주식";
+  const title = `${label} 상승/하락 확률 분석 | ${siteName}`;
   const desc = `${label} 의 차트 패턴·지지저항·과거 유사 구간을 기반으로 한 상승/하락 확률 추정.`;
   const url = `${ANALYSIS_BASE_URL}?t=${encodeURIComponent(key)}`;
 

@@ -13709,4 +13709,23 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   button[data-key$="_premarket"], button[data-key$="_close"] { min-height: 40px; }
   /* 긴 목록 '더 보기' 버튼 */
   .list-more-btn { display: block; width: 100%; margin: 10px 0 4px; min-height: 44px; }
+  /* 챗봇: 아래로 스크롤하는 동안 숨김(app.js setupChatFabIa) */
+  .chatbot { transition: transform 0.22s ease, opacity 0.22s ease; }
+  .chatbot.is-scroll-hidden:not(.is-chat-open) { transform: translateY(140%); opacity: 0; pointer-events: none; }
+  /* 트리맵 '지도/목록' 전환은 폰에서만 */
+  .ia-map-view-seg[hidden] { display: none; }
+  #mapViewSeg { display: inline-flex; margin: 0 0 10px; }
+  body.map-view-list #stockTreemap { display: none; }
+  body.map-view-list #stockTreemapList { display: block; }
 }
+/* 줄바꿈 금지 조각(분석 페이지 요약 줄 등) */
+.nowrap { white-space: nowrap; }
+/* 트리맵 목록 뷰(폰): 8px 타일 대신 시가총액순 목록 — 색은 선택 지표, 탭하면 종목 패널 */
+.map-list { display: none; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); overflow: hidden; }
+.map-list-row { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 12px 8px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; cursor: pointer; }
+.map-list-row:last-child { border-bottom: 0; }
+.map-list-row .map-list-bar { align-self: stretch; }
+.map-list-row strong { display: block; font-size: var(--fs-sub); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-list-row small { display: block; color: var(--muted); font-size: var(--fs-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.map-list-row em { font-style: normal; font-weight: 700; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.map-list-sector { padding: 6px 12px; background: var(--panel-soft); color: var(--muted); font-size: var(--fs-cap); font-weight: 600; border-bottom: 1px solid var(--line); }

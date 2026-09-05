@@ -505,18 +505,19 @@ async function sendAiChat(queryText = null) {
   
   // 2. Add Bot Loading/Typing bubble
   let matchedTicker = extractStockTickerFromQuery(text);
-  const matchedStock = matchedTicker ? stockByTicker(matchedTicker) : null;
-  if (matchedTicker && !matchedStock) {
-    // 한글 별칭이 반대 시장 종목으로 풀린 경우(US 모드의 "삼성전자" 등). 예전엔
-    // stockByTicker(...).company 에서 TypeError 로 조용히 죽어 답변이 영영 안 왔다.
-    const other = /^\d{6}$/.test(matchedTicker) ? "한국 주식" : "미국 주식";
-    const hint = appendAiChatMessage("bot", `${matchedTicker}은(는) 이 시장 스냅샷에 없는 종목입니다. 상단에서 ${other}으로 전환해 보세요. 아래는 종목 데이터 없이 답변합니다.`);
-    if (hint) {
-      hint.classList.add("is-hint");
-      hint.querySelectorAll(".ai-badge-tags-container, .copy-msg-btn").forEach((el) => el.remove());
-    }
-    matchedTicker = null;
+  let matchedStock = matchedTicker ? stockByTicker(matchedTicker) : null;
+  if (!matchedStock && typeof resolveTickerAcrossMarkets === "function") {
+    // 반대 시장 종목(US 모드의 "삼성전자", KR 모드의 "AAPL")이면 시장을 바꿔서라도 찾는다.
+    // 예전엔 "전환해 보세요" 힌트만 띄우고 종목 데이터 없이 답했다.
+    try {
+      const cross = await resolveTickerAcrossMarkets(text);
+      if (cross && stockByTicker(cross)) {
+        matchedTicker = cross;
+        matchedStock = stockByTicker(cross);
+      }
+    } catch (_) { /* 분류 실패 → 아래 일반 답변 */ }
   }
+  if (matchedTicker && !matchedStock) matchedTicker = null;
   const loadingText = matchedTicker
     ? `${matchedStock.company} (${matchedTicker}) 데이터를 분석하여 심층 투자 보고서를 요약하고 있습니다...`
     : "답변을 작성하고 있습니다...";
@@ -596,6 +597,10 @@ async function sendAiChat(queryText = null) {
 
     typingBubble.classList.remove("typing", "is-streaming");
 
+    // 깨진 답변('of the. the of the…' 반복)은 화면에 남기지 않는다 — 워커 가드를 지나쳐도
+    // 프런트에서 한 번 더 거른다(09-05 모바일 국내 모드에서 실제로 새어 나옴).
+    const broken = typeof isDegenerateLlmText === "function" && result.reply && isDegenerateLlmText(result.reply, /[가-힣]/.test(text));
+    if (broken) result.reply = "답변 생성이 불안정해 다시 시도해야 합니다. 같은 질문을 한 번 더 보내 주세요.";
     if (result.streamed) {
       const reply = result.reply || (result.aborted ? "" : "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.");
       if (bubbleDiv) bubbleDiv.innerHTML = reply ? formatMarkdownToHtml(reply) : `<span class="muted">답변이 중단되었습니다.</span>`;

@@ -1,10 +1,190 @@
 {
-  "updatedAtKst": "2026-09-04 18:01 KST",
-  "lastFileDate": "2026-09-03",
-  "count": 655,
+  "updatedAtKst": "2026-09-05 17:32 KST",
+  "lastFileDate": "2026-09-04",
+  "count": 658,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Albatross Acquisition Corp",
+      "ticker": "ATAC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001829126-26-009779:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2135163/000182912626009779/albatrossacq_s1a.htm"
+    },
+    {
+      "company": "Albatross Acquisition Corp",
+      "ticker": "ATAC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001829126-26-009779:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2135163/000182912626009779/albatrossacq_s1a.htm"
+    },
+    {
+      "company": "CLEARONE INC",
+      "ticker": "CLRO",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001753926-26-001724:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/840715/000175392626001724/MainDocument.htm"
+    },
+    {
+      "company": "CLEARONE INC",
+      "ticker": "CLRO",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001753926-26-001724:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/840715/000175392626001724/MainDocument.htm"
+    },
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001628280-26-060761:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026060761/sbenergy-sx1a1exhibitsonly.htm"
+    },
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001628280-26-060761:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026060761/sbenergy-sx1a1exhibitsonly.htm"
+    },
+    {
+      "company": "Laser Photonics Corp",
+      "ticker": "LASE",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-04",
+      "accession": "0001493152-26-041613:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1807887/000149315226041613/forms-1.htm"
+    },
+    {
+      "company": "AIxCrypto Holdings, Inc.",
+      "ticker": "AIXC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001493152-26-041428:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226041428/forms-1a.htm"
+    },
+    {
+      "company": "AIxCrypto Holdings, Inc.",
+      "ticker": "AIXC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001493152-26-041428:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1460702/000149315226041428/forms-1a.htm"
+    },
+    {
+      "company": "ECOMINAS CORP.",
+      "ticker": "ILXP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001477932-26-005410:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226005410/ilxp_s1a.htm"
+    },
+    {
+      "company": "ECOMINAS CORP.",
+      "ticker": "ILXP",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001477932-26-005410:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226005410/ilxp_s1a.htm"
+    },
+    {
+      "company": "Game Your Game Inc.",
+      "ticker": "GYGY",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001213900-26-097734:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2111846/000121390026097734/ea0304501-s1a1_game.htm"
+    },
+    {
+      "company": "Game Your Game Inc.",
+      "ticker": "GYGY",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001213900-26-097734:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2111846/000121390026097734/ea0304501-s1a1_game.htm"
+    },
+    {
+      "company": "Legion Capital Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-04",
+      "accession": "0001213900-26-097368:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2151558/000121390026097368/ea0304337-01.htm"
+    },
+    {
+      "company": "PBT Land & Minerals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001213900-26-097366:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026097366/ea0299258-02.htm"
+    },
+    {
+      "company": "PBT Land & Minerals, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-04",
+      "accession": "0001213900-26-097366:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142855/000121390026097366/ea0299258-02.htm"
+    },
+    {
+      "company": "ADARx Pharmaceuticals, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-04",
+      "accession": "0001193125-26-383838:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526383838/d903461ds1.htm"
+    },
+    {
+      "company": "New Iceland Arctic Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-04",
+      "accession": "0001185185-26-003850:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2148245/000118518526003850/newicelands1081926.htm"
+    },
     {
       "company": "Nexalin Technology, Inc.",
       "ticker": "NXL",
@@ -6612,161 +6792,6 @@
       "offerPriceChecked": 2,
       "offerPriceNone": true,
       "offerPriceNoneReason": "debt"
-    },
-    {
-      "company": "Idaho Copper Corp  (COPR, COPR-WT)",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-06",
-      "accession": "0001493152-26-032040:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1263364/000149315226032040/form424b4.htm",
-      "offerPrice": 4.85,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Catheter Precision, Inc.",
-      "ticker": "VTAK",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001437749-26-022592:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1716621/000143774926022592/vtak20260702_s1a.htm"
-    },
-    {
-      "company": "Catheter Precision, Inc.",
-      "ticker": "VTAK",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001437749-26-022592:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1716621/000143774926022592/vtak20260702_s1a.htm"
-    },
-    {
-      "company": "iSpecimen Inc.",
-      "ticker": "ISPC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001213900-26-075593:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1558569/000121390026075593/ea0297032-s1a1_ispecimen.htm"
-    },
-    {
-      "company": "iSpecimen Inc.",
-      "ticker": "ISPC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001213900-26-075593:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1558569/000121390026075593/ea0297032-s1a1_ispecimen.htm"
-    },
-    {
-      "company": "Jones Ventures INTL Acquisition1 Corp",
-      "ticker": "JONE",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001213900-26-075567:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2129056/000121390026075567/ea0285792-03.htm"
-    },
-    {
-      "company": "Jones Ventures INTL Acquisition1 Corp",
-      "ticker": "JONE",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001213900-26-075567:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2129056/000121390026075567/ea0285792-03.htm"
-    },
-    {
-      "company": "Viking Acquisition Corp. II  (VII, VII-UN)",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-06",
-      "accession": "0001213900-26-075135:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2139246/000121390026075135/ea0293867-05.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 10.0,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Syntiant Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-06",
-      "accession": "0001193125-26-296426:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1718728/000119312526296426/ck0001718728-20260706.htm"
-    },
-    {
-      "company": "Gloo Holdings, Inc.",
-      "ticker": "GLOO",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001193125-26-295575:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2069785/000119312526295575/gloo-20260706.htm"
-    },
-    {
-      "company": "Gloo Holdings, Inc.",
-      "ticker": "GLOO",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001193125-26-295575:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2069785/000119312526295575/gloo-20260706.htm"
-    },
-    {
-      "company": "Csquare, Inc.",
-      "ticker": "CSQR",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001104659-26-080556:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2105398/000110465926080556/tm264837-13_s1a.htm"
-    },
-    {
-      "company": "Csquare, Inc.",
-      "ticker": "CSQR",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001104659-26-080556:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2105398/000110465926080556/tm264837-13_s1a.htm"
-    },
-    {
-      "company": "USBC, Inc.",
-      "ticker": "USBC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001074828-26-000044:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000044/usbc-20260706.htm"
-    },
-    {
-      "company": "USBC, Inc.",
-      "ticker": "USBC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-06",
-      "accession": "0001074828-26-000044:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000044/usbc-20260706.htm"
     }
   ]
 }

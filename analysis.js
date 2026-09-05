@@ -2723,7 +2723,7 @@ function buildResultHTML(result) {
   return `
     <div class="head-card">
       <div class="head-meta">
-        <h2>${escapeHtml(result.ticker)} <span class="muted">${escapeHtml(result.company || "")}</span></h2>
+        <h2>${escapeHtml(analysisHeadLabels(result).main)} <span class="muted">${escapeHtml(analysisHeadLabels(result).sub)}</span></h2>
         <p class="muted">기준일 ${escapeHtml(result.lastDate)} · 종가 ${fmtPrice(result.price)} · 분석 봉 ${result.bars}개</p>
       </div>
       <div class="verdict" style="color:${color}">${verdictText(up)}</div>
@@ -2950,6 +2950,16 @@ const ANALYSIS_BASE_URL = "https://seonu-dragon.github.io/Mir_US_Stocks/analysis
 function setMetaContent(selector, value) {
   const el = document.head.querySelector(selector);
   if (el) el.setAttribute("content", value);
+}
+
+// 결과 머리글의 주/보조 표기. 국내 코드(005930)는 회사명을 앞에, 코드를 뒤에 둔다(fmt.js 의
+// stockLabel/stockSubLabel 과 같은 규칙 — analysis.html 은 fmt.js 를 싣지 않아 여기서 직접 판정).
+function analysisHeadLabels(result) {
+  const ticker = String((result && result.ticker) || "");
+  const company = String((result && result.company) || "");
+  const kr = !!(window.MirMarket && window.MirMarket.getMode() === "kr");
+  if (kr && company && /^\d{1,6}$/.test(ticker.replace(/\.(KS|KQ)$/i, ""))) return { main: company, sub: ticker };
+  return { main: ticker, sub: company };
 }
 
 function updateAnalysisMeta(ticker, company) {

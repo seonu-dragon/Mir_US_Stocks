@@ -179,10 +179,10 @@ function renderCommunityHotTopics() {
           <button type="button" class="community-hot-card" data-ticker="${escapeHtml(topic.ticker)}">
             <div class="community-hot-top">
               <span class="community-hot-rank">#${idx + 1}</span>
-              <span class="community-hot-ticker">${escapeHtml(topic.ticker)}</span>
+              <span class="community-hot-ticker">${escapeHtml(stockLabel(topic.ticker))}</span>
               <span class="community-hot-change ${change == null ? "" : cls(change)}">${change == null ? "—" : fmtDailyPct(change)}</span>
             </div>
-            <span class="community-hot-name" title="${escapeHtml(stock ? stock.company : "")}">${escapeHtml(stock ? stock.company : "—")}</span>
+            <span class="community-hot-name" title="${escapeHtml(stock ? stockSubLabel(stock) : "")}">${escapeHtml(stock ? stockSubLabel(stock) : "—")}</span>
             <span class="community-hot-sources">${escapeHtml(sources)}</span>
           </button>
         `;
@@ -559,7 +559,7 @@ function renderCommunityVoteMine() {
   const mine = byId("communityVoteMine");
   if (!mine) return;
   mine.textContent = communityVoteMyToday
-    ? `오늘 내 투표: ${communityVoteMyToday.ticker} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
+    ? `오늘 내 투표: ${stockLabel(communityVoteMyToday.ticker)} · ${COMMUNITY_VOTE_META[communityVoteMyToday.choice]?.label || communityVoteMyToday.choice} (다시 투표하면 교체됩니다)`
     : "오늘은 아직 투표하지 않았습니다.";
 }
 
@@ -731,7 +731,7 @@ async function renderCommunityAdminPanel() {
         <div class="community-admin-item">
           <div class="community-admin-item-head">
             <span class="community-admin-count">신고 ${p.reportCount}</span>
-            ${p.ticker ? `<span class="community-post-tag">${escapeHtml(p.ticker)}</span>` : ""}
+            ${p.ticker ? `<span class="community-post-tag">${escapeHtml(stockLabel(p.ticker))}</span>` : ""}
             <span class="community-post-author">${escapeHtml(p.author || "익명")}</span>
             <time class="muted">${escapeHtml(formatCommunityTime(p.createdAt))}</time>
             <button type="button" class="ghost compact-btn community-admin-delete" data-id="${escapeHtml(p.id)}">글 삭제</button>
@@ -896,7 +896,7 @@ function renderCommunityHotTickersPanel() {
     <span class="community-hot-tickers-label">인기 종목</span>
     ${top.map(([ticker, count]) => `
       <button type="button" class="community-hot-ticker${activeTicker === ticker ? " is-active" : ""}" data-ticker="${escapeHtml(ticker)}">
-        ${escapeHtml(ticker)}<em>${count}</em>
+        ${escapeHtml(stockLabel(ticker))}<em>${count}</em>
       </button>
     `).join("")}
     ${activeTicker ? `<button type="button" class="community-hot-ticker community-hot-clear" data-clear="1">전체 보기</button>` : ""}

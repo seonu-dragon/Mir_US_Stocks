@@ -221,8 +221,8 @@ function renderScreener({ trackSaved = false } = {}) {
   body.innerHTML = rows.map(({ item }) => `
     <tr>
       <td>${watchStarButton(item.ticker)}</td>
-      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
-      <td>${escapeHtml(item.company)}</td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
+      <td>${escapeHtml(stockSubLabel(item))}</td>
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</td>
@@ -409,8 +409,8 @@ function runNlScreener() {
     const pe = Number(f.pe != null ? f.pe : f.forwardPE);
     return `<tr>
       <td>${watchStarButton(it.ticker)}</td>
-      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(it.ticker)}">${escapeHtml(it.ticker)}</button></td>
-      <td>${escapeHtml(it.company)}</td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(it.ticker)}">${escapeHtml(stockLabel(it))}</button></td>
+      <td>${escapeHtml(stockSubLabel(it))}</td>
       <td>${escapeHtml(it.sector)}</td>
       <td class="${cls(it.changePct)}">${fmtDailyPct(it.changePct)}</td>
       <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>

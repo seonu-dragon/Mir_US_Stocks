@@ -89,6 +89,35 @@ function actionPct(value) {
   return fmtSignedPct(value);
 }
 
+// 종목 표기 규칙(2026-09-04): 미국은 티커(AAPL)로 회사를 알 수 있지만 국내 코드(005930)는
+// 그렇지 않다. 그래서 화면에 보이는 종목 이름은 이 두 함수로만 만든다.
+//   stockLabel    = 주 표기  — US: 티커 / KR: 회사명(삼성전자)
+//   stockSubLabel = 보조 표기 — US: 회사명 / KR: 6자리 코드
+// 인자는 종목 객체({ticker, company})든 티커 문자열이든 된다. 이름을 모르는 코드는 코드 그대로.
+// data-ticker 속성·URL·저장 키·검색 입력값은 여전히 티커/코드를 쓴다(이 함수는 표시 전용).
+function _stockRef(tickerOrItem, item) {
+  const obj = tickerOrItem && typeof tickerOrItem === "object" ? tickerOrItem : item;
+  const ticker = String((obj && obj.ticker) || (typeof tickerOrItem === "string" ? tickerOrItem : "") || "");
+  let name = obj && (obj.company || obj.name);
+  if (!name && ticker && typeof stockByTicker === "function") {
+    const found = stockByTicker(ticker);
+    name = found && (found.company || found.name);
+  }
+  return { ticker, name: name ? String(name) : "" };
+}
+function stockLabel(tickerOrItem, item) {
+  const ref = _stockRef(tickerOrItem, item);
+  if (typeof isKrMarket === "function" && isKrMarket() && /^\d{1,6}(\.(KS|KQ))?$/i.test(ref.ticker)) return ref.name || ref.ticker;
+  return ref.ticker;
+}
+function stockSubLabel(tickerOrItem, item) {
+  const ref = _stockRef(tickerOrItem, item);
+  if (typeof isKrMarket === "function" && isKrMarket() && /^\d{1,6}(\.(KS|KQ))?$/i.test(ref.ticker)) {
+    return ref.name ? ref.ticker.replace(/\.(KS|KQ)$/i, "").padStart(6, "0") : "";
+  }
+  return ref.name;
+}
+
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, (char) => ({
     "&": "&amp;",

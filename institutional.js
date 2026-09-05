@@ -571,7 +571,7 @@ function renderCongressTradesForTicker(item) {
         <h3>정치인 매수·매도 현황</h3>
         <p class="muted">미국 의회 PTR 공시 기준 · 매수 ${cell.netBuys || 0} · 매도 ${cell.netSells || 0} · 의원 ${cell.politicianCount || 0}명</p>
       </div>
-      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+      <span class="event-badge">${escapeHtml(stockLabel(item))}</span>
     </div>
     <div class="table-wrap compact-table-wrap">
       <table class="compact-table congress-trades-table">

@@ -721,7 +721,10 @@ function populateSectorBenchmarkSelect(cfg) {
   const sectorName = {};
   (cfg.sectorEtfs || []).forEach((e) => { sectorName[e.ticker] = e.name; });
   select.innerHTML = benches.map((t) => {
-    const label = SECTOR_BENCHMARK_LABELS[t] || (sectorName[t] ? `${t} (${sectorName[t]})` : t);
+    // 국내 벤치마크 ETF(102110 등)는 코드만으론 알 수 없으니 스냅샷에 이름이 있으면 이름을 앞세운다.
+    const named = stockLabel(t);
+    const label = SECTOR_BENCHMARK_LABELS[t]
+      || (sectorName[t] ? (isKrMarket() ? `${sectorName[t]} (${t})` : `${t} (${sectorName[t]})`) : (named !== t ? `${named} (${t})` : t));
     return `<option value="${t}">${escapeHtml(label)}</option>`;
   }).join("");
   if (!benches.includes(selectedSectorBenchmark)) selectedSectorBenchmark = benches[0];
@@ -1518,7 +1521,7 @@ function watchlistSummaryCardHtml() {
   const sorted = items.slice().sort((a, b) => Math.abs(Number(b.changePct || 0)) - Math.abs(Number(a.changePct || 0)));
   const rows = sorted.slice(0, 6).map((s) => `
     <button type="button" class="hx-row watch-summary-row" data-ticker="${escapeHtml(s.ticker)}">
-      <span>${escapeHtml(s.ticker)}</span>
+      <span>${escapeHtml(stockLabel(s))}</span>
       <em class="${cls(s.changePct)}">${actionPct(s.changePct)}</em>
     </button>`).join("");
   return `<div class="summary-card hx-card watchlist-summary-card">
@@ -1558,7 +1561,7 @@ function actionBoardCard(title, hint, rows, emptyText, target, extraClass = "") 
 function actionStockRow(item, note) {
   return `
     <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
-      <span><strong>${escapeHtml(item.ticker)}</strong><small>${escapeHtml(note || item.company || "")}</small></span>
+      <span><strong>${escapeHtml(stockLabel(item))}</strong><small>${escapeHtml(note || stockSubLabel(item) || "")}</small></span>
       <em class="${cls(item.changePct)}">${actionPct(item.changePct)}</em>
     </button>`;
 }
@@ -1574,7 +1577,7 @@ function portfolioActionRows() {
     return { item, value, plPct };
   }).filter(Boolean).sort((a, b) => b.value - a.value).slice(0, 4).map(({ item, value, plPct }) => `
     <button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(item.ticker)}">
-      <span><strong>${escapeHtml(item.ticker)}</strong><small>평가 ${marketCfg().formatMoney(value)}</small></span>
+      <span><strong>${escapeHtml(stockLabel(item))}</strong><small>평가 ${marketCfg().formatMoney(value)}</small></span>
       <em class="${cls(plPct)}">${actionPct(plPct)}</em>
     </button>`);
 }
@@ -1598,7 +1601,7 @@ function upcomingActionRows() {
     const f = (window.MAP_FUNDAMENTALS || {})[ticker] || {};
     const date = f.earningsDate || f.nextEarningsDate || item?.earningsDate;
     if (!item || !date || String(date) < today) return null;
-    return `<button type="button" class="daily-action-row daily-action-schedule-row" data-action-ticker="${escapeHtml(ticker)}"><span><strong>${escapeHtml(ticker)} 실적</strong><small>${escapeHtml(String(date))}</small></span><em class="info">예정</em></button>`;
+    return `<button type="button" class="daily-action-row daily-action-schedule-row" data-action-ticker="${escapeHtml(ticker)}"><span><strong>${escapeHtml(stockLabel(item))} 실적</strong><small>${escapeHtml(String(date))}</small></span><em class="info">예정</em></button>`;
   }).filter(Boolean).slice(0, 3);
 }
 
@@ -1671,7 +1674,7 @@ function filingActionRows() {
   if (!rows.length) rows = events.filter((event) => event.hot);
   return rows.slice(0, 4).map((event) => {
     const labels = (event.items || []).map((item) => item.label).filter(Boolean).slice(0, 2).join(" · ") || "8-K 공시";
-    return `<button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(event.ticker)}"><span><strong>${escapeHtml(event.ticker)}</strong><small>${escapeHtml(labels)} · ${escapeHtml(event.fileDate || "")}</small></span><em class="${event.hot ? "warn" : "info"}">${event.hot ? "주요" : "신규"}</em></button>`;
+    return `<button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(event.ticker)}"><span><strong>${escapeHtml(stockLabel(event.ticker))}</strong><small>${escapeHtml(labels)} · ${escapeHtml(event.fileDate || "")}</small></span><em class="${event.hot ? "warn" : "info"}">${event.hot ? "주요" : "신규"}</em></button>`;
   });
 }
 
@@ -1747,7 +1750,7 @@ function myStockEventRows() {
   // 4건 상한 — 다른 카드와 같은 높이를 유지해, 늦게 도착해도 그리드 행 높이를 안 바꾼다.
   return events.slice(0, 4).map((ev) => {
     const item = stockByTicker(ev.ticker);
-    const name = isKrMarket() ? (item?.company || ev.ticker) : ev.ticker;
+    const name = stockLabel(item || ev.ticker);
     const sub = isKrMarket() ? ev.label : `${item?.company ? `${item.company} · ` : ""}${ev.label}`;
     return `<button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(ev.ticker)}">
       <span><strong>${escapeHtml(name)}</strong><small>${escapeHtml(sub)}</small></span>
@@ -2530,7 +2533,7 @@ function render13fHighlights() {
   if (!el) return;
   const { newBuys, soldOut } = compute13fChanges();
   if (!newBuys.length && !soldOut.length) { el.innerHTML = ""; return; }
-  const list = (arr, c) => arr.map((x) => `<button type="button" class="hl-chip ${c}" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(x.ticker)} <em>${x.n}</em></button>`).join("");
+  const list = (arr, c) => arr.map((x) => `<button type="button" class="hl-chip ${c}" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(stockLabel(x.ticker))} <em>${x.n}</em></button>`).join("");
   el.innerHTML = `
     <div class="hl-col"><h4>분기 신규 매수 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(newBuys, "hl-buy")}</div></div>
     <div class="hl-col"><h4>분기 전량 매도 Top <span>(기관 수)</span></h4><div class="hl-chips">${list(soldOut, "hl-sell")}</div></div>`;
@@ -3119,9 +3122,10 @@ function setupFilters() {
 
   byId("tickerOptions").innerHTML = data.stocks.flatMap((item) => {
     const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
-    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(item.company)}</option>`];
+    // 국내는 '회사명 · 코드', 미국은 회사명(값은 항상 티커).
+    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(isKrMarket() ? `${stockLabel(item)} · ${stockSubLabel(item)}` : item.company)}</option>`];
     aliases.slice(0, 2).forEach((alias) => {
-      rows.push(`<option value="${escapeHtml(item.ticker)}">${escapeHtml(alias)} · ${escapeHtml(item.ticker)}</option>`);
+      rows.push(`<option value="${escapeHtml(item.ticker)}">${escapeHtml(alias)} · ${escapeHtml(isKrMarket() ? stockSubLabel(item) : item.ticker)}</option>`);
     });
     return rows;
   }).join("");
@@ -3443,8 +3447,8 @@ function renderSelected(item) {
 function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
-    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(item.ticker)} ${syntheticBadge(item)}</h3>
-    <p class="muted">${escapeHtml(item.company ?? "")} · ${escapeHtml(item.sector ?? "")} · ${escapeHtml(item.industry ?? "")}</p>
+    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(stockLabel(item))} ${syntheticBadge(item)}</h3>
+    <p class="muted">${escapeHtml(stockSubLabel(item) ?? "")} · ${escapeHtml(item.sector ?? "")} · ${escapeHtml(item.industry ?? "")}</p>
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
     ${krFlowCard(item)}
@@ -3591,7 +3595,7 @@ function renderSectors() {
           <div class="leader-chips">
             ${item.topLeaders.map(stock => `
               <span class="leader-chip" data-ticker="${stock.ticker}">
-                <strong class="ticker">${escapeHtml(stock.ticker)}</strong>
+                <strong class="ticker">${escapeHtml(stockLabel(stock))}</strong>
                 <span class="change ${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</span>
               </span>
             `).join("")}
@@ -3631,7 +3635,7 @@ function renderSectorDetail() {
   const rows = getSectorStocks(meta);
   
   // Update detail texts
-  byId("sectorDetailEtf").textContent = meta.ticker;
+  byId("sectorDetailEtf").textContent = stockLabel(meta.ticker); // KR: KODEX 200 처럼 이름(없으면 코드)
   byId("sectorDetailTitle").textContent = meta.name;
   byId("sectorDetailDesc").textContent = meta.desc;
   
@@ -3654,8 +3658,8 @@ function renderSectorDetail() {
   byId("sectorConstituentsBody").innerHTML = visibleRows.map((stock, index) => `
     <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
       <td class="rank-cell">${index + 1}</td>
-      <td><strong>${escapeHtml(stock.ticker)}</strong></td>
-      <td>${escapeHtml(stock.company ?? "")}</td>
+      <td><strong>${escapeHtml(stockLabel(stock))}</strong></td>
+      <td>${escapeHtml(stockSubLabel(stock) ?? "")}</td>
       <td>${marketCfg().formatPrice(stock.price)}</td>
       <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
       <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
@@ -4101,10 +4105,10 @@ function renderTopStocks() {
     <article class="stock-card top-stock-card" data-ticker="${escapeHtml(item.ticker)}">
       <div class="rank-line">
         <span>${index + 1}</span>
-        <strong>${escapeHtml(item.ticker)}</strong>
+        <strong>${escapeHtml(stockLabel(item))}</strong>
         <em class="${metricClass(value, metric)}">${formatMetricValue(value, metric)}</em>
       </div>
-      <p class="muted">${escapeHtml(item.company)}</p>
+      <p class="muted">${escapeHtml(stockSubLabel(item) || "")}</p>
       <p>${escapeHtml(item.sector)} · ${escapeHtml(item.industry)}</p>
       <div class="mini-facts">
         ${miniMetric("가격", priceOrDash(item.price))}
@@ -4395,10 +4399,10 @@ function scanCardHtml(entry, rank) {
     <article class="stock-card scanner-card" data-ticker="${escapeHtml(item.ticker)}">
       <div class="rank-line">
         <span>${rank}</span>
-        <strong>${escapeHtml(item.ticker)}</strong>
+        <strong>${escapeHtml(stockLabel(item))}</strong>
         <em class="scan-badge scan-badge-${entry.mode}">${scanBadgeText(entry)}</em>
       </div>
-      <p class="muted">${escapeHtml(item.company || "")}</p>
+      <p class="muted">${escapeHtml(stockSubLabel(item) || "")}</p>
       <div class="scan-prob scan-score">
         <div class="scan-prob-head"><span>${escapeHtml(head.label)}</span><b>${escapeHtml(head.value)}</b></div>
         <div class="scan-prob-bar scan-score-bar"${head.bar == null ? " hidden" : ""}><div class="scan-prob-fill scan-score-fill" style="width:${head.bar == null ? 0 : head.bar}%"></div></div>
@@ -4714,8 +4718,8 @@ function renderJump() {
 
   byId("jumpGrid").innerHTML = rows.map((item) => `
     <article class="stock-card jump-stock-card" data-ticker="${escapeHtml(item.ticker)}" style="cursor: pointer;">
-      <h3>${escapeHtml(item.ticker)}</h3>
-      <p class="muted">${escapeHtml(item.company ?? "")}</p>
+      <h3>${escapeHtml(stockLabel(item))}</h3>
+      <p class="muted">${escapeHtml(stockSubLabel(item) ?? "")}</p>
       <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · Vol ${Number.isFinite(vol(item)) ? `${vol(item).toFixed(1)}x` : "—"}</p>
       <p>RSI ${fmtRsi(item)} · EPS ${fmtEps(item)}</p>
     </article>
@@ -4814,7 +4818,7 @@ function renderSearch(options = {}) {
       }
     });
   }
-  byId("chartTitle").textContent = `${item.ticker} · ${item.company}`;
+  byId("chartTitle").textContent = `${stockLabel(item)} · ${stockSubLabel(item)}`;
   byId("searchFacts").innerHTML = stockFacts(item, "선택 종목");
   drawChart(item);
   renderEarningsCalendar(item);
@@ -4834,7 +4838,7 @@ function renderSearch(options = {}) {
   loadStockDetail(item.ticker).then((detail) => {
     if (!detail || selectedTicker !== item.ticker) return;
     const refreshed = applyLive(withDetail(base));
-    byId("chartTitle").textContent = `${refreshed.ticker} · ${refreshed.company}`;
+    byId("chartTitle").textContent = `${stockLabel(refreshed)} · ${stockSubLabel(refreshed)}`;
     byId("searchFacts").innerHTML = stockFacts(refreshed, "선택 종목");
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
@@ -4923,7 +4927,7 @@ function renderMoveExplanation(item) {
       <div><h3>왜 ${direction}했나?</h3></div>
       <strong class="${cls(change)}">${fmtDailyPct(change)}</strong>
     </div>
-    <p class="move-explanation-summary">${escapeHtml(item.ticker)}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
+    <p class="move-explanation-summary">${escapeHtml(stockLabel(item))}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
     <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
     <p class="move-explanation-note">스냅샷·뉴스·공시의 기준 시각이 다를 수 있습니다. 투자 판단 전 원문과 최신 시세를 확인하세요.</p>`;
 }
@@ -5110,7 +5114,7 @@ function renderEstimateRevision(item) {
   box.innerHTML = `
     <div class="estimate-revision-head">
       <div><span>ESTIMATE TREND</span><h3>실적 추정치 변화</h3></div>
-      <strong>${escapeHtml(item.ticker)} · ${historyDays ? `${historyDays}일 추적` : "오늘부터 추적"}</strong>
+      <strong>${escapeHtml(stockLabel(item))} · ${historyDays ? `${historyDays}일 추적` : "오늘부터 추적"}</strong>
     </div>
     <div class="estimate-revision-grid">
       ${metrics.map((metric) => {
@@ -5710,8 +5714,8 @@ function setupTickerAutocomplete(inputId, options = {}) {
     }
     list.innerHTML = items.map((item, index) => `
       <button type="button" class="ticker-ac-item${index === activeIdx ? " is-active" : ""}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
-        <strong>${escapeHtml(item.ticker)}</strong>
-        <span>${escapeHtml(item.company)}</span>
+        <strong>${escapeHtml(stockLabel(item))}</strong>
+        <span>${escapeHtml(stockSubLabel(item) || "")}</span>
         ${item.hint && item.hint !== item.ticker ? `<em>${escapeHtml(item.hint)}</em>` : ""}
       </button>
     `).join("");
@@ -6443,7 +6447,7 @@ function scrollCommunityToChart() {
 function socialTickerCell(ticker) {
   const known = stockByTicker(ticker);
   if (!known) return `<strong>${escapeHtml(ticker)}</strong>`;
-  return `<button type="button" class="ticker-link" data-ticker="${escapeHtml(ticker)}" title="종목 분석 보기">${escapeHtml(ticker)}</button>`;
+  return `<button type="button" class="ticker-link" data-ticker="${escapeHtml(ticker)}" title="종목 분석 보기">${escapeHtml(stockLabel(known))}</button>`;
 }
 
 function bindSocialSentimentClicks(tableIds) {
@@ -8042,7 +8046,7 @@ function cmdkBuildActions(query) {
       if (!row || seen.has(row.ticker) || seen.size >= 5) return;
       seen.add(row.ticker);
       actions.push({
-        label: `${row.ticker} · ${row.company || ""}`,
+        label: `${stockLabel(row)} · ${stockSubLabel(row) || ""}`,
         hint: aiActive ? "AI 모드 분석" : "종목 분석 이동",
         keep: true, // 종목은 퍼지 재필터 없이 그대로 노출
         run: () => {

@@ -674,7 +674,7 @@ function renderEarningsCalendar(item) {
   box.innerHTML = `
     <div class="earnings-inline-head">
       <strong>일정 · 컨센서스</strong>
-      <span>${escapeHtml(item.ticker)}</span>
+      <span>${escapeHtml(stockLabel(item))}</span>
     </div>
     <div class="earnings-summary">
       <article class="earnings-upcoming">
@@ -765,7 +765,7 @@ function stockEventCommunityCardHtml(item) {
             <p class="event-community-preview-body">${escapeHtml(post.content)}</p>
           </div>
         `).join("")}</div>`
-      : `<p class="event-community-empty">${escapeHtml(item.ticker)} 관련 의견이 아직 없습니다. 첫 의견을 남겨보세요.</p>`;
+      : `<p class="event-community-empty">${escapeHtml(stockLabel(item))} 관련 의견이 아직 없습니다. 첫 의견을 남겨보세요.</p>`;
   const ctaLabel = `${count}개의 의견 보기`;
   return `
     <article class="event-card event-card-community event-info">
@@ -810,7 +810,7 @@ function renderStockEvents(item) {
         <h3>종목 이벤트</h3>
         <p class="muted">실적, 옵션 만기, 컨센서스 목표가, 뉴스, 가격 변동, 커뮤니티 의견을 한곳에 모았습니다.</p>
       </div>
-      <span class="event-badge">${escapeHtml(item.ticker)}</span>
+      <span class="event-badge">${escapeHtml(stockLabel(item))}</span>
     </div>
     <div class="event-grid">
       ${earningsEvent ? eventCardHtml(earningsEvent) : ""}
@@ -991,7 +991,7 @@ function moveAnalysisHtml(item, move) {
   return `
     <div class="move-analysis-box ${isLoading ? "is-loading" : ""}">
       <div class="move-analysis-title">
-        <strong>${escapeHtml(item.ticker)} ${escapeHtml(move.date)} 원인 분석</strong>
+        <strong>${escapeHtml(stockLabel(item))} ${escapeHtml(move.date)} 원인 분석</strong>
         ${confidenceHtml}
       </div>
       <p>${escapeHtml(text)}</p>
@@ -1450,8 +1450,8 @@ function renderEtfConstituents(item) {
           ${list.map((s, i) => `
             <tr class="etf-con-row" data-ticker="${escapeHtml(s.ticker)}" style="cursor:pointer;">
               <td class="rank-cell">${i + 1}</td>
-              <td><strong>${escapeHtml(s.ticker)}</strong></td>
-              <td>${escapeHtml(s.name || "")}</td>
+              <td><strong>${escapeHtml(stockLabel(s))}</strong></td>
+              <td>${escapeHtml(stockSubLabel(s))}</td>
               <td><span class="rs-badge">${fmtRsi(stockByTicker(s.ticker) || s)}</span></td>
               <td class="${cls(s.changePct)}">${s.changePct != null ? fmtDailyPct(s.changePct) : "-"}</td>
               <td class="${cls(s.monthChangePct)}">${s.monthChangePct != null ? fmtPct(s.monthChangePct) : "-"}</td>

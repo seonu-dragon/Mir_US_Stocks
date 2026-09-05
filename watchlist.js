@@ -117,7 +117,7 @@ function renderWatchlistBar() {
   if (summary) summary.textContent = `${items.length}개 · 상승 ${items.length ? Math.round((up / items.length) * 100) : 0}%`;
   chips.innerHTML = items.map((item) => `
     <button type="button" class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
-      <strong>${escapeHtml(item.ticker)}</strong>
+      <strong>${escapeHtml(stockLabel(item))}</strong>
       <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
       <span class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거">×</span>
     </button>
@@ -259,7 +259,7 @@ function renderWatchAlerts() {
   results.innerHTML = rows.length
     ? rows.map(({ item, reasons }) => `
       <button type="button" class="watch-alert-item" data-ticker="${escapeHtml(item.ticker)}">
-        <strong>${escapeHtml(item.ticker)}</strong>
+        <strong>${escapeHtml(stockLabel(item))}</strong>
         <span>${reasons.map(escapeHtml).join(" · ")}</span>
         <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
       </button>
@@ -441,7 +441,7 @@ function renderEarningsCalendarMarket(rows) {
           const d = localDateFromIso(it.date);
           const dow = d ? WEEKDAY_KO[d.getDay()] : "";
           return `<button type="button" class="earn-hl-chip" data-ticker="${escapeHtml(it.ticker)}">
-            ${it.watch ? "★ " : ""}<b>${escapeHtml(it.ticker)}</b><em>${dow}</em></button>`;
+            ${it.watch ? "★ " : ""}<b>${escapeHtml(stockLabel(it))}</b><em>${dow}</em></button>`;
         }).join("")}
       </div>
     </div>` : "";
@@ -478,7 +478,7 @@ function earningsCalendarGrid(items, today) {
         <div class="earn-cal-chips">
           ${list.map((it) => `
             <button type="button" class="earn-cal-chip" data-ticker="${escapeHtml(it.ticker)}" title="${escapeHtml(it.company)}">
-              <span class="earn-chip-top">${it.watch ? `<i class="earn-star">★</i>` : ""}<b>${escapeHtml(it.ticker)}</b>${earnChange(it.changePct)}</span>
+              <span class="earn-chip-top">${it.watch ? `<i class="earn-star">★</i>` : ""}<b>${escapeHtml(stockLabel(it))}</b>${earnChange(it.changePct)}</span>
               <span class="earn-chip-sub">${it.capTier ? `${escapeHtml(it.capTier)} · ` : ""}${escapeHtml(it.sectorKo || "-")}</span>
             </button>`).join("")}
         </div>
@@ -509,8 +509,8 @@ function earningsListView(items, today) {
             <button type="button" class="earn-row" data-ticker="${escapeHtml(it.ticker)}">
               <span class="earn-row-id">
                 ${it.watch ? `<i class="earn-star">★</i>` : ""}
-                <b>${escapeHtml(it.ticker)}</b>
-                <em>${escapeHtml(it.company)}</em>
+                <b>${escapeHtml(stockLabel(it))}</b>
+                <em>${escapeHtml(stockSubLabel(it))}</em>
               </span>
               <span class="earn-row-sector">${escapeHtml(it.sectorKo || "-")}</span>
               <span class="earn-row-price">${it.price != null ? priceOrDash(it.price) : "—"} ${earnChange(it.changePct)}</span>

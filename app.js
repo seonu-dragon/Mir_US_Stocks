@@ -3285,7 +3285,13 @@ function setupEvents() {
   // IA 재편 그룹 서브탭(오늘·시장·내 투자) + 종목 안 찾기 세그먼트·공시 세그먼트
   ["today", "market"].forEach((group) => {
     byId(`${group}SubTabs`)?.querySelectorAll(".sub-tab").forEach((btn) => {
-      btn.addEventListener("click", () => activateTab(btn.dataset.sub, { push: btn.dataset.sub !== currentTab }));
+      // 잎 이름을 그룹+sub 로 넘긴다. '요약'의 잎 이름은 그룹 이름과 같은 "today" 라서
+      // activateTab("today") 로 보내면 normalizeTabRequest 가 그룹 요청으로 보고 '마지막 잎'
+      // (캘린더·AI 브리핑)에 머물렀다 — 요약을 눌러도 안 넘어가던 원인(2026-09-05).
+      btn.addEventListener("click", () => {
+        const leaf = btn.dataset.sub;
+        activateTab(TAB_GROUP_OF[leaf] || leaf, { sub: leaf, push: leaf !== currentTab });
+      });
     });
   });
   byId("bulkSubTabs")?.querySelectorAll(".sub-tab").forEach((btn) => {

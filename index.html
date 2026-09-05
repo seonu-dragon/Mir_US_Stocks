@@ -483,7 +483,7 @@ html[data-theme="dark"] {
                 <p class="muted">미국 및 한국 주식 시장의 실시간 데이터를 기반으로 기업 정보, 차트 기술적 분석, 실적 지표를 대화하듯 점검해 드립니다.</p>
                 
                 <div class="welcome-suggestions">
-                  <button type="button" class="ai-chat-suggest-card" data-query="NVDA 분석해줘">
+                  <button type="button" class="ai-chat-suggest-card" id="aiSuggestPrimary" data-query="NVDA 분석해줘">
                     <strong>NVDA 분석해줘</strong>
                     <span>엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.</span>
                   </button>
@@ -517,8 +517,8 @@ html[data-theme="dark"] {
             <button type="submit" class="primary">분석</button>
           </form>
           <div class="home-search-suggestions" aria-label="추천 검색">
-            <button type="button" class="search-suggest-chip" data-query="NVDA 분석해줘">NVDA 분석해줘</button>
-            <button type="button" class="search-suggest-chip" data-query="삼성전자 어때?">삼성전자 어때?</button>
+            <button type="button" class="search-suggest-chip" id="homeSuggestPrimary" data-query="NVDA 분석해줘">NVDA 분석해줘</button>
+            <button type="button" class="search-suggest-chip" id="homeSuggestSecondary" data-query="삼성전자 어때?">삼성전자 어때?</button>
             <button type="button" class="search-suggest-chip" data-query="배당 좋은 주식">배당주 찾기</button>
           </div>
         </div>
@@ -828,7 +828,8 @@ html[data-theme="dark"] {
               <div class="heatmap-legend ia-legend-pop" id="heatmapLegend" aria-label="Heatmap color legend"></div>
             </div>
           </div>
-          <div class="toolbar heatmap-toolbar ia-heatmap-toolbar">
+          <div class="toolbar heatmap-toolbar ia-heatmap-toolbar is-collapsed" id="heatmapToolbar">
+            <button type="button" class="ghost ia-map-filter-toggle" id="heatmapFilterToggle" aria-expanded="false" aria-controls="heatmapToolbar">필터</button>
             <label>
               지수/그룹
               <select id="bucketFilter"></select>
@@ -2262,14 +2263,14 @@ html[data-theme="dark"] {
             <thead>
               <tr>
                 <th></th>
-                <th>Ticker</th>
-                <th>Company</th>
-                <th>Sector</th>
-                <th>Change</th>
+                <th>종목</th>
+                <th>회사</th>
+                <th>섹터</th>
+                <th>등락</th>
                 <th>RSI</th>
                 <th>EPS</th>
-                <th>Volume</th>
-                <th>Signal</th>
+                <th>거래량</th>
+                <th>신호</th>
               </tr>
             </thead>
             <tbody id="bulkTable"></tbody>

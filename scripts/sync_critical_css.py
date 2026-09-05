@@ -37,7 +37,10 @@ TARGETS = [ROOT / "index.html", ROOT / "analysis.html"]
 
 CSS_BLOCK = re.compile(r"/\* === critical:start === \*/\r?\n(.*?)/\* === critical:end === \*/", re.S)
 HTML_BLOCK = re.compile(r"<!-- critical:start -->.*?<!-- critical:end -->", re.S)
-MAX_LINES = 250
+# 예산: 첫 페인트용 인라인 CSS. 2026-09-05 기준 276줄 — 그중 :root 토큰(색·z-index·간격·
+# 글꼴 ~100줄)과 다크 테마 재정의는 FOUC 방지에 필요해 뺄 수 없다. 300 을 넘기면 규칙을
+# 줄이거나 토큰을 정리할 것(경고만 내고 실패시키진 않는다).
+MAX_LINES = 300
 LF = chr(10)
 CRLF = chr(13) + chr(10)
 

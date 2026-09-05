@@ -53,7 +53,9 @@ function persistWatchlist() {
   watchlist = [...new Set(watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))];
   try { window.safeStorage.set(watchlistStorageKey(), JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
   const input = byId("bulkInput");
-  if (input) input.value = watchlist.join(", ");
+  // 편집창도 표시 규칙을 따른다(국내: 회사명, 미국: 티커). 회사명은 resolveTickerQuery 가
+  // 다시 코드로 해석하므로 저장/불러오기 왕복에 문제가 없다. 이름을 모르는 코드는 코드 그대로.
+  if (input) input.value = watchlist.map((t) => (typeof stockLabel === "function" ? stockLabel(t) : t)).join(", ");
   scheduleCloudSyncPush();
 }
 

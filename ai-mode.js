@@ -2422,7 +2422,13 @@ async function renderAiStockDashboard(ticker) {
   host.setAttribute("aria-hidden", "false");
   // 사이드바 접기 토글 (차트를 전체 폭으로)
   const collapseBtn = byId("aiDashCollapse");
-  const syncCollapseGlyph = () => { if (collapseBtn) collapseBtn.textContent = document.body.classList.contains("ai-dash-collapsed") ? "‹" : "›"; };
+  const syncCollapseGlyph = () => {
+    if (!collapseBtn) return;
+    const collapsed = document.body.classList.contains("ai-dash-collapsed");
+    // 모바일은 글자 있는 필(시트 위 가운데) — '›' 하나로는 무슨 버튼인지 알 수 없었다.
+    const mobile = window.matchMedia && window.matchMedia("(max-width: 900px)").matches;
+    collapseBtn.textContent = mobile ? (collapsed ? "정보 패널 보기" : "차트 크게 보기") : (collapsed ? "‹" : "›");
+  };
   syncCollapseGlyph();
   if (collapseBtn) collapseBtn.addEventListener("click", () => {
     document.body.classList.toggle("ai-dash-collapsed");

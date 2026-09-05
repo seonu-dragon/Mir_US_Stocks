@@ -12850,13 +12850,20 @@ body.ai-mode-active .ai-input-hint:empty {
     min-width: 0;
   }
 
+  /* 모바일 AI 모드에서도 로고는 남긴다(클릭 = 홈, 09-05). 예전엔 숨겨서 돌아갈 길이 종료 버튼뿐이었다. */
   body.ai-mode-active .brand-lockup {
-    display: none;
+    display: flex;
+    min-width: 0;
+    margin-right: 8px;
+    pointer-events: auto; /* 모바일 AI 헤더는 클릭 통과(pointer-events: none)라 로고만 다시 받는다 */
+    cursor: pointer;
   }
 
-  body.ai-mode-active .brand-text .eyebrow,
+  body.ai-mode-active .brand-text .eyebrow { display: none; }
   body.ai-mode-active .brand-text h1 {
-    display: none;
+    display: block;
+    font-size: var(--fs-body);
+    white-space: nowrap;
   }
 
   body.ai-mode-active .ai-mode-btn {

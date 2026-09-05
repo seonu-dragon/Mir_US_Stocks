@@ -461,6 +461,10 @@ function setupUiPrefs() {
     brandHome.dataset.bound = "1";
     const goHome = () => {
       try {
+        // AI 모드 안에서도 로고 = 홈: 먼저 AI 모드를 닫는다(대시보드·cosmos 정리 포함).
+        if (window.MirAI?.isActive?.()) window.MirAI.exit();
+      } catch (_) {}
+      try {
         // sub 를 명시해야 '요약' 잎으로 간다 — 그룹 이름만 주면 마지막 잎(캘린더 등)에 머문다.
         if (typeof activateTab === "function") activateTab("today", { sub: "today" });
       } catch (_) {}

@@ -243,7 +243,7 @@ function renderYieldCurve() {
       <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
         <div style="flex:1;min-width:240px">${yieldCurveSvg(yc.curve)}</div>
         <div style="display:flex;gap:10px;flex-wrap:wrap">
-          ${Number.isFinite(Number(last10)) ? `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;min-width:120px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">10년물</div><div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${Number(last10).toFixed(2)}%</div><div style="font-size:10.5px;color:var(--muted)">기준 만기</div></article>` : ""}
+          ${Number.isFinite(Number(last10)) ? `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;min-width:120px"><div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">10년물</div><div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums">${Number(last10).toFixed(2)}%</div><div style="font-size:var(--fs-cap);color:var(--muted)">기준 만기</div></article>` : ""}
           ${spTile("10Y − 2Y", sp.t10y2y, "정상(우상향)")}
           ${spTile("10Y − 3M", sp.t10y3m, "정상(우상향)")}
         </div>
@@ -329,7 +329,7 @@ function renderCotPositioning() {
       </div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
         <div style="font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:${col}">${fmtNet(m.specNet)}</div>
-        <div style="font-size:10.5px;color:var(--muted)">1주 ${chg}</div>
+        <div style="font-size:var(--fs-cap);color:var(--muted)">1주 ${chg}</div>
       </div>
       ${pct == null ? "" : `<div>
         <div style="display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--muted);margin-bottom:3px"><span>3년 범위 내 위치</span><span style="font-variant-numeric:tabular-nums">${pct}%</span></div>
@@ -537,7 +537,7 @@ function historyTile(key) {
   const last = vals[vals.length - 1];
   const body = vals.length >= 5
     ? historySparkSvg(vals)
-    : `<div style="font-size:10.5px;color:var(--muted)">히스토리 적립 중 (${vals.length}일차)</div>`;
+    : `<div style="font-size:var(--fs-cap);color:var(--muted)">히스토리 적립 중 (${vals.length}일차)</div>`;
   const clickable = vals.length >= 2;
   const attrs = clickable
     ? ` role="button" tabindex="0" data-hist-key="${escapeHtml(key)}" aria-label="${escapeHtml(s.label)} 추이 자세히 보기" style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;color:var(--text);cursor:pointer"`
@@ -570,7 +570,7 @@ function openHistoryDetail(key) {
 
   const chart = enough
     ? `<div style="color:var(--text);margin:6px 0 4px">${historyDetailSvg(recs)}</div>
-       <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-bottom:12px">
+       <div style="display:flex;justify-content:space-between;font-size:var(--fs-cap);color:var(--muted);margin-bottom:12px">
          <span>${dateTxt(first.date)}</span><span>${dateTxt(latest.date)}</span></div>`
     : "";
   const note = vals.length < 5
@@ -578,7 +578,7 @@ function openHistoryDetail(key) {
     : "";
 
   const statRow = (lbl, val, sub, col) => `<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
-      <span style="font-size:10.5px;color:var(--muted)">${escapeHtml(lbl)}</span>
+      <span style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(lbl)}</span>
       <span style="font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;color:${col || "var(--text)"}">${val}</span>
       ${sub ? `<span style="font-size:var(--fs-cap);color:var(--muted)">${sub}</span>` : ""}
     </div>`;
@@ -676,7 +676,7 @@ function externalGaugesHtml() {
     if (!Number.isFinite(Number(v))) return "";
     const lab = fearGreedLabel(Number(v));
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:10px 14px;min-width:150px">
-      <div style="font-size:10.5px;color:var(--muted);margin-bottom:4px">${name}</div>
+      <div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">${name}</div>
       <div style="display:flex;align-items:baseline;gap:8px"><strong style="font-size:20px;font-variant-numeric:tabular-nums;color:${lab.c}">${Math.round(v)}</strong><span style="font-size:var(--fs-cap);color:${lab.c}">${escapeHtml(label || lab.t)}</span></div>
     </article>`;
   };
@@ -708,7 +708,7 @@ function renderFearGreed() {
     return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0">
       <span style="width:88px;font-size:11.5px;color:var(--muted)">${escapeHtml(c.key)}</span>
       <div style="flex:1;height:6px;border-radius:3px;background:var(--panel-soft);overflow:hidden"><div style="width:${c.score}%;height:100%;background:${cl.c}"></div></div>
-      <span style="width:82px;text-align:right;font-size:10.5px;color:var(--muted)">${escapeHtml(c.detail)}</span>
+      <span style="width:82px;text-align:right;font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(c.detail)}</span>
     </div>`;
   }).join("");
   host.innerHTML = `

@@ -132,6 +132,7 @@
   let lastLayoutKey = "";
   let pinchStartDist = 0;
   let pinchStartScale = BASE_SCALE;
+  let chartPinchStartCount = 0; // 차트 모드 핀치 시작 시 가시 봉 수
   const activePointers = new Map();
 
   /* ── Landscape primitives (3D z = f(x,y,t)) ── */
@@ -1869,13 +1870,22 @@
 
   function onPointerDown(e) {
     if (!running || e.button !== 0) return;
-    // 차트 모드: 드래그로 시간축 이동(팬)
+    // 차트 모드: 한 손가락 드래그 = 시간축 이동(팬), 두 손가락 = 핀치 줌(09-05 모바일).
     if (renderMode === "chart") {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      canvas.setPointerCapture?.(e.pointerId);
+      if (activePointers.size >= 2) {
+        isDragging = false;
+        pinchStartDist = pointerDistance();
+        chartPinchStartCount = chartViewCount || chartBars.length;
+        canvas.classList.add("is-dragging");
+        e.preventDefault();
+        return;
+      }
       isDragging = true;
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
       canvas.classList.add("is-dragging");
-      canvas.setPointerCapture?.(e.pointerId);
       e.preventDefault();
       return;
     }
@@ -1920,6 +1930,20 @@
 
     if (activePointers.size >= 2 && pinchStartDist > 0) {
       const dist = pointerDistance();
+      if (renderMode === "chart") {
+        // 손가락을 벌리면 확대(가시 봉 수 감소), 오므리면 축소. 두 손가락 중점을 고정점으로.
+        if (dist > 0 && chartPinchStartCount > 0) {
+          const pts = [...activePointers.values()];
+          const rect = canvas.getBoundingClientRect();
+          const midX = (pts[0].x + pts[1].x) / 2;
+          const anchorFrac = clamp((midX - rect.left) / (rect.width || 1), 0, 1);
+          const targetCount = chartPinchStartCount * (pinchStartDist / dist);
+          const factor = targetCount / Math.max(1, chartViewCount || chartBars.length);
+          if (Math.abs(factor - 1) > 0.01) chartZoom(factor, anchorFrac);
+        }
+        e.preventDefault();
+        return;
+      }
       if (dist > 0) {
         viewScale = clamp(pinchStartScale * (dist / pinchStartDist), 0.2, 0.62);
       }
@@ -1963,6 +1987,15 @@
     activePointers.delete(e.pointerId);
     if (activePointers.size < 2) {
       pinchStartDist = 0;
+      chartPinchStartCount = 0;
+    }
+    // 차트 모드에서 핀치 중 한 손가락만 떼면 남은 손가락으로 바로 팬을 잇는다.
+    if (renderMode === "chart" && activePointers.size === 1) {
+      const rest = [...activePointers.values()][0];
+      lastPointerX = rest.x;
+      lastPointerY = rest.y;
+      isDragging = true;
+      return;
     }
     isDragging = false;
     isZoomDrag = false;
@@ -2231,6 +2264,8 @@
     init,
     start,
     stop,
+    // 테스트·디버그용: 현재 가시 윈도우(팬·핀치 검증)
+    getChartView: () => ({ start: chartViewStart, count: chartViewCount, total: chartFullBars.length }),
     morphToChart,
     setChartRange,
     setChartStyle,

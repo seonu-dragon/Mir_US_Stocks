@@ -13412,6 +13412,18 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-legend-wrap .heatmap-legend.ia-legend-pop { display: none; position: absolute; right: 0; top: calc(100% + 6px); z-index: var(--z-legend-pop); min-width: 280px; margin: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); box-shadow: 0 12px 30px rgba(15, 23, 42, 0.18); }
 .ia-legend-wrap.is-open .heatmap-legend.ia-legend-pop { display: flex; flex-wrap: wrap; gap: 6px 10px; }
 .ia-heatmap-toolbar { margin-bottom: 0; }
+/* 모바일 트리맵: 지수·섹터·타일 크기·초기화·공유가 5줄로 쌓여 지도가 첫 화면 밖으로 밀렸다.
+   폰에서는 '종목 찾기' + '필터' 버튼만 두고, 필터를 누르면 나머지를 펼친다. 데스크톱은 그대로. */
+.ia-map-filter-toggle { display: none; }
+@media (max-width: 640px) {
+  .ia-heatmap-toolbar { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+  .ia-heatmap-toolbar > label.grow { flex: 1 1 auto; order: -2; margin: 0; }
+  .ia-map-filter-toggle { display: inline-flex; order: -1; min-height: var(--control-h); padding: 0 14px; }
+  .ia-map-filter-toggle[aria-expanded="true"] { background: var(--panel-soft); }
+  .ia-heatmap-toolbar.is-collapsed > label:not(.grow),
+  .ia-heatmap-toolbar.is-collapsed > button:not(.ia-map-filter-toggle) { display: none; }
+  .ia-heatmap-toolbar > label:not(.grow) { flex: 1 1 calc(50% - 8px); }
+}
 .ia-footnote { margin: 14px 0 0; font-size: var(--fs-sub); color: var(--muted); }
 
 /* --- 접이식(폴드) 공통 --- */

@@ -781,9 +781,42 @@ function applyMarketOnlyUi() {
   const krMode = cfg.id === "kr";
   const setPh = (id, ph) => { const el = byId(id); if (el) el.placeholder = ph; };
   setPh("tickerSearch", krMode ? "종목명·종목코드·한국어 (예: 삼성전자, 005930)" : "한국어·티커·영문 (예: 테슬라, NVDA, Apple)");
-  setPh("pfTicker", krMode ? "티커 (예: 005930)" : "티커 (예: NVDA)");
+  setPh("pfTicker", krMode ? "회사명·종목코드 (예: 삼성전자)" : "티커 (예: NVDA)");
   setPh("pfCost", `평단가 ${cfg.currencySymbol || "$"}`);
-  setPh("positionTicker", krMode ? "005930" : "NVDA");
+  setPh("positionTicker", krMode ? "삼성전자" : "NVDA");
+  // 국내에서 '티커'라는 말은 낯설다 — 입력 안내문도 회사명·종목코드로 바꾼다.
+  setPh("bulkInput", krMode ? "회사명·종목코드, 쉼표 구분 (예: 삼성전자, 005930)" : "한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)");
+  setPh("myInvestEmptyInput", krMode ? "회사명 또는 종목코드 (예: 삼성전자)" : "티커 또는 종목명 (예: NVDA, 삼성전자)");
+  setPh("chartCompareInput", krMode ? "회사명·종목코드 (예: SK하이닉스)" : "한국어·티커·영문 (예: SPY, 삼성전자)");
+  setPh("compareInput", krMode ? "회사명·종목코드 (예: 현대차)" : "한국어·티커·영문 (예: 테슬라, Apple)");
+  setPh("valSearch", krMode ? "회사명·종목코드" : "티커·회사");
+  setPh("shortSearch", krMode ? "회사명·종목코드" : "티커·회사");
+  setPh("eventsSearch", krMode ? "회사명·종목코드·이벤트" : "티커·기업·이벤트");
+  setPh("ipoSearch", krMode ? "회사명·종목코드" : "회사·티커");
+  setPh("levEtfSearch", krMode ? "ETF 이름·종목코드·기초자산" : "티커·이름·기초자산");
+  // 홈 추천 칩·AI 첫 화면 카드: 국내 모드에서 미국 종목(NVDA) 예시가 나오지 않게.
+  const primaryChip = byId("homeSuggestPrimary");
+  if (primaryChip) {
+    primaryChip.dataset.query = krMode ? "삼성전자 분석해줘" : "NVDA 분석해줘";
+    primaryChip.textContent = primaryChip.dataset.query;
+  }
+  const secondaryChip = byId("homeSuggestSecondary");
+  if (secondaryChip) {
+    secondaryChip.dataset.query = krMode ? "SK하이닉스 어때?" : "삼성전자 어때?";
+    secondaryChip.textContent = secondaryChip.dataset.query;
+  }
+  const homeInput = byId("homeSearchInput");
+  if (homeInput) homeInput.placeholder = krMode ? "예: 삼성전자 지금 사도 될까? / SK하이닉스 분석해줘" : "예: 삼성전자 지금 사도 될까? / NVDA 분석해줘";
+  const aiCard = byId("aiSuggestPrimary");
+  if (aiCard) {
+    aiCard.dataset.query = krMode ? "삼성전자 분석해줘" : "NVDA 분석해줘";
+    const strong = aiCard.querySelector("strong");
+    const span = aiCard.querySelector("span");
+    if (strong) strong.textContent = aiCard.dataset.query;
+    if (span) span.textContent = krMode
+      ? "삼성전자의 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다."
+      : "엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.";
+  }
   const sigIntro = byId("signalsIntro");
   if (sigIntro) {
     sigIntro.textContent = krMode
@@ -2172,7 +2205,9 @@ const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract",
 // 그 데이터가 아직 없으면 US 에선 탭 자체를 숨긴다 — 없는 데이터는 기능을 끈다.
 const DUAL_MARKET_SUBTABS = new Set(["dividend", "earnreact", "buyback", "dilution"]);
 function usBuybackRows() {
-  return ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e && e.kind === "buyback");
+  // kind==="buyback" = 금액이 확정된 자사주 발표. buybackMention = 본문에 repurchase 언급만
+  // 있는 8-K(빌더가 2026-09-05 부터 구분) — 자사주 표에서 '금액 미확인'으로만 보인다.
+  return ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e && (e.kind === "buyback" || e.buybackMention));
 }
 function searchSubTabHidden(sub, cfg) {
   if (sub === "short") return featureOff("shortInterest", cfg);
@@ -2672,9 +2707,13 @@ function layoutMobileTabs() {
 
   const gap = 6;
   const width = wrap.clientWidth;
-  const visible = width >= 560 ? 4 : width >= 400 ? 3.5 : 3;
-  const gapCount = visible >= 4 ? 3 : visible >= 3.5 ? 2.5 : 2;
-  const tabWidth = Math.max(96, Math.floor((width - gap * gapCount) / visible));
+  // 탭이 4개 이하(IA 재편 후 오늘·시장·종목·내 투자)면 한 화면에 전부 넣는다. 예전 3개 노출
+  // 규칙은 탭이 7개일 때 것이라, 390px 폰에서 '내 투자'가 화면 밖으로 밀려 있는 줄도 몰랐다.
+  const shownTabs = [...tabsEl.querySelectorAll(".tab")].filter((t) => !t.hidden && t.style.display !== "none").length;
+  const fitAll = shownTabs > 0 && shownTabs <= 4 && (width - gap * (shownTabs - 1)) / shownTabs >= 80;
+  const visible = fitAll ? shownTabs : (width >= 560 ? 4 : width >= 400 ? 3.5 : 3);
+  const gapCount = fitAll ? shownTabs - 1 : (visible >= 4 ? 3 : visible >= 3.5 ? 2.5 : 2);
+  const tabWidth = Math.max(fitAll ? 80 : 96, Math.floor((width - gap * gapCount) / visible));
 
   tabsEl.style.setProperty("--tab-width", `${tabWidth}px`);
   tabsEl.querySelectorAll(".tab").forEach((tab) => {
@@ -3162,6 +3201,17 @@ function setupEvents() {
   byId("heatmapSearch").addEventListener("input", debounce(renderTreemap, 150));
   // Enter 확정(현재 시장에서 찾으면 타일 포커스, 못 찾으면 반대 시장까지)은
   // setupTickerSearchHelpers 의 공용 자동완성이 처리한다.
+  // 모바일 트리맵 필터 접기/펼치기(CSS 는 640px 이하에서만 접는다).
+  const filterToggle = byId("heatmapFilterToggle");
+  const heatmapToolbar = byId("heatmapToolbar");
+  if (filterToggle && heatmapToolbar && !filterToggle.dataset.bound) {
+    filterToggle.dataset.bound = "1";
+    filterToggle.addEventListener("click", () => {
+      const open = heatmapToolbar.classList.toggle("is-collapsed") === false;
+      filterToggle.setAttribute("aria-expanded", String(open));
+      filterToggle.textContent = open ? "필터 접기" : "필터";
+    });
+  }
   byId("resetFilters").addEventListener("click", () => {
     byId("bucketFilter").value = marketCfg().defaultBucket || "idx_sp500";
     byId("sectorFilter").value = "All";

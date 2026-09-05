@@ -133,15 +133,25 @@ def tag_buybacks(events):
     except Exception as exc:
         print(f"  [경고] buyback 태깅 질의 실패 — 이번 실행은 건너뜀: {exc}")
         return
-    tagged = fetched = amounts = 0
+    tagged = fetched = amounts = demoted = 0
     for e in events:
         doc = docs.get(e.get("accession"))
         if not doc:
             continue
-        if e.get("kind") != "buyback":
-            e["kind"] = "buyback"
+        # 2026-09-05: 구문검색 매칭만으로 kind="buyback" 을 세우면 실적 발표 8-K 처럼
+        # 본문에 'share repurchase' 한 줄 있는 일반 공시가 190건 중 144건이나 자사주로
+        # 분류됐다. 이제 '언급'(buybackMention)과 '발표'(kind=buyback, 금액 확정)를 나눈다.
+        # 금액이 확정된 행만 자사주 발표로 분류하고, 원문까지 봤는데 금액이 없으면
+        # 예전 태그를 내린다(화면은 언급 행을 '금액 미확인'으로 따로 보여 준다).
+        e["buybackMention"] = True
         tagged += 1
-        if e.get("amountUsd") is not None or e.get("buybackChecked"):
+        if e.get("amountUsd") is not None:
+            e["kind"] = "buyback"
+            continue
+        if e.get("buybackChecked"):
+            if e.get("kind") == "buyback":
+                e.pop("kind", None)
+                demoted += 1
             continue
         if fetched >= MAX_BUYBACK_DOC_FETCHES:
             continue
@@ -160,9 +170,13 @@ def tag_buybacks(events):
         amount = extract_buyback_amount(text)
         if amount is not None:
             e["amountUsd"] = amount
+            e["kind"] = "buyback"
             amounts += 1
+        elif e.get("kind") == "buyback":
+            e.pop("kind", None)
+            demoted += 1
         e["buybackChecked"] = True
-    print(f"  buyback 태깅: {tagged}건 태그, 원문 {fetched}건 조회, 금액 확정 {amounts}건")
+    print(f"  buyback 태깅: 언급 {tagged}건, 원문 {fetched}건 조회, 금액 확정 {amounts}건, 태그 내림 {demoted}건")
 
 
 def label_items(items):

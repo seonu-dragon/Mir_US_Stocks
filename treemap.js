@@ -280,11 +280,79 @@ function setupTreemapVisibilityWatch() {
 // 툴팁 위치만 옮기고 패널·툴팁 HTML 은 다시 만들지 않는다.
 let _lastHoverKey = null;
 
+// ===== 폰 '목록' 뷰(2026-09-06) =====
+// 390px 에서는 타일 수십 개가 8px 이하라 읽을 수 없다. 폰에서는 '지도/목록' 전환을 보여 주고,
+// 목록은 같은 필터·크기 기준(시가총액순)·같은 색 지표를 세로 목록으로 그린다(탭 → 종목 패널).
+const MAP_VIEW_STORAGE_KEY = "mir_map_view_v1";
+function phoneViewport() { return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches; }
+function mapViewIsList() { return phoneViewport() && document.body.classList.contains("map-view-list"); }
+function setupMapViewSeg() {
+  const seg = byId("mapViewSeg");
+  if (!seg || seg.dataset.bound) return;
+  seg.dataset.bound = "1";
+  let saved = "map";
+  try { saved = window.safeStorage.get(MAP_VIEW_STORAGE_KEY) || "map"; } catch (_) {}
+  const apply = (view) => {
+    document.body.classList.toggle("map-view-list", view === "list");
+    seg.querySelectorAll("[data-map-view]").forEach((b) => {
+      const on = b.dataset.mapView === view;
+      b.classList.toggle("is-active", on);
+      b.setAttribute("aria-pressed", String(on));
+    });
+  };
+  apply(saved);
+  seg.querySelectorAll("[data-map-view]").forEach((btn) => btn.addEventListener("click", () => {
+    apply(btn.dataset.mapView);
+    try { window.safeStorage.set(MAP_VIEW_STORAGE_KEY, btn.dataset.mapView); } catch (_) {}
+    renderTreemap();
+  }));
+}
+function renderTreemapList(all, metric, sizeMetric) {
+  const host = byId("stockTreemapList");
+  if (!host) return;
+  // 섹터별로 묶고(섹터는 합계 크기순), 섹터 안에서는 크기순 — 섹터 헤더가 반복되지 않게.
+  const sectorWeight = {};
+  all.forEach((item) => { sectorWeight[item.sector] = (sectorWeight[item.sector] || 0) + sizeWeight(item, sizeMetric); });
+  const sorted = all.slice().sort((a, b) =>
+    (sectorWeight[b.sector] - sectorWeight[a.sector]) || String(a.sector).localeCompare(String(b.sector)) || (sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric)));
+  let lastSector = null;
+  const rows = [];
+  sorted.forEach((item) => {
+    if (item.sector !== lastSector) { lastSector = item.sector; rows.push(`<div class="map-list-sector">${escapeHtml(item.sector || "기타")}</div>`); }
+    const v = metricValue(item, metric);
+    const has = Number.isFinite(v);
+    rows.push(`<button type="button" class="map-list-row" data-ticker="${escapeHtml(item.ticker)}">
+      <span class="map-list-bar" style="background:${has ? metricColor(v, metric) : "var(--line)"}"></span>
+      <span><strong>${escapeHtml(stockLabel(item))}</strong><small>${escapeHtml(stockSubLabel(item) || "")}${item.industry ? " · " + escapeHtml(item.industry) : ""}</small></span>
+      <em class="${has ? metricClass(v, metric) : "muted"}">${has ? formatMetricValue(v, metric) : "—"}</em>
+    </button>`);
+  });
+  host.innerHTML = rows.join("");
+  host.hidden = false;
+  host.querySelectorAll(".map-list-row").forEach((btn) => btn.addEventListener("click", () => {
+    const item = stockByTicker(btn.dataset.ticker);
+    if (!item) return;
+    renderSelected(item);
+    byId("selectedStock")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }));
+}
+
 function renderTreemap() {
   const metric = byId("metricFilter").value;
   const sizeMetric = byId("tileSizeFilter").value;
   const query = byId("heatmapSearch").value.trim();
   const map = byId("stockTreemap");
+  setupMapViewSeg();
+  const seg = byId("mapViewSeg");
+  if (seg) seg.hidden = !phoneViewport();
+  if (mapViewIsList()) {
+    renderLegend(metric);
+    renderTreemapList(filteredStocks(), metric, sizeMetric);
+    _treemapPending = false;
+    return;
+  }
+  const listHost = byId("stockTreemapList");
+  if (listHost) listHost.hidden = true;
   const width = map.clientWidth;
   // 숨겨진 탭(폭 0)에서 그리면 레이아웃이 깨진 채 남으므로 렌더하지 않음. 예전엔 지도 탭이
   // current 인 채로 가려진 상태(AI 모드 차트 뷰)에서 rAF 로 초당 ~80회 재시도했다. 이제 '그려야

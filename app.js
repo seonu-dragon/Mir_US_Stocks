@@ -3200,12 +3200,16 @@ const LIST_LIMITS = [
   { host: "krDartTable", item: "tbody > tr", limit: 50, step: 100 },
   { host: "scannerCards", item: ":scope > *", limit: 12, step: 12 },
   { host: "calendarBody", item: ".cal-day", limit: 4, step: 4 },
+  { host: "insiderCluster", item: ".cluster-grid > .cluster-card", limit: 6, step: 6, mobileOnly: true },
+  { host: "stockTreemapList", item: ".map-list-row", limit: 40, step: 40 },
 ];
+const isPhoneViewport = () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
 const listLimitState = new WeakMap();
 function applyListLimit(host, spec, { reset = false } = {}) {
   let st = listLimitState.get(host);
   if (!st || reset) { st = { shown: spec.limit, applying: false }; listLimitState.set(host, st); }
   if (st.applying) return;
+  if (spec.mobileOnly && !isPhoneViewport()) st.shown = Infinity; // 데스크톱은 전부 보인다
   st.applying = true;
   try {
     host.querySelector(":scope > .list-more-btn")?.remove();
@@ -7293,6 +7297,23 @@ function setupChatFabIa() {
     bubble.hidden = false;
     store.set(CHAT_BUBBLE_SEEN_KEY, "1");
     setTimeout(() => { bubble.hidden = true; updateChatSafeArea(); }, 9000);
+  }
+  // 폰: 아래로 스크롤하는 동안은 버튼을 숨기고, 위로 올리거나 멈추면 다시 보인다(09-06).
+  // 우하단 고정 버튼이 표·카드의 마지막 줄을 늘 가리던 문제의 완화책.
+  if (window.matchMedia && window.matchMedia("(max-width: 640px)").matches) {
+    let lastY = window.pageYOffset;
+    let idleTimer = null;
+    window.addEventListener("scroll", () => {
+      if (chat.classList.contains("is-chat-open")) return;
+      const y = window.pageYOffset;
+      const down = y > lastY + 6;
+      const up = y < lastY - 6;
+      if (down && y > 80) chat.classList.add("is-scroll-hidden");
+      else if (up) chat.classList.remove("is-scroll-hidden");
+      lastY = y;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => chat.classList.remove("is-scroll-hidden"), 900);
+    }, { passive: true });
   }
   const footer = document.querySelector("footer");
   if (footer && typeof IntersectionObserver === "function") {

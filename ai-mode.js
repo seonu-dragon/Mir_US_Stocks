@@ -304,7 +304,7 @@ function startNewAiChatSession() {
         firstCard.dataset.query = `${welcomeData.ticker} 분석해줘`;
         const cardStrong = firstCard.querySelector("strong");
         const cardSpan = firstCard.querySelector("span");
-        if (cardStrong) cardStrong.textContent = `${welcomeData.ticker} 분석해줘`;
+        if (cardStrong) cardStrong.textContent = `${stockLabel(welcomeData)} 분석해줘`; // 표시만 회사명(국내) — dataset.query 는 티커 유지
         if (cardSpan) cardSpan.textContent = `${welcomeData.name}의 핵심 기술 지표, 실적 상황을 종합 점검합니다.`; // textContent 라 escape 불필요(이중 이스케이프 방지)
       }
     }
@@ -949,8 +949,8 @@ function aiSectorPanel(item) {
     .sort((a, b) => (Number(b.threeMonthChangePct) || 0) - (Number(a.threeMonthChangePct) || 0));
   const rows = peers.slice(0, 8).map((row, index) => [
     `${index + 1}`,
-    `<strong>${escapeHtml(row.ticker)}</strong>`,
-    escapeHtml(row.company || ""),
+    `<strong>${escapeHtml(stockLabel(row))}</strong>`,
+    escapeHtml(stockSubLabel(row)),
     `<span class="${cls(row.changePct)}">${fmtDailyPct(row.changePct)}</span>`,
     fmtRsi(row),
   ]);
@@ -1357,8 +1357,8 @@ function aiPeerPanel(item) {
     const f = mf(s.ticker);
     const self = s.ticker === item.ticker;
     const tkCell = self
-      ? `<strong>${escapeHtml(s.ticker)}</strong>`
-      : `<strong class="ticker-link ai-peer-link" data-ticker="${escapeHtml(s.ticker)}" role="button" tabindex="0">${escapeHtml(s.ticker)}</strong>`;
+      ? `<strong>${escapeHtml(stockLabel(s))}</strong>`
+      : `<strong class="ticker-link ai-peer-link" data-ticker="${escapeHtml(s.ticker)}" role="button" tabindex="0">${escapeHtml(stockLabel(s))}</strong>`;
     const chg = Number(s.threeMonthChangePct);
     const rt = "text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap";
     return `<tr style="${self ? "background:var(--panel-soft)" : ""}">
@@ -2171,7 +2171,7 @@ async function renderInlineStockWidget(ticker, parentBubble) {
             <button type="button" class="widget-share-btn" data-ai-chart-action="share" title="리포트 이미지 저장">공유</button>
           </div>
         </div>
-        <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(initialItem.ticker)} interactive chart"></svg>
+        <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(stockLabel(initialItem))} interactive chart"></svg>
         <p class="ai-widget-chart-hint">마우스 휠로 확대/축소하고, 차트를 좌우로 드래그해서 구간을 이동할 수 있습니다.</p>
       </div>
       <div class="widget-info-grid">
@@ -2555,8 +2555,8 @@ function aiDashCardHtml(item) {
   return `
     <div class="ai-dash-card-head">
       <div class="ai-dash-idname">
-        <strong class="ai-dash-ticker">${escapeHtml(item.ticker)}</strong>
-        <span class="ai-dash-company">${escapeHtml(item.company || "")}${secKo ? " · " + escapeHtml(secKo) : ""}</span>
+        <strong class="ai-dash-ticker">${escapeHtml(stockLabel(item))}</strong>
+        <span class="ai-dash-company">${escapeHtml(stockSubLabel(item))}${secKo ? " · " + escapeHtml(secKo) : ""}</span>
       </div>
       <div class="ai-dash-price">
         <b>${priceOrDash(item.price)}</b>
@@ -2920,8 +2920,8 @@ function setupAiChatModeEvents() {
       popup.innerHTML = results.map((s, idx) => `
         <div class="autocomplete-item" data-ticker="${escapeHtml(s.ticker)}" data-index="${idx}">
           <div style="display:flex;align-items:center;gap:10px;">
-            <span class="ticker-badge">${escapeHtml(s.ticker)}</span>
-            <span class="company-name">${escapeHtml(s.company || "")}</span>
+            <span class="ticker-badge">${escapeHtml(stockLabel(s))}</span>
+            <span class="company-name">${escapeHtml(stockSubLabel(s))}</span>
           </div>
           <span class="market-badge">${escapeHtml(autocompleteMarketBadge(s))}</span>
         </div>

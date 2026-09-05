@@ -346,7 +346,9 @@
     `;
 
     const last = rows[rows.length - 1];
-    document.getElementById("captureTitle").textContent = `${meta.ticker} · ${meta.name}`;
+    // 국내 코드(6자리 숫자)는 회사명을 앞에 둔다 — 이 파일은 fmt.js 없이도 돌아야 해서 규칙을 직접 적용.
+    const krCode = /^\d{6}$/.test(String(meta.ticker || ""));
+    document.getElementById("captureTitle").textContent = krCode && meta.name ? `${meta.name} · ${meta.ticker}` : `${meta.ticker} · ${meta.name}`;
     document.getElementById("captureMeta").textContent =
       `종가 ${formatPrice(last.c, meta.market)} · ${last.d || ""}`;
     document.getElementById("capturePeriod").textContent = `${meta.period} · 일봉 · 상승확률 분석`;

@@ -142,7 +142,7 @@ function renderInsiderCluster() {
     <div class="cluster-grid">
       ${clusters.map((g) => `
         <button type="button" class="cluster-card" data-ticker="${escapeHtml(g.ticker)}" title="${g.owners.size}명 매수 · ${g.count}건">
-          <strong>${escapeHtml(g.ticker)}</strong>
+          <strong>${escapeHtml(stockLabel(g.ticker))}</strong>
           <span>${g.owners.size}명 · ${g.count}건</span>
           <em>${insiderFmtUsd(g.value)}</em>
         </button>`).join("")}

@@ -223,7 +223,7 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
   const peersToShow = sortedPeers.slice(0, 8);
   const remainCount = totalPeers - peersToShow.length;
   const peerChips = peersToShow.map((peer) => `
-    <span class="peer-chip ${cls(peer[period])}">${escapeHtml(peer.ticker)} ${fmtPct(peer[period] ?? 0)}</span>
+    <span class="peer-chip ${cls(peer[period])}">${escapeHtml(stockLabel(peer))} ${fmtPct(peer[period] ?? 0)}</span>
   `).join("") + (remainCount > 0 ? `<span class="peer-more">+${remainCount}개 더</span>` : "");
   return `
     <article class="etf-rs-card" data-category="${escapeHtml(item.category)}" title="클릭해서 전체 ${totalPeers}개 구성 종목 보기">
@@ -490,7 +490,7 @@ function levEtfCardHtml(item) {
   return `
     <article class="lev-etf-card ${hasLive ? "has-live" : "no-live"}" data-ticker="${escapeHtml(item.ticker)}" tabindex="0" role="button">
       <div class="lev-etf-card-head">
-        <span class="ticker-pill">${escapeHtml(item.ticker)}</span>
+        <span class="ticker-pill">${escapeHtml(stockLabel(item))}</span>
         ${levEtfTypeBadge(item.type)}
         <span class="lev-etf-lev">${escapeHtml(item.leverage || "—")}</span>
       </div>
@@ -619,7 +619,7 @@ function renderRrg() {
     return `${tailPath}<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5" fill="${color}"/><text x="${(px + 7).toFixed(1)}" y="${(py + 3).toFixed(1)}" class="rrg-dot-label">${escapeHtml(p.ticker)}</text>`;
   }).join("");
   wrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" class="rrg-svg" role="img" aria-label="RRG 섹터 회전 그래프">${quads}${axes}${quadLabels}${dots}</svg>`;
-  if (metaEl) metaEl.textContent = `벤치마크 ${bench.ticker} · ${points.length}개 섹터 ETF`;
+  if (metaEl) metaEl.textContent = `벤치마크 ${stockLabel(bench.ticker)} · ${points.length}개 섹터 ETF`;
   if (legendEl) {
     const byQuad = {};
     points.forEach((p) => { (byQuad[p.quad] = byQuad[p.quad] || []).push(p.ticker); });
@@ -827,8 +827,8 @@ function showConstituentPanel(categoryName, period) {
     return `
       <tr>
         <td><strong>${idx + 1}</strong></td>
-        <td><strong class="ticker-link" data-ticker="${escapeHtml(peer.ticker)}" role="button" tabindex="0">${escapeHtml(peer.ticker)}</strong></td>
-        <td>${escapeHtml(peer.name || "")}</td>
+        <td><strong class="ticker-link" data-ticker="${escapeHtml(peer.ticker)}" role="button" tabindex="0">${escapeHtml(stockLabel(peer))}</strong></td>
+        <td>${escapeHtml(stockSubLabel(peer) || "")}</td>
         <td class="${cls(pct)}"><strong>${fmtPct(pct)}</strong></td>
         <td class="${cls(spyRel)}">${fmtPct(spyRel)}</td>
         <td class="${cls(qqqRel)}">${fmtPct(qqqRel)}</td>

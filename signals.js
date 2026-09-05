@@ -191,7 +191,7 @@ function fetchMarketHeader() {
 // ===== #9 오늘의 시그널 통합 대시보드 =====
 function signalCard(title, items, note) {
   const body = items.length
-    ? items.map((x) => `<li><button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(x.ticker)}</button><span>${escapeHtml(x.note || "")}</span></li>`).join("")
+    ? items.map((x) => `<li><button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(stockLabel(x.ticker))}</button><span>${escapeHtml(x.note || "")}</span></li>`).join("")
     : `<li class="muted">해당 신호 없음</li>`;
   return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul></div>`;
 }

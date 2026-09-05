@@ -669,8 +669,8 @@ function stockTooltip(item) {
   return `
     <div class="tooltip-head">
       <div>
-        <strong>${escapeHtml(item.ticker)}</strong>
-        <span>${escapeHtml(item.company)}</span>
+        <strong>${escapeHtml(stockLabel(item))}</strong>
+        <span>${escapeHtml(stockSubLabel(item))}</span>
       </div>
       <div class="tooltip-price">
         <b>${priceOrDash(item.price)}</b>
@@ -725,7 +725,7 @@ function groupTooltip(group) {
 function peerTooltipRow(item) {
   return `
     <div class="peer-row">
-      <strong>${escapeHtml(item.ticker)}</strong>
+      <strong>${escapeHtml(stockLabel(item))}</strong>
       ${sparklineSvg(item.closeSeries, { width: 76, height: 20, color: item.changePct >= 0 ? "#22c55e" : "#ef4444" })}
       <span>${priceOrDash(item.price)}</span>
       <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>

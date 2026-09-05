@@ -287,20 +287,20 @@
       const inKr = window.MirMarket?.getMode?.() === "kr";
       setInputHint(
         inKr && !/^\d{6}$/.test(ticker)
-          ? `${ticker}는 미국 종목입니다. 상단에서 미국 주식 모드로 전환한 뒤 다시 시도해 보세요.`
-          : `${ticker} 차트를 불러오지 못했습니다. 네트워크·프록시 설정을 확인해 주세요.`,
+          ? `${stockLabel(ticker)}는 미국 종목입니다. 상단에서 미국 주식 모드로 전환한 뒤 다시 시도해 보세요.`
+          : `${stockLabel(ticker)} 차트를 불러오지 못했습니다. 네트워크·프록시 설정을 확인해 주세요.`,
         true,
       );
       return;
     }
     if (detail?.__emptyChart) {
-      setInputHint(`${ticker} 파일은 있지만 chartSeries 데이터가 비어 있습니다.`, true);
+      setInputHint(`${stockLabel(ticker)} 파일은 있지만 chartSeries 데이터가 비어 있습니다.`, true);
       return;
     }
 
     const bars = parseChartSeries(detail?.chartSeries);
     if (!bars.length) {
-      setInputHint(`${ticker} 차트 데이터가 없습니다.`, true);
+      setInputHint(`${stockLabel(ticker)} 차트 데이터가 없습니다.`, true);
       return;
     }
 
@@ -322,7 +322,7 @@
         document.body.classList.add("ai-stock-analysis-view");
         const liveTag = detail?.__liveGenerated ? " · 실시간" : "";
         const staleTag = window.MirDataStatus?.showBanner ? " · 캐시 데이터" : "";
-        setInputHint(`${ticker} · 6개월 차트${liveTag}${staleTag}`, false);
+        setInputHint(`${stockLabel(ticker)} · 6개월 차트${liveTag}${staleTag}`, false);
         // 배경 차트 위로 JARVIS 대시보드(종목 카드·투자의견·기관·뉴스) 페이드인
         try { window.MirDash?.render?.(ticker); } catch (_) {}
       },

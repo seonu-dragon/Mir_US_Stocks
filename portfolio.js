@@ -242,10 +242,10 @@ function renderDividendPlanner() {
     <div><span>월평균</span><strong>${marketCfg().formatMoney(annual / 12)}</strong></div>
     <div><span>평가액 대비</span><strong>${portfolioValue > 0 ? (annual / portfolioValue * 100).toFixed(2) : "0.00"}%</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>연 DPS</th><th>주기</th><th>기준일</th><th>연 예상</th></tr></thead><tbody>${detailed.map((row) => `
-    <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
-      <td><input type="number" min="0" step="0.01" value="${numericDividend(row.setting.annualDps) || ""}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="annualDps" aria-label="${escapeHtml(row.ticker)} 연간 주당배당금"></td>
-      <td><select data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="frequency" aria-label="${escapeHtml(row.ticker)} 배당 주기">${[[12,"월"],[4,"분기"],[2,"반기"],[1,"연"]].map(([value, label]) => `<option value="${value}"${Number(row.setting.frequency) === value ? " selected" : ""}>${label}</option>`).join("")}</select></td>
-      <td><input type="date" value="${escapeHtml(row.setting.exDate || "")}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="exDate" aria-label="${escapeHtml(row.ticker)} 배당 기준일"></td>
+    <tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
+      <td><input type="number" min="0" step="0.01" value="${numericDividend(row.setting.annualDps) || ""}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="annualDps" aria-label="${escapeHtml(stockLabel(row.ticker))}연간 주당배당금"></td>
+      <td><select data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="frequency" aria-label="${escapeHtml(stockLabel(row.ticker))} 배당 주기">${[[12,"월"],[4,"분기"],[2,"반기"],[1,"연"]].map(([value, label]) => `<option value="${value}"${Number(row.setting.frequency) === value ? " selected" : ""}>${label}</option>`).join("")}</select></td>
+      <td><input type="date" value="${escapeHtml(row.setting.exDate || "")}" data-dividend-ticker="${escapeHtml(row.ticker)}" data-dividend-field="exDate" aria-label="${escapeHtml(stockLabel(row.ticker))}배당 기준일"></td>
       <td><strong>${marketCfg().formatMoney(row.annualCash)}</strong></td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-dividend-ticker]").forEach((control) => control.addEventListener("change", () => {
     const ticker = control.dataset.dividendTicker;
@@ -290,7 +290,7 @@ function renderRebalanceCalculator() {
       : difference > 0
         ? `매수 ${rebalanceShareLabel(shares)}`
         : `매도 ${rebalanceShareLabel(shares)}`;
-    return `<tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${priceOrDash(row.price)}</small></td><td>${currentPct.toFixed(1)}%</td><td><input type="number" min="0" max="100" step="0.1" value="${targetPct.toFixed(1)}" data-rebalance-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 목표 비중">%</td><td class="${cls(difference)}">${fmtPortfolioMoneyDelta(difference)}</td><td><strong class="${difference > 0 ? "pos" : difference < 0 ? "neg" : "muted"}">${action}</strong></td></tr>`;
+    return `<tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${priceOrDash(row.price)}</small></td><td>${currentPct.toFixed(1)}%</td><td><input type="number" min="0" max="100" step="0.1" value="${targetPct.toFixed(1)}" data-rebalance-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(stockLabel(row.ticker))}목표 비중">%</td><td class="${cls(difference)}">${fmtPortfolioMoneyDelta(difference)}</td><td><strong class="${difference > 0 ? "pos" : difference < 0 ? "neg" : "muted"}">${action}</strong></td></tr>`;
   }).join("")}</tbody></table>`;
   table.querySelectorAll("[data-rebalance-ticker]").forEach((input) => input.addEventListener("change", () => {
     rebalanceTargets[input.dataset.rebalanceTicker] = Math.max(0, Number(input.value) || 0);
@@ -403,9 +403,9 @@ function renderStressTest() {
     <div><span>스트레스 후</span><strong>${fmtStressMoney(stressed)}</strong></div>
     <div><span>예상 변화</span><strong class="${cls(impact)}">${fmtStressDelta(impact)} (${original > 0 ? (impact / original * 100).toFixed(1) : "0.0"}%)</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>현재 평가액</th><th>충격률</th><th>예상 영향</th><th>스트레스 후 비중</th></tr></thead><tbody>${detailed.map((row) => `
-    <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${escapeHtml(row.stock?.sector || "기타")}</small></td>
+    <tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${escapeHtml(row.stock?.sector || "기타")}</small></td>
       <td>${fmtStressMoney(row.value)}</td>
-      <td><input type="number" min="-100" max="100" step="1" value="${row.shock.toFixed(1)}" data-stress-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 충격률">%</td>
+      <td><input type="number" min="-100" max="100" step="1" value="${row.shock.toFixed(1)}" data-stress-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(stockLabel(row.ticker))} 충격률">%</td>
       <td class="${cls(row.impact)}">${fmtStressDelta(row.impact)}</td>
       <td>${stressed > 0 ? (row.stressedValue / stressed * 100).toFixed(1) : "0.0"}%</td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-stress-ticker]").forEach((input) => input.addEventListener("change", () => {
@@ -537,8 +537,8 @@ function renderKrwPortfolio() {
     <div><span>주가 효과</span><strong class="${cls(totals.priceEffect)}">${fmtKrw(totals.priceEffect)}</strong></div>
     <div><span>환율 효과</span><strong class="${cls(totals.fxEffect)}">${fmtKrw(totals.fxEffect)}</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>매입 환율</th><th>원화 원금</th><th>원화 평가액</th><th>주가 효과</th><th>환율 효과</th><th>총 손익</th></tr></thead><tbody>${detailed.map((row) => `
-    <tr><td><strong>${escapeHtml(row.ticker)}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
-      <td>${row.krwNative ? `<span class="muted">—</span>` : `<input type="number" min="1" step="0.1" value="${row.entryFx.toFixed(1)}" data-entry-fx-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(row.ticker)} 매입 환율"><small>${row.hasSavedFx ? "저장됨" : "현재 환율 임시 적용"}</small>`}</td>
+    <tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${Number(row.qty).toLocaleString()}주</small></td>
+      <td>${row.krwNative ? `<span class="muted">—</span>` : `<input type="number" min="1" step="0.1" value="${row.entryFx.toFixed(1)}" data-entry-fx-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(stockLabel(row.ticker))}매입 환율"><small>${row.hasSavedFx ? "저장됨" : "현재 환율 임시 적용"}</small>`}</td>
       <td>${fmtKrw(row.krwCost)}</td><td>${fmtKrw(row.krwValue)}</td>
       <td class="${cls(row.priceEffect)}">${fmtKrw(row.priceEffect)}</td><td class="${cls(row.fxEffect)}">${fmtKrw(row.fxEffect)}</td><td class="${cls(row.totalEffect)}"><strong>${fmtKrw(row.totalEffect)}</strong></td></tr>`).join("")}</tbody></table>`;
   table.querySelectorAll("[data-entry-fx-ticker]").forEach((input) => input.addEventListener("change", () => {
@@ -673,7 +673,7 @@ async function renderBenchmarkAttributionNow() {
       <div><span>초과수익</span><strong class="${cls(alpha)}">${fmtPct(alpha)}</strong></div>
       <div><span>비교 기간</span><strong>${escapeHtml(startDate)} ~ ${escapeHtml(endDate)}</strong></div>`,
       table: `<table><thead><tr><th>종목</th><th>현재 비중</th><th>기간 수익률</th><th>수익 기여도</th><th>${escapeHtml(benchmarkTicker)} 대비 기여도</th></tr></thead><tbody>${rows.sort((a, b) => b.alphaContribution - a.alphaContribution).map((row) => `
-      <tr><td><button type="button" class="benchmark-ticker" data-benchmark-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td><td>${row.weightPct.toFixed(1)}%</td><td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td><td class="${cls(row.contribution)}">${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(2)}%p</td><td class="${cls(row.alphaContribution)}"><strong>${row.alphaContribution >= 0 ? "+" : ""}${row.alphaContribution.toFixed(2)}%p</strong></td></tr>`).join("")}</tbody></table>`,
+      <tr><td><button type="button" class="benchmark-ticker" data-benchmark-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button></td><td>${row.weightPct.toFixed(1)}%</td><td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td><td class="${cls(row.contribution)}">${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(2)}%p</td><td class="${cls(row.alphaContribution)}"><strong>${row.alphaContribution >= 0 ? "+" : ""}${row.alphaContribution.toFixed(2)}%p</strong></td></tr>`).join("")}</tbody></table>`,
       status: excluded ? `가격 이력이 부족한 ${excluded}개 종목은 제외했습니다. 현재 비중을 유효 종목에 다시 배분한 근사치입니다.` : "현재 비중을 기간 시작점에 적용한 근사 기여도입니다.",
     };
     benchmarkAttributionCache.set(cacheKey, result);
@@ -758,9 +758,9 @@ function renderInvestmentJournal() {
   const labels = { idea: "검토", open: "보유", closed: "종료" };
   list.innerHTML = investmentJournal.map((row) => `
     <article class="journal-entry">
-      <button type="button" class="journal-ticker" data-journal-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
+      <button type="button" class="journal-ticker" data-journal-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button>
       <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? marketCfg().formatPrice(row.entry) : "-"} · 목표 ${row.target ? marketCfg().formatPrice(row.target) : "-"} · 손절 ${row.stop ? marketCfg().formatPrice(row.stop) : "-"}</small></div>
-      <select data-journal-status="${escapeHtml(row.id)}" aria-label="${escapeHtml(row.ticker)} 기록 상태">${Object.entries(labels).map(([value, label]) => `<option value="${value}"${row.status === value ? " selected" : ""}>${label}</option>`).join("")}</select>
+      <select data-journal-status="${escapeHtml(row.id)}" aria-label="${escapeHtml(stockLabel(row.ticker))} 기록 상태">${Object.entries(labels).map(([value, label]) => `<option value="${value}"${row.status === value ? " selected" : ""}>${label}</option>`).join("")}</select>
       <button type="button" class="journal-delete" data-journal-delete="${escapeHtml(row.id)}" aria-label="기록 삭제">삭제</button>
     </article>`).join("");
   list.querySelectorAll("[data-journal-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.journalTicker, { openSearch: true })));
@@ -882,7 +882,7 @@ function renderPortfolio() {
 
   rows.sort((a, b) => b.value - a.value);
   const body = rows.map((r) => `<tr>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(isKrMarket() ? (r.stock?.company || r.ticker) : r.ticker)}</button></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(stockLabel(r.ticker, r.stock))}</button></td>
     <td class="ins-num">${r.qty.toLocaleString()}</td>
     <td class="ins-num">${fmtPfMoney(r.avgCost)}</td>
     <td class="ins-num">${fmtPfMoney(r.price)}</td>
@@ -901,7 +901,7 @@ function renderPortfolio() {
   if (pieEl) {
     let slices;
     if (portfolioDonutMode === "stock") {
-      slices = rows.map((row) => ({ label: row.ticker, ticker: row.ticker, value: row.value })).sort((a, b) => b.value - a.value);
+      slices = rows.map((row) => ({ label: stockLabel(row.ticker, row.stock), ticker: row.ticker, value: row.value })).sort((a, b) => b.value - a.value);
     } else {
       const bySector = {};
       rows.forEach((row) => { bySector[row.sector] = (bySector[row.sector] || 0) + row.value; });
@@ -1001,8 +1001,8 @@ function renderBulk() {
   byId("bulkTable").innerHTML = rows.length ? rows.map((item) => `
     <tr>
       <td>${watchStarButton(item.ticker)}</td>
-      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
-      <td>${escapeHtml(item.company)}</td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
+      <td>${escapeHtml(stockSubLabel(item))}</td>
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td>${fmtRsi(item)}</td>
@@ -1052,8 +1052,8 @@ function renderBacktestTickerChips() {
   box.innerHTML = backtestTickers.length
     ? backtestTickers.map((ticker) => {
       const stock = stockByTicker(ticker);
-      const label = stock?.company ? `${ticker} · ${stock.company}` : ticker;
-      return `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}" title="${escapeHtml(label)}">${escapeHtml(ticker)} <span>x</span></button>`;
+      const label = stock?.company ? `${stockLabel(ticker, stock)} · ${stockSubLabel(ticker, stock)}` : ticker;
+      return `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}" title="${escapeHtml(label)}">${escapeHtml(stockLabel(ticker, stock))} <span>x</span></button>`;
     }).join("")
     : `<span class="muted">종목을 하나씩 추가하세요. (최대 ${BACKTEST_MAX_TICKERS}개)</span>`;
   box.querySelectorAll(".compare-chip").forEach((chip) => {
@@ -1077,7 +1077,7 @@ function addBacktestTicker(raw) {
     return false;
   }
   if (backtestTickers.includes(ticker)) {
-    setBacktestStatus(`${ticker}는 이미 추가되어 있습니다.`);
+    setBacktestStatus(`${stockLabel(ticker)}는 이미 추가되어 있습니다.`);
     return false;
   }
   if (backtestTickers.length >= BACKTEST_MAX_TICKERS) {
@@ -1163,7 +1163,7 @@ function backtestBenchmarkLabel(ticker) {
   const found = backtestBenchmarkOptions().find(([t]) => t === ticker);
   if (found) return found[1];
   const stock = stockByTicker(ticker);
-  return stock?.company ? `${ticker} · ${stock.company}` : ticker;
+  return stock?.company ? `${stockLabel(ticker, stock)} · ${stockSubLabel(ticker, stock)}` : ticker;
 }
 
 // 백테스트 금액은 시장 통화로(정수). 예전엔 KR 에서도 USD 로 찍혔다.
@@ -1378,14 +1378,14 @@ function renderBacktestResults(payload) {
     weights: stockReturns.map((row) => row.weightPct / 100)
   });
   table.innerHTML = `
-    <caption class="backtest-meta">${escapeHtml(tickers.join(", "))} · ${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · buy-and-hold</caption>
+    <caption class="backtest-meta">${escapeHtml(tickers.map((t) => stockLabel(t)).join(", "))} ·${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · buy-and-hold</caption>
     ${warnHtml}
     ${disclaimerHtml}
     <thead><tr><th>티커</th><th>회사</th><th>시작가</th><th>종가</th><th>수익률</th><th>비중</th><th>투자액</th><th>평가액</th></tr></thead>
     <tbody>
       ${stockReturns.map((row) => `
         <tr>
-          <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
+          <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button></td>
           <td>${escapeHtml(row.company)}</td>
           <td>${priceOrDash(row.startPrice)}</td>
           <td>${priceOrDash(row.endPrice)}</td>
@@ -1483,7 +1483,7 @@ function renderPortfolioRiskPanel(payload) {
   const topPosition = stockReturns.slice().sort((a, b) => b.weightPct - a.weightPct)[0];
   const warnings = [];
   if (topSector && topSector[1] >= 50) warnings.push(`섹터 쏠림: ${topSector[0]} 비중 ${topSector[1].toFixed(0)}% (점검 기준 50% 이상).`);
-  if (topPosition && topPosition.weightPct >= 35) warnings.push(`단일 종목 쏠림: ${topPosition.ticker} 비중 ${topPosition.weightPct.toFixed(0)}% (점검 기준 35% 이상).`);
+  if (topPosition && topPosition.weightPct >= 35) warnings.push(`단일 종목 쏠림: ${stockLabel(topPosition.ticker)} 비중 ${topPosition.weightPct.toFixed(0)}% (점검 기준 35% 이상).`);
   if (maxDd != null && maxDd <= -30) warnings.push(`하락 위험: 과거 구간 최대낙폭 ${fmtPct(maxDd)} (점검 기준 -30% 이하).`);
   box.innerHTML = `
     <div class="risk-head">
@@ -1499,7 +1499,7 @@ function renderPortfolioRiskPanel(payload) {
       <article><span>${escapeHtml(benchmarkTicker)} 베타</span><strong>${bench.beta == null ? "-" : bench.beta.toFixed(2)}</strong></article>
       <article><span>상관계수</span><strong>${bench.corr == null ? "-" : bench.corr.toFixed(2)}</strong></article>
       <article><span>최대 섹터</span><strong>${topSector ? escapeHtml(topSector[0]) : "-"}</strong><em>${topSector ? `${topSector[1].toFixed(1)}%` : ""}</em></article>
-      <article><span>최대 종목</span><strong>${topPosition ? escapeHtml(topPosition.ticker) : "-"}</strong><em>${topPosition ? `${topPosition.weightPct.toFixed(1)}%` : ""}</em></article>
+      <article><span>최대 종목</span><strong>${topPosition ? escapeHtml(stockLabel(topPosition.ticker)) : "-"}</strong><em>${topPosition ? `${topPosition.weightPct.toFixed(1)}%` : ""}</em></article>
     </div>
     ${warnings.length ? `<p class="risk-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>` : `<p class="risk-note">점검 기준: 섹터 50% 이상, 단일 종목 35% 이상, 최대낙폭 -30% 이하. 리밸런싱, 배당, 세금, 거래비용은 반영하지 않습니다.</p>`}
   `;
@@ -1559,7 +1559,7 @@ async function runPortfolioBacktest() {
     const warnings = [];
     const invalid = loaded.filter((s) => s.synthetic || s.dateMap.size < 30);
     invalid.forEach((s) => {
-      warnings.push(`${s.ticker}: 실제 일봉 이력 없음 — 제외됨.`);
+      warnings.push(`${stockLabel(s.ticker)}:실제 일봉 이력 없음 — 제외됨.`);
     });
     let valid = loaded.filter((s) => !s.synthetic && s.dateMap.size >= 30);
     if (valid.length < 2) {
@@ -1599,7 +1599,7 @@ async function runPortfolioBacktest() {
     // 중간 결측일은 직전 종가로 채운다(backtestFilledPrices) — NaN 을 만들지 않는다.
     const noStart = valid.filter((s) => !backtestValidPrice(s.dateMap.get(startDate)));
     if (noStart.length) {
-      noStart.forEach((s) => warnings.push(`${s.ticker}: 시작일(${startDate})에 유효한 종가가 없어 제외됨.`));
+      noStart.forEach((s) => warnings.push(`${stockLabel(s.ticker)}:시작일(${startDate})에 유효한 종가가 없어 제외됨.`));
       valid = valid.filter((s) => !noStart.includes(s));
       activeWeights = valid.length ? normalizeActiveWeights() : null;
       if (valid.length < 1 || !activeWeights) {
@@ -1609,7 +1609,7 @@ async function runPortfolioBacktest() {
     }
     valid.forEach((s) => {
       const filledCount = backtestFilledPrices(s, dates).filledCount;
-      if (filledCount > 0) warnings.push(`${s.ticker}: 결측 ${filledCount}거래일은 직전 종가로 보간했습니다.`);
+      if (filledCount > 0) warnings.push(`${stockLabel(s.ticker)}:결측 ${filledCount}거래일은 직전 종가로 보간했습니다.`);
     });
     const portfolioRaw = backtestPortfolioSeries(valid, dates, activeWeights);
     if (!backtestValidPrice(portfolioRaw[0]?.v)) {
@@ -1688,7 +1688,10 @@ function populateBacktestBenchmarks() {
     .filter((t) => stockByTicker(t));
   sel.innerHTML = merged.map((ticker) => {
     const label = backtestBenchmarkLabel(ticker);
-    return `<option value="${escapeHtml(ticker)}">${escapeHtml(ticker)} · ${escapeHtml(label)}</option>`;
+    // 라벨이 이미 종목 표기(US 티커·KR 회사명)로 시작하면 한 번만 쓴다(KR "삼성전자 · 005930 · 삼성전자" 방지).
+    const name = stockLabel(ticker);
+    const text = label.includes(name) ? label : `${name} · ${label}`;
+    return `<option value="${escapeHtml(ticker)}">${escapeHtml(text)}</option>`;
   }).join("");
   if (!sel.value) sel.value = backtestDefaultBenchmark();
   // 투자금 입력(정적 HTML 기본 10000)은 시장 전환 시 통화 기본값으로 바꾼다 — 사용자가

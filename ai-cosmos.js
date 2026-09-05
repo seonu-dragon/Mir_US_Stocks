@@ -912,13 +912,21 @@
       ctx.fillText(fmtDate(chartBars[idx].d), xAt(idx), h - 10);
     }
 
+    // 국내는 회사명이 주 표기, 코드는 보조(사이트 표기 규칙과 동일). 보조 라벨 위치는
+    // 주 라벨 폭을 재서 정한다 — 예전엔 +52px 고정이라 긴 이름과 겹쳤다.
+    const krLabel = typeof isKrMarket === "function" && isKrMarket() && /^\d{6}/.test(String(chartMeta.ticker || ""));
+    const primaryLabel = krLabel ? (chartMeta.name || chartMeta.ticker) : chartMeta.ticker;
+    const secondaryLabel = krLabel ? chartMeta.ticker : (chartMeta.name || "");
     ctx.fillStyle = "rgba(248, 250, 252, 0.95)";
     ctx.font = "600 15px Pretendard, system-ui, sans-serif";
     ctx.textAlign = "left";
-    ctx.fillText(chartMeta.ticker, Math.max(8, padL - 4), Math.max(18, padT - 14));
+    const labelX = Math.max(8, padL - 4);
+    const labelY = Math.max(18, padT - 14);
+    ctx.fillText(primaryLabel, labelX, labelY);
+    const primaryW = ctx.measureText(primaryLabel).width;
     ctx.fillStyle = "rgba(148, 163, 184, 0.7)";
     ctx.font = "11px Pretendard, system-ui, sans-serif";
-    ctx.fillText(chartMeta.name || "", Math.max(8, padL + 52), Math.max(18, padT - 14));
+    ctx.fillText(secondaryLabel, labelX + primaryW + 8, labelY);
 
     ctx.fillStyle = chg >= 0 ? "#4ade80" : "#f87171";
     ctx.font = "11px Pretendard, system-ui, sans-serif";

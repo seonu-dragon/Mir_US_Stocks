@@ -10609,6 +10609,9 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
   cursor: pointer;
 }
 .ai-dash-stylebar button.is-active { background: var(--accent); color: #fff; }
+/* 필 버튼은 전역 button min-height(44px)를 쓰지 않는다 — 바가 52px 로 부풀어 차트를 덮었다. */
+.ai-dash-rangebar button,
+.ai-dash-stylebar button { min-height: 0; height: 28px; line-height: 1; }
 
 .ai-dash-stats {
   display: grid;
@@ -10725,7 +10728,9 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
 
 /* 태블릿·모바일: 차트 상단, 정보 패널은 하단 시트(가로 전체) */
 @media (max-width: 900px) {
-  body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { right: 0; bottom: 60%; width: auto; height: auto; } /* 차트 축소(46%→40%) */
+  /* 차트는 헤더(44px)+기간 줄+캔들 유형 줄 아래(122px)에서 시작 — 필이 차트를 덮지 않고,
+     차트 제목이 헤더 뒤에 숨지 않는다(09-05). 그만큼 시트를 조금 줄인다(60%→58%). */
+  body.ai-stock-analysis-view.ai-mode-active .ai-cosmos { top: 122px; right: 0; bottom: 58%; width: auto; height: auto; }
   .ai-dash-grid {
     top: auto;
     left: 10px;
@@ -10736,10 +10741,10 @@ body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
     padding-bottom: 12px;     /* 마지막 내용이 입력 바에 가려 잘리지 않게 */
   }
   .ai-dash-rangebar,
-  body.ai-dash-collapsed .ai-dash-rangebar { left: 50%; }
-  /* 좁은 화면: 캔들 유형 바를 기간 탭 아래 줄로 내려 겹치지 않게 */
+  body.ai-dash-collapsed .ai-dash-rangebar { top: 50px; left: 50%; }
+  /* 좁은 화면: 캔들 유형 바를 기간 탭 아래 줄로 — 둘 다 차트(122px~) 위에 있다 */
   .ai-dash-stylebar,
-  body.ai-dash-collapsed .ai-dash-stylebar { top: 120px; left: 10px; }
+  body.ai-dash-collapsed .ai-dash-stylebar { top: 86px; left: 10px; }
   /* 접힘: 하단 시트를 아래로 내리고 차트를 전체 높이로 */
   body.ai-dash-collapsed .ai-dash-grid { transform: translateY(calc(100% + 24px)); }
   body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos { bottom: 0; right: 0; }
@@ -12998,7 +13003,7 @@ body.ai-mode-active .ai-input-hint:empty {
   }
   body.ai-mode-active .ai-dash-grid {
     position: absolute;
-    top: 126px;              /* 상단 입력 바 아래 */
+    top: 84px;               /* 입력창이 헤더 줄로 올라가(09-05) 그만큼 위로 — 헤더 72px + 여백 */
     left: 14px;
     right: 14px;
     bottom: 10px;
@@ -13117,8 +13122,9 @@ body.ai-mode-active .ai-input-hint:empty {
   }
 
   /* cosmos(차트 캔버스)를 중앙 셀에 맞춰 인셋. 좌/우/하단 트랙 크기 변수를 따라간다. */
+  /* 차트는 기간·캔들 유형 필(84~124px 줄) 아래에서 시작한다 — 필이 차트를 덮지 않는다. */
   body.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
-    top: 120px;
+    top: 128px;
     left: calc(var(--ai-left-w) + 24px);
     right: calc(var(--ai-right-w) + 24px);
     bottom: calc(var(--ai-bottom-h) + 8px); /* 하단 데이터 행에 맞춰 차트 축소 */
@@ -13126,7 +13132,7 @@ body.ai-mode-active .ai-input-hint:empty {
     height: auto;
   }
   body.ai-dash-collapsed.ai-stock-analysis-view.ai-mode-active .ai-cosmos {
-    top: 120px;
+    top: 128px;
     left: 0;
     right: 0;
     bottom: 0;
@@ -13139,27 +13145,59 @@ body.ai-mode-active .ai-input-hint:empty {
   body.ai-mode-active .ai-chat-input-wrapper .ai-autocomplete,
   body.ai-mode-active .ai-input-hint { pointer-events: auto; }
 
+  /* 기간·캔들 유형 필: 차트 위 한 줄(84~124px), 차트 캔버스는 128px 부터 → 겹침 없음 */
   body.ai-mode-active .ai-dash-rangebar {
-    top: 158px;
+    top: 88px;
     left: calc((var(--ai-left-w) + 24px) + (100% - (var(--ai-left-w) + 24px) - (var(--ai-right-w) + 24px)) / 2);
   }
-  body.ai-dash-collapsed.ai-mode-active .ai-dash-rangebar { left: 50%; top: 158px; }
+  body.ai-dash-collapsed.ai-mode-active .ai-dash-rangebar { left: 50%; top: 88px; }
   body.ai-mode-active .ai-dash-collapse {
-    top: 158px;
+    top: 88px;
     right: calc(var(--ai-right-w) + 32px);
   }
   body.ai-dash-collapsed.ai-mode-active .ai-dash-collapse { right: 14px; }
-  /* 캔들 유형 선택: 차트 영역(좌 사이드바 제외) 좌상단 */
+  /* 캔들 유형 선택: 같은 줄 왼쪽 */
   body.ai-mode-active .ai-dash-stylebar {
-    top: 158px;
+    top: 88px;
     left: calc(var(--ai-left-w) + 32px);
   }
   body.ai-dash-collapsed.ai-mode-active .ai-dash-stylebar { left: 14px; }
 
-  /* 참고 레이아웃: 종목 화면에서는 채팅 입력이 상단 */
+  /* 종목 화면: 채팅 입력을 헤더 줄('미르의 한국 주식' 옆 빈 공간)에 넣는다(09-05).
+     예전엔 헤더 아래 별도 줄(64~123px)을 차지해 첫 화면 60px 가 비었다. */
   body.ai-mode-active.ai-stock-analysis-view .ai-chat-input-wrapper {
-    top: 64px;
+    top: 9px;
     bottom: auto;
+    left: 50%;
+    width: min(620px, calc(100vw - 680px));
+    z-index: calc(var(--z-ai-topbar) + 1);
+  }
+  body.ai-mode-active.ai-stock-analysis-view .ai-chat-form {
+    min-height: 44px;
+    padding: 3px 4px 3px 14px;
+  }
+  body.ai-mode-active.ai-stock-analysis-view .ai-chat-form input {
+    height: 36px;
+    min-height: 0;
+    font-size: var(--fs-sub);
+  }
+  body.ai-mode-active.ai-stock-analysis-view .ai-chat-form .ai-send-btn,
+  body.ai-mode-active.ai-stock-analysis-view .ai-chat-form .ai-voice-btn {
+    width: 34px;
+    height: 34px;
+    min-height: 0;
+  }
+  body.ai-mode-active.ai-stock-analysis-view .ai-input-hint { display: none; } /* 종목명·기간은 카드에 있다 */
+  /* 입력창이 헤더 위에 그려지려면 #tab-ai-chat(z 1) 자체가 헤더(z 50)보다 위여야 한다.
+     대신 #tab-ai-chat 은 클릭을 통과시켜 헤더의 미국/한국 스위치가 눌리게 하고, 실제
+     내용(캔버스·대시보드 패널·입력 폼)만 클릭을 받는다. .ai-dash 는 원래 규칙(래퍼 통과,
+     패널만 잡음)을 유지한다. */
+  body.ai-mode-active.ai-stock-analysis-view #tab-ai-chat {
+    z-index: calc(var(--z-ai-topbar) + 1);
+    pointer-events: none;
+  }
+  body.ai-mode-active.ai-stock-analysis-view #tab-ai-chat > :not(.ai-dash):not(.ai-chat-input-wrapper):not(.ai-chat-layout) {
+    pointer-events: auto;
   }
   body.ai-mode-active.ai-stock-analysis-view .ai-chat-input-wrapper::before { display: none; }
   body.ai-mode-active.ai-stock-analysis-view .ai-autocomplete {

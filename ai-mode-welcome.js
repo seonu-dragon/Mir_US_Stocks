@@ -266,7 +266,22 @@
   async function handleStockQuery(query) {
     // 종목이면 3D 모핑 + 대시보드, 아니면 채팅. 예전엔 여기서 실패 힌트만 띄우는 바람에
     // 추천 칩 4개가 전부(섹터·관심종목 질문은 물론 "NVDA 분석해줘"까지) 막혀 있었다.
-    const ticker = resolveTickerFromQuery(query);
+    let ticker = resolveTickerFromQuery(query);
+    // 시장 무관 입력(2026-09-05): 국내 모드에서 "AAPL", 미국 모드에서 "삼성전자"처럼 반대
+    // 시장 종목이 오면 app.js 의 resolveTickerAcrossMarkets 가 시장을 바꾸고(스냅샷 교체까지
+    // await) 티커를 돌려준다. 예전엔 "미국 종목입니다. 전환하세요" 힌트만 띄우고 끝났다.
+    const knownHere = ticker && typeof stockByTicker === "function" && !!stockByTicker(ticker);
+    if ((!ticker || !knownHere) && typeof resolveTickerAcrossMarkets === "function") {
+      const before = window.MirMarket?.getMode?.();
+      setInputHint("종목을 찾는 중…", false);
+      let cross = null;
+      try { cross = await resolveTickerAcrossMarkets(query); } catch (_) { cross = null; }
+      if (cross) {
+        ticker = cross;
+        const after = window.MirMarket?.getMode?.();
+        if (after && after !== before) setInputHint(`${after === "kr" ? "한국" : "미국"} 주식으로 전환했습니다.`, false);
+      }
+    }
     if (!ticker) {
       await routeToChat(query);
       return;

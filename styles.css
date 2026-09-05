@@ -13643,3 +13643,70 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .scan-rank-row label { white-space: normal; flex-basis: 100%; }
   .scan-rank-row select { max-width: 100%; flex: 1 1 auto; min-width: 0; }
 }
+
+/* =============================================================================
+   2026-09-05 모바일 전수 점검 반영(390px 기준) — 파일 끝에 두어 앞선 규칙을 덮는다
+   ============================================================================= */
+@media (max-width: 640px) {
+  /* iOS 는 16px 미만 입력에 포커스하면 화면을 확대한다 */
+  /* !important: 컴포넌트별 12~13px 셀렉트 규칙(.ia-metric-select, 조건감지 셀렉트 등)이 여럿이라
+     하나씩 덮는 대신 폰에서만 일괄 강제한다. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea { font-size: 16px !important; }
+  /* 탭 타깃: 체크박스 13px → 20px, 표 안 종목 링크 18px → 36px, ★ 폭 20 → 36 */
+  input[type="checkbox"] { width: 20px; height: 20px; min-width: 20px; }
+  .ticker-link, .ins-ticker { min-height: 36px !important; padding-top: 6px; padding-bottom: 6px; }
+  .watch-star { min-width: 36px; }
+  table a { display: inline-block; padding: 6px 0; }
+  /* 넓은 표(.table-wide)는 표 자체가 가로 스크롤 — 래퍼 없이 놓인 DART 표가 페이지를 밀던 문제 */
+  .table-wide { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+  /* 경제 캘린더: 표 대신 카드형 줄(시간·국가·중요성 / 이벤트 / 실제·예측·이전) */
+  .cal-table.table-wide { display: table; min-width: 0; width: 100%; }
+  .cal-table thead { display: none; }
+  .cal-table tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 8px;
+    padding: 8px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  .cal-table td { display: block; padding: 0; border: 0; white-space: normal; }
+  .cal-table .cal-time { flex: 0 0 44px; }
+  .cal-table .cal-country { flex: 0 0 40px; }
+  .cal-table .cal-imp { flex: 1 1 auto; }
+  .cal-table .cal-event { flex: 1 0 100%; min-width: 0; }
+  .cal-table td:nth-child(5), .cal-table td:nth-child(6), .cal-table td:nth-child(7) {
+    flex: 0 0 auto; color: var(--muted); font-weight: 500;
+  }
+  .cal-table td:empty { display: none; }
+  .cal-table td:nth-child(5):not(:empty)::before { content: "실제 "; }
+  .cal-table td:nth-child(6):not(:empty)::before { content: "예측 "; margin-left: 10px; }
+  .cal-table td:nth-child(7):not(:empty)::before { content: "이전 "; margin-left: 10px; }
+  .cal-table td.cal-actual:not(:empty) { color: var(--text); font-weight: 700; }
+  /* 챗봇: 말풍선은 숨기고 버튼만, 닫기 ✕ 는 28px, 본문은 버튼 높이만큼 여백 */
+  .chatbot { right: 12px; bottom: 12px; }
+  .chatbot:not(.is-chat-open) .chat-bubble.ia-chat-bubble { display: none; }
+  .chat-dismiss { width: 32px; height: 32px; min-height: 0; top: -10px; right: -10px; font-size: var(--fs-sub); }
+  main { padding-bottom: 96px; }
+  /* 오늘 탭 지수 카드 3열: 이름·등락을 한 줄로, 숫자는 한 단계 작게 */
+  /* 이름은 절대 안 자르고(S&P 500), 등락은 같은 줄에 들어가면 오른쪽, 안 들어가면 다음 줄 오른쪽 */
+  .index-strip.ia-index-compact .index-head { flex-wrap: wrap; gap: 2px 4px; align-items: center; }
+  .index-strip.ia-index-compact .index-head strong { font-size: 11px; white-space: nowrap; }
+  .index-strip.ia-index-compact .index-head em { font-size: 11px; white-space: nowrap; margin-left: auto; }
+  .index-strip.ia-index-compact .index-price { font-size: var(--fs-body); }
+  /* 트리맵 '필터' 토글: 종목 찾기 옆의 작은 필(전체 폭 입력창처럼 보이던 것) */
+  .ia-heatmap-toolbar > label.grow { flex: 1 1 200px; order: -2; min-width: 0; }
+  .ia-heatmap-toolbar .ia-map-filter-toggle { order: -1; flex: 0 0 auto; width: auto; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill); }
+  /* 세그먼트 가로 스크롤 힌트: 페이드를 넓히고 끝에 여백 */
+  .ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds, .segmented.ia-seg-strip {
+    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent);
+    mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent);
+    padding-right: 48px;
+  }
+  /* AI 브리핑 종류 버튼 30px → 40px */
+  button[data-key$="_premarket"], button[data-key$="_close"] { min-height: 40px; }
+  /* 긴 목록 '더 보기' 버튼 */
+  .list-more-btn { display: block; width: 100%; margin: 10px 0 4px; min-height: 44px; }
+}

@@ -3147,7 +3147,10 @@ function setupTabReorder(nav) {
 function setupFilters() {
   const cfg = marketCfg();
   const buckets = cfg.buckets || [];
-  const defaultBucket = cfg.defaultBucket || "idx_sp500";
+  // 국내 모바일 기본 범위는 코스피 200: '코스피 개별 종목'은 삼성전자가 지도의 절반을 차지하고
+  // 8px 타일이 수십 개라 폰에서 읽을 수 없었다(09-05 모바일 점검).
+  const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
+  const defaultBucket = (cfg.id === "kr" && phone) ? "idx_kospi200" : (cfg.defaultBucket || "idx_sp500");
   byId("bucketFilter").innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
   byId("bucketFilter").value = defaultBucket;
   byId("topBucket").innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
@@ -3186,6 +3189,66 @@ function setupFilters() {
 }
 
 let eventsBound = false;
+// ===== 긴 목록 접기(09-05 모바일 점검) =====
+// 내부자 2만px·밸류에이션 1.7만px·배당 1.5만px 짜리 페이지를 처음 N개 + '더 보기'로 줄인다.
+// 렌더러를 하나씩 고치지 않고 호스트의 childList 변화를 관찰해 다시 적용한다(검색·정렬로
+// 다시 그려도 그대로 동작). 자체 변경(hidden 토글·버튼 추가)은 applying 플래그로 무시한다.
+const LIST_LIMITS = [
+  { host: "insiderTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "valuationTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "dividendTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "krDartTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "scannerCards", item: ":scope > *", limit: 12, step: 12 },
+  { host: "calendarBody", item: ".cal-day", limit: 4, step: 4 },
+];
+const listLimitState = new WeakMap();
+function applyListLimit(host, spec, { reset = false } = {}) {
+  let st = listLimitState.get(host);
+  if (!st || reset) { st = { shown: spec.limit, applying: false }; listLimitState.set(host, st); }
+  if (st.applying) return;
+  st.applying = true;
+  try {
+    host.querySelector(":scope > .list-more-btn")?.remove();
+    const items = [...host.querySelectorAll(spec.item)].filter((el) => !el.classList.contains("list-more-btn"));
+    let hiddenCount = 0;
+    items.forEach((el, i) => {
+      const hide = i >= st.shown;
+      if (hide) hiddenCount += 1;
+      if (el.dataset.listLimited === "1" && !hide) { el.hidden = false; delete el.dataset.listLimited; }
+      else if (hide) { el.hidden = true; el.dataset.listLimited = "1"; }
+    });
+    if (hiddenCount > 0) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ghost compact-btn list-more-btn";
+      btn.textContent = `더 보기 (${Math.min(spec.step, hiddenCount)}개 · 남은 ${hiddenCount}개)`;
+      btn.addEventListener("click", () => { st.shown += spec.step; applyListLimit(host, spec); });
+      host.appendChild(btn);
+    }
+  } finally {
+    st.applying = false;
+  }
+}
+function setupListLimits() {
+  if (typeof MutationObserver !== "function") return;
+  LIST_LIMITS.forEach((spec) => {
+    const host = byId(spec.host);
+    if (!host || host.dataset.listLimitBound) return;
+    host.dataset.listLimitBound = "1";
+    const obs = new MutationObserver((records) => {
+      const st = listLimitState.get(host);
+      if (st?.applying) return;
+      // 렌더러가 내용을 갈아끼운 경우(우리 버튼이 아닌 노드가 추가/삭제)만 처음부터 다시 적용
+      const external = records.some((r) => [...r.addedNodes, ...r.removedNodes].some((n) => !(n.classList && n.classList.contains("list-more-btn"))));
+      if (external) applyListLimit(host, spec, { reset: true });
+    });
+    obs.observe(host, { childList: true, subtree: true });
+    applyListLimit(host, spec, { reset: true });
+  });
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", setupListLimits);
+else setupListLimits();
+
 function setupEvents() {
   // 여기 리스너는 전부 index.html 고정 요소·document·window 대상이다. boot() 재진입
   // (시장 전환, 오프라인 복구)마다 다시 붙으면 관심종목 ★ 토글이 두 번 실행돼 무효가
@@ -5743,6 +5806,10 @@ function setupTickerAutocomplete(inputId, options = {}) {
   let activeIdx = -1;
 
   function closeList() {
+    // 대기 중인 자동완성 갱신까지 끊는다 — Enter 로 확정한 뒤 디바운스 타이머가 목록을
+    // 다시 열어 모바일에서 '분석' 버튼과 프리셋 줄을 덮던 원인(09-05).
+    clearTimeout(timer);
+    timer = null;
     list.hidden = true;
     list.innerHTML = "";
     activeIdx = -1;

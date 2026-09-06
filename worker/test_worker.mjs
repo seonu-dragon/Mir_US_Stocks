@@ -32,6 +32,7 @@ import {
   resolveModelOverride,
   withLastGood,
   parseQuoteState,
+  parseQuoteStateFromChart,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -804,6 +805,21 @@ await test("parseQuoteState: PRE 는 pre 세션 시세, POST/CLOSED 는 post, RE
   const regular = parseQuoteState(mk({ marketState: "REGULAR", regularMarketPrice: 100, regularMarketChangePercent: 0.5 }));
   eq(regular.session, undefined, "정규장은 세션 없음"); eq(regular.marketState, "REGULAR"); eq(regular.regularChangePct, 0.5);
   eq(parseQuoteState(null), null); eq(parseQuoteState({ quoteResponse: { result: [] } }), null);
+});
+
+await test("parseQuoteStateFromChart: 마지막 봉이 post 구간이면 post 세션 시세, 18시간 지나면 세션 없음, 정규장 안이면 REGULAR", () => {
+  // 2026-09-04(금) AAPL 실측 구조: 정규장 13:30~20:00Z, post 20:00~24:00Z, 마지막 봉 23:59:58Z 종가 320.01, 정규장 종가 319.97
+  const periods = { pre: { start: 1788508800, end: 1788528600 }, regular: { start: 1788528600, end: 1788552000 }, post: { start: 1788552000, end: 1788566400 } };
+  const mk = (ts, closes, regular) => ({ chart: { result: [{ meta: { regularMarketPrice: regular, regularMarketChangePercent: -2.51, currentTradingPeriod: periods }, timestamp: ts, indicators: { quote: [{ close: closes }] } }] } });
+  const post = parseQuoteStateFromChart(mk([1788551700, 1788552300, 1788566398], [319.9, 320.5, 320.01], 319.97), 1788566398 * 1000 + 3600 * 1000);
+  eq(post.session, "post"); eq(post.marketState, "POST"); eq(post.price, 320.01); eq(post.changePct, 0.01); ok(post.time.startsWith("2026-09-04T23:59"), post.time);
+  const stale = parseQuoteStateFromChart(mk([1788551700, 1788566398], [319.9, 320.01], 319.97), 1788566398 * 1000 + 25 * 3600 * 1000);
+  eq(stale.session, undefined, "일요일 아침엔 금요일 애프터 시세를 안 보여 준다"); eq(stale.marketState, "POST");
+  const pre = parseQuoteStateFromChart(mk([1788508800, 1788510000], [330.0, 331.5], 328.21), 1788510000 * 1000 + 60000);
+  eq(pre.session, "pre"); eq(pre.changePct, 1.0, "전일 종가 대비"); eq(pre.price, 331.5);
+  const regular = parseQuoteStateFromChart(mk([1788528600, 1788540000], [329, 325], 325), 1788540000 * 1000 + 60000);
+  eq(regular.session, undefined); eq(regular.marketState, "REGULAR");
+  eq(parseQuoteStateFromChart({ chart: { result: [] } }), null);
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

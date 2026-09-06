@@ -338,11 +338,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=c015ef0f95" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=c015ef0f95"></noscript>
+    <link rel="preload" href="styles.css?v=218d7b43e2" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=218d7b43e2"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=ec85a089a4"></script>
+    <script src="build_id.js?v=0ccf29a39f"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2786,12 +2786,12 @@ html[data-theme="dark"] {
     <script src="ai-mode.js?v=47fb470c8c"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=5c25042607"></script>
-    <script src="portfolio.js?v=9190add9d5"></script>
+    <script src="portfolio.js?v=583432ce50"></script>
     <script src="screener.js?v=daa41bf44f"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=ed52256e42"></script>
-    <script src="feature-data.js?v=24bc98ba70"></script>
+    <script src="feature-data.js?v=80ccdfda25"></script>
     <script src="treemap.js?v=da148e6cf5"></script>
     <script src="signals.js?v=190a51be0c"></script>
     <script src="chart.js?v=cb3b5fe7e0"></script>
@@ -2799,7 +2799,7 @@ html[data-theme="dark"] {
     <script src="markets-etf.js?v=84a3373c16"></script>
     <script src="kr-panels.js?v=600059f917"></script>
     <script src="watchlist.js?v=94c7936a2f"></script>
-    <script src="app.js?v=6f4acbe2c7"></script>
+    <script src="app.js?v=15e59e9abe"></script>
     <script src="ai-cosmos.js?v=7892547abe"></script>
     <script src="ai-mode-welcome.js?v=1f3daf04a6"></script>
   </body>

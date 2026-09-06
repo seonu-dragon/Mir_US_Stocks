@@ -585,6 +585,17 @@ async function loadData(options = {}) {
   // 깔릴 때까지 호환용으로만 남긴다.
   if (data && data.cardNews) {
     cardNewsBackup = data.cardNews;
+    // 스냅샷에 실린 덱에 축소본(thumbs)이 없으면 경량 파일(수백 바이트)에서 가져와 붙인다 —
+    // 스냅샷은 하루 한 번 재생성되고 카드뉴스 발행은 그 뒤라, 축소본은 경량 파일이 먼저 안다.
+    const needThumbs = ["us", "kr"].some((k) => data.cardNews[k] && Array.isArray(data.cardNews[k].images) && !Array.isArray(data.cardNews[k].thumbs));
+    if (needThumbs) {
+      const light = await fetchCardNewsLight();
+      ["us", "kr"].forEach((k) => {
+        const deck = data.cardNews[k];
+        const l = light && light[k];
+        if (deck && l && Array.isArray(l.thumbs) && Array.isArray(l.images) && l.images.join("|") === (deck.images || []).join("|")) deck.thumbs = l.thumbs;
+      });
+    }
   } else if (data && !data.cardNews) {
     if (cardNewsBackup) {
       data.cardNews = cardNewsBackup;
@@ -1642,6 +1653,14 @@ function upcomingActionRows() {
 let actionBoardMode = "actions"; // 뉴스 모드 DOM 은 남아 있지만 카드뉴스는 오늘 탭(renderTodayNews) 한 곳에서 보여준다
 let actionBoardMqBound = false;
 
+// 카드에는 빌더가 만든 720px WebP 축소본(deck.thumbs)을, 크게 보기에는 원본(deck.images)을 쓴다.
+// 축소본이 없거나 개수가 다르면(옛 배포분) 원본으로 폴백.
+function cardNewsThumb(deck, i) {
+  const imgs = deck && Array.isArray(deck.images) ? deck.images : [];
+  const thumbs = deck && Array.isArray(deck.thumbs) && deck.thumbs.length === imgs.length ? deck.thumbs : null;
+  return (thumbs && thumbs[i]) || imgs[i] || "";
+}
+
 function renderActionNews() {
   const box = byId("dailyActionNews");
   if (!box) return;
@@ -1667,7 +1686,7 @@ function renderActionNews() {
     </div>`;
   const row = `<div class="action-news-row">` + imgs.map((src, i) => `
     <button type="button" class="action-news-item" data-news-idx="${i}" title="크게 보기">
-      <img src="${escapeHtml(src)}" alt="카드뉴스 ${i + 1}" loading="lazy" decoding="async" fetchpriority="low">
+      <img src="${escapeHtml(cardNewsThumb(active, i))}" alt="카드뉴스 ${i + 1}" loading="lazy" decoding="async" fetchpriority="low">
     </button>`).join("") + `</div>`;
   box.innerHTML = head + row;
   box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
@@ -6981,7 +7000,7 @@ function renderTodayNews() {
       </div>` : ""}
     </div>
     <div class="ia-today-news-grid" id="todayNewsGrid">
-      ${imgs.map((src, i) => `<button type="button" class="ia-today-news-card" data-news-idx="${i}" title="크게 보기"><img src="${escapeHtml(src)}" alt="오늘의 카드뉴스 ${i + 1}" loading="lazy" decoding="async"></button>`).join("")}
+      ${imgs.map((src, i) => `<button type="button" class="ia-today-news-card" data-news-idx="${i}" title="크게 보기"><img src="${escapeHtml(cardNewsThumb(active, i))}" alt="오늘의 카드뉴스 ${i + 1}" loading="lazy" decoding="async"></button>`).join("")}
     </div>`;
   box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
     if (btn.dataset.cn === todayNewsView) return;

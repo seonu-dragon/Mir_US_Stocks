@@ -11,3 +11,5 @@ python-dotenv==1.2.2
 # KRX 공매도 잔고(build_kr_short_interest.py). 1.2.x 에서 KRX 회원 로그인
 # (KRX_ID/KRX_PW)이 추가됐다 — 1.0.x 로 내려가면 로그인이 없어 LOGOUT 만 받는다.
 pykrx==1.2.8
+# 카드뉴스 축소본(build_today_content.make_card_thumb) — 로컬 발행에서 쓰이고 CI 는 테스트만 돈다.
+pillow==12.2.0

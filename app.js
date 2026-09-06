@@ -1661,6 +1661,18 @@ function cardNewsThumb(deck, i) {
   return (thumbs && thumbs[i]) || imgs[i] || "";
 }
 
+// 관심 리스트 실적 D-day 배지(2026-09-06): 14일 안에 실적 발표가 있으면 종목 이름 옆에 표시.
+// 미국은 us_calendar(nextEarnings), 국내는 예정일 소스가 없어 표시하지 않는다.
+function earningsDdayBadge(ticker) {
+  const cal = (window.US_STOCK_CALENDAR || {}).stocks || {};
+  const next = cal[String(ticker || "").toUpperCase()]?.nextEarnings;
+  if (!next) return "";
+  const today = formatKstDateTime().slice(0, 10);
+  const dd = myEventDday(next, today);
+  if (dd == null || dd < 0 || dd > 14) return "";
+  return `<span class="earn-dday${dd === 0 ? " is-today" : ""}" title="실적 발표 ${escapeHtml(next)}">실적 ${myEventBadge(dd)}</span>`;
+}
+
 function renderActionNews() {
   const box = byId("dailyActionNews");
   if (!box) return;
@@ -2117,6 +2129,32 @@ function loadCalendar() {
     });
 }
 
+// 경제 캘린더 서프라이즈(2026-09-06): 실제치가 예측치를 웃돌면 초록, 밑돌면 빨강.
+// 단위(%, K, M, B)를 떼고 숫자만 비교한다. 실업률·CPI 처럼 '낮을수록 좋은' 지표의 방향
+// 판단은 하지 않고 "예측 대비 위/아래" 만 표시한다(제목에 차이를 적는다).
+function calSurpriseNumber(v) {
+  const s = String(v ?? "").replace(/,/g, "").trim();
+  const m = s.match(/^-?\d+(\.\d+)?/);
+  return m ? Number(m[0]) : NaN;
+}
+function calSurpriseDelta(e) {
+  const a = calSurpriseNumber(e.actual);
+  const f = calSurpriseNumber(e.forecast);
+  if (!Number.isFinite(a) || !Number.isFinite(f)) return null;
+  return a - f;
+}
+function calSurpriseClass(e) {
+  const d = calSurpriseDelta(e);
+  if (d === null || d === 0) return "";
+  return d > 0 ? " cal-beat" : " cal-miss";
+}
+function calSurpriseTitle(e) {
+  const d = calSurpriseDelta(e);
+  if (d === null || d === 0) return "";
+  const sign = d > 0 ? "+" : "";
+  return `title="예측 ${escapeHtml(e.forecast)} 대비 ${sign}${Number(d.toFixed(2))}"`;
+}
+
 function impDots(n) {
   const full = Math.max(0, Math.min(3, n || 0));
   const lvl = full >= 3 ? "imp-3" : (full === 2 ? "imp-2" : "imp-1");
@@ -2153,7 +2191,7 @@ function renderCalendar(events) {
                 <td class="cal-country">${escapeHtml(e.country || e.currency || "")}</td>
                 <td class="cal-imp">${impDots(e.importance)}</td>
                 <td class="cal-event">${escapeHtml(e.event || "")}</td>
-                <td class="cal-actual">${escapeHtml(e.actual || "")}</td>
+                <td class="cal-actual${calSurpriseClass(e)}" ${calSurpriseTitle(e)}>${escapeHtml(e.actual || "")}</td>
                 <td>${escapeHtml(e.forecast || "")}</td>
                 <td>${escapeHtml(e.previous || "")}</td>
               </tr>
@@ -6563,7 +6601,63 @@ function renderBriefingSide(side) {
     .catch(() => { if (briefingSel[side] === key) el.innerHTML = emptyHtml; });
 }
 
+// ===== 브리핑 읽어주기(2026-09-06, Web Speech) =====
+// 폰에서 긴 브리핑을 눈으로 읽기 힘들 때 음성으로 듣는다. 브라우저 내장 TTS 라 서버·키가 없고,
+// 지원 안 되는 브라우저에선 버튼을 숨긴다. 한 번에 하나만 재생, 다시 누르면 정지.
+let _ttsActiveBtn = null;
+function briefingPlainText(el) {
+  const clone = el.cloneNode(true);
+  clone.querySelectorAll("script, style, .copy-msg-btn, button").forEach((n) => n.remove());
+  return (clone.innerText || clone.textContent || "").replace(/\s+/g, " ").trim();
+}
+function stopBriefingTts() {
+  try { window.speechSynthesis.cancel(); } catch (_) {}
+  if (_ttsActiveBtn) {
+    _ttsActiveBtn.textContent = "읽어주기";
+    _ttsActiveBtn.setAttribute("aria-pressed", "false");
+    _ttsActiveBtn = null;
+  }
+}
+function setupBriefingTts() {
+  const supported = typeof window.speechSynthesis !== "undefined" && typeof SpeechSynthesisUtterance === "function";
+  document.querySelectorAll(".briefing-tts").forEach((btn) => {
+    if (btn.dataset.bound) return;
+    btn.dataset.bound = "1";
+    if (!supported) { btn.hidden = true; return; }
+    btn.addEventListener("click", () => {
+      if (_ttsActiveBtn === btn) { stopBriefingTts(); return; }
+      stopBriefingTts();
+      const el = byId(btn.dataset.ttsTarget);
+      const text = el ? briefingPlainText(el) : "";
+      if (!text || /불러오는 중|데이터가 아직 없습니다/.test(text)) {
+        btn.textContent = "브리핑 없음";
+        setTimeout(() => { if (_ttsActiveBtn !== btn) btn.textContent = "읽어주기"; }, 1500);
+        return;
+      }
+      const u = new SpeechSynthesisUtterance(text.slice(0, 6000));
+      u.lang = "ko-KR";
+      u.rate = 1.05;
+      const voices = window.speechSynthesis.getVoices();
+      const ko = voices.find((v) => /^ko/i.test(v.lang));
+      if (ko) u.voice = ko;
+      u.onend = () => { if (_ttsActiveBtn === btn) stopBriefingTts(); };
+      u.onerror = () => { if (_ttsActiveBtn === btn) stopBriefingTts(); };
+      _ttsActiveBtn = btn;
+      btn.textContent = "정지";
+      btn.setAttribute("aria-pressed", "true");
+      window.speechSynthesis.speak(u);
+    });
+  });
+  // 다른 탭으로 가거나 페이지를 떠나면 멈춘다.
+  if (!document.body.dataset.ttsBound) {
+    document.body.dataset.ttsBound = "1";
+    document.addEventListener("visibilitychange", () => { if (document.hidden) stopBriefingTts(); });
+    document.addEventListener("click", (e) => { if (e.target.closest("#mainTabs .tab, #todaySubTabs .sub-tab")) stopBriefingTts(); });
+  }
+}
+
 function setupBriefingToggles() {
+  setupBriefingTts();
   document.querySelectorAll(".briefing-toggle").forEach((group) => {
     // 고정 DOM — 재부팅 시 중복 바인딩 방지 (dataset 가드)
     if (group.dataset.bound) return;

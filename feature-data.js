@@ -151,13 +151,42 @@ function ensureFeatureData(key) {
 // Heavy datasets (13F / congress / insider, ~11MB combined) are excluded here and
 // load lazily when their tab is first opened (see renderWithFeature / activateTab),
 // so a visitor who never opens those tabs never downloads them.
+// 폰(≤640px)·데이터 절약 모드(2026-09-06): 첫 화면(오늘 탭·국면·내 종목 이벤트·국내 하이라이트)이
+// 읽는 데이터셋만 먼저 받고, 나머지 2~3MB 는 첫 상호작용(터치·스크롤·키) 또는 8초 뒤에 받는다.
+// 전부 결국 받으므로 화면 동작은 같고, 첫 화면이 그려지는 동안 네트워크 경합만 줄인다.
+// 데이터 절약 모드에서는 2단계를 상호작용 때만 시작한다(탭 진입 시 필요한 것은 activateTab 이 따로 요청).
+const FIRST_SCREEN_FEATURE_KEYS = new Set([
+  "sentimentGauges", "marketHistory", "macro", "yieldCurve", "events", "whitehouse", "ipo",
+  "krDart", "krEventDetails", "krFlow", "krConsensus", "krDividends", "krContracts", "ecosMacro",
+]);
 function preloadFeatureData() {
-  const run = () => Object.keys(FEATURE_DATA).forEach((key) => {
+  const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
+  const saveData = !!(navigator.connection && navigator.connection.saveData);
+  const load = (keys) => keys.forEach((key) => {
     if (FEATURE_DATA[key].heavy || FEATURE_DATA[key].lazy) return;
     ensureFeatureData(key).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
   });
-  if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 2500 });
-  else setTimeout(run, 1200);
+  const all = Object.keys(FEATURE_DATA);
+  if (!phone && !saveData) {
+    const run = () => load(all);
+    if (typeof requestIdleCallback === "function") requestIdleCallback(run, { timeout: 2500 });
+    else setTimeout(run, 1200);
+    return;
+  }
+  const first = all.filter((k) => FIRST_SCREEN_FEATURE_KEYS.has(k));
+  const rest = all.filter((k) => !FIRST_SCREEN_FEATURE_KEYS.has(k));
+  const runFirst = () => load(first);
+  if (typeof requestIdleCallback === "function") requestIdleCallback(runFirst, { timeout: 2500 });
+  else setTimeout(runFirst, 1200);
+  let restStarted = false;
+  const runRest = () => {
+    if (restStarted) return;
+    restStarted = true;
+    ["pointerdown", "touchstart", "keydown", "scroll"].forEach((ev) => window.removeEventListener(ev, runRest));
+    load(rest);
+  };
+  ["pointerdown", "touchstart", "keydown", "scroll"].forEach((ev) => window.addEventListener(ev, runRest, { passive: true, once: true }));
+  if (!saveData) setTimeout(runRest, 8000);
 }
 
 // Render a feature surface, lazy-loading its dataset on first use. While the dataset
@@ -188,6 +217,8 @@ function refreshFeatureViews() {
   // applySearchSubVisibility: US 자사주·증자희석 탭은 데이터(8-K kind / US_DILUTION)가
   // 늦게 도착하면 그때 나타나야 한다 — 부팅 시점엔 전역이 없어 숨겨져 있다.
   const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility(), renderTodayRegime];
+  // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
+  if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   if (currentTab === "search" && INST_SUBS.includes(searchSubTab)) {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {

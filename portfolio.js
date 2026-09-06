@@ -1001,7 +1001,7 @@ function renderBulk() {
   byId("bulkTable").innerHTML = rows.length ? rows.map((item) => `
     <tr>
       <td>${watchStarButton(item.ticker)}</td>
-      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
+      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}</td>
       <td>${escapeHtml(stockSubLabel(item))}</td>
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>

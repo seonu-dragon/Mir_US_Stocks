@@ -13720,6 +13720,18 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 }
 /* 줄바꿈 금지 조각(분석 페이지 요약 줄 등) */
 .nowrap { white-space: nowrap; }
+/* 경제 캘린더 서프라이즈: 실제치가 예측 위(초록)/아래(빨강) */
+.cal-table td.cal-actual.cal-beat { color: var(--green); }
+.cal-table td.cal-actual.cal-miss { color: var(--red); }
+.cal-table td.cal-actual.cal-beat::after { content: " ▲"; font-size: 0.8em; }
+.cal-table td.cal-actual.cal-miss::after { content: " ▼"; font-size: 0.8em; }
+/* 브리핑 읽어주기 버튼 */
+.briefing-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.briefing-tts { margin-left: auto; min-height: 32px; padding: 0 12px; font-size: var(--fs-cap); }
+.briefing-tts[aria-pressed="true"] { background: var(--blue); color: #fff; border-color: var(--blue); }
+/* 관심 리스트 실적 D-day 배지 */
+.earn-dday { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: var(--r-pill); background: var(--tint-warn); color: var(--tint-warn-fg); font-size: var(--fs-cap); font-weight: 700; white-space: nowrap; vertical-align: middle; }
+.earn-dday.is-today { background: var(--tint-neg); color: var(--tint-neg-fg); }
 /* 트리맵 목록 뷰(폰): 8px 타일 대신 시가총액순 목록 — 색은 선택 지표, 탭하면 종목 패널 */
 .map-list { display: none; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); overflow: hidden; }
 .map-list-row { display: grid; grid-template-columns: 6px minmax(0, 1fr) auto; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 8px 12px 8px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); text-align: left; cursor: pointer; }

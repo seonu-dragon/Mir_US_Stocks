@@ -422,15 +422,17 @@ export async function handleFetch(request, env) {
     }
 
     // Korean stocks get Korean-language headlines from Naver; US stays on Yahoo.
-    const [news, chart, earnings] = await Promise.all([
+    // quote(2026-09-06): 미국 종목의 장 상태·프리/애프터마켓 시세. 실패해도 null 로 두고 나머지는 그대로.
+    const [news, chart, earnings, quote] = await Promise.all([
       kr ? fetchNaverNews(ticker) : fetchNews(env, symbol),
       fetchChart(symbol),
       fetchEarnings(symbol),
+      kr ? Promise.resolve(null) : fetchQuoteState(symbol),
     ]);
     const { text: summary, error: summaryError, model: summaryModel, cached: summaryCached } =
       await cachedTickerSummary(request, env, ticker, news, kr, modelOverride);
     return cors(json({
-      ticker, news, chart, earnings, summary, summaryError, summaryModel,
+      ticker, news, chart, earnings, quote, summary, summaryError, summaryModel,
       summaryCached: Boolean(summaryCached), newsSource: kr ? "naver" : "yahoo",
     }));
 }
@@ -1236,6 +1238,40 @@ async function fetchEarningsCalendar(tickers) {
   }
   out.sort((a, b) => String(a.nextDate).localeCompare(String(b.nextDate)));
   return out;
+}
+
+// 장 상태 + 프리/애프터마켓(미국). v7/finance/quote 는 세션 쿠키·crumb 이 있어야 200 이라
+// yahooAuthedFetch 를 쓴다. 정규장(REGULAR)이나 데이터가 없으면 세션 시세 없이 상태만 준다.
+export function parseQuoteState(data) {
+  const q = data && data.quoteResponse && data.quoteResponse.result && data.quoteResponse.result[0];
+  if (!q) return null;
+  const num = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v) * 100) / 100 : null);
+  const state = String(q.marketState || "").toUpperCase();
+  const out = { marketState: state || null, regular: num(q.regularMarketPrice), regularChangePct: num(q.regularMarketChangePercent) };
+  if (/^PRE/.test(state) && q.preMarketPrice != null) {
+    out.session = "pre";
+    out.price = num(q.preMarketPrice);
+    out.changePct = num(q.preMarketChangePercent);
+    out.time = q.preMarketTime ? new Date(q.preMarketTime * 1000).toISOString() : null;
+  } else if (/^(POST|CLOSED)/.test(state) && q.postMarketPrice != null) {
+    out.session = "post";
+    out.price = num(q.postMarketPrice);
+    out.changePct = num(q.postMarketChangePercent);
+    out.time = q.postMarketTime ? new Date(q.postMarketTime * 1000).toISOString() : null;
+  }
+  return out;
+}
+
+async function fetchQuoteState(symbol) {
+  try {
+    const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}` +
+      `&fields=marketState,regularMarketPrice,regularMarketChangePercent,preMarketPrice,preMarketChangePercent,preMarketTime,postMarketPrice,postMarketChangePercent,postMarketTime`;
+    const r = await yahooAuthedFetch(url);
+    if (!r || !r.ok) return null;
+    return parseQuoteState(await r.json());
+  } catch (e) {
+    return null;
+  }
 }
 
 async function fetchChart(symbol) {

@@ -265,6 +265,7 @@ const liveNewsCache = {};
 const liveChartCache = {};
 const liveEarningsCache = {};
 const liveSummaryCache = {};
+const liveQuoteCache = {}; // 워커 quote(장 상태·프리/애프터마켓 시세, 미국만)
 const liveNewsSourceCache = {}; // "naver" | "yahoo" — which source the proxy returned
 const liveFetched = {};
 const liveDone = {};
@@ -3624,11 +3625,24 @@ function renderSelected(item) {
 }
 
 
+// 프리/애프터마켓 한 줄(2026-09-06, 미국 전용): 워커 quote 가 PRE/POST 세션 시세를 주면
+// 종목 요약 상단에 "프리마켓 $123.45 ▲ +1.2%" 로 보여 준다. 정규장이거나 데이터가 없으면 빈 문자열.
+function sessionQuoteLine(item) {
+  const q = item && item.liveQuote;
+  if (!q || !q.session || !Number.isFinite(Number(q.price))) return "";
+  const label = q.session === "pre" ? "프리마켓" : "애프터마켓";
+  const pct = Number(q.changePct);
+  const pctHtml = Number.isFinite(pct) ? `<span class="${cls(pct)}">${fmtDailyPct(pct)}</span>` : "";
+  const when = q.time ? ` · ${escapeHtml(formatKstDateTime(new Date(q.time)).slice(11, 16))} KST` : "";
+  return `<p class="session-quote" title="정규장 외 시세 · 정규장 종가 대비">${label} <b>${escapeHtml(marketCfg().formatPrice(q.price))}</b> ${pctHtml}${when}</p>`;
+}
+
 function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(stockLabel(item))} ${syntheticBadge(item)}</h3>
     <p class="muted">${escapeHtml(stockSubLabel(item) ?? "")} · ${escapeHtml(item.sector ?? "")} · ${escapeHtml(item.industry ?? "")}</p>
+    ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
     ${krFlowCard(item)}
@@ -5369,8 +5383,10 @@ function applyLive(item) {
   const chart = liveChartCache[item.ticker];
   const news = liveNewsCache[item.ticker];
   const earnings = liveEarningsCache[item.ticker];
-  if (!chart && !news && !earnings) return item;
+  const quote = liveQuoteCache[item.ticker];
+  if (!chart && !news && !earnings && !quote) return item;
   const out = { ...item };
+  if (quote) out.liveQuote = quote;
   if (Array.isArray(chart) && chart.length) {
     out.chartSeries = chart;
     out.historySource = "yahoo";
@@ -5405,6 +5421,7 @@ function maybeFetchLiveData(base) {
       if (typeof payload.newsSource === "string") liveNewsSourceCache[ticker] = payload.newsSource;
       if (Array.isArray(payload.chart)) liveChartCache[ticker] = payload.chart;
       if (payload.earnings) liveEarningsCache[ticker] = payload.earnings;
+      if (payload.quote && typeof payload.quote === "object") liveQuoteCache[ticker] = payload.quote;
       if (typeof payload.summary === "string") liveSummaryCache[ticker] = payload.summary;
       liveDone[ticker] = true;
       if (selectedTicker !== ticker) return;

@@ -1262,16 +1262,71 @@ export function parseQuoteState(data) {
   return out;
 }
 
+// crumb 없이도 되는 폴백: v8 chart(range=1d, includePrePost) 의 마지막 봉이 정규장 밖(pre/post
+// 구간)에 찍혀 있으면 그 종가가 세션 시세다. 정규장 종가(regularMarketPrice) 대비 등락을 계산한다.
+// 라이브에서 v7 quote 가 401(세션/crumb 실패)이라 quote 가 null 로 나오던 문제의 실제 해법(2026-09-06).
+export function parseQuoteStateFromChart(data, nowMs = Date.now(), maxAgeMs = 18 * 3600 * 1000) {
+  const res = data && data.chart && data.chart.result && data.chart.result[0];
+  if (!res || !res.meta) return null;
+  const meta = res.meta;
+  const num = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v) * 100) / 100 : null);
+  const out = { marketState: null, regular: num(meta.regularMarketPrice), regularChangePct: num(meta.regularMarketChangePercent) };
+  const ts = res.timestamp || [];
+  const closes = ((res.indicators && res.indicators.quote && res.indicators.quote[0]) || {}).close || [];
+  let lastIdx = -1;
+  for (let i = ts.length - 1; i >= 0; i -= 1) { if (closes[i] != null) { lastIdx = i; break; } }
+  if (lastIdx < 0) return out;
+  const lastTs = ts[lastIdx];
+  const lastClose = closes[lastIdx];
+  const periods = meta.currentTradingPeriod || {};
+  const within = (p) => p && Number.isFinite(p.start) && Number.isFinite(p.end) && lastTs >= p.start && lastTs < p.end;
+  const regularEnd = periods.regular && periods.regular.end;
+  const regularStart = periods.regular && periods.regular.start;
+  let session = null;
+  if (within(periods.post) || (regularEnd && lastTs >= regularEnd)) session = "post";
+  else if (within(periods.pre) || (regularStart && lastTs < regularStart)) session = "pre";
+  if (session === "post") out.marketState = "POST";
+  else if (session === "pre") out.marketState = "PRE";
+  else out.marketState = "REGULAR";
+  const ageOk = nowMs - lastTs * 1000 <= maxAgeMs;
+  if (!session || !ageOk) return out;
+  // 프리마켓은 전일 종가(= 이 시점의 regularMarketPrice) 대비, 애프터는 당일 정규장 종가 대비
+  const ref = Number(meta.regularMarketPrice);
+  const price = Number(lastClose);
+  if (!Number.isFinite(price) || !Number.isFinite(ref) || ref <= 0) return out;
+  out.session = session;
+  out.price = num(price);
+  out.changePct = num((price / ref - 1) * 100);
+  out.time = new Date(lastTs * 1000).toISOString();
+  return out;
+}
+
+async function fetchQuoteStateFromChart(symbol) {
+  try {
+    const r = await fetchT(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m&includePrePost=true`,
+      { headers: UA }
+    );
+    if (!r.ok) return null;
+    return parseQuoteStateFromChart(await r.json());
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fetchQuoteState(symbol) {
   try {
     const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(symbol)}` +
       `&fields=marketState,regularMarketPrice,regularMarketChangePercent,preMarketPrice,preMarketChangePercent,preMarketTime,postMarketPrice,postMarketChangePercent,postMarketTime`;
     const r = await yahooAuthedFetch(url);
-    if (!r || !r.ok) return null;
-    return parseQuoteState(await r.json());
+    if (r && r.ok) {
+      const parsed = parseQuoteState(await r.json());
+      if (parsed) return parsed;
+    }
   } catch (e) {
-    return null;
+    /* v7 은 세션/crumb 이 자주 막힌다 — 아래 chart 폴백으로 */
   }
+  return fetchQuoteStateFromChart(symbol);
 }
 
 async function fetchChart(symbol) {

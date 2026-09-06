@@ -31,6 +31,7 @@ import {
   llmOriginAllowed,
   resolveModelOverride,
   withLastGood,
+  parseQuoteState,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -789,6 +790,20 @@ await test("GEMINI_DEFAULT_MODEL 하드코딩이 소스에서 사라졌다", () 
   const src = readFileSync(WORKER_SRC, "utf8");
   ok(!src.includes("GEMINI_DEFAULT_MODEL"), "GEMINI_DEFAULT_MODEL 잔존");
   ok(src.includes('"gemini-2.0-flash", "gemini-1.5-flash"'), "기본 체인");
+});
+
+// ── quote(프리/애프터마켓) 파서 ─────────────────────────────────────────
+await test("parseQuoteState: PRE 는 pre 세션 시세, POST/CLOSED 는 post, REGULAR 는 세션 없음", () => {
+  const mk = (r) => ({ quoteResponse: { result: [r] } });
+  const pre = parseQuoteState(mk({ marketState: "PRE", regularMarketPrice: 100, regularMarketChangePercent: 1.234, preMarketPrice: 101.567, preMarketChangePercent: 1.567, preMarketTime: 1757100000 }));
+  eq(pre.session, "pre", "pre 세션"); eq(pre.price, 101.57, "반올림"); eq(pre.changePct, 1.57); eq(pre.regular, 100); ok(/^2025|^2026/.test(pre.time), "ISO 시각");
+  const post = parseQuoteState(mk({ marketState: "POSTPOST", regularMarketPrice: 100, postMarketPrice: 98.5, postMarketChangePercent: -1.5 }));
+  eq(post.session, "post"); eq(post.price, 98.5); eq(post.changePct, -1.5);
+  const closed = parseQuoteState(mk({ marketState: "CLOSED", regularMarketPrice: 100, postMarketPrice: 99, postMarketChangePercent: -1 }));
+  eq(closed.session, "post", "CLOSED 도 애프터 시세가 있으면 post");
+  const regular = parseQuoteState(mk({ marketState: "REGULAR", regularMarketPrice: 100, regularMarketChangePercent: 0.5 }));
+  eq(regular.session, undefined, "정규장은 세션 없음"); eq(regular.marketState, "REGULAR"); eq(regular.regularChangePct, 0.5);
+  eq(parseQuoteState(null), null); eq(parseQuoteState({ quoteResponse: { result: [] } }), null);
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

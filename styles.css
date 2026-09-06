@@ -13729,6 +13729,11 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .briefing-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .briefing-tts { margin-left: auto; min-height: 32px; padding: 0 12px; font-size: var(--fs-cap); }
 .briefing-tts[aria-pressed="true"] { background: var(--blue); color: #fff; border-color: var(--blue); }
+/* 프리/애프터마켓 시세(미국, 워커 quote) */
+.session-quote { display: inline-flex; align-items: center; gap: 6px; margin: 2px 0 8px; padding: 3px 10px; border-radius: var(--r-pill); background: var(--tint-info); color: var(--tint-info-fg); font-size: var(--fs-cap); font-weight: 600; }
+.session-quote b { font-variant-numeric: tabular-nums; }
+.session-quote .pos { color: var(--green); }
+.session-quote .neg { color: var(--red); }
 /* 관심 리스트 실적 D-day 배지 */
 .earn-dday { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: var(--r-pill); background: var(--tint-warn); color: var(--tint-warn-fg); font-size: var(--fs-cap); font-weight: 700; white-space: nowrap; vertical-align: middle; }
 .earn-dday.is-today { background: var(--tint-neg); color: var(--tint-neg-fg); }

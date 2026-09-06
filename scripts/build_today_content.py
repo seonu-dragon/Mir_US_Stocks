@@ -243,15 +243,50 @@ def build_deck(date, variant):
 
     dest_dir = CONTENT_ASSETS / date / variant
     dest_dir.mkdir(parents=True, exist_ok=True)
-    for old in dest_dir.glob("*.png"):      # avoid stale leftovers from previous runs
+    for old in list(dest_dir.glob("*.png")) + list(dest_dir.glob("*.webp")):  # avoid stale leftovers
         old.unlink()
 
     images = []
+    thumbs = []
     for src in body:
         shutil.copy2(src, dest_dir / src.name)
         images.append(f"data/content/{date}/{variant}/{src.name}")
+        thumb = make_card_thumb(src, dest_dir)
+        if thumb:
+            thumbs.append(f"data/content/{date}/{variant}/{thumb.name}")
 
-    return {"title": deck_title(date, card_dir, variant), "images": images}
+    deck = {"title": deck_title(date, card_dir, variant), "images": images}
+    # 카드 축소본은 전부 만들어졌을 때만 싣는다(일부만 있으면 화면이 섞여 보인다).
+    if len(thumbs) == len(images):
+        deck["thumbs"] = thumbs
+    return deck
+
+
+# 카드용 축소본(2026-09-06): 원본 PNG 는 장당 1.1~1.4MB 라 오늘 탭이 첫 로딩에 6MB 를 받았다.
+# 화면은 340px 폭으로 그리므로 720px WebP(장당 ~100KB)를 함께 만들어 카드에 쓰고,
+# '크게 보기'에서만 원본 PNG 를 쓴다. Pillow 가 없으면 조용히 건너뛴다(화면은 PNG 로 폴백).
+THUMB_WIDTH = 720
+THUMB_QUALITY = 80
+
+
+def make_card_thumb(src, dest_dir):
+    try:
+        from PIL import Image
+    except Exception:
+        return None
+    out = Path(dest_dir) / f"{src.stem}.thumb.webp"
+    try:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        with Image.open(src) as im:
+            im = im.convert("RGB")
+            if im.width > THUMB_WIDTH:
+                ratio = THUMB_WIDTH / im.width
+                im = im.resize((THUMB_WIDTH, max(1, round(im.height * ratio))), Image.LANCZOS)
+            im.save(out, "WEBP", quality=THUMB_QUALITY, method=4)
+        return out
+    except Exception as exc:  # 깨진 PNG 등 — 원본만 쓰고 넘어간다
+        print(f"  [경고] 카드 축소본 실패 {src.name}: {exc}")
+        return None
 
 
 def build_payload(date):

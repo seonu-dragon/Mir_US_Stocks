@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-09-11 01:47 KST",
+  "updatedAtKst": "2026-09-11 21:11 KST",
   "lastFileDate": "2026.11.02",
-  "count": 34,
+  "count": 33,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다).",
   "ipos": [
@@ -63,6 +63,21 @@
       "offerPriceBand": [
         2000,
         2000
+      ]
+    },
+    {
+      "company": "디티에스(구.동양티에스)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "대신증권,유진증권",
+      "fileDate": "2026.10.13",
+      "accession": "kr-ipo-bidding-디티에스(구.동양티에스)",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        17000,
+        18500
       ]
     },
     {
@@ -156,6 +171,36 @@
       ]
     },
     {
+      "company": "빅웨이브로보틱스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "유진투자증권,미래에셋증권",
+      "fileDate": "2026.09.29",
+      "accession": "kr-ipo-listed-빅웨이브로보틱스",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        15000,
+        18000
+      ]
+    },
+    {
+      "company": "글로벌테크놀로지",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "한국투자증권",
+      "fileDate": "2026.09.29",
+      "accession": "kr-ipo-listed-글로벌테크놀로지",
+      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        13000,
+        15000
+      ]
+    },
+    {
       "company": "와이즈플래닛컴퍼니",
       "ticker": null,
       "stage": "filed",
@@ -164,11 +209,7 @@
       "fileDate": "2026.09.23",
       "accession": "kr-ipo-listed-와이즈플래닛컴퍼니",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        10000,
-        12000
-      ]
+      "offerPrice": 12000
     },
     {
       "company": "KB스팩34호",
@@ -231,36 +272,6 @@
       "offerPriceBand": [
         12400,
         14600
-      ]
-    },
-    {
-      "company": "글로벌테크놀로지",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "한국투자증권",
-      "fileDate": "2026.09.16",
-      "accession": "kr-ipo-bidding-글로벌테크놀로지",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        13000,
-        15000
-      ]
-    },
-    {
-      "company": "빅웨이브로보틱스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "유진투자증권,미래에셋증권",
-      "fileDate": "2026.09.15",
-      "accession": "kr-ipo-bidding-빅웨이브로보틱스",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        15000,
-        18000
       ]
     },
     {
@@ -389,7 +400,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "미래에셋증권",
+      "form": "",
       "fileDate": "2026.07.01",
       "accession": "kr-ipo-listed-매드업",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -416,28 +427,6 @@
       "accession": "kr-ipo-listed-스트라드비젼",
       "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 12000
-    },
-    {
-      "company": "져스텍",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.06.29",
-      "accession": "kr-ipo-listed-져스텍",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 12500
-    },
-    {
-      "company": "메리츠스팩2호",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.06.19",
-      "accession": "kr-ipo-listed-메리츠스팩2호",
-      "link": "http://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 2000
     }
   ]
 }

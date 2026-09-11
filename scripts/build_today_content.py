@@ -136,6 +136,12 @@ def _deck_at(folder_name):
 
 
 def variant_card_dir(date, variant):
+    if variant == "us":
+        # 미국장 덱 폴더는 두 규약이 공존한다: KST 발행일(D-us, 2026-09-11 워크플로우부터)과
+        # 옛 거래일(D-1-us). 오늘 날짜 폴더가 있으면 그것이 이번 발행의 덱이다.
+        deck = _deck_at(f"{date}-us")
+        if deck:
+            return deck
     deck = _deck_at(variant_folder_name(date, variant))
     if deck or variant != "us":
         return deck

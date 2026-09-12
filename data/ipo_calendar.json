@@ -1,10 +1,170 @@
 {
-  "updatedAtKst": "2026-09-11 18:04 KST",
-  "lastFileDate": "2026-09-10",
-  "count": 622,
+  "updatedAtKst": "2026-09-12 17:47 KST",
+  "lastFileDate": "2026-09-11",
+  "count": 620,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "FutureCore Acquisition Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-11",
+      "accession": "0001829126-26-010047:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2142699/000182912626010047/futurecoreacq_s1.htm"
+    },
+    {
+      "company": "Accelevation Holdings Corp.",
+      "ticker": "ACCV",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001628280-26-061542:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141406/000162828026061542/accelevationllc-sx1a1.htm"
+    },
+    {
+      "company": "Accelevation Holdings Corp.",
+      "ticker": "ACCV",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001628280-26-061542:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141406/000162828026061542/accelevationllc-sx1a1.htm"
+    },
+    {
+      "company": "DYADIC INTERNATIONAL INC",
+      "ticker": "DYAI",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-11",
+      "accession": "0001493152-26-042435:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1213809/000149315226042435/forms-1.htm"
+    },
+    {
+      "company": "Gold Mountain Acquisition Corp.",
+      "ticker": "GDMT",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001493152-26-042376:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2105318/000149315226042376/forms-1a.htm"
+    },
+    {
+      "company": "Gold Mountain Acquisition Corp.",
+      "ticker": "GDMT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001493152-26-042376:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2105318/000149315226042376/forms-1a.htm"
+    },
+    {
+      "company": "Barrel Energy Inc.",
+      "ticker": "BRLL",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-11",
+      "accession": "0001477932-26-005542:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1631463/000147793226005542/brll_s1.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001213900-26-099328:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026099328/ea0305219-s1a4_cryptex.htm"
+    },
+    {
+      "company": "Cryptex Digital Market Cap ETF",
+      "ticker": "BAGZ",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001213900-26-099328:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115027/000121390026099328/ea0305219-s1a4_cryptex.htm"
+    },
+    {
+      "company": "SeeQC, Inc.",
+      "ticker": "SEQC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001213900-26-099300:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1779977/000121390026099300/ea0288470-05.htm"
+    },
+    {
+      "company": "SeeQC, Inc.",
+      "ticker": "SEQC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001213900-26-099300:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1779977/000121390026099300/ea0288470-05.htm"
+    },
+    {
+      "company": "Eloxx Pharmaceuticals, Inc.",
+      "ticker": "ELOX",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-11",
+      "accession": "0001193125-26-389422:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1035354/000119312526389422/d152186ds1.htm"
+    },
+    {
+      "company": "Haymaker Acquisition Corp V",
+      "ticker": "HYAC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001193125-26-389409:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2111838/000119312526389409/d86766ds1a.htm"
+    },
+    {
+      "company": "Haymaker Acquisition Corp V",
+      "ticker": "HYAC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-11",
+      "accession": "0001193125-26-389409:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2111838/000119312526389409/d86766ds1a.htm"
+    },
+    {
+      "company": "QVC Group, Inc.",
+      "ticker": "QVCG",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-11",
+      "accession": "0001104659-26-107125:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1254699/000110465926107125/tm2625133-1_s1.htm"
+    },
+    {
+      "company": "Rent the Runway, Inc.",
+      "ticker": "RENT",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-11",
+      "accession": "0000950103-26-013811:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1468327/000095010326013811/dp253177_s1.htm"
+    },
     {
       "company": "Elevation Acquisition Group Inc.",
       "ticker": null,
@@ -6225,189 +6385,6 @@
       "fileDate": "2026-07-14",
       "accession": "0001104659-26-083475:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2103547/000110465926083475/tm2534148d6_s1a.htm"
-    },
-    {
-      "company": "Material Resource Acquisition Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-13",
-      "accession": "0002136360-26-000003:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2136360/000213636026000003/mracs1-plain.htm"
-    },
-    {
-      "company": "Nexentis Technologies Inc.",
-      "ticker": "NXTS",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-13",
-      "accession": "0001493152-26-033026:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1789192/000149315226033026/forms-1.htm"
-    },
-    {
-      "company": "Advasa Holdings, Inc.",
-      "ticker": "ADBT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001493152-26-032985:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2084227/000149315226032985/forms-1a.htm"
-    },
-    {
-      "company": "Advasa Holdings, Inc.",
-      "ticker": "ADBT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001493152-26-032985:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2084227/000149315226032985/forms-1a.htm"
-    },
-    {
-      "company": "Elong Power Holding Ltd.",
-      "ticker": "ELPW",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-13",
-      "accession": "0001493152-26-032975:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2015691/000149315226032975/form424b4.htm",
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Starton Holdings, Inc.",
-      "ticker": "STA",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001213900-26-077653:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2049977/000121390026077653/ea0225405-16.htm"
-    },
-    {
-      "company": "Starton Holdings, Inc.",
-      "ticker": "STA",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001213900-26-077653:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2049977/000121390026077653/ea0225405-16.htm"
-    },
-    {
-      "company": "Avalon GloboCare Corp.",
-      "ticker": "ALBT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-13",
-      "accession": "0001213900-26-077307:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1630212/000121390026077307/ea0297456-s1_avalon.htm"
-    },
-    {
-      "company": "Syntiant Corp.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001193125-26-302144:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1718728/000119312526302144/project_sterling_s-1a_ex.htm"
-    },
-    {
-      "company": "Syntiant Corp.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001193125-26-302144:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1718728/000119312526302144/project_sterling_s-1a_ex.htm"
-    },
-    {
-      "company": "Nuburu, Inc.",
-      "ticker": "BURU",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-13",
-      "accession": "0001193125-26-301451:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1814215/000119312526301451/buru-20260713.htm"
-    },
-    {
-      "company": "Research Alliance Corp IV",
-      "ticker": "RACD",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-13",
-      "accession": "0001193125-26-301373:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2137777/000119312526301373/d160806d424b4.htm",
-      "offerPrice": 10.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "Ionic Digital Inc.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001185185-26-002919:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2007691/000118518526002919/ionicdigis1a1070926.htm"
-    },
-    {
-      "company": "Ionic Digital Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001185185-26-002919:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2007691/000118518526002919/ionicdigis1a1070926.htm"
-    },
-    {
-      "company": "CTT PHARMACEUTICAL HOLDINGS, INC.",
-      "ticker": "CTTH",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001171520-26-000172:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1035422/000117152026000172/eps12677_ctth.htm"
-    },
-    {
-      "company": "CTT PHARMACEUTICAL HOLDINGS, INC.",
-      "ticker": "CTTH",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001171520-26-000172:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1035422/000117152026000172/eps12677_ctth.htm"
-    },
-    {
-      "company": "USBC, Inc.",
-      "ticker": "USBC",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001074828-26-000052:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000052/usbc-20260713.htm"
-    },
-    {
-      "company": "USBC, Inc.",
-      "ticker": "USBC",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-13",
-      "accession": "0001074828-26-000052:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1074828/000107482826000052/usbc-20260713.htm"
     }
   ]
 }

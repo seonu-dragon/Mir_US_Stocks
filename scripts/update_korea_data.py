@@ -354,40 +354,76 @@ NAVER_INDUSTRY_MAPPING = {
 }
 
 
+# 2026-09-10 네이버 금융 PC(finance.naver.com)가 클라이언트 렌더링 "Npay 증권"으로
+# 개편되면서 sise_market_sum / sise_group HTML 표가 사라졌다(행 0건). 그 결과 국내
+# 유니버스가 하드코딩 ETF 50개로 무너진 채 이틀간 배포됐다(신선도 검사가 잡음).
+# 이후로는 모바일 JSON API(m.stock.naver.com/api)만 쓴다 — 재무·뉴스·수급이 이미 쓰던 경로다.
+MSTOCK_API = "https://m.stock.naver.com/api"
+MSTOCK_PAGE_SIZE = 100  # 서버 상한(500 은 400 응답)
+
+
+def fetch_mstock_json(path: str, retries: int = 3) -> dict:
+    url = f"{MSTOCK_API}/{path.lstrip('/')}"
+    headers = {**HTTP_HEADERS, "Accept": "application/json", "Referer": "https://m.stock.naver.com/"}
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                return json.loads(resp.read().decode("utf-8"))
+        except Exception as exc:  # 429/5xx/네트워크 — 짧게 물러섰다 재시도
+            last_exc = exc
+            time.sleep(1.0 * (attempt + 1))
+    raise RuntimeError(f"m.stock API failed: {path}: {last_exc}")
+
+
+def _mstock_pages(path: str, list_key: str, page_size: int = MSTOCK_PAGE_SIZE, max_pages: int = 80):
+    """page=1.. 을 totalCount 까지 돌며 list_key 항목을 순서대로 낸다."""
+    sep = "&" if "?" in path else "?"
+    for page in range(1, max_pages + 1):
+        payload = fetch_mstock_json(f"{path}{sep}page={page}&pageSize={page_size}")
+        items = payload.get(list_key) or []
+        if not items:
+            return
+        yield from items
+        total = payload.get("totalCount")
+        if isinstance(total, int) and page * page_size >= total:
+            return
+
+
 def fetch_naver_industry_map() -> dict[str, tuple[str, str]]:
     print("Fetching Naver Finance industry classifications...")
-    url = "https://finance.naver.com/sise/sise_group.naver?type=upjong"
     try:
-        html = request_html(url)
-        links = re.findall(r'href="/sise/sise_group_detail\.naver\?[^"]*no=(\d+)"[^>]*>([^<]+)</a>', html)
-        if not links:
-            print("[warn] No Naver industries matched in list HTML.")
+        groups = [
+            (g.get("no"), str(g.get("name") or "").strip())
+            for g in _mstock_pages("stocks/industry", "groups")
+        ]
+        groups = [(no, name) for no, name in groups if no is not None and name]
+        if not groups:
+            print("[warn] No Naver industries returned by m.stock API.")
             return {}
-        
-        ticker_map = {}
-        
-        def fetch_one_detail(no, raw_name):
-            name = raw_name.strip()
-            detail_url = f"https://finance.naver.com/sise/sise_group_detail.naver?no={no}"
+
+        ticker_map: dict[str, tuple[str, str]] = {}
+
+        def fetch_one_detail(no, name):
+            if name not in NAVER_INDUSTRY_MAPPING:
+                return {}
+            sector, ind = NAVER_INDUSTRY_MAPPING[name]
             try:
-                html_d = request_html(detail_url)
-                codes = re.findall(r'/item/main\.naver\?code=(\d+)"', html_d)
-                ret = {}
-                if name in NAVER_INDUSTRY_MAPPING:
-                    sector, ind = NAVER_INDUSTRY_MAPPING[name]
-                    for code in codes:
-                        ret[code] = (sector, ind)
-                return ret
+                return {
+                    str(s.get("itemCode")): (sector, ind)
+                    for s in _mstock_pages(f"stocks/industry/{no}", "stocks")
+                    if s.get("itemCode")
+                }
             except Exception as e:
                 print(f"[warn] Fetch detail failed for {name} (no={no}): {e}")
                 return {}
 
         with ThreadPoolExecutor(max_workers=8) as pool:
-            futures = {pool.submit(fetch_one_detail, no, name): name for no, name in links}
+            futures = {pool.submit(fetch_one_detail, no, name): name for no, name in groups}
             for fut in as_completed(futures):
-                res = fut.result()
-                ticker_map.update(res)
-        print(f"Successfully mapped {len(ticker_map)} stocks from Naver Finance.")
+                ticker_map.update(fut.result())
+        print(f"Successfully mapped {len(ticker_map)} stocks from Naver Finance ({len(groups)} industries).")
         return ticker_map
     except Exception as e:
         print(f"[warn] Failed to fetch Naver industry list: {e}")
@@ -423,41 +459,40 @@ def cap_bucket_kr(cap_trillion: float, groups: set[str]) -> str:
     return "lt100b"
 
 
+def _raw_number(item: dict, raw_key: str, text_key: str) -> float | None:
+    value = item.get(raw_key)
+    if value in (None, "", "N/A"):
+        value = item.get(text_key)
+    return parse_number(str(value)) if value not in (None, "") else None
+
+
 def fetch_market_page(sosok: int, page: int) -> list[dict]:
-    """sosok: 0=KOSPI, 1=KOSDAQ"""
+    """sosok: 0=KOSPI, 1=KOSDAQ. m.stock.naver.com 시가총액 순 목록(페이지당 100건)."""
     market = "kospi" if sosok == 0 else "kosdaq"
-    url = (
-        "https://finance.naver.com/sise/sise_market_sum.naver?"
-        f"sosok={sosok}&page={page}"
-        "&fieldIds=market_sum&fieldIds=amount&fieldIds=volume"
-    )
-    html = request_html(url)
-    rows = re.findall(
-        r'<td class="no">\d+</td>.*?/item/board\.naver\?code=\d+.*?</tr>',
-        html,
-        re.DOTALL,
+    payload = fetch_mstock_json(
+        f"stocks/marketValue/{'KOSPI' if sosok == 0 else 'KOSDAQ'}?page={page}&pageSize={MSTOCK_PAGE_SIZE}"
     )
     out = []
-    for row in rows:
-        code_m = re.search(r'/item/main\.naver\?code=(\d+)"[^>]*>([^<]+)</a>', row)
-        if not code_m:
+    for item in payload.get("stocks") or []:
+        code = str(item.get("itemCode") or "")
+        company = strip_cell(str(item.get("stockName") or ""))
+        # 옛 HTML 파서는 숫자 6자리 코드만 잡았다(0193T0 같은 영숫자 ETF 는 KR_ETFS 로만).
+        if not re.fullmatch(r"\d{6}", code) or not company:
             continue
-        code, company = code_m.group(1), strip_cell(code_m.group(2))
-        cells = re.findall(r"<td[^>]*>(.*?)</td>", row, re.DOTALL)
-        if len(cells) < 7:
-            continue
-        price = parse_number(cells[2])
-        change_pct = parse_change_pct(cells[4])
-        # Naver market-sum table order is:
-        # 현재가, 전일비, 등락률, 액면가, 시가총액, 상장주식수, ...
-        # Keep 시가총액 at cells[6]; cells[7] is listed shares and must not drive heatmap area.
-        cap_eok = parse_number(cells[6]) if len(cells) > 6 else None
-        volume = parse_number(cells[9]) if len(cells) > 9 else None
-        amount = parse_number(cells[10]) if len(cells) > 10 else None
+        price = _raw_number(item, "closePriceRaw", "closePrice")
         if price is None:
             continue
-        cap_trillion = (cap_eok or 0) / 10000.0  # 억원 → 조원
-        is_etf_like = is_etf_like_name(company)
+        change_pct = parse_number(str(item.get("fluctuationsRatio") or ""))
+        cap_raw = _raw_number(item, "marketValueRaw", "marketValue")
+        # marketValueRaw 는 원 단위, marketValue 텍스트는 백만원 단위
+        if item.get("marketValueRaw") not in (None, "", "N/A"):
+            cap_trillion = (cap_raw or 0) / 1e12
+        else:
+            cap_trillion = (cap_raw or 0) / 1e6
+        volume = _raw_number(item, "accumulatedTradingVolumeRaw", "accumulatedTradingVolume")
+        amount = parse_number(str(item.get("accumulatedTradingValue") or ""))  # 백만원(옛 표와 동일)
+        end_type = str(item.get("stockEndType") or "").lower()
+        is_etf_like = end_type in {"etf", "etn"} or is_etf_like_name(company)
         groups = {"all_etf", "all_misc"} if is_etf_like else {f"idx_{market}", "all_kr"}
         sector, industry = ("ETF", "ETF/ETN") if is_etf_like else classify_kr_stock(code, company)
         out.append({

@@ -1,10 +1,70 @@
 {
-  "updatedAtKst": "2026-09-13 18:42 KST",
-  "lastFileDate": "2026-09-11",
-  "count": 608,
+  "updatedAtKst": "2026-09-14 19:05 KST",
+  "lastFileDate": "2026-09-14",
+  "count": 600,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Leader's Advantage Acquisition Corp.",
+      "ticker": "LEDR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-14",
+      "accession": "0001213900-26-099404:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109823/000121390026099404/ea0286599-06.htm"
+    },
+    {
+      "company": "Leader's Advantage Acquisition Corp.",
+      "ticker": "LEDR",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-14",
+      "accession": "0001213900-26-099404:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109823/000121390026099404/ea0286599-06.htm"
+    },
+    {
+      "company": "Electra Therapeutics, Inc.",
+      "ticker": "ETRA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-14",
+      "accession": "0001193125-26-389755:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2088082/000119312526389755/d61940ds1a.htm"
+    },
+    {
+      "company": "Electra Therapeutics, Inc.",
+      "ticker": "ETRA",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-14",
+      "accession": "0001193125-26-389755:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2088082/000119312526389755/d61940ds1a.htm"
+    },
+    {
+      "company": "Eaglesky Acquisition Corp",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-14",
+      "accession": "0001185185-26-003965:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2143067/000118518526003965/eagleacqs1a1090926.htm"
+    },
+    {
+      "company": "Eaglesky Acquisition Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1/A",
+      "fileDate": "2026-09-14",
+      "accession": "0001185185-26-003965:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2143067/000118518526003965/eagleacqs1a1090926.htm"
+    },
     {
       "company": "FutureCore Acquisition Corp",
       "ticker": null,
@@ -6114,157 +6174,6 @@
       "link": "https://www.sec.gov/Archives/edgar/data/2105398/000110465926084293/tm264837-15_424b4.htm",
       "offerPrice": 21.0,
       "offerPriceChecked": 2
-    },
-    {
-      "company": "Braveheart Bio, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-15",
-      "accession": "0001628280-26-048213:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2131524/000162828026048213/braveheartbioinc-sx1.htm"
-    },
-    {
-      "company": "ARC Group Securities Acquisition I",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-15",
-      "accession": "0001493152-26-033301:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2094712/000149315226033301/forms-1a.htm"
-    },
-    {
-      "company": "ARC Group Securities Acquisition I",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-15",
-      "accession": "0001493152-26-033301:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2094712/000149315226033301/forms-1a.htm"
-    },
-    {
-      "company": "QumulusAI, Inc.",
-      "ticker": "QMLS",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-15",
-      "accession": "0001437749-26-023622:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2084026/000143774926023622/quma20260714_424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPriceNone": true,
-      "offerPriceNoneReason": "direct-listing"
-    },
-    {
-      "company": "authID Inc.",
-      "ticker": "AUID",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-15",
-      "accession": "0001213900-26-078329:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1534154/000121390026078329/ea0297999-s1_authid.htm"
-    },
-    {
-      "company": "Churchill Capital Corp XIII",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-15",
-      "accession": "0001213900-26-078277:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2114229/000121390026078277/ea0297779-01.htm"
-    },
-    {
-      "company": "Standard Nuclear, Inc.",
-      "ticker": "STDN",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-15",
-      "accession": "0001213900-26-078128:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2086716/000121390026078128/ea0276071-12.htm"
-    },
-    {
-      "company": "Standard Nuclear, Inc.",
-      "ticker": "STDN",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-15",
-      "accession": "0001213900-26-078128:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2086716/000121390026078128/ea0276071-12.htm"
-    },
-    {
-      "company": "Jones Ventures INTL Acquisition1 Corp",
-      "ticker": "JONE",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-15",
-      "accession": "0001213900-26-078066:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2129056/000121390026078066/ea0285792-05.htm",
-      "offerPrice": 10.0,
-      "offerPriceChecked": 2,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Jones Ventures INTL Acquisition1 Corp",
-      "ticker": "JONE",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-15",
-      "accession": "0001213900-26-078062:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2129056/000121390026078062/ea0285792-06.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 10.0,
-      "offerPriceKind": "unit"
-    },
-    {
-      "company": "Vogenx, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-15",
-      "accession": "0001185185-26-002985:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1903784/000118518526002985/vogenxs1071026.htm"
-    },
-    {
-      "company": "Encore Medical, Inc.",
-      "ticker": "EMI",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-15",
-      "accession": "0001104659-26-083917:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1838003/000110465926083917/tm2525595-23_s1a.htm"
-    },
-    {
-      "company": "Encore Medical, Inc.",
-      "ticker": "EMI",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-15",
-      "accession": "0001104659-26-083917:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1838003/000110465926083917/tm2525595-23_s1a.htm"
-    },
-    {
-      "company": "AEON Biopharma, Inc.",
-      "ticker": "AEON",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-15",
-      "accession": "0001104659-26-083680:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/1837607/000110465926083680/tm2615250-5_424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPrice": 0.3221
     }
   ]
 }

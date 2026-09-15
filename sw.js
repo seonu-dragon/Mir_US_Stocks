@@ -6,6 +6,9 @@ let ACTIVE_CACHE_NAME = null;
 // 않는다(예전엔 그렇게 들어가 있었고, 순수 낭비였다). 그런 자산은 런타임에 cacheFirst
 // 로 잡히고, 스냅샷(수 MB×4)도 첫 방문 때 런타임 캐시에 들어간다 — install 단계에서
 // 24MB 를 받아두던 걸 없앴다.
+// (2026-09-15) mir-mascot.png(220KB)은 어디서도 렌더하지 않는데 첫 방문마다 받아
+// 왔다 — 뺐다. app.js 가 쓰는 건 mir-mascot-fly.png 로 다른 파일이고, 그건 런타임
+// staleWhileRevalidate 로 잡힌다.
 const OFFLINE_ASSETS = [
   "./",
   "./index.html",
@@ -13,8 +16,7 @@ const OFFLINE_ASSETS = [
   "./manifest.webmanifest",
   "./assets/favicon.ico",
   "./assets/favicon-32.png",
-  "./assets/apple-touch-icon.png",
-  "./assets/mir-mascot.png"
+  "./assets/apple-touch-icon.png"
 ];
 
 function parseBuildId(text) {
@@ -72,6 +74,30 @@ async function cacheFirst(request, cacheName) {
     safePut(cache, request, response.clone());
   }
   return response;
+}
+
+// 내비게이션(주소창·링크로 페이지를 여는 요청) 전용. 오프라인일 때 캐시에서
+// 정확히 같은 URL 을 찾으면 그걸 주고, 없으면 쿼리를 무시하고 셸을 찾는다.
+// 이 사이트의 모든 화면은 index.html?tab=… / analysis.html?t=… 처럼 쿼리로만
+// 갈리는데, 프리캐시에는 쿼리 없는 "./index.html" 하나만 들어 있어서 예전엔
+// 오프라인에서 탭 링크로 들어오면 전부 캐시 미스가 났다(2026-09-15 감사).
+async function navigationFirst(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      safePut(cache, request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    const exact = await cache.match(request);
+    if (exact) return exact;
+    const shell = await cache.match(request, { ignoreSearch: true });
+    if (shell) return shell;
+    const home = await cache.match("./index.html", { ignoreSearch: true });
+    if (home) return home;
+    throw err;
+  }
 }
 
 async function staleWhileRevalidate(request, cacheName) {
@@ -134,6 +160,10 @@ self.addEventListener("fetch", (event) => {
       // 처음 본 날짜의 데이터를 계속 본다(2026-08-07~09-03 실제 발생). 항상 네트워크 우선.
       if (url.pathname.includes("/data/")) {
         return networkFirst(req, cacheName);
+      }
+      // 페이지 이동은 쿼리를 무시한 셸 폴백까지 본다(위 navigationFirst 주석).
+      if (req.mode === "navigate") {
+        return navigationFirst(req, cacheName);
       }
       // 내용해시로 버전이 박힌 자산(app.js·styles.css 등)은 불변으로 취급 → 캐시 우선.
       if (url.searchParams.has("v")) {

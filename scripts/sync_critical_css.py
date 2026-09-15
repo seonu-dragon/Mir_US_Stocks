@@ -74,9 +74,22 @@ def render_inline(css: str, eol: str) -> str:
     ])
 
 
+# Path.read_text/write_text 의 newline= 인자는 Python 3.13+ 에서만 받는다.
+# CI 러너가 3.12 라 --check 가 TypeError 로 죽었고(2026-09-15 에 CI 에 연결하면서
+# 드러났다), 로컬 3.13 에서만 통과했다. open() 으로 낮춰 3.12 에서도 돌게 한다.
+def read_keep_eol(path: Path) -> str:
+    with path.open(encoding="utf-8", newline="") as fh:
+        return fh.read()
+
+
+def write_keep_eol(path: Path, text: str) -> None:
+    with path.open("w", encoding="utf-8", newline="") as fh:
+        fh.write(text)
+
+
 def sync(target: Path, css: str, check: bool) -> bool:
     """True = 이미 최신(또는 갱신 완료). False = 어긋남(--check) 또는 마커 없음."""
-    html = target.read_text(encoding="utf-8", newline="")   # 줄끝 보존
+    html = read_keep_eol(target)   # 줄끝 보존
     eol = CRLF if CRLF in html else LF
     m = HTML_BLOCK.search(html)
     if not m:
@@ -89,7 +102,7 @@ def sync(target: Path, css: str, check: bool) -> bool:
     if check:
         print(f"[diff] {target.name}: styles.css 의 critical 블록과 다름")
         return False
-    target.write_text(new_html, encoding="utf-8", newline="")
+    write_keep_eol(target, new_html)
     print(f"[sync] {target.name}: 갱신 ({css.count(LF) + 1}줄)")
     return True
 
@@ -99,7 +112,7 @@ def main() -> int:
     ap.add_argument("--check", action="store_true", help="갱신하지 않고 어긋남만 보고(exit 1)")
     args = ap.parse_args()
 
-    css = extract_critical(STYLES.read_text(encoding="utf-8", newline=""))
+    css = extract_critical(read_keep_eol(STYLES))
     ok = True
     for t in TARGETS:
         if not t.exists():

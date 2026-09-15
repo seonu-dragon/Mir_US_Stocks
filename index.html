@@ -567,7 +567,6 @@ html[data-theme="dark"] {
             <div class="daily-action-grid" id="dailyActionGrid" aria-live="polite">
               <p class="muted">오늘의 확인 항목을 정리하는 중입니다.</p>
             </div>
-            <div class="daily-action-news" id="dailyActionNews" hidden></div>
           </section>
         </div>
 
@@ -580,11 +579,12 @@ html[data-theme="dark"] {
         <div class="briefing-schedule" aria-label="AI 브리핑 업데이트 일정">
           <p class="briefing-schedule-title">AI 브리핑 업데이트 일정 <span>(한국 표준시 KST)</span></p>
           <ul class="briefing-schedule-list">
-            <li><strong>미국 장마감 시황 브리핑</strong> 업데이트 시간: <time>06:00</time></li>
-            <li><strong>국내 개장 전 심층 보고서</strong> 업데이트 시간: <time>07:00</time></li>
-            <li><strong>국내 장마감 시황 브리핑</strong> 업데이트 시간: <time>16:00</time></li>
-            <li><strong>미국 개장 전 심층 보고서</strong> 업데이트 시간: <time>21:00</time></li>
+            <li><strong>미국 장마감 시황 브리핑</strong> 업데이트 예정: <time>05:34</time></li>
+            <li><strong>국내 개장 전 심층 보고서</strong> 업데이트 예정: <time>06:06</time></li>
+            <li><strong>국내 장마감 시황 브리핑</strong> 업데이트 예정: <time>15:42</time></li>
+            <li><strong>미국 개장 전 심층 보고서</strong> 업데이트 예정: <time>21:07</time></li>
           </ul>
+          <p class="briefing-schedule-note muted">예정 시각이며, 실제 발행은 지연될 수 있습니다.</p>
         </div>
         <div class="ai-briefing-grid">
           <div class="briefing-box">
@@ -1135,7 +1135,7 @@ html[data-theme="dark"] {
         <div class="tab-leaf" id="tab-health">
           <div class="section-title">
             <h2>시장 폭</h2>
-            <p>주요 지수·국가·채권·원자재·환율과 상승/하락 종목 분포를 봅니다. 지수/ETF는 하루 1회 스냅샷, 환율은 실시간으로 가져옵니다.</p>
+            <p>주요 지수·국가·채권·원자재·환율과 상승/하락 종목 분포를 봅니다. 지수/ETF는 저장된 스냅샷, 환율은 실시간으로 가져옵니다.</p>
           </div>
           <section class="index-strip" id="indexStripFull" aria-label="지수 전체"></section>
           <section class="summary-band" id="marketSummary"></section>
@@ -1247,7 +1247,7 @@ html[data-theme="dark"] {
                   <span class="control-caption">프리셋</span>
                   <div class="segmented ia-builtin" id="chartBuiltinPresets"></div>
                 </div>
-                <button type="button" id="chartProbBtn" class="primary chart-prob-btn" title="이동평균선·지지/저항을 차트에 표시하고 상승 확률을 계산합니다">상승확률 분석</button>
+                <button type="button" id="chartProbBtn" class="primary chart-prob-btn" title="이동평균선·지지/저항을 차트에 표시하고 기술 점수(0~100)를 계산합니다">기술 점수 분석</button>
                 <button type="button" class="ghost compact-btn ia-chart-settings-btn" id="chartSettingsBtn" aria-expanded="false" aria-controls="chartSettingsPanel">⋯ 차트 설정</button>
               </div>
               <details class="chart-settings-panel ia-chart-settings" id="chartSettingsPanel">
@@ -1670,7 +1670,15 @@ html[data-theme="dark"] {
 
         <div class="sub-panel" id="sub-scanner">
           <div class="ia-find-head">
-            <p class="muted" id="scannerMeta">기술적 지표를 종합해 상승 확률이 높은 종목을 순위로 보여줍니다.</p>
+            <p class="muted" id="scannerMeta">기술적 지표를 종합한 모멘텀 점수(0~100)로 종목 순위를 보여줍니다. 점수는 확률이 아닙니다.</p>
+            <div class="toolbar">
+              <label>
+                순위 기준
+                <select id="scanRank"></select>
+              </label>
+            </div>
+            <p class="muted" id="scannerRankNote" hidden></p>
+            <p class="muted" id="scannerEvidence" hidden></p>
           </div>
           <details class="ia-fold ia-adv">
             <summary>고급 필터</summary>
@@ -2701,7 +2709,7 @@ html[data-theme="dark"] {
         <button type="button" class="ia-link" data-open="community">커뮤니티</button>
       </div>
       <div class="ia-footer-note">
-        <span>하루 1회 저장된 스냅샷 데이터를 사용합니다.</span>
+        <span>저장된 스냅샷 데이터를 사용합니다. 시장별 갱신 주기는 위 안내를 참고하세요.</span>
         <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
       </div>
     </footer>

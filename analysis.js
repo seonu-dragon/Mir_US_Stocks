@@ -1,5 +1,5 @@
 /*
- * 차트 확률 분석 엔진 (analysis.js)
+ * 차트 기술 점수 분석 엔진 (analysis.js)
  * ----------------------------------
  * 종목 하나의 5년치 일봉(OHLCV)을 받아 두 가지 방식으로 상승/하락 확률을 추정한다.
  *
@@ -155,7 +155,9 @@ function tfTrendState(closes, fast = 20, slow = 60) {
 
 function computeGapFillStats(rows, maxFillBars = 40, minPct = 0.003) {
   const samples = [];
-  for (let i = 1; i < rows.length - 5; i += 1) {
+  // 최근 5봉을 빼고 돌면 바로 어제 난 갭이 목록에 안 뜬다 — 끝까지 훑고,
+  // 아직 관찰 창이 안 지난 갭은 아래 censored 로 분모에서만 뺀다(감사 P3).
+  for (let i = 1; i < rows.length; i += 1) {
     const prev = rows[i - 1];
     const cur = rows[i];
     let zone = null;
@@ -166,12 +168,13 @@ function computeGapFillStats(rows, maxFillBars = 40, minPct = 0.003) {
     let fillBars = null;
     // 갭 발생 봉(i) 자신은 존 경계(zone.hi = cur.l 등)에 항상 닿아 있어 j=i부터 돌면
     // 모든 갭이 fillBars=0으로 '메움' 처리된다. 다음 봉부터 검사한다(파이썬 포팅본과 동일).
-    for (let j = i + 1; j < Math.min(rows.length, i + maxFillBars); j += 1) {
+    // 창은 갭 다음 봉부터 정확히 maxFillBars 개(i+1 … i+maxFillBars). 예전엔 39봉만 봤다.
+    for (let j = i + 1; j <= Math.min(rows.length - 1, i + maxFillBars); j += 1) {
       if (rows[j].l <= zone.hi && rows[j].h >= zone.lo) { filled = true; fillBars = j - i; break; }
     }
     // 우측 절단(right-censoring): 관찰 창(maxFillBars)이 아직 다 지나지 않은 최근 갭은
     // '안 메워짐' 으로 확정할 수 없다. 비율 분모에서 빼고 목록에는 '관찰 중' 으로 남긴다.
-    const censored = !filled && (i + maxFillBars > rows.length);
+    const censored = !filled && (i + maxFillBars > rows.length - 1);
     samples.push({ ...zone, filled, fillBars, censored });
   }
   const resolved = samples.filter((s) => !s.censored);
@@ -1457,6 +1460,15 @@ const CANDLE_PATTERN_KEYS = new Set([
 // 노이즈라 신호를 내지 않는다. 방향 크기는 원시 상승률이 아니라 기준선 대비 edge 로.
 const PATTERN_SIGNAL_MIN_N = 200;
 const PATTERN_SIGNAL_MIN_EDGE = 1.0;
+// 방향이 섞인 패턴 키(build_pattern_stats.py 가 상방·하방 이벤트를 한 풀에 담는다).
+// 통계의 edge 는 두 방향 평균이라 하방 확정에도 상방 신호가 붙는다(island_reversal
+// n=8,145 edge +5.6, gap_fill n=303,732 edge +2.8). 키를 방향별로 쪼개기 전까지는
+// 신호 대상에서 뺀다 — 카드(설명)로는 계속 보여 준다.
+const DIRECTION_MIXED_PATTERN_KEYS = new Set([
+  "symmetrical_triangle", "broadening_triangle", "complex_hns", "island_reversal", "gap_fill_setup",
+]);
+// '종목 실측' 모드 표본 하한. n=1 에 100% 가 나오는 것을 통계라고 보여 줄 수 없다.
+const INDIVIDUAL_STAT_MIN_N = 20;
 
 // 감지된 현재 패턴 + 과거 통계 → 신호 + 카드 정보
 function patternSignals(rows, horizon, stats, opts) {
@@ -1472,6 +1484,7 @@ function patternSignals(rows, horizon, stats, opts) {
     const barsAgo = rows.length - 1 - ev.confirm_idx;
     const edge = Number.isFinite(s.edge) ? s.edge : null;
     const eligible = !CANDLE_PATTERN_KEYS.has(ev.pattern)
+      && !DIRECTION_MIXED_PATTERN_KEYS.has(ev.pattern)
       && edge != null && Math.abs(edge) >= PATTERN_SIGNAL_MIN_EDGE
       && (s.n || 0) >= PATTERN_SIGNAL_MIN_N;
     if (eligible) {
@@ -1484,8 +1497,13 @@ function patternSignals(rows, horizon, stats, opts) {
       });
     }
     const indyStat = analyzeIndividualPatternPerformance(rows, ev.pattern, horizon);
-    const useIndy = opts.statsMode === "individual" && indyStat;
-    const displayStat = useIndy ? { ...indyStat, edge: s.edge, n: indyStat.n, _source: "individual" } : { ...s, _source: "population" };
+    // 종목 실측은 표본 하한을 넘겼을 때만 쓴다(미달이면 전체 통계로 폴백).
+    // 개별 통계 옆에 모집단 edge 를 붙이지 않는다 — 다른 분모의 숫자를 나란히 두면
+    // "이 종목 실측 대비 시장 대비 +x%p" 로 잘못 읽힌다(감사 P2).
+    const useIndy = opts.statsMode === "individual" && indyStat && indyStat.n >= INDIVIDUAL_STAT_MIN_N;
+    const displayStat = useIndy
+      ? { ...indyStat, edge: null, _source: "individual" }
+      : { ...s, _source: "population" };
     // 레짐 조건부 통계 — 빌더가 벤치마크(SPY/KODEX 200) 종가 vs 200일 SMA 로 이벤트를
     // 분류해 regimes.{above200|below200} 에 같은 스키마로 담고, 빌드 시점의
     // currentRegime 을 함께 준다. 표본이 얇으면(n<30) 노이즈라 숨긴다.
@@ -1503,6 +1521,7 @@ function patternSignals(rows, horizon, stats, opts) {
       stat: displayStat,
       popStat: s,
       indyStat,
+      indyBelowMin: !!(opts.statsMode === "individual" && (!indyStat || indyStat.n < INDIVIDUAL_STAT_MIN_N)),
       baseline: stats.baseline ? stats.baseline[hKey] : null,
       measuredMove: computeMeasuredMove(rows, ev),
       failed: checkPatternFailure(rows, ev),
@@ -1516,6 +1535,11 @@ function patternSignals(rows, horizon, stats, opts) {
 // ===== 돌파 연속성 / 되돌림 셋업 (build_breakout_retest.py 로 검증한 엣지) =====
 // 검증 결과: 상승 돌파는 약한 추세 지속 우위(+1~2%p), 하락 돌파는 오히려 반등 경향.
 // 되돌림(retest)은 상승 돌파의 단기 진입 타이밍에 도움. → 표시용 카드(중복 신호 방지).
+// 되돌림 정의는 통계를 만든 build_breakout_retest.py 와 같아야 한다 —
+// 그쪽은 돌파 봉(b) 다음 봉부터 15봉 안에서 rows[i].l <= 넥라인 <= rows[i].h 인
+// 첫 봉을 retest 로 본다. JS 는 예전에 '20봉 · |종가−넥라인| <= ATR' 이라 서로 다른
+// 표본을 같은 표에서 읽고 있었다(감사 P2).
+const BREAKOUT_RETEST_WIN = 15;
 function detectBreakoutRetest(rows, horizon, stats) {
   if (!stats || !stats.directions) return null;
   const n = rows.length;
@@ -1526,16 +1550,19 @@ function detectBreakoutRetest(rows, horizon, stats) {
     .sort((a, b) => b.confirm_idx - a.confirm_idx);
   if (!evs.length) return null;
   const recent = evs[0];
-  const price = rows[n - 1].c;
-  const atr = windowAtr(rows);
   const barsSince = n - 1 - recent.confirm_idx;
-  const isRetest = barsSince >= 1 && Math.abs(price - recent.neckline) <= atr; // 돌파선 재접촉
+  // 돌파 다음 봉부터 15봉 안에 넥라인을 실제로 관통한 첫 봉이 있으면 retest.
+  let retestIdx = null;
+  for (let i = recent.confirm_idx + 1; i < Math.min(n, recent.confirm_idx + 1 + BREAKOUT_RETEST_WIN); i += 1) {
+    if (rows[i].l <= recent.neckline && recent.neckline <= rows[i].h) { retestIdx = i; break; }
+  }
+  const isRetest = retestIdx != null;
   const dirKey = recent.dir > 0 ? "up_break" : "down_break";
   const entry = isRetest ? "retest" : "breakout";
   const dd = stats.directions[dirKey];
   const s = dd && dd.entries && dd.entries[entry] && dd.entries[entry][String(horizon)];
   if (!s) return null;
-  return { dir: recent.dir, isRetest, barsSince, neckline: recent.neckline, stat: s };
+  return { dir: recent.dir, isRetest, barsSince, retestBarsAgo: retestIdx == null ? null : n - 1 - retestIdx, neckline: recent.neckline, stat: s };
 }
 
 // ===== 신호 합의 (Signal Consensus) =====
@@ -1815,7 +1842,8 @@ function buildSignals(rows) {
     if (sq.fired) {
       const mom = last(rocArray(closes, 12));
       dir = mom != null && mom > 0 ? 0.55 : mom != null && mom < 0 ? -0.55 : 0;
-      detail = "스퀴즈 해제 + 모멘텀 " + (mom >= 0 ? "상승" : "하락");
+      // mom 이 null 이면 "모멘텀 상승"(null >= 0 이 true) 으로 잘못 찍혔다.
+      detail = "스퀴즈 해제" + (mom == null ? " (모멘텀 산출 불가)" : " + 모멘텀 " + (mom > 0 ? "상승" : mom < 0 ? "하락" : "보합"));
     } else if (sq.squeezed) dir = 0.1;
     signals.push({ label: "TTM Squeeze", dir, weight: sq.fired ? 1.0 : 0.5, detail, fired: !!sq.fired, squeezed: !!sq.squeezed });
   }
@@ -2351,12 +2379,15 @@ function renderPatternCard(result) {
     const srcLabel = c.stat && c.stat._source === "individual" ? "종목 실측" : "전체 통계";
     const indyStr = c.indyStat && c.stat && c.stat._source === "population" ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 과거 실측: <b>${c.indyStat.n}회</b> 발생 중 <b>${c.indyStat.up_rate.toFixed(0)}%</b> 상승 (평균 <b>${c.indyStat.avg_ret >= 0 ? "+" : ""}${c.indyStat.avg_ret.toFixed(1)}%</b>)</span>` : "";
+    // '종목 실측' 을 골랐지만 표본이 하한 미만이면 전체 통계로 폴백했다는 사실을 밝힌다.
+    const thinStr = c.indyBelowMin ?
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 표본이 ${INDIVIDUAL_STAT_MIN_N}건 미만이라 전체 통계로 대체했습니다.</span>` : "";
     const failStr = c.failed ? `<span class="pat-tag" style="background:var(--tint-neg);color:var(--tint-neg-fg);border-color:var(--neg)">패턴 실패</span>` : "";
     const targetStr = c.measuredMove && Number.isFinite(c.measuredMove.target) ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">목표가 추정: <b>${fmtPrice(c.measuredMove.target)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
     // 현재 레짐(벤치마크 200일선 상회/하회) 조건부 성공률 — n>=30 일 때만 한 줄.
     const regimeStr = c.regimeStat ?
-      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">현재 레짐(200일선 ${c.regimeKey === "above200" ? "상회" : "하회"}) 기준: 상승확률 <b style="color:${gaugeColor(c.regimeStat.up_rate)}">${c.regimeStat.up_rate.toFixed(0)}%</b> (n=${c.regimeStat.n.toLocaleString()})</span>` : "";
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">현재 레짐(200일선 ${c.regimeKey === "above200" ? "상회" : "하회"}) 기준: 과거 상승 비율 <b style="color:${gaugeColor(c.regimeStat.up_rate)}">${c.regimeStat.up_rate.toFixed(0)}%</b> (n=${c.regimeStat.n.toLocaleString()})</span>` : "";
     return `<div class="pat-item">
       <div class="pat-head">
         <span class="pat-name">${escapeHtml(c.label)}</span>
@@ -2371,6 +2402,7 @@ function renderPatternCard(result) {
         ${edgeStr}
         ${regimeStr}
         ${indyStr}
+        ${thinStr}
         ${targetStr}
       </p>
     </div>`;
@@ -2615,7 +2647,9 @@ function buildResultHTML(result) {
     return `<div class="notice">이 종목은 차트 데이터가 부족합니다(${result.bars}봉). 대형주·주요 종목을 입력해 주세요.</div>`;
   }
   const up = result.headlineUp;
-  const down = result.headlineDown;
+  // 헤드라인은 '확률'이 아니라 기술 점수(0~100)다. 막대·판정 문구 모두 점수 기준으로 그린다.
+  const scoreVal = result.consensus.up;
+  const scoreColor = gaugeColor(scoreVal);
   const color = gaugeColor(up);
 
   const bullSignals = result.signals.filter((s) => s.dir > 0.15).sort((a, b) => b.dir * b.weight - a.dir * a.weight);
@@ -2686,8 +2720,7 @@ function buildResultHTML(result) {
     <div class="grid2 cprob-top-grid">
       <div class="card">
         <h3>① 기술 점수 <b>${result.consensus.up.toFixed(0)}</b><span class="muted">/100 · 신호 합의 (추세 강도 ADX ${result.adxVal != null ? result.adxVal.toFixed(0) : "—"})</span></h3>
-        <p class="muted" style="margin:0 0 8px;font-size:12px;">기술 점수는 지표 투표의 가중 합산을 0~100 으로 환산한 값이며 확률이 아닙니다. 실측 확률은 ② 를 보세요.</p>
-        ${calibrationSlotHtml(result.consensus.up, result.horizon)}
+        <p class="muted" style="margin:0 0 8px;font-size:12px;">기술 점수는 지표 투표의 가중 합산을 0~100 으로 환산한 값이며 확률이 아닙니다. 과거 실측 상승 비율은 ② 를 보세요.</p>
         ${bullSignals.length ? `<div class="sig-group"><h4 class="bull">강세 신호</h4>${bullSignals.map(signalRow).join("")}</div>` : ""}
         ${bearSignals.length ? `<div class="sig-group"><h4 class="bear">약세 신호</h4>${bearSignals.map(signalRow).join("")}</div>` : ""}
         ${neutralSignals.length ? `<div class="sig-group"><h4 class="neu">중립</h4>${neutralSignals.map(signalRow).join("")}</div>` : ""}
@@ -2726,7 +2759,7 @@ function buildResultHTML(result) {
         <h2>${escapeHtml(analysisHeadLabels(result).main)} <span class="muted">${escapeHtml(analysisHeadLabels(result).sub)}</span></h2>
         <p class="muted"><span class="nowrap">기준일 ${escapeHtml(result.lastDate)}</span> · <span class="nowrap">종가 ${fmtPrice(result.price)}</span> · <span class="nowrap">분석 봉 ${result.bars}개</span></p>
       </div>
-      <div class="verdict" style="color:${color}">${verdictText(up)}</div>
+      ${result.base ? `<div class="verdict" style="color:${color}">${verdictText(up)}</div>` : ""}
     </div>
 
     <div class="card briefing-card" style="margin-bottom:14px; padding: 14px 16px;">
@@ -2735,11 +2768,13 @@ function buildResultHTML(result) {
     </div>
 
     <div class="prob-wrap">
-      <div class="prob-bar">
-        <div class="prob-up" style="width:${up.toFixed(1)}%">상승 ${up.toFixed(0)}%</div>
-        <div class="prob-down" style="width:${down.toFixed(1)}%">하락 ${down.toFixed(0)}%</div>
+      <p class="prob-score-head" style="margin:0 0 6px;font-size:var(--fs-h3);font-weight:700;color:${scoreColor};">기술 점수 ${scoreVal.toFixed(0)}/100${result.base ? ` <span class="muted" style="font-weight:600;font-size:var(--fs-sub);">· 과거 실측 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건)</span>` : ""}</p>
+      <div class="prob-bar" role="img" aria-label="기술 점수 ${scoreVal.toFixed(0)} / 100">
+        <div class="prob-up" style="width:${scoreVal.toFixed(1)}%;background:${scoreColor}"></div>
+        <div class="prob-down" style="width:${(100 - scoreVal).toFixed(1)}%;background:var(--line,#d9dee7)"></div>
       </div>
-      <p class="prob-caption">${result.horizon}거래일 기준 종합 추정 · 기술 점수 ${result.consensus.up.toFixed(0)}/100${result.base ? ` / 과거 실측 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건${result.base.ciLow != null ? `, 95% ${result.base.ciLow.toFixed(0)}~${result.base.ciHigh.toFixed(0)}%` : ""})` : " / 과거 실측 표본 부족"}</p>
+      <p class="prob-caption">${result.horizon}거래일 기준 · 기술 점수는 지표 투표의 가중 합산(0~100)이며 확률이 아닙니다${result.base ? ` · 과거 유사 국면 실측 상승 비율 ${baseUpDisplay.toFixed(0)}% (표본 ${result.base.samples}건${result.base.ciLow != null ? `, 95% 구간 ${result.base.ciLow.toFixed(0)}~${result.base.ciHigh.toFixed(0)}%` : ""})` : " · 과거 실측 표본 부족"}</p>
+      ${calibrationSlotHtml(scoreVal, result.horizon)}
     </div>
 
     <div class="card">
@@ -2932,6 +2967,8 @@ async function runAnalysis(ticker) {
     if (reqId !== analysisRequestSeq) return;
     const hint = (window.MirMarket && window.MirMarket.getMode() === "kr") ? "005930, 000660" : "NVDA, AAPL, TSLA";
     el.innerHTML = `<div class="notice err">"${escapeHtml(ticker)}" 종목 데이터를 찾을 수 없습니다. 티커를 정확히 입력했는지 확인해 주세요. (예: ${hint})</div>`;
+    // 실패한 종목의 메타가 남으면 크롤러가 빈 화면을 그 종목 페이지로 색인한다.
+    updateAnalysisMeta("", "");
   }
 }
 
@@ -2962,21 +2999,37 @@ function analysisHeadLabels(result) {
   return { main: ticker, sub: company };
 }
 
+// 기본(종목 미지정) 메타 — analysis.html 의 정적 값과 같아야 한다.
+const ANALYSIS_BASE_TITLE = "차트 기술 점수 분석 | 미르의 미국 주식";
+const ANALYSIS_BASE_DESC = "종목 차트 분석 기반 기술 점수(0~100)·과거 유사 구간 실측";
+
+function analysisMarketSuffix() {
+  // sitemap 의 국내 딥링크(`?t=005930&market=kr`)와 canonical 이 같아야 한다.
+  // 한쪽만 바꾸면 크롤러가 canonical 을 따라가 미국 모드 빈 화면을 색인한다.
+  return (window.MirMarket && window.MirMarket.getMode && window.MirMarket.getMode() === "kr") ? "&market=kr" : "";
+}
+
 function updateAnalysisMeta(ticker, company) {
   const key = ticker ? analysisTickerKey(ticker) : "";
   const link = document.head.querySelector('link[rel="canonical"]');
   if (!key) {
     // 검색 화면(종목 미지정)으로 돌아온 경우 원래 메타로 되돌린다.
     if (link) link.setAttribute("href", ANALYSIS_BASE_URL);
+    document.title = ANALYSIS_BASE_TITLE;
+    setMetaContent('meta[name="description"]', ANALYSIS_BASE_DESC);
+    setMetaContent('meta[property="og:title"]', ANALYSIS_BASE_TITLE);
+    setMetaContent('meta[property="og:description"]', ANALYSIS_BASE_DESC);
     setMetaContent('meta[property="og:url"]', ANALYSIS_BASE_URL);
+    setMetaContent('meta[name="twitter:title"]', ANALYSIS_BASE_TITLE);
+    setMetaContent('meta[name="twitter:description"]', ANALYSIS_BASE_DESC);
     return;
   }
   const label = company ? `${company}(${key})` : key;
   // 사이트명은 시장을 따른다 — 국내 종목을 열어도 '미르의 미국 주식'으로 나오던 문제(09-06).
   const siteName = (window.MirMarket && window.MirMarket.getConfig && window.MirMarket.getConfig().pageTitle) || "미르의 미국 주식";
-  const title = `${label} 상승/하락 확률 분석 | ${siteName}`;
-  const desc = `${label} 의 차트 패턴·지지저항·과거 유사 구간을 기반으로 한 상승/하락 확률 추정.`;
-  const url = `${ANALYSIS_BASE_URL}?t=${encodeURIComponent(key)}`;
+  const title = `${label} 기술 점수·차트 패턴 분석 | ${siteName}`;
+  const desc = `${label} 의 차트 패턴·지지저항·과거 유사 구간 실측을 종합한 기술 점수(0~100). 확률 예측이 아닙니다.`;
+  const url = `${ANALYSIS_BASE_URL}?t=${encodeURIComponent(key)}${analysisMarketSuffix()}`;
 
   document.title = title;
   if (link) link.setAttribute("href", url);
@@ -2984,6 +3037,9 @@ function updateAnalysisMeta(ticker, company) {
   setMetaContent('meta[property="og:title"]', title);
   setMetaContent('meta[property="og:description"]', desc);
   setMetaContent('meta[property="og:url"]', url);
+  setMetaContent('meta[name="twitter:title"]', title);
+  setMetaContent('meta[name="twitter:description"]', desc);
+  setMetaContent('meta[property="og:site_name"]', siteName);
 }
 
 async function init() {
@@ -2993,7 +3049,7 @@ async function init() {
     const params = new URLSearchParams(window.location.search);
     const market = params.get("market");
     window.MirMarket.setMode(market === "kr" ? "kr" : window.MirMarket.getInitialMode());
-    document.title = window.MirMarket.getConfig().pageTitle + " · 차트 확률 분석";
+    document.title = window.MirMarket.getConfig().pageTitle + " · 차트 기술 점수 분석";
   }
   // submit 바인딩을 통계 로드보다 먼저 건다. 예전엔 await ensureStats() 뒤에 바인딩해,
   // 통계가 오기 전에 Enter 를 치면 preventDefault 가 없어 폼이 네이티브 GET 으로 페이지를

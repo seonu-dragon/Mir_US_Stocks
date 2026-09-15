@@ -1,4 +1,6 @@
 notion-client>=2.2.1
 playwright>=1.40.0
-python-dotenv>=1.0.0
 requests>=2.31.0
+
+# 테스트: py -m pytest automation/tests -q
+pytest>=8.0.0

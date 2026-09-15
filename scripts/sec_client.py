@@ -14,7 +14,7 @@ import re
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -221,19 +221,76 @@ def assert_not_emptying(out_json, payload):
         )
 
 
-def write_data(out_json, out_js, js_var, payload, *, indent=2, allow_empty=False):
+def assert_not_regressing(out_json, payload, *, floor_ratio=0.70, label=None):
+    """직전 산출물의 `floor_ratio` 미만으로 줄어든 결과로 덮으려 하면 중단한다.
+
+    `assert_not_emptying` 은 0건만 잡는다. 실제 사고는 그 앞단에서 난다 — DART 가
+    status 020(한도 초과)을 주기 시작하면 2,600행이 400행으로 줄어든 채 '정상'
+    발행되고, 워크플로우는 초록이며 신선도 게이트도 통과한다(타임스탬프는 새것,
+    0건도 아님). 절반이 사라지는 날은 발행하지 않는다.
+
+    호출부가 **정상적으로 줄어드는** 데이터셋(조회 창이 좁아진 날 등)이면 부르지 않거나
+    floor_ratio 를 낮춘다.
+    """
+    fresh = payload_row_count(payload)
+    if fresh is None:
+        return
+    path = Path(out_json)
+    if not path.exists():
+        return
+    try:
+        prev = payload_row_count(json.loads(path.read_text(encoding="utf-8")))
+    except Exception:
+        return
+    if not prev or prev <= 0:
+        return
+    if fresh >= prev * floor_ratio:
+        return
+    name = label or path.name
+    raise SystemExit(
+        f"[중단] {name}: 이번 실행 {fresh}건 < 직전 {prev}건의 {floor_ratio:.0%} "
+        f"({int(prev * floor_ratio)}건) — 소스가 반쯤 죽은 것으로 보고 덮지 않는다. "
+        "DART status 020(한도 초과)·로그인 만료를 먼저 확인할 것."
+    )
+
+
+def kst_today():
+    """KST 기준 오늘 날짜. naive `date.today()` 는 Actions(UTC)에서 하루 어긋난다."""
+    return datetime.now(KST).date()
+
+
+def latest_fiscal_year(now=None) -> int:
+    """DART 에서 **조회 가능한** 최신 사업연도.
+
+    사업보고서는 보통 3월 말까지 제출되므로 1~3월에는 직전 연도 보고서가 아직
+    없다(전 종목 status 013). 4월 이후에만 year-1, 그 전에는 year-2 를 쓴다.
+    """
+    now = now or datetime.now(KST)
+    return now.year - 1 if now.month >= 4 else now.year - 2
+
+
+# DART 계열 회귀 게이트의 기본 하한. 한도 초과(020)·로그인 만료로 절반이 사라지는 날을
+# 잡는다. 이벤트성(대량보유·주요사항보고)처럼 건수가 원래 출렁이는 데이터셋에는 쓰지 않는다.
+DART_REGRESSION_FLOOR = 0.70
+
+
+def write_data(out_json, out_js, js_var, payload, *, indent=2, allow_empty=False, min_ratio=None):
     """.json(빌더 상태) + .js(브라우저 전역) 쌍을 원자적으로 쓴다.
 
     indent=None 이면 .json 도 compact 로 쓴다 — KR DART 계열처럼 수 MB 짜리는
     pretty 로 부풀리지 않는다. .js 는 항상 compact.
 
     allow_empty=False(기본)이면 0건 페이로드로 기존 비어 있지 않은 파일을 덮지 않는다.
+    min_ratio 를 주면 직전 대비 그 비율 미만으로 줄어든 결과도 막는다
+    (assert_not_regressing — 0건이 아니라 '반쪽' 회귀를 잡는 쪽).
     """
     import sys
     sys.path.insert(0, str(ROOT / "scripts"))
     from briefing_store import atomic_write_text
     if not allow_empty:
         assert_not_emptying(out_json, payload)
+    if min_ratio:
+        assert_not_regressing(out_json, payload, floor_ratio=min_ratio)
     if indent is None:
         json_text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     else:
@@ -293,12 +350,20 @@ def git_publish(paths, label, *, cwd=None, attempts=3, sleep_s=10.0):
     return False
 
 
-def merge_previous_stocks(payload, out_json, label, key="stocks"):
+CARRY_EXPIRY_DAYS = 14
+
+
+def merge_previous_stocks(payload, out_json, label, key="stocks", expiry_days=CARRY_EXPIRY_DAYS):
     """이번 실행에서 못 받은 종목은 직전 산출물 값을 유지한다(패널 깜빡임 방지).
 
     build_us_finnhub_metrics 의 prev-merge 전략과 동일 — 429 로 몇 종목 놓친
     실행이 기존 결과를 통째로 날리면 실행마다 종목이 나타났다 사라진다.
     payload[key] 는 티커→레코드 dict 여야 한다.
+
+    **만료가 있다**: 승계된 레코드에 `carriedSince`(처음 승계된 날, KST)를 찍고,
+    expiry_days 를 넘기면 버린다. 만료가 없던 시절에는 상장폐지된 종목이 영원히
+    부활했고(KR 컨센서스), 얼어붙은 목표주가가 현재가 대비 괴리율로 계산돼
+    화면에 남았다(2026-09-15 감사).
     """
     try:
         if not out_json.exists():
@@ -307,13 +372,73 @@ def merge_previous_stocks(payload, out_json, label, key="stocks"):
         cur = payload.get(key)
         if cur is None:
             return payload
-        kept = 0
+        today = datetime.now(KST).date()
+        kept = expired = 0
         for ticker, rec in prev.items():
-            if ticker not in cur:
-                cur[ticker] = rec
-                kept += 1
+            if ticker in cur:
+                continue
+            if not isinstance(rec, dict):
+                continue
+            since = rec.get("carriedSince")
+            if since:
+                try:
+                    age = (today - datetime.strptime(str(since)[:10], "%Y-%m-%d").date()).days
+                except ValueError:
+                    age = 0
+                if age >= expiry_days:
+                    expired += 1
+                    continue
+            else:
+                rec = {**rec, "carriedSince": today.isoformat()}
+            cur[ticker] = rec
+            kept += 1
         if kept:
-            print(f"[{label}] 이번에 못 받은 {kept}종목은 이전 값 유지")
+            print(f"[{label}] 이번에 못 받은 {kept}종목은 이전 값 유지(최대 {expiry_days}일)")
+        if expired:
+            print(f"[{label}] {expiry_days}일 넘게 못 받은 {expired}종목은 승계를 끊었다")
     except Exception as exc:
         print(f"[{label}] 이전 파일 병합 실패(무시): {exc}")
+    return payload
+
+
+def merge_previous_rows(payload, out_json, label, *, rows_key="rows",
+                        key_fn=None, date_key="date", keep_days=180):
+    """행 리스트형 산출물에 직전 파일의 행을 합친다(최근 keep_days 일만).
+
+    공시 창이 7일뿐인 빌더는 매 실행 '지난 7일' 로 파일을 통째로 갈아엎어서,
+    라이브 실적반응이 8행까지 줄어 있었다. 키(기본: link → ticker+date)로 중복을
+    제거하고 keep_days 보다 오래된 행만 떨어뜨린다.
+    """
+    def _default_key(row):
+        return row.get("link") or f"{row.get('ticker')}|{row.get(date_key)}|{row.get('title', '')}"
+
+    key_of = key_fn or _default_key
+    rows = list(payload.get(rows_key) or [])
+    try:
+        path = Path(out_json)
+        prev_rows = []
+        if path.exists():
+            prev_rows = json.loads(path.read_text(encoding="utf-8")).get(rows_key) or []
+        cutoff = (datetime.now(KST).date() - timedelta(days=keep_days)).isoformat()
+        seen = {key_of(r) for r in rows}
+        added = 0
+        for row in prev_rows:
+            if not isinstance(row, dict):
+                continue
+            k = key_of(row)
+            if k in seen:
+                continue
+            stamp = str(row.get(date_key) or "")[:10]
+            if stamp and stamp < cutoff:
+                continue
+            rows.append(row)
+            seen.add(k)
+            added += 1
+        # 이번 실행 행도 창 밖이면 떨어뜨린다(파일이 무한히 자라지 않게).
+        rows = [r for r in rows if not (str(r.get(date_key) or "")[:10] and str(r.get(date_key))[:10] < cutoff)]
+        if added:
+            print(f"[{label}] 직전 파일에서 {added}건 승계(최근 {keep_days}일 유지) — 총 {len(rows)}건")
+    except Exception as exc:
+        print(f"[{label}] 직전 행 병합 실패(무시): {exc}")
+    payload[rows_key] = rows
     return payload

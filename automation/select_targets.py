@@ -49,7 +49,13 @@ def select_overseas_targets(
 ) -> list[dict]:
     selected: list[dict] = []
     scanner_sorted = sorted(scanner_items, key=lambda x: x.get("probability_score", 0), reverse=True)
-    mention_sorted = sorted(mention_items, key=lambda x: x.get("mention_count", 0), reverse=True)
+    # rank_score 가 현재 이름(build_kiwoom_exports). mention_count 는 옛 이름이라
+    # 이미 커밋된 export 파일을 읽을 때를 위해 폴백으로만 남긴다.
+    mention_sorted = sorted(
+        mention_items,
+        key=lambda x: x.get("rank_score", x.get("mention_count", 0)) or 0,
+        reverse=True,
+    )
 
     for item in scanner_sorted:
         if len([x for x in selected if x.get("source") == "scanner"]) >= 10:

@@ -64,6 +64,10 @@ def paths() -> dict[str, Path]:
         "posts": PROJECT_ROOT / "outputs" / "posts",
         "logs": PROJECT_ROOT / "outputs" / "logs",
         "prompts": PROJECT_ROOT / "prompts",
+        # 쿨다운 원장은 **추적되는** 경로에 둔다. 예전엔 outputs/posts/*.json 이었는데
+        # outputs/ 가 .gitignore 라 다른 머신·새 클론에서는 원장이 늘 비어 있었고
+        # "같은 종목 3일 재등장 금지" 가 사실상 동작하지 않았다(2026-09-15 감사).
+        "cooldown_ledger": PROJECT_ROOT / "data" / "kiwoom_cooldown.json",
     }
 
 

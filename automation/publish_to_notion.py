@@ -33,7 +33,9 @@ AUTOMATION_DIR = Path(__file__).resolve().parent
 if str(AUTOMATION_DIR) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_DIR))
 
+from compliance_check import assert_publishable, ensure_disclaimer  # noqa: E402
 from notion_client import append_stock_section, create_daily_page  # noqa: E402
+from ticker_cooldown import record_posted  # noqa: E402
 from utils import PROJECT_ROOT, load_env_file, load_json, save_json, today_kst  # noqa: E402
 
 
@@ -73,23 +75,48 @@ def main() -> int:
 
     news_idx = _news_index(today)
 
-    daily = create_daily_page(today=today)
-    page_id = daily.get("id", "")
-    page_url = daily.get("url", "")
-
-    results = []
+    # 준법 게이트는 **노션 페이지를 만들기 전에** 전부 돌린다. 한 건이라도 걸리면
+    # 아무것도 올리지 않는다(fail-closed) — 반쯤 올라간 글을 지우러 다니지 않게.
+    checked = []
+    blocked = []
     for post in posts:
         market = str(post.get("market", "")).upper()
         ticker = str(post.get("ticker", ""))
         if not post.get("title") or not post.get("body"):
             print(f"[publish] 건너뜀(제목/본문 없음): {market}/{ticker}")
             continue
+        safe = ensure_disclaimer(post)   # 면책 한 줄이 없으면 붙인다
+        try:
+            assert_publishable(safe)
+        except ValueError as exc:
+            blocked.append(str(exc))
+            continue
+        checked.append(safe)
+    if blocked:
+        print("[publish] 준법 위반으로 발행을 중단합니다:")
+        for line in blocked:
+            print(f"  - {line}")
+        return 1
+    if not checked:
+        print("[publish] 발행할 글이 없습니다.")
+        return 1
+
+    daily = create_daily_page(today=today)
+    page_id = daily.get("id", "")
+    page_url = daily.get("url", "")
+
+    results = []
+    for post in checked:
+        market = str(post.get("market", "")).upper()
+        ticker = str(post.get("ticker", ""))
         news = news_idx.get((market, ticker), [])
         append_stock_section(page_id=page_id, post=post, news=news, market=market)
         results.append({"ticker": ticker, "name": post.get("name", ticker), "market": market})
 
     if not args.skip_cooldown_record and results:
-        # 같은 종목 3일 재등장 금지를 위한 기록.
+        # 같은 종목 3일 재등장 금지를 위한 기록. 추적되는 원장이 정본이고,
+        # outputs/ 사본은 로컬 이력용으로만 남긴다.
+        record_posted([r["ticker"] for r in results], today)
         save_json(f"outputs/posts/{today}_daily.json", {"batch": "daily", "date": today, "results": results})
 
     print(f"\n[publish] 노션 발행 완료: {len(results)}종")

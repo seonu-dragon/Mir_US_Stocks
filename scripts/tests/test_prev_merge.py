@@ -10,6 +10,7 @@
 from __future__ import annotations
 
 import json
+from datetime import timedelta
 
 import pytest
 
@@ -32,8 +33,48 @@ def test_missing_tickers_keep_previous_values(tmp_path):
     payload = {"stocks": {"AAPL": {"pe": 31}}}
     merged = sec.merge_previous_stocks(payload, prev, "test")
     assert merged["stocks"]["AAPL"] == {"pe": 31}      # 오늘 받은 건 갱신
-    assert merged["stocks"]["MSFT"] == {"pe": 35}      # 못 받은 건 유지
+    assert merged["stocks"]["MSFT"]["pe"] == 35        # 못 받은 건 유지
+    # 승계된 레코드에는 만료 시계(carriedSince)가 찍힌다.
+    assert merged["stocks"]["MSFT"]["carriedSince"] == sec.kst_today().isoformat()
+    assert "carriedSince" not in merged["stocks"]["AAPL"]
     assert len(merged["stocks"]) == 3                  # 줄어들지 않는다
+
+
+def test_carried_records_expire(tmp_path):
+    """상폐 종목이 영원히 부활하지 않게 — carriedSince 가 만료 기간을 넘기면 버린다."""
+    stale = (sec.kst_today() - timedelta(days=20)).isoformat()
+    recent = (sec.kst_today() - timedelta(days=3)).isoformat()
+    prev = _write_prev(tmp_path, {
+        "DEAD": {"pe": 1, "carriedSince": stale},
+        "SLOW": {"pe": 2, "carriedSince": recent},
+    })
+    merged = sec.merge_previous_stocks({"stocks": {}}, prev, "test", expiry_days=14)
+    assert "DEAD" not in merged["stocks"]
+    assert merged["stocks"]["SLOW"]["pe"] == 2
+    # carriedSince 는 처음 승계된 날 그대로 — 매 실행 갱신되면 만료가 오지 않는다.
+    assert merged["stocks"]["SLOW"]["carriedSince"] == recent
+
+
+def test_merge_previous_rows_keeps_180_day_window(tmp_path):
+    """7일 창 빌더가 매 실행 파일을 갈아엎어 라이브가 8행까지 줄었던 회귀."""
+    path = tmp_path / "reactions.json"
+    old_row = {"ticker": "000660", "date": (sec.kst_today() - timedelta(days=200)).isoformat()}
+    kept_row = {"ticker": "005930", "date": (sec.kst_today() - timedelta(days=30)).isoformat()}
+    path.write_text(json.dumps({"rows": [old_row, kept_row]}, ensure_ascii=False), encoding="utf-8")
+    today_row = {"ticker": "035720", "date": sec.kst_today().isoformat()}
+    merged = sec.merge_previous_rows({"rows": [today_row]}, path, "test", keep_days=180)
+    tickers = {r["ticker"] for r in merged["rows"]}
+    assert tickers == {"035720", "005930"}   # 200일 전 행은 떨어진다
+
+
+def test_merge_previous_rows_dedupes_by_key(tmp_path):
+    path = tmp_path / "reactions.json"
+    row = {"ticker": "005930", "date": sec.kst_today().isoformat(), "link": "L1", "dayPct": 1.0}
+    path.write_text(json.dumps({"rows": [row]}, ensure_ascii=False), encoding="utf-8")
+    fresh = {**row, "dayPct": 2.0}
+    merged = sec.merge_previous_rows({"rows": [fresh]}, path, "test")
+    assert len(merged["rows"]) == 1
+    assert merged["rows"][0]["dayPct"] == 2.0   # 이번 실행 값이 이긴다
 
 
 def test_result_never_shrinks_below_previous(tmp_path):
@@ -59,7 +100,7 @@ def test_corrupt_previous_file_does_not_lose_todays_rows(tmp_path):
 def test_custom_key_is_respected(tmp_path):
     prev = _write_prev(tmp_path, {"AAPL": {"x": 1}}, key="rows")
     merged = sec.merge_previous_stocks({"rows": {}}, prev, "test", key="rows")
-    assert merged["rows"] == {"AAPL": {"x": 1}}
+    assert merged["rows"]["AAPL"]["x"] == 1
 
 
 # --------------------------------------------------------------------------

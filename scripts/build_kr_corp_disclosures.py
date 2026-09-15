@@ -42,7 +42,13 @@ try:
 except Exception:
     pass
 
-from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from briefing_store import repository_publish_lock  # noqa: E402
+from build_kr_disclosures import dart_pace  # noqa: E402
+from sec_client import (  # noqa: E402
+    assert_not_regressing,
+    merge_previous_rows,
+    write_data,
+)
 
 KST = ZoneInfo("Asia/Seoul")
 DISCLOSURES = ROOT / "data" / "kr_disclosures.json"
@@ -67,6 +73,8 @@ def fetch_doc(rcept: str, api_key: str) -> str | None:
     url = f"https://opendart.fss.or.kr/api/document.xml?crtfc_key={api_key}&rcept_no={rcept}"
     for attempt in range(3):
         try:
+            # 공유 페이싱(기본 0.15s). DART 일일 한도(20,000)를 이 빌더 혼자 태우지 않게.
+            dart_pace()
             raw = urllib.request.urlopen(url, timeout=20).read()
             z = zipfile.ZipFile(io.BytesIO(raw))
             data = z.read(z.namelist()[0])
@@ -99,25 +107,51 @@ def _num(s):
         return None
 
 
-def after(txt: str, label: str, pat: str, window: int = 90):
-    """label 을 찾고 그 뒤 window 자 안에서 pat 의 첫 그룹을 돌려준다(날짜·텍스트용)."""
-    i = txt.find(label)
-    if i < 0:
-        return None
-    m = re.search(pat, txt[i + len(label): i + len(label) + window])
-    return m.group(1) if m else None
+# 라벨과 값 사이에 올 수 있는 구분자. '-'(미기재 표시)는 **일부러 뺐다** —
+# 그걸 건너뛰면 빈 필드가 다음 필드의 값을 집어온다.
+_SEP = r"[\s:|·]*"
+
+
+def _label_positions(txt: str, label: str):
+    """label 이 나오는 모든 위치(첫 것만 보면 헤더 행에 걸린다)."""
+    start = 0
+    while True:
+        i = txt.find(label, start)
+        if i < 0:
+            return
+        yield i
+        start = i + len(label)
+
+
+def after(txt: str, label: str, pat: str, window: int = 40):
+    """label **바로 뒤**(구분자만 사이)에 붙은 pat 의 첫 그룹만 값으로 인정한다.
+
+    예전엔 라벨 뒤 90자를 `re.search` 로 훑어서, 값이 '-'(미기재)면 다음 필드의
+    값을 집어왔다: 배당기준일이 '-' 면 지급예정일을, 계약 '종료일' 자리에서
+    시작일을 값으로 썼다(2026-09-15 감사). after_num 과 같은 앵커링 규칙을 쓴다.
+    라벨이 여러 번 나오면(헤더 행 등) 앵커가 맞는 첫 위치를 쓴다.
+    """
+    anchored = re.compile(_SEP + r"(?:" + pat + r")")
+    for i in _label_positions(txt, label):
+        tail = txt[i + len(label): i + len(label) + window]
+        m = anchored.match(tail)
+        if m:
+            return m.group(1)
+    return None
 
 
 def after_num(txt: str, label: str, window: int = 25):
     """label 바로 뒤(공백만 사이)에 붙은 숫자만 값으로 인정한다. 필드가 '-'(미기재)면
     바로 뒤가 숫자가 아니라 None — 이렇게 앵커링해야 빈 필드가 먼 곳의 다른 숫자(예:
     계약금액)를 잘못 집어오지 않는다."""
-    i = txt.find(label)
-    if i < 0:
-        return None
-    tail = txt[i + len(label): i + len(label) + window]
-    m = re.match(r"\s*([\d.,]+)\b", tail)
-    return _num(m.group(1)) if m else None
+    for i in _label_positions(txt, label):
+        tail = txt[i + len(label): i + len(label) + window]
+        m = re.match(r"\s*([\d.,]+)\b", tail)
+        if m:
+            value = _num(m.group(1))
+            if value is not None:
+                return value
+    return None
 
 
 DATE = r"(\d{4}-\d{2}-\d{2})"
@@ -165,14 +199,23 @@ def build(api_key: str, limit: int | None):
         div_src, con_src = div_src[:limit], con_src[:limit]
     print(f"[공시파싱] 배당 {len(div_src)}건 · 공급계약 {len(con_src)}건")
 
+    # 파싱 손실을 셈한다. 예전엔 공급계약 108건 중 50건만 살아남아도(54% 소실)
+    # 로그에 아무 흔적이 없었다 — 소스 108, 원문 실패 N, 규모 미기재 M 을 payload 에 싣는다.
+    stats = {
+        "dividends": {"source": len(div_src), "fetchFailed": 0, "noValue": 0},
+        "contracts": {"source": len(con_src), "fetchFailed": 0, "noAmount": 0},
+    }
+
     dividends, contracts = [], []
     for r in div_src:
         doc = fetch_doc(rcpt_of(r), api_key)
         if not doc:
+            stats["dividends"]["fetchFailed"] += 1
             continue
         d = parse_dividend(clean(doc))
         # 기준일도 지급일도 없으면 파싱 실패로 보고 버린다(지어내지 않는다).
         if not (d.get("recordDate") or d.get("dps")):
+            stats["dividends"]["noValue"] += 1
             continue
         d.update({"ticker": str(r.get("ticker") or "").zfill(6),
                   "company": r.get("company") or "", "date": r.get("fileDate") or "",
@@ -181,28 +224,44 @@ def build(api_key: str, limit: int | None):
     for r in con_src:
         doc = fetch_doc(rcpt_of(r), api_key)
         if not doc:
+            stats["contracts"]["fetchFailed"] += 1
             continue
         c = parse_contract(clean(doc))
         if c.get("amount") is None and c.get("salesRatio") is None:
+            stats["contracts"]["noAmount"] += 1
             continue  # 조건부·미공개라 규모 정보가 전혀 없으면 버린다
         c.update({"ticker": str(r.get("ticker") or "").zfill(6),
                   "company": r.get("company") or "", "date": r.get("fileDate") or "",
                   "link": r.get("link") or ""})
         contracts.append(c)
 
+    for kind, got in (("dividends", len(dividends)), ("contracts", len(contracts))):
+        s = stats[kind]
+        print(f"[공시파싱/{kind}] 소스 {s['source']} → 적재 {got} "
+              f"(원문 실패 {s['fetchFailed']} · 값 없음 {s.get('noValue', s.get('noAmount'))})")
+
     dividends.sort(key=lambda x: x.get("recordDate") or x.get("date") or "", reverse=True)
     contracts.sort(key=lambda x: (x.get("salesRatio") or 0), reverse=True)
-    return dividends, contracts
+    return dividends, contracts, stats
 
 
-def write(kind: str, rows: list, note: str):
+def write(kind: str, rows: list, note: str, stats: dict | None = None):
+    """write_data 경유 — 0건 방어(assert_not_emptying)와 .js 계약을 공유한다.
+
+    직전 파일의 최근 180일 행을 합쳐 발행한다: DART 공시 조회 창이 7일이라
+    매 실행 통째로 갈아엎으면 라이브 표가 한 주치로 쪼그라든다.
+    """
     out_json, out_js, glob = OUT[kind]
     payload = {"updatedAtKst": now_kst(), "source": "DART 공시 원문(document.xml) 파싱",
-               "note": note, "count": len(rows), "rows": rows}
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+               "note": note, "rows": rows}
+    if stats:
+        payload["parseStats"] = stats
+    merge_previous_rows(payload, out_json, f"공시파싱/{kind}", keep_days=180)
+    payload["count"] = len(payload["rows"])
+    # 직전 대비 30% 넘게 줄면 소스 사고로 보고 덮지 않는다(prev-merge 뒤라 더 엄격해도 된다).
+    assert_not_regressing(out_json, payload, label=f"{kind}.json")
     out_json.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write_text(out_json, text)
-    atomic_write_text(out_js, f"window.{glob} = " + text + ";")
+    write_data(out_json, out_js, glob, payload, indent=None)
 
 
 def main() -> int:
@@ -229,21 +288,27 @@ def main() -> int:
         print("[공시파싱] kr_disclosures.json 없음 — 공시 빌더 먼저.")
         return 0
 
-    dividends, contracts = build(api_key, args.limit)
+    dividends, contracts, stats = build(api_key, args.limit)
     print(f"[공시파싱] 파싱 성공 — 배당 {len(dividends)} · 공급계약 {len(contracts)}")
     with repository_publish_lock(ROOT):
         write("dividends", dividends,
-              "현금ㆍ현물배당결정 공시 원문에서 1주당 배당금·시가배당률·배당기준일·지급예정일을 파싱.")
+              "현금ㆍ현물배당결정 공시 원문에서 1주당 배당금·시가배당률·배당기준일·지급예정일을 파싱. "
+              "최근 180일 병합 유지.",
+              stats["dividends"])
         write("contracts", contracts,
-              "단일판매ㆍ공급계약 공시 원문에서 계약금액·최근 매출액 대비 비중을 파싱. 조건부·미공개는 제외.")
+              "단일판매ㆍ공급계약 공시 원문에서 계약금액·최근 매출액 대비 비중을 파싱. 조건부·미공개는 제외. "
+              "최근 180일 병합 유지.",
+              stats["contracts"])
         print("Wrote dividends/contracts.")
         if args.push:
             import sec_client as sec
-            sec.git_publish(
+            if not sec.git_publish(
                 ["data/korea/dividends.json", "data/korea/dividends.js",
                  "data/korea/contracts.json", "data/korea/contracts.js"],
                 "KR dividends + contracts (parsed)",
-            )
+            ):
+                print("[공시파싱] git 게시 실패 — 발행되지 않았다")
+                return 1
     return 0
 
 

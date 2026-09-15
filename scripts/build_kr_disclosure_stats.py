@@ -339,7 +339,7 @@ def main() -> int:
     print(f"[통계] 유형 {len(stats)}개 기록 · 무작위를 이긴 유형 {edges}개")
     for typ, v in sorted(stats.items(), key=lambda x: x[1]["d0"]["mean"])[:12]:
         mark = "★" if v["edge"] else " "
-        print(f"  {mark} {typ:18s} N={v[chr(39)+chr(39)] if False else v['sample']:5d}  D0={v['d0']['mean']:+6.2f}%  "
+        print(f"  {mark} {typ:18s} N={v['sample']:5d}  D0={v['d0']['mean']:+6.2f}%  "
               f"D+1={v['d1']['mean']:+6.2f}%  (무작위 D0={v['d0'].get('random',{}).get('mean',0):+.2f}%)")
 
     if args.push:

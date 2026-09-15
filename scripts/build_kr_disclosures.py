@@ -11,6 +11,8 @@ import argparse
 import json
 import os
 import sys
+import threading
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
@@ -28,7 +30,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
-from sec_client import write_data  # noqa: E402
+from sec_client import DART_REGRESSION_FLOOR, write_data  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "kr_disclosures.json"
@@ -124,25 +126,102 @@ def load_json(path: Path, default):
 
 def write_outputs(payload: dict) -> None:
     # .json 은 빌더 상태(compact 유지), .js 는 브라우저 전역 — sec_client.write_data 로 통일.
-    write_data(OUT_JSON, OUT_JS, "KR_DISCLOSURES", payload, indent=None)
+    # DART 한도 초과(020)·로그인 만료로 직전 대비 30% 넘게 줄어든 결과는 덮지 않는다
+    # (2026-09-15 감사: 2,600행 -> 400행이 '정상' 발행된 적이 있다).
+    write_data(OUT_JSON, OUT_JS, "KR_DISCLOSURES", payload, indent=None,
+               min_ratio=DART_REGRESSION_FLOOR)
+
+
+# DART 호출 페이싱. 전 빌더가 이 모듈의 dart_get 을 공유하므로 여기 한 곳에서
+# 속도를 잡는다. 2026-09-15 감사 실측: 주간 ~13,400회를 sleep 0 으로 쏘고 있었고
+# (일일 한도 20,000 의 67%) 한도에 걸린 날(status 020)에는 2,600행이 400행으로
+# 줄어든 채 '정상' 발행됐다.
+DART_PACE_SECONDS = float(os.environ.get("DART_PACE_SECONDS", "0.15") or 0)
+_dart_pace_lock = threading.Lock()
+_dart_last_call = [0.0]
+
+
+def dart_pace() -> None:
+    with _dart_pace_lock:
+        if DART_PACE_SECONDS > 0:
+            wait = DART_PACE_SECONDS - (time.monotonic() - _dart_last_call[0])
+            if wait > 0:
+                time.sleep(wait)
+        _dart_last_call[0] = time.monotonic()
+
+
+def dart_abort_if_rate_limited(status: str, where: str = "") -> None:
+    """DART status 020(= 사용 한도 초과)이면 즉시 중단한다.
+
+    SystemExit 은 BaseException 이라 빌더들의 `except Exception` 에 걸리지 않고
+    프로세스를 exit 1 로 끝낸다 — 반쪽 결과를 정상 발행하지 않기 위한 것이다.
+    """
+    if str(status) == "020":
+        raise SystemExit(
+            f"[중단] DART status 020 (사용 한도 초과){(' — ' + where) if where else ''}. "
+            "남은 호출을 포기하고 기존 파일을 유지한다."
+        )
 
 
 def dart_get(path: str, params: dict, api_key: str) -> dict:
     q = {**params, "crtfc_key": api_key}
     url = f"{DART_BASE}/{path}?{urllib.parse.urlencode(q)}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mir-US-Stocks/1.0"})
+    dart_pace()
     with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+        data = json.loads(resp.read().decode("utf-8"))
+    dart_abort_if_rate_limited(data.get("status"), path)
+    return data
 
 
-def load_corp_map(api_key: str) -> dict[str, str]:
+# corpCode.xml 은 ~20MB ZIP 이고 상장사 목록이라 하루 단위로도 거의 안 바뀐다.
+# 7개 빌더가 매 실행 새로 받으면서 DART 예산을 쓰고 있었다 — 7일 캐시.
+# 캐시는 gitignore 된 outputs/ 아래에 둔다 — data/ 에 커밋되지 않는 잡파일을 만들지 않는다.
+CORP_CODE_CACHE = ROOT / "outputs" / "_cache" / "corp_code_map.json"
+CORP_CODE_CACHE_DAYS = 7
+
+
+def _load_corp_map_cache() -> dict[str, str] | None:
+    try:
+        if not CORP_CODE_CACHE.exists():
+            return None
+        age = time.time() - CORP_CODE_CACHE.stat().st_mtime
+        if age > CORP_CODE_CACHE_DAYS * 86400:
+            return None
+        payload = json.loads(CORP_CODE_CACHE.read_text(encoding="utf-8"))
+        codes = payload.get("codes") or {}
+        return codes if codes else None
+    except Exception:
+        return None
+
+
+def _save_corp_map_cache(codes: dict[str, str]) -> None:
+    try:
+        CORP_CODE_CACHE.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(
+            CORP_CODE_CACHE,
+            json.dumps({"updatedAtKst": now_kst(), "count": len(codes), "codes": codes},
+                       ensure_ascii=False, separators=(",", ":")),
+        )
+    except Exception as exc:
+        print(f"  [경고] corpCode 캐시 저장 실패(무시): {exc}")
+
+
+def load_corp_map(api_key: str, *, use_cache: bool = True) -> dict[str, str]:
     import zipfile
     import io
     import xml.etree.ElementTree as ET
 
+    if use_cache:
+        cached = _load_corp_map_cache()
+        if cached:
+            print(f"  corpCode 캐시 사용 ({len(cached)}종목, {CORP_CODE_CACHE_DAYS}일 이내)")
+            return cached
+
     url = f"{DART_BASE}/corpCode.xml?crtfc_key={api_key}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mir-US-Stocks/1.0"})
     try:
+        dart_pace()
         with urllib.request.urlopen(req, timeout=30) as resp:
             zip_data = resp.read()
         with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
@@ -158,9 +237,21 @@ def load_corp_map(api_key: str) -> dict[str, str]:
                 corp = corp.strip()
                 if stock:
                     out[stock.zfill(6)] = corp
+        if out:
+            _save_corp_map_cache(out)
         return out
     except Exception as e:
         print(f"Error loading corp map: {e}")
+        # 다운로드가 실패해도 오래된 캐시가 있으면 그걸 쓴다(빈 맵보다 낫다).
+        stale = None
+        try:
+            if CORP_CODE_CACHE.exists():
+                stale = (json.loads(CORP_CODE_CACHE.read_text(encoding="utf-8")).get("codes") or None)
+        except Exception:
+            stale = None
+        if stale:
+            print(f"  [경고] corpCode 다운로드 실패 — 만료된 캐시 {len(stale)}종목으로 진행")
+            return stale
         return {}
 
 

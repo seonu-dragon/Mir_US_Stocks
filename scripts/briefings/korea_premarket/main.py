@@ -14,8 +14,9 @@ for _path in (_COMMON_DIR, _PKG_DIR):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
-from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news
+from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news, has_market_data
 from config import GEMINI_API_KEY, validate_config
+from kr_context import NO_FABRICATION_RULE, macro_context_text
 from publish import publish_briefing_to_site
 from telegram_bot import notify_briefing_status
 
@@ -27,14 +28,15 @@ if sys.platform == "win32":
 def generate_korea_premarket_analysis(raw_data_text):
     """Gemini API를 호출하여 국내 증시 개장 전 심층 분석 리포트를 작성합니다."""
     if not GEMINI_API_KEY:
-        print("  [경고] GEMINI_API_KEY가 설정되어 있지 않아 AI 분석을 생략합니다.")
-        return ""
+        # 키가 없으면 플레이스홀더를 발행하지 않고 잡을 빨갛게 만든다(2026-09-15 감사).
+        raise RuntimeError("GEMINI_API_KEY 가 없어 국내 개장 전 분석을 만들 수 없다 — 발행 중단")
 
     prompt = f"""너는 대한민국 여의도 증권가에서 가장 신뢰받는 최고의 시황 애널리스트이자 자산운용사 펀드매니저다.
 지금은 국내 증시가 개장하기 전(오전)이다. 제공된 데이터(전 거래일 코스피/코스닥 종가 및 등락률, 개인/외국인/기관 순매수액, 최근 증권/금융 주요 RSS 뉴스 제목)와 간밤 글로벌 시장 흐름에 대한 너의 지식을 종합하여, 오늘 장에 대비하는 전문적이고 명쾌한 '개장 전 심층 분석' 리포트를 작성해라.
 
 [원천 데이터 (전 거래일 마감 기준)]
 {raw_data_text}
+{NO_FABRICATION_RULE}
 
 [작성 지침 (절대 엄수)]
 1. 전 거래일 마감 수급과 간밤 미국 증시/환율/금리 흐름을 연계하여, 오늘 국내 증시의 예상 시나리오를 날카롭게 제시해라.
@@ -83,8 +85,7 @@ def generate_korea_premarket_analysis(raw_data_text):
 
         time.sleep(2)
 
-    print("  [경고] 모든 Gemini 모델 호출에 실패하여 AI 개장 전 분석을 생략합니다.")
-    return ""
+    raise RuntimeError("모든 Gemini 모델 호출 실패 — AI 분석 없이 발행하지 않는다")
 
 
 def update_etf_charts(data):
@@ -147,12 +148,16 @@ def main():
 
     print("=== 국내 증시 개장 전 심층 분석 데이터 수집 시작 ===")
 
-    try:
-        validate_config(require_gemini=True, require_telegram=True)
-    except ValueError as e:
-        print(f"  [경고] {e}")
+    # 키가 없으면 여기서 죽는다(플레이스홀더 발행 금지, 2026-09-15 감사).
+    validate_config(require_gemini=True, require_telegram=True)
 
-    today = datetime.now(KST).strftime("%Y년 %m월 %d일 %H시 %M분")
+    now = datetime.now(KST)
+    # 주말에는 개장 전 브리핑을 만들지 않는다(다음 거래일은 월요일이다).
+    if now.weekday() >= 5 and not args.test:
+        print(f"[건너뜀] {now:%Y-%m-%d}(KST) 는 주말 — 국내 개장 전 브리핑을 발행하지 않는다.")
+        return
+
+    today = now.strftime("%Y년 %m월 %d일 %H시 %M분")
 
     # 1. 데이터 수집 (전 거래일 마감 기준)
     print("  > 국내 지수 정보 수집 중...")
@@ -163,6 +168,11 @@ def main():
 
     print("  > 증권 주요 경제 뉴스 수집 중...")
     news_items = fetch_market_news()
+
+    # 지수·수급이 **둘 다** 비면 발행하지 않는다. 예전엔 '데이터 수집 실패' 만 담긴
+    # 리포트를 올리고 AI 가 헤드라인으로 수급을 창작했다(2026-09-15 감사).
+    if not has_market_data(indices, trends):
+        raise SystemExit("[중단] 국내 지수·수급 수집이 모두 실패했다 — 개장 전 브리핑을 발행하지 않는다.")
 
     # --- Part 1: 로우 데이터 ---
     report_lines_part1 = [
@@ -225,19 +235,29 @@ def main():
         raw_data_lines.append(f"코스피 순매수 - 개인: {kospi_trend.get('개인')}, 외국인: {kospi_trend.get('외국인')}, 기관: {kospi_trend.get('기관')}")
     if kosdaq_trend:
         raw_data_lines.append(f"코스닥 순매수 - 개인: {kosdaq_trend.get('개인')}, 외국인: {kosdaq_trend.get('외국인')}, 기관: {kosdaq_trend.get('기관')}")
+    if not kospi and not kosdaq:
+        raw_data_lines.append("데이터 없음 — 지수 수치를 쓰지 말 것")
+    if not kospi_trend and not kosdaq_trend:
+        raw_data_lines.append("데이터 없음 — 수급 금액을 쓰지 말 것")
+
     raw_data_lines.append("\n=== 최근 금융/증권 뉴스 ===")
     for item in news_items:
         raw_data_lines.append(f"[{item['source']}] {item['title']}")
+    if not news_items:
+        raw_data_lines.append("데이터 없음 — 뉴스 기반 서술을 하지 말 것")
+
+    # 간밤 미 증시(스냅샷)·환율/금리(ECOS) 실측 주입. 없으면 '데이터 없음' 으로 명시된다.
+    raw_data_lines.append(macro_context_text())
+
     raw_data_text = "\n".join(raw_data_lines)
 
     # 2. AI 분석
     ai_analysis_text = generate_korea_premarket_analysis(raw_data_text)
+    if not ai_analysis_text:
+        raise RuntimeError("AI 분석 본문이 비어 있다 — 플레이스홀더를 발행하지 않는다")
 
     report_lines_part2 = [f"💡 <b>[국내 증시 개장 전 심층 분석 브리핑]</b>\n"]
-    if ai_analysis_text:
-        report_lines_part2.append(ai_analysis_text)
-    else:
-        report_lines_part2.append("AI 요약 분석을 생성할 수 없습니다.")
+    report_lines_part2.append(ai_analysis_text)
     report_lines_part2.append("\n━━━━━━━━━━━━━━━━━━━━━")
     report_lines_part2.append("<i>* 전 거래일 수급·뉴스와 간밤 글로벌 흐름을 기반으로 AI가 분석한 개장 전 리포트로 투자 권유를 뜻하지 않습니다.</i>")
     full_report_part2 = "\n".join(report_lines_part2)

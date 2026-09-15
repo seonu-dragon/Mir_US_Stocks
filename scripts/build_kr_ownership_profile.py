@@ -42,7 +42,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
-from sec_client import write_data  # noqa: E402
+from sec_client import DART_REGRESSION_FLOOR, latest_fiscal_year, write_data  # noqa: E402
 from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
@@ -87,7 +87,10 @@ def load_json(path: Path, default):
 
 def write_outputs(payload: dict) -> None:
     # .json 은 빌더 상태(compact 유지), .js 는 브라우저 전역 — sec_client.write_data 로 통일.
-    write_data(OUT_JSON, OUT_JS, "KR_OWNERSHIP_PROFILE", payload, indent=None)
+    # DART 한도 초과(020)·로그인 만료로 직전 대비 30% 넘게 줄어든 결과는 덮지 않는다
+    # (2026-09-15 감사: 2,600행 -> 400행이 '정상' 발행된 적이 있다).
+    write_data(OUT_JSON, OUT_JS, "KR_OWNERSHIP_PROFILE", payload, indent=None,
+               min_ratio=DART_REGRESSION_FLOOR)
 
 
 def _rows(api: str, corp: str, year: str, api_key: str, errors: dict) -> list[dict]:
@@ -216,7 +219,9 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="시총 상위 N종목만(테스트용)")
     args = parser.parse_args()
 
-    year = args.year.strip() or str(datetime.now(KST).year - 1)
+    # 최신 조회 가능 사업연도. 사업보고서는 3월 말까지 제출되므로 1~3월에는
+    # year-1 이 아직 없어 전 종목 status 013 이 된다(sec_client.latest_fiscal_year).
+    year = args.year.strip() or str(latest_fiscal_year())
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
         write_outputs({"updatedAtKst": now_kst(), "source": "DART Open API · 사업보고서 주요정보",

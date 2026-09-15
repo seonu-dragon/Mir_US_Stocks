@@ -87,7 +87,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
-from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from briefing_store import repository_publish_lock  # noqa: E402
 
 KST = timezone(timedelta(hours=9))
 KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
@@ -736,10 +736,12 @@ def main() -> int:
         payload["estimateDropped"] = payload.get("estimateDropped", 0) + extra
         print(f"[컨센서스] 승계분 최종 안전망: 오염 추정 {extra}종목 추가 제외")
     payload["count"] = len(payload["stocks"])
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-    atomic_write_text(OUT_JSON, text)
-    atomic_write_text(OUT_JS, "window.KR_CONSENSUS = " + text + ";\n")
-    print(f"[컨센서스] {payload['count']}종목 · {len(text) / 1024:.0f}KB · {(time.time() - t0) / 60:.1f}분")
+    # write_data 경유(0-row 방어 + .json/.js 원자적 동시 기록). 예전엔 여기서만
+    # atomic_write_text 를 직접 불러 공통 규약 밖에 있었다(2026-09-15 감사).
+    import sec_client as sec_mod
+    sec_mod.write_data(OUT_JSON, OUT_JS, "KR_CONSENSUS", payload, indent=None)
+    size_kb = OUT_JSON.stat().st_size / 1024 if OUT_JSON.exists() else 0
+    print(f"[컨센서스] {payload['count']}종목 · {size_kb:.0f}KB · {(time.time() - t0) / 60:.1f}분")
     print(f"Wrote {OUT_JSON.name}, {OUT_JS.name}")
 
     if args.push:

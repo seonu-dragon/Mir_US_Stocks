@@ -76,6 +76,15 @@ CHECKS = {
         ("data/korea/ecos_macro.json", 6, False),
         ("data/korea/gov_contracts.json", 8, False),
         ("data/korea/trade_exports.json", 8, False),
+        # 아래 5개는 update_korea_data.py 가 **서브프로세스로** 부르는 빌더의 산출물이라
+        # 워크플로 YAML 에 이름이 없고, 2026-09-15 감사 전까지 어느 그룹에도 없었다.
+        # KRX 로그인(KRX_ID/PW)이 만료되면 short_interest/short_volume/krx_metrics 가
+        # 무기한 얼어붙는데 워크플로우는 초록이었다.
+        ("data/korea/krx_metrics.json", 5, True),      # .js 짝 없음(빌드 전용 입력)
+        ("data/korea/short_interest.json", 6, True),   # KRX 잔고는 T+2
+        ("data/korea/short_volume.json", 6, True),     # KRX 거래비중은 T+1
+        ("data/korea/ipo_calendar.json", 6, False),    # 공모 비수기엔 0건이 정상
+        ("data/korea/earnings_reactions.json", 6, False),  # 실적 시즌 밖엔 0건이 정상
     ],
     # kr-disclosures.yml(평일 15:30) — 세 빌더 모두 continue-on-error 라 DART 키가
     # 죽어도 초록이었다. 주말·연휴를 감안해 4~5일.
@@ -146,6 +155,21 @@ RATIO_CHECKS = {
     ],
 }
 
+# 절대값 하한: (파일, 키 경로, 최소값, 설명)
+# 비율 감시는 "전체가 같이 쪼그라든" 붕괴를 못 잡는다. 2026-09-10 에 네이버 PC HTML 이
+# 사라져 국내 유니버스가 3,800 → 50(ETF 뿐)으로 무너졌을 때 ratio 는 오히려 1.0 이었고
+# 나이도 신선했다. 개수 자체에 바닥을 둔다.
+MIN_CHECKS = {
+    "kr": [
+        (
+            "data/korea/market_snapshot.json",
+            ("universeCount",),
+            3000,
+            "국내 상장 유니버스 종목 수",
+        ),
+    ],
+}
+
 
 def file_date(payload: dict) -> str | None:
     for key in TIMESTAMP_KEYS:
@@ -211,12 +235,38 @@ def main() -> int:
             continue
         print(f"OK {rel}: {label} {value:.1%} (하한 {floor:.0%})")
 
+    for rel, keypath, floor, label in MIN_CHECKS.get(args.group, []):
+        path = ROOT / rel
+        if not path.exists():
+            problems.append(f"{rel}: 파일 없음(하한 감시 {label})")
+            continue
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            problems.append(f"{rel}: JSON 파싱 실패 ({exc})")
+            continue
+        value = payload
+        for key in keypath:
+            value = value.get(key) if isinstance(value, dict) else None
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            problems.append(f"{rel}: {'.'.join(keypath)} 없음 — {label} 를 셀 수 없다")
+            continue
+        if value < floor:
+            problems.append(f"{rel}: {label} {value:,} < 하한 {floor:,}")
+            continue
+        print(f"OK {rel}: {label} {value:,} (하한 {floor:,})")
+
     if problems:
         print("\n[신선도 실패]")
         for p in problems:
             print(f"  - {p}")
         return 1
-    print(f"\nOK — {args.group} 그룹 {len(CHECKS[args.group]) + len(RATIO_CHECKS.get(args.group, []))}개 검사 모두 통과.")
+    total = (
+        len(CHECKS[args.group])
+        + len(RATIO_CHECKS.get(args.group, []))
+        + len(MIN_CHECKS.get(args.group, []))
+    )
+    print(f"\nOK — {args.group} 그룹 {total}개 검사 모두 통과.")
     return 0
 
 

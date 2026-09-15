@@ -157,7 +157,9 @@
     defaultTicker: "005930",
     searchPlaceholder: "종목명·종목코드 (예: 삼성전자, 005930)",
     cardnewsDefault: "kr",
-    snapshotCadence: "매일 15:40 KST",
+    // 크론은 15:42 KST 지만 GitHub Actions 지연(실측 2~6.6시간)으로 실제 발행은
+    // 저녁이다(2026-09 실측 22:38). 문구는 실제에 맞춘다 — 없는 신선도를 주장하지 않는다.
+    snapshotCadence: "매일 장마감 후 (실제 발행 22시 전후 KST)",
     liveTickerSuffix: ".KS",
     formatTicker: (t) => {
       // 국내 코드(005930)는 6자리로 채우되, 숫자가 아닌 티커는 그대로 둔다.

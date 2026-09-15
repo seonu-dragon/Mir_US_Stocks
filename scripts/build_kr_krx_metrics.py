@@ -100,7 +100,8 @@ def foreign(stock, date, market):
 def find_available(stock, max_back=8):
     """밸류에이션(PER)이 실제로 집계된 최신 거래일. 당일(장중·미집계)엔 PER 이 전부 0 이라
     행은 오지만 값이 비어 있다 — PER 이 채워진 날을 골라야 한다."""
-    today = datetime.date.today()
+    # KST 기준. naive date.today() 는 Actions(UTC)에서 하루 어긋나 최신 거래일을 놓친다.
+    today = sec.kst_today()
     for back in range(0, max_back + 1):
         d = (today - datetime.timedelta(days=back)).strftime("%Y%m%d")
         f = fundamentals(stock, d, "KOSPI")
@@ -151,14 +152,21 @@ def main():
     print("=== KRX 공식 지표 수집 시작 ===")
     payload = build()
     if not payload or not payload["metrics"]:
-        print("  [경고] 수집 0건 — 기존 파일 유지")
-        return
+        # 전량 실패는 실패다. KRX 로그인(KRX_ID/KRX_PW)이 만료되면 여기서 조용히
+        # exit 0 으로 끝나 히트맵 지표가 무기한 얼어붙었다(2026-09-15 감사).
+        print("  [실패] 수집 0건 — 기존 파일 유지. KRX_ID/KRX_PW 와 pykrx 로그인을 확인할 것")
+        raise SystemExit(1)
+    # 직전 대비 30% 넘게 줄면 로그인 부분 실패로 보고 덮지 않는다.
+    sec.assert_not_regressing(OUT_JSON, payload, label="krx_metrics.json")
     with repository_publish_lock(ROOT):
         OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
         atomic_write_text(OUT_JSON, json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
         print(f"Wrote {OUT_JSON} — {payload['count']} tickers")
-        if args.push:
-            sec.git_publish(["data/korea/krx_metrics.json"], "KR KRX metrics (foreign/valuation)")
+        if args.push and not sec.git_publish(
+            ["data/korea/krx_metrics.json"], "KR KRX metrics (foreign/valuation)"
+        ):
+            print("  [실패] git 게시 실패 — 발행되지 않았다")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

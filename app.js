@@ -2751,7 +2751,8 @@ function setupViewMode() {
   }
 }
 
-const MOBILE_TABS_MQ = "(max-width: 960px)";
+// CSS 의 모바일 탭 브레이크포인트(styles.css @media max-width:900px)와 맞춘다.
+const MOBILE_TABS_MQ = "(max-width: 900px)";
 
 function layoutMobileTabs() {
   const wrap = byId("tabsScrollWrap");

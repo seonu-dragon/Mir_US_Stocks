@@ -35,7 +35,10 @@ def _get_notion_client():
     token = notion_token()
     if not token:
         raise ValueError("NOTION_TOKEN이 필요합니다. (.env에 NOTION_TOKEN 또는 NOTION_ACCESS_TOKEN)")
-    return Client(auth=token)
+    # notion_version 을 명시한다. SDK 기본값은 최신 API(2025-09-03, data_source 모델)인데
+    # 이 파일의 호출부(databases.query / pages.create parent=database_id)는 2022-06-28
+    # 계약으로 쓰여 있다 — 버전을 안 박으면 SDK 업그레이드 날 조용히 깨진다.
+    return Client(auth=token, notion_version=NOTION_VERSION)
 
 
 def _database_id() -> str:

@@ -80,7 +80,8 @@ def value_by_ticker(stock, date: str, market: str) -> dict[str, dict]:
 
 def find_latest(stock, start_back: int = 1, max_back: int = 10):
     """최신 가용 공매도 거래일을 과거로 탐색. (date_str, {티커:...}) — 없으면 (None, {})."""
-    today = datetime.date.today()
+    # KST 기준. naive date.today() 는 Actions(UTC)에서 하루 어긋나 최신 거래일을 놓친다.
+    today = sec.kst_today()
     for back in range(start_back, max_back + 1):
         d = (today - datetime.timedelta(days=back)).strftime("%Y%m%d")
         merged = {}
@@ -150,11 +151,12 @@ def main():
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "KR_SHORT_VOLUME", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} rows")
-        if args.push:
-            sec.git_publish(
-                ["data/korea/short_volume.json", "data/korea/short_volume.js"],
-                "KR daily short volume (KRX)",
-            )
+        if args.push and not sec.git_publish(
+            ["data/korea/short_volume.json", "data/korea/short_volume.js"],
+            "KR daily short volume (KRX)",
+        ):
+            print("  [실패] git 게시 실패 — 발행되지 않았다")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

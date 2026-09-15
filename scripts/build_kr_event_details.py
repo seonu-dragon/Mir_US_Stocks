@@ -29,7 +29,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -202,8 +202,6 @@ def build(api_key: str, days: int, limit: int | None):
         raise SystemExit("[이벤트] corpCode.xml 수집 실패 — 중단한다.")
 
     end = datetime.now(KST).date()
-    bgn = (end.replace(day=1) if days >= 28 else end).strftime("%Y%m%d")
-    from datetime import timedelta
     bgn = (end - timedelta(days=days)).strftime("%Y%m%d")
     end_s = end.strftime("%Y%m%d")
 

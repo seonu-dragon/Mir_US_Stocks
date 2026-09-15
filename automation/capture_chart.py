@@ -3,14 +3,26 @@
 from __future__ import annotations
 
 import contextlib
+import functools
 import os
+import shutil
 import socket
+import tempfile
 import threading
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlencode
 
-from utils import PROJECT_ROOT, chart_output_path, load_env_file
+from utils import PROJECT_ROOT, chart_output_path, detail_json_path, load_env_file
+
+# 캡처 페이지가 실제로 읽는 파일. 이것만 스테이징 폴더에 복사해 서빙한다.
+CAPTURE_ASSETS = (
+    "chart_capture.html",
+    "chart_capture.js",
+    "analysis.js",
+    "indicators.js",
+    "pattern_detectors_extended.js",
+)
 
 
 def _free_port() -> int:
@@ -20,18 +32,38 @@ def _free_port() -> int:
 
 
 @contextlib.contextmanager
-def _local_site():
-    """Serve PROJECT_ROOT over HTTP so chart_capture.js can fetch detail JSON."""
-    port = _free_port()
-    server = ThreadingHTTPServer(("127.0.0.1", port), SimpleHTTPRequestHandler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
+def _local_site(ticker: str, market: str):
+    """캡처에 필요한 파일만 담은 **전용 폴더**를 HTTP 로 서빙한다.
+
+    예전에는 PROJECT_ROOT 를 통째로 루프백 서빙했다. 그 폴더에는 `.env`(API 키 전부)와
+    추적되지 않는 로컬 산출물이 들어 있고, 서버가 도는 동안 이 머신의 아무 프로세스나
+    http://127.0.0.1:<port>/.env 로 읽을 수 있었다(2026-09-15 감사).
+    """
+    staging = Path(tempfile.mkdtemp(prefix="mir_capture_"))
     try:
-        yield f"http://127.0.0.1:{port}"
+        for name in CAPTURE_ASSETS:
+            src = PROJECT_ROOT / name
+            if src.exists():
+                shutil.copy2(src, staging / name)
+        detail = detail_json_path(market, ticker)
+        if detail.exists():
+            rel = detail.relative_to(PROJECT_ROOT)
+            dest = staging / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(detail, dest)
+        port = _free_port()
+        handler = functools.partial(SimpleHTTPRequestHandler, directory=str(staging))
+        server = ThreadingHTTPServer(("127.0.0.1", port), handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            yield f"http://127.0.0.1:{port}"
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=2)
     finally:
-        server.shutdown()
-        server.server_close()
-        thread.join(timeout=2)
+        shutil.rmtree(staging, ignore_errors=True)
 
 
 def _page_url(base: str, ticker: str, market: str, period: str = "6M") -> str:
@@ -63,7 +95,8 @@ def capture_chart(
     print(f"[capture] {ticker} ({market}) -> {out.name}")
 
     def _capture_from(base_url: str) -> Path | None:
-        os.chdir(PROJECT_ROOT)
+        # os.chdir(PROJECT_ROOT) 는 예전 서버가 cwd 를 서빙했기 때문이었다. 이제는
+        # 스테이징 폴더를 directory= 로 지정하므로 프로세스 cwd 를 건드리지 않는다.
         url = _page_url(base_url, ticker, market, period)
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -93,7 +126,7 @@ def capture_chart(
         except Exception as exc:
             print(f"[capture] remote failed ({exc}); falling back to local server")
 
-    with _local_site() as local_base:
+    with _local_site(ticker, market) as local_base:
         return _capture_from(local_base)
 
 

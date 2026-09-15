@@ -5,7 +5,7 @@
 삼성전자·현대차·LG에너지솔루션 등 수출주에게는 실적 발표보다 빠른 매크로
 컨텍스트다. 매월 15일경 전월 확정치가 나온다.
 
-  http://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList
+  https://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList
   - hsSgn: HS 코드(4~6자리), strtYymm/endYymm: YYYYMM
   - cntyCd 미지정 시 국가별 행이 나오므로 '총계' 행을 합산/선별한다.
   - 응답은 XML. 필드명은 2026-08 실응답 기준(expDlr 수출금액$ 등).
@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "korea" / "trade_exports.json"
 OUT_JS = ROOT / "data" / "korea" / "trade_exports.js"
 
-API = "http://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList"
+API = "https://apis.data.go.kr/1220000/nitemtrade/getNitemtradeList"
 # 로컬(Git Bash)에서 돌릴 때 주의: 키가 '/'로 시작해 MSYS 가 Windows 경로로
 # 변조한다(C:/Program Files/Git/... → 403). PowerShell 이나
 # MSYS2_ENV_CONV_EXCL=DATA_GO_KR_KEY 로 실행할 것. Actions(Linux)는 무관.

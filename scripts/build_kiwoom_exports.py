@@ -401,8 +401,11 @@ def compute_community_hot_topics(social: dict, limit: int = 20) -> list[dict]:
                 "rank": rank,
                 "ticker": ticker,
                 "name": stock.get("name") or ticker,
-                "mention_count": int(round(topic["score"] * 100)),
-                "mention_change_rate": round(change or 0.0, 1),
+                # 정직한 이름으로 바꿨다. 예전 키는 mention_count / mention_change_rate
+                # 였지만 실제 값은 '언급 수'가 아니라 순위 점수 × 100 이었고,
+                # '언급 증가율'도 아니라 24시간 **가격** 등락률이었다(2026-09-15 감사).
+                "rank_score": int(round(topic["score"] * 100)),
+                "price_change_24h": round(change, 1) if change is not None else None,
                 "sentiment_hint": sentiment,
                 "reason": community_reason(sources, change),
                 "sources": sources,
@@ -605,10 +608,14 @@ def build_analysis_export(
         "return_period": round(return_period, 1),
         "support_levels": supports,
         "resistance_levels": resistances,
+        # sma200 은 봉이 200개 이상일 때만 싣는다. 6M(126봉) 기본 기간에서는 계산이
+        # 불가능해 198/200 종목이 "unknown" 으로 나갔고, 그 값이 프롬프트에 들어갔다.
         "moving_average": {
-            "sma20": ma_state(price, sma20, "sma20"),
-            "sma60": ma_state(price, sma60, "sma60"),
-            "sma200": ma_state(price, sma200, "sma200"),
+            k: v for k, v in (
+                ("sma20", ma_state(price, sma20, "sma20")),
+                ("sma60", ma_state(price, sma60, "sma60")),
+                ("sma200", ma_state(price, sma200, "sma200") if sma200 is not None else None),
+            ) if v is not None
         },
         "rsi": {
             "period": 14,

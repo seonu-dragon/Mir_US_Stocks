@@ -21,6 +21,7 @@ if str(AUTOMATION_DIR) not in sys.path:
     sys.path.insert(0, str(AUTOMATION_DIR))
 
 from capture_chart import capture_chart  # noqa: E402
+from compliance_check import assert_publishable, ensure_disclaimer  # noqa: E402
 from fetch_news import fetch_stock_news  # noqa: E402
 from generate_post import ANGLES, generate_post  # noqa: E402
 from notion_client import append_stock_section, create_daily_page  # noqa: E402
@@ -29,7 +30,7 @@ from select_targets import (  # noqa: E402
     select_issue_targets,
 )
 from telegram_client import send_error_message, send_summary_message  # noqa: E402
-from ticker_cooldown import get_cooldown_tickers  # noqa: E402
+from ticker_cooldown import get_cooldown_tickers, record_posted  # noqa: E402
 from utils import (  # noqa: E402
     analysis_path,
     load_env_file,
@@ -143,8 +144,8 @@ def process_target(
             "quality_score": 0,
         }
     else:
-        # 준법 규칙은 생성 프롬프트의 "지킬 내용"에 이미 반영돼 있어
-        # 별도 준법 체크 호출 없이 생성 결과를 그대로 쓴다 (Gemini 호출량 절감).
+        # 생성 프롬프트에도 준법 규칙이 들어 있지만, 프롬프트는 게이트가 아니다.
+        # 발행 직전에 정규식 하드룰로 한 번 더 막는다(아래 assert_publishable).
         post = generate_post(
             target=target,
             analysis=analysis,
@@ -153,6 +154,10 @@ def process_target(
             recent_news=recent_news,
             angle=angle,
         )
+
+    # 준법 게이트(fail-closed): 면책 한 줄을 강제하고, 금지 표현이 있으면 발행하지 않는다.
+    post = ensure_disclaimer(post)
+    assert_publishable(post)
 
     if not skip_notion:
         append_stock_section(page_id=daily_page_id, post=post, news=recent_news, market=market)
@@ -239,6 +244,9 @@ def main() -> int:
 
         payload = {"batch": "daily", "date": today, "results": results}
         save_json(f"outputs/posts/{today}_daily.json", payload)
+        if results and not args.skip_notion:
+            # 3일 쿨다운 원장(추적 경로). outputs/ 사본만으로는 다른 머신에서 비어 있었다.
+            record_posted([r["ticker"] for r in results], today)
 
         if not args.skip_telegram:
             send_summary_message(today=today, results=results, daily_page_url=daily_page_url)

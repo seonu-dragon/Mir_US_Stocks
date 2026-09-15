@@ -24,8 +24,8 @@ OUT_JSON = ROOT / "data" / "korea" / "ipo_calendar.json"
 OUT_JS = ROOT / "data" / "korea" / "ipo_calendar.js"
 SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 
-URL_BIDDING = "http://www.38.co.kr/html/fund/index.htm?o=k"
-URL_LISTING = "http://www.38.co.kr/html/fund/index.htm?o=nw"
+URL_BIDDING = "https://www.38.co.kr/html/fund/index.htm?o=k"
+URL_LISTING = "https://www.38.co.kr/html/fund/index.htm?o=nw"
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
@@ -54,12 +54,21 @@ def clean_company_name(name: str) -> str:
 
 
 def find_ticker(name: str, comp_map: dict[str, str]) -> str | None:
+    """정규화한 회사명이 **정확히** 일치할 때만 티커를 붙인다.
+
+    예전엔 부분 문자열 매칭이라 짧은 사명·스팩이 전혀 다른 상장사에 붙었다
+    ('대신밸런스제N호스팩' → '대신' 포함 종목). 상장 전 공모주는 스냅샷에 없는 게
+    정상이라 None 이 옳은 답이다 — 카드는 티커 링크 없이 뜬다.
+    """
     cleaned = clean_company_name(name)
+    if not cleaned:
+        return None
     if cleaned in comp_map:
         return comp_map[cleaned]
-    # 부분 매칭 시도
+    # 공백·하이픈 표기 차이까지만 같은 이름으로 본다.
+    squeezed = re.sub(r"[\s\-]", "", cleaned)
     for k, v in comp_map.items():
-        if k in cleaned or cleaned in k:
+        if re.sub(r"[\s\-]", "", k) == squeezed:
             return v
     return None
 
@@ -301,8 +310,11 @@ def main():
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "IPO_CALENDAR", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} IPOs")
-        if args.push:
-            sec.git_publish(["data/korea/ipo_calendar.json", "data/korea/ipo_calendar.js"], "korea ipo calendar")
+        if args.push and not sec.git_publish(
+            ["data/korea/ipo_calendar.json", "data/korea/ipo_calendar.js"], "korea ipo calendar"
+        ):
+            print("  [실패] git 게시 실패 — 발행되지 않았다")
+            sys.exit(1)
 
 
 if __name__ == "__main__":

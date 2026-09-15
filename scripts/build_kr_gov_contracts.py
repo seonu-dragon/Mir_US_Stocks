@@ -5,7 +5,7 @@ DART 공급계약 공시가 '기업이 알린' 수주라면, 나라장터 낙찰
 공시 의무(자기자본 대비 일정 비율)에 못 미치는 공공 수주까지 잡히므로 정부 매출
 의존 종목의 수주 흐름을 공시보다 촘촘하게 볼 수 있다.
 
-  http://apis.data.go.kr/1230000/as/ScsbidInfoService
+  https://apis.data.go.kr/1230000/as/ScsbidInfoService
   - 2024~2025 조달청 API 개편으로 구 경로(/1230000/ScsbidInfoService{,05,06})는
     전부 폐기됐다(NO_OPENAPI_SERVICE_ERROR). 현재 살아있는 경로는 /as/ 다.
   - 업무별 오퍼레이션: getScsbidListSttusThng(물품)·Servc(용역)·Cnstwk(공사).
@@ -40,7 +40,7 @@ SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 OUT_JSON = ROOT / "data" / "korea" / "gov_contracts.json"
 OUT_JS = ROOT / "data" / "korea" / "gov_contracts.js"
 
-BASE = "http://apis.data.go.kr/1230000/as/ScsbidInfoService"
+BASE = "https://apis.data.go.kr/1230000/as/ScsbidInfoService"
 OPS = [  # (오퍼레이션, 업무 구분)
     ("getScsbidListSttusThng", "물품"),
     ("getScsbidListSttusServc", "용역"),

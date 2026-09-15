@@ -14,8 +14,9 @@ for _path in (_COMMON_DIR, _PKG_DIR):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
-from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news
+from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news, has_market_data
 from config import GEMINI_API_KEY, validate_config
+from kr_context import NO_FABRICATION_RULE, macro_context_text
 from publish import publish_briefing_to_site
 from telegram_bot import send_telegram_message, notify_briefing_status
 
@@ -26,15 +27,17 @@ if sys.platform == "win32":
 def generate_market_gemini_analysis(raw_data_text):
     """Gemini API를 호출하여 장마감 시황 데이터를 분석해 심층 보고서를 작성합니다."""
     if not GEMINI_API_KEY:
-        print("  [경고] GEMINI_API_KEY가 설정되어 있지 않아 AI 분석을 생략합니다.")
-        return ""
-        
+        # 키가 없으면 '플레이스홀더 발행 + exit 0' 이 아니라 잡을 빨갛게 만든다.
+        # 예전엔 "AI 요약 분석을 생성할 수 없습니다." 가 사이트에 그대로 발행됐다.
+        raise RuntimeError("GEMINI_API_KEY 가 없어 국내 장마감 시황을 만들 수 없다 — 발행 중단")
+
+    
     prompt = f"""너는 대한민국의 여의도 증권가에서 가장 신뢰받는 최고의 시황 애널리스트이자 자산운용사 펀드매니저다.
 제공된 당일의 증시 데이터(코스피/코스닥 지수 종가 및 등락률, 개인/외국인/기관 순매수액, 당일 증권/금융 주요 RSS 뉴스 제목)를 바탕으로 전문적이고 명쾌한 장마감 시황 브리핑을 작성해라.
 
 [원천 데이터]
 {raw_data_text}
-
+{NO_FABRICATION_RULE}
 [작성 지침 (절대 엄수)]
 1. 당일 코스피/코스닥 지수의 움직임과 메이저 수급 주체(특히 외국인과 기관)의 수급 흐름을 날카롭게 연계하여 요약해라.
 2. 최종 출력 서식은 반드시 **텔레그램 호환 HTML 태그**로 작성해라. (Markdown 기호 *, **, # 등 사용 금지. <b>, <i>, <code>, <pre>, <blockquote>, <a> 등만 허용)
@@ -93,8 +96,7 @@ def generate_market_gemini_analysis(raw_data_text):
         
         time.sleep(2)
         
-    print("  [경고] 모든 Gemini 모델 호출에 실패하여 AI 장마감 시황 요약을 생략합니다.")
-    return ""
+    raise RuntimeError("모든 Gemini 모델 호출 실패 — AI 시황 없이 발행하지 않는다")
 
 def update_etf_charts(data):
     """지정된 15개 ETF의 차트 데이터를 Yahoo Finance에서 수집하여 data['sector_charts']에 업데이트합니다."""
@@ -163,12 +165,18 @@ def main():
     
     print("=== 국내 장마감 시황 데이터 수집 시작 ===")
     
-    try:
-        validate_config(require_gemini=True, require_telegram=True)
-    except ValueError as e:
-        print(f"  [경고] {e}")
-        
-    today = datetime.now(KST).strftime("%Y년 %m월 %d일 %H시 %M분")
+    # 키가 없으면 여기서 죽는다. 예전엔 경고만 찍고 계속 진행해 "AI 요약 분석을
+    # 생성할 수 없습니다." 플레이스홀더가 exit 0 으로 발행됐다(2026-09-15 감사).
+    validate_config(require_gemini=True, require_telegram=True)
+
+    now = datetime.now(KST)
+    # 주말에는 '금일 마감' 브리핑을 만들지 않는다(라이브에 토요일자 마감 브리핑이
+    # 실제로 올라가 있었다). 크론은 매일이라 여기서 거른다.
+    if now.weekday() >= 5 and not args.test:
+        print(f"[건너뜀] {now:%Y-%m-%d}(KST) 는 주말 — 국내 장마감 브리핑을 발행하지 않는다.")
+        return
+
+    today = now.strftime("%Y년 %m월 %d일 %H시 %M분")
     
     # 1. 데이터 수집
     print("  > 국내 지수 정보 수집 중...")
@@ -179,6 +187,11 @@ def main():
     
     print("  > 증권 주요 경제 뉴스 수집 중...")
     news_items = fetch_market_news()
+
+    # 지수·수급이 **둘 다** 비면 발행하지 않는다. 예전엔 '데이터 수집 실패' 만 담긴
+    # 리포트를 올리고 AI 가 헤드라인으로 수급을 창작했다(2026-09-15 감사).
+    if not has_market_data(indices, trends):
+        raise SystemExit("[중단] 국내 지수·수급 수집이 모두 실패했다 — 장마감 브리핑을 발행하지 않는다.")
     
     # --- Part 1: 로우 데이터 브리핑 메시지 조립 ---
     report_lines_part1 = [
@@ -254,39 +267,42 @@ def main():
     if kosdaq_trend:
         raw_data_lines.append(f"코스닥 순매수 - 개인: {kosdaq_trend.get('개인')}, 외국인: {kosdaq_trend.get('외국인')}, 기관: {kosdaq_trend.get('기관')}")
         
+    if not kospi and not kosdaq:
+        raw_data_lines.append("데이터 없음 — 지수 수치를 쓰지 말 것")
+    if not kospi_trend and not kosdaq_trend:
+        raw_data_lines.append("데이터 없음 — 수급 금액을 쓰지 말 것")
+
     raw_data_lines.append("\n=== 주요 금융/증권 뉴스 ===")
     for item in news_items:
         raw_data_lines.append(f"[{item['source']}] {item['title']}")
         
+    if not news_items:
+        raw_data_lines.append("데이터 없음 — 뉴스 기반 서술을 하지 말 것")
+
+    # 미 증시 지수(스냅샷)·환율/금리(ECOS) 실측 주입. 없으면 '데이터 없음' 으로 명시된다.
+    raw_data_lines.append(macro_context_text())
+
     raw_data_text = "\n".join(raw_data_lines)
     
     # 2. AI 분석 진행
     ai_analysis_text = generate_market_gemini_analysis(raw_data_text)
+    if not ai_analysis_text:
+        raise RuntimeError("AI 시황 본문이 비어 있다 — 플레이스홀더를 발행하지 않는다")
     
     # --- Part 2: AI 시황 해설 메시지 조립 ---
     report_lines_part2 = [
         f"💡 <b>[국내 증시 장마감 시황 심층 브리핑]</b>\n"
     ]
-    if ai_analysis_text:
-        report_lines_part2.append(ai_analysis_text)
-    else:
-        report_lines_part2.append("AI 요약 분석을 생성할 수 없습니다.")
+    report_lines_part2.append(ai_analysis_text)
     report_lines_part2.append("\n━━━━━━━━━━━━━━━━━━━━━")
     report_lines_part2.append("<i>* 당일 시장의 수급과 뉴스를 기반으로 AI가 분석한 보고서로 투자 권유를 뜻하지 않습니다.</i>")
     
     full_report_part2 = "\n".join(report_lines_part2)
     
-    # Update local web dashboard snapshot
     combined_briefing = f"{full_report_part1}\n\n{full_report_part2}"
-    published = update_market_snapshot(combined_briefing)
-    if not published:
-        raise RuntimeError("국내 장마감 브리핑의 GitHub 게시 및 원격 검증에 실패했습니다.")
 
-    # 완료 알림은 원격 브랜치 검증 후에만 출력합니다.
-    print("[완료] 국내 장마감 시황이 GitHub와 웹사이트 데이터에 반영·검증되었습니다. (텔레그램 발송 생략)")
-    return
-    
-    # 3. 출력 및 발송
+    # 3. 출력 및 발송. --test 는 **아무것도 발행하지 않는다** — 예전엔 이 자리에
+    #    무조건 return 이 있어 아래 분기 전체가 도달 불가였고 --test 가 실제로 발행했다.
     if args.test:
         import re
         def clean_tags(text):
@@ -307,7 +323,15 @@ def main():
         print(clean_tags(full_report_part1))
         print("\n=== [테스트 모드] 국내 증시 장마감 시황 심층 브리핑 (Part 2/2) ===")
         print(clean_tags(full_report_part2))
+        print("\n[완료] 테스트 출력 완료 (웹사이트 발행·텔레그램 발송 없음)")
+        return
     else:
+        # 웹사이트 발행(원격 검증 포함)이 먼저. 실패하면 텔레그램도 보내지 않는다.
+        published = update_market_snapshot(combined_briefing)
+        if not published:
+            raise RuntimeError("국내 장마감 브리핑의 GitHub 게시 및 원격 검증에 실패했습니다.")
+        print("[완료] 국내 장마감 시황이 GitHub와 웹사이트 데이터에 반영·검증되었습니다.")
+
         print("\n[발송] 텔레그램으로 국내 증시 마감 데이터 Part 1 전송 중...")
         success1 = send_telegram_message(full_report_part1)
         if success1:

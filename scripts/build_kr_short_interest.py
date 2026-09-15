@@ -114,7 +114,8 @@ def fetch_all_markets(stock, date: str) -> dict[str, dict]:
 def find_available(stock, start_back: int = 2, max_back: int = 14):
     """오늘로부터 start_back 일 전부터 과거로 훑어 잔고가 실제로 있는 최신
     거래일을 찾는다. (date_str, {티커:...}) 반환. 못 찾으면 (None, {})."""
-    today = datetime.date.today()
+    # KST 기준. naive date.today() 는 Actions(UTC)에서 하루 어긋나 최신 거래일을 놓친다.
+    today = sec.kst_today()
     for back in range(start_back, max_back + 1):
         d = (today - datetime.timedelta(days=back)).strftime("%Y%m%d")
         data = fetch_all_markets(stock, d)
@@ -153,7 +154,8 @@ def trading_by_ticker(stock, date: str, market: str) -> dict[str, float]:
 
 def find_trading(stock, start_back: int = 1, max_back: int = 10):
     """최신 가용 공매도 거래일(거래비중용). 거래는 T+1 이라 잔고일보다 최신이다."""
-    today = datetime.date.today()
+    # KST 기준. naive date.today() 는 Actions(UTC)에서 하루 어긋나 최신 거래일을 놓친다.
+    today = sec.kst_today()
     for back in range(start_back, max_back + 1):
         d = (today - datetime.timedelta(days=back)).strftime("%Y%m%d")
         merged = {}
@@ -293,16 +295,19 @@ def main():
     print("=== 국내 공매도 잔고 수집 시작 (KRX) ===")
     payload = build()
     if not payload or not payload["rows"]:
-        print("  [경고] 수집 0건 — 기존 파일 유지(덮어쓰지 않음)")
-        return
+        # KRX 회원 로그인이 만료돼도 exit 0 이라 신선도 게이트 밖에서 무기한 얼어붙었다.
+        print("  [실패] 수집 0건 — 기존 파일 유지. KRX_ID/KRX_PW 로그인을 확인할 것")
+        raise SystemExit(1)
+    sec.assert_not_regressing(OUT_JSON, payload, label="short_interest.json")
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "SHORT_INTEREST", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} rows")
-        if args.push:
-            sec.git_publish(
-                ["data/korea/short_interest.json", "data/korea/short_interest.js"],
-                "KR short interest (KRX)",
-            )
+        if args.push and not sec.git_publish(
+            ["data/korea/short_interest.json", "data/korea/short_interest.js"],
+            "KR short interest (KRX)",
+        ):
+            print("  [실패] git 게시 실패 — 발행되지 않았다")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

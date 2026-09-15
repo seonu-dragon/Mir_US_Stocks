@@ -30,7 +30,7 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
-from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from briefing_store import repository_publish_lock  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 DISCLOSURES = ROOT / "data" / "kr_disclosures.json"
@@ -177,24 +177,32 @@ def main() -> int:
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+    import sec_client as sec
+
     payload = build()
     if not payload["rows"]:
-        # 공시 창에 잠정실적이 없을 수도 있다(실적 시즌 밖). 빈 페이로드를 정상 발행한다
-        # — 패널은 '최근 발표 없음'을 보여주면 된다.
+        # 공시 창에 잠정실적이 없을 수도 있다(실적 시즌 밖). 빈 페이로드로 시작하되
+        # 아래 prev-merge 가 직전 180일치를 되살린다.
         payload = {"updatedAtKst": now_kst(), "source": "DART 공시(영업잠정실적) + Yahoo 일봉",
-                   "count": 0, "rows": []}
-    text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+                   "rows": []}
+    # 공시 조회 창이 7일이라 매 실행 파일을 통째로 갈아엎으면 표가 한 주치로 쪼그라든다
+    # (라이브 실측 8행, 2026-09-15 감사). 직전 파일의 최근 180일 행을 합쳐 발행한다.
+    sec.merge_previous_rows(payload, OUT_JSON, "실적반응", keep_days=180)
+    payload["rows"].sort(key=lambda x: x.get("date") or "", reverse=True)
+    payload["count"] = len(payload["rows"])
+    payload.setdefault("note", "")
     with repository_publish_lock(ROOT):
         OUT_JSON.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write_text(OUT_JSON, text)
-        atomic_write_text(OUT_JS, "window.KR_EARNINGS_REACTIONS = " + text + ";")
+        # allow_empty: 실적 시즌 밖에는 정말로 0건일 수 있다(신선도 그룹도 0건을 허용).
+        sec.write_data(OUT_JSON, OUT_JS, "KR_EARNINGS_REACTIONS", payload,
+                       indent=None, allow_empty=True)
         print(f"Wrote {OUT_JSON} — {payload['count']} rows")
-        if args.push:
-            import sec_client as sec
-            sec.git_publish(
-                ["data/korea/earnings_reactions.json", "data/korea/earnings_reactions.js"],
-                "KR earnings reactions",
-            )
+        if args.push and not sec.git_publish(
+            ["data/korea/earnings_reactions.json", "data/korea/earnings_reactions.js"],
+            "KR earnings reactions",
+        ):
+            print("[실적반응] git 게시 실패 — 발행되지 않았다")
+            return 1
     return 0
 
 

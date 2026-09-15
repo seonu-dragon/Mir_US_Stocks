@@ -68,7 +68,11 @@ def check_gemini() -> bool:
         from gemini_client import GeminiClient
 
         client = GeminiClient()
-        result = client.generate_json('{"ping": true}라고만 담긴 JSON 객체를 반환하세요.')
+        # use_cache=False: 캐시가 히트하면 키가 폐기돼도 "OK" 가 나온다.
+        # 연결 점검 스크립트가 캐시를 읽으면 점검이 아니다(2026-09-15 감사).
+        result = client.generate_json(
+            '{"ping": true}라고만 담긴 JSON 객체를 반환하세요.', use_cache=False
+        )
         print("[gemini] OK —", json.dumps(result, ensure_ascii=False)[:120])
         return True
     except Exception as exc:

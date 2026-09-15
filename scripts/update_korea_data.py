@@ -18,6 +18,8 @@ import importlib.util
 import json
 import os
 import re
+import shutil
+import sys
 import tempfile
 import threading
 import time
@@ -27,6 +29,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
+
+# 윈도우 기본 콘솔은 cp949 라 한글 로그 한 줄에 UnicodeEncodeError 로 빌드가 죽는다.
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "korea" / "market_snapshot.json"
@@ -42,6 +52,9 @@ HISTORY_BACKFILL_PER_RUN = int(os.environ.get("KR_HISTORY_BACKFILL", "500") or 0
 # Naver fundamentals are cheap (1 JSON call) and cover all listed stocks, so we
 # fetch them far wider than Yahoo did — every mid/small cap gets financials too.
 MAX_FUNDAMENTALS = 1600
+# 상장 종목 하한. 실측 3,800여 종목이라 3,000 은 넉넉한 안전선이다
+# (check_data_freshness.py 의 kr 그룹 universeCount 검사와 같은 값).
+MIN_LISTED_UNIVERSE = 3000
 HTTP_HEADERS = {"User-Agent": "Mozilla/5.0", "Accept": "text/html,application/json"}
 
 SECTOR_MAP = {
@@ -391,6 +404,66 @@ def _mstock_pages(path: str, list_key: str, page_size: int = MSTOCK_PAGE_SIZE, m
             return
 
 
+# 지수 카드용. ticker 는 화면에서 눌렀을 때 열 **대리 ETF** 일 뿐, 가격·등락률의
+# 출처가 아니다. 2026-09-15 이전에는 지수 등락률 자리에 시총 1위 개별 종목
+# (삼성전자·알테오젠)의 등락률이 들어가 코스피 −4.2%(실제 −3.26%)로 발행됐다.
+KR_INDEX_DEFS = (
+    ("^KS11", "코스피", "KOSPI", "069500"),
+    ("^KQ11", "코스닥", "KOSDAQ", "229200"),
+)
+
+
+def fetch_kr_index_quotes() -> dict[str, dict | None]:
+    """m.stock 지수 API 에서 **실제 지수** 종가·등락률을 받는다.
+
+    반환: {"KOSPI": {"price": 6657.91, "changePct": -0.4, "change": -26.46}, ...}
+    실패한 지수는 None — 개별 종목이나 ETF 값으로 대체하지 않는다. 호출부가
+    price/changePct 를 null 로 내보내고, 화면은 '—' 를 보여주면 된다.
+    """
+    out: dict[str, dict | None] = {}
+    for _symbol, name, code, _proxy in KR_INDEX_DEFS:
+        try:
+            payload = fetch_mstock_json(f"index/{code}/basic")
+        except Exception as exc:
+            print(f"[warn] {name} 지수(m.stock index/{code}/basic) 수집 실패: {exc}")
+            out[code] = None
+            continue
+        price = parse_number(str(payload.get("closePrice") or ""))
+        change_pct = parse_number(str(payload.get("fluctuationsRatio") or ""))
+        change = parse_number(str(payload.get("compareToPreviousClosePrice") or ""))
+        if price is None or change_pct is None:
+            print(f"[warn] {name} 지수 응답에 closePrice/fluctuationsRatio 없음 — null 로 둔다")
+            out[code] = None
+            continue
+        out[code] = {
+            "price": round(price, 2),
+            "changePct": round(change_pct, 2),
+            "change": round(change, 2) if change is not None else None,
+        }
+        print(f"  지수 {name}: {price:,.2f} ({change_pct:+.2f}%)")
+    return out
+
+
+def build_kr_indices() -> list[dict]:
+    """스냅샷 indices 배열. price 는 **지수 레벨**(ETF 가격 아님)."""
+    quotes = fetch_kr_index_quotes()
+    rows = []
+    for symbol, name, code, proxy in KR_INDEX_DEFS:
+        q = quotes.get(code)
+        rows.append({
+            "symbol": symbol,
+            "name": name,
+            # ticker 는 클릭 시 열 대리 ETF 다. 가격·등락률의 출처가 아니다.
+            "ticker": proxy,
+            "proxyTicker": proxy,
+            "price": q["price"] if q else None,
+            "changePct": q["changePct"] if q else None,
+            "change": q["change"] if q else None,
+            "source": "m.stock index/basic" if q else "unavailable",
+        })
+    return rows
+
+
 def fetch_naver_industry_map() -> dict[str, tuple[str, str]]:
     print("Fetching Naver Finance industry classifications...")
     try:
@@ -538,6 +611,17 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
     metas = sorted(universe.values(), key=lambda m: m.get("marketCapT") or 0, reverse=True)
     if limit:
         metas = metas[:limit]
+    else:
+        # 유니버스 하한. 2026-09-10 에 네이버 PC HTML 이 사라지면서 상장 종목이
+        # 50개(= ETF 뿐)로 붕괴한 스냅샷이 이틀 배포됐고, 정직성 게이트도
+        # 비율 감시도 이걸 잡지 못했다. 소스가 반쯤 죽은 날은 발행하지 않는다.
+        listed = sum(1 for m in metas if m.get("market") in {"kospi", "kosdaq"})
+        if listed < MIN_LISTED_UNIVERSE:
+            raise SystemExit(
+                f"[중단] 상장 종목 {listed}개 < 하한 {MIN_LISTED_UNIVERSE}개 — "
+                "m.stock 목록 API 가 깨졌을 가능성이 높다. 기존 스냅샷을 덮지 않는다."
+            )
+        print(f"  유니버스: 상장 {listed}종목 (하한 {MIN_LISTED_UNIVERSE})")
 
     # Index membership = top-N by market cap WITHIN each market, not across the
     # combined list. metas is already sorted by marketCapT desc, so filtering by
@@ -554,17 +638,28 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
         if meta["symbol"] in THEMATIC_CODES:
             meta["groups"].add("thematic")
 
-    for code, (company, sector, industry, bucket, cap) in KR_ETFS.items():
+    # 대표 ETF 는 '빠지지 않게' 보장만 하고 **실측값을 덮지 않는다**. 예전엔 여기서
+    # 하드코딩 시총(KODEX 200 5.0조)이 실제 행(24.31조)을 덮어썼고 price 를 None 으로
+    # 되돌려 ETF 카드가 통째로 틀렸다(2026-09-15 감사). 시세 목록에 이미 있으면
+    # 라벨/버킷만 보강하고, 없을 때만(신규 상장·목록 누락) 뼈대 행을 만든다.
+    for code, (company, sector, industry, bucket, _legacy_cap) in KR_ETFS.items():
+        existing = universe.get(code)
+        if existing:
+            existing["groups"] = set(existing.get("groups") or set()) | {"all_etf", "all_misc", bucket}
+            existing.setdefault("sector", sector)
+            existing.setdefault("industry", industry)
+            continue
         universe[code] = {
             "symbol": code,
             "company": company,
             "market": "etf",
             "yahooSymbol": yahoo_ticker(code, "kospi"),
             "quotePrice": None,
-            "quoteChangePct": 0.0,
-            "quoteVolume": 0,
-            "marketCapT": cap / 10.0,
-            "marketCapB": cap / 10.0,
+            "quoteChangePct": None,
+            "quoteVolume": None,
+            # 실측 marketSum 이 없으면 지어내지 않는다 — 카드가 '—' 를 보이면 된다.
+            "marketCapT": None,
+            "marketCapB": None,
             "sector": sector,
             "industry": industry,
             "groups": {"all_etf", "all_misc", bucket},
@@ -1165,8 +1260,8 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
 def minimal_naver_etf_row(info: dict) -> dict | None:
     """Lightweight ETF row from Naver quote only (no Yahoo history). Used for newer
     leveraged products Yahoo has no .KS series for, so the card still shows a price
-    and today's change instead of all dashes. Longer-horizon returns use daily change
-    as a weak proxy until Yahoo history is available."""
+    and today's change instead of all dashes. 3개월·YTD 는 야후 이력이 없으면 만들 수
+    없다 — 예전엔 당일 등락 × 2.1 / × 3.3 으로 합성했는데 그건 지어낸 수치다(None)."""
     if info.get("price") is None:
         return None
     cap_t = round((info.get("capEok") or 0) / 10000.0, 3)
@@ -1179,8 +1274,8 @@ def minimal_naver_etf_row(info: dict) -> dict | None:
         "changePct": chg,
         "weekChangePct": chg,
         "monthChangePct": chg,
-        "threeMonthChangePct": round(chg * 2.1, 1),
-        "ytdChangePct": round(chg * 3.3, 1),
+        "threeMonthChangePct": None,
+        "ytdChangePct": None,
         "marketCapT": cap_t, "marketCapB": cap_t,
         "groups": ["all_etf", "all_misc"], "bucket": "all_misc",
         "historySource": "naver",
@@ -1575,8 +1670,6 @@ def build_snapshot(limit: int | None = None) -> dict:
         for g in item.get("groups", []):
             group_counts[g] = group_counts.get(g, 0) + 1
 
-    kospi = [s for s in stocks if s.get("market") == "kospi"]
-    kosdaq = [s for s in stocks if s.get("market") == "kosdaq"]
     sector_charts = fetch_sector_charts()
 
     # 이번 실행에서 야후가 404 를 준 종목을 기록해 다음 실행의 백필 쿼터에서 뺀다.
@@ -1614,10 +1707,7 @@ def build_snapshot(limit: int | None = None) -> dict:
             "etfRelative": etf_relative,
         },
         "leveragedEtfCatalog": lev_catalog,
-        "indices": [
-            {"symbol": "^KS11", "name": "코스피", "ticker": "069500", "changePct": kospi[0]["changePct"] if kospi else 0},
-            {"symbol": "^KQ11", "name": "코스닥", "ticker": "229200", "changePct": kosdaq[0]["changePct"] if kosdaq else 0},
-        ],
+        "indices": build_kr_indices(),
         "errors": errors[:80],
         "historyFallback": {"cached": cached_count, "fabricated": fabricated},
         # 차트(실측 일봉) 커버리지. check_data_freshness.py 가 비율로 감시한다 —
@@ -1806,15 +1896,7 @@ def build_krx_metrics() -> None:
     """KRX 공식 지표(외국인 지분율/한도소진율 + 밸류에이션)를 서브프로세스로 수집한다.
     pykrx 로그인이 필요하므로 별 프로세스에서 돌린다(KRX_ID/KRX_PW 는 env 상속). 실패해도
     스냅샷은 진행 — 그 경우 attach_krx_metrics 가 조용히 건너뛴다."""
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_krx_metrics.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[krx] 지표 빌더 실행 실패: {exc}")
+    run_subbuilder("krx", "build_kr_krx_metrics.py")
 
 
 def attach_krx_metrics(payload: dict) -> None:
@@ -1967,12 +2049,53 @@ def write_js(path: Path, payload: dict):
 
 
 def write_details(details: dict):
-    DETAILS_DIR.mkdir(parents=True, exist_ok=True)
-    for old in DETAILS_DIR.glob("*.json"):
-        old.unlink()
-    for ticker, detail in details.items():
-        safe = re.sub(r"[^0-9A-Z._-]", "_", ticker.upper())
-        write_json(DETAILS_DIR / f"{safe}.json", detail)
+    """새 details 를 **임시 폴더에 다 쓴 뒤** 통째로 교체한다.
+
+    예전엔 기존 *.json 을 먼저 지우고 하나씩 새로 썼다. 중간에 죽으면 반쯤 빈
+    details 가 그대로 커밋돼 종목 화면이 대량으로 '데이터 없음' 이 된다.
+    """
+    DETAILS_DIR.parent.mkdir(parents=True, exist_ok=True)
+    staging = Path(tempfile.mkdtemp(prefix="korea_details_", dir=str(DETAILS_DIR.parent)))
+    try:
+        for ticker, detail in details.items():
+            safe = re.sub(r"[^0-9A-Z._-]", "_", ticker.upper())
+            write_json(staging / f"{safe}.json", detail)
+        old = DETAILS_DIR.parent / f"{DETAILS_DIR.name}.old"
+        if old.exists():
+            shutil.rmtree(old, ignore_errors=True)
+        if DETAILS_DIR.exists():
+            os.replace(DETAILS_DIR, old)
+        os.replace(staging, DETAILS_DIR)
+        staging = None
+        shutil.rmtree(old, ignore_errors=True)
+    finally:
+        if staging is not None:
+            shutil.rmtree(staging, ignore_errors=True)
+
+
+SUBBUILDER_TIMEOUT = 1800  # 초. 서브빌더 하나가 멈춰도 스냅샷 파이프라인을 붙잡지 않는다.
+
+
+def run_subbuilder(label: str, script: str, *extra_args: str, timeout: int = SUBBUILDER_TIMEOUT) -> bool:
+    """서브빌더를 타임아웃과 함께 돌리고 비-0 종료를 **로그로 남긴다**.
+
+    예전엔 check=False + timeout 없음이라 (a) 빌더가 실패해도 아무 흔적이 없었고
+    (b) 소스가 멈추면 스냅샷 잡이 워크플로 타임아웃까지 끌려갔다.
+    """
+    import subprocess
+    cmd = [sys.executable, str(ROOT / "scripts" / script), *extra_args]
+    try:
+        result = subprocess.run(cmd, check=False, timeout=timeout)
+    except subprocess.TimeoutExpired:
+        print(f"[{label}] 타임아웃 {timeout}s 초과 — 건너뛴다(기존 파일 유지)")
+        return False
+    except Exception as exc:
+        print(f"[{label}] 실행 실패: {exc}")
+        return False
+    if result.returncode != 0:
+        print(f"[{label}] 비정상 종료 exit={result.returncode} — 기존 파일 유지")
+        return False
+    return True
 
 
 def persist_snapshot(snapshot, light, details):
@@ -1985,46 +2108,14 @@ def persist_snapshot(snapshot, light, details):
         build_map_fundamentals.build_market("kr")
     except Exception as exc:
         print(f"[map_fundamentals/kr] rebuild skipped: {exc}")
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_pattern_stats.py"), "--market", "kr"],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[pattern_stats/kr] rebuild skipped: {exc}")
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_ipo_calendar.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[ipo_calendar/kr] rebuild skipped: {exc}")
+    run_subbuilder("pattern_stats/kr", "build_pattern_stats.py", "--market", "kr")
+    run_subbuilder("ipo_calendar/kr", "build_kr_ipo_calendar.py")
     # KRX 공매도 잔고(실데이터). pykrx 포크가 KRX_ID/KRX_PW(Actions Secrets / 로컬 .env)로
     # 로그인해 수집한다. --push 없이 파일만 쓰고, 상위 update_korea_data 가 data/korea/ 를
     # 커밋할 때 함께 올라간다. 자격증명이 없으면 빌더가 0건으로 조용히 끝나 기존 파일을 유지.
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_short_interest.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[short_interest/kr] rebuild skipped: {exc}")
+    run_subbuilder("short_interest/kr", "build_kr_short_interest.py")
     # 일일 공매도 거래비중(잔고와 별개, T+1). 같은 KRX_ID/KRX_PW 로그인 자격증명을 쓴다.
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_short_volume.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[short_volume/kr] rebuild skipped: {exc}")
+    run_subbuilder("short_volume/kr", "build_kr_short_volume.py")
     # 카드뉴스 경량 파일(data/cardnews.*) — KR 키만 갱신, US 키는 보존.
     try:
         deck = (UD.load_today_content() or {}).get("kr")
@@ -2032,37 +2123,13 @@ def persist_snapshot(snapshot, light, details):
     except Exception as exc:
         print(f"[cardnews/kr] 경량 파일 갱신 실패(스냅샷은 계속): {exc}")
     # 잠정실적 발표 + 주가반응(kr_disclosures + 야후 일봉). 공시 빌더가 먼저 돌아야 한다.
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_earnings_reactions.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[earnings_reactions/kr] rebuild skipped: {exc}")
+    run_subbuilder("earnings_reactions/kr", "build_kr_earnings_reactions.py")
     # 배당·공급계약 공시 원문 파싱(DART document.xml). 공시 빌더가 먼저 돌아야 한다.
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_corp_disclosures.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[corp_disclosures/kr] rebuild skipped: {exc}")
+    run_subbuilder("corp_disclosures/kr", "build_kr_corp_disclosures.py")
     # 애널리스트 컨센서스(FnGuide 목표주가·투자의견·추정기관수 + 증권사 리포트 원문).
     # 시총 상위 종목을 스냅샷에서 읽으므로 스냅샷을 쓴 뒤에 돌아야 한다. 인증 없는
     # 공개 소스만 쓰고 실패하면 기존 파일을 유지한 채 종료한다.
-    try:
-        import subprocess
-        import sys
-        subprocess.run(
-            [sys.executable, str(ROOT / "scripts" / "build_kr_consensus.py")],
-            check=False,
-        )
-    except Exception as exc:
-        print(f"[consensus/kr] rebuild skipped: {exc}")
+    run_subbuilder("consensus/kr", "build_kr_consensus.py")
 
 
 def main():

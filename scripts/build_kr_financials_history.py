@@ -34,6 +34,7 @@ except Exception:
     pass
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from sec_client import latest_fiscal_year  # noqa: E402
 from build_kr_disclosures import load_corp_map  # noqa: E402
 from build_kr_earnings import (  # noqa: E402
     BATCH, REVENUE_NAMES, OPERATING_NAMES, NET_NAMES, ASSET_NAMES,
@@ -47,8 +48,10 @@ OUT_JSON = ROOT / "data" / "korea" / "financials_history.json"
 
 
 def year_range(n: int = 10) -> list[str]:
-    # 올해 사업보고서는 아직 미제출(3월경)이라 전년도까지가 최신 연간이다.
-    end = datetime.date.today().year - 1
+    # 최신 조회 가능 사업연도. 1~3월에는 직전 연도 사업보고서가 아직 없어(전 종목
+    # status 013) year-2 를 써야 한다 — sec_client.latest_fiscal_year 가 그 규칙이다.
+    # KST 기준으로 계산한다(naive date.today() 는 Actions(UTC)에서 하루 어긋난다).
+    end = latest_fiscal_year()
     return [str(y) for y in range(end - n + 1, end + 1)]
 
 
@@ -145,7 +148,9 @@ def main() -> int:
         print(f"Wrote {OUT_JSON} — {len(fin)}종목")
         if args.push:
             import sec_client as sec
-            sec.git_publish(["data/korea/financials_history.json"], "KR financials history")
+            if not sec.git_publish(["data/korea/financials_history.json"], "KR financials history"):
+                print("[재무이력] git 게시 실패 — 발행되지 않았다")
+                return 1
     return 0
 
 

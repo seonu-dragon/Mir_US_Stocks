@@ -45,7 +45,7 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 | 05:05 | 미국 시장 스냅샷(+매크로·옵션·배당·컨센서스) | `daily-market-snapshot.yml` |
 | 05:30 | 미국 실적 캘린더 | `daily-earnings-calendar.yml` |
 | 05:34 | 미국 장마감 브리핑 | `us-close-briefing.yml` |
-| 06:00 | 백악관 일정 | `white-house-schedule.yml` |
+| 06:00 · 16:00 · 21:00 | 백악관 일정(하루 3회) | `white-house-schedule.yml` |
 | 06:06 | 국내 개장 전 브리핑 | `korea-premarket-briefing.yml` |
 | 13:17 | 미국 내부자 거래 | `insider-trades.yml` |
 | 13:23 | 8-K 주요 공시 | `material-events.yml` |
@@ -57,9 +57,29 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 | 15:42 | 국내 장마감 브리핑 + **KR 스냅샷(실제 일일 경로)** | `korea-close-briefing.yml` |
 | 21:07 | 미국 개장 전 브리핑 | `us-premarket-briefing.yml` |
 | 일요일 03:02 | 실적 이력(주간) | `weekly-earnings-history.yml` |
-| 일요일 04:20 | S/R·돌파 통계 + sitemap(주간) | `weekly-edge-stats.yml` |
-| 매월 5일 등 | 13F 포트폴리오(분기성) | `13f-quarterly-refresh.yml` |
-| (dispatch 전용) | 국내 시장 스냅샷 단독 실행 | `daily-korea-market-snapshot.yml` |
+| 일요일 04:20 | 돌파·되돌림 통계 + 팩터 검증 + sitemap(주간) | `weekly-edge-stats.yml` |
+| 매월 5일 15:05 · 2·5·8·11월 15일 15:10 | 13F 포트폴리오(크론 2개) | `13f-quarterly-refresh.yml` |
+| 평일 22:00 (+ dispatch) | 국내 시장 스냅샷 백업 경로 | `daily-korea-market-snapshot.yml` |
+| 매시 :17 | 배포 큐 좀비 run 감시(데이터 갱신 아님) | `pages-queue-watchdog.yml` |
+
+표의 시각은 **크론 지정 시각(KST)** 이고, GitHub 크론은 밀집 시간대에 수십 분씩 밀린다
+(국내 마감 브리핑 실측 22:00~23:40 KST). 화면에 찍히는 갱신 시각은 실제 실행 시각이다.
+
+한 워크플로우가 이름값 하나만 돌리는 게 아니다 — **동반 빌더**가 같은 job 안에서 함께 돈다:
+
+- `daily-market-snapshot.yml`: Finnhub 밸류에이션 · FRED 수익률곡선/매크로 · FINRA 일별
+  공매도 · 옵션 통계 · 배당/실적 캘린더 · 연방계약 · COT · 국채경매 · SEC FTD ·
+  위키 관심도 · WSB 감성 · 심리 게이지 · 애널리스트 컨센서스 → `update_data.py` →
+  `build_market_history.py` → 신선도 게이트.
+- `korea-close-briefing.yml`: ECOS 매크로 · 나라장터 · 관세청 → `update_korea_data.py`
+  (= **국내 일일 스냅샷의 실제 경로**) → 투자자 수급·컨센서스 → 브리핑 → 신선도 게이트.
+- `ipo-calendar.yml`: IPO 캘린더 + `build_us_dilution.py`(증자·희석).
+- `weekly-edge-stats.yml`: JS↔PY 패턴 패리티 · 돌파/되돌림 통계 · 팩터 검증 · sitemap 재생성.
+  **S/R 존중률 통계(`build_sr_stats.py`)는 2026-08-06 부로 주석 처리**됐다 — 검증 결론이
+  '무작위 대비 엣지 없음'이라 산출물(`data/sr_stats.json`)을 아무도 읽지 않는다.
+  필요하면 로컬에서 수동 실행한다.
+- `daily-korea-market-snapshot.yml` 은 위 국내 마감 브리핑이 실패했을 때를 위한 **백업**
+  경로라 ECOS·나라장터·관세청·신선도 스텝이 없다.
 
 각 워크플로우는 **자기만의 concurrency 그룹**(`mir-publish-${{ github.workflow }}`)을 갖습니다.
 같은 워크플로우의 중복 실행만 직렬화하고, 서로 다른 워크플로우는 병렬로 돕니다 —
@@ -102,6 +122,8 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
        `gemini-1.5-flash`(2025-09 종료)가 **둘 다 죽어 있었다**. `GEMINI_MODEL` 이
        비어 있으면 /chat 마다 404 를 두 번 받고서야 Workers AI 로 넘어갔다.
        기본 체인이 또 낡으면 **코드를 고치기 전에 이 변수부터** 살아 있는 모델로 채울 것.
+       모델이 은퇴할 때마다 여기와 `worker/yahoo-proxy.js` 의
+       `GEMINI_FALLBACK_MODELS` 를 같이 고칠 것.
    - KV: `COMMUNITY_KV` (커뮤니티+클라우드 동기화), `MOVE_CACHE` (원인 분석·요약 캐시,
      IP 리밋 카운터, `lastgood:*` — fx·fng·indices·calendar 의 직전 정상값.
      업스트림(야후·CNN·investing.com)이 죽으면 7일 이내 값을 `stale: true, storedAt`

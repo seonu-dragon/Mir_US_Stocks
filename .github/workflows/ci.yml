@@ -4,6 +4,11 @@ name: CI
 # 목록에 넣지 않는다(scripts/check_deploy_triggers.py 의 NOT_DATA_WORKFLOWS 참조).
 on:
   pull_request:
+  # main 직접 푸시(핫픽스·머지 커밋)도 검사한다. PR 만 걸어 두면 main 에 바로 들어간
+  # 변경은 아무 게이트도 통과하지 않는다. 데이터 워크플로우의 GITHUB_TOKEN push 는
+  # 이벤트를 만들지 않으므로(재귀 방지) 사람 푸시에만 걸린다.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -38,12 +43,25 @@ jobs:
       - name: Workflow trigger names
         run: python scripts/check_deploy_triggers.py
 
-      # ?v= 캐시버스터·MIR_BUILD_ID·sw.js 폴백이 자산 내용 해시와 맞는지.
-      # 체크아웃 EOL(CRLF/LF) 정규화 수정이 별도 PR 로 들어오기 전엔 리눅스 러너에서
-      # 해시가 어긋날 수 있어 당분간 경고만 — 그 PR 이 머지되면 continue-on-error 를 지울 것.
+      # ?v= 캐시버스터·MIR_BUILD_ID·sw.js BUILD_ID_FALLBACK 이 자산 내용 해시와 맞는지.
+      # 해시는 CRLF→LF 정규화본으로 계산하므로 Windows 작업트리와 리눅스 러너가 같은
+      # 값을 낸다(stamp_build_id.normalized_bytes) — 예전의 continue-on-error 사유는
+      # 해소됐고 2026-09-15 에 제거했다. 어긋나면 사용자가 옛 JS 를 계속 받는다.
       - name: Build id stamps (?v= / MIR_BUILD_ID / sw.js)
-        continue-on-error: true
         run: python scripts/stamp_build_id.py --check
+
+      # index/analysis 에 인라인된 critical CSS 가 styles.css 와 동기인지.
+      - name: Critical CSS in sync
+        run: python scripts/sync_critical_css.py --check
+
+      # sitemap.xml 이 현재 스냅샷 기준으로 최신인지(생성물 — 직접 편집 금지).
+      # 지금은 생성이 주간(weekly-edge-stats)이라 lastmod 가 하루만 지나도 어긋난다 —
+      # 매일 빨개지면 아무도 안 보게 되므로 당분간 경고만 남긴다. 생성이
+      # daily-market-snapshot 으로 옮겨지면(감사 2026-09-15 §2-5) 이 줄을 지워
+      # 하드 게이트로 만들 것.
+      - name: Sitemap up to date
+        continue-on-error: true
+        run: python scripts/build_sitemap.py --check
 
       - name: Global name collisions (if the checker exists)
         run: |

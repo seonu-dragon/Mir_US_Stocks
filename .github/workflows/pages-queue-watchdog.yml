@@ -2,8 +2,10 @@ name: Pages queue watchdog
 
 # 2026-08-08 에 `queued` 로 굳은 Deploy Pages run 하나가 concurrency group=pages 를
 # 25일간 점유해 모든 배포가 pending → cancelled 됐다(사이트는 07-30 데이터로 정지).
-# 정상 큐 대기는 몇 분이므로, 2시간 넘게 queued 인 채 job 도 없는 run 은 좀비로 보고
+# 정상 큐 대기는 몇 분이므로, 2시간 넘게 대기 중인 채 job 도 없는 run 은 좀비로 보고
 # 매시간 취소한다. 취소되면 그 뒤에 대기하던 최신 run 이 바로 시작된다.
+# GitHub 는 이 상태를 `queued`·`pending`·`in_progress`(job 0개) 중 아무거나로 보고할 수
+# 있어 세 가지를 모두 조회한다 — 2026-08-08 의 그 run 은 `pending` 이었다.
 # 이 워크플로우는 deploy-pages.yml 의 workflow_run 목록에 넣지 않는다(배포 트리거 아님).
 on:
   schedule:
@@ -23,18 +25,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           MAX_AGE_SEC: "7200"
+        shell: bash
         run: |
+          set -uo pipefail
           now=$(date +%s)
-          gh api "repos/$REPO/actions/workflows/deploy-pages.yml/runs?status=queued&per_page=50" \
-            --jq '.workflow_runs[] | "\(.id) \(.created_at)"' | while read -r id created; do
-            [ -z "$id" ] && continue
-            age=$(( now - $(date -d "$created" +%s) ))
-            jobs=$(gh api "repos/$REPO/actions/runs/$id/jobs" --jq '.jobs | length')
-            if [ "$age" -gt "$MAX_AGE_SEC" ] && [ "$jobs" = "0" ]; then
-              echo "zombie run $id queued for ${age}s with no job -> cancel"
-              gh api -X POST "repos/$REPO/actions/runs/$id/cancel" \
-                || gh api -X POST "repos/$REPO/actions/runs/$id/force-cancel"
-            else
-              echo "run $id queued ${age}s jobs=$jobs -> keep"
-            fi
+          for status in queued pending in_progress; do
+            gh api "repos/$REPO/actions/workflows/deploy-pages.yml/runs?status=$status&per_page=50" \
+              --jq '.workflow_runs[] | "\(.id) \(.created_at)"' | while read -r id created; do
+              [ -z "$id" ] && continue
+              age=$(( now - $(date -d "$created" +%s) ))
+              jobs=$(gh api "repos/$REPO/actions/runs/$id/jobs" --jq '.jobs | length')
+              if [ "$age" -gt "$MAX_AGE_SEC" ] && [ "$jobs" = "0" ]; then
+                echo "zombie run $id ($status) for ${age}s with no job -> cancel"
+                gh api -X POST "repos/$REPO/actions/runs/$id/cancel" \
+                  || gh api -X POST "repos/$REPO/actions/runs/$id/force-cancel"
+              else
+                echo "run $id ($status) ${age}s jobs=$jobs -> keep"
+              fi
+            done
           done
+
+      # 감시자가 조용히 죽으면 좀비를 잡아 줄 사람이 없다(25일 장애의 재발 경로).
+      # 다른 워크플로우와 같은 형태로 실패를 텔레그램에 알린다.
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

@@ -1,4 +1,4 @@
-﻿name: Deploy Pages
+name: Deploy Pages
 
 # 정적 사이트(HTML/JS/CSS + data/)를 GitHub Actions로 직접 배포한다.
 # legacy(브랜치 Jekyll) 자동 배포는 push가 몰릴 때 배포끼리 경합해
@@ -40,10 +40,13 @@ on:
       - "White House schedule refresh"
   workflow_dispatch:
 
+# actions: read 는 아래 no-op 게이트의 `gh run list` 용이다. 지금은 공개 레포라
+# 없어도 통하지만, 비공개로 바꾸면 조회가 조용히 실패해 "항상 배포" 로 퇴화한다.
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 # 배포는 한 번에 하나만. 진행 중인 배포는 끊지 않고(false), 대기열의
 # 중간 실행들은 GitHub가 자동으로 정리해 최신 것만 남긴다.
@@ -68,7 +71,7 @@ jobs:
 
       # 같은 내용을 여러 번 올리지 않는다. 데이터 워크플로우가 각각 완료마다 배포를
       # 트리거하는데, 그중 다수는 앞선 배포가 이미 올린 커밋을 다시 올리거나 서빙하지
-      # 않는 경로만 바꾼다(아티팩트 ~330MB 업로드 낭비 + 큐 점유). 마지막 성공 배포의
+      # 않는 경로만 바꾼다(아티팩트 456MB 업로드 낭비 + 큐 점유). 마지막 성공 배포의
       # 커밋과 지금 커밋 사이에 서빙 경로 변경이 없으면 건너뛴다.
       # 비교 대상은 workflow_run.head_sha 가 아니라 github.sha 다 — head_sha 는 데이터
       # 워크플로우가 체크아웃한 커밋(= 그 run 이 push 하기 *전*)이라 그걸로 비교하면
@@ -84,7 +87,10 @@ jobs:
         run: |
           set -euo pipefail
           CUR="${{ github.sha }}"
-          LAST="$(gh run list --workflow deploy-pages.yml --status success --limit 1 --json headSha --jq '.[0].headSha // empty' 2>/dev/null || true)"
+          # stderr 를 버리지 않는다 — 권한·레이트리밋 오류를 삼키면 "이전 배포 없음"
+          # 으로 잘못 읽혀 매번 456MB 를 다시 올린다. --branch main 으로 다른 브랜치의
+          # 수동 배포가 기준 커밋이 되는 것도 막는다.
+          LAST="$(gh run list --workflow deploy-pages.yml --branch main --status success --limit 1 --json headSha --jq '.[0].headSha // empty' || true)"
           if [ -z "$LAST" ]; then
             echo "no previous successful deploy — deploying"
             echo "deploy=true" >> "$GITHUB_OUTPUT"; exit 0
@@ -122,8 +128,8 @@ jobs:
         if: steps.gate.outputs.deploy != 'false'
         uses: actions/configure-pages@v5
 
-      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(2026-09-03 기준 아티팩트
-      # ≈330MB; 2026-08-06 실측 땐 추적 424MB 중 ~350MB). 예전엔 체크아웃에서 rm 으로 지운 뒤 path: '.'
+      # 사이트가 서빙하지 않는 파일을 아티팩트에서 덜어낸다(2026-09-15 실측 아티팩트
+      # 456MB; 2026-08-06 실측 땐 추적 424MB 중 ~350MB). 예전엔 체크아웃에서 rm 으로 지운 뒤 path: '.'
       # 를 올렸는데, 2026-08-06 부터 rsync 로 _site/ 스테이징 사본을 만들어 올린다 —
       # 체크아웃이 온전히 남아 이후 스텝이 레포 파일을 참조해도 안전하고, 실수로
       # 제외를 빼먹으면 배포가 커질 뿐 체크아웃을 파괴하는 사고가 없다.
@@ -158,6 +164,25 @@ jobs:
                  _site/data/korea/financials_history.json _site/data/korea/krx_metrics.json \
                  _site/data/us_financials_history.json
           echo "artifact size:" && du -sh _site | cut -f1
+
+      # 아티팩트 크기 가드. GitHub Pages 발행 사이트 권장 한도는 1GB 인데 2026-09-15
+      # 실측이 456MB(data/details 195M + data/korea/details 169M)이고 종목이 늘수록
+      # 같이 큰다. 조용히 한도에 닿으면 배포가 통째로 죽으므로, 700MB 를 넘으면 여기서
+      # 먼저 실패시킨다(아래 Notify failure 스텝이 텔레그램으로 알린다).
+      - name: Artifact size guard
+        if: steps.gate.outputs.deploy != 'false'
+        env:
+          MAX_MB: "700"
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIZE_MB="$(du -sm _site | cut -f1)"
+          echo "artifact size: ${SIZE_MB} MB (limit ${MAX_MB} MB, Pages 권장 한도 1024 MB)"
+          echo "- 배포 아티팩트: ${SIZE_MB} MB / 가드 ${MAX_MB} MB" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$SIZE_MB" -gt "$MAX_MB" ]; then
+            echo "::error::배포 아티팩트가 ${SIZE_MB}MB 로 한도 ${MAX_MB}MB 를 넘었습니다. data/details·data/korea/details 프루닝 또는 외부 스토리지(R2) 이전이 필요합니다(CLAUDE.md '알려진 부채')."
+            exit 1
+          fi
 
       # 배포본만 번들: _site/ 의 index/analysis/chart_capture.html 이 읽는 classic script 들을
       # 같은 순서로 이어붙여 esbuild 로 압축한 dist/<page>.bundle.js?v=<해시> 하나로 바꾼다.

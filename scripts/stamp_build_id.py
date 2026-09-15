@@ -113,6 +113,13 @@ def main() -> int:
         current = re.search(r'MIR_BUILD_ID = "([^"]+)"', build_id_js.read_text(encoding="utf-8"))
         if not current or current.group(1) != build_id:
             changes.append(f"build_id.js: MIR_BUILD_ID ({current.group(1) if current else '?'} → {build_id})")
+        # sw.js 의 폴백도 같이 본다. 스탬프는 둘을 함께 쓰는데 --check 는 build_id.js 만
+        # 봐서, sw.js 만 어긋난 상태(= build_id.js 를 못 읽는 첫 로드에서 SW 가 옛 세대
+        # 캐시를 계속 쓰는 상태)를 CI 가 통과시켰다(2026-09-15 감사).
+        sw_js = ROOT / "sw.js"
+        sw_cur = re.search(r'BUILD_ID_FALLBACK = "([^"]+)"', sw_js.read_text(encoding="utf-8"))
+        if not sw_cur or sw_cur.group(1) != build_id:
+            changes.append(f"sw.js: BUILD_ID_FALLBACK ({sw_cur.group(1) if sw_cur else '?'} → {build_id})")
     else:
         sub_once(build_id_js, r'MIR_BUILD_ID = "[^"]+"', f'MIR_BUILD_ID = "{build_id}"', "MIR_BUILD_ID", changes)
         sub_once(ROOT / "sw.js", r'BUILD_ID_FALLBACK = "[^"]+"', f'BUILD_ID_FALLBACK = "{build_id}"',

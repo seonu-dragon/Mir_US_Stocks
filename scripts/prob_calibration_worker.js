@@ -36,6 +36,19 @@ global.document = {
   getElementById() { return null; },
 };
 
+// 공매도 신호(analysis.js getShortInterest, weight 최대 1.3)는 window.SHORT_INTEREST 를
+// 본다. 주입하지 않으면 캘리브레이션 점수만 이 신호 없이 계산돼 화면 점수와 어긋난다
+// (2026-09-15 감사). 화면이 쓰는 파일 그대로를 올린다 — 이 스냅샷은 '현재' 값이라
+// 과거 봉에도 같은 값이 적용되는데, 화면 점수도 똑같이 현재 스냅샷을 쓰므로 두 점수는
+// 일치한다. 대신 과거 구간에 대해서는 시점 불일치가 남는다(산출물 caveats 에 명시).
+try {
+  const siPath = path.join(ROOT, "data", "short_interest.json");
+  global.window.SHORT_INTEREST = JSON.parse(fs.readFileSync(siPath, "utf-8"));
+} catch (e) {
+  global.window.SHORT_INTEREST = null;
+  process.stderr.write("  경고: data/short_interest.json 을 읽지 못해 공매도 신호가 빠진다\n");
+}
+
 require(path.join(ROOT, "indicators.js"));
 require(path.join(ROOT, "pattern_detectors_extended.js"));
 const MirProb = require(path.join(ROOT, "analysis.js"));

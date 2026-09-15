@@ -53,15 +53,29 @@ CONCEPTS = {
 }
 
 
-def get_json(url, timeout=25):
+def get_json(url, timeout=25, retries=4):
+    """429/5xx 는 지수 백오프로 재시도, 404 는 즉시 중단.
+
+    예전엔 재시도가 0회라 SEC 가 429 를 한 번만 줘도 그 종목이 통째로 사라졌다
+    (--top 500 인데 라이브 count 304, 2026-09-15 감사).
+    """
     import gzip
-    import io
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        raw = r.read()
-        if r.headers.get("Content-Encoding") == "gzip":
-            raw = gzip.decompress(raw)
-        return json.loads(raw.decode("utf-8", "replace"))
+    last = None
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=UA)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                raw = r.read()
+                if r.headers.get("Content-Encoding") == "gzip":
+                    raw = gzip.decompress(raw)
+                return json.loads(raw.decode("utf-8", "replace"))
+        except Exception as exc:
+            last = exc
+            if getattr(exc, "code", None) in (403, 404):
+                raise
+            if attempt < retries:
+                sec.backoff_sleep(attempt, base=1.0, cap=30.0)
+    raise last
 
 
 def ticker_cik_map():
@@ -102,12 +116,18 @@ def annual_by_concept(gaap: dict, names: list[str]) -> dict:
     return byfy
 
 
-def company_history(cik: int, years: int) -> list[dict]:
+def company_history(cik: int, years: int):
+    """연간 재무 행 목록. **요청 자체가 실패하면 None**(= 모름)을 돌려준다.
+
+    빈 리스트(= 공시에 연간 재무가 없음)와 구분해야 prev-merge 가 '이번에 못
+    받은 종목'만 정확히 살릴 수 있다.
+    """
     url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik:010d}.json"
     try:
         facts = (get_json(url).get("facts") or {}).get("us-gaap") or {}
-    except Exception:
-        return []
+    except Exception as exc:
+        print(f"    [경고] CIK {cik} companyfacts 실패: {exc}")
+        return None
     if not facts:
         return []
     per = {k: annual_by_concept(facts, names) for k, names in CONCEPTS.items()}
@@ -136,6 +156,7 @@ def build(top: int | None, years: int):
     time.sleep(0.2)
     hist = {}
     done = 0
+    failed = 0
     for t in tickers:
         cik = cmap.get(t)
         done += 1
@@ -143,11 +164,33 @@ def build(top: int | None, years: int):
             continue
         rows = company_history(cik, years)
         time.sleep(0.12)  # SEC 초당 ~10회 준수
-        if len(rows) >= 2:
+        if rows is None:
+            failed += 1
+        elif len(rows) >= 2:
             hist[t] = rows
         if done % 100 == 0:
-            print(f"  진행 {done}/{len(tickers)} (수집 {len(hist)})")
-    return hist
+            print(f"  진행 {done}/{len(tickers)} (수집 {len(hist)}, 실패 {failed})")
+    print(f"[US재무] 시도 {done}종목 · 수집 {len(hist)} · 요청 실패 {failed}")
+    return hist, failed
+
+
+def merge_previous(hist: dict) -> tuple[dict, int]:
+    """이번에 못 받은 종목은 직전 산출물 값을 유지한다(패널 깜빡임·커버리지 붕괴 방지)."""
+    if not OUT_JSON.exists():
+        return hist, 0
+    try:
+        prev = (json.loads(OUT_JSON.read_text(encoding="utf-8")).get("financials") or {})
+    except Exception as exc:
+        print(f"[US재무] 이전 파일 병합 실패(무시): {exc}")
+        return hist, 0
+    kept = 0
+    for ticker, rows in prev.items():
+        if ticker not in hist and rows:
+            hist[ticker] = rows
+            kept += 1
+    if kept:
+        print(f"[US재무] 이번에 못 받은 {kept}종목은 이전 값 유지")
+    return hist, len(prev)
 
 
 def main() -> int:
@@ -160,17 +203,27 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
     print(f"=== US 다년 재무 수집 (SEC, 상위 {args.top}) ===")
-    hist = build(args.top, args.years)
-    payload = {"updatedAtKst": sec.kst_now_str(), "source": "SEC EDGAR XBRL companyfacts (10-K)",
-               "count": len(hist), "financials": hist}
+    hist, failed = build(args.top, args.years)
     if not hist:
-        print("[US재무] 수집 0건 — 기존 파일 유지")
-        return 0
+        print("[US재무] 수집 0건 — 기존 파일 유지, 실패로 끝낸다")
+        return 1
+    fresh = len(hist)
+    hist, prev_count = merge_previous(hist)
+    # 커버리지가 직전 대비 20% 넘게 줄었으면 소스가 깨진 것이다. 승계까지 했는데도
+    # 줄었다면 조용히 발행하지 않는다(2026-09-15 감사: 500 중 304만 발행 중이었다).
+    if prev_count and len(hist) < prev_count * 0.80:
+        print(f"[US재무] 커버리지 {prev_count} → {len(hist)}종목 ({len(hist) / prev_count:.0%}) — "
+              f"20% 넘게 줄어 발행하지 않는다(요청 실패 {failed}건)")
+        return 1
+    payload = {"updatedAtKst": sec.kst_now_str(), "source": "SEC EDGAR XBRL companyfacts (10-K)",
+               "count": len(hist), "freshCount": fresh, "failedCount": failed, "financials": hist}
     with repository_publish_lock(ROOT):
         atomic_write_text(OUT_JSON, json.dumps(payload, ensure_ascii=False, separators=(",", ":")))
-        print(f"Wrote {OUT_JSON} — {len(hist)}종목")
+        print(f"Wrote {OUT_JSON} — {len(hist)}종목(신규 {fresh}, 실패 {failed})")
         if args.push:
-            sec.git_publish(["data/us_financials_history.json"], "US financials history")
+            if not sec.git_publish(["data/us_financials_history.json"], "US financials history"):
+                print("[중단] US 다년 재무 push 실패 — 발행되지 않았다")
+                return 1
     return 0
 
 

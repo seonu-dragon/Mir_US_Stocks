@@ -40,19 +40,34 @@ APP_JS = ROOT / "app.js"
 NOT_DATA_WORKFLOWS = {"Deploy Pages", "Pages queue watchdog", "Daily Korea News Top 5", "CI"}
 
 
-def workflow_names() -> dict[str, str]:
-    """실제 워크플로우 name: → 파일명."""
+def _read(path: Path) -> str:
+    # utf-8-sig: deploy-pages.yml 에 UTF-8 BOM 이 있어 순수 utf-8 로 읽으면
+    # 첫 줄이 "\ufeffname: Deploy Pages" 가 되고 `^name:` 정규식이 빗나갔다
+    # (2026-09-15 감사 — 'Deploy Pages' 를 못 보고도 조용히 통과했다).
+    return path.read_text(encoding="utf-8-sig")
+
+
+def workflow_files() -> list[Path]:
+    """*.yml 과 *.yaml 을 모두 본다(둘 다 GitHub 이 인식한다)."""
+    return sorted(list(WORKFLOW_DIR.glob("*.yml")) + list(WORKFLOW_DIR.glob("*.yaml")))
+
+
+def workflow_names() -> tuple[dict[str, str], list[str]]:
+    """(실제 워크플로우 name: → 파일명, name: 을 못 읽은 파일 목록)."""
     names: dict[str, str] = {}
-    for path in sorted(WORKFLOW_DIR.glob("*.yml")):
-        m = re.search(r"^name:\s*(.+?)\s*$", path.read_text(encoding="utf-8"), re.M)
+    unparsable: list[str] = []
+    for path in workflow_files():
+        m = re.search(r"^name:\s*(.+?)\s*$", _read(path), re.M)
         if m:
             names[m.group(1).strip().strip('"').strip("'")] = path.name
-    return names
+        else:
+            unparsable.append(path.name)
+    return names, unparsable
 
 
 def deploy_trigger_names() -> list[str]:
     """deploy-pages.yml 의 workflow_run.workflows 목록."""
-    text = DEPLOY.read_text(encoding="utf-8")
+    text = _read(DEPLOY)
     block = re.search(r"workflows:\s*\n((?:\s+-\s+.+\n)+)", text)
     if not block:
         return []
@@ -65,7 +80,7 @@ def deploy_trigger_names() -> list[str]:
 
 def trust_recovery_names() -> list[str]:
     """app.js TRUST_RECOVERY 안의 workflow: "..." 값."""
-    text = APP_JS.read_text(encoding="utf-8")
+    text = APP_JS.read_text(encoding="utf-8-sig")
     block = re.search(r"const TRUST_RECOVERY = \{(.+?)\n\};", text, re.S)
     if not block:
         return []
@@ -73,9 +88,16 @@ def trust_recovery_names() -> list[str]:
 
 
 def main() -> int:
-    actual = workflow_names()
+    actual, unparsable = workflow_names()
     data_workflows = {n for n in actual if n not in NOT_DATA_WORKFLOWS}
     problems: list[str] = []
+
+    for fname in unparsable:
+        # 이름을 못 읽으면 그 워크플로우는 이 검사에서 통째로 빠진다 —
+        # '아무 문제 없음'으로 보이는 게 가장 위험하다. 문제로 올린다.
+        problems.append(
+            f"{fname}: 최상위 `name:` 을 읽지 못했다 — 배포 트리거 검사에서 누락된다."
+        )
 
     listed = deploy_trigger_names()
     if not listed:

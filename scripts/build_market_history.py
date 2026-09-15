@@ -28,6 +28,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import json
 import statistics
 import sys
@@ -171,6 +172,26 @@ def latest_close(detail_path):
     return None
 
 
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+
+def latest_trading_date(detail_path):
+    """detail 의 chartSeries 마지막 **거래일**(YYYY-MM-DD). 없으면 None.
+
+    행 형식은 [open, high, low, close, volume, "YYYY-MM-DD"] 다 — 날짜 칸
+    위치에 의존하지 않도록 행 안의 날짜 문자열을 찾는다.
+    """
+    d = load_json(detail_path)
+    series = (d or {}).get("chartSeries") or []
+    for row in reversed(series):
+        if not row:
+            continue
+        for cell in reversed(row):
+            if isinstance(cell, str) and _DATE_RE.match(cell):
+                return cell
+    return None
+
+
 def macro_value(macro, fid):
     for it in (macro or {}).get("indicators") or []:
         if it.get("id") == fid:
@@ -186,8 +207,13 @@ def build_record():
     yield_curve = load_json(ROOT / "data" / "yield_curve.json")
 
     t10y2y = _num(((yield_curve or {}).get("spreads") or {}).get("t10y2y"))
+    # 레코드 날짜는 **마지막 거래일**이다. KST 오늘로 찍으면 토·일에도 레코드가
+    # 생겨 금요일 값이 3번 반복되고, 스파크라인이 주말마다 평탄해졌다
+    # (2026-09-15 감사). 거래일을 못 읽으면 KST 오늘로 폴백한다.
+    stamp = (latest_trading_date(ROOT / "data" / "details" / "SPY.json")
+             or datetime.now(KST).strftime("%Y-%m-%d"))
     record = {
-        "date": datetime.now(KST).strftime("%Y-%m-%d"),
+        "date": stamp,
         "fearGreed": compute_fear_greed(snapshot, fundamentals, options_stats, macro),
         "usdKrw": fetch_usd_krw(),
         "spyClose": latest_close(ROOT / "data" / "details" / "SPY.json"),

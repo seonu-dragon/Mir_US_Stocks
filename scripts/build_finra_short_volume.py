@@ -22,6 +22,7 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -39,9 +40,11 @@ def kst_now_str() -> str:
 def fetch_day(d: datetime):
     url = f"https://cdn.finra.org/equity/regsho/daily/CNMSshvol{d.strftime('%Y%m%d')}.txt"
     try:
-        with urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=30) as r:
-            return r.read().decode("utf-8", "replace")
+        return sec.http_get_with_backoff(
+            url, headers=UA, timeout=30,
+            label=f"finra {d:%Y-%m-%d}").decode("utf-8", "replace")
     except Exception:
+        # 주말·휴일 파일은 404 라 정상이다(호출부가 다음 날짜로 넘어간다).
         return None
 
 

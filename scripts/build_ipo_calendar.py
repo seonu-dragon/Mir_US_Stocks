@@ -278,10 +278,11 @@ def build(backfill_days, overlap_days=5, max_price_fetches=120):
 
     merged = {r["accession"]: r for r in existing}
     new = 0
+    partial = False
     # 며칠씩 끊어 efts 조회(폼별)
     for form in ("424B4", "S-1", "S-1/A"):
-        hits = sec.efts_hits(form, start.isoformat(), today.isoformat())
-        stage_label, stage = FORM_STAGE.get(form, (form, "filed"))
+        hits, form_partial = sec.efts_hits(form, start.isoformat(), today.isoformat())
+        partial = partial or form_partial
         for hit in hits:
             src = hit.get("_source", {})
             accession = src.get("adsh") or hit["_id"].split(":")[0]
@@ -293,6 +294,12 @@ def build(backfill_days, overlap_days=5, max_price_fetches=120):
             cik = int(ciks[0]) if ciks and str(ciks[0]).isdigit() else 0
             acc_nodash = accession.replace("-", "")
             doc = hit["_id"].split(":")[1]
+            # 단계는 **실제 제출된 폼**으로 판정한다. efts 는 "S-1" 질의에
+            # S-1/A 도 함께 돌려주는데, 예전엔 질의 폼으로 라벨을 붙여
+            # S-1/A 정정본 180건이 '등록 신청'으로 표시됐다(2026-09-15 감사).
+            actual_form = str(src.get("form") or form).strip().upper()
+            stage_label, stage = FORM_STAGE.get(
+                actual_form, FORM_STAGE.get(form, (actual_form or form, "filed")))
             merged[key] = {
                 "company": company,
                 "ticker": ticker,
@@ -304,16 +311,23 @@ def build(backfill_days, overlap_days=5, max_price_fetches=120):
                 "link": f"https://www.sec.gov/Archives/edgar/data/{cik}/{acc_nodash}/{doc}" if cik else "",
             }
             new += 1
-        print(f"    {form}: {len(hits)}건")
+        print(f"    {form}: {len(hits)}건{' (일부 실패)' if form_partial else ''}")
 
     cutoff = (today - timedelta(days=RETENTION_DAYS)).isoformat()
     ipos = [r for r in merged.values() if (r.get("fileDate") or "") >= cutoff]
     ipos.sort(key=lambda r: (r.get("fileDate") or "", r.get("accession") or ""), reverse=True)
     ipos = ipos[:MAX_ROWS]
     enrich_offer_prices(ipos, max_price_fetches)
+    fresh_last = max((r.get("fileDate") or "" for r in ipos), default=today.isoformat())
+    if partial and last:
+        # 이번 창을 다 못 받았다 — 커서를 전진시키면 빠진 공시를 영영 다시
+        # 안 본다. 이전 커서를 그대로 두고 다음 실행이 같은 구간을 재수집한다.
+        print(f"  [경고] efts 일부 실패 — lastFileDate 를 {last} 로 고정(재수집 예약)")
+        fresh_last = last
     payload = {
         "updatedAtKst": sec.kst_now_str(),
-        "lastFileDate": max((r.get("fileDate") or "" for r in ipos), default=today.isoformat()),
+        "lastFileDate": fresh_last,
+        "partialFetch": bool(partial),
         "count": len(ipos),
         "source": "SEC EDGAR S-1 / 424B4",
         "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. "
@@ -344,7 +358,8 @@ def main():
         sec.write_data(OUT_JSON, OUT_JS, "IPO_CALENDAR", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} ipos")
         if args.push and not args.no_push:
-            sec.git_publish(["data/ipo_calendar.json", "data/ipo_calendar.js"], "IPO calendar")
+            if not sec.git_publish(["data/ipo_calendar.json", "data/ipo_calendar.js"], "IPO calendar"):
+                raise SystemExit("[중단] IPO 캘린더 push 실패 — 발행되지 않았다")
 
 
 if __name__ == "__main__":

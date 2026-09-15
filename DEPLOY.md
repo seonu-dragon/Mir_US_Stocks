@@ -42,11 +42,11 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 | KST | 작업 | 워크플로 |
 |---|---|---|
 | 04:43 | 국내 뉴스 Top 5 | `daily-korea-news.yml` |
-| 05:05 | 미국 시장 스냅샷(+매크로·옵션·배당·컨센서스) | `daily-market-snapshot.yml` |
-| 05:30 | 미국 실적 캘린더 | `daily-earnings-calendar.yml` |
-| 05:34 | 미국 장마감 브리핑 | `us-close-briefing.yml` |
 | 06:00 · 16:00 · 21:00 | 백악관 일정(하루 3회) | `white-house-schedule.yml` |
+| 06:05 | 미국 시장 스냅샷(+매크로·옵션·배당·컨센서스) | `daily-market-snapshot.yml` |
 | 06:06 | 국내 개장 전 브리핑 | `korea-premarket-briefing.yml` |
+| 06:30 | 미국 실적 캘린더 | `daily-earnings-calendar.yml` |
+| 06:34 | 미국 장마감 브리핑 | `us-close-briefing.yml` |
 | 13:17 | 미국 내부자 거래 | `insider-trades.yml` |
 | 13:23 | 8-K 주요 공시 | `material-events.yml` |
 | 13:28 | 액티비스트 13D/G | `activist-stakes.yml` |
@@ -80,6 +80,17 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
   필요하면 로컬에서 수동 실행한다.
 - `daily-korea-market-snapshot.yml` 은 위 국내 마감 브리핑이 실패했을 때를 위한 **백업**
   경로라 ECOS·나라장터·관세청·신선도 스텝이 없다.
+
+> **미국 마감 계열 3개는 21시대 UTC 입니다(2026-09-15 변경).**
+> `daily-market-snapshot` 21:05 · `daily-earnings-calendar` 21:30 ·
+> `us-close-briefing` 21:34 UTC = KST 06:05 / 06:30 / 06:34.
+> 예전 값(20:05 / 20:30 / 20:34 UTC)은 서머타임이 끝난 겨울(EST)에 **15:05 ET**,
+> 즉 미국 정규장 마감 55분 전이었습니다. 그동안 무사했던 건 GitHub 크론 지연
+> (실측 21:57~22:34 UTC) 덕분이지, 설정이 맞아서가 아니었습니다.
+> 크론만으로는 서머타임을 따라갈 수 없어 스크립트 진입부에도 ET 게이트를
+> 넣었습니다 — `sec_client.require_us_market_closed()` 가 평일 16:05 ET 이전이면
+> exit 1 로 멈춥니다(`update_data.py`, `briefings/us_close/main.py`).
+> 이 세 크론을 다시 20시대로 되돌리면 겨울에 장중 데이터가 '종가'로 발행됩니다.
 
 각 워크플로우는 **자기만의 concurrency 그룹**(`mir-publish-${{ github.workflow }}`)을 갖습니다.
 같은 워크플로우의 중복 실행만 직렬화하고, 서로 다른 워크플로우는 병렬로 돕니다 —

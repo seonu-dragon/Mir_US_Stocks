@@ -20,6 +20,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "wsb_sentiment.json"
@@ -35,9 +36,8 @@ def kst_now_str() -> str:
 
 
 def build() -> dict | None:
-    req = urllib.request.Request(URL, headers=UA)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        rows = json.loads(r.read().decode("utf-8"))
+    rows = json.loads(sec.http_get_with_backoff(
+        URL, headers=UA, timeout=30, label="wsb").decode("utf-8"))
     if not isinstance(rows, list) or len(rows) < 10:
         return None
 

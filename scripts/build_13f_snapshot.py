@@ -22,10 +22,9 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import sec_client as sec  # noqa: E402
 from briefing_store import repository_publish_lock  # noqa: E402
 from institutions_13f_registry import UNIQUE_INSTITUTIONS  # noqa: E402
-from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
-from sec_client import git_publish  # noqa: E402
 
 OUT_JSON = ROOT / "data" / "institutional_13f.json"
 OUT_JS = ROOT / "data" / "institutional_13f.js"
@@ -35,6 +34,9 @@ CURL = shutil.which("curl") or shutil.which("curl.exe")
 QUARTER_ENDS = {1: "03-31", 2: "06-30", 3: "09-30", 4: "12-31"}
 MAX_QUARTERS = 10
 TOP_HOLDINGS = 25
+# 이번 실행에서 최소 이만큼은 실제로 받아와야 발행한다. 2026-09-15 감사 실측:
+# 131개 중 62개(47%)가 error 인데도 초록으로 발행되고 있었다.
+MIN_OK_RATIO = 0.70
 
 
 def curl_fetch(url: str) -> str:
@@ -170,8 +172,26 @@ def institution_quarters(cik: str, quarters: int = MAX_QUARTERS) -> list[dict]:
     return out
 
 
+def load_previous() -> dict[str, dict]:
+    """직전 산출물의 기관별 레코드(cik → 레코드). 없으면 빈 dict."""
+    if not OUT_JSON.exists():
+        return {}
+    try:
+        prev = json.loads(OUT_JSON.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"[warn] 이전 13F 파일을 읽지 못함(무시): {exc}")
+        return {}
+    out = {}
+    for rec in prev.get("institutions") or []:
+        cik = str(rec.get("cik") or "").strip()
+        if cik:
+            out[cik] = rec
+    return out
+
+
 def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
     institutions = UNIQUE_INSTITUTIONS[:limit]
+    previous = load_previous()
     payload = {
         "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
         "updateSchedule": "quarterly",
@@ -182,6 +202,7 @@ def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
         "institutions": [],
     }
     ok = 0
+    carried = 0
     for inst in institutions:
         try:
             inst_quarters = institution_quarters(inst["cik"], quarters=quarters)
@@ -199,31 +220,49 @@ def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
             top = latest.get("holdings", [{}])[0].get("issuer", "-")
             print(f"[ok] {inst['name']} quarters={len(inst_quarters)} top={top}")
         except Exception as exc:
-            payload["institutions"].append({
-                **inst,
-                "status": "error",
-                "error": str(exc),
-                "holdings": [],
-                "quarters": [],
-            })
-            print(f"[err] {inst['name']}: {exc}")
+            # 기관 단위 prev-merge: 이번에 못 받은 기관은 직전 분기 데이터를
+            # 그대로 유지한다. 예전엔 holdings=[] 로 덮어써서 소스가 흔들린
+            # 날 화면에서 그 기관이 통째로 사라졌다(2026-09-15 감사).
+            prev = previous.get(str(inst.get("cik") or "").strip())
+            if prev and prev.get("quarters"):
+                payload["institutions"].append({
+                    **inst,
+                    "status": "carried",
+                    "error": str(exc),
+                    "carriedFrom": prev.get("carriedFrom") or prev.get("reportDate") or "",
+                    "reportDate": prev.get("reportDate", ""),
+                    "filedDate": prev.get("filedDate", ""),
+                    "accession": prev.get("accession", ""),
+                    "holdings": prev.get("holdings") or [],
+                    "quarters": prev.get("quarters") or [],
+                })
+                carried += 1
+                print(f"[carry] {inst['name']}: {exc} — 직전 값 유지")
+            else:
+                payload["institutions"].append({
+                    **inst,
+                    "status": "error",
+                    "error": str(exc),
+                    "holdings": [],
+                    "quarters": [],
+                })
+                print(f"[err] {inst['name']}: {exc}")
         time.sleep(0.25)
+    payload["okCount"] = ok
+    payload["carriedCount"] = carried
+    payload["errorCount"] = len(institutions) - ok - carried
     return payload, ok, len(institutions)
 
 
 def write_files(payload: dict) -> None:
-    atomic_write_text(OUT_JSON, json.dumps(payload, ensure_ascii=False, indent=2))
-    # 브라우저가 읽는 쪽. write_text 는 중단 시 잘린 파일을 남긴다 — .json 과 같이 원자적으로.
-    atomic_write_text(
-        OUT_JS,
-        "window.INSTITUTIONAL_13F = "
-        + json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
-        + ";\n",
-    )
+    # 공용 write_data 경유 — 0건으로 기존 파일을 덮는 회귀를 assert_not_emptying 이 막는다.
+    # (예전엔 atomic_write_text 로 직행해 이 게이트를 통째로 우회했다)
+    sec.write_data(OUT_JSON, OUT_JS, "INSTITUTIONAL_13F", payload)
 
 
 def publish() -> bool:
-    return git_publish(["data/institutional_13f.json", "data/institutional_13f.js"], "institutional 13F")
+    return sec.git_publish(["data/institutional_13f.json", "data/institutional_13f.js"],
+                           "institutional 13F")
 
 
 def main() -> None:
@@ -240,11 +279,19 @@ def main() -> None:
 
     print("=== SEC 13F-HR 기관 보유 스냅샷 빌드 시작 ===")
     payload, ok, total = build_payload(args.limit, args.quarters)
+    carried = payload.get("carriedCount", 0)
+    if total and ok < total * MIN_OK_RATIO:
+        raise SystemExit(
+            f"[중단] 13F 신규 수집 {ok}/{total}건 ({ok / total:.0%}) — "
+            f"하한 {MIN_OK_RATIO:.0%} 미달. 기존 파일을 유지하고 실패로 끝낸다"
+            f"(승계 {carried}건). 13f.info 소스를 확인할 것."
+        )
     with repository_publish_lock(ROOT):
         write_files(payload)
-        print(f"Wrote {OUT_JSON} ({ok}/{total} ok)")
+        print(f"Wrote {OUT_JSON} ({ok}/{total} ok, 승계 {carried}건)")
         if args.push and not args.no_push:
-            publish()
+            if not publish():
+                raise SystemExit("[중단] 13F 스냅샷 push 실패 — 발행되지 않았다")
 
 
 if __name__ == "__main__":

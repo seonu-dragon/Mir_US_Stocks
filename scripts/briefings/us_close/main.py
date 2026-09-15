@@ -21,7 +21,8 @@ KST = ZoneInfo("Asia/Seoul")
 
 _PKG_DIR = Path(__file__).resolve().parent
 _COMMON_DIR = _PKG_DIR.parent / "common"
-for _path in (_COMMON_DIR, _PKG_DIR):
+_SCRIPTS_DIR = _PKG_DIR.parents[1]
+for _path in (_COMMON_DIR, _PKG_DIR, _SCRIPTS_DIR):
     if str(_path) not in sys.path:
         sys.path.insert(0, str(_path))
 
@@ -38,6 +39,7 @@ from config import GEMINI_API_KEY, validate_config
 from publish import publish_briefing_to_site
 from schedules import build_congress_trades_safe
 from telegram_bot import send_telegram_message, notify_briefing_status
+from sec_client import require_us_market_closed
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -93,8 +95,10 @@ def generate_us_close_analysis(raw_data_text):
     for cfg in models_config:
         model   = cfg["model"]
         version = cfg["version"]
-        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        headers = {"Content-Type": "application/json"}
+        # API 키는 쿼리스트링이 아니라 x-goog-api-key 헤더로 보낸다 — URL 은
+        # 예외 메시지·프록시 로그에 그대로 찍힌다(2026-09-15 감사).
+        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent"
+        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
         print(f"[AI 분석] {model} ({version}) 모델로 미국 장마감 시황 분석 생성 시도 중...")
@@ -118,38 +122,59 @@ def update_market_snapshot(us_close_html, reddit_data, stocktwits_data, yahoo_da
     """Safely merge and publish ai_briefing.us_close plus social sentiment."""
 
     def mutate(data):
-        data.setdefault("social_sentiment", {})
-        data["social_sentiment"]["reddit"] = [
-            {
-                "ticker": it.get("ticker", ""),
-                "name": it.get("name", ""),
-                "mentions": it.get("mentions", 0),
-                "change24h": ((it["mentions"] - it["mentions_prev"]) / it["mentions_prev"] * 100)
-                if it.get("mentions_prev") else 0,
-            }
-            for it in reddit_data
-        ]
-        data["social_sentiment"]["stocktwits"] = [
-            {"ticker": it.get("symbol", ""), "name": it.get("name", ""), "watchlist_count": it.get("watchlist_count", 0)}
-            for it in stocktwits_data
-        ]
-        data["social_sentiment"]["yahoo"] = [
-            {"ticker": it.get("symbol", ""), "name": it.get("name", ""), "price": it.get("price", "")}
-            for it in yahoo_data
-        ]
+        # 스크레이퍼가 예외를 삼키고 빈 배열을 돌려주면(레딧·스톡트윗 구조 변경 등)
+        # 예전에는 그 빈 배열이 멀쩡한 기존 값을 덮어 소셜 패널이 통째로 비었다.
+        # 이번 실행에서 실제로 받은 소스만 갱신하고 나머지는 직전 값을 유지한다.
+        social = data.setdefault("social_sentiment", {})
+        kept = []
+        if reddit_data:
+            social["reddit"] = [
+                {
+                    "ticker": it.get("ticker", ""),
+                    "name": it.get("name", ""),
+                    "mentions": it.get("mentions", 0),
+                    "change24h": ((it["mentions"] - it["mentions_prev"]) / it["mentions_prev"] * 100)
+                    if it.get("mentions_prev") else 0,
+                }
+                for it in reddit_data
+            ]
+        else:
+            kept.append("reddit")
+        if stocktwits_data:
+            social["stocktwits"] = [
+                {"ticker": it.get("symbol", ""), "name": it.get("name", ""),
+                 "watchlist_count": it.get("watchlist_count", 0)}
+                for it in stocktwits_data
+            ]
+        else:
+            kept.append("stocktwits")
+        if yahoo_data:
+            social["yahoo"] = [
+                {"ticker": it.get("symbol", ""), "name": it.get("name", ""), "price": it.get("price", "")}
+                for it in yahoo_data
+            ]
+        else:
+            kept.append("yahoo")
+        if kept:
+            print(f"  [경고] 소셜 소스 {', '.join(kept)} 수집 0건 — 직전 값을 유지한다")
 
     return publish_briefing_to_site("us_close", us_close_html, "US Close", mutate)
 
 def main():
     parser = argparse.ArgumentParser(description="미국 장마감 시황 브리핑 생성 및 텔레그램 발송")
     parser.add_argument("--test", action="store_true", help="텔레그램 발송 없이 콘솔에만 출력합니다.")
+    parser.add_argument("--ignore-market-close-guard", action="store_true",
+                        help="뉴욕 장 마감(16:05 ET) 전이라도 실행한다(수동 디버깅 전용).")
     args = parser.parse_args()
 
     print("=== 미국 장마감 시황 데이터 수집 시작 ===")
-    try:
-        validate_config(require_gemini=True, require_telegram=True)
-    except ValueError as e:
-        print(f"  [경고] {e}")
+    # '장마감' 브리핑이므로 뉴욕 장이 실제로 닫혔는지 먼저 본다. 크론은 UTC 고정이라
+    # 서머타임 전환 때 장중(15:0x ET)에 돌 수 있었다(2026-09-15 감사).
+    if not args.ignore_market_close_guard:
+        require_us_market_closed("미국 장마감 브리핑")
+    # 키가 없으면 AI 분석이 통째로 비고, 그 상태로 발행하면 "AI 분석 불가"
+    # 플레이스홀더가 사이트에 올라간다. 경고가 아니라 실패로 끝낸다.
+    validate_config(require_gemini=True, require_telegram=True)
 
     today = datetime.now(KST).strftime("%Y년 %m월 %d일 %H시 %M분")
 
@@ -263,13 +288,17 @@ def main():
 
     # 2. AI 분석
     ai_text = generate_us_close_analysis(raw_text)
+    if not ai_text.strip():
+        # 플레이스홀더("AI 요약 분석을 생성할 수 없습니다")를 발행하고 텔레그램으로
+        # "작성완료"를 통보하던 경로를 끊는다 — 실패는 실패로 끝낸다.
+        raise SystemExit(
+            "[중단] Gemini 응답이 비어 미국 장마감 브리핑을 생성하지 못했다 — "
+            "발행하지 않는다(기존 브리핑 유지). API 키·모델·쿼터를 확인할 것."
+        )
 
     # ── Part 2: AI briefing ──
     rp2 = [f"💡 <b>[미국 증시 장마감 시황 심층 브리핑]</b>\n"]
-    if ai_text:
-        rp2.append(ai_text)
-    else:
-        rp2.append("AI 요약 분석을 생성할 수 없습니다.")
+    rp2.append(ai_text)
     rp2.append("\n━━━━━━━━━━━━━━━━━━━━━")
     rp2.append("<i>* 미국 장 마감 후 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>")
     full_part2 = "\n".join(rp2)

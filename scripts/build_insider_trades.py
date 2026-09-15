@@ -32,8 +32,9 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import sec_client  # noqa: E402
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
-from sec_client import git_publish  # noqa: E402
+from sec_client import backoff_sleep, git_publish  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 ET_TZ = ZoneInfo("America/New_York")
@@ -42,20 +43,9 @@ OUT_JSON = ROOT / "data" / "insider_trades.json"
 OUT_JS = ROOT / "data" / "insider_trades.js"
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
 
-SEC_HEADERS = {
-    "User-Agent": "Mir-US-Stocks/1.0 (contact@seonu-dragon.xyz)",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate",
-    "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
-}
+# SEC 는 브라우저 사칭이 아니라 연락처가 담긴 정직한 UA 를 요구한다.
+# (sec_client.SEC_HEADERS 와 같은 정책 — 2026-09-15 에 Chrome 사칭 헤더 제거)
+SEC_HEADERS = dict(sec_client.SEC_HEADERS)
 
 COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 EFTS_URL = "https://efts.sec.gov/LATEST/search-index"
@@ -81,7 +71,7 @@ REQUEST_PAUSE = 0.13   # SEC 예의상 ~8 req/s
 
 def sec_get(url, retries=4):
     last = None
-    for attempt in range(retries):
+    for attempt in range(1, retries + 1):
         try:
             req = urllib.request.Request(url, headers=SEC_HEADERS)
             with urllib.request.urlopen(req, timeout=30) as r:
@@ -93,10 +83,11 @@ def sec_get(url, retries=4):
         except Exception as exc:
             last = exc
             code = getattr(exc, "code", None)
-            # 429/500/503 일시 오류는 백오프 후 재시도, 403/404 는 즉시 중단
+            # 429/500/503 일시 오류는 지수 백오프 후 재시도, 403/404 는 즉시 중단
             if code in (403, 404):
                 raise
-            time.sleep(1.5 * (attempt + 1))
+            if attempt < retries:
+                backoff_sleep(attempt)
     raise last
 
 
@@ -125,9 +116,14 @@ def load_universe_ciks(top=0):
 
 
 def efts_form4_hits(day_iso):
-    """특정 file_date 의 모든 Form 4 검색 히트(페이지네이션)."""
+    """특정 file_date 의 모든 Form 4 검색 히트(페이지네이션).
+
+    반환: ``(hits, partial)`` — partial 이면 그 날짜를 다 못 받았다는 뜻이라
+    호출부는 lastFileDate 를 전진시키면 안 된다(sec_client.efts_hits 와 동일).
+    """
     hits = []
     frm = 0
+    partial = False
     while frm < 10000:
         q = urllib.parse.urlencode({
             "q": "", "forms": "4",
@@ -137,6 +133,7 @@ def efts_form4_hits(day_iso):
             data = sec_get_json(f"{EFTS_URL}?{q}")
         except Exception as exc:
             print(f"    [경고] efts {day_iso} from={frm} 실패: {exc}")
+            partial = True
             break
         page = data.get("hits", {}).get("hits", [])
         if not page:
@@ -146,7 +143,9 @@ def efts_form4_hits(day_iso):
         frm += len(page)
         if frm >= total:
             break
-    return hits
+    else:
+        partial = True
+    return hits, partial
 
 
 def _txt(node, path):
@@ -276,12 +275,14 @@ def build(backfill_days, top, overlap_days=5):
     merged = {trade_key(r): r for r in existing}
     new_records = 0
     scanned_filings = 0
+    partial = False
 
     day = start
     while day <= end:
         iso = day.isoformat()
         # 주말은 접수가 거의 없으나 일부 정정 공시가 있을 수 있어 그대로 조회
-        hits = efts_form4_hits(iso)
+        hits, day_partial = efts_form4_hits(iso)
+        partial = partial or day_partial
         day_universe = 0
         for hit in hits:
             scanned_filings += 1
@@ -305,7 +306,8 @@ def build(backfill_days, top, overlap_days=5):
                 merged[trade_key(r)] = r
                 new_records += 1
             day_universe += 1
-        print(f"    {iso}: 전체 {len(hits)}건 / universe {day_universe}건")
+        print(f"    {iso}: 전체 {len(hits)}건 / universe {day_universe}건"
+              f"{' (일부 실패)' if day_partial else ''}")
         day += timedelta(days=1)
 
     # 보관 기간/행수 상한 적용 + 정렬(파일일·거래일 최신순)
@@ -316,9 +318,14 @@ def build(backfill_days, top, overlap_days=5):
         trades = trades[:MAX_ROWS]
 
     last_seen = max((r.get("fileDate") or "" for r in trades), default=end.isoformat())
+    if partial and last_file_date:
+        # 하루치라도 잘렸으면 커서를 전진시키지 않는다 — 다음 실행이 재수집한다.
+        print(f"  [경고] efts 일부 실패 — lastFileDate 를 {last_file_date} 로 고정(재수집 예약)")
+        last_seen = last_file_date
     payload = {
         "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
         "lastFileDate": last_seen,
+        "partialFetch": bool(partial),
         "count": len(trades),
         "newCount": new_records,
         "source": "SEC EDGAR Form 4",
@@ -360,7 +367,8 @@ def main():
         write_files(payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} trades")
         if args.push and not args.no_push:
-            publish()
+            if not publish():
+                raise SystemExit("[중단] 내부자 거래 push 실패 — 발행되지 않았다")
 
 
 if __name__ == "__main__":

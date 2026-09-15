@@ -25,6 +25,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (merge_previous_keyed_rows / http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "cot_positioning.json"
@@ -64,9 +65,8 @@ def fetch_rows(dataset: str, code: str) -> list[dict]:
         "$limit": str(WEEKS + 20),
     }
     url = dataset + "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=45) as r:
-        return json.loads(r.read().decode("utf-8"))
+    raw = sec.http_get_with_backoff(url, headers=UA, timeout=45, label=f"cot {code}")
+    return json.loads(raw.decode("utf-8"))
 
 
 def num(row: dict, key: str) -> float | None:
@@ -167,6 +167,9 @@ def main() -> int:
         "source": "CFTC Commitments of Traders (TFF Leveraged Funds · Disaggregated Managed Money)",
         "markets": markets,
     }
+    # 일부 시장만 실패한 날 파일이 줄어들면 다운스트림이 그 시장을 null 로
+    # 적립한다. 이번에 못 받은 시장은 직전 값을 유지한다(TTL 30일).
+    payload = sec.merge_previous_keyed_rows(payload, OUT_JSON, "cot", "markets", "key")
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     atomic_write_text(OUT_JSON, compact)
     atomic_write_text(OUT_JS, f"window.COT_POSITIONING = {compact};\n")

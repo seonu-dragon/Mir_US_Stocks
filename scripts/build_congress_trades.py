@@ -30,9 +30,10 @@ from congress_committees_registry import (  # noqa: E402
 )
 from congress_party_lookup import (  # noqa: E402
     CongressPartyLookup,
+    _collapse_duplicate_name_tokens,
     normalize_party_code,
 )
-from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
+from briefing_store import repository_publish_lock  # noqa: E402
 from sec_client import git_publish  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
@@ -53,10 +54,12 @@ TICKER_BAD = {"--", "N/A", "NA", "NONE", "UNKNOWN"}
 
 
 def _fetch_quiver() -> list:
+    # quiverquant 는 유료 API 다. 무인증으로 호출하되 **Referer 를 위조하지 않는다**
+    # (2026-09-15 감사: 브라우저에서 온 것처럼 속이던 헤더 제거). 막히면 아래
+    # House/Senate PTR 공시 미러가 1차 소스 역할을 그대로 한다.
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "User-Agent": "Mir-US-Stocks/1.0 (contact@seonu-dragon.xyz)",
         "Accept": "application/json",
-        "Referer": "https://www.quiverquant.com/congresstrading/",
     }
     try:
         import requests
@@ -142,8 +145,20 @@ def _trade_side(type_str: str) -> str:
     return "other"
 
 
+def _canonical_name(name: str) -> str:
+    """의원명 정규화 — 소스마다 다른 표기를 한 사람으로 모은다.
+
+    House PTR 미러는 'Hon. Scott Franklin', 'Scott Franklin Franklin',
+    'Scott Franklin' 을 섞어 내보낸다. 정규화 없이 이름을 키로 쓰면 한 사람이
+    4명으로 갈라져 거래 건수·수익률 랭킹이 전부 틀어진다(2026-09-15 감사:
+    11개 성씨 중복). congress_party_lookup 의 토큰 정리 로직을 그대로 쓴다.
+    """
+    collapsed = _collapse_duplicate_name_tokens(name or "")
+    return re.sub(r"\s+", " ", collapsed).strip() or (name or "").strip()
+
+
 def _slug_id(name: str, chamber: str) -> str:
-    base = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    base = re.sub(r"[^a-z0-9]+", "-", _canonical_name(name).lower()).strip("-")
     return f"{chamber.lower()}-{base or 'unknown'}"
 
 
@@ -159,7 +174,7 @@ def _normalize_senate(row: dict) -> dict | None:
         return None
     side = _trade_side(row.get("type", ""))
     return {
-        "politician": name,
+        "politician": _canonical_name(name),
         "chamber": "Senate",
         "ticker": ticker,
         "asset": str(row.get("asset_description") or "").strip(),
@@ -202,7 +217,7 @@ def _normalize_quiver(row: dict) -> dict | None:
     except (TypeError, ValueError):
         excess_return = None
     return {
-        "politician": name,
+        "politician": _canonical_name(name),
         "chamber": chamber,
         "party": str(row.get("Party") or "").strip(),
         "ticker": ticker,
@@ -233,7 +248,7 @@ def _normalize_house(row: dict) -> dict | None:
         return None
     side = _trade_side(row.get("type", ""))
     return {
-        "politician": name,
+        "politician": _canonical_name(name),
         "chamber": "House",
         "ticker": ticker,
         "asset": str(row.get("asset_description") or "").strip(),
@@ -252,7 +267,7 @@ def _normalize_house(row: dict) -> dict | None:
 
 def _trade_key(trade: dict) -> str:
     return "|".join([
-        trade.get("politician", ""),
+        _canonical_name(trade.get("politician", "")),
         trade.get("transactionDate", ""),
         trade.get("ticker", ""),
         trade.get("side", ""),
@@ -264,7 +279,7 @@ def _trade_key(trade: dict) -> str:
 def _build_quiver_party_map(rows: list[dict]) -> dict[str, str]:
     party_map: dict[str, str] = {}
     for row in rows:
-        name = str(row.get("Representative") or "").strip()
+        name = _canonical_name(str(row.get("Representative") or ""))
         party = normalize_party_code(str(row.get("Party") or "").strip())
         if name and party:
             party_map[name] = party
@@ -289,9 +304,10 @@ def _resolve_party(
     return ""
 
 
-def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str]]:
+def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str], int]:
     merged: dict[str, dict] = {}
     quiver_party_map: dict[str, str] = {}
+    sources_ok = 0
 
     # Recent cross-chamber feed (Senate + House, ~1000 rows)
     try:
@@ -308,6 +324,8 @@ def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str]]:
             merged[_trade_key(t)] = t
             kept += 1
         print(f"[fetch] quiver: {kept}/{len(quiver_rows)} trades since {cutoff.date()}")
+        if quiver_rows:
+            sources_ok += 1
     except Exception as exc:
         print(f"[warn] quiver fetch failed: {exc}")
 
@@ -327,6 +345,8 @@ def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str]]:
                 merged[key] = t
                 kept += 1
         print(f"[fetch] house: {kept}/{len(house_rows)} added since {cutoff.date()}")
+        if house_rows:
+            sources_ok += 1
     except Exception as exc:
         print(f"[warn] house fetch failed: {exc}")
 
@@ -347,12 +367,14 @@ def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str]]:
                 merged[key] = t
                 kept += 1
         print(f"[fetch] senate legacy: {kept}/{len(senate_rows)} added since {cutoff.date()}")
+        if senate_rows:
+            sources_ok += 1
     except Exception as exc:
         print(f"[warn] senate legacy fetch failed: {exc}")
 
     trades = list(merged.values())
     trades.sort(key=lambda t: t["transactionDate"], reverse=True)
-    return trades, quiver_party_map
+    return trades, quiver_party_map, sources_ok
 
 
 def _price_on_date(ticker: str, date: datetime, cache: dict) -> float | None:
@@ -511,7 +533,14 @@ def _build_committee_matrix(trades: list[dict]) -> list[dict]:
 
 def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_returns: bool = False) -> dict:
     cutoff = datetime.now() - timedelta(days=lookback_years * 365)
-    trades, quiver_party_map = _load_trades(cutoff)
+    trades, quiver_party_map, sources_ok = _load_trades(cutoff)
+    # 세 소스가 전부 죽으면 0건 페이로드가 6MB 짜리 기존 파일을 덮어쓴다.
+    # 최소 한 소스는 실제로 응답해야 진행한다(2026-09-15 감사).
+    if sources_ok == 0:
+        raise SystemExit(
+            "[중단] 의회 매매: quiver/house/senate 세 소스 모두 응답 없음 — "
+            "기존 파일을 유지하고 실패로 끝낸다."
+        )
     party_lookup = None
     try:
         party_lookup = CongressPartyLookup.from_remote()
@@ -661,12 +690,10 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
 
 
 def write_files(payload: dict) -> None:
-    body = json.dumps(payload, ensure_ascii=False, indent=2)
-    atomic_write_text(OUT_JSON, body + "\n")
-    atomic_write_text(
-        OUT_JS,
-        "window.CONGRESS_TRADES = " + json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + ";\n",
-    )
+    # 공용 write_data 경유 — assert_not_emptying 이 '0건이 기존 6MB 파일을 덮는'
+    # 회귀를 막는다(예전엔 atomic_write_text 직행이라 이 게이트를 우회했다).
+    import sec_client as sec
+    sec.write_data(OUT_JSON, OUT_JS, "CONGRESS_TRADES", payload)
 
 
 def publish_payload(project_dir: Path, commit_label: str = "Congress Trades") -> bool:
@@ -677,7 +704,7 @@ def publish_payload(project_dir: Path, commit_label: str = "Congress Trades") ->
     )
 
 
-def main() -> None:
+def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-push", action="store_true")
     parser.add_argument("--skip-returns", action="store_true", help="Skip yfinance return estimates")
@@ -687,6 +714,12 @@ def main() -> None:
     payload = build_payload(lookback_years=args.lookback_years, skip_returns=args.skip_returns)
     project_dir = ROOT
 
+    # 쓰기 전 0건 방어. 소스가 응답은 했는데 스키마가 바뀌어 전부 걸러진 경우다.
+    if not payload.get("tradeCount"):
+        raise SystemExit(
+            "[중단] 의회 매매 0건 — 기존 파일을 덮지 않는다. 소스 스키마를 확인할 것."
+        )
+
     with repository_publish_lock(project_dir):
         write_files(payload)
         print(
@@ -695,8 +728,11 @@ def main() -> None:
             f"{len(payload['rankings'])} ranked"
         )
         if not args.no_push:
-            publish_payload(project_dir)
+            if not publish_payload(project_dir):
+                print("[중단] 의회 매매 push 실패 — 발행되지 않았다")
+                return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

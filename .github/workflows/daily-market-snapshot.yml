@@ -2,7 +2,9 @@ name: Daily US market snapshot
 
 on:
   schedule:
-    - cron: "5 20 * * *"  # 05:05 KST (UTC+9) — US market close snapshot
+    # 21:05 UTC — EDT 17:05 / EST 16:05 ET. 둘 다 정규장 마감(16:00 ET) 이후다.
+    # 예전 "5 20"(20:05 UTC)은 겨울(EST)에 15:05 ET, 즉 마감 55분 전이었다.
+    - cron: "5 21 * * *"  # 06:05 KST (UTC+9) — US market close snapshot
   workflow_dispatch:
 
 permissions:

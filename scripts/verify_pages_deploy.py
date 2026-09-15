@@ -75,18 +75,47 @@ def sweep_zombies():
     return cancelled
 
 
-def latest_run():
+def head_sha():
+    """방금 푸시한 커밋(로컬 HEAD). 이 커밋에 대한 배포만 본다."""
+    r = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True,
+                       encoding="utf-8", errors="replace")
+    return r.stdout.strip() if r.returncode == 0 else ""
+
+
+def latest_run(sha=""):
+    """이 커밋을 배포하는 run. sha 가 없으면 가장 최근 run.
+
+    예전엔 `per_page=1` 로 '가장 최근 run' 만 봐서, 방금 푸시한 커밋의 배포가
+    아직 생성되기 전이면 **직전 run 의 성공**을 보고 끝났다. 메모리에 남은
+    '가짜 불일치 경고'의 원인이다(mir-publish-verify-race).
+    """
+    if sha:
+        data = gh_json(f"repos/{REPO}/actions/workflows/{WORKFLOW}/runs"
+                       f"?head_sha={sha}&per_page=5")
+        runs = (data or {}).get("workflow_runs", [])
+        if runs:
+            runs.sort(key=lambda r: r.get("created_at") or "", reverse=True)
+            return runs[0]
+        return None
     data = gh_json(f"repos/{REPO}/actions/workflows/{WORKFLOW}/runs?per_page=1")
     runs = (data or {}).get("workflow_runs", [])
     return runs[0] if runs else None
 
 
-def wait_for_deploy(minutes):
+def wait_for_deploy(minutes, sha=""):
     deadline = time.monotonic() + minutes * 60
     last = None
+    waited_for_run = False
     while True:
-        run = latest_run()
+        run = latest_run(sha)
         if run is None:
+            # 아직 이 커밋의 배포 run 이 만들어지지 않았을 수 있다(workflow_run 트리거 지연).
+            if sha and time.monotonic() <= deadline:
+                if not waited_for_run:
+                    print(f"  [배포] {sha[:8]} 에 대한 Deploy Pages run 을 기다리는 중…")
+                    waited_for_run = True
+                time.sleep(15)
+                continue
             print("  [배포] Deploy Pages 실행 기록이 없습니다.")
             return None
         state = f"{run['status']}/{run.get('conclusion')}"
@@ -114,7 +143,10 @@ def main():
     ap.add_argument("--date", default=datetime.now(KST).strftime("%Y-%m-%d"), help="기대하는 today_content date (기본: KST 오늘)")
     ap.add_argument("--wait-minutes", type=float, default=8)
     ap.add_argument("--no-wait", action="store_true")
+    ap.add_argument("--sha", default=None,
+                    help="이 커밋의 배포만 기다린다(기본: 로컬 git HEAD). 빈 문자열이면 최근 run)")
     args = ap.parse_args()
+    sha = head_sha() if args.sha is None else args.sha
 
     warn = False
     try:
@@ -127,7 +159,7 @@ def main():
             n = sweep_zombies()
             print(f"[verify] 좀비 큐 정리: {n}건")
             if not args.no_wait:
-                run = wait_for_deploy(args.wait_minutes)
+                run = wait_for_deploy(args.wait_minutes, sha)
                 if run is None or run["status"] != "completed" or run.get("conclusion") != "success":
                     warn = True
         except RuntimeError as exc:

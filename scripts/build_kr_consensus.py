@@ -729,7 +729,9 @@ def main() -> int:
         print(f"[컨센서스] 매핑 안 된 투자의견 문자열: {sorted(_unmapped_opinions)}")
 
     from sec_client import merge_previous_stocks
-    payload = merge_previous_stocks(payload, OUT_JSON, "컨센서스")
+    # 컨센서스는 분기 리포트 주기라 45일까지 승계를 허용하되, 그 뒤엔 버린다
+    # (상폐 종목이 영구 부활하던 문제).
+    payload = merge_previous_stocks(payload, OUT_JSON, "컨센서스", expiry_days=45)
     carry_stage_fields(payload)
     extra = enforce_margin_guard(payload)
     if extra:

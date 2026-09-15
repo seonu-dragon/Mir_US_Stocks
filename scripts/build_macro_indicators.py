@@ -18,6 +18,7 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (merge_previous_keyed_rows / http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "macro_indicators.json"
@@ -45,9 +46,8 @@ def kst_now_str() -> str:
 
 def fetch_series(fid: str, start: str) -> list[tuple[str, float]]:
     url = f"https://fred.stlouisfed.org/graph/fredgraph.csv?id={fid}&cosd={start}"
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        text = r.read().decode("utf-8", "replace")
+    text = sec.http_get_with_backoff(url, headers=UA, timeout=30,
+                                     label=f"FRED {fid}").decode("utf-8", "replace")
     out = []
     for line in text.splitlines()[1:]:
         parts = line.split(",")
@@ -98,7 +98,11 @@ def build() -> dict | None:
         })
     if not out:
         return None
-    return {"updatedAtKst": kst_now_str(), "source": "FRED · St. Louis Fed", "indicators": out}
+    payload = {"updatedAtKst": kst_now_str(), "source": "FRED · St. Louis Fed", "indicators": out}
+    # FRED 가 일부 시리즈만 주는 날 파일이 통째로 줄어들면, 이 파일을 읽는
+    # build_market_history 가 그 지표를 null 로 영구 적립한다(2026-09-15 감사).
+    # 이번에 못 받은 지표는 직전 값을 그대로 유지한다(TTL 30일).
+    return sec.merge_previous_keyed_rows(payload, OUT_JSON, "macro", "indicators", "id")
 
 
 def main() -> int:

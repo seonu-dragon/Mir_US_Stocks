@@ -54,7 +54,8 @@ def nasdaq_short(ticker):
                 time.sleep(PAUSE)
                 return json.loads(raw)
         except Exception:
-            time.sleep(0.8 * (attempt + 1))
+            if attempt < 2:
+                sec.backoff_sleep(attempt + 1, base=0.8, cap=20.0)
     return None
 
 
@@ -139,13 +140,17 @@ def main():
     payload = build(args.top)
     if not payload["rows"]:
         print("  [경고] 수집 0건 — 기존 파일 유지(덮어쓰지 않음)")
-        return
+        return 1
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "SHORT_INTEREST", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} rows")
         if args.push and not args.no_push:
-            sec.git_publish(["data/short_interest.json", "data/short_interest.js"], "short interest")
+            if not sec.git_publish(["data/short_interest.json", "data/short_interest.js"],
+                                   "short interest"):
+                print("[중단] 공매도 잔고 push 실패 — 발행되지 않았다")
+                return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

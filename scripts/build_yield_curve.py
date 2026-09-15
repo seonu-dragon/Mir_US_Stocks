@@ -23,6 +23,7 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "yield_curve.json"
@@ -44,9 +45,8 @@ def kst_now_str() -> str:
 
 
 def fetch_csv(url: str) -> list[list[str]]:
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=30) as r:
-        text = r.read().decode("utf-8", "replace")
+    text = sec.http_get_with_backoff(url, headers=UA, timeout=30,
+                                     label="yield curve").decode("utf-8", "replace")
     return [line.split(",") for line in text.splitlines() if line.strip()]
 
 

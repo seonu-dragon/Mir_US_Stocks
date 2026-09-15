@@ -16,6 +16,7 @@
     py scripts/check_data_freshness.py --group short-interest  # short-interest.yml 말미
     py scripts/check_data_freshness.py --group edge-stats      # weekly-edge-stats.yml 말미
     py scripts/check_data_freshness.py --group 13f             # 13f-quarterly-refresh.yml 말미
+    py scripts/check_data_freshness.py --group white-house     # white-house-schedule.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -115,7 +116,9 @@ CHECKS = {
     # 산출물이 어느 그룹에도 없어, 소스가 죽어도 Actions 는 영원히 초록이었다.
     "sec-daily": [
         ("data/insider_trades.json", 4, False),
-        ("data/congress_trades.json", 8, False),   # 의회 공시는 제출이 몰려 빈 날이 있다
+        # 의회 공시는 제출이 몰려 빈 날이 있지만 tradeCount 는 5년 누적이라
+        # 0 이면 소스가 깨진 것이다.
+        ("data/congress_trades.json", 8, True),
         ("data/material_events.json", 4, False),
         ("data/activist_stakes.json", 10, False),  # 13D/G 는 원래 드물다
     ],
@@ -133,12 +136,25 @@ CHECKS = {
         ("data/breakout_retest_stats.json", 10, False),
         # 스캐너 순위 기준 검증(build_factor_validation.mjs, Node). 주간 갱신.
         ("data/factor_validation.json", 10, False),
+        # 확률 캘리브레이션(build_prob_calibration.py). 2026-09-03 이후 스케줄이
+        # 없어 멈춰 있었고 analysis.js 가 그 파일을 계속 fetch 했다 — 주간 스텝을
+        # weekly-edge-stats.yml 에 붙이면서 감시도 함께 건다.
+        ("data/prob_calibration.json", 10, False),
     ],
     # 13f-quarterly-refresh.yml — 분기 공시(45일 시차)라 정상 상태도 오래 늙어 보인다.
     "13f": [
         ("data/institutional_13f.json", 120, True),
     ],
+    # white-house-schedule.yml(하루 3회). 스키마가 바뀌면 0건 + 신선한 타임스탬프가
+    # 푸시될 수 있어 나이만이 아니라 0건(eventCount)도 본다.
+    "white-house": [
+        ("data/white_house_schedule.json", 3, True),
+    ],
 }
+
+# require_rows 가 볼 '건수' 키. 최상위 count 만 보던 시절엔 13f(institutionCount)·
+# congress(tradeCount)·whitehouse(eventCount) 가 0건이어도 통과했다(2026-09-15 감사).
+COUNT_KEYS = ("count", "institutionCount", "tradeCount", "eventCount", "rowCount")
 
 # 비율 감시: (파일, 페이로드 키 경로, 최소 비율, 설명)
 # 나이만 보면 "매일 신선하게 갱신되는데 내용은 3분의 1이 비어 있는" 상태를 못 잡는다.
@@ -207,10 +223,17 @@ def main() -> int:
             problems.append(f"{rel}: {stamp} ({age}일 경과 > 허용 {max_age}일)")
             continue
         if require_rows:
-            count = payload.get("count")
-            if count == 0:
+            counts = {
+                key: payload[key] for key in COUNT_KEYS
+                if isinstance(payload.get(key), int) and not isinstance(payload.get(key), bool)
+            }
+            if not counts:
+                problems.append(f"{rel}: 건수 키 없음 {COUNT_KEYS} — 0건 감시를 할 수 없다")
+                continue
+            zero_keys = [key for key, value in counts.items() if value == 0]
+            if zero_keys:
                 note = payload.get("note") or ""
-                problems.append(f"{rel}: 0건 (note={note!r})")
+                problems.append(f"{rel}: {', '.join(zero_keys)} 0건 (note={note!r})")
                 continue
         print(f"OK {rel}: {stamp} ({age}일)")
 

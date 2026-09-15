@@ -1,13 +1,11 @@
-"""정직성 게이트: 이력 대상 축소 vs 실제 야후 스로틀."""
+"""정직성 게이트: 이력 대상 축소 vs 실제 야후 스로틀.
+
+2026-09-15 에 scripts/ 루트에서 scripts/tests/ 로 옮겼다 — pytest 수집 경로
+밖에 있어서(파일명이 test_* 인데도 `pytest scripts/tests` 에 안 잡혀) 이
+게이트 검증이 CI 에서 한 번도 돌지 않았다. import 경로는 conftest 가 잡는다.
+"""
 
 from __future__ import annotations
-
-import sys
-from pathlib import Path
-
-SCRIPTS = Path(__file__).resolve().parent
-if str(SCRIPTS) not in sys.path:
-    sys.path.insert(0, str(SCRIPTS))
 
 from update_data import (  # noqa: E402
     enforce_history_honesty_gate,
@@ -67,11 +65,3 @@ def test_empty_previous_does_not_abort():
     prefer = [f"T{i:03d}" for i in range(50)]
     fresh = [_yahoo(t) for t in prefer]
     enforce_history_honesty_gate(fresh, prefer, [])
-
-
-if __name__ == "__main__":
-    test_universe_shrink_does_not_abort()
-    test_same_universe_throttle_aborts()
-    test_new_tickers_without_yahoo_do_not_abort()
-    test_empty_previous_does_not_abort()
-    print("ok")

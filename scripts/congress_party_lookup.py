@@ -100,10 +100,11 @@ def _first_name_match(query_first: str, member: MemberRecord) -> bool:
     for cand in candidates:
         if query_first == cand:
             return True
-        if cand.startswith(query_first) or query_first.startswith(cand):
-            return True
-        if query_first and cand and query_first[0] == cand[0]:
-            return True
+        # 약칭(Chris ↔ Christopher)만 허용한다. 예전엔 '첫 글자만 같으면 일치'라
+        # Scott ↔ Steve 도 통과했고, 동률이면 은퇴 의원을 골랐다(2026-09-15 감사).
+        if len(query_first) >= 3 and len(cand) >= 3:
+            if cand.startswith(query_first) or query_first.startswith(cand):
+                return True
     return False
 
 
@@ -204,8 +205,12 @@ class CongressPartyLookup:
         matched = [m for m in candidates if _first_name_match(first, m)]
         if len(matched) == 1:
             return matched[0].party
-        if matched:
-            return matched[-1].party
+        # 여전히 여러 명이면 누구인지 모르는 것이다. 예전에는 matched[-1](대개
+        # 은퇴한 동성 의원)을 골라 정당을 지어냈다 — 이제 빈 값을 돌려준다.
+        if len(matched) > 1:
+            parties = {m.party for m in matched if m.party}
+            if len(parties) == 1:
+                return parties.pop()  # 후보가 여럿이어도 정당이 하나면 안전하다
         return ""
 
 

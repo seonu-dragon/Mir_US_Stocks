@@ -23,6 +23,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "treasury_auctions.json"
@@ -52,9 +53,8 @@ def fnum(v) -> float | None:
 
 def fetch(params: dict) -> list[dict]:
     url = API + "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=45) as r:
-        return json.loads(r.read().decode("utf-8")).get("data", [])
+    raw = sec.http_get_with_backoff(url, headers=UA, timeout=45, label="treasury auctions")
+    return json.loads(raw.decode("utf-8")).get("data", [])
 
 
 def build() -> dict | None:

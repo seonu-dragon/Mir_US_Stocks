@@ -27,7 +27,9 @@ OUT_JSON = ROOT / "data" / "activist_stakes.json"
 OUT_JS = ROOT / "data" / "activist_stakes.js"
 
 RETENTION_DAYS = 60
-MAX_ROWS = 1500
+# 1500 은 60일 보관치를 못 담아 실효 보관이 20일로 줄고 있었다(2026-09-15 감사).
+# 상한에 닿으면 경고를 찍어 다음에 또 조용히 잘리지 않게 한다.
+MAX_ROWS = 4000
 FORM_PREFIXES = ["SCHEDULE 13D", "SCHEDULE 13G"]
 
 
@@ -38,7 +40,10 @@ def _field(block, name):
 
 def parse_header(text):
     """SGML 헤더에서 (subject_cik, subject_name, filer_name, form) 추출."""
-    hdr = text[:4000]
+    # 헤더는 </SEC-HEADER> 까지다. 4000자로 자르면 filer 가 여럿인 공시에서
+    # FILED BY 블록이 잘려 제출인을 놓친다(2026-09-15 감사).
+    end = text.find("</SEC-HEADER>")
+    hdr = text[:end] if end > 0 else text[:20000]
     form = _field(hdr, "CONFORMED SUBMISSION TYPE")
     subj_m = re.search(r"SUBJECT COMPANY:(.*?)(FILED BY:|$)", hdr, re.DOTALL)
     filer_m = re.search(r"FILED BY:(.*?)$", hdr, re.DOTALL)
@@ -121,7 +126,10 @@ def build(backfill_days, top, overlap_days=5):
     cutoff = (today - timedelta(days=RETENTION_DAYS)).isoformat()
     filings = [r for r in merged.values() if (r.get("fileDate") or "") >= cutoff]
     filings.sort(key=lambda r: (r.get("fileDate") or "", r.get("accession") or ""), reverse=True)
-    filings = filings[:MAX_ROWS]
+    if len(filings) > MAX_ROWS:
+        print(f"  [경고] 보관 대상 {len(filings)}건이 상한 {MAX_ROWS}건을 넘어 잘린다 — "
+              f"MAX_ROWS 를 올리거나 RETENTION_DAYS 를 줄일 것")
+        filings = filings[:MAX_ROWS]
     payload = {
         "updatedAtKst": sec.kst_now_str(),
         "lastDate": max((r.get("fileDate") or "" for r in filings), default=today.isoformat()),
@@ -150,7 +158,9 @@ def main():
         sec.write_data(OUT_JSON, OUT_JS, "ACTIVIST_STAKES", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} filings")
         if args.push and not args.no_push:
-            sec.git_publish(["data/activist_stakes.json", "data/activist_stakes.js"], "activist stakes")
+            if not sec.git_publish(["data/activist_stakes.json", "data/activist_stakes.js"],
+                                   "activist stakes"):
+                raise SystemExit("[중단] 13D/G 대량보유 공시 push 실패 — 발행되지 않았다")
 
 
 if __name__ == "__main__":

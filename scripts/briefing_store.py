@@ -13,6 +13,12 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
+import sys
+
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 실행 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 try:
     import msvcrt

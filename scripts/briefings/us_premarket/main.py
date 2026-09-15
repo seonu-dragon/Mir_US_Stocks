@@ -72,8 +72,10 @@ def generate_us_premarket_analysis(raw_data_text):
     for cfg in models_config:
         model = cfg["model"]
         version = cfg["version"]
-        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        headers = {"Content-Type": "application/json"}
+        # API 키는 쿼리스트링이 아니라 x-goog-api-key 헤더로 보낸다 — URL 은
+        # 예외 메시지·프록시 로그에 그대로 찍힌다(2026-09-15 감사).
+        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent"
+        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         payload = {
             "contents": [
                 {
@@ -159,30 +161,44 @@ def update_market_snapshot(us_premarket_html, reddit_data, stocktwits_data, yaho
     """Safely merge and publish the US premarket briefing and related sections."""
 
     def mutate(data):
+        # 스크레이퍼가 예외를 삼키고 빈 배열을 주면 기존 값을 덮지 않는다
+        # (2026-09-15 감사: 빈 배열이 소셜 패널을 통째로 비웠다).
         sentiment = data.setdefault("social_sentiment", {})
-        sentiment["reddit"] = [
-            {
-                "ticker": item.get("ticker", ""),
-                "name": item.get("name", ""),
-                "mentions": item.get("mentions", 0),
-                "change24h": ((item.get("mentions", 0) - item.get("mentions_prev", 0)) / item.get("mentions_prev", 1) * 100)
-                if item.get("mentions_prev") else 0,
-            }
-            for item in reddit_data
-        ]
-        sentiment["stocktwits"] = [
-            {"ticker": item.get("symbol", ""), "name": item.get("name", ""), "watchlist_count": item.get("watchlist_count", 0)}
-            for item in stocktwits_data
-        ]
-        sentiment["yahoo"] = [
-            {
-                "ticker": item.get("symbol", ""),
-                "name": item.get("name", ""),
-                "price": item.get("price", ""),
-                "changePct": item.get("change_pct", 0.0),
-            }
-            for item in yahoo_data
-        ]
+        kept = []
+        if reddit_data:
+            sentiment["reddit"] = [
+                {
+                    "ticker": item.get("ticker", ""),
+                    "name": item.get("name", ""),
+                    "mentions": item.get("mentions", 0),
+                    "change24h": ((item.get("mentions", 0) - item.get("mentions_prev", 0)) / item.get("mentions_prev", 1) * 100)
+                    if item.get("mentions_prev") else 0,
+                }
+                for item in reddit_data
+            ]
+        else:
+            kept.append("reddit")
+        if stocktwits_data:
+            sentiment["stocktwits"] = [
+                {"ticker": item.get("symbol", ""), "name": item.get("name", ""), "watchlist_count": item.get("watchlist_count", 0)}
+                for item in stocktwits_data
+            ]
+        else:
+            kept.append("stocktwits")
+        if yahoo_data:
+            sentiment["yahoo"] = [
+                {
+                    "ticker": item.get("symbol", ""),
+                    "name": item.get("name", ""),
+                    "price": item.get("price", ""),
+                    "changePct": item.get("change_pct", 0.0),
+                }
+                for item in yahoo_data
+            ]
+        else:
+            kept.append("yahoo")
+        if kept:
+            print(f"  [경고] 소셜 소스 {', '.join(kept)} 수집 0건 — 직전 값을 유지한다")
         update_etf_charts(data)
 
     return publish_briefing_to_site("us_premarket", us_premarket_html, "US Premarket", mutate)
@@ -194,10 +210,9 @@ def main():
     
     print("=== 미국 프리마켓 및 SNS 데이터 수집 시작 ===")
     
-    try:
-        validate_config(require_gemini=True, require_telegram=True)
-    except ValueError as e:
-        print(f"  [경고] {e}")
+    # 키가 없으면 AI 분석이 통째로 비고, 그 상태로 발행하면 플레이스홀더가
+    # 사이트에 올라간다. 경고가 아니라 실패로 끝낸다.
+    validate_config(require_gemini=True, require_telegram=True)
         
     today = datetime.now(KST).strftime("%Y년 %m월 %d일 %H시 %M분")
     
@@ -307,15 +322,19 @@ def main():
     
     # 2. AI 분석 진행
     ai_analysis_text = generate_us_premarket_analysis(raw_data_text)
-    
+    if not ai_analysis_text.strip():
+        # 플레이스홀더("AI 요약 분석을 생성할 수 없습니다")를 발행하고 텔레그램으로
+        # "작성완료"를 통보하던 경로를 끊는다 — 실패는 실패로 끝낸다.
+        raise SystemExit(
+            "[중단] Gemini 응답이 비어 미국 개장 전 브리핑을 생성하지 못했다 — "
+            "발행하지 않는다(기존 브리핑 유지). API 키·모델·쿼터를 확인할 것."
+        )
+
     # --- Part 2: AI 시황 해설 메시지 조립 ---
     report_lines_part2 = [
         f"💡 <b>[미국 증시 개장 전 심층 브리핑]</b>\n"
     ]
-    if ai_analysis_text:
-        report_lines_part2.append(ai_analysis_text)
-    else:
-        report_lines_part2.append("AI 요약 분석을 생성할 수 없습니다.")
+    report_lines_part2.append(ai_analysis_text)
     report_lines_part2.append("\n━━━━━━━━━━━━━━━━━━━━━")
     report_lines_part2.append("<i>* 본 자료는 미국 프리마켓 및 다각도 소셜 커뮤니티 트렌드를 취합해 AI가 실시간 분석한 보고서로 투자 권유가 아닙니다.</i>")
     

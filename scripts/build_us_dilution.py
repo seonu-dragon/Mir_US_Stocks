@@ -91,8 +91,10 @@ def build(backfill_days, top, overlap_days=5):
     merged = {r["accession"]: r for r in existing if r.get("accession")}
     new = 0
     total_hits = 0
+    partial = False
     for form in FORMS:
-        hits = sec.efts_hits(form, start.isoformat(), today.isoformat())
+        hits, form_partial = sec.efts_hits(form, start.isoformat(), today.isoformat())
+        partial = partial or form_partial
         total_hits += len(hits)
         kept = 0
         for hit in hits:
@@ -124,7 +126,8 @@ def build(backfill_days, top, overlap_days=5):
             merged[accession] = row
             new += 1
             kept += 1
-        print(f"    {form}: 전체 {len(hits)}건 / universe {kept}건")
+        print(f"    {form}: 전체 {len(hits)}건 / universe {kept}건"
+              f"{' (일부 실패)' if form_partial else ''}")
 
     # 소스 전면 실패 방어: efts 가 한 건도 안 준 상태에서 덮어쓰지 않는다.
     if total_hits == 0:
@@ -135,9 +138,15 @@ def build(backfill_days, top, overlap_days=5):
     rows = [r for r in merged.values() if (r.get("fileDate") or "") >= cutoff]
     rows.sort(key=lambda r: (r.get("fileDate") or "", r.get("accession") or ""), reverse=True)
     rows = rows[:MAX_ROWS]
+    fresh_last = max((r.get("fileDate") or "" for r in rows), default=today.isoformat())
+    if partial and last:
+        # 창을 다 못 받았으면 커서를 전진시키지 않는다 — 다음 실행이 재수집한다.
+        print(f"  [경고] efts 일부 실패 — lastFileDate 를 {last} 로 고정(재수집 예약)")
+        fresh_last = last
     payload = {
         "updatedAtKst": sec.kst_now_str(),
-        "lastFileDate": max((r.get("fileDate") or "" for r in rows), default=today.isoformat()),
+        "lastFileDate": fresh_last,
+        "partialFetch": bool(partial),
         "count": len(rows),
         "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
         "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. "
@@ -164,7 +173,8 @@ def main():
         sec.write_data(OUT_JSON, OUT_JS, "US_DILUTION", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} rows")
         if args.push and not args.no_push:
-            sec.git_publish(["data/us_dilution.json", "data/us_dilution.js"], "US dilution")
+            if not sec.git_publish(["data/us_dilution.json", "data/us_dilution.js"], "US dilution"):
+                raise SystemExit("[중단] 증자·희석 트래커 push 실패 — 발행되지 않았다")
 
 
 if __name__ == "__main__":

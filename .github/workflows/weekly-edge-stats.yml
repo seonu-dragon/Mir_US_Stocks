@@ -65,20 +65,19 @@ jobs:
         shell: bash
         run: |
           node scripts/build_factor_validation.mjs
-          if git diff --quiet data/factor_validation.json data/factor_validation.js; then
-            echo "factor validation unchanged"
-            exit 0
-          fi
-          git add data/factor_validation.json data/factor_validation.js
-          git commit -m "Auto-update factor validation (weekly)"
-          for attempt in 1 2 3; do
-            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "${GITHUB_REF_NAME}"; then
-              exit 0
-            fi
-            git rebase --abort 2>/dev/null || true
-            sleep 10
-          done
-          exit 1
+          # 발행은 공용 경로(sec_client.git_publish)로 — fetch → rebase -X theirs →
+          # push 재시도가 동일하게 적용된다. 인라인 `git pull --rebase` 는
+          # -X theirs 가 없어 스냅샷 충돌 시 세 번 다 실패했다(통합 publish 규약).
+          python scripts/sec_client.py             --publish data/factor_validation.json data/factor_validation.js             --label "factor validation (weekly)"
+
+      # 확률 캘리브레이션(analysis.js 가 fetch 하는 data/prob_calibration.json).
+      # 스케줄이 없어 2026-09-03 이후 멈춰 있었다 — 주간으로 붙인다.
+      - name: Build probability calibration
+        continue-on-error: true
+        shell: bash
+        run: |
+          python scripts/build_prob_calibration.py
+          python scripts/sec_client.py             --publish data/prob_calibration.json data/prob_calibration.js             --label "prob calibration (weekly)"
 
       # 참고: data/korea/disclosure_stats.json (신뢰도 센터 소비)은 CI 에 편입할 수
       # 없다 — build_kr_disclosure_stats.py 는 gitignore 된 로컬 아카이브
@@ -92,20 +91,7 @@ jobs:
         shell: bash
         run: |
           python scripts/build_sitemap.py
-          if git diff --quiet sitemap.xml; then
-            echo "sitemap unchanged"
-            exit 0
-          fi
-          git add sitemap.xml
-          git commit -m "Auto-update sitemap (weekly)"
-          for attempt in 1 2 3; do
-            if git pull --rebase origin "${GITHUB_REF_NAME}" && git push origin "${GITHUB_REF_NAME}"; then
-              exit 0
-            fi
-            git rebase --abort 2>/dev/null || true
-            sleep 10
-          done
-          exit 1
+          python scripts/sec_client.py --publish sitemap.xml --label "sitemap (weekly)"
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

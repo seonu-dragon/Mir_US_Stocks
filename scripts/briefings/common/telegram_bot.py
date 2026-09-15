@@ -4,6 +4,25 @@ import time
 import requests
 
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+import sys
+
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 실행 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+def _redact(text) -> str:
+    """로그·예외 문자열에서 봇 토큰을 지운다.
+
+    텔레그램 API 는 토큰을 URL 경로(`/bot<token>/...`)로만 받아 헤더로 옮길 수
+    없다. 대신 requests 예외 메시지에 URL 이 통째로 실려 로컬 콘솔·Actions 로그에
+    토큰이 그대로 찍히던 것을 막는다(2026-09-15 감사).
+    """
+    out = str(text)
+    if TELEGRAM_BOT_TOKEN:
+        out = out.replace(TELEGRAM_BOT_TOKEN, "<TELEGRAM_BOT_TOKEN>")
+    return out
 
 
 def send_telegram_message(text):
@@ -53,12 +72,12 @@ def send_telegram_message(text):
                 if fb_response.status_code == 200:
                     print("  [성공] 평문 변환 메시지 발송 완료")
                     return True
-                print(f"  [오류] 평문 재전송 실패 ({fb_response.status_code}): {fb_response.text}")
+                print(f"  [오류] 평문 재전송 실패 ({fb_response.status_code}): {_redact(fb_response.text)}")
                 return False
-            print(f"  [오류] 텔레그램 발송 실패 ({response.status_code}): {response.text}")
+            print(f"  [오류] 텔레그램 발송 실패 ({response.status_code}): {_redact(response.text)}")
             return False
         except Exception as error:
-            print(f"  [경고] 텔레그램 전송 시도 {attempt} 실패: {error}")
+            print(f"  [경고] 텔레그램 전송 시도 {attempt} 실패: {_redact(error)}")
             if attempt < max_retries:
                 time.sleep(3)
     print("  [오류] 최대 재시도 횟수 초과로 전송 실패")

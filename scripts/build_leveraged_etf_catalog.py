@@ -163,7 +163,8 @@ ROWS = [
     ("TYO", "Direxion Daily 7-10 Year Treasury Bear 3X", "inverse", "3x", "short", "IEF", "중기국채", "thematic", "국채", "Direxion"),
     # --- 추가 섹터 레버리지·인버스 ---
     ("DRN", "Direxion Daily Real Estate Bull 3X", "leveraged", "3x", "long", "XLRE", "리츠", "sector", "리츠", "Direxion"),
-    ("DRE", "Direxion Daily Real Estate Bear 3X", "inverse", "3x", "short", "XLRE", "리츠", "sector", "리츠", "Direxion"),
+    # DRE(Direxion Daily Real Estate Bear 3X)는 상장폐지 — 야후 404 가 매 실행
+    # errors[] 에 쌓였다(2026-09-15 감사). 큐레이션 목록에서 제거.
     ("UTSL", "Direxion Daily Utilities Bull 3X", "leveraged", "3x", "long", "XLU", "유틸리티", "sector", "유틸리티", "Direxion"),
     ("UXI", "ProShares Ultra Industrials", "leveraged", "2x", "long", "XLI", "산업재", "sector", "산업재", "ProShares"),
     ("SIJ", "ProShares UltraShort Industrials", "inverse", "2x", "short", "XLI", "산업재", "sector", "산업재", "ProShares"),
@@ -387,32 +388,65 @@ def catalog_items(screener_rows: list[dict] | None = None) -> list[dict]:
     return sorted(by_ticker.values(), key=lambda item: (item.get("group") or "", item["ticker"]))
 
 
-def main() -> None:
+def _previous_discovered() -> list[dict]:
+    """직전 산출물의 자동 탐지분. 스크리너가 죽은 날 목록이 큐레이션분만 남는 걸 막는다."""
+    prev = ROOT / "data" / "leveraged_etf_catalog.json"
+    if not prev.exists():
+        return []
+    try:
+        return [it for it in (json.loads(prev.read_text(encoding="utf-8")).get("items") or [])
+                if it.get("discovered")]
+    except Exception as exc:
+        print(f"[warn] 이전 카탈로그를 읽지 못함(무시): {exc}")
+        return []
+
+
+def main() -> int:
     screener_rows = None
+    screener_ok = False
     try:
         import sys
         scripts_dir = Path(__file__).resolve().parent
         sys.path.insert(0, str(scripts_dir))
         import update_data as ud
         screener_rows = ud.fetch_nasdaq_etf_screener()
+        screener_ok = bool(screener_rows)
     except Exception as exc:
         print(f"[warn] Nasdaq ETF screener unavailable for discovery: {exc}")
 
     items = catalog_items(screener_rows)
+    if not screener_ok:
+        # 스크리너 실패를 삼키면 자동 탐지분이 통째로 빠진 카탈로그가 발행된다.
+        # 직전 탐지분을 되살려 목록이 줄어들지 않게 한다.
+        have = {it["ticker"] for it in items}
+        carried = [it for it in _previous_discovered() if it.get("ticker") not in have]
+        if carried:
+            items = sorted(items + carried,
+                           key=lambda item: (item.get("group") or "", item["ticker"]))
+            print(f"[warn] 스크리너 실패 — 직전 자동 탐지 {len(carried)}종목 유지")
     curated = sum(1 for item in items if not item.get("discovered"))
     discovered = len(items) - curated
 
-    out = ROOT / "data" / "leveraged_etf_catalog.js"
     payload = {
         "updated": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d"),
+        "updatedAtKst": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST"),
         "note": "레버리지·인버스·커버드콜·변동성 등 옵션형 ETF 카탈로그. 수동 큐레이션 + Nasdaq 스크리너 자동 탐지.",
         "curatedCount": curated,
         "discoveredCount": discovered,
+        "count": len(items),
         "items": items,
     }
-    body = "window.LEVERAGED_ETF_CATALOG = " + json.dumps(payload, ensure_ascii=False, indent=2) + ";\n"
-    atomic_write_text(out, body)
-    print(f"Wrote {len(items)} items ({curated} curated + {discovered} discovered) to {out}")
+    if not items:
+        print("[중단] 카탈로그 0건 — 기존 파일을 덮지 않는다")
+        return 1
+    # .json 짝을 함께 쓴다 — 예전엔 .js 만 써서 이전 자동 탐지분을 읽을 파일이 없었다.
+    out_json = ROOT / "data" / "leveraged_etf_catalog.json"
+    out_js = ROOT / "data" / "leveraged_etf_catalog.js"
+    import sec_client as sec
+    sec.write_data(out_json, out_js, "LEVERAGED_ETF_CATALOG", payload)
+    print(f"Wrote {len(items)} items ({curated} curated + {discovered} discovered) to {out_js}")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

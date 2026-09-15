@@ -1,10 +1,29 @@
 {
-  "updatedAtKst": "2026-09-14 19:05 KST",
+  "updatedAtKst": "2026-09-15 18:34 KST",
   "lastFileDate": "2026-09-14",
+  "partialFetch": false,
   "count": 644,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
+    {
+      "ticker": "OPAL",
+      "formType": "S-3/A",
+      "formLabel": "일괄신고 정정",
+      "fileDate": "2026-09-14",
+      "title": "OPAL Fuels Inc.  (OPAL)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1842279/000162828026061907/opalfuelss-3a2026.htm",
+      "accession": "0001628280-26-061907"
+    },
+    {
+      "ticker": "AMTB",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-14",
+      "title": "Amerant Bancorp Inc.  (AMTB)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1734342/000162828026061685/amerantbank-preliminarypro.htm",
+      "accession": "0001628280-26-061685"
+    },
     {
       "ticker": "BIVI",
       "formType": "424B5",
@@ -24,6 +43,42 @@
       "accession": "0001213900-26-099392"
     },
     {
+      "ticker": "BNTC",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-09-14",
+      "title": "Benitec Biopharma Inc.  (BNTC)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1808898/000119312526390758/d123814ds3.htm",
+      "accession": "0001193125-26-390758"
+    },
+    {
+      "ticker": "AWK",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-14",
+      "title": "American Water Capital Corp.",
+      "url": "https://www.sec.gov/Archives/edgar/data/1410636/000119312526389922/d190116d424b5.htm",
+      "accession": "0001193125-26-389922"
+    },
+    {
+      "ticker": "CDW",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-14",
+      "title": "CDW Corp  (CDW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1402057/000119312526389920/d141326d424b5.htm",
+      "accession": "0001193125-26-389920"
+    },
+    {
+      "ticker": "CHWY",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-09-14",
+      "title": "Chewy, Inc.  (CHWY)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1766502/000119312526389818/d175085ds3asr.htm",
+      "accession": "0001193125-26-389818"
+    },
+    {
       "ticker": "TYRA",
       "formType": "S-3ASR",
       "formLabel": "자동 일괄신고(WKSI)",
@@ -40,6 +95,24 @@
       "title": "Autolus Therapeutics plc  (AUTL)",
       "url": "https://www.sec.gov/Archives/edgar/data/1730463/000119312526389586/d112040ds3.htm",
       "accession": "0001193125-26-389586"
+    },
+    {
+      "ticker": "SYY",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-14",
+      "title": "SYSCO CORP  (SYY)",
+      "url": "https://www.sec.gov/Archives/edgar/data/96021/000110465926107561/tm2625144-5_424b5.htm",
+      "accession": "0001104659-26-107561"
+    },
+    {
+      "ticker": "SYY",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-09-14",
+      "title": "SYSCO CORP  (SYY)",
+      "url": "https://www.sec.gov/Archives/edgar/data/96021/000110465926107527/tm2625144-1_s3asr.htm",
+      "accession": "0001104659-26-107527"
     },
     {
       "ticker": "NAUT",
@@ -5728,78 +5801,6 @@
       "title": "DigitalOcean Holdings, Inc.  (DOCN)",
       "url": "https://www.sec.gov/Archives/edgar/data/1582961/000110465926084419/tm2620279d3_424b5.htm",
       "accession": "0001104659-26-084419"
-    },
-    {
-      "ticker": "PNC",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-16",
-      "title": "PNC FINANCIAL SERVICES GROUP, INC.  (PNC)",
-      "url": "https://www.sec.gov/Archives/edgar/data/713676/000162828026048384/pncfsg-3xtrancheseniorx11n.htm",
-      "accession": "0001628280-26-048384"
-    },
-    {
-      "ticker": "ASPI",
-      "formType": "S-3ASR",
-      "formLabel": "자동 일괄신고(WKSI)",
-      "fileDate": "2026-07-16",
-      "title": "ASP Isotopes Inc.  (ASPI)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1921865/000147793226004362/aspi_s3asr.htm",
-      "accession": "0001477932-26-004362"
-    },
-    {
-      "ticker": "RAIN",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-16",
-      "title": "Rain Enhancement Technologies Holdco, Inc.  (RAIN, RAINW)",
-      "url": "https://www.sec.gov/Archives/edgar/data/2028293/000121390026078718/ea0298130-424b5_rain.htm",
-      "accession": "0001213900-26-078718"
-    },
-    {
-      "ticker": "RGNX",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-16",
-      "title": "REGENXBIO Inc.  (RGNX)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1590877/000119312526306170/d133519d424b5.htm",
-      "accession": "0001193125-26-306170"
-    },
-    {
-      "ticker": "MTB",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-16",
-      "title": "M&T BANK CORP  (MTB, MTB-PH, MTB-PJ, MTB-PK)",
-      "url": "https://www.sec.gov/Archives/edgar/data/36270/000119312526305481/d23610d424b5.htm",
-      "accession": "0001193125-26-305481"
-    },
-    {
-      "ticker": "CRDF",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-16",
-      "title": "Cardiff Oncology, Inc.  (CRDF)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1213037/000119312526305465/crdf_07.14.26_-_424b5.htm",
-      "accession": "0001193125-26-305465"
-    },
-    {
-      "ticker": "SNTI",
-      "formType": "S-3/A",
-      "formLabel": "일괄신고 정정",
-      "fileDate": "2026-07-16",
-      "title": "Senti Biosciences Holdings, Inc.  (SNTI)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1854270/000119312526305347/d87527ds3a.htm",
-      "accession": "0001193125-26-305347"
-    },
-    {
-      "ticker": "FRST",
-      "formType": "S-3/A",
-      "formLabel": "일괄신고 정정",
-      "fileDate": "2026-07-16",
-      "title": "Primis Financial Corp.  (FRST)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1325670/000110465926084243/frst-20260716xs3a.htm",
-      "accession": "0001104659-26-084243"
     }
   ]
 }

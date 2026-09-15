@@ -218,7 +218,10 @@ def main() -> int:
         print("[options] 유효 데이터 없음 — 기존 파일 유지")
         return 1
     from sec_client import merge_previous_stocks
-    payload = merge_previous_stocks(payload, OUT_JSON, "options")
+    # 옵션 만기는 주 단위라 승계분 수명은 짧게(7일) — top 밖으로 밀린 종목이
+    # 만기 지난 maxPain 을 무기한 달고 남던 문제(2026-09-15 감사).
+    payload = merge_previous_stocks(payload, OUT_JSON, "options",
+                                    expiry_days=7, max_rows=args.top * 3)
     compact = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
     atomic_write_text(OUT_JSON, compact)
     atomic_write_text(OUT_JS, f"window.OPTIONS_STATS = {compact};\n")

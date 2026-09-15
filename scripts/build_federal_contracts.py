@@ -27,6 +27,7 @@ import urllib.request
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "federal_contracts.json"
@@ -57,10 +58,20 @@ def kst_now_str() -> str:
     return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M KST")
 
 
-def post(body: dict, timeout=30) -> dict:
-    req = urllib.request.Request(API, data=json.dumps(body).encode(), headers=UA)
-    with urllib.request.urlopen(req, timeout=timeout) as r:
-        return json.loads(r.read())
+def post(body: dict, timeout=30, retries=3) -> dict:
+    last = None
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(API, data=json.dumps(body).encode(), headers=UA)
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                return json.loads(r.read())
+        except Exception as exc:
+            last = exc
+            if getattr(exc, "code", None) in (403, 404):
+                raise
+            if attempt < retries:
+                sec.backoff_sleep(attempt, base=1.0, cap=30.0)
+    raise last
 
 
 def fetch(recipient: str, start: str, end: str, max_pages: int = 6) -> dict | None:

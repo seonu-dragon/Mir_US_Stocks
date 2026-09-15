@@ -27,6 +27,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (http_get_with_backoff)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "wiki_attention.json"
@@ -47,12 +48,18 @@ def kst_now_str() -> str:
 
 
 def get_json(url: str) -> dict | list | None:
-    req = urllib.request.Request(url, headers=UA)
+    """실패하면 None. 404(문서 없음)와 일시 오류를 호출부가 구분할 수 있도록
+    ``get_json.last_error_transient`` 에 마지막 실패 종류를 남긴다."""
+    get_json.last_error_transient = False
     try:
-        with urllib.request.urlopen(req, timeout=30) as r:
-            return json.loads(r.read().decode("utf-8"))
-    except Exception:
+        return json.loads(sec.http_get_with_backoff(
+            url, headers=UA, timeout=30, label="wiki").decode("utf-8"))
+    except Exception as exc:
+        get_json.last_error_transient = getattr(exc, "code", None) not in (403, 404)
         return None
+
+
+get_json.last_error_transient = False
 
 
 def norm_tokens(name: str) -> list[str]:
@@ -100,13 +107,26 @@ def load_top(path: Path, n: int) -> list[dict]:
 
 
 def build_market(rows: list[dict], lang: str, cache: dict) -> list[dict]:
+    """조회수 순위. cache 는 ticker → 위키 문서 제목(없으면 False).
+
+    두 가지를 고쳤다(2026-09-15 감사).
+      1) 검색이 **일시 오류**로 실패했을 때 False 를 영구 캐시해 그 종목이
+         영영 조회되지 않던 문제 — 일시 실패는 캐시하지 않는다.
+      2) map 이 무한히 커지던 문제 — 이번 실행의 유니버스에 없는 키를 지운다.
+    """
     out = []
+    wanted = {s["ticker"] for s in rows}
+    for stale in [k for k in cache if k not in wanted]:
+        cache.pop(stale, None)
     for s in rows:
         t, company = s["ticker"], s["company"]
-        entry = cache.get(t)
-        if entry is None:  # 신규 종목만 검색(캐시 미스). 실패는 False 로 기억.
+        if t not in cache:  # 신규 종목만 검색(캐시 미스)
             title = search_title(lang, company)
-            cache[t] = title if title else False
+            if title:
+                cache[t] = title
+            elif not getattr(get_json, "last_error_transient", False):
+                cache[t] = False  # 문서가 실제로 없다 — 다음부터 건너뛴다
+            # 일시 오류면 캐시하지 않는다(다음 실행에서 다시 시도)
             time.sleep(0.1)
         title = cache.get(t)
         if not title:
@@ -159,6 +179,11 @@ def main() -> int:
         return 1
     if len(us) < 10:
         print(f"[wiki] US 유효 {len(us)}종목(<10) — 기존 파일 유지")
+        return 1
+    # KR 스냅샷이 있는데 결과가 0건이면 ko 위키 경로가 깨진 것이다.
+    # 예전엔 US 만 보고 초록으로 끝나 KR 패널이 조용히 비었다.
+    if KR_SNAP.exists() and not kr:
+        print("[wiki] KR 유효 0종목 — 기존 파일 유지(ko.wikipedia 경로 확인)")
         return 1
     payload = {
         "updatedAtKst": kst_now_str(),

@@ -3,7 +3,10 @@
 429·타임아웃으로 몇 종목을 놓친 실행이 기존 결과를 통째로 날리면, 사이트에서
 종목이 실행마다 나타났다 사라진다. 공유 헬퍼 두 개가 이 규약을 담당한다:
 
-- `sec_client.merge_previous_stocks` — 티커→레코드 dict 의 prev-merge.
+- `sec_client.merge_previous_stocks` — 티커→레코드 dict 의 prev-merge(승계분에
+  `carriedSince` 스탬프를 찍고 TTL 이 지나면 버린다).
+- `sec_client.merge_previous_rows` — 날짜 창 기준 행 리스트(KR 공시·실적반응)의 prev-merge.
+- `sec_client.merge_previous_keyed_rows` — id 기준 리스트(매크로 지표·COT 시장)의 prev-merge.
 - `update_data.merge_history_rows` / `history_overlap_ok` / `fetch_history_smart`
   — 일봉 증분 수집(캐시 + 최근 1y)과 분할 가드.
 """
@@ -32,11 +35,11 @@ def test_missing_tickers_keep_previous_values(tmp_path):
     prev = _write_prev(tmp_path, {"AAPL": {"pe": 30}, "MSFT": {"pe": 35}, "NVDA": {"pe": 60}})
     payload = {"stocks": {"AAPL": {"pe": 31}}}
     merged = sec.merge_previous_stocks(payload, prev, "test")
-    assert merged["stocks"]["AAPL"] == {"pe": 31}      # 오늘 받은 건 갱신
+    assert merged["stocks"]["AAPL"] == {"pe": 31}      # 오늘 받은 건 갱신(스탬프 없음)
     assert merged["stocks"]["MSFT"]["pe"] == 35        # 못 받은 건 유지
     # 승계된 레코드에는 만료 시계(carriedSince)가 찍힌다.
-    assert merged["stocks"]["MSFT"]["carriedSince"] == sec.kst_today().isoformat()
-    assert "carriedSince" not in merged["stocks"]["AAPL"]
+    assert merged["stocks"]["MSFT"][sec.CARRIED_SINCE_KEY] == sec.kst_today().isoformat()
+    assert sec.CARRIED_SINCE_KEY not in merged["stocks"]["AAPL"]
     assert len(merged["stocks"]) == 3                  # 줄어들지 않는다
 
 
@@ -101,6 +104,43 @@ def test_custom_key_is_respected(tmp_path):
     prev = _write_prev(tmp_path, {"AAPL": {"x": 1}}, key="rows")
     merged = sec.merge_previous_stocks({"rows": {}}, prev, "test", key="rows")
     assert merged["rows"]["AAPL"]["x"] == 1
+
+
+# --- 만료 / 상한 / id 기반 리스트 prev-merge --------------------------------
+
+def test_carry_respects_max_rows(tmp_path):
+    """상한을 넘기면 오래된 승계분부터 버린다 — 파일이 무한히 자라지 않게."""
+    prev = _write_prev(tmp_path, {f"T{i}": {"v": i} for i in range(50)})
+    merged = sec.merge_previous_stocks({"stocks": {"FRESH": {"v": 0}}}, prev, "test",
+                                       max_rows=10)
+    assert len(merged["stocks"]) == 10
+    assert "FRESH" in merged["stocks"]          # 이번 실행 값은 항상 남는다
+
+
+def test_merge_previous_keyed_rows_fills_missing_ids(tmp_path):
+    """매크로 지표·COT 시장처럼 항목 집합이 고정인 산출물의 부분 실패 보강."""
+    path = tmp_path / "macro.json"
+    path.write_text(json.dumps({"indicators": [
+        {"id": "A", "value": 1},
+        {"id": "B", "value": 2},
+    ]}, ensure_ascii=False), encoding="utf-8")
+    payload = {"indicators": [{"id": "A", "value": 9}]}
+    merged = sec.merge_previous_keyed_rows(payload, path, "macro", "indicators", "id")
+    ids = {r["id"] for r in merged["indicators"]}
+    assert ids == {"A", "B"}
+    carried = next(r for r in merged["indicators"] if r["id"] == "B")
+    assert carried["value"] == 2 and carried[sec.CARRIED_SINCE_KEY]
+
+
+def test_merge_previous_keyed_rows_drops_expired(tmp_path):
+    old = (sec.kst_today() - timedelta(days=99)).isoformat()
+    path = tmp_path / "macro.json"
+    path.write_text(json.dumps({"indicators": [
+        {"id": "B", "value": 2, sec.CARRIED_SINCE_KEY: old},
+    ]}, ensure_ascii=False), encoding="utf-8")
+    merged = sec.merge_previous_keyed_rows({"indicators": []}, path, "macro",
+                                           "indicators", "id", expiry_days=30)
+    assert merged["indicators"] == []
 
 
 # --------------------------------------------------------------------------

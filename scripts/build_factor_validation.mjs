@@ -438,6 +438,25 @@ function writeAtomic(file, text) {
   fs.writeFileSync(tmp, text, "utf8");
   fs.renameSync(tmp, file);
 }
+function assertPayloadUsable(out) {
+  const markets = Object.entries(out.markets || {});
+  if (!markets.length) throw new Error("factor validation: markets 가 비었다 — 쓰지 않는다");
+  for (const [m, res] of markets) {
+    if (!res || !res.sample || !res.horizons) {
+      throw new Error(`factor validation: ${m} 결과 구조 불완전 — 쓰지 않는다`);
+    }
+    if (!(res.sample.tickers > 0) || !(res.sample.evalDates > 0)) {
+      throw new Error(`factor validation: ${m} 표본 0건(tickers=${res.sample.tickers}, evalDates=${res.sample.evalDates}) — 쓰지 않는다`);
+    }
+    for (const h of HORIZONS) {
+      const H = res.horizons[h];
+      if (!H || !H.base || !(H.base.n > 0) || !H.factors) {
+        throw new Error(`factor validation: ${m} ${h}d 구간 결과 없음 — 쓰지 않는다`);
+      }
+    }
+  }
+}
+
 function printSummary(out) {
   for (const [m, res] of Object.entries(out.markets)) {
     console.log(`\n== ${m.toUpperCase()} · ${res.sample.tickers}종목 · ${res.sample.firstEvalDate}~${res.sample.lastEvalDate} · ${res.sample.evalDates}평가일 · ${(res.elapsedMs / 1000).toFixed(1)}s`);
@@ -471,10 +490,13 @@ function main() {
     out.markets[m.id] = evaluateMarket(m);
   }
   const payload = roundDeep(out);
+  // 검증을 **쓰기 전에** 끝낸다. 예전엔 파일부터 쓰고 printSummary 에서
+  // 죽으면 멀쩡한 산출물을 망가뜨린 채 exit 1 이었다(2026-09-15 감사).
+  assertPayloadUsable(payload);
+  printSummary(payload);
   const json = JSON.stringify(payload);
   writeAtomic(path.join(ROOT, "data/factor_validation.json"), json + "\n");
   writeAtomic(path.join(ROOT, "data/factor_validation.js"), `window.FACTOR_VALIDATION = ${json};\n`);
-  printSummary(payload);
   console.log(`\nwrote data/factor_validation.json (+.js) ${(json.length / 1024).toFixed(0)}KB`);
 }
 

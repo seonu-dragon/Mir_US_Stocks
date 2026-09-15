@@ -6,18 +6,26 @@ import json
 import math
 import os
 import re
+import shutil
 import subprocess
+import sys
 import tempfile
 import threading
 import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글·U+2014 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from briefing_store import apply_briefing_fragments, repository_publish_lock
+from sec_client import ET_TZ, require_us_market_closed
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -395,7 +403,8 @@ ETF_THEME_DEFS.extend([
         "group": "Consumer",
         "category": "Restaurants",
         "representative": "EATZ",
-        "peers": ["EATZ", "BITE"],
+        # BITE 는 2023 년 상장폐지 — 야후가 404 를 돌려줘 매 실행 errors[] 에 쌓였다.
+        "peers": ["EATZ"],
         "keywords": ["restaurant", "restaurants", "food service"],
     },
     {
@@ -1446,8 +1455,10 @@ def fetch_yahoo_history(symbol, range_="5y"):
     opens = quote.get("open", [])
     highs = quote.get("high", [])
     lows = quote.get("low", [])
-    closes = quote["close"]
-    volumes = quote["volume"]
+    # 야후가 quote 객체에서 close/volume 배열을 통째로 빼먹는 응답을 준다
+    # (라이브 오류 "MIDZ: 'close'"). KeyError 로 죽지 말고 빈 히스토리로 본다.
+    closes = quote.get("close") or []
+    volumes = quote.get("volume") or []
     timestamps = result.get("timestamp", [])
     rows = []
     for timestamp, open_value, high, low, close, volume in zip(timestamps, opens, highs, lows, closes, volumes):
@@ -1537,8 +1548,10 @@ def fetch_news(symbol, limit=8):
         published = entry.get("providerPublishTime")
         if published:
             try:
+                # 미국 뉴스 발행일은 현지(ET) 날짜로 적는다 — KST 로 변환하면
+                # 미 동부 오전 기사가 하루 뒤 날짜로 찍힌다.
                 published_at = datetime.fromtimestamp(
-                    int(published), tz=ZoneInfo("Asia/Seoul")
+                    int(published), tz=ET_TZ
                 ).strftime("%Y-%m-%d")
             except Exception:
                 published_at = ""
@@ -1664,6 +1677,23 @@ def load_ticker_cik_map():
     return _TICKER_CIK_CACHE
 
 
+def _is_annual_gaap_period(row):
+    """XBRL 사실(fact) 한 줄이 '1년치'인지. 잔액 항목(start 없음)은 항상 True.
+
+    10-K 안에는 4분기 단독 매출 같은 **분기 기간** 사실도 함께 실린다. 폼이
+    10-K 라는 이유만으로 집어 오면 분기 매출이 연매출로 둔갑해 salesB·PSR 이
+    4배 왜곡된다(2026-09-15 감사). 기간 길이가 330~400일일 때만 연간으로 본다.
+    """
+    start, end = row.get("start"), row.get("end")
+    if not start or not end:
+        return True  # 자산·자본 등 시점 잔액 — 기간 길이 개념이 없다
+    try:
+        days = (date.fromisoformat(str(end)) - date.fromisoformat(str(start))).days
+    except ValueError:
+        return False
+    return 330 <= days <= 400
+
+
 def latest_sec_gaap_value(usgaap, tags):
     for tag in tags:
         block = usgaap.get(tag)
@@ -1673,8 +1703,9 @@ def latest_sec_gaap_value(usgaap, tags):
             rows = (block.get("units") or {}).get(unit_key) or []
             if not rows:
                 continue
-            annual = [row for row in rows if row.get("form") == "10-K"]
-            pool = annual or rows
+            annual = [row for row in rows
+                      if row.get("form") == "10-K" and _is_annual_gaap_period(row)]
+            pool = annual or [row for row in rows if _is_annual_gaap_period(row)]
             pool.sort(key=lambda row: row.get("end", ""), reverse=True)
             if pool and pool[0].get("val") is not None:
                 return float(pool[0]["val"])
@@ -2105,7 +2136,9 @@ def lookback(values, periods):
 
 
 def ytd_base_close(rows, closes):
-    current_year = str(datetime.now(ZoneInfo("Asia/Seoul")).year)
+    # 미국 종목의 연초 기준은 **뉴욕 시각의 해**다. KST 로 보면 매년 1월 1일
+    # 오전 9시간 동안(그리고 12월 31일 밤) 한 해가 어긋난다.
+    current_year = str(datetime.now(ET_TZ).year)
     for row in rows:
         if str(row.get("date", "")).startswith(current_year):
             return row["close"]
@@ -2912,7 +2945,8 @@ def build_snapshot():
 
     return {
         "updatedAtKst": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST"),
-        "policy": "Daily snapshot. Update once at 06:00 KST.",
+        # 실제 크론과 맞춘다(daily-market-snapshot.yml: 21:05 UTC = 06:05 KST).
+        "policy": "Daily snapshot. Update once at 06:05 KST (21:05 UTC, after the US close).",
         "summary": build_summary(stocks),
         "stocks": stocks,
         "health": {
@@ -3062,26 +3096,40 @@ def _load_existing_earnings_histories():
 
 
 def write_details(details):
+    """details/ 전체를 **새 디렉터리에 다 쓴 뒤 통째로 교체**한다.
+
+    예전에는 기존 파일을 먼저 전부 unlink 하고 하나씩 다시 썼다. 중간에 죽으면
+    반쯤 빈 디렉터리가 남고, 바로 다음 단계의 `git add data/` 가 그 상태를
+    커밋해 종목 상세가 대량으로 사라졌다(2026-09-15 감사). 이제 쓰기가 끝나야
+    교체되므로 어느 시점에 죽어도 디렉터리는 항상 완결 상태다.
+    """
     DETAILS_DIR.mkdir(parents=True, exist_ok=True)
     preserved_earnings = _load_existing_earnings_histories()
-    for old_file in DETAILS_DIR.glob("*"):
-        if old_file.is_file() and old_file.suffix.lower() in {".json", ".js"}:
-            old_file.unlink()
-    for ticker, detail in details.items():
-        if "earningsHistory" not in detail:
-            saved = preserved_earnings.get(str(ticker).upper())
-            if saved:
-                detail["earningsHistory"] = saved
-        safe = _detail_safe_name(ticker)
-        json_path = DETAILS_DIR / f"{safe}.json"
-        fd, temp_name = tempfile.mkstemp(prefix=f"{safe}_", suffix=".json", dir=str(DETAILS_DIR))
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as handle:
+    staging = DETAILS_DIR.parent / f".{DETAILS_DIR.name}.new"
+    if staging.exists():
+        shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True, exist_ok=True)
+    try:
+        for ticker, detail in details.items():
+            if "earningsHistory" not in detail:
+                saved = preserved_earnings.get(str(ticker).upper())
+                if saved:
+                    detail["earningsHistory"] = saved
+            safe = _detail_safe_name(ticker)
+            with open(staging / f"{safe}.json", "w", encoding="utf-8") as handle:
                 json.dump(detail, handle, ensure_ascii=False, separators=(",", ":"))
-            os.replace(temp_name, json_path)
-        finally:
-            if os.path.exists(temp_name):
-                os.unlink(temp_name)
+        # 교체: 기존 → .old 로 옮기고 새 디렉터리를 제자리에, 그다음 .old 삭제.
+        # os.replace 는 비어 있지 않은 디렉터리에 쓸 수 없어 두 단계로 나눈다.
+        retired = DETAILS_DIR.parent / f".{DETAILS_DIR.name}.old"
+        if retired.exists():
+            shutil.rmtree(retired, ignore_errors=True)
+        if DETAILS_DIR.exists():
+            os.replace(DETAILS_DIR, retired)
+        os.replace(staging, DETAILS_DIR)
+        shutil.rmtree(retired, ignore_errors=True)
+    finally:
+        if staging.exists():
+            shutil.rmtree(staging, ignore_errors=True)
 
 
 def load_existing_snapshot():
@@ -3254,7 +3302,17 @@ def main():
         action="store_true",
         help="증분 병합을 끄고 모든 preferHistory 종목을 range=5y 전체로 재수집한다(수동 복구용).",
     )
+    parser.add_argument(
+        "--ignore-market-close-guard",
+        action="store_true",
+        help="뉴욕 장 마감(16:05 ET) 전이라도 실행한다(수동 디버깅 전용).",
+    )
     args = parser.parse_args()
+
+    # 이 스냅샷은 '미국 장 마감' 데이터다. 크론이 서머타임과 어긋나 장중에 돌면
+    # 종가가 아닌 값이 종가로 발행된다 — 진입부에서 ET 로 직접 막는다.
+    if not args.ignore_market_close_guard:
+        require_us_market_closed("미국 시장 스냅샷")
 
     global FORCE_FULL_HISTORY
     FORCE_FULL_HISTORY = args.full_history
@@ -3300,15 +3358,22 @@ def main():
 
         # 시장지도 색상 기준용 펀더멘털 요약(data/map_fundamentals.*)을 디스크의
         # 최신 detail 파일 기준으로 재생성한다. (write_details 직후이므로 동기화 보장)
+        # 히트맵 색상·valueScore 의 유일한 입력이다. 조용히 삼키면 화면의
+        # 시장지도가 통째로 회색이 되는데 워크플로우는 초록으로 끝났다.
+        # 스냅샷 자체는 이미 성공했으므로 커밋은 그대로 진행하고, 실패 사실만
+        # 남겨 마지막에 exit 1 로 워크플로우를 빨갛게 만든다.
+        map_fundamentals_error = None
         try:
             import build_map_fundamentals
-            build_map_fundamentals.main()
+            rc = build_map_fundamentals.main()
+            if rc:
+                map_fundamentals_error = f"build_map_fundamentals.main() 반환 코드 {rc}"
         except Exception as exc:
-            print(f"[map_fundamentals] rebuild skipped: {exc}")
+            map_fundamentals_error = f"{type(exc).__name__}: {exc}"
+        if map_fundamentals_error:
+            print(f"[map_fundamentals] 재생성 실패 — {map_fundamentals_error}")
 
         try:
-            import subprocess
-            import sys
             subprocess.run(
                 [sys.executable, str(ROOT / "scripts" / "build_pattern_stats.py"), "--market", "us"],
                 check=False,
@@ -3334,6 +3399,13 @@ def main():
 
         if args.push and not args.no_push:
             git_push_updates(updated_at)
+
+    if map_fundamentals_error:
+        raise SystemExit(
+            f"[중단] map_fundamentals 재생성 실패({map_fundamentals_error}) — "
+            "스냅샷은 발행했지만 히트맵 색상·valueScore 입력이 갱신되지 않았다."
+        )
+
 
 if __name__ == "__main__":
     main()

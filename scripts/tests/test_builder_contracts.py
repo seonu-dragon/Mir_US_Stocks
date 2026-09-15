@@ -27,11 +27,10 @@ from conftest import BUILDER_NAMES, SCRIPTS, builder_source, import_builder
 # 이들은 sec_client.write_data 대신 atomic_write_text 를 직접 부르므로 0건 방어를
 # 공유받지 못한다. 원자성은 지키지만, 소스가 죽은 날 빈 파일을 발행할 여지가 남는다.
 # **목록을 늘리지 말 것** — 새 빌더는 write_data 로 쓴다. 하나씩 옮길 때마다 여기서 뺀다.
+# 2026-09-15: 13F·의회·레버리지 ETF 카탈로그를 write_data 로 옮기고 목록에서 뺐다.
 LEGACY_DIRECT_WRITERS = frozenset({
-    "build_13f_snapshot",
     "build_breakout_retest",
     "build_cftc_cot",
-    "build_congress_trades",
     "build_federal_contracts",
     "build_finra_short_volume",
     "build_insider_trades",
@@ -45,7 +44,6 @@ LEGACY_DIRECT_WRITERS = frozenset({
     "build_kr_krx_metrics",
     "build_kr_nps_holdings",
     "build_kr_trade_exports",
-    "build_leveraged_etf_catalog",
     "build_macro_indicators",
     "build_map_fundamentals",
     "build_market_history",

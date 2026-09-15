@@ -2,7 +2,8 @@ name: Daily earnings calendar
 
 on:
   schedule:
-    - cron: "30 20 * * *"  # 05:30 KST (UTC+9) — 매일 US 스냅샷(05:05) 직후 갱신
+    # 21:30 UTC — EDT 17:30 / EST 16:30 ET (마감 이후).
+    - cron: "30 21 * * *"  # 06:30 KST (UTC+9) — 매일 US 스냅샷(06:05) 직후 갱신
   workflow_dispatch:
 
 permissions:

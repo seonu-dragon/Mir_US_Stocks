@@ -67,9 +67,13 @@ _TAG_RE = re.compile(r"<[^>]+>")
 
 
 def efts_query_hits(query, form, startdt, enddt, cap=10000):
-    """sec.efts_hits 와 동일하되 q(전문검색 구문)를 지정한다."""
+    """sec.efts_hits 와 동일하되 q(전문검색 구문)를 지정한다.
+
+    반환: ``(hits, partial)`` — sec.efts_hits 와 같은 계약이다.
+    """
     hits = []
     frm = 0
+    partial = False
     while frm < cap:
         q = urllib.parse.urlencode({
             "q": query, "forms": form, "startdt": startdt, "enddt": enddt, "from": frm,
@@ -78,6 +82,7 @@ def efts_query_hits(query, form, startdt, enddt, cap=10000):
             data = sec.sec_get_json(f"{sec.EFTS_URL}?{q}")
         except Exception as exc:
             print(f"    [경고] efts q={query} {startdt}~{enddt} from={frm} 실패: {exc}")
+            partial = True
             break
         page = data.get("hits", {}).get("hits", [])
         if not page:
@@ -87,18 +92,23 @@ def efts_query_hits(query, form, startdt, enddt, cap=10000):
         frm += len(page)
         if frm >= total:
             break
-    return hits
+    else:
+        partial = True
+    return hits, partial
 
 
 def find_buyback_docs(start_iso, end_iso):
-    """구간 내 repurchase/buyback 8-K → {accession: 매칭 문서 파일명}."""
+    """구간 내 repurchase/buyback 8-K → ({accession: 매칭 문서 파일명}, partial)."""
     docs = {}
+    partial = False
     for query in BUYBACK_QUERIES:
-        for hit in efts_query_hits(query, "8-K", start_iso, end_iso):
+        hits, q_partial = efts_query_hits(query, "8-K", start_iso, end_iso)
+        partial = partial or q_partial
+        for hit in hits:
             src = hit.get("_source", {})
             adsh = src.get("adsh") or hit["_id"].split(":")[0]
             docs.setdefault(adsh, hit["_id"].split(":")[1])
-    return docs
+    return docs, partial
 
 
 def extract_buyback_amount(text):
@@ -129,7 +139,7 @@ def tag_buybacks(events):
     if not dates:
         return
     try:
-        docs = find_buyback_docs(min(dates), max(dates))
+        docs, _docs_partial = find_buyback_docs(min(dates), max(dates))
     except Exception as exc:
         print(f"  [경고] buyback 태깅 질의 실패 — 이번 실행은 건너뜀: {exc}")
         return
@@ -212,10 +222,12 @@ def build(backfill_days, top, overlap_days=3):
 
     merged = {e["accession"]: e for e in existing}
     new = 0
+    partial = False
     day = start
     while day <= today:
         iso = day.isoformat()
-        hits = sec.efts_hits("8-K", iso, iso)
+        hits, day_partial = sec.efts_hits("8-K", iso, iso)
+        partial = partial or day_partial
         kept = 0
         for hit in hits:
             src = hit.get("_source", {})
@@ -244,7 +256,8 @@ def build(backfill_days, top, overlap_days=3):
             new += 1
             kept += 1
         if hits:
-            print(f"    {iso}: 8-K 전체 {len(hits)} / universe {kept}")
+            print(f"    {iso}: 8-K 전체 {len(hits)} / universe {kept}"
+                  f"{' (일부 실패)' if day_partial else ''}")
         day += timedelta(days=1)
 
     cutoff = (today - timedelta(days=RETENTION_DAYS)).isoformat()
@@ -252,9 +265,15 @@ def build(backfill_days, top, overlap_days=3):
     events.sort(key=lambda e: (e.get("fileDate") or "", e.get("accession") or ""), reverse=True)
     events = events[:MAX_ROWS]
     tag_buybacks(events)
+    fresh_last = max((e.get("fileDate") or "" for e in events), default=today.isoformat())
+    if partial and last:
+        # 하루치라도 잘렸으면 커서를 전진시키지 않는다 — 다음 실행이 재수집한다.
+        print(f"  [경고] efts 일부 실패 — lastFileDate 를 {last} 로 고정(재수집 예약)")
+        fresh_last = last
     payload = {
         "updatedAtKst": sec.kst_now_str(),
-        "lastFileDate": max((e.get("fileDate") or "" for e in events), default=today.isoformat()),
+        "lastFileDate": fresh_last,
+        "partialFetch": bool(partial),
         "count": len(events),
         "source": "SEC EDGAR 8-K",
         "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. "
@@ -281,7 +300,9 @@ def main():
         sec.write_data(OUT_JSON, OUT_JS, "MATERIAL_EVENTS", payload)
         print(f"Wrote {OUT_JSON} — {payload['count']} events")
         if args.push and not args.no_push:
-            sec.git_publish(["data/material_events.json", "data/material_events.js"], "material events")
+            if not sec.git_publish(["data/material_events.json", "data/material_events.js"],
+                                   "material events"):
+                raise SystemExit("[중단] 8-K 주요 공시 push 실패 — 발행되지 않았다")
 
 
 if __name__ == "__main__":

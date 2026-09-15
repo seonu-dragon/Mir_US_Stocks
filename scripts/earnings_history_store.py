@@ -8,6 +8,11 @@ import json
 import re
 import sys
 import time
+
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -157,7 +162,12 @@ def publish_detail_changes(project_dir: Path, commit_label: str = "Earnings Refr
     )
 
 
-def main() -> None:
+# 야후가 죽은 날 전량 실패해도 신선한 스탬프가 찍혀 감시가 무력화됐다
+# (2026-09-15 감사). 실패 비율이 이 값을 넘으면 실패로 끝낸다.
+MAX_FAILED_RATIO = 0.20
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(description="Incrementally refresh earningsHistory in detail files")
     parser.add_argument("--no-push", action="store_true")
     parser.add_argument("--resume", action="store_true")
@@ -177,9 +187,21 @@ def main() -> None:
         )
         write_meta(stats)
         # 갱신 0건이어도 스탬프는 올린다 — 그래야 신선도 감시가 "돌긴 돌았다" 를 안다.
+        # 다만 meta 에 failed 를 남기고, 실패 비율이 높으면 아래에서 exit 1 한다.
         if not args.no_push:
-            publish_detail_changes(ROOT)
+            if not publish_detail_changes(ROOT):
+                print("[중단] 실적 이력 push 실패 — 발행되지 않았다")
+                return 1
+
+    attempted = int(stats.get("updated", 0)) + int(stats.get("failed", 0))
+    if attempted and int(stats.get("failed", 0)) > attempted * MAX_FAILED_RATIO:
+        print(
+            f"[중단] 실적 이력 수집 실패 {stats['failed']}/{attempted}건 "
+            f"({stats['failed'] / attempted:.0%} > {MAX_FAILED_RATIO:.0%}) — 소스를 확인할 것"
+        )
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

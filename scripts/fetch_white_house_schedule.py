@@ -5,9 +5,15 @@ from __future__ import annotations
 
 import json
 import re
+import sys
 import urllib.request
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
+
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 KST = ZoneInfo("Asia/Seoul")
 ET = ZoneInfo("America/New_York")
@@ -112,6 +118,15 @@ def build_white_house_payload(*, horizon_days: int = 21, lookback_days: int = 1)
     events.sort(key=lambda e: e.get("sortKey", 0))
     for e in events:
         e.pop("sortKey", None)
+
+    # 원본은 왔는데 정규화 결과가 0건이면 스키마가 바뀐 것이다. 예전에는 그
+    # 상태로 '0건 + 방금 찍은 타임스탬프'를 푸시해 감시 장치가 영영 못 봤다
+    # (2026-09-15 감사). 소스가 비어 있는 것과 우리가 못 읽은 것을 구분한다.
+    if rows and not events:
+        raise RuntimeError(
+            f"백악관 일정: 원본 {len(rows)}행을 받았으나 정규화 결과 0건 — "
+            "Factba.se 스키마 변경 가능성. 기존 파일을 덮지 않는다."
+        )
 
     return {
         "source": "Factba.se (White House public schedule)",

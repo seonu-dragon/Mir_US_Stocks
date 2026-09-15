@@ -84,8 +84,10 @@ def yahoo_symbol(ticker: str, market: str) -> str:
 def fetch_next_earnings(ticker: str, market: str) -> dict | None:
     try:
         import yfinance as yf
-    except ImportError:
-        return None
+    except ImportError as exc:
+        # 예전엔 여기서 None 을 돌려줘 '수집 0건'과 구분되지 않았고, 워크플로우는
+        # 라이브러리가 없는 채로 매일 초록으로 끝났다(2026-09-15 감사).
+        raise SystemExit(f"[중단] yfinance 를 import 할 수 없다: {exc}") from exc
     symbol = yahoo_symbol(ticker, market)
     try:
         cal = yf.Ticker(symbol).calendar
@@ -174,7 +176,7 @@ def write_outputs(payload: dict, market: str) -> None:
         print(f"Wrote {OUT_JSON} ({payload['count']} rows)")
 
 
-def main() -> None:
+def main() -> int:
     ap = argparse.ArgumentParser(description="Build static earnings calendar snapshot")
     ap.add_argument("--market", choices=["us", "kr"], default="us")
     ap.add_argument("--limit", type=int, default=80)
@@ -186,16 +188,25 @@ def main() -> None:
     payload = build(args.market, args.limit)
     if not payload["earnings"]:
         # Yahoo가 0건을 주면(일시적 오류·레이트리밋) 기존 스냅샷을 덮어쓰지 않는다.
+        # 다만 '아무것도 못 받은 실행'은 실패다 — 초록으로 끝내지 않는다.
         print("  [경고] 실적 일정 0건 — 기존 파일 유지(덮어쓰지 않음)")
-        return
+        return 1
     write_outputs(payload, args.market)
     if args.push:
         import sec_client as sec
         if args.market == "kr":
-            sec.git_publish(["data/korea/earnings_calendar.json", "data/korea/earnings_calendar.js"], "KR earnings calendar")
+            ok = sec.git_publish(
+                ["data/korea/earnings_calendar.json", "data/korea/earnings_calendar.js"],
+                "KR earnings calendar")
         else:
-            sec.git_publish(["data/earnings_calendar.json", "data/earnings_calendar.js"], "earnings calendar")
+            ok = sec.git_publish(
+                ["data/earnings_calendar.json", "data/earnings_calendar.js"],
+                "earnings calendar")
+        if not ok:
+            print("[중단] 실적 캘린더 push 실패 — 발행되지 않았다")
+            return 1
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

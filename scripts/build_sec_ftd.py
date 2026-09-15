@@ -20,12 +20,19 @@ from __future__ import annotations
 import io
 import json
 import sys
+import time
 import urllib.request
 import zipfile
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 빌드 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from briefing_store import atomic_write_text  # 중단 시 잘린 JSON 방지
+import sec_client as sec  # noqa: E402  (backoff_sleep)
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT_JSON = ROOT / "data" / "sec_ftd.json"
@@ -56,14 +63,33 @@ def candidate_tags() -> list[str]:
 
 
 def fetch_latest() -> tuple[str, bytes] | None:
-    for tag in candidate_tags():
+    """가장 최근 반월 파일. 404(아직 미발행)만 다음 후보로 넘어간다.
+
+    예전엔 어떤 실패든 조용히 다음(더 오래된) 후보로 내려가, SEC 가 5xx 를
+    내는 날에는 한 달 전 파일을 '최신'으로 발행했다(2026-09-15 감사).
+    이제 404 가 아닌 실패는 재시도하고, 끝내 실패하면 그 자리에서 멈춘다.
+    후보 사이에는 SEC 예의상 간격을 둔다.
+    """
+    for idx, tag in enumerate(candidate_tags()):
+        if idx:
+            time.sleep(0.5)
         url = BASE.format(tag=tag)
-        req = urllib.request.Request(url, headers=UA)
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                return tag, r.read()
-        except Exception:
-            continue
+        for attempt in range(1, 4):
+            req = urllib.request.Request(url, headers=UA)
+            try:
+                with urllib.request.urlopen(req, timeout=60) as r:
+                    return tag, r.read()
+            except Exception as exc:
+                code = getattr(exc, "code", None)
+                if code == 404:
+                    print(f"  [ftd] {tag}: 아직 발행 전(404) — 이전 반월로")
+                    break  # 다음(더 오래된) 후보로
+                if attempt < 3:
+                    print(f"  [ftd] {tag}: 일시 오류({exc}) — 재시도 {attempt}/3")
+                    sec.backoff_sleep(attempt, base=2.0, cap=30.0)
+                    continue
+                print(f"  [ftd] {tag}: 반복 실패({exc}) — 더 오래된 파일로 회귀하지 않는다")
+                return None
     return None
 
 

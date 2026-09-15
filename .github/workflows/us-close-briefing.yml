@@ -2,7 +2,8 @@ name: US close briefing
 
 on:
   schedule:
-    - cron: "34 20 * * *"  # 05:34 KST (UTC+9)
+    # 21:34 UTC — EDT 17:34 / EST 16:34 ET (마감 이후). 상세는 DEPLOY.md 크론 표.
+    - cron: "34 21 * * *"  # 06:34 KST (UTC+9)
   workflow_dispatch:
 
 permissions:

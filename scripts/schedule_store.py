@@ -18,6 +18,11 @@ if str(SCRIPTS) not in sys.path:
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from fetch_white_house_schedule import build_white_house_payload  # noqa: E402
 
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 실행 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "white_house_schedule.json"
 OUT_JS = ROOT / "data" / "white_house_schedule.js"

@@ -21,6 +21,12 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
+
+if sys.platform == "win32":
+    # cp949 콘솔에서 한글 출력이 UnicodeEncodeError 로 죽어 실행 실패로 둔갑한다.
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 
 def fetch_json_via_curl(url: str, headers: dict | None = None, timeout: int = 15):

@@ -1,20 +1,23 @@
 #!/usr/bin/env python3
 """공용 SEC EDGAR 접근 유틸 (내부자/13D·G/8-K/IPO 빌드 공유).
 
-SEC Archives 는 Akamai 봇 매니저가 Sec-Fetch-*/sec-ch-ua 브라우저 헤더를
-요구하므로 SEC_HEADERS 로 항상 그 헤더를 보낸다. data.sec.gov / efts /
-www.sec.gov/Archives 모두 이 헤더로 접근 가능(검증 완료).
+SEC 는 자동화 접근을 금지하지 않는다 — 대신 **연락처가 담긴 정직한
+User-Agent** 와 초당 10건 이하를 요구한다(sec.gov/os/webmaster-faq#developers).
+예전엔 여기에 Chrome 사칭 헤더(sec-ch-ua / Sec-Fetch-*)를 실어 보냈는데,
+이는 SEC 의 접근 정책에 정면으로 어긋나고 차단 시 식별도 불가능하다.
+2026-09-15 에 제거했다 — 지금은 UA + 연락처만 보낸다.
 """
 
 from __future__ import annotations
 
 import gzip
 import json
+import random
 import re
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -25,18 +28,11 @@ ROOT = Path(__file__).resolve().parents[1]
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
 
 SEC_HEADERS = {
+    # SEC 가 요구하는 것은 '누구인지 알 수 있는' UA 하나다. 브라우저 사칭 금지.
     "User-Agent": "Mir-US-Stocks/1.0 (contact@seonu-dragon.xyz)",
     "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-US,en;q=0.9",
     "Accept-Encoding": "gzip, deflate",
-    "sec-ch-ua": '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "none",
-    "Sec-Fetch-User": "?1",
-    "Upgrade-Insecure-Requests": "1",
 }
 
 COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
@@ -44,10 +40,50 @@ EFTS_URL = "https://efts.sec.gov/LATEST/search-index"
 REQUEST_PAUSE = 0.13  # SEC 예의상 ~8 req/s
 
 
-def sec_get(url, retries=4):
-    """원시 bytes 반환. 403/404 즉시 중단, 429/5xx 백오프 재시도."""
+def backoff_sleep(attempt, *, base=1.5, cap=60.0, jitter=0.25):
+    """지수 백오프 대기(공용). attempt 는 1부터.
+
+    선형 `sleep(k * attempt)` 는 429 가 걸린 뒤에도 거의 같은 속도로 다시
+    때려 상대 서버의 쿨다운을 넘기지 못한다. base * 2^(attempt-1) 로 늘리고
+    동시 실행이 같은 박자로 재시도하지 않도록 지터를 섞는다.
+    """
+    delay = min(base * (2 ** max(0, attempt - 1)), cap)
+    delay += delay * jitter * random.random()
+    time.sleep(delay)
+    return delay
+
+
+def http_get_with_backoff(url, *, headers=None, timeout=30, retries=3, label=""):
+    """무키 데이터 소스용 GET — 지수 백오프 재시도 + gzip 해제. bytes 반환.
+
+    FRED·CFTC·FINRA·Treasury·Wikimedia·USASpending 등 8개 빌더가 재시도 없이
+    한 번만 요청해, 상대가 한 번 삐끗하면 그 지표가 통째로 빠진 파일을 발행했다
+    (2026-09-15 감사). 403/404 는 재시도해도 소용없으니 즉시 올린다.
+    """
     last = None
-    for attempt in range(retries):
+    for attempt in range(1, retries + 1):
+        try:
+            req = urllib.request.Request(url, headers=headers or {})
+            with urllib.request.urlopen(req, timeout=timeout) as r:
+                data = r.read()
+                if r.headers.get("Content-Encoding") == "gzip":
+                    data = gzip.decompress(data)
+                return data
+        except Exception as exc:
+            last = exc
+            if getattr(exc, "code", None) in (403, 404):
+                raise
+            if attempt < retries:
+                if label:
+                    print(f"    [재시도 {attempt}/{retries - 1}] {label}: {exc}")
+                backoff_sleep(attempt, base=1.0, cap=30.0)
+    raise last
+
+
+def sec_get(url, retries=4):
+    """원시 bytes 반환. 403/404 즉시 중단, 429/5xx 지수 백오프 재시도."""
+    last = None
+    for attempt in range(1, retries + 1):
         try:
             req = urllib.request.Request(url, headers=SEC_HEADERS)
             with urllib.request.urlopen(req, timeout=30) as r:
@@ -60,7 +96,8 @@ def sec_get(url, retries=4):
             last = exc
             if getattr(exc, "code", None) in (403, 404):
                 raise
-            time.sleep(1.5 * (attempt + 1))
+            if attempt < retries:
+                backoff_sleep(attempt)
     raise last
 
 
@@ -69,9 +106,17 @@ def sec_get_json(url):
 
 
 def efts_hits(forms, startdt, enddt, cap=10000):
-    """efts 전문검색 히트(페이지네이션). 8-K/S-1/424B4 등 indexed form 용."""
+    """efts 전문검색 히트(페이지네이션). 8-K/S-1/424B4 등 indexed form 용.
+
+    반환: ``(hits, partial)``. ``partial=True`` 는 페이지네이션 도중 요청이
+    실패해 **그 창(window)의 결과가 잘렸다**는 뜻이다. 예전에는 중간 실패를
+    조용히 ``break`` 해 잘린 목록을 완결본처럼 돌려줬고, 호출부는 그 상태로
+    커서(lastFileDate)를 전진시켜 빠진 공시를 영구히 잃었다. 호출부는
+    partial 이면 커서를 전진시키지 말고 이전 결과와 병합하거나 exit 1 할 것.
+    """
     hits = []
     frm = 0
+    partial = False
     while frm < cap:
         q = urllib.parse.urlencode({
             "q": "", "forms": forms, "startdt": startdt, "enddt": enddt, "from": frm,
@@ -80,6 +125,7 @@ def efts_hits(forms, startdt, enddt, cap=10000):
             data = sec_get_json(f"{EFTS_URL}?{q}")
         except Exception as exc:
             print(f"    [경고] efts {forms} {startdt}~{enddt} from={frm} 실패: {exc}")
+            partial = True
             break
         page = data.get("hits", {}).get("hits", [])
         if not page:
@@ -89,7 +135,10 @@ def efts_hits(forms, startdt, enddt, cap=10000):
         frm += len(page)
         if frm >= total:
             break
-    return hits
+    else:
+        # cap 에 걸려 빠져나온 경우도 '전부 받지 못한' 상태다.
+        partial = True
+    return hits, partial
 
 
 def load_universe_tickers(top=0):
@@ -169,6 +218,39 @@ def kst_now_str():
 
 def et_today():
     return datetime.now(ET_TZ).date()
+
+
+US_CLOSE_GUARD_HOUR = 16
+US_CLOSE_GUARD_MINUTE = 5
+
+
+def require_us_market_closed(label, *, now=None, allow_weekend=False):
+    """미국 정규장 마감 전이면 SystemExit(1). 마감 후 파이프라인의 진입 가드.
+
+    크론은 UTC 고정이라 서머타임(EDT/EST)에 따라 ET 시각이 한 시간 밀린다.
+    2026-09-15 감사 실측: 20:05/20:30/20:34 UTC 크론이 겨울(EST)에는 15:05 ET —
+    **장 마감 55분 전**이었고, 지금까지 무사했던 건 GitHub 크론 지연(21:57~22:34
+    실측) 덕분이었다. 크론을 21시대로 옮겼지만, 지연이 반대로 당겨지거나 누가
+    다시 손대는 경우를 대비해 스크립트 진입부에서도 ET 로 직접 확인한다.
+
+    주말(토·일)은 '마감 후'가 자명하므로 통과시킨다(allow_weekend 와 무관하게
+    거래일이 아니면 시각 검사를 하지 않는다).
+    """
+    now = now or datetime.now(ET_TZ)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=ET_TZ)
+    now = now.astimezone(ET_TZ)
+    if now.weekday() >= 5:  # 토·일 — 직전 거래일 마감 데이터
+        return now
+    limit = now.replace(hour=US_CLOSE_GUARD_HOUR, minute=US_CLOSE_GUARD_MINUTE,
+                        second=0, microsecond=0)
+    if now < limit:
+        raise SystemExit(
+            f"[중단] {label}: 현재 뉴욕 시각 {now:%Y-%m-%d %H:%M %Z} — "
+            f"정규장 마감(16:00 ET) 전이다. 장중 데이터로 '마감' 산출물을 "
+            f"발행하지 않는다. 크론(UTC)이 서머타임과 어긋났는지 확인할 것."
+        )
+    return now
 
 
 SKIP_ROW_KEYS = frozenset({
@@ -351,10 +433,24 @@ def git_publish(paths, label, *, cwd=None, attempts=3, sleep_s=10.0):
 
 
 CARRY_EXPIRY_DAYS = 14
+CARRIED_SINCE_KEY = "carriedSince"
 
 
-def merge_previous_stocks(payload, out_json, label, key="stocks", expiry_days=CARRY_EXPIRY_DAYS):
-    """이번 실행에서 못 받은 종목은 직전 산출물 값을 유지한다(패널 깜빡임 방지).
+def _parse_iso_date(value):
+    if not isinstance(value, str):
+        return None
+    m = re.search(r"\d{4}-\d{2}-\d{2}", value)
+    if not m:
+        return None
+    try:
+        return date.fromisoformat(m.group(0))
+    except ValueError:
+        return None
+
+
+def merge_previous_stocks(payload, out_json, label, key="stocks",
+                          expiry_days=CARRY_EXPIRY_DAYS, *, max_rows=0):
+    """이번 실행에서 못 받은 종목은 직전 산출물 값을 **기한부로** 유지한다.
 
     build_us_finnhub_metrics 의 prev-merge 전략과 동일 — 429 로 몇 종목 놓친
     실행이 기존 결과를 통째로 날리면 실행마다 종목이 나타났다 사라진다.
@@ -363,7 +459,11 @@ def merge_previous_stocks(payload, out_json, label, key="stocks", expiry_days=CA
     **만료가 있다**: 승계된 레코드에 `carriedSince`(처음 승계된 날, KST)를 찍고,
     expiry_days 를 넘기면 버린다. 만료가 없던 시절에는 상장폐지된 종목이 영원히
     부활했고(KR 컨센서스), 얼어붙은 목표주가가 현재가 대비 괴리율로 계산돼
-    화면에 남았다(2026-09-15 감사).
+    화면에 남았다. 옵션 통계에서는 top60 밖으로 밀려난 종목이 만기 지난
+    maxPain 을 무기한 달고 남았다(2026-09-15 감사).
+
+    expiry_days: 승계 유지 한도(옵션 7일, 컨센서스 45일, 기본 14일).
+    max_rows: 병합 후 총 행 수 상한(0=무제한). 신선한 승계분부터 남긴다.
     """
     try:
         if not out_json.exists():
@@ -373,29 +473,33 @@ def merge_previous_stocks(payload, out_json, label, key="stocks", expiry_days=CA
         if cur is None:
             return payload
         today = datetime.now(KST).date()
-        kept = expired = 0
+        today_iso = today.isoformat()
+        expired = 0
+        candidates = []
         for ticker, rec in prev.items():
-            if ticker in cur:
+            if ticker in cur or not isinstance(rec, dict):
                 continue
-            if not isinstance(rec, dict):
+            stamp = _parse_iso_date(rec.get(CARRIED_SINCE_KEY))
+            if stamp is not None and (today - stamp).days >= expiry_days:
+                expired += 1
                 continue
-            since = rec.get("carriedSince")
-            if since:
-                try:
-                    age = (today - datetime.strptime(str(since)[:10], "%Y-%m-%d").date()).days
-                except ValueError:
-                    age = 0
-                if age >= expiry_days:
-                    expired += 1
-                    continue
-            else:
-                rec = {**rec, "carriedSince": today.isoformat()}
-            cur[ticker] = rec
+            candidates.append((stamp or today, ticker, rec))
+        # 신선한 승계분부터 남긴다(상한에 걸리면 오래된 쪽을 버린다).
+        candidates.sort(key=lambda row: row[0], reverse=True)
+        room = len(candidates)
+        if max_rows and max_rows > 0:
+            room = max(0, max_rows - len(cur))
+        capped = max(0, len(candidates) - room)
+        kept = 0
+        for _stamp, ticker, rec in candidates[:room]:
+            cur[ticker] = {**rec, CARRIED_SINCE_KEY: rec.get(CARRIED_SINCE_KEY) or today_iso}
             kept += 1
         if kept:
             print(f"[{label}] 이번에 못 받은 {kept}종목은 이전 값 유지(최대 {expiry_days}일)")
         if expired:
             print(f"[{label}] {expiry_days}일 넘게 못 받은 {expired}종목은 승계를 끊었다")
+        if capped:
+            print(f"[{label}] 상한 {max_rows}행 초과 — 오래된 승계분 {capped}종목 제외")
     except Exception as exc:
         print(f"[{label}] 이전 파일 병합 실패(무시): {exc}")
     return payload
@@ -442,3 +546,65 @@ def merge_previous_rows(payload, out_json, label, *, rows_key="rows",
         print(f"[{label}] 직전 행 병합 실패(무시): {exc}")
     payload[rows_key] = rows
     return payload
+
+
+def merge_previous_keyed_rows(payload, out_json, label, key, id_field, *,
+                              expiry_days=30):
+    """**id 가 있는** 리스트형 산출물의 prev-merge — 못 받은 항목만 채운다.
+
+    merge_previous_rows 와 달리 날짜 창이 아니라 항목 식별자(id_field)로 맞춘다.
+    매크로 지표·COT 시장처럼 '항목 집합이 고정'인 산출물용이다. 부분 실패가
+    파일을 통째로 줄여(지표 12개 → 7개) build_market_history 가 null 을 영구
+    적립하던 문제를 막는다(2026-09-15 감사). 승계분에는 ``carriedSince`` 를
+    찍고 expiry_days 가 지나면 버린다.
+    """
+    try:
+        rows = payload.get(key)
+        if not isinstance(rows, list) or not Path(out_json).exists():
+            return payload
+        prev_rows = json.loads(Path(out_json).read_text(encoding="utf-8")).get(key) or []
+        have = {r.get(id_field) for r in rows if isinstance(r, dict)}
+        today = datetime.now(KST).date()
+        today_iso = today.isoformat()
+        kept = expired = 0
+        for rec in prev_rows:
+            if not isinstance(rec, dict):
+                continue
+            rid = rec.get(id_field)
+            if rid is None or rid in have:
+                continue
+            stamp = _parse_iso_date(rec.get(CARRIED_SINCE_KEY))
+            if stamp is not None and (today - stamp).days >= expiry_days:
+                expired += 1
+                continue
+            rec.setdefault(CARRIED_SINCE_KEY, today_iso)
+            rows.append(rec)
+            kept += 1
+        if kept:
+            print(f"[{label}] 이번에 못 받은 {kept}개 항목은 이전 값 유지(최대 {expiry_days}일)")
+        if expired:
+            print(f"[{label}] 승계 만료 {expired}개 제거(>= {expiry_days}일)")
+    except Exception as exc:
+        print(f"[{label}] 이전 파일 병합 실패(무시): {exc}")
+    return payload
+
+
+def _cli():
+    """워크플로우에서 쓰는 얇은 CLI — 인라인 `git pull --rebase` 를 대체한다.
+
+        python scripts/sec_client.py --publish data/a.json data/a.js --label "..."
+
+    빌더가 파이썬이 아닌 경우(예: build_factor_validation.mjs)에도 같은
+    fetch → rebase -X theirs → push 재시도 경로를 쓰게 하기 위한 것이다.
+    변경이 없으면 커밋 없이 성공으로 끝난다.
+    """
+    import argparse
+    ap = argparse.ArgumentParser(description="data 경로 커밋·푸시(공용 publish 경로)")
+    ap.add_argument("--publish", nargs="+", required=True, metavar="PATH")
+    ap.add_argument("--label", required=True)
+    args = ap.parse_args()
+    return 0 if git_publish(args.publish, args.label) else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(_cli())

@@ -289,7 +289,7 @@ let chartState = {
   showIchimoku: false,
   showKeltner: false,
   showDonchian: false,
-  showSupportResistance: false, // 지지/저항 수평선 오버레이(상승확률 분석에서 켜짐)
+  showSupportResistance: false, // 지지/저항 수평선 오버레이(기술 점수 분석에서 켜짐)
   showTechLevels: false, // 피벗·Fib·ATR·LinReg 등 기술 레벨선 마스터
   techLevelTypes: {
     pivot: false, r1: false, r2: false, s1: false, s2: false,
@@ -344,11 +344,7 @@ function watchlistStorageKey(marketId) {
 }
 const CHART_PRESET_STORAGE_KEY = "mir_chart_presets_v1";
 const WATCH_ALERT_STORAGE_KEY = "mir_watch_alerts_v1";
-const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
-// 첫 방문자 기본값. 탭 10개를 한꺼번에 보여주면 처음 온 사람에겐 과하다. 기존 사용자는
-// setupViewMode 가 localStorage 를 먼저 읽으므로 영향이 없고, 고급 탭으로 들어오는
-// 딥링크(?tab=signals 등)도 거기서 advanced 로 승격되므로 그대로 동작한다.
-// 2026-09-04: 기본/고급 구분을 없앴다. 모든 탭이 항상 보이고(고급), 저장된 옛 값은 무시한다.
+// 2026-09-04 에 기본/고급 구분을 없앴다. 모든 탭이 항상 보인다(고급 고정).
 const DEFAULT_VIEW_MODE = "advanced";
 // 저장된 스크리너 조건도 시장별로 나눈다 — 조건(섹터·시총 단위·프리셋)이 시장마다
 // 다른데 한 키를 공유해 KR 조건이 US 목록에 섞여 나왔다(감사 2026-09-15 P2).
@@ -680,6 +676,9 @@ function resetMarketCaches() {
   // 시장 전환 시 남아 있던 반대 시장 티커를 지운다(백테스트 바스켓·비교보드 입력·저장 조건).
   if (typeof resetPortfolioMarketState === "function") resetPortfolioMarketState();
   if (typeof resetScreenerMarketState === "function") resetScreenerMarketState();
+  // chart.js 의 패턴 캐시는 티커 키라 시장을 바꾸면 무효다(영구 Map 이라 안 비우면 계속 남는다).
+  if (typeof watchPatternCache !== "undefined") watchPatternCache.clear();
+  if (typeof patternScreenerCache !== "undefined") patternScreenerCache.clear();
 
   // Clear market-specific feature globals and promises so they reload for the new market!
   Object.keys(FEATURE_DATA).forEach((key) => {
@@ -695,7 +694,7 @@ async function switchMarketMode(mode) {
   if (!window.MirMarket || window.MirMarket.getMode() === mode) return;
   window.MirMarket.setMode(mode);
   const cfg = marketCfg();
-  cardnewsView = cfg.cardnewsDefault;
+  todayNewsView = cfg.cardnewsDefault || null; // 시장을 바꾸면 카드뉴스 덱도 그 시장 기본값으로
   selectedTicker = cfg.defaultTicker;
   selectedSectorEtf = (cfg.sectorEtfs[0] || {}).ticker || selectedSectorEtf;
   selectedSectorBenchmark = cfg.etfBenchmarks[0] || selectedSectorBenchmark;
@@ -719,7 +718,7 @@ function setupMarketMode() {
     switchEl.querySelectorAll("[data-market-mode]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const mode = btn.dataset.marketMode;
-        if (mode && mode !== window.MirMarket.getMode()) switchMarketMode(mode);
+        if (mode && mode !== window.MirMarket.getMode()) switchMarketMode(mode).catch(reportBootFailure("시장 전환"));
       });
     });
     marketModeUiReady = true;
@@ -926,7 +925,7 @@ function boot(options = {}) {
   else if (!stockByTicker(selectedTicker)) selectedTicker = marketCfg().defaultTicker;
   initWatchlist(route.get("watchlist"));
   loadPortfolio();
-  pullCloudSync().finally(() => {
+  pullCloudSync().catch(reportBootFailure("클라우드 동기화")).finally(() => {
     renderWatchlistBar();
     renderPortfolio();
     renderWatchAlerts();
@@ -938,11 +937,10 @@ function boot(options = {}) {
   // 테마는 head 스크립트와 setupUiPrefs 만 만진다.
   setupPwa();
   updateDataLoadedAt();
-  renderCardNews();
   setupLightbox();
   setupChatbot();
   applyMarketHeader();
-  setupViewMode(route.get("tab"));
+  setupViewMode();
   setupTabs();
   setupTabSemantics();
   setupIaShell();
@@ -951,7 +949,6 @@ function boot(options = {}) {
   setupTickerSearchHelpers();
   renderAll();
   setupActionBoard();
-  setActionBoardMode(actionBoardMode);
   loadCalendar();
   setupEvents();
   setupBriefingToggles();
@@ -990,150 +987,6 @@ function boot(options = {}) {
   if (initialTab || mapRoute) scrollToTabContent();
   // 초기 렌더 이후, 현재 시장에서 활성화된 feature 데이터를 백그라운드로 로드.
   preloadFeatureData();
-}
-
-// 오늘의 카드뉴스 미니 캐러셀(헤더): data.cardNews = { us:{title,images}, kr:{title,images} }
-// 두 버전(미국 뉴스 / 국내 뉴스)을 스위치로 선택, 헤더 높이에 맞춰 자동 전환, 클릭 시 라이트박스.
-let cardnewsTimer = null;
-let cardnewsView = "us";  // 기본: 미국 뉴스(미국 주식 사이트)
-let cardnewsIdx = 0;
-let cardnewsImages = [];
-let cardnewsSwipeBound = false;
-let cardnewsInView = true;
-
-function showCardNewsSlide(idx) {
-  const img = byId("cardnewsCarouselImg");
-  if (!img || !cardnewsImages.length) return;
-  cardnewsIdx = ((idx % cardnewsImages.length) + cardnewsImages.length) % cardnewsImages.length;
-  img.decoding = "async";
-  img.src = cardnewsImages[cardnewsIdx];
-}
-
-function startCardNewsTimer() {
-  if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
-  if (cardnewsImages.length > 1) {
-    // Auto-advance lazy-loads the next ~1.3MB card image. Skip advancing while the tab is
-    // backgrounded or the carousel is scrolled out of view, so a visitor who never looks
-    // at it doesn't pull the whole ~7MB set. Manual prev/next/swipe still work anytime.
-    cardnewsTimer = setInterval(() => {
-      if (document.hidden || !cardnewsInView) return;
-      showCardNewsSlide(cardnewsIdx + 1);
-    }, 3000);
-  }
-}
-
-function stepCardNews(delta) {
-  if (cardnewsImages.length <= 1) return;
-  showCardNewsSlide(cardnewsIdx + delta);
-  startCardNewsTimer();
-}
-
-function bindCardNewsSwipe(host) {
-  if (!host || cardnewsSwipeBound) return;
-  cardnewsSwipeBound = true;
-  // Track whether the carousel is on screen so startCardNewsTimer can pause off-screen.
-  if (typeof IntersectionObserver !== "undefined") {
-    new IntersectionObserver((entries) => {
-      cardnewsInView = entries.some((e) => e.isIntersecting);
-    }, { threshold: 0.1 }).observe(host);
-  }
-  let touchStartX = 0;
-  let touchStartY = 0;
-  let swiped = false;
-  host.addEventListener("touchstart", (event) => {
-    const t = event.changedTouches[0];
-    touchStartX = t.clientX;
-    touchStartY = t.clientY;
-    swiped = false;
-  }, { passive: true });
-  host.addEventListener("touchend", (event) => {
-    const t = event.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-    if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
-      swiped = true;
-      stepCardNews(dx < 0 ? 1 : -1);
-    }
-  }, { passive: true });
-  const band = byId("contentBand");
-  if (band) {
-    band.addEventListener("click", (event) => {
-      if (swiped) { event.preventDefault(); event.stopPropagation(); swiped = false; }
-    });
-  }
-}
-
-function renderCardNews() {
-  const host = byId("cardnewsHost");
-  const band = byId("contentBand");
-  const img = byId("cardnewsCarouselImg");
-  const prevBtn = byId("cardnewsPrev");
-  const nextBtn = byId("cardnewsNext");
-  const switchEl = byId("cardnewsSwitch");
-  if (!host || !band || !img) return;
-
-  const cn = data.cardNews || {};
-  const sets = {
-    us: cn.us && Array.isArray(cn.us.images) && cn.us.images.length ? cn.us : null,
-    kr: cn.kr && Array.isArray(cn.kr.images) && cn.kr.images.length ? cn.kr : null,
-  };
-  if (cardnewsTimer) { clearInterval(cardnewsTimer); cardnewsTimer = null; }
-
-  if (!sets.us && !sets.kr) {
-    host.hidden = true;
-    if (switchEl) switchEl.hidden = true;
-    cardnewsImages = [];
-    return;
-  }
-  // 선택된 버전이 없으면 us 우선, 없으면 kr
-  if (!sets[cardnewsView]) cardnewsView = sets.us ? "us" : "kr";
-
-  if (switchEl) {
-    switchEl.hidden = false;
-    switchEl.querySelectorAll("[data-cn]").forEach((btn) => {
-      const v = btn.dataset.cn;
-      btn.disabled = !sets[v];
-      btn.classList.toggle("is-active", v === cardnewsView && !!sets[v]);
-      btn.onclick = () => {
-        if (!sets[v] || v === cardnewsView) return;
-        cardnewsView = v;
-        cardnewsIdx = 0;
-        renderCardNews();
-      };
-    });
-  }
-
-  const active = sets[cardnewsView];
-  cardnewsImages = active.images;
-  cardnewsIdx = 0;
-  host.hidden = false;
-  showCardNewsSlide(0);
-  const multi = cardnewsImages.length > 1;
-  host.classList.toggle("has-nav", multi);
-  if (prevBtn) prevBtn.onclick = (event) => { event.stopPropagation(); stepCardNews(-1); };
-  if (nextBtn) nextBtn.onclick = (event) => { event.stopPropagation(); stepCardNews(1); };
-  band.title = active.title ? `${active.title} — 클릭하면 크게 보기` : "클릭하면 크게 보기";
-  band.onclick = () => openLightbox(cardnewsImages, cardnewsIdx);
-  bindCardNewsSwipe(host);
-  startCardNewsTimer();
-  syncCardNewsHeight();
-}
-
-// 카드뉴스 박스 높이를 오른쪽 '데이터 기준' 박스와 픽셀 단위로 동일하게 맞춤.
-// 모바일에서는 CSS aspect-ratio로 높이를 잡고 가로 폭 100%를 유지한다.
-function syncCardNewsHeight() {
-  const host = byId("cardnewsHost");
-  const band = byId("contentBand");
-  const card = document.querySelector(".update-card");
-  if (!host || !band || !card || host.hidden) return;
-  if (window.matchMedia("(max-width: 768px)").matches) {
-    band.style.height = "";
-    host.style.height = "";
-    return;
-  }
-  const h = `${card.offsetHeight}px`;
-  band.style.height = h;
-  host.style.height = h;
 }
 
 // 카드뉴스 크게 보기 라이트박스
@@ -1193,7 +1046,7 @@ function setupLightbox() {
 }
 
 // 사이트 도우미 챗봇 (Cloudflare Worker /chat → Workers AI)
-const CHAT_SUGGESTIONS = ["PER이 뭐야?", "NVDA 요약해줘", "시장 지도 보는 법", "RS 점수가 뭐야?"];
+const CHAT_SUGGESTIONS = ["PER이 뭐야?", "NVDA 요약해줘", "시장 지도 보는 법", "모멘텀 점수가 뭐야?"];
 let chatHistory = [];
 let chatBusy = false;
 let rotationHorizon = "1M";
@@ -1673,9 +1526,9 @@ function upcomingActionRows() {
   }).filter(Boolean).slice(0, 3);
 }
 
-// ===== 액션 보드 ↔ 오늘의 뉴스 전환 (웹) =====
-let actionBoardMode = "actions"; // 뉴스 모드 DOM 은 남아 있지만 카드뉴스는 오늘 탭(renderTodayNews) 한 곳에서 보여준다
-let actionBoardMqBound = false;
+// ===== 액션 보드 =====
+// IA 재편(67e907b6f) 이후 카드뉴스는 오늘 탭(renderTodayNews) 한 곳에서만 보여준다.
+// '오늘의 뉴스' 모드 전환 UI 는 그때 마크업이 빠졌는데 JS 분기만 남아 있었다(2026-09-15 제거).
 
 // 카드에는 빌더가 만든 720px WebP 축소본(deck.thumbs)을, 크게 보기에는 원본(deck.images)을 쓴다.
 // 축소본이 없거나 개수가 다르면(옛 배포분) 원본으로 폴백.
@@ -1697,64 +1550,6 @@ function earningsDdayBadge(ticker) {
   return `<span class="earn-dday${dd === 0 ? " is-today" : ""}" title="실적 발표 ${escapeHtml(next)}">실적 ${myEventBadge(dd)}</span>`;
 }
 
-function renderActionNews() {
-  const box = byId("dailyActionNews");
-  if (!box) return;
-  const cn = data.cardNews || {};
-  const sets = {
-    us: cn.us && Array.isArray(cn.us.images) && cn.us.images.length ? cn.us : null,
-    kr: cn.kr && Array.isArray(cn.kr.images) && cn.kr.images.length ? cn.kr : null,
-  };
-  if (!sets.us && !sets.kr) {
-    box.innerHTML = `<p class="muted daily-action-empty">오늘 카드뉴스가 아직 준비되지 않았습니다.</p>`;
-    return;
-  }
-  if (!sets[cardnewsView]) cardnewsView = sets.us ? "us" : "kr";
-  const active = sets[cardnewsView];
-  const imgs = active.images;
-  const head = `
-    <div class="action-news-head">
-      <strong>${escapeHtml(active.title || "오늘의 카드뉴스")}</strong>
-      <div class="action-news-switch">
-        ${sets.us ? `<button type="button" data-cn="us" class="${cardnewsView === "us" ? "is-active" : ""}">미국</button>` : ""}
-        ${sets.kr ? `<button type="button" data-cn="kr" class="${cardnewsView === "kr" ? "is-active" : ""}">국내</button>` : ""}
-      </div>
-    </div>`;
-  const row = `<div class="action-news-row">` + imgs.map((src, i) => `
-    <button type="button" class="action-news-item" data-news-idx="${i}" title="크게 보기">
-      <img src="${escapeHtml(cardNewsThumb(active, i))}" alt="카드뉴스 ${i + 1}" loading="lazy" decoding="async" fetchpriority="low">
-    </button>`).join("") + `</div>`;
-  box.innerHTML = head + row;
-  box.querySelectorAll("[data-cn]").forEach((btn) => btn.addEventListener("click", () => {
-    if (btn.dataset.cn === cardnewsView) return;
-    cardnewsView = btn.dataset.cn;
-    renderActionNews();
-  }));
-  box.querySelectorAll("[data-news-idx]").forEach((btn) => btn.addEventListener("click", () => {
-    openLightbox(imgs, Number(btn.dataset.newsIdx));
-  }));
-}
-
-function setActionBoardMode(mode) {
-  // 뉴스 모드는 웹(데스크톱) 전용. 모바일은 전환 UI가 없어 뉴스 모드로 두면
-  // 액션 보드가 빈 채로 남으므로 항상 액션 보드로 강제한다.
-  if (mode === "news" && window.matchMedia("(max-width: 768px)").matches) mode = "actions";
-  actionBoardMode = mode === "news" ? "news" : "actions";
-  const isNews = actionBoardMode === "news";
-  const grid = byId("dailyActionGrid");
-  const news = byId("dailyActionNews");
-  const board = byId("dailyActionBoard");
-  const title = byId("dailyActionTitle");
-  const sw = byId("actionModeSwitch");
-  if (sw) sw.querySelectorAll("[data-action-mode]").forEach((b) =>
-    b.classList.toggle("is-active", b.dataset.actionMode === actionBoardMode));
-  if (grid) grid.hidden = isNews;
-  if (news) news.hidden = !isNews;
-  if (board) board.classList.toggle("is-news", isNews);
-  if (title) title.textContent = isNews ? "오늘의 뉴스" : "내 종목 이벤트";
-  if (isNews) renderActionNews();
-}
-
 function filingActionRows() {
   const watched = new Set(watchlist);
   const events = ((window.MATERIAL_EVENTS || {}).events || []);
@@ -1764,6 +1559,11 @@ function filingActionRows() {
     const labels = (event.items || []).map((item) => item.label).filter(Boolean).slice(0, 2).join(" · ") || "8-K 공시";
     return `<button type="button" class="daily-action-row" data-action-ticker="${escapeHtml(event.ticker)}"><span><strong>${escapeHtml(stockLabel(event.ticker))}</strong><small>${escapeHtml(labels)} · ${escapeHtml(event.fileDate || "")}</small></span><em class="${event.hot ? "warn" : "info"}">${event.hot ? "주요" : "신규"}</em></button>`;
   });
+}
+
+// KST 기준 n일 전 날짜(YYYY-MM-DD). 로컬 타임존이 KST 가 아니어도 같은 값을 준다.
+function kstDaysAgo(days) {
+  return formatKstDateTime(new Date(Date.now() - days * 86400000)).slice(0, 10);
 }
 
 // ===== 이번 주 내 종목 이벤트 (관심 + 보유 종목의 D-7 일정 통합) =====
@@ -1811,7 +1611,9 @@ function myStockEventRows() {
     // 내부자 매수 클러스터: INSIDER_TRADES 가 이미 로드돼 있을 때만(7일 · 매수 2건 이상)
     const trades = (window.INSIDER_TRADES || {}).trades;
     if (Array.isArray(trades) && trades.length) {
-      const weekAgo = new Date(new Date(`${today}T00:00:00`).getTime() - 7 * 86400000).toISOString().slice(0, 10);
+      // KST 로 N일 전. 예전엔 `new Date(today+"T00:00:00")`(로컬 해석) 을 toISOString 으로
+      // 되돌려 KST 에서 하루가 더 밀렸다(7일 창이 8일이 됐다, 2026-09-15 감사).
+      const weekAgo = kstDaysAgo(7);
       const buyCount = {};
       trades.forEach((r) => {
         if (r.kind === "buy" && (r.fileDate || "") >= weekAgo && tickerSet.has(r.ticker)) {
@@ -1824,7 +1626,7 @@ function myStockEventRows() {
     }
   } else {
     const disc = (window.KR_DISCLOSURES || {}).disclosures || [];
-    const cutoff = new Date(new Date(`${today}T00:00:00`).getTime() - 2 * 86400000).toISOString().slice(0, 10);
+    const cutoff = kstDaysAgo(2); // KST 기준 2일 창(toISOString 은 하루를 더 밀었다)
     const seen = {};
     disc.forEach((d) => {
       if (!tickerSet.has(d.ticker) || (d.fileDate || "") < cutoff) return;
@@ -1882,19 +1684,6 @@ function renderActionBoard() {
 }
 
 function setupActionBoard() {
-  const modeSwitch = byId("actionModeSwitch");
-  if (modeSwitch && !modeSwitch.dataset.bound) {
-    modeSwitch.dataset.bound = "1";
-    modeSwitch.querySelectorAll("[data-action-mode]").forEach((b) =>
-      b.addEventListener("click", () => setActionBoardMode(b.dataset.actionMode)));
-  }
-  // 데스크톱에서 '오늘의 뉴스'로 둔 채 모바일 폭으로 좁히면 보드가 비므로 액션 모드로 복구
-  if (!actionBoardMqBound) {
-    actionBoardMqBound = true;
-    window.matchMedia("(max-width: 768px)").addEventListener("change", (e) => {
-      if (e.matches && actionBoardMode === "news") setActionBoardMode("actions");
-    });
-  }
   const refresh = byId("dailyActionRefresh");
   if (!refresh || refresh.dataset.bound) return;
   refresh.dataset.bound = "1";
@@ -1902,7 +1691,6 @@ function setupActionBoard() {
     calendarLoaded = false;
     earningsCalendarCache = null;
     renderActionBoard();
-    if (actionBoardMode === "news") renderActionNews();
     loadCalendar();
     showAppToast("오늘의 확인 항목을 새로 불러옵니다");
   });
@@ -1927,15 +1715,21 @@ function indexAnalysisTicker(symbol) {
 function renderSnapshotIndices() {
   if (!isKrMarket() || !Array.isArray(data.indices)) return;
   const items = data.indices.map((ix) => {
+    // 가격은 반드시 지수 레벨(빌더가 내는 ix.price)만 쓴다. 예전엔 추종 ETF(069500)의
+    // 주가를 폴백으로 썼고, 그래서 "코스피 105,410 ▼-3.5%" 처럼 ETF 가격에 지수 등락률을
+    // 붙인 혼합 표기가 나갔다(2026-09-15 감사). 지수 레벨이 없으면 "—".
     const proxy = stockByTicker(ix.ticker);
-    const price = Number(proxy?.price);
+    const price = Number(ix.price);
+    const changePct = Number(ix.changePct);
+    const series = proxy?.closeSeries || [];
     return {
       symbol: ix.symbol,
       name: ix.name,
-      // 0 은 '가격 없음' 이다 — 0 으로 찍지 말고 null → "—".
       price: Number.isFinite(price) && price > 0 ? price : null,
-      changePct: ix.changePct ?? proxy?.changePct ?? 0,
-      series: proxy?.closeSeries || [],
+      changePct: Number.isFinite(changePct) ? changePct : null,
+      // 스파크라인만은 아직 추종 ETF 종가다 — 카드에 '(ETF 근사)' 로 밝힌다.
+      series,
+      seriesNote: series.length >= 2 ? "ETF 근사" : "",
     };
   }).filter((ix) => ix.name);
   if (items.length) setHeaderIndices(items, "snapshot");
@@ -1971,14 +1765,18 @@ function renderIndexStripInto(el, indices) {
   el.innerHTML = indices.map((ix) => {
     const analysisTicker = indexAnalysisTicker(ix.symbol);
     const clickable = !!analysisTicker;
+    // 등락률은 유한수일 때만 찍는다. 시리즈로 역산해 덮어쓰지 않는다 — 갭 하락일에는
+    // 장중 시리즈(시가 기준)와 실제 등락률(전일 종가 기준)이 정당하게 크게 어긋난다.
+    const changePct = Number.isFinite(Number(ix.changePct)) ? Number(ix.changePct) : null;
     return `
     <div class="index-card${clickable ? " index-card-clickable" : ""}"${clickable ? ` data-ticker="${escapeHtml(analysisTicker)}" role="button" tabindex="0" title="${escapeHtml(ix.name)} → ${escapeHtml(analysisTicker)} 종목 분석"` : ""}>
       <div class="index-head">
         <strong>${escapeHtml(ix.name)}</strong>
-        <em class="${cls(ix.changePct)}">${fmtPct(ix.changePct)}</em>
+        <em class="${cls(changePct)}">${changePct == null ? "—" : fmtPct(changePct)}</em>
       </div>
       <div class="index-price">${Number.isFinite(Number(ix.price)) && ix.price != null ? Number(ix.price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</div>
-      ${indexSparkline(ix.series, ix.changePct >= 0)}
+      ${indexSparkline(ix.series, (changePct ?? 0) >= 0)}
+      ${ix.seriesNote ? `<div class="muted" style="font-size:var(--fs-cap);margin-top:2px;">${escapeHtml(ix.seriesNote)}</div>` : ""}
     </div>
   `;
   }).join("");
@@ -2481,7 +2279,9 @@ function appDialog({ title, message, defaultValue = null, okLabel = "확인", ca
     okBtn.type = "submit";
     okBtn.className = "app-dialog-btn is-primary";
     okBtn.textContent = okLabel;
-    actions.append(cancelBtn, okBtn);
+    // cancelLabel: "" 이면 안내 전용 다이얼로그 — 확인 버튼만 둔다(window.alert 대체).
+    if (cancelLabel) actions.append(cancelBtn, okBtn);
+    else actions.append(okBtn);
     form.appendChild(actions);
     dlg.appendChild(form);
     document.body.appendChild(dlg);
@@ -2735,34 +2535,14 @@ function activateCommunitySub(name, { push = false, communityTicker = null } = {
   if (push) recordNav();
 }
 
-let currentViewMode = DEFAULT_VIEW_MODE;
-
-function setViewMode(mode, { persist = true } = {}) {
-  currentViewMode = mode === "advanced" ? "advanced" : "basic";
-  const tabs = byId("mainTabs");
-  if (tabs) tabs.dataset.viewMode = currentViewMode;
-  document.documentElement.dataset.viewMode = currentViewMode;
-  byId("viewModeSwitch")?.querySelectorAll("[data-view-mode]").forEach((button) => {
-    const active = button.dataset.viewMode === currentViewMode;
-    button.classList.toggle("is-active", active);
-    button.setAttribute("aria-pressed", String(active));
-  });
-  if (persist) {
-    try { window.safeStorage.set(VIEW_MODE_STORAGE_KEY, currentViewMode); } catch (_) {}
-  }
-  requestAnimationFrame(layoutMobileTabs);
-}
-
+// 기본/고급 구분은 2026-09-04 에 사라졌다 — 항상 '고급'(모든 탭 노출). 토글 마크업도
+// 저장값도 없으므로 남은 일은 속성 한 번 찍는 것뿐이다(styles.css 가 아직
+// html[data-view-mode="advanced"] 를 선택자로 쓴다).
 function setupViewMode() {
-  // 기본/고급 스위치는 사라졌다 — 항상 고급(전체 탭). 예전에 '기본'을 저장한 브라우저도 덮는다.
-  setViewMode(DEFAULT_VIEW_MODE, { persist: true });
-  const modeSwitch = byId("viewModeSwitch");
-  if (modeSwitch && !modeSwitch.dataset.bound) {
-    modeSwitch.dataset.bound = "1";
-    modeSwitch.querySelectorAll("[data-view-mode]").forEach((button) => {
-      button.addEventListener("click", () => setViewMode(button.dataset.viewMode));
-    });
-  }
+  const tabs = byId("mainTabs");
+  if (tabs) tabs.dataset.viewMode = DEFAULT_VIEW_MODE;
+  document.documentElement.dataset.viewMode = DEFAULT_VIEW_MODE;
+  requestAnimationFrame(layoutMobileTabs);
 }
 
 // CSS 의 모바일 탭 브레이크포인트(styles.css @media max-width:900px)와 맞춘다.
@@ -2908,8 +2688,6 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   const group = TAB_GROUP_OF[name] || name;
   const tabBtn = document.querySelector(`#mainTabs [data-tab="${group}"]`);
   if (!tabBtn) return;
-  const leafBtn = tabButtonFor(name);
-  if ((tabBtn.dataset.advanced === "true" || leafBtn?.dataset.advanced === "true") && currentViewMode !== "advanced") setViewMode("advanced");
   document.querySelectorAll("#mainTabs .tab").forEach((item) => item.classList.remove("is-active"));
   document.querySelectorAll("main > .panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
@@ -3235,15 +3013,20 @@ function setupFilters() {
   // 8px 타일이 수십 개라 폰에서 읽을 수 없었다(09-05 모바일 점검).
   const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
   const defaultBucket = (cfg.id === "kr" && phone) ? "idx_kospi200" : (cfg.defaultBucket || "idx_sp500");
-  byId("bucketFilter").innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  const bucketOptions = buckets
+    .map(([value, label]) => `<option value="${escapeHtml(value)}">${escapeHtml(label)}</option>`).join("");
+  byId("bucketFilter").innerHTML = bucketOptions;
   byId("bucketFilter").value = defaultBucket;
-  byId("topBucket").innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  byId("topBucket").innerHTML = bucketOptions;
   byId("topBucket").value = defaultBucket;
 
-  const sectors = ["All", ...[...new Set(data.stocks.map((item) => item.sector))].sort()];
-  byId("sectorFilter").innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
+  // 섹터 문자열은 스냅샷(외부 데이터)에서 온다 — 이스케이프 없이 <option> 에 넣지 말 것.
+  const sectors = ["All", ...[...new Set(data.stocks.map((item) => item.sector))].filter(Boolean).sort()];
+  const sectorOptions = sectors
+    .map((sector) => `<option value="${escapeHtml(sector)}">${escapeHtml(sector)}</option>`).join("");
+  byId("sectorFilter").innerHTML = sectorOptions;
   byId("sectorFilter").value = "All";
-  byId("topSector").innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
+  byId("topSector").innerHTML = sectorOptions;
   byId("topSector").value = "All";
 
   byId("tickerOptions").innerHTML = data.stocks.flatMap((item) => {
@@ -3262,14 +3045,14 @@ function setupFilters() {
   byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
 
   const scrBucket = byId("scrBucket");
-  if (scrBucket) scrBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  if (scrBucket) scrBucket.innerHTML = bucketOptions;
   const scrSector = byId("scrSector");
-  if (scrSector) scrSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
+  if (scrSector) scrSector.innerHTML = sectorOptions;
 
   const scanBucket = byId("scanBucket");
-  if (scanBucket) { scanBucket.innerHTML = buckets.map(([value, label]) => `<option value="${value}">${label}</option>`).join(""); scanBucket.value = defaultBucket; }
+  if (scanBucket) { scanBucket.innerHTML = bucketOptions; scanBucket.value = defaultBucket; }
   const scanSector = byId("scanSector");
-  if (scanSector) scanSector.innerHTML = sectors.map((sector) => `<option value="${sector}">${sector}</option>`).join("");
+  if (scanSector) scanSector.innerHTML = sectorOptions;
 }
 
 let eventsBound = false;
@@ -3591,10 +3374,6 @@ function setupEvents() {
     if (chip) selectTicker(chip.dataset.groupTicker, { openSearch: true });
   });
   window.addEventListener("resize", debounce(renderTreemap, 120));
-  window.addEventListener("resize", syncCardNewsHeight);
-  // 폰트가 늦게 로드되면 데이터박스 높이가 바뀔 수 있어 한 번 더 맞춤
-  window.addEventListener("load", syncCardNewsHeight);
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncCardNewsHeight);
 
   // Sector chart: timeframe and benchmark listeners
   byId("sectorTimeframeControls").querySelectorAll("button").forEach((btn) => {
@@ -3693,11 +3472,23 @@ function fact(label, value) {
   return `<div class="fact"><span>${label}</span><strong>${value}</strong></div>`;
 }
 
+// 섹터/산업 문자열 정규화 캐시. renderSectors 는 ETF 20개 × 전 종목을 훑고
+// renderSectorDetail 이 한 번 더 훑는데, 매번 toUpperCase/toLowerCase 를 새로 만들면
+// 폰에서 눈에 띄게 느리다(감사 P2). 스냅샷 객체가 바뀌면 WeakMap 이 알아서 비워진다.
+const _sectorNormCache = new WeakMap();
+function sectorNorm(stock) {
+  let v = _sectorNormCache.get(stock);
+  if (!v) {
+    v = { s: String(stock.sector || "").toUpperCase(), ind: String(stock.industry || "").toLowerCase() };
+    _sectorNormCache.set(stock, v);
+  }
+  return v;
+}
+
 function getSectorStocks(meta) {
   return data.stocks.filter((stock) => {
     if (!stock.sector) return false;
-    const s = stock.sector.toUpperCase();
-    const ind = (stock.industry || "").toLowerCase();
+    const { s, ind } = sectorNorm(stock);
     
     if (isKrMarket()) {
       const t = meta.ticker;
@@ -3826,11 +3617,15 @@ function renderSectors() {
     `;
   }).join("");
 
-  // Setup click events
-  byId("sectorList").querySelectorAll(".sector-card").forEach((card) => {
+  // Setup click events — 카드 선택은 is-active 클래스만 옮기고 오른쪽 상세만 다시 그린다.
+  // 예전엔 renderSectors() 를 통째로 다시 돌려 ETF 20개 × 전 종목 스캔을 반복했다.
+  const sectorList = byId("sectorList");
+  sectorList.querySelectorAll(".sector-card").forEach((card) => {
     card.addEventListener("click", () => {
+      if (selectedSectorEtf === card.dataset.ticker) return;
       selectedSectorEtf = card.dataset.ticker;
-      renderSectors(); // Redraw list to toggle is-active class
+      sectorList.querySelectorAll(".sector-card").forEach((c) => c.classList.toggle("is-active", c === card));
+      renderSectorDetail();
     });
   });
 
@@ -3915,17 +3710,6 @@ function renderSectorDetail() {
   drawSectorComparisonChart(selectedSectorEtf, selectedSectorRange, selectedSectorBenchmark);
 }
 
-function formatTimestamp(t, range) {
-  const d = new Date(t * 1000);
-  if (range === "1D") {
-    return d.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
-  }
-  if (range === "1W") {
-    return (d.getMonth() + 1) + "/" + d.getDate() + " " + d.toLocaleDateString('ko-KR', { weekday: 'short' });
-  }
-  return (d.getMonth() + 1) + "/" + d.getDate();
-}
-
 function buildSectorSeriesFromConstituents(sectorTicker, benchmarkSeries) {
   const meta = getSectorEtfs().find((m) => m.ticker === sectorTicker);
   if (!meta) return [];
@@ -3962,9 +3746,9 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
   const svg = byId("sectorComparisonChart");
   const tooltip = byId("chartTooltip");
 
-  // Update legend labels
-  byId("legendSectorLabel").textContent = `${sectorTicker} (섹터)`;
-  byId("legendBenchmarkLabel").textContent = `${benchmarkTicker} (벤치)`;
+  // Update legend labels — 국내는 코드(069500)가 아니라 회사/ETF 이름을 주 표기로(fmt.js stockLabel)
+  byId("legendSectorLabel").textContent = `${stockLabel(sectorTicker)} (섹터)`;
+  byId("legendBenchmarkLabel").textContent = `${stockLabel(benchmarkTicker)} (벤치)`;
   
   let sectorSeries = data.sector_charts?.[sectorTicker]?.[timeframe] || [];
   const benchmarkSeries = data.sector_charts?.[benchmarkTicker]?.[timeframe] || [];
@@ -3979,7 +3763,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
       approximate = true;
     }
   }
-  byId("legendSectorLabel").textContent = `${sectorTicker} (섹터${approximate ? " · 근사" : ""})`;
+  byId("legendSectorLabel").textContent = `${stockLabel(sectorTicker)} (섹터${approximate ? " · 근사" : ""})`;
 
   const mobile = window.matchMedia("(max-width: 768px)").matches;
   const width = mobile ? 480 : 860;
@@ -4233,8 +4017,8 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     
     tooltip.innerHTML = `
       <strong>${formattedDate}</strong>
-      <div class="item"><span style="width:120px;display:inline-block">${sectorTicker}:</span><b>${closestPoint.r >= 0 ? "+" : ""}${closestPoint.r.toFixed(2)}%</b></div>
-      <div class="item"><span style="width:120px;display:inline-block">${benchmarkTicker}:</span><b>${benchmarkPoint.r >= 0 ? "+" : ""}${benchmarkPoint.r.toFixed(2)}%</b></div>
+      <div class="item"><span style="width:120px;display:inline-block">${escapeHtml(stockLabel(sectorTicker))}:</span><b>${closestPoint.r >= 0 ? "+" : ""}${closestPoint.r.toFixed(2)}%</b></div>
+      <div class="item"><span style="width:120px;display:inline-block">${escapeHtml(stockLabel(benchmarkTicker))}:</span><b>${benchmarkPoint.r >= 0 ? "+" : ""}${benchmarkPoint.r.toFixed(2)}%</b></div>
       <div class="item" style="margin-top: 5px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 4px;">
         <span>상대 수익률:</span><strong class="${diffClass}" style="margin-left:8px">${diffText}</strong>
       </div>
@@ -4662,7 +4446,11 @@ function renderScannerCards(entries) {
 function updateScanCardInPlace(entry) {
   const grid = byId("scannerCards");
   if (!grid) return;
-  const card = grid.querySelector(`.scanner-card[data-ticker="${escapeHtml(entry.item.ticker)}"]`);
+  // CSS 선택자에는 escapeHtml 이 아니라 CSS.escape 를 쓴다(HTML 엔티티는 선택자에서 안 먹는다).
+  const tickerSel = typeof CSS !== "undefined" && CSS.escape
+    ? CSS.escape(entry.item.ticker)
+    : String(entry.item.ticker).replace(/[^A-Za-z0-9_-]/g, "");
+  const card = grid.querySelector(`.scanner-card[data-ticker="${tickerSel}"]`);
   if (!card) return;
   const head = scanHeadHtml(entry);
   const label = card.querySelector(".scan-prob-head span");
@@ -5096,7 +4884,7 @@ function renderSearch(options = {}) {
 function moveEvidenceRow(kind, title, detail, options = {}) {
   const body = `<span class="move-evidence-icon" aria-hidden="true">${options.icon || "•"}</span><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(detail || "")}</small></span>`;
   return options.href
-    ? `<a class="move-evidence-row" href="${escapeHtml(options.href)}" target="_blank" rel="noopener">${body}<em>원문</em></a>`
+    ? `<a class="move-evidence-row" href="${escapeHtml(safeHttpHref(options.href))}" target="_blank" rel="noopener">${body}<em>원문</em></a>`
     : `<div class="move-evidence-row">${body}<em class="${options.tone || "info"}">${escapeHtml(kind)}</em></div>`;
 }
 
@@ -5198,12 +4986,15 @@ function investmentChecklistResults(item) {
   const valuationPass = valuationKnown && sectorMedian != null && forwardPe <= sectorMedian;
   const valuationWarn = valuationKnown && sectorMedian != null && forwardPe > sectorMedian * 1.35;
 
-  const volume = Number(item.volumeRatio || 0);
+  // 거래량비는 결측(0)과 '평균의 0배'가 구분돼야 한다 — 없으면 "—" 로 쓰고 판정에서 뺀다.
+  const volumeRaw = Number(item.volumeRatio);
+  const volume = Number.isFinite(volumeRaw) && volumeRaw > 0 ? volumeRaw : null;
+  const volumeText = volume == null ? "—" : `${volume.toFixed(1)}배`;
   const insider = ((window.INSIDER_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
   const buys = insider.filter((row) => row.kind === "buy").length;
   const sells = insider.filter((row) => row.kind === "sell").length;
-  const flowPass = volume >= 1.2 || buys > sells;
-  const flowWarn = volume < 0.7 || sells > buys + 2;
+  const flowPass = (volume != null && volume >= 1.2) || buys > sells;
+  const flowWarn = (volume != null && volume < 0.7) || sells > buys + 2;
 
   const rsi = rsiValue(item);
   const debtEq = Number(f.debtEq);
@@ -5217,7 +5008,7 @@ function investmentChecklistResults(item) {
     { label: "추세", status: trendPass ? "pass" : trendWarn ? "warn" : "check", detail: `1개월 ${fmtPct(item.monthChangePct)} · RSI ${fmtRsi(item)}${sma20 != null ? ` · SMA20 ${last >= sma20 ? "위" : "아래"}` : ""}` },
     { label: "실적·추정", status: !earningsKnown ? "check" : earningsPass ? "pass" : (epsTtmVal != null && epsTtmVal <= 0) ? "warn" : "check", detail: earningsKnown ? `EPS(TTM) ${fmtEpsValue(epsTtmVal)}${epsNextYVal != null ? ` · 내년 추정 ${fmtEpsValue(epsNextYVal)}` : ""}` : "EPS 데이터가 부족합니다." },
     { label: "밸류에이션", status: !valuationKnown || sectorMedian == null ? "check" : valuationPass ? "pass" : valuationWarn ? "warn" : "check", detail: valuationKnown ? `Forward P/E ${forwardPe.toFixed(1)}${sectorMedian != null ? ` · 섹터 중앙값 ${sectorMedian.toFixed(1)}` : " · 섹터 비교값 없음"}` : "Forward P/E 데이터가 없습니다." },
-    { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volume.toFixed(1)}배${isKrMarket() ? "" : ` · 내부자 매수 ${buys} / 매도 ${sells}`}` },
+    { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volumeText}${isKrMarket() ? "" : ` · 내부자 매수 ${buys} / 매도 ${sells}`}` },
     { label: "리스크", status: riskFlags.length ? "warn" : "pass", detail: riskFlags.length ? riskFlags.join(" · ") : "현재 규칙에서 과열·부채·낙폭 경고가 없습니다." }
   ];
 }
@@ -5336,7 +5127,7 @@ function renderEstimateRevision(item) {
   const historyDays = rows.length > 1 ? Math.round((Date.now() - (Number(rows[0].savedAt) || Date.now())) / 86400000) : 0;
   box.innerHTML = `
     <div class="estimate-revision-head">
-      <div><span>ESTIMATE TREND</span><h3>실적 추정치 변화</h3></div>
+      <div><span>실적 추정치 흐름</span><h3>실적 추정치 변화</h3></div>
       <strong>${escapeHtml(stockLabel(item))} · ${historyDays ? `${historyDays}일 추적` : "오늘부터 추적"}</strong>
     </div>
     <div class="estimate-revision-grid">
@@ -5401,10 +5192,6 @@ function renderSmartMoney(item) {
     ${row("대량보유 13D/G", act.length ? `${act.length}건 (액티비스트 ${act.filter((a) => a.kind === "activist").length})` : "—")}
     <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
-
-// 기관 보유 변화(13F QoQ) 패널은 index.html 에 대상 요소(#stockInst13f)가 없어 죽은 코드였다
-// (85줄 삭제). chart-indicators.js 의 renderStockEvents 가 아직 호출하므로 빈 스텁만 남긴다.
-function renderInst13fChange() {}
 
 // Merge any live (proxy-fetched) chart/news over the snapshot+detail data.
 function applyLive(item) {
@@ -5512,6 +5299,59 @@ function syntheticBadge(item) {
   return `<span class="synth-badge" title="야후 실시간 가격 이력이 없어 이력 기반 지표(1개월·52주 위치·신고가 거리 등)는 추정값입니다. 가격과 당일 등락률은 실제입니다.">추정</span>`;
 }
 
+// ===== 링크·HTML 안전 헬퍼 (2026-09-15 감사) =====
+// 외부 데이터(뉴스 링크·공시 링크·LLM 브리핑 HTML)를 화면에 넣기 전에 통과시킨다.
+// http(s) 스킴과 스킴 없는 상대 경로만 통과시키고 javascript:/data:/vbscript: 는 버린다.
+// 제어문자를 끼워 넣은 "java\tscript:" 같은 우회도 스킴 판정 전에 걷어낸다.
+function safeHttpHref(url) {
+  const raw = String(url ?? "").trim();
+  if (!raw) return "";
+  const probe = Array.from(raw).filter((ch) => ch.charCodeAt(0) > 32 && ch.charCodeAt(0) !== 160).join("");
+  const scheme = /^([a-z][a-z0-9+.-]*):/i.exec(probe);
+  if (scheme) return /^https?$/i.test(scheme[1]) ? raw : "";
+  if (probe.startsWith("//")) return `https:${raw}`; // 프로토콜 상대 URL
+  return raw; // 스킴 없는 상대/루트 경로(file:// 폴백에서도 그대로 동작해야 한다)
+}
+
+// 브리핑·리포트 HTML 허용목록 sanitizer. fmt.js 의 decorateBriefingHtml 은 이름 그대로
+// 이모지 제거·제목 치환만 하고 태그를 거르지 않는다(감사 P2). 워커 LLM 이나 빌더가 만든
+// HTML 이 그대로 innerHTML 로 들어가므로 여기서 한 번 더 태그/속성을 좁힌다.
+const RICH_HTML_TAGS = new Set([
+  "a", "b", "blockquote", "br", "code", "div", "em", "h1", "h2", "h3", "h4", "h5", "h6",
+  "hr", "i", "li", "ol", "p", "pre", "s", "small", "span", "strong", "sub", "sup",
+  "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u", "ul",
+]);
+const RICH_HTML_ATTRS = new Set(["class", "href", "title", "target", "rel", "colspan", "rowspan", "style", "lang", "dir"]);
+
+function sanitizeRichHtml(html) {
+  const src = String(html ?? "");
+  if (!src) return "";
+  if (typeof DOMParser === "undefined") return escapeHtml(src);
+  const doc = new DOMParser().parseFromString(`<body><div id="mirSanitizeRoot">${src}</div></body>`, "text/html");
+  const root = doc.getElementById("mirSanitizeRoot");
+  if (!root) return "";
+  const walk = (node) => {
+    Array.from(node.children).forEach((el) => {
+      const tag = el.tagName.toLowerCase();
+      if (!RICH_HTML_TAGS.has(tag)) { el.remove(); return; } // script/style/iframe/object 등
+      Array.from(el.attributes).forEach((attr) => {
+        const name = attr.name.toLowerCase();
+        if (name.startsWith("on") || !RICH_HTML_ATTRS.has(name)) { el.removeAttribute(attr.name); return; }
+        if (name === "href") {
+          const safe = safeHttpHref(attr.value);
+          if (safe) el.setAttribute("href", safe); else el.removeAttribute("href");
+          return;
+        }
+        if (name === "style" && /(javascript:|expression\(|url\()/i.test(attr.value)) el.removeAttribute("style");
+      });
+      if (tag === "a" && el.getAttribute("target") === "_blank") el.setAttribute("rel", "noopener noreferrer");
+      walk(el);
+    });
+  };
+  walk(root);
+  return root.innerHTML;
+}
+
 function renderNews(item) {
   const box = byId("searchNews");
   if (!box) return;
@@ -5538,7 +5378,7 @@ function renderNews(item) {
     <ul class="news-list">
       ${news.slice(0, 12).map((n) => `
         <li class="news-item">
-          <a href="${escapeHtml(n.link || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.title || "")}</a>
+          <a href="${escapeHtml(safeHttpHref(n.link) || "#")}" target="_blank" rel="noopener noreferrer">${escapeHtml(n.title || "")}</a>
           <span class="news-meta">${escapeHtml(n.publisher || "")}${n.publishedAt ? ` · ${escapeHtml(n.publishedAt)}` : ""}</span>
         </li>
       `).join("")}
@@ -5731,6 +5571,7 @@ function buildTickerSearchIndex() {
       ticker: s.ticker,
       company: s.company || "",
       companyLower: String(s.company || "").toLowerCase(),
+      tickerLower: String(s.ticker || "").toLowerCase(),
       marketCapB: Number(s.marketCapB) || 0,
     })),
   };
@@ -6252,7 +6093,7 @@ function renderMarketBreadth() {
   box.innerHTML = `
     <div class="breadth-head">
       <div>
-        <span class="daily-action-kicker">MARKET BREADTH</span>
+        <span class="daily-action-kicker">시장 폭</span>
         <h2>시장 폭 지표</h2>
         <p>스냅샷 ${n.toLocaleString()}개 종목(ETF 제외) 기준 시장 전체의 참여도·체력입니다.</p>
       </div>
@@ -6504,11 +6345,14 @@ function dataTrustSources() {
   if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시", "whitehouse"));
   // KR 전용 소스. 이게 빠져 있어서 2026-07-17 에 DART 데이터가 배포 트리거 끊김으로
   // 사이트에 안 나가는 동안에도 신뢰도 센터는 "정상"만 보여줬다.
-  if (cfg.features?.krDart) rows.push(source("DART 공시", "DART Open API", window.KR_DISCLOSURES, ["disclosures"], 48, "매일", "krDart"));
-  if (cfg.features?.krOwnership) rows.push(source("지분 공시", "DART Open API", window.KR_OWNERSHIP, ["majorHolders", "insiders"], 72, "매일", "krOwnership"));
+  // krDart·krOwnership 은 KR 설정에만 있는 키다(US features 에는 아예 없다) —
+  // 여기만은 '=== false' 가 아니라 명시적 true 로 판정한다. 규칙대로 쓰면 US 모드에서
+  // 없는 KR 소스 5장이 '데이터 없음' 카드로 뜬다(2026-09-15 스모크에서 확인).
+  if (cfg.features?.krDart === true) rows.push(source("DART 공시", "DART Open API", window.KR_DISCLOSURES, ["disclosures"], 48, "매일", "krDart"));
+  if (cfg.features?.krOwnership === true) rows.push(source("지분 공시", "DART Open API", window.KR_OWNERSHIP, ["majorHolders", "insiders"], 72, "매일", "krOwnership"));
   // 파생 이벤트 피드 — 비수기엔 0건이 정상이라 allowEmpty(0건+최신이면 정상). 빌더가 안
   // 돌아 timestamp 가 낡으면 그때 '갱신 지연'으로 잡힌다.
-  if (cfg.features?.krDart) {
+  if (cfg.features?.krDart === true) {
     rows.push(source("배당 결정", "DART 원문 파싱", window.KR_DIVIDENDS, ["rows"], 72, "매일", "krDividends", "", true));
     rows.push(source("공급계약", "DART 원문 파싱", window.KR_CONTRACTS, ["rows"], 72, "매일", "krContracts", "", true));
     rows.push(source("실적발표 반응", "DART · Yahoo", window.KR_EARNINGS_REACTIONS, ["rows"], 72, "매일", "krEarningsReact", "", true));
@@ -6634,7 +6478,7 @@ function renderBriefingSide(side) {
     </div>`;
   // Snapshot ai_briefing (US) → standalone file fallback (KR 스냅샷엔 ai_briefing이 없음).
   const inline = (data.ai_briefing || {})[key] || briefingFileCache[key];
-  if (inline) { el.innerHTML = decorateBriefingHtml(inline); return; }
+  if (inline) { el.innerHTML = sanitizeRichHtml(decorateBriefingHtml(inline)); return; }
   el.innerHTML = `<div class="empty-briefing"><strong>${BRIEFING_LABELS[key]}</strong><br>브리핑을 불러오는 중…</div>`;
   fetch(`data/briefings/${key}.json`, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : null))
@@ -6642,7 +6486,7 @@ function renderBriefingSide(side) {
       const html = b && b.html;
       if (html) briefingFileCache[key] = html;
       if (briefingSel[side] !== key) return; // user toggled away while loading
-      el.innerHTML = html ? decorateBriefingHtml(html) : emptyHtml;
+      el.innerHTML = html ? sanitizeRichHtml(decorateBriefingHtml(html)) : emptyHtml;
     })
     .catch(() => { if (briefingSel[side] === key) el.innerHTML = emptyHtml; });
 }
@@ -6736,29 +6580,24 @@ function socialTickerCell(ticker) {
   return `<button type="button" class="ticker-link" data-ticker="${escapeHtml(ticker)}" title="종목 분석 보기">${escapeHtml(stockLabel(known))}</button>`;
 }
 
+// 소셜 감성 표(레딧·스톡트윗·야후·WSB)의 종목 버튼/행 클릭. 대상 표 id 를 배열로 받는다.
 function bindSocialSentimentClicks(tableIds) {
   const ids = tableIds || {
     reddit: "socialRedditTable",
     stocktwits: "socialStocktwitsTable",
     yahoo: "socialYahooTable",
   };
-  const selector = [
-    `#${ids.reddit} .ticker-link`,
-    `#${ids.stocktwits} .ticker-link`,
-    `#${ids.yahoo} .ticker-link`,
-  ].join(", ");
-  document.querySelectorAll(selector).forEach((btn) => {
-    btn.addEventListener("click", (event) => {
-      event.stopPropagation();
-      openSocialTicker(btn.dataset.ticker);
+  const tableList = Array.isArray(ids) ? ids : Object.values(ids);
+  tableList.filter(Boolean).forEach((tableId) => {
+    const table = byId(tableId);
+    if (!table) return;
+    table.querySelectorAll(".ticker-link").forEach((btn) => {
+      btn.addEventListener("click", (event) => {
+        event.stopPropagation();
+        openSocialTicker(btn.dataset.ticker);
+      });
     });
-  });
-  [
-    `#${ids.reddit} tr[data-ticker]`,
-    `#${ids.stocktwits} tr[data-ticker]`,
-    `#${ids.yahoo} tr[data-ticker]`,
-  ].forEach((rowSel) => {
-    document.querySelectorAll(rowSel).forEach((row) => {
+    table.querySelectorAll("tr[data-ticker]").forEach((row) => {
       row.addEventListener("click", () => openSocialTicker(row.dataset.ticker));
     });
   });
@@ -6841,6 +6680,8 @@ function renderWsbSentimentTable() {
       <td style="color:${col}">${bull ? "강세" : "약세"}${Number.isFinite(r.score) ? ` ${r.score > 0 ? "+" : ""}${r.score}` : ""}</td>
     </tr>`;
   }).join("");
+  // WSB 표는 bindSocialSentimentClicks 목록에 없어 종목 버튼이 죽어 있었다(감사 P2).
+  bindSocialSentimentClicks(["socialWsbTable"]);
 }
 
 function renderSocialSentiment() {
@@ -6938,9 +6779,14 @@ function setupPwa() {
         return;
       }
       const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-      window.alert(isIOS
-        ? "Safari 공유 버튼 → '홈 화면에 추가'를 선택하세요."
-        : "브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.");
+      appDialog({
+        title: "앱 설치",
+        message: isIOS
+          ? "Safari 공유 버튼 → '홈 화면에 추가'를 선택하세요."
+          : "브라우저 메뉴에서 '앱 설치' 또는 '홈 화면에 추가'를 선택하세요.",
+        okLabel: "확인",
+        cancelLabel: "",
+      });
     });
   }
 }
@@ -7047,7 +6893,7 @@ function exportPortfolioCsv() {
       stock?.sector || "",
     ]);
   });
-  downloadCsv(`mir-portfolio-${marketCfg().id}-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+  downloadCsv(`mir-portfolio-${marketCfg().id}-${kstDaysAgo(0)}.csv`, rows); // 파일명 날짜는 KST
 }
 
 let lastBacktestExportPayload = null;
@@ -7068,7 +6914,7 @@ function exportBacktestCsv() {
   (p.stockReturns || []).forEach((row) => {
     rows.push([row.ticker, row.company, row.startPrice, row.endPrice, row.returnPct, row.weightPct, row.invested, row.finalValue]);
   });
-  downloadCsv(`mir-backtest-${new Date().toISOString().slice(0, 10)}.csv`, rows);
+  downloadCsv(`mir-backtest-${kstDaysAgo(0)}.csv`, rows); // 파일명 날짜는 KST
 }
 
 
@@ -7510,7 +7356,16 @@ function setupIaShell() {
 }
 
 
-loadData();
+// 최상위 프라미스는 catch 가 없으면 unhandledrejection 으로 조용히 사라진다 —
+// 화면은 빈 채로 남고 콘솔만 한 줄 뜬다(감사 P2). 사유를 콘솔에 남기고 배너로 알린다.
+function reportBootFailure(what) {
+  return (err) => {
+    console.error(`[Mir] ${what} 실패`, err);
+    try { showAppToast(`${what}에 실패했습니다. 새로고침해 주세요.`, 5000); } catch (_) {}
+  };
+}
+
+loadData().catch(reportBootFailure("데이터 로드"));
 
 // ===== PWA Offline / Stale Snapshot Banner =====
 function getSnapshotTimestamp() {
@@ -7573,8 +7428,8 @@ function updateOnlineStatus() {
       banner.innerHTML = `
         <div class="offline-banner-content" style="flex-wrap:wrap;justify-content:center;">
           <span class="offline-icon"></span>
-          <strong>${reason}</strong>
-          <span>${detail}</span>
+          <strong>${escapeHtml(reason)}</strong>
+          <span>${escapeHtml(detail)}</span>
           <button type="button" id="offlineRetryBtn" ${offlineRetryBusy ? "disabled" : ""}
             style="margin-left:6px;padding:4px 12px;border-radius:20px;border:1px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;opacity:${offlineRetryBusy ? ".6" : "1"};white-space:nowrap;">${offlineRetryBusy ? `${OFFLINE_RETRY_SPINNER_SVG}재시도 중` : "재시도"}</button>
           <span id="offlineRetryMsg" class="muted" style="font-size:12px;" hidden></span>
@@ -7631,7 +7486,6 @@ updateOnlineStatus();
 
 // ===== AI Search and Deep Report UI Handler =====
 let currentActiveReportTicker = null;
-let aiReportBusy = false;
 
 // 지표·용어 약어 중 실제 티커와 겹치는 것들 — 2026-07-24 스냅샷 실측.
 // RSI=Rush Street Interactive, PBR=Petrobras, ATR=AptarGroup, EMA=Emera …
@@ -7685,7 +7539,7 @@ function extractStockTickerFromQuery(query) {
   // 3. Scan company name matches
   if (tickerSearchIndex && tickerSearchIndex.byMarketCap) {
     for (const row of tickerSearchIndex.byMarketCap) {
-      const comp = String(row.companyLower || "").toLowerCase();
+      const comp = row.companyLower || ""; // 인덱스에서 이미 소문자다 — 매 호출 재생성 금지
       if (comp.length > 1 && text.includes(comp)) {
         return row.ticker;
       }
@@ -7987,7 +7841,7 @@ const HOME_ROUTE_RULES = [
   { tab: "sector", keywords: ["섹터 흐름", "섹터흐름", "섹터", "업종", "반도체", "2차전지", "이차전지", "배터리", "바이오", "제약", "자동차", "금융", "은행", "방산", "조선", "화학", "인터넷", "게임", "엔터", "sector", "industry"] },
   // 스크리너 (조건 검색) — 페이지 전용어(preempt)
   { tab: "search", sub: "screener", preempt: true, keywords: ["스크리너", "스크리닝", "조건 검색", "조건검색", "종목 발굴", "발굴", "골라줘", "골라", "찾아줘", "필터링", "필터", "screener", "screening"] },
-  // 상승확률 스캐너
+  // 모멘텀 스캐너(구 '상승확률 스캐너' — 검색 키워드는 이용자 표현이라 유지)
   { tab: "search", sub: "scanner", keywords: ["상승확률", "상승 확률", "오를 종목", "오를까", "오를", "스캐너", "상승 가능성", "상승가능성", "scanner"] },
   // 주도주 / 상위 / 신고가
   { tab: "search", sub: "top", keywords: ["주도주", "강한 종목", "강한 주식", "강한", "리더", "상위 종목", "상위", "신고가", "모멘텀 강", "leader", "strongest"] },
@@ -8309,7 +8163,8 @@ function cmdkEnsureDom() {
     if (e.target === overlay) cmdkClose();
   });
   const input = overlay.querySelector("#cmdkInput");
-  input.addEventListener("input", () => cmdkRender(input.value));
+  // 디바운스 없이는 키 입력마다 전 종목 스캔 + 목록 재렌더가 돈다(감사 P2).
+  input.addEventListener("input", debounce(() => cmdkRender(input.value), 120));
   return overlay;
 }
 
@@ -8367,10 +8222,12 @@ function cmdkBuildActions(query) {
       const resolved = extractStockTickerFromQuery(q);
       if (resolved) pushStock(stockByTicker(resolved));
     } catch (_) { /* ignore */ }
+    // 키 입력마다 전 종목의 ticker/company 를 새로 소문자화하지 않는다 —
+    // buildTickerSearchIndex 가 미리 만든 소문자 필드를 시총 순으로 훑는다.
     const ql = q.toLowerCase();
-    ((data && data.stocks) || []).some((row) => {
-      if (String(row.ticker || "").toLowerCase().startsWith(ql)
-        || String(row.company || "").toLowerCase().includes(ql)) pushStock(row);
+    const rows = (tickerSearchIndex && tickerSearchIndex.byMarketCap) || [];
+    rows.some((row) => {
+      if (row.tickerLower.startsWith(ql) || row.companyLower.includes(ql)) pushStock(stockByTicker(row.ticker));
       return seen.size >= 5;
     });
   }

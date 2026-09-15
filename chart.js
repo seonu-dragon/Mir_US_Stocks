@@ -4,7 +4,7 @@
 // 먼저 싣고 같은 전역 스코프를 공유한다. 로드 시점 실행문은 window.MirChartOverlays
 // 대입 하나뿐이고(참조 없는 순수 대입), 그마저도 예전보다 이르게 실행되므로 안전하다.
 // 담는 것: currentChartItem 캐시, 팬/줌, 오버레이 프리셋과 계산(VWAP·PSAR·갭·추세선·
-// 시장구조·거래량프로파일), 상승확률 패널, 차트 컨트롤/프리셋/비교, 포인터 인터랙션,
+// 시장구조·거래량프로파일), 기술 점수 패널, 차트 컨트롤/프리셋/비교, 포인터 인터랙션,
 // 드로잉(추세선·피보) 영속화, drawChart 본체.
 // 지표 계산 자체는 chart-indicators.js 가 갖는다 — 여기로 옮기지 말 것.
 // 이름 충돌은 scripts/check_global_name_collisions.py 가 감시한다.
@@ -109,7 +109,9 @@ function detectUnfilledGapZones(rows, minPct = 0.003) {
     else if (cur.h < prev.l * (1 - minPct)) zone = { type: "down", lo: cur.h, hi: prev.l, startIdx: i - 1 };
     if (!zone) continue;
     let filled = false;
-    for (let j = i; j < rows.length; j += 1) {
+    // 갭 발생 봉(i) 자신은 존 경계(zone.hi = cur.l 등)에 항상 닿아 있다 — j=i 로 돌면
+    // 모든 갭이 즉시 '메움' 처리돼 오버레이가 영영 비었다(analysis.js:169 와 같은 규칙).
+    for (let j = i + 1; j < rows.length; j += 1) {
       if (rows[j].l <= zone.hi && rows[j].h >= zone.lo) { filled = true; break; }
     }
     if (!filled) gaps.push(zone);
@@ -370,7 +372,8 @@ function restoreChartOverlaysFromProb() {
   syncChartOverlayCheckboxes();
 }
 
-// ===== 차트 상승확률 분석 (analysis.js 엔진 재사용) =====
+// ===== 차트 기술 점수 분석 (analysis.js 엔진 재사용) =====
+// 2026-09-15: 점수는 예측 확률이 아니라 지표 투표의 가중합(0~100)이다. '확률' 표기 금지.
 let chartProbHorizon = 20; // 5=1주, 20=1개월, 60=3개월
 let chartProbStatsMode = "population"; // population | individual
 let chartProbPanelOpen = false;
@@ -385,7 +388,7 @@ function buildChartProbPanel(result) {
   const statsBtns = [["population", "전체 통계"], ["individual", "종목 실측"]].map(([k, l]) =>
     `<button type="button" class="cprob-hz cprob-stats-btn${k === chartProbStatsMode ? " is-active" : ""}" data-cpstats="${k}">${l}</button>`).join("");
   const toolbar = `<div class="cprob-toolbar">
-      <span class="cprob-title">상승확률 분석</span>
+      <span class="cprob-title">기술 점수 분석</span>
       <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
       <div class="cprob-hz-group" role="group" aria-label="패턴 통계 기준">${statsBtns}</div>
     </div>`;
@@ -582,7 +585,7 @@ function toggleChartProbAnalysis() {
   runChartProbAnalysis();
 }
 
-// "상승확률 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 확률을 계산해 패널에 표시.
+// "기술 점수 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 기술 점수를 계산해 패널에 표시.
 function runChartProbAnalysis() {
   const panel = byId("chartProbPanel");
   if (!panel) return;
@@ -828,7 +831,7 @@ function syncChartControlUi() {
     const el = byId(id);
     if (el) el.checked = Boolean(chartState[id]);
   });
-  // 기술레벨·패턴 체크박스 그룹(상승확률 패널 칩)도 프리셋 상태로 맞춘다.
+  // 기술레벨·패턴 체크박스 그룹(기술 점수 패널 칩)도 프리셋 상태로 맞춘다.
   syncCprobChartControlChips();
 }
 
@@ -948,7 +951,7 @@ function renderCompareChips() {
   box.querySelectorAll(".compare-chip").forEach((chip) => {
     chip.addEventListener("click", () => removeChartCompareTicker(chip.dataset.ticker));
   });
-}// TradingView-style: wheel=봉 확대/축소, pointer drag=봉 이동 (상승확률 분석 중에도 동작).
+}// TradingView-style: wheel=봉 확대/축소, pointer drag=봉 이동 (기술 점수 분석 중에도 동작).
 function setupChartInteractions() {
   const svg = byId("priceChart");
   if (!svg || svg.dataset.panBound) return;
@@ -1130,6 +1133,33 @@ function hydrateChartDrawings(ticker) {
   chartDrawings[ticker] = entry && Array.isArray(entry.items)
     ? entry.items.filter((d) => d && Number.isFinite(d.t1) && Number.isFinite(d.t2))
     : [];
+}
+
+// 봉 인덱스 → 타임스탬프(ms). 날짜가 없는 봉이 섞이면 Date.parse 가 NaN 을 주고,
+// chartXnFromTime 의 이분 탐색(배열이 단조 증가라는 전제)이 조용히 틀린 답을 낸다.
+// 앞뒤 유효값으로 선형 보간하고, 하나도 없으면 인덱스를 하루 간격으로 쓴다.
+function buildChartTimes(rows) {
+  const t = rows.map((r) => Date.parse(r && r.d));
+  const n = t.length;
+  const DAY = 86400000;
+  let firstValid = -1;
+  for (let i = 0; i < n; i += 1) { if (Number.isFinite(t[i])) { firstValid = i; break; } }
+  if (firstValid < 0) return rows.map((_, i) => i * DAY);
+  for (let i = firstValid - 1; i >= 0; i -= 1) t[i] = t[i + 1] - DAY;
+  for (let i = firstValid + 1; i < n; i += 1) {
+    if (Number.isFinite(t[i])) continue;
+    let j = i + 1;
+    while (j < n && !Number.isFinite(t[j])) j += 1;
+    if (j < n) {
+      const step = (t[j] - t[i - 1]) / (j - (i - 1));
+      for (let k = i; k < j; k += 1) t[k] = t[i - 1] + step * (k - (i - 1));
+      i = j - 1;
+    } else {
+      for (let k = i; k < n; k += 1) t[k] = t[k - 1] + DAY;
+      break;
+    }
+  }
+  return t;
 }
 
 // 날짜(ms) ↔ 플롯 가로비율(0~1). 보이는 봉 날짜 배열(geom.times)로 변환하고,
@@ -1733,7 +1763,7 @@ function drawChart(item, options = {}) {
   hydrateChartDrawings(item.ticker); // 저장된 드로잉 복원(최초 1회)
   lastChartGeom = {
     padL, plotW, padT, plotH, min, max, range, width, height, ticker: item.ticker,
-    times: rows.map((r) => Date.parse(r.d)),
+    times: buildChartTimes(rows),
   };
   const isLine = chartState.chartType === "line";
   const isHeikin = chartState.chartType === "heikin";

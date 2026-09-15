@@ -450,7 +450,7 @@ function visibleChartRows(rows) {
   return base.slice(Math.max(0, end - windowSize), end);
 }
 
-// 상승확률 분석 차트 오버레이: 보이는 구간 + 앞쪽 이력(피보·회귀 등)을 함께 쓴다.
+// 기술 점수 분석 차트 오버레이: 보이는 구간 + 앞쪽 이력(피보·회귀 등)을 함께 쓴다.
 function chartAnalysisContextRows(allRows) {
   const rangeSize = rangeBarCount(allRows.length);
   const base = allRows.slice(-rangeSize);
@@ -614,7 +614,7 @@ async function buildStockChatContext(userText) {
       techStr
     );
 
-    // 스마트머니·촉매·상승확률 — 사이트의 차별화 데이터(내부자/의회/13F/대량보유/공매도/공시/MirProb)도
+    // 스마트머니·촉매·모멘텀 점수 — 사이트의 차별화 데이터(내부자/의회/13F/대량보유/공매도/공시/MirProb)도
     // AI가 함께 보고 판단하도록 컨텍스트에 추가한다. 데이터가 없는 항목은 생략(주로 KR 종목).
     const smLines = [];
     const ins = ((window.INSIDER_TRADES || {}).trades || []).filter((r) => r.ticker === item.ticker);
@@ -641,11 +641,11 @@ async function buildStockChatContext(userText) {
         const { up } = scanQuickProb(item, 20);
         if (Number.isFinite(up)) {
           const upR = Math.round(up);
-          smLines.push(`MirProb 상승확률(약 1개월, 스냅샷 추정) ${upR}%(${typeof scanVerdict === "function" ? scanVerdict(upR) : ""})`);
+          smLines.push(`MirProb 모멘텀 점수(스냅샷 추정, 예측 아님) ${upR}/100`);
         }
       }
-    } catch (e) { /* 확률 계산 실패 시 생략 */ }
-    if (smLines.length) lines.push(`  └ 스마트머니·촉매·확률: ${smLines.join(" · ")}`);
+    } catch (e) { /* 점수 계산 실패 시 생략 */ }
+    if (smLines.length) lines.push(`  └ 스마트머니·촉매·모멘텀: ${smLines.join(" · ")}`);
   });
   return lines.length
     ? `다음은 사이트 스냅샷/프록시 기준 종목 데이터입니다(실시간 투자 조언 아님, 참고용):\n${lines.join("\n")}`
@@ -815,7 +815,6 @@ function renderStockEvents(item) {
     <div class="event-grid">
       ${earningsEvent ? eventCardHtml(earningsEvent) : ""}
       <section class="smart-money-card event-card-smart" id="stockSmartMoney"></section>
-      <section class="smart-money-card event-card-smart" id="stockInst13f"></section>
       ${restEvents.map(eventCardHtml).join("")}
       ${stockEventCommunityCardHtml(item)}
     </div>

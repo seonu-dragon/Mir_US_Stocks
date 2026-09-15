@@ -108,7 +108,9 @@
     const macd = values.map((_, i) => fast[i] - slow[i]);
     const signal = emaRaw(macd, 9);
     const hist = macd.map((v, i) => v - signal[i]);
-    const warm = Math.min(25, values.length);
+    // 워밍업: 느린 EMA 26 + 시그널 EMA 9 → 첫 유효 인덱스는 26+9-2 = 33.
+    // 25 로 두면 시그널이 아직 자기 초기값에 끌려 있는 구간을 실값처럼 보여 준다.
+    const warm = Math.min(33, values.length);
     for (let i = 0; i < warm; i += 1) { macd[i] = null; signal[i] = null; hist[i] = null; }
     return { macd, signal, hist };
   }
@@ -238,8 +240,20 @@
       if (plusDi[i] == null || minusDi[i] == null || plusDi[i] + minusDi[i] === 0) return null;
       return 100 * Math.abs(plusDi[i] - minusDi[i]) / (plusDi[i] + minusDi[i]);
     });
-    const adx = wilderArray(dx.map((v) => (v == null ? 0 : v)), period);
-    for (let i = 0; i < period * 2 - 2 && i < adx.length; i += 1) adx[i] = null;
+    // ADX 는 '첫 유효 DX 부터' period 개를 평균해 시드한다. 예전엔 워밍업 구간의
+    // null DX 를 0 으로 채워 wilderArray 에 넘겨서, 시드 평균이 0 쪽으로 끌려
+    // 추세 강도가 실제보다 낮게 나왔다(감사 P3).
+    const adx = nullsLike(rows);
+    const firstDx = dx.findIndex((v) => v != null);
+    if (firstDx >= 0 && firstDx + period <= dx.length) {
+      let sum = 0;
+      for (let i = firstDx; i < firstDx + period; i += 1) sum += dx[i] == null ? 0 : dx[i];
+      adx[firstDx + period - 1] = sum / period;
+      for (let i = firstDx + period; i < dx.length; i += 1) {
+        const prev = adx[i - 1];
+        adx[i] = ((prev * (period - 1)) + (dx[i] == null ? prev : dx[i])) / period;
+      }
+    }
     return { adx, plusDi, minusDi };
   }
 
@@ -437,6 +451,8 @@
 
   function accumulationDistributionArray(rows) {
     const out = nullsLike(rows);
+    // 합성봉은 고가·저가를 ±0.4% 로 지어낸 값이라 (c−l)−(h−c) 승수가 무의미하다.
+    if (isSyntheticRows(rows)) return out;
     let line = 0;
     for (let i = 0; i < rows.length; i += 1) {
       const row = rows[i];
@@ -490,6 +506,7 @@
   // 앵커드/누적 VWAP — 전달된 첫 봉부터 누적한다(app.js 는 앵커 인덱스부터 slice 해서 부른다).
   function vwapArray(rows) {
     const out = nullsLike(rows);
+    if (isSyntheticRows(rows)) return out; // 전형가격이 지어낸 h/l 로 만들어진다
     let pv = 0;
     let volume = 0;
     for (let i = 0; i < rows.length; i += 1) {
@@ -507,6 +524,7 @@
   // 신호용은 최근 구간만 보는 이쪽을 쓴다.
   function rollingVwap(rows, period = 20) {
     const out = nullsLike(rows);
+    if (isSyntheticRows(rows)) return out; // 합성봉 VWAP 은 신호로 쓸 수 없다
     let pv = 0;
     let vol = 0;
     for (let i = 0; i < rows.length; i += 1) {

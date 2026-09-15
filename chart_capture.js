@@ -132,7 +132,7 @@
     return allRows.slice(Math.max(0, allRows.length - ctx));
   }
 
-  function renderSupportResistance(levels, rows, xFor, yFor, padL, plotW, min, max, market) {
+  function renderSupportResistance(levels, yFor, padL, plotW, min, max, market) {
     return levels
       .filter((lvl) => lvl.hi >= min && lvl.lo <= max)
       .map((lvl) => {
@@ -266,6 +266,9 @@
     const range = max - min || 1;
     const xFor = (i) => padL + (i / Math.max(1, rows.length - 1)) * plotW;
     const yFor = (v) => padT + ((max - v) / range) * priceH;
+    // 오버레이(지지·저항·추세선·패턴 점)는 보이는 가격 범위 밖의 값을 받을 수 있다.
+    // 클램프하지 않으면 SVG 밖으로 튀어 다른 패널 위에 그려진다(chart.js overlayYFor 와 동일).
+    const overlayYFor = (v) => yFor(Math.max(min, Math.min(max, v)));
     const candleW = Math.max(2, Math.min(9, (plotW / rows.length) * 0.55));
 
     const ctxCloses = ctxRows.map((r) => r.c);
@@ -279,11 +282,11 @@
     let srSvg = "";
     if (window.MirProb && window.MirProb.supportResistanceLevels) {
       const levels = window.MirProb.supportResistanceLevels(ctxRows);
-      srSvg = renderSupportResistance(levels, rows, xFor, yFor, padL, plotW, min, max, meta.market);
+      srSvg = renderSupportResistance(levels, rows, overlayYFor, padL, plotW, min, max, meta.market);
     }
 
-    const trendSvg = renderTrendlines(rows, xFor, yFor, padL);
-    const patSvg = renderPatterns(allRows, rows, xFor, yFor);
+    const trendSvg = renderTrendlines(rows, xFor, overlayYFor, padL);
+    const patSvg = renderPatterns(allRows, rows, xFor, overlayYFor);
 
     const candles = rows.map((row, i) => {
       const x = xFor(i);
@@ -351,7 +354,7 @@
     document.getElementById("captureTitle").textContent = krCode && meta.name ? `${meta.name} · ${meta.ticker}` : `${meta.ticker} · ${meta.name}`;
     document.getElementById("captureMeta").textContent =
       `종가 ${formatPrice(last.c, meta.market)} · ${last.d || ""}`;
-    document.getElementById("capturePeriod").textContent = `${meta.period} · 일봉 · 상승확률 분석`;
+    document.getElementById("capturePeriod").textContent = `${meta.period} · 일봉 · 기술 점수 분석`;
     document.getElementById("captureStatus").textContent = "캡처 준비 완료";
     document.getElementById("chart-capture-area").dataset.ready = "1";
   }

@@ -426,7 +426,9 @@ def test_tab_a11y(browser, base: str) -> None:
               f"selected={n['selected']} roving={n['roving']}")
 
     # 화살표 이동. 리스너가 중복 등록되면 한 번에 두 칸씩 넘어간다(실제로 그랬다).
-    page.evaluate("() => setViewMode('advanced')")
+    # 기본/고급 토글은 2026-09-04 에 없어졌고 setViewMode 도 2026-09-15 에 지웠다.
+    # setupViewMode() 가 항상 '고급'(모든 탭 노출)으로 스탬프한다.
+    page.evaluate("() => setupViewMode()")
     page.wait_for_timeout(1200)
     order = page.evaluate("""() => [...document.querySelectorAll('#mainTabs [role=tab]')]
         .filter(b => !b.hidden && b.offsetParent !== null).map(b => b.dataset.tab)""")
@@ -501,8 +503,11 @@ def test_ticker_deeplink_seo(browser, base: str) -> None:
     check("제목·OG 도 종목별",
           "NVDA" in page.title() and "NVDA" in (meta('meta[property="og:title"]') or ""),
           page.title())
+    # 2026-09-15 정직화로 헤드라인이 '상승 N%' → '기술 점수 N/100' 으로 바뀌었다.
+    # 둘 중 하나라도 있으면 결과가 그려진 것으로 본다.
     check("분석이 실제로 렌더", page.evaluate(
-        "() => document.body.innerText.includes('확률')"
+        "() => (document.body.innerText.includes('기술 점수')"
+        " || document.body.innerText.includes('확률'))"
         " && !document.body.innerText.includes('찾을 수 없습니다')"))
 
     page.goto(analysis, wait_until="domcontentloaded", timeout=60000)

@@ -52,9 +52,12 @@ HISTORY_BACKFILL_PER_RUN = int(os.environ.get("KR_HISTORY_BACKFILL", "500") or 0
 # Naver fundamentals are cheap (1 JSON call) and cover all listed stocks, so we
 # fetch them far wider than Yahoo did — every mid/small cap gets financials too.
 MAX_FUNDAMENTALS = 1600
-# 상장 종목 하한. 실측 3,800여 종목이라 3,000 은 넉넉한 안전선이다
-# (check_data_freshness.py 의 kr 그룹 universeCount 검사와 같은 값).
-MIN_LISTED_UNIVERSE = 3000
+# 상장 '주식' 하한(ETF 제외, market 이 kospi/kosdaq 인 것만 센다). 실측 2,590여 종목
+# (2026-09-15 러너 로그 2,589)이라 2,000 이 안전선이다. 스냅샷의 universeCount 는
+# ETF 를 포함한 전체(3,800여)라 check_data_freshness.py 의 kr 그룹은 3,000 을 쓴다 —
+# 두 숫자는 세는 대상이 달라 값이 다르다. 2026-09-15 dispatch 가 3,000 으로 잡혀
+# 정상 상태에서 중단된 적이 있으니 같은 값으로 맞추지 말 것.
+MIN_LISTED_UNIVERSE = 2000
 HTTP_HEADERS = {"User-Agent": "Mozilla/5.0", "Accept": "text/html,application/json"}
 
 SECTOR_MAP = {

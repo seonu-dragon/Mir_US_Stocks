@@ -833,18 +833,33 @@ await test("parseQuoteStateFromChart: 마지막 봉이 post 구간이면 post �
 
 console.log("\n[10] 2026-09-15 감사 수정");
 
-await test("resolveIndexChangePct: meta.chartPreviousClose 기준, 시리즈와 3%p 넘게 어긋나면 시리즈 기준", () => {
-  // 정상: KOSPI 실측(직전 종가 6909.91 → 6684.37 = -3.26%), 장중 시리즈도 같은 방향
+await test("resolveIndexChangePct: prevClose 가 있으면 언제나 meta 기준, 시리즈는 폴백일 뿐", () => {
+  // 정상: KOSPI 실측(직전 종가 6909.91 → 6684.37 = -3.26%)
   const normal = resolveIndexChangePct(6684.37, 6909.91, [6850, 6800, 6684.37]);
-  eq(normal.source, "meta", "평시엔 meta");
+  eq(normal.source, "meta", "meta 기준");
   eq(Math.round(normal.changePct * 100) / 100, -3.26, "참값");
-  // prevClose 가 한 세션 밀린 경우: meta -7.5% vs 시리즈 -0.5% → 시리즈 채택
-  const drifted = resolveIndexChangePct(6684.37, 7226, [6718, 6684.37]);
-  eq(drifted.source, "series", "총체적 불일치는 시리즈");
-  ok(Math.abs(drifted.changePct + 0.5) < 0.05, `시리즈 등락률: ${drifted.changePct}`);
-  // prevClose 결측 → 시리즈, 둘 다 없으면 0
+  // 갭 하락일: 시리즈(-0.23%)와 3%p 넘게 벌어져도 값은 meta 그대로여야 한다.
+  // 예전의 3%p 오버라이드는 바로 이 경우에 멀쩡한 -3.26 을 -0.23 으로 망가뜨렸다.
+  const gap = resolveIndexChangePct(6684.37, 6909.91, [6700, 6690, 6684.37]);
+  eq(gap.source, "meta", "갭 하락일에도 meta");
+  eq(Math.round(gap.changePct * 100) / 100, -3.26, "값을 바꾸지 않는다");
+  ok(Math.abs(gap.changePct - gap.seriesChangePct) > 3, "시리즈와는 3%p 넘게 어긋난 상황");
+  // prevClose 결측·0·비유한 → 시리즈 폴백
   eq(resolveIndexChangePct(102, null, [100, 102]).source, "series", "prevClose 결측");
-  deepEq(resolveIndexChangePct(null, null, []), { changePct: 0, source: "none" }, "데이터 없음");
+  eq(resolveIndexChangePct(102, 0, [100, 102]).source, "series", "prevClose 0");
+  eq(Math.round(resolveIndexChangePct(102, null, [100, 102]).changePct * 100) / 100, 2, "시리즈 등락률");
+  // 둘 다 없으면 0
+  const none = resolveIndexChangePct(null, null, []);
+  eq(none.changePct, 0, "데이터 없음"); eq(none.source, "none");
+});
+
+await test("3%p 비교로 값을 뒤집던 오버라이드가 사라졌다", () => {
+  const src = readFileSync(WORKER_SRC, "utf8");
+  ok(!src.includes("INDEX_SERIES_SANITY_PP"), "옛 안전장치 상수 잔존");
+  // 남은 3%p 비교는 값 변경이 아니라 로그 전용이어야 한다.
+  const divergenceLines = src.split("\n").filter((l) => l.includes("INDEX_SERIES_DIVERGENCE_PP") && !l.includes("const INDEX_SERIES_DIVERGENCE_PP"));
+  eq(divergenceLines.length, 1, "어긋남 판정은 한 곳(로그)에서만");
+  ok(/console\.error/.test(src.split("\n")[src.split("\n").findIndex((l) => l.includes("INDEX_SERIES_DIVERGENCE_PP") && !l.includes("const ")) + 1] || ""), "판정 뒤는 로그");
 });
 
 await test("KR 지수 prevClose 오버라이드(fetchPrevDailyClose)가 소스에서 사라졌다", () => {
@@ -858,14 +873,26 @@ await test("indices: 심볼당 1회만 부르고 같은 응답의 meta 로 등�
   const env = kvEnv();
   await withMockFetch((url) => {
     if (url.includes("%5EKS11")) {
-      return jsonResp({ chart: { result: [{ meta: { regularMarketPrice: 6684.37, chartPreviousClose: 6909.91 }, indicators: { quote: [{ close: [6850, 6800, 6684.37] }] } }] } });
+      // 갭 하락 세션: 직전 종가 6909.91 → 시가 6700 → 종가 6684.37. 시리즈만 보면 -0.23% 다.
+      return jsonResp({ chart: { result: [{ meta: { regularMarketPrice: 6684.37, chartPreviousClose: 6909.91 }, indicators: { quote: [{ close: [6700, 6690, 6684.37] }] } }] } });
     }
     return yahooChart([100, 101, 102]);
   }, async (calls) => {
     const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
     eq(calls.length, 8, "INDEX_LIST 8종 × 1회 (별도 일봉 호출 없음)");
     const kospi = data.indices.find((i) => i.symbol === "^KS11");
-    eq(kospi.changePct, -3.26, "meta 기준 참값");
+    eq(kospi.changePct, -3.26, "meta 기준 참값 — 시리즈와 벌어져도 뒤집지 않는다");
+    eq(kospi.changePctSource, "meta", "어느 쪽을 썼는지 응답에 표기");
+  });
+});
+
+await test("indices: prevClose 가 없으면 시리즈 폴백이고 changePctSource 가 series 로 표시된다", async () => {
+  const env = kvEnv();
+  await withMockFetch(() => jsonResp({ chart: { result: [{ meta: { regularMarketPrice: 102 }, indicators: { quote: [{ close: [100, 101, 102] }] } }] } }), async () => {
+    const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
+    const first = data.indices[0];
+    eq(first.changePct, 2, "시리즈 첫 봉 기준");
+    eq(first.changePctSource, "series", "폴백 표기");
   });
 });
 

@@ -1601,30 +1601,32 @@ const INDEX_LIST = [
 // −3.26), KOSDAQ −3.60%(참값 −1.69)로 발행됐고, 같은 응답의 chartPreviousClose
 // (6909.91 / 820.64)는 정확했다 → 오버라이드 제거(감사 P0-1).
 //
-// 대신 총체적 오류만 잡는 안전장치를 둔다: meta 기준 등락률이 당일 시리즈
-// (첫 봉 → 마지막 봉) 등락률과 3%p 넘게 어긋나면 시리즈 쪽을 쓴다. 시리즈는
-// 갭(전일 종가 → 시가)을 못 보므로 평시엔 meta 가 맞고, 이 분기는 prevClose 가
-// 세션 단위로 밀려 등락률이 배로 뛸 때만 발동한다.
-const INDEX_SERIES_SANITY_PP = 3;
+// 규약: **prevClose 가 유한하고 0보다 크면 언제나 그 값으로 계산한다.** 당일 시리즈
+// (첫 봉 → 마지막 봉)는 meta 가 없을 때만 쓰는 폴백이다.
+//
+// 한때 "meta 와 시리즈가 3%p 넘게 어긋나면 시리즈를 쓴다"는 안전장치를 뒀다가
+// 뺐다. 시리즈는 갭(전일 종가 → 시가)을 구조적으로 못 본다 — 3% 갭 하락으로
+// 시작해 장중 보합인 날이면 meta −3.3%(참값) vs 시리즈 −0.2% 로 벌어지는데,
+// 그때 시리즈를 고르면 멀쩡한 값을 틀린 값으로 바꾼다. 어긋남은 값을 바꾸는
+// 근거가 아니라 관측 대상이므로, 응답에는 어느 쪽을 썼는지(changePctSource)만
+// 싣고 크게 벌어지면 로그만 남긴다.
+const INDEX_SERIES_DIVERGENCE_PP = 3;
 
-export function resolveIndexChangePct(price, prevClose, closes, sanityPp = INDEX_SERIES_SANITY_PP) {
+export function resolveIndexChangePct(price, prevClose, closes) {
   const series = (Array.isArray(closes) ? closes : [])
     .filter((v) => v != null)
     .map(Number)
     .filter(Number.isFinite);
-  const seriesPct = series.length >= 2 && series[0] > 0
+  const seriesChangePct = series.length >= 2 && series[0] > 0
     ? (series[series.length - 1] / series[0] - 1) * 100
     : null;
   const p = Number(price);
   const prev = Number(prevClose);
-  const metaPct = Number.isFinite(p) && Number.isFinite(prev) && prev > 0 ? (p / prev - 1) * 100 : null;
-  if (metaPct == null) {
-    return { changePct: seriesPct == null ? 0 : seriesPct, source: seriesPct == null ? "none" : "series" };
+  if (Number.isFinite(p) && Number.isFinite(prev) && prev > 0) {
+    return { changePct: (p / prev - 1) * 100, source: "meta", seriesChangePct };
   }
-  if (seriesPct != null && Math.abs(metaPct - seriesPct) > sanityPp) {
-    return { changePct: seriesPct, source: "series" };
-  }
-  return { changePct: metaPct, source: "meta" };
+  if (seriesChangePct == null) return { changePct: 0, source: "none", seriesChangePct };
+  return { changePct: seriesChangePct, source: "series", seriesChangePct };
 }
 
 async function fetchIndices() {
@@ -1643,13 +1645,20 @@ async function fetchIndices() {
       const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
       const closes = (q.close || []).filter((v) => v != null);
       const price = closes.length ? closes[closes.length - 1] : meta.regularMarketPrice;
-      const prevClose = meta.chartPreviousClose || meta.previousClose || (closes.length ? closes[0] : null);
-      const { changePct } = resolveIndexChangePct(price, prevClose, closes);
+      // 시리즈 첫 봉 폴백은 resolveIndexChangePct 안에 있다 — 여기서 섞으면
+      // changePctSource 가 meta 라고 거짓말을 한다.
+      const prevClose = meta.chartPreviousClose || meta.previousClose || null;
+      const { changePct, source, seriesChangePct } = resolveIndexChangePct(price, prevClose, closes);
+      // 값은 바꾸지 않는다 — 어긋남은 로그로만 남겨 prevClose 가 또 밀리면 찾을 수 있게.
+      if (source === "meta" && seriesChangePct != null && Math.abs(changePct - seriesChangePct) > INDEX_SERIES_DIVERGENCE_PP) {
+        console.error(`index changePct divergence: ${symbol} meta=${changePct.toFixed(2)} series=${seriesChangePct.toFixed(2)} prevClose=${prevClose}`);
+      }
       out.push({
         symbol,
         name,
         price: round(price),
         changePct: Math.round(changePct * 100) / 100,
+        changePctSource: source,
         series: closes.map(round),
       });
     } catch (e) {

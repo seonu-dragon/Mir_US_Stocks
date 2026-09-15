@@ -48,9 +48,18 @@ Cloudflare Dashboard에서 **Settings → Variables and Secrets**에 `FINNHUB_AP
 - `POST /community/clear` — 본인 글 전체 삭제 `{ clientId }`
 - `POST /community/comment` — 댓글 등록 `{ postId, author, content, clientId }` / `DELETE` 로 본인 댓글 삭제
 - `POST /community/like` — 공감 토글 `{ postId, clientId }`
-- `POST /community/report` — 신고 `{ postId, clientId, reason? }`. 전체 숨김은 하지 않고 신고자 본인만 클라이언트에서 가림. 신고 로그만 적재.
-- `GET /community/reports?adminKey=KEY` — **관리자 전용** 신고된 글+사유 목록
-- `POST /community/vote` — 종목 투표 `{ ticker, choice(buy|sell|hold), clientId }`. **하루 1표**(같은 날 재투표 시 교체). 별도 KV 키에 35일 보관.
+- `POST /community/report` — 신고 `{ postId, clientId, reason? }`. **서로 다른 신고자 3명**이 쌓이면 공개 목록에서 자동 숨김(작성자 본인·관리자에게는 `hiddenByReports` 와 함께 계속 보임).
+  - 세는 단위는 **신고 건수가 아니라 서로 다른 신고자 수**다. 기준은 해시 IP(`IP_HASH_SALT`), 없으면 `clientId`.
+    `clientId` 는 브라우저가 만드는 값이라 세 번 갈아 끼우면 아무 글이나 내릴 수 있었고, 앞단의 IP 리밋은
+    KV 고정창(최종 일관성)이라 원자적 방어가 못 된다. 응답의 `reportCount` 도 같은 단위다.
+- `GET /community/reports` — **관리자 전용** 신고된 글+사유 목록(`X-Admin-Key` 헤더, 구형 `?adminKey=` 폴백).
+  `reportCount`=서로 다른 신고자 수, `reportEntries`=원본 건수, `hidden`=자동 숨김 여부.
+- `POST /community/vote` — 종목 투표 `{ ticker, choice, clientId }`. **choice 는 `buy` / `sell` 두 가지뿐이다**
+  (예전 문서에 있던 `hold` 는 워커가 받지 않는다 — `400 bad_choice`. 집계에서도 옛 '관망' 표는 총계에서 빠진다).
+  - **하루 1표**(같은 날 재투표 시 교체). 여기서 "하루"의 경계는 **UTC 자정**이라 한국시간으로는
+    **오전 9시에 리셋**된다. 국내 장중(09:00~15:30)은 같은 날로 묶이므로 실사용엔 문제가 없지만,
+    KST 00:00~09:00 에 던진 표는 전날 몫으로 잡힌다.
+  - clientId 는 위조 가능하므로 해시 IP 기준으로도 하루 1표다. 별도 KV 키에 35일 보관.
 - `GET /community/votes?period=day|week|month&clientId=...` — 종목별 투표 순위(+ `myToday`)
 - 프론트는 `LIVE_DATA_PROXY` 주소 뒤에 위 경로를 붙여 호출하며, 종목 토론 탭에서 약 12초마다 자동 새로고침합니다.
 
@@ -59,6 +68,16 @@ Cloudflare Dashboard에서 **Settings → Variables and Secrets**에 `FINNHUB_AP
 - 신고된 글을 검토·삭제하려면 Worker → **Settings → Variables and Secrets**에 Secret **`COMMUNITY_ADMIN_KEY`**(아무 비밀 문자열)를 추가하고 **Deploy**.
 - 그 뒤 사이트를 **`?cadmin=설정한키`**로 한 번 접속하면 해당 브라우저가 관리자로 기억되어, 종목 토론 상단에 **🛡 신고 내역** 패널(글 삭제 가능)이 표시됩니다.
 - 키를 설정하지 않으면 신고 로그는 쌓이되 관리자 조회는 비활성화됩니다(`403`).
+- 진단 라우트 `?earnings_probe=1`(야후 쿠키·crumb 상태)도 같은 관리자 키 뒤에 있습니다.
+  키 없이 부르면 `403` 이고 야후를 호출하지 않습니다.
+
+### `IP_HASH_SALT` — 선택이 아니라 사실상 필수
+
+신고·투표 중복 판정에 쓰는 IP 해시의 솔트입니다. **설정하지 않으면 코드에 박힌 공개
+문자열(`mir-community-v1`)이 그대로 쓰이므로, 해시를 본 사람은 IPv4 전체 공간(43억)을
+몇 분 만에 전수 대입해 원본 IP 를 복원할 수 있습니다.** 해시는 관리자 신고 조회 응답에
+그대로 실려 나갑니다. Worker → **Settings → Variables and Secrets** 에 길고 임의적인
+Secret 으로 넣으세요(값을 바꾸면 그 시점 이후 신고·투표의 중복 판정만 새로 시작됩니다).
 
 ## 사이트 도우미 챗봇 (`POST /chat`)
 
@@ -128,12 +147,46 @@ const ALLOW_ORIGIN = "https://seonu-dragon.github.io";
 - 켜면 `/community*` 읽기·쓰기가 전부 인스턴스 하나로 직렬화되고, 첫 요청 때 기존 KV
   값을 DO storage 로 한 번 복사해 옵니다(기존 글 유지).
 
+### `COMMUNITY_SERIALIZED` — 바인딩이 아니라 내부 플래그
+
+`CommunityStore` 가 핸들러에 넘기는 **가짜 env 필드**입니다(대시보드에 넣는 값이 아닙니다).
+DO 경로에서는 요청이 이미 한 줄로 직렬화되므로, 이 플래그가 켜져 있으면
+`mutateVersionedList` 가 KV 용 write-then-verify 재시도(버전 스탬프 확인 + 3회 재시도)를
+건너뛰고 **한 번만 읽고 한 번만 씁니다**. 같은 파일의 `COMMUNITY_KV` 도 DO storage 어댑터로
+바꿔치기됩니다. 커뮤니티 저장 로직을 고칠 때 이 두 가지를 같이 보지 않으면, DO 경로에서만
+글이 사라지거나 KV 경로에서만 덮어쓰기가 나는 식으로 한쪽이 조용히 깨집니다.
+
 ## 자체 검증
 
 ```bash
 node --check worker/yahoo-proxy.js
-node worker/test_worker.mjs      # Node 18+, 네트워크 없이 도는 30개 케이스
+node worker/test_worker.mjs      # Node 18+, 네트워크 없이 도는 65개 케이스
 ```
 
-Origin 게이트·캐시 우회·`?model=` 관리자 제한·IP 리밋·DO/KV 동등성·동시 글쓰기를
-인메모리 모의 env 로 확인합니다. 대시보드에 붙여넣기 전에 돌려 보세요.
+Origin 게이트·캐시 우회·`?model=` 관리자 제한·IP 리밋·DO/KV 동등성·동시 글쓰기와
+2026-09-15 감사 수정분(지수 등락률 산수·부분 실패 lastgood·깨진 답 판정 4경로·모르는
+경로 404 no-store·crumb 음성 캐시)을 인메모리 모의 env 로 확인합니다.
+대시보드에 붙여넣기 전에 돌려 보세요.
+
+## 캐시·응답 규약(2026-09-15 정리)
+
+- `?ticker=` 와 `?move_analysis=` 응답에는 **`Vary: Origin`** 이 붙습니다. summary·analysis 가
+  Origin 게이트 뒤라 같은 URL 이라도 호출자에 따라 내용이 다른데, 예전엔 `public, max-age=900`
+  만 있어서 Origin 없는 호출이 만든 "요약 빈" 응답이 15분간 공유될 수 있었습니다.
+- **모르는 경로는 `404 {"error":"not_found"}` + `Cache-Control: no-store`** 입니다(예전엔
+  `400 missing ticker` 를 15분 캐시했습니다). `ticker` 는 16자로 잘립니다.
+- `?indices=` 의 등락률은 **같은 1d/5m 응답의 `meta.chartPreviousClose` 기준**입니다.
+  그 값이 없을 때만 당일 시리즈(첫 봉 → 마지막 봉)로 계산하고, 어느 쪽을 썼는지는
+  행마다 `changePctSource: "meta" | "series"` 로 실려 나갑니다. 갭 하락일에는 두 값이
+  크게 벌어지는 것이 정상이므로(시리즈는 전일 종가 → 시가 갭을 못 봅니다) **어긋난다고
+  값을 바꾸지 않고** 로그만 남깁니다. 예전엔 KR 지수만 7d/1d 응답을 한 번 더 받아
+  `closes[len-2]` 로 덮어썼는데, 그 위치 기준 때문에 KOSPI −4.97%(참값 −3.26) 처럼
+  한 세션 밀린 값이 발행됐습니다.
+- `?fx=`·`?indices=` 는 기대 심볼의 **60% 미만**만 돌아오면 성공으로 보지 않습니다 —
+  `lastgood:*` 를 조각으로 덮지 않고, 직전 정상값을 `stale: true` 로 서빙합니다
+  (직전값이 없으면 모은 조각 + `partial: true`).
+- 야후 crumb 부트스트랩이 실패하면 **5분간 음성 캐시**됩니다. 그동안 `earnings` 는 추가
+  호출 없이 `null` 이고, `?earnings_calendar=` 배치도 바로 빈 배열을 돌려줍니다
+  (무료 플랜 서브리퀘스트 상한 50 을 태우던 경로).
+- `/sync/prefs` **PUT 은 허용 Origin 에서만** 받고, 값은 **180일 TTL** 로 저장하며, 크기
+  제한 32KB 는 UTF-16 길이가 아니라 **바이트** 기준입니다.

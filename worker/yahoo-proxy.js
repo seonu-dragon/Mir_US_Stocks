@@ -122,10 +122,20 @@ function lastGoodEmpty(value) {
   return value == null || (Array.isArray(value) && value.length === 0);
 }
 
-// fetcher() 가 비어 있지 않은 값을 주면 KV 에 저장하고 { value, stale:false } 를,
-// 비었거나 던지면 KV 의 직전값(캡 이내)을 { value, stale:true, storedAt } 로 돌려준다.
-// 직전값도 없으면 { value: emptyValue, stale:false } — 기존 빈 응답 그대로.
-export async function withLastGood(env, name, fetcher, emptyValue, { maxAgeMs = LASTGOOD_MAX_AGE_MS, now = Date.now() } = {}) {
+// 부분 실패 판정(감사 P2-1). fx 11종·indices 8종처럼 심볼을 병렬로 긁는 fetcher 는
+// 한두 개만 살아 돌아와도 "성공"이라 직전 정상값을 그 조각으로 덮어썼다. 기대 개수의
+// 60% 미만이면 실패로 보고 저장하지 않는다(직전값은 그대로 두고 stale 로 서빙).
+export const LASTGOOD_MIN_COVERAGE = 0.6;
+
+export function lastGoodInsufficient(value, expectedCount, minCoverage = LASTGOOD_MIN_COVERAGE) {
+  if (!expectedCount || !Array.isArray(value)) return false;
+  return value.length < Math.ceil(expectedCount * minCoverage);
+}
+
+// fetcher() 가 충분한 값을 주면 KV 에 저장하고 { value, stale:false } 를, 비었거나
+// 던졌거나 **부분 실패**면 KV 의 직전값(캡 이내)을 { value, stale:true, storedAt } 로
+// 돌려준다. 직전값도 없으면 빈 값(부분 실패 땐 모은 만큼 + partial:true)을 준다.
+export async function withLastGood(env, name, fetcher, emptyValue, { maxAgeMs = LASTGOOD_MAX_AGE_MS, now = Date.now(), expectedCount = 0 } = {}) {
   const kv = lastGoodKv(env);
   const key = `lastgood:${name}`;
   let fresh = emptyValue;
@@ -134,7 +144,9 @@ export async function withLastGood(env, name, fetcher, emptyValue, { maxAgeMs = 
   } catch (e) {
     fresh = emptyValue;
   }
-  if (!lastGoodEmpty(fresh)) {
+  const empty = lastGoodEmpty(fresh);
+  const partial = !empty && lastGoodInsufficient(fresh, expectedCount);
+  if (!empty && !partial) {
     if (kv) {
       try {
         await kv.put(key, JSON.stringify({ storedAt: new Date(now).toISOString(), value: fresh }), { expirationTtl: LASTGOOD_KV_TTL_SEC });
@@ -142,26 +154,34 @@ export async function withLastGood(env, name, fetcher, emptyValue, { maxAgeMs = 
     }
     return { value: fresh, stale: false, storedAt: null };
   }
-  if (!kv) return { value: emptyValue, stale: false, storedAt: null };
+  // 여기부터는 실패 경로 — 어떤 경우에도 lastgood 을 덮어쓰지 않는다.
+  const fallback = partial ? { value: fresh, stale: false, storedAt: null, partial: true } : { value: emptyValue, stale: false, storedAt: null };
+  if (!kv) return fallback;
   try {
     const saved = await kv.get(key, "json");
     const storedAt = saved && saved.storedAt ? Date.parse(saved.storedAt) : NaN;
-    if (!saved || lastGoodEmpty(saved.value) || !Number.isFinite(storedAt)) return { value: emptyValue, stale: false, storedAt: null };
-    if (now - storedAt > maxAgeMs) return { value: emptyValue, stale: false, storedAt: null };
-    return { value: saved.value, stale: true, storedAt: saved.storedAt };
+    if (!saved || lastGoodEmpty(saved.value) || !Number.isFinite(storedAt)) return fallback;
+    if (now - storedAt > maxAgeMs) return fallback;
+    return { value: saved.value, stale: true, storedAt: saved.storedAt, ...(partial ? { partial: true } : {}) };
   } catch (e) {
-    return { value: emptyValue, stale: false, storedAt: null };
+    return fallback;
   }
 }
 
 // { <field>: value } 응답. stale 이면 stale/storedAt/warning 필드와 Warning 헤더를
 // 덧붙이고 캐시를 짧게 잡는다. 신선하면 응답 모양은 예전과 완전히 같다.
 function staleAwareJson(field, result) {
-  if (!result.stale) return json({ [field]: result.value });
+  if (!result.stale) {
+    // 부분 실패인데 직전 정상값도 없는 경우: 모은 조각은 주되 partial 로 표시하고
+    // 짧게만 캐시한다(다음 요청이 곧 다시 시도하도록).
+    if (result.partial) return json({ [field]: result.value, partial: true }, 200, LASTGOOD_STALE_CACHE_SEC);
+    return json({ [field]: result.value });
+  }
   const resp = json({
     [field]: result.value,
     stale: true,
     storedAt: result.storedAt,
+    ...(result.partial ? { partial: true } : {}),
     warning: `upstream unavailable; serving last good ${field} from ${result.storedAt}`,
   }, 200, LASTGOOD_STALE_CACHE_SEC);
   resp.headers.set("Warning", '110 - "Response is Stale"');
@@ -228,10 +248,14 @@ const CHAT_MODELS = [
 ];
 // /chat 이 GEMINI_API_KEY 가 있을 때 쓰는 모델 체인. env.GEMINI_MODEL 이 있으면
 // 그것을 맨 앞에 두고, 이어서 아래 기본 순서를 붙인다. 한 모델이 404/400
-// "model not found" 를 주면 다음 모델을 **한 번씩만** 시도한다(WEBSITE_INSPECTION_REPORT
-// §4-②: 1.5-flash 하드코딩 → 2.0-flash 우선, 폐기 대비 폴백). 스트리밍·비스트리밍
+// "model not found" 를 주면 다음 모델을 **한 번씩만** 시도한다. 스트리밍·비스트리밍
 // 두 경로가 같은 체인을 봐야 하므로 한 곳에만 둔다.
-const GEMINI_FALLBACK_MODELS = ["gemini-2.0-flash", "gemini-1.5-flash"];
+//
+// 2026-09-15 감사(P1-2): 옛 기본값 gemini-2.0-flash(2026-06-01 셧다운)·
+// gemini-1.5-flash(2025-09 종료)가 둘 다 죽어, GEMINI_MODEL 미설정이면 /chat 마다
+// 404 를 두 번 받고서야 Workers AI 로 넘어갔다. 살아 있는 모델로 교체.
+// 이 목록이 또 낡으면 코드 재배포 없이 env.GEMINI_MODEL 로 먼저 덮을 수 있다.
+const GEMINI_FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite"];
 
 export function geminiModelChain(env) {
   const chain = [];
@@ -299,7 +323,7 @@ export async function handleFetch(request, env) {
     // 네 경로 모두 stale-if-error(withLastGood): 업스트림이 죽으면 KV 의 직전
     // 정상값을 stale:true 마커와 함께 준다. 신선할 땐 응답 모양이 예전과 같다.
     if (url.searchParams.get("fx")) {
-      return cors(staleAwareJson("fx", await withLastGood(env, "fx", fetchFx, [])));
+      return cors(staleAwareJson("fx", await withLastGood(env, "fx", fetchFx, [], { expectedCount: FX_LIST.length })));
     }
     // CNN Fear & Greed index for the top header gauge.
     if (url.searchParams.get("fng")) {
@@ -307,13 +331,17 @@ export async function handleFetch(request, env) {
     }
     // Intraday index mini-charts (Finviz-style strip).
     if (url.searchParams.get("indices")) {
-      return cors(staleAwareJson("indices", await withLastGood(env, "indices", fetchIndices, [])));
+      return cors(staleAwareJson("indices", await withLastGood(env, "indices", fetchIndices, [], { expectedCount: INDEX_LIST.length })));
     }
     // Economic calendar (Korea + US) via investing.com XHR endpoint.
     if (url.searchParams.get("calendar")) {
       return cors(staleAwareJson("calendar", await fetchCalendar(env)));
     }
     if (url.searchParams.get("earnings_probe")) {
+      // 야후 세션을 실제로 태우는 진단 라우트라 관리자 키 뒤에 둔다(감사 P3).
+      if (!(await communityAdminOk(env, request, url.searchParams.get("adminKey")))) {
+        return cors(json({ error: "forbidden" }, 403, 0));
+      }
       const session = await bootstrapYahooSessionBasic();
       let quoteStatus = null;
       if (session?.crumb) {
@@ -339,10 +367,15 @@ export async function handleFetch(request, env) {
       return cors(json({ earnings }));
     }
 
+    // 가장 긴 실제 심볼이 005930.KS(9자)라 16자면 넉넉하다. 무제한이면 긴 문자열이
+    // 캐시 키·프롬프트·업스트림 URL 로 그대로 흘러간다(감사 P3).
     const ticker = (url.searchParams.get("ticker") || "")
       .toUpperCase()
-      .replace(/[^A-Z0-9.\-]/g, "");
-    if (!ticker) return cors(json({ error: "missing ticker" }, 400));
+      .replace(/[^A-Z0-9.\-]/g, "")
+      .slice(0, 16);
+    // 여기가 라우팅의 끝이다. 모르는 경로를 400 + max-age=900 으로 주면 오타 한 번이
+    // 15분간 엣지에 박힌다 → 404 + no-store (감사 P3).
+    if (!ticker) return cors(noStoreJson({ error: "not_found", message: "unknown route" }, 404));
 
     // Korean tickers must keep the dot for Yahoo (005930.KS); US class shares use
     // dashes (BRK.B -> BRK-B).
@@ -372,7 +405,7 @@ export async function handleFetch(request, env) {
       if (!originOk) return cors(json({ error: "forbidden_origin" }, 403, 0));
       if (env && env.MOVE_CACHE) {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
-        if (cached && cached.analysis) return cors(json({ ...cached, cached: true }, 200, 2592000));
+        if (cached && cached.analysis) return cors(varyOrigin(json({ ...cached, cached: true }, 200, 2592000)));
       }
       if (await ipRateLimited(request, env, "move", 6, 60)) {
         return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
@@ -418,7 +451,7 @@ export async function handleFetch(request, env) {
       if (analysis && originOk && env && env.MOVE_CACHE) {
         await env.MOVE_CACHE.put(cacheKey, JSON.stringify(payload), { expirationTtl: 2592000 });
       }
-      return cors(json(payload, 200, analysis ? 2592000 : 900));
+      return cors(varyOrigin(json(payload, 200, analysis ? 2592000 : 900)));
     }
 
     // Korean stocks get Korean-language headlines from Naver; US stays on Yahoo.
@@ -431,10 +464,11 @@ export async function handleFetch(request, env) {
     ]);
     const { text: summary, error: summaryError, model: summaryModel, cached: summaryCached } =
       await cachedTickerSummary(request, env, ticker, news, kr, modelOverride);
-    return cors(json({
+    // summary 는 Origin 게이트 뒤라 같은 URL 이라도 호출자에 따라 내용이 다르다.
+    return cors(varyOrigin(json({
       ticker, news, chart, earnings, quote, summary, summaryError, summaryModel,
       summaryCached: Boolean(summaryCached), newsSource: kr ? "naver" : "yahoo",
-    }));
+    })));
 }
 
 // ?ticker= 의 한국어 요약. 예전엔 요청마다 70B 모델을 돌렸고 Origin·IP 제한도
@@ -843,6 +877,27 @@ function isKoreanTicker(ticker) {
 // Yahoo quoteSummary now requires session cookies + crumb (otherwise 401 → earnings null).
 let yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
 const YAHOO_SESSION_TTL_MS = 20 * 60 * 1000;
+// 부트스트랩 실패 음성 캐시(감사 P1-1). 2026-09-15 라이브에서 crumb 발급이 전면
+// 실패했는데(cookieLen 0) 실패를 기억하지 않아, ?ticker= 한 번에 fc.yahoo.com →
+// finance.yahoo.com → getcrumb → guce consent 3종 → getcrumb 를 종목마다 새로 태웠다
+// (무료 플랜 서브리퀘스트 상한 50 에 30회 이상, 응답 3.5초). 실패하면 5분간 재시도를
+// 멈추고, 그 사이 crumb 이 필요한 경로는 즉시 포기한다.
+const YAHOO_SESSION_FAIL_TTL_MS = 5 * 60 * 1000;
+let yahooSessionFailedUntil = 0;
+// 같은 isolate 안에서 여러 요청이 동시에 부트스트랩하지 않도록 한 번만 돌린다.
+let yahooSessionInflight = null;
+
+// crumb 이 없고 음성 캐시가 살아 있는 상태 — 추가 fetch 없이 포기해야 하는 구간.
+export function yahooSessionBlocked(now = Date.now()) {
+  return !yahooSession.crumb && now < yahooSessionFailedUntil;
+}
+
+// 테스트용 초기화(모듈 전역이라 케이스 사이에 남으면 서로 간섭한다).
+export function resetYahooSessionState() {
+  yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
+  yahooSessionFailedUntil = 0;
+  yahooSessionInflight = null;
+}
 
 function cookiesFromResponse(response) {
   const parts = [];
@@ -965,10 +1020,30 @@ async function ensureYahooSession(force = false) {
   if (!force && yahooSession.crumb && Date.now() - yahooSession.at < YAHOO_SESSION_TTL_MS) {
     return yahooSession;
   }
-  const next = (await bootstrapYahooSessionBasic()) || (await bootstrapYahooSessionCsrf());
-  if (next) yahooSession = next;
-  else yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
-  return yahooSession;
+  // 직전 부트스트랩이 실패했으면 TTL 동안은 그대로 포기한다(재시도 폭주 방지).
+  if (yahooSessionBlocked()) return yahooSession;
+  // 이미 누가 부트스트랩 중이면 그 결과를 같이 기다린다(중복 서브리퀘스트 제거).
+  if (yahooSessionInflight) return yahooSessionInflight;
+  yahooSessionInflight = (async () => {
+    try {
+      const next = (await bootstrapYahooSessionBasic()) || (await bootstrapYahooSessionCsrf());
+      if (next) {
+        yahooSession = next;
+        yahooSessionFailedUntil = 0;
+      } else {
+        yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
+        yahooSessionFailedUntil = Date.now() + YAHOO_SESSION_FAIL_TTL_MS;
+      }
+      return yahooSession;
+    } catch (e) {
+      yahooSession = { cookie: "", crumb: "", at: 0, strategy: "basic" };
+      yahooSessionFailedUntil = Date.now() + YAHOO_SESSION_FAIL_TTL_MS;
+      return yahooSession;
+    } finally {
+      yahooSessionInflight = null;
+    }
+  })();
+  return yahooSessionInflight;
 }
 
 function yahooAuthedInit(session, method, body) {
@@ -1123,7 +1198,24 @@ async function fetchNews(env, symbol) {
   return fetchNewsFromYahoo(symbol);
 }
 
-async function fetchEarningsFromVisualization(symbol) {
+// 서브리퀘스트 예산. Workers 무료 플랜은 요청당 50 서브리퀘스트가 상한이고,
+// earnings 배치는 티커마다 quoteSummary 2회 + visualization 1회까지 쓴다.
+// 예산을 다 쓰면 남은 티커는 호출하지 않고 건너뛴다(감사 P2-6).
+const EARNINGS_CALENDAR_SUBREQUEST_BUDGET = 30;
+
+function subrequestBudget(left) {
+  return { left };
+}
+
+function budgetTake(budget, n = 1) {
+  if (!budget) return true;
+  if (budget.left < n) return false;
+  budget.left -= n;
+  return true;
+}
+
+async function fetchEarningsFromVisualization(symbol, budget = null) {
+  if (!budgetTake(budget)) return null;
   const plain = String(symbol || "").replace(/\.(KS|KQ)$/i, "");
   const r = await yahooAuthedFetch(
     "https://query1.finance.yahoo.com/v1/finance/visualization?lang=en-US&region=US",
@@ -1169,18 +1261,24 @@ async function fetchEarningsFromVisualization(symbol) {
   return { nextDate, dates: [nextDate], epsEstimate, history: history.slice(0, 8) };
 }
 
-async function fetchEarnings(symbol) {
+async function fetchEarnings(symbol, budget = null) {
+  // crumb 이 없으면 quoteSummary 도 visualization 도 401 이다 — 부를수록 서브리퀘스트만
+  // 태우므로 즉시 null 로 끝낸다(감사 P1-1). 부트스트랩 자체도 음성 캐시가 막는다.
+  const session = await ensureYahooSession();
+  if (!session.crumb) return null;
   try {
     const summaryUrl =
       `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}` +
       `?modules=calendarEvents,earningsHistory,defaultKeyStatistics`;
+    if (!budgetTake(budget)) return null;
     let r = await yahooAuthedFetch(summaryUrl);
     if (!r || !r.ok) {
+      if (!budgetTake(budget)) return null;
       r = await yahooAuthedFetch(
         `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(symbol)}?modules=calendarEvents,earningsHistory,defaultKeyStatistics`,
       );
     }
-    if (!r || !r.ok) return await fetchEarningsFromVisualization(symbol);
+    if (!r || !r.ok) return await fetchEarningsFromVisualization(symbol, budget);
     const data = await r.json();
     const result = (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result[0]) || {};
     const cal = (result.calendarEvents && result.calendarEvents.earnings) || {};
@@ -1215,22 +1313,27 @@ async function fetchEarnings(symbol) {
       epsEstimate,
       history,
     };
-    if (!payload.nextDate) return await fetchEarningsFromVisualization(symbol);
+    if (!payload.nextDate) return await fetchEarningsFromVisualization(symbol, budget);
     return payload;
   } catch (e) {
-    return await fetchEarningsFromVisualization(symbol);
+    return await fetchEarningsFromVisualization(symbol, budget);
   }
 }
 
 async function fetchEarningsCalendar(tickers) {
   const out = [];
+  // crumb 세션이 죽어 있으면 배치 전체가 401 이다 — 티커당 세 번씩 두드리지 않고 끝낸다.
+  const session = await ensureYahooSession();
+  if (!session.crumb) return out;
+  const budget = subrequestBudget(EARNINGS_CALENDAR_SUBREQUEST_BUDGET);
   const batchSize = 8;
   for (let i = 0; i < tickers.length; i += batchSize) {
+    if (budget.left <= 0) break;
     const batch = tickers.slice(i, i + batchSize);
     const chunk = await Promise.all(batch.map(async (ticker) => {
       // Korean tickers keep the dot for Yahoo (005930.KS); US class shares use dashes.
       const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
-      const data = await fetchEarnings(symbol);
+      const data = await fetchEarnings(symbol, budget);
       if (!data || !data.nextDate) return null;
       return { ticker, nextDate: data.nextDate, epsEstimate: data.epsEstimate };
     }));
@@ -1491,31 +1594,39 @@ const INDEX_LIST = [
   ["ETH-USD", "Ethereum"],
 ];
 
-// Yahoo's chartPreviousClose for the Korean indices (^KS11/^KQ11) is frequently
-// stale by a session (and even varies by requested range), which roughly doubles
-// the reported % change. For these symbols we derive the true prior-session close
-// from the daily candle series instead.
-const KR_INDICES = new Set(["^KS11", "^KQ11"]);
+// 직전 세션 종가는 **같은 1d/5m 응답의 meta.chartPreviousClose** 를 쓴다.
+// 예전엔 ^KS11/^KQ11 만 7d/1d 응답을 한 번 더 받아 `closes[len-2]` 로 덮어썼다.
+// 그 배열은 위치 기준이라 "마지막 봉 = 현재 세션" 가정이 깨지면(장 시작 전·휴장·
+// 결측 봉) 한 세션 밀린 값을 집는다. 2026-09-15 라이브에서 KOSPI −4.97%(참값
+// −3.26), KOSDAQ −3.60%(참값 −1.69)로 발행됐고, 같은 응답의 chartPreviousClose
+// (6909.91 / 820.64)는 정확했다 → 오버라이드 제거(감사 P0-1).
+//
+// 규약: **prevClose 가 유한하고 0보다 크면 언제나 그 값으로 계산한다.** 당일 시리즈
+// (첫 봉 → 마지막 봉)는 meta 가 없을 때만 쓰는 폴백이다.
+//
+// 한때 "meta 와 시리즈가 3%p 넘게 어긋나면 시리즈를 쓴다"는 안전장치를 뒀다가
+// 뺐다. 시리즈는 갭(전일 종가 → 시가)을 구조적으로 못 본다 — 3% 갭 하락으로
+// 시작해 장중 보합인 날이면 meta −3.3%(참값) vs 시리즈 −0.2% 로 벌어지는데,
+// 그때 시리즈를 고르면 멀쩡한 값을 틀린 값으로 바꾼다. 어긋남은 값을 바꾸는
+// 근거가 아니라 관측 대상이므로, 응답에는 어느 쪽을 썼는지(changePctSource)만
+// 싣고 크게 벌어지면 로그만 남긴다.
+const INDEX_SERIES_DIVERGENCE_PP = 3;
 
-async function fetchPrevDailyClose(symbol) {
-  try {
-    const r = await fetchT(
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=7d&interval=1d`,
-      { headers: UA }
-    );
-    if (!r.ok) return null;
-    const data = await r.json();
-    const res = data && data.chart && data.chart.result && data.chart.result[0];
-    if (!res) return null;
-    const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
-    const closes = (q.close || []).filter((v) => v != null);
-    if (closes.length < 2) return null;
-    // The last daily candle is the current (live) session; the one before it is
-    // the true previous-session close.
-    return closes[closes.length - 2];
-  } catch (e) {
-    return null;
+export function resolveIndexChangePct(price, prevClose, closes) {
+  const series = (Array.isArray(closes) ? closes : [])
+    .filter((v) => v != null)
+    .map(Number)
+    .filter(Number.isFinite);
+  const seriesChangePct = series.length >= 2 && series[0] > 0
+    ? (series[series.length - 1] / series[0] - 1) * 100
+    : null;
+  const p = Number(price);
+  const prev = Number(prevClose);
+  if (Number.isFinite(p) && Number.isFinite(prev) && prev > 0) {
+    return { changePct: (p / prev - 1) * 100, source: "meta", seriesChangePct };
   }
+  if (seriesChangePct == null) return { changePct: 0, source: "none", seriesChangePct };
+  return { changePct: seriesChangePct, source: "series", seriesChangePct };
 }
 
 async function fetchIndices() {
@@ -1534,17 +1645,20 @@ async function fetchIndices() {
       const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
       const closes = (q.close || []).filter((v) => v != null);
       const price = closes.length ? closes[closes.length - 1] : meta.regularMarketPrice;
-      let prevClose = meta.chartPreviousClose || meta.previousClose || (closes.length ? closes[0] : null);
-      if (KR_INDICES.has(symbol)) {
-        const krPrev = await fetchPrevDailyClose(symbol);
-        if (krPrev) prevClose = krPrev;
+      // 시리즈 첫 봉 폴백은 resolveIndexChangePct 안에 있다 — 여기서 섞으면
+      // changePctSource 가 meta 라고 거짓말을 한다.
+      const prevClose = meta.chartPreviousClose || meta.previousClose || null;
+      const { changePct, source, seriesChangePct } = resolveIndexChangePct(price, prevClose, closes);
+      // 값은 바꾸지 않는다 — 어긋남은 로그로만 남겨 prevClose 가 또 밀리면 찾을 수 있게.
+      if (source === "meta" && seriesChangePct != null && Math.abs(changePct - seriesChangePct) > INDEX_SERIES_DIVERGENCE_PP) {
+        console.error(`index changePct divergence: ${symbol} meta=${changePct.toFixed(2)} series=${seriesChangePct.toFixed(2)} prevClose=${prevClose}`);
       }
-      const changePct = (price != null && prevClose) ? (price / prevClose - 1) * 100 : 0;
       out.push({
         symbol,
         name,
         price: round(price),
         changePct: Math.round(changePct * 100) / 100,
+        changePctSource: source,
         series: closes.map(round),
       });
     } catch (e) {
@@ -1598,6 +1712,22 @@ function json(obj, status = 200, cacheSeconds = 900) {
       "Cache-Control": `public, max-age=${cacheSeconds}`,
     },
   });
+}
+
+// 캐시하면 안 되는 응답(모르는 경로·거부 등). max-age=0 만으로는 공유 캐시가
+// 저장 자체는 할 수 있어 no-store 로 못 박는다.
+function noStoreJson(obj, status = 404) {
+  const r = json(obj, status, 0);
+  r.headers.set("Cache-Control", "no-store");
+  return r;
+}
+
+// 같은 URL 이라도 Origin 에 따라 본문이 달라지는 응답(LLM 요약 포함 여부)에 붙인다.
+// 없으면 Origin 없는 호출이 만든 "요약 빈" 응답이 15분 동안 브라우저 요청에도
+// 그대로 나가고, 반대로 요약이 든 응답이 남에게 공유될 수 있다(감사 P1-3).
+function varyOrigin(resp) {
+  resp.headers.set("Vary", "Origin");
+  return resp;
 }
 
 function cors(resp) {
@@ -1764,7 +1894,22 @@ const COMMUNITY_DUP_WINDOW_MS = 600000;
 const COMMUNITY_MAX_LINKS = 2;
 const COMMUNITY_BANNED_PATTERNS = [/viagra|카지노|토토사이트|먹튀|불법대출/i];
 // 신고가 이 건수 이상 쌓인 글·댓글은 공개 목록에서 자동 숨김(작성자 본인·관리자 제외).
+// 세는 단위는 신고 **건수가 아니라 서로 다른 신고자 수**다 — 기준은 해시 IP,
+// 없으면 clientId. clientId 는 브라우저가 만드는 값이라 세 번 갈아 끼우면 아무 글이나
+// 내릴 수 있었고, 앞단의 ipRateLimited(KV 고정창)는 엣지 간 최종 일관성이라 원자적
+// 방어가 못 된다(감사 P2-3).
 const COMMUNITY_REPORT_HIDE_THRESHOLD = 3;
+
+export function distinctReporterCount(row) {
+  const reports = Array.isArray(row && row.reports) ? row.reports : [];
+  const seen = new Set();
+  for (const r of reports) {
+    if (!r) continue;
+    if (r.ipHash) seen.add(`ip:${r.ipHash}`);
+    else if (r.clientId) seen.add(`cid:${r.clientId}`);
+  }
+  return seen.size;
+}
 
 // 투표(별도 KV) — 하루 1표, 35일 보관
 const COMMUNITY_VOTES_KV_KEY = "community:v1:votes";
@@ -1772,8 +1917,10 @@ const COMMUNITY_VOTE_CHOICES = ["buy", "sell"];
 const COMMUNITY_MAX_VOTES = 8000;
 const COMMUNITY_VOTE_RETENTION_MS = 35 * 24 * 60 * 60 * 1000;
 
-// /sync/prefs PUT 바디 상한. 워치리스트 80 + 포트폴리오 60 + 알림 설정이면 수 KB 다.
+// /sync/prefs PUT 바디 상한(바이트). 워치리스트 80 + 포트폴리오 60 + 알림 설정이면 수 KB 다.
 const SYNC_PREFS_MAX_BODY_BYTES = 32 * 1024;
+// 설정 키 보관 기간 — 갱신할 때마다 연장된다(180일 무활동이면 만료).
+const SYNC_PREFS_TTL_SEC = 180 * 24 * 60 * 60;
 
 function communityLinkCount(text) {
   return (String(text || "").match(/https?:\/\/|www\./gi) || []).length;
@@ -1948,7 +2095,7 @@ async function handleCommunityList(url, env, request) {
   // 단, 작성자 본인과 관리자에게는 보이고(본인 글에는 hiddenByReports 마커를 실어
   // 클라이언트가 "신고 누적으로 숨김 처리됨" 상태를 안내), 신고 내역(reports 배열,
   // clientId 포함)은 계속 서버에만 남긴다.
-  const reportCountOf = (row) => (Array.isArray(row && row.reports) ? row.reports.length : 0);
+  const reportCountOf = distinctReporterCount;
   const isHidden = (row) => reportCountOf(row) >= COMMUNITY_REPORT_HIDE_THRESHOLD;
   const visible = filtered.filter((p) => !isHidden(p) || isAdmin || isViewer(p.clientId));
   const publicPosts = visible.slice(0, limit).map((p) => {
@@ -2128,10 +2275,11 @@ async function handleCommunityReport(request, env) {
     if (!post) return { response: json({ error: "not_found" }, 404, 30) };
     const reports = Array.isArray(post.reports) ? post.reports : [];
     const already = reports.some((r) => r && (r.clientId === clientId || (r.ipHash && r.ipHash === ipHash)));
-    if (already) return { response: json({ ok: true, postId, reportCount: reports.length }, 200, 0) };
+    // reportCount 는 자동 숨김 판정과 같은 단위(서로 다른 신고자 수)로 돌려준다.
+    if (already) return { response: json({ ok: true, postId, reportCount: distinctReporterCount(post) }, 200, 0) };
     reports.push({ clientId, ipHash, reason, at: new Date().toISOString() });
     post.reports = reports;
-    return { items: posts, response: json({ ok: true, postId, reportCount: reports.length }, 200, 0) };
+    return { items: posts, response: json({ ok: true, postId, reportCount: distinctReporterCount(post) }, 200, 0) };
   });
 }
 
@@ -2150,7 +2298,9 @@ async function handleCommunityReportsList(url, env, request) {
       ticker: p.ticker || "",
       content: p.content,
       createdAt: p.createdAt,
-      reportCount: p.reports.length,
+      reportCount: distinctReporterCount(p),
+      reportEntries: p.reports.length,
+      hidden: distinctReporterCount(p) >= COMMUNITY_REPORT_HIDE_THRESHOLD,
       reports: p.reports,
     }))
     .sort((a, b) => b.reportCount - a.reportCount);
@@ -2261,12 +2411,17 @@ async function handleSyncPrefsGet(url, env) {
 
 async function handleSyncPrefsPut(request, env) {
   if (!env || !env.COMMUNITY_KV) return communityKvMissing();
+  // 쓰기 경로는 허용 Origin(사이트·로컬 서버)에서만. 예전엔 curl 한 줄로 아무
+  // clientId 의 설정을 덮어쓰고 KV 키를 무한히 만들 수 있었다(감사 P1-4).
+  if (!llmOriginAllowed(request)) return privateJson({ error: "forbidden_origin" }, 403);
   if (await ipRateLimited(request, env, "sync_put", 10, 60)) return rateLimitedResponse();
   const declared = Number(request.headers.get("Content-Length") || 0);
   if (declared > SYNC_PREFS_MAX_BODY_BYTES) return privateJson({ error: "payload_too_large" }, 413);
   let text;
   try { text = await request.text(); } catch { return privateJson({ error: "bad_json" }, 400); }
-  if (text.length > SYNC_PREFS_MAX_BODY_BYTES) return privateJson({ error: "payload_too_large" }, 413);
+  // 상한은 바이트 기준이다. text.length 는 UTF-16 코드유닛이라 한글 본문이면
+  // 실제 크기의 1/3 로 재는 셈이었다(32KB 제한을 ~96KB 가 통과).
+  if (new TextEncoder().encode(text).length > SYNC_PREFS_MAX_BODY_BYTES) return privateJson({ error: "payload_too_large" }, 413);
   let body;
   try { body = JSON.parse(text); } catch { return privateJson({ error: "bad_json" }, 400); }
   const clientId = sanitizeCommunityClientId(body && body.clientId);
@@ -2278,7 +2433,9 @@ async function handleSyncPrefsPut(request, env) {
     alertSettings: prefs.alertSettings && typeof prefs.alertSettings === "object" ? prefs.alertSettings : {},
     updatedAt: Number(prefs.updatedAt) || Date.now(),
   };
-  await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload));
+  // TTL 이 없으면 한 번 만들어진 clientId 키가 영구히 남는다(익명 clientId 는
+  // 브라우저 저장소를 지우면 새로 생긴다) → 180일 무갱신이면 만료.
+  await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload), { expirationTtl: SYNC_PREFS_TTL_SEC });
   return privateJson({ ok: true, updatedAt: payload.updatedAt });
 }
 
@@ -2623,10 +2780,13 @@ function formatChatNewsRagBlock(news) {
 // 업스트림(Gemini alt=sse 또는 Workers AI stream:true)의 SSE 를 라인 단위로 파싱해
 // `data: {"delta":"..."}` 형태의 우리 포맷으로 재송출한다. 마지막에 done 메타 +
 // [DONE] 센티널을 보낸다. 클라이언트는 Content-Type 으로 신/구 워커를 감지한다.
-function chatSseResponse(upstream, pickDelta, meta) {
+function chatSseResponse(upstream, pickDelta, meta, { expectKorean = true } = {}) {
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   let buf = "";
+  // 스트리밍은 델타를 이미 내보낸 뒤라 답을 바꿀 수 없다. 대신 누적 본문을 같은
+  // 판정기에 걸어 done 메타에 degenerate 플래그를 실어 보낸다(감사 P2-5).
+  let acc = "";
   const transform = new TransformStream({
     transform(chunk, controller) {
       buf += decoder.decode(chunk, { stream: true });
@@ -2639,12 +2799,17 @@ function chatSseResponse(upstream, pickDelta, meta) {
         if (!payload || payload === "[DONE]") continue;
         try {
           const delta = pickDelta(JSON.parse(payload));
-          if (delta) controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+          if (delta) {
+            if (acc.length < 8000) acc += delta;
+            controller.enqueue(encoder.encode(`data: ${JSON.stringify({ delta })}\n\n`));
+          }
         } catch (e) { /* 파싱 불가 청크는 건너뜀 */ }
       }
     },
     flush(controller) {
-      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, ...(meta || {}) })}\n\n`));
+      const degenerate = looksDegenerateReply(acc, expectKorean);
+      if (degenerate) console.error("chat stream: degenerate reply", (meta && meta.model) || "");
+      controller.enqueue(encoder.encode(`data: ${JSON.stringify({ done: true, ...(meta || {}), ...(degenerate ? { degenerate: true } : {}) })}\n\n`));
       controller.enqueue(encoder.encode("data: [DONE]\n\n"));
     },
   });
@@ -2680,7 +2845,7 @@ function geminiRequestPayload(systemContent, history) {
   };
 }
 
-async function geminiStreamChat(env, systemContent, history, ragMeta) {
+async function geminiStreamChat(env, systemContent, history, ragMeta, expectKorean = true) {
   const payload = geminiRequestPayload(systemContent, history);
   for (const geminiModel of geminiModelChain(env)) {
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:streamGenerateContent?alt=sse`;
@@ -2699,7 +2864,7 @@ async function geminiStreamChat(env, systemContent, history, ragMeta) {
         console.error("Gemini stream error:", res.status);
         return null; // 비스트리밍 경로로 폴백
       }
-      return chatSseResponse(res.body, pickGeminiDelta, { model: geminiModel, ...(ragMeta || {}) });
+      return chatSseResponse(res.body, pickGeminiDelta, { model: geminiModel, ...(ragMeta || {}) }, { expectKorean });
     } catch (e) {
       console.error("Gemini stream call failed:", e);
       return null;
@@ -2710,7 +2875,7 @@ async function geminiStreamChat(env, systemContent, history, ragMeta) {
 
 // 한국어 답변인데 한글이 거의 없거나 같은 3-gram 이 20% 넘게 반복되면 깨진 출력으로 본다.
 // expectKorean: 사용자 질문에 한글이 있을 때만 한글 비율을 본다(영어 질문에는 영어 답이 정상).
-function looksDegenerateReply(text, expectKorean = true) {
+export function looksDegenerateReply(text, expectKorean = true) {
   const s = String(text || "").trim();
   if (s.length < 40) return false;
   const letters = (s.match(/[A-Za-z\uAC00-\uD7A3]/g) || []).length;
@@ -2779,9 +2944,10 @@ async function handleChat(request, env) {
     : {};
 
   // 만약 환경 변수에 GEMINI_API_KEY가 존재하면 Google Gemini API를 호출하여 성능을 대폭 향상합니다.
+  const expectKorean = /[가-힣]/.test(userText);
   if (env && env.GEMINI_API_KEY) {
     if (wantStream) {
-      const streamResp = await geminiStreamChat(env, systemContent, history, ragMeta);
+      const streamResp = await geminiStreamChat(env, systemContent, history, ragMeta, expectKorean);
       if (streamResp) return streamResp;
       // 스트리밍 실패 시 아래 비스트리밍 Gemini → Workers AI 순으로 폴백
     }
@@ -2799,6 +2965,11 @@ async function handleChat(request, env) {
         if (res.ok) {
           const data = await res.json();
           const text = String(data.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+          if (text && looksDegenerateReply(text, expectKorean)) {
+            // 깨진 반복 답은 그대로 캐시·표시되면 안 된다 — 다음 모델로 (감사 P2-5).
+            console.error("Gemini reply looked degenerate, trying next model:", geminiModel);
+            continue;
+          }
           if (text) {
             return json({
               reply: text,
@@ -2827,10 +2998,14 @@ async function handleChat(request, env) {
       try {
         const stream = await env.AI.run(model, { messages, max_tokens: 768, temperature: 0.3, stream: true });
         if (stream && typeof stream.pipeThrough === "function") {
-          return chatSseResponse(stream, pickWorkersAiDelta, { model, ...ragMeta });
+          return chatSseResponse(stream, pickWorkersAiDelta, { model, ...ragMeta }, { expectKorean });
         }
         // 런타임이 스트림 대신 객체를 준 경우: 즉시 완성 응답으로 처리
         const text = String((stream && stream.response) || "").trim();
+        if (text && looksDegenerateReply(text, expectKorean)) {
+          lastError = `degenerate_response:${model}`;
+          continue;
+        }
         if (text) return json({ reply: text, model, rag: ragMeta.rag || null });
       } catch (e) {
         lastError = `${model}: ${(e && e.message) || e}`;
@@ -2843,7 +3018,7 @@ async function handleChat(request, env) {
     try {
       const result = await env.AI.run(model, { messages, max_tokens: 768, temperature: 0.3 });
       const text = String((result && result.response) || "").trim();
-      if (text && looksDegenerateReply(text, /[\uAC00-\uD7A3]/.test(userText))) {
+      if (text && looksDegenerateReply(text, expectKorean)) {
         // 2026-09-04: 한 모델이 ". of the the of the the …" 만 반복한 답을 냈다. 다음 모델로.
         lastError = `degenerate_response:${model}`;
         continue;

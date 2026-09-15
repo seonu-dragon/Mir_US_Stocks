@@ -7,6 +7,12 @@
 // 지분 공시(krOwn* · renderKrOwnership · setupKrOwnershipEvents).
 // 이름 충돌은 scripts/check_global_name_collisions.py 가 감시한다.
 
+// 외부 링크 스킴 검증. app.js 가 전역 safeHttpHref 를 제공하면 그걸 쓰고,
+// 없으면 http(s) 만 통과시키는 로컬 폴백(javascript: 등 차단).
+const krPanelHref = (u) => (typeof safeHttpHref === "function"
+  ? safeHttpHref(u)
+  : (/^https?:\/\//i.test(String(u || "")) ? String(u) : "#"));
+
 // 감사의견 경고. 한국에서 '의견거절'·'한정'·'부적정' 은 상장폐지 사유라 가격보다 먼저
 // 봐야 할 정보다. 실측(2,521종목): 비적정 47종목 — 금양·STX·삼부토건 등 지금도 거래 중.
 // 강조사항(계속기업 불확실성 등)은 270종목(11%)이라 경고보다 한 단계 낮게 보여준다.
@@ -364,21 +370,21 @@ function renderKrDisclosures() {
     );
   }
   if (!rows.length) {
-    table.innerHTML = `<p class="muted">${payload.note || "표시할 공시가 없습니다."}</p>`;
+    table.innerHTML = `<p class="muted">${escapeHtml(payload.note || "표시할 공시가 없습니다.")}</p>`;
     return;
   }
   table.innerHTML = `
     <table class="insider-table table-wide">
-      <thead><tr><th>일자</th><th>종목</th><th>회사</th><th>유형</th><th>제목</th></tr></thead>
+      <thead><tr><th>일자</th><th>종목</th><th>${isKrMarket() ? "코드" : "회사"}</th><th>유형</th><th>제목</th></tr></thead>
       <tbody>
         ${rows.slice(0, 200).map((row) => `
           <tr>
             <td>${escapeHtml(row.fileDate || "")}</td>
-            <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
-            <td>${escapeHtml(row.company || "")}</td>
+            <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row))}</button></td>
+            <td>${escapeHtml(stockSubLabel(row) || "")}</td>
             <td>${escapeHtml(row.typeLabel || "")}</td>
             <td>
-              ${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}
+              ${row.link ? `<a href="${escapeHtml(krPanelHref(row.link))}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}
               ${krEventDetailLine(row)}
               ${krDisclosureStatLine(row)}
             </td>
@@ -414,6 +420,7 @@ function krOwnDelta(v, suffix, digits = 0) {
 function renderKrOwnProfile() {
   const meta = byId("krOwnMeta");
   const table = byId("krOwnTable");
+  if (!table) return; // 탭 마크업이 아직 없으면 조용히 빠진다
   const payload = window.KR_OWNERSHIP_PROFILE;
   if (!payload) {
     table.innerHTML = `<p class="muted">지배구조 데이터를 불러오는 중…</p>`;
@@ -449,8 +456,8 @@ function renderKrOwnProfile() {
   const num = (v) => (Number.isFinite(v) ? Number(v).toLocaleString() : "—");
   const body = rows.slice(0, 200).map(({ item, p }) => `
     <tr>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(item.ticker)}</button></td>
-      <td>${escapeHtml(item.company || "")}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
+      <td>${escapeHtml(stockSubLabel(item) || "")}</td>
       <td>${escapeHtml(p.topHolder || "—")}</td>
       <td>${pct(p.ownerStakePct)}</td>
       <td><b>${pct(p.freeFloatPct)}</b></td>
@@ -461,7 +468,7 @@ function renderKrOwnProfile() {
   table.innerHTML = `
     <table class="insider-table table-wide">
       <thead><tr>
-        <th>종목</th><th>회사</th><th>최대주주</th><th>지분율</th>
+        <th>종목</th><th>${isKrMarket() ? "코드" : "회사"}</th><th>최대주주</th><th>지분율</th>
         <th>유통물량</th><th>자기주식</th><th>소액주주 수</th>
       </tr></thead>
       <tbody>${body}</tbody>
@@ -506,16 +513,17 @@ function renderKrOwnership() {
     return;
   }
 
+  const codeHead = isKrMarket() ? "코드" : "회사";
   const head = isMajor
-    ? `<tr><th>일자</th><th>종목</th><th>회사</th><th>보고자</th><th>보유비율</th><th>증감</th><th>보유주식</th><th>구분</th></tr>`
-    : `<tr><th>일자</th><th>종목</th><th>회사</th><th>보고자</th><th>직위</th><th>소유주식</th><th>증감</th><th>등기</th></tr>`;
+    ? `<tr><th>일자</th><th>종목</th><th>${codeHead}</th><th>보고자</th><th>보유비율</th><th>증감</th><th>보유주식</th><th>구분</th></tr>`
+    : `<tr><th>일자</th><th>종목</th><th>${codeHead}</th><th>보고자</th><th>직위</th><th>소유주식</th><th>증감</th><th>등기</th></tr>`;
 
   const body = rows.slice(0, 200).map((row) => {
     const common = `
       <td>${escapeHtml(row.fileDate || "")}</td>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button></td>
-      <td>${escapeHtml(row.company || "")}</td>
-      <td>${row.link ? `<a href="${escapeHtml(row.link)}" target="_blank" rel="noopener">${escapeHtml(row.filer || "-")}</a>` : escapeHtml(row.filer || "-")}</td>`;
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row))}</button></td>
+      <td>${escapeHtml(stockSubLabel(row) || "")}</td>
+      <td>${row.link ? `<a href="${escapeHtml(krPanelHref(row.link))}" target="_blank" rel="noopener">${escapeHtml(row.filer || "-")}</a>` : escapeHtml(row.filer || "-")}</td>`;
     return isMajor
       ? `<tr>${common}
           <td><b>${krOwnNum(row.ratio, 2)}%</b></td>

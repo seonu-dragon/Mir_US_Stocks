@@ -17,6 +17,7 @@
   --green: #0f7a3f;          /* 흰 배경 대비 ≥ 4.5:1 */
   --red: #c03535;
   --amber: #98620f;
+  --teal: #0e7490;           /* 흰 배경 대비 ≥ 4.5:1 */
   --link: #1d4ed8;
   --chip-bg: #eff6ff;
   --chip-border: #bfdbfe;
@@ -90,21 +91,16 @@
   --r-md: 8px;
   --r-lg: 12px;
   --r-pill: 999px;
-  /* 히어로·AI 레이어가 참조하던 별칭. 새 이름을 만들지 말고 본체 토큰을 쓸 것. */
-  --brand: var(--primary);
-  --text-soft: var(--text-muted);
-  --radius: var(--r-lg);
-  --radius-sm: var(--r-sm);
-  --shadow-md: var(--shadow);
-  --panel-bg: var(--panel);
-  --border-color: var(--line);
+  /* 별칭 토큰(--brand/--text-soft/--panel-bg/--border-color)은 2026-09-15 에 없앴다.
+     :root 에서 var() 가 한 번 풀려 버려 body.ai-mode-active 같은 스코프 재정의를
+     따라가지 못했다(라이트 테마 + AI 모드에서 사용자 말풍선 색이 갈림). 본체 토큰만 쓴다.
+     --radius/--radius-sm/--shadow-md 도 참조처가 0 이라 함께 제거. */
   --tint-danger: var(--tint-neg);
   --tint-danger-fg: var(--tint-neg-fg);
 
   /* ── 그림자: 떠 있는 요소(다이얼로그·팝오버·FAB)에만 ── */
   --shadow-sm: 0 2px 8px rgba(20, 30, 50, 0.06);
   --shadow: 0 10px 28px rgba(20, 30, 50, 0.10);
-  --shadow-lg: 0 18px 44px rgba(20, 30, 50, 0.14);
 
   /* ── 간격 스케일 (4·8·12·16·20·24) ── */
   --space-1: 4px;
@@ -123,8 +119,6 @@
   --fs-cap: 12px;
   /* 이전 이름 (kr-panels.js 인라인이 아직 참조) */
   --fs-label: var(--fs-cap);
-  --fw-semibold: 600;
-  --fw-bold: 700;
 
   /* ── 터치 타깃 ── */
   --control-h: 44px;
@@ -402,108 +396,6 @@ h1 {
   align-items: center;
 }
 
-.social-tooltip {
-  position: absolute;
-  top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%) translateY(4px);
-  padding: 6px 10px;
-  border-radius: var(--r-md);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  background: rgba(15, 23, 42, 0.96);
-  color: #e2e8f0;
-  font-size: var(--fs-sub);
-  font-weight: 600;
-  line-height: 1.6;
-  white-space: nowrap;
-  text-align: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease,
-    background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-  z-index: var(--z-popover);
-}
-
-.social-tooltip::before {
-  content: "";
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-bottom-color: rgba(15, 23, 42, 0.96);
-  transition: border-bottom-color 0.15s ease;
-}
-
-.social-link-wrap:hover .social-tooltip,
-.social-link-wrap:focus-within .social-tooltip {
-  opacity: 1;
-  visibility: visible;
-  transform: translateX(-50%) translateY(0);
-}
-
-.social-link-wrap:has(.sl-instagram):hover .social-tooltip,
-.social-link-wrap:has(.sl-instagram):focus-within .social-tooltip {
-  background: #d6249f;
-  border-color: #d6249f;
-  color: #fff;
-}
-
-.social-link-wrap:has(.sl-instagram):hover .social-tooltip::before,
-.social-link-wrap:has(.sl-instagram):focus-within .social-tooltip::before {
-  border-bottom-color: #d6249f;
-}
-
-.social-link-wrap:has(.sl-x):hover .social-tooltip,
-.social-link-wrap:has(.sl-x):focus-within .social-tooltip {
-  background: #000;
-  border-color: #000;
-  color: #fff;
-}
-
-.social-link-wrap:has(.sl-x):hover .social-tooltip::before,
-.social-link-wrap:has(.sl-x):focus-within .social-tooltip::before {
-  border-bottom-color: #000;
-}
-
-.social-link-wrap:has(.sl-threads):hover .social-tooltip,
-.social-link-wrap:has(.sl-threads):focus-within .social-tooltip {
-  background: #000;
-  border-color: #000;
-  color: #fff;
-}
-
-.social-link-wrap:has(.sl-threads):hover .social-tooltip::before,
-.social-link-wrap:has(.sl-threads):focus-within .social-tooltip::before {
-  border-bottom-color: #000;
-}
-
-.social-link-wrap:has(.sl-naver):hover .social-tooltip,
-.social-link-wrap:has(.sl-naver):focus-within .social-tooltip {
-  background: #03c75a;
-  border-color: #03c75a;
-  color: #fff;
-}
-
-.social-link-wrap:has(.sl-naver):hover .social-tooltip::before,
-.social-link-wrap:has(.sl-naver):focus-within .social-tooltip::before {
-  border-bottom-color: #03c75a;
-}
-
-.social-link-wrap:has(.sl-install):hover .social-tooltip,
-.social-link-wrap:has(.sl-install):focus-within .social-tooltip {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-
-.social-link-wrap:has(.sl-install):hover .social-tooltip::before,
-.social-link-wrap:has(.sl-install):focus-within .social-tooltip::before {
-  border-bottom-color: var(--primary);
-}
-
 .social-link {
   display: inline-flex;
   align-items: center;
@@ -521,21 +413,6 @@ h1 {
   width: 16px;
   height: 16px;
   fill: currentColor;
-}
-
-/* SNS 줄 끝의 앱 설치 버튼(항상 표시, 설치되면 숨김) — 평소 흑백, 호버 시 파란색 */
-.social-link.sl-install {
-  padding: 0;
-  cursor: pointer;
-}
-
-.social-link.sl-install:hover {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-.social-link.sl-install[hidden] {
-  display: none;
 }
 
 .social-link svg path {
@@ -578,125 +455,6 @@ h1 {
   display: flex;
   align-items: stretch;   /* 카드뉴스와 데이터기준 박스 높이를 동일하게 */
   gap: 14px;
-}
-
-/* 카드뉴스 라벨 + 버전 스위치 */
-.cardnews-switch {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-}
-
-.cardnews-switch[hidden] { display: none; }
-
-.cardnews-label {
-  font-size: var(--fs-cap);
-  font-weight: 600;
-  color: #cbd5e1;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.cardnews-tabs {
-  display: flex;
-  gap: var(--space-1);
-}
-
-.cardnews-tabs button {
-  padding: 4px 9px;
-  font-size: var(--fs-cap);
-  font-weight: 600;
-  white-space: nowrap;
-  border-radius: var(--r-pill);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.cardnews-tabs button.is-active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
-}
-
-.cardnews-tabs button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.cardnews-carousel-host {
-  display: flex;
-  align-items: stretch;
-  gap: var(--space-1);
-  flex: 0 0 auto;
-  align-self: stretch;
-}
-
-.cardnews-carousel-host[hidden] { display: none; }
-
-.cardnews-nav {
-  display: none;
-  flex: 0 0 auto;
-  align-self: center;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
-  font-size: var(--fs-h3);
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.cardnews-nav:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.cardnews-carousel-host.has-nav .cardnews-nav {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-@media (max-width: 900px) {
-  .cardnews-carousel-host.has-nav .cardnews-nav {
-    display: none;
-  }
-}
-
-/* 오늘의 카드뉴스 미니 캐러셀: 데이터기준 박스와 같은 크기, 높이를 잘라내(crop) 글자 노출 */
-.cardnews-carousel {
-  position: relative;        /* 내부 img 절대배치 기준 */
-  align-self: stretch;       /* 높이를 데이터기준 박스와 동일하게 */
-  flex: 0 0 auto;
-  width: 325px;              /* 데이터기준 박스보다 가로로 넓게(약 +30%) */
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.06);
-  overflow: hidden;
-  cursor: zoom-in;
-  transition: transform 0.15s ease;
-}
-
-.cardnews-carousel:hover { transform: translateY(-1px); }
-.cardnews-carousel[hidden] { display: none; }
-
-.cardnews-carousel img {
-  position: absolute;
-  inset: 0;                  /* 버튼(=데이터박스 높이)을 가득 채움 */
-  width: 100%;
-  height: 100%;
-  object-fit: cover;         /* 너비에 맞추고 위아래를 잘라 글자가 보이게 */
-  object-position: 50% 80%;  /* 카드 헤드라인 위치를 보여줌(crop_sample 기준) */
-  transition: opacity 0.25s ease;
 }
 
 /* 크게 보기 라이트박스 */
@@ -811,16 +569,6 @@ main {
 .summary-band .summary-card { padding: 9px 11px; }
 /* === critical:end === */
 
-.regime-card {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  border-left-width: 4px;
-}
-
-.regime-card.regime-on { border-left-color: var(--pos); }
-.regime-card.regime-off { border-left-color: var(--neg); }
-.regime-card.regime-mixed { border-left-color: #f59e0b; }
 
 strong.regime-label {
   font-size: var(--fs-h2);
@@ -832,43 +580,6 @@ strong.regime-label {
   font-size: var(--fs-cap);
   font-style: normal;
   font-weight: 600;
-}
-
-.regime-desc {
-  margin: 2px 0 0;
-  color: var(--muted);
-  font-size: var(--fs-sub);
-  line-height: 1.6;
-}
-
-.regime-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 4px 6px;
-  margin-top: auto;
-  padding-top: 6px;
-}
-
-.regime-stat {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.regime-stat b {
-  color: var(--muted);
-  font-size: var(--fs-cap);
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.regime-stat em {
-  color: var(--text);
-  font-size: var(--fs-cap);
-  font-style: normal;
-  font-weight: 700;
-  line-height: 1.5;
 }
 
 .fng-card,
@@ -1497,7 +1208,7 @@ button.ghost {
   margin: 8px 0 4px;
   font-size: var(--fs-sub);
   line-height: 1.5;
-  color: #b45309;
+  color: var(--amber);
   background: rgba(251, 191, 36, 0.12);
   border: 1px solid rgba(251, 191, 36, 0.35);
   border-radius: var(--r-md);
@@ -2460,7 +2171,7 @@ button.ghost {
 .congress-trades-table thead th {
   font-size: var(--fs-cap);
   color: var(--muted);
-  background: rgba(0, 0, 0, 0.02);
+  background: var(--panel-soft);
 }
 
 .congress-pol-link {
@@ -2701,7 +2412,7 @@ button.ghost {
 .imp-1 { color: var(--text-muted); }
 .imp-2 { color: #f59e0b; }
 .imp-3 { color: var(--neg); }
-.imp-dim { color: #e2e8f0; letter-spacing: 1px; }
+.imp-dim { color: var(--text-muted); letter-spacing: 1px; }
 
 .cal-day { margin-bottom: 18px; }
 .cal-day h3 {
@@ -3087,7 +2798,8 @@ footer {
   }
 
   .heatmap-legend {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    /* 고정 열 대신 자동 줄바꿈 — 예전엔 아래쪽 900px 블록이 이 3열을 덮고 있었다. */
+    grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
   }
 }
 
@@ -3098,8 +2810,9 @@ footer {
   .topbar {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--space-3);
-    padding: 14px 12px 10px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 16px 10px;
   }
 
   .topbar-left {
@@ -3127,52 +2840,9 @@ footer {
     gap: 10px;
   }
 
-  .cardnews-switch {
-    width: 100%;
-  }
-
-  .cardnews-carousel-host {
-    width: 100%;
-    align-self: auto;
-    height: auto;
-    min-height: 0;
-  }
-
-  /* 카드뉴스 원본은 1080x1350(4:5) 세로 이미지다. 모바일에서 통짜로 펼치면
-     360px 뷰포트 기준 높이가 ~425px — 첫 화면을 카드뉴스가 통째로 먹고
-     정작 핵심 기능(종목·AI·포트폴리오)은 스크롤 아래로 밀린다.
-     데스크톱과 같은 crop 방식으로 헤드라인 띠만 보여주는 티저로 축소한다.
-     원본 전체는 탭하면 라이트박스에서 볼 수 있다. */
-  .cardnews-carousel {
-    flex: 1 1 auto;
-    width: auto;
-    max-width: 100%;
-    align-self: auto;
-    aspect-ratio: 16 / 10;
-    height: auto;
-    max-height: 34vh;   /* 세로가 짧은 기기에서도 첫 화면을 가리지 않게 */
-    min-height: 0;
-  }
-
-  .cardnews-carousel img {
-    position: absolute;
-    inset: 0;
-    display: block;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    /* 헤드라인+부제가 원본의 세로 62~92% 구간에 있어 아래쪽을 보여준다. */
-    object-position: 50% 84%;
-  }
-
   .update-card {
     min-width: 0;
     width: 100%;
-  }
-
-  .social-tooltip {
-    white-space: normal;
-    max-width: min(220px, 72vw);
   }
 
   main { padding: 10px 10px 20px; }
@@ -3229,9 +2899,13 @@ footer {
 
   .tabs::-webkit-scrollbar { display: none; }
 
-  /* Show ~3 tabs per screen; rest revealed by horizontal swipe */
+  /* 한 화면에 3개 노출, 나머지는 가로 스와이프. 폭 기준은 100vw 가 아니라 컨테이너
+     100% 다 — 100vw 는 세로 스크롤바 폭을 포함해서 데스크톱 브라우저에서 탭 줄이
+     화면보다 넓어졌고, 그걸 가리려고 body{overflow-x:hidden} 을 덮어 두고 있었다.
+     실제 픽셀 폭은 JS(app.js layoutMobileTabs)가 --tab-width 로 넣는다. 승격된
+     .tabs.is-carousel .tab 규칙(파일 끝)이 같은 변수를 쓴다. */
   .tabs .tab {
-    flex: 0 0 calc((100vw - 32px) / 3);
+    flex: 0 0 var(--tab-width, calc((100% - 12px) / 3));
     box-sizing: border-box;
     min-width: 0;
     padding: 0 8px;
@@ -3240,18 +2914,6 @@ footer {
     font-size: var(--fs-body);
     scroll-snap-align: start;
     scroll-snap-stop: always;
-  }
-
-  @media (min-width: 641px) {
-    .tabs .tab {
-      flex-basis: calc((100vw - 42px) / 3.5);
-    }
-  }
-
-  @media (min-width: 641px) {
-    .tabs .tab {
-      flex-basis: calc((100vw - 48px) / 4);
-    }
   }
 
   /* Sub-tabs (섹터 흐름) also scroll horizontally */
@@ -3292,9 +2954,6 @@ footer {
   .briefing-box { padding: var(--space-4); }
 
   .section-title { flex-direction: column; align-items: flex-start; gap: var(--space-1); }
-
-  /* Stop wide content from forcing horizontal page scroll */
-  body { overflow-x: hidden; }
 
   /* AI 브리핑 소셜 표: fit instead of forcing a 760px-min table */
   .table-scroll { overflow-x: auto; }
@@ -3409,7 +3068,7 @@ footer {
   line-height: 1.7;
 }
 
-/* Mobile (≤768): collapse into one box with divider-separated sections. */
+/* Mobile (≤900): collapse into one box with divider-separated sections. */
 @media (max-width: 900px) {
   #tab-ai-briefing .section-title {
     flex-direction: column;
@@ -3463,7 +3122,8 @@ footer {
 .briefing-header {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  flex-wrap: wrap;          /* 읽어주기 버튼이 좁은 화면에서 줄바꿈 */
+  gap: 10px;
   margin-bottom: 18px;
   border-bottom: 2px solid var(--line);
   padding-bottom: 14px;
@@ -4411,14 +4071,14 @@ footer {
 
 .lev-etf-badge-volatility {
   background: rgba(217, 119, 6, 0.12);
-  color: #b45309;
+  color: var(--amber);
   border: 1px solid rgba(217, 119, 6, 0.25);
 }
 
 .lev-etf-badge-buffer,
 .lev-etf-badge-defined-outcome {
   background: rgba(14, 116, 144, 0.1);
-  color: #0e7490;
+  color: var(--teal);
   border: 1px solid rgba(14, 116, 144, 0.22);
 }
 
@@ -4867,13 +4527,7 @@ footer {
 .chat-fab:hover { background: var(--surface-2); filter: none; }
 
 .chatbot.dragging .chat-fab { cursor: grabbing; }
-.chatbot.dragging .chat-bubble,
-.chatbot.dragging .chat-fab-bubble { display: none; }
-
-/* 첫 방문 말풍선: .is-first-visit 가 붙어 있을 때만 */
-.chat-fab-bubble { display: none; }
-.is-first-visit .chat-fab-bubble,
-.chat-fab-bubble.is-first-visit { display: block; }
+.chatbot.dragging .chat-bubble { display: none; }
 
 .chat-mascot {
   display: block;
@@ -4886,8 +4540,7 @@ footer {
   50% { transform: translateY(-5px); }
 }
 
-.chat-bubble,
-.chat-fab-bubble {
+.chat-bubble {
   position: absolute;
   bottom: 100%;            /* 마스코트 위로 띄움(레이아웃 높이에 영향 없음) */
   right: 0;
@@ -4904,11 +4557,9 @@ footer {
   box-shadow: 0 8px 20px rgba(20, 30, 50, 0.16);
 }
 
-.chat-bubble b,
-.chat-fab-bubble b { color: var(--primary); }
+.chat-bubble b { color: var(--primary); }
 
-.chat-bubble::after,
-.chat-fab-bubble::after {
+.chat-bubble::after {
   content: "";
   position: absolute;
   right: 26px;
@@ -5463,7 +5114,7 @@ footer {
 
 .quality-warn {
   background: rgba(245, 158, 11, 0.16);
-  color: #b45309;
+  color: var(--amber);
 }
 
 .quality-muted {
@@ -5533,7 +5184,7 @@ footer {
 }
 
 .risk-warn {
-  color: #b45309;
+  color: var(--amber);
   font-weight: 600;
 }
 
@@ -5761,7 +5412,9 @@ footer {
   }
 
   .rotation-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* 640 이하는 1열 — 아래쪽에 같은 브레이크포인트 블록이 또 있어 2열이 곧바로
+       덮이고 있었다(append-only 충돌). 한 곳으로 합친다. */
+    grid-template-columns: 1fr;
     gap: var(--space-2);
     padding: 10px;
   }
@@ -5854,15 +5507,6 @@ footer {
     justify-content: center;
   }
   .earnings-summary {
-    grid-template-columns: 1fr;
-  }
-  .regime-stats {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .rotation-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -6623,46 +6267,6 @@ footer {
   text-overflow: ellipsis;
 }
 
-/* ==========================================================================
-   Community Tab
-   ========================================================================== */
-.community-cardnews-block {
-  margin-bottom: var(--space-5);
-  padding: 16px 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--panel);
-}
-
-.community-cardnews-block[hidden] {
-  display: none;
-}
-
-.community-cardnews-toolbar {
-  display: flex;
-  justify-content: flex-start;
-  margin-bottom: 10px;
-}
-
-.community-cardnews-tabs {
-  flex-shrink: 0;
-}
-
-.community-cardnews-title {
-  margin: 0 0 14px;
-  font-size: var(--fs-body);
-  font-weight: 600;
-  color: var(--text);
-  line-height: 1.5;
-}
-
-.community-cardnews-gallery {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  width: 100%;
-}
-
 /* Daily action board and simplified navigation */
 .daily-action-board {
   margin: var(--space-5) 0 var(--space-4);
@@ -6673,7 +6277,6 @@ footer {
 }
 
 .daily-action-head,
-.navigation-mode-bar,
 .daily-action-card-head,
 .daily-action-row {
   display: flex;
@@ -6687,8 +6290,7 @@ footer {
   font-size: var(--fs-h2);
 }
 
-.daily-action-head p,
-.navigation-mode-bar span {
+.daily-action-head p {
   margin: 0;
   color: var(--muted);
   font-size: var(--fs-cap);
@@ -6844,18 +6446,6 @@ footer {
   margin-top: 1px;
 }
 
-.navigation-mode-bar {
-  margin: 10px 0 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--panel);
-}
-
-.navigation-mode-bar strong,
-.navigation-mode-bar span { display: block; }
-.navigation-mode-bar strong { margin-bottom: 2px; font-size: var(--fs-sub); }
-
 .market-mode-switch {
   display: inline-flex;
   flex: 0 0 auto;
@@ -6885,31 +6475,6 @@ footer {
 
 html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-active {
   color: var(--neg);
-}
-
-.view-mode-switch {
-  display: inline-flex;
-  flex: 0 0 auto;
-  padding: 3px;
-  border-radius: var(--r-md);
-  background: var(--panel-soft);
-}
-
-.view-mode-switch button {
-  min-height: 34px;
-  padding: 6px 11px;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--muted);
-  font-size: var(--fs-cap);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.view-mode-switch button.is-active {
-  background: var(--panel);
-  color: var(--primary);
 }
 
 #mainTabs[data-view-mode="basic"] .tab[data-advanced="true"] {
@@ -6989,8 +6554,7 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
     margin: 10px 0 12px;
     padding: 12px;
   }
-  .daily-action-head,
-  .navigation-mode-bar { align-items: flex-start; flex-direction: column; }
+  .daily-action-head { align-items: flex-start; flex-direction: column; }
   .daily-action-head > div:first-child { min-width: 0; width: 100%; }
   .daily-action-head p { line-height: 1.5; }
   .daily-action-meta {
@@ -7015,8 +6579,6 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
   .daily-action-grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .daily-action-row { padding: 8px; }
   .daily-action-schedule-row { min-height: 56px; }
-  .view-mode-switch { width: 100%; }
-  .view-mode-switch button { flex: 1; }
   .daily-action-card:nth-child(n+3) { display: none; }
   html[data-view-mode="advanced"] .daily-action-card:nth-child(n+3) { display: block; }
 }
@@ -7092,25 +6654,6 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
   }
 }
 
-.community-sns-section {
-  margin-top: 28px;
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--line);
-}
-
-.community-sns-section-title {
-  margin: 0 0 12px;
-  font-size: var(--fs-h3);
-  font-weight: 500;
-}
-
-.community-sns-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
-  margin-top: var(--space-2);
-}
-
 .community-sns-card {
   display: flex;
   flex-direction: column;
@@ -7175,22 +6718,6 @@ html[data-market="kr"] .market-mode-switch button[data-market-mode="kr"].is-acti
 
 .community-sns-cta:hover {
   background: #1e293b;
-}
-
-.community-cta-strip {
-  margin-top: 18px;
-  padding: 14px 16px;
-  border-radius: var(--r-lg);
-  background: var(--chip-bg);
-  border: 1px solid var(--chip-border);
-  text-align: center;
-}
-
-.community-cta-strip p {
-  margin: 0;
-  color: var(--tint-info-fg);
-  font-size: var(--fs-body);
-  font-weight: 600;
 }
 
 .community-hot-topics {
@@ -7271,7 +6798,7 @@ span.community-hot-ticker {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-  min-height: calc(1.35em * 2);
+  min-height: calc(1.5em * 2);   /* line-height 와 같은 값이어야 2줄 자리가 맞는다 */
 }
 
 .community-hot-change {
@@ -7538,56 +7065,6 @@ button.community-hot-ticker {
   flex: 0 0 auto;
 }
 
-.community-vote-btn {
-  position: relative;
-  overflow: hidden;
-  flex: 1 1 0;
-  height: 34px;
-  min-height: 0;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--panel);
-  color: var(--text);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.community-vote-btn.is-mine {
-  border-color: var(--vote-color);
-}
-
-.community-vote-fill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  background: var(--vote-color);
-  opacity: 0.14;
-  transition: width 0.25s;
-}
-
-.community-vote-label,
-.community-vote-num {
-  position: relative;
-  z-index: var(--z-layer-1);
-  font-size: var(--fs-cap);
-  font-weight: 600;
-}
-
-.community-vote-num {
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-
-.community-vote-btn.is-mine .community-vote-label {
-  color: var(--vote-color);
-  font-weight: 500;
-}
-
 /* 신고 버튼 */
 .community-post-report {
   color: var(--muted);
@@ -7808,9 +7285,6 @@ button.community-hot-ticker {
   font-size: var(--fs-h3);
 }
 
-.community-vote-rank-title.community-vote-buy { color: var(--green); }
-.community-vote-rank-title.community-vote-sell { color: var(--red); }
-
 .community-vote-rank-list {
   display: flex;
   flex-direction: column;
@@ -7846,9 +7320,6 @@ button.community-hot-ticker {
   font-size: var(--fs-sub);
   white-space: nowrap;
 }
-
-.community-vote-rank-count.community-vote-buy { color: var(--green); }
-.community-vote-rank-count.community-vote-sell { color: var(--red); }
 
 .community-vote-rank-sub {
   font-size: var(--fs-cap);
@@ -7974,7 +7445,6 @@ button.community-hot-ticker {
 }
 
 @media (max-width: 1200px) {
-  .community-sns-grid,
   .community-hot-grid {
     grid-template-columns: 1fr;
   }
@@ -8776,9 +8246,10 @@ button.agg-label { cursor: pointer; color: var(--accent); }
   button, a, .tab, select, input,
   .daily-action-row, .nl-example, .watch-star,
   .sector-card, .event-card, .rank-card {
+    /* filter·box-shadow 는 전역 목록에서 뺐다 — 거의 모든 인터랙티브 요소에 걸려
+       호버마다 필터/그림자 레이어를 다시 굽는다. 필요한 컴포넌트가 개별로 선언한다. */
     transition: background-color .15s ease, border-color .15s ease,
-                color .15s ease, box-shadow .18s ease,
-                filter .15s ease, transform .12s ease;
+                color .15s ease, transform .12s ease;
   }
 }
 
@@ -8865,6 +8336,7 @@ html[data-theme="dark"] {
   --green: #34d399;
   --red: #f87171;
   --amber: #fbbf24;
+  --teal: #67e8f9;
   /* 보강 의미 색 */
   --text-muted: #9aa6bb;
   --accent: #3b82f6;
@@ -8881,12 +8353,9 @@ html[data-theme="dark"] {
   --tint-info-fg: #93c5fd;
   /* 그림자(다크) */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 18px 44px rgba(0, 0, 0, 0.6);
 }
 /* === critical:end === */
-/* 장식용 라이트 그라데이션 → 다크에서 평면 다크 표면 */
 html[data-theme="dark"] .event-card-community,
-html[data-theme="dark"] .community-cardnews-block,
 html[data-theme="dark"] .daily-action-board,
 html[data-theme="dark"] .move-explanation-card,
 html[data-theme="dark"] .community-sns-card,
@@ -8910,8 +8379,6 @@ html[data-theme="dark"] .nl-chip { background: #1e3a5f; color: #bfdbfe; }
 html[data-theme="dark"] .breadth-track,
 html[data-theme="dark"] .corr-diag { background: var(--surface-3); }
 html[data-theme="dark"] .daily-action-row:hover { background: #1e3a5f; border-color: var(--primary); }
-/* 기본/고급 스위치: 다크에서 활성 알약이 도드라지게 */
-html[data-theme="dark"] .view-mode-switch button.is-active { background: var(--surface-3); color: var(--link); }
 /* 다크: 라이트 틴트 배지/버튼이 흰 박스처럼 떠 보이는 것 보정 */
 html[data-theme="dark"] .rs-badge,
 html[data-theme="dark"] .badge-social { background: #2a2140; color: var(--accent); border-color: #4c3a6e; }
@@ -8936,27 +8403,6 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
   color: var(--muted);
   font-size: var(--fs-sub);
 }
-/* 홈 구역 일관 간격 */
-/* 오늘의 액션 보드 = 개인 히어로: 더 또렷한 입체감 */
-
-/* ============================================================
-   상단 탭 고정 (sticky) — 스크롤해도 섹션 전환 가능
-   ============================================================ */
-
-/* ============================================================
-   UI 설정 토글 버튼 (탐색 모드 바)
-   ============================================================ */
-.navigation-mode-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.ui-pref-toggles {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 .ui-pref-btn {
   height: 34px;
   min-height: 0;
@@ -8976,21 +8422,14 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
    모바일 최적화
    ============================================================ */
 @media (max-width: 900px) {
-  .topbar { flex-wrap: wrap; gap: 10px; padding: 14px 16px 10px; }
-  .topbar-left { width: 100%; }
-  .topbar-right { width: 100%; justify-content: flex-start; }
-  .update-card { min-width: 0; width: 100%; }
-  .navigation-mode-bar { flex-direction: column; align-items: stretch; gap: 10px; }
-  .navigation-mode-bar .view-mode-switch,
-  .navigation-mode-bar .ui-pref-toggles { justify-content: stretch; }
-  .ui-pref-toggles { flex-wrap: wrap; }
+  /* .topbar/.topbar-left/.topbar-right/.update-card 는 위쪽 900px 블록 한 곳에서 정의한다. */
   .ui-pref-btn { flex: 1 1 auto; }
 }
 @media (max-width: 640px) {
   main { padding-left: var(--space-3); padding-right: var(--space-3); }
   .topbar { padding: 12px 14px 8px; }
   h1 { font-size: var(--fs-h2); }
-  .summary-band { grid-template-columns: 1fr 1fr; }
+  /* .summary-band 는 아래 '모바일 정밀화' 640 블록에서 1열로 정의한다(중복 제거). */
 }
 
 /* ============================================================
@@ -9018,8 +8457,6 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 @media (max-width: 900px) {
   /* 요약밴드: 5열 → 2열 (대형폰·태블릿 세로) */
   .summary-band { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  /* 히트맵 범례: 고정 9열 → 자동 줄바꿈 */
-  .heatmap-legend { grid-template-columns: repeat(auto-fill, minmax(66px, 1fr)); }
 }
 @media (max-width: 640px) {
   /* 작은 폰: 요약밴드 1열로 완전 스택 */
@@ -9033,9 +8470,6 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 /* ===== 모바일: 남은 다열 그리드 붕괴 (위험분석·커뮤니티 카드뉴스) ===== */
 @media (max-width: 640px) {
   .risk-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .community-cardnews-row-2 { grid-template-columns: repeat(3, 1fr); }
-}
-@media (max-width: 640px) {
   .community-cardnews-row-2 { grid-template-columns: repeat(2, 1fr); }
 }
 
@@ -9101,34 +8535,6 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 .gauge-needle { stroke: var(--text); }
 .gauge-hub { fill: var(--text); }
 
-/* ============================================================
-   오늘의 액션 보드 ↔ 오늘의 뉴스 전환 (웹 전용)
-   ============================================================ */
-.action-mode-switch {
-  display: inline-flex;
-  gap: 4px;
-  padding: 3px;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-}
-.action-mode-switch button {
-  height: 30px;
-  min-height: 0;
-  min-width: 0;
-  padding: 0 12px;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--muted);
-  font-size: var(--fs-cap);
-  font-weight: 600;
-  cursor: pointer;
-}
-.action-mode-switch button.is-active {
-  background: var(--panel);
-  color: var(--primary);
-}
-
 .daily-action-news { margin-top: 14px; }
 .action-news-head {
   display: flex;
@@ -9190,7 +8596,6 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 }
 /* 모바일: 액션 보드는 기존대로 — 모드 스위치/뉴스 숨김(헤더 캐러셀 유지) */
 @media (max-width: 900px) {
-  .action-mode-switch { display: none; }
   .daily-action-news { display: none; }
 }
 .daily-action-board.is-news .daily-action-head p { display: none; }
@@ -9720,7 +9125,7 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
   font-size: var(--fs-sub);
 }
 
-/* ===== 상승확률 스캐너 ===== */
+/* ===== 모멘텀 점수 스캐너 ===== */  /* 점수는 예측이 아니다(app.js scanQuickProb 주석 참고) */
 label.scan-deep-toggle {
   flex-direction: row;
   align-items: center;
@@ -9883,7 +9288,7 @@ label.scan-deep-toggle {
 .home-search-kicker {
   font-size: var(--fs-cap);
   font-weight: 500;
-  color: var(--brand);
+  color: var(--primary);
   display: inline-block;
   margin-bottom: 8px;
 }
@@ -9900,7 +9305,7 @@ label.scan-deep-toggle {
 }
 
 @media (max-width: 640px) {
-  .home-search-title { font-size: 28px; }
+  .home-search-title { font-size: clamp(var(--fs-h2), 6vw, var(--fs-h1)); }
 }
 
 .home-search-subtitle {
@@ -9926,7 +9331,7 @@ label.scan-deep-toggle {
 }
 
 .home-search-bar:focus-within {
-  border-color: var(--brand);
+  border-color: var(--primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 15%, transparent);
 }
 
@@ -9945,7 +9350,7 @@ label.scan-deep-toggle {
 }
 
 .home-search-bar button {
-  background: var(--brand);
+  background: var(--primary);
   color: #ffffff;
   border: none;
   padding: 10px 24px;
@@ -9975,8 +9380,8 @@ label.scan-deep-toggle {
 
 .search-suggest-chip {
   background: var(--panel-soft);
-  border: 1px solid rgba(226, 232, 240, 0.08);
-  color: var(--text-soft);
+  border: 1px solid var(--line);
+  color: var(--text-muted);
   padding: 6px 14px;
   border-radius: var(--r-lg);
   cursor: pointer;
@@ -9985,14 +9390,14 @@ label.scan-deep-toggle {
 
 .search-suggest-chip:hover {
   background: color-mix(in srgb, var(--accent) 10%, transparent);
-  border-color: var(--brand);
-  color: var(--brand);
+  border-color: var(--primary);
+  color: var(--primary);
 }
 
 /* AI Deep Report Card styling */
 .ai-report-card {
-  background: var(--panel-bg);
-  border: 1px solid var(--border-color);
+  background: var(--panel);
+  border: 1px solid var(--line);
   border-radius: var(--r-lg);
   padding: 16px;
   margin-bottom: 16px;
@@ -10016,7 +9421,7 @@ label.scan-deep-toggle {
 .ai-report-kicker {
   font-size: var(--fs-cap);
   font-weight: 500;
-  color: var(--brand);
+  color: var(--primary);
 }
 
 .ai-report-title {
@@ -10029,7 +9434,7 @@ label.scan-deep-toggle {
 .ai-report-body {
   font-size: var(--fs-sub);
   line-height: 1.6;
-  color: var(--text-soft);
+  color: var(--text-muted);
   min-height: 80px;
 }
 
@@ -10141,8 +9546,8 @@ label.scan-deep-toggle {
 }
 
 @keyframes floatLogo {
-  from { transform: translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--brand)); }
-  to { transform: translateY(-10px) scale(1.1); filter: drop-shadow(0 0 15px var(--brand)); }
+  from { transform: translateY(0) scale(1); filter: drop-shadow(0 0 5px var(--primary)); }
+  to { transform: translateY(-10px) scale(1.1); filter: drop-shadow(0 0 15px var(--primary)); }
 }
 
 .ai-assembly-content h3 {
@@ -10220,13 +9625,13 @@ label.scan-deep-toggle {
 
 .ai-mode-btn:hover {
   transform: translateY(-1px);
-  border-color: var(--brand);
+  border-color: var(--primary);
 }
 
 .ai-mode-btn.active {
-  background: var(--brand);
+  background: var(--primary);
   color: #fff;
-  border-color: var(--brand);
+  border-color: var(--primary);
 }
 
 body.ai-mode-active #mainTabs,
@@ -10238,7 +9643,6 @@ body.ai-mode-active .index-visuals,
 body.ai-mode-active .summary-band,
 body.ai-mode-active .watchlist-bar,
 body.ai-mode-active .daily-action-board,
-body.ai-mode-active .navigation-mode-bar,
 body.ai-mode-active .tabs-scroll-wrap,
 body.ai-mode-active .panel:not(#tab-ai-chat),
 body.ai-mode-active .chatbot,
@@ -10253,7 +9657,6 @@ body.ai-mode-active main > :not(#tab-ai-chat) {
 }
 
 body.ai-mode-active {
-  --ai-topbar-h: 72px;
   /* AI 몰입 화면은 테마와 무관하게 어두운 캔버스: 토큰을 이 스코프에서 다크로 재선언 */
   color-scheme: dark;
   --bg: #03050a;
@@ -10271,6 +9674,28 @@ body.ai-mode-active {
   --link: #7dabff;
   --chip-bg: #16324f;
   --chip-border: #2a4a72;
+  /* 상태 틴트·역상 필·의미색도 함께 다크로 — 이게 빠져 있어서 라이트 테마에서 AI
+     모드를 켜면 우주 배경 위에 밝은 틴트 상자(.nl-chip·.session-quote·.earn-dday·
+     .audit-emphasis·.squeeze-card·.ticker-pill 등)가 그대로 떠 있었다. */
+  --tint-pos: #14321f;
+  --tint-neg: #3a1d1d;
+  --tint-warn: #3a2f12;
+  --tint-info: #16324f;
+  --tint-pos-fg: #4ade80;
+  --tint-neg-fg: #fca5a5;
+  --tint-warn-fg: #fcd34d;
+  --tint-info-fg: #93c5fd;
+  --tint-danger: #3a1d1d;
+  --tint-danger-fg: #fca5a5;
+  --ink: #e6ecf5;
+  --ink-fg: #0b1220;
+  --green: #34d399;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --teal: #67e8f9;
+  --pos: #34d399;
+  --neg: #f87171;
+  --card: #0d1220;
   background: var(--bg);
   overflow: hidden;
 }
@@ -10432,9 +9857,32 @@ body.ai-mode-active.ai-stock-analysis-view .ai-cosmos {
      다크로 강제한다. (AI 모드가 라이트로 떠도 카드가 흰색으로 뜨지 않게) */
   --panel: rgba(255, 255, 255, 0.05);
   --panel-soft: rgba(255, 255, 255, 0.03);
+  --surface-2: rgba(255, 255, 255, 0.07);
+  --surface-3: rgba(255, 255, 255, 0.10);
+  --card: rgba(255, 255, 255, 0.05);
   --text: #eaf0fb;
   --muted: #9fb0cc;
+  --text-muted: #9fb0cc;
   --line: rgba(150, 175, 255, 0.16);
+  /* 상태 틴트·역상 필·의미색까지 다크로 (body.ai-mode-active 와 같은 이유) */
+  --tint-pos: #14321f;
+  --tint-neg: #3a1d1d;
+  --tint-warn: #3a2f12;
+  --tint-info: #16324f;
+  --tint-pos-fg: #4ade80;
+  --tint-neg-fg: #fca5a5;
+  --tint-warn-fg: #fcd34d;
+  --tint-info-fg: #93c5fd;
+  --tint-danger: #3a1d1d;
+  --tint-danger-fg: #fca5a5;
+  --ink: #e6ecf5;
+  --ink-fg: #0b1220;
+  --green: #34d399;
+  --red: #f87171;
+  --amber: #fbbf24;
+  --teal: #67e8f9;
+  --pos: #34d399;
+  --neg: #f87171;
   color: #eaf0fb;
 }
 body.ai-stock-analysis-view .ai-dash.is-active {
@@ -10833,9 +10281,11 @@ body.ai-stock-analysis-view .ai-cosmos {
   to { transform: rotate(360deg); }
 }
 
+/* drop-shadow 를 무한 애니메이션하면 매 프레임 필터를 다시 굽는다(AI 모드에서
+   backdrop-filter 레이어와 겹쳐 특히 비쌌다). 합성만으로 되는 opacity/transform 으로. */
 @keyframes pulseSparkle {
-  from { filter: drop-shadow(0 0 2px color-mix(in srgb, var(--accent) 40%, transparent)); opacity: 0.8; }
-  to { filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 80%, transparent)); opacity: 1; }
+  from { opacity: 0.75; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1.04); }
 }
 
 .ai-chat-branding h2 {
@@ -11062,7 +10512,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 }
 
 .chat-msg.user .msg-bubble {
-  background: var(--brand);
+  background: var(--primary);
   color: #ffffff;
   border-bottom-right-radius: 4px;
   box-shadow: 0 10px 25px color-mix(in srgb, var(--accent) 25%, transparent), inset 0 1px 0 rgba(255, 255, 255, 0.2);
@@ -11088,7 +10538,8 @@ body.ai-stock-analysis-view .ai-cosmos {
 .md-table { width: auto; min-width: 0; border-collapse: collapse; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
 .md-table th, .md-table td { padding: 4px 10px; border: 1px solid rgba(127, 127, 127, 0.35); text-align: left; vertical-align: top; white-space: nowrap; }
 .md-table th { font-weight: 600; background: rgba(127, 127, 127, 0.14); }
-.msg-bubble code, .ai-verdict-llm-body code, #analysisAiReportBody code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.92em; padding: 1px 5px; border-radius: var(--r-xs); background: rgba(127, 127, 127, 0.16); }
+/* 0.92em 은 부모가 13px 이면 12px 아래로 내려간다 — 12px 하한을 명시한다. */
+.msg-bubble code, .ai-verdict-llm-body code, #analysisAiReportBody code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: max(var(--fs-cap), 0.92em); padding: 1px 5px; border-radius: var(--r-xs); background: rgba(127, 127, 127, 0.16); }
 .msg-bubble pre, .ai-verdict-llm-body pre, #analysisAiReportBody pre { margin: 8px 0; padding: 10px 12px; overflow-x: auto; border-radius: var(--r-md); background: rgba(127, 127, 127, 0.14); font-size: var(--fs-sub); line-height: 1.5; }
 .msg-bubble pre code, .ai-verdict-llm-body pre code, #analysisAiReportBody pre code { padding: 0; background: none; font-size: inherit; }
 .msg-bubble ol, .ai-verdict-llm-body ol, #analysisAiReportBody ol { margin: 6px 0; padding-left: 1.4em; }
@@ -11282,7 +10733,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   margin-bottom: 16px;
 }
 .ai-orb-core {
-  font-size: var(--fs-h1); color: var(--brand);
+  font-size: var(--fs-h1); color: var(--primary);
   animation: pulseSparkle 1.4s infinite alternate;
   z-index: var(--z-layer-2);
 }
@@ -11290,8 +10741,8 @@ body.ai-stock-analysis-view .ai-cosmos {
   position: absolute; inset: 0;
   border-radius: 50%;
   border: 2px solid transparent;
-  border-top-color: color-mix(in srgb, var(--brand) 75%, transparent);
-  border-right-color: color-mix(in srgb, var(--brand) 30%, transparent);
+  border-top-color: color-mix(in srgb, var(--primary) 75%, transparent);
+  border-right-color: color-mix(in srgb, var(--primary) 30%, transparent);
   animation: aiOrbSpin 1.15s linear infinite;
 }
 .ai-orb-ring.is-2 {
@@ -11307,7 +10758,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 }
 .ai-assembly-track-fill {
   display: block; height: 100%; width: 40%; border-radius: var(--r-pill);
-  background: linear-gradient(90deg, transparent, var(--brand), var(--accent), transparent);
+  background: linear-gradient(90deg, transparent, var(--primary), var(--accent), transparent);
   animation: aiTrackSlide 1.25s ease-in-out infinite;
 }
 @keyframes aiTrackSlide {
@@ -11331,7 +10782,8 @@ body.ai-stock-analysis-view .ai-cosmos {
 .ai-gauge { width: 176px; height: 176px; display: block; }
 .ai-gauge-fill { animation: aiGaugeSweep 1s cubic-bezier(0.16, 1, 0.3, 1) both; }
 @keyframes aiGaugeSweep {
-  from { stroke-dashoffset: var(--gauge-dash); }
+  /* --gauge-dash 는 ai-mode.js 가 인라인으로 심는다. 없으면 0(애니메이션 없음). */
+  from { stroke-dashoffset: var(--gauge-dash, 0); }
   to { stroke-dashoffset: 0; }
 }
 .ai-gauge-num { font-size: var(--fs-h1); font-weight: 700; letter-spacing: -0.01em; }
@@ -11742,7 +11194,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 
 .widget-facts td {
   padding: 6px 8px;
-  border-bottom: 1px solid rgba(226, 232, 240, 0.04);
+  border-bottom: 1px solid var(--line);
 }
 
 .widget-news-list {
@@ -11756,7 +11208,7 @@ body.ai-stock-analysis-view .ai-cosmos {
   padding: 8px;
   background: var(--panel-soft);
   border-radius: var(--r-sm);
-  border-left: 2.5px solid var(--brand);
+  border-left: 2.5px solid var(--primary);
 }
 
 .widget-news-item a {
@@ -11954,7 +11406,7 @@ body.ai-stock-analysis-view .ai-cosmos {
 }
 
 .new-chat-btn {
-  background: var(--brand);
+  background: var(--primary);
   color: #fff;
   border: none;
   border-radius: var(--r-lg);
@@ -12349,6 +11801,18 @@ body.ai-stock-analysis-view .ai-cosmos {
   opacity: 0.6;
 }
 
+/* 호버가 없는 기기(터치)에서는 항상 보인다 — 예전엔 :hover 로만 드러나서
+   폰에서 AI 답변을 복사할 방법이 아예 없었다. 키보드 포커스도 같이 드러낸다. */
+@media (hover: none) {
+  .copy-msg-btn { opacity: 0.6; }
+}
+
+.copy-msg-btn:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 /* .msg-bubble prefix: same specificity as `.msg-bubble:hover .copy-msg-btn` above, later in source → wins */
 .msg-bubble .copy-msg-btn:hover {
   opacity: 1;
@@ -12502,6 +11966,18 @@ body.ai-stock-analysis-view .ai-cosmos {
   transform: translateX(0);
 }
 
+/* 터치 기기에선 항상 보인다(세션 메뉴에 도달할 다른 경로가 없다). */
+@media (hover: none) {
+  .session-menu-trigger { opacity: 0.6; transform: translateX(0); }
+}
+
+.session-menu-trigger:focus-visible {
+  opacity: 1;
+  transform: translateX(0);
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
 .ai-history-item .session-menu-trigger:hover {
   opacity: 1;
   background: rgba(255, 255, 255, 0.06);
@@ -12577,17 +12053,6 @@ body.ai-stock-analysis-view .ai-cosmos {
 
 [data-theme="light"] .session-context-menu button.context-delete-btn:hover {
   background: color-mix(in srgb, var(--neg) 5%, transparent);
-}
-
-/* 8. Busy 상태 컨트롤 비활성화 및 미니 스피너 */
-.ai-chat-form.is-busy input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.ai-chat-form.is-busy button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 @keyframes aiSpinnerSpin {
@@ -12825,7 +12290,6 @@ body.ai-mode-active .ai-input-hint:empty {
 /* AI mode — mobile optimization */
 @media (max-width: 900px) {
   body.ai-mode-active {
-    --ai-topbar-h: 0px;
     --ai-vv-height: 100svh;
     --ai-vv-top: 0px;
     --ai-dock-offset: 58px;
@@ -13373,7 +12837,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-header-search { display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 10px; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: var(--r-pill); background: rgba(255, 255, 255, 0.08); color: #e2e8f0; font-size: var(--fs-sub); cursor: pointer; }
 .ia-header-search:hover { background: rgba(255, 255, 255, 0.14); }
 .ia-header-search svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
-.ia-header-search kbd { font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: var(--r-xs); padding: 3px 5px; }
+.ia-header-search kbd { font: var(--fs-cap)/1 ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--topbar-muted); border: 1px solid rgba(255, 255, 255, 0.28); border-radius: var(--r-xs); padding: 3px 5px; }
 .ia-gear-wrap { position: relative; }
 .ia-gear-btn { width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(255, 255, 255, 0.16); border-radius: var(--r-pill); background: rgba(255, 255, 255, 0.08); color: #e2e8f0; cursor: pointer; }
 .ia-gear-btn:hover, .ia-gear-btn[aria-expanded="true"] { background: rgba(255, 255, 255, 0.16); }
@@ -13382,9 +12846,6 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-popover-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; padding: 4px 8px; font-size: var(--fs-sub); }
 .ia-popover-row > span { color: var(--muted); }
 .ia-popover .ui-pref-btn { min-height: 32px; padding: 0 12px; border-radius: var(--r-md); font-size: var(--fs-sub); }
-.ia-popover .view-mode-switch { display: inline-flex; gap: 2px; padding: 2px; border-radius: var(--r-pill); background: var(--panel-soft); border: 1px solid var(--line); }
-.ia-popover .view-mode-switch button { min-height: 28px; padding: 0 10px; border: 0; border-radius: var(--r-pill); background: transparent; color: var(--muted); font-size: var(--fs-cap); font-weight: 600; }
-.ia-popover .view-mode-switch button.is-active { background: var(--blue); color: #fff; }
 .ia-popover-item { display: block; width: 100%; min-height: 40px; padding: 0 8px; text-align: left; border: 0; border-radius: var(--r-md); background: transparent; color: var(--text); font-size: var(--fs-sub); cursor: pointer; }
 .ia-popover-item:hover { background: var(--panel-soft); }
 .ia-popover-sep { height: 1px; margin: 6px 4px; background: var(--line); }
@@ -13427,7 +12888,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-regime-tone { font-weight: 600; }
 .ia-regime-on { color: var(--green); }
 .ia-regime-off { color: var(--red); }
-.ia-regime-mixed { color: #b45309; }
+.ia-regime-mixed { color: var(--amber); }
 .ia-regime-sep { color: var(--muted); margin: 0 2px; }
 .ia-regime-meta { display: block; margin: 2px 0 0; font-size: var(--fs-sub); font-weight: 400; line-height: 1.5; color: var(--muted); }
 .index-strip.ia-index-compact { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -13482,6 +12943,10 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .ia-heatmap-toolbar.is-collapsed > label:not(.grow),
   .ia-heatmap-toolbar.is-collapsed > button:not(.ia-map-filter-toggle) { display: none; }
   .ia-heatmap-toolbar > label:not(.grow) { flex: 1 1 calc(50% - 8px); }
+  /* '필터' 토글은 전체 폭 입력창이 아니라 작은 필 — 아래쪽 640 블록에 흩어져 있던
+     같은 선택자 두 줄을 여기로 합쳤다(append-only 충돌). */
+  .ia-heatmap-toolbar > label.grow { flex: 1 1 200px; min-width: 0; }
+  .ia-heatmap-toolbar .ia-map-filter-toggle { flex: 0 0 auto; width: auto; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill); }
 }
 .ia-footnote { margin: 14px 0 0; font-size: var(--fs-sub); color: var(--muted); }
 
@@ -13501,7 +12966,8 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-adv .toolbar { margin-bottom: 8px; }
 .ia-widget-fold .section-title h2 { display: none; }
 .ia-widget-fold .section-title { margin-bottom: 8px; }
-.ia-tool-fold > section, .ia-tool-fold > div { border: 0 !important; box-shadow: none !important; background: transparent !important; margin: 0 !important; }
+/* 특이도로 해결(0,2,1) — 예전엔 !important 4개였다. 접힌 도구 안의 패널은 테두리 없이. */
+.ia-tool-fold.ia-tool-fold > section, .ia-tool-fold.ia-tool-fold > div { border: 0; box-shadow: none; background: transparent; margin: 0; }
 .ia-tool-fold .portfolio-tool-head > div > h3 { display: none; }
 .ia-tool-fold .backtest-panel .section-title h2 { display: none; }
 .ia-tool-fold .corr-head h3 { display: none; }
@@ -13591,8 +13057,10 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 /* --- 모바일 --- */
 @media (max-width: 900px) {
   .ia-topbar { flex-wrap: wrap; padding: 10px 14px; }
-  .ia-topbar-left { display: flex !important; flex-direction: row !important; flex: 1 1 100%; width: 100%; justify-content: space-between; align-items: center; }
-  .ia-topbar-right { display: flex !important; flex-direction: row !important; flex-wrap: nowrap; flex: 1 1 100%; width: 100%; align-items: center; justify-content: flex-end; gap: 8px; }
+  /* .topbar 접두로 특이도를 올려 위쪽 900px 의 .topbar-left/.topbar-right 세로 정렬을
+     덮는다 — 예전엔 !important 4개였다. */
+  .topbar .ia-topbar-left { display: flex; flex-direction: row; flex: 1 1 100%; width: 100%; justify-content: space-between; align-items: center; }
+  .topbar .ia-topbar-right { display: flex; flex-direction: row; flex-wrap: nowrap; flex: 1 1 100%; width: 100%; align-items: center; justify-content: flex-end; gap: 8px; }
   .ia-topbar .ai-mode-btn { flex: 0 0 auto; }
   .ia-header-search { flex: 1 1 auto; justify-content: center; min-height: 40px; }
   .ia-header-search kbd { display: none; }
@@ -13685,20 +13153,18 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .cal-table td:nth-child(6):not(:empty)::before { content: "예측 "; margin-left: 10px; }
   .cal-table td:nth-child(7):not(:empty)::before { content: "이전 "; margin-left: 10px; }
   .cal-table td.cal-actual:not(:empty) { color: var(--text); font-weight: 700; }
-  /* 챗봇: 말풍선은 숨기고 버튼만, 닫기 ✕ 는 28px, 본문은 버튼 높이만큼 여백 */
-  .chatbot { right: 12px; bottom: 12px; }
+  /* 챗봇: 말풍선은 숨기고 버튼만, 닫기 ✕ 는 28px, 본문은 버튼 높이만큼 여백
+     (right/bottom 은 위쪽 640 블록에서 이미 같은 값으로 정의한다) */
   .chatbot:not(.is-chat-open) .chat-bubble.ia-chat-bubble { display: none; }
   .chat-dismiss { width: 32px; height: 32px; min-height: 0; top: -10px; right: -10px; font-size: var(--fs-sub); }
   main { padding-bottom: 96px; }
   /* 오늘 탭 지수 카드 3열: 이름·등락을 한 줄로, 숫자는 한 단계 작게 */
   /* 이름은 절대 안 자르고(S&P 500), 등락은 같은 줄에 들어가면 오른쪽, 안 들어가면 다음 줄 오른쪽 */
   .index-strip.ia-index-compact .index-head { flex-wrap: wrap; gap: 2px 4px; align-items: center; }
-  .index-strip.ia-index-compact .index-head strong { font-size: 11px; white-space: nowrap; }
-  .index-strip.ia-index-compact .index-head em { font-size: 11px; white-space: nowrap; margin-left: auto; }
+  /* 12px 하한(--fs-cap). 3열에 들어가도록 자간을 조금 줄이고 이름은 줄바꿈 허용. */
+  .index-strip.ia-index-compact .index-head strong { font-size: var(--fs-cap); letter-spacing: -0.02em; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .index-strip.ia-index-compact .index-head em { font-size: var(--fs-cap); letter-spacing: -0.02em; white-space: nowrap; margin-left: auto; }
   .index-strip.ia-index-compact .index-price { font-size: var(--fs-body); }
-  /* 트리맵 '필터' 토글: 종목 찾기 옆의 작은 필(전체 폭 입력창처럼 보이던 것) */
-  .ia-heatmap-toolbar > label.grow { flex: 1 1 200px; order: -2; min-width: 0; }
-  .ia-heatmap-toolbar .ia-map-filter-toggle { order: -1; flex: 0 0 auto; width: auto; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill); }
   /* 세그먼트 가로 스크롤 힌트: 페이드를 넓히고 끝에 여백 */
   .ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds, .segmented.ia-seg-strip {
     -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent);
@@ -13725,8 +13191,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .cal-table td.cal-actual.cal-miss { color: var(--red); }
 .cal-table td.cal-actual.cal-beat::after { content: " ▲"; font-size: 0.8em; }
 .cal-table td.cal-actual.cal-miss::after { content: " ▼"; font-size: 0.8em; }
-/* 브리핑 읽어주기 버튼 */
-.briefing-header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* 브리핑 읽어주기 버튼 (.briefing-header 본체 규칙은 위쪽 한 곳에만 둔다) */
 .briefing-tts { margin-left: auto; min-height: 32px; padding: 0 12px; font-size: var(--fs-cap); }
 .briefing-tts[aria-pressed="true"] { background: var(--blue); color: #fff; border-color: var(--blue); }
 /* 프리/애프터마켓 시세(미국, 워커 quote) */
@@ -13746,3 +13211,60 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .map-list-row small { display: block; color: var(--muted); font-size: var(--fs-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-list-row em { font-style: normal; font-weight: 700; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .map-list-sector { padding: 6px 12px; background: var(--panel-soft); color: var(--muted); font-size: var(--fs-cap); font-weight: 600; border-bottom: 1px solid var(--line); }
+.map-list-more { display: block; width: 100%; min-height: 44px; border: 0; border-top: 1px solid var(--line); background: var(--panel-soft); color: var(--primary); font-size: var(--fs-sub); font-weight: 600; cursor: pointer; }
+/* 의회 랭킹 표본부족 행: 순위를 주지 않고 아래로 내린 행 */
+.congress-rank-thin td { color: var(--muted); }
+.congress-thin-badge { display: inline-block; margin-left: 4px; padding: 1px 6px; border-radius: var(--r-pill); background: var(--tint-warn); color: var(--tint-warn-fg); font-size: var(--fs-cap); font-weight: 700; white-space: nowrap; }
+
+/* ==========================================================================
+   폰 접근성 보정 (감사 2026-09-15 P2) — 마지막에 두어 컴포넌트 규칙을 덮는다
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* 32px 미만이던 탭 타깃. 글자 크기는 그대로 두고 눌리는 면적만 44px 로 넓힌다. */
+  .leader-chip,
+  .congress-help-button,
+  .score-help-button,
+  .session-menu-trigger,
+  .watch-star,
+  .watch-chip-remove,
+  .screener-delta-chip,
+  .hl-chip,
+  .earn-hl-chip,
+  .pf-pie-switch button,
+  .pf-del,
+  .copy-msg-btn,
+  .chat-close,
+  .compact-btn,
+  .cprob-hz,
+  .benchmark-ticker,
+  button.agg-label,
+  .ai-dash-rangebar button,
+  .ai-dash-stylebar button {
+    height: auto;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .watch-star, .watch-chip-remove, .session-menu-trigger, .copy-msg-btn, .chat-close {
+    min-width: 44px;
+    height: auto;
+  }
+
+  /* 고정 높이 30~32px 셀렉트는 16px 글자(폰 확대 방지 규칙)에서 한글 받침이 잘린다.
+     폰에서는 높이를 풀고 최소 40px 만 보장한다. */
+  .watch-alert-controls label.watch-alert-with-select select,
+  .portfolio-tool-head > select,
+  .portfolio-tool-table input,
+  .portfolio-tool-table select,
+  .journal-entry select,
+  .journal-ticker,
+  .journal-delete,
+  .benchmark-controls select {
+    height: auto;
+    min-height: 40px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    line-height: 1.4;
+  }
+}

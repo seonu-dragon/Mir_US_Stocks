@@ -189,8 +189,10 @@ function etfRsSecondaryBenchmarks() {
 // The two "대비" secondary benchmarks shown on each ETF RS card, per market.
 function etfRsSecondaryStatsHtml(item, period) {
   return etfRsSecondaryBenchmarks().map(([t, label]) => {
-    const v = item.relative?.[t]?.[period] ?? 0;
-    return `<span>${label} 대비 <strong class="${cls(v)}">${fmtPct(v)}</strong></span>`;
+    // 결측을 0 으로 채우면 "+0.0%" 가 실측처럼 보인다 — 없으면 "—"(감사 2026-09-15 P2).
+    const raw = item.relative?.[t]?.[period];
+    const v = Number.isFinite(Number(raw)) ? Number(raw) : null;
+    return `<span>${label} 대비 <strong class="${v == null ? "muted" : cls(v)}">${v == null ? "—" : fmtPct(v)}</strong></span>`;
   }).join("");
 }
 
@@ -204,12 +206,17 @@ function getSectorEtfRows() {
     .filter((item) => group === "All" || item.group === group)
     .map((item) => ({
       ...item,
-      activeRelative: item.relative?.[benchmark]?.[period] ?? 0,
-      activeReturn: item[period] ?? 0
+      // 정렬 키는 숫자가 필요하지만, 표시는 결측을 "—" 로 내보내야 한다.
+      activeRelative: Number.isFinite(Number(item.relative?.[benchmark]?.[period])) ? Number(item.relative[benchmark][period]) : null,
+      activeReturn: Number.isFinite(Number(item[period])) ? Number(item[period]) : null
     }))
     .sort((a, b) => {
-      if (sort === "return") return b.activeReturn - a.activeReturn;
-      return b.activeRelative - a.activeRelative;
+      const key = sort === "return" ? "activeReturn" : "activeRelative";
+      const av = a[key]; const bv = b[key];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;   // 결측은 항상 아래로
+      if (bv == null) return -1;
+      return bv - av;
     });
   return { rows, payload, benchmark, period };
 }
@@ -230,7 +237,7 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
       <div class="etf-rs-topline">
         ${rankBadge}
         <span class="group-badge">${escapeHtml(item.group ?? "")}</span>
-        <strong class="${cls(item.activeRelative)}">${escapeHtml(benchmark)} 대비 ${fmtPct(item.activeRelative)}</strong>
+        <strong class="${item.activeRelative == null ? "muted" : cls(item.activeRelative)}">${escapeHtml(benchmark)} 대비 ${item.activeRelative == null ? "—" : fmtPct(item.activeRelative)}</strong>
       </div>
       <h4>${escapeHtml(item.category)}</h4>
       <div class="etf-rs-main">
@@ -238,10 +245,10 @@ function sectorEtfCardHtml(item, rankIdx, period, benchmark) {
           <span class="ticker-pill">${escapeHtml(item.representative ?? "")}</span>
           <strong>${escapeHtml(item.name ?? "")}</strong>
         </div>
-        <div class="etf-rs-score ${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</div>
+        <div class="etf-rs-score ${item.activeReturn == null ? "muted" : cls(item.activeReturn)}">${item.activeReturn == null ? "—" : fmtPct(item.activeReturn)}</div>
       </div>
       <div class="etf-rs-stats">
-        <span>${periodLabel(period)} <strong class="${cls(item.activeReturn)}">${fmtPct(item.activeReturn)}</strong></span>
+        <span>${periodLabel(period)} <strong class="${item.activeReturn == null ? "muted" : cls(item.activeReturn)}">${item.activeReturn == null ? "—" : fmtPct(item.activeReturn)}</strong></span>
         ${etfRsSecondaryStatsHtml(item, period)}
       </div>
       <div class="peer-list">${peerChips}</div>
@@ -485,7 +492,7 @@ function levEtfCardHtml(item) {
   const chgCls = hasLive ? cls(live.changePct) : "";
   const month = hasLive && Number.isFinite(live.monthChangePct) ? fmtPct(live.monthChangePct) : "—";
   const monthCls = hasLive ? cls(live.monthChangePct) : "";
-  const rs = hasLive && Number.isFinite(Number(live.rsi14)) ? Math.round(Number(live.rsi14)) : "—";
+  const rs = hasLive ? fmtRsi(live) : "—"; // 합성 히스토리 종목의 가짜 RSI 차단
   const scopeLabel = LEV_ETF_SCOPE_LABEL[item.scope] || item.scope;
   return `
     <article class="lev-etf-card ${hasLive ? "has-live" : "no-live"}" data-ticker="${escapeHtml(item.ticker)}" tabindex="0" role="button">
@@ -662,18 +669,23 @@ function renderCorrelationMatrix() {
   const meta = byId("corrMeta");
   if (!box) return;
   const lookback = 60;
-  const tickers = (watchlist || []).slice(0, 14).filter((t) => {
+  // 합성 히스토리(가짜 가격) 종목은 상관을 계산해도 의미가 없다 — 제외하고 건수를 고지한다.
+  const candidates = (watchlist || []).slice(0, 14);
+  let syntheticSkipped = 0;
+  const tickers = candidates.filter((t) => {
     const s = stockByTicker(t);
-    return s && Array.isArray(s.closeSeries) && s.closeSeries.length >= 20;
+    if (!s || !Array.isArray(s.closeSeries) || s.closeSeries.length < 20) return false;
+    if (typeof isSyntheticHistory === "function" && isSyntheticHistory(s)) { syntheticSkipped += 1; return false; }
+    return true;
   });
   if (tickers.length < 2) {
-    box.innerHTML = `<p class="muted">관심종목을 2개 이상 추가하면 상관관계가 표시됩니다. (가격 이력이 있는 종목 기준)</p>`;
+    box.innerHTML = `<p class="muted">관심종목을 2개 이상 추가하면 상관관계가 표시됩니다. (실측 가격 이력이 있는 종목 기준${syntheticSkipped ? ` · 합성 이력 ${syntheticSkipped}종목 제외` : ""})</p>`;
     if (meta) meta.textContent = "";
     return;
   }
   const returns = {};
   tickers.forEach((t) => { returns[t] = corrDailyReturns(stockByTicker(t).closeSeries, lookback); });
-  const head = `<th class="corr-corner"></th>` + tickers.map((t) => `<th class="corr-th">${escapeHtml(t)}</th>`).join("");
+  const head = `<th class="corr-corner"></th>` + tickers.map((t) => `<th class="corr-th" title="${escapeHtml(t)}">${escapeHtml(stockLabel(t))}</th>`).join("");
   const bodyRows = tickers.map((rt) => {
     const cells = tickers.map((ct) => {
       if (rt === ct) return `<td class="corr-cell corr-diag">1.00</td>`;
@@ -682,7 +694,7 @@ function renderCorrelationMatrix() {
       const strong = Number.isFinite(c) && Math.abs(c) >= 0.6;
       return `<td class="corr-cell${strong ? " corr-strong" : ""}" style="background:${corrColor(c)}" title="${escapeHtml(rt)} vs ${escapeHtml(ct)}: ${txt}">${txt}</td>`;
     }).join("");
-    return `<tr><th class="corr-rowhead">${escapeHtml(rt)}</th>${cells}</tr>`;
+    return `<tr><th class="corr-rowhead" title="${escapeHtml(rt)}">${escapeHtml(stockLabel(rt))}</th>${cells}</tr>`;
   }).join("");
   box.innerHTML = `<table class="corr-table"><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table>`;
   let sum = 0, cnt = 0, maxPair = null;
@@ -693,9 +705,10 @@ function renderCorrelationMatrix() {
     }
   }
   if (meta) {
+    const skipNote = syntheticSkipped ? ` · 합성 이력 ${syntheticSkipped}종목 제외` : "";
     meta.textContent = cnt
-      ? `최근 ${lookback}거래일 · 평균 상관 ${(sum / cnt).toFixed(2)}${maxPair ? ` · 최고 ${maxPair.a}–${maxPair.b} ${maxPair.c.toFixed(2)}` : ""}`
-      : `최근 ${lookback}거래일`;
+      ? `최근 ${lookback}거래일 · ${tickers.length}종목 · 평균 상관 ${(sum / cnt).toFixed(2)}${maxPair ? ` · 최고 ${stockLabel(maxPair.a)}–${stockLabel(maxPair.b)} ${maxPair.c.toFixed(2)}` : ""}${skipNote}`
+      : `최근 ${lookback}거래일${skipNote}`;
   }
 }
 
@@ -809,29 +822,39 @@ function showConstituentPanel(categoryName, period) {
   if (!row) return;
 
   const panel = byId("constituentPanel");
-  byId("constituentPanelTicker").textContent = row.representative;
-  byId("constituentPanelName").textContent = `${row.category} — ${row.name}`;
+  if (!panel) return;
+  const tickerEl = byId("constituentPanelTicker");
+  const nameEl = byId("constituentPanelName");
+  if (tickerEl) tickerEl.textContent = stockLabel(row.representative);
+  if (nameEl) nameEl.textContent = `${row.category} — ${row.name}`;
   
   // Sort ALL peers by the active period descending
   const allPeers = (row.peers || []).slice().sort((a, b) => (b[period] ?? 0) - (a[period] ?? 0));
-  byId("constituentPanelCount").textContent = `${allPeers.length}개 구성 종목`;
-  byId("constituentPeriodHeader").textContent = periodLabel(period) + " 수익률";
+  const countEl = byId("constituentPanelCount");
+  if (countEl) countEl.textContent = `${allPeers.length}개 구성 종목`;
+  const periodHeaderEl = byId("constituentPeriodHeader");
+  if (periodHeaderEl) periodHeaderEl.textContent = periodLabel(period) + " 수익률";
   const [[bench1, bench1Label], [bench2, bench2Label]] = etfRsSecondaryBenchmarks();
   if (byId("constituentBench1Header")) byId("constituentBench1Header").textContent = `${bench1Label} 대비`;
   if (byId("constituentBench2Header")) byId("constituentBench2Header").textContent = `${bench2Label} 대비`;
 
-  byId("constituentPanelBody").innerHTML = allPeers.map((peer, idx) => {
-    const spyRel = peer[`rel_${bench1}`]?.[period] ?? (row.relative?.[bench1]?.[period] ?? 0);
-    const qqqRel = peer[`rel_${bench2}`]?.[period] ?? (row.relative?.[bench2]?.[period] ?? 0);
-    const pct = peer[period] ?? 0;
+  // 구성종목의 상대수익률이 없으면 ETF 그룹 값으로 대신 채우던 것을 없앴다 —
+  // 종목 행에 그룹 수치가 섞여 "+0.0%" 가 실측처럼 보였다(감사 2026-09-15 P2).
+  const num = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
+  const relCell = (v) => `<td class="${v == null ? "muted" : cls(v)}">${v == null ? "—" : fmtPct(v)}</td>`;
+  const bodyEl = byId("constituentPanelBody");
+  if (bodyEl) bodyEl.innerHTML = allPeers.map((peer, idx) => {
+    const spyRel = num(peer[`rel_${bench1}`]?.[period]);
+    const qqqRel = num(peer[`rel_${bench2}`]?.[period]);
+    const pct = num(peer[period]);
     return `
       <tr>
         <td><strong>${idx + 1}</strong></td>
         <td><strong class="ticker-link" data-ticker="${escapeHtml(peer.ticker)}" role="button" tabindex="0">${escapeHtml(stockLabel(peer))}</strong></td>
         <td>${escapeHtml(stockSubLabel(peer) || "")}</td>
-        <td class="${cls(pct)}"><strong>${fmtPct(pct)}</strong></td>
-        <td class="${cls(spyRel)}">${fmtPct(spyRel)}</td>
-        <td class="${cls(qqqRel)}">${fmtPct(qqqRel)}</td>
+        <td class="${pct == null ? "muted" : cls(pct)}"><strong>${pct == null ? "—" : fmtPct(pct)}</strong></td>
+        ${relCell(spyRel)}
+        ${relCell(qqqRel)}
       </tr>
     `;
   }).join("");

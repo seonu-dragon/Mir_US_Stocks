@@ -350,7 +350,13 @@ const VIEW_MODE_STORAGE_KEY = "mir_view_mode_v2";
 // 딥링크(?tab=signals 등)도 거기서 advanced 로 승격되므로 그대로 동작한다.
 // 2026-09-04: 기본/고급 구분을 없앴다. 모든 탭이 항상 보이고(고급), 저장된 옛 값은 무시한다.
 const DEFAULT_VIEW_MODE = "advanced";
-const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1";
+// 저장된 스크리너 조건도 시장별로 나눈다 — 조건(섹터·시총 단위·프리셋)이 시장마다
+// 다른데 한 키를 공유해 KR 조건이 US 목록에 섞여 나왔다(감사 2026-09-15 P2).
+const SAVED_SCREENER_STORAGE_KEY = "mir_saved_screeners_v1"; // 구 공유 키(마이그레이션 전용)
+function savedScreenerStorageKey(marketId) {
+  const id = marketId || (isKrMarket() ? "kr" : "us");
+  return id === "kr" ? "mir_saved_screeners_kr" : "mir_saved_screeners_us";
+}
 const ESTIMATE_HISTORY_STORAGE_KEY = "mir_estimate_history_v1";
 
 const DEFAULT_WATCHLIST_US = ["NVDA", "MSFT", "AAPL", "PLTR", "SOXX"];
@@ -671,6 +677,9 @@ function resetMarketCaches() {
   marketHeader.indices = [];
   marketHeader.indicesSource = null;
   if (typeof window.resetDisclosureTrackerCaches === "function") window.resetDisclosureTrackerCaches();
+  // 시장 전환 시 남아 있던 반대 시장 티커를 지운다(백테스트 바스켓·비교보드 입력·저장 조건).
+  if (typeof resetPortfolioMarketState === "function") resetPortfolioMarketState();
+  if (typeof resetScreenerMarketState === "function") resetScreenerMarketState();
 
   // Clear market-specific feature globals and promises so they reload for the new market!
   Object.keys(FEATURE_DATA).forEach((key) => {
@@ -2613,6 +2622,8 @@ function activateInstitutionalSub(name, { push = false } = {}) {
     renderWithFeature("krDart", renderKrDisclosures, "krDartTable", load);
     // 상세 숫자는 따로 온다. 늦게 도착하면 그때 다시 그린다 — 없어도 목록은 나온다.
     if (load) ensureFeatureData("krEventDetails").then((ok) => { if (ok) renderKrDisclosures(); });
+    // 공시 유형별 과거 반응(krDiscStats)도 늦게 온다 — 도착하면 판정 줄을 다시 그린다.
+    if (load) ensureFeatureData("krDiscStats").then((ok) => { if (ok) renderKrDisclosures(); });
   }
   if (institutionalSubTab === "krown") renderWithFeature("krOwnership", renderKrOwnership, "krOwnTable", load);
   if (push) {
@@ -2754,7 +2765,8 @@ function setupViewMode() {
   }
 }
 
-const MOBILE_TABS_MQ = "(max-width: 960px)";
+// CSS 의 모바일 탭 브레이크포인트(styles.css @media max-width:900px)와 맞춘다.
+const MOBILE_TABS_MQ = "(max-width: 900px)";
 
 function layoutMobileTabs() {
   const wrap = byId("tabsScrollWrap");
@@ -3273,7 +3285,8 @@ const LIST_LIMITS = [
   { host: "scannerCards", item: ":scope > *", limit: 12, step: 12 },
   { host: "calendarBody", item: ".cal-day", limit: 4, step: 4 },
   { host: "insiderCluster", item: ".cluster-grid > .cluster-card", limit: 6, step: 6, mobileOnly: true },
-  { host: "stockTreemapList", item: ".map-list-row", limit: 40, step: 40 },
+  // stockTreemapList 는 treemap.js 가 렌더 측에서 40개만 만들고 '더 보기' 를 붙인다(중복 제거).
+  { host: "krOwnTable", item: "tbody > tr", limit: 50, step: 100 },
 ];
 const isPhoneViewport = () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
 const listLimitState = new WeakMap();
@@ -4864,7 +4877,9 @@ function metricValue(item, metric) {
 }
 
 function metricSortDirection(metric) {
-  return ["pe", "forwardPE", "ps", "pb", "low52Dist"].includes(metric) ? -1 : 1;
+  // 작을수록 좋은 지표는 오름차순. newHighDistancePct(신고가까지 남은 거리)는
+  // 0 에 가까울수록 신고가라 여기에 속한다(감사 2026-09-15 P2).
+  return ["pe", "forwardPE", "ps", "pb", "low52Dist", "newHighDistancePct"].includes(metric) ? -1 : 1;
 }
 
 function formatMetricValue(value, metric) {
@@ -6619,7 +6634,7 @@ function renderBriefingSide(side) {
     </div>`;
   // Snapshot ai_briefing (US) → standalone file fallback (KR 스냅샷엔 ai_briefing이 없음).
   const inline = (data.ai_briefing || {})[key] || briefingFileCache[key];
-  if (inline) { el.innerHTML = sanitizeBriefingHtml(inline); return; }
+  if (inline) { el.innerHTML = decorateBriefingHtml(inline); return; }
   el.innerHTML = `<div class="empty-briefing"><strong>${BRIEFING_LABELS[key]}</strong><br>브리핑을 불러오는 중…</div>`;
   fetch(`data/briefings/${key}.json`, { cache: "no-cache" })
     .then((r) => (r.ok ? r.json() : null))
@@ -6627,7 +6642,7 @@ function renderBriefingSide(side) {
       const html = b && b.html;
       if (html) briefingFileCache[key] = html;
       if (briefingSel[side] !== key) return; // user toggled away while loading
-      el.innerHTML = html ? sanitizeBriefingHtml(html) : emptyHtml;
+      el.innerHTML = html ? decorateBriefingHtml(html) : emptyHtml;
     })
     .catch(() => { if (briefingSel[side] === key) el.innerHTML = emptyHtml; });
 }

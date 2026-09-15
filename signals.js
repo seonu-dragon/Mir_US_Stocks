@@ -886,7 +886,7 @@ function renderAggregateInsights() {
     bySec[st.sector] = (bySec[st.sector] || 0) + (Number(r.value) || 0);
   }
   const secRows = Object.entries(bySec).map(([s, v]) => ({ label: s, value: v })).sort((a, b) => b.value - a.value).slice(0, 8);
-  cards.push(`<div class="agg-card"><h3>‍내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "#16a34a") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
+  cards.push(`<div class="agg-card"><h3>내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "#16a34a") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker[data-ticker]").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }

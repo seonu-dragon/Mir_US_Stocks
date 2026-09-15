@@ -383,6 +383,22 @@ function localDateFromIso(iso) {
   return parts ? new Date(parts.year, parts.month - 1, parts.day) : null;
 }
 
+// D+n 은 '달력상 며칠 뒤' 다. 로컬 자정끼리 빼면 서머타임 경계에서 23h/25h 가 나와
+// Math.ceil 이 하루를 틀린다 — UTC 자정으로 옮겨 일수를 센다(감사 2026-09-15 P2).
+function calendarDayDiff(from, to) {
+  if (!from || !to) return null;
+  const utc = (d) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  return Math.round((utc(to) - utc(from)) / 86400000);
+}
+function earningsRelativeDayLabel(target, today) {
+  const days = calendarDayDiff(today, target);
+  if (days == null) return { days: null, rel: "" };
+  if (days === 0) return { days, rel: "오늘" };
+  if (days === 1) return { days, rel: "내일" };
+  if (days < 0) return { days, rel: `${Math.abs(days)}일 전` };
+  return { days, rel: `${days}일 후` };
+}
+
 // Join an earnings-calendar row with the snapshot so the calendar can show sector,
 // price/change, valuation, target upside, size tier and watchlist state.
 function enrichEarningsRow(row) {
@@ -397,7 +413,8 @@ function enrichEarningsRow(row) {
   return {
     ticker: t, date: row.nextDate, company: stock.company || t,
     sector: stock.sector || "", sectorKo: isKrMarket() ? (stock.sector || "") : (SECTOR_KO[stock.sector] || stock.sector || ""),
-    marketCapB: capB, capTier, rsi14: (stock.rsi14 ?? null),
+    // historySource 를 같이 실어야 fmtRsi 가 합성 이력을 가려낼 수 있다.
+    marketCapB: capB, capTier, rsi14: (stock.rsi14 ?? null), historySource: stock.historySource,
     price, changePct: Number.isFinite(Number(stock.changePct)) ? Number(stock.changePct) : null,
     epsEstimate: (row.epsEstimate != null ? Number(row.epsEstimate) : null),
     target, upside, watch: isInWatchlist(t),
@@ -468,8 +485,7 @@ function earningsCalendarGrid(items, today) {
     const list = byDate[date].sort(earnSortCmp);
     const d = localDateFromIso(date);
     const dow = d ? WEEKDAY_KO[d.getDay()] : "";
-    const days = Math.ceil((d - today) / 86400000);
-    const rel = days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`;
+    const { days, rel } = earningsRelativeDayLabel(d, today);
     const isToday = days === 0;
     return `
       <div class="earn-cal-day${isToday ? " is-today" : ""}">
@@ -497,8 +513,7 @@ function earningsListView(items, today) {
     const list = byDate[date].sort(earnSortCmp);
     const d = localDateFromIso(date);
     const dow = d ? WEEKDAY_KO[d.getDay()] : "";
-    const days = Math.ceil((d - today) / 86400000);
-    const rel = days === 0 ? "오늘" : days === 1 ? "내일" : `${days}일 후`;
+    const { rel } = earningsRelativeDayLabel(d, today);
     const capSum = list.reduce((s, it) => s + (it.marketCapB || 0), 0);
     return `
       <section class="earn-list-group">
@@ -519,7 +534,7 @@ function earningsListView(items, today) {
               <span class="earn-row-eps"><i>EPS 예상</i>${it.epsEstimate != null ? moneyOrDash(it.epsEstimate) : "—"}</span>
               <span class="earn-row-target"><i>목표 여력</i>${it.upside != null ? `<b class="${cls(it.upside)}">${fmtPct(it.upside)}</b>` : "—"}</span>
               <span class="earn-row-cap"><i>시총</i>${fmtBillions(it.marketCapB)}${it.capTier ? ` <em class="earn-tier earn-tier-${it.capTier === "메가" ? "mega" : it.capTier === "대형" ? "large" : "mid"}">${escapeHtml(it.capTier)}</em>` : ""}</span>
-              <span class="earn-row-rs"><i>RSI</i>${Number.isFinite(Number(it.rsi14)) ? Math.round(Number(it.rsi14)) : "—"}</span>
+              <span class="earn-row-rs"><i>RSI</i>${fmtRsi(it)}</span>
             </button>`).join("")}
         </div>
       </section>`;

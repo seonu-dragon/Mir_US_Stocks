@@ -174,15 +174,45 @@ function rebalanceShareLabel(shares) {
   return `${shares.toFixed(2)}주`;
 }
 
-function dividendDefaults(row) {
-  const f = row.stock?.fundamentals || (window.MAP_FUNDAMENTALS || {})[row.ticker] || {};
-  const direct = numericDividend(f.dividendRate || row.stock?.dividendRate);
-  const rawYield = numericDividend(f.dividendYield || row.stock?.dividendYield);
-  const yieldRatio = rawYield > 1 ? rawYield / 100 : rawYield;
+// 배당 기본값 소스(감사 2026-09-15 P1).
+//   - 스냅샷의 fundamentals.dividendYield/dividendRate 는 실측 0건이라 항상 $0 이었다.
+//   - 수익률 단위가 섞여 있다고 보고 `rawYield > 1 ? /100 : raw` 로 분기하던 탓에
+//     0.8%(=0.8) 같은 값이 80% 로 부풀고, 1.2% 는 1.2% 로 읽혀 100배 차이가 났다.
+// 이제 시장별 실데이터에서만 읽고, 수익률은 **항상 퍼센트 단위**로 통일한다.
+//   US: US_STOCK_CALENDAR.stocks[티커] { divYield(%), divRate(주당 연배당), exDate }
+//   KR: KR_DIVIDENDS.rows[] { dps(원), yieldPct(%), recordDate }
+function dividendSourceFor(ticker) {
+  if (isKrMarket()) {
+    const rows = (window.KR_DIVIDENDS || {}).rows || [];
+    const hit = rows.find((r) => String(r.ticker || "") === String(ticker));
+    if (!hit) return null;
+    return {
+      dps: numericDividend(hit.dps),
+      yieldPct: numericDividend(hit.yieldPct),
+      date: hit.recordDate || "",
+      frequency: 1, // 국내 배당은 연 1회(결산배당)가 기본
+    };
+  }
+  const cal = (window.US_STOCK_CALENDAR || {}).stocks || {};
+  const c = cal[ticker];
+  if (!c) return null;
   return {
-    annualDps: direct || (yieldRatio > 0 ? row.price * yieldRatio : 0),
+    dps: numericDividend(c.divRate),
+    yieldPct: numericDividend(c.divYield),
+    date: c.exDate || "",
     frequency: 4,
-    exDate: f.dividendExDate || row.stock?.dividendExDate || "",
+  };
+}
+
+function dividendDefaults(row) {
+  const src = dividendSourceFor(row.ticker);
+  if (!src) return { annualDps: 0, frequency: isKrMarket() ? 1 : 4, exDate: "" };
+  // 주당 연배당이 있으면 그대로, 없으면 수익률(%) × 가격 / 100.
+  const fromYield = (src.yieldPct > 0 && row.price > 0) ? (row.price * src.yieldPct) / 100 : 0;
+  return {
+    annualDps: src.dps > 0 ? src.dps : fromYield,
+    frequency: src.frequency,
+    exDate: src.date,
   };
 }
 
@@ -216,11 +246,18 @@ function dividendMonthBuckets(rows) {
   return months;
 }
 
+let _dividendPlannerFeatureTried = false;
 function renderDividendPlanner() {
   const table = byId("dividendPlannerTable");
   const summary = byId("dividendPlannerSummary");
   const monthsBox = byId("dividendMonthGrid");
   if (!table || !summary || !monthsBox) return;
+  // 배당 소스는 지연 로드 데이터셋이다 — 한 번만 요청하고, 도착하면 refreshFeatureViews
+  // (feature-data.js)가 이 함수를 다시 부른다.
+  if (!_dividendPlannerFeatureTried && typeof ensureFeatureData === "function") {
+    _dividendPlannerFeatureTried = true;
+    ensureFeatureData(isKrMarket() ? "krDividends" : "usCalendar");
+  }
   const rows = portfolioDetailRows();
   if (!rows.length) {
     byId("dividendPlannerTotal").textContent = `연 ${marketCfg().formatMoney(0)}`;
@@ -937,6 +974,72 @@ function renderPortfolio() {
   renderPortfolioXray();
 }
 
+// ===== X-RAY 팩터 백분위 (스냅샷당 1회 계산 · 메모이즈) =====
+// 예전엔 보유 종목마다 ai-mode.js factorPercentiles 를 불러 전 종목(1,500+)을 5회씩
+// 다시 정렬했다 — 10종목이면 렌더 한 번에 50회 정렬. 스냅샷 키로 한 번만 만든다.
+//
+// 밸류 축은 valueScore(0~100, 클수록 저평가)와 폴백 -(pe + pb*8)을 한 배열에 섞어
+// 백분위를 냈는데, 스케일이 전혀 달라(수백 대 수십) 폴백 종목이 항상 바닥에 깔렸다.
+// 두 그룹을 따로 백분위화해서 각자 자기 그룹 안에서의 위치를 갖게 한다.
+let _factorPercentilesCache = null;
+function factorPercentileSnapshotKey() {
+  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  const stamp = String((typeof data !== "undefined" && data && (data.updatedAtKst || data.updated_at_kst)) || "");
+  const mode = (window.MirMarket && typeof window.MirMarket.getMode === "function") ? window.MirMarket.getMode() : "";
+  return `${mode}|${stamp}|${stocks.length}`;
+}
+function buildFactorPercentileIndex() {
+  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  if (stocks.length < 30) return null;
+  const mfFor = (t) => ((typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(t) : null) || {});
+  const cols = { valueScore: [], valueFallback: [], momentum: [], quality: [], growth: [], size: [] };
+  const push = (arr, t, v) => { if (Number.isFinite(v)) arr.push([t, v]); };
+  for (const s of stocks) {
+    const mf = mfFor(s.ticker);
+    if (Number.isFinite(mf.valueScore)) push(cols.valueScore, s.ticker, Number(mf.valueScore));
+    else if (mf.pe > 0 && mf.pb > 0) push(cols.valueFallback, s.ticker, -(Number(mf.pe) + Number(mf.pb) * 8));
+    push(cols.momentum, s.ticker, Number(s.threeMonthChangePct));
+    const roe = Number(mf.roe), nm = Number(mf.netMargin), dr = Number(mf.debtRatio);
+    if (Number.isFinite(roe) || Number.isFinite(nm)) {
+      push(cols.quality, s.ticker, (Number.isFinite(roe) ? roe : 0) + (Number.isFinite(nm) ? nm : 0) - (Number.isFinite(dr) ? dr / 5 : 0));
+    }
+    push(cols.growth, s.ticker, Number.isFinite(mf.revenueGrowth) ? Number(mf.revenueGrowth)
+      : ((Number.isFinite(Number(s.epsNextY)) && Number.isFinite(Number(s.epsTtm)) && Number(s.epsTtm) > 0)
+          ? (Number(s.epsNextY) / Number(s.epsTtm) - 1) * 100 : NaN));
+    push(cols.size, s.ticker, Number(s.marketCapB));
+  }
+  // 열마다 티커 → 백분위 맵을 한 번만 만든다.
+  const index = {};
+  Object.keys(cols).forEach((key) => {
+    const arr = cols[key];
+    const map = new Map();
+    if (arr.length >= 20) {
+      const sorted = arr.slice().sort((a, b) => a[1] - b[1]);
+      const last = sorted.length - 1;
+      sorted.forEach(([t], i) => map.set(t, Math.round(i / last * 100)));
+    }
+    index[key] = map;
+  });
+  return index;
+}
+function portfolioFactorPercentiles(ticker) {
+  const key = factorPercentileSnapshotKey();
+  if (!_factorPercentilesCache || _factorPercentilesCache.key !== key) {
+    _factorPercentilesCache = { key, index: buildFactorPercentileIndex() };
+  }
+  const idx = _factorPercentilesCache.index;
+  if (!idx) return null;
+  const get = (m) => (m.has(ticker) ? m.get(ticker) : null);
+  const value = idx.valueScore.has(ticker) ? idx.valueScore.get(ticker) : get(idx.valueFallback);
+  return {
+    value,
+    momentum: get(idx.momentum),
+    quality: get(idx.quality),
+    growth: get(idx.growth),
+    size: get(idx.size),
+  };
+}
+
 // 포트폴리오 X-ray — 보유 비중 가중 팩터 노출(밸류·모멘텀·퀄리티·성장·규모 시장 백분위)
 // + 집중도(HHI·상위3비중·유효종목수). 섹터 분산은 도넛, 배당 인컴은 배당 캘린더가 커버.
 function renderPortfolioXray() {
@@ -956,7 +1059,7 @@ function renderPortfolioXray() {
   const acc = {}; const wsum = {};
   for (const [, k] of axes) { acc[k] = 0; wsum[k] = 0; }
   for (const r of rows) {
-    const f = (typeof factorPercentiles === "function") ? factorPercentiles({ ticker: r.ticker }) : null;
+    const f = portfolioFactorPercentiles(r.ticker);
     if (!f) continue;
     for (const [, k] of axes) {
       if (Number.isFinite(f[k])) { acc[k] += r.value * f[k]; wsum[k] += r.value; }
@@ -1098,6 +1201,18 @@ function removeBacktestTicker(ticker) {
 function setBacktestTickers(list) {
   backtestTickers = [...new Set((list || []).map((t) => String(t).toUpperCase()).filter((t) => stockByTicker(t)))].slice(0, BACKTEST_MAX_TICKERS);
   renderBacktestTickerChips();
+}
+
+// 시장 전환 시 호출(app.js resetMarketCaches). 백테스트 바스켓에 반대 시장 티커가
+// 남아 있으면 details JSON 404 로 돌아가지 않는다(감사 2026-09-15 P2).
+function resetPortfolioMarketState() {
+  backtestTickers = [];
+  _dividendPlannerFeatureTried = false; // 새 시장의 배당 소스를 다시 받는다
+  const benchSel = byId("backtestBenchmark");
+  if (benchSel) benchSel.selectedIndex = 0;
+  setBacktestStatus("");
+  renderBacktestTickerChips();
+  _factorPercentilesCache = null; // 시장이 바뀌면 X-RAY 백분위 메모도 무효
 }
 
 function setBacktestStatus(text) {

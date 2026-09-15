@@ -89,12 +89,19 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    워커는 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포)
    - Secrets: `GEMINI_API_KEY`, `FINNHUB_API_KEY`, `NAVER_CLIENT_ID`,
      `NAVER_CLIENT_SECRET`, `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`,
-     (선택) `IP_HASH_SALT` — 신고·투표 중복 판정용 IP 해시 솔트(없으면 고정 기본값)
+     **`IP_HASH_SALT`** — 신고·투표 중복 판정용 IP 해시 솔트. 이름만 "선택"이지
+     **넣어야 한다**: 없으면 코드에 박힌 공개 문자열(`mir-community-v1`)이 쓰여
+     해시에서 IPv4 원본을 전수 대입으로 즉시 복원할 수 있고, 그 해시는 관리자
+     신고 조회 응답에 그대로 실린다(`worker/README.md` 참고)
    - `GEMINI_MODEL` (선택, 변수·시크릿 어느 쪽이든): `/chat` 이 쓸 Gemini 모델 이름.
      지정하면 그 모델을 **맨 앞에** 두고, 없거나 그 모델이 404/400 "model not found"
-     를 주면 기본 체인 `gemini-2.0-flash` → `gemini-1.5-flash` 순으로 한 번씩 더
+     를 주면 기본 체인 `gemini-2.5-flash` → `gemini-2.5-flash-lite` 순으로 한 번씩 더
      시도한다(그 외 오류 — 쿼터·키 — 는 바로 Workers AI 폴백). 새 모델로 바꿀 땐
-     이 변수만 고치면 되고 코드 재배포는 필요 없다. 예: `gemini-2.5-flash`.
+     이 변수만 고치면 되고 코드 재배포는 필요 없다.
+     · 2026-09-15 감사에서 옛 기본 체인 `gemini-2.0-flash`(2026-06-01 셧다운)·
+       `gemini-1.5-flash`(2025-09 종료)가 **둘 다 죽어 있었다**. `GEMINI_MODEL` 이
+       비어 있으면 /chat 마다 404 를 두 번 받고서야 Workers AI 로 넘어갔다.
+       기본 체인이 또 낡으면 **코드를 고치기 전에 이 변수부터** 살아 있는 모델로 채울 것.
    - KV: `COMMUNITY_KV` (커뮤니티+클라우드 동기화), `MOVE_CACHE` (원인 분석·요약 캐시,
      IP 리밋 카운터, `lastgood:*` — fx·fng·indices·calendar 의 직전 정상값.
      업스트림(야후·CNN·investing.com)이 죽으면 7일 이내 값을 `stale: true, storedAt`

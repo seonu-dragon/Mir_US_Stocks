@@ -37,6 +37,11 @@ data/korea/market_snapshot.js
 .pytest_cache/
 .claude/worktrees/
 
+# 배포 번들 산출물. scripts/build_bundle.mjs 가 --apply 로 만드는데, 배포는 _site/
+# 스테이징 사본 안에서만 번들하고 레포의 HTML 은 그대로 둔다(CLAUDE.md '배포 번들').
+# 로컬에서 --apply 를 돌려 보면 여기 생기므로 커밋 대상이 아니다.
+dist/
+
 # 2026-09-03 전수조사: 사이트가 서빙하지 않는 바이너리는 추적하지 않는다.
 # 이미 커밋된 것은 이력에 남아 있어 `git checkout <sha> -- <경로>` 로 꺼낼 수 있다.
 # 원본은 AI/SNS(및 카드뉴스는 AI/카드뉴스/daily)에 그대로 있고, 여기 사본은

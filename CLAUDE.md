@@ -128,33 +128,69 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 ## 데이터 정직성
 
 지어낸 수치를 발행하지 않는다. 국내 공매도 빌더가 `random.Random(ticker)` 로 잔고를
-만들어내면서 docstring 으로는 "사실적인 통계" 라고 주장하고 있었고, 삭제했다. KR 은
-`market_config.js` 에서 `shortInterest: false` 로 막혀 있다 — KRX 실연동 전엔 켜지 말 것.
+만들어내면서 docstring 으로는 "사실적인 통계" 라고 주장하고 있었고, 삭제했다. 그 뒤
+2026-07-21 에 KRX 회원 로그인(`KRX_ID`/`KRX_PW`) 기반 실연동이 들어와
+(`scripts/build_kr_short_interest.py`, pykrx 잔고비중) **지금 KR `shortInterest` 는
+`market_config.js:241` 에서 `true` 다** — 화면에 나오는 국내 공매도 잔고는 실데이터다.
+이 문서는 07-21 이후로도 한참 `false` 라고 적고 있었다(2026-09-15 감사에서 정정).
+난수로 만든 수치를 되살리지 말라는 규칙 자체는 그대로다.
 
 **없는 데이터는 기능을 끈다.** 빈 화면을 띄우거나 없는 파일을 계속 요청하지 않는다.
 `market_config.js` 의 `features` 로 시장별로 차단한다(키가 없으면 켜진 것으로 본다 —
 판정은 `=== false` 로 할 것. `!features.x` 로 쓰면 키 없는 시장까지 꺼진다).
-현재 KR 에서 꺼 둔 것: `shortInterest`(실데이터 없음), `earningsCalendar`(국내는 실적
-예정일 소스가 없다 — 빌더는 지나간 분기 실적만 만들고 워커도 빈 배열을 준다),
-`breakoutStats`(US 만 산출). 콘솔 404 를 방치하면 진짜 404 를 가린다.
+현재 KR 에서 꺼 둔 것: `earningsCalendar`(국내는 실적 예정일 소스가 없다 — 빌더는
+지나간 분기 실적만 만들고 워커도 빈 배열을 준다), `breakoutStats`(US 만 산출).
+콘솔 404 를 방치하면 진짜 404 를 가린다.
+
+## 2026-09-15 전수 감사
+
+프론트 25개 스크립트·CSS·HTML 전 행, 워커 2,864행, 파이썬 빌더·브리핑·automation,
+워크플로우 22개를 읽고 라이브와 대조한 보고서가 **`mir_design/AUDIT_2026-09-15.md`**
+에 있다(P0 21건 · P1 · P2 · P3 · 문서 현행화 표 · 커버리지). 배포에는 올라가지
+않는다(`mir_design/` 은 rsync 제외).
+
+한 줄 요약: 테스트·게이트·Actions 는 전부 초록인데 그 뒤에서 지수 등락률이 틀린 값으로
+발행되고, 실적 데이터·Gemini 폴백·국내 브리핑 스크레이퍼가 죽어 있고, 09-04 의
+'상승확률 → 모멘텀 점수' 정직화가 화면 절반에 미반영이며, 미국 빌더 다수가 실패를
+exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P0)과 §7(착수 순서)을
+먼저 볼 것** — 여기 '알려진 부채'는 그중 배포·용량 항목만 요약한 것이다.
 
 ## 알려진 부채
 
-수치는 2026-09-03 실측.
+수치는 2026-09-15 실측.
 
-- `.git` pack 이 2.5GB(`git count-objects -vH` size-pack 2.57GiB; 07-18 엔 878MB 였다).
-  데이터 커밋이 하루 ~22개라 계속 커진다. 줄이려면 이력을 다시 써야 하므로
-  (`git filter-repo` + 강제 푸시) 아직 손대지 않았다. 완화: Actions 는 `fetch-depth: 1`
-  로 받아 run 마다 이 pack 을 내려받지 않고, 6MB 짜리 `data/market_snapshot.js` 는
-  더 이상 커밋하지 않는다(file:// 폴백용으로 로컬 생성만). **배포 아티팩트와는
-  별개다** — Pages 한도에 걸리는 쪽은 아래 서빙 파일 총량이다.
-- 배포 아티팩트 ≈330MB. `deploy-pages.yml` 이 rsync 로 `_site/` 스테이징 사본을 만들어
-  (빌드 전용 경로·브라우저가 안 읽는 .js/.json 짝 제외) 그것만 올린다 — 예전의
-  `path: '.'` 전체 업로드가 아니다. 데이터 워크플로우가 각각 배포를 트리거하지만,
-  마지막 성공 배포 이후 서빙 경로에 변경이 없으면 게이트 스텝이 건너뛴다.
-  GitHub Pages 발행 사이트 권장 한도는 1GB.
-- `app.js` 850KB / `styles.css` 340KB / `index.html` 122KB 단일 파일.
+- `.git` pack 이 1.09GiB(`git count-objects -vH` size-pack). 2026-09-04 에
+  `git filter-repo` 로 `data/`·`SNS/` 를 이력에서 들어내 159MiB 까지 줄였는데 다시
+  1GB 대로 올라와 있다 — 데이터 커밋이 하루 ~22개인 것도 있지만, 주된 원인은 재작성
+  **전** 이력을 통째로 들고 있는 orphan 브랜치 2개다(`codex/continue-mir-us-stocks`,
+  `feat/kr-disclosure-stats` — `main` 과 공통 조상이 없어 filter-repo 가 손대지 않았고,
+  둘이서만 ~1GB). origin 브랜치 157개 중 153개가 정리 대상이다. **이 둘은 지우면
+  재작성 전 이력이 영영 사라지므로 메인테이너 확인 후에 삭제할 것**(확인되면
+  `git push origin --delete <branch>` + `git gc --prune=now --aggressive`).
+  완화책은 그대로: Actions 는 `fetch-depth: 1` 로 받고, 6MB 짜리
+  `data/market_snapshot.js` 는 커밋하지 않는다(file:// 폴백용 로컬 생성만).
+  **배포 아티팩트와는 별개다** — Pages 한도에 걸리는 쪽은 아래 서빙 파일 총량이다.
+- 배포 아티팩트 **456MB**(2026-09-15 실측, run 34856925470). 추이: 2026-08-06 ~350MB →
+  09-03 문서상 330MB → 09-15 456MB. 내역은 `data/details` 195MB +
+  `data/korea/details` 169MB 로, 둘이 80%다. `deploy-pages.yml` 이 rsync 로 `_site/`
+  스테이징 사본을 만들어(빌드 전용 경로 + 브라우저가 안 읽는 큰 `.json` 짝 —
+  insider/congress/13F·market_snapshot.js·korea earnings/indicators 등 — 제외) 그것만
+  올린다. **details 는 더 못 줄인다**: 분석 페이지가 아무 종목이나 `?t=` 로 열 수 있고
+  그때 `data/details/<TICKER>.json` 을 직접 fetch 하므로 상위 N 종목만 남기는 프루닝은
+  안 된다. 남아 있는 `.json` 짝(map_fundamentals·activist·kr_disclosures 등, 합계
+  ~4MB)은 더 덜어낼 여지지만 의미 있는 크기가 아니다. 실질적인 다음 수는 details 를
+  Cloudflare R2 등으로 옮기는 것이다. 한도까지의 완충을 지키려고 배포에 700MB
+  사이즈 가드를 뒀다(넘으면 배포 실패 + 텔레그램). GitHub Pages 발행 사이트 권장
+  한도는 1GB.
+- `app.js` 403KB / `styles.css` 373KB / `index.html` 151KB 단일 파일(CRLF 작업트리
+  기준. 2026-09-04 분리 작업 전엔 app.js 가 850KB 였다).
   분리 전에 `scripts/smoke_ui.py` 를 안전망으로 쓸 것.
+- 스탬프가 닿지 않는 **수동 `?v=`** 가 5곳 있다. `scripts/stamp_build_id.py` 는
+  HTML 의 `.js`/`.css` 참조만 다시 쓰므로 이미지·동적 로딩은 손대지 않는다:
+  `index.html:39-41`(favicon.ico / favicon-32.png / apple-touch-icon.png `?v=5`),
+  `index.html:20,26`(og-cover.png `?v=4`), `app.js:1361`(mir-mascot-fly.png `?v=1`),
+  `ai-mode.js:1770`(html2canvas `?v=1.4.1`). 해당 파일을 실제로 교체할 때만 손으로
+  숫자를 올리면 된다 — **그 외에는 건드리지 말 것**(값이 갈라져도 스탬프가 못 잡는다).
 - `sitemap.xml` 은 `scripts/build_sitemap.py` 가 생성한다(**직접 고치지 말 것**).
   홈·분석 + 시가총액 상위 300종목/시장의 `analysis.html?t=` 딥링크 = 602 URL.
   스냅샷이 크게 바뀌면 다시 돌린다: `py scripts/build_sitemap.py`

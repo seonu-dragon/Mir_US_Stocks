@@ -107,14 +107,14 @@
       const [a, b, c] = z.slice(i, i + 3);
       if (a.type === "L" && b.type === "H" && c.type === "L") {
         const bot = (a.price + c.price) / 2;
-        if (c.price < a.price * 0.995 && Math.abs(a.price - c.price) / bot <= H.PAT.TOP_TOL) {
+        if (bot > 0 && c.price < a.price * 0.995 && Math.abs(a.price - c.price) / bot <= H.PAT.TOP_TOL) {
           const ci = H.confirmBreak(rows, c.idx, b.price, +1, Math.min(a.price, c.price));
           if (ci != null) push(out, "two_b_bottom", +1, ci, b.price, { points: [{ idx: a.idx, price: a.price, label: "1차" }, { idx: c.idx, price: c.price, label: "2B" }] });
         }
       }
       if (a.type === "H" && b.type === "L" && c.type === "H") {
         const top = (a.price + c.price) / 2;
-        if (c.price > a.price * 1.005 && Math.abs(a.price - c.price) / top <= H.PAT.TOP_TOL) {
+        if (top > 0 && c.price > a.price * 1.005 && Math.abs(a.price - c.price) / top <= H.PAT.TOP_TOL) {
           const ci = H.confirmBreak(rows, c.idx, b.price, -1, Math.max(a.price, c.price));
           if (ci != null) push(out, "two_b_top", -1, ci, b.price, { points: [{ idx: a.idx, price: a.price, label: "1차" }, { idx: c.idx, price: c.price, label: "2B" }] });
         }

@@ -284,6 +284,9 @@ let _lastHoverKey = null;
 // 390px 에서는 타일 수십 개가 8px 이하라 읽을 수 없다. 폰에서는 '지도/목록' 전환을 보여 주고,
 // 목록은 같은 필터·크기 기준(시가총액순)·같은 색 지표를 세로 목록으로 그린다(탭 → 종목 패널).
 const MAP_VIEW_STORAGE_KEY = "mir_map_view_v1";
+// 렌더 측 상한 — DOM 을 만든 뒤 CSS 로 감추는 방식(app.js LIST_LIMITS)을 대체한다.
+const MAP_LIST_RENDER_LIMIT = 40;
+let mapListRenderLimit = MAP_LIST_RENDER_LIMIT;
 function phoneViewport() { return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches; }
 function mapViewIsList() { return phoneViewport() && document.body.classList.contains("map-view-list"); }
 function setupMapViewSeg() {
@@ -315,18 +318,27 @@ function renderTreemapList(all, metric, sizeMetric) {
   all.forEach((item) => { sectorWeight[item.sector] = (sectorWeight[item.sector] || 0) + sizeWeight(item, sizeMetric); });
   const sorted = all.slice().sort((a, b) =>
     (sectorWeight[b.sector] - sectorWeight[a.sector]) || String(a.sector).localeCompare(String(b.sector)) || (sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric)));
+  // 폰 목록은 상한(MAP_LIST_RENDER_LIMIT)까지만 DOM 을 만들고 '더 보기' 로 이어 붙인다.
+  // 전에는 전 종목(1,500+)을 만든 뒤 CSS 로 40개만 보여 줬다.
+  const limit = Math.min(sorted.length, mapListRenderLimit);
+  const shown = sorted.slice(0, limit);
   let lastSector = null;
   const rows = [];
-  sorted.forEach((item) => {
+  shown.forEach((item) => {
     if (item.sector !== lastSector) { lastSector = item.sector; rows.push(`<div class="map-list-sector">${escapeHtml(item.sector || "기타")}</div>`); }
-    const v = metricValue(item, metric);
+    // 지도 지표(펀더멘털 18종 포함)는 mapMetricValue/fmtMetric 을 써야 한다 —
+    // 스크리너용 metricValue 는 펀더멘털 키를 몰라 전부 "—" 였다(감사 2026-09-15 P1).
+    const v = mapMetricValue(item, metric);
     const has = Number.isFinite(v);
     rows.push(`<button type="button" class="map-list-row" data-ticker="${escapeHtml(item.ticker)}">
       <span class="map-list-bar" style="background:${has ? metricColor(v, metric) : "var(--line)"}"></span>
       <span><strong>${escapeHtml(stockLabel(item))}</strong><small>${escapeHtml(stockSubLabel(item) || "")}${item.industry ? " · " + escapeHtml(item.industry) : ""}</small></span>
-      <em class="${has ? metricClass(v, metric) : "muted"}">${has ? formatMetricValue(v, metric) : "—"}</em>
+      <em class="${has ? metricClass(v, metric) : "muted"}">${has ? fmtMetric(v, metric) : "—"}</em>
     </button>`);
   });
+  if (sorted.length > limit) {
+    rows.push(`<button type="button" class="map-list-more" data-map-list-more="1">더 보기 (${limit} / ${sorted.length})</button>`);
+  }
   host.innerHTML = rows.join("");
   host.hidden = false;
   host.querySelectorAll(".map-list-row").forEach((btn) => btn.addEventListener("click", () => {
@@ -335,6 +347,11 @@ function renderTreemapList(all, metric, sizeMetric) {
     renderSelected(item);
     byId("selectedStock")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }));
+  const moreBtn = host.querySelector("[data-map-list-more]");
+  if (moreBtn) moreBtn.addEventListener("click", () => {
+    mapListRenderLimit += MAP_LIST_RENDER_LIMIT;
+    renderTreemapList(all, metric, sizeMetric);
+  });
 }
 
 function renderTreemap() {
@@ -347,6 +364,7 @@ function renderTreemap() {
   if (seg) seg.hidden = !phoneViewport();
   if (mapViewIsList()) {
     renderLegend(metric);
+    mapListRenderLimit = MAP_LIST_RENDER_LIMIT; // 필터가 바뀌면 '더 보기' 를 되감는다
     renderTreemapList(filteredStocks(), metric, sizeMetric);
     _treemapPending = false;
     return;
@@ -366,13 +384,14 @@ function renderTreemap() {
 
   renderLegend(metric);
   treemapPeerIndex();
+  _treemapGroupIndex = null; // 필터가 바뀌었을 수 있다
   _lastHoverKey = null;
 
   const all = filteredStocks();
   if (!all.length) {
     const bucket = byId("bucketFilter").value;
     let emptyMsg = "조건에 맞는 종목이 없습니다.";
-    if (bucket === "watchlist") emptyMsg = "관심종목이 없습니다. 종목 분석에서 를 눌러 관심종목에 추가해 보세요.";
+    if (bucket === "watchlist") emptyMsg = "관심종목이 없습니다. 종목 분석에서 별(★) 버튼을 눌러 관심종목에 추가해 보세요.";
     else if (bucket === "portfolio") emptyMsg = "보유종목이 없습니다. 포트폴리오 탭에서 보유 종목을 추가해 보세요.";
     map.innerHTML = `<div class="heatmap-empty">${escapeHtml(emptyMsg)}</div>`;
     zoomView = null;
@@ -759,10 +778,32 @@ function stockTooltip(item) {
   `;
 }
 
+// 그룹 툴팁용 섹터/산업군 인덱스 — 호버마다 전 종목을 두 번 필터하던 것을 렌더당
+// 한 번으로 줄인다(감사 2026-09-15 P2). 렌더/필터 변경 시 renderTreemap 이 비운다.
+let _treemapGroupIndex = null;
+function treemapGroupIndex() {
+  if (_treemapGroupIndex) return _treemapGroupIndex;
+  const bySector = new Map();
+  const byIndustry = new Map();
+  filteredStocks().forEach((item) => {
+    const sec = item.sector;
+    const ind = item.industry;
+    if (!bySector.has(sec)) bySector.set(sec, []);
+    bySector.get(sec).push(item);
+    const key = `${sec}\u0000${ind}`;
+    if (!byIndustry.has(key)) byIndustry.set(key, []);
+    byIndustry.get(key).push(item);
+  });
+  _treemapGroupIndex = { bySector, byIndustry };
+  return _treemapGroupIndex;
+}
+
 function groupTooltip(group) {
   const metric = byId("metricFilter").value;
-  let rows = filteredStocks().filter((item) => item.sector === group.sector);
-  if (group.type === "industry") rows = rows.filter((item) => item.industry === group.industry);
+  const idx = treemapGroupIndex();
+  const rows = (group.type === "industry"
+    ? idx.byIndustry.get(`${group.sector}\u0000${group.industry}`)
+    : idx.bySector.get(group.sector)) || [];
   const averageChange = average(rows, metric);
   const leaders = [...rows].sort((a, b) => b.changePct - a.changePct).slice(0, 4);
   const largest = [...rows].sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 6);
@@ -806,7 +847,14 @@ function miniFact(label, value) {
 }
 
 function sparklineSvg(series, options = {}) {
-  const values = Array.isArray(series) && series.length > 1 ? series.map(Number).filter(Number.isFinite) : [0, 0];
+  // 이력이 없으면 [0,0] 으로 채워 '평평한 선' 을 그리던 것을 없앴다 — 데이터가 없는 것과
+  // 변동이 없는 것은 다르다(감사 2026-09-15 P2). 없으면 자리만 비운다.
+  const values = (Array.isArray(series) && series.length > 1) ? series.map(Number).filter(Number.isFinite) : [];
+  if (values.length < 2) {
+    const w = options.width || 120;
+    const h = options.height || 34;
+    return `<svg class="sparkline is-empty" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"></svg>`;
+  }
   const width = options.width || 120;
   const height = options.height || 34;
   const pad = 4;
@@ -857,7 +905,6 @@ function sizeWeight(item, sizeMetric) {
   const raw = Number(item[sizeMetric]);
   if (!Number.isFinite(raw)) return 1;
   if (sizeMetric === "volumeRatio") return Math.max(0.25, raw);
-  if (sizeMetric.includes("Score")) return Math.max(1, raw);
   return Math.max(1, raw);
 }
 

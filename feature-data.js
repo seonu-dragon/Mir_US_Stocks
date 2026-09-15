@@ -258,6 +258,11 @@ function refreshFeatureViews() {
   if (byId("sub-etf-lev")?.classList.contains("is-active")) {
     calls.push(() => ensureFeatureData("leveraged").then(() => renderLeveragedEtfPage()));
   }
+  // 배당 플래너는 US_STOCK_CALENDAR / KR_DIVIDENDS 를 읽는다. 둘 다 지연 로드라
+  // 첫 렌더 때는 비어 있어 연 0 원으로 굳었다 — 도착하면 다시 그린다.
+  if (currentTab === "bulk" && typeof renderDividendPlanner === "function" && byId("dividendPlannerTable")) {
+    calls.push(renderDividendPlanner);
+  }
   calls.forEach((fn) => { try { fn(); } catch (e) { console.warn("refreshFeatureViews", e); } });
 }
 

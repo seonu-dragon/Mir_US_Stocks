@@ -62,7 +62,12 @@ function issuerTickerIndex() {
     if (!norm) return;
     if (!byNorm.has(norm)) byNorm.set(norm, stock.ticker);
     const first = norm.split(" ")[0];
-    if (first && !byFirst.has(first)) byFirst.set(first, stock.ticker);
+    if (first) {
+      // 첫 단어가 여러 종목에 걸리면 귀속을 포기한다(APPLE HOSPITALITY → AAPL 오귀속).
+      const prev = byFirst.get(first);
+      if (!prev) byFirst.set(first, { ticker: stock.ticker, count: 1 });
+      else if (prev.ticker !== stock.ticker) { prev.count += 1; }
+    }
     entries.push([norm, stock.ticker]);
   });
   _issuerTickerIndex = { byNorm, byFirst, entries };
@@ -78,10 +83,18 @@ function resolveIssuerTicker(issuer) {
   if (!out) {
     const first = norm.split(" ")[0];
     if (first && first.length >= 3) {
-      out = idx.byFirst.get(first) || null;
+      // 첫 단어·접두 일치는 후보가 유일할 때만 쓴다(감사 2026-09-15 P2-10).
+      const bucket = idx.byFirst.get(first);
+      if (bucket && bucket.count === 1) out = bucket.ticker;
       if (!out) {
-        const hit = idx.entries.find(([n]) => n.startsWith(first));
-        out = hit ? hit[1] : null;
+        let hit = null;
+        let ambiguous = false;
+        for (let i = 0; i < idx.entries.length; i += 1) {
+          if (!idx.entries[i][0].startsWith(first)) continue;
+          if (hit && hit !== idx.entries[i][1]) { ambiguous = true; break; }
+          hit = idx.entries[i][1];
+        }
+        out = ambiguous ? null : hit;
       }
     }
   }
@@ -323,6 +336,19 @@ function congressTradesData() {
   return window.CONGRESS_TRADES || {};
 }
 
+// 의원별 추정 수익률 랭킹의 표본 하한(감사 2026-09-15 P0-19).
+const CONGRESS_RANK_MIN_TRADES = 10;
+const CONGRESS_RANK_MIN_BUYS = 5;
+
+function congressRankIsThin(row) {
+  if (!row) return true;
+  const buys = Number(row.buyCount) || 0;
+  const sells = Number(row.sellCount) || 0;
+  if (buys + sells >= CONGRESS_RANK_MIN_TRADES) return false;
+  if (buys >= CONGRESS_RANK_MIN_BUYS) return false;
+  return true;
+}
+
 function congressSideBadge(side) {
   if (side === "buy") return `<span class="congress-side buy">매수</span>`;
   if (side === "sell") return `<span class="congress-side sell">매도</span>`;
@@ -394,8 +420,21 @@ function renderCongressTrades() {
     return;
   }
 
-  const rankingRows = Array.isArray(payload.rankings) ? payload.rankings : [];
+  // 표본 하한: 매수+매도 10건 이상, 또는 매수 단독 5건 이상이어야 순위에 넣는다.
+  // 미달(thin)은 배지를 달아 순위 아래로 내리고 등수를 주지 않는다 — 매수 1건으로
+  // 추정 수익률 103% 가 2위에 오르던 문제(감사 2026-09-15 P0-19).
+  const rawRankingRows = Array.isArray(payload.rankings) ? payload.rankings : [];
+  const rankedRows = [];
+  const thinRows = [];
+  rawRankingRows.forEach((row) => {
+    if (congressRankIsThin(row)) thinRows.push(row);
+    else rankedRows.push(row);
+  });
+  rankedRows.forEach((row, idx) => { row._displayRank = idx + 1; });
+  thinRows.forEach((row) => { row._displayRank = null; });
+  const rankingRows = rankedRows.concat(thinRows);
   const rankTotal = rankingRows.length;
+  const thinCount = thinRows.length;
   const rankPageCount = Math.max(1, Math.ceil(rankTotal / CONGRESS_RANK_PAGE_SIZE));
   if (congressRankPage >= rankPageCount) congressRankPage = 0;
   const rankStart = congressRankPage * CONGRESS_RANK_PAGE_SIZE;
@@ -405,6 +444,7 @@ function renderCongressTrades() {
       <div class="congress-section-head">
         <h3>의원별 추정 수익률 랭킹</h3>
         <p class="congress-section-note">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>
+        <p class="congress-section-note">순위는 <b>매수+매도 ${CONGRESS_RANK_MIN_TRADES}건 이상</b>(또는 매수 단독 ${CONGRESS_RANK_MIN_BUYS}건 이상)인 의원만 매깁니다. 표본이 그보다 적으면 <b>표본부족</b> 배지를 달아 순위 없이 아래에 붙입니다${thinCount ? ` — 현재 ${thinCount}명` : ""}.</p>
       </div>
       <div class="table-wrap">
         <table class="congress-rank-table table-wide">
@@ -413,9 +453,9 @@ function renderCongressTrades() {
           </thead>
           <tbody>
             ${rankPageRows.length ? rankPageRows.map((row) => `
-              <tr data-pol-id="${escapeHtml(row.id || "")}">
-                <td>${row.rank}</td>
-                <td><button type="button" class="congress-pol-link" data-pol-id="${escapeHtml(row.id || "")}">${escapeHtml(row.name || "")}</button></td>
+              <tr data-pol-id="${escapeHtml(row.id || "")}"${row._displayRank == null ? ' class="congress-rank-thin"' : ""}>
+                <td>${row._displayRank == null ? "—" : row._displayRank}</td>
+                <td><button type="button" class="congress-pol-link" data-pol-id="${escapeHtml(row.id || "")}">${escapeHtml(row.name || "")}</button>${row._displayRank == null ? ' <span class="congress-thin-badge" title="표본이 적어 순위에서 제외">표본부족</span>' : ""}</td>
                 <td>${escapeHtml(row.chamber || "")}</td>
                 <td>${escapeHtml(row.party || "-")}</td>
                 <td class="${cls(row.estReturnPct || 0)}">${row.estReturnPct != null ? fmtPct(row.estReturnPct) : "—"}</td>

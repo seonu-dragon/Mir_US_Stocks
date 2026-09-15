@@ -136,8 +136,11 @@ const EMOJI_RE = /\p{Extended_Pictographic}|[\u{1F1E6}-\u{1F1FF}]|[\u{1F3FB}-\u{
 function stripEmoji(text) {
   return String(text ?? "").replace(EMOJI_RE, (ch) => (EMOJI_KEEP.has(ch) ? ch : ""));
 }
-// 브리핑 HTML: 이모지를 떼고 "📊 [제목] - 날짜" 굵은 첫 줄을 제목/날짜로 바꾼다.
-function sanitizeBriefingHtml(html) {
+// 브리핑 HTML: 이모지를 떼고 "[제목] - 날짜" 굵은 첫 줄을 제목/날짜로 바꾼다.
+// 이름 주의 — 이건 XSS 새니타이저가 아니다(신뢰된 파이프라인 HTML 의 표시 장식일 뿐).
+// 예전 이름 sanitizeBriefingHtml 은 안전 처리로 오해할 여지가 있어 decorate 로 바꿨고,
+// 호출부 호환을 위해 아래에 별칭을 남긴다.
+function decorateBriefingHtml(html) {
   let out = stripEmoji(html);
   out = out.replace(/<b>\s*\[([^\]<]+)\]\s*-?\s*([^<]*?)\s*<\/b>/, (m, title, date) =>
     `<strong class="briefing-title">${title.trim()}</strong>${date.trim() ? ` <span class="muted">${date.trim()}</span>` : ""}`);
@@ -145,6 +148,8 @@ function sanitizeBriefingHtml(html) {
   out = out.replace(/(<(?:b|strong|h[1-6])(?:\s[^>]*)?>)\s+/g, "$1");
   return out;
 }
+// 구 이름 호환 별칭(외부 스니펫·북마클릿용). 새 코드는 decorateBriefingHtml 을 쓴다.
+const sanitizeBriefingHtml = decorateBriefingHtml;
 
 // ===== LLM 답변 품질 검증 =====
 // 2026-09-04 새벽, 워커 LLM 이 ". of the the of the the …" 만 800자 반복한 답변을 한 번

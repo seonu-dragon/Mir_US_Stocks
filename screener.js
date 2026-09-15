@@ -64,13 +64,30 @@ function applyScreenerConfig(config) {
 }
 
 function loadSavedScreeners() {
-  const rows = window.safeStorage.getJSON(SAVED_SCREENER_STORAGE_KEY, []);
-  savedScreeners = Array.isArray(rows) ? rows.filter((row) => row && row.id && row.name && row.config) : [];
+  const key = savedScreenerStorageKey();
+  let rows = window.safeStorage.getJSON(key, null);
+  if (!Array.isArray(rows)) {
+    // 시장 분리 전(mir_saved_screeners_v1) 목록은 US 쪽으로 1회 이관한다.
+    const legacy = window.safeStorage.getJSON(SAVED_SCREENER_STORAGE_KEY, []);
+    rows = (Array.isArray(legacy) && !isKrMarket()) ? legacy : [];
+    if (rows.length) window.safeStorage.setJSON(key, rows);
+  }
+  savedScreeners = rows.filter((row) => row && row.id && row.name && row.config);
   savedScreeners.forEach((row) => migrateScreenerConfig(row.config));
 }
 
 function persistSavedScreeners() {
-  window.safeStorage.setJSON(SAVED_SCREENER_STORAGE_KEY, savedScreeners);
+  window.safeStorage.setJSON(savedScreenerStorageKey(), savedScreeners);
+}
+
+// 시장 전환 시 호출(app.js resetMarketCaches) — 저장 조건·비교보드 입력을 새 시장 것으로.
+function resetScreenerMarketState() {
+  selectedSavedScreenerId = "";
+  savedScreeners = [];
+  loadSavedScreeners();
+  renderSavedScreenerPicker();
+  const input = byId("compareInput");
+  if (input) input.value = (watchlist || []).slice(0, 4).join(", ");
 }
 
 function savedScreenerById(id = selectedSavedScreenerId) {
@@ -415,7 +432,7 @@ function runNlScreener() {
       <td class="${cls(it.changePct)}">${fmtDailyPct(it.changePct)}</td>
       <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>
       <td>${fmtEps(it)}</td>
-      <td>${Number.isFinite(Number(it.rsi14)) ? Math.round(Number(it.rsi14)) : "—"}</td>
+      <td>${fmtRsi(it)}</td>
       <td>${Number.isFinite(pe) ? pe.toFixed(1) : "-"}</td>
       <td>${fmtBillions(it.marketCapB)}</td>
       <td>${signalFor(it)}</td>
@@ -448,8 +465,6 @@ function setupUiPrefs() {
   const prefs = getUiPrefs();
   const theme = prefs.theme || (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
   applyTheme(theme);
-  // 밀도(컴팩트/넓게) 토글은 2026-09-04 에 제거했다. 예전 저장값이 남아 있어도 적용하지 않는다.
-  document.documentElement.removeAttribute("data-density");
   byId("themeToggle")?.addEventListener("click", () => {
     const next = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
     setUiPref("theme", next);
@@ -612,7 +627,7 @@ const COMPARE_METRICS = [
   ["EPS", (i) => fmtEps(i)],
   ["거래량", (i) => `${Number(i.volumeRatio || 0).toFixed(1)}x`],
   ["시총", (i) => fmtBillions(i.marketCapB)],
-  ["신고가 거리", (i) => fmtPct(-i.newHighDistancePct)],
+  ["신고가 거리", (i) => (Number.isFinite(Number(i.newHighDistancePct)) ? fmtPct(-Number(i.newHighDistancePct)) : "—")],
   ["PER", (i) => fmtMultiple(i.fundamentals?.pe)],
   ["Fwd PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
   ["P/S", (i) => fmtMultiple(i.fundamentals?.ps)],

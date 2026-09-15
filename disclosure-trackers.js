@@ -3,6 +3,12 @@
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
+// 외부 링크 스킴 검증. app.js 가 전역 safeHttpHref 를 제공하면 그걸 쓰고, 없으면
+// http(s) 만 통과시키는 로컬 폴백(javascript: 등 차단).
+const discHref = (u) => (typeof safeHttpHref === "function"
+  ? safeHttpHref(u)
+  : (/^https?:[/][/]/i.test(String(u || "")) ? String(u) : "#"));
+
 // ===== 종목 버튼 이벤트 위임 =====
 // 표·칩 컨테이너 하나에 click 리스너 하나만 단다. 예전엔 렌더마다 행(300~500개)마다
 // addEventListener 를 걸어 재렌더 때마다 클로저·리스너가 수백 개씩 새로 생겼다.
@@ -191,7 +197,7 @@ function renderActivistStakes() {
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
       <td><span class="ins-code ${kc}">${escapeHtml(r.form || "")}</span><div class="ins-sub">${escapeHtml(r.kindLabel || "")}</div></td>
       <td>${escapeHtml(r.filer || "")}</td>
-      <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
+      <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
@@ -239,7 +245,7 @@ function renderMaterialEvents() {
       <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
       <td>${items}</td>
-      <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
+      <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
@@ -461,7 +467,7 @@ function renderIpoCalendar() {
       <td><span class="ins-code ${sc}">${escapeHtml(r.stageLabel || "")}</span></td>
       <td>${escapeHtml(r.ticker || "—")}</td>
       <td>${escapeHtml(r.company || "")}${ipoOfferNote(r, cfg)}</td>
-      <td class="ins-num"><a href="${escapeHtml(r.link || "#")}" target="_blank" rel="noopener">원문</a></td>
+      <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
@@ -755,13 +761,16 @@ let buybackSort = "size", buybackType = "all", buybackQuery = "", _buybackTried 
 // 정직성 검증: build_kr_disclosure_stats.py 가 5년치로 공시유형별 '발표 후 초과수익 vs
 // 무작위'를 검정해뒀다(41유형 중 무작위 이긴 것 0). 각 트래커 메타에 해당 유형 결과를
 // 붙여, '예측 아님'을 문구가 아니라 데이터로 뒷받침한다. 데이터 없으면 빈 문자열.
+// 평균이 아니라 중앙값을 쓴다 — kr-panels.js krDisclosureStatLine 과 같은 원칙이다.
+// 평균은 소형주 급등 몇 건에 끌려가 부호까지 뒤집힌다(증자·사채 D0 평균 +0.57% vs
+// 중앙값 -0.06%). 두 화면이 서로 다른 통계를 보여주던 것을 중앙값으로 통일했다.
 function krDiscStatNote(type) {
   const st = ((window.KR_DISCLOSURE_STATS || {}).stats || {})[type];
-  if (!st || !st.d1 || !Number.isFinite(st.d1.mean)) return "";
-  const ev = st.d1.mean;
-  const rnd = st.d1.random && Number.isFinite(st.d1.random.mean) ? st.d1.random.mean : null;
+  if (!st || !st.d1 || !Number.isFinite(st.d1.median)) return "";
+  const ev = st.d1.median;
+  const rnd = st.d1.random && Number.isFinite(st.d1.random.median) ? st.d1.random.median : null;
   const n = st.sample || st.d1.n || 0;
-  return ` · <span class="muted">5년 ${Number(n).toLocaleString()}건 백테스트: 발표 후 D+1 초과수익 ${ev > 0 ? "+" : ""}${ev.toFixed(2)}%${rnd != null ? ` vs 무작위 ${rnd > 0 ? "+" : ""}${rnd.toFixed(2)}%` : ""} — 유의미한 우위 없음</span>`;
+  return ` · <span class="muted">5년 ${Number(n).toLocaleString()}건 백테스트: 발표 후 D+1 초과수익 중앙값 ${ev > 0 ? "+" : ""}${ev.toFixed(2)}%${rnd != null ? ` vs 무작위 ${rnd > 0 ? "+" : ""}${rnd.toFixed(2)}%` : ""} — 유의미한 우위 없음</span>`;
 }
 
 function buybackCategory(title) {
@@ -863,7 +872,7 @@ function renderUsBuybacks() {
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company)}</div></td>
     <td class="ins-num"><strong>${r.capPct != null ? `${r.capPct.toFixed(2)}%` : "—"}</strong></td>
     <td class="ins-num">${r.amount != null ? insiderFmtUsd(r.amount) : "—"}</td>
-    <td><a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
+    <td><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
   </tr>`).join("");
   const remain = shownRows.length - buybackLimit;
   wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">시총대비</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`
@@ -1367,7 +1376,7 @@ function renderUsDilution() {
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company)}</div></td>
     <td><span class="ins-code ${formCls(r.formType)}">${escapeHtml(r.formType || "—")}</span></td>
     <td class="ins-num">${r.amount != null ? insiderFmtUsd(r.amount) : "—"}</td>
-    <td><a href="${escapeHtml(r.url)}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
+    <td><a href="${escapeHtml(discHref(r.url))}" target="_blank" rel="noopener">${escapeHtml(r.title)}</a></td>
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>제출일</th><th>종목</th><th>서류</th><th class="ins-num">금액</th><th>공시</th></tr></thead><tbody>${body}</tbody></table>`;
   delegateTickerClicks(wrap, ".ins-ticker");

@@ -11,7 +11,9 @@
 //   · 커뮤니티: DO 경로와 KV 폴백이 같은 결과, DO 경로는 동시 글쓰기를 잃지 않음
 //   · 이전 하드닝 회귀(IP 리밋·X-Admin-Key·private no-store·fetchT 일원화)
 //   · stale-if-error: fx·fng·indices·calendar 가 업스트림 실패 시 KV 직전값을 stale 로 서빙, 7일 캡
-//   · Gemini 모델 체인: env.GEMINI_MODEL → 2.0-flash → 1.5-flash, 404/400 만 다음 모델로
+//   · Gemini 모델 체인: env.GEMINI_MODEL → 2.5-flash → 2.5-flash-lite, 404/400 만 다음 모델로
+//   · 2026-09-15 감사 수정분: 지수 등락률 산수·부분 실패 lastgood·깨진 답 판정 4경로·
+//     모르는 경로 404 no-store·crumb 음성 캐시
 //
 // env 는 전부 인메모리 모의다: KV 는 Map, AI 는 고정 문자열, DO 는 CommunityStore
 // 인스턴스를 직접 감싼 스텁. [8]·[9] 만 globalThis.fetch 를 잠깐 바꿔 업스트림
@@ -25,10 +27,14 @@ import {
   CommunityStore,
   cachedTickerSummary,
   communityHandlerFor,
+  distinctReporterCount,
   geminiModelChain,
   geminiModelUnavailable,
   handleFetch,
   llmOriginAllowed,
+  looksDegenerateReply,
+  resetYahooSessionState,
+  resolveIndexChangePct,
   resolveModelOverride,
   withLastGood,
   parseQuoteState,
@@ -486,6 +492,7 @@ await test("/sync/prefs 는 private, no-store 로 응답한다", async () => {
   const put = await handleFetch(
     req("https://w/sync/prefs", {
       method: "PUT",
+      origin: ALLOWED,
       body: { clientId: "client-aaa", prefs: { watchlist: ["NVDA"], portfolio: [], alertSettings: {} } },
     }),
     env,
@@ -514,8 +521,8 @@ await test("LLM 게이트가 데이터 프록시(fx·indices·calendar)까지 �
   const src = readFileSync(WORKER_SRC, "utf8");
   const gated = src.split("\n")
     .filter((l) => l.includes("llmOriginAllowed(request)") && !l.includes("function llmOriginAllowed"));
-  // /chat, move_analysis, cachedTickerSummary 세 곳에서만 게이트한다.
-  eq(gated.length, 3, "게이트 호출 지점 수");
+  // /chat, move_analysis, cachedTickerSummary, /sync/prefs PUT 네 곳에서만 게이트한다.
+  eq(gated.length, 4, "게이트 호출 지점 수");
   for (const marker of ['url.searchParams.get("fx")', 'url.searchParams.get("indices")', 'url.searchParams.get("calendar")']) {
     ok(src.includes(marker), `${marker} 경로가 사라졌다`);
   }
@@ -712,18 +719,18 @@ await test("calendar: 탭별로 보관하고, 한 탭만 죽어도 그 탭만 �
 
 // ── 9. Gemini 모델 체인 ──────────────────────────────────────────────────────
 
-console.log("\n[9] Gemini 모델 체인 (env.GEMINI_MODEL → 2.0-flash → 1.5-flash)");
+console.log("\n[9] Gemini 모델 체인 (env.GEMINI_MODEL → 2.5-flash → 2.5-flash-lite)");
 
 await test("geminiModelChain: 기본 순서, env 우선, 중복 제거", () => {
-  deepEq(geminiModelChain({}), ["gemini-2.0-flash", "gemini-1.5-flash"], "기본");
-  deepEq(geminiModelChain({ GEMINI_MODEL: "gemini-2.5-flash" }), ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"], "env 우선");
-  deepEq(geminiModelChain({ GEMINI_MODEL: " gemini-1.5-flash " }), ["gemini-1.5-flash", "gemini-2.0-flash"], "중복 제거 + trim");
-  deepEq(geminiModelChain({ GEMINI_MODEL: "" }), ["gemini-2.0-flash", "gemini-1.5-flash"], "빈 문자열은 무시");
+  deepEq(geminiModelChain({}), ["gemini-2.5-flash", "gemini-2.5-flash-lite"], "기본");
+  deepEq(geminiModelChain({ GEMINI_MODEL: "gemini-3.6-flash" }), ["gemini-3.6-flash", "gemini-2.5-flash", "gemini-2.5-flash-lite"], "env 우선");
+  deepEq(geminiModelChain({ GEMINI_MODEL: " gemini-2.5-flash-lite " }), ["gemini-2.5-flash-lite", "gemini-2.5-flash"], "중복 제거 + trim");
+  deepEq(geminiModelChain({ GEMINI_MODEL: "" }), ["gemini-2.5-flash", "gemini-2.5-flash-lite"], "빈 문자열은 무시");
 });
 
 await test("geminiModelUnavailable: 404 는 항상, 400 은 모델 문구가 있을 때만, 그 외는 아님", () => {
   eq(geminiModelUnavailable(404, ""), true, "404");
-  eq(geminiModelUnavailable(400, '{"error":{"message":"models/gemini-1.5-flash is not found for API version v1beta","status":"NOT_FOUND"}}'), true, "400 model not found");
+  eq(geminiModelUnavailable(400, '{"error":{"message":"models/gemini-2.5-flash-lite is not found for API version v1beta","status":"NOT_FOUND"}}'), true, "400 model not found");
   eq(geminiModelUnavailable(400, '{"error":{"message":"API key not valid"}}'), false, "400 키 오류");
   eq(geminiModelUnavailable(429, "quota"), false, "429");
   eq(geminiModelUnavailable(500, "model"), false, "500");
@@ -734,14 +741,14 @@ const geminiChatEnv = () => kvEnv({ GEMINI_API_KEY: "test-key" });
 
 await test("/chat: 첫 모델이 404 면 다음 모델을 한 번 더 시도하고 답한 모델명을 돌려준다", async () => {
   await withMockFetch((url) => {
-    if (geminiUrlModel(url) === "gemini-2.0-flash") return jsonResp({ error: { message: "not found" } }, 404);
+    if (geminiUrlModel(url) === "gemini-2.5-flash") return jsonResp({ error: { message: "not found" } }, 404);
     return jsonResp({ candidates: [{ content: { parts: [{ text: "제미나이 답변" }] } }] });
   }, async (calls) => {
     const res = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: chatBody }), geminiChatEnv());
     const data = await res.json();
     eq(data.reply, "제미나이 답변", "reply");
-    eq(data.model, "gemini-1.5-flash", "답한 모델");
-    deepEq(calls.map((c) => geminiUrlModel(c.url)), ["gemini-2.0-flash", "gemini-1.5-flash"], "시도 순서");
+    eq(data.model, "gemini-2.5-flash-lite", "답한 모델");
+    deepEq(calls.map((c) => geminiUrlModel(c.url)), ["gemini-2.5-flash", "gemini-2.5-flash-lite"], "시도 순서");
     ok(calls.every((c) => c.init.headers["x-goog-api-key"] === "test-key" && !c.url.includes("key=")), "키는 헤더로만");
   });
 });
@@ -775,22 +782,22 @@ await test("/chat stream: 스트리밍 경로도 같은 체인을 타고 SSE 로
   const sse = `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text: "안녕" }] } }] })}\n\n`;
   await withMockFetch((url) => {
     ok(url.includes("streamGenerateContent"), "스트리밍 엔드포인트");
-    if (geminiUrlModel(url) === "gemini-2.0-flash") return jsonResp({ error: { message: "not found" } }, 404);
+    if (geminiUrlModel(url) === "gemini-2.5-flash") return jsonResp({ error: { message: "not found" } }, 404);
     return new Response(sse, { status: 200, headers: { "Content-Type": "text/event-stream" } });
   }, async (calls) => {
     const res = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: { ...chatBody, stream: true } }), geminiChatEnv());
     ok(/text\/event-stream/.test(res.headers.get("Content-Type") || ""), "SSE");
     const text = await res.text();
     ok(text.includes('"delta":"안녕"'), `델타: ${text}`);
-    ok(text.includes('"model":"gemini-1.5-flash"'), "답한 모델 메타");
-    deepEq(calls.map((c) => geminiUrlModel(c.url)), ["gemini-2.0-flash", "gemini-1.5-flash"], "시도 순서");
+    ok(text.includes('"model":"gemini-2.5-flash-lite"'), "답한 모델 메타");
+    deepEq(calls.map((c) => geminiUrlModel(c.url)), ["gemini-2.5-flash", "gemini-2.5-flash-lite"], "시도 순서");
   });
 });
 
 await test("GEMINI_DEFAULT_MODEL 하드코딩이 소스에서 사라졌다", () => {
   const src = readFileSync(WORKER_SRC, "utf8");
   ok(!src.includes("GEMINI_DEFAULT_MODEL"), "GEMINI_DEFAULT_MODEL 잔존");
-  ok(src.includes('"gemini-2.0-flash", "gemini-1.5-flash"'), "기본 체인");
+  ok(src.includes('"gemini-2.5-flash", "gemini-2.5-flash-lite"'), "기본 체인");
 });
 
 // ── quote(프리/애프터마켓) 파서 ─────────────────────────────────────────
@@ -820,6 +827,179 @@ await test("parseQuoteStateFromChart: 마지막 봉이 post 구간이면 post �
   const regular = parseQuoteStateFromChart(mk([1788528600, 1788540000], [329, 325], 325), 1788540000 * 1000 + 60000);
   eq(regular.session, undefined); eq(regular.marketState, "REGULAR");
   eq(parseQuoteStateFromChart({ chart: { result: [] } }), null);
+});
+
+// ── 10. 2026-09-15 감사 수정 ─────────────────────────────────────────────────
+
+console.log("\n[10] 2026-09-15 감사 수정");
+
+await test("resolveIndexChangePct: meta.chartPreviousClose 기준, 시리즈와 3%p 넘게 어긋나면 시리즈 기준", () => {
+  // 정상: KOSPI 실측(직전 종가 6909.91 → 6684.37 = -3.26%), 장중 시리즈도 같은 방향
+  const normal = resolveIndexChangePct(6684.37, 6909.91, [6850, 6800, 6684.37]);
+  eq(normal.source, "meta", "평시엔 meta");
+  eq(Math.round(normal.changePct * 100) / 100, -3.26, "참값");
+  // prevClose 가 한 세션 밀린 경우: meta -7.5% vs 시리즈 -0.5% → 시리즈 채택
+  const drifted = resolveIndexChangePct(6684.37, 7226, [6718, 6684.37]);
+  eq(drifted.source, "series", "총체적 불일치는 시리즈");
+  ok(Math.abs(drifted.changePct + 0.5) < 0.05, `시리즈 등락률: ${drifted.changePct}`);
+  // prevClose 결측 → 시리즈, 둘 다 없으면 0
+  eq(resolveIndexChangePct(102, null, [100, 102]).source, "series", "prevClose 결측");
+  deepEq(resolveIndexChangePct(null, null, []), { changePct: 0, source: "none" }, "데이터 없음");
+});
+
+await test("KR 지수 prevClose 오버라이드(fetchPrevDailyClose)가 소스에서 사라졌다", () => {
+  const src = readFileSync(WORKER_SRC, "utf8");
+  ok(!src.includes("fetchPrevDailyClose"), "fetchPrevDailyClose 잔존");
+  ok(!src.includes("KR_INDICES"), "KR_INDICES 잔존");
+  ok(!src.includes("range=7d&interval=1d"), "지수용 별도 일봉 호출 잔존");
+});
+
+await test("indices: 심볼당 1회만 부르고 같은 응답의 meta 로 등락률을 낸다(라이브 -4.97 재발 방지)", async () => {
+  const env = kvEnv();
+  await withMockFetch((url) => {
+    if (url.includes("%5EKS11")) {
+      return jsonResp({ chart: { result: [{ meta: { regularMarketPrice: 6684.37, chartPreviousClose: 6909.91 }, indicators: { quote: [{ close: [6850, 6800, 6684.37] }] } }] } });
+    }
+    return yahooChart([100, 101, 102]);
+  }, async (calls) => {
+    const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
+    eq(calls.length, 8, "INDEX_LIST 8종 × 1회 (별도 일봉 호출 없음)");
+    const kospi = data.indices.find((i) => i.symbol === "^KS11");
+    eq(kospi.changePct, -3.26, "meta 기준 참값");
+  });
+});
+
+await test("withLastGood: 기대 심볼의 60% 미만만 돌아오면 실패로 보고 lastgood 을 덮지 않는다", async () => {
+  const env = kvEnv();
+  const full = [1, 2, 3, 4, 5, 6, 7, 8];
+  const fresh = await withLastGood(env, "p", async () => full, [], { expectedCount: 8 });
+  deepEq(fresh.value, full, "전량 성공은 저장");
+  const partial = await withLastGood(env, "p", async () => [1, 2, 3], [], { expectedCount: 8 });
+  eq(partial.stale, true, "부분 실패는 직전값으로");
+  deepEq(partial.value, full, "직전값 그대로");
+  deepEq(JSON.parse(env.MOVE_CACHE.map.get("lastgood:p")).value, full, "KV 가 조각으로 덮이지 않았다");
+  const okish = await withLastGood(env, "p", async () => [1, 2, 3, 4, 5], [], { expectedCount: 8 });
+  eq(okish.stale, false, "5/8 은 임계 이상이라 정상");
+  deepEq(JSON.parse(env.MOVE_CACHE.map.get("lastgood:p")).value, [1, 2, 3, 4, 5], "정상값은 저장");
+  const none = await withLastGood(kvEnv(), "q", async () => [1], [], { expectedCount: 8 });
+  eq(none.partial, true, "직전값이 없으면 partial 표시");
+  deepEq(none.value, [1], "모은 조각은 준다");
+});
+
+const degenerateText = "of the the ".repeat(15).trim();
+
+await test("looksDegenerateReply: 같은 3-gram 반복·한글 없는 한국어 답을 깨진 것으로 본다", () => {
+  eq(looksDegenerateReply(degenerateText, true), true, "반복");
+  eq(looksDegenerateReply("삼성전자는 반도체 업황과 환율에 함께 영향을 받는 종목입니다. 최근 뉴스는 공급 계약과 관련이 있습니다.", true), false, "정상 한국어");
+  eq(looksDegenerateReply("짧음", true), false, "40자 미만은 판정하지 않음");
+});
+
+await test("깨진 답 판정이 4개 응답 경로 전부에 걸려 있다", () => {
+  const src = readFileSync(WORKER_SRC, "utf8");
+  const sites = src.split("\n").filter((l) => l.includes("looksDegenerateReply(") && !l.includes("function looksDegenerateReply"));
+  // Gemini 비스트리밍 / 스트리밍 flush(제미나이·Workers AI 공용) / WAI 스트림 객체 폴백 / WAI 비스트리밍
+  eq(sites.length, 4, `판정 호출 지점 수: ${sites.join(" | ")}`);
+});
+
+await test("/chat: Gemini 첫 모델이 깨진 답을 주면 다음 모델로 넘어간다", async () => {
+  await withMockFetch((url) => {
+    if (geminiUrlModel(url) === "gemini-2.5-flash") return jsonResp({ candidates: [{ content: { parts: [{ text: degenerateText }] } }] });
+    return jsonResp({ candidates: [{ content: { parts: [{ text: "정상적인 한국어 답변입니다." }] } }] });
+  }, async () => {
+    const data = await (await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: chatBody }), geminiChatEnv())).json();
+    eq(data.reply, "정상적인 한국어 답변입니다.", "깨진 답은 버린다");
+    eq(data.model, "gemini-2.5-flash-lite", "다음 모델");
+  });
+});
+
+await test("/chat stream: 깨진 답이 흘러가면 done 메타에 degenerate 를 표시한다", async () => {
+  const sse = (text) => `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })}\n\n`;
+  await withMockFetch(() => new Response(sse(degenerateText), { status: 200, headers: { "Content-Type": "text/event-stream" } }), async () => {
+    const res = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: { ...chatBody, stream: true } }), geminiChatEnv());
+    const text = await res.text();
+    ok(text.includes('"degenerate":true'), `done 메타: ${text.slice(-200)}`);
+  });
+  await withMockFetch(() => new Response(sse("정상적인 한국어 답변입니다. 오늘 시장은 반도체 업종이 강세였습니다."), { status: 200, headers: { "Content-Type": "text/event-stream" } }), async () => {
+    const res = await handleFetch(req("https://w/chat", { method: "POST", origin: ALLOWED, body: { ...chatBody, stream: true } }), geminiChatEnv());
+    ok(!(await res.text()).includes("degenerate"), "정상 답에는 플래그 없음");
+  });
+});
+
+await test("모르는 경로는 404 + no-store (400 을 15분 캐시하던 문제)", async () => {
+  const res = await handleFetch(req("https://w/nope"), kvEnv());
+  eq(res.status, 404, "status");
+  eq(res.headers.get("Cache-Control"), "no-store", "Cache-Control");
+  eq((await res.json()).error, "not_found", "error");
+});
+
+await test("?ticker= 응답에는 Vary: Origin 이 붙는다(요약이 Origin 에 따라 갈리므로)", async () => {
+  resetYahooSessionState();
+  await withMockFetch(() => new Response("", { status: 403 }), async () => {
+    const res = await handleFetch(req("https://w/?ticker=AAPL"), kvEnv());
+    eq(res.headers.get("Vary"), "Origin", "Vary");
+  });
+  resetYahooSessionState();
+});
+
+await test("ticker 는 16자로 잘려 업스트림 URL 로 나간다", async () => {
+  resetYahooSessionState();
+  await withMockFetch(() => new Response("", { status: 403 }), async (calls) => {
+    await handleFetch(req(`https://w/?ticker=${"A".repeat(40)}`), kvEnv());
+    const chartCall = calls.find((c) => c.url.includes("/v8/finance/chart/"));
+    ok(chartCall && /\/chart\/A{16}\?/.test(chartCall.url), `차트 호출 URL: ${chartCall && chartCall.url}`);
+  });
+  resetYahooSessionState();
+});
+
+await test("?earnings_probe=1 은 관리자 키 뒤에 있다(무인증이면 야후를 부르지 않는다)", async () => {
+  const env = kvEnv({ COMMUNITY_ADMIN_KEY: "sekret" });
+  let fetched = 0;
+  await withMockFetch(() => { fetched += 1; return new Response("", { status: 200 }); }, async () => {
+    const denied = await handleFetch(req("https://w/?earnings_probe=1"), env);
+    eq(denied.status, 403, "무인증 403");
+    eq(fetched, 0, "업스트림 미호출");
+  });
+});
+
+await test("crumb 부트스트랩 실패는 음성 캐시된다 — earnings 는 추가 호출 없이 null", async () => {
+  resetYahooSessionState();
+  await withMockFetch(() => new Response("", { status: 403 }), async (calls) => {
+    const data = await (await handleFetch(req("https://w/?ticker=AAPL"), kvEnv())).json();
+    eq(data.earnings, null, "earnings null");
+    ok(calls.some((c) => /fc\.yahoo\.com|guce\.yahoo\.com/.test(c.url)), "첫 요청은 부트스트랩을 시도한다");
+    calls.length = 0;
+    await handleFetch(req("https://w/?ticker=MSFT"), kvEnv());
+    ok(!calls.some((c) => /fc\.yahoo\.com|guce\.yahoo\.com|getcrumb/.test(c.url)), `5분간 재부트스트랩 금지: ${calls.map((c) => c.url).join(" ")}`);
+    ok(!calls.some((c) => c.url.includes("quoteSummary") || c.url.includes("visualization")), "crumb 없으면 실적 호출도 안 한다");
+  });
+  resetYahooSessionState();
+});
+
+await test("/sync/prefs PUT: Origin 게이트 + 180일 TTL + 바이트 기준 크기 제한", async () => {
+  const env = kvEnv();
+  const body = { clientId: "client-ttl", prefs: { watchlist: ["NVDA"], portfolio: [], alertSettings: {} } };
+  const noOrigin = await handleFetch(req("https://w/sync/prefs", { method: "PUT", body }), env);
+  eq(noOrigin.status, 403, "Origin 없으면 403");
+  eq((await noOrigin.json()).error, "forbidden_origin", "error");
+
+  let ttl = null;
+  const basePut = env.COMMUNITY_KV.put.bind(env.COMMUNITY_KV);
+  env.COMMUNITY_KV.put = async (key, value, options) => { ttl = options && options.expirationTtl; return basePut(key, value); };
+  const okRes = await handleFetch(req("https://w/sync/prefs", { method: "PUT", origin: ALLOWED, body }), env);
+  eq(okRes.status, 200, "허용 Origin 은 200");
+  eq(ttl, 180 * 24 * 60 * 60, "expirationTtl 180일");
+
+  // 한글 12,000자 = 36,000바이트. UTF-16 길이로 재던 시절엔 32KB 제한을 통과했다.
+  const big = { clientId: "client-big", prefs: { watchlist: ["가".repeat(12000)], portfolio: [], alertSettings: {} } };
+  const tooLarge = await handleFetch(req("https://w/sync/prefs", { method: "PUT", origin: ALLOWED, body: big }), env);
+  eq(tooLarge.status, 413, "바이트 기준으로 거부");
+});
+
+await test("신고 자동 숨김은 건수가 아니라 서로 다른 신고자(해시 IP) 수를 센다", () => {
+  eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h1" }, { clientId: "c", ipHash: "h1" }] }), 1, "같은 IP 3건 = 1명");
+  eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h2" }, { clientId: "c", ipHash: "h3" }] }), 3, "서로 다른 IP 3명");
+  eq(distinctReporterCount({ reports: [{ clientId: "a" }, { clientId: "a" }] }), 1, "ipHash 없으면 clientId 로");
+  eq(distinctReporterCount(null), 0, "빈 값");
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

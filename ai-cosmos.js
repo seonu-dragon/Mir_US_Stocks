@@ -1,5 +1,4 @@
-  // storage.js(첫 스크립트) 가 window.safeStorage 를 보장한다.
-  const storage = window.safeStorage;/**
+/**
  * AI mode — multi loss-landscape backdrop (3D terrains + physics ball)
  * morphs into a 2D stock chart when the user requests a ticker.
  */
@@ -56,9 +55,8 @@
     const s = storage.get(CHART_STYLE_LS_KEY);
     return CHART_STYLES.has(s) ? s : "candle";
   })();
-  // 차트 모드는 정적이라 60fps 루프를 돌리지 않는다. 별 반짝임만 ≤10fps 타이머로 살린다.
-  const CHART_TWINKLE_MS = 120;
-  let chartTwinkleTimer = 0;
+  // 차트 모드는 정적이라 프레임 루프를 돌리지 않는다 — 별 반짝임 하나를 위해
+  // 캔들·오버레이·지표 패널을 통째로 다시 그리던 ≈8fps 타이머를 없앢다(2026-09-15).
   const PATTERN_MAX_FULL = 60; // 캐시에 유지할 최대 패턴 수(초과 시 시간축 고르게 샘플)
   const PATTERN_MAX_RENDER = 6; // 한 화면(가시 구간)에 그릴 최대 패턴 수(가독성)
   const CHART_TARGET_YAW = 0;
@@ -1620,6 +1618,9 @@
     let zMin = Infinity;
     let zMax = -Infinity;
 
+    // 1패스는 높이만 모아 zMin/zMax 를 확정한다. 예전엔 여기서도 jetColor 를 불렀지만
+    // 그 색은 '그 시점까지의' zMin/zMax 로 계산돼 항상 틀렸고, 바로 아래 2패스가 전부
+    // 덮어썼다 — 프레임당 44×44=1,936회가 순수 낭비였다.
     for (let i = 0; i < gridRes; i++) {
       points[i] = [];
       for (let j = 0; j < gridRes; j++) {
@@ -1628,9 +1629,7 @@
         const z = heightAt(x, y, epoch);
         zMin = Math.min(zMin, z);
         zMax = Math.max(zMax, z);
-        const tc = (z - zMin) / (zMax - zMin + 0.0001);
-        const [r, g, b] = jetColor(tc);
-        points[i][j] = { x, y, z, r, g, b };
+        points[i][j] = { x, y, z, r: 0, g: 0, b: 0 };
       }
     }
 
@@ -1810,9 +1809,11 @@
     }
 
     if (renderMode === "chart") {
+      // 차트는 정적이다 — 한 번 그리고 루프를 세운다. 예전엔 별 반짝임 하나 때문에
+      // ≈8fps 로 캔들·오버레이·지표 패널 전체를 다시 그려(drawChart2D) 종목 화면을
+      // 켜 두는 동안 계속 CPU 를 먹었다. 반짝임은 차트 모드에선 포기한다.
       drawChart2D(w, h, 1);
       raf = 0;
-      scheduleChartTwinkle();
       return;
     }
 
@@ -1827,24 +1828,6 @@
     trackAdaptiveGrid(typeof now === "number" ? now : performance.now(), dt);
     drawLandscape(w, h, dt);
     raf = requestAnimationFrame(draw);
-  }
-
-  function clearChartTwinkle() {
-    if (chartTwinkleTimer) {
-      clearTimeout(chartTwinkleTimer);
-      chartTwinkleTimer = 0;
-    }
-  }
-
-  // 차트 모드 프레임 예약: 60fps 대신 ≈8fps(별 반짝임용). reduced-motion 이면 정적.
-  function scheduleChartTwinkle() {
-    clearChartTwinkle();
-    if (reducedMotion) return;
-    chartTwinkleTimer = setTimeout(() => {
-      chartTwinkleTimer = 0;
-      if (!running || renderMode !== "chart" || document.hidden || raf) return;
-      raf = requestAnimationFrame(draw);
-    }, CHART_TWINKLE_MS);
   }
 
   function isZoomModifier(e) {
@@ -2033,6 +2016,7 @@
     canvas.removeEventListener("pointermove", onPointerMove);
     canvas.removeEventListener("pointerup", onPointerUp);
     canvas.removeEventListener("pointercancel", onPointerUp);
+    canvas.removeEventListener("wheel", onWheel); // bindPointer 가 달아 둔 짝(예전엔 안 떼서 중복 바인딩)
     canvas.classList.remove("is-dragging");
     isDragging = false;
     isZoomDrag = false;
@@ -2061,7 +2045,6 @@
     if (document.hidden) {
       cancelAnimationFrame(raf);
       raf = 0;
-      clearChartTwinkle();
     } else if (running) {
       cancelAnimationFrame(raf);
       draw();
@@ -2144,7 +2127,6 @@
       start();
     } else {
       // 차트 모드에는 rAF 루프가 없으므로 모핑 루프를 여기서 다시 시동한다.
-      clearChartTwinkle();
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(draw);
     }
@@ -2153,7 +2135,6 @@
 
   function resetToLandscape() {
     resetLandscapeState();
-    clearChartTwinkle();
     if (running) {
       cancelAnimationFrame(raf);
       draw();
@@ -2210,13 +2191,18 @@
     starsSizeKey = "";
     cancelAnimationFrame(raf);
     raf = 0;
-    clearChartTwinkle();
     unbindPointer();
     document.removeEventListener("visibilitychange", onVisibility);
     resizeObs?.disconnect();
     resizeObs = null;
     root?.classList.remove("is-live", "is-stock-mode");
     resetLandscapeState();
+    // resetLandscapeState 는 chartBars 만 비운다 — 원본 전체 봉(5년치)과 오버레이는
+    // AI 모드를 나가도 계속 메모리에 남아 있었다.
+    chartFullBars = [];
+    chartOverlays = null;
+    chartViewStart = 0;
+    chartViewCount = 0;
   }
 
   function init() {

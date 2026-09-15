@@ -1,5 +1,8 @@
 // 이 파일은 app.js 에서 기계적으로 분리된 코드다 (refactor/appjs-split-stage1).
-// AI 모드 클러스터: 전용 AI 챗 모드/세션/스트리밍/MirProb 히어로/JARVIS 대시보드 (원본 app.js 18838-21687).
+// AI 모드 클러스터: 전용 AI 챗 모드/세션/스트리밍/JARVIS 대시보드 (원본 app.js 18838-21687).
+// 2026-09-15: 인라인 종목 위젯(renderInlineStockWidget)과 MirProb '상승확률' 히어로 클러스터를
+// 통째로 삭제했다 — scanProbColor/scanVerdict 가 f25c88487 에서 사라져 히어로는 항상 throw 했고
+// (.catch 가 삼켜 스켈레톤만 남음), 위젯 자체도 웰컴(MirDash)이 단일 창구가 되면서 도달 불가였다.
 // index.html 에서 app.js 보다 먼저 로드되는 classic script. 최상위 function/let/const 는
 // 전역 렉시컬 환경을 공유하므로 app.js 와 양방향 참조가 호출 시점에 해결된다.
 
@@ -17,13 +20,17 @@ let currentSessionId = null;
 // 로컬스토리지 대화 기록 저장
 // localStorage 는 ~5MB 한도가 있다. 세션·메시지를 무한히 쌓으면 언젠가
 // setItem 이 QuotaExceededError 로 터지고, 그 뒤로는 아무 것도 저장되지 않는다.
-const AI_SESSIONS_MAX = 30;          // 최신 30개 세션만 보관
-const AI_SESSION_MESSAGES_MAX = 200; // 세션당 최신 200개 메시지만 보관
+// 30세션 × 200메시지는 최악 12MB 로 5MB 한도를 우습게 넘겼다(QuotaExceeded → 이후
+// 저장이 통째로 조용히 실패). 개수 상한을 현실적으로 낮추고, 그래도 넘치면 바이트
+// 예산으로 오래된 세션부터 버린다.
+const AI_SESSIONS_MAX = 10;          // 최신 10개 세션만 보관
+const AI_SESSION_MESSAGES_MAX = 60;  // 세션당 최신 60개 메시지만 보관
+const AI_SESSIONS_BYTE_BUDGET = 3 * 1024 * 1024; // 직렬화 3MB 상한(localStorage 5MB 중)
 
 function pruneAiSessions() {
-  const entries = Object.entries(aiChatSessions)
+  const byRecent = () => Object.entries(aiChatSessions)
     .sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-  entries.slice(AI_SESSIONS_MAX).forEach(([id]) => {
+  byRecent().slice(AI_SESSIONS_MAX).forEach(([id]) => {
     if (id !== currentSessionId) delete aiChatSessions[id];
   });
   Object.values(aiChatSessions).forEach((session) => {
@@ -31,14 +38,42 @@ function pruneAiSessions() {
       session.history.splice(0, session.history.length - AI_SESSION_MESSAGES_MAX);
     }
   });
+  // 바이트 예산: 긴 답변 몇 개만으로도 개수 상한을 지키면서 수 MB 가 된다.
+  let entries = byRecent();
+  while (entries.length > 1 && JSON.stringify(aiChatSessions).length > AI_SESSIONS_BYTE_BUDGET) {
+    const [oldestId] = entries[entries.length - 1];
+    if (oldestId === currentSessionId) {
+      if (entries.length < 2) break;
+      const [prevId] = entries[entries.length - 2];
+      delete aiChatSessions[prevId];
+    } else {
+      delete aiChatSessions[oldestId];
+    }
+    entries = byRecent();
+  }
 }
 
-function saveAiSessionsToStorage() {
+// 답변이 확정될 때마다 전체 세션을 stringify 하면(긴 대화에서 수 MB) 메인 스레드가 멎는다.
+// 500ms 디바운스로 모아 쓴다. 탭을 닫을 때는 flush 로 마지막 상태를 확실히 남긴다.
+let aiSessionSaveTimer = 0;
+function flushAiSessionsToStorage() {
+  if (aiSessionSaveTimer) { clearTimeout(aiSessionSaveTimer); aiSessionSaveTimer = 0; }
   pruneAiSessions();
   // 쿼터 초과·저장소 차단은 safeStorage 가 흡수한다 — 저장 실패해도 화면 동작은 유지.
   window.safeStorage.setJSON("mir_ai_sessions", aiChatSessions);
   window.safeStorage.set("mir_ai_current_session", currentSessionId || "");
 }
+
+function saveAiSessionsToStorage({ immediate = false } = {}) {
+  if (immediate) { flushAiSessionsToStorage(); return; }
+  if (aiSessionSaveTimer) return;
+  aiSessionSaveTimer = setTimeout(() => {
+    aiSessionSaveTimer = 0;
+    flushAiSessionsToStorage();
+  }, 500);
+}
+
+window.addEventListener("pagehide", () => { if (aiSessionSaveTimer) flushAiSessionsToStorage(); });
 
 // 대화 기록 불러오기 및 사이드바 렌더링
 function loadAndRenderAiHistory() {
@@ -179,7 +214,7 @@ function triggerInlineRename(item, session) {
     const val = input.value.trim();
     if (val && val !== prevName) {
       session.name = val;
-      saveAiSessionsToStorage();
+      saveAiSessionsToStorage({ immediate: true });
     }
     renderAiHistoryList();
   };
@@ -205,7 +240,7 @@ function deleteAiChatSession(sessionId) {
   if (!aiChatSessions[sessionId]) return;
   
   delete aiChatSessions[sessionId];
-  saveAiSessionsToStorage();
+  saveAiSessionsToStorage({ immediate: true });
   
   if (currentSessionId === sessionId) {
     const remaining = Object.keys(aiChatSessions);
@@ -225,7 +260,7 @@ function switchAiChatSession(sessionId) {
   
   currentSessionId = sessionId;
   aiChatHistory = aiChatSessions[sessionId].history;
-  saveAiSessionsToStorage();
+  saveAiSessionsToStorage({ immediate: true });
   renderAiHistoryList();
   
   // 채팅창 로그 리빌
@@ -282,7 +317,7 @@ function startNewAiChatSession() {
     timestamp: new Date().toISOString()
   };
   
-  saveAiSessionsToStorage();
+  saveAiSessionsToStorage({ immediate: true });
   renderAiHistoryList();
   
   const log = byId("aiChatLog");
@@ -311,20 +346,15 @@ function startNewAiChatSession() {
   }
 }
 
+// 답변 위에 붙는 태그. '종합: 호재/경계/중립' 배지는 삭제했다(2026-09-15) — 본문에
+// "하락"·"우려" 같은 낱말이 있는지만 보고 투자 판단처럼 보이는 라벨을 붙이는 건
+// 사이트 정책(매수/매도·전망 단정 금지, aiVerdictPanel 주석)에 어긋났고, 답변이 빈
+// 중단 상태에서도 '중립'이 남았다. 중립적인 주제 태그만 유지한다.
 function generateAiBadges(text) {
   const badges = [];
-  const lower = text.toLowerCase();
-  
-  // 1. 호재/악재 감지
-  if (lower.includes("호재") || lower.includes("긍정") || lower.includes("상승") || lower.includes("매수 신호") || lower.includes("강세")) {
-    badges.push('<span class="ai-badge-tag bullish">종합: 호재</span>');
-  } else if (lower.includes("악재") || lower.includes("경계") || lower.includes("하락") || lower.includes("위험") || lower.includes("우려")) {
-    badges.push('<span class="ai-badge-tag bearish">종합: 경계</span>');
-  } else {
-    badges.push('<span class="ai-badge-tag neutral">종합: 중립</span>');
-  }
-  
-  // 2. 테마 감지
+  const lower = String(text || "").toLowerCase();
+
+  // 주제(테마) 감지
   if (lower.includes("반도체") || lower.includes("hbm") || lower.includes("메모리") || lower.includes("삼성전자") || lower.includes("하이닉스") || lower.includes("nvda") || lower.includes("엔비디아")) {
     badges.push('<span class="ai-badge-tag neutral">테마: 반도체</span>');
   } else if (lower.includes("금리") || lower.includes("연준") || lower.includes("fomc") || lower.includes("인플레이션")) {
@@ -341,9 +371,67 @@ function generateAiBadges(text) {
   return "";
 }
 
-function typeWriterMarkdown(element, rawText, onComplete) {
+// ===== 봇 버블 구조 =====
+// .msg-bubble > (.msg-md 본문 + .copy-msg-btn 복사 버튼).
+// 마크다운은 반드시 .msg-md 안에만 쓴다 — 예전엔 스트리밍·최종 렌더가 .msg-bubble 의
+// innerHTML 을 통째로 덮어써서 appendAiChatMessage 가 달아 둔 복사 버튼이 사라졌다
+// (새 답변에는 복사 버튼이 아예 없었다).
+function aiBubbleBody(bubble) {
+  if (!bubble) return null;
+  let body = bubble.querySelector(".msg-md");
+  if (!body) {
+    body = document.createElement("div");
+    body.className = "msg-md";
+    // 기존 내용(로딩 문구 등)을 본문 칸으로 옮긴다.
+    while (bubble.firstChild && bubble.firstChild !== body) {
+      const node = bubble.firstChild;
+      if (node.nodeType === 1 && node.classList.contains("copy-msg-btn")) break;
+      body.appendChild(node);
+    }
+    bubble.insertBefore(body, bubble.firstChild);
+  }
+  return body;
+}
+
+function ensureAiCopyButton(bubble) {
+  if (!bubble || bubble.querySelector(".copy-msg-btn")) return;
+  const btn = document.createElement("button");
+  btn.className = "copy-msg-btn";
+  btn.type = "button";
+  btn.title = "답변 복사";
+  btn.setAttribute("aria-label", "답변 복사");
+  btn.textContent = "복사";
+  btn.addEventListener("click", () => {
+    const body = bubble.querySelector(".msg-md") || bubble;
+    const textToCopy = body.innerText.trim();
+    navigator.clipboard.writeText(textToCopy).then(() => {
+      btn.textContent = "✓";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "복사";
+        btn.classList.remove("copied");
+      }, 1500);
+    }).catch((err) => {
+      console.error("복사 실패:", err);
+    });
+  });
+  bubble.appendChild(btn);
+}
+
+// 답변 텍스트를 버블에 쓰는 단일 창구. stripEmoji 를 항상 먼저 거친다
+// (사이트는 장식 이모지를 쓰지 않는다 — app.js:1345/7842/7888 과 같은 규칙).
+function setAiBubbleMarkdown(bubble, text, { copyButton = true } = {}) {
+  const body = aiBubbleBody(bubble);
+  if (!body) return;
+  const clean = stripEmoji(String(text ?? ""));
+  body.innerHTML = formatMarkdownToHtml(clean);
+  if (copyButton && clean.trim()) ensureAiCopyButton(bubble);
+}
+
+function typeWriterMarkdown(bubble, rawText, onComplete) {
   let i = 0;
-  const text = String(rawText || "");
+  const text = stripEmoji(String(rawText || ""));
+  const element = aiBubbleBody(bubble) || bubble;
   // 타이핑 중엔 textContent 만 갱신한다 — 매 16ms 마다 전체 문자열을 마크다운 파싱하면
   // 긴 답변에서 CPU 를 다 먹었다. 마크다운 HTML 은 끝에 한 번만 만든다.
   element.textContent = "";
@@ -352,6 +440,7 @@ function typeWriterMarkdown(element, rawText, onComplete) {
     if (i >= text.length) {
       clearInterval(interval);
       element.innerHTML = formatMarkdownToHtml(text);
+      if (text.trim()) ensureAiCopyButton(bubble);
       if (onComplete) onComplete();
       return;
     }
@@ -399,6 +488,32 @@ function aiAbortAllStreams() {
   });
 }
 
+// 워커 에러(영어 코드)를 한국어로. 표는 community.js 의 MIR_WORKER_ERROR_KO 를 함께 쓴다
+// (index.html 에서 community.js 가 먼저 로드되고, 호출은 전부 로드 후에 일어난다).
+function aiWorkerErrorMessage(err, fallback) {
+  if (!err) return fallback || "요청을 처리하지 못했습니다.";
+  if (err.name === "AbortError") return "답변 생성을 중단했습니다.";
+  const raw = String(err.message || "");
+  const data = { error: err.code || raw, message: raw };
+  if (typeof mirWorkerErrorKo === "function") return mirWorkerErrorKo(data, err.status || 0, fallback);
+  return raw || fallback || "요청을 처리하지 못했습니다.";
+}
+
+// SSE done 프레임이 준 모델·RAG 출처 수를 답변 아래 한 줄로 남긴다.
+function renderAiReplyMeta(msgEl, meta) {
+  if (!msgEl || !meta) return;
+  const bits = [];
+  if (meta.model) bits.push(String(meta.model));
+  const rag = Number(meta.ragCount);
+  if (Number.isFinite(rag) && rag > 0) bits.push(`참고 자료 ${rag}건`);
+  if (!bits.length) return;
+  msgEl.querySelectorAll(".ai-reply-meta").forEach((el) => el.remove());
+  const note = document.createElement("p");
+  note.className = "ai-reply-meta muted font-small";
+  note.textContent = bits.join(" · ");
+  msgEl.appendChild(note);
+}
+
 // /chat 호출 공용 헬퍼. stream:true 를 요청하되, 응답이 JSON 이면(구 워커) 그대로
 // 파싱해 비스트리밍으로 처리한다. 중단(abort) 시에도 지금까지 받은 부분 텍스트를 돌려준다.
 async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
@@ -415,12 +530,13 @@ async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
     try { data = await res.json(); } catch (_) { data = null; }
     const err = new Error(String((data && (data.message || data.error)) || `HTTP ${res.status}`));
     err.status = res.status;
+    err.code = String((data && data.error) || ""); // forbidden_origin 등 — 한국어 변환용
     throw err;
   }
   const ctype = (res.headers.get("Content-Type") || "").toLowerCase();
   if (!ctype.includes("text/event-stream")) {
     const data = await res.json();
-    return { reply: (data && data.reply) || "", streamed: false, aborted: false };
+    return { reply: (data && data.reply) || "", streamed: false, aborted: false, meta: data ? { model: data.model || "", ragCount: Number((data.rag && data.rag.newsCount) || 0) } : null };
   }
 
   const reader = res.body.getReader();
@@ -428,6 +544,9 @@ async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
   let buf = "";
   let full = "";
   let aborted = false;
+  // 워커는 마지막에 `{done:true, model, rag:{newsCount, sources}}` 프레임을 보낸다
+  // (yahoo-proxy.js:2647). 예전엔 이걸 버려서 어떤 모델이·무슨 근거로 답했는지 알 수 없었다.
+  let meta = null;
   const consume = (block) => {
     for (const rawLine of block.split("\n")) {
       const line = rawLine.trim();
@@ -439,6 +558,12 @@ async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
         if (typeof parsed.delta === "string" && parsed.delta) {
           full += parsed.delta;
           if (onDelta) onDelta(parsed.delta, full);
+        } else if (parsed.done) {
+          meta = {
+            model: typeof parsed.model === "string" ? parsed.model : "",
+            ragCount: Number((parsed.rag && parsed.rag.newsCount) || 0),
+            ragSources: Array.isArray(parsed.rag && parsed.rag.sources) ? parsed.rag.sources : [],
+          };
         }
       } catch (_) { /* 불완전 청크는 무시 */ }
     }
@@ -459,10 +584,10 @@ async function requestAiChatReply(payload, { signal, onDelta, endpoint } = {}) {
     if (err && err.name === "AbortError") aborted = true;
     else if (!full) throw err; // 아무것도 못 받았으면 실제 오류로 전파
   }
-  return { reply: full, streamed: true, aborted };
+  return { reply: full, streamed: true, aborted, meta };
 }
 
-async function sendAiChat(queryText = null) {
+async function sendAiChat(queryText = null, { skipCrossMarket = false } = {}) {
   if (aiChatBusy) return;
   
   const input = byId("aiChatInput");
@@ -506,7 +631,9 @@ async function sendAiChat(queryText = null) {
   // 2. Add Bot Loading/Typing bubble
   let matchedTicker = extractStockTickerFromQuery(text);
   let matchedStock = matchedTicker ? stockByTicker(matchedTicker) : null;
-  if (!matchedStock && typeof resolveTickerAcrossMarkets === "function") {
+  // skipCrossMarket: ai-mode-welcome.js 가 이미 같은 해석기를 돌린 뒤 넘긴 질문이다
+  // (시장 전환까지 await 하는 무거운 경로라 두 번 돌면 전환이 한 번 더 일어날 수 있다).
+  if (!skipCrossMarket && !matchedStock && typeof resolveTickerAcrossMarkets === "function") {
     // 반대 시장 종목(US 모드의 "삼성전자", KR 모드의 "AAPL")이면 시장을 바꿔서라도 찾는다.
     // 예전엔 "전환해 보세요" 힌트만 띄우고 종목 데이터 없이 답했다.
     try {
@@ -525,18 +652,15 @@ async function sendAiChat(queryText = null) {
   const typingBubble = appendAiChatMessage("bot", loadingText);
   typingBubble.classList.add("typing");
 
-  if (matchedTicker) {
-    const chartMessage = appendAiChatMessage("bot", "");
-    if (chartMessage) {
-      chartMessage.classList.add("chart-message");
-      chartMessage.querySelector(".msg-bubble")?.remove();
-      renderInlineStockWidget(matchedTicker, chartMessage);
-    }
-  }
-  
   if (log) log.scrollTop = log.scrollHeight;
   
   const controller = aiStreamBegin();
+  // 스트림이 중단되면 예약해 둔 rAF 페인트도 취소한다 — 예전엔 중단 후 도착한 rAF 가
+  // 최종 렌더('(중단됨)' 표시)를 덮어썼고, AI 모드를 나간 뒤에도 분리된 DOM 에 썼다.
+  let pendingPaintRaf = 0;
+  const cancelPendingPaint = () => {
+    if (pendingPaintRaf) { cancelAnimationFrame(pendingPaintRaf); pendingPaintRaf = 0; }
+  };
   try {
     if (!LIVE_DATA_PROXY) throw new Error("no proxy configured");
 
@@ -544,8 +668,10 @@ async function sendAiChat(queryText = null) {
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
 
     // 답변 확정(스트리밍/타이핑 종료) 시 공통 마무리: 이력 저장 + 배지 부착
-    const finalizeReply = (replyText, abortedMark) => {
-      aiChatHistory.push({ role: "assistant", content: replyText, ts: Date.now() });
+    const finalizeReply = (replyText, abortedMark, { store = true } = {}) => {
+      // 깨진 답변 대체 문구는 히스토리에 넣지 않는다 — 다음 질문의 컨텍스트로 실려
+      // 나가면 모델이 그 문장을 대화 내용으로 착각한다.
+      if (store) aiChatHistory.push({ role: "assistant", content: replyText, ts: Date.now() });
       // 로딩 문구 기준으로 미리 붙은 배지는 걷어내고 실제 답변 기준으로 다시 단다
       typingBubble.querySelectorAll(".ai-badge-tags-container").forEach((el) => el.remove());
       const badgesHtml = generateAiBadges(replyText);
@@ -555,9 +681,9 @@ async function sendAiChat(queryText = null) {
         typingBubble.insertBefore(tempDiv.firstChild, bubbleDiv);
       }
       if (abortedMark && bubbleDiv) {
-        bubbleDiv.insertAdjacentHTML("beforeend", `<span class="ai-abort-note muted">(중단됨)</span>`);
+        aiBubbleBody(bubbleDiv)?.insertAdjacentHTML("beforeend", `<span class="ai-abort-note muted">(중단됨)</span>`);
       }
-      if (aiChatSessions[currentSessionId]) {
+      if (store && aiChatSessions[currentSessionId]) {
         aiChatSessions[currentSessionId].history = aiChatHistory;
         aiChatSessions[currentSessionId].timestamp = new Date().toISOString();
         saveAiSessionsToStorage();
@@ -567,11 +693,11 @@ async function sendAiChat(queryText = null) {
 
     // 스트리밍 점진 렌더 — rAF 로 스로틀해 매 토큰마다 파싱 폭주를 막는다.
     let streamStarted = false;
-    let paintQueued = false;
     let latestFull = "";
     const paintStream = () => {
-      paintQueued = false;
-      if (bubbleDiv) bubbleDiv.innerHTML = formatMarkdownToHtml(latestFull);
+      pendingPaintRaf = 0;
+      if (!bubbleDiv || !bubbleDiv.isConnected) return;
+      setAiBubbleMarkdown(bubbleDiv, latestFull, { copyButton: false });
       if (log) log.scrollTop = log.scrollHeight;
     };
     const onDelta = (_delta, full) => {
@@ -581,10 +707,7 @@ async function sendAiChat(queryText = null) {
         typingBubble.classList.remove("typing");
         typingBubble.classList.add("is-streaming");
       }
-      if (!paintQueued) {
-        paintQueued = true;
-        requestAnimationFrame(paintStream);
-      }
+      if (!pendingPaintRaf) pendingPaintRaf = requestAnimationFrame(paintStream);
     };
 
     const result = await requestAiChatReply({
@@ -595,6 +718,7 @@ async function sendAiChat(queryText = null) {
       searchHints: matchedTicker ? { tickers: [matchedTicker], companies: [matchedStock.company].filter(Boolean) } : {},
     }, { signal: controller.signal, onDelta });
 
+    cancelPendingPaint();
     typingBubble.classList.remove("typing", "is-streaming");
 
     // 깨진 답변('of the. the of the…' 반복)은 화면에 남기지 않는다 — 워커 가드를 지나쳐도
@@ -603,25 +727,33 @@ async function sendAiChat(queryText = null) {
     if (broken) result.reply = "답변 생성이 불안정해 다시 시도해야 합니다. 같은 질문을 한 번 더 보내 주세요.";
     if (result.streamed) {
       const reply = result.reply || (result.aborted ? "" : "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.");
-      if (bubbleDiv) bubbleDiv.innerHTML = reply ? formatMarkdownToHtml(reply) : `<span class="muted">답변이 중단되었습니다.</span>`;
-      if (reply) finalizeReply(reply, result.aborted);
-      else if (result.aborted && bubbleDiv) bubbleDiv.insertAdjacentHTML("beforeend", ` <span class="ai-abort-note muted">(중단됨)</span>`);
+      if (bubbleDiv) {
+        if (reply) setAiBubbleMarkdown(bubbleDiv, reply);
+        else aiBubbleBody(bubbleDiv).innerHTML = `<span class="muted">답변이 중단되었습니다.</span>`;
+      }
+      if (reply) finalizeReply(reply, result.aborted, { store: !broken });
+      else if (result.aborted && bubbleDiv) aiBubbleBody(bubbleDiv)?.insertAdjacentHTML("beforeend", ` <span class="ai-abort-note muted">(중단됨)</span>`);
     } else {
       // 구 워커(JSON) 폴백 — 오늘과 동일한 타이핑 라이터 렌더 유지
       const reply = result.reply || "답변을 가져오지 못했습니다. 잠시 후 다시 시도해 주세요.";
-      typeWriterMarkdown(bubbleDiv, reply, () => finalizeReply(reply, false));
+      typeWriterMarkdown(bubbleDiv, reply, () => finalizeReply(reply, false, { store: !broken }));
     }
+    // SSE done 프레임이 준 모델·RAG 출처 수를 답변 아래에 남긴다(무엇을 근거로 답했는지).
+    renderAiReplyMeta(typingBubble, result.meta);
   } catch (err) {
+    cancelPendingPaint();
     typingBubble.classList.remove("typing", "is-streaming");
     const bubbleDiv = typingBubble.querySelector(".msg-bubble");
-    if (bubbleDiv) {
+    const body = aiBubbleBody(bubbleDiv);
+    if (body) {
       if (err && err.name === "AbortError") {
-        bubbleDiv.innerHTML = `<span class="muted">답변 생성을 중단했습니다. <span class="ai-abort-note">(중단됨)</span></span>`;
+        body.innerHTML = `<span class="muted">답변 생성을 중단했습니다. <span class="ai-abort-note">(중단됨)</span></span>`;
       } else {
-        bubbleDiv.innerHTML = `연결 실패: ${escapeHtml(String((err && err.message) || err))}`;
+        body.textContent = aiWorkerErrorMessage(err, "지금은 AI 답변을 불러올 수 없습니다.");
       }
     }
   } finally {
+    cancelPendingPaint();
     aiStreamEnd(controller);
     aiChatBusy = false;
   }
@@ -632,8 +764,12 @@ async function sendAiChat(queryText = null) {
 // resolveTicker 도 함께 넘겨, 웰컴이 자체 해석기를 따로 두지 않게 한다
 // (자체 해석기는 문자열 전체가 티커일 때만 맞아서 "NVDA 분석해줘" 를 놓쳤다).
 window.MirAiChat = {
-  send: (text) => sendAiChat(text),
+  // opts.skipCrossMarket: 웰컴이 이미 resolveTickerAcrossMarkets 를 돌렸으면 다시 돌리지 않는다.
+  send: (text, opts) => sendAiChat(text, opts),
   resolveTicker: (text) => extractStockTickerFromQuery(text),
+  // AI 모드를 나갈 때 진행 중인 /chat 스트림을 끊는 창구. 예전엔 나가도 스트림이
+  // 계속 흘러 과금이 이어졌고, 분리된 DOM 에 rAF 로 innerHTML 을 썼다.
+  abort: () => aiAbortAllStreams(),
   // autocomplete: setupAiChatModeEvents 가 채운다 — { highlightedTicker(), hide() }
   autocomplete: null,
 };
@@ -653,79 +789,16 @@ function appendAiChatMessage(role, text) {
     msg.innerHTML = `<div class="msg-bubble">${escapeHtml(content)}</div>`;
   } else {
     const badgesHtml = generateAiBadges(content);
-    const parsedContent = formatMarkdownToHtml(content);
-    msg.innerHTML = `
-      ${badgesHtml}
-      <div class="msg-bubble">
-        ${parsedContent}
-        ${content ? `<button class="copy-msg-btn" title="답변 복사" aria-label="답변 복사">복사</button>` : ""}
-      </div>
-    `;
-    
-    const copyBtn = msg.querySelector(".copy-msg-btn");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", () => {
-        // 복사 버튼 자신을 제외한 텍스트만 복사하기 위해, 복제 후 복사 버튼 노드를 제거하고 텍스트를 파싱
-        const bubble = msg.querySelector(".msg-bubble");
-        if (bubble) {
-          const clone = bubble.cloneNode(true);
-          clone.querySelector(".copy-msg-btn")?.remove();
-          const textToCopy = clone.innerText.trim();
-          
-          navigator.clipboard.writeText(textToCopy).then(() => {
-            copyBtn.textContent = "✓";
-            copyBtn.classList.add("copied");
-            setTimeout(() => {
-              copyBtn.textContent = "복사";
-              copyBtn.classList.remove("copied");
-            }, 1500);
-          }).catch(err => {
-            console.error("복사 실패:", err);
-          });
-        }
-      });
-    }
+    msg.innerHTML = `${badgesHtml}<div class="msg-bubble"><div class="msg-md"></div></div>`;
+    setAiBubbleMarkdown(msg.querySelector(".msg-bubble"), content);
   }
-  
+
   log.appendChild(msg);
   log.scrollTop = log.scrollHeight;
   return msg;
 }
 
 const aiLiveDataPromises = {};
-
-function createAiChartState() {
-  return {
-    ...chartState,
-    range: "1Y",
-    barTf: "D",
-    chartType: "candle",
-    zoom: 1,
-    offset: 0,
-    showSma20: true,
-    showSma60: true,
-    showVolume: true,
-    showRsi: true,
-    showMacd: false,
-    showStoch: false,
-    showSupportResistance: true,
-    showPatterns: true,
-    showTechLevels: true,
-    showVolumeProfile: false,
-    showTrendlines: true,
-    showGapZones: false,
-    showTtmSqueeze: false,
-    showMarketStructure: false,
-    showChandelier: false,
-    showAnchoredVwap: false,
-    showRsSpy: false,
-    showRsQqq: false,
-    showRsSector: false,
-    showMansfield: false,
-    techLevelTypes: { ...chartState.techLevelTypes },
-    patternTypes: { ...chartState.patternTypes },
-  };
-}
 
 async function ensureAiWidgetStock(ticker) {
   const base = stockByTicker(ticker) || data.stocks.find((row) => row.ticker === ticker);
@@ -818,6 +891,9 @@ function aiSmartMoneyEvidence(item) {
 }
 
 function aiDisclosureEvidence(item) {
+  // 8-K/실적 이벤트는 US 전용 수집물이다. KR 은 market_config 의 materialEvents:false 로
+  // 꺼져 있고(없는 데이터는 기능을 끈다), KR 공시는 aiKrEventsPanel 이 따로 그린다.
+  if (!aiPanelEnabled("materialEvents")) return "";
   const events = ((window.MATERIAL_EVENTS || {}).events || []).filter((event) => String(event.ticker || "").toUpperCase() === item.ticker);
   const earnings = item.liveEarnings || {};
   if (events.length) {
@@ -845,7 +921,7 @@ function renderAiEvidenceGrid(item) {
     aiSmartMoneyEvidence(item),
     aiDisclosureEvidence(item),
     aiNewsEvidence(item),
-  ].join("");
+  ].filter(Boolean).join("");
 }
 
 function aiModePanel(title, subtitle, body, extraClass = "") {
@@ -895,9 +971,9 @@ function aiTechnicalPanel(item) {
   return aiModePanel("기술 지표", "추세·모멘텀·이평", aiMetricGrid([
     { label: "현재가", value: priceOrDash(last || item.price) },
     { label: "1개월", value: fmtPct(item.monthChangePct), tone: cls(item.monthChangePct) },
-    { label: "RSI", value: fmtRsi(item), detail: "상대강도지수(14)" },
     { label: "거래량", value: `${Number(item.volumeRatio || 0).toFixed(1)}x`, detail: "평균 대비" },
-    { label: "RSI(14)", value: rsi == null ? "-" : rsi.toFixed(1), tone: rsi >= 70 ? "warn" : rsi <= 30 ? "pos" : "" },
+    // 예전에는 스냅샷 RSI와 실측 RSI(14) 칸이 나란히 둘 다 있었다 — 같은 지표가 두 칸.
+    { label: "RSI(14)", value: rsi == null ? "-" : rsi.toFixed(1), detail: "상대강도지수", tone: rsi >= 70 ? "warn" : rsi <= 30 ? "pos" : "" },
     { label: "MACD", value: macd == null ? "-" : macd.toFixed(2), detail: signal == null ? "" : `Signal ${signal.toFixed(2)}`, tone: macd != null && signal != null ? cls(macd - signal) : "" },
     { label: "SMA20", value: sma20 == null ? "-" : chartPriceLabel(sma20), tone: last != null && sma20 != null ? cls(last - sma20) : "" },
     { label: "SMA60", value: sma60 == null ? "-" : chartPriceLabel(sma60), tone: last != null && sma60 != null ? cls(last - sma60) : "" },
@@ -918,10 +994,19 @@ function aiFundamentalPanel(item) {
   ]));
 }
 
+// 뉴스 링크는 외부(워커 프록시 → 야후/구글뉴스)에서 온 문자열이다. javascript: · data:
+// 같은 스킴이 섞이면 클릭 한 번으로 스크립트가 돈다 — http(s) 만 통과시킨다.
+// app.js 에 전역 safeHttpHref 가 생기면 그쪽을 쓰고, 없으면 여기 로컬 검사로.
+function _href(raw) {
+  if (typeof safeHttpHref === "function") return safeHttpHref(raw);
+  const url = String(raw || "").trim();
+  return /^https?:\/\//i.test(url) ? url : "#";
+}
+
 function aiNewsPanel(item) {
   const news = Array.isArray(item.news) ? item.news : [];
   const rows = news.slice(0, 8).map((newsItem) => {
-    const href = newsItem.url || newsItem.link || "#";
+    const href = _href(newsItem.url || newsItem.link);
     const title = escapeHtml(newsItem.title || "제목 없음");
     const source = escapeHtml(newsItem.source || newsItem.publisher || "뉴스");
     const time = escapeHtml(newsItem.time || newsItem.publishedAt || "");
@@ -935,6 +1020,7 @@ function aiNewsPanel(item) {
 }
 
 function aiEventsPanel(item) {
+  if (!aiPanelEnabled("materialEvents")) return ""; // KR: 8-K·실적 빈 상자 방지
   const events = ((window.MATERIAL_EVENTS || {}).events || []).filter((event) => String(event.ticker || "").toUpperCase() === item.ticker);
   const rows = events.slice(0, 8).map((event) => {
     const labels = (event.items || []).map((entry) => entry.label).filter(Boolean).slice(0, 3).join(", ") || event.type || "-";
@@ -1570,545 +1656,6 @@ function renderAiModeDataBoard(item) {
   `;
 }
 
-function aiChartRangeBarCount(total, state) {
-  const dailyMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
-  const div = state.barTf === "W" ? 5 : (state.barTf === "M" ? 21 : 1);
-  const want = Math.round((dailyMap[state.range] || total) / div);
-  return Math.min(total, Math.max(10, want));
-}
-
-function aiChartWindowInfo(item, state) {
-  const allRows = resampleBars(getChartRows(item), state.barTf);
-  const rangeSize = aiChartRangeBarCount(allRows.length, state);
-  const base = allRows.slice(-rangeSize);
-  const windowSize = Math.max(12, Math.floor(base.length / state.zoom));
-  const maxOffset = Math.max(0, base.length - windowSize);
-  state.offset = Math.min(state.offset, maxOffset);
-  return { total: base.length, windowSize, maxOffset };
-}
-
-function aiSetZoomAnchored(item, state, frac, requestedZoom) {
-  const info = aiChartWindowInfo(item, state);
-  const minWindow = Math.min(12, Math.max(1, info.total));
-  const oldWindow = Math.max(minWindow, Math.floor(info.total / state.zoom));
-  const oldStart = Math.max(0, info.total - state.offset - oldWindow);
-  const anchor = oldStart + frac * (oldWindow - 1);
-  const newZoom = Math.min(40, Math.max(1, requestedZoom));
-  const newWindow = Math.max(minWindow, Math.floor(info.total / newZoom));
-  let newStart = Math.round(anchor - frac * (newWindow - 1));
-  newStart = Math.max(0, Math.min(Math.max(0, info.total - newWindow), newStart));
-  state.zoom = newZoom;
-  state.offset = Math.max(0, info.total - newWindow - newStart);
-}
-
-function drawAiWidgetChart(item, svg, state, metaEl) {
-  if (!item || !svg || !state) return;
-  const prevState = chartState;
-  const prevCompare = compareTickers;
-  const prevGeom = lastChartGeom;
-  try {
-    chartState = state;
-    compareTickers = [];
-    drawChart(item, { svgElement: svg });
-  } finally {
-    chartState = prevState;
-    compareTickers = prevCompare;
-    lastChartGeom = prevGeom;
-  }
-  const info = aiChartWindowInfo(item, state);
-  if (metaEl) {
-    metaEl.textContent = `${state.range} · ${info.windowSize}봉 표시 · 휠 확대/축소 · 드래그 이동`;
-  }
-
-  // 크로스헤어 트래커 바인딩
-  if (svg.dataset.crosshairBound !== "true") {
-    svg.dataset.crosshairBound = "true";
-    let guideLine = null;
-    let tooltip = null;
-
-    const removeCrosshair = () => {
-      if (guideLine) { guideLine.remove(); guideLine = null; }
-      if (tooltip) { tooltip.remove(); tooltip = null; }
-    };
-
-    const updateCrosshair = (event) => {
-      const rect = svg.getBoundingClientRect();
-      const g = priceChartGeom();
-      
-      const vbAttr = svg.getAttribute("viewBox") || "0 0 860 520";
-      const vbTokens = vbAttr.split(" ");
-      const vbWidth = parseFloat(vbTokens[2]) || g.width;
-      const vbHeight = parseFloat(vbTokens[3]) || 520;
-      
-      const clientX = event.touches ? event.touches[0].clientX : event.clientX;
-      const clientY = event.touches ? event.touches[0].clientY : event.clientY;
-      
-      const vbX = ((clientX - rect.left) / Math.max(1, rect.width)) * vbWidth;
-      const vbY = ((clientY - rect.top) / Math.max(1, rect.height)) * vbHeight;
-
-      const padL = g.padL;
-      const padR = g.padR;
-      const plotW = vbWidth - padL - padR;
-
-      if (vbX < padL || vbX > vbWidth - padR) {
-        removeCrosshair();
-        return;
-      }
-
-      // visibleBars 직접 역추출
-      const allRows = resampleBars(getChartRows(item), state.barTf);
-      const rangeSize = aiChartRangeBarCount(allRows.length, state);
-      const base = allRows.slice(-rangeSize);
-      const windowSize = Math.max(12, Math.floor(base.length / state.zoom));
-      const offset = state.offset;
-      const visibleBars = base.slice(base.length - offset - windowSize, base.length - offset);
-
-      if (!visibleBars || visibleBars.length === 0) return;
-
-      const frac = Math.max(0, Math.min(1, (vbX - padL) / plotW));
-      const barIdx = Math.min(visibleBars.length - 1, Math.floor(frac * visibleBars.length));
-      const targetBar = visibleBars[barIdx];
-      if (!targetBar) return;
-
-      const targetX = padL + (barIdx + 0.5) * (plotW / visibleBars.length);
-
-      // 세로선 그리기
-      if (!guideLine) {
-        guideLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        guideLine.setAttribute("class", "chart-crosshair-line");
-        guideLine.setAttribute("y1", "0");
-        guideLine.setAttribute("y2", vbHeight.toString());
-        svg.appendChild(guideLine);
-      }
-      guideLine.setAttribute("x1", targetX.toString());
-      guideLine.setAttribute("x2", targetX.toString());
-
-      // 툴팁 박스 그리기
-      if (!tooltip) {
-        tooltip = document.createElementNS("http://www.w3.org/2000/svg", "g");
-        tooltip.setAttribute("class", "chart-tooltip-box");
-        tooltip.innerHTML = `
-          <rect width="135" height="58" rx="8" fill="rgba(15,23,42,0.9)" />
-          <text x="10" y="18" fill="#fff" font-size="10.5" font-weight="600" class="tip-date"></text>
-          <text x="10" y="34" fill="#10b981" font-size="11.5" font-weight="700" class="tip-price"></text>
-          <text x="10" y="47" fill="#c084fc" font-size="9" class="tip-volume"></text>
-        `;
-        svg.appendChild(tooltip);
-      }
-
-      // 바는 {o,h,l,c,v,d} 구조다 — .close/.volume/.time 으로 읽으면 항상 0/빈값이 나온다.
-      const priceVal = isKrMarket() ? `${parseFloat(targetBar.c || 0).toLocaleString()}원` : `$${parseFloat(targetBar.c || 0).toFixed(2)}`;
-      const volVal = `거래량: ${parseFloat(targetBar.v || 0).toLocaleString()}`;
-
-      tooltip.querySelector(".tip-date").textContent = targetBar.d || "";
-      tooltip.querySelector(".tip-price").textContent = `종가: ${priceVal}`;
-      tooltip.querySelector(".tip-volume").textContent = volVal;
-
-      let tooltipX = targetX + 15;
-      if (tooltipX + 135 > vbWidth) {
-        tooltipX = targetX - 150;
-      }
-      let tooltipY = vbY - 26;
-      if (tooltipY < 8) tooltipY = 8;
-      if (tooltipY + 58 > vbHeight) tooltipY = vbHeight - 66;
-
-      tooltip.setAttribute("transform", `translate(${tooltipX}, ${tooltipY})`);
-    };
-
-    svg.addEventListener("pointermove", updateCrosshair);
-    svg.addEventListener("pointerleave", removeCrosshair);
-    svg.addEventListener("pointerup", removeCrosshair);
-  }
-}
-
-function toggleAiWidgetFullscreen(widget) {
-  const isModal = widget.classList.contains("is-fullscreen-modal");
-  
-  if (isModal) {
-    widget.classList.remove("is-fullscreen-modal");
-    const overlay = document.querySelector(".ai-modal-overlay");
-    if (overlay) overlay.remove();
-  } else {
-    const overlay = document.createElement("div");
-    overlay.className = "ai-modal-overlay";
-    document.body.appendChild(overlay);
-    
-    widget.classList.add("is-fullscreen-modal");
-    
-    // 오버레이 클릭 시 닫기
-    overlay.addEventListener("click", () => {
-      widget.classList.remove("is-fullscreen-modal");
-      overlay.remove();
-    });
-  }
-}
-
-async function exportWidgetAsImage(widget, ticker) {
-  const shareBtn = widget.querySelector(".widget-share-btn");
-  const prevText = shareBtn ? shareBtn.textContent : "공유";
-  
-  if (shareBtn) {
-    shareBtn.textContent = "캡처 중...";
-    shareBtn.disabled = true;
-  }
-  
-  try {
-    // 1. html2canvas 동적 로딩 — 로컬 벤더 사본(assets/vendor) 우선, 실패 시 CDN 폴백.
-    // CDN 단독이던 시절엔 오프라인·차단망에서 캡처가 통째로 죽었다. stamp_build_id.py
-    // 의 ?v= 재작성은 HTML 정적 참조만 대상이라(동적 로딩은 대상 밖), 여기는 라이브러리
-    // 버전 고정 쿼리를 쓴다 — 파일 내용이 버전과 함께만 바뀌므로 캐시 무효화에 충분하다.
-    if (!window.html2canvas) {
-      const loadScript = (src, cross) => new Promise((resolve, reject) => {
-        const script = document.createElement("script");
-        script.src = src;
-        if (cross) script.crossOrigin = "anonymous";
-        script.onload = resolve;
-        script.onerror = () => { script.remove(); reject(new Error(`load failed: ${src}`)); };
-        document.head.appendChild(script);
-      });
-      try {
-        await loadScript("assets/vendor/html2canvas.min.js?v=1.4.1");
-      } catch (_) {
-        await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", true)
-          .catch(() => { throw new Error("캡처 라이브러리를 로드하지 못했습니다."); });
-      }
-      if (!window.html2canvas) throw new Error("캡처 라이브러리를 로드하지 못했습니다.");
-    }
-    
-    // SVG 가이드라인 충돌 제거
-    const crosshair = widget.querySelector(".chart-crosshair-line");
-    const tooltip = widget.querySelector(".chart-tooltip-box");
-    if (crosshair) crosshair.remove();
-    if (tooltip) tooltip.remove();
-    
-    // 2. 캔버스 캡처 실행 (다크/라이트 모드 배경 보정)
-    const isLight = document.body.getAttribute("data-theme") === "light";
-    const bgColor = isLight ? "#ffffff" : "#0f172a";
-    
-    const canvas = await window.html2canvas(widget, {
-      backgroundColor: bgColor,
-      scale: 2, // 고해상도 2배 출력
-      useCORS: true,
-      logging: false,
-      ignoreElements: (el) => {
-        return el.classList.contains("ai-widget-chart-tools") || el.classList.contains("widget-assembly-overlay");
-      }
-    });
-    
-    // 3. 파일 다운로드 실행
-    const dataUrl = canvas.toDataURL("image/png");
-    const link = document.createElement("a");
-    const dateStr = new Date().toISOString().substring(0, 10).replace(/-/g, "");
-    link.download = `mir_ai_report_${ticker}_${dateStr}.png`;
-    link.href = dataUrl;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-  } catch (err) {
-    showAppToast("이미지 캡처 중 오류가 발생했습니다: " + err.message, 3200);
-  } finally {
-    if (shareBtn) {
-      shareBtn.textContent = prevText;
-      shareBtn.disabled = false;
-    }
-  }
-}
-
-function setupAiWidgetChartControls(widget, item, state) {
-  const svg = widget.querySelector(".ai-widget-chart");
-  const meta = widget.querySelector(".ai-widget-chart-meta");
-  const render = () => drawAiWidgetChart(item, svg, state, meta);
-
-  // 지표 설정 드롭다운 토글 및 외부 클릭 감지
-  const dropdownTrigger = widget.querySelector(".ai-dropdown-trigger-btn");
-  const dropdownMenu = widget.querySelector(".ai-indicators-dropdown");
-  
-  if (dropdownTrigger && dropdownMenu) {
-    dropdownTrigger.addEventListener("click", (e) => {
-      e.stopPropagation();
-      dropdownMenu.classList.toggle("is-open");
-    });
-
-    // 외부 클릭 닫기는 위임 리스너 1개로 — 위젯이 만들어질 때마다 document 에
-    // 리스너를 더하면 사라진 위젯의 메뉴 참조가 계속 쌓인다.
-    if (!setupAiWidgetChartControls._outsideBound) {
-      setupAiWidgetChartControls._outsideBound = true;
-      document.addEventListener("click", (e) => {
-        document.querySelectorAll(".ai-indicators-dropdown.is-open").forEach((menu) => {
-          if (!menu.contains(e.target) && !e.target.closest(".ai-dropdown-trigger-btn")) {
-            menu.classList.remove("is-open");
-          }
-        });
-      });
-    }
-  }
-
-  // 지표 체크박스 바인딩
-  widget.querySelectorAll(".ai-indicators-dropdown input[type='checkbox']").forEach((cb) => {
-    cb.addEventListener("change", () => {
-      const type = cb.dataset.indicator;
-      const active = cb.checked;
-      
-      if (type === "sma") {
-        state.showSma20 = active;
-        state.showSma60 = active;
-      } else if (type === "volume") {
-        state.showVolume = active;
-      } else if (type === "rsi") {
-        state.showRsi = active;
-      } else if (type === "trendlines") {
-        state.showTrendlines = active;
-      } else if (type === "support") {
-        state.showSupportResistance = active;
-      } else if (type === "patterns") {
-        state.showPatterns = active;
-      } else if (type === "levels") {
-        state.showTechLevels = active;
-      }
-      render();
-    });
-  });
-
-  widget.querySelectorAll("[data-ai-chart-range]").forEach((button) => {
-    button.addEventListener("click", () => {
-      state.range = button.dataset.aiChartRange || "1Y";
-      state.zoom = 1;
-      state.offset = 0;
-      widget.querySelectorAll("[data-ai-chart-range]").forEach((item) => item.classList.toggle("is-active", item === button));
-      render();
-    });
-  });
-
-  widget.querySelectorAll("[data-ai-chart-action]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const action = button.dataset.aiChartAction;
-      const info = aiChartWindowInfo(item, state);
-      if (action === "zoom-in") aiSetZoomAnchored(item, state, 0.5, state.zoom * 1.35);
-      else if (action === "zoom-out") aiSetZoomAnchored(item, state, 0.5, state.zoom / 1.35);
-      else if (action === "pan-left") state.offset = Math.min(info.maxOffset, state.offset + Math.max(5, Math.round(12 / state.zoom)));
-      else if (action === "pan-right") state.offset = Math.max(0, state.offset - Math.max(5, Math.round(12 / state.zoom)));
-      else if (action === "reset") { state.zoom = 1; state.offset = 0; }
-      else if (action === "fullscreen") toggleAiWidgetFullscreen(widget);
-      else if (action === "share") exportWidgetAsImage(widget, item.ticker);
-      render();
-    });
-  });
-
-  if (!svg) return;
-  
-  // 더블클릭 뷰 리셋 제스처
-  svg.addEventListener("dblclick", (e) => {
-    e.preventDefault();
-    state.zoom = 1;
-    state.offset = 0;
-    render();
-  });
-  svg.addEventListener("wheel", (event) => {
-    event.preventDefault();
-    const rect = svg.getBoundingClientRect();
-    const g = priceChartGeom();
-    const vbX = ((event.clientX - rect.left) / Math.max(1, rect.width)) * g.width;
-    const plotW = g.width - g.padL - g.padR;
-    const frac = Math.max(0, Math.min(1, (vbX - g.padL) / plotW));
-    aiSetZoomAnchored(item, state, frac, event.deltaY < 0 ? state.zoom * 1.2 : state.zoom / 1.2);
-    render();
-  }, { passive: false });
-
-  let dragPointerId = null;
-  let startX = 0;
-  let startOffset = 0;
-  let dragInfo = null;
-  let dragPlotPx = 1;
-  let raf = 0;
-  const schedule = () => {
-    if (raf) return;
-    raf = requestAnimationFrame(() => {
-      raf = 0;
-      render();
-    });
-  };
-
-  svg.addEventListener("pointerdown", (event) => {
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-    dragPointerId = event.pointerId;
-    startX = event.clientX;
-    startOffset = state.offset;
-    dragInfo = aiChartWindowInfo(item, state);
-    const rect = svg.getBoundingClientRect();
-    const g = priceChartGeom();
-    dragPlotPx = rect.width * ((g.width - g.padL - g.padR) / g.width);
-    svg.classList.add("is-dragging");
-    try { svg.setPointerCapture(event.pointerId); } catch (e) { /* ignore */ }
-    event.preventDefault();
-  });
-
-  svg.addEventListener("pointermove", (event) => {
-    if (dragPointerId == null || event.pointerId !== dragPointerId || !dragInfo) return;
-    const dx = event.clientX - startX;
-    const barsPerPx = dragInfo.windowSize / Math.max(1, dragPlotPx);
-    let next = Math.round(startOffset + dx * barsPerPx);
-    next = Math.max(0, Math.min(dragInfo.maxOffset, next));
-    if (next !== state.offset) {
-      state.offset = next;
-      schedule();
-    }
-    event.preventDefault();
-  });
-
-  const endDrag = (event) => {
-    if (dragPointerId == null || event.pointerId !== dragPointerId) return;
-    dragPointerId = null;
-    dragInfo = null;
-    svg.classList.remove("is-dragging");
-    try { svg.releasePointerCapture(event.pointerId); } catch (e) { /* ignore */ }
-    render();
-  };
-  svg.addEventListener("pointerup", endDrag);
-  svg.addEventListener("pointercancel", endDrag);
-}
-
-// ===== AI 모드: 상승확률(MirProb) 히어로 & 시각화 헬퍼 =====
-let aiProbHorizon = 20; // 5=1주, 20=1개월, 60=3개월
-
-// 5년 일봉이 있으면 차트 확률 엔진으로 정밀 분석, 없으면 스냅샷 지표로 간이 추정.
-async function computeAiProbability(item, horizon) {
-  const hz = horizon || aiProbHorizon;
-  const rows = getChartRows(item);
-  const quick = () => {
-    const q = scanQuickProb(item, hz);
-    return { fallback: true, headlineUp: q.up, horizon: hz, signals: [], patterns: [] };
-  };
-  if (!window.MirProb || !window.MirProb.analyzeRows || !Array.isArray(rows) || rows.length < 60) {
-    return quick();
-  }
-  try {
-    await Promise.all([
-      window.MirProb.ensureStats ? window.MirProb.ensureStats() : Promise.resolve(),
-      (typeof ensureAnalysisFeatureData === "function" ? ensureAnalysisFeatureData() : Promise.resolve()),
-    ]);
-    const result = window.MirProb.analyzeRows(rows, hz, {
-      ticker: item.ticker, company: item.company, statsMode: "population",
-    });
-    if (!result || result.error) return quick();
-    return result;
-  } catch (e) {
-    return quick();
-  }
-}
-
-// 270° 원형 게이지 SVG. CSS 애니메이션(aiGaugeSweep)으로 아크가 그려진다.
-function aiRadialGauge(pct, opts = {}) {
-  const size = opts.size || 176;
-  const stroke = opts.stroke || 15;
-  const r = (size - stroke) / 2 - 2;
-  const cx = size / 2, cy = size / 2;
-  const circ = 2 * Math.PI * r;
-  const track = circ * 0.75;                       // 270° 아크
-  const val = Math.max(0, Math.min(100, Number(pct) || 0));
-  const filled = track * (val / 100);
-  const color = scanProbColor(val);
-  const rot = 135;                                 // 하단 중앙에 갭
-  return `
-    <svg class="ai-gauge" viewBox="0 0 ${size} ${size}" role="img" aria-label="상승확률 ${Math.round(val)}%">
-      <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" style="stroke:var(--line)" stroke-width="${stroke}"
-        stroke-dasharray="${track.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"
-        transform="rotate(${rot} ${cx} ${cy})"/>
-      <circle class="ai-gauge-fill" cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke-width="${stroke}"
-        stroke-dasharray="${filled.toFixed(1)} ${circ.toFixed(1)}" stroke-linecap="round"
-        style="stroke:${color};--gauge-dash:${filled.toFixed(1)}" transform="rotate(${rot} ${cx} ${cy})"/>
-      <text x="${cx}" y="${cy - 2}" class="ai-gauge-num" text-anchor="middle" style="fill:${color}">${Math.round(val)}<tspan class="ai-gauge-pct">%</tspan></text>
-      <text x="${cx}" y="${cy + 22}" class="ai-gauge-cap" text-anchor="middle">상승확률</text>
-    </svg>`;
-}
-
-function aiProbStat(label, value, detail, tone) {
-  return `<article class="ai-prob-stat">
-      <span>${escapeHtml(label)}</span>
-      <strong class="${tone || ""}">${escapeHtml(String(value))}</strong>
-      <em>${escapeHtml(detail || "")}</em>
-    </article>`;
-}
-
-function aiSignalBar(s) {
-  const dir = Math.max(-1, Math.min(1, Number(s.dir) || 0));
-  const pct = Math.round(Math.abs(dir) * 100);
-  const bull = dir >= 0;
-  return `<div class="ai-sig-row" title="${escapeHtml(s.detail || "")}">
-      <span class="ai-sig-label">${escapeHtml(s.label || "신호")}</span>
-      <span class="ai-sig-track"><span class="ai-sig-fill ${bull ? "is-bull" : "is-bear"}" style="width:${pct}%"></span></span>
-      <span class="ai-sig-dir ${bull ? "pos" : "neg"}">${bull ? "▲" : "▼"}</span>
-    </div>`;
-}
-
-function aiProbabilityHero(result) {
-  const up = Math.round(result.headlineUp ?? 50);
-  const color = scanProbColor(up);
-  const verdict = (window.MirProb && window.MirProb.verdictText) ? window.MirProb.verdictText(up) : scanVerdict(up);
-  const hz = result.horizon || aiProbHorizon;
-  const hzLabel = hz <= 5 ? "1주" : hz >= 60 ? "3개월" : "1개월";
-  const base = result.base;
-  const consensus = result.consensus ? Math.round(result.consensus.up) : null;
-
-  const stats = [];
-  if (consensus != null) stats.push(aiProbStat("신호 합의", `${consensus}%`, "기술 지표 종합"));
-  if (base && base.samples) stats.push(aiProbStat("과거 실측", `${Math.round(base.upProb)}%`, `유사 ${base.samples}회`));
-  if (result.adxVal != null) stats.push(aiProbStat("추세 강도", result.adxVal.toFixed(0), "ADX"));
-
-  const analog = base && base.samples ? `
-    <div class="ai-prob-analog">
-      <div class="ai-prob-analog-head">지금 차트, 과거엔 어땠나 <span>지난 5년 · ${hzLabel} 뒤</span></div>
-      <p>지금과 비슷했던 <b>${base.samples}회</b> 중
-         <b style="color:${scanProbColor(base.upProb)}">${Math.round(base.upProb)}%</b>가 ${hzLabel} 뒤 상승했어요.</p>
-      <div class="ai-prob-analog-grid">
-        <div><span>평균</span><b class="${cls(base.avgReturn)}">${base.avgReturn >= 0 ? "+" : ""}${base.avgReturn.toFixed(1)}%</b></div>
-        <div><span>최고</span><b class="pos">+${base.best.toFixed(0)}%</b></div>
-        <div><span>최저</span><b class="neg">${base.worst.toFixed(0)}%</b></div>
-      </div>
-    </div>` : (result.fallback ? `<div class="ai-prob-analog is-lite"><p class="muted">5년 일봉이 부족해 스냅샷 지표로 간이 추정했습니다.</p></div>` : "");
-
-  const signals = (result.signals || []).slice()
-    .sort((a, b) => Math.abs(b.dir * b.weight) - Math.abs(a.dir * a.weight)).slice(0, 5);
-  const signalBars = signals.length
-    ? `<div class="ai-prob-signals"><div class="ai-prob-sub-head">핵심 신호</div>${signals.map(aiSignalBar).join("")}</div>`
-    : "";
-
-  const pats = (result.patterns || []).slice(0, 6);
-  const patChips = pats.length ? `<div class="ai-prob-patterns">${pats.map((p) => {
-    const d = Number(p.nominalDir) || 0;
-    const when = p.barsAgo === 0 ? "오늘 확정" : `${p.barsAgo || 0}봉 전 확정`;
-    return `<span class="ai-pat-chip ${d > 0 ? "is-bull" : d < 0 ? "is-bear" : ""}" title="${escapeHtml(when)}">${escapeHtml(p.label || p.pattern)}</span>`;
-  }).join("")}</div>` : "";
-
-  return `
-    <section class="ai-prob-hero" style="--prob-color:${color}">
-      <div class="ai-prob-gauge-col">
-        ${aiRadialGauge(up)}
-        <div class="ai-prob-verdict" style="color:${color}">${escapeHtml(verdict)}</div>
-        <div class="ai-prob-hznote">${hzLabel} 기준 종합 추정${result.fallback ? " · 간이" : ""}</div>
-      </div>
-      <div class="ai-prob-detail">
-        <div class="ai-prob-stats">${stats.join("")}</div>
-        ${analog}
-        ${signalBars}
-        ${patChips}
-      </div>
-    </section>`;
-}
-
-function aiProbSkeleton() {
-  return `
-    <div class="ai-prob-skeleton">
-      <div class="ai-prob-skel-gauge shimmer-loading"></div>
-      <div class="ai-prob-skel-lines">
-        <div class="shimmer-loading shimmer-line mid"></div>
-        <div class="shimmer-loading shimmer-line"></div>
-        <div class="shimmer-loading shimmer-line short"></div>
-        <div class="shimmer-loading shimmer-line mid"></div>
-      </div>
-    </div>`;
-}
-
 // 블록을 Claude 웹처럼 순차적으로 blur-in 리빌.
 function revealAiBlocksStaggered(container, step = 130) {
   if (!container) return;
@@ -2116,175 +1663,6 @@ function revealAiBlocksStaggered(container, step = 130) {
   blocks.forEach((block, index) => {
     setTimeout(() => block.classList.add("reveal-active"), index * step);
   });
-}
-
-async function renderInlineStockWidget(ticker, parentBubble) {
-  const base = stockByTicker(ticker) || data.stocks.find((row) => row.ticker === ticker);
-  if (!base) return;
-  const initialItem = applyLive(withDetail(base));
-  const itemPromise = ensureAiWidgetStock(ticker);
-  
-  const widgetId = "widget_" + Date.now() + "_" + Math.floor(Math.random() * 1000);
-  
-  const widgetContainer = document.createElement("div");
-  widgetContainer.className = "chat-msg-widget ai-chart-widget";
-  widgetContainer.id = widgetId;
-  
-  widgetContainer.innerHTML = `
-    <div class="widget-assembly-overlay">
-      <div class="ai-assembly-orb">
-        <span class="ai-orb-core"></span>
-        <span class="ai-orb-ring"></span>
-        <span class="ai-orb-ring is-2"></span>
-      </div>
-      <p class="widget-status" id="status_${widgetId}">${escapeHtml(initialItem.company)} 투자 데이터를 모으는 중...</p>
-      <div class="ai-assembly-track"><span class="ai-assembly-track-fill"></span></div>
-    </div>
-    <div class="widget-content-grid" id="grid_${widgetId}" style="opacity: 0; display: none; transition: opacity 0.5s ease-in-out;">
-      <div class="ai-prob-host ai-block animate-reveal" id="prob_${widgetId}"></div>
-      <div class="widget-chart-box ai-block animate-reveal">
-        <div class="ai-widget-chart-head">
-          <div>
-            <strong>${escapeHtml(initialItem.company)} <span>${escapeHtml(initialItem.ticker)}</span></strong>
-            <small class="ai-widget-chart-meta">차트 준비 중</small>
-          </div>
-          <div class="ai-widget-chart-tools" aria-label="AI 차트 조작">
-            <div class="ai-dropdown-wrapper">
-              <button type="button" class="ai-dropdown-trigger-btn" title="차트 분석 레이어 설정">지표 설정 </button>
-              <div class="ai-indicators-dropdown">
-                <label><input type="checkbox" data-indicator="trendlines" checked> 자동 추세선</label>
-                <label><input type="checkbox" data-indicator="support" checked> 지지/저항선</label>
-                <label><input type="checkbox" data-indicator="patterns" checked> 차트 패턴</label>
-                <label><input type="checkbox" data-indicator="levels" checked> 매물대 가이드</label>
-                <label><input type="checkbox" data-indicator="sma" checked> 이동평균선</label>
-                <label><input type="checkbox" data-indicator="volume" checked> 거래량 차트</label>
-                <label><input type="checkbox" data-indicator="rsi" checked> RSI 보조지표</label>
-              </div>
-            </div>
-            <span style="border-left:1px solid rgba(255,255,255,0.1);height:14px;margin:0 4px;"></span>
-            <button type="button" data-ai-chart-range="5Y">5Y</button>
-            <button type="button" class="is-active" data-ai-chart-range="1Y">1Y</button>
-            <button type="button" data-ai-chart-range="6M">6M</button>
-            <button type="button" data-ai-chart-range="3M">3M</button>
-            <button type="button" data-ai-chart-range="1M">1M</button>
-            <button type="button" data-ai-chart-action="pan-left" title="이전 구간">‹</button>
-            <button type="button" data-ai-chart-action="zoom-out" title="축소">−</button>
-            <button type="button" data-ai-chart-action="zoom-in" title="확대">+</button>
-            <button type="button" data-ai-chart-action="pan-right" title="다음 구간">›</button>
-            <button type="button" data-ai-chart-action="reset" title="초기화">Reset</button>
-            <button type="button" data-ai-chart-action="fullscreen" title="풀스크린 분석" class="fullscreen-toggle-btn">⤢</button>
-            <button type="button" class="widget-share-btn" data-ai-chart-action="share" title="리포트 이미지 저장">공유</button>
-          </div>
-        </div>
-        <svg id="chart_${widgetId}" class="ai-widget-chart" viewBox="0 0 860 520" role="img" aria-label="${escapeHtml(stockLabel(initialItem))} interactive chart"></svg>
-        <p class="ai-widget-chart-hint">마우스 휠로 확대/축소하고, 차트를 좌우로 드래그해서 구간을 이동할 수 있습니다.</p>
-      </div>
-      <div class="widget-info-grid">
-        <div class="ai-evidence-grid ai-block animate-reveal" id="evidence_${widgetId}"></div>
-        <div class="ai-mode-data-host ai-block animate-reveal" id="modeData_${widgetId}"></div>
-        <div class="widget-facts ai-block animate-reveal">
-          <h4>핵심 투자 지표</h4>
-          <div id="facts_${widgetId}"></div>
-        </div>
-        <div class="widget-news ai-block animate-reveal">
-          <h4>관련 최신 소식</h4>
-          <div id="news_${widgetId}" class="widget-news-list"></div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  parentBubble.appendChild(widgetContainer);
-  
-  const log = byId("aiChatLog");
-  
-  const statusLabel = byId("status_" + widgetId);
-  const overlay = widgetContainer.querySelector(".widget-assembly-overlay");
-  const grid = byId("grid_" + widgetId);
-  
-  // Step-by-step assembly animation inline
-  setTimeout(() => {
-    if (statusLabel) statusLabel.textContent = "가격 이력과 보조지표를 불러오는 중...";
-  }, 400);
-  
-  setTimeout(() => {
-    if (statusLabel) statusLabel.textContent = "차트 확대/이동 컨트롤을 연결하는 중...";
-  }, 800);
-  
-  setTimeout(() => {
-    if (statusLabel) statusLabel.textContent = "실시간 뉴스와 핵심 지표를 정리하는 중...";
-  }, 1200);
-  
-  setTimeout(async () => {
-    const item = await itemPromise || initialItem;
-    // Fade out overlay
-    if (overlay) overlay.style.opacity = "0";
-    
-    setTimeout(() => {
-      if (overlay) overlay.style.display = "none";
-      if (grid) {
-        grid.style.display = "grid";
-        // Force reflow
-        grid.offsetHeight;
-        grid.style.opacity = "1";
-      }
-
-      // 상승확률 히어로: 먼저 스켈레톤을 보여주고, 분석이 끝나면 교체(Claude 웹 스타일).
-      const probContainer = byId("prob_" + widgetId);
-      if (probContainer) {
-        probContainer.innerHTML = aiProbSkeleton();
-      }
-
-      // Render components inside the bubble!
-      const factsContainer = byId("facts_" + widgetId);
-      if (factsContainer) {
-        factsContainer.innerHTML = stockFacts(item, "AI Mode");
-      }
-
-      const evidenceContainer = byId("evidence_" + widgetId);
-      if (evidenceContainer) {
-        evidenceContainer.innerHTML = renderAiEvidenceGrid(item);
-      }
-
-      const modeDataContainer = byId("modeData_" + widgetId);
-      if (modeDataContainer) {
-        modeDataContainer.innerHTML = renderAiModeDataBoard(item);
-      }
-      
-      const newsContainer = byId("news_" + widgetId);
-      if (newsContainer) {
-        if (item.news && item.news.length > 0) {
-          newsContainer.innerHTML = item.news.slice(0, 3).map(n => `
-            <div class="widget-news-item">
-              <a href="${escapeHtml(n.url || "#")}" target="_blank" rel="noopener">${escapeHtml(n.title)}</a>
-              <small>${escapeHtml(n.source)} · ${escapeHtml(n.time || "")}</small>
-            </div>
-          `).join("");
-        } else {
-          newsContainer.innerHTML = `<p class="muted font-small">최근 뉴스 정보가 없습니다.</p>`;
-        }
-      }
-      
-      // Draw interactive SVG price chart inside bubble!
-      const chartSvg = byId("chart_" + widgetId);
-      if (chartSvg) {
-        const aiState = createAiChartState();
-        drawAiWidgetChart(item, chartSvg, aiState, widgetContainer.querySelector(".ai-widget-chart-meta"));
-        setupAiWidgetChartControls(widgetContainer, item, aiState);
-      }
-      
-      // Reveal widget (차트 레이어 애니메이션 트리거) + 블록을 순차 blur-in.
-      widgetContainer.classList.add("reveal-active");
-      revealAiBlocksStaggered(widgetContainer);
-
-      // 상승확률 분석은 무겁게 걸릴 수 있어 리빌을 막지 않고 끝나면 스켈레톤을 교체한다.
-      computeAiProbability(item).then((probResult) => {
-        if (!probContainer || !probContainer.isConnected) return;
-        probContainer.innerHTML = aiProbabilityHero(probResult);
-        probContainer.classList.add("is-loaded");
-      }).catch(() => { /* 실패 시 스켈레톤 유지 */ });
-    }, 400);
-  }, 1600);
 }
 
 // ===== JARVIS 종목 대시보드 (AI 모드) =====
@@ -2590,7 +1968,7 @@ function aiDashNewsHtml(item) {
   const news = Array.isArray(item.news) ? item.news.slice(0, 4) : [];
   if (!news.length) return `<p class="muted font-small">최근 뉴스 정보가 없습니다.</p>`;
   return news.map((n) => `
-    <a class="ai-dash-news-item" href="${escapeHtml(n.url || "#")}" target="_blank" rel="noopener">
+    <a class="ai-dash-news-item" href="${escapeHtml(_href(n.url))}" target="_blank" rel="noopener">
       <span>${escapeHtml(n.title || "")}</span>
       <small>${escapeHtml(n.source || "")}${n.time ? " · " + escapeHtml(n.time) : ""}</small>
     </a>`).join("");
@@ -2746,6 +2124,11 @@ function aiDashLlmCacheSet(key, text) {
 // opts.query가 있으면 후속 질문 답변(Q&A), 없으면 자동 심층 코멘트.
 // 프록시가 없으면 자동 코멘트는 조용히 비우고, 실패하면 워커가 준 메시지(429 등)를 보여준다.
 let aiDashLlmController = null;
+// 스트리밍 페인트 rAF 핸들 — 스트림이 끝나거나 다른 종목으로 넘어가면 취소한다.
+let dashPaintRaf = 0;
+function cancelAiDashPaint() {
+  if (dashPaintRaf) { cancelAnimationFrame(dashPaintRaf); dashPaintRaf = 0; }
+}
 
 async function fetchAiDashLlmComment(item, seq, opts) {
   const slot = byId("aiDashLlm");
@@ -2757,7 +2140,7 @@ async function fetchAiDashLlmComment(item, seq, opts) {
   if (!custom) {
     const cached = aiDashLlmCacheGet(cacheKey);
     if (cached) {
-      slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${formatMarkdownToHtml(cached)}</div>`;
+      slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${formatMarkdownToHtml(stripEmoji(cached))}</div>`;
       return;
     }
   }
@@ -2771,6 +2154,7 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     try { aiDashLlmController.abort(); } catch (_) { /* ignore */ }
     aiStreamEnd(aiDashLlmController);
   }
+  cancelAiDashPaint(); // 직전 요청이 예약해 둔 rAF 가 새 답변을 덮지 않게
   const controller = aiStreamBegin();
   aiDashLlmController = controller;
   try {
@@ -2783,15 +2167,13 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     const paint = (text, loading) => {
       const cur = byId("aiDashLlm");
       if (!cur || seq !== aiDashSeq) return;
-      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body${loading ? " is-streaming" : ""}">${formatMarkdownToHtml(text)}</div>`;
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body${loading ? " is-streaming" : ""}">${formatMarkdownToHtml(stripEmoji(text))}</div>`;
     };
-    let paintQueued = false;
     let latestFull = "";
     const onDelta = (_d, full) => {
       latestFull = full;
-      if (paintQueued) return;
-      paintQueued = true;
-      requestAnimationFrame(() => { paintQueued = false; paint(latestFull, true); });
+      if (dashPaintRaf) return;
+      dashPaintRaf = requestAnimationFrame(() => { dashPaintRaf = 0; paint(latestFull, true); });
     };
 
     const result = await requestAiChatReply({
@@ -2808,7 +2190,7 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     const cur = byId("aiDashLlm");
     if (!cur) return;
     if (reply) {
-      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${formatMarkdownToHtml(reply)}${result.aborted ? ` <span class="ai-abort-note muted">(중단됨)</span>` : ""}</div>`;
+      cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><div class="ai-verdict-llm-body">${formatMarkdownToHtml(stripEmoji(reply))}${result.aborted ? ` <span class="ai-abort-note muted">(중단됨)</span>` : ""}</div>`;
       if (!custom && !result.aborted) aiDashLlmCacheSet(cacheKey, reply);
     } else if (result.aborted) {
       cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">(중단됨)</p>`;
@@ -2821,12 +2203,13 @@ async function fetchAiDashLlmComment(item, seq, opts) {
       if (err && err.name === "AbortError") {
         cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">(중단됨)</p>`;
       } else {
-        // 워커가 상태코드와 함께 준 메시지(429 "잠시 후 다시" 등)는 그대로, 네트워크 단절은 일반 문구.
-        const msg = err && err.status ? String(err.message) : "지금은 AI 답변을 불러올 수 없습니다.";
+        // 워커 에러코드(forbidden_origin 등)는 한국어로 옮겨 보여준다.
+        const msg = aiWorkerErrorMessage(err, "지금은 AI 답변을 불러올 수 없습니다.");
         cur.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">${escapeHtml(msg)}</p>`;
       }
     }
   } finally {
+    cancelAiDashPaint();
     aiStreamEnd(controller);
     if (aiDashLlmController === controller) aiDashLlmController = null;
   }
@@ -2835,6 +2218,9 @@ async function fetchAiDashLlmComment(item, seq, opts) {
 window.MirDash = {
   render: renderAiStockDashboard,
   hide() {
+    // 진행 중인 /chat 스트림을 먼저 끊는다 — 대시보드를 지우고 나면 rAF 페인트가
+    // 분리된 DOM 을 건드리고, 끊지 않은 스트림은 계속 과금된다.
+    aiAbortAllStreams();
     const host = byId("aiStockDashboard");
     if (host) { host.classList.remove("is-active"); host.setAttribute("aria-hidden", "true"); host.innerHTML = ""; }
     aiDashSeq++;
@@ -2908,19 +2294,31 @@ function setupAiChatModeEvents() {
       return /^\d{6}$/.test(s.ticker) ? "KRX" : "US";
     };
 
-    // 자동완성 추천 입력 리스너
-    input.addEventListener("input", () => {
-      const value = input.value.trim().toLowerCase();
-      if (value.length < 1) {
-        hidePopup();
-        return;
-      }
-
+    // 자동완성 추천 입력 리스너. 200ms 디바운스(community.js:1451 과 같은 값) + 시총
+    // 정렬 인덱스 우선 — 예전엔 키를 누를 때마다 전 종목(US 5천·KR 3천)을 풀스캔했다.
+    const renderAutocomplete = (value) => {
       const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
-      results = stocks.filter((s) => {
-        // company 가 비어 있는 스냅샷 행(일부 ETF·신규상장)에서 toLowerCase 가 죽지 않게.
-        return String(s.ticker || "").toLowerCase().includes(value) || String(s.company || "").toLowerCase().includes(value);
-      }).slice(0, 5);
+      // app.js 의 tickerSearchIndex 는 시총 내림차순 + companyLower 가 미리 계산돼 있다.
+      const pool = (typeof tickerSearchIndex !== "undefined" && tickerSearchIndex && Array.isArray(tickerSearchIndex.byMarketCap))
+        ? tickerSearchIndex.byMarketCap
+        : null;
+      const hits = [];
+      if (pool) {
+        for (let i = 0; i < pool.length && hits.length < 5; i += 1) {
+          const row = pool[i];
+          if (String(row.ticker || "").toLowerCase().includes(value) || row.companyLower.includes(value)) {
+            const full = stockByTicker(row.ticker);
+            if (full) hits.push(full);
+          }
+        }
+      } else {
+        for (let i = 0; i < stocks.length && hits.length < 5; i += 1) {
+          const s = stocks[i];
+          // company 가 비어 있는 스냅샷 행(일부 ETF·신규상장)에서 toLowerCase 가 죽지 않게.
+          if (String(s.ticker || "").toLowerCase().includes(value) || String(s.company || "").toLowerCase().includes(value)) hits.push(s);
+        }
+      }
+      results = hits;
 
       if (results.length === 0) {
         hidePopup();
@@ -2942,6 +2340,16 @@ function setupAiChatModeEvents() {
       popup.querySelectorAll(".autocomplete-item").forEach((item) => {
         item.addEventListener("click", () => submitTicker(item.dataset.ticker));
       });
+    };
+    let autocompleteTimer = 0;
+    input.addEventListener("input", () => {
+      clearTimeout(autocompleteTimer);
+      const value = input.value.trim().toLowerCase();
+      if (value.length < 1) {
+        hidePopup();
+        return;
+      }
+      autocompleteTimer = setTimeout(() => renderAutocomplete(value), 200);
     });
 
     // ↑↓/Esc 만 여기서. Enter 는 welcome 의 capture 리스너가 highlightedTicker() 를 읽어 처리한다.

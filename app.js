@@ -904,7 +904,15 @@ function boot(options = {}) {
   const route = new URLSearchParams(window.location.search);
   setupMarketMode();
   showFallbackBanner();
-  if (route.get("cadmin")) setCommunityAdminKey(route.get("cadmin"));
+  if (route.get("cadmin")) {
+    setCommunityAdminKey(route.get("cadmin"));
+    // 키를 저장했으면 주소창에서 지운다 — 남겨 두면 북마크·공유·Referer 로 새어 나간다.
+    try {
+      route.delete("cadmin");
+      const qs = route.toString();
+      history.replaceState(null, "", `${location.pathname}${qs ? `?${qs}` : ""}${location.hash}`);
+    } catch (_) { /* history 차단 환경은 무시 */ }
+  }
   if (route.get("ticker")) selectedTicker = normalizeTickerKey(route.get("ticker"));
   else if (!stockByTicker(selectedTicker)) selectedTicker = marketCfg().defaultTicker;
   initWatchlist(route.get("watchlist"));
@@ -1342,10 +1350,16 @@ function setupChatbot() {
       });
       if (!res.ok) throw new Error(`chat ${res.status}`);
       const payload = await res.json();
-      const reply = stripEmoji((payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.");
+      let reply = stripEmoji((payload && payload.reply) || "답변을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.");
+      // 깨진 답변('. of the the…' 반복)은 도우미 챗에도 새어 나온다(ai-mode.js 와 같은 가드).
+      let brokenReply = false;
+      if (typeof isDegenerateLlmText === "function" && isDegenerateLlmText(reply, /[가-힣]/.test(text))) {
+        reply = "답변 생성이 불안정했어요. 같은 질문을 한 번 더 보내 주세요.";
+        brokenReply = true;
+      }
       typing.classList.remove("typing");
       typing.textContent = reply;
-      chatHistory.push({ role: "assistant", content: reply });
+      if (!brokenReply) chatHistory.push({ role: "assistant", content: reply }); // 대체 문구는 컨텍스트로 넘기지 않는다
     } catch (err) {
       typing.classList.remove("typing");
       typing.textContent = "지금은 도우미에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.";

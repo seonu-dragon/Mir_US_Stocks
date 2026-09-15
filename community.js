@@ -224,6 +224,8 @@ let communityNewCount = 0;
 const COMMUNITY_HIDDEN_KEY = "mir_community_hidden_v1";
 const COMMUNITY_ADMIN_KEY_LS = "mir_community_admin_key_v1";
 let communityVotePeriod = "day";
+// 댓글 등록 중인 글 id — 버튼과 Ctrl/⌘+Enter 가 공유하는 중복 전송 가드.
+const communityCommentInFlight = new Set();
 
 // ----- 낙관적 반영(WEBSITE_INSPECTION_REPORT §4-③) -----
 // COMMUNITY_DO 가 없는 KV 폴백 환경에선 글·댓글·좋아요가 서버에서 201 로 받아들여져도
@@ -347,9 +349,9 @@ function setCommunityAdminKey(key) {
   if (key) window.safeStorage.set(COMMUNITY_ADMIN_KEY_LS, String(key));
 }
 
-// 관리자 요청 공통 헤더. 키는 URL 이 아니라 헤더로 보낸다(쿼리스트링은 프록시·브라우저
-// 이력·접근로그에 남는다). 워커가 X-Admin-Key 를 받도록 갱신되는 중이라, 한 릴리스 동안은
-// 구 방식(쿼리/본문 adminKey)도 폴백으로 함께 유지한다.
+// 관리자 요청 공통 헤더. 키는 URL 이 아니라 헤더로만 보낸다(쿼리스트링은 프록시·브라우저
+// 이력·접근로그에 남는다). 워커(yahoo-proxy.js:194-201)는 X-Admin-Key 를 정식으로 받고,
+// 쿼리/본문 adminKey 는 워커 쪽 구형 폴백일 뿐이라 클라이언트에서는 더 이상 쓰지 않는다.
 function communityAdminHeaders(extra) {
   const headers = { "Content-Type": "application/json", ...(extra || {}) };
   const key = getCommunityAdminKey();
@@ -359,6 +361,45 @@ function communityAdminHeaders(extra) {
 
 function isCommunityAdmin() {
   return Boolean(getCommunityAdminKey());
+}
+
+// 워커가 주는 에러 코드는 영어 식별자다(forbidden_origin, content_too_short …).
+// 그대로 토스트에 띄우면 사용자는 무슨 뜻인지 알 수 없다 — 한국어 문구로 옮긴다.
+// ai-mode.js 의 aiWorkerErrorMessage 와 같은 표를 쓴다(전역 이름 충돌 방지를 위해
+// 표만 공유하고 래퍼는 파일별로 둔다).
+const MIR_WORKER_ERROR_KO = {
+  forbidden_origin: "이 주소에서는 AI·커뮤니티 기능을 쓸 수 없습니다(허용되지 않은 출처).",
+  forbidden: "권한이 없습니다. 관리자 키를 확인해 주세요.",
+  no_user_message: "보낼 내용이 비어 있습니다.",
+  content_too_short: "내용을 2자 이상 입력해 주세요.",
+  content_too_long: "내용이 너무 깁니다. 줄여서 다시 시도해 주세요.",
+  missing_client_id: "브라우저 식별자를 만들지 못했습니다. 새로고침 후 다시 시도해 주세요.",
+  bad_json: "요청 형식이 올바르지 않습니다. 새로고침 후 다시 시도해 주세요.",
+  not_found: "대상을 찾을 수 없습니다. 이미 삭제되었을 수 있습니다.",
+  rate_limited: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요.",
+  no_community_kv: "게시판을 일시적으로 사용할 수 없습니다.",
+  community_do_unavailable: "게시판을 일시적으로 사용할 수 없습니다.",
+  already_voted: "오늘은 이미 투표했습니다.",
+};
+
+// status 도 함께 본다 — 코드가 없는 5xx/네트워크 실패에도 한국어 문구를 준다.
+function mirWorkerErrorKo(data, status, fallback) {
+  const code = String((data && (data.error || data.code)) || "").trim();
+  if (code && MIR_WORKER_ERROR_KO[code]) return MIR_WORKER_ERROR_KO[code];
+  const num = Number(status) || 0;
+  if (num === 429) return MIR_WORKER_ERROR_KO.rate_limited;
+  if (num === 403) return MIR_WORKER_ERROR_KO.forbidden;
+  if (num === 404) return MIR_WORKER_ERROR_KO.not_found;
+  if (num >= 500) return "서버에 일시적인 문제가 있습니다. 잠시 후 다시 시도해 주세요.";
+  if (num === 0) return "네트워크에 연결하지 못했습니다. 연결 상태를 확인해 주세요.";
+  // 워커가 사람이 읽을 한국어 message 를 주면 그대로(코드보다 우선순위는 낮다).
+  const msg = data && typeof data.message === "string" ? data.message.trim() : "";
+  if (msg && !/^[a-z0-9_]+$/.test(msg)) return msg;
+  return fallback || "요청을 처리하지 못했습니다.";
+}
+
+function communityErrorMessage(data, status, fallback) {
+  return mirWorkerErrorKo(data, status, fallback);
 }
 
 function getCommunityNickname() {
@@ -404,13 +445,17 @@ function stopCommunityPolling() {
   }
 }
 
-function resolveCommunityTickerInput(raw) {
+// requireKnown(기본): 스냅샷에 없는 티커는 빈 문자열. 예전엔 "ZZZZ" 같은 입력을 그대로
+// 흘려 존재하지 않는 종목에 투표·글 태그가 붙었다. 목록 필터는 반대 시장 종목(국내 모드의
+// AAPL 등)으로도 걸러야 해서 requireKnown:false 로 관대하게 쓴다.
+function resolveCommunityTickerInput(raw, { requireKnown = true } = {}) {
   const text = String(raw || "").trim();
   if (!text) return "";
   const direct = text.toUpperCase().replace(/[^A-Z0-9.\-]/g, "");
   if (direct && stockByTicker(direct)) return direct;
-  const resolved = resolveTickerQuery(text);
-  return resolved || direct;
+  const resolved = typeof resolveTickerQuery === "function" ? resolveTickerQuery(text) : "";
+  if (resolved && stockByTicker(resolved)) return resolved;
+  return requireKnown ? "" : (resolved || direct);
 }
 
 function formatCommunityTime(iso) {
@@ -466,15 +511,23 @@ function communityKnownAuthors() {
 
 // 본문·댓글의 @닉네임 멘션을 강조 span으로 변환한다(이미 escapeHtml 된 문자열에 적용).
 // 닉네임에 공백이 있을 수 있어(예: "젠슨 황") 실제 참여자 이름만 1패스로 매칭한다.
-function highlightCommunityMentions(escaped) {
-  const text = String(escaped);
+// 정규식은 렌더 1회당 한 번만 만든다 — 예전엔 글·댓글마다 전체 캐시를 다시 훑어
+// 이름 목록과 RegExp 를 새로 만들었다(글 10개 × 댓글 n개 = O(n²)).
+function communityMentionRegex() {
   const names = communityKnownAuthors();
-  if (!names.length || text.indexOf("@") < 0) return text;
+  if (!names.length) return null;
   const pattern = names
     .map((n) => escapeHtml(n).replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
     .join("|");
-  const re = new RegExp(`@(${pattern})`, "g");
-  return text.replace(re, (m, name) => `<span class="community-mention">@${name}</span>`);
+  return new RegExp(`@(${pattern})`, "g");
+}
+
+function highlightCommunityMentions(escaped, re) {
+  const text = String(escaped);
+  const rx = re === undefined ? communityMentionRegex() : re;
+  if (!rx || text.indexOf("@") < 0) return text;
+  rx.lastIndex = 0;
+  return text.replace(rx, (m, name) => `<span class="community-mention">@${name}</span>`);
 }
 
 // 종목 글 하단 미니 스파크라인(스냅샷 closeSeries 사용, 비동기 없음).
@@ -515,12 +568,22 @@ async function reportCommunityPost(postId) {
   const url = communityApiUrl("/community/report");
   if (!url) return;
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ postId, clientId: getCommunityClientId(), reason: String(reason || "").slice(0, 200) }),
     });
-  } catch (_) {}
+    // 실패를 삼키면 사용자는 관리자에게 접수된 줄 안다(로컬 가림만 됐을 뿐).
+    if (!res.ok) {
+      let data = null;
+      try { data = await res.json(); } catch (_) { data = null; }
+      showAppToast(`${communityErrorMessage(data, res.status, "신고 접수에 실패했습니다.")} 글은 내 화면에서만 가려집니다.`, 3600);
+      return;
+    }
+    showAppToast("신고를 접수했습니다. 이 글은 내 화면에서 가려집니다.");
+  } catch (_) {
+    showAppToast("신고를 전송하지 못했습니다(네트워크). 글은 내 화면에서만 가려집니다.", 3600);
+  }
 }
 
 // ===== 투표 페이지 (하루 1표 · 일/주/월 순위) =====
@@ -634,7 +697,7 @@ function communityVoteRankColHtml(rows, kind) {
           return `
             <div class="community-vote-rank-row">
               <span class="community-vote-rank-num">${i + 1}</span>
-              <button type="button" class="ticker-pill community-vote-rank-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(row.ticker)}</button>
+              <button type="button" class="ticker-pill community-vote-rank-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button>
               <span class="community-vote-rank-company muted">${stock ? escapeHtml(stock.company) : ""}</span>
               <span class="community-vote-rank-count community-vote-${kind}">${count}표</span>
               <span class="community-vote-rank-sub muted">전체 ${row.total}</span>
@@ -682,7 +745,7 @@ async function submitCommunityVote() {
     });
     const data = await res.json();
     if (!res.ok) {
-      showAppToast(data.message || data.error || "투표 실패", 3200);
+      showAppToast(communityErrorMessage(data, res.status, "투표에 실패했습니다."), 3200);
       return;
     }
     // 서버가 받아준 표를 즉시 반영(§4-③). 서버 응답의 vote 가 없으면 보낸 값으로.
@@ -701,28 +764,47 @@ async function submitCommunityVote() {
 }
 
 // ===== 관리자 신고 내역 패널 =====
-async function renderCommunityAdminPanel() {
+// 패널 HTML 은 한 번 받아 캐시한다. 예전엔 renderCommunityBoard() 가 매번 이 함수를
+// 불러서 12초 폴링마다 관리자 키가 실려 나갔다 — 이제 네트워크 요청은 탭 진입·명시적
+// 새로고침(=fetchCommunityPosts 의 비-silent 경로)에서만 일어나고, 보드 재렌더는
+// paintCommunityAdminPanel() 로 캐시본만 다시 붙인다.
+let communityAdminPanelHtml = "";
+
+function paintCommunityAdminPanel() {
   const panel = byId("communityAdminPanel");
   if (!panel) return;
   if (!isCommunityAdmin()) { panel.hidden = true; panel.innerHTML = ""; return; }
+  if (!communityAdminPanelHtml) return; // 아직 한 번도 못 받았으면 직전 상태 유지
+  panel.hidden = false;
+  panel.innerHTML = communityAdminPanelHtml;
+  bindCommunityAdminPanel(panel);
+}
+
+function bindCommunityAdminPanel(panel) {
+  byId("communityAdminRefresh")?.addEventListener("click", () => renderCommunityAdminPanel());
+  panel.querySelectorAll(".community-admin-delete").forEach((btn) => {
+    btn.addEventListener("click", () => adminDeleteCommunityPost(btn.dataset.id));
+  });
+}
+
+async function renderCommunityAdminPanel() {
+  const panel = byId("communityAdminPanel");
+  if (!panel) return;
+  if (!isCommunityAdmin()) { panel.hidden = true; panel.innerHTML = ""; communityAdminPanelHtml = ""; return; }
   const url = communityApiUrl("/community/reports");
   if (!url) { panel.hidden = true; return; }
   try {
-    // 새 워커: POST + X-Admin-Key 헤더. 구 워커(GET 만 라우팅)는 POST 를 모르는 경로로
-    // 흘려보내므로 403 이 아닌 실패면 한 릴리스 동안 쿼리스트링 방식으로 폴백한다.
-    let res = await fetch(url, { method: "POST", headers: communityAdminHeaders(), body: "{}", cache: "no-store" });
-    if (!res.ok && res.status !== 403) {
-      res = await fetch(`${url}?adminKey=${encodeURIComponent(getCommunityAdminKey())}`, { cache: "no-store" });
-    }
+    // 워커 라우트는 `GET /community/reports` 하나뿐이다(yahoo-proxy.js:1641). 키는 헤더로만.
+    const res = await fetch(url, { method: "GET", headers: communityAdminHeaders(), cache: "no-store" });
     const data = await res.json();
     if (!res.ok) {
+      communityAdminPanelHtml = `<div class="community-admin-head"><strong>관리자 · 신고 내역</strong></div><p class="muted">${escapeHtml(communityErrorMessage(data, res.status, "권한 확인 실패(키를 확인하세요)."))}</p>`;
       panel.hidden = false;
-      panel.innerHTML = `<div class="community-admin-head"><strong>관리자 · 신고 내역</strong></div><p class="muted">권한 확인 실패(키를 확인하세요).</p>`;
+      panel.innerHTML = communityAdminPanelHtml;
       return;
     }
     const posts = data.posts || [];
-    panel.hidden = false;
-    panel.innerHTML = `
+    communityAdminPanelHtml = `
       <div class="community-admin-head">
         <strong>관리자 · 신고 내역 ${posts.length}건</strong>
         <button type="button" class="ghost compact-btn" id="communityAdminRefresh">새로고침</button>
@@ -741,10 +823,9 @@ async function renderCommunityAdminPanel() {
         </div>
       `).join("") : `<p class="muted">신고된 글이 없습니다.</p>`}
     `;
-    byId("communityAdminRefresh")?.addEventListener("click", renderCommunityAdminPanel);
-    panel.querySelectorAll(".community-admin-delete").forEach((btn) => {
-      btn.addEventListener("click", () => adminDeleteCommunityPost(btn.dataset.id));
-    });
+    panel.hidden = false;
+    panel.innerHTML = communityAdminPanelHtml;
+    bindCommunityAdminPanel(panel);
   } catch (_) {
     panel.hidden = true;
   }
@@ -763,7 +844,7 @@ async function adminDeleteCommunityPost(id) {
       body: JSON.stringify({ id, clientId: getCommunityClientId(), adminKey: getCommunityAdminKey() }),
     });
     const data = await res.json();
-    if (!res.ok) { showAppToast(data.error || "삭제 실패", 3200); return; }
+    if (!res.ok) { showAppToast(communityErrorMessage(data, res.status, "삭제에 실패했습니다."), 3200); return; }
     await fetchCommunityPosts({ silent: true });
     renderCommunityAdminPanel();
   } catch (err) {
@@ -847,7 +928,7 @@ async function toggleCommunityLike(postId) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showAppToast(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.error || "공감 처리 실패"), 3200);
+      showAppToast(communityErrorMessage(data, res.status, "공감 처리에 실패했습니다."), 3200);
       await fetchCommunityPosts({ silent: true }); // 실패면 서버 상태로 되돌린다
       return;
     }
@@ -890,7 +971,7 @@ function renderCommunityHotTickersPanel() {
     box.innerHTML = "";
     return;
   }
-  const activeTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
+  const activeTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "", { requireKnown: false });
   box.hidden = false;
   box.innerHTML = `
     <span class="community-hot-tickers-label">인기 종목</span>
@@ -918,8 +999,7 @@ function renderCommunityHotTickersPanel() {
 
 function filterCommunityPostsView(posts) {
   const filterMode = byId("communityFilter")?.value || "all";
-  const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
-  const clientId = getCommunityClientId();
+  const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "", { requireKnown: false });
   const hidden = getCommunityHiddenIds();
   let filtered = posts.filter((p) => !hidden.has(p.id));
   if (filterMode === "mine") {
@@ -952,12 +1032,13 @@ function renderCommunityBoard() {
 
   if (nickInput && !nickInput.value) nickInput.value = getCommunityNickname();
 
-  const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "");
+  const filterTicker = resolveCommunityTickerInput(byId("communityFilterTicker")?.value || "", { requireKnown: false });
   const posts = filterCommunityPostsView(communityPostsCache);
-  const clientId = getCommunityClientId();
+  const mentionRe = communityMentionRegex();
 
   renderCommunityHotTickersPanel();
-  renderCommunityAdminPanel();
+  // 네트워크 요청 없이 캐시된 관리자 패널만 다시 붙인다(갱신은 탭 진입·새로고침에서).
+  paintCommunityAdminPanel();
 
   if (communityFetchPromise && !communityPostsCache.length && !communityBoardError) {
     meta.textContent = "글을 불러오는 중…";
@@ -966,7 +1047,14 @@ function renderCommunityBoard() {
   }
 
   if (!posts.length) {
-    meta.textContent = communityBoardError ? "글을 불러오지 못했습니다." : "아직 등록된 글이 없습니다. 첫 글을 남겨보세요.";
+    const hiddenOnly = getCommunityHiddenIds().size;
+    meta.innerHTML = escapeHtml(communityBoardError ? "글을 불러오지 못했습니다." : "아직 등록된 글이 없습니다. 첫 글을 남겨보세요.")
+      + (hiddenOnly ? ` · <button type="button" class="ghost compact-btn" id="communityShowHidden">숨긴 글 ${hiddenOnly}개 · 모두 보기</button>` : "");
+    byId("communityShowHidden")?.addEventListener("click", () => {
+      clearCommunityHiddenIds();
+      showAppToast("숨긴 글을 다시 표시합니다.");
+      renderCommunityBoard();
+    });
     feed.innerHTML = `<div class="community-empty">${communityBoardError ? "게시판 연결을 확인한 뒤 새로고침해 주세요." : "트렌딩 탭에서 관심 종목을 보고, 종목 없이도 시장 의견을 남길 수 있습니다."}</div>`;
     renderCommunityPagination(0);
     return;
@@ -979,8 +1067,16 @@ function renderCommunityBoard() {
   const pageStart = (communityBoardPage - 1) * COMMUNITY_PAGE_SIZE;
   const pagePosts = posts.slice(pageStart, pageStart + COMMUNITY_PAGE_SIZE);
 
-  meta.textContent = `${posts.length}개 글${filterTicker ? ` · ${filterTicker} 필터` : ""}`
-    + (totalPages > 1 ? ` · ${communityBoardPage}/${totalPages}페이지` : "");
+  // 신고해서 가려 둔 글은 되돌릴 방법이 없었다(clearCommunityHiddenIds 가 호출되지 않음).
+  const hiddenCount = getCommunityHiddenIds().size;
+  meta.innerHTML = escapeHtml(`${posts.length}개 글${filterTicker ? ` · ${stockLabel(filterTicker)} 필터` : ""}`
+    + (totalPages > 1 ? ` · ${communityBoardPage}/${totalPages}페이지` : ""))
+    + (hiddenCount ? ` · <button type="button" class="ghost compact-btn" id="communityShowHidden">숨긴 글 ${hiddenCount}개 · 모두 보기</button>` : "");
+  byId("communityShowHidden")?.addEventListener("click", () => {
+    clearCommunityHiddenIds();
+    showAppToast("숨긴 글을 다시 표시합니다.");
+    renderCommunityBoard();
+  });
 
   // 재렌더(특히 12초 자동 새로고침) 시 작성 중이던 댓글 입력이 사라지지 않도록
   // 열려 있는 답글 입력칸의 내용·커서·포커스를 미리 보존한다.
@@ -1012,7 +1108,7 @@ function renderCommunityBoard() {
           </p>` : ""}
         <div class="community-post-head">
           ${post.ticker
-            ? `<button type="button" class="ticker-pill community-post-ticker" data-ticker="${escapeHtml(post.ticker)}" title="이 종목 글만 보기">${escapeHtml(post.ticker)}</button>`
+            ? `<button type="button" class="ticker-pill community-post-ticker" data-ticker="${escapeHtml(post.ticker)}" title="이 종목 글만 보기">${escapeHtml(stockLabel(post.ticker))}</button>`
             : `<span class="community-post-tag">일반</span>`}
           ${communityAvatarHtml(post.author)}
           <span class="community-post-author">${escapeHtml(post.author || "익명")}</span>
@@ -1020,7 +1116,7 @@ function renderCommunityBoard() {
         </div>
         ${stock ? `<p class="community-post-company muted">${escapeHtml(stock.company)} · 당일 ${fmtDailyPct(stock.changePct)}</p>` : ""}
         ${post.ticker ? communityMiniChartHtml(post.ticker) : ""}
-        <p class="community-post-body">${highlightCommunityMentions(escapeHtml(post.content))}</p>
+        <p class="community-post-body">${highlightCommunityMentions(escapeHtml(post.content), mentionRe)}</p>
         ${comments.length ? `
           <div class="community-comments">
             ${comments.map((comment) => {
@@ -1037,7 +1133,7 @@ function renderCommunityBoard() {
                       ${canDeleteComment ? `<button type="button" class="ghost compact-btn community-comment-delete" data-post-id="${escapeHtml(post.id)}" data-comment-id="${escapeHtml(comment.id)}">삭제</button>` : ""}
                     </div>
                   </div>
-                  <p class="community-comment-body">${highlightCommunityMentions(escapeHtml(comment.content))}</p>
+                  <p class="community-comment-body">${highlightCommunityMentions(escapeHtml(comment.content), mentionRe)}</p>
                 </div>
               `;
             }).join("")}
@@ -1106,29 +1202,32 @@ function renderCommunityBoard() {
       renderCommunityBoard();
     });
   });
+  // 버튼 클릭과 Ctrl/⌘+Enter 가 같은 in-flight 집합을 본다. 예전엔 키보드 경로에만
+  // 가드가 없어서 연타하면 같은 댓글이 두 번 등록됐다.
+  const submitReply = async (postId, btn) => {
+    if (!postId || communityCommentInFlight.has(postId)) return;
+    const input = feed.querySelector(`.community-reply-input[data-post-id="${CSS.escape(postId)}"]`);
+    communityCommentInFlight.add(postId);
+    const prevLabel = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "등록 중…"; }
+    try {
+      await postCommunityComment(postId, input?.value || "");
+    } finally {
+      communityCommentInFlight.delete(postId);
+      // 성공 시 폼이 재렌더로 사라지지만, 실패 시엔 버튼을 되살린다.
+      if (btn) { btn.disabled = false; btn.textContent = prevLabel; }
+    }
+  };
   feed.querySelectorAll(".community-reply-submit").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const postId = btn.dataset.postId;
-      const input = feed.querySelector(`.community-reply-input[data-post-id="${CSS.escape(postId)}"]`);
-      if (btn.disabled) return;
-      btn.disabled = true;
-      const prevLabel = btn.textContent;
-      btn.textContent = "등록 중…";
-      try {
-        await postCommunityComment(postId, input?.value || "");
-      } finally {
-        // 성공 시 폼이 재렌더로 사라지지만, 실패 시엔 버튼을 되살린다.
-        btn.disabled = false;
-        btn.textContent = prevLabel;
-      }
-    });
+    btn.addEventListener("click", () => submitReply(btn.dataset.postId, btn));
   });
   // Ctrl/⌘ + Enter 로 댓글 바로 등록
   feed.querySelectorAll(".community-reply-input").forEach((input) => {
     input.addEventListener("keydown", (event) => {
       if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
         event.preventDefault();
-        postCommunityComment(input.dataset.postId, input.value || "");
+        const postId = input.dataset.postId;
+        submitReply(postId, feed.querySelector(`.community-reply-submit[data-post-id="${CSS.escape(postId)}"]`));
       }
     });
   });
@@ -1198,6 +1297,9 @@ async function fetchCommunityPosts({ silent = false } = {}) {
   if (!silent) {
     const meta = byId("communityBoardMeta");
     if (meta) meta.textContent = "글을 불러오는 중…";
+    // 관리자 신고 내역은 여기서만 새로 받는다(탭 진입·새로고침 버튼·삭제 직후).
+    // 12초 폴링은 silent 라 타지 않는다 — 예전엔 보드 렌더마다 키가 나갔다.
+    renderCommunityAdminPanel();
   }
   if (communityFetchPromise) return communityFetchPromise;
 
@@ -1209,7 +1311,7 @@ async function fetchCommunityPosts({ silent = false } = {}) {
       const res = await fetch(listUrl, { cache: "no-store" });
       const data = await res.json();
       if (!res.ok && data.error !== "no_community_kv") {
-        throw new Error(data.message || data.error || `HTTP ${res.status}`);
+        throw new Error(communityErrorMessage(data, res.status, `HTTP ${res.status}`));
       }
       communityBoardError = data.error === "no_community_kv" ? "no_community_kv" : "";
       // 서버 목록 위에 아직 수렴 안 된 내 글·댓글·좋아요를 얹는다(id dedupe → 멱등).
@@ -1270,10 +1372,7 @@ async function postCommunityMessage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      const msg = data.error === "no_community_kv"
-        ? "게시판을 일시적으로 사용할 수 없습니다."
-        : (data.message || data.error || "등록 실패");
-      showAppToast(msg, 3200);
+      showAppToast(communityErrorMessage(data, res.status, "글 등록에 실패했습니다."), 3200);
       return;
     }
     if (contentInput) contentInput.value = "";
@@ -1329,7 +1428,7 @@ async function postCommunityComment(postId, rawContent) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showAppToast(data.error === "no_community_kv" ? "게시판을 일시적으로 사용할 수 없습니다." : (data.message || data.error || "댓글 등록 실패"), 3200);
+      showAppToast(communityErrorMessage(data, res.status, "댓글 등록에 실패했습니다."), 3200);
       return;
     }
     communityReplyPostId = null;
@@ -1359,7 +1458,7 @@ async function deleteCommunityComment(postId, commentId) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showAppToast(data.error === "forbidden" ? "본인 댓글만 삭제할 수 있습니다." : (data.error || "삭제 실패"), 3200);
+      showAppToast(data.error === "forbidden" ? "본인 댓글만 삭제할 수 있습니다." : communityErrorMessage(data, res.status, "댓글 삭제에 실패했습니다."), 3200);
       return;
     }
     await fetchCommunityPosts();
@@ -1381,7 +1480,7 @@ async function deleteCommunityPost(id) {
     });
     const data = await res.json();
     if (!res.ok) {
-      showAppToast(data.error === "forbidden" ? "본인 글만 삭제할 수 있습니다." : (data.error || "삭제 실패"), 3200);
+      showAppToast(data.error === "forbidden" ? "본인 글만 삭제할 수 있습니다." : communityErrorMessage(data, res.status, "삭제에 실패했습니다."), 3200);
       return;
     }
     await fetchCommunityPosts();
@@ -1402,7 +1501,7 @@ async function clearCommunityPostsMine() {
     });
     const data = await res.json();
     if (!res.ok) {
-      showAppToast(data.message || data.error || "삭제 실패", 3200);
+      showAppToast(communityErrorMessage(data, res.status, "삭제에 실패했습니다."), 3200);
       return;
     }
     await fetchCommunityPosts();

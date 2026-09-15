@@ -260,7 +260,9 @@
     exitAiWelcomeView();
     const input = byId("aiChatInput");
     if (input) input.value = "";
-    await send(query);
+    // handleStockQuery 가 이미 resolveTickerAcrossMarkets 를 돌린 뒤 넘긴 질문이다 —
+    // sendAiChat 에서 같은(시장 전환까지 await 하는) 해석을 두 번 돌리지 않게 알린다.
+    await send(query, { skipCrossMarket: true });
   }
 
   async function handleStockQuery(query) {
@@ -280,6 +282,10 @@
         ticker = cross;
         const after = window.MirMarket?.getMode?.();
         if (after && after !== before) setInputHint(`${after === "kr" ? "한국" : "미국"} 주식으로 전환했습니다.`, false);
+      } else if (!knownHere) {
+        // 여기서도 저쪽 시장에서도 못 찾은 티커다. 예전엔 낡은 ticker 를 그대로 들고
+        // 차트 로드로 내려가 "차트를 불러오지 못했습니다" 만 띄웠다 — 채팅으로 넘긴다.
+        ticker = null;
       }
     }
     if (!ticker) {
@@ -413,6 +419,9 @@
       return;
     }
 
+    // AI 모드를 나가기 전에 흐르고 있는 /chat 스트림을 먼저 끊는다. 예전엔 나가도
+    // 스트림이 계속 흘러 토큰이 소모됐고, 예약된 rAF 가 감춰진 DOM 에 계속 썼다.
+    try { window.MirAiChat?.abort?.(); } catch (_) { /* ignore */ }
     clearMobileVisualViewport();
     delete document.documentElement.dataset.aiMode;
     unwatchTheme();

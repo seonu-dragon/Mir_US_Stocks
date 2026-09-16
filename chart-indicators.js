@@ -791,7 +791,7 @@ function openCommunityBoardForTicker(ticker) {
 function openCommunityComposeForTicker(ticker) {
   activateTab("community", { push: true, sub: "board" });
   const tickerInput = byId("communityTicker");
-  if (tickerInput) tickerInput.value = ticker || "";
+  if (tickerInput) tickerInput.value = ticker ? stockInputValue(ticker) : "";
   setTimeout(() => {
     byId("communityCompose")?.scrollIntoView({ behavior: "smooth", block: "center" });
     byId("communityContent")?.focus();
@@ -1444,13 +1444,13 @@ function renderEtfConstituents(item) {
   box.innerHTML = head + `
     <div class="table-wrap">
       <table class="etf-constituents-table">
-        <thead><tr><th>#</th><th>티커</th><th>회사명</th><th>RSI</th><th>당일</th><th>1개월</th></tr></thead>
+        <thead><tr><th>#</th><th>${isKrMarket() ? "종목" : "티커"}</th><th class="col-sub">회사명</th><th>RSI</th><th>당일</th><th>1개월</th></tr></thead>
         <tbody>
           ${list.map((s, i) => `
             <tr class="etf-con-row" data-ticker="${escapeHtml(s.ticker)}" style="cursor:pointer;">
               <td class="rank-cell">${i + 1}</td>
               <td><strong>${escapeHtml(stockLabel(s))}</strong></td>
-              <td>${escapeHtml(stockSubLabel(s))}</td>
+              <td class="col-sub">${escapeHtml(stockSubLabel(s))}</td>
               <td><span class="rs-badge">${fmtRsi(stockByTicker(s.ticker) || s)}</span></td>
               <td class="${cls(s.changePct)}">${s.changePct != null ? fmtDailyPct(s.changePct) : "-"}</td>
               <td class="${cls(s.monthChangePct)}">${s.monthChangePct != null ? fmtPct(s.monthChangePct) : "-"}</td>

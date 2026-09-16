@@ -83,15 +83,15 @@ function marketTableHtml(title, rows) {
         <table class="market-table table-wide">
           <thead>
             <tr>
-              <th>이름</th><th>티커</th><th>현재가</th><th>당일</th>
+              <th>이름</th>${isKrMarket() ? "" : "<th>티커</th>"}<th>현재가</th><th>당일</th>
               <th>1주</th><th>1개월</th><th>3개월</th><th>YTD</th>
             </tr>
           </thead>
           <tbody>
             ${rows.map(({ ticker, name, s }) => `
-              <tr class="market-row" data-ticker="${ticker}" style="cursor:pointer;" title="${escapeHtml(ticker)} 분석 보기">
+              <tr class="market-row" data-ticker="${ticker}" style="cursor:pointer;" title="${escapeHtml(isKrMarket() ? name : ticker)} 분석 보기">
                 <td>${escapeHtml(name)}</td>
-                <td><strong>${escapeHtml(ticker)}</strong></td>
+                ${isKrMarket() ? "" : `<td><strong>${escapeHtml(ticker)}</strong></td>`}
                 <td>${priceOrDash(s.price)}</td>
                 <td class="${cls(s.changePct)}">${fmtDailyPct(s.changePct)}</td>
                 <td class="${cls(s.weekChangePct)}">${fmtPct(s.weekChangePct)}</td>
@@ -851,7 +851,7 @@ function showConstituentPanel(categoryName, period) {
       <tr>
         <td><strong>${idx + 1}</strong></td>
         <td><strong class="ticker-link" data-ticker="${escapeHtml(peer.ticker)}" role="button" tabindex="0">${escapeHtml(stockLabel(peer))}</strong></td>
-        <td>${escapeHtml(stockSubLabel(peer) || "")}</td>
+        <td class="col-sub">${escapeHtml(stockSubLabel(peer) || "")}</td>
         <td class="${pct == null ? "muted" : cls(pct)}"><strong>${pct == null ? "—" : fmtPct(pct)}</strong></td>
         ${relCell(spyRel)}
         ${relCell(qqqRel)}

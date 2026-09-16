@@ -800,20 +800,27 @@ function applyMarketOnlyUi() {
   // Market-aware placeholders + signal sections that have no KR data.
   const krMode = cfg.id === "kr";
   const setPh = (id, ph) => { const el = byId(id); if (el) el.placeholder = ph; };
-  setPh("tickerSearch", krMode ? "종목명·종목코드·한국어 (예: 삼성전자, 005930)" : "한국어·티커·영문 (예: 테슬라, NVDA, Apple)");
-  setPh("pfTicker", krMode ? "회사명·종목코드 (예: 삼성전자)" : "티커 (예: NVDA)");
+  // 표 머리글 '티커' → 국내는 '종목'(그 열에 회사명이 들어간다).
+  document.querySelectorAll("th[data-kr-label], [data-kr-text]").forEach((el) => {
+    const krText = el.dataset.krLabel || el.dataset.krText;
+    if (!el.dataset.usLabel) el.dataset.usLabel = el.textContent;
+    el.textContent = krMode ? krText : el.dataset.usLabel;
+  });
+  setPh("backtestTickerInput", krMode ? "회사명 (예: 삼성전자)" : "한국어·티커 검색 (예: 테슬라)");
+  setPh("tickerSearch", krMode ? "종목명·한국어 (예: 삼성전자, 하이닉스)" : "한국어·티커·영문 (예: 테슬라, NVDA, Apple)");
+  setPh("pfTicker", krMode ? "회사명 (예: 삼성전자)" : "티커 (예: NVDA)");
   setPh("pfCost", `평단가 ${cfg.currencySymbol || "$"}`);
   setPh("positionTicker", krMode ? "삼성전자" : "NVDA");
   // 국내에서 '티커'라는 말은 낯설다 — 입력 안내문도 회사명·종목코드로 바꾼다.
-  setPh("bulkInput", krMode ? "회사명·종목코드, 쉼표 구분 (예: 삼성전자, 005930)" : "한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)");
-  setPh("myInvestEmptyInput", krMode ? "회사명 또는 종목코드 (예: 삼성전자)" : "티커 또는 종목명 (예: NVDA, 삼성전자)");
-  setPh("chartCompareInput", krMode ? "회사명·종목코드 (예: SK하이닉스)" : "한국어·티커·영문 (예: SPY, 삼성전자)");
-  setPh("compareInput", krMode ? "회사명·종목코드 (예: 현대차)" : "한국어·티커·영문 (예: 테슬라, Apple)");
-  setPh("valSearch", krMode ? "회사명·종목코드" : "티커·회사");
-  setPh("shortSearch", krMode ? "회사명·종목코드" : "티커·회사");
-  setPh("eventsSearch", krMode ? "회사명·종목코드·이벤트" : "티커·기업·이벤트");
-  setPh("ipoSearch", krMode ? "회사명·종목코드" : "회사·티커");
-  setPh("levEtfSearch", krMode ? "ETF 이름·종목코드·기초자산" : "티커·이름·기초자산");
+  setPh("bulkInput", krMode ? "회사명, 쉼표 구분 (예: 삼성전자, 현대차)" : "한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)");
+  setPh("myInvestEmptyInput", krMode ? "회사명 (예: 삼성전자)" : "티커 또는 종목명 (예: NVDA, 삼성전자)");
+  setPh("chartCompareInput", krMode ? "회사명 (예: SK하이닉스)" : "한국어·티커·영문 (예: SPY, 삼성전자)");
+  setPh("compareInput", krMode ? "회사명 (예: 현대차)" : "한국어·티커·영문 (예: 테슬라, Apple)");
+  setPh("valSearch", krMode ? "회사명" : "티커·회사");
+  setPh("shortSearch", krMode ? "회사명" : "티커·회사");
+  setPh("eventsSearch", krMode ? "회사명·이벤트" : "티커·기업·이벤트");
+  setPh("ipoSearch", krMode ? "회사명" : "회사·티커");
+  setPh("levEtfSearch", krMode ? "ETF 이름·기초자산" : "티커·이름·기초자산");
   // 홈 추천 칩·AI 첫 화면 카드: 국내 모드에서 미국 종목(NVDA) 예시가 나오지 않게.
   const primaryChip = byId("homeSuggestPrimary");
   if (primaryChip) {
@@ -3099,13 +3106,13 @@ function setupFilters() {
   byId("tickerOptions").innerHTML = data.stocks.flatMap((item) => {
     const aliases = (window.TICKER_ALIASES_KO || {})[item.ticker] || [];
     // 국내는 '회사명 · 코드', 미국은 회사명(값은 항상 티커).
-    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(isKrMarket() ? `${stockLabel(item)} · ${stockSubLabel(item)}` : item.company)}</option>`];
+    const rows = [`<option value="${escapeHtml(item.ticker)}">${escapeHtml(isKrMarket() ? stockLabel(item) : item.company)}</option>`];
     aliases.slice(0, 2).forEach((alias) => {
-      rows.push(`<option value="${escapeHtml(item.ticker)}">${escapeHtml(alias)} · ${escapeHtml(isKrMarket() ? stockSubLabel(item) : item.ticker)}</option>`);
+      rows.push(`<option value="${escapeHtml(item.ticker)}">${isKrMarket() ? `${escapeHtml(alias)} · ${escapeHtml(stockLabel(item))}` : `${escapeHtml(alias)} · ${escapeHtml(item.ticker)}`}</option>`);
     });
     return rows;
   }).join("");
-  byId("tickerSearch").value = selectedTicker;
+  byId("tickerSearch").value = stockInputValue(selectedTicker);
 
   const etfRows = data.health?.etfRelative?.rows || [];
   const etfGroups = ["All", ...[...new Set(etfRows.map((item) => item.group).filter(Boolean))].sort()];
@@ -3365,7 +3372,7 @@ function setupEvents() {
   });
   const bulkCompare = byId("bulkCompare");
   if (bulkCompare) bulkCompare.addEventListener("click", () => {
-    byId("compareInput").value = watchlist.join(", ");
+    byId("compareInput").value = watchlist.map(stockInputValue).join(", ");
     activateTab("search", { sub: "compare", push: true });
   });
   setupWatchlistUi();
@@ -3514,7 +3521,7 @@ function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(stockLabel(item))} ${syntheticBadge(item)}</h3>
-    <p class="muted">${escapeHtml(stockSubLabel(item) ?? "")} · ${escapeHtml(item.sector ?? "")} · ${escapeHtml(item.industry ?? "")}</p>
+    <p class="muted">${joinSubParts(stockSubLabel(item), item.sector, item.industry)}</p>
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
@@ -3625,7 +3632,7 @@ function renderSectors() {
     return `
       <article class="sector-card${isActive ? " is-active" : ""}" data-ticker="${item.ticker}">
         <div class="sector-card-header">
-          <h3>${item.name} (${item.ticker})</h3>
+          <h3>${escapeHtml(item.name)}${isKrCodeTicker(item.ticker) ? "" : ` (${escapeHtml(item.ticker)})`}</h3>
           <span class="symbol-badge">${item.count} 종목</span>
         </div>
         
@@ -3742,7 +3749,7 @@ function renderSectorDetail() {
     <tr class="constituent-row" data-ticker="${stock.ticker}" style="cursor: pointer;">
       <td class="rank-cell">${index + 1}</td>
       <td><strong>${escapeHtml(stockLabel(stock))}</strong></td>
-      <td>${escapeHtml(stockSubLabel(stock) ?? "")}</td>
+      <td class="col-sub">${escapeHtml(stockSubLabel(stock) ?? "")}</td>
       <td>${marketCfg().formatPrice(stock.price)}</td>
       <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
       <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
@@ -4858,7 +4865,7 @@ function selectTicker(ticker, options = {}) {
   }
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
-  byId("tickerSearch").value = selectedTicker;
+  byId("tickerSearch").value = stockInputValue(selectedTicker);
   chatFocusTicker = found.ticker;
   // 지도는 보일 때만(숨은 탭은 폭 0 이라 어차피 그리지 못한다 — 진입 때 다시 그린다).
   if (currentTab === "map") renderTreemap();
@@ -4911,7 +4918,7 @@ function renderSearch(options = {}) {
       }
     });
   }
-  byId("chartTitle").textContent = `${stockLabel(item)} · ${stockSubLabel(item)}`;
+  byId("chartTitle").textContent = [stockLabel(item), stockSubLabel(item)].filter(Boolean).join(" · ");
   byId("searchFacts").innerHTML = stockFacts(item, "선택 종목");
   drawChart(item);
   renderEarningsCalendar(item);
@@ -4931,7 +4938,7 @@ function renderSearch(options = {}) {
   loadStockDetail(item.ticker).then((detail) => {
     if (!detail || selectedTicker !== item.ticker) return;
     const refreshed = applyLive(withDetail(base));
-    byId("chartTitle").textContent = `${stockLabel(refreshed)} · ${stockSubLabel(refreshed)}`;
+    byId("chartTitle").textContent = [stockLabel(refreshed), stockSubLabel(refreshed)].filter(Boolean).join(" · ");
     byId("searchFacts").innerHTML = stockFacts(refreshed, "선택 종목");
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
@@ -5468,9 +5475,19 @@ function renderNews(item) {
   `;
 }
 
+// AI 요약 등 자유 텍스트 속 국내 종목코드('005930.KS', '005930')를 회사명으로 바꾼다.
+// 스냅샷에 있는 코드만 바꾸므로 가격·수량 같은 6자리 숫자는 대부분 그대로 둔다.
+function krCodesToNames(text) {
+  if (!isKrMarket()) return text;
+  return String(text || "").replace(/(^|[^\d.,])(\d{6})(?:\.(?:KS|KQ))?(?![\d,])/g, (whole, lead, code) => {
+    const stock = stockByTicker(code);
+    return stock && stock.company ? `${lead}${stock.company}` : whole;
+  });
+}
+
 function newsSummaryHtml(item) {
   if (typeof item.newsSummary === "string" && item.newsSummary.trim()) {
-    const paras = item.newsSummary.trim().split(/\n+/).map((line) => line.trim()).filter(Boolean);
+    const paras = krCodesToNames(item.newsSummary.trim()).split(/\n+/).map((line) => line.trim()).filter(Boolean);
     return `
       <div class="news-summary">
         <div class="news-summary-head">한국어 요약</div>
@@ -5706,6 +5723,9 @@ function searchTickerSuggestions(query, limit = 8) {
   for (let i = 0; i < maxScan && seen.size < limit + 4; i += 1) {
     const row = pool[i];
     const ticker = kr ? row.ticker : String(row.ticker || "").toUpperCase();
+    // 회사명 완전 일치는 그 종목으로 확정한다('삼성전자' ≠ '삼성전자우'). 국내 입력칸이
+    // 확정 종목을 회사명으로 되써 주므로(stockInputValue) 이게 모호하면 다시 못 찾는다.
+    if (row.companyLower === qLower) { push(ticker, 990, null, true); continue; }
     if (kr) {
       if (ticker === qTickerKey) push(ticker, 995, null);
       else if (/^\d+$/.test(q) && ticker.startsWith(q)) push(ticker, 620 - i * 0.001, null);
@@ -5719,7 +5739,8 @@ function searchTickerSuggestions(query, limit = 8) {
   if (seen.size < limit && q.length >= 3 && maxScan < pool.length) {
     for (let i = maxScan; i < pool.length && seen.size < limit + 2; i += 1) {
       const row = pool[i];
-      if (row.companyLower.includes(qLower)) push(row.ticker, 320 - i * 0.001, null);
+      if (row.companyLower === qLower) push(row.ticker, 990, null, true);
+      else if (row.companyLower.includes(qLower)) push(row.ticker, 320 - i * 0.001, null);
     }
   }
 
@@ -5770,7 +5791,7 @@ function notifyAmbiguousTicker(raw, hits = null) {
   const q = String(raw || "").trim();
   const list = hits && hits.length ? hits : (q ? searchTickerSuggestions(q, 4) : []);
   if (list.length >= 2 && typeof showAppToast === "function") {
-    showAppToast(`'${q}' 후보 ${list.length}개: ${list.map((h) => h.ticker).join(", ")} — 목록에서 선택하세요`);
+    showAppToast(`'${q}' 후보 ${list.length}개: ${list.map((h) => stockLabel(h.ticker)).join(", ")} — 목록에서 선택하세요`);
   }
   return list;
 }
@@ -5847,14 +5868,14 @@ function setupTickerAutocomplete(inputId, options = {}) {
 
   function applySuggestion(ticker) {
     if (!multi) {
-      input.value = ticker;
+      input.value = stockInputValue(ticker);
       closeList();
       input.dispatchEvent(new Event("change", { bubbles: true }));
       if (onCommit) onCommit(ticker);
       return;
     }
     const { start, end, val } = tickerInputActiveToken(input);
-    const next = `${val.slice(0, start)}${ticker}${val.slice(end)}`;
+    const next = `${val.slice(0, start)}${stockInputValue(ticker)}${val.slice(end)}`;
     input.value = next.includes(",") ? next.replace(/\s*,\s*/g, ", ") : next;
     closeList();
     input.dispatchEvent(new Event("change", { bubbles: true }));
@@ -5868,8 +5889,8 @@ function setupTickerAutocomplete(inputId, options = {}) {
     list.innerHTML = items.map((item, index) => `
       <button type="button" class="ticker-ac-item${index === activeIdx ? " is-active" : ""}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
         <strong>${escapeHtml(stockLabel(item))}</strong>
-        <span>${escapeHtml(stockSubLabel(item) || "")}</span>
-        ${item.hint && item.hint !== item.ticker ? `<em>${escapeHtml(item.hint)}</em>` : ""}
+        <span>${escapeHtml(stockSubLabel(item) || (isKrCodeTicker(item.ticker) ? (stockByTicker(item.ticker)?.industry || stockByTicker(item.ticker)?.sector || "") : ""))}</span>
+        ${item.hint && item.hint !== item.ticker && item.hint !== item.company && item.hint !== "티커" ? `<em>${escapeHtml(item.hint)}</em>` : ""}
       </button>
     `).join("");
     list.hidden = false;
@@ -5890,7 +5911,7 @@ function setupTickerAutocomplete(inputId, options = {}) {
         else notifyAmbiguousTicker(input.value.trim());
         return;
       }
-      input.value = list.join(", ");
+      input.value = list.map(stockInputValue).join(", ");
       closeList();
       input.dispatchEvent(new Event("change", { bubbles: true }));
       if (onCommit) onCommit(list);
@@ -5904,7 +5925,7 @@ function setupTickerAutocomplete(inputId, options = {}) {
       else notifyAmbiguousTicker(query, hits);
       return;
     }
-    input.value = ticker;
+    input.value = stockInputValue(ticker);
     closeList();
     input.dispatchEvent(new Event("change", { bubbles: true }));
     if (onCommit) onCommit(ticker);
@@ -8327,14 +8348,14 @@ function cmdkBuildActions(query) {
       if (!row || seen.has(row.ticker) || seen.size >= 5) return;
       seen.add(row.ticker);
       actions.push({
-        label: `${stockLabel(row)} · ${stockSubLabel(row) || ""}`,
+        label: [stockLabel(row), stockSubLabel(row)].filter(Boolean).join(" · "),
         hint: aiActive ? "AI 모드 분석" : "종목 분석 이동",
         keep: true, // 종목은 퍼지 재필터 없이 그대로 노출
         run: () => {
           if (aiActive && window.MirAI?.queryStock) {
             const input = byId("aiChatInput");
-            if (input) input.value = `${row.ticker} 분석해줘`;
-            window.MirAI.queryStock(`${row.ticker} 분석해줘`);
+            if (input) input.value = `${stockInputValue(row.ticker)} 분석해줘`;
+            window.MirAI.queryStock(`${stockInputValue(row.ticker)} 분석해줘`);
           } else {
             navigateToStockAnalysis(row.ticker, `${row.ticker} 분석`, { animate: false });
           }

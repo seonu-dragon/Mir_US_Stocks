@@ -385,7 +385,7 @@ function renderIpoPerformance(perf, wrap, meta, payload) {
   };
   const nameCell = (r) => {
     const main = isKrMarket() ? (r.company || r.ticker) : r.ticker;
-    const sub = isKrMarket() ? r.ticker : (r.company || "");
+    const sub = isKrMarket() ? "" : (r.company || "");
     return `<td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(main)}</button><div class="ins-sub">${escapeHtml(sub)}</div></td>`;
   };
   const body = list.slice(0, 200).map((r) => {
@@ -465,13 +465,13 @@ function renderIpoCalendar() {
     return `<tr>
       <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
       <td><span class="ins-code ${sc}">${escapeHtml(r.stageLabel || "")}</span></td>
-      <td>${escapeHtml(r.ticker || "—")}</td>
+      ${isKrMarket() ? "" : `<td>${escapeHtml(r.ticker || "—")}</td>`}
       <td>${escapeHtml(r.company || "")}${ipoOfferNote(r, cfg)}</td>
       <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");
   wrap.innerHTML = `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건</div>
-    <table class="insider-table table-wide"><thead><tr><th>제출일</th><th>단계</th><th>티커</th><th>회사</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
+    <table class="insider-table table-wide"><thead><tr><th>제출일</th><th>단계</th>${isKrMarket() ? "" : "<th>티커</th>"}<th>회사</th><th class="ins-num">링크</th></tr></thead><tbody>${body}</tbody></table>`;
 }
 
 // ===== #3 밸류에이션 랭킹 =====
@@ -536,7 +536,7 @@ function renderValuation() {
   };
   const body = shown.map((r, i) => `<tr>
     <td class="ins-date">${i + 1}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(isKrMarket() ? (r.item.company || r.item.ticker) : r.item.ticker)}</button><div class="ins-sub">${escapeHtml(isKrMarket() ? r.item.ticker : (r.item.company || ""))}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(isKrMarket() ? (r.item.company || r.item.ticker) : r.item.ticker)}</button><div class="ins-sub">${escapeHtml(isKrMarket() ? "" : (r.item.company || ""))}</div></td>
     <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
     <td class="ins-num"><strong>${fmtv(r.value)}</strong></td>
     <td class="ins-num">${fmtBillions(itemCapForValuation(r.item))}</td>
@@ -568,7 +568,7 @@ function ftdSectionHtml() {
     }
     return `<tr>
       <td class="ins-date">${i + 1}</td>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(r.t)}</div></td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(tickerHint(r.t))}</div></td>
       <td class="ins-num"><strong>${Number.isFinite(r.pctShares) ? `${r.pctShares.toFixed(2)}%` : "—"}</strong></td>
       <td class="ins-num">${Number(r.maxFails).toLocaleString()}주</td>
       <td class="ins-num">${Number.isFinite(r.valueM) ? `$${r.valueM.toLocaleString()}M` : "—"}</td>
@@ -659,7 +659,7 @@ function renderKrShortVolume(payload, wrap, meta) {
   if (!rows.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r, i) => `<tr>
     <td class="ins-date">${i + 1}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(tickerHint(r.ticker))}</div></td>
     <td class="ins-num"><strong>${Number.isFinite(Number(r.ratioPct)) ? `${Number(r.ratioPct).toFixed(2)}%` : "—"}</strong></td>
     <td class="ins-num">${krMoneyEok(r.shortValue)}</td>
     <td>${overheated.has(r.ticker) ? `<span class="ins-code ins-sell">과열</span>` : ""}</td>
@@ -731,7 +731,7 @@ function renderShortInterest() {
     const chgCls = r.changePct > 0 ? "ins-sell" : r.changePct < 0 ? "ins-buy" : "";
     const primary = isBal ? `${Number(r.balanceRatio || 0).toFixed(2)}%` : Number(r.daysToCover || 0).toFixed(2);
     const mainLabel = isBal ? (r.company || r.ticker) : r.ticker;
-    const subLabel = isBal ? r.ticker : (r.company || "");
+    const subLabel = isBal ? tickerHint(r.ticker) : (r.company || "");
     const extra = isBal
       ? `<td class="ins-num short-spark-cell">${shortSparkline(r.history)}</td>`
         + `<td class="ins-num">${Number.isFinite(r.tradingRatio) ? `${r.tradingRatio.toFixed(2)}%` : "—"}</td>`
@@ -933,7 +933,7 @@ function renderBuyback() {
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 자사주 취득·처분 공시가 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}${r.purpose ? ` · ${escapeHtml(r.purpose)}` : ""}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.purpose)}</div></td>
     <td class="ins-sub ${r.cls}">${escapeHtml(r.type)}</td>
     <td class="ins-num"><strong>${r.capPct != null ? `${r.capPct.toFixed(2)}%` : "—"}</strong></td>
     <td class="ins-num">${r.amount != null ? `${(r.amount / 1e8).toLocaleString(undefined, { maximumFractionDigits: 0 })}억` : "—"}</td>
@@ -1098,7 +1098,7 @@ function renderEarningsReactions() {
   const pct = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)} · ${r.consolidated ? "연결" : "별도"}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.consolidated ? "연결" : "별도")}</div></td>
     <td class="ins-num">${pct(r.dayPct)}</td>
     <td class="ins-num">${pct(r.nextPct)}</td>
   </tr>`).join("");
@@ -1226,7 +1226,7 @@ function renderDividends() {
   if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("배당")}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 배당 결정이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)} · ${escapeHtml(r.divKind || "배당")}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.divKind || "배당")}</div></td>
     <td class="ins-num"><strong>${Number.isFinite(r.yieldPct) ? `${r.yieldPct.toFixed(2)}%` : "—"}</strong></td>
     <td class="ins-num">${Number.isFinite(r.dps) ? `₩${Number(r.dps).toLocaleString()}` : "—"}</td>
     <td class="ins-date">${escapeHtml(r.recordDate || "—")}</td>
@@ -1262,7 +1262,7 @@ function renderContracts() {
   const body = rows.slice(0, 200).map((r) => {
     const period = (r.startDate || r.endDate) ? `${escapeHtml(r.startDate || "")}~${escapeHtml(r.endDate || "")}` : "";
     return `<tr>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}${r.counterparty ? ` · ${escapeHtml(r.counterparty)}` : ""}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.counterparty)}</div></td>
     <td class="ins-num"><strong>${Number.isFinite(r.salesRatio) ? `${r.salesRatio.toFixed(1)}%` : "—"}</strong></td>
     <td class="ins-num">${krMoneyEok(r.amount)}</td>
     <td class="ins-date">${escapeHtml(r.date || "")}<div class="ins-sub">${period}</div></td>
@@ -1282,7 +1282,7 @@ function govContractsSectionHtml() {
   if (!gov || !Array.isArray(gov.byTicker) || !gov.byTicker.length) return "";
   const topRows = gov.byTicker.slice(0, 12).map((r, i) => `<tr>
     <td class="ins-date">${i + 1}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company || r.ticker)}</button><div class="ins-sub">${escapeHtml(r.ticker)}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company || r.ticker)}</button><div class="ins-sub">${escapeHtml(tickerHint(r.ticker))}</div></td>
     <td class="ins-num"><strong>${Number(r.totalB).toLocaleString()}억</strong></td>
     <td class="ins-num">${Number(r.count).toLocaleString()}건</td>
     <td class="ins-date">${escapeHtml(r.lastDate || "")}</td>
@@ -1423,7 +1423,7 @@ function renderDilution() {
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 증자·사채 발행이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${escapeHtml(r.ticker)}${r.method ? ` · ${escapeHtml(r.method)}` : ""}</div></td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.method)}</div></td>
     <td class="ins-sub ins-sell">${escapeHtml(r.type)}</td>
     <td class="ins-num"><strong>${r.dilutionPct != null ? `${r.dilutionPct.toFixed(1)}%` : "—"}</strong></td>
     <td class="ins-num">${krMoneyEok(r.amount)}</td>

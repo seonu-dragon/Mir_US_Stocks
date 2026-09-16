@@ -839,10 +839,11 @@ async function summarizeKorean(env, ticker, news, modelOverride, isKr = false) {
     .join("\n");
   const marketLabel = isKr ? "국내(한국)" : "미국";
   const properNounRule = isKr
-    ? "- 회사명·제품명 등 고유명사는 뉴스에 나온 한국어 표기를 그대로 사용하세요.\n"
+    ? "- 회사명·제품명 등 고유명사는 뉴스에 나온 한국어 표기를 그대로 사용하세요.\n- 숫자 종목코드(예: 005930, 005930.KS)는 문장에 쓰지 말고 회사명으로 부르세요.\n"
     : "- 회사명, 제품명, 매체명 등 고유명사는 영어 원문 그대로 두세요(억지로 음역하지 마세요).\n";
   const prompt =
-    `${marketLabel} 주식 ${ticker}의 최신 뉴스 헤드라인:\n\n${headlines}\n\n` +
+    // 국내는 숫자 코드를 주어로 주면 요약문에 '005930.KS의 …' 가 그대로 나온다(2026-09-16).
+    `${marketLabel} 주식 ${isKr ? "(헤드라인 속 회사)" : ticker}의 최신 뉴스 헤드라인:\n\n${headlines}\n\n` +
     `위 헤드라인들을 종합해서 핵심 흐름을 한국어 3~4문장의 자연스러운 단락 하나로 요약하세요.\n` +
     `규칙:\n` +
     `- 헤드라인을 하나씩 번역하거나 번호로 나열하지 마세요. 반드시 하나의 단락으로 종합하세요.\n` +

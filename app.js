@@ -1093,6 +1093,16 @@ function setupChatbot() {
       if (chatRoot) chatRoot.style.display = "none";
     });
   }
+  // 터치 기기에선 FAB 옆 ✕ 를 띄우지 않는다(열기 버튼과 겹쳐 본문을 가리고, 보조기기에 '열기'·'숨기기'
+  // 두 버튼이 늘 함께 읽혔다 — 2026-09-16 재감사). 숨기기는 열린 패널 머리의 '버튼 숨기기'로 옮겼다.
+  const hideFabBtn = byId("chatHideFab");
+  if (hideFabBtn) {
+    hideFabBtn.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closePanel();
+      if (chatRoot) chatRoot.style.display = "none";
+    });
+  }
 
   let greeted = false;
 
@@ -1729,7 +1739,8 @@ function renderSnapshotIndices() {
       changePct: Number.isFinite(changePct) ? changePct : null,
       // 스파크라인만은 아직 추종 ETF 종가다 — 카드에 '(ETF 근사)' 로 밝힌다.
       series,
-      seriesNote: series.length >= 2 ? "ETF 근사" : "",
+      seriesNote: series.length >= 2 ? "추이: ETF 근사" : "",
+      seriesNoteTitle: "지수 가격과 등락률은 실제 지수 값입니다. 아래 추이선만 지수를 추종하는 ETF 종가로 그린 근사치입니다.",
     };
   }).filter((ix) => ix.name);
   if (items.length) setHeaderIndices(items, "snapshot");
@@ -1775,8 +1786,10 @@ function renderIndexStripInto(el, indices) {
         <em class="${cls(changePct)}">${changePct == null ? "—" : fmtPct(changePct)}</em>
       </div>
       <div class="index-price">${Number.isFinite(Number(ix.price)) && ix.price != null ? Number(ix.price).toLocaleString(undefined, { maximumFractionDigits: 2 }) : "—"}</div>
-      ${indexSparkline(ix.series, (changePct ?? 0) >= 0)}
-      ${ix.seriesNote ? `<div class="muted" style="font-size:var(--fs-cap);margin-top:2px;">${escapeHtml(ix.seriesNote)}</div>` : ""}
+      ${ix.seriesNote && Array.isArray(ix.series) && ix.series.length >= 2
+        // 캡션은 스파크라인에 붙인다. 가격 바로 밑에 따로 두면 지수 가격까지 ETF 근사로 읽혔다(2026-09-16 재감사).
+        ? `<div class="index-spark-wrap">${indexSparkline(ix.series, (changePct ?? 0) >= 0)}<span class="index-spark-note" title="${escapeHtml(ix.seriesNoteTitle || ix.seriesNote)}">${escapeHtml(ix.seriesNote)}</span></div>`
+        : indexSparkline(ix.series, (changePct ?? 0) >= 0)}
     </div>
   `;
   }).join("");
@@ -2574,10 +2587,12 @@ function layoutMobileTabs() {
   // 탭이 4개 이하(IA 재편 후 오늘·시장·종목·내 투자)면 한 화면에 전부 넣는다. 예전 3개 노출
   // 규칙은 탭이 7개일 때 것이라, 390px 폰에서 '내 투자'가 화면 밖으로 밀려 있는 줄도 몰랐다.
   const shownTabs = [...tabsEl.querySelectorAll(".tab")].filter((t) => !t.hidden && t.style.display !== "none").length;
-  const fitAll = shownTabs > 0 && shownTabs <= 4 && (width - gap * (shownTabs - 1)) / shownTabs >= 80;
+  // 하한 64px: 320px 폰(래퍼 296px → 탭 69px)에서도 '내 투자'(약 50px + 좌우 6px)가 들어간다.
+  // 예전 80px 하한에선 320px 에서 3개만 보이고 '내 투자'가 스와이프 뒤로 숨었다(2026-09-16 재감사).
+  const fitAll = shownTabs > 0 && shownTabs <= 4 && (width - gap * (shownTabs - 1)) / shownTabs >= 64;
   const visible = fitAll ? shownTabs : (width >= 560 ? 4 : width >= 400 ? 3.5 : 3);
   const gapCount = fitAll ? shownTabs - 1 : (visible >= 4 ? 3 : visible >= 3.5 ? 2.5 : 2);
-  const tabWidth = Math.max(fitAll ? 80 : 96, Math.floor((width - gap * gapCount) / visible));
+  const tabWidth = Math.max(fitAll ? 64 : 96, Math.floor((width - gap * gapCount) / visible));
 
   tabsEl.style.setProperty("--tab-width", `${tabWidth}px`);
   tabsEl.querySelectorAll(".tab").forEach((tab) => {
@@ -2614,6 +2629,56 @@ function updateTabsScrollHints() {
   const maxScroll = tabsEl.scrollWidth - tabsEl.clientWidth;
   wrap.classList.toggle("can-scroll-left", tabsEl.scrollLeft > 4);
   wrap.classList.toggle("can-scroll-right", maxScroll > 4 && tabsEl.scrollLeft < maxScroll - 4);
+}
+
+// ===== 가로 스크롤 스트립(서브탭·세그먼트) 넘침 힌트 =====
+// 폰에서 서브탭 줄은 가로 스와이프인데, 예전엔 CSS 가 항상 오른쪽 끝을 페이드시켰다 — 넘치지
+// 않아도 마지막 항목이 흐려지고, 끝까지 밀어도 그대로라 '더 있다'는 신호가 되지 못했다
+// (320px 에서 '시그널'이 화면 밖인데 알 수 없음, 2026-09-16 재감사). 이제 실제로 넘치는 방향에만
+// is-overflow-left/right 를 달고(styles.css 가 그 방향만 마스크), 활성 항목이 화면 밖이면
+// 스트립 안에서만 가로로 끌어온다(scrollIntoView 는 페이지 세로 스크롤까지 건드려서 쓰지 않는다).
+const SCROLL_STRIP_SELECTOR = ".ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds";
+const SCROLL_STRIP_EDGE = 4;
+
+function updateScrollStripHint(strip) {
+  const max = strip.scrollWidth - strip.clientWidth;
+  const overflow = max > SCROLL_STRIP_EDGE;
+  strip.classList.toggle("is-overflow-left", overflow && strip.scrollLeft > SCROLL_STRIP_EDGE);
+  strip.classList.toggle("is-overflow-right", overflow && strip.scrollLeft < max - SCROLL_STRIP_EDGE);
+}
+
+function revealActiveInStrip(strip) {
+  if (strip.scrollWidth - strip.clientWidth <= SCROLL_STRIP_EDGE) return;
+  const active = strip.querySelector(".is-active");
+  if (!active || active.offsetParent === null) return;
+  const s = strip.getBoundingClientRect();
+  const a = active.getBoundingClientRect();
+  const fade = 40;  // 마스크 폭만큼 안쪽까지 들여와야 흐려지지 않는다
+  let delta = 0;
+  if (a.left < s.left + (strip.scrollLeft > 0 ? fade : 0)) delta = a.left - s.left - fade;
+  else if (a.right > s.right - fade) delta = a.right - s.right + fade;
+  if (delta) strip.scrollLeft = Math.max(0, strip.scrollLeft + delta);
+}
+
+function setupScrollStripHints(root = document) {
+  root.querySelectorAll(SCROLL_STRIP_SELECTOR).forEach((strip) => {
+    if (strip.dataset.stripHint) return;
+    strip.dataset.stripHint = "1";
+    strip.addEventListener("scroll", () => updateScrollStripHint(strip), { passive: true });
+    // 숨은 탭 패널 안의 스트립은 폭이 0 이다 — 보이게 되는 순간 ResizeObserver 가 다시 잰다.
+    if (typeof ResizeObserver !== "undefined") {
+      new ResizeObserver(() => { revealActiveInStrip(strip); updateScrollStripHint(strip); }).observe(strip);
+    }
+    if (typeof MutationObserver !== "undefined") {
+      new MutationObserver((records) => {
+        // 스트립 자신의 is-overflow-* 토글은 무시한다(자기 변화로 도는 루프 방지).
+        if (records.every((r) => r.target === strip && r.attributeName === "class")) return;
+        requestAnimationFrame(() => { revealActiveInStrip(strip); updateScrollStripHint(strip); });
+      })
+        .observe(strip, { subtree: true, attributes: true, attributeFilter: ["class", "hidden"], childList: true });
+    }
+    updateScrollStripHint(strip);
+  });
 }
 
 // 딥링크(?tab=...)로 들어온 사용자를 탭 본문까지 데려간다.
@@ -2691,6 +2756,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   document.querySelectorAll("#mainTabs .tab").forEach((item) => item.classList.remove("is-active"));
   document.querySelectorAll("main > .panel").forEach((panel) => panel.classList.remove("is-active"));
   tabBtn.classList.add("is-active");
+  // 폰에서 홈(오늘) 밖의 탭은 히어로 검색을 한 줄 검색창으로 줄인다(styles.css data-main-tab).
+  document.documentElement.dataset.mainTab = group;
   const groupPanel = byId(`tab-${group}`);
   groupPanel?.classList.add("is-active");
   // 그룹 안의 잎 전환(오늘: 요약/브리핑/캘린더, 시장: 트리맵/섹터/시장폭/시그널)
@@ -4309,8 +4376,9 @@ const scanPct = (v) => (Number.isFinite(v) ? `${(v * 100).toFixed(1)}%` : "—")
 const scanSignedPct = (v) => (Number.isFinite(v) ? `${v > 0 ? "+" : ""}${v.toFixed(1)}%` : "—");
 
 // 순위 기준 셀렉트 옵션. 기존 점수 + 이 시장·기간에서 validated 인 팩터(실측 수치 라벨).
-function scanRankOptions(horizon, stocks) {
-  const opts = [{ value: "quick", label: "모멘텀 점수(기존)" }];
+function scanRankOptions(horizon, stocks, deep = false) {
+  // 정밀 분석이 켜져 있으면 모멘텀 점수는 후보를 뽑는 데만 쓰고 최종 순서는 차트 기술 점수다 — 라벨도 그렇게.
+  const opts = [{ value: "quick", label: deep ? "모멘텀 점수 상위 → 차트 기술 점수 순" : "모멘텀 점수(기존)" }];
   const notes = [];
   const v = scanValidationFor(horizon);
   if (!v) {
@@ -4335,10 +4403,10 @@ function scanRankOptions(horizon, stocks) {
   return { opts, notes };
 }
 
-function syncScanRankSelect(horizon, stocks) {
+function syncScanRankSelect(horizon, stocks, deep = false) {
   const select = byId("scanRank");
   if (!select) return { basis: "quick", notes: [] };
-  const { opts, notes } = scanRankOptions(horizon, stocks);
+  const { opts, notes } = scanRankOptions(horizon, stocks, deep);
   const prev = select.value || "quick";
   select.innerHTML = opts.map((o) => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join("");
   select.value = opts.some((o) => o.value === prev) ? prev : "quick";
@@ -4376,7 +4444,8 @@ function scanBasisLabel(basis) {
 function scanBadgeText(entry) {
   const mode = entry.mode;
   // 팩터 순위에서는 카드 머리에 팩터 값을 남기고 기술 점수는 배지에 숫자로 넣는다.
-  if (mode === "deep") return entry.basis !== "quick" && Number.isFinite(entry.deep) ? `기술 점수 ${Math.round(entry.deep)}` : "기술 점수";
+  // 모멘텀 점수 순위의 정밀 분석 카드는 머리가 이미 '기술 점수 NN' 이라 배지는 출처만 적는다.
+  if (mode === "deep") return entry.basis !== "quick" && Number.isFinite(entry.deep) ? `기술 점수 ${Math.round(entry.deep)}` : "차트 분석";
   return mode === "loading" ? "분석중" : "스냅샷";
 }
 
@@ -4512,7 +4581,16 @@ async function runDeepScan(entries, horizon, runId) {
   if (runId !== scannerRunId) return;
   renderScannerCards(entries);  // 기술 점수 기준으로 최종 재정렬
   const meta = byId("scannerMeta");
-  if (meta) meta.textContent = meta.textContent.replace(/· 차트 기술 점수로 재정렬 중…$/, "· 차트 기술 점수로 재정렬됨");
+  if (meta && meta.dataset.prefix != null) {
+    // 실제 정렬 = 모멘텀 점수로 상위 N개를 뽑은 뒤 차트 기술 점수 순. 순위 라벨은 그 하나만 적는다
+    // (예전엔 '순위: 모멘텀 점수 · 차트 기술 점수로 재정렬됨' 이 함께 떠서 무엇이 기준인지 모호했다).
+    const deepCount = entries.filter((e) => e.mode === "deep" && Number.isFinite(e.deep)).length;
+    const rest = entries.length - deepCount;
+    meta.textContent = deepCount
+      ? `${meta.dataset.prefix} · 순위: 차트 기술 점수 (모멘텀 점수 상위 ${entries.length}개를 재정렬)`
+        + (rest ? ` · 일봉이 없는 ${rest}개는 모멘텀 점수로 하단` : "")
+      : `${meta.dataset.prefix} · 순위: 모멘텀 점수 (차트 기술 점수를 계산하지 못함)`;
+  }
 }
 
 function renderScanner() {
@@ -4541,7 +4619,7 @@ function renderScanner() {
     .filter((item) => !isSyntheticHistory(item))
     .filter((item) => Array.isArray(item.closeSeries) && item.closeSeries.length >= 20);
 
-  const { basis } = syncScanRankSelect(horizon, universe);
+  const { basis } = syncScanRankSelect(horizon, universe, deep && !!window.MirProb);
   const runtime = basis !== "quick" ? SCAN_FACTOR_RUNTIME[basis] : null;
   const v = scanValidationFor(horizon);
   const f = v && runtime && v.table.factors && v.table.factors[basis];
@@ -4562,9 +4640,13 @@ function renderScanner() {
   const scope = labelForSelect("scanBucket");
   const meta = byId("scannerMeta");
   if (meta) {
-    meta.textContent = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 실측 이력 ${universe.length.toLocaleString()}종목 기준 · 상위 ${scored.length}개 · 순위: ${scanBasisLabel(basis)}`
-      // 검증된 팩터 순위는 그 팩터 값으로만 정렬한다 — 기술 점수 재정렬은 모멘텀 점수일 때만.
-      + (deep && window.MirProb && basis === "quick" ? " · 차트 기술 점수로 재정렬 중…" : "");
+    const prefix = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 실측 이력 ${universe.length.toLocaleString()}종목 기준 · 상위 ${scored.length}개`;
+    meta.dataset.prefix = prefix;
+    // 검증된 팩터 순위는 그 팩터 값으로만 정렬한다 — 기술 점수 재정렬은 모멘텀 점수일 때만.
+    // 재정렬이 끝나면 runDeepScan 이 순위 라벨을 '기술 점수' 로 바꿔 쓴다(라벨은 늘 하나).
+    meta.textContent = deep && window.MirProb && basis === "quick"
+      ? `${prefix} · 순위: 모멘텀 점수 → 차트 기술 점수로 재정렬 중…`
+      : `${prefix} · 순위: ${scanBasisLabel(basis)}`;
   }
   const evidence = byId("scannerEvidence");
   if (evidence) {
@@ -6340,7 +6422,22 @@ function dataTrustSources() {
   if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주", "activist"));
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));
   if (cfg.features?.shortInterest !== false) rows.push(source("공매도", cfg.id === "kr" ? "KRX 공매도 종합포털" : "FINRA · Nasdaq", window.SHORT_INTEREST, ["rows", "stocks"], cfg.id === "kr" ? 120 : 1080, cfg.id === "kr" ? "T+2 매 거래일" : "월 2회", "short"));
-  if (cfg.features?.sec13f !== false) rows.push(source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f"));
+  if (cfg.features?.sec13f !== false) {
+    const row = source("기관 13F", "SEC EDGAR", window.INSTITUTIONAL_13F, ["institutions"], 2880, "분기 공시 후", "inst13f");
+    const s13 = trust13fStats(window.INSTITUTIONAL_13F);
+    if (s13) {
+      row.extra = [
+        ["수집 실패 기관", `${s13.error.toLocaleString()} / ${s13.total.toLocaleString()}곳${s13.carried ? ` (이전 분기 유지 ${s13.carried.toLocaleString()}곳)` : ""}`],
+        ["마지막 정상 분기", s13.lastGoodDate || "확인 불가"],
+      ];
+      // 실패 기관이 30% 이상이면 파일이 최신이어도 '정상' 으로 두지 않는다
+      // (2026-09-05 자료는 131곳 중 62곳 실패인데 정상으로 보였다 — 재감사 2026-09-16).
+      if (s13.total && s13.error / s13.total >= 0.3 && row.status.key === "good") {
+        row.status = { ...row.status, key: "warn", label: "일부 수집 실패" };
+      }
+    }
+    rows.push(row);
+  }
   if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집", "congress"));
   if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시", "whitehouse"));
   // KR 전용 소스. 이게 빠져 있어서 2026-07-17 에 DART 데이터가 배포 트리거 끊김으로
@@ -6372,6 +6469,30 @@ function dataTrustSources() {
     rows.push(source("수출 모멘텀", "관세청 (data.go.kr)", window.KR_TRADE_EXPORTS, ["items"], 192, "매일 15:42 · 월 단위 데이터", "tradeExports"));
   }
   return rows;
+}
+
+// 13F 수집 결과 요약. 새 빌더는 okCount·carriedCount·errorCount 를 내지만, 예전 페이로드에는
+// 없으므로 institutions[].status 로 다시 센다. 마지막 정상 분기 = ok/carried 기관의 reportDate 최댓값.
+function trust13fStats(payload) {
+  const insts = Array.isArray(payload?.institutions) ? payload.institutions : null;
+  if (!insts) return null;
+  const counted = { ok: 0, carried: 0, error: 0 };
+  let lastGoodDate = "";
+  insts.forEach((inst) => {
+    const st = inst?.status;
+    if (st in counted) counted[st]++;
+    if ((st === "ok" || st === "carried") && typeof inst.reportDate === "string" && inst.reportDate > lastGoodDate) {
+      lastGoodDate = inst.reportDate;
+    }
+  });
+  const num = (v, fb) => (Number.isFinite(Number(v)) && v !== null && v !== "" ? Number(v) : fb);
+  return {
+    total: num(payload.institutionCount, insts.length),
+    ok: num(payload.okCount, counted.ok),
+    carried: num(payload.carriedCount, counted.carried),
+    error: num(payload.errorCount, counted.error),
+    lastGoodDate,
+  };
 }
 
 // 신뢰도 센터가 로드를 시도해 본 feature 키(성공/실패 무관). 재요청 폭주 방지용.
@@ -6418,6 +6539,7 @@ function renderDataTrustCenter() {
         <div><dt>기준 시각</dt><dd>${escapeHtml(row.timestamp || "확인 불가")}</dd></div>
         <div><dt>로드 수량</dt><dd>${Number(row.count || 0).toLocaleString()}건</dd></div>
         <div><dt>갱신 정책</dt><dd>${escapeHtml(row.cadence)}</dd></div>
+        ${(row.extra || []).map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("")}
       </dl>
       <small>${escapeHtml(trustAgeLabel(row.status.age))}</small>
       <details class="data-trust-detail"${needsAction ? " open" : ""}>
@@ -7343,6 +7465,7 @@ function setupIaShell() {
   setupChartSettingsButton();
   setupMyInvestEmpty();
   setupChatFabIa();
+  setupScrollStripHints();
   const topPreset = byId("topPreset");
   const scrPreset = byId("scrPreset");
   if (topPreset && !topPreset.dataset.iaMirror) {

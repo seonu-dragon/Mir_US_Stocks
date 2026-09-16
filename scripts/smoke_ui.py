@@ -252,8 +252,12 @@ def test_trust_center(browser, base: str) -> None:
     check("데이터 재요청이 폭주하지 않음", delta < 6 and stats["maxDup"] < 3,
           f"{before} → {stats['total']} (동일 URL 최다 {stats['maxDup']}회)")
 
-    cards.first.locator("summary").click()
-    page.wait_for_timeout(250)
+    # 조치가 필요한 카드는 상세가 이미 열려 있다(needsAction → <details open>).
+    # summary 를 무조건 누르면 그 경우 오히려 닫혀 위양성이 났다 — 닫혀 있을 때만 연다.
+    detail = cards.first.locator("details.data-trust-detail")
+    if detail.count() and not detail.evaluate("d => d.open"):
+        cards.first.locator("summary").click()
+        page.wait_for_timeout(250)
     txt = cards.first.inner_text()
     for label in ("영향받는 화면", "원인", "조치"):
         check(f"상세에 '{label}' 표시", label in txt)

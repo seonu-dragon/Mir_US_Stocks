@@ -17,7 +17,11 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 120  # 실측 ~1시간(2026-09)
+    # 실측 ~1시간(2026-09). 보조 빌더는 스텝마다 timeout-minutes 를 건다 — 2026-09-16
+    # build_federal_contracts.py 가 USASpending 응답 지연으로 1시간 30분을 잡아먹어 본체
+    # update_data.py 가 잡 한도 2분 전에 시작해 취소됐고, 사이트 스냅샷이 하루 멈췄다.
+    # 보조 스텝 한도 합(135분) + 본체(~30분)가 잡 한도 안에 들어가게 180분.
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -46,6 +50,7 @@ jobs:
       # 실패해도 스냅샷 갱신은 계속한다 — 키가 없거나 API 가 죽어도 기존 값이 남는다.
       - name: Refresh Finnhub valuation metrics (US)
         continue-on-error: true
+        timeout-minutes: 25
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: python scripts/build_us_finnhub_metrics.py --push
@@ -54,63 +59,76 @@ jobs:
       # 파일만 쓰고, 아래 update_data 의 git add data/ 가 함께 커밋·배포한다.
       - name: Build US Treasury yield curve (FRED)
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_yield_curve.py
 
       # FRED 매크로 지표(인플레·고용·금리·신용스프레드·소비심리). 키 불필요.
       - name: Build macro indicators (FRED)
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_macro_indicators.py
 
       # FINRA 일일 공매도 거래량(무료). 격주 공매도잔고 보완.
       - name: Build FINRA daily short volume
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_finra_short_volume.py
 
       # 옵션 심리(풋콜·맥스페인, Yahoo 크럼). 실패해도 스냅샷 갱신 계속.
       - name: Build US options stats (Yahoo)
         continue-on-error: true
+        timeout-minutes: 10
         run: python scripts/build_options_stats.py --top 80
 
       # 배당 + 다음 실적 예정일(Yahoo). 실패해도 계속.
       - name: Build US dividends & earnings calendar (Yahoo)
         continue-on-error: true
+        timeout-minutes: 10
         run: python scripts/build_us_dividends_calendar.py --top 200
 
       # 연방 계약(USASpending, 무료). 정부계약사 12개월 집행액. 실패해도 계속.
       - name: Build US federal contracts (USASpending)
         continue-on-error: true
+        timeout-minutes: 20
         run: python scripts/build_federal_contracts.py
 
       # 무키 공공 피드 3종(2026-08-06 추가). 전부 '기존 파일 유지 후 exit 1' 규약이라
       # continue-on-error 로 넘기고, 신선도 감시가 마지막 관문으로 잡는다.
       - name: Build CFTC COT positioning
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_cftc_cot.py
 
       - name: Build US Treasury auction demand (FiscalData)
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_treasury_auctions.py
 
       - name: Build SEC fails-to-deliver
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_sec_ftd.py
 
       # 무키 피드 2차(2026-08-06): 위키 관심도·WSB 감성·외부 공포탐욕 게이지.
       - name: Build wiki attention (US+KR)
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_wiki_attention.py
 
       - name: Build WSB sentiment (Tradestie)
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_wsb_sentiment.py
 
       - name: Build sentiment gauges (crypto/CNN F&G)
         continue-on-error: true
+        timeout-minutes: 5
         run: python scripts/build_sentiment_gauges.py
 
       # 애널리스트 컨센서스(Finnhub 추천·서프라이즈). 무료 티어, 미국만. 실패해도 계속.
       - name: Build US analyst consensus (Finnhub)
         continue-on-error: true
+        timeout-minutes: 15
         env:
           FINNHUB_API_KEY: ${{ secrets.FINNHUB_API_KEY }}
         run: python scripts/build_us_analyst_consensus.py --top 200
@@ -123,6 +141,7 @@ jobs:
       # 히스토리 실패가 스냅샷 발행을 막으면 안 되므로 continue-on-error.
       - name: Append market history (fear/greed - macro)
         continue-on-error: true
+        timeout-minutes: 10
         run: python scripts/build_market_history.py --push
 
       # 마지막 관문: 위 스텝들은 소스가 죽어도 "기존 파일 유지" 후

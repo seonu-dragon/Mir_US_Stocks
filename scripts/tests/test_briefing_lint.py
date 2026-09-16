@@ -98,6 +98,10 @@ def test_autofix_stutters(src, expected):
         "코스피는 2,601.35로 마감했습니다.",
         "10 10 거래일 연속",
         "은행은 은행대로 움직였습니다.",
+        "반도체 등 등락률 상위 업종",
+        "장 중 중국 지표가 나왔습니다.",
+        "순매도할 수 수출주에 대해",
+        "매수 후 후퇴했습니다.",
     ],
 )
 def test_autofix_leaves_normal_sentences(src):

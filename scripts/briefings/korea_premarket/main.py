@@ -16,7 +16,8 @@ for _path in (_COMMON_DIR, _PKG_DIR):
 
 from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news, has_market_data
 from config import GEMINI_API_KEY, validate_config
-from kr_context import NO_FABRICATION_RULE, macro_context_text
+from kr_context import CAUSAL_CLAIM_RULE, NO_FABRICATION_RULE, macro_context_text
+from briefing_lint import gate_briefing
 from publish import publish_briefing_to_site
 from telegram_bot import notify_briefing_status
 
@@ -25,39 +26,45 @@ if sys.platform == "win32":
     sys.stderr.reconfigure(encoding="utf-8")
 
 
-def generate_korea_premarket_analysis(raw_data_text):
-    """Gemini API를 호출하여 국내 증시 개장 전 심층 분석 리포트를 작성합니다."""
+def generate_korea_premarket_analysis(raw_data_text, feedback=""):
+    """Gemini API를 호출하여 국내 증시 개장 전 심층 분석 리포트를 작성합니다.
+
+    feedback: 발행 전 관문(briefing_lint)이 반려한 문장 목록. 재생성 때만 붙는다.
+    """
     if not GEMINI_API_KEY:
         # 키가 없으면 플레이스홀더를 발행하지 않고 잡을 빨갛게 만든다(2026-09-15 감사).
         raise RuntimeError("GEMINI_API_KEY 가 없어 국내 개장 전 분석을 만들 수 없다 — 발행 중단")
 
     prompt = f"""너는 대한민국 여의도 증권가에서 가장 신뢰받는 최고의 시황 애널리스트이자 자산운용사 펀드매니저다.
-지금은 국내 증시가 개장하기 전(오전)이다. 제공된 데이터(전 거래일 코스피/코스닥 종가 및 등락률, 개인/외국인/기관 순매수액, 최근 증권/금융 주요 RSS 뉴스 제목)와 간밤 글로벌 시장 흐름에 대한 너의 지식을 종합하여, 오늘 장에 대비하는 전문적이고 명쾌한 '개장 전 심층 분석' 리포트를 작성해라.
+지금은 국내 증시가 개장하기 전(오전)이다. 제공된 데이터(전 거래일 코스피/코스닥 종가 및 등락률, 개인/외국인/기관 순매수액, 최근 증권/금융 주요 RSS 뉴스 제목, 간밤 미 증시 대리 ETF 등락률, 환율·금리 실측)만을 근거로, 오늘 장에 대비하는 전문적이고 명쾌한 '개장 전 심층 분석' 리포트를 작성해라. 데이터에 없는 시장 흐름을 기억으로 채우지 마라.
 
 [원천 데이터 (전 거래일 마감 기준)]
 {raw_data_text}
 {NO_FABRICATION_RULE}
+{CAUSAL_CLAIM_RULE}
 
 [작성 지침 (절대 엄수)]
-1. 전 거래일 마감 수급과 간밤 미국 증시/환율/금리 흐름을 연계하여, 오늘 국내 증시의 예상 시나리오를 날카롭게 제시해라.
+1. 전 거래일 마감 수급과 간밤 미국 증시/환율/금리 수치를 연계하여, 오늘 국내 증시의 예상 시나리오를 제시해라. 시나리오는 예상이므로 '~할 수 있습니다', '~가능성이 있습니다' 로 표현해라.
 2. 최종 출력 서식은 반드시 **텔레그램 호환 HTML 태그**로 작성해라. (Markdown 기호 *, **, # 등 사용 금지. <b>, <i>, <code>, <pre>, <blockquote>, <a> 등만 허용)
 3. 레이아웃 규격 (반드시 다음 대제목 구조를 그대로 지켜서 한글로 작성해라. 지구본 이모지 🌐는 절대 쓰지 마라. 구조화된 개행과 계층 표시를 위해 ├─, └─ 특수문자를 적절히 활용해라):
 
 🌙 <b>간밤 글로벌 시장 & 매크로 점검</b>
-├─ <b>미국 증시:</b> (간밤 미국 3대 지수 흐름과 주요 빅테크/섹터 동향이 국내에 미칠 영향 2~3줄)
-└─ <b>환율·금리·원자재:</b> (원/달러 환율, 미국채 금리, 유가/금 등 매크로 변수가 오늘 장에 줄 영향)
+├─ <b>미국 증시:</b> (원천 데이터의 SPY·QQQ·DIA 등락률을 인용해 간밤 흐름과 국내에 줄 수 있는 영향 2~3줄. 빅테크·섹터별 데이터는 없으니 지어내지 마라)
+└─ <b>환율·금리:</b> (원천 데이터의 원/달러 환율·국고채·기준금리 수치를 인용해 오늘 장에 줄 수 있는 영향. 미국채·유가·금은 데이터가 없으니 언급하지 마라)
 
 📊 <b>전 거래일 국내 증시 복기</b>
-├─ <b>지수·수급:</b> (전일 코스피/코스닥 마감과 외국인·기관 수급이 시사하는 방향성)
-└─ <b>주도 업종:</b> (전일 강했던/약했던 업종·테마와 오늘 이어질 가능성)
+├─ <b>지수·수급:</b> (전일 코스피/코스닥 마감과 외국인·기관 순매수 금액이 시사하는 방향성)
+└─ <b>뉴스 점검:</b> (헤드라인에 **적힌 사실만** 1~2개 요약하고, 오늘 장과의 연관성은 '~ 가능성이 있습니다' 로만 표현. 업종·테마별 등락 데이터는 없으니 '주도 업종'을 지어내지 마라)
 
 🎯 <b>오늘의 개장 전 전략 가이드</b>
-├─ <b>예상 시나리오:</b> (오늘 코스피/코스닥의 강세/약세/혼조 시나리오와 근거)
-└─ <b>관심 포인트:</b> (개인 투자자가 개장 전 체크할 관심 업종/테마 및 대응 전략 2~3줄)
+├─ <b>예상 시나리오:</b> (오늘 코스피/코스닥의 강세/약세/혼조 시나리오와 그 근거가 되는 원천 데이터 수치)
+└─ <b>관심 포인트:</b> (개장 전 확인할 수급·환율·헤드라인 이슈와 대응 전략 2~3줄. 특정 업종·테마 추천은 헤드라인 근거가 있을 때만)
 
 ⚠️ <b>오늘 장중 유의 사항</b>
-└─ <b>리스크 점검:</b> (오늘 예정된 국내외 경제지표 발표, 이벤트, 변동성 요인 등 유의점 2~3줄)
+└─ <b>리스크 점검:</b> (원천 데이터 수치와 헤드라인에 나온 일정만 근거로 유의점 2~3줄. 데이터에 없는 경제지표 발표 일정은 지어내지 마라)
 """
+    if feedback:
+        prompt += f"\n{feedback}\n"
 
     models_config = [
         {"model": "gemini-2.5-flash", "version": "v1beta"},
@@ -67,8 +74,10 @@ def generate_korea_premarket_analysis(raw_data_text):
     for cfg in models_config:
         model = cfg["model"]
         version = cfg["version"]
-        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        headers = {"Content-Type": "application/json"}
+        # API 키는 쿼리스트링이 아니라 x-goog-api-key 헤더로 보낸다 — URL 은
+        # 예외 메시지·프록시 로그에 그대로 찍힌다(us_close 와 같은 방식).
+        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent"
+        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         payload = {"contents": [{"parts": [{"text": prompt}]}]}
 
         print(f"[AI 분석] {model} ({version}) 모델로 국내 개장 전 심층 분석 생성 시도 중...")
@@ -255,6 +264,15 @@ def main():
     ai_analysis_text = generate_korea_premarket_analysis(raw_data_text)
     if not ai_analysis_text:
         raise RuntimeError("AI 분석 본문이 비어 있다 — 플레이스홀더를 발행하지 않는다")
+
+    # 발행 전 관문(korea_close 와 동일): 오타 자동 교정 → 근거 없는 인과 단정은 1회 재생성
+    # → 남으면 문장 제거 → 그것도 안 되면 BriefingLintError 로 발행 중단.
+    ai_analysis_text = gate_briefing(
+        ai_analysis_text,
+        [item["title"] for item in news_items],
+        regenerate=lambda fb: generate_korea_premarket_analysis(raw_data_text, feedback=fb),
+        label="korea_premarket",
+    )
 
     report_lines_part2 = [f"💡 <b>[국내 증시 개장 전 심층 분석 브리핑]</b>\n"]
     report_lines_part2.append(ai_analysis_text)

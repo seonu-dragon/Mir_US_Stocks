@@ -9227,6 +9227,28 @@ label.scan-deep-toggle {
   animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* 폰에서는 알약 모양이 여러 줄로 감기면 큰 타원이 되어 본문을 가렸다(재감사 2026-09-16).
+   좁은 화면에선 하단 전체폭 카드로 낮추고 챗봇 버튼과 겹치지 않게 띄운다. */
+@media (max-width: 640px) {
+  .offline-banner {
+    left: 12px;
+    right: 12px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+    transform: none;
+    width: auto !important;
+    max-width: none !important;
+    border-radius: var(--r-md, 12px);
+    padding: 10px 14px;
+    font-size: 13px;
+    /* 기본 slideUp 은 translate(-50%) 를 포함해 left 고정 배치에서 옆으로 튄다 */
+    animation-name: offlineBannerUpMobile;
+  }
+  .offline-banner-content {
+    justify-content: flex-start !important;
+    gap: 4px 8px;
+  }
+}
+
 [data-theme="light"] .offline-banner {
   background: rgba(255, 255, 255, 0.95);
   color: var(--text);
@@ -9245,6 +9267,11 @@ label.scan-deep-toggle {
   display: inline-flex;
   align-items: center;
   animation: pulse 1.5s infinite alternate;
+}
+
+@keyframes offlineBannerUpMobile {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: none; opacity: 1; }
 }
 
 @keyframes slideUp {

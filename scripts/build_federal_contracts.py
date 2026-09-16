@@ -58,7 +58,14 @@ def kst_now_str() -> str:
     return datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d %H:%M KST")
 
 
-def post(body: dict, timeout=30, retries=3) -> dict:
+# 전체 수집 마감시간. 2026-09-16 Actions 에서 USASpending 이 느려 39종목에 1시간 30분이
+# 걸렸고, 같은 잡의 본체 스냅샷이 타임아웃으로 취소됐다. 마감을 넘기면 남은 종목은
+# 건너뛰고, 목표의 80% 미만이면 기존 파일을 유지한다(부분 데이터로 덮지 않는다).
+DEADLINE_S = 15 * 60
+MIN_COVERAGE = 0.8
+
+
+def post(body: dict, timeout=20, retries=3) -> dict:
     last = None
     for attempt in range(1, retries + 1):
         try:
@@ -112,12 +119,16 @@ def fetch(recipient: str, start: str, end: str, max_pages: int = 6) -> dict | No
     return {"count": count, "total": round(total), "top": round(top), "approx": capped}
 
 
-def build() -> dict | None:
+def build(deadline_s: float = DEADLINE_S) -> dict | None:
     end = datetime.now(timezone.utc).date()
     start = end - timedelta(days=365)
     out = {}
     done = 0
+    started = time.monotonic()
     for ticker, name in CONTRACTORS.items():
+        if time.monotonic() - started > deadline_s:
+            print(f"  [federal] 마감 {deadline_s / 60:.0f}분 초과 — {done}/{len(CONTRACTORS)}에서 중단")
+            break
         done += 1
         rec = fetch(name, start.isoformat(), end.isoformat())
         time.sleep(0.2)
@@ -126,6 +137,9 @@ def build() -> dict | None:
         if done % 10 == 0:
             print(f"  진행 {done}/{len(CONTRACTORS)} (수집 {len(out)})")
     if not out:
+        return None
+    if done < len(CONTRACTORS) and len(out) < len(CONTRACTORS) * MIN_COVERAGE:
+        print(f"  [federal] 마감 중단으로 {len(out)}/{len(CONTRACTORS)}종목뿐 — 기존 파일 유지")
         return None
     return {"updatedAtKst": kst_now_str(),
             "source": "USASpending.gov · 최근 12개월 prime award (계약 A/B/C/D)",

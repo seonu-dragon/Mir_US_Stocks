@@ -2995,7 +2995,8 @@ function analysisHeadLabels(result) {
   const ticker = String((result && result.ticker) || "");
   const company = String((result && result.company) || "");
   const kr = !!(window.MirMarket && window.MirMarket.getMode() === "kr");
-  if (kr && company && /^\d{1,6}$/.test(ticker.replace(/\.(KS|KQ)$/i, ""))) return { main: company, sub: ticker };
+  // 국내는 회사명만(코드는 보조로도 안 낸다 — 2026-09-16). 검색엔진용 <title> 에만 코드가 남는다.
+  if (kr && company && /^\d{1,6}$/.test(ticker.replace(/\.(KS|KQ)$/i, ""))) return { main: company, sub: "" };
   return { main: ticker, sub: company };
 }
 

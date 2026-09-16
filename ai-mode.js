@@ -331,7 +331,7 @@ function startNewAiChatSession() {
       const welcomeData = getPersonalizedWelcomeData();
       const mutedP = welcome.querySelector("p.muted");
       if (mutedP) {
-        mutedP.innerHTML = `오늘 관심 종목 중 등락률이 높은 <strong>${escapeHtml(welcomeData.name)} (${escapeHtml(welcomeData.ticker)})</strong>의 정밀 AI 리포트를 확인해 보시겠어요? 아래 카드를 누르거나 무엇이든 질문해 주세요.`;
+        mutedP.innerHTML = `오늘 관심 종목 중 등락률이 높은 <strong>${escapeHtml(welcomeData.name)}${isKrCodeTicker(welcomeData.ticker) ? "" : ` (${escapeHtml(welcomeData.ticker)})`}</strong>의 정밀 AI 리포트를 확인해 보시겠어요? 아래 카드를 누르거나 무엇이든 질문해 주세요.`;
       }
       
       const firstCard = welcome.querySelector(".welcome-suggestions .ai-chat-suggest-card");
@@ -1041,11 +1041,11 @@ function aiSectorPanel(item) {
   const rows = peers.slice(0, 8).map((row, index) => [
     `${index + 1}`,
     `<strong>${escapeHtml(stockLabel(row))}</strong>`,
-    escapeHtml(stockSubLabel(row)),
+    ...(isKrMarket() ? [] : [escapeHtml(stockSubLabel(row))]),
     `<span class="${cls(row.changePct)}">${fmtDailyPct(row.changePct)}</span>`,
     fmtRsi(row),
   ]);
-  return aiModePanel("섹터 흐름", `${item.sector || "-"} 3개월 강도`, aiMiniTable(["#", "티커", "회사", "당일", "RSI"], rows, "동일 섹터 비교 데이터가 없습니다."));
+  return aiModePanel("섹터 흐름", `${item.sector || "-"} 3개월 강도`, aiMiniTable(isKrMarket() ? ["#", "종목", "당일", "RSI"] : ["#", "티커", "회사", "당일", "RSI"], rows, "동일 섹터 비교 데이터가 없습니다."));
 }
 
 // 시장별 기능 게이트(market_config.js features). 키가 없으면 켜진 것으로 본다(=== false 판정).
@@ -1945,7 +1945,7 @@ function aiDashCardHtml(item) {
     <div class="ai-dash-card-head">
       <div class="ai-dash-idname">
         <strong class="ai-dash-ticker">${escapeHtml(stockLabel(item))}</strong>
-        <span class="ai-dash-company">${escapeHtml(stockSubLabel(item))}${secKo ? " · " + escapeHtml(secKo) : ""}</span>
+        <span class="ai-dash-company">${joinSubParts(stockSubLabel(item), secKo)}</span>
       </div>
       <div class="ai-dash-price">
         <b>${priceOrDash(item.price)}</b>
@@ -2271,7 +2271,7 @@ function setupAiChatModeEvents() {
       else sendAiChat(query);
     };
     const submitTicker = (ticker) => {
-      const query = `${ticker} 분석해줘`;
+      const query = `${stockInputValue(ticker)} 분석해줘`;
       input.value = query;
       submitQuery(query);
     };
@@ -2330,7 +2330,7 @@ function setupAiChatModeEvents() {
         <div class="autocomplete-item" data-ticker="${escapeHtml(s.ticker)}" data-index="${idx}">
           <div style="display:flex;align-items:center;gap:10px;">
             <span class="ticker-badge">${escapeHtml(stockLabel(s))}</span>
-            <span class="company-name">${escapeHtml(stockSubLabel(s))}</span>
+            <span class="company-name">${escapeHtml(stockSubLabel(s) || (isKrCodeTicker(s.ticker) ? (stockByTicker(s.ticker)?.industry || "") : ""))}</span>
           </div>
           <span class="market-badge">${escapeHtml(autocompleteMarketBadge(s))}</span>
         </div>

@@ -375,13 +375,13 @@ function renderKrDisclosures() {
   }
   table.innerHTML = `
     <table class="insider-table table-wide">
-      <thead><tr><th>일자</th><th>종목</th><th>${isKrMarket() ? "코드" : "회사"}</th><th>유형</th><th>제목</th></tr></thead>
+      <thead><tr><th>일자</th><th>종목</th><th class="col-sub">회사</th><th>유형</th><th>제목</th></tr></thead>
       <tbody>
         ${rows.slice(0, 200).map((row) => `
           <tr>
             <td>${escapeHtml(row.fileDate || "")}</td>
             <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row))}</button></td>
-            <td>${escapeHtml(stockSubLabel(row) || "")}</td>
+            <td class="col-sub">${escapeHtml(stockSubLabel(row) || "")}</td>
             <td>${escapeHtml(row.typeLabel || "")}</td>
             <td>
               ${row.link ? `<a href="${escapeHtml(krPanelHref(row.link))}" target="_blank" rel="noopener">${escapeHtml(row.title || "")}</a>` : escapeHtml(row.title || "")}
@@ -457,7 +457,7 @@ function renderKrOwnProfile() {
   const body = rows.slice(0, 200).map(({ item, p }) => `
     <tr>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
-      <td>${escapeHtml(stockSubLabel(item) || "")}</td>
+      <td class="col-sub">${escapeHtml(stockSubLabel(item) || "")}</td>
       <td>${escapeHtml(p.topHolder || "—")}</td>
       <td>${pct(p.ownerStakePct)}</td>
       <td><b>${pct(p.freeFloatPct)}</b></td>
@@ -468,7 +468,7 @@ function renderKrOwnProfile() {
   table.innerHTML = `
     <table class="insider-table table-wide">
       <thead><tr>
-        <th>종목</th><th>${isKrMarket() ? "코드" : "회사"}</th><th>최대주주</th><th>지분율</th>
+        <th>종목</th><th class="col-sub">회사</th><th>최대주주</th><th>지분율</th>
         <th>유통물량</th><th>자기주식</th><th>소액주주 수</th>
       </tr></thead>
       <tbody>${body}</tbody>
@@ -513,16 +513,16 @@ function renderKrOwnership() {
     return;
   }
 
-  const codeHead = isKrMarket() ? "코드" : "회사";
+  const codeHead = "회사";
   const head = isMajor
-    ? `<tr><th>일자</th><th>종목</th><th>${codeHead}</th><th>보고자</th><th>보유비율</th><th>증감</th><th>보유주식</th><th>구분</th></tr>`
-    : `<tr><th>일자</th><th>종목</th><th>${codeHead}</th><th>보고자</th><th>직위</th><th>소유주식</th><th>증감</th><th>등기</th></tr>`;
+    ? `<tr><th>일자</th><th>종목</th><th class="col-sub">${codeHead}</th><th>보고자</th><th>보유비율</th><th>증감</th><th>보유주식</th><th>구분</th></tr>`
+    : `<tr><th>일자</th><th>종목</th><th class="col-sub">${codeHead}</th><th>보고자</th><th>직위</th><th>소유주식</th><th>증감</th><th>등기</th></tr>`;
 
   const body = rows.slice(0, 200).map((row) => {
     const common = `
       <td>${escapeHtml(row.fileDate || "")}</td>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row))}</button></td>
-      <td>${escapeHtml(stockSubLabel(row) || "")}</td>
+      <td class="col-sub">${escapeHtml(stockSubLabel(row) || "")}</td>
       <td>${row.link ? `<a href="${escapeHtml(krPanelHref(row.link))}" target="_blank" rel="noopener">${escapeHtml(row.filer || "-")}</a>` : escapeHtml(row.filer || "-")}</td>`;
     return isMajor
       ? `<tr>${common}

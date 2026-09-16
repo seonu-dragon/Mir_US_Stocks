@@ -489,7 +489,7 @@ function syncPositionTickerPrice() {
   const ticker = resolveCommunityTickerInput(raw) || String(raw).trim().toUpperCase();
   const stock = stockByTicker(ticker);
   if (!stock) return;
-  byId("positionTicker").value = ticker;
+  byId("positionTicker").value = stockInputValue(ticker);
   byId("positionEntry").value = marketCfg().priceInputValue(stock.price); // KRW 는 정수, USD 는 센트
   renderPositionSizeCalculator(false);
 }
@@ -1105,7 +1105,7 @@ function renderBulk() {
     <tr>
       <td>${watchStarButton(item.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}</td>
-      <td>${escapeHtml(stockSubLabel(item))}</td>
+      <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td>${fmtRsi(item)}</td>
@@ -1155,7 +1155,7 @@ function renderBacktestTickerChips() {
   box.innerHTML = backtestTickers.length
     ? backtestTickers.map((ticker) => {
       const stock = stockByTicker(ticker);
-      const label = stock?.company ? `${stockLabel(ticker, stock)} · ${stockSubLabel(ticker, stock)}` : ticker;
+      const label = stock?.company ? [stockLabel(ticker, stock), stockSubLabel(ticker, stock)].filter(Boolean).join(" · ") : ticker;
       return `<button type="button" class="compare-chip" data-ticker="${escapeHtml(ticker)}" title="${escapeHtml(label)}">${escapeHtml(stockLabel(ticker, stock))} <span>x</span></button>`;
     }).join("")
     : `<span class="muted">종목을 하나씩 추가하세요. (최대 ${BACKTEST_MAX_TICKERS}개)</span>`;
@@ -1278,7 +1278,7 @@ function backtestBenchmarkLabel(ticker) {
   const found = backtestBenchmarkOptions().find(([t]) => t === ticker);
   if (found) return found[1];
   const stock = stockByTicker(ticker);
-  return stock?.company ? `${stockLabel(ticker, stock)} · ${stockSubLabel(ticker, stock)}` : ticker;
+  return stock?.company ? [stockLabel(ticker, stock), stockSubLabel(ticker, stock)].filter(Boolean).join(" · ") : ticker;
 }
 
 // 백테스트 금액은 시장 통화로(정수). 예전엔 KR 에서도 USD 로 찍혔다.

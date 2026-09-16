@@ -332,7 +332,7 @@ function renderTreemapList(all, metric, sizeMetric) {
     const has = Number.isFinite(v);
     rows.push(`<button type="button" class="map-list-row" data-ticker="${escapeHtml(item.ticker)}">
       <span class="map-list-bar" style="background:${has ? metricColor(v, metric) : "var(--line)"}"></span>
-      <span><strong>${escapeHtml(stockLabel(item))}</strong><small>${escapeHtml(stockSubLabel(item) || "")}${item.industry ? " · " + escapeHtml(item.industry) : ""}</small></span>
+      <span><strong>${escapeHtml(stockLabel(item))}</strong><small>${joinSubParts(stockSubLabel(item), item.industry)}</small></span>
       <em class="${has ? metricClass(v, metric) : "muted"}">${has ? fmtMetric(v, metric) : "—"}</em>
     </button>`);
   });
@@ -444,7 +444,7 @@ function focusTreemapTicker(ticker, options = {}) {
   selectedTicker = stock.ticker;
   zoomView = { sector: stock.sector, industry: stock.industry || "Other" };
   const search = byId("heatmapSearch");
-  if (search) search.value = stock.ticker;
+  if (search) search.value = stockInputValue(stock.ticker);
   if (options.openMap !== false && currentTab !== "map") {
     activateTab("map", { push: Boolean(options.push), ticker: stock.ticker });
     return;

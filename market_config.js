@@ -155,7 +155,7 @@
     detailsDir: "data/korea/details",
     defaultBucket: "idx_kospi_stock",
     defaultTicker: "005930",
-    searchPlaceholder: "종목명·종목코드 (예: 삼성전자, 005930)",
+    searchPlaceholder: "종목명 (예: 삼성전자, SK하이닉스)",
     cardnewsDefault: "kr",
     // 크론은 15:42 KST 지만 GitHub Actions 지연(실측 2~6.6시간)으로 실제 발행은
     // 저녁이다(2026-09 실측 22:38). 문구는 실제에 맞춘다 — 없는 신선도를 주장하지 않는다.

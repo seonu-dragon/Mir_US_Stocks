@@ -105,6 +105,28 @@ function _stockRef(tickerOrItem, item) {
   }
   return { ticker, name: name ? String(name) : "" };
 }
+// 국내 모드에서는 화면 어디에도 6자리 종목코드를 주 표기로도, 보조 표기로도 내지 않는다
+// (2026-09-16 사용자 요청: "숫자 티커는 복잡해 보이기만 한다"). 코드는 data-*·URL·저장키·
+// 입력 해석에만 쓰고, 화면에는 회사명만. 미국 모드는 티커가 주 표기 그대로다.
+function isKrCodeTicker(ticker) {
+  return typeof isKrMarket === "function" && isKrMarket() && /^\d{1,6}(\.(KS|KQ))?$/i.test(String(ticker || ""));
+}
+// 목록의 보조줄에 티커를 찍던 자리용: 국내면 "", 미국이면 티커.
+function tickerHint(ticker) {
+  return isKrCodeTicker(ticker) ? "" : String(ticker || "");
+}
+// 보조줄 조각을 " · " 로 잇는다(빈 조각은 건너뜀). 반환값은 이미 escape 됨.
+function joinSubParts(...parts) {
+  return parts.filter((part) => part != null && String(part).trim() !== "").map((part) => escapeHtml(part)).join(" · ");
+}
+// 입력칸에 '확정된 종목'을 되써 줄 때의 표시값. 국내는 회사명(해석기가 회사명 완전 일치를
+// 그 종목으로 되돌린다), 미국은 티커.
+function stockInputValue(ticker) {
+  const t = String(ticker || "");
+  if (!isKrCodeTicker(t)) return t;
+  const found = typeof stockByTicker === "function" ? stockByTicker(t) : null;
+  return (found && (found.company || found.name)) || t;
+}
 function stockLabel(tickerOrItem, item) {
   const ref = _stockRef(tickerOrItem, item);
   if (typeof isKrMarket === "function" && isKrMarket() && /^\d{1,6}(\.(KS|KQ))?$/i.test(ref.ticker)) return ref.name || ref.ticker;
@@ -112,9 +134,7 @@ function stockLabel(tickerOrItem, item) {
 }
 function stockSubLabel(tickerOrItem, item) {
   const ref = _stockRef(tickerOrItem, item);
-  if (typeof isKrMarket === "function" && isKrMarket() && /^\d{1,6}(\.(KS|KQ))?$/i.test(ref.ticker)) {
-    return ref.name ? ref.ticker.replace(/\.(KS|KQ)$/i, "").padStart(6, "0") : "";
-  }
+  if (isKrCodeTicker(ref.ticker)) return "";
   return ref.name;
 }
 

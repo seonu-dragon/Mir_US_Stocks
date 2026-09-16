@@ -239,7 +239,7 @@ function renderScreener({ trackSaved = false } = {}) {
     <tr>
       <td>${watchStarButton(item.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
-      <td>${escapeHtml(stockSubLabel(item))}</td>
+      <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
       <td>${escapeHtml(item.sector)}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</td>
@@ -427,7 +427,7 @@ function runNlScreener() {
     return `<tr>
       <td>${watchStarButton(it.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(it.ticker)}">${escapeHtml(stockLabel(it))}</button></td>
-      <td>${escapeHtml(stockSubLabel(it))}</td>
+      <td class="col-sub">${escapeHtml(stockSubLabel(it))}</td>
       <td>${escapeHtml(it.sector)}</td>
       <td class="${cls(it.changePct)}">${fmtDailyPct(it.changePct)}</td>
       <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>
@@ -650,7 +650,7 @@ function renderCompareBoard() {
     return;
   }
   const items = tickers.map((t) => withDetail(stockByTicker(t))).filter(Boolean);
-  let html = `<thead><tr><th>지표</th>${items.map((i) => `<th><button type="button" class="ticker-link" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(i.ticker)}</button><div class="muted" style="font-size:var(--fs-cap);font-weight:400">${escapeHtml(i.company || i.name || "")}</div></th>`).join("")}</tr></thead><tbody>`;
+  let html = `<thead><tr><th>지표</th>${items.map((i) => `<th><button type="button" class="ticker-link" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(stockLabel(i))}</button>${stockSubLabel(i) ? `<div class="muted" style="font-size:var(--fs-cap);font-weight:400">${escapeHtml(stockSubLabel(i))}</div>` : ""}</th>`).join("")}</tr></thead><tbody>`;
   COMPARE_METRICS.forEach(([label, fmt, toneFn]) => {
     html += `<tr><td class="metric-label">${label}</td>${items.map((item) => {
       const tone = toneFn ? toneFn(item) : "";

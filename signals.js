@@ -362,7 +362,7 @@ function renderWikiAttention() {
     const spark = Array.isArray(r.series) && r.series.length > 5 ? seasonalitySvgLine(r.series) : "";
     return `<tr>
       <td class="ins-date">${i + 1}</td>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(r.t)}</div></td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(tickerHint(r.t))}</div></td>
       <td class="ins-num"><strong style="color:${col}">x${Number(r.ratio).toFixed(2)}</strong>${hot ? `<div style="font-size:9.5px;color:var(--green)">급증</div>` : ""}</td>
       <td class="ins-num">${Number(r.avg7).toLocaleString()}</td>
       <td class="ins-num">${Number(r.avg30).toLocaleString()}</td>

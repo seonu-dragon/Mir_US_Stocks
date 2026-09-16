@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=b2644062ea" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=b2644062ea"></noscript>
+    <link rel="preload" href="styles.css?v=f4b8c49728" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=f4b8c49728"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=3a4f0af173"></script>
+    <script src="build_id.js?v=1c3364ed01"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -967,8 +967,8 @@ html[data-theme="dark"] {
                     <thead>
                       <tr>
                         <th>#</th>
-                        <th>티커</th>
-                        <th>회사명</th>
+                        <th data-kr-label="종목">티커</th>
+                        <th class="col-sub">회사명</th>
                         <th>현재가</th>
                         <th>당일 등락률</th>
                         <th>1주 등락률</th>
@@ -1047,8 +1047,8 @@ html[data-theme="dark"] {
                 <thead>
                   <tr>
                     <th>#</th>
-                    <th>티커</th>
-                    <th>회사명</th>
+                    <th data-kr-label="종목">티커</th>
+                    <th class="col-sub">회사명</th>
                     <th id="constituentPeriodHeader">1개월 수익률</th>
                     <th id="constituentBench1Header">SPY 대비</th>
                     <th id="constituentBench2Header">QQQ 대비</th>
@@ -1220,7 +1220,7 @@ html[data-theme="dark"] {
 
         <div class="toolbar">
           <label class="grow">
-            티커 검색
+            <span data-kr-text="종목 검색">티커 검색</span>
             <input id="tickerSearch" placeholder="한국어·티커·영문 (예: 테슬라, NVDA, Apple)" autocomplete="off">
           </label>
           <button id="searchButton" class="primary">분석</button>
@@ -1621,7 +1621,7 @@ html[data-theme="dark"] {
           <div class="table-wrap" id="nlResultsWrap" hidden>
             <table class="compact-table screener-table table-wide">
               <thead>
-                <tr><th></th><th>티커</th><th>회사</th><th>섹터</th><th>당일</th><th>1M</th><th>EPS</th><th>RSI</th><th>PER</th><th>시총</th><th>신호</th></tr>
+                <tr><th></th><th data-kr-label="종목">티커</th><th class="col-sub">회사</th><th>섹터</th><th>당일</th><th>1M</th><th>EPS</th><th>RSI</th><th>PER</th><th>시총</th><th>신호</th></tr>
               </thead>
               <tbody id="nlResults"></tbody>
             </table>
@@ -1651,8 +1651,8 @@ html[data-theme="dark"] {
             <thead>
               <tr>
                 <th></th>
-                <th>티커</th>
-                <th>회사</th>
+                <th data-kr-label="종목">티커</th>
+                <th class="col-sub">회사</th>
                 <th>섹터</th>
                 <th>당일</th>
                 <th>1M</th>
@@ -1850,7 +1850,7 @@ html[data-theme="dark"] {
               <button type="button" data-type="buy">매입/소각</button>
               <button type="button" data-type="sell">처분/해지</button>
             </div>
-            <label class="grow">검색<input id="buybackSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+            <label class="grow">검색<input id="buybackSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
           <div class="institutional-meta" id="buybackMeta"></div>
           <div class="insider-table-wrap" id="buybackTable"></div>
@@ -1873,7 +1873,7 @@ html[data-theme="dark"] {
               <button type="button" data-sort="date" class="is-active">최신순</button>
               <button type="button" data-sort="react">발표 반응 큰순</button>
             </div>
-            <label class="grow">검색<input id="earnReactSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+            <label class="grow">검색<input id="earnReactSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
           <div class="institutional-meta" id="earnReactMeta"></div>
           <div class="insider-table-wrap" id="earnReactTable"></div>
@@ -1896,7 +1896,7 @@ html[data-theme="dark"] {
               <button type="button" data-sort="record" class="is-active">배당기준일 임박순</button>
               <button type="button" data-sort="yield">시가배당률 높은순</button>
             </div>
-            <label class="grow">검색<input id="dividendSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+            <label class="grow">검색<input id="dividendSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
           <div class="institutional-meta" id="dividendMeta"></div>
           <div class="insider-table-wrap" id="dividendTable"></div>
@@ -1919,7 +1919,7 @@ html[data-theme="dark"] {
               <button type="button" data-sort="ratio" class="is-active">매출대비 큰순</button>
               <button type="button" data-sort="date">최신순</button>
             </div>
-            <label class="grow">검색<input id="contractSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+            <label class="grow">검색<input id="contractSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
           <div class="institutional-meta" id="contractMeta"></div>
           <div class="insider-table-wrap" id="contractTable"></div>
@@ -1943,7 +1943,7 @@ html[data-theme="dark"] {
               <button type="button" data-sort="amount">발행금액 큰순</button>
               <button type="button" data-sort="date">최신순</button>
             </div>
-            <label class="grow">검색<input id="dilutionSearch" type="search" placeholder="종목명·코드" autocomplete="off"></label>
+            <label class="grow">검색<input id="dilutionSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
           <div class="institutional-meta" id="dilutionMeta"></div>
           <div class="insider-table-wrap" id="dilutionTable"></div>
@@ -2011,7 +2011,7 @@ html[data-theme="dark"] {
           <div class="institutional-picker">
             <label class="grow">
               지분공시 검색
-              <input id="krOwnSearch" type="search" placeholder="종목코드·회사명·보고자" autocomplete="off">
+              <input id="krOwnSearch" type="search" placeholder="회사명·보고자" autocomplete="off">
             </label>
           </div>
           <div class="institutional-detail" id="krOwnTable">
@@ -2035,7 +2035,7 @@ html[data-theme="dark"] {
           <div class="institutional-picker">
             <label class="grow">
               공시 검색
-              <input id="krDartSearch" type="search" placeholder="종목코드·회사명·제목" autocomplete="off">
+              <input id="krDartSearch" type="search" placeholder="회사명·공시 제목" autocomplete="off">
             </label>
           </div>
           <div class="institutional-detail" id="krDartTable">
@@ -2270,7 +2270,7 @@ html[data-theme="dark"] {
               <tr>
                 <th></th>
                 <th>종목</th>
-                <th>회사</th>
+                <th class="col-sub">회사</th>
                 <th>섹터</th>
                 <th>등락</th>
                 <th>RSI</th>
@@ -2769,7 +2769,7 @@ html[data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=7cc92f9ce7"></script>
+    <script src="market_config.js?v=b9360557ed"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -2780,28 +2780,28 @@ html[data-theme="dark"] {
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="indicators.js?v=f226af20a0"></script>
     <script src="pattern_detectors_extended.js?v=da47646599"></script>
-    <script src="analysis.js?v=3234a2908b"></script>
+    <script src="analysis.js?v=3c01512c79"></script>
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
-    <script src="chart-indicators.js?v=0d3888c52b"></script>
+    <script src="chart-indicators.js?v=21cd9d7f5a"></script>
     <script src="community.js?v=af8ec25e4f"></script>
-    <script src="ai-mode.js?v=72a26aa251"></script>
+    <script src="ai-mode.js?v=a0df5227ee"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=add68b6290"></script>
-    <script src="portfolio.js?v=30b7907c94"></script>
-    <script src="screener.js?v=c24a09dbbc"></script>
+    <script src="disclosure-trackers.js?v=43fafa46ee"></script>
+    <script src="portfolio.js?v=58b9c4f658"></script>
+    <script src="screener.js?v=d734941458"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="fmt.js?v=db7c8b3c73"></script>
+    <script src="fmt.js?v=643b0a9ecf"></script>
     <script src="feature-data.js?v=c5446545a6"></script>
-    <script src="treemap.js?v=6172cf62a1"></script>
-    <script src="signals.js?v=38999d2e3b"></script>
+    <script src="treemap.js?v=e89993e134"></script>
+    <script src="signals.js?v=6fd1ef23ff"></script>
     <script src="chart.js?v=aff4f193c6"></script>
     <script src="institutional.js?v=206b237685"></script>
-    <script src="markets-etf.js?v=ea2db74494"></script>
-    <script src="kr-panels.js?v=9fccfac25f"></script>
+    <script src="markets-etf.js?v=69674be0f5"></script>
+    <script src="kr-panels.js?v=53e63c5806"></script>
     <script src="watchlist.js?v=638b0c099e"></script>
-    <script src="app.js?v=c29c331148"></script>
+    <script src="app.js?v=2aef154dbb"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

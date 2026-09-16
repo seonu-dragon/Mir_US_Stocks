@@ -459,14 +459,14 @@ export async function handleFetch(request, env) {
     const [news, chart, earnings, quote] = await Promise.all([
       kr ? fetchNaverNews(ticker) : fetchNews(env, symbol),
       fetchChart(symbol),
-      fetchEarnings(symbol),
+      resolveTickerEarnings(ticker, symbol, kr),
       kr ? Promise.resolve(null) : fetchQuoteState(symbol),
     ]);
     const { text: summary, error: summaryError, model: summaryModel, cached: summaryCached } =
       await cachedTickerSummary(request, env, ticker, news, kr, modelOverride);
     // summary 는 Origin 게이트 뒤라 같은 URL 이라도 호출자에 따라 내용이 다르다.
     return cors(varyOrigin(json({
-      ticker, news, chart, earnings, quote, summary, summaryError, summaryModel,
+      ticker, news, chart, earnings: earnings.earnings, earningsStatus: earnings.status, quote, summary, summaryError, summaryModel,
       summaryCached: Boolean(summaryCached), newsSource: kr ? "naver" : "yahoo",
     })));
 }
@@ -1320,6 +1320,102 @@ async function fetchEarnings(symbol, budget = null) {
   }
 }
 
+// ── ?ticker= 실적: 야후 → 발행된 실적 캘린더 폴백 ──────────────────────────────
+// 2026-09-15 부터 야후 crumb 발급이 막혀 라이브 ?ticker=NVDA 의 earnings 가 계속
+// null 이었다(2026-09-16 재감사). 음성 캐시는 호출 낭비만 줄였을 뿐 데이터를 되살리지
+// 못했다. 야후가 실패하면 GitHub Actions 가 yfinance 로 만들어 Pages 에 올리는
+// data/earnings_calendar.json(다음 실적일·EPS 예상)과 data/details/<T>.json 의
+// earningsHistory(지난 서프라이즈)로 채운다. 그래도 없으면 earnings 는 null 로 두되
+// earningsStatus 로 '데이터 없음' 을 명시한다 — null 하나로는 "실패" 와 "원래 없음" 을
+// 구분할 수 없었다. (earnings 를 빈 객체로 바꾸지 않는 이유: 프론트가 truthy 면
+// 라이브 값으로 캐시해 정적 캘린더 폴백을 가린다.)
+export const MIR_PAGES_DATA_BASE = "https://seonu-dragon.github.io/Mir_US_Stocks/data";
+const PUBLISHED_EARNINGS_TTL_MS = 30 * 60 * 1000;
+let publishedEarningsMemo = { at: 0, rows: null };
+
+export function resetPublishedEarningsMemo() {
+  publishedEarningsMemo = { at: 0, rows: null };
+}
+
+async function loadPublishedEarningsCalendar() {
+  if (publishedEarningsMemo.rows && Date.now() - publishedEarningsMemo.at < PUBLISHED_EARNINGS_TTL_MS) {
+    return publishedEarningsMemo.rows;
+  }
+  try {
+    const r = await fetchT(`${MIR_PAGES_DATA_BASE}/earnings_calendar.json`, { headers: { Accept: "application/json" } });
+    if (!r.ok) return publishedEarningsMemo.rows;
+    const data = await r.json();
+    const rows = Array.isArray(data?.earnings) ? data.earnings : [];
+    publishedEarningsMemo = { at: Date.now(), rows };
+    return rows;
+  } catch (e) {
+    return publishedEarningsMemo.rows;
+  }
+}
+
+async function loadPublishedEarningsHistory(ticker) {
+  if (!/^[A-Z0-9.\-]{1,12}$/.test(ticker)) return [];
+  try {
+    const r = await fetchT(`${MIR_PAGES_DATA_BASE}/details/${encodeURIComponent(ticker)}.json`, { headers: { Accept: "application/json" } });
+    if (!r.ok) return [];
+    const data = await r.json();
+    const rows = Array.isArray(data?.earningsHistory) ? data.earningsHistory : [];
+    // 최신이 앞(야후 경로와 같은 순서), 8개까지.
+    return rows
+      .filter((row) => row && row.date)
+      .slice()
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+      .slice(0, 8)
+      .map((row) => ({
+        date: row.date,
+        epsActual: Number.isFinite(Number(row.epsActual)) ? Number(row.epsActual) : null,
+        epsEstimate: Number.isFinite(Number(row.epsEstimate)) ? Number(row.epsEstimate) : null,
+        surprisePct: Number.isFinite(Number(row.surprisePct)) ? Number(row.surprisePct) : null,
+      }));
+  } catch (e) {
+    return [];
+  }
+}
+
+export async function resolveTickerEarnings(ticker, symbol, kr) {
+  const live = await fetchEarnings(symbol).catch(() => null);
+  if (live && live.nextDate) {
+    return { earnings: live, status: { state: "ok", source: "yahoo" } };
+  }
+  // 국내는 실적 예정일 소스가 없다(market_config.js features.earningsCalendar=false).
+  if (kr) {
+    return { earnings: null, status: { state: "unavailable", source: null, reason: "kr_no_earnings_source" } };
+  }
+  const key = String(ticker || "").toUpperCase();
+  const [rows, history] = await Promise.all([
+    loadPublishedEarningsCalendar(),
+    loadPublishedEarningsHistory(key),
+  ]);
+  const today = new Date().toISOString().slice(0, 10);
+  const row = (rows || []).find((r) => String(r?.ticker || "").toUpperCase() === key);
+  const nextDate = row && typeof row.nextDate === "string" && row.nextDate >= today ? row.nextDate : null;
+  if (nextDate || history.length) {
+    return {
+      earnings: {
+        nextDate,
+        dates: nextDate ? [nextDate] : [],
+        epsEstimate: nextDate && row.epsEstimate != null && Number.isFinite(Number(row.epsEstimate)) ? Number(row.epsEstimate) : null,
+        history,
+      },
+      status: {
+        state: nextDate ? "fallback" : "partial",
+        source: "mir-published",
+        reason: live ? "yahoo_no_next_date" : "yahoo_unavailable",
+        ...(nextDate ? {} : { note: "다음 실적일 데이터 없음" }),
+      },
+    };
+  }
+  return {
+    earnings: null,
+    status: { state: "unavailable", source: null, reason: live ? "yahoo_no_next_date" : "yahoo_unavailable", note: "실적 데이터 없음" },
+  };
+}
+
 async function fetchEarningsCalendar(tickers) {
   const out = [];
   // crumb 세션이 죽어 있으면 배치 전체가 401 이다 — 티커당 세 번씩 두드리지 않고 끝낸다.
@@ -1629,18 +1725,65 @@ export function resolveIndexChangePct(price, prevClose, closes) {
   return { changePct: seriesChangePct, source: "series", seriesChangePct };
 }
 
+// ^KS11/^KQ11 의 가격·등락률 기준 소스는 **네이버 m.stock 지수 API** 다(2026-09-16 재감사).
+// 국내 모드 스냅샷(update_korea_data.py fetch_kr_index_quotes)이 같은 API 를 쓰므로
+// 미국 모드 지수 띠와 국내 모드 지수 카드가 같은 숫자를 낸다. 야후 ^KQ11 의
+// chartPreviousClose 는 하루 밀린 값을 주는 날이 반복됐다 — 09-15 812.41 에 −1.00%
+// (참값 +0.70, prev 820.64), 09-16 815.98 에 +1.14%(참값 +0.44, prev 806.79).
+// 야후는 스파크라인 시리즈만 쓰고, 네이버가 실패할 때만 가격·등락률 폴백이다.
+export const KR_INDEX_NAVER_CODES = { "^KS11": "KOSPI", "^KQ11": "KOSDAQ" };
+
+export function parseNaverIndexBasic(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  const num = (v) => {
+    const n = Number(String(v ?? "").replace(/,/g, "").trim());
+    return String(v ?? "").trim() !== "" && Number.isFinite(n) ? n : null;
+  };
+  const price = num(payload.closePrice);
+  let changePct = num(payload.fluctuationsRatio);
+  if (price == null || price <= 0 || changePct == null) return null;
+  // 하락일에 부호 없이 오는 응답에 대비해 방향 코드로 부호를 맞춘다.
+  const dir = String(payload.compareToPreviousPrice?.name || "").toUpperCase();
+  if ((dir === "FALLING" || dir === "LOWER_LIMIT") && changePct > 0) changePct = -changePct;
+  if ((dir === "RISING" || dir === "UPPER_LIMIT") && changePct < 0) changePct = -changePct;
+  return { price, changePct };
+}
+
+async function fetchNaverIndexQuote(code) {
+  try {
+    const r = await fetchT(`https://m.stock.naver.com/api/index/${encodeURIComponent(code)}/basic`, {
+      headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" },
+    });
+    if (!r.ok) return null;
+    return parseNaverIndexBasic(await r.json());
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fetchIndices() {
   const out = [];
   await Promise.all(INDEX_LIST.map(async ([symbol, name]) => {
     try {
-      const r = await fetchT(
-        `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m`,
-        { headers: UA }
-      );
-      if (!r.ok) return;
-      const data = await r.json();
-      const res = data && data.chart && data.chart.result && data.chart.result[0];
-      if (!res) return;
+      const naverCode = KR_INDEX_NAVER_CODES[symbol];
+      const naverPromise = naverCode ? fetchNaverIndexQuote(naverCode) : Promise.resolve(null);
+      let res = null;
+      try {
+        const r = await fetchT(
+          `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=1d&interval=5m`,
+          { headers: UA }
+        );
+        const data = r.ok ? await r.json() : null;
+        res = (data && data.chart && data.chart.result && data.chart.result[0]) || null;
+      } catch (e) {
+        res = null;
+      }
+      if (!res) {
+        // 야후가 죽어도 KR 지수는 네이버 값만으로 카드를 채운다(시리즈는 비움).
+        const naver = await naverPromise;
+        if (naver) out.push({ symbol, name, price: round(naver.price), changePct: Math.round(naver.changePct * 100) / 100, changePctSource: "naver", changePctPolicy: "naver-primary", series: [] });
+        return;
+      }
       const meta = res.meta || {};
       const q = (res.indicators && res.indicators.quote && res.indicators.quote[0]) || {};
       const closes = (q.close || []).filter((v) => v != null);
@@ -1653,12 +1796,18 @@ async function fetchIndices() {
       if (source === "meta" && seriesChangePct != null && Math.abs(changePct - seriesChangePct) > INDEX_SERIES_DIVERGENCE_PP) {
         console.error(`index changePct divergence: ${symbol} meta=${changePct.toFixed(2)} series=${seriesChangePct.toFixed(2)} prevClose=${prevClose}`);
       }
+      const naver = await naverPromise;
+      if (naverCode && !naver) {
+        console.error(`KR index naver quote failed: ${symbol} — yahoo ${source} 폴백`);
+      }
       out.push({
         symbol,
         name,
-        price: round(price),
-        changePct: Math.round(changePct * 100) / 100,
-        changePctSource: source,
+        price: round(naver ? naver.price : price),
+        changePct: Math.round((naver ? naver.changePct : changePct) * 100) / 100,
+        changePctSource: naver ? "naver" : source,
+        // 배포 게이트(check_kr_index_parity.py)가 '네이버 기준 워커' 인지 구분하는 표식.
+        ...(naverCode ? { changePctPolicy: "naver-primary" } : {}),
         series: closes.map(round),
       });
     } catch (e) {

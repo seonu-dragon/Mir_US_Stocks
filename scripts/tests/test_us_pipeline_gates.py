@@ -239,3 +239,92 @@ def test_us_close_pipelines_call_the_guard():
     for rel in ("update_data.py", "briefings/us_close/main.py"):
         src = (SCRIPTS / rel).read_text(encoding="utf-8")
         assert "require_us_market_closed" in src, f"{rel}: ET 가드 호출이 없다"
+
+
+# --------------------------------------------------------------------------
+# 5. US 마감 브리핑 fail-closed — Gemini 본문이 비면 발행·완료 알림 없이 실패
+# --------------------------------------------------------------------------
+# 2026-09-16 재감사: 코드는 바뀌었지만 수정 이후 정기 실행은 전부 정상 본문이라
+# 이 분기가 실제로 동작한다는 증거가 없었다. 실운영 대신 여기서 끝까지 태운다.
+# 스크레이퍼·발행·텔레그램을 가짜 모듈로 바꿔 끼운 **별도 프로세스**에서 main 을
+# 실행한다(평면 모듈명 scrapers/config 가 국내 브리핑 테스트와 섞이지 않게).
+
+_US_CLOSE_DRIVER = r'''
+import sys, types, json
+from pathlib import Path
+pkg = Path(sys.argv[1])
+calls = {"publish": 0, "status": [], "telegram": 0, "congress": 0}
+
+def mod(name, **attrs):
+    m = types.ModuleType(name); m.__dict__.update(attrs); sys.modules[name] = m
+
+mod("scrapers",
+    fetch_us_indices=lambda: {"S&P 500": {"close": 6000.0, "change": 10.0, "change_pct": 0.17}},
+    fetch_macro_indicators=lambda: {}, fetch_sector_etf_performance=lambda: {},
+    fetch_us_news=lambda: [], fetch_reddit_trending=lambda: [],
+    fetch_stocktwits_trending=lambda: [], fetch_yahoo_trending=lambda: [])
+mod("config", GEMINI_API_KEY="dummy", validate_config=lambda **k: None)
+def _publish(*a, **k):
+    calls["publish"] += 1; return True
+mod("publish", publish_briefing_to_site=_publish)
+def _congress():
+    calls["congress"] += 1
+mod("schedules", build_congress_trades_safe=_congress)
+def _tg(*a, **k):
+    calls["telegram"] += 1; return True
+mod("telegram_bot", send_telegram_message=_tg,
+    notify_briefing_status=lambda label, state: calls["status"].append(state))
+mod("sec_client", require_us_market_closed=lambda label: None)
+mod("requests")
+
+import importlib.util
+spec = importlib.util.spec_from_file_location("us_close_main", pkg / "main.py")
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+ai_text = sys.argv[2]
+m.generate_us_close_analysis = lambda raw: ai_text
+sys.argv = ["main.py"]
+code = 0
+try:
+    m._run_with_telegram_status()
+except SystemExit as e:
+    code = e.code if isinstance(e.code, int) else 1
+    if not isinstance(e.code, int):
+        print(str(e.code))
+except Exception:
+    import traceback; traceback.print_exc(file=sys.stdout)
+    code = 2
+print("RESULT " + json.dumps({"code": code, **calls}))
+'''
+
+
+def _run_us_close_driver(tmp_path, ai_text):
+    import subprocess
+    import sys as _sys
+    from pathlib import Path as _P
+
+    driver = tmp_path / "driver.py"
+    driver.write_text(_US_CLOSE_DRIVER, encoding="utf-8")
+    pkg = _P(__file__).resolve().parents[1] / "briefings" / "us_close"
+    proc = subprocess.run([_sys.executable, str(driver), str(pkg), ai_text],
+                          capture_output=True, text=True, encoding="utf-8", timeout=60)
+    line = next((l for l in proc.stdout.splitlines() if l.startswith("RESULT ")), None)
+    assert line, f"driver 출력 없음\nstdout={proc.stdout}\nstderr={proc.stderr}"
+    return {**json.loads(line[len("RESULT "):]), "stdout": proc.stdout}
+
+
+@pytest.mark.parametrize("ai_text", ["", "   \n  "])
+def test_us_close_empty_ai_body_fails_closed(tmp_path, ai_text):
+    r = _run_us_close_driver(tmp_path, ai_text)
+    assert r["code"] == 1, f"fail-closed SystemExit 가 아니다(2=다른 예외): {r}"
+    assert "Gemini 응답이 비어" in r["stdout"], "중단 사유가 fail-closed 분기가 아니다"
+    assert r["publish"] == 0, "플레이스홀더를 발행했다"
+    assert r["congress"] == 0
+    assert r["status"] == ["start", "failed"], f"실패 알림이 아니다: {r['status']}"
+
+
+def test_us_close_normal_body_publishes(tmp_path):
+    r = _run_us_close_driver(tmp_path, "<b>정상 본문</b>")
+    assert r["code"] in (0, None)
+    assert r["publish"] == 1
+    assert r["status"] == ["start", "complete"]

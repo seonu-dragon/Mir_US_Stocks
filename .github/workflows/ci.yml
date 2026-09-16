@@ -76,6 +76,11 @@ jobs:
           set -e
           for f in *.js worker/*.js; do node --check "$f"; done
 
+      # 워커 단위 테스트(네트워크 없음 — fetch 목). 워커는 대시보드 수동 배포라 CI 가
+      # 유일한 자동 검증이다. KR 지수 네이버 기준·실적 폴백 가용성 테스트 포함.
+      - name: Worker tests
+        run: node worker/test_worker.mjs
+
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)
         run: |

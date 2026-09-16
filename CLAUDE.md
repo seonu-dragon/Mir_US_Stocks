@@ -212,4 +212,13 @@ exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P
   있으면 `/community*` 를 인스턴스 하나로 직렬화, 없으면 기존 KV + 재시도 경로.
   바인딩을 안 넣어도 아무것도 깨지지 않는다.
 - 워커를 고쳤으면: `node --check worker/yahoo-proxy.js` + `node worker/test_worker.mjs`
-  (네트워크 없이 게이트·저장소 계층만 검증).
+  (네트워크 없이 게이트·저장소 계층만 검증). CI 도 같은 테스트를 돌린다.
+- `?indices=` 의 **^KS11/^KQ11 가격·등락률은 네이버 m.stock 지수 API 기준**이다
+  (국내 스냅샷과 같은 소스, 2026-09-16). 야후 ^KQ11 `chartPreviousClose` 가 하루 밀린
+  날이 반복됐다. 야후는 스파크라인 시리즈와 네이버 실패 시 폴백만. 두 모드가 다시
+  갈라지면 `deploy-pages.yml` 의 `scripts/check_kr_index_parity.py` 가 배포를 멈춘다
+  (같은 세션 가격인데 0.2%p 이상 차이일 때만. 옛 워커면 경고만).
+- `?ticker=` 의 `earnings` 는 야후 crumb 이 죽으면 발행된 `data/earnings_calendar.json`
+  + `data/details/<T>.json` 의 `earningsHistory` 로 채운다. 그래도 없으면 `earnings: null`
+  이고 `earningsStatus.state` 가 `unavailable` 이다 — `earnings` 를 빈 객체로 바꾸지 말 것
+  (프론트가 truthy 면 라이브 값으로 캐시해 정적 캘린더 폴백을 가린다).

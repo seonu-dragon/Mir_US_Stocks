@@ -35,6 +35,8 @@ import {
   looksDegenerateReply,
   resetYahooSessionState,
   resolveIndexChangePct,
+  parseNaverIndexBasic,
+  resetPublishedEarningsMemo,
   resolveModelOverride,
   withLastGood,
   parseQuoteState,
@@ -879,11 +881,62 @@ await test("indices: 심볼당 1회만 부르고 같은 응답의 meta 로 등�
     return yahooChart([100, 101, 102]);
   }, async (calls) => {
     const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
-    eq(calls.length, 8, "INDEX_LIST 8종 × 1회 (별도 일봉 호출 없음)");
+    eq(calls.filter((c) => c.url.includes("finance.yahoo.com")).length, 8, "INDEX_LIST 8종 × 1회 (별도 일봉 호출 없음)");
+    eq(calls.filter((c) => c.url.includes("m.stock.naver.com")).length, 2, "KR 지수 2종만 네이버 1회씩");
+    // 이 목은 네이버 응답을 주지 않으므로(차트 JSON) 야후 meta 폴백 경로를 본다.
     const kospi = data.indices.find((i) => i.symbol === "^KS11");
     eq(kospi.changePct, -3.26, "meta 기준 참값 — 시리즈와 벌어져도 뒤집지 않는다");
     eq(kospi.changePctSource, "meta", "어느 쪽을 썼는지 응답에 표기");
   });
+});
+
+await test("indices: KR 지수는 네이버 m.stock 값이 기준이다 — 야후 prevClose 가 밀린 날에도 국내 스냅샷과 같다", async () => {
+  const env = kvEnv();
+  await withMockFetch((url) => {
+    if (url.includes("m.stock.naver.com/api/index/KOSDAQ/basic")) {
+      return jsonResp({ closePrice: "815.98", fluctuationsRatio: "0.44", compareToPreviousPrice: { code: "2", name: "RISING" } });
+    }
+    if (url.includes("m.stock.naver.com/api/index/KOSPI/basic")) {
+      return jsonResp({ closePrice: "6,627.26", fluctuationsRatio: "-0.85", compareToPreviousPrice: { code: "5", name: "FALLING" } });
+    }
+    if (url.includes("%5EKQ11")) {
+      // 2026-09-16 라이브 재현: 야후 chartPreviousClose 806.79(하루 밀림) → +1.14%. 참값 +0.44.
+      return jsonResp({ chart: { result: [{ meta: { regularMarketPrice: 815.98, chartPreviousClose: 806.79 }, indicators: { quote: [{ close: [806.97, 815.98] }] } }] } });
+    }
+    return yahooChart([100, 101, 102]);
+  }, async () => {
+    const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
+    const kosdaq = data.indices.find((i) => i.symbol === "^KQ11");
+    eq(kosdaq.changePct, 0.44, "네이버 등락률");
+    eq(kosdaq.price, 815.98, "네이버 가격");
+    eq(kosdaq.changePctSource, "naver", "출처 표기");
+    deepEq(kosdaq.series, [806.97, 815.98], "스파크라인은 야후 시리즈 그대로");
+    const kospi = data.indices.find((i) => i.symbol === "^KS11");
+    eq(kospi.price, 6627.26, "천 단위 쉼표 파싱");
+    eq(kospi.changePct, -0.85, "하락 부호");
+    eq(data.indices.find((i) => i.symbol === "^DJI").changePctSource, "meta", "미국 지수는 그대로 야후");
+  });
+});
+
+await test("indices: 야후가 죽어도 KR 지수는 네이버 값으로 나온다(시리즈 빈 배열)", async () => {
+  const env = kvEnv();
+  await withMockFetch((url) => {
+    if (url.includes("m.stock.naver.com")) return jsonResp({ closePrice: "812.41", fluctuationsRatio: "0.70", compareToPreviousPrice: { name: "RISING" } });
+    throw new TypeError("yahoo down");
+  }, async () => {
+    const data = await (await handleFetch(req("https://w/?indices=1"), env)).json();
+    const rows = data.indices.filter((i) => i.changePctSource === "naver");
+    eq(rows.length, 2, "KR 2종");
+    deepEq(rows[0].series, [], "시리즈 없음");
+  });
+});
+
+await test("parseNaverIndexBasic: 부호 없는 하락·빈 값·0 가격을 걸러낸다", () => {
+  eq(parseNaverIndexBasic({ closePrice: "800", fluctuationsRatio: "1.2", compareToPreviousPrice: { name: "FALLING" } }).changePct, -1.2, "방향 코드로 부호 보정");
+  eq(parseNaverIndexBasic({ closePrice: "", fluctuationsRatio: "1.2" }), null, "가격 없음");
+  eq(parseNaverIndexBasic({ closePrice: "0", fluctuationsRatio: "0" }), null, "0 가격");
+  eq(parseNaverIndexBasic(null), null, "null");
+  eq(parseNaverIndexBasic({ closePrice: "800", fluctuationsRatio: "0.00", compareToPreviousPrice: { name: "EVEN" } }).changePct, 0, "보합");
 });
 
 await test("indices: prevClose 가 없으면 시리즈 폴백이고 changePctSource 가 series 로 표시된다", async () => {
@@ -988,16 +1041,76 @@ await test("?earnings_probe=1 은 관리자 키 뒤에 있다(무인증이면 �
   });
 });
 
-await test("crumb 부트스트랩 실패는 음성 캐시된다 — earnings 는 추가 호출 없이 null", async () => {
+// 호출 게이트 테스트: 여기서 보는 건 "crumb 이 죽었을 때 야후를 더 두드리지 않는다" 뿐이다.
+// earnings 가 null 인 건 폴백 소스까지 전부 403 인 목이라서다 — 데이터가 있어야 하는
+// 상황의 가용성은 아래 '실적 가용성' 테스트들이 따로 본다(2026-09-16 재감사).
+await test("crumb 부트스트랩 실패는 음성 캐시된다 — 야후 실적 호출을 추가로 하지 않는다", async () => {
   resetYahooSessionState();
+  resetPublishedEarningsMemo();
   await withMockFetch(() => new Response("", { status: 403 }), async (calls) => {
     const data = await (await handleFetch(req("https://w/?ticker=AAPL"), kvEnv())).json();
-    eq(data.earnings, null, "earnings null");
+    eq(data.earnings, null, "모든 소스가 죽은 목에서는 earnings null");
+    eq(data.earningsStatus.state, "unavailable", "null 이어도 상태는 명시");
     ok(calls.some((c) => /fc\.yahoo\.com|guce\.yahoo\.com/.test(c.url)), "첫 요청은 부트스트랩을 시도한다");
     calls.length = 0;
     await handleFetch(req("https://w/?ticker=MSFT"), kvEnv());
     ok(!calls.some((c) => /fc\.yahoo\.com|guce\.yahoo\.com|getcrumb/.test(c.url)), `5분간 재부트스트랩 금지: ${calls.map((c) => c.url).join(" ")}`);
     ok(!calls.some((c) => c.url.includes("quoteSummary") || c.url.includes("visualization")), "crumb 없으면 실적 호출도 안 한다");
+  });
+  resetYahooSessionState();
+});
+
+await test("실적 가용성: 야후 crumb 이 죽어도 발행된 실적 캘린더·details 로 nextDate 와 history 를 준다", async () => {
+  resetYahooSessionState();
+  resetPublishedEarningsMemo();
+  const future = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
+  await withMockFetch((url) => {
+    if (url.endsWith("/data/earnings_calendar.json")) {
+      return jsonResp({ earnings: [{ ticker: "NVDA", nextDate: future, epsEstimate: 2.4727 }, { ticker: "OLD", nextDate: "2020-01-01" }] });
+    }
+    if (url.endsWith("/data/details/NVDA.json")) {
+      return jsonResp({ earningsHistory: [
+        { date: "2025-02-26", epsActual: 0.89, epsEstimate: 0.85, surprisePct: 5.25 },
+        { date: "2025-05-28", epsActual: 0.96, epsEstimate: 0.93, surprisePct: 3.1 },
+      ] });
+    }
+    return new Response("", { status: 403 });
+  }, async () => {
+    const data = await (await handleFetch(req("https://w/?ticker=NVDA"), kvEnv())).json();
+    eq(data.earnings.nextDate, future, "캘린더 nextDate");
+    eq(data.earnings.epsEstimate, 2.4727, "EPS 예상");
+    eq(data.earnings.history[0].date, "2025-05-28", "history 최신순");
+    eq(data.earningsStatus.state, "fallback", "폴백 상태");
+    eq(data.earningsStatus.source, "mir-published", "출처");
+  });
+  resetYahooSessionState();
+  resetPublishedEarningsMemo();
+});
+
+await test("실적 가용성: 지난 날짜만 있고 이력도 없으면 earnings null + '데이터 없음' 상태", async () => {
+  resetYahooSessionState();
+  resetPublishedEarningsMemo();
+  await withMockFetch((url) => {
+    if (url.endsWith("/data/earnings_calendar.json")) return jsonResp({ earnings: [{ ticker: "OLD", nextDate: "2020-01-01" }] });
+    return new Response("", { status: 404 });
+  }, async () => {
+    const data = await (await handleFetch(req("https://w/?ticker=OLD"), kvEnv())).json();
+    eq(data.earnings, null, "지난 실적일을 다음 실적일로 내보내지 않는다");
+    eq(data.earningsStatus.state, "unavailable", "상태");
+    eq(data.earningsStatus.note, "실적 데이터 없음", "명시 문구");
+  });
+  resetYahooSessionState();
+  resetPublishedEarningsMemo();
+});
+
+await test("실적 가용성: 국내 종목은 폴백 소스가 없어 발행 파일을 부르지 않고 상태만 명시", async () => {
+  resetYahooSessionState();
+  resetPublishedEarningsMemo();
+  await withMockFetch(() => new Response("", { status: 403 }), async (calls) => {
+    const data = await (await handleFetch(req("https://w/?ticker=005930.KS"), kvEnv())).json();
+    eq(data.earnings, null, "null");
+    eq(data.earningsStatus.reason, "kr_no_earnings_source", "사유");
+    ok(!calls.some((c) => c.url.includes("github.io")), "Pages 호출 없음");
   });
   resetYahooSessionState();
 });

@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=416ff7f90a" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=416ff7f90a"></noscript>
+    <link rel="preload" href="styles.css?v=5fdb366f80" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=5fdb366f80"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d934e2fabc"></script>
+    <script src="build_id.js?v=b3eb9cc25f"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2747,7 +2747,10 @@ html[data-theme="dark"] {
             <strong>미르 도우미</strong>
             <span class="chat-sub">사이트 사용법 · 용어 설명</span>
           </div>
-          <button class="chat-close" id="chatClose" type="button" aria-label="닫기">✕</button>
+          <div class="chat-head-actions">
+            <button class="chat-hide-fab" id="chatHideFab" type="button" title="이번 방문 동안 챗봇 버튼을 숨깁니다">버튼 숨기기</button>
+            <button class="chat-close" id="chatClose" type="button" aria-label="닫기">✕</button>
+          </div>
         </div>
         <div class="chat-log" id="chatLog"></div>
         <div class="chat-suggest" id="chatSuggest"></div>
@@ -2798,7 +2801,7 @@ html[data-theme="dark"] {
     <script src="markets-etf.js?v=ea2db74494"></script>
     <script src="kr-panels.js?v=9fccfac25f"></script>
     <script src="watchlist.js?v=638b0c099e"></script>
-    <script src="app.js?v=3c8d6e0fd8"></script>
+    <script src="app.js?v=1a7cd2e78a"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

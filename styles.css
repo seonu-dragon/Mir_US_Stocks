@@ -12871,9 +12871,6 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 @media (max-width: 1200px) {
   .ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds, .segmented.ia-seg-strip {
     display: flex; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent);
-    padding-right: 36px;
   }
   .ia-sub-tabs::-webkit-scrollbar, .ia-seg-strip::-webkit-scrollbar { display: none; }
   .ia-seg-strip .sub-tab, .ia-seg button, .sub-tab, .segmented button { flex: 0 0 auto; white-space: nowrap; min-height: 44px; }
@@ -13165,12 +13162,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .index-strip.ia-index-compact .index-head strong { font-size: var(--fs-cap); letter-spacing: -0.02em; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .index-strip.ia-index-compact .index-head em { font-size: var(--fs-cap); letter-spacing: -0.02em; white-space: nowrap; margin-left: auto; }
   .index-strip.ia-index-compact .index-price { font-size: var(--fs-body); }
-  /* 세그먼트 가로 스크롤 힌트: 페이드를 넓히고 끝에 여백 */
-  .ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds, .segmented.ia-seg-strip {
-    -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent);
-    mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent);
-    padding-right: 48px;
-  }
+  /* 세그먼트 가로 스크롤 힌트는 파일 끝 '가로 스트립 넘침 힌트'(JS 가 넘치는 방향만 표시)로 옮겼다. */
   /* AI 브리핑 종류 버튼 30px → 40px */
   button[data-key$="_premarket"], button[data-key$="_close"] { min-height: 40px; }
   /* 긴 목록 '더 보기' 버튼 */
@@ -13268,3 +13260,70 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
     line-height: 1.4;
   }
 }
+
+/* ==========================================================================
+   재감사 2026-09-16 UX 보정 — 파일 끝에 두어 앞선 규칙을 덮는다
+   ========================================================================== */
+
+/* --- 가로 스트립 넘침 힌트(app.js setupScrollStripHints) ---
+   넘치는 방향에만 페이드. 예전의 상시 오른쪽 페이드는 넘치지 않을 때도 마지막 항목을 흐렸고,
+   끝까지 밀어도 그대로라 '더 있음' 신호가 되지 못했다. :is() 는 목록 중 가장 강한(id) 특이도를
+   가지므로 #sectorSubTabs 등의 id 규칙보다 뒤에서 이긴다. */
+:is(.ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds).is-overflow-right {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 44px), transparent);
+}
+:is(.ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds).is-overflow-left {
+  -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+  mask-image: linear-gradient(to left, #000 calc(100% - 44px), transparent);
+}
+:is(.ia-sub-tabs, .ia-seg-strip, #sectorSubTabs, #calendarSubTabs, #communitySubTabs, #krOwnKinds).is-overflow-left.is-overflow-right {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+  mask-image: linear-gradient(to right, transparent, #000 44px, #000 calc(100% - 44px), transparent);
+}
+/* 좁은 폰에서는 밑줄형 서브탭 좌우 여백을 줄여 4개가 한 줄에 들어가게 한다(320px 에서 '시그널'이 밖이었다). */
+@media (max-width: 420px) {
+  .ia-sub-tabs .sub-tab { padding-left: 12px; padding-right: 12px; }
+}
+@media (max-width: 360px) {
+  .ia-sub-tabs .sub-tab { padding-left: 9px; padding-right: 9px; }
+}
+
+/* --- 히어로 검색: 폰의 오늘 밖 탭에서는 한 줄 검색창만 ---
+   data-main-tab 은 app.js activateTab 이 <html> 에 단다. 시장·종목 화면에서 제목·설명·추천 칩이
+   318px 를 차지해 트리맵·지수 카드가 첫 화면 밖으로 밀렸다. */
+@media (max-width: 900px) {
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-section { padding: 6px 0 10px; margin-bottom: 8px; border-bottom: 0; }
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-title,
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-subtitle,
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-suggestions { display: none; }
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-bar { margin-bottom: 0; padding: 4px; }
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-bar input { padding: 8px 14px; }
+  :root[data-main-tab]:not([data-main-tab="today"]) .home-search-bar button { padding: 8px 18px; }
+}
+
+/* --- 챗봇 FAB: 한 번에 한 컨트롤만 ---
+   숨기기 ✕ 는 마우스를 올리거나 키보드 포커스가 FAB 에 있을 때만 드러난다(visibility 라 그 전엔
+   접근성 트리에도 없다). 터치 기기에선 아예 빼고, 열린 패널 머리의 '버튼 숨기기'를 쓴다. */
+.chat-dismiss { visibility: hidden; opacity: 0; transition: opacity 0.15s ease, visibility 0s linear 0.15s; }
+.chat-fab-wrap:hover .chat-dismiss,
+.chat-fab-wrap:focus-within .chat-dismiss { visibility: visible; opacity: 1; transition: opacity 0.15s ease; }
+@media (hover: none), (max-width: 640px) {
+  .chat-dismiss { display: none; }
+}
+/* 패널이 열리면 app.js 가 FAB 에 hidden 을 거는데, 위의 display:inline-flex 가 이겨 보조기기엔 '열기'가 남았다. */
+.chatbot .chat-fab.ia-chat-fab[hidden] { display: none; }
+.chat-head-actions { display: flex; align-items: center; gap: 4px; }
+.chat-hide-fab { min-height: 32px; padding: 0 10px; border: 1px solid var(--line); border-radius: var(--r-pill); background: transparent; color: var(--muted); font-size: var(--fs-cap); font-weight: 500; cursor: pointer; white-space: nowrap; }
+.chat-hide-fab:hover { color: var(--text); border-color: var(--muted); }
+@media (max-width: 640px) {
+  /* 폰: 44 → 40px, 모서리에 더 붙여 카드·필터를 덜 가린다. 본문 하단 여백(96px)은 위 규칙 그대로. */
+  .chatbot:not(.is-chat-open) { right: 10px; }
+  .chatbot .chat-fab.ia-chat-fab { width: 40px; height: 40px; box-shadow: 0 6px 16px rgba(15, 23, 42, 0.24); }
+  .chatbot .chat-fab.ia-chat-fab .ia-chat-glyph { width: 20px; height: 20px; }
+  .chat-hide-fab { min-height: 44px; border-color: transparent; }
+}
+
+/* --- 국내 지수 카드: 'ETF 근사' 는 추이선의 캡션 --- */
+.index-spark-wrap { position: relative; }
+.index-spark-note { display: block; margin-top: 2px; text-align: right; color: var(--muted); font-size: var(--fs-cap); line-height: 1.3; cursor: help; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

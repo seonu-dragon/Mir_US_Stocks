@@ -16,7 +16,8 @@ for _path in (_COMMON_DIR, _PKG_DIR):
 
 from scrapers import fetch_indices, fetch_investor_trends, fetch_market_news, has_market_data
 from config import GEMINI_API_KEY, validate_config
-from kr_context import NO_FABRICATION_RULE, macro_context_text
+from kr_context import CAUSAL_CLAIM_RULE, NO_FABRICATION_RULE, macro_context_text
+from briefing_lint import gate_briefing
 from publish import publish_briefing_to_site
 from telegram_bot import send_telegram_message, notify_briefing_status
 
@@ -24,8 +25,11 @@ if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
 
-def generate_market_gemini_analysis(raw_data_text):
-    """Gemini API를 호출하여 장마감 시황 데이터를 분석해 심층 보고서를 작성합니다."""
+def generate_market_gemini_analysis(raw_data_text, feedback=""):
+    """Gemini API를 호출하여 장마감 시황 데이터를 분석해 심층 보고서를 작성합니다.
+
+    feedback: 발행 전 관문(briefing_lint)이 반려한 문장 목록. 재생성 때만 붙는다.
+    """
     if not GEMINI_API_KEY:
         # 키가 없으면 '플레이스홀더 발행 + exit 0' 이 아니라 잡을 빨갛게 만든다.
         # 예전엔 "AI 요약 분석을 생성할 수 없습니다." 가 사이트에 그대로 발행됐다.
@@ -38,27 +42,30 @@ def generate_market_gemini_analysis(raw_data_text):
 [원천 데이터]
 {raw_data_text}
 {NO_FABRICATION_RULE}
+{CAUSAL_CLAIM_RULE}
 [작성 지침 (절대 엄수)]
-1. 당일 코스피/코스닥 지수의 움직임과 메이저 수급 주체(특히 외국인과 기관)의 수급 흐름을 날카롭게 연계하여 요약해라.
+1. 당일 코스피/코스닥 지수의 움직임과 메이저 수급 주체(특히 외국인과 기관)의 순매수 금액을 연계하여 요약해라. 원인은 위 [원인·테마 서술 규칙]을 따른다.
 2. 최종 출력 서식은 반드시 **텔레그램 호환 HTML 태그**로 작성해라. (Markdown 기호 *, **, # 등 사용 금지. <b>, <i>, <code>, <pre>, <blockquote>, <a> 등만 허용)
 3. 레이아웃 규격 (반드시 다음 대제목 구조를 그대로 지켜서 한글로 작성해라. 지구본 이모지 🌐는 절대 쓰지 마라. 구조화된 개행과 계층 표시를 위해 ├─, └─ 특수문자를 적절히 활용해라):
 
 📈 <b>오늘의 코스피 & 코스닥 시황 요약</b>
-├─ <b>코스피:</b> (코스피 지수의 변동 흐름과 주요 상승/하락 원인 분석 2~3줄)
-└─ <b>코스닥:</b> (코스닥 지수의 변동 흐름과 주요 코스닥 시총 상위주 움직임 연계 분석 2~3줄)
+├─ <b>코스피:</b> (코스피 종가·등락률과 수급 수치로 확인되는 흐름 2~3줄. 헤드라인·수치로 뒷받침되지 않는 원인은 쓰지 마라)
+└─ <b>코스닥:</b> (코스닥 종가·등락률과 코스피 대비 상대 흐름 2~3줄. 개별 종목·시총 상위주 데이터는 없으니 언급하지 마라)
 
 👥 <b>투자 주체별 수급 동향 해설</b>
 ├─ <b>수급 상황:</b> (개인, 외국인, 기관의 순매수 내역을 바탕으로 메이저 수급이 가리키는 시장의 방향성 분석)
-└─ <b>매매 특징:</b> (외국인과 기관이 오늘 증시를 사거나 판 주된 배경과 집중했을 것으로 추정되는 업종/테마 분석 2~3줄)
+└─ <b>매매 특징:</b> (시장별로 외국인·기관·개인 중 누가 가장 크게 사고팔았는지 금액으로 비교 2~3줄. 업종·테마별 수급 데이터는 없으니 추정하지 마라. 매매 배경은 헤드라인에 근거가 있을 때만 핵심 단어를 인용해 쓰고, 없으면 '가능성' 으로 표현하거나 생략)
 
-📰 <b>오늘의 핵심 뉴스 & 주도 테마 분석</b>
-├─ <b>주요 이슈:</b> (제공된 뉴스 헤드라인들을 바탕으로 당일 시장을 뒤흔든 핵심 거시 경제 변수나 기업 이슈 요약)
-└─ <b>주도 테마:</b> (오늘 상승률이 눈에 띄거나 시장의 거래량이 집중된 주도 테마/섹터 분석)
+📰 <b>오늘의 핵심 뉴스 점검</b>
+├─ <b>주요 이슈:</b> (제공된 뉴스 헤드라인에 **적힌 사실만** 2~3개 요약. 헤드라인에 없는 배경·수치를 덧붙이지 마라)
+└─ <b>시장 연관성:</b> (그 이슈가 오늘 지수·수급과 연결될 **가능성**을 '~ 가능성이 있습니다' 형태로 1~2줄. 헤드라인이 없거나 연결 근거가 없으면 "헤드라인만으로는 지수 움직임과의 연관성을 확인하기 어렵습니다" 라고 적어라)
 
 🎯 <b>내일의 증시 전략 및 대응 가이드</b>
 ├─ <b>전략 포인트:</b> (단기/중기 관점에서 개인 투자자가 취해야 할 전략적 포지셔닝 제안)
-└─ <b>유의 사항:</b> (오늘 밤 예정된 미 증시 지표 발표, 환율, 금리 변동 등 내일 장에 영향을 미칠 주요 리스크 및 유의점 2~3줄)
+└─ <b>유의 사항:</b> (원천 데이터의 환율·금리·미 증시 수치와 헤드라인에 나온 일정만 근거로 내일 장의 유의점 2~3줄. 데이터에 없는 지표 발표 일정은 지어내지 마라)
 """
+    if feedback:
+        prompt += f"\n{feedback}\n"
 
     models_config = [
         {"model": "gemini-2.5-flash", "version": "v1beta"},
@@ -68,8 +75,10 @@ def generate_market_gemini_analysis(raw_data_text):
     for cfg in models_config:
         model = cfg["model"]
         version = cfg["version"]
-        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent?key={GEMINI_API_KEY}"
-        headers = {"Content-Type": "application/json"}
+        # API 키는 쿼리스트링이 아니라 x-goog-api-key 헤더로 보낸다 — URL 은
+        # 예외 메시지·프록시 로그에 그대로 찍힌다(us_close 와 같은 방식).
+        url = f"https://generativelanguage.googleapis.com/{version}/models/{model}:generateContent"
+        headers = {"Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY}
         payload = {
             "contents": [
                 {
@@ -288,6 +297,16 @@ def main():
     ai_analysis_text = generate_market_gemini_analysis(raw_data_text)
     if not ai_analysis_text:
         raise RuntimeError("AI 시황 본문이 비어 있다 — 플레이스홀더를 발행하지 않는다")
+
+    # 발행 전 관문: 말더듬 오타는 고치고, 헤드라인·실측으로 뒷받침되지 않는 인과 단정은
+    # 되먹여 한 번 재생성 → 그래도 남으면 해당 문장만 제거, 제거로도 안 되면
+    # BriefingLintError 로 발행 중단(아래 _run_with_telegram_status 가 실패 알림).
+    ai_analysis_text = gate_briefing(
+        ai_analysis_text,
+        [item["title"] for item in news_items],
+        regenerate=lambda fb: generate_market_gemini_analysis(raw_data_text, feedback=fb),
+        label="korea_close",
+    )
     
     # --- Part 2: AI 시황 해설 메시지 조립 ---
     report_lines_part2 = [

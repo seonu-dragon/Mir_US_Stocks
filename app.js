@@ -6430,6 +6430,11 @@ function dataTrustSources() {
         ["수집 실패 기관", `${s13.error.toLocaleString()} / ${s13.total.toLocaleString()}곳${s13.carried ? ` (이전 분기 유지 ${s13.carried.toLocaleString()}곳)` : ""}`],
         ["마지막 정상 분기", s13.lastGoodDate || "확인 불가"],
       ];
+      // 실패 기관이 30% 이상이면 파일이 최신이어도 '정상' 으로 두지 않는다
+      // (2026-09-05 자료는 131곳 중 62곳 실패인데 정상으로 보였다 — 재감사 2026-09-16).
+      if (s13.total && s13.error / s13.total >= 0.3 && row.status.key === "good") {
+        row.status = { ...row.status, key: "warn", label: "일부 수집 실패" };
+      }
     }
     rows.push(row);
   }

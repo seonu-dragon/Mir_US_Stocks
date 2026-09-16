@@ -87,9 +87,26 @@ def test_sleep_is_only_between_attempts(repo, monkeypatch):
     monkeypatch.setattr(subprocess, "run", fake_run)
     monkeypatch.setattr(sec.time, "sleep", lambda s: slept.append(s))
     (repo / "data" / "x.json").write_text('{"v": 9}\n', encoding="utf-8")
-    sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=3, sleep_s=7)
+    sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=3, sleep_s=7, backoff=1)
     # 마지막 시도 뒤에는 자지 않는다.
     assert slept == [7, 7]
+
+
+def test_sleep_backs_off_exponentially_by_default(repo, monkeypatch):
+    """GitHub push 500 같은 서버 쪽 일시 장애를 넘기도록 간격이 늘어난다."""
+    slept = []
+    real_run = subprocess.run
+
+    def fake_run(args, **kwargs):
+        if args[:2] == ["git", "push"]:
+            raise subprocess.CalledProcessError(1, args)
+        return real_run(args, **kwargs)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    monkeypatch.setattr(sec.time, "sleep", lambda s: slept.append(s))
+    (repo / "data" / "x.json").write_text('{"v": 10}\n', encoding="utf-8")
+    assert sec.git_publish(["data/x.json"], "x", cwd=repo) is False
+    assert slept == [10.0, 20.0, 40.0, 80.0]
 
 
 def test_no_remote_is_a_success_without_touching_git(tmp_path):

@@ -384,7 +384,7 @@ def write_data(out_json, out_js, js_var, payload, *, indent=2, allow_empty=False
     )
 
 
-def git_publish(paths, label, *, cwd=None, attempts=3, sleep_s=10.0):
+def git_publish(paths, label, *, cwd=None, attempts=5, sleep_s=10.0, backoff=2.0):
     """data 경로들을 커밋·푸시. paths: 레포 루트 기준 상대경로 리스트.
 
     모든 빌더가 공유하는 유일한 publish 경로다(2026-09-03 통일). 예전엔 13F·내부자·
@@ -393,7 +393,10 @@ def git_publish(paths, label, *, cwd=None, attempts=3, sleep_s=10.0):
     -X theirs 도 없어 스냅샷 충돌 시 세 번 다 실패했다.
 
     cwd: 레포 루트(기본 ROOT). 테스트가 임시 레포를 넘긴다.
-    attempts/sleep_s: 재시도 횟수와 간격(테스트는 0 으로).
+    attempts/sleep_s/backoff: 재시도 횟수, 첫 간격, 간격 배수(테스트는 sleep_s=0).
+      기본 5회·10→20→40→80초. 2026-09-15 Insider trades 가 GitHub 쪽 push 500
+      (Internal Server Error)을 3회·23초 안에 연달아 맞고 그날 발행을 놓쳤다 —
+      서버 쪽 일시 장애는 수십 초~몇 분이라 간격을 늘려야 넘긴다.
     """
     import subprocess
     repo = Path(cwd) if cwd else ROOT
@@ -428,7 +431,7 @@ def git_publish(paths, label, *, cwd=None, attempts=3, sleep_s=10.0):
             if attempt < attempts:
                 print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
                 if sleep_s:
-                    time.sleep(sleep_s)
+                    time.sleep(sleep_s * (backoff ** (attempt - 1)))
     return False
 
 

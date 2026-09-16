@@ -184,6 +184,14 @@ jobs:
             exit 1
           fi
 
+      # KR 지수 정합성 게이트(2026-09-16 재감사). 미국 모드 지수 띠(워커 ?indices=)와
+      # 국내 모드 지수 카드(data/korea/market_snapshot.json)가 **같은 세션 가격**인데
+      # 등락률이 0.2%p 이상 다르면 배포를 멈춘다(KOSDAQ 812.41 이 −1.00% vs +0.70% 로
+      # 동시에 보였던 사례). 다른 세션·워커 장애·옛 워커(대시보드 수동 배포 전)는 경고만.
+      - name: KR index parity gate (worker vs snapshot)
+        if: steps.gate.outputs.deploy != 'false'
+        run: python3 scripts/check_kr_index_parity.py
+
       # 배포본만 번들: _site/ 의 index/analysis/chart_capture.html 이 읽는 classic script 들을
       # 같은 순서로 이어붙여 esbuild 로 압축한 dist/<page>.bundle.js?v=<해시> 하나로 바꾼다.
       # 레포의 HTML 은 그대로(로컬은 빌드 없이 서브). 자세한 건 scripts/build_bundle.mjs 머리말.

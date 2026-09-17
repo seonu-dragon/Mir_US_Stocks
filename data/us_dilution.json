@@ -1,11 +1,110 @@
 {
-  "updatedAtKst": "2026-09-16 18:28 KST",
-  "lastFileDate": "2026-09-15",
+  "updatedAtKst": "2026-09-17 18:37 KST",
+  "lastFileDate": "2026-09-16",
   "partialFetch": false,
-  "count": 642,
+  "count": 653,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
+    {
+      "ticker": "DSP",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "Viant Technology Inc.  (DSP)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1828791/000162828026062297/viant-prosuppx424b5.htm",
+      "accession": "0001628280-26-062297"
+    },
+    {
+      "ticker": "SDEV",
+      "formType": "S-3/A",
+      "formLabel": "일괄신고 정정",
+      "fileDate": "2026-09-16",
+      "title": "Stablecoin Development Corp  (SDEV)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1389545/000143774926030554/sdev20260914_s3a.htm",
+      "accession": "0001437749-26-030554"
+    },
+    {
+      "ticker": "CLNN",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "Clene Inc.  (CLNN)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1822791/000143774926030521/clnn20260911_424b5.htm",
+      "accession": "0001437749-26-030521"
+    },
+    {
+      "ticker": "ABLV",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "Able View Global Inc.  (ABLV, ABLVW)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1957489/000121390026100527/ea0305463-424b5_able.htm",
+      "accession": "0001213900-26-100527"
+    },
+    {
+      "ticker": "HCAI",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "Huachen AI Parking Management Technology Holding Co., Ltd  (HCAI)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1958399/000121390026100374/ea0305325-424b5_huachen.htm",
+      "accession": "0001213900-26-100374"
+    },
+    {
+      "ticker": "JILL",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-09-16",
+      "title": "J.Jill, Inc.  (JILL)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1687932/000119312526393259/d539887ds3.htm",
+      "accession": "0001193125-26-393259"
+    },
+    {
+      "ticker": "BCBP",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "BCB BANCORP INC  (BCBP)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1228454/000119312526393106/d131498d424b5.htm",
+      "accession": "0001193125-26-393106"
+    },
+    {
+      "ticker": "BBNX",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "Beta Bionics, Inc.  (BBNX)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1674632/000119312526392277/d108271d424b5.htm",
+      "accession": "0001193125-26-392277"
+    },
+    {
+      "ticker": "NVT",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "nVent Electric plc  (NVT)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926108238/tm2625115-2_424b5.htm",
+      "accession": "0001104659-26-108238"
+    },
+    {
+      "ticker": "SYY",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-16",
+      "title": "SYSCO CORP  (SYY)",
+      "url": "https://www.sec.gov/Archives/edgar/data/96021/000110465926108068/tm2625144-6_424b5.htm",
+      "accession": "0001104659-26-108068"
+    },
+    {
+      "ticker": "BUSE",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-09-16",
+      "title": "FIRST BUSEY CORP /NV/  (BUSE, BUSEP)",
+      "url": "https://www.sec.gov/Archives/edgar/data/314489/000031448926000061/buse_20260916xs-3xregistra.htm",
+      "accession": "0000314489-26-000061"
+    },
     {
       "ticker": "INBS",
       "formType": "S-3",

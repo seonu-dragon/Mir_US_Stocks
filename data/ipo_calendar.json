@@ -1,11 +1,153 @@
 {
-  "updatedAtKst": "2026-09-16 18:28 KST",
-  "lastFileDate": "2026-09-15",
+  "updatedAtKst": "2026-09-17 18:37 KST",
+  "lastFileDate": "2026-09-16",
   "partialFetch": false,
-  "count": 598,
+  "count": 612,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Cuprina Holdings (Cayman) LTD",
+      "ticker": "CUPR",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-16",
+      "accession": "0001493152-26-042872:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1995704/000149315226042872/form424b4.htm",
+      "offerPrice": 1.15,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "NuvOx Therapeutics, Inc.",
+      "ticker": "NUOX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100586:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1966126/000121390026100586/ea0225257-10.htm"
+    },
+    {
+      "company": "NuvOx Therapeutics, Inc.",
+      "ticker": "NUOX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100586:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1966126/000121390026100586/ea0225257-10.htm"
+    },
+    {
+      "company": "Change Agents Corporation.",
+      "ticker": "CHGA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100576:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1630212/000121390026100576/ea0305711-s1a3_change.htm"
+    },
+    {
+      "company": "Change Agents Corporation.",
+      "ticker": "CHGA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100576:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1630212/000121390026100576/ea0305711-s1a3_change.htm"
+    },
+    {
+      "company": "Dror Ortho-Design, Inc.",
+      "ticker": "DROR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100567:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1282980/000121390026100567/ea0305492-s1a4_drorortho.htm"
+    },
+    {
+      "company": "Dror Ortho-Design, Inc.",
+      "ticker": "DROR",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100567:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1282980/000121390026100567/ea0305492-s1a4_drorortho.htm"
+    },
+    {
+      "company": "CYABRA, INC.",
+      "ticker": "CYAB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100260:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2032341/000121390026100260/ea0305546-s1a2_cyabra.htm"
+    },
+    {
+      "company": "CYABRA, INC.",
+      "ticker": "CYAB",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001213900-26-100260:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2032341/000121390026100260/ea0305546-s1a2_cyabra.htm"
+    },
+    {
+      "company": "Bitwise NEAR ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001193125-26-393240:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2067111/000119312526393240/ck0002067111-20260916.htm"
+    },
+    {
+      "company": "Bitwise NEAR ETF",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001193125-26-393240:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2067111/000119312526393240/ck0002067111-20260916.htm"
+    },
+    {
+      "company": "Lower Cross Acquisitions Corp",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-16",
+      "accession": "0001185185-26-004071:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2147457/000118518526004071/lcacs1091126.htm"
+    },
+    {
+      "company": "New Iceland Arctic Acquisition Corp.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001185185-26-004057:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2148245/000118518526004057/newicelands1a1091526.htm"
+    },
+    {
+      "company": "New Iceland Arctic Acquisition Corp.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-16",
+      "accession": "0001185185-26-004057:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2148245/000118518526004057/newicelands1a1091526.htm"
+    },
     {
       "company": "Canary Staked SEI ETF",
       "ticker": null,

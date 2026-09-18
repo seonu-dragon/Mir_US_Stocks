@@ -964,6 +964,8 @@ function boot(options = {}) {
   const initialTab = route.get("tab");
   const initialSub = route.get("sub");
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
+  // 산업 지표 딥링크(?tab=industry&i=<id>&t=<변환>) — 탭을 그리기 전에 선택 상태만 심는다.
+  if (route.get("i") && typeof industryPreselect === "function") industryPreselect(route.get("i"), route.get("t"));
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
   const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
   const routeTicker = route.get("ticker");
@@ -2051,12 +2053,12 @@ function renderCalendar(events) {
 // 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
 const TAB_GROUP_OF = {
   today: "today", calendar: "today", "ai-briefing": "today",
-  map: "market", sector: "market", health: "market", signals: "market",
+  map: "market", sector: "market", health: "market", signals: "market", industry: "market",
   search: "search", bulk: "bulk", community: "community",
 };
 const GROUP_LEAVES = {
   today: ["today", "ai-briefing", "calendar"],
-  market: ["map", "sector", "health", "signals"],
+  market: ["map", "sector", "health", "signals", "industry"],
 };
 // 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
 const lastGroupLeaf = { today: "today", market: "map" };
@@ -3471,6 +3473,7 @@ function setupEvents() {
 const tabRendered = {};
 const TAB_RENDERERS = {
   sector: () => renderSectors(),
+  industry: () => renderIndustry(),
   bulk: () => { renderBulk(); renderMyInvestSummary(); },
   health: () => renderHealth(),
   "ai-briefing": () => renderAiBriefing(),
@@ -7988,6 +7991,8 @@ async function resolveTickerAcrossMarkets(query) {
 const HOME_ROUTE_RULES = [
   // 시장 지도 / 히트맵 — 페이지 전용어(preempt): 티커 퍼지매칭(코스피→KOSS)보다 먼저 라우팅.
   { tab: "map", preempt: true, keywords: ["히트맵", "트리맵", "시장 지도", "시장지도", "시장 전체", "전체 흐름", "시장 지금", "시장 맵", "heatmap", "treemap", "market map"] },
+  // 산업 선행지표 — 페이지 전용어(preempt). "반도체" 같은 섹터 키워드보다 긴 문구만 잡는다.
+  { tab: "industry", preempt: true, keywords: ["산업지표", "산업 지표", "선행지표", "선행 지표", "산업 선행", "tsmc 매출", "tsmc 월매출", "월매출", "industry indicator", "leading indicator"] },
   // 섹터 흐름 (섹터명 포함)
   { tab: "sector", keywords: ["섹터 흐름", "섹터흐름", "섹터", "업종", "반도체", "2차전지", "이차전지", "배터리", "바이오", "제약", "자동차", "금융", "은행", "방산", "조선", "화학", "인터넷", "게임", "엔터", "sector", "industry"] },
   // 스크리너 (조건 검색) — 페이지 전용어(preempt)

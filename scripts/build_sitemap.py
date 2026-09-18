@@ -132,6 +132,13 @@ def build_xml(limit: int) -> str:
             suffix = "&market=kr" if market == "kr" else ""
             url(f"{BASE}/analysis.html?t={ticker}{suffix}", date, "weekly", "0.5")
 
+    # 산업 지표 딥링크(index.html?tab=industry&i=) — 지표 하나가 URL 하나(기획서 4장).
+    ind_path = ROOT / "data" / "industry_indicators.json"
+    ind = load_json(ind_path) if ind_path.exists() else None
+    if isinstance(ind, dict) and isinstance(ind.get("indicators"), dict):
+        ind_date = str(ind.get("as_of_date") or newest)[:10]
+        for iid in sorted(ind["indicators"]):
+            url(f"{BASE}/index.html?tab=industry&i={iid}", ind_date, "daily", "0.4")
     lines.append("</urlset>")
     lines.append("")
     return "\n".join(lines)

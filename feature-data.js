@@ -225,6 +225,8 @@ function refreshFeatureViews() {
   const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility(), renderTodayRegime];
   // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
+  // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.
+  if (currentTab === "industry" && typeof renderIndustry === "function") calls.push(renderIndustry);
   if (currentTab === "search" && INST_SUBS.includes(searchSubTab)) {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {

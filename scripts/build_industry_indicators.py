@@ -888,6 +888,38 @@ def validate_definitions(indicators: list[dict], categories: list[dict], details
 # ---------------------------------------------------------------------------
 # 빌드
 # ---------------------------------------------------------------------------
+_NAME_CACHE: dict[str, str] = {}
+
+
+def _company_name(r: dict) -> str:
+    key = r.get("ticker") or r.get("code")
+    if key in _NAME_CACHE:
+        return _NAME_CACHE[key]
+    path = (DETAILS_KR if r.get("market") == "kr" else DETAILS_US) / f"{key}.json"
+    try:
+        name = str(json.loads(path.read_text(encoding="utf-8")).get("company") or "").strip()
+    except Exception:
+        name = ""
+    _NAME_CACHE[key] = name
+    return name
+
+
+def recession_periods(series: list[tuple[str, float]]) -> list[dict]:
+    """USREC(1=침체) 월간 더미 → [{start: 'YYYY-MM', end: 'YYYY-MM'|None}] (모든 차트의 침체 음영)."""
+    out: list[dict] = []
+    cur: dict | None = None
+    for k, v in normalize_keys(series, "M"):
+        if v >= 0.5 and cur is None:
+            cur = {"start": k, "end": None}
+        elif v < 0.5 and cur is not None:
+            cur["end"] = k
+            out.append(cur)
+            cur = None
+    if cur is not None:
+        out.append(cur)
+    return out
+
+
 def load_previous() -> dict:
     if OUT_JSON.exists():
         try:
@@ -996,6 +1028,10 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
     if problems:
         return {}, problems
     prev = load_previous()
+    # 관련 종목 표기용 회사명(details 의 company). 미국 모드에서 국내 코드를 회사명으로 보여 주려면 데이터에 있어야 한다.
+    for ind in INDICATORS:
+        for r in ind["related_tickers"]:
+            r["name"] = _company_name(r)
     prev_ind = prev.get("indicators") if isinstance(prev.get("indicators"), dict) else {}
     start_iso = (today - timedelta(days=365 * HISTORY_YEARS + 400)).isoformat()
     built: dict[str, dict] = {}
@@ -1037,8 +1073,16 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
         ids = [i["id"] for i in INDICATORS if c["id"] in i["categories"] and i["id"] in built]
         categories.append({"id": c["id"], "name": c["name"], "sector_etfs": c["sector_etfs"],
                            "chain": [{"stage": s, "members": m} for s, m in c["chain"]], "indicators": ids})
+    recession = None
+    if not only or "fred" in only:
+        try:
+            recession = recession_periods(fetch_fred("USREC", "1985-01-01"))
+        except Exception as exc:  # noqa: BLE001
+            print(f"  [warn] USREC 침체 기간 수집 실패({exc}) — 직전 값 유지")
+    if recession is None:
+        recession = prev.get("recession") or []
     payload = {
-        "updatedAtKst": kst_now_str(), "as_of_date": today.isoformat(),
+        "updatedAtKst": kst_now_str(), "as_of_date": today.isoformat(), "recession": recession,
         "policy": "빌드 시 계산한 서술 통계. 신호등·YoY 는 주가 방향을 뜻하지 않는다(8장). 검증되지 않은 '선행 N개월'은 싣지 않는다.",
         "count": len(built), "failed": failures, "carried": carried,
         "categories": categories, "indicators": built,

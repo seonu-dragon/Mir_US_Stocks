@@ -121,3 +121,32 @@ def test_census_c30_xlsx_reader_finds_data_center_column():
     out = IF.parse_census_c30(rows, "Data center")
     assert out == [("2026-05", 65.688), ("2026-06", 70.755), ("2026-07", 75.166)]
     assert IF.parse_census_c30(rows, "없는 열") == []
+
+
+# ---- P0-c: 리치몬드·캔자스시티 xlsx, World Bank Pink Sheet ----
+def test_excel_serial_to_key():
+    assert IF.excel_serial_to_key("46235") == "2026-08"
+    assert IF.excel_serial_to_key("46235", monthly=False) == "2026-08-01"
+    assert IF.excel_serial_to_key("abc") is None and IF.excel_serial_to_key("5") is None
+
+
+def test_richmond_composite_parses_serial_dates_and_skips_na():
+    rows = [["date", "nsa_mfg_ship_c", "sa_mfg_composite"], ["34274", "4", "#N/A"], ["46235", "9", "-1"], ["46205", "1", "7"]]
+    assert IF.parse_richmond_mfg(rows) == [("2026-07", 7.0), ("2026-08", -1.0)]
+    assert IF.parse_richmond_mfg([["date", "x"]]) == []
+
+
+def test_kcfed_horizontal_layout_uses_first_composite_block():
+    rows = [["Table2"], ["Historical Manufacturing Survey Indexes"], ["", "37103", "37134", "46199", "46229", "46260", "46291"],
+            ["Versus a Month Ago"], ["Composite Index", "-16", "0", "11", "9", "10", ""], ["Versus a Year Ago"], ["Composite Index", "5", "5", "5", "5", "5", "5"]]
+    out = IF.parse_kcfed_mfg(rows)
+    assert out[0] == ("2001-07", -16.0) and out[-1] == ("2026-08", 10.0) and len(out) == 5
+
+
+def test_wb_pink_sheet_finds_column_by_prefix():
+    rows = [["World Bank Commodity Price Data"], [""], [""], ["Updated"],
+            ["", "Crude oil, average", "Urea ", "Potassium chloride **"], ["", "($/bbl)", "($/mt)", "($/mt)"],
+            ["2026M07", "80", "385", "390"], ["2026M08", "84.4", "390", "386.9"]]
+    assert IF.parse_wb_pink(rows, "Urea") == [("2026-07", 385.0), ("2026-08", 390.0)]
+    assert IF.parse_wb_pink(rows, "Potassium chloride")[-1] == ("2026-08", 386.9)
+    assert IF.parse_wb_pink(rows, "없음") == []

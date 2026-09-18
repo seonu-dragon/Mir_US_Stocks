@@ -55,6 +55,7 @@ from pathlib import Path
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: F401 (계약: 원자 쓰기)
 import sec_client as sec
 import industry_fetchers as IF  # P0-b 무키 소스 파서
+import industry_sensitivity as IS  # 8.1 선행 상관 검증 하네스
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -66,6 +67,8 @@ SIGNAL_JSON = DATA / "industry_signal.json"
 SIGNAL_JS = DATA / "industry_signal.js"
 CALENDAR_JSON = DATA / "industry_calendar.json"
 CALENDAR_JS = DATA / "industry_calendar.js"
+SENS_JSON = DATA / "industry_sensitivity.json"
+SENS_JS = DATA / "industry_sensitivity.js"
 ARCHIVE_DIR = DATA / "industry_archive"
 DETAILS_US = DATA / "details"
 DETAILS_KR = DATA / "korea" / "details"
@@ -1399,6 +1402,7 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
     prev_ind = prev.get("indicators") if isinstance(prev.get("indicators"), dict) else {}
     start_iso = (today - timedelta(days=365 * HISTORY_YEARS + 400)).isoformat()
     built: dict[str, dict] = {}
+    raw_series: dict[str, list[tuple[str, float]]] = {}
     failures: list[str] = []
     carried = 0
     for ind in INDICATORS:
@@ -1410,6 +1414,7 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
             if stale(raw, ind["frequency"], today, ind.get("stale_days")):
                 raise RuntimeError(f"stale — 최신 관측 {raw[-1][0]} (한도 {ind.get('stale_days') or STALE_DAYS[ind['frequency']]}일)")
             built[iid] = analyze(ind, raw, today)
+            raw_series[iid] = normalize_keys([(k, v * ind.get("scale", 1.0)) for k, v in raw], ind["frequency"])
             print(f"  [ok] {iid}: {built[iid]['latest_date']} {built[iid]['latest_value']} {ind['unit']}"
                   f" · YoY {built[iid]['latest_yoy']} · {built[iid]['regime']['direction']}")
         except Exception as exc:  # noqa: BLE001
@@ -1451,9 +1456,30 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
         "updatedAtKst": kst_now_str(), "as_of_date": today.isoformat(), "recession": recession,
         "policy": "빌드 시 계산한 서술 통계. 신호등·YoY 는 주가 방향을 뜻하지 않는다(8장). 검증되지 않은 '선행 N개월'은 싣지 않는다.",
         "count": len(built), "failed": failures, "carried": carried,
+        "sensitivity_summary": None,
         "categories": categories, "indicators": built,
     }
+    # 8.1 선행 상관 검증 — 통과 쌍만 related_tickers[].sensitivity 에 실린다(기본 시나리오는 0개).
+    try:
+        prev_sens = json.loads(SENS_JSON.read_text(encoding="utf-8")) if SENS_JSON.exists() else None
+    except Exception:
+        prev_sens = None
+    sens = IS.run(built, raw_series, CATEGORIES, _load_detail, prev_sens, today=today)
+    sens["updatedAtKst"] = payload["updatedAtKst"]
+    attached = IS.attach_to_indicators(built, sens)
+    payload["sensitivity_summary"] = {**sens["summary"], "attached": attached}
+    payload["_sensitivity"] = sens
+    print(f"  [sensitivity] 검사 {sens['summary']['tested']}쌍 · 표본 부족 {sens['summary']['insufficient']} · "
+          f"기각 {sens['summary']['rejected']} · 통과 {sens['summary']['validated']}")
     return payload, []
+
+
+def _load_detail(market: str, key: str) -> dict | None:
+    path = (DETAILS_KR if market == "kr" else DETAILS_US) / f"{key}.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 def build_by_ticker(payload: dict) -> dict:
@@ -1524,7 +1550,10 @@ def main() -> int:
     by_ticker = build_by_ticker(payload)
     signal = build_signal(payload)
     calendar = build_calendar(payload, today)
+    sens = payload.pop("_sensitivity", None)
     sec.write_data(OUT_JSON, OUT_JS, "INDUSTRY_INDICATORS", payload, indent=None)
+    if sens:
+        sec.write_data(SENS_JSON, SENS_JS, "INDUSTRY_SENSITIVITY", sens, indent=None, allow_empty=True)
     sec.write_data(BY_TICKER_JSON, BY_TICKER_JS, "INDUSTRY_BY_TICKER", by_ticker, indent=None)
     sec.write_data(SIGNAL_JSON, SIGNAL_JS, "INDUSTRY_SIGNAL", signal, indent=None)
     sec.write_data(CALENDAR_JSON, CALENDAR_JS, "INDUSTRY_CALENDAR", calendar, indent=None, allow_empty=True)
@@ -1532,7 +1561,7 @@ def main() -> int:
           f"발표 일정 {calendar['count']}건 → {OUT_JSON.name}")
     if args.push:
         paths = [str(p.relative_to(ROOT)).replace("\\", "/") for p in
-                 (OUT_JSON, OUT_JS, BY_TICKER_JSON, BY_TICKER_JS, SIGNAL_JSON, SIGNAL_JS, CALENDAR_JSON, CALENDAR_JS)]
+                 (OUT_JSON, OUT_JS, BY_TICKER_JSON, BY_TICKER_JS, SIGNAL_JSON, SIGNAL_JS, CALENDAR_JSON, CALENDAR_JS, SENS_JSON, SENS_JS)]
         paths.append("data/industry_archive")
         with repository_publish_lock(ROOT):
             if not sec.git_publish(paths, "industry indicators"):

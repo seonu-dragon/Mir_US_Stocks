@@ -437,9 +437,16 @@ function renderIndustryMain() {
   else renderIndustryCategoryHome(main, industryCategory(industryState.cat));
 }
 
+// 8.1 통과 쌍의 꼬리표: "2주 선행 · ρ 0.46 (표본외 n=150 · 95% 구간 0.18~0.67)". 점추정만 쓰지 않는다.
+function industrySensTail(s) {
+  const lag = s.lag_months != null ? `${s.lag_months}개월` : `${s.lag_weeks}주`;
+  const ci = Array.isArray(s.ci95) && s.ci95.length === 2 ? ` · 95% 구간 ${Number(s.ci95[0]).toFixed(2)}~${Number(s.ci95[1]).toFixed(2)}` : "";
+  return `${lag} 선행 · ρ ${Number(s.oos_rho).toFixed(2)} (표본외 n=${s.oos_n}${ci})`;
+}
+
 function industryTickerChip(r, extraCls = "") {
   const key = r.ticker || r.code;
-  return `<button type="button" class="industry-chip ${extraCls}" data-ticker="${escapeHtml(key)}" data-market="${escapeHtml(r.market || "us")}" title="${escapeHtml(r.role || "")}">${escapeHtml(indTickerLabel(r))}${r.sensitivity && r.sensitivity.validated ? `<span class="industry-chip-tail">${escapeHtml(`${r.sensitivity.lag_months}개월 선행 · ρ ${Number(r.sensitivity.oos_rho).toFixed(2)}`)}</span>` : ""}</button>`;
+  return `<button type="button" class="industry-chip ${extraCls}" data-ticker="${escapeHtml(key)}" data-market="${escapeHtml(r.market || "us")}" title="${escapeHtml(r.role || "")}">${escapeHtml(indTickerLabel(r))}${r.sensitivity && r.sensitivity.validated ? `<span class="industry-chip-tail">${escapeHtml(industrySensTail(r.sensitivity))}</span>` : ""}</button>`;
 }
 
 function industryBindTickerChips(root) {
@@ -581,7 +588,7 @@ function renderIndustryDetail(main, ind) {
     ${indPanel("기간별 등락", ind.perf_mode === "diff" ? "단위 차이(레벨 지표)" : "변화율", `<div class="industry-perf">${perfCells}</div><p class="muted industry-foot">주기보다 짧은 칸(월간 지표의 1D·1W 등)과 기준점이 성긴 칸은 비워 둡니다 — 가짜 보간을 하지 않습니다.</p>`)}
     ${sea ? indPanel("동월 비교", `${sea.month}월 전년비`, `<div class="industry-seasonal"><div><span class="muted">${sea.years}년 평균</span><b>${indFmtSigned(sea.same_month_yoy_avg, "%", 1)}</b></div><div><span class="muted">올해</span><b class="${indCls(sea.this_year_yoy)}">${indFmtSigned(sea.this_year_yoy, "%", 1)}</b></div><div><span class="muted">판정</span><b>${sea.verdict === "above" ? "평년보다 강함" : "평년보다 약함"}</b></div></div>`) : ""}
     ${stats ? indPanel(`${stats.window_years}년 통계`, `${stats.n}개 관측`, `<div class="industry-seasonal"><div><span class="muted">평균</span><b>${indFmtNum(stats.mean)}</b></div><div><span class="muted">표준편차</span><b>${indFmtNum(stats.sd)}</b></div><div><span class="muted">최소</span><b>${indFmtNum(stats.min.val)}</b><span class="muted">${escapeHtml(stats.min.date)}</span></div><div><span class="muted">최대</span><b>${indFmtNum(stats.max.val)}</b><span class="muted">${escapeHtml(stats.max.date)}</span></div></div>`) : ""}
-    ${related ? indPanel("관련 상장사", "누르면 종목 분석으로", `<div class="industry-chips">${related}</div><p class="muted industry-foot">검증된 선행 상관이 있는 종목만 꼬리표가 붙습니다(8장 기준). 꼬리표가 없는 것이 기본이며, 상관이 없다는 뜻이 아니라 검증 전이라는 뜻입니다.</p>`) : ""}
+    ${related ? indPanel("관련 상장사", "누르면 종목 분석으로", `<div class="industry-chips">${related}</div><p class="muted industry-foot">검증된 선행 상관이 있는 종목만 꼬리표가 붙습니다(8장 기준: 겹치지 않는 변화율 · 섹터 초과수익 · 표본외 단회 검정 · 블록 부트스트랩 · FDR 10%). 꼬리표가 없는 것이 기본이며, 상관이 없다는 뜻이 아니라 통과하지 못했거나 표본이 모자란다는 뜻입니다.${d.sensitivity_summary ? ` 전체 ${d.sensitivity_summary.tested}쌍 검사 · ${d.sensitivity_summary.validated}쌍 통과 · 표본 부족 ${d.sensitivity_summary.insufficient}.` : ""}</p>`) : ""}
     ${relatedInd ? indPanel("같이 보는 지표", "", `<div class="industry-chips">${relatedInd}</div>`) : ""}
     ${indPanel("해석", "사실 요소만", `<p class="industry-interp">${escapeHtml(industryInterpretation(ind))}</p>${ind.note ? `<p class="muted industry-foot">${escapeHtml(ind.note)}</p>` : ""}`)}
     <p class="muted industry-foot">출처 ${escapeHtml(ind.source || "")}${ind.license && ind.license.note ? ` · ${escapeHtml(ind.license.note)}` : ""} · 갱신 ${escapeHtml(d.updatedAtKst || "")}</p>`;
@@ -673,7 +680,7 @@ function industryReverseRow(id) {
   if (!ind) return "";
   const tail = (ind.related_tickers || []).find((r) => r.sensitivity && r.sensitivity.validated);
   return `<button type="button" class="industry-rev-row" data-ind="${escapeHtml(id)}">
-    <span class="industry-rev-name">${escapeHtml(ind.name_kr)}${tail ? `<span class="industry-chip-tail">${escapeHtml(`${tail.sensitivity.lag_months}개월 선행 · ρ ${Number(tail.sensitivity.oos_rho).toFixed(2)}`)}</span>` : ""}</span>
+    <span class="industry-rev-name">${escapeHtml(ind.name_kr)}${tail ? `<span class="industry-chip-tail">${escapeHtml(industrySensTail(tail.sensitivity))}</span>` : ""}</span>
     <span class="industry-rev-val"><b>${indFmtNum(ind.latest_value)}</b><span class="muted">${escapeHtml(ind.unit || "")}</span></span>
     <span class="industry-rev-yoy ${indCls(ind.latest_yoy)}">${ind.latest_yoy != null ? indFmtSigned(ind.latest_yoy, "%", 1) : (ind.latest_mom != null ? indFmtSigned(ind.latest_mom, industryTransformUnit(ind, "mom"), 2) : "—")}</span>
     ${industrySpark((ind.series || []).slice(-12).map((p) => p.val), 96, 26)}

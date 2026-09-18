@@ -38,6 +38,7 @@ on:
       - "Weekly earnings history refresh"
       - "Weekly edge stats (S/R · breakout)"
       - "White House schedule refresh"
+      - "Industry indicators"
   workflow_dispatch:
 
 # actions: read 는 아래 no-op 게이트의 `gh run list` 용이다. 지금은 공개 레포라
@@ -116,7 +117,7 @@ jobs:
                ':(exclude)data/korea/earnings.js' ':(exclude)data/korea/earnings.json' \
                ':(exclude)data/korea/indicators.js' ':(exclude)data/korea/indicators.json' \
                ':(exclude)data/korea/financials_history.json' ':(exclude)data/korea/krx_metrics.json' \
-               ':(exclude)data/us_financials_history.json'; then
+               ':(exclude)data/us_financials_history.json' ':(exclude)data/industry_archive'; then
             echo "no site-affecting change between $LAST and $CUR — skipping"
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           else
@@ -152,7 +153,7 @@ jobs:
             --exclude='/scripts' --exclude='/automation' --exclude='/worker' \
             --exclude='/prompts' --exclude='/terminals' --exclude='/mcps' \
             --exclude='/agent-tools' --exclude='/outputs' \
-            --exclude='/data/export' --exclude='/data/참고' \
+            --exclude='/data/export' --exclude='/data/참고' --exclude='/data/industry_archive' \
             --exclude='/README.md' --exclude='/CLAUDE.md' --exclude='/DEPLOY.md' \
             --exclude='/AI_MODE_VISION.md' --exclude='/FEATURES.md' \
             ./ _site/

@@ -1,0 +1,50 @@
+name: Industry indicators
+
+# 산업·매크로 선행지표(FRED · TWSE/TPEx 월매출 · ECOS · OECD CLI) — 매일 06:10 KST.
+# 일간 시리즈(유가·스프레드·금리)와 대만 월매출 공시(매월 10일 전후)를 같이 받는다.
+# 월간만 있는 시리즈는 값이 같으면 JSON diff 가 작다. 새 키는 없다(ECOS 는 기존 secret).
+on:
+  schedule:
+    - cron: "10 21 * * *"  # 21:10 UTC (KST 06:10)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  industry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Build industry indicators
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+        run: python scripts/build_industry_indicators.py --push
+      # 빌더가 실패를 삼켜도 산출물 나이로 마지막 관문을 세운다.
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group industry
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

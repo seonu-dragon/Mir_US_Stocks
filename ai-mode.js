@@ -1626,6 +1626,38 @@ function aiFederalContractsPanel(item) {
   return aiModePanel("연방 계약", "USASpending · 최근 12개월 집행액", grid + note);
 }
 
+// 산업 선행지표 — 이 종목이 따라가는 지표 3개(INDUSTRY_BY_TICKER 역인덱스). 값은 빌드 시 계산한
+// 서술 통계이고 주가 방향이 아니다. 데이터가 아직 없으면 받기만 시작하고 빈 문자열(다음 렌더에 뜬다).
+function aiIndustryPanel(item) {
+  if (!item || !item.ticker || typeof industryReverseIds !== "function") return "";
+  const idx = window.INDUSTRY_BY_TICKER;
+  const d = window.INDUSTRY_INDICATORS;
+  if (!idx || !d) {
+    if (typeof ensureFeatureData === "function") { ensureFeatureData("industryByTicker"); ensureFeatureData("industry"); }
+    return "";
+  }
+  const ids = industryReverseIds(item.ticker).slice(0, 3);
+  if (!ids.length) return "";
+  const rt = "text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap";
+  const rows = ids.map((id) => {
+    const ind = d.indicators[id];
+    if (!ind) return "";
+    const yoy = ind.latest_yoy;
+    const dir = (ind.regime || {}).direction;
+    const dirLabel = { improving: "개선", deteriorating: "악화", flat: "보합" }[dir] || "—";
+    return `<tr><td style="overflow:hidden"><strong class="ai-industry-link" data-ind="${escapeHtml(id)}" role="button" tabindex="0">${escapeHtml(ind.name_kr)}</strong><div style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(ind.latest_date)} · ${escapeHtml(ind.source || "")}</div></td>
+      <td style="${rt}">${escapeHtml(indFmtNum(ind.latest_value))} <span style="color:var(--muted);font-size:var(--fs-cap)">${escapeHtml(ind.unit || "")}</span></td>
+      <td style="${rt}" class="${Number.isFinite(Number(yoy)) ? cls(Number(yoy)) : ""}">${yoy != null ? escapeHtml(indFmtSigned(yoy, "%", 1)) : "—"}</td>
+      <td style="${rt}">${escapeHtml(dirLabel)}</td></tr>`;
+  }).join("");
+  const body = `<div class="ai-mode-table-wrap"><table class="ai-mode-table" style="table-layout:fixed;width:100%;min-width:0">
+    <colgroup><col style="width:46%"><col style="width:22%"><col style="width:16%"><col style="width:16%"></colgroup>
+    <thead><tr><th>지표</th><th style="text-align:right">최신</th><th style="text-align:right">전년비</th><th style="text-align:right">신호등</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>
+    <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">이 종목의 업황을 앞서 보여 주는 공식 통계(FRED·TWSE·한국은행·OECD). 신호등은 증가율의 방향이며 주가 방향이 아닙니다. 지표명을 누르면 산업 지표 탭으로 갑니다.</div>`;
+  return aiModePanel("산업 선행지표", "이 종목이 따라가는 지표 · 서술 통계", body);
+}
+
 function renderAiModeDataBoard(item) {
   return `
     <div class="ai-mode-data-board">
@@ -1635,6 +1667,7 @@ function renderAiModeDataBoard(item) {
       ${aiFactorPanel(item)}
       ${aiRiskPanel(item)}
       ${aiPeerPanel(item)}
+      ${aiIndustryPanel(item)}
       ${aiFundamentalPanel(item)}
       ${aiAnalystPanel(item)}
       ${aiDividendPanel(item)}

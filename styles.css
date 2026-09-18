@@ -13472,3 +13472,33 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .industry-headline-main b { font-size: 24px; }
   .industry-controls .ghost { padding: 4px 8px; }
 }
+
+/* 산업 지표 — 종목 상세 역방향 위젯 · 홈 카드 · 섹터 스트립 */
+.industry-reverse-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; }
+.industry-reverse-card[hidden] { display: none; }
+.industry-reverse-card h3 { margin: 0 0 10px; font-size: var(--fs-body); }
+.industry-rev-list { display: flex; flex-direction: column; gap: 6px; }
+.industry-rev-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 96px 44px; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); color: inherit; font-size: var(--fs-sub); cursor: pointer; text-align: left; }
+.industry-rev-row:hover { border-color: var(--primary); }
+.industry-rev-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.industry-rev-val { display: inline-flex; align-items: baseline; gap: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.industry-rev-val .muted { font-size: var(--fs-cap); }
+.industry-rev-yoy { font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+.industry-rev-next { font-size: var(--fs-cap); text-align: right; }
+.industry-home-card { margin: 8px 0 0; }
+.industry-home-card[hidden] { display: none; }
+.industry-home-btn { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); color: inherit; font-size: var(--fs-sub); cursor: pointer; text-align: left; }
+.industry-home-btn:hover { border-color: var(--primary); }
+.industry-home-title { font-weight: 700; }
+.industry-home-tops { display: inline-flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-cap); color: var(--muted); }
+.industry-home-tops b { font-variant-numeric: tabular-nums; }
+.industry-home-go { margin-left: auto; font-size: var(--fs-cap); }
+.industry-sector-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.industry-sector-label { font-size: var(--fs-cap); color: var(--muted); font-weight: 600; margin-right: 2px; }
+.industry-sector-chip { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: inherit; font-size: var(--fs-cap); cursor: pointer; }
+.industry-sector-chip:hover { border-color: var(--primary); }
+.industry-sector-chip b { font-variant-numeric: tabular-nums; }
+@media (max-width: 720px) {
+  .industry-rev-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+  .industry-rev-row .industry-spark, .industry-rev-next { display: none; }
+}

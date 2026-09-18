@@ -606,11 +606,37 @@ INDICATORS: list[dict] = [
           "XLI CAT HON", basis="level", provider="Federal Reserve Bank of New York (FRED 경유)", license=PUBLIC),
     _fred("dallas_fed_mfg", "BACTSAMFRBDAL", "댈러스연준 텍사스 제조업 일반활동지수", "Dallas Fed Texas Manufacturing Outlook: General Business Activity (SA)", ["macro_activity", "energy"], "확산지수", "M",
           "XLI XLE CAT", basis="level", provider="Federal Reserve Bank of Dallas (FRED 경유)", license=PUBLIC),
+    _src("richmond_fed_mfg", ("richmond",), "리치몬드연준 제5지구 제조업 종합지수", "Richmond Fed Fifth District Manufacturing Composite (SA)", ["macro_activity"], "확산지수", "M",
+         "XLI CAT HON", source="Federal Reserve Bank of Richmond (mfg_historicaldata.xlsx)", source_url="https://www.richmondfed.org/region_communities/regional_data_analysis/surveys_of_business_conditions/manufacturing",
+         series_id="sa_mfg_composite", basis="level", note="출하 33%·신규주문 40%·고용 27% 가중. FRED 미수록"),
+    _src("kcfed_mfg", ("kcfed",), "캔자스시티연준 제10지구 제조업 종합지수", "Kansas City Fed Tenth District Manufacturing Composite (SA, vs month ago)", ["macro_activity", "energy"], "확산지수", "M",
+         "XLI XLE CAT", source="Federal Reserve Bank of Kansas City (historicalmfg.xlsx, 링크 추출)", source_url="https://www.kansascityfed.org/surveys/manufacturing-survey/",
+         series_id="Composite Index (vs month ago, SA)", basis="level", note="파일명에 발표일이 박혀 매달 바뀐다 — 서베이 페이지에서 링크를 긁는다"),
     _src("regional_fed_composite_pmi", ("regional_composite", ("GACDFSA066MSFRBPHI", "GACDISA066MSFRBNY", "BACTSAMFRBDAL")),
-         "지역 연준 제조업 합성지수 (3/5 반영, z-점수)", "Regional Fed Manufacturing Composite (z-score, 3 of 5 surveys)", ["macro_activity"], "z-점수 (0=장기 평균)", "M",
-         "XLI SPY IWM CAT", source="필라델피아·뉴욕·댈러스 연준 서베이(FRED)로 자체 계산", source_url="https://fred.stlouisfed.org/series/GACDFSA066MSFRBPHI",
-         series_id="z-avg(PHI, NY, DAL)", basis="level", digits=2, related_ind=["philly_fed_mfg", "empire_state_mfg", "dallas_fed_mfg", "indpro"],
-         note="ISM 이 아니다 — 지역 연준 3개 서베이의 z-정규화 평균(리치몬드·캔자스시티는 xlsx 라 P0-c). 선례: Bespoke Five Fed"),
+         "지역 연준 제조업 합성지수 (5개 서베이 z-점수 평균)", "Regional Fed Manufacturing Composite (z-score average of 5 surveys)", ["macro_activity"], "z-점수 (0=장기 평균)", "M",
+         "XLI SPY IWM CAT", source="필라델피아·뉴욕·댈러스(FRED)·리치몬드·캔자스시티(xlsx) 서베이로 자체 계산", source_url="https://fred.stlouisfed.org/series/GACDFSA066MSFRBPHI",
+         series_id="z-avg(PHI, NY, DAL, RIC, KC)", basis="level", digits=2, related_ind=["philly_fed_mfg", "empire_state_mfg", "dallas_fed_mfg", "richmond_fed_mfg", "kcfed_mfg", "indpro"],
+         note="ISM 이 아니다 — 지역 연준 5개 서베이를 각자 이력의 평균·표준편차로 z 화해 평균(도착한 것만, 최소 2개). 선례: Bespoke Five Fed"),
+    # ---- World Bank Pink Sheet (CC BY 4.0, 1960~) — 비료·목재·고무·팜유 ----
+    _src("wb_urea", ("wb_pink", "urea"), "요소 비료 가격 (World Bank Pink Sheet)", "Urea Price (World Bank CMO)", ["commodities_metals"], "USD/톤", "M",
+         "CF MOS NTR", source="World Bank Commodity Price Data (Pink Sheet)", source_url="https://www.worldbank.org/en/research/commodity-markets", series_id="Urea",
+         tone=0, license={"redistribution": "attribution", "note": "World Bank CC BY 4.0", "commercial_ok": True}, stale_days=100, related_ind=["imf_urea"],
+         note="IMF PUREA 와 기준 품목이 달라 값이 다르다 — 비료는 Pink Sheet 우선"),
+    _src("wb_dap", ("wb_pink", "dap"), "DAP 비료 가격 (World Bank Pink Sheet)", "DAP Price (World Bank CMO)", ["commodities_metals"], "USD/톤", "M",
+         "MOS CF NTR", source="World Bank Commodity Price Data (Pink Sheet)", source_url="https://www.worldbank.org/en/research/commodity-markets", series_id="DAP",
+         tone=0, license={"redistribution": "attribution", "note": "World Bank CC BY 4.0", "commercial_ok": True}, stale_days=100),
+    _src("wb_potash", ("wb_pink", "potash"), "염화칼륨 가격 (World Bank Pink Sheet)", "Potassium Chloride Price (World Bank CMO)", ["commodities_metals"], "USD/톤", "M",
+         "NTR MOS", source="World Bank Commodity Price Data (Pink Sheet)", source_url="https://www.worldbank.org/en/research/commodity-markets", series_id="Potassium chloride",
+         tone=0, license={"redistribution": "attribution", "note": "World Bank CC BY 4.0", "commercial_ok": True}, stale_days=100, related_ind=["imf_potash"]),
+    _src("wb_rubber_tsr20", ("wb_pink", "rubber_tsr20"), "천연고무 TSR20 가격 (World Bank Pink Sheet)", "Rubber TSR20 Price (World Bank CMO)", ["auto_ev", "commodities_metals"], "USD/kg", "M",
+         "GT 161390 073240 002350", source="World Bank Commodity Price Data (Pink Sheet)", source_url="https://www.worldbank.org/en/research/commodity-markets", series_id="Rubber, TSR20",
+         tone=-1, license={"redistribution": "attribution", "note": "World Bank CC BY 4.0", "commercial_ok": True}, stale_days=100, note="타이어 원가"),
+    _src("wb_sawnwood_malaysian", ("wb_pink", "sawnwood_malaysian"), "말레이시아 제재목 가격 (World Bank Pink Sheet)", "Sawnwood Malaysian Price (World Bank CMO)", ["housing", "commodities_metals"], "USD/m³", "M",
+         "WY LPX HD LOW", source="World Bank Commodity Price Data (Pink Sheet)", source_url="https://www.worldbank.org/en/research/commodity-markets", series_id="Sawnwood, Malaysian",
+         tone=0, license={"redistribution": "attribution", "note": "World Bank CC BY 4.0", "commercial_ok": True}, stale_days=100),
+    _src("wb_palm_oil", ("wb_pink", "palm_oil"), "팜유 가격 (World Bank Pink Sheet)", "Palm Oil Price (World Bank CMO)", ["consumer_labor", "commodities_metals"], "USD/톤", "M",
+         "ADM BG 097950 004370", source="World Bank Commodity Price Data (Pink Sheet)", source_url="https://www.worldbank.org/en/research/commodity-markets", series_id="Palm oil",
+         tone=-1, license={"redistribution": "attribution", "note": "World Bank CC BY 4.0", "commercial_ok": True}, stale_days=100, note="라면·식품 원가"),
     _src("crypto_fear_greed", ("altme",), "크립토 공포·탐욕 지수 (alternative.me)", "Crypto Fear & Greed Index", ["crypto_fintech"], "0~100", "D",
          "COIN MSTR IBIT HOOD", source="alternative.me", source_url="https://alternative.me/crypto/fear-and-greed-index/", series_id="fng", tone=1, basis="level",
          license=ALTME_ATTR, digits=0),
@@ -1255,7 +1281,18 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
                 inputs.append(normalize_keys(fetch_fred(fid, "2000-01-01"), "M"))
             except Exception as exc:  # noqa: BLE001
                 print(f"    [composite] {fid} 실패({exc}) — 제외")
+        for name, fn in (("richmond", IF.fetch_richmond_mfg), ("kcfed", IF.fetch_kcfed_mfg)):
+            try:
+                inputs.append(fn())
+            except Exception as exc:  # noqa: BLE001
+                print(f"    [composite] {name} 실패({exc}) — 제외")
         return IF.zscore_composite(inputs)
+    if kind == "richmond":
+        return IF.fetch_richmond_mfg()
+    if kind == "kcfed":
+        return IF.fetch_kcfed_mfg()
+    if kind == "wb_pink":
+        return IF.fetch_wb_pink(src[1])
     raise RuntimeError(f"알 수 없는 소스 {kind}")
 
 

@@ -147,6 +147,12 @@ CHECKS = {
     ],
     # white-house-schedule.yml(하루 3회). 스키마가 바뀌면 0건 + 신선한 타임스탬프가
     # 푸시될 수 있어 나이만이 아니라 0건(eventCount)도 본다.
+    # 산업 선행지표 — 매일 06:10 KST. 월간 시리즈가 많아 파일 갱신 시각만 본다.
+    "industry": [
+        ("data/industry_indicators.json", 3, False),
+        ("data/industry_by_ticker.json", 3, False),
+        ("data/industry_signal.json", 3, False),
+    ],
     "white-house": [
         ("data/white_house_schedule.json", 3, True),
     ],

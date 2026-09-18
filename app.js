@@ -6289,6 +6289,11 @@ const TRUST_RECOVERY = {
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
   "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
   "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
+  "산업 선행지표": {
+    us: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
+    kr: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
+    tabs: "시장 탭 · 산업 지표 · 종목 상세 역방향 위젯",
+  },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
@@ -6480,6 +6485,8 @@ function dataTrustSources() {
   rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));
   rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
+  // 산업 선행지표(2026-09-18) — 등록하지 않으면 감시 사각지대. lazy 라 신뢰도 센터가 직접 받아 본다.
+  rows.push(source("산업 선행지표", "FRED · TWSE/TPEx · 한국은행 ECOS · OECD", window.INDUSTRY_INDICATORS, ["indicators"], 48, "매일 06:10", "industry"));
   if (cfg.id === "us") {
     rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));

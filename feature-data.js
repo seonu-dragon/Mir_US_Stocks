@@ -57,6 +57,12 @@ const FEATURE_DATA = {
   // CFTC COT 투기 포지셔닝(주간, 무키 공식 API). 미국 선물이지만 지수·금리·환율·
   // 원자재 쏠림은 글로벌 위험자산 공통 컨텍스트라 두 시장 모두 로드.
   cotPositioning: { global: "COT_POSITIONING", path: "data/cot_positioning.js" },
+  // 산업·매크로 선행지표(build_industry_indicators.py). 두 시장 모두(미국 지표는 KR 수출주에도
+  // 컨텍스트). 750KB 라 산업 탭·종목 역방향 위젯을 처음 열 때만 받는다(lazy).
+  industry:         { global: "INDUSTRY_INDICATORS", path: "data/industry_indicators.js", lazy: true },
+  industryByTicker: { global: "INDUSTRY_BY_TICKER",  path: "data/industry_by_ticker.js",  lazy: true },
+  industrySignal:   { global: "INDUSTRY_SIGNAL",     path: "data/industry_signal.js",     lazy: true },
+  industryCalendar: { global: "INDUSTRY_CALENDAR",   path: "data/industry_calendar.js",   lazy: true },
   // 미 국채 경매 수요(bid-to-cover, FiscalData). 금리곡선 패널과 짝 — 두 시장 모두.
   treasuryAuctions: { global: "TREASURY_AUCTIONS", path: "data/treasury_auctions.js" },
   // SEC 결제 불이행(FTD, 반월 파일). 공매도 서브탭에서만 쓰는 US 전용 lazy.

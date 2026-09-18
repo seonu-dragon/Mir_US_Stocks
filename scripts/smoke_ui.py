@@ -33,11 +33,13 @@ except ImportError:
 # 2026-09 IA 재편: 상단 탭 4개(today/market/search/bulk) + 숨은 community. 옛 이름은
 # 별칭으로 남아 있어야 한다(?tab=signals → 시장/시그널 등).
 TABS = ["today", "market", "search", "bulk", "map", "sector", "signals", "institutional",
-        "health", "calendar", "community", "ai-briefing"]
+        "health", "calendar", "community", "ai-briefing", "industry"]
 # 옛 딥링크 → (상단 탭, 활성 잎/서브) 기대값
 LEGACY_LINKS = {
     "?tab=signals": ("market", "signals"),
     "?tab=sector": ("market", "sector"),
+    "?tab=industry": ("market", "industry"),
+    "?tab=industry&i=tsmc_monthly_rev": ("market", "industry"),
     "?tab=breadth": ("market", "health"),
     "?tab=marketdata": ("market", "health"),
     "?tab=calendar": ("today", "calendar"),

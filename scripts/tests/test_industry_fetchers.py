@@ -65,9 +65,9 @@ def test_tga_uses_open_today_bal_and_trillions():
 def test_defillama_deribit_altme_json():
     rows = [{"date": "1757980800", "totalCirculatingUSD": {"peggedUSD": 300e9}}, {"date": "1758067200", "totalCirculatingUSD": {"peggedUSD": 301e9}}]
     out = IF.parse_defillama_stablecoins(rows)
-    assert out[-1] == ("2026-09-17", 301.0) and out[0][0] == "2026-09-16"
+    assert out[-1] == ("2025-09-17", 301.0) and out[0][0] == "2025-09-16"  # epoch 1757980800 = 2025-09-16 UTC
     d = IF.parse_deribit_dvol({"result": {"data": [[1758067200000, 38.0, 39.0, 37.0, 38.48]]}})
-    assert d == [("2026-09-17", 38.48)]
+    assert d == [("2025-09-17", 38.48)]
     f = IF.parse_altme_fng({"data": [{"value": "56", "timestamp": "1789689600"}, {"value": "50", "timestamp": "1789603200"}]})
     assert f[-1][1] == 56 and f[0][1] == 50
 

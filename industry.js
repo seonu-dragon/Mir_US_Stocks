@@ -91,10 +91,31 @@ function industrySlice(ind, rangeKey) {
   return series.filter((p) => indDate(p.date) >= cutoff);
 }
 
+// 일간·주간 시리즈는 점별 yoy 를 파일에 싣지 않는다(용량) — 364일 전 이하 최신값 대비로 여기서 계산한다.
+// 월간·분기는 빌더가 실은 p.yoy 를 쓴다(같은 달 매칭).
+function industryYoyOf(ind, points) {
+  if (!points.length) return [];
+  if (points.some((p) => p.yoy != null) || ind.regime_basis !== "yoy") return points.map((p) => (Number.isFinite(Number(p.yoy)) ? Number(p.yoy) : null));
+  const full = Array.isArray(ind.series) ? ind.series : points;
+  const keys = full.map((p) => indDate(p.date).getTime());
+  const vals = full.map((p) => Number(p.val));
+  return points.map((p) => {
+    const target = indDate(p.date).getTime() - 364 * 86400000;
+    let lo = 0, hi = keys.length - 1, best = -1;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (keys[mid] <= target) { best = mid; lo = mid + 1; } else hi = mid - 1; }
+    if (best < 0) return null;
+    // 기준점이 목표일보다 두 달 넘게 앞이면(시리즈 시작 직후) 없는 것으로 본다.
+    if (target - keys[best] > 62 * 86400000) return null;
+    const base = vals[best], v = Number(p.val);
+    if (!Number.isFinite(base) || base === 0 || (v < 0) !== (base < 0)) return null;
+    return (v / base - 1) * 100;
+  });
+}
+
 function industryTransform(ind, points, transform) {
   const vals = points.map((p) => Number(p.val));
   const diff = ind.perf_mode === "diff";
-  if (transform === "yoy") return points.map((p) => (Number.isFinite(Number(p.yoy)) ? Number(p.yoy) : null));
+  if (transform === "yoy") return industryYoyOf(ind, points);
   if (transform === "mom") return vals.map((v, i) => (i === 0 || !Number.isFinite(vals[i - 1]) ? null : diff ? v - vals[i - 1] : vals[i - 1] === 0 ? null : (v / vals[i - 1] - 1) * 100));
   if (transform === "rebase100") { const base = vals.find((v) => Number.isFinite(v) && v !== 0); return vals.map((v) => (base ? v / base * 100 : null)); }
   if (transform === "drawdown") { let peak = -Infinity; return vals.map((v) => { peak = Math.max(peak, v); return peak > 0 ? (v / peak - 1) * 100 : null; }); }
@@ -591,7 +612,7 @@ function renderIndustryChart(ind) {
   const points = industrySlice(ind, industryState.range);
   const transform = (ind.transforms_available || ["level"]).includes(industryState.transform) ? industryState.transform : "level";
   const primary = industryTransform(ind, points, transform);
-  const yoyLine = transform === "level" && ind.regime_basis === "yoy" ? points.map((p) => (Number.isFinite(Number(p.yoy)) ? Number(p.yoy) : null)) : null;
+  const yoyLine = transform === "level" && ind.regime_basis === "yoy" ? industryYoyOf(ind, points) : null;
   const recession = industryState.recession && d.recession ? d.recession : [];
   const unit = industryTransformUnit(ind, transform);
   const draw = (overlay, overlayLabel) => {

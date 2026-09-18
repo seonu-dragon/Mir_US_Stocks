@@ -33,6 +33,7 @@ jobs:
       - name: Build industry indicators
         env:
           ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
         run: python scripts/build_industry_indicators.py --push
       # 빌더가 실패를 삼켜도 산출물 나이로 마지막 관문을 세운다.
       - name: Data freshness gate

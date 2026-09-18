@@ -21,6 +21,8 @@ import json
 import re
 import urllib.parse
 import urllib.request
+import time
+import xml.etree.ElementTree as ET
 import zipfile
 from datetime import date, datetime, timedelta, timezone
 
@@ -244,6 +246,103 @@ def fetch_cboe_putcall_recent(days: int = 7) -> list[tuple[str, float]]:
         if v is not None:
             out.append((d.isoformat(), v))
     return sorted(out)
+
+
+# ---------------------------------------------------------------------------
+# 관세청 품목별 수출입실적 Itemtrade (data.go.kr 15101609, HS 10단위, DATA_GO_KR_KEY)
+# ---------------------------------------------------------------------------
+# 기존 build_kr_trade_exports.py 의 nitemtrade(국가별)와 달리 국가 분해가 없고 중량(expWgt/impWgt, KG)이
+# 있다 → 금액÷중량 = 단가. 같은 게이트웨이라 "연도를 넘으면 0건"·"버스트 차단" 제약을 그대로 가정한다.
+CUSTOMS_ITEMTRADE = "https://apis.data.go.kr/1220000/Itemtrade/getItemtradeList"
+
+
+def parse_customs_items(xml_text: str) -> list[dict]:
+    """<item> 행 → {ym, expDlr, expWgt, impDlr, impWgt}. '총계' 같은 요약 행(year 가 YYYY.MM 이 아님)은 뺀다."""
+    root = ET.fromstring(xml_text)
+    err = root.findtext(".//returnReasonCode") or root.findtext(".//resultCode")
+    if err and err not in ("00", "0"):
+        raise RuntimeError(f"관세청 API 오류 {err}: {root.findtext('.//returnAuthMsg') or root.findtext('.//resultMsg')}")
+    out = []
+    for it in root.iter("item"):
+        ym = (it.findtext("year") or "").replace(".", "").strip()
+        if len(ym) != 6 or not ym.isdigit():
+            continue
+        out.append({"ym": f"{ym[:4]}-{ym[4:]}", "expDlr": _num(it.findtext("expDlr")), "expWgt": _num(it.findtext("expWgt")),
+                    "impDlr": _num(it.findtext("impDlr")), "impWgt": _num(it.findtext("impWgt"))})
+    return out
+
+
+def customs_series(rows: list[dict], measure: str) -> list[tuple[str, float]]:
+    """measure: exp_unit(USD/kg) | imp_unit | exp_amt(백만$) | imp_amt. 중량 0 인 달은 단가 결측."""
+    by: dict[str, dict] = {}
+    for r in rows:
+        agg = by.setdefault(r["ym"], {"expDlr": 0.0, "expWgt": 0.0, "impDlr": 0.0, "impWgt": 0.0})
+        for k in agg:
+            if r.get(k) is not None:
+                agg[k] += r[k]
+    out = []
+    for ym in sorted(by):
+        a = by[ym]
+        if measure == "exp_unit":
+            v = a["expDlr"] / a["expWgt"] if a["expWgt"] > 0 else None
+        elif measure == "imp_unit":
+            v = a["impDlr"] / a["impWgt"] if a["impWgt"] > 0 else None
+        elif measure == "exp_amt":
+            v = a["expDlr"] / 1e6
+        else:
+            v = a["impDlr"] / 1e6
+        if v is not None and v > 0:
+            out.append((ym, v))
+    return out
+
+
+def fetch_customs_item(key: str, hs: str, start_year: int) -> list[dict]:
+    """연 단위로 쪼개 요청(기간이 연도를 넘으면 0건). 게이트웨이 리셋은 3회 백오프. 호출 간 1.5초."""
+    now = datetime.now(timezone.utc)
+    rows: list[dict] = []
+    for year in range(start_year, now.year + 1):
+        s, e = f"{year}01", (now.strftime("%Y%m") if year == now.year else f"{year}12")
+        params = urllib.parse.urlencode({"serviceKey": key, "strtYymm": s, "endYymm": e, "hsSgn": hs})
+        text = ""
+        for attempt in range(3):
+            try:
+                req = urllib.request.Request(f"{CUSTOMS_ITEMTRADE}?{params}", headers=UA_IDENT)
+                with urllib.request.urlopen(req, timeout=45) as r:
+                    text = r.read().decode("utf-8", "replace")
+                break
+            except Exception:
+                if attempt == 2:
+                    raise
+                time.sleep(5 * (attempt + 1))
+        rows.extend(parse_customs_items(text))
+        time.sleep(1.5)
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# 지역 연준 합성 PMI (z-정규화 평균) — 입력은 FRED 시리즈 3개(필라델피아·뉴욕·댈러스)
+# ---------------------------------------------------------------------------
+def zscore_composite(series_list: list[list[tuple[str, float]]], min_inputs: int = 2) -> list[tuple[str, float]]:
+    """각 시리즈를 자기 전체 이력의 평균·표준편차로 z 화한 뒤 같은 달끼리 평균. 입력이 min_inputs 미만인 달은 뺀다."""
+    zs: list[dict[str, float]] = []
+    for s in series_list:
+        vals = [v for _, v in s]
+        if len(vals) < 24:
+            continue
+        mean = sum(vals) / len(vals)
+        sd = (sum((v - mean) ** 2 for v in vals) / len(vals)) ** 0.5
+        if sd <= 0:
+            continue
+        zs.append({k[:7]: (v - mean) / sd for k, v in s})
+    if not zs:
+        return []
+    months = sorted(set().union(*[set(z) for z in zs]))
+    out = []
+    for m in months:
+        have = [z[m] for z in zs if m in z]
+        if len(have) >= min_inputs:
+            out.append((m, sum(have) / len(have)))
+    return out
 
 
 # ---------------------------------------------------------------------------

@@ -79,7 +79,7 @@ UA_BROWSER = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebK
 MIN_INDICATORS = 10
 CARRY_DAYS = 30
 HISTORY_YEARS = 10
-SERIES_CAP = {"D": 750, "W": 520, "M": 120, "Q": 60}
+SERIES_CAP = {"D": 520, "W": 400, "M": 120, "Q": 60}  # 일간 2년·주간 ~8년. 2026-09-18 119개에서 1.59MB 라 줄였다
 # 최신 관측일이 이보다 오래되면 stale — 기대 주기 × 2 에 발표 지연(월간 통계는 익월 중순,
 # IMF 원자재는 한 달)을 더한 값. 지표 정의의 stale_days 로 덮어쓸 수 있다.
 STALE_DAYS = {"D": 21, "W": 35, "M": 100, "Q": 220}
@@ -538,6 +538,79 @@ INDICATORS: list[dict] = [
     _src("deribit_dvol_btc", ("deribit", "BTC"), "비트코인 내재변동성 지수 (Deribit DVOL)", "Deribit BTC Volatility Index (DVOL)", ["crypto_fintech"], "%", "D",
          "MSTR COIN IBIT HOOD", source="Deribit 공개 API", source_url="https://www.deribit.com/statistics/BTC/volatility-index", series_id="DVOL BTC 1D",
          tone=-1, basis="level", license=DERIBIT_RESTRICTED, note="크립토판 VIX"),
+    # ================= KR 전용 묶음 + 지역 연준 합성 (2026-09-18) =================
+    # ---- 관세청 HS 10단위 (DATA_GO_KR_KEY — Actions 에만 있다) ----
+    _src("kr_dram_export_unit_price", ("customs", "8542321010", "exp_unit"), "DRAM 수출단가 (관세청, HS 8542.32.1010)", "Korea DRAM Export Unit Price (USD/kg)",
+         ["tech_semi", "kr_industry"], "USD/kg", "M", "005930 000660 MU", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8542321010 expDlr/expWgt", proxy=True, license={"redistribution": "public", "note": "공공데이터포털 — 이용허락범위 제한 없음", "commercial_ok": True},
+         stale_days=75, related_ind=["kr_xpi_dram", "boj_memory_ic_export_price", "tw_memory_rev"], note="금액÷중량 = kg 당 수출단가. 현물가가 아니라 무역통계 프록시(믹스 변화에 흔들린다)"),
+    _src("kr_flash_export_unit_price", ("customs", "8542321030", "exp_unit"), "플래시메모리 수출단가 (관세청)", "Korea Flash Memory Export Unit Price (USD/kg)",
+         ["tech_semi", "kr_industry"], "USD/kg", "M", "005930 000660 MU WDC SNDK", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8542321030 expDlr/expWgt", proxy=True, license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, related_ind=["kr_xpi_flash"]),
+    _src("kr_mcp_export_unit_price", ("customs", "8542323000", "exp_unit"), "복합구조칩(MCP) 수출단가 (관세청)", "Korea Multi-Chip Package Export Unit Price (USD/kg)",
+         ["tech_semi", "ai_datacenter", "kr_industry"], "USD/kg", "M", "000660 005930 NVDA MU", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8542323000 expDlr/expWgt", proxy=True, license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75,
+         note="HBM 이 여기로 분류된다는 것은 업계 통설(문서상 명시 없음)"),
+    _src("kr_mcp_export_amount", ("customs", "8542323000", "exp_amt"), "복합구조칩(MCP) 수출액 (관세청)", "Korea Multi-Chip Package Exports (USD mn)",
+         ["tech_semi", "kr_industry"], "백만 USD", "M", "000660 005930 NVDA", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8542323000 expDlr", license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, digits=1),
+    _src("kr_cathode_ncm_export_unit_price", ("customs", "2841909020", "exp_unit"), "NCM 양극재 수출단가 (관세청)", "Korea NCM Cathode Export Unit Price (USD/kg)",
+         ["auto_ev", "kr_industry"], "USD/kg", "M", "247540 066970 003670 051910 ALB", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="2841909020 expDlr/expWgt", proxy=True, license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75,
+         related_ind=["kr_mpi_lithium", "imf_lithium"], note="양극재 판가 프록시"),
+    _src("kr_lithium_carbonate_import_unit_price", ("customs", "2836910000", "imp_unit"), "탄산리튬 수입단가 (관세청)", "Korea Lithium Carbonate Import Unit Price (USD/kg)",
+         ["auto_ev", "kr_industry"], "USD/kg", "M", "247540 066970 003670 ALB SQM", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="2836910000 impDlr/impWgt", proxy=True, tone=0, license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75,
+         related_ind=["kr_mpi_lithium", "imf_lithium"]),
+    _src("kr_mlcc_export_unit_price", ("customs", "8532240000", "exp_unit"), "MLCC 수출단가 (관세청)", "Korea MLCC Export Unit Price (USD/kg)",
+         ["tech_semi", "kr_industry"], "USD/kg", "M", "009150 AAPL", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8532240000 expDlr/expWgt", proxy=True, license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75),
+    _src("kr_transformer_export_amount", ("customs", "8504230000", "exp_amt"), "초고압 변압기 수출액 (관세청, >10MVA)", "Korea Large Transformer Exports (USD mn)",
+         ["ai_datacenter", "kr_industry"], "백만 USD", "M", "267260 298040 010120 ETN GEV", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8504230000 expDlr", license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, digits=1, related_ind=["kr_xpi_transformer", "census_datacenter_construction"]),
+    _src("kr_ramen_export_amount", ("customs", "1902301010", "exp_amt"), "라면 수출액 (관세청)", "Korea Instant Noodle Exports (USD mn)",
+         ["consumer_labor", "kr_industry"], "백만 USD", "M", "003230 004370", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="1902301010 expDlr", license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, digits=1),
+    _src("kr_cosmetics_export_amount", ("customs", "3304991000", "exp_amt"), "기초화장품 수출액 (관세청)", "Korea Skincare Cosmetics Exports (USD mn)",
+         ["consumer_labor", "kr_industry"], "백만 USD", "M", "090430 192820 161890 257720", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="3304991000 expDlr", license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, digits=1),
+    _src("kr_toxin_export_amount", ("customs", "3002491000", "exp_amt"), "독소·톡소이드(보툴리눔 톡신 포함) 수출액 (관세청)", "Korea Toxins & Toxoids Exports (USD mn)",
+         ["kr_industry"], "백만 USD", "M", "145020 086900 069620", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="3002491000 expDlr", license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, digits=1),
+    _src("kr_solar_module_export_amount", ("customs", "8541430000", "exp_amt"), "태양광 모듈 수출액 (관세청)", "Korea Solar PV Module Exports (USD mn)",
+         ["energy", "kr_industry"], "백만 USD", "M", "009830", source="관세청 품목별 수출입실적 (data.go.kr)", source_url="https://www.data.go.kr/data/15101609/openapi.do",
+         series_id="8541430000 expDlr", license={"redistribution": "public", "note": "공공데이터포털", "commercial_ok": True}, stale_days=75, digits=1),
+    # ---- ECOS 확장 (기존 키) ----
+    _ecos("kr_bsi_electronics", "512Y007", "M", ["AA", "C2600"], "전자·영상·통신장비 업황 BSI (실적)", "Korea BSI: Electronics Business Conditions", ["tech_semi", "kr_industry"],
+          "지수 (100=중립)", "005930 000660 009150", basis="level", note="한국은행 기업경기조사 — 업종별 체감경기"),
+    _ecos("kr_electronics_inventory_sa", "901Y032", "M", ["I11ACQ", "6"], "전자부품·컴퓨터·통신 재고지수 (계절조정)", "Korea Inventory Index: Electronic Components (SA)", ["tech_semi", "kr_industry"],
+          "지수 (2020=100)", "005930 000660 034220", tone=-1, related_ind=["kr_mfg_inventory_ratio"], note="원자료 통계청 — 반도체 단독(C261)은 KOSIS 필요"),
+    _ecos("kr_investor_deposits", "901Y056", "M", ["S23A"], "투자자예탁금 (월말)", "Korea Investor Deposits (month-end)", ["kr_industry"],
+          "조원", "039490 006800 016360 005940 071050", scale=1e-12, digits=2, note="원자료 금융투자협회 — 개인 대기자금"),
+    _ecos("kr_margin_loans", "901Y056", "M", ["S23E"], "신용거래융자 잔고 (월말)", "Korea Margin Loans Outstanding (month-end)", ["kr_industry"],
+          "조원", "039490 006800 016360 071050", scale=1e-12, digits=2, tone=-1, note="개인 레버리지 과열도"),
+    _ecos("kr_construction_orders", "901Y020", "M", ["I42A"], "국내 건설수주액", "Korea Domestic Construction Orders", ["housing", "kr_industry"],
+          "조원", "000720 006360 375500", scale=1e-6, digits=2, note="건설사 매출 1~2년 선행 — 월별 변동이 크다"),
+    _ecos("kr_unsold_housing", "901Y074", "M", ["I410A"], "전국 미분양 주택", "Korea Unsold New Housing Units (nationwide)", ["housing", "kr_industry"],
+          "호", "000720 006360 375500", tone=-1, basis="level", digits=0),
+    _ecos("kr_dutyfree_sales_index", "901Y098", "M", ["I74F", "I74A"], "면세점 판매액지수 (경상)", "Korea Retail Sales Index: Duty-Free Stores", ["consumer_labor", "kr_industry"],
+          "지수 (2020=100)", "008770 004170", note="방한 관광·중국 소비의 프록시"),
+    _ecos("kr_power_usage_mfg", "901Y019", "M", ["I41AF"], "제조업 전력사용량", "Korea Electricity Consumption: Manufacturing", ["kr_industry", "macro_activity"],
+          "GWh", "015760", scale=1e-3, digits=1, note="제조업 가동의 실측"),
+    _ecos("kr_csi_travel", "511Y002", "M", ["FMCCD", "99988"], "소비자동향 — 여행비 지출전망 CSI", "Korea CSI: Travel Spending Outlook", ["consumer_labor", "kr_industry"],
+          "지수 (100=중립)", "039130 008770 003490", basis="level"),
+    # ---- 지역 연준 제조업 서베이 + 합성 (FRED, ISM 무료 대체) ----
+    _fred("philly_fed_mfg", "GACDFSA066MSFRBPHI", "필라델피아연준 제조업 일반활동지수", "Philadelphia Fed Manufacturing: General Activity (SA)", ["macro_activity"], "확산지수", "M",
+          "XLI CAT HON", basis="level", provider="Federal Reserve Bank of Philadelphia (FRED 경유)", license=PUBLIC),
+    _fred("empire_state_mfg", "GACDISA066MSFRBNY", "뉴욕연준 Empire State 제조업 일반활동지수", "Empire State Manufacturing: General Business Conditions (SA)", ["macro_activity"], "확산지수", "M",
+          "XLI CAT HON", basis="level", provider="Federal Reserve Bank of New York (FRED 경유)", license=PUBLIC),
+    _fred("dallas_fed_mfg", "BACTSAMFRBDAL", "댈러스연준 텍사스 제조업 일반활동지수", "Dallas Fed Texas Manufacturing Outlook: General Business Activity (SA)", ["macro_activity", "energy"], "확산지수", "M",
+          "XLI XLE CAT", basis="level", provider="Federal Reserve Bank of Dallas (FRED 경유)", license=PUBLIC),
+    _src("regional_fed_composite_pmi", ("regional_composite", ("GACDFSA066MSFRBPHI", "GACDISA066MSFRBNY", "BACTSAMFRBDAL")),
+         "지역 연준 제조업 합성지수 (3/5 반영, z-점수)", "Regional Fed Manufacturing Composite (z-score, 3 of 5 surveys)", ["macro_activity"], "z-점수 (0=장기 평균)", "M",
+         "XLI SPY IWM CAT", source="필라델피아·뉴욕·댈러스 연준 서베이(FRED)로 자체 계산", source_url="https://fred.stlouisfed.org/series/GACDFSA066MSFRBPHI",
+         series_id="z-avg(PHI, NY, DAL)", basis="level", digits=2, related_ind=["philly_fed_mfg", "empire_state_mfg", "dallas_fed_mfg", "indpro"],
+         note="ISM 이 아니다 — 지역 연준 3개 서베이의 z-정규화 평균(리치몬드·캔자스시티는 xlsx 라 P0-c). 선례: Bespoke Five Fed"),
     _src("crypto_fear_greed", ("altme",), "크립토 공포·탐욕 지수 (alternative.me)", "Crypto Fear & Greed Index", ["crypto_fintech"], "0~100", "D",
          "COIN MSTR IBIT HOOD", source="alternative.me", source_url="https://alternative.me/crypto/fear-and-greed-index/", series_id="fng", tone=1, basis="level",
          license=ALTME_ATTR, digits=0),
@@ -1168,7 +1241,32 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
         return IF.fetch_census_c30(src[1])
     if kind == "cboe_pc":
         return latest_archive_series(ind["id"], IF.fetch_cboe_putcall_recent())
+    if kind == "customs":
+        key = keys.get("customs")
+        if not key:
+            raise RuntimeError("DATA_GO_KR_KEY 없음")
+        _, hs, measure = src
+        rows = _customs_rows(key, hs)
+        return IF.customs_series(rows, measure)
+    if kind == "regional_composite":
+        inputs = []
+        for fid in src[1]:
+            try:
+                inputs.append(normalize_keys(fetch_fred(fid, "2000-01-01"), "M"))
+            except Exception as exc:  # noqa: BLE001
+                print(f"    [composite] {fid} 실패({exc}) — 제외")
+        return IF.zscore_composite(inputs)
     raise RuntimeError(f"알 수 없는 소스 {kind}")
+
+
+_CUSTOMS_CACHE: dict[str, list[dict]] = {}
+
+
+def _customs_rows(key: str, hs: str) -> list[dict]:
+    """같은 HS 코드를 여러 지표(단가·금액)가 쓰므로 실행당 한 번만 받는다."""
+    if hs not in _CUSTOMS_CACHE:
+        _CUSTOMS_CACHE[hs] = IF.fetch_customs_item(key, hs, 2016)
+    return _CUSTOMS_CACHE[hs]
 
 
 def latest_archive_series(archive_id: str, recent: list[tuple[str, float]], keep: int = 2000, *, write: bool = True) -> list[tuple[str, float]]:
@@ -1243,7 +1341,8 @@ def analyze(ind: dict, raw: list[tuple[str, float]], today: date) -> dict:
         "transforms_available": ["level", "yoy", "mom", "rebase100", "drawdown", "zscore"] if basis == "yoy" else ["level", "mom", "zscore"],
         "related_tickers": ind["related_tickers"], "related_indicators": ind.get("related_indicators", []),
         "sensitivity_validated": None,
-        "series": [{"date": k, "val": _round(v, digits), **({"yoy": _round(y, 2)} if y is not None else {})}
+        # 일간·주간은 점별 yoy 를 싣지 않는다(파일 절반이 그것이었다) — 화면이 364일 전 값으로 계산한다.
+        "series": [{"date": k, "val": _round(v, digits), **({"yoy": _round(y, 2)} if y is not None and freq in ("M", "Q") else {})}
                    for (k, v), y in zip(tail, tail_yoy)],
         "points": len(series),
     }
@@ -1375,7 +1474,8 @@ def main() -> int:
     ap.add_argument("--only", default="", help="쉼표 구분: fred,tw,ecos,oecd (테스트용)")
     args = ap.parse_args()
     only = {s.strip() for s in args.only.split(",") if s.strip()}
-    keys = {"ecos": os.environ.get("ECOS_API_KEY", "").strip().strip('"')}
+    keys = {"ecos": os.environ.get("ECOS_API_KEY", "").strip().strip('"'),
+            "customs": os.environ.get("DATA_GO_KR_KEY", "").strip().strip('"')}
     print("=== 산업 선행지표 수집 (FRED · TWSE/TPEx · ECOS · OECD) ===")
     today = kst_now().date()
     payload, problems = build(keys, only, today=today)

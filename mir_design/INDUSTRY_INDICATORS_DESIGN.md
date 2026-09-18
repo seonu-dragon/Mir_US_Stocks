@@ -1906,7 +1906,7 @@ Mir 산업지표      = 미국 상장사 태그가 달린, 출처가 드러난,
 
 ### 10.1 현재 상태 한 줄
 
-**기획·조사만 끝났고 코드는 한 줄도 없다.** `scripts/build_industry_indicators.py`, `industry.js`, `#tab-industry`, 워크플로우 모두 미작성. 이 문서와 부속 카탈로그는 **git 미커밋**(`mir_design/` 은 배포에서 rsync 제외라 사이트에는 영향 없음).
+**(2026-09-18 갱신) P0-a·P0-b·KR 묶음·P0-c 일부·로드맵 3단계·P1 선행 검증 하네스까지 구현·라이브 완료.** 지표 152개, PR #193~#199. 이 문서와 카탈로그는 git 에 있다(`mir_design/` 은 배포 제외). 상세는 10.10.
 
 ### 10.2 목표가 어떻게 바뀌었나
 
@@ -1925,6 +1925,7 @@ Mir 산업지표      = 미국 상장사 태그가 달린, 출처가 드러난,
 | 1차 (09-15) | 지표별 수집 등급, 공식 API 카탈로그(FRED·EIA·BLS·Census·TWSE…), 라이선스 표, 초안의 미검증 경로(KOMIS REST 등) 정정 | 1장 ①~⑦, 2A-A~F, 2B |
 | 2차 (09-15 저녁) | 레포 실제 코드 대조(이미 있는 빌더·진입 함수·배포 규약), 무료 소스 60여 종 실호출 검증, 유사 서비스 기능 단위 조사, UI 정정본, 정직성 규약 신설 | 0장 4절, 1장 ⑧~㉑, 2A-G, 4장, 5.5-2, 8장 |
 | **3차 검토 (09-17)** | ① 관련 종목 티커 전수 대조 — **18개가 레포에 없었다** ② 중복 지표 ID 통합 ③ P0 를 PR 단위 3단으로 분할 ④ 선행 검증(8.1)·신호등(8.3) 재정의 ⑤ `industry.html` 폐기, 메인 탭으로 단일화 ⑥ 근거 없는 수치 문장 삭제 | 0장 5절, 1장 P0 표, 8.1, 8.3, 6장 체크리스트 15~17 |
+| **구현 (09-18)** | PR #193 수집기 P0-a(66) → #194 산업 지표 탭 → #195 역방향 위젯·AI 컨텍스트·홈 카드·섹터 스트립 → #196 P0-b 무키 묶음(119) → #197 KR 묶음·지역 연준 3종(144) → #198 P0-c 리치몬드·KC·Pink Sheet(152) → #199 8.1 선행 검증 하네스 | 10.10 |
 | **3차 조사 (09-17)** | 다섯 영역 병렬 조사 → 신규 324개(직접 응답 확인 262). "유료라 포기"했던 칸 다수를 공식 무료로 대체 | 1B장 + 부속 `INDUSTRY_DATA_CATALOG.md` |
 
 ### 10.4 문서 지도 — 무엇이 어디 있나
@@ -2015,6 +2016,23 @@ Mir 산업지표      = 미국 상장사 태그가 달린, 출처가 드러난,
 - 레포의 `GOLD`(시총 $1.4B·INDUSTRIALS)·`CMT` 는 흔히 떠올리는 회사(배릭·공작기계)가 아니다. 다른 큐레이션 표(테마·밸류체인 등)에 같은 착각이 있는지 점검 가치가 있다.
 - 산업부 도메인이 `motie.go.kr` → `motir.go.kr`, FDIC API 가 `banks.data.fdic.gov` → `api.fdic.gov/banks` 로 이전됐다. 기존 빌더가 옛 주소를 쓰는지 확인.
 - FRED `fredgraph.csv` 는 브라우저 UA 를 주면 연결이 끊긴다. 기존 `build_macro_indicators.py` 의 식별 UA 를 바꾸지 말 것.
+
+### 10.10 구현 이력 (2026-09-18) — 실제로 만들어진 것과 문서와 달라진 점
+
+**파일**: `scripts/build_industry_indicators.py`(정의·분석·게이트·산출), `scripts/industry_fetchers.py`(무키 소스 파서, 순수 함수), `scripts/industry_sensitivity.py`(8.1 하네스), `industry.js`(탭·역방향 위젯·홈 카드·섹터 스트립), `.github/workflows/industry-indicators.yml`(06:10 KST, ECOS·DATA_GO_KR 키), 테스트 `scripts/tests/test_industry_*.py`.
+
+**문서와 달라진 결정**
+- `copper_comex` → `copper_price_monthly`, `lme_nickel_cash` → `nickel_price_monthly`(IMF 월간이라 이름을 원지표처럼 쓰지 않음). `tpex_monthly_rev` 는 무관한 회사 합산이라 `tw_aspeed_bmc_rev`·`tw_globalwafers_rev` 로 분리. `oecd_cli` 는 `oecd_cli_us`·`oecd_cli_kr`.
+- FRED 반도체 IP 는 `IPN3344S` 가 404 → `IPG3344S`(반도체·전자부품). 중국 M2 `MYAGM2CNM189N` 은 2019-08 에서 멈춰 제외.
+- 선행 검증 하네스는 별도 워크플로우가 아니라 **빌더 끝에서 매일** 돈다(lag 는 `data/industry_sensitivity.json` 에 고정, 재탐색 없음). 종목 일봉이 5년뿐이라 월간 쌍은 전부 표본 부족 — 통과는 주간 쌍에서만 나온다(첫 실측 374쌍 중 1쌍).
+- `regional_fed_composite_pmi` 는 5개 서베이 z-평균(FRED 3 + 리치몬드·KC xlsx). `industry_signal.top` 은 요약 객체(홈 카드·섹터 스트립이 본체 없이 그린다).
+- 용량: 일간 520점·주간 400점, 일간·주간 점별 yoy 는 화면에서 계산. 152개에서 `industry_indicators.js` 약 1.4MB(2MB 넘으면 지표별 파일로 분리).
+
+**아직 안 된 것**
+- 관세청 10일 잠정치(15157908): API 명세가 docx 라 엔드포인트·필드를 확보하지 못함 → 미구현. EIA 키 묶음(P0-b 에너지: 재고·EIA-930·정제가동률·SPR)은 `EIA_API_KEY` 등록 후.
+- P0-c 나머지: STB 철도·ETF 발행주식수·FINRA 격주 잔고·EDGAR EX-99 월간 KPI·Q4 IR 피드·Boeing·KOFIA·KCCI·마카오 DICJ·Epoch AI·Census BTOS·`bigtech_capex_sum`(10-Q).
+- P1: 자체 계산 breadth·XBRL 바텀업 매크로·Kalshi(약관 확인 후)·IMF PortWatch(라이선스 확인 후)·애틀랜타연준 MPT·키 필요 소스(KOSIS·USDA·AFDC).
+- `IMF PLITH` 단위 미확인(화면에 '단위 확인 중' 표기). DRAM/플래시/MCP 수출단가(USD/kg)는 믹스 변화에 흔들리는 무역통계 프록시로 표기.
 
 ### 10.9 다음 작업 순서 (권장)
 

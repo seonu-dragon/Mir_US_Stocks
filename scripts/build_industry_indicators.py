@@ -54,6 +54,7 @@ from pathlib import Path
 
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: F401 (계약: 원자 쓰기)
 import sec_client as sec
+import industry_fetchers as IF  # P0-b 무키 소스 파서
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
@@ -126,6 +127,8 @@ CATEGORIES = [
      "chain": [("은행·카드", ["JPM", "COF", "AXP"]), ("크레딧", ["HYG", "LQD"])]},
     {"id": "rates_fx_vol", "name": "금리·환율·변동성", "sector_etfs": ["TLT"],
      "chain": [("장기채", ["TLT"]), ("지수", ["SPY", "QQQ"])]},
+    {"id": "crypto_fintech", "name": "크립토·핀테크", "sector_etfs": ["IBIT"],
+     "chain": [("거래소·브로커", ["COIN", "HOOD"]), ("보유·채굴", ["MSTR", "MARA", "RIOT"])]},
     {"id": "kr_industry", "name": "한국 산업·수급", "sector_etfs": ["EWY"],
      "chain": [("메모리", ["005930", "000660"]), ("배터리", ["373220", "247540"]), ("전력기기", ["267260", "298040"])]},
 ]
@@ -184,6 +187,26 @@ def _oecd(id_, area, name_kr, name_en, related):
             "release": {"kind": "monthly", "day": 12, "time_kst": "20:00", "note": "OECD CLI 월간 발표(둘째 주)"},
             "license": OECD_ATTR, "related_tickers": _rel(related), "related_indicators": [], "stale_days": 100, "note": ""}
 
+
+def _src(id_, src, name_kr, name_en, cats, unit, freq, related, *, source, source_url, series_id="", tone=1,
+         basis="yoy", scale=1.0, digits=2, release=None, license=None, grade="A", related_ind=(), stale_days=None,
+         note="", proxy=False):
+    return {"id": id_, "name_kr": name_kr, "name_en": name_en, "categories": cats, "unit": unit, "frequency": freq,
+            "src": src, "source": source, "source_url": source_url, "source_series_id": series_id, "proxy": proxy,
+            "grade": grade, "tone": tone, "regime_basis": basis, "scale": scale, "digits": digits,
+            "release": release or {"kind": "none"}, "license": license or PUBLIC, "related_tickers": _rel(related),
+            "related_indicators": list(related_ind), "stale_days": stale_days, "note": note}
+
+
+IMF_ATTR = {"redistribution": "attribution", "note": "IMF Primary Commodity Price System — 출처 표기, 지표값만 게시(원표 재호스팅 없음)", "commercial_ok": False}
+BIS_ATTR = {"redistribution": "attribution", "note": "BIS Statistics — 출처 표기 시 재이용", "commercial_ok": True}
+BOJ_ATTR = {"redistribution": "attribution", "note": "일본은행 시계열 통계 — 출처 표기", "commercial_ok": True}
+CBOE_RESTRICTED = {"redistribution": "restricted", "note": "© Cboe — 지수값 표시·출처 표기, CSV 내보내기 없음", "commercial_ok": False}
+DERIBIT_RESTRICTED = {"redistribution": "restricted", "note": "Deribit 공개 시세 API — 표시 허용·재판매 금지, CSV 없음", "commercial_ok": False}
+ALTME_ATTR = {"redistribution": "attribution", "note": "alternative.me Crypto Fear & Greed — 데이터 옆 출처 표기", "commercial_ok": True}
+LLAMA_ATTR = {"redistribution": "attribution", "note": "DefiLlama — 출처 표기(공식 라이선스 문구 없음)", "commercial_ok": True}
+FRB_NOTE = {"redistribution": "public", "note": "연준 FEDS Notes 공개 데이터 — 인용 표기", "commercial_ok": True}
+FRED_3RD = THIRD_PARTY
 
 REL_MONTHLY_3 = {"kind": "monthly", "day": 3, "time_kst": "23:30", "note": "BEA 자동차 판매 (익월 초)"}
 REL_HOUSING = {"kind": "monthly", "day": 18, "time_kst": "21:30", "note": "Census 주택 착공·허가 (익월 중순)"}
@@ -354,6 +377,170 @@ INDICATORS: list[dict] = [
     _ecos("kr_foreign_net_daily", "802Y001", "D", ["0030000"], "외국인 순매수 (코스피, 20일 누적)", "Korea Foreign Net Buying: KOSPI (20-day cumulative)",
           ["kr_industry"], "조원", "005930 000660 005380 EWY", tone=1, basis="level", scale=1e-4, digits=2, kind="flow20",
           note="한국은행 일별 외국인 순매수(억원)를 20거래일 누적한 값. 일별 원값은 부호가 잦게 바뀌어 추세를 보기 어렵다"),
+    # ================= P0-b — 무키 JSON/CSV 묶음 (2026-09-18) =================
+    # ---- 변동성·시장구조 (Cboe CDN CSV, 브라우저 UA) ----
+    _src("vix9d", ("csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX9D_History.csv", "DATE", "CLOSE", "browser"),
+         "VIX 9일물 (VIX9D)", "Cboe 9-Day Volatility Index", ["rates_fx_vol"], "지수", "D", "SPY QQQ", source="Cboe Global Indices (CDN CSV)",
+         source_url="https://www.cboe.com/tradable_products/vix/", series_id="VIX9D", tone=-1, basis="level", license=CBOE_RESTRICTED, grade="A",
+         related_ind=["vix", "vix3m"], note="VIX9D > VIX 면 단기 패닉 국면"),
+    _src("vix3m", ("csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX3M_History.csv", "DATE", "CLOSE", "browser"),
+         "VIX 3개월물 (VIX3M)", "Cboe 3-Month Volatility Index", ["rates_fx_vol"], "지수", "D", "SPY QQQ", source="Cboe Global Indices (CDN CSV)",
+         source_url="https://www.cboe.com/tradable_products/vix/", series_id="VIX3M", tone=-1, basis="level", license=CBOE_RESTRICTED,
+         related_ind=["vix", "vix9d"], note="VIX > VIX3M(백워데이션)이 가장 검증된 단기 리스크 스위치"),
+    _src("vvix", ("csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/VVIX_History.csv", "DATE", None, "browser"),
+         "VVIX (변동성의 변동성)", "Cboe VVIX Index", ["rates_fx_vol"], "지수", "D", "SPY", source="Cboe Global Indices (CDN CSV)",
+         source_url="https://www.cboe.com/us/indices/dashboard/vvix/", series_id="VVIX", tone=-1, basis="level", license=CBOE_RESTRICTED),
+    _src("skew", ("csv", "https://cdn.cboe.com/api/global/us_indices/daily_prices/SKEW_History.csv", "DATE", None, "browser"),
+         "SKEW (꼬리위험 지수)", "Cboe SKEW Index", ["rates_fx_vol"], "지수", "D", "SPY QQQ", source="Cboe Global Indices (CDN CSV)",
+         source_url="https://www.cboe.com/us/indices/dashboard/skew/", series_id="SKEW", tone=-1, basis="level", license=CBOE_RESTRICTED,
+         note="140 이상 + 낮은 VIX = 헤지 수요 누적"),
+    _src("cboe_putcall_equity", ("cboe_pc",), "Cboe 주식 풋콜비율 (적립)", "Cboe Equity Put/Call Ratio", ["rates_fx_vol"], "비율", "D", "SPY QQQ HOOD",
+         source="Cboe 일별 시장통계 JSON (매일 1점 적립)", source_url="https://www.cboe.com/us/options/market_statistics/daily/", series_id="EQUITY PUT/CALL RATIO",
+         tone=1, basis="level", license=CBOE_RESTRICTED, stale_days=10, note="0.5 이하 과열 · 1.0 이상 공포. 2026-09-18 부터 적립 — 히스토리는 쌓이는 만큼만"),
+    _src("ofr_fsi", ("csv", "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv", "Date", "OFR FSI", "ident"),
+         "OFR 금융스트레스지수", "OFR Financial Stress Index", ["liquidity_credit", "rates_fx_vol"], "지수 (0=평균)", "D", "SPY HYG XLF",
+         source="Office of Financial Research", source_url="https://www.financialresearch.gov/financial-stress-index/", series_id="OFR FSI",
+         tone=-1, basis="level", related_ind=["nfci", "stlfsi", "us_high_yield_spread"]),
+    _src("ofr_fsi_credit", ("csv", "https://www.financialresearch.gov/financial-stress-index/data/fsi.csv", "Date", "Credit", "ident"),
+         "OFR 금융스트레스 — 신용 기여도", "OFR FSI: Credit Contribution", ["liquidity_credit"], "지수 기여도", "D", "HYG LQD JPM",
+         source="Office of Financial Research", source_url="https://www.financialresearch.gov/financial-stress-index/", series_id="OFR FSI Credit",
+         tone=-1, basis="level", related_ind=["ofr_fsi"]),
+    # ---- 유동성·신용 ----
+    _src("dts_tga_daily", ("tga",), "재무부 일반계정 (TGA) 일별 잔고", "Treasury General Account Closing Balance (daily)", ["liquidity_credit"], "조 USD", "D",
+         "SPY QQQ TLT", source="US Treasury FiscalData (Daily Treasury Statement)", source_url="https://fiscaldata.treasury.gov/datasets/daily-treasury-statement/",
+         series_id="operating_cash_balance", tone=-1, basis="level", digits=3, related_ind=["fed_net_liquidity", "fed_total_assets"],
+         note="TGA 증가 = 시중 유동성 흡수. 순유동성(주간)의 일별 입력"),
+    _src("gz_ebp", ("csv", "https://www.federalreserve.gov/econres/notes/feds-notes/ebp_csv.csv", "date", "ebp", "ident", True),
+         "초과채권프리미엄 (GZ EBP)", "Gilchrist-Zakrajšek Excess Bond Premium", ["liquidity_credit"], "%p", "M", "HYG LQD SPY",
+         source="Federal Reserve Board (FEDS Notes, Favara et al.)", source_url="https://www.federalreserve.gov/econres/notes/feds-notes/updating-the-recession-risk-and-the-excess-bond-premium-20161006.html",
+         series_id="ebp", tone=-1, basis="level", license=FRB_NOTE, stale_days=130, note="부도위험을 뺀 신용시장 심리 — 침체 예측력이 학술적으로 검증된 신용지표"),
+    _src("gz_recession_prob", ("csv", "https://www.federalreserve.gov/econres/notes/feds-notes/ebp_csv.csv", "date", "est_prob", "ident", True),
+         "GZ 모형 침체확률 (12개월)", "GZ Model Recession Probability", ["macro_activity", "liquidity_credit"], "확률 (0~1)", "M", "SPY TLT",
+         source="Federal Reserve Board (FEDS Notes)", source_url="https://www.federalreserve.gov/econres/notes/feds-notes/updating-the-recession-risk-and-the-excess-bond-premium-20161006.html",
+         series_id="est_prob", tone=-1, basis="level", license=FRB_NOTE, stale_days=130, digits=3, related_ind=["gz_ebp", "recession_prob_smoothed", "sahm_rule"]),
+    _src("fed_fci_g", ("csv", "https://www.federalreserve.gov/econres/notes/feds-notes/fci_g_public_monthly_3yr.csv", "date", "FCI-G Index (baseline)", "ident", True),
+         "연준 금융여건지수 FCI-G (3년 룩백)", "Fed Financial Conditions Impulse on Growth", ["liquidity_credit", "macro_activity"], "%p (성장 임펄스)", "M", "SPY XLF",
+         source="Federal Reserve Board (FEDS Notes)", source_url="https://www.federalreserve.gov/econres/notes/feds-notes/a-new-index-to-measure-us-financial-conditions-20230630.html",
+         series_id="FCI-G baseline", tone=-1, basis="level", license=FRB_NOTE, stale_days=130, digits=3, note="양(+)이면 금융여건이 향후 1년 성장에 역풍"),
+    _fred("ccc_oas", "BAMLH0A3HYC", "CCC 이하 하이일드 스프레드 (OAS)", "ICE BofA CCC & Lower US High Yield OAS", ["liquidity_credit"], "%p", "D",
+          "HYG JNK", tone=-1, basis="level", provider="ICE BofA (FRED 경유, 제3자)", license=THIRD_PARTY, related_ind=["us_high_yield_spread"],
+          note="HY 평균이 조용해도 CCC 가 먼저 벌어진다"),
+    _fred("bbb_oas", "BAMLC0A4CBBB", "BBB 회사채 스프레드 (OAS)", "ICE BofA BBB US Corporate OAS", ["liquidity_credit"], "%p", "D",
+          "LQD JPM", tone=-1, basis="level", provider="ICE BofA (FRED 경유, 제3자)", license=THIRD_PARTY, related_ind=["us_ig_spread"]),
+    _fred("h8_bank_loans", "TOTLL", "상업은행 대출·리스 잔액 (H.8)", "Loans and Leases in Bank Credit, All Commercial Banks", ["liquidity_credit"], "조 USD", "W",
+          "JPM BAC WFC KRE", scale=1e-3, digits=3, release=REL_WEEKLY_WED, provider="Federal Reserve H.8 (FRED 경유)", license=PUBLIC),
+    _fred("h8_bank_deposits", "DPSACBW027SBOG", "상업은행 예금 잔액 (H.8)", "Deposits, All Commercial Banks", ["liquidity_credit"], "조 USD", "W",
+          "JPM BAC WFC KRE ZION", scale=1e-3, digits=3, release=REL_WEEKLY_WED, provider="Federal Reserve H.8 (FRED 경유)", license=PUBLIC,
+          note="예금 유출 = 지역은행 스트레스의 1차 실측"),
+    _fred("fed_discount_window", "WLCFLPCL", "연준 할인창구 대출 (프라이머리 크레딧)", "Primary Credit Outstanding (H.4.1)", ["liquidity_credit"], "십억 USD", "W",
+          "KRE KBE WAL ZION", tone=-1, basis="level", scale=1e-3, digits=2, release=REL_WEEKLY_WED, provider="Federal Reserve H.4.1 (FRED 경유)", license=PUBLIC,
+          note="급증 = 2023-03 식 은행 사건의 실시간 경보"),
+    _fred("commercial_paper_outstanding", "COMPOUT", "상업어음 잔액", "Commercial Paper Outstanding", ["liquidity_credit"], "조 USD", "W",
+          "XLF GS", scale=1e-3, digits=3, provider="Federal Reserve (FRED 경유)", license=PUBLIC),
+    _fred("revolving_credit", "REVOLSL", "리볼빙 소비자신용 (G.19)", "Revolving Consumer Credit Owned and Securitized", ["consumer_labor", "liquidity_credit"], "조 USD", "M",
+          "COF SYF AXP V MA", scale=1e-6, digits=3, provider="Federal Reserve G.19 (FRED 경유)", license=PUBLIC, related_ind=["cc_delinquency"]),
+    _fred("card_chargeoff_rate", "CORCCACBS", "신용카드 상각률 (상업은행)", "Charge-Off Rate on Credit Card Loans", ["consumer_labor", "liquidity_credit"], "%", "Q",
+          "COF SYF AXP JPM", tone=-1, basis="level", stale_days=220, related_ind=["cc_delinquency"]),
+    _fred("sloos_ci_standards", "DRTSCILM", "은행 대출태도 — 대기업 C&I 순강화 비율 (SLOOS)", "Net % of Banks Tightening Standards: C&I Loans to Large Firms", ["liquidity_credit"], "% (순강화)", "Q",
+          "XLF KRE JPM", tone=-1, basis="level", stale_days=220, note="신용 사이클을 2~3분기 선행"),
+    _fred("mmf_retail_assets", "WRMFNS", "소매 MMF 자산", "Retail Money Market Funds", ["liquidity_credit"], "조 USD", "W",
+          "SPY BIL", scale=1e-3, digits=3, stale_days=60, provider="Federal Reserve H.6 (FRED 경유)", license=PUBLIC, note="대기자금(월 1회 갱신에 가깝다)"),
+    _fred("kc_fsi", "KCFSI", "캔자스시티연준 금융스트레스지수", "Kansas City Financial Stress Index", ["liquidity_credit"], "지수 (0=평균)", "M",
+          "SPY XLF", tone=-1, basis="level", provider="Federal Reserve Bank of Kansas City (FRED 경유)", license=PUBLIC, related_ind=["stlfsi", "ofr_fsi"]),
+    # ---- 금리·인플레 기대 ----
+    _fred("expected_inflation_10y", "EXPINF10YR", "클리블랜드연준 10년 기대인플레이션", "10-Year Expected Inflation (Cleveland Fed)", ["rates_fx_vol"], "%", "M",
+          "TIP TLT GLD", tone=0, basis="level", provider="Federal Reserve Bank of Cleveland (FRED 경유)", license=PUBLIC, related_ind=["breakeven_10y"]),
+    _fred("sticky_cpi", "CORESTICKM159SFRBATL", "애틀랜타연준 Sticky CPI (근원, 12개월)", "Sticky Price CPI less Food and Energy (12-month)", ["rates_fx_vol", "consumer_labor"], "%", "M",
+          "TLT TIP SPY", tone=-1, basis="level", provider="Federal Reserve Bank of Atlanta (FRED 경유)", license=PUBLIC, note="끈적한 물가 = 연준 피벗 제약"),
+    _fred("atl_wage_growth", "FRBATLWGT3MMAUMHWGO", "애틀랜타연준 임금상승 추적기 (3MMA)", "Atlanta Fed Wage Growth Tracker (3-month MA)", ["consumer_labor"], "%", "M",
+          "PAYX ADP XLY", tone=0, basis="level", provider="Federal Reserve Bank of Atlanta (FRED 경유)", license=PUBLIC),
+    _fred("forward_inflation_5y5y", "T5YIFR", "5년-5년 선도 기대인플레이션", "5-Year, 5-Year Forward Inflation Expectation Rate", ["rates_fx_vol"], "%", "D",
+          "TLT TIP GLD", tone=0, basis="level", related_ind=["breakeven_10y"]),
+    _fred("oil_vix", "OVXCLS", "원유 변동성지수 (OVX)", "CBOE Crude Oil ETF Volatility Index", ["energy", "rates_fx_vol"], "지수", "D",
+          "XLE XOM OXY", tone=-1, basis="level", provider="Cboe (FRED 경유, 제3자)", license=THIRD_PARTY, related_ind=["wti_crude_oil"]),
+    _fred("gold_vix", "GVZCLS", "금 변동성지수 (GVZ)", "CBOE Gold ETF Volatility Index", ["commodities_metals", "rates_fx_vol"], "지수", "D",
+          "GLD GDX NEM", tone=-1, basis="level", provider="Cboe (FRED 경유, 제3자)", license=THIRD_PARTY),
+    _fred("diesel_retail_weekly", "GASDESW", "미국 경유 소매가 (주간)", "U.S. No 2 Diesel Retail Prices", ["shipping_logistics", "energy"], "USD/갤런", "W",
+          "UPS FDX KNX ODFL", tone=-1, provider="EIA (FRED 경유)", license=PUBLIC, note="UPS·FDX 유류할증료의 입력값"),
+    # ---- 원자재 (IMF PCPS, 월간·한 달 빠름) ----
+    _src("imf_lithium", ("sdmx", IF.imf_pcps_url("PLITH"), "IMF PCPS PLITH"), "탄산리튬 가격 (IMF PCPS)", "Lithium Carbonate Price (IMF PCPS)", ["auto_ev", "commodities_metals"],
+         "IMF 표기 USD/톤 (단위 확인 중)", "M", "ALB SQM LAC TSLA 247540 066970 003670", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PLITH", tone=0, license=IMF_ATTR, stale_days=120, related_ind=["kr_mpi_lithium", "nickel_price_monthly"],
+         note="값 크기(14만대)로 보아 CNY/톤 환산 전 값일 가능성 — 단위 메타 확인 전까지는 수준보다 추세를 볼 것"),
+    _src("imf_cobalt", ("sdmx", IF.imf_pcps_url("PCOBA"), "IMF PCPS PCOBA"), "코발트 가격 (IMF PCPS)", "Cobalt Price (IMF PCPS)", ["auto_ev", "commodities_metals"],
+         "USD/톤", "M", "BHP ALB TSLA 006400", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PCOBA", tone=0, license=IMF_ATTR, stale_days=120),
+    _src("imf_uranium", ("sdmx", IF.imf_pcps_url("PURAN"), "IMF PCPS PURAN"), "우라늄 가격 (IMF PCPS 월평균)", "Uranium Price (IMF PCPS)", ["energy", "commodities_metals"],
+         "USD/lb", "M", "CCJ UEC UUUU LEU CEG 034020", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PURAN", tone=0, license=IMF_ATTR, stale_days=120, note="UxC 일별 현물의 공식 무료 월간 대체"),
+    _src("imf_urea", ("sdmx", IF.imf_pcps_url("PUREA"), "IMF PCPS PUREA"), "요소 비료 가격 (IMF PCPS)", "Urea Price (IMF PCPS)", ["commodities_metals"],
+         "USD/톤", "M", "CF MOS NTR", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PUREA", tone=0, license=IMF_ATTR, stale_days=120),
+    _src("imf_potash", ("sdmx", IF.imf_pcps_url("PPOTASH"), "IMF PCPS PPOTASH"), "염화칼륨 비료 가격 (IMF PCPS)", "Potassium Chloride Price (IMF PCPS)", ["commodities_metals"],
+         "USD/톤", "M", "MOS NTR CF", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PPOTASH", tone=0, license=IMF_ATTR, stale_days=120),
+    _src("imf_lng_japan", ("sdmx", IF.imf_pcps_url("PNGASJP"), "IMF PCPS PNGASJP"), "일본 LNG 수입가격 (IMF PCPS)", "LNG Japan Price (IMF PCPS)", ["energy"],
+         "USD/MMBtu", "M", "LNG KMI 036460", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PNGASJP", tone=0, license=IMF_ATTR, stale_days=120, related_ind=["henry_hub_natgas"]),
+    _src("imf_gas_europe", ("sdmx", IF.imf_pcps_url("PNGASEU"), "IMF PCPS PNGASEU"), "유럽 천연가스 가격 (IMF PCPS)", "Natural Gas Europe Price (IMF PCPS)", ["energy"],
+         "USD/MMBtu", "M", "LNG EQT SHEL", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PNGASEU", tone=0, license=IMF_ATTR, stale_days=120, related_ind=["henry_hub_natgas"]),
+    _src("imf_coal_australia", ("sdmx", IF.imf_pcps_url("PCOALAU"), "IMF PCPS PCOALAU"), "호주 석탄 가격 (IMF PCPS)", "Coal Australia Price (IMF PCPS)", ["energy", "commodities_metals"],
+         "USD/톤", "M", "BTU 015760", source="IMF Primary Commodity Price System", source_url="https://data.imf.org/en/datasets/IMF.RES:PCPS",
+         series_id="PCOALAU", tone=0, license=IMF_ATTR, stale_days=120),
+    # ---- 일본은행 기업물가 (메모리 IC·장비) ----
+    _src("boj_memory_ic_export_price", ("boj", "PRCG20_2300550006"), "MOS 메모리 IC 수출물가지수 (일본은행, 계약통화)", "BoJ Export Price Index: MOS Memory ICs (contract currency)",
+         ["tech_semi"], "지수 (2020=100)", "M", "MU SNDK WDC STX 005930 000660", source="일본은행 기업물가지수", source_url="https://www.stat-search.boj.or.jp/",
+         series_id="PRCG20_2300550006", license=BOJ_ATTR, stale_days=100, related_ind=["kr_xpi_dram", "kr_xpi_flash", "tw_memory_rev"],
+         note="한국은행 DRAM 수출물가와 짝 — 두 나라 공식 통계가 같은 방향이면 메모리 가격 지표로 읽는다"),
+    _src("boj_semi_equipment_export_price", ("boj", "PRCG20_2300450024"), "반도체 제조장비 수출물가지수 (일본은행)", "BoJ Export Price Index: Semiconductor Manufacturing Equipment",
+         ["tech_semi"], "지수 (2020=100)", "M", "AMAT LRCX KLAC TER 240810", source="일본은행 기업물가지수", source_url="https://www.stat-search.boj.or.jp/",
+         series_id="PRCG20_2300450024", tone=0, basis="level", license=BOJ_ATTR, stale_days=100),
+    # ---- BIS 글로벌 체제 ----
+    _src("bis_reer_kr", ("sdmx", IF.bis_url("WS_EER", "M.R.B.KR"), "BIS REER KR"), "원화 실질실효환율 (BIS Broad)", "Real Effective Exchange Rate: Korea (BIS)", ["kr_industry", "rates_fx_vol"],
+         "지수 (2020=100)", "M", "005380 000270 EWY", source="BIS Statistics", source_url="https://data.bis.org/topics/EER", series_id="WS_EER M.R.B.KR",
+         tone=-1, basis="level", license=BIS_ATTR, stale_days=100, note="원화 고평가(상승) = 수출주 가격경쟁력 약화"),
+    _src("bis_reer_jp", ("sdmx", IF.bis_url("WS_EER", "M.R.B.JP"), "BIS REER JP"), "엔화 실질실효환율 (BIS Broad)", "Real Effective Exchange Rate: Japan (BIS)", ["rates_fx_vol"],
+         "지수 (2020=100)", "M", "EWJ TM 005380", source="BIS Statistics", source_url="https://data.bis.org/topics/EER", series_id="WS_EER M.R.B.JP",
+         tone=0, basis="level", license=BIS_ATTR, stale_days=100),
+    _src("bis_credit_gap_kr", ("sdmx", IF.bis_url("WS_CREDIT_GAP", "Q.KR.P.A.C"), "BIS credit gap KR"), "한국 신용갭 (BIS)", "Credit-to-GDP Gap: Korea (BIS)", ["kr_industry", "liquidity_credit"],
+         "%p", "Q", "105560 055550 EWY", source="BIS Statistics", source_url="https://data.bis.org/topics/CREDIT_GAPS", series_id="WS_CREDIT_GAP Q.KR.P.A.C",
+         tone=-1, basis="level", license=BIS_ATTR, stale_days=300),
+    _src("bis_credit_gap_us", ("sdmx", IF.bis_url("WS_CREDIT_GAP", "Q.US.P.A.C"), "BIS credit gap US"), "미국 신용갭 (BIS)", "Credit-to-GDP Gap: United States (BIS)", ["liquidity_credit"],
+         "%p", "Q", "JPM XLF SPY", source="BIS Statistics", source_url="https://data.bis.org/topics/CREDIT_GAPS", series_id="WS_CREDIT_GAP Q.US.P.A.C",
+         tone=-1, basis="level", license=BIS_ATTR, stale_days=300),
+    _src("bis_dsr_kr", ("sdmx", IF.bis_url("WS_DSR", "Q.KR.P"), "BIS DSR KR"), "한국 민간 원리금상환비율 (BIS DSR)", "Debt Service Ratio, Private Non-financial: Korea (BIS)", ["kr_industry"],
+         "%", "Q", "105560 055550 029780", source="BIS Statistics", source_url="https://data.bis.org/topics/DSR", series_id="WS_DSR Q.KR.P",
+         tone=-1, basis="level", license=BIS_ATTR, stale_days=300),
+    _src("bis_property_kr", ("sdmx", IF.bis_url("WS_SPP", "Q.KR.R.628"), "BIS property KR"), "한국 실질 주택가격지수 (BIS)", "Real Residential Property Prices: Korea (BIS)", ["kr_industry", "housing"],
+         "지수 (2010=100)", "Q", "000720 006360 375500", source="BIS Statistics", source_url="https://data.bis.org/topics/RPP", series_id="WS_SPP Q.KR.R.628",
+         license=BIS_ATTR, stale_days=300),
+    _src("bis_property_cn", ("sdmx", IF.bis_url("WS_SPP", "Q.CN.R.628"), "BIS property CN"), "중국 실질 주택가격지수 (BIS)", "Real Residential Property Prices: China (BIS)", ["housing", "commodities_metals"],
+         "지수 (2010=100)", "Q", "BABA VALE RIO BHP", source="BIS Statistics", source_url="https://data.bis.org/topics/RPP", series_id="WS_SPP Q.CN.R.628",
+         license=BIS_ATTR, stale_days=300, note="철광석·구리 수요의 배경"),
+    # ---- 건설·AI 인프라 (Census C30) ----
+    _src("census_datacenter_construction", ("census_c30", "Data center"), "미국 데이터센터 건설지출 (민간, 연율)", "U.S. Private Construction Spending: Data Center (SAAR)", ["ai_datacenter"],
+         "십억 USD (연율)", "M", "VRT ETN PWR EME DLR EQIX GEV ANET 010120 267260 298040", source="U.S. Census Bureau C30 (privsatime.xlsx)",
+         source_url="https://www.census.gov/construction/c30/c30index.html", series_id="Private SA · Data center", stale_days=100,
+         related_ind=["tw_ai_server_odm_rev", "tw_dc_network_power_rev", "kr_xpi_transformer"], note="AI 설비투자의 공식 월간 실측 — FRED 에 없는 열"),
+    _fred("census_mfg_construction", "TLMFGCONS", "미국 제조업 건설지출 (연율)", "Total Construction Spending: Manufacturing", ["macro_activity"], "십억 USD (연율)", "M",
+          "CAT URI VMC MLM PWR", scale=1e-3, digits=1, provider="Census (FRED 경유)", license=PUBLIC, note="리쇼어링·CHIPS 투자"),
+    _fred("census_power_construction", "TLPWRCONS", "미국 전력 건설지출 (연율)", "Total Construction Spending: Power", ["ai_datacenter", "macro_activity"], "십억 USD (연율)", "M",
+          "PWR ETN GEV VST NEE", scale=1e-3, digits=1, provider="Census (FRED 경유)", license=PUBLIC, related_ind=["census_datacenter_construction"]),
+    # ---- 원전 ----
+    _src("nrc_reactor_avg_power", ("nrc",), "미국 원자로 평균 출력 (NRC, 전 호기)", "U.S. Nuclear Reactors Average Power (NRC daily status)", ["energy", "ai_datacenter"],
+         "%", "D", "CEG VST TLN NRG BWXT 034020", source="U.S. NRC Power Reactor Status Reports", source_url="https://www.nrc.gov/reading-rm/doc-collections/event-status/reactor-status/",
+         series_id="PowerReactorStatusForLast365Days", basis="level", stale_days=10, note="봄·가을 재장전 시즌에 낮아진다 — 가스 수요와 짝"),
+    # ---- 크립토·핀테크 ----
+    _src("stablecoin_supply", ("defillama_stable",), "스테이블코인 총 유통량", "Total Stablecoin Circulating Supply (DefiLlama)", ["crypto_fintech"], "십억 USD", "D",
+         "COIN HOOD MSTR IBIT CRCL", source="DefiLlama stablecoins", source_url="https://defillama.com/stablecoins", series_id="stablecoincharts/all",
+         license=LLAMA_ATTR, digits=1, note="크립토 시장의 달러 유동성"),
+    _src("deribit_dvol_btc", ("deribit", "BTC"), "비트코인 내재변동성 지수 (Deribit DVOL)", "Deribit BTC Volatility Index (DVOL)", ["crypto_fintech"], "%", "D",
+         "MSTR COIN IBIT HOOD", source="Deribit 공개 API", source_url="https://www.deribit.com/statistics/BTC/volatility-index", series_id="DVOL BTC 1D",
+         tone=-1, basis="level", license=DERIBIT_RESTRICTED, note="크립토판 VIX"),
+    _src("crypto_fear_greed", ("altme",), "크립토 공포·탐욕 지수 (alternative.me)", "Crypto Fear & Greed Index", ["crypto_fintech"], "0~100", "D",
+         "COIN MSTR IBIT HOOD", source="alternative.me", source_url="https://alternative.me/crypto/fear-and-greed-index/", series_id="fng", tone=1, basis="level",
+         license=ALTME_ATTR, digits=0),
 ]
 
 
@@ -958,7 +1145,48 @@ def fetch_raw(ind: dict, keys: dict, start_iso: str, only: set[str]) -> list[tup
         return fetch_ecos(key, stat, cycle, items, s, e)
     if kind == "oecd":
         return fetch_oecd_cli(src[1], start_iso[:7])
+    # ---- P0-b 무키 소스 (industry_fetchers) ----
+    if kind == "csv":
+        _, url, date_col, value_col, ua = src[:5]
+        monthly = bool(src[5]) if len(src) > 5 else False
+        return IF.fetch_csv(url, date_col, value_col, ua=ua, monthly=monthly, label=ind["id"])
+    if kind == "sdmx":
+        return IF.fetch_sdmx_csv(src[1], label=src[2] if len(src) > 2 else ind["id"])
+    if kind == "boj":
+        return IF.fetch_boj(src[1])
+    if kind == "tga":
+        return IF.fetch_tga()
+    if kind == "defillama_stable":
+        return IF.fetch_defillama_stablecoins()
+    if kind == "deribit":
+        return IF.fetch_deribit_dvol(src[1])
+    if kind == "altme":
+        return IF.fetch_altme_fng()
+    if kind == "nrc":
+        return IF.fetch_nrc_power()
+    if kind == "census_c30":
+        return IF.fetch_census_c30(src[1])
+    if kind == "cboe_pc":
+        return latest_archive_series(ind["id"], IF.fetch_cboe_putcall_recent())
     raise RuntimeError(f"알 수 없는 소스 {kind}")
+
+
+def latest_archive_series(archive_id: str, recent: list[tuple[str, float]], keep: int = 2000, *, write: bool = True) -> list[tuple[str, float]]:
+    """'최신값만 주는 소스' 적립 규약 — data/industry_archive/<id>.json 에 같은 날짜는 skip 하고 덧붙인다."""
+    path = ARCHIVE_DIR / f"{archive_id}.json"
+    archive = load_archive(path)
+    recs = {r["date"]: float(r["val"]) for r in archive.get("records", []) if isinstance(r, dict) and r.get("date") is not None}
+    changed = False
+    for d, v in recent:
+        if d not in recs:
+            recs[d] = v
+            changed = True
+    ordered = sorted(recs.items())[-keep:]
+    if changed and write:
+        ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
+        atomic_write_text(path, json.dumps({"keep": keep, "records": [{"date": d, "val": v} for d, v in ordered]},
+                                           ensure_ascii=False, separators=(",", ":")) + "\n")
+    return ordered
 
 
 def flow20(series: list[tuple[str, float]]) -> list[tuple[str, float]]:
@@ -1065,6 +1293,8 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
             print(f"  [fail] {msg}")
         if ind["src"][0] in ("fred", "net_liq"):
             time.sleep(0.25)
+        elif ind["src"][0] in ("sdmx", "csv", "boj"):
+            time.sleep(0.5)
     if len(built) < MIN_INDICATORS:
         return {}, [f"수집된 지표 {len(built)}개 < {MIN_INDICATORS} — 기존 파일 유지"] + failures
     # 카테고리 정의 + 지표 목록(정의 순서)

@@ -24,6 +24,7 @@ BASIC_KOSPI = {
     "itemCode": "KOSPI", "stockName": "코스피",
     "closePrice": "6,657.91", "compareToPreviousClosePrice": "-26.46",
     "fluctuationsRatio": "-0.40",
+    "localTradedAt": "2026-09-01T16:10:00+09:00", "marketStatus": "CLOSE",
 }
 BASIC_KOSDAQ = {
     "itemCode": "KOSDAQ", "stockName": "코스닥",
@@ -58,6 +59,9 @@ def test_indices_use_real_index_level_and_change(mstock):
     # ticker 는 클릭용 대리 ETF 로만 남는다.
     assert by_name["코스피"]["ticker"] == "069500"
     assert by_name["코스피"]["proxyTicker"] == "069500"
+    # 세션 식별자 — 배포 정합성 게이트가 같은 거래일인지 가린다.
+    assert by_name["코스피"]["tradedAt"] == "2026-09-01T16:10:00+09:00"
+    assert by_name["코스피"]["marketStatus"] == "CLOSE"
 
 
 def test_index_failure_emits_null_not_a_stock_change(mstock):

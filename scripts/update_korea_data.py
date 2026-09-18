@@ -442,6 +442,9 @@ def fetch_kr_index_quotes() -> dict[str, dict | None]:
             "price": round(price, 2),
             "changePct": round(change_pct, 2),
             "change": round(change, 2) if change is not None else None,
+            # 세션 식별자 — 배포 게이트(check_kr_index_parity.py)가 워커와 같은 거래일인지 가린다.
+            "tradedAt": payload.get("localTradedAt"),
+            "marketStatus": payload.get("marketStatus"),
         }
         print(f"  지수 {name}: {price:,.2f} ({change_pct:+.2f}%)")
     return out
@@ -462,6 +465,8 @@ def build_kr_indices() -> list[dict]:
             "price": q["price"] if q else None,
             "changePct": q["changePct"] if q else None,
             "change": q["change"] if q else None,
+            "tradedAt": q.get("tradedAt") if q else None,
+            "marketStatus": q.get("marketStatus") if q else None,
             "source": "m.stock index/basic" if q else "unavailable",
         })
     return rows

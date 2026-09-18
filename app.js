@@ -3497,6 +3497,7 @@ function renderAll() {
   renderDataFreshnessStatus();
   // 오늘 탭 요약(국면 한 문장·카드뉴스 1장)은 부팅 탭이라 여기서 그린다.
   renderTodayRegime();
+  if (typeof renderIndustryHomeCard === "function") renderIndustryHomeCard();
   renderTodayNews();
   renderMyInvestSummary();
 }
@@ -3712,6 +3713,9 @@ function renderSectors() {
       selectTicker(chip.dataset.ticker, { openSearch: true });
     });
   });
+
+  // 섹터 ETF 카드 끝에 산업 선행지표 3개 스트립(industry.js). INDUSTRY_SIGNAL 이 없으면 받은 뒤 붙는다.
+  if (typeof industryDecorateSectorCards === "function") industryDecorateSectorCards();
 
   // Render detail on the right
   renderSectorDetail();
@@ -4932,6 +4936,7 @@ function renderSearch(options = {}) {
   renderEstimateRevision(item);
   render52wRange(item);
   renderStockEvents(item);
+  if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);

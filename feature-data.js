@@ -223,6 +223,7 @@ function refreshFeatureViews() {
   // applySearchSubVisibility: US 자사주·증자희석 탭은 데이터(8-K kind / US_DILUTION)가
   // 늦게 도착하면 그때 나타나야 한다 — 부팅 시점엔 전역이 없어 숨겨져 있다.
   const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility(), renderTodayRegime];
+  if (typeof renderIndustryHomeCard === "function") calls.push(renderIndustryHomeCard);
   // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.
@@ -246,6 +247,7 @@ function refreshFeatureViews() {
           () => renderMoveExplanation(item),
           () => renderEstimateRevision(item),
           () => renderStockEvents(item),
+          () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
         );
       }
     }

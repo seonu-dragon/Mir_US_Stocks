@@ -550,7 +550,7 @@ async function buildStockChatContext(userText) {
   // (내부자·의회·13F·대량보유·공매도·주요공시 — AI가 함께 참고하려면 먼저 받아와야 함)
   await Promise.all([
     ...[...tickers].map((ticker) => loadStockDetail(ticker)),
-    ...["inst13f", "insider", "short", "congress", "activist", "events"].map((k) =>
+    ...["inst13f", "insider", "short", "congress", "activist", "events", "industryByTicker", "industry"].map((k) =>
       (typeof ensureFeatureData === "function" ? ensureFeatureData(k) : Promise.resolve()).catch(() => {})),
   ]);
 
@@ -646,6 +646,11 @@ async function buildStockChatContext(userText) {
       }
     } catch (e) { /* 점수 계산 실패 시 생략 */ }
     if (smLines.length) lines.push(`  └ 스마트머니·촉매·모멘텀: ${smLines.join(" · ")}`);
+    // 산업 선행지표(역인덱스 상위 3개) — 스마트머니와 같은 자리에 한 줄. 검증 안 된 선행 ρ 는 싣지 않는다.
+    if (typeof industryContextLine === "function") {
+      const indLine = industryContextLine(item.ticker);
+      if (indLine) lines.push(`  └ ${indLine}`);
+    }
   });
   return lines.length
     ? `다음은 사이트 스냅샷/프록시 기준 종목 데이터입니다(실시간 투자 조언 아님, 참고용):\n${lines.join("\n")}`

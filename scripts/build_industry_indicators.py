@@ -1112,9 +1112,11 @@ def build_signal(payload: dict) -> dict:
         for iid in c["indicators"]:
             d = payload["indicators"][iid]["regime"]["direction"]
             counts[d if d in counts else "unknown"] += 1
-        # 대표 지표 3개: 최근 발표된 순
-        top = sorted(c["indicators"], key=lambda i: payload["indicators"][i]["latest_date"], reverse=True)[:3]
-        cats.append({"id": c["id"], "name": c["name"], **counts, "top": top})
+        # 대표 지표 3개: 최근 발표된 순. 홈 카드·섹터 스트립이 본체(750KB) 없이 그릴 수 있게 요약값을 싣는다.
+        top_ids = sorted(c["indicators"], key=lambda i: payload["indicators"][i]["latest_date"], reverse=True)[:3]
+        top = [{k: payload["indicators"][i].get(k) for k in ("id", "name_kr", "latest_value", "unit", "latest_yoy", "latest_date")}
+               | {"direction": payload["indicators"][i]["regime"]["direction"]} for i in top_ids]
+        cats.append({"id": c["id"], "name": c["name"], "sector_etfs": c.get("sector_etfs", []), **counts, "top": top})
     return {"updatedAtKst": payload["updatedAtKst"], "count": len(cats), "categories": cats,
             "note": "개선/악화는 증가율의 방향(YoY 3MMA 의 3개월 변화)이며 주가 방향이 아니다"}
 

@@ -636,3 +636,121 @@ function industryDownloadCsv(ind) {
   a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 0);
 }
+
+// ---------------------------------------------------------------------------
+// 종목 상세 역방향 위젯 — "이 종목이 따라가는 산업 지표" (INDUSTRY_BY_TICKER 역인덱스)
+// ---------------------------------------------------------------------------
+// selectTicker 가 부르고, 데이터가 늦게 도착하면 refreshFeatureViews 가 다시 부른다(라이브에서
+// 피처 전역이 패널 렌더보다 늦는 경합 — 등록하지 않으면 카드가 영영 안 뜬다).
+function industryReverseIds(ticker) {
+  const idx = window.INDUSTRY_BY_TICKER;
+  return idx && idx.byTicker ? (idx.byTicker[ticker] || []) : [];
+}
+
+function industryReverseRow(id) {
+  const ind = industryIndicator(id);
+  if (!ind) return "";
+  const tail = (ind.related_tickers || []).find((r) => r.sensitivity && r.sensitivity.validated);
+  return `<button type="button" class="industry-rev-row" data-ind="${escapeHtml(id)}">
+    <span class="industry-rev-name">${escapeHtml(ind.name_kr)}${tail ? `<span class="industry-chip-tail">${escapeHtml(`${tail.sensitivity.lag_months}개월 선행 · ρ ${Number(tail.sensitivity.oos_rho).toFixed(2)}`)}</span>` : ""}</span>
+    <span class="industry-rev-val"><b>${indFmtNum(ind.latest_value)}</b><span class="muted">${escapeHtml(ind.unit || "")}</span></span>
+    <span class="industry-rev-yoy ${indCls(ind.latest_yoy)}">${ind.latest_yoy != null ? indFmtSigned(ind.latest_yoy, "%", 1) : (ind.latest_mom != null ? indFmtSigned(ind.latest_mom, industryTransformUnit(ind, "mom"), 2) : "—")}</span>
+    ${industrySpark((ind.series || []).slice(-12).map((p) => p.val), 96, 26)}
+    <span class="industry-rev-next muted">${ind.next_release ? `D-${ind.next_release.days_ahead}` : escapeHtml(ind.latest_date)}</span>
+  </button>`;
+}
+
+function renderIndustryReverse(item) {
+  const host = byId("industryReverse");
+  if (!host) return;
+  const ticker = item && item.ticker;
+  if (!ticker) { host.hidden = true; host.innerHTML = ""; return; }
+  const ready = !!(window.INDUSTRY_BY_TICKER && industryData());
+  if (!ready) {
+    // 역인덱스(작음)를 먼저 받아 이 종목에 지표가 있는지 보고, 있을 때만 본체(750KB)를 받는다.
+    ensureFeatureData("industryByTicker").then((ok) => {
+      if (!ok || (typeof selectedTicker !== "undefined" && selectedTicker !== ticker)) return;
+      if (!industryReverseIds(ticker).length) { host.hidden = true; host.innerHTML = ""; return; }
+      host.hidden = false;
+      host.innerHTML = '<h3>이 종목이 따라가는 산업 지표</h3><p class="muted">불러오는 중…</p>';
+      ensureFeatureData("industry").then((ok2) => { if (ok2 && selectedTicker === ticker) renderIndustryReverse(item); });
+    });
+    return;
+  }
+  const ids = industryReverseIds(ticker);
+  if (!ids.length) { host.hidden = true; host.innerHTML = ""; return; }
+  host.hidden = false;
+  host.innerHTML = `<h3>이 종목이 따라가는 산업 지표</h3>
+    <div class="industry-rev-list">${ids.slice(0, 3).map(industryReverseRow).join("")}</div>
+    <p class="muted industry-foot">관련 지표 ${ids.length}개 중 최근 발표 순 3개 · 누르면 산업 지표 탭으로 갑니다. 값은 빌드 시 계산한 서술 통계이며 주가 방향을 뜻하지 않습니다. 검증된 선행 상관이 있을 때만 꼬리표가 붙습니다.</p>`;
+  host.querySelectorAll("[data-ind]").forEach((b) => b.addEventListener("click", () => openIndustryIndicator(b.dataset.ind)));
+}
+
+// AI 리포트 컨텍스트용 한 줄(chart-indicators.js buildStockChatContext 가 부른다).
+function industryContextLine(ticker) {
+  const ids = industryReverseIds(ticker).slice(0, 3);
+  const parts = ids.map((id) => {
+    const ind = industryIndicator(id);
+    if (!ind) return null;
+    const yoy = ind.latest_yoy != null ? `, 전년비 ${indFmtSigned(ind.latest_yoy, "%", 1)}` : "";
+    const dir = INDUSTRY_DIRECTION_LABEL[(ind.regime || {}).direction] || "";
+    return `${ind.name_kr} ${indFmtNum(ind.latest_value)}${ind.unit ? ind.unit : ""}(${ind.latest_date}${yoy}${dir ? `, 신호등 ${dir}` : ""})`;
+  }).filter(Boolean);
+  return parts.length ? `산업 선행지표(빌드 시 계산한 서술 통계, 주가 예측 아님): ${parts.join(" · ")}` : "";
+}
+
+// ---------------------------------------------------------------------------
+// 홈(오늘 탭) 산업 신호등 카드 — INDUSTRY_SIGNAL · INDUSTRY_CALENDAR(둘 다 작다)
+// ---------------------------------------------------------------------------
+function renderIndustryHomeCard() {
+  const host = byId("industryHomeCard");
+  if (!host) return;
+  const sig = window.INDUSTRY_SIGNAL;
+  if (!sig || !Array.isArray(sig.categories)) {
+    ensureFeatureData("industrySignal").then((ok) => { if (ok) renderIndustryHomeCard(); });
+    ensureFeatureData("industryCalendar");
+    return;
+  }
+  const cats = sig.categories;
+  const up = cats.filter((c) => c.improving > c.deteriorating).length;
+  const down = cats.filter((c) => c.deteriorating > c.improving).length;
+  const cal = window.INDUSTRY_CALENDAR;
+  const soon = cal && Array.isArray(cal.events) ? cal.events.filter((e) => e.days_ahead <= 7) : [];
+  const tops = cats.flatMap((c) => (c.top || []).filter((t) => typeof t === "object")).sort((a, b) => String(b.latest_date).localeCompare(String(a.latest_date))).slice(0, 2);
+  host.hidden = false;
+  host.innerHTML = `
+    <button type="button" class="industry-home-btn">
+      <span class="industry-home-title">산업 신호등</span>
+      <span class="industry-home-body"><b class="pos">개선 우세 ${up}</b> · <b class="neg">악화 우세 ${down}</b> <span class="muted">/ ${cats.length}개 카테고리</span>${soon.length ? ` · 이번 주 발표 ${soon.length}건` : ""}</span>
+      ${tops.length ? `<span class="industry-home-tops">${tops.map((t) => `<span>${escapeHtml(t.name_kr)} <b class="${indCls(t.latest_yoy)}">${t.latest_yoy != null ? indFmtSigned(t.latest_yoy, "%", 1) : indFmtNum(t.latest_value)}</b></span>`).join("")}</span>` : ""}
+      <span class="industry-home-go muted">산업 지표 탭 ›</span>
+    </button>`;
+  host.querySelector(".industry-home-btn").addEventListener("click", () => activateTab("industry"));
+}
+
+// ---------------------------------------------------------------------------
+// 섹터 탭 — 섹터 ETF 카드 끝에 "선행지표 3개" 스트립 (renderSectors 끝에서 부른다)
+// ---------------------------------------------------------------------------
+function industryDecorateSectorCards() {
+  const cards = document.querySelectorAll("#sectorList .sector-card[data-ticker]");
+  if (!cards.length) return;
+  const sig = window.INDUSTRY_SIGNAL;
+  if (!sig || !Array.isArray(sig.categories)) {
+    ensureFeatureData("industrySignal").then((ok) => { if (ok) industryDecorateSectorCards(); });
+    return;
+  }
+  cards.forEach((card) => {
+    if (card.querySelector(".industry-sector-strip")) return;
+    const etf = card.dataset.ticker;
+    const cats = sig.categories.filter((c) => (c.sector_etfs || []).includes(etf));
+    const tops = cats.flatMap((c) => (c.top || []).filter((t) => typeof t === "object"));
+    const seen = new Set();
+    const picks = tops.filter((t) => !seen.has(t.id) && seen.add(t.id)).slice(0, 3);
+    if (!picks.length) return;
+    const strip = document.createElement("div");
+    strip.className = "industry-sector-strip";
+    strip.innerHTML = `<span class="industry-sector-label">선행지표</span>${picks.map((t) => `<button type="button" class="industry-sector-chip" data-ind="${escapeHtml(t.id)}"><span>${escapeHtml(t.name_kr)}</span><b class="${indCls(t.latest_yoy)}">${t.latest_yoy != null ? indFmtSigned(t.latest_yoy, "%", 1) : indFmtNum(t.latest_value)}</b></button>`).join("")}`;
+    strip.querySelectorAll("[data-ind]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); openIndustryIndicator(b.dataset.ind); }));
+    card.appendChild(strip);
+  });
+}

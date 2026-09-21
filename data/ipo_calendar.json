@@ -1,11 +1,76 @@
 {
-  "updatedAtKst": "2026-09-20 18:25 KST",
-  "lastFileDate": "2026-09-18",
+  "updatedAtKst": "2026-09-21 19:10 KST",
+  "lastFileDate": "2026-09-21",
   "partialFetch": false,
-  "count": 616,
+  "count": 609,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Orion180 Insurance Group Inc.",
+      "ticker": "OIG",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-21",
+      "accession": "0001628280-26-062794:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2124472/000162828026062794/orion180-424b4.htm",
+      "offerPrice": 12.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Fast Finance Pay Corp.",
+      "ticker": "FFPP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043424:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109616/000149315226043424/forms-1a.htm"
+    },
+    {
+      "company": "Fast Finance Pay Corp.",
+      "ticker": "FFPP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043424:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109616/000149315226043424/forms-1a.htm"
+    },
+    {
+      "company": "Leader's Advantage Acquisition Corp.  (LEDR, LEDRU)",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-21",
+      "accession": "0001213900-26-101599:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2109823/000121390026101599/ea0286599-08.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "ADARx Pharmaceuticals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396007:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526396007/d903461ds1a.htm"
+    },
+    {
+      "company": "ADARx Pharmaceuticals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396007:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526396007/d903461ds1a.htm"
+    },
     {
       "company": "VME Companies, Inc.",
       "ticker": null,
@@ -6193,139 +6258,6 @@
       "fileDate": "2026-07-23",
       "accession": "0001104659-26-086075:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1787117/000110465926086075/tm2513004-14_s1a.htm"
-    },
-    {
-      "company": "VARSAL TECH, INC.",
-      "ticker": "VAT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001493152-26-034129:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2109801/000149315226034129/forms-1a.htm"
-    },
-    {
-      "company": "VARSAL TECH, INC.",
-      "ticker": "VAT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001493152-26-034129:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2109801/000149315226034129/forms-1a.htm"
-    },
-    {
-      "company": "KIDZ AI Inc.  (KIDZ, KIDZW)",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-07-22",
-      "accession": "0001477932-26-004453:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2022308/000147793226004453/kidz_424b4.htm",
-      "offerPriceChecked": 2,
-      "offerPriceNone": true,
-      "offerPriceNoneReason": "resale"
-    },
-    {
-      "company": "Pinnacle Acquisition Corp",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-22",
-      "accession": "0001213900-26-080433:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2123955/000121390026080433/ea0295579-02.htm"
-    },
-    {
-      "company": "Market Technology Acquisition Corp",
-      "ticker": "MTAK",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001213900-26-080237:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133136/000121390026080237/ea0294553-04.htm"
-    },
-    {
-      "company": "Market Technology Acquisition Corp",
-      "ticker": "MTAK",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001213900-26-080237:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133136/000121390026080237/ea0294553-04.htm"
-    },
-    {
-      "company": "NorthStrive Acquisition Corp I.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-22",
-      "accession": "0001213900-26-080207:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133719/000121390026080207/ea0298151-01.htm"
-    },
-    {
-      "company": "Mitesco, Inc.",
-      "ticker": "MITI",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001185185-26-003092:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/802257/000118518526003092/mitis1a1071426.htm"
-    },
-    {
-      "company": "Mitesco, Inc.",
-      "ticker": "MITI",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001185185-26-003092:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/802257/000118518526003092/mitis1a1071426.htm"
-    },
-    {
-      "company": "Avalanche Treasury Corp",
-      "ticker": "AVAT",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001104659-26-085808:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2092446/000110465926085808/tmb-20260331xs1a.htm"
-    },
-    {
-      "company": "Avalanche Treasury Corp",
-      "ticker": "AVAT",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001104659-26-085808:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2092446/000110465926085808/tmb-20260331xs1a.htm"
-    },
-    {
-      "company": "Starfighters Space, Inc.",
-      "ticker": "FJET",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001062993-26-003771:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1947016/000106299326003771/forms1a.htm"
-    },
-    {
-      "company": "Starfighters Space, Inc.",
-      "ticker": "FJET",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-22",
-      "accession": "0001062993-26-003771:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1947016/000106299326003771/forms1a.htm"
     }
   ]
 }

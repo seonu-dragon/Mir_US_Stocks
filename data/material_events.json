@@ -1,11 +1,565 @@
 {
-  "updatedAtKst": "2026-09-21 18:59 KST",
-  "lastFileDate": "2026-09-18",
+  "updatedAtKst": "2026-09-22 18:21 KST",
+  "lastFileDate": "2026-09-21",
   "partialFetch": false,
-  "count": 669,
+  "count": 698,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만.",
   "events": [
+    {
+      "ticker": "GJO",
+      "company": "STRATS SM TRUST FOR WAL-MART STORES, INC. SECURITIES, SERIES 2005-4  (GJO)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001999371-26-020928",
+      "link": "https://www.sec.gov/Archives/edgar/data/1340909/000199937126020928/gjo-8k_091526.htm"
+    },
+    {
+      "ticker": "GJP",
+      "company": "STRATS(SM) TRUST FOR DOMINION RESOURCES, INC. SECURITIES, SERIES 2005-6  (GJP)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001999371-26-020923",
+      "link": "https://www.sec.gov/Archives/edgar/data/1343491/000199937126020923/gjp-8k_091526.htm"
+    },
+    {
+      "ticker": "APO",
+      "company": "Apollo Global Management, Inc.  (APO, APOS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001858681-26-000051",
+      "link": "https://www.sec.gov/Archives/edgar/data/1858681/000185868126000051/apo-20260921.htm"
+    },
+    {
+      "ticker": "QSEA",
+      "company": "Quartzsea Acquisition Corp  (QSEA, QSEAR, QSEAU)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001829126-26-010281",
+      "link": "https://www.sec.gov/Archives/edgar/data/2047455/000182912626010281/quartzsea_8k.htm"
+    },
+    {
+      "ticker": "TTC",
+      "company": "TORO CO  (TTC)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001628280-26-062886",
+      "link": "https://www.sec.gov/Archives/edgar/data/737758/000162828026062886/ttc-20260921.htm"
+    },
+    {
+      "ticker": "BG",
+      "company": "Bunge Global SA  (BG)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001628280-26-062880",
+      "link": "https://www.sec.gov/Archives/edgar/data/1996862/000162828026062880/bg-20260917.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001564708-26-000205",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000205/nws-20260918.htm",
+      "buybackMention": true,
+      "amountUsd": 1000000000.0,
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "IBAC",
+      "company": "IB Acquisition Corp.  (IBAC, IBACR)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043585",
+      "link": "https://www.sec.gov/Archives/edgar/data/1998781/000149315226043585/form8-k.htm"
+    },
+    {
+      "ticker": "ALIS",
+      "company": "Calisa Acquisition Corp  (ALIS, ALISR, ALISU)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043574",
+      "link": "https://www.sec.gov/Archives/edgar/data/2026767/000149315226043574/form8-k.htm"
+    },
+    {
+      "ticker": "BMNR",
+      "company": "BITMINE IMMERSION TECHNOLOGIES, INC.  (BMNP, BMNR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043486",
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226043486/form8-k.htm"
+    },
+    {
+      "ticker": "APAC",
+      "company": "StoneBridge Acquisition II Corp  (APAC, APACR, APACU)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001437749-26-030772",
+      "link": "https://www.sec.gov/Archives/edgar/data/2043630/000143774926030772/apac20260921_8k.htm"
+    },
+    {
+      "ticker": "TDG",
+      "company": "TransDigm Group INC  (TDG)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001260221-26-000062",
+      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000062/tdg-20260921.htm"
+    },
+    {
+      "ticker": "KFII",
+      "company": "K&F GROWTH ACQUISITION CORP. II  (KFII, KFIIR, KFIIU)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001213900-26-101813",
+      "link": "https://www.sec.gov/Archives/edgar/data/2029976/000121390026101813/ea0305960-8k_kfgrow2.htm"
+    },
+    {
+      "ticker": "IPXG",
+      "company": "Inflection Point Acquisition Corp. VII  (IPXG, IPXGU, IPXGW)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001213900-26-101659",
+      "link": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026101659/ea0306061-8k425_inflection7.htm"
+    },
+    {
+      "ticker": "PODD",
+      "company": "INSULET CORP  (PODD)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396779",
+      "link": "https://www.sec.gov/Archives/edgar/data/1145197/000119312526396779/d71204d8k.htm"
+    },
+    {
+      "ticker": "LB",
+      "company": "LandBridge Co LLC  (LB)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396773",
+      "link": "https://www.sec.gov/Archives/edgar/data/1995807/000119312526396773/lb-20260918.htm"
+    },
+    {
+      "ticker": "CDW",
+      "company": "CDW Corp  (CDW)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396653",
+      "link": "https://www.sec.gov/Archives/edgar/data/1402057/000119312526396653/d240122d8k.htm"
+    },
+    {
+      "ticker": "CTVA",
+      "company": "Corteva, Inc.  (CTVA)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396123",
+      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526396123/d144225d8k.htm"
+    },
+    {
+      "ticker": "MSTR",
+      "company": "Strategy Inc  (MSTR, STRC, STRD, STRF, STRK)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396093",
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526396093/mstr-20260914.htm",
+      "buybackMention": true,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "ALKS",
+      "company": "Alkermes plc.  (ALKS)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396065",
+      "link": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526396065/alks-20260921.htm"
+    },
+    {
+      "ticker": "WCC",
+      "company": "WESCO INTERNATIONAL INC  (WCC)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396005",
+      "link": "https://www.sec.gov/Archives/edgar/data/929008/000119312526396005/d163628d8k.htm"
+    },
+    {
+      "ticker": "AXON",
+      "company": "AXON ENTERPRISE, INC.  (AXON)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-395997",
+      "link": "https://www.sec.gov/Archives/edgar/data/1069183/000119312526395997/d476163d8k.htm",
+      "buybackMention": true,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "VII",
+      "company": "Viking Acquisition Corp. II  (VII, VII-UN, VII-WT)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "2.03",
+          "label": "채무·부외부채 발생"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0001185185-26-004181",
+      "link": "https://www.sec.gov/Archives/edgar/data/2139246/000118518526004181/vac28k092126.htm"
+    },
+    {
+      "ticker": "WWD",
+      "company": "Woodward, Inc.  (WWD)",
+      "items": [
+        {
+          "code": "2.05",
+          "label": "구조조정 비용"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001171843-26-006140",
+      "link": "https://www.sec.gov/Archives/edgar/data/108312/000117184326006140/f8k_092126.htm"
+    },
+    {
+      "ticker": "DKS",
+      "company": "DICK'S SPORTING GOODS, INC.  (DKS)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001140361-26-037192",
+      "link": "https://www.sec.gov/Archives/edgar/data/1089063/000114036126037192/ef20082169_8k.htm"
+    },
+    {
+      "ticker": "HPQ",
+      "company": "HP INC  (HPQ)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001140361-26-037170",
+      "link": "https://www.sec.gov/Archives/edgar/data/47217/000114036126037170/ef20082499_form8k.htm"
+    },
+    {
+      "ticker": "ATR",
+      "company": "APTARGROUP, INC.  (ATR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-21",
+      "accession": "0001104659-26-109359",
+      "link": "https://www.sec.gov/Archives/edgar/data/896622/000110465926109359/tm2625862d1_8k.htm"
+    },
+    {
+      "ticker": "AVTR",
+      "company": "Avantor, Inc.  (AVTR)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0000947871-26-000877",
+      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000094787126000877/ss6842956_8k.htm"
+    },
+    {
+      "ticker": "AVTR",
+      "company": "Avantor, Inc.  (AVTR)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-21",
+      "accession": "0000947871-26-000876",
+      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000094787126000876/ss6842956_8k.htm"
+    },
     {
       "ticker": "OKTA",
       "company": "Okta, Inc.  (OKTA)",

@@ -1,11 +1,31 @@
 {
-  "updatedAtKst": "2026-09-21 19:10 KST",
+  "updatedAtKst": "2026-09-22 18:27 KST",
   "lastFileDate": "2026-09-21",
   "partialFetch": false,
   "count": 609,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": "SBE",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001628280-26-062846:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026062846/sbenergy-sx1a2.htm"
+    },
+    {
+      "company": "SB Energy, Inc.",
+      "ticker": "SBE",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001628280-26-062846:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133037/000162828026062846/sbenergy-sx1a2.htm"
+    },
     {
       "company": "Orion180 Insurance Group Inc.",
       "ticker": "OIG",
@@ -17,6 +37,26 @@
       "link": "https://www.sec.gov/Archives/edgar/data/2124472/000162828026062794/orion180-424b4.htm",
       "offerPrice": 12.0,
       "offerPriceChecked": 2
+    },
+    {
+      "company": "Rothe Development, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043509:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2108671/000149315226043509/forms-1a.htm"
+    },
+    {
+      "company": "Rothe Development, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001493152-26-043509:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2108671/000149315226043509/forms-1a.htm"
     },
     {
       "company": "Fast Finance Pay Corp.",
@@ -39,6 +79,36 @@
       "link": "https://www.sec.gov/Archives/edgar/data/2109616/000149315226043424/forms-1a.htm"
     },
     {
+      "company": "ECOMINAS CORP.",
+      "ticker": "ILXP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001477932-26-005725:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226005725/ilxp_s1a.htm"
+    },
+    {
+      "company": "ECOMINAS CORP.",
+      "ticker": "ILXP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001477932-26-005725:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1115864/000147793226005725/ilxp_s1a.htm"
+    },
+    {
+      "company": "Silicon Valley Acquisition Corp. II",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-21",
+      "accession": "0001213900-26-101822:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2145826/000121390026101822/ea0304348-01.htm"
+    },
+    {
       "company": "Leader's Advantage Acquisition Corp.  (LEDR, LEDRU)",
       "ticker": null,
       "stage": "priced",
@@ -50,6 +120,36 @@
       "offerPrice": 10.0,
       "offerPriceKind": "unit",
       "offerPriceChecked": 2
+    },
+    {
+      "company": "Iambic Therapeutics, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396704:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1997038/000119312526396704/iam-20260921.htm"
+    },
+    {
+      "company": "Oura Inc.",
+      "ticker": "OURA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396051:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133022/000119312526396051/d119865ds1a.htm"
+    },
+    {
+      "company": "Oura Inc.",
+      "ticker": "OURA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001193125-26-396051:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2133022/000119312526396051/d119865ds1a.htm"
     },
     {
       "company": "ADARx Pharmaceuticals, Inc.",
@@ -70,6 +170,26 @@
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396007:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1802369/000119312526396007/d903461ds1a.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001104659-26-109217:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926109217/cntm-20260630xs1a.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-21",
+      "accession": "0001104659-26-109217:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926109217/cntm-20260630xs1a.htm"
     },
     {
       "company": "VME Companies, Inc.",
@@ -6138,126 +6258,6 @@
       "fileDate": "2026-07-24",
       "accession": "0001104659-26-086682:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/2098410/000110465926086682/tmb-20260724xs1.htm"
-    },
-    {
-      "company": "Innovative Eyewear Inc  (LUCY, LUCYW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-23",
-      "accession": "0001829126-26-007808:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1808377/000182912626007808/innovativeeye_s1.htm"
-    },
-    {
-      "company": "AMERICAN BATTERY MATERIALS, INC.",
-      "ticker": "BLTH",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001493152-26-034421:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1487718/000149315226034421/forms-1a.htm"
-    },
-    {
-      "company": "AMERICAN BATTERY MATERIALS, INC.",
-      "ticker": "BLTH",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001493152-26-034421:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1487718/000149315226034421/forms-1a.htm"
-    },
-    {
-      "company": "SYNTEC OPTICS HOLDINGS, INC.  (OPTX, OPTXW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-23",
-      "accession": "0001493152-26-034282:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1866816/000149315226034282/forms-1.htm"
-    },
-    {
-      "company": "authID Inc.",
-      "ticker": "AUID",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001213900-26-080882:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1534154/000121390026080882/ea0298808-s1a1_authid.htm"
-    },
-    {
-      "company": "authID Inc.",
-      "ticker": "AUID",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001213900-26-080882:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1534154/000121390026080882/ea0298808-s1a1_authid.htm"
-    },
-    {
-      "company": "Lyntris Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-23",
-      "accession": "0001193125-26-314602:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2132582/000119312526314602/d23330ds1.htm"
-    },
-    {
-      "company": "Narragansett Bancorp, Inc.",
-      "ticker": "NARA",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001193125-26-313847:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2138186/000119312526313847/d122170ds1a.htm"
-    },
-    {
-      "company": "Narragansett Bancorp, Inc.",
-      "ticker": "NARA",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001193125-26-313847:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2138186/000119312526313847/d122170ds1a.htm"
-    },
-    {
-      "company": "Enhanced Group Inc.",
-      "ticker": "ENHA",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-07-23",
-      "accession": "0001193125-26-312793:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1956439/000119312526312793/d147352ds1.htm"
-    },
-    {
-      "company": "Reformation Inc.",
-      "ticker": "REF",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001104659-26-086075:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1787117/000110465926086075/tm2513004-14_s1a.htm"
-    },
-    {
-      "company": "Reformation Inc.",
-      "ticker": "REF",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-07-23",
-      "accession": "0001104659-26-086075:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1787117/000110465926086075/tm2513004-14_s1a.htm"
     }
   ]
 }

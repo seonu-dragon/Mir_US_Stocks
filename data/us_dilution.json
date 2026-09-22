@@ -1,11 +1,56 @@
 {
-  "updatedAtKst": "2026-09-21 19:10 KST",
+  "updatedAtKst": "2026-09-22 18:27 KST",
   "lastFileDate": "2026-09-21",
   "partialFetch": false,
-  "count": 663,
+  "count": 660,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
+    {
+      "ticker": "DCX",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-21",
+      "title": "Digital Currency X Technology Inc.  (DCX)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1957413/000149315226043493/form424b5.htm",
+      "accession": "0001493152-26-043493"
+    },
+    {
+      "ticker": "HOST",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-21",
+      "title": "Host Digital Inc.  (HCWC, HOST)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1948864/000149315226043454/form424b5.htm",
+      "accession": "0001493152-26-043454"
+    },
+    {
+      "ticker": "MYSE",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-21",
+      "title": "Myseum.AI, Inc.  (MYSE)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1648960/000121390026101810/ea030599102-424b5_myseum.htm",
+      "accession": "0001213900-26-101810"
+    },
+    {
+      "ticker": "AXG",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-21",
+      "title": "Solowin Holdings, Ltd.  (AXG)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1959224/000121390026101784/ea0306106-424b5_solowin.htm",
+      "accession": "0001213900-26-101784"
+    },
+    {
+      "ticker": "FBK",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-09-21",
+      "title": "FB Financial Corp  (FBK)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1649749/000121390026101669/ea0306006-01.htm",
+      "accession": "0001213900-26-101669"
+    },
     {
       "ticker": "FFAI",
       "formType": "S-3/A",
@@ -14,6 +59,15 @@
       "title": "FARADAY FUTURE INTELLIGENT ELECTRIC INC.  (FFAI)",
       "url": "https://www.sec.gov/Archives/edgar/data/1805521/000121390026101559/ea0305988-s3a1_faraday.htm",
       "accession": "0001213900-26-101559"
+    },
+    {
+      "ticker": "DKS",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-09-21",
+      "title": "DICK'S SPORTING GOODS, INC.  (DKS)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1089063/000114036126037197/ny20082094x1_s3asr.htm",
+      "accession": "0001140361-26-037197"
     },
     {
       "ticker": "KSCP",
@@ -5891,87 +5945,6 @@
       "title": "Baosheng Media Group Holdings Ltd  (BAOS)",
       "url": "https://www.sec.gov/Archives/edgar/data/1811216/000110465926086552/tm2620732d1_424b5.htm",
       "accession": "0001104659-26-086552"
-    },
-    {
-      "ticker": "FSBC",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "FIVE STAR BANCORP  (FSBC)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1275168/000155278126000393/e26307_fsbc-424b5.htm",
-      "accession": "0001552781-26-000393"
-    },
-    {
-      "ticker": "NRXS",
-      "formType": "S-3",
-      "formLabel": "일괄신고 등록(Shelf)",
-      "fileDate": "2026-07-23",
-      "title": "Neuraxis, INC  (NRXS)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1933567/000149315226034417/forms-3.htm",
-      "accession": "0001493152-26-034417"
-    },
-    {
-      "ticker": "GOAI",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "Eva Live Inc  (GOAI)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1983736/000149315226034403/form424b5.htm",
-      "accession": "0001493152-26-034403"
-    },
-    {
-      "ticker": "COCO",
-      "formType": "S-3ASR",
-      "formLabel": "자동 일괄신고(WKSI)",
-      "fileDate": "2026-07-23",
-      "title": "Vita Coco Company, Inc.  (COCO)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1482981/000149315226034398/forms-3asr.htm",
-      "accession": "0001493152-26-034398"
-    },
-    {
-      "ticker": "RADX",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "Radiopharm Theranostics Ltd  (RADX, RDPTF)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1949257/000121390026080653/ea0298996-424b5_radiopharm.htm",
-      "accession": "0001213900-26-080653"
-    },
-    {
-      "ticker": "CPHI",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "CHINA PHARMA HOLDINGS, INC.  (CPHI)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1106644/000121390026080581/ea0298951-424b5_china.htm",
-      "accession": "0001213900-26-080581"
-    },
-    {
-      "ticker": "CDXS",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "CODEXIS, INC.  (CDXS)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1200375/000119312526314241/d131805d424b5.htm",
-      "accession": "0001193125-26-314241"
-    },
-    {
-      "ticker": "SMMT",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "Summit Therapeutics Inc.  (SMMT)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1599298/000119312526314210/d39231d424b5.htm",
-      "accession": "0001193125-26-314210"
-    },
-    {
-      "ticker": "RBNE",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-07-23",
-      "title": "Robin Energy Ltd.  (RBNE)",
-      "url": "https://www.sec.gov/Archives/edgar/data/2039060/000114036126029422/ny20077992x1_424b5.htm",
-      "accession": "0001140361-26-029422"
     }
   ]
 }

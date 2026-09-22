@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -62,15 +63,15 @@ def build_previous_section(previous: dict | None) -> tuple[str, str]:
     prev_date = previous.get("date", "어제")
     prev_text = previous.get("text", "")
     rule_line = (
-        f"7. 아래 [어제 발행한 경제 뉴스]와 사실상 같은 사건·주제는, 어제 발행분 이후 "
-        f"'의미 있는 새로운 전개'(신규 수치·공식 발표·정책·이벤트·시장 반응 변화 등)가 있을 때만 선정한다. "
-        f"어제와 같은 주제인데 새로 달라진 내용이 없으면 그 주제를 제외하고, 대신 어제 다루지 않은 다른 구별되는 주제를 선정한다. "
-        f"어제와 주제가 겹치지만 내용이 실질적으로 달라졌다면 선정하되 무엇이 달라졌는지 continuity_from_yesterday에 적는다."
+        f"7. 아래 [어제 주제 제목]과 사실상 같은 사건·주제는, 어제 이후 "
+        f"'의미 있는 새로운 전개'(신규 수치·공식 발표·정책·이벤트·시장 반응 변화 등)가 오늘 수집 기사에 있을 때만 선정한다. "
+        f"새로 달라진 내용이 없으면 그 주제를 제외하고, 어제 다루지 않은 다른 주제를 고른다. "
+        f"겹치되 오늘 기사가 실질적으로 다르면 선정하고, 달라진 점만 continuity_from_yesterday에 1~2문장으로 적는다. "
+        f"어제 제목 목록은 중복 확인용이다. 어제 글의 문장·수치·평가를 복사하거나, 오늘 [수집 기사]에 없는 사실을 key_facts에 넣지 마라."
     )
     context_block = (
-        f"\n[어제 발행한 경제 뉴스]\n"
-        f"아래는 어제({prev_date}) 발행한 '오늘의 경제 뉴스' 글이다. "
-        f"오늘 후보 주제가 이 내용과 겹치는지, 겹친다면 오늘 실질적으로 달라진 내용이 있는지 반드시 대조하라.\n"
+        f"\n[어제 주제 제목]\n"
+        f"어제({prev_date}) 다룬 제목만 있다. 본문이 아니다. 이 목록에 없는 사실을 여기서 가져오지 마라.\n"
         f"{prev_text}\n"
     )
     return rule_line, context_block
@@ -192,7 +193,7 @@ class GeminiTop5Analyzer:
         self,
         api_key: str,
         model: str = DEFAULT_GEMINI_MODEL,
-        timeout: int = 120,
+        timeout: int = 240,
         models: tuple[str, ...] | None = None,
     ) -> None:
         if not api_key:
@@ -374,32 +375,24 @@ def render_markdown(analysis: dict, collection: dict) -> str:
     return "\n".join(lines)
 
 
-PREVIOUS_TEXT_BUDGET = 8_000
-
-
-def _extract_topic_section(markdown: str) -> str:
-    """Keep only the Top 5 topic blocks, dropping 선정 기준·Grok 전달용 요청 boilerplate."""
-    lines = markdown.splitlines()
-    kept: list[str] = []
-    capturing = False
-    for line in lines:
+def _yesterday_titles(markdown: str) -> list[str]:
+    """Topic headings only. Full yesterday bodies made Gemini copy stale facts and slowed the call."""
+    titles: list[str] = []
+    for line in markdown.splitlines():
         stripped = line.strip()
-        if stripped.startswith("## "):
-            heading = stripped[3:]
-            # 주제 블록은 "## 1. ..." 처럼 숫자로 시작한다.
-            capturing = heading[:1].isdigit()
-        if stripped == "---":
-            capturing = False
-        if capturing:
-            kept.append(line)
-    return "\n".join(kept).strip() or markdown.strip()
+        if not stripped.startswith("## ") or stripped.startswith("### "):
+            continue
+        heading = stripped[3:].strip()
+        if heading[:1].isdigit():
+            titles.append(heading)
+    return titles
 
 
 def load_previous_publication(daily_root: Path, date_str: str) -> dict | None:
-    """Load the most recent prior day's published '오늘의 경제 뉴스' for dedup comparison.
+    """Load yesterday's topic titles for dedup. Bodies are omitted on purpose.
 
-    Returns {"date", "text"} where text combines yesterday's Gemini Top5(phase1)와
-    있으면 Grok 심층분석(phase2) 주제 본문. 어제가 없으면 None.
+    Phase 2 headings win when that file exists, because phase 1 can still contain
+    claims the later pass rejected. Returns {"date", "text"} or None.
     """
     if not daily_root.exists():
         return None
@@ -409,19 +402,63 @@ def load_previous_publication(daily_root: Path, date_str: str) -> dict | None:
         if entry.is_dir() and entry.name < date_str
     )
     for prev_date in reversed(prior_dates):
-        phase1 = daily_root / prev_date / "02_analysis" / "01_gemini_phase1.md"
-        if not phase1.exists():
-            continue
-        sections = [f"# 어제({prev_date}) Top 5 주제", _extract_topic_section(phase1.read_text(encoding="utf-8"))]
         phase2 = daily_root / prev_date / "02_analysis" / "02_grok_phase2.md"
-        if phase2.exists():
-            sections.append(f"# 어제({prev_date}) 심층 분석")
-            sections.append(_extract_topic_section(phase2.read_text(encoding="utf-8")))
-        text = "\n\n".join(sections).strip()
-        if len(text) > PREVIOUS_TEXT_BUDGET:
-            text = text[:PREVIOUS_TEXT_BUDGET] + "\n…(이하 생략)"
+        phase1 = daily_root / prev_date / "02_analysis" / "01_gemini_phase1.md"
+        source = phase2 if phase2.exists() else phase1
+        if not source.exists():
+            continue
+        titles = _yesterday_titles(source.read_text(encoding="utf-8"))
+        if not titles and source != phase1 and phase1.exists():
+            titles = _yesterday_titles(phase1.read_text(encoding="utf-8"))
+        if not titles:
+            continue
+        text = "\n".join(f"- {title}" for title in titles)
         return {"date": prev_date, "text": text}
     return None
+
+
+def adopt_remote_daily_if_present(date_str: str) -> bool:
+    """Skip a second Gemini run when origin/main already has today's marker.
+
+    Local fallback used to start before Actions finished pushing, then spend
+    another Gemini call and collide on commit. Fetch failure must not block collection.
+    """
+    marker = f"SNS/Naver/02_daily_work/{date_str}/status/02_gemini.done"
+    try:
+        fetch = subprocess.run(
+            ["git", "fetch", "--depth", "1", "origin", "main"],
+            cwd=PROJECT_ROOT,
+            capture_output=True,
+            text=True,
+            timeout=90,
+        )
+    except (OSError, subprocess.TimeoutExpired) as exc:
+        print(f"[원격] fetch를 건너뜁니다: {exc}")
+        return False
+    if fetch.returncode != 0:
+        detail = (fetch.stderr or fetch.stdout or "").strip().replace("\n", " ")
+        print(f"[원격] fetch를 건너뜁니다: {detail[:240]}")
+        return False
+    probe = subprocess.run(
+        ["git", "cat-file", "-e", f"origin/main:{marker}"],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+    )
+    if probe.returncode != 0:
+        return False
+    day = f"SNS/Naver/02_daily_work/{date_str}"
+    checkout = subprocess.run(
+        ["git", "checkout", "origin/main", "--", day],
+        cwd=PROJECT_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if checkout.returncode != 0:
+        detail = (checkout.stderr or checkout.stdout or "").strip().replace("\n", " ")
+        print(f"[원격] 오늘 결과가 있으나 받아오지 못했습니다: {detail[:240]}")
+        return False
+    print(f"[원격] origin/main에 {date_str} Gemini 결과가 있어 재생성하지 않습니다.")
+    return True
 
 
 def write_status(path: Path, stage: str, details: dict) -> None:
@@ -441,6 +478,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--model", default=os.getenv("GEMINI_MODEL", DEFAULT_GEMINI_MODEL))
     parser.add_argument("--work-dir", type=Path, help="테스트용 일일 작업 폴더 경로")
     parser.add_argument("--reuse-input", action="store_true", help="기존 news_collection.json 재사용")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="origin/main에 오늘 Gemini 결과가 있어도 다시 수집한다",
+    )
     return parser.parse_args()
 
 
@@ -448,6 +490,8 @@ def main() -> int:
     args = parse_args()
     load_env_file(PROJECT_ROOT / ".env")
     date_str = args.date or datetime.now(KST).strftime("%Y-%m-%d")
+    if not args.force and not args.work_dir and adopt_remote_daily_if_present(date_str):
+        return 0
     daily_dir = args.work_dir.resolve() if args.work_dir else (
         PROJECT_ROOT / "SNS" / "Naver" / "02_daily_work" / date_str
     )

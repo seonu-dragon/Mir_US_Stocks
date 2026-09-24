@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-09-24 08:57:15 KST",
+  "updatedAtKst": "2026-09-24 18:32:37 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 7742,
@@ -20,6 +20,18 @@
     },
     {
       "rank": 2,
+      "id": "house-tim-moore",
+      "name": "Tim Moore",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 134.29,
+      "buyCount": 49,
+      "sellCount": 28,
+      "tradeCount": 77,
+      "committees": []
+    },
+    {
+      "rank": 3,
       "id": "house-terri-a-sewell",
       "name": "Terri A. Sewell",
       "chamber": "House",
@@ -28,18 +40,6 @@
       "buyCount": 1,
       "sellCount": 1,
       "tradeCount": 2,
-      "committees": []
-    },
-    {
-      "rank": 3,
-      "id": "house-tim-moore",
-      "name": "Tim Moore",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 95.56,
-      "buyCount": 49,
-      "sellCount": 28,
-      "tradeCount": 77,
       "committees": []
     },
     {
@@ -120,7 +120,7 @@
       "name": "Valerie Hoyle",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 33.89,
+      "estReturnPct": 34.45,
       "buyCount": 97,
       "sellCount": 89,
       "tradeCount": 186,
@@ -154,20 +154,6 @@
     },
     {
       "rank": 13,
-      "id": "house-josh-gottheimer",
-      "name": "Josh Gottheimer",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 26.53,
-      "buyCount": 425,
-      "sellCount": 144,
-      "tradeCount": 570,
-      "committees": [
-        "Financial Services"
-      ]
-    },
-    {
-      "rank": 14,
       "id": "house-ed-case",
       "name": "Ed Case",
       "chamber": "House",
@@ -179,12 +165,26 @@
       "committees": []
     },
     {
+      "rank": 14,
+      "id": "house-josh-gottheimer",
+      "name": "Josh Gottheimer",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 23.5,
+      "buyCount": 425,
+      "sellCount": 144,
+      "tradeCount": 570,
+      "committees": [
+        "Financial Services"
+      ]
+    },
+    {
       "rank": 15,
       "id": "house-lisa-mcclain",
       "name": "Lisa McClain",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 23.67,
+      "estReturnPct": 20.75,
       "buyCount": 332,
       "sellCount": 332,
       "tradeCount": 664,
@@ -834,7 +834,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 23.67
+      "estReturnPct": 20.75
     },
     {
       "id": "house-gilbert-cisneros",
@@ -1544,7 +1544,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 26.53
+      "estReturnPct": 23.5
     },
     {
       "id": "house-daniel-goldman",
@@ -5440,7 +5440,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 33.89
+      "estReturnPct": 34.45
     },
     {
       "id": "house-lois-frankel",
@@ -8980,7 +8980,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 95.56
+      "estReturnPct": 134.29
     },
     {
       "id": "house-byron-donalds",

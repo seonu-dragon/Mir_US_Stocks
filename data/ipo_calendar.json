@@ -1,11 +1,84 @@
 {
-  "updatedAtKst": "2026-09-23 18:29 KST",
-  "lastFileDate": "2026-09-22",
+  "updatedAtKst": "2026-09-24 18:28 KST",
+  "lastFileDate": "2026-09-23",
   "partialFetch": false,
-  "count": 603,
+  "count": 610,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Wella Co",
+      "ticker": "WELA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-23",
+      "accession": "0001628280-26-063205:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2125056/000162828026063205/wellaoperations-sx1a1.htm"
+    },
+    {
+      "company": "Wella Co",
+      "ticker": "WELA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-23",
+      "accession": "0001628280-26-063205:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2125056/000162828026063205/wellaoperations-sx1a1.htm"
+    },
+    {
+      "company": "Live Oak Acquisition Corp. VI",
+      "ticker": null,
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-09-23",
+      "accession": "0001213900-26-102498:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2115191/000121390026102498/ea0281091-04.htm",
+      "offerPrice": 10.0,
+      "offerPriceKind": "unit",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Creatd, Inc.",
+      "ticker": "CRTD",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-23",
+      "accession": "0001213900-26-102334:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1357671/000121390026102334/ea0306336-s1a1_creatd.htm"
+    },
+    {
+      "company": "Creatd, Inc.",
+      "ticker": "CRTD",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-23",
+      "accession": "0001213900-26-102334:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1357671/000121390026102334/ea0306336-s1a1_creatd.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-23",
+      "accession": "0001104659-26-109830:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926109830/cntm-20260630xs1a.htm"
+    },
+    {
+      "company": "ConnectM Technology Solutions, Inc.",
+      "ticker": "CNTM",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-09-23",
+      "accession": "0001104659-26-109830:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1895249/000110465926109830/cntm-20260630xs1a.htm"
+    },
     {
       "company": "Black Hawk Acquisition Corp  (BKHA, BKHAR, BKHAU)",
       "ticker": null,

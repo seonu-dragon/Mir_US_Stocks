@@ -17,6 +17,7 @@
     py scripts/check_data_freshness.py --group edge-stats      # weekly-edge-stats.yml 말미
     py scripts/check_data_freshness.py --group 13f             # 13f-quarterly-refresh.yml 말미
     py scripts/check_data_freshness.py --group white-house     # white-house-schedule.yml 말미
+    py scripts/check_data_freshness.py --group macro-odds      # macro-odds.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -90,6 +91,8 @@ CHECKS = {
         ("data/korea/short_volume.json", 6, True),     # KRX 거래비중은 T+1
         ("data/korea/ipo_calendar.json", 6, False),    # 공모 비수기엔 0건이 정상
         ("data/korea/earnings_reactions.json", 6, False),  # 실적 시즌 밖엔 0건이 정상
+        # 시장경보·이상 종목(KIND + 스냅샷 일봉). 관리종목·거래정지만으로도 늘 수백 건이라 0건 = 이상.
+        ("data/korea/market_alerts.json", 6, True),
     ],
     # kr-disclosures.yml(평일 15:30) — 세 빌더 모두 continue-on-error 라 DART 키가
     # 죽어도 초록이었다. 주말·연휴를 감안해 4~5일.
@@ -159,6 +162,11 @@ CHECKS = {
     ],
     "white-house": [
         ("data/white_house_schedule.json", 3, True),
+    ],
+    # macro-odds.yml(하루 3회) — 예측시장 확률 + 침체 신호. Kalshi·Polymarket 이 둘 다 죽으면
+    # 빌더가 기존 파일을 유지하고 exit 1 이지만, 한쪽만 죽는 날이 이어져도 나이로 잡는다.
+    "macro-odds": [
+        ("data/macro_odds.json", 2, True),
     ],
 }
 

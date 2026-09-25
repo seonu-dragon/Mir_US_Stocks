@@ -54,6 +54,9 @@ const FEATURE_DATA = {
   yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
   // FRED 매크로 지표(인플레·고용·금리·신용스프레드·소비심리). 두 시장 모두 로드.
   macro: { global: "MACRO_INDICATORS", path: "data/macro_indicators.js" },
+  // 예측시장 확률(Kalshi·Polymarket) + 침체 신호 모음(산업 지표 재사용). 미국 매크로지만
+  // 금리·침체 기대는 국내에도 공통 배경이라 두 시장 모두 로드. 시그널 탭 위젯 전용.
+  macroOdds: { global: "MACRO_ODDS", path: "data/macro_odds.js" },
   // CFTC COT 투기 포지셔닝(주간, 무키 공식 API). 미국 선물이지만 지수·금리·환율·
   // 원자재 쏠림은 글로벌 위험자산 공통 컨텍스트라 두 시장 모두 로드.
   cotPositioning: { global: "COT_POSITIONING", path: "data/cot_positioning.js" },
@@ -101,6 +104,9 @@ const FEATURE_DATA = {
   // KR 일일 공매도 거래비중(KRX). 잔고(short_interest)와 별개 파일 — 공매도 탭을
   // 열 때만 시도(lazy)하고, 없으면 잔고/거래비중 토글이 숨는다.
   krShortVolume: { global: "KR_SHORT_VOLUME", path: "data/korea/short_volume.js", feature: "shortInterest", krOnly: true, lazy: true },
+  // 시장경보(투자주의·경고·위험)·거래정지·관리종목(KRX KIND) + 상·하한가·52주 신고/신저가·
+  // 거래대금 급증(build_kr_market_alerts.py). 시그널 탭 보드와 종목 헤더 배지가 읽는다 — KR 전용.
+  krMarketAlerts: { global: "KR_MARKET_ALERTS", path: "data/korea/market_alerts.js", feature: "krMarketAlerts", krOnly: true },
   // 공포탐욕·환율·매크로 일일 히스토리(1일 1레코드 적립) — 시그널 탭 스파크라인.
   marketHistory: { global: "MARKET_HISTORY", path: "data/history/market_history.js" },
   // 오늘의 특징주(build_movers_reasons.py) — 장 마감 후 등락 상하위 + 한 줄 사유. 시장별 파일

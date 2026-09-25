@@ -778,8 +778,8 @@ function renderMacroIndicators() {
 // 있어도. 보일 때만 그리고, 숨어 있으면 dirty 로 표시해 다음 진입 때 한 번 그린다.
 let signalsDirty = true;
 const SIGNALS_FEATURE_KEYS = [
-  "yieldCurve", "macro", "cotPositioning", "treasuryAuctions", "wikiAttention", "sentimentGauges",
-  "ecosMacro", "tradeExports", "optionsStats", "marketHistory",
+  "yieldCurve", "macro", "macroOdds", "cotPositioning", "treasuryAuctions", "wikiAttention", "sentimentGauges",
+  "ecosMacro", "tradeExports", "optionsStats", "marketHistory", "krMarketAlerts",
   // Smart-money signals read the heavy 13F/congress/insider datasets; they're excluded from
   // the boot prefetch and load on first visit.
   "insider", "congress", "inst13f",
@@ -798,8 +798,10 @@ function renderSignals() {
   renderFearGreed();
   renderMacroIndicators();
   renderYieldCurve();
+  if (typeof renderMacroOdds === "function") renderMacroOdds();
   renderEcosMacro();
   renderTradeExports();
+  if (typeof renderKrMarketAlerts === "function") renderKrMarketAlerts();
   renderTreasuryAuctions();
   renderCotPositioning();
   renderWikiAttention();

@@ -847,7 +847,7 @@ function applyMarketOnlyUi() {
   const sigIntro = byId("signalsIntro");
   if (sigIntro) {
     sigIntro.textContent = krMode
-      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다."
+      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다. KRX 시장경보·거래정지·관리종목은 아래 '시장경보·이상 종목' 에 있습니다."
       : "내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.";
   }
   // 집계 인사이트(의회·내부자 종합)는 미국 전용 데이터 → KR에서는 빈 섹션이 되므로 숨긴다.
@@ -3204,6 +3204,8 @@ function setupEvents() {
   if (eventsBound) {
     populateBacktestBenchmarks();  // 시장별 벤치마크 목록 갱신
     initBacktestDateRange();       // 스냅샷 기준 날짜 범위 갱신
+    // 적립식 시뮬레이터(dca.js): 반대 시장 티커를 비우고 통화·벤치마크를 새 시장으로.
+    if (window.MirDca) { window.MirDca.onMarketChange(); window.MirDca.setup(); }
     return;
   }
   eventsBound = true;
@@ -3383,6 +3385,7 @@ function setupEvents() {
   setupUiPrefs();
   setupCompareEvents();
   setupBacktestEvents();
+  if (window.MirDca) window.MirDca.setup(); // 적립식 시뮬레이터(내 투자 › 도구)
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
     const moveButton = event.target.closest("[data-move-analysis]");
@@ -3530,6 +3533,7 @@ function stockFacts(item, title) {
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
+    ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
     ${krFlowCard(item)}
     ${krGroupCard(item)}
     ${krNpsCard(item)}
@@ -6292,6 +6296,11 @@ const GITHUB_REPO = "https://github.com/seonu-dragon/Mir_US_Stocks";
 const TRUST_RECOVERY = {
   "COT 포지셔닝": { us: { workflow: "Daily US market snapshot", script: "scripts/build_cftc_cot.py" }, tabs: "시그널 탭 · 선물 투기 포지셔닝" },
   "국채 경매": { us: { workflow: "Daily US market snapshot", script: "scripts/build_treasury_auctions.py" }, tabs: "시그널 탭 · 국채 경매 수요" },
+  "예측시장 확률": {
+    us: { workflow: "Macro odds (prediction markets)", script: "scripts/build_macro_odds.py" },
+    kr: { workflow: "Macro odds (prediction markets)", script: "scripts/build_macro_odds.py" },
+    tabs: "시그널 탭 · 예측시장 확률 · 침체 신호",
+  },
   "리테일 관심도": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wiki_attention.py" }, tabs: "시그널 탭 · 리테일 관심도(위키)" },
   "외부 공포탐욕": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sentiment_gauges.py" }, tabs: "시그널 탭 · 심리지수 비교 타일" },
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
@@ -6501,6 +6510,8 @@ function dataTrustSources() {
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
   // 조용한 날은 0종목이 정상이라 allowEmpty.
   if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · Gemini 요약" : "SEC 8-K · 뉴스 헤드라인 · Gemini 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
+  // 예측시장(2026-09-25) — 하루 3회. 12시간 넘게 멈추면 두 번 연속 실패라 36시간 여유.
+  rows.push(source("예측시장 확률", "Kalshi · Polymarket", window.MACRO_ODDS, ["groups"], 36, "하루 3회 (06·14·22시)", "macroOdds"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));
   rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
   // 산업 선행지표(2026-09-18) — 등록하지 않으면 감시 사각지대. lazy 라 신뢰도 센터가 직접 받아 본다.
@@ -6513,6 +6524,8 @@ function dataTrustSources() {
     rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));
     rows.push(source("정부조달 낙찰", "나라장터 (data.go.kr)", window.KR_GOV_CONTRACTS, ["awards"], 192, "매일 15:42", "krGovContracts"));
     rows.push(source("수출 모멘텀", "관세청 (data.go.kr)", window.KR_TRADE_EXPORTS, ["items"], 192, "매일 15:42 · 월 단위 데이터", "tradeExports"));
+    // 시장경보·이상 종목 보드. 페이로드 count(섹션 합계)로 센다 — 0건이면 소스 이상.
+    if (cfg.features?.krMarketAlerts === true) rows.push(source("시장경보·이상 종목", "KRX KIND · 네이버 금융 · 스냅샷 일봉", window.KR_MARKET_ALERTS, ["sections"], 120, "매일 15:42", "krMarketAlerts"));
   }
   return rows;
 }
@@ -7100,6 +7113,8 @@ function activateBulkSub(name, { push = false } = {}) {
   byId("bulkSubTabs")?.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === bulkSubTab));
   document.querySelectorAll("#tab-bulk > #myInvestBody > .sub-panel").forEach((p) => p.classList.remove("is-active"));
   byId(`sub-bulk-${bulkSubTab}`)?.classList.add("is-active");
+  // 도구(적립식·포트폴리오 시뮬레이터 등)는 내 종목이 없어도 쓸 수 있다 — 빈 상태가 도구까지 가리지 않게.
+  renderMyInvestSummary();
   if (push) recordNav();
 }
 
@@ -7248,8 +7263,10 @@ function renderMyInvestSummary() {
   // 목록은 '아직 내 종목이 없다' 로 본다. 그래야 첫 방문자에게 빈 상태가 보인다.
   const hasWatch = Array.isArray(watchlist) && watchlist.length > 0 && !watchlistIsSeed();
   const isEmpty = !hasPortfolio && !hasWatch;
-  empty.hidden = !isEmpty;
-  body.hidden = isEmpty;
+  // 도구 서브탭을 연 경우(딥링크 ?tab=tools, 종목 화면의 '적립식으로 샀다면')에는 빈 상태 대신 본문을 보인다.
+  const toolsOpen = bulkSubTab === "tools";
+  empty.hidden = !isEmpty || toolsOpen;
+  body.hidden = isEmpty && !toolsOpen;
   if (!box) return;
   if (!hasPortfolio) {
     box.innerHTML = hasWatch

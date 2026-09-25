@@ -52,3 +52,7 @@ SNS/**/*.png
 SNS/**/*.jpg
 data/참고/
 scripts/update_log.txt
+
+# 구독 피드(.ics/RSS). deploy-pages.yml 이 _site/ 안에서 scripts/gen_feeds.py 로 매 배포마다 만든다.
+# 로컬에서 화면 확인용으로 돌려 본 산출물은 커밋하지 않는다.
+data/feeds/

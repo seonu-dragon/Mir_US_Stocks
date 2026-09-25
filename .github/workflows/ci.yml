@@ -81,6 +81,10 @@ jobs:
       - name: Worker tests
         run: node worker/test_worker.mjs
 
+      # 적립식 시뮬레이터 순수 계산(dca-core.js): XIRR 알려진 값·휴장일 이월·정수 매수 이월·배당.
+      - name: DCA simulator tests
+        run: node scripts/tests/test_dca_core.mjs
+
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)
         run: |

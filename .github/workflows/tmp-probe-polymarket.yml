@@ -1,0 +1,11 @@
+name: TMP probe polymarket
+on:
+  push:
+    branches: [feat/macro-odds]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in "https://gamma-api.polymarket.com/events?tag_slug=fed-rates&closed=false&limit=2" "https://gamma-api.polymarket.com/public-search?q=recession&limit_per_type=3&events_status=active" "https://gamma-api.polymarket.com/tags?limit=5"; do
+            echo "=== $u"; curl -s -m 30 -A "Mozilla/5.0" -w "\nHTTP %{http_code}\n" "$u" | head -c 6000; echo; done

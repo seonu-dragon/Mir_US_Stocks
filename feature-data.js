@@ -103,6 +103,9 @@ const FEATURE_DATA = {
   krShortVolume: { global: "KR_SHORT_VOLUME", path: "data/korea/short_volume.js", feature: "shortInterest", krOnly: true, lazy: true },
   // 공포탐욕·환율·매크로 일일 히스토리(1일 1레코드 적립) — 시그널 탭 스파크라인.
   marketHistory: { global: "MARKET_HISTORY", path: "data/history/market_history.js" },
+  // 오늘의 특징주(build_movers_reasons.py) — 장 마감 후 등락 상하위 + 한 줄 사유. 시장별 파일
+  // (US data/movers_reasons.js · KR data/korea/movers_reasons.js), 오늘 탭 첫 화면이라 가볍게 먼저.
+  movers: { global: "MOVERS_REASONS", path: "data/movers_reasons.js", feature: "moversBoard", marketSpecific: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
@@ -163,7 +166,7 @@ function ensureFeatureData(key) {
 // 데이터 절약 모드에서는 2단계를 상호작용 때만 시작한다(탭 진입 시 필요한 것은 activateTab 이 따로 요청).
 const FIRST_SCREEN_FEATURE_KEYS = new Set([
   "sentimentGauges", "marketHistory", "macro", "yieldCurve", "events", "whitehouse", "ipo",
-  "krDart", "krEventDetails", "krFlow", "krConsensus", "krDividends", "krContracts", "ecosMacro",
+  "krDart", "krEventDetails", "krFlow", "krConsensus", "krDividends", "krContracts", "ecosMacro", "movers",
 ]);
 function preloadFeatureData() {
   const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
@@ -224,6 +227,8 @@ function refreshFeatureViews() {
   // 늦게 도착하면 그때 나타나야 한다 — 부팅 시점엔 전역이 없어 숨겨져 있다.
   const calls = [renderSignalsIfVisible, renderActionBoard, renderKrHighlights, () => applySearchSubVisibility(), renderTodayRegime];
   if (typeof renderIndustryHomeCard === "function") calls.push(renderIndustryHomeCard);
+  // 오늘의 특징주 카드 — movers 데이터가 오늘 탭 렌더보다 늦게 도착하면 여기서 다시 그린다.
+  if (typeof renderMoversBoard === "function") calls.push(renderMoversBoard);
   // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.

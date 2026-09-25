@@ -13502,3 +13502,39 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .industry-rev-row { grid-template-columns: minmax(0, 1fr) auto auto; }
   .industry-rev-row .industry-spark, .industry-rev-next { display: none; }
 }
+/* 오늘의 특징주 — 오늘 탭 요약 카드 · 종목 분석 한 줄 (movers.js) */
+.movers-board { margin: 12px 0 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.movers-board[hidden] { display: none; }
+.movers-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px 12px; margin-bottom: 8px; }
+.movers-head h2 { margin: 0; }
+.movers-head p { margin: 2px 0 0; }
+.movers-tabs { display: inline-flex; gap: 4px; }
+.movers-tab { height: auto; min-height: 0; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: inherit; font-size: var(--fs-sub); cursor: pointer; }
+.movers-tab.is-active { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.movers-banner { margin: 0 0 8px; padding: 8px 10px; border-left: 3px solid var(--neg); border-radius: var(--r-md); background: var(--panel-soft); font-size: var(--fs-sub); }
+.movers-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.movers-row { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr); gap: 4px 14px; align-items: start; padding: 9px 0; border-top: 1px solid var(--line); }
+.movers-row:first-child { border-top: 0; }
+.movers-go { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; min-width: 0; height: auto; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.movers-go:hover .movers-name { color: var(--primary); text-decoration: underline; }
+.movers-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: 14px; }
+.movers-name small { margin-left: 6px; color: var(--muted); font-weight: 400; font-size: var(--fs-cap); }
+.movers-chg { flex: none; font-variant-numeric: tabular-nums; font-size: var(--fs-sub); }
+.movers-why { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; min-width: 0; font-size: var(--fs-sub); line-height: 1.55; overflow-wrap: anywhere; }
+.movers-tag { flex: none; padding: 0 7px; border-radius: 999px; border: 1px solid var(--line); font-size: 11px; line-height: 18px; color: var(--muted); }
+.movers-tag-sector { border-color: color-mix(in srgb, var(--primary) 45%, var(--line)); color: var(--primary); }
+.movers-tag-disc, .movers-tag-news { color: var(--text); }
+.movers-sector-note { font-weight: 600; }
+.movers-sep { color: var(--muted); }
+.movers-reason-none, .movers-reason-failed { color: var(--muted); }
+.movers-reason-failed { font-style: italic; }
+.movers-links { display: inline-flex; flex-wrap: wrap; gap: 8px; font-size: var(--fs-cap); }
+.movers-links a { color: var(--primary); white-space: nowrap; }
+.movers-foot { margin: 10px 0 0; font-size: var(--fs-cap); line-height: 1.6; }
+.movers-foot b { font-variant-numeric: tabular-nums; font-weight: 600; }
+.movers-analysis-note { display: flex; flex-direction: column; gap: 4px; margin: 10px 0 4px; padding: 10px 12px; border-left: 3px solid var(--primary); border-radius: var(--r-md); background: var(--panel-soft); }
+.movers-analysis-label { font-size: var(--fs-cap); font-weight: 700; color: var(--primary); }
+@media (max-width: 640px) {
+  .movers-board { padding: 12px; }
+  .movers-row { grid-template-columns: minmax(0, 1fr); }
+}

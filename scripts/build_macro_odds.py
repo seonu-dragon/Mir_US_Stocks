@@ -109,12 +109,24 @@ def parse_iso(s):
         return None
 
 
-def short_rule(text, limit=320):
-    """판정 기준 원문(영문) — 첫 문단만, 길면 자른다."""
+def short_rule(text, limit=420):
+    """판정 기준 원문(영문) — 앞 문단부터 이어 붙여 limit 자까지. 'either of the following:'
+    처럼 첫 줄만으로는 뜻이 안 서는 문구가 있어(Polymarket 침체) 줄 단위로 채운다."""
     if not isinstance(text, str):
         return ""
-    first = text.strip().split("\n")[0].strip()
-    return first if len(first) <= limit else first[: limit - 1].rstrip() + "…"
+    out = ""
+    for line in (x.strip() for x in text.strip().splitlines()):
+        if not line:
+            continue
+        nxt = (out + " " + line).strip()
+        if len(nxt) > limit:
+            if not out:
+                out = line[: limit - 1].rstrip() + "…"
+            else:
+                out += " …"
+            break
+        out = nxt
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -161,7 +173,7 @@ def cpi_label(v, kind):
         return f"{v:.1f}% 초과"
     if kind == "below":
         return f"{v:.1f}% 미만"
-    return f"{v:.1f}%"
+    return f"정확히 {v:.1f}%"
 
 
 # ---------------------------------------------------------------------------
@@ -503,7 +515,7 @@ RECESSION_SIGNALS = [
      "시장에서 가장 흔히 인용되는 역전 기준"),
     ("cfnai_ma3", "CFNAI 3개월 평균", "lt", -0.70, "−0.70 미만",
      "시카고연준 — 확장기 뒤 CFNAI-MA3 가 −0.70 아래로 내려가면 침체 시작 가능성이 커진 것으로 해석"),
-    ("gz_recession_prob", "GZ 모형 침체확률 (12개월)", None, None, "공인 임계 없음",
+    ("gz_recession_prob", "GZ 모형 침체확률 (12개월)", None, None, "공인 기준 없음",
      "연준 이사회 FEDS Notes(Favara 외) — 확률 자체를 보는 지표라 임계 판정에서 뺀다"),
 ]
 

@@ -72,6 +72,8 @@ POLY_MIN_EVENT_VOLUME = 25000
 # CPI 처럼 행사가 사다리인 시장은 행사가별로도 거른다(OI 가 몇 계약뿐인 끝자락 제외).
 KALSHI_MIN_STRIKE_OI = 200
 POLY_MIN_STRIKE_LIQUIDITY = 500
+# 사다리에서 사실상 결판난 행사가(3% 미만·97% 초과)는 뺀다 — 정보가 없고 줄만 늘린다.
+LADDER_MIN, LADDER_MAX = 0.03, 0.97
 
 TOPICS = {
     "fomc": {"title": "다음 FOMC 금리 결정", "region": "us"},
@@ -193,6 +195,19 @@ def kalshi_open_markets(series_ticker):
     return out
 
 
+MID_MAX_SPREAD = 0.05
+
+
+def pick_price(bid, ask, last):
+    """확률 표시값: 호가 스프레드가 5%p 이하면 중간값, 아니면 최근 체결가.
+
+    최근 체결가만 쓰면 거래가 뜸한 행사가가 몇 주 전 값에 멈춰 사다리가 뒤집힌다
+    (2026-09-25 실측: CPI 3.3% 초과 0.88 < 3.4% 초과 0.96)."""
+    if bid is not None and ask is not None and 0 < ask and ask - bid <= MID_MAX_SPREAD and bid > 0:
+        return round((bid + ask) / 2, 4)
+    return last
+
+
 def kalshi_history(series_ticker, ticker):
     now = int(time.time())
     q = urllib.parse.urlencode({"start_ts": now - (HISTORY_DAYS + 1) * 86400, "end_ts": now, "period_interval": 1440})
@@ -205,9 +220,11 @@ def kalshi_history(series_ticker, ticker):
     for c in d.get("candlesticks") or []:
         ts = c.get("end_period_ts")
         price = c.get("price") or {}
-        p = fnum(price.get("close_dollars"))
-        if p is None:
-            p = fnum(price.get("previous_dollars"))
+        last = fnum(price.get("close_dollars"))
+        if last is None:
+            last = fnum(price.get("previous_dollars"))
+        p = pick_price(fnum((c.get("yes_bid") or {}).get("close_dollars")),
+                       fnum((c.get("yes_ask") or {}).get("close_dollars")), last)
         if ts and p is not None:
             hist.append({"d": datetime.fromtimestamp(int(ts), KST).strftime("%Y-%m-%d"), "p": round(p, 4)})
     return hist[-HISTORY_DAYS:]
@@ -269,7 +286,8 @@ def kalshi_group(topic, series_ticker, event_ticker, ms, close, oi, vol):
         moi = fnum(m.get("open_interest_fp")) or 0
         mvol = fnum(m.get("volume_fp")) or 0
         sub = m.get("yes_sub_title") or m.get("subtitle") or ""
-        o = {"ticker": m.get("ticker"), "raw": sub, "prob": last, "bid": bid, "ask": ask,
+        prob = pick_price(bid, ask, last)
+        o = {"ticker": m.get("ticker"), "raw": sub, "prob": prob, "bid": bid, "ask": ask,
              "volume": round(mvol), "openInterest": round(moi)}
         if topic in ("fomc", "bok"):
             code = rate_outcome_code(sub) or rate_outcome_code(m.get("title") or "")
@@ -278,7 +296,7 @@ def kalshi_group(topic, series_ticker, event_ticker, ms, close, oi, vol):
             o["code"], o["label"] = code, RATE_LABELS[code]
         elif topic == "cpi":
             v, kind = cpi_strike(sub)
-            if v is None or moi < KALSHI_MIN_STRIKE_OI or last is None or not (0.02 <= last <= 0.98):
+            if v is None or moi < KALSHI_MIN_STRIKE_OI or prob is None or not (LADDER_MIN <= prob <= LADDER_MAX):
                 continue
             o["strike"], o["kind"], o["label"] = v, kind, cpi_label(v, kind)
         else:  # recession — 단일 Yes/No
@@ -293,14 +311,23 @@ def kalshi_group(topic, series_ticker, event_ticker, ms, close, oi, vol):
     for o in outcomes:
         o["history"] = kalshi_history(series_ticker, o["ticker"])
     first = ms[0]
-    rules = short_rule(first.get("rules_primary"))
+    try:
+        ev = get_json(f"{KALSHI}/events/{event_ticker}", f"kalshi event {event_ticker}").get("event") or {}
+    except Exception:  # noqa: BLE001 — 제목은 부가 정보
+        ev = {}
+    settle = ", ".join(s.get("name", "") for s in (ev.get("settlement_sources") or []) if s.get("name"))
+    # 개별 시장의 규칙 문구는 그 결과(예: '0.5%p 이상 인상') 전용이라, 하나의 결과로 판정되는
+    # 침체 시장만 원문을 싣는다.
+    rules = short_rule(first.get("rules_primary")) if topic == "recession" else ""
     return {
         "topic": topic, "venue": "Kalshi", "eventId": event_ticker,
-        "eventTitle": first.get("title") or event_ticker,
+        "eventTitle": " · ".join(x for x in (ev.get("title"), ev.get("sub_title")) if x) or event_ticker,
+        "eventDate": (ev.get("strike_date") or "")[:10] or None,
+        "settlement": settle,
         "closeTime": close.isoformat().replace("+00:00", "Z"),
         "volume": round(vol), "liquidity": round(oi), "liquidityKind": "openInterest",
         "url": f"https://kalshi.com/markets/{series_ticker.lower()}",
-        "rules": rules, "priceBasis": "최근 체결가", "outcomes": outcomes,
+        "rules": rules, "priceBasis": "호가 중간값(스프레드 5%p 이하) · 그 외 최근 체결가", "outcomes": outcomes,
     }
 
 
@@ -415,7 +442,7 @@ def poly_topic(topic, now, excluded):
             o["code"], o["label"] = code, RATE_LABELS[code]
         elif topic == "cpi":
             v, kind = cpi_strike(raw)
-            if v is None or mliq < POLY_MIN_STRIKE_LIQUIDITY or not (0.02 <= p <= 0.98):
+            if v is None or mliq < POLY_MIN_STRIKE_LIQUIDITY or not (LADDER_MIN <= p <= LADDER_MAX):
                 continue
             o["strike"], o["kind"], o["label"] = v, kind, cpi_label(v, kind)
         else:
@@ -438,7 +465,9 @@ def poly_topic(topic, now, excluded):
         "closeTime": end.isoformat().replace("+00:00", "Z"),
         "volume": round(vol), "liquidity": round(liq), "liquidityKind": "orderbook",
         "url": f"https://polymarket.com/event/{e.get('slug')}",
-        "rules": short_rule(e.get("description")), "priceBasis": "호가 중간값(표시가)", "outcomes": outcomes,
+        "eventDate": None, "settlement": "",
+        "rules": short_rule(e.get("description")) if topic == "recession" else "",
+        "priceBasis": "Polymarket 표시가(호가 중간값)", "outcomes": outcomes,
     }
 
 

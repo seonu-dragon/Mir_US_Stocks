@@ -205,6 +205,47 @@ MIN_CHECKS = {
 }
 
 
+US_SNAPSHOT = "data/market_snapshot.json"
+
+
+def check_us_price_session(payload: dict, now: datetime | None = None) -> tuple[list[str], list[str]]:
+    """US 스냅샷 가격이 '마지막으로 끝난 거래일' 종가인지 **날짜로** 판정한다.
+
+    2026-09-25: updatedAtKst 는 당일(09:54 KST)로 신선했는데 가격은 전부 09-23 종가였다.
+    나이 감시로는 못 잡는다 — 스냅샷의 priceDate(야후가 날짜를 붙여 준 기준일)를 NYSE
+    달력의 마지막 완료 거래일과 비교한다. 가격이 비슷한지로 세션을 추정하지 않는다.
+    반환: (문제 목록, OK 메시지 목록).
+    """
+    from us_market_calendar import last_completed_session
+
+    problems: list[str] = []
+    oks: list[str] = []
+    price_date = payload.get("priceDate")
+    expected = last_completed_session(now)
+    if not price_date:
+        problems.append(f"{US_SNAPSHOT}: priceDate 없음 — 가격 기준 거래일을 확인할 수 없다")
+    elif expected is None:
+        oks.append(
+            f"WARN {US_SNAPSHOT}: NYSE 휴장 달력이 올해를 모른다(us_market_calendar.py) — "
+            f"priceDate {price_date} 대조 생략"
+        )
+    elif price_date < expected.isoformat():
+        problems.append(
+            f"{US_SNAPSHOT}: 가격 기준일 {price_date} < 마지막 완료 거래일 {expected.isoformat()} "
+            "— 미국 시세가 거래일 단위로 밀렸다"
+        )
+    else:
+        oks.append(f"OK {US_SNAPSHOT}: 가격 기준일 {price_date} (마지막 완료 거래일 {expected.isoformat()})")
+    screener = ((payload.get("priceCheck") or {}).get("screener") or {})
+    if screener.get("status") == "stale":
+        problems.append(
+            f"{US_SNAPSHOT}: Nasdaq 스크리너가 전 거래일 값(표본 stale {screener.get('stale')} · "
+            f"fresh {screener.get('fresh')}, 재시도 {screener.get('retries')}) — "
+            "실측 이력이 없는 종목 가격이 하루 밀렸다"
+        )
+    return problems, oks
+
+
 def file_date(payload: dict) -> str | None:
     for key in TIMESTAMP_KEYS:
         value = payload.get(key)
@@ -297,6 +338,20 @@ def main() -> int:
             continue
         print(f"OK {rel}: {label} {value:,} (하한 {floor:,})")
 
+    session_checks = 0
+    if args.group == "us":
+        session_checks = 1
+        path = ROOT / US_SNAPSHOT
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            problems.append(f"{US_SNAPSHOT}: 가격 기준일 감시용 읽기 실패 ({exc})")
+        else:
+            session_problems, oks = check_us_price_session(payload)
+            problems.extend(session_problems)
+            for line in oks:
+                print(line)
+
     if problems:
         print("\n[신선도 실패]")
         for p in problems:
@@ -306,6 +361,7 @@ def main() -> int:
         len(CHECKS[args.group])
         + len(RATIO_CHECKS.get(args.group, []))
         + len(MIN_CHECKS.get(args.group, []))
+        + session_checks
     )
     print(f"\nOK — {args.group} 그룹 {total}개 검사 모두 통과.")
     return 0

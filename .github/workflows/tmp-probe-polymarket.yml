@@ -7,5 +7,34 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          for u in "https://gamma-api.polymarket.com/events?tag_slug=fed-rates&closed=false&limit=2" "https://gamma-api.polymarket.com/public-search?q=recession&limit_per_type=3&events_status=active" "https://gamma-api.polymarket.com/tags?limit=5"; do
-            echo "=== $u"; curl -s -m 30 -A "Mozilla/5.0" -w "\nHTTP %{http_code}\n" "$u" | head -c 6000; echo; done
+          cat > p.py <<'PY'
+          import json, urllib.request, urllib.parse
+          UA={"User-Agent":"Mozilla/5.0"}
+          def g(u):
+              return json.loads(urllib.request.urlopen(urllib.request.Request(u,headers=UA),timeout=30).read())
+          B="https://gamma-api.polymarket.com"
+          for tag in ["fed-rates","fed","recession","inflation","economy","cpi","economic-policy"]:
+              try:
+                  ev=g(f"{B}/events?tag_slug={tag}&closed=false&active=true&limit=50&order=volume&ascending=false")
+              except Exception as e:
+                  print("TAG",tag,"ERR",e); continue
+              print("TAG",tag,len(ev))
+              for e in ev[:15]:
+                  print("  EV",e.get("slug"),"|",e.get("title"),"|end",e.get("endDate"),"|vol",round(e.get("volume") or 0),"|liq",round(e.get("liquidity") or 0),"|n",len(e.get("markets") or []), "|tags",[t.get("slug") for t in (e.get("tags") or [])][:6])
+          for q in ["fed decision","US recession 2026","inflation 2026","Bank of Korea"]:
+              r=g(f"{B}/public-search?"+urllib.parse.urlencode({"q":q,"limit_per_type":8,"events_status":"active"}))
+              print("Q",q,list(r.keys()))
+              for e in (r.get("events") or []):
+                  print("  EV",e.get("slug"),"|",e.get("title"),"|end",e.get("endDate"),"|vol",round(e.get("volume") or 0),"|liq",round(e.get("liquidity") or 0),"|closed",e.get("closed"))
+          ev=g(f"{B}/events?tag_slug=fed-rates&closed=false&active=true&limit=50&order=volume&ascending=false")
+          for e in ev:
+              if "decision" in (e.get("slug") or ""):
+                  print("DEC",e["slug"],e.get("endDate"))
+                  for m in e["markets"]:
+                      print("   M",m.get("groupItemTitle"),m.get("outcomePrices"),m.get("lastTradePrice"),m.get("bestBid"),m.get("bestAsk"),m.get("volumeNum"),m.get("liquidityNum"),m.get("closed"),m.get("active"),m.get("endDate"))
+                  tok=json.loads(e["markets"][0]["clobTokenIds"])[0]
+                  h=g(f"https://clob.polymarket.com/prices-history?market={tok}&interval=1m&fidelity=1440")
+                  print("   HIST",str(h)[:600])
+                  break
+          PY
+          python p.py

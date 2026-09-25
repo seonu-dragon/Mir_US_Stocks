@@ -779,7 +779,7 @@ function renderMacroIndicators() {
 let signalsDirty = true;
 const SIGNALS_FEATURE_KEYS = [
   "yieldCurve", "macro", "cotPositioning", "treasuryAuctions", "wikiAttention", "sentimentGauges",
-  "ecosMacro", "tradeExports", "optionsStats", "marketHistory",
+  "ecosMacro", "tradeExports", "optionsStats", "marketHistory", "krMarketAlerts",
   // Smart-money signals read the heavy 13F/congress/insider datasets; they're excluded from
   // the boot prefetch and load on first visit.
   "insider", "congress", "inst13f",
@@ -800,6 +800,7 @@ function renderSignals() {
   renderYieldCurve();
   renderEcosMacro();
   renderTradeExports();
+  if (typeof renderKrMarketAlerts === "function") renderKrMarketAlerts();
   renderTreasuryAuctions();
   renderCotPositioning();
   renderWikiAttention();

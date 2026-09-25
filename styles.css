@@ -7661,6 +7661,20 @@ button.community-hot-ticker {
 .signal-card ul { list-style: none; margin: 0; padding: 0; }
 .signal-card li { display: flex; align-items: baseline; gap: var(--space-2); padding: 5px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sub); }
 .signal-card li span { color: var(--text-muted); font-size: var(--fs-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 국내 시장경보·이상 종목 보드(kr-alerts.js). 시그널 카드 모양을 그대로 쓰고 칩·접기만 더한다. */
+.kr-alert-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.kr-alert-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--fs-cap); color: var(--text-muted); }
+.kr-alert-chip b { color: var(--text); font-variant-numeric: tabular-nums; }
+.kr-alert-chip.is-zero { opacity: .55; }
+.kr-alert-card h3 { display: flex; align-items: baseline; gap: 6px; }
+.kr-alert-count { font-size: var(--fs-cap); font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.kr-alert-card li { min-width: 0; }
+.kr-alert-card li .ins-ticker, .kr-alert-name { flex: 0 0 auto; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kr-alert-name { font-weight: 600; font-size: var(--fs-sub); }
+.kr-alert-more > summary { cursor: pointer; padding: 6px 0 2px; font-size: var(--fs-cap); color: var(--text-muted); }
+.kr-alert-stale { color: var(--tint-warn-fg); }
+.kr-alert-foot { margin: 12px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.65; }
+.kr-alert-notice { margin-top: 6px; }
 
 /* 차트 드로잉 (#23) */
 #priceChart.is-drawing { cursor: crosshair; }

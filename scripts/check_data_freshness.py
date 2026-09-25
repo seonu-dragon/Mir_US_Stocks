@@ -86,6 +86,8 @@ CHECKS = {
         ("data/korea/short_volume.json", 6, True),     # KRX 거래비중은 T+1
         ("data/korea/ipo_calendar.json", 6, False),    # 공모 비수기엔 0건이 정상
         ("data/korea/earnings_reactions.json", 6, False),  # 실적 시즌 밖엔 0건이 정상
+        # 시장경보·이상 종목(KIND + 스냅샷 일봉). 관리종목·거래정지만으로도 늘 수백 건이라 0건 = 이상.
+        ("data/korea/market_alerts.json", 6, True),
     ],
     # kr-disclosures.yml(평일 15:30) — 세 빌더 모두 continue-on-error 라 DART 키가
     # 죽어도 초록이었다. 주말·연휴를 감안해 4~5일.

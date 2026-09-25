@@ -2124,6 +2124,10 @@ def persist_snapshot(snapshot, light, details):
     run_subbuilder("short_interest/kr", "build_kr_short_interest.py")
     # 일일 공매도 거래비중(잔고와 별개, T+1). 같은 KRX_ID/KRX_PW 로그인 자격증명을 쓴다.
     run_subbuilder("short_volume/kr", "build_kr_short_volume.py")
+    # 시장경보(투자주의·경고·위험)·거래정지·관리종목(KRX KIND) + 상·하한가·52주 신고/신저가·
+    # 거래대금 급증. details(write_details)를 읽으므로 스냅샷을 쓴 뒤에 돈다. 인증 없음.
+    # 실패해도 기존 파일 유지 후 비-0 종료 — run_subbuilder 가 로그만 남기고 계속 간다.
+    run_subbuilder("market_alerts/kr", "build_kr_market_alerts.py", timeout=600)
     # 카드뉴스 경량 파일(data/cardnews.*) — KR 키만 갱신, US 키는 보존.
     try:
         deck = (UD.load_today_content() or {}).get("kr")

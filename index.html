@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=91aaabd8e5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=91aaabd8e5"></noscript>
+    <link rel="preload" href="styles.css?v=7bdef6bc7d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=7bdef6bc7d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=ec7d0905ff"></script>
+    <script src="build_id.js?v=ae4d045206"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1408,7 +1408,8 @@ html[data-theme="dark"] {
               </div>
             </section>
 
-            <div class="animate-reveal" style="display:flex;justify-content:flex-end;margin:0 0 -4px">
+            <div class="animate-reveal" style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin:0 0 -4px">
+              <button type="button" class="ghost compact-btn" id="dcaFromTicker" title="이 종목을 매월 같은 금액으로 샀다면 — 적립식 시뮬레이터로 이동">적립식으로 샀다면</button>
               <button type="button" class="ghost compact-btn" id="shareTickerLink" title="현재 종목 화면 링크 복사">종목 링크 복사</button>
             </div>
             <aside class="detail-panel animate-reveal" id="searchFacts"></aside>
@@ -2469,6 +2470,126 @@ html[data-theme="dark"] {
           </div>
         </div>
           </details>
+          <details class="ia-fold ia-tool-fold" id="dcaFold">
+            <summary>적립식 시뮬레이터</summary>
+        <section class="dca-panel" id="dcaPanel">
+          <div class="section-title compact-title">
+            <h2>적립식(주식 모으기) 시뮬레이터</h2>
+            <p>매 주기 같은 금액으로 샀다면 지금 얼마인지, 과거 일봉 종가로 계산합니다.</p>
+          </div>
+          <div class="toolbar backtest-toolbar backtest-ticker-toolbar">
+            <label class="grow">
+              종목 추가
+              <div class="backtest-ticker-add">
+                <input id="dcaTickerInput" placeholder="종목명·티커 검색 (예: 애플, SPY)" autocomplete="off">
+                <button type="button" id="dcaTickerAdd">추가</button>
+              </div>
+            </label>
+          </div>
+          <div class="dca-assets" id="dcaAssets"></div>
+          <div class="toolbar backtest-toolbar dca-form">
+            <label>
+              주기
+              <select id="dcaFreq">
+                <option value="monthly" selected>매월</option>
+                <option value="weekly">매주</option>
+                <option value="daily">매일(거래일)</option>
+              </select>
+            </label>
+            <label id="dcaMonthDayWrap">
+              매수일
+              <select id="dcaMonthDay">
+                <option value="1" selected>1일</option>
+                <option value="2">2일</option>
+                <option value="3">3일</option>
+                <option value="4">4일</option>
+                <option value="5">5일</option>
+                <option value="6">6일</option>
+                <option value="7">7일</option>
+                <option value="8">8일</option>
+                <option value="9">9일</option>
+                <option value="10">10일</option>
+                <option value="11">11일</option>
+                <option value="12">12일</option>
+                <option value="13">13일</option>
+                <option value="14">14일</option>
+                <option value="15">15일</option>
+                <option value="16">16일</option>
+                <option value="17">17일</option>
+                <option value="18">18일</option>
+                <option value="19">19일</option>
+                <option value="20">20일</option>
+                <option value="21">21일</option>
+                <option value="22">22일</option>
+                <option value="23">23일</option>
+                <option value="24">24일</option>
+                <option value="25">25일</option>
+                <option value="26">26일</option>
+                <option value="27">27일</option>
+                <option value="28">28일</option>
+                <option value="last">마지막 거래일</option>
+              </select>
+            </label>
+            <label id="dcaWeekdayWrap" hidden>
+              요일
+              <select id="dcaWeekday">
+                <option value="1" selected>월요일</option>
+                <option value="2">화요일</option>
+                <option value="3">수요일</option>
+                <option value="4">목요일</option>
+                <option value="5">금요일</option>
+              </select>
+            </label>
+            <label>
+              회당 금액 <span id="dcaCurrency">(USD)</span>
+              <input id="dcaAmount" type="number" min="1" step="10" value="500" inputmode="decimal">
+            </label>
+            <label>
+              기간
+              <select id="dcaPreset">
+                <option value="">직접 설정</option>
+                <option value="1">최근 1년</option>
+                <option value="3" selected>최근 3년</option>
+                <option value="5">최근 5년</option>
+              </select>
+            </label>
+            <label>
+              시작일
+              <input id="dcaStart" type="date">
+            </label>
+            <label>
+              종료일
+              <input id="dcaEnd" type="date">
+            </label>
+            <label>
+              비교 지수
+              <select id="dcaBenchmark"></select>
+            </label>
+          </div>
+          <div class="toolbar backtest-toolbar dca-options">
+            <label class="check-label"><input id="dcaReinvest" type="checkbox" checked> 배당 재투자</label>
+            <label class="check-label"><input id="dcaFractional" type="checkbox"> 소수점 매수</label>
+            <button type="button" id="dcaRun" class="primary">시뮬레이션</button>
+            <button type="button" class="ghost" id="dcaShare">설정 링크 복사</button>
+          </div>
+          <p class="muted dca-div-note" id="dcaDivNote"></p>
+          <p class="backtest-status muted" id="dcaStatus" aria-live="polite"></p>
+          <div class="dca-results" id="dcaResults" hidden>
+            <div class="backtest-summary dca-summary" id="dcaSummary"></div>
+            <div id="dcaWarn"></div>
+            <div class="backtest-chart-wrap dca-chart-wrap">
+              <svg id="dcaChart" viewBox="0 0 800 280" role="img" aria-label="누적 투자금과 평가액 차트"></svg>
+              <div class="dca-tip" id="dcaTip" hidden></div>
+              <div class="dca-legend" id="dcaLegend"></div>
+            </div>
+            <div class="table-wrap" id="dcaCompare"></div>
+            <div class="table-wrap">
+              <table class="backtest-table dca-asset-table" id="dcaTable"></table>
+            </div>
+            <p class="backtest-disclaimer muted dca-notes" id="dcaNotes"></p>
+          </div>
+        </section>
+          </details>
           <details class="ia-fold ia-tool-fold">
             <summary>관심종목 상관관계</summary>
         <section class="corr-card" id="corrCard">
@@ -2809,6 +2930,8 @@ html[data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=43fafa46ee"></script>
     <script src="portfolio.js?v=58b9c4f658"></script>
+    <script src="dca-core.js?v=69a09baee1"></script>
+    <script src="dca.js?v=e7fa020aec"></script>
     <script src="screener.js?v=d734941458"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
@@ -2825,7 +2948,7 @@ html[data-theme="dark"] {
     <script src="kr-alerts.js?v=5f414887e9"></script>
     <script src="watchlist.js?v=638b0c099e"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=a3859a12e2"></script>
+    <script src="app.js?v=09ab75637a"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

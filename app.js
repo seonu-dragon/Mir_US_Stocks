@@ -3204,6 +3204,8 @@ function setupEvents() {
   if (eventsBound) {
     populateBacktestBenchmarks();  // 시장별 벤치마크 목록 갱신
     initBacktestDateRange();       // 스냅샷 기준 날짜 범위 갱신
+    // 적립식 시뮬레이터(dca.js): 반대 시장 티커를 비우고 통화·벤치마크를 새 시장으로.
+    if (window.MirDca) { window.MirDca.onMarketChange(); window.MirDca.setup(); }
     return;
   }
   eventsBound = true;
@@ -3383,6 +3385,7 @@ function setupEvents() {
   setupUiPrefs();
   setupCompareEvents();
   setupBacktestEvents();
+  if (window.MirDca) window.MirDca.setup(); // 적립식 시뮬레이터(내 투자 › 도구)
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
     const moveButton = event.target.closest("[data-move-analysis]");
@@ -7100,6 +7103,8 @@ function activateBulkSub(name, { push = false } = {}) {
   byId("bulkSubTabs")?.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === bulkSubTab));
   document.querySelectorAll("#tab-bulk > #myInvestBody > .sub-panel").forEach((p) => p.classList.remove("is-active"));
   byId(`sub-bulk-${bulkSubTab}`)?.classList.add("is-active");
+  // 도구(적립식·포트폴리오 시뮬레이터 등)는 내 종목이 없어도 쓸 수 있다 — 빈 상태가 도구까지 가리지 않게.
+  renderMyInvestSummary();
   if (push) recordNav();
 }
 
@@ -7248,8 +7253,10 @@ function renderMyInvestSummary() {
   // 목록은 '아직 내 종목이 없다' 로 본다. 그래야 첫 방문자에게 빈 상태가 보인다.
   const hasWatch = Array.isArray(watchlist) && watchlist.length > 0 && !watchlistIsSeed();
   const isEmpty = !hasPortfolio && !hasWatch;
-  empty.hidden = !isEmpty;
-  body.hidden = isEmpty;
+  // 도구 서브탭을 연 경우(딥링크 ?tab=tools, 종목 화면의 '적립식으로 샀다면')에는 빈 상태 대신 본문을 보인다.
+  const toolsOpen = bulkSubTab === "tools";
+  empty.hidden = !isEmpty || toolsOpen;
+  body.hidden = isEmpty && !toolsOpen;
   if (!box) return;
   if (!hasPortfolio) {
     box.innerHTML = hasWatch

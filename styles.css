@@ -6189,6 +6189,96 @@ footer {
   .backtest-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* 적립식 시뮬레이터(dca.js) — 포트폴리오 시뮬레이터 스타일(backtest-*)을 재사용하고 차이만. */
+.dca-panel {
+  margin-top: 18px;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+}
+.ia-tool-fold .dca-panel .section-title h2 { display: none; }
+.dca-assets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 10px;
+  min-height: 28px;
+}
+.dca-empty { margin: 4px 0; font-size: var(--fs-sub); }
+.dca-asset-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel-soft);
+  max-width: 100%;
+}
+.dca-asset-name {
+  font-weight: 600;
+  font-size: var(--fs-sub);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 14em;
+}
+.dca-weight {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-cap);
+  color: var(--muted);
+}
+.dca-weight input { width: 4.2em; min-width: 0; }
+.dca-weight em { font-style: normal; }
+.dca-options { align-items: center; margin-bottom: 4px; }
+.dca-div-note { margin: 0 0 6px; font-size: var(--fs-cap); min-height: 0; }
+.dca-div-note:empty { display: none; }
+.dca-summary { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dca-metric-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: var(--fs-cap);
+  font-style: normal;
+}
+.dca-chart-wrap { position: relative; }
+#dcaChart { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.dca-tip {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  z-index: 2;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+  font-size: var(--fs-cap);
+  line-height: 1.5;
+  pointer-events: none;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.dca-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 6px 4px 0;
+  font-size: var(--fs-cap);
+  color: var(--muted);
+}
+.dca-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.dca-compare-table, .dca-asset-table { margin-bottom: var(--space-3); font-variant-numeric: tabular-nums; }
+.dca-compare-table td:not(:first-child), .dca-asset-table td:not(:first-child) { white-space: nowrap; }
+.dca-form label[hidden] { display: none !important; }
+.dca-compare-table td:first-child { min-width: 9.5em; }
+.dca-footnote { margin: -6px 0 10px; font-size: var(--fs-cap); }
+.dca-notes { font-size: var(--fs-cap); line-height: 1.6; }
+@media (max-width: 900px) {
+  .dca-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 /* ==========================================================================
    Mobile tab carousel — last in file so it always wins
    ========================================================================== */

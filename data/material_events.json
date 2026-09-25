@@ -1,11 +1,185 @@
 {
-  "updatedAtKst": "2026-09-25 18:38 KST",
-  "lastFileDate": "2026-09-24",
+  "updatedAtKst": "2026-09-25 23:35 KST",
+  "lastFileDate": "2026-09-25",
   "partialFetch": false,
-  "count": 731,
+  "count": 740,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만.",
   "events": [
+    {
+      "ticker": "CIFR",
+      "company": "Cipher Digital Inc.  (CIFR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-25",
+      "accession": "0001819989-26-000043",
+      "link": "https://www.sec.gov/Archives/edgar/data/1819989/000181998926000043/cifr-20260924.htm"
+    },
+    {
+      "ticker": "FDS",
+      "company": "FACTSET RESEARCH SYSTEMS INC  (FDS)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-25",
+      "accession": "0001628280-26-063495",
+      "link": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026063495/fds-20260923.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-25",
+      "accession": "0001564708-26-000209",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000209/nws-20260924.htm",
+      "buybackMention": true,
+      "amountUsd": 1000000000.0,
+      "kind": "buyback",
+      "buybackChecked": true
+    },
+    {
+      "ticker": "EQH",
+      "company": "Equitable Holdings, Inc.  (EQH, EQH-PA, EQH-PC)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-25",
+      "accession": "0001333986-26-000048",
+      "link": "https://www.sec.gov/Archives/edgar/data/1333986/000133398626000048/axaeq-20260923.htm"
+    },
+    {
+      "ticker": "MOS",
+      "company": "MOSAIC CO  (MOS)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-25",
+      "accession": "0001285785-26-000125",
+      "link": "https://www.sec.gov/Archives/edgar/data/1285785/000128578526000125/formxchangeofofficerssepte.htm"
+    },
+    {
+      "ticker": "MSTR",
+      "company": "Strategy Inc  (MSTR, STRC, STRD, STRF, STRK)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-25",
+      "accession": "0001193125-26-401636",
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526401636/mstr-20260924.htm"
+    },
+    {
+      "ticker": "CTVA",
+      "company": "Corteva, Inc.  (CTVA)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-09-25",
+      "accession": "0001193125-26-401618",
+      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526401618/d181849d8k.htm"
+    },
+    {
+      "ticker": "COR",
+      "company": "Cencora, Inc.  (COR)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-25",
+      "accession": "0001104659-26-110624",
+      "link": "https://www.sec.gov/Archives/edgar/data/1140859/000110465926110624/tm2626030d1_8k.htm"
+    },
+    {
+      "ticker": "DUK",
+      "company": "Duke Energy CORP  (DUK, DUKB, DUKU, DUK-PA)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-09-25",
+      "accession": "0001104659-26-110588",
+      "link": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926110588/tm2626114d1_8k.htm"
+    },
     {
       "ticker": "JQC",
       "company": "Nuveen Credit Strategies Income Fund  (JQC)",

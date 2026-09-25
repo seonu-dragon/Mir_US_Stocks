@@ -93,6 +93,10 @@ const FEATURE_DATA = {
   federalContracts: { global: "FEDERAL_CONTRACTS", path: "data/federal_contracts.js", usOnly: true },
   // 애널리스트 컨센서스(Finnhub 추천·실적 서프라이즈). 무료 티어가 미국만이라 US 전용.
   analystConsensus: { global: "ANALYST_CONSENSUS", path: "data/analyst_consensus.js", usOnly: true },
+  // 실적 전 비교: 과거 실적 반응 vs 옵션 예상변동폭(build_earnings_move_compare.py). US 전용.
+  earningsMoveCompare: { global: "EARNINGS_MOVE_COMPARE", path: "data/earnings_move_compare.js", usOnly: true },
+  // 실적 보도자료(8-K 2.02 EX-99.1) 한국어 요약(build_earnings_releases.py, Gemini). US 전용.
+  earningsReleases: { global: "EARNINGS_RELEASES", path: "data/earnings_releases.js", usOnly: true },
   // FINRA 일일 공매도 거래량(통합). 미국만 공개라 US 전용.
   finraShort: { global: "FINRA_SHORT_VOLUME", path: "data/finra_short_volume.js", usOnly: true },
   // 배당 + 다음 실적 예정일(Yahoo). US 전용(KR 은 별도 배당 트래커가 있음).
@@ -239,6 +243,14 @@ function refreshFeatureViews() {
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.
   if (currentTab === "industry" && typeof renderIndustry === "function") calls.push(renderIndustry);
+  // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은
+  // EARNINGS_MOVE_COMPARE / EARNINGS_RELEASES 가 늦게 도착하면 그때 다시 그려야 보인다.
+  if (earningsCalendarCache && byId("earningsCalendarBody") && typeof renderEarningsCalendarMarket === "function") {
+    calls.push(() => renderEarningsCalendarMarket(earningsCalendarCache));
+  }
+  if (currentTab === "search" && searchSubTab === "earnreact" && typeof renderEarningsReactions === "function") {
+    calls.push(renderEarningsReactions);
+  }
   if (currentTab === "search" && INST_SUBS.includes(searchSubTab)) {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));
   } else if (currentTab === "search") {

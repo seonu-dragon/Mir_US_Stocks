@@ -55,6 +55,10 @@
   - 미국 및 한국의 주요 매크로 경제 지표 발표 일정과 백악관 정치 일정(KST 기준)을 중요도 필터와 함께 통합 타임라인으로 제공.
 - **시장 실적 발표 캘린더**:
   - 보유 중인 관심종목 및 시총 상위 대형주들의 실적 발표(Earnings Call) 일정을 시간 순서대로 캘린더화.
+- **캘린더 구독 (.ics, 2026-09-25)**: 경제 캘린더·실적 일정 머리의 `캘린더 구독` 버튼 → 다이얼로그(`subscribe-feeds.js`).
+  - 피드 3개: `data/feeds/calendar-us.ics`(시총 상위 300 실적 예정일·배당락일·IPO 가격확정·월간 옵션 만기), `calendar-kr.ics`(배당 기준일·지급일, 공모 청약·신규 상장), `econ.ics`(FOMC 결정 14:00 ET·investing.com 중요도 보통 이상 한미 지표·산업 지표 발표일). 과거 7일~미래 90일.
+  - 구글 캘린더 추가 링크(`calendar.google.com/calendar/r?cid=webcal://…`)·webcal 링크·URL 복사. 외부 발신(푸시·텔레그램)은 없다 — 구독 앱이 정적 파일을 다시 받아 갈 뿐.
+  - 규칙 기반 날짜는 두 가지뿐이고 설명에 근거를 적는다: FOMC(연준 공개 일정표를 `gen_feeds.py` 에 옮겨 적음 — 새 해 일정 공개 시 갱신), 옵션 만기(셋째 금요일, 성금요일·준틴스면 목요일). KR 옵션 만기는 휴장일 소스가 없어 넣지 않았다.
 
 ### ⑤ 시장 탭 › 트리맵 (Market Heatmap)
 
@@ -179,6 +183,9 @@
   - SEC 등록서류(S-1 등록 신청, 424B4 가격 확정) 기반 신규 상장 추진 기업의 캘린더.
 - **DART 공시 (KR 전용)**:
   - 한국 코스피/코스닥 종목의 주요 공시 내역(DART Open API 연동) 필터 검색 및 리스트 제공.
+- **공시 구독 (RSS 2.0, 2026-09-25)**: 공시 칩 줄 아래 `공시 구독 (RSS)` 버튼 → 같은 다이얼로그(공시 절이 위).
+  - 시장별 `data/feeds/disclosures-us.xml`(8-K 중 빌더 hot 분류 + 자사주), `activist-us.xml`(13D·13D/A), `disclosures-kr.xml`(증자·CB/BW·최대주주 변동·자사주·소각·공급계약·주요사항보고 등, 유동성공급계약 제외). 각 최신 300건.
+  - 종목별 `data/feeds/ticker/us-<T>.xml`·`kr-<code>.xml`: 시장별 시총 상위 50종목(ETF 제외)만 — 관심종목별은 정적 호스팅이라 불가. 공시 0건이어도 파일을 만들어 구독 URL 이 404 가 되지 않게 한다(순위 밖으로 밀리면 404).
 
 ### ⑪ 내 투자 탭 (보유 · 관심 / 도구)
 
@@ -337,6 +344,8 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
 - **산업·매크로 선행지표 빌더 (`build_industry_indicators.py` + `industry_fetchers.py` + `industry_sensitivity.py`)**:
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.
+- **구독 피드 생성 (`gen_feeds.py`)**:
+  - 레포에 커밋하지 않고 `deploy-pages.yml` 이 `_site/` 스테이징 뒤 `python3 scripts/gen_feeds.py --root _site --out _site/data/feeds` 로 매 배포마다 만든다(데이터가 여러 워크플로우에서 오므로 전부 합쳐지는 지점). ~1MB·파일 ~107개. `continue-on-error` 라 피드 실패가 배포를 막지 않는다. 매니페스트 `data/feeds/feeds.json` 을 다이얼로그가 읽는다(없으면 안내만). 로컬 확인: `py scripts/gen_feeds.py`(data/feeds/ 는 .gitignore). 형식 검증 `scripts/tests/test_gen_feeds.py`(75옥텟 줄 접기·CRLF·이스케이프·UID 유일성·RSS 필수 요소).
 - **백악관 일정 수집 (`fetch_white_house_schedule.py`)**:
   - 백악관 공식 브리핑룸 일정을 크롤링하여 경제 캘린더에 통합하기 위한 포맷 빌드.
 

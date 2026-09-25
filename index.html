@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=6bae058009" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=6bae058009"></noscript>
+    <link rel="preload" href="styles.css?v=2a7db57ec3" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=2a7db57ec3"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=0b6499e6e8"></script>
+    <script src="build_id.js?v=1928f13dbb"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -626,6 +626,7 @@ html[data-theme="dark"] {
           <div class="section-title">
             <h2>경제 캘린더</h2>
             <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 통합 표시합니다. 백악관 일정은 06·16·21시에 갱신됩니다.</p>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="FOMC·경제지표·실적·배당·IPO 일정을 구글/애플 캘린더에 구독합니다">캘린더 구독</button>
           </div>
           <div class="calendar-filters" id="calendarFilters">
             <fieldset class="calendar-filter-group">
@@ -653,6 +654,7 @@ html[data-theme="dark"] {
           <div class="section-title">
             <h2>시장 실적 캘린더</h2>
             <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="시총 상위 실적 예정일을 캘린더 앱에 구독합니다">캘린더 구독</button>
           </div>
           <div class="toolbar earnings-toolbar">
             <label>
@@ -1838,6 +1840,10 @@ html[data-theme="dark"] {
             <button class="sub-tab" data-disc="krown" data-krown-kind="insider">임원</button>
             <button class="sub-tab" data-disc="krown" data-krown-kind="profile">지배구조</button>
           </nav>
+          <div class="feed-sub-bar">
+            <span>새 공시를 RSS 리더로 받아 보기 — 시장별 주요 공시·시총 상위 종목별 피드</span>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="disclosures">공시 구독 (RSS)</button>
+          </div>
         <div class="sub-panel" id="sub-buyback">
           <div class="section-title">
             <h2>자사주 매입 · 소각 트래커</h2>
@@ -2813,6 +2819,7 @@ html[data-theme="dark"] {
     <script src="kr-panels.js?v=53e63c5806"></script>
     <script src="kr-alerts.js?v=5f414887e9"></script>
     <script src="watchlist.js?v=638b0c099e"></script>
+    <script src="subscribe-feeds.js?v=8e306f9e90"></script>
     <script src="app.js?v=5511bfb1cc"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>

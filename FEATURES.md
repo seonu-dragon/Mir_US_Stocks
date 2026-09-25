@@ -362,6 +362,7 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
 ### ① 마켓 데이터 빌더 & 자동화
 - **미국 마켓 스냅샷 생성 (`update_data.py`)**: 
   - Yahoo Finance, SEC EDGAR 등 다양한 소스에서 S&P 500, Nasdaq 100 지수 구성 요소 및 주요 대형주, ETF의 1년 주가 데이터, 거래량, 펀더멘털 데이터를 긁어와 브라우저가 사용하는 단일 스냅샷 파일 `data/market_snapshot.json` 생성.
+  - **가격 기준 거래일(`priceDate`, 2026-09-25)**: 실측 이력 종목의 가격·등락률은 날짜가 붙은 야후 값(일봉 날짜 / `meta.regularMarketTime`)으로 정한다 — 일봉이 마지막 거래일 봉을 빠뜨리면(00:00 UTC 이후 실행 시 실측) 시세로 채우되 봉은 지어내지 않는다(`sessionBarMissing`). 날짜 없는 Nasdaq 스크리너 값은 이력 없는 소형주용으로만 쓰고, 대형주 20개 표본을 야후 종가(기준일·전 거래일)와 대조해 전 거래일 값이면 10분 간격 3회까지 재조회(`priceCheck.screener`). `check_data_freshness.py --group us` 가 `priceDate` 를 NYSE 달력(`scripts/us_market_calendar.py`, 휴장일 하드코딩 — 해마다 추가)의 마지막 완료 거래일과 대조해 밀리면 실패.
 - **한국 마켓 스냅샷 생성 (`update_korea_data.py`)**:
   - 미국 마켓 스냅샷 빌더의 로직을 복제 및 수정하여 코스피/코스닥 종목 데이터를 패러렐 수집하여 `data/korea/market_snapshot.json` 생성.
 - **데일리 업데이트 등록 스크립트 (`register_daily_update.ps1` / `run_daily_update.bat`)**:

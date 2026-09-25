@@ -26,6 +26,7 @@ if sys.platform == "win32":
 
 from briefing_store import apply_briefing_fragments, repository_publish_lock
 from sec_client import ET_TZ, require_us_market_closed
+from us_market_calendar import session_close as us_session_close
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -1451,6 +1452,9 @@ def fetch_yahoo_history(symbol, range_="5y"):
     else:
         raise RuntimeError(f"history fetch failed after 3 attempts: {last_error}")
     result = payload["chart"]["result"][0]
+    # 가격 기준일 판정용: 일봉이 마지막 거래일 봉을 빠뜨려도(아래 PRICE SESSION 절)
+    # meta.regularMarketTime/Price 는 날짜가 붙은 시세라 기준일을 날짜로 정할 수 있다.
+    remember_yahoo_quote(symbol, result.get("meta"))
     quote = result["indicators"]["quote"][0]
     opens = quote.get("open", [])
     highs = quote.get("high", [])
@@ -2023,6 +2027,15 @@ def make_stock(meta, rows):
     closes = [row["close"] for row in rows]
     volumes = [row["volume"] for row in rows]
     price = float(meta.get("quotePrice") or closes[-1])
+    # 기준일(priceDate) 봉을 야후 일봉이 빠뜨린 경우(resolve_session_price 의 barMissing):
+    # 가격을 마지막 봉 '다음 날' 값으로 이어 붙여 기간 수익률·closeSeries 가 하루 어긋나지
+    # 않게 한다. chartSeries 에는 봉을 만들지 않는다(시가를 모른다) — 예전처럼 전날 봉의
+    # 종가를 덮어쓰면 09-22 봉에 09-23 종가가 붙는다(2026-09-24 실측).
+    price_date = meta.get("priceDate")
+    bar_missing = bool(price_date and rows and str(rows[-1].get("date") or "") < price_date)
+    if bar_missing:
+        closes = closes + [price]
+        volumes = volumes + [float(meta.get("quoteVolume") or volumes[-1])]
     prev = closes[-2]
     change_pct = meta.get("quoteChangePct")
     if change_pct is None:
@@ -2075,6 +2088,11 @@ def make_stock(meta, rows):
         "closeSeries": [round(value, 2) for value in closes[-40:-1]] + [round(price, 2)],
         "historySource": history_source,
     }
+    # 가격 기준 거래일(뉴욕 날짜). 야후 날짜로 확인된 종목만 — 스크리너 값은 날짜가 없다.
+    if price_date:
+        stock["priceDate"] = price_date
+        if bar_missing:
+            stock["sessionBarMissing"] = True
     # 실측 EPS(TTM) 를 라이트 스냅샷에 노출한다(테이블이 읽는 곳). 유한한 실수일 때만.
     # epsNextY 는 있으면 성장 참고용으로 함께 노출한다.
     eps_ttm = fundamentals.get("epsTtm")
@@ -2101,7 +2119,7 @@ def make_stock(meta, rows):
                 round(row["open"], 2),
                 round(row["high"], 2),
                 round(row["low"], 2),
-                round(price if index == len(history_rows) - 1 else row["close"], 2),
+                round(price if index == len(history_rows) - 1 and not bar_missing else row["close"], 2),
                 int(row["volume"]),
                 row.get("date"),  # YYYY-MM-DD for the chart x-axis (None if unavailable)
             ]
@@ -2556,6 +2574,271 @@ def history_fetch_summary(stats, lock):
             f"오버랩 불일치 {snap['mismatch']}")
 
 
+# ── PRICE SESSION: 가격 기준 거래일(priceDate) ────────────────────────────────
+# 2026-09-25 사고: 09:54 KST 스냅샷의 미국 종목 가격·등락률이 전부 09-23 종가였다
+# (NVDA 225.51 −1.5%, 실제 09-24 224.58 −0.41%). 원인 두 가지가 겹쳤다.
+#  (1) 가격은 Nasdaq 스크리너(api/screener/stocks)의 lastsale/pctchange 를 날짜 확인
+#      없이 썼다. 스크리너는 날짜 필드가 없는 일괄 파일이라, 갱신이 늦은 날(09-25 00:32Z)
+#      전 거래일 값을 그대로 줬다. ETF 스크리너는 거의 매일 한 거래일 늦다(SPY 09-17~24 실측).
+#  (2) GitHub 크론 지연으로 본체가 00:00 UTC(20:00 ET) 이후에 돌면 야후 일봉에 마지막
+#      거래일 봉이 빠져 있었다(09-17·22·23·24·25 다섯 번 모두, 그 전엔 한 번도 없음).
+#      그 위에 스크리너 가격을 '마지막 봉의 종가'로 덮어써 09-22 봉에 09-23 종가가 붙었다.
+# 이제 실측 이력 종목은 야후의 **날짜가 붙은** 값(일봉 날짜 / meta.regularMarketTime)으로
+# 기준일을 정하고 그 날의 종가·전 거래일 종가로 가격·등락률을 만든다. 스크리너 값은
+# 이력이 없는 소형주용으로만 남기고, 표본 대조로 신선도를 확인해 늦으면 기다렸다 다시 받는다.
+_YAHOO_QUOTES = {}
+_YAHOO_QUOTES_LOCK = threading.Lock()
+
+
+def _finite_or_none(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if math.isfinite(number) else None
+
+
+def yahoo_quote_from_meta(meta):
+    """야후 chart meta → {"time", "price", "volume"} (정규장 마지막 체결 시각·가격). 없으면 None."""
+    if not isinstance(meta, dict):
+        return None
+    price = _finite_or_none(meta.get("regularMarketPrice"))
+    stamp = _finite_or_none(meta.get("regularMarketTime"))
+    if not price or price <= 0 or not stamp:
+        return None
+    return {
+        "time": int(stamp),
+        "price": price,
+        "volume": _finite_or_none(meta.get("regularMarketVolume")),
+    }
+
+
+def remember_yahoo_quote(symbol, meta):
+    quote = yahoo_quote_from_meta(meta)
+    if quote:
+        with _YAHOO_QUOTES_LOCK:
+            _YAHOO_QUOTES[symbol] = quote
+
+
+def take_yahoo_quote(symbol):
+    with _YAHOO_QUOTES_LOCK:
+        return _YAHOO_QUOTES.pop(symbol, None)
+
+
+def _row_day(row):
+    try:
+        return datetime.strptime(str(row.get("date")), "%Y-%m-%d").date()
+    except (TypeError, ValueError):
+        return None
+
+
+def resolve_session_price(rows, quote=None, now=None):
+    """가격 기준 거래일과 그 날의 종가·전 거래일 종가를 **날짜로** 정한다.
+
+    - 아직 정규장이 안 끝난 날짜의 봉(수동 실행 시 장중 부분 봉)은 버린다.
+    - 야후 시세(meta)의 날짜가 마지막 봉보다 뒤이고 그 날 장이 끝났으면, 일봉이 그 날
+      봉을 빠뜨린 것이다 → 가격은 시세 가격, 전일 종가는 마지막 봉 종가(barMissing).
+      봉을 지어내 붙이지는 않는다(시가를 모른다).
+    - 그 밖에는 마지막 완료 봉의 종가가 가격, 그 앞 봉 종가가 전일 종가.
+    반환 dict(rows, priceDate, price, prevClose, volume, barMissing) 또는 None(판정 불가).
+    """
+    if not rows:
+        return None
+    now_et = (now or datetime.now(ET_TZ)).astimezone(ET_TZ)
+    complete = [row for row in rows if _row_day(row) and now_et >= us_session_close(_row_day(row))]
+    if not complete:
+        return None
+    last_day = _row_day(complete[-1])
+    quote_day = None
+    if quote and quote.get("time"):
+        quote_day = datetime.fromtimestamp(quote["time"], ET_TZ).date()
+    if quote_day and quote_day > last_day and now_et >= us_session_close(quote_day):
+        return {
+            "rows": complete,
+            "priceDate": quote_day.isoformat(),
+            "price": float(quote["price"]),
+            "prevClose": float(complete[-1]["close"]),
+            "volume": quote.get("volume"),
+            "barMissing": True,
+        }
+    if len(complete) < 2:
+        return None
+    last = complete[-1]
+    return {
+        "rows": complete,
+        "priceDate": last_day.isoformat(),
+        "price": float(last["close"]),
+        "prevClose": float(complete[-2]["close"]),
+        "volume": last.get("volume"),
+        "barMissing": False,
+    }
+
+
+def apply_session_price(meta, session):
+    """resolve_session_price 결과를 meta 의 시세 필드에 반영하고 잘린 rows 를 돌려준다."""
+    if meta.get("quotePrice") is not None:
+        meta["screenerPrice"] = meta.get("quotePrice")
+    meta["quotePrice"] = session["price"]
+    prev = session["prevClose"]
+    meta["quoteChangePct"] = ((session["price"] / prev) - 1) * 100 if prev else None
+    if session.get("volume"):
+        meta["quoteVolume"] = session["volume"]
+    meta["priceDate"] = session["priceDate"]
+    meta["priceSource"] = "yahoo"
+    meta["sessionBarMissing"] = bool(session["barMissing"])
+    return session["rows"]
+
+
+# 스크리너 신선도 표본: 유동성 큰 대형주(야후 일봉이 확실한 종목).
+SCREENER_PROBE_SYMBOLS = (
+    "AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "META", "AVGO", "TSLA", "JPM", "LLY",
+    "XOM", "WMT", "V", "COST", "NFLX", "ORCL", "BAC", "KO", "PG", "HD",
+)
+# 전일 대비 움직임이 이보다 작으면 '어느 날 값인지' 가를 수 없어 표본에서 뺀다.
+SCREENER_PROBE_MIN_MOVE = 0.002
+# 두 종가가 같은 값인지(센트 반올림 오차 허용).
+SCREENER_PROBE_MATCH_REL = 0.0003
+SCREENER_STALE_RETRIES = int(os.environ.get("SCREENER_STALE_RETRIES", "3"))
+SCREENER_STALE_WAIT_SEC = int(os.environ.get("SCREENER_STALE_WAIT_SEC", "600"))
+
+
+def fetch_yahoo_probe(symbol):
+    """표본용 가벼운 조회: 최근 1개월 일봉 + meta 시세. (rows, quote)."""
+    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range=1mo&interval=1d"
+    payload = request_json(url, timeout=12)
+    result = payload["chart"]["result"][0]
+    closes = (result.get("indicators", {}).get("quote") or [{}])[0].get("close") or []
+    rows = [
+        {"date": datetime.fromtimestamp(ts, tz=ZoneInfo("UTC")).date().isoformat(), "close": float(close)}
+        for ts, close in zip(result.get("timestamp") or [], closes)
+        if close is not None
+    ]
+    return rows, yahoo_quote_from_meta(result.get("meta"))
+
+
+def classify_screener_quotes(screener_prices, sessions):
+    """스크리너 가격이 기준일 종가(fresh)인지 전 거래일 종가(stale)인지 표본으로 센다.
+
+    가격이 '비슷한지'로 세션을 추정하지 않는다: 야후가 **날짜를 붙여 준** 두 종가
+    (기준일·전 거래일)와 센트 단위로 같은지만 보고, 두 종가가 너무 가까운 종목은 뺀다.
+    """
+    fresh = stale = other = 0
+    session_dates = set()
+    for symbol, session in sessions.items():
+        price = screener_prices.get(symbol)
+        if not session or not price:
+            continue
+        latest, prev = session["price"], session["prevClose"]
+        if not prev or abs(latest - prev) / prev < SCREENER_PROBE_MIN_MOVE:
+            continue
+        session_dates.add(session["priceDate"])
+        if abs(price - latest) / latest <= SCREENER_PROBE_MATCH_REL:
+            fresh += 1
+        elif abs(price - prev) / prev <= SCREENER_PROBE_MATCH_REL:
+            stale += 1
+        else:
+            other += 1
+    if stale > fresh and stale >= 3:
+        status = "stale"
+    elif fresh >= 3 and fresh >= stale:
+        status = "fresh"
+    else:
+        status = "unknown"
+    return {
+        "status": status,
+        "fresh": fresh,
+        "stale": stale,
+        "other": other,
+        "sessionDate": max(session_dates) if session_dates else None,
+    }
+
+
+def ensure_fresh_screener(universe, *, fetch_screener=None, fetch_probe=None,
+                          retries=None, wait_sec=None, sleep=time.sleep, now=None):
+    """스크리너가 전 거래일 값이면 기다렸다 다시 받아 universe 의 시세를 갈아 끼운다.
+
+    이력 종목은 build_one 에서 야후 날짜 기준 가격으로 다시 맞추므로, 여기 결과가
+    실제로 좌우하는 건 이력이 없는 소형주의 가격이다. 끝까지 늦으면 status=stale 로
+    남겨 신선도 게이트가 워크플로우를 빨갛게 만든다.
+    """
+    fetch_screener = fetch_screener or fetch_nasdaq_screener
+    fetch_probe = fetch_probe or fetch_yahoo_probe
+    retries = SCREENER_STALE_RETRIES if retries is None else retries
+    wait_sec = SCREENER_STALE_WAIT_SEC if wait_sec is None else wait_sec
+    by_symbol = {meta["symbol"]: meta for meta in universe}
+    sessions = {}
+    for symbol in SCREENER_PROBE_SYMBOLS:
+        if symbol not in by_symbol:
+            continue
+        try:
+            rows, quote = fetch_probe(symbol)
+        except Exception as exc:
+            print(f"[가격기준일] 표본 {symbol} 야후 조회 실패: {exc}")
+            continue
+        sessions[symbol] = resolve_session_price(rows, quote, now=now)
+
+    def current_prices():
+        return {s: by_symbol[s].get("quotePrice") for s in sessions if s in by_symbol}
+
+    result = classify_screener_quotes(current_prices(), sessions)
+    attempt = 0
+    while result["status"] == "stale" and attempt < retries:
+        attempt += 1
+        print(
+            f"[가격기준일] Nasdaq 스크리너가 전 거래일 값(표본 fresh {result['fresh']} · "
+            f"stale {result['stale']}, 기준일 {result['sessionDate']}) — "
+            f"{wait_sec}초 뒤 재조회 {attempt}/{retries}"
+        )
+        sleep(wait_sec)
+        rows = fetch_screener()
+        fresh_quotes = {row["symbol"]: row for row in rows}
+        probe = classify_screener_quotes(
+            {s: (fresh_quotes.get(s) or {}).get("quotePrice") for s in sessions}, sessions,
+        )
+        if probe["status"] == "stale" or not rows:
+            result = probe if rows else result
+            continue
+        replaced = 0
+        for symbol, row in fresh_quotes.items():
+            meta = by_symbol.get(symbol)
+            if meta is None:
+                continue
+            for key in ("quotePrice", "quoteChangePct", "quoteVolume"):
+                if row.get(key) is not None:
+                    meta[key] = row[key]
+            replaced += 1
+        print(f"[가격기준일] 재조회 스크리너로 {replaced}종목 시세 교체 ({probe['status']})")
+        result = probe
+    result["retries"] = attempt
+    result["sampled"] = len([s for s in sessions.values() if s])
+    print(
+        f"[가격기준일] 스크리너 {result['status']} (fresh {result['fresh']} · stale {result['stale']} · "
+        f"기타 {result['other']}, 기준일 {result['sessionDate']}, 재시도 {attempt})"
+    )
+    return result
+
+
+def summarize_price_dates(stocks):
+    """스냅샷 수준 priceDate(야후 날짜 기준 종목의 최빈 기준일)와 집계."""
+    counts = {}
+    bar_missing = 0
+    for item in stocks:
+        day = item.get("priceDate")
+        if day:
+            counts[day] = counts.get(day, 0) + 1
+        if item.get("sessionBarMissing"):
+            bar_missing += 1
+    if not counts:
+        return None, {"yahooDated": 0, "sessionBarMissing": bar_missing, "priceDateCounts": {}}
+    price_date = max(counts, key=lambda day: (counts[day], day))
+    top = dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4])
+    return price_date, {
+        "yahooDated": sum(counts.values()),
+        "sessionBarMissing": bar_missing,
+        "priceDateCounts": top,
+    }
+
+
 REAL_HISTORY_SOURCES = frozenset({"yahoo", "yahoo-cache"})
 HISTORY_HONESTY_FLOOR = 0.9
 
@@ -2653,6 +2936,10 @@ def build_one(meta):
             meta["historySource"] = "yahoo"
             if dividends:
                 meta["dividends"] = dividends
+            # 가격·등락률을 날짜가 붙은 야후 값으로 맞춘다(PRICE SESSION 절).
+            session = resolve_session_price(rows, take_yahoo_quote(symbol))
+            if session:
+                rows = apply_session_price(meta, session)
         else:
             # 공시 창·유동성 필터에서 내려간 종목도 직전 실측이 있으면 합성으로 덮지 않는다.
             rows = history_from_cache_or_synthetic(symbol, meta, load_cached_history)
@@ -2902,6 +3189,7 @@ def build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_c
 
 def build_snapshot():
     universe, etf_category_map, etf_universe_count, lev_etf_count, exchange_backfill_count = build_universe()
+    screener_check = ensure_fresh_screener(universe)
     stocks = []
     errors = []
     with ThreadPoolExecutor(max_workers=32) as executor:
@@ -2924,6 +3212,12 @@ def build_snapshot():
     print(history_fetch_summary(_history_stats, _history_stats_lock))
     cached_count = honesty["cached_count"]
     fabricated = honesty["fabricated"]
+    price_date, price_check = summarize_price_dates(stocks)
+    price_check["screener"] = screener_check
+    print(
+        f"[가격기준일] priceDate {price_date} · 야후 날짜 확인 {price_check['yahooDated']}종목 · "
+        f"기준일 봉 누락 {price_check['sessionBarMissing']} · 분포 {price_check['priceDateCounts']}"
+    )
 
     stocks.sort(key=lambda item: item["marketCapB"], reverse=True)
     lookup = {item["ticker"]: item for item in stocks}
@@ -2947,6 +3241,10 @@ def build_snapshot():
         "updatedAtKst": datetime.now(ZoneInfo("Asia/Seoul")).strftime("%Y-%m-%d %H:%M KST"),
         # 실제 크론과 맞춘다(daily-market-snapshot.yml: 21:05 UTC = 06:05 KST).
         "policy": "Daily snapshot. Update once at 06:05 KST (21:05 UTC, after the US close).",
+        # 가격 기준 거래일(뉴욕 날짜). updatedAtKst 는 '언제 만들었나', 이건 '어느 날 종가인가'.
+        # check_data_freshness --group us 가 NYSE 달력의 마지막 완료 거래일과 대조한다.
+        "priceDate": price_date,
+        "priceCheck": price_check,
         "summary": build_summary(stocks),
         "stocks": stocks,
         "health": {

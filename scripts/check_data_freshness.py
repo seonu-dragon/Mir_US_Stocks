@@ -61,6 +61,8 @@ CHECKS = {
         ("data/sec_ftd.json", 45, False),
         ("data/wiki_attention.json", 6, False),
         ("data/wsb_sentiment.json", 6, False),
+        # 오늘의 특징주 — 거래일에만 새로 쓴다(같은 거래일 재실행은 건너뜀). 연휴 감안 6일.
+        ("data/movers_reasons.json", 6, False),
         ("data/sentiment_gauges.json", 6, False),
     ],
     "kr": [
@@ -68,6 +70,8 @@ CHECKS = {
         ("data/kr_disclosures.json", 4, False),
         ("data/korea/pattern_stats.json", 10, False),
         ("data/korea/investor_flow.json", 5, False),
+        # 오늘의 특징주 — 거래일에만 새로 쓴다. 추석·설 연휴(최장 5~6일 휴장) 감안 7일.
+        ("data/korea/movers_reasons.json", 7, False),
         # 배당·수주는 DART 키 누락 시 count=0 으로 신선하게 갱신되는 함정이
         # 있었다(2026-07-22) — 나이만이 아니라 0건도 잡는다.
         ("data/korea/dividends.json", 8, True),

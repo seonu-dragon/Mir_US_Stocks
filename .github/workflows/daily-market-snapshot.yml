@@ -144,6 +144,17 @@ jobs:
         timeout-minutes: 10
         run: python scripts/build_market_history.py --push
 
+      # 오늘의 특징주(등락 상하위 + 한 줄 사유). 방금 발행된 US 스냅샷을 읽으므로 반드시
+      # 스냅샷 갱신 뒤. us-close-briefing(21:34 UTC)은 스냅샷 완료(~1시간)보다 먼저 체크아웃해
+      # 옛 스냅샷을 볼 수 있어 여기 둔다. 실패해도 스냅샷 발행·신선도 게이트를 막지 않는다.
+      - name: Build movers reasons (US)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/build_movers_reasons.py --market us --push
+
       # 마지막 관문: 위 스텝들은 소스가 죽어도 "기존 파일 유지" 후
       # continue-on-error 로 넘어가므로 영원히 초록일 수 있다. 산출물의
       # 타임스탬프가 허용 나이를 넘으면 여기서 워크플로우를 빨갛게 만든다.

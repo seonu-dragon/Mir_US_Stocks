@@ -1,0 +1,498 @@
+{
+  "market": "us",
+  "tradeDate": "2026-09-23",
+  "updatedAtKst": "2026-09-25 23:02 KST",
+  "status": "llm_failed",
+  "attempt": 2,
+  "count": 20,
+  "criteria": "시총 20억 달러 이상 · 거래대금 2,500만 달러 이상 · ETF 제외 · 등락률 ±3% 이상 · 방향별 최대 10종목",
+  "source": "SEC 8-K · Google News · Yahoo · 시장 스냅샷",
+  "note": "공시·뉴스 헤드라인·업종 평균만을 근거로 한 자동 요약이라 틀릴 수 있다. 근거가 없으면 '뚜렷한 재료 확인 안 됨', 요약이 검증을 통과하지 못하면 '요약 실패'. 매매 신호가 아니다.",
+  "llm": {
+    "llmCalls": 2,
+    "llmStocks": 19,
+    "models": [],
+    "errors": [
+      "gemini-2.5-flash-lite HTTP 429",
+      "gemini-2.5-flash-lite HTTP 429"
+    ]
+  },
+  "indexMoves": [
+    {
+      "name": "S&P 500(SPY)",
+      "changePct": -0.7
+    },
+    {
+      "name": "나스닥100(QQQ)",
+      "changePct": -0.8
+    }
+  ],
+  "up": [
+    {
+      "ticker": "FSLY",
+      "company": "Fastly Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 13.69,
+      "close": 29.649999618530273,
+      "tradingValue": 897801988,
+      "marketCapB": 4.25,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Klaviyo Series A·CrowdStrike 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.56,
+        "n": 138,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "SECZ",
+      "company": "Securitize Corp.",
+      "sector": "FINANCIAL",
+      "industry": "Finance: Consumer Services",
+      "changePct": 10.46,
+      "close": 14.359999656677246,
+      "tradingValue": 131933933,
+      "marketCapB": 2.699,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Finance: Consumer Services",
+        "avgPct": -1.81,
+        "n": 78,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "ACMR",
+      "company": "ACM Research Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Industrial Machinery/Components",
+      "changePct": 6.42,
+      "close": 80.66999816894531,
+      "tradingValue": 227440993,
+      "marketCapB": 5.306,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Industrial Machinery/Components",
+        "avgPct": 0.01,
+        "n": 101,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "KVYO",
+      "company": "Klaviyo Inc. Series A",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 5.73,
+      "close": 16.780000686645508,
+      "tradingValue": 161183653,
+      "marketCapB": 4.587,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Fastly·CrowdStrike 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.56,
+        "n": 138,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "VICR",
+      "company": "Vicor Corporation",
+      "sector": "TECHNOLOGY",
+      "industry": "Industrial Machinery/Components",
+      "changePct": 5.52,
+      "close": 283.1600036621094,
+      "tradingValue": 458181202,
+      "marketCapB": 12.728,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Industrial Machinery/Components",
+        "avgPct": 0.0,
+        "n": 101,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "PANW",
+      "company": "Palo Alto Networks Inc.",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer peripheral equipment",
+      "changePct": 5.0,
+      "close": 393.29998779296875,
+      "tradingValue": 2467052833,
+      "marketCapB": 318.955,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Computer peripheral equipment 업종 동반 상승(시총가중 평균 +2.2%)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer peripheral equipment",
+        "avgPct": 2.17,
+        "n": 6,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "CRWD",
+      "company": "CrowdStrike Holdings Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 4.97,
+      "close": 262.489990234375,
+      "tradingValue": 3471640113,
+      "marketCapB": 265.885,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Fastly·Klaviyo Series A 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.4,
+        "n": 138,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "BETA",
+      "company": "Beta Technologies Inc. Class A",
+      "sector": "INDUSTRIALS",
+      "industry": "Aerospace",
+      "changePct": 4.55,
+      "close": 24.34000015258789,
+      "tradingValue": 53840080,
+      "marketCapB": 5.416,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Aerospace",
+        "avgPct": 0.27,
+        "n": 18,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "OKTA",
+      "company": "Okta Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 4.45,
+      "close": 205.36000061035156,
+      "tradingValue": 1125352267,
+      "marketCapB": 36.125,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Fastly·Klaviyo Series A 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.54,
+        "n": 138,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "IONQ",
+      "company": "IonQ Inc.",
+      "sector": "TECHNOLOGY",
+      "industry": "EDP Services",
+      "changePct": 4.42,
+      "close": 42.540000915527344,
+      "tradingValue": 3086519544,
+      "marketCapB": 17.137,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "EDP Services",
+        "avgPct": -0.63,
+        "n": 76,
+        "weighting": "시총가중"
+      }
+    }
+  ],
+  "down": [
+    {
+      "ticker": "PBLS",
+      "company": "Parabilis Medicines Inc.",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Pharmaceutical Preparations",
+      "changePct": -12.73,
+      "close": 33.310001373291016,
+      "tradingValue": 37104011,
+      "marketCapB": 3.96,
+      "reason": "Biotechnology: Pharmaceutical Preparations 업종 동반 하락(Erasca·Vera Therapeutics 등)",
+      "reasonStatus": "sector",
+      "sectorNote": "Biotechnology: Pharmaceutical Preparations 업종 동반 하락(Erasca·Vera Therapeutics 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Biotechnology: Pharmaceutical Preparations",
+        "avgPct": -1.3,
+        "n": 202,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "EXK",
+      "company": "Endeavour Silver Corporation Ordinary Shares (Canada)",
+      "sector": "BASIC MATERIALS",
+      "industry": "Precious Metals",
+      "changePct": -11.89,
+      "close": 9.260000228881836,
+      "tradingValue": 117795537,
+      "marketCapB": 2.712,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Precious Metals 업종 동반 하락(시총가중 평균 -4.2%)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Precious Metals",
+        "avgPct": -4.15,
+        "n": 53,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "ERAS",
+      "company": "Erasca Inc.",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Pharmaceutical Preparations",
+      "changePct": -10.32,
+      "close": 13.944999694824219,
+      "tradingValue": 61691284,
+      "marketCapB": 5.079,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Biotechnology: Pharmaceutical Preparations 업종 동반 하락(Parabilis Medicines·Vera Therapeutics 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Biotechnology: Pharmaceutical Preparations",
+        "avgPct": -1.3,
+        "n": 202,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "VERA",
+      "company": "Vera Therapeutics Inc. Class A",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Pharmaceutical Preparations",
+      "changePct": -8.85,
+      "close": 33.04999923706055,
+      "tradingValue": 66691593,
+      "marketCapB": 2.403,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Biotechnology: Pharmaceutical Preparations 업종 동반 하락(Parabilis Medicines·Erasca 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Biotechnology: Pharmaceutical Preparations",
+        "avgPct": -1.31,
+        "n": 202,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "PAYX",
+      "company": "Paychex Inc.",
+      "sector": "INDUSTRIALS",
+      "industry": "Diversified Commercial Services",
+      "changePct": -8.77,
+      "close": 104.48999786376953,
+      "tradingValue": 858458475,
+      "marketCapB": 36.164,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Diversified Commercial Services 업종 동반 하락(시총가중 평균 -3.2%)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Diversified Commercial Services",
+        "avgPct": -3.16,
+        "n": 19,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "SHAZ",
+      "company": "SharonAI Holdings Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "EDP Services",
+      "changePct": -8.67,
+      "close": 57.72999954223633,
+      "tradingValue": 92870250,
+      "marketCapB": 2.019,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "EDP Services",
+        "avgPct": -0.47,
+        "n": 76,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "RXRX",
+      "company": "Recursion Pharmaceuticals Inc. Class A",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
+      "changePct": -8.64,
+      "close": 3.700000047683716,
+      "tradingValue": 87581221,
+      "marketCapB": 2.082,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
+        "avgPct": -1.59,
+        "n": 64,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "MLYS",
+      "company": "Mineralys Therapeutics Inc.",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Pharmaceutical Preparations",
+      "changePct": -8.54,
+      "close": 26.889999389648438,
+      "tradingValue": 39746108,
+      "marketCapB": 2.351,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Biotechnology: Pharmaceutical Preparations 업종 동반 하락(Parabilis Medicines·Erasca 등)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Biotechnology: Pharmaceutical Preparations",
+        "avgPct": -1.31,
+        "n": 202,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "AUGO",
+      "company": "Aura Minerals Inc. Common Shares",
+      "sector": "BASIC MATERIALS",
+      "industry": "Metal Mining",
+      "changePct": -8.01,
+      "close": 85.33999633789062,
+      "tradingValue": 121174261,
+      "marketCapB": 6.96,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "Metal Mining 업종 동반 하락(시총가중 평균 -2.4%)",
+      "tags": [
+        "섹터동조"
+      ],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Metal Mining",
+        "avgPct": -2.42,
+        "n": 27,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "KNF",
+      "company": "Knife Riv Holding Co.",
+      "sector": "INDUSTRIALS",
+      "industry": "Mining & Quarrying of Nonmetallic Minerals (No Fuels)",
+      "changePct": -7.86,
+      "close": 51.43000030517578,
+      "tradingValue": 99198185,
+      "marketCapB": 3.029,
+      "reason": "",
+      "reasonStatus": "failed",
+      "sectorNote": "",
+      "tags": [],
+      "evidence": [],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Mining & Quarrying of Nonmetallic Minerals (No Fuels)",
+        "avgPct": -2.31,
+        "n": 13,
+        "weighting": "시총가중"
+      }
+    }
+  ]
+}

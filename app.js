@@ -3501,6 +3501,7 @@ function renderAll() {
   // 오늘 탭 요약(국면 한 문장·카드뉴스 1장)은 부팅 탭이라 여기서 그린다.
   renderTodayRegime();
   if (typeof renderIndustryHomeCard === "function") renderIndustryHomeCard();
+  if (typeof renderMoversBoard === "function") renderMoversBoard();
   renderTodayNews();
   renderMyInvestSummary();
 }
@@ -5039,6 +5040,7 @@ function renderMoveExplanation(item) {
       <div><h3>왜 ${direction}했나?</h3></div>
       <strong class="${cls(change)}">${fmtDailyPct(change)}</strong>
     </div>
+    ${typeof moversAnalysisNote === "function" ? moversAnalysisNote(item) : ""}
     <p class="move-explanation-summary">${escapeHtml(stockLabel(item))}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
     <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
     <p class="move-explanation-note">스냅샷·뉴스·공시의 기준 시각이 다를 수 있습니다. 투자 판단 전 원문과 최신 시세를 확인하세요.</p>`;
@@ -6304,6 +6306,11 @@ const TRUST_RECOVERY = {
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
+  "오늘의 특징주": {
+    us: { workflow: "Daily US market snapshot", script: "scripts/build_movers_reasons.py --market us" },
+    kr: { workflow: "Korea close briefing", script: "scripts/build_movers_reasons.py --market kr" },
+    tabs: "오늘 탭 · 요약 · 오늘의 특징주, 종목 분석 · 왜 상승했나?",
+  },
   "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
   "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
   "산업 선행지표": {
@@ -6500,6 +6507,9 @@ function dataTrustSources() {
   // 2026-08-06 신규 무키 피드 — 등록하지 않으면 신뢰도 센터의 감시 사각지대가 된다.
   rows.push(source("COT 포지셔닝", "CFTC", window.COT_POSITIONING, ["markets"], 336, "매주 금요일 발표", "cotPositioning"));
   rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
+  // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
+  // 조용한 날은 0종목이 정상이라 allowEmpty.
+  if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · Gemini 요약" : "SEC 8-K · 뉴스 헤드라인 · Gemini 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
   // 예측시장(2026-09-25) — 하루 3회. 12시간 넘게 멈추면 두 번 연속 실패라 36시간 여유.
   rows.push(source("예측시장 확률", "Kalshi · Polymarket", window.MACRO_ODDS, ["groups"], 36, "하루 3회 (06·14·22시)", "macroOdds"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));

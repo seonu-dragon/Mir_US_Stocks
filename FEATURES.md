@@ -35,6 +35,9 @@
 
 - **오늘의 시장 정보 요약**: 시장의 주요 지수 변동성, Greed & Fear 공포 탐욕 지수, USD/KRW 환율, 거시경제 국면을 한눈에 표시.
 - **오늘의 뉴스 캐러셀 & 크게 보기(Lightbox)**: 미국/한국 데일리 카드뉴스 배너를 갤러리 형태로 표기 및 클릭 시 Lightbox 오버레이로 슬라이드 뷰 제공.
+- **오늘의 특징주 (2026-09-25, `movers.js`)**: 장 마감 스냅샷 기준 등락률 상위·하위 종목(시장별 방향당 최대 10개, US 시총 20억 달러·거래대금 2,500만 달러 / KR 시총 2,000억·거래대금 50억 이상, ETF·스팩 제외, ±3% 이상)을 상승/하락 탭으로 보여 주고 종목마다 한 줄 사유 + 근거 유형 태그(공시·뉴스·섹터동조·불명) + 원문 링크 1~3개를 붙인다. 종목을 누르면 종목 분석으로 이동하고, 종목 분석의 "왜 상승했나?" 상자 맨 위에도 같은 사유가 뜬다.
+  - 사유는 공시·뉴스 헤드라인만 입력으로 한 Gemini 요약이다. 근거가 없으면 **"뚜렷한 재료 확인 안 됨"**, 검증(인용 ID 가 입력 목록에 있는지·숫자가 근거에 있는지·LLM 자체 판정 same_company/explains_move)을 통과 못 하면 **"요약 실패"** 로 표시한다. 업종이 같이 움직였으면(시총가중 업종 평균 2% 이상·종목 등락의 30% 이상, 또는 같은 업종 특징주 3종목 이상) 그 사실을 LLM 이 아닌 코드가 스냅샷 수치로 먼저 적는다(`sectorNote`).
+  - 기준 거래일·생성 시각·"자동 요약이라 틀릴 수 있음"·"매매 신호가 아닌 정보" 를 카드에 표기. 데이터 `data/movers_reasons.js`(US) · `data/korea/movers_reasons.js`(KR), 전역 `MOVERS_REASONS`(FEATURE_DATA `movers`, marketSpecific). 끄려면 `market_config.js` features 에 `moversBoard: false`.
 - **MY DAILY DESK (액션 보드)**: 
   - 등록된 관심종목, 가상 포트폴리오, 주요 일정, 신규 공시 중 금일 확인이 필요한 이벤트만 수집하여 액션 리스트 생성.
   - 액션 보드 모드와 오늘의 뉴스 모드 간 토글.
@@ -353,6 +356,10 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
 - **산업·매크로 선행지표 빌더 (`build_industry_indicators.py` + `industry_fetchers.py` + `industry_sensitivity.py`)**:
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.
+- **오늘의 특징주 빌더 (`build_movers_reasons.py --market us|kr`)**:
+  - KR 은 `Korea close briefing` 브리핑 뒤, US 는 `Daily US market snapshot` 스냅샷 발행 뒤 스텝(둘 다 `!cancelled()` + continue-on-error — 브리핑·스냅샷 실패와 서로 막지 않는다). 등락률·거래대금은 라이브 소스의 거래일 봉으로 다시 확인한다(KR 네이버 m.stock, US 야후 일봉 — details 일봉은 날짜가 빠지거나 늦다). US 거래일은 시총 상위 15종목의 야후 일봉과 스냅샷 등락률을 대조한 다수결.
+  - 근거: KR DART(`list.json` 종목별 + 기존 `kr_disclosures.json`)·네이버 뉴스 검색 API(키 없거나 거부되면 Google News RSS)·종목 상세 뉴스 / US SEC 8-K(efts 당일분 + `material_events.json`)·Google News RSS·종목 상세 야후 뉴스, 업종 시총가중 평균, 지수. 제목에 종목명/티커가 없는 기사는 버린다.
+  - LLM 은 뉴스·공시 근거가 있는 종목만 10개 묶음으로 호출(시장당 하루 1~2회, 상한 4회). 같은 거래일 보드가 이미 정상이면 호출 없이 끝나고, 요약이 실패한 보드는 거래일당 최대 2회까지 재시도. 요약이 전부 실패하면 목록은 "요약 실패" 로 발행하고 exit 1.
 - **예측시장 확률 빌더 (`build_macro_odds.py`)**:
   - 하루 3회 06:37·14:37·22:37 KST(`Macro odds (prediction markets)` 워크플로우). Kalshi·Polymarket 공개 API(키 없음) + 산업 지표 재사용 → `data/macro_odds.json/.js`(`window.MACRO_ODDS`). Polymarket 은 한국 IP 에서 HTTP 451 로 막혀 로컬 실행 시 Kalshi 만 나온다(미국 러너에서는 열림). 두 거래소가 모두 실패하면 기존 파일 유지 + exit 1, 나이 관문은 `check_data_freshness.py --group macro-odds`.
 - **구독 피드 생성 (`gen_feeds.py`)**:

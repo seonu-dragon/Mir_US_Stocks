@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import ssl
 import sys
 import urllib.request
 import urllib.parse
@@ -30,6 +31,12 @@ URL_LISTING = "https://www.38.co.kr/html/fund/index.htm?o=nw"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 }
+
+# 38.co.kr 은 TLS 1.2 + 1024비트 DHE 만 제공해 OpenSSL 3 기본(SECLEVEL=2)이
+# 핸드셰이크를 거부한다("dh key too small", 2026-09-22~ 캘린더 정지). 이 호스트
+# 전용으로 보안 레벨만 1로 낮춘다 — 인증서·호스트명 검증은 그대로 유지.
+_SSL_CTX = ssl.create_default_context()
+_SSL_CTX.set_ciphers("DEFAULT:@SECLEVEL=1")
 
 
 def load_company_ticker_map() -> dict[str, str]:
@@ -118,7 +125,7 @@ def attach_offer_price(row: dict, fixed_cell: str, band_cell: str) -> None:
 def fetch_soup(url: str):
     try:
         req = urllib.request.Request(url, headers=HEADERS)
-        with urllib.request.urlopen(req, timeout=20) as r:
+        with urllib.request.urlopen(req, timeout=20, context=_SSL_CTX) as r:
             raw = r.read()
             try:
                 html = raw.decode("utf-8")

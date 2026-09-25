@@ -7661,6 +7661,20 @@ button.community-hot-ticker {
 .signal-card ul { list-style: none; margin: 0; padding: 0; }
 .signal-card li { display: flex; align-items: baseline; gap: var(--space-2); padding: 5px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sub); }
 .signal-card li span { color: var(--text-muted); font-size: var(--fs-cap); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 국내 시장경보·이상 종목 보드(kr-alerts.js). 시그널 카드 모양을 그대로 쓰고 칩·접기만 더한다. */
+.kr-alert-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.kr-alert-chip { display: inline-flex; align-items: baseline; gap: 4px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--fs-cap); color: var(--text-muted); }
+.kr-alert-chip b { color: var(--text); font-variant-numeric: tabular-nums; }
+.kr-alert-chip.is-zero { opacity: .55; }
+.kr-alert-card h3 { display: flex; align-items: baseline; gap: 6px; }
+.kr-alert-count { font-size: var(--fs-cap); font-weight: 600; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.kr-alert-card li { min-width: 0; }
+.kr-alert-card li .ins-ticker, .kr-alert-name { flex: 0 0 auto; max-width: 55%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kr-alert-name { font-weight: 600; font-size: var(--fs-sub); }
+.kr-alert-more > summary { cursor: pointer; padding: 6px 0 2px; font-size: var(--fs-cap); color: var(--text-muted); }
+.kr-alert-stale { color: var(--tint-warn-fg); }
+.kr-alert-foot { margin: 12px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.65; }
+.kr-alert-notice { margin-top: 6px; }
 
 /* 차트 드로잉 (#23) */
 #priceChart.is-drawing { cursor: crosshair; }
@@ -13562,4 +13576,30 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .mo-sig-date { grid-area: date; justify-self: end; }
   .mo-sig-trend { display: none; }
   .mo-mlabel { display: inline; }
+
+/* 구독 피드 다이얼로그(subscribe-feeds.js) — 신뢰도 센터 다이얼로그 틀을 그대로 쓴다. */
+.feed-sub-btn { flex-shrink: 0; white-space: nowrap; }
+.feed-sub-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 10px 0 12px; padding: 8px 12px; border: 1px dashed var(--line); border-radius: var(--r-md); color: var(--muted); font-size: var(--fs-cap); }
+.feed-sub-dialog { width: min(860px, 94vw); }
+.feed-sub-meta { margin: 12px 0 4px; color: var(--muted); font-size: var(--fs-cap); line-height: 1.55; }
+.feed-sub-section { margin-top: 16px; }
+.feed-sub-section h3 { margin: 0 0 4px; font-size: var(--fs-h3); }
+.feed-sub-section h3 small { margin-left: 6px; color: var(--muted); font-size: var(--fs-cap); font-weight: 600; }
+.feed-sub-note { margin: 0 0 10px; color: var(--muted); font-size: var(--fs-cap); line-height: 1.55; }
+.feed-sub-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 10px; }
+.feed-sub-card { display: flex; flex-direction: column; gap: 6px; min-width: 0; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); }
+.feed-sub-card p { margin: 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; }
+.feed-sub-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.feed-sub-badge { flex-shrink: 0; padding: 1px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); color: var(--muted); font-size: var(--fs-cap); }
+.feed-sub-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.feed-sub-actions a.compact-btn, .feed-sub-ticker a.compact-btn { display: inline-flex; align-items: center; min-height: var(--control-h); border: 1px solid var(--line); border-radius: var(--r-md); color: var(--text); font-weight: 600; text-decoration: none; }
+.feed-sub-actions a.compact-btn:hover, .feed-sub-ticker a.compact-btn:hover { border-color: var(--chip-border); background: var(--surface-2); }
+.feed-sub-actions .is-done, .feed-sub-ticker .is-done { border-color: var(--green); color: var(--green); }
+.feed-sub-url { display: block; overflow-wrap: anywhere; color: var(--muted); font-size: 11px; }
+.feed-sub-ticker { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 6px; }
+.feed-sub-ticker select { max-width: min(320px, 70vw); }
+.feed-sub-empty { margin-top: 14px; padding: 14px; border-radius: var(--r-md); background: var(--panel-soft); }
+.feed-sub-empty p { margin: 6px 0 0; color: var(--muted); font-size: var(--fs-sub); }
+@media (max-width: 720px) {
+  .section-title .feed-sub-btn { align-self: flex-start; }
 }

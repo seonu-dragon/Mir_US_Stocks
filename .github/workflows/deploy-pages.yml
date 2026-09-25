@@ -167,6 +167,17 @@ jobs:
                  _site/data/us_financials_history.json
           echo "artifact size:" && du -sh _site | cut -f1
 
+      # 구독 피드(.ics 캘린더 + 공시 RSS). 데이터가 여러 워크플로우에서 따로 커밋되므로 전부가
+      # 합쳐지는 여기(배포 스테이징)에서 만든다 — 레포에는 커밋하지 않는다(data/feeds/ 는
+      # .gitignore). 경제지표는 워커 ?calendar=1 을 한 번 부르고, 실패해도 FOMC·산업 지표로
+      # 계속한다. 피드 생성 실패로 사이트 배포를 막지 않도록 continue-on-error — 실패하면
+      # 이번 배포에만 피드가 빠지고 다음 배포에서 다시 만든다. 크기는 ~1MB·파일 ~107개.
+      # Pages 는 확장자로 Content-Type 을 정한다: .ics → text/calendar, .xml → application/xml.
+      - name: Generate subscribe feeds (.ics / RSS)
+        if: steps.gate.outputs.deploy != 'false'
+        continue-on-error: true
+        run: python3 scripts/gen_feeds.py --root _site --out _site/data/feeds
+
       # 아티팩트 크기 가드. GitHub Pages 발행 사이트 권장 한도는 1GB 인데 2026-09-15
       # 실측이 456MB(data/details 195M + data/korea/details 169M)이고 종목이 늘수록
       # 같이 큰다. 조용히 한도에 닿으면 배포가 통째로 죽으므로, 700MB 를 넘으면 여기서

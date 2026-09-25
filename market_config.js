@@ -94,6 +94,8 @@
       whiteHouse: true,
       finraShortVolume: true,
       earningsCalendar: true,
+      // 국내 시장경보·이상 종목 보드(KRX KIND)는 KR 전용.
+      krMarketAlerts: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -257,6 +259,9 @@
       finraShortVolume: false,
       krDart: true,
       krOwnership: true,
+      // 시장경보(투자주의·경고·위험)·거래정지·관리종목(KRX KIND) + 상·하한가·52주 신고/신저가·
+      // 거래대금 급증 보드. data/korea/market_alerts.js (build_kr_market_alerts.py).
+      krMarketAlerts: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

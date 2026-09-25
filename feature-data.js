@@ -104,6 +104,9 @@ const FEATURE_DATA = {
   // KR 일일 공매도 거래비중(KRX). 잔고(short_interest)와 별개 파일 — 공매도 탭을
   // 열 때만 시도(lazy)하고, 없으면 잔고/거래비중 토글이 숨는다.
   krShortVolume: { global: "KR_SHORT_VOLUME", path: "data/korea/short_volume.js", feature: "shortInterest", krOnly: true, lazy: true },
+  // 시장경보(투자주의·경고·위험)·거래정지·관리종목(KRX KIND) + 상·하한가·52주 신고/신저가·
+  // 거래대금 급증(build_kr_market_alerts.py). 시그널 탭 보드와 종목 헤더 배지가 읽는다 — KR 전용.
+  krMarketAlerts: { global: "KR_MARKET_ALERTS", path: "data/korea/market_alerts.js", feature: "krMarketAlerts", krOnly: true },
   // 공포탐욕·환율·매크로 일일 히스토리(1일 1레코드 적립) — 시그널 탭 스파크라인.
   marketHistory: { global: "MARKET_HISTORY", path: "data/history/market_history.js" },
 };

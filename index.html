@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=2e8195f93c" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=2e8195f93c"></noscript>
+    <link rel="preload" href="styles.css?v=91aaabd8e5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=91aaabd8e5"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=6542c68f2c"></script>
+    <script src="build_id.js?v=ec7d0905ff"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -626,6 +626,7 @@ html[data-theme="dark"] {
           <div class="section-title">
             <h2>경제 캘린더</h2>
             <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 통합 표시합니다. 백악관 일정은 06·16·21시에 갱신됩니다.</p>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="FOMC·경제지표·실적·배당·IPO 일정을 구글/애플 캘린더에 구독합니다">캘린더 구독</button>
           </div>
           <div class="calendar-filters" id="calendarFilters">
             <fieldset class="calendar-filter-group">
@@ -653,6 +654,7 @@ html[data-theme="dark"] {
           <div class="section-title">
             <h2>시장 실적 캘린더</h2>
             <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="시총 상위 실적 예정일을 캘린더 앱에 구독합니다">캘린더 구독</button>
           </div>
           <div class="toolbar earnings-toolbar">
             <label>
@@ -1153,6 +1155,10 @@ html[data-theme="dark"] {
               <p id="signalsIntro">내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.</p>
             </div>
             <div class="signals-grid" id="signalsGrid"></div>
+          </details>
+          <details class="ia-fold" id="fold-krMarketAlerts" open hidden>
+            <summary>시장경보·이상 종목 (국내)</summary>
+            <div id="krMarketAlerts"></div>
           </details>
           <details class="ia-fold ia-widget-fold" id="fold-fearGreed">
             <summary>시장 심리 종합지수</summary>
@@ -1838,6 +1844,10 @@ html[data-theme="dark"] {
             <button class="sub-tab" data-disc="krown" data-krown-kind="insider">임원</button>
             <button class="sub-tab" data-disc="krown" data-krown-kind="profile">지배구조</button>
           </nav>
+          <div class="feed-sub-bar">
+            <span>새 공시를 RSS 리더로 받아 보기 — 시장별 주요 공시·시총 상위 종목별 피드</span>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="disclosures">공시 구독 (RSS)</button>
+          </div>
         <div class="sub-panel" id="sub-buyback">
           <div class="section-title">
             <h2>자사주 매입 · 소각 트래커</h2>
@@ -2779,7 +2789,7 @@ html[data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=b9360557ed"></script>
+    <script src="market_config.js?v=c4608b55a3"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -2803,17 +2813,19 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=869ae4d5e4"></script>
+    <script src="feature-data.js?v=e3e39f6d0a"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
-    <script src="signals.js?v=72e8e243e2"></script>
+    <script src="signals.js?v=92d09d598c"></script>
     <script src="macro-odds.js?v=533cf73954"></script>
     <script src="chart.js?v=aff4f193c6"></script>
     <script src="institutional.js?v=206b237685"></script>
     <script src="markets-etf.js?v=69674be0f5"></script>
     <script src="kr-panels.js?v=53e63c5806"></script>
+    <script src="kr-alerts.js?v=5f414887e9"></script>
     <script src="watchlist.js?v=638b0c099e"></script>
-    <script src="app.js?v=624a0637ff"></script>
+    <script src="subscribe-feeds.js?v=8e306f9e90"></script>
+    <script src="app.js?v=a3859a12e2"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

@@ -847,7 +847,7 @@ function applyMarketOnlyUi() {
   const sigIntro = byId("signalsIntro");
   if (sigIntro) {
     sigIntro.textContent = krMode
-      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다."
+      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다. KRX 시장경보·거래정지·관리종목은 아래 '시장경보·이상 종목' 에 있습니다."
       : "내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.";
   }
   // 집계 인사이트(의회·내부자 종합)는 미국 전용 데이터 → KR에서는 빈 섹션이 되므로 숨긴다.
@@ -3529,6 +3529,7 @@ function stockFacts(item, title) {
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
+    ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
     ${krFlowCard(item)}
     ${krGroupCard(item)}
     ${krNpsCard(item)}
@@ -6510,6 +6511,8 @@ function dataTrustSources() {
     rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));
     rows.push(source("정부조달 낙찰", "나라장터 (data.go.kr)", window.KR_GOV_CONTRACTS, ["awards"], 192, "매일 15:42", "krGovContracts"));
     rows.push(source("수출 모멘텀", "관세청 (data.go.kr)", window.KR_TRADE_EXPORTS, ["items"], 192, "매일 15:42 · 월 단위 데이터", "tradeExports"));
+    // 시장경보·이상 종목 보드. 페이로드 count(섹션 합계)로 센다 — 0건이면 소스 이상.
+    if (cfg.features?.krMarketAlerts === true) rows.push(source("시장경보·이상 종목", "KRX KIND · 네이버 금융 · 스냅샷 일봉", window.KR_MARKET_ALERTS, ["sections"], 120, "매일 15:42", "krMarketAlerts"));
   }
   return rows;
 }

@@ -40,6 +40,13 @@ jobs:
 
       - name: Build US earnings calendar
         run: python scripts/build_earnings_calendar.py --limit 120 --push
+      # 실적 전 비교: 과거 실적 반응(SEC 8-K 2.02 시각 + 일봉) vs 옵션 예상변동폭(반응일 뒤
+      # 첫 만기). 방금 만든 실적 캘린더를 입력으로 쓴다. 키 불필요(SEC UA · 야후 크럼).
+      - name: Earnings move compare (past reaction vs options)
+        continue-on-error: true
+        run: python scripts/build_earnings_move_compare.py --push
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group earnings-move
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

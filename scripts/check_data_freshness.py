@@ -18,6 +18,8 @@
     py scripts/check_data_freshness.py --group 13f             # 13f-quarterly-refresh.yml 말미
     py scripts/check_data_freshness.py --group white-house     # white-house-schedule.yml 말미
     py scripts/check_data_freshness.py --group macro-odds      # macro-odds.yml 말미
+    py scripts/check_data_freshness.py --group earnings-move   # daily-earnings-calendar.yml 말미
+    py scripts/check_data_freshness.py --group earnings-releases  # material-events.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -167,6 +169,17 @@ CHECKS = {
     # 빌더가 기존 파일을 유지하고 exit 1 이지만, 한쪽만 죽는 날이 이어져도 나이로 잡는다.
     "macro-odds": [
         ("data/macro_odds.json", 2, True),
+    ],
+    # daily-earnings-calendar.yml(매일 06:30 KST) 의 실적 전 비교 스텝.
+    # 다가오는 3주 안 발표가 0건인 시기는 사실상 없지만, 빌더가 0건이면 파일을 덮지 않으므로
+    # 나이만 본다. 주말에도 도는 워크플로우라 4일이면 두 번 연속 실패를 뜻한다.
+    "earnings-move": [
+        ("data/earnings_move_compare.json", 4, False),
+    ],
+    # material-events.yml(매일 13:23 KST) 의 보도자료 요약 스텝. 새 2.02 가 없어도 실행마다
+    # 타임스탬프를 올리므로 나이가 늙으면 빌더(키·Gemini·SEC)가 죽은 것이다.
+    "earnings-releases": [
+        ("data/earnings_releases.json", 4, False),
     ],
 }
 

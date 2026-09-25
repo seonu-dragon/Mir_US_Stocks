@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-09-25 09:00:59 KST",
+  "updatedAtKst": "2026-09-25 18:48:33 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 7746,
@@ -68,18 +68,6 @@
     },
     {
       "rank": 6,
-      "id": "house-dwight-evans",
-      "name": "Dwight Evans",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 50.34,
-      "buyCount": 9,
-      "sellCount": 15,
-      "tradeCount": 24,
-      "committees": []
-    },
-    {
-      "rank": 7,
       "id": "house-bruce-westerman",
       "name": "Bruce Westerman",
       "chamber": "House",
@@ -91,7 +79,7 @@
       "committees": []
     },
     {
-      "rank": 8,
+      "rank": 7,
       "id": "house-robert-e-latta",
       "name": "Robert E. Latta",
       "chamber": "House",
@@ -103,7 +91,7 @@
       "committees": []
     },
     {
-      "rank": 9,
+      "rank": 8,
       "id": "house-rob-bresnahan",
       "name": "Rob Bresnahan",
       "chamber": "House",
@@ -115,7 +103,7 @@
       "committees": []
     },
     {
-      "rank": 10,
+      "rank": 9,
       "id": "house-valerie-hoyle",
       "name": "Valerie Hoyle",
       "chamber": "House",
@@ -127,7 +115,7 @@
       "committees": []
     },
     {
-      "rank": 11,
+      "rank": 10,
       "id": "house-jared-moskowitz",
       "name": "Jared Moskowitz",
       "chamber": "House",
@@ -139,7 +127,7 @@
       "committees": []
     },
     {
-      "rank": 12,
+      "rank": 11,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -151,6 +139,18 @@
       "committees": [
         "Financial Services"
       ]
+    },
+    {
+      "rank": 12,
+      "id": "house-dwight-evans",
+      "name": "Dwight Evans",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 25.85,
+      "buyCount": 9,
+      "sellCount": 15,
+      "tradeCount": 24,
+      "committees": []
     },
     {
       "rank": 13,
@@ -20288,7 +20288,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 50.34
+      "estReturnPct": 25.85
     },
     {
       "id": "house-debbie-wasserman-schultz",

@@ -15,7 +15,7 @@ concurrency:
 jobs:
   events:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -31,6 +31,16 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
       - name: Build material events
         run: python scripts/build_material_events.py --backfill-days 14 --top 1500 --push
+      # 실적 보도자료 한국어 요약: 위 피드의 Item 2.02 8-K → EX-99.1 원문 → Gemini.
+      # 요약 숫자는 원문 텍스트에 있는지 검증해 없으면 버린다. 한 실행 최대 30건.
+      - name: Earnings press release summaries (Gemini)
+        continue-on-error: true
+        timeout-minutes: 20
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/build_earnings_releases.py --push
+      - name: Earnings releases freshness gate
+        run: python scripts/check_data_freshness.py --group earnings-releases
       # 실패 시 텔레그램 통지 — 신선도 감시가 워크플로우를 빨갛게 만들어도
       # Actions 탭을 안 보면 모른다. 마지막 관문의 알림 루프를 여기서 닫는다.
       # (continue-on-error 스텝의 실패는 job 실패가 아니라서 여기 안 걸린다 — 의도)

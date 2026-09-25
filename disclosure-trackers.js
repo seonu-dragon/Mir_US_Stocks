@@ -1062,15 +1062,21 @@ function renderUsEarningsReactions() {
     : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 실적 발표 데이터가 없습니다.</p>`; return; }
   const pctCell = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
+  const hasRel = typeof earningsReleasesSectionHtml === "function" && !!window.EARNINGS_RELEASES;
+  if (!hasRel && typeof eiEnsure === "function") eiEnsure("earningsReleases");
   const body = rows.slice(0, 100).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.ticker)}</button><div class="ins-sub">${escapeHtml(r.company)}</div></td>
     <td class="ins-num">${r.surprise != null ? `<strong class="${r.surprise > 0 ? "ins-buy" : r.surprise < 0 ? "ins-sell" : ""}">${r.surprise > 0 ? "+" : ""}${r.surprise.toFixed(1)}%</strong>` : "—"}</td>
     <td class="ins-num">${pctCell(r.d0)}</td>
     <td class="ins-num">${pctCell(r.d1)}</td>
+    ${hasRel ? `<td class="ins-num">${eiReleaseButtonHtml(r.ticker, r.date)}</td>` : ""}
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">EPS 서프라이즈</th><th class="ins-num">발표일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
+  // 보도자료 한국어 요약(earnings-insight.js) — 표 위 카드 + 행별 '요약' 버튼.
+  const relSection = hasRel ? earningsReleasesSectionHtml(earnReactQuery) : "";
+  wrap.innerHTML = `${relSection}<table class="insider-table table-wide"><thead><tr><th>발표일</th><th>종목</th><th class="ins-num">EPS 서프라이즈</th><th class="ins-num">발표일 등락</th><th class="ins-num">익일 등락</th>${hasRel ? `<th class="ins-num">보도자료</th>` : ""}</tr></thead><tbody>${body}</tbody></table>`;
   delegateTickerClicks(wrap, ".ins-ticker");
+  if (hasRel) bindEarningsReleaseButtons(wrap);
 }
 
 function renderEarningsReactions() {

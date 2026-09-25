@@ -827,6 +827,7 @@ function renderStockEvents(item) {
   `;
   renderEarningsCalendar(item);
   renderEarningsReaction(item);
+  if (typeof renderEarningsInsight === "function") renderEarningsInsight(item);
   renderSmartMoney(item);
 }
 
@@ -913,6 +914,7 @@ function eventCardHtml(event) {
         </div>
         <div id="stockEarnings" class="earnings-inline-calendar"></div>
         <div id="earningsReaction" class="earnings-inline-reaction-host"></div>
+        <div id="earningsInsight" class="earnings-insight-host" hidden></div>
       </article>`;
   }
   return `

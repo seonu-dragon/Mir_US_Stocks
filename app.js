@@ -6363,6 +6363,14 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/build_kr_earnings_reactions.py" },
     tabs: "종목검색 · 실적발표 서브탭",
   },
+  "실적 전 비교": {
+    us: { workflow: "Daily earnings calendar", script: "scripts/build_earnings_move_compare.py" },
+    tabs: "오늘 · 실적 일정 · 종목 이벤트 실적 카드",
+  },
+  "실적 보도자료 요약": {
+    us: { workflow: "Material events (SEC 8-K)", script: "scripts/build_earnings_releases.py" },
+    tabs: "종목검색 · 실적발표 서브탭 · 종목 이벤트 실적 카드",
+  },
   "기관 13F": {
     us: { workflow: "Institutional 13F quarterly refresh", script: "scripts/build_13f_snapshot.py" },
     tabs: "기관 13F · 스마트머니 신호",
@@ -6519,6 +6527,9 @@ function dataTrustSources() {
   if (cfg.id === "us") {
     rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
+    // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.
+    rows.push(source("실적 전 비교", "SEC 8-K · Yahoo 옵션", window.EARNINGS_MOVE_COMPARE, ["stocks"], 72, "매일 06:30", "earningsMoveCompare", "", true));
+    rows.push(source("실적 보도자료 요약", "SEC 8-K EX-99.1 · Gemini", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
   }
   if (cfg.id === "kr") {
     rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));

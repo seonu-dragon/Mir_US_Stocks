@@ -466,7 +466,9 @@ function renderEarningsCalendarMarket(rows) {
     </div>` : "";
 
   const body_html = earnView === "calendar" ? earningsCalendarGrid(items, today) : earningsListView(items, today);
-  body.innerHTML = highlightHtml + body_html;
+  // 실적 전 비교(과거 반응 vs 옵션 예상변동폭) — earnings-insight.js, US 전용.
+  const compareHtml = typeof earningsMoveCompareSectionHtml === "function" ? earningsMoveCompareSectionHtml(items) : "";
+  body.innerHTML = highlightHtml + compareHtml + body_html;
 
   delegateTickerClicks(body, "[data-ticker]");
 }

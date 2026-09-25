@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=1f737767fb" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=1f737767fb"></noscript>
+    <link rel="preload" href="styles.css?v=7bdef6bc7d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=7bdef6bc7d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=c85f3f7c37"></script>
+    <script src="build_id.js?v=ae4d045206"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1171,6 +1171,10 @@ html[data-theme="dark"] {
           <details class="ia-fold ia-widget-fold" id="fold-yieldCurve">
             <summary>미국 국채 수익률 곡선</summary>
             <div id="yieldCurve"></div>
+          </details>
+          <details class="ia-fold ia-widget-fold" id="fold-macroOdds">
+            <summary>예측시장 확률 · 침체 신호 (미국)</summary>
+            <div id="macroOdds"></div>
           </details>
           <details class="ia-fold ia-widget-fold" id="fold-ecosMacro">
             <summary>한국 거시지표 (ECOS)</summary>
@@ -2932,10 +2936,11 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=9f44bf825b"></script>
+    <script src="feature-data.js?v=e3e39f6d0a"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
-    <script src="signals.js?v=5f08bbdb0c"></script>
+    <script src="signals.js?v=92d09d598c"></script>
+    <script src="macro-odds.js?v=533cf73954"></script>
     <script src="chart.js?v=aff4f193c6"></script>
     <script src="institutional.js?v=206b237685"></script>
     <script src="markets-etf.js?v=69674be0f5"></script>
@@ -2943,7 +2948,7 @@ html[data-theme="dark"] {
     <script src="kr-alerts.js?v=5f414887e9"></script>
     <script src="watchlist.js?v=638b0c099e"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=ada321a2e4"></script>
+    <script src="app.js?v=09ab75637a"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

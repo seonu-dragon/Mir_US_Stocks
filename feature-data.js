@@ -54,6 +54,9 @@ const FEATURE_DATA = {
   yieldCurve: { global: "YIELD_CURVE", path: "data/yield_curve.js" },
   // FRED 매크로 지표(인플레·고용·금리·신용스프레드·소비심리). 두 시장 모두 로드.
   macro: { global: "MACRO_INDICATORS", path: "data/macro_indicators.js" },
+  // 예측시장 확률(Kalshi·Polymarket) + 침체 신호 모음(산업 지표 재사용). 미국 매크로지만
+  // 금리·침체 기대는 국내에도 공통 배경이라 두 시장 모두 로드. 시그널 탭 위젯 전용.
+  macroOdds: { global: "MACRO_ODDS", path: "data/macro_odds.js" },
   // CFTC COT 투기 포지셔닝(주간, 무키 공식 API). 미국 선물이지만 지수·금리·환율·
   // 원자재 쏠림은 글로벌 위험자산 공통 컨텍스트라 두 시장 모두 로드.
   cotPositioning: { global: "COT_POSITIONING", path: "data/cot_positioning.js" },

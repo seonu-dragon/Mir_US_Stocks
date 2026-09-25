@@ -108,7 +108,7 @@
   (`KR_MARKET_ALERTS`), `update_korea_data.py` 서브빌더(15:42 KST). 섹션별로 실패하면 직전
   발행분을 `status: "carried"` 로 유지하고 화면에 그 날짜를 적는다. 매매 신호가 아니라 정보.
 - **접이식 위젯**: 시장 심리 종합지수 · 매크로 지표 · 미국 국채 수익률 곡선 ·
-  한국 거시지표(ECOS) · 수출입 동향 · 국채 경매 · 선물 포지션(COT) · 위키피디아 관심도 ·
+  예측시장 확률 · 침체 신호(2026-09-25) · 한국 거시지표(ECOS) · 수출입 동향 · 국채 경매 · 선물 포지션(COT) · 위키피디아 관심도 ·
   집계 인사이트. 상세 설명은 아래 '매크로 · 옵션 · 수급 심리 패널'.
 
 ### ⑧-2 시장 탭 › 산업 지표 (산업·매크로 선행지표 터미널, 2026-09-18)
@@ -244,6 +244,9 @@
 - **매크로 대시보드**:
   - *US*: FRED 핵심 지표(CPI 인플레이션, 실업률, 정책금리, 하이일드 신용스프레드, 소비심리)의 현재값·추세 요약.
   - *KR*: 한국은행 ECOS Open API 기반 — 기준금리, 국고채 1·3·10년 커브, 회사채 AA- 신용스프레드, 환율, 물가, 뉴스심리지수 (2026-08 추가).
+- **예측시장 확률 · 침체 신호 (2026-09-25, 미국 매크로 — US·KR 모드 모두 표시)**:
+  - *예측시장*: Kalshi·Polymarket 공개 API(키 없음)에서 다음 FOMC 금리 결정(인하/동결/인상), 올해 미국 경기침체, 다음 CPI 발표(Kalshi=초과 누적 확률, Polymarket=정확히 그 값 구간), 한국은행 금리 결정을 찾는다. 시장 ID 를 하드코딩하지 않고 Kalshi 는 Economics 시리즈 제목 검색, Polymarket 은 public-search + 슬러그 패턴으로 찾는다. 제목·결정일/마감일·거래량·유동성(Kalshi 는 미결제약정)·판정 출처를 같이 보여 주고, 유동성 하한(Kalshi OI 5천 계약·거래량 1만 / Polymarket 호가 유동성 $1만·거래량 $2.5만) 미달 이벤트는 빼고 제외 사유를 표시한다(2026-09-25 기준 한국은행 10월 결정은 두 거래소 모두 미달). 최근 30일 일별 추이 스파크라인. 확률 값은 호가 스프레드 5%p 이하면 중간값, 아니면 최근 체결가. "예측시장 가격은 참여자 베팅이며 예측의 정답이 아님" 고정 표기.
+  - *침체 신호 모음*: 새 수집 없이 산업 지표 데이터(`industry_indicators.json`)의 삼 법칙(0.50%p)·Chauvet-Piger 침체확률(80%)·10년−3개월/10년−2년 금리차(0 미만 역전)·CFNAI 3개월 평균(−0.70)·GZ 모형 침체확률(공인 임계 없음 → 판정 제외)을 한 표에 두고 현재값·임계·초과 여부·기준 시점만 보여 준다. 합성 점수는 만들지 않고 "N개 중 M개 임계 초과" 만 센다. 예측시장의 올해 침체 확률을 같은 카드에 나란히 둔다.
 - **옵션 심리 (Options Stats)**:
   - Yahoo 옵션 체인 기반 풋/콜 미결제약정 비율, 맥스페인(Max Pain), 만기 기준 예상 변동폭.
 - **CFTC COT 투기 포지셔닝**:
@@ -350,6 +353,8 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
 - **산업·매크로 선행지표 빌더 (`build_industry_indicators.py` + `industry_fetchers.py` + `industry_sensitivity.py`)**:
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.
+- **예측시장 확률 빌더 (`build_macro_odds.py`)**:
+  - 하루 3회 06:37·14:37·22:37 KST(`Macro odds (prediction markets)` 워크플로우). Kalshi·Polymarket 공개 API(키 없음) + 산업 지표 재사용 → `data/macro_odds.json/.js`(`window.MACRO_ODDS`). Polymarket 은 한국 IP 에서 HTTP 451 로 막혀 로컬 실행 시 Kalshi 만 나온다(미국 러너에서는 열림). 두 거래소가 모두 실패하면 기존 파일 유지 + exit 1, 나이 관문은 `check_data_freshness.py --group macro-odds`.
 - **구독 피드 생성 (`gen_feeds.py`)**:
   - 레포에 커밋하지 않고 `deploy-pages.yml` 이 `_site/` 스테이징 뒤 `python3 scripts/gen_feeds.py --root _site --out _site/data/feeds` 로 매 배포마다 만든다(데이터가 여러 워크플로우에서 오므로 전부 합쳐지는 지점). ~1MB·파일 ~107개. `continue-on-error` 라 피드 실패가 배포를 막지 않는다. 매니페스트 `data/feeds/feeds.json` 을 다이얼로그가 읽는다(없으면 안내만). 로컬 확인: `py scripts/gen_feeds.py`(data/feeds/ 는 .gitignore). 형식 검증 `scripts/tests/test_gen_feeds.py`(75옥텟 줄 접기·CRLF·이스케이프·UID 유일성·RSS 필수 요소).
 - **백악관 일정 수집 (`fetch_white_house_schedule.py`)**:

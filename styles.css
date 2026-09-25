@@ -13606,6 +13606,66 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .industry-rev-row { grid-template-columns: minmax(0, 1fr) auto auto; }
   .industry-rev-row .industry-spark, .industry-rev-next { display: none; }
 }
+/* ===== 예측시장 확률 · 침체 신호 (macro-odds.js, 2026-09-25) ===== */
+.mo-tag { display: inline-block; margin-left: 6px; padding: 1px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--fs-cap); font-weight: 500; color: var(--muted); vertical-align: middle; }
+.mo-grid { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 8px; }
+.mo-card { flex: 1 1 340px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.mo-card-wide { flex-basis: 100%; }
+.mo-card h3 { margin: 0; font-size: 15px; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.mo-count { font-size: var(--fs-cap); font-weight: 500; color: var(--muted); }
+.mo-count b { color: var(--text, inherit); font-variant-numeric: tabular-nums; }
+.mo-venue { background: var(--panel-soft); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+.mo-venue-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-bottom: 8px; }
+.mo-venue-name { font-size: 12.5px; font-weight: 700; color: inherit; text-decoration: none; border-bottom: 1px dotted var(--muted); }
+.mo-venue-title { font-size: var(--fs-cap); color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+.mo-rows { display: flex; flex-direction: column; gap: 5px; }
+.mo-row { display: grid; grid-template-columns: minmax(0, 8.5em) minmax(40px, 1fr) 3.6em 72px; align-items: center; gap: 8px; font-size: 12.5px; }
+.mo-row.is-lead .mo-lbl, .mo-row.is-lead .mo-val { font-weight: 700; }
+.mo-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mo-bar { height: 8px; border-radius: 4px; background: color-mix(in srgb, var(--line) 70%, transparent); overflow: hidden; }
+.mo-bar i { display: block; height: 100%; border-radius: 4px; background: #5b8def; }
+.mo-val { text-align: right; font-variant-numeric: tabular-nums; }
+.mo-trend { line-height: 0; }
+.mo-spark { display: block; }
+.mo-single { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.mo-single strong { font-size: 24px; font-variant-numeric: tabular-nums; }
+.mo-chg { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; }
+.mo-meta { margin: 8px 0 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.mo-note { margin: 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.65; }
+.mo-venue .mo-note { margin-top: 6px; }
+.mo-rules { font-size: var(--fs-cap); color: var(--muted); margin-top: 4px; }
+.mo-rules summary { cursor: pointer; }
+.mo-rules p, .mo-rules ul { margin: 6px 0 0; line-height: 1.6; overflow-wrap: anywhere; }
+.mo-rules ul { padding-left: 18px; }
+.mo-mkts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.mo-mkt { display: inline-flex; align-items: center; gap: 6px; background: var(--panel-soft); border-radius: 10px; padding: 6px 10px; font-size: 12.5px; }
+.mo-mkt strong { font-variant-numeric: tabular-nums; }
+.mo-sub { font-size: var(--fs-cap); color: var(--muted); }
+.mo-sub a { color: inherit; }
+.mo-state { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: var(--fs-cap); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+.mo-state.is-over { border-color: var(--red); color: var(--red); font-weight: 600; }
+.mo-state.is-na { border-style: dashed; }
+.mo-sigs { display: flex; flex-direction: column; }
+.mo-sig { display: grid; grid-template-columns: minmax(0, 2fr) 6.5em minmax(0, 1.1fr) 6.5em 7em 72px; align-items: center; gap: 4px 10px; padding: 9px 4px; border-top: 1px solid var(--line); font-size: 13px; }
+.mo-sig-head { border-top: 0; font-size: var(--fs-cap); color: var(--muted); padding-top: 0; }
+.mo-sig-val { text-align: right; font-variant-numeric: tabular-nums; }
+.mo-sig-date { font-variant-numeric: tabular-nums; }
+.mo-sig-thr { padding-left: 10px; }
+.mo-mlabel { display: none; }
+.mo-disclaimer { margin: 6px 0 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.65; }
+@media (max-width: 640px) {
+  .mo-card { flex-basis: 100%; padding: 12px; }
+  .mo-row { grid-template-columns: minmax(0, 7em) minmax(30px, 1fr) 3.4em; }
+  .mo-row .mo-trend { display: none; }
+  .mo-sig-head { display: none; }
+  .mo-sig { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name name" "val state" "thr date"; }
+  .mo-sig-name { grid-area: name; }
+  .mo-sig-val { grid-area: val; text-align: left; }
+  .mo-sig-state { grid-area: state; justify-self: end; }
+  .mo-sig-thr { grid-area: thr; padding-left: 0; }
+  .mo-sig-date { grid-area: date; justify-self: end; }
+  .mo-sig-trend { display: none; }
+  .mo-mlabel { display: inline; }
 
 /* 구독 피드 다이얼로그(subscribe-feeds.js) — 신뢰도 센터 다이얼로그 틀을 그대로 쓴다. */
 .feed-sub-btn { flex-shrink: 0; white-space: nowrap; }

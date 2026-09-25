@@ -6294,6 +6294,11 @@ const GITHUB_REPO = "https://github.com/seonu-dragon/Mir_US_Stocks";
 const TRUST_RECOVERY = {
   "COT 포지셔닝": { us: { workflow: "Daily US market snapshot", script: "scripts/build_cftc_cot.py" }, tabs: "시그널 탭 · 선물 투기 포지셔닝" },
   "국채 경매": { us: { workflow: "Daily US market snapshot", script: "scripts/build_treasury_auctions.py" }, tabs: "시그널 탭 · 국채 경매 수요" },
+  "예측시장 확률": {
+    us: { workflow: "Macro odds (prediction markets)", script: "scripts/build_macro_odds.py" },
+    kr: { workflow: "Macro odds (prediction markets)", script: "scripts/build_macro_odds.py" },
+    tabs: "시그널 탭 · 예측시장 확률 · 침체 신호",
+  },
   "리테일 관심도": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wiki_attention.py" }, tabs: "시그널 탭 · 리테일 관심도(위키)" },
   "외부 공포탐욕": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sentiment_gauges.py" }, tabs: "시그널 탭 · 심리지수 비교 타일" },
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
@@ -6495,6 +6500,8 @@ function dataTrustSources() {
   // 2026-08-06 신규 무키 피드 — 등록하지 않으면 신뢰도 센터의 감시 사각지대가 된다.
   rows.push(source("COT 포지셔닝", "CFTC", window.COT_POSITIONING, ["markets"], 336, "매주 금요일 발표", "cotPositioning"));
   rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
+  // 예측시장(2026-09-25) — 하루 3회. 12시간 넘게 멈추면 두 번 연속 실패라 36시간 여유.
+  rows.push(source("예측시장 확률", "Kalshi · Polymarket", window.MACRO_ODDS, ["groups"], 36, "하루 3회 (06·14·22시)", "macroOdds"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));
   rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
   // 산업 선행지표(2026-09-18) — 등록하지 않으면 감시 사각지대. lazy 라 신뢰도 센터가 직접 받아 본다.

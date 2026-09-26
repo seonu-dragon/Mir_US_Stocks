@@ -2512,18 +2512,18 @@ function generateBriefing(result) {
     const distSup = ((price - sr.support) / price) * 100;
     const distRes = ((sr.resistance - price) / price) * 100;
     if (distSup < 3) {
-      strategy = `현재 주가가 지지선(${fmtPrice(sr.support)}) 부근에 밀착해 있어 반등 타점이나 지지선 이탈 시 손절 기준으로 활용하기 적합한 구간입니다.`;
+      strategy = `현재가가 지지선(${fmtPrice(sr.support)})에서 3% 이내에 있습니다.`;
     } else if (distRes < 3) {
-      strategy = `저항선(${fmtPrice(sr.resistance)})에 도달하여 돌파 여부 확인이 중요합니다. 돌파 시 추가 급등, 저항 시 비중 축소 타이밍입니다.`;
+      strategy = `현재가가 저항선(${fmtPrice(sr.resistance)})에서 3% 이내에 있습니다.`;
     } else {
-      strategy = `주가가 지지선(${fmtPrice(sr.support)})과 저항선(${fmtPrice(sr.resistance)})의 박스권 중간에 위치해 있어 돌파 또는 지지 확인 후 진입하는 것이 안전합니다.`;
+      strategy = `현재가는 지지선(${fmtPrice(sr.support)})과 저항선(${fmtPrice(sr.resistance)}) 사이에 있습니다.`;
     }
   } else {
-    strategy = "지지선과 저항선 데이터가 부족해 돌파 여부 위주의 실시간 차트 확인이 필요합니다.";
+    strategy = "지지선·저항선을 계산할 자료가 부족합니다.";
   }
   if (result.techLevels && result.techLevels.atr) {
     const a = result.techLevels.atr;
-    strategy += ` ATR 기준 손절 ${fmtPrice(a.stop)}, 1차 목표 ${fmtPrice(a.target)} (리스크 약 ${a.riskPct.toFixed(1)}%).`;
+    strategy += ` 최근 변동폭(2ATR) 기준 하단 ${fmtPrice(a.stop)} · 상단 ${fmtPrice(a.target)}(현재가 대비 약 ${a.riskPct.toFixed(1)}%).`;
   }
 
   return `
@@ -2532,7 +2532,7 @@ function generateBriefing(result) {
       <ul class="cprob-briefing-reasons" style="margin: 8px 0 12px; padding-left: 20px; list-style-type: none;">
         ${coreBrief}
       </ul>
-      <p class="cprob-briefing-strategy" style="margin: 10px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; font-size: 13px;"><strong>대응 전략:</strong> ${strategy}</p>
+      <p class="cprob-briefing-strategy" style="margin: 10px 0 0; border-top: 1px dashed var(--line); padding-top: 10px; font-size: 13px;"><strong>가격 위치:</strong> ${strategy}</p>
     </div>
   `;
 }

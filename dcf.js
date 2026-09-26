@@ -184,7 +184,7 @@ function dcfBaseRateHtml(ctx, c) {
   const frac = Number.isFinite(b.fraction) ? `${Math.round(b.fraction * 100)}%` : "—";
   const revLine = rv && rv.ok ? ` 같은 기준으로 <b>매출</b>이 연 ${g} 이상 자란 비율은 ${Math.round(rv.fraction * 100)}%(표본 ${rv.n}개, 중앙값 ${rv.median}%)입니다.` : "";
   return `<p class="dcf-br"><b>과거 기저율</b> — ${escapeHtml(b.bucket)} 기업 ${b.n}개 중 <b>${frac}</b>가 ${b.horizon}년 동안 FCF 를 연 ${g} 이상 늘렸습니다(중앙값 ${b.median}%).${revLine}</p>
-    <p class="dcf-muted">기간 ${escapeHtml(b.period || `${b.horizon}년`)}${b.horizon < 10 ? ` — 10년치 자료가 없어 ${b.horizon}년으로 셌습니다` : ""}. 처음·끝 FCF 가 모두 양수인 기업만 들어가며(제외 ${b.excluded}개) 지금 상장된 시총 상위 기업만 있어(생존편향) 실제보다 높게 나옵니다. 과거 분포이지 확률 예측이 아닙니다.</p>`;
+    <p class="dcf-muted">기간 ${escapeHtml(b.period || `${b.horizon}년`)}. 처음·끝 FCF 가 모두 양수인 현재 상장 대형주만 셌으므로(제외 ${b.excluded}개, 생존편향) 실제보다 높게 나옵니다. 과거 분포이지 확률 예측이 아닙니다.</p>`;
 }
 
 function dcfInputsHtml(ctx, c) {
@@ -198,7 +198,7 @@ function dcfInputsHtml(ctx, c) {
       <input type="number" min="${lo}" max="${hi}" step="${step}" value="${v}" data-dcf-field="${k}" class="dcf-num" aria-label="${escapeHtml(label)} %"><em>%</em></label>`;
   }).join("");
   return `<div class="dcf-scen-tabs"><div class="segmented" role="group" aria-label="시나리오">${tabs}</div>
-      <span class="dcf-muted">시나리오마다 따로 저장됩니다</span></div>
+      </div>
     <div class="dcf-fields">${rows}</div>`;
 }
 
@@ -207,13 +207,13 @@ function dcfCommonHtml(ctx, c) {
   const erp = MirDcfCore.ERP[ctx.market] || MirDcfCore.ERP.us;
   const rf = dr.rfInfo;
   const note = dr.fallback
-    ? `기본값 ${dcfPct(dr.r)} — 금리 자료를 아직 못 받아 고정값을 씁니다`
+    ? `기본값 ${dcfPct(dr.r)}(금리 자료가 없어 고정값)`
     : `기본값 ${dcfPct(dr.r, 2)} = ${escapeHtml(rf.label)} ${rf.pct.toFixed(2)}%(${escapeHtml(rf.source)}, ${escapeHtml(rf.asOf)}) + 주식위험프리미엄 ${dcfPct(erp.value, 2)}(${escapeHtml(erp.source)}, ${escapeHtml(erp.asOf)}) · 베타 1 가정`;
   const rv = +(c.r * 100).toFixed(2), tv = +(c.tg * 100).toFixed(2);
   return `<div class="dcf-common">
       <label class="dcf-field"><span>할인율</span><input type="number" min="3" max="25" step="0.1" value="${rv}" data-dcf-common="r" class="dcf-num" aria-label="할인율 %"><em>%</em></label>
       <label class="dcf-field"><span>영구성장률</span><input type="number" min="-2" max="5" step="0.1" value="${tv}" data-dcf-common="tg" class="dcf-num" aria-label="영구성장률 %"><em>%</em></label>
-      <p class="dcf-muted dcf-common-note">${note}. 역DCF 와 시나리오 DCF 가 같은 값을 씁니다.</p>
+      <p class="dcf-muted dcf-common-note">${note}.</p>
     </div>`;
 }
 
@@ -223,7 +223,9 @@ function dcfRangeSvg(vals, price) {
   let lo = Math.min(...pts), hi = Math.max(...pts);
   const pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.1 || 1;
   lo -= pad; hi += pad;
-  const W = 600, H = 54;
+  // viewBox 를 그릴 자리의 실제 폭에 맞춘다(고정 600 이면 넓은 화면에선 가운데만, 폰에선 글자가 깨알처럼 작아진다).
+  const hostW = (typeof byId === "function" && byId("dcfSection") && byId("dcfSection").clientWidth) || 632;
+  const W = Math.max(280, Math.min(1400, Math.round(hostW - 34))), H = 54;
   const x = (v) => 10 + (v - lo) / (hi - lo) * (W - 20);
   const [bear, base, bull] = vals;
   let out = "";
@@ -287,7 +289,7 @@ function dcfSectionHtml(ctx) {
         <button type="button" class="ghost compact-btn" data-dcf-act="thesis">이 시나리오로 가설 만들기</button>
       </div>
     </div>
-    ${st.fromLink ? `<p class="dcf-note">공유 링크의 가정을 불러왔습니다. 바꾸면 이 브라우저에 저장됩니다.</p>` : ""}
+    ${st.fromLink ? `<p class="dcf-note">공유 링크의 가정을 불러왔습니다.</p>` : ""}
     <div class="dcf-common-slot">${dcfCommonHtml(ctx, c)}</div>
     <div class="dcf-reverse-slot">${dcfReverseHtml(ctx, c)}</div>
     <div class="dcf-block">
@@ -297,8 +299,11 @@ function dcfSectionHtml(ctx) {
       <div class="dcf-grid-slot">${dcfGridHtml(ctx, c)}</div>
       ${assumed.length ? `<p class="dcf-muted">자료가 없어 가정값으로 시작한 항목: ${escapeHtml(assumed.join(", "))}.</p>` : ""}
     </div>
-    <p class="mf-foot">추정치이며 가정에 극도로 민감합니다(할인율 1%p 차이로 주당 가치가 수십 % 달라질 수 있습니다). 투자 권유나 목표주가가 아니고, 기저율은 과거 분포입니다.
-      FCF = 영업활동현금흐름 − 설비투자. 주당 가치 = (기업가치 − 순차입금) ÷ ${escapeHtml(c.shares ? c.shares.label : "희석 주식수")}. 시나리오 DCF 의 시작 매출은 TTM, 영업이익률은 현재 값에서 5년차 목표로 직선 이동합니다.</p>`;
+    <p class="mf-foot">추정치이며 가정에 극도로 민감합니다(할인율 1%p 차이로 주당 가치가 수십 % 달라질 수 있습니다). 투자 권유나 목표주가가 아닙니다.</p>
+    <details class="stock-method"><summary>계산 방법</summary>
+      <p>FCF = 영업활동현금흐름 − 설비투자. 주당 가치 = (기업가치 − 순차입금) ÷ ${escapeHtml(c.shares ? c.shares.label : "희석 주식수")}.</p>
+      <p>시나리오 DCF 는 최근 4분기(TTM) 매출에서 시작하고, 영업이익률은 현재 값에서 5년차 목표로 직선 이동합니다.</p>
+    </details>`;
 }
 
 // 부분 갱신 — 슬라이더를 끄는 동안 입력 포커스가 날아가지 않게 결과 칸만 다시 그린다.

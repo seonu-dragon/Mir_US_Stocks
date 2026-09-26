@@ -97,6 +97,9 @@ jobs:
         run: |
           node scripts/tests/test_signal_scorecard_core.mjs
           node scripts/build_signal_ledger.mjs --verify
+      # 재무 확장 파생 지표(financials-core.js): ROIC·순차입금/EBITDA·주식수 증감·TTM 시계열(연속 분기만)·결측 전파.
+      - name: Financials core tests
+        run: node scripts/tests/test_financials_core.mjs
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

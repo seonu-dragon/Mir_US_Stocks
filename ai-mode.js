@@ -1316,6 +1316,21 @@ function finMoney(v) {
   return `$${n.toLocaleString()}`;
 }
 function aiFinancialsPanel(item) {
+  // 재무 확장 데이터(financials.js, SEC/DART 종목별 파일)가 있으면 그쪽으로. 아직 안 받았으면
+  // 옛 financialsHistory 표를 자리(data-fin-ai)에 두고 받아지는 대로 바꿔 끼운다.
+  if (item && item.ticker && typeof financialsCached === "function") {
+    const file = financialsCached(item.ticker);
+    if (file) return financialsAiPanelHtml(file);
+    if (file === undefined && typeof hydrateFinancialsAiPanels === "function") {
+      const key = mfTickerKey(item.ticker);
+      setTimeout(() => hydrateFinancialsAiPanels(item.ticker), 0);
+      const legacy = aiLegacyFinancialsPanel(item);
+      return legacy ? `<div data-fin-ai="${escapeHtml(key)}">${legacy}</div>` : `<div data-fin-ai="${escapeHtml(key)}" hidden></div>`;
+    }
+  }
+  return aiLegacyFinancialsPanel(item);
+}
+function aiLegacyFinancialsPanel(item) {
   const rows = item && item.financialsHistory;
   if (!Array.isArray(rows) || rows.length < 2) return "";
   const sorted = rows.slice().sort((a, b) => b.y - a.y).slice(0, 10);

@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=d773f04944" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=d773f04944"></noscript>
+    <link rel="preload" href="styles.css?v=a66b955c2f" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=a66b955c2f"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=7b32caf65a"></script>
+    <script src="build_id.js?v=d5cd021deb"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -453,7 +453,7 @@ html[data-theme="dark"] {
                 <span class="ai-sparkle-large"></span>
                 <div>
                   <h2>미르 AI 어시스턴트</h2>
-                  <p class="muted">실시간 데이터 기반 심층 시장 분석 및 리서치</p>
+                  <p class="muted">사이트에 게시된 시장 데이터로 답하는 분석 도우미</p>
                 </div>
               </div>
               <div class="ai-header-controls">
@@ -471,12 +471,12 @@ html[data-theme="dark"] {
               <div class="ai-chat-welcome" id="aiChatWelcome">
                 <div class="welcome-icon"></div>
                 <h2>무엇을 분석해 드릴까요?</h2>
-                <p class="muted">미국 및 한국 주식 시장의 실시간 데이터를 기반으로 기업 정보, 차트 기술적 분석, 실적 지표를 대화하듯 점검해 드립니다.</p>
+                <p class="muted">미국·한국 주식의 기업 정보, 차트, 실적 지표를 대화하듯 점검해 드립니다.</p>
                 
                 <div class="welcome-suggestions">
                   <button type="button" class="ai-chat-suggest-card" id="aiSuggestPrimary" data-query="NVDA 분석해줘">
                     <strong>NVDA 분석해줘</strong>
-                    <span>엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.</span>
+                    <span>엔비디아의 차트와 핵심 지표, 실적을 종합 점검합니다.</span>
                   </button>
                   <button type="button" class="ai-chat-suggest-card" data-query="반도체 섹터 흐름 어때?">
                     <strong>반도체 섹터 흐름 어때?</strong>
@@ -2575,7 +2575,7 @@ html[data-theme="dark"] {
               <select id="backtestBenchmark"></select>
             </label>
             <label>
-              투자금 (USD)
+              <span>투자금 <span id="backtestCurrency">(USD)</span></span>
               <input id="backtestInvestment" type="number" min="1" step="100" value="10000">
             </label>
             <button type="button" id="backtestRun" class="primary">시뮬레이션</button>
@@ -2603,6 +2603,7 @@ html[data-theme="dark"] {
               <svg id="backtestChart" viewBox="0 0 800 260" role="img" aria-label="누적 수익 차트"></svg>
             </div>
             <div class="pf-tearsheet" id="backtestTearsheet"></div>
+            <div class="backtest-notes" id="backtestNotes"></div>
             <div class="table-wrap">
               <table class="backtest-table" id="backtestTable"></table>
             </div>
@@ -2680,7 +2681,7 @@ html[data-theme="dark"] {
               </select>
             </label>
             <label>
-              회당 금액 <span id="dcaCurrency">(USD)</span>
+              <span>회당 금액 <span id="dcaCurrency">(USD)</span></span>
               <input id="dcaAmount" type="number" min="1" step="10" value="500" inputmode="decimal">
             </label>
             <label>
@@ -2749,7 +2750,7 @@ html[data-theme="dark"] {
               <div><h3>투자 가설 추적</h3></div>
               <strong id="thesisCount">0건</strong>
             </div>
-            <p class="muted">매수 근거와 '틀렸다고 볼 조건'을 측정 가능한 값으로 적어 두면, 사이트에 올 때마다 현재 데이터로 점검해 위반·근접·정상을 표시합니다. 등록 시점 지표는 동결 저장되고, 수정하면 원래 가설과 수정 시각이 남습니다. 매매 신호가 아니라 내 기록을 점검하는 도구입니다. (이 브라우저에 저장 · 클라우드 동기화에 포함)</p>
+            <p class="muted">매수 근거와 '틀렸다고 볼 조건'을 숫자로 적어 두면, 올 때마다 현재 데이터로 점검해 위반·근접·정상을 표시합니다. 매매 신호가 아니라 내 기록을 점검하는 도구입니다. (이 브라우저에 저장)</p>
             <div class="thesis-toolbar">
               <button type="button" class="primary compact-btn" data-thesis-new>새 가설</button>
               <nav class="thesis-filter" aria-label="가설 목록 필터">
@@ -3011,14 +3012,13 @@ html[data-theme="dark"] {
       <div class="ia-footer-meta">
         <span>데이터 기준</span>
         <strong id="updatedAt">불러오는 중</strong>
-        <small id="snapshotCadenceNote">주식 데이터는 매일 06:00 KST 스냅샷 · 일부 보조 데이터는 별도 조회</small>
+        <small id="snapshotCadenceNote">주가 매일 06:00 KST 갱신 · 항목별 기준 시각은 신뢰도 센터에서</small>
       </div>
       <div class="ia-footer-links">
         <button type="button" class="ia-link" data-open="trust">데이터 신뢰도 센터</button>
         <button type="button" class="ia-link" data-open="community">커뮤니티</button>
       </div>
       <div class="ia-footer-note">
-        <span>저장된 스냅샷 데이터를 사용합니다. 시장별 갱신 주기는 위 안내를 참고하세요.</span>
         <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
       </div>
     </footer>
@@ -3036,7 +3036,7 @@ html[data-theme="dark"] {
         <div class="data-trust-summary" id="dataTrustSummary"></div>
         <div class="data-trust-grid" id="dataTrustGrid" aria-live="polite"></div>
         <p class="data-trust-note"><button type="button" class="ia-link" data-open="scorecard">신호 성적표 보기 — 화면에 띄운 신호가 발행 뒤 실제로 어떻게 됐는지</button></p>
-        <p class="data-trust-note">상태는 브라우저에 로드된 최신 파일을 기준으로 계산합니다. 실시간 원본 장애 여부를 직접 보장하지는 않습니다.</p>
+        <p class="data-trust-note">상태는 사이트에 게시된 최신 자료 기준입니다. 원본 서비스의 실시간 장애 여부는 반영하지 않습니다.</p>
       </section>
     </dialog>
     <div class="chat-page-spacer" aria-hidden="true"></div>
@@ -3079,7 +3079,7 @@ html[data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=cf947f6707"></script>
+    <script src="market_config.js?v=62586ff0c4"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3095,17 +3095,17 @@ html[data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="chart-indicators.js?v=08b1ac0259"></script>
     <script src="community.js?v=af8ec25e4f"></script>
-    <script src="ai-mode.js?v=2642a3273b"></script>
+    <script src="ai-mode.js?v=551db9b24c"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=64291633e8"></script>
     <script src="movers.js?v=4a60812545"></script>
-    <script src="portfolio.js?v=4e19177b3c"></script>
+    <script src="portfolio.js?v=e460158602"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
-    <script src="portfolio-risk.js?v=cedc92eb46"></script>
+    <script src="portfolio-risk.js?v=42bb40aa23"></script>
     <script src="thesis-core.js?v=fb63922564"></script>
-    <script src="thesis.js?v=53f3d6f7f5"></script>
+    <script src="thesis.js?v=d5dc13738c"></script>
     <script src="screener.js?v=709605d4d0"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
@@ -3140,9 +3140,9 @@ html[data-theme="dark"] {
     <script src="financials.js?v=2b33b47cc1"></script>
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=3e6f86bccd"></script>
-    <script src="subscribe-feeds.js?v=26f31f2852"></script>
-    <script src="app.js?v=dbe643cfaa"></script>
+    <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
+    <script src="app.js?v=31bb6a70a0"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
-    <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
+    <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
   </body>
 </html>

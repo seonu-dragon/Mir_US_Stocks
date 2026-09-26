@@ -106,7 +106,7 @@
     return `
       <section class="feed-sub-section">
         <h3>종목별 공시 RSS <small>${esc(MARKET_LABEL[mode])} 시가총액 상위 ${list.length}종목</small></h3>
-        <p class="feed-sub-note">정적 사이트라 관심종목마다 피드를 만들 수는 없어, 시가총액 상위 종목만 제공합니다.
+        <p class="feed-sub-note">시가총액 상위 종목만 제공합니다.
           ${mode === "kr" ? "DART 공시 전체(최근 7일 수집분 누적)" : "SEC 8-K 전체·13D/13G"}가 들어갑니다.</p>
         <div class="feed-sub-ticker">
           <label>종목 <select id="feedSubTickerSelect" data-market="${esc(mode)}">${opts}</select></label>
@@ -166,7 +166,7 @@
       <section class="feed-sub-section" id="feedSubRss">
         <h3>공시 RSS 구독</h3>
         <p class="feed-sub-note">RSS URL 을 Feedly·Inoreader·NetNewsWire 같은 RSS 리더(또는 슬랙·디스코드의 RSS 봇)에 붙여 넣으면
-          새 공시가 올라올 때 리더가 알려 줍니다. 수집 주기는 원본 워크플로우를 따라 하루 몇 번이며 실시간이 아닙니다.</p>
+          새 공시가 올라올 때 리더가 알려 줍니다. 공시는 하루 몇 차례 모아 올리므로 실시간이 아닙니다.</p>
         <div class="feed-sub-grid">${rss}</div>
       </section>
       ${tickerBlock(manifest, mode)}`;
@@ -189,7 +189,7 @@
         <div class="data-trust-head">
           <div>
             <h2 id="feedSubTitle">일정·공시 구독</h2>
-            <p>캘린더 앱과 RSS 리더로 받아 보는 정적 피드입니다. 가입·알림 권한이 필요 없습니다.</p>
+            <p>캘린더 앱과 RSS 리더로 받아 봅니다. 가입·알림 권한이 필요 없습니다.</p>
           </div>
           <div class="ia-dialog-actions"><button type="button" class="ghost compact-btn" id="feedSubClose" aria-label="닫기">✕ 닫기</button></div>
         </div>

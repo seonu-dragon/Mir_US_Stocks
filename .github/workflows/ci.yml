@@ -155,6 +155,10 @@ jobs:
       # 평균 목표가 서술(권유 문구 없음), 의견 분포 비율.
       - name: Company info core tests
         run: node scripts/tests/test_company_info_core.mjs
+      # 종목 체력·유사종목·위험(stock-health-core.js): 스노우플레이크 통과 수/분모, %→배수, 적자 제외,
+      # 피어 산업군→섹터 폴백·시총순, 변동성·낙폭·월별 평균(무효 종가 행 건너뜀).
+      - name: Stock health core tests
+        run: node scripts/tests/test_stock_health_core.mjs
 
       # 포트폴리오 위험 분석 순수 계산(portfolio-risk-core.js): Ledoit-Wolf(scikit-learn 값)·리스크 패리티 수렴·
       # 최소분산(상한)·낙폭 구간·월별 수익·empyrical 지표·위기 재생 경로.
@@ -164,6 +168,15 @@ jobs:
       # 찾기 › 상위 종목 표의 열 설정(find-table-core.js): 시장별 열·저장값 정리·켜기/끄기·순서.
       - name: Find table core tests
         run: node scripts/tests/test_find_table_core.mjs
+
+      # 가격 차트 이벤트 마커(chart-events-core.js): 실적·배당락·분할·8-K/DART 모으기, 휴장일 → 다음 봉 매핑,
+      # 보이는 구간 자르기, 겹침 묶기(줌에 따라 풀림), 포인터 히트 판정.
+      - name: Chart event marker tests
+        run: node scripts/tests/test_chart_events_core.mjs
+
+      # 일별 시세 표(daily-table-core.js): 전일대비 ▲/▼ 금액·등락률, 보합, 거래량 0, 표기.
+      - name: Daily price table tests
+        run: node scripts/tests/test_daily_table_core.mjs
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

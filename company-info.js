@@ -1,5 +1,5 @@
 // company-info.js — 종목 분석 뷰의 "기업개요" 카드(#companyInfo)와 US "목표주가 범위" 카드(#priceTargetCard).
-// 데이터: scripts/build_company_profile.py(KR DART · US SEC) · scripts/build_us_price_targets.py(Nasdaq)
+// 데이터: scripts/build_company_profile.py(KR DART · US SEC) · scripts/build_us_price_targets.py(Nasdaq, 점 티커는 Yahoo 보충 — 레코드 src)
 //   인덱스 window.COMPANY_PROFILE_INDEX / US_PRICE_TARGETS_INDEX(FEATURE_DATA lazy) → 종목이 든 해시 샤드 하나만 fetch.
 // 계산은 company-info-core.js(MirCompanyInfoCore). 클래식 스크립트(전역 공유) — 이름은 ci* 로 충돌을 피한다.
 
@@ -114,8 +114,10 @@ function ciLoadTargets(key) {
   return ciFetch(ciShardUrl("data/us_price_targets", "", key, ix)).then((pl) => (pl && pl.t ? pl.t[key] || null : null));
 }
 
-function ciPriceTargetHtml(t, price) {
+// 범위 바 + 평균 목표가 서술. 종목 상세 카드와 AI 모드 컨센서스 패널이 같이 쓴다. 계산 불가면 "".
+function ciRangeHtml(t, price) {
   const core = ciCore();
+  if (!core || !t) return "";
   const money = (v) => escapeHtml(priceOrDash(v));
   const parts = [];
   const g = core.rangeGeometry(t, price);
@@ -138,6 +140,12 @@ function ciPriceTargetHtml(t, price) {
       parts.push(`<p class="ci-gap"><i class="ci-dot" aria-hidden="true"></i>현재가 ${money(price)} · ${escapeHtml(sentence)}</p>`);
     }
   }
+  return parts.join("");
+}
+
+function ciPriceTargetHtml(t, price) {
+  const core = ciCore();
+  const parts = [ciRangeHtml(t, price)];
   const sh = core.opinionShares(t);
   if (sh) {
     const seg = (cls, pct, label, n) => (pct > 0 ? `<span class="${cls}" style="width:${pct}%" title="${label} ${n}명"></span>` : "");
@@ -177,6 +185,32 @@ function renderPriceTargets(item) {
     host.hidden = false;
     host.innerHTML = `<div class="qi-head"><h3>목표주가 범위</h3><span>${n ? `애널리스트 ${n}명 · ` : ""}기준 ${escapeHtml(t.asOf || "")}</span></div>
       ${body}
-      <p class="ci-src">출처 Nasdaq · 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
+      <p class="ci-src">출처 ${t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq"} · 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
   });
+}
+
+// AI 모드 컨센서스 패널용 자리. 패널 HTML 은 동기로 만들어지므로 자리(data-pt-slot)만 두고,
+// 인덱스·샤드가 오면 같은 종목의 자리를 모두 채운다. 데이터가 없거나 KR 이면 "".
+function priceTargetSlotHtml(item) {
+  if (!item || !item.ticker || ciIsKr() || !ciCore() || item.__liveStub) return "";
+  const key = String(item.ticker).toUpperCase();
+  const price = Number(item.price);
+  setTimeout(() => hydratePriceTargetSlots(key, price), 0);
+  return `<div class="ci-slot" data-pt-slot="${escapeHtml(key)}" hidden></div>`;
+}
+
+function hydratePriceTargetSlots(key, price) {
+  const ready = window.US_PRICE_TARGETS_INDEX
+    ? Promise.resolve(true)
+    : (typeof ensureFeatureData === "function" ? ensureFeatureData("usPriceTargets") : Promise.resolve(false));
+  ready.then((ok) => (ok ? ciLoadTargets(key) : null)).then((t) => {
+    const body = t ? ciRangeHtml(t, price) : "";
+    if (!body) return;
+    const n = Number(t.n) || 0;
+    const head = `<div class="ci-slot-head"><span>목표주가 범위</span><em>${t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq"}${n ? ` · ${n}명` : ""}${t.asOf ? ` · 기준 ${escapeHtml(t.asOf)}` : ""}</em></div>`;
+    document.querySelectorAll(`.ci-slot[data-pt-slot="${CSS.escape(key)}"]`).forEach((el) => {
+      el.innerHTML = head + body;
+      el.hidden = false;
+    });
+  }).catch(() => {});
 }

@@ -3,7 +3,7 @@
 
 병렬 PR 을 병합하다 `@media { ... }` 닫는 괄호가 빠지면 그 뒤 규칙 전체가 조용히
 모바일 전용이 된다(2026-09-25·26 두 번 — 특징주·재무 섹션). 브라우저는 에러를 내지
-않으니 여기서 잡는다. 주석과 문자열 안의 괄호는 센다에서 뺀다.
+않으니 여기서 잡는다. 주석과 문자열 안의 괄호는 세지 않는다.
 """
 from __future__ import annotations
 
@@ -12,11 +12,14 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+COMMENT = re.compile(r"/\*.*?\*/", re.S)
+STRING = re.compile(r'"(?:\\.|[^"\\])*"' + r"|'(?:\\.|[^'\\])*'")
 
 
 def unclosed(text: str) -> list[int]:
-    s = re.sub(r"/\*.*?\*/", lambda m: " " * len(m.group()), text, flags=re.S)
-    s = re.sub(r"\"(?:\.|[^\"\])*\"|'(?:\.|[^'\])*'", lambda m: " " * len(m.group()), s)
+    """닫히지 않은 '{' 의 줄 번호 목록. 짝 없는 '}' 는 음수 줄 번호로 반환."""
+    blank = lambda m: " " * len(m.group())  # noqa: E731 — 위치(줄 번호) 보존
+    s = STRING.sub(blank, COMMENT.sub(blank, text))
     stack: list[int] = []
     for i, ch in enumerate(s):
         if ch == "{":
@@ -31,8 +34,7 @@ def unclosed(text: str) -> list[int]:
 def main() -> int:
     bad = 0
     for name in ("styles.css",):
-        lines = unclosed((ROOT / name).read_text(encoding="utf-8"))
-        for ln in lines:
+        for ln in unclosed((ROOT / name).read_text(encoding="utf-8")):
             bad += 1
             if ln < 0:
                 print(f"[css] {name}:{-ln} 여는 괄호 없는 '}}'")

@@ -1,5 +1,5 @@
 // company-info.js — 종목 분석 뷰의 "기업개요" 카드(#companyInfo)와 US "목표주가 범위" 카드(#priceTargetCard).
-// 데이터: scripts/build_company_profile.py(KR DART · US SEC) · scripts/build_us_price_targets.py(Nasdaq)
+// 데이터: scripts/build_company_profile.py(KR DART · US SEC) · scripts/build_us_price_targets.py(Nasdaq, 점 티커는 Yahoo 보충 — 레코드 src)
 //   인덱스 window.COMPANY_PROFILE_INDEX / US_PRICE_TARGETS_INDEX(FEATURE_DATA lazy) → 종목이 든 해시 샤드 하나만 fetch.
 // 계산은 company-info-core.js(MirCompanyInfoCore). 클래식 스크립트(전역 공유) — 이름은 ci* 로 충돌을 피한다.
 
@@ -185,7 +185,7 @@ function renderPriceTargets(item) {
     host.hidden = false;
     host.innerHTML = `<div class="qi-head"><h3>목표주가 범위</h3><span>${n ? `애널리스트 ${n}명 · ` : ""}기준 ${escapeHtml(t.asOf || "")}</span></div>
       ${body}
-      <p class="ci-src">출처 Nasdaq · 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
+      <p class="ci-src">출처 ${t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq"} · 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
   });
 }
 

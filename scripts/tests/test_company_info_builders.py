@@ -202,3 +202,45 @@ def test_shard_of_matches_js_known_values():
     # company-info-core.js 테스트와 같은 값(test_company_info_core.mjs).
     assert shard_store.shard_of("AAPL", 16) == 12
     assert shard_store.shard_of("005930", 32) == 24
+
+
+# 점 티커(주식 클래스) — Nasdaq 은 BRK.B 를 알아보지만 targetprice 가 비어 있어(2026-09-26 실측) Yahoo 로 보충.
+def _yahoo_result(lo=510.0, avg=547.6667, hi=604.0, cur="USD", trend=None):
+    return {
+        "financialData": {"targetLowPrice": {"raw": lo}, "targetMeanPrice": {"raw": avg},
+                          "targetHighPrice": {"raw": hi}, "financialCurrency": cur},
+        "recommendationTrend": {"trend": trend if trend is not None else [
+            {"period": "0m", "strongBuy": 1, "buy": 1, "hold": 2, "sell": 0, "strongSell": 1},
+            {"period": "-1m", "strongBuy": 9, "buy": 9, "hold": 9, "sell": 9, "strongSell": 9}]},
+    }
+
+
+def test_yahoo_symbol_and_share_class():
+    assert pt.yahoo_symbol("BRK.B") == "BRK-B" and pt.yahoo_symbol("hei.a") == "HEI-A"
+    assert pt.is_share_class("BF.B") and not pt.is_share_class("AAPL")
+
+
+def test_parse_yahoo_summary_maps_to_nasdaq_schema():
+    kind, rec = pt.parse_yahoo_summary(_yahoo_result())
+    assert kind == "ok"
+    assert rec == {"lo": 510.0, "avg": 547.67, "hi": 604.0, "buy": 2, "hold": 2, "sell": 1, "n": 5, "src": "yahoo"}
+
+
+def test_parse_yahoo_summary_rejects_bad_range_currency_and_empty():
+    kind, rec = pt.parse_yahoo_summary(_yahoo_result(lo=700, avg=547, hi=604))
+    assert kind == "ok" and "avg" not in rec and rec["n"] == 5          # 범위만 빼고 의견은 남김
+    kind, rec = pt.parse_yahoo_summary(_yahoo_result(cur="CAD", trend=[]))
+    assert kind == "none" and rec is None                               # 달러가 아닌 목표가는 싣지 않는다
+    assert pt.parse_yahoo_summary({"financialData": {}, "recommendationTrend": {}}) == ("none", None)
+    assert pt.parse_yahoo_summary(None) == ("none", None)
+
+
+def test_universe_adds_share_classes_beyond_top(tmp_path, monkeypatch):
+    snap = tmp_path / "snap.json"
+    snap.write_text(json.dumps({"stocks": [
+        {"ticker": "AAPL", "marketCapB": 3000}, {"ticker": "BRK.B", "marketCapB": 1000},
+        {"ticker": "XYZ", "marketCapB": 5}, {"ticker": "HEI.A", "marketCapB": 4},
+        {"ticker": "SPY", "marketCapB": 9999, "sector": "EXCHANGE TRADED FUNDS"},
+    ]}), encoding="utf-8")
+    monkeypatch.setattr(pt, "SNAPSHOT", snap)
+    assert pt.universe(2) == ["AAPL", "BRK.B", "HEI.A"]

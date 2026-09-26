@@ -23,10 +23,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from xml.sax.saxutils import escape
+from urllib.parse import parse_qs, urlparse
+from xml.sax.saxutils import escape, unescape
 from zoneinfo import ZoneInfo
 
 if sys.platform == "win32":
@@ -144,11 +146,66 @@ def build_xml(limit: int) -> str:
     return "\n".join(lines)
 
 
+_LOC_RE = re.compile(r"<loc>([^<]+)</loc>")
+
+
+def loc_set(xml: str) -> set[str]:
+    return {unescape(m) for m in _LOC_RE.findall(xml)}
+
+
+def check_sitemap(current: str, expected: str, max_drift: float) -> int:
+    """--check: 글자 단위 비교가 아니라 URL 집합으로 판정한다.
+
+    예전에는 파일 전체를 문자열로 비교해서, 스냅샷이 매일 갱신되는 동안 sitemap 은
+    주간(weekly-edge-stats)에만 다시 만들어지는 탓에 lastmod 날짜·시총 순서만
+    바뀌어도 main 에서 늘 실패했다(아무도 안 보는 빨간불). 이제는
+      - 현재 파일에 있는 종목 URL 이 전부 상세 JSON 을 갖는지(없는 종목을 검색엔진에
+        제출하면 '데이터를 찾을 수 없습니다' 페이지가 색인된다) — 하드 실패
+      - 기대 URL 집합과의 차이가 max_drift 이하인지(시총 경계 종목 교체·lastmod 는 허용)
+    만 본다. 새 URL 종류(예: 산업 지표 딥링크)를 추가하면 차이가 커져 재생성을 요구한다.
+    """
+    cur, exp = loc_set(current), loc_set(expected)
+    if not cur:
+        print("sitemap.xml 이 없거나 URL 이 0개다. py scripts/build_sitemap.py 를 실행할 것.",
+              file=sys.stderr)
+        return 1
+    dead = []
+    for loc in sorted(cur):
+        q = parse_qs(urlparse(loc).query)
+        t = (q.get("t") or [""])[0]
+        if not t or not urlparse(loc).path.endswith("analysis.html"):
+            continue
+        market = "kr" if (q.get("market") or [""])[0] == "kr" else "us"
+        if not (MARKETS[market]["details"] / f"{t}.json").exists():
+            dead.append(loc)
+    missing, extra = exp - cur, cur - exp
+    drift = (len(missing) + len(extra)) / max(len(exp), 1)
+    if dead:
+        print(f"sitemap.xml 에 상세 데이터가 없는 종목 URL {len(dead)}개 — 재생성 필요:",
+              file=sys.stderr)
+        for loc in dead[:10]:
+            print(f"  {loc}", file=sys.stderr)
+        return 1
+    if drift > max_drift:
+        print(f"sitemap.xml 이 낡았다 — URL 집합 차이 {drift:.1%} > 허용 {max_drift:.0%} "
+              f"(빠짐 {len(missing)} · 남음 {len(extra)}, 기대 {len(exp)} URL). "
+              f"py scripts/build_sitemap.py 를 실행할 것.", file=sys.stderr)
+        for loc in sorted(missing)[:5]:
+            print(f"  + {loc}", file=sys.stderr)
+        for loc in sorted(extra)[:5]:
+            print(f"  - {loc}", file=sys.stderr)
+        return 1
+    print(f"OK — sitemap.xml 유효 ({len(cur)} URL, 기대 {len(exp)} 대비 차이 {drift:.1%})")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=300, help="시장별 최대 종목 수")
     ap.add_argument("--check", action="store_true",
-                    help="파일을 쓰지 않고, 현재 sitemap.xml 과 다르면 exit 1")
+                    help="파일을 쓰지 않고, 현재 sitemap.xml 이 낡았으면 exit 1")
+    ap.add_argument("--max-drift", type=float, default=0.10,
+                    help="--check 에서 허용하는 URL 집합 차이 비율(기본 10%%)")
     args = ap.parse_args()
 
     xml = build_xml(args.limit)
@@ -156,12 +213,7 @@ def main() -> int:
 
     if args.check:
         current = OUT.read_text(encoding="utf-8") if OUT.exists() else ""
-        if current != xml:
-            print(f"sitemap.xml 이 최신이 아니다 (예상 {count} URL). "
-                  f"py scripts/build_sitemap.py 를 실행할 것.", file=sys.stderr)
-            return 1
-        print(f"OK — sitemap.xml 최신 ({count} URL)")
-        return 0
+        return check_sitemap(current, xml, args.max_drift)
 
     atomic_write_text(OUT, xml)
     print(f"Wrote {OUT.relative_to(ROOT)} — {count} URL")

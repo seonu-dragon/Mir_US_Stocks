@@ -732,6 +732,8 @@ function renderShortInterest() {
   });
   const shown = rows.slice(0, 200);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 종목이 없습니다.</p>`; return; }
+  // KRX 가 거래비중을 아직 집계하지 않은 날은 전 종목 0 으로 온다 — 0.00% 가 아니라 "—".
+  const tradeKnown = payload.rows.some((r) => Number(r.tradingRatio) > 0);
   const body = shown.map((r, i) => {
     const chg = Number.isFinite(r.changePct) ? `${r.changePct > 0 ? "+" : ""}${r.changePct.toFixed(1)}%` : "—";
     const chgCls = r.changePct > 0 ? "ins-sell" : r.changePct < 0 ? "ins-buy" : "";
@@ -740,7 +742,7 @@ function renderShortInterest() {
     const subLabel = isBal ? tickerHint(r.ticker) : (r.company || "");
     const extra = isBal
       ? `<td class="ins-num short-spark-cell">${shortSparkline(r.history)}</td>`
-        + `<td class="ins-num">${Number.isFinite(r.tradingRatio) ? `${r.tradingRatio.toFixed(2)}%` : "—"}</td>`
+        + `<td class="ins-num">${tradeKnown && Number.isFinite(r.tradingRatio) ? `${r.tradingRatio.toFixed(2)}%` : "—"}</td>`
       : "";
     return `<tr>
       <td class="ins-date">${i + 1}</td>

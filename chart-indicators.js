@@ -1193,7 +1193,9 @@ function renderEarningsReaction(item) {
         </table>
         </div>
       </details>
-    ` : `<p class="muted earnings-reaction-empty">실적 발표 반응을 계산할 가격·실적 히스토리가 부족합니다.</p>`}
+    ` : `<p class="muted earnings-reaction-empty">${(typeof isStockEtf === "function" && isStockEtf(item))
+      ? "ETF 는 실적 발표·재무제표가 없습니다. 구성 종목은 수급·보유 탭에서 볼 수 있습니다."
+      : "실적 발표 반응을 계산할 가격·실적 히스토리가 부족합니다."}</p>`}
   `;
 }
 

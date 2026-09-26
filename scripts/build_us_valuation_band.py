@@ -586,7 +586,7 @@ def write_all(months, series, meta_extra, *, push):
             atomic_write_text(f, json.dumps(sh, ensure_ascii=False, separators=(",", ":")) + "\n")
             rel.append(f"{REL_DIR}/{f.name}")
         # 메타는 마지막 — 샤드가 다 써진 뒤에만 새 기간을 가리킨다.
-        sec.write_data(OUT_JSON, OUT_JS, JS_VAR, meta, indent=None)
+        sec.write_data(OUT_JSON, OUT_JS, "US_VALUATION_BAND_META", meta, indent=None)
         rel += [f"{REL_DIR}/meta.json", f"{REL_DIR}/meta.js"]
         print(f"Wrote {OUT_DIR} — {count}종목 · {months[0]}~{months[-1]} ({len(months)}개월)")
         if push and not sec.git_publish(rel, "US valuation band (PER/PBR/PSR)"):

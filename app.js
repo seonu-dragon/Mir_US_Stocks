@@ -1447,8 +1447,7 @@ function regimeFngCardHtml() {
     <div class="summary-card regime-fng-card regime-${regime.tone}">
       <span>시장 국면 · 공포탐욕</span>
       <div class="rf-head">
-        <strong class="regime-label">${regime.label}</strong>
-        <em class="regime-ko">${regime.ko}</em>
+        <strong class="regime-label" title="${escapeHtml(regime.label)}">${regime.ko}</strong>
       </div>
       <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
         ${arcs}
@@ -1714,7 +1713,7 @@ function renderActionBoard() {
   // 딥링크 스크롤(scrollToTabContent) 뒤에 본문이 밀리는 레이아웃 시프트가 난다.
   const scheduleWide = !myEventRows.length || !showFilings;
   grid.innerHTML =
-    actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
+    actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, stockSubLabel(item) || item.industry || "")), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
     actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? (thesisAlerts.length ? "투자 가설 점검 · 저장한 조건" : "저장한 조건에 맞는 종목") : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
     actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, scheduleWide ? "is-wide" : "") +
     (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "") +
@@ -1969,7 +1968,7 @@ function loadCalendar() {
     calendarLoaded = true;
     renderCalendarFiltered();
     if (!calendarEventsCache.length) {
-      body.innerHTML = `<p class="muted">경제 캘린더는 실시간 프록시 연결 시 표시됩니다. 백악관 일정 데이터가 없습니다.</p>`;
+      body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
     }
     return;
   }
@@ -2033,7 +2032,7 @@ function renderCalendar(events) {
   const body = byId("calendarBody");
   if (!body) return;
   if (!events.length) {
-    body.innerHTML = `<p class="muted">표시할 일정이 없습니다. (investing.com 접근이 일시적으로 차단되었을 수 있습니다)</p>`;
+    body.innerHTML = `<p class="muted">${calendarEventsCache.length ? "선택한 조건에 맞는 일정이 없습니다." : "표시할 일정이 없습니다."}</p>`;
     return;
   }
   const groups = [];
@@ -2049,7 +2048,8 @@ function renderCalendar(events) {
       <h3>${escapeHtml(calendarDayLabel(g.key, g.rows))}</h3>
       <div class="table-wrap">
         <table class="cal-table table-wide">
-          <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th>실제</th><th>예측</th><th>이전</th></tr></thead>
+          <colgroup><col class="cal-col-time"><col class="cal-col-country"><col class="cal-col-imp"><col><col class="cal-col-num"><col class="cal-col-num"><col class="cal-col-num"></colgroup>
+          <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th class="cal-num">실제</th><th class="cal-num">예측</th><th class="cal-num">이전</th></tr></thead>
           <tbody>
             ${g.rows.map((e) => `
               <tr>
@@ -2057,9 +2057,9 @@ function renderCalendar(events) {
                 <td class="cal-country">${escapeHtml(e.country || e.currency || "")}</td>
                 <td class="cal-imp">${impDots(e.importance)}</td>
                 <td class="cal-event">${escapeHtml(e.event || "")}</td>
-                <td class="cal-actual${calSurpriseClass(e)}" ${calSurpriseTitle(e)}>${escapeHtml(e.actual || "")}</td>
-                <td>${escapeHtml(e.forecast || "")}</td>
-                <td>${escapeHtml(e.previous || "")}</td>
+                <td class="cal-num cal-actual${calSurpriseClass(e)}" ${calSurpriseTitle(e)}>${escapeHtml(e.actual || "")}</td>
+                <td class="cal-num">${escapeHtml(e.forecast || "")}</td>
+                <td class="cal-num">${escapeHtml(e.previous || "")}</td>
               </tr>
             `).join("")}
           </tbody>
@@ -3126,7 +3126,7 @@ function setupFilters() {
   // 섹터 문자열은 스냅샷(외부 데이터)에서 온다 — 이스케이프 없이 <option> 에 넣지 말 것.
   const sectors = ["All", ...[...new Set(data.stocks.map((item) => item.sector))].filter(Boolean).sort()];
   const sectorOptions = sectors
-    .map((sector) => `<option value="${escapeHtml(sector)}">${escapeHtml(sector)}</option>`).join("");
+    .map((sector) => `<option value="${escapeHtml(sector)}">${escapeHtml(sector === "All" ? "전체" : ((typeof SECTOR_KO === "object" && SECTOR_KO[sector]) || sector))}</option>`).join("");
   byId("sectorFilter").innerHTML = sectorOptions;
   byId("sectorFilter").value = "All";
   byId("topSector").innerHTML = sectorOptions;
@@ -3145,7 +3145,7 @@ function setupFilters() {
 
   const etfRows = data.health?.etfRelative?.rows || [];
   const etfGroups = ["All", ...[...new Set(etfRows.map((item) => item.group).filter(Boolean))].sort()];
-  byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
+  byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${escapeHtml(group)}">${escapeHtml(group === "All" ? "전체 그룹" : group)}</option>`).join("");
 
   const scrBucket = byId("scrBucket");
   if (scrBucket) scrBucket.innerHTML = bucketOptions;
@@ -3795,11 +3795,11 @@ function renderSectorDetail() {
       <td class="rank-cell">${index + 1}</td>
       <td><strong>${escapeHtml(stockLabel(stock))}</strong></td>
       <td class="col-sub">${escapeHtml(stockSubLabel(stock) ?? "")}</td>
-      <td>${marketCfg().formatPrice(stock.price)}</td>
-      <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
-      <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
-      <td class="${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
-      <td><span class="rs-badge">${fmtRsi(stock)}</span></td>
+      <td class="num">${marketCfg().formatPrice(stock.price)}</td>
+      <td class="num ${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
+      <td class="num ${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
+      <td class="num ${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
+      <td class="num"><span class="rs-badge">${fmtRsi(stock)}</span></td>
     </tr>
   `).join("");
 
@@ -3901,7 +3901,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     svg.innerHTML = `
       <rect x="0" y="0" width="${width}" height="${height}" fill="#101827" rx="10"></rect>
       <text x="${width / 2}" y="${height / 2 - 10}" font-size="15" fill="#64748b" text-anchor="middle" font-weight="700">차트 데이터 없음</text>
-      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#475569" text-anchor="middle">이 섹터의 비교 차트는 다음 데이터 갱신에서 추가됩니다.</text>
+      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#94a3b8" text-anchor="middle">이 기간의 비교 차트 데이터가 없습니다.</text>
     `;
     tooltip.style.display = "none";
     return;
@@ -3981,12 +3981,19 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     const color = isZero ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.07)";
     const w = isZero ? 1.5 : 1;
     const dash = isZero ? "" : `stroke-dasharray="4 4"`;
-    const labelColor = isZero ? "#e2e8f0" : "#64748b";
-    const labelWeight = isZero ? "800" : "600";
     return `
       <line x1="${padL}" y1="${y.toFixed(1)}" x2="${padL + plotW}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="${w}" ${dash}></line>
-      <text x="${padL - 8}" y="${(y + 4).toFixed(1)}" font-size="10.5" fill="${labelColor}" text-anchor="end" font-weight="${labelWeight}">${r >= 0 ? "+" : ""}${r.toFixed(2)}%</text>
     `;
+  }).join("");
+  // 눈금 라벨은 플롯 왼쪽 여백에 놓이므로 clip-path(플롯 영역) 밖에 그린다 — 안에 두면 전부 잘려 Y축 숫자가 사라졌다.
+  const gridStep = gridLevels.length > 1 ? Math.abs(gridLevels[1] - gridLevels[0]) : 1;
+  const gridDecimals = gridStep >= 1 ? 0 : (gridStep >= 0.1 ? 1 : 2);
+  const gridLabelsSvg = gridLevels.map((r) => {
+    const y = yFor(r);
+    if (y < padT - 1 || y > padT + plotH + 1) return "";
+    const isZero = Math.abs(r) < 0.001;
+    const v = isZero ? 0 : r;
+    return `<text x="${padL - 8}" y="${(y + 4).toFixed(1)}" font-size="${mobile ? 13 : 11}" fill="${isZero ? "#e2e8f0" : "#94a3b8"}" text-anchor="end" font-weight="${isZero ? "800" : "600"}" style="font-variant-numeric:tabular-nums">${v > 0 ? "+" : ""}${v.toFixed(gridDecimals)}%</text>`;
   }).join("");
   
   // X axis labels (pick 5 evenly spaced points)
@@ -4000,7 +4007,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     const x = xFor(p.t);
     return `
       <line x1="${x.toFixed(1)}" y1="${(padT + plotH).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(padT + plotH + 6).toFixed(1)}" stroke="rgba(255,255,255,0.2)" stroke-width="1"></line>
-      <text x="${x.toFixed(1)}" y="${(padT + plotH + 20).toFixed(1)}" font-size="10.5" fill="#94a3b8" text-anchor="middle">${xDateLabel(p.t, timeframe)}</text>
+      <text x="${x.toFixed(1)}" y="${(padT + plotH + 20).toFixed(1)}" font-size="${mobile ? 13 : 11}" fill="#94a3b8" text-anchor="middle">${xDateLabel(p.t, timeframe)}</text>
     `;
   }).join("");
   
@@ -4032,6 +4039,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="rgba(255,255,255,0.02)" rx="4"></rect>
     <!-- Grid lines (clipped) -->
     <g clip-path="url(#chartClip)">${gridLinesSvg}</g>
+    <g>${gridLabelsSvg}</g>
     <!-- X axis labels -->
     <g>${xLabelsSvg}</g>
     <!-- Sector fill area -->

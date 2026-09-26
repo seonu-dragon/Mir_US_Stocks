@@ -36,9 +36,11 @@ function moversTagChips(row) {
   return tags.map((tag) => `<span class="movers-tag movers-tag-${tag === "섹터동조" ? "sector" : tag === "공시" ? "disc" : tag === "뉴스" ? "news" : "none"}">${escapeHtml(tag)}</span>`).join("");
 }
 
-function moversReasonText(row) {
+function moversReasonText(row, quietFailed) {
   const status = row.reasonStatus || "failed";
   if (status === "failed") {
+    // 목록 전체가 실패면 위에 한 번만 안내하고 줄마다 '요약 실패'를 반복하지 않는다.
+    if (quietFailed) return row.sectorNote ? `<span class="movers-sector-note">${escapeHtml(row.sectorNote)}</span>` : "";
     // 요약이 실패해도 업종 동조는 스냅샷 수치로 코드가 쓴 사실이라 그대로 보여 준다.
     const note = row.sectorNote ? `<span class="movers-sector-note">${escapeHtml(row.sectorNote)}</span><span class="movers-sep" aria-hidden="true"> · </span>` : "";
     return `${note}<span class="movers-reason movers-reason-failed">${MOVERS_STATUS_TEXT.failed}</span>`;
@@ -54,10 +56,17 @@ function moversReasonText(row) {
 function moversEvidenceLinks(row) {
   const ev = Array.isArray(row.evidence) ? row.evidence.slice(0, 3) : [];
   if (!ev.length) return "";
+  // 같은 종류가 여러 개면 "기사 원문 기사 원문"처럼 똑같은 링크가 반복돼 보여 번호를 붙인다(기사 1 · 기사 2).
+  const labelOf = (e) => (e.type === "disclosure" ? "공시" : "기사");
+  const totals = {};
+  ev.forEach((e) => { totals[labelOf(e)] = (totals[labelOf(e)] || 0) + 1; });
+  const seen = {};
   return `<span class="movers-links">${ev.map((e) => {
-    const label = e.type === "disclosure" ? "공시" : "기사";
+    const label = labelOf(e);
+    seen[label] = (seen[label] || 0) + 1;
+    const text = totals[label] > 1 ? `${label} ${seen[label]}` : `${label} 원문`;
     const title = [e.source, e.date, e.title].filter(Boolean).join(" · ");
-    return `<a href="${escapeHtml(safeHttpHref(e.link))}" target="_blank" rel="noopener" title="${escapeHtml(title)}">${label} 원문</a>`;
+    return `<a href="${escapeHtml(safeHttpHref(e.link))}" target="_blank" rel="noopener" title="${escapeHtml(title)}">${text}</a>`;
   }).join("")}</span>`;
 }
 
@@ -76,9 +85,10 @@ function renderMoversBoard() {
   const rows = moversSide === "down" ? p.down : p.up;
   el.hidden = false;
   const tab = (side, label, n) => `<button type="button" class="movers-tab${moversSide === side ? " is-active" : ""}" data-movers-side="${side}" aria-pressed="${moversSide === side}">${label} <span class="muted">${n}</span></button>`;
-  const statusBanner = p.status === "llm_failed"
-    ? `<p class="movers-banner">오늘은 요약 생성에 실패했습니다. 사유 칸이 '요약 실패'로 표시됩니다.</p>`
-    : "";
+  const allFailed = rows.length > 0 && rows.every((row) => (row.reasonStatus || "failed") === "failed");
+  const statusBanner = allFailed
+    ? `<p class="movers-banner">이번 목록은 사유 요약을 만들지 못했습니다. 등락률과 업종 동조만 표시합니다.</p>`
+    : (p.status === "llm_failed" ? `<p class="movers-banner">일부 종목은 사유 요약을 만들지 못해 '요약 실패'로 표시됩니다.</p>` : "");
   const body = rows.length
     ? `<ol class="movers-list">${rows.map((row) => `
         <li class="movers-row">
@@ -86,7 +96,7 @@ function renderMoversBoard() {
             <span class="movers-name">${escapeHtml(stockLabel(row.ticker, row))}${stockSubLabel(row.ticker, row) ? `<small>${escapeHtml(stockSubLabel(row.ticker, row))}</small>` : ""}</span>
             <strong class="movers-chg ${cls(Number(row.changePct))}">${fmtDailyPct(row.changePct)}</strong>
           </button>
-          <div class="movers-why">${moversTagChips(row)}${moversReasonText(row)}${moversEvidenceLinks(row)}</div>
+          <div class="movers-why">${moversTagChips(row)}${moversReasonText(row, allFailed)}${moversEvidenceLinks(row)}</div>
         </li>`).join("")}</ol>`
     : `<p class="muted">기준(${escapeHtml(p.criteria || "")})을 넘은 ${moversSide === "down" ? "하락" : "상승"} 종목이 없습니다.</p>`;
   const idx = (p.indexMoves || []).map((i) => `${escapeHtml(i.name)} <b class="${cls(Number(i.changePct))}">${fmtSignedPct(Number(i.changePct))}</b>`).join(" · ");

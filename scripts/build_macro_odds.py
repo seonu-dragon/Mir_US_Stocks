@@ -609,7 +609,7 @@ def build(now=None):
     recession = build_recession_signals()
     return {
         "updatedAtKst": kst_now().strftime("%Y-%m-%d %H:%M KST"),
-        "source": "Kalshi · Polymarket 공개 시장 데이터 / FRED · 연준(산업 지표 재사용)",
+        "source": "Kalshi · Polymarket 공개 시장 데이터 / FRED · 연준",
         "disclaimer": "예측시장 가격은 참여자들의 베팅으로 형성된 값이며 예측의 정답이 아닙니다. 매매 신호가 아닌 참고 정보입니다.",
         "thresholds": {
             "kalshiMinEventOpenInterest": KALSHI_MIN_EVENT_OI, "kalshiMinEventVolume": KALSHI_MIN_EVENT_VOLUME,

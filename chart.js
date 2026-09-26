@@ -539,7 +539,7 @@ const TECH_LEVEL_LABELS = [
   ["pivot", "Pivot (P)"], ["r1", "R1"], ["r2", "R2"], ["s1", "S1"], ["s2", "S2"],
   ["fib0", "Fib 0%"], ["fib236", "Fib 23.6%"], ["fib382", "Fib 38.2%"], ["fib50", "Fib 50%"],
   ["fib618", "Fib 61.8%"], ["fib100", "Fib 100%"],
-  ["stop", "Stop"], ["tgt", "Tgt"], ["tgt2", "Tgt 2R"],
+  ["stop", "−2ATR"], ["tgt", "+2ATR"], ["tgt2", "+4ATR"],
   ["lrUpper", "LR+"], ["lrLower", "LR-"], ["psar", "PSAR"],
 ];
 const FIB_LEVEL_KEYS = {
@@ -1948,9 +1948,9 @@ function drawChart(item, options = {}) {
       });
     }
     if (tl.atr) {
-      if (tlTypes.stop) techLevelSvg += hLine(tl.atr.stop, `Stop ${chartPriceLabel(tl.atr.stop)}`, "#dc2626", "2 3");
-      if (tlTypes.tgt) techLevelSvg += hLine(tl.atr.target, `Tgt ${chartPriceLabel(tl.atr.target)}`, "#16a34a", "2 3");
-      if (tlTypes.tgt2 && tl.atr.target2 != null) techLevelSvg += hLine(tl.atr.target2, `Tgt2 ${chartPriceLabel(tl.atr.target2)}`, "#15803d", "2 3");
+      if (tlTypes.stop) techLevelSvg += hLine(tl.atr.stop, `−2ATR ${chartPriceLabel(tl.atr.stop)}`, "#94a3b8", "2 3");
+      if (tlTypes.tgt) techLevelSvg += hLine(tl.atr.target, `+2ATR ${chartPriceLabel(tl.atr.target)}`, "#94a3b8", "2 3");
+      if (tlTypes.tgt2 && tl.atr.target2 != null) techLevelSvg += hLine(tl.atr.target2, `+4ATR ${chartPriceLabel(tl.atr.target2)}`, "#94a3b8", "2 3");
     }
     if (tl.linreg) {
       if (tlTypes.lrUpper) techLevelSvg += hLine(tl.linreg.upper, "LR+", "#94a3b8", "8 4");

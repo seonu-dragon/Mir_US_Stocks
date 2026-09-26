@@ -213,7 +213,7 @@ function renderInstitutional13f() {
 
   if (!institutions.length) {
     if (select) select.innerHTML = "";
-    detail.innerHTML = `<p class="muted">13F 데이터를 불러오지 못했습니다. <code>python scripts/build_13f_snapshot.py</code> 실행 후 다시 시도하세요.</p>`;
+    detail.innerHTML = `<p class="muted">13F 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>`;
     return;
   }
 
@@ -413,7 +413,7 @@ function renderCongressTrades() {
   `;
 
   if (!politicians.length) {
-    if (rankings) rankings.innerHTML = `<p class="muted">의회 매매 데이터가 없습니다. <code>python scripts/build_congress_trades.py</code> 실행 후 다시 시도하세요.</p>`;
+    if (rankings) rankings.innerHTML = `<p class="muted">의회 매매 데이터가 아직 없습니다.</p>`;
     if (matrix) matrix.innerHTML = "";
     if (select) select.innerHTML = "";
     detail.innerHTML = `<p class="muted">데이터를 불러오지 못했습니다.</p>`;

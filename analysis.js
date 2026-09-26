@@ -2384,7 +2384,7 @@ function renderPatternCard(result) {
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">이 종목 표본이 ${INDIVIDUAL_STAT_MIN_N}건 미만이라 전체 통계로 대체했습니다.</span>` : "";
     const failStr = c.failed ? `<span class="pat-tag" style="background:var(--tint-neg);color:var(--tint-neg-fg);border-color:var(--neg)">패턴 실패</span>` : "";
     const targetStr = c.measuredMove && Number.isFinite(c.measuredMove.target) ?
-      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">목표가 추정: <b>${fmtPrice(c.measuredMove.target)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
+      `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">패턴 높이만큼 이동 시: <b>${fmtPrice(c.measuredMove.target)}</b> <span class="muted">(${c.measuredMove.note})</span></span>` : "";
     // 현재 레짐(벤치마크 200일선 상회/하회) 조건부 성공률 — n>=30 일 때만 한 줄.
     const regimeStr = c.regimeStat ?
       `<span style="display:block; margin-top:4px; color:var(--muted); font-size:12px;">현재 레짐(200일선 ${c.regimeKey === "above200" ? "상회" : "하회"}) 기준: 과거 상승 비율 <b style="color:${gaugeColor(c.regimeStat.up_rate)}">${c.regimeStat.up_rate.toFixed(0)}%</b> (n=${c.regimeStat.n.toLocaleString()})</span>` : "";
@@ -2442,9 +2442,9 @@ function generateBriefing(result) {
   let opinion = "";
   if (up >= 65) opinion = `종합 분석 결과 <strong>상승 우위 국면</strong>입니다. ${consistency}`;
   else if (up >= 55) opinion = `종합 분석 결과 <strong>약한 상승 우위</strong> 상태입니다. 전반적인 추세는 우상향이나 단기 매물 소화 과정이 관찰됩니다. ${consistency}`;
-  else if (up > 45) opinion = `종합 분석 결과 <strong>방향성이 불분명한 혼조 국면</strong>입니다. 주요 신호들이 서로 엇갈리고 있어 무리한 추격 매수보다는 관망이 유리할 수 있습니다.`;
-  else if (up > 35) opinion = `종합 분석 결과 <strong>약한 하락 우위</strong> 상태입니다. 매수세가 점차 약해지고 있어 보수적인 리스크 관리가 필요합니다. ${consistency}`;
-  else opinion = `종합 분석 결과 <strong>하락 우위 국면</strong>입니다. 추세 이탈 신호가 다수 감지되어 기술적 반등 시 비중을 조절하는 전략을 권장합니다. ${consistency}`;
+  else if (up > 45) opinion = `종합 분석 결과 <strong>방향성이 불분명한 혼조 국면</strong>입니다. 주요 신호들이 서로 엇갈립니다.`;
+  else if (up > 35) opinion = `종합 분석 결과 <strong>약한 하락 우위</strong> 상태입니다. 하락 쪽 신호가 조금 더 많습니다. ${consistency}`;
+  else opinion = `종합 분석 결과 <strong>하락 우위 국면</strong>입니다. 추세 이탈 신호가 다수 감지됩니다. ${consistency}`;
 
   let supportReasons = [];
   let riskReasons = [];
@@ -2523,7 +2523,7 @@ function generateBriefing(result) {
   }
   if (result.techLevels && result.techLevels.atr) {
     const a = result.techLevels.atr;
-    strategy += ` 최근 변동폭(2ATR) 기준 하단 ${fmtPrice(a.stop)} · 상단 ${fmtPrice(a.target)}(현재가 대비 약 ${a.riskPct.toFixed(1)}%).`;
+    strategy += ` 최근 하루 평균 변동폭(ATR 14일)은 ±${fmtPrice(a.atr)}(약 ±${(a.riskPct / 2).toFixed(1)}%)입니다.`;
   }
 
   return `
@@ -2586,7 +2586,7 @@ function calibrationInnerHtml(score, horizon) {
   const market = isKrAnalysisMode() ? "kr" : "us";
   if (!calibrationData()) {
     return calibrationMissing
-      ? `<span class="muted">과거 적중률 표가 아직 산출되지 않았습니다 (scripts/build_prob_calibration.py).</span>`
+      ? `<span class="muted">과거 적중률 표가 아직 없습니다.</span>`
       : `<span class="muted">과거 적중률 표를 불러오는 중…</span>`;
   }
   const hit = calibrationBucket(score, horizon, market);
@@ -2796,10 +2796,8 @@ function renderTechnicalLevelsCard(result) {
   if (!tl) return "";
   const parts = [];
   if (tl.atr) {
-    parts.push(`<p class="pat-stat"><b>ATR 손절</b> (2ATR): <b style="color:var(--neg)">${fmtPrice(tl.atr.stop)}</b> ·
-      <b>목표</b> (1R): <b style="color:var(--pos)">${fmtPrice(tl.atr.target)}</b> ·
-      <b>목표</b> (2R): <b style="color:var(--pos)">${fmtPrice(tl.atr.target2)}</b>
-      <span class="muted"> (리스크 ${tl.atr.riskPct.toFixed(1)}%)</span></p>`);
+    parts.push(`<p class="pat-stat"><b>ATR(14) 변동폭</b> 하루 평균 ±${fmtPrice(tl.atr.atr)} <span class="muted">(±${(tl.atr.riskPct / 2).toFixed(1)}%)</span> ·
+      <b>±2ATR 범위</b> ${fmtPrice(tl.atr.stop)} ~ ${fmtPrice(tl.atr.target)}</p>`);
   }
   if (tl.pivots) {
     const p = tl.pivots;
@@ -2820,9 +2818,9 @@ function renderTechnicalLevelsCard(result) {
   }
   if (!parts.length) return "";
   return `<div class="card tech-levels-card">
-    <h3>기술적 레벨 · 리스크 프레임</h3>
+    <h3>기술적 레벨 · 변동폭</h3>
     ${parts.join("")}
-    <p class="pat-note muted">※ 피보나치·피벗·ATR 목표가는 참고용이며 투자 권유가 아닙니다.</p>
+    <p class="pat-note muted">※ 과거 가격으로 계산한 기준선이며, 매매 신호나 투자 권유가 아닙니다.</p>
   </div>`;
 }
 

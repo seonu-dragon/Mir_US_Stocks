@@ -2029,8 +2029,8 @@ function aiVerdictPanel(item) {
   const tgt = Number(f.targetPrice);
   if (Number.isFinite(tgt) && Number.isFinite(price) && price) {
     const up = (tgt - price) / price * 100;
-    if (up >= 15) sig.push({ s: 1.5, k: "strength", t: `목표가 +${up.toFixed(0)}% 상승 여력` });
-    else if (up <= -5) sig.push({ s: -1, k: "risk", t: `현재가가 목표가 상회 (${up.toFixed(0)}%)` });
+    if (up >= 15) sig.push({ s: 1.5, k: "strength", t: `애널리스트 평균 목표가가 현재가보다 ${up.toFixed(0)}% 높음` });
+    else if (up <= -5) sig.push({ s: -1, k: "risk", t: `현재가가 애널리스트 평균 목표가를 ${Math.abs(up).toFixed(0)}% 웃돎` });
   }
   const fpe = Number(f.forwardPE);
   if (Number.isFinite(fpe) && fpe > 0) {
@@ -2170,7 +2170,7 @@ async function fetchAiDashLlmComment(item, seq, opts) {
     }
   }
   if (!LIVE_DATA_PROXY) {
-    if (custom) slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">AI 답변은 서버(Worker) 연결 후 이용할 수 있습니다.</p>`;
+    if (custom) slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body muted">AI 답변을 지금 불러올 수 없습니다.</p>`;
     return;
   }
   slot.innerHTML = `<div class="ai-verdict-llm-head">${headLabel}</div><p class="ai-verdict-llm-body ai-verdict-llm-loading">작성 중…</p>`;

@@ -406,11 +406,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=8e767eadb5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=8e767eadb5"></noscript>
+    <link rel="preload" href="styles.css?v=dd12223a28" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=dd12223a28"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=6fd2321724"></script>
+    <script src="build_id.js?v=a975b8639f"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -797,6 +797,7 @@ html[data-market="kr"][data-theme="dark"] {
           <button class="sub-tab" data-sub="marketindex">시장지표</button>
           <button class="sub-tab" data-sub="signals" data-advanced="true">시그널</button>
           <button class="sub-tab" data-sub="industry" data-advanced="true">산업 지표</button>
+          <button class="sub-tab" data-sub="krflow">수급·자금</button>
         </nav>
 
         <div class="tab-leaf is-active" id="tab-map">
@@ -1290,6 +1291,14 @@ html[data-market="kr"][data-theme="dark"] {
         <!-- 산업·매크로 선행지표(industry.js) — 데이터는 탭 첫 진입 때 lazy 로드 -->
         <div class="tab-leaf" id="tab-industry"></div>
         <div class="tab-leaf" id="tab-marketindex"></div>
+        <!-- 국내 투자자 동향·증시자금·순매수 상위(kr-flow-panels.js) — 국내 전용, 데이터는 첫 진입 때 lazy -->
+        <div class="tab-leaf" id="tab-krflow">
+          <div class="section-title">
+            <h2>수급·자금</h2>
+            <p>코스피·코스닥 투자자별 순매수와 증시 주변 자금(예탁금·신용융자·미수금·반대매매)입니다.</p>
+          </div>
+          <div id="krFlowMarket"></div>
+        </div>
       </section>
 
       <!-- ==================== 종목 탭 (분석 · 찾기 · 비교 · 공시) ==================== -->
@@ -3164,7 +3173,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=470a2a089b"></script>
+    <script src="market_config.js?v=be0cad50e2"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3196,7 +3205,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=0f1d901fa4"></script>
+    <script src="feature-data.js?v=5d08360081"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a49b72735f"></script>
@@ -3219,7 +3228,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart.js?v=fe2b9f924b"></script>
     <script src="institutional.js?v=09576dbcdc"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
-    <script src="kr-panels.js?v=53e63c5806"></script>
+    <script src="kr-panels.js?v=10bb49b991"></script>
+    <script src="kr-flow-core.js?v=40d1f6309b"></script>
+    <script src="kr-flow-panels.js?v=e0a5c6bc8b"></script>
     <script src="kr-alerts.js?v=c549e24ad9"></script>
     <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
     <script src="signal-scorecard.js?v=6fc77f71e2"></script>
@@ -3232,7 +3243,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=234693fd95"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
-    <script src="app.js?v=79981066eb"></script>
+    <script src="app.js?v=70d2d3cb22"></script>
     <script src="ai-cosmos.js?v=069b3c9089"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
   </body>

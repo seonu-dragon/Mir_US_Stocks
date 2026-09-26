@@ -80,6 +80,9 @@ CHECKS = {
         ("data/kr_disclosures.json", 4, False),
         ("data/korea/pattern_stats.json", 10, False),
         ("data/korea/investor_flow.json", 5, False),
+        # 증시자금·시장 투자자별(build_kr_market_funds.py). 실행마다 updatedAtKst 를 새로 쓴다
+        # (소스가 둘 다 죽으면 안 씀). 연휴 감안 6일. 0건(count=증시자금 일수)도 잡는다.
+        ("data/korea/market_funds.json", 6, True),
         # 오늘의 특징주 — 거래일에만 새로 쓴다. 추석·설 연휴(최장 5~6일 휴장) 감안 7일.
         ("data/korea/movers_reasons.json", 7, False),
         ("data/signal_scorecard.json", 4, False),

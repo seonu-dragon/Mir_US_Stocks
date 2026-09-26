@@ -81,7 +81,8 @@
       "^GSPC": "SPY",
       "^RUT": "IWM",
     },
-    hiddenTabs: [],
+    // 국내 전용 잎(수급·자금 = kr-flow-panels.js)은 미국 모드에서 숨긴다.
+    hiddenTabs: ["krflow"],
     hiddenInstitutionalSubs: [],
     features: {
       congress: true,
@@ -99,6 +100,8 @@
       // PER·PBR·PSR 밴드(valuation-band.js) — SEC 공시 재무(공시일 기준) + 야후 월말 종가로 산출한
       // 약 5년 월말 배수(build_us_valuation_band.py). 국내와 같은 카드·샤드 모양.
       valuationBand: true,
+      // 증시자금·시장 투자자별 매매·순매수 상위(금투협·네이버)는 국내 전용.
+      krFunds: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -268,6 +271,9 @@
       krMarketAlerts: true,
       // PER·PBR 밴드 — KRX 공식 월말 PER/PBR 10년(build_kr_valuation_band.py).
       valuationBand: true,
+      // 시장 탭 '수급·자금' — 증시자금(금투협 freesis)·투자자별 일별 매매·순매수 상위
+      // (data/korea/market_funds.js, build_kr_market_funds.py) + 종목 수급 '일별 보기'.
+      krFunds: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

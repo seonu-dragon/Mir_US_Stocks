@@ -7755,6 +7755,84 @@ button.community-hot-ticker {
   color: var(--text-muted);
 }
 
+/* 종목 수급 카드 '일별 보기'(kr-flow-panels.js). 7열이라 좁은 사이드 컬럼·폰에선 가로 스크롤. */
+.krflow-daily { margin-top: 8px; }
+.krflow-daily > summary { cursor: pointer; color: var(--primary); font-weight: 600; font-size: var(--fs-cap); }
+/* width:0 + min-width:100% — 표의 최소 폭이 사이드 컬럼 그리드 트랙을 밀어내지 않게(스크롤은 이 안에서만). */
+.krflow-daily-scroll { overflow-x: auto; margin-top: 6px; -webkit-overflow-scrolling: touch; width: 0; min-width: 100%; }
+.krflow-daily-table { min-width: 460px; }
+.krflow-daily-table td, .krflow-daily-table th { white-space: nowrap; }
+
+/* 시장 탭 '수급·자금'(kr-flow-panels.js) — 투자자 동향·증시자금·순매수 상위 카드 */
+.kf-card {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  min-width: 0;
+}
+.kf-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 6px; }
+.kf-head h3 { margin: 0; font-size: 16px; font-weight: 700; margin-right: auto; }
+.kf-seg button { min-height: 30px; font-size: var(--fs-cap); }
+.kf-sub, .kf-source, .kf-lastday { margin: 4px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.5; }
+.kf-lastday span { margin-right: 10px; white-space: nowrap; }
+.kf-lastday b, .kf-tile b, .kf-fund-value, .kf-table td { font-variant-numeric: tabular-nums; }
+.kf-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 10px 0; }
+.kf-tile {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md);
+  background: var(--surface-2); color: var(--text); text-align: left; cursor: pointer; min-width: 0;
+}
+.kf-tile.is-active { border-color: var(--primary); box-shadow: inset 0 0 0 1px var(--primary); }
+.kf-tile-label { font-size: var(--fs-cap); color: var(--text-muted); }
+.kf-tile b { font-size: 17px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.kf-tile small, .kf-fund-value small { font-size: 11px; font-weight: 500; margin-left: 2px; color: var(--text-muted); }
+.kf-tile .pos, .kf-table .pos, .kf-lastday .pos, .kf-fund-diff.pos { color: var(--pos); }
+.kf-tile .neg, .kf-table .neg, .kf-lastday .neg, .kf-fund-diff.neg { color: var(--neg); }
+.kf-chart { margin: 0; }
+.kf-chart svg { display: block; width: 100%; height: 150px; }
+.kf-zero { stroke: var(--line); stroke-width: 1; }
+.kf-bar-pos { fill: color-mix(in srgb, var(--pos) 70%, transparent); }
+.kf-bar-neg { fill: color-mix(in srgb, var(--neg) 70%, transparent); }
+.kf-cum { fill: none; stroke: var(--primary); stroke-width: 2; }
+.kf-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: var(--fs-cap); color: var(--text-muted); }
+.kf-legend i { display: inline-block; vertical-align: middle; margin-right: 5px; }
+.kf-key-bar { width: 10px; height: 10px; background: linear-gradient(90deg, var(--pos) 50%, var(--neg) 50%); border-radius: 2px; }
+.kf-key-line { width: 14px; height: 2px; background: var(--primary); }
+.kf-axis { margin-left: auto; }
+.kf-funds { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 8px; }
+.kf-fund { display: flex; flex-direction: column; gap: 2px; padding: 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); min-width: 0; }
+.kf-fund-label { font-size: var(--fs-cap); color: var(--text-muted); }
+.kf-fund-value { font-size: 17px; font-weight: 700; white-space: nowrap; }
+.kf-fund-diff { font-size: var(--fs-cap); color: var(--text-muted); min-height: 1.2em; }
+.kf-spark { width: 100%; height: 32px; margin-top: 4px; }
+.kf-spark path { fill: none; stroke: var(--primary); stroke-width: 1.5; }
+.kf-top { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 8px; }
+.kf-top-col { min-width: 0; }
+.kf-top-col h4 { margin: 0 0 4px; font-size: var(--fs-sub); font-weight: 600; }
+.kf-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: var(--fs-sub); }
+.kf-table th, .kf-table td { padding: 5px 4px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.kf-table thead th { color: var(--text-muted); font-weight: 500; font-size: var(--fs-cap); }
+.kf-table tbody th { text-align: left; font-weight: 500; overflow: hidden; text-overflow: ellipsis; max-width: 150px; background: transparent; }
+.kf-table thead th:nth-child(2) { text-align: left; }
+.kf-table .kf-rank { color: var(--text-muted); width: 1.6em; text-align: left; }
+.kf-table tbody tr { cursor: pointer; }
+.kf-table tbody tr:hover { background: var(--surface-2); }
+.kf-foot { margin-top: 4px; }
+@media (max-width: 900px) {
+  .kf-funds { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .kf-top { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 480px) {
+  .kf-card { padding: 12px; }
+  .kf-tiles { gap: 6px; }
+  .kf-tile { padding: 7px 8px; }
+  .kf-tile b { font-size: 14px; white-space: normal; overflow: visible; word-break: keep-all; }
+  .kf-tile b small { display: none; }
+  .kf-axis { margin-left: 0; }
+}
+
 /* 공시 유형별 과거 반응. 신호가 아니라 '신호가 아니다' 를 말하는 줄이라 눈에 띄면
    안 된다 — 희석률 같은 실제 숫자(.ins-sub 기본)보다 한 단계 더 물러나 있게 둔다. */
 .disc-stat { opacity: 0.85; }

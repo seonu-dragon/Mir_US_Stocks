@@ -239,3 +239,116 @@ def test_kr_build_doc_financial_flag_and_strips_nothing_required():
     doc = kr.build_doc("105560", "00688996", "KB금융", raw, sector="금융", industry="은행", updated="t")
     assert doc["industryType"] == "bank" and "financial" in doc["flags"]
     assert doc["currency"] == "KRW" and doc["annual"][0]["fy"] == 2025 and "_raw" in doc
+
+
+# ─────────────────── KR 시간 예산 · 중간 저장 · 재개(2026-09-26) ───────────────────
+def test_kr_should_checkpoint_rules():
+    assert not kr.should_checkpoint(0, 999, every=150, every_min=20)       # 새 종목 없으면 저장 안 함
+    assert kr.should_checkpoint(150, 0, every=150, every_min=20)
+    assert not kr.should_checkpoint(149, 19.9, every=150, every_min=20)
+    assert kr.should_checkpoint(1, 20, every=150, every_min=20)           # 시간 기준
+    assert not kr.should_checkpoint(5, 999, every=0, every_min=0)         # 둘 다 끄면 마지막에만
+
+
+def test_kr_clock_budget():
+    t = {"now": 1000.0}
+    c = kr.Clock(10, now=lambda: t["now"])
+    assert not c.over() and c.elapsed_min() == 0
+    t["now"] += 599
+    assert not c.over()
+    t["now"] += 1
+    assert c.over() and abs(c.elapsed_min() - 10) < 1e-9
+    assert not kr.Clock(0, now=lambda: 1e12).over()                        # 0 = 무제한
+
+
+def _kr_env(tmp_path, monkeypatch, n=5):
+    import json as _json
+    snap = tmp_path / "snap.json"
+    stocks = [{"ticker": f"{i:06d}", "company": f"회사{i}", "marketCapB": 100 - i, "sector": "제조"} for i in range(1, n + 1)]
+    snap.write_text(_json.dumps({"stocks": stocks}), encoding="utf-8")
+    out = tmp_path / "fin"
+    out.mkdir()
+    monkeypatch.setattr(kr, "KR_SNAPSHOT", snap)
+    monkeypatch.setattr(kr, "OUT_DIR", out)
+    monkeypatch.setattr(kr, "OUT_JSON", tmp_path / "idx.json")
+    monkeypatch.setattr(kr, "OUT_JS", tmp_path / "idx.js")
+    corp_map = {s["ticker"]: f"C{s['ticker']}" for s in stocks}
+    return corp_map, out
+
+
+def _fake_dart(log):
+    def dart_get(path, params, key):
+        log.append((path, params.get("corp_code"), params.get("bsns_year"), params.get("reprt_code")))
+        if path.startswith("stockTotqy"):
+            return {"status": "013"}
+        return {"status": "000", "list": [
+            {**_row("IS", "ifrs-full_Revenue", "매출액", thstrm_amount=300, frmtrm_amount=250), "rcept_no": "20260315000001"},
+            _row("BS", "ifrs-full_Assets", "자산총계", thstrm_amount=1000, frmtrm_amount=900),
+        ]}
+    return dart_get
+
+
+def _args(**kw):
+    import argparse
+    base = dict(push=False, top=1000, max_calls=3000, only="", time_budget_min=0, save_every=150,
+                save_minutes=20, progress_every=0)
+    base.update(kw)
+    return argparse.Namespace(**base)
+
+
+def test_kr_checkpoints_every_n_and_resumes_without_refetch(tmp_path, monkeypatch):
+    import json as _json
+    corp_map, out = _kr_env(tmp_path, monkeypatch, n=5)
+    saves = []
+    real = kr.save_checkpoint
+
+    def spy(*a, **k):
+        saves.append((len(a[2]), k["final"]))
+        return real(*a, **k)
+
+    monkeypatch.setattr(kr, "save_checkpoint", spy)
+    log = []
+    # 호출 7회: 1계층(최신 사업보고서 + 최신 분기) 종목당 2회 → 3종목째 도중 예산 소진
+    rc = kr.main_run(_args(max_calls=7, save_every=2), "k", dart_get=_fake_dart(log), corp_map=corp_map)
+    assert rc == 0                                         # 예산 소진은 정상 종료
+    assert len(log) == 7
+    assert saves[0] == (2, False)                          # 2종목마다 중간 저장
+    assert saves[-1][1] is True                            # 남은 종목은 최종 저장
+    idx = _json.loads((tmp_path / "idx.json").read_text(encoding="utf-8"))
+    assert idx["count"] == 4 and idx["calls"] == 7
+    # 재개: 받은 보고서(_raw.reports)는 다시 받지 않는다
+    log2 = []
+    kr.main_run(_args(max_calls=2), "k", dart_get=_fake_dart(log2), corp_map=corp_map)
+    first = {(c, y, r) for _p, c, y, r in log}
+    assert log2 and not ({(c, y, r) for _p, c, y, r in log2} & first)
+
+
+def test_kr_time_budget_stops_and_saves(tmp_path, monkeypatch):
+    corp_map, out = _kr_env(tmp_path, monkeypatch, n=5)
+    t = {"now": 0.0}
+    log = []
+    inner = _fake_dart(log)
+
+    def slow(path, params, key):
+        t["now"] += 60.0                                   # 호출 1회 = 1분
+        return inner(path, params, key)
+
+    clock = kr.Clock(3, now=lambda: t["now"])
+    rc = kr.main_run(_args(time_budget_min=3), "k", dart_get=slow, corp_map=corp_map, clock=clock)
+    assert rc == 0 and len(log) == 3                       # 3분 뒤 호출 중단, 정상 종료
+    assert sorted(p.name for p in out.iterdir()) == ["000001.json", "000002.json"]   # 받은 데까지 저장
+
+
+def test_kr_rate_limit_still_saves_and_fails(tmp_path, monkeypatch):
+    corp_map, out = _kr_env(tmp_path, monkeypatch, n=3)
+    log = []
+    inner = _fake_dart(log)
+
+    def limited(path, params, key):
+        if len(log) >= 2:
+            raise SystemExit("[중단] DART status 020 (사용 한도 초과)")
+        return inner(path, params, key)
+
+    rc = kr.main_run(_args(), "k", dart_get=limited, corp_map=corp_map)
+    assert rc == 1                                         # 한도 초과는 실패로 알린다
+    assert (out / "000001.json").exists()                  # 그래도 받은 데까지는 저장

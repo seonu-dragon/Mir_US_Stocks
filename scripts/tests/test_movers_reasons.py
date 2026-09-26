@@ -238,3 +238,136 @@ def test_new_trade_date_ignores_previous_two_attempts(monkeypatch, tmp_path):
     out_json.write_text(json.dumps({"tradeDate": "2026-09-25", "status": "llm_failed", "attempt": 2}), encoding="utf-8")
     payload, code = b.build("us", use_llm=False, force=False)
     assert payload is None and code == 0
+
+
+# ─────────── Gemini 429 완화(2026-09-26): 한 번에 묻기 · 재시도는 실패 종목만 · 백오프·폴백 ───────────
+def _mover(ticker, change=8.0):
+    s = _stock(change=change)
+    s["ticker"] = ticker
+    return s
+
+
+def _ok_row(ticker):
+    return {"ticker": ticker, "same_company": True, "explains_move": True,
+            "reason": "198억원 규모 자사주 매입 결정", "evidence": ["E2"]}
+
+
+def test_summarize_asks_all_stocks_in_one_call():
+    import json as _json
+    movers = {"up": [_mover(f"U{i}") for i in range(10)], "down": [_mover(f"D{i}", -8) for i in range(10)]}
+    prompts = []
+
+    def llm(prompt):
+        prompts.append(prompt)
+        return _json.dumps([_ok_row(s["ticker"]) for s in movers["up"] + movers["down"]]), "m", ""
+
+    boards, meta = b.summarize(movers, "kr", [], "2026-09-25", True, llm=llm)
+    assert meta["llmCalls"] == 1 and len(prompts) == 1
+    assert all(r["reasonStatus"] == "ok" for r in boards["up"] + boards["down"])
+
+
+def test_summarize_reuses_prev_success_and_asks_only_failed():
+    import json as _json
+    movers = {"up": [_mover("A"), _mover("B")], "down": [_mover("C", -8)]}
+    prev = {"A": {"ticker": "A", "reasonStatus": "ok", "reason": "이전 사유", "tags": ["뉴스"], "evidence": []},
+            "B": {"ticker": "B", "reasonStatus": "failed", "reason": ""},
+            "C": {"ticker": "C", "reasonStatus": "none", "reason": b.NO_MATERIAL, "tags": ["불명"], "evidence": []}}
+    asked = []
+
+    def llm(prompt):
+        asked.append([t for t in ("[A]", "[B]", "[C]") if t in prompt])
+        return _json.dumps([_ok_row("B")]), "m", ""
+
+    boards, meta = b.summarize(movers, "kr", [], "2026-09-25", True, prev_rows=prev, llm=llm)
+    assert asked == [["[B]"]]                              # 실패했던 종목만 다시 묻는다
+    by = {r["ticker"]: r for r in boards["up"] + boards["down"]}
+    assert by["A"]["reason"] == "이전 사유" and by["A"]["reasonStatus"] == "ok"
+    assert by["B"]["reasonStatus"] == "ok"
+    assert by["C"]["reasonStatus"] == "none"
+    assert meta["reused"] == 2 and meta["asked"] == 1
+
+
+def test_summarize_retries_only_missing_rows_once():
+    import json as _json
+    movers = {"up": [_mover("A"), _mover("B"), _mover("C")], "down": []}
+    calls = []
+
+    def llm(prompt):
+        calls.append(prompt)
+        if len(calls) == 1:
+            return _json.dumps([_ok_row("A")]), "m", ""       # B·C 가 응답에서 빠짐
+        assert "[A]" not in prompt and "[B]" in prompt and "[C]" in prompt
+        return _json.dumps([_ok_row("B")]), "m", ""
+
+    boards, meta = b.summarize(movers, "kr", [], "2026-09-25", True, llm=llm)
+    assert meta["llmCalls"] == 2
+    st = {r["ticker"]: r["reasonStatus"] for r in boards["up"]}
+    assert st == {"A": "ok", "B": "ok", "C": "failed"}
+
+
+def test_summarize_stops_when_all_models_quota():
+    movers = {"up": [_mover("A")], "down": []}
+    calls = []
+
+    def llm(prompt):
+        calls.append(1)
+        return None, None, "QUOTA gemini-2.5-flash HTTP 429 (하루 한도)"
+
+    boards, meta = b.summarize(movers, "kr", [], "2026-09-25", True, llm=llm)
+    assert len(calls) == 1 and boards["up"][0]["reasonStatus"] == "failed"
+
+
+class _Resp:
+    def __init__(self, text):
+        import json as _json
+        self._b = _json.dumps({"candidates": [{"content": {"parts": [{"text": text}]}}]}).encode()
+
+    def read(self):
+        return self._b
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+def _http429(body):
+    import io
+    import urllib.error
+    return urllib.error.HTTPError("u", 429, "Too Many", {}, io.BytesIO(body.encode()))
+
+
+def test_call_gemini_backoff_then_model_fallback(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "x")
+    seen, slept = [], []
+
+    def opener(req, timeout=0):
+        model = req.full_url.split("/models/")[1].split(":")[0]
+        seen.append(model)
+        if model == "lite":
+            raise _http429('{"error":{"details":[{"quotaId":"GenerateRequestsPerMinutePerProjectPerModel-FreeTier"}]}}')
+        return _Resp("[]")
+
+    text, model, err = b.call_gemini("p", models=("lite", "flash"), sleep=slept.append, opener=opener)
+    assert (text, model, err) == ("[]", "flash", "")
+    assert seen == ["lite", "lite", "lite", "flash"]        # 분당 한도: 백오프 두 번 뒤 폴백
+    assert slept[:2] == list(b.BACKOFF_SECONDS)
+
+
+def test_call_gemini_daily_quota_skips_wait_and_flags_quota(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "x")
+    seen, slept = [], []
+
+    def opener(req, timeout=0):
+        seen.append(req.full_url)
+        raise _http429('{"error":{"details":[{"quotaId":"GenerateRequestsPerDayPerProjectPerModel-FreeTier"}]}}')
+
+    text, model, err = b.call_gemini("p", models=("lite", "flash"), sleep=slept.append, opener=opener)
+    assert text is None and err.startswith("QUOTA")
+    assert len(seen) == 2                                    # 하루 한도는 기다리지 않고 모델당 1회
+    assert all(s == 2 for s in slept)                        # 모델 사이 짧은 간격만
+
+
+def test_default_model_order_prefers_lite():
+    assert b.GEMINI_MODELS[0] == "gemini-2.5-flash-lite"    # 브리핑이 먼저 쓰는 flash 를 아낀다

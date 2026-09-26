@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=d36c6be1bf" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=d36c6be1bf"></noscript>
+    <link rel="preload" href="styles.css?v=8420935737" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=8420935737"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=036063c0cb"></script>
+    <script src="build_id.js?v=07992a82c1"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3331,6 +3331,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
     <script src="calendar-panel.js?v=cde775a5ef"></script>
+    <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
     <script src="app.js?v=21d7d05bdd"></script>
     <script src="ai-cosmos.js?v=83b89d5891"></script>

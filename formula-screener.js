@@ -438,7 +438,7 @@ function fxRenderFieldHelp() {
   const groups = {};
   av.list.forEach((fd) => { (groups[fd.group] = groups[fd.group] || []).push(fd); });
   const missing = FX_FIELDS.filter((fd) => !av.keys.includes(fd.key)).map((fd) => fd.key);
-  box.innerHTML = Object.entries(groups).map(([g, list]) => `<div class="fx-field-group"><b>${escapeHtml(g)}</b>${list.map((fd) => `<button type="button" class="fx-field-chip" data-fx-insert="${escapeHtml(fd.key)}" title="${escapeHtml(`${fd.label} · 출처 ${fd.src} · 값 있는 종목 ${av.counts[fd.key].toLocaleString()}/${av.universeSize.toLocaleString()}`)}">${escapeHtml(fd.key)}<span>${escapeHtml(fd.label)}</span></button>`).join("")}</div>`).join("")
+  box.innerHTML = Object.entries(groups).map(([g, list]) => `<div class="fx-field-group"><b>${escapeHtml(g)}</b>${list.map((fd) => `<button type="button" class="fx-field-chip" data-fx-insert="${escapeHtml(fd.key)}" title="${escapeHtml(`${fd.label} · 값 있는 종목 ${av.counts[fd.key].toLocaleString()}/${av.universeSize.toLocaleString()}`)}">${escapeHtml(fd.key)}<span>${escapeHtml(fd.label)}</span></button>`).join("")}</div>`).join("")
     + (missing.length ? `<p class="muted fx-missing">이 시장에 값이 없어 뺀 필드: ${escapeHtml(missing.join(", "))}</p>` : "");
 }
 
@@ -464,7 +464,7 @@ function fxRenderDelta(record) {
   const box = byId("fxDelta");
   if (!box) return;
   if (!record) {
-    box.innerHTML = `<p class="muted">수식을 저장하면 다음 스냅샷부터 신규 편입·이탈 종목을 비교합니다(저장형 스크리너와 같은 목록).</p>`;
+    box.innerHTML = `<p class="muted">수식을 저장하면 다음 갱신부터 새로 들어오고 빠진 종목을 비교합니다(저장형 스크리너와 같은 목록).</p>`;
     return;
   }
   box.innerHTML = savedScreenerDeltaHtml(record);

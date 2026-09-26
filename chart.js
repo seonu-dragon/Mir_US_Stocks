@@ -2063,9 +2063,8 @@ function drawChart(item, options = {}) {
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
     ${dateLabels}
-    <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
+    <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length}봉 · 종가 ${chartPriceLabel(last.c)} · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
-    <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">${chartPriceLabel(last.c)}</text>
     ${lastTag}
     ${axisHit}
     ${yBtns}

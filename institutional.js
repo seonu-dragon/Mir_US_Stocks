@@ -201,14 +201,14 @@ function renderInstitutional13f() {
 
   const schedule = payload.updateSchedule === "quarterly"
     ? "분기별 갱신 (13F 공시 주기)"
-    : "스냅샷 갱신";
+    : "정기 갱신";
   meta.innerHTML = `
     <div class="institutional-meta-grid">
       <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "SEC EDGAR 13F-HR")}</strong></article>
       <article><span>갱신 주기</span><strong>${escapeHtml(schedule)}</strong></article>
-      <article><span>마지막 빌드</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
+      <article><span>마지막 갱신</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
     </div>
-    <p>${escapeHtml(payload.note || "")}</p>
+    <p>${escapeHtml(String(payload.note || "").replace(/\s*매일 갱신해도 동일하므로 분기 공시 후에만 업데이트합니다\./, ""))}</p>
   `;
 
   if (!institutions.length) {
@@ -407,7 +407,7 @@ function renderCongressTrades() {
     <div class="institutional-meta-grid">
       <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "Congress PTR")}</strong></article>
       <article><span>갱신 주기</span><strong>매일 06:00 KST (미국 장마감 브리핑)</strong></article>
-      <article><span>마지막 빌드</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
+      <article><span>마지막 갱신</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
     </div>
     <p>${escapeHtml(payload.note || "")}</p>
   `;

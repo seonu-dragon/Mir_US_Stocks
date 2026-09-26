@@ -82,12 +82,12 @@
     const sameFormula = slotKey === lastSlotKey;
     lastSlotKey = slotKey;
     if (!meta) {
-      slot.innerHTML = `<div class="fxbt"><p class="muted fxbt-note">과거 백테스트 패널을 불러오는 중…</p></div>`;
+      slot.innerHTML = `<div class="fxbt"><p class="muted fxbt-note">과거 백테스트를 불러오는 중…</p></div>`;
       if (typeof ensureFeatureData === "function") {
         ensureFeatureData("screenerBacktest").then((ok) => {
           if (lastSlotKey !== slotKey || !slot.isConnected) return;
           if (ok && metaFor(market)) render(slot, opts);
-          else slot.innerHTML = `<div class="fxbt"><p class="muted fxbt-note">과거 백테스트 패널이 아직 없습니다(주간 빌더가 만들기 전). 현재 목록은 과거 검증되지 않은 결과입니다.</p></div>`;
+          else slot.innerHTML = `<div class="fxbt"><p class="muted fxbt-note">과거 백테스트 자료가 아직 없습니다. 현재 목록은 과거 검증되지 않은 결과입니다.</p></div>`;
         });
       }
       return;
@@ -212,10 +212,10 @@
       <details class="fxbt-fold"><summary>계산 규칙과 한계</summary>
         <ul>${(meta.rules || []).map((r) => `<li>${esc(r)}</li>`).join("")}
           <li>${esc(universeNote)}. 현재 스크리너 모집단과 종목 구성이 달라 순위(rank)·백분위(pct) 함수 값도 현재 화면과 다릅니다.</li>
-          <li>재무 필드는 현재 재무 파일이 있는 종목에만 있어(지금 살아남은 회사) 비교 기준을 같은 종목들로 맞췄습니다. 섹터·업종은 현재 분류를 과거에 그대로 씁니다.</li>
+          <li>재무 필드는 지금 살아남은 회사에만 있어 비교 기준도 같은 종목들로 맞췄습니다(생존편향). 섹터·업종은 현재 분류를 과거에 그대로 씁니다.</li>
           <li>최대 낙폭은 월말 값으로만 재서 실제 장중·일간 낙폭보다 작게 나옵니다. 벤치마크는 배당을 뺀 가격 수익률이며 비용을 넣지 않았습니다.</li>
         </ul>
-        <p class="muted">출처: ${esc(meta.source || "")} · 패널 갱신 ${esc(meta.updatedAtKst || "")}</p>
+        <p class="muted">출처: ${esc(meta.source || "")} · 갱신 ${esc(meta.updatedAtKst || "")}</p>
       </details>`;
   }
 

@@ -14360,6 +14360,46 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
   .fxbt-table th, .fxbt-table td { font-size: 12px; padding-left: 4px; padding-right: 4px; }
 }
 
+/* ── 종목 탭 다듬기(2026-09-26): 계산 방법 접기·재무 차트 눈금·표/카드 정렬 ── */
+.stock-method { margin-top: 8px; font-size: var(--fs-cap); color: var(--muted); }
+.stock-method > summary { cursor: pointer; color: var(--text); font-weight: 600; min-height: 28px; display: inline-flex; align-items: center; }
+.stock-method > p { margin: 4px 0 6px; line-height: 1.6; }
+.mf-chart .mf-grid { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
+.mf-chart .mf-tick { paint-order: stroke; stroke: var(--panel); stroke-width: 3px; stroke-linejoin: round; font-variant-numeric: tabular-nums; }
+.industry-rev-row { grid-template-columns: minmax(0, 1fr) auto auto 96px minmax(44px, auto); }
+.industry-rev-next { white-space: nowrap; }
+.analysis-quality-grid { align-items: start; }
+.analysis-quality-grid > .data-quality-card { height: auto; }
+@media (max-width: 720px) {
+  .industry-rev-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+}
+.estimate-revision-card[hidden] { display: none; }
+/* 오른쪽 열이 더 길 때 남는 높이를 차트·핵심 지표 카드 안의 빈칸으로 늘리지 않는다. */
+@media (min-width: 901px) {
+  .workspace.stock-analysis-top { grid-template-rows: auto 1fr; }
+  .stock-analysis-top > .analysis-fundamentals { align-self: start; }
+}
+@media (max-width: 640px) {
+  .congress-trades-table { min-width: 0; width: 100%; }
+  .congress-trades-table th, .congress-trades-table td { padding: 6px 4px; font-size: 12px; white-space: normal; }
+}
+.ia-preset-label[hidden] { display: none; }
+/* 공시·랭킹 표의 종목 버튼이 전역 button 최소 높이(컨트롤 높이)를 받아 행이 두 배로 높던 것 — 데스크톱만(폰은 36px 탭 타깃 유지). */
+@media (min-width: 641px) {
+  .insider-table .ins-ticker { min-height: 0; }
+}
+/* 공시 표 위 메타 줄: grid 라서 " · " 구분자와 인라인 링크가 한 줄씩 흩어지던 것 — 문장처럼 이어지게. */
+.institutional-meta { display: block; line-height: 1.7; }
+.institutional-meta > div + p, .institutional-meta > div + div, .institutional-meta > p + p { margin-top: 10px; }
+.es-link.is-inline, .sig-score-link.is-inline { min-height: 0; vertical-align: baseline; }
+.es-chart { max-width: none; }
+@media (max-width: 640px) {
+  /* 밸류에이션 랭킹: 폰에서 섹터 열을 빼 핵심 값(배수·시총·당일)이 첫 화면에 들어오게. */
+  #valuationTable .insider-table { min-width: 0; width: 100%; }
+  #valuationTable th:nth-child(3), #valuationTable td:nth-child(3) { display: none; }
+  #valuationTable .ins-sub { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #valuationTable th, #valuationTable td { padding-left: 4px; padding-right: 4px; }
+}
 /* ===== 2026-09-26 다듬기: 오늘·시장 탭 ===== */
 /* 경제 캘린더(데스크톱): 날짜별 표마다 열 폭이 달라 숫자 열이 들쭉날쭉하던 것을 고정 폭 + 오른쪽 정렬로 */
 @media (min-width: 641px) {

@@ -255,7 +255,7 @@ function esControlsHtml(ix, market, types, t) {
     </div>
     <div class="es-row es-row-wrap">
       <div class="es-group"><span class="es-glabel">초과수익 방법</span>${esSeg("method", [["ma", "시장조정", "종목 − 벤치마크"], ["mm", "시장모형", "추정창 −250~−30일 α·β"]], (v) => v === esState.method)}</div>
-      <div class="es-group"><span class="es-glabel">누적 시작</span>${esSeg("anchor", [["pre", "−5일부터"], ["d0", "0일부터"], ["d1", "+1일부터", "공시 시각을 모르는 유형은 0일에 공시 전 움직임이 섞일 수 있다"]], (v) => v === esState.anchor)}</div>
+      <div class="es-group"><span class="es-glabel">누적 시작</span>${esSeg("anchor", [["pre", "−5일부터"], ["d0", "0일부터"], ["d1", "+1일부터", "공시 시각을 모르는 유형은 0일에 공시 전 움직임이 섞일 수 있습니다"]], (v) => v === esState.anchor)}</div>
       <div class="es-group"><span class="es-glabel">가중</span>${esSeg("weight", [["event", "이벤트 동일"], ["day", "날짜 동일", "같은 날 몰린 이벤트를 하루 한 표로"]], (v) => v === esState.weighting)}</div>
       <div class="es-group"><span class="es-glabel">대조군</span>${esSeg("control", [["on", esState.showControl ? "표시 중" : "숨김"]], () => esState.showControl)}</div>
     </div>
@@ -290,15 +290,15 @@ function esResultHtml(ix, market, sel, payloads) {
     series.forEach((s, si) => { if (s.agg) hIdx.forEach((pi, hi) => { keys.push(`${si}:${hi}`); ps.push(s.agg.event[pi].p); }); });
     const qs = core.bhAdjust(ps);
     qMap = new Map(keys.map((k, i) => [k, qs[i]]));
-    warn.push(`여러 유형을 한꺼번에 비교하면 우연히 '구간이 0을 벗어난' 결과가 늘어난다. 표의 q 값은 표에 나온 ${ps.length}개 검정 전체에 Benjamini–Hochberg FDR 보정을 한 값이다 — q 가 0.1 을 넘으면 우연과 구분하기 어렵다.`);
+    warn.push(`여러 유형을 한꺼번에 비교하면 우연히 '구간이 0을 벗어난' 결과가 늘어납니다. 표의 q 값은 ${ps.length}개 검정 전체를 FDR 보정한 값으로, 0.1 을 넘으면 우연과 구분하기 어렵습니다.`);
   }
   const cl = main.agg.clustering;
-  if (cl.warn) warn.push(`같은 날 군집: 0일이 ${escapeHtml(MirEventStudyCore.dayIso(cl.topDay))} 하루에 ${cl.top.toLocaleString()}건(${Math.round(cl.topShare * 100)}%) 몰렸고 날짜당 평균 ${cl.perDay.toFixed(1)}건이다. 구간은 날짜 묶음 부트스트랩으로 계산했지만, 평균이 하루 시장 움직임에 끌릴 수 있으니 '날짜 동일' 가중으로도 확인할 것.`);
-  if (main.t.timing === "date" && esState.anchor !== "d1") warn.push("이 유형은 공시 '시각'이 없어 공시일을 0일로 뒀다 — 장 마감 뒤 공시는 반응이 +1일에 나고, 0일에는 공시 전 움직임이 섞일 수 있다. '+1일부터'로도 확인할 것.");
-  if (main.t.accrual) warn.push("적립형 유형이다 — 수집을 시작한 뒤(2026-09~)의 표본만 있어 기간이 짧다.");
-  if (esState.sizeB.length && main.t.size) warn.push(`크기 조건을 걸면 크기 속성이 있는 표본만 남는다(${escapeHtml(main.t.size.label)} 있는 표본 ${main.t.nSize.toLocaleString()}건 중).`);
-  if (esState.method === "mm") warn.push(`시장모형은 추정창(−250~−30거래일)에 관측이 120일 이상 있는 이벤트만 쓴다(이 유형 ${main.t.nMM.toLocaleString()}/${main.t.n.toLocaleString()}). 대조군은 시장조정 기준이다.`);
-  if (esState.ticker) warn.push("종목 한 곳의 표본은 적어 한두 번의 반응이 평균을 좌우한다 — 참고용.");
+  if (cl.warn) warn.push(`같은 날 군집: 0일이 ${escapeHtml(MirEventStudyCore.dayIso(cl.topDay))} 하루에 ${cl.top.toLocaleString()}건(${Math.round(cl.topShare * 100)}%) 몰렸습니다(날짜당 평균 ${cl.perDay.toFixed(1)}건). 평균이 그날 하루 시장 움직임에 끌릴 수 있으니 '날짜 동일' 가중으로도 확인해 보세요.`);
+  if (main.t.timing === "date" && esState.anchor !== "d1") warn.push("이 유형은 공시 시각이 없어 공시일을 0일로 뒀습니다. 장 마감 뒤 공시는 반응이 +1일에 나타나므로 '+1일부터'로도 확인해 보세요.");
+  if (main.t.accrual) warn.push("최근부터 모으기 시작한 유형이라 표본 기간이 짧습니다.");
+  if (esState.sizeB.length && main.t.size) warn.push(`크기 조건을 걸면 ${escapeHtml(main.t.size.label)} 값이 있는 표본(${main.t.nSize.toLocaleString()}건)만 남습니다.`);
+  if (esState.method === "mm") warn.push(`시장모형은 이벤트 전 가격 이력이 충분한 표본만 씁니다(이 유형 ${main.t.nMM.toLocaleString()}/${main.t.n.toLocaleString()}건). 대조군은 시장조정 기준입니다.`);
+  if (esState.ticker) warn.push("종목 한 곳의 표본은 적어 한두 번의 반응이 평균을 좌우합니다.");
 
   const D0 = MirEventStudyCore.FIELD.d0;
   const firstD = MirEventStudyCore.dayIso(main.rows.reduce((a, r) => Math.min(a, r[D0]), main.rows[0][D0]));
@@ -321,7 +321,9 @@ function esResultHtml(ix, market, sel, payloads) {
 
 function esChartHtml(ix, series) {
   const points = ix.points;
-  const W = 640, H = 260, L = 44, R = 12, T = 12, B = 28;
+  // viewBox 를 실제 폭에 맞춘다 — 고정 640 이면 폰에서 눈금 글자가 5px 로 줄고 넓은 화면에선 부풀었다.
+  const hostW = (typeof byId === "function" && byId("eventStudyRoot") && byId("eventStudyRoot").clientWidth) || 640;
+  const W = Math.max(300, Math.min(1100, Math.round(hostW))), H = W < 480 ? 220 : 260, L = 44, R = 12, T = 12, B = 28;
   const xMin = points[0], xMax = points[points.length - 1];
   const X = (p) => L + ((p - xMin) / (xMax - xMin)) * (W - L - R);
   const vals = [0];
@@ -409,7 +411,7 @@ function esTableHtml(ix, series, qMap) {
     }).join("");
   }).join("");
   return `<div class="es-table-wrap"><table class="es-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>
-    <p class="muted es-note">판정은 대조군(같은 종목 무작위 날짜)과의 짝 차이 95% 구간이 0을 벗어났는지로 본다(대조 표본이 30 미만이면 초과수익 자체가 0 대비). 대조군 평균이 0에서 벗어난 만큼은 이벤트와 무관한 표본 종목군 자체의 흐름(현재까지 살아남은 종목만 있는 생존편향 포함)이다. 수수료·세금·체결 가능성은 반영하지 않았고, 과거 평균이 앞으로의 반응을 보장하지 않는다. 매매 신호가 아니다.</p>`;
+    <p class="muted es-note">판정은 대조군(같은 종목의 무작위 날짜)과의 차이 95% 구간이 0을 벗어났는지로 봅니다. 대조군 평균이 0에서 벗어난 만큼은 이벤트와 무관한 종목군 자체의 흐름(생존편향 포함)입니다. 비용은 반영하지 않았고, 과거 평균은 앞으로의 반응을 보장하지 않습니다.</p>`;
 }
 
 function esRecentHtml(ix, main) {
@@ -444,7 +446,7 @@ function esLimitsHtml(ix, market) {
       ${["ma", "mm", "day0", "car", "control", "ci", "guard"].filter((k) => m[k]).map((k) => `<li>${escapeHtml(m[k])}</li>`).join("")}
       ${(ix.limits || []).map((x) => `<li><b>한계</b> ${escapeHtml(x)}</li>`).join("")}
       ${st.events ? `<li>이 시장 수집 이벤트 ${Number(st.events).toLocaleString()}건 중 경로 계산 ${Number(st.kept || 0).toLocaleString()}건 — 가격 이력 없음 ${Number(st.noPrice || 0).toLocaleString()} · 창 부족 ${Number(st.noWindow || 0).toLocaleString()} · 가격 오류 ${Number(st.badPrice || 0).toLocaleString()} · 중복 ${Number(st.deduped || 0).toLocaleString()}.</li>` : ""}
-      ${mk.dartMissing && mk.dartMissing.length ? `<li>DART 분기 백필 진행 중 — 아직 안 받은 분기 ${mk.dartMissing.length}개(${escapeHtml(mk.dartMissing.slice(0, 4).join(", "))}…).</li>` : ""}
+      ${mk.dartMissing && mk.dartMissing.length ? `<li>아직 반영되지 않은 DART 분기 ${mk.dartMissing.length}개(${escapeHtml(mk.dartMissing.slice(0, 4).join(", "))}…).</li>` : ""}
     </ul>
   </details>
   <p class="muted es-source">출처: ${escapeHtml(ix.source || "")} · 기준 ${escapeHtml(ix.updatedAtKst || "")}</p>`;
@@ -488,6 +490,6 @@ function renderStockEventStudy(item) {
     host.hidden = false;
     host.innerHTML = `<div class="es-card-head"><h3>과거 이벤트 반응</h3><span class="muted">시장조정 초과수익 평균 · 0일부터 · 기준 ${escapeHtml(ix.updatedAtKst || "")}</span></div>
       <div class="es-table-wrap"><table class="es-table es-card-table"><thead><tr><th>이벤트</th><th class="num">건수</th><th class="num">0~+1일</th><th class="num">0~+5일</th><th class="num">0~+20일</th><th class="num">최근</th><th></th></tr></thead><tbody>${body}</tbody></table></div>
-      <p class="muted es-note">한 종목의 표본은 몇 건뿐이라 우연이 크게 작용한다 — 전체 표본과 비교해 볼 것. 가격 이력 약 5년 안의 이벤트만, 매매 신호가 아니다.</p>`;
+      <p class="muted es-note">한 종목의 표본은 몇 건뿐이라 우연이 크게 작용합니다. 전체 표본과 비교해 보세요. 최근 약 5년 이벤트만 셌고, 매매 신호가 아닙니다.</p>`;
   });
 }

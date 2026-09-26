@@ -125,7 +125,7 @@ function eiReleaseCardHtml(rel, { compact = false } = {}) {
       ${rel.guidanceNote ? `<p class="ei-guid-note">${escapeHtml(rel.guidanceNote)}</p>` : ""}
       <p class="ei-src">원문 <a href="${escapeHtml(rel.exhibitUrl || rel.filingUrl || "")}" target="_blank" rel="noopener">EX-99.1 보도자료</a> ·
         <a href="${escapeHtml(rel.filingUrl || "")}" target="_blank" rel="noopener">8-K 제출</a> ·
-        Gemini 한국어 요약, 원문에 없는 숫자가 든 항목은 제거${rel.droppedItems ? `(${rel.droppedItems}개)` : ""} · 기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
+        AI 한국어 요약(원문에 있는 숫자만) · 기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
     </article>`;
 }
 

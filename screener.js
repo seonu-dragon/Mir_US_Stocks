@@ -126,7 +126,7 @@ function renderSavedScreenerDelta(record) {
   const box = byId("savedScreenerDelta");
   if (!box) return;
   if (!record) {
-    box.innerHTML = `<p class="muted">조건을 저장하면 다음 스냅샷부터 편입·이탈을 비교합니다.</p>`;
+    box.innerHTML = `<p class="muted">조건을 저장하면 다음 갱신부터 편입·이탈을 비교합니다.</p>`;
     return;
   }
   box.innerHTML = savedScreenerDeltaHtml(record);
@@ -637,9 +637,9 @@ const COMPARE_METRICS = [
   ["시총", (i) => fmtBillions(i.marketCapB)],
   ["신고가 거리", (i) => (Number.isFinite(Number(i.newHighDistancePct)) ? fmtPct(-Number(i.newHighDistancePct)) : "—")],
   ["PER", (i) => fmtMultiple(i.fundamentals?.pe)],
-  ["Fwd PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
-  ["P/S", (i) => fmtMultiple(i.fundamentals?.ps)],
-  ["P/B", (i) => fmtMultiple(i.fundamentals?.pb)],
+  ["선행 PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
+  ["PSR", (i) => fmtMultiple(i.fundamentals?.ps)],
+  ["PBR", (i) => fmtMultiple(i.fundamentals?.pb)],
   ["섹터", (i) => i.sector],
   ["신호", (i) => signalFor(i)],
 ];

@@ -161,9 +161,14 @@ def find_trading(stock, start_back: int = 1, max_back: int = 10):
         merged = {}
         for market in MARKETS:
             merged.update(trading_by_ticker(stock, d, market))
-        if merged:
+        # KRX 는 최신 거래일 행을 먼저 내주고 '비중' 은 나중에 채우는 날이 있다 — 그날은 전
+        # 종목이 0.0 이라(2026-09-24~26 실제로 2,588종목 전부 0.00% 로 화면에 나감) 없는
+        # 날로 보고 하루 더 거슬러 간다.
+        if merged and any(v > 0 for v in merged.values()):
             print(f"  최신 가용 거래일(거래비중): {d} ({len(merged)}종목)")
             return d, merged
+        if merged:
+            print(f"  {d}: 거래비중이 전부 0 — 아직 집계 전으로 보고 건너뜀")
     return None, {}
 
 

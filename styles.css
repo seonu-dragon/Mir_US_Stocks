@@ -31,42 +31,9 @@
   --chip-border: rgba(10, 20, 30, 0.20);
   --chat-safe-bottom: 61px;
 
-  /* ── z-index 스택 토큰 (2026-09-04) ──
-     값은 예전 리터럴을 그대로 옮긴 것이라 쌓임 순서가 바뀌지 않았다. 새 규칙은 리터럴 대신 토큰을 쓸 것.
-     매핑(옛 값 → 토큰): -1 behind · 0 base · 1/2/4/5/6 layer-N(컴포넌트 내부 쌓임: 섹터 제목·타일·탑바·배너)
-     · 10 sticky(고정 헤더·복사 버튼·위젯 오버레이) · 18 ai-chatlog · 20 popover(툴팁·탭 스크롤·도움말)
-     · 25 ai-input · 30 topbar(설정 팝오버가 sticky 탭 위에 뜨도록) · 40 legend-pop · 50 ai-topbar · 60/61 drawer-backdrop/drawer(구성종목 패널)
-     · 80 ia-popover · 90 cmdk · 100 dropdown(AI 자동완성) · 120 autocomplete(티커 자동완성)
-     · 900 fab(챗봇) · 1000 modal/lightbox(라이트박스·히트맵 툴팁·지표 드롭다운·세션 메뉴)
-     · 2000 assembly(AI 조립 오버레이) · 9999 toast(앱 토스트·AI 모달) · 10000 fullscreen(위젯 전체화면)
-     · 99999 offline(오프라인 배너) */
-  --z-behind: -1;
-  --z-base: 0;
-  --z-layer-1: 1;
-  --z-layer-2: 2;
-  --z-layer-4: 4;
+  /* z-index 토큰 중 첫 페인트(탑바·탭 줄)에 쓰는 둘만 여기 — 나머지는 critical 밖 :root 에 */
   --z-layer-5: 5;
-  --z-layer-6: 6;
-  --z-sticky: 10;
-  --z-ai-chatlog: 18;
   --z-popover: 20;
-  --z-ai-input: 25;
-  --z-topbar: 30;
-  --z-legend-pop: 40;
-  --z-ai-topbar: 50;
-  --z-drawer-backdrop: 60;
-  --z-drawer: 61;
-  --z-ia-popover: 80;
-  --z-cmdk: 90;
-  --z-dropdown: 100;
-  --z-autocomplete: 120;
-  --z-fab: 900;
-  --z-modal: 1000;
-  --z-lightbox: 1000;
-  --z-assembly: 2000;
-  --z-toast: 9999;
-  --z-fullscreen: 10000;
-  --z-offline: 99999;
 
   /* ── 의미 색 (단일 브랜드 색 = primary, 등락 = pos/neg) ── */
   --text-muted: #6b7079;   /* 보조 텍스트 (12px 에서도 4.5:1) */
@@ -95,11 +62,6 @@
   --topbar-accent: #1d4ed8;
   --topbar-line: rgba(10, 20, 30, 0.10);
   --topbar-ctl: #f3f4f6;      /* 헤더 안 검색·시장 전환 바탕 */
-  --chart-bg: #ffffff;        /* SVG 차트 캔버스 */
-  --chart-line: rgba(10, 20, 30, 0.08);   /* 격자 */
-  --chart-axis: #6b7079;      /* 축 눈금 글자 */
-  --chart-text: #374151;      /* 차트 안 라벨 */
-  --chart-panel: rgba(10, 20, 30, 0.03);  /* 보조 패널(RSI 등) 바탕 */
   --ink: #1c1f24;             /* 선택색: 선택 칩·탭 밑줄·기본 버튼(파랑을 대신) */
   --ink-fg: #ffffff;
 
@@ -117,17 +79,12 @@
   --tint-danger-fg: var(--tint-neg-fg);
 
   /* ── 그림자: 카드에는 없음. 떠 있는 요소(팝오버·드롭다운·토스트)와 다이얼로그만 ── */
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.06);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);          /* 팝오버·드롭다운 */
-  --shadow-dialog: 0 8px 28px rgba(0, 0, 0, 0.14);   /* 다이얼로그·커맨드 팔레트 */
 
   /* ── 간격 스케일 (4·8·12·16·20·24) ── */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
 
   /* ── 타이포그래피 스케일 (7단 12·13·14·16·18·22·28, 12px 아래 없음 — UI 1단계) ──
      14 = 본문·표, 16 = 카드·패널 제목, 18 = 섹션 제목·종목명, 22 = 페이지 섹션, 28 = 가격 */
@@ -164,6 +121,55 @@
   box-sizing: border-box;
 }
 /* === critical:end === */
+
+/* critical 밖 토큰: 첫 페인트(탑바·탭·요약 띠)에 안 쓰여 인라인 critical CSS 예산(300줄)에서 뺐다.
+   styles.css 가 로드되면 바로 정의되고, JS 가 getComputedStyle 로 읽는 토큰(pos/neg)은 여기 두지 않는다. */
+:root {
+  /* ── z-index 스택 토큰 (2026-09-04) ──
+     값은 예전 리터럴을 그대로 옮긴 것이라 쌓임 순서가 바뀌지 않았다. 새 규칙은 리터럴 대신 토큰을 쓸 것.
+     매핑(옛 값 → 토큰): -1 behind · 0 base · 1/2/4/5/6 layer-N(컴포넌트 내부 쌓임: 섹터 제목·타일·탑바·배너)
+     · 10 sticky(고정 헤더·복사 버튼·위젯 오버레이) · 18 ai-chatlog · 20 popover(툴팁·탭 스크롤·도움말)
+     · 25 ai-input · 30 topbar(설정 팝오버가 sticky 탭 위에 뜨도록) · 40 legend-pop · 50 ai-topbar · 60/61 drawer-backdrop/drawer(구성종목 패널)
+     · 80 ia-popover · 90 cmdk · 100 dropdown(AI 자동완성) · 120 autocomplete(티커 자동완성)
+     · 900 fab(챗봇) · 1000 modal/lightbox(라이트박스·히트맵 툴팁·지표 드롭다운·세션 메뉴)
+     · 2000 assembly(AI 조립 오버레이) · 9999 toast(앱 토스트·AI 모달) · 10000 fullscreen(위젯 전체화면)
+     · 99999 offline(오프라인 배너) */
+  --z-behind: -1;
+  --z-base: 0;
+  --z-layer-1: 1;
+  --z-layer-2: 2;
+  --z-layer-4: 4;
+  --z-layer-6: 6;
+  --z-sticky: 10;
+  --z-ai-chatlog: 18;
+  --z-ai-input: 25;
+  --z-topbar: 30;
+  --z-legend-pop: 40;
+  --z-ai-topbar: 50;
+  --z-drawer-backdrop: 60;
+  --z-drawer: 61;
+  --z-ia-popover: 80;
+  --z-cmdk: 90;
+  --z-dropdown: 100;
+  --z-autocomplete: 120;
+  --z-fab: 900;
+  --z-modal: 1000;
+  --z-lightbox: 1000;
+  --z-assembly: 2000;
+  --z-toast: 9999;
+  --z-fullscreen: 10000;
+  --z-offline: 99999;
+  --chart-bg: #ffffff;        /* SVG 차트 캔버스 */
+  --chart-line: rgba(10, 20, 30, 0.08);   /* 격자 */
+  --chart-axis: #6b7079;      /* 축 눈금 글자 */
+  --chart-text: #374151;      /* 차트 안 라벨 */
+  --chart-panel: rgba(10, 20, 30, 0.03);  /* 보조 패널(RSI 등) 바탕 */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);          /* 팝오버·드롭다운 */
+  --shadow-dialog: 0 8px 28px rgba(0, 0, 0, 0.14);   /* 다이얼로그·커맨드 팔레트 */
+  --space-5: 20px;
+  --space-6: 24px;
+}
 
 /* 앱 토스트(예: '한 번 더 뒤로 가기하면 종료됩니다') */
 .app-toast {
@@ -8599,8 +8605,6 @@ html[data-theme="dark"] {
   --line: rgba(255, 255, 255, 0.10);
   --line-soft: rgba(255, 255, 255, 0.06);
   --line-strong: rgba(255, 255, 255, 0.20);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
-  --shadow-dialog: 0 8px 28px rgba(0, 0, 0, 0.55);
   --chip-bg: #1a1d21;
   --chip-border: rgba(255, 255, 255, 0.20);
   --blue: #3b82f6;
@@ -8615,11 +8619,6 @@ html[data-theme="dark"] {
   --topbar-ctl: #24272c;
   --ink: #e8eaed;
   --ink-fg: #121417;
-  --chart-bg: #1a1d21;
-  --chart-line: rgba(255, 255, 255, 0.07);
-  --chart-axis: #979ca4;
-  --chart-text: #c9cdd3;
-  --chart-panel: rgba(255, 255, 255, 0.03);
   --green: #34d399;
   --red: #f87171;
   --amber: #fbbf24;
@@ -8645,7 +8644,6 @@ html[data-theme="dark"] {
   --tint-warn-fg: #fcd34d;
   --tint-info-fg: #93c5fd;
   /* 그림자(다크) */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 /* ── 시장별 등락색 (사용자 결정 2026-09-26) ──
    한국 모드만 상승 빨강·하락 파랑(국내 관례). 미국 모드는 위 기본값(상승 초록·하락 빨강).
@@ -8676,6 +8674,17 @@ html[data-market="kr"][data-theme="dark"] {
   --topbar-accent: #a5a6fb;
 }
 /* === critical:end === */
+/* 다크 테마 중 첫 페인트에 안 쓰는 토큰(critical 밖) */
+html[data-theme="dark"] {
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
+  --shadow-dialog: 0 8px 28px rgba(0, 0, 0, 0.55);
+  --chart-bg: #1a1d21;
+  --chart-line: rgba(255, 255, 255, 0.07);
+  --chart-axis: #979ca4;
+  --chart-text: #c9cdd3;
+  --chart-panel: rgba(255, 255, 255, 0.03);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
 html[data-theme="dark"] .event-card-community,
 html[data-theme="dark"] .daily-action-board,
 html[data-theme="dark"] .move-explanation-card,

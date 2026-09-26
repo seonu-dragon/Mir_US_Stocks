@@ -178,7 +178,7 @@
         <span class="fxbt-badge is-survivor">생존편향: 상장폐지 종목 없음</span>
         <span class="muted fxbt-verdict-why">${esc(v.reasons.join(" · "))}</span>
       </div>
-      <p class="fxbt-summary">${esc(window.MirScreenerBacktestCore.describe(res, { cost: costLabel }))} 과거 성과는 미래를 보장하지 않습니다.</p>
+      <p class="fxbt-summary">${esc(window.MirScreenerBacktestCore.describe(res, { cost: costLabel }))}</p>
       ${chartSvg(res, benchLabel, out.clientWidth || (slot.clientWidth - 28))}
       <div class="table-wrap"><table class="compact-table fxbt-table">
         <thead><tr><th></th><th class="num">이 조건</th><th class="num">비교 기준<br><span class="muted">같은 유니버스 동일가중</span></th><th class="num">${esc(benchLabel)}</th></tr></thead>

@@ -3643,7 +3643,16 @@ function stockChangeHtml(item) {
   const arrow = pct > 0 ? "▲" : pct < 0 ? "▼" : "";
   let abs = "";
   if (!atLimit && Number.isFinite(price) && price > 0 && pct > -100) {
-    const diff = Math.abs(price - price / (1 + pct / 100));
+    let diff = Math.abs(price - price / (1 + pct / 100));
+    // 스냅샷 등락률은 소수 1자리라 거꾸로 푼 절대값이 '9,956원' 처럼 호가 단위에 안 맞는
+    // 값이 된다. 국내는 두 가격이 모두 호가 단위의 배수이므로 전일가 구간의 호가 단위로 맞춘다.
+    if (isKrMarket()) {
+      const prev = price / (1 + pct / 100);
+      // ETF·ETN 은 가격대와 무관하게 5원(2,000원 미만 1원).
+      const tick = prev < 2000 ? 1 : isStockEtf(item) ? 5 : prev < 5000 ? 5 : prev < 20000 ? 10
+        : prev < 50000 ? 50 : prev < 200000 ? 100 : prev < 500000 ? 500 : 1000;
+      diff = Math.round(diff / tick) * tick;
+    }
     abs = diff > 0 ? escapeHtml(marketCfg().formatPrice(diff)).replace(/^[-+]/, "") : "0";
   }
   const pctText = `${fmtSignedPct(pct, 2)}${atLimit ? " (상하한)" : ""}`;

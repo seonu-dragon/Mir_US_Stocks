@@ -159,6 +159,10 @@
     - 하단 지표: 거래량(Volume), Vol MA20, Volume Ratio, OBV, A/D, CMF, MFI, RSI(14), MACD, Stochastic, ROC, Momentum, Williams %R, ATR, ADX, CCI, RS vs SPY/QQQ/Sector, Mansfield RS.
   - *차트 비교*: 주 차트 위에 다른 종목(예: SPY, QQQ)을 멀티 차트 형태로 추가 비교.
   - *프리셋 관리*: 차트 설정을 내 커스텀 프리셋으로 저장/불러오기/삭제 기능.
+- **업종 상대 팩터 등급 A~F (종목 분석 · AI 대시보드, 2026-09-26)**:
+  - 밸류(PER·PBR·PSR·EV/EBITDA·EV/EBIT·P/FCF, 0 이하 제외)·성장(매출·영업이익 성장률, 예상 EPS 성장률 추정치)·수익성(ROE·ROA·순이익률)·모멘텀(3개월 수익률·52주 고점 근접)·재무 건전성(부채비율·유동비율)을 **같은 업종 안** 백분위로 등급화(A ≥80 · B ≥60 · C ≥40 · D ≥20 · F). 업종 표본 10개 미만이면 섹터로 올리고, 그래도 모자라면 보류.
+  - 펼치면 구성 지표 값·업종 내 백분위·표본 수. 팩터마다 `factor_validation.json` 결과 한 줄(모멘텀 구성 지표는 대부분 미통과, 나머지는 '검증 대상 아님').
+  - 브라우저 계산(`factor-grade-core.js` + `factor-grades.js`): 새 데이터 파일 없이 열린 종목의 업종·섹터 집단만 계산(부팅 비용 0). 기존 스노우플레이크는 유지하되 '절대 기준'으로 명시.
 - **모멘텀 점수 스캐너** (2026-09-04 이전 이름 '상승확률 스캐너'):
   - 스냅샷 지표(추세·모멘텀·RSI·거래량 등)로 전 종목을 12~88점으로 점수화해 순위를 매긴다.
   - **확률이 아니다.** `scripts/build_factor_validation.mjs` 의 과거 검증에서 이 점수는
@@ -177,6 +181,12 @@
   - "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주" 등의 자연어 입력을 파싱해 자동 스크리닝 필터를 적용하여 종목 발굴.
 - **조건 저장형 스크리너 (Saved Screener)**:
   - 사용자가 스크리닝한 조건을 저장하고 다음 날 데이터 스냅샷이 업데이트되었을 때 편입/이탈된 신규 종목의 델타(Delta)를 확인하는 추적 기능.
+- **사용자 정의 수식 스크리너 (종목 › 찾기 › 수식, 2026-09-26)**:
+  - `roe > 15 and pe < sectorMedian(pe) and rsi14 < 40` 같은 수식을 직접 쓰거나 조건 블록으로 조립. 파서는 `formula-core.js`(토크나이저 + 재귀 하강, **eval/new Function 없음**, node 테스트 `scripts/tests/test_formula_core.mjs`).
+  - 함수: `sectorMedian`·`sectorPct`·`industryMedian`·`industryPct`(그룹 표본 5개 미만이면 결측)·`rank`(1 = 가장 큼)·`pct`·`median`·`abs`·`min`·`max`·`avg`. 결측은 3값 논리로 **조건 불충족**, 0 나누기는 결측, 조건·숫자 혼용은 컴파일 단계 오류, 잘못된 필드는 비슷한 이름 제안.
+  - 필드는 스냅샷·map_fundamentals 에 이 시장에서 30종목 이상 값이 있는 것만 자동완성·필드 목록에 보인다(KR 부채비율·성장률, US 예상 EPS 성장률 등 시장별로 다름). 집계 모집단은 시장 전체(ETF 제외), 유니버스 선택은 결과만 거른다.
+  - 사용자 정의 열(최대 4개, 머리글 클릭 정렬), 공유 링크(`?tab=search&sub=formula&fx=<토큰>`), 저장은 **저장형 스크리너와 같은 목록**(`kind: "formula"`)이라 편입/이탈 델타가 그대로 동작하고 기존 저장 셀렉트에서도 `[수식]` 으로 열린다.
+  - 결과 옆에 "이 조건은 과거 검증되지 않았습니다" 표시. 3차 스크리너 백테스트 연결 지점: `window.MirFormulaBacktest.render(slotEl, { compiled, source, market, columns })` 를 정의하면 `#fxBacktestSlot` 에 붙는다(없으면 자리 숨김).
 - **밸류에이션 랭킹**:
   - PE, Forward PE, PEG, ROE, 배당수익률 등의 재무 지표를 기준으로 섹터 및 시가총액별 종목 정렬 및 검색.
 - **공매도 잔고 & 숏스퀴즈 스캐너 (Short Interest)**:

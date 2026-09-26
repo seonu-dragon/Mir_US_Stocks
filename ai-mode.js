@@ -1260,10 +1260,10 @@ function aiSnowflakePanel(item) {
     <div style="flex:1;min-width:150px">
       <div style="font-size:13px;color:var(--muted);margin-bottom:8px">종합 <b style="color:var(--text)">${total}/30</b> · 통과한 재무 체크</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;font-size:12px">${checks}</div>
-      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">각 축 = PER·PBR·성장·부채·ROE·배당 등 최대 6개 체크 중 통과 개수. 예측 점수가 아니라 재무 상태 요약입니다.</div>
+      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65"><b>절대 기준</b>: 각 축 = PER 15 미만·ROE 15% 초과 같은 고정 기준 최대 6개 중 통과 개수라 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다. 같은 업종 안 위치는 아래 '업종 상대 팩터 등급'을 보세요. 예측 점수가 아니라 재무 상태 요약입니다.</div>
     </div>
   </div>`;
-  return aiModePanel("종목 체력", "스노우플레이크 · 재무 체크", body);
+  return aiModePanel("종목 체력", "스노우플레이크 · 절대 기준 재무 체크", body);
 }
 
 // DCF 적정주가(Simply Wall St 벤치마크). 2단계(10년 성장 + 영구성장) 현금흐름 할인.
@@ -1663,6 +1663,7 @@ function renderAiModeDataBoard(item) {
     <div class="ai-mode-data-board">
       ${aiTechnicalPanel(item)}
       ${aiSnowflakePanel(item)}
+      ${typeof aiFactorGradePanel === "function" ? aiFactorGradePanel(item) : ""}
       ${aiDcfPanel(item)}
       ${aiFactorPanel(item)}
       ${aiRiskPanel(item)}

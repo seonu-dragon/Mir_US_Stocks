@@ -13942,3 +13942,96 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .sig-score-grid { grid-template-columns: 1fr; }
   .sig-score-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* 수식 스크리너(formula-screener.js) — 종목 탭 › 찾기 › 수식 */
+#sub-formula code { font-size: var(--fs-cap); overflow-wrap: anywhere; }
+.fx-help-list { margin: 6px 0 10px; padding-left: 18px; font-size: var(--fs-cap); line-height: 1.7; color: var(--text-muted); }
+.fx-field-list { display: flex; flex-direction: column; gap: 8px; }
+.fx-field-group { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; min-width: 0; }
+.fx-field-group > b { flex: 0 0 52px; font-size: var(--fs-cap); color: var(--text-muted); }
+.fx-field-chip { display: inline-flex; align-items: baseline; gap: 4px; max-width: 100%; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--panel); color: var(--text); font-size: var(--fs-cap); font-family: inherit; cursor: pointer; }
+.fx-field-chip span { color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fx-field-chip:hover { border-color: var(--accent); }
+.fx-missing { margin: 4px 0 0; font-size: var(--fs-cap); overflow-wrap: anywhere; }
+.fx-editor { margin: 10px 0; min-width: 0; }
+.fx-label { display: block; margin-bottom: 4px; font-size: var(--fs-cap); font-weight: 600; color: var(--text-muted); }
+.fx-input-wrap { position: relative; min-width: 0; }
+#fxInput { display: block; width: 100%; box-sizing: border-box; min-height: 56px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); color: var(--text); font: 500 16px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; resize: vertical; }
+#fxInput:focus, .fx-col-expr:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.fx-suggest { position: absolute; left: 0; right: 0; top: calc(100% + 2px); z-index: 30; margin: 0; padding: 4px; list-style: none; max-height: 260px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); box-shadow: 0 6px 20px rgba(0, 0, 0, .12); }
+.fx-suggest[hidden] { display: none; }
+.fx-suggest li { display: flex; align-items: baseline; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: pointer; font-size: var(--fs-cap); min-width: 0; }
+.fx-suggest li b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; white-space: nowrap; }
+.fx-suggest li span { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fx-suggest li.is-active, .fx-suggest li:hover { background: var(--tint-info); }
+.fx-error { margin: 6px 0 0; padding: 6px 10px; border-radius: var(--r-md); background: var(--tint-warn); color: var(--tint-warn-fg); font-size: var(--fs-cap); line-height: 1.55; overflow-wrap: anywhere; }
+.fx-error[hidden] { display: none; }
+.fx-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.fx-actions label { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cap); color: var(--text-muted); min-width: 0; }
+.fx-actions select { min-width: 0; max-width: 100%; }
+.fx-examples .fx-example { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 500; font-size: var(--fs-cap); max-width: 100%; overflow-wrap: anywhere; text-align: left; }
+.fx-fold { padding-bottom: 4px; }
+.fx-fold > :not(summary) { margin-left: 14px; margin-right: 14px; }
+.fx-blocks { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.fx-block { display: grid; grid-template-columns: minmax(0, 2fr) 64px minmax(0, 1.3fr) minmax(0, 1fr) 36px; gap: 6px; align-items: center; }
+.fx-block select, .fx-block input { min-width: 0; width: 100%; box-sizing: border-box; }
+.fx-block input[hidden] { visibility: hidden; display: block; }
+.fx-preview { margin: 8px 14px; font-size: var(--fs-cap); overflow-wrap: anywhere; }
+.fx-note { font-size: var(--fs-cap); margin-top: 10px; line-height: 1.6; }
+.fx-columns { display: flex; flex-direction: column; gap: 6px; }
+.fx-col-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2.4fr) 36px; gap: 6px; align-items: center; }
+.fx-col-row input { min-width: 0; width: 100%; box-sizing: border-box; }
+.fx-col-expr { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.fx-col-err { grid-column: 1 / -1; margin: 0; font-size: var(--fs-cap); color: var(--tint-warn-fg); overflow-wrap: anywhere; }
+.fx-col-err[hidden] { display: none; }
+.fx-result-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; margin: 12px 0 6px; }
+.fx-meta { margin: 0; font-size: var(--fs-cap); }
+.fx-unverified { margin: 0; padding: 3px 10px; border: 1px dashed var(--line); border-radius: var(--r-pill); font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.5; }
+.fx-backtest-slot[hidden] { display: none; }
+.fx-table th.num, .fx-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.fx-sort { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.fx-sort.is-custom { color: var(--accent); }
+@media (max-width: 640px) {
+  .fx-block { grid-template-columns: minmax(0, 1fr) 64px; }
+  .fx-block .fx-b-mode { grid-column: 1 / 2; }
+  .fx-block .fx-b-value { grid-column: 2 / 3; }
+  .fx-block .fx-b-del { grid-column: 2 / 3; justify-self: end; }
+  .fx-col-row { grid-template-columns: minmax(0, 1fr) 36px; }
+  .fx-col-row .fx-input-wrap { grid-column: 1 / -1; grid-row: 2; }
+  .fx-field-group > b { flex-basis: 100%; }
+  .fx-result-head { flex-direction: column; align-items: flex-start; }
+  .fx-unverified { border-radius: var(--r-md); }
+}
+
+/* 업종 상대 팩터 등급(factor-grades.js) — 종목 분석 + AI 대시보드. 등급 색은 매수/매도로 읽히지 않게 단색 농도만 쓴다. */
+.fgrade-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }
+.fgrade-card[hidden] { display: none; }
+.fgrade-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 8px; }
+.fgrade-head h3 { margin: 0; font-size: var(--fs-body); }
+.fgrade-sub { font-size: var(--fs-cap); }
+.fgrade-list { display: flex; flex-direction: column; gap: 4px; }
+.fgrade-row { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); min-width: 0; }
+.fgrade-row > summary { list-style: none; display: flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 10px; cursor: pointer; min-width: 0; }
+.fgrade-row > summary::-webkit-details-marker { display: none; }
+.fgrade-row > summary::after { content: "▾"; margin-left: auto; color: var(--text-muted); transition: transform .18s; flex: none; }
+.fgrade-row[open] > summary::after { transform: rotate(180deg); }
+.fgrade-badge { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: 28px; height: 26px; padding: 0 6px; border-radius: var(--r-md); font-weight: 700; font-size: 14px; border: 1px solid var(--accent); color: var(--accent); box-sizing: border-box; }
+.fgrade-A { background: var(--accent); color: #fff; }
+.fgrade-B { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.fgrade-C { background: transparent; }
+.fgrade-D { border-color: var(--line); color: var(--text-muted); }
+.fgrade-F { border-color: var(--line); color: var(--text-muted); border-style: dashed; }
+.fgrade-na { border-color: var(--line); color: var(--text-muted); font-size: var(--fs-cap); font-weight: 600; }
+.fgrade-name { flex: none; font-weight: 600; font-size: var(--fs-sub); }
+.fgrade-sum { min-width: 0; font-size: var(--fs-cap); color: var(--text-muted); overflow-wrap: anywhere; line-height: 1.45; }
+.fgrade-esc { display: inline-block; padding: 0 6px; border: 1px solid var(--line); border-radius: var(--r-pill); }
+.fgrade-body { padding: 4px 10px 10px; min-width: 0; }
+.fgrade-table-wrap { overflow-x: auto; }
+.fgrade-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: var(--fs-cap); }
+.fgrade-table th, .fgrade-table td { padding: 4px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+.fgrade-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fgrade-table tr.fgrade-unused td { color: var(--text-muted); }
+.fgrade-dir { color: var(--text-muted); font-size: 11px; white-space: nowrap; }
+.fgrade-note, .fgrade-valid { margin: 6px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.6; overflow-wrap: anywhere; }
+.fgrade-valid { padding: 4px 8px; border-left: 2px solid var(--line); }
+.fgrade-foot { margin: 8px 0 0; font-size: var(--fs-cap); color: var(--text-muted); line-height: 1.65; overflow-wrap: anywhere; }

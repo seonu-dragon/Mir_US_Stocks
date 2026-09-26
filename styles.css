@@ -13982,6 +13982,7 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
 @media (max-width: 640px) {
   .financials-card { padding: 12px; }
   .mf-table { font-size: var(--fs-cap); }
+}
 /* ===== 포트폴리오 위험 분석(portfolio-risk.js, 2026-09-26) ===== */
 .pf-risk-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-bottom: 8px; }
 .pf-risk-controls label { display: flex; flex-direction: column; gap: 3px; min-width: 0; color: var(--muted); font-size: var(--fs-cap); }

@@ -241,3 +241,12 @@ function renderUnifiedCalendarIfVisible() {
     if (host) renderCalendarPanel(host);
   }
 }
+
+// 오른쪽 레일(rail.js)이 window.MirCalendarPanel.render(el, { market, compact, container }) 로 부른다.
+window.MirCalendarPanel = {
+  render(host, opts) {
+    calPanelEnsureData();
+    if (typeof loadCalendar === "function" && typeof calendarLoaded !== "undefined" && !calendarLoaded) loadCalendar();
+    renderCalendarPanel(host, opts);
+  },
+};

@@ -19,6 +19,14 @@
   data/us_price_targets/index.json/.js   window.US_PRICE_TARGETS_INDEX — 건수·출처·기준 시각·샤드 버전
   data/us_price_targets/NN.json          16 샤드 {"v":1,"t":{티커: 레코드}} — 바뀐 샤드만 다시 쓴다
 
+점 티커(주식 클래스: BRK.B · BF.B · HEI.A · LEN.B …, 2026-09-26 실측)
+  Nasdaq 은 'BRK.B' 를 심볼로 알아보지만(내부 표기 BRK/B) targetprice 는 전부 "No record found" 다.
+  BRK-B · BRK/B · BRK^B · BRKB 는 400/404. 즉 심볼 변환으로는 안 나온다 → 점 티커만 Yahoo quoteSummary
+  (financialData 목표가 저·평균·고 + recommendationTrend 이번 달 의견, 심볼은 BRK-B 형식)로 보충한다.
+  레코드에 "src":"yahoo" 를 달아 화면이 출처를 Yahoo 로 표기하고, 저장 키는 원래 티커(BRK.B)다.
+  다른 클래스의 목표가를 옮겨 쓰지 않는다(HEI.A 는 HEI 보다 싸게 거래되고 BRK.A 는 BRK.B 의 1,500배).
+  점 티커는 시총 상위 밖이어도 대상에 넣는다(스냅샷 전체 약 23개 — 추가 호출이 적다).
+
 실행: python scripts/build_us_price_targets.py [--top 1000] [--only AAPL,NVDA] [--push]
 """
 
@@ -139,6 +147,78 @@ def parse_targetprice(payload) -> tuple[str, dict | None]:
     return "ok", rec
 
 
+def yahoo_symbol(ticker: str) -> str:
+    """BRK.B → BRK-B (Yahoo 표기). 저장 키는 원래 티커를 그대로 쓴다."""
+    return str(ticker).upper().replace(".", "-").replace("/", "-")
+
+
+def is_share_class(ticker: str) -> bool:
+    return "." in str(ticker)
+
+
+def _raw(node, key):
+    v = (node or {}).get(key) if isinstance(node, dict) else None
+    return v.get("raw") if isinstance(v, dict) else v
+
+
+def parse_yahoo_summary(result) -> tuple[str, dict | None]:
+    """quoteSummary result(financialData, recommendationTrend) → ('ok', 레코드) | ('none', None).
+
+    Nasdaq 레코드와 같은 키(lo/avg/hi, buy/hold/sell/n). 의견은 이번 달(period 0m) 분포 —
+    strongBuy+buy → buy, strongSell+sell → sell. 월별 이력(hist)은 싣지 않는다.
+    """
+    if not isinstance(result, dict):
+        return "none", None
+    fd = result.get("financialData") or {}
+    cur = str(_raw(fd, "financialCurrency") or "USD").upper()
+    rec: dict = {}
+    lo, avg, hi = _num(_raw(fd, "targetLowPrice")), _num(_raw(fd, "targetMeanPrice")), _num(_raw(fd, "targetHighPrice"))
+    if cur == "USD" and lo is not None and avg is not None and hi is not None and 0 < lo <= avg <= hi:
+        rec.update({"lo": round(lo, 2), "avg": round(avg, 2), "hi": round(hi, 2)})
+    trend = ((result.get("recommendationTrend") or {}).get("trend")) or []
+    now = next((r for r in trend if isinstance(r, dict) and r.get("period") == "0m"), None)
+    if now:
+        vals = [_cnt(now.get(k)) for k in ("strongBuy", "buy", "hold", "sell", "strongSell")]
+        if None not in vals and sum(vals) > 0:
+            sb, b, h, s, ss = vals
+            rec.update({"buy": sb + b, "hold": h, "sell": s + ss, "n": sum(vals)})
+    if not rec.get("n") and "avg" not in rec:
+        return "none", None
+    rec["src"] = "yahoo"
+    return "ok", rec
+
+
+class YahooTargets:
+    """점 티커 보충용 Yahoo quoteSummary 세션(쿠키+크럼, build_us_dividends_calendar.Yahoo 재사용). 첫 사용 때 인증."""
+
+    MODULES = "financialData,recommendationTrend"
+
+    def __init__(self):
+        self._y = None
+        self._ok = None
+
+    def lookup(self, ticker: str):
+        """('ok', rec) | ('none', None) | ('fail', None)=인증·네트워크 실패(직전 레코드 유지)."""
+        if self._ok is None:
+            from build_us_dividends_calendar import Yahoo
+            self._y = Yahoo()
+            self._ok = self._y.auth()
+            if not self._ok:
+                print("  [Yahoo] 크럼 인증 실패 — 점 티커 보충 생략")
+        if not self._ok:
+            return "fail", None
+        url = (f"https://query1.finance.yahoo.com/v10/finance/quoteSummary/{urllib.parse.quote(yahoo_symbol(ticker))}"
+               f"?modules={self.MODULES}&crumb={urllib.parse.quote(self._y.crumb)}")
+        try:
+            d = json.loads(self._y._get(url))
+        except Exception as exc:
+            if "404" in str(exc):
+                return "none", None
+            return "fail", None
+        res = ((d.get("quoteSummary") or {}).get("result")) or []
+        return parse_yahoo_summary(res[0] if res else None)
+
+
 def fetch(ticker: str, retries: int = 3):
     url = URL.format(t=urllib.parse.quote(ticker))
     last = None
@@ -161,7 +241,11 @@ def universe(top: int) -> list[str]:
     snap = load_json(SNAPSHOT, {"stocks": []}) or {"stocks": []}
     stocks = [s for s in snap.get("stocks") or [] if s.get("ticker") and s.get("sector") not in ETF_SECTORS]
     stocks.sort(key=lambda s: float(s.get("marketCapB") or 0), reverse=True)
-    return [str(s["ticker"]).upper() for s in stocks[:top]]
+    out = [str(s["ticker"]).upper() for s in stocks[:top]]
+    seen = set(out)
+    # 점 티커(주식 클래스)는 시총 상위 밖이어도 넣는다 — Nasdaq 이 비워 두는 종목이라 Yahoo 로 따로 받는다.
+    out += [t for t in (str(s["ticker"]).upper() for s in stocks[top:]) if is_share_class(t) and t not in seen]
+    return out
 
 
 def main() -> int:
@@ -177,6 +261,8 @@ def main() -> int:
     before = len(records)
     stamp = datetime.now(KST).date().isoformat()
     ok = none = fail = 0
+    yahoo_ok = 0
+    yahoo = YahooTargets()
     t0 = time.time()
     for i, t in enumerate(tickers, 1):
         try:
@@ -189,6 +275,14 @@ def main() -> int:
         finally:
             time.sleep(PAUSE)
         kind, rec = parse_targetprice(payload)
+        if kind == "none" and is_share_class(t):
+            kind, rec = yahoo.lookup(t)
+            if kind == "ok":
+                yahoo_ok += 1
+            elif kind == "fail":
+                # 인증·네트워크 실패: 직전 레코드를 그대로 두고 실패로 세지는 않는다(Nasdaq 응답은 받았다)
+                none += 1
+                continue
         if kind == "ok":
             old = records.get(t) or {}
             rec["asOf"] = old.get("asOf") if {k: v for k, v in old.items() if k != "asOf"} == rec else stamp
@@ -201,7 +295,7 @@ def main() -> int:
             fail += 1
         if i % 100 == 0:
             print(f"  {i}/{len(tickers)} · 성공 {ok} · 없음 {none} · 실패 {fail} · {(time.time() - t0) / 60:.0f}분")
-    print(f"[목표주가] 대상 {len(tickers)} · 성공 {ok} · 커버리지 없음 {none} · 실패 {fail}")
+    print(f"[목표주가] 대상 {len(tickers)} · 성공 {ok}(점 티커 Yahoo 보충 {yahoo_ok}) · 커버리지 없음 {none} · 실패 {fail}")
 
     if (ok + none) < len(tickers) * MIN_SUCCESS_RATIO:
         print("[목표주가] 응답 성공이 대상의 절반 미만 — 소스 이상으로 보고 기존 파일 유지")
@@ -223,6 +317,7 @@ def main() -> int:
         "count": len(records),
         "universe": len(tickers),
         "failed": fail,
+        "yahooShareClass": yahoo_ok,
         "shards": SHARDS,
         "ver": ver,
     }

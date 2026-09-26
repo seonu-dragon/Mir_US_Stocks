@@ -10,9 +10,9 @@ on:
         type: boolean
         default: false
       kr_max_calls:
-        description: "KR 재무 확장 DART 호출 상한(평일 수동 실행이면 다른 DART 빌더와 안 겹쳐 크게 잡아도 된다)"
+        description: "KR 재무 확장 DART 호출 상한(러너에서 1회 약 1.4초 — 3000이면 약 70분. 시간 예산에 걸리면 받은 데까지 저장하고 멈춘다)"
         type: string
-        default: "4000"
+        default: "3000"
 
 permissions:
   contents: write
@@ -135,12 +135,17 @@ jobs:
   # 재무 확장(연간 10년·분기 12개·TTM, 현금흐름·희석 주식수·차입금 등). earnings 잡이 4시간을 넘게
   # 돌아 같은 잡에 넣으면 360분 한도에 걸린다 — 별도 잡(별도 러너)으로 병렬 실행한다. 워크플로우
   # 이름은 그대로라 deploy-pages.yml 의 workflow_run 트리거도 그대로다.
-  # DART 는 earnings 잡의 소유구조·감사의견 빌더와 하루 한도를 나눠 쓰므로 KR 은 호출 상한(기본 4,000)
+  # DART 는 earnings 잡의 소유구조·감사의견 빌더와 하루 한도를 나눠 쓰므로 KR 은 호출 상한(기본 3,000)
   # 안에서 우선순위대로 받고 다음 주에 이어 받는다(build_financials_kr.py docstring).
+  # 2026-09-26: 10,000회 수동 실행이 240분에 잘려 로그 0줄·중간 커밋 없이 전부 유실 → python -u,
+  # 잡 시작 시각 기준 시간 예산(한도 25분 전에 멈춤), 150종목/20분마다 중간 커밋·push.
   financials:
     runs-on: ubuntu-latest
     timeout-minutes: 240
     steps:
+      - name: Record job start
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
@@ -174,8 +179,15 @@ jobs:
         continue-on-error: true
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
-          KR_MAX_CALLS: ${{ inputs.kr_max_calls || '4000' }}
-        run: python scripts/build_financials_kr.py --push --max-calls "$KR_MAX_CALLS"
+          KR_MAX_CALLS: ${{ inputs.kr_max_calls || '3000' }}
+        shell: bash
+        run: |
+          # 잡 한도 240분 − 여유 25분(마지막 push·DCF 기저율·신선도 관문) − 앞 스텝이 쓴 시간
+          NOW=$(date +%s)
+          BUDGET=$(( (JOB_START_EPOCH + (240 - 25) * 60 - NOW) / 60 ))
+          if [ "$BUDGET" -lt 5 ]; then echo "[KR재무] 남은 시간 ${BUDGET}분 — 건너뛴다"; exit 0; fi
+          echo "[KR재무] 시간 예산 ${BUDGET}분 · 호출 상한 ${KR_MAX_CALLS}"
+          python -u scripts/build_financials_kr.py --push --max-calls "$KR_MAX_CALLS" --time-budget-min "$BUDGET"
 
       # 역DCF 기저율 분포 — 위 두 스텝이 갱신한 종목 파일로 다시 계산(네트워크 없음, 몇 초).
       - name: DCF base rates

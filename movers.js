@@ -100,6 +100,7 @@ function renderMoversBoard() {
     </div>
     ${statusBanner}
     ${body}
+    ${typeof signalScoreLine === "function" ? signalScoreLine(moversSide === "down" ? "movers_down" : "movers_up") : ""}
     <p class="movers-foot muted">${idx ? `지수 ${idx} · ` : ""}${escapeHtml(p.criteria || "")}<br>근거: ${escapeHtml(p.source || "")} · 생성 ${escapeHtml(p.updatedAtKst || "")} · 공시·헤드라인만 본 요약이며 매매 신호가 아닌 정보입니다.</p>`;
   el.querySelectorAll("[data-movers-side]").forEach((btn) => {
     btn.addEventListener("click", () => { moversSide = btn.dataset.moversSide === "down" ? "down" : "up"; renderMoversBoard(); });

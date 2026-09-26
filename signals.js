@@ -189,11 +189,13 @@ function fetchMarketHeader() {
 }
 
 // ===== #9 오늘의 시그널 통합 대시보드 =====
-function signalCard(title, items, note) {
+// scKind: 신호 성적표(signal-scorecard.js)의 신호 종류 — 카드 아래 '이 신호의 과거 성적' 한 줄.
+function signalCard(title, items, note, scKind = "") {
   const body = items.length
     ? items.map((x) => `<li><button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(stockLabel(x.ticker))}</button><span>${escapeHtml(x.note || "")}</span></li>`).join("")
     : `<li class="muted">해당 신호 없음</li>`;
-  return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul></div>`;
+  const score = scKind && typeof signalScoreLine === "function" ? signalScoreLine(scKind) : "";
+  return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul>${score}</div>`;
 }
 // ===== 미국 국채 수익률 곡선 (FRED) =====
 // 매크로 컨텍스트: 곡선 모양과 장단기 스프레드. 역전(음수)은 역사적으로 경기침체를
@@ -779,7 +781,7 @@ function renderMacroIndicators() {
 let signalsDirty = true;
 const SIGNALS_FEATURE_KEYS = [
   "yieldCurve", "macro", "macroOdds", "cotPositioning", "treasuryAuctions", "wikiAttention", "sentimentGauges",
-  "ecosMacro", "tradeExports", "optionsStats", "marketHistory", "krMarketAlerts",
+  "ecosMacro", "tradeExports", "optionsStats", "marketHistory", "krMarketAlerts", "signalScorecard",
   // Smart-money signals read the heavy 13F/congress/insider datasets; they're excluded from
   // the boot prefetch and load on first visit.
   "insider", "congress", "inst13f",
@@ -820,19 +822,19 @@ function renderSignals() {
       g.owners.add(r.owner || "?"); g.v += Number(r.value) || 0;
     }
     const clusters = Object.values(byT).filter((g) => g.owners.size >= 2).sort((a, b) => b.owners.size - a.owners.size || b.v - a.v).slice(0, 8);
-    cards.push(signalCard("내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수"));
+    cards.push(signalCard("내부자 클러스터 매수", clusters.map((g) => ({ ticker: g.t, note: `${g.owners.size}명 · ${insiderFmtUsd(g.v)}` })), "2인+ 임원 공개시장 매수", "insider_cluster"));
   }
   // 52주 신고가 근접 — 합성 이력은 52주 고점 자체가 랜덤워크가 만든 값이라 제외한다.
   const highs = data.stocks.filter((s) => !isStockEtf(s) && !isSyntheticHistory(s) && Number(s.newHighDistancePct) <= 0.5 && (s.marketCapB || 0) >= minCapForHighs)
     .sort((a, b) => b.marketCapB - a.marketCapB).slice(0, 8);
-  cards.push(signalCard("52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtDailyPct(s.changePct)}` })), "고점 0.5% 이내"));
+  cards.push(signalCard("52주 신고가 근접", highs.map((s) => ({ ticker: s.ticker, note: `${priceOrDash(s.price)} · ${fmtDailyPct(s.changePct)}` })), "고점 0.5% 이내", "high52"));
   if (cfg.features?.materialEvents !== false) {
     const ev = ((window.MATERIAL_EVENTS || {}).events || []).filter((e) => e.hot).slice(0, 8);
-    cards.push(signalCard("주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") }))));
+    cards.push(signalCard("주요 공시 8-K", ev.map((e) => ({ ticker: e.ticker, note: (e.items || []).map((i) => i.label).slice(0, 2).join(", ") })), "", "material_8k"));
   }
   if (!isKrMarket()) {
     const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((a) => a.kind === "activist").slice(0, 8);
-    cards.push(signalCard("액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" }))));
+    cards.push(signalCard("액티비스트 13D", act.map((a) => ({ ticker: a.ticker, note: a.filer || "" })), "", "activist_13d"));
   }
   if (cfg.features?.ipo !== false) {
     const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
@@ -843,6 +845,7 @@ function renderSignals() {
     if (b.dataset.ticker && b.dataset.ticker !== "—") selectTicker(b.dataset.ticker, { openSearch: true });
   }));
   renderAggregateInsights();
+  if (typeof renderSignalScorecard === "function") renderSignalScorecard();
   renderSignalsSummary();
   syncSignalFolds();
 }

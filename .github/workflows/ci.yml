@@ -91,6 +91,12 @@ jobs:
       # PER·PBR 밴드 순수 계산(valuation-band-core.js): 분위·백분위·적자 끊김·샤드 해시(PY 와 동일).
       - name: Valuation band tests
         run: node scripts/tests/test_valuation_band_core.mjs
+      # 신호 성적표 순수 계산(signal-scorecard-core.js): 진입 기준일(룩어헤드 차단)·수익률·중복 처리·
+      # 부트스트랩 판정 + 커밋된 원장의 해시 체인(소급 수정·삭제가 없었는지).
+      - name: Signal scorecard tests
+        run: |
+          node scripts/tests/test_signal_scorecard_core.mjs
+          node scripts/build_signal_ledger.mjs --verify
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

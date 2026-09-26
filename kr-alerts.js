@@ -75,7 +75,10 @@ function krAlertTickerCell(row) {
 
 const KR_ALERT_PREVIEW = 8;
 
-function krAlertCard(title, note, rows, noteFn, sec) {
+// 시장경보 섹션 → 신호 성적표 신호 종류(signal-scorecard.js). 없는 섹션은 한 줄을 달지 않는다.
+const KR_ALERT_SCORE_KIND = { risk: "alert_warning", warning: "alert_warning", caution: "alert_caution", limitUp: "limit_up", limitDown: "limit_down", valueSurge: "value_surge" };
+
+function krAlertCard(title, note, rows, noteFn, sec, scKind = "") {
   const li = (r) => `<li>${krAlertTickerCell(r)}<span>${escapeHtml(noteFn(r) || "")}</span></li>`;
   const head = rows.slice(0, KR_ALERT_PREVIEW).map(li).join("");
   const rest = rows.slice(KR_ALERT_PREVIEW);
@@ -88,6 +91,7 @@ function krAlertCard(title, note, rows, noteFn, sec) {
     <h3>${escapeHtml(title)} <span class="kr-alert-count">${rows.length.toLocaleString()}</span></h3>
     ${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}${carried}
     <ul>${head || '<li class="muted">해당 종목 없음</li>'}</ul>${more}
+    ${scKind && typeof signalScoreLine === "function" ? signalScoreLine(scKind) : ""}
   </div>`;
 }
 
@@ -137,7 +141,7 @@ function renderKrMarketAlerts() {
   ];
   sections.forEach(([key, title, note, rows, fn]) => {
     if (!S[key]) return; // 수집해 본 적 없는 항목은 카드 자체를 뺀다
-    cards.push(krAlertCard(title, note, rows, fn, S[key]));
+    cards.push(krAlertCard(title, note, rows, fn, S[key], KR_ALERT_SCORE_KIND[key] || ""));
   });
 
   const chips = sections.filter(([key]) => S[key]).map(([key, title, , rows]) =>

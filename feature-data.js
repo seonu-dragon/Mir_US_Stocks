@@ -341,7 +341,7 @@ function refreshFeatureViews() {
       const item = applyLive(withDetail(base));
       if (byId("selectedStock")) calls.push(() => renderSelected(item));
       const facts = byId("searchFacts");
-      if (facts) calls.push(() => { facts.innerHTML = stockFacts(item, "선택 종목"); });
+      if (facts) calls.push(() => renderSearchFacts(item));
       // 시세정보·투자정보: 52주 고저 대체값·동일업종 PER 은 MAP_FUNDAMENTALS 가 늦게 오면 그때 채워진다.
       if (currentTab === "search" && searchSubTab === "analysis" && byId("fundamentalTable")) {
         calls.push(() => render52wRange(item), () => renderFundamentals(item));

@@ -813,18 +813,24 @@ function renderStockEvents(item) {
     <div class="event-head">
       <div>
         <h3>종목 이벤트</h3>
-        <p class="muted">실적, 옵션 만기, 컨센서스 목표가, 뉴스, 가격 변동, 커뮤니티 의견을 한곳에 모았습니다.</p>
+        <p class="muted">옵션 만기, 목표가, 배당, 뉴스, 가격 변동, 커뮤니티 의견을 한곳에 모았습니다.</p>
       </div>
       <span class="event-badge">${escapeHtml(stockLabel(item))}</span>
     </div>
     <div class="event-grid">
-      ${earningsEvent ? eventCardHtml(earningsEvent) : ""}
-      <section class="smart-money-card event-card-smart" id="stockSmartMoney"></section>
       ${restEvents.map(eventCardHtml).join("")}
       ${stockEventCommunityCardHtml(item)}
     </div>
     ${moveAnalysisHtml(item, events.find((event) => event.type === "Move")?.move || null)}
   `;
+  // 실적 카드(일정·EPS 기록·발표 반응·인사이트)는 종목 상세 '재무' 탭(#stockEarningsCard)에,
+  // 스마트머니 종합은 '수급·보유' 탭의 고정 노드(#stockSmartMoney)에 그린다. 안쪽 id 는 그대로라
+  // renderEarningsCalendar·renderEarningsReaction·renderEarningsInsight 는 바뀐 게 없다.
+  const earnBox = byId("stockEarningsCard");
+  if (earnBox) {
+    earnBox.innerHTML = earningsEvent ? eventCardHtml(earningsEvent) : "";
+    earnBox.hidden = !earningsEvent;
+  }
   renderEarningsCalendar(item);
   renderEarningsReaction(item);
   if (typeof renderEarningsInsight === "function") renderEarningsInsight(item);
@@ -1364,8 +1370,27 @@ function renderDataFreshnessStatus() {
   `;
 }
 
+// 투자정보 블록은 종목 상세 좌측 요약(#stockInvestInfo)에 그린다. 그 노드가 없는 화면이면 예전처럼
+// 핵심 지표 카드 맨 위에 붙이도록 호출부에 "" 가 아닌 HTML 을 돌려준다.
+function placeInvestInfo(html) {
+  const el = byId("stockInvestInfo");
+  if (!el) return html;
+  el.innerHTML = html || "";
+  el.hidden = !html;
+  return "";
+}
+
+// 핵심 지표 카드는 보통 '재무' 탭에 있지만, ETF 는 이 자리가 구성 종목 표라 '수급·보유' 탭으로 옮긴다.
+function placeFundamentalTable(isEtf) {
+  const box = byId("fundamentalTable");
+  const target = byId(isEtf ? "sdv-flow" : "sdv-fin");
+  if (!box || !target || box.parentElement === target) return;
+  target.prepend(box);
+}
+
 function renderFundamentals(item) {
   // ETF: 투자정보(시총·NAV·괴리율·배당) + 구성 종목(RS 순).
+  placeFundamentalTable(isStockEtf(item));
   if (isStockEtf(item)) {
     renderEtfConstituents(item);
     return;
@@ -1375,24 +1400,25 @@ function renderFundamentals(item) {
   const hasFundamentals = Object.keys(f).length > 0;
   const krT = isKrMarket();
   const ttm = typeof qiTtmRatios === "function" ? qiTtmRatios(item) : null;
-  const investHtml = typeof investInfoHtml === "function" ? investInfoHtml(item, f, ttm) : "";
+  const investFull = typeof investInfoHtml === "function" ? investInfoHtml(item, f, ttm) : "";
+  const investHtml = placeInvestInfo(investFull);
 
   // 투자정보 블록(시총·PER·EPS·추정PER·PBR·BPS·배당·PSR·PCFR)과 시세정보 카드(현재가·전일·52주 고저·거래량)에
   // 이미 나온 값은 아래 그룹에서 뺀다. 투자정보 블록을 못 그리는 경우(코어 미로드)엔 예전 밸류에이션 그룹을 되살린다.
   const ttmGroup = typeof ttmRatioGroup === "function" ? ttmRatioGroup(ttm) : null;
   const groups = [
-    ...(investHtml ? [] : [{ title: "밸류에이션", metrics: [
+    ...(investFull ? [] : [{ title: "밸류에이션", metrics: [
       [f.peLabel || "PER", fmtMultiple(f.pe)], ["선행 PER(추정)", fmtMultiple(f.forwardPE)],
       ["PSR", fmtMultiple(f.ps)], ["PBR", fmtMultiple(f.pb)],
     ] }]),
     ttmGroup
       ? { title: ttmGroup.title, note: ttmGroup.note, wide: true, metrics: [...(hasFiniteNumber(f.grossMargin) ? [["매출총이익률", fmtPercent(f.grossMargin)]] : []), ...ttmGroup.metrics] }
-      : { title: "수익성", wide: !!investHtml, metrics: [
+      : { title: "수익성", wide: !!investFull, metrics: [
         ["매출총이익률", fmtPercent(f.grossMargin)], ["영업이익률", fmtPercent(f.operMargin)],
         ["순이익률", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
       ] },
     { title: "추정 · 기타", metrics: [
-      ...(investHtml ? [] : [[f.epsLabel || "최근 4분기 EPS", moneyOrDash(f.epsShown ?? f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)]]),
+      ...(investFull ? [] : [[f.epsLabel || "최근 4분기 EPS", moneyOrDash(f.epsShown ?? f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)]]),
       ["다음 분기 EPS 추정", moneyOrDash(f.epsNextQ)], ["1년 목표가", priceOrDash(f.targetPrice)],
       ["RSI(14)", fmtRsi(item)], ["지수", indexLabel(item)],
     ] },
@@ -1460,8 +1486,8 @@ function etfConstituentStocks(ticker) {
 
 function renderEtfConstituents(item) {
   const result = etfConstituentStocks(item.ticker);
-  const invest = typeof investInfoHtml === "function" ? investInfoHtml(item, item.fundamentals || {}, null) : "";
-  const head = `${invest}<div class="fundamental-head"><h3>구성 종목 (1개월 모멘텀순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
+  const invest = placeInvestInfo(typeof investInfoHtml === "function" ? investInfoHtml(item, item.fundamentals || {}, null) : "");
+  const head = `${invest}<div class="fundamental-head"><h3>ETF 구성 종목 (1개월 모멘텀순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
   const box = byId("fundamentalTable");
   if (!result || !result.list.length) {
     box.innerHTML = head + `<p class="muted" style="padding:12px;">이 ETF의 구성 종목 데이터가 없습니다.</p>`;

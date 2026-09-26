@@ -3599,6 +3599,97 @@ function fact(label, value) {
   return `<div class="fact"><span>${label}</span><strong>${value}</strong></div>`;
 }
 
+// ── 종목 상세 좌측 요약(2026-09 UI 2단계) ────────────────────────────────────────
+// #searchFacts 에는 종목명·가격·등락·기준 시각과 짧은 지표만 둔다. 예전 stockFacts 가 한꺼번에
+// 싣던 KR 수급·기업집단·국민연금 카드는 '수급·보유' 탭(#stockFlowPanel), 애널리스트 컨센서스는
+// 요약 패널 아래(#stockConsensus)로 나눠 그린다. stockFacts 자체는 지도 탭 선택 종목(#selectedStock)
+// 용으로 그대로 남는다. #searchFacts 를 다시 그리는 곳은 전부 renderSearchFacts 를 거친다
+// (피처 데이터가 늦게 오면 refreshFeatureViews 가 이걸 불러 세 곳을 같이 채운다).
+function stockMarketLabel(item) {
+  const g = (item && item.groups) || [];
+  if (isKrMarket()) {
+    if (g.includes("idx_kosdaq") || g.includes("idx_kosdaq150")) return "코스닥";
+    if (g.includes("idx_kospi") || g.includes("idx_kospi200")) return "코스피";
+    return "";
+  }
+  if (g.includes("idx_nasdaq") || g.includes("idx_ndx100")) return "나스닥";
+  if (g.includes("idx_nyse")) return "NYSE";
+  return "";
+}
+
+// "▲1,000 (+3.62%)" — 절대값은 부호 없이 화살표, %는 부호. 절대값은 표시 등락률에서 거꾸로 푼다
+// (전일 종가 = 가격 / (1 + 등락률)). KR 상하한을 넘는 값(데이터 어긋남)은 절대값을 빼고 % 만 둔다.
+function stockChangeHtml(item) {
+  const price = Number(item && item.price);
+  const raw = Number(item && item.changePct);
+  if (!Number.isFinite(raw)) return `<span class="muted">—</span>`;
+  const pct = isKrMarket() ? krDisplayChangePct(raw) : raw;
+  const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
+  const arrow = pct > 0 ? "▲" : pct < 0 ? "▼" : "";
+  let abs = "";
+  if (!atLimit && Number.isFinite(price) && price > 0 && pct > -100) {
+    const diff = Math.abs(price - price / (1 + pct / 100));
+    abs = diff > 0 ? escapeHtml(marketCfg().formatPrice(diff)).replace(/^[-+]/, "") : "0";
+  }
+  const pctText = `${fmtSignedPct(pct, 2)}${atLimit ? " (상하한)" : ""}`;
+  return `<span class="${cls(pct)}">${arrow}${abs}${abs ? " " : ""}(${pctText})</span>`;
+}
+
+function stockAsOfText(item) {
+  const d = String((item && item.priceDate) || "").slice(0, 10);
+  const md = /^\d{4}-\d{2}-\d{2}$/.test(d) ? `${d.slice(5, 7)}.${d.slice(8, 10)} 종가` : "";
+  const snap = (data && (data.updatedAtKst || data.updated_at_kst)) || "";
+  return [md, snap ? `데이터 ${String(snap).replace(/^\d{4}-/, "").replace("-", ".")}` : ""].filter(Boolean).join(" · ");
+}
+
+function stockSummaryHtml(item) {
+  const sub = stockSubLabel(item);
+  const idLine = joinSubParts(isKrCodeTicker(item.ticker) ? "" : item.ticker, stockMarketLabel(item), item.sector, item.industry);
+  const name = sub || stockLabel(item);
+  return `
+    <p class="sd-idline">${idLine}</p>
+    <h2 class="sd-name">${escapeHtml(name)} ${syntheticBadge(item)} ${watchStarButton(item.ticker)}</h2>
+    <div class="sd-price-row">
+      <strong class="sd-price">${escapeHtml(priceOrDash(item.price))}</strong>${typeof quoteKrwApproxHtml === "function" ? quoteKrwApproxHtml(item.price) : ""}
+    </div>
+    <p class="sd-change">${stockChangeHtml(item)}<span class="sd-asof">${escapeHtml(stockAsOfText(item))}</span></p>
+    ${sessionQuoteLine(item)}
+    ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
+    ${auditOpinionNotice(item)}
+    ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
+    <dl class="sd-facts">
+      ${sdFact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
+      ${sdFact("RSI(14)", fmtRsi(item))}
+      ${sdFact("EPS", isStockEtf(item) ? "—" : fmtEps(item))}
+      ${sdFact("거래량 배율", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
+      ${sdFact("52주 위치", Number.isFinite(Number(item.stochK)) ? Math.round(Number(item.stochK)) : "—")}
+      ${sdFact("신고가 거리", Number.isFinite(Number(item.newHighDistancePct)) ? fmtPct(-Number(item.newHighDistancePct)) : "—")}
+    </dl>`;
+}
+
+function sdFact(label, value) {
+  return `<div class="sd-fact"><dt>${label}</dt><dd>${value}</dd></div>`;
+}
+
+function renderStockFlowPanel(item) {
+  const el = byId("stockFlowPanel");
+  if (!el) return;
+  const html = item ? [krFlowCard(item), krGroupCard(item), krNpsCard(item)].join("").trim() : "";
+  // 일별 보기(<details>)를 열어 둔 채 늦은 데이터로 다시 그리면 접히지 않게 상태를 옮긴다.
+  const wasOpen = !!el.querySelector("details[open]");
+  el.innerHTML = html ? `<h3 class="sd-card-title">수급 · 보유</h3>${html}` : "";
+  el.hidden = !html;
+  if (wasOpen) { const d = el.querySelector("details"); if (d && !d.open) d.open = true; }
+}
+
+function renderStockConsensus(item) {
+  const el = byId("stockConsensus");
+  if (!el) return;
+  const html = item ? krConsensusCard(item).trim() : "";
+  el.innerHTML = html;
+  el.hidden = !html;
+}
+
 // 섹터/산업 문자열 정규화 캐시. renderSectors 는 ETF 20개 × 전 종목을 훑고
 // renderSectorDetail 이 한 번 더 훑는데, 매번 toUpperCase/toLowerCase 를 새로 만들면
 // 폰에서 눈에 띄게 느리다(감사 P2). 스냅샷 객체가 바뀌면 WeakMap 이 알아서 비워진다.
@@ -4969,6 +5060,8 @@ function renderSearchMissing(ticker) {
       <h3 class="stock-facts-head">${t}</h3>
       <p class="muted">찾을 수 없는 종목입니다. 티커·종목명을 다시 확인하거나 자동완성 목록에서 선택해 주세요.</p>`;
   }
+  renderStockFlowPanel(null);
+  renderStockConsensus(null);
   const chart = byId("priceChart");
   if (chart) chart.innerHTML = "";
   const news = byId("searchNews");
@@ -4977,7 +5070,10 @@ function renderSearchMissing(ticker) {
 
 function renderSearchFacts(item) {
   const el = byId("searchFacts");
-  if (el && item) el.innerHTML = stockFacts(item, "선택 종목");
+  if (!el || !item) return;
+  el.innerHTML = stockSummaryHtml(item);
+  renderStockFlowPanel(item);
+  renderStockConsensus(item);
 }
 
 function renderSearch(options = {}) {
@@ -4989,13 +5085,12 @@ function renderSearch(options = {}) {
   if (isKrMarket() && !window.KR_AUDIT_OPINION) {
     ensureFeatureData("krAudit").then((ok) => {
       if (ok && selectedTicker === base.ticker) {
-        const el = byId("searchFacts");
-        if (el) el.innerHTML = stockFacts(applyLive(withDetail(base)), "선택 종목");
+        renderSearchFacts(applyLive(withDetail(base)));
       }
     });
   }
   byId("chartTitle").textContent = [stockLabel(item), stockSubLabel(item)].filter(Boolean).join(" · ");
-  byId("searchFacts").innerHTML = stockFacts(item, "선택 종목");
+  renderSearchFacts(item);
   drawChart(item);
   renderEarningsCalendar(item);
   renderCongressTradesForTicker(item);
@@ -5023,7 +5118,7 @@ function renderSearch(options = {}) {
     if (!detail || selectedTicker !== item.ticker) return;
     const refreshed = applyLive(withDetail(base));
     byId("chartTitle").textContent = [stockLabel(refreshed), stockSubLabel(refreshed)].filter(Boolean).join(" · ");
-    byId("searchFacts").innerHTML = stockFacts(refreshed, "선택 종목");
+    renderSearchFacts(refreshed);
     drawChart(refreshed);
     renderEarningsCalendar(refreshed);
     renderCongressTradesForTicker(refreshed);
@@ -5051,7 +5146,34 @@ function renderSearch(options = {}) {
   // first of selectTicker's two render passes — firing here would waste an LLM /chat
   // call on every visit and force-load the heavy 13F/insider/congress datasets.
   // The natural-language search path issues its own loadAiDeepReport with a custom query.
-  if (currentTab === "search" && !options.fromAiSearch && !options.skipAiReport) loadAiDeepReport(item.ticker);
+  if (currentTab === "search" && !options.fromAiSearch && !options.skipAiReport) requestAiDeepReport(item.ticker);
+}
+
+// 자동 AI 리포트는 이제 'AI 진단' 탭 안에 있다. 탭을 열지 않는 방문마다 LLM 을 부르지 않도록,
+// 캐시가 있거나 그 탭이 열려 있을 때만 바로 불러오고 나머지는 탭을 처음 열 때(stock-view.js) 부른다.
+// 자연어 질문 경로(navigateToStockAnalysis)는 사용자가 직접 물은 것이라 이 함수를 거치지 않는다.
+let aiReportPendingTicker = null;
+function requestAiDeepReport(ticker) {
+  const viewing = typeof sdActiveView !== "function" || sdActiveView() === "ai";
+  const cached = readAiReportCache(aiReportCacheKey(ticker, null));
+  if (viewing || cached) {
+    aiReportPendingTicker = null;
+    loadAiDeepReport(ticker);
+    return;
+  }
+  if (currentActiveReportTicker === ticker) return;
+  aiReportPendingTicker = ticker;
+  currentActiveReportTicker = null;
+  const body = byId("analysisAiReportBody");
+  if (body) body.innerHTML = `<p class="muted">이 탭을 열면 수집된 지표로 AI 진단 리포트를 작성합니다.</p>`;
+}
+
+// stock-view.js 가 'AI 진단' 탭을 열 때 부른다.
+function flushPendingAiReport() {
+  const t = aiReportPendingTicker;
+  if (!t || t !== selectedTicker || currentTab !== "search") return;
+  aiReportPendingTicker = null;
+  loadAiDeepReport(t);
 }
 
 function moveEvidenceRow(kind, title, detail, options = {}) {

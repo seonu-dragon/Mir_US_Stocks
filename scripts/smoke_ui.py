@@ -46,6 +46,8 @@ LEGACY_LINKS = {
     "?tab=briefing": ("today", "ai-briefing"),
     "?tab=institutional&sub=congress": ("search", "congress"),
     "?tab=search&sub=analysis&ticker=AAPL": ("search", "analysis"),
+    "?tab=search&sub=analysis&ticker=AAPL&view=fin": ("search", "analysis"),
+    "?ticker=AAPL&view=val": ("search", "analysis"),
     "?tab=community": ("community", "community"),
 }
 
@@ -144,6 +146,63 @@ def test_deeplinks(browser, base: str) -> None:
         if "ticker=AAPL" in query:
             ok = ok and st["ticker"] == "AAPL"
         check(f"옛 딥링크 {query} → {tab}/{leaf}", ok, str(st))
+    page.close()
+
+
+# 종목 상세 6탭(stock-view.js) 딥링크: &view= 가 해당 탭을 열고, 옛 공유 링크(&dcf=)는 밸류 탭으로,
+# view 가 없으면 개요. 탭을 누르면 URL 에 &view= 가 남는다.
+STOCK_VIEW_LINKS = {
+    "?tab=search&sub=analysis&ticker=AAPL": "overview",
+    "?tab=search&sub=analysis&ticker=AAPL&view=fin": "fin",
+    "?tab=search&sub=analysis&ticker=AAPL&view=val": "val",
+    "?tab=search&sub=analysis&ticker=AAPL&view=events": "events",
+    "?tab=search&sub=analysis&ticker=AAPL&view=flow": "flow",
+    "?tab=search&sub=analysis&ticker=AAPL&view=ai": "ai",
+    "?ticker=AAPL&view=valuation": "val",
+    "?tab=search&sub=analysis&ticker=AAPL&dcf=x": "val",
+    "?market=kr&tab=search&sub=analysis&ticker=005930&view=flow": "flow",
+}
+
+
+def test_stock_views(browser, base: str) -> None:
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+    # AI 진단 탭은 열 때 LLM 리포트를 부른다 — 스모크에서는 막는다(무료 한도 보호).
+    page.route("**/chat", lambda r: r.abort())
+    page.route("**/chat?*", lambda r: r.abort())
+    for query, want in STOCK_VIEW_LINKS.items():
+        boot(page, f"{base}{query}")
+        # 탭 카드 중 늦게 오는 피처 데이터(KR 수급 등)가 채워질 때까지 잠깐 기다린다.
+        try:
+            page.wait_for_function("() => { const el = document.querySelector('#stockMain .sd-view.is-active');"
+                                   " return !!el && el.getBoundingClientRect().height > 0; }", timeout=10000)
+        except Exception:
+            pass
+        st = page.evaluate("""() => ({
+          sub: typeof searchSubTab === 'string' ? searchSubTab : null,
+          view: typeof sdActiveView === 'function' ? sdActiveView() : null,
+          btn: document.querySelector('#stockViewTabs .sd-tab.is-active')?.dataset.view,
+          panel: document.querySelector('#stockMain .sd-view.is-active')?.dataset.view,
+          visible: (() => { const el = document.querySelector('#stockMain .sd-view.is-active');
+                            return !!el && el.getBoundingClientRect().height > 0; })(),
+        })""")
+        ok = st["sub"] == "analysis" and st["view"] == want and st["btn"] == want and st["panel"] == want and st["visible"]
+        check(f"종목 상세 딥링크 {query} → {want}", ok, str(st))
+    # 탭 클릭 → URL 에 view 가 남고, 숨은 탭 카드도 폭이 살아 있다(차트·재무 SVG).
+    boot(page, f"{base}?market=us&tab=search&sub=analysis&ticker=AAPL")
+    page.click('#stockViewTabs [data-view="fin"]')
+    page.wait_for_timeout(300)
+    url = page.evaluate("location.search")
+    check("탭 클릭 → URL &view=fin", "view=fin" in url and "ticker=AAPL" in url, url)
+    widths = page.evaluate("""() => ({
+      chart: document.getElementById('priceChart')?.getBoundingClientRect().width || 0,
+      fin: document.getElementById('sdv-fin')?.getBoundingClientRect().width || 0,
+    })""")
+    check("숨은 개요 탭의 차트도 폭 유지", widths["chart"] > 300, str(widths))
+    page.click('#stockViewTabs [data-view="overview"]')
+    page.wait_for_timeout(300)
+    check("개요로 돌아오면 URL 에서 view 제거", "view=" not in page.evaluate("location.search"))
+    shoot(page, "stock-detail")
     page.close()
 
 
@@ -562,6 +621,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--base", default="http://127.0.0.1:8099/index.html")
     ap.add_argument("--shots", default="", help="스크린샷을 저장할 디렉터리")
+    ap.add_argument("--only", default="", help="쉼표로 구분한 테스트 함수 이름만 실행(예: test_stock_views)")
     args = ap.parse_args()
 
     if args.shots:
@@ -571,9 +631,12 @@ def main() -> int:
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch()
-            for fn in (test_deeplinks, test_dialogs, test_trust_center,
-                       test_worker_no_client_id_leak, test_kr_market,
-                       test_tab_a11y, test_ticker_deeplink_seo, test_mobile):
+            tests = (test_deeplinks, test_stock_views, test_dialogs, test_trust_center,
+                     test_worker_no_client_id_leak, test_kr_market,
+                     test_tab_a11y, test_ticker_deeplink_seo, test_mobile)
+            if args.only:
+                tests = tuple(fn for fn in tests if fn.__name__ in args.only.split(","))
+            for fn in tests:
                 print(f"\n--- {fn.__name__} ---", flush=True)
                 fn(browser, args.base)
             browser.close()

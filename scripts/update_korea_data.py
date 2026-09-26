@@ -547,6 +547,45 @@ def _raw_number(item: dict, raw_key: str, text_key: str) -> float | None:
     return parse_number(str(value)) if value not in (None, "") else None
 
 
+def listed_shares_from(item: dict) -> int | None:
+    """상장주식수 = marketValueRaw(원) ÷ closePriceRaw. 네이버 시총은 상장주식수 × 종가라 나눗셈이
+    정수로 떨어진다(2026-09-26 실측 200종목 전부). 안 떨어지면 다른 기준이 섞인 것이라 버린다.
+    자기주식이 포함된 수다 — DCF 에서 DART 유통주식수가 없을 때만 대체값으로(라벨과 함께) 쓴다."""
+    try:
+        cap = int(str(item.get("marketValueRaw") or "").replace(",", ""))
+        px = int(str(item.get("closePriceRaw") or "").replace(",", ""))
+    except ValueError:
+        return None
+    if cap <= 0 or px <= 0 or cap % px:
+        return None
+    return cap // px
+
+
+def align_last_bar_to_close(rows: list, quote_date: str | None, close: float | None) -> bool:
+    """야후 일봉의 마지막 봉을 KRX 정규장 종가(네이버 closePrice)에 맞춘다. 바꿨으면 True.
+
+    2026-09-26 실측(25종목 × 37거래일): 야후 .KS/.KQ 일봉 종가가 KRX 종가와 다른 날이 23%였고
+    마지막 봉은 25종목 중 23종목이 달랐다(삼성전자 09-23 야후 285,500 vs KRX 286,500). 헤더(스냅샷)는
+    KRX 종가인데 차트 마지막 봉만 달라 '현재가가 당일 고가보다 높은' 화면이 됐다. 같은 날짜의
+    봉일 때만 종가를 바꾸고 고가·저가를 그 종가를 포함하도록 넓힌다. 날짜가 다르면(야후가 그날 봉을
+    아직 안 줌) 건드리지 않는다 — 봉을 지어내지 않는다. 이전 봉들은 야후 값 그대로다.
+    """
+    if not rows or not quote_date or not isinstance(close, (int, float)) or close <= 0:
+        return False
+    last = rows[-1]
+    if str(last.get("date") or "")[:10] != quote_date:
+        return False
+    old = last.get("close")
+    if isinstance(old, (int, float)) and abs(old - close) < 1e-9:
+        return False
+    last["close"] = float(close)
+    if isinstance(last.get("high"), (int, float)):
+        last["high"] = max(float(last["high"]), float(close))
+    if isinstance(last.get("low"), (int, float)) and last["low"] > 0:
+        last["low"] = min(float(last["low"]), float(close))
+    return True
+
+
 def fetch_market_page(sosok: int, page: int) -> list[dict]:
     """sosok: 0=KOSPI, 1=KOSDAQ. m.stock.naver.com 시가총액 순 목록(페이지당 100건)."""
     market = "kospi" if sosok == 0 else "kosdaq"
@@ -560,11 +599,15 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
         # 옛 HTML 파서는 숫자 6자리 코드만 잡았다(0193T0 같은 영숫자 ETF 는 KR_ETFS 로만).
         if not re.fullmatch(r"\d{6}", code) or not company:
             continue
+        # closePrice = KRX 정규장 종가(장중엔 KRX 현재가). 넥스트레이드(NXT) 애프터마켓 가격은
+        # overMarketPriceInfo.overPrice 로 따로 온다 — 대표가로 쓰지 않는다. 2026-09-26 실측 25종목:
+        # closePrice 는 KRX 일별 종가(siseJson)와 25/25 일치, overPrice 는 8종목이 달랐다.
         price = _raw_number(item, "closePriceRaw", "closePrice")
         if price is None:
             continue
         change_pct = parse_number(str(item.get("fluctuationsRatio") or ""))
         cap_raw = _raw_number(item, "marketValueRaw", "marketValue")
+        listed_shares = listed_shares_from(item)
         # marketValueRaw 는 원 단위, marketValue 텍스트는 백만원 단위
         if item.get("marketValueRaw") not in (None, "", "N/A"):
             cap_trillion = (cap_raw or 0) / 1e12
@@ -591,6 +634,7 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             "quoteDate": quote_date,
             "marketCapT": cap_trillion,
             "marketCapB": cap_trillion,  # 조원 단위 (한국 모드 전용)
+            "listedShares": listed_shares,
             "sector": sector,
             "industry": industry,
             "groups": groups,
@@ -1194,7 +1238,14 @@ def build_one(meta: dict):
         if news:
             meta["news"] = news
 
+    lastbar_fixed = False
+    if meta.get("historySource") in {"yahoo", "yahoo-cache"} and meta.get("quotePrice"):
+        lastbar_fixed = align_last_bar_to_close(rows, meta.get("quoteDate"), meta.get("quotePrice"))
     stock = UD.make_stock(meta, rows)
+    if lastbar_fixed:
+        stock["lastBarSource"] = "krx-close"     # 마지막 봉 종가를 KRX 종가(네이버)로 맞췄다
+    if meta.get("listedShares"):
+        stock["listedShares"] = int(meta["listedShares"])
     if meta.get("historySource") == "yahoo":
         backfill_change_from_history(stock, rows)
     attach_week52_from_history(stock, rows)

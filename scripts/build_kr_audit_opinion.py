@@ -43,6 +43,7 @@ if str(SCRIPTS) not in sys.path:
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, latest_fiscal_year, write_data  # noqa: E402
 from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from step_budget import StepBudget, carry_over, missing_first  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "korea" / "audit_opinion.json"
@@ -95,7 +96,9 @@ def pick_current(rows: list[dict]) -> dict | None:
     return uniq[0] if uniq else None
 
 
-def build(api_key: str, year: str, limit: int | None):
+def build(api_key: str, year: str, limit: int | None, budget: StepBudget | None = None,
+          prev: dict | None = None):
+    """(opinions, errors, attempted, universe). prev 에 있는 종목은 뒤로 — 못 받은 종목부터 채운다."""
     snapshot = load_json(KR_SNAPSHOT, {"stocks": []})
     stocks = [s for s in snapshot.get("stocks") or []
               if s.get("sector") not in ("ETF", "etf", "EXCHANGE TRADED FUNDS")]
@@ -114,14 +117,22 @@ def build(api_key: str, year: str, limit: int | None):
             pairs.append((t, corp))
     if limit:
         pairs = pairs[:limit]
-    print(f"[감사의견] 대상 {len(pairs)}종목 × 1회 = 약 {len(pairs)}회 호출")
+    universe = {t for t, _ in pairs}
+    pairs = missing_first(pairs, set(prev or {}))
+    print(f"[감사의견] 대상 {len(pairs)}종목 × 1회 = 약 {len(pairs)}회 호출 "
+          f"(직전 값 {len(prev or {})}종목 — 없는 종목부터)", flush=True)
 
     out: dict[str, dict] = {}
     errors: dict[str, int] = {}
+    attempted: set[str] = set()
     t0 = time.time()
     for i, (ticker, corp) in enumerate(pairs, 1):
+        if budget and budget.over():
+            print(f"[감사의견] {budget.reason} — {i - 1}/{len(pairs)}종목에서 멈춘다(나머지는 직전 값 이월)",
+                  flush=True)
+            break
         if i % 400 == 0:
-            print(f"[감사의견] {i}/{len(pairs)} … ({(time.time()-t0)/60:.0f}분)")
+            print(f"[감사의견] {i}/{len(pairs)} … ({(time.time()-t0)/60:.0f}분)", flush=True)
         try:
             data = dart_get("accnutAdtorNmNdAdtOpinion.json",
                             {"corp_code": corp, "bsns_year": year, "reprt_code": "11011"},
@@ -129,7 +140,13 @@ def build(api_key: str, year: str, limit: int | None):
         except Exception as exc:
             k = f"request:{type(exc).__name__}"
             errors[k] = errors.get(k, 0) + 1
+            if budget:
+                budget.record(False)
             continue
+        if budget:
+            budget.record(True)
+        if str(data.get("status") or "") in ("000", "013"):
+            attempted.add(ticker)
         status = str(data.get("status") or "")
         if status == "013":
             continue
@@ -153,7 +170,7 @@ def build(api_key: str, year: str, limit: int | None):
         if emph and emph not in NO_EMPHASIS:
             rec["emphasis"] = emph[:300]
         out[ticker] = rec
-    return out, errors
+    return out, errors, attempted, universe
 
 
 def main() -> int:
@@ -161,6 +178,8 @@ def main() -> int:
     ap.add_argument("--push", action="store_true")
     ap.add_argument("--year", default="", help="사업연도. 기본은 작년(최신 사업보고서).")
     ap.add_argument("--limit", type=int, default=None, help="시총 상위 N종목만(테스트용)")
+    ap.add_argument("--time-budget-min", type=float, default=0,
+                    help="이 분이 지나면 멈추고 저장(0=무제한). 못 받은 종목은 직전 값(같은 사업연도) 이월.")
     args = ap.parse_args()
 
     # 최신 조회 가능 사업연도. 사업보고서는 3월 말까지 제출되므로 1~3월에는
@@ -174,10 +193,15 @@ def main() -> int:
         print("DART_API_KEY missing; wrote empty kr audit opinion payload.")
         return 0
 
-    opinions, errors = build(api_key, year, args.limit)
+    prev_payload = load_json(OUT_JSON, {}) or {}
+    prev = (prev_payload.get("opinions") or {}) if str(prev_payload.get("year") or "") == year else {}
+    budget = StepBudget(args.time_budget_min)
+    fresh, errors, attempted, universe = build(api_key, year, args.limit, budget, prev)
+    opinions, carried = carry_over(fresh, prev, attempted, universe)
+    print(f"[감사의견] 이번 수집 {len(fresh)}종목 · 직전 값 이월 {carried}종목", flush=True)
     if errors:
         print(f"[감사의견] 오류 {sum(errors.values())}건: {dict(list(errors.items())[:5])}")
-    if not opinions and errors:
+    if not fresh and errors:
         print("[감사의견] 수집 0건 + 오류 발생 — 기존 파일을 덮어쓰지 않고 실패 처리한다.")
         return 1
 
@@ -191,6 +215,10 @@ def main() -> int:
         "note": "최신 사업보고서 기준. '적정' 이 아닌 의견(의견거절·한정·부적정)은 상장폐지 사유다.",
         "year": year,
         "companyCount": len(opinions),
+        # 시간 예산에 걸린 주에는 일부 종목이 직전 실행 값(같은 사업연도)이다.
+        "refreshedCount": len(fresh),
+        "carriedCount": carried,
+        "stoppedReason": budget.reason or None,
         "adverseCount": adverse,
         "distribution": dict(dist),
         "opinions": opinions,

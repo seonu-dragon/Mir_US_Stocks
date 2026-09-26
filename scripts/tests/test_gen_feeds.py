@@ -61,6 +61,18 @@ def site(tmp_path):
         {"company": "바로팜", "stage": "filed", "form": "미래에셋증권", "fileDate": "2026.11.02",
          "accession": "kr-ipo-bidding-바로팜", "link": "http://www.38.co.kr/", "offerPriceBand": [16400, 20200]},
     ]})
+    _write(root, "market_calendar.json", {"events": [
+        {"date": "2026-10-05", "market": "kr", "kind": "holiday", "name": "개천절 대체휴일"},
+        {"date": "2026-10-08", "market": "kr", "kind": "expiry", "title": "코스피200 옵션 월물 만기", "detail": "매월 둘째 목요일"},
+        {"date": "2026-11-26", "market": "us", "kind": "holiday", "name": "추수감사절"},
+        {"date": "2026-11-27", "market": "us", "kind": "early_close", "name": "추수감사절 다음 날", "detail": "13:00 ET 마감"},
+        {"date": "2026-10-16", "market": "us", "kind": "expiry", "title": "미국 월간 옵션 만기"},
+    ]})
+    _write(root, "korea/ir_schedule.json", {"rows": [
+        {"code": "005380", "company": "현대자동차", "date": "2026-10-23", "time": "14:10", "earnings": True,
+         "purpose": "2026년 3분기 경영실적 발표", "link": "https://dart/ir1"},
+        {"code": "322180", "company": "LS티라유텍", "date": "2026-09-30", "time": "15:00", "earnings": False},
+    ]})
     _write(root, "industry_calendar.json", {"events": [
         {"id": "h8", "name_kr": "은행 대출 (H.8)", "date": "2026-09-30", "time_kst": "05:30", "note": "매주"},
     ]})
@@ -283,3 +295,19 @@ def test_missing_inputs_do_not_crash(tmp_path, no_network):
     # 규칙 기반(FOMC·옵션 만기)만 남는다.
     assert m["totalCount"] > 0
     assert (tmp_path / "out" / "econ.ics").exists()
+
+
+def test_calendar_feeds_include_holidays_expiry_and_kr_ir(built):
+    out, _ = built
+    kr = {e["SUMMARY"]: e for e in _events((out / "calendar-kr.ics").read_bytes().decode("utf-8"))}
+    assert kr["[휴장] 한국 증시 휴장 · 개천절 대체휴일"]["DTSTART;VALUE=DATE"] == "20261005"
+    assert kr["[옵션 만기] 코스피200 옵션 월물 만기"]["DTSTART;VALUE=DATE"] == "20261008"
+    assert kr["[실적 IR] 현대자동차"]["DTSTART"] == "20261023T051000Z"   # 14:10 KST
+    assert not any("LS티라유텍" in s for s in kr)                          # 비실적 IR 은 빠진다
+    us = [e for e in _events((out / "calendar-us.ics").read_bytes().decode("utf-8"))]
+    by = {e["SUMMARY"]: e for e in us}
+    assert by["[휴장] 미국 증시 휴장 · 추수감사절"]["DTSTART;VALUE=DATE"] == "20261126"
+    assert "[단축 거래] 미국 증시 13:00 ET 마감" in by
+    # 미국 옵션 만기는 규칙 이벤트 하나만(달력 파일의 만기와 중복되지 않는다).
+    assert len([e for e in us if e["SUMMARY"].startswith("[옵션") and e["DTSTART;VALUE=DATE"] == "20261016"]) == 1
+

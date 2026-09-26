@@ -913,8 +913,10 @@ function applyMarketOnlyUi() {
     const earningsOff = featureOff("earningsCalendar", cfg);
     calendarNav.querySelectorAll(".sub-tab").forEach((btn) => setTabHidden(btn, btn.dataset.sub === "earnings" && earningsOff));
     if (calendarSubTab === "earnings" && earningsOff) {
-      activateCalendarSub("macro", { push: false });
+      activateCalendarSub("all", { push: false });
     }
+    // 시장이 바뀌면 통합 캘린더의 종목 일정(미국 실적·배당락 ↔ 국내 IR·배당)이 달라진다.
+    if (typeof renderUnifiedCalendarIfVisible === "function") renderUnifiedCalendarIfVisible();
   }
   const calKr = document.querySelector('[data-cal-country="korea"]');
   const calUs = document.querySelector('[data-cal-country="us"]');
@@ -1954,6 +1956,8 @@ function calendarEventPassesFilters(event) {
 function renderCalendarFiltered() {
   const filtered = calendarEventsCache.filter(calendarEventPassesFilters);
   renderCalendar(filtered);
+  // 통합 캘린더(calendar-panel.js)도 같은 경제지표를 쓴다 — 워커 응답이 늦게 오면 여기서 다시 그린다.
+  if (typeof renderUnifiedCalendarIfVisible === "function") renderUnifiedCalendarIfVisible();
 }
 
 function loadCalendar() {
@@ -2166,7 +2170,7 @@ function applySearchSubVisibility(cfg = marketCfg()) {
     activateSearchSub("analysis", { push: false });
   }
 }
-let calendarSubTab = "macro";
+let calendarSubTab = "all";
 let communitySubTab = "trending";
 let communityCardnewsView = "us";
 let communityBoardTickerFilter = "";
@@ -2528,7 +2532,7 @@ function render52wRange(item) {
 
 
 function activateCalendarSub(name, { push = false } = {}) {
-  calendarSubTab = name || "macro";
+  calendarSubTab = name && document.querySelector(`#tab-calendar #sub-${name}`) ? name : "all";
   const nav = byId("calendarSubTabs");
   if (nav) {
     nav.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === calendarSubTab));
@@ -2538,6 +2542,7 @@ function activateCalendarSub(name, { push = false } = {}) {
   }
   if (calendarSubTab === "macro") loadCalendar();
   if (calendarSubTab === "earnings") loadEarningsCalendar();
+  if (calendarSubTab === "all" && typeof renderUnifiedCalendar === "function") renderUnifiedCalendar();
   if (push) {
     recordNav();
   }
@@ -5101,6 +5106,7 @@ function renderSearch(options = {}) {
   render52wRange(item);
   renderStockEvents(item);
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
+  if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
@@ -6570,6 +6576,13 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Market indicators", script: "scripts/build_market_indicators.py" },
     tabs: "시장 탭 · 시장지표",
   },
+  "휴장·만기 달력": {
+    us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_market_calendar.py" },
+    kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_market_calendar.py" },
+    tabs: "오늘 탭 · 캘린더 · 전체 일정",
+  },
+  "실적 IR 일정": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_ir_schedule.py" }, tabs: "오늘 탭 · 캘린더 · 전체 일정(실적)" },
+  "ETF 구성 종목": { us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_us_etf_holdings.py" }, tabs: "종목 탭 · 분석 · 구성 종목 / 이 종목을 담은 ETF" },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
@@ -6765,6 +6778,10 @@ function dataTrustSources() {
   rows.push(source("산업 선행지표", "FRED · TWSE/TPEx · 한국은행 ECOS · OECD", window.INDUSTRY_INDICATORS, ["indicators"], 48, "매일 06:10", "industry"));
   // 시장지표 — 평일 하루 2회(07:30·16:10 KST). 주말을 넘기면 60시간이 정상이라 여유 있게 72시간. lazy.
   rows.push(source("시장지표", "Yahoo · FRED · ECOS · 재무성 · Bundesbank · BoE · BIS", window.MARKET_INDICATORS, ["items"], 72, "평일 07:30·16:10", "marketIndicators"));
+  // 통합 캘린더(2026-09-26) — 휴장·만기(오프라인 계산)는 매일, 국내 실적 IR 은 매일, 미국 ETF 구성은 월 1회.
+  rows.push(source("휴장·만기 달력", "exchange_calendars(XKRX·XNYS) · 연준 일정표", window.MARKET_CALENDAR, ["events"], 72, "매일 06:40", "marketCalendar"));
+  if (cfg.id === "kr" && cfg.features?.krIrSchedule !== false) rows.push(source("실적 IR 일정", "DART 기업설명회 개최 공시", window.KR_IR_SCHEDULE, ["rows"], 72, "매일 06:40", "krIrSchedule", "", true));
+  if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
   // 이벤트 스터디(2026-09-26) — 주 1회 사전 계산. lazy 라 신뢰도 센터가 직접 받아 본다. 표본 수·기간·생존편향을 함께 적는다.
   {
     const es = window.EVENT_STUDY_INDEX;

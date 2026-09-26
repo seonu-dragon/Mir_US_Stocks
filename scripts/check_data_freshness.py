@@ -26,6 +26,8 @@
     py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
     py scripts/check_data_freshness.py --group screener-backtest  # screener-backtest-panel.yml 말미
     py scripts/check_data_freshness.py --group market-indicators  # market-indicators.yml 말미
+    py scripts/check_data_freshness.py --group market-calendar    # market-calendar.yml 말미
+    py scripts/check_data_freshness.py --group etf-holdings       # market-calendar.yml etf 잡
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -233,6 +235,15 @@ CHECKS = {
     ],
     "price-targets": [
         ("data/us_price_targets/index.json", 5, True),
+    ],
+    # market-calendar.yml(매일 06:40 KST) — 휴장·만기 달력(오프라인 계산)은 0건이면 실패, 국내 실적 IR 은 비수기
+    # 0건이 정상이라 나이만. ETF 구성(월 1회, etf 잡)은 40일.
+    "market-calendar": [
+        ("data/market_calendar.json", 3, True),
+        ("data/korea/ir_schedule.json", 3, False),
+    ],
+    "etf-holdings": [
+        ("data/etf_holdings/index.json", 40, True),
     ],
     "screener-backtest": [
         ("data/screener_backtest_meta.json", 10, False),

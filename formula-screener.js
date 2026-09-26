@@ -23,6 +23,9 @@ const FX_FIELDS = [
   { key: "ytdChangePct", label: "연초 대비 수익률(%)", group: "가격", src: "스냅샷", get: (it) => fxNum(it.ytdChangePct) },
   { key: "marketCap", label: "시가총액(US $B · KR 조원)", group: "가격", src: "스냅샷", get: (it) => { const v = itemCapForValuation(it); return v > 0 ? v : null; } },
   { key: "volumeRatio", label: "거래량 배율(20일 평균 대비)", group: "가격", src: "스냅샷", get: (it) => fxNum(it.volumeRatio) },
+  { key: "volume", label: "거래량(주)", group: "가격", src: "스냅샷", get: (it) => { const v = fxNum(it.volume); return v > 0 ? v : null; } },
+  // KR 은 네이버 거래대금, US 는 종가 × 거래량 근사. 단위를 맞춰 수식에 쓰기 쉽게 KR 억원 · US 백만 달러.
+  { key: "amount", label: "거래대금(US $M · KR 억원)", group: "가격", src: "스냅샷", get: (it) => { const v = fxNum(it.amount); return v > 0 ? v / (isKrMarket() ? 1e8 : 1e6) : null; } },
   { key: "rsi14", label: "RSI(14)", group: "기술", src: "스냅샷", get: (it) => rsiValue(it) },
   { key: "stochK", label: "스토캐스틱 %K", group: "기술", src: "스냅샷", get: (it) => fxNum(it.stochK) },
   { key: "newHighDistancePct", label: "52주 고점 대비 하락폭(%)", group: "기술", src: "스냅샷", get: (it) => fxNum(it.newHighDistancePct) },

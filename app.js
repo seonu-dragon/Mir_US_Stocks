@@ -2512,6 +2512,8 @@ function render13fHighlights() {
 function render52wRange(item) {
   const el = byId("range52Bar");
   if (!el || !item) return;
+  // 시세정보 카드(quote-info.js)가 52주 게이지·날짜와 전일/시가/고가/저가/거래량/거래대금을 함께 그린다.
+  if (typeof renderQuoteInfo === "function" && renderQuoteInfo(item)) return;
   const f = (window.MAP_FUNDAMENTALS || {})[item.ticker] || {};
   const low = Number(f.low52), high = Number(f.high52), price = Number(item.price);
   if (!Number.isFinite(low) || !Number.isFinite(high) || high <= low || !Number.isFinite(price)) { el.innerHTML = ""; return; }
@@ -3576,12 +3578,12 @@ function stockFacts(item, title) {
     ${krNpsCard(item)}
     ${krConsensusCard(item)}
     <div class="facts">
-      ${fact("가격", priceOrDash(item.price))}
+      ${fact("가격", `${priceOrDash(item.price)}${typeof quoteKrwApproxHtml === "function" ? quoteKrwApproxHtml(item.price) : ""}`)}
       ${fact("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}
       ${fact("1개월", `<span class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</span>`)}
       ${fact("RSI", fmtRsi(item))}
       ${fact("EPS", fmtEps(item))}
-      ${fact("거래량", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
+      ${fact("거래량 배율", Number.isFinite(Number(item.volumeRatio)) ? `${Number(item.volumeRatio).toFixed(1)}x` : "—")}
       ${fact("52주 위치", Number.isFinite(Number(item.stochK)) ? Math.round(Number(item.stochK)) : "—")}
       ${fact("신고가 거리", Number.isFinite(Number(item.newHighDistancePct)) ? fmtPct(-Number(item.newHighDistancePct)) : "—")}
     </div>
@@ -4826,6 +4828,8 @@ function metricSortDirection(metric) {
 
 function formatMetricValue(value, metric) {
   if (metric === "marketCapB") return fmtBillions(value);
+  if (metric === "amount") return typeof qiMoneyLarge === "function" ? qiMoneyLarge(value) : fmtCompact(value);
+  if (metric === "volume") return Number.isFinite(Number(value)) ? `${Math.round(Number(value)).toLocaleString("en-US")}주` : "—";
   if (metric === "volumeRatio") return `${Number(value).toFixed(1)}x`;
   if (metric === "newHighDistancePct") return `${Number(value).toFixed(1)}%↓`;
   if (metric === "low52Dist") return `저가 +${Number(value).toFixed(1)}%`;
@@ -4837,7 +4841,7 @@ function formatMetricValue(value, metric) {
 }
 
 function metricClass(value, metric) {
-  if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio", "low52Dist", "rsi14", "stochK", "epsTtm"].includes(metric)) return "";
+  if (["pe", "forwardPE", "ps", "pb", "marketCapB", "volumeRatio", "volume", "amount", "low52Dist", "rsi14", "stochK", "epsTtm"].includes(metric)) return "";
   if (metric === "newHighDistancePct") return "neg";
   return cls(value);
 }

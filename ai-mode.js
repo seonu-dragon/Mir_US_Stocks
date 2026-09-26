@@ -805,7 +805,10 @@ async function ensureAiWidgetStock(ticker) {
   if (!base) return null;
   await Promise.all([
     loadStockDetail(ticker),
-    ...["inst13f", "insider", "short", "congress", "activist", "events"].map((key) =>
+    // 뒤쪽 패널(컨센서스·목표주가·옵션·연방계약·FINRA·배당/실적 예정일)이 쓰는 지연 데이터도 기다린다 —
+    // 두 번째 paint 전에 도착하지 않으면 그 패널이 통째로 빠졌다(390px 에서 컨센서스 패널이 안 뜨던 경합).
+    ...["inst13f", "insider", "short", "congress", "activist", "events",
+      "analystConsensus", "usPriceTargets", "optionsStats", "federalContracts", "finraShort", "usCalendar"].map((key) =>
       (typeof ensureFeatureData === "function" ? ensureFeatureData(key) : Promise.resolve(false)).catch(() => false)),
   ]);
 
@@ -1194,76 +1197,11 @@ function aiKrEventsPanel(item) {
   return aiModePanel("KR 이벤트·수급", "공시 종합", aiMetricGrid(bits));
 }
 
-// 종목 체력 스노우플레이크(Simply Wall St 벤치마크). 5축(밸류·성장·건전성·과거성과·배당)
-// 각각을 6개 재무 체크 통과 개수(0~6)로 채운다. 블랙박스 점수가 아니라 '통과한 체크'를
-// 그대로 보여주는 게 핵심 — Mir 정직성 원칙과 맞다. 예측 신호가 아니라 재무 체크 요약.
-function computeSnowflake(f) {
-  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
-  const asRatio = (v) => (v == null ? null : (v > 10 ? v / 100 : v)); // %로 오면 배수로
-  const pe = n(f.pe), fpe = n(f.forwardPE), pb = n(f.pb ?? f.pbr), ps = n(f.ps), peg = n(f.peg);
-  const dy = n(f.divYield), payout = n(f.payoutRatio);
-  const roe = n(f.roe), roa = n(f.roa), nm = n(f.netMargin ?? f.profitMargin);
-  const debt = asRatio(n(f.debtEq)) ?? (n(f.debtRatio) != null ? n(f.debtRatio) / 100 : null);
-  const cur = asRatio(n(f.currentRatio)) ?? asRatio(n(f.quickRatio));
-  const rg = n(f.revenueGrowth), og = n(f.operatingGrowth), ng = n(f.netGrowth);
-  const eps = n(f.epsTtm ?? f.eps), epsN = n(f.epsNextY);
-  const axis = (checks) => {
-    let pass = 0, ev = 0;
-    for (const [has, ok] of checks) { if (has) { ev++; if (ok) pass++; } }
-    return { pass, ev, score: ev > 0 ? pass : null };
-  };
-  return {
-    value: axis([[pe > 0, pe < 15], [pe > 0, pe < 25], [pb > 0, pb < 1.5], [pb > 0, pb < 3], [ps > 0, ps < 2], [peg > 0, peg > 0 && peg < 1.5]]),
-    growth: axis([[peg > 0, peg < 1], [peg > 0, peg < 1.5], [pe > 0 && fpe > 0, fpe < pe], [rg != null, rg > 10], [rg != null, rg > 0], [og != null || ng != null, (og != null ? og > 0 : ng > 0)]]),
-    health: axis([[debt != null, debt < 0.5], [debt != null, debt < 1], [cur != null, cur > 1.5], [cur != null, cur > 1], [nm != null, nm > 5], [nm != null, nm > 0]]),
-    past: axis([[roe != null, roe > 15], [roe != null, roe > 8], [roa != null, roa > 5], [nm != null, nm > 10], [nm != null, nm > 0], [eps != null, eps > 0]]),
-    dividend: axis([[dy != null, dy > 0], [dy != null, dy > 2], [dy != null, dy > 3.5], [payout != null, payout > 0 && payout < 80], [payout != null, payout > 0 && payout < 60], [dy != null, dy > 0 && dy < 12]]),
-  };
-}
-
-function snowflakeSvg(sf) {
-  const axes = [["밸류", sf.value], ["성장", sf.growth], ["건전성", sf.health], ["과거성과", sf.past], ["배당", sf.dividend]];
-  const cx = 96, cy = 100, R = 62, N = 5;
-  const ang = (i) => (-Math.PI / 2) + i * (2 * Math.PI / N);
-  const pt = (i, r) => [cx + r * Math.cos(ang(i)), cy + r * Math.sin(ang(i))];
-  let grid = "";
-  for (const g of [2, 4, 6]) grid += `<polygon points="${axes.map((_, i) => pt(i, g / 6 * R).map((v) => v.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="var(--muted)" stroke-opacity="0.16" stroke-width="1"/>`;
-  let spokes = "", labels = "";
-  axes.forEach(([name], i) => {
-    const [x, y] = pt(i, R);
-    spokes += `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="var(--muted)" stroke-opacity="0.16"/>`;
-    const [lx, ly] = pt(i, R + 14);
-    const anchor = Math.abs(lx - cx) < 6 ? "middle" : (lx > cx ? "start" : "end");
-    labels += `<text x="${lx.toFixed(1)}" y="${(ly + 3).toFixed(1)}" font-size="11" fill="var(--muted)" text-anchor="${anchor}">${name}</text>`;
-  });
-  const dp = axes.map(([_, a], i) => pt(i, (a.score ?? 0) / 6 * R).map((v) => v.toFixed(1)).join(",")).join(" ");
-  const total = axes.reduce((s, [_, a]) => s + (a.score ?? 0), 0);
-  const col = total >= 20 ? "#2fa25f" : total >= 12 ? "#5b8def" : "#d98a2b";
-  const dots = axes.map(([_, a], i) => { const [x, y] = pt(i, (a.score ?? 0) / 6 * R); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.4" fill="${col}"/>`; }).join("");
-  return `<svg viewBox="0 0 192 206" width="180" height="192" role="img" aria-label="종목 체력 레이더">${grid}${spokes}<polygon points="${dp}" fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="1.6" stroke-linejoin="round"/>${dots}${labels}</svg>`;
-}
-
+// 종목 체력 스노우플레이크 · 팩터 스코어 · 위험 · 유사종목 — 본문은 stock-health.js 가 만들고
+// 종목 상세(밸류·개요 탭)와 같이 쓴다. 여기서는 AI 대시보드 패널로 감싸기만 한다.
 function aiSnowflakePanel(item) {
-  // 소스: 종목 상세 fundamentals + 지도 펀더멘털(MAP_FUNDAMENTALS)을 결측 보완으로 병합.
-  // 홈의 light 종목은 fundamentals 가 비어 있어 map 이 주 소스가 된다.
-  const mf = (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(item.ticker) : null) || {};
-  const norm = normalizedFundamentalsForItem(item) || {};
-  const f = { ...mf };
-  for (const k in norm) if (norm[k] != null) f[k] = norm[k];
-  const sf = computeSnowflake(f);
-  const axes = [["밸류", sf.value], ["성장", sf.growth], ["건전성", sf.health], ["과거성과", sf.past], ["배당", sf.dividend]];
-  if (axes.filter(([_, a]) => a.ev > 0).length < 2) return ""; // 데이터 부족하면 숨김
-  const total = axes.reduce((s, [_, a]) => s + (a.score ?? 0), 0);
-  const checks = axes.map(([name, a]) => `<div style="display:flex;justify-content:space-between;gap:8px"><span style="color:var(--muted)">${name}</span><b>${a.ev > 0 ? `${a.pass}/${a.ev}` : "—"}</b></div>`).join("");
-  const body = `<div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
-    ${snowflakeSvg(sf)}
-    <div style="flex:1;min-width:150px">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:8px">종합 <b style="color:var(--text)">${total}/30</b> · 통과한 재무 체크</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;font-size:12px">${checks}</div>
-      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65"><b>절대 기준</b>: 각 축 = PER 15 미만·ROE 15% 초과 같은 고정 기준 최대 6개 중 통과 개수라 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다. 같은 업종 안 위치는 아래 '업종 상대 팩터 등급'을 보세요. 예측 점수가 아니라 재무 상태 요약입니다.</div>
-    </div>
-  </div>`;
-  return aiModePanel("종목 체력", "스노우플레이크 · 절대 기준 재무 체크", body);
+  const body = typeof stockSnowflakeBodyHtml === "function" ? stockSnowflakeBodyHtml(item) : "";
+  return body ? aiModePanel("종목 체력", "스노우플레이크 · 절대 기준 재무 체크", body) : "";
 }
 
 // 역DCF(dcf.js) — 재무 확장 파일(SEC/DART)의 FCF·희석 주식수·순차입금으로 '현재가에 들어 있는 성장률' 을 역산.
@@ -1326,159 +1264,18 @@ function aiLegacyFinancialsPanel(item) {
   return aiModePanel("다년 재무", `연간 추이 · ${sorted[sorted.length - 1].y}~${sorted[0].y} (${isKrMarket() ? "DART" : "SEC"})`, `<div class="insider-table-wrap">${table}</div>`);
 }
 
-// 위험 프로파일 — 가격 이력(getChartRows)으로 연율변동성·최대낙폭·1년수익률 + 월별
-// 시즈널리티. 예측이 아니라 과거 위험/계절 패턴 요약.
-function seasonalitySvg(monthly) {
-  const W = 250, H = 54, n = 12, bw = W / n;
-  const vals = monthly.map((v) => (Number.isFinite(v) ? v : 0));
-  const mx = Math.max(1, ...vals.map(Math.abs));
-  const mid = H / 2;
-  let bars = "", labels = "";
-  const M = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
-  for (let i = 0; i < n; i++) {
-    const v = vals[i]; const h = Math.abs(v) / mx * (H / 2 - 3);
-    const y = v >= 0 ? mid - h : mid; const col = v >= 0 ? "#30a46c" : "#e5484d";
-    bars += `<rect x="${(i * bw + 3).toFixed(1)}" y="${y.toFixed(1)}" width="${(bw - 6).toFixed(1)}" height="${Math.max(1, h).toFixed(1)}" fill="${col}" rx="1.5"/>`;
-    labels += `<text x="${(i * bw + bw / 2).toFixed(1)}" y="${H + 9}" font-size="8" fill="var(--muted)" text-anchor="middle">${M[i]}</text>`;
-  }
-  return `<svg viewBox="0 0 ${W} ${H + 12}" width="100%" height="${H + 12}"><line x1="0" y1="${mid}" x2="${W}" y2="${mid}" stroke="var(--muted)" stroke-opacity="0.2"/>${bars}${labels}</svg>`;
-}
 function aiRiskPanel(item) {
-  const rows = getChartRows(item);
-  if (!Array.isArray(rows) || rows.length < 60) return "";
-  const closes = rows.map((r) => Number(r.c)).filter((c) => c > 0);
-  if (closes.length < 60) return "";
-  const rets = [];
-  for (let i = 1; i < closes.length; i++) rets.push(closes[i] / closes[i - 1] - 1);
-  const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
-  const varc = rets.reduce((a, b) => a + (b - mean) ** 2, 0) / rets.length;
-  const vol = Math.sqrt(varc) * Math.sqrt(252) * 100;
-  let peak = closes[0], mdd = 0;
-  for (const c of closes) { if (c > peak) peak = c; const dd = c / peak - 1; if (dd < mdd) mdd = dd; }
-  const oneY = closes.length > 252 ? (closes[closes.length - 1] / closes[closes.length - 252] - 1) * 100 : null;
-  const byMonth = Array.from({ length: 12 }, () => []);
-  for (let i = 1; i < rows.length && i < closes.length; i++) {
-    const d = rows[i] && rows[i].d; if (!d) continue;
-    const m = Number(String(d).slice(5, 7)) - 1;
-    if (m >= 0 && m < 12 && closes[i] && closes[i - 1]) byMonth[m].push(closes[i] / closes[i - 1] - 1);
-  }
-  const seasonal = byMonth.map((a) => a.length ? (a.reduce((x, y) => x + y, 0) / a.length) * 21 * 100 : null);
-  const grid = aiMetricGrid([
-    { label: "연율 변동성", value: Number.isFinite(vol) ? `${vol.toFixed(0)}%` : "—", tone: vol > 45 ? "warn" : "" },
-    { label: "최대 낙폭", value: Number.isFinite(mdd) ? `${(mdd * 100).toFixed(0)}%` : "—", tone: "warn" },
-    { label: "1년 수익률", value: oneY != null ? `${oneY > 0 ? "+" : ""}${oneY.toFixed(0)}%` : "—", tone: cls(oneY) },
-    { label: "표본", value: `${closes.length}일` },
-  ]);
-  const body = grid + `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">월별 시즈널리티 (평균 수익률)</div>${seasonalitySvg(seasonal)}`;
-  return aiModePanel("위험 · 시즈널리티", "가격 이력 기반 · 참고용", body);
-}
-
-// 팩터 스코어 — 시장 내 백분위(밸류·모멘텀·퀄리티·성장·규모). 스노우플레이크의 정량
-// 상대평가 버전. 예측이 아니라 '동종 대비 위치'.
-function factorPercentiles(item) {
-  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
-  if (stocks.length < 30) return null;
-  const mfFor = (t) => ((typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(t) : null) || {});
-  const cols = { value: [], momentum: [], quality: [], growth: [], size: [] };
-  const push = (arr, t, v) => { if (Number.isFinite(v)) arr.push([t, v]); };
-  for (const s of stocks) {
-    const mf = mfFor(s.ticker);
-    const val = Number.isFinite(mf.valueScore) ? mf.valueScore
-      : (mf.pe > 0 && mf.pb > 0 ? -(mf.pe + mf.pb * 8) : NaN); // 높을수록 저평가
-    push(cols.value, s.ticker, val);
-    push(cols.momentum, s.ticker, Number(s.threeMonthChangePct));
-    const roe = Number(mf.roe), nm = Number(mf.netMargin), dr = Number(mf.debtRatio);
-    if (Number.isFinite(roe) || Number.isFinite(nm)) push(cols.quality, s.ticker, (roe || 0) + (nm || 0) - (Number.isFinite(dr) ? dr / 5 : 0));
-    push(cols.growth, s.ticker, Number.isFinite(mf.revenueGrowth) ? mf.revenueGrowth
-      : ((Number.isFinite(Number(s.epsNextY)) && Number.isFinite(Number(s.epsTtm)) && Number(s.epsTtm) > 0)
-          ? (Number(s.epsNextY) / Number(s.epsTtm) - 1) * 100 : NaN));
-    push(cols.size, s.ticker, Number(s.marketCapB));
-  }
-  const pct = (arr) => {
-    if (arr.length < 20) return null;
-    const sorted = arr.slice().sort((a, b) => a[1] - b[1]);
-    const idx = sorted.findIndex((x) => x[0] === item.ticker);
-    return idx < 0 ? null : Math.round(idx / (sorted.length - 1) * 100);
-  };
-  return { value: pct(cols.value), momentum: pct(cols.momentum), quality: pct(cols.quality), growth: pct(cols.growth), size: pct(cols.size) };
+  const body = typeof stockRiskBodyHtml === "function" ? stockRiskBodyHtml(item) : "";
+  return body ? aiModePanel("위험 · 시즈널리티", "가격 이력 기반 · 과거 통계", body) : "";
 }
 function aiFactorPanel(item) {
-  const f = factorPercentiles(item);
-  if (!f) return "";
-  const axes = [["밸류", f.value], ["모멘텀", f.momentum], ["퀄리티", f.quality], ["성장", f.growth], ["규모", f.size]];
-  if (axes.filter(([_, v]) => v != null).length < 3) return "";
-  const bar = (name, v) => {
-    const col = v == null ? "var(--muted)" : v >= 70 ? "#30a46c" : v >= 40 ? "#5b8def" : "#d98a2b";
-    const w = v == null ? 0 : v;
-    return `<div style="display:flex;align-items:center;gap:8px;margin:5px 0">
-      <span style="width:44px;font-size:12px;color:var(--muted)">${name}</span>
-      <div style="flex:1;height:7px;border-radius:4px;background:var(--panel-soft);overflow:hidden"><div style="width:${w}%;height:100%;background:${col}"></div></div>
-      <span style="width:34px;text-align:right;font-size:12px;font-weight:600">${v == null ? "—" : v}</span>
-    </div>`;
-  };
-  const body = axes.map(([n, v]) => bar(n, v)).join("")
-    + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">시장 내 백분위(0~100). 밸류=저평가·모멘텀=3개월 상대강세·퀄리티=ROE·마진·저부채·성장=매출성장/RS·규모=시총. 예측이 아니라 동종 대비 위치입니다.</div>`;
-  return aiModePanel("팩터 스코어", "시장 내 백분위", body);
+  const body = typeof stockFactorPctBodyHtml === "function" ? stockFactorPctBodyHtml(item) : "";
+  return body ? aiModePanel("팩터 스코어", "시장 전체 백분위 · 예측 아님", body) : "";
 }
-
-// 유사종목 비교 — 같은 산업군(폴백 섹터) 시총 상위 피어 표. stockanalysis·Simply Wall St
-// 공통 기능. 예측이 아니라 동종 기업과의 밸류·수익성·모멘텀 나란히 보기.
 function aiPeerPanel(item) {
-  const stocks = (typeof data !== "undefined" && data && Array.isArray(data.stocks)) ? data.stocks : [];
-  if (stocks.length < 10 || !item || !item.ticker) return "";
-  const sameInd = stocks.filter((s) => s.ticker !== item.ticker && item.industry && s.industry === item.industry);
-  const pool = sameInd.length >= 3 ? sameInd
-    : stocks.filter((s) => s.ticker !== item.ticker && item.sector && s.sector === item.sector);
-  if (!pool.length) return "";
-  const basis = sameInd.length >= 3 ? "같은 산업군" : "같은 섹터";
-  const peers = pool.slice().sort((a, b) => (Number(b.marketCapB) || 0) - (Number(a.marketCapB) || 0)).slice(0, 6);
-  const list = [item, ...peers];
-  const mf = (t) => (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(t) : null) || {};
-  const num = (v, d = 1) => Number.isFinite(Number(v)) ? Number(v).toFixed(d) : "—";
-  const rows = list.map((s) => {
-    const f = mf(s.ticker);
-    const self = s.ticker === item.ticker;
-    const tkCell = self
-      ? `<strong>${escapeHtml(stockLabel(s))}</strong>`
-      : `<strong class="ticker-link ai-peer-link" data-ticker="${escapeHtml(s.ticker)}" role="button" tabindex="0">${escapeHtml(stockLabel(s))}</strong>`;
-    const chg = Number(s.threeMonthChangePct);
-    const rt = "text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap";
-    return `<tr style="${self ? "background:var(--panel-soft)" : ""}">
-      <td style="overflow:hidden">${tkCell}<div style="font-size:var(--fs-cap);color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(s.company || "")}</div></td>
-      <td style="${rt}">${fmtBillions(s.marketCapB)}</td>
-      <td style="${rt}">${num(f.pe)}</td>
-      <td style="${rt}">${num(f.pb)}</td>
-      <td style="${rt}" class="${Number.isFinite(chg) ? cls(chg) : ""}">${Number.isFinite(chg) ? fmtPct(chg) : "—"}</td>
-    </tr>`;
-  }).join("");
-  const body = `<div class="ai-mode-table-wrap"><table class="ai-mode-table" style="table-layout:fixed;width:100%;min-width:0">
-    <colgroup><col style="width:31%"><col style="width:19%"><col style="width:14%"><col style="width:14%"><col style="width:22%"></colgroup>
-    <thead><tr><th>종목</th><th style="text-align:right;white-space:nowrap">시총</th><th style="text-align:right;white-space:nowrap">PER</th><th style="text-align:right;white-space:nowrap">PBR</th><th style="text-align:right;white-space:nowrap">3개월</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>
-    <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px">${basis} 시총 상위 비교(강조행이 현재 종목). 종목명을 누르면 해당 분석으로 이동합니다.</div>`;
-  return aiModePanel("유사종목 비교", basis + " · 시총순", body);
+  const body = typeof stockPeerBodyHtml === "function" ? stockPeerBodyHtml(item) : "";
+  return body ? aiModePanel("유사종목 비교", `${stockPeerBasis(item)} · 시총순`, body) : "";
 }
-
-// 유사종목 표의 종목 클릭(위임, 문서에 한 번만). 인라인 onclick 에 티커를 문자열로 박던
-// 것을 data-ticker 로 바꿨다 — 인라인은 이스케이프가 안 돼 있었고 CSP 에도 걸린다.
-// AI 모드 안에서는 같은 AI 분석으로, 밖(종목검색 탭)에서는 종목 분석으로 이동한다.
-function onAiPeerLinkActivate(e) {
-  const link = e.target && e.target.closest ? e.target.closest(".ai-peer-link[data-ticker]") : null;
-  if (!link) return;
-  if (e.type === "keydown" && e.key !== "Enter" && e.key !== " ") return;
-  const t = link.dataset.ticker;
-  if (!t) return;
-  e.preventDefault();
-  if (window.MirAI?.isActive?.() && window.MirAI.queryStock) {
-    const input = byId("aiChatInput");
-    if (input) input.value = `${t} 분석해줘`;
-    window.MirAI.queryStock(`${t} 분석해줘`);
-    return;
-  }
-  selectTicker(t, { openSearch: true });
-}
-document.addEventListener("click", onAiPeerLinkActivate);
-document.addEventListener("keydown", onAiPeerLinkActivate);
 
 // 일일 공매도 거래량(FINRA) — 격주 공매도잔고를 보완하는 매일 지표. 공매도량/총거래량
 // 비율 + 10일 추이. MM 헤지·데이트레이딩도 포함되니 '포지션'이 아니라 '참여도'다(참고용).
@@ -1525,8 +1322,9 @@ function aiDividendPanel(item) {
   return aiModePanel("배당", "Yahoo · 연간 기준", grid + cmp);
 }
 
-// 애널리스트 컨센서스 — 추천 분포(강력매수~강력매도) + 분기 EPS 서프라이즈(Finnhub).
-// 목표주가는 무료 티어 제외. 참고용이며 예측·매매 신호가 아니다.
+// 애널리스트 컨센서스 — 추천 분포(강력매수~강력매도) + 분기 EPS 서프라이즈(Finnhub)
+// + 목표주가 범위(Nasdaq US_PRICE_TARGETS, company-info.js 의 범위 바를 자리에 늦게 채운다).
+// 참고용이며 예측·매매 신호가 아니다.
 function aiAnalystPanel(item) {
   const ac = window.ANALYST_CONSENSUS;
   if (!ac || !ac.stocks || !item || !item.ticker) return "";
@@ -1566,8 +1364,9 @@ function aiAnalystPanel(item) {
   const nextE = cal && cal.stocks && cal.stocks[String(item.ticker).toUpperCase()] && cal.stocks[String(item.ticker).toUpperCase()].nextEarnings;
   const nextHtml = nextE ? `<div style="background:var(--panel-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span style="color:var(--muted)">다음 실적 발표 예정</span> <strong style="margin-left:6px">${escapeHtml(nextE)}</strong></div>` : "";
   if (!recHtml && !earnHtml && !nextHtml) return "";
-  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">출처: Finnhub(추천 분포·EPS 서프라이즈) · Yahoo(실적 예정일). 참고용이며 예측·매매 신호가 아닙니다.</p>`;
-  return aiModePanel("애널리스트 컨센서스", "추천 분포 · EPS 서프라이즈", nextHtml + recHtml + earnHtml + note);
+  const ptSlot = typeof priceTargetSlotHtml === "function" ? priceTargetSlotHtml(item) : "";
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">출처: Finnhub(추천 분포·EPS 서프라이즈) · Nasdaq·Yahoo(목표주가) · Yahoo(실적 예정일). 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
+  return aiModePanel("애널리스트 컨센서스", "추천 분포 · 목표주가 · EPS 서프라이즈", nextHtml + recHtml + ptSlot + earnHtml + note);
 }
 
 // 옵션 심리 — 풋/콜 비율(미결제약정) + 맥스페인. 둘 다 참고용 심리·수급 지표이지 매매

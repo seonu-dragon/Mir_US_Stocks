@@ -153,6 +153,10 @@ jobs:
       # 평균 목표가 서술(권유 문구 없음), 의견 분포 비율.
       - name: Company info core tests
         run: node scripts/tests/test_company_info_core.mjs
+      # 종목 체력·유사종목·위험(stock-health-core.js): 스노우플레이크 통과 수/분모, %→배수, 적자 제외,
+      # 피어 산업군→섹터 폴백·시총순, 변동성·낙폭·월별 평균(무효 종가 행 건너뜀).
+      - name: Stock health core tests
+        run: node scripts/tests/test_stock_health_core.mjs
 
       # 포트폴리오 위험 분석 순수 계산(portfolio-risk-core.js): Ledoit-Wolf(scikit-learn 값)·리스크 패리티 수렴·
       # 최소분산(상한)·낙폭 구간·월별 수익·empyrical 지표·위기 재생 경로.

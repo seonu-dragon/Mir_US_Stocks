@@ -338,6 +338,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
+          () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
           () => { if (typeof renderDcf === "function") renderDcf(item); },
           () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },

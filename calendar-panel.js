@@ -198,6 +198,7 @@ function renderCalendarPanel(host, opts) {
       <div class="calp-list" aria-live="polite">${list}</div>
     </div>
     ${calPanelFootHtml(cfg)}
+    ${st.compact && opts && opts.container === "rail" ? `<div class="mir-rail-tools"><button type="button" class="mir-rail-link" data-rail-goto="calendar">캘린더 전체 보기</button></div>` : ""}
   </div>`;
 
   if (!host.dataset.calBound) {

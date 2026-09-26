@@ -254,8 +254,12 @@ function renderValBandChart(series, res, mult, label) {
     now = `<path class="valband-price valband-price-now" d="M${x0.toFixed(1)},${y0.toFixed(1)}L${x1.toFixed(1)},${y1.toFixed(1)}"/><circle class="valband-dot" cx="${x1.toFixed(1)}" cy="${y1.toFixed(1)}" r="3.5"/>`;
   }
   // 축: y 4칸, x 는 1월마다(간격이 좁으면 격년)
-  const ticks = [0, 1, 2, 3, 4].map((k) => lo + ((hi - lo) * k) / 4);
-  const yAxis = ticks.map((v) => `<line class="valband-grid" x1="${g.L}" x2="${g.W - g.R}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text class="valband-tick" x="${g.L - 6}" y="${(yOf(v) + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(valBandAxisLabel(v))}</text>`).join("");
+  // 눈금은 1·2·2.5·5 × 10^k 배수(가격 차트와 같은 MirYScale.linearTicks). 없으면 예전 4칸 등분.
+  const ys = window.MirYScale;
+  const tk = ys && typeof ys.linearTicks === "function" ? ys.linearTicks(lo, hi, g.H < 240 ? 4 : 5) : null;
+  const ticks = tk && tk.ticks.length >= 2 ? tk.ticks : [0, 1, 2, 3, 4].map((k) => lo + ((hi - lo) * k) / 4);
+  const tickLabel = tk && tk.ticks.length >= 2 ? (v) => core.axisTickLabel(v, tk.step, marketCfg().id) : valBandAxisLabel;
+  const yAxis = ticks.map((v) => `<line class="valband-grid" x1="${g.L}" x2="${g.W - g.R}" y1="${yOf(v).toFixed(1)}" y2="${yOf(v).toFixed(1)}"/><text class="valband-tick" x="${g.L - 6}" y="${(yOf(v) + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(tickLabel(v))}</text>`).join("");
   const years = series.dates.map((d, i) => [d, i]).filter(([d]) => d.endsWith("-01"));
   const step = years.length > 7 ? 2 : 1;
   const xAxis = years.filter((_, k) => k % step === 0).map(([d, i]) => `<text class="valband-tick" x="${xOf(i).toFixed(1)}" y="${g.H - 6}" text-anchor="middle">${d.slice(0, 4)}</text>`).join("")

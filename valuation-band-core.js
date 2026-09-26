@@ -158,7 +158,31 @@
     return out;
   }
 
-  const api = { DEFAULT_QUANTILES, shardOf, monthSeq, seriesFromShard, quantileSorted, percentileOf, computeBands, defaultMetric, linePath, areaPath, lossRanges };
+  // 세로축 눈금 글자. step 은 눈금 간격(1·2·2.5·5 × 10^k, chart-yscale-core 의 linearTicks 가 고름).
+  // 소수 자릿수는 간격에서 정한다 — 같은 축의 글자는 자릿수가 같다.
+  // 원화: 1억 이상은 '억', 간격이 1만 이상이면 '만'(보통 정수), 그 아래는 원 단위 정수(천 단위 쉼표).
+  // 달러: 간격이 100 이상이고 값이 1000 이상이면 'k', 아니면 간격에 맞는 소수.
+  function stepDec(step) {
+    if (!(step > 0)) return 0;
+    const exp = Math.floor(Math.log10(step) + 1e-9);
+    const mant = step / Math.pow(10, exp);
+    return Math.min(4, Math.max(0, -exp + (Math.abs(mant - 2.5) < 1e-6 ? 1 : 0)));
+  }
+  function axisTickLabel(v, step, market) {
+    if (!Number.isFinite(v)) return "";
+    if (market === "kr") {
+      if (Math.abs(v) >= 1e8 && step >= 1e6) return `${(v / 1e8).toFixed(stepDec(step / 1e8))}억`;
+      if (step >= 1e4 || (Math.abs(v) >= 1e4 && step >= 1e3)) {
+        if (v === 0) return "0";
+        return `${(v / 1e4).toLocaleString("ko-KR", { minimumFractionDigits: stepDec(step / 1e4), maximumFractionDigits: stepDec(step / 1e4) })}만`;
+      }
+      return Math.round(v).toLocaleString("ko-KR");
+    }
+    if (Math.abs(v) >= 1000 && step >= 100) return `$${(v / 1000).toFixed(stepDec(step / 1000))}k`;
+    return `$${v.toFixed(stepDec(step))}`;
+  }
+
+  const api = { axisTickLabel, DEFAULT_QUANTILES, shardOf, monthSeq, seriesFromShard, quantileSorted, percentileOf, computeBands, defaultMetric, linePath, areaPath, lossRanges };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirValBandCore = api;
 })(typeof window !== "undefined" ? window : null);

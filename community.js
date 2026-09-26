@@ -627,8 +627,8 @@ function renderCommunityVoteMine() {
 }
 
 const COMMUNITY_VOTE_META = {
-  buy: { label: "매수", color: "var(--green)" },
-  sell: { label: "매도", color: "var(--red)" },
+  buy: { label: "매수", color: "var(--pos)" },
+  sell: { label: "매도", color: "var(--neg)" },
 };
 
 function renderCommunityVote({ optimistic = false } = {}) {

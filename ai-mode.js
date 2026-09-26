@@ -1318,7 +1318,7 @@ function aiDividendPanel(item) {
       tone: Number(s.payout) > 80 ? "warn" : "" },
     { label: "배당락일", value: s.exDate ? escapeHtml(s.exDate) : "—" },
   ]);
-  const cmp = vsAvg != null ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--green)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}. 배당성향이 높을수록 이익 대비 배당 부담이 큽니다. 참고용입니다.</p>` : "";
+  const cmp = vsAvg != null ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--pos)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}. 배당성향이 높을수록 이익 대비 배당 부담이 큽니다. 참고용입니다.</p>` : "";
   return aiModePanel("배당", "Yahoo · 연간 기준", grid + cmp);
 }
 
@@ -1341,7 +1341,7 @@ function aiAnalystPanel(item) {
     // 가중 컨센서스: 강매+2 매수+1 보유0 매도-1 강매도-2
     const score = (rec.strongBuy * 2 + rec.buy - rec.sell - rec.strongSell * 2) / rec.total;
     const label = score >= 1 ? "강력 매수" : score >= 0.4 ? "매수 우위" : score > -0.4 ? "중립" : score > -1 ? "매도 우위" : "매도";
-    const lcol = score >= 0.4 ? "var(--green)" : score <= -0.4 ? "var(--red)" : "var(--muted)";
+    const lcol = score >= 0.4 ? "var(--pos)" : score <= -0.4 ? "var(--neg)" : "var(--muted)";
     const legend = segs.filter(([, n]) => n > 0).map(([lbl, n, c]) =>
       `<span style="display:inline-flex;align-items:center;gap:4px;font-size:var(--fs-cap);color:var(--muted);margin-right:10px"><i style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></i>${lbl} ${n}</span>`).join("");
     recHtml = `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
@@ -1355,7 +1355,7 @@ function aiAnalystPanel(item) {
   if (earn.length) {
     const pills = earn.map((e) => {
       const sp = Number(e.surprisePercent); const beat = sp >= 0;
-      return `<span style="display:inline-block;font-size:var(--fs-cap);padding:3px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--panel-soft);color:${beat ? "var(--green)" : "var(--red)"};font-variant-numeric:tabular-nums">${escapeHtml(String(e.period || "").slice(2, 7))} ${beat ? "+" : ""}${sp.toFixed(1)}%</span>`;
+      return `<span style="display:inline-block;font-size:var(--fs-cap);padding:3px 8px;border-radius:6px;margin:2px 4px 2px 0;background:var(--panel-soft);color:${beat ? "var(--pos)" : "var(--neg)"};font-variant-numeric:tabular-nums">${escapeHtml(String(e.period || "").slice(2, 7))} ${beat ? "+" : ""}${sp.toFixed(1)}%</span>`;
     }).join("");
     earnHtml = `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 EPS 서프라이즈 (추정 대비)</div><div>${pills}</div>`;
   }

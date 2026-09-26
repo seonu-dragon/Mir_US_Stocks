@@ -27,6 +27,26 @@ test("shardOf: 파이썬 해시와 같은 규칙(수작업 계산)", () => {
   assert.equal(core.shardOf("000660", 32), 28);
 });
 
+test("axisTickLabel: 달러는 간격에 맞는 자릿수, 1000 이상 k", () => {
+  assert.equal(core.axisTickLabel(150, 50, "us"), "$150");
+  assert.equal(core.axisTickLabel(87.5, 2.5, "us"), "$87.5");
+  assert.equal(core.axisTickLabel(90, 2.5, "us"), "$90.0");
+  assert.equal(core.axisTickLabel(1500, 500, "us"), "$1.5k");
+  assert.equal(core.axisTickLabel(2000, 1000, "us"), "$2k");
+  assert.equal(core.axisTickLabel(0.5, 0.1, "us"), "$0.5");
+});
+
+test("axisTickLabel: 원화는 만·억 단위, 소수는 간격이 요구할 때만", () => {
+  assert.equal(core.axisTickLabel(60000, 10000, "kr"), "6만");
+  assert.equal(core.axisTickLabel(120000, 20000, "kr"), "12만");
+  assert.equal(core.axisTickLabel(57500, 2500, "kr"), "5.75만");
+  assert.equal(core.axisTickLabel(55000, 5000, "kr"), "5.5만");
+  assert.equal(core.axisTickLabel(1500000, 500000, "kr"), "150만");
+  assert.equal(core.axisTickLabel(3000, 500, "kr"), "3,000");
+  assert.equal(core.axisTickLabel(0, 20000, "kr"), "0");
+  assert.equal(core.axisTickLabel(250000000, 50000000, "kr"), "2.5억");
+});
+
 test("monthSeq: 연도 넘김", () => {
   assert.deepEqual(core.monthSeq("2025-11", 4), ["2025-11", "2025-12", "2026-01", "2026-02"]);
 });

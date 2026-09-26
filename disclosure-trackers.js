@@ -569,7 +569,7 @@ function ftdSectionHtml() {
     let trend = `<span style="color:var(--muted)">신규</span>`;
     if (Number.isFinite(prev) && prev > 0) {
       const d = (r.maxFails - prev) / prev * 100;
-      const col = d > 0 ? "var(--red)" : "var(--green)"; // FTD 증가 = 결제 압박 심화
+      const col = d > 0 ? "var(--pos)" : "var(--neg)"; // 증감 방향만 등락색으로(해석은 색으로 하지 않음)
       trend = `<span style="color:${col}">${d > 0 ? "+" : ""}${d.toFixed(0)}%</span>`;
     }
     return `<tr>
@@ -1502,7 +1502,7 @@ function renderKrHighlights() {
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
   const chip = (it) => {
-    const c = it.tone === "good" ? "var(--green)" : it.tone === "warn" ? "var(--red)" : "var(--primary)";
+    const c = it.tone === "good" ? "var(--good)" : it.tone === "warn" ? "var(--bad)" : "var(--primary)";
     return `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:3px 7px;padding:7px 12px;border-left:3px solid ${c};border-radius:8px;background:var(--panel-soft);color:var(--text);cursor:pointer;text-align:left;line-height:1.4;height:auto;min-height:0">
       <span style="font-size:14px;font-weight:600;color:var(--text)">${escapeHtml(it.company)}</span>
       <span style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(it.label)}</span>

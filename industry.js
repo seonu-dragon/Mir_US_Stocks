@@ -710,7 +710,7 @@ function renderIndustryReverse(item) {
   host.hidden = false;
   host.innerHTML = `<h3>이 종목이 따라가는 산업 지표</h3>
     <div class="industry-rev-list">${ids.slice(0, 3).map(industryReverseRow).join("")}</div>
-    <p class="muted industry-foot">관련 지표 ${ids.length}개 중 최근 발표 순 3개 · 누르면 산업 지표 탭으로 갑니다. 값은 빌드 시 계산한 서술 통계이며 주가 방향을 뜻하지 않습니다. 검증된 선행 상관이 있을 때만 꼬리표가 붙습니다.</p>`;
+    <p class="muted industry-foot">관련 지표 ${ids.length}개 중 최근 발표 순 3개 · 누르면 산업 지표 탭으로 갑니다. 주가 방향을 뜻하지 않습니다.</p>`;
   host.querySelectorAll("[data-ind]").forEach((b) => b.addEventListener("click", () => openIndustryIndicator(b.dataset.ind)));
 }
 

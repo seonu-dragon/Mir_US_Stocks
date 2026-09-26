@@ -882,7 +882,7 @@ function applyMarketOnlyUi() {
   }
   const topMinCapText = byId("topMinMarketCapLabelText");
   if (topMinCapText) {
-    topMinCapText.textContent = cfg.id === "kr" ? "최소 시총(조원)" : "Min MktCap($B)";
+    topMinCapText.textContent = cfg.id === "kr" ? "최소 시총(조원)" : "최소 시총($B)";
   }
   const scrMinCapText = byId("scrMinCapLabelText");
   if (scrMinCapText) {
@@ -3118,7 +3118,7 @@ function setupFilters() {
   // 섹터 문자열은 스냅샷(외부 데이터)에서 온다 — 이스케이프 없이 <option> 에 넣지 말 것.
   const sectors = ["All", ...[...new Set(data.stocks.map((item) => item.sector))].filter(Boolean).sort()];
   const sectorOptions = sectors
-    .map((sector) => `<option value="${escapeHtml(sector)}">${escapeHtml(sector)}</option>`).join("");
+    .map((sector) => `<option value="${escapeHtml(sector)}">${sector === "All" ? "전체" : escapeHtml(sector)}</option>`).join("");
   byId("sectorFilter").innerHTML = sectorOptions;
   byId("sectorFilter").value = "All";
   byId("topSector").innerHTML = sectorOptions;
@@ -3165,6 +3165,9 @@ const LIST_LIMITS = [
   { host: "insiderCluster", item: ".cluster-grid > .cluster-card", limit: 6, step: 6, mobileOnly: true },
   // stockTreemapList 는 treemap.js 가 렌더 측에서 40개만 만들고 '더 보기' 를 붙인다(중복 제거).
   { host: "krOwnTable", item: "tbody > tr", limit: 50, step: 100 },
+  // 공시 피드 표 — 수백 행이 한 번에 펼쳐지던 것. 본표(직계 table)만 자르고 뒤에 붙는 보조 표(FTD·조달)는 그대로.
+  ...["eventsTable", "shortTable", "earnReactTable", "buybackTable", "contractTable", "dilutionTable", "activistTable", "ipoTable"]
+    .map((host) => ({ host, item: ":scope > table > tbody > tr", limit: 50, step: 100 })),
 ];
 const isPhoneViewport = () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
 const listLimitState = new WeakMap();
@@ -3556,7 +3559,7 @@ function stockFacts(item, title) {
     <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(stockLabel(item))} ${syntheticBadge(item)}</h3>
     <p class="muted">${joinSubParts(stockSubLabel(item), item.sector, item.industry)}</p>
     ${sessionQuoteLine(item)}
-    ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "스냅샷에 없는 종목 — 실시간 데이터만 표시" : "스냅샷에 없는 종목 — 실시간 데이터도 없음") : "스냅샷에 없는 종목 — 실시간 조회 중…"}</p>` : ""}
+    ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}
     ${typeof krMarketAlertNotice === "function" ? krMarketAlertNotice(item) : ""}
     ${krFlowCard(item)}
@@ -4202,13 +4205,13 @@ function renderTopStocks() {
 
   const filterText = [
     labelForSelect("topBucket"),
-    sector,
+    sector === "All" ? "" : sector,
     labelForSelect("topMetric"),
     preset !== "custom" ? labelForSelect("topPreset") : "",
     minRsi ? `RSI >= ${minRsi}` : "",
     maxRsi ? `RSI <= ${maxRsi}` : "",
-    minVolume ? `Vol >= ${minVolume}x` : "",
-    minMarketCap ? (isKrMarket() ? `시총 >= ${marketCfg().formatMarketCap(minMarketCap)}` : `MktCap >= $${minMarketCap}B`) : ""
+    minVolume ? `거래량 배율 >= ${minVolume}x` : "",
+    minMarketCap ? (isKrMarket() ? `시총 >= ${marketCfg().formatMarketCap(minMarketCap)}` : `시총 >= $${minMarketCap}B`) : ""
   ].filter(Boolean).join(" · ");
   byId("topStocksMeta").textContent = `${filterText} · ${rows.length}개`;
 
@@ -4404,7 +4407,7 @@ const SCAN_FACTOR_RUNTIME = {
     // 검증은 252봉 고점 기준인데 2026-09-04 이전 스냅샷의 newHighDistancePct 는 5년 고점 기준이다.
     // 수정된 빌더가 만든 스냅샷(newHighDistance5yPct 동반)에서만 같은 정의가 된다.
     available: (stocks) => stocks.some((s) => s && Object.prototype.hasOwnProperty.call(s, "newHighDistance5yPct")),
-    unavailableNote: "52주 신고가 근접은 다음 스냅샷 갱신 뒤 사용 가능합니다(현재 스냅샷의 신고가 거리는 5년 고점 기준).",
+    unavailableNote: "52주 신고가 근접은 다음 데이터 갱신 뒤 사용할 수 있습니다.",
   },
   low_vol: {
     value: (item) => { const sd = scanStdev20(item.closeSeries); return sd == null ? null : -sd; },
@@ -4490,7 +4493,7 @@ function scanBadgeText(entry) {
   // 팩터 순위에서는 카드 머리에 팩터 값을 남기고 기술 점수는 배지에 숫자로 넣는다.
   // 모멘텀 점수 순위의 정밀 분석 카드는 머리가 이미 '기술 점수 NN' 이라 배지는 출처만 적는다.
   if (mode === "deep") return entry.basis !== "quick" && Number.isFinite(entry.deep) ? `기술 점수 ${Math.round(entry.deep)}` : "차트 분석";
-  return mode === "loading" ? "분석중" : "스냅샷";
+  return mode === "loading" ? "분석 중" : "기본 점수";
 }
 
 // 카드 머리(주 수치). 기술 점수(deep) > 모멘텀 점수 > 팩터 값 순으로 보여 준다.
@@ -4684,7 +4687,7 @@ function renderScanner() {
   const scope = labelForSelect("scanBucket");
   const meta = byId("scannerMeta");
   if (meta) {
-    const prefix = `${scope} · ${sector} · ${scanHorizonLabel(horizon)} · 실측 이력 ${universe.length.toLocaleString()}종목 기준 · 상위 ${scored.length}개`;
+    const prefix = [scope, sector === "All" ? "" : sector, scanHorizonLabel(horizon), `${universe.length.toLocaleString()}종목 중 상위 ${scored.length}개`].filter(Boolean).join(" · ");
     meta.dataset.prefix = prefix;
     // 검증된 팩터 순위는 그 팩터 값으로만 정렬한다 — 기술 점수 재정렬은 모멘텀 점수일 때만.
     // 재정렬이 끝나면 runDeepScan 이 순위 라벨을 '기술 점수' 로 바꿔 쓴다(라벨은 늘 하나).
@@ -4865,7 +4868,7 @@ function renderJump() {
     <article class="stock-card jump-stock-card" data-ticker="${escapeHtml(item.ticker)}" style="cursor: pointer;">
       <h3>${escapeHtml(stockLabel(item))}</h3>
       <p class="muted">${escapeHtml(stockSubLabel(item) ?? "")}</p>
-      <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · Vol ${Number.isFinite(vol(item)) ? `${vol(item).toFixed(1)}x` : "—"}</p>
+      <p><strong class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</strong> · 거래량 ${Number.isFinite(vol(item)) ? `${vol(item).toFixed(1)}x` : "—"}</p>
       <p>RSI ${fmtRsi(item)} · EPS ${fmtEps(item)}</p>
     </article>
   `).join("");
@@ -4930,18 +4933,18 @@ function selectTicker(ticker, options = {}) {
 function renderSearchMissing(ticker) {
   const t = escapeHtml(ticker || "");
   const title = byId("chartTitle");
-  if (title) title.textContent = `${ticker || "—"} · 스냅샷에 없는 종목`;
+  if (title) title.textContent = `${ticker || "—"} · 찾을 수 없는 종목`;
   const facts = byId("searchFacts");
   if (facts) {
     facts.innerHTML = `
       <span class="muted">선택 종목</span>
       <h3 class="stock-facts-head">${t}</h3>
-      <p class="muted">스냅샷에 없는 종목입니다. 티커·종목명을 다시 확인하거나 자동완성 목록에서 선택해 주세요.</p>`;
+      <p class="muted">찾을 수 없는 종목입니다. 티커·종목명을 다시 확인하거나 자동완성 목록에서 선택해 주세요.</p>`;
   }
   const chart = byId("priceChart");
   if (chart) chart.innerHTML = "";
   const news = byId("searchNews");
-  if (news) news.innerHTML = `<span class="muted">주요 뉴스</span><p class="news-empty">스냅샷에 없는 종목이라 뉴스를 불러오지 않습니다.</p>`;
+  if (news) news.innerHTML = `<span class="muted">주요 뉴스</span><p class="news-empty">뉴스가 없습니다.</p>`;
 }
 
 function renderSearchFacts(item) {
@@ -5081,7 +5084,7 @@ function renderMoveExplanation(item) {
     ${typeof moversAnalysisNote === "function" ? moversAnalysisNote(item) : ""}
     <p class="move-explanation-summary">${escapeHtml(stockLabel(item))}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
     <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
-    <p class="move-explanation-note">스냅샷·뉴스·공시의 기준 시각이 다를 수 있습니다. 투자 판단 전 원문과 최신 시세를 확인하세요.</p>`;
+    <p class="move-explanation-note">시세·뉴스·공시의 기준 시각이 다를 수 있습니다.</p>`;
 }
 
 function checklistRow(label, result) {
@@ -5148,7 +5151,7 @@ function investmentChecklistResults(item) {
   return [
     { label: "추세", status: trendPass ? "pass" : trendWarn ? "warn" : "check", detail: `1개월 ${fmtPct(item.monthChangePct)} · RSI ${fmtRsi(item)}${sma20 != null ? ` · SMA20 ${last >= sma20 ? "위" : "아래"}` : ""}` },
     { label: "실적·추정", status: !earningsKnown ? "check" : earningsPass ? "pass" : (epsTtmVal != null && epsTtmVal <= 0) ? "warn" : "check", detail: earningsKnown ? `EPS(TTM) ${fmtEpsValue(epsTtmVal)}${epsNextYVal != null ? ` · 내년 추정 ${fmtEpsValue(epsNextYVal)}` : ""}` : "EPS 데이터가 부족합니다." },
-    { label: "밸류에이션", status: !valuationKnown || sectorMedian == null ? "check" : valuationPass ? "pass" : valuationWarn ? "warn" : "check", detail: valuationKnown ? `Forward P/E ${forwardPe.toFixed(1)}${sectorMedian != null ? ` · 섹터 중앙값 ${sectorMedian.toFixed(1)}` : " · 섹터 비교값 없음"}` : "Forward P/E 데이터가 없습니다." },
+    { label: "밸류에이션", status: !valuationKnown || sectorMedian == null ? "check" : valuationPass ? "pass" : valuationWarn ? "warn" : "check", detail: valuationKnown ? `선행 PER ${forwardPe.toFixed(1)}${sectorMedian != null ? ` · 섹터 중앙값 ${sectorMedian.toFixed(1)}` : " · 섹터 비교값 없음"}` : "선행 PER 데이터가 없습니다." },
     { label: "수급", status: flowPass ? "pass" : flowWarn ? "warn" : "check", detail: `거래량 ${volumeText}${isKrMarket() ? "" : ` · 내부자 매수 ${buys} / 매도 ${sells}`}` },
     { label: "리스크", status: riskFlags.length ? "warn" : "pass", detail: riskFlags.length ? riskFlags.join(" · ") : "현재 규칙에서 과열·부채·낙폭 경고가 없습니다." }
   ];
@@ -5231,7 +5234,7 @@ function estimateBaseline(rows, days) {
 }
 
 function estimateValue(value, kind) {
-  if (!Number.isFinite(Number(value))) return "-";
+  if (value == null || value === "" || !Number.isFinite(Number(value))) return "—";
   const number = Number(value);
   if (kind === "score") return `${Math.round(number)}점`;
   if (kind === "revenue") return isKrMarket() ? fmtFinancialB(number / 10) : `$${fmtCompact(number)}`;
@@ -5239,7 +5242,7 @@ function estimateValue(value, kind) {
 }
 
 function estimateChange(current, baseline, kind) {
-  if (!Number.isFinite(Number(current)) || !Number.isFinite(Number(baseline))) return { text: "기준 부족", tone: "muted" };
+  if (current == null || baseline == null || !Number.isFinite(Number(current)) || !Number.isFinite(Number(baseline))) return { text: "기준 부족", tone: "muted" };
   const now = Number(current);
   const before = Number(baseline);
   if (kind === "score") {
@@ -5264,7 +5267,10 @@ function renderEstimateRevision(item) {
     { key: "revenueNextQ", label: "다음 분기 매출", kind: "revenue", optional: true },
     { key: "revenueNextY", label: "향후 1년 매출", kind: "revenue", optional: true },
     { key: "targetPrice", label: "평균 목표가", kind: "money" },
-  ].filter((metric) => !metric.optional || Number.isFinite(current[metric.key]));
+  ].filter((metric) => Number.isFinite(current[metric.key]) && current[metric.key] !== 0);
+  // 추정치가 하나도 없으면(국내 다수 종목) 빈 칸 카드 대신 숨긴다.
+  box.hidden = !metrics.length;
+  if (!metrics.length) { box.innerHTML = ""; return; }
   const historyDays = rows.length > 1 ? Math.round((Date.now() - (Number(rows[0].savedAt) || Date.now())) / 86400000) : 0;
   box.innerHTML = `
     <div class="estimate-revision-head">
@@ -5275,10 +5281,14 @@ function renderEstimateRevision(item) {
       ${metrics.map((metric) => {
         const weekChange = estimateChange(current[metric.key], week?.[metric.key], metric.kind);
         const monthChange = estimateChange(current[metric.key], month?.[metric.key], metric.kind);
-        return `<article><span>${escapeHtml(metric.label)}</span><strong>${estimateValue(current[metric.key], metric.kind)}</strong><div><em class="${weekChange.tone}">7일 ${weekChange.text}</em><em class="${monthChange.tone}">30일 ${monthChange.text}</em></div></article>`;
+        const noBase = weekChange.text === "기준 부족" && monthChange.text === "기준 부족";
+        const chips = noBase
+          ? `<em class="muted">비교 기록 쌓는 중</em>`
+          : `<em class="${weekChange.tone}">7일 ${weekChange.text}</em><em class="${monthChange.tone}">30일 ${monthChange.text}</em>`;
+        return `<article><span>${escapeHtml(metric.label)}</span><strong>${estimateValue(current[metric.key], metric.kind)}</strong><div>${chips}</div></article>`;
       }).join("")}
     </div>
-    <p>이 브라우저가 확인한 일별 값을 최대 45일간 저장합니다. 매출 컨센서스는 원본 데이터가 제공되는 종목에만 표시됩니다.</p>`;
+    <p>이 기기에서 본 값을 날마다 기록해 7일·30일 전과 비교합니다.</p>`;
 }
 
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
@@ -5505,7 +5515,7 @@ function renderNews(item) {
     box.innerHTML = `
       <span class="muted">주요 뉴스</span>
       ${estimate}
-      <p class="news-empty">이 종목의 뉴스가 아직 수집되지 않았습니다. 데이터 갱신 스크립트 실행 시 자동으로 채워집니다.</p>
+      <p class="news-empty">이 종목의 뉴스가 아직 없습니다.</p>
     `;
     return;
   }
@@ -7482,6 +7492,9 @@ function renderMyInvestSummary() {
 function syncFindPreset(source) {
   const top = byId("topPreset");
   const scr = byId("scrPreset");
+  // 프리셋은 상위 종목·스크리너에만 적용된다 — 다른 찾기 모드에선 숨긴다.
+  const presetLabel = top && top.closest(".ia-preset-label");
+  if (presetLabel) presetLabel.hidden = !(searchSubTab === "top" || searchSubTab === "screener");
   if (!top || !scr) return;
   if (source === scr) { if (top.value !== scr.value) top.value = scr.value; return; }
   if (scr.value !== top.value) {

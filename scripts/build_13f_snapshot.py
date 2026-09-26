@@ -196,7 +196,7 @@ def build_payload(limit: int, quarters: int) -> tuple[dict, int, int]:
         "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
         "updateSchedule": "quarterly",
         "source": "SEC EDGAR 13F-HR via 13f.info",
-        "note": "분기마다 제출되는 공시 기준 보유 내역입니다. 매일 갱신해도 동일하므로 분기 공시 후에만 업데이트합니다. 실시간 매매가 아닙니다.",
+        "note": "분기마다 제출되는 공시 기준 보유 내역입니다. 실시간 매매가 아닙니다.",
         "quartersPerInstitution": quarters,
         "institutionCount": len(institutions),
         "institutions": [],

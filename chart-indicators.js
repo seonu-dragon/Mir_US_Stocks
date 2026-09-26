@@ -859,7 +859,7 @@ function stockEventRows(item) {
     },
     {
       type: "Target",
-      title: "Nasdaq 1Y 컨센서스 목표가",
+      title: "Nasdaq 1년 컨센서스 목표가",
       value: Number.isFinite(target) ? priceOrDash(target) : "데이터 없음",
       note: targetUpside == null ? "Nasdaq 제공 목표가 데이터 없음" : `현재가 대비 ${fmtPct(targetUpside)} · Nasdaq 제공 집계값`,
       tone: targetUpside == null ? "muted" : cls(targetUpside)
@@ -1211,20 +1211,20 @@ function sourceLabel(source) {
   if (src.includes("yahoo")) return "Yahoo Finance";
   if (src.includes("sec")) return "SEC EDGAR";
   if (src.includes("naver")) return "네이버 금융";
-  if (src.includes("snapshot")) return "스냅샷 생성값";
+  if (src.includes("snapshot")) return "자체 집계";
   return source;
 }
 
 function missingFundamentalFields(f) {
   const fields = [
     ["pe", "PER"],
-    ["forwardPE", "Forward PER"],
-    ["epsTtm", "EPS TTM"],
-    ["epsNextY", "EPS Next Y"],
-    ["salesB", "Sales"],
-    ["incomeB", "Income"],
+    ["forwardPE", "선행 PER"],
+    ["epsTtm", "EPS(최근 4분기)"],
+    ["epsNextY", "내년 EPS 추정"],
+    ["salesB", "매출"],
+    ["incomeB", "순이익"],
     ["roe", "ROE"],
-    ["targetPrice", "1Y Target"]
+    ["targetPrice", "1년 목표가"]
   ];
   return fields.filter(([key]) => f[key] == null || f[key] === "").map(([, label]) => label);
 }
@@ -1292,12 +1292,10 @@ function renderDataQualityPanel(item) {
   const box = byId("dataQualityPanel");
   if (!box || !item) return;
   const f = normalizedFundamentalsForItem(item);
-  const hasDetail = Boolean(detailCache[safeTicker(item.ticker)] || item.chartSeries || Object.keys(f).length);
   const missing = missingFundamentalFields(f);
   const chartRows = getChartRows(item);
   const source = sourceLabel(f.source);
   const history = sourceLabel(item.historySource);
-  const detailStatus = hasDetail ? "상세 데이터 로드됨" : "상세 데이터 로딩 전/없음";
   const quality = missing.length <= 2 && chartRows.length > 240 ? "good" : missing.length <= 5 ? "warn" : "muted";
   const toneText = quality === "good" ? "양호" : quality === "warn" ? "일부 누락" : "제한적";
   box.innerHTML = `
@@ -1309,10 +1307,10 @@ function renderDataQualityPanel(item) {
       <span class="quality-badge quality-${quality}">${toneText}</span>
     </div>
     <div class="quality-grid">
-      <article><span>스냅샷 기준</span><strong>${escapeHtml(data.updatedAtKst || data.updated_at_kst || "-")}</strong></article>
-      <article><span>가격 이력</span><strong>${escapeHtml(history)}</strong><em>${chartRows.length ? `${chartRows.length} bars` : "차트 없음"}</em></article>
-      <article><span>재무 데이터</span><strong>${escapeHtml(source)}</strong><em>${Object.keys(f).length ? `${Object.keys(f).length} fields` : "없음"}</em></article>
-      <article><span>뉴스</span><strong>${Array.isArray(item.news) && item.news.length ? `${item.news.length}건` : "없음"}</strong><em>${detailStatus}</em></article>
+      <article><span>데이터 기준</span><strong>${escapeHtml(data.updatedAtKst || data.updated_at_kst || "-")}</strong></article>
+      <article><span>가격 이력</span><strong>${escapeHtml(history)}</strong><em>${chartRows.length ? `${chartRows.length.toLocaleString()}거래일` : "차트 없음"}</em></article>
+      <article><span>재무 데이터</span><strong>${escapeHtml(source)}</strong><em>${Object.keys(f).length ? `${Object.keys(f).length}개 항목` : "없음"}</em></article>
+      <article><span>뉴스</span><strong>${Array.isArray(item.news) && item.news.length ? `${item.news.length}건` : "없음"}</strong></article>
     </div>
     <p class="quality-note">
       ${missing.length ? `누락 지표: ${escapeHtml(missing.slice(0, 6).join(", "))}${missing.length > 6 ? " 외" : ""}` : "핵심 재무 지표가 대부분 채워져 있습니다."}
@@ -1362,38 +1360,38 @@ function renderFundamentals(item) {
   // 수익성 …) instead of scanning a flat 30-cell grid.
   const groups = [
     { title: "밸류에이션", metrics: [
-      ["P/E", fmtMultiple(f.pe)], ["Forward P/E", fmtMultiple(f.forwardPE)],
-      ["P/S", fmtMultiple(f.ps)], ["P/B", fmtMultiple(f.pb)],
+      ["PER", fmtMultiple(f.pe)], ["선행 PER", fmtMultiple(f.forwardPE)],
+      ["PSR", fmtMultiple(f.ps)], ["PBR", fmtMultiple(f.pb)],
     ] },
     { title: "수익성", metrics: [
-      ["Gross Margin", fmtPercent(f.grossMargin)], ["Oper Margin", fmtPercent(f.operMargin)],
-      ["Profit Margin", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
+      ["매출총이익률", fmtPercent(f.grossMargin)], ["영업이익률", fmtPercent(f.operMargin)],
+      ["순이익률", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
     ] },
     { title: "실적 (EPS)", metrics: [
-      ["EPS TTM", moneyOrDash(f.epsTtm)], ["EPS Next Y", moneyOrDash(f.epsNextY)],
-      ["EPS Next Q", moneyOrDash(f.epsNextQ)], [krT ? "1Y 목표가" : "1Y Target", priceOrDash(f.targetPrice)],
+      ["최근 4분기 EPS", moneyOrDash(f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)],
+      ["다음 분기 EPS 추정", moneyOrDash(f.epsNextQ)], ["1년 목표가", priceOrDash(f.targetPrice)],
     ] },
     { title: "기간 성과", metrics: [
-      ["Perf Week", fmtPct(item.weekChangePct)], ["Perf Month", fmtPct(item.monthChangePct)],
-      ["Perf Quarter", fmtPct(item.threeMonthChangePct)], ["Perf YTD", fmtPct(item.ytdChangePct)],
+      ["1주", fmtPct(item.weekChangePct)], ["1개월", fmtPct(item.monthChangePct)],
+      ["3개월", fmtPct(item.threeMonthChangePct)], ["연초 이후", fmtPct(item.ytdChangePct)],
     ] },
     { title: "규모 · 유동성", wide: true, metrics: [
-      ["Market Cap", krT ? fmtBillions(item.marketCapB) : fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB)],
-      ["Sales", fmtFinancialB(f.salesB)], ["Income", fmtFinancialB(f.incomeB)], ["Cash", fmtFinancialB(f.cashB)],
-      ["Shares Out", fmtShares(f.sharesBDisplay ?? f.sharesB)], ["Avg Volume", fmtCompact(f.avgVolume)],
-      ["Volume", fmtCompact(f.volume)], ["Debt/Eq", fmtNum(f.debtEq)],
-      ["Current Ratio", fmtRatio(f.currentRatio)], ["Quick Ratio", fmtRatio(f.quickRatio)],
+      ["시가총액", krT ? fmtBillions(item.marketCapB) : fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB)],
+      ["매출", fmtFinancialB(f.salesB)], ["순이익", fmtFinancialB(f.incomeB)], ["현금", fmtFinancialB(f.cashB)],
+      ["발행주식수", fmtShares(f.sharesBDisplay ?? f.sharesB)], ["평균 거래량", fmtCompact(f.avgVolume)],
+      ["거래량", fmtCompact(f.volume)], ["부채/자본", fmtNum(f.debtEq)],
+      ["유동비율", fmtRatio(f.currentRatio)], ["당좌비율", fmtRatio(f.quickRatio)],
     ] },
     { title: "가격", wide: true, metrics: [
-      ["Price", priceOrDash(displayPrice)], ["Prev Close", priceOrDash(f.prevClose)],
-      ["52W High", priceOrDash(f.week52High)], ["52W Low", priceOrDash(f.week52Low)],
-      ["RSI (14)", fmtRsi(item)], ["EPS (TTM)", fmtEps(item)], ["Index", indexLabel(item)],
+      ["현재가", priceOrDash(displayPrice)], ["전일 종가", priceOrDash(f.prevClose)],
+      ["52주 최고", priceOrDash(f.week52High)], ["52주 최저", priceOrDash(f.week52Low)],
+      ["RSI(14)", fmtRsi(item)], ["지수", indexLabel(item)],
     ] },
   ];
 
   const sourceText = hasFundamentals
-    ? (krT ? "Yahoo Finance · 네이버 금융 보완 (KRX)" : f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC 보완" : f.source === "sec" ? "SEC EDGAR · 분기 재무 공시" : f.source === "nasdaq+sec" || f.source === "nasdaq+sec+yahoo" ? "Nasdaq + SEC + Yahoo · NYSE 등 전 거래소" : "Nasdaq + SEC/Yahoo 스냅샷")
-    : (detailMode ? "상세 데이터를 불러오는 중이거나 해당 종목 상세값이 없습니다." : "일부 지표는 다음 스냅샷 갱신 후 표시됩니다.");
+    ? (krT ? "Yahoo Finance · 네이버 금융" : f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC" : f.source === "sec" ? "SEC 분기 공시" : "Nasdaq · SEC · Yahoo")
+    : (detailMode ? "불러오는 중이거나 이 종목의 값이 없습니다." : "일부 지표는 다음 갱신 후 표시됩니다.");
 
   const groupHtml = (g) => `
     <div class="fund-group${g.wide ? " fund-group-wide" : ""}">
@@ -1409,7 +1407,7 @@ function renderFundamentals(item) {
 
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
-      <h3>Fundamentals</h3>
+      <h3>핵심 지표</h3>
       <span>${sourceText}</span>
     </div>
     <div class="fund-groups">
@@ -1474,7 +1472,8 @@ function renderEtfConstituents(item) {
 
 function valueWithClass(value) {
   const text = String(value ?? "-");
-  const numeric = Number(text.replace(/[$,%MBK]/g, ""));
+  // 빈 값("-")은 음수처럼 빨갛게 칠하지 않고 흐린 "—" 로 통일한다.
+  if (text === "-" || text === "—" || text === "") return `<strong class="muted">—</strong>`;
   const className = text.startsWith("+") ? "pos" : text.startsWith("-") ? "neg" : "";
   return `<strong class="${className}">${escapeHtml(text)}</strong>`;
 }

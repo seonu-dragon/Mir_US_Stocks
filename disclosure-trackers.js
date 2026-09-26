@@ -78,7 +78,7 @@ function renderInsiderTrades() {
   const payload = window.INSIDER_TRADES;
   if (!payload || !Array.isArray(payload.trades) || !payload.trades.length) {
     if (meta) meta.innerHTML = "";
-    wrap.innerHTML = `<p class="muted">아직 내부자 거래 데이터가 없습니다. 데이터 수집(GitHub Actions) 후 표시됩니다.</p>`;
+    wrap.innerHTML = `<p class="muted">아직 내부자 거래 데이터가 없습니다.</p>`;
     return;
   }
   if (meta) {
@@ -180,7 +180,7 @@ function renderActivistStakes() {
   const payload = window.ACTIVIST_STAKES;
   if (!payload || !Array.isArray(payload.filings) || !payload.filings.length) {
     if (meta) meta.innerHTML = "";
-    wrap.innerHTML = `<p class="muted">아직 13D/G 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    wrap.innerHTML = `<p class="muted">아직 13D/G 데이터가 없습니다.</p>`;
     return;
   }
   if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 13D/G")}${typeof esTrackerLink === "function" ? esTrackerLink("us_13d") : ""}`;
@@ -229,7 +229,7 @@ function renderMaterialEvents() {
   const payload = window.MATERIAL_EVENTS;
   if (!payload || !Array.isArray(payload.events) || !payload.events.length) {
     if (meta) meta.innerHTML = "";
-    wrap.innerHTML = `<p class="muted">아직 8-K 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    wrap.innerHTML = `<p class="muted">아직 8-K 데이터가 없습니다.</p>`;
     return;
   }
   if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 8-K")}${typeof esTrackerLink === "function" ? esTrackerLink(["us_8k_101", "us_earn"]) : ""}`;
@@ -431,7 +431,7 @@ function renderIpoCalendar() {
   const payload = window.IPO_CALENDAR;
   if (!payload || !Array.isArray(payload.ipos) || !payload.ipos.length) {
     if (meta) meta.innerHTML = "";
-    wrap.innerHTML = `<p class="muted">아직 IPO 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    wrap.innerHTML = `<p class="muted">아직 IPO 데이터가 없습니다.</p>`;
     return;
   }
   // 성과 보기: 공모가(offerPrice)가 붙은 데이터가 하나라도 있어야 토글이 나타난다.
@@ -516,7 +516,10 @@ function renderValuation() {
   const sector = byId("valSector")?.value || "All";
   const cap = byId("valCap")?.value || "all";
   const q = valQuery.trim().toLowerCase();
-  const cfg = mapMetricConfig(metric) || {};
+  const cfg = { ...(mapMetricConfig(metric) || {}) };
+  // 머리글·요약은 화면의 한국어 지표 이름을 쓴다(트리맵 설정의 영문 라벨 대신).
+  const optLabel = byId("valMetric")?.selectedOptions?.[0]?.textContent;
+  if (optLabel) cfg.label = optLabel.trim();
   const mf = window.MAP_FUNDAMENTALS || {};
   let rows = data.stocks.filter((s) => !isStockEtf(s))
     .filter((s) => sector === "All" || s.sector === sector)
@@ -704,7 +707,7 @@ function renderShortInterest() {
   if (volActive) { renderKrShortVolume(volPayload, wrap, meta); return; }
   if (!payload || !Array.isArray(payload.rows) || !payload.rows.length) {
     if (meta) meta.innerHTML = "";
-    wrap.innerHTML = `<p class="muted">아직 공매도 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
+    wrap.innerHTML = `<p class="muted">아직 공매도 데이터가 없습니다.</p>`;
     return;
   }
   let invStr = "";

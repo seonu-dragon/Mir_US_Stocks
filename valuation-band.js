@@ -24,7 +24,7 @@ const VALBAND_SOURCES = {
       pbr: "BPS = 자본총계 ÷ 발행주식수, 분기 자료가 없는 구간은 연간 값",
       psr: "SPS = 최근 4분기 매출 ÷ 발행주식수, 금융업은 계산 안 함",
     },
-    priceNote: "주가는 야후 월말 종가(분할 조정, 배당 미반영)이고 공시 주식수는 분할을 감지해 같은 기준으로 환산했습니다. 분기 재무가 최근 12분기뿐이라 그 이전은 10-K 직후 몇 달만 PER·PSR 이 있고 나머지 달은 비워 둡니다(늦은 연간 이익으로 채우면 과거 배수가 부풀어 보입니다).",
+    priceNote: "주가는 월말 종가(분할 조정, 배당 미반영)입니다. 분기 재무가 최근 12분기뿐이라 그 이전은 연간 실적 공시 직후 몇 달만 PER·PSR 이 있고, 나머지 달은 비워 둡니다(밴드가 끊겨 보이는 이유).",
     excludedText: {
       foreign: "해외발행인(20-F·40-F)이라 분기 실적이 없고 재무 통화·ADR 주식 기준이 달라 밴드를 계산하지 않습니다.",
       currency: "재무제표 통화가 달러가 아니라 밴드를 계산하지 않습니다.",
@@ -132,7 +132,11 @@ function renderValBandCard(host, opts) {
       ${res.ok ? renderValBandChart(series, res, mult, label) : `<p class="muted">${label} 유효 자료가 부족합니다.</p>`}
       <p class="valband-readout muted" aria-live="polite"></p>
       ${valBandValidationLine(meta)}
-      <p class="muted valband-foot">밴드 = 그 달 주당 ${VALBAND_METRICS[metric].base} × 과거 ${label} 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값${baseNote ? `(${escapeHtml(baseNote)})` : ""}. <b>과거 범위 안의 위치일 뿐이며 평균 회귀를 보장하지 않습니다.</b> 이익이 구조적으로 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 매매 신호가 아닌 정보입니다. ${escapeHtml(src.priceNote || "")} 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")} · 갱신 ${escapeHtml(meta.updatedAtKst || "")}.</p>`;
+      <p class="muted valband-foot"><b>과거 범위 안의 위치일 뿐 평균 회귀를 보장하지 않으며, 매매 신호가 아닙니다.</b> 이익 구조가 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")}</p>
+      <details class="stock-method"><summary>계산 방법</summary>
+        <p>밴드 = 그 달 주당 ${VALBAND_METRICS[metric].base} × 과거 ${label} 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값${baseNote ? `(${escapeHtml(baseNote)})` : ""}.</p>
+        ${src.priceNote ? `<p>${escapeHtml(src.priceNote)}</p>` : ""}
+      </details>`;
     host.querySelectorAll("[data-vb-metric]").forEach((b) => b.addEventListener("click", () => {
       if (b.disabled) return;
       metric = b.dataset.vbMetric;

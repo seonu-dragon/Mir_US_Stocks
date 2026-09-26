@@ -140,7 +140,7 @@ function mfFormat(v, type, currency) {
 // ── 차트: 막대(최대 3계열) + 선(보조축) ──
 function mfChartSvg(points, preset, currency, width) {
   // viewBox 를 실제 폭에 맞춰 글자가 찌그러지지 않게 한다(preserveAspectRatio="none" 금지).
-  const W = Math.max(280, Math.round(width || 720)), H = W < 520 ? 180 : 220, padL = 8, padR = 8, top = 14, bottom = 26;
+  const W = Math.max(280, Math.round(width || 720)), H = W < 520 ? 180 : 220, padL = 52, padR = 8, top = 14, bottom = 26;
   const n = points.length;
   if (!n) return "";
   const barKeys = preset.bars.map((b) => b[0]);
@@ -171,6 +171,12 @@ function mfChartSvg(points, preset, currency, width) {
     }
   });
   const zero = `<line x1="${padL}" x2="${W - padR}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" class="mf-zero"/>`;
+  // 막대 눈금: 최댓값·절반(음수가 있으면 최솟값도)에 옅은 선과 값 — 막대 크기를 읽을 기준.
+  const fmtTick = (v) => (preset.unit === "shares" ? mfShares(v) : mfMoney(v, currency));
+  const ticks = [];
+  if (max > 0) ticks.push(max, max / 2);
+  if (min < 0) ticks.push(min);
+  const grid = ticks.map((v) => `<line x1="${padL}" x2="${W - padR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" class="mf-grid"/><text x="${padL - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="mf-axis mf-tick">${escapeHtml(fmtTick(v))}</text>`).join("");
   let line = "";
   if (preset.line) {
     const [lk, , ltype] = preset.line;
@@ -190,7 +196,7 @@ function mfChartSvg(points, preset, currency, width) {
       line = `<path d="${d}" class="mf-line"/>${dots}`;
     }
   }
-  return `<svg class="mf-chart" viewBox="0 0 ${W} ${H}" style="height:${H}px" role="img" aria-label="${escapeHtml(preset.label)} 차트">${zero}${bars}${line}${labels}</svg>`;
+  return `<svg class="mf-chart" viewBox="0 0 ${W} ${H}" style="height:${H}px" role="img" aria-label="${escapeHtml(preset.label)} 차트">${grid}${zero}${bars}${line}${labels}</svg>`;
 }
 
 function mfLegend(preset) {
@@ -202,8 +208,8 @@ function mfLegend(preset) {
 
 function mfMetaLine(file) {
   const src = file.market === "kr"
-    ? `DART 전체재무제표 · ${file.basis === "OFS" ? "별도" : "연결"}(${escapeHtml(file.basis || "")})`
-    : `SEC EDGAR XBRL · ${escapeHtml(file.annualForm || "10-K")}${(file.quarterly || []).length ? "·10-Q" : ""} · ${escapeHtml(file.basis || "")}`;
+    ? `DART ${file.basis === "OFS" ? "별도" : "연결"}재무제표`
+    : `SEC 공시(${escapeHtml(file.annualForm || "10-K")}${(file.quarterly || []).length ? "·10-Q" : ""})`;
   const a = (file.annual || [])[file.annual.length - 1];
   const q = (file.quarterly || [])[file.quarterly.length - 1];
   const bits = [`출처 ${src}`];
@@ -230,7 +236,7 @@ function mfNotes(file, suppressed) {
   const notes = [];
   if (f.includes("financial")) notes.push("금융업은 예금·보험부채가 영업 자금이라 FCF·순차입금·ROIC·유동비율이 제조업과 뜻이 달라 표에서 뺐습니다(계정 원값은 아래 표에 있습니다).");
   if (f.includes("foreignFiler")) notes.push(`20-F/40-F 발행인은 연간만 공시하고, 금액이 ${escapeHtml(file.currency)} 기준입니다. EPS·주식수는 원주 기준이라 ADR(예탁증서) 1주와 다를 수 있습니다.`);
-  if (file.market === "kr") notes.push("DART 는 감가상각비·주식보상비용·이자비용을 본문에 따로 싣지 않는 회사가 많아 해당 칸과 순차입금/EBITDA 가 비는 경우가 많습니다. 기말일은 DART 가 주지 않아 사업연도·분기로만 표시합니다.");
+  if (file.market === "kr") notes.push("감가상각비·주식보상비용·이자비용을 따로 공시하지 않는 회사가 많아 해당 칸과 순차입금/EBITDA 가 자주 비어 있습니다.");
   if (!suppressed.size && !notes.length) return "";
   return notes.map((t) => `<p class="mf-note">${t}</p>`).join("");
 }
@@ -307,8 +313,7 @@ function mfSectionHtml(file, width) {
     ${mfDerivedTable(file)}
     ${mfAccountsTable(file, kind)}
     ${mfNotes(file, suppressed)}
-    <p class="mf-foot">공시 원문 수치를 옮긴 과거 정보이며 예측이나 매매 신호가 아닙니다. —(결측)은 공시에 해당 계정이 없거나 표준 태그로 확인되지 않은 것이고, 추정으로 채우지 않았습니다.
-      †·옅은 막대는 누계에서 빼서 만든 분기 값입니다(현금흐름표는 누계로만 공시, 4분기 = 연간 − 3분기 누계). 지표 이름에 마우스를 올리면 정의가 보입니다.</p>`;
+    <p class="mf-foot">공시 수치를 옮긴 과거 정보이며 예측이 아닙니다. —는 공시에서 확인되지 않은 값이며 추정으로 채우지 않았습니다. †·옅은 막대는 누계 공시에서 빼서 만든 분기 값입니다(예: 4분기 = 연간 − 3분기 누계).</p>`;
 }
 
 function mfBind(host) {

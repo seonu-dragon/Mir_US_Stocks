@@ -117,9 +117,7 @@ function factorGradeBodyHtml(item) {
   }
   const when = (data && (data.updatedAtKst || data.updated_at_kst)) || "";
   return `<div class="fgrade-list">${res.factors.map(factorGradeRowHtml).join("")}</div>
-    <p class="fgrade-foot">A 백분위 80 이상 · B 60~80 · C 40~60 · D 20~40 · F 20 미만. 비교 집단은 같은 업종(표본 ${idx.minSample}개 미만이면 섹터, 그래도 모자라면 보류), ETF 제외.
-    적자·음수 배수는 밸류 비교에서 뺍니다. 예상 EPS 성장률은 애널리스트 추정치입니다.
-    매매 신호나 추천이 아니라 현재 위치를 요약한 정보입니다. 출처: 시장 스냅샷·map_fundamentals${when ? ` · 기준 ${escapeHtml(when)}` : ""}.</p>`;
+    <p class="fgrade-foot">A 백분위 80 이상 · B 60~80 · C 40~60 · D 20~40 · F 20 미만. 비교 집단은 같은 업종(표본 ${idx.minSample}개 미만이면 섹터), 적자·음수 배수는 밸류 비교에서 뺍니다. 예상 EPS 성장률은 애널리스트 추정치입니다. 매매 신호가 아니라 현재 위치를 요약한 정보입니다.${when ? ` 기준 ${escapeHtml(when)}.` : ""}</p>`;
 }
 
 function renderFactorGrades(item) {

@@ -88,9 +88,10 @@
 - 역DCF: ttm.fcf(없으면 annual 마지막 행 fcf), ttm.sharesDilAvg 또는 sharesOut, ttm.netDebt(최근 분기말).
   currency ≠ 주가 통화(해외발행인)거나 industryType ≠ "general" 이면 건너뛸 것(flags 로 판정).
   → 구현: dcf-core.js(계산) · dcf.js(화면) · scripts/build_dcf_base_rates.py(기저율 분포).
-- US PER 밴드: quarterly[].epsDil(분기, d 에 epsDil 이 있으면 산출값) → MirFinCore.ttmSeries(q, "epsDil")
-  로 분기별 TTM EPS 시계열(각 점 = 그 분기말 기준 최근 4분기 합, 연속 4분기일 때만). PBR 밴드는
-  quarterly[].equity / sharesOut. flags 에 adrShareBasis 가 있으면 EPS 가 ADS 기준이 아닐 수 있다.
+- US PER 밴드(build_us_valuation_band.py): epsDil 은 행마다 분할 전/후 기준이 섞여 있어(같은 행 안에서도
+  sharesOut 은 당시 기준, sharesDilAvg 는 재표시 기준일 수 있다) 쓰지 않고, net(4분기 합) ÷ sharesDilAvg,
+  equity ÷ sharesOut, rev ÷ sharesOut 을 filed 기준 시점으로 계산한다. 주식수는 분할을 감지해 현재 기준으로
+  환산. flags 에 foreignFiler/adrShareBasis 가 있으면 계산하지 않는다.
 - 재무 위험 점수: MirFinCore.derivedMetrics(file) 가 FCF 마진·ROIC·순차입금/EBITDA·주식수 증감률·
   SBC/매출·이익의 질을 연간/TTM 으로 돌려준다(정의는 financials-core.js 주석).
 """

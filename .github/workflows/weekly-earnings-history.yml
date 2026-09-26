@@ -164,6 +164,12 @@ jobs:
         continue-on-error: true
         run: python scripts/build_financials_us.py --push
 
+      # US PER·PBR·PSR 밴드 — 방금 갱신된 data/financials/*.json 과 레포의 data/details 일봉만 읽는다
+      # (외부 호출 0). 월말 배수 약 5년 + 저PBR 검증(SPY 대비)을 매번 전체 재계산(수 초).
+      - name: US valuation band (PER/PBR/PSR)
+        continue-on-error: true
+        run: python scripts/build_us_valuation_band.py --push
+
       - name: KR financials expanded (DART)
         continue-on-error: true
         env:

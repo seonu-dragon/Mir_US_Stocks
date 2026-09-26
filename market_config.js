@@ -96,8 +96,9 @@
       earningsCalendar: true,
       // 국내 시장경보·이상 종목 보드(KRX KIND)는 KR 전용.
       krMarketAlerts: false,
-      // PER·PBR 밴드(valuation-band.js) — US 는 재무 이력 확장 후 같은 컴포넌트로 붙인다.
-      valuationBand: false,
+      // PER·PBR·PSR 밴드(valuation-band.js) — SEC 공시 재무(공시일 기준) + 야후 월말 종가로 산출한
+      // 약 5년 월말 배수(build_us_valuation_band.py). 국내와 같은 카드·샤드 모양.
+      valuationBand: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

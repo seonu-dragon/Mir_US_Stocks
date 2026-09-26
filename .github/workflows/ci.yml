@@ -134,6 +134,10 @@ jobs:
       # 역DCF · 시나리오 DCF(dcf-core.js): 역산 수렴·알려진 DCF 값·음수 FCF/금융업 거부·민감도 격자·기저율·URL 인코딩.
       - name: DCF core tests
         run: node scripts/tests/test_dcf_core.mjs
+      # 종목 시세정보·투자정보(quote-info-core.js): 52주 고저·날짜(종가/장중), 세션 봉, 배당 합, 괴리율,
+      # 액면분할 표기, 재무비율 TTM(적자·자본잠식·통화 불일치·금융업), 동일업종 중앙값, 억/조·$B·원화 병기 표기.
+      - name: Quote info core tests
+        run: node scripts/tests/test_quote_info_core.mjs
 
       # 포트폴리오 위험 분석 순수 계산(portfolio-risk-core.js): Ledoit-Wolf(scikit-learn 값)·리스크 패리티 수렴·
       # 최소분산(상한)·낙폭 구간·월별 수익·empyrical 지표·위기 재생 경로.

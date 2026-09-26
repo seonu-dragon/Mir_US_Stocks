@@ -173,6 +173,8 @@ function fetchMarketHeader() {
       marketHeader.fx = p.fx;
       marketHeader.fxStatus = "loaded";
       renderPortfolio();
+      // 해외 종목 가격·시총 옆 원화 병기(quote-info.js)는 환율이 도착해야 그릴 수 있다.
+      if (typeof refreshQuoteInfoFx === "function") refreshQuoteInfoFx();
     } else if (!marketHeader.fx.length) {
       marketHeader.fxStatus = "error";
     }

@@ -21,6 +21,7 @@
     py scripts/check_data_freshness.py --group earnings-move   # daily-earnings-calendar.yml 말미
     py scripts/check_data_freshness.py --group earnings-releases  # material-events.yml 말미
     py scripts/check_data_freshness.py --group kr-valuation-band  # kr-valuation-band.yml 말미
+    py scripts/check_data_freshness.py --group event-study        # event-study.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -189,6 +190,11 @@ CHECKS = {
     # 12일이면 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료 시 전량 실패).
     "kr-valuation-band": [
         ("data/korea/valuation_band/meta.json", 12, True),
+    ],
+    # event-study.yml(매주 일요일). 실행마다 index updatedAtKst 를 새로 쓴다 — 10일이면 한 번 놓친 것.
+    # 0건(count)도 잡는다(가격·아카이브를 못 읽으면 표본이 0).
+    "event-study": [
+        ("data/event_study/index.json", 10, True),
     ],
 }
 

@@ -122,6 +122,9 @@ const FEATURE_DATA = {
   // 신호 라이브 성적표(build_signal_ledger.mjs) — 두 시장이 한 파일(~40KB). 시그널 탭 하단 성적표와
   // 신호 카드·특징주·시장경보·스캐너의 '이 신호의 과거 성적' 한 줄이 읽는다.
   signalScorecard: { global: "SIGNAL_SCORECARD", path: "data/signal_scorecard.js" },
+  // 이벤트 스터디 인덱스(build_event_study.py) — 유형 카탈로그·방법·한계(~20KB, 두 시장 한 파일).
+  // 유형별 표본(data/event_study/<유형>.json)과 종목별 요약(tk/*.json)은 event-study.js 가 필요할 때 fetch.
+  eventStudy: { global: "EVENT_STUDY_INDEX", path: "data/event_study/index.js", feature: "eventStudy", lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
@@ -268,6 +271,9 @@ function refreshFeatureViews() {
       calls.push(renderBuyback);
     } else if (searchSubTab === "dilution") {
       calls.push(renderDilution);
+    } else if (searchSubTab === "eventstudy") {
+      // 워크벤치는 사용자가 조작 중일 수 있어 아직 못 그린(불러오는 중) 상태일 때만 다시 그린다.
+      if (typeof renderEventStudy === "function") calls.push(() => { if (!byId("eventStudyRoot")?.querySelector(".es-controls")) renderEventStudy(); });
     } else if (selectedTicker && data && Array.isArray(data.stocks)) {
       const base = selectedBaseRow();
       if (base) {
@@ -280,6 +286,7 @@ function refreshFeatureViews() {
           () => renderStockEvents(item),
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
+          () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
         );
       }
     }

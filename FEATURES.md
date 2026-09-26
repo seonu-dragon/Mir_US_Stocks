@@ -192,6 +192,26 @@
   - *배당*: 배당 캘린더. KR은 DART '현금·현물배당결정' 원문 파싱으로 시가배당률·주당배당금·배당기준일·지급예정일을 표기.
   - *수주*: 공급계약·수주 공시를 최근 매출액 대비 계약 규모(%)로 정렬 (KR: DART 단일판매·공급계약).
   - *증자·CB (희석·오버행)*: 주식수가 늘어 기존 주주가 희석되는 공시 추적. KR은 유상증자·CB·BW·EB(DART), US는 SEC S-3/S-3ASR shelf 등록과 424B5 추가발행 보충서. 희석률 기준 정렬.
+  - *이벤트 스터디 (2026-09-26)*: 공시 칩 줄 첫 칩 `이벤트 스터디`(`event-study.js` + 순수 집계 `event-study-core.js`,
+    딥링크 `?tab=search&sub=eventstudy&es=<유형>[&est=<종목>]`). 과거 약 5년의 이벤트 전체에 대해 −5 ~ +60 거래일
+    누적 초과수익(CAR)을 미리 계산해 두고, 사용자가 유형·기간·시총 구간(이벤트 시점 근사)·섹터·크기 조건을 고르면
+    평균/중앙값 곡선 + 0일 날짜 묶음 부트스트랩 95% 구간 + 표본 수 + 양(+) 비율을 그린다. 초과수익은 시장조정(벤치마크 차)과
+    시장모형(추정창 −250~−30일 OLS β) 토글, 누적 시작 −5일/0일/+1일, 가중 '이벤트 동일/날짜 동일'(같은 날 군집 보정) —
+    하루 쏠림(5% 초과 또는 날짜당 3건 이상)이면 경고. 대조군은 KR 공시 반응 통계의 무작위 대조 방식을 전 유형에 적용한
+    '같은 종목의 무작위 날짜'(같은 유형 ±20거래일 밖, 결정적 시드)이고 짝 차이(이벤트 − 대조)와 구간을 함께 보여 준다.
+    최대 3개 유형을 겹쳐 비교하면 표의 모든 (유형×기간) 검정에 Benjamini–Hochberg FDR q 값과 다중비교 주의 문구를 붙인다.
+    유형: US 8-K 2.02 실적(크기 EPS 서프라이즈)·1.01·2.01·5.02·4.01·4.02·3.01·1.05·2.05·2.06, 13D 최초(크기 지분율 —
+    2024-12 이후 XML 양식만), 424B5, 내부자 클러스터·자사주(적립형) / KR 잠정실적·공급계약(크기 매출액 대비)·공급계약 해지·
+    자사주 취득/신탁/처분·소각·유상(크기 희석률)/무상증자·CB·BW·EB·최대주주 변경·현금배당·조회공시 요구·불성실공시·소송·
+    타법인 주식 취득. US 는 SEC 접수 시각이 미 동부 16:00 이후면 다음 거래일이 0일, KR 은 접수 시각이 없어 공시일이 0일
+    (화면에 '+1일부터'로도 보라고 적는다). 생존편향(현재 추적 종목만 가격 이력)·시총 근사·적립형 표본 기간을 화면에 적는다.
+    각 공시 트래커(자사주·실적발표·배당·수주·증자·CB·내부자·액티비스트·8-K) 머리줄에 '이 유형의 과거 반응 보기' 링크,
+    종목 분석 뷰에 '과거 이벤트 반응' 카드(그 종목의 유형별 평균 CAR, '이 종목만/전체와 비교'). 신호 성적표(발행 뒤 성적)와
+    역할이 다르다 — 이쪽은 과거 이벤트 전체의 연구 도구이고 부트스트랩 난수기(`MirSignalCore.mulberry32`)와 방법을 공유한다.
+    데이터: `scripts/build_event_study.py` → `data/event_study/index.{json,js}`(`EVENT_STUDY_INDEX`, lazy) + 유형별
+    `data/event_study/<유형>.json`(고를 때 fetch) + 종목별 `data/event_study/tk/<시장>_NN.json`(16 샤드), 상태
+    `data/event_study_archive/<시장>.json`(배포 제외). 주간 워크플로우 `Event study (weekly)`(일 12:23 KST, `DART_API_KEY`).
+    테스트 `scripts/tests/test_event_study_core.mjs`.
 
 ### ⑩ 종목 탭 › 공시 — 기관 · 정치인 · 내부자 · 공시 피드
 
@@ -414,6 +434,11 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - `Daily US market snapshot`(특징주 뒤) · `Korea close briefing`(특징주 뒤) 끝의 `Record signal ledger` 스텝(`!cancelled()` + continue-on-error). `--record us|kr` 가 그날 화면 규칙(`signal-scorecard-core.js` 의 `extractSignals`)으로 신호를 다시 뽑아 원장 끝에 붙이고(같은 공시·지정·거래일은 1회, 상태 신호는 쿨다운 28일·내부자 60일, 기록일보다 7일 넘게 앞선 사건은 제외) 두 시장 성적표를 다시 집계한다. 발행은 `sec_client.py --publish`.
   - 무결성: 실행마다 manifest 의 파일 해시·묶음(offset/bytes) 해시·체인을 먼저 대조하고, 어긋나면 붙이지 않고 exit 1(성적표에는 '기록 해시 불일치'). `.gitattributes` 에서 원장은 `-text`(줄끝 변환 금지).
   - 소급 복원: `--backfill us|kr --git "<repo>::<ref>" --from --to` — 실시간 줄이 생기기 전에만 허용. 2026-09-04 이전은 이력 재작성 전 백업 레포(`mir_backup_20260904_git`)에서 읽었다.
+- **이벤트 스터디 빌더 (`build_event_study.py`, 2026-09-26)**:
+  - 매주 일요일 12:23 KST(`Event study (weekly)`). US: `data.sec.gov/submissions/CIK*.json`(recent + 과거 파일 최대 4개)로 추적 종목(실측 이력·비ETF) 시총 상위 1,200개의 8-K 항목·13D·424B5 와 접수 시각을 받고, 13D 새 XML 양식의 `percentOfClass` 를 실행당 최대 300건 조회. KR: DART `list.json` 주요사항보고(B)·거래소공시(I) 분기 창 — 최근 2분기 + 아직 안 받은 분기 최대 4개(5년 전체 21분기는 `--kr-quarters 21`, 약 2,800회 호출). 정정 공시는 제외.
+  - 적립형: `insider_trades.json`(14일 안 2명 이상 P 매수)·`material_events.json`(kind=buyback 금액)·`korea/contracts.json`(매출액 대비)·`kr_event_details.json`(희석률·자사주 금액)을 매 실행 접수번호로 아카이브에 붙인다.
+  - 경로: 벤치마크(US SPY · KR 코스피 KODEX 200 / 코스닥 KODEX 코스닥150) 거래일 달력 위 일간 수익률, 시장조정·시장모형 CAR 을 지점 15개(−5…+60)에 0.1%p 정수로. 일간 초과수익 |AR|>100% 는 가격 오류로 제외, 같은 유형·같은 0일은 1건, 424B5 는 20거래일 안 연속 제출 중 첫 건.
+  - 실패 처리: 수집이 실패하면 기존 아카이브 유지 + exit 1, 표본이 직전 대비 30% 넘게 줄면 인덱스를 덮지 않는다. 나이 관문 `check_data_freshness.py --group event-study`(10일·0건 실패).
 - **예측시장 확률 빌더 (`build_macro_odds.py`)**:
   - 하루 3회 06:37·14:37·22:37 KST(`Macro odds (prediction markets)` 워크플로우). Kalshi·Polymarket 공개 API(키 없음) + 산업 지표 재사용 → `data/macro_odds.json/.js`(`window.MACRO_ODDS`). Polymarket 은 한국 IP 에서 HTTP 451 로 막혀 로컬 실행 시 Kalshi 만 나온다(미국 러너에서는 열림). 두 거래소가 모두 실패하면 기존 파일 유지 + exit 1, 나이 관문은 `check_data_freshness.py --group macro-odds`.
 - **구독 피드 생성 (`gen_feeds.py`)**:

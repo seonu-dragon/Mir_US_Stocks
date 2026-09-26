@@ -82,7 +82,7 @@ function renderInsiderTrades() {
     return;
   }
   if (meta) {
-    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC Form 4")}`;
+    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC Form 4")}${typeof esTrackerLink === "function" ? esTrackerLink("us_insider_cluster") : ""}`;
   }
   const q = insiderQuery.trim().toLowerCase();
   let rows = payload.trades;
@@ -183,7 +183,7 @@ function renderActivistStakes() {
     wrap.innerHTML = `<p class="muted">아직 13D/G 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
     return;
   }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 13D/G")}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 13D/G")}${typeof esTrackerLink === "function" ? esTrackerLink("us_13d") : ""}`;
   const q = activistQuery.trim().toLowerCase();
   let rows = payload.filings;
   if (activistKind !== "all") rows = rows.filter((r) => r.kind === activistKind);
@@ -232,7 +232,7 @@ function renderMaterialEvents() {
     wrap.innerHTML = `<p class="muted">아직 8-K 데이터가 없습니다. 데이터 수집 후 표시됩니다.</p>`;
     return;
   }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 8-K")}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 8-K")}${typeof esTrackerLink === "function" ? esTrackerLink(["us_8k_101", "us_earn"]) : ""}`;
   const q = eventsQuery.trim().toLowerCase();
   let rows = payload.events;
   if (eventsHot === "hot") rows = rows.filter((r) => r.hot);
@@ -864,7 +864,7 @@ function renderUsBuybacks() {
   const shownRows = buybackShowAll ? rows : withAmt;
   if (meta) meta.innerHTML = `업데이트 ${escapeHtml((window.MATERIAL_EVENTS || {}).updatedAtKst || "")} · 금액 확인 ${withAmt.length}건`
     + (noAmt ? ` · 금액 미확인 ${noAmt}건 <button type="button" class="link-btn" id="buybackToggleAll">${buybackShowAll ? "숨기기" : "포함해 보기"}</button>` : "")
-    + ` · 출처 SEC 8-K`;
+    + ` · 출처 SEC 8-K${typeof esTrackerLink === "function" ? esTrackerLink("us_buyback") : ""}`;
   byId("buybackToggleAll")?.addEventListener("click", () => { buybackShowAll = !buybackShowAll; buybackLimit = 50; renderUsBuybacks(); });
   if (!shownRows.length) { wrap.innerHTML = `<p class="muted">${withAmt.length ? "조건에 맞는 발표가 없습니다." : "금액이 확인된 자사주 발표가 없습니다. 위에서 미확인분을 펼쳐 볼 수 있습니다."}</p>`; return; }
   const body = shownRows.slice(0, buybackLimit).map((r) => `<tr>
@@ -928,7 +928,7 @@ function renderBuyback() {
   const buyN = rows.filter((r) => r.typeKey === "buy").length;
   const sellN = rows.length - buyN;
   if (meta) meta.innerHTML = rows.length
-    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건${krDiscStatNote("자기주식")}${isKrMarket() && typeof signalScoreLine === "function" ? ` ${signalScoreLine("buyback", { inline: true })}` : ""}`
+    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건${krDiscStatNote("자기주식")}${isKrMarket() && typeof signalScoreLine === "function" ? ` ${signalScoreLine("buyback", { inline: true })}` : ""}${typeof esTrackerLink === "function" ? esTrackerLink(["kr_buyback"]) : ""}`
     : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 자사주 취득·처분 공시가 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
@@ -1058,7 +1058,7 @@ function renderUsEarningsReactions() {
   if (earnReactSort === "react") rows.sort((a, b) => Math.max(Math.abs(b.d0 ?? 0), Math.abs(b.d1 ?? 0)) - Math.max(Math.abs(a.d0 ?? 0), Math.abs(a.d1 ?? 0)));
   else rows.sort((a, b) => b.date.localeCompare(a.date));
   if (meta) meta.innerHTML = rows.length
-    ? `업데이트 ${escapeHtml((window.ANALYST_CONSENSUS || {}).updatedAtKst || "")} · 최근 발표 ${rows.length}건 · 시총 상위 50종목 · 종가 기준`
+    ? `업데이트 ${escapeHtml((window.ANALYST_CONSENSUS || {}).updatedAtKst || "")} · 최근 발표 ${rows.length}건 · 시총 상위 50종목 · 종가 기준${typeof esTrackerLink === "function" ? esTrackerLink("us_earn") : ""}`
     : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 실적 발표 데이터가 없습니다.</p>`; return; }
   const pctCell = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
@@ -1098,7 +1098,7 @@ function renderEarningsReactions() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (earnReactSort === "react") rows.sort((a, b) => Math.abs(b.dayPct ?? 0) - Math.abs(a.dayPct ?? 0));
   else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 발표${krDiscStatNote("잠정실적")}` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 발표${krDiscStatNote("잠정실적")}${typeof esTrackerLink === "function" ? esTrackerLink("kr_earn") : ""}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 잠정실적 발표가 없습니다.</p>`; return; }
   // 주가 상승=초록(ins-buy)·하락=빨강(ins-sell). 공매도 패널과 방향이 반대인 데 주의.
   const pct = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
@@ -1229,7 +1229,7 @@ function renderDividends() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (dividendSort === "yield") rows.sort((a, b) => (b.yieldPct ?? -1) - (a.yieldPct ?? -1));
   else rows.sort((a, b) => (a.recordDate || "9999").localeCompare(b.recordDate || "9999")); // 배당락 임박순
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("배당")}` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("배당")}${typeof esTrackerLink === "function" ? esTrackerLink("kr_dividend") : ""}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 배당 결정이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.divKind || "배당")}</div></td>
@@ -1263,7 +1263,7 @@ function renderContracts() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (contractSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else rows.sort((a, b) => (b.salesRatio ?? -1) - (a.salesRatio ?? -1));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("공급계약")}${typeof signalScoreLine === "function" ? ` ${signalScoreLine("contract", { inline: true })}` : ""}` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("공급계약")}${typeof signalScoreLine === "function" ? ` ${signalScoreLine("contract", { inline: true })}` : ""}${typeof esTrackerLink === "function" ? esTrackerLink("kr_contract") : ""}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 공급계약이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => {
     const period = (r.startDate || r.endDate) ? `${escapeHtml(r.startDate || "")}~${escapeHtml(r.endDate || "")}` : "";
@@ -1375,7 +1375,7 @@ function renderUsDilution() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.title || "").toLowerCase().includes(q));
   if (dilutionSort === "amount") rows.sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1));
   else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 · 출처 ${escapeHtml(payload.source || "SEC EDGAR")}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 · 출처 ${escapeHtml(payload.source || "SEC EDGAR")}${typeof esTrackerLink === "function" ? esTrackerLink("us_424b5") : ""}`;
   const formCls = (f) => (/424B5/i.test(f) ? "ins-sell" : "ins-neutral");
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
@@ -1425,7 +1425,7 @@ function renderDilution() {
   if (dilutionSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else if (dilutionSort === "amount") rows.sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1));
   else rows.sort((a, b) => (b.dilutionPct ?? -1) - (a.dilutionPct ?? -1));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("증자·사채")}` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("증자·사채")}${typeof esTrackerLink === "function" ? esTrackerLink(["kr_rights", "kr_cb"]) : ""}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 증자·사채 발행이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>

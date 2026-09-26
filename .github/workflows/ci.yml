@@ -97,6 +97,10 @@ jobs:
         run: |
           node scripts/tests/test_signal_scorecard_core.mjs
           node scripts/build_signal_ledger.mjs --verify
+      # 이벤트 스터디 순수 집계(event-study-core.js): 기준점 재정렬·날짜 묶음 부트스트랩(신호 성적표와 같은 구간)·
+      # 날짜 동일 가중·BH-FDR·군집 경고·종목 샤드(파이썬 crc32 와 동일).
+      - name: Event study tests
+        run: node scripts/tests/test_event_study_core.mjs
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

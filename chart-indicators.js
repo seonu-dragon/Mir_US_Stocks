@@ -1333,14 +1333,11 @@ function renderDataFreshnessStatus() {
   const snap = parseSnapshotDate(raw);
   const ageHours = snap ? Math.max(0, (Date.now() - snap.getTime()) / 36e5) : null;
   const stale = ageHours != null && ageHours > 30;
-  const aiKeys = Object.keys(data.ai_briefing || {});
-  const social = data.social_sentiment || {};
-  const socialCount = Object.values(social).reduce((sum, rows) => sum + (Array.isArray(rows) ? rows.length : 0), 0);
   box.classList.toggle("is-stale", stale);
   box.innerHTML = `
-    <strong>데이터 상태</strong>
-    <span>스냅샷 ${escapeHtml(raw || "-")} · AI 브리핑 ${aiKeys.length}종 · 소셜 트렌딩 ${socialCount}개</span>
-    <span>${stale ? "스냅샷이 30시간 이상 지나 오래된 데이터일 수 있습니다." : "주식 데이터는 하루 1회 스냅샷이며, AI/소셜 블록은 별도 생성기가 채운 값을 표시합니다."}</span>
+    <strong>데이터 기준</strong>
+    <span>시세 ${escapeHtml(raw || "-")}</span>
+    ${stale ? "<span>30시간 이상 지난 데이터일 수 있습니다.</span>" : ""}
   `;
 }
 

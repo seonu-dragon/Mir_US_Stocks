@@ -190,11 +190,13 @@ function renderSignalScorecard() {
     </div>
     <div class="sig-score-grid">${kinds.map((k) => sigScoreCard(k, h)).join("")}</div>
     <div class="sig-score-foot">
+      <p><b>한계</b> ${escapeHtml(method.limits || "")}</p>
+      <details class="sig-score-method"><summary>계산 방법</summary>
       <p><b>계산</b> ${escapeHtml(method.entry || "")} ${escapeHtml(method.excess || "")} ${escapeHtml(method.ci || "")}</p>
       <p><b>중복 처리</b> ${escapeHtml(method.dedupe || "")}</p>
       <p><b>소급 복원</b> ${escapeHtml(method.backfill || "")}</p>
-      <p><b>한계</b> ${escapeHtml(method.limits || "")}</p>
       <p><b>원장</b> ${Number(L.rows || 0).toLocaleString()}줄(소급 ${Number(L.backfill || 0).toLocaleString()} · 실시간 ${Number(L.live || 0).toLocaleString()}) · ${escapeHtml(L.firstDate || "—")} ~ ${escapeHtml(L.lastDate || "—")} · ${integrity}${files ? `<br>월별 파일: ${files} · <a href="data/signal_ledger/${escapeHtml(m)}/manifest.json" target="_blank" rel="noopener">해시 목록</a>` : ""}</p>
+      </details>
       <p class="muted">가격 기준: ${escapeHtml(bench.label || "")} 마지막 일봉 ${escapeHtml(bench.lastDate || "—")} · 집계 ${escapeHtml(p.updatedAtKst || "")} · 출처 ${escapeHtml(p.source || "")}
         <button type="button" class="ia-link" data-open="trust">데이터 신뢰도 센터 열기</button></p>
     </div>`;

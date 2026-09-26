@@ -267,7 +267,7 @@ function renderIndustry() {
           ensureFeatureData("industryCalendar").then(() => renderIndustry());
           renderIndustry();
         } else {
-          host.innerHTML = '<div class="industry-loading"><p class="muted">산업 지표 파일이 아직 배포되지 않았습니다. 다음 갱신(매일 06:10 KST) 뒤에 다시 확인해 주세요.</p></div>';
+          host.innerHTML = '<div class="industry-loading"><p class="muted">산업 지표 데이터를 불러오지 못했습니다. 잠시 뒤 다시 확인해 주세요.</p></div>';
         }
       });
     }
@@ -585,10 +585,10 @@ function renderIndustryDetail(main, ind) {
       <button type="button" class="ghost compact-btn" id="industryLink">링크 복사</button>
     </div>
     <div class="industry-chart" id="industryChart"></div>
-    ${indPanel("기간별 등락", ind.perf_mode === "diff" ? "단위 차이(레벨 지표)" : "변화율", `<div class="industry-perf">${perfCells}</div><p class="muted industry-foot">주기보다 짧은 칸(월간 지표의 1D·1W 등)과 기준점이 성긴 칸은 비워 둡니다 — 가짜 보간을 하지 않습니다.</p>`)}
+    ${indPanel("기간별 등락", ind.perf_mode === "diff" ? "단위 차이(레벨 지표)" : "변화율", `<div class="industry-perf">${perfCells}</div><p class="muted industry-foot">주기보다 짧은 칸(월간 지표의 1D·1W 등)과 기준점이 성긴 칸은 비워 둡니다.</p>`)}
     ${sea ? indPanel("동월 비교", `${sea.month}월 전년비`, `<div class="industry-seasonal"><div><span class="muted">${sea.years}년 평균</span><b>${indFmtSigned(sea.same_month_yoy_avg, "%", 1)}</b></div><div><span class="muted">올해</span><b class="${indCls(sea.this_year_yoy)}">${indFmtSigned(sea.this_year_yoy, "%", 1)}</b></div><div><span class="muted">판정</span><b>${sea.verdict === "above" ? "평년보다 강함" : "평년보다 약함"}</b></div></div>`) : ""}
     ${stats ? indPanel(`${stats.window_years}년 통계`, `${stats.n}개 관측`, `<div class="industry-seasonal"><div><span class="muted">평균</span><b>${indFmtNum(stats.mean)}</b></div><div><span class="muted">표준편차</span><b>${indFmtNum(stats.sd)}</b></div><div><span class="muted">최소</span><b>${indFmtNum(stats.min.val)}</b><span class="muted">${escapeHtml(stats.min.date)}</span></div><div><span class="muted">최대</span><b>${indFmtNum(stats.max.val)}</b><span class="muted">${escapeHtml(stats.max.date)}</span></div></div>`) : ""}
-    ${related ? indPanel("관련 상장사", "누르면 종목 분석으로", `<div class="industry-chips">${related}</div><p class="muted industry-foot">검증된 선행 상관이 있는 종목만 꼬리표가 붙습니다(8장 기준: 겹치지 않는 변화율 · 섹터 초과수익 · 표본외 단회 검정 · 블록 부트스트랩 · FDR 10%). 꼬리표가 없는 것이 기본이며, 상관이 없다는 뜻이 아니라 통과하지 못했거나 표본이 모자란다는 뜻입니다.${d.sensitivity_summary ? ` 전체 ${d.sensitivity_summary.tested}쌍 검사 · ${d.sensitivity_summary.validated}쌍 통과 · 표본 부족 ${d.sensitivity_summary.insufficient}.` : ""}</p>`) : ""}
+    ${related ? indPanel("관련 상장사", "누르면 종목 분석으로", `<div class="industry-chips">${related}</div><p class="muted industry-foot">검증된 선행 상관이 있는 종목만 꼬리표가 붙습니다. 꼬리표가 없다고 상관이 없다는 뜻은 아닙니다(검증 미통과 또는 표본 부족).${d.sensitivity_summary ? ` 전체 ${d.sensitivity_summary.tested}쌍 검사 · ${d.sensitivity_summary.validated}쌍 통과 · 표본 부족 ${d.sensitivity_summary.insufficient}.` : ""}</p><details class="industry-method"><summary>검증 방법</summary><p class="muted industry-foot">겹치지 않는 구간의 변화율로 섹터 대비 초과수익과의 상관을 보고, 표본 밖 기간에서 한 번만 검정합니다. 블록 부트스트랩으로 신뢰구간을 구하고, 여러 쌍을 동시에 본 데 따른 우연은 FDR 10%로 걸러 냅니다.</p></details>`) : ""}
     ${relatedInd ? indPanel("같이 보는 지표", "", `<div class="industry-chips">${relatedInd}</div>`) : ""}
     ${indPanel("해석", "사실 요소만", `<p class="industry-interp">${escapeHtml(industryInterpretation(ind))}</p>${ind.note ? `<p class="muted industry-foot">${escapeHtml(ind.note)}</p>` : ""}`)}
     <p class="muted industry-foot">출처 ${escapeHtml(ind.source || "")}${ind.license && ind.license.note ? ` · ${escapeHtml(ind.license.note)}` : ""} · 갱신 ${escapeHtml(d.updatedAtKst || "")}</p>`;

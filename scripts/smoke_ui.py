@@ -230,7 +230,7 @@ def test_trust_center(browser, base: str) -> None:
     cards = page.locator(".data-trust-card")
     n = cards.count()
     check("신뢰도 카드 렌더", n > 0, f"{n}장")
-    check("모든 카드에 원인·조치 패널", page.locator(".data-trust-detail").count() == n)
+    check("모든 카드에 상태 설명 패널", page.locator(".data-trust-detail").count() == n)
     check("지연 로딩이 '데이터 없음'으로 오분류되지 않음",
           page.locator(".data-trust-card.trust-missing").count() <= 2,
           f"missing={page.locator('.data-trust-card.trust-missing').count()}")
@@ -261,11 +261,11 @@ def test_trust_center(browser, base: str) -> None:
         cards.first.locator("summary").click()
         page.wait_for_timeout(250)
     txt = cards.first.inner_text()
-    for label in ("영향받는 화면", "원인", "조치"):
+    for label in ("쓰이는 화면", "상태", "참고"):
         check(f"상세에 '{label}' 표시", label in txt)
-    href = page.locator(".data-trust-link").first.get_attribute("href") or ""
-    check("실행 이력 링크가 이 레포 Actions 를 가리킴",
-          href.startswith("https://github.com/seonu-dragon/Mir_US_Stocks/actions"), href)
+    # 운영용 정보(워크플로우·빌더 파일명·Actions 링크)는 사용자 화면에 내지 않는다(2026-09-26).
+    check("상세에 워크플로우·빌더 이름이 없음",
+          "워크플로우" not in txt and "scripts/" not in txt and page.locator(".data-trust-link").count() == 0)
 
     shoot(page.locator(".data-trust-center"), "trust-center")
     page.close()

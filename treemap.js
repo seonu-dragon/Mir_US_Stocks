@@ -325,7 +325,7 @@ function renderTreemapList(all, metric, sizeMetric) {
   let lastSector = null;
   const rows = [];
   shown.forEach((item) => {
-    if (item.sector !== lastSector) { lastSector = item.sector; rows.push(`<div class="map-list-sector">${escapeHtml(item.sector || "기타")}</div>`); }
+    if (item.sector !== lastSector) { lastSector = item.sector; rows.push(`<div class="map-list-sector">${escapeHtml(tmSectorLabel(item.sector) || "기타")}</div>`); }
     // 지도 지표(펀더멘털 18종 포함)는 mapMetricValue/fmtMetric 을 써야 한다 —
     // 스크리너용 metricValue 는 펀더멘털 키를 몰라 전부 "—" 였다(감사 2026-09-15 P1).
     const v = mapMetricValue(item, metric);
@@ -426,7 +426,7 @@ function renderTreemap() {
     const industryRects = squarify(industries, inner, (item) => item.weight);
     return `
       <section class="sector-box" data-sector="${escapeHtml(sector.sector)}" style="${rectStyle(rect)}">
-        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(sector.sector)} 확대">${escapeHtml(sector.sector)} · ${fmtMetric(sector.change, metric)} </div>
+        <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(tmSectorLabel(sector.sector))} 확대">${escapeHtml(tmSectorLabel(sector.sector))} · ${fmtMetric(sector.change, metric)} </div>
         ${industryRects.map(({ item: industry, rect: industryRect }) => industryBox(sector.sector, industry, industryRect, metric, sizeMetric, query)).join("")}
       </section>
     `;
@@ -471,7 +471,7 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
   const map = byId("stockTreemap");
   const headerH = 34;
   const inner = { x: 0, y: headerH, w: width, h: height - headerH };
-  const crumb = zoomView.industry ? `${zoomView.sector} · ${zoomView.industry}` : zoomView.sector;
+  const crumb = zoomView.industry ? `${tmSectorLabel(zoomView.sector)} · ${zoomView.industry}` : tmSectorLabel(zoomView.sector);
   const header = `
     <div class="treemap-zoom-header">
       <button type="button" id="treemapBack" class="treemap-back">← 전체 보기</button>
@@ -491,6 +491,11 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
   // 클릭은 handleHeatmapClick(위임) 이 처리한다.
   renderSelected(scoped.find((item) => item.ticker === selectedTicker) || scoped[0]);
   pulseTreemapFocusTile();
+}
+
+// 섹터 이름은 스냅샷의 영문 대문자(TECHNOLOGY 등) — 화면에는 한국어로(signals.js SECTOR_KO). 데이터 속성·필터 값은 원문 그대로.
+function tmSectorLabel(sector) {
+  return (typeof SECTOR_KO === "object" && SECTOR_KO[sector]) || sector;
 }
 
 function sectorRank(sector) {
@@ -911,9 +916,12 @@ function sizeWeight(item, sizeMetric) {
 function average(items, metric) {
   if (!items || !items.length) return null;
   const vals = [];
+  // 펀더멘털 지표는 '이상치 가능' 경계로 눌러서(윈저라이즈) 평균한다 — ROE 3,948% 한 종목이
+  // 섹터 타일 색을 통째로 바꾸지 않게(fundamentals-sanity-core.js).
+  const clip = MAP_METRIC_CONFIG[metric] && window.MirFundSanity ? (v) => window.MirFundSanity.winsor(metric, v) : (v) => v;
   for (const item of items) {
     const v = mapMetricValue(item, metric);
-    if (Number.isFinite(v)) vals.push(v);
+    if (Number.isFinite(v)) vals.push(clip(v));
   }
   if (!vals.length) return null;
   return vals.reduce((sum, v) => sum + v, 0) / vals.length;

@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=24c0638807" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=24c0638807"></noscript>
+    <link rel="preload" href="styles.css?v=08e8f27eb9" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=08e8f27eb9"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=e0adce5f4c"></script>
+    <script src="build_id.js?v=437dc12578"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -453,7 +453,7 @@ html[data-theme="dark"] {
                 <span class="ai-sparkle-large"></span>
                 <div>
                   <h2>미르 AI 어시스턴트</h2>
-                  <p class="muted">실시간 데이터 기반 심층 시장 분석 및 리서치</p>
+                  <p class="muted">사이트에 게시된 시장 데이터로 답하는 분석 도우미</p>
                 </div>
               </div>
               <div class="ai-header-controls">
@@ -471,12 +471,12 @@ html[data-theme="dark"] {
               <div class="ai-chat-welcome" id="aiChatWelcome">
                 <div class="welcome-icon"></div>
                 <h2>무엇을 분석해 드릴까요?</h2>
-                <p class="muted">미국 및 한국 주식 시장의 실시간 데이터를 기반으로 기업 정보, 차트 기술적 분석, 실적 지표를 대화하듯 점검해 드립니다.</p>
+                <p class="muted">미국·한국 주식의 기업 정보, 차트, 실적 지표를 대화하듯 점검해 드립니다.</p>
                 
                 <div class="welcome-suggestions">
                   <button type="button" class="ai-chat-suggest-card" id="aiSuggestPrimary" data-query="NVDA 분석해줘">
                     <strong>NVDA 분석해줘</strong>
-                    <span>엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.</span>
+                    <span>엔비디아의 차트와 핵심 지표, 실적을 종합 점검합니다.</span>
                   </button>
                   <button type="button" class="ai-chat-suggest-card" data-query="반도체 섹터 흐름 어때?">
                     <strong>반도체 섹터 흐름 어때?</strong>
@@ -626,7 +626,7 @@ html[data-theme="dark"] {
         <div class="sub-panel is-active" id="sub-macro">
           <div class="section-title">
             <h2>경제 캘린더</h2>
-            <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 통합 표시합니다. 백악관 일정은 06·16·21시에 갱신됩니다.</p>
+            <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 모았습니다.</p>
             <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="FOMC·경제지표·실적·배당·IPO 일정을 구글/애플 캘린더에 구독합니다">캘린더 구독</button>
           </div>
           <div class="calendar-filters" id="calendarFilters">
@@ -654,7 +654,7 @@ html[data-theme="dark"] {
         <div class="sub-panel" id="sub-earnings">
           <div class="section-title">
             <h2>시장 실적 캘린더</h2>
-            <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. (Yahoo Finance · Worker 프록시)</p>
+            <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. 출처: Yahoo Finance</p>
             <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="시총 상위 실적 예정일을 캘린더 앱에 구독합니다">캘린더 구독</button>
           </div>
           <div class="toolbar earnings-toolbar">
@@ -974,11 +974,11 @@ html[data-theme="dark"] {
                         <th>#</th>
                         <th data-kr-label="종목">티커</th>
                         <th class="col-sub">회사명</th>
-                        <th>현재가</th>
-                        <th>당일 등락률</th>
-                        <th>1주 등락률</th>
-                        <th>1달 등락률</th>
-                        <th>RSI</th>
+                        <th class="num">현재가</th>
+                        <th class="num">당일</th>
+                        <th class="num">1주</th>
+                        <th class="num">1달</th>
+                        <th class="num">RSI</th>
                       </tr>
                     </thead>
                     <tbody id="sectorConstituentsBody"></tbody>
@@ -1070,7 +1070,7 @@ html[data-theme="dark"] {
           <div class="lev-etf-controls-bar">
             <div class="section-title compact-title">
               <h2>레버리지·인버스·옵션형 ETF</h2>
-              <p>섹터·지수·개별종목의 레버리지/인버스/커버드콜·변동성 ETF를 한곳에서 정리했습니다. 일일 스냅샷 업데이트 후 시세·RS가 표시됩니다.</p>
+              <p>섹터·지수·개별종목의 레버리지/인버스/커버드콜·변동성 ETF를 한곳에서 정리했습니다.</p>
             </div>
             <div class="lev-etf-controls-row">
               <label>
@@ -1140,7 +1140,7 @@ html[data-theme="dark"] {
         <div class="tab-leaf" id="tab-health">
           <div class="section-title">
             <h2>시장 폭</h2>
-            <p>주요 지수·국가·채권·원자재·환율과 상승/하락 종목 분포를 봅니다. 지수/ETF는 저장된 스냅샷, 환율은 실시간으로 가져옵니다.</p>
+            <p>주요 지수·국가·채권·원자재·환율과 상승/하락 종목 분포입니다. 지수·ETF는 최근 수집 시각 기준, 환율은 실시간입니다.</p>
           </div>
           <section class="index-strip" id="indexStripFull" aria-label="지수 전체"></section>
           <section class="summary-band" id="marketSummary"></section>
@@ -2575,7 +2575,7 @@ html[data-theme="dark"] {
               <select id="backtestBenchmark"></select>
             </label>
             <label>
-              투자금 (USD)
+              <span>투자금 <span id="backtestCurrency">(USD)</span></span>
               <input id="backtestInvestment" type="number" min="1" step="100" value="10000">
             </label>
             <button type="button" id="backtestRun" class="primary">시뮬레이션</button>
@@ -2603,6 +2603,7 @@ html[data-theme="dark"] {
               <svg id="backtestChart" viewBox="0 0 800 260" role="img" aria-label="누적 수익 차트"></svg>
             </div>
             <div class="pf-tearsheet" id="backtestTearsheet"></div>
+            <div class="backtest-notes" id="backtestNotes"></div>
             <div class="table-wrap">
               <table class="backtest-table" id="backtestTable"></table>
             </div>
@@ -2680,7 +2681,7 @@ html[data-theme="dark"] {
               </select>
             </label>
             <label>
-              회당 금액 <span id="dcaCurrency">(USD)</span>
+              <span>회당 금액 <span id="dcaCurrency">(USD)</span></span>
               <input id="dcaAmount" type="number" min="1" step="10" value="500" inputmode="decimal">
             </label>
             <label>
@@ -2749,7 +2750,7 @@ html[data-theme="dark"] {
               <div><h3>투자 가설 추적</h3></div>
               <strong id="thesisCount">0건</strong>
             </div>
-            <p class="muted">매수 근거와 '틀렸다고 볼 조건'을 측정 가능한 값으로 적어 두면, 사이트에 올 때마다 현재 데이터로 점검해 위반·근접·정상을 표시합니다. 등록 시점 지표는 동결 저장되고, 수정하면 원래 가설과 수정 시각이 남습니다. 매매 신호가 아니라 내 기록을 점검하는 도구입니다. (이 브라우저에 저장 · 클라우드 동기화에 포함)</p>
+            <p class="muted">매수 근거와 '틀렸다고 볼 조건'을 숫자로 적어 두면, 올 때마다 현재 데이터로 점검해 위반·근접·정상을 표시합니다. 매매 신호가 아니라 내 기록을 점검하는 도구입니다. (이 브라우저에 저장)</p>
             <div class="thesis-toolbar">
               <button type="button" class="primary compact-btn" data-thesis-new>새 가설</button>
               <nav class="thesis-filter" aria-label="가설 목록 필터">
@@ -3011,14 +3012,13 @@ html[data-theme="dark"] {
       <div class="ia-footer-meta">
         <span>데이터 기준</span>
         <strong id="updatedAt">불러오는 중</strong>
-        <small id="snapshotCadenceNote">주식 데이터는 매일 06:00 KST 스냅샷 · 일부 보조 데이터는 별도 조회</small>
+        <small id="snapshotCadenceNote">주가 매일 06:00 KST 갱신 · 항목별 기준 시각은 신뢰도 센터에서</small>
       </div>
       <div class="ia-footer-links">
         <button type="button" class="ia-link" data-open="trust">데이터 신뢰도 센터</button>
         <button type="button" class="ia-link" data-open="community">커뮤니티</button>
       </div>
       <div class="ia-footer-note">
-        <span>저장된 스냅샷 데이터를 사용합니다. 시장별 갱신 주기는 위 안내를 참고하세요.</span>
         <span>투자 판단의 참고 자료이며 매수/매도 추천이 아닙니다.</span>
       </div>
     </footer>
@@ -3036,7 +3036,7 @@ html[data-theme="dark"] {
         <div class="data-trust-summary" id="dataTrustSummary"></div>
         <div class="data-trust-grid" id="dataTrustGrid" aria-live="polite"></div>
         <p class="data-trust-note"><button type="button" class="ia-link" data-open="scorecard">신호 성적표 보기 — 화면에 띄운 신호가 발행 뒤 실제로 어떻게 됐는지</button></p>
-        <p class="data-trust-note">상태는 브라우저에 로드된 최신 파일을 기준으로 계산합니다. 실시간 원본 장애 여부를 직접 보장하지는 않습니다.</p>
+        <p class="data-trust-note">상태는 사이트에 게시된 최신 자료 기준입니다. 원본 서비스의 실시간 장애 여부는 반영하지 않습니다.</p>
       </section>
     </dialog>
     <div class="chat-page-spacer" aria-hidden="true"></div>
@@ -3079,7 +3079,7 @@ html[data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=cf947f6707"></script>
+    <script src="market_config.js?v=62586ff0c4"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3093,44 +3093,45 @@ html[data-theme="dark"] {
     <script src="analysis.js?v=0b4b756fcc"></script>
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
-    <script src="chart-indicators.js?v=71364046d6"></script>
+    <script src="chart-indicators.js?v=76ad317069"></script>
     <script src="community.js?v=af8ec25e4f"></script>
-    <script src="ai-mode.js?v=2642a3273b"></script>
+    <script src="ai-mode.js?v=551db9b24c"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=d4f337fa16"></script>
-    <script src="movers.js?v=4f92914563"></script>
-    <script src="portfolio.js?v=4e19177b3c"></script>
+    <script src="disclosure-trackers.js?v=08f52eb714"></script>
+    <script src="movers.js?v=4a60812545"></script>
+    <script src="portfolio.js?v=e460158602"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
-    <script src="portfolio-risk.js?v=cedc92eb46"></script>
+    <script src="portfolio-risk.js?v=42bb40aa23"></script>
     <script src="thesis-core.js?v=fb63922564"></script>
-    <script src="thesis.js?v=53f3d6f7f5"></script>
+    <script src="thesis.js?v=d5dc13738c"></script>
     <script src="screener.js?v=16ba074494"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
     <script src="feature-data.js?v=e7a6b005c0"></script>
-    <script src="treemap.js?v=e89993e134"></script>
-    <script src="industry.js?v=4ee813cea9"></script>
+    <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
+    <script src="treemap.js?v=8604e68954"></script>
+    <script src="industry.js?v=3a0246f6c8"></script>
     <script src="valuation-band-core.js?v=11d961c47c"></script>
     <script src="valuation-band.js?v=a8f1f4303b"></script>
-    <script src="factor-grade-core.js?v=98a21c5909"></script>
-    <script src="factor-grades.js?v=e28146195e"></script>
+    <script src="factor-grade-core.js?v=5b2d301864"></script>
+    <script src="factor-grades.js?v=0146d20671"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
-    <script src="formula-screener.js?v=9d96500d2d"></script>
+    <script src="formula-screener.js?v=780e898d05"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=6c869ac754"></script>
-    <script src="signals.js?v=3a43ef5ebd"></script>
-    <script src="macro-odds.js?v=533cf73954"></script>
+    <script src="signals.js?v=8d7bf55d00"></script>
+    <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart.js?v=fb6b701192"></script>
     <script src="institutional.js?v=8e7dd80757"></script>
-    <script src="markets-etf.js?v=69674be0f5"></script>
+    <script src="markets-etf.js?v=603b74fc3f"></script>
     <script src="kr-panels.js?v=53e63c5806"></script>
-    <script src="kr-alerts.js?v=e5bc27d4a9"></script>
+    <script src="kr-alerts.js?v=c549e24ad9"></script>
     <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
-    <script src="signal-scorecard.js?v=8775538443"></script>
+    <script src="signal-scorecard.js?v=6fc77f71e2"></script>
     <script src="event-study-core.js?v=98c430e41a"></script>
     <script src="event-study.js?v=bcfb67eb71"></script>
     <script src="watchlist.js?v=830011f027"></script>
@@ -3139,9 +3140,9 @@ html[data-theme="dark"] {
     <script src="financials.js?v=3e7d8558c4"></script>
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=234693fd95"></script>
-    <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=0d1b710590"></script>
+    <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
+    <script src="app.js?v=b1a09df0d7"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
-    <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
+    <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
   </body>
 </html>

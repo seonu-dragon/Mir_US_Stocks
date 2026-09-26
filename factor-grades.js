@@ -49,6 +49,8 @@ function factorGradeIndex() {
     get: factorGradeMetricValue,
     exclude: (s) => isStockEtf(s),
     metricAvailable: (k) => coverage[k] === true,
+    // 극단값(ROE 3,948% 등)은 백분위에서 '이상치 가능' 경계로 눌러 쓴다(fundamentals-sanity-core.js).
+    clip: (k, v) => (window.MirFundSanity ? window.MirFundSanity.winsor(k, v) : v),
   });
   _factorGradeMemo = { key, index };
   return index;
@@ -88,7 +90,7 @@ function factorGradeRowHtml(f) {
   if (f.status === "ok") {
     const rows = f.metrics.map((m) => `<tr${m.usable ? "" : ' class="fgrade-unused"'}>
         <td>${escapeHtml(m.label)}${m.dir < 0 ? ' <span class="fgrade-dir">낮을수록 상위</span>' : ""}</td>
-        <td class="num">${escapeHtml(factorGradeFmtValue(m))}</td>
+        <td class="num"${m.clipped && window.MirFundSanity ? ` title="${escapeHtml(window.MirFundSanity.describe(m.key))} 백분위는 경계값으로 계산했습니다."` : ""}>${escapeHtml(factorGradeFmtValue(m))}${m.clipped ? '<span class="fx-outlier" aria-label="이상치 가능">이상치 가능</span>' : ""}</td>
         <td class="num">${m.pct != null ? Math.round(m.pct) : (m.usable ? "—" : "표본 부족")}</td>
         <td class="num">${m.n}</td>
       </tr>`).join("");

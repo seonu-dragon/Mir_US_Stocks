@@ -30,7 +30,8 @@ const FX_FIELDS = [
   { key: "rangePos5yPct", label: "5년 가격 범위 내 위치(%)", group: "기술", src: "스냅샷", get: (it) => fxNum(it.rangePos5yPct) },
   { key: "vol20", label: "20일 변동성(일간 %)", group: "기술", src: "계산", get: (it) => (typeof scanStdev20 === "function" ? scanStdev20(it.closeSeries) : null) },
   // 이익(스냅샷)
-  { key: "epsTtm", label: "EPS(TTM)", group: "이익", src: "스냅샷", get: (it) => epsTtmValue(it) },
+  // -999 는 나스닥 eps 표의 결측 표식이다(fundamentals_sanity.py SENTINELS). 다음 빌드부터 원천에서 빠진다.
+  { key: "epsTtm", label: "EPS(TTM)", group: "이익", src: "스냅샷", get: (it) => { const v = epsTtmValue(it); return v === -999 ? null : v; } },
   { key: "epsNextY", label: "예상 EPS(다음 해, 추정치)", group: "이익", src: "스냅샷", get: (it) => fxNum(it.epsNextY) },
   { key: "epsGrowthEst", label: "예상 EPS 성장률(%, 추정치)", group: "이익", src: "계산", get: (it) => { const a = Number(it.epsTtm), b = Number(it.epsNextY); return a > 0 && Number.isFinite(b) ? (b / a - 1) * 100 : null; } },
   // 밸류·재무(map_fundamentals)
@@ -197,9 +198,13 @@ function fxRenderTable(run) {
   let sortKey = fxState.sort;
   if (!sortKey || !cols.some((c) => c.key === sortKey)) sortKey = fxState.columns.findIndex((c, ci) => run.colVals[ci]) >= 0 ? `c${fxState.columns.findIndex((c, ci) => run.colVals[ci])}` : "marketCap";
   const dir = fxState.dir === 1 ? 1 : -1;
+  const sanity = window.MirFundSanity;
+  const fieldHasBounds = (k) => Boolean(sanity && FX_FIELD_BY_KEY[k] && sanity.bounds(k));
   const idx = run.idx.slice().sort((a, b) => {
     const av = fxSortValue(run, a, sortKey);
     const bv = fxSortValue(run, b, sortKey);
+    // '이상치 가능' 값(ROE 3,948% 등)은 경계 안 값 뒤, 결측 앞으로(fundamentals-sanity-core.js).
+    if (fieldHasBounds(sortKey)) return sanity.sortCompare(sortKey, av, bv, dir);
     if (av == null && bv == null) return 0;
     if (av == null) return 1; // 결측은 항상 맨 뒤
     if (bv == null) return -1;
@@ -211,6 +216,7 @@ function fxRenderTable(run) {
     body.innerHTML = `<tr><td colspan="${5 + cols.length}" class="muted">조건에 맞는 종목이 없습니다. 결측값이 있는 종목은 조건을 충족하지 않은 것으로 봅니다.</td></tr>`;
     return;
   }
+  const outlierCount = sanity ? idx.filter((i) => cols.some((c) => fieldHasBounds(c.key) && sanity.isOutlier(c.key, fxSortValue(run, i, c.key)))).length : 0;
   body.innerHTML = idx.slice(0, FX_MAX_ROWS).map((i) => {
     const { item } = run.rows[i];
     return `<tr>
@@ -219,10 +225,21 @@ function fxRenderTable(run) {
       <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
       <td>${escapeHtml(item.sector || "")}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
-      ${cols.map((c) => `<td class="num">${c.key === "marketCap" ? fmtBillions(item.marketCapB) : escapeHtml(fxFmt(fxSortValue(run, i, c.key)))}</td>`).join("")}
+      ${cols.map((c) => fxCellHtml(run, i, c)).join("")}
     </tr>`;
-  }).join("") + (idx.length > FX_MAX_ROWS ? `<tr><td colspan="${5 + cols.length}" class="muted">상위 ${FX_MAX_ROWS}개만 표시(전체 ${idx.length.toLocaleString()}개) — 조건을 좁히거나 정렬을 바꾸세요.</td></tr>` : "");
+  }).join("") + (outlierCount ? `<tr><td colspan="${5 + cols.length}" class="muted">'이상치 가능' ${outlierCount.toLocaleString()}종목 — 값은 원자료 그대로지만 분모(자본·매출·이익)가 0 에 가깝거나 단위가 섞였을 가능성이 커 정렬에서 뒤로 보냈습니다. 조건 판정에는 그대로 씁니다.</td></tr>` : "") + (idx.length > FX_MAX_ROWS ? `<tr><td colspan="${5 + cols.length}" class="muted">상위 ${FX_MAX_ROWS}개만 표시(전체 ${idx.length.toLocaleString()}개) — 조건을 좁히거나 정렬을 바꾸세요.</td></tr>` : "");
   delegateTickerClicks(body, ".ticker-link");
+}
+
+// 결과 표 한 칸. 필드 열 값이 '이상치 가능' 경계 밖이면 표시를 붙인다(값은 그대로).
+function fxCellHtml(run, i, c) {
+  const item = run.rows[i].item;
+  if (c.key === "marketCap") return `<td class="num">${fmtBillions(item.marketCapB)}</td>`;
+  const v = fxSortValue(run, i, c.key);
+  const sanity = window.MirFundSanity;
+  const flag = !c.custom && sanity && sanity.isOutlier(c.key, v);
+  if (!flag) return `<td class="num">${escapeHtml(fxFmt(v))}</td>`;
+  return `<td class="num is-outlier" title="${escapeHtml(sanity.describe(c.key))}">${escapeHtml(fxFmt(v))}<span class="fx-outlier">이상치 가능</span></td>`;
 }
 
 // ---------- 3차 스크리너 백테스트 연결 지점 ----------

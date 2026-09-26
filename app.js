@@ -476,7 +476,15 @@ function loadMapFundamentalsScript(cfg) {
     const src = isKr ? "data/korea/map_fundamentals.js" : "data/map_fundamentals.js";
     const globalName = isKr ? "KOREA_MAP_FUNDAMENTALS" : "MAP_FUNDAMENTALS";
     const apply = () => {
-      window.MAP_FUNDAMENTALS = window[globalName] || {};
+      // 이상치 규칙(fundamentals-sanity-core.js): 적자 PER·자본잠식 ROE 등 정의상 의미 없는 값을
+      // 결측으로. 빌더도 같은 규칙을 적용하지만 이미 배포된 옛 파일에도 바로 효과가 나도록
+      // 여기서 한 번 더(제자리 수정 — 같은 객체를 보는 모든 화면에 반영). 두 번 해도 결과가 같다.
+      const table = window[globalName] || {};
+      if (window.MirFundSanity && !table.__sanitized) {
+        window.MAP_FUNDAMENTALS_SANITY = window.MirFundSanity.sanitizeTable(table);
+        Object.defineProperty(table, "__sanitized", { value: true, enumerable: false });
+      }
+      window.MAP_FUNDAMENTALS = table;
       // 시장마다 있는 지표가 달라 옵션을 다시 걸러야 한다(KR 은 P/S 가 없는 등).
       refreshFundamentalMetricOptions();
       resolve(true);
@@ -878,7 +886,7 @@ function applyMarketOnlyUi() {
   if (rsQqqLabel && rsQqqLabel.lastChild) rsQqqLabel.lastChild.textContent = ` RS vs ${rsB2}`;
   const cadenceNote = byId("snapshotCadenceNote");
   if (cadenceNote) {
-    cadenceNote.textContent = `주식 데이터는 ${cfg.snapshotCadence || "매일 06:00 KST"} 스냅샷 · 일부 보조 데이터는 별도 조회`;
+    cadenceNote.textContent = `주가 ${cfg.snapshotCadence || "매일 06:00 KST"} 갱신 · 항목별 기준 시각은 신뢰도 센터에서`;
   }
   const topMinCapText = byId("topMinMarketCapLabelText");
   if (topMinCapText) {
@@ -1439,8 +1447,7 @@ function regimeFngCardHtml() {
     <div class="summary-card regime-fng-card regime-${regime.tone}">
       <span>시장 국면 · 공포탐욕</span>
       <div class="rf-head">
-        <strong class="regime-label">${regime.label}</strong>
-        <em class="regime-ko">${regime.ko}</em>
+        <strong class="regime-label" title="${escapeHtml(regime.label)}">${regime.ko}</strong>
       </div>
       <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
         ${arcs}
@@ -1706,7 +1713,7 @@ function renderActionBoard() {
   // 딥링크 스크롤(scrollToTabContent) 뒤에 본문이 밀리는 레이아웃 시프트가 난다.
   const scheduleWide = !myEventRows.length || !showFilings;
   grid.innerHTML =
-    actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
+    actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, stockSubLabel(item) || item.industry || "")), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
     actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? (thesisAlerts.length ? "투자 가설 점검 · 저장한 조건" : "저장한 조건에 맞는 종목") : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
     actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, scheduleWide ? "is-wide" : "") +
     (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "") +
@@ -1961,7 +1968,7 @@ function loadCalendar() {
     calendarLoaded = true;
     renderCalendarFiltered();
     if (!calendarEventsCache.length) {
-      body.innerHTML = `<p class="muted">경제 캘린더는 실시간 프록시 연결 시 표시됩니다. 백악관 일정 데이터가 없습니다.</p>`;
+      body.innerHTML = `<p class="muted">경제 캘린더를 불러오지 못했습니다.</p>`;
     }
     return;
   }
@@ -2025,7 +2032,7 @@ function renderCalendar(events) {
   const body = byId("calendarBody");
   if (!body) return;
   if (!events.length) {
-    body.innerHTML = `<p class="muted">표시할 일정이 없습니다. (investing.com 접근이 일시적으로 차단되었을 수 있습니다)</p>`;
+    body.innerHTML = `<p class="muted">${calendarEventsCache.length ? "선택한 조건에 맞는 일정이 없습니다." : "표시할 일정이 없습니다."}</p>`;
     return;
   }
   const groups = [];
@@ -2041,7 +2048,8 @@ function renderCalendar(events) {
       <h3>${escapeHtml(calendarDayLabel(g.key, g.rows))}</h3>
       <div class="table-wrap">
         <table class="cal-table table-wide">
-          <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th>실제</th><th>예측</th><th>이전</th></tr></thead>
+          <colgroup><col class="cal-col-time"><col class="cal-col-country"><col class="cal-col-imp"><col><col class="cal-col-num"><col class="cal-col-num"><col class="cal-col-num"></colgroup>
+          <thead><tr><th>시간</th><th>국가</th><th>중요성</th><th>이벤트</th><th class="cal-num">실제</th><th class="cal-num">예측</th><th class="cal-num">이전</th></tr></thead>
           <tbody>
             ${g.rows.map((e) => `
               <tr>
@@ -2049,9 +2057,9 @@ function renderCalendar(events) {
                 <td class="cal-country">${escapeHtml(e.country || e.currency || "")}</td>
                 <td class="cal-imp">${impDots(e.importance)}</td>
                 <td class="cal-event">${escapeHtml(e.event || "")}</td>
-                <td class="cal-actual${calSurpriseClass(e)}" ${calSurpriseTitle(e)}>${escapeHtml(e.actual || "")}</td>
-                <td>${escapeHtml(e.forecast || "")}</td>
-                <td>${escapeHtml(e.previous || "")}</td>
+                <td class="cal-num cal-actual${calSurpriseClass(e)}" ${calSurpriseTitle(e)}>${escapeHtml(e.actual || "")}</td>
+                <td class="cal-num">${escapeHtml(e.forecast || "")}</td>
+                <td class="cal-num">${escapeHtml(e.previous || "")}</td>
               </tr>
             `).join("")}
           </tbody>
@@ -3118,7 +3126,7 @@ function setupFilters() {
   // 섹터 문자열은 스냅샷(외부 데이터)에서 온다 — 이스케이프 없이 <option> 에 넣지 말 것.
   const sectors = ["All", ...[...new Set(data.stocks.map((item) => item.sector))].filter(Boolean).sort()];
   const sectorOptions = sectors
-    .map((sector) => `<option value="${escapeHtml(sector)}">${sector === "All" ? "전체" : escapeHtml(sector)}</option>`).join("");
+    .map((sector) => `<option value="${escapeHtml(sector)}">${escapeHtml(sector === "All" ? "전체" : ((typeof SECTOR_KO === "object" && SECTOR_KO[sector]) || sector))}</option>`).join("");
   byId("sectorFilter").innerHTML = sectorOptions;
   byId("sectorFilter").value = "All";
   byId("topSector").innerHTML = sectorOptions;
@@ -3137,7 +3145,7 @@ function setupFilters() {
 
   const etfRows = data.health?.etfRelative?.rows || [];
   const etfGroups = ["All", ...[...new Set(etfRows.map((item) => item.group).filter(Boolean))].sort()];
-  byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${group}">${group}</option>`).join("");
+  byId("sectorEtfRsGroup").innerHTML = etfGroups.map((group) => `<option value="${escapeHtml(group)}">${escapeHtml(group === "All" ? "전체 그룹" : group)}</option>`).join("");
 
   const scrBucket = byId("scrBucket");
   if (scrBucket) scrBucket.innerHTML = bucketOptions;
@@ -3790,11 +3798,11 @@ function renderSectorDetail() {
       <td class="rank-cell">${index + 1}</td>
       <td><strong>${escapeHtml(stockLabel(stock))}</strong></td>
       <td class="col-sub">${escapeHtml(stockSubLabel(stock) ?? "")}</td>
-      <td>${marketCfg().formatPrice(stock.price)}</td>
-      <td class="${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
-      <td class="${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
-      <td class="${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
-      <td><span class="rs-badge">${fmtRsi(stock)}</span></td>
+      <td class="num">${marketCfg().formatPrice(stock.price)}</td>
+      <td class="num ${cls(stock.changePct)}">${fmtDailyPct(stock.changePct)}</td>
+      <td class="num ${cls(stock.weekChangePct)}">${fmtPct(stock.weekChangePct)}</td>
+      <td class="num ${cls(stock.monthChangePct)}">${fmtPct(stock.monthChangePct)}</td>
+      <td class="num"><span class="rs-badge">${fmtRsi(stock)}</span></td>
     </tr>
   `).join("");
 
@@ -3896,7 +3904,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     svg.innerHTML = `
       <rect x="0" y="0" width="${width}" height="${height}" fill="#101827" rx="10"></rect>
       <text x="${width / 2}" y="${height / 2 - 10}" font-size="15" fill="#64748b" text-anchor="middle" font-weight="700">차트 데이터 없음</text>
-      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#475569" text-anchor="middle">이 섹터의 비교 차트는 다음 데이터 갱신에서 추가됩니다.</text>
+      <text x="${width / 2}" y="${height / 2 + 14}" font-size="12" fill="#94a3b8" text-anchor="middle">이 기간의 비교 차트 데이터가 없습니다.</text>
     `;
     tooltip.style.display = "none";
     return;
@@ -3976,12 +3984,19 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     const color = isZero ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.07)";
     const w = isZero ? 1.5 : 1;
     const dash = isZero ? "" : `stroke-dasharray="4 4"`;
-    const labelColor = isZero ? "#e2e8f0" : "#64748b";
-    const labelWeight = isZero ? "800" : "600";
     return `
       <line x1="${padL}" y1="${y.toFixed(1)}" x2="${padL + plotW}" y2="${y.toFixed(1)}" stroke="${color}" stroke-width="${w}" ${dash}></line>
-      <text x="${padL - 8}" y="${(y + 4).toFixed(1)}" font-size="10.5" fill="${labelColor}" text-anchor="end" font-weight="${labelWeight}">${r >= 0 ? "+" : ""}${r.toFixed(2)}%</text>
     `;
+  }).join("");
+  // 눈금 라벨은 플롯 왼쪽 여백에 놓이므로 clip-path(플롯 영역) 밖에 그린다 — 안에 두면 전부 잘려 Y축 숫자가 사라졌다.
+  const gridStep = gridLevels.length > 1 ? Math.abs(gridLevels[1] - gridLevels[0]) : 1;
+  const gridDecimals = gridStep >= 1 ? 0 : (gridStep >= 0.1 ? 1 : 2);
+  const gridLabelsSvg = gridLevels.map((r) => {
+    const y = yFor(r);
+    if (y < padT - 1 || y > padT + plotH + 1) return "";
+    const isZero = Math.abs(r) < 0.001;
+    const v = isZero ? 0 : r;
+    return `<text x="${padL - 8}" y="${(y + 4).toFixed(1)}" font-size="${mobile ? 13 : 11}" fill="${isZero ? "#e2e8f0" : "#94a3b8"}" text-anchor="end" font-weight="${isZero ? "800" : "600"}" style="font-variant-numeric:tabular-nums">${v > 0 ? "+" : ""}${v.toFixed(gridDecimals)}%</text>`;
   }).join("");
   
   // X axis labels (pick 5 evenly spaced points)
@@ -3995,7 +4010,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     const x = xFor(p.t);
     return `
       <line x1="${x.toFixed(1)}" y1="${(padT + plotH).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(padT + plotH + 6).toFixed(1)}" stroke="rgba(255,255,255,0.2)" stroke-width="1"></line>
-      <text x="${x.toFixed(1)}" y="${(padT + plotH + 20).toFixed(1)}" font-size="10.5" fill="#94a3b8" text-anchor="middle">${xDateLabel(p.t, timeframe)}</text>
+      <text x="${x.toFixed(1)}" y="${(padT + plotH + 20).toFixed(1)}" font-size="${mobile ? 13 : 11}" fill="#94a3b8" text-anchor="middle">${xDateLabel(p.t, timeframe)}</text>
     `;
   }).join("");
   
@@ -4027,6 +4042,7 @@ function drawSectorComparisonChart(sectorTicker, timeframe, benchmarkTicker) {
     <rect x="${padL}" y="${padT}" width="${plotW}" height="${plotH}" fill="rgba(255,255,255,0.02)" rx="4"></rect>
     <!-- Grid lines (clipped) -->
     <g clip-path="url(#chartClip)">${gridLinesSvg}</g>
+    <g>${gridLabelsSvg}</g>
     <!-- X axis labels -->
     <g>${xLabelsSvg}</g>
     <!-- Sector fill area -->
@@ -5620,7 +5636,15 @@ function loadStockDetail(ticker) {
   if (detailPromises[key]) return detailPromises[key];
   const detailUrl = (window.MirMarket && window.MirMarket.detailPath(key)) || `data/details/${encodeURIComponent(key)}.json`;
   detailPromises[key] = fetch(detailUrl, { cache: "no-cache" })
-    .then((response) => (response.ok ? response.json() : null))
+    // 옛 빌더가 쓴 상세 파일엔 표준 JSON 이 아닌 NaN 토큰이 섞여 있을 수 있다(2026-09-26 기준
+    // 미국 1,576개). response.json() 은 그 파일 전체를 버리므로 NaN 만 null 로 바꿔 다시 읽는다.
+    .then((response) => (response.ok ? response.text() : null))
+    .then((text) => {
+      if (text == null) return null;
+      try { return JSON.parse(text); } catch (_) {
+        try { return JSON.parse(text.replace(/([:,\[])\s*-?(?:NaN|Infinity)(?=\s*[,}\]])/g, "$1null")); } catch (__) { return null; }
+      }
+    })
     .then(async (detail) => {
       if (detail) {
         detailCache[key] = detail;
@@ -6335,9 +6359,8 @@ function trustAgeLabel(hours) {
   return `${Math.floor(hours / 24)}일 전`;
 }
 
-const GITHUB_REPO = "https://github.com/seonu-dragon/Mir_US_Stocks";
-
-// 상태가 나쁠 때 "그래서 뭘 해야 하나"에 답하기 위한 소스별 복구 정보.
+// 소스별 운영 정보. 화면에는 tabs(쓰이는 화면)만 나가고 workflow/script 는 운영용 기록이다
+// (scripts/check_deploy_triggers.py 가 workflow 이름을 대조한다).
 // workflow 는 .github/workflows/*.yml 의 name: 과 정확히 일치해야 한다
 // (deploy-pages.yml 의 workflow_run 목록과 같은 값).
 // script 는 그 워크플로우가 실제로 실행하는 빌더다.
@@ -6475,41 +6498,28 @@ const TRUST_RECOVERY = {
 // 두 문장이 붙어 있으면 사용자가 원인과 조치를 구분하지 못한다.
 function trustDiagnosis(row) {
   const key = row.status.key;
-  const wf = row.recovery?.workflow;
-  const runHint = wf
-    ? `GitHub Actions 에서 "${wf}" 워크플로우를 수동 실행(Run workflow)하면 다시 수집한다.`
-    : "해당 빌더 스크립트를 로컬에서 실행하면 다시 수집한다.";
   if (key === "pending") {
-    return {
-      cause: "무거운 데이터셋이라 필요할 때 내려받는다. 아직 이 브라우저로 받아오는 중이며, 파이프라인 문제가 아니다.",
-      fix: "잠시 후 자동으로 갱신된다. 계속 이 상태면 네트워크나 파일 배포를 확인한다.",
-    };
+    return { cause: "용량이 큰 자료라 필요할 때 내려받습니다. 지금 불러오는 중입니다.", fix: "잠시 기다리면 자동으로 갱신됩니다." };
   }
   if (key === "missing") {
     return {
-      cause: "이 데이터셋이 브라우저에 로드되지 않았다. 빌드가 한 번도 성공하지 않았거나, 이 시장(US/KR)에서 제공하지 않는 소스일 수 있다.",
-      fix: runHint,
+      cause: "이 자료를 불러오지 못했습니다. 이 시장에서 제공하지 않는 자료이거나 수집이 실패했을 수 있습니다.",
+      fix: "관련 화면은 비어 있거나 숨겨질 수 있습니다. 다음 갱신 뒤 다시 확인해 주세요.",
     };
   }
   if (key === "unknown") {
-    return {
-      cause: "데이터는 있는데 기준 시각이 비어 있다. 빌더가 updatedAtKst 를 쓰지 않았을 때 나타난다.",
-      fix: "빌더 출력에 기준 시각 필드가 들어가는지 확인한다. " + runHint,
-    };
+    return { cause: "자료는 있지만 기준 시각이 기록되지 않았습니다.", fix: "얼마나 최신인지 확인할 수 없으니 참고용으로만 봐 주세요." };
   }
   if (key === "stale") {
     return {
-      cause: `갱신 주기(${row.cadence})를 넘겼다. 워크플로우가 실패했거나, 커밋은 됐지만 배포가 안 됐을 수 있다.`,
-      fix: `먼저 Actions 실행 이력에서 실패 여부를 본다. 성공했는데도 오래됐다면 배포 쪽 문제다 — 커밋 메시지의 [skip ci] 나 deploy-pages.yml 의 workflow_run 목록에 이 워크플로우 이름이 빠졌는지 확인한다. ${runHint}`,
+      cause: `정해진 갱신 주기(${row.cadence})를 넘겼습니다. 수집이 실패했거나 반영이 늦어지고 있습니다.`,
+      fix: "화면의 수치가 기준 시각 시점의 값이라는 점을 감안해 주세요.",
     };
   }
   if (key === "warn") {
-    return {
-      cause: "아직 유효하지만 다음 갱신 시점이 가까워졌다.",
-      fix: "조치 불필요. 다음 예정 실행 후에도 시각이 그대로면 그때 확인한다.",
-    };
+    return { cause: "유효하지만 다음 갱신 시각이 가까워졌습니다.", fix: "조치할 것은 없습니다." };
   }
-  return { cause: "정상 주기 안에서 갱신되고 있다.", fix: "조치 불필요." };
+  return { cause: "정해진 주기 안에서 갱신되고 있습니다.", fix: "조치할 것은 없습니다." };
 }
 
 function dataTrustSources() {
@@ -6574,7 +6584,7 @@ function dataTrustSources() {
     }
     rows.push(row);
   }
-  if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "Congress PTR", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집", "congress"));
+  if (cfg.features?.congress !== false) rows.push(source("정치인 매매", "미 의회 거래 공시(PTR)", window.CONGRESS_TRADES, ["trades", "byTicker"], 336, "주기적 수집", "congress"));
   if (cfg.features?.whiteHouse !== false) rows.push(source("백악관 일정", "The White House", window.WHITE_HOUSE_SCHEDULE, ["events", "schedule"], 48, "06 · 16 · 21시", "whitehouse"));
   // KR 전용 소스. 이게 빠져 있어서 2026-07-17 에 DART 데이터가 배포 트리거 끊김으로
   // 사이트에 안 나가는 동안에도 신뢰도 센터는 "정상"만 보여줬다.
@@ -6595,7 +6605,7 @@ function dataTrustSources() {
   rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
   // 조용한 날은 0종목이 정상이라 allowEmpty.
-  if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · Gemini 요약" : "SEC 8-K · 뉴스 헤드라인 · Gemini 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
+  if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · AI 요약(Gemini)" : "SEC 8-K · 뉴스 헤드라인 · AI 요약(Gemini)", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
   // 예측시장(2026-09-25) — 하루 3회. 12시간 넘게 멈추면 두 번 연속 실패라 36시간 여유.
   rows.push(source("예측시장 확률", "Kalshi · Polymarket", window.MACRO_ODDS, ["groups"], 36, "하루 3회 (06·14·22시)", "macroOdds"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));
@@ -6621,23 +6631,23 @@ function dataTrustSources() {
   // 신호 라이브 성적표(2026-09-26) — 원장 해시가 어긋나면 파일이 최신이어도 '정상' 으로 두지 않는다.
   {
     const sc = window.SIGNAL_SCORECARD;
-    const row = source("신호 성적표", "Mir 신호 원장(발행 시점 동결) · 종목 일봉", sc, ["kinds"], 72, "매일 (US 스냅샷·KR 마감 브리핑 뒤)", "signalScorecard");
+    const row = source("신호 성적표", "Mir 신호 기록(발행 시점에 고정) · 종목 일봉", sc, ["kinds"], 72, "매일 (US 스냅샷·KR 마감 브리핑 뒤)", "signalScorecard");
     const L = sc && sc.ledger && sc.ledger[cfg.id];
     if (L) {
       row.extra = [
-        ["원장", `${Number(L.rows || 0).toLocaleString()}줄 (소급 복원 ${Number(L.backfill || 0).toLocaleString()} · 실시간 ${Number(L.live || 0).toLocaleString()})`],
-        ["기록 해시", L.integrity === "ok" ? `체인 일치 (${String(L.head || "").slice(0, 12)}…)` : "불일치"],
+        ["기록", `${Number(L.rows || 0).toLocaleString()}건 (과거 복원 ${Number(L.backfill || 0).toLocaleString()} · 발행 시점 기록 ${Number(L.live || 0).toLocaleString()})`],
+        ["사후 수정 여부", L.integrity === "ok" ? "없음(기록 검증 일치)" : "검증 불일치"],
       ];
-      if (L.integrity !== "ok" && row.status.key === "good") row.status = { ...row.status, key: "warn", label: "기록 해시 불일치" };
+      if (L.integrity !== "ok" && row.status.key === "good") row.status = { ...row.status, key: "warn", label: "기록 검증 불일치" };
     }
     rows.push(row);
   }
   // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
-  rows.push(source("재무 확장", cfg.id === "kr" ? "DART 전체재무제표" : "SEC EDGAR XBRL companyfacts", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일 03:02", "financialsIndex"));
+  rows.push(source("상세 재무제표", cfg.id === "kr" ? "DART 전체 재무제표" : "SEC EDGAR 공시 재무", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일", "financialsIndex"));
   // 과거 위기 구간(2026-09-26) — 과거 가격이라 내용은 고정, 월 1회 새 상위 종목만 보탠다. 40일 여유.
   {
     const ch = window.CRISIS_HISTORY;
-    const row = source("과거 위기 구간", "Yahoo Finance 일봉(2008·2018·2020·2022·2024 구간)", ch, ["markets"], 960, "매월 1일 · 과거 구간 고정", "crisisHistory");
+    const row = source("과거 위기 구간", "Yahoo Finance 일봉(2008·2018·2020·2022·2024 구간)", ch, ["markets"], 960, "매월 1일 (과거 구간은 고정)", "crisisHistory");
     const mk = ch && ch.markets && ch.markets[cfg.id];
     if (mk) row.extra = [["종목 시계열", `${Object.keys(mk.series || {}).length.toLocaleString()}개 (상위 ${mk.universe || "—"}종목 + 대리 지수)`], ["상장 전·없음", `${Object.keys(mk.missing || {}).length.toLocaleString()}종목 — 화면에서 대리(지수 × β)로 계산`]];
     rows.push(row);
@@ -6645,12 +6655,12 @@ function dataTrustSources() {
   // 역DCF 기저율(2026-09-26) — 재무 확장 잡 끝에서 다시 계산. 표본 수·기간을 함께 적는다(과거 분포·생존편향).
   {
     const br = window.DCF_BASE_RATES;
-    const row = source("역DCF 기저율", "재무 확장 파일(SEC · DART) 파생", br, ["markets"], 192, "매주 일요일 03:02 (재무 확장 뒤)", "dcfBaseRates");
+    const row = source("역DCF 기저율", "SEC · DART 재무제표로 계산", br, ["markets"], 192, "매주 일요일", "dcfBaseRates");
     const m = br && br.markets && br.markets[cfg.id];
     if (m) {
       const hs = Object.keys(m.horizons || {}).sort((a, b) => b - a);
       row.extra = [
-        ["표본", `${Number(m.companies || 0).toLocaleString()}개 기업 (재무 파일 ${Number(m.files || 0).toLocaleString()}개 중 비금융·통화 일치)`],
+        ["표본", `${Number(m.companies || 0).toLocaleString()}개 기업 (${Number(m.files || 0).toLocaleString()}개 중 금융업 제외·통화 일치)`],
         ["기간", hs.map((h) => `${h}년: ${m.horizons[h].period} · FCF n=${(m.horizons[h].all.fcf || []).length}`).join(" / ")],
         ["한계", "생존편향(현재 상장 기업만) · 최근 약 10년 한 국면 · 예측 아님"],
       ];
@@ -6662,15 +6672,13 @@ function dataTrustSources() {
   {
     const sbRaw = window.SCREENER_BACKTEST_META;
     const sb = sbRaw && sbRaw.market === cfg.id ? sbRaw : null;
-    const row = source("스크리너 백테스트 패널", sb?.source || "Yahoo 일봉 · SEC/DART 연간 재무(시점 기준)", sb, ["tickers"], 240, "매주 일요일 · 월말 기준", "screenerBacktest");
+    // 규칙·과적합 배지 기준 전문은 수식 화면 '과거 백테스트'의 계산 방법에 있다 — 여기선 요약만.
+    const row = source("스크리너 백테스트 패널", cfg.id === "kr" ? "Yahoo 일봉 · DART 연간 재무(제출일 기준)" : "Yahoo 일봉 · SEC 연간 재무(제출일 기준)", sb, ["tickers"], 240, "매주 일요일 · 월말 기준", "screenerBacktest");
     if (sb) {
-      const crit = (window.MirOverfitCore && window.MirOverfitCore.CRITERIA) || [];
       row.extra = [
         ["기간", `${(sb.dates || [])[0] || "?"} ~ ${sb.periodEnd || "?"} (${sb.months || 0}개월, 월 리밸런싱)`],
         ["유니버스", `${(sb.tickers || []).length.toLocaleString()}종목 · ${sb.minTradingValueLabel || ""} · 현재 상장 종목만(생존편향)`],
-        ["과거 값 있는 필드", Object.keys(sb.fields || {}).join(", ")],
-        ...(sb.rules || []).map((r, i) => [`규칙 ${i + 1}`, r]),
-        ...crit.map((c, i) => [`배지 기준 ${i + 1}`, c]),
+        ["규칙", `월말 신호 → 다음 거래일 종가 체결 · 재무는 공시 제출 뒤부터 · 배당 미포함 · 과거 값 있는 필드 ${Object.keys(sb.fields || {}).length}개`],
       ];
     }
     rows.push(row);
@@ -6680,7 +6688,7 @@ function dataTrustSources() {
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
     // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.
     rows.push(source("실적 전 비교", "SEC 8-K · Yahoo 옵션", window.EARNINGS_MOVE_COMPARE, ["stocks"], 72, "매일 06:30", "earningsMoveCompare", "", true));
-    rows.push(source("실적 보도자료 요약", "SEC 8-K EX-99.1 · Gemini", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
+    rows.push(source("실적 보도자료 요약", "SEC 8-K 보도자료 · AI 요약(Gemini)", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
     // PER·PBR·PSR 밴드(US, 2026-09-26) — 주간 재무 확장 뒤 산출. 검증 결론(SPY 대비·전체 대비)도 적는다.
     if (cfg.features?.valuationBand === true) {
       const vbMeta = window.US_VALUATION_BAND_META;
@@ -6775,31 +6783,26 @@ function renderDataTrustCenter() {
   grid.innerHTML = sources.map((row) => {
     const { cause, fix } = trustDiagnosis(row);
     // pending 은 곧 스스로 해소되므로 경고처럼 펼쳐두지 않는다.
+    // 갱신 워크플로우·빌더 이름(TRUST_RECOVERY)은 운영용이라 화면에 내지 않는다 — 영향받는 화면만.
     const needsAction = !["good", "warn", "pending"].includes(row.status.key);
-    const wf = row.recovery?.workflow;
-    // 실행 이력 링크: 워크플로우 파일명을 모르니 name 으로 검색되는 Actions 목록으로 보낸다.
-    const actionsHref = `${GITHUB_REPO}/actions${wf ? `?query=${encodeURIComponent(wf)}` : ""}`;
     return `
     <article class="data-trust-card trust-${row.status.key}">
       <div class="data-trust-card-head"><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.status.label)}</span></div>
       <p>${escapeHtml(row.provider)}</p>
       <dl>
-        <div><dt>기준 시각</dt><dd>${escapeHtml(row.timestamp || "확인 불가")}</dd></div>
-        <div><dt>로드 수량</dt><dd>${Number(row.count || 0).toLocaleString()}건</dd></div>
-        <div><dt>갱신 정책</dt><dd>${escapeHtml(row.cadence)}</dd></div>
+        <div><dt>기준 시각</dt><dd>${escapeHtml(String(row.timestamp || "확인 불가").replace(/(\d{1,2}:\d{2}):\d{2}/, "$1"))}</dd></div>
+        <div><dt>수량</dt><dd>${Number(row.count || 0).toLocaleString()}건</dd></div>
+        <div><dt>갱신 주기</dt><dd>${escapeHtml(row.cadence)}</dd></div>
         ${(row.extra || []).map(([k, v]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd></div>`).join("")}
       </dl>
       <small>${escapeHtml(trustAgeLabel(row.status.age))}</small>
       <details class="data-trust-detail"${needsAction ? " open" : ""}>
-        <summary>${needsAction ? "왜 이 상태인가 · 어떻게 고치나" : "상세"}</summary>
+        <summary>${needsAction ? "왜 이 상태인가" : "상세"}</summary>
         <dl>
-          ${row.recovery?.tabs ? `<div><dt>영향받는 화면</dt><dd>${escapeHtml(row.recovery.tabs)}</dd></div>` : ""}
-          <div><dt>원인</dt><dd>${escapeHtml(cause)}</dd></div>
-          <div><dt>조치</dt><dd>${escapeHtml(fix)}</dd></div>
-          ${wf ? `<div><dt>갱신 워크플로우</dt><dd><code>${escapeHtml(wf)}</code></dd></div>` : ""}
-          ${row.recovery?.script ? `<div><dt>빌더</dt><dd><code>${escapeHtml(row.recovery.script)}</code></dd></div>` : ""}
+          ${row.recovery?.tabs ? `<div><dt>쓰이는 화면</dt><dd>${escapeHtml(row.recovery.tabs)}</dd></div>` : ""}
+          <div><dt>상태</dt><dd>${escapeHtml(cause)}</dd></div>
+          <div><dt>참고</dt><dd>${escapeHtml(fix)}</dd></div>
         </dl>
-        <a class="data-trust-link" href="${escapeHtml(actionsHref)}" target="_blank" rel="noopener">실행 이력 보기 →</a>
       </details>
     </article>`;
   }).join("");
@@ -6980,6 +6983,8 @@ function renderSocialSentimentTables(tableIds) {
     yahoo: "socialYahooTable",
   };
   const social = data.social_sentiment || {};
+  // 수집 원본에 HTML 엔티티가 이미 들어 있는 이름("S&amp;P")이 있어 한 번 풀고 다시 이스케이프한다.
+  const socialName = (v) => stripEmoji(String(v || "").replace(/&amp;/g, "&").replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"'));
   const redditEl = byId(ids.reddit);
   const stocktwitsEl = byId(ids.stocktwits);
   const yahooEl = byId(ids.yahoo);
@@ -6991,9 +6996,9 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
+        <td>${escapeHtml(socialName(item.name))}</td>
         <td>${Number(item.mentions || 0).toLocaleString()}</td>
-        <td class="${cls(item.change24h || 0)}">${fmtPct(item.change24h || 0)}</td>
+        <td class="${cls(item.change24h || 0)}" style="white-space:nowrap">${fmtPct(item.change24h || 0)}</td>
       </tr>
     `).join("");
   } else {
@@ -7006,7 +7011,7 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
+        <td>${escapeHtml(socialName(item.name))}</td>
         <td>${Number(item.watchlist_count || 0).toLocaleString()}</td>
       </tr>
     `).join("");
@@ -7020,8 +7025,8 @@ function renderSocialSentimentTables(tableIds) {
       <tr class="social-row" data-ticker="${escapeHtml(item.ticker)}">
         <td>${idx + 1}</td>
         <td>${socialTickerCell(item.ticker)}</td>
-        <td>${escapeHtml(stripEmoji(item.name || ""))}</td>
-        <td class="${cls(item.changePct || 0)}">${escapeHtml(item.price || "-")}${item.changePct ? ` (${fmtDailyPct(item.changePct)})` : ""}</td>
+        <td>${escapeHtml(socialName(item.name))}</td>
+        <td class="${cls(item.changePct || 0)}" style="white-space:nowrap">${item.price ? escapeHtml(item.price) : ""}${item.changePct ? `${item.price ? " " : ""}${fmtDailyPct(item.changePct)}` : (item.price ? "" : "—")}</td>
       </tr>
     `).join("");
   } else {
@@ -7047,7 +7052,7 @@ function renderWsbSentimentTable() {
       <td>${socialTickerCell(r.t)}</td>
       <td>${escapeHtml(stripEmoji(r.company || ""))}</td>
       <td>${Number(r.comments || 0).toLocaleString()}</td>
-      <td style="color:${col}">${bull ? "강세" : "약세"}${Number.isFinite(r.score) ? ` ${r.score > 0 ? "+" : ""}${r.score}` : ""}</td>
+      <td style="color:${col};white-space:nowrap">${bull ? "강세" : "약세"}${Number.isFinite(r.score) ? ` ${r.score > 0 ? "+" : ""}${r.score}` : ""}</td>
     </tr>`;
   }).join("");
   // WSB 표는 bindSocialSentimentClicks 목록에 없어 종목 버튼이 죽어 있었다(감사 P2).
@@ -7473,7 +7478,7 @@ function renderMyInvestSummary() {
     const cost = Number(p.qty) * Number(p.avgCost);
     return { value, cost, changePct: Number(stock.changePct) || 0 };
   }).filter(Boolean);
-  if (!rows.length) { box.innerHTML = `<p class="muted">저장된 ${portfolio.length}개 종목이 현재 시장 스냅샷에 없습니다.</p>`; return; }
+  if (!rows.length) { box.innerHTML = `<p class="muted">저장된 ${portfolio.length}개 종목의 시세 데이터가 없습니다.</p>`; return; }
   const totalValue = rows.reduce((s, r) => s + r.value, 0);
   const totalCost = rows.reduce((s, r) => s + r.cost, 0);
   const pl = totalValue - totalCost;
@@ -7482,7 +7487,7 @@ function renderMyInvestSummary() {
   const fmt = (v) => marketCfg().formatMoney(v);
   const divTotal = (byId("dividendPlannerTotal")?.textContent || "").trim();
   box.innerHTML = `
-    <article class="ia-stat"><span>평가금액</span><strong>${fmt(totalValue)}</strong></article>
+    <article class="ia-stat"><span>평가금액</span><strong>${fmt(totalValue)}</strong><em>원금 ${fmt(totalCost)}</em></article>
     <article class="ia-stat"><span>평가손익</span><strong class="${cls(pl)}">${pl >= 0 ? "+" : "-"}${fmt(Math.abs(pl))} <small>${fmtPct(plPct)}</small></strong></article>
     <article class="ia-stat"><span>오늘</span><strong class="${cls(today)}">${fmtPct(today)}</strong></article>
     <article class="ia-stat"><span>배당 예상</span><strong>${escapeHtml(divTotal || "—")}</strong></article>`;

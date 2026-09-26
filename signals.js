@@ -201,7 +201,9 @@ function signalCard(title, items, note, scKind = "") {
 // 매크로 컨텍스트: 곡선 모양과 장단기 스프레드. 역전(음수)은 역사적으로 경기침체를
 // 앞서 나타난 적이 많지만 시점은 들쭉날쭉 — 신호가 아니라 현재 상태 요약이다.
 function yieldCurveSvg(curve) {
-  const W = 320, H = 96, padL = 28, padR = 10, padT = 10, padB = 20;
+  // 폭을 채우는 비율(W:H ≈ 3:1)과 11px 라벨 — 예전 320×96 은 카드 안에서 작게 줄어 눈금이 8px 로 읽기 어려웠다.
+  const phone = window.matchMedia && window.matchMedia("(max-width: 640px)").matches;
+  const W = phone ? 300 : 420, H = phone ? 140 : 150, padL = 40, padR = 12, padT = 12, padB = 24;
   const pts = curve.filter((c) => Number.isFinite(Number(c.y)));
   if (pts.length < 3) return "";
   const ys = pts.map((c) => c.y);
@@ -211,12 +213,15 @@ function yieldCurveSvg(curve) {
   const x = (i) => padL + (W - padL - padR) * (pts.length === 1 ? 0.5 : i / (pts.length - 1));
   const y = (v) => padT + (H - padT - padB) * (1 - (v - ymin) / span);
   const line = pts.map((c, i) => `${i === 0 ? "M" : "L"}${x(i).toFixed(1)},${y(c.y).toFixed(1)}`).join(" ");
-  const dots = pts.map((c, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(c.y).toFixed(1)}" r="2.4" fill="#5b8def"/>`).join("");
+  const dots = pts.map((c, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(c.y).toFixed(1)}" r="3" fill="var(--primary)"><title>${escapeHtml(String(c.m))} ${Number(c.y).toFixed(2)}%</title></circle>`).join("");
   const labels = pts.map((c, i) => (i % 2 === 0 || i === pts.length - 1)
-    ? `<text x="${x(i).toFixed(1)}" y="${H - 6}" font-size="8" fill="var(--muted)" text-anchor="middle">${c.m}</text>` : "").join("");
-  const gy = [ymin, (ymin + ymax) / 2, ymax];
-  const grid = gy.map((v) => `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-opacity="0.5"/><text x="2" y="${(y(v) + 3).toFixed(1)}" font-size="8" fill="var(--muted)">${v.toFixed(1)}</text>`).join("");
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" preserveAspectRatio="xMidYMid meet">${grid}<path d="${line}" fill="none" stroke="#5b8def" stroke-width="1.6"/>${dots}${labels}</svg>`;
+    ? `<text x="${x(i).toFixed(1)}" y="${H - 6}" font-size="11" fill="var(--muted)" text-anchor="middle">${escapeHtml(String(c.m))}</text>` : "").join("");
+  // 눈금은 0.5%p 단위의 반올림 값으로(예전엔 3.8·5.0·6.3 처럼 중간값이 그대로 찍혔다).
+  const step = span > 3 ? 1 : 0.5;
+  const gy = [];
+  for (let v = Math.ceil(ymin / step) * step; v <= ymax + 1e-9; v += step) gy.push(Number(v.toFixed(2)));
+  const grid = gy.map((v) => `<line x1="${padL}" y1="${y(v).toFixed(1)}" x2="${W - padR}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-opacity="0.6"/><text x="${padL - 6}" y="${(y(v) + 4).toFixed(1)}" font-size="11" fill="var(--muted)" text-anchor="end" style="font-variant-numeric:tabular-nums">${v.toFixed(1)}%</text>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="미국 국채 만기별 수익률 곡선" style="display:block;max-height:220px;max-width:560px">${grid}<path d="${line}" fill="none" stroke="var(--primary)" stroke-width="2"/>${dots}${labels}</svg>`;
 }
 
 function renderYieldCurve() {
@@ -376,7 +381,7 @@ function renderWikiAttention() {
       <p>${isKrMarket() ? "한국어" : "영어"} 위키피디아 회사 문서의 최근 7일 평균 조회수를 직전 30일 평균과 비교했습니다. 관심이 몰리는 곳의 프록시일 뿐 방향 신호가 아닙니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">배율</th><th class="ins-num">7일 평균</th><th class="ins-num">직전 30일</th><th>30일 추이</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">봇 트래픽 제외(user). 사명→문서 매핑이 검증된 종목만 싣습니다. 출처: ${escapeHtml(wa.source || "Wikimedia")} · ${escapeHtml(wa.updatedAtKst || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">회사와 위키 문서가 확실히 대응되는 종목만 싣습니다. 출처: ${escapeHtml(wa.source || "Wikimedia")} · ${escapeHtml(wa.updatedAtKst || "")}.</p>
     </div>`;
   host.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
@@ -576,7 +581,7 @@ function openHistoryDetail(key) {
          <span>${dateTxt(first.date)}</span><span>${dateTxt(latest.date)}</span></div>`
     : "";
   const note = vals.length < 5
-    ? `<div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:12px">히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이가 뚜렷해집니다.</div>`
+    ? `<div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:12px">기록 ${vals.length}일째 — 추이는 5일치부터 그립니다.</div>`
     : "";
 
   const statRow = (lbl, val, sub, col) => `<div style="display:flex;flex-direction:column;gap:2px;min-width:0">
@@ -663,7 +668,7 @@ function fgHistBlock() {
   const vals = historySeries("fearGreed");
   if (!vals.length) return "";
   if (vals.length < 5) {
-    return `<div style="margin-top:10px;font-size:var(--fs-cap);color:var(--muted)">지수 히스토리 적립 중 (${vals.length}일차) — 5일치부터 추이를 그립니다.</div>`;
+    return `<div style="margin-top:10px;font-size:var(--fs-cap);color:var(--muted)">기록 ${vals.length}일째 — 추이는 5일치부터 그립니다.</div>`;
   }
   return `<div style="display:flex;align-items:center;gap:10px;margin-top:12px;color:var(--muted)">
     <span style="font-size:var(--fs-cap);flex-shrink:0">최근 ${vals.length}일</span>${historySparkSvg(vals, 180, 36)}</div>`;
@@ -715,7 +720,7 @@ function renderFearGreed() {
   }).join("");
   host.innerHTML = `
     <div class="section-title"><h2>시장 심리 종합지수</h2>
-      <p>${isKrMarket() ? "국내 시장 지표(시장 폭·모멘텀·주가 강도)를" : "이미 수집하는 지표(시장 폭·모멘텀·주가 강도·옵션 풋콜·신용스프레드)를"} 0~100으로 종합했습니다. 예측이 아니라 현재 공포/탐욕 상태의 요약입니다.</p></div>
+      <p>${isKrMarket() ? "국내 시장 지표(시장 폭·모멘텀·주가 강도)를" : "시장 폭·모멘텀·주가 강도·옵션 풋콜·신용스프레드를"} 0~100으로 종합했습니다. 예측이 아니라 현재 공포/탐욕 상태의 요약입니다.</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
         <strong style="font-size:34px;font-variant-numeric:tabular-nums;color:${lab.c}">${value}</strong>
@@ -758,7 +763,7 @@ function renderMacroIndicators() {
     .map(historyTile).filter(Boolean).join("");
   const histBlock = histTiles
     ? `<div class="section-title" style="margin-top:6px"><h2>매크로 추이</h2>
-        <p>일일 스냅샷을 적립한 자체 히스토리입니다 (하루 1회 기록). 5일치부터 추이 선을 그립니다.</p></div>
+        <p>하루 한 번 기록한 값의 추이입니다.</p></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:8px">${histTiles}</div>`
     : "";
   host.innerHTML = `

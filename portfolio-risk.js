@@ -69,8 +69,9 @@
   }
 
   // ------------------------------------------------------------ 작은 SVG 선 차트
-  function lineChart({ dates, lines, ref, height = 170, yFmt = (v) => v.toFixed(1) }) {
-    const W = 520;
+  // width 는 실제 표시 폭(px)을 넘긴다 — 고정 좌표계를 늘려 그리면 글자가 커지고 좌우가 비었다.
+  function lineChart({ dates, lines, ref, height = 170, width = 520, yFmt = (v) => v.toFixed(1) }) {
+    const W = Math.max(280, Math.round(width || 520));
     const H = height;
     const padL = 44; const padR = 10; const padT = 12; const padB = 24;
     const all = [];
@@ -236,12 +237,10 @@
       <details class="pf-risk-method">
         <summary>계산 방법 · 한계</summary>
         <ul>
-          <li>기간: ${esc(res.dates[0])} ~ ${esc(res.dates[res.dates.length - 1])}, 모든 종목에 가격이 있는 공통 거래일 ${res.days + 1}일의 일별 단순수익률(상세 일봉 종가, 배당 미포함). 연환산 ×252.</li>
-          <li>공분산: Ledoit-Wolf 축소 추정(목표 = 평균 분산 × 단위행렬). 이번 축소 강도 δ = ${num(res.shrinkage, 3)} (0 = 표본 공분산 그대로, 1 = 완전 축소).</li>
-          <li>위험 기여도 = 비중 × 한계기여((Σw)ᵢ / σ) ÷ 포트폴리오 변동성 σ. 합계 100%. 비중보다 5%p 넘게 크면 강조했습니다.</li>
-          <li>리스크 패리티: 모든 종목의 위험 기여가 같아지는 롱온리 비중(순환 좌표하강, ${res.riskParity.converged ? "수렴" : "미수렴"}).</li>
-          <li>최소분산: 포트폴리오 변동성이 가장 작은 롱온리 비중(${esc(capNote)}).</li>
-          <li>기대수익을 입력받는 최대 샤프·평균분산 최적화는 넣지 않았습니다 — 과거 수익률로 추정한 기대수익은 오차가 커서 비중이 표본 기간에 과적합됩니다.</li>
+          <li>${esc(res.dates[0])} ~ ${esc(res.dates[res.dates.length - 1])}, 모든 종목에 가격이 있는 ${res.days + 1}거래일의 일별 수익률(종가, 배당 미포함). 공분산은 표본 오차를 줄이는 축소 추정(Ledoit-Wolf)을 씁니다.</li>
+          <li>위험 기여도 = 그 종목이 포트폴리오 변동성에서 차지하는 몫(합계 100%). 비중보다 5%p 넘게 크면 강조했습니다.</li>
+          <li>리스크 패리티는 위험 기여가 모두 같아지는 비중, 최소분산은 변동성이 가장 작은 비중입니다(공매도 없음, ${esc(capNote)})${res.riskParity.converged ? "" : " — 이번 리스크 패리티는 근사값입니다"}.</li>
+          <li>기대수익을 넣는 최적화는 과거 수익률에 과적합되기 쉬워 제공하지 않습니다.</li>
           <li>과거 변동성·상관은 앞으로 바뀝니다. 매매 권유가 아닌 정보이며, 거래비용·세금은 반영하지 않습니다.</li>
         </ul>
       </details>`;
@@ -296,7 +295,7 @@
     const ts = core().tearsheet(payload.portfolioSeries || [], payload.benchmarkSeries || []);
     if (!ts) { box.innerHTML = ""; return; }
     const b = ts.benchmark;
-    const bt = esc(payload.benchmarkTicker || "벤치마크");
+    const bt = esc(payload.benchmarkName || payload.benchmarkTicker || "벤치마크");
     const metric = (name, value, cl = "", note = "") => `<article><span>${name}</span><strong class="${cl}">${value}</strong>${note ? `<em>${note}</em>` : ""}</article>`;
     // 월별 히트맵
     const years = [...new Set(ts.monthly.map((m) => m.year))];
@@ -320,10 +319,12 @@
       <thead><tr><th>순위</th><th>시작(고점)</th><th>저점</th><th>회복일</th><th>깊이</th><th>기간</th><th>저점까지</th></tr></thead>
       <tbody>${ts.drawdowns.map((d, i) => `<tr><td>${i + 1}</td><td>${esc(d.peak)}</td><td>${esc(d.valley)}</td><td>${d.recovered ? esc(d.recovery) : `<span class="muted">미회복</span>`}</td><td class="neg">${pct(d.depth)}</td><td>${d.days}거래일${d.recovered ? "" : "+"}</td><td>${d.toValleyDays}거래일</td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">낙폭 구간이 없습니다.</p>`;
     const roll = ts.rolling;
+    const boxW = box.clientWidth || box.parentElement?.clientWidth || 800; // 첫 렌더엔 :empty 로 숨겨져 폭이 0
+    const rollW = boxW > 640 ? (boxW - 10) / 2 : boxW;
     const rollHtml = roll.length >= 2 ? `
       <div class="pf-roll-grid">
-        <figure><figcaption>롤링 12개월 샤프</figcaption>${lineChart({ dates: roll.map((r) => r.d), lines: [{ values: roll.map((r) => r.sharpe), color: "#2563eb" }], ref: 0, yFmt: (v) => v.toFixed(1) })}</figure>
-        ${b ? `<figure><figcaption>롤링 12개월 β (${bt} 대비)</figcaption>${lineChart({ dates: roll.map((r) => r.d), lines: [{ values: roll.map((r) => r.beta), color: "#d97706" }], ref: 1, yFmt: (v) => v.toFixed(2) })}</figure>` : ""}
+        <figure><figcaption>롤링 12개월 샤프</figcaption>${lineChart({ dates: roll.map((r) => r.d), lines: [{ values: roll.map((r) => r.sharpe), color: "#2563eb" }], ref: 0, width: rollW, yFmt: (v) => v.toFixed(1) })}</figure>
+        ${b ? `<figure><figcaption>롤링 12개월 β (${bt} 대비)</figcaption>${lineChart({ dates: roll.map((r) => r.d), lines: [{ values: roll.map((r) => r.beta), color: "#d97706" }], ref: 1, width: rollW, yFmt: (v) => v.toFixed(2) })}</figure>` : ""}
       </div>` : `<p class="muted">기간이 1년(252거래일) 이하라 롤링 12개월 지표는 계산하지 않았습니다.</p>`;
     box.innerHTML = `
       <div class="pf-tearsheet-head">
@@ -345,7 +346,7 @@
       </div>
       <h4 class="pf-risk-sub">월별 수익률 (%)</h4>
       ${heat}
-      <p class="muted pf-risk-note">* 표시는 기간 시작·끝이라 한 달(한 해) 전체가 아닌 부분 구간입니다. 월 수익 = 그 달 마지막 거래일 / 직전 달 마지막 거래일 − 1.</p>
+      <p class="muted pf-risk-note">* 기간 시작·끝이라 한 달(한 해) 전체가 아닌 부분 구간입니다.</p>
       <h4 class="pf-risk-sub">연도별 수익</h4>
       ${yearTable}
       <h4 class="pf-risk-sub">낙폭 구간 상위 5</h4>
@@ -353,17 +354,13 @@
       <h4 class="pf-risk-sub">롤링 지표</h4>
       ${rollHtml}
       <details class="pf-risk-method">
-        <summary>공식 · 기간 (empyrical 기준)</summary>
+        <summary>계산 방법</summary>
         <ul>
-          <li>r = 일별 단순수익률(시뮬레이터의 매수 후 보유 가치 기준), n = 수익률 개수(${ts.days}).</li>
-          <li>연환산 수익률 = (누적 가치)^(252/n) − 1 · 연 변동성 = 표준편차(r, 표본) × √252.</li>
-          <li>샤프 = 평균(r) / 표준편차(r) × √252 (무위험 수익률 0).</li>
-          <li>소르티노 = 평균(r) × 252 / 하방위험, 하방위험 = √평균(min(r, 0)²) × √252.</li>
-          <li>칼마 = 연환산 수익률 / |최대 낙폭|.</li>
-          <li>β = 공분산(r, r_벤치) / 분산(r_벤치). 롤링은 252거래일 창을 5거래일마다 다시 계산.</li>
-          <li>상방(하방) 포착률 = 벤치마크가 오른(내린) 날만 모은 포트폴리오 연환산 수익률 / 같은 날 벤치마크 연환산 수익률. 100% 초과면 그날들에 벤치마크보다 크게 움직였다는 뜻(하방은 낮을수록 방어적).</li>
-          <li>낙폭 구간: 고점 → 저점 → 고점 수준 재도달(회복일). 기간은 고점부터 회복(미회복이면 마지막 날)까지 거래일 수.</li>
-          <li>과거 구간 결과이며 예측이 아닙니다. 현재 스냅샷 종목만 쓰므로 생존 편향이 있습니다.</li>
+          <li>일별 수익률 r(${ts.days}개) 기준. 연환산 수익률 = 누적^(252/n) − 1, 연 변동성 = 표준편차(r) × √252.</li>
+          <li>샤프 = 평균(r) / 표준편차(r) × √252, 소르티노는 분모를 하락일 변동만으로, 칼마 = 연환산 수익률 / |최대 낙폭|.</li>
+          <li>상방(하방) 포착률 = 벤치마크가 오른(내린) 날만 본 연환산 수익률 비율. 하방은 낮을수록 방어적입니다.</li>
+          <li>β·롤링 지표는 최근 252거래일 창을 5거래일마다 다시 계산합니다. 월 수익은 월말 종가 기준입니다.</li>
+          <li>과거 구간 결과이며 예측이 아닙니다. 지금 상장된 종목만 쓰므로 생존 편향이 있습니다.</li>
         </ul>
       </details>`;
   }
@@ -507,6 +504,8 @@
           { values: sel.port.map((v) => v / 10), color: "#2563eb", width: 2.2 },
         ],
         ref: 100,
+        width: pane.clientWidth || pane.parentElement?.clientWidth || 800,
+        height: (pane.clientWidth || pane.parentElement?.clientWidth || 800) < 520 ? 180 : 220,
         yFmt: (v) => v.toFixed(0),
       });
       detail = `

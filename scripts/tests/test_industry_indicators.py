@@ -255,3 +255,37 @@ def test_by_ticker_index_reverses_related_tickers():
         B.INDICATORS[0]["id"]: {"related_tickers": [{"ticker": "NVDA", "market": "us"}, {"code": "000660", "market": "kr"}]}}}
     idx = B.build_by_ticker(payload)["byTicker"]
     assert idx["NVDA"] == [B.INDICATORS[0]["id"]] and idx["000660"] == [B.INDICATORS[0]["id"]]
+
+# --- 날짜 게이트(sanitize_series): 차트가 축 밖으로 튀거나 역순으로 그려지지 않게 빌드 단계에서 정리 ---
+def test_sanitize_series_sorts_dedupes_and_drops_bad_keys():
+    s = [("2026-08", 3.0), ("2025-08", 1.0), ("2026-07", 2.0), ("2026-07", 2.5), ("2026-13", 9.0), ("115/08", 9.0), ("2026-06", float("nan"))]
+    out, notes = B.sanitize_series(s, "M", date(2026, 9, 27))
+    assert out == [("2025-08", 1.0), ("2026-07", 2.5), ("2026-08", 3.0)]
+    assert any(n.startswith("중복") for n in notes)
+    assert sum(n.startswith("형식") for n in notes) == 2
+    assert any(n.startswith("값") for n in notes)
+
+
+def test_sanitize_series_drops_future_periods_and_wrong_frequency_format():
+    out, notes = B.sanitize_series([("2026-09", 1.0), ("2026-10", 2.0)], "M", date(2026, 9, 27))
+    assert out == [("2026-09", 1.0)] and notes == ["미래 2026-10"]
+    out, notes = B.sanitize_series([("2026-09-01", 1.0), ("2026-Q3", 2.0)], "Q", date(2026, 9, 27))
+    assert out == [("2026-Q3", 2.0)] and notes and notes[0].startswith("형식")
+    out, _ = B.sanitize_series([("2026-09-26", 1.0), ("2026-09-25", 0.5), ("2026-09-28", 3.0)], "D", date(2026, 9, 27))
+    assert out == [("2026-09-25", 0.5), ("2026-09-26", 1.0)]
+
+
+def test_committed_payload_series_pass_the_gate():
+    """커밋된 data/industry_indicators.json 이 게이트 규칙(형식·오름차순·중복 없음·미래 없음)을 지키는지."""
+    path = B.OUT_JSON
+    if not path.exists():
+        pytest.skip("산출물 없음")
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    today = date.fromisoformat(payload["as_of_date"])
+    bad = []
+    for iid, ind in payload["indicators"].items():
+        s = [(p["date"], p["val"]) for p in ind.get("series") or [] if p.get("val") is not None]
+        clean, notes = B.sanitize_series(s, ind["frequency"], today)
+        if notes or clean != [(k, float(v)) for k, v in s]:
+            bad.append(f"{iid}: {notes[:3]}")
+    assert not bad, bad

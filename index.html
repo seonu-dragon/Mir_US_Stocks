@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=68229297a4" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=68229297a4"></noscript>
+    <link rel="preload" href="styles.css?v=1e56fe0f0c" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=1e56fe0f0c"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=83c23383aa"></script>
+    <script src="build_id.js?v=06195f1836"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3284,7 +3284,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="company-info.js?v=0afc274331"></script>
     <script src="treemap-core.js?v=6cefd0806f"></script>
     <script src="treemap.js?v=7face7d880"></script>
-    <script src="industry.js?v=05412ccb82"></script>
+    <script src="industry-chart-core.js?v=012453fc55"></script>
+    <script src="industry.js?v=f5bf50edee"></script>
     <script src="market-indicators-core.js?v=9ee5403887"></script>
     <script src="market-indicators.js?v=1821bc8c38"></script>
     <script src="valuation-band-core.js?v=8169dae7ed"></script>
@@ -3331,6 +3332,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="mobile-cards.js?v=aae191cacc"></script>
     <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
     <script src="calendar-panel.js?v=cde775a5ef"></script>
+    <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
     <script src="app.js?v=2c0def7c1a"></script>
     <script src="ai-cosmos.js?v=83b89d5891"></script>

@@ -239,6 +239,8 @@ function refreshFeatureViews() {
   if (typeof renderIndustryHomeCard === "function") calls.push(renderIndustryHomeCard);
   // 오늘의 특징주 카드 — movers 데이터가 오늘 탭 렌더보다 늦게 도착하면 여기서 다시 그린다.
   if (typeof renderMoversBoard === "function") calls.push(renderMoversBoard);
+  // 투자 가설 점검 — MAP_FUNDAMENTALS·실적 보도자료·시장경보 등이 늦게 도착하면 다시 평가한다.
+  if (window.MirThesis) calls.push(window.MirThesis.onDataRefresh);
   // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.

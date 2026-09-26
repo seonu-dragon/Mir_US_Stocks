@@ -1135,6 +1135,23 @@ await test("/sync/prefs PUT: Origin 게이트 + 180일 TTL + 바이트 기준 �
   eq(tooLarge.status, 413, "바이트 기준으로 거부");
 });
 
+await test("/sync/prefs PUT: 시장별 관심종목·투자 가설을 보존하고, 없으면 필드를 만들지 않는다", async () => {
+  const env = kvEnv();
+  const theses = { items: [{ id: "th-1", ticker: "AAPL", market: "us", createdAt: "2026-09-26T09:00:00+09:00" }], deleted: ["th-0"] };
+  const body = { clientId: "client-thesis", prefs: { watchlist: ["NVDA"], watchlistUs: ["NVDA"], watchlistKr: ["005930"], portfolio: [], alertSettings: {}, theses } };
+  const put = await handleFetch(req("https://w/sync/prefs", { method: "PUT", origin: ALLOWED, body }), env);
+  eq(put.status, 200, "PUT 200");
+  const got = await (await handleFetch(req("https://w/sync/prefs?clientId=client-thesis"), env)).json();
+  eq(got.prefs.theses.items[0].id, "th-1", "가설 보존");
+  eq(got.prefs.theses.deleted[0], "th-0", "삭제 표식 보존");
+  eq(got.prefs.watchlistKr[0], "005930", "KR 관심종목 보존");
+  const plain = { clientId: "client-plain", prefs: { watchlist: ["NVDA"], portfolio: [], alertSettings: {}, theses: [1, 2] } };
+  await handleFetch(req("https://w/sync/prefs", { method: "PUT", origin: ALLOWED, body: plain }), env);
+  const got2 = await (await handleFetch(req("https://w/sync/prefs?clientId=client-plain"), env)).json();
+  eq(got2.prefs.theses, undefined, "배열 등 잘못된 형식은 버린다");
+  eq(got2.prefs.watchlistUs, undefined, "보내지 않은 필드는 만들지 않는다");
+});
+
 await test("신고 자동 숨김은 건수가 아니라 서로 다른 신고자(해시 IP) 수를 센다", () => {
   eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h1" }, { clientId: "c", ipHash: "h1" }] }), 1, "같은 IP 3건 = 1명");
   eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h2" }, { clientId: "c", ipHash: "h3" }] }), 3, "서로 다른 IP 3명");

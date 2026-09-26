@@ -13700,6 +13700,7 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .mo-sig-date { grid-area: date; justify-self: end; }
   .mo-sig-trend { display: none; }
   .mo-mlabel { display: inline; }
+}
 
 /* 구독 피드 다이얼로그(subscribe-feeds.js) — 신뢰도 센터 다이얼로그 틀을 그대로 쓴다. */
 .feed-sub-btn { flex-shrink: 0; white-space: nowrap; }
@@ -13774,4 +13775,81 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .ei-compare { grid-template-columns: 1fr; }
   .ei-rel-grid { grid-template-columns: 1fr; }
   .ei-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* ===== 투자 가설 추적 (thesis.js, 2026-09-26) ===== */
+.journal-entry { grid-template-columns: 72px minmax(0, 1fr) 90px auto; }
+.journal-row-actions { display: flex; gap: 4px; justify-content: flex-end; }
+.thesis-card { grid-column: 1 / -1; }
+.thesis-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 10px; }
+.thesis-filter { display: inline-flex; gap: 4px; }
+.thesis-filter .is-active { border-color: var(--primary); color: var(--primary); }
+.thesis-spacer { flex: 1 1 auto; }
+.thesis-form { display: grid; gap: 9px; margin: 0 0 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); }
+.thesis-form-head { display: grid; gap: 2px; }
+.thesis-form-head small, .thesis-cond-head small { font-size: var(--fs-cap); }
+.thesis-form-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 1fr)); gap: 8px; }
+.thesis-form label { display: grid; gap: 4px; min-width: 0; color: var(--muted); font-size: var(--fs-cap); }
+.thesis-form input, .thesis-form select { width: 100%; min-width: 0; height: 34px; }
+.thesis-form textarea { width: 100%; min-height: 64px; padding: 9px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text); font: inherit; resize: vertical; }
+.thesis-cond-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.thesis-presets { display: flex; flex-wrap: wrap; gap: 5px; }
+.thesis-presets button { height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font-size: var(--fs-cap); }
+.thesis-presets button:hover { border-color: var(--primary); color: var(--primary); }
+.thesis-cond-list { display: grid; gap: 6px; }
+.thesis-cond-list > p { margin: 0; font-size: var(--fs-cap); }
+.thesis-cond-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 1fr) auto; align-items: center; gap: 6px; }
+.thesis-cond-row small { overflow: hidden; font-size: var(--fs-cap); text-overflow: ellipsis; white-space: nowrap; }
+.thesis-cond-param { color: var(--muted); font-size: var(--fs-cap); }
+.thesis-form-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.thesis-form-actions input { flex: 1 1 200px; width: auto; }
+.thesis-list { display: grid; gap: 9px; }
+.thesis-item { display: grid; gap: 7px; min-width: 0; padding: 11px 12px; border: 1px solid var(--line); border-left-width: 3px; border-radius: var(--r-md); background: var(--panel-soft); }
+.thesis-item.is-breach { border-left-color: var(--red); }
+.thesis-item.is-near { border-left-color: var(--amber); }
+.thesis-item.is-ok { border-left-color: var(--green); }
+.thesis-item-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.thesis-item-head small { font-size: var(--fs-cap); }
+.thesis-ticker { height: 28px; padding: 0 9px; background: var(--panel); color: var(--primary); font-size: var(--fs-sub); font-weight: 600; }
+.thesis-badge { display: inline-flex; align-items: center; height: 22px; padding: 0 8px; border: 1px solid currentColor; border-radius: 999px; color: var(--muted); font-size: var(--fs-cap); font-weight: 600; white-space: nowrap; }
+.thesis-badge.is-breach { color: var(--red); }
+.thesis-badge.is-near { color: var(--amber); }
+.thesis-badge.is-ok { color: var(--green); }
+.thesis-text { margin: 0; font-size: var(--fs-sub); line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+.thesis-recheck { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 7px 9px; border: 1px dashed var(--amber); border-radius: var(--r-sm); font-size: var(--fs-cap); }
+.thesis-recheck span { flex: 1 1 220px; }
+.thesis-conds { display: grid; gap: 3px; margin: 0; padding: 0; list-style: none; }
+.thesis-conds li { display: grid; grid-template-columns: 10px minmax(0, auto) minmax(0, 1fr); align-items: baseline; gap: 6px; font-size: var(--fs-cap); }
+.thesis-conds b { font-weight: 600; }
+.thesis-conds em { overflow-wrap: anywhere; color: var(--muted); font-style: normal; }
+.thesis-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--line); }
+.thesis-conds .is-breach .thesis-dot { background: var(--red); }
+.thesis-conds .is-near .thesis-dot { background: var(--amber); }
+.thesis-conds .is-ok .thesis-dot { background: var(--green); }
+.thesis-conds .is-breach em { color: var(--red); }
+.thesis-perf { margin: 0; font-size: var(--fs-cap); line-height: 1.6; }
+.thesis-perf small { display: block; }
+.thesis-fold summary { cursor: pointer; color: var(--muted); font-size: var(--fs-cap); }
+.thesis-fold[open] summary { margin-bottom: 6px; }
+.thesis-change-table { min-width: 420px !important; }
+.thesis-ver { padding: 6px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-cap); }
+.thesis-ver p { margin: 3px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.thesis-ver.is-current { border-bottom: 0; }
+.thesis-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.thesis-close-row { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 5px; }
+.thesis-close-row select { width: auto; height: 32px; }
+.thesis-del { margin-left: auto; color: var(--muted); }
+.thesis-subhead { margin: 14px 0 6px; font-size: var(--fs-sub); }
+.thesis-note { margin: 6px 0 0; font-size: var(--fs-cap); line-height: 1.5; }
+.thesis-score { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.thesis-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.thesis-strip-title { font-size: var(--fs-sub); font-weight: 600; }
+.thesis-strip button { margin-left: auto; }
+@media (max-width: 720px) {
+  .thesis-form-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .thesis-form-grid > :first-child { grid-column: 1 / -1; }
+  .thesis-cond-row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+  .thesis-cond-row [data-cond-metric] { grid-column: 1 / -1; }
+  .thesis-cond-row small { grid-column: 1 / -1; grid-row: 3; }
+  .thesis-score { grid-template-columns: 1fr; }
+  .thesis-form input, .thesis-form select, .thesis-close-row select { height: auto; min-height: 40px; }
 }

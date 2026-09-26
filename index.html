@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=2df303c05f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=2df303c05f"></noscript>
+    <link rel="preload" href="styles.css?v=1b46e77cd9" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=1b46e77cd9"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=6a86986b43"></script>
+    <script src="build_id.js?v=291b7ab7b9"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1410,6 +1410,7 @@ html[data-theme="dark"] {
             </section>
 
             <div class="animate-reveal" style="display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin:0 0 -4px">
+              <button type="button" class="ghost compact-btn" id="thesisFromTicker" title="이 종목의 매수 근거와 폐기 조건을 기록하고 방문할 때마다 점검">가설 추가</button>
               <button type="button" class="ghost compact-btn" id="dcaFromTicker" title="이 종목을 매월 같은 금액으로 샀다면 — 적립식 시뮬레이터로 이동">적립식으로 샀다면</button>
               <button type="button" class="ghost compact-btn" id="shareTickerLink" title="현재 종목 화면 링크 복사">종목 링크 복사</button>
             </div>
@@ -2247,6 +2248,7 @@ html[data-theme="dark"] {
 
         <div class="sub-panel is-active" id="sub-bulk-holdings">
         <div class="ia-stat-row" id="myInvestSummary" aria-live="polite"></div>
+        <div class="thesis-strip" id="thesisStrip" hidden></div>
         <section class="portfolio-card" id="portfolioCard">
           <div class="pf-head">
             <h3>보유 종목</h3>
@@ -2604,6 +2606,35 @@ html[data-theme="dark"] {
           <div class="corr-wrap" id="corrMatrix"></div>
         </section>
           </details>
+          <details class="ia-fold ia-tool-fold" id="thesisFold">
+            <summary>투자 가설 추적</summary>
+          <section class="portfolio-tool-card thesis-card" id="thesisPanel">
+            <div class="portfolio-tool-head">
+              <div><h3>투자 가설 추적</h3></div>
+              <strong id="thesisCount">0건</strong>
+            </div>
+            <p class="muted">매수 근거와 '틀렸다고 볼 조건'을 측정 가능한 값으로 적어 두면, 사이트에 올 때마다 현재 데이터로 점검해 위반·근접·정상을 표시합니다. 등록 시점 지표는 동결 저장되고, 수정하면 원래 가설과 수정 시각이 남습니다. 매매 신호가 아니라 내 기록을 점검하는 도구입니다. (이 브라우저에 저장 · 클라우드 동기화에 포함)</p>
+            <div class="thesis-toolbar">
+              <button type="button" class="primary compact-btn" data-thesis-new>새 가설</button>
+              <nav class="thesis-filter" aria-label="가설 목록 필터">
+                <button type="button" class="ghost compact-btn is-active" data-thesis-filter="open">진행 중</button>
+                <button type="button" class="ghost compact-btn" data-thesis-filter="closed">종료</button>
+                <button type="button" class="ghost compact-btn" data-thesis-filter="all">전체</button>
+              </nav>
+              <span class="thesis-spacer"></span>
+              <button type="button" class="ghost compact-btn" data-thesis-export="json">JSON 내보내기</button>
+              <button type="button" class="ghost compact-btn" data-thesis-export="csv">CSV</button>
+              <button type="button" class="ghost compact-btn" data-thesis-import>가져오기</button>
+              <input type="file" id="thesisImportFile" accept="application/json,.json" hidden>
+            </div>
+            <div class="thesis-form" id="thesisForm" hidden></div>
+            <div class="thesis-list" id="thesisList"></div>
+            <p class="muted thesis-note" id="thesisOtherNote"></p>
+            <h4 class="thesis-subhead">종료한 가설 성적 (벤치마크 대비)</h4>
+            <div id="thesisScore"></div>
+            <p class="muted thesis-note" id="thesisAsOf"></p>
+          </section>
+          </details>
           <details class="ia-fold ia-tool-fold">
             <summary>투자 아이디어 · 매매일지</summary>
           <section class="portfolio-tool-card investment-journal-card" id="investmentJournalCard">
@@ -2931,14 +2962,16 @@ html[data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=a3b194f9b4"></script>
     <script src="movers.js?v=ec1399659c"></script>
-    <script src="portfolio.js?v=58b9c4f658"></script>
+    <script src="portfolio.js?v=61ef6f3d50"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
+    <script src="thesis-core.js?v=fb63922564"></script>
+    <script src="thesis.js?v=53f3d6f7f5"></script>
     <script src="screener.js?v=d734941458"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=b27e81b493"></script>
+    <script src="feature-data.js?v=4b518d2453"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
     <script src="signals.js?v=92d09d598c"></script>
@@ -2948,10 +2981,10 @@ html[data-theme="dark"] {
     <script src="markets-etf.js?v=69674be0f5"></script>
     <script src="kr-panels.js?v=53e63c5806"></script>
     <script src="kr-alerts.js?v=5f414887e9"></script>
-    <script src="watchlist.js?v=f5f0a3c283"></script>
+    <script src="watchlist.js?v=830011f027"></script>
     <script src="earnings-insight.js?v=8e1bf51e44"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=3a22c99f17"></script>
+    <script src="app.js?v=8486c4f7fb"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

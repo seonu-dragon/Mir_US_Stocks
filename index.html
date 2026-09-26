@@ -406,11 +406,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=af91870a2a" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=af91870a2a"></noscript>
+    <link rel="preload" href="styles.css?v=9c5d36b774" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=9c5d36b774"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=cf22941a82"></script>
+    <script src="build_id.js?v=4da80c312b"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -612,10 +612,18 @@ html[data-market="kr"][data-theme="dark"] {
 
         <div class="tab-leaf is-active" id="tab-today-summary">
           <p class="ia-regime" id="todayRegime" aria-live="polite">시장 국면을 계산하는 중입니다.</p>
-          <section class="industry-home-card" id="industryHomeCard" hidden aria-label="산업 신호등"></section>
-          <section class="index-strip ia-index-compact" id="indexStrip" aria-label="주요 지수"></section>
-          <p class="ia-more-line"><button type="button" class="ia-link" data-open="health">지수 8개 · 환율 · 섹터 전체 보기</button></p>
+          <!-- 홈 대시(home-dash.js): 지수 카드 캐러셀 → 선택 지수 큰 차트 + 시장 현황 → AI 브리핑 요약 -->
+          <section class="home-dash" id="homeDash" aria-label="주요 지수와 시장 현황">
+            <div class="index-strip home-idx-strip" id="indexStrip" role="listbox" aria-label="주요 지수 — 카드를 고르면 아래 차트가 바뀝니다"></div>
+            <div class="home-dash-row">
+              <div class="home-chart-card" id="homeIndexChart" aria-live="polite"></div>
+              <aside class="home-status-card" id="homeMarketStatus" aria-label="시장 현황"></aside>
+            </div>
+            <p class="ia-more-line"><button type="button" class="ia-link" data-open="health">지수 · 환율 · 섹터 전체 보기</button></p>
+          </section>
+          <section class="home-briefing" id="homeBriefing" hidden aria-label="AI 브리핑 요약"></section>
           <section class="movers-board" id="moversBoard" hidden aria-label="오늘의 특징주"></section>
+          <section class="industry-home-card" id="industryHomeCard" hidden aria-label="산업 신호등"></section>
           <section class="kr-highlights" id="krHighlights" hidden></section>
           <section class="ia-today-news" id="todayNews" hidden aria-label="오늘의 뉴스"></section>
       <section class="watchlist-bar" id="watchlistBar" hidden>
@@ -1232,7 +1240,7 @@ html[data-market="kr"][data-theme="dark"] {
           <details class="ia-fold" id="fold-signalsGrid" open>
             <summary>종목 시그널</summary>
             <div class="section-title">
-              <p id="signalsIntro">내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다. 각 신호가 발행 뒤 실제로 어떻게 됐는지는 아래 '신호 성적표'에 적립합니다.</p>
+              <p id="signalsIntro">내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다. 각 신호가 발행 뒤 실제로 어떻게 됐는지는 '신호 성적표' 항목에 적립합니다.</p>
             </div>
             <div class="signals-grid" id="signalsGrid"></div>
           </details>
@@ -1617,6 +1625,21 @@ html[data-market="kr"][data-theme="dark"] {
             </label>
           </div>
         <div class="sub-panel" id="sub-top">
+        <!-- 칩 필터 줄 · 열 설정 · 표/카드 토글(find-table.js) -->
+        <div class="ft-bar" id="findTableBar">
+          <div class="ft-chips" id="findChipsBucket" role="group" aria-label="지수·그룹"></div>
+          <div class="ft-bar-row">
+            <div class="ft-chips" id="findChipsMetric" role="group" aria-label="정렬 기준"></div>
+            <div class="ft-actions">
+              <button type="button" class="ghost compact-btn" id="findColsBtn" aria-expanded="false" aria-controls="findColsPanel">열 설정</button>
+              <div class="segmented ia-seg ia-seg-sm" id="findViewSeg" role="group" aria-label="보기 방식">
+                <button type="button" data-fview="table">표</button>
+                <button type="button" data-fview="card">카드</button>
+              </div>
+            </div>
+          </div>
+          <div class="ft-cols-panel" id="findColsPanel" hidden></div>
+        </div>
         <div class="ia-find-head">
           <span class="muted" id="topStocksMeta">조건에 맞는 상위 종목입니다.</span>
         </div>
@@ -1708,7 +1731,8 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
           </div>
         </details>
-        <div class="rank-grid" id="topStocks"></div>
+        <div class="table-wrap ft-table-wrap" id="topStocksTableWrap"></div>
+        <div class="rank-grid" id="topStocks" hidden></div>
         </div>
         <div class="sub-panel" id="sub-screener">
         <div class="ia-find-head">
@@ -2590,7 +2614,7 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
 
         <div class="sub-panel" id="sub-bulk-tools">
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="xray">
             <summary>팩터 노출 · 집중도 (X-RAY)</summary>
           <section class="portfolio-tool-card" id="pfXrayCard">
             <div class="portfolio-tool-head">
@@ -2600,7 +2624,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div id="pfXrayBody"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="rebalance">
             <summary>포트폴리오 리밸런싱</summary>
           <section class="portfolio-tool-card" id="rebalanceCard">
             <div class="portfolio-tool-head">
@@ -2615,7 +2639,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="portfolio-tool-table" id="rebalanceTable"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" id="pfRiskFold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="pfrisk" id="pfRiskFold">
             <summary>위험 기여도 · 리스크 패리티 · 최소분산</summary>
           <section class="portfolio-tool-card" id="pfRiskCard">
             <div class="portfolio-tool-head">
@@ -2632,7 +2656,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div id="pfRiskBody"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="stress">
             <summary>스트레스 테스트</summary>
           <section class="portfolio-tool-card" id="stressTestCard">
             <div class="portfolio-tool-head">
@@ -2660,7 +2684,7 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="position">
             <summary>포지션 크기 계산기</summary>
           <section class="portfolio-tool-card" id="positionSizeCard">
             <div class="portfolio-tool-head">
@@ -2680,7 +2704,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="position-size-result" id="positionSizeResult"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="sim">
             <summary>포트폴리오 시뮬레이터</summary>
         <div class="backtest-panel" id="backtestPanel">
           <div class="section-title compact-title">
@@ -2755,7 +2779,7 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </div>
           </details>
-          <details class="ia-fold ia-tool-fold" id="dcaFold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="dca" id="dcaFold">
             <summary>적립식 시뮬레이터</summary>
         <section class="dca-panel" id="dcaPanel">
           <div class="section-title compact-title">
@@ -2875,7 +2899,7 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="corr">
             <summary>관심종목 상관관계</summary>
         <section class="corr-card" id="corrCard">
           <div class="corr-head">
@@ -2888,7 +2912,7 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="corr-wrap" id="corrMatrix"></div>
         </section>
           </details>
-          <details class="ia-fold ia-tool-fold" id="thesisFold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="thesis" id="thesisFold">
             <summary>투자 가설 추적</summary>
           <section class="portfolio-tool-card thesis-card" id="thesisPanel">
             <div class="portfolio-tool-head">
@@ -2917,7 +2941,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p class="muted thesis-note" id="thesisAsOf"></p>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="journal">
             <summary>투자 아이디어 · 매매일지</summary>
           <section class="portfolio-tool-card investment-journal-card" id="investmentJournalCard">
             <div class="portfolio-tool-head">
@@ -2937,7 +2961,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="journal-list" id="journalList"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="dividend">
             <summary>배당 캘린더 · 현금흐름</summary>
           <section class="portfolio-tool-card" id="dividendPlannerCard">
             <div class="portfolio-tool-head">
@@ -2950,7 +2974,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="dividend-month-grid" id="dividendMonthGrid"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="krw">
             <summary>원화 기준 포트폴리오</summary>
           <section class="portfolio-tool-card portfolio-wide-card" id="krwPortfolioCard">
             <div class="portfolio-tool-head">
@@ -2962,7 +2986,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="portfolio-tool-table" id="krwPortfolioTable"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="bench">
             <summary>벤치마크 성과 · 기여도</summary>
           <section class="portfolio-tool-card portfolio-wide-card" id="benchmarkAttributionCard">
             <div class="portfolio-tool-head">
@@ -2978,7 +3002,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="portfolio-tool-table" id="benchmarkAttributionTable"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold">
+          <details class="ia-fold ia-tool-fold" data-toc-key="sync">
             <summary>클라우드 동기화</summary>
           <div class="cloud-sync-panel">
             <div class="cloud-sync-head">
@@ -3245,7 +3269,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=08f52eb714"></script>
     <script src="movers.js?v=4a60812545"></script>
-    <script src="portfolio.js?v=e460158602"></script>
+    <script src="portfolio.js?v=c43b5dc298"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
@@ -3256,7 +3280,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=bf996ceb1f"></script>
+    <script src="feature-data.js?v=55f11a26f2"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3275,7 +3299,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=6c869ac754"></script>
-    <script src="signals.js?v=c29754fe72"></script>
+    <script src="signals.js?v=51e90ac142"></script>
     <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart.js?v=fe2b9f924b"></script>
@@ -3297,7 +3321,11 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dcf.js?v=234693fd95"></script>
     <script src="stock-view.js?v=3a816499ca"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
-    <script src="app.js?v=db7072cc98"></script>
+    <script src="home-dash.js?v=1fdd3d2a61"></script>
+    <script src="find-table-core.js?v=b40a857684"></script>
+    <script src="find-table.js?v=bf8683882a"></script>
+    <script src="toc-layout.js?v=d3e6f7b6a1"></script>
+    <script src="app.js?v=b97bee5888"></script>
     <script src="ai-cosmos.js?v=069b3c9089"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=f647c74678"></script>

@@ -14839,7 +14839,7 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; }
 /* --- 10. 굵기: 본문 500 · 강조 600 · 제목·가격 700 --- */
 .index-price { font-weight: var(--fw-title); }
 .summary-card strong { font-weight: var(--fw-title); }
-=======
+
 /* ── 종목 시세정보·투자정보(quote-info.js) ── */
 .range52-card .qi-head, .qi-invest .qi-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: var(--space-2); }
 .qi-head h3 { margin: 0; font-size: var(--fs-body); }
@@ -15113,6 +15113,7 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; }
   .sd-views { padding-top: 12px; }
   .sd-view { gap: 12px; }
 }
+/* ==============================================================
    오른쪽 레일(UI 개편 4단계, rail.js) — PC ≥1280px 전용.
    56px 아이콘 열 + 320px 패널. 본문은 body 오른쪽 여백으로 밀어 가리지 않는다.
    ============================================================== */
@@ -15196,3 +15197,283 @@ html.rail-enabled body:not(.ai-mode-active) .chatbot { display: none; }
 }
 .mir-rail-chat .chat-head { min-height: 56px; padding: 0 12px 0 20px; background: var(--panel); }
 .mir-rail-chat .chat-hide-fab { display: none; }
+
+/* ==============================================================
+   UI 개편 3단계 — 오늘(홈 대시)·시장 시그널 목차·찾기 표·내 투자 도구 목차
+   (home-dash.js · toc-layout.js · find-table.js)
+   ============================================================== */
+
+/* --- 오늘: 지수 카드 캐러셀 --- */
+.index-strip.home-idx-strip {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 2px 2px 4px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+.home-idx-card {
+  flex: 0 0 176px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "name name" "price price" "chg spark";
+  align-items: center;
+  column-gap: 8px;
+  min-height: 84px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  color: var(--text);
+  text-align: left;
+  scroll-snap-align: start;
+  box-shadow: none;
+  cursor: pointer;
+}
+.home-idx-card:hover { border-color: var(--line-strong); background: var(--panel); }
+.home-idx-card.is-active { border-color: var(--ink); box-shadow: inset 0 0 0 0.5px var(--ink); }
+.home-idx-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.home-idx-card.is-static { cursor: default; grid-template-areas: "name" "price" "chg"; grid-template-columns: minmax(0, 1fr); }
+.home-idx-card.is-static:hover { border-color: var(--line); }
+.home-idx-name { grid-area: name; overflow: hidden; color: var(--text-2); font-size: var(--fs-13); font-weight: var(--fw-strong); white-space: nowrap; text-overflow: ellipsis; }
+.home-idx-price { grid-area: price; white-space: nowrap; font-size: var(--fs-18); font-weight: var(--fw-title); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.home-idx-chg { grid-area: chg; font-size: var(--fs-cap); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
+.home-idx-spark { grid-area: spark; width: 56px; height: 24px; }
+.home-idx-empty { margin: 0; padding: 24px 0; font-size: var(--fs-sub); }
+
+/* --- 오늘: 큰 차트 + 시장 현황 --- */
+.home-dash { margin: 12px 0 0; }
+.home-dash-row { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 12px; align-items: stretch; }
+.home-chart-card,
+.home-status-card { min-width: 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.home-chart-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.home-chart-title { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; min-width: 0; }
+.home-chart-title strong { font-size: var(--fs-16); font-weight: var(--fw-title); }
+.home-chart-price { font-size: 24px; font-weight: var(--fw-title); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.home-chart-chg { font-size: var(--fs-body); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
+.home-chart-go { flex: none; }
+.home-chart-card { display: flex; flex-direction: column; }
+.home-chart-plot { position: relative; display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) 64px; grid-template-rows: minmax(0, 1fr); height: auto; min-height: 220px; }
+.home-chart-plot svg { display: block; width: 100%; height: 100%; overflow: visible; border-bottom: 1px solid var(--line); }
+.home-chart-base { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
+.home-chart-yaxis { position: relative; }
+.home-chart-plot.is-approx { grid-template-columns: minmax(0, 1fr); }
+.home-chart-plot.is-approx .home-chart-yaxis { display: none; }
+.home-chart-yaxis span { position: absolute; right: 0; transform: translateY(-50%); color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.home-chart-cap { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; }
+.home-chart-empty { margin: 0; padding: 60px 0; font-size: var(--fs-sub); text-align: center; }
+.home-status-title { margin: 0 0 10px; font-size: var(--fs-16); font-weight: var(--fw-title); }
+.home-status-sec { padding: 10px 0; border-top: 1px solid var(--line); }
+.home-status-sec:first-of-type { border-top: 0; padding-top: 0; }
+.home-status-sec h3 { margin: 0 0 6px; color: var(--text-2); font-size: var(--fs-13); font-weight: var(--fw-strong); }
+.home-status-sec h3 small { margin-left: 4px; color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); }
+.home-status-inline { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.home-status-inline h3 { margin: 0; }
+.home-status-inline p { margin: 0; font-size: var(--fs-sub); }
+.home-status-inline b { font-size: var(--fs-16); font-variant-numeric: tabular-nums; }
+.home-breadth-nums { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-cap); }
+.home-breadth-nums span { display: flex; flex-direction: column; }
+.home-breadth-nums b { font-size: var(--fs-16); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.home-breadth-nums span:nth-child(2) { align-items: center; }
+.home-breadth-nums span:last-child { align-items: flex-end; }
+.home-breadth-bar { display: flex; height: 6px; margin: 8px 0 6px; overflow: hidden; border-radius: 3px; background: var(--bg-soft); }
+.home-breadth-bar i { display: block; height: 100%; }
+.home-breadth-bar .up { background: var(--pos); }
+.home-breadth-bar .flat { background: var(--line-strong); }
+.home-breadth-bar .down { background: var(--neg); }
+.home-status-note { margin: 0; color: var(--text-2); font-size: var(--fs-cap); }
+.home-status-note b { color: var(--text); font-variant-numeric: tabular-nums; }
+.home-flow-table { width: 100%; min-width: 0; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.home-flow-table th, .home-flow-table td { padding: 4px 0; border-bottom: 1px solid var(--line); text-align: right; font-size: var(--fs-cap); background: transparent; }
+.home-flow-table th:first-child { text-align: left; }
+.home-flow-table thead th { color: var(--muted); font-weight: var(--fw-body); }
+.home-flow-table tbody th { color: var(--text-2); font-weight: var(--fw-body); }
+.home-flow-table tbody tr:hover > td { background: transparent; }
+.home-status-link { margin-top: 6px; font-size: var(--fs-cap); }
+.home-status-foot { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-cap); }
+#homeDash .ia-more-line { margin: 8px 0 0; }
+
+/* --- 오늘: AI 브리핑 요약 --- */
+.home-briefing { margin: 12px 0 0; padding: 16px 18px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.home-briefing[hidden] { display: none; }
+.home-brief-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.home-brief-head h2 { margin: 0; font-size: var(--fs-16); font-weight: var(--fw-title); }
+.home-brief-head h2 small { margin-left: 6px; color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); }
+.home-brief-list { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0 0 0 18px; font-size: var(--fs-sub); line-height: 1.6; }
+.home-brief-list b { font-weight: var(--fw-strong); }
+.home-brief-more { margin-top: 8px; }
+.home-brief-more > summary { display: inline-block; color: var(--text-2); font-size: var(--fs-cap); cursor: pointer; }
+.home-brief-full { max-height: 480px; margin-top: 8px; overflow: auto; padding: 12px 14px; border-radius: var(--r-md); background: var(--bg-soft); }
+.home-brief-note { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-cap); }
+#tab-today-summary > .movers-board,
+#tab-today-summary > .industry-home-card { margin-top: 12px; }
+
+/* --- 목차 레이아웃(시장 › 시그널, 내 투자 › 도구) --- */
+.toc-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; align-items: start; }
+.toc-nav {
+  position: sticky;
+  top: calc(var(--sd-sticky-top, 56px) + 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  padding: 4px 0;
+  border-right: 1px solid var(--line);
+  scrollbar-width: thin;
+}
+.toc-item {
+  display: block;
+  width: 100%;
+  min-height: 38px;
+  margin: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-left: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-sub);
+  font-weight: var(--fw-body);
+  line-height: 1.4;
+  text-align: left;
+  box-shadow: none;
+}
+.toc-item:hover { color: var(--text); background: var(--bg-soft); }
+.toc-item.is-active { border-left-color: var(--ink); color: var(--text); font-weight: var(--fw-title); background: transparent; }
+.toc-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.toc-item[hidden] { display: none; }
+.toc-body { min-width: 0; }
+.toc-body > details.toc-fold { margin: 0; border: 0; border-radius: 0; background: transparent; }
+.toc-body > details.toc-fold:not(.toc-active),
+.toc-body > details.toc-fold[hidden],
+.toc-body > details.toc-fold > summary { display: none; }
+.toc-body > details.toc-fold > :not(summary) { padding: 0; }
+.toc-empty { margin: 0; padding: 40px 16px; font-size: var(--fs-sub); text-align: center; }
+.toc-empty[hidden] { display: none; }
+
+/* --- 찾기: 칩 줄 · 열 설정 · 표 --- */
+.ft-bar { position: relative; display: flex; flex-direction: column; gap: 8px; margin: 0 0 10px; }
+.ft-bar-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.ft-chips { display: flex; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.ft-chips::-webkit-scrollbar { display: none; }
+.ft-chips:empty { display: none; }
+.ft-chip {
+  flex: none;
+  height: 32px;
+  min-height: 32px;
+  margin: 0;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-13);
+  font-weight: var(--fw-body);
+  white-space: nowrap;
+  box-shadow: none;
+}
+.ft-chip:hover { border-color: var(--text-2); color: var(--text); background: transparent; }
+.ft-chip.is-active { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); font-weight: var(--fw-strong); }
+.ft-actions { display: flex; flex: none; align-items: center; gap: 6px; }
+.ft-actions .compact-btn[hidden] { display: none; }
+.ft-actions .compact-btn, .ft-actions .segmented button { height: 32px; min-height: 32px; padding-top: 0; padding-bottom: 0; }
+.ft-cols-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: var(--z-dropdown, 30);
+  width: 300px;
+  max-width: calc(100vw - 32px);
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+.ft-cols-panel[hidden] { display: none; }
+.ft-cols-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-size: var(--fs-sub); }
+.ft-cols-list { margin: 0; padding: 0; list-style: none; }
+.ft-cols-list li { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 36px; border-bottom: 1px solid var(--line); font-size: var(--fs-sub); }
+.ft-cols-list li:not(.is-on) { color: var(--text-2); }
+.ft-cols-list label { display: flex; flex: 1 1 auto; align-items: center; gap: 8px; min-width: 0; cursor: pointer; }
+.ft-cols-list input { width: 16px; height: 16px; margin: 0; }
+.ft-cols-move { display: flex; gap: 2px; }
+.ft-cols-move button { width: 28px; height: 28px; min-height: 28px; padding: 0; border: 1px solid var(--line); border-radius: var(--r-sm); background: transparent; color: var(--text-2); font-size: 10px; box-shadow: none; }
+.ft-cols-move button:disabled { opacity: 0.35; cursor: default; }
+.ft-cols-note { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-cap); }
+.ft-table-wrap[hidden], #topStocks[hidden] { display: none; }
+.ft-table { width: 100%; }
+.ft-table th.num, .ft-table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ft-table th { white-space: nowrap; }
+.ft-table th.is-sorted { color: var(--text); }
+.ft-sort { min-height: 0; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; box-shadow: none; cursor: pointer; }
+.ft-sort:hover { color: var(--text); background: transparent; }
+.ft-table tbody tr { cursor: pointer; }
+.ft-table td.ft-name { min-width: 150px; max-width: 220px; white-space: nowrap; }
+.ft-rank { display: inline-block; width: 22px; color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; text-align: right; vertical-align: middle; }
+.ft-name-text { display: inline-flex; flex-direction: column; max-width: calc(100% - 34px); min-width: 0; margin-left: 8px; vertical-align: middle; }
+.ft-name-text strong { overflow: hidden; font-weight: var(--fw-strong); white-space: nowrap; text-overflow: ellipsis; }
+.ft-name-text small { overflow: hidden; color: var(--muted); font-size: var(--fs-cap); white-space: nowrap; text-overflow: ellipsis; }
+.ft-table td.ft-text { max-width: 220px; overflow: hidden; color: var(--text-2); font-size: var(--fs-cap); white-space: nowrap; text-overflow: ellipsis; }
+.ft-empty { margin: 0; padding: 32px 0; font-size: var(--fs-sub); text-align: center; }
+.ft-table-wrap > .list-more-btn { display: block; margin: 10px auto 0; }
+
+@media (max-width: 1100px) {
+  .home-dash-row { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .toc-layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .toc-nav {
+    position: static;
+    flex-direction: row;
+    gap: 6px;
+    max-height: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0 0 2px;
+    border-right: 0;
+    scrollbar-width: none;
+  }
+  .toc-nav::-webkit-scrollbar { display: none; }
+  .toc-item {
+    flex: none;
+    width: auto;
+    min-height: 34px;
+    padding: 0 12px;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--r-sm);
+    font-size: var(--fs-13);
+    white-space: nowrap;
+  }
+  .toc-item.is-active { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); font-weight: var(--fw-strong); }
+}
+@media (max-width: 640px) {
+  .home-idx-card { flex-basis: 148px; min-height: 76px; padding: 10px; }
+  .home-idx-price { font-size: var(--fs-16); }
+  .home-idx-spark { width: 44px; }
+  .home-chart-card, .home-status-card, .home-briefing { padding: 14px; }
+  .home-chart-plot { min-height: 180px; grid-template-columns: minmax(0, 1fr) 56px; }
+  .home-chart-price { font-size: 20px; }
+  /* 모바일: 카드 테두리 대신 섹션 사이 8px 회색 띠 */
+  #tab-today-summary > section:not([hidden]) {
+    margin-left: -10px;
+    margin-right: -10px;
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+  #tab-today-summary > section:not([hidden]) ~ section:not([hidden]) { margin-top: 0; border-top: 8px solid var(--bg-soft); }
+  #tab-today-summary > .home-dash { padding: 0 10px 12px; }
+  #tab-today-summary > .home-dash .home-chart-card,
+  #tab-today-summary > .home-dash .home-status-card { padding: 12px 0 0; border: 0; border-radius: 0; }
+  #tab-today-summary > .home-dash .home-status-card { margin-top: 4px; border-top: 1px solid var(--line); }
+  .ft-bar-row { flex-wrap: wrap; }
+  .ft-actions { margin-left: auto; }
+  .ft-cols-panel { position: fixed; top: auto; right: 16px; bottom: 16px; left: 16px; width: auto; max-height: 70vh; }
+  .ft-table td.ft-name { min-width: 128px; max-width: 150px; }
+}

@@ -275,6 +275,10 @@ function refreshFeatureViews() {
   if (typeof renderIndustryHomeCard === "function") calls.push(renderIndustryHomeCard);
   // 오늘의 특징주 카드 — movers 데이터가 오늘 탭 렌더보다 늦게 도착하면 여기서 다시 그린다.
   if (typeof renderMoversBoard === "function") calls.push(renderMoversBoard);
+  // 오늘 탭 시장 현황·AI 브리핑 요약(home-dash.js) — 국내 수급(KR_MARKET_FUNDS)이 늦게 오면 다시 그린다.
+  if (typeof renderHomeDash === "function") calls.push(renderHomeDash);
+  // 찾기 › 상위 종목 표 — PER·PBR·ROE 열은 MAP_FUNDAMENTALS 가 늦게 오면 그때 채워진다.
+  if (currentTab === "search" && searchSubTab === "top" && typeof renderTopStocks === "function") calls.push(renderTopStocks);
   // 투자 가설 점검 — MAP_FUNDAMENTALS·실적 보도자료·시장경보 등이 늦게 도착하면 다시 평가한다.
   if (window.MirThesis) calls.push(window.MirThesis.onDataRefresh);
   // 오른쪽 레일 패널 — 스냅샷·캘린더 데이터가 늦게 오면 열린 패널을 다시 그린다.

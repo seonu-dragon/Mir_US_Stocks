@@ -16,6 +16,8 @@ const marketHeader = { fng: null, fngStatus: "loading", fx: [], fxStatus: "loadi
 function applyMarketHeader() {
   renderSummary();
   renderIndexStrip(marketHeader.indices);
+  // 오늘 탭 시장 현황(공포·탐욕)·환율 카드도 같은 상태에서 그린다(home-dash.js).
+  if (typeof renderHomeMarketStatus === "function") renderHomeMarketStatus();
 }
 
 // 지수 스트립 병합. 워커(US 8종)가 기준이고 스냅샷(KR 코스피·코스닥)은 심볼이 겹치지 않는

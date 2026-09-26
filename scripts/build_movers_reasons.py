@@ -6,9 +6,10 @@
 
 흐름
 1. 대상: 커밋된 장마감 스냅샷에서 당일 등락률 상위/하위. ETF·잡주는 시총·거래대금
-   하한으로 뺀다. 등락률은 스냅샷 값이 아니라 `details/<T>.json` 일봉의 마지막 두 종가로
-   다시 계산하고, 마지막 봉 날짜가 거래일과 다르거나(거래정지·스테일) 스냅샷과 1%p 넘게
-   어긋나면 뺀다 — 지어낸 등락이 특징주로 올라가지 않게.
+   하한으로 뺀다. 거래일은 KR 지수 tradedAt · US 스냅샷 priceDate. 등락률은 날짜가 확인되는
+   값(KR 네이버 · US 야후 일봉, 봉이 빠졌으면 야후 meta 시세 → details 일봉 → 그 종목
+   priceDate 가 거래일인 스냅샷 값)으로 다시 확인하고, 날짜를 확인 못 하거나 스냅샷과 1%p
+   넘게 어긋나면 뺀다 — 지어낸 등락이 특징주로 올라가지 않게.
 2. 근거: 같은 날(전 거래일 포함) 공시(KR DART list.json · 기존 kr_disclosures /
    US SEC 8-K 전문검색 · 기존 material_events), 뉴스 헤드라인(KR 네이버 검색 API →
    없으면 Google News RSS · 종목 상세의 네이버 뉴스 / US Google News RSS · 종목 상세의
@@ -52,6 +53,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import sec_client as sec  # noqa: E402
+import us_market_calendar as usc  # noqa: E402
 from briefing_store import repository_publish_lock  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
@@ -190,11 +192,26 @@ def detail_bar(cfg: dict, ticker: str):
     return {"date": day, "close": close, "prevClose": prev_close, "volume": volume, "detail": d}
 
 
-def resolve_trade_date(snap: dict, cfg: dict, market: str) -> str | None:
+def snapshot_price_date(snap: dict, now: datetime | None = None) -> str | None:
+    """US 스냅샷의 priceDate — 형식이 맞고, 거래일이며, 이미 장이 끝난 날일 때만."""
+    pd = str(snap.get("priceDate") or "")
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", pd):
+        return None
+    day = date.fromisoformat(pd)
+    if usc.is_trading_day(day) is False:
+        return None
+    now_et = (now or datetime.now(usc.ET)).astimezone(usc.ET)
+    if now_et < usc.session_close(day):
+        return None
+    return pd
+
+
+def resolve_trade_date(snap: dict, cfg: dict, market: str, now: datetime | None = None) -> str | None:
     """스냅샷 등락률이 가리키는 거래일.
 
     KR: 지수 tradedAt(네이버, 스냅샷과 같은 소스).
-    US: 스냅샷에는 날짜가 없고, 종목 상세의 일봉은 날짜가 빠지거나 밀린다(2026-09-25 실측:
+    US: 스냅샷 priceDate(PR #209, 야후의 날짜 붙은 값으로 정한 가격 기준일)가 1순위.
+    없으면(옛 스냅샷) 다수결 — 종목 상세의 일봉은 날짜가 빠지거나 밀린다(2026-09-25 실측:
     ABNB 상세 일봉이 09-22 봉 없이 09-21 → 09-23 으로 이어져 등락률이 -10.4% 로 계산됨,
     실제 09-23 은 -7.6%). 그래서 시총 상위 종목들의 야후 일봉 중 스냅샷 등락률과 맞는
     날짜를 다수결로 고른다.
@@ -205,7 +222,13 @@ def resolve_trade_date(snap: dict, cfg: dict, market: str) -> str | None:
             if re.fullmatch(r"\d{4}-\d{2}-\d{2}", t):
                 return t
         return None
-    stocks = [s for s in snap.get("stocks") or [] if not is_excluded(s, cfg, market)
+    # 2026-09-26 run 36202139416: 크론이 00:00 UTC 뒤에 돌아 야후·상세 일봉 마지막이 09-24
+    # 라 다수결이 {'2026-09-23': 1} 로 끝나 보드가 멈췄다. 스냅샷 priceDate 는 09-25 였다.
+    pd = snapshot_price_date(snap, now)
+    if pd:
+        print(f"  거래일: 스냅샷 priceDate {pd}")
+        return pd
+    stocks =[s for s in snap.get("stocks") or [] if not is_excluded(s, cfg, market)
               and fnum(s.get("changePct")) is not None and abs(float(s["changePct"])) >= 0.3]
     stocks.sort(key=lambda s: fnum(s.get("marketCapB")) or 0, reverse=True)
     votes = Counter()
@@ -236,25 +259,67 @@ def yahoo_bars(ticker: str) -> dict[str, dict]:
     sym = ticker.replace(".", "-")
     raw = http_get(f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(sym)}?range=1mo&interval=1d",
                    timeout=15)
-    out: dict[str, dict] = {}
     try:
         res = json.loads(raw.decode("utf-8"))["chart"]["result"][0] if raw else None
-        if res:
-            tz = ZoneInfo(res["meta"].get("exchangeTimezoneName") or "America/New_York")
-            quote = res["indicators"]["quote"][0]
-            prev = None
-            for i, t in enumerate(res["timestamp"]):
-                close, volume = quote["close"][i], quote["volume"][i]
-                if close is None:
-                    continue
-                day = datetime.fromtimestamp(t, tz).date().isoformat()
-                out[day] = {"close": float(close), "volume": float(volume or 0),
-                            "changePct": (float(close) / prev - 1) * 100 if prev else None}
-                prev = float(close)
     except Exception:
-        out = {}
+        res = None
+    out = parse_yahoo_chart(res) if res else {}
     time.sleep(0.15)
     _yahoo_cache[ticker] = out
+    return out
+
+
+def previous_trading_day(day: date) -> date | None:
+    """NYSE 달력으로 직전 거래일. 달력이 모르는 해면 None(추정하지 않는다)."""
+    d = day
+    for _ in range(10):
+        d -= timedelta(days=1)
+        trading = usc.is_trading_day(d)
+        if trading is None:
+            return None
+        if trading:
+            return d
+    return None
+
+
+def parse_yahoo_chart(res: dict, now: datetime | None = None) -> dict[str, dict]:
+    """야후 chart result → {날짜: {close, changePct, volume}}.
+
+    00:00 UTC 이후 받은 일봉은 마지막 거래일 봉이 빠진 채 오는 일이 잦다(2026-09-26 run
+    에서 3,168종목). 그때도 meta.regularMarketTime/Price 는 그 날 값이다 — 시세 날짜가
+    마지막 봉의 **바로 다음 거래일**이고 그 날 장이 끝났으면, 그 날을 시세 가격 · 마지막 봉
+    종가(= 전 거래일 종가) · regularMarketVolume 으로 채운다(fromMeta). 봉이 이틀 이상
+    빠졌으면 전일 종가를 모르므로 채우지 않는다(지어내지 않는다).
+    """
+    out: dict[str, dict] = {}
+    try:
+        meta = res.get("meta") or {}
+        tz = ZoneInfo(meta.get("exchangeTimezoneName") or "America/New_York")
+        quote = res["indicators"]["quote"][0]
+        prev = None
+        for i, t in enumerate(res.get("timestamp") or []):
+            close, volume = quote["close"][i], quote["volume"][i]
+            if close is None:
+                continue
+            day = datetime.fromtimestamp(t, tz).date().isoformat()
+            out[day] = {"close": float(close), "volume": float(volume or 0),
+                        "changePct": (float(close) / prev - 1) * 100 if prev else None}
+            prev = float(close)
+        price, stamp = fnum(meta.get("regularMarketPrice")), fnum(meta.get("regularMarketTime"))
+        if out and price and price > 0 and stamp:
+            qday = datetime.fromtimestamp(stamp, usc.ET).date()
+            last_day = date.fromisoformat(max(out))
+            now_et = (now or datetime.now(usc.ET)).astimezone(usc.ET)
+            if (qday > last_day and now_et >= usc.session_close(qday)
+                    and previous_trading_day(qday) == last_day):
+                prev_close = out[last_day.isoformat()]["close"]
+                out[qday.isoformat()] = {
+                    "close": price, "volume": fnum(meta.get("regularMarketVolume")),
+                    "changePct": (price / prev_close - 1) * 100 if prev_close else None,
+                    "fromMeta": True,
+                }
+    except Exception:
+        return {}
     return out
 
 
@@ -303,16 +368,40 @@ def live_bar_kr(ticker: str, trade_date: str) -> dict | None:
 def live_bar_us(ticker: str, trade_date: str) -> dict | None:
     """야후 일봉에서 거래일 봉(전 거래일 종가 대비 등락률·거래량)."""
     bar = yahoo_bars(ticker).get(trade_date)
-    if not bar or bar.get("changePct") is None:
+    if not bar or bar.get("changePct") is None or bar.get("volume") is None:
         return None
     return {"date": trade_date, "close": bar["close"], "changePct": bar["changePct"],
-            "volume": bar["volume"], "source": "yahoo"}
+            "volume": bar["volume"], "source": "yahoo-meta" if bar.get("fromMeta") else "yahoo"}
 
 
-def verified_bar(cfg: dict, market: str, ticker: str, trade_date: str) -> tuple[dict | None, dict | None]:
-    """(거래일 봉, details). 등락률·거래대금은 라이브 소스(KR 네이버 · US 야후)의 거래일 봉으로
-    확인한다 — details 일봉은 날짜가 빠지거나(US) 며칠 늦다(KR 중소형주).
-    라이브가 실패하면 details 의 마지막 봉이 거래일일 때만 쓴다(스냅샷 대조는 호출부)."""
+def snapshot_bar_us(stock: dict, detail: dict, trade_date: str) -> dict | None:
+    """마지막 수단: 스냅샷 값 — 그 종목 priceDate 가 거래일일 때만(야후 날짜로 확인된 값).
+
+    스냅샷엔 거래량이 없어 상세 일봉 최근 20봉 평균 거래량 × volumeRatio 로 거래대금
+    하한만 가늠한다(보드에 거래대금 값은 싣지 않는다). 재료가 모자라면 쓰지 않는다.
+    """
+    if not stock or stock.get("priceDate") != trade_date:
+        return None
+    price, chg, ratio = fnum(stock.get("price")), fnum(stock.get("changePct")), fnum(stock.get("volumeRatio"))
+    vols = []
+    for row in ((detail or {}).get("chartSeries") or [])[-20:]:
+        try:
+            if str(row[5])[:10] < trade_date and float(row[4] or 0) > 0:
+                vols.append(float(row[4]))
+        except (TypeError, ValueError, IndexError):
+            continue
+    if not price or chg is None or not ratio or len(vols) < 5:
+        return None
+    return {"date": trade_date, "close": price, "changePct": chg,
+            "volume": sum(vols) / len(vols) * ratio, "source": "snapshot"}
+
+
+def verified_bar(cfg: dict, market: str, ticker: str, trade_date: str,
+                 stock: dict | None = None) -> tuple[dict | None, dict | None]:
+    """(거래일 봉, details). 등락률·거래대금은 라이브 소스(KR 네이버 · US 야후 일봉/시세)의
+    거래일 봉으로 확인한다 — details 일봉은 날짜가 빠지거나(US) 며칠 늦다(KR 중소형주).
+    라이브가 실패하면 details 의 마지막 봉이 거래일일 때, US 는 그다음 스냅샷 값의 priceDate
+    가 거래일일 때만 쓴다(스냅샷 대조는 호출부). 날짜를 확인 못 하면 (None, details)."""
     detail = load_json(cfg["details"] / f"{ticker}.json") or {}
     live = (live_bar_kr if market == "kr" else live_bar_us)(ticker, trade_date)
     if market == "kr":
@@ -324,6 +413,10 @@ def verified_bar(cfg: dict, market: str, ticker: str, trade_date: str) -> tuple[
         return ({"date": trade_date, "close": bar["close"],
                  "changePct": (bar["close"] / bar["prevClose"] - 1) * 100,
                  "volume": bar["volume"], "source": "details"}, detail)
+    if market == "us":
+        snap_bar = snapshot_bar_us(stock, detail, trade_date)
+        if snap_bar:
+            return snap_bar, detail
     return None, detail
 
 
@@ -347,7 +440,7 @@ def pick_movers(snap: dict, cfg: dict, market: str, trade_date: str):
         for s in ranked[:MAX_VERIFY_PER_SIDE]:
             if len(out[side]) >= TOP_N:
                 break
-            bar, detail = verified_bar(cfg, market, s["ticker"], trade_date)
+            bar, detail = verified_bar(cfg, market, s["ticker"], trade_date, s)
             if not bar:
                 dropped["거래일 봉 확인 불가"] += 1
                 continue
@@ -367,12 +460,17 @@ def pick_movers(snap: dict, cfg: dict, market: str, trade_date: str):
                 "industry": s.get("industry") or "",
                 "changePct": round(chg, 2),
                 "close": bar["close"],
-                "tradingValue": round(value),
+                # 스냅샷 폴백은 거래량이 추정이라 값은 싣지 않는다(하한 판정에만 썼다).
+                "tradingValue": round(value) if bar["source"] != "snapshot" else None,
+                "priceSource": bar["source"],
                 "marketCapB": fnum(s.get("marketCapB")),
                 "_detail": detail or {},
             })
     if dropped:
         print(f"  제외: {dict(dropped)}")
+    sources = Counter(m["priceSource"] for side in out.values() for m in side)
+    if sources:
+        print(f"  등락률 확인 소스: {dict(sources)}")
     return out
 
 

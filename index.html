@@ -406,11 +406,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=a7db259cbd" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=a7db259cbd"></noscript>
+    <link rel="preload" href="styles.css?v=8347a4d940" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=8347a4d940"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=2764148c69"></script>
+    <script src="build_id.js?v=9c48f5fdcc"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1565,6 +1565,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="news-card animate-reveal" id="searchNews"></section>
               <!-- 이 종목이 따라가는 산업 지표(industry.js renderIndustryReverse) — INDUSTRY_BY_TICKER 역인덱스 -->
               <section class="industry-reverse-card animate-reveal" id="industryReverse" hidden></section>
+              <!-- 위험 · 시즈널리티(stock-health.js) — 일봉 종가로 계산한 과거 통계 -->
+              <section class="range52-card sh-card animate-reveal" id="stockRisk" hidden></section>
               <!-- 기업개요(company-info.js renderCompanyInfo) — KR DART · US SEC 해시 샤드 -->
               <section class="range52-card ci-card animate-reveal" id="companyInfo" hidden></section>
             </div>
@@ -1582,8 +1584,13 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="financials-card dcf-card animate-reveal" id="dcfSection" hidden></section>
               <!-- PER·PBR 밴드(valuation-band.js renderValuationBand) -->
               <section class="valband-card animate-reveal" id="valuationBand" hidden></section>
+              <!-- 종목 체력 스노우플레이크(stock-health.js renderStockHealth) — 절대 기준 재무 체크, 업종 상대 등급과 짝 -->
+              <section class="range52-card sh-card animate-reveal" id="stockSnowflake" hidden></section>
               <!-- 업종 상대 팩터 등급(factor-grades.js renderFactorGrades) — 스냅샷·map_fundamentals 로 브라우저 계산 -->
               <section class="fgrade-card animate-reveal" id="factorGrades" hidden></section>
+              <!-- 시장 전체 백분위 · 유사종목 비교(stock-health.js) — AI 모드 대시보드와 같은 본문 -->
+              <section class="range52-card sh-card animate-reveal" id="stockFactorPct" hidden></section>
+              <section class="range52-card sh-card animate-reveal" id="stockPeers" hidden></section>
             </div>
             <div class="sd-view" id="sdv-events" data-view="events" role="tabpanel">
               <section class="stock-events-card animate-reveal" id="stockEvents"></section>
@@ -3289,7 +3296,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="per-basis-core.js?v=b7c4da7066"></script>
     <script src="chart-indicators.js?v=8c1020327f"></script>
     <script src="community.js?v=c4d7daa34a"></script>
-    <script src="ai-mode.js?v=84d484d62f"></script>
+    <script src="ai-mode.js?v=f6931aa04c"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=08f52eb714"></script>
     <script src="movers.js?v=4a60812545"></script>
@@ -3304,12 +3311,12 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=4f4ac1ea8d"></script>
+    <script src="feature-data.js?v=84576c1483"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
     <script src="company-info-core.js?v=c15f9a8b38"></script>
-    <script src="company-info.js?v=c79ceb47d3"></script>
+    <script src="company-info.js?v=0afc274331"></script>
     <script src="treemap-core.js?v=6cefd0806f"></script>
     <script src="treemap.js?v=c18c417434"></script>
     <script src="industry.js?v=3a0246f6c8"></script>
@@ -3319,6 +3326,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="valuation-band.js?v=4148d126ec"></script>
     <script src="factor-grade-core.js?v=5b2d301864"></script>
     <script src="factor-grades.js?v=0146d20671"></script>
+    <script src="stock-health-core.js?v=bd57169177"></script>
+    <script src="stock-health.js?v=9e62cb61d0"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
     <script src="formula-screener.js?v=993d550cd9"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
@@ -3356,7 +3365,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
     <script src="calendar-panel.js?v=497ff92d75"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=aa26fd34fb"></script>
+    <script src="app.js?v=19cb78ea9b"></script>
     <script src="ai-cosmos.js?v=069b3c9089"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=f647c74678"></script>

@@ -25,6 +25,7 @@ if str(SCRIPTS) not in sys.path:
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import git_publish  # noqa: E402
 from update_data import DETAILS_DIR, fetch_earnings_history  # noqa: E402
+from step_budget import StepBudget  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 SNAPSHOT = ROOT / "data" / "market_snapshot.json"
@@ -107,18 +108,47 @@ def refresh_ticker(ticker: str, *, fetch_limit: int = 4) -> bool:
     return True
 
 
+def load_next_offset() -> int:
+    """직전 실행이 시간 예산에 걸려 멈춘 위치. 러너는 매번 새로라 scratch 체크포인트가 남지 않는다 —
+    커밋되는 meta 에 적어 두고 다음 주는 거기서부터 돈다(뒤쪽 종목이 영영 안 도는 일을 막는다)."""
+    try:
+        return max(int(json.loads(META.read_text(encoding="utf-8")).get("nextOffset") or 0), 0)
+    except Exception:
+        return 0
+
+
+def rotate(targets: list[str], offset: int) -> list[str]:
+    if not targets:
+        return targets
+    k = offset % len(targets)
+    return targets[k:] + targets[:k]
+
+
 def refresh_all_incremental(
     *,
     tickers: list[str] | None = None,
     resume: bool = False,
     sleep_s: float = 0.08,
     fetch_limit: int = 4,
+    budget: StepBudget | None = None,
+    start_offset: int = 0,
 ) -> dict[str, int]:
-    targets = tickers or load_snapshot_tickers()
+    base = tickers or load_snapshot_tickers()
+    targets = rotate(base, start_offset)
     done = load_checkpoint() if resume else set()
     updated = skipped = failed = 0
+    processed = 0
+    stopped = ""
 
     for ticker in targets:
+        if budget and budget.over():
+            stopped = budget.reason
+            print(f"[중단] {stopped} — {processed}/{len(targets)}종목 처리, 다음 실행은 이어서 시작", flush=True)
+            break
+        processed += 1
+        if processed % 500 == 0:
+            el = f" · {budget.elapsed_min():.0f}분" if budget else ""
+            print(f"[진행] {processed}/{len(targets)}{el}", flush=True)
         if resume and ticker in done:
             skipped += 1
             continue
@@ -138,19 +168,28 @@ def refresh_all_incremental(
         except Exception as exc:
             failed += 1
             print(f"[err] {ticker}: {exc}")
+            if budget:
+                budget.record(False)
+        else:
+            if budget:
+                budget.record(True)
         if updated and updated % 50 == 0:
             save_checkpoint(done)
         time.sleep(sleep_s)
 
     save_checkpoint(done)
-    return {"updated": updated, "skipped": skipped, "failed": failed, "total": len(targets)}
+    n = len(base)
+    next_offset = ((start_offset + processed) % n) if (stopped and n) else 0
+    return {"updated": updated, "skipped": skipped, "failed": failed, "total": len(targets),
+            "processed": processed, "nextOffset": next_offset, "stoppedReason": stopped}
 
 
-def write_meta(stats: dict[str, int]) -> None:
+def write_meta(stats: dict) -> None:
     atomic_write_text(META, json.dumps({
         "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
         "source": "yahoo earningsHistory (incremental)",
-        **{k: int(v) for k, v in stats.items()},
+        **{k: (int(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v)
+           for k, v in stats.items() if v not in (None, "")},
     }, ensure_ascii=False, indent=2) + "\n")
 
 
@@ -173,6 +212,8 @@ def main() -> int:
     parser.add_argument("--resume", action="store_true")
     parser.add_argument("--sleep", type=float, default=0.08)
     parser.add_argument("--fetch-limit", type=int, default=4)
+    parser.add_argument("--time-budget-min", type=float, default=0,
+                        help="이 분이 지나면 멈추고 받은 데까지 발행(0=무제한). 멈춘 위치는 meta.nextOffset")
     args = parser.parse_args()
 
     with repository_publish_lock(ROOT):
@@ -180,6 +221,8 @@ def main() -> int:
             resume=args.resume,
             sleep_s=args.sleep,
             fetch_limit=args.fetch_limit,
+            budget=StepBudget(args.time_budget_min),
+            start_offset=load_next_offset(),
         )
         print(
             f"updated={stats['updated']} skipped={stats['skipped']} "

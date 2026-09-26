@@ -250,6 +250,39 @@ test("상태 인코딩 왕복 + 잘못된 문자열 거부", () => {
   assert.equal(core.decodeState("2,9|1,1,1,1,1|1,1,1,1,1|1,1,1,1,1"), null, "r ≤ tg 거부");
 });
 
+// ── KR 주식수 대체값(withListedShares) — 2026-09-26 카카오 '주식수 공시가 없어' 사례 ──
+const krNoShares = {
+  market: "kr", currency: "KRW", industryType: "general", flags: [],
+  annual: [{ fy: 2025, rev: 8.1e12, op: 7.3e11, net: 4.9e11, ocf: 1.4e12, capex: 4.8e11, fcf: 9.3e11, cash: 6.4e12, debt: 2.1e12, netDebt: -4.2e12 }],
+  ttm: { basis: "FY", fy: 2025, rev: 8.1e12, net: 4.9e11, ocf: 1.4e12, capex: 4.8e11, fcf: 9.3e11, netDebt: -4.2e12 },
+};
+test("KR 주식수 없음 → noShares, listedShares 로 보완하면 계산되고 라벨이 대체값임을 밝힌다", () => {
+  assert.equal(core.eligibility(krNoShares, "kr").code, "noShares");
+  const f = core.withListedShares(krNoShares, { listedShares: 442999903, price: 33800, marketCapB: 14.973 });
+  assert.notEqual(f, krNoShares, "원본을 바꾸지 않고 사본");
+  assert.equal(krNoShares.sharesFallback, undefined);
+  const sh = core.dilutedShares(f);
+  assert.equal(sh.value, 442999903);
+  assert.ok(sh.fallback && /상장주식수/.test(sh.label) && /자기주식 포함/.test(sh.label));
+  assert.ok(core.eligibility(f, "kr").ok);
+  const rev = core.reverseDcf(f, { market: "kr", price: 33800, r: 0.09, tg: 0.02 });
+  assert.ok(rev.ok);
+  near(rev.marketCap, 33800 * 442999903, 1);
+});
+test("listedShares 없는 옛 스냅샷: 시총 1조 이상만 시총÷현재가로 추정, 미만은 보완 안 함", () => {
+  const big = core.dilutedShares(core.withListedShares(krNoShares, { price: 33800, marketCapB: 14.973 }));
+  near(big.value, Math.round(14.973e12 / 33800), 0.5);
+  assert.ok(/추정/.test(big.label));
+  assert.equal(core.withListedShares(krNoShares, { price: 5000, marketCapB: 0.05 }), krNoShares);
+});
+test("공시 주식수가 있으면 대체값을 쓰지 않는다 · US 파일은 건드리지 않는다", () => {
+  const withOut = Object.assign({}, krNoShares, { annual: [Object.assign({}, krNoShares.annual[0], { sharesOut: 400000000 })] });
+  assert.equal(core.withListedShares(withOut, { listedShares: 442999903 }), withOut);
+  assert.equal(core.dilutedShares(withOut).value, 400000000);
+  const us = Object.assign({}, krNoShares, { market: "us" });
+  assert.equal(core.withListedShares(us, { listedShares: 1 }), us);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

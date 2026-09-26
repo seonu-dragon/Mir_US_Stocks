@@ -400,6 +400,19 @@ function dcfAction(host, ctx, act) {
   }
 }
 
+// KR 재무 파일에 DART 주식수가 아직 없으면 스냅샷 상장주식수로 보완한 사본(dcf-core withListedShares).
+// 같은 원본·같은 주식수면 같은 사본을 돌려준다 — renderDcf 의 '같은 파일이면 다시 안 그림' 비교가 깨지지 않게.
+const dcfSharesCache = new WeakMap();
+function dcfFileWithShares(file, item) {
+  if (!file || typeof file !== "object" || !window.MirDcfCore || !MirDcfCore.withListedShares) return file;
+  const sk = `${item && item.listedShares}|${item && item.marketCapB}|${item && item.price}`;
+  const hit = dcfSharesCache.get(file);
+  if (hit && hit.sk === sk) return hit.out;
+  const out = MirDcfCore.withListedShares(file, item);
+  dcfSharesCache.set(file, { sk, out });
+  return out;
+}
+
 // 종목 분석 뷰(#dcfSection). 재무 파일이 없는 종목·ETF 는 숨긴다.
 function renderDcf(item) {
   const host = byId("dcfSection");
@@ -408,8 +421,9 @@ function renderDcf(item) {
   if (!item || !item.ticker || !window.MirDcfCore || typeof loadFinancials !== "function"
       || (typeof isStockEtf === "function" && isStockEtf(item))) return hide();
   const ticker = item.ticker;
-  const file = financialsCached(ticker);
-  if (file === null) return hide();
+  const rawFile = financialsCached(ticker);
+  if (rawFile === null) return hide();
+  const file = rawFile === undefined ? undefined : dcfFileWithShares(rawFile, item);
   if (file === undefined) {
     loadFinancials(ticker).then((f) => {
       if (typeof selectedTicker !== "undefined" && dcfKey(selectedTicker) !== dcfKey(ticker)) return;
@@ -439,9 +453,10 @@ function renderDcf(item) {
 }
 
 // ── AI 모드 DCF 패널(요약) ──
-function dcfAiPanelHtml(item, file) {
+function dcfAiPanelHtml(item, rawFile) {
   const core = window.MirDcfCore;
-  if (!core || !file) return "";
+  if (!core || !rawFile) return "";
+  const file = dcfFileWithShares(rawFile, item);
   const market = dcfMarket();
   const price = Number(item.price);
   const el = core.eligibility(file, market);
@@ -470,7 +485,7 @@ function dcfAiPanelHtml(item, file) {
     { label: "기준 FCF", value: `${mfMoney(rev.fcf0, file.currency)} · ${rev.basis === "avg3" ? "3년 평균" : "TTM"}` },
     { label: "할인율 · 영구성장", value: `${dcfPct(r)} · ${dcfPct(tg)}` },
     { label: "과거 달성 비율", value: brText },
-  ]) + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">현재가 ${escapeHtml(dcfPrice(price))}를 정당화하려면 향후 10년 FCF 가 매년 이만큼 자라야 한다는 역산입니다. 할인율 = ${dr.fallback ? "고정 기본값" : `${escapeHtml(dr.rfInfo.label)} + 주식위험프리미엄(Damodaran)`}. 과거 달성 비율은 비슷한 매출 규모 기업의 과거 분포(생존편향 있음)입니다. <b>추정치이며 가정에 극도로 민감</b>하고 투자 권유가 아닙니다. 가정을 바꾸는 시나리오 DCF 는 종목 분석 화면에 있습니다.</div>`;
+  ]) + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">현재가 ${escapeHtml(dcfPrice(price))}를 정당화하려면 향후 10년 FCF 가 매년 이만큼 자라야 한다는 역산입니다. 할인율 = ${dr.fallback ? "고정 기본값" : `${escapeHtml(dr.rfInfo.label)} + 주식위험프리미엄(Damodaran)`}. 과거 달성 비율은 비슷한 매출 규모 기업의 과거 분포(생존편향 있음)입니다. <b>추정치이며 가정에 극도로 민감</b>하고 투자 권유가 아닙니다. 가정을 바꾸는 시나리오 DCF 는 종목 분석 화면에 있습니다.${rev.shares && rev.shares.fallback ? ` 주식수: ${escapeHtml(rev.shares.label)}.` : ""}</div>`;
   return aiModePanel("역DCF", "시장 가격에 들어 있는 성장률 · 추정", body);
 }
 

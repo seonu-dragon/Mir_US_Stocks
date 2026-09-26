@@ -44,6 +44,7 @@ if str(SCRIPTS) not in sys.path:
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, latest_fiscal_year, write_data  # noqa: E402
 from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from step_budget import StepBudget, carry_over, missing_first  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "korea" / "ownership_profile.json"
@@ -93,7 +94,8 @@ def write_outputs(payload: dict) -> None:
                min_ratio=DART_REGRESSION_FLOOR)
 
 
-def _rows(api: str, corp: str, year: str, api_key: str, errors: dict) -> list[dict]:
+def _rows(api: str, corp: str, year: str, api_key: str, errors: dict,
+          budget: StepBudget | None = None) -> list[dict]:
     try:
         data = dart_get(f"{api}.json",
                         {"corp_code": corp, "bsns_year": year, "reprt_code": "11011"},
@@ -101,7 +103,11 @@ def _rows(api: str, corp: str, year: str, api_key: str, errors: dict) -> list[di
     except Exception as exc:
         k = f"{api}:request:{type(exc).__name__}"
         errors[k] = errors.get(k, 0) + 1
+        if budget:
+            budget.record(False)
         return []
+    if budget:
+        budget.record(True)
     status = str(data.get("status") or "")
     if status == "013":
         return []
@@ -177,7 +183,9 @@ def major_holder(rows: list[dict]) -> dict:
     return out
 
 
-def build(api_key: str, year: str, limit: int | None):
+def build(api_key: str, year: str, limit: int | None, budget: StepBudget | None = None,
+          prev: dict | None = None):
+    """(profiles, errors, attempted, universe). prev 에 있는 종목은 뒤로 — 못 받은 종목부터 채운다."""
     snapshot = load_json(KR_SNAPSHOT, {"stocks": []})
     stocks = [s for s in snapshot.get("stocks") or []
               if s.get("sector") not in ("ETF", "etf", "EXCHANGE TRADED FUNDS")]
@@ -196,20 +204,32 @@ def build(api_key: str, year: str, limit: int | None):
             pairs.append((t, corp))
     if limit:
         pairs = pairs[:limit]
-    print(f"[프로필] 대상 {len(pairs)}종목 × 3 API = 약 {len(pairs) * 3}회 호출")
+    universe = {t for t, _ in pairs}
+    pairs = missing_first(pairs, set(prev or {}))
+    print(f"[프로필] 대상 {len(pairs)}종목 × 3 API = 약 {len(pairs) * 3}회 호출 "
+          f"(직전 값 {len(prev or {})}종목 — 없는 종목부터)", flush=True)
 
     out: dict[str, dict] = {}
     errors: dict[str, int] = {}
+    attempted: set[str] = set()
     for i, (ticker, corp) in enumerate(pairs, 1):
+        if budget and budget.over():
+            print(f"[프로필] {budget.reason} — {i - 1}/{len(pairs)}종목에서 멈춘다(나머지는 직전 값 이월)",
+                  flush=True)
+            break
         if i % 300 == 0:
-            print(f"[프로필] {i}/{len(pairs)} …")
+            el = f" · {budget.elapsed_min():.0f}분" if budget else ""
+            print(f"[프로필] {i}/{len(pairs)} …{el}", flush=True)
+        n_err = sum(errors.values())
         row = {}
-        row.update(minority_holders(_rows("mrhlSttus", corp, year, api_key, errors)))
-        row.update(treasury_stock(_rows("tesstkAcqsDspsSttus", corp, year, api_key, errors)))
-        row.update(major_holder(_rows("hyslrSttus", corp, year, api_key, errors)))
+        row.update(minority_holders(_rows("mrhlSttus", corp, year, api_key, errors, budget)))
+        row.update(treasury_stock(_rows("tesstkAcqsDspsSttus", corp, year, api_key, errors, budget)))
+        row.update(major_holder(_rows("hyslrSttus", corp, year, api_key, errors, budget)))
+        if row or sum(errors.values()) == n_err:
+            attempted.add(ticker)          # 값을 얻었거나 세 API 모두 응답(013 포함)을 받았을 때만 '확인함'
         if row:
             out[ticker] = row
-    return out, errors
+    return out, errors, attempted, universe
 
 
 def main() -> int:
@@ -217,6 +237,8 @@ def main() -> int:
     parser.add_argument("--push", action="store_true")
     parser.add_argument("--year", default="", help="사업연도. 기본은 작년.")
     parser.add_argument("--limit", type=int, default=None, help="시총 상위 N종목만(테스트용)")
+    parser.add_argument("--time-budget-min", type=float, default=0,
+                        help="이 분이 지나면 멈추고 저장(0=무제한). 못 받은 종목은 직전 값(같은 사업연도) 이월.")
     args = parser.parse_args()
 
     # 최신 조회 가능 사업연도. 사업보고서는 3월 말까지 제출되므로 1~3월에는
@@ -230,10 +252,15 @@ def main() -> int:
         print("DART_API_KEY missing; wrote empty kr ownership profile payload.")
         return 0
 
-    profiles, errors = build(api_key, year, args.limit)
+    prev_payload = load_json(OUT_JSON, {}) or {}
+    prev = (prev_payload.get("profiles") or {}) if str(prev_payload.get("year") or "") == year else {}
+    budget = StepBudget(args.time_budget_min)
+    fresh, errors, attempted, universe = build(api_key, year, args.limit, budget, prev)
+    profiles, carried = carry_over(fresh, prev, attempted, universe)
+    print(f"[프로필] 이번 수집 {len(fresh)}종목 · 직전 값 이월 {carried}종목", flush=True)
     if errors:
         print(f"[프로필] 오류 응답 {sum(errors.values())}건: {dict(list(errors.items())[:5])}")
-    if not profiles and errors:
+    if not fresh and errors:
         print("[프로필] 수집 0건 + 오류 발생 — 기존 파일을 덮어쓰지 않고 실패 처리한다.")
         return 1
 
@@ -248,6 +275,10 @@ def main() -> int:
         "note": "소액주주 유통물량·자기주식·최대주주 지분율. 최신 사업보고서 기준.",
         "year": year,
         "companyCount": len(profiles),
+        # 시간 예산에 걸린 주에는 일부 종목이 직전 실행 값(같은 사업연도)이다.
+        "refreshedCount": len(fresh),
+        "carriedCount": carried,
+        "stoppedReason": budget.reason or None,
         "coverage": counts,
         "profiles": profiles,
     }

@@ -43,6 +43,7 @@ if str(SCRIPTS) not in sys.path:
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, write_data  # noqa: E402
 from build_kr_disclosures import dart_get, load_corp_map  # noqa: E402
+from step_budget import StepBudget, carry_over, missing_first  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "korea" / "earnings.json"
@@ -142,7 +143,8 @@ def announce_date(rcept_no: str) -> str:
     return f"{s[:4]}-{s[4:6]}-{s[6:8]}" if len(s) >= 8 and s[:8].isdigit() else ""
 
 
-def fetch_batch(corp_codes: list[str], year: str, reprt: str, api_key: str, errors: dict) -> list[dict]:
+def fetch_batch(corp_codes: list[str], year: str, reprt: str, api_key: str, errors: dict,
+                budget: StepBudget | None = None) -> list[dict]:
     try:
         data = dart_get(
             "fnlttMultiAcnt.json",
@@ -152,7 +154,11 @@ def fetch_batch(corp_codes: list[str], year: str, reprt: str, api_key: str, erro
     except Exception as exc:
         key = f"request:{type(exc).__name__}"
         errors[key] = errors.get(key, 0) + 1
+        if budget:
+            budget.record(False)
         return []
+    if budget:
+        budget.record(True)
     status = str(data.get("status") or "")
     if status == "013":
         return []                       # 해당 분기 데이터 없음
@@ -163,7 +169,11 @@ def fetch_batch(corp_codes: list[str], year: str, reprt: str, api_key: str, erro
     return data.get("list") or []
 
 
-def build(api_key: str, years: list[str], limit: int | None):
+class PhaseStopped(Exception):
+    """분기 실적 단계가 시간 예산·연속 실패로 끝나지 못했다 — 반쪽 결과는 쓰지 않는다."""
+
+
+def build(api_key: str, years: list[str], limit: int | None, budget: StepBudget | None = None):
     snapshot = load_json(KR_SNAPSHOT, {"stocks": []})
     stocks = [
         s for s in snapshot.get("stocks") or []
@@ -189,7 +199,7 @@ def build(api_key: str, years: list[str], limit: int | None):
         pairs = pairs[:limit]
     by_corp = {c: t for t, c in pairs}
     print(f"[실적] 대상 {len(pairs)}종목 · {len(years)}개년 × {len(REPORTS)}보고서 "
-          f"= 약 {-(-len(pairs) // BATCH) * len(years) * len(REPORTS)}회 호출")
+          f"= 약 {-(-len(pairs) // BATCH) * len(years) * len(REPORTS)}회 호출", flush=True)
 
     errors: dict[str, int] = {}
     # ticker -> {(year, reprt): row}
@@ -198,8 +208,12 @@ def build(api_key: str, years: list[str], limit: int | None):
     for year in years:
         for reprt, (qlabel, qnum) in REPORTS.items():
             for i in range(0, len(pairs), BATCH):
+                if budget and budget.over():
+                    # 분기 실적은 208회짜리라 평소엔 몇 분이면 끝난다. 여기서 멈췄다면 DART 가
+                    # 비정상이다 — 일부 분기만 빈 채로 발행하지 않고 기존 파일을 유지한다.
+                    raise PhaseStopped(budget.reason)
                 chunk = [c for _, c in pairs[i:i + BATCH]]
-                rows = fetch_batch(chunk, year, reprt, api_key, errors)
+                rows = fetch_batch(chunk, year, reprt, api_key, errors, budget)
                 # 종목·재무제표구분별로 손익계산서만 모은다.
                 grouped: dict[tuple[str, str], list[dict]] = {}
                 # 손익계산서(IS)와 재무상태표(BS)를 같이 모은다. BS 는 자산총계 하나만
@@ -280,7 +294,8 @@ def build(api_key: str, years: list[str], limit: int | None):
     return out, errors, pairs
 
 
-def fetch_cash_flow_and_ev(api_key: str, pairs: list[tuple[str, str]], year: str):
+def fetch_cash_flow_and_ev(api_key: str, pairs: list[tuple[str, str]], year: str,
+                          budget: StepBudget | None = None, attempted: set | None = None):
     """{ticker: {operatingCashFlow, capex, freeCashFlow, cash, totalDebt}} — 최신 연간.
 
     한 번의 전체재무제표 응답에서 현금흐름표(P/FCF 용)와 재무상태표(EV 용)를 같이
@@ -294,9 +309,15 @@ def fetch_cash_flow_and_ev(api_key: str, pairs: list[tuple[str, str]], year: str
     """
     out: dict[str, dict] = {}
     errors: dict[str, int] = {}
+    attempted = attempted if attempted is not None else set()
     for i, (ticker, corp) in enumerate(pairs, 1):
-        if i % 500 == 0:
-            print(f"[현금흐름] {i}/{len(pairs)} …")
+        if budget and budget.over():
+            print(f"[현금흐름] {budget.reason} — {i - 1}/{len(pairs)}종목에서 멈춘다(나머지는 직전 값 이월)",
+                  flush=True)
+            break
+        if i % 250 == 0:
+            el = f" · {budget.elapsed_min():.0f}분" if budget else ""
+            print(f"[현금흐름] {i}/{len(pairs)} …{el}", flush=True)
         try:
             data = dart_get(
                 "fnlttSinglAcntAll.json",
@@ -305,8 +326,14 @@ def fetch_cash_flow_and_ev(api_key: str, pairs: list[tuple[str, str]], year: str
             )
         except Exception as exc:
             errors[f"request:{type(exc).__name__}"] = errors.get(f"request:{type(exc).__name__}", 0) + 1
+            if budget:
+                budget.record(False)
             continue
+        if budget:
+            budget.record(True)
         status = str(data.get("status") or "")
+        if status in ("000", "013"):
+            attempted.add(ticker)          # 응답을 받아 '확인한' 종목 — 이월 대상이 아니다
         if status == "013":
             continue
         if status != "000":
@@ -357,6 +384,9 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=None, help="시총 상위 N종목만(테스트용)")
     parser.add_argument("--skip-cashflow", action="store_true",
                         help="현금흐름(종목당 1회, 가장 느림) 단계를 건너뛴다")
+    parser.add_argument("--time-budget-min", type=float, default=0,
+                        help="이 분이 지나면 호출을 멈추고 받은 데까지 저장(0=무제한). "
+                             "현금흐름 단계에서 못 받은 종목은 직전 값을 이월한다.")
     args = parser.parse_args()
 
     this_year = datetime.now(KST).year
@@ -374,7 +404,12 @@ def main() -> int:
         print("DART_API_KEY missing; wrote empty kr earnings payload.")
         return 0
 
-    earnings, errors, pairs = build(api_key, years, args.limit)
+    budget = StepBudget(args.time_budget_min)
+    try:
+        earnings, errors, pairs = build(api_key, years, args.limit, budget)
+    except PhaseStopped as exc:
+        print(f"[실적] 분기 실적 단계 중단({exc}) — 기존 파일을 유지하고 실패 처리한다.", flush=True)
+        return 1
     if errors:
         print(f"[실적] 오류 응답 {sum(errors.values())}건: {errors}")
     if not earnings and errors:
@@ -382,13 +417,22 @@ def main() -> int:
         return 1
 
     cash_flow = {}
+    cf_year = str(max(int(y) for y in years) - 1)       # 최신 '연간' 보고서가 있는 해
+    cf_stats = {"refreshed": 0, "carried": 0}
     if not args.skip_cashflow:
-        # 종목당 1회라 가장 비싼 단계다(≈2,600회, 수 분). 값이 분기에만 바뀌므로
-        # 주간 워크플로우에서 도는 걸 전제로 한다.
-        cf_year = str(max(int(y) for y in years) - 1)   # 최신 '연간' 보고서가 있는 해
-        print(f"[현금흐름·EV] {len(pairs)}종목 × 1회 (기준연도 {cf_year})")
-        cash_flow = fetch_cash_flow_and_ev(api_key, pairs, cf_year)
-        print(f"[현금흐름] {len(cash_flow)}종목 수집.")
+        # 종목당 1회라 가장 비싼 단계다(≈2,600회, 평소 1시간). 값이 사업보고서에만 바뀌므로
+        # 주간 워크플로우에서 도는 걸 전제로 한다. 직전 파일에 없는 종목부터 받는다.
+        prev = load_json(OUT_JSON, {}) or {}
+        prev_years = [int(y) for y in prev.get("years") or [] if str(y).isdigit()]
+        prev_cf_year = str(prev.get("cashFlowYear") or (max(prev_years) - 1 if prev_years else ""))
+        prev_cf = (prev.get("cashFlow") or {}) if prev_cf_year == cf_year else {}
+        ordered = missing_first(pairs, set(prev_cf))
+        print(f"[현금흐름·EV] {len(pairs)}종목 × 1회 (기준연도 {cf_year}, 직전 값 {len(prev_cf)}종목)", flush=True)
+        attempted: set[str] = set()
+        fresh_cf = fetch_cash_flow_and_ev(api_key, ordered, cf_year, budget, attempted)
+        cash_flow, carried = carry_over(fresh_cf, prev_cf, attempted, {t for t, _ in pairs})
+        cf_stats = {"refreshed": len(fresh_cf), "carried": carried}
+        print(f"[현금흐름] {len(fresh_cf)}종목 수집 · 직전 값 이월 {carried}종목.", flush=True)
 
     payload = {
         "updatedAtKst": now_kst(),
@@ -399,6 +443,11 @@ def main() -> int:
         "years": years,
         "companyCount": len(earnings),
         "earnings": earnings,
+        "cashFlowYear": cf_year,
+        # 시간 예산에 걸린 주에는 일부 종목의 cashFlow 가 직전 실행 값(같은 사업연도)이다.
+        "cashFlowRefreshed": cf_stats["refreshed"],
+        "cashFlowCarried": cf_stats["carried"],
+        "stoppedReason": budget.reason or None,
         "cashFlow": cash_flow,
     }
     write_outputs(payload)

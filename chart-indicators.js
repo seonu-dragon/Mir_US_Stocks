@@ -296,7 +296,7 @@ function renderComparePanel(item, rows, xFor, x1, x2, top, height) {
   const series = [{
     name: item.ticker,
     values: indexedReturnSeries(rows),
-    color: "#f8fafc",
+    color: "var(--text)",
     width: 1.5
   }];
   const colors = ["#60a5fa", "#34d399", "#f59e0b", "#f472b6", "#818cf8"];

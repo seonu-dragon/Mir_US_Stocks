@@ -112,7 +112,10 @@ def test_deeplinks(browser, base: str) -> None:
           const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
           const atEnd = Math.abs(y - max) <= 4;
           // 문서가 뷰포트보다 짧으면(내 투자 빈 상태 등) 스크롤할 곳이 없다 — 그건 통과.
-          return (y > 100 || max < 100) && ((top > -20 && top < 60) || atEnd);
+          // UI 1단계(2026-09-26)부터 히어로 검색은 오늘 탭에만 있어 다른 탭은 탭 바가 헤더 바로
+          // 아래(문서 y≈70)에 온다 — 이미 본문 위라 스크롤 거리가 짧아도 통과.
+          const docTop = top + y;
+          return (y > 100 || max < 100 || docTop < 160) && ((top > -20 && top < 90) || atEnd);
         }"""
         try:
             page.wait_for_function(cond, timeout=9000)

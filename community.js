@@ -536,7 +536,7 @@ function communityMiniChartHtml(ticker) {
   const stock = ticker ? stockByTicker(ticker) : null;
   const series = stock && Array.isArray(stock.closeSeries) ? stock.closeSeries : null;
   if (!series || series.length < 2) return "";
-  const color = (stock.changePct ?? 0) >= 0 ? "#138a4d" : "#c03535";
+  const color = (stock.changePct ?? 0) >= 0 ? "var(--pos)" : "var(--neg)";
   return `<div class="community-post-spark">${sparklineSvg(series, { width: 160, height: 40, color })}</div>`;
 }
 

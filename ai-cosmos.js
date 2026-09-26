@@ -993,12 +993,18 @@
     if (lastY >= padT - 1 && lastY <= padT + plotH + 1) {
       const prev = n > 1 ? chartBars[n - 2].c : last.o;
       ctx.fillStyle = last.c >= prev ? mirColor("pos", "#16a34a") : mirColor("neg", "#dc2626");
-      const tagW = Math.max(30, w - axisX - 4);
-      if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(axisX + 2, lastY - 8, tagW, 16, 3); ctx.fill(); }
-      else ctx.fillRect(axisX + 2, lastY - 8, tagW, 16);
-      ctx.fillStyle = "#fff";
+      // 태그 폭은 글자 폭으로 재고 오른쪽 끝에서 6px 안쪽에 둔다 — 예전엔 캔버스 끝(w-2)까지 칠해
+      // 옆 패널·화면 가장자리에 붙어 잘려 보였다. 값은 요약 카드와 같은 자릿수(국내 정수, 해외 소수 2자리).
       ctx.font = "700 10px Pretendard, system-ui, sans-serif";
-      ctx.fillText(fmtPrice(last.c), w - 6, lastY + 3.5);
+      const kr = typeof isKrMarket === "function" && isKrMarket();
+      const tagDec = kr || last.c >= 1000 ? 0 : 2;
+      const tagText = last.c.toLocaleString("en-US", { minimumFractionDigits: tagDec, maximumFractionDigits: tagDec });
+      const tagW = Math.max(30, Math.ceil(ctx.measureText(tagText).width) + 10);
+      const tagX = Math.max(padL, Math.min(axisX + 2, w - 6 - tagW));
+      if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(tagX, lastY - 8, tagW, 16, 3); ctx.fill(); }
+      else ctx.fillRect(tagX, lastY - 8, tagW, 16);
+      ctx.fillStyle = "#fff";
+      ctx.fillText(tagText, tagX + tagW - 5, lastY + 3.5);
     }
     // A(자동 맞춤)·L(로그) 토글 — 가격 축 칸, 가격 플롯 바로 아래(거래량 옆 빈 칸).
     const bw = 22;

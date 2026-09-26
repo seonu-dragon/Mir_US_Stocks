@@ -550,9 +550,15 @@ async function fetchCardNewsLight() {
   }
 }
 
+// 지금 data 에 들어 있는 실제 스냅샷의 시장(폴백 데모면 null). 네트워크 복구·재시도 때 다시 받다가
+// 순간 끊기면 멀쩡한 실제 데이터를 데모 데이터로 덮어쓰던 것을 막는다(같은 시장일 때만 유지).
+let loadedSnapshotMarket = null;
+
 async function loadData(options = {}) {
   const cfg = marketCfg();
   let loaded = false;
+  const hadRealSnapshot = !usingFallbackSnapshot && loadedSnapshotMarket === cfg.id
+    && data && Array.isArray(data.stocks) && data.stocks.length > 0;
   usingFallbackSnapshot = false;
   if (window.location.protocol !== "file:") {
     try {
@@ -580,10 +586,17 @@ async function loadData(options = {}) {
     }
   }
 
+  if (!loaded && hadRealSnapshot) {
+    console.warn(`Snapshot reload failed for ${cfg.id}; keeping the data already on screen.`);
+    loaded = true;
+  }
   if (!loaded) {
     console.warn(`Using fallback snapshot for ${cfg.id}. Regenerate ${cfg.snapshotPath}.`);
     data = fallbackData;
     usingFallbackSnapshot = true;
+    loadedSnapshotMarket = null;
+  } else {
+    loadedSnapshotMarket = cfg.id;
   }
   rebuildStockIndex();
 
@@ -7966,6 +7979,64 @@ function setupMyInvestEmpty() {
 
 // ----- 챗봇 FAB: 첫 방문 1회 말풍선 + 푸터와 겹치지 않게 -----
 const CHAT_BUBBLE_SEEN_KEY = "mir_chat_bubble_seen_v1";
+// 폰: 멈춰 있을 때 FAB 자리 아래에 차트·표 칸·버튼·굵은 숫자가 있으면 FAB 를 비켜 둔다.
+// 스크롤 숨김만으로는 멈추는 순간 다시 나타나 오늘 탭 하루 차트의 가격 축·마지막 값, 표의
+// 마지막 열, 시세 카드 숫자를 계속 가렸다. 빈 여백·본문 글 위에서만 보인다.
+const CHAT_FAB_COVER_SEL = "td, th, button, a, input, select, textarea, label, [role='button'], [role='tab'], canvas, .home-chart-plot";
+function chatFabCoversImportant(el) {
+  if (!el || el.closest("#chatbot")) return false;
+  if (el.closest(CHAT_FAB_COVER_SEL)) return true;
+  const svg = el.closest("svg");
+  if (svg) {
+    const r = svg.getBoundingClientRect();
+    return r.width >= 160 && r.height >= 70; // 차트(작은 아이콘·스파크라인 제외)
+  }
+  const text = (el.textContent || "").trim();
+  if (text.length > 0 && text.length <= 32 && /\d/.test(text)) {
+    const weight = parseInt(getComputedStyle(el).fontWeight, 10) || 400;
+    if (weight >= 600) return true;
+  }
+  return false;
+}
+
+function setupChatFabCoverGuard(chat) {
+  const fab = chat.querySelector(".chat-fab");
+  if (!fab || typeof document.elementsFromPoint !== "function") return;
+  let raf = 0;
+  const check = () => {
+    raf = 0;
+    // 드래그로 옮겼거나 패널이 열려 있으면 손대지 않는다.
+    if (chat.style.left || chat.style.top || chat.classList.contains("is-chat-open")) {
+      chat.classList.remove("is-cover-hidden");
+      return;
+    }
+    const size = fab.offsetWidth;
+    if (!size) return;
+    const cs = getComputedStyle(chat);
+    // transform(스크롤 숨김) 영향이 없는 제자리 좌표로 잰다.
+    const right = document.documentElement.clientWidth - (parseFloat(cs.right) || 0);
+    const bottom = window.innerHeight - (parseFloat(cs.bottom) || 0);
+    const left = right - size;
+    const top = bottom - size;
+    let covered = false;
+    for (let i = 0; i < 3 && !covered; i += 1) {
+      for (let j = 0; j < 3 && !covered; j += 1) {
+        const x = left + 4 + ((size - 8) * i) / 2;
+        const y = top + 4 + ((size - 8) * j) / 2;
+        const hit = document.elementsFromPoint(x, y).find((e) => !e.closest("#chatbot"));
+        if (chatFabCoversImportant(hit)) covered = true;
+      }
+    }
+    chat.classList.toggle("is-cover-hidden", covered);
+  };
+  const schedule = () => { if (!raf) raf = requestAnimationFrame(check); };
+  window.addEventListener("scroll", schedule, { passive: true });
+  window.addEventListener("resize", schedule);
+  // 탭 전환·더 보기 등으로 FAB 아래 내용이 바뀐다. 차트·패널은 비동기로 그려져 한 번 더 본다.
+  document.addEventListener("click", () => { setTimeout(schedule, 350); setTimeout(schedule, 1600); }, true);
+  [800, 2500, 6000].forEach((ms) => setTimeout(schedule, ms));
+}
+
 function setupChatFabIa() {
   const chat = byId("chatbot");
   const bubble = byId("chatBubble");
@@ -7993,6 +8064,7 @@ function setupChatFabIa() {
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => chat.classList.remove("is-scroll-hidden"), 900);
     }, { passive: true });
+    setupChatFabCoverGuard(chat);
   }
   const footer = document.querySelector("footer");
   if (footer && typeof IntersectionObserver === "function") {

@@ -12871,6 +12871,8 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   /* 챗봇: 아래로 스크롤하는 동안 숨김(app.js setupChatFabIa) */
   .chatbot { transition: transform 0.22s ease, opacity 0.22s ease; }
   .chatbot.is-scroll-hidden:not(.is-chat-open) { transform: translateY(140%); opacity: 0; pointer-events: none; }
+  /* 멈춘 자리 아래에 차트·표 칸·버튼·굵은 숫자가 있으면 비켜 둔다(app.js setupChatFabCoverGuard) */
+  .chatbot.is-cover-hidden:not(.is-chat-open) { transform: translateY(140%); opacity: 0; pointer-events: none; }
   /* 트리맵 '지도/목록' 전환은 폰에서만 */
   .ia-map-view-seg[hidden] { display: none; }
   #mapViewSeg { display: inline-flex; margin: 0 0 10px; }

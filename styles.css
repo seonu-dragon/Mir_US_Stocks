@@ -14176,3 +14176,56 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
   .pf-risk-controls label { flex: 1 1 40%; }
   .pf-risk-controls select { width: 100%; }
 }
+
+/* 수식 스크리너 과거 백테스트(screener-backtest.js) — 결과 머리 줄(#fxBacktestSlot) 아래 전체 폭. 배지는 매수/매도로 읽히지 않게 중립·경고 톤만. */
+.fx-backtest-slot { flex: 1 1 100%; width: 100%; min-width: 0; }
+.fxbt { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 12px 14px; min-width: 0; }
+.fxbt-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; }
+.fxbt-head h4 { margin: 0; font-size: 15px; }
+.fxbt-head h4 .muted { font-weight: 400; font-size: var(--fs-cap); }
+.fxbt-note { margin: 6px 0 8px; font-size: var(--fs-cap); line-height: 1.55; }
+.fxbt-badge { display: inline-block; padding: 2px 9px; border-radius: var(--r-pill); border: 1px solid var(--line); font-size: var(--fs-cap); font-weight: 600; line-height: 1.6; white-space: nowrap; }
+.fxbt-badge.is-survivor { background: var(--tint-warn); border-color: transparent; color: var(--amber); }
+.fxbt-badge.is-pass { background: var(--tint-info); border-color: transparent; color: var(--primary); }
+.fxbt-badge.is-insufficient { background: var(--panel-soft); color: var(--text-muted); }
+.fxbt-badge.is-overfit { background: var(--tint-neg); border-color: transparent; color: var(--red); }
+.fxbt-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 12px; }
+.fxbt-controls label { display: flex; flex-direction: column; gap: 2px; font-size: var(--fs-cap); color: var(--text-muted); }
+.fxbt-controls input { width: 96px; }
+.fxbt-trials { font-size: var(--fs-cap); }
+.fxbt-missing { padding: 8px 10px; border: 1px dashed var(--line); border-radius: var(--r-md); font-size: 13px; }
+.fxbt-missing ul { margin: 4px 0; padding-left: 18px; }
+.fxbt-missing p { margin: 4px 0 0; font-size: var(--fs-cap); overflow-wrap: anywhere; }
+.fxbt-result:empty { display: none; }
+.fxbt-result { margin-top: 10px; min-width: 0; }
+.fxbt-verdict { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.fxbt-verdict-why { font-size: var(--fs-cap); }
+.fxbt-summary { margin: 8px 0; font-size: 13px; line-height: 1.6; }
+.fxbt-error { color: var(--red); font-size: 13px; }
+.fxbt-chart { margin: 6px 0 10px; }
+.fxbt-chart svg { display: block; max-width: 100%; height: auto; }
+.fxbt-chart .grid { stroke: var(--line); stroke-width: 1; }
+.fxbt-chart .grid.base { stroke: var(--text-muted); stroke-dasharray: 3 3; }
+.fxbt-chart .ax { fill: var(--text-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.fxbt-chart .ln { fill: none; stroke-width: 2; vector-effect: non-scaling-stroke; }
+.fxbt-chart .ln.s1 { stroke: var(--primary); }
+.fxbt-chart .ln.s2 { stroke: var(--text-muted); }
+.fxbt-chart .ln.s3 { stroke: var(--teal); stroke-dasharray: 5 3; }
+.fxbt-chart figcaption { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-cap); }
+.fxbt-chart .lg i { display: inline-block; width: 14px; height: 3px; margin-right: 5px; vertical-align: middle; border-radius: 2px; }
+.fxbt-chart .lg.s1 i { background: var(--primary); }
+.fxbt-chart .lg.s2 i { background: var(--text-muted); }
+.fxbt-chart .lg.s3 i { background: var(--teal); }
+.fxbt-table { min-width: 0; }
+.fxbt-table th, .fxbt-table td { font-size: 13px; }
+.fxbt-table td.num, .fxbt-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.fxbt-overfit h5 { margin: 12px 0 4px; font-size: 14px; }
+.fxbt-stats { margin: 6px 0; padding-left: 18px; font-size: 13px; line-height: 1.6; }
+.fxbt-fold { margin-top: 8px; font-size: 13px; }
+.fxbt-fold summary { cursor: pointer; font-weight: 600; }
+.fxbt-fold ul { margin: 6px 0; padding-left: 18px; line-height: 1.6; }
+@media (max-width: 640px) {
+  .fxbt { padding: 10px; }
+  .fxbt-controls input { width: 80px; }
+  .fxbt-table th, .fxbt-table td { font-size: 12px; padding-left: 4px; padding-right: 4px; }
+}

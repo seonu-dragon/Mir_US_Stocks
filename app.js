@@ -6343,6 +6343,11 @@ const TRUST_RECOVERY = {
     kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" },
     tabs: "종목 탭 · 분석 · PER·PBR 밴드",
   },
+  "스크리너 백테스트 패널": {
+    us: { workflow: "Screener backtest panel", script: "scripts/build_screener_backtest_panel.mjs" },
+    kr: { workflow: "Screener backtest panel", script: "scripts/build_screener_backtest_panel.mjs" },
+    tabs: "종목 탭 · 찾기 · 수식 · 과거 백테스트",
+  },
   "과거 위기 구간": {
     us: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
     kr: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
@@ -6611,6 +6616,24 @@ function dataTrustSources() {
         ["표본", `${Number(m.companies || 0).toLocaleString()}개 기업 (재무 파일 ${Number(m.files || 0).toLocaleString()}개 중 비금융·통화 일치)`],
         ["기간", hs.map((h) => `${h}년: ${m.horizons[h].period} · FCF n=${(m.horizons[h].all.fcf || []).length}`).join(" / ")],
         ["한계", "생존편향(현재 상장 기업만) · 최근 약 10년 한 국면 · 예측 아님"],
+      ];
+    }
+    rows.push(row);
+  }
+  // 스크리너 백테스트 패널(2026-09-26) — 주간(일요일), 월말 기준이라 새 달이 끝나야 기간이 늘어난다. 10일 여유.
+  // 과적합 배지 기준(overfit-core.js CRITERIA)을 여기에도 그대로 공개한다.
+  {
+    const sbRaw = window.SCREENER_BACKTEST_META;
+    const sb = sbRaw && sbRaw.market === cfg.id ? sbRaw : null;
+    const row = source("스크리너 백테스트 패널", sb?.source || "Yahoo 일봉 · SEC/DART 연간 재무(시점 기준)", sb, ["tickers"], 240, "매주 일요일 · 월말 기준", "screenerBacktest");
+    if (sb) {
+      const crit = (window.MirOverfitCore && window.MirOverfitCore.CRITERIA) || [];
+      row.extra = [
+        ["기간", `${(sb.dates || [])[0] || "?"} ~ ${sb.periodEnd || "?"} (${sb.months || 0}개월, 월 리밸런싱)`],
+        ["유니버스", `${(sb.tickers || []).length.toLocaleString()}종목 · ${sb.minTradingValueLabel || ""} · 현재 상장 종목만(생존편향)`],
+        ["과거 값 있는 필드", Object.keys(sb.fields || {}).join(", ")],
+        ...(sb.rules || []).map((r, i) => [`규칙 ${i + 1}`, r]),
+        ...crit.map((c, i) => [`배지 기준 ${i + 1}`, c]),
       ];
     }
     rows.push(row);

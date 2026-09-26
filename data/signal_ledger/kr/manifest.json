@@ -14,9 +14,9 @@
    "lines": 316
   },
   "2026-09.jsonl": {
-   "sha256": "1c8076a470d138a045f7cf056724c35a8c698c864824daf58a1e3338f8308e57",
-   "bytes": 104190,
-   "lines": 475
+   "sha256": "3ea8cf901ed6afbb9cb858c32fefb0693a466fa5ca5119fa26492edac5147ad3",
+   "bytes": 129924,
+   "lines": 585
   }
  },
  "batches": [
@@ -49,8 +49,18 @@
    "src": "backfill",
    "sha256": "1c8076a470d138a045f7cf056724c35a8c698c864824daf58a1e3338f8308e57",
    "head": "f38bb83436e7e51121e400268cf68ca47106da5f4156778c7199ddb84310bf12"
+  },
+  {
+   "at": "2026-09-26T21:41:27+09:00",
+   "file": "2026-09.jsonl",
+   "offset": 104190,
+   "bytes": 25734,
+   "added": 110,
+   "src": "live",
+   "sha256": "960be06f575f6988cb90210b617a6e9c46db9781b22f106c53c6d04ce7b7ffa9",
+   "head": "4c0fb5211280b7677bd42721fcf31c58f21ff6fbf383da7d4b6eed4a7972e125"
   }
  ],
- "head": "f38bb83436e7e51121e400268cf68ca47106da5f4156778c7199ddb84310bf12",
- "rows": 1032
+ "head": "4c0fb5211280b7677bd42721fcf31c58f21ff6fbf383da7d4b6eed4a7972e125",
+ "rows": 1142
 }

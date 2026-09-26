@@ -4953,6 +4953,7 @@ function renderSearch(options = {}) {
   render52wRange(item);
   renderStockEvents(item);
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
+  if (typeof renderValuationBand === "function") renderValuationBand(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6317,6 +6318,7 @@ const TRUST_RECOVERY = {
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
+  "PER·PBR 밴드": { kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" }, tabs: "종목 탭 · 분석 · PER·PBR 밴드" },
   "오늘의 특징주": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_movers_reasons.py --market us" },
     kr: { workflow: "Korea close briefing", script: "scripts/build_movers_reasons.py --market kr" },
@@ -6548,6 +6550,19 @@ function dataTrustSources() {
     rows.push(source("수출 모멘텀", "관세청 (data.go.kr)", window.KR_TRADE_EXPORTS, ["items"], 192, "매일 15:42 · 월 단위 데이터", "tradeExports"));
     // 시장경보·이상 종목 보드. 페이로드 count(섹션 합계)로 센다 — 0건이면 소스 이상.
     if (cfg.features?.krMarketAlerts === true) rows.push(source("시장경보·이상 종목", "KRX KIND · 네이버 금융 · 스냅샷 일봉", window.KR_MARKET_ALERTS, ["sections"], 120, "매일 15:42", "krMarketAlerts"));
+    // PER·PBR 밴드(2026-09-26) — 주간 점검, 새 달이 끝났을 때만 시계열이 늘어난다. 검증 결론도 함께 적는다.
+    if (cfg.features?.valuationBand === true) {
+      const vbMeta = window.KR_VALUATION_BAND_META;
+      const row = source("PER·PBR 밴드", "KRX 공식 (월말 PER·PBR·종가)", vbMeta, ["months"], 336, "매주 토요일 · 월말 기준", "krValBand");
+      const v12 = vbMeta?.validation?.horizons?.["12m"];
+      if (vbMeta) {
+        row.extra = [
+          ["기간", `${(vbMeta.months || [])[0] || "?"} ~ ${(vbMeta.months || []).slice(-1)[0] || "?"} (${(vbMeta.months || []).length}개월)`],
+          ["검증(저PBR 하위 20% → 12개월)", v12 && !v12.insufficient ? `${v12.verdict} · 초과 ${v12.meanExcessPct}%p [${v12.ciLowPct}, ${v12.ciHighPct}] · ${v12.months}개월` : "표본 부족 · 미검증"],
+        ];
+      }
+      rows.push(row);
+    }
   }
   return rows;
 }

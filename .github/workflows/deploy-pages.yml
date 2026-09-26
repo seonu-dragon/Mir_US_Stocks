@@ -40,6 +40,7 @@ on:
       - "White House schedule refresh"
       - "Industry indicators"
       - "Macro odds (prediction markets)"
+      - "KR valuation band (PER/PBR)"
   workflow_dispatch:
 
 # actions: read 는 아래 no-op 게이트의 `gh run list` 용이다. 지금은 공개 레포라

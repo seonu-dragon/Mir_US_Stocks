@@ -115,6 +115,9 @@ const FEATURE_DATA = {
   marketHistory: { global: "MARKET_HISTORY", path: "data/history/market_history.js" },
   // 오늘의 특징주(build_movers_reasons.py) — 장 마감 후 등락 상하위 + 한 줄 사유. 시장별 파일
   // (US data/movers_reasons.js · KR data/korea/movers_reasons.js), 오늘 탭 첫 화면이라 가볍게 먼저.
+  // PER·PBR 밴드 메타(기간·검증·샤드 수, 작음). 종목별 시계열은 valuation-band.js 가 샤드 JSON
+  // 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy) — KR 전용.
+  krValBand: { global: "KR_VALUATION_BAND_META", path: "data/korea/valuation_band/meta.js", feature: "valuationBand", krOnly: true, lazy: true },
   movers: { global: "MOVERS_REASONS", path: "data/movers_reasons.js", feature: "moversBoard", marketSpecific: true },
 };
 const _featureDataPromises = {};
@@ -273,6 +276,7 @@ function refreshFeatureViews() {
           () => renderEstimateRevision(item),
           () => renderStockEvents(item),
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
+          () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
         );
       }
     }

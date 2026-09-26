@@ -1431,13 +1431,106 @@ def parse_yahoo_dividends(result, first_date=None):
     return dividends
 
 
+# ── 액면분할 이력(events=split) ──────────────────────────────────────────────
+# 상세 빌더가 이미 부르는 chart 호출에 split 이벤트만 함께 받는다(새 호출 없음).
+# 전체 수집("5y")은 URL 을 10y 로 받아 최근 10년 분할을 한 번에 얻고(일봉은 여전히 1,260봉만 남긴다),
+# 증분(1y)은 직전 detail 의 splits 와 합친다. 스레드마다 다른 키라 dict 대입/pop 은 안전하다.
+SPLIT_LOOKBACK_YEARS = 10
+_FRESH_SPLITS = {}   # fetch 키(US 심볼 / KR 야후 심볼) → 이번 실행에서 받은 분할 목록
+_CACHED_SPLITS = {}  # 캐시 키(티커) → 직전 detail 의 splits (키가 있던 경우만)
+
+
+def yahoo_history_range_param(range_):
+    """전체 수집(5y)은 분할 이력을 위해 10y 로 받는다. 일봉은 호출부가 1,260봉으로 자른다."""
+    return "10y" if range_ == "5y" else range_
+
+
+def split_cutoff_date(today=None):
+    today = today or datetime.now(ZoneInfo("Asia/Seoul")).date()
+    try:
+        return today.replace(year=today.year - SPLIT_LOOKBACK_YEARS).isoformat()
+    except ValueError:  # 2월 29일
+        return (today - timedelta(days=365 * SPLIT_LOOKBACK_YEARS)).isoformat()
+
+
+def parse_yahoo_splits(result, since=None):
+    """events.splits({ts: {date, numerator, denominator}}) → [["YYYY-MM-DD", 분자, 분모], ...] 오름차순.
+    4:1 분할이면 [날짜, 4, 1], 1:10 병합이면 [날짜, 1, 10]."""
+    raw = ((result.get("events") or {}).get("splits")) or {}
+    out = []
+    for key, item in raw.items():
+        if not isinstance(item, dict):
+            continue
+        try:
+            ts = int(item.get("date") or key)
+            num = float(item.get("numerator") or 0)
+            den = float(item.get("denominator") or 0)
+        except (TypeError, ValueError):
+            continue
+        if num <= 0 or den <= 0 or num == den:
+            continue
+        day = datetime.fromtimestamp(ts, tz=ZoneInfo("UTC")).date().isoformat()
+        if since and day < since:
+            continue
+        out.append([day, round(num, 4), round(den, 4)])
+    out.sort()
+    return out
+
+
+def _cached_splits(detail):
+    """detail 의 splits 를 검증해 돌려준다. 키가 없으면 None(= 아직 모름, 빈 목록과 구분)."""
+    if not isinstance(detail, dict) or "splits" not in detail:
+        return None
+    out = []
+    for entry in detail.get("splits") or []:
+        try:
+            day, num, den = str(entry[0]), float(entry[1]), float(entry[2])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if day and num > 0 and den > 0:
+            out.append([day, num, den])
+    out.sort()
+    return out
+
+
+def remember_cached_splits(key, detail):
+    splits = _cached_splits(detail)
+    if splits is not None:
+        _CACHED_SPLITS[str(key)] = splits
+
+
+def take_splits(fetch_key, cache_key, full_fetch, today=None):
+    """이번 실행의 분할 목록. None = 모름(키를 내보내지 않는다).
+
+    전체 수집(10y)이면 받은 목록이 곧 전부다. 증분이면 직전 detail 목록과 합친다 —
+    직전 detail 에 splits 키가 없으면(기능 도입 직후) 받은 1년치에 분할이 있을 때만 싣는다."""
+    fresh = _FRESH_SPLITS.pop(str(fetch_key), None)
+    cached = _CACHED_SPLITS.pop(str(cache_key), None)
+    if fresh is not None and full_fetch:
+        merged = fresh
+    elif cached is not None:
+        by_date = {e[0]: e for e in cached}
+        for e in fresh or []:
+            by_date[e[0]] = e
+        merged = [by_date[d] for d in sorted(by_date)]
+    elif fresh:
+        merged = fresh
+    else:
+        return None
+    cutoff = split_cutoff_date(today)
+    return [e for e in merged if e[0] >= cutoff]
+
+
 def fetch_yahoo_history(symbol, range_="5y"):
     """일봉 + 배당 이벤트. 반환: (rows, dividends).
 
     range_ 는 야후 chart API 의 range 파라미터("5y" 전체 / "1y" 증분).
     dividends 는 [["YYYY-MM-DD", amount], ...] — 비어 있을 수 있다.
     """
-    url = f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}?range={range_}&interval=1d&events=div"
+    url = (
+        f"https://query1.finance.yahoo.com/v8/finance/chart/{urllib.parse.quote(yahoo_symbol(symbol))}"
+        f"?range={yahoo_history_range_param(range_)}&interval=1d&events=div,split"
+    )
     # 32스레드가 동시에 때리므로 스로틀(429)에 한 번은 걸릴 수 있다.
     # 짧은 지터 백오프 2회로 일시 스로틀을 흡수한다 — 그래도 실패하면
     # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다.
@@ -1481,6 +1574,7 @@ def fetch_yahoo_history(symbol, range_="5y"):
         raise RuntimeError(f"Not enough rows for {symbol}")
     rows = rows[-1260:]
     dividends = parse_yahoo_dividends(result, first_date=rows[0]["date"])
+    _FRESH_SPLITS[str(symbol)] = parse_yahoo_splits(result, since=split_cutoff_date())
     return rows, dividends
 
 
@@ -2127,6 +2221,14 @@ def make_stock(meta, rows):
         "closeSeries": [round(value, 2) for value in closes[-40:-1]] + [round(price, 2)],
         "historySource": history_source,
     }
+    # 거래량(주)·거래대금(통화 단위). KR 은 네이버가 준 대금(백만원 → 원)을 그대로 쓰고,
+    # US 는 소스에 대금이 없어 가격 × 거래량으로 근사한다(화면에 '근사' 표기).
+    session_volume = session_volume_for(meta, rows, price_date, history_source)
+    if session_volume is not None:
+        stock["volume"] = session_volume
+    amount = session_amount_for(meta, price, session_volume)
+    if amount is not None:
+        stock["amount"] = amount
     # 가격 기준 거래일(뉴욕 날짜). 야후 날짜로 확인된 종목만 — 스크리너 값은 날짜가 없다.
     if price_date:
         stock["priceDate"] = price_date
@@ -2168,6 +2270,9 @@ def make_stock(meta, rows):
         # 통계 빌더·analysis.js 가 '배당 포함 총수익' 전방 수익률에 쓴다.
         if meta.get("dividends"):
             stock["dividends"] = meta["dividends"]
+        # 액면분할(최근 10년, [날짜, 분자, 분모]). None 이면 아직 모름 — 키를 싣지 않는다.
+        if meta.get("splits") is not None:
+            stock["splits"] = meta["splits"]
     else:
         # 없는 데이터는 기능을 끈다 — 빈 배열 + 사유를 명시해 UI 가 "데이터 부족" 대신
         # 이유를 말할 수 있게 하고, 정직성 게이트가 셀 수 있게 한다.
@@ -2182,6 +2287,39 @@ def make_stock(meta, rows):
 
 # 52주 = 252 거래일(make_stock 의 high_52w/low_52w/stochK/newHighDistancePct 창).
 WEEKS_52_BARS = 252
+
+
+def _positive_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    return float(value) if math.isfinite(value) and value > 0 else None
+
+
+def session_volume_for(meta, rows, price_date, history_source):
+    """가격 기준 세션의 거래량(주). 시세 소스 값이 우선이고, 없으면 실측 일봉의 마지막 봉 —
+    단 그 봉이 기준일 봉일 때만(날짜를 모르면 마지막 봉). 합성 이력의 거래량은 쓰지 않는다."""
+    quote = _positive_number(meta.get("quoteVolume"))
+    if quote is not None:
+        return int(round(quote))
+    if history_source not in REAL_HISTORY_SOURCES or not rows:
+        return None
+    last = rows[-1]
+    if price_date and str(last.get("date") or "") != str(price_date):
+        return None
+    bar = _positive_number(last.get("volume"))
+    return int(round(bar)) if bar is not None else None
+
+
+def session_amount_for(meta, price, volume):
+    """거래대금(원 또는 달러, 정수). meta 에 quoteAmount 키가 있으면(KR, 백만원 단위) 그 값만 쓴다 —
+    없다고 가격 × 거래량으로 지어내지 않는다. 그 키가 없는 시장(US)은 가격 × 거래량 근사."""
+    if "quoteAmount" in meta:
+        millions = _positive_number(meta.get("quoteAmount"))
+        return int(round(millions * 1_000_000)) if millions is not None else None
+    px = _positive_number(price)
+    if px is None or not volume:
+        return None
+    return int(round(px * volume))
 
 
 def lookback(values, periods):
@@ -2469,6 +2607,7 @@ def load_cached_history(symbol):
             })
         if len(rows) < 30:
             return None
+        remember_cached_splits(symbol, detail)
         return rows, _cached_dividends(detail)
     except Exception:
         return None
@@ -3094,6 +3233,7 @@ def enforce_history_honesty_gate(stocks, prefer_tickers, prev_stocks):
 
 def build_one(meta):
     symbol = meta["symbol"]
+    mode = None
     try:
         if meta.get("preferHistory"):
             rows, dividends, mode = fetch_history_smart(
@@ -3124,6 +3264,9 @@ def build_one(meta):
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
             error = f"{symbol}: {exc}"
+    splits = take_splits(symbol, symbol, mode in {"full", "full-mismatch"})
+    if splits is not None:
+        meta["splits"] = splits
     if meta.get("preferFundamentals"):
         try:
             price_hint = meta.get("quotePrice") or (rows[-1]["close"] if rows else None)
@@ -3508,7 +3651,7 @@ def attach_us_financials_history(payload):
 
 
 DETAIL_KEYS = [
-    "chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory",
+    "chartSeries", "dividends", "fundamentals", "news", "earningsHistory", "financialsHistory", "splits",
 ]
 # 값이 비어도 그대로 옮겨야 하는 메타 키(사유 표기). 이것만으로는 detail 파일을 만들지 않는다.
 DETAIL_META_KEYS = ["chartUnavailableReason"]

@@ -296,7 +296,7 @@ function renderComparePanel(item, rows, xFor, x1, x2, top, height) {
   const series = [{
     name: item.ticker,
     values: indexedReturnSeries(rows),
-    color: "#f8fafc",
+    color: "var(--text)",
     width: 1.5
   }];
   const colors = ["#60a5fa", "#34d399", "#f59e0b", "#f472b6", "#818cf8"];
@@ -1342,47 +1342,46 @@ function renderDataFreshnessStatus() {
 }
 
 function renderFundamentals(item) {
-  // ETFs don't need fundamentals — show their constituent stocks (by RS) instead.
+  // ETF: 투자정보(시총·NAV·괴리율·배당) + 구성 종목(RS 순).
   if (isStockEtf(item)) {
     renderEtfConstituents(item);
     return;
   }
   const f = normalizedFundamentalsForItem(item);
-  const displayPrice = latestPriceForFundamentals(item, f);
   const detailMode = data.detailPolicy?.mode === "split";
   const hasFundamentals = Object.keys(f).length > 0;
   const krT = isKrMarket();
+  const ttm = typeof qiTtmRatios === "function" ? qiTtmRatios(item) : null;
+  const investHtml = typeof investInfoHtml === "function" ? investInfoHtml(item, f, ttm) : "";
 
-  // Group the metrics by what they tell you, so the eye can jump to a theme (밸류에이션,
-  // 수익성 …) instead of scanning a flat 30-cell grid.
+  // 투자정보 블록(시총·PER·EPS·추정PER·PBR·BPS·배당·PSR·PCFR)과 시세정보 카드(현재가·전일·52주 고저·거래량)에
+  // 이미 나온 값은 아래 그룹에서 뺀다. 투자정보 블록을 못 그리는 경우(코어 미로드)엔 예전 밸류에이션 그룹을 되살린다.
+  const ttmGroup = typeof ttmRatioGroup === "function" ? ttmRatioGroup(ttm) : null;
   const groups = [
-    { title: "밸류에이션", metrics: [
+    ...(investHtml ? [] : [{ title: "밸류에이션", metrics: [
       ["PER", fmtMultiple(f.pe)], ["선행 PER", fmtMultiple(f.forwardPE)],
       ["PSR", fmtMultiple(f.ps)], ["PBR", fmtMultiple(f.pb)],
-    ] },
-    { title: "수익성", metrics: [
-      ["매출총이익률", fmtPercent(f.grossMargin)], ["영업이익률", fmtPercent(f.operMargin)],
-      ["순이익률", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
-    ] },
-    { title: "실적 (EPS)", metrics: [
-      ["최근 4분기 EPS", moneyOrDash(f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)],
+    ] }]),
+    ttmGroup
+      ? { title: ttmGroup.title, note: ttmGroup.note, wide: true, metrics: [...(hasFiniteNumber(f.grossMargin) ? [["매출총이익률", fmtPercent(f.grossMargin)]] : []), ...ttmGroup.metrics] }
+      : { title: "수익성", wide: !!investHtml, metrics: [
+        ["매출총이익률", fmtPercent(f.grossMargin)], ["영업이익률", fmtPercent(f.operMargin)],
+        ["순이익률", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
+      ] },
+    { title: "추정 · 기타", metrics: [
+      ...(investHtml ? [] : [["최근 4분기 EPS", moneyOrDash(f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)]]),
       ["다음 분기 EPS 추정", moneyOrDash(f.epsNextQ)], ["1년 목표가", priceOrDash(f.targetPrice)],
+      ["RSI(14)", fmtRsi(item)], ["지수", indexLabel(item)],
     ] },
     { title: "기간 성과", metrics: [
       ["1주", fmtPct(item.weekChangePct)], ["1개월", fmtPct(item.monthChangePct)],
       ["3개월", fmtPct(item.threeMonthChangePct)], ["연초 이후", fmtPct(item.ytdChangePct)],
     ] },
     { title: "규모 · 유동성", wide: true, metrics: [
-      ["시가총액", krT ? fmtBillions(item.marketCapB) : fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB)],
       ["매출", fmtFinancialB(f.salesB)], ["순이익", fmtFinancialB(f.incomeB)], ["현금", fmtFinancialB(f.cashB)],
       ["발행주식수", fmtShares(f.sharesBDisplay ?? f.sharesB)], ["평균 거래량", fmtCompact(f.avgVolume)],
-      ["거래량", fmtCompact(f.volume)], ["부채/자본", fmtNum(f.debtEq)],
+      ["부채/자본", fmtNum(f.debtEq)],
       ["유동비율", fmtRatio(f.currentRatio)], ["당좌비율", fmtRatio(f.quickRatio)],
-    ] },
-    { title: "가격", wide: true, metrics: [
-      ["현재가", priceOrDash(displayPrice)], ["전일 종가", priceOrDash(f.prevClose)],
-      ["52주 최고", priceOrDash(f.week52High)], ["52주 최저", priceOrDash(f.week52Low)],
-      ["RSI(14)", fmtRsi(item)], ["지수", indexLabel(item)],
     ] },
   ];
 
@@ -1400,6 +1399,7 @@ function renderFundamentals(item) {
             ${valueWithClass(value)}
           </div>`).join("")}
       </div>
+      ${g.note ? `<p class="fund-group-note">${escapeHtml(g.note)}</p>` : ""}
     </div>`;
 
   byId("fundamentalTable").innerHTML = `
@@ -1407,6 +1407,7 @@ function renderFundamentals(item) {
       <h3>핵심 지표</h3>
       <span>${sourceText}</span>
     </div>
+    ${investHtml}
     <div class="fund-groups">
       ${groups.map(groupHtml).join("")}
     </div>
@@ -1436,7 +1437,8 @@ function etfConstituentStocks(ticker) {
 
 function renderEtfConstituents(item) {
   const result = etfConstituentStocks(item.ticker);
-  const head = `<div class="fundamental-head"><h3>구성 종목 (1개월 모멘텀순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
+  const invest = typeof investInfoHtml === "function" ? investInfoHtml(item, item.fundamentals || {}, null) : "";
+  const head = `${invest}<div class="fundamental-head"><h3>구성 종목 (1개월 모멘텀순)</h3><span>${result ? escapeHtml(result.name) : "ETF"}</span></div>`;
   const box = byId("fundamentalTable");
   if (!result || !result.list.length) {
     box.innerHTML = head + `<p class="muted" style="padding:12px;">이 ETF의 구성 종목 데이터가 없습니다.</p>`;

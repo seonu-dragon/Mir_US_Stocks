@@ -372,6 +372,43 @@
     return `${cfg.detailsDir}/${encodeURIComponent(key)}.json`;
   }
 
+  // CSS 토큰 색을 JS(캔버스·SVG)에서 읽는다. 등락색(--pos/--neg)은 시장별(한국 = 상승 빨강·하락 파랑,
+  // 미국 = 상승 초록·하락 빨강)이고 테마별로도 달라서, 리터럴 대신 이 함수나 "var(--pos)" 문자열을 쓴다.
+  // <html> 의 data-market·data-theme 조합마다 캐시한다(트리맵 수백 타일에서 getComputedStyle 반복 방지).
+  const _tokenCache = { key: "", map: Object.create(null) };
+  function mirColor(name, fallback) {
+    // AI 모드는 body.ai-mode-active 스코프에서 등락색을 어두운 캔버스용으로 다시 선언한다 → body 기준.
+    const body = document.body;
+    const ai = !!(body && body.classList.contains("ai-mode-active"));
+    const root = ai ? body : document.documentElement;
+    const html = document.documentElement;
+    const key = (html.getAttribute("data-market") || "") + "|" + (html.getAttribute("data-theme") || "") + (ai ? "|ai" : "");
+    if (_tokenCache.key !== key) { _tokenCache.key = key; _tokenCache.map = Object.create(null); }
+    let v = _tokenCache.map[name];
+    if (v === undefined) {
+      try { v = getComputedStyle(root).getPropertyValue("--" + name).trim(); } catch (_) { v = ""; }
+      if (v) _tokenCache.map[name] = v;
+    }
+    return v || fallback || "";
+  }
+  // "#rrggbb" 또는 "rgb(...)" 토큰에 투명도를 입힌 rgba 문자열(캔버스 채움용).
+  function mirColorAlpha(name, alpha, fallback) {
+    const c = mirColor(name, fallback);
+    const m = /^#([0-9a-f]{6})$/i.exec(c);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+    }
+    const r = /^rgba?\(([^)]+)\)$/i.exec(c);
+    if (r) {
+      const parts = r[1].split(",").slice(0, 3).map((x) => x.trim());
+      return `rgba(${parts.join(", ")}, ${alpha})`;
+    }
+    return c;
+  }
+  window.mirColor = mirColor;
+  window.mirColorAlpha = mirColorAlpha;
+
   window.MirMarket = {
     US,
     KR,

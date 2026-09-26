@@ -2076,12 +2076,12 @@ function renderCalendar(events) {
 // 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
 const TAB_GROUP_OF = {
   today: "today", calendar: "today", "ai-briefing": "today",
-  map: "market", sector: "market", health: "market", signals: "market", industry: "market",
+  map: "market", sector: "market", health: "market", signals: "market", industry: "market", marketindex: "market",
   search: "search", bulk: "bulk", community: "community",
 };
 const GROUP_LEAVES = {
   today: ["today", "ai-briefing", "calendar"],
-  market: ["map", "sector", "health", "signals", "industry"],
+  market: ["map", "sector", "health", "marketindex", "signals", "industry"],
 };
 // 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
 const lastGroupLeaf = { today: "today", market: "map" };
@@ -2381,6 +2381,7 @@ const TAB_REDIRECT = {
   find: { tab: "search", sub: "find" },
   breadth: { tab: "health", sub: null },
   marketdata: { tab: "health", sub: null },
+  marketindicators: { tab: "marketindex", sub: null },
   heatmap: { tab: "map", sub: null },
   briefing: { tab: "ai-briefing", sub: null },
   stocks: { tab: "search", sub: null },
@@ -3516,6 +3517,7 @@ const tabRendered = {};
 const TAB_RENDERERS = {
   sector: () => renderSectors(),
   industry: () => renderIndustry(),
+  marketindex: () => { if (typeof renderMarketIndicators === "function") renderMarketIndicators(); },
   bulk: () => { renderBulk(); renderMyInvestSummary(); },
   health: () => renderHealth(),
   "ai-briefing": () => renderAiBriefing(),
@@ -6424,6 +6426,11 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
     tabs: "시장 탭 · 산업 지표 · 종목 상세 역방향 위젯",
   },
+  "시장지표": {
+    us: { workflow: "Market indicators", script: "scripts/build_market_indicators.py" },
+    kr: { workflow: "Market indicators", script: "scripts/build_market_indicators.py" },
+    tabs: "시장 탭 · 시장지표",
+  },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
@@ -6617,6 +6624,8 @@ function dataTrustSources() {
   rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
   // 산업 선행지표(2026-09-18) — 등록하지 않으면 감시 사각지대. lazy 라 신뢰도 센터가 직접 받아 본다.
   rows.push(source("산업 선행지표", "FRED · TWSE/TPEx · 한국은행 ECOS · OECD", window.INDUSTRY_INDICATORS, ["indicators"], 48, "매일 06:10", "industry"));
+  // 시장지표 — 평일 하루 2회(07:30·16:10 KST). 주말을 넘기면 60시간이 정상이라 여유 있게 72시간. lazy.
+  rows.push(source("시장지표", "Yahoo · FRED · ECOS · 재무성 · Bundesbank · BoE · BIS", window.MARKET_INDICATORS, ["items"], 72, "평일 07:30·16:10", "marketIndicators"));
   // 이벤트 스터디(2026-09-26) — 주 1회 사전 계산. lazy 라 신뢰도 센터가 직접 받아 본다. 표본 수·기간·생존편향을 함께 적는다.
   {
     const es = window.EVENT_STUDY_INDEX;
@@ -8272,6 +8281,8 @@ const HOME_ROUTE_RULES = [
   { tab: "calendar", sub: "earnings", keywords: ["실적 발표 일정", "실적발표 일정", "실적 발표일", "실적발표일", "실적 일정", "어닝 일정", "실적 캘린더", "실적 발표 언제", "earnings calendar", "earnings date"] },
   // 경제 캘린더 / 지표
   { tab: "calendar", keywords: ["경제 지표", "경제지표", "경제 캘린더", "일정", "캘린더", "fomc", "cpi", "지표 발표", "calendar", "economic"] },
+  // 시장지표(원자재·해외 지수·국채·기준금리) — 페이지 전용어(preempt)
+  { tab: "marketindex", preempt: true, keywords: ["시장지표", "시장 지표", "원자재", "국제유가", "유가", "금값", "금 시세", "은 시세", "구리 가격", "곡물", "기준금리", "해외지수", "해외 지수", "니케이", "항셍", "지수 선물", "국채 10년", "commodity", "commodities"] },
   // 매크로 / 마켓 데이터
   { tab: "health", keywords: ["금리", "환율", "매크로", "vix", "국채", "달러", "채권", "인플레이션", "macro", "yield", "rates", "fx"] },
   // AI 브리핑 — 페이지 전용어(preempt): "AI" 티커(C3.ai) 오탐 방지
@@ -8657,6 +8668,7 @@ function cmdkBuildActions(query) {
   goto("시장 · 트리맵", "map");
   goto("시장 · 섹터 흐름", "sector");
   goto("시장 · 시장 폭", "health");
+  goto("시장 · 시장지표", "marketindex");
   goto("시장 · 시그널", "signals");
   goto("종목 · 분석", "search", "analysis");
   goto("종목 · 찾기 (스크리너·스캐너)", "search", "find");

@@ -66,6 +66,9 @@ const FEATURE_DATA = {
   industryByTicker: { global: "INDUSTRY_BY_TICKER",  path: "data/industry_by_ticker.js",  lazy: true },
   industrySignal:   { global: "INDUSTRY_SIGNAL",     path: "data/industry_signal.js",     lazy: true },
   industryCalendar: { global: "INDUSTRY_CALENDAR",   path: "data/industry_calendar.js",   lazy: true },
+  // 시장지표(build_market_indicators.py) — 원자재 선물·해외 지수·환율·주요국 국채·기준금리(~90KB).
+  // 두 시장 공통. 시장 탭 '시장지표' 잎을 처음 열 때만 받는다(lazy).
+  marketIndicators: { global: "MARKET_INDICATORS", path: "data/market_indicators.js", lazy: true },
   // 미 국채 경매 수요(bid-to-cover, FiscalData). 금리곡선 패널과 짝 — 두 시장 모두.
   treasuryAuctions: { global: "TREASURY_AUCTIONS", path: "data/treasury_auctions.js" },
   // SEC 결제 불이행(FTD, 반월 파일). 공매도 서브탭에서만 쓰는 US 전용 lazy.
@@ -270,6 +273,8 @@ function refreshFeatureViews() {
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.
   if (currentTab === "industry" && typeof renderIndustry === "function") calls.push(renderIndustry);
+  // 시장지표 잎 — MARKET_INDICATORS(lazy)가 탭 렌더보다 늦게 오면 여기서 다시 그린다.
+  if (currentTab === "marketindex" && typeof renderMarketIndicators === "function") calls.push(renderMarketIndicators);
   // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.
   if (currentTab === "search" && searchSubTab === "formula" && typeof renderFormulaScreener === "function") calls.push(renderFormulaScreener);
   // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은

@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=dc7ce7bec5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=dc7ce7bec5"></noscript>
+    <link rel="preload" href="styles.css?v=44b6e4bdb3" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=44b6e4bdb3"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=9fb9a5b56d"></script>
+    <script src="build_id.js?v=de56032105"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -717,6 +717,7 @@ html[data-theme="dark"] {
           <button class="sub-tab is-active" data-sub="map">트리맵</button>
           <button class="sub-tab" data-sub="sector">섹터 흐름</button>
           <button class="sub-tab" data-sub="health" data-advanced="true">시장 폭</button>
+          <button class="sub-tab" data-sub="marketindex">시장지표</button>
           <button class="sub-tab" data-sub="signals" data-advanced="true">시그널</button>
           <button class="sub-tab" data-sub="industry" data-advanced="true">산업 지표</button>
         </nav>
@@ -1211,6 +1212,7 @@ html[data-theme="dark"] {
         </div>
         <!-- 산업·매크로 선행지표(industry.js) — 데이터는 탭 첫 진입 때 lazy 로드 -->
         <div class="tab-leaf" id="tab-industry"></div>
+        <div class="tab-leaf" id="tab-marketindex"></div>
       </section>
 
       <!-- ==================== 종목 탭 (분석 · 찾기 · 비교 · 공시) ==================== -->
@@ -3116,12 +3118,14 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=49de9498c3"></script>
+    <script src="feature-data.js?v=0f1d901fa4"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=4a68651082"></script>
     <script src="treemap.js?v=8604e68954"></script>
     <script src="industry.js?v=3a0246f6c8"></script>
+    <script src="market-indicators-core.js?v=3c455ff8c0"></script>
+    <script src="market-indicators.js?v=51d4c78837"></script>
     <script src="valuation-band-core.js?v=11d961c47c"></script>
     <script src="valuation-band.js?v=a8f1f4303b"></script>
     <script src="factor-grade-core.js?v=5b2d301864"></script>
@@ -3150,7 +3154,7 @@ html[data-theme="dark"] {
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=234693fd95"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
-    <script src="app.js?v=952219098f"></script>
+    <script src="app.js?v=7a0de17bdb"></script>
     <script src="ai-cosmos.js?v=b86a34b3ae"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
   </body>

@@ -634,6 +634,7 @@ async function loadData(options = {}) {
   }
 
   if (!options.skipBoot) boot(options);
+  if (window.MirRail) window.MirRail.refresh(); // 시장 전환 뒤 레일 패널(관심·보유·캘린더)을 새 시장으로
   if (typeof refreshMirDataStatus === "function") refreshMirDataStatus();
   if (typeof updateOnlineStatus === "function") updateOnlineStatus();
 }
@@ -4938,6 +4939,8 @@ function selectTicker(ticker, options = {}) {
   }
   if (found.ticker !== selectedTicker) moveAnalysisState = null;
   selectedTicker = found.ticker;
+  // 오른쪽 레일 '최근 본 종목' — 상태만 맞추는 호출(openSearch:false)은 기록하지 않는다.
+  if (options.openSearch !== false && window.MirRail) window.MirRail.noteViewed(found.ticker);
   byId("tickerSearch").value = stockInputValue(selectedTicker);
   chatFocusTicker = found.ticker;
   // 지도는 보일 때만(숨은 탭은 폭 0 이라 어차피 그리지 못한다 — 진입 때 다시 그린다).

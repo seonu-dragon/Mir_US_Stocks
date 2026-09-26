@@ -39,13 +39,25 @@ validate_kr_flow.py 로 재봤다. 매일 종목을 수급으로 줄 세워 상�
 순매수는 '수량' 이라 종목 간 비교가 안 된다(삼성전자 100만주 ≠ 소형주 100만주).
 거래량 대비 비율(frnPct)을 함께 낸다.
 
-## 일별 행(daily) — 종목별 샤드
+## 일별 행(daily) — 종목별 샤드, 크기 예산 하루 300KB
 
-같은 응답의 20거래일 일별 행(날짜·종가·전일대비·개인·외국인·기관 수량·외국인 보유율)을
-버리지 않고 data/korea/investor_flow_daily/sNN.json(32개, 키 "daily")에 남긴다. 새 호출은
-없다. 2,600종목 × 20행이라 약 2.5MB — 부팅 프리로드(investor_flow.js)에 얹지 않고 종목
-분석의 '일별 보기' 를 열 때 그 종목의 샤드 하나만 받는다. build_kr_market_funds.py 가 이
-행으로 외국인·기관 순매수 금액 상위(수량 × 종가, 추정)를 계산한다.
+같은 응답의 20거래일 일별 행(날짜·종가·개인·외국인·기관 수량·외국인 보유율)을
+data/korea/investor_flow_daily/sNN.json(16개)에 남긴다. 새 호출은 없다.
+
+20일 창이 매일 한 칸씩 밀려 샤드는 거래일마다 전부 바뀐다 — 그 크기가 곧 하루 커밋
+증가량이다(이 레포는 data 이력이 2.7GB 까지 불어 이력을 재작성한 적이 있다). 그래서:
+  - 대상: 상세 파일이 있는 비ETF 종목 중 시가총액 상위 DAILY_MAX(480). 전 종목(2,588)은
+    하루 약 2.2MB, 480종목이면 약 290KB 다(2026-09-26 실측). 대상 밖 종목은 화면이 5일·20일 누적만 보여 주고 한 줄로 안내한다
+    (stocks[t].dy 가 대상 표시).
+  - 형식: 샤드마다 날짜 목록을 한 번만 두고, 종목은 평평한 정수 배열
+    [n, 기준전일종가, 종가(첫 값+차분)×n, 개인×n, 외국인×n, 기관×n, 보유율×100(첫 값+차분)×n,
+    전일대비 보정×n(공식 전일대비 − 다음 행 종가와의 차 — 전부 0 이면 생략)].
+    날짜가 샤드 공통 목록과 다른 종목(거래정지 등)만 own 에 자기 날짜를 둔다.
+  - 내용이 같으면 파일을 다시 쓰지 않는다(주말·연휴 재실행에 커밋이 생기지 않게).
+    그래서 샤드에는 실행 시각을 넣지 않는다.
+
+외국인·기관 순매수 금액 상위(수량 × 종가, 추정)는 샤드 대상과 무관하게 전 종목 일별 행으로
+여기서 계산해 investor_flow.json 의 top 에 싣는다(build_kr_market_funds.py 가 옮겨 싣는다).
 """
 
 from __future__ import annotations
@@ -77,7 +89,10 @@ KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 OUT_JSON = ROOT / "data" / "korea" / "investor_flow.json"
 OUT_JS = ROOT / "data" / "korea" / "investor_flow.js"
 DAILY_DIR = ROOT / "data" / "korea" / "investor_flow_daily"
-DAILY_SHARDS = 32
+DAILY_SHARDS = 16
+DAILY_MAX = 480              # 일별 표 대상 종목 수(시총 상위, 상세 파일 보유) — 하루 300KB 예산에 맞춘 값
+DETAILS_DIR = ROOT / "data" / "korea" / "details"
+TOP_N = 10
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json",
@@ -174,20 +189,139 @@ def daily_row(r: dict) -> list | None:
     ]
 
 
-def write_daily_shards(daily: dict[str, list], stamp: str) -> list[str]:
-    """종목별 일별 행을 샤드로 쓴다. 반환: 레포 기준 상대 경로 목록."""
-    shards: list[dict] = [{} for _ in range(DAILY_SHARDS)]
+def deltas(vals: list) -> list:
+    """[a, b, c] → [a, b-a, c-b]. 결측은 None 으로 두고 다음 값은 직전 '유효' 값 기준으로 뺀다."""
+    out, prev = [], None
+    for v in vals:
+        if v is None:
+            out.append(None)
+            continue
+        out.append(v if prev is None else v - prev)
+        prev = v
+    return out
+
+
+def encode_stock(rows: list) -> list:
+    """일별 행(최신순) → 평평한 정수 배열. kr-flow-core.js decodeStock 과 짝."""
+    n = len(rows)
+    oldest = rows[-1] if rows else None
+    p0 = (oldest[1] - oldest[2]) if oldest and oldest[1] is not None and oldest[2] is not None else None
+    holds = [None if r[6] is None else int(round(r[6] * 100)) for r in rows]
+    # 공식 전일대비는 '다음 행 종가와의 차' 와 가끔 다르다(기준가 조정 등 — 삼성전자 09-23: 전일대비
+    # +10,000 인데 09-22 종가 차는 +9,000). 그 어긋남만 따로 둔다(대부분 0 이라 거의 공짜).
+    adj = []
+    for i, r in enumerate(rows):
+        base = rows[i + 1][1] if i + 1 < n else p0
+        if r[2] is None or r[1] is None or base is None:
+            adj.append(None)
+        else:
+            adj.append(r[2] - (r[1] - base))
+    out = [n, p0, *deltas([r[1] for r in rows]), *[r[3] for r in rows], *[r[4] for r in rows],
+           *[r[5] for r in rows], *deltas(holds)]
+    if any(a for a in adj):          # 보정이 전부 0/결측이면 열 자체를 생략(디코더가 0 으로 본다)
+        out.extend(adj)
+    return out
+
+
+def daily_targets(stocks: list[dict], details_dir: Path = DETAILS_DIR, limit: int = DAILY_MAX) -> set[str]:
+    """일별 표 대상: 상세 파일이 있는 비ETF 종목 중 시가총액 상위 limit."""
+    have = {p.stem for p in details_dir.glob("*.json")} if details_dir.exists() else None
+    ranked = sorted((s for s in stocks if s.get("sector") != "ETF"),
+                    key=lambda s: s.get("marketCapB") or 0, reverse=True)
+    out = []
+    for s in ranked:
+        t = str(s["ticker"]).zfill(6)
+        if have is not None and t not in have:
+            continue
+        out.append(t)
+        if len(out) >= limit:
+            break
+    return set(out)
+
+
+def build_daily_shards(daily: dict[str, list], n_shards: int = DAILY_SHARDS) -> list[dict]:
+    """샤드 페이로드 목록. 샤드마다 가장 긴 날짜 목록을 공통으로 둔다."""
+    buckets: list[dict] = [{} for _ in range(n_shards)]
     for t, rows in daily.items():
-        shards[shard_of(t)][t] = rows
-    as_of = max((rows[0][0] for rows in daily.values() if rows), default=None)
-    paths = []
-    for i, book in enumerate(shards):
-        f = DAILY_DIR / f"s{i:02d}.json"
-        text = json.dumps({"updatedAtKst": stamp, "asOf": as_of, "daily": book},
-                          ensure_ascii=False, separators=(",", ":"))
+        if rows:
+            buckets[shard_of(t, n_shards)][t] = rows
+    shards = []
+    for book in buckets:
+        dates: list[str] = []
+        for t in sorted(book):
+            if len(book[t]) > len(dates):
+                dates = [r[0] for r in book[t]]
+        payload = {"v": 1, "asOf": dates[0] if dates else None, "dates": dates, "t": {}, "own": {}}
+        for t in sorted(book):
+            rows = book[t]
+            payload["t"][t] = encode_stock(rows)
+            if [r[0] for r in rows] != dates[: len(rows)]:
+                payload["own"][t] = [r[0] for r in rows]
+        if not payload["own"]:
+            del payload["own"]
+        shards.append(payload)
+    return shards
+
+
+def write_daily_shards(daily: dict[str, list], directory: Path | None = None) -> tuple[list[str], int]:
+    """샤드를 쓰되 내용이 같은 파일은 건드리지 않는다. 반환: (바뀐 파일의 레포 기준 경로, 바뀐 바이트 합)."""
+    directory = directory or DAILY_DIR
+    changed, changed_bytes = [], 0
+    for i, payload in enumerate(build_daily_shards(daily)):
+        f = directory / f"s{i:02d}.json"
+        text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+        try:
+            if f.read_text(encoding="utf-8") == text:
+                continue
+        except OSError:
+            pass
         atomic_write_text(f, text)
-        paths.append(f.relative_to(ROOT).as_posix())
-    return paths
+        changed.append(f.relative_to(ROOT).as_posix() if f.is_relative_to(ROOT) else str(f))
+        changed_bytes += len(text.encode("utf-8"))
+    return changed, changed_bytes
+
+
+def compute_top(daily: dict[str, list], names: dict[str, str], n: int = TOP_N) -> dict | None:
+    """외국인·기관 순매수/순매도 금액 상위 n(1일·5일). 금액 = Σ 수량 × 그날 종가(추정, 억 원)."""
+    dates = sorted({r[0] for rows in daily.values() for r in rows[:5] if r and r[0]}, reverse=True)
+    if not dates:
+        return None
+    latest5 = dates[:5]
+
+    def iso(d):
+        return f"{d[:4]}-{d[4:6]}-{d[6:8]}"
+
+    out = {"asOf": iso(latest5[0]), "from5": iso(latest5[-1])}
+    for key, wanted in (("d1", set(latest5[:1])), ("d5", set(latest5))):
+        acc = {"frn": [], "org": []}
+        for t, rows in daily.items():
+            sums = {"frn": 0.0, "org": 0.0}
+            hit = 0
+            last_close, last_chg = None, None
+            for r in rows:
+                if len(r) < 6 or r[0] not in wanted or r[1] is None:
+                    continue
+                close = float(r[1])
+                if last_close is None:           # 행은 최신순 — 첫 행이 가장 최근
+                    last_close, last_chg = close, r[2]
+                for col, idx in (("frn", 4), ("org", 5)):
+                    if r[idx] is not None:
+                        sums[col] += float(r[idx]) * close
+                hit += 1
+            if not hit:
+                continue
+            pct = None
+            if last_chg is not None and last_close and last_close - float(last_chg) > 0:
+                pct = round(float(last_chg) / (last_close - float(last_chg)) * 100, 2)
+            for col in ("frn", "org"):
+                acc[col].append({"t": t, "n": names.get(t, t), "a": round(sums[col] / 1e8, 1), "c": pct})
+        sect = {}
+        for col in ("frn", "org"):
+            nz = [x for x in acc[col] if x["a"] != 0]
+            sect[f"{col}Buy"] = sorted([x for x in nz if x["a"] > 0], key=lambda x: -x["a"])[:n]
+            sect[f"{col}Sell"] = sorted([x for x in nz if x["a"] < 0], key=lambda x: x["a"])[:n]
+        out[key] = sect
+    return out
 
 
 def summarize(rows: list[dict]) -> dict:
@@ -268,7 +402,15 @@ def main() -> int:
         return 1
 
     stamp = now_kst()
-    daily_paths = write_daily_shards(daily, stamp) if daily else []
+    targets = daily_targets(stocks)
+    target_daily = {t: rows for t, rows in daily.items() if t in targets}
+    daily_paths, daily_bytes = write_daily_shards(target_daily) if target_daily else ([], 0)
+    for t in target_daily:
+        if t in out:
+            out[t]["dy"] = 1
+    top = compute_top(daily, {str(s["ticker"]).zfill(6): s.get("company") or "" for s in stocks})
+    print(f"[수급] 일별 샤드 대상 {len(target_daily)}종목 · 바뀐 샤드 {len(daily_paths)}개 · "
+          f"{daily_bytes / 1024:.0f}KB")
     payload = {
         "updatedAtKst": stamp,
         "source": "네이버 금융 (수급 20거래일)",
@@ -276,8 +418,11 @@ def main() -> int:
                 "사실 표시용이지 신호가 아니다.",
         "count": len(out),
         # 일별 행 샤드 수(0 이면 화면이 '일별 보기' 를 만들지 않는다 — 없는 파일을 요청하지 않게).
-        "dailyShards": DAILY_SHARDS if daily_paths else 0,
-        "dailyAsOf": max((rows[0][0] for rows in daily.values() if rows), default=None),
+        "dailyShards": DAILY_SHARDS if target_daily else 0,
+        "dailyAsOf": max((rows[0][0] for rows in target_daily.values() if rows), default=None),
+        "dailyCount": len(target_daily),
+        # 외국인·기관 순매수 금액 상위(전 종목, 수량 × 종가 추정). build_kr_market_funds.py 가 옮겨 싣는다.
+        "top": top,
         "stocks": out,
     }
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

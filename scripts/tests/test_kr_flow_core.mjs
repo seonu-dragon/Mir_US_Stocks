@@ -91,14 +91,41 @@ test("linePath: 점 개수·결측 건너뜀", () => {
   assert.equal(core.linePath([], 10, 10), "");
 });
 
-test("dailyRows: 샤드 행 → 객체, 등락률 계산", () => {
-  const shard = { daily: { "005930": [["20260923", 286500, 10000, -7630126, 4513767, 1346883, 46.63]] } };
-  const [r] = core.dailyRows(shard, "005930");
-  assert.equal(r.d, "2026-09-23");
-  assert.equal(r.close, 286500);
-  assert.ok(Math.abs(r.pct - (10000 / 276500) * 100) < 1e-9);
-  assert.equal(r.frn, 4513767);
-  assert.equal(r.hold, 46.63);
+// build_kr_investor_flow.py encode_stock 의 기대값(test_kr_market_funds.py::test_encode_stock_flat_int_deltas)과 같은 벡터.
+const ENC = [3, 261000, 286500, -9000, -2500, -7630126, -2707452, -10152588,
+  4513767, 659851, 4080410, 1346883, 259459, 4186614, 4663, -8, 1, 1000, 1000, 0];
+const DATES = ["20260923", "20260922", "20260921"];
+
+test("undelta: 결측 건너뛰고 복원(파이썬 deltas 의 역)", () => {
+  assert.deepEqual(core.undelta([5, null, 2, -1]), [5, null, 7, 6]);
+});
+
+test("decodeStock: 평평한 배열 → 행, 전일대비는 보정 반영·등락률 분모는 공식 기준가", () => {
+  const rows = core.decodeStock(ENC, DATES);
+  assert.equal(rows.length, 3);
+  assert.deepEqual(rows.map((r) => r.close), [286500, 277500, 275000]);
+  // 공식 전일대비(보정 반영): 09-23 +10,000(종가 차 +9,000 + 보정 1,000)
+  assert.deepEqual(rows.map((r) => r.chg), [10000, 3500, 14000]);
+  assert.ok(Math.abs(rows[0].pct - (10000 / 276500) * 100) < 1e-9);
+  assert.ok(Math.abs(rows[2].pct - (14000 / 261000) * 100) < 1e-9);
+  assert.equal(rows[0].d, "2026-09-23");
+  assert.equal(rows[1].frn, 659851);
+  assert.equal(rows[2].org, 4186614);
+  assert.deepEqual(rows.map((r) => r.hold), [46.63, 46.55, 46.56]);
+  assert.deepEqual(core.decodeStock([3, 1, 2], DATES), []);
+  // 보정 열이 없는 배열(구형)도 종가 차로 읽는다
+  assert.deepEqual(core.decodeStock(ENC.slice(0, 17), DATES).map((r) => r.chg), [9000, 2500, 14000]);
+  assert.deepEqual(core.decodeStock(null, DATES), []);
+});
+
+test("dailyRows: 공통 날짜 / own 날짜 / 없음", () => {
+  const shard = { dates: DATES, t: { "005930": ENC, "000660": [1, 100, 110, 0, 5, -5, 1000] }, own: { "000660": ["20260921"] } };
+  assert.equal(core.dailyRows(shard, "005930")[1].d, "2026-09-22");
+  const r = core.dailyRows(shard, "000660");
+  assert.equal(r.length, 1);
+  assert.equal(r[0].d, "2026-09-21");
+  assert.equal(r[0].chg, 10);
+  assert.equal(r[0].hold, 10);
   assert.deepEqual(core.dailyRows(shard, "000000"), []);
   assert.deepEqual(core.dailyRows(null, "005930"), []);
 });

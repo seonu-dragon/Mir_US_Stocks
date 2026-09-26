@@ -4,7 +4,7 @@
 // 화면: 시장 탭 › '수급·자금' 잎(#tab-krflow, 국내 전용 — US 는 hiddenTabs·features.krFunds 로 숨김)
 //      종목 분석 › 수급 카드 › '일별 보기'(kr-panels.js krFlowCard 가 krFlowDailyToggle 을 부른다)
 // 데이터: window.KR_MARKET_FUNDS(lazy, build_kr_market_funds.py),
-//        data/korea/investor_flow_daily/sNN.json(종목별 20거래일, build_kr_investor_flow.py)
+//        data/korea/investor_flow_daily/sNN.json(시총 상위 480종목 20거래일, build_kr_investor_flow.py)
 // 사실 표시용이다 — 수급·신용잔고로 매매 판단을 만들지 않는다.
 
 const KRFLOW_VIEW = { market: "KOSPI", period: 21, investor: "frn", topSide: "Buy", topWin: "d1" };
@@ -220,6 +220,9 @@ function krFlowTopCard(payload) {
 function krFlowDailyToggle(item) {
   const flow = window.KR_INVESTOR_FLOW;
   if (!flow || !(flow.dailyShards > 0) || !item?.ticker || krFlowOff()) return "";
+  if (!flow.stocks?.[item.ticker]?.dy) {
+    return `<p class="krflow-note">일별 표는 시가총액 상위 ${Number(flow.dailyCount) || 480}종목만 제공합니다 — 위 5일·20일 누적을 참고하세요.</p>`;
+  }
   return `
     <details class="krflow-daily" data-kf-daily="${escapeHtml(String(item.ticker))}">
       <summary>일별 보기</summary>
@@ -229,7 +232,7 @@ function krFlowDailyToggle(item) {
 
 function krFlowFetchShard(code) {
   const flow = window.KR_INVESTOR_FLOW || {};
-  const n = flow.dailyShards || 32;
+  const n = flow.dailyShards || 16;
   const idx = window.MirKrFlowCore.shardOf(code, n);
   const url = `data/korea/investor_flow_daily/s${String(idx).padStart(2, "0")}.json?v=${encodeURIComponent(flow.dailyAsOf || flow.updatedAtKst || "")}`;
   if (!_krFlowShardCache[url]) {

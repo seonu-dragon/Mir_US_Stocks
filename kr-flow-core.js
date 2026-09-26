@@ -5,7 +5,8 @@
 // 입력 형식(data/korea/market_funds.js · data/korea/investor_flow_daily/sNN.json):
 //   funds.rows      [{ d:"YYYY-MM-DD", dep, credit, unpaid, forced, forcedPct }] 오름차순, 억 원(비중 %)
 //   investors.KOSPI [{ d:"YYYY-MM-DD", ind, frn, org }] 오름차순, 억 원
-//   종목 일별 샤드  daily[code] = [[YYYYMMDD, 종가, 전일대비, 개인, 외국인, 기관, 외국인 보유율]] 최신순, 수량(주)
+//   종목 일별 샤드  { dates:[YYYYMMDD 최신순], t:{ code:[n, 기준전일종가, 종가 차분×n, 개인×n, 외국인×n, 기관×n,
+//                   보유율×100 차분×n, 전일대비 보정×n] }, own:{ code:[자기 날짜] } } — 수량(주). build_kr_investor_flow.py encode_stock 과 짝.
 (function (root) {
   "use strict";
 
@@ -127,28 +128,58 @@
     return /^\d{8}$/.test(s) ? `${s.slice(0, 4)}-${s.slice(4, 6)}-${s.slice(6, 8)}` : s;
   }
 
-  // 샤드에서 한 종목의 일별 행을 객체로(최신순). 등락률은 전일대비 ÷ (종가 − 전일대비).
-  function dailyRows(shard, code) {
-    const rows = shard && shard.daily && shard.daily[code];
-    if (!Array.isArray(rows)) return [];
-    return rows.map((r) => {
-      const close = finite(r[1]) ? r[1] : null;
-      const chg = finite(r[2]) ? r[2] : null;
-      const base = close != null && chg != null ? close - chg : null;
-      return {
-        d: isoDate(r[0]),
-        close,
-        chg,
-        pct: base && base > 0 ? (chg / base) * 100 : null,
-        ind: finite(r[3]) ? r[3] : null,
-        frn: finite(r[4]) ? r[4] : null,
-        org: finite(r[5]) ? r[5] : null,
-        hold: finite(r[6]) ? r[6] : null,
-      };
+  // 첫 값 + 차분 → 원값. 결측(null)은 건너뛰고 다음 값은 직전 유효 값에 더한다(파이썬 deltas 의 역).
+  function undelta(vals) {
+    let prev = null;
+    return vals.map((v) => {
+      if (!finite(v)) return null;
+      prev = prev == null ? v : prev + v;
+      return prev;
     });
   }
 
-  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, dailyRows };
+  // 평평한 배열 하나 → 일별 행 객체(최신순). 등락률은 다음(더 오래된) 행 종가, 마지막 행은 기준전일종가로.
+  function decodeStock(arr, dates) {
+    if (!Array.isArray(arr) || !finite(arr[0]) || arr[0] <= 0) return [];
+    const n = arr[0];
+    const col = (k) => arr.slice(2 + n * k, 2 + n * (k + 1));
+    if (arr.length < 2 + n * 5) return [];
+    const adj = arr.length >= 2 + n * 6 ? col(5) : [];
+    const p0 = finite(arr[1]) ? arr[1] : null;
+    const close = undelta(col(0));
+    const ind = col(1);
+    const frn = col(2);
+    const org = col(3);
+    const hold = undelta(col(4));
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const c = close[i];
+      const base = i + 1 < n ? close[i + 1] : p0;
+      // 공식 전일대비 = (종가 − 더 오래된 행 종가) + 보정. 등락률 분모는 공식 기준가(종가 − 전일대비).
+      const chg = c != null && base != null ? c - base + (finite(adj[i]) ? adj[i] : 0) : null;
+      const ref = c != null && chg != null ? c - chg : null;
+      out.push({
+        d: isoDate(dates && dates[i]),
+        close: c,
+        chg,
+        pct: chg != null && ref > 0 ? (chg / ref) * 100 : null,
+        ind: finite(ind[i]) ? ind[i] : null,
+        frn: finite(frn[i]) ? frn[i] : null,
+        org: finite(org[i]) ? org[i] : null,
+        hold: hold[i] != null ? hold[i] / 100 : null,
+      });
+    }
+    return out;
+  }
+
+  // 샤드에서 한 종목의 일별 행(최신순). 없으면 [].
+  function dailyRows(shard, code) {
+    if (!shard || !shard.t || !shard.t[code]) return [];
+    const dates = (shard.own && shard.own[code]) || shard.dates || [];
+    return decodeStock(shard.t[code], dates);
+  }
+
+  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrFlowCore = api;
 })(typeof window !== "undefined" ? window : null);

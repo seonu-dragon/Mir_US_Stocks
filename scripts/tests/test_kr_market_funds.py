@@ -87,7 +87,7 @@ def test_compute_top_amount_is_qty_times_close():
                    ["20260922", 1841000, -27000, 0, -10000, 0, 55.1]],
         "111111": [["20260923", 1000, 0, 0, 0, 0, 1.0]],
     }
-    top = mf.compute_top(daily, {"005930": "삼성전자", "000660": "SK하이닉스"})
+    top = flow.compute_top(daily, {"005930": "삼성전자", "000660": "SK하이닉스"})
     assert top["asOf"] == "2026-09-23" and top["from5"] == "2026-09-22"
     buy = top["d1"]["frnBuy"]
     assert buy[0]["t"] == "005930" and buy[0]["n"] == "삼성전자"
@@ -99,7 +99,7 @@ def test_compute_top_amount_is_qty_times_close():
     assert five == round((4513767 * 286500 + 659851 * 277500) / 1e8, 1)
     # 0원(순매수 없음)은 어느 쪽 표에도 없다
     assert all(x["t"] != "111111" for sect in top["d1"].values() for x in sect)
-    assert mf.compute_top({}, {}) is None
+    assert flow.compute_top({}, {}) is None
 
 
 def test_ecos_check_month_end_match(monkeypatch):
@@ -133,18 +133,64 @@ def test_flow_daily_row_sign_and_shape():
 
 def test_flow_shard_of_matches_js_vectors():
     # kr-flow-core.js / valuation-band-core.js 와 같은 해시(test_kr_flow_core.mjs 와 같은 벡터).
-    assert flow.shard_of("005930") == 29
-    assert flow.shard_of("000660") == 28
+    assert flow.shard_of("005930", 32) == 29
+    assert flow.shard_of("000660", 32) == 28
+    assert flow.shard_of("005930") == 29 % 16 and flow.DAILY_SHARDS == 16
 
 
-def test_flow_daily_shards_roundtrip(tmp_path, monkeypatch):
-    monkeypatch.setattr(flow, "DAILY_DIR", tmp_path / "investor_flow_daily")
-    monkeypatch.setattr(flow, "ROOT", tmp_path)
-    daily = {"005930": [["20260923", 286500, 10000, -1, 2, 3, 46.6]], "000660": [["20260923", 1, 0, 0, 0, 0, 1.0]]}
-    paths = flow.write_daily_shards(daily, "2026-09-26 16:00 KST")
-    assert len(paths) == flow.DAILY_SHARDS
-    s29 = json.loads((tmp_path / "investor_flow_daily" / "s29.json").read_text(encoding="utf-8"))
-    assert s29["daily"]["005930"][0][4] == 2 and s29["asOf"] == "20260923"
-    # market_funds 가 같은 샤드를 읽는다
-    book = mf.load_flow_daily(tmp_path / "investor_flow_daily")
-    assert set(book) == {"005930", "000660"}
+ROWS = [["20260923", 286500, 10000, -7630126, 4513767, 1346883, 46.63],
+        ["20260922", 277500, 3500, -2707452, 659851, 259459, 46.55],
+        ["20260921", 275000, 14000, -10152588, 4080410, 4186614, 46.56]]
+
+
+def test_encode_stock_flat_int_deltas():
+    enc = flow.encode_stock(ROWS)
+    # [n, p0, 종가 차분×3, 개인×3, 외국인×3, 기관×3, 보유율×100 차분×3, 전일대비 보정×3] — kr-flow-core decodeStock 과 같은 벡터
+    assert enc == [3, 261000, 286500, -9000, -2500, -7630126, -2707452, -10152588,
+                   4513767, 659851, 4080410, 1346883, 259459, 4186614, 4663, -8, 1, 1000, 1000, 0]
+    assert all(isinstance(v, int) for v in enc)
+    # 보정이 모두 0 이면 보정 열은 생략된다
+    clean = [["20260923", 110, 10, 0, 0, 0, 1.0], ["20260922", 100, 5, 0, 0, 0, 1.0]]
+    assert len(flow.encode_stock(clean)) == 2 + 2 * 5
+    assert flow.deltas([5, None, 7, 6]) == [5, None, 2, -1]
+
+
+def test_daily_targets_top_mcap_with_details(tmp_path):
+    (tmp_path / "000001.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "000002.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "000003.json").write_text("{}", encoding="utf-8")
+    stocks = [{"ticker": "000001", "marketCapB": 5}, {"ticker": "000002", "marketCapB": 9},
+              {"ticker": "000003", "marketCapB": 7, "sector": "ETF"}, {"ticker": "000004", "marketCapB": 99},
+              {"ticker": "000005", "marketCapB": 1}]
+    assert flow.daily_targets(stocks, tmp_path, limit=1) == {"000002"}
+    assert flow.daily_targets(stocks, tmp_path, limit=10) == {"000001", "000002"}   # ETF·상세 없음 제외
+
+
+def test_build_daily_shards_shared_dates_and_own():
+    daily = {"005930": ROWS, "000660": [ROWS[0], ROWS[2]]}
+    shards = flow.build_daily_shards(daily, n_shards=1)
+    sh = shards[0]
+    assert sh["dates"] == ["20260923", "20260922", "20260921"] and sh["asOf"] == "20260923"
+    assert sh["own"] == {"000660": ["20260923", "20260921"]}
+    assert "own" not in flow.build_daily_shards({"005930": ROWS}, n_shards=1)[0]
+
+
+def test_write_daily_shards_skips_unchanged(tmp_path):
+    d = tmp_path / "investor_flow_daily"
+    daily = {"005930": ROWS}
+    changed, nbytes = flow.write_daily_shards(daily, d)
+    assert len(changed) == flow.DAILY_SHARDS and nbytes > 0
+    mtime = (d / "s13.json").stat().st_mtime_ns
+    changed2, nbytes2 = flow.write_daily_shards(daily, d)   # 같은 내용 → 아무것도 안 씀
+    assert changed2 == [] and nbytes2 == 0
+    assert (d / "s13.json").stat().st_mtime_ns == mtime
+    changed3, _ = flow.write_daily_shards({"005930": ROWS[:2]}, d)
+    assert len(changed3) == 1 and changed3[0].endswith("s13.json")
+    assert "updatedAtKst" not in json.loads((d / "s13.json").read_text(encoding="utf-8"))
+
+
+def test_load_top_reads_investor_flow(tmp_path):
+    f = tmp_path / "investor_flow.json"
+    f.write_text(json.dumps({"top": {"asOf": "2026-09-23"}}), encoding="utf-8")
+    assert mf.load_top(f) == {"asOf": "2026-09-23"}
+    assert mf.load_top(tmp_path / "none.json") is None

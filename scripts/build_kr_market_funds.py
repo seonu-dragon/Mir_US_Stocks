@@ -20,8 +20,8 @@
    (장 마감 뒤 값 확정 반영) + 그 뒤 평일만 묻는다 — 평상시 2~4콜.
 
 3) 외국인·기관 순매수 상위 10 — 새 호출 없음.
-   build_kr_investor_flow.py 가 남긴 종목별 20거래일 일별 행(data/korea/investor_flow_daily/)의
-   순매수 '수량 × 그날 종가' 로 금액을 추정한다. 체결가 가중이 아니라 추정치다(화면에 적는다).
+   build_kr_investor_flow.py 가 전 종목 20거래일 일별 행의 '순매수 수량 × 그날 종가' 로 계산해
+   investor_flow.json 의 top 에 실은 것을 옮겨 싣는다. 체결가 가중이 아니라 추정치다(화면에 적는다).
 
 교차 검증: freesis 월말 값을 한국은행 ECOS 901Y056(월말, 원자료 금투협)과 대조한다 —
 산업 지표 빌더가 이미 받아 둔 data/industry_indicators.json 을 읽는다(ECOS 추가 호출 없음).
@@ -54,8 +54,7 @@ if str(SCRIPTS) not in sys.path:
 KST = ZoneInfo("Asia/Seoul")
 OUT_JSON = ROOT / "data" / "korea" / "market_funds.json"
 OUT_JS = ROOT / "data" / "korea" / "market_funds.js"
-KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
-FLOW_DAILY_DIR = ROOT / "data" / "korea" / "investor_flow_daily"
+FLOW_JSON = ROOT / "data" / "korea" / "investor_flow.json"
 INDUSTRY = ROOT / "data" / "industry_indicators.json"
 
 FREESIS_URL = "https://freesis.kofia.or.kr/meta/getMetaDataList.do"
@@ -69,7 +68,6 @@ FUNDS_OVERLAP_DAYS = 10        # 증분 때 겹쳐 받아 수정분을 덮는다
 FUNDS_KEEP = 800               # 약 3년치까지 보관
 INVESTOR_BACKFILL_DAYS = 95    # 첫 실행 약 3개월(63거래일+)
 INVESTOR_KEEP = 260            # 약 1년치
-TOP_N = 10
 MIN_INTERVAL = 0.35            # 네이버 지수 추이 호출 간격(초)
 MARKET_CLOSE_HHMM = "15:40"    # 이 시각 전에는 오늘 수급을 확정값으로 보지 않는다
 
@@ -253,68 +251,11 @@ def fetch_investors(prev: dict, now: datetime) -> tuple[dict, list[str]]:
 
 
 # ---------------------------------------------------------------- 3) 순매수 상위
-# 샤드 행: [d(YYYYMMDD), 종가, 전일대비(부호), 개인, 외국인, 기관, 외국인 보유율] — 수량(주)
-def load_flow_daily(directory: Path = FLOW_DAILY_DIR) -> dict[str, list]:
-    book: dict[str, list] = {}
-    if not directory.exists():
-        return book
-    for f in sorted(directory.glob("s*.json")):
-        try:
-            j = json.loads(f.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        for t, rows in (j.get("daily") or {}).items():
-            if isinstance(rows, list):
-                book[t] = rows
-    return book
-
-
-def compute_top(daily: dict[str, list], names: dict[str, str], n: int = TOP_N) -> dict | None:
-    """외국인·기관 순매수/순매도 금액 상위 n(1일·5일). 금액 = Σ 수량 × 그날 종가(추정, 억 원)."""
-    dates = sorted({r[0] for rows in daily.values() for r in rows[:5] if r and r[0]}, reverse=True)
-    if not dates:
-        return None
-    latest5 = dates[:5]
-    windows = {"d1": set(latest5[:1]), "d5": set(latest5)}
-    out = {"asOf": iso(latest5[0]), "from5": iso(latest5[-1])}
-    for key, wanted in windows.items():
-        acc = {"frn": [], "org": []}
-        for t, rows in daily.items():
-            sums = {"frn": 0.0, "org": 0.0}
-            hit = 0
-            last_close, last_chg = None, None
-            for r in rows:
-                if len(r) < 6 or r[0] not in wanted or r[1] is None:
-                    continue
-                close = float(r[1])
-                if last_close is None:           # 행은 최신순 — 첫 행이 가장 최근
-                    last_close, last_chg = close, r[2]
-                for col, idx in (("frn", 4), ("org", 5)):
-                    if r[idx] is not None:
-                        sums[col] += float(r[idx]) * close
-                hit += 1
-            if not hit:
-                continue
-            pct = None
-            if last_chg is not None and last_close and last_close - float(last_chg) > 0:
-                pct = round(float(last_chg) / (last_close - float(last_chg)) * 100, 2)
-            for col in ("frn", "org"):
-                acc[col].append({"t": t, "n": names.get(t, t), "a": round(sums[col] / 1e8, 1), "c": pct})
-        sect = {}
-        for col in ("frn", "org"):
-            rows = [x for x in acc[col] if x["a"] != 0]
-            sect[f"{col}Buy"] = sorted([x for x in rows if x["a"] > 0], key=lambda x: -x["a"])[:n]
-            sect[f"{col}Sell"] = sorted([x for x in rows if x["a"] < 0], key=lambda x: x["a"])[:n]
-        out[key] = sect
-    return out
-
-
-def snapshot_names() -> dict[str, str]:
+def load_top(path: Path | None = None) -> dict | None:
     try:
-        snap = json.loads(KR_SNAPSHOT.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return {}
-    return {str(s.get("ticker")).zfill(6): s.get("company") or s.get("name") or "" for s in snap.get("stocks") or []}
+        return json.loads((path or FLOW_JSON).read_text(encoding="utf-8")).get("top")
+    except (OSError, json.JSONDecodeError, AttributeError):
+        return None
 
 
 # ---------------------------------------------------------------- 교차 검증
@@ -393,7 +334,7 @@ def main() -> int:
               + (f" · 오류 {len(inv_err)}건" if inv_err else ""))
 
     # 3) 순매수 상위(파일만 읽음)
-    top = compute_top(load_flow_daily(), snapshot_names()) or prev.get("top")
+    top = load_top() or prev.get("top")
 
     if not funds_rows and not any(investors.get(m) for m in MARKETS):
         print("[중단] 증시자금·투자자별 모두 0건 — 파일을 쓰지 않는다.")

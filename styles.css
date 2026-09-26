@@ -14062,6 +14062,8 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .fx-table th.num, .fx-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
 .fx-sort { padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
 .fx-sort.is-custom { color: var(--accent); }
+/* 펀더멘털 '이상치 가능' 표시(fundamentals-sanity-core.js) — 값 옆 작은 꼬리표 */
+.fx-outlier { display: inline-block; margin-left: 4px; padding: 0 4px; border: 1px solid var(--line, rgba(127,127,127,.35)); border-radius: 4px; font-size: 10px; font-weight: 500; line-height: 15px; color: var(--muted); white-space: nowrap; vertical-align: 1px; }
 @media (max-width: 640px) {
   .fx-block { grid-template-columns: minmax(0, 1fr) 64px; }
   .fx-block .fx-b-mode { grid-column: 1 / 2; }

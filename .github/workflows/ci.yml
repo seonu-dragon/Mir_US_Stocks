@@ -101,6 +101,10 @@ jobs:
       # 업종 상대 팩터 등급(factor-grade-core.js): 업종 내 백분위·섹터 승격·표본 부족 보류·검증 요약 문구.
       - name: Factor grade tests
         run: node scripts/tests/test_factor_grade_core.mjs
+      # 펀더멘털 이상치 규칙(fundamentals-sanity-core.js): 정의상 무의미 값 결측·이상치 경계·정렬 순서.
+      # 사례 파일은 파이썬(test_fundamentals_sanity.py)과 공유 — 두 구현이 같은 답을 내야 한다.
+      - name: Fundamentals sanity tests
+        run: node scripts/tests/test_fundamentals_sanity_core.mjs
       # 스크리너 과거 백테스트(screener-backtest-core.js) + 공통 과적합 검사(overfit-core.js):
       # DSR 알려진 값(Bailey & López de Prado 2014)·룩어헤드 없음·거래비용/회전율·현금 처리·배지 판정.
       - name: Screener backtest tests

@@ -1,0 +1,28 @@
+{
+  "_comment": "fundamentals_sanity.py 와 fundamentals-sanity-core.js 가 같은 결과를 내는지 두 테스트가 함께 읽는 사례. 실제 관측된 이상치(2026-09-26 data/)를 본떴다.",
+  "sanitize": [
+    {"name": "KR 적자 음수 PER·선행 PER 은 결측", "row": {"pe": -33.95, "forwardPE": -12.1, "roe": -183.43, "pb": 1.2}, "want": {"roe": -183.43, "pb": 1.2}, "dropped": ["pe", "forwardPE"]},
+    {"name": "배수 0 은 반올림·0 나누기 흔적 → 결측", "row": {"pe": 0.0, "ps": 0, "eps": 83088.31}, "want": {"eps": 83088.31}, "dropped": ["pe", "ps"]},
+    {"name": "자본잠식(PBR<0·부채비율<0): PBR·부채비율·ROE 모두 결측", "row": {"pb": -0.76, "debtRatio": -295.394, "roe": -83.46, "netMargin": 358.13}, "want": {"netMargin": 358.13}, "dropped": ["pb", "debtRatio", "roe"]},
+    {"name": "적자 배당성향 음수는 결측, 0 은 유지", "row": {"payoutRatio": -1612.774, "divYield": 0}, "want": {"divYield": 0}, "dropped": ["payoutRatio"]},
+    {"name": "|ROA| > 1000% 은 소스 단위 불일치 → 결측, 1000 이하는 유지", "row": {"roa": -64200.0, "roe": 16.0}, "want": {"roe": 16.0}, "dropped": ["roa"]},
+    {"name": "ROA 경계 안 극단값(-350%)은 남긴다", "row": {"roa": -350.0}, "want": {"roa": -350.0}, "dropped": []},
+    {"name": "나스닥 EPS 결측 표식 -999 는 결측", "row": {"eps": -999.0, "pe": 12}, "want": {"pe": 12}, "dropped": ["eps"]},
+    {"name": "콜게이트 ROE 3,948% (자본 양수)는 남긴다 — 표시·정렬에서만 다룬다", "row": {"roe": 3948.15, "pb": 1270.46}, "want": {"roe": 3948.15, "pb": 1270.46}, "dropped": []},
+    {"name": "빌더: 자본 ≤ 0(반올림 0 포함)이면 ROE 결측", "row": {"roe": 643445.45, "roa": -8.4}, "ctx": {"equityB": -0.0, "salesB": 0.381}, "want": {"roa": -8.4}, "dropped": ["roe"]},
+    {"name": "빌더: 음(-)이익/음(-)자본의 양수 ROE 도 결측", "row": {"roe": 160.64}, "ctx": {"equityB": -0.144}, "want": {}, "dropped": ["roe"]},
+    {"name": "빌더: 매출 0(반올림)이면 순이익률 결측", "row": {"netMargin": -762355.56, "roe": -110.57}, "ctx": {"equityB": 0.248, "salesB": 0.0}, "want": {"roe": -110.57}, "dropped": ["netMargin"]},
+    {"name": "정상 행은 그대로", "row": {"pe": 29.87, "pb": 8.66, "roe": 30.23, "roa": 17.6, "netMargin": 40.31, "divYield": 0.8, "eps": 17.28}, "ctx": {"equityB": 442.4, "salesB": 331.8}, "want": {"pe": 29.87, "pb": 8.66, "roe": 30.23, "roa": 17.6, "netMargin": 40.31, "divYield": 0.8, "eps": 17.28}, "dropped": []}
+  ],
+  "outlier": [
+    {"key": "roe", "v": 3948.15, "want": true, "winsor": 300},
+    {"key": "roe", "v": -99985.43, "want": true, "winsor": -300},
+    {"key": "roe", "v": 151.91, "want": false, "winsor": 151.91},
+    {"key": "pe", "v": 6421.11, "want": true, "winsor": 1000},
+    {"key": "pe", "v": 16.1, "want": false, "winsor": 16.1},
+    {"key": "divYield", "v": 85.0, "want": true, "winsor": 30},
+    {"key": "netMargin", "v": -1236.0, "want": true, "winsor": -300},
+    {"key": "eps", "v": 83088.31, "want": false, "winsor": 83088.31},
+    {"key": "unknownKey", "v": 1e9, "want": false, "winsor": 1e9}
+  ]
+}

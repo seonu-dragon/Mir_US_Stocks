@@ -524,7 +524,10 @@ function renderValuation() {
     .map((s) => ({ item: s, value: Number((mapFundamentalsFor(s.ticker) || {})[metric]) }))
     .filter((r) => Number.isFinite(r.value) && (metric === "divYield" ? r.value >= 0 : r.value > 0));
   if (q) rows = rows.filter((r) => r.item.ticker.toLowerCase().includes(q) || (r.item.company || "").toLowerCase().includes(q));
-  rows.sort((a, b) => (valOrder === "asc" ? a.value - b.value : b.value - a.value));
+  // '이상치 가능' 값(ROE 3,948%·PER 6,000배 등)은 정렬 맨 뒤로(fundamentals-sanity-core.js). 값은 원자료 그대로.
+  const sanity = window.MirFundSanity;
+  if (sanity) rows.sort((a, b) => sanity.sortCompare(metric, a.value, b.value, valOrder === "asc" ? 1 : -1));
+  else rows.sort((a, b) => (valOrder === "asc" ? a.value - b.value : b.value - a.value));
   const shown = rows.slice(0, 200);
   const krNote = isKrMarket() ? " · 당일 등락은 상하한가 ±30% 기준 표시" : "";
   if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}${krNote}`;
@@ -538,7 +541,7 @@ function renderValuation() {
     <td class="ins-date">${i + 1}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(isKrMarket() ? (r.item.company || r.item.ticker) : r.item.ticker)}</button><div class="ins-sub">${escapeHtml(isKrMarket() ? "" : (r.item.company || ""))}</div></td>
     <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
-    <td class="ins-num"><strong>${fmtv(r.value)}</strong></td>
+    <td class="ins-num"${sanity && sanity.isOutlier(metric, r.value) ? ` title="${escapeHtml(sanity.describe(metric))}"` : ""}><strong>${fmtv(r.value)}</strong>${sanity && sanity.isOutlier(metric, r.value) ? '<span class="fx-outlier">이상치 가능</span>' : ""}</td>
     <td class="ins-num">${fmtBillions(itemCapForValuation(r.item))}</td>
     <td class="ins-num ${cls(krDisplayChangePct(r.item.changePct))}">${fmtDailyPct(r.item.changePct)}</td>
   </tr>`).join("");

@@ -17,18 +17,23 @@ DART 응답 구조(2026-09-26 실제 호출로 확인, 삼성전자 00126380)
   - 주식수: stockTotqySttus(주식의 총수 현황) 사업보고서 보통주 유통주식수(발행 − 자기주식). 연간만.
 
 호출 예산(DART 개인 키 하루 한도 — 같은 주간 워크플로우의 소유구조·감사의견 빌더와 나눠 쓴다)
-  종목당 보고서 1개 = 1회. 처음 채울 때는 종목당 ~15회라 한 번에 다 못 받는다. --max-calls(기본 4,000)
+  종목당 보고서 1개 = 1회. 처음 채울 때는 종목당 ~15회라 한 번에 다 못 받는다. --max-calls(기본 3,000)
   안에서 **우선순위 계층**으로 받는다: ① 최신 사업보고서·최신 분기 → ② 나머지 최근 8개 보고서 →
   ③ 3년 전 사업보고서 → ④ 주식수 → ⑤ 6년 전 사업보고서. 받은 보고서는 종목 파일의 `_raw.reports` 에
   적어 두고 다음 실행은 빠진 것만 받는다(몇 주에 걸쳐 채워진다). 평시에는 새 보고서 제출 기한이
   지난 주에만 종목당 1회씩 든다. status 020(한도 초과)이면 거기서 멈추고 받은 데까지 저장 + exit 1.
+
+시간 예산·중간 저장(2026-09-26 — 10,000회 수동 실행이 240분 한도에 잘려 로그 0줄·전부 유실된 뒤)
+  --time-budget-min 이 지나면 호출을 멈추고 저장(정상 종료). --save-every 종목 / --save-minutes 분마다
+  종목 파일·인덱스를 쓰고 --push 면 그때마다 커밋·push 한다. 잘려도 마지막 체크포인트까지는 남고, 다음
+  실행은 `_raw.reports` 를 보고 빠진 보고서만 받는다(재개). 진행 로그는 flush 한다.
 
 산출물
   data/korea/financials/<코드>.json          종목별(지연 로드, `_raw` = 증분 재계산용 원천값 — 화면은 안 쓴다)
   data/korea/financials_index.json/.js        window.FINANCIALS_INDEX (KR 모드에서 같은 전역)
 
 Requires DART_API_KEY.
-실행: python scripts/build_financials_kr.py [--top 1000] [--max-calls 4000] [--only 005930,000660] [--push]
+실행: python -u scripts/build_financials_kr.py [--top 1000] [--max-calls 3000] [--time-budget-min 200] [--only 005930,000660] [--push]
 """
 
 from __future__ import annotations
@@ -434,18 +439,108 @@ class Budget(Exception):
     pass
 
 
-def main_run(args, api_key: str) -> int:
-    from build_kr_disclosures import dart_get, load_corp_map
+class TimeUp(Budget):
+    """시간 예산 소진 — 호출 예산 소진과 같이 '계획된 분할 수집'으로 본다."""
+
+
+def log(msg: str) -> None:
+    # 2026-09-26: KR_MAX_CALLS=10000 수동 실행이 4시간 동안 로그 0줄(파이프 stdout 블록 버퍼링)로
+    # 240분 한도에 잘렸다. 진행 로그는 매번 flush 한다(워크플로우도 python -u).
+    print(msg, flush=True)
+
+
+class Clock:
+    """경과 시간·마감 판정. now 를 주입할 수 있어 테스트가 시간을 흉내 낸다."""
+
+    def __init__(self, budget_min: float, now=None):
+        import time as _time
+        self._now = now or _time.monotonic
+        self.start = self._now()
+        self.deadline = self.start + budget_min * 60 if budget_min and budget_min > 0 else None
+
+    def elapsed_min(self) -> float:
+        return (self._now() - self.start) / 60
+
+    def over(self) -> bool:
+        return self.deadline is not None and self._now() >= self.deadline
+
+
+def should_checkpoint(pending: int, since_save_min: float, *, every: int, every_min: float) -> bool:
+    """중간 저장 시점: 저장 안 된 종목이 every 개 이상이거나, 마지막 저장 후 every_min 분이 지났고 1종목이라도 있을 때."""
+    if pending <= 0:
+        return False
+    if every > 0 and pending >= every:
+        return True
+    return every_min > 0 and since_save_min >= every_min
+
+
+def save_checkpoint(targets: dict, docs_raw: dict, pending: set, *, stamp: str, calls: int,
+                    fresh_total: int, push: bool, final: bool) -> tuple[bool, int]:
+    """pending 종목 파일 + 인덱스를 쓰고(push 면 커밋·푸시) pending 을 비운다. (성공 여부, 이번에 쓴 문서 수).
+
+    인덱스는 매번 디스크의 직전 인덱스에 덧붙이므로 중간 저장을 몇 번 하든 누적된다. 재개는 종목 파일의
+    `_raw.reports` 가 맡는다 — 잘려도 마지막 체크포인트까지 받은 보고서는 다음 실행이 다시 받지 않는다.
+    git_publish 는 경로 단위 `git add` 라 실제로 바뀐 파일만 커밋된다.
+    """
+    prev_index = load_json(OUT_JSON, {}) or {}
+    index_tickers: dict = dict(prev_index.get("tickers") or {})
+    written = 0
+    for t in sorted(pending):
+        corp, s = targets[t]
+        doc = build_doc(t, corp, s.get("company") or s.get("name") or t, docs_raw[t],
+                        sector=s.get("sector"), industry=s.get("industry"), updated=stamp)
+        path = OUT_DIR / f"{t}.json"
+        if not doc:
+            # 원천 상태만 남겨 다음 실행이 같은 보고서를 다시 받지 않게 한다(화면용 인덱스에는 안 올린다)
+            atomic_write_text(path, dumps_compact({"schema": SCHEMA_VERSION, "market": "kr", "ticker": t,
+                                                   "annual": [], "quarterly": [], "_raw": docs_raw[t]}) + "\n")
+            index_tickers.pop(t, None)
+            continue
+        atomic_write_text(path, dumps_compact(doc) + "\n")
+        index_tickers[t] = index_entry(doc)
+        written += 1
+    pending.clear()
+    index_tickers = {t: v for t, v in index_tickers.items() if (OUT_DIR / f"{t}.json").exists()}
+    tag = "최종" if final else "중간"
+    log(f"[KR재무] {tag} 저장 · 호출 {calls}회 · 종목 파일 갱신 {written} (누적 {fresh_total + written}) · "
+        f"인덱스 {len(index_tickers)}종목")
+    if not index_tickers:
+        log("[KR재무] 인덱스 0종목 — 기존 인덱스 유지")
+        return False, written
+    payload = {
+        "schema": SCHEMA_VERSION, "market": "kr", "updatedAtKst": stamp, "source": SOURCE,
+        "count": len(index_tickers), "freshCount": fresh_total + written, "calls": calls,
+        "fields": "rev,op,net,pretax,tax,interest,da,sbc,ocf,capex,fcf,epsDil,"
+                  "assets,liab,equity,cash,debt,netDebt,curAssets,curLiab,receivables,sharesOut",
+        "tickers": dict(sorted(index_tickers.items())),
+    }
+    with repository_publish_lock(ROOT):
+        sec.write_data(OUT_JSON, OUT_JS, "FINANCIALS_INDEX", payload, indent=None, min_ratio=0.8)
+        if push:
+            paths = ["data/korea/financials", "data/korea/financials_index.json", "data/korea/financials_index.js"]
+            label = "KR financials (DART)" if final else f"KR financials (DART, 중간 {len(index_tickers)}종목)"
+            if not sec.git_publish(paths, label):
+                log("[중단] KR 재무 push 실패 — 발행되지 않았다")
+                return False, written
+    return True, written
+
+
+def main_run(args, api_key: str, *, dart_get=None, corp_map=None, clock: Clock | None = None) -> int:
+    """dart_get·corp_map·clock 은 테스트 주입용(기본은 실제 DART·시계)."""
+    if dart_get is None or corp_map is None:
+        from build_kr_disclosures import dart_get as _dg, load_corp_map
+        dart_get = dart_get or _dg
+        corp_map = corp_map if corp_map is not None else load_corp_map(api_key)
 
     today = date.today()
     stamp = sec.kst_now_str()
+    clock = clock or Clock(args.time_budget_min)
     snap = load_json(KR_SNAPSHOT, {"stocks": []}) or {"stocks": []}
     stocks = [s for s in (snap.get("stocks") or [])
               if s.get("ticker") and s.get("sector") not in ("ETF", "etf", "EXCHANGE TRADED FUNDS")]
     stocks.sort(key=lambda s: s.get("marketCapB") if isinstance(s.get("marketCapB"), (int, float)) else 0, reverse=True)
-    corp_map = load_corp_map(api_key)
     if not corp_map:
-        print("[KR재무] corpCode.xml 수집 실패 — 중단")
+        log("[KR재무] corpCode.xml 수집 실패 — 중단")
         return 1
     targets = []
     for s in stocks:
@@ -458,8 +553,11 @@ def main_run(args, api_key: str) -> int:
         targets = [x for x in targets if x[0] in wanted]
     elif args.top:
         targets = targets[:args.top]
-    print(f"[KR재무] 대상 {len(targets)}종목 · 호출 예산 {args.max_calls}")
+    budget_txt = f"{args.time_budget_min:g}분" if clock.deadline is not None else "무제한"
+    log(f"[KR재무] 대상 {len(targets)}종목 · 호출 예산 {args.max_calls} · 시간 예산 {budget_txt} · "
+        f"중간 저장 {args.save_every}종목/{args.save_minutes:g}분마다")
 
+    by_ticker = {t: (corp, s) for t, corp, s in targets}
     docs_raw: dict[str, dict] = {}
     for t, corp, s in targets:
         prev = load_json(OUT_DIR / f"{t}.json", None) or {}
@@ -468,14 +566,26 @@ def main_run(args, api_key: str) -> int:
     calls = {"n": 0}
     errors: dict[str, int] = {}
     stopped = None
-    touched: set[str] = set()
+    pending: set[str] = set()
+    state = {"fresh": 0, "saves": 0, "last_save": clock.elapsed_min(), "publish_failed": False}
     recent_keys = {report_key("F", y, c) for y, c in available_reports(today)[:2]}
 
     def call(path, params):
         if calls["n"] >= args.max_calls:
             raise Budget("예산 소진")
+        if clock.over():
+            raise TimeUp("시간 소진")
         calls["n"] += 1
         return dart_get(path, params, api_key)
+
+    def checkpoint(final: bool) -> None:
+        ok, n = save_checkpoint(by_ticker, docs_raw, pending, stamp=stamp, calls=calls["n"],
+                                fresh_total=state["fresh"], push=args.push, final=final)
+        state["fresh"] += n
+        state["saves"] += 1
+        state["last_save"] = clock.elapsed_min()
+        if not ok:
+            state["publish_failed"] = True
 
     def fetch_fs(raw, corp, year, code):
         order = [raw["fs"]] if raw.get("fs") else ["CFS", "OFS"]
@@ -490,9 +600,10 @@ def main_run(args, api_key: str) -> int:
                 return None, None
         return "", []
 
+    all_tiers = tiers(today)
     try:
-        for tier in tiers(today):
-            for t, corp, s in targets:
+        for ti, tier in enumerate(all_tiers, 1):
+            for si, (t, corp, s) in enumerate(targets, 1):
                 raw = docs_raw[t]
                 for kind, year, code in tier:
                     if not needs(raw, kind, year, code, today, recent_keys):
@@ -515,20 +626,29 @@ def main_run(args, api_key: str) -> int:
                         else:
                             errors[f"{st}:{data.get('message') or ''}"] = errors.get(f"{st}:{data.get('message') or ''}", 0) + 1
                             continue
-                        touched.add(t)
+                        pending.add(t)
                         continue
                     fs, rows = fetch_fs(raw, corp, year, code)
                     if fs is None:
                         continue
                     if not rows:
                         reports[key] = {"none": today.isoformat()}
-                        touched.add(t)
+                        pending.add(t)
                         continue
                     raw["fs"] = raw.get("fs") or fs
                     merge_raw(raw, parse_report(rows, year, code))
                     reports[key] = {"rcept": str(rows[0].get("rcept_no") or ""), "at": today.isoformat()}
-                    touched.add(t)
-            print(f"  계층 완료 · 누적 호출 {calls['n']}")
+                    pending.add(t)
+                if args.progress_every > 0 and si % args.progress_every == 0:
+                    log(f"  계층 {ti}/{len(all_tiers)} · 종목 {si}/{len(targets)} · 호출 {calls['n']}/{args.max_calls}"
+                        f" · 경과 {clock.elapsed_min():.1f}분")
+                if should_checkpoint(len(pending), clock.elapsed_min() - state["last_save"],
+                                     every=args.save_every, every_min=args.save_minutes):
+                    checkpoint(final=False)
+            log(f"  계층 {ti}/{len(all_tiers)} 완료 · 누적 호출 {calls['n']} · 경과 {clock.elapsed_min():.1f}분")
+    except TimeUp:
+        stopped = (f"시간 예산 {args.time_budget_min:g}분 소진(호출 {calls['n']}회) — "
+                   "받은 데까지 저장하고 나머지는 다음 실행에 이어 받는다")
     except Budget:
         stopped = f"호출 예산 {args.max_calls}회 소진 — 나머지는 다음 실행에 이어 받는다"
     except SystemExit as exc:          # dart_get: status 020(한도 초과)
@@ -536,50 +656,18 @@ def main_run(args, api_key: str) -> int:
     except Exception as exc:           # 네트워크 장애 — 받은 데까지는 저장한다
         stopped = f"요청 중단: {type(exc).__name__}: {exc}"
     if stopped:
-        print(f"[KR재무] {stopped}")
+        log(f"[KR재무] {stopped}")
     if errors:
-        print(f"[KR재무] 오류 {sum(errors.values())}건: {dict(list(errors.items())[:5])}")
+        log(f"[KR재무] 오류 {sum(errors.values())}건: {dict(list(errors.items())[:5])}")
 
-    prev_index = load_json(OUT_JSON, {}) or {}
-    index_tickers: dict = dict(prev_index.get("tickers") or {})
-    written = 0
-    for t, corp, s in targets:
-        if t not in touched:
-            continue
-        doc = build_doc(t, corp, s.get("company") or s.get("name") or t, docs_raw[t],
-                        sector=s.get("sector"), industry=s.get("industry"), updated=stamp)
-        path = OUT_DIR / f"{t}.json"
-        if not doc:
-            # 원천 상태만 남겨 다음 실행이 같은 보고서를 다시 받지 않게 한다(화면용 인덱스에는 안 올린다)
-            atomic_write_text(path, dumps_compact({"schema": SCHEMA_VERSION, "market": "kr", "ticker": t,
-                                                   "annual": [], "quarterly": [], "_raw": docs_raw[t]}) + "\n")
-            index_tickers.pop(t, None)
-            continue
-        atomic_write_text(path, dumps_compact(doc) + "\n")
-        index_tickers[t] = index_entry(doc)
-        written += 1
-    index_tickers = {t: v for t, v in index_tickers.items() if (OUT_DIR / f"{t}.json").exists()}
-    print(f"[KR재무] 호출 {calls['n']}회 · 종목 파일 갱신 {written} · 인덱스 {len(index_tickers)}종목")
-    if not index_tickers:
-        print("[KR재무] 인덱스 0종목 — 기존 파일 유지, 실패로 끝낸다")
+    if pending or not state["saves"]:
+        checkpoint(final=True)
+    log(f"[KR재무] 끝 · 호출 {calls['n']}회 · 저장 {state['saves']}번 · 종목 파일 갱신 누적 {state['fresh']}"
+        f" · 경과 {clock.elapsed_min():.1f}분")
+    if state["publish_failed"]:
         return 1
-    payload = {
-        "schema": SCHEMA_VERSION, "market": "kr", "updatedAtKst": stamp, "source": SOURCE,
-        "count": len(index_tickers), "freshCount": written, "calls": calls["n"],
-        "fields": "rev,op,net,pretax,tax,interest,da,sbc,ocf,capex,fcf,epsDil,"
-                  "assets,liab,equity,cash,debt,netDebt,curAssets,curLiab,receivables,sharesOut",
-        "tickers": dict(sorted(index_tickers.items())),
-    }
-    with repository_publish_lock(ROOT):
-        sec.write_data(OUT_JSON, OUT_JS, "FINANCIALS_INDEX", payload, indent=None, min_ratio=0.8)
-        print(f"Wrote {OUT_JSON.name} — {len(index_tickers)}종목")
-        if args.push:
-            paths = ["data/korea/financials", "data/korea/financials_index.json", "data/korea/financials_index.js"]
-            if not sec.git_publish(paths, "KR financials (DART)"):
-                print("[중단] KR 재무 push 실패 — 발행되지 않았다")
-                return 1
-    # 예산 소진은 정상(계획된 분할 수집). 한도 초과·네트워크 장애는 실패로 알린다.
-    if stopped and not stopped.startswith("호출 예산"):
+    # 예산(호출·시간) 소진은 정상(계획된 분할 수집). 한도 초과·네트워크 장애는 실패로 알린다.
+    if stopped and not (stopped.startswith("호출 예산") or stopped.startswith("시간 예산")):
         return 1
     return 0
 
@@ -588,17 +676,28 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="KR 재무 확장(DART 전체재무제표, 연간·분기·TTM)")
     ap.add_argument("--push", action="store_true")
     ap.add_argument("--top", type=int, default=1000, help="시총 상위 N 종목(ETF 제외)")
-    ap.add_argument("--max-calls", type=int, default=4000, help="이번 실행의 DART 호출 상한")
+    # 기본 3,000: GitHub 러너에서 DART 1회 ≈ 1.4초(2026-09-26 실측 10,000회 > 240분)라 약 70분.
+    # DART 개인 키 하루 한도 2만 회를 같은 날 소유구조(≈7,800)·감사의견·실적 빌더와 나눠 쓴다.
+    ap.add_argument("--max-calls", type=int, default=3000, help="이번 실행의 DART 호출 상한")
+    ap.add_argument("--time-budget-min", type=float, default=200,
+                    help="이 시간(분)이 지나면 호출을 멈추고 받은 데까지 저장(0=무제한). 잡 한도보다 여유 있게")
+    ap.add_argument("--save-every", type=int, default=150, help="이 종목 수만큼 새로 받을 때마다 중간 저장(+push)")
+    ap.add_argument("--save-minutes", type=float, default=20, help="마지막 저장 후 이 시간(분)이 지나면 중간 저장")
+    ap.add_argument("--progress-every", type=int, default=100, help="진행 로그 간격(종목 수)")
     ap.add_argument("--only", default="", help="쉼표로 구분한 종목코드만(로컬 확인용)")
     args = ap.parse_args()
     if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8")
         sys.stderr.reconfigure(encoding="utf-8")
+    try:
+        sys.stdout.reconfigure(line_buffering=True)   # 파이프(Actions)에서도 줄 단위로 흘려보낸다
+    except Exception:
+        pass
     api_key = os.environ.get("DART_API_KEY", "").strip()
     if not api_key:
-        print("[KR재무] DART_API_KEY 미설정 — 기존 파일 유지, 아무것도 쓰지 않는다")
+        log("[KR재무] DART_API_KEY 미설정 — 기존 파일 유지, 아무것도 쓰지 않는다")
         return 0
-    print(f"=== KR 재무 확장 (DART, 상위 {args.top}) — {datetime.now():%Y-%m-%d %H:%M} ===")
+    log(f"=== KR 재무 확장 (DART, 상위 {args.top}) — {datetime.now():%Y-%m-%d %H:%M} ===")
     return main_run(args, api_key)
 
 

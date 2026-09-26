@@ -20,8 +20,15 @@
    있는지 (b) 문장 속 숫자가 인용 근거·등락률에 있는지 검사하고, 어기면 그 종목은
    "요약 실패"로 발행한다(사유 없이 목록만 나가지 않는다).
 
-호출량: 시장당 하루 LLM 2~3회(10종목 묶음), 공개 레포에 매일 커밋되므로 이 이상 늘리지
-말 것. 같은 거래일 보드가 이미 정상 발행돼 있으면 아무것도 호출하지 않고 끝낸다
+호출량: 시장당 하루 LLM 보통 1회(20종목 한 묶음), 공개 레포에 매일 커밋되므로 이 이상 늘리지
+말 것. GEMINI_API_KEY 는 브리핑 4종·국내 뉴스·실적 보도자료와 같은 키이고 무료 티어는 모델별
+하루 20건이다(2026-09-26 KR 특징주 20종목 중 10종목이 429 로 요약 실패). 그래서
+  - 20종목을 한 번에 묻고(출력 검증은 종목별 그대로),
+  - 브리핑이 먼저 쓰는 flash 대신 flash-lite 부터 쓰고, 429 면 분당 한도는 지수 백오프(15→30초) 후
+    같은 모델 재시도, 하루 한도(PerDay)면 기다리지 않고 다음 모델로 넘어간다,
+  - 같은 거래일 두 번째 시도는 직전 보드에서 이미 요약된 종목을 그대로 두고 실패한 종목만 다시 묻는다,
+  - 응답에서 빠진 종목만 같은 실행에서 한 번 더 묻는다(호출 상한 안에서),
+  - 이 빌더가 오늘(KST) 부른 횟수를 보드의 llm.callsToday 에 누적해 로그로 남긴다. 같은 거래일 보드가 이미 정상 발행돼 있으면 아무것도 호출하지 않고 끝낸다
 (KR 브리핑 워크플로우는 주말·연휴에도 돈다).
 """
 from __future__ import annotations
@@ -68,11 +75,14 @@ JS_GLOBAL = "MOVERS_REASONS"
 NO_MATERIAL = "뚜렷한 재료 확인 안 됨"
 TOP_N = 10               # 방향별 최대 종목 수
 MIN_ABS_MOVE = 3.0       # 이보다 작게 움직인 종목은 '특징주'가 아니다
-LLM_BATCH = 10           # 한 번의 Gemini 호출에 넣는 종목 수
-MAX_LLM_CALLS = 4        # 시장당 하루 상한(보통 1~2회)
+LLM_BATCH = 20           # 한 번의 Gemini 호출에 넣는 종목 수(TOP_N×2 = 한 번에 전부)
+MAX_LLM_CALLS = 3        # 한 실행의 상한(보통 1회 + 빠진 종목 재요청 1회)
 MAX_NEWS_PER_STOCK = 6
 MAX_DISC_PER_STOCK = 4
-GEMINI_MODELS = ("gemini-2.5-flash", "gemini-2.5-flash-lite")
+# 브리핑 4종이 flash 를 먼저 쓴다 — 특징주는 flash-lite 부터(실적 보도자료 요약도 lite, 하루 ≤10건).
+GEMINI_MODELS = ("gemini-2.5-flash-lite", "gemini-2.5-flash")
+BACKOFF_SECONDS = (15, 30)   # 분당 한도 429 재시도 간격(모델마다)
+REUSABLE_STATUS = ("ok", "none", "sector")   # 같은 거래일 재시도 때 그대로 두는 직전 결과
 
 MARKETS = {
     "us": {
@@ -823,39 +833,59 @@ def build_prompt(batch: list[dict], market: str, indices: list[dict], trade_date
 출력은 JSON 배열만: [{{"ticker": "...", "same_company": true, "explains_move": true, "reason": "...", "evidence": ["E1"]}}]"""
 
 
-def call_gemini(prompt: str) -> tuple[str | None, str | None, str]:
+def is_daily_quota(detail: str) -> bool:
+    """429 본문이 '하루 한도'(기다려도 오늘은 안 풀림)인지. 분당 한도면 False."""
+    d = (detail or "").lower()
+    return "perday" in d or "per_day" in d or "per day" in d or "requestsperday" in d
+
+
+def call_gemini(prompt: str, *, models=None, sleep=None, opener=None) -> tuple[str | None, str | None, str]:
+    """(text, model, err). 모델 폴백 + 429 지수 백오프. models·sleep·opener 는 테스트 주입용."""
     key = os.getenv("GEMINI_API_KEY", "")
     if not key:
         return None, None, "GEMINI_API_KEY 없음"
+    models = tuple(models or GEMINI_MODELS)
+    sleep = sleep or time.sleep
+    opener = opener or urllib.request.urlopen
     body = {"contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2, "maxOutputTokens": 8192,
                                  # 2.5 계열은 사고 토큰이 출력 한도를 먹어 JSON 이 잘린다 — 한 줄 요약엔 필요 없다.
                                  "thinkingConfig": {"thinkingBudget": 0}}}
     last_err = ""
-    # 분당 한도(429)는 같은 시각에 도는 브리핑과 겹칠 때 난다 — 모델마다 한 번 40초 쉬고 다시.
-    for model in GEMINI_MODELS:
-        for attempt in range(2):
+    quota_models = 0
+    # 분당 한도(429)는 같은 시각에 도는 브리핑과 겹칠 때 난다 — 15→30초 백오프 후 같은 모델로 다시.
+    # 하루 한도(PerDay)는 기다려도 안 풀리니 바로 다음 모델로.
+    for model in models:
+        for attempt in range(len(BACKOFF_SECONDS) + 1):
             url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
             # 키는 쿼리스트링이 아니라 헤더로(URL 은 예외 메시지·로그에 찍힌다).
             req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
                                          headers={"Content-Type": "application/json", "x-goog-api-key": key})
-            code = None
+            code, detail = None, ""
             try:
-                with urllib.request.urlopen(req, timeout=90) as resp:
+                with opener(req, timeout=90) as resp:
                     data = json.loads(resp.read().decode("utf-8"))
                 text = data["candidates"][0]["content"]["parts"][0]["text"]
                 return text, model, ""
             except urllib.error.HTTPError as exc:
                 code = exc.code
-                last_err = f"{model} HTTP {exc.code}"
+                try:
+                    detail = exc.read().decode("utf-8", "replace")[:2000]
+                except Exception:
+                    detail = ""
+                last_err = f"{model} HTTP {exc.code}" + (" (하루 한도)" if code == 429 and is_daily_quota(detail) else "")
             except Exception as exc:
                 last_err = f"{model} {type(exc).__name__}"
-            print(f"  [경고] Gemini 실패: {last_err}")
-            if code == 429 and attempt == 0:
-                time.sleep(40)
+            print(f"  [경고] Gemini 실패: {last_err}", flush=True)
+            if code == 429 and not is_daily_quota(detail) and attempt < len(BACKOFF_SECONDS):
+                sleep(BACKOFF_SECONDS[attempt])
                 continue
+            if code == 429:
+                quota_models += 1
             break
-        time.sleep(2)
+        sleep(2)
+    if quota_models == len(models):
+        last_err = "QUOTA " + last_err
     return None, None, last_err
 
 
@@ -942,10 +972,33 @@ def finalize(stock: dict, status: str, reason: str, cited: list[dict]) -> dict:
     return out
 
 
-def summarize(movers: dict, market: str, indices: list[dict], trade_date: str, use_llm: bool):
-    """종목별 사유 확정. LLM 은 뉴스·공시 근거가 있는 종목에만."""
+def reuse_row(stock: dict, prev_row: dict) -> dict:
+    """같은 거래일 직전 시도에서 이미 확정된 사유를 그대로 쓴다(등락률·가격 등은 이번 값)."""
+    out = finalize(stock, "none", NO_MATERIAL, [])
+    for k in ("reason", "reasonStatus", "tags", "evidence"):
+        if k in prev_row:
+            out[k] = prev_row[k]
+    return out
+
+
+def parse_llm_rows(text: str | None) -> dict[str, dict]:
+    parsed = json.loads(text) if text else []
+    if isinstance(parsed, dict):
+        parsed = parsed.get("items") or parsed.get("results") or []
+    return {str(r.get("ticker")).strip().upper(): r for r in parsed if isinstance(r, dict)}
+
+
+def summarize(movers: dict, market: str, indices: list[dict], trade_date: str, use_llm: bool,
+              prev_rows: dict | None = None, llm=None):
+    """종목별 사유 확정. LLM 은 뉴스·공시 근거가 있는 종목에만.
+
+    prev_rows: 같은 거래일 직전 보드의 {티커: 행}. 거기서 이미 확정(ok·none·sector)된 종목은 다시 묻지 않는다.
+    llm: 테스트 주입용(prompt → (text, model, err)). 기본은 call_gemini.
+    """
+    llm = llm or call_gemini
+    prev_rows = prev_rows or {}
     all_stocks = movers["up"] + movers["down"]
-    need_llm = []
+    need_llm, ask = [], []
     results: dict[str, dict] = {}
     for s in all_stocks:
         ev = s["_evidence"]
@@ -954,34 +1007,55 @@ def summarize(movers: dict, market: str, indices: list[dict], trade_date: str, u
             results[s["ticker"]] = finalize(s, "none", NO_MATERIAL, [])
             continue
         need_llm.append(s)
+        prev = prev_rows.get(s["ticker"])
+        if prev and prev.get("reasonStatus") in REUSABLE_STATUS:
+            results[s["ticker"]] = reuse_row(s, prev)
+        else:
+            ask.append(s)
+    reused = len(need_llm) - len(ask)
 
     calls, models, errors = 0, set(), []
-    for i in range(0, len(need_llm), LLM_BATCH):
-        batch = need_llm[i:i + LLM_BATCH]
-        rows = {}
-        if use_llm and calls < MAX_LLM_CALLS:
-            calls += 1
-            text, model, err = call_gemini(build_prompt(batch, market, indices, trade_date))
-            if model:
-                models.add(model)
-            if err:
-                errors.append(err)
-            try:
-                parsed = json.loads(text) if text else []
-                if isinstance(parsed, dict):
-                    parsed = parsed.get("items") or parsed.get("results") or []
-                rows = {str(r.get("ticker")).strip(): r for r in parsed if isinstance(r, dict)}
-            except Exception:
-                errors.append("JSON 파싱 실패")
-                print(f"  [경고] Gemini 응답 JSON 파싱 실패: {(text or '')[:200]!r}")
-                rows = {}
-        for s in batch:
-            row = rows.get(s["ticker"]) or rows.get(s["ticker"].upper())
-            status, cited, reason = validate_llm_row(s, row) if row else ("failed", [], "")
-            if status == "failed" and use_llm:
-                print(f"  [검증 실패] {s['ticker']}: {json.dumps(row, ensure_ascii=False)[:240] if row else '응답 없음'}")
-            results[s["ticker"]] = finalize(s, status, reason, cited)
-    meta = {"llmCalls": calls, "llmStocks": len(need_llm), "models": sorted(models), "errors": errors[:5]}
+    rows: dict[str, dict] = {}
+    quota_out = False
+
+    def ask_llm(batch: list[dict]) -> bool:
+        """한 번 호출해 rows 에 합친다. 응답 텍스트를 받았으면 True."""
+        nonlocal calls, quota_out
+        calls += 1
+        text, model, err = llm(build_prompt(batch, market, indices, trade_date))
+        if model:
+            models.add(model)
+        if err:
+            errors.append(err)
+            if err.startswith("QUOTA"):
+                quota_out = True
+        try:
+            rows.update(parse_llm_rows(text))
+        except Exception:
+            errors.append("JSON 파싱 실패")
+            print(f"  [경고] Gemini 응답 JSON 파싱 실패: {(text or '')[:200]!r}")
+            return False
+        return bool(text)
+
+    if use_llm and ask:
+        got_text = False
+        for i in range(0, len(ask), LLM_BATCH):
+            if calls >= MAX_LLM_CALLS or quota_out:
+                break
+            got_text = ask_llm(ask[i:i + LLM_BATCH]) or got_text
+        # 응답에서 빠진 종목만 한 번 더(잘린 JSON 등). 모델이 전부 한도면 다시 부르지 않는다.
+        missing = [s for s in ask if s["ticker"].upper() not in rows]
+        if missing and got_text and not quota_out and calls < MAX_LLM_CALLS:
+            print(f"  응답에 빠진 {len(missing)}종목만 다시 요청")
+            ask_llm(missing[:LLM_BATCH])
+    for s in ask:
+        row = rows.get(s["ticker"].upper())
+        status, cited, reason = validate_llm_row(s, row) if row else ("failed", [], "")
+        if status == "failed" and use_llm:
+            print(f"  [검증 실패] {s['ticker']}: {json.dumps(row, ensure_ascii=False)[:240] if row else '응답 없음'}")
+        results[s["ticker"]] = finalize(s, status, reason, cited)
+    meta = {"llmCalls": calls, "llmStocks": len(need_llm), "reused": reused, "asked": len(ask),
+            "models": sorted(models), "errors": errors[:5]}
     return {side: [results[s["ticker"]] for s in movers[side]] for side in ("up", "down")}, meta
 
 
@@ -1048,10 +1122,21 @@ def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]
               f" (공시 {sum(e['type'] == 'disclosure' for e in ev)} · 뉴스 {sum(e['type'] == 'news' for e in ev)}"
               f"{' · 업종동조' if ev and ev[0]['type'] == 'sector' else ''})")
 
-    boards, meta = summarize(movers, market, indices, trade_date, use_llm)
+    prev_rows = {}
+    if prev.get("tradeDate") == trade_date:
+        prev_rows = {r.get("ticker"): r for r in (prev.get("up") or []) + (prev.get("down") or []) if r.get("ticker")}
+    boards, meta = summarize(movers, market, indices, trade_date, use_llm, prev_rows=prev_rows)
+    # 이 빌더(시장별)가 오늘(KST) 부른 Gemini 횟수 — 같은 날 재시도면 누적. 키를 7개 워크플로우가 나눠 쓴다.
+    today_kst = datetime.now(KST).date().isoformat()
+    prev_llm = prev.get("llm") or {}
+    carried = int(prev_llm.get("callsToday") or 0) if prev_llm.get("callDate") == today_kst else 0
+    meta["callDate"] = today_kst
+    meta["callsToday"] = carried + meta["llmCalls"]
+    print(f"  Gemini 호출: 이번 {meta['llmCalls']}회(실행 상한 {MAX_LLM_CALLS}) · 오늘 누적 {meta['callsToday']}회"
+          f"({market}) · 재사용 {meta['reused']}종목 · 요청 {meta['asked']}종목 · 모델 {','.join(meta['models']) or '-'}")
     rows = boards["up"] + boards["down"]
     failed = sum(r["reasonStatus"] == "failed" for r in rows)
-    status = "ok" if not failed else ("llm_failed" if failed == meta["llmStocks"] and failed else "partial")
+    status = "ok" if not failed else ("llm_failed" if failed == meta["asked"] and not meta["reused"] else "partial")
     if not use_llm and meta["llmStocks"]:
         status = "no_llm"
     payload = {

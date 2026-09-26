@@ -5122,6 +5122,7 @@ function renderSearch(options = {}) {
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
+  if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
@@ -5150,6 +5151,8 @@ function renderSearch(options = {}) {
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);
     renderNews(refreshed);
+    // 위험·시즈널리티는 종목 상세의 chartSeries, 체력은 상세 fundamentals 를 쓴다.
+    if (typeof renderStockHealth === "function") renderStockHealth(refreshed);
   });
 
   // If not triggered via natural language AI search, instantly reveal dashboard components.

@@ -605,7 +605,7 @@ async function buildStockChatContext(userText) {
 
     lines.push(
       `[${item.ticker} ${item.company}] 섹터:${item.sector} · 가격:${priceOrDash(item.price)} · 당일:${fmtDailyPct(item.changePct)} · 1주:${fmtPct(item.weekChangePct)} · 1M:${fmtPct(item.monthChangePct)} · RSI:${fmtRsi(item)} · EPS:${fmtEps(item)} · 거래량비율:${Number(item.volumeRatio || 0).toFixed(1)}x · 신고가거리:${fmtPct(-item.newHighDistancePct)} · 신호:${signalFor(item)}` +
-      (f.pe ? ` · PER:${fmtMultiple(f.pe)}` : "") +
+      (f.pe ? ` · ${f.peLabel || "PER"}:${fmtMultiple(f.pe)}` : "") +
       (f.forwardPE ? ` · FwdPER:${fmtMultiple(f.forwardPE)}` : "") +
       (f.ps ? ` · P/S:${fmtMultiple(f.ps)}` : "") +
       (f.pb ? ` · P/B:${fmtMultiple(f.pb)}` : "") +
@@ -1262,18 +1262,41 @@ function normalizedFundamentalsForItem(item) {
   const marketCapB = marketCapBillionForFundamentals(item, f);
   if (isKrMarket() && marketCapB != null) f.marketCapDisplay = marketCapB / 1000;
 
-  let epsTtm = firstFiniteNumber(f.epsTtm, f.trailingEps, f.trailingEPS, f.eps);
+  const kr = isKrMarket();
   let sharesB = firstFiniteNumber(f.sharesB, f.sharesOutstandingB);
-  if (isKrMarket() && marketCapB != null && price && price > 0) {
+  if (kr && marketCapB != null && price && price > 0) {
     const derivedSharesB = marketCapB / price;
     if (derivedSharesB > 0) sharesB = derivedSharesB;
   }
-  if (!(epsTtm > 0) && sharesB > 0 && Number(f.incomeB) > 0) {
-    epsTtm = Number(f.incomeB) / sharesB;
-  }
-  if (epsTtm > 0) f.epsTtm = epsTtm;
   if (sharesB > 0) f.sharesBDisplay = sharesB;
-  if (price > 0 && epsTtm > 0) f.pe = price / epsTtm;
+  const fallbackEps = sharesB > 0 && Number(f.incomeB) > 0 ? Number(f.incomeB) / sharesB : null;
+  const basisCore = window.MirPerBasisCore;
+  if (basisCore) {
+    // PER 기준(최근 4분기 / 연간 / KRX 사업연도)을 먼저 정하고 현재가로 다시 계산한다.
+    // 예전 국내 자료는 연간 EPS 를 epsTtm 이름으로 담았으므로 기준 표식이 없으면 연간으로 본다.
+    const r = basisCore.perBasis(raw, { kr, price, fallbackEps });
+    f.peBasis = r.basis;
+    f.peLabel = r.label;
+    f.epsLabel = r.epsLabel;
+    f.peNote = r.note;
+    f.epsShown = r.eps;
+    f.epsTtm = r.basis === "ttm" ? r.eps : null; // 연간 EPS 를 '최근 4분기' 칸에 넣지 않는다
+    f.pe = r.pe;
+  } else {
+    let epsTtm = firstFiniteNumber(f.epsTtm, f.trailingEps, f.trailingEPS, f.eps);
+    if (!(epsTtm > 0) && fallbackEps) epsTtm = fallbackEps;
+    if (epsTtm > 0) f.epsTtm = epsTtm;
+    f.epsShown = f.epsTtm;
+    if (price > 0 && epsTtm > 0) f.pe = price / epsTtm;
+  }
+  // PBR: 국내는 최근 분기 BPS(bpsLatest)가 있으면 그 기준으로 현재가에 맞춘다.
+  const bpsNow = firstFiniteNumber(f.bpsLatest);
+  if (kr && bpsNow > 0 && price > 0) {
+    f.pb = price / bpsNow;
+    f.bpsShown = bpsNow;
+  } else {
+    f.bpsShown = firstFiniteNumber(f.bps);
+  }
 
   const epsNextY = firstFiniteNumber(f.epsNextY, f.forwardEps, f.forwardEPS, f.epsForward);
   if (price > 0 && epsNextY > 0) {
@@ -1359,7 +1382,7 @@ function renderFundamentals(item) {
   const ttmGroup = typeof ttmRatioGroup === "function" ? ttmRatioGroup(ttm) : null;
   const groups = [
     ...(investHtml ? [] : [{ title: "밸류에이션", metrics: [
-      ["PER", fmtMultiple(f.pe)], ["선행 PER", fmtMultiple(f.forwardPE)],
+      [f.peLabel || "PER", fmtMultiple(f.pe)], ["선행 PER(추정)", fmtMultiple(f.forwardPE)],
       ["PSR", fmtMultiple(f.ps)], ["PBR", fmtMultiple(f.pb)],
     ] }]),
     ttmGroup
@@ -1369,7 +1392,7 @@ function renderFundamentals(item) {
         ["순이익률", fmtPercent(f.profitMargin)], ["ROE", fmtPercent(f.roe)],
       ] },
     { title: "추정 · 기타", metrics: [
-      ...(investHtml ? [] : [["최근 4분기 EPS", moneyOrDash(f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)]]),
+      ...(investHtml ? [] : [[f.epsLabel || "최근 4분기 EPS", moneyOrDash(f.epsShown ?? f.epsTtm)], ["내년 EPS 추정", moneyOrDash(f.epsNextY)]]),
       ["다음 분기 EPS 추정", moneyOrDash(f.epsNextQ)], ["1년 목표가", priceOrDash(f.targetPrice)],
       ["RSI(14)", fmtRsi(item)], ["지수", indexLabel(item)],
     ] },

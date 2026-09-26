@@ -15,6 +15,10 @@ const VALBAND_SOURCES = {
   kr: {
     featureKey: "krValBand", global: "KR_VALUATION_BAND_META", dir: "data/korea/valuation_band", sourceLabel: "KRX 공식 PER·PBR",
     baseNote: { per: "KRX 공식 EPS 는 직전 사업연도 기준이라 계단식", pbr: "KRX 공식 BPS" },
+    // KRX 공식 PER = 현재가 ÷ 직전 사업연도 EPS. 과거와 같은 잣대로 비교하려고 그대로 쓰되,
+    // 투자정보의 대표 PER(최근 4분기)과 다른 이유를 화면에 적는다.
+    statSuffix: { per: "사업연도 기준", pbr: "사업연도 기준" },
+    statHint: { per: "밴드는 과거와 같은 잣대로 비교하려고 직전 사업연도 EPS 기준(KRX 공식)입니다. 투자정보의 PER 은 최근 4개 분기 기준이라 이익이 크게 바뀐 해에는 두 값이 많이 다릅니다." },
     priceNote: "주가는 KRX 월말 종가를 액면분할·병합만 수정했습니다(배당 미반영).",
   },
   us: {
@@ -122,13 +126,16 @@ function renderValBandCard(host, opts) {
     };
     const notice = valBandNotice(metric, per, pbr);
     const baseNote = (src.baseNote && src.baseNote[metric]) || "";
+    const statSuffix = (src.statSuffix && src.statSuffix[metric]) || "";
+    const statHint = (src.statHint && src.statHint[metric]) || "";
     host.innerHTML = `
       <div class="valband-head">
         <h3>${title} <span class="muted valband-sub">과거 ${res.ok ? res.validCount : 0}개월 배수 분포 · 월말</span></h3>
         <div class="segmented valband-seg" role="group" aria-label="밴드 기준">${btn("per")}${btn("pbr")}${btn("psr")}</div>
       </div>
       ${notice ? `<p class="valband-notice">${notice}</p>` : ""}
-      ${res.ok ? valBandStats(res, label) : ""}
+      ${res.ok ? valBandStats(res, statSuffix ? `${label}(${statSuffix})` : label) : ""}
+      ${res.ok && statHint ? `<p class="muted valband-hint">${escapeHtml(statHint)}</p>` : ""}
       ${res.ok ? renderValBandChart(series, res, mult, label) : `<p class="muted">${label} 유효 자료가 부족합니다.</p>`}
       <p class="valband-readout muted" aria-live="polite"></p>
       ${valBandValidationLine(meta)}

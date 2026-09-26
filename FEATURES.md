@@ -371,7 +371,7 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.
 - **오늘의 특징주 빌더 (`build_movers_reasons.py --market us|kr`)**:
-  - KR 은 `Korea close briefing` 브리핑 뒤, US 는 `Daily US market snapshot` 스냅샷 발행 뒤 스텝(둘 다 `!cancelled()` + continue-on-error — 브리핑·스냅샷 실패와 서로 막지 않는다). 등락률·거래대금은 라이브 소스의 거래일 봉으로 다시 확인한다(KR 네이버 m.stock, US 야후 일봉 — details 일봉은 날짜가 빠지거나 늦다). US 거래일은 시총 상위 15종목의 야후 일봉과 스냅샷 등락률을 대조한 다수결.
+  - KR 은 `Korea close briefing` 브리핑 뒤, US 는 `Daily US market snapshot` 스냅샷 발행 뒤 스텝(둘 다 `!cancelled()` + continue-on-error — 브리핑·스냅샷 실패와 서로 막지 않는다). 등락률·거래대금은 라이브 소스의 거래일 봉으로 다시 확인한다(KR 네이버 m.stock, US 야후 일봉 — details 일봉은 날짜가 빠지거나 늦다). US 거래일은 스냅샷 `priceDate`(야후 날짜로 정한 가격 기준일)가 1순위이고, 없을 때만 시총 상위 15종목의 야후 일봉과 스냅샷 등락률을 대조한 다수결. 00:00 UTC 뒤에 받은 야후 일봉에 마지막 거래일 봉이 빠지면(2026-09-26 run 36202139416 에서 보드가 멈춘 원인) 야후 `meta.regularMarketTime/Price`(시세 날짜가 마지막 봉의 바로 다음 거래일일 때만) → details 마지막 봉 → 그 종목 `priceDate` 가 거래일인 스냅샷 값 순으로 확인하고, 날짜를 확인 못 한 종목만 뺀다(보드 항목의 `priceSource`).
   - 근거: KR DART(`list.json` 종목별 + 기존 `kr_disclosures.json`)·네이버 뉴스 검색 API(키 없거나 거부되면 Google News RSS)·종목 상세 뉴스 / US SEC 8-K(efts 당일분 + `material_events.json`)·Google News RSS·종목 상세 야후 뉴스, 업종 시총가중 평균, 지수. 제목에 종목명/티커가 없는 기사는 버린다.
   - LLM 은 뉴스·공시 근거가 있는 종목만 10개 묶음으로 호출(시장당 하루 1~2회, 상한 4회). 같은 거래일 보드가 이미 정상이면 호출 없이 끝나고, 요약이 실패한 보드는 거래일당 최대 2회까지 재시도. 요약이 전부 실패하면 목록은 "요약 실패" 로 발행하고 exit 1.
 - **예측시장 확률 빌더 (`build_macro_odds.py`)**:

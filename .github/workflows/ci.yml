@@ -50,6 +50,9 @@ jobs:
       - name: Build id stamps (?v= / MIR_BUILD_ID / sw.js)
         run: python scripts/stamp_build_id.py --check
 
+      - name: CSS brace balance
+        run: python scripts/check_css_balance.py
+
       # index/analysis 에 인라인된 critical CSS 가 styles.css 와 동기인지.
       - name: Critical CSS in sync
         run: python scripts/sync_critical_css.py --check

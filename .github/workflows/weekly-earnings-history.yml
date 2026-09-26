@@ -171,6 +171,11 @@ jobs:
           KR_MAX_CALLS: ${{ inputs.kr_max_calls || '4000' }}
         run: python scripts/build_financials_kr.py --push --max-calls "$KR_MAX_CALLS"
 
+      # 역DCF 기저율 분포 — 위 두 스텝이 갱신한 종목 파일로 다시 계산(네트워크 없음, 몇 초).
+      - name: DCF base rates
+        continue-on-error: true
+        run: python scripts/build_dcf_base_rates.py --push
+
       - name: Data freshness gate
         run: python scripts/check_data_freshness.py --group financials
 

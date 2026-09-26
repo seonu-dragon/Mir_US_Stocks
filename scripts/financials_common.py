@@ -87,6 +87,7 @@
 ────────────────────────────────────────────────────────────────────────
 - 역DCF: ttm.fcf(없으면 annual 마지막 행 fcf), ttm.sharesDilAvg 또는 sharesOut, ttm.netDebt(최근 분기말).
   currency ≠ 주가 통화(해외발행인)거나 industryType ≠ "general" 이면 건너뛸 것(flags 로 판정).
+  → 구현: dcf-core.js(계산) · dcf.js(화면) · scripts/build_dcf_base_rates.py(기저율 분포).
 - US PER 밴드: quarterly[].epsDil(분기, d 에 epsDil 이 있으면 산출값) → MirFinCore.ttmSeries(q, "epsDil")
   로 분기별 TTM EPS 시계열(각 점 = 그 분기말 기준 최근 4분기 합, 연속 4분기일 때만). PBR 밴드는
   quarterly[].equity / sharesOut. flags 에 adrShareBasis 가 있으면 EPS 가 ADS 기준이 아닐 수 있다.

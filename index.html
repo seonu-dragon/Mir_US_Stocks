@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=29235f6f22" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=29235f6f22"></noscript>
+    <link rel="preload" href="styles.css?v=b57d5e7aa7" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=b57d5e7aa7"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=14cbc0b833"></script>
+    <script src="build_id.js?v=c687868f60"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1432,6 +1432,8 @@ html[data-theme="dark"] {
         <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
         <!-- 재무(financials.js renderFinancials) — SEC/DART 종목별 파일, 인덱스에 있는 종목만 -->
         <section class="financials-card animate-reveal" id="financialsSection" hidden></section>
+        <!-- 역DCF · 시나리오 DCF(dcf.js renderDcf) — 재무 확장 파일이 있는 비금융 종목만 -->
+        <section class="financials-card dcf-card animate-reveal" id="dcfSection" hidden></section>
         <section class="stock-events-card animate-reveal" id="stockEvents"></section>
         <!-- 이 종목이 따라가는 산업 지표(industry.js renderIndustryReverse) — INDUSTRY_BY_TICKER 역인덱스 -->
         <section class="industry-reverse-card animate-reveal" id="industryReverse" hidden></section>
@@ -3075,7 +3077,7 @@ html[data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="chart-indicators.js?v=742472f4c4"></script>
     <script src="community.js?v=af8ec25e4f"></script>
-    <script src="ai-mode.js?v=ae73e637ec"></script>
+    <script src="ai-mode.js?v=2642a3273b"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=674ff5989c"></script>
     <script src="movers.js?v=4f92914563"></script>
@@ -3090,7 +3092,7 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=9c1c6847b9"></script>
+    <script src="feature-data.js?v=0b1965e4e6"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
     <script src="valuation-band-core.js?v=0e0b770b57"></script>
@@ -3112,8 +3114,10 @@ html[data-theme="dark"] {
     <script src="earnings-insight.js?v=8e1bf51e44"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="financials.js?v=2b33b47cc1"></script>
+    <script src="dcf-core.js?v=f8687c4ac3"></script>
+    <script src="dcf.js?v=3e6f86bccd"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=68275fa426"></script>
+    <script src="app.js?v=022f31f3b2"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

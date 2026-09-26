@@ -189,6 +189,8 @@ CHECKS = {
     "financials": [
         ("data/financials_index.json", 8, True),
         ("data/korea/financials_index.json", 8, True),
+        # 역DCF 기저율 — 같은 잡 끝에서 실행마다 다시 쓴다.
+        ("data/dcf_base_rates.json", 8, True),
     ],
     "earnings-releases": [
         ("data/earnings_releases.json", 4, False),

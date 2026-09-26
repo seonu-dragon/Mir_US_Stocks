@@ -344,6 +344,8 @@ html[data-market="kr"] {
   --accent: #4338ca;
   --link: #4338ca;
   --topbar-accent: #4338ca;
+  --red: var(--bad);
+  --tint-pos: #fde2e2; --tint-neg: #dbeafe; --tint-pos-fg: #b91c1c; --tint-neg-fg: #1d4ed8;
 }
 html[data-market="kr"][data-theme="dark"] {
   --pos: #f25a5d;
@@ -356,6 +358,7 @@ html[data-market="kr"][data-theme="dark"] {
   --accent: #8b8cf8;
   --link: #a5a6fb;
   --topbar-accent: #a5a6fb;
+  --tint-pos: #3a1d1d; --tint-neg: #16284a; --tint-pos-fg: #fca5a5; --tint-neg-fg: #93c5fd;
 }
 </style>
     <!-- critical:end -->
@@ -363,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=64c777ad1f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=64c777ad1f"></noscript>
+    <link rel="preload" href="styles.css?v=8a6522f55d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=8a6522f55d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=7d9aa86471"></script>
+    <script src="build_id.js?v=61ddfc519e"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3249,10 +3252,10 @@ html[data-market="kr"][data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="per-basis-core.js?v=b7c4da7066"></script>
     <script src="chart-indicators.js?v=9e108a94cb"></script>
-    <script src="community.js?v=c4d7daa34a"></script>
-    <script src="ai-mode.js?v=7199eb4dee"></script>
+    <script src="community.js?v=567e03431f"></script>
+    <script src="ai-mode.js?v=dca21f04cc"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=8369c14291"></script>
+    <script src="disclosure-trackers.js?v=d506c64965"></script>
     <script src="movers.js?v=4a60812545"></script>
     <script src="portfolio.js?v=c43b5dc298"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
@@ -3272,11 +3275,11 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="company-info-core.js?v=c15f9a8b38"></script>
     <script src="company-info.js?v=0afc274331"></script>
     <script src="treemap.js?v=79d7a5b9a2"></script>
-    <script src="industry.js?v=3a0246f6c8"></script>
+    <script src="industry.js?v=05412ccb82"></script>
     <script src="market-indicators-core.js?v=3c455ff8c0"></script>
     <script src="market-indicators.js?v=51d4c78837"></script>
-    <script src="valuation-band-core.js?v=11d961c47c"></script>
-    <script src="valuation-band.js?v=4148d126ec"></script>
+    <script src="valuation-band-core.js?v=8169dae7ed"></script>
+    <script src="valuation-band.js?v=707d271766"></script>
     <script src="factor-grade-core.js?v=5b2d301864"></script>
     <script src="factor-grades.js?v=0146d20671"></script>
     <script src="stock-health-core.js?v=bd57169177"></script>
@@ -3286,7 +3289,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=da99b8e4b6"></script>
-    <script src="signals.js?v=51e90ac142"></script>
+    <script src="signals.js?v=be7a1ea8bd"></script>
     <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=733715a6b0"></script>
@@ -3316,10 +3319,10 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table.js?v=bf8683882a"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
-    <script src="calendar-panel.js?v=497ff92d75"></script>
+    <script src="calendar-panel.js?v=9ba51cec03"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=19a30aa6e4"></script>
-    <script src="ai-cosmos.js?v=069b3c9089"></script>
+    <script src="app.js?v=588d52f25b"></script>
+    <script src="ai-cosmos.js?v=56dc52942d"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=f647c74678"></script>
   </body>

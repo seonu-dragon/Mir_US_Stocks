@@ -19,6 +19,7 @@
   --primary: #1d4ed8;
   --primary-fill: #1d4ed8;   /* 흰 글자를 얹는 채움면(버튼·배지). 다크에선 더 짙게 */
   --on-primary: #ffffff;
+  /* 의미색 규칙: 방향(증감·예상 상회/하회·매수/매도)=--pos/--neg, 판정(통과·주의)=--good/--bad, 호재/악재 해석은 색 없이. 초록 하드코딩 금지 */
   --green: #0f7a3f;          /* 의미색 '좋음' (등락색 아님 — 등락은 --pos/--neg) */
   --red: #c03535;            /* 의미색 '나쁨' */
   --amber: #98620f;
@@ -4535,8 +4536,8 @@ footer {
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
-.fund-metric strong.pos { color: var(--green); }
-.fund-metric strong.neg { color: var(--red); }
+.fund-metric strong.pos { color: var(--pos); }
+.fund-metric strong.neg { color: var(--neg); }
 
 @media (max-width: 640px) {
   .fund-groups { grid-template-columns: 1fr; }
@@ -5122,9 +5123,9 @@ footer {
   font-weight: 600;
 }
 
-.confidence-high { background: var(--tint-pos); color: var(--tint-pos-fg); }
+.confidence-high { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .confidence-medium { background: var(--tint-warn); color: var(--tint-warn-fg); }
-.confidence-low { background: var(--tint-neg); color: var(--tint-neg-fg); }
+.confidence-low { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
 
 .move-analysis-sources {
   display: grid;
@@ -5209,8 +5210,8 @@ footer {
 }
 
 .quality-good {
-  background: color-mix(in srgb, var(--pos) 14%, transparent);
-  color: var(--tint-pos-fg);
+  background: color-mix(in srgb, var(--good) 14%, transparent);
+  color: var(--good);
 }
 
 .quality-warn {
@@ -6145,7 +6146,7 @@ footer {
   vertical-align: middle;
 }
 .earn-tier-mega { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--accent); }
-.earn-tier-large { background: rgba(16,163,74,0.14); color: var(--green); }
+.earn-tier-large { background: color-mix(in srgb, var(--teal) 14%, transparent); color: var(--teal); }
 .earn-tier-mid { background: var(--panel-soft); color: var(--muted); }
 
 @media (max-width: 900px) {
@@ -7406,15 +7407,15 @@ button.community-hot-ticker {
 }
 
 .community-vote-choice[data-choice="buy"].is-selected {
-  border-color: var(--green);
+  border-color: var(--pos);
   background: color-mix(in srgb, var(--pos) 10%, transparent);
-  color: var(--green);
+  color: var(--pos);
 }
 
 .community-vote-choice[data-choice="sell"].is-selected {
-  border-color: var(--red);
+  border-color: var(--neg);
   background: color-mix(in srgb, var(--neg) 10%, transparent);
-  color: var(--red);
+  color: var(--neg);
 }
 
 .community-vote-choice[data-choice="hold"].is-selected {
@@ -8025,7 +8026,7 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 .screener-delta-cols b { display: block; margin-bottom: 6px; font-size: var(--fs-cap); }
 .screener-delta-cols > div > div { display: flex; flex-wrap: wrap; gap: 5px; }
 .screener-delta-chip { height: auto; padding: 3px 7px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--panel); font-size: var(--fs-cap); font-weight: 700; cursor: pointer; }
-.screener-delta-chip.is-added { border-color: #86efac; color: var(--green); background: var(--tint-pos); }
+.screener-delta-chip.is-added { border-color: color-mix(in srgb, var(--good) 45%, transparent); color: var(--good); background: color-mix(in srgb, var(--good) 10%, transparent); }
 .screener-delta-chip.is-removed { border-color: #fca5a5; color: var(--red); background: var(--tint-neg); }
 
 /* 데이터 신뢰도 센터 */
@@ -8090,7 +8091,7 @@ button.agg-label { cursor: pointer; color: var(--accent); }
 .investment-check-list { display: grid; gap: 6px; }
 .investment-check-row { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: var(--space-2); min-height: 48px; padding: 7px; border: 1px solid var(--line); border-radius: var(--r-md); }
 .investment-check-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font-size: var(--fs-cap); font-weight: 600; }
-.checklist-pass .investment-check-icon { background: var(--tint-pos); color: var(--green); }
+.checklist-pass .investment-check-icon { background: color-mix(in srgb, var(--good) 14%, transparent); color: var(--good); }
 .checklist-warn .investment-check-icon { background: var(--tint-warn); color: var(--amber); }
 .checklist-check .investment-check-icon { background: var(--surface-3); color: var(--muted); }
 .investment-check-row strong,
@@ -8660,6 +8661,8 @@ html[data-market="kr"] {
   --accent: #4338ca;
   --link: #4338ca;
   --topbar-accent: #4338ca;
+  --red: var(--bad);         /* 판정 '나쁨'이 상승 빨강과 헷갈리지 않게 주황으로 */
+  --tint-pos: #fde2e2; --tint-neg: #dbeafe; --tint-pos-fg: #b91c1c; --tint-neg-fg: #1d4ed8; /* 등락 틴트도 빨강↑파랑↓ */
 }
 html[data-market="kr"][data-theme="dark"] {
   --pos: #f25a5d;
@@ -8672,6 +8675,7 @@ html[data-market="kr"][data-theme="dark"] {
   --accent: #8b8cf8;
   --link: #a5a6fb;
   --topbar-accent: #a5a6fb;
+  --tint-pos: #3a1d1d; --tint-neg: #16284a; --tint-pos-fg: #fca5a5; --tint-neg-fg: #93c5fd;
 }
 /* === critical:end === */
 /* 다크 테마 중 첫 페인트에 안 쓰는 토큰(critical 밖) */
@@ -11082,13 +11086,13 @@ body.ai-stock-analysis-view .ai-cosmos {
 }
 
 .ai-evidence-card.is-positive {
-  border-color: color-mix(in srgb, var(--green) 42%, var(--line));
-  background: color-mix(in srgb, var(--green) 8%, var(--panel));
+  border-color: color-mix(in srgb, var(--good) 42%, var(--line));
+  background: color-mix(in srgb, var(--good) 8%, var(--panel));
 }
 
 .ai-evidence-card.is-negative {
-  border-color: color-mix(in srgb, var(--red) 38%, var(--line));
-  background: color-mix(in srgb, var(--red) 7%, var(--panel));
+  border-color: color-mix(in srgb, var(--bad) 38%, var(--line));
+  background: color-mix(in srgb, var(--bad) 7%, var(--panel));
 }
 
 .ai-evidence-card.is-warning {
@@ -12702,8 +12706,8 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .ia-signal-value { font-size: var(--fs-h2); font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .ia-signal-value small { font-size: var(--fs-sub); font-weight: 500; margin-left: 2px; color: var(--muted); letter-spacing: normal; }
 .ia-signal-delta { font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
-.ia-signal-card.pos .ia-signal-delta { color: var(--good); }
-.ia-signal-card.neg .ia-signal-delta { color: var(--bad); }
+.ia-signal-card.pos .ia-signal-delta { color: var(--pos); }
+.ia-signal-card.neg .ia-signal-delta { color: var(--neg); }
 .ia-signal-note { font-size: var(--fs-sub); color: var(--muted); }
 
 /* --- 내 투자 --- */
@@ -12875,8 +12879,8 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 /* 줄바꿈 금지 조각(분석 페이지 요약 줄 등) */
 .nowrap { white-space: nowrap; }
 /* 경제 캘린더 서프라이즈: 실제치가 예측 위(초록)/아래(빨강) */
-.cal-table td.cal-actual.cal-beat { color: var(--green); }
-.cal-table td.cal-actual.cal-miss { color: var(--red); }
+.cal-table td.cal-actual.cal-beat { color: var(--pos); }
+.cal-table td.cal-actual.cal-miss { color: var(--neg); }
 .cal-table td.cal-actual.cal-beat::after { content: " ▲"; font-size: 0.8em; }
 .cal-table td.cal-actual.cal-miss::after { content: " ▼"; font-size: 0.8em; }
 /* 브리핑 읽어주기 버튼 (.briefing-header 본체 규칙은 위쪽 한 곳에만 둔다) */
@@ -14168,7 +14172,7 @@ html[data-theme="dark"] { --map-bg: #121417; --map-sector-bg: #1f2226; --map-sec
 
 /* --- 9. 한국 모드 AI 몰입 화면·대시보드도 시장 등락색을 따른다 --- */
 html[data-market="kr"] body.ai-mode-active,
-html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; }
+html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; --red: var(--bad); --tint-pos-fg: #fca5a5; --tint-neg-fg: #93c5fd; }
 
 /* --- 10. 굵기: 본문 500 · 강조 600 · 제목·가격 700 --- */
 .index-price { font-weight: var(--fw-title); }
@@ -14875,6 +14879,22 @@ button.calp-who:hover strong { text-decoration: underline; }
   .calp-item { grid-template-columns: 52px minmax(0, 1fr); }
   .calp-meta { grid-column: 2; flex-direction: row; align-items: center; gap: 8px; justify-content: flex-start; }
 }
+/* 오른쪽 레일(320px 패널)의 compact 모드: 달력 위, 선택 주 일정 목록 아래로 한 열. */
+.calp.is-compact { gap: 10px; padding: 4px 16px 0; }
+.calp.is-compact .calp-toolbar { gap: 8px; }
+.calp.is-compact .calp-chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin: 0 -2px; padding: 0 2px 2px; }
+.calp.is-compact .calp-chips::-webkit-scrollbar { display: none; }
+.calp.is-compact .calp-chips button { flex: 0 0 auto; padding: 0 10px; }
+.calp.is-compact .calp-body { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+.calp.is-compact .calp-cal { max-width: none; padding: 8px 6px; }
+.calp.is-compact .calp-nav { justify-content: space-between; }
+.calp.is-compact .calp-title { font-size: var(--fs-sub); white-space: nowrap; }
+.calp.is-compact .calp-day { min-height: 38px; }
+.calp.is-compact .calp-list { gap: 12px; }
+.calp.is-compact .calp-item { grid-template-columns: 52px minmax(0, 1fr); gap: 8px; }
+.calp.is-compact .calp-line { font-size: var(--fs-sub); }
+.calp.is-compact .calp-meta { grid-column: 2; flex-direction: row; align-items: center; gap: 8px; justify-content: flex-start; }
+.calp.is-compact .mir-rail-tools { padding: 0; }
 
 /* ===== 미국 ETF 구성 / 이 종목을 담은 ETF(etf-holdings.js) — 종목 분석 ===== */
 .etfh-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }

@@ -237,11 +237,11 @@ function renderYieldCurve() {
   const spTile = (label, v, sub) => {
     if (!Number.isFinite(Number(v))) return "";
     const inv = v < 0;
-    const col = inv ? "var(--red)" : "var(--green)";
+    const col = inv ? "var(--bad)" : "var(--text)";
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px;min-width:120px">
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:5px">${label}</div>
       <div style="font-size:20px;font-weight:700;font-variant-numeric:tabular-nums;color:${col}">${v > 0 ? "+" : ""}${Number(v).toFixed(2)}%p</div>
-      <div style="font-size:10.5px;color:${inv ? "var(--red)" : "var(--muted)"}">${inv ? "역전(단기>장기)" : sub}</div>
+      <div style="font-size:10.5px;color:${inv ? "var(--bad)" : "var(--muted)"}">${inv ? "역전(단기>장기)" : sub}</div>
     </article>`;
   };
   const spark = Array.isArray(yc.spreadHistory) && yc.spreadHistory.length > 5
@@ -289,7 +289,7 @@ function renderTreasuryAuctions() {
   if (!ta || !Array.isArray(ta.recent) || !ta.recent.length) { host.innerHTML = ""; return; }
   const rows = ta.recent.map((r) => {
     const delta = Number.isFinite(r.btc) && Number.isFinite(r.btcAvg6) ? r.btc - r.btcAvg6 : null;
-    const dCol = delta == null ? "var(--muted)" : delta >= 0 ? "var(--green)" : "var(--red)";
+    const dCol = delta == null ? "var(--muted)" : delta >= 0 ? "var(--pos)" : "var(--neg)";
     const dTxt = delta == null ? "—" : `${delta >= 0 ? "▲" : "▼"} ${Math.abs(delta).toFixed(2)}`;
     return `<tr>
       <td class="ins-date">${escapeHtml(r.date || "")}</td>
@@ -328,7 +328,7 @@ function renderCotPositioning() {
     return `${v > 0 ? "+" : v < 0 ? "−" : ""}${s}`;
   };
   const cards = cot.markets.map((m) => {
-    const col = m.specNet > 0 ? "var(--green)" : m.specNet < 0 ? "var(--red)" : "var(--muted)";
+    const col = m.specNet > 0 ? "var(--pos)" : m.specNet < 0 ? "var(--neg)" : "var(--muted)";
     const chg = Number.isFinite(m.specChg1w) ? `${m.specChg1w > 0 ? "+" : m.specChg1w < 0 ? "−" : ""}${Math.abs(m.specChg1w).toLocaleString()}` : "—";
     const pct = Number.isFinite(m.pct3y) ? Math.max(0, Math.min(100, m.pct3y)) : null;
     const spark = Array.isArray(m.history) && m.history.length > 5
@@ -369,12 +369,12 @@ function renderWikiAttention() {
   if (!Array.isArray(list) || list.length < 5) { host.innerHTML = ""; return; }
   const rows = list.slice(0, 10).map((r, i) => {
     const hot = r.ratio >= 1.5;
-    const col = hot ? "var(--green)" : r.ratio < 0.7 ? "var(--red)" : "var(--muted)";
+    const col = hot ? "var(--pos)" : r.ratio < 0.7 ? "var(--neg)" : "var(--muted)";
     const spark = Array.isArray(r.series) && r.series.length > 5 ? seasonalitySvgLine(r.series) : "";
     return `<tr>
       <td class="ins-date">${i + 1}</td>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.t)}">${escapeHtml(r.company || r.t)}</button><div class="ins-sub">${escapeHtml(tickerHint(r.t))}</div></td>
-      <td class="ins-num"><strong style="color:${col}">x${Number(r.ratio).toFixed(2)}</strong>${hot ? `<div style="font-size:9.5px;color:var(--green)">급증</div>` : ""}</td>
+      <td class="ins-num"><strong style="color:${col}">x${Number(r.ratio).toFixed(2)}</strong>${hot ? `<div style="font-size:9.5px;color:var(--pos)">급증</div>` : ""}</td>
       <td class="ins-num">${Number(r.avg7).toLocaleString()}</td>
       <td class="ins-num">${Number(r.avg30).toLocaleString()}</td>
       <td style="min-width:110px">${spark}</td>
@@ -401,10 +401,8 @@ function renderEcosMacro() {
   const tiles = m.indicators.map((it) => {
     const ch = Number(it.change);
     let col = "var(--muted)";
-    if (Number.isFinite(ch) && ch !== 0 && it.tone !== "neutral") {
-      const positive = it.tone === "down" ? ch > 0 : ch < 0;
-      col = positive ? "var(--green)" : "var(--red)";
-    }
+    // 색은 방향만(▲ 등락색 상승 · ▼ 하락). 공매도 감소 같은 '좋음' 판단은 색으로 하지 않는다.
+    if (Number.isFinite(ch) && ch !== 0) col = ch > 0 ? "var(--pos)" : "var(--neg)";
     const arrow = Number.isFinite(ch) && ch !== 0 ? (ch > 0 ? "▲" : "▼") : "";
     const spark = Array.isArray(it.series) && it.series.length > 5 ? seasonalitySvgLine(it.series) : "";
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
@@ -436,7 +434,7 @@ function renderTradeExports() {
   if (!isKrMarket() || !t || !Array.isArray(t.items) || !t.items.length) { host.innerHTML = ""; return; }
   const tiles = t.items.map((it) => {
     const yoy = Number(it.yoyPct);
-    const col = Number.isFinite(yoy) ? (yoy > 0 ? "var(--green)" : yoy < 0 ? "var(--red)" : "var(--muted)") : "var(--muted)";
+    const col = Number.isFinite(yoy) ? (yoy > 0 ? "var(--pos)" : yoy < 0 ? "var(--neg)" : "var(--muted)") : "var(--muted)";
     const spark = Array.isArray(it.series) && it.series.length > 5 ? seasonalitySvgLine(it.series) : "";
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
@@ -749,11 +747,8 @@ function renderMacroIndicators() {
   const tile = (it) => {
     const ch = Number(it.change);
     let col = "var(--muted)";
-    if (Number.isFinite(ch) && ch !== 0 && it.tone !== "neutral") {
-      const goodUp = it.tone === "down"; // "down" tone = 높을수록 좋음
-      const positive = goodUp ? ch > 0 : ch < 0;
-      col = positive ? "var(--green)" : "var(--red)";
-    }
+    // 색은 방향만(▲ 등락색 상승 · ▼ 하락) — 좋다/나쁘다 판단은 색으로 하지 않는다.
+    if (Number.isFinite(ch) && ch !== 0) col = ch > 0 ? "var(--pos)" : "var(--neg)";
     const arrow = Number.isFinite(ch) && ch !== 0 ? (ch > 0 ? "▲" : "▼") : "";
     return `<article style="background:var(--panel-soft);border-radius:12px;padding:12px 14px">
       <div style="font-size:11.5px;color:var(--muted);margin-bottom:6px;line-height:1.3">${escapeHtml(it.label)}</div>
@@ -900,7 +895,7 @@ function renderAggregateInsights() {
     bySec[st.sector] = (bySec[st.sector] || 0) + (Number(r.value) || 0);
   }
   const secRows = Object.entries(bySec).map(([s, v]) => ({ label: s, value: v })).sort((a, b) => b.value - a.value).slice(0, 8);
-  cards.push(`<div class="agg-card"><h3>내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "#16a34a") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
+  cards.push(`<div class="agg-card"><h3>내부자 매수대금 섹터 랭킹</h3>${secRows.length ? aggBars(secRows, usd, "var(--pos)") : '<p class="muted">최근 30일 내부자 매수 데이터 없음</p>'}</div>`);
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker[data-ticker]").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }

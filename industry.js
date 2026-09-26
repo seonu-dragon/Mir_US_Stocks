@@ -147,7 +147,7 @@ function industrySpark(vals, w = 140, h = 34) {
   const x = (i) => 2 + (w - 4) * i / (nums.length - 1);
   const y = (v) => 2 + (h - 4) * (1 - (v - mn) / span);
   const d = nums.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const col = nums[nums.length - 1] >= nums[0] ? "var(--green)" : "var(--red)";
+  const col = nums[nums.length - 1] >= nums[0] ? "var(--pos)" : "var(--neg)";
   return `<svg class="industry-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
 }
 

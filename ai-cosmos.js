@@ -59,6 +59,8 @@
   // 캔들·오버레이·지표 패널을 통째로 다시 그리던 ≈8fps 타이머를 없앢다(2026-09-15).
   const PATTERN_MAX_FULL = 60; // 캐시에 유지할 최대 패턴 수(초과 시 시간축 고르게 샘플)
   const PATTERN_MAX_RENDER = 6; // 한 화면(가시 구간)에 그릴 최대 패턴 수(가독성)
+  const PATTERN_MAX_RENDER_NARROW = 4; // 폰 폭에서의 최대 패턴 수
+  const LABEL_NARROW_W = 600; // 이 폭(CSS px) 미만이면 차트 라벨 충돌 회피를 켠다
   const CHART_TARGET_YAW = 0;
   const CHART_TARGET_PITCH = 1.12;
   const CHART_TARGET_ROLL = 0;
@@ -1075,7 +1077,13 @@
   // 가시 구간과 겹치는 패턴을 가독성 있게 추린다:
   // 최근 것부터 훑되 최소 간격(가시 봉수/PATTERN_MAX_RENDER)을 두고 골라 라벨이 겹치지 않게,
   // 그리고 시간축으로 퍼지도록 한다. → 6M은 최근 몇 개, 5Y는 과거까지 고르게 노출.
+  // 폰 폭(CSS 600px 미만)에서는 라벨 자리가 모자라 4개까지만(데스크톱은 그대로 6).
+  function patternRenderMax() {
+    const cw = (canvas && canvas.clientWidth) || 0;
+    return cw > 0 && cw < LABEL_NARROW_W ? PATTERN_MAX_RENDER_NARROW : PATTERN_MAX_RENDER;
+  }
   function selectVisiblePatterns(start, n) {
+    const maxN = patternRenderMax();
     const end = start + n - 1;
     const cand = [];
     (chartOverlays.patterns || []).forEach((pat) => {
@@ -1085,19 +1093,73 @@
       cand.push({ pat, anchor: r.anchor });
     });
     cand.sort((a, b) => b.anchor - a.anchor); // 최근 우선
-    const minGap = Math.max(6, Math.round(n / PATTERN_MAX_RENDER));
+    const minGap = Math.max(6, Math.round(n / maxN));
     const picked = [];
     for (const c of cand) {
-      if (picked.length >= PATTERN_MAX_RENDER) break;
+      if (picked.length >= maxN) break;
       if (picked.every((p) => Math.abs(p.anchor - c.anchor) >= minGap)) picked.push(c);
     }
     return picked.map((p) => p.pat);
   }
 
   // 지지/저항·추세선·기하학적 차트 패턴을 2D 차트 위에 그린다(종목 분석 탭과 동일 로직).
+  // 폰 폭 라벨 배치: 이미 놓인 상자와 겹치면 세로로 한 줄씩 비켜 보고, 그래도 겹치면 줄인 이름,
+  // 그래도 안 되면 글자는 생략(도형은 그대로). 데스크톱(narrow=false)은 예전처럼 바로 그린다.
+  function makeLabelPlacer(layout, narrow) {
+    const boxes = [];
+    const LINE = 12;
+    const hit = (b) => boxes.some((o) => b.x < o.x + o.w + 3 && b.x + b.w + 3 > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
+    // texts: 긴 이름부터 짧은 이름 순. baseY: 기준 글자 기준선. dys: 비켜 볼 세로 오프셋들.
+    return function place(texts, x, baseY, opts) {
+      const o = opts || {};
+      if (!narrow) {
+        ctx.fillText(texts[0], x, baseY);
+        return true;
+      }
+      const dys = o.dys || [0, LINE, 2 * LINE, -LINE, 3 * LINE, -2 * LINE];
+      const top = layout.padT + 2;
+      const bottom = layout.padT + layout.plotH - 2;
+      const right = layout.padL + layout.plotW;
+      for (const t of texts) {
+        if (!t) continue;
+        const tw = ctx.measureText(t).width;
+        let lx = ctx.textAlign === "center" ? x - tw / 2 : x;
+        lx = Math.max(layout.padL, Math.min(right - tw, lx));
+        for (const dy of dys) {
+          const by = baseY + dy;
+          const b = { x: lx, y: by - 10, w: tw, h: LINE };
+          if (b.y < top || by > bottom) continue;
+          if (hit(b)) continue;
+          boxes.push(b);
+          const align = ctx.textAlign;
+          ctx.textAlign = "left";
+          // 캔들 위에서도 읽히게 옅은 테두리(AI 모드는 항상 어두운 배경).
+          ctx.save();
+          ctx.lineWidth = 3; ctx.lineJoin = "round"; ctx.strokeStyle = "rgba(5,8,20,0.7)";
+          ctx.strokeText(t, lx, by);
+          ctx.restore();
+          ctx.fillText(t, lx, by);
+          ctx.textAlign = align;
+          return true;
+        }
+      }
+      return false;
+    };
+  }
+  // 폰 폭에서 쓸 짧은 이름: 괄호 설명을 떼고, 그래도 길면 7자 + "…".
+  function shortPatternNames(name) {
+    const full = String(name || "패턴");
+    const bare = full.replace(/\s*\([^)]*\)\s*/g, "").trim() || full;
+    const out = [bare];
+    if (bare.length > 7) out.push(`${bare.slice(0, 6)}…`);
+    return out;
+  }
+
   function drawChartOverlays(w, h, layout, alpha) {
     if (!chartOverlays || alpha <= 0 || !chartBars.length) return;
     const { n, xAt, yAt } = layoutHelpers(layout);
+    const narrow = w > 0 && w < LABEL_NARROW_W;
+    const placeLabel = makeLabelPlacer(layout, narrow);
     const start = Math.round(chartViewStart);
     const total = chartOverlays.totalBars || chartFullBars.length;
     // 전체바 인덱스 → 가시 좌표(윈도우 밖이면 null)
@@ -1147,7 +1209,7 @@
       ctx.font = "700 10px system-ui, -apple-system, sans-serif";
       ctx.fillStyle = col;
       ctx.textAlign = "left";
-      ctx.fillText(ln.kind === "sup" ? "지지 추세선" : "저항 추세선", p1.x + 3, p1.y - 4);
+      placeLabel([ln.kind === "sup" ? "지지 추세선" : "저항 추세선", ln.kind === "sup" ? "지지선" : "저항선"], p1.x + 3, p1.y - 4, { dys: [0, -12, 12] });
     });
 
     // 차트 패턴: 기하학적 도형(추세선/윤곽선/목선/피벗+라벨) (분석 탭과 동일)
@@ -1179,12 +1241,13 @@
       ctx.fillStyle = color;
       pvs.forEach((p) => {
         ctx.beginPath(); ctx.arc(p.x, p.y, 3.2, 0, Math.PI * 2); ctx.fill();
-        if (p.label) { ctx.font = "700 10px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.fillText(p.label, p.x, p.y - 7); }
+        if (p.label) { ctx.font = "700 10px system-ui, sans-serif"; ctx.textAlign = "center"; placeLabel([p.label], p.x, p.y - 7, { dys: [0] }); }
       });
       if (pvs.length) anchor = anchor || pvs[0];
       if (anchor) {
         ctx.font = "800 10.5px system-ui, sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = color;
-        ctx.fillText(pat.name || pat.pattern || "패턴", anchor.x, anchor.y + 14);
+        const nm = pat.name || pat.pattern || "패턴";
+        placeLabel(narrow ? shortPatternNames(nm) : [nm], anchor.x, anchor.y + 14);
       }
     });
 

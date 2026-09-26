@@ -2007,7 +2007,7 @@ function loadCalendar() {
     });
 }
 
-// 경제 캘린더 서프라이즈(2026-09-06): 실제치가 예측치를 웃돌면 초록, 밑돌면 빨강.
+// 경제 캘린더 서프라이즈: 실제치가 예측치를 웃돌면 등락색 상승(▲), 밑돌면 하락(▼).
 // 단위(%, K, M, B)를 떼고 숫자만 비교한다. 실업률·CPI 처럼 '낮을수록 좋은' 지표의 방향
 // 판단은 하지 않고 "예측 대비 위/아래" 만 표시한다(제목에 차이를 적는다).
 function calSurpriseNumber(v) {
@@ -3811,7 +3811,7 @@ function renderSectors() {
           </div>
           <div class="stat-group">
             <span class="stat-label">상승 / 하락</span>
-            <span class="stat-value font-sm" style="color: ${item.upCount >= item.downCount ? 'var(--green)' : 'var(--red)'}; font-weight: 700;">
+            <span class="stat-value font-sm" style="color: ${item.upCount >= item.downCount ? 'var(--pos)' : 'var(--neg)'}; font-weight: 700;">
               ${item.upCount} ▲ / ${item.downCount} ▼
             </span>
           </div>
@@ -7273,7 +7273,7 @@ function renderWsbSentimentTable() {
   }
   el.innerHTML = rows.slice(0, 15).map((r, i) => {
     const bull = r.sentiment === "Bullish";
-    const col = bull ? "var(--green)" : "var(--red)";
+    const col = bull ? "var(--pos)" : "var(--neg)";
     return `<tr class="social-row" data-ticker="${escapeHtml(r.t)}">
       <td>${i + 1}</td>
       <td>${socialTickerCell(r.t)}</td>
@@ -7624,8 +7624,8 @@ function signalCandidates() {
     if (!it || !Number.isFinite(Number(it.value))) return;
     const v = Number(it.value);
     const d = Number(it.change) || 0;
-    const goodUp = it.tone === "down";
-    const tone = d === 0 || it.tone === "neutral" ? "muted" : ((goodUp ? d > 0 : d < 0) ? "pos" : "neg");
+    // 색은 방향(▲ 등락색 상승 · ▼ 하락)만 — 좋다/나쁘다 판단은 색으로 하지 않는다(styles.css '의미색 규칙').
+    const tone = d === 0 ? "muted" : (d > 0 ? "pos" : "neg");
     out.push({ key: id, label, value: `${v}`, unit: it.unit || "", delta: d, deltaText: `${d > 0 ? "+" : ""}${d}${it.unit || ""} · ${String(it.date || "").slice(0, 7)}`, norm: Math.abs(d) / scale, note: noteFn ? noteFn(v, d) : "", tone });
   };
   macro("VIXCLS", "VIX 변동성", 1.5, (v) => (v >= 25 ? "불안 구간" : v <= 15 ? "안정 구간" : "보통"));

@@ -1581,8 +1581,232 @@ function setupChartDrawing() {
   }
 }
 
+// ===== 차트 이벤트 마커(실적 E · 배당락 D · 액면분할 S · 주요 공시 공) =====
+// 계산(모으기·봉 매핑·묶기·히트 판정)은 chart-events-core.js(window.MirChartEvents). 여기는 상태·그리기·툴팁.
+// 마커는 가격 플롯 바로 아래 띠(CHART_EVENT_STRIP_H)에 봉 x(xFor)로 찍는다 — 가로 줌·이동과 같은 좌표이고,
+// 세로 줌·로그는 가격 축만 바꾸므로 마커 위치에 영향이 없다. 자료: 상세 파일(earningsHistory·dividends·
+// splits) + 이미 받는 공시 전역(MATERIAL_EVENTS 8-K · KR_DISCLOSURES). 새 외부 호출 없음.
+const CHART_EVENT_KINDS_KEY = "mir_chart_event_kinds_v1";
+const CHART_EVENT_STRIP_H = 20;
+let chartEventKinds = null; // { E, D, S, F } — 처음 쓸 때 저장값에서 읽는다
+let _chartEventCache = { refs: null, events: [] };
+let chartEventTipPinned = false;
+
+function chartEventCore() { return window.MirChartEvents || null; }
+
+function getChartEventKinds() {
+  if (!chartEventKinds) {
+    const core = chartEventCore();
+    const raw = window.safeStorage ? window.safeStorage.getJSON(CHART_EVENT_KINDS_KEY, null) : null;
+    chartEventKinds = core ? core.normalizeEnabled(raw) : { E: true, D: true, S: true, F: true };
+  }
+  return chartEventKinds;
+}
+
+function chartEventFilings() {
+  if (isKrMarket()) return { us: null, kr: window.KR_DISCLOSURES && Array.isArray(window.KR_DISCLOSURES.disclosures) ? window.KR_DISCLOSURES.disclosures : null };
+  return { us: window.MATERIAL_EVENTS && Array.isArray(window.MATERIAL_EVENTS.events) ? window.MATERIAL_EVENTS.events : null, kr: null };
+}
+
+// 종목의 이벤트 목록. 원자료 참조가 그대로면 캐시(팬·줌 프레임마다 다시 모으지 않게).
+function chartEventsForItem(item) {
+  const core = chartEventCore();
+  if (!core || !item) return [];
+  const f = chartEventFilings();
+  const refs = [item.ticker, item.earningsHistory, item.dividends, item.splits, f.us, f.kr];
+  const c = _chartEventCache;
+  if (c.refs && c.refs.every((v, i) => v === refs[i])) return c.events;
+  const events = core.collectEvents({
+    kr: isKrMarket(), ticker: item.ticker,
+    earnings: item.earningsHistory, dividends: item.dividends, splits: item.splits,
+    usFilings: f.us, krFilings: f.kr,
+  });
+  _chartEventCache = { refs, events };
+  return events;
+}
+
+// 공시 전역(MATERIAL_EVENTS·KR_DISCLOSURES)이 차트보다 늦게 도착하면 마커를 다시 그린다
+// (refreshFeatureViews 가 부른다). 이미 반영된 참조면 아무것도 안 한다.
+function refreshChartEventsIfStale() {
+  const c = _chartEventCache;
+  if (!c.refs || !lastChartGeom) return;
+  const f = chartEventFilings();
+  if (c.refs[4] === f.us && c.refs[5] === f.kr) return;
+  redrawChart();
+}
+
+function syncChartEventToggles() {
+  const kinds = getChartEventKinds();
+  byId("chartEventToggles")?.querySelectorAll("button[data-ev-kind]").forEach((b) => {
+    const on = kinds[b.dataset.evKind] !== false;
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+
+function setupChartEventToggles() {
+  const box = byId("chartEventToggles");
+  if (!box || box.dataset.bound) return;
+  box.dataset.bound = "1";
+  box.querySelectorAll("button[data-ev-kind]").forEach((b) => b.addEventListener("click", () => {
+    const kinds = getChartEventKinds();
+    kinds[b.dataset.evKind] = kinds[b.dataset.evKind] === false;
+    if (window.safeStorage) window.safeStorage.setJSON(CHART_EVENT_KINDS_KEY, kinds);
+    syncChartEventToggles();
+    hideChartEventTip(true);
+    redrawChart();
+  }));
+  syncChartEventToggles();
+}
+
+// 차트 아래 한 줄 안내(기호 뜻 · 공시 수집 기간). 바뀔 때만 DOM 을 건드린다.
+function updateChartEventNote(events) {
+  const el = byId("chartEventNote");
+  if (!el) return;
+  const core = chartEventCore();
+  let text = "";
+  if (core && events.length) {
+    const kinds = getChartEventKinds();
+    const has = (k) => events.some((e) => e.kind === k);
+    const parts = core.KINDS.filter((k) => has(k) && kinds[k] !== false).map((k) => `${core.KIND_SYMBOL[k]} ${core.KIND_LABEL[k]}`);
+    if (parts.length) {
+      text = `차트 아래 기호: ${parts.join(" · ")}`;
+      if (has("F") && kinds.F !== false) {
+        const f = chartEventFilings();
+        const w = core.filingWindow(f.us || f.kr);
+        if (w) text += ` (공시는 ${w.from.slice(5).replace("-", "/")}~${w.to.slice(5).replace("-", "/")} 수집분만)`;
+      }
+      text += " · 기호를 가리키거나 누르면 날짜·내용 표시";
+    }
+  }
+  if (el.textContent !== text) el.textContent = text;
+  el.hidden = !text;
+}
+
+function chartEventMarkersSvg(clusters, yC) {
+  return clusters.map((c, i) => {
+    const w = c.label.length > 1 ? 18 : 14;
+    const x = c.x;
+    return `<g class="chart-ev chart-ev-${c.kind}" data-ev="${i}"><rect x="${(x - w / 2).toFixed(1)}" y="${(yC - 7).toFixed(1)}" width="${w}" height="14" rx="3"></rect><text x="${x.toFixed(1)}" y="${(yC + 3.5).toFixed(1)}" text-anchor="middle">${escapeHtml(c.label)}</text></g>`;
+  }).join("");
+}
+
+function chartEventTipEl() {
+  let tip = byId("chartEventTip");
+  if (!tip) {
+    tip = document.createElement("div");
+    tip.id = "chartEventTip";
+    tip.className = "chart-ev-tip";
+    tip.setAttribute("role", "tooltip");
+    tip.hidden = true;
+    document.body.appendChild(tip);
+  }
+  return tip;
+}
+
+function hideChartEventTip(force) {
+  if (chartEventTipPinned && !force) return;
+  chartEventTipPinned = false;
+  const tip = byId("chartEventTip");
+  if (tip) { tip.hidden = true; tip.classList.remove("is-pinned"); }
+  const hover = byId("chartEventHover");
+  if (hover) hover.innerHTML = "";
+}
+
+function chartEventTipHtml(cluster) {
+  const core = chartEventCore();
+  const MAX = 6;
+  const rows = cluster.items.slice(0, MAX).map((e) => {
+    const date = e.date.replace(/-/g, ".");
+    const link = e.link ? ` <a href="${escapeHtml(e.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
+    return `<li><span class="chart-ev-badge chart-ev-${e.kind}">${escapeHtml(core.KIND_SYMBOL[e.kind])}</span><div><b>${escapeHtml(date)} · ${escapeHtml(e.title)}</b>${e.detail || link ? `<small>${escapeHtml(e.detail)}${link}</small>` : ""}</div></li>`;
+  }).join("");
+  const rest = cluster.items.length > MAX ? `<p class="chart-ev-tip-more">외 ${cluster.items.length - MAX}건</p>` : "";
+  return `<ul>${rows}</ul>${rest}`;
+}
+
+// 툴팁을 화면 좌표(clientX/Y) 근처에 띄운다. position: fixed 라 카드 배치와 무관하게 화면 안으로 맞춘다.
+function showChartEventTip(cluster, clientX, clientY, pinned) {
+  const g = lastChartGeom;
+  const tip = chartEventTipEl();
+  tip.innerHTML = chartEventTipHtml(cluster);
+  tip.classList.toggle("is-pinned", Boolean(pinned));
+  tip.hidden = false;
+  chartEventTipPinned = Boolean(pinned);
+  const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  const r = tip.getBoundingClientRect();
+  let left = clientX - r.width / 2;
+  left = Math.max(8, Math.min(vw - r.width - 8, left));
+  let top = clientY - r.height - 14;
+  if (top < 8) top = Math.min(vh - r.height - 8, clientY + 18);
+  tip.style.left = `${Math.round(left)}px`;
+  tip.style.top = `${Math.round(top)}px`;
+  const hover = byId("chartEventHover");
+  if (hover && g) {
+    hover.innerHTML = `<line x1="${cluster.x.toFixed(1)}" y1="${g.padT}" x2="${cluster.x.toFixed(1)}" y2="${(g.padT + g.plotH).toFixed(1)}" class="chart-ev-guide"></line>`;
+  }
+}
+
+// 포인터 → 마커 묶음(없으면 null). viewBox 좌표로 바꿔 core.hitCluster 로 판정.
+function chartEventHit(event) {
+  const g = lastChartGeom;
+  const core = chartEventCore();
+  const svg = byId("priceChart");
+  if (!g || !core || !svg || !g.events || !g.events.clusters.length) return null;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
+  const vbY = ((event.clientY - rect.top) / rect.height) * g.height;
+  // 판정 폭은 화면 px 기준(마우스 8px · 터치 16px)을 viewBox 로 환산하되 마커 크기보다 작아지지 않게.
+  const scale = g.width / rect.width;
+  const px = event.pointerType === "touch" ? 16 : 8;
+  return core.hitCluster(g.events.clusters, vbX, vbY, g.events.yC, Math.max(9, px * scale), Math.max(10, px * scale));
+}
+
+function setupChartEventInteractions() {
+  const svg = byId("priceChart");
+  if (!svg || svg.dataset.evBound) return;
+  svg.dataset.evBound = "1";
+  let downX = 0;
+  let downY = 0;
+  svg.addEventListener("pointerdown", (e) => { downX = e.clientX; downY = e.clientY; });
+  svg.addEventListener("pointermove", (e) => {
+    if (e.pointerType !== "mouse" || e.buttons) return; // 드래그(팬) 중·터치는 탭으로만
+    const hit = chartEventHit(e);
+    svg.classList.toggle("is-ev-hover", Boolean(hit));
+    if (hit) {
+      if (!chartEventTipPinned) showChartEventTip(hit, e.clientX, e.clientY, false);
+    } else {
+      hideChartEventTip(false);
+    }
+  });
+  svg.addEventListener("pointerleave", () => { svg.classList.remove("is-ev-hover"); hideChartEventTip(false); });
+  svg.addEventListener("pointerup", (e) => {
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 8) return; // 드래그(팬)는 탭이 아니다
+    const hit = chartEventHit(e);
+    if (hit) showChartEventTip(hit, e.clientX, e.clientY, true);
+    else hideChartEventTip(true);
+  });
+  // 고정된 툴팁은 바깥을 누르거나 스크롤·Esc 로 닫는다.
+  document.addEventListener("pointerdown", (e) => {
+    if (!chartEventTipPinned) return;
+    const tip = byId("chartEventTip");
+    if ((tip && tip.contains(e.target)) || svg.contains(e.target)) return;
+    hideChartEventTip(true);
+  });
+  window.addEventListener("scroll", () => {
+    const tip = byId("chartEventTip");
+    if (tip && !tip.hidden) hideChartEventTip(true);
+  }, { passive: true });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") hideChartEventTip(true); });
+}
+
 function drawChart(item, options = {}) {
   setupChartDrawing();
+  setupChartEventToggles();
+  setupChartEventInteractions();
+  const mainChart = !options.svgElement;
   const svg = options.svgElement || byId("priceChart");
   const allRows = resampleBars(getChartRows(item), chartState.barTf);
   const rows = visibleChartRows(allRows);
@@ -1596,6 +1820,7 @@ function drawChart(item, options = {}) {
   const xPlotRight = padL + plotW;
 
   if (!rows.length) {
+    if (mainChart) { updateChartEventNote([]); hideChartEventTip(true); }
     svg.setAttribute("viewBox", `0 0 ${width} 360`);
     svg.innerHTML = `<rect x="0" y="0" width="${width}" height="360" rx="8" class="chart-bg"></rect><text x="${width / 2}" y="180" text-anchor="middle" class="chart-axis">차트 데이터 없음</text>`;
     return;
@@ -1625,7 +1850,14 @@ function drawChart(item, options = {}) {
   if (compareTickers.length) panels.push({ t: "compare", h: 72 });
   const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
   const axisH = 26;
-  const height = padT + plotH + panelsH + axisH;
+  // 이벤트 마커 띠: 켜진 종류의 이벤트가 하나라도 있으면(보이는 구간 밖이어도) 자리를 잡아
+  // 팬·줌 중에 차트 높이가 들썩이지 않게 한다.
+  const evCore = chartEventCore();
+  const evKinds = getChartEventKinds();
+  const evAll = mainChart ? chartEventsForItem(item) : [];
+  const evOn = evAll.filter((e) => evKinds[e.kind] !== false);
+  const evStripH = evOn.length ? CHART_EVENT_STRIP_H : 0;
+  const height = padT + plotH + evStripH + panelsH + axisH;
   svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
   const plotRows = chartState.chartType === "heikin" ? heikinAshiRows(rows) : rows;
@@ -1960,8 +2192,22 @@ function drawChart(item, options = {}) {
     }
   }
 
+  // 이벤트 마커(가격 플롯 아래 띠). 봉 x 는 캔들과 같은 xFor — 가로 줌·이동과 일치.
+  let evSvg = "";
+  let evClusters = [];
+  const evYC = padT + plotH + evStripH / 2 + 1;
+  if (evStripH && evCore) {
+    const evStart = allRows.indexOf(rows[0]);
+    if (evStart >= 0) {
+      const mapped = evCore.mapEventsToBars(evOn, allRows.map((r) => r.d), evStart, rows.length, evKinds);
+      evClusters = evCore.clusterMarkers(mapped, xFor, 16);
+      evSvg = chartEventMarkersSvg(evClusters, evYC);
+    }
+  }
+  if (mainChart) updateChartEventNote(evAll);
+
   // Stacked indicator panels.
-  let cursorY = padT + plotH + gap;
+  let cursorY = padT + plotH + evStripH + gap;
   let panelsSvg = "";
   for (const p of panels) {
     if (p.t === "volume") panelsSvg += renderVolumePanel(rows, xFor, padL, padL + plotW, cursorY, p.h, candleW);
@@ -2008,6 +2254,7 @@ function drawChart(item, options = {}) {
     padL, plotW, padT, plotH, min, max, width, height, ticker: item.ticker,
     log: yLog, manual: yManual, scale: yScale, autoMin: autoRef.min, autoMax: autoRef.max,
     times: buildChartTimes(rows),
+    events: mainChart ? { clusters: evClusters, yC: evYC } : null,
   };
   const isLine = chartState.chartType === "line";
   const isHeikin = chartState.chartType === "heikin";
@@ -2061,6 +2308,8 @@ function drawChart(item, options = {}) {
     <g id="chartDrawLayer" clip-path="url(#chartDrawClip)">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
+    <g id="chartEventHover" class="chart-ev-hover"></g>
+    ${evSvg}
     ${dateLabels}
     <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length}봉 · 종가 ${chartPriceLabel(last.c)} · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
@@ -2068,4 +2317,6 @@ function drawChart(item, options = {}) {
     ${axisHit}
     ${yBtns}
   `;
+  // 일별 시세 표(daily-table.js)는 같은 일봉을 쓴다. 시계열이 그대로면 즉시 돌아간다.
+  if (mainChart && typeof renderDailyTable === "function") renderDailyTable(item);
 }

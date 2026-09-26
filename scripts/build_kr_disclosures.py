@@ -221,9 +221,20 @@ def load_corp_map(api_key: str, *, use_cache: bool = True) -> dict[str, str]:
     url = f"{DART_BASE}/corpCode.xml?crtfc_key={api_key}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mir-US-Stocks/1.0"})
     try:
-        dart_pace()
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            zip_data = resp.read()
+        # 2026-09-26 weekly kr-dart 잡: 러너에서 한 번 30초 타임아웃으로 DART 빌더 5개가 모두 중단됐다
+        # (러너엔 outputs/ 캐시가 없다). 연결 지연은 일시적인 경우가 많아 간격을 두고 세 번까지 받는다.
+        zip_data = b""
+        for attempt in range(3):
+            try:
+                dart_pace()
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    zip_data = resp.read()
+                break
+            except Exception as exc:  # noqa: BLE001 — 마지막 시도 실패는 아래 except 로
+                if attempt == 2:
+                    raise
+                print(f"  corpCode.xml 받기 실패({attempt + 1}/3): {exc} — 15초 뒤 다시")
+                time.sleep(15)
         with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
             with zf.open("CORPCODE.xml") as xml_file:
                 tree = ET.parse(xml_file)

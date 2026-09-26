@@ -736,7 +736,7 @@ function renderShortInterest() {
   const tradeKnown = payload.rows.some((r) => Number(r.tradingRatio) > 0);
   const body = shown.map((r, i) => {
     const chg = Number.isFinite(r.changePct) ? `${r.changePct > 0 ? "+" : ""}${r.changePct.toFixed(1)}%` : "—";
-    const chgCls = r.changePct > 0 ? "ins-sell" : r.changePct < 0 ? "ins-buy" : "";
+    const chgCls = r.changePct > 0 ? "ins-buy" : r.changePct < 0 ? "ins-sell" : ""; // 증감 방향만 등락색(--pos/--neg), 해석은 색으로 하지 않음
     const primary = isBal ? `${Number(r.balanceRatio || 0).toFixed(2)}%` : Number(r.daysToCover || 0).toFixed(2);
     const mainLabel = isBal ? (r.company || r.ticker) : r.ticker;
     const subLabel = isBal ? tickerHint(r.ticker) : (r.company || "");

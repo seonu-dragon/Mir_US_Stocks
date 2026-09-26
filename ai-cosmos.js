@@ -797,11 +797,12 @@
 
   // step(눈금 간격)을 주면 눈금 라벨 — 간격의 배수라 소수 자리를 간격에 맞춘다(세로 확대 시
   // 같은 라벨이 겹치지 않게). step 이 없으면 예전 가격대별 형식(현재가 태그 등).
+  // 천 단위 구분 기호를 넣는다(원화 200000 → 200,000). 폭은 padR(최소 56px) 안에 든다.
   function fmtPrice(v, step) {
-    if (step > 0) return v.toFixed(Math.min(4, YS().stepDecimals(step)));
-    if (v >= 1000) return v.toFixed(0);
-    if (v >= 100) return v.toFixed(1);
-    return v.toFixed(2);
+    let dec;
+    if (step > 0) dec = Math.min(4, YS().stepDecimals(step));
+    else dec = v >= 1000 ? 0 : v >= 100 ? 1 : 2;
+    return v.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
   }
 
   function fmtDate(d) {

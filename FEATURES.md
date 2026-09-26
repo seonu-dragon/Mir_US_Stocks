@@ -91,6 +91,7 @@
 - **타일 크기 기준 전환**: 시가총액(Market Cap), 동일 크기(Equal), 거래량 배율(Volume Ratio) 기준 선택.
 - **종목 검색 및 상태창**: 트리맵 내부 검색 및 클릭 시 개별 종목의 퀵 뷰 요약 패널 노출.
 - **히트맵 상태 공유**: 현재 설정한 필터 기준(그룹, 섹터, 색상, 크기)을 반영한 URL을 복사하여 공유하는 기능.
+- **극소 타일 '기타 N개' 묶음 (2026-09-26)**: 면적 700px² 미만(글자가 안 들어가는 크기) 종목을 섹터마다 한 칸으로 묶는다(`treemap-core.js` + `treemap.js` `tmSplitTiny`). 면적은 구성 종목 가중치 합이라 비율은 그대로, 색은 시가총액 가중 평균(펀더멘털은 이상치 윈저라이즈). 전체 화면에서 누르면 그 섹터 확대, 확대 화면에서는 목록 팝오버(시총 순, 누르면 종목 분석). 선택·검색 일치 종목은 묶지 않고, '동일 크기' 보기에서는 묶지 않는다. 전체 보통주·모바일에서 섹터 절반이 빈 어두운 칸으로 보이던 원인은 데이터 결측이 아니라 가로 1~12px 타일(테두리·모서리만 보이고 산업 상자 배경이 비침)이었다. node 테스트 `scripts/tests/test_treemap_core.mjs`.
 
 ### ⑥ 시장 탭 › 섹터 흐름
 
@@ -116,6 +117,7 @@
 - **화면**: `?tab=marketindex`(`market-indicators.js`, 표기는 `market-indicators-core.js`). 요약 카드 12개(4열, 폰 2열: 코스피200·S&P500/나스닥100 선물·니케이·달러/유로/엔(100엔)·WTI·금·구리·미국/한국 10년, 3개월 스파크라인) + 표: 지수(코스피200·해외 7·미국 지수 선물 4) · 환율 · 국채 10년 5개국 · 기준금리 6개국(전회대비·변경일) · 에너지/금속/농축산물(만기월·단위). 등락 `▲1.23(+0.45%)`, 상승 빨강·하락 파랑.
 - **데이터**: `scripts/build_market_indicators.py` → `data/market_indicators.json/.js`(`MARKET_INDICATORS`, lazy). 야후 v8 chart(선물 20종·지수·환율, 만기월은 shortName, 전일대비는 거래소 당일 변동 기준) · FRED DGS10 · ECOS 국고 10년 · 재무성 jgbcme · Bundesbank · BoE IUDMNPY(실패 시 OECD 월평균) · BIS WS_CBPOL · frankfurter(환율 대체). 실패 항목은 직전값+`stale`, 전부 실패면 exit 1. 야후가 과거 일봉을 안 주는 ^KS200·CNYKRW 는 실행마다 스파크 점을 쌓는다.
 - **워크플로우**: `market-indicators.yml`(평일 07:30·16:10 KST) → Deploy Pages 트리거, 신선도 그룹 `market-indicators`, 신뢰도 센터 '시장지표'.
+- **환율 계산기 (2026-09-26)**: 환율 표 아래. 금액 + 통화(원·달러·유로·엔·위안) → 나머지 통화로 원화 크로스 계산(`market-indicators-core.js` `fxRates`/`fxConvert`, 엔은 100엔 값을 1엔으로). 기준일·1단위당 원화를 함께 적고 '은행 고시 매매기준율·현찰·송금 환율이 아님, 수수료 미반영' 을 명시.
 
 ### ⑧ 시장 탭 › 시그널
 
@@ -200,6 +202,10 @@
   - "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주" 등의 자연어 입력을 파싱해 자동 스크리닝 필터를 적용하여 종목 발굴.
 - **조건 저장형 스크리너 (Saved Screener)**:
   - 사용자가 스크리닝한 조건을 저장하고 다음 날 데이터 스냅샷이 업데이트되었을 때 편입/이탈된 신규 종목의 델타(Delta)를 확인하는 추적 기능.
+- **찾기 › 상위 종목 '목록' 칩 (2026-09-26)**: 정렬 칩 옆 `배당 랭킹` · `신규상장` · `관리·경보`(국내만). 계산은 `find-table-core.js`, 화면은 `find-table.js`. 정렬 칩을 누르거나 같은 칩을 다시 누르면 일반 표로.
+  - *배당 랭킹*: 지수/그룹 칩 범위 안에서 배당수익률 순(ETF 제외, 상위 300). 이상치 규칙(`fundamentals-sanity-core.js`, 30% 초과)은 뒤로 보내고 '이상치 가능' 표시, 적자 기업은 배당성향 '적자'. 열: 배당수익률·주당배당금·배당성향·PER·시총. 국내 = MAP_FUNDAMENTALS(`divYield`·`payoutRatio`·`dps` — `dps` 는 `build_map_fundamentals.py` 에 이번에 추가, 다음 KR 스냅샷부터 채워짐), 미국 = MAP_FUNDAMENTALS `divYield` + `US_STOCK_CALENDAR`(시총 상위 ~200종목의 `divRate`·`payout`). 연속 배당 연수는 두 시장 모두 소스가 없어 넣지 않았다. 일반 표 열 설정에도 주당배당금·배당성향 열 추가.
+  - *신규상장*: 최근 90일. 국내 = 38커뮤니케이션 '신규 상장 완료'(상장일·확정 공모가·주관사, 회사명으로 스냅샷 매칭). 미국 = SEC 424B4 중 같은 CIK 의 S-1/F-1 등록 신청이 수집 기간에 있는 건만(추가 공모 배제 목적, 완전하지 않음을 화면에 명시). SPAC 유닛가·현재가가 공모가의 10배 초과/10분의 1 미만이면 공모가 대비를 계산하지 않는다. 스냅샷 한 장으로는 '새로 생긴 코드' 를 알 수 없어 IPO 캘린더만 쓴다.
+  - *관리·경보*: `KR_MARKET_ALERTS` 의 관리종목·거래정지·투자위험/경고·투자주의를 한 표로(구분 칩, 지정일, 현재가·등락률).
 - **사용자 정의 수식 스크리너 (종목 › 찾기 › 수식, 2026-09-26)**:
   - `roe > 15 and pe < sectorMedian(pe) and rsi14 < 40` 같은 수식을 직접 쓰거나 조건 블록으로 조립. 파서는 `formula-core.js`(토크나이저 + 재귀 하강, **eval/new Function 없음**, node 테스트 `scripts/tests/test_formula_core.mjs`).
   - 함수: `sectorMedian`·`sectorPct`·`industryMedian`·`industryPct`(그룹 표본 5개 미만이면 결측)·`rank`(1 = 가장 큼)·`pct`·`median`·`abs`·`min`·`max`·`avg`. 결측은 3값 논리로 **조건 불충족**, 0 나누기는 결측, 조건·숫자 혼용은 컴파일 단계 오류, 잘못된 필드는 비슷한 이름 제안.
@@ -233,6 +239,7 @@
   - 역DCF: EV(= 현재가 × 희석 주식수 + 순차입금)를 정당화하는 향후 10년 FCF 연성장률을 이분법으로 역산. 기준 FCF 는 TTM / 최근 3년 평균 토글(기본 = 작은 쪽, '보수적' 표시). 할인율 기본값 = 10년 국채(US FRED DGS10 `YIELD_CURVE`, KR 국고채 10년 `KR_ECOS_MACRO`) + ERP(Damodaran 내재 ERP 4.14% 2026-09-01, KR 은 국가위험 0.64% 가산 — 값·출처·기준일은 `dcf-core.js` 상수, 화면 표시). 사용자가 바꿀 수 있다. 금융업·적자·FCF 음수·통화 불일치·해외발행인은 계산하지 않고 이유 표시. 차입금 태그가 없으면 0 으로 계산하고 그 사실을 표시.
   - 기저율: "이 매출 규모 기업 중 N년 동안 FCF(및 매출)가 연 g% 이상 자란 비율" — `data/dcf_base_rates.json/.js`(`window.DCF_BASE_RATES`, FEATURE_DATA `dcfBaseRates` lazy). 표본 수·기간·제외 수·생존편향을 화면에 표시. 10년치가 없으면 가능한 최장(현재 US 9년, KR 5년)으로 세고 그 기간을 표시. 표본 20개 미만이면 기저율을 내지 않는다.
   - 시나리오 DCF: 매출 성장률(1~5년·6~10년)·영업이익률 목표(5년에 걸쳐 수렴)·세율·재투자율 슬라이더 + 할인율·영구성장률. 약세·기본·강세 3개를 따로 저장(localStorage `mir.dcf.v1`), 결과는 범위(약세~강세, 현재가 표시), 할인율×영구성장 5×5 민감도 격자. 주당 가치 = (EV − 순차입금) ÷ 희석 주식수. "시나리오 링크 복사"(`?market=&ticker=&dcf=`), "이 시나리오로 가설 만들기"(가설 추적 폼에 가정·주당 가치를 채워 연다).
+  - KR 주식수 대체값(2026-09-26): DART 주식수(stockTotqySttus)가 아직 없는 KR 종목은 스냅샷 `listedShares`(없으면 시총 1조원 이상만 시총÷현재가)로 계산하고 '상장주식수(자기주식 포함 · DART 주식수 수집 전 대체값)' 라벨을 붙인다(`withListedShares`). 자기주식이 포함돼 주당 가치가 보수적으로 나온다. 재무 확장 빌더는 최신 연도 주식수를 1계층으로 올렸다(예전 4계층이라 940종목 중 910종목이 비어 463종목이 '주식수 공시가 없어' 로 멈췄다).
   - AI 모드 "역DCF" 패널이 같은 계산(요약)을 쓴다. 신뢰도 센터 "역DCF 기저율" 등록(표본·기간·한계). 테스트 `scripts/tests/test_dcf_core.mjs`(CI).
 - **밸류에이션 랭킹**:
   - PE, Forward PE, PEG, ROE, 배당수익률 등의 재무 지표를 기준으로 섹터 및 시가총액별 종목 정렬 및 검색.
@@ -507,6 +514,8 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
 - **한국 마켓 스냅샷 생성 (`update_korea_data.py`)**:
   - 미국 마켓 스냅샷 빌더의 로직을 복제 및 수정하여 코스피/코스닥 종목 데이터를 패러렐 수집하여 `data/korea/market_snapshot.json` 생성.
 - **스냅샷 행 파생 필드 (2026-09-26, 새 외부 호출 없음)**: 행마다 `volume`(주)·`amount`(통화 단위 정수 — KR 은 네이버 거래대금 백만원×10⁶ 그대로, 없으면 비움 / US 는 가격×거래량 근사), KR `priceDate`(m.stock 종목별 `localTradedAt`, ETF 는 지수 체결일 — US 와 같은 `YYYY-MM-DD`), KR ETF `nav`·`navPremiumPct`(이미 부르는 `etfItemList` 의 같은 시각 가격/NAV, 목록은 한 실행에 한 번만 받는다). 상세 파일(detail)에 `splits` = 최근 10년 액면분할 `[날짜, 분자, 분모]` — 상세 빌더의 야후 chart 호출을 `events=div,split` 로 바꾸고 전체 수집(5y)은 URL 을 10y 로 받아(일봉은 그대로 1,260봉) 한 번에 얻으며, 증분(1y)은 직전 detail 목록과 합친다. 직전 detail 에 키가 없던 종목은 롤링 전체 재수집(하루 1/30) 때 채워진다 — 그 전엔 키가 없고 화면도 분할 줄을 숨긴다. 스크리너 정렬·수식 스크리너 필드(`volume`, `amount` = US $M · KR 억원)에 추가. 계약 테스트 `scripts/tests/test_snapshot_fields.py`.
+- **KR 가격 기준 = KRX 정규장 종가 (2026-09-26, `update_korea_data.py`)**: 스냅샷 대표가는 m.stock 목록의 `closePrice`(KRX 종가 — 25종목 실측에서 KRX 일별 종가 siseJson 과 25/25 일치). 넥스트레이드(NXT) 애프터마켓가는 `overMarketPriceInfo.overPrice` 로 따로 오며 대표가로 쓰지 않는다. 야후 일봉 종가는 KRX 종가와 다른 날이 23%(마지막 봉은 25종목 중 23종목)라, 마지막 봉이 가격 기준일(`priceDate`)과 같은 날이면 그 봉의 종가를 KRX 종가로 맞추고 고가·저가를 넓힌다(`align_last_bar_to_close`, 행에 `lastBarSource:"krx-close"`). 날짜가 다르면 봉을 만들지 않고, 이전 봉은 야후 값 그대로다. 행마다 `listedShares`(상장주식수 = 네이버 시총 ÷ 종가, 나눠떨어질 때만).
+- **주간 실적·재무 워크플로우 잡 분할 (2026-09-26, `weekly-earnings-history.yml` + `scripts/step_budget.py`)**: 예전 earnings 잡 하나(11스텝)가 08-22·09-05·09-19 세 번 `KR quarterly earnings` 에서 5시간 넘게 멈춰 360분 한도로 취소되고 뒤 7스텝이 못 돌았다(8개 파일 09-13 정지). 이제 `us-and-public`(SEC·국민연금·기업집단·야후 실적 이력, 150분) · `kr-dart`(지표·다년재무·감사의견·분기실적·소유구조, 300분) · `financials`(기존) 세 잡이 병렬이고, `weekly-gate` 가 두 잡 뒤 최신 main 으로 `--group weekly` 신선도 관문을 한 번 본다. 모든 스텝 `python -u` + 스텝 `timeout-minutes`, 느린 스텝은 잡 시작 기준 남은 시간으로 `--time-budget-min`(상한 cap). 예산·연속 실패 25회면 멈추고 받은 데까지 저장: 감사의견·소유구조·KR 현금흐름은 못 받은 종목에 직전 값(같은 사업연도) 이월 + 없는 종목부터 수집(`refreshedCount`·`carriedCount`·`stoppedReason` 기록), 분기 실적 단계는 반쪽 발행 대신 기존 파일 유지, 야후 실적 이력은 멈춘 위치를 `earnings_history_meta.json` 의 `nextOffset` 에 남겨 다음 주 이어서. 테스트 `scripts/tests/test_weekly_budget.py`.
 - **데일리 업데이트 등록 스크립트 (`register_daily_update.ps1` / `run_daily_update.bat`)**:
   - 매일 오전 6시(한국 표준시)에 윈도우 작업 스케줄러(Windows Task Scheduler)에 스냅샷 데이터 수집 스크립트가 자동 가동되도록 OS 백그라운드 등록 및 구동 제어.
 - **재무 확장 빌더 (`build_financials_us.py` · `build_financials_kr.py` + `financials_common.py`, 2026-09-26)**:

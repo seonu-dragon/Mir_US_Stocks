@@ -165,9 +165,13 @@ jobs:
       - name: Portfolio risk tests
         run: node scripts/tests/test_portfolio_risk_core.mjs
 
-      # 찾기 › 상위 종목 표의 열 설정(find-table-core.js): 시장별 열·저장값 정리·켜기/끄기·순서.
+      # 찾기 › 상위 종목 표의 열 설정·목록(find-table-core.js): 시장별 열·저장값 정리·켜기/끄기·순서·배당 랭킹·신규상장·관리/경보.
       - name: Find table core tests
         run: node scripts/tests/test_find_table_core.mjs
+
+      # 시장지도 극소 타일 묶기(treemap-core.js): 면적 기준 분할·전부 작을 때 처리·시총가중 평균.
+      - name: Treemap core tests
+        run: node scripts/tests/test_treemap_core.mjs
 
       # 가격 차트 이벤트 마커(chart-events-core.js): 실적·배당락·분할·8-K/DART 모으기, 휴장일 → 다음 봉 매핑,
       # 보이는 구간 자르기, 겹침 묶기(줌에 따라 풀림), 포인터 히트 판정.

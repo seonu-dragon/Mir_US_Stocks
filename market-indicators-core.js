@@ -126,8 +126,52 @@
     return ms / 86400000 > (Number.isFinite(maxDays) ? maxDays : 7);
   }
 
+  // ===== 환율 계산기 =====
+  // 시장지표 환율 항목(USDKRW·EURKRW·JPYKRW(100엔)·CNYKRW)을 '1단위당 원화'로 정리한다.
+  // 반환: { KRW: { rate: 1 }, USD: { rate, asOf }, ... } — 값이 없거나 0 이하인 통화는 빠진다.
+  const FX_CODES = { USDKRW: "USD", EURKRW: "EUR", JPYKRW: "JPY", CNYKRW: "CNY" };
+  function fxRates(items) {
+    const out = { KRW: { rate: 1, asOf: null } };
+    for (const it of items || []) {
+      const code = it && FX_CODES[it.id];
+      if (!code) continue;
+      const v = num(it.value);
+      const per = num(it.per) || 1;
+      if (v === null || v <= 0) continue;
+      out[code] = { rate: v / per, asOf: it.asOf || null, stale: Boolean(it.stale) };
+    }
+    return out;
+  }
+
+  // amount(from 통화) → to 통화. 원화를 거치는 크로스 계산. 계산 불가면 null.
+  function fxConvert(amount, from, to, rates) {
+    const a = num(amount);
+    const f = rates && rates[from];
+    const t = rates && rates[to];
+    if (a === null || !f || !t || !(f.rate > 0) || !(t.rate > 0)) return null;
+    return (a * f.rate) / t.rate;
+  }
+
+  // 원·엔은 소수 없이, 나머지는 2자리.
+  function fxDecimals(code) {
+    return code === "KRW" || code === "JPY" ? 0 : 2;
+  }
+
+  // "1,234,567.8" / "1234567" → 1234567.8. 빈 칸·음수·숫자 아님은 null.
+  function parseAmount(text) {
+    const s = String(text == null ? "" : text).replace(/[,\s]/g, "");
+    if (!/^(\d+\.?\d*|\.\d+)$/.test(s)) return null;
+    const n = Number(s);
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  }
+
   const api = {
     DASH,
+    FX_CODES,
+    fxRates,
+    fxConvert,
+    fxDecimals,
+    parseAmount,
     decimalsFor,
     fmtNum,
     fmtRate,

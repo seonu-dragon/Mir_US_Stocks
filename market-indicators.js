@@ -11,6 +11,66 @@
   const C = () => window.MirMarketIndicatorsCore;
   let pending = null;
 
+  // 환율 계산기 상태 — 데이터 도착·재렌더 뒤에도 입력값을 유지한다.
+  const FX_NAMES = { KRW: "원", USD: "달러", EUR: "유로", JPY: "엔", CNY: "위안" };
+  const FX_ORDER = ["KRW", "USD", "EUR", "JPY", "CNY"];
+  const fxState = { amount: "1000000", from: "KRW" };
+  let fxRatesCache = null;
+
+  function fxFormat(v, code) {
+    const c = C();
+    return v === null ? c.DASH : c.fmtNum(v, c.fxDecimals(code));
+  }
+
+  function fxResultHtml() {
+    const c = C();
+    const rates = fxRatesCache || {};
+    const amount = c.parseAmount(fxState.amount);
+    const targets = FX_ORDER.filter((k) => k !== fxState.from && rates[k]);
+    if (amount === null) return '<p class="fx-calc-empty muted">금액을 숫자로 입력해 주세요.</p>';
+    return `<ul class="fx-calc-out">${targets.map((k) => {
+      const v = c.fxConvert(amount, fxState.from, k, rates);
+      return `<li><span class="fx-calc-cur">${esc(FX_NAMES[k])} <small>${k}</small></span><span class="fx-calc-val">${esc(fxFormat(v, k))}</span></li>`;
+    }).join("")}</ul>`;
+  }
+
+  function fxCalcHtml(fxItems) {
+    const c = C();
+    fxRatesCache = c.fxRates(fxItems);
+    const codes = FX_ORDER.filter((k) => fxRatesCache[k]);
+    if (codes.length < 2) return "";
+    if (!fxRatesCache[fxState.from]) fxState.from = "KRW";
+    const dates = [...new Set(codes.map((k) => fxRatesCache[k].asOf).filter(Boolean))].sort();
+    const dateText = dates.length ? dates.map((d) => c.fmtDate(d, true)).join(" · ") : "";
+    const rateLine = codes.filter((k) => k !== "KRW").map((k) => `${FX_NAMES[k]} ${c.fmtNum(fxRatesCache[k].rate * (k === "JPY" ? 100 : 1), 2)}${k === "JPY" ? "(100엔)" : ""}`).join(" · ");
+    return `
+      <div class="fx-calc" id="fxCalc">
+        <div class="fx-calc-in">
+          <label class="fx-calc-field"><input type="text" inputmode="decimal" autocomplete="off" id="fxCalcAmount" value="${esc(fxState.amount)}" aria-label="바꿀 금액"></label>
+          <label class="fx-calc-field fx-calc-sel"><select id="fxCalcFrom" aria-label="입력 통화">${codes.map((k) => `<option value="${k}"${k === fxState.from ? " selected" : ""}>${FX_NAMES[k]} (${k})</option>`).join("")}</select></label>
+        </div>
+        <div id="fxCalcResult">${fxResultHtml()}</div>
+        <p class="fx-calc-note">시장 환율(Yahoo Finance) 기준 원화 크로스 계산 · 기준일 ${esc(dateText)} · 1단위당 원: ${esc(rateLine)}. 은행 고시 매매기준율·현찰·송금 환율이 아니며 수수료가 반영되지 않습니다.</p>
+      </div>`;
+  }
+
+  function bindFxCalc(host) {
+    if (host.dataset.fxBound) return;
+    host.dataset.fxBound = "1";
+    host.addEventListener("input", (e) => {
+      if (e.target.id !== "fxCalcAmount") return;
+      fxState.amount = e.target.value;
+      const out = document.getElementById("fxCalcResult");
+      if (out) out.innerHTML = fxResultHtml();
+    });
+    host.addEventListener("change", (e) => {
+      if (e.target.id !== "fxCalcFrom") return;
+      fxState.from = e.target.value;
+      const out = document.getElementById("fxCalcResult");
+      if (out) out.innerHTML = fxResultHtml();
+    });
+  }
+
   const GROUP_TITLES = {
     energy: "에너지",
     metals: "금속",
@@ -144,14 +204,22 @@
     // 두 열에 높이를 맞춰 배치: 왼쪽 지수·에너지·금속, 오른쪽 환율·국채·기준금리·농축산물.
     if (indexRows.length) left.push(panel("지수", priceTable(indexRows), "선물은 연속 근월물"));
     ["energy", "metals"].forEach((g) => { if ((groups[g] || []).length) left.push(panel(GROUP_TITLES[g], priceTable(groups[g], { contract: true, unit: true }))); });
-    if ((groups.fx || []).length) right.push(panel("환율", priceTable(groups.fx), "엔은 100엔 기준"));
+    if ((groups.fx || []).length) {
+      right.push(panel("환율", priceTable(groups.fx), "엔은 100엔 기준"));
+      const calc = fxCalcHtml(groups.fx);
+      if (calc) right.push(panel("환율 계산기", calc));
+    }
     if ((groups.bonds || []).length) right.push(panel("국채 10년", bondTable(groups.bonds)));
     if ((groups.policy || []).length) right.push(panel("기준금리", rateTable(groups.policy), "미국은 목표범위 중간값 · 중국은 LPR 1년"));
     if ((groups.agri || []).length) right.push(panel(GROUP_TITLES.agri, priceTable(groups.agri, { contract: true, unit: true })));
     parts.push(`<div class="mi-grid"><div class="mi-col">${left.join("")}</div><div class="mi-col">${right.join("")}</div></div>`);
 
     parts.push(`<p class="mi-foot">출처: Yahoo Finance(선물·지수·환율, 지연 시세) · FRED · 한국은행 ECOS · 일본 재무성 · 독일연방은행 · 영란은행 · BIS. 기준일은 각 시장 현지 날짜. 업데이트 ${esc(data.updatedAtKst || "")}. 정보 제공용이며 투자 권유가 아닙니다.</p>`);
+    // 재렌더(데이터 도착 등) 때 입력칸에 포커스가 있었으면 되돌린다.
+    const hadFocus = document.activeElement && document.activeElement.id === "fxCalcAmount";
     host.innerHTML = parts.join("");
+    bindFxCalc(host);
+    if (hadFocus) document.getElementById("fxCalcAmount")?.focus();
   }
 
   window.renderMarketIndicators = render;

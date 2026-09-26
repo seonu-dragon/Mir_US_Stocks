@@ -127,7 +127,32 @@
     if (num(ttm.sharesOut) > 0) return { value: ttm.sharesOut, label: "기말 발행주식수(희석 미공시)", basic: true };
     const b = ((file && file.annual) || []).slice().reverse().find((r) => num(r.sharesOut) > 0);
     if (b) return { value: b.sharesOut, label: `기말 발행주식수(FY${b.fy}, 희석 미공시)`, basic: true };
+    // 공시 주식수가 없을 때만 — withListedShares 가 붙인 대체값(라벨에 출처·한계를 적는다).
+    const fb = file && file.sharesFallback;
+    if (fb && num(fb.value) > 0) return { value: fb.value, label: fb.label, basic: true, fallback: true };
     return null;
+  }
+
+  // KR 재무 파일에 DART 주식수가 아직 없을 때(주간 분할 수집 중) 스냅샷 상장주식수로 보완한 사본.
+  // 상장주식수 = 네이버 시총 ÷ 종가(스냅샷 listedShares). 자기주식이 포함돼 주식수가 다소 크다
+  // → 주당 가치가 보수적으로(낮게) 나온다. 라벨에 그대로 적는다. listedShares 가 없는 옛 스냅샷은
+  // 시총(조원, 소수 3자리 반올림)÷현재가로 계산하되, 반올림 오차가 0.1% 이하인 시총 1조원 이상만.
+  // 공시 주식수가 있으면 원본을 그대로 돌려준다.
+  function withListedShares(file, item) {
+    if (!file || dilutedShares(file)) return file;
+    if ((file.market || "") !== "kr" || !item) return file;
+    let value = num(item.listedShares);
+    let label = "상장주식수(네이버 시총÷종가, 자기주식 포함 · DART 주식수 수집 전 대체값)";
+    if (!(value > 0)) {
+      const cap = num(item.marketCapB), price = num(item.price);
+      if (cap !== null && cap >= 1 && price > 0) {
+        value = Math.round((cap * 1e12) / price);
+        label = "상장주식수 추정(시총÷현재가, 자기주식 포함 · DART 주식수 수집 전 대체값)";
+      } else {
+        return file;
+      }
+    }
+    return Object.assign({}, file, { sharesFallback: { value, label } });
   }
 
   // 순차입금: 최근 분기말(TTM 행) → 최근 연간. 차입금 태그가 없으면 0 으로 보고 표시한다(결측을 숨기지 않음).
@@ -383,7 +408,7 @@
 
   const api = {
     ERP, FALLBACK_DISCOUNT, DEFAULT_TERMINAL, YEARS, DEFAULT_TAX,
-    pvGrowth, impliedGrowth, baseFcfOptions, dilutedShares, netDebtOf, eligibility, defaultDiscount,
+    pvGrowth, impliedGrowth, baseFcfOptions, dilutedShares, withListedShares, netDebtOf, eligibility, defaultDiscount,
     reverseDcf, scenarioValue, sensitivityGrid, defaultScenarios, cagr, fractionAtLeast, baseRate,
     encodeState, decodeState,
   };

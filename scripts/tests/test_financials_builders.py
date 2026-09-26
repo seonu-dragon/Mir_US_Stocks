@@ -217,7 +217,8 @@ def test_kr_report_schedule_and_tiers():
     assert reps[0] == (2026, "11012") and reps[1] == (2026, "11013") and reps[2] == (2025, "11011")
     assert (2026, "11014") not in reps                         # 11/17 전
     t = kr.tiers(date(2026, 9, 26))
-    assert t[0] == [("F", 2025, "11011"), ("F", 2026, "11012")]
+    assert t[0] == [("F", 2025, "11011"), ("F", 2026, "11012"), ("S", 2025, "11011")]
+    assert ("S", 2025, "11011") not in t[3] and ("S", 2021, "11011") in t[3]   # 최신 주식수는 1계층에만
     assert len(t[1]) == 6 and ("F", 2022, "11011") in t[2]
     assert kr.available_reports(date(2026, 3, 1))[0] == (2025, "11014")   # 사업보고서 기한 전
 
@@ -308,19 +309,19 @@ def test_kr_checkpoints_every_n_and_resumes_without_refetch(tmp_path, monkeypatc
 
     monkeypatch.setattr(kr, "save_checkpoint", spy)
     log = []
-    # 호출 7회: 1계층(최신 사업보고서 + 최신 분기) 종목당 2회 → 3종목째 도중 예산 소진
+    # 호출 7회: 1계층(최신 사업보고서 + 최신 분기 + 최신 주식수) 종목당 3회 → 3종목째 도중 예산 소진
     rc = kr.main_run(_args(max_calls=7, save_every=2), "k", dart_get=_fake_dart(log), corp_map=corp_map)
     assert rc == 0                                         # 예산 소진은 정상 종료
     assert len(log) == 7
     assert saves[0] == (2, False)                          # 2종목마다 중간 저장
     assert saves[-1][1] is True                            # 남은 종목은 최종 저장
     idx = _json.loads((tmp_path / "idx.json").read_text(encoding="utf-8"))
-    assert idx["count"] == 4 and idx["calls"] == 7
+    assert idx["count"] == 3 and idx["calls"] == 7
     # 재개: 받은 보고서(_raw.reports)는 다시 받지 않는다
     log2 = []
     kr.main_run(_args(max_calls=2), "k", dart_get=_fake_dart(log2), corp_map=corp_map)
-    first = {(c, y, r) for _p, c, y, r in log}
-    assert log2 and not ({(c, y, r) for _p, c, y, r in log2} & first)
+    first = set(log)                                       # (API, corp, 연도, 보고서) — 주식수와 재무제표는 API 가 다르다
+    assert log2 and not (set(log2) & first)
 
 
 def test_kr_time_budget_stops_and_saves(tmp_path, monkeypatch):
@@ -336,7 +337,7 @@ def test_kr_time_budget_stops_and_saves(tmp_path, monkeypatch):
     clock = kr.Clock(3, now=lambda: t["now"])
     rc = kr.main_run(_args(time_budget_min=3), "k", dart_get=slow, corp_map=corp_map, clock=clock)
     assert rc == 0 and len(log) == 3                       # 3분 뒤 호출 중단, 정상 종료
-    assert sorted(p.name for p in out.iterdir()) == ["000001.json", "000002.json"]   # 받은 데까지 저장
+    assert sorted(p.name for p in out.iterdir()) == ["000001.json"]   # 받은 데까지 저장(1종목 = 1계층 3회)
 
 
 def test_kr_rate_limit_still_saves_and_fails(tmp_path, monkeypatch):

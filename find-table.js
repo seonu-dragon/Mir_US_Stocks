@@ -140,7 +140,7 @@ function renderFindTable(rows, metric) {
     }).join("");
     const sub = typeof stockSubLabel === "function" ? stockSubLabel(item) : "";
     return `<tr data-ticker="${escapeHtml(item.ticker)}" tabindex="0">
-      <td class="ft-name"><span class="ft-rank">${i + 1}</span><span class="ft-name-text"><strong>${escapeHtml(stockLabel(item))}</strong>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span></td>
+      <td class="ft-name"><span class="ft-rank">${i + 1}</span>${(typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, item.name, 22) : "")}<span class="ft-name-text"><strong>${escapeHtml(stockLabel(item))}</strong>${sub ? `<small>${escapeHtml(sub)}</small>` : ""}</span></td>
       ${cells}
     </tr>`;
   }).join("");
@@ -156,7 +156,8 @@ function ftFmtDate(iso) { return iso ? iso.replace(/-/g, ".") : "—"; }
 function ftNameCell(rank, item, fallbackName, sub) {
   const name = item ? stockLabel(item) : fallbackName;
   const small = sub != null ? sub : (item && typeof stockSubLabel === "function" ? stockSubLabel(item) : "");
-  return `<td class="ft-name">${rank != null ? `<span class="ft-rank">${rank}</span>` : ""}<span class="ft-name-text"><strong>${escapeHtml(name || "—")}</strong>${small ? `<small>${escapeHtml(small)}</small>` : ""}</span></td>`;
+  const logo = item && typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, item.name, 22) : "";
+  return `<td class="ft-name">${rank != null ? `<span class="ft-rank">${rank}</span>` : ""}${logo}<span class="ft-name-text"><strong>${escapeHtml(name || "—")}</strong>${small ? `<small>${escapeHtml(small)}</small>` : ""}</span></td>`;
 }
 
 function ftTableHtml(head, body, cls) {

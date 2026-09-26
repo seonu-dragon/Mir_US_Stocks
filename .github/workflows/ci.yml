@@ -155,6 +155,10 @@ jobs:
       # 평균 목표가 서술(권유 문구 없음), 의견 분포 비율.
       - name: Company info core tests
         run: node scripts/tests/test_company_info_core.mjs
+
+      # 회사 로고(company-logo-core.js): 인덱스 조회·우선주→보통주 로고·모노그램 글자·팔레트 번호.
+      - name: Company logo core tests
+        run: node scripts/tests/test_company_logo_core.mjs
       # 종목 체력·유사종목·위험(stock-health-core.js): 스노우플레이크 통과 수/분모, %→배수, 적자 제외,
       # 피어 산업군→섹터 폴백·시총순, 변동성·낙폭·월별 평균(무효 종가 행 건너뜀).
       - name: Stock health core tests

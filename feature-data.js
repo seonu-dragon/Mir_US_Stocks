@@ -141,6 +141,10 @@ const FEATURE_DATA = {
   // company-info.js 가 그 종목이 든 해시 샤드 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy).
   companyProfile: { global: "COMPANY_PROFILE_INDEX", path: "data/company_profile/index.js", lazy: true },
   // US 목표주가 범위(build_us_price_targets.py, Nasdaq) — 같은 방식. KR 컨센서스에는 최고·최저가 없다.
+  // 회사 로고 인덱스(build_company_logos.py) — 시장별 로고 보유 티커 목록(~8KB, 두 시장 한 파일).
+  // 로고 파일(data/logos/<시장>/<티커>.webp, 64px)은 companyLogoHtml 이 lazy <img> 로 그린다.
+  // 오늘의 특징주·오른쪽 레일이 첫 화면이라 첫 단계에서 받는다. 도착 전에는 모노그램.
+  companyLogos: { global: "COMPANY_LOGOS", path: "data/logos/index.js" },
   usPriceTargets: { global: "US_PRICE_TARGETS_INDEX", path: "data/us_price_targets/index.js", usOnly: true, lazy: true },
   // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
   // '과거 위기 재생' 을 열 때만 받는다(lazy).
@@ -220,7 +224,7 @@ function ensureFeatureData(key) {
 // 데이터 절약 모드에서는 2단계를 상호작용 때만 시작한다(탭 진입 시 필요한 것은 activateTab 이 따로 요청).
 const FIRST_SCREEN_FEATURE_KEYS = new Set([
   "sentimentGauges", "marketHistory", "macro", "yieldCurve", "events", "whitehouse", "ipo",
-  "krDart", "krEventDetails", "krFlow", "krConsensus", "krDividends", "krContracts", "ecosMacro", "movers",
+  "krDart", "krEventDetails", "krFlow", "krConsensus", "krDividends", "krContracts", "ecosMacro", "movers", "companyLogos",
 ]);
 function preloadFeatureData() {
   const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
@@ -291,6 +295,8 @@ function refreshFeatureViews() {
   if (window.MirThesis) calls.push(window.MirThesis.onDataRefresh);
   // 오른쪽 레일 패널 — 스냅샷·캘린더 데이터가 늦게 오면 열린 패널을 다시 그린다.
   if (window.MirRail) calls.push(window.MirRail.refresh);
+  // 회사 로고 인덱스가 늦게 오면 이미 그린 모노그램(대기 표시)만 로고로 바꾼다(company-logo.js).
+  if (typeof window.upgradeCompanyLogos === "function") calls.push(window.upgradeCompanyLogos);
   // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.

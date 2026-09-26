@@ -3587,7 +3587,7 @@ function sessionQuoteLine(item) {
 function stockFacts(item, title) {
   return `
     <span class="muted">${title}</span>
-    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${escapeHtml(stockLabel(item))} ${syntheticBadge(item)}</h3>
+    <h3 class="stock-facts-head">${watchStarButton(item.ticker)} ${(typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, item.name, 28) : "")}${escapeHtml(stockLabel(item))} ${syntheticBadge(item)}</h3>
     <p class="muted">${joinSubParts(stockSubLabel(item), item.sector, item.industry)}</p>
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
@@ -3684,7 +3684,7 @@ function stockSummaryHtml(item) {
   const name = sub || stockLabel(item);
   return `
     <p class="sd-idline">${idLine}</p>
-    <h2 class="sd-name">${escapeHtml(name)} ${syntheticBadge(item)} ${watchStarButton(item.ticker)}</h2>
+    <h2 class="sd-name">${typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, item.name, 28) : ""}${escapeHtml(name)} ${syntheticBadge(item)} ${watchStarButton(item.ticker)}</h2>
     <div class="sd-price-row">
       <strong class="sd-price">${escapeHtml(priceOrDash(item.price))}</strong>${typeof quoteKrwApproxHtml === "function" ? quoteKrwApproxHtml(item.price) : ""}
     </div>
@@ -6892,6 +6892,17 @@ function dataTrustSources() {
       row.extra = cfg.id === "kr"
         ? [["직원 수", `${Number(m.withEmployees || 0).toLocaleString()}개사 (최신 사업보고서)`], ["범위", "상장일 미제공 · DART 하루 호출 한도 안에서 매주 이어 받음"]]
         : [["범위", "시가총액 상위 약 1,500종목 · 직원 수 미제공(SEC 표준 태그 없음)"]];
+    }
+    rows.push(row);
+  }
+  // 회사 로고 — 주 1회(수요일). 회사 공식 홈페이지 파비콘을 64px 로 줄여 사이트에 저장(외부 로고 서비스 미사용).
+  {
+    const lg = window.COMPANY_LOGOS;
+    const m = lg && lg.markets ? lg.markets[cfg.id] : null;
+    const view = lg ? { updatedAtKst: (m && m.updatedAtKst) || lg.updatedAtKst, count: m ? Number(m.count) || 0 : 0 } : null;
+    const row = source("회사 로고", "각 회사 공식 홈페이지 파비콘", view, [], 192, "매주 수요일", "companyLogos");
+    if (m) {
+      row.extra = [["범위", `시가총액 상위 ${Number(m.universe || 0).toLocaleString()}종목 중 ${Number(m.inTop || 0).toLocaleString()}종목 · 없으면 이름 첫 글자로 표시`]];
     }
     rows.push(row);
   }

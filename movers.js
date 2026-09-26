@@ -93,7 +93,7 @@ function renderMoversBoard() {
     ? `<ol class="movers-list">${rows.map((row) => `
         <li class="movers-row">
           <button type="button" class="movers-go" data-ticker="${escapeHtml(row.ticker)}" title="종목 분석 열기">
-            <span class="movers-name">${escapeHtml(stockLabel(row.ticker, row))}${stockSubLabel(row.ticker, row) ? `<small>${escapeHtml(stockSubLabel(row.ticker, row))}</small>` : ""}</span>
+            <span class="movers-name">${(typeof companyLogoHtml === "function" ? companyLogoHtml(row.ticker, null, row.name, 22) : "")}${escapeHtml(stockLabel(row.ticker, row))}${stockSubLabel(row.ticker, row) ? `<small>${escapeHtml(stockSubLabel(row.ticker, row))}</small>` : ""}</span>
             <strong class="movers-chg ${cls(Number(row.changePct))}">${fmtDailyPct(row.changePct)}</strong>
           </button>
           <div class="movers-why">${moversTagChips(row)}${moversReasonText(row, allFailed)}${moversEvidenceLinks(row)}</div>

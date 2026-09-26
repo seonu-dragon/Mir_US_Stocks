@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=f92116d88d" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=f92116d88d"></noscript>
+    <link rel="preload" href="styles.css?v=560d9ad6be" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=560d9ad6be"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=b408895d89"></script>
+    <script src="build_id.js?v=757da48514"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -572,20 +572,23 @@ html[data-market="kr"][data-theme="dark"] {
 
         <div class="tab-leaf is-active" id="tab-today-summary">
           <p class="ia-regime" id="todayRegime" aria-live="polite">시장 국면을 계산하는 중입니다.</p>
-          <!-- 홈 대시(home-dash.js): 지수 카드 캐러셀 → 선택 지수 큰 차트 + 시장 현황 → AI 브리핑 요약 -->
+          <!-- 홈 대시(home-dash.js): 지수 카드 캐러셀 → 선택 지수 하루 차트(라이브) + 시장 현황 → 오늘의 뉴스 → AI 브리핑 요약 -->
           <section class="home-dash" id="homeDash" aria-label="주요 지수와 시장 현황">
             <div class="index-strip home-idx-strip" id="indexStrip" role="listbox" aria-label="주요 지수 — 카드를 고르면 아래 차트가 바뀝니다"></div>
             <div class="home-dash-row">
-              <div class="home-chart-card" id="homeIndexChart" aria-live="polite"></div>
+              <div class="home-chart-card" id="homeIndexChart"></div>
               <aside class="home-status-card" id="homeMarketStatus" aria-label="시장 현황"></aside>
             </div>
             <p class="ia-more-line"><button type="button" class="ia-link" data-open="health">지수 · 환율 · 섹터 전체 보기</button></p>
           </section>
+          <!-- 카드뉴스가 사이트의 메인이라 지수 바로 다음, 브리핑·특징주보다 위(2026-09-27) -->
+          <section class="ia-today-news" id="todayNews" hidden aria-label="오늘의 뉴스"></section>
+          <!-- 1단 화면(1100px 이하)에서는 시장 현황을 뉴스 아래로 옮긴다(home-dash.js hdPlaceStatus) -->
+          <section class="home-status-slot" id="homeStatusSlot" hidden></section>
           <section class="home-briefing" id="homeBriefing" hidden aria-label="AI 브리핑 요약"></section>
           <section class="movers-board" id="moversBoard" hidden aria-label="오늘의 특징주"></section>
           <section class="industry-home-card" id="industryHomeCard" hidden aria-label="산업 신호등"></section>
           <section class="kr-highlights" id="krHighlights" hidden></section>
-          <section class="ia-today-news" id="todayNews" hidden aria-label="오늘의 뉴스"></section>
       <section class="watchlist-bar" id="watchlistBar" hidden>
         <div class="watchlist-head">
           <div>
@@ -3318,7 +3321,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="daily-table.js?v=554a7af8ef"></script>
     <script src="stock-view.js?v=3a816499ca"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
-    <script src="home-dash.js?v=1fdd3d2a61"></script>
+    <script src="home-chart-core.js?v=7081095dd9"></script>
+    <script src="home-dash.js?v=3db2e5c53a"></script>
     <script src="find-table-core.js?v=7a807895ca"></script>
     <script src="find-table.js?v=1a20e0a195"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>

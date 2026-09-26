@@ -5008,6 +5008,8 @@ function renderSearch(options = {}) {
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
   if (typeof renderDcf === "function") renderDcf(item);
+  if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
+  if (typeof renderPriceTargets === "function") renderPriceTargets(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6424,6 +6426,15 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
     tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
   },
+  "기업개요": {
+    us: { workflow: "Company profile & price targets", script: "scripts/build_company_profile.py --market us" },
+    kr: { workflow: "Company profile & price targets", script: "scripts/build_company_profile.py --market kr" },
+    tabs: "종목 분석 · 기업개요",
+  },
+  "목표주가 범위": {
+    us: { workflow: "Company profile & price targets", script: "scripts/build_us_price_targets.py" },
+    tabs: "종목 분석 · 목표주가 범위",
+  },
   "산업 선행지표": {
     us: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
     kr: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
@@ -6661,6 +6672,19 @@ function dataTrustSources() {
   }
   // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
   rows.push(source("상세 재무제표", cfg.id === "kr" ? "DART 전체 재무제표" : "SEC EDGAR 공시 재무", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일", "financialsIndex"));
+  // 기업개요(2026-09-26) — 주 1회(수요일). KR 은 DART 호출 상한 안에서 증분이라 한 실행에 전부 갱신되진 않는다.
+  {
+    const cp = window.COMPANY_PROFILE_INDEX;
+    const m = cp && cp.markets ? cp.markets[cfg.id] : null;
+    const view = cp ? { updatedAtKst: (m && m.updatedAtKst) || cp.updatedAtKst, count: m ? Number(m.count) || 0 : 0 } : null;
+    const row = source("기업개요", cfg.id === "kr" ? "DART 기업개황·직원현황" : "SEC EDGAR submissions", view, [], 192, "매주 수요일", "companyProfile");
+    if (m) {
+      row.extra = cfg.id === "kr"
+        ? [["직원 수", `${Number(m.withEmployees || 0).toLocaleString()}개사 (최신 사업보고서)`], ["범위", "상장일 미제공 · DART 하루 호출 한도 안에서 매주 이어 받음"]]
+        : [["범위", "시가총액 상위 약 1,500종목 · 직원 수 미제공(SEC 표준 태그 없음)"]];
+    }
+    rows.push(row);
+  }
   // 과거 위기 구간(2026-09-26) — 과거 가격이라 내용은 고정, 월 1회 새 상위 종목만 보탠다. 40일 여유.
   {
     const ch = window.CRISIS_HISTORY;
@@ -6701,6 +6725,13 @@ function dataTrustSources() {
     rows.push(row);
   }
   if (cfg.id === "us") {
+    // 목표주가 범위(2026-09-26) — 주 2회(수·토), 시총 상위 1,000종목.
+    {
+      const pt = window.US_PRICE_TARGETS_INDEX;
+      const row = source("목표주가 범위", "Nasdaq (애널리스트 목표주가·투자의견)", pt, [], 120, "매주 수·토", "usPriceTargets");
+      if (pt) row.extra = [["범위", `시가총액 상위 ${Number(pt.universe || 0).toLocaleString()}종목 중 커버리지 있는 종목 · 이번 수집 실패 ${Number(pt.failed || 0)}건`], ["한계", "애널리스트 추정치 · 목표주가 월별 이력은 제공되지 않음(의견 분포 이력만)"]];
+      rows.push(row);
+    }
     rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
     // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.

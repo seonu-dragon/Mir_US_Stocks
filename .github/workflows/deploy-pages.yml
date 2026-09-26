@@ -45,6 +45,7 @@ on:
       - "Crisis history (stress replay)"
       - "Screener backtest panel"
       - "Market indicators"
+      - "Company profile & price targets"
   workflow_dispatch:
 
 # actions: read 는 아래 no-op 게이트의 `gh run list` 용이다. 지금은 공개 레포라
@@ -124,7 +125,7 @@ jobs:
                ':(exclude)data/korea/indicators.js' ':(exclude)data/korea/indicators.json' \
                ':(exclude)data/korea/financials_history.json' ':(exclude)data/korea/krx_metrics.json' \
                ':(exclude)data/us_financials_history.json' ':(exclude)data/industry_archive' \
-               ':(exclude)data/event_study_archive'; then
+               ':(exclude)data/event_study_archive' ':(exclude)data/company_profile/state.json'; then
             echo "no site-affecting change between $LAST and $CUR — skipping"
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           else
@@ -171,7 +172,8 @@ jobs:
                  _site/data/korea/earnings.js _site/data/korea/earnings.json \
                  _site/data/korea/indicators.js _site/data/korea/indicators.json \
                  _site/data/korea/financials_history.json _site/data/korea/krx_metrics.json \
-                 _site/data/us_financials_history.json
+                 _site/data/us_financials_history.json \
+                 _site/data/company_profile/state.json
           echo "artifact size:" && du -sh _site | cut -f1
 
       # 구독 피드(.ics 캘린더 + 공시 RSS). 데이터가 여러 워크플로우에서 따로 커밋되므로 전부가

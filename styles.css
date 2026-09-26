@@ -14914,4 +14914,42 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; }
   .mi-unit-inline { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
   .mi-table th, .mi-table td { padding: 7px 4px; }
 }
+
+/* ── 기업개요 · 목표주가 범위(company-info.js) ── */
+.ci-card .qi-head h3 { margin: 0; font-size: var(--fs-body); }
+.ci-table { width: 100%; min-width: 0; border-collapse: collapse; table-layout: fixed; }
+.ci-table th, .ci-table td { padding: 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; font-size: var(--fs-sub); text-align: left; }
+.ci-table th { width: 84px; padding-right: 10px; color: var(--text-muted); font-weight: 500; white-space: nowrap; }
+.ci-table td { overflow-wrap: anywhere; line-height: 1.5; }
+.ci-table tr:last-child th, .ci-table tr:last-child td { border-bottom: 0; }
+.ci-table td small { font-size: var(--fs-cap); }
+.ci-table a { color: var(--link); text-decoration: none; }
+.ci-table a:hover { text-decoration: underline; }
+.ci-src { margin: 8px 0 0; color: var(--text-muted); font-size: var(--fs-cap); line-height: 1.5; }
+.ci-range { margin: 4px 0 8px; }
+.ci-range-track { position: relative; height: 6px; margin: 10px 0 8px; border-radius: var(--r-pill); background: var(--surface-3); }
+.ci-range-band { position: absolute; top: 0; bottom: 0; border-radius: var(--r-pill); background: color-mix(in srgb, var(--accent) 35%, var(--surface-3)); }
+.ci-range-avg { position: absolute; top: -4px; width: 2px; height: 14px; background: var(--text); transform: translateX(-50%); border-radius: 1px; }
+.ci-range-price, .ci-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); box-shadow: var(--shadow-sm); }
+.ci-range-price { position: absolute; top: -3px; transform: translateX(-50%); }
+.ci-dot { display: inline-block; width: 9px; height: 9px; margin-right: 6px; vertical-align: 0; border-width: 1px; }
+.ci-range-ends { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; font-size: var(--fs-cap); color: var(--text-muted); }
+.ci-range-ends > div { display: flex; flex-direction: column; min-width: 0; }
+.ci-range-ends .ci-mid { align-items: center; text-align: center; }
+.ci-range-ends .ci-end-r { align-items: flex-end; text-align: right; }
+.ci-range-ends strong { color: var(--text); font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.ci-gap { margin: 0 0 10px; font-size: var(--fs-sub); color: var(--text); font-variant-numeric: tabular-nums; }
+.ci-op-bar { display: flex; height: 8px; border-radius: var(--r-pill); overflow: hidden; background: var(--surface-3); }
+.ci-op-bar span { display: block; height: 100%; }
+.ci-op-buy { background: color-mix(in srgb, var(--accent) 70%, var(--surface-3)); }
+.ci-op-hold { background: color-mix(in srgb, var(--text-muted) 45%, var(--surface-3)); }
+.ci-op-sell { background: var(--text-muted); }
+.ci-op-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: var(--fs-cap); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.ci-op-legend i { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 2px; }
+.ci-hist { margin-top: 8px; font-size: var(--fs-cap); }
+.ci-hist summary { cursor: pointer; color: var(--text-muted); }
+.ci-hist-table { width: 100%; min-width: 0; margin-top: 6px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ci-hist-table th, .ci-hist-table td { padding: 3px 4px; border-bottom: 1px solid var(--line); text-align: left; }
+.ci-hist-table th { color: var(--text-muted); font-weight: 500; }
+.ci-hist-table .num { text-align: right; }
 /* ==============================================================

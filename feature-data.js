@@ -137,6 +137,11 @@ const FEATURE_DATA = {
   // 시장별 파일(US data/financials_index.js · KR data/korea/financials_index.js). 종목 분석의 재무 섹션을
   // 처음 그릴 때만 받는다(lazy). 종목별 파일은 financials.js 가 fetch 한다.
   financialsIndex: { global: "FINANCIALS_INDEX", path: "data/financials_index.js", marketSpecific: true, lazy: true },
+  // 기업개요(build_company_profile.py, KR DART · US SEC) — 시장별 샤드 버전만 담은 작은 인덱스. 종목 파일은
+  // company-info.js 가 그 종목이 든 해시 샤드 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy).
+  companyProfile: { global: "COMPANY_PROFILE_INDEX", path: "data/company_profile/index.js", lazy: true },
+  // US 목표주가 범위(build_us_price_targets.py, Nasdaq) — 같은 방식. KR 컨센서스에는 최고·최저가 없다.
+  usPriceTargets: { global: "US_PRICE_TARGETS_INDEX", path: "data/us_price_targets/index.js", usOnly: true, lazy: true },
   // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
   // '과거 위기 재생' 을 열 때만 받는다(lazy).
   crisisHistory: { global: "CRISIS_HISTORY", path: "data/crisis_history.js", lazy: true },
@@ -318,6 +323,8 @@ function refreshFeatureViews() {
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
           () => { if (typeof renderDcf === "function") renderDcf(item); },
+          () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },
+          () => { if (typeof renderPriceTargets === "function") renderPriceTargets(item); },
         );
       }
     }

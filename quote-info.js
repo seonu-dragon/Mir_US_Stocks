@@ -203,14 +203,18 @@ function investInfoHtml(item, f, ttm) {
       qiRow("주당배당금", dps === null ? "—" : escapeHtml(qiPerShare(dps)), { title: dpsNote || "" }),
     );
   } else {
+    // PER·EPS 는 같은 기준끼리(최근 4분기 / 연간). 기준은 normalizedFundamentalsForItem 이 정한다.
+    const fromF = qiNum(f.pe) !== null;
     const per = qiNum(f.pe) ?? tv.per;
-    const eps = qiNum(f.epsTtm) ?? tv.eps;
-    const bps = qiNum(f.bps) ?? tv.bps ?? (price && qiNum(f.pb) > 0 ? price / Number(f.pb) : null);
+    const eps = fromF ? (qiNum(f.epsShown) ?? qiNum(f.epsTtm)) : (qiNum(f.epsShown) ?? qiNum(f.epsTtm) ?? tv.eps);
+    const perLabel = fromF ? (f.peLabel || "PER") : (tv.per != null ? "PER(최근 4분기)" : (f.peLabel || "PER"));
+    const epsLabel = fromF ? (f.epsLabel || "EPS") : (tv.eps != null && qiNum(f.epsShown) === null ? "EPS(최근 4분기)" : (f.epsLabel || "EPS"));
+    const bps = qiNum(f.bpsShown) ?? qiNum(f.bps) ?? tv.bps ?? (price && qiNum(f.pb) > 0 ? price / Number(f.pb) : null);
     const psr = tv.psr ?? qiNum(f.ps) ?? qiNum(mf.ps);
     if (kr) rows.push(qiRow("외국인소진율", qiPct(qiNum(f.foreignExhaustion) ?? qiNum(mf.foreignExhaustion))));
     rows.push(
-      qiRow("PER", qiMultiple(per)),
-      qiRow("EPS", escapeHtml(qiPerShare(eps))),
+      qiRow(perLabel, qiMultiple(per), { title: f.peNote || "" }),
+      qiRow(epsLabel, escapeHtml(qiPerShare(eps))),
       qiRow("추정PER", qiMultiple(f.forwardPE), { title: "증권사 추정 EPS 기준(추정치)" }),
       qiRow("추정EPS", escapeHtml(qiPerShare(f.epsNextY)), { title: "증권사 추정치" }),
       qiRow("PBR", qiMultiple(qiNum(f.pb) ?? tv.pbr)),

@@ -81,7 +81,8 @@
       "^GSPC": "SPY",
       "^RUT": "IWM",
     },
-    hiddenTabs: [],
+    // 국내 전용 잎(수급·자금 = kr-flow-panels.js)은 미국 모드에서 숨긴다.
+    hiddenTabs: ["krflow"],
     hiddenInstitutionalSubs: [],
     features: {
       congress: true,
@@ -99,6 +100,8 @@
       // PER·PBR·PSR 밴드(valuation-band.js) — SEC 공시 재무(공시일 기준) + 야후 월말 종가로 산출한
       // 약 5년 월말 배수(build_us_valuation_band.py). 국내와 같은 카드·샤드 모양.
       valuationBand: true,
+      // 증시자금·시장 투자자별 매매·순매수 상위(금투협·네이버)는 국내 전용.
+      krFunds: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -268,6 +271,9 @@
       krMarketAlerts: true,
       // PER·PBR 밴드 — KRX 공식 월말 PER/PBR 10년(build_kr_valuation_band.py).
       valuationBand: true,
+      // 시장 탭 '수급·자금' — 증시자금(금투협 freesis)·투자자별 일별 매매·순매수 상위
+      // (data/korea/market_funds.js, build_kr_market_funds.py) + 종목 수급 '일별 보기'.
+      krFunds: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -365,6 +371,43 @@
     const key = cfg.id === "kr" ? cfg.formatTicker(ticker) : String(ticker || "").toUpperCase();
     return `${cfg.detailsDir}/${encodeURIComponent(key)}.json`;
   }
+
+  // CSS 토큰 색을 JS(캔버스·SVG)에서 읽는다. 등락색(--pos/--neg)은 시장별(한국 = 상승 빨강·하락 파랑,
+  // 미국 = 상승 초록·하락 빨강)이고 테마별로도 달라서, 리터럴 대신 이 함수나 "var(--pos)" 문자열을 쓴다.
+  // <html> 의 data-market·data-theme 조합마다 캐시한다(트리맵 수백 타일에서 getComputedStyle 반복 방지).
+  const _tokenCache = { key: "", map: Object.create(null) };
+  function mirColor(name, fallback) {
+    // AI 모드는 body.ai-mode-active 스코프에서 등락색을 어두운 캔버스용으로 다시 선언한다 → body 기준.
+    const body = document.body;
+    const ai = !!(body && body.classList.contains("ai-mode-active"));
+    const root = ai ? body : document.documentElement;
+    const html = document.documentElement;
+    const key = (html.getAttribute("data-market") || "") + "|" + (html.getAttribute("data-theme") || "") + (ai ? "|ai" : "");
+    if (_tokenCache.key !== key) { _tokenCache.key = key; _tokenCache.map = Object.create(null); }
+    let v = _tokenCache.map[name];
+    if (v === undefined) {
+      try { v = getComputedStyle(root).getPropertyValue("--" + name).trim(); } catch (_) { v = ""; }
+      if (v) _tokenCache.map[name] = v;
+    }
+    return v || fallback || "";
+  }
+  // "#rrggbb" 또는 "rgb(...)" 토큰에 투명도를 입힌 rgba 문자열(캔버스 채움용).
+  function mirColorAlpha(name, alpha, fallback) {
+    const c = mirColor(name, fallback);
+    const m = /^#([0-9a-f]{6})$/i.exec(c);
+    if (m) {
+      const n = parseInt(m[1], 16);
+      return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+    }
+    const r = /^rgba?\(([^)]+)\)$/i.exec(c);
+    if (r) {
+      const parts = r[1].split(",").slice(0, 3).map((x) => x.trim());
+      return `rgba(${parts.join(", ")}, ${alpha})`;
+    }
+    return c;
+  }
+  window.mirColor = mirColor;
+  window.mirColorAlpha = mirColorAlpha;
 
   window.MirMarket = {
     US,

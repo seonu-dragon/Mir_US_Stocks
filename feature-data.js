@@ -123,6 +123,9 @@ const FEATURE_DATA = {
   krValBand: { global: "KR_VALUATION_BAND_META", path: "data/korea/valuation_band/meta.js", feature: "valuationBand", krOnly: true, lazy: true },
   // US 판(SEC 재무 + 야후 월말 종가 산출, build_us_valuation_band.py). 메타에 제외 종목 사유가 함께 있다.
   usValBand: { global: "US_VALUATION_BAND_META", path: "data/valuation_band/meta.js", feature: "valuationBand", usOnly: true, lazy: true },
+  // 국내 증시자금·시장 투자자별 매매·순매수 상위(build_kr_market_funds.py, ~50KB). 시장 탭 '수급·자금'
+  // 을 열 때만 받는다(lazy). 종목별 일별 수급은 kr-flow-panels.js 가 샤드 JSON 하나만 fetch 한다.
+  krFunds: { global: "KR_MARKET_FUNDS", path: "data/korea/market_funds.js", feature: "krFunds", krOnly: true, lazy: true },
   movers: { global: "MOVERS_REASONS", path: "data/movers_reasons.js", feature: "moversBoard", marketSpecific: true },
   // 신호 라이브 성적표(build_signal_ledger.mjs) — 두 시장이 한 파일(~40KB). 시그널 탭 하단 성적표와
   // 신호 카드·특징주·시장경보·스캐너의 '이 신호의 과거 성적' 한 줄이 읽는다.
@@ -280,6 +283,8 @@ function refreshFeatureViews() {
   if (currentTab === "industry" && typeof renderIndustry === "function") calls.push(renderIndustry);
   // 시장지표 잎 — MARKET_INDICATORS(lazy)가 탭 렌더보다 늦게 오면 여기서 다시 그린다.
   if (currentTab === "marketindex" && typeof renderMarketIndicators === "function") calls.push(renderMarketIndicators);
+  // 국내 수급·자금 — KR_MARKET_FUNDS 가 잎 렌더보다 늦게 도착하면 다시 그린다.
+  if (currentTab === "krflow" && typeof renderKrFlowMarket === "function") calls.push(renderKrFlowMarket);
   // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.
   if (currentTab === "search" && searchSubTab === "formula" && typeof renderFormulaScreener === "function") calls.push(renderFormulaScreener);
   // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은

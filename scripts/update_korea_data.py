@@ -859,14 +859,10 @@ def fetch_naver_fundamentals(code: str, price=None) -> dict:
         f["debtEq"] = round(val("부채비율", cur) / 100, 2)
     if val("당좌비율", cur) is not None:
         f["quickRatio"] = round(val("당좌비율", cur) / 100, 2)
-    if val("PER", cur) is not None:
-        f["pe"] = val("PER", cur)
-    if val("PBR", cur) is not None:
-        f["pb"] = f["pbr"] = val("PBR", cur)
-    if val("EPS", cur) is not None:
-        f["eps"] = f["epsTtm"] = val("EPS", cur)
-    if val("BPS", cur) is not None:
-        f["bps"] = val("BPS", cur)
+    # 연간 표의 PER·PBR 은 '그 해 말 주가 ÷ 그 해 EPS·BPS' 라서(삼성전자 2025 = 18.27배)
+    # 현재 배수가 아니다. 대표 배수는 아래 apply_kr_valuation_basis 가 정한다.
+    annual_eps = val("EPS", cur)
+    annual_bps = val("BPS", cur)
     if fwd:
         if val("PER", fwd) is not None:
             f["forwardPE"] = val("PER", fwd)
@@ -875,6 +871,142 @@ def fetch_naver_fundamentals(code: str, price=None) -> dict:
     div = val("주당배당금", cur)
     if div is not None and price:
         f["divYield"] = round(div / float(price) * 100, 2)
+    integ = fetch_naver_integration_valuation(code)
+    apply_kr_valuation_basis(f, annual_eps=annual_eps, annual_bps=annual_bps,
+                             annual_year=_year_of_key(cur), integ=integ, price=price)
+    return f
+
+
+def _year_of_key(key) -> int | None:
+    try:
+        return int(str(key)[:4])
+    except (TypeError, ValueError):
+        return None
+
+
+def _naver_value(text):
+    """'22,292원' · '12.85배' · '-1,234원' → float. 'N/A'·'-'·빈칸 → None."""
+    if text is None:
+        return None
+    s = str(text).replace(",", "").replace("원", "").replace("배", "").replace("%", "").strip()
+    if s in ("", "-", "N/A"):
+        return None
+    try:
+        return float(s)
+    except ValueError:
+        return None
+
+
+def parse_naver_integration(payload: dict) -> dict:
+    """m.stock 종목 메인(integration)의 투자지표 → {epsTtm, epsTtmAsOf, peTtm, pbLatest,
+    bpsLatest, bpsAsOf, cnsEps, cnsPe}. 네이버 화면의 PER 은 '현재가 ÷ 최근 4분기 EPS 합'
+    이고 valueDesc 가 그 기준 분기(예: '2026.06.')다. 없는 칸은 키를 넣지 않는다."""
+    out: dict = {}
+    infos = {t.get("code"): t for t in (payload or {}).get("totalInfos") or [] if isinstance(t, dict)}
+
+    def asof(t):
+        d = str((t or {}).get("valueDesc") or "").strip().rstrip(".")
+        return d or None
+
+    def num(code):
+        t = infos.get(code)
+        return _naver_value(t.get("value")) if t else None
+
+    if num("eps") is not None:
+        out["epsTtm"] = num("eps")
+        if asof(infos.get("eps")):
+            out["epsTtmAsOf"] = asof(infos.get("eps"))
+    if num("per") is not None:
+        out["peTtm"] = num("per")
+    if num("bps") is not None:
+        out["bpsLatest"] = num("bps")
+        if asof(infos.get("bps")):
+            out["bpsAsOf"] = asof(infos.get("bps"))
+    if num("pbr") is not None:
+        out["pbLatest"] = num("pbr")
+    if num("cnsEps") is not None:
+        out["cnsEps"] = num("cnsEps")
+    if num("cnsPer") is not None:
+        out["cnsPe"] = num("cnsPer")
+    return out
+
+
+def fetch_naver_integration_valuation(code: str) -> dict:
+    """네이버 종목 메인의 PER/EPS(최근 4분기)·PBR/BPS(최근 분기)·추정 PER/EPS. 실패 → {}."""
+    url = f"https://m.stock.naver.com/api/stock/{code}/integration"
+    req = urllib.request.Request(url, headers={**HTTP_HEADERS, "Referer": "https://m.stock.naver.com/"})
+    for attempt in range(3):
+        try:
+            _naver_throttle()
+            payload = json.loads(urllib.request.urlopen(req, timeout=12).read().decode("utf-8", "replace"))
+            return parse_naver_integration(payload)
+        except Exception:
+            if attempt == 2:
+                return {}
+            time.sleep(0.6 * (attempt + 1))
+    return {}
+
+
+def apply_kr_valuation_basis(f: dict, *, annual_eps, annual_bps, annual_year, integ: dict, price) -> dict:
+    """대표 PER/PBR 과 그 기준을 fundamentals 에 적는다(순수 함수 — 테스트 대상).
+
+    - epsTtm/pe: 네이버 '최근 4분기' EPS 가 있으면 그것(peBasis="ttm", epsTtmAsOf="2026.06").
+      없으면 직전 사업연도 EPS 로 현재가 기준 PER(peBasis="annual", peYear=2025).
+      epsTtm 은 진짜 4분기 합일 때만 넣는다 — 연간 EPS 를 TTM 이라 부르지 않는다.
+    - eps: 대표 EPS(TTM 우선). epsAnnual/epsAnnualYear 는 따로 보존(PEG 성장률은 연간끼리).
+    - pb: 최근 분기 BPS 기준(pbBasis="quarter") → 없으면 연간 BPS(pbBasis="annual").
+    - 적자(EPS <= 0)면 PER 은 넣지 않는다(네이버도 N/A).
+    """
+    integ = integ or {}
+    try:
+        px = float(price) if price else None
+    except (TypeError, ValueError):
+        px = None
+    if annual_eps is not None:
+        f["epsAnnual"] = annual_eps
+        if annual_year:
+            f["epsAnnualYear"] = annual_year
+    if annual_bps is not None:
+        f["bps"] = annual_bps
+    ttm = integ.get("epsTtm")
+    if ttm is not None:
+        f["eps"] = f["epsTtm"] = ttm
+        if integ.get("epsTtmAsOf"):
+            f["epsTtmAsOf"] = integ["epsTtmAsOf"]
+        f["peBasis"] = "ttm"
+        if ttm > 0:
+            pe = integ.get("peTtm")
+            if pe is None and px:
+                pe = round(px / ttm, 2)
+            if pe is not None and pe > 0:
+                f["pe"] = pe
+    elif annual_eps is not None:
+        f["eps"] = annual_eps
+        f["peBasis"] = "annual"
+        if annual_year:
+            f["peYear"] = annual_year
+        if annual_eps > 0 and px:
+            f["pe"] = round(px / annual_eps, 2)
+    bps_q = integ.get("bpsLatest")
+    if bps_q is not None and bps_q > 0:
+        f["bpsLatest"] = bps_q
+        if integ.get("bpsAsOf"):
+            f["bpsAsOf"] = integ["bpsAsOf"]
+        pb = integ.get("pbLatest")
+        if pb is None and px:
+            pb = round(px / bps_q, 2)
+        if pb is not None and pb > 0:
+            f["pb"] = f["pbr"] = pb
+            f["pbBasis"] = "quarter"
+    elif annual_bps is not None and annual_bps > 0 and px:
+        f["pb"] = f["pbr"] = round(px / annual_bps, 2)
+        f["pbBasis"] = "annual"
+    # 추정 PER 은 네이버 화면 값(현재가 ÷ 컨센서스 EPS)을 우선한다 — 연간 표의 추정 열은
+    # 수집 시점 가격이 조금 다를 수 있다.
+    if (integ.get("cnsPe") or 0) > 0:
+        f["forwardPE"] = integ["cnsPe"]
+    if f.get("epsNextY") is None and integ.get("cnsEps") is not None:
+        f["epsNextY"] = integ["cnsEps"]
     return f
 
 
@@ -1931,7 +2063,8 @@ def enrich_kr_valuation(payload: dict) -> None:
         # PEG = P/E / EPS 성장률(%). DART 는 애널리스트 추정치를 주지 않아 네이버의
         # epsNextY 를 쓴다. 성장률이 0 이하면 PEG 는 의미가 없으므로 값을 넣지 않는다
         # (음수 PEG 를 '저평가 초록' 으로 칠하면 정반대로 읽힌다).
-        pe, eps, eps_next = fund.get("pe"), fund.get("eps"), fund.get("epsNextY")
+        # 성장률은 연간 EPS 끼리(내년 추정 ÷ 직전 사업연도). eps 는 TTM 일 수 있어 섞지 않는다.
+        pe, eps, eps_next = fund.get("pe"), fund.get("epsAnnual", fund.get("eps")), fund.get("epsNextY")
         if (all(isinstance(x, (int, float)) for x in (pe, eps, eps_next))
                 and pe > 0 and eps > 0 and eps_next > eps and fund.get("peg") is None):
             growth = (eps_next - eps) / abs(eps) * 100
@@ -2020,11 +2153,16 @@ def attach_krx_metrics(payload: dict) -> None:
         if m.get("fgnExh") is not None:
             fund["foreignExhaustion"] = m["fgnExh"]
         # 공식 밸류에이션 보강 — 네이버 결측(None)일 때만.
-        if m.get("per") and fund.get("pe") is None:
+        # KRX 공식 PER/PBR 은 '현재가 ÷ 직전 사업연도 EPS·BPS' 다(삼성전자 43배 vs 네이버 최근
+        # 4분기 12.9배, 2026-09-26). 연간 기준이라는 표식을 함께 남긴다.
+        # 최근 4분기가 적자(peBasis="ttm" 인데 pe 없음)면 연간 PER 로 메우지 않는다.
+        if m.get("per") and fund.get("pe") is None and fund.get("peBasis") is None:
             fund["pe"] = m["per"]
+            fund["peBasis"] = "annual-krx"
             val_n += 1
-        if m.get("pbr") and fund.get("pb") is None:
+        if m.get("pbr") and fund.get("pb") is None and fund.get("pbBasis") is None:
             fund["pb"] = fund["pbr"] = m["pbr"]
+            fund["pbBasis"] = "annual-krx"
         if m.get("div") is not None and fund.get("divYield") is None:
             fund["divYield"] = m["div"]
         if m.get("dps") is not None and fund.get("dps") is None:

@@ -33,9 +33,71 @@ function redrawChart() {
 }
 
 // 줌·오프셋 초기화. '초기화' 버튼, 차트 더블클릭, 터치 더블탭이 모두 이 함수를 부른다.
+// 세로 축도 자동 맞춤으로 돌린다(로그 여부는 사용자 선택이라 유지).
 function resetChartView() {
   chartState = { ...chartState, zoom: 1, offset: 0 };
+  chartYScale = window.MirYScale.withAuto(chartYScale);
   redrawChart();
+}
+
+// ===== 가격 축 세로 스케일(TradingView 식) =====
+// 계산은 chart-yscale-core.js(window.MirYScale) 가 하고 여기는 상태·이벤트만 붙인다.
+// auto=true 면 지금처럼 보이는 봉의 고가·저가로 맞추고, 가격 축을 드래그·휠하면 수동(min/max)
+// 으로 바뀐다. 종목·기간·봉이 바뀌면(chartYScaleKey) 자동 맞춤으로 돌아간다.
+let chartYScale = { auto: true, log: false, min: null, max: null };
+let chartYScaleKey = "";
+
+function setChartYAuto() {
+  if (chartYScale.auto) return;
+  chartYScale = window.MirYScale.withAuto(chartYScale);
+  redrawChart();
+}
+
+function toggleChartYLog() {
+  chartYScale = window.MirYScale.withLog(chartYScale, !chartYScale.log);
+  redrawChart();
+}
+
+// 현재 화면 범위를 기준으로 수동 범위를 만든다(처음 조작하는 순간 자동 → 수동).
+function chartYCurrentRange() {
+  const g = lastChartGeom;
+  return g ? { min: g.min, max: g.max } : null;
+}
+
+function chartYAutoRef() {
+  const g = lastChartGeom;
+  return g && Number.isFinite(g.autoMin) ? { min: g.autoMin, max: g.autoMax } : null;
+}
+
+function setChartYManual(range) {
+  if (!range || !window.MirYScale.validRange(range, chartYScale.log)) return;
+  chartYScale = window.MirYScale.withManual(chartYScale, range);
+}
+
+// 명령바(보기 그룹)의 '자동'·'로그' 버튼 상태를 맞춘다. SVG 모서리 버튼은 drawChart 가 그린다.
+function syncChartYScaleButtons() {
+  const autoBtn = byId("chartYAuto");
+  const logBtn = byId("chartYLog");
+  if (autoBtn) {
+    autoBtn.classList.toggle("is-active", chartYScale.auto);
+    autoBtn.setAttribute("aria-pressed", chartYScale.auto ? "true" : "false");
+  }
+  if (logBtn) {
+    logBtn.classList.toggle("is-active", chartYScale.log);
+    logBtn.setAttribute("aria-pressed", chartYScale.log ? "true" : "false");
+  }
+}
+
+// 가격 축 눈금 라벨: 눈금은 간격(step)의 배수라 소수 자리를 간격에 맞춘다 — 세로로 크게
+// 확대하면 $0.5 간격인데 "$150" 으로 겹쳐 찍히거나, $10 간격인데 "$45.0" 처럼 군더더기가
+// 붙지 않게. 원화는 1원 미만 간격일 때만 소수를 쓴다.
+function chartAxisPriceLabel(value, step) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  if (!(step > 0)) return chartPriceLabel(n);
+  const dec = Math.min(4, window.MirYScale.stepDecimals(step));
+  if (isKrMarket()) return n.toLocaleString("ko-KR", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  return `$${n.toLocaleString(undefined, { minimumFractionDigits: dec, maximumFractionDigits: dec })}`;
 }
 
 let chartPanActive = false;
@@ -952,13 +1014,62 @@ function renderCompareChips() {
     chip.addEventListener("click", () => removeChartCompareTicker(chip.dataset.ticker));
   });
 }// TradingView-style: wheel=봉 확대/축소, pointer drag=봉 이동 (기술 점수 분석 중에도 동작).
+// 클라이언트 좌표 → SVG viewBox 좌표 + 가격 축 판정. lastChartGeom(마지막 그린 차트) 기준.
+function chartYAxisPoint(event) {
+  const g = lastChartGeom;
+  const svg = byId("priceChart");
+  if (!g || !svg) return null;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
+  const vbY = ((event.clientY - rect.top) / rect.height) * g.height;
+  const onAxis = window.MirYScale.hitPriceAxis(vbX, vbY, {
+    plotRight: g.padL + g.plotW, axisEnd: g.width, top: g.padT, height: g.plotH,
+  });
+  // 플롯 높이의 화면 픽셀(드래그 거리 → 배율/이동량 환산용)
+  const plotPxH = rect.height * (g.plotH / g.height);
+  return { g, vbX, vbY, onAxis, plotPxH, price: g.scale.value(vbY) };
+}
+
 function setupChartInteractions() {
   const svg = byId("priceChart");
   if (!svg || svg.dataset.panBound) return;
   svg.dataset.panBound = "1";
 
+  // 모서리 A/L 토글(SVG 안 버튼). 클릭·Enter/Space. 팬 시작은 beginPan 에서 걸러 낸다.
+  const yBtnAction = (btn) => {
+    const key = btn.dataset.yscale;
+    const hadFocus = document.activeElement === btn;
+    if (key === "auto") {
+      if (chartYScale.auto) return; // 이미 켜져 있으면 그대로(자동 맞춤을 끄는 건 축 조작)
+      setChartYAuto();
+    } else if (key === "log") {
+      toggleChartYLog();
+    }
+    // 다시 그리면 버튼 노드가 바뀌므로 키보드 포커스를 새 노드로 옮긴다.
+    if (hadFocus) svg.querySelector(`[data-yscale="${key}"]`)?.focus();
+  };
+  svg.addEventListener("click", (event) => {
+    const btn = event.target.closest && event.target.closest("[data-yscale]");
+    if (btn) { event.preventDefault(); yBtnAction(btn); }
+  });
+  svg.addEventListener("keydown", (event) => {
+    const btn = event.target.closest && event.target.closest("[data-yscale]");
+    if (btn && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); yBtnAction(btn); }
+  });
+
   svg.addEventListener("wheel", (event) => {
     event.preventDefault();
+    // 가격 축 위 휠 = 세로 줌(커서 가격 고정). 본문 휠은 예전처럼 가로 줌.
+    const yp = chartYAxisPoint(event);
+    if (yp && yp.onAxis) {
+      const start = chartYCurrentRange();
+      if (!start) return;
+      const f = window.MirYScale.wheelZoomFactor(event.deltaY);
+      setChartYManual(window.MirYScale.zoomRange(start, f, yp.price, chartYScale.log, chartYAutoRef()));
+      scheduleChartPanRedraw();
+      return;
+    }
     const g = priceChartGeom();
     const rect = svg.getBoundingClientRect();
     const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
@@ -974,16 +1085,35 @@ function setupChartInteractions() {
   let dragN = 0;
   let dragWindow = 0;
   let dragPlotPx = 1;
+  // 세로 조작: "yzoom"=가격 축 드래그, "pan"=본문 드래그(수동 범위면 세로 이동도 함께)
+  let dragMode = "pan";
+  let dragYStart = null;   // 드래그 시작 시 세로 범위 {min,max}
+  let dragYAnchor = NaN;   // 축 드래그 줌 고정 가격(가시 범위 가운데)
+  let dragYRef = null;     // 과도한 확대 방지 기준(자동 맞춤 범위)
+  let dragPlotPxH = 1;
+  let lastAxisTapAt = 0;
   // 더블탭(터치) → 초기화. 마우스는 dblclick 이벤트로 같은 동작.
   let lastTapAt = 0;
   let lastTapX = 0;
   let lastTapY = 0;
 
   const beginPan = (event) => {
-    if (drawTool) return;
+    if (event.target.closest && event.target.closest("[data-yscale]")) return; // A/L 버튼
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    const yp = chartYAxisPoint(event);
+    const onAxis = Boolean(yp && yp.onAxis);
+    if (drawTool && !onAxis) return; // 드로잉 중에도 가격 축 드래그는 받는다
+    if (touchMode === "pinch" || touchMode === "ypinch") return;
     const item = currentChartItem();
     if (!item) return;
+    const Y = window.MirYScale;
+    dragMode = onAxis ? "yzoom" : "pan";
+    dragYStart = chartYCurrentRange();
+    dragYRef = chartYAutoRef();
+    dragYAnchor = dragYStart
+      ? Y.fromT((Y.toT(dragYStart.min, chartYScale.log) + Y.toT(dragYStart.max, chartYScale.log)) / 2, chartYScale.log)
+      : NaN;
+    dragPlotPxH = yp ? Math.max(1, yp.plotPxH) : 1;
     dragPointerId = event.pointerId;
     chartPanActive = true;
     startX = event.clientX;
@@ -1001,6 +1131,22 @@ function setupChartInteractions() {
 
   const movePan = (event) => {
     if (dragPointerId == null || event.pointerId !== dragPointerId) return;
+    const dy = event.clientY - startY;
+    if (dragMode === "yzoom") {
+      // 가격 축 드래그: 위로 끌면 늘리고(확대) 아래로 끌면 압축. 움직였을 때만 수동으로 전환.
+      if (dragYStart && Math.abs(dy) >= 1) {
+        const f = window.MirYScale.dragZoomFactor(dy, dragPlotPxH);
+        setChartYManual(window.MirYScale.zoomRange(dragYStart, f, dragYAnchor, chartYScale.log, dragYRef));
+        scheduleChartPanRedraw();
+      }
+      event.preventDefault();
+      return;
+    }
+    // 자동 맞춤이 꺼져 있으면 본문 드래그가 세로로도 움직인다(켜져 있으면 가로만 — 예전 동작).
+    if (!chartYScale.auto && dragYStart && dy !== 0) {
+      setChartYManual(window.MirYScale.panRange(dragYStart, dy, dragPlotPxH, chartYScale.log));
+      scheduleChartPanRedraw();
+    }
     const dx = event.clientX - startX;
     const barsPerPx = dragWindow / Math.max(1, dragPlotPx);
     let next = Math.round(startOffset + dx * barsPerPx);
@@ -1021,6 +1167,23 @@ function setupChartInteractions() {
     // 판정은 리드로우(endChartPan, 수백 ms) 앞에서 이벤트 타임스탬프로 한다 — 리드로우 뒤에 Date.now()
     // 로 재면 첫 탭의 리드로우 시간이 간격에 더해져 실제 더블탭을 놓친다.
     let doubleTap = false;
+    if (dragMode === "yzoom") {
+      // 가격 축 더블클릭/더블탭 → 세로 자동 맞춤. 포인터 업마다 차트를 다시 그려(innerHTML)
+      // 첫 클릭의 대상 노드가 사라지므로 브라우저 dblclick 이 안 올 수 있어 여기서 직접 판정한다.
+      if (event.type === "pointerup") {
+        const moved = Math.hypot(event.clientX - startX, event.clientY - startY);
+        const now = event.timeStamp || Date.now();
+        if (moved < (event.pointerType === "touch" ? 12 : 5) && now - lastAxisTapAt < 400) {
+          lastAxisTapAt = 0;
+          chartYScale = window.MirYScale.withAuto(chartYScale);
+        } else {
+          lastAxisTapAt = moved < 12 ? now : 0;
+        }
+      }
+      dragMode = "pan";
+      endChartPan();
+      return;
+    }
     if (event.type === "pointerup" && event.pointerType === "touch" && !touchMode) {
       const moved = Math.hypot(event.clientX - startX, event.clientY - startY);
       const now = event.timeStamp || Date.now();
@@ -1036,7 +1199,10 @@ function setupChartInteractions() {
         lastTapAt = 0;
       }
     }
-    if (doubleTap) chartState = { ...chartState, zoom: 1, offset: 0 }; // resetChartView 와 같은 상태; 리드로우는 아래 한 번
+    if (doubleTap) { // resetChartView 와 같은 상태; 리드로우는 아래 한 번
+      chartState = { ...chartState, zoom: 1, offset: 0 };
+      chartYScale = window.MirYScale.withAuto(chartYScale);
+    }
     endChartPan();
   };
 
@@ -1045,27 +1211,59 @@ function setupChartInteractions() {
   document.addEventListener("pointerup", endPan);
   document.addEventListener("pointercancel", endPan);
   // 마우스 더블클릭 → 초기화(상단 '초기화' 버튼과 동일). 드로잉 중엔 무시.
+  // 가격 축 더블클릭 → 세로 자동 맞춤만(가로 줌은 유지). A/L 버튼 더블클릭은 무시.
   svg.addEventListener("dblclick", (event) => {
+    if (event.target.closest && event.target.closest("[data-yscale]")) return;
+    const yp = chartYAxisPoint(event);
+    if (yp && yp.onAxis) {
+      event.preventDefault();
+      chartYScale = window.MirYScale.withAuto(chartYScale);
+      redrawChart();
+      return;
+    }
     if (drawTool) return;
     event.preventDefault();
     resetChartView();
   });
 
-  let touchMode = null;
+  let touchMode = null;     // null | "pinch"(가로 줌) | "ypinch"(세로 줌)
   let pinchStartDist = 0;
   let pinchStartZoom = 1;
+  let pinchYStart = null;
+  let pinchYAnchor = NaN;
+  let pinchYRef = null;
   const touchDist = (touches) => Math.hypot(
     touches[0].clientX - touches[1].clientX,
     touches[0].clientY - touches[1].clientY
   );
+  const touchDy = (touches) => Math.abs(touches[0].clientY - touches[1].clientY);
 
   svg.addEventListener("touchstart", (event) => {
     if (event.touches.length === 2) {
-      touchMode = "pinch";
+      // 두 손가락이 세로로 벌어져 있거나(세로 간격 > 가로 간격 × 1.5) 가격 축 위에서 시작하면
+      // 세로 핀치(가격 배율), 아니면 예전처럼 가로 핀치(기간 줌).
+      const t0 = event.touches[0];
+      const t1 = event.touches[1];
+      const dxAbs = Math.abs(t0.clientX - t1.clientX);
+      const dyAbs = Math.abs(t0.clientY - t1.clientY);
+      const mid = { clientX: (t0.clientX + t1.clientX) / 2, clientY: (t0.clientY + t1.clientY) / 2 };
+      const yp = chartYAxisPoint(mid);
+      const vertical = (yp && yp.onAxis) || dyAbs > dxAbs * 1.5;
       dragPointerId = null;
+      dragMode = "pan";
       chartPanActive = false;
-      pinchStartDist = touchDist(event.touches);
-      pinchStartZoom = chartState.zoom;
+      svg.classList.remove("is-dragging");
+      if (vertical && yp && dyAbs > 8) {
+        touchMode = "ypinch";
+        pinchStartDist = dyAbs;
+        pinchYStart = chartYCurrentRange();
+        pinchYAnchor = yp.price;
+        pinchYRef = chartYAutoRef();
+      } else {
+        touchMode = "pinch";
+        pinchStartDist = touchDist(event.touches);
+        pinchStartZoom = chartState.zoom;
+      }
     }
   }, { passive: true });
 
@@ -1074,12 +1272,24 @@ function setupChartInteractions() {
       const dist = touchDist(event.touches);
       if (pinchStartDist > 0) setZoomAnchored(0.5, pinchStartZoom * (dist / pinchStartDist));
       event.preventDefault();
+    } else if (touchMode === "ypinch" && event.touches.length === 2) {
+      const f = window.MirYScale.pinchZoomFactor(pinchStartDist, Math.max(1, touchDy(event.touches)));
+      if (pinchYStart && Math.abs(f - 1) > 0.005) {
+        setChartYManual(window.MirYScale.zoomRange(pinchYStart, f, pinchYAnchor, chartYScale.log, pinchYRef));
+        scheduleChartPanRedraw();
+      }
+      event.preventDefault();
     }
   }, { passive: false });
 
   svg.addEventListener("touchend", (event) => {
     if (event.touches.length < 2) touchMode = null;
   });
+
+  // 명령바 '보기' 그룹의 자동·로그 버튼(모바일에선 차트 바로 아래로 옮겨진다).
+  byId("chartYAuto")?.addEventListener("click", () => setChartYAuto());
+  byId("chartYLog")?.addEventListener("click", () => toggleChartYLog());
+  syncChartYScaleButtons();
 }
 
 // ===== 차트 드로잉(추세선·피보나치 되돌림) =====
@@ -1215,7 +1425,10 @@ function renderChartDrawings() {
   if (drawPreview) items.push(drawPreview);
   if (!items.length) return "";
   const pxX = (xn) => g.padL + xn * g.plotW;
-  const pxY = (price) => g.padT + ((g.max - price) / g.range) * g.plotH;
+  const pxY = (price) => {
+    const y = g.scale.y(price); // 선형·로그 공통(chart-yscale-core)
+    return Number.isFinite(y) ? y : g.padT + g.plotH * 4;
+  };
   let out = "";
   for (const d of items) {
     const xs = drawingScreenXn(g, d);
@@ -1244,7 +1457,7 @@ function chartPointToData(evt) {
   const px = (evt.clientX - rect.left) * (g.width / rect.width);
   const py = (evt.clientY - rect.top) * (g.height / rect.height);
   const xn = Math.max(0, Math.min(1, (px - g.padL) / g.plotW));
-  const price = g.max - ((py - g.padT) / g.plotH) * g.range;
+  const price = g.scale.value(py);
   return { xn, price };
 }
 
@@ -1318,6 +1531,9 @@ function setupChartDrawing() {
     svg.addEventListener("pointerdown", (e) => {
       if (!drawTool) return;
       if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (e.target.closest && e.target.closest("[data-yscale]")) return;
+      const yp = chartYAxisPoint(e);
+      if (yp && yp.onAxis) return; // 가격 축은 세로 배율 조작(beginPan)이 받는다
       if (drawPointerId != null) return; // 두 번째 손가락은 무시(핀치는 touch 핸들러가 처리)
       e.preventDefault();
       const start = chartPointToData(e);
@@ -1416,21 +1632,43 @@ function drawChart(item, options = {}) {
   const closes = plotRows.map((row) => row.c);
   const lows = plotRows.map((row) => row.l);
   const highs = plotRows.map((row) => row.h);
-  const min = Math.min(...lows);
-  const max = Math.max(...highs);
-  const range = max - min || 1;
+  const autoLo = Math.min(...lows);
+  const autoHi = Math.max(...highs);
+  // 세로 축: 자동 맞춤이면 보이는 봉 고가·저가, 수동이면 사용자가 정한 범위. 로그면 log10 공간.
+  // 종목·기간·봉이 바뀌면 자동 맞춤으로 돌아간다(로그 선택은 유지).
+  const yKey = `${item.ticker}|${chartState.range}|${chartState.barTf}`;
+  if (yKey !== chartYScaleKey) {
+    chartYScaleKey = yKey;
+    chartYScale = window.MirYScale.withAuto(chartYScale);
+  }
+  const yRes = window.MirYScale.resolveRange(chartYScale, autoLo, autoHi, 0);
+  const autoRef = window.MirYScale.autoRange(autoLo, autoHi, 0, yRes.log);
+  const yScale = window.MirYScale.createScale({ min: yRes.min, max: yRes.max, log: yRes.log, top: padT, height: plotH });
+  const min = yScale.min;
+  const max = yScale.max;
+  const yLog = yRes.log;
+  const yManual = !yRes.auto;
   const xFor = (index) => padL + (index / Math.max(1, rows.length - 1)) * plotW;
-  const yFor = (value) => padT + ((max - value) / range) * plotH;
+  const yFor = (value) => yScale.y(value);
   const candleW = Math.max(2, Math.min(11, (plotW / rows.length) * 0.62));
 
   const linePath = closes.map((value, index) => `${index ? "L" : "M"} ${xFor(index).toFixed(1)} ${yFor(value).toFixed(1)}`).join(" ");
   const area = `${linePath} L ${(padL + plotW).toFixed(1)} ${(padT + plotH).toFixed(1)} L ${padL} ${(padT + plotH).toFixed(1)} Z`;
-  const grid = [0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-    const y = padT + plotH * ratio;
-    const value = max - range * ratio;
-    return `<line x1="${padL}" y1="${y}" x2="${padL + plotW}" y2="${y}" class="chart-grid"></line><text x="${width - 8}" y="${y + 4}" class="chart-axis" text-anchor="end">${chartPriceLabel(value)}</text>`;
+  // 가격 눈금: 범위에 맞춰 1·2·2.5·5 배수(로그면 10^k × 가수)로 다시 잡는다.
+  const yTicks = window.MirYScale.ticks(min, max, yLog, plotH >= 260 ? 6 : 5);
+  const grid = yTicks.ticks.map((value) => {
+    const y = yFor(value);
+    if (!Number.isFinite(y)) return "";
+    return `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${padL + plotW}" y2="${y.toFixed(1)}" class="chart-grid"></line><text x="${width - 8}" y="${(y + 4).toFixed(1)}" class="chart-axis" text-anchor="end">${chartAxisPriceLabel(value, yTicks.step)}</text>`;
   }).join("");
-  const overlayYFor = (value) => yFor(Math.max(min, Math.min(max, value)));
+  // 오버레이 y. 자동 맞춤에서는 예전처럼 화면 범위로 클램프한다(화면이 곧 보이는 봉 범위라
+  // 클램프되는 건 채널 채움 가장자리 정도). 수동(세로 확대·이동)에서는 클램프하면 범위 밖
+  // 수평선이 가장자리에 가짜로 깔리므로 클램프하지 않고 플롯 clipPath(#chartPlotClip)로 자른다.
+  // 로그에서 0 이하 값은 좌표가 없으므로 화면 아래 멀리 보낸다(잘려서 안 보임).
+  const overlayYFor = (value) => {
+    const y = yFor(yManual ? value : Math.max(min, Math.min(max, value)));
+    return Number.isFinite(y) ? y : padT + plotH * 4;
+  };
 
   // 지표 계산용 컨텍스트(보이는 구간 + 앞쪽 이력). 보이는 rows는 ctxRows의 꼬리이므로
   // 지표를 ctxRows로 계산한 뒤 lastN(..., visN)으로 잘라 그린다(좌측 워밍업 잘림 방지).
@@ -1440,7 +1678,13 @@ function drawChart(item, options = {}) {
   const tailCh = (ch) => ch ? { upper: lastN(ch.upper, visN), lower: lastN(ch.lower, visN), mid: lastN(ch.mid, visN) } : null;
   const tailObj = (o) => { const r = {}; for (const k in o) r[k] = Array.isArray(o[k]) ? lastN(o[k], visN) : o[k]; return r; };
   // 화면 가격범위 밖 값은 가장자리에 평평하게 깔리지 않도록 null 처리(선이 끊김) — 가짜 수평선 방지.
-  const clipRange = (arr) => arr.map((v) => (v == null || !Number.isFinite(v) || v < min || v > max) ? null : v);
+  // 자동 맞춤에서는 예전처럼 화면 범위 밖을 끊고(가장자리 잡선 방지), 수동(세로 확대·이동)
+  // 에서는 선이 플롯 경계를 지나가도록 두고 clipPath 로 자른다. 로그에서 0 이하는 항상 끊는다.
+  const clipRange = (arr) => arr.map((v) => {
+    if (v == null || !Number.isFinite(v) || (yLog && v <= 0)) return null;
+    if (!yManual && (v < min || v > max)) return null;
+    return v;
+  });
 
   // Bollinger Bands (20, 2σ) overlay.
   let bollSvg = "";
@@ -1762,16 +2006,43 @@ function drawChart(item, options = {}) {
   // 변환용(보이는 봉들의 타임스탬프, 오름차순).
   hydrateChartDrawings(item.ticker); // 저장된 드로잉 복원(최초 1회)
   lastChartGeom = {
-    padL, plotW, padT, plotH, min, max, range, width, height, ticker: item.ticker,
+    padL, plotW, padT, plotH, min, max, width, height, ticker: item.ticker,
+    log: yLog, manual: yManual, scale: yScale, autoMin: autoRef.min, autoMax: autoRef.max,
     times: buildChartTimes(rows),
   };
   const isLine = chartState.chartType === "line";
   const isHeikin = chartState.chartType === "heikin";
 
+  // 가격 축(오른쪽 여백) — 드래그·휠로 세로 배율, 더블클릭으로 자동 맞춤. 투명 히트 영역이
+  // 커서(ns-resize)와 터치 대상을 맡는다. 현재가 태그는 새 스케일 위 좌표로 축에 붙인다.
+  const axisW = width - xPlotRight;
+  const lastY = yFor(last.c);
+  const prevClose = rows.length > 1 ? rows[rows.length - 2].c : last.o;
+  const lastTag = Number.isFinite(lastY) && lastY >= padT - 1 && lastY <= padT + plotH + 1
+    ? `<g class="chart-last-tag ${last.c >= prevClose ? "is-up" : "is-down"}"><rect x="${(xPlotRight + 2).toFixed(1)}" y="${(lastY - 8).toFixed(1)}" width="${(axisW - 4).toFixed(1)}" height="16" rx="3"></rect><text x="${(width - 6).toFixed(1)}" y="${(lastY + 3.5).toFixed(1)}" text-anchor="end">${escapeHtml(chartPriceLabel(last.c))}</text></g>`
+    : "";
+  const axisHit = `<rect class="chart-yaxis-hit" data-yaxis="1" x="${xPlotRight.toFixed(1)}" y="${padT}" width="${axisW.toFixed(1)}" height="${plotH}"><title>가격 축: 위아래로 끌어 세로 배율 조정 · 휠로 확대/축소 · 더블클릭 자동 맞춤</title></rect>`;
+  // 모서리 토글(A=자동 맞춤, L=로그). 가격 축 아래 칸(플롯 바닥 ~ 다음 패널 사이)에 둔다.
+  const btnW = Math.min(22, (axisW - 6) / 2);
+  const btnY = padT + plotH + 2;
+  const yBtn = (key, label, on, x, title) => `<g class="chart-yscale-btn${on ? " is-on" : ""}" data-yscale="${key}" role="button" tabindex="0" aria-pressed="${on ? "true" : "false"}" aria-label="${title}"><title>${title}</title><rect x="${x.toFixed(1)}" y="${btnY.toFixed(1)}" width="${btnW.toFixed(1)}" height="14" rx="3"></rect><text x="${(x + btnW / 2).toFixed(1)}" y="${(btnY + 10.5).toFixed(1)}" text-anchor="middle">${label}</text></g>`;
+  const yBtns = yBtn("auto", "A", !yManual, width - 4 - btnW * 2 - 2, yManual ? "세로 자동 맞춤 켜기(꺼짐)" : "세로 자동 맞춤(켜짐)")
+    + yBtn("log", "L", yLog, width - 4 - btnW, yLog ? "로그 스케일 끄기(켜짐)" : "로그 스케일 켜기(꺼짐)");
+  // 수동 범위에서는 가격 플롯 밖(보조 패널·헤더)으로 캔들·선이 넘치지 않게 자른다.
+  const candleHalf = candleW / 2 + 1;
+  const plotClip = yManual
+    ? `<clipPath id="chartPlotClip"><rect x="${(padL - candleHalf).toFixed(1)}" y="${padT}" width="${(plotW + candleHalf * 2).toFixed(1)}" height="${plotH}"></rect></clipPath>`
+    : "";
+  const plotOpen = yManual ? `<g clip-path="url(#chartPlotClip)">` : "";
+  const plotClose = yManual ? "</g>" : "";
+  syncChartYScaleButtons();
+
   svg.innerHTML = `
     <rect x="0" y="0" width="${width}" height="${height}" rx="8" class="chart-bg"></rect>
+    ${plotClip}
     ${vGuides}
     ${grid}
+    ${plotOpen}
     ${isLine ? `<path d="${area}" class="chart-area"></path>` : ""}
     ${bollSvg}
     ${isLine ? "" : candles}
@@ -1786,7 +2057,8 @@ function drawChart(item, options = {}) {
     ${chandelierSvg}
     ${patSvg}
     ${techLevelSvg}
-    <clipPath id="chartDrawClip"><rect x="${padL}" y="0" width="${(width - padL).toFixed(1)}" height="${(padT + plotH + 2).toFixed(1)}"></rect></clipPath>
+    ${plotClose}
+    <clipPath id="chartDrawClip"><rect x="${padL}" y="${yManual ? padT : 0}" width="${(width - padL).toFixed(1)}" height="${(yManual ? plotH : padT + plotH + 2).toFixed(1)}"></rect></clipPath>
     <g id="chartDrawLayer" clip-path="url(#chartDrawClip)">${renderChartDrawings()}</g>
     ${panelsSvg}
     <line x1="${padL}" y1="${padT + plotH}" x2="${padL + plotW}" y2="${padT + plotH}" class="chart-base"></line>
@@ -1794,5 +2066,8 @@ function drawChart(item, options = {}) {
     <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length} bars · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
     <text x="${width - 10}" y="20" text-anchor="end" class="chart-label">${chartPriceLabel(last.c)}</text>
+    ${lastTag}
+    ${axisHit}
+    ${yBtns}
   `;
 }

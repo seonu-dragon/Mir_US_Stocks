@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=a66b955c2f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=a66b955c2f"></noscript>
+    <link rel="preload" href="styles.css?v=3779a2a245" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=3779a2a245"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d5cd021deb"></script>
+    <script src="build_id.js?v=c69d70335f"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1288,6 +1288,8 @@ html[data-theme="dark"] {
                     <button type="button" id="chartZoomIn" title="확대">+</button>
                     <button type="button" id="chartPanRight" title="오른쪽으로 이동">›</button>
                     <button type="button" id="chartReset" title="초기화">Reset</button>
+                    <button type="button" id="chartYAuto" class="is-active" aria-pressed="true" title="세로 자동 맞춤 — 가격 축을 끌거나 휠로 세로 배율을 바꾸면 꺼진다(가격 축 더블클릭으로 다시 켬)">자동</button>
+                    <button type="button" id="chartYLog" aria-pressed="false" title="로그 스케일 — 같은 비율 변화를 같은 높이로">로그</button>
                   </div>
                 </div>
                 <div class="control-group compact-control-group">
@@ -3125,7 +3127,8 @@ html[data-theme="dark"] {
     <script src="screener-backtest.js?v=a5f9e857fb"></script>
     <script src="signals.js?v=8d7bf55d00"></script>
     <script src="macro-odds.js?v=28a01082e3"></script>
-    <script src="chart.js?v=aff4f193c6"></script>
+    <script src="chart-yscale-core.js?v=2b5154ddc0"></script>
+    <script src="chart.js?v=bc7de9d69a"></script>
     <script src="institutional.js?v=206b237685"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
     <script src="kr-panels.js?v=53e63c5806"></script>
@@ -3142,7 +3145,7 @@ html[data-theme="dark"] {
     <script src="dcf.js?v=3e6f86bccd"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
     <script src="app.js?v=31bb6a70a0"></script>
-    <script src="ai-cosmos.js?v=9ac692de17"></script>
+    <script src="ai-cosmos.js?v=f27abc2e8c"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
   </body>
 </html>

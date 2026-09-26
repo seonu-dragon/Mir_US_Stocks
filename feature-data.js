@@ -134,6 +134,10 @@ const FEATURE_DATA = {
   // 역DCF 기저율 분포(build_dcf_base_rates.py) — 두 시장이 한 파일(~18KB). 종목 분석의 DCF 카드·AI 모드
   // 역DCF 패널이 처음 그릴 때만 받는다(lazy).
   dcfBaseRates: { global: "DCF_BASE_RATES", path: "data/dcf_base_rates.js", lazy: true },
+  // 수식 스크리너 과거 백테스트 패널 메타(build_screener_backtest_panel.mjs) — 시장별 파일
+  // (US data/screener_backtest_meta.js · KR data/korea/screener_backtest_meta.js, 약 70~140KB).
+  // 수식 스크리너에서 수식이 처음 컴파일될 때만 받는다(lazy). 필드 샤드는 screener-backtest.js 가 fetch.
+  screenerBacktest: { global: "SCREENER_BACKTEST_META", path: "data/screener_backtest_meta.js", marketSpecific: true, lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다

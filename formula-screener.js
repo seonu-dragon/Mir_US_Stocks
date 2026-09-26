@@ -226,9 +226,9 @@ function fxRenderTable(run) {
 }
 
 // ---------- 3차 스크리너 백테스트 연결 지점 ----------
-// window.MirFormulaBacktest = { render(slotEl, { compiled, source, market, columns }) } 가 정의되면
-// 결과 옆 자리(#fxBacktestSlot)에 붙인다. 아직 없으므로 자리를 숨긴다 — 비활성 버튼이나 '준비 중'
-// 문구는 띄우지 않는다. 백테스트가 붙기 전까지 화면의 "과거 검증되지 않음" 문구가 사실 그대로다.
+// window.MirFormulaBacktest = { render(slotEl, { compiled, source, market, columns }) } (screener-backtest.js)가
+// 결과 옆 자리(#fxBacktestSlot)에 버튼·결과를 그린다. 백테스트는 사용자가 버튼을 눌러야 돈다 — 그 전까지
+// 화면의 "과거 검증되지 않음" 문구가 사실 그대로다. 정의가 없거나 렌더가 실패하면 자리를 숨긴다.
 function fxRenderBacktestSlot(compiled) {
   const slot = byId("fxBacktestSlot");
   if (!slot) return;

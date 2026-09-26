@@ -101,6 +101,10 @@ jobs:
       # 업종 상대 팩터 등급(factor-grade-core.js): 업종 내 백분위·섹터 승격·표본 부족 보류·검증 요약 문구.
       - name: Factor grade tests
         run: node scripts/tests/test_factor_grade_core.mjs
+      # 스크리너 과거 백테스트(screener-backtest-core.js) + 공통 과적합 검사(overfit-core.js):
+      # DSR 알려진 값(Bailey & López de Prado 2014)·룩어헤드 없음·거래비용/회전율·현금 처리·배지 판정.
+      - name: Screener backtest tests
+        run: node scripts/tests/test_screener_backtest_core.mjs
       # 신호 성적표 순수 계산(signal-scorecard-core.js): 진입 기준일(룩어헤드 차단)·수익률·중복 처리·
       # 부트스트랩 판정 + 커밋된 원장의 해시 체인(소급 수정·삭제가 없었는지).
       - name: Signal scorecard tests

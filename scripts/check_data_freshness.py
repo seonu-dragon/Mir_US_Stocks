@@ -23,6 +23,7 @@
     py scripts/check_data_freshness.py --group kr-valuation-band  # kr-valuation-band.yml 말미
     py scripts/check_data_freshness.py --group financials         # weekly-earnings-history.yml financials 잡
     py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
+    py scripts/check_data_freshness.py --group screener-backtest  # screener-backtest-panel.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -207,6 +208,12 @@ CHECKS = {
     # 대리 지수 최근 3년(β 추정용)을 새로 쓴다 — 40일이면 한 번 실패, 0건(count)도 잡는다.
     "crisis-history": [
         ("data/crisis_history.json", 40, True),
+    ],
+    # screener-backtest-panel.yml(일요일 05:40 KST) — 수식 스크리너 과거 백테스트 패널. 주간이라 10일.
+    # 빌더가 유니버스 200종목·월말 24개 미만이면 쓰지 않고 exit 1 이라 건수 대신 나이만 본다.
+    "screener-backtest": [
+        ("data/screener_backtest_meta.json", 10, False),
+        ("data/korea/screener_backtest_meta.json", 10, False),
     ],
 }
 

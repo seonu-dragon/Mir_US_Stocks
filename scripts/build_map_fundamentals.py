@@ -65,6 +65,8 @@ DIRECT = {
     "debtRatio": "debtRatio",
     "currentRatio": "currentRatio",
     "payoutRatio": "payoutRatio",
+    # 주당배당금 — 국내는 네이버·KRX 공식(attach_krx_metrics)이 details 에 dps 로 싣는다. 찾기 › 배당 랭킹이 읽는다.
+    "dps": "dps",
     "divYield": "divYield",
     "epsTtm": "eps",
     "roe": "roe",

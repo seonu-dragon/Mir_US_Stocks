@@ -6,6 +6,10 @@
 //   · US 스냅샷에는 거래량·거래대금 필드가 없다 → US 에서는 거래량 배율만.
 //   · 외국인 비율(foreignPct)은 국내 MAP_FUNDAMENTALS 에만 있다.
 //   · PER·PBR·ROE·배당수익률은 MAP_FUNDAMENTALS(부팅 몇 초 뒤 도착) — 값이 없으면 화면은 "—".
+//   · 주당배당금·배당성향: 국내는 MAP_FUNDAMENTALS(dps·payoutRatio), 미국은 US_STOCK_CALENDAR
+//     (시총 상위 ~200종목의 divRate·payout)에만 있다. 연속 배당 연수는 두 시장 모두 소스가 없어 열을 두지 않는다.
+//
+// 아래쪽 '목록' 로직(배당 랭킹·신규상장·관리/경보)도 여기 둔다 — 전부 입력 객체만 보고 계산한다.
 (function (root) {
   "use strict";
 
@@ -24,6 +28,8 @@
     { key: "pb", label: "PBR", markets: ["us", "kr"], num: true, metric: "pb" },
     { key: "roe", label: "ROE", markets: ["us", "kr"], num: true },
     { key: "divYield", label: "배당수익률", markets: ["us", "kr"], num: true },
+    { key: "dps", label: "주당배당금", markets: ["us", "kr"], num: true },
+    { key: "payoutRatio", label: "배당성향", markets: ["us", "kr"], num: true },
     { key: "foreignPct", label: "외국인 비율", markets: ["kr"], num: true },
     { key: "rsi14", label: "RSI", markets: ["us", "kr"], num: true, metric: "rsi14" },
     { key: "epsTtm", label: "EPS", markets: ["us", "kr"], num: true, metric: "epsTtm" },
@@ -94,7 +100,204 @@
     return cur;
   }
 
-  const api = { COLUMNS, availableColumns, columnByKey, defaultColumns, sanitizeColumns, parseSaved, toggleColumn, moveColumn };
+  // ===== 목록: 배당 랭킹 · 신규상장 · 관리/경보 =====
+  function fin(v) {
+    if (v === null || v === undefined || v === "" || typeof v === "boolean") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function isEtfItem(item) {
+    if (!item) return false;
+    const sec = String(item.sector || "").toUpperCase();
+    return sec === "ETF" || sec === "EXCHANGE TRADED FUNDS" || Boolean(item.etfCategory) || item.nav != null;
+  }
+
+  // 한 종목의 배당 정보. fund = MAP_FUNDAMENTALS 행, cal = US_STOCK_CALENDAR.stocks[티커](미국만).
+  //   · 배당수익률: fund.divYield 우선, 없으면 cal.divYield. 0 이하는 배당 없음(null).
+  //   · 배당성향: fund.payoutRatio → cal.payout. 이익이 0 이하(적자)면 의미가 없어 null, deficit=true.
+  //   · 주당배당금: fund.dps → cal.divRate.
+  function dividendInfo(item, fund, cal) {
+    const f = fund || {};
+    const c = cal || {};
+    const y = fin(f.divYield) != null ? fin(f.divYield) : fin(c.divYield);
+    const divYield = y != null && y > 0 ? y : null;
+    const dpsRaw = fin(f.dps) != null ? fin(f.dps) : fin(c.divRate);
+    const dps = dpsRaw != null && dpsRaw > 0 ? dpsRaw : null;
+    const eps = fin(f.eps) != null ? fin(f.eps) : fin(item && item.epsTtm);
+    const deficit = eps != null && eps <= 0;
+    const payRaw = fin(f.payoutRatio) != null ? fin(f.payoutRatio) : fin(c.payout);
+    const payoutRatio = deficit || payRaw == null || payRaw < 0 ? null : payRaw;
+    return { divYield, dps, payoutRatio, deficit };
+  }
+
+  // 배당 랭킹: 배당수익률 내림차순. sanity(MirFundSanity)가 있으면 '이상치 가능'(수익률 30% 초과)은
+  // 경계 안 값 뒤로 보내고 표시한다. ETF 는 제외(분배금 구조가 달라 같은 줄에 두지 않는다).
+  function dividendRanking(items, opts) {
+    const o = opts || {};
+    const fundFor = o.fundFor || (() => null);
+    const calFor = o.calFor || (() => null);
+    const sanity = o.sanity || null;
+    const rows = [];
+    (items || []).forEach((item) => {
+      if (!item || isEtfItem(item)) return;
+      const info = dividendInfo(item, fundFor(item), calFor(item));
+      if (info.divYield == null) return;
+      const outlier = sanity ? sanity.isOutlier("divYield", info.divYield) : info.divYield > 30;
+      rows.push(Object.assign({ item, outlier }, info));
+    });
+    rows.sort((a, b) => {
+      if (sanity) {
+        const d = sanity.sortCompare("divYield", a.divYield, b.divYield, -1);
+        if (d) return d;
+      } else if (a.outlier !== b.outlier) {
+        return a.outlier ? 1 : -1;
+      } else if (b.divYield !== a.divYield) {
+        return b.divYield - a.divYield;
+      }
+      return (fin(b.item.marketCapB) || 0) - (fin(a.item.marketCapB) || 0);
+    });
+    return o.limit ? rows.slice(0, o.limit) : rows;
+  }
+
+  // "2026.09.23" / "2026-09-23" → "2026-09-23"
+  function isoDate(s) {
+    const m = String(s || "").match(/(\d{4})[.\-/](\d{1,2})[.\-/](\d{1,2})/);
+    if (!m) return null;
+    return `${m[1]}-${m[2].padStart(2, "0")}-${m[3].padStart(2, "0")}`;
+  }
+
+  function daysBetween(aIso, bIso) {
+    const a = Date.parse(`${aIso}T00:00:00Z`);
+    const b = Date.parse(`${bIso}T00:00:00Z`);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+    return Math.round((b - a) / 86400000);
+  }
+
+  function normName(s) {
+    return String(s || "")
+      .replace(/\(주\)|㈜|주식회사/g, "")
+      .replace(/[\s.,·()\-]/g, "")
+      .toLowerCase();
+  }
+
+  function secCik(link) {
+    const m = String(link || "").match(/\/data\/(\d+)\//);
+    return m ? m[1] : null;
+  }
+
+  // 신규상장. ipo = IPO_CALENDAR(시장별 파일), stocks = 스냅샷 종목, today = "YYYY-MM-DD".
+  //   · 국내(38커뮤니케이션): stage "priced" = 신규 상장 완료, fileDate = 상장일, offerPrice = 확정 공모가(원).
+  //     종목코드가 비어 있는 행이 많아 회사명으로 스냅샷과 맞춘다.
+  //   · 미국(SEC): 424B4(가격확정) 중, 같은 회사(CIK)의 S-1/F-1 등록 신청이 수집 기간 안에 있는 것만.
+  //     424B4 는 기존 상장사의 추가 공모에도 쓰여 등록 신청 기록이 없는 건은 신규상장이라 단정할 수 없다.
+  //     offerPriceKind "unit"(SPAC 유닛가)은 주가와 단위가 달라 공모가 대비를 계산하지 않는다.
+  function recentListings(market, ipo, stocks, today, opts) {
+    const o = opts || {};
+    const maxDays = o.days || 90;
+    const list = (ipo && Array.isArray(ipo.ipos)) ? ipo.ipos : [];
+    const byTicker = new Map();
+    const byName = new Map();
+    (stocks || []).forEach((s) => {
+      if (!s || !s.ticker) return;
+      byTicker.set(String(s.ticker).toUpperCase(), s);
+      const n = normName(s.company);
+      if (n && !byName.has(n)) byName.set(n, s);
+    });
+    const kr = market === "kr";
+    const registered = new Set();
+    if (!kr) {
+      list.forEach((r) => {
+        if (r && r.stage !== "priced" && /^(S-1|F-1)/.test(String(r.form || ""))) {
+          const cik = secCik(r.link);
+          if (cik) registered.add(cik);
+        }
+      });
+    }
+    const seen = new Set();
+    const out = [];
+    list.forEach((r) => {
+      if (!r || r.stage !== "priced") return;
+      const date = isoDate(r.fileDate);
+      if (!date) return;
+      const age = today ? daysBetween(date, today) : 0;
+      if (age == null || age < 0 || age > maxDays) return;
+      if (!kr) {
+        if (String(r.form || "") !== "424B4") return;
+        const cik = secCik(r.link);
+        if (!cik || !registered.has(cik)) return;
+      }
+      const tk = r.ticker ? String(r.ticker).toUpperCase() : "";
+      const item = (tk && byTicker.get(tk)) || (kr ? byName.get(normName(r.company)) : null) || null;
+      const key = item ? `t:${item.ticker}` : (tk ? `t:${tk}` : `n:${normName(r.company)}`);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const offer = fin(r.offerPrice);
+      const offerUnit = r.offerPriceKind === "unit";
+      const price = item ? fin(item.price) : null;
+      let retPct = offer && offer > 0 && price != null && !offerUnit ? (price / offer - 1) * 100 : null;
+      // 현재가가 공모가의 10배 초과·10분의 1 미만이면 액면분할·병합이나 기존 상장사 공모일 가능성이 커
+      // 공모가 대비를 계산하지 않는다(값을 지우고 표시만 남긴다).
+      const retSuspect = retPct != null && (price / offer > 10 || price / offer < 0.1);
+      if (retSuspect) retPct = null;
+      out.push({
+        company: r.company || (item && item.company) || "",
+        ticker: item ? item.ticker : (tk || null),
+        date, days: age, offerPrice: offer, offerUnit, price, retPct, retSuspect, item,
+        link: r.link || null, broker: kr ? (r.form || "") : "",
+      });
+    });
+    out.sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0));
+    return out;
+  }
+
+  // 관리종목·거래정지·시장경보(KR_MARKET_ALERTS.sections). 한 종목이 여러 구분에 걸리면 행을 나눠 둔다.
+  const ALERT_KINDS = [
+    { key: "admin", label: "관리종목", group: "admin" },
+    { key: "halt", label: "거래정지", group: "halt" },
+    { key: "risk", label: "투자위험", group: "warn" },
+    { key: "warning", label: "투자경고", group: "warn" },
+    { key: "caution", label: "투자주의", group: "caution" },
+  ];
+
+  function alertRows(alerts, stocks, filter) {
+    const sec = (alerts && alerts.sections) || {};
+    const byTicker = new Map();
+    (stocks || []).forEach((s) => { if (s && s.ticker) byTicker.set(String(s.ticker), s); });
+    const out = [];
+    ALERT_KINDS.forEach((k) => {
+      if (filter && filter !== "all" && filter !== k.group) return;
+      const s = sec[k.key];
+      if (!s || !Array.isArray(s.rows)) return;
+      s.rows.forEach((r) => {
+        if (!r || !r.ticker) return;
+        out.push({
+          kind: k.key, kindLabel: k.label, group: k.group,
+          ticker: String(r.ticker), company: r.company || "", market: r.market || "",
+          detail: r.reason || r.type || "",
+          date: isoDate(r.designatedDate) || isoDate(r.noticeDate) || null,
+          asOf: s.asOf || null, item: byTicker.get(String(r.ticker)) || null,
+        });
+      });
+    });
+    return out;
+  }
+
+  function alertCounts(alerts) {
+    const sec = (alerts && alerts.sections) || {};
+    const c = { all: 0, admin: 0, halt: 0, warn: 0, caution: 0 };
+    ALERT_KINDS.forEach((k) => {
+      const n = sec[k.key] && Array.isArray(sec[k.key].rows) ? sec[k.key].rows.length : 0;
+      c[k.group] += n;
+      c.all += n;
+    });
+    return c;
+  }
+
+  const api = {
+    COLUMNS, availableColumns, columnByKey, defaultColumns, sanitizeColumns, parseSaved, toggleColumn, moveColumn,
+    isEtfItem, dividendInfo, dividendRanking, isoDate, daysBetween, normName, recentListings, ALERT_KINDS, alertRows, alertCounts,
+  };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirFindTableCore = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

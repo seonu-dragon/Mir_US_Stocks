@@ -89,6 +89,38 @@ test("오래된 기준일", () => {
   assert.equal(core.isOld("", "2026-09-26", 7), false);
 });
 
+test("환율 계산기: 1단위당 원화(엔은 100엔 → 1엔)·크로스 계산", () => {
+  const items = [
+    { id: "USDKRW", group: "fx", value: 1354.4, asOf: "2026-09-26" },
+    { id: "EURKRW", group: "fx", value: 1543.2, asOf: "2026-09-25" },
+    { id: "JPYKRW", group: "fx", value: 859.7, per: 100, asOf: "2026-09-25" },
+    { id: "CNYKRW", group: "fx", value: null },
+    { id: "WTI", group: "energy", value: 70 },
+  ];
+  const r = core.fxRates(items);
+  assert.deepEqual(Object.keys(r).sort(), ["EUR", "JPY", "KRW", "USD"]);
+  assert.ok(Math.abs(r.JPY.rate - 8.597) < 1e-9);
+  assert.equal(r.USD.asOf, "2026-09-26");
+  assert.ok(Math.abs(core.fxConvert(1354.4, "KRW", "USD", r) - 1) < 1e-12);
+  assert.equal(Math.round(core.fxConvert(100, "USD", "KRW", r)), 135440);
+  // 달러 → 유로는 원화를 거친 크로스
+  assert.equal(core.fxConvert(1543.2, "USD", "EUR", r).toFixed(4), "1354.4000");
+  assert.equal(core.fxConvert(100, "KRW", "CNY", r), null);
+  assert.equal(core.fxConvert(null, "KRW", "USD", r), null);
+});
+
+test("환율 계산기: 금액 입력 정리·자릿수", () => {
+  assert.equal(core.parseAmount("1,000,000"), 1000000);
+  assert.equal(core.parseAmount(" 12.5 "), 12.5);
+  assert.equal(core.parseAmount(".5"), 0.5);
+  assert.equal(core.parseAmount("-3"), null);
+  assert.equal(core.parseAmount("abc"), null);
+  assert.equal(core.parseAmount(""), null);
+  assert.equal(core.fxDecimals("KRW"), 0);
+  assert.equal(core.fxDecimals("JPY"), 0);
+  assert.equal(core.fxDecimals("USD"), 2);
+});
+
 if (failures.length) {
   console.error(`market-indicators-core: ${passed} passed, ${failures.length} failed`);
   failures.forEach((f) => console.error(`  FAIL ${f}`));

@@ -433,14 +433,20 @@ function renderTreemap() {
   }).sort((a, b) => sectorRank(a.sector) - sectorRank(b.sector) || b.weight - a.weight);
 
   const sectorRects = squarify(sectors, { x: 0, y: 0, w: width, h: height }, (item) => item.weight);
+  _tmGroups = new Map();
   map.innerHTML = sectorRects.map(({ item: sector, rect }) => {
     const inner = insetRect({ x: 0, y: 0, w: rect.w, h: rect.h }, 3, 22, 3, 3);
-    const industries = groupIndustries(sector.children, metric, sizeMetric);
+    // 극소 종목은 섹터마다 '기타 N개' 한 칸으로(tmSplitTiny). 누르면 그 섹터를 확대한다.
+    const split = tmSplitTiny(sector.children, inner.w * inner.h, sizeMetric, { sector: sector.sector, action: "zoom" });
+    const industries = groupIndustries(split.keep, metric, sizeMetric);
+    if (split.group) industries.push(split.group);
     const industryRects = squarify(industries, inner, (item) => item.weight);
     return `
       <section class="sector-box" data-sector="${escapeHtml(sector.sector)}" style="${rectStyle(rect)}">
         <div class="sector-title" data-zoom-sector="${escapeHtml(sector.sector)}" title="클릭하면 ${escapeHtml(tmSectorLabel(sector.sector))} 확대">${escapeHtml(tmSectorLabel(sector.sector))} · ${fmtMetric(sector.change, metric)} </div>
-        ${industryRects.map(({ item: industry, rect: industryRect }) => industryBox(sector.sector, industry, industryRect, metric, sizeMetric, query)).join("")}
+        ${industryRects.map(({ item: industry, rect: industryRect }) => (industry.isTinyGroup
+          ? tmGroupTile(industry, industryRect, metric)
+          : industryBox(sector.sector, industry, industryRect, metric, sizeMetric, query))).join("")}
       </section>
     `;
   }).join("");
@@ -491,15 +497,22 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
       <span>${escapeHtml(crumb)} · ${fmtMetric(average(scoped, metric), metric)} · ${scoped.length}종목</span>
     </div>`;
 
+  _tmGroups = new Map();
+  // 확대 화면에서도 남는 극소 종목은 '기타 N개' 로 묶고, 누르면 목록 팝오버를 연다.
+  const split = tmSplitTiny(scoped, inner.w * inner.h, sizeMetric, { sector: zoomView.sector, industry: zoomView.industry || null, action: "list" });
   if (zoomView.industry) {
-    const sorted = scoped.slice().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
-    const rects = squarify(sorted, inner, (item) => sizeWeight(item, sizeMetric));
-    map.innerHTML = header + rects.map(({ item, rect }) => heatTile(item, rect, metric, query)).join("");
+    const sorted = split.keep.slice().sort((a, b) => sizeWeight(b, sizeMetric) - sizeWeight(a, sizeMetric));
+    const entries = split.group ? sorted.concat([split.group]) : sorted;
+    const rects = squarify(entries, inner, (item) => (item.isTinyGroup ? item.weight : sizeWeight(item, sizeMetric)));
+    map.innerHTML = header + rects.map(({ item, rect }) => (item.isTinyGroup ? tmGroupTile(item, rect, metric) : heatTile(item, rect, metric, query))).join("");
   } else {
-    const industries = groupIndustries(scoped, metric, sizeMetric);
+    const industries = groupIndustries(split.keep, metric, sizeMetric);
+    if (split.group) industries.push(split.group);
     const industryRects = squarify(industries, inner, (item) => item.weight);
     map.innerHTML = header + industryRects
-      .map(({ item: industry, rect }) => industryBox(zoomView.sector, industry, rect, metric, sizeMetric, query)).join("");
+      .map(({ item: industry, rect }) => (industry.isTinyGroup
+        ? tmGroupTile(industry, rect, metric)
+        : industryBox(zoomView.sector, industry, rect, metric, sizeMetric, query))).join("");
   }
   // 클릭은 handleHeatmapClick(위임) 이 처리한다.
   renderSelected(scoped.find((item) => item.ticker === selectedTicker) || scoped[0]);
@@ -643,8 +656,133 @@ function heatTile(item, rect, metric, query) {
   return `<button class="${classAttr}" style="${rectStyle(rect)} background:${metricColor(value, metric)}" ${dataAttrs} title="${escapeHtml(titleText)}">${children}</button>`;
 }
 
+// ----- 극소 타일 묶음('기타 N개') -----
+// 면적이 이보다 작은 타일은 글자가 안 들어가고(가로 42px 미만), 12px 미만이면 빈 버튼이 된다. 전체 보통주
+// 뷰에서 섹터마다 수백 개가 이 크기라 색 점(confetti)과 테두리·빈 배경만 보였다 — 섹터·확대 범위마다 한 칸으로 묶는다.
+const TM_TINY_AREA = 700; // px²
+let _tmGroups = new Map();
+
+function tmCapWeight(item) {
+  const v = Number(isKrMarket() ? (item.marketCapT ?? item.marketCapB) : item.marketCapB);
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}
+
+function tmGroupValue(group, metric) {
+  const core = window.MirTreemapCore;
+  if (!core) return null;
+  const clip = MAP_METRIC_CONFIG[metric] && window.MirFundSanity ? (v) => window.MirFundSanity.winsor(metric, v) : null;
+  return core.weightedAverage(group.stocks, (it) => mapMetricValue(it, metric), tmCapWeight, clip);
+}
+
+// stocks → { keep, group }. 선택·포커스·검색 일치 종목은 묶지 않는다(타일이 보여야 강조가 보인다).
+function tmSplitTiny(stocks, area, sizeMetric, meta) {
+  const core = window.MirTreemapCore;
+  if (!core || !stocks.length || sizeMetric === "equal") return { keep: stocks, group: null };
+  const query = byId("heatmapSearch")?.value.trim() || "";
+  const pinned = (it) => it.ticker === treemapFocusTicker || (query && heatmapItemMatchesQuery(it, query));
+  const total = stocks.reduce((s, it) => s + sizeWeight(it, sizeMetric), 0) || 1;
+  const { keep, tiny } = core.partitionTiny(stocks, (it) => (pinned(it) ? Infinity : sizeWeight(it, sizeMetric) / total * area), TM_TINY_AREA);
+  if (!tiny.length) return { keep, group: null };
+  const id = `g${_tmGroups.size + 1}`;
+  const group = {
+    isTinyGroup: true,
+    id,
+    industry: `기타 ${tiny.length}개`,
+    stocks: tiny,
+    weight: tiny.reduce((s, it) => s + sizeWeight(it, sizeMetric), 0),
+    sector: meta.sector,
+    zoomIndustry: meta.industry || null,
+    action: meta.action,
+  };
+  _tmGroups.set(id, group);
+  return { keep, group };
+}
+
+function tmGroupTile(group, rect, metric) {
+  const value = tmGroupValue(group, metric);
+  const label = fmtMetric(value, metric);
+  const color = value === null && !MAP_METRIC_CONFIG[metric] && metric !== "rsi14" && metric !== "epsTtm" ? metricColor(0, metric) : metricColor(value, metric);
+  const hint = group.action === "zoom" ? "누르면 이 섹터를 확대합니다" : "누르면 종목 목록을 엽니다";
+  const aria = `${tmSectorLabel(group.sector)} 기타 ${group.stocks.length}개 · 시가총액 가중 ${label} · ${hint}`;
+  const showName = rect.w > 46 && rect.h > 24;
+  const showMetric = rect.w > 56 && rect.h > 42;
+  const children = (showName ? `<strong>기타 ${group.stocks.length}개</strong>` : "") + (showMetric ? `<small>${label}</small>` : "");
+  return `<button type="button" class="heat-tile heat-group" style="${rectStyle(rect)} background:${color}" data-group="${group.id}" aria-label="${escapeHtml(aria)}">${children}</button>`;
+}
+
+function tmGroupTooltip(group, metric) {
+  const core = window.MirTreemapCore;
+  const top = core ? core.topMembers(group.stocks, tmCapWeight, 6) : group.stocks.slice(0, 6);
+  const more = group.stocks.length - top.length;
+  return `
+    <div class="tooltip-head">
+      <div>
+        <strong>기타 ${group.stocks.length}개</strong>
+        <span>${escapeHtml(tmSectorLabel(group.sector))}${group.zoomIndustry ? ` · ${escapeHtml(group.zoomIndustry)}` : ""} · 지도에서 너무 작은 종목 묶음</span>
+      </div>
+      <div class="tooltip-price">
+        <b>${fmtMetric(tmGroupValue(group, metric), metric)}</b>
+        <em>시총가중</em>
+      </div>
+    </div>
+    <div class="tooltip-peers">
+      <span>시가총액 상위${more > 0 ? ` · 외 ${more}개` : ""} · ${group.action === "zoom" ? "누르면 섹터 확대" : "누르면 전체 목록"}</span>
+      ${top.map((item) => peerTooltipRow(item)).join("")}
+    </div>
+  `;
+}
+
+function tmClosePopover() {
+  byId("stockTreemap")?.querySelector(".tm-popover")?.remove();
+}
+
+function tmOpenPopover(group, tile) {
+  const map = byId("stockTreemap");
+  if (!map) return;
+  tmClosePopover();
+  const metric = byId("metricFilter").value;
+  const core = window.MirTreemapCore;
+  const sorted = core ? core.topMembers(group.stocks, tmCapWeight, group.stocks.length) : group.stocks.slice();
+  const pop = document.createElement("div");
+  pop.className = "tm-popover";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", `기타 ${group.stocks.length}개 종목`);
+  pop.innerHTML = `<div class="tm-pop-head"><strong>${escapeHtml(tmSectorLabel(group.sector))}${group.zoomIndustry ? ` · ${escapeHtml(group.zoomIndustry)}` : ""} · 기타 ${group.stocks.length}개</strong><button type="button" class="tm-pop-close" aria-label="닫기">✕</button></div>
+    <ul class="tm-pop-list">${sorted.map((it) => {
+      const v = mapMetricValue(it, metric);
+      return `<li><button type="button" class="tm-pop-item" data-ticker="${escapeHtml(it.ticker)}"><span class="tm-pop-name">${escapeHtml(stockLabel(it))}</span><span class="tm-pop-cap">${escapeHtml(fmtBillions(it.marketCapB))}</span><span class="tm-pop-val ${MAP_METRIC_CONFIG[metric] ? "" : cls(v)}">${fmtMetric(v, metric)}</span></button></li>`;
+    }).join("")}</ul>
+    <p class="tm-pop-note">시가총액 큰 순 · 누르면 종목 분석</p>`;
+  map.appendChild(pop);
+  pop.addEventListener("keydown", (e) => { if (e.key === "Escape") { tmClosePopover(); tile.focus(); } });
+  // 타일 근처에 두되 지도 밖으로 나가지 않게.
+  const mr = map.getBoundingClientRect();
+  const tr = tile.getBoundingClientRect();
+  const pw = Math.min(300, mr.width - 16);
+  pop.style.width = `${pw}px`;
+  const left = Math.max(8, Math.min(tr.left - mr.left, mr.width - pw - 8));
+  const ph = pop.offsetHeight;
+  let top = tr.bottom - mr.top + 6;
+  if (top + ph > mr.height - 8) top = Math.max(8, tr.top - mr.top - ph - 6);
+  pop.style.left = `${left}px`;
+  pop.style.top = `${top}px`;
+  pop.querySelector(".tm-pop-close")?.focus();
+}
+
 function handleHeatmapPointer(event) {
   const map = byId("stockTreemap");
+  if (event.target.closest(".tm-popover")) { hideHeatmapTooltip(); _lastHoverKey = null; return; }
+  const gTile = event.target.closest(".heat-group");
+  if (gTile && map.contains(gTile)) {
+    const key = `g:${gTile.dataset.group}`;
+    if (key === _lastHoverKey) { positionHeatmapTooltip(event); return; }
+    const group = _tmGroups.get(gTile.dataset.group);
+    if (group) {
+      _lastHoverKey = key;
+      showHeatmapTooltip(tmGroupTooltip(group, byId("metricFilter").value), event);
+    }
+    return;
+  }
   const tile = event.target.closest(".heat-tile");
   if (tile && map.contains(tile)) {
     const key = `t:${tile.dataset.ticker}`;
@@ -691,6 +829,25 @@ function handleHeatmapPointer(event) {
 function handleHeatmapClick(event) {
   const map = byId("stockTreemap");
   if (!map) return;
+  const pop = event.target.closest(".tm-popover");
+  if (pop && map.contains(pop)) {
+    event.stopPropagation();
+    const pick = event.target.closest(".tm-pop-item[data-ticker]");
+    if (pick) { tmClosePopover(); selectTicker(pick.dataset.ticker, { openSearch: true }); return; }
+    if (event.target.closest(".tm-pop-close")) tmClosePopover();
+    return;
+  }
+  const gTile = event.target.closest(".heat-group");
+  if (gTile && map.contains(gTile)) {
+    event.stopPropagation();
+    const group = _tmGroups.get(gTile.dataset.group);
+    if (!group) return;
+    hideHeatmapTooltip();
+    if (group.action === "zoom") { zoomView = { sector: group.sector }; renderTreemap(); }
+    else tmOpenPopover(group, gTile);
+    return;
+  }
+  tmClosePopover();
   const tile = event.target.closest(".heat-tile");
   if (tile && map.contains(tile)) {
     event.stopPropagation();

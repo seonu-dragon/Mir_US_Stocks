@@ -206,6 +206,39 @@ def test_stock_views(browser, base: str) -> None:
     page.close()
 
 
+# UI 3단계: 시그널·도구의 목차(toc-layout.js). 옛 딥링크(&dca= · &pfrisk= · &thesis=)는 그 도구를,
+# &tool= / &sig= 는 해당 항목을 연다. 찾기 기본 보기는 표(find-table.js), 오늘 탭은 지수 캐러셀.
+TOC_LINKS = {
+    "?tab=tools&dca=SPY:100": ("#sub-bulk-tools", "dca"),
+    "?tab=tools&pfrisk=1": ("#sub-bulk-tools", "pfrisk"),
+    "?tab=tools&thesis=AAPL": ("#sub-bulk-tools", "thesis"),
+    "?tab=tools&tool=stress": ("#sub-bulk-tools", "stress"),
+    "?tab=signals&sig=yieldcurve": ("#tab-signals", "yieldcurve"),
+}
+
+
+def test_stage3_layout(browser, base: str) -> None:
+    page = browser.new_page(viewport={"width": 1280, "height": 900})
+    watch(page)
+    for query, (root, want) in TOC_LINKS.items():
+        boot(page, f"{base}{query}")
+        st = page.evaluate("""([root, want]) => {
+          const f = document.querySelector(`${root} details[data-toc-key='${want}']`);
+          return { active: document.querySelector(`${root} .toc-item.is-active`)?.dataset.tocKey,
+                   visible: !!f && f.open && f.getBoundingClientRect().height > 0 };
+        }""", [root, want])
+        check(f"목차 딥링크 {query} → {want}", st["active"] == want and st["visible"], str(st))
+    boot(page, f"{base}?tab=find")
+    st = page.evaluate("""() => ({ rows: document.querySelectorAll('#topStocksTableWrap tbody tr').length,
+      cardsHidden: document.getElementById('topStocks').hidden })""")
+    check("찾기 > 상위 종목 기본 = 표", st["rows"] > 0 and st["cardsHidden"], str(st))
+    boot(page, f"{base}?tab=today")
+    st = page.evaluate("""() => ({ cards: document.querySelectorAll('#indexStrip .home-idx-card').length,
+      chart: document.querySelector('#homeIndexChart svg')?.getBoundingClientRect().width || 0 })""")
+    check("오늘 > 지수 캐러셀 + 큰 차트", st["cards"] >= 2 and st["chart"] > 300, str(st))
+    page.close()
+
+
 def test_dialogs(browser, base: str) -> None:
     page = browser.new_page(viewport={"width": 1100, "height": 800})
     watch(page)
@@ -632,7 +665,7 @@ def main() -> int:
         with sync_playwright() as p:
             browser = p.chromium.launch()
             tests = (test_deeplinks, test_stock_views, test_dialogs, test_trust_center,
-                     test_worker_no_client_id_leak, test_kr_market,
+                     test_worker_no_client_id_leak, test_kr_market, test_stage3_layout,
                      test_tab_a11y, test_ticker_deeplink_seo, test_mobile)
             if args.only:
                 tests = tuple(fn for fn in tests if fn.__name__ in args.only.split(","))

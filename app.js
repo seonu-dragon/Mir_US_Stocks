@@ -856,7 +856,7 @@ function applyMarketOnlyUi() {
   const sigIntro = byId("signalsIntro");
   if (sigIntro) {
     sigIntro.textContent = krMode
-      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다. KRX 시장경보·거래정지·관리종목은 아래 '시장경보·이상 종목' 에 있습니다."
+      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다. KRX 시장경보·거래정지·관리종목은 '시장경보·이상 종목' 항목에 있습니다."
       : "내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.";
   }
   // 집계 인사이트(의회·내부자 종합)는 미국 전용 데이터 → KR에서는 빈 섹션이 되므로 숨긴다.
@@ -1793,7 +1793,12 @@ function renderIndexStrip(indices) {
   const el = byId("indexStrip");
   if (!el) return;
   const full = byId("indexStripFull");
-  if (!indices || !indices.length) { el.innerHTML = ""; if (full) full.innerHTML = ""; return; }
+  if (!indices || !indices.length) {
+    if (full) full.innerHTML = "";
+    if (typeof renderHomeIndexCarousel === "function") renderHomeIndexCarousel(el, []);
+    else el.innerHTML = "";
+    return;
+  }
   // In KR mode, lead with KOSPI/KOSDAQ; the worker's index list is US-first.
   if (isKrMarket()) {
     const krOrder = ["^KS11", "^KQ11"];
@@ -1803,7 +1808,9 @@ function renderIndexStrip(indices) {
     });
   }
   if (full) renderIndexStripInto(full, indices);
-  renderIndexStripInto(el, pickTodayIndices(indices));
+  // 오늘 탭은 전체 지수를 가로 캐러셀로(home-dash.js) — 카드를 고르면 아래 큰 차트가 바뀐다.
+  if (typeof renderHomeIndexCarousel === "function") renderHomeIndexCarousel(el, indices);
+  else renderIndexStripInto(el, pickTodayIndices(indices));
 }
 
 function renderIndexStripInto(el, indices) {
@@ -3179,6 +3186,8 @@ const LIST_LIMITS = [
   { host: "dividendTable", item: "tbody > tr", limit: 50, step: 100 },
   { host: "krDartTable", item: "tbody > tr", limit: 50, step: 100 },
   { host: "scannerCards", item: ":scope > *", limit: 12, step: 12 },
+  // 찾기 › 상위 종목 표(find-table.js) — 개수를 96 으로 늘려도 처음엔 50행만.
+  { host: "topStocksTableWrap", item: ":scope > table > tbody > tr", limit: 50, step: 50 },
   { host: "calendarBody", item: ".cal-day", limit: 4, step: 4 },
   { host: "insiderCluster", item: ".cluster-grid > .cluster-card", limit: 6, step: 6, mobileOnly: true },
   // stockTreemapList 는 treemap.js 가 렌더 측에서 40개만 만들고 '더 보기' 를 붙인다(중복 제거).
@@ -3551,6 +3560,7 @@ function renderAll() {
   renderTodayRegime();
   if (typeof renderIndustryHomeCard === "function") renderIndustryHomeCard();
   if (typeof renderMoversBoard === "function") renderMoversBoard();
+  if (typeof renderHomeDash === "function") renderHomeDash();
   renderTodayNews();
   renderMyInvestSummary();
 }
@@ -4334,6 +4344,8 @@ function renderTopStocks() {
     minMarketCap ? (isKrMarket() ? `시총 >= ${marketCfg().formatMarketCap(minMarketCap)}` : `시총 >= $${minMarketCap}B`) : ""
   ].filter(Boolean).join(" · ");
   byId("topStocksMeta").textContent = `${filterText} · ${rows.length}개`;
+  // 표 보기(find-table.js) — 같은 결과를 표로. 카드와 표 중 무엇을 보일지도 거기서 정한다.
+  if (typeof renderFindTable === "function") renderFindTable(rows, metric);
 
   if (!rows.length) {
     byId("topStocks").innerHTML = `<article class="rank-card"><h3>조건에 맞는 종목이 없습니다.</h3><p class="muted">필터를 완화해보세요.</p></article>`;
@@ -7841,7 +7853,7 @@ function setupOpenLinks() {
       scrollToTabContent();
       return;
     }
-    if (what === "health" || what === "signals" || what === "map" || what === "sector") {
+    if (what === "health" || what === "signals" || what === "map" || what === "sector" || what === "krflow" || what === "ai-briefing") {
       activateTab(what);
       scrollToTabContent();
     }

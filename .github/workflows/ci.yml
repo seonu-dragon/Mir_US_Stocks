@@ -159,6 +159,10 @@ jobs:
       - name: Portfolio risk tests
         run: node scripts/tests/test_portfolio_risk_core.mjs
 
+      # 찾기 › 상위 종목 표의 열 설정(find-table-core.js): 시장별 열·저장값 정리·켜기/끄기·순서.
+      - name: Find table core tests
+        run: node scripts/tests/test_find_table_core.mjs
+
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)
         run: |

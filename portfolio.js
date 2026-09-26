@@ -1065,8 +1065,9 @@ function renderPortfolioXray() {
   if (!host) return;
   const rows = portfolioDetailRows().filter((r) => r.value > 0);
   if (rows.length < 2) {
-    if (card) card.style.display = "none";
-    host.innerHTML = "";
+    // 도구 목차(toc-layout.js)에서 이 도구를 고르면 본문이 통째로 비어 보이므로 카드는 두고 안내만 한 줄.
+    if (card) card.style.display = "";
+    host.innerHTML = `<p class="muted">보유 종목을 2개 이상 추가하면 비중으로 가중한 팩터 노출과 집중도를 계산합니다.</p>`;
     return;
   }
   if (card) card.style.display = "";

@@ -99,6 +99,10 @@ jobs:
       # PER·PBR 밴드 순수 계산(valuation-band-core.js): 분위·백분위·적자 끊김·샤드 해시(PY 와 동일).
       - name: Valuation band tests
         run: node scripts/tests/test_valuation_band_core.mjs
+
+      # 국내 수급·증시자금 순수 계산(kr-flow-core.js): 샤드 해시(PY 와 동일)·부호 포맷·막대/누적 기하.
+      - name: KR flow core tests
+        run: node scripts/tests/test_kr_flow_core.mjs
       # 수식 스크리너 파서·평가기(formula-core.js): 연산자 우선순위·괄호·결측(3값 논리)·0 나누기·
       # 그룹 집계(sectorMedian/sectorPct/rank)·오류 메시지·eval 미사용·공유 토큰 왕복.
       - name: Formula screener tests

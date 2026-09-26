@@ -98,6 +98,7 @@ function krFlowCard(item) {
       <p class="krflow-note">누가 샀는지를 보여줄 뿐, 다음날 주가와는 무관합니다
          — 외국인·기관 순매수 상위 10%와 하위 10%의 다음날 수익률은 무작위와 구분되지
          않았습니다(60거래일 검정).</p>
+      ${typeof krFlowDailyToggle === "function" ? krFlowDailyToggle(item) : ""}
     </div>`;
 }
 

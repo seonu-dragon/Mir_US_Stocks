@@ -38,6 +38,14 @@ validate_kr_flow.py 로 재봤다. 매일 종목을 수급으로 줄 세워 상�
 
 순매수는 '수량' 이라 종목 간 비교가 안 된다(삼성전자 100만주 ≠ 소형주 100만주).
 거래량 대비 비율(frnPct)을 함께 낸다.
+
+## 일별 행(daily) — 종목별 샤드
+
+같은 응답의 20거래일 일별 행(날짜·종가·전일대비·개인·외국인·기관 수량·외국인 보유율)을
+버리지 않고 data/korea/investor_flow_daily/sNN.json(32개, 키 "daily")에 남긴다. 새 호출은
+없다. 2,600종목 × 20행이라 약 2.5MB — 부팅 프리로드(investor_flow.js)에 얹지 않고 종목
+분석의 '일별 보기' 를 열 때 그 종목의 샤드 하나만 받는다. build_kr_market_funds.py 가 이
+행으로 외국인·기관 순매수 금액 상위(수량 × 종가, 추정)를 계산한다.
 """
 
 from __future__ import annotations
@@ -68,6 +76,8 @@ KST = ZoneInfo("Asia/Seoul")
 KR_SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 OUT_JSON = ROOT / "data" / "korea" / "investor_flow.json"
 OUT_JS = ROOT / "data" / "korea" / "investor_flow.js"
+DAILY_DIR = ROOT / "data" / "korea" / "investor_flow_daily"
+DAILY_SHARDS = 32
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json",
@@ -122,6 +132,64 @@ def qnum(v):
         return None
 
 
+def shard_of(code: str, n: int = DAILY_SHARDS) -> int:
+    """티커 → 샤드 번호. kr-flow-core.js 의 shardOf 와 1:1 같아야 한다(valuation band 와 같은 해시)."""
+    h = 0
+    for ch in str(code):
+        h = (h * 31 + ord(ch)) % 1000003
+    return h % n
+
+
+def signed_change(r: dict):
+    """전일대비 — 문자열에 부호가 있으면 그대로, 없으면 등락 코드(1·2 상승 / 4·5 하락 / 3 보합)로."""
+    v = qnum(r.get("compareToPreviousClosePrice"))
+    if v is None:
+        return None
+    raw = str(r.get("compareToPreviousClosePrice") or "").strip()
+    if raw.startswith("-") or raw.startswith("+"):
+        return v if raw.startswith("+") else -abs(v)
+    code = str((r.get("compareToPreviousPrice") or {}).get("code") or "")
+    if code in ("4", "5"):
+        return -abs(v)
+    if code == "3":
+        return 0.0
+    return abs(v)
+
+
+def daily_row(r: dict) -> list | None:
+    """/trend 한 행 → [YYYYMMDD, 종가, 전일대비, 개인, 외국인, 기관, 외국인 보유율]. 날짜 없으면 None."""
+    d = r.get("bizdate")
+    if not d:
+        return None
+    def whole(v):
+        return None if v is None else int(round(v))
+    return [
+        str(d),
+        whole(qnum(r.get("closePrice"))),
+        whole(signed_change(r)),
+        whole(qnum(r.get("individualPureBuyQuant"))),
+        whole(qnum(r.get("foreignerPureBuyQuant"))),
+        whole(qnum(r.get("organPureBuyQuant"))),
+        qnum(r.get("foreignerHoldRatio")),
+    ]
+
+
+def write_daily_shards(daily: dict[str, list], stamp: str) -> list[str]:
+    """종목별 일별 행을 샤드로 쓴다. 반환: 레포 기준 상대 경로 목록."""
+    shards: list[dict] = [{} for _ in range(DAILY_SHARDS)]
+    for t, rows in daily.items():
+        shards[shard_of(t)][t] = rows
+    as_of = max((rows[0][0] for rows in daily.values() if rows), default=None)
+    paths = []
+    for i, book in enumerate(shards):
+        f = DAILY_DIR / f"s{i:02d}.json"
+        text = json.dumps({"updatedAtKst": stamp, "asOf": as_of, "daily": book},
+                          ensure_ascii=False, separators=(",", ":"))
+        atomic_write_text(f, text)
+        paths.append(f.relative_to(ROOT).as_posix())
+    return paths
+
+
 def summarize(rows: list[dict]) -> dict:
     """최근 5일·20일 순매수 합계와 거래량 대비 비율."""
     def total(key, n):
@@ -166,6 +234,7 @@ def main() -> int:
           f"약 {len(stocks)*MIN_INTERVAL/60:.0f}분")
 
     out: dict[str, dict] = {}
+    daily: dict[str, list] = {}
     t0 = time.time()
     for i, s in enumerate(stocks, 1):
         t = str(s["ticker"]).zfill(6)
@@ -174,7 +243,11 @@ def main() -> int:
         # 수급 이력은 /trend 에만 있다. /integration 의 dealTrendInfos 는 5일치뿐이다.
         trend = fetch(f"https://m.stock.naver.com/api/stock/{t}/trend?pageSize={FLOW_DAYS}&page=1")
         rows = []
+        drows = []
         for r in trend or []:
+            dr = daily_row(r)
+            if dr:
+                drows.append(dr)
             rows.append({
                 "d": r.get("bizdate"),
                 "frn": qnum(r.get("foreignerPureBuyQuant")),
@@ -187,17 +260,24 @@ def main() -> int:
 
         if rec:
             out[t] = rec
+        if drows:
+            daily[t] = drows
 
     if not out:
         print("[수급] 수집 0건 — 기존 파일을 덮어쓰지 않는다.")
         return 1
 
+    stamp = now_kst()
+    daily_paths = write_daily_shards(daily, stamp) if daily else []
     payload = {
-        "updatedAtKst": now_kst(),
+        "updatedAtKst": stamp,
         "source": "네이버 금융 (수급 20거래일)",
         "note": "수급은 다음날 수익률과 무관하다(외국인 t=+1.39 · 기관 t=-0.99). "
                 "사실 표시용이지 신호가 아니다.",
         "count": len(out),
+        # 일별 행 샤드 수(0 이면 화면이 '일별 보기' 를 만들지 않는다 — 없는 파일을 요청하지 않게).
+        "dailyShards": DAILY_SHARDS if daily_paths else 0,
+        "dailyAsOf": max((rows[0][0] for rows in daily.values() if rows), default=None),
         "stocks": out,
     }
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
@@ -209,7 +289,7 @@ def main() -> int:
         import sec_client as sec
         with repository_publish_lock(ROOT):
             if not sec.git_publish(
-                ["data/korea/investor_flow.json", "data/korea/investor_flow.js"],
+                ["data/korea/investor_flow.json", "data/korea/investor_flow.js", *daily_paths],
                 "KR investor flow",
             ):
                 return 1

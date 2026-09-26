@@ -2076,12 +2076,12 @@ function renderCalendar(events) {
 // 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
 const TAB_GROUP_OF = {
   today: "today", calendar: "today", "ai-briefing": "today",
-  map: "market", sector: "market", health: "market", signals: "market", industry: "market",
+  map: "market", sector: "market", health: "market", signals: "market", industry: "market", krflow: "market",
   search: "search", bulk: "bulk", community: "community",
 };
 const GROUP_LEAVES = {
   today: ["today", "ai-briefing", "calendar"],
-  market: ["map", "sector", "health", "signals", "industry"],
+  market: ["map", "sector", "health", "signals", "industry", "krflow"],
 };
 // 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
 const lastGroupLeaf = { today: "today", market: "map" };
@@ -3514,6 +3514,8 @@ const tabRendered = {};
 const TAB_RENDERERS = {
   sector: () => renderSectors(),
   industry: () => renderIndustry(),
+  // 국내 수급·자금(kr-flow-panels.js) — 데이터를 스스로 lazy 로드한다.
+  krflow: () => { if (typeof renderKrFlowMarket === "function") renderKrFlowMarket(); },
   bulk: () => { renderBulk(); renderMyInvestSummary(); },
   health: () => renderHealth(),
   "ai-briefing": () => renderAiBriefing(),
@@ -6378,6 +6380,7 @@ const TRUST_RECOVERY = {
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
+  "증시자금·투자자 동향": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_market_funds.py" }, tabs: "시장 탭 · 수급·자금" },
   "PER·PBR 밴드": {
     us: { workflow: "Weekly earnings history refresh", script: "scripts/build_us_valuation_band.py" },
     kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" },
@@ -6711,6 +6714,19 @@ function dataTrustSources() {
     rows.push(source("수출 모멘텀", "관세청 (data.go.kr)", window.KR_TRADE_EXPORTS, ["items"], 192, "매일 15:42 · 월 단위 데이터", "tradeExports"));
     // 시장경보·이상 종목 보드. 페이로드 count(섹션 합계)로 센다 — 0건이면 소스 이상.
     if (cfg.features?.krMarketAlerts === true) rows.push(source("시장경보·이상 종목", "KRX KIND · 네이버 금융 · 스냅샷 일봉", window.KR_MARKET_ALERTS, ["sections"], 120, "매일 15:42", "krMarketAlerts"));
+    // 증시자금(금투협, 영업일 1~2일 지연)·시장 투자자별·순매수 상위. 0건은 이상(allowEmpty 아님).
+    if (cfg.features?.krFunds === true) {
+      const kf = window.KR_MARKET_FUNDS;
+      const row = source("증시자금·투자자 동향", "금융투자협회 freesis · 네이버 금융", kf, ["count"], 120, "매일 15:42 · 증시자금은 영업일 1~2일 지연", "krFunds");
+      if (kf) {
+        row.extra = [
+          ["증시자금 기준일", kf.funds?.asOf || "—"],
+          ["투자자별 기준일", kf.investors?.asOf || "—"],
+          ["ECOS 월말 대조", kf.check ? `${kf.check.month} 예탁금 차이 ${kf.check.depDiffPct}%${kf.check.creditDiffPct != null ? ` · 신용융자 ${kf.check.creditDiffPct}%` : ""}` : "대조 자료 없음"],
+        ];
+      }
+      rows.push(row);
+    }
     // PER·PBR 밴드(2026-09-26) — 주간 점검, 새 달이 끝났을 때만 시계열이 늘어난다. 검증 결론도 함께 적는다.
     if (cfg.features?.valuationBand === true) {
       const vbMeta = window.KR_VALUATION_BAND_META;

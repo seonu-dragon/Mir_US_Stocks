@@ -89,6 +89,14 @@ jobs:
         continue-on-error: true
         run: python scripts/build_kr_investor_flow.py --push
 
+      # 증시자금(금투협 freesis 2콜)·코스피/코스닥 투자자별 순매수(네이버 2~4콜)·외국인/기관
+      # 순매수 상위(위 스텝이 남긴 종목별 일별 샤드를 읽음 — 새 호출 없음). 그래서 수급 스텝 뒤.
+      # 실패해도 기존 파일 유지(빌더가 exit 1) — 6일 넘게 얼면 아래 신선도 게이트가 잡는다.
+      - name: Build KR market funds
+        continue-on-error: true
+        timeout-minutes: 15
+        run: python scripts/build_kr_market_funds.py --push
+
       - name: Run Korea close briefing
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

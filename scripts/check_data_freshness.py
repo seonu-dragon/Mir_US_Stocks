@@ -22,6 +22,7 @@
     py scripts/check_data_freshness.py --group earnings-releases  # material-events.yml 말미
     py scripts/check_data_freshness.py --group kr-valuation-band  # kr-valuation-band.yml 말미
     py scripts/check_data_freshness.py --group financials         # weekly-earnings-history.yml financials 잡
+    py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -196,6 +197,11 @@ CHECKS = {
     # 12일이면 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료 시 전량 실패).
     "kr-valuation-band": [
         ("data/korea/valuation_band/meta.json", 12, True),
+    ],
+    # crisis-history.yml(매월 1일). 과거 구간이라 내용은 고정이지만 실행마다 updatedAtKst 와
+    # 대리 지수 최근 3년(β 추정용)을 새로 쓴다 — 40일이면 한 번 실패, 0건(count)도 잡는다.
+    "crisis-history": [
+        ("data/crisis_history.json", 40, True),
     ],
 }
 

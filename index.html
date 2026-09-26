@@ -406,11 +406,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=4728e8d9a7" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=4728e8d9a7"></noscript>
+    <link rel="preload" href="styles.css?v=8e767eadb5" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=8e767eadb5"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=82766e3a42"></script>
+    <script src="build_id.js?v=78da7b5050"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -794,6 +794,7 @@ html[data-market="kr"][data-theme="dark"] {
           <button class="sub-tab is-active" data-sub="map">트리맵</button>
           <button class="sub-tab" data-sub="sector">섹터 흐름</button>
           <button class="sub-tab" data-sub="health" data-advanced="true">시장 폭</button>
+          <button class="sub-tab" data-sub="marketindex">시장지표</button>
           <button class="sub-tab" data-sub="signals" data-advanced="true">시그널</button>
           <button class="sub-tab" data-sub="industry" data-advanced="true">산업 지표</button>
         </nav>
@@ -1288,6 +1289,7 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
         <!-- 산업·매크로 선행지표(industry.js) — 데이터는 탭 첫 진입 때 lazy 로드 -->
         <div class="tab-leaf" id="tab-industry"></div>
+        <div class="tab-leaf" id="tab-marketindex"></div>
       </section>
 
       <!-- ==================== 종목 탭 (분석 · 찾기 · 비교 · 공시) ==================== -->
@@ -1574,6 +1576,8 @@ html[data-market="kr"][data-theme="dark"] {
               <option value="epsTtm">EPS (TTM)</option>
               <option value="stochK">스토캐스틱 %K</option>
               <option value="volumeRatio">거래량 배율</option>
+              <option value="volume">거래량</option>
+              <option value="amount">거래대금</option>
               <option value="marketCapB">시가총액</option>
               <option value="pe">PER</option>
               <option value="forwardPE">선행 PER</option>
@@ -1685,6 +1689,8 @@ html[data-market="kr"][data-theme="dark"] {
               <option value="changePct">당일 등락률</option>
               <option value="monthChangePct">1개월</option>
               <option value="volumeRatio">거래량 배율</option>
+              <option value="volume">거래량</option>
+              <option value="amount">거래대금</option>
               <option value="marketCapB">시가총액</option>
               <option value="newHighDistancePct">고점 대비 하락폭</option>
               <option value="low52Dist">52주 저가 대비</option>
@@ -3172,7 +3178,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="analysis.js?v=e4acfb4afc"></script>
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
-    <script src="chart-indicators.js?v=7307ec505d"></script>
+    <script src="chart-indicators.js?v=c70a864990"></script>
     <script src="community.js?v=c4d7daa34a"></script>
     <script src="ai-mode.js?v=90d93109a7"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
@@ -3189,20 +3195,24 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=e7a6b005c0"></script>
+    <script src="feature-data.js?v=0f1d901fa4"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
+    <script src="quote-info-core.js?v=9c5a008760"></script>
+    <script src="quote-info.js?v=4a68651082"></script>
     <script src="treemap.js?v=79d7a5b9a2"></script>
     <script src="industry.js?v=3a0246f6c8"></script>
+    <script src="market-indicators-core.js?v=3c455ff8c0"></script>
+    <script src="market-indicators.js?v=51d4c78837"></script>
     <script src="valuation-band-core.js?v=11d961c47c"></script>
     <script src="valuation-band.js?v=a8f1f4303b"></script>
     <script src="factor-grade-core.js?v=5b2d301864"></script>
     <script src="factor-grades.js?v=0146d20671"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
-    <script src="formula-screener.js?v=780e898d05"></script>
+    <script src="formula-screener.js?v=993d550cd9"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=6c869ac754"></script>
-    <script src="signals.js?v=8d7bf55d00"></script>
+    <script src="signals.js?v=c29754fe72"></script>
     <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart.js?v=fe2b9f924b"></script>
@@ -3221,7 +3231,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=234693fd95"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
-    <script src="app.js?v=62d926f0de"></script>
+    <script src="app.js?v=79981066eb"></script>
     <script src="ai-cosmos.js?v=069b3c9089"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
   </body>

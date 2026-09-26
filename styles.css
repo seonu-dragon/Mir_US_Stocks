@@ -14573,7 +14573,6 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
   #tab-bulk .table-wrap .col-sub { display: none; }
 }
 
-/* =====================================================================
    UI 1단계 (2026-09-26) — 토큰·표·칩·탭 정돈
    원칙: "상자 대신 선과 여백, 색 대신 굵기와 회색 단계"(네이버 증권 비교 계획서 2·4·5절).
    레이아웃 재배치(종목 상세 좌측 패널·오른쪽 레일)는 2단계 이후라 여기 없다.
@@ -14761,3 +14760,80 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; }
 /* --- 10. 굵기: 본문 500 · 강조 600 · 제목·가격 700 --- */
 .index-price { font-weight: var(--fw-title); }
 .summary-card strong { font-weight: var(--fw-title); }
+=======
+/* ── 종목 시세정보·투자정보(quote-info.js) ── */
+.range52-card .qi-head, .qi-invest .qi-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: var(--space-2); }
+.qi-head h3 { margin: 0; font-size: var(--fs-body); }
+.qi-head span { color: var(--text-muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.qi-gauge { margin: 2px 0 10px; }
+.qi-gauge-top, .qi-gauge-ends { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-cap); color: var(--text-muted); }
+.qi-bar { position: relative; height: 6px; margin: 6px 0; border-radius: var(--r-pill); background: var(--surface-3); }
+.qi-marker { position: absolute; top: -4px; width: 12px; height: 12px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel); transform: translateX(-50%); box-shadow: var(--shadow-sm); }
+.qi-gauge-ends > div { display: flex; flex-direction: column; min-width: 0; }
+.qi-gauge-ends .qi-end-r { align-items: flex-end; text-align: right; }
+.qi-gauge-ends strong { color: var(--text); font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.qi-gauge-ends em { font-style: normal; font-variant-numeric: tabular-nums; }
+.qi-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; margin: 0; }
+.qi-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); min-width: 0; }
+.qi-row dt { color: var(--text-muted); font-size: var(--fs-sub); white-space: nowrap; }
+.qi-row dd { margin: 0; font-size: var(--fs-sub); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.qi-row dd.pos { color: var(--pos); }
+.qi-row dd.neg { color: var(--neg); }
+.qi-row-empty { border-bottom-color: transparent; }
+.qi-krw { display: block; margin-top: 1px; color: var(--text-muted); font-size: var(--fs-cap); font-weight: 500; }
+.qi-splits { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 8px 0 0; font-size: var(--fs-cap); color: var(--text-muted); }
+.qi-splits b { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.qi-note { margin: 6px 0 0; font-size: var(--fs-cap); color: var(--text-muted); }
+.qi-invest { padding: 12px 14px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.qi-peer { margin-top: 10px; padding: 8px 12px 2px; border-radius: var(--r-md); background: var(--surface-2); }
+.qi-peer-title { font-size: var(--fs-cap); font-weight: 600; color: var(--text); }
+.qi-peer-title span { color: var(--text-muted); font-weight: 500; }
+.qi-grid-peer .qi-row { border-bottom: 0; }
+.fund-group-note { margin: 6px 0 4px; font-size: var(--fs-cap); color: var(--text-muted); }
+/* ===== 시장지표 잎(#tab-marketindex, market-indicators.js) =====
+   상승 빨강·하락 파랑(국내 시세 관례, 기존 --red/--blue 토큰). 카드 4열 → 폰 2열. */
+.mi-up { color: var(--pos); }
+.mi-down { color: var(--neg); }
+.mi-flat { color: var(--muted); }
+.mi-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.mi-card { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }
+.mi-card-head { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+.mi-card-name { font-size: var(--fs-sub); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mi-card-date { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+.mi-card-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.25; }
+.mi-card-chg { font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.mi-card .mi-spark, .mi-card .mi-spark-empty { display: block; width: 100%; margin-top: 4px; }
+.mi-card-sub { font-size: var(--fs-cap); color: var(--muted); min-height: 16px; }
+.mi-tag { display: inline-block; margin-left: 4px; padding: 0 5px; border: 1px solid var(--line); border-radius: var(--r-xs); font-size: 11px; font-weight: 500; color: var(--muted); vertical-align: 1px; }
+.mi-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.mi-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.mi-panel { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); padding: 12px 14px; min-width: 0; }
+.mi-panel-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+.mi-panel-head h3 { margin: 0; font-size: var(--fs-body); }
+.mi-panel-head .muted { font-size: var(--fs-cap); }
+.mi-table-wrap { overflow-x: auto; }
+.mi-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: var(--fs-sub); }
+.mi-table th, .mi-table td { padding: 7px 6px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.mi-table thead th { font-size: var(--fs-cap); font-weight: 500; color: var(--muted); }
+.mi-table tbody tr:last-child th, .mi-table tbody tr:last-child td { border-bottom: 0; }
+.mi-table th { background: none; }
+.mi-table tbody th { font-weight: 600; color: var(--text); }
+.mi-table .mi-n { text-align: right; font-variant-numeric: tabular-nums; }
+.mi-table .mi-c { text-align: center; font-variant-numeric: tabular-nums; }
+.mi-table .mi-d, .mi-table .mi-u, .mi-table .mi-src { color: var(--muted); font-size: var(--fs-cap); }
+.mi-unit-inline { display: none; }
+.mi-foot { margin: 14px 0 0; font-size: var(--fs-cap); color: var(--muted); }
+@media (max-width: 900px) {
+  .mi-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .qi-grid { column-gap: 12px; }
+  .qi-invest { padding: 10px 12px; }
+  .mi-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .mi-card { padding: 10px 12px; }
+  .mi-card-val { font-size: 18px; }
+  .mi-table .mi-opt { display: none; }
+  .mi-unit-inline { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+  .mi-table th, .mi-table td { padding: 7px 4px; }
+}
+/* ==============================================================

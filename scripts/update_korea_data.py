@@ -572,6 +572,9 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             cap_trillion = (cap_raw or 0) / 1e6
         volume = _raw_number(item, "accumulatedTradingVolumeRaw", "accumulatedTradingVolume")
         amount = parse_number(str(item.get("accumulatedTradingValue") or ""))  # 백만원(옛 표와 동일)
+        # 이 시세의 체결 시각(KST). 거래정지 종목은 마지막 거래일이 남는다 → 행별 가격 기준일.
+        traded_at = str(item.get("localTradedAt") or "")
+        quote_date = traded_at[:10] if re.fullmatch(r"\d{4}-\d{2}-\d{2}", traded_at[:10]) else None
         end_type = str(item.get("stockEndType") or "").lower()
         is_etf_like = end_type in {"etf", "etn"} or is_etf_like_name(company)
         groups = {"all_etf", "all_misc"} if is_etf_like else {f"idx_{market}", "all_kr"}
@@ -585,6 +588,7 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             "quoteChangePct": change_pct if change_pct is not None else 0.0,
             "quoteVolume": volume,
             "quoteAmount": amount,
+            "quoteDate": quote_date,
             "marketCapT": cap_trillion,
             "marketCapB": cap_trillion,  # 조원 단위 (한국 모드 전용)
             "sector": sector,
@@ -665,6 +669,7 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
             "quotePrice": None,
             "quoteChangePct": None,
             "quoteVolume": None,
+            "quoteAmount": None,
             # 실측 marketSum 이 없으면 지어내지 않는다 — 카드가 '—' 를 보이면 된다.
             "marketCapT": None,
             "marketCapB": None,
@@ -710,7 +715,8 @@ def fetch_yahoo_history_kr(yahoo_symbol: str, range_: str = "5y"):
     """
     url = (
         "https://query1.finance.yahoo.com/v8/finance/chart/"
-        f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}?range={range_}&interval=1d&events=div"
+        f"{urllib.parse.quote(yahoo_quote_symbol(yahoo_symbol))}"
+        f"?range={UD.yahoo_history_range_param(range_)}&interval=1d&events=div,split"
     )
     # 일시 스로틀(429)은 짧은 지터 백오프 2회로 흡수한다 — 그래도 실패하면
     # build_one 이 직전 실측 이력(yahoo-cache)으로 폴백한다. US(update_data)와 동일 전략.
@@ -751,6 +757,7 @@ def fetch_yahoo_history_kr(yahoo_symbol: str, range_: str = "5y"):
         raise RuntimeError(f"Not enough rows for {yahoo_symbol}")
     rows = rows[-1260:]
     dividends = UD.parse_yahoo_dividends(result, first_date=rows[0]["date"])
+    UD._FRESH_SPLITS[str(yahoo_symbol)] = UD.parse_yahoo_splits(result, since=UD.split_cutoff_date())
     return rows, dividends
 
 
@@ -977,6 +984,7 @@ def load_cached_history(symbol: str):
             })
         if len(rows) < 30:
             return None
+        UD.remember_cached_splits(symbol, detail)
         return rows, UD._cached_dividends(detail)
     except Exception:
         return None
@@ -1007,6 +1015,7 @@ def build_one(meta: dict):
     symbol = meta["symbol"]
     ysym = meta["yahooSymbol"]
     error = None
+    mode = None
     try:
         if meta.get("preferHistory"):
             rows, dividends, mode = UD.fetch_history_smart(
@@ -1032,6 +1041,9 @@ def build_one(meta: dict):
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
             error = f"{symbol}: {exc}"
+    splits = UD.take_splits(ysym, symbol, mode in {"full", "full-mismatch"})
+    if splits is not None:
+        meta["splits"] = splits
 
     if meta.get("preferFundamentals"):
         # Naver covers every listed Korean stock; Yahoo's .KS fundamentals are sparse
@@ -1061,6 +1073,10 @@ def build_one(meta: dict):
     stock["marketCapT"] = round(meta.get("marketCapT") or 0, 3)
     stock["marketCapB"] = stock["marketCapT"]
     stock["currency"] = "KRW"
+    # 가격 기준 거래일(KST). make_stock 에 meta["priceDate"] 로 넘기지 않는 이유: 그 경로는 US 의
+    # '기준일 봉 누락' 보정(가격을 다음 날 값으로 이어 붙임)을 켠다 — KR 이력 규칙은 그대로 둔다.
+    if meta.get("quoteDate"):
+        stock["priceDate"] = meta["quoteDate"]
     if stock.get("market") != "etf":
         stock["sector"], stock["industry"] = classify_kr_stock(
             stock.get("ticker") or "",
@@ -1114,8 +1130,16 @@ KR_ETF_THEME_DEFS = [
 ]
 
 
+_ETF_UNIVERSE_CACHE: list[dict] | None = None
+
+
 def fetch_kr_etf_universe() -> list[dict]:
-    """All listed Korean ETFs from Naver (code, name, price, daily change, cap)."""
+    """All listed Korean ETFs from Naver (code, name, price, daily change, cap, NAV, 거래대금).
+
+    한 실행에서 ETF 표시 정규화·ETF 섹션·NAV 부착이 같은 목록을 쓰므로 성공한 응답은 한 번만 받는다."""
+    global _ETF_UNIVERSE_CACHE
+    if _ETF_UNIVERSE_CACHE:
+        return _ETF_UNIVERSE_CACHE
     url = "https://finance.naver.com/api/sise/etfItemList.nhn"
     try:
         req = urllib.request.Request(url, headers={**HTTP_HEADERS, "Referer": "https://finance.naver.com/sise/etf.naver"})
@@ -1137,9 +1161,45 @@ def fetch_kr_etf_universe() -> list[dict]:
             "price": _num(e.get("nowVal")),
             "changePct": _num(e.get("changeRate")),
             "volume": _num(e.get("quant")),
+            "amountMil": _num(e.get("amonut")),        # 거래대금, 백만원(응답 키 철자 그대로)
+            "nav": _num(e.get("nav")),                  # 순자산가치(원/주)
             "capEok": _num(e.get("marketSum")) or 0,  # 억원
         })
+    if out:
+        _ETF_UNIVERSE_CACHE = out
     return out
+
+
+def etf_nav_fields(info: dict) -> dict:
+    """ETF 행에 붙일 NAV·괴리율. 괴리율 = 같은 응답의 현재가 / NAV − 1(%) — 같은 시각의 두 값."""
+    nav = info.get("nav")
+    price = info.get("price")
+    if not (isinstance(nav, (int, float)) and nav > 0):
+        return {}
+    out = {"nav": round(float(nav), 2)}
+    if isinstance(price, (int, float)) and price > 0:
+        out["navPremiumPct"] = round((float(price) / float(nav) - 1) * 100, 2)
+    return out
+
+
+def attach_kr_etf_nav(stocks: list[dict], price_date: str | None) -> int:
+    """네이버 ETF 목록의 NAV·괴리율·거래대금을 ETF 행에 붙인다(추가 호출 없음 — 캐시된 목록).
+    ETF 행 거래대금이 비어 있으면 목록의 거래대금으로 채우고, 가격 기준일이 없으면 지수 체결일로."""
+    by_code = {e["code"]: e for e in (_ETF_UNIVERSE_CACHE or [])}
+    n = 0
+    for s in stocks:
+        info = by_code.get(s.get("ticker"))
+        if not info:
+            continue
+        s.update(etf_nav_fields(info))
+        if s.get("amount") is None and isinstance(info.get("amountMil"), (int, float)) and info["amountMil"] > 0:
+            s["amount"] = int(round(info["amountMil"] * 1_000_000))
+        if s.get("volume") is None and isinstance(info.get("volume"), (int, float)) and info["volume"] > 0:
+            s["volume"] = int(info["volume"])
+        if price_date and not s.get("priceDate"):
+            s["priceDate"] = price_date
+        n += 1
+    return n
 
 
 def normalize_kr_etf_flags(stocks: list[dict]) -> int:
@@ -1245,6 +1305,7 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
         "quotePrice": info.get("price"),
         "quoteChangePct": info.get("changePct"),
         "quoteVolume": info.get("volume"),
+        "quoteAmount": info.get("amountMil"),
         "marketCapB": (info.get("capEok") or 0) / 10000.0,  # 억원 → 조원
         "preferHistory": True,
     }
@@ -1253,7 +1314,11 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
         if dividends:
             meta["dividends"] = dividends
     except Exception:
+        UD._FRESH_SPLITS.pop(ysym, None)
         return None
+    splits = UD.take_splits(ysym, code, True)
+    if splits is not None:
+        meta["splits"] = splits
     stock = UD.make_stock(meta, rows)
     backfill_change_from_history(stock, rows)  # 야후 실 히스토리 → 개장 전 0% 보정
     stock["ticker"] = code
@@ -1262,6 +1327,7 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
     stock["currency"] = "KRW"
     stock["marketCapT"] = round((info.get("capEok") or 0) / 10000.0, 3)
     stock["marketCapB"] = stock["marketCapT"]
+    stock.update(etf_nav_fields(info))
     return stock
 
 
@@ -1287,6 +1353,10 @@ def minimal_naver_etf_row(info: dict) -> dict | None:
         "marketCapT": cap_t, "marketCapB": cap_t,
         "groups": ["all_etf", "all_misc"], "bucket": "all_misc",
         "historySource": "naver",
+        **({"volume": int(info["volume"])} if isinstance(info.get("volume"), (int, float)) and info["volume"] > 0 else {}),
+        **({"amount": int(round(info["amountMil"] * 1_000_000))}
+           if isinstance(info.get("amountMil"), (int, float)) and info["amountMil"] > 0 else {}),
+        **etf_nav_fields(info),
     }
 
 
@@ -1680,6 +1750,16 @@ def build_snapshot(limit: int | None = None) -> dict:
 
     sector_charts = fetch_sector_charts()
 
+    # 지수 체결일 = ETF 행(네이버 ETF 목록엔 체결 시각이 없다)의 가격 기준일.
+    indices = build_kr_indices()
+    index_date = next(
+        (str(ix.get("tradedAt"))[:10] for ix in indices
+         if ix.get("tradedAt") and re.fullmatch(r"\d{4}-\d{2}-\d{2}", str(ix.get("tradedAt"))[:10])),
+        None,
+    )
+    nav_rows = attach_kr_etf_nav(stocks, index_date)
+    print(f"[etf] NAV·괴리율 부착 {nav_rows}종목 · 가격 기준일(지수) {index_date or '미확인'}")
+
     # 이번 실행에서 야후가 404 를 준 종목을 기록해 다음 실행의 백필 쿼터에서 뺀다.
     save_no_source_tickers(_NO_SOURCE_THIS_RUN)
 
@@ -1715,7 +1795,7 @@ def build_snapshot(limit: int | None = None) -> dict:
             "etfRelative": etf_relative,
         },
         "leveragedEtfCatalog": lev_catalog,
-        "indices": build_kr_indices(),
+        "indices": indices,
         "errors": errors[:80],
         "historyFallback": {"cached": cached_count, "fabricated": fabricated},
         # 차트(실측 일봉) 커버리지. check_data_freshness.py 가 비율로 감시한다 —

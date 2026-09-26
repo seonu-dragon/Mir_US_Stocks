@@ -1,0 +1,52 @@
+name: Market indicators
+
+# 시장지표(원자재 선물·해외 지수·지수 선물·코스피200·환율 크로스·주요국 국채 10년·기준금리).
+# 평일 하루 2회: 07:30 KST(미국장 마감 뒤) · 16:10 KST(국내장 마감 뒤).
+# 소스는 전부 무키(야후·FRED·재무성·Bundesbank·BoE·BIS·frankfurter). 한국 국고채 10년만
+# ECOS 키가 있으면 직접 받고, 없으면 data/korea/ecos_macro.json 의 값을 재사용한다.
+on:
+  schedule:
+    - cron: "30 22 * * 0-4"  # 22:30 UTC 일~목 = KST 07:30 월~금
+    - cron: "10 7 * * 1-5"   # 07:10 UTC 월~금 = KST 16:10
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  indicators:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Build market indicators
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
+        run: python scripts/build_market_indicators.py --push
+      # 일부 소스가 조용히 죽어 직전값만 이어져도 파일 갱신 시각은 오른다 — 나이는 마지막 관문.
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group market-indicators
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

@@ -991,6 +991,8 @@ function boot(options = {}) {
   }
   // 신호 성적표 딥링크(?tab=signals&sc=<신호 종류>, sc 만 있어도 시그널 탭으로).
   if (route.get("sc") != null && typeof openSignalScorecard === "function") openSignalScorecard(route.get("sc"), { push: false });
+  // 이벤트 스터디 딥링크(?tab=search&sub=eventstudy&es=<유형>[&est=<종목>]) — es 만 있어도 워크벤치로.
+  if (route.get("es") != null && typeof openEventStudy === "function") openEventStudy(route.get("es"), { ticker: route.get("est") || "", push: false });
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
@@ -2088,10 +2090,11 @@ let searchSubTab = "analysis";
 // 종목 탭 서브탭은 4개(분석·찾기·비교·공시)지만 searchSubTab 은 잎 이름(top/screener/…/13f/…)을
 // 유지한다 — 렌더 분기와 ?tab=search&sub= 딥링크가 그 이름을 쓴다. 그룹은 여기서 계산한다.
 const FIND_SUBS = ["top", "screener", "formula", "scanner", "jump", "valuation"];
-const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short"];
+const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "eventstudy"];
 const INST_SUBS = ["13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
 // 공시 세그먼트 표시 순서(자사주 … IPO, KR: DART·5%룰·임원·지배구조)
-const DISC_ORDER = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
+// eventstudy(이벤트 스터디 워크벤치)는 맨 뒤 — 공시 세그먼트 기본 잎(첫 가시 탭)을 바꾸지 않는다.
+const DISC_ORDER = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown", "eventstudy"];
 let lastFindSub = "top";
 let lastDiscSub = null;
 let discKrownKind = "major";
@@ -2124,6 +2127,7 @@ function usBuybackRows() {
 }
 function searchSubTabHidden(sub, cfg) {
   if (sub === "short") return featureOff("shortInterest", cfg);
+  if (sub === "eventstudy") return featureOff("eventStudy", cfg);
   if (!KR_DART_SUBTABS.has(sub)) return false;
   if (DUAL_MARKET_SUBTABS.has(sub) && cfg.id === "us") {
     if (sub === "buyback") return !usBuybackRows().length;
@@ -2432,6 +2436,7 @@ function activateSearchSub(name, { push = false, skipRender = false, renderOptio
   if (searchSubTab === "dividend") renderDividends();
   if (searchSubTab === "contract") renderContracts();
   if (searchSubTab === "dilution") renderDilution();
+  if (searchSubTab === "eventstudy" && typeof renderEventStudy === "function") renderEventStudy();
   if (searchSubTab === "analysis" && !skipRender) renderSearch(renderOptions || {});
   if (push) recordNav();
 }
@@ -4971,6 +4976,7 @@ function renderSearch(options = {}) {
   renderStockEvents(item);
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
+  if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
   if (typeof renderDcf === "function") renderDcf(item);
@@ -6353,6 +6359,11 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
     tabs: "내 투자 · 도구 · 스트레스 테스트 · 과거 위기 재생",
   },
+  "이벤트 스터디": {
+    us: { workflow: "Event study (weekly)", script: "scripts/build_event_study.py --market us" },
+    kr: { workflow: "Event study (weekly)", script: "scripts/build_event_study.py --market kr" },
+    tabs: "종목 탭 · 공시 · 이벤트 스터디 · 종목 분석 '과거 이벤트 반응'",
+  },
   "신호 성적표": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_signal_ledger.mjs --record us" },
     kr: { workflow: "Korea close briefing", script: "scripts/build_signal_ledger.mjs --record kr" },
@@ -6581,6 +6592,22 @@ function dataTrustSources() {
   rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
   // 산업 선행지표(2026-09-18) — 등록하지 않으면 감시 사각지대. lazy 라 신뢰도 센터가 직접 받아 본다.
   rows.push(source("산업 선행지표", "FRED · TWSE/TPEx · 한국은행 ECOS · OECD", window.INDUSTRY_INDICATORS, ["indicators"], 48, "매일 06:10", "industry"));
+  // 이벤트 스터디(2026-09-26) — 주 1회 사전 계산. lazy 라 신뢰도 센터가 직접 받아 본다. 표본 수·기간·생존편향을 함께 적는다.
+  {
+    const es = window.EVENT_STUDY_INDEX;
+    const row = source("이벤트 스터디", "SEC EDGAR · DART · 종목 일봉(Yahoo)", es, ["types"], 240, "매주 일요일", "eventStudy");
+    if (es) {
+      const ts = (es.types || []).filter((t) => t.m === cfg.id);
+      const n = ts.reduce((a, t) => a + (t.n || 0), 0);
+      const first = ts.reduce((a, t) => (t.first && (!a || t.first < a) ? t.first : a), "");
+      const last = ts.reduce((a, t) => (t.last && t.last > a ? t.last : a), "");
+      row.extra = [
+        ["표본", `${ts.filter((t) => t.n).length}개 유형 · ${n.toLocaleString()}건 · 0일 ${first || "?"} ~ ${last || "?"}`],
+        ["한계", "현재 추적 종목만(상장폐지 제외 — 생존편향) · 과거 평균이며 예측 아님"],
+      ];
+    }
+    rows.push(row);
+  }
   // 신호 라이브 성적표(2026-09-26) — 원장 해시가 어긋나면 파일이 최신이어도 '정상' 으로 두지 않는다.
   {
     const sc = window.SIGNAL_SCORECARD;

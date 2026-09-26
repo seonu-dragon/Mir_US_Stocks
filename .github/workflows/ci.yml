@@ -111,6 +111,10 @@ jobs:
         run: |
           node scripts/tests/test_signal_scorecard_core.mjs
           node scripts/build_signal_ledger.mjs --verify
+      # 이벤트 스터디 순수 집계(event-study-core.js): 기준점 재정렬·날짜 묶음 부트스트랩(신호 성적표와 같은 구간)·
+      # 날짜 동일 가중·BH-FDR·군집 경고·종목 샤드(파이썬 crc32 와 동일).
+      - name: Event study tests
+        run: node scripts/tests/test_event_study_core.mjs
       # 재무 확장 파생 지표(financials-core.js): ROIC·순차입금/EBITDA·주식수 증감·TTM 시계열(연속 분기만)·결측 전파.
       - name: Financials core tests
         run: node scripts/tests/test_financials_core.mjs

@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=72971fd1c5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=72971fd1c5"></noscript>
+    <link rel="preload" href="styles.css?v=f90493696a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=f90493696a"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=345dd85411"></script>
+    <script src="build_id.js?v=9fa59db9f4"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1439,6 +1439,8 @@ html[data-theme="dark"] {
         <section class="industry-reverse-card animate-reveal" id="industryReverse" hidden></section>
         <!-- PER·PBR 밴드(valuation-band.js renderValuationBand) — KR 전용, 월말 KRX 공식 배수 -->
         <section class="valband-card animate-reveal" id="valuationBand" hidden></section>
+        <!-- 과거 이벤트 반응(event-study.js renderStockEventStudy) — data/event_study/tk 샤드 하나만 받는다 -->
+        <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
         <!-- 업종 상대 팩터 등급(factor-grades.js renderFactorGrades) — 스냅샷·map_fundamentals 로 브라우저 계산 -->
         <section class="fgrade-card animate-reveal" id="factorGrades" hidden></section>
         <div class="analysis-balanced-grid analysis-quality-grid">
@@ -1920,6 +1922,7 @@ html[data-theme="dark"] {
 
         <div class="sub-panel" id="sub-disclosures">
           <nav class="sub-tabs ia-seg-strip" id="discSubTabs" aria-label="공시 종류">
+            <button class="sub-tab" data-disc="eventstudy" title="과거 공시·이벤트 전체의 발표 뒤 초과수익을 조건별로">이벤트 스터디</button>
             <button class="sub-tab" data-disc="buyback">자사주</button>
             <button class="sub-tab" data-disc="earnreact">실적발표</button>
             <button class="sub-tab" data-disc="dividend">배당</button>
@@ -1941,6 +1944,21 @@ html[data-theme="dark"] {
             <span>새 공시를 RSS 리더로 받아 보기 — 시장별 주요 공시·시총 상위 종목별 피드</span>
             <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="disclosures">공시 구독 (RSS)</button>
           </div>
+        <div class="sub-panel" id="sub-eventstudy">
+          <div class="section-title">
+            <h2>이벤트 스터디 — 공시 뒤 주가는 평균적으로 어떻게 움직였나</h2>
+          </div>
+          <details class="about-data">
+            <summary>이 화면은?</summary>
+            <p>과거 약 5년의 공시·이벤트(US: SEC 8-K 항목·13D·424B5·실적 발표, KR: DART 잠정실적·공급계약·자사주·증자·CB 등)마다 −5 ~ +60 거래일의 <b>초과수익</b>(시장조정 또는 시장모형)을 미리 계산해 두고, 고른 조건으로 평균·중앙값 누적 곡선과 날짜 묶음 부트스트랩 95% 구간을 그립니다. 같은 종목의 무작위 날짜를 대조군으로 함께 보여 줍니다.</p>
+          <div class="data-disclaimer">
+            <strong>연구용 정보</strong>
+            <span>과거 평균일 뿐 예측이 아니며 매매 신호가 아닙니다. 현재 추적 중인 종목만 가격 이력이 있어 상장폐지 종목은 빠집니다(생존편향). Mir 가 띄운 신호의 발행 뒤 성적은 시그널 탭 '신호 성적표'에서 따로 봅니다.</span>
+          </div>
+          </details>
+          <div id="eventStudyRoot" class="es-root"></div>
+        </div>
+
         <div class="sub-panel" id="sub-buyback">
           <div class="section-title">
             <h2>자사주 매입 · 소각 트래커</h2>
@@ -3079,7 +3097,7 @@ html[data-theme="dark"] {
     <script src="community.js?v=af8ec25e4f"></script>
     <script src="ai-mode.js?v=2642a3273b"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=674ff5989c"></script>
+    <script src="disclosure-trackers.js?v=7b5a9f25f0"></script>
     <script src="movers.js?v=4f92914563"></script>
     <script src="portfolio.js?v=4e19177b3c"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
@@ -3092,7 +3110,7 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=9ba184788d"></script>
+    <script src="feature-data.js?v=e7a6b005c0"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
     <script src="valuation-band-core.js?v=11d961c47c"></script>
@@ -3113,6 +3131,8 @@ html[data-theme="dark"] {
     <script src="kr-alerts.js?v=e5bc27d4a9"></script>
     <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
     <script src="signal-scorecard.js?v=8775538443"></script>
+    <script src="event-study-core.js?v=98c430e41a"></script>
+    <script src="event-study.js?v=95530093c5"></script>
     <script src="watchlist.js?v=830011f027"></script>
     <script src="earnings-insight.js?v=8e1bf51e44"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
@@ -3120,7 +3140,7 @@ html[data-theme="dark"] {
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=3e6f86bccd"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=20b7fa5714"></script>
+    <script src="app.js?v=c88e9e4856"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

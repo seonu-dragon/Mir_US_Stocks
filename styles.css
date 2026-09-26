@@ -13943,6 +13943,77 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .sig-score-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
+/* ===== 이벤트 스터디 워크벤치(event-study.js) — 종목 탭 › 공시 › 이벤트 스터디 + 종목 분석 카드 ===== */
+.es-root { min-width: 0; }
+.es-controls { display: flex; flex-direction: column; gap: 10px; margin: 4px 0 14px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.es-row { display: flex; gap: 10px 14px; align-items: flex-end; min-width: 0; }
+.es-row-wrap { flex-wrap: wrap; align-items: flex-start; }
+.es-field { display: flex; flex-direction: column; gap: 4px; font-size: var(--fs-cap); color: var(--text-muted); min-width: 0; }
+.es-field.grow { flex: 1 1 260px; }
+.es-field select { min-width: 0; max-width: 100%; height: var(--control-h-sm, 34px); padding: 0 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); color: var(--text); font: inherit; font-size: var(--fs-sub); }
+.es-desc { margin: 0; font-size: var(--fs-cap); line-height: 1.55; }
+.es-group { display: flex; flex-direction: column; gap: 4px; min-width: 0; max-width: 100%; }
+.es-glabel { font-size: var(--fs-cap); color: var(--text-muted); }
+.es-seg { flex-wrap: wrap; max-width: 100%; }
+.es-seg button { padding: 5px 10px; font-size: var(--fs-cap); }
+.es-chips { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 18px; min-width: 0; }
+.es-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 3px 8px; border: 1px solid var(--line); border-radius: var(--r-pill); background: var(--panel-soft); font-size: var(--fs-cap); overflow-wrap: anywhere; }
+.es-chip button { border: 0; background: none; color: var(--text-muted); cursor: pointer; padding: 0 2px; font-size: var(--fs-cap); }
+.es-sw { display: inline-block; flex: none; width: 14px; height: 3px; border-radius: 2px; background: currentColor; vertical-align: middle; }
+.es-s0 { color: var(--accent); }
+.es-s1 { color: var(--amber); }
+.es-s2 { color: var(--teal); }
+.es-s3 { color: var(--blue); }
+.es-sw-band { height: 8px; background: var(--accent); opacity: .18; }
+.es-sw-dash { background: none; border-top: 2px dashed currentColor; height: 0; }
+.es-sw-control { background: none; border-top: 2px dotted var(--text-muted); height: 0; }
+.es-result { min-width: 0; }
+.es-head { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.es-head b { font-size: var(--fs-body); }
+.es-sub { font-size: var(--fs-cap); }
+.es-chart { width: 100%; max-width: 900px; min-width: 0; margin-bottom: 8px; }
+.es-chart svg { display: block; width: 100%; height: auto; }
+.es-grid { stroke: var(--line); stroke-width: 1; }
+.es-zero { stroke: var(--text-muted); stroke-width: 1; stroke-opacity: .6; }
+.es-day0 { stroke: var(--text-muted); stroke-width: 1; stroke-dasharray: 3 3; stroke-opacity: .7; }
+.es-tick { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.es-band { fill: var(--accent); fill-opacity: .14; stroke: none; }
+.es-line { fill: none; stroke: currentColor; stroke-width: 2; stroke-linejoin: round; }
+.es-median { stroke-width: 1.3; stroke-dasharray: 5 4; }
+.es-control { stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 2 3; }
+.es-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: var(--fs-cap); color: var(--text-muted); }
+.es-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.es-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.es-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: var(--fs-cap); }
+.es-table th, .es-table td { padding: 5px 8px; border-bottom: 1px solid var(--line); text-align: left; white-space: nowrap; }
+.es-table th { color: var(--text-muted); font-weight: 600; }
+.es-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.es-table tr.es-first td { border-top: 1px solid var(--line); }
+.es-verdict { font-size: var(--fs-cap); }
+.es-v-pos { color: var(--green); }
+.es-v-neg { color: var(--red); }
+.es-v-hold, .es-v-unclear { color: var(--text-muted); }
+.es-note, .es-source { font-size: var(--fs-cap); line-height: 1.6; margin: 6px 0; overflow-wrap: anywhere; }
+.es-warn { margin: 10px 0; padding: 8px 12px 8px 26px; border-radius: var(--r-md); background: var(--tint-warn); color: var(--tint-warn-fg); font-size: var(--fs-cap); line-height: 1.6; }
+.es-warn li + li { margin-top: 4px; }
+.es-recent { margin: 10px 0; }
+.es-recent summary, .es-about summary { cursor: pointer; font-size: var(--fs-sub); }
+.es-about ul { margin: 8px 0 0; padding-left: 18px; font-size: var(--fs-cap); line-height: 1.65; color: var(--text-muted); }
+.es-about li { overflow-wrap: anywhere; }
+.es-link { display: block; width: 100%; margin: 8px 0 0; padding: 6px 0 0; border: 0; border-top: 1px dashed var(--line); background: none; color: var(--text-muted); font: inherit; font-size: var(--fs-cap); line-height: 1.5; text-align: left; cursor: pointer; }
+.es-link:hover, .es-link:focus-visible { color: var(--accent); text-decoration: underline; }
+.es-link.is-inline { display: inline; width: auto; margin: 0; padding: 0; border: 0; }
+.es-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }
+.es-card[hidden] { display: none; }
+.es-card-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 8px; }
+.es-card-head h3 { margin: 0; font-size: var(--fs-body); }
+.es-card-head span { font-size: var(--fs-cap); }
+@media (max-width: 640px) {
+  .es-row { flex-wrap: wrap; }
+  .es-field, .es-field.grow { flex: 1 1 100%; }
+  .es-chips { padding-top: 0; }
+  .es-controls { padding: 10px; }
+}
 /* 수식 스크리너(formula-screener.js) — 종목 탭 › 찾기 › 수식 */
 #sub-formula code { font-size: var(--fs-cap); overflow-wrap: anywhere; }
 .fx-help-list { margin: 6px 0 10px; padding-left: 18px; font-size: var(--fs-cap); line-height: 1.7; color: var(--text-muted); }

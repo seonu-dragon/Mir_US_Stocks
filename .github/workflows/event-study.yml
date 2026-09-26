@@ -1,0 +1,75 @@
+name: Event study (weekly)
+
+# 이벤트 스터디 워크벤치(종목 탭 › 공시 › 이벤트 스터디) 사전 계산 — scripts/build_event_study.py.
+# US: SEC submissions API 로 추적 종목 시총 상위 1,200개의 8-K 항목·13D·424B5 를 다시 받고(약 10분, 초당 ~8건),
+# KR: DART list.json 분기 창(최근 2분기 + 아직 안 받은 분기 최대 4개)을 받은 뒤 두 시장의 초과수익 경로를
+# 다시 계산한다(data/event_study/, 아카이브 data/event_study_archive/ 는 배포 제외).
+# 일봉(data/details·data/korea/details)은 평일 스냅샷 워크플로우가 갱신하므로 주말에 한 번 돈다.
+
+on:
+  schedule:
+    - cron: "23 3 * * 0"  # 일요일 12:23 KST
+  workflow_dispatch:
+    inputs:
+      market:
+        description: "us | kr | all"
+        default: "all"
+      kr_quarters:
+        description: "이번 실행에서 받을 DART 분기 수(최근 2분기 포함, 5년 전체 = 21)"
+        default: "6"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build event study
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+        shell: bash
+        run: |
+          python scripts/build_event_study.py \
+            --market "${{ github.event.inputs.market || 'all' }}" \
+            --kr-quarters "${{ github.event.inputs.kr_quarters || '6' }}" \
+            --push
+
+      - name: Freshness gate
+        if: ${{ !cancelled() }}
+        run: python scripts/check_data_freshness.py --group event-study
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

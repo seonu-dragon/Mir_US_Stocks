@@ -123,6 +123,18 @@
   let chartMeta = { ticker: "", name: "", range: "6M" };
   let chartPriceMin = 0;
   let chartPriceMax = 1;
+  // 가격 축 세로 스케일(chart-yscale-core.js 의 window.MirYScale). 종목 분석 차트(chart.js)와
+  // 같은 규칙: 가격 축 드래그·휠 = 세로 배율(자동 맞춤 해제), 더블클릭·A = 자동 복귀, L = 로그.
+  // 로그 선택만 localStorage 에 남기고, 수동 범위는 종목·기간이 바뀌면 자동으로 돌아간다.
+  const CHART_YLOG_LS_KEY = "mir_ai_chart_ylog";
+  let yState = { auto: true, log: storage.get(CHART_YLOG_LS_KEY) === "1", min: null, max: null };
+  let chartAutoMin = 0; // 자동 맞춤 범위(과도한 확대 방지 기준)
+  let chartAutoMax = 1;
+  let chartYBtnRects = []; // 캔버스에 그린 A/L 버튼 히트 박스 [{key,x,y,w,h}]
+  let yDragMode = "";      // "" | "yzoom"(가격 축 드래그)
+  let yPinch = null;       // 세로 핀치 {startDist, range, anchor}
+  let lastAxisTapAt = 0;
+  const YS = () => window.MirYScale;
   let morphCallback = null;
   let lastDrawTs = 0;
   let stars = [];
@@ -612,9 +624,50 @@
       lo = Math.min(lo, b.l);
       hi = Math.max(hi, b.h);
     }
-    const pad = (hi - lo) * 0.06 || 1;
-    chartPriceMin = lo - pad;
-    chartPriceMax = hi + pad;
+    // 자동 맞춤 = 보이는 봉 고가·저가 + 위아래 6% 여백(로그면 비율 공간 6%).
+    const Y = YS();
+    const auto = Y.autoRange(lo, hi, 0.06, yState.log);
+    chartAutoMin = auto.min;
+    chartAutoMax = auto.max;
+    const r = Y.resolveRange(yState, lo, hi, 0.06);
+    chartPriceMin = r.min;
+    chartPriceMax = r.max;
+  }
+
+  function currentYRange() {
+    return { min: chartPriceMin, max: chartPriceMax };
+  }
+  function setYManual(range) {
+    const Y = YS();
+    if (!range || !Y.validRange(range, yState.log)) return;
+    yState = Y.withManual(yState, range);
+    chartPriceMin = range.min;
+    chartPriceMax = range.max;
+  }
+  function setYAuto() {
+    yState = YS().withAuto(yState);
+    updateChartBounds();
+    redrawChartNow();
+    return true;
+  }
+  function toggleYLog() {
+    yState = YS().withLog(yState, !yState.log);
+    storage.set(CHART_YLOG_LS_KEY, yState.log ? "1" : "0");
+    updateChartBounds();
+    redrawChartNow();
+    return yState.log;
+  }
+  // 캔버스 좌표(CSS px) → 가격 축/버튼 판정. 차트 모드 레이아웃 기준.
+  function chartHit(clientX, clientY) {
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const layout = getChartLayout(canvas.clientWidth, canvas.clientHeight);
+    const btn = chartYBtnRects.find((b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+    const onAxis = !btn && YS().hitPriceAxis(x, y, { plotRight: layout.padL + layout.plotW, axisEnd: layout.w, top: layout.padT, height: layout.plotH });
+    const scale = YS().createScale({ min: chartPriceMin, max: chartPriceMax, log: yState.log, top: layout.padT, height: layout.plotH });
+    return { x, y, layout, btn: btn ? btn.key : "", onAxis, price: scale.value(y) };
   }
 
   // 확대/이동: chartFullBars 위의 가시 윈도우를 초기화·적용한다.
@@ -716,12 +769,34 @@
     const n = chartBars.length;
     const span = chartPriceMax - chartPriceMin || 1;
     const xAt = (i) => layout.padL + (i / Math.max(1, n - 1)) * layout.plotW;
-    const yAt = (price) => layout.padT + layout.plotH - ((price - chartPriceMin) / span) * layout.plotH;
+    // 선형·로그 공통 변환(chart-yscale-core). 로그에서 0 이하 값은 화면 아래 멀리(잘림).
+    const scale = YS().createScale({ min: chartPriceMin, max: chartPriceMax, log: yState.log, top: layout.padT, height: layout.plotH });
+    const yAt = (price) => {
+      const y = scale.y(price);
+      return Number.isFinite(y) ? y : layout.padT + layout.plotH * 4;
+    };
     const candleW = Math.max(2, Math.min(12, (layout.plotW / Math.max(1, n)) * 0.62));
-    return { n, span, xAt, yAt, candleW };
+    return { n, span, xAt, yAt, candleW, scale };
   }
 
-  function fmtPrice(v) {
+  // 수동 범위(세로 확대·이동)일 때 가격 플롯 밖으로 캔들·선이 넘치지 않게 자른다.
+  function clipPricePlot(layout, candleW) {
+    if (yState.auto) return;
+    const half = (candleW || 0) / 2 + 1;
+    ctx.beginPath();
+    ctx.rect(layout.padL - half, layout.padT, layout.plotW + half * 2, layout.plotH);
+    ctx.clip();
+  }
+
+  // 가격 축 눈금(1·2·2.5·5 배수, 로그면 10^k × 가수).
+  function priceTicks(layout) {
+    return YS().ticks(chartPriceMin, chartPriceMax, yState.log, layout.plotH >= 240 ? 6 : 4);
+  }
+
+  // step(눈금 간격)을 주면 눈금 라벨 — 간격의 배수라 소수 자리를 간격에 맞춘다(세로 확대 시
+  // 같은 라벨이 겹치지 않게). step 이 없으면 예전 가격대별 형식(현재가 태그 등).
+  function fmtPrice(v, step) {
+    if (step > 0) return v.toFixed(Math.min(4, YS().stepDecimals(step)));
     if (v >= 1000) return v.toFixed(0);
     if (v >= 100) return v.toFixed(1);
     return v.toFixed(2);
@@ -750,13 +825,16 @@
 
     ctx.strokeStyle = "rgba(148, 163, 184, 0.08)";
     ctx.lineWidth = 1;
-    for (let g = 0; g <= 5; g += 1) {
-      const y = padT + (g / 5) * plotH;
+    for (const v of priceTicks(layout).ticks) {
+      const y = yAt(v);
+      if (y < padT - 0.5 || y > padT + plotH + 0.5) continue;
       ctx.beginPath();
       ctx.moveTo(padL, y);
       ctx.lineTo(padL + plotW, y);
       ctx.stroke();
     }
+    ctx.save(); // 가격 플롯 클립(수동 범위일 때만) — 거래량 막대 전에 푼다
+    clipPricePlot(layout, candleW);
 
     // MA lines "draw in" left→right: extend only as far as the reveal front.
     function drawMaLine(values, color) {
@@ -844,6 +922,8 @@
       }
     }
     ctx.globalAlpha = alpha;
+    ctx.restore(); // 가격 플롯 클립 해제
+    ctx.globalAlpha = alpha;
 
     if (includeVolume) {
       const volTop = padT + plotH + gap;
@@ -894,14 +974,52 @@
     ctx.save();
     ctx.globalAlpha = alpha;
 
-    for (let g = 0; g <= 5; g += 1) {
-      const y = padT + (g / 5) * plotH;
-      const price = chartPriceMax - (g / 5) * span;
-      ctx.fillStyle = "rgba(148, 163, 184, 0.55)";
-      ctx.font = "10px Pretendard, system-ui, sans-serif";
-      ctx.textAlign = "right";
-      ctx.fillText(fmtPrice(price), w - 8, y + 3);
+    const pt = priceTicks(layout);
+    const { yAt } = layoutHelpers(layout);
+    ctx.fillStyle = "rgba(148, 163, 184, 0.55)";
+    ctx.font = "10px Pretendard, system-ui, sans-serif";
+    ctx.textAlign = "right";
+    for (const price of pt.ticks) {
+      const y = yAt(price);
+      if (y < padT - 0.5 || y > padT + plotH + 0.5) continue;
+      ctx.fillText(fmtPrice(price, pt.step), w - 8, y + 3);
     }
+    // 현재가 태그(가격 축 위, 새 스케일 좌표). 범위 밖이면 생략.
+    const lastY = yAt(last.c);
+    const axisX = padL + plotW;
+    if (lastY >= padT - 1 && lastY <= padT + plotH + 1) {
+      const prev = n > 1 ? chartBars[n - 2].c : last.o;
+      ctx.fillStyle = last.c >= prev ? "#16a34a" : "#dc2626";
+      const tagW = Math.max(30, w - axisX - 4);
+      if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(axisX + 2, lastY - 8, tagW, 16, 3); ctx.fill(); }
+      else ctx.fillRect(axisX + 2, lastY - 8, tagW, 16);
+      ctx.fillStyle = "#fff";
+      ctx.font = "700 10px Pretendard, system-ui, sans-serif";
+      ctx.fillText(fmtPrice(last.c), w - 6, lastY + 3.5);
+    }
+    // A(자동 맞춤)·L(로그) 토글 — 가격 축 칸, 가격 플롯 바로 아래(거래량 옆 빈 칸).
+    const bw = 22;
+    const bh = 16;
+    const by = padT + plotH + layout.gap + 2;
+    const bx0 = w - 6 - bw * 2 - 4;
+    chartYBtnRects = [
+      { key: "auto", x: bx0, y: by, w: bw, h: bh, on: yState.auto, label: "A" },
+      { key: "log", x: bx0 + bw + 4, y: by, w: bw, h: bh, on: yState.log, label: "L" },
+    ];
+    ctx.font = "700 10px Pretendard, system-ui, sans-serif";
+    ctx.textAlign = "center";
+    for (const b of chartYBtnRects) {
+      ctx.fillStyle = b.on ? "#1d4ed8" : "rgba(15, 23, 42, 0.9)";
+      ctx.strokeStyle = b.on ? "#1d4ed8" : "rgba(148, 163, 184, 0.4)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(b.x, b.y, b.w, b.h, 4); else ctx.rect(b.x, b.y, b.w, b.h);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = b.on ? "#fff" : "#94a3b8";
+      ctx.fillText(b.label, b.x + b.w / 2, b.y + 11.5);
+    }
+    ctx.textAlign = "right";
 
     const tickCount = Math.min(6, n);
     for (let t = 0; t < tickCount; t += 1) {
@@ -988,9 +1106,11 @@
       if (vi < 0 || vi >= n) return null;
       return { x: xAt(vi), y: yAt(price) };
     };
-    const clampY = (price) => yAt(Math.max(chartPriceMin, Math.min(chartPriceMax, price)));
+    // 자동 맞춤이면 예전처럼 화면 범위로 클램프, 수동이면 클램프 대신 플롯 클립으로 자른다.
+    const clampY = (price) => yAt(yState.auto ? Math.max(chartPriceMin, Math.min(chartPriceMax, price)) : price);
     ctx.save();
     ctx.globalAlpha = alpha;
+    clipPricePlot(layout, 0);
 
     // 지지/저항: 밴드(hi~lo) + 가격선, 지지=초록·저항=빨강 (분석 탭과 동일)
     (chartOverlays.sr || []).forEach((lvl) => {
@@ -1854,17 +1974,36 @@
   function onPointerDown(e) {
     if (!running || e.button !== 0) return;
     // 차트 모드: 한 손가락 드래그 = 시간축 이동(팬), 두 손가락 = 핀치 줌(09-05 모바일).
+    // 가격 축 드래그 = 세로 배율, A/L 버튼 = 자동 맞춤·로그, 세로로 벌린 두 손가락 = 세로 핀치.
     if (renderMode === "chart") {
+      const hit = chartHit(e.clientX, e.clientY);
+      if (hit && hit.btn && activePointers.size === 0) {
+        if (hit.btn === "auto") setYAuto(); else toggleYLog();
+        e.preventDefault();
+        return;
+      }
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       canvas.setPointerCapture?.(e.pointerId);
       if (activePointers.size >= 2) {
         isDragging = false;
-        pinchStartDist = pointerDistance();
-        chartPinchStartCount = chartViewCount || chartBars.length;
+        yDragMode = "";
+        const pts = [...activePointers.values()];
+        const dxAbs = Math.abs(pts[0].x - pts[1].x);
+        const dyAbs = Math.abs(pts[0].y - pts[1].y);
+        const mid = chartHit((pts[0].x + pts[1].x) / 2, (pts[0].y + pts[1].y) / 2);
+        if (mid && dyAbs > 8 && (mid.onAxis || dyAbs > dxAbs * 1.5)) {
+          yPinch = { startDist: dyAbs, range: currentYRange(), anchor: mid.price };
+          pinchStartDist = 0;
+        } else {
+          yPinch = null;
+          pinchStartDist = pointerDistance();
+          chartPinchStartCount = chartViewCount || chartBars.length;
+        }
         canvas.classList.add("is-dragging");
         e.preventDefault();
         return;
       }
+      yDragMode = hit && hit.onAxis ? "yzoom" : "";
       isDragging = true;
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
@@ -1911,6 +2050,19 @@
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
 
+    if (renderMode === "chart" && activePointers.size >= 2 && yPinch) {
+      const pts = [...activePointers.values()];
+      const dyAbs = Math.max(1, Math.abs(pts[0].y - pts[1].y));
+      const Y = YS();
+      const f = Y.pinchZoomFactor(yPinch.startDist, dyAbs);
+      if (Math.abs(f - 1) > 0.005) {
+        setYManual(Y.zoomRange(yPinch.range, f, yPinch.anchor, yState.log, { min: chartAutoMin, max: chartAutoMax }));
+        redrawChartNow();
+      }
+      e.preventDefault();
+      return;
+    }
+
     if (activePointers.size >= 2 && pinchStartDist > 0) {
       const dist = pointerDistance();
       if (renderMode === "chart") {
@@ -1948,11 +2100,34 @@
     }
 
     if (isDragging && renderMode === "chart") {
-      chartPan(dx, canvas?.clientWidth || window.innerWidth);
+      const Y = YS();
+      const plotH = getChartLayout(canvas.clientWidth, canvas.clientHeight).plotH;
+      if (yDragMode === "yzoom") {
+        // 가격 축 드래그: 위로 끌면 늘리고 아래로 끌면 압축(가시 범위 가운데 고정).
+        if (dy !== 0) {
+          const r = currentYRange();
+          const mid = Y.fromT((Y.toT(r.min, yState.log) + Y.toT(r.max, yState.log)) / 2, yState.log);
+          setYManual(Y.zoomRange(r, Y.dragZoomFactor(dy, plotH), mid, yState.log, { min: chartAutoMin, max: chartAutoMax }));
+          redrawChartNow();
+        }
+        lastPointerX = e.clientX;
+        lastPointerY = e.clientY;
+        e.preventDefault();
+        return;
+      }
+      // 자동 맞춤이 꺼져 있으면 세로로도 이동(켜져 있으면 가로만 — 예전 동작).
+      if (!yState.auto && dy !== 0) setYManual(Y.panRange(currentYRange(), dy, plotH, yState.log));
+      if (dx !== 0) chartPan(dx, canvas?.clientWidth || window.innerWidth);
+      else if (!yState.auto && dy !== 0) redrawChartNow();
       lastPointerX = e.clientX;
       lastPointerY = e.clientY;
       e.preventDefault();
       return;
+    }
+    if (renderMode === "chart" && canvas) {
+      // 호버 커서: 가격 축 = ns-resize, A/L = pointer, 본문 = grab
+      const hit = chartHit(e.clientX, e.clientY);
+      canvas.style.cursor = hit && hit.btn ? "pointer" : hit && hit.onAxis ? "ns-resize" : "";
     }
 
     if (isDragging && renderMode === "landscape") {
@@ -1967,11 +2142,19 @@
   }
 
   function onPointerUp(e) {
+    const wasPointer = activePointers.has(e.pointerId);
     activePointers.delete(e.pointerId);
     if (activePointers.size < 2) {
       pinchStartDist = 0;
       chartPinchStartCount = 0;
+      yPinch = null;
     }
+    // 가격 축 더블탭(터치) → 세로 자동 맞춤(마우스는 dblclick).
+    if (renderMode === "chart" && wasPointer && yDragMode === "yzoom" && e.type === "pointerup" && e.pointerType === "touch") {
+      const now = e.timeStamp || Date.now();
+      if (now - lastAxisTapAt < 350) { lastAxisTapAt = 0; setYAuto(); } else lastAxisTapAt = now;
+    }
+    if (activePointers.size === 0) yDragMode = "";
     // 차트 모드에서 핀치 중 한 손가락만 떼면 남은 손가락으로 바로 팬을 잇는다.
     if (renderMode === "chart" && activePointers.size === 1) {
       const rest = [...activePointers.values()][0];
@@ -1994,10 +2177,28 @@
   function onWheel(e) {
     if (renderMode !== "chart" || chartFullBars.length < MIN_CHART_BARS) return;
     e.preventDefault();
+    // 가격 축 위 휠 = 세로 줌(커서 가격 고정). 본문 휠은 예전처럼 가로 줌.
+    const hit = chartHit(e.clientX, e.clientY);
+    if (hit && hit.onAxis) {
+      const Y = YS();
+      setYManual(Y.zoomRange(currentYRange(), Y.wheelZoomFactor(e.deltaY), hit.price, yState.log, { min: chartAutoMin, max: chartAutoMax }));
+      redrawChartNow();
+      return;
+    }
     const rect = canvas.getBoundingClientRect();
     const anchorFrac = clamp((e.clientX - rect.left) / (rect.width || 1), 0, 1);
     // 아래로 스크롤 → 축소(더 넓게), 위로 → 확대(더 좁게)
     chartZoom(e.deltaY > 0 ? 1.18 : 0.85, anchorFrac);
+  }
+
+  // 가격 축 더블클릭 → 세로 자동 맞춤.
+  function onDblClick(e) {
+    if (renderMode !== "chart") return;
+    const hit = chartHit(e.clientX, e.clientY);
+    if (hit && hit.onAxis) {
+      e.preventDefault();
+      setYAuto();
+    }
   }
 
   function bindPointer() {
@@ -2008,6 +2209,7 @@
     canvas.addEventListener("pointerup", onPointerUp);
     canvas.addEventListener("pointercancel", onPointerUp);
     canvas.addEventListener("wheel", onWheel, opts);
+    canvas.addEventListener("dblclick", onDblClick);
   }
 
   function unbindPointer() {
@@ -2017,6 +2219,7 @@
     canvas.removeEventListener("pointerup", onPointerUp);
     canvas.removeEventListener("pointercancel", onPointerUp);
     canvas.removeEventListener("wheel", onWheel); // bindPointer 가 달아 둔 짝(예전엔 안 떼서 중복 바인딩)
+    canvas.removeEventListener("dblclick", onDblClick);
     canvas.classList.remove("is-dragging");
     isDragging = false;
     isZoomDrag = false;
@@ -2092,6 +2295,7 @@
         : { sr: [], trendlines: [], patterns: fullPats, totalBars: bars.length };
     }
     chartBars = sliceBarsByRange(bars, payload.range || "6M");
+    yState = YS().withAuto(yState); // 새 종목은 세로 자동 맞춤으로 시작
     resetChartWindow();
     chartMeta = {
       ticker: String(payload.ticker || "").toUpperCase(),
@@ -2146,6 +2350,7 @@
     if (!chartFullBars.length || renderMode === "landscape") return false;
     chartBars = sliceBarsByRange(chartFullBars, range || "6M");
     if (!chartBars.length) return false;
+    yState = YS().withAuto(yState); // 기간을 바꾸면 세로 자동 맞춤으로 복귀
     resetChartWindow();
     chartMeta.range = range || "6M";
     updateChartBounds();
@@ -2256,6 +2461,10 @@
     setChartRange,
     setChartStyle,
     getChartStyle: () => chartStyle,
+    // 가격 축 세로 스케일(A=자동 맞춤, L=로그). 검증·디버그용 getYScale 포함.
+    setYAuto,
+    toggleYLog,
+    getYScale: () => ({ auto: yState.auto, log: yState.log, min: chartPriceMin, max: chartPriceMax, autoMin: chartAutoMin, autoMax: chartAutoMax }),
     resetToLandscape,
     relayout,
     getMode: () => renderMode,

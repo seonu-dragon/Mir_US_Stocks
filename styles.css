@@ -1691,6 +1691,63 @@ button.ghost {
   fill: var(--neg);
 }
 
+/* 가격 축 세로 스케일(chart.js · chart-yscale-core.js): 축 드래그 히트 영역, A/L 모서리 토글,
+   현재가 태그. 차트 배경은 테마와 무관하게 어둡다(--chart-bg) — 색은 어두운 배경 기준. */
+.chart-yaxis-hit {
+  fill: transparent;
+  cursor: ns-resize;
+  touch-action: none;
+}
+.chart-yaxis-hit:hover {
+  fill: rgba(148, 163, 184, 0.06);
+}
+.chart-yscale-btn {
+  cursor: pointer;
+}
+.chart-yscale-btn rect {
+  fill: rgba(15, 23, 42, 0.9);
+  stroke: rgba(148, 163, 184, 0.35);
+  stroke-width: 1;
+}
+.chart-yscale-btn text {
+  fill: #94a3b8;
+  font-size: 9.5px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.chart-yscale-btn:hover rect {
+  stroke: rgba(203, 213, 225, 0.7);
+}
+.chart-yscale-btn.is-on rect {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+.chart-yscale-btn.is-on text {
+  fill: #fff;
+}
+.chart-yscale-btn:focus {
+  outline: none;
+}
+.chart-yscale-btn:focus-visible rect {
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+.chart-last-tag {
+  pointer-events: none;
+}
+.chart-last-tag rect {
+  fill: var(--pos);
+}
+.chart-last-tag.is-down rect {
+  fill: var(--neg);
+}
+.chart-last-tag text {
+  fill: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 .vol-up {
   fill: color-mix(in srgb, var(--pos) 42%, transparent);
 }

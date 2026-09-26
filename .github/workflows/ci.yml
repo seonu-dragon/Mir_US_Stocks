@@ -88,6 +88,11 @@ jobs:
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs
 
+      # 가격 축 세로 스케일 순수 계산(chart-yscale-core.js): 선형/로그 변환·축 드래그 줌·세로 팬·
+      # 눈금 간격(1·2·2.5·5)·자동 맞춤 해제/복귀. 종목 분석 차트와 AI 모드 차트가 같이 쓴다.
+      - name: Chart price-axis scale tests
+        run: node scripts/tests/test_chart_yscale_core.mjs
+
       # 투자 가설 추적 순수 계산(thesis-core.js): 조건 위반/근접 판정·이력 보존·벤치마크 대비 성적·병합·클라우드 축약.
       - name: Thesis tracker tests
         run: node scripts/tests/test_thesis_core.mjs

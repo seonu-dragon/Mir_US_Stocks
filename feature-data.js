@@ -277,6 +277,8 @@ function refreshFeatureViews() {
   if (typeof renderMoversBoard === "function") calls.push(renderMoversBoard);
   // 투자 가설 점검 — MAP_FUNDAMENTALS·실적 보도자료·시장경보 등이 늦게 도착하면 다시 평가한다.
   if (window.MirThesis) calls.push(window.MirThesis.onDataRefresh);
+  // 오른쪽 레일 패널 — 스냅샷·캘린더 데이터가 늦게 오면 열린 패널을 다시 그린다.
+  if (window.MirRail) calls.push(window.MirRail.refresh);
   // 관심 리스트의 실적 D-day 배지는 us_calendar 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.

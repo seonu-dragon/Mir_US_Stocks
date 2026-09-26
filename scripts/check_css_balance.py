@@ -31,10 +31,29 @@ def unclosed(text: str) -> list[int]:
     return [text.count("\n", 0, i) + 1 for i in stack]
 
 
+def unterminated_comment(text: str) -> int | None:
+    """닫히지 않은 '/*' 의 줄 번호. 그 뒤 규칙이 전부 주석이 돼 조용히 무시된다
+    (2026-09-26 병합 중 파일 끝에 '/* ====' 머리글만 남은 적 있음)."""
+    pos = 0
+    while True:
+        a = text.find("/*", pos)
+        if a < 0:
+            return None
+        b = text.find("*/", a + 2)
+        if b < 0:
+            return text.count("\n", 0, a) + 1
+        pos = b + 2
+
+
 def main() -> int:
     bad = 0
     for name in ("styles.css",):
-        for ln in unclosed((ROOT / name).read_text(encoding="utf-8")):
+        text = (ROOT / name).read_text(encoding="utf-8")
+        cl = unterminated_comment(text)
+        if cl is not None:
+            bad += 1
+            print(f"[css] {name}:{cl} 닫히지 않은 주석 '/*'")
+        for ln in unclosed(text):
             bad += 1
             if ln < 0:
                 print(f"[css] {name}:{-ln} 여는 괄호 없는 '}}'")

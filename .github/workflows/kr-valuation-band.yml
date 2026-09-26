@@ -1,0 +1,77 @@
+name: KR valuation band (PER/PBR)
+
+# 종목 분석 화면의 PER·PBR 밴드(valuation-band.js) 데이터. KRX 공식 월말 PER/PBR/종가를
+# 날짜별 전 종목 조회로 받는다(scripts/build_kr_valuation_band.py). 새로 끝난 달이 없으면
+# KRX 를 부르지 않고 메타의 점검 시각만 올린다 — 보통 주 1회 0~2콜.
+# 월 초 첫 토요일에 직전 달 월말이 추가된다. 전체 10년 재수집(+검증 재계산)은 수동:
+# workflow_dispatch 의 full=true (약 10분, KRX ~240콜을 2.5초 간격으로).
+#
+# KRX 는 같은 계정 중복 로그인 시 먼저 로그인한 세션을 끊는다. 평일 15:42 KST 의 KR 스냅샷
+# (공매도·KRX 지표 빌더)과 겹치지 않게 토요일에 돈다. 빌더도 끊기면 재로그인·재시도한다.
+
+on:
+  schedule:
+    - cron: "17 1 * * 6"  # 토요일 10:17 KST
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "10년 전체 재수집 + 저PBR 검증 재계산"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build KR valuation band
+        env:
+          KRX_ID: ${{ secrets.KRX_ID }}
+          KRX_PW: ${{ secrets.KRX_PW }}
+        shell: bash
+        run: |
+          if [ "${{ github.event.inputs.full }}" = "true" ]; then
+            python scripts/build_kr_valuation_band.py --full --push
+          else
+            python scripts/build_kr_valuation_band.py --push
+          fi
+
+      - name: Freshness gate
+        run: python scripts/check_data_freshness.py --group kr-valuation-band
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

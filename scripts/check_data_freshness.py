@@ -20,6 +20,7 @@
     py scripts/check_data_freshness.py --group macro-odds      # macro-odds.yml 말미
     py scripts/check_data_freshness.py --group earnings-move   # daily-earnings-calendar.yml 말미
     py scripts/check_data_freshness.py --group earnings-releases  # material-events.yml 말미
+    py scripts/check_data_freshness.py --group kr-valuation-band  # kr-valuation-band.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -180,6 +181,11 @@ CHECKS = {
     # 타임스탬프를 올리므로 나이가 늙으면 빌더(키·Gemini·SEC)가 죽은 것이다.
     "earnings-releases": [
         ("data/earnings_releases.json", 4, False),
+    ],
+    # kr-valuation-band.yml(매주 토요일). 새 달이 없어도 실행마다 메타 updatedAtKst 를 올린다 —
+    # 12일이면 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료 시 전량 실패).
+    "kr-valuation-band": [
+        ("data/korea/valuation_band/meta.json", 12, True),
     ],
 }
 

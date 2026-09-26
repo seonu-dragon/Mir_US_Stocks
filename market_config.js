@@ -96,6 +96,8 @@
       earningsCalendar: true,
       // 국내 시장경보·이상 종목 보드(KRX KIND)는 KR 전용.
       krMarketAlerts: false,
+      // PER·PBR 밴드(valuation-band.js) — US 는 재무 이력 확장 후 같은 컴포넌트로 붙인다.
+      valuationBand: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -262,6 +264,8 @@
       // 시장경보(투자주의·경고·위험)·거래정지·관리종목(KRX KIND) + 상·하한가·52주 신고/신저가·
       // 거래대금 급증 보드. data/korea/market_alerts.js (build_kr_market_alerts.py).
       krMarketAlerts: true,
+      // PER·PBR 밴드 — KRX 공식 월말 PER/PBR 10년(build_kr_valuation_band.py).
+      valuationBand: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

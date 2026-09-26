@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=2df303c05f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=2df303c05f"></noscript>
+    <link rel="preload" href="styles.css?v=6f676df380" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=6f676df380"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=6a86986b43"></script>
+    <script src="build_id.js?v=5532432f83"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1428,6 +1428,8 @@ html[data-theme="dark"] {
         <section class="stock-events-card animate-reveal" id="stockEvents"></section>
         <!-- 이 종목이 따라가는 산업 지표(industry.js renderIndustryReverse) — INDUSTRY_BY_TICKER 역인덱스 -->
         <section class="industry-reverse-card animate-reveal" id="industryReverse" hidden></section>
+        <!-- PER·PBR 밴드(valuation-band.js renderValuationBand) — KR 전용, 월말 KRX 공식 배수 -->
+        <section class="valband-card animate-reveal" id="valuationBand" hidden></section>
         <div class="analysis-balanced-grid analysis-quality-grid">
           <section class="data-quality-card animate-reveal" id="dataQualityPanel"></section>
           <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
@@ -2911,7 +2913,7 @@ html[data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=c4608b55a3"></script>
+    <script src="market_config.js?v=c3397a4bcb"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -2938,9 +2940,11 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=b27e81b493"></script>
+    <script src="feature-data.js?v=ea62dc324f"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
+    <script src="valuation-band-core.js?v=0e0b770b57"></script>
+    <script src="valuation-band.js?v=0fc9596115"></script>
     <script src="signals.js?v=92d09d598c"></script>
     <script src="macro-odds.js?v=533cf73954"></script>
     <script src="chart.js?v=aff4f193c6"></script>
@@ -2951,7 +2955,7 @@ html[data-theme="dark"] {
     <script src="watchlist.js?v=f5f0a3c283"></script>
     <script src="earnings-insight.js?v=8e1bf51e44"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=3a22c99f17"></script>
+    <script src="app.js?v=ef9434abf7"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

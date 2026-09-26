@@ -223,6 +223,14 @@ CHECKS = {
     "market-indicators": [
         ("data/market_indicators.json", 4, True),
     ],
+    # company-info.yml — 기업개요(수요일)·US 목표주가 범위(수·토). 인덱스 updatedAtKst 는 실행마다 새로 쓴다.
+    # 기업개요는 주 1회라 한 번 실패를 바로 잡도록 8일, 목표주가는 주 2회라 5일. 0건(count)도 잡는다.
+    "company-profile": [
+        ("data/company_profile/index.json", 8, True),
+    ],
+    "price-targets": [
+        ("data/us_price_targets/index.json", 5, True),
+    ],
     "screener-backtest": [
         ("data/screener_backtest_meta.json", 10, False),
         ("data/korea/screener_backtest_meta.json", 10, False),

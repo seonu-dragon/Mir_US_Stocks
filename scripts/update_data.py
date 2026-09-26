@@ -1861,12 +1861,16 @@ def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
             out[dst] = val
     cr = info.get("currentRatio")
     qr = info.get("quickRatio")
+    # 야후가 NaN 을 주는 종목이 있다. float('nan') 을 그대로 json.dump 하면 브라우저가
+    # 못 읽는 `NaN` 토큰이 들어가 상세 파일 전체가 파싱 실패한다(2026-09-26: 1,576개).
+    cr = _finite_or_none(cr)
+    qr = _finite_or_none(qr)
     # 야후는 배수(1.003)로 주지만 나스닥 비율표·DART·화면(fmtRatio 가 ÷100)은 %(100.3) 기준이다.
     # 섞이면 히트맵 구간표(80~300%)에서 야후분이 전부 '최하' 로 칠해진다 — %로 맞춘다.
     if cr is not None:
-        out["currentRatio"] = round(float(cr) * 100, 2)
+        out["currentRatio"] = round(cr * 100, 2)
     if qr is not None:
-        out["quickRatio"] = round(float(qr) * 100, 2)
+        out["quickRatio"] = round(qr * 100, 2)
 
     price = price_hint or out.get("prevClose") or info.get("regularMarketPrice")
     market_cap = out.get("marketCapB") or market_cap_b
@@ -3565,6 +3569,17 @@ def _load_existing_earnings_histories():
     return preserved
 
 
+def _json_finite(value):
+    """NaN/Infinity 를 None 으로 바꾼 사본. 표준 JSON 에는 NaN 이 없어 브라우저 JSON.parse 가 실패한다."""
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {k: _json_finite(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_finite(v) for v in value]
+    return value
+
+
 def write_details(details):
     """details/ 전체를 **새 디렉터리에 다 쓴 뒤 통째로 교체**한다.
 
@@ -3587,7 +3602,7 @@ def write_details(details):
                     detail["earningsHistory"] = saved
             safe = _detail_safe_name(ticker)
             with open(staging / f"{safe}.json", "w", encoding="utf-8") as handle:
-                json.dump(detail, handle, ensure_ascii=False, separators=(",", ":"))
+                json.dump(_json_finite(detail), handle, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
         # 교체: 기존 → .old 로 옮기고 새 디렉터리를 제자리에, 그다음 .old 삭제.
         # os.replace 는 비어 있지 않은 디렉터리에 쓸 수 없어 두 단계로 나눈다.
         retired = DETAILS_DIR.parent / f".{DETAILS_DIR.name}.old"

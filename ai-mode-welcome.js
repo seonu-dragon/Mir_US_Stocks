@@ -112,7 +112,12 @@
   async function fetchDetailFromPath(path) {
     const res = await fetch(path, { cache: "no-store" });
     if (!res.ok) return { detail: null, status: res.status };
-    const detail = await res.json();
+    const text = await res.text();
+    let detail = null;
+    try { detail = JSON.parse(text); } catch (_) {
+      // 옛 상세 파일의 비표준 NaN 토큰만 null 로 바꿔 다시 읽는다(app.js loadStockDetail 과 같음).
+      detail = JSON.parse(text.replace(/([:,\[])\s*-?(?:NaN|Infinity)(?=\s*[,}\]])/g, "$1null"));
+    }
     return { detail, status: res.status };
   }
 
@@ -299,7 +304,7 @@
     const detail = await loadTickerDetail(ticker);
     if (detail?.__fetchError === "network") {
       setInputHint(
-        "차트 파일을 불러오지 못했습니다. 로컬 서버로 열어 주세요. (scripts/serve.ps1 → http://localhost:8080)",
+        "차트 데이터를 불러오지 못했습니다. 네트워크 연결을 확인한 뒤 다시 시도해 주세요.",
         true,
       );
       return;
@@ -309,13 +314,13 @@
       setInputHint(
         inKr && !/^\d{6}$/.test(ticker)
           ? `${stockLabel(ticker)}는 미국 종목입니다. 상단에서 미국 주식 모드로 전환한 뒤 다시 시도해 보세요.`
-          : `${stockLabel(ticker)} 차트를 불러오지 못했습니다. 네트워크·프록시 설정을 확인해 주세요.`,
+          : `${stockLabel(ticker)} 차트 데이터가 없습니다.`,
         true,
       );
       return;
     }
     if (detail?.__emptyChart) {
-      setInputHint(`${stockLabel(ticker)} 파일은 있지만 chartSeries 데이터가 비어 있습니다.`, true);
+      setInputHint(`${stockLabel(ticker)} 차트 데이터가 없습니다.`, true);
       return;
     }
 
@@ -342,7 +347,7 @@
         container?.classList.remove("is-welcome-view");
         document.body.classList.add("ai-stock-analysis-view");
         const liveTag = detail?.__liveGenerated ? " · 실시간" : "";
-        const staleTag = window.MirDataStatus?.showBanner ? " · 캐시 데이터" : "";
+        const staleTag = window.MirDataStatus?.showBanner ? " · 지난 데이터" : "";
         setInputHint(`${stockLabel(ticker)} · 6개월 차트${liveTag}${staleTag}`, false);
         // 배경 차트 위로 JARVIS 대시보드(종목 카드·투자의견·기관·뉴스) 페이드인
         try { window.MirDash?.render?.(ticker); } catch (_) {}

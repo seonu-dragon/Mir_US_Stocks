@@ -839,7 +839,7 @@ function aiEvidenceCard(title, value, detail, tone = "") {
   return `
     <article class="ai-evidence-card${tone ? ` ${tone}` : ""}">
       <span>${escapeHtml(title)}</span>
-      <strong>${escapeHtml(value || "-")}</strong>
+      <strong>${escapeHtml(value || "—")}</strong>
       <p>${escapeHtml(detail || "확인된 데이터가 아직 없습니다.")}</p>
     </article>
   `;
@@ -856,7 +856,7 @@ function aiSectorEvidence(item) {
   return aiEvidenceCard(
     "섹터 흐름",
     `${item.sector || "섹터"} ${rel >= 0 ? "대비 강함" : "대비 약함"}`,
-    `섹터 평균 ${fmtPct(sectorAvg)} · 종목 ${fmtDailyPct(item.changePct)} · RS 순위 ${rank || "-"}/${ranked.length || "-"}`,
+    `섹터 평균 ${fmtPct(sectorAvg)} · 종목 ${fmtDailyPct(item.changePct)} · RS 순위 ${rank || "—"}/${ranked.length || "—"}`,
     rel >= 0 ? "is-positive" : "is-negative"
   );
 }
@@ -940,7 +940,7 @@ function aiMetricGrid(metrics) {
   return `<div class="ai-mode-metric-grid">${metrics.map((metric) => `
     <article>
       <span>${escapeHtml(metric.label)}</span>
-      <strong class="${metric.tone || ""}">${escapeHtml(String(metric.value ?? "-"))}</strong>
+      <strong class="${metric.tone || ""}">${escapeHtml(String(metric.value ?? "—"))}</strong>
       ${metric.detail ? `<em>${escapeHtml(metric.detail)}</em>` : ""}
     </article>
   `).join("")}</div>`;
@@ -973,10 +973,10 @@ function aiTechnicalPanel(item) {
     { label: "1개월", value: fmtPct(item.monthChangePct), tone: cls(item.monthChangePct) },
     { label: "거래량", value: `${Number(item.volumeRatio || 0).toFixed(1)}x`, detail: "평균 대비" },
     // 예전에는 스냅샷 RSI와 실측 RSI(14) 칸이 나란히 둘 다 있었다 — 같은 지표가 두 칸.
-    { label: "RSI(14)", value: rsi == null ? "-" : rsi.toFixed(1), detail: "상대강도지수", tone: rsi >= 70 ? "warn" : rsi <= 30 ? "pos" : "" },
-    { label: "MACD", value: macd == null ? "-" : macd.toFixed(2), detail: signal == null ? "" : `Signal ${signal.toFixed(2)}`, tone: macd != null && signal != null ? cls(macd - signal) : "" },
-    { label: "SMA20", value: sma20 == null ? "-" : chartPriceLabel(sma20), tone: last != null && sma20 != null ? cls(last - sma20) : "" },
-    { label: "SMA60", value: sma60 == null ? "-" : chartPriceLabel(sma60), tone: last != null && sma60 != null ? cls(last - sma60) : "" },
+    { label: "RSI(14)", value: rsi == null ? "—" : rsi.toFixed(1), detail: "상대강도지수", tone: rsi >= 70 ? "warn" : rsi <= 30 ? "pos" : "" },
+    { label: "MACD", value: macd == null ? "—" : macd.toFixed(2), detail: signal == null ? "" : `Signal ${signal.toFixed(2)}`, tone: macd != null && signal != null ? cls(macd - signal) : "" },
+    { label: "SMA20", value: sma20 == null ? "—" : chartPriceLabel(sma20), tone: last != null && sma20 != null ? cls(last - sma20) : "" },
+    { label: "SMA60", value: sma60 == null ? "—" : chartPriceLabel(sma60), tone: last != null && sma60 != null ? cls(last - sma60) : "" },
   ]));
 }
 
@@ -1013,7 +1013,7 @@ function aiNewsPanel(item) {
     return [
       `<a href="${escapeHtml(href)}" target="_blank" rel="noopener">${title}</a>`,
       source,
-      time || "-",
+      time || "—",
     ];
   });
   return aiModePanel("뉴스", `${news.length}건`, aiMiniTable(["헤드라인", "출처", "시간"], rows, "이 종목의 뉴스가 아직 수집되지 않았습니다."), "is-wide ai-news-dup");
@@ -1023,9 +1023,9 @@ function aiEventsPanel(item) {
   if (!aiPanelEnabled("materialEvents")) return ""; // KR: 8-K·실적 빈 상자 방지
   const events = ((window.MATERIAL_EVENTS || {}).events || []).filter((event) => String(event.ticker || "").toUpperCase() === item.ticker);
   const rows = events.slice(0, 8).map((event) => {
-    const labels = (event.items || []).map((entry) => entry.label).filter(Boolean).slice(0, 3).join(", ") || event.type || "-";
+    const labels = (event.items || []).map((entry) => entry.label).filter(Boolean).slice(0, 3).join(", ") || event.type || "—";
     return [
-      escapeHtml(event.fileDate || event.date || "-"),
+      escapeHtml(event.fileDate || event.date || "—"),
       escapeHtml(labels),
       `<span class="${event.hot ? "warn" : "muted"}">${event.hot ? "주요" : "일반"}</span>`,
     ];
@@ -1045,7 +1045,7 @@ function aiSectorPanel(item) {
     `<span class="${cls(row.changePct)}">${fmtDailyPct(row.changePct)}</span>`,
     fmtRsi(row),
   ]);
-  return aiModePanel("섹터 흐름", `${item.sector || "-"} 3개월 강도`, aiMiniTable(isKrMarket() ? ["#", "종목", "당일", "RSI"] : ["#", "티커", "회사", "당일", "RSI"], rows, "동일 섹터 비교 데이터가 없습니다."));
+  return aiModePanel("섹터 흐름", `${item.sector || "—"} 3개월 강도`, aiMiniTable(isKrMarket() ? ["#", "종목", "당일", "RSI"] : ["#", "티커", "회사", "당일", "RSI"], rows, "동일 섹터 비교 데이터가 없습니다."));
 }
 
 // 시장별 기능 게이트(market_config.js features). 키가 없으면 켜진 것으로 본다(=== false 판정).
@@ -1059,10 +1059,10 @@ function aiInsiderPanel(item) {
   if (!aiPanelEnabled("insider")) return "";
   const rowsRaw = ((window.INSIDER_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
   const rows = rowsRaw.slice(0, 8).map((row) => [
-    escapeHtml(row.date || row.filingDate || "-"),
-    escapeHtml(row.owner || row.name || row.insider || "-"),
-    `<span class="${row.kind === "buy" ? "pos" : row.kind === "sell" ? "neg" : "muted"}">${escapeHtml(row.kind || row.transaction || "-")}</span>`,
-    escapeHtml(row.valueText || (row.valueM ? `$${Number(row.valueM || 0).toFixed(1)}M` : row.shares ? `${row.shares}주` : "-")),
+    escapeHtml(row.date || row.filingDate || "—"),
+    escapeHtml(row.owner || row.name || row.insider || "—"),
+    `<span class="${row.kind === "buy" ? "pos" : row.kind === "sell" ? "neg" : "muted"}">${escapeHtml(({ buy: "매수", sell: "매도" })[row.kind] || row.kind || row.transaction || "—")}</span>`,
+    escapeHtml(row.valueText || (row.valueM ? `$${Number(row.valueM || 0).toFixed(1)}M` : row.shares ? `${row.shares}주` : "—")),
   ]);
   return aiModePanel("내부자 거래", "Form 4", aiMiniTable(["일자", "내부자", "구분", "규모"], rows, "최근 내부자 거래 데이터가 없습니다."));
 }
@@ -1072,15 +1072,15 @@ function aiCongressPanel(item) {
   const meta = ((window.CONGRESS_TRADES || {}).byTicker || {})[item.ticker];
   const recent = ((window.CONGRESS_TRADES || {}).trades || []).filter((row) => row.ticker === item.ticker);
   const summary = meta ? aiMetricGrid([
-    { label: "순매수", value: meta.netBuys ?? "-" },
-    { label: "순매도", value: meta.netSells ?? "-" },
-    { label: "정치인 수", value: meta.politicianCount ?? "-" },
+    { label: "순매수", value: meta.netBuys ?? "—" },
+    { label: "순매도", value: meta.netSells ?? "—" },
+    { label: "정치인 수", value: meta.politicianCount ?? "—" },
   ]) : "";
   const rows = recent.slice(0, 6).map((row) => [
-    escapeHtml(row.transactionDate || row.date || "-"),
-    escapeHtml(row.representative || row.politician || "-"),
-    `<span class="${String(row.side || "").toLowerCase().includes("buy") ? "pos" : String(row.side || "").toLowerCase().includes("sell") ? "neg" : "muted"}">${escapeHtml(row.side || row.type || "-")}</span>`,
-    escapeHtml(row.amount || row.amountText || "-"),
+    escapeHtml(row.transactionDate || row.date || "—"),
+    escapeHtml(row.representative || row.politician || "—"),
+    `<span class="${String(row.side || "").toLowerCase().includes("buy") ? "pos" : String(row.side || "").toLowerCase().includes("sell") ? "neg" : "muted"}">${escapeHtml(row.side || row.type || "—")}</span>`,
+    escapeHtml(row.amount || row.amountText || "—"),
   ]);
   return aiModePanel("의회 매매", "PTR", summary + aiMiniTable(["일자", "인물", "구분", "규모"], rows, meta ? "상세 거래 목록이 없습니다." : "의회 매매 데이터가 없습니다."));
 }
@@ -1090,10 +1090,10 @@ function aiInstitutionalPanel(item) {
   const f13 = (typeof inst13fIndex === "function" ? inst13fIndex() : {})[item.ticker];
   const act = ((window.ACTIVIST_STAKES || {}).filings || []).filter((row) => row.ticker === item.ticker);
   const body = aiMetricGrid([
-    { label: "13F 보유기관", value: f13 ? `${f13.holders}곳` : "-" },
-    { label: "13F 평가액", value: f13 ? `$${(Number(f13.valueM || 0) / 1000).toFixed(1)}B` : "-" },
-    { label: "13D/G", value: act.length ? `${act.length}건` : "-" },
-    { label: "액티비스트", value: act.filter((row) => row.kind === "activist").length || "-" },
+    { label: "13F 보유기관", value: f13 ? `${f13.holders}곳` : "—" },
+    { label: "13F 평가액", value: f13 ? `$${(Number(f13.valueM || 0) / 1000).toFixed(1)}B` : "—" },
+    { label: "13D/G", value: act.length ? `${act.length}건` : "—" },
+    { label: "액티비스트", value: act.filter((row) => row.kind === "activist").length || "—" },
   ]);
   return aiModePanel("기관·대량보유", "13F·13D/G", body);
 }
@@ -1107,9 +1107,9 @@ function aiShortInterestPanel(item) {
     isBal
       ? { label: "잔고비중", value: `${Number(shortRow.balanceRatio || 0).toFixed(2)}%` }
       : { label: "Days To Cover", value: Number(shortRow.daysToCover || 0).toFixed(1) },
-    { label: "변화율", value: Number.isFinite(Number(shortRow.changePct)) ? fmtPct(shortRow.changePct) : "-", tone: cls(shortRow.changePct) },
-    { label: isBal ? "공매도 잔고" : "공매도 수량", value: shares ? Number(shares).toLocaleString() : "-" },
-    { label: "기준일", value: shortRow.settlementDate || shortRow.date || "-" },
+    { label: "변화율", value: Number.isFinite(Number(shortRow.changePct)) ? fmtPct(shortRow.changePct) : "—", tone: cls(shortRow.changePct) },
+    { label: isBal ? "공매도 잔고" : "공매도 수량", value: shares ? Number(shares).toLocaleString() : "—" },
+    { label: "기준일", value: shortRow.settlementDate || shortRow.date || "—" },
   ]));
 }
 
@@ -1117,13 +1117,13 @@ function aiEarningsPanel(item) {
   if (!aiPanelEnabled("earningsCalendar")) return "";
   const earnings = item.liveEarnings || {};
   const reactions = earningsReactionRows(item).slice(0, 4).map((row) => [
-    escapeHtml(row.date || "-"),
-    row.surprise == null ? "-" : `<span class="${cls(row.surprise)}">${fmtPct(row.surprise)}</span>`,
-    row.post5 == null ? "-" : `<span class="${cls(row.post5)}">${fmtPct(row.post5)}</span>`,
+    escapeHtml(row.date || "—"),
+    row.surprise == null ? "—" : `<span class="${cls(row.surprise)}">${fmtPct(row.surprise)}</span>`,
+    row.post5 == null ? "—" : `<span class="${cls(row.post5)}">${fmtPct(row.post5)}</span>`,
   ]);
   const next = aiMetricGrid([
-    { label: "다음 실적", value: earnings.nextDate || "-" },
-    { label: "EPS 예상", value: earnings.epsEstimate ?? "-" },
+    { label: "다음 실적", value: earnings.nextDate || "—" },
+    { label: "EPS 예상", value: earnings.epsEstimate ?? "—" },
     { label: "EPS", value: fmtEps(item) },
   ]);
   return aiModePanel("실적", "캘린더·반응", next + aiMiniTable(["발표일", "EPS 서프라이즈", "발표 후 5D"], reactions, "실적 발표 반응 데이터가 부족합니다."));
@@ -1134,8 +1134,8 @@ function aiDataQualityPanel(item) {
   const chartRows = getChartRows(item);
   const missing = missingFundamentalFields(f);
   return aiModePanel("데이터 품질", "출처", aiMetricGrid([
-    { label: "스냅샷", value: data.updatedAtKst || data.updated_at_kst || "-" },
-    { label: "가격 이력", value: `${chartRows.length} bars`, detail: sourceLabel(item.historySource) },
+    { label: "데이터 기준", value: data.updatedAtKst || data.updated_at_kst || "—" },
+    { label: "가격 이력", value: `${chartRows.length.toLocaleString()}거래일`, detail: sourceLabel(item.historySource) },
     { label: "재무 출처", value: sourceLabel(f.source) },
     { label: "누락 지표", value: missing.length ? `${missing.length}개` : "없음", tone: missing.length > 5 ? "warn" : "" },
   ]));
@@ -1185,7 +1185,7 @@ function aiKrEventsPanel(item) {
   const dil = disc.find((d) => dilutionCategory(d.title));
   if (dil) { const dt = details[rcpt(dil.link)] || {}; const cat = dilutionCategory(dil.title); bits.push({ label: `${cat.label}(희석)`, value: dt.dilutionPct != null ? `희석 ${dt.dilutionPct.toFixed(1)}%` : "공시", tone: "warn" }); }
   const dv = ((window.KR_DIVIDENDS || {}).rows || []).find((r) => r.ticker === t);
-  if (dv) bits.push({ label: "배당", value: Number.isFinite(dv.yieldPct) ? `${dv.yieldPct.toFixed(2)}% · 기준일 ${dv.recordDate || "-"}` : `기준일 ${dv.recordDate || "-"}` });
+  if (dv) bits.push({ label: "배당", value: Number.isFinite(dv.yieldPct) ? `${dv.yieldPct.toFixed(2)}% · 기준일 ${dv.recordDate || "—"}` : `기준일 ${dv.recordDate || "—"}` });
   const ct = ((window.KR_CONTRACTS || {}).rows || []).find((r) => r.ticker === t);
   if (ct && Number.isFinite(ct.salesRatio)) bits.push({ label: "수주", value: `매출대비 ${ct.salesRatio.toFixed(1)}%` });
   const er = ((window.KR_EARNINGS_REACTIONS || {}).rows || []).find((r) => r.ticker === t);
@@ -1452,8 +1452,8 @@ function aiPeerPanel(item) {
     </tr>`;
   }).join("");
   const body = `<div class="ai-mode-table-wrap"><table class="ai-mode-table" style="table-layout:fixed;width:100%;min-width:0">
-    <colgroup><col style="width:34%"><col style="width:18%"><col style="width:13%"><col style="width:13%"><col style="width:22%"></colgroup>
-    <thead><tr><th>종목</th><th style="text-align:right">시총</th><th style="text-align:right">PER</th><th style="text-align:right">PBR</th><th style="text-align:right">3개월</th></tr></thead>
+    <colgroup><col style="width:31%"><col style="width:19%"><col style="width:14%"><col style="width:14%"><col style="width:22%"></colgroup>
+    <thead><tr><th>종목</th><th style="text-align:right;white-space:nowrap">시총</th><th style="text-align:right;white-space:nowrap">PER</th><th style="text-align:right;white-space:nowrap">PBR</th><th style="text-align:right;white-space:nowrap">3개월</th></tr></thead>
     <tbody>${rows}</tbody></table></div>
     <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px">${basis} 시총 상위 비교(강조행이 현재 종목). 종목명을 누르면 해당 분석으로 이동합니다.</div>`;
   return aiModePanel("유사종목 비교", basis + " · 시총순", body);
@@ -1566,7 +1566,7 @@ function aiAnalystPanel(item) {
   const nextE = cal && cal.stocks && cal.stocks[String(item.ticker).toUpperCase()] && cal.stocks[String(item.ticker).toUpperCase()].nextEarnings;
   const nextHtml = nextE ? `<div style="background:var(--panel-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span style="color:var(--muted)">다음 실적 발표 예정</span> <strong style="margin-left:6px">${escapeHtml(nextE)}</strong></div>` : "";
   if (!recHtml && !earnHtml && !nextHtml) return "";
-  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">Finnhub 애널리스트 추천 분포·분기 EPS 서프라이즈와 예정 실적일(Yahoo)입니다. 목표주가는 무료 데이터에 없어 제외했습니다. 참고용이며 예측·매매 신호가 아닙니다.</p>`;
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">출처: Finnhub(추천 분포·EPS 서프라이즈) · Yahoo(실적 예정일). 참고용이며 예측·매매 신호가 아닙니다.</p>`;
   return aiModePanel("애널리스트 컨센서스", "추천 분포 · EPS 서프라이즈", nextHtml + recHtml + earnHtml + note);
 }
 
@@ -1636,14 +1636,14 @@ function aiIndustryPanel(item) {
     const yoy = ind.latest_yoy;
     const dir = (ind.regime || {}).direction;
     const dirLabel = { improving: "개선", deteriorating: "악화", flat: "보합" }[dir] || "—";
-    return `<tr><td style="overflow:hidden"><strong class="ai-industry-link" data-ind="${escapeHtml(id)}" role="button" tabindex="0">${escapeHtml(ind.name_kr)}</strong><div style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(ind.latest_date)} · ${escapeHtml(ind.source || "")}</div></td>
-      <td style="${rt}">${escapeHtml(indFmtNum(ind.latest_value))} <span style="color:var(--muted);font-size:var(--fs-cap)">${escapeHtml(ind.unit || "")}</span></td>
+    return `<tr><td style="overflow:hidden"><strong class="ai-industry-link" data-ind="${escapeHtml(id)}" role="button" tabindex="0">${escapeHtml(ind.name_kr)}</strong><div style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(ind.latest_date)} · ${escapeHtml(String(ind.source || "").replace(/\s*OpenAPI/gi, ""))}</div></td>
+      <td style="${rt}">${escapeHtml(indFmtNum(ind.latest_value))}<div style="color:var(--muted);font-size:var(--fs-cap)">${escapeHtml(ind.unit || "")}</div></td>
       <td style="${rt}" class="${Number.isFinite(Number(yoy)) ? cls(Number(yoy)) : ""}">${yoy != null ? escapeHtml(indFmtSigned(yoy, "%", 1)) : "—"}</td>
       <td style="${rt}">${escapeHtml(dirLabel)}</td></tr>`;
   }).join("");
   const body = `<div class="ai-mode-table-wrap"><table class="ai-mode-table" style="table-layout:fixed;width:100%;min-width:0">
-    <colgroup><col style="width:46%"><col style="width:22%"><col style="width:16%"><col style="width:16%"></colgroup>
-    <thead><tr><th>지표</th><th style="text-align:right">최신</th><th style="text-align:right">전년비</th><th style="text-align:right">신호등</th></tr></thead>
+    <colgroup><col style="width:42%"><col style="width:22%"><col style="width:19%"><col style="width:17%"></colgroup>
+    <thead><tr><th>지표</th><th style="text-align:right;white-space:nowrap">최신</th><th style="text-align:right;white-space:nowrap">전년비</th><th style="text-align:right;white-space:nowrap">방향</th></tr></thead>
     <tbody>${rows}</tbody></table></div>
     <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">이 종목의 업황을 앞서 보여 주는 공식 통계(FRED·TWSE·한국은행·OECD). 신호등은 증가율의 방향이며 주가 방향이 아닙니다. 지표명을 누르면 산업 지표 탭으로 갑니다.</div>`;
   return aiModePanel("산업 선행지표", "이 종목이 따라가는 지표 · 서술 통계", body);

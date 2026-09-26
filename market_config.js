@@ -120,11 +120,12 @@
       const digits = Math.abs(n) < 1000 ? 2 : 0;
       return `$${n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: 2 })}`;
     },
-    // 금액(평가액·손익 등): 소수는 있으면 최대 2자리, 없으면 생략.
+    // 금액(평가액·손익 등): 센트가 있으면 2자리 고정("$2,250.7" 이 아니라 "$2,250.70"), 없으면 생략.
     formatMoney(value) {
       const n = Number(value);
       if (!Number.isFinite(n)) return "-";
-      return `$${n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+      const digits = Math.abs(Math.round(n * 100)) % 100 === 0 ? 0 : 2;
+      return `$${n.toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: 2 })}`;
     },
     // 큰 금액(백테스트 투자금·평가액): 정수 달러.
     formatMoneyWhole(value) {

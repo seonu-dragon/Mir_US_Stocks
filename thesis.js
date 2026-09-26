@@ -556,14 +556,14 @@
     const rank = (t) => (t.status === "closed" ? -1 : core().STATE_RANK[evalOf(t).state] + (evalOf(t).recheck ? 0.5 : 0));
     const shown = all.filter((t) => filter === "all" || t.status === filter).sort((a, b) => rank(b) - rank(a) || String(b.createdAt).localeCompare(String(a.createdAt)));
     listEl.innerHTML = shown.length ? shown.map(itemHtml).join("")
-      : `<p class="muted">${filter === "closed" ? "종료한 가설이 없습니다." : "아직 등록한 가설이 없습니다. '새 가설'로 매수 근거와 틀렸다고 볼 조건을 적어 두면, 방문할 때마다 현재 데이터로 점검합니다."}</p>`;
+      : `<p class="muted">${filter === "closed" ? "종료한 가설이 없습니다." : "아직 등록한 가설이 없습니다."}</p>`;
     const other = store.items.length - all.length;
     const note = $("thesisOtherNote");
     if (note) note.textContent = other ? `${mkt() === "kr" ? "미국" : "국내"} 시장 가설 ${other}건은 그 시장 모드에서 점검됩니다.` : "";
     const sc = $("thesisScore");
     if (sc) sc.innerHTML = scoreHtml(all);
     const asof = $("thesisAsOf");
-    if (asof) asof.textContent = `점검 기준: 스냅샷 ${snapshotAsOf()} · 재무 지표는 map_fundamentals·종목 상세 JSON · 이벤트는 ${mkt() === "kr" ? "KRX 시장경보·DART 잠정실적" : "실적 보도자료 요약·SEC Form 4·실적 예정일"}`;
+    if (asof) asof.textContent = `점검 기준: ${snapshotAsOf()} 데이터 · 이벤트 출처 ${mkt() === "kr" ? "KRX 시장경보·DART 잠정실적" : "실적 발표·SEC Form 4(내부자 거래)·실적 예정일"}`;
   }
 
   // ----- 동작 -----

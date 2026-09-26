@@ -14341,3 +14341,43 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
 .kr-highlights { margin: 12px 0 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
 .kr-highlights .section-title { display: block; }
 @media (max-width: 640px) { .kr-highlights { padding: 12px; } }
+/* ===== 내 투자 · AI · 공통 다듬기 (2026-09-26) ===== */
+/* display 를 지정한 컨테이너는 hidden 속성이 안 먹어 빈 테두리 줄이 남았다. */
+.thesis-strip[hidden], .thesis-form[hidden] { display: none; }
+/* 스트레스 테스트 두 모드의 설명 문단을 다른 도구 카드와 같은 크기로 */
+#stressPresetPane > .muted, #stressCrisisPane > .muted { margin: 8px 0 10px; font-size: var(--fs-sub); line-height: 1.5; }
+/* 접힌 도구 안의 차트는 밝은 캔버스(주식 차트용 어두운 배경을 쓰지 않는다) */
+#backtestChart .chart-bg { fill: transparent; }
+#backtestChart .chart-grid, .pf-mini-chart .chart-grid { stroke: var(--line); stroke-dasharray: 3 4; }
+#backtestChart .chart-axis, .pf-mini-chart .chart-axis { fill: var(--muted); font-size: 11px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.pf-mini-chart { max-height: none; }
+.backtest-notes:empty { display: none; }
+.backtest-notes .backtest-disclaimer { margin: 0 0 10px; font-size: var(--fs-cap); line-height: 1.5; }
+#backtestTable td:nth-child(n+3), #backtestTable th:nth-child(n+3) { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 배당 월별 격자 아래 가정 문구는 격자 전체 폭의 작은 글씨로 */
+.dividend-month-grid .dividend-month-note { grid-column: 1 / -1; margin: 2px 0 0; font-size: var(--fs-cap); }
+/* X-RAY 집중도 3칸은 한 줄로 */
+#pfXrayBody .ai-mode-metric-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+/* 접힌 도구의 제목(summary)과 겹치는 카드 안 제목은 숨긴다 */
+.ia-tool-fold .cloud-sync-head > strong { display: none; }
+.ia-tool-fold .cloud-sync-panel > .muted { margin: 4px 0 10px; font-size: var(--fs-sub); }
+@media (max-width: 640px) {
+  .corr-head { flex-direction: column; align-items: stretch; gap: 4px; }
+}
+.ia-stat em { display: block; margin-top: 2px; font-size: var(--fs-cap); font-style: normal; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ia-stat strong small { white-space: nowrap; }
+/* 상단 요약 줄이 이미 평가금액·손익·오늘·원금을 보여 주므로 카드 안의 같은 합계 줄은 숨긴다 */
+#myInvestSummary:has(.ia-stat) ~ #portfolioCard #pfSummary { display: none; }
+#bulkTable td { white-space: nowrap; }
+@media (max-width: 640px) {
+  .ia-stat { padding: 10px 12px; }
+  .ia-stat strong { font-size: var(--fs-h3); word-break: keep-all; }
+  .ia-stat strong small { display: block; margin: 2px 0 0; }
+}
+/* AI 입력창: 전역 input:focus 링이 알약 모양 폼 안에 네모로 떴다 — 링은 폼 테두리가 맡는다 */
+.ai-chat-form input:focus, .ai-chat-form input:hover { border: 0; box-shadow: none; }
+.ai-chat-form:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
+@media (max-width: 640px) {
+  /* 폰에서는 관심 리스트의 회사명 열을 숨겨 등락·RSI 가 첫 화면에 들어오게 */
+  #tab-bulk .table-wrap .col-sub { display: none; }
+}

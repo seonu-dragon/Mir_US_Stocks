@@ -150,7 +150,7 @@ function fmtPortfolioMoney(value) {
 
 function fmtPortfolioMoneyDelta(value) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return "-";
+  if (!Number.isFinite(n)) return "—";
   const sign = n >= 0 ? "+" : "-";
   return `${sign}${fmtPortfolioMoney(Math.abs(n))}`;
 }
@@ -393,14 +393,14 @@ function presetStressShock(row, scenario) {
 }
 
 function fmtStressMoney(value) {
-  if (!Number.isFinite(Number(value))) return "-";
+  if (!Number.isFinite(Number(value))) return "—";
   if (isKrMarket()) return fmtKrw(value);
   return `$${Number(value).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
 }
 
 function fmtStressDelta(value) {
   const n = Number(value);
-  if (!Number.isFinite(n)) return "-";
+  if (!Number.isFinite(n)) return "—";
   const sign = n >= 0 ? "+" : "-";
   if (isKrMarket()) return `${sign}${fmtKrw(Math.abs(n))}`;
   return `${sign}$${Math.abs(n).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
@@ -501,7 +501,7 @@ function currentUsdKrw() {
 }
 
 function fmtKrw(value) {
-  if (!Number.isFinite(Number(value))) return "-";
+  if (!Number.isFinite(Number(value))) return "—";
   return new Intl.NumberFormat("ko-KR", { style: "currency", currency: "KRW", maximumFractionDigits: 0 }).format(Number(value));
 }
 
@@ -706,10 +706,10 @@ async function renderBenchmarkAttributionNow() {
     const result = {
       summary: `
       <div><span>포트폴리오</span><strong class="${cls(portfolioReturn)}">${fmtPct(portfolioReturn)}</strong></div>
-      <div><span>${escapeHtml(benchmarkTicker)}</span><strong class="${cls(benchmarkReturn)}">${fmtPct(benchmarkReturn)}</strong></div>
+      <div><span>${escapeHtml(stockLabel(benchmarkTicker))}</span><strong class="${cls(benchmarkReturn)}">${fmtPct(benchmarkReturn)}</strong></div>
       <div><span>초과수익</span><strong class="${cls(alpha)}">${fmtPct(alpha)}</strong></div>
       <div><span>비교 기간</span><strong>${escapeHtml(startDate)} ~ ${escapeHtml(endDate)}</strong></div>`,
-      table: `<table><thead><tr><th>종목</th><th>현재 비중</th><th>기간 수익률</th><th>수익 기여도</th><th>${escapeHtml(benchmarkTicker)} 대비 기여도</th></tr></thead><tbody>${rows.sort((a, b) => b.alphaContribution - a.alphaContribution).map((row) => `
+      table: `<table><thead><tr><th>종목</th><th>현재 비중</th><th>기간 수익률</th><th>수익 기여도</th><th>${escapeHtml(stockLabel(benchmarkTicker))} 대비 기여도</th></tr></thead><tbody>${rows.sort((a, b) => b.alphaContribution - a.alphaContribution).map((row) => `
       <tr><td><button type="button" class="benchmark-ticker" data-benchmark-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button></td><td>${row.weightPct.toFixed(1)}%</td><td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td><td class="${cls(row.contribution)}">${row.contribution >= 0 ? "+" : ""}${row.contribution.toFixed(2)}%p</td><td class="${cls(row.alphaContribution)}"><strong>${row.alphaContribution >= 0 ? "+" : ""}${row.alphaContribution.toFixed(2)}%p</strong></td></tr>`).join("")}</tbody></table>`,
       status: excluded ? `가격 이력이 부족한 ${excluded}개 종목은 제외했습니다. 현재 비중을 유효 종목에 다시 배분한 근사치입니다.` : "현재 비중을 기간 시작점에 적용한 근사 기여도입니다.",
     };
@@ -796,7 +796,7 @@ function renderInvestmentJournal() {
   list.innerHTML = investmentJournal.map((row) => `
     <article class="journal-entry">
       <button type="button" class="journal-ticker" data-journal-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button>
-      <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? marketCfg().formatPrice(row.entry) : "-"} · 목표 ${row.target ? marketCfg().formatPrice(row.target) : "-"} · 손절 ${row.stop ? marketCfg().formatPrice(row.stop) : "-"}</small></div>
+      <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? marketCfg().formatPrice(row.entry) : "—"} · 목표 ${row.target ? marketCfg().formatPrice(row.target) : "—"} · 손절 ${row.stop ? marketCfg().formatPrice(row.stop) : "—"}</small></div>
       <select data-journal-status="${escapeHtml(row.id)}" aria-label="${escapeHtml(stockLabel(row.ticker))} 기록 상태">${Object.entries(labels).map(([value, label]) => `<option value="${value}"${row.status === value ? " selected" : ""}>${label}</option>`).join("")}</select>
       <span class="journal-row-actions">
         ${window.MirThesis ? `<button type="button" class="journal-delete journal-to-thesis" data-journal-thesis="${escapeHtml(row.id)}" title="이 메모를 조건으로 점검하는 투자 가설로 옮겨 적기">가설로</button>` : ""}
@@ -932,14 +932,14 @@ function renderPortfolio() {
   const body = rows.map((r) => `<tr>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(stockLabel(r.ticker, r.stock))}</button></td>
     <td class="ins-num">${r.qty.toLocaleString()}</td>
-    <td class="ins-num">${fmtPfMoney(r.avgCost)}</td>
-    <td class="ins-num">${fmtPfMoney(r.price)}</td>
+    <td class="ins-num">${marketCfg().formatPrice(r.avgCost)}</td>
+    <td class="ins-num">${marketCfg().formatPrice(r.price)}</td>
     <td class="ins-num">${fmtPfMoney(r.value)}</td>
     <td class="ins-num">${totalValue > 0 ? (r.value / totalValue * 100).toFixed(1) : "0"}%</td>
     <td class="ins-num ${cls(r.pl)}">${fmtPct(r.plPct)}</td>
     <td class="ins-num"><button type="button" class="pf-del" data-ticker="${escapeHtml(r.ticker)}" title="삭제">✕</button></td>
   </tr>`).join("");
-  tableEl.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">현재 스냅샷에 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
+  tableEl.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">시세 데이터가 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
   tableEl.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
   tableEl.querySelectorAll(".pf-del").forEach((b) => b.addEventListener("click", () => {
     portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker); savePortfolio(); renderPortfolio();
@@ -1143,7 +1143,7 @@ function signalFor(item) {
   const m3 = Number(item.threeMonthChangePct);
   const m1 = Number(item.monthChangePct);
   const day = Number(item.changePct);
-  if (m3 > 15 && m1 > 0 && day > 0 && (rsi == null || rsi <= 80)) return "강한 상승 후보";
+  if (m3 > 15 && m1 > 0 && day > 0 && (rsi == null || rsi <= 80)) return "강한 상승 추세";
   if (m1 > 0 && day > 0) return "상승 추세";
   if (rsi != null && rsi <= 30) return "과매도 관찰";
   return "중립";
@@ -1418,9 +1418,10 @@ function backtestAnnualizedPct(startVal, endVal, tradingDays) {
 function drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker) {
   const svg = byId("backtestChart");
   if (!svg || !portfolioSeries.length) return;
-  const width = 800;
-  const height = 260;
-  const padL = 52;
+  // 좌표계를 실제 표시 폭에 맞춘다 — 고정 800 을 늘려 그리면 축 글자가 화면 폭 따라 커졌다.
+  const width = Math.max(320, Math.round(svg.clientWidth || 800));
+  const height = width < 520 ? 220 : 260;
+  const padL = 44;
   const padR = 16;
   const padT = 18;
   const padB = 34;
@@ -1456,10 +1457,12 @@ function drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate,
     <line x1="${padL}" y1="${y100.toFixed(1)}" x2="${width - padR}" y2="${y100.toFixed(1)}" class="rsi-guide"></line>
     ${portPath}
     ${benchPath}
-    ${yTicks.map((v) => `<text x="${padL - 6}" y="${yFor(v) + 4}" text-anchor="end" class="chart-axis">${Math.round(v)}</text>`).join("")}
-    ${xLabels.map(({ i, label }) => `<text x="${xFor(i).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="chart-axis">${escapeHtml(String(label || "").slice(2))}</text>`).join("")}
-    <text x="${padL + 4}" y="${padT + 12}" class="chart-axis">포트폴리오</text>
-    <text x="${padL + 84}" y="${padT + 12}" class="chart-axis" fill="#94a3b8">${escapeHtml(benchmarkTicker)}</text>
+    ${yTicks.filter((v) => Math.abs(yFor(v) - baseY) > 12).map((v) => `<text x="${padL - 6}" y="${yFor(v) + 4}" text-anchor="end" class="chart-axis">${Math.round(v)}</text>`).join("")}
+    ${xLabels.map(({ i, label }, k) => `<text x="${xFor(i).toFixed(1)}" y="${height - 8}" text-anchor="${k === 0 ? "start" : k === xLabels.length - 1 ? "end" : "middle"}" class="chart-axis">${escapeHtml(String(label || "").slice(2))}</text>`).join("")}
+    <line x1="${padL + 6}" y1="${padT + 8}" x2="${padL + 22}" y2="${padT + 8}" stroke="#2563eb" stroke-width="2.2"></line>
+    <text x="${padL + 28}" y="${padT + 12}" class="chart-axis">포트폴리오</text>
+    ${benchPath ? `<line x1="${padL + 100}" y1="${padT + 8}" x2="${padL + 116}" y2="${padT + 8}" stroke="#94a3b8" stroke-width="1.8" stroke-dasharray="4 3"></line>
+    <text x="${padL + 122}" y="${padT + 12}" class="chart-axis">${escapeHtml(benchmarkTicker)}</text>` : ""}
     <text x="${padL - 6}" y="${baseY + 4}" text-anchor="end" class="chart-axis">100</text>
   `;
 }
@@ -1490,36 +1493,36 @@ function renderBacktestResults(payload) {
     periodLabel,
     weightLabel,
   } = payload;
+  // 화면 표기는 종목 표기 규칙(국내는 회사명)을 따른다 — KR 에서 "069500 베타" 처럼 코드가 보였다.
+  const benchName = stockLabel(benchmarkTicker);
   summary.innerHTML = `
     <article class="backtest-metric"><span>포트폴리오 수익률</span><strong class="${cls(totalReturn)}">${fmtPct(totalReturn)}</strong></article>
     <article class="backtest-metric"><span>연환산</span><strong class="${cls(annReturn)}">${annReturn == null ? "—" : fmtPct(annReturn)}</strong></article>
     <article class="backtest-metric"><span>투자금</span><strong class="is-money">${fmtBacktestMoney(investment)}</strong></article>
     <article class="backtest-metric"><span>최종 평가액</span><strong class="is-money ${cls(totalReturn)}">${fmtBacktestMoney(finalValue)}</strong></article>
-    <article class="backtest-metric"><span>${escapeHtml(benchmarkTicker)} (${escapeHtml(benchmarkLabel)})</span><strong class="${cls(benchmarkReturn)}">${benchmarkReturn == null ? "—" : fmtPct(benchmarkReturn)}</strong></article>
+    <article class="backtest-metric"><span>${escapeHtml(benchmarkLabel && !benchmarkLabel.includes(benchName) ? `${benchName} (${benchmarkLabel})` : (benchmarkLabel || benchName))}</span><strong class="${cls(benchmarkReturn)}">${benchmarkReturn == null ? "—" : fmtPct(benchmarkReturn)}</strong></article>
     <article class="backtest-metric"><span>초과 수익 (α)</span><strong class="${cls(alpha)}">${alpha == null ? "—" : fmtPct(alpha)}</strong></article>
     <article class="backtest-metric"><span>수익금</span><strong class="is-money ${cls(profit)}">${profit >= 0 ? "+" : ""}${fmtBacktestMoney(profit)}</strong></article>
   `;
   const warnHtml = warnings.length
     ? `<p class="backtest-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>`
     : "";
-  const disclaimerHtml = `<p class="backtest-disclaimer muted"><strong>면책:</strong> 본 백테스트는 현재 스냅샷에 포함된 종목만 사용합니다. 기간 중 상장폐지·합병된 종목은 제외되어 <strong>생존 편향(survivorship bias)</strong>으로 실제 수익률보다 높게 나올 수 있습니다. 거래비용·세금·슬리피지는 반영되지 않은 총수익(buy-and-hold) 기준입니다.</p>`;
+  const disclaimerHtml = `<p class="backtest-disclaimer muted">지금 상장된 종목만 대상이라 기간 중 상장폐지·합병된 종목이 빠져 있어(생존 편향) 실제보다 높게 나올 수 있습니다. 종가 기준이며 배당·거래비용·세금은 반영하지 않았습니다.</p>`;
   renderPortfolioRiskPanel({
     stockReturns,
     portfolioSeries,
     benchmarkSeries,
-    benchmarkTicker,
+    benchmarkTicker: benchName,
     weights: stockReturns.map((row) => row.weightPct / 100)
   });
   table.innerHTML = `
-    <caption class="backtest-meta">${escapeHtml(tickers.map((t) => stockLabel(t)).join(", "))} ·${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · buy-and-hold</caption>
-    ${warnHtml}
-    ${disclaimerHtml}
-    <thead><tr><th>티커</th><th>회사</th><th>시작가</th><th>종가</th><th>수익률</th><th>비중</th><th>투자액</th><th>평가액</th></tr></thead>
+    <caption class="backtest-meta">${escapeHtml(tickers.map((t) => stockLabel(t)).join(", "))} · ${escapeHtml(periodLabel)} · ${escapeHtml(startDate)} → ${escapeHtml(endDate)} (${tradingDays}거래일) · ${escapeHtml(weightLabel)} · 매수 후 보유</caption>
+    <thead><tr><th>종목</th><th class="col-sub">회사</th><th>시작가</th><th>종가</th><th>수익률</th><th>비중</th><th>투자액</th><th>평가액</th></tr></thead>
     <tbody>
       ${stockReturns.map((row) => `
         <tr>
           <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button></td>
-          <td>${escapeHtml(row.company)}</td>
+          <td class="col-sub">${escapeHtml(row.company)}</td>
           <td>${priceOrDash(row.startPrice)}</td>
           <td>${priceOrDash(row.endPrice)}</td>
           <td class="${cls(row.returnPct)}">${fmtPct(row.returnPct)}</td>
@@ -1530,12 +1533,16 @@ function renderBacktestResults(payload) {
       `).join("")}
     </tbody>
   `;
+  // 경고·면책은 표 밖에 둔다 — <table> 안의 <p> 는 브라우저가 첫 칸에 밀어 넣어 열 폭이 깨졌다.
+  const notes = byId("backtestNotes");
+  if (notes) notes.innerHTML = `${warnHtml}${disclaimerHtml}`;
   table.querySelectorAll(".ticker-link").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
-  drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker);
+  box.hidden = false; // 차트·티어시트가 표시 폭을 재려면 먼저 보여야 한다
+  drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchName);
   // 성과 지표(티어시트) — 월별 히트맵·낙폭 구간·롤링 샤프/β 등(portfolio-risk.js).
-  if (window.MirPortfolioRisk) window.MirPortfolioRisk.renderTearsheet(payload);
+  if (window.MirPortfolioRisk) window.MirPortfolioRisk.renderTearsheet({ ...payload, benchmarkName: benchName });
   lastBacktestExportPayload = payload;
   box.hidden = false;
   setBacktestStatus("");
@@ -1629,12 +1636,12 @@ function renderPortfolioRiskPanel(payload) {
       <span class="quality-badge ${warnings.length ? "quality-warn" : "quality-good"}">${warnings.length ? "점검 필요" : "균형 양호"}</span>
     </div>
     <div class="risk-grid">
-      <article><span>최대 낙폭</span><strong class="${cls(maxDd)}">${maxDd == null ? "-" : fmtPct(maxDd)}</strong></article>
-      <article><span>연환산 변동성</span><strong>${vol == null ? "-" : fmtPct(vol)}</strong></article>
-      <article><span>${escapeHtml(benchmarkTicker)} 베타</span><strong>${bench.beta == null ? "-" : bench.beta.toFixed(2)}</strong></article>
-      <article><span>상관계수</span><strong>${bench.corr == null ? "-" : bench.corr.toFixed(2)}</strong></article>
-      <article><span>최대 섹터</span><strong>${topSector ? escapeHtml(topSector[0]) : "-"}</strong><em>${topSector ? `${topSector[1].toFixed(1)}%` : ""}</em></article>
-      <article><span>최대 종목</span><strong>${topPosition ? escapeHtml(stockLabel(topPosition.ticker)) : "-"}</strong><em>${topPosition ? `${topPosition.weightPct.toFixed(1)}%` : ""}</em></article>
+      <article><span>최대 낙폭</span><strong class="${cls(maxDd)}">${maxDd == null ? "—" : fmtPct(maxDd)}</strong></article>
+      <article><span>연환산 변동성</span><strong>${vol == null ? "—" : `${vol.toFixed(1)}%`}</strong></article>
+      <article><span>${escapeHtml(benchmarkTicker)} 베타</span><strong>${bench.beta == null ? "—" : bench.beta.toFixed(2)}</strong></article>
+      <article><span>상관계수</span><strong>${bench.corr == null ? "—" : bench.corr.toFixed(2)}</strong></article>
+      <article><span>최대 섹터</span><strong>${topSector ? escapeHtml(topSector[0]) : "—"}</strong><em>${topSector ? `${topSector[1].toFixed(1)}%` : ""}</em></article>
+      <article><span>최대 종목</span><strong>${topPosition ? escapeHtml(stockLabel(topPosition.ticker)) : "—"}</strong><em>${topPosition ? `${topPosition.weightPct.toFixed(1)}%` : ""}</em></article>
     </div>
     ${warnings.length ? `<p class="risk-warn">${warnings.map((w) => escapeHtml(w)).join(" ")}</p>` : `<p class="risk-note">점검 기준: 섹터 50% 이상, 단일 종목 35% 이상, 최대낙폭 -30% 이하. 리밸런싱, 배당, 세금, 거래비용은 반영하지 않습니다.</p>`}
   `;
@@ -1831,6 +1838,8 @@ function populateBacktestBenchmarks() {
   if (!sel.value) sel.value = backtestDefaultBenchmark();
   // 투자금 입력(정적 HTML 기본 10000)은 시장 전환 시 통화 기본값으로 바꾼다 — 사용자가
   // 직접 넣은 값(다른 시장 기본값과 다름)은 건드리지 않는다.
+  const invCur = byId("backtestCurrency");
+  if (invCur) invCur.textContent = cfg.id === "kr" ? "(원)" : "(USD)";
   const inv = byId("backtestInvestment");
   if (inv && inv.dataset.market !== cfg.id) {
     const otherDefault = (cfg.id === "kr" ? window.MirMarket?.US : window.MirMarket?.KR)?.backtestDefaultInvestment;

@@ -226,7 +226,7 @@ function fxRenderTable(run) {
       <td>${watchStarButton(item.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
       <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
-      <td>${escapeHtml(item.sector || "")}</td>
+      <td>${escapeHtml(sectorLabelKo(item.sector))}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       ${cols.map((c) => fxCellHtml(run, i, c)).join("")}
     </tr>`;

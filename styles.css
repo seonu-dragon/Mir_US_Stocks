@@ -12643,7 +12643,8 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   /* '필터' 토글은 전체 폭 입력창이 아니라 작은 필 — 아래쪽 640 블록에 흩어져 있던
      같은 선택자 두 줄을 여기로 합쳤다(append-only 충돌). */
   .ia-heatmap-toolbar > label.grow { flex: 1 1 200px; min-width: 0; }
-  .ia-heatmap-toolbar .ia-map-filter-toggle { flex: 0 0 auto; width: auto; min-height: 44px; padding: 0 14px; border-radius: var(--r-pill); }
+  /* 필(999px)이면 54×44 버튼이 찌그러진 원처럼 보였다 — 옆 입력창·'범례' 버튼과 같은 모서리로. */
+  .ia-heatmap-toolbar .ia-map-filter-toggle { flex: 0 0 auto; width: auto; min-width: 64px; min-height: 44px; padding: 0 16px; justify-content: center; align-items: center; border-radius: var(--r-md); }
 }
 .ia-footnote { margin: 14px 0 0; font-size: var(--fs-sub); color: var(--muted); }
 
@@ -14220,6 +14221,7 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; --red: var(--b
 .mi-card-val { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.25; }
 .mi-card-chg { font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
 .mi-card .mi-spark, .mi-card .mi-spark-empty { display: block; width: 100%; margin-top: 4px; }
+.mi-card .mi-spark-pending { display: flex; align-items: center; font-size: var(--fs-cap); color: var(--muted); }
 .mi-card-sub { font-size: var(--fs-cap); color: var(--muted); min-height: 16px; }
 .mi-tag { display: inline-block; margin-left: 4px; padding: 0 5px; border: 1px solid var(--line); border-radius: var(--r-xs); font-size: 11px; font-weight: 500; color: var(--muted); vertical-align: 1px; }
 .mi-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }

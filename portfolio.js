@@ -440,7 +440,7 @@ function renderStressTest() {
     <div><span>스트레스 후</span><strong>${fmtStressMoney(stressed)}</strong></div>
     <div><span>예상 변화</span><strong class="${cls(impact)}">${fmtStressDelta(impact)} (${original > 0 ? (impact / original * 100).toFixed(1) : "0.0"}%)</strong></div>`;
   table.innerHTML = `<table><thead><tr><th>종목</th><th>현재 평가액</th><th>충격률</th><th>예상 영향</th><th>스트레스 후 비중</th></tr></thead><tbody>${detailed.map((row) => `
-    <tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${escapeHtml(row.stock?.sector || "기타")}</small></td>
+    <tr><td><strong>${escapeHtml(stockLabel(row.ticker))}</strong><small>${escapeHtml(sectorLabelKo(row.stock?.sector) || "기타")}</small></td>
       <td>${fmtStressMoney(row.value)}</td>
       <td><input type="number" min="-100" max="100" step="1" value="${row.shock.toFixed(1)}" data-stress-ticker="${escapeHtml(row.ticker)}" aria-label="${escapeHtml(stockLabel(row.ticker))} 충격률">%</td>
       <td class="${cls(row.impact)}">${fmtStressDelta(row.impact)}</td>
@@ -1124,7 +1124,7 @@ function renderBulk() {
       <td>${watchStarButton(item.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}</td>
       <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
-      <td>${escapeHtml(item.sector)}</td>
+      <td>${escapeHtml(sectorLabelKo(item.sector))}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td>${fmtRsi(item)}</td>
       <td>${fmtEps(item)}</td>

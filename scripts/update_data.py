@@ -2427,6 +2427,15 @@ def build_universe():
             "groups": {"all_us", "idx_sp500", *exchange_groups.get(symbol, set())},
         }
         universe[symbol] = merge_meta(universe.get(symbol), meta)
+        # S&P 500 은 위키 GICS 섹터·세부업종이 나스닥 스크리너(SIC 기반)보다 우선한다.
+        # 나스닥은 담배(MO·PM)를 'Health Care / Medicinal Chemicals and Botanical Products' 로
+        # 분류해 화면에 '헬스케어·의약품' 으로 나왔다(GICS 는 Consumer Staples / Tobacco).
+        # 섹터가 서로 다를 때만 바꾼다(세부업종도 함께 — 나스닥 업종명이 틀린 섹터에 딸려 있으므로).
+        # 같으면 나스닥 업종명을 둬서 유사종목(같은 업종) 비교가 S&P 500 안팎으로 섞이지 않게 한다.
+        if meta["sector"] != "MISC" and universe[symbol].get("sector") != meta["sector"]:
+            universe[symbol]["sector"] = meta["sector"]
+            if sub_industry:
+                universe[symbol]["industry"] = sub_industry
 
     for symbol in fetch_nasdaq100_symbols():
         if symbol in DUPLICATE_SHARE_CLASSES:

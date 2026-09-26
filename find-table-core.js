@@ -115,7 +115,7 @@
 
   // 한 종목의 배당 정보. fund = MAP_FUNDAMENTALS 행, cal = US_STOCK_CALENDAR.stocks[티커](미국만).
   //   · 주당배당금: fund.dps → cal.divRate.
-  //   · 배당수익률: 같은 줄의 주당배당금 ÷ 현재가를 먼저(표의 두 값이 서로 맞게), 없으면 cal.divYield,
+  //   · 배당수익률: fund.divSrc(빌더가 붙인 기준)가 있으면 fund.divYield. 없으면 같은 줄의 주당배당금 ÷ 현재가를 먼저(표의 두 값이 서로 맞게), 없으면 cal.divYield,
   //     그다음 fund.divYield. 미국 fund.divYield 는 Finnhub 값이 섞여 현재가 기준보다 높게 나오는
   //     종목이 있었다(MO 9.45% vs 4.44/68.82=6.45%). 0 이하는 배당 없음(null).
   //   · 배당성향: fund.payoutRatio → cal.payout. 이익이 0 이하(적자)면 의미가 없어 null, deficit=true.
@@ -125,14 +125,18 @@
     const dpsRaw = fin(f.dps) != null ? fin(f.dps) : fin(c.divRate);
     const dps = dpsRaw != null && dpsRaw > 0 ? dpsRaw : null;
     const price = fin(item && item.price);
+    // 미국: 빌더가 기준을 정해 둔 값(divSrc: ttm=최근 12개월 지급 합÷현재가, yahoo, finnhub)이 있으면
+    // 그 값을 그대로 쓴다 — 히트맵·수식 스크리너와 같은 숫자가 되게.
+    const srcY = f.divSrc ? fin(f.divYield) : null;
     const fromDps = dps != null && price != null && price > 0 ? Math.round((dps / price) * 10000) / 100 : null;
-    const y = fromDps != null ? fromDps : fin(c.divYield) != null ? fin(c.divYield) : fin(f.divYield);
+    const y = srcY != null ? srcY : fromDps != null ? fromDps : fin(c.divYield) != null ? fin(c.divYield) : fin(f.divYield);
     const divYield = y != null && y > 0 ? y : null;
+    const divSrc = srcY != null ? String(f.divSrc) : null;
     const eps = fin(f.eps) != null ? fin(f.eps) : fin(item && item.epsTtm);
     const deficit = eps != null && eps <= 0;
     const payRaw = fin(f.payoutRatio) != null ? fin(f.payoutRatio) : fin(c.payout);
     const payoutRatio = deficit || payRaw == null || payRaw < 0 ? null : payRaw;
-    return { divYield, dps, payoutRatio, deficit };
+    return { divYield, dps, payoutRatio, deficit, divSrc };
   }
 
   // 배당 랭킹: 배당수익률 내림차순. sanity(MirFundSanity)가 있으면 '이상치 가능'(수익률 30% 초과)은

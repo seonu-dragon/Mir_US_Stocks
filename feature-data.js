@@ -356,6 +356,8 @@ function refreshFeatureViews() {
     if (base) {
       const item = applyLive(withDetail(base));
       if (byId("selectedStock")) calls.push(() => renderSelected(item));
+      // 가격 차트 이벤트 마커 — 8-K·DART 공시 전역이 차트보다 늦게 오면 그때 마커를 다시 그린다.
+      if (typeof refreshChartEventsIfStale === "function") calls.push(refreshChartEventsIfStale);
       const facts = byId("searchFacts");
       if (facts) calls.push(() => renderSearchFacts(item));
       // 시세정보·투자정보: 52주 고저 대체값·동일업종 PER 은 MAP_FUNDAMENTALS 가 늦게 오면 그때 채워진다.

@@ -14911,6 +14911,81 @@ button.calp-who:hover strong { text-decoration: underline; }
   .etfh-sub { max-width: 170px; }
 }
 
+/* ===== 가격 차트 이벤트 마커(chart.js · chart-events-core.js) ===== */
+/* 가격 플롯 아래 띠의 작은 기호: E 실적 · D 배당락 · S 액면분할 · 공 주요 공시 · 숫자 = 겹친 개수 */
+.chart-ev { pointer-events: none; }
+.chart-ev rect { fill: var(--chart-bg); stroke: var(--chart-axis); stroke-width: 1; }
+.chart-ev text { fill: var(--chart-text); font-size: 9.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.chart-ev-E rect { stroke: var(--accent); }
+.chart-ev-E text { fill: var(--accent); }
+.chart-ev-D rect { stroke: var(--amber); }
+.chart-ev-D text { fill: var(--amber); }
+.chart-ev-S rect { stroke: var(--teal); }
+.chart-ev-S text { fill: var(--teal); }
+.chart-ev-F rect { stroke: var(--text-2); }
+.chart-ev-F text { fill: var(--text-2); }
+.chart-ev-mixed rect { fill: var(--surface-2); }
+.chart-ev-guide { stroke: var(--chart-axis); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0.8; pointer-events: none; }
+#priceChart.is-ev-hover { cursor: pointer; }
+.chart-ev-note { margin: 6px 2px 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.5; }
+.chart-ev-note[hidden] { display: none; }
+.chart-ev-toggles { margin-left: var(--space-2); }
+.chart-ev-toggles button { min-width: 34px; padding: 0 8px; font-weight: 700; }
+.chart-ev-toggles button.is-active { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); }
+.chart-ev-toggles button.is-active:hover { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); }
+#chartViewGroup.chart-view-mobile { flex-direction: column; align-items: stretch; }
+#chartViewGroup.chart-view-mobile > .icon-controls { min-width: 0; }
+.chart-view-mobile .chart-ev-toggles { margin-left: 0; }
+.chart-view-mobile .chart-ev-toggles button { min-height: 32px; font-size: var(--fs-sub); }
+.chart-ev-tip {
+  position: fixed; z-index: var(--z-popover); max-width: min(320px, calc(100vw - 16px));
+  padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
+  background: var(--panel); color: var(--text); box-shadow: var(--shadow);
+  font-size: var(--fs-cap); line-height: 1.45; pointer-events: none;
+}
+.chart-ev-tip.is-pinned { pointer-events: auto; }
+.chart-ev-tip[hidden] { display: none; }
+.chart-ev-tip ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.chart-ev-tip li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 6px; align-items: start; }
+.chart-ev-tip b { display: block; font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
+.chart-ev-tip small { display: block; color: var(--text-2); font-size: var(--fs-cap); overflow-wrap: anywhere; }
+.chart-ev-tip a { color: var(--link); }
+.chart-ev-tip-more { margin: 6px 0 0; color: var(--muted); }
+.chart-ev-badge {
+  display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 16px;
+  border: 1px solid var(--chart-axis); border-radius: 3px; font-size: 10px; font-weight: 700; color: var(--chart-text);
+}
+.chart-ev-badge.chart-ev-E { border-color: var(--accent); color: var(--accent); }
+.chart-ev-badge.chart-ev-D { border-color: var(--amber); color: var(--amber); }
+.chart-ev-badge.chart-ev-S { border-color: var(--teal); color: var(--teal); }
+.chart-ev-badge.chart-ev-F { border-color: var(--text-2); color: var(--text-2); }
+
+/* ===== 일별 시세 표(daily-table.js) ===== */
+.dtbl-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }
+.dtbl-card[hidden] { display: none; }
+.dtbl-card .fundamental-head { background: none; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 8px; }
+.dtbl-card .fundamental-head h3 { margin: 0; font-size: var(--fs-h3); }
+.dtbl-card .fundamental-head span { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; }
+.dtbl-table { width: 100%; min-width: 0; border-collapse: collapse; }
+.dtbl-table th, .dtbl-table td { padding: 7px 6px; font-size: var(--fs-sub); vertical-align: middle; white-space: nowrap; }
+.dtbl-table th { font-size: var(--fs-cap); color: var(--muted); font-weight: 600; text-align: left; }
+.dtbl-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.dtbl-table .dtbl-date { font-variant-numeric: tabular-nums; color: var(--text-2); }
+.dtbl-table .dtbl-close { font-weight: 600; color: var(--text); }
+.dtbl-table .dtbl-chg.pos { color: var(--pos); }
+.dtbl-table .dtbl-chg.neg { color: var(--neg); }
+.dtbl-table .dtbl-chg:not(.pos):not(.neg) { color: var(--flat); }
+.dtbl-table .dtbl-d-short { display: none; }
+.dtbl-more { margin-top: 8px; }
+.dtbl-foot { margin: 10px 0 0; font-size: var(--fs-cap); color: var(--muted); }
+@media (max-width: 640px) {
+  .dtbl-card { padding: 12px; }
+  .dtbl-table .dtbl-ohl { display: none; }
+  .dtbl-table .dtbl-d-long { display: none; }
+  .dtbl-table .dtbl-d-short { display: inline; }
+  .dtbl-table th, .dtbl-table td { padding: 7px 4px; }
+}
+
 /* ── 종목 체력·팩터 스코어·유사종목·위험 카드(stock-health.js) — 종목 상세 + AI 모드 대시보드 공용 ── */
 .sh-card { background: var(--panel); }
 .sh-note { margin: 10px 0 0; font-size: var(--fs-cap); color: var(--muted); line-height: 1.65; }

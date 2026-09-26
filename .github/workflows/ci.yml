@@ -167,6 +167,15 @@ jobs:
       - name: Find table core tests
         run: node scripts/tests/test_find_table_core.mjs
 
+      # 가격 차트 이벤트 마커(chart-events-core.js): 실적·배당락·분할·8-K/DART 모으기, 휴장일 → 다음 봉 매핑,
+      # 보이는 구간 자르기, 겹침 묶기(줌에 따라 풀림), 포인터 히트 판정.
+      - name: Chart event marker tests
+        run: node scripts/tests/test_chart_events_core.mjs
+
+      # 일별 시세 표(daily-table-core.js): 전일대비 ▲/▼ 금액·등락률, 보합, 거래량 0, 표기.
+      - name: Daily price table tests
+        run: node scripts/tests/test_daily_table_core.mjs
+
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)
         run: |

@@ -406,11 +406,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=87fc9f0a06" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=87fc9f0a06"></noscript>
+    <link rel="preload" href="styles.css?v=eacb134110" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=eacb134110"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=0aaa6800a3"></script>
+    <script src="build_id.js?v=757db0da94"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1433,6 +1433,12 @@ html[data-market="kr"][data-theme="dark"] {
                         <button type="button" id="chartYAuto" class="is-active" aria-pressed="true" title="세로 자동 맞춤 — 가격 축을 끌거나 휠로 세로 배율을 바꾸면 꺼진다(가격 축 더블클릭으로 다시 켬)">자동</button>
                         <button type="button" id="chartYLog" aria-pressed="false" title="로그 스케일 — 같은 비율 변화를 같은 높이로">로그</button>
                       </div>
+                      <div class="icon-controls chart-ev-toggles" id="chartEventToggles" role="group" aria-label="차트 아래 이벤트 기호">
+                        <button type="button" data-ev-kind="E" class="is-active" aria-pressed="true" title="실적 발표일 표시">E</button>
+                        <button type="button" data-ev-kind="D" class="is-active" aria-pressed="true" title="배당락일 표시">D</button>
+                        <button type="button" data-ev-kind="S" class="is-active" aria-pressed="true" title="액면분할·병합 표시">S</button>
+                        <button type="button" data-ev-kind="F" class="is-active" aria-pressed="true" title="주요 공시 표시">공</button>
+                      </div>
                     </div>
                     <div class="control-group compact-control-group">
                       <span class="control-caption">유형</span>
@@ -1542,6 +1548,7 @@ html[data-market="kr"][data-theme="dark"] {
                   </details>
                 </div>
                 <svg id="priceChart" viewBox="0 0 860 520" role="img" aria-label="Price trend chart"></svg>
+                <p class="chart-ev-note" id="chartEventNote" hidden></p>
               </div>
               <div id="chartProbPanel" class="cprob" hidden></div>
               <button type="button" class="sd-ai-teaser" id="stockAiTeaser" data-goto-view="ai" hidden>
@@ -1549,6 +1556,8 @@ html[data-market="kr"][data-theme="dark"] {
                 <span class="sd-ai-teaser-text" id="stockAiTeaserText"></span>
                 <span class="sd-ai-teaser-go" aria-hidden="true">›</span>
               </button>
+              <!-- 일별 시세(daily-table.js renderDailyTable) — 차트와 같은 일봉, drawChart 가 부른다 -->
+              <section class="dtbl-card animate-reveal" id="dailyPriceTable" hidden></section>
               <div class="analysis-balanced-grid analysis-insight-grid">
                 <section class="move-explanation-card animate-reveal" id="moveExplanation" aria-live="polite"></section>
                 <section class="investment-checklist-card animate-reveal" id="investmentChecklist" aria-live="polite"></section>
@@ -3299,7 +3308,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=a90ee38044"></script>
+    <script src="feature-data.js?v=84576c1483"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3323,7 +3332,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="signals.js?v=51e90ac142"></script>
     <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
-    <script src="chart.js?v=fe2b9f924b"></script>
+    <script src="chart-events-core.js?v=733715a6b0"></script>
+    <script src="chart.js?v=ce7ff6d758"></script>
     <script src="institutional.js?v=09576dbcdc"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
     <script src="kr-panels.js?v=10bb49b991"></script>
@@ -3340,6 +3350,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="financials.js?v=3e7d8558c4"></script>
     <script src="dcf-core.js?v=f8687c4ac3"></script>
     <script src="dcf.js?v=234693fd95"></script>
+    <script src="daily-table-core.js?v=c3c5b7132b"></script>
+    <script src="daily-table.js?v=554a7af8ef"></script>
     <script src="stock-view.js?v=3a816499ca"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
     <script src="home-dash.js?v=1fdd3d2a61"></script>

@@ -1434,7 +1434,8 @@ function regimeFngCardHtml() {
   const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "연결 실패" : "로딩 중");
   const asOf = live && marketHeader.fng.source === "snapshot" && marketHeader.fng.asOf ? ` · 스냅샷 기준 ${marketHeader.fng.asOf}` : "";
   const color = live ? fngColor(score) : "#94a3b8";
-  const cx = 100, cy = 96, r = 76, w = 16;
+  // 바늘은 늘 위쪽 반원만 가리키므로 점수는 허브 아래에 둔다(바늘과 겹치지 않게).
+  const cx = 100, cy = 82, r = 72, w = 16;
   const deg = (s) => 180 - (s / 100) * 180;
   const arcs =
     gaugeArc(cx, cy, r, deg(0), deg(25), "#dc2626", w) +
@@ -1449,11 +1450,11 @@ function regimeFngCardHtml() {
       <div class="rf-head">
         <strong class="regime-label" title="${escapeHtml(regime.label)}">${regime.ko}</strong>
       </div>
-      <svg class="fng-gauge" viewBox="0 0 200 118" role="img" aria-label="Fear and Greed gauge">
+      <svg class="fng-gauge" viewBox="0 0 200 122" role="img" aria-label="Fear and Greed gauge">
         ${arcs}
         <line class="gauge-needle" x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke-width="3" stroke-linecap="round"></line>
         <circle class="gauge-hub" cx="${cx}" cy="${cy}" r="5"></circle>
-        <text x="${cx}" y="${cy - 18}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
+        <text x="${cx}" y="${cy + 34}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
       </svg>
       <div class="rf-foot">
         <span class="rf-fng" style="color:${color}">${escapeHtml(label)}${escapeHtml(asOf)}</span>
@@ -6605,7 +6606,7 @@ function dataTrustSources() {
   rows.push(source("국채 경매", "US Treasury FiscalData", window.TREASURY_AUCTIONS, ["recent"], 336, "경매 일정마다", "treasuryAuctions"));
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
   // 조용한 날은 0종목이 정상이라 allowEmpty.
-  if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · AI 요약(Gemini)" : "SEC 8-K · 뉴스 헤드라인 · AI 요약(Gemini)", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
+  if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · AI 자동 요약" : "SEC 8-K · 뉴스 헤드라인 · AI 자동 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
   // 예측시장(2026-09-25) — 하루 3회. 12시간 넘게 멈추면 두 번 연속 실패라 36시간 여유.
   rows.push(source("예측시장 확률", "Kalshi · Polymarket", window.MACRO_ODDS, ["groups"], 36, "하루 3회 (06·14·22시)", "macroOdds"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));
@@ -6688,7 +6689,7 @@ function dataTrustSources() {
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
     // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.
     rows.push(source("실적 전 비교", "SEC 8-K · Yahoo 옵션", window.EARNINGS_MOVE_COMPARE, ["stocks"], 72, "매일 06:30", "earningsMoveCompare", "", true));
-    rows.push(source("실적 보도자료 요약", "SEC 8-K 보도자료 · AI 요약(Gemini)", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
+    rows.push(source("실적 보도자료 요약", "SEC 8-K 보도자료 · AI 자동 요약", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
     // PER·PBR·PSR 밴드(US, 2026-09-26) — 주간 재무 확장 뒤 산출. 검증 결론(SPY 대비·전체 대비)도 적는다.
     if (cfg.features?.valuationBand === true) {
       const vbMeta = window.US_VALUATION_BAND_META;

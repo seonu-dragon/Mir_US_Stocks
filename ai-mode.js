@@ -984,7 +984,7 @@ function aiFundamentalPanel(item) {
   const f = normalizedFundamentalsForItem(item);
   return aiModePanel("밸류에이션", "재무·가치", aiMetricGrid([
     { label: "시가총액", value: fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB) },
-    { label: "PER", value: fmtMultiple(f.pe) },
+    { label: f.peLabel || "PER", value: fmtMultiple(f.pe) },
     { label: "Forward PER", value: fmtMultiple(f.forwardPE) },
     { label: "P/S", value: fmtMultiple(f.ps) },
     { label: "EPS Next Y", value: moneyOrDash(f.epsNextY) },
@@ -1980,7 +1980,7 @@ function aiDashCardHtml(item) {
     <div class="ai-dash-stats">
       ${stat("시가총액", fmtBillions(f.marketCapDisplay ?? f.marketCapB ?? item.marketCapB))}
       ${stat("목표주가", targetVal)}
-      ${stat("PER", fmtMultiple(f.pe))}
+      ${stat(f.peLabel || "PER", fmtMultiple(f.pe))}
       ${stat("Fwd PER", fmtMultiple(f.forwardPE))}
       ${stat("RSI", fmtRsi(item))}
       ${stat("기관 보유(13F)", instVal)}

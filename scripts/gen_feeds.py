@@ -12,8 +12,8 @@
 .gitignore) — 봇 커밋과 충돌할 일이 없고, 배포마다 최신 데이터로 다시 만들어진다.
 
 산출물(<out>/):
-  calendar-us.ics   미국 실적 예정일(시총 상위)·배당락일·IPO 가격확정·월간 옵션 만기
-  calendar-kr.ics   국내 배당 기준일·지급일, 공모 청약·신규 상장
+  calendar-us.ics   미국 실적 예정일(시총 상위)·배당락일·IPO 가격확정·월간 옵션 만기·휴장·단축 거래
+  calendar-kr.ics   국내 실적 IR·배당 기준일·지급일, 공모 청약·신규 상장, 코스피200 옵션 만기·휴장
   econ.ics          FOMC 금리 결정(연준 공식 일정)·경제지표(investing.com, 워커 경유)·산업 지표 발표일
   disclosures-us.xml  SEC 8-K 중 중요 항목(빌더의 hot 분류 + 자사주)
   activist-us.xml     SEC 13D/13D-A(경영참여 목적 5%+)
@@ -456,6 +456,79 @@ def kr_calendar_events(data: Path, today: date) -> list[Event]:
     return events
 
 
+def market_calendar_events(data: Path, today: date, market: str) -> list[Event]:
+    """휴장·단축 거래(두 시장)와 국내 파생 만기 — data/market_calendar.json(exchange_calendars 계산).
+
+    미국 월간 옵션 만기는 위의 규칙(monthly_opex)이 이미 싣는다. 국내 만기(코스피200 옵션 둘째 목요일,
+    휴장이면 직전 거래일)는 거래일 달력이 있어야 당길 수 있어 이 파일에서만 온다. 파일이 없으면 빈 목록.
+    """
+    mc = load_json(data / "market_calendar.json") or {}
+    events: list[Event] = []
+    label = "한국" if market == "kr" else "미국"
+    for r in mc.get("events") or []:
+        if r.get("market") != market:
+            continue
+        d = parse_day(r.get("date"))
+        if not d or not in_window(d, today):
+            continue
+        kind = r.get("kind")
+        if kind == "holiday":
+            events.append(Event(
+                stable_uid("holiday", market, d.isoformat()),
+                f"[휴장] {label} 증시 휴장 · {r.get('name') or ''}".rstrip(" ·"),
+                day=d,
+                description=f"{label} 거래소 휴장일. 출처: exchange_calendars 거래소 달력(거래소 공지가 우선).",
+                categories=("휴장",),
+            ))
+        elif kind == "early_close":
+            events.append(Event(
+                stable_uid("early-close", market, d.isoformat()),
+                f"[단축 거래] {label} 증시 {r.get('detail') or ''}".strip(),
+                day=d,
+                description=f"{r.get('name') or ''} 조기 마감. 출처: exchange_calendars 거래소 달력.".strip(),
+                categories=("휴장",),
+            ))
+        elif kind == "expiry" and market == "kr":
+            events.append(Event(
+                stable_uid("kr-expiry", d.isoformat()),
+                f"[옵션 만기] {r.get('title') or '코스피200 옵션 만기'}",
+                day=d,
+                description=(f"{r.get('detail') or ''}. 규칙으로 계산한 날짜이며 거래소 공지가 우선합니다.").lstrip(". "),
+                categories=("옵션",),
+            ))
+    return events
+
+
+def kr_ir_events(data: Path, today: date) -> list[Event]:
+    """국내 실적 발표 IR(DART 기업설명회 개최 공시). 실적 IR 로 분류된 것만."""
+    irs = load_json(data / "korea" / "ir_schedule.json") or {}
+    events: list[Event] = []
+    for r in irs.get("rows") or []:
+        if not isinstance(r, dict) or not r.get("earnings"):
+            continue
+        d = parse_day(r.get("date"))
+        if not d or not in_window(d, today):
+            continue
+        kwargs = {"day": d}
+        try:
+            hh, mm = (int(x) for x in str(r.get("time") or "").split(":")[:2])
+            st = datetime(d.year, d.month, d.day, hh, mm, tzinfo=KST)
+            kwargs = {"start": st, "end": st + timedelta(minutes=60)}
+        except (ValueError, TypeError):
+            pass
+        co = r.get("company") or ""
+        events.append(Event(
+            stable_uid("kr-ir", r.get("code"), d.isoformat()),
+            f"[실적 IR] {co}",
+            description=(f"{r.get('purpose') or '실적 발표'}. 출처: DART 기업설명회(IR)개최 공시. "
+                         "실적 전에 IR 을 여는 회사만 잡힙니다. 투자 권유가 아닙니다."),
+            url=str(r.get("link") or ""),
+            categories=("실적",),
+            **kwargs,
+        ))
+    return events
+
+
 def fetch_worker_calendar(url: str, timeout: int = 20) -> list[dict]:
     if not url:
         return []
@@ -728,9 +801,11 @@ def build_all(root: Path, out: Path, *, now: datetime, worker_rows: list[dict], 
                 "path": f"data/feeds/{rel}", "count": text.count("<item>")}
 
     add_cal("calendar-us", "us", "미국 일정",
-            "시총 상위 실적 예정일·배당락일·IPO 가격확정·월간 옵션 만기", us_calendar_events(data, today))
+            "시총 상위 실적 예정일·배당락일·IPO 가격확정·월간 옵션 만기·휴장일",
+            us_calendar_events(data, today) + market_calendar_events(data, today, "us"))
     add_cal("calendar-kr", "kr", "국내 일정",
-            "배당 기준일·지급일, 공모 청약·신규 상장", kr_calendar_events(data, today))
+            "실적 IR·배당 기준일·지급일, 공모 청약·신규 상장, 옵션 만기·휴장일",
+            kr_calendar_events(data, today) + kr_ir_events(data, today) + market_calendar_events(data, today, "kr"))
     add_cal("econ", "all", "경제 일정",
             "FOMC 금리 결정·한미 주요 경제지표·산업 지표 발표일(한국 시간)", econ_events(data, today, worker_rows))
 

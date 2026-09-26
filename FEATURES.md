@@ -55,8 +55,14 @@
   본문을 낭독한다(다시 누르면 정지).
 - **소셜 트렌딩 연결**: Reddit·Stocktwits·Yahoo·WSB 감성은 커뮤니티 탭 트렌딩으로 보낸다.
 
-### ④ 오늘 탭 › 캘린더 (경제 캘린더 · 실적 일정)
+### ④ 오늘 탭 › 캘린더 (전체 일정 · 경제 캘린더 · 실적 일정)
 
+- **전체 일정(통합 캘린더, 2026-09-26, `calendar-panel.js` + 순수 계산 `calendar-panel-core.js`)**: 캘린더의 첫 서브탭(딥링크 `?tab=calendar&sub=all`).
+  - 칩: 전체·실적·배당·공모주·경제지표·휴장·만기(기간 안 건수 표시), `관심·보유 종목만` 체크(관심종목 + 보유 종목의 실적·배당·공모만 거르고 휴장·만기·경제지표는 그대로), 주(기준일부터 7일)/월 전환 미니 달력(종류별 점, 날짜 누르면 그날만) + 날짜별 이벤트 목록(종목명·티커, 정보 줄 예: "연간 주당 배당금 $1.08", "주당 배당금 300원 · 시가배당률 6%", "희망공모가 16,400~20,200원"). 보기·체크 상태는 브라우저에 기억.
+  - 데이터: 휴장·단축거래·파생 만기·FOMC(`scripts/build_market_calendar.py` → `data/market_calendar.json/.js`, `exchange_calendars` XKRX·XNYS 로 향후 90일 오프라인 계산 — 미국 월간 옵션 셋째 금요일·한국 코스피200 옵션 둘째 목요일, 휴장이면 직전 거래일, 3·6·9·12월은 동시 만기, 대체휴일 표시), 국내 실적 IR(`scripts/build_kr_ir_schedule.py` → `data/korea/ir_schedule.json/.js`, DART `list.json` 거래소공시의 '기업설명회(IR)개최' 원문에서 일시·목적을 읽고 실적 IR 만 '실적' 칩에 — NDR·증권사 포럼은 제외, 정정 공시가 원 공시를 대체, 원문 파싱 결과는 접수번호로 캐시), 미국 실적·배당락(`us_calendar`·`earnings_calendar`), 국내 배당(`korea/dividends`), 공모주(`ipo_calendar` — 미국은 424B4 가격 확정만), 경제지표(워커 investing.com, 중요도 보통 이상·이번 주/다음 주).
+  - 한계 표시: 국내 실적은 "실적 전에 IR 을 여는 회사만 잡힌다" 한 줄, 미국 실적일은 추정일일 수 있음, 휴장·만기는 거래소 공지가 우선. KR `earningsCalendar`(실적 일정 서브탭)는 계속 꺼 둔다 — 켜는 조건은 `market_config.js` 주석(코스피200 절반 이상에 예정일이 있는 소스).
+  - 렌더 함수 `renderCalendarPanel(host, opts)` 는 host 마다 독립 상태라 오른쪽 레일(UI 4단계)에서 `{ compact: true }` 로 재사용할 수 있다.
+  - 워크플로우 `Market calendar + ETF holdings`(매일 06:40 KST calendar 잡, DART_API_KEY), 신선도 그룹 `market-calendar`, 신뢰도 센터 '휴장·만기 달력'·'실적 IR 일정'.
 - **통합 경제 캘린더**:
   - 미국 및 한국의 주요 매크로 경제 지표 발표 일정과 백악관 정치 일정(KST 기준)을 중요도 필터와 함께 통합 타임라인으로 제공.
 - **시장 실적 발표 캘린더**:
@@ -64,7 +70,7 @@
 - **캘린더 구독 (.ics, 2026-09-25)**: 경제 캘린더·실적 일정 머리의 `캘린더 구독` 버튼 → 다이얼로그(`subscribe-feeds.js`).
   - 피드 3개: `data/feeds/calendar-us.ics`(시총 상위 300 실적 예정일·배당락일·IPO 가격확정·월간 옵션 만기), `calendar-kr.ics`(배당 기준일·지급일, 공모 청약·신규 상장), `econ.ics`(FOMC 결정 14:00 ET·investing.com 중요도 보통 이상 한미 지표·산업 지표 발표일). 과거 7일~미래 90일.
   - 구글 캘린더 추가 링크(`calendar.google.com/calendar/r?cid=webcal://…`)·webcal 링크·URL 복사. 외부 발신(푸시·텔레그램)은 없다 — 구독 앱이 정적 파일을 다시 받아 갈 뿐.
-  - 규칙 기반 날짜는 두 가지뿐이고 설명에 근거를 적는다: FOMC(연준 공개 일정표를 `gen_feeds.py` 에 옮겨 적음 — 새 해 일정 공개 시 갱신), 옵션 만기(셋째 금요일, 성금요일·준틴스면 목요일). KR 옵션 만기는 휴장일 소스가 없어 넣지 않았다.
+  - 규칙 기반 날짜는 두 가지뿐이고 설명에 근거를 적는다: FOMC(연준 공개 일정표를 `gen_feeds.py` 에 옮겨 적음 — 새 해 일정 공개 시 갱신), 옵션 만기(셋째 금요일, 성금요일·준틴스면 목요일). 2026-09-26 부터 `data/market_calendar.json` 으로 두 시장 휴장·단축 거래와 KR 코스피200 옵션 만기(둘째 목요일, 휴장이면 직전 거래일), 국내 실적 IR(`korea/ir_schedule.json`)도 싣는다.
 - **실적 전 비교 · 과거 반응 vs 옵션 예상변동폭 (US)**: 표시 기간 안에 실적을 발표하는 종목마다
   "과거 최대 8회 실적 발표 뒤 첫 거래일 종가 등락의 절댓값 평균(표본 수)"과 "반응일 이후 첫 만기 옵션의
   등가격 스트래들 ÷ 현재가"를 나란히 표로 보여 준다. 발표 시점(장전/장후)은 SEC 8-K Item 2.02 제출 시각으로
@@ -212,6 +218,7 @@
 - **시세정보 · 투자정보 (2026-09-26, `quote-info.js` + `quote-info-core.js`)**: 종목 상세 좌측 요약 패널(`#range52Bar` 시세정보, `#stockInvestInfo` 투자정보). 네이버 종목 상세 좌측 패널 구성을 따른다. node 테스트 `scripts/tests/test_quote_info_core.mjs`(CI).
   - 시세정보: 52주 게이지(최저·최고 값과 날짜, 현재 위치 — 상세 파일 일봉 최근 252봉, KR 종가·US 장중 고저로 사이트의 기존 52주 값과 같은 기준), 전일·시가·고가·저가(가격 기준일 봉, 봉이 아직 없으면 비움)·거래량(주)·거래대금(KR 억/조 원, US $B/M, US 는 종가×거래량 근사 '≈'), 가격 기준일, 액면분할(최근 10년).
   - 투자정보: 시가총액(US 는 원화 병기)·외국인소진율(KR)·PER·EPS·추정PER·추정EPS·PBR·BPS·배당수익률·주당배당금(소스 값이 없으면 최근 1년 배당 합과 현재가로 짝을 맞춤)·PSR·PCFR, 회색 박스에 동일업종(업종 표본 5개 미만이면 섹터, ETF 제외) PER·당일 등락률 중앙값(PER 은 양수·`fundamentals-sanity-core.js` 이상치 제외). ETF 는 시총·NAV·괴리율(= 가격/NAV − 1, KR)·배당 + 구성 종목.
+  - *구성 종목(SEC 공시) / 이 종목을 담은 ETF (US, 2026-09-26, `etf-holdings.js`)*: SEC Form N-PORT-P(1940년법 펀드의 분기말 보유 내역, 분기말 후 최대 60일 뒤 공개 — 카드에 기준일·제출일·원문 링크)로 순자산 상위 300개 ETF 의 보유 상위 25(비중 막대·10개 기본, 더 보기)·섹터 노출(티커가 스냅샷과 이어진 주식만, 나머지 '미분류')·국가 노출·자산 구성을 ETF 종목 분석에, 일반 종목 분석에는 그 종목 비중이 큰 ETF 10개와 보유 ETF 수. SPY·DIA·MDY 는 단위투자신탁, GLD·IBIT 등은 1933년법 신탁이라 N-PORT 가 없어 사유만 표시(운용사 보유 파일은 복제 금지 문구가 있어 쓰지 않음). QQQ 는 개방형 전환으로 N-PORT 가 있다. 빌더 `scripts/build_us_etf_holdings.py`(시리즈별 최신 NPORT-P 머리의 순자산으로 순위 → 본문 스트리밍 파싱, CUSIP → 티커는 OpenFIGI 캐시 `cusip_map.json` + 회사명 일치, 종류주 글자가 다르면 잇지 않음) → `data/etf_holdings/index.js`(lazy) + `etf/<T>.json`·`rev/<첫 글자>.json` 샤드(바뀐 파일만 씀). 워크플로우 같은 파일의 etf 잡(매월 3일 06:10 KST 또는 dispatch `etf=true`), 신선도 그룹 `etf-holdings`.
   - PER 기준 (2026-09-26, `per-basis-core.js`): 대표 PER 은 **최근 4개 분기 EPS 합** 기준(국내는 네이버 종목 메인 `integration` 의 PER/EPS, 기준 분기 `epsTtmAsOf`), 없으면 직전 사업연도 EPS 로 현재가 기준 계산하고 라벨로 구분("PER(최근 4분기)" / "PER(2025 연간)" / KRX 보강값 "PER(사업연도 기준)"). 국내 PBR 도 최근 분기 BPS 기준. 빌더(`update_korea_data.py`)가 `peBasis`·`epsAnnual`·`bpsLatest` 를 적고, 스크리너·히트맵·업종 등급·수식 스크리너의 `pe`/`epsTtm` 도 같은 값을 쓴다. 예전에는 연간 EPS 를 `epsTtm` 이름으로 담아 삼성전자가 43배(네이버 12.85배)로 보였다. 미국은 원래 최근 4분기 합. node 테스트 `scripts/tests/test_per_basis_core.mjs`, pytest `test_kr_per_basis.py`.
   - 재무비율 TTM: 재무 확장 파일(이미 재무 섹션이 받는 파일, 추가 로드 없음)의 `ttm` 으로 PSR·PCFR·영업/순이익률·ROE·ROA·부채비율·SPS·CFPS. 통화가 다르거나 ADR·해외발행인이면 가격 배수는 계산하지 않고, 금융업은 PCFR·영업이익률·부채비율 제외, 경계 밖 값은 `*`(이상치 가능). 기존 핵심 지표 카드의 밸류에이션·가격 그룹은 이 두 블록으로 옮겼다(값은 그대로).
   - 해외 종목 가격·시총 옆 원화 병기(`≈ 46만 1,945원`): 워커 환율(`?fx=`, USD/KRW) × 가격. 환율이 늦게 오면 도착 시 다시 그린다.

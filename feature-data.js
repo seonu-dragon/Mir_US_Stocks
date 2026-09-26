@@ -152,6 +152,14 @@ const FEATURE_DATA = {
   // (US data/screener_backtest_meta.js · KR data/korea/screener_backtest_meta.js, 약 70~140KB).
   // 수식 스크리너에서 수식이 처음 컴파일될 때만 받는다(lazy). 필드 샤드는 screener-backtest.js 가 fetch.
   screenerBacktest: { global: "SCREENER_BACKTEST_META", path: "data/screener_backtest_meta.js", marketSpecific: true, lazy: true },
+  // 휴장일·단축거래·파생 만기·FOMC(build_market_calendar.py, exchange_calendars 오프라인 계산, ~5KB).
+  // 두 시장이 한 파일 — 통합 캘린더(calendar-panel.js)가 읽는다.
+  marketCalendar: { global: "MARKET_CALENDAR", path: "data/market_calendar.js" },
+  // 국내 실적 발표 예정(DART 기업설명회 개최 공시 파싱, build_kr_ir_schedule.py). 통합 캘린더를 열 때만.
+  krIrSchedule: { global: "KR_IR_SCHEDULE", path: "data/korea/ir_schedule.js", feature: "krIrSchedule", krOnly: true, lazy: true },
+  // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
+  // etf-holdings.js 가 종목 분석을 열 때 하나만 fetch 한다.
+  usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
@@ -291,6 +299,8 @@ function refreshFeatureViews() {
   if (currentTab === "marketindex" && typeof renderMarketIndicators === "function") calls.push(renderMarketIndicators);
   // 국내 수급·자금 — KR_MARKET_FUNDS 가 잎 렌더보다 늦게 도착하면 다시 그린다.
   if (currentTab === "krflow" && typeof renderKrFlowMarket === "function") calls.push(renderKrFlowMarket);
+  // 통합 캘린더 — 휴장·만기·IR·배당·IPO 데이터셋이 각각 늦게 도착한다.
+  if (currentTab === "calendar" && typeof renderUnifiedCalendarIfVisible === "function") calls.push(renderUnifiedCalendarIfVisible);
   // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.
   if (currentTab === "search" && searchSubTab === "formula" && typeof renderFormulaScreener === "function") calls.push(renderFormulaScreener);
   // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은
@@ -324,6 +334,7 @@ function refreshFeatureViews() {
           () => renderEstimateRevision(item),
           () => renderStockEvents(item),
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
+          () => { if (typeof renderEtfHoldings === "function") renderEtfHoldings(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },

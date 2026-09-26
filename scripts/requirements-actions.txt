@@ -13,3 +13,5 @@ python-dotenv==1.2.2
 pykrx==1.2.8
 # 카드뉴스 축소본(build_today_content.make_card_thumb) — 로컬 발행에서 쓰이고 CI 는 테스트만 돈다.
 pillow==12.2.0
+# 거래소 휴장일·단축거래(build_market_calendar.py, XKRX·XNYS). pandas 는 yfinance 가 이미 끌어온다.
+exchange_calendars==4.13.2

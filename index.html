@@ -406,11 +406,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=9c5d36b774" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=9c5d36b774"></noscript>
+    <link rel="preload" href="styles.css?v=4e71b65fca" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=4e71b65fca"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=4da80c312b"></script>
+    <script src="build_id.js?v=8e4d9b0a92"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -704,11 +704,21 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
         <div class="tab-leaf" id="tab-calendar">
         <nav class="sub-tabs" id="calendarSubTabs" aria-label="Calendar sub-sections">
-          <button class="sub-tab is-active" data-sub="macro">경제 캘린더</button>
+          <button class="sub-tab is-active" data-sub="all">전체 일정</button>
+          <button class="sub-tab" data-sub="macro">경제 캘린더</button>
           <button class="sub-tab" data-sub="earnings">실적 일정</button>
         </nav>
 
-        <div class="sub-panel is-active" id="sub-macro">
+        <div class="sub-panel is-active" id="sub-all">
+          <div class="section-title">
+            <h2>전체 일정</h2>
+            <p>실적·배당·공모주·경제지표·휴장·파생 만기를 한국 시간 기준으로 모았습니다.</p>
+            <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="FOMC·경제지표·실적·배당·IPO 일정을 구글/애플 캘린더에 구독합니다">캘린더 구독</button>
+          </div>
+          <div id="calendarPanelHost"><p class="muted">일정을 불러오는 중…</p></div>
+        </div>
+
+        <div class="sub-panel" id="sub-macro">
           <div class="section-title">
             <h2>경제 캘린더</h2>
             <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 모았습니다.</p>
@@ -1572,6 +1582,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
             </div>
             <div class="sd-view" id="sdv-flow" data-view="flow" role="tabpanel">
+              <!-- 미국 ETF 구성 종목 / 이 종목을 담은 ETF(etf-holdings.js renderEtfHoldings) — SEC N-PORT 샤드 하나만 받는다 -->
+              <section class="etfh-card animate-reveal" id="etfHoldingsCard" hidden></section>
               <!-- KR 수급(5일·20일 + 일별 보기) · 기업집단 · 국민연금(kr-panels.js) -->
               <section class="detail-panel sd-flow animate-reveal" id="stockFlowPanel" hidden></section>
               <!-- 스마트머니 종합(app.js renderSmartMoney) — US 전용 -->
@@ -3248,7 +3260,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=be0cad50e2"></script>
+    <script src="market_config.js?v=90ddbede6e"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3280,7 +3292,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=55f11a26f2"></script>
+    <script src="feature-data.js?v=e35827a3af"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3325,7 +3337,10 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table-core.js?v=b40a857684"></script>
     <script src="find-table.js?v=bf8683882a"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
-    <script src="app.js?v=b97bee5888"></script>
+    <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
+    <script src="calendar-panel.js?v=497ff92d75"></script>
+    <script src="etf-holdings.js?v=5279fc6f46"></script>
+    <script src="app.js?v=aa26fd34fb"></script>
     <script src="ai-cosmos.js?v=069b3c9089"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=f647c74678"></script>

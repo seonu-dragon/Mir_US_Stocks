@@ -13581,6 +13581,51 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
 .industry-reverse-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; }
 .industry-reverse-card[hidden] { display: none; }
 .industry-reverse-card h3 { margin: 0 0 10px; font-size: var(--fs-body); }
+
+/* PER·PBR 밴드(valuation-band.js) — 종목 분석 화면, 시장 무관 */
+.valband-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }
+.valband-card[hidden] { display: none; }
+.valband-card h3 { margin: 0; font-size: var(--fs-body); }
+.valband-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; margin-bottom: 8px; }
+.valband-sub { font-size: var(--fs-cap); font-weight: 400; margin-left: 4px; }
+.valband-seg button[disabled] { opacity: .45; cursor: not-allowed; }
+.valband-notice { margin: 0 0 8px; padding: 6px 10px; border-radius: var(--r-md); background: var(--tint-warn); color: var(--tint-warn-fg); font-size: var(--fs-cap); line-height: 1.55; }
+.valband-stats { display: grid; grid-template-columns: minmax(0, 1.4fr) repeat(5, minmax(0, 1fr)); gap: 6px; margin-bottom: 8px; }
+.valband-stat { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 6px 8px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); }
+.valband-stat span { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-cap); color: var(--muted); white-space: nowrap; }
+.valband-stat b { font-variant-numeric: tabular-nums; font-size: var(--fs-sub); }
+.valband-stat em { font-style: normal; font-size: var(--fs-cap); color: var(--text); font-weight: 600; }
+.valband-stat-main b { font-size: var(--fs-body); }
+.valband-sw { display: inline-block; width: 10px; height: 2px; border-radius: 1px; background: var(--accent); }
+.valband-sw-0, .valband-sw-4 { opacity: .45; }
+.valband-sw-1, .valband-sw-3 { opacity: .7; }
+.valband-chart { width: 100%; min-width: 0; }
+.valband-chart svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.valband-grid { stroke: var(--line); stroke-width: 1; }
+.valband-tick { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.valband-fill { fill: var(--accent); stroke: none; }
+.valband-fill-0, .valband-fill-3 { fill-opacity: .07; }
+.valband-fill-1, .valband-fill-2 { fill-opacity: .15; }
+.valband-line { fill: none; stroke: var(--accent); stroke-width: 1; }
+.valband-line-0, .valband-line-4 { stroke-opacity: .45; stroke-dasharray: 3 3; }
+.valband-line-1, .valband-line-3 { stroke-opacity: .65; }
+.valband-line-2 { stroke-opacity: .9; stroke-width: 1.2; }
+.valband-price { fill: none; stroke: var(--text); stroke-width: 1.8; stroke-linejoin: round; }
+.valband-price-now { stroke-dasharray: 2 3; }
+.valband-dot { fill: var(--text); }
+.valband-loss { fill: var(--neg); fill-opacity: .08; }
+.valband-guide { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 2 2; }
+.valband-hit { fill: transparent; cursor: crosshair; }
+.valband-readout { min-height: 1.4em; margin: 4px 0 0; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.valband-verdict { margin: 6px 0 0; font-size: var(--fs-cap); line-height: 1.6; }
+.valband-verdict .pos { color: var(--pos); }
+.valband-verdict .neg { color: var(--neg); }
+.valband-foot { margin: 6px 0 0; font-size: var(--fs-cap); line-height: 1.6; }
+@media (max-width: 640px) {
+  .valband-card { padding: 12px; }
+  .valband-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .valband-stat-main { grid-column: 1 / -1; flex-direction: row; align-items: baseline; gap: 8px; }
+}
 .industry-rev-list { display: flex; flex-direction: column; gap: 6px; }
 .industry-rev-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto 96px 44px; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); color: inherit; font-size: var(--fs-sub); cursor: pointer; text-align: left; }
 .industry-rev-row:hover { border-color: var(--primary); }

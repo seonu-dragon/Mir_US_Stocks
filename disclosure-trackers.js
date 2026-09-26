@@ -543,7 +543,7 @@ function renderValuation() {
   const body = shown.map((r, i) => `<tr>
     <td class="ins-date">${i + 1}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.item.ticker)}">${escapeHtml(isKrMarket() ? (r.item.company || r.item.ticker) : r.item.ticker)}</button><div class="ins-sub">${escapeHtml(isKrMarket() ? "" : (r.item.company || ""))}</div></td>
-    <td class="ins-sub">${escapeHtml(r.item.sector)}</td>
+    <td class="ins-sub">${escapeHtml(sectorLabelKo(r.item.sector))}</td>
     <td class="ins-num"${sanity && sanity.isOutlier(metric, r.value) ? ` title="${escapeHtml(sanity.describe(metric))}"` : ""}><strong>${fmtv(r.value)}</strong>${sanity && sanity.isOutlier(metric, r.value) ? '<span class="fx-outlier">이상치 가능</span>' : ""}</td>
     <td class="ins-num">${fmtBillions(itemCapForValuation(r.item))}</td>
     <td class="ins-num ${cls(krDisplayChangePct(r.item.changePct))}">${fmtDailyPct(r.item.changePct)}</td>
@@ -1242,7 +1242,7 @@ function renderDividends() {
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.divKind || "배당")}</div></td>
     <td class="ins-num"><strong>${Number.isFinite(r.yieldPct) ? `${r.yieldPct.toFixed(2)}%` : "—"}</strong></td>
-    <td class="ins-num">${Number.isFinite(r.dps) ? `₩${Number(r.dps).toLocaleString()}` : "—"}</td>
+    <td class="ins-num">${Number.isFinite(r.dps) ? `${Number(r.dps).toLocaleString("ko-KR")}원` : "—"}</td>
     <td class="ins-date">${escapeHtml(r.recordDate || "—")}</td>
     <td class="ins-date">${escapeHtml(r.payDate || "—")}</td>
   </tr>`).join("");
@@ -1441,7 +1441,7 @@ function renderDilution() {
     <td class="ins-sub ins-sell">${escapeHtml(r.type)}</td>
     <td class="ins-num"><strong>${r.dilutionPct != null ? `${r.dilutionPct.toFixed(1)}%` : "—"}</strong></td>
     <td class="ins-num">${krMoneyEok(r.amount)}</td>
-    <td class="ins-num">${r.convPrice != null ? `₩${Number(r.convPrice).toLocaleString()}` : "—"}</td>
+    <td class="ins-num">${r.convPrice != null ? `${Number(r.convPrice).toLocaleString("ko-KR")}원` : "—"}</td>
   </tr>`).join("");
   wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th class="ins-num">희석률</th><th class="ins-num">발행금액</th><th class="ins-num">전환·행사가</th></tr></thead><tbody>${body}</tbody></table>`;
   delegateTickerClicks(wrap, ".ins-ticker");

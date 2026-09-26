@@ -93,6 +93,10 @@ test("배당 정보: 적자면 배당성향 제외, 0 이하 수익률은 배당
   assert.equal(m2.divYield, 4.36);
   const c = core.dividendInfo({ epsTtm: 8.6 }, { divYield: 0.32 }, { divRate: 1.08, payout: 12 });
   assert.deepEqual([c.divYield, c.dps, c.payoutRatio, c.deficit], [0.32, 1.08, 12, false]);
+  // 빌더가 기준(divSrc)을 붙인 값은 그대로 쓴다 — 히트맵·수식 스크리너와 같은 숫자(T: 1.112/25.38).
+  const t = core.dividendInfo({ price: 25.5 }, { divYield: 4.38, dps: 1.112, divSrc: "ttm" }, { divYield: 4.36, divRate: 1.11 });
+  assert.deepEqual([t.divYield, t.dps, t.divSrc], [4.38, 1.112, "ttm"]);
+  assert.equal(m.divSrc, null);
 });
 
 test("배당 랭킹: 수익률 내림차순, 이상치(30% 초과)는 뒤로, ETF·무배당 제외", () => {

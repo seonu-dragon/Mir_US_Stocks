@@ -116,6 +116,7 @@
 
 - **화면**: `?tab=marketindex`(`market-indicators.js`, 표기는 `market-indicators-core.js`). 요약 카드 12개(4열, 폰 2열: 코스피200·S&P500/나스닥100 선물·니케이·달러/유로/엔(100엔)·WTI·금·구리·미국/한국 10년, 3개월 스파크라인) + 표: 지수(코스피200·해외 7·미국 지수 선물 4) · 환율 · 국채 10년 5개국 · 기준금리 6개국(전회대비·변경일) · 에너지/금속/농축산물(만기월·단위). 등락 `▲1.23(+0.45%)`, 상승 빨강·하락 파랑.
 - **데이터**: `scripts/build_market_indicators.py` → `data/market_indicators.json/.js`(`MARKET_INDICATORS`, lazy). 야후 v8 chart(선물 20종·지수·환율, 만기월은 shortName, 전일대비는 거래소 당일 변동 기준) · FRED DGS10 · ECOS 국고 10년 · 재무성 jgbcme · Bundesbank · BoE IUDMNPY(실패 시 OECD 월평균) · BIS WS_CBPOL · frankfurter(환율 대체). 실패 항목은 직전값+`stale`, 전부 실패면 exit 1. 야후가 과거 일봉을 안 주는 ^KS200·CNYKRW 는 실행마다 스파크 점을 쌓는다.
+- 스파크라인 점이 2개 미만(야후 ^KS200 처럼 과거 일봉이 없어 매일 한 점씩 쌓는 지표)이면 빈 칸 대신 '이력 적립 중'.
 - **워크플로우**: `market-indicators.yml`(평일 07:30·16:10 KST) → Deploy Pages 트리거, 신선도 그룹 `market-indicators`, 신뢰도 센터 '시장지표'.
 - **환율 계산기 (2026-09-26)**: 환율 표 아래. 금액 + 통화(원·달러·유로·엔·위안) → 나머지 통화로 원화 크로스 계산(`market-indicators-core.js` `fxRates`/`fxConvert`, 엔은 100엔 값을 1엔으로). 기준일·1단위당 원화를 함께 적고 '은행 고시 매매기준율·현찰·송금 환율이 아님, 수수료 미반영' 을 명시.
 
@@ -204,6 +205,7 @@
   - 사용자가 스크리닝한 조건을 저장하고 다음 날 데이터 스냅샷이 업데이트되었을 때 편입/이탈된 신규 종목의 델타(Delta)를 확인하는 추적 기능.
 - **찾기 › 상위 종목 '목록' 칩 (2026-09-26)**: 정렬 칩 옆 `배당 랭킹` · `신규상장` · `관리·경보`(국내만). 계산은 `find-table-core.js`, 화면은 `find-table.js`. 정렬 칩을 누르거나 같은 칩을 다시 누르면 일반 표로.
   - *배당 랭킹*: 지수/그룹 칩 범위 안에서 배당수익률 순(ETF 제외, 상위 300). 이상치 규칙(`fundamentals-sanity-core.js`, 30% 초과)은 뒤로 보내고 '이상치 가능' 표시, 적자 기업은 배당성향 '적자'. 열: 배당수익률·주당배당금·배당성향·PER·시총. 국내 = MAP_FUNDAMENTALS(`divYield`·`payoutRatio`·`dps` — `dps` 는 `build_map_fundamentals.py` 에 이번에 추가, 다음 KR 스냅샷부터 채워짐), 미국 = MAP_FUNDAMENTALS `divYield` + `US_STOCK_CALENDAR`(시총 상위 ~200종목의 `divRate`·`payout`). 연속 배당 연수는 두 시장 모두 소스가 없어 넣지 않았다. 일반 표 열 설정에도 주당배당금·배당성향 열 추가.
+  - *미국 배당수익률 기준 (2026-09-27)*: Finnhub `dividendYieldIndicatedAnnual` 이 연환산 배당을 오래된 가격으로 나눠 부풀려져 있었다(야후와 겹치는 168종목 중 54개가 1.3배 이상, T 6.85% vs 4.37%). `build_map_fundamentals.py` 가 상세 파일 `dividends` 의 최근 1년 실제 지급 합 ÷ 스냅샷 현재가로 `divYield`·`dps` 를 다시 계산하고 기준을 `divSrc`(`ttm`·`yahoo`·`finnhub`)로 남긴다. 과거 지급 간격으로 본 연간 횟수보다 1년 안 건수가 적으면(기록 누락 — RY·ACN) 쓰지 않고 야후(상세 fundamentals → `us_calendar`) → Finnhub `currentDividendYieldTTM`(새 형식 `divBasis:"ttm"` 만, 옛 연환산 값은 버림) 순. 히트맵·수식 스크리너·배당 랭킹이 같은 값을 쓰고, 랭킹 칸에 마우스를 올리면 기준이 보인다. 특별배당은 실제 지급이라 포함(PGR·CME 가 야후 예상 수익률보다 높게 나옴).
   - *신규상장*: 최근 90일. 국내 = 38커뮤니케이션 '신규 상장 완료'(상장일·확정 공모가·주관사, 회사명으로 스냅샷 매칭). 미국 = SEC 424B4 중 같은 CIK 의 S-1/F-1 등록 신청이 수집 기간에 있는 건만(추가 공모 배제 목적, 완전하지 않음을 화면에 명시). SPAC 유닛가·현재가가 공모가의 10배 초과/10분의 1 미만이면 공모가 대비를 계산하지 않는다. 스냅샷 한 장으로는 '새로 생긴 코드' 를 알 수 없어 IPO 캘린더만 쓴다.
   - *관리·경보*: `KR_MARKET_ALERTS` 의 관리종목·거래정지·투자위험/경고·투자주의를 한 표로(구분 칩, 지정일, 현재가·등락률).
 - **사용자 정의 수식 스크리너 (종목 › 찾기 › 수식, 2026-09-26)**:

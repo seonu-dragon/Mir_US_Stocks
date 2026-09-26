@@ -33,7 +33,10 @@ import argparse
 import json
 import os
 import re
+import ssl
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -115,6 +118,44 @@ def lat2han(s: str) -> str:
     return "".join(_LAT2HAN.get(ch, ch) for ch in up)
 
 
+def _ssl_context() -> ssl.SSLContext:
+    """certifi 번들이 있으면 그걸로(러너·로컬 Windows 의 CA 차이 제거), TLS 1.2 이상."""
+    try:
+        import certifi  # type: ignore
+        ctx = ssl.create_default_context(cafile=certifi.where())
+    except Exception:  # noqa: BLE001
+        ctx = ssl.create_default_context()
+    ctx.minimum_version = ssl.TLSVersion.TLSv1_2
+    return ctx
+
+
+_SSL_CTX = _ssl_context()
+# 2026-09-26 러너에서 집단 목록(1페이지)은 3초에 받고 소속회사 페이지 하나가
+# "_ssl.c:993: The handshake operation timed out" 로 끊겨 13일째 갱신이 멈췄다.
+# 로컬에선 TLS 핸드셰이크가 0.1초 — 해외 러너↔공공데이터포털 구간의 간헐 지연이라 재시도로 흡수한다.
+RETRY_WAITS = (5, 15, 30, 60)
+
+
+def _fetch_with_retry(req: urllib.request.Request, waits=RETRY_WAITS, sleep=time.sleep) -> bytes:
+    last: Exception | None = None
+    for attempt in range(len(waits) + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=90, context=_SSL_CTX) as r:
+                return r.read()
+        except urllib.error.HTTPError as e:
+            # 4xx(키·파라미터 오류)는 다시 쳐도 같다. 5xx·429 만 재시도.
+            if e.code < 500 and e.code != 429:
+                raise
+            last = e
+        except (urllib.error.URLError, TimeoutError, ssl.SSLError, ConnectionError, OSError) as e:
+            last = e
+        if attempt < len(waits):
+            print(f"  [재시도 {attempt + 1}/{len(waits)}] {type(last).__name__}: {last} — {waits[attempt]}초 후")
+            sleep(waits[attempt])
+    assert last is not None
+    raise last
+
+
 def api_get(url: str, params: dict) -> ET.Element:
     key = os.environ.get("DATA_GO_KR_KEY", "").strip()
     if not key:
@@ -123,8 +164,7 @@ def api_get(url: str, params: dict) -> ET.Element:
     for k, v in params.items():
         qs += f"&{k}={urllib.parse.quote(str(v))}"
     req = urllib.request.Request(f"{url}?{qs}", headers=UA)
-    with urllib.request.urlopen(req, timeout=60) as r:
-        raw = r.read()
+    raw = _fetch_with_retry(req)
     root = ET.fromstring(raw)
     # 게이트웨이 오류(미등록 키 등)는 OpenAPI_ServiceResponse 로 온다
     if root.tag == "OpenAPI_ServiceResponse":

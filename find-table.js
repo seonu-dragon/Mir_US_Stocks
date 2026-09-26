@@ -51,6 +51,15 @@ function ftDivInfo(item) {
   return core ? core.dividendInfo(item, ftFund(item), ftCal(item)) : { divYield: null, dps: null, payoutRatio: null, deficit: false };
 }
 
+// map_fundamentals 의 divSrc(배당수익률 기준) → 사용자용 한 줄
+const FT_DIV_SRC_LABEL = {
+  ttm: "최근 12개월 지급 배당 합 ÷ 현재가",
+  yahoo: "야후 배당수익률",
+  finnhub: "Finnhub 최근 12개월 배당수익률",
+};
+
+function ftSector(s) { return typeof sectorLabelKo === "function" ? sectorLabelKo(s) : s; }
+
 function ftFmtDps(v) {
   if (v == null) return "—";
   return ftMarket() === "kr" ? `${Math.round(v).toLocaleString("ko-KR")}원` : `$${v.toFixed(2)}`;
@@ -84,7 +93,7 @@ function ftCell(item, key) {
     case "rsi14": { const v = typeof rsiValue === "function" ? rsiValue(item) : n(item.rsi14); return v == null ? ["—", ""] : [String(Math.round(v)), ""]; }
     case "epsTtm": { const v = n(item.epsTtm); return v == null ? ["—", ""] : [ftDash(fmtEpsValue(v)), ""]; }
     case "newHigh": { const v = n(item.newHighDistancePct); return v == null ? ["—", ""] : [v <= 0.2 ? "신고가" : `−${v.toFixed(1)}%`, ""]; }
-    case "sector": return [escapeHtml([item.sector, item.industry].filter(Boolean).join(" · ") || "—"), "ft-text"];
+    case "sector": return [escapeHtml([ftSector(item.sector), item.industry].filter(Boolean).join(" · ") || "—"), "ft-text"];
     default: return ["—", ""];
   }
 }
@@ -202,18 +211,18 @@ function ftRenderDividend(wrap, core) {
     return `<tr data-ticker="${escapeHtml(item.ticker)}" tabindex="0">
       ${ftNameCell(i + 1, item)}
       <td class="num">${ftPriceText(item)}</td>
-      <td class="num">${r.divYield.toFixed(2)}%${flag}</td>
+      <td class="num"${r.divSrc ? ` title="${escapeHtml(FT_DIV_SRC_LABEL[r.divSrc] || "")}"` : ""}>${r.divYield.toFixed(2)}%${flag}</td>
       <td class="num">${ftFmtDps(r.dps)}</td>
       <td class="num">${payHtml}</td>
       <td class="num">${Number.isFinite(pe) && pe > 0 ? pe.toFixed(1) : "—"}</td>
       <td class="num">${ftDash(fmtBillions(item.marketCapB))}</td>
-      <td class="ft-text">${escapeHtml([item.sector, item.industry].filter(Boolean).join(" · ") || "—")}</td>
+      <td class="ft-text">${escapeHtml([ftSector(item.sector), item.industry].filter(Boolean).join(" · ") || "—")}</td>
     </tr>`;
   }).join("");
   const asOf = (typeof data === "object" && data && data.updatedAtKst) || "";
   const calAt = us ? ((window.US_STOCK_CALENDAR || {}).updatedAtKst || "") : "";
   const note = us
-    ? `배당수익률은 야후·나스닥의 최근 12개월 배당 ÷ 현재가(추정치)입니다. 주당배당금·배당성향은 시가총액 상위 약 200종목만 있습니다${calAt ? `(${escapeHtml(calAt)})` : ""}. 상위권에는 폐쇄형 펀드·신탁이 섞일 수 있고, 분배금에 원금 반환이 포함될 수 있습니다.`
+    ? `배당수익률은 최근 12개월 실제 지급 배당 합 ÷ 현재가입니다(특별배당 포함, 배당 기록이 빈 종목은 야후·Finnhub 값 — 칸에 마우스를 올리면 기준 표시). 배당성향은 시가총액 상위 약 200종목만 있습니다${calAt ? `(${escapeHtml(calAt)})` : ""}. 상위권에는 폐쇄형 펀드·신탁이 섞일 수 있고, 분배금에 원금 반환이 포함될 수 있습니다.`
     : `배당수익률·주당배당금은 네이버·KRX 공식 값, 배당성향은 DART 재무지표입니다(직전 사업연도 기준).`;
   wrap.innerHTML = ftTableHtml(head, body, "ft-list-table")
     + `<p class="ft-list-note">${note} 적자 기업은 배당성향을 계산하지 않습니다. ETF 제외. 과거 배당이 앞으로의 배당을 보장하지 않으며 투자 권유가 아닙니다.${asOf ? ` 가격 기준 ${escapeHtml(asOf)}.` : ""}</p>`;

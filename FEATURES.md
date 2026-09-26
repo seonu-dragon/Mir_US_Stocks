@@ -187,6 +187,7 @@
   - 필드는 스냅샷·map_fundamentals 에 이 시장에서 30종목 이상 값이 있는 것만 자동완성·필드 목록에 보인다(KR 부채비율·성장률, US 예상 EPS 성장률 등 시장별로 다름). 집계 모집단은 시장 전체(ETF 제외), 유니버스 선택은 결과만 거른다.
   - 사용자 정의 열(최대 4개, 머리글 클릭 정렬), 공유 링크(`?tab=search&sub=formula&fx=<토큰>`), 저장은 **저장형 스크리너와 같은 목록**(`kind: "formula"`)이라 편입/이탈 델타가 그대로 동작하고 기존 저장 셀렉트에서도 `[수식]` 으로 열린다.
   - 결과 옆에 "이 조건은 과거 검증되지 않았습니다" 표시. 3차 스크리너 백테스트 연결 지점: `window.MirFormulaBacktest.render(slotEl, { compiled, source, market, columns })` 를 정의하면 `#fxBacktestSlot` 에 붙는다(없으면 자리 숨김).
+- **재무 섹션 (2026-09-26, `financials.js` + `financials-core.js`)**: 종목 분석 뷰의 종목 이벤트 위(`#financialsSection`). 연간(최대 10년)/분기(최근 12분기) 토글, 차트 항목(매출·영업이익 + 영업이익률 선 / 순이익·희석 EPS / 현금흐름 OCF·설비투자·FCF / 현금·총차입금 / 주식수), 파생 지표 표(최근 5개 회계연도 + TTM: FCF·FCF 마진·영업이익률·ROIC·순차입금/EBITDA·주식수 증감·SBC/매출·이익의 질·유동비율 — 정의는 지표명 툴팁과 `financials-core.js` 머리 주석), 계정 원값 표(접이식), 출처·기준 결산기·최근 분기·반영 공시일 표시. 결측은 "—"(추정으로 안 채움), 누계에서 빼서 만든 분기 값은 †·옅은 막대. 금융업은 FCF·순차입금·ROIC·유동비율을 표에서 빼고, 20-F/40-F(해외발행인)는 보고통화·ADR 주식수 기준 차이를 각주로 알린다. 인덱스(`window.FINANCIALS_INDEX`, FEATURE_DATA `financialsIndex`, 시장별·lazy)에 있는 종목만 종목별 파일을 받는다(없으면 섹션 숨김, 404 없음). AI 모드의 "재무" 패널도 같은 데이터(없으면 옛 `financialsHistory` 표). 신뢰도 센터 "재무 확장" 등록.
 - **밸류에이션 랭킹**:
   - PE, Forward PE, PEG, ROE, 배당수익률 등의 재무 지표를 기준으로 섹터 및 시가총액별 종목 정렬 및 검색.
 - **공매도 잔고 & 숏스퀴즈 스캐너 (Short Interest)**:
@@ -239,6 +240,13 @@
   - 동일 비중(Equal) 또는 커스텀 목표 비중에 따라 현재 포트폴리오 평가금액에서 각 종목별로 매수/매도해야 할 정밀 수량 계산.
 - **포트폴리오 스트레스 테스트**:
   - 시장 급락, 기술주 조정, 경기 침체, 금리 급등 등 시나리오별 가정 충격률을 포트폴리오에 반영하여 예상 손실액과 위험 노출 비중 변화를 시뮬레이션.
+  - **과거 위기 재생 (2026-09-26, `portfolio-risk.js`)** — 같은 카드의 `가정 시나리오 | 과거 위기 재생` 토글, 딥링크 `?tab=tools&pfrisk=crisis`: 현재 평가액 비중으로 2008 금융위기(2008-09-01~2009-03-09)·2018 Q4(10-01~12-24)·2020 코로나(02-19~03-23)·2022 금리 급등(01-03~10-12)·2024-08-05 전후(07-31~08-09)를 매수 후 보유로 통과시켜 구간 수익률·구간 내 최대낙폭·최저점·기준 지수(SPY/코스피) 비교. 종목마다 **실측**(상세 일봉 약 5년 → 없으면 위기 데이터셋) / **대리**(US 섹터 SPDR, XLRE·XLC 상장 전이면 SPY / KR 코스피·코스닥 지수의 일별 수익률 × 최근 3년 회귀 β, β 는 0~3 제한·이력 없으면 1 가정)를 표시하고 구간별 **대리 비중**을 적는다. 데이터 `data/crisis_history.json/.js`(`window.CRISIS_HISTORY`, lazy) — 빌더 `scripts/build_crisis_history.py`, 워크플로우 `Crisis history (stress replay)`(매월 1일). 워커 차트 프록시는 range=5y 고정이라(`fetchChart`) 5년 넘는 구간을 브라우저에서 받을 수 없어 빌드 시점에 받는다.
+- **위험 기여도 · 리스크 패리티 · 최소분산 (2026-09-26, `portfolio-risk.js` · 계산 `portfolio-risk-core.js`)** — 내 투자 › 도구, 딥링크 `?tab=tools&pfrisk=alloc`:
+  - 대상: 보유 포트폴리오(평가액 비중) 또는 포트폴리오 시뮬레이터의 종목·비중. 추정 기간 최근 1/3/5년(공통 거래일 일별 수익률, 상세 일봉 실측만 — 합성 이력 종목은 제외하고 표시).
+  - 공분산은 **Ledoit-Wolf 축소**(scikit-learn `LedoitWolf` 와 같은 식, 축소 강도 δ 표시). 종목별 연 변동성·위험 기여도(비중×한계기여/포트 변동성)·리스크 패리티 비중(순환 좌표하강)·최소분산 비중(롱온리, 종목 상한 입력, 가속 사영경사)을 현재 비중과 나란히.
+  - **표본 외 비교**: 추정 기간 앞 절반으로 비중을 정하고 뒤 절반의 실현 변동성·최대낙폭·수익률을 현재·동일·리스크 패리티·최소분산이 나란히(매일 같은 비중 유지 가정, 분할 1회 = 표본 1개라고 명시).
+  - `리스크 패리티/최소분산 → 리밸런싱 목표`(계산에서 빠진 종목은 현재 비중 유지) / 시뮬레이터 대상이면 `→ 시뮬레이터 직접 비중`(0% 허용) 후 실행.
+  - 최대 샤프·평균분산(기대수익 입력) 최적화는 표본 내 과적합이라 넣지 않았다(화면에도 사유 표기).
 - **포지션 크기 계산기 (Risk Budget)**:
   - 허용 손실 비율(%) 및 최대 투자 비중(%)을 바탕으로 손절가(Stop Loss) 기준 보수적인 최적의 진입 수량 계산.
 - **원화 기준 포트폴리오 (KRW View)**:
@@ -261,6 +269,7 @@
   - 로컬스토리지에 저장되는 포트폴리오, 관심종목, 알림 설정을 클라우드에 백업 및 다른 기기에서 불러오는 동기화 기능.
 - **포트폴리오 시뮬레이터 (Backtester)**:
   - 구성한 포트폴리오 비중으로 과거 특정 기간 동안 매수 후 보유(Buy and Hold)했을 때의 누적 수익률 차트, MDD, 샤프 지수, 변동성 등의 투자 위험 지표 시뮬레이션.
+  - **성과 지표(티어시트, 2026-09-26)**: 결과 아래 월별 수익률 히트맵(가로 스크롤은 표 안에서만)·연도별 수익(벤치마크 대비)·낙폭 구간 상위 5(고점·저점·회복일·깊이·기간)·롤링 12개월 샤프/β 차트·연환산 수익률·소르티노·칼마·상/하방 포착률·연환산/누적 초과수익. empyrical 공식을 `portfolio-risk-core.js` 로 옮겼고(연 252거래일, 무위험 0) 공식·기간을 화면에 적는다.
 - **적립식(주식 모으기) 시뮬레이터 (DCA)** — 내 투자 › 도구, 딥링크 `?tab=tools&dca=AAPL:60,MSFT:40`:
   - "매월/매주/매 거래일 N원(또는 $N)씩 샀다면?"을 과거 일봉 종가로 계산. 종목 1~5개(비중 분할), 매수일(1~28일·마지막 거래일)/요일, 기간(기본 최근 3년).
   - 출력: 누적 투자금 vs 평가액 차트(호버 툴팁), 총수익률, 연환산 **XIRR**(적립식은 CAGR 이 아니다), 시간가중 최대 낙폭, 최저 평가수익률, 종목별 보유 수량·평균 매수단가, 같은 총액 거치식(CAGR)·지수(SPY/KODEX 200 등) 적립식 비교.
@@ -413,6 +422,12 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - 미국 마켓 스냅샷 빌더의 로직을 복제 및 수정하여 코스피/코스닥 종목 데이터를 패러렐 수집하여 `data/korea/market_snapshot.json` 생성.
 - **데일리 업데이트 등록 스크립트 (`register_daily_update.ps1` / `run_daily_update.bat`)**:
   - 매일 오전 6시(한국 표준시)에 윈도우 작업 스케줄러(Windows Task Scheduler)에 스냅샷 데이터 수집 스크립트가 자동 가동되도록 OS 백그라운드 등록 및 구동 제어.
+- **재무 확장 빌더 (`build_financials_us.py` · `build_financials_kr.py` + `financials_common.py`, 2026-09-26)**:
+  - 주간(`Weekly earnings history refresh` 워크플로우의 별도 `financials` 잡, 일요일 03:02 KST · 수동 실행 시 `only_financials`·`kr_max_calls` 입력). **스키마·필드명·단위·로드 방법은 `scripts/financials_common.py` docstring** — 역DCF(ttm.fcf·sharesDilAvg/sharesOut·netDebt)·US PER 밴드(quarterly[].epsDil → `MirFinCore.ttmSeries`, equity)·재무 위험 점수는 여기서 읽는다.
+  - 계정(키가 없으면 결측): rev·op·net·pretax·tax·interest·da·sbc·ocf·capex(양수=유출)·fcf·epsDil·sharesDilAvg / assets·liab(부채총계)·equity·cash·debt(차입금+사채, 리스 제외)·netDebt·curAssets·curLiab·receivables·sharesOut. 옛 `financialsHistory` 의 `debt` 는 부채총계였다 — 새 스키마의 `debt` 는 차입금이다.
+  - US: SEC companyfacts, 시총 상위 1,100(ETF 제외). us-gaap/ifrs-full 태그 대체 매핑표(매출 9개 후보 등), 기간마다 첫 태그 — 누계 빼기는 같은 태그끼리만. 분기 = 직접 3개월 값 또는 YTD 차이, 4분기 = 연간 − 9개월 누계. 20-F/40-F·금융업(Deposits·보험 태그·FINANCIAL 섹터)·비USD 보고통화는 flags. 증분: EDGAR 일별 색인(`daily-index/master.YYYYMMDD.idx`)으로 새 10-K/10-Q/20-F/40-F 를 낸 CIK 만 다시 받고, 120일 넘은 종목은 실행당 200개씩 재확인(상태 `data/financials_state.json`). 초당 ~8회·User-Agent.
+  - KR: DART fnlttSinglAcntAll(연결 우선·없으면 별도, 회사별 고정) + stockTotqySttus(보통주 유통주식수). 분기 보고서의 3개월·누계·전년 비교 컬럼을 모두 써서 8개 보고서로 12분기를 만든다. 하루 한도를 같은 워크플로우의 DART 빌더와 나눠 쓰므로 `--max-calls`(기본 4,000) 안에서 우선순위 계층(최신 사업보고서·최신 분기 → 나머지 최근 보고서 → 3년 전 사업보고서 → 주식수 → 6년 전)으로 받고, 받은 보고서는 종목 파일 `_raw.reports` 에 적어 다음 주에 이어 받는다. 감가상각비·주식보상비용·이자비용은 본문에 없는 회사가 많아 대부분 결측, 기말일은 DART 가 주지 않아 없음. 법인세 부호는 "세전 − 법인세 ≈ 순이익" 이 되는 쪽으로 표기만 맞춘다.
+  - 산출물: `data/financials/<TICKER>.json` · `data/korea/financials/<코드>.json`(종목별, 지연 로드), `data/financials_index.json/.js` · `data/korea/financials_index.json/.js`(`window.FINANCIALS_INDEX`). 신선도 `check_data_freshness.py --group financials`(8일). 순수 로직 테스트 `scripts/tests/test_financials_builders.py`, 파생 지표 `scripts/tests/test_financials_core.mjs`(CI).
 - **산업·매크로 선행지표 빌더 (`build_industry_indicators.py` + `industry_fetchers.py` + `industry_sensitivity.py`)**:
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.
@@ -420,6 +435,8 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - KR 은 `Korea close briefing` 브리핑 뒤, US 는 `Daily US market snapshot` 스냅샷 발행 뒤 스텝(둘 다 `!cancelled()` + continue-on-error — 브리핑·스냅샷 실패와 서로 막지 않는다). 등락률·거래대금은 라이브 소스의 거래일 봉으로 다시 확인한다(KR 네이버 m.stock, US 야후 일봉 — details 일봉은 날짜가 빠지거나 늦다). US 거래일은 스냅샷 `priceDate`(야후 날짜로 정한 가격 기준일)가 1순위이고, 없을 때만 시총 상위 15종목의 야후 일봉과 스냅샷 등락률을 대조한 다수결. 00:00 UTC 뒤에 받은 야후 일봉에 마지막 거래일 봉이 빠지면(2026-09-26 run 36202139416 에서 보드가 멈춘 원인) 야후 `meta.regularMarketTime/Price`(시세 날짜가 마지막 봉의 바로 다음 거래일일 때만) → details 마지막 봉 → 그 종목 `priceDate` 가 거래일인 스냅샷 값 순으로 확인하고, 날짜를 확인 못 한 종목만 뺀다(보드 항목의 `priceSource`).
   - 근거: KR DART(`list.json` 종목별 + 기존 `kr_disclosures.json`)·네이버 뉴스 검색 API(키 없거나 거부되면 Google News RSS)·종목 상세 뉴스 / US SEC 8-K(efts 당일분 + `material_events.json`)·Google News RSS·종목 상세 야후 뉴스, 업종 시총가중 평균, 지수. 제목에 종목명/티커가 없는 기사는 버린다.
   - LLM 은 뉴스·공시 근거가 있는 종목만 10개 묶음으로 호출(시장당 하루 1~2회, 상한 4회). 같은 거래일 보드가 이미 정상이면 호출 없이 끝나고, 요약이 실패한 보드는 거래일당 최대 2회까지 재시도. 요약이 전부 실패하면 목록은 "요약 실패" 로 발행하고 exit 1.
+- **과거 위기 구간 빌더 (`build_crisis_history.py`, 2026-09-26)**:
+  - 매월 1일 11:23 KST(`Crisis history (stress replay)`, 수동 dispatch 의 `refetch` 로 전부 재수집). Yahoo v8 chart(period1/period2) 일봉 → 대리 지수(SPY·섹터 SPDR 11·^KS11·^KQ11)의 다섯 구간 + 최근 3년 종가, 시가총액 상위 US 250·KR 150 종목의 2008·2018 Q4·2020 구간. 값은 구간 첫날 = 1000 정규화 정수(분할 조정·배당 미포함)라 이미 받은 종목은 다시 받지 않고, 상장 전(심볼 없음)은 매번 다시 확인. 기준 지수 실패·종목 수 30% 넘게 감소 시 기존 파일 유지 + exit 1. ~390KB, 스트레스 테스트의 과거 위기 재생을 열 때만 로드.
 - **신호 원장·성적표 빌더 (`build_signal_ledger.mjs`, 2026-09-26)**:
   - `Daily US market snapshot`(특징주 뒤) · `Korea close briefing`(특징주 뒤) 끝의 `Record signal ledger` 스텝(`!cancelled()` + continue-on-error). `--record us|kr` 가 그날 화면 규칙(`signal-scorecard-core.js` 의 `extractSignals`)으로 신호를 다시 뽑아 원장 끝에 붙이고(같은 공시·지정·거래일은 1회, 상태 신호는 쿨다운 28일·내부자 60일, 기록일보다 7일 넘게 앞선 사건은 제외) 두 시장 성적표를 다시 집계한다. 발행은 `sec_client.py --publish`.
   - 무결성: 실행마다 manifest 의 파일 해시·묶음(offset/bytes) 해시·체인을 먼저 대조하고, 어긋나면 붙이지 않고 exit 1(성적표에는 '기록 해시 불일치'). `.gitattributes` 에서 원장은 `-text`(줄끝 변환 금지).

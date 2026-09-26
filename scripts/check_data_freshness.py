@@ -21,6 +21,8 @@
     py scripts/check_data_freshness.py --group earnings-move   # daily-earnings-calendar.yml 말미
     py scripts/check_data_freshness.py --group earnings-releases  # material-events.yml 말미
     py scripts/check_data_freshness.py --group kr-valuation-band  # kr-valuation-band.yml 말미
+    py scripts/check_data_freshness.py --group financials         # weekly-earnings-history.yml financials 잡
+    py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -182,6 +184,12 @@ CHECKS = {
     ],
     # material-events.yml(매일 13:23 KST) 의 보도자료 요약 스텝. 새 2.02 가 없어도 실행마다
     # 타임스탬프를 올리므로 나이가 늙으면 빌더(키·Gemini·SEC)가 죽은 것이다.
+    # weekly-earnings-history.yml 의 financials 잡(일요일 03:02 KST). 재무 확장 인덱스는 실행마다
+    # 타임스탬프를 새로 쓴다(새 공시가 없어도). 주 1회라 한 번 실패를 바로 잡도록 8일.
+    "financials": [
+        ("data/financials_index.json", 8, True),
+        ("data/korea/financials_index.json", 8, True),
+    ],
     "earnings-releases": [
         ("data/earnings_releases.json", 4, False),
     ],
@@ -189,6 +197,11 @@ CHECKS = {
     # 12일이면 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료 시 전량 실패).
     "kr-valuation-band": [
         ("data/korea/valuation_band/meta.json", 12, True),
+    ],
+    # crisis-history.yml(매월 1일). 과거 구간이라 내용은 고정이지만 실행마다 updatedAtKst 와
+    # 대리 지수 최근 3년(β 추정용)을 새로 쓴다 — 40일이면 한 번 실패, 0건(count)도 잡는다.
+    "crisis-history": [
+        ("data/crisis_history.json", 40, True),
     ],
 }
 

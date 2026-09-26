@@ -3220,6 +3220,8 @@ function setupEvents() {
     initBacktestDateRange();       // 스냅샷 기준 날짜 범위 갱신
     // 적립식 시뮬레이터(dca.js): 반대 시장 티커를 비우고 통화·벤치마크를 새 시장으로.
     if (window.MirDca) { window.MirDca.onMarketChange(); window.MirDca.setup(); }
+    // 위험 기여도·티어시트·과거 위기 재생(portfolio-risk.js): 반대 시장 결과를 버린다.
+    if (window.MirPortfolioRisk) { window.MirPortfolioRisk.onMarketChange(); window.MirPortfolioRisk.setup(); }
     // 투자 가설 추적(thesis.js): 현재 시장 가설만 다시 평가.
     if (window.MirThesis) window.MirThesis.onMarketChange();
     return;
@@ -3402,6 +3404,7 @@ function setupEvents() {
   setupCompareEvents();
   setupBacktestEvents();
   if (window.MirDca) window.MirDca.setup(); // 적립식 시뮬레이터(내 투자 › 도구)
+  if (window.MirPortfolioRisk) window.MirPortfolioRisk.setup(); // 위험 기여도·과거 위기 재생(내 투자 › 도구)
   if (window.MirThesis) window.MirThesis.setup(); // 투자 가설 추적(내 투자 › 도구) — 방문 시 조건 점검
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
@@ -4969,6 +4972,7 @@ function renderSearch(options = {}) {
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
+  if (typeof renderFinancials === "function") renderFinancials(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6334,6 +6338,11 @@ const TRUST_RECOVERY = {
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
   "PER·PBR 밴드": { kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" }, tabs: "종목 탭 · 분석 · PER·PBR 밴드" },
+  "과거 위기 구간": {
+    us: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
+    kr: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
+    tabs: "내 투자 · 도구 · 스트레스 테스트 · 과거 위기 재생",
+  },
   "신호 성적표": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_signal_ledger.mjs --record us" },
     kr: { workflow: "Korea close briefing", script: "scripts/build_signal_ledger.mjs --record kr" },
@@ -6346,6 +6355,11 @@ const TRUST_RECOVERY = {
   },
   "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
   "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
+  "재무 확장": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_us.py" },
+    kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
+    tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
+  },
   "산업 선행지표": {
     us: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
     kr: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
@@ -6569,6 +6583,16 @@ function dataTrustSources() {
       ];
       if (L.integrity !== "ok" && row.status.key === "good") row.status = { ...row.status, key: "warn", label: "기록 해시 불일치" };
     }
+    rows.push(row);
+  }
+  // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
+  rows.push(source("재무 확장", cfg.id === "kr" ? "DART 전체재무제표" : "SEC EDGAR XBRL companyfacts", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일 03:02", "financialsIndex"));
+  // 과거 위기 구간(2026-09-26) — 과거 가격이라 내용은 고정, 월 1회 새 상위 종목만 보탠다. 40일 여유.
+  {
+    const ch = window.CRISIS_HISTORY;
+    const row = source("과거 위기 구간", "Yahoo Finance 일봉(2008·2018·2020·2022·2024 구간)", ch, ["markets"], 960, "매월 1일 · 과거 구간 고정", "crisisHistory");
+    const mk = ch && ch.markets && ch.markets[cfg.id];
+    if (mk) row.extra = [["종목 시계열", `${Object.keys(mk.series || {}).length.toLocaleString()}개 (상위 ${mk.universe || "—"}종목 + 대리 지수)`], ["상장 전·없음", `${Object.keys(mk.missing || {}).length.toLocaleString()}종목 — 화면에서 대리(지수 × β)로 계산`]];
     rows.push(row);
   }
   if (cfg.id === "us") {

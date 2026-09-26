@@ -50,6 +50,9 @@ jobs:
       - name: Build id stamps (?v= / MIR_BUILD_ID / sw.js)
         run: python scripts/stamp_build_id.py --check
 
+      - name: CSS brace balance
+        run: python scripts/check_css_balance.py
+
       # index/analysis 에 인라인된 critical CSS 가 styles.css 와 동기인지.
       - name: Critical CSS in sync
         run: python scripts/sync_critical_css.py --check
@@ -104,6 +107,14 @@ jobs:
         run: |
           node scripts/tests/test_signal_scorecard_core.mjs
           node scripts/build_signal_ledger.mjs --verify
+      # 재무 확장 파생 지표(financials-core.js): ROIC·순차입금/EBITDA·주식수 증감·TTM 시계열(연속 분기만)·결측 전파.
+      - name: Financials core tests
+        run: node scripts/tests/test_financials_core.mjs
+
+      # 포트폴리오 위험 분석 순수 계산(portfolio-risk-core.js): Ledoit-Wolf(scikit-learn 값)·리스크 패리티 수렴·
+      # 최소분산(상한)·낙폭 구간·월별 수익·empyrical 지표·위기 재생 경로.
+      - name: Portfolio risk tests
+        run: node scripts/tests/test_portfolio_risk_core.mjs
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

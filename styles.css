@@ -14651,6 +14651,7 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
   #tab-bulk .table-wrap .col-sub { display: none; }
 }
 
+/* =====================================================================
    UI 1단계 (2026-09-26) — 토큰·표·칩·탭 정돈
    원칙: "상자 대신 선과 여백, 색 대신 굵기와 회색 단계"(네이버 증권 비교 계획서 2·4·5절).
    레이아웃 재배치(종목 상세 좌측 패널·오른쪽 레일)는 2단계 이후라 여기 없다.
@@ -14953,3 +14954,162 @@ html[data-market="kr"] .ai-dash { --pos: #f25a5d; --neg: #4d8ffa; }
 .ci-hist-table th { color: var(--text-muted); font-weight: 500; }
 .ci-hist-table .num { text-align: right; }
 /* ==============================================================
+   종목 상세(종목 › 분석) — UI 2단계: 좌측 고정 요약 패널 + 본문 6탭(stock-view.js)
+   ============================================================== */
+.stock-detail {
+  --sd-side-w: 336px;
+  display: grid;
+  grid-template-columns: var(--sd-side-w) minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+  margin-top: var(--space-3);
+}
+.sd-side {
+  position: sticky;
+  top: calc(var(--sd-sticky-top, 0px) + 8px);
+  max-height: calc(100vh - var(--sd-sticky-top, 0px) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.sd-main { position: relative; min-width: 0; }
+.sd-side > *, .sd-extra > * { margin: 0; }
+
+/* 요약: 종목명·가격·등락·기준 시각 */
+.sd-quote { padding: 16px; }
+.sd-idline { margin: 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.4; }
+.sd-name { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 4px 0 6px; font-size: var(--fs-18); font-weight: var(--fw-title); letter-spacing: -0.4px; line-height: 1.35; }
+.sd-name .watch-star { font-size: var(--fs-18); }
+.sd-price-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
+.sd-price { font-size: var(--fs-28); font-weight: var(--fw-title); line-height: 1.2; letter-spacing: 0; font-variant-numeric: tabular-nums; }
+.sd-change { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; margin: 2px 0 0; font-size: var(--fs-body); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
+.sd-asof { color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); }
+.sd-quote .session-quote { margin: 6px 0 0; }
+.sd-quote .audit-notice { margin: 10px 0 0; }
+.sd-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; margin: 12px 0 0; border-top: 1px solid var(--line); }
+.sd-fact { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sub); }
+.sd-fact dt { color: var(--text-2); white-space: nowrap; }
+.sd-fact dd { margin: 0; font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; text-align: right; }
+.sd-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.sd-actions .compact-btn { flex: 1 1 auto; }
+
+/* 요약 아래 블록: 시세정보 · 투자정보 · 컨센서스 · 목표주가 범위 · 데이터 품질 */
+.sd-block { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; background: var(--panel); }
+.sd-side .range52-card { border-radius: var(--r-md); }
+.sd-extra { display: flex; flex-direction: column; gap: 12px; }
+.sd-invest .qi-invest { padding: 0; border: 0; background: transparent; }
+.sd-invest .qi-invest > .qi-grid { grid-template-columns: minmax(0, 1fr); }
+.sd-invest .qi-row-empty { display: none; }
+.sd-consensus .krflow-card { margin: 0; padding: 0; border: 0; background: transparent; }
+.sd-consensus .krflow-head b { font-size: var(--fs-body); }
+.sd-block[hidden], .sd-flow[hidden], .event-card-smart[hidden], .sd-earnings-card[hidden] { display: none; }
+.sd-more-btn { display: none; }
+.sd-quality { border: 1px solid var(--line); border-radius: var(--r-md); padding: 0 14px; background: var(--panel); }
+.sd-quality > summary { padding: 10px 0; color: var(--text-2); font-size: var(--fs-sub); cursor: pointer; }
+.sd-quality[open] > summary { border-bottom: 1px solid var(--line); }
+.sd-quality .data-quality-card { margin: 0; padding: 10px 0 12px; border: 0; background: transparent; }
+.sd-quality .quality-head h3 { display: none; }
+.sd-quality .quality-head p { margin: 0; font-size: var(--fs-cap); }
+.sd-quality .quality-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+
+/* 본문 탭 */
+.sd-tabs {
+  position: sticky;
+  top: var(--sd-sticky-top, 0px);
+  z-index: var(--z-sticky);
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+.sd-tabs::-webkit-scrollbar { display: none; }
+.sd-tab {
+  flex: none;
+  min-height: 44px;
+  margin-bottom: -1px;
+  padding: 10px 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-2);
+  font-size: var(--fs-body);
+  font-weight: var(--fw-body);
+  white-space: nowrap;
+  box-shadow: none;
+}
+.sd-tab:hover { color: var(--text); background: transparent; }
+.sd-tab.is-active { color: var(--text); border-bottom-color: var(--ink); font-weight: var(--fw-title); }
+.sd-tab.is-empty:not(.is-active) { color: var(--muted); }
+.sd-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.sd-views { position: relative; padding-top: 16px; }
+.sd-view { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.sd-view > * { margin-top: 0; margin-bottom: 0; min-width: 0; }
+/* 숨은 탭: display:none 이면 안쪽 SVG 가 폭 0 으로 그려진다(재무·밴드·DCF 는 호스트 폭을 잰다).
+   폭은 그대로 두고 높이만 0 · 안 보이게 — 숨은 채로 다시 그려도 보이는 순간 제 폭이다. */
+.sd-view:not(.is-active) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+.sd-view .analysis-balanced-grid { margin-top: 0; }
+.sd-view .chart-card { height: auto; }
+.sd-empty { margin: 0; padding: 40px 16px; color: var(--muted); font-size: var(--fs-sub); text-align: center; }
+.sd-empty[hidden] { display: none; }
+.sd-flow .sd-card-title { margin: 0 0 4px; font-size: var(--fs-16); font-weight: var(--fw-title); }
+.sd-flow { padding: 16px; }
+.sd-flow .krflow-card { margin: 0; padding: 12px 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: transparent; }
+.sd-flow .krflow-card:first-of-type { border-top: 0; }
+#stockSmartMoney { padding: 16px; }
+
+/* 개요 탭의 AI 진단 한 줄 */
+.sd-ai-teaser {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--bg-soft);
+  color: var(--text);
+  font-size: var(--fs-sub);
+  font-weight: var(--fw-body);
+  text-align: left;
+  box-shadow: none;
+}
+.sd-ai-teaser[hidden] { display: none; }
+.sd-ai-teaser:hover { border-color: var(--line-strong); background: var(--bg-soft); }
+.sd-ai-teaser-label { flex: none; color: var(--primary); font-size: var(--fs-cap); font-weight: var(--fw-title); }
+.sd-ai-teaser-text { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sd-ai-teaser-go { flex: none; color: var(--muted); }
+
+@media (max-width: 1100px) {
+  .stock-detail { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .sd-side { position: static; max-height: none; overflow: visible; }
+  .sd-more-btn { display: block; width: 100%; min-height: 40px; }
+  .sd-side:not(.is-open) .sd-extra { display: none; }
+}
+@media (max-width: 640px) {
+  .stock-detail { margin-top: var(--space-2); }
+  /* 종목 검색 줄: 입력칸과 분석 버튼을 한 줄로(가격이 첫 화면에 더 위로) */
+  #sub-analysis > .toolbar { flex-wrap: nowrap; align-items: flex-end; }
+  #sub-analysis > .toolbar > label { flex: 1 1 auto; min-width: 0; }
+  #sub-analysis > .toolbar > #searchButton { flex: none; width: auto; padding-inline: 18px; }
+  .sd-quote { padding: 14px; }
+  .sd-tab { padding: 10px 11px; font-size: var(--fs-sub); }
+  .sd-views { padding-top: 12px; }
+  .sd-view { gap: 12px; }
+}

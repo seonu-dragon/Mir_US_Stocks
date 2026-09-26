@@ -1,6 +1,6 @@
 // 종목 분석 뷰의 시세정보(52주 게이지 · 전일/시가/고가/저가/거래량/거래대금)와 투자정보(시총·PER·EPS·PBR·BPS·
 // 배당·PSR·동일업종 비교·ETF NAV/괴리율) 블록. 계산은 quote-info-core.js(MirQuoteCore), 여기는 표시만.
-// 시세정보는 #range52Bar 에(render52wRange 가 위임), 투자정보는 핵심 지표 카드(renderFundamentals) 맨 위에 들어간다.
+// 시세정보는 #range52Bar 에(render52wRange 가 위임), 투자정보는 renderFundamentals 가 종목 상세 좌측 요약의 #stockInvestInfo 에 넣는다.
 
 function qiCore() { return window.MirQuoteCore || null; }
 
@@ -166,7 +166,7 @@ function qiPerShare(v) {
   return qiIsKr() ? `${Math.round(n).toLocaleString("ko-KR")}원` : `$${n.toFixed(2)}`;
 }
 
-// 핵심 지표 카드 맨 위에 넣는 투자정보 블록 HTML. f = normalizedFundamentalsForItem(item).
+// 투자정보 블록 HTML(종목 상세 좌측 요약 #stockInvestInfo). f = normalizedFundamentalsForItem(item).
 function investInfoHtml(item, f, ttm) {
   const core = qiCore();
   if (!core || !item) return "";
@@ -277,6 +277,6 @@ function refreshQuoteInfoFx() {
   if (!base) return;
   const item = applyLive(withDetail(base));
   const facts = byId("searchFacts");
-  if (facts && typeof stockFacts === "function") facts.innerHTML = stockFacts(item, "선택 종목");
+  if (facts && typeof renderSearchFacts === "function") renderSearchFacts(item);
   if (typeof renderFundamentals === "function") renderFundamentals(item);
 }

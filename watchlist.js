@@ -93,7 +93,7 @@ function toggleWatchlist(ticker) {
   const facts = byId("searchFacts");
   if (facts && selectedTicker === t) {
     const base = selectedBaseRow(t);
-    if (base) facts.innerHTML = stockFacts(applyLive(withDetail(base)), "선택 종목");
+    if (base) renderSearchFacts(applyLive(withDetail(base)));
   }
 }
 

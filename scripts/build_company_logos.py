@@ -549,13 +549,13 @@ def main() -> int:
         "count": sum(int(v.get("count") or 0) for v in markets_meta.values()),
         "markets": markets_meta,
     }
-    atomic_write_text(index_json, json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
-    atomic_write_text(out_dir / "index.js", "window.COMPANY_LOGOS = " + json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + ";\n")
+    import sec_client as sec
+
+    # 급감 방어는 위의 시장별 80% 검사가 먼저 하고, write_data 가 0건 덮어쓰기를 한 번 더 막는다.
+    sec.write_data(index_json, out_dir / "index.js", "COMPANY_LOGOS", payload, indent=None)
     atomic_write_text(state_json, json.dumps(state, ensure_ascii=False, separators=(",", ":"), sort_keys=True) + "\n")
 
     if args.push:
-        import sec_client as sec
-
         with repository_publish_lock(ROOT):
             if not sec.git_publish(["data/logos"], "company logos"):
                 return 1

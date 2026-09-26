@@ -177,6 +177,7 @@
   - "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주" 등의 자연어 입력을 파싱해 자동 스크리닝 필터를 적용하여 종목 발굴.
 - **조건 저장형 스크리너 (Saved Screener)**:
   - 사용자가 스크리닝한 조건을 저장하고 다음 날 데이터 스냅샷이 업데이트되었을 때 편입/이탈된 신규 종목의 델타(Delta)를 확인하는 추적 기능.
+- **재무 섹션 (2026-09-26, `financials.js` + `financials-core.js`)**: 종목 분석 뷰의 종목 이벤트 위(`#financialsSection`). 연간(최대 10년)/분기(최근 12분기) 토글, 차트 항목(매출·영업이익 + 영업이익률 선 / 순이익·희석 EPS / 현금흐름 OCF·설비투자·FCF / 현금·총차입금 / 주식수), 파생 지표 표(최근 5개 회계연도 + TTM: FCF·FCF 마진·영업이익률·ROIC·순차입금/EBITDA·주식수 증감·SBC/매출·이익의 질·유동비율 — 정의는 지표명 툴팁과 `financials-core.js` 머리 주석), 계정 원값 표(접이식), 출처·기준 결산기·최근 분기·반영 공시일 표시. 결측은 "—"(추정으로 안 채움), 누계에서 빼서 만든 분기 값은 †·옅은 막대. 금융업은 FCF·순차입금·ROIC·유동비율을 표에서 빼고, 20-F/40-F(해외발행인)는 보고통화·ADR 주식수 기준 차이를 각주로 알린다. 인덱스(`window.FINANCIALS_INDEX`, FEATURE_DATA `financialsIndex`, 시장별·lazy)에 있는 종목만 종목별 파일을 받는다(없으면 섹션 숨김, 404 없음). AI 모드의 "재무" 패널도 같은 데이터(없으면 옛 `financialsHistory` 표). 신뢰도 센터 "재무 확장" 등록.
 - **밸류에이션 랭킹**:
   - PE, Forward PE, PEG, ROE, 배당수익률 등의 재무 지표를 기준으로 섹터 및 시가총액별 종목 정렬 및 검색.
 - **공매도 잔고 & 숏스퀴즈 스캐너 (Short Interest)**:
@@ -403,6 +404,12 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - 미국 마켓 스냅샷 빌더의 로직을 복제 및 수정하여 코스피/코스닥 종목 데이터를 패러렐 수집하여 `data/korea/market_snapshot.json` 생성.
 - **데일리 업데이트 등록 스크립트 (`register_daily_update.ps1` / `run_daily_update.bat`)**:
   - 매일 오전 6시(한국 표준시)에 윈도우 작업 스케줄러(Windows Task Scheduler)에 스냅샷 데이터 수집 스크립트가 자동 가동되도록 OS 백그라운드 등록 및 구동 제어.
+- **재무 확장 빌더 (`build_financials_us.py` · `build_financials_kr.py` + `financials_common.py`, 2026-09-26)**:
+  - 주간(`Weekly earnings history refresh` 워크플로우의 별도 `financials` 잡, 일요일 03:02 KST · 수동 실행 시 `only_financials`·`kr_max_calls` 입력). **스키마·필드명·단위·로드 방법은 `scripts/financials_common.py` docstring** — 역DCF(ttm.fcf·sharesDilAvg/sharesOut·netDebt)·US PER 밴드(quarterly[].epsDil → `MirFinCore.ttmSeries`, equity)·재무 위험 점수는 여기서 읽는다.
+  - 계정(키가 없으면 결측): rev·op·net·pretax·tax·interest·da·sbc·ocf·capex(양수=유출)·fcf·epsDil·sharesDilAvg / assets·liab(부채총계)·equity·cash·debt(차입금+사채, 리스 제외)·netDebt·curAssets·curLiab·receivables·sharesOut. 옛 `financialsHistory` 의 `debt` 는 부채총계였다 — 새 스키마의 `debt` 는 차입금이다.
+  - US: SEC companyfacts, 시총 상위 1,100(ETF 제외). us-gaap/ifrs-full 태그 대체 매핑표(매출 9개 후보 등), 기간마다 첫 태그 — 누계 빼기는 같은 태그끼리만. 분기 = 직접 3개월 값 또는 YTD 차이, 4분기 = 연간 − 9개월 누계. 20-F/40-F·금융업(Deposits·보험 태그·FINANCIAL 섹터)·비USD 보고통화는 flags. 증분: EDGAR 일별 색인(`daily-index/master.YYYYMMDD.idx`)으로 새 10-K/10-Q/20-F/40-F 를 낸 CIK 만 다시 받고, 120일 넘은 종목은 실행당 200개씩 재확인(상태 `data/financials_state.json`). 초당 ~8회·User-Agent.
+  - KR: DART fnlttSinglAcntAll(연결 우선·없으면 별도, 회사별 고정) + stockTotqySttus(보통주 유통주식수). 분기 보고서의 3개월·누계·전년 비교 컬럼을 모두 써서 8개 보고서로 12분기를 만든다. 하루 한도를 같은 워크플로우의 DART 빌더와 나눠 쓰므로 `--max-calls`(기본 4,000) 안에서 우선순위 계층(최신 사업보고서·최신 분기 → 나머지 최근 보고서 → 3년 전 사업보고서 → 주식수 → 6년 전)으로 받고, 받은 보고서는 종목 파일 `_raw.reports` 에 적어 다음 주에 이어 받는다. 감가상각비·주식보상비용·이자비용은 본문에 없는 회사가 많아 대부분 결측, 기말일은 DART 가 주지 않아 없음. 법인세 부호는 "세전 − 법인세 ≈ 순이익" 이 되는 쪽으로 표기만 맞춘다.
+  - 산출물: `data/financials/<TICKER>.json` · `data/korea/financials/<코드>.json`(종목별, 지연 로드), `data/financials_index.json/.js` · `data/korea/financials_index.json/.js`(`window.FINANCIALS_INDEX`). 신선도 `check_data_freshness.py --group financials`(8일). 순수 로직 테스트 `scripts/tests/test_financials_builders.py`, 파생 지표 `scripts/tests/test_financials_core.mjs`(CI).
 - **산업·매크로 선행지표 빌더 (`build_industry_indicators.py` + `industry_fetchers.py` + `industry_sensitivity.py`)**:
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.

@@ -13942,3 +13942,44 @@ html[data-view-mode="basic"] .sub-tab[data-advanced="true"] { display: none; }
   .sig-score-grid { grid-template-columns: 1fr; }
   .sig-score-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ===== 재무 섹션(financials.js): 종목 분석 › 재무 · AI 모드 재무 패널 ===== */
+.financials-card { --mf-c1: #1d4ed8; --mf-c2: #0e7490; --mf-c3: #0f7a3f; --mf-line: #b45309; margin: 14px 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); min-width: 0; }
+html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; --mf-c3: #4ade80; --mf-line: #fbbf24; }
+.financials-card[hidden] { display: none; }
+.mf-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 6px 12px; }
+.mf-head h3 { margin: 0; font-size: var(--fs-body); }
+.mf-meta { margin: 3px 0 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; overflow-wrap: anywhere; }
+.mf-badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.mf-badge { padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: var(--muted); font-size: var(--fs-cap); white-space: nowrap; }
+.mf-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 10px 0 6px; }
+.mf-chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.mf-chip { height: auto; min-height: 0; padding: 4px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-soft); color: inherit; font-size: var(--fs-cap); cursor: pointer; }
+.mf-chip.is-active { border-color: var(--primary); color: var(--primary); font-weight: 600; }
+.mf-kind button[disabled] { opacity: 0.45; cursor: not-allowed; }
+.mf-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--muted); font-size: var(--fs-cap); }
+.mf-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.mf-sw { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.mf-sw.mf-c1 { background: var(--mf-c1); }
+.mf-sw.mf-c2 { background: var(--mf-c2); }
+.mf-sw.mf-c3 { background: var(--mf-c3); }
+.mf-sw-line { height: 2px; width: 14px; background: var(--mf-line); border-radius: 1px; }
+.mf-chart-wrap { margin: 6px 0 10px; }
+.mf-chart { display: block; width: 100%; }
+.mf-chart .mf-axis { font-size: 11px; fill: var(--muted); }
+.mf-chart .mf-zero { stroke: var(--line); stroke-width: 1; }
+.mf-chart .mf-line { fill: none; stroke: var(--mf-line); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.mf-chart .mf-dot { fill: var(--panel); stroke: var(--mf-line); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.mf-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mf-table { width: 100%; min-width: 0; font-size: var(--fs-sub); }
+.mf-table th[scope="row"] { text-align: left; font-weight: 500; white-space: nowrap; cursor: help; }
+.mf-table td, .mf-table thead th { white-space: nowrap; }
+.mf-table sup { color: var(--muted); font-size: 10px; margin-left: 1px; }
+.mf-accounts { margin-top: 10px; }
+.mf-accounts > summary { cursor: pointer; font-size: var(--fs-sub); color: var(--muted); }
+.mf-note, .mf-foot { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.6; }
+.mf-empty { margin: 16px 0; font-size: var(--fs-sub); }
+@media (max-width: 640px) {
+  .financials-card { padding: 12px; }
+  .mf-table { font-size: var(--fs-cap); }
+}

@@ -4964,6 +4964,7 @@ function renderSearch(options = {}) {
   renderStockEvents(item);
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
+  if (typeof renderFinancials === "function") renderFinancials(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6341,6 +6342,11 @@ const TRUST_RECOVERY = {
   },
   "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
   "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
+  "재무 확장": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_us.py" },
+    kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
+    tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
+  },
   "산업 선행지표": {
     us: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
     kr: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
@@ -6566,6 +6572,8 @@ function dataTrustSources() {
     }
     rows.push(row);
   }
+  // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
+  rows.push(source("재무 확장", cfg.id === "kr" ? "DART 전체재무제표" : "SEC EDGAR XBRL companyfacts", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일 03:02", "financialsIndex"));
   if (cfg.id === "us") {
     rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));

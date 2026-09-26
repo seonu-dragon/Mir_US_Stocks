@@ -4,6 +4,15 @@ on:
   schedule:
     - cron: "2 18 * * 6"  # 일요일 03:02 KST (UTC 토요일 18:02)
   workflow_dispatch:
+    inputs:
+      only_financials:
+        description: "재무 확장(financials 잡)만 실행 — 실적·DART 소유구조 등 earnings 잡은 건너뛴다"
+        type: boolean
+        default: false
+      kr_max_calls:
+        description: "KR 재무 확장 DART 호출 상한(평일 수동 실행이면 다른 DART 빌더와 안 겹쳐 크게 잡아도 된다)"
+        type: string
+        default: "4000"
 
 permissions:
   contents: write
@@ -14,6 +23,7 @@ concurrency:
 
 jobs:
   earnings:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.only_financials }}
     runs-on: ubuntu-latest
     timeout-minutes: 360  # 실측 4시간 20분(2026-08-30 성공 run) — 120 으로 줄이면 매주 잘린다
     steps:
@@ -120,4 +130,58 @@ jobs:
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
           MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
+  # 재무 확장(연간 10년·분기 12개·TTM, 현금흐름·희석 주식수·차입금 등). earnings 잡이 4시간을 넘게
+  # 돌아 같은 잡에 넣으면 360분 한도에 걸린다 — 별도 잡(별도 러너)으로 병렬 실행한다. 워크플로우
+  # 이름은 그대로라 deploy-pages.yml 의 workflow_run 트리거도 그대로다.
+  # DART 는 earnings 잡의 소유구조·감사의견 빌더와 하루 한도를 나눠 쓰므로 KR 은 호출 상한(기본 4,000)
+  # 안에서 우선순위대로 받고 다음 주에 이어 받는다(build_financials_kr.py docstring).
+  financials:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # SEC companyfacts. 키 불필요(User-Agent 만). EDGAR 일별 색인으로 새 10-K·10-Q 를 낸 회사만 다시 받는다.
+      - name: US financials expanded (SEC)
+        continue-on-error: true
+        run: python scripts/build_financials_us.py --push
+
+      - name: KR financials expanded (DART)
+        continue-on-error: true
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          KR_MAX_CALLS: ${{ inputs.kr_max_calls || '4000' }}
+        run: python scripts/build_financials_kr.py --push --max-calls "$KR_MAX_CALLS"
+
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group financials
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} (financials) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

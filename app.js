@@ -966,6 +966,8 @@ function boot(options = {}) {
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   // 산업 지표 딥링크(?tab=industry&i=<id>&t=<변환>) — 탭을 그리기 전에 선택 상태만 심는다.
   if (route.get("i") && typeof industryPreselect === "function") industryPreselect(route.get("i"), route.get("t"));
+  // 수식 스크리너 공유 링크(?tab=search&sub=formula&fx=<토큰>) — 첫 렌더 때 수식을 채우고 실행한다.
+  if (route.get("fx") && typeof formulaScreenerPreload === "function") formulaScreenerPreload(route.get("fx"));
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
   const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
   const routeTicker = route.get("ticker");
@@ -2085,7 +2087,7 @@ let currentTab = "today";
 let searchSubTab = "analysis";
 // 종목 탭 서브탭은 4개(분석·찾기·비교·공시)지만 searchSubTab 은 잎 이름(top/screener/…/13f/…)을
 // 유지한다 — 렌더 분기와 ?tab=search&sub= 딥링크가 그 이름을 쓴다. 그룹은 여기서 계산한다.
-const FIND_SUBS = ["top", "screener", "scanner", "jump", "valuation"];
+const FIND_SUBS = ["top", "screener", "formula", "scanner", "jump", "valuation"];
 const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short"];
 const INST_SUBS = ["13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
 // 공시 세그먼트 표시 순서(자사주 … IPO, KR: DART·5%룰·임원·지배구조)
@@ -2357,6 +2359,7 @@ const TAB_REDIRECT = {
   jump: { tab: "search", sub: "jump" },
   compare: { tab: "search", sub: "compare" },
   screener: { tab: "search", sub: "screener" },
+  formula: { tab: "search", sub: "formula" },
   scanner: { tab: "search", sub: "scanner" },
   earnings: { tab: "calendar", sub: "earnings" },
   // 구 URL 별칭 — 예전 10탭 이름은 전부 새 IA 의 잎으로 떨어진다.
@@ -2421,6 +2424,7 @@ function activateSearchSub(name, { push = false, skipRender = false, renderOptio
   if (searchSubTab === "jump") renderJump();
   if (searchSubTab === "compare") renderCompareBoard();
   if (searchSubTab === "screener") renderScreener();
+  if (searchSubTab === "formula" && typeof renderFormulaScreener === "function") renderFormulaScreener();
   if (searchSubTab === "valuation") renderValuation();
   if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "buyback") renderBuyback();
@@ -4967,6 +4971,7 @@ function renderSearch(options = {}) {
   renderStockEvents(item);
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
+  if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
@@ -8134,6 +8139,8 @@ const HOME_ROUTE_RULES = [
   { tab: "search", sub: "jump", keywords: ["급등주", "급등", "거래량 급증", "거래량 터", "거래량터", "거래량 폭발", "surge", "gainers"] },
   // 종목 비교
   { tab: "search", sub: "compare", keywords: ["비교", "대비", " vs ", "vs.", "versus", "compare"] },
+  // 사용자 정의 수식 스크리너
+  { tab: "search", sub: "formula", keywords: ["수식", "수식 스크리너", "사용자 정의", "커스텀 스크리너", "formula"] },
   // 저평가 / 밸류
   { tab: "search", sub: "valuation", keywords: ["저평가", "밸류에이션", "밸류", "싼 종목", "싼 주식", "per", "pbr", "valuation", "undervalued"] },
   // 공매도

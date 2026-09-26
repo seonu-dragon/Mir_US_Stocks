@@ -258,6 +258,8 @@ function refreshFeatureViews() {
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.
   if (currentTab === "industry" && typeof renderIndustry === "function") calls.push(renderIndustry);
+  // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.
+  if (currentTab === "search" && searchSubTab === "formula" && typeof renderFormulaScreener === "function") calls.push(renderFormulaScreener);
   // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은
   // EARNINGS_MOVE_COMPARE / EARNINGS_RELEASES 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (earningsCalendarCache && byId("earningsCalendarBody") && typeof renderEarningsCalendarMarket === "function") {
@@ -287,6 +289,7 @@ function refreshFeatureViews() {
           () => renderStockEvents(item),
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
+          () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
         );
       }

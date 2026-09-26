@@ -100,7 +100,8 @@ function renderSavedScreenerPicker() {
   const del = byId("savedScreenerDelete");
   if (badge) badge.textContent = `저장 ${savedScreeners.length}개`;
   if (!select) return;
-  select.innerHTML = `<option value="">저장된 조건 선택</option>` + savedScreeners.map((row) => `<option value="${escapeHtml(row.id)}">${escapeHtml(row.name)}</option>`).join("");
+  // 수식 스크리너(formula-screener.js)가 같은 목록에 kind: "formula" 로 저장한다 — 고르면 수식 화면으로 넘긴다.
+  select.innerHTML = `<option value="">저장된 조건 선택</option>` + savedScreeners.map((row) => `<option value="${escapeHtml(row.id)}">${row.kind === "formula" ? "[수식] " : ""}${escapeHtml(row.name)}</option>`).join("");
   select.value = selectedSavedScreenerId;
   if (del) del.disabled = !selectedSavedScreenerId;
 }
@@ -132,7 +133,8 @@ function renderSavedScreenerDelta(record) {
   delegateTickerClicks(box, "[data-ticker]");
 }
 
-function compareSavedScreener(record, tickers) {
+// renderFn: 델타를 그릴 곳(기본 = 저장형 스크리너 패널, 수식 스크리너는 자기 패널 함수를 넘긴다).
+function compareSavedScreener(record, tickers, renderFn = renderSavedScreenerDelta) {
   if (!record) return;
   const snapshotKey = screenerSnapshotKey();
   const previous = Array.isArray(record.lastTickers) ? record.lastTickers : [];
@@ -152,7 +154,7 @@ function compareSavedScreener(record, tickers) {
   }
   record.lastCheckedAt = formatKstDateTime();
   persistSavedScreeners();
-  renderSavedScreenerDelta(record);
+  renderFn(record);
 }
 
 function saveCurrentScreener() {
@@ -604,6 +606,12 @@ function setupScreenerEvents() {
     if (!applyingSavedScreener) { selectedSavedScreenerId = ""; renderSavedScreenerPicker(); renderSavedScreenerDelta(null); }
   }));
   byId("savedScreenerSelect")?.addEventListener("change", (event) => {
+    const picked = savedScreenerById(event.target.value);
+    if (picked && picked.kind === "formula" && typeof openFormulaScreenerRecord === "function") {
+      event.target.value = selectedSavedScreenerId;
+      openFormulaScreenerRecord(picked.id);
+      return;
+    }
     selectedSavedScreenerId = event.target.value;
     const record = savedScreenerById();
     const input = byId("savedScreenerName");

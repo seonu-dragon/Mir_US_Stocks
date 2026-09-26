@@ -107,3 +107,134 @@ def test_short_company_and_title_matching():
     assert not b.title_mentions("Stock market today: Dow slips", terms)
     # 짧은 대문자 티커는 단어 경계로만(‘Z’ 가 아무 단어에나 걸리지 않게)
     assert not b.title_mentions("Zillow-free headline about zebras", ["Z"])
+
+
+# --- 거래일 판정: 2026-09-26 run 36202139416 재현 ------------------------------------
+# 스냅샷 priceDate 는 2026-09-25 인데, 00:00 UTC 뒤에 받은 야후·상세 일봉은 마지막 봉이
+# 09-24 였다. 예전 판정(야후 일봉 다수결)은 {'2026-09-23': 1} 로 끝나 보드가 멈췄다.
+
+import json
+from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
+
+ET = ZoneInfo("America/New_York")
+NOW = datetime(2026, 9, 26, 0, 30, tzinfo=timezone.utc)   # 09-25 20:30 ET
+
+
+def _ts(day: str, hh=9, mm=30) -> int:
+    y, m, d = map(int, day.split("-"))
+    return int(datetime(y, m, d, hh, mm, tzinfo=ET).timestamp())
+
+
+def _chart(bars: list[tuple[str, float, float]], meta_day: str | None, meta_price=None, meta_vol=None) -> dict:
+    meta = {"exchangeTimezoneName": "America/New_York"}
+    if meta_day:
+        meta.update({"regularMarketTime": _ts(meta_day, 16, 0), "regularMarketPrice": meta_price,
+                     "regularMarketVolume": meta_vol})
+    return {"meta": meta, "timestamp": [_ts(d) for d, _, _ in bars],
+            "indicators": {"quote": [{"close": [c for _, c, _ in bars], "volume": [v for _, _, v in bars]}]}}
+
+
+def test_snapshot_price_date_wins_without_network(monkeypatch):
+    def boom(_t):
+        raise AssertionError("priceDate 가 있으면 야후를 부르지 않는다")
+    monkeypatch.setattr(b, "yahoo_bars", boom)
+    snap = {"priceDate": "2026-09-25", "stocks": [{"ticker": "AAPL", "changePct": 1.5, "marketCapB": 3000}]}
+    assert b.resolve_trade_date(snap, b.MARKETS["us"], "us", now=NOW) == "2026-09-25"
+
+
+def test_snapshot_price_date_rejects_bad_values():
+    assert b.snapshot_price_date({"priceDate": "2026-09-27"}, now=NOW) is None    # 일요일
+    assert b.snapshot_price_date({"priceDate": "2026-09-26"}, now=NOW) is None    # 토요일
+    # 장이 안 끝난 날
+    assert b.snapshot_price_date({"priceDate": "2026-09-25"},
+                                 now=datetime(2026, 9, 25, 15, 0, tzinfo=ET)) is None
+    assert b.snapshot_price_date({"priceDate": "garbage"}, now=NOW) is None
+    assert b.snapshot_price_date({}, now=NOW) is None
+
+
+def test_old_snapshot_without_price_date_falls_back_to_vote(monkeypatch):
+    calls = []
+    monkeypatch.setattr(b, "yahoo_bars", lambda t: calls.append(t) or {})
+    snap = {"stocks": [{"ticker": "AAPL", "changePct": 1.5, "marketCapB": 3000, "sector": "TECH"}]}
+    assert b.resolve_trade_date(snap, b.MARKETS["us"], "us", now=NOW) is None
+    assert calls == ["AAPL"]
+
+
+def test_yahoo_meta_fills_missing_last_bar():
+    res = _chart([("2026-09-23", 100.0, 1e6), ("2026-09-24", 110.0, 2e6)], "2026-09-25", 99.0, 3e6)
+    bars = b.parse_yahoo_chart(res, now=NOW)
+    assert bars["2026-09-25"]["fromMeta"] is True
+    assert abs(bars["2026-09-25"]["changePct"] - (99.0 / 110.0 - 1) * 100) < 1e-9
+    assert bars["2026-09-25"]["volume"] == 3e6
+
+
+def test_yahoo_meta_not_used_when_two_bars_missing_or_session_open():
+    # 09-23 다음 거래일은 09-24 — 09-25 시세의 전일 종가를 모른다.
+    res = _chart([("2026-09-22", 100.0, 1e6), ("2026-09-23", 110.0, 2e6)], "2026-09-25", 99.0, 3e6)
+    assert "2026-09-25" not in b.parse_yahoo_chart(res, now=NOW)
+    res = _chart([("2026-09-23", 100.0, 1e6), ("2026-09-24", 110.0, 2e6)], "2026-09-25", 99.0, 3e6)
+    assert "2026-09-25" not in b.parse_yahoo_chart(res, now=datetime(2026, 9, 25, 14, 0, tzinfo=ET))
+    # 월요일 시세의 직전 거래일은 금요일(주말 건너뜀)
+    res = _chart([("2026-09-24", 100.0, 1e6), ("2026-09-25", 110.0, 2e6)], "2026-09-28", 121.0, 3e6)
+    bars = b.parse_yahoo_chart(res, now=datetime(2026, 9, 29, 1, 0, tzinfo=timezone.utc))
+    assert abs(bars["2026-09-28"]["changePct"] - 10.0) < 1e-9
+
+
+def _write_detail(path, ticker, last_day="2026-09-24"):
+    days = [f"2026-09-{d:02d}" for d in (10, 11, 14, 15, 16, 17, 18, 21, 22, 23, 24) if f"2026-09-{d:02d}" <= last_day]
+    series = [[10, 11, 9, 10.0, 5_000_000, d] for d in days]
+    (path / f"{ticker}.json").write_text(json.dumps({"chartSeries": series}), encoding="utf-8")
+
+
+def test_pick_movers_on_0926_like_day(monkeypatch, tmp_path):
+    """상세 일봉 마지막 09-24 · 야후 일봉도 09-24 까지 · 기준일 09-25."""
+    for t in ("MET", "SNAP", "OLD", "NOPE"):
+        _write_detail(tmp_path, t)
+    cfg = {**b.MARKETS["us"], "details": tmp_path}
+    charts = {
+        # 야후 meta 로 확인(10.0 → 10.8, +8%)
+        "MET": _chart([("2026-09-23", 10.0, 5e6), ("2026-09-24", 10.0, 6e6)], "2026-09-25", 10.8, 7e6),
+    }
+    monkeypatch.setattr(b, "yahoo_bars", lambda t: b.parse_yahoo_chart(charts[t], now=NOW) if t in charts else {})
+    snap = {"priceDate": "2026-09-25", "stocks": [
+        {"ticker": "MET", "company": "Meta Filled", "changePct": 8.0, "marketCapB": 50, "price": 10.8,
+         "priceDate": "2026-09-25", "volumeRatio": 1.2},
+        # 야후 실패 → 그 종목 priceDate 가 기준일인 스냅샷 값으로
+        {"ticker": "SNAP", "company": "Snap Fallback", "changePct": -6.0, "marketCapB": 20, "price": 9.4,
+         "priceDate": "2026-09-25", "volumeRatio": 2.0},
+        # 그 종목 priceDate 가 하루 늦음 → 날짜 확인 불가, 뺀다
+        {"ticker": "OLD", "company": "Old Date", "changePct": 7.0, "marketCapB": 20, "price": 10.7,
+         "priceDate": "2026-09-24", "volumeRatio": 2.0},
+        # priceDate 없음(스크리너 값) → 뺀다
+        {"ticker": "NOPE", "company": "No Date", "changePct": -9.0, "marketCapB": 20, "price": 9.1,
+         "volumeRatio": 2.0},
+    ]}
+    monkeypatch.setattr(b.time, "sleep", lambda _s: None)
+    out = b.pick_movers(snap, cfg, "us", "2026-09-25")
+    assert [m["ticker"] for m in out["up"]] == ["MET"]
+    assert out["up"][0]["priceSource"] == "yahoo-meta"
+    assert abs(out["up"][0]["changePct"] - 8.0) < 0.01
+    assert out["up"][0]["tradingValue"] == round(10.8 * 7e6)
+    assert [m["ticker"] for m in out["down"]] == ["SNAP"]
+    assert out["down"][0]["priceSource"] == "snapshot"
+    assert out["down"][0]["tradingValue"] is None    # 추정 거래량 값은 싣지 않는다
+
+
+def test_new_trade_date_ignores_previous_two_attempts(monkeypatch, tmp_path):
+    """09-23 보드가 llm_failed 2회여도 09-25 는 새 거래일 — 첫 시도로 진행한다."""
+    out_json = tmp_path / "movers_reasons.json"
+    out_json.write_text(json.dumps({"tradeDate": "2026-09-23", "status": "llm_failed", "attempt": 2}), encoding="utf-8")
+    snap_path = tmp_path / "snap.json"
+    snap_path.write_text(json.dumps({"priceDate": "2026-09-25", "stocks": [{"ticker": "AAPL", "changePct": 0.1}]}),
+                         encoding="utf-8")
+    monkeypatch.setitem(b.MARKETS, "us", {**b.MARKETS["us"], "snapshot": snap_path, "out_json": out_json})
+    monkeypatch.setattr(b, "snapshot_price_date", lambda snap, now=None: snap.get("priceDate"))
+    monkeypatch.setattr(b, "pick_movers", lambda *a, **k: {"up": [], "down": []})
+    payload, code = b.build("us", use_llm=False, force=False)
+    assert code == 0 and payload["tradeDate"] == "2026-09-25" and payload["attempt"] == 1
+
+    # 같은 거래일에 이미 2회 시도했으면 건너뛴다(기존 동작 유지)
+    out_json.write_text(json.dumps({"tradeDate": "2026-09-25", "status": "llm_failed", "attempt": 2}), encoding="utf-8")
+    payload, code = b.build("us", use_llm=False, force=False)
+    assert payload is None and code == 0

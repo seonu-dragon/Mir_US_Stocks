@@ -4973,6 +4973,7 @@ function renderSearch(options = {}) {
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
+  if (typeof renderDcf === "function") renderDcf(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6593,6 +6594,21 @@ function dataTrustSources() {
     const row = source("과거 위기 구간", "Yahoo Finance 일봉(2008·2018·2020·2022·2024 구간)", ch, ["markets"], 960, "매월 1일 · 과거 구간 고정", "crisisHistory");
     const mk = ch && ch.markets && ch.markets[cfg.id];
     if (mk) row.extra = [["종목 시계열", `${Object.keys(mk.series || {}).length.toLocaleString()}개 (상위 ${mk.universe || "—"}종목 + 대리 지수)`], ["상장 전·없음", `${Object.keys(mk.missing || {}).length.toLocaleString()}종목 — 화면에서 대리(지수 × β)로 계산`]];
+    rows.push(row);
+  }
+  // 역DCF 기저율(2026-09-26) — 재무 확장 잡 끝에서 다시 계산. 표본 수·기간을 함께 적는다(과거 분포·생존편향).
+  {
+    const br = window.DCF_BASE_RATES;
+    const row = source("역DCF 기저율", "재무 확장 파일(SEC · DART) 파생", br, ["markets"], 192, "매주 일요일 03:02 (재무 확장 뒤)", "dcfBaseRates");
+    const m = br && br.markets && br.markets[cfg.id];
+    if (m) {
+      const hs = Object.keys(m.horizons || {}).sort((a, b) => b - a);
+      row.extra = [
+        ["표본", `${Number(m.companies || 0).toLocaleString()}개 기업 (재무 파일 ${Number(m.files || 0).toLocaleString()}개 중 비금융·통화 일치)`],
+        ["기간", hs.map((h) => `${h}년: ${m.horizons[h].period} · FCF n=${(m.horizons[h].all.fcf || []).length}`).join(" / ")],
+        ["한계", "생존편향(현재 상장 기업만) · 최근 약 10년 한 국면 · 예측 아님"],
+      ];
+    }
     rows.push(row);
   }
   if (cfg.id === "us") {

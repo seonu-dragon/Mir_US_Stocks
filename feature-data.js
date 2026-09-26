@@ -129,6 +129,9 @@ const FEATURE_DATA = {
   // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
   // '과거 위기 재생' 을 열 때만 받는다(lazy).
   crisisHistory: { global: "CRISIS_HISTORY", path: "data/crisis_history.js", lazy: true },
+  // 역DCF 기저율 분포(build_dcf_base_rates.py) — 두 시장이 한 파일(~18KB). 종목 분석의 DCF 카드·AI 모드
+  // 역DCF 패널이 처음 그릴 때만 받는다(lazy).
+  dcfBaseRates: { global: "DCF_BASE_RATES", path: "data/dcf_base_rates.js", lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
@@ -291,6 +294,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
+          () => { if (typeof renderDcf === "function") renderDcf(item); },
         );
       }
     }

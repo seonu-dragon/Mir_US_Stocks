@@ -86,6 +86,11 @@ test("배당 정보: 적자면 배당성향 제외, 0 이하 수익률은 배당
   const b = core.dividendInfo({}, { divYield: 0 });
   assert.equal(b.divYield, null);
   // 미국 보조 소스(US_STOCK_CALENDAR): fund 에 없으면 cal 의 divRate·payout 을 쓴다.
+  // 현재가가 있으면 주당배당금 ÷ 현재가가 fund.divYield(Finnhub 등)보다 먼저 — 같은 줄 두 값이 맞게.
+  const m = core.dividendInfo({ epsTtm: 5.55, price: 68.82 }, { divYield: 9.45 }, { divYield: 6.4, divRate: 4.44, payout: 89.3 });
+  assert.equal(m.divYield, 6.45);
+  const m2 = core.dividendInfo({ price: 25 }, { divYield: 6.85 }, { divYield: 4.36 });
+  assert.equal(m2.divYield, 4.36);
   const c = core.dividendInfo({ epsTtm: 8.6 }, { divYield: 0.32 }, { divRate: 1.08, payout: 12 });
   assert.deepEqual([c.divYield, c.dps, c.payoutRatio, c.deficit], [0.32, 1.08, 12, false]);
 });

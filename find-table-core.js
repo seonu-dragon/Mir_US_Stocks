@@ -114,16 +114,20 @@
   }
 
   // 한 종목의 배당 정보. fund = MAP_FUNDAMENTALS 행, cal = US_STOCK_CALENDAR.stocks[티커](미국만).
-  //   · 배당수익률: fund.divYield 우선, 없으면 cal.divYield. 0 이하는 배당 없음(null).
-  //   · 배당성향: fund.payoutRatio → cal.payout. 이익이 0 이하(적자)면 의미가 없어 null, deficit=true.
   //   · 주당배당금: fund.dps → cal.divRate.
+  //   · 배당수익률: 같은 줄의 주당배당금 ÷ 현재가를 먼저(표의 두 값이 서로 맞게), 없으면 cal.divYield,
+  //     그다음 fund.divYield. 미국 fund.divYield 는 Finnhub 값이 섞여 현재가 기준보다 높게 나오는
+  //     종목이 있었다(MO 9.45% vs 4.44/68.82=6.45%). 0 이하는 배당 없음(null).
+  //   · 배당성향: fund.payoutRatio → cal.payout. 이익이 0 이하(적자)면 의미가 없어 null, deficit=true.
   function dividendInfo(item, fund, cal) {
     const f = fund || {};
     const c = cal || {};
-    const y = fin(f.divYield) != null ? fin(f.divYield) : fin(c.divYield);
-    const divYield = y != null && y > 0 ? y : null;
     const dpsRaw = fin(f.dps) != null ? fin(f.dps) : fin(c.divRate);
     const dps = dpsRaw != null && dpsRaw > 0 ? dpsRaw : null;
+    const price = fin(item && item.price);
+    const fromDps = dps != null && price != null && price > 0 ? Math.round((dps / price) * 10000) / 100 : null;
+    const y = fromDps != null ? fromDps : fin(c.divYield) != null ? fin(c.divYield) : fin(f.divYield);
+    const divYield = y != null && y > 0 ? y : null;
     const eps = fin(f.eps) != null ? fin(f.eps) : fin(item && item.epsTtm);
     const deficit = eps != null && eps <= 0;
     const payRaw = fin(f.payoutRatio) != null ? fin(f.payoutRatio) : fin(c.payout);

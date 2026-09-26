@@ -3638,11 +3638,23 @@ function stockChangeHtml(item) {
   const price = Number(item && item.price);
   const raw = Number(item && item.changePct);
   if (!Number.isFinite(raw)) return `<span class="muted">—</span>`;
-  const pct = isKrMarket() ? krDisplayChangePct(raw) : raw;
   const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
+  // 종가 시리즈의 마지막 값이 현재가이고 직전 값과의 등락률이 스냅샷 등락률(소수 1자리)과
+  // 반올림 오차 안에서 맞으면, 거꾸로 풀지 않고 실제 전일 종가로 절대값·%를 낸다
+  // (일별 시세 표 '▲0.49(+0.22%)' 와 머리글 '$0.45(+0.20%)' 가 어긋나던 것).
+  const cs = item && Array.isArray(item.closeSeries) ? item.closeSeries : null;
+  const csLast = cs && cs.length >= 2 ? Number(cs[cs.length - 1]) : NaN;
+  const csPrev = cs && cs.length >= 2 ? Number(cs[cs.length - 2]) : NaN;
+  const exactPct = Number.isFinite(price) && price > 0 && csPrev > 0 && Math.abs(csLast - price) < 1e-6 * price
+    ? (price / csPrev - 1) * 100 : NaN;
+  const exact = !atLimit && Number.isFinite(exactPct) && Math.abs(exactPct - raw) <= 0.051;
+  const pct = exact ? exactPct : isKrMarket() ? krDisplayChangePct(raw) : raw;
   const arrow = pct > 0 ? "▲" : pct < 0 ? "▼" : "";
   let abs = "";
-  if (!atLimit && Number.isFinite(price) && price > 0 && pct > -100) {
+  if (exact) {
+    const diff = Math.abs(price - csPrev);
+    abs = diff > 0 ? escapeHtml(marketCfg().formatPrice(diff)).replace(/^[-+]/, "") : "0";
+  } else if (!atLimit && Number.isFinite(price) && price > 0 && pct > -100) {
     let diff = Math.abs(price - price / (1 + pct / 100));
     // 스냅샷 등락률은 소수 1자리라 거꾸로 푼 절대값이 '9,956원' 처럼 호가 단위에 안 맞는
     // 값이 된다. 국내는 두 가격이 모두 호가 단위의 배수이므로 전일가 구간의 호가 단위로 맞춘다.
@@ -5526,6 +5538,38 @@ function renderSmartMoney(item) {
     <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
 
+// 국내: 실시간 프록시(야후) 일봉의 마지막 봉이 스냅샷 기준일과 같은 날이고 그날 정규장이 끝났으면
+// 종가를 스냅샷의 KRX 종가로 맞추고 고가·저가를 넓힌다(빌더 align_last_bar_to_close 와 같은 규칙).
+// 야후 .KS 마지막 봉이 KRX 종가와 다른 날이 많아(삼성전자 09-23 285,500 vs 286,500) 머리글·시세정보와
+// 차트·일별 시세 표가 어긋났다. 날짜가 다르거나 장중이면 건드리지 않는다.
+function alignKrLiveLastBar(chart, item) {
+  const close = Number(item && item.price);
+  const day = String((item && item.priceDate) || "").slice(0, 10);
+  if (!(close > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return chart;
+  const kst = new Date(Date.now() + 9 * 3600 * 1000);
+  const today = kst.toISOString().slice(0, 10);
+  const closed = today > day || (today === day && kst.getUTCHours() * 60 + kst.getUTCMinutes() >= 15 * 60 + 40);
+  if (!closed) return chart;
+  const last = chart[chart.length - 1];
+  if (Array.isArray(last)) {
+    if (String(last[5] || "").slice(0, 10) !== day || Number(last[3]) === close) return chart;
+    const bar = last.slice();
+    bar[3] = close;
+    if (Number.isFinite(Number(bar[1]))) bar[1] = Math.max(Number(bar[1]), close);
+    if (Number(bar[2]) > 0) bar[2] = Math.min(Number(bar[2]), close);
+    return chart.slice(0, -1).concat([bar]);
+  }
+  if (last && typeof last === "object") {
+    const d = String(last.d ?? last.date ?? "").slice(0, 10);
+    if (d !== day || Number(last.c) === close) return chart;
+    const bar = { ...last, c: close };
+    if (Number.isFinite(Number(last.h))) bar.h = Math.max(Number(last.h), close);
+    if (Number(last.l) > 0) bar.l = Math.min(Number(last.l), close);
+    return chart.slice(0, -1).concat([bar]);
+  }
+  return chart;
+}
+
 // Merge any live (proxy-fetched) chart/news over the snapshot+detail data.
 function applyLive(item) {
   if (!item) return item;
@@ -5537,7 +5581,7 @@ function applyLive(item) {
   const out = { ...item };
   if (quote) out.liveQuote = quote;
   if (Array.isArray(chart) && chart.length) {
-    out.chartSeries = chart;
+    out.chartSeries = isKrMarket() ? alignKrLiveLastBar(chart, item) : chart;
     out.historySource = "yahoo";
   }
   // KR keeps the build's curated Korean (Naver) headlines unless the live proxy

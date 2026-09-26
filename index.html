@@ -91,33 +91,8 @@
   --chip-bg: #ffffff;
   --chip-border: rgba(10, 20, 30, 0.20);
   --chat-safe-bottom: 61px;
-  --z-behind: -1;
-  --z-base: 0;
-  --z-layer-1: 1;
-  --z-layer-2: 2;
-  --z-layer-4: 4;
   --z-layer-5: 5;
-  --z-layer-6: 6;
-  --z-sticky: 10;
-  --z-ai-chatlog: 18;
   --z-popover: 20;
-  --z-ai-input: 25;
-  --z-topbar: 30;
-  --z-legend-pop: 40;
-  --z-ai-topbar: 50;
-  --z-drawer-backdrop: 60;
-  --z-drawer: 61;
-  --z-ia-popover: 80;
-  --z-cmdk: 90;
-  --z-dropdown: 100;
-  --z-autocomplete: 120;
-  --z-fab: 900;
-  --z-modal: 1000;
-  --z-lightbox: 1000;
-  --z-assembly: 2000;
-  --z-toast: 9999;
-  --z-fullscreen: 10000;
-  --z-offline: 99999;
   --text-muted: #6b7079;
   --accent: #1d4ed8;
   --pos: #0f7a3f;
@@ -139,11 +114,6 @@
   --topbar-accent: #1d4ed8;
   --topbar-line: rgba(10, 20, 30, 0.10);
   --topbar-ctl: #f3f4f6;
-  --chart-bg: #ffffff;
-  --chart-line: rgba(10, 20, 30, 0.08);
-  --chart-axis: #6b7079;
-  --chart-text: #374151;
-  --chart-panel: rgba(10, 20, 30, 0.03);
   --ink: #1c1f24;
   --ink-fg: #ffffff;
   --r-xs: 4px;
@@ -153,15 +123,10 @@
   --r-pill: 999px;
   --tint-danger: var(--tint-neg);
   --tint-danger-fg: var(--tint-neg-fg);
-  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.06);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-dialog: 0 8px 28px rgba(0, 0, 0, 0.14);
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
   --space-4: 16px;
-  --space-5: 20px;
-  --space-6: 24px;
   --fs-12: 12px;
   --fs-13: 13px;
   --fs-14: 14px;
@@ -331,8 +296,6 @@ html[data-theme="dark"] {
   --line: rgba(255, 255, 255, 0.10);
   --line-soft: rgba(255, 255, 255, 0.06);
   --line-strong: rgba(255, 255, 255, 0.20);
-  --shadow: 0 4px 12px rgba(0, 0, 0, 0.40);
-  --shadow-dialog: 0 8px 28px rgba(0, 0, 0, 0.55);
   --chip-bg: #1a1d21;
   --chip-border: rgba(255, 255, 255, 0.20);
   --blue: #3b82f6;
@@ -347,11 +310,6 @@ html[data-theme="dark"] {
   --topbar-ctl: #24272c;
   --ink: #e8eaed;
   --ink-fg: #121417;
-  --chart-bg: #1a1d21;
-  --chart-line: rgba(255, 255, 255, 0.07);
-  --chart-axis: #979ca4;
-  --chart-text: #c9cdd3;
-  --chart-panel: rgba(255, 255, 255, 0.03);
   --green: #34d399;
   --red: #f87171;
   --amber: #fbbf24;
@@ -374,7 +332,6 @@ html[data-theme="dark"] {
   --tint-neg-fg: #fca5a5;
   --tint-warn-fg: #fcd34d;
   --tint-info-fg: #93c5fd;
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 html[data-market="kr"] {
   --pos: #e03a3e;
@@ -406,11 +363,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=8347a4d940" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=8347a4d940"></noscript>
+    <link rel="preload" href="styles.css?v=6dcd65a877" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=6dcd65a877"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=9c48f5fdcc"></script>
+    <script src="build_id.js?v=d961404330"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3294,11 +3251,11 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="per-basis-core.js?v=b7c4da7066"></script>
-    <script src="chart-indicators.js?v=8c1020327f"></script>
+    <script src="chart-indicators.js?v=9e108a94cb"></script>
     <script src="community.js?v=c4d7daa34a"></script>
-    <script src="ai-mode.js?v=f6931aa04c"></script>
+    <script src="ai-mode.js?v=7199eb4dee"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=08f52eb714"></script>
+    <script src="disclosure-trackers.js?v=8369c14291"></script>
     <script src="movers.js?v=4a60812545"></script>
     <script src="portfolio.js?v=c43b5dc298"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
@@ -3332,7 +3289,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="formula-screener.js?v=993d550cd9"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
-    <script src="screener-backtest.js?v=6c869ac754"></script>
+    <script src="screener-backtest.js?v=da99b8e4b6"></script>
     <script src="signals.js?v=51e90ac142"></script>
     <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
@@ -3365,7 +3322,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
     <script src="calendar-panel.js?v=497ff92d75"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=19cb78ea9b"></script>
+    <script src="app.js?v=19a30aa6e4"></script>
     <script src="ai-cosmos.js?v=069b3c9089"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=f647c74678"></script>

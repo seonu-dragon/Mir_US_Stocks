@@ -2083,7 +2083,11 @@ function setupAiChatModeEvents() {
   if (form && input && popup) {
     let activeIndex = -1;
     let results = [];
+    let autocompleteTimer = 0;
     const hidePopup = () => {
+      // 입력 직후(200ms 디바운스 안)에 Enter 로 보내면, 대기 중이던 타이머가 제출 뒤에
+      // 자동완성을 다시 열어 종목 대시보드를 덮었다(모바일에서 특히). 타이머도 끊는다.
+      clearTimeout(autocompleteTimer);
       popup.hidden = true;
       activeIndex = -1;
       results = [];
@@ -2165,7 +2169,6 @@ function setupAiChatModeEvents() {
         item.addEventListener("click", () => submitTicker(item.dataset.ticker));
       });
     };
-    let autocompleteTimer = 0;
     input.addEventListener("input", () => {
       clearTimeout(autocompleteTimer);
       const value = input.value.trim().toLowerCase();

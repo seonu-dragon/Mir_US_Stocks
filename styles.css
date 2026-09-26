@@ -14592,13 +14592,38 @@ html.rail-enabled body:not(.ai-mode-active) .chatbot { display: none; }
 .home-chart-chg { font-size: var(--fs-body); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; }
 .home-chart-go { flex: none; }
 .home-chart-card { display: flex; flex-direction: column; }
-.home-chart-plot { position: relative; display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) 64px; grid-template-rows: minmax(0, 1fr); height: auto; min-height: 220px; }
-.home-chart-plot svg { display: block; width: 100%; height: 100%; overflow: visible; border-bottom: 1px solid var(--line); }
+/* 하루 차트(home-dash.js hdIntradayPlot): 그림 | 가격 눈금 / 시각 눈금. 글자·점은 SVG 밖 HTML(% 위치). */
+.home-chart-plot { position: relative; display: grid; flex: 1 1 auto; grid-template-columns: minmax(0, 1fr) 64px; grid-template-rows: minmax(200px, 1fr) auto; min-height: 236px; }
+.home-chart-area { position: relative; min-width: 0; border-bottom: 1px solid var(--line-strong); touch-action: pan-y; cursor: crosshair; }
+.home-chart-plot svg { position: absolute; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; }
+.home-chart-grid line { stroke: var(--line-soft); stroke-width: 1; }
 .home-chart-base { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 4; }
 .home-chart-yaxis { position: relative; }
-.home-chart-plot.is-approx { grid-template-columns: minmax(0, 1fr); }
-.home-chart-plot.is-approx .home-chart-yaxis { display: none; }
+.home-chart-plot.is-approx { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(200px, 1fr); }
+.home-chart-plot.is-approx .home-chart-area { cursor: default; }
 .home-chart-yaxis span { position: absolute; right: 0; transform: translateY(-50%); color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.home-chart-last { position: absolute; right: 0; z-index: 1; padding: 1px 5px; transform: translateY(-50%); border-radius: var(--r-xs); background: var(--flat); color: var(--bg); font-size: var(--fs-cap); font-weight: var(--fw-strong); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.home-chart-last.pos { background: var(--pos); }
+.home-chart-last.neg { background: var(--neg); }
+.home-chart-xaxis { position: relative; height: 22px; }
+.home-chart-xaxis span { position: absolute; top: 5px; transform: translateX(-50%); color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.home-chart-xaxis span.is-first { transform: none; }
+.home-chart-xaxis span.is-last { transform: translateX(-100%); }
+.home-chart-lastdot,
+.home-chart-dot { position: absolute; width: 7px; height: 7px; margin: -3.5px 0 0 -3.5px; border-radius: 50%; background: var(--flat); pointer-events: none; box-shadow: 0 0 0 2px var(--panel); }
+.home-chart-lastdot.pos { background: var(--pos); }
+.home-chart-lastdot.neg { background: var(--neg); }
+.home-chart-dot { z-index: 2; background: var(--ink); }
+.home-chart-cross { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px dashed var(--line-strong); pointer-events: none; }
+.home-chart-tip { position: absolute; top: 4px; z-index: 3; margin-left: 10px; padding: 5px 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text); font-size: var(--fs-cap); line-height: 1.45; white-space: nowrap; font-variant-numeric: tabular-nums; pointer-events: none; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); }
+.home-chart-tip.is-left { margin-left: 0; transform: translateX(calc(-100% - 10px)); }
+.home-chart-tip-t { display: block; color: var(--muted); }
+.home-chart-tip small { font-size: inherit; }
+.home-chart-cross[hidden], .home-chart-dot[hidden], .home-chart-tip[hidden] { display: none; }
+.home-chart-badge { align-self: center; padding: 1px 7px; border: 1px solid var(--line-strong); border-radius: var(--r-xs); color: var(--text-2); font-size: var(--fs-cap); font-weight: var(--fw-strong); white-space: nowrap; }
+.home-chart-badge.is-live { border-color: transparent; background: var(--tint-info); color: var(--tint-info-fg); }
+.home-chart-badge.is-live::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+.home-chart-badge.is-delayed { border-color: transparent; background: var(--tint-warn); color: var(--tint-warn-fg); }
 .home-chart-cap { margin: 8px 0 0; color: var(--muted); font-size: var(--fs-cap); line-height: 1.5; }
 .home-chart-empty { margin: 0; padding: 60px 0; font-size: var(--fs-sub); text-align: center; }
 .home-status-title { margin: 0 0 10px; font-size: var(--fs-16); font-weight: var(--fw-title); }
@@ -14760,6 +14785,7 @@ html.rail-enabled body:not(.ai-mode-active) .chatbot { display: none; }
 .ft-empty { margin: 0; padding: 32px 0; font-size: var(--fs-sub); text-align: center; }
 .ft-table-wrap > .list-more-btn { display: block; margin: 10px auto 0; }
 
+.home-status-slot { margin: 0 0 16px; }
 @media (max-width: 1100px) {
   .home-dash-row { grid-template-columns: minmax(0, 1fr); }
 }
@@ -14794,7 +14820,8 @@ html.rail-enabled body:not(.ai-mode-active) .chatbot { display: none; }
   .home-idx-price { font-size: var(--fs-16); }
   .home-idx-spark { width: 44px; }
   .home-chart-card, .home-status-card, .home-briefing { padding: 14px; }
-  .home-chart-plot { min-height: 180px; grid-template-columns: minmax(0, 1fr) 56px; }
+  .home-chart-plot { min-height: 200px; grid-template-columns: minmax(0, 1fr) 56px; grid-template-rows: minmax(170px, 1fr) auto; }
+  .home-chart-xaxis span.is-odd { display: none; }
   .home-chart-price { font-size: 20px; }
   /* 모바일: 카드 테두리 대신 섹션 사이 8px 회색 띠 */
   #tab-today-summary > section:not([hidden]) {
@@ -14808,7 +14835,8 @@ html.rail-enabled body:not(.ai-mode-active) .chatbot { display: none; }
   #tab-today-summary > .home-dash { padding: 0 10px 12px; }
   #tab-today-summary > .home-dash .home-chart-card,
   #tab-today-summary > .home-dash .home-status-card { padding: 12px 0 0; border: 0; border-radius: 0; }
-  #tab-today-summary > .home-dash .home-status-card { margin-top: 4px; border-top: 1px solid var(--line); }
+  #tab-today-summary > .home-status-slot { margin-bottom: 0; }
+  #tab-today-summary > .home-status-slot .home-status-card { padding: 14px 10px; border: 0; border-radius: 0; }
   .ft-bar-row { flex-wrap: wrap; }
   .ft-actions { margin-left: auto; }
   .ft-cols-panel { position: fixed; top: auto; right: 16px; bottom: 16px; left: 16px; width: auto; max-height: 70vh; }

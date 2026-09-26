@@ -112,6 +112,19 @@ jobs:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_movers_reasons.py --market kr --push
 
+      # 신호 라이브 성적표: 오늘 화면에 뜬 국내 신호를 발행 시점 가격으로 원장(data/signal_ledger/kr/)에
+      # 동결(append-only)하고 발행 뒤 성적을 다시 집계한다(data/signal_scorecard.*). 스냅샷·특징주 뒤라야
+      # 오늘 화면과 같다. 실패해도 스냅샷 발행·신선도 게이트를 막지 않는다(continue-on-error).
+      # 원장 해시가 manifest 와 어긋나면 아무것도 붙이지 않고 exit 1 — 발행도 건너뛴다.
+      - name: Record signal ledger (KR)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          node scripts/build_signal_ledger.mjs --record kr
+          python scripts/sec_client.py --publish data/signal_ledger data/signal_scorecard.json data/signal_scorecard.js --label "signal ledger (KR)"
+
       # 마지막 관문: 산출물 타임스탬프·0건 함정(예: DART 키 누락으로 배당 0건)을
       # 여기서 잡아 워크플로우를 빨갛게 만든다.
       - name: Check data freshness (KR)

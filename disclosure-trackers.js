@@ -928,7 +928,7 @@ function renderBuyback() {
   const buyN = rows.filter((r) => r.typeKey === "buy").length;
   const sellN = rows.length - buyN;
   if (meta) meta.innerHTML = rows.length
-    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건${krDiscStatNote("자기주식")}`
+    ? `업데이트 ${escapeHtml((window.KR_DISCLOSURES || {}).updatedAtKst || "")} · 매입/소각 ${buyN}건 · 처분/해지 ${sellN}건${krDiscStatNote("자기주식")}${isKrMarket() && typeof signalScoreLine === "function" ? ` ${signalScoreLine("buyback", { inline: true })}` : ""}`
     : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 자사주 취득·처분 공시가 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => `<tr>
@@ -1263,7 +1263,7 @@ function renderContracts() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
   if (contractSort === "date") rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
   else rows.sort((a, b) => (b.salesRatio ?? -1) - (a.salesRatio ?? -1));
-  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("공급계약")}` : "";
+  if (meta) meta.innerHTML = rows.length ? `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${krDiscStatNote("공급계약")}${typeof signalScoreLine === "function" ? ` ${signalScoreLine("contract", { inline: true })}` : ""}` : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 공시분에 공급계약이 없습니다.</p>`; return; }
   const body = rows.slice(0, 200).map((r) => {
     const period = (r.startDate || r.endDate) ? `${escapeHtml(r.startDate || "")}~${escapeHtml(r.endDate || "")}` : "";

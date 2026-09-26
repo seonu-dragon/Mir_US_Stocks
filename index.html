@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=64f2b59fe8" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=64f2b59fe8"></noscript>
+    <link rel="preload" href="styles.css?v=db70c5c3df" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=db70c5c3df"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=2fc776d41c"></script>
+    <script src="build_id.js?v=bb9efafb01"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1153,7 +1153,7 @@ html[data-theme="dark"] {
           <details class="ia-fold" id="fold-signalsGrid" open>
             <summary>종목 시그널</summary>
             <div class="section-title">
-              <p id="signalsIntro">내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.</p>
+              <p id="signalsIntro">내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다. 각 신호가 발행 뒤 실제로 어떻게 됐는지는 아래 '신호 성적표'에 적립합니다.</p>
             </div>
             <div class="signals-grid" id="signalsGrid"></div>
           </details>
@@ -1203,6 +1203,10 @@ html[data-theme="dark"] {
               <p>개별 거래를 종합한 매크로 트렌드입니다 (최근 30일 기준).</p>
             </div>
             <div class="agg-grid" id="aggInsights"></div>
+          </details>
+          <details class="ia-fold" id="fold-signalScorecard">
+            <summary>신호 성적표 — 발행 뒤 실제로 어떻게 됐나</summary>
+            <div id="signalScorecard"></div>
           </details>
         </div>
         <!-- 산업·매크로 선행지표(industry.js) — 데이터는 탭 첫 진입 때 lazy 로드 -->
@@ -1700,6 +1704,7 @@ html[data-theme="dark"] {
             </div>
             <p class="muted" id="scannerRankNote" hidden></p>
             <p class="muted" id="scannerEvidence" hidden></p>
+            <p class="sig-score-slot" id="scannerScoreLine" hidden></p>
           </div>
           <details class="ia-fold ia-adv">
             <summary>고급 필터</summary>
@@ -2901,6 +2906,7 @@ html[data-theme="dark"] {
         </div>
         <div class="data-trust-summary" id="dataTrustSummary"></div>
         <div class="data-trust-grid" id="dataTrustGrid" aria-live="polite"></div>
+        <p class="data-trust-note"><button type="button" class="ia-link" data-open="scorecard">신호 성적표 보기 — 화면에 띄운 신호가 발행 뒤 실제로 어떻게 됐는지</button></p>
         <p class="data-trust-note">상태는 브라우저에 로드된 최신 파일을 기준으로 계산합니다. 실시간 원본 장애 여부를 직접 보장하지는 않습니다.</p>
       </section>
     </dialog>
@@ -2962,8 +2968,8 @@ html[data-theme="dark"] {
     <script src="community.js?v=af8ec25e4f"></script>
     <script src="ai-mode.js?v=e03bf628f1"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=a3b194f9b4"></script>
-    <script src="movers.js?v=ec1399659c"></script>
+    <script src="disclosure-trackers.js?v=674ff5989c"></script>
+    <script src="movers.js?v=4f92914563"></script>
     <script src="portfolio.js?v=61ef6f3d50"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
@@ -2973,22 +2979,24 @@ html[data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=c95d215d2c"></script>
+    <script src="feature-data.js?v=dc3cf21f44"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
     <script src="valuation-band-core.js?v=0e0b770b57"></script>
     <script src="valuation-band.js?v=0fc9596115"></script>
-    <script src="signals.js?v=92d09d598c"></script>
+    <script src="signals.js?v=3a43ef5ebd"></script>
     <script src="macro-odds.js?v=533cf73954"></script>
     <script src="chart.js?v=aff4f193c6"></script>
     <script src="institutional.js?v=206b237685"></script>
     <script src="markets-etf.js?v=69674be0f5"></script>
     <script src="kr-panels.js?v=53e63c5806"></script>
-    <script src="kr-alerts.js?v=5f414887e9"></script>
+    <script src="kr-alerts.js?v=e5bc27d4a9"></script>
+    <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
+    <script src="signal-scorecard.js?v=8775538443"></script>
     <script src="watchlist.js?v=830011f027"></script>
     <script src="earnings-insight.js?v=8e1bf51e44"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=4d179381a8"></script>
+    <script src="app.js?v=aa93929ff5"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

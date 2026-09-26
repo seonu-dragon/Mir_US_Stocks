@@ -987,6 +987,8 @@ function boot(options = {}) {
       communityTicker: initialCommunityTicker,
     });
   }
+  // 신호 성적표 딥링크(?tab=signals&sc=<신호 종류>, sc 만 있어도 시그널 탭으로).
+  if (route.get("sc") != null && typeof openSignalScorecard === "function") openSignalScorecard(route.get("sc"), { push: false });
   // 뒤로가기 가드: 현재(시작) 상태를 breadcrumb 루트로 두고 히스토리 센티넬 설치
   navStack = [navCurrentState()];
   setupBackGuard();
@@ -4684,6 +4686,14 @@ function renderScanner() {
     evidence.textContent = text;
     evidence.hidden = !text;
   }
+  // 신호 성적표: 이 순위(모멘텀 점수·검증 팩터)의 상위 24가 발행 뒤 실제로 어떻게 됐는지 한 줄.
+  const scoreSlot = byId("scannerScoreLine");
+  if (scoreSlot) {
+    const scKind = { quick: "momentum_top", low_vol: "factor_low_vol", high52_prox: "factor_high52" }[basis] || "";
+    const line = scKind && typeof signalScoreLine === "function" ? signalScoreLine(scKind) : "";
+    scoreSlot.innerHTML = line;
+    scoreSlot.hidden = !line;
+  }
 
   if (!scored.length) {
     byId("scannerCards").innerHTML = `<article class="rank-card"><h3>분석할 종목이 없습니다.</h3><p class="muted">대상 범위나 섹터를 바꿔보세요.</p></article>`;
@@ -6319,6 +6329,11 @@ const TRUST_RECOVERY = {
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
   "PER·PBR 밴드": { kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" }, tabs: "종목 탭 · 분석 · PER·PBR 밴드" },
+  "신호 성적표": {
+    us: { workflow: "Daily US market snapshot", script: "scripts/build_signal_ledger.mjs --record us" },
+    kr: { workflow: "Korea close briefing", script: "scripts/build_signal_ledger.mjs --record kr" },
+    tabs: "시그널 탭 · 신호 성적표 · 신호 카드의 '이 신호의 과거 성적'",
+  },
   "오늘의 특징주": {
     us: { workflow: "Daily US market snapshot", script: "scripts/build_movers_reasons.py --market us" },
     kr: { workflow: "Korea close briefing", script: "scripts/build_movers_reasons.py --market kr" },
@@ -6537,6 +6552,20 @@ function dataTrustSources() {
   rows.push(source("외부 공포탐욕", "alternative.me · CNN", window.SENTIMENT_GAUGES, ["crypto", "cnn"], 144, "매일", "sentimentGauges", "", true));
   // 산업 선행지표(2026-09-18) — 등록하지 않으면 감시 사각지대. lazy 라 신뢰도 센터가 직접 받아 본다.
   rows.push(source("산업 선행지표", "FRED · TWSE/TPEx · 한국은행 ECOS · OECD", window.INDUSTRY_INDICATORS, ["indicators"], 48, "매일 06:10", "industry"));
+  // 신호 라이브 성적표(2026-09-26) — 원장 해시가 어긋나면 파일이 최신이어도 '정상' 으로 두지 않는다.
+  {
+    const sc = window.SIGNAL_SCORECARD;
+    const row = source("신호 성적표", "Mir 신호 원장(발행 시점 동결) · 종목 일봉", sc, ["kinds"], 72, "매일 (US 스냅샷·KR 마감 브리핑 뒤)", "signalScorecard");
+    const L = sc && sc.ledger && sc.ledger[cfg.id];
+    if (L) {
+      row.extra = [
+        ["원장", `${Number(L.rows || 0).toLocaleString()}줄 (소급 복원 ${Number(L.backfill || 0).toLocaleString()} · 실시간 ${Number(L.live || 0).toLocaleString()})`],
+        ["기록 해시", L.integrity === "ok" ? `체인 일치 (${String(L.head || "").slice(0, 12)}…)` : "불일치"],
+      ];
+      if (L.integrity !== "ok" && row.status.key === "good") row.status = { ...row.status, key: "warn", label: "기록 해시 불일치" };
+    }
+    rows.push(row);
+  }
   if (cfg.id === "us") {
     rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
@@ -7467,6 +7496,11 @@ function setupOpenLinks() {
     if (!el) return;
     const what = el.dataset.open;
     if (what === "trust") { openDataTrustCenter(); return; }
+    if (what === "scorecard") {
+      byId("dataTrustDialog")?.close?.();
+      if (typeof openSignalScorecard === "function") openSignalScorecard(el.dataset.scKind || "");
+      return;
+    }
     if (what === "community") {
       if (window.MirAI?.isActive?.()) window.MirAI.exit();
       activateTab("community", { sub: el.dataset.openSub || null });

@@ -119,6 +119,9 @@ const FEATURE_DATA = {
   // 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy) — KR 전용.
   krValBand: { global: "KR_VALUATION_BAND_META", path: "data/korea/valuation_band/meta.js", feature: "valuationBand", krOnly: true, lazy: true },
   movers: { global: "MOVERS_REASONS", path: "data/movers_reasons.js", feature: "moversBoard", marketSpecific: true },
+  // 신호 라이브 성적표(build_signal_ledger.mjs) — 두 시장이 한 파일(~40KB). 시그널 탭 하단 성적표와
+  // 신호 카드·특징주·시장경보·스캐너의 '이 신호의 과거 성적' 한 줄이 읽는다.
+  signalScorecard: { global: "SIGNAL_SCORECARD", path: "data/signal_scorecard.js" },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다

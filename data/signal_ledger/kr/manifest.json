@@ -1,0 +1,56 @@
+{
+ "market": "kr",
+ "version": 1,
+ "note": "append-only 신호 원장. files 는 파일 전체 SHA-256, batches 는 추가 묶음마다 [offset, offset+bytes) 구간의 SHA-256 과 체인(head = sha256(이전 head + 묶음 해시)).",
+ "files": {
+  "2026-07.jsonl": {
+   "sha256": "f9de2bcc40c1df7868e21662c87e6bf14a0be69004dacd00d848743dccebabfe",
+   "bytes": 54441,
+   "lines": 241
+  },
+  "2026-08.jsonl": {
+   "sha256": "418b90280eb5390f81d26903d60f18481d0a75201e61fa8b40f48489e1b2cdb1",
+   "bytes": 70968,
+   "lines": 316
+  },
+  "2026-09.jsonl": {
+   "sha256": "1c8076a470d138a045f7cf056724c35a8c698c864824daf58a1e3338f8308e57",
+   "bytes": 104190,
+   "lines": 475
+  }
+ },
+ "batches": [
+  {
+   "at": "2026-09-26T11:24:10+09:00",
+   "file": "2026-07.jsonl",
+   "offset": 0,
+   "bytes": 54441,
+   "added": 241,
+   "src": "backfill",
+   "sha256": "f9de2bcc40c1df7868e21662c87e6bf14a0be69004dacd00d848743dccebabfe",
+   "head": "c1323a7079736c8e230297cc580a96befbb9e63910234a759b95864999eea0ec"
+  },
+  {
+   "at": "2026-09-26T11:24:10+09:00",
+   "file": "2026-08.jsonl",
+   "offset": 0,
+   "bytes": 70968,
+   "added": 316,
+   "src": "backfill",
+   "sha256": "418b90280eb5390f81d26903d60f18481d0a75201e61fa8b40f48489e1b2cdb1",
+   "head": "4a9ebf6e9b243e55cee2c91ce0fca899484a734c21dbc7dc680e76db09c0c2ae"
+  },
+  {
+   "at": "2026-09-26T11:24:10+09:00",
+   "file": "2026-09.jsonl",
+   "offset": 0,
+   "bytes": 104190,
+   "added": 475,
+   "src": "backfill",
+   "sha256": "1c8076a470d138a045f7cf056724c35a8c698c864824daf58a1e3338f8308e57",
+   "head": "f38bb83436e7e51121e400268cf68ca47106da5f4156778c7199ddb84310bf12"
+  }
+ ],
+ "head": "f38bb83436e7e51121e400268cf68ca47106da5f4156778c7199ddb84310bf12",
+ "rows": 1032
+}

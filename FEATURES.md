@@ -118,6 +118,20 @@
   빌더 `scripts/build_kr_market_alerts.py` → `data/korea/market_alerts.{json,js}`
   (`KR_MARKET_ALERTS`), `update_korea_data.py` 서브빌더(15:42 KST). 섹션별로 실패하면 직전
   발행분을 `status: "carried"` 로 유지하고 화면에 그 날짜를 적는다. 매매 신호가 아니라 정보.
+- **신호 성적표 (2026-09-26)**: 시그널 탭 맨 아래 접이식 섹션(`signal-scorecard.js`, `#fold-signalScorecard`,
+  딥링크 `?tab=signals&sc=<신호 종류>`). Mir 가 화면에 띄운 신호를 **발행 시점에 동결**해 적립한 원장을 발행 뒤
+  5·20·60 거래일 실제 수익률, 같은 기간 벤치마크(US SPY · KR KODEX 200) 대비 초과수익, 벤치마크를 이긴 비율,
+  발행일 묶음 부트스트랩 95% 구간으로 보여 준다. 표본 30 미만은 '판단 보류', 기간이 안 찬 표본·가격 이력 없는 종목·
+  이력이 끊긴 종목(생존편향)은 따로 센다. 대상: US 내부자 클러스터 매수·52주 신고가 근접·8-K·13D·팩터 순위
+  (20일 저변동성·52주 고점 근접, 발행 당시 검증 통과 여부 기록)·모멘텀 점수 상위(검증 실패 점수, 대조군)·오늘의
+  특징주 상승/하락, KR 52주 신고가·팩터 순위·모멘텀 점수·특징주·투자경고/위험·투자주의/경고 예고·상한가·하한가·
+  거래대금 급증·자사주 취득/소각·공급계약. 진입은 발행(기록) 시각 이후 첫 거래일 시가, 청산은 N번째 거래일 종가
+  (발행 시점 가격은 기록·대조용). 결과가 나빠도 그대로 보여 준다. 시그널 카드·오늘의 특징주·시장경보 카드·스캐너·
+  자사주/공급계약 트래커에 '이 신호의 과거 성적' 한 줄 링크, 신뢰도 센터에 '신호 성적표' 카드(원장 해시 불일치 시 경고).
+  원장 `data/signal_ledger/<us|kr>/<YYYY-MM>.jsonl`(append-only, `manifest.json` 에 파일·묶음별 SHA-256 과 해시 체인,
+  CI 가 `--verify`) → `data/signal_scorecard.{json,js}`(`SIGNAL_SCORECARD`). 빌더 `scripts/build_signal_ledger.mjs`,
+  순수 계산 `signal-scorecard-core.js`(테스트 `scripts/tests/test_signal_scorecard_core.mjs`). 07-23~09-25 는 git 이력의
+  커밋 시점 파일에서 '소급 복원'(US 12:00 · KR 20:00 KST 이전 커밋만).
 - **접이식 위젯**: 시장 심리 종합지수 · 매크로 지표 · 미국 국채 수익률 곡선 ·
   예측시장 확률 · 침체 신호(2026-09-25) · 한국 거시지표(ECOS) · 수출입 동향 · 국채 경매 · 선물 포지션(COT) · 위키피디아 관심도 ·
   집계 인사이트. 상세 설명은 아래 '매크로 · 옵션 · 수급 심리 패널'.
@@ -396,6 +410,10 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - KR 은 `Korea close briefing` 브리핑 뒤, US 는 `Daily US market snapshot` 스냅샷 발행 뒤 스텝(둘 다 `!cancelled()` + continue-on-error — 브리핑·스냅샷 실패와 서로 막지 않는다). 등락률·거래대금은 라이브 소스의 거래일 봉으로 다시 확인한다(KR 네이버 m.stock, US 야후 일봉 — details 일봉은 날짜가 빠지거나 늦다). US 거래일은 스냅샷 `priceDate`(야후 날짜로 정한 가격 기준일)가 1순위이고, 없을 때만 시총 상위 15종목의 야후 일봉과 스냅샷 등락률을 대조한 다수결. 00:00 UTC 뒤에 받은 야후 일봉에 마지막 거래일 봉이 빠지면(2026-09-26 run 36202139416 에서 보드가 멈춘 원인) 야후 `meta.regularMarketTime/Price`(시세 날짜가 마지막 봉의 바로 다음 거래일일 때만) → details 마지막 봉 → 그 종목 `priceDate` 가 거래일인 스냅샷 값 순으로 확인하고, 날짜를 확인 못 한 종목만 뺀다(보드 항목의 `priceSource`).
   - 근거: KR DART(`list.json` 종목별 + 기존 `kr_disclosures.json`)·네이버 뉴스 검색 API(키 없거나 거부되면 Google News RSS)·종목 상세 뉴스 / US SEC 8-K(efts 당일분 + `material_events.json`)·Google News RSS·종목 상세 야후 뉴스, 업종 시총가중 평균, 지수. 제목에 종목명/티커가 없는 기사는 버린다.
   - LLM 은 뉴스·공시 근거가 있는 종목만 10개 묶음으로 호출(시장당 하루 1~2회, 상한 4회). 같은 거래일 보드가 이미 정상이면 호출 없이 끝나고, 요약이 실패한 보드는 거래일당 최대 2회까지 재시도. 요약이 전부 실패하면 목록은 "요약 실패" 로 발행하고 exit 1.
+- **신호 원장·성적표 빌더 (`build_signal_ledger.mjs`, 2026-09-26)**:
+  - `Daily US market snapshot`(특징주 뒤) · `Korea close briefing`(특징주 뒤) 끝의 `Record signal ledger` 스텝(`!cancelled()` + continue-on-error). `--record us|kr` 가 그날 화면 규칙(`signal-scorecard-core.js` 의 `extractSignals`)으로 신호를 다시 뽑아 원장 끝에 붙이고(같은 공시·지정·거래일은 1회, 상태 신호는 쿨다운 28일·내부자 60일, 기록일보다 7일 넘게 앞선 사건은 제외) 두 시장 성적표를 다시 집계한다. 발행은 `sec_client.py --publish`.
+  - 무결성: 실행마다 manifest 의 파일 해시·묶음(offset/bytes) 해시·체인을 먼저 대조하고, 어긋나면 붙이지 않고 exit 1(성적표에는 '기록 해시 불일치'). `.gitattributes` 에서 원장은 `-text`(줄끝 변환 금지).
+  - 소급 복원: `--backfill us|kr --git "<repo>::<ref>" --from --to` — 실시간 줄이 생기기 전에만 허용. 2026-09-04 이전은 이력 재작성 전 백업 레포(`mir_backup_20260904_git`)에서 읽었다.
 - **예측시장 확률 빌더 (`build_macro_odds.py`)**:
   - 하루 3회 06:37·14:37·22:37 KST(`Macro odds (prediction markets)` 워크플로우). Kalshi·Polymarket 공개 API(키 없음) + 산업 지표 재사용 → `data/macro_odds.json/.js`(`window.MACRO_ODDS`). Polymarket 은 한국 IP 에서 HTTP 451 로 막혀 로컬 실행 시 Kalshi 만 나온다(미국 러너에서는 열림). 두 거래소가 모두 실패하면 기존 파일 유지 + exit 1, 나이 관문은 `check_data_freshness.py --group macro-odds`.
 - **구독 피드 생성 (`gen_feeds.py`)**:

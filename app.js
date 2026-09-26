@@ -1842,7 +1842,7 @@ function indexSparkline(series, up) {
   const w = 200, h = 44;
   const min = Math.min(...vals), max = Math.max(...vals), rng = max - min || 1;
   const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(h - ((v - min) / rng) * h).toFixed(1)}`).join(" ");
-  const color = up ? "#16a34a" : "#dc2626";
+  const color = up ? "var(--pos)" : "var(--neg)";
   return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6"></polyline></svg>`;
 }
 
@@ -4529,7 +4529,7 @@ function scanHeadHtml(entry) {
 function scanCardHtml(entry, rank) {
   const item = entry.item;
   const head = scanHeadHtml(entry);
-  const spark = sparklineSvg(item.closeSeries, { width: 240, height: 56, color: (item.changePct || 0) >= 0 ? "#22c55e" : "#ef4444" });
+  const spark = sparklineSvg(item.closeSeries, { width: 240, height: 56, color: (item.changePct || 0) >= 0 ? "var(--pos)" : "var(--neg)" });
   const stats = entry.stats
     ? `<div class="scan-evidence">${escapeHtml(entry.stats)}</div>`
     : "";

@@ -231,6 +231,19 @@ function metricColor(value, metric) {
     if (v >= 30) return "#a86933";
     return "#9f2f2f";
   }
+  // 등락률 타일: 한국 모드는 상승 빨강·하락 파랑(국내 관례, styles.css html[data-market="kr"] 의
+  // --pos/--neg 와 같은 계열), 미국 모드는 상승 초록·하락 빨강. 흰 글자가 얹히므로 명도를 맞췄다.
+  if (isKrMarket()) {
+    if (v >= 5) return "#a3161a";
+    if (v >= 3) return "#c42127";
+    if (v >= 1) return "#d8474b";
+    if (v > 0) return "#d9787a";
+    if (v === 0) return "#667085";
+    if (v > -1) return "#6f93d6";
+    if (v > -3) return "#3f6fd0";
+    if (v > -5) return "#1f55c0";
+    return "#123f94";
+  }
   if (v >= 5) return "#006b35";
   if (v >= 3) return "#008f46";
   if (v >= 1) return "#20a05a";
@@ -769,7 +782,7 @@ function stockTooltip(item) {
         <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
       </div>
     </div>
-    ${sparklineSvg(item.closeSeries, { width: 260, height: 76, color: item.changePct >= 0 ? "#22c55e" : "#ef4444" })}
+    ${sparklineSvg(item.closeSeries, { width: 260, height: 76, color: item.changePct >= 0 ? "var(--pos)" : "var(--neg)" })}
     <div class="tooltip-facts">
       ${miniFact("Sector", item.sector)}
       ${miniFact("Industry", item.industry)}
@@ -840,7 +853,7 @@ function peerTooltipRow(item) {
   return `
     <div class="peer-row">
       <strong>${escapeHtml(stockLabel(item))}</strong>
-      ${sparklineSvg(item.closeSeries, { width: 76, height: 20, color: item.changePct >= 0 ? "#22c55e" : "#ef4444" })}
+      ${sparklineSvg(item.closeSeries, { width: 76, height: 20, color: item.changePct >= 0 ? "var(--pos)" : "var(--neg)" })}
       <span>${priceOrDash(item.price)}</span>
       <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
     </div>
@@ -873,7 +886,7 @@ function sparklineSvg(series, options = {}) {
   });
   const path = points.map(([x, y], index) => `${index ? "L" : "M"} ${x.toFixed(1)} ${y.toFixed(1)}`).join(" ");
   const area = `${path} L ${width - pad} ${height - pad} L ${pad} ${height - pad} Z`;
-  const color = options.color || "#22c55e";
+  const color = options.color || "var(--pos)";
   return `
     <svg class="sparkline" viewBox="0 0 ${width} ${height}" aria-hidden="true">
       <path d="${area}" fill="${color}" opacity="0.16"></path>

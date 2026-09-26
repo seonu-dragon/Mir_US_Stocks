@@ -584,7 +584,7 @@
         const base0 = clamp(0, lo, hi);
         const y0 = mY(base0);
         const y1 = mY(clamp(base0 + hVal, lo, hi));
-        ctx.fillStyle = hVal >= 0 ? "rgba(34, 197, 94, 0.35)" : "rgba(239, 68, 68, 0.35)";
+        ctx.fillStyle = mirColorAlpha(hVal >= 0 ? "pos" : "neg", 0.35, hVal >= 0 ? "#22c55e" : "#ef4444");
         ctx.fillRect(x - barW / 2, Math.min(y0, y1), barW, Math.max(1, Math.abs(y1 - y0)));
       }
       const line = (series, color) => {
@@ -609,7 +609,7 @@
     ctx.fillStyle = "rgba(203, 213, 225, 0.85)";
     ctx.fillText("MACD (12·26·9)", mX0 + 8, top + 13);
     if (lastMacd != null) {
-      ctx.fillStyle = lastMacd >= 0 ? "#4ade80" : "#f87171";
+      ctx.fillStyle = lastMacd >= 0 ? mirColor("pos", "#4ade80") : mirColor("neg", "#f87171");
       ctx.fillText(lastMacd >= 100 ? lastMacd.toFixed(0) : lastMacd.toFixed(2), mX0 + 92, top + 13);
     }
 
@@ -869,10 +869,10 @@
       }
       if (frontIdx >= 0) {
         const up = chartBars[frontIdx].c >= chartBars[0].c;
-        const lineColor = up ? "#22c55e" : "#ef4444";
+        const lineColor = up ? mirColor("pos", "#22c55e") : mirColor("neg", "#ef4444");
         const areaGrad = ctx.createLinearGradient(0, padT, 0, padT + plotH);
-        areaGrad.addColorStop(0, up ? "rgba(34, 197, 94, 0.20)" : "rgba(239, 68, 68, 0.20)");
-        areaGrad.addColorStop(1, up ? "rgba(34, 197, 94, 0)" : "rgba(239, 68, 68, 0)");
+        areaGrad.addColorStop(0, mirColorAlpha(up ? "pos" : "neg", 0.20, up ? "#22c55e" : "#ef4444"));
+        areaGrad.addColorStop(1, mirColorAlpha(up ? "pos" : "neg", 0, up ? "#22c55e" : "#ef4444"));
         // 영역 채우기
         ctx.globalAlpha = alpha;
         ctx.beginPath();
@@ -900,7 +900,7 @@
         const bar = styleBars[i];
         const x = xAt(i);
         const up = bar.c >= bar.o;
-        const color = up ? "#22c55e" : "#ef4444";
+        const color = up ? mirColor("pos", "#22c55e") : mirColor("neg", "#ef4444");
         // candles sprout from the close-price line outward as they reveal
         const grow = rev ? smoothstep(r) : 1;
         const baseY = yAt(bar.c);
@@ -936,7 +936,7 @@
         const grow = rev ? smoothstep(r) : 1;
         const vh = ((bar.v || 0) / maxVol) * (volH - 4) * grow;
         ctx.globalAlpha = alpha * r;
-        ctx.fillStyle = up ? "rgba(34, 197, 94, 0.45)" : "rgba(239, 68, 68, 0.45)";
+        ctx.fillStyle = mirColorAlpha(up ? "pos" : "neg", 0.45, up ? "#22c55e" : "#ef4444");
         ctx.fillRect(x - candleW * 0.5, volTop + volH - vh, candleW, vh);
       }
     }
@@ -989,7 +989,7 @@
     const axisX = padL + plotW;
     if (lastY >= padT - 1 && lastY <= padT + plotH + 1) {
       const prev = n > 1 ? chartBars[n - 2].c : last.o;
-      ctx.fillStyle = last.c >= prev ? "#16a34a" : "#dc2626";
+      ctx.fillStyle = last.c >= prev ? mirColor("pos", "#16a34a") : mirColor("neg", "#dc2626");
       const tagW = Math.max(30, w - axisX - 4);
       if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(axisX + 2, lastY - 8, tagW, 16, 3); ctx.fill(); }
       else ctx.fillRect(axisX + 2, lastY - 8, tagW, 16);
@@ -1045,7 +1045,7 @@
     ctx.font = "11px Pretendard, system-ui, sans-serif";
     ctx.fillText(secondaryLabel, labelX + primaryW + 8, labelY);
 
-    ctx.fillStyle = chg >= 0 ? "#4ade80" : "#f87171";
+    ctx.fillStyle = chg >= 0 ? mirColor("pos", "#4ade80") : mirColor("neg", "#f87171");
     ctx.font = "11px Pretendard, system-ui, sans-serif";
     ctx.fillText(`${chg >= 0 ? "+" : ""}${chg.toFixed(2)}%`, Math.max(8, padL + 4), Math.max(32, padT));
 

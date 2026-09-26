@@ -84,7 +84,8 @@ jobs:
       # 공정위 공시대상기업집단 소속회사 → 그룹사 매핑(기업집단포털 오픈API). 연 1회(5/1 지정).
       - name: KR corp groups (공정위 기업집단)
         continue-on-error: true
-        timeout-minutes: 10
+        # 페이지마다 TLS 핸드셰이크 타임아웃 재시도(최대 5회, 대기 5·15·30·60초)가 있어 10분이면 모자랄 수 있다.
+        timeout-minutes: 20
         env:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
         run: python -u scripts/build_kr_corp_groups.py --push

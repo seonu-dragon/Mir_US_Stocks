@@ -61,7 +61,10 @@ FIELD_MAP = {
     "pegTTM": "peg",
     "evEbitdaTTM": "evEbitda",
     "currentEv/freeCashFlowTTM": "pfcf",
-    "dividendYieldIndicatedAnnual": "divYield",
+    # dividendYieldIndicatedAnnual 은 쓰지 않는다: 연환산 배당을 오래된 가격으로 나눠 부풀려져 있었다
+    # (2026-09-27 실측 T 6.85% — dividendIndicatedAnnual 1.11 ÷ $16.2, 현재가 $25.38 이면 4.38%.
+    # 같은 응답의 currentDividendYieldTTM 은 4.62%). 최근 12개월 지급 기준 TTM 을 쓴다.
+    "currentDividendYieldTTM": "divYield",
 }
 
 
@@ -172,6 +175,7 @@ def main() -> int:
         # 조회에 실패한 종목은 여기 오지 않으므로 0 을 지어내지 않는다.
         if "divYield" not in rec:
             rec["divYield"] = 0.0
+        rec["divBasis"] = "ttm"   # build_map_fundamentals 는 이 표시가 없는 옛 값(연환산)을 버린다
         if rec:
             out[t] = rec
 

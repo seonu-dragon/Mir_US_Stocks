@@ -818,7 +818,7 @@ function applyMarketOnlyUi() {
   setPh("backtestTickerInput", krMode ? "회사명 (예: 삼성전자)" : "한국어·티커 검색 (예: 테슬라)");
   setPh("tickerSearch", krMode ? "종목명·한국어 (예: 삼성전자, 하이닉스)" : "한국어·티커·영문 (예: 테슬라, NVDA, Apple)");
   setPh("pfTicker", krMode ? "회사명 (예: 삼성전자)" : "티커 (예: NVDA)");
-  setPh("pfCost", `평단가 ${cfg.currencySymbol || "$"}`);
+  setPh("pfCost", cfg.currencySymbol === "₩" ? "평단가(원)" : `평단가 ${cfg.currencySymbol || "$"}`);
   setPh("positionTicker", krMode ? "삼성전자" : "NVDA");
   // 국내에서 '티커'라는 말은 낯설다 — 입력 안내문도 회사명·종목코드로 바꾼다.
   setPh("bulkInput", krMode ? "회사명, 쉼표 구분 (예: 삼성전자, 현대차)" : "한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)");
@@ -4381,7 +4381,7 @@ function renderTopStocks() {
         <em class="${metricClass(value, metric)}">${formatMetricValue(value, metric)}</em>
       </div>
       <p class="muted">${escapeHtml(stockSubLabel(item) || "")}</p>
-      <p>${escapeHtml(item.sector)} · ${escapeHtml(item.industry)}</p>
+      <p>${escapeHtml(sectorLabelKo(item.sector))} · ${escapeHtml(item.industry)}</p>
       <div class="mini-facts">
         ${miniMetric("가격", priceOrDash(item.price))}
         ${miniMetric("당일", `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>`)}

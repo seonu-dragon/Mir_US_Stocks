@@ -1,8 +1,10 @@
 // home-dash.js — 오늘 탭(요약)의 첫 화면: 지수 카드 캐러셀 → 선택 지수 큰 차트 + 시장 현황 → AI 브리핑 요약.
 // ====================================================================================
 // 클래식 스크립트(모듈 아님). 전역 이름은 hd 접두사.
-// 데이터는 새로 받지 않는다 — 이미 있는 것만 다시 배치한다.
+// 새로 받는 것은 큰 지수 차트의 라이브 시리즈(워커 ?indices=1 한 번의 묶음 요청, 장중에만 1분 폴링)뿐이다.
+// 나머지는 이미 있는 것을 다시 배치한다.
 //   · 지수: marketHeader.indices(signals.js — 워커 당일 5분 시리즈 / KR 은 스냅샷 + 추종 ETF 종가 근사)
+//     라이브 응답(hdLive)이 오면 카드의 가격·등락률·스파크라인도 그 값으로 덮는다(같은 응답이라 추가 요청 없음).
 //   · 환율: marketHeader.fx(현재가·등락률만, 추이 없음)
 //   · 시장 현황: data.stocks(ETF 제외 개별 종목) 상승·보합·하락 수, 52주 고점 근처 수, CNN 공포·탐욕
 //   · 국내 수급: window.KR_MARKET_FUNDS(lazy, kr-flow-panels.js 와 같은 파일) 최근 거래일 투자자별 순매수
@@ -10,7 +12,8 @@
 // 렌더 진입점: renderIndexStrip(app.js) → renderHomeIndexCarousel, renderAll·refreshFeatureViews → renderHomeDash.
 
 let hdSelected = null;      // 선택된 지수 심볼
-let hdIndices = [];         // 마지막으로 받은 지수 목록(캐러셀 순서)
+let hdIndices = [];         // 마지막으로 받은 지수 목록(캐러셀 순서, 라이브 값 반영)
+let hdIndicesRaw = [];      // renderIndexStrip 이 준 원본(라이브 응답이 오면 이걸로 다시 그린다)
 const HD_BRIEF_CACHE = {};  // key → html(없으면 "")
 
 function hdNum(v) {
@@ -50,7 +53,19 @@ function renderHomeIndexCarousel(el, indices) {
   // 시장별 앞줄: 미국 S&P·나스닥·다우, 국내 코스피·코스닥. 나머지는 받은 순서.
   const lead = isKrMarket() ? ["^KS11", "^KQ11", "^GSPC", "^IXIC"] : ["^GSPC", "^IXIC", "^DJI", "^RUT"];
   const rank = (ix) => { const i = lead.indexOf(ix.symbol); return i < 0 ? 99 : i; };
-  hdIndices = (indices || []).filter((ix) => ix && ix.name).map((ix, i) => ({ ix, i }))
+  hdIndicesRaw = Array.isArray(indices) ? indices : [];
+  // 미국 모드는 부팅 때 헤더가 워커 응답을 이미 받았다 — 그걸 첫 라이브 값으로 쓴다(추가 요청 없음).
+  if (!hdLive.rows && typeof marketHeader !== "undefined" && marketHeader.indicesSource === "worker" && hdIndicesRaw.some((ix) => Array.isArray(ix.series) && ix.series.length >= 2 && !ix.seriesNote)) {
+    hdLive.rows = hdIndicesRaw.filter((ix) => !ix.seriesNote);
+    hdLive.at = Date.now();
+  }
+  const withLive = (ix) => {
+    const live = hdLiveRow(ix.symbol);
+    if (!live || live === ix) return ix;
+    const price = hdNum(live.price), chg = hdNum(live.changePct);
+    return { ...ix, price: price ?? ix.price, changePct: chg ?? ix.changePct, series: live.series.length >= 2 ? live.series : ix.series, seriesNote: live.series.length >= 2 ? "" : ix.seriesNote };
+  };
+  hdIndices = hdIndicesRaw.filter((ix) => ix && ix.name).map((ix, i) => ({ ix: withLive(ix), i }))
     .sort((a, b) => rank(a.ix) - rank(b.ix) || a.i - b.i).map((r) => r.ix);
   if (!hdIndices.length) {
     el.innerHTML = `<p class="home-idx-empty muted">지수 시세를 불러오는 중입니다.</p>`;
@@ -109,66 +124,329 @@ function hdSelectIndex(symbol, { focus = false } = {}) {
     });
   }
   renderHomeIndexChart();
+  hdLiveSchedule();
 }
 
-// 선택 지수 큰 차트. 가로 눈금이 없는 시리즈(시각이 안 붙은 5분 봉·일봉 근사)라 선만 그리고,
-// 세로 눈금은 HTML 로 옆에 둔다 — SVG 는 preserveAspectRatio="none" 이라 숨은 상태(폭 0)에서
-// 그려도 보이는 순간 제 폭으로 늘어난다.
-function renderHomeIndexChart() {
+// ----- 선택 지수 큰 차트: 오늘 하루(장중) + 이 차트만 라이브 -----
+// 시리즈 원본은 워커 ?indices=1(야후 1d/5m 종가, 국내 지수 가격·등락률은 네이버). 한 번의 묶음
+// 요청이 8개 지수를 다 주므로 선택을 바꿔도 새로 받지 않는다. 미국 모드는 부팅 때 헤더가 이미 같은
+// 응답을 받아 두므로 첫 요청이 없다. 장중에만 HD_LIVE_POLL_MS 마다, 탭이 보일 때만 다시 받는다.
+// 시간축 계산(시각 배정·장 상태·눈금)은 home-chart-core.js.
+// SVG 는 preserveAspectRatio="none" 이라(숨은 상태에서 그려도 보이는 순간 제 폭으로 늘어난다)
+// 글자·점은 SVG 밖 HTML 로 % 위치에 둔다.
+const HD_LIVE_POLL_MS = 60000;
+const hdLive = { rows: null, at: 0, stale: false, failed: false, loading: false, started: false, timer: 0, pending: false };
+
+function hdCore() { return typeof window !== "undefined" ? window.MirHomeChartCore : null; }
+
+function hdLiveRow(symbol) {
+  return (hdLive.rows || []).find((r) => r && r.symbol === symbol && Array.isArray(r.series)) || null;
+}
+
+function hdCalendarEvents() {
+  const c = window.MARKET_CALENDAR;
+  return c && Array.isArray(c.events) ? c.events : [];
+}
+
+function hdKstClock(ms) {
+  const core = hdCore();
+  if (!core) return "";
+  const z = core.zoneParts(ms, "Asia/Seoul");
+  return core.fmtMin(z.min);
+}
+
+// 선택 지수가 지금 폴링할 만한가(정규장 중이거나 24시간 시장).
+function hdLiveWanted() {
+  const core = hdCore();
+  const mkt = core && core.symbolMarket(hdSelected);
+  if (!mkt) return false;
+  const s = core.sessionState(mkt, Date.now(), hdCalendarEvents());
+  return Boolean(s && s.state === "open");
+}
+
+function hdChartVisible() {
   const host = byId("homeIndexChart");
-  if (!host) return;
-  const ix = hdIndices.find((r) => r.symbol === hdSelected);
-  if (!ix) { host.innerHTML = `<p class="home-chart-empty muted">지수를 불러오면 여기에 차트가 나옵니다.</p>`; return; }
-  const chg = hdNum(ix.changePct);
-  const price = hdNum(ix.price);
-  const vals = (ix.series || []).map(Number).filter(Number.isFinite);
-  const approx = Boolean(ix.seriesNote); // KR 스냅샷: 추종 ETF 종가 근사
-  // 전일 종가는 등락률로 역산한 값이다(당일 시리즈일 때만 기준선으로 쓴다).
-  const prevClose = !approx && price != null && chg != null ? price / (1 + chg / 100) : null;
-  const analysis = typeof indexAnalysisTicker === "function" ? indexAnalysisTicker(ix.symbol) : null;
-  let plot = `<p class="home-chart-empty muted">추이 데이터가 없습니다.</p>`;
-  if (vals.length >= 2) {
-    const all = prevClose != null ? vals.concat([prevClose]) : vals;
-    let lo = Math.min(...all), hi = Math.max(...all);
-    const pad = (hi - lo || Math.abs(hi) * 0.01 || 1) * 0.08;
-    lo -= pad; hi += pad;
-    const W = 1000, H = 240;
-    const y = (v) => H - ((v - lo) / (hi - lo)) * H;
-    const x = (i) => (i / (vals.length - 1)) * W;
-    const line = vals.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
-    const up = approx ? vals[vals.length - 1] >= vals[0] : (chg ?? 0) >= 0;
-    const color = up ? "var(--pos)" : "var(--neg)";
-    const area = `${line}L${W},${H}L0,${H}Z`;
-    const base = prevClose != null ? `<line x1="0" x2="${W}" y1="${y(prevClose).toFixed(1)}" y2="${y(prevClose).toFixed(1)}" class="home-chart-base" vector-effect="non-scaling-stroke"></line>` : "";
-    // ETF 근사 추이의 세로 눈금은 ETF 가격이라 지수 수준으로 읽히면 안 된다 — 근사일 땐 눈금을 내지 않는다.
-    const axisFmt = (v) => Math.abs(v) >= 1000 ? Math.round(v).toLocaleString("en-US") : v.toLocaleString("en-US", { maximumFractionDigits: 2 });
-    const ticks = approx ? "" : [hi - pad, (hi + lo) / 2, lo + pad].map((v) => `<span style="top:${((y(v) / H) * 100).toFixed(2)}%">${axisFmt(v)}</span>`).join("");
-    plot = `<div class="home-chart-plot${approx ? " is-approx" : ""}">
-        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(ix.name)} ${approx ? "최근 추이" : "당일 추이"}">
-          <path d="${area}" fill="${color}" fill-opacity="0.08" stroke="none"></path>
-          ${base}
-          <path d="${line}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"></path>
-        </svg>
-        <div class="home-chart-yaxis" aria-hidden="true">${ticks}</div>
-      </div>`;
+  return Boolean(host && host.offsetParent !== null && !document.hidden);
+}
+
+function hdFetchLive() {
+  if (hdLive.loading || typeof LIVE_DATA_PROXY === "undefined" || !LIVE_DATA_PROXY) return;
+  hdLive.loading = true;
+  hdLive.pending = false;
+  const ctl = typeof AbortController === "function" ? new AbortController() : null;
+  const kill = ctl ? setTimeout(() => ctl.abort(), 10000) : 0;
+  fetch(`${LIVE_DATA_PROXY.replace(/\/$/, "")}/?indices=1`, { cache: "no-store", signal: ctl ? ctl.signal : undefined })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((p) => {
+      if (p && Array.isArray(p.indices) && p.indices.length) {
+        hdLive.rows = p.indices;
+        hdLive.at = Date.now();
+        hdLive.stale = Boolean(p.stale);
+        hdLive.failed = false;
+      } else {
+        hdLive.failed = true;
+      }
+    })
+    .catch(() => { hdLive.failed = true; })
+    .finally(() => {
+      clearTimeout(kill);
+      hdLive.loading = false;
+      hdRefreshFromLive();
+      hdLiveSchedule();
+    });
+}
+
+function hdLiveSchedule(delay) {
+  clearTimeout(hdLive.timer);
+  hdLive.timer = 0;
+  if (!hdLiveWanted()) return;
+  const wait = delay != null ? delay : Math.max(5000, HD_LIVE_POLL_MS - (Date.now() - hdLive.at));
+  hdLive.timer = setTimeout(() => {
+    hdLive.timer = 0;
+    // 브라우저 탭이 숨었으면 받지 않는다(visibilitychange 가 이어 받는다). 다른 사이트 탭(시장·종목…)을
+    // 보는 중이면 네트워크 없이 5초마다 확인만 하다가 요약이 다시 보이면 받는다.
+    if (document.hidden) { hdLive.pending = true; return; }
+    if (!hdChartVisible()) { hdLive.pending = true; hdLiveSchedule(5000); return; }
+    hdFetchLive();
+  }, wait);
+}
+
+// 첫 화면을 막지 않게 늦게 시작. 장외라도 한 번은 받는다(국내 모드는 스냅샷 ETF 근사만 있어서).
+function hdLiveStart() {
+  if (hdLive.started) return;
+  hdLive.started = true;
+  if (typeof ensureFeatureData === "function") {
+    ensureFeatureData("marketCalendar").then((ok) => { if (ok) { renderHomeIndexChart(); hdLiveSchedule(); } });
   }
-  const caption = approx
-    ? `추이선은 지수를 추종하는 ETF 종가 ${vals.length}거래일로 그린 근사치입니다. 가격·등락률은 실제 지수 값입니다.`
-    : `당일 5분 간격 추이${prevClose != null ? " · 점선은 등락률로 역산한 전일 종가" : ""} · 출처 Yahoo Finance`;
-  host.innerHTML = `
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) return;
+    if ((hdLive.pending || Date.now() - hdLive.at >= HD_LIVE_POLL_MS) && hdLiveWanted() && hdChartVisible()) hdFetchLive();
+  });
+  const go = () => {
+    if (hdLive.rows && Date.now() - hdLive.at < HD_LIVE_POLL_MS) { hdLiveSchedule(); return; }
+    hdFetchLive();
+  };
+  if (typeof requestIdleCallback === "function") requestIdleCallback(go, { timeout: 4000 });
+  else setTimeout(go, 1500);
+}
+
+// 오늘 탭으로 돌아왔을 때 등 — 밀린 갱신이 있으면 받는다.
+function hdLiveResume() {
+  if (!hdLive.started) return;
+  if ((hdLive.pending || (!hdLive.timer && Date.now() - hdLive.at >= HD_LIVE_POLL_MS)) && hdLiveWanted() && hdChartVisible()) hdFetchLive();
+}
+
+function hdRefreshFromLive() {
+  const el = byId("indexStrip");
+  if (el && hdIndicesRaw.length) renderHomeIndexCarousel(el, hdIndicesRaw);
+  else renderHomeIndexChart();
+}
+
+function hdStatusBadge(kind, session) {
+  if (hdLive.failed && hdLive.rows) return { cls: "is-delayed", text: `지연 · ${hdKstClock(hdLive.at)} 기준` };
+  if (hdLive.stale) return { cls: "is-delayed", text: "지연" };
+  if (kind === "live") return { cls: "is-live", text: session && session.market === "crypto" ? "24시간 · 실시간" : "장중 · 실시간" };
+  if (kind === "post") return { cls: "", text: "장 마감" };
+  if (kind === "pre") return { cls: "", text: "개장 전 · 직전 거래일" };
+  if (kind === "holiday") return { cls: "", text: `휴장${session && session.holidayName ? `(${session.holidayName})` : ""} · 직전 거래일` };
+  if (kind === "weekend") return { cls: "", text: "휴장 · 직전 거래일" };
+  if (kind === "prev") return { cls: "", text: "직전 거래일" };
+  return { cls: "", text: "" };
+}
+
+function hdChartHead(ix, price, chg, badge, analysis) {
+  return `
     <div class="home-chart-head">
       <div class="home-chart-title">
         <strong>${escapeHtml(ix.name)}</strong>
         <span class="home-chart-price">${price == null ? "—" : hdFmtLevel(price)}</span>
         <span class="home-chart-chg ${chg == null ? "muted" : cls(chg)}">${chg == null ? "—" : fmtPct(chg)}</span>
+        ${badge && badge.text ? `<span class="home-chart-badge ${badge.cls}">${escapeHtml(badge.text)}</span>` : ""}
       </div>
       ${analysis ? `<button type="button" class="ghost compact-btn home-chart-go" data-ticker="${escapeHtml(analysis)}" title="${escapeHtml(ix.name)}을(를) 추종하는 ${escapeHtml(analysis)} 종목 분석">${escapeHtml(stockLabel(analysis))} 분석 ›</button>` : ""}
-    </div>
-    ${plot}
-    <p class="home-chart-cap">${escapeHtml(caption)}</p>`;
-  host.querySelector(".home-chart-go")?.addEventListener("click", (e) => selectTicker(e.currentTarget.dataset.ticker, { openSearch: true }));
+    </div>`;
 }
 
+function hdAxisFmt(v, step) {
+  const digits = step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+  return v.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+// 하루 차트 본체. 반환: { plot, caption } 또는 null(그릴 수 없음).
+function hdIntradayPlot(ix, row, price, chg) {
+  const core = hdCore();
+  const mkt = core && core.symbolMarket(ix.symbol);
+  if (!core || !mkt || !row) return null;
+  const now = Date.now();
+  const session = core.sessionState(mkt, now, hdCalendarEvents());
+  const placed = core.placeSeries(row.series, session);
+  const pts = placed.points;
+  if (pts.length < 2) return null;
+  const mk = core.MARKETS[mkt];
+  const t0 = mk.open, t1 = mkt === "crypto" ? mk.open + 1440 : (placed.kind === "post" ? session.close : mk.close);
+  const prevClose = price != null && chg != null ? price / (1 + chg / 100) : null;
+  const vals = pts.map((p) => p.v);
+  const all = prevClose != null ? vals.concat([prevClose]) : vals;
+  let lo = Math.min(...all), hi = Math.max(...all);
+  const pad = (hi - lo || Math.abs(hi) * 0.01 || 1) * 0.1;
+  lo -= pad; hi += pad;
+  const W = 1000, H = 240;
+  const xp = (t) => ((Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0)) * 100; // %
+  const yp = (v) => ((hi - v) / (hi - lo)) * 100; // % (위가 0)
+  const X = (t) => (xp(t) * W / 100).toFixed(1);
+  const Y = (v) => (yp(v) * H / 100).toFixed(1);
+  // 선: 비어 있는 구간(마지막 봉 → 종가)은 점선으로 따로.
+  let solid = "", bridge = "";
+  pts.forEach((p, i) => {
+    if (i && p.bridged) bridge = `M${X(pts[i - 1].t)},${Y(pts[i - 1].v)}L${X(p.t)},${Y(p.v)}`;
+    else solid += `${i ? "L" : "M"}${X(p.t)},${Y(p.v)}`;
+  });
+  const last = pts[pts.length - 1];
+  // 전일 종가 위는 상승색, 아래는 하락색(기준선이 없으면 한 색). 면은 기준선까지만 채운다.
+  const baseY = prevClose != null ? Number(Y(prevClose)) : null;
+  const floor = baseY != null ? baseY.toFixed(1) : H;
+  const area = `M${X(pts[0].t)},${floor}` + pts.map((p) => `L${X(p.t)},${Y(p.v)}`).join("") + `L${X(last.t)},${floor}Z`;
+  const up = prevClose != null ? last.v >= prevClose : (chg ?? 0) >= 0;
+  const uid = `hdc${Math.random().toString(36).slice(2, 8)}`;
+  const layer = (color, clip) => `<g${clip ? ` clip-path="url(#${clip})"` : ""}>
+      <path d="${area}" fill="${color}" fill-opacity="0.09" stroke="none"></path>
+      <path d="${solid}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"></path>
+      ${bridge ? `<path d="${bridge}" fill="none" stroke="${color}" stroke-width="1.5" stroke-dasharray="3 4" vector-effect="non-scaling-stroke"></path>` : ""}
+    </g>`;
+  const lines = baseY != null
+    ? `<defs><clipPath id="${uid}u"><rect x="0" y="-10" width="${W}" height="${(baseY + 10).toFixed(1)}"></rect></clipPath>
+        <clipPath id="${uid}d"><rect x="0" y="${baseY.toFixed(1)}" width="${W}" height="${(H - baseY + 10).toFixed(1)}"></rect></clipPath></defs>
+        ${layer("var(--pos)", `${uid}u`)}${layer("var(--neg)", `${uid}d`)}`
+    : layer(up ? "var(--pos)" : "var(--neg)", "");
+  // 격자: 가로(가격 눈금) · 세로(시각 눈금).
+  const { step, ticks: vTicks } = core.valueTicks(lo, hi, 6);
+  const tStep = mkt === "crypto" ? 180 : 60;
+  const tTicks = core.timeTicks(t0, t1, tStep);
+  const gridH = vTicks.map((v) => `<line x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}" vector-effect="non-scaling-stroke"></line>`).join("");
+  const gridV = tTicks.filter((t) => t > t0 && t < t1).map((t) => `<line x1="${X(t)}" x2="${X(t)}" y1="0" y2="${H}" vector-effect="non-scaling-stroke"></line>`).join("");
+  const base = baseY != null ? `<line x1="0" x2="${W}" y1="${baseY.toFixed(1)}" y2="${baseY.toFixed(1)}" class="home-chart-base" vector-effect="non-scaling-stroke"></line>` : "";
+  // 표시 시각: 국내 KST, 미국 ET(툴팁에 KST 병기), 코인은 KST.
+  const kstShift = mkt === "crypto" ? 540 : 0;
+  const tLabel = (t) => core.fmtMin(t + kstShift);
+  const lastY = yp(last.v);
+  const yLabels = vTicks.filter((v) => Math.abs(yp(v) - lastY) > 7)
+    .map((v) => `<span style="top:${yp(v).toFixed(2)}%">${hdAxisFmt(v, step)}</span>`).join("");
+  const xLabels = tTicks.map((t, i) => `<span class="${i % 2 ? "is-odd" : ""}${t === t0 ? " is-first" : ""}${t === t1 ? " is-last" : ""}" style="left:${xp(t).toFixed(2)}%">${tLabel(t)}</span>`).join("");
+  const lastCls = prevClose == null ? "" : last.v > prevClose ? "pos" : last.v < prevClose ? "neg" : "";
+  const zoneNote = mkt === "us"
+    ? (() => {
+      const diff = (core.zoneParts(now, "Asia/Seoul").offsetMin - core.zoneParts(now, "America/New_York").offsetMin) / 60;
+      return `시각은 미 동부시간(ET) · 한국시간 = ET + ${diff}시간`;
+    })()
+    : mkt === "crypto" ? "시각은 한국시간 · 24시간 거래" : "시각은 한국시간";
+  const plot = `<div class="home-chart-plot" data-hd-uid="${uid}">
+      <div class="home-chart-area">
+        <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(ix.name)} 하루 추이, ${tLabel(pts[0].t)}부터 ${tLabel(last.t)}까지">
+          <g class="home-chart-grid">${gridH}${gridV}</g>
+          ${base}
+          ${lines}
+        </svg>
+        <i class="home-chart-lastdot ${lastCls}" style="left:${xp(last.t).toFixed(2)}%;top:${lastY.toFixed(2)}%" aria-hidden="true"></i>
+        <i class="home-chart-cross" hidden aria-hidden="true"></i>
+        <i class="home-chart-dot" hidden aria-hidden="true"></i>
+        <div class="home-chart-tip" hidden></div>
+      </div>
+      <div class="home-chart-yaxis" aria-hidden="true">${yLabels}<b class="home-chart-last ${lastCls}" style="top:${lastY.toFixed(2)}%">${hdFmtLevel(last.v)}</b></div>
+      <div class="home-chart-xaxis" aria-hidden="true">${xLabels}</div>
+    </div>`;
+  const bits = placed.kind === "live" ? [`${tLabel(last.t)} 기준`, "5분 간격"] : ["5분 간격"];
+  if (prevClose != null) bits.push("가로 점선은 전일 종가");
+  bits.push(zoneNote);
+  const src = mkt === "kr" ? "출처 Yahoo Finance · 가격·등락률은 네이버" : "출처 Yahoo Finance";
+  const upd = hdLive.at ? ` · 갱신 ${hdKstClock(hdLive.at)} KST` : "";
+  return {
+    plot,
+    caption: `${bits.join(" · ")} · ${src}${upd}`,
+    badge: hdStatusBadge(placed.kind, session),
+    interact: { pts, t0, t1, prevClose, tLabel, mkt, xp, yp, kind: placed.kind },
+  };
+}
+
+// 크로스헤어·툴팁(시각·값·전일 대비).
+function hdBindCrosshair(host, info) {
+  const area = host.querySelector(".home-chart-area");
+  if (!area || !info) return;
+  const cross = area.querySelector(".home-chart-cross");
+  const dot = area.querySelector(".home-chart-dot");
+  const tip = area.querySelector(".home-chart-tip");
+  const core = hdCore();
+  const hide = () => { cross.hidden = true; dot.hidden = true; tip.hidden = true; };
+  const show = (clientX) => {
+    const r = area.getBoundingClientRect();
+    if (!r.width) return;
+    const frac = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+    const t = info.t0 + frac * (info.t1 - info.t0);
+    let best = info.pts[0];
+    info.pts.forEach((p) => { if (Math.abs(p.t - t) < Math.abs(best.t - t)) best = p; });
+    const x = info.xp(best.t), y = info.yp(best.v);
+    cross.hidden = false; dot.hidden = false; tip.hidden = false;
+    cross.style.left = `${x}%`;
+    dot.style.left = `${x}%`; dot.style.top = `${y}%`;
+    const d = info.prevClose ? (best.v / info.prevClose - 1) * 100 : null;
+    let when = info.tLabel(best.t);
+    if (info.mkt === "us" && core) {
+      const diff = core.zoneParts(Date.now(), "Asia/Seoul").offsetMin - core.zoneParts(Date.now(), "America/New_York").offsetMin;
+      when = `${when} ET <small>(${core.fmtMin(best.t + diff)} KST)</small>`;
+    }
+    const isClose = best === info.pts[info.pts.length - 1] && info.kind !== "live";
+    tip.innerHTML = `<span class="home-chart-tip-t">${when}${isClose ? " · 종가" : ""}</span>
+      <b>${hdFmtLevel(best.v)}</b>${d == null ? "" : ` <span class="${cls(d)}">${fmtPct(d)}</span>`}`;
+    tip.classList.toggle("is-left", x > 60);
+    tip.style.left = `${x}%`;
+  };
+  area.addEventListener("pointermove", (e) => show(e.clientX));
+  area.addEventListener("pointerdown", (e) => show(e.clientX));
+  area.addEventListener("pointerleave", hide);
+}
+
+function renderHomeIndexChart() {
+  const host = byId("homeIndexChart");
+  if (!host) return;
+  const ix = hdIndices.find((r) => r.symbol === hdSelected);
+  if (!ix) { host.innerHTML = `<p class="home-chart-empty muted">지수를 불러오면 여기에 차트가 나옵니다.</p>`; return; }
+  hdLiveStart();
+  const chg = hdNum(ix.changePct);
+  const price = hdNum(ix.price);
+  const analysis = typeof indexAnalysisTicker === "function" ? indexAnalysisTicker(ix.symbol) : null;
+  // 1) 워커 당일 5분 시리즈가 있으면 하루 차트.
+  const row = hdLiveRow(ix.symbol) || (!ix.seriesNote && Array.isArray(ix.series) && ix.series.length >= 2 ? ix : null);
+  const intraday = hdIntradayPlot(ix, row, price, chg);
+  if (intraday) {
+    host.innerHTML = `${hdChartHead(ix, price, chg, intraday.badge, analysis)}
+      ${intraday.plot}
+      <p class="home-chart-cap">${escapeHtml(intraday.caption)}</p>`;
+    hdBindCrosshair(host, intraday.interact);
+  } else {
+    // 2) 라이브를 못 받은 국내 스냅샷: 추종 ETF 종가 근사(가격 눈금 없음).
+    const vals = (ix.series || []).map(Number).filter(Number.isFinite);
+    const approx = Boolean(ix.seriesNote);
+    let plot = `<p class="home-chart-empty muted">${hdLive.loading || !hdLive.at && !hdLive.failed ? "하루 차트를 불러오는 중입니다." : "추이 데이터가 없습니다."}</p>`;
+    if (approx && vals.length >= 2) {
+      let lo = Math.min(...vals), hi = Math.max(...vals);
+      const pad = (hi - lo || Math.abs(hi) * 0.01 || 1) * 0.08;
+      lo -= pad; hi += pad;
+      const W = 1000, H = 240;
+      const line = vals.map((v, i) => `${i ? "L" : "M"}${((i / (vals.length - 1)) * W).toFixed(1)},${(H - ((v - lo) / (hi - lo)) * H).toFixed(1)}`).join("");
+      const color = vals[vals.length - 1] >= vals[0] ? "var(--pos)" : "var(--neg)";
+      plot = `<div class="home-chart-plot is-approx"><div class="home-chart-area">
+          <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(ix.name)} 최근 추이(ETF 근사)">
+            <path d="${line}L${W},${H}L0,${H}Z" fill="${color}" fill-opacity="0.08" stroke="none"></path>
+            <path d="${line}" fill="none" stroke="${color}" stroke-width="2" vector-effect="non-scaling-stroke"></path>
+          </svg></div></div>`;
+    }
+    const badge = hdLive.failed ? { cls: "is-delayed", text: "실시간 연결 실패" } : null;
+    const caption = approx && vals.length >= 2
+      ? `하루 차트를 받지 못해 지수를 추종하는 ETF 종가 ${vals.length}거래일로 그린 근사 추이를 보여 줍니다. 가격·등락률은 실제 지수 값입니다.`
+      : "";
+    host.innerHTML = `${hdChartHead(ix, price, chg, badge, analysis)}${plot}${caption ? `<p class="home-chart-cap">${escapeHtml(caption)}</p>` : ""}`;
+  }
+  host.querySelector(".home-chart-go")?.addEventListener("click", (e) => selectTicker(e.currentTarget.dataset.ticker, { openSearch: true }));
+}
 // ----- 시장 현황 소패널 -----
 function hdBreadth() {
   const rows = (typeof data !== "undefined" && data && Array.isArray(data.stocks) ? data.stocks : [])
@@ -216,9 +494,29 @@ function hdKrFlowHtml() {
     </div>`;
 }
 
+// 1단 화면(1100px 이하)에서는 시장 현황을 차트 옆이 아니라 오늘의 뉴스 아래(#homeStatusSlot)에 둔다 —
+// 폰 첫 화면이 지수 카드 → 하루 차트 → 카드뉴스로 이어지게. 넓은 화면에서는 차트 옆 원래 자리.
+let hdStatusMq = null;
+function hdPlaceStatus() {
+  const card = byId("homeMarketStatus"), slot = byId("homeStatusSlot");
+  const row = document.querySelector("#homeDash .home-dash-row");
+  if (!card || !slot || !row || typeof matchMedia !== "function") return;
+  if (!hdStatusMq) {
+    hdStatusMq = matchMedia("(max-width: 1100px)");
+    const onChange = () => hdPlaceStatus();
+    if (hdStatusMq.addEventListener) hdStatusMq.addEventListener("change", onChange);
+    else if (hdStatusMq.addListener) hdStatusMq.addListener(onChange);
+  }
+  const narrow = hdStatusMq.matches;
+  if (narrow && card.parentNode !== slot) slot.appendChild(card);
+  if (!narrow && card.parentNode !== row) row.appendChild(card);
+  slot.hidden = !narrow;
+}
+
 function renderHomeMarketStatus() {
   const host = byId("homeMarketStatus");
   if (!host) return;
+  hdPlaceStatus();
   const b = hdBreadth();
   const score = typeof fngScore === "function" ? fngScore() : null;
   const parts = [];
@@ -355,4 +653,5 @@ function renderHomeDash() {
   renderHomeMarketStatus();
   renderHomeBriefing();
   if (!byId("homeIndexChart")?.innerHTML) renderHomeIndexChart();
+  hdLiveResume();
 }

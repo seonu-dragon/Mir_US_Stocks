@@ -68,6 +68,16 @@ const SECTOR_KO = {
   "REAL ESTATE": "부동산", "BASIC MATERIALS": "소재", "COMMUNICATION SERVICES": "커뮤니케이션"
 };
 
+// 화면 표시용 섹터명(미국 영문 대문자 → 한국어). 국내 섹터는 이미 한국어라 그대로.
+// SECTOR_KO 는 섹터 순위 집계 대상 목록도 겸하므로 MISC·ETF 는 여기서만 더한다.
+function sectorLabelKo(sector) {
+  const s = String(sector || "");
+  if (SECTOR_KO[s]) return SECTOR_KO[s];
+  if (s === "MISC") return "기타";
+  if (s === "EXCHANGE TRADED FUNDS") return "ETF";
+  return s;
+}
+
 function computeSectorRanks() {
   const agg = {};
   const kr = isKrMarket();

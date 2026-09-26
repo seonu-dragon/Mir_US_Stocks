@@ -28,7 +28,7 @@ function fmtRsi(item) {
 function fmtEpsValue(v) {
   if (!Number.isFinite(Number(v))) return "—";
   const n = Number(v);
-  return isKrMarket() ? `₩${Math.round(n).toLocaleString("ko-KR")}` : `$${n.toFixed(2)}`;
+  return isKrMarket() ? `${Math.round(n).toLocaleString("ko-KR")}원` : `$${n.toFixed(2)}`;
 }
 function fmtEps(item) {
   return fmtEpsValue(epsTtmValue(item));

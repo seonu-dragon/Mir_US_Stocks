@@ -521,7 +521,7 @@ function renderTreemapZoom(scoped, metric, sizeMetric, query, width, height) {
 
 // 섹터 이름은 스냅샷의 영문 대문자(TECHNOLOGY 등) — 화면에는 한국어로(signals.js SECTOR_KO). 데이터 속성·필터 값은 원문 그대로.
 function tmSectorLabel(sector) {
-  return (typeof SECTOR_KO === "object" && SECTOR_KO[sector]) || sector;
+  return typeof sectorLabelKo === "function" ? sectorLabelKo(sector) : sector;
 }
 
 function sectorRank(sector) {

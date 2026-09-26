@@ -110,6 +110,10 @@
 
   function spark(it, w, h) {
     const d = C().sparkPath(it.spark, w, h, 2);
+    // 과거 일봉을 못 받아 매일 한 점씩 쌓는 지표(야후 ^KS200)는 점이 2개 미만이면 선을 못 그린다.
+    // 빈 칸 대신 이유를 한 줄로.
+    const pts = Array.isArray(it.spark) ? it.spark.length : 0;
+    if (!d && pts < 2) return `<span class="mi-spark-empty mi-spark-pending" style="height:${h}px">이력 적립 중</span>`;
     if (!d) return `<span class="mi-spark-empty" style="height:${h}px"></span>`;
     return `<svg class="mi-spark ${dirCls(it.change)}" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>`;
   }

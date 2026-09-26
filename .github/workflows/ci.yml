@@ -96,6 +96,9 @@ jobs:
       # 통합 캘린더 순수 계산(calendar-panel-core.js): 날짜·주/월 격자·데이터셋 정규화·칩/관심종목 필터·날짜별 묶음.
       - name: Calendar panel core tests
         run: node scripts/tests/test_calendar_panel_core.mjs
+      # 오늘 탭 지수 하루 차트 시간축(home-chart-core.js): 5분 봉 시각 배정·장 상태(장중/마감/휴장/단축)·눈금.
+      - name: Home chart core tests
+        run: node scripts/tests/test_home_chart_core.mjs
 
       # PER 기준 판정(per-basis-core.js): 국내 최근 4분기/연간/KRX 사업연도 라벨·현재가 재계산.
       - name: PER basis core tests

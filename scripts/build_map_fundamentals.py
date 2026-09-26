@@ -104,6 +104,125 @@ def extract(fund: dict) -> dict:
     return out
 
 
+def _snapshot_prices(market: str) -> dict:
+    """현재가(스냅샷 price). 배당수익률 분모 — 상세 파일의 차트 마지막 종가보다 이게 화면 현재가와 같다."""
+    if market != "us":
+        return {}
+    try:
+        snap = json.loads((ROOT / "data" / "market_snapshot.json").read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    out = {}
+    for s in snap.get("stocks") or []:
+        p = num(s.get("price"))
+        if s.get("ticker") and p and p > 0:
+            out[str(s["ticker"]).upper()] = p
+    return out
+
+
+def _parse_dividends(dividends) -> list[tuple[str, float]]:
+    out = []
+    for e in dividends if isinstance(dividends, list) else []:
+        try:
+            d, amt = str(e[0])[:10], float(e[1])
+        except (TypeError, ValueError, IndexError):
+            continue
+        if amt > 0 and len(d) == 10:
+            out.append((d, amt))
+    out.sort()
+    return out
+
+
+def expected_payments_per_year(events: list[tuple[str, float]]):
+    """지급 간격 중앙값으로 본 연간 지급 횟수(월 12·분기 4·반기 2·연 1). 기록이 3건 미만이면 None."""
+    from datetime import date
+    if len(events) < 3:
+        return None
+    days = [(date.fromisoformat(b[0]) - date.fromisoformat(a[0])).days for a, b in zip(events, events[1:])]
+    days = sorted(x for x in days if x > 0)
+    if not days:
+        return None
+    med = days[len(days) // 2]
+    if med < 20:
+        return None
+    return max(1, min(12, round(365 / med)))
+
+
+def trailing_dividend(dividends, as_of: str):
+    """최근 1년 실제 지급 배당 합. (as_of - 1년, as_of] 구간 — 브라우저 quote-info-core.trailingDividend 와
+    같은 규칙이라 종목 화면 '최근 1년 배당 합' 과 지도·랭킹 값이 한 기준이 된다.
+
+    상세 파일의 배당 기록에는 중간이 빠진 종목이 있다(RY·ACN: 2025-07 다음이 2026-04 — 분기 배당인데
+    1년 안에 2건). 그대로 더하면 수익률이 절반으로 나온다. 그래서 과거 지급 간격으로 본 연간 횟수보다
+    구간 안 건수가 적으면 '모름'(None)으로 두고 다른 소스로 넘긴다. 0건도 중단인지 누락인지 모르니 None.
+    """
+    events = _parse_dividends(dividends)
+    if not events:
+        return None
+    end = str(as_of or "")[:10]
+    if len(end) != 10 or end[4] != "-":
+        return None
+    start = f"{int(end[:4]) - 1}{end[4:]}"
+    window = [a for d, a in events if start < d <= end]
+    expected = expected_payments_per_year([e for e in events if e[0] <= end])
+    if not window or expected is None or len(window) < expected:
+        return None
+    return round(sum(window), 4)
+
+
+def apply_trailing_div_yield(market: str, table: dict, details_by_ticker: dict) -> dict:
+    """미국 배당수익률을 '최근 12개월 실제 지급 배당 ÷ 현재가' 로 통일한다(divSrc="ttm").
+
+    Finnhub dividendYieldIndicatedAnnual 은 연환산 배당(dividendIndicatedAnnual)을 오래된 가격으로
+    나눈 값이라 부풀려져 있었다(2026-09-27 실측: T 1.11/6.85% → 분모 $16.2, 현재가 $25.38 이면 4.38%;
+    CRH 1.56/6.99% → 분모 $22.3). 야후와 겹치는 168종목 중 54개가 1.3배 이상 높았다.
+    상세 파일(야후)의 배당 이벤트가 있으면 그 합을 쓰고, 없으면 야후 값(divSrc="yahoo"),
+    그다음 Finnhub TTM 값(merge_finnhub, divSrc="finnhub") 순으로 채운다.
+    주당배당금(dps)도 같은 합으로 채워 배당 랭킹의 '주당배당금 ÷ 현재가' 가 같은 값이 되게 한다.
+    """
+    counts = {}
+    if market != "us":
+        return counts
+    prices = _snapshot_prices(market)
+    for ticker, detail in details_by_ticker.items():
+        row = table.get(ticker)
+        series = detail.get("chartSeries") or []
+        price = prices.get(ticker)
+        as_of = None
+        if series and isinstance(series[-1], list) and len(series[-1]) >= 6:
+            as_of = series[-1][5]
+            if price is None:
+                price = num(series[-1][3])
+        amount = trailing_dividend(detail.get("dividends"), as_of) if as_of else None
+        if row is None:
+            continue
+        if amount is not None and price and price > 0:
+            row["divYield"] = round(amount / price * 100, 2)
+            row["dps"] = amount
+            row["divSrc"] = "ttm"
+        elif row.get("divYield") is not None:
+            row["divSrc"] = "yahoo"
+        else:
+            continue
+        counts[row["divSrc"]] = counts.get(row["divSrc"], 0) + 1
+    # 상세 파일에 없는 칸은 야후 캘린더(us_calendar.json, 시총 상위 ~200종목)로 메운다.
+    try:
+        cal = json.loads((ROOT / "data" / "us_calendar.json").read_text(encoding="utf-8")).get("stocks") or {}
+    except Exception:
+        cal = {}
+    for ticker, c in cal.items():
+        row = table.get(str(ticker).upper())
+        y = num((c or {}).get("divYield"))
+        if row is None or row.get("divYield") is not None or y is None:
+            continue
+        row["divYield"] = y
+        row["divSrc"] = "yahoo"
+        counts["yahoo"] = counts.get("yahoo", 0) + 1
+    if counts:
+        print(f"  배당수익률 기준: {counts}")
+    return counts
+
+
 def merge_finnhub(market: str, table: dict) -> None:
     """야후가 못 채우는 미국 지표를 Finnhub 값으로 보강한다(build_us_finnhub_metrics.py).
 
@@ -132,9 +251,15 @@ def merge_finnhub(market: str, table: dict) -> None:
         if row is None:
             continue                 # 스냅샷에 없는 종목은 지도에 넣지 않는다
         for k, v in rec.items():
+            if k == "divYield" and v and rec.get("divBasis") != "ttm":
+                # 예전 형식(dividendYieldIndicatedAnnual, 오래된 가격 기준으로 부풀려짐)은 버린다.
+                # 0(무배당)만 믿는다. 다음 Finnhub 실행부터 TTM 기준(divBasis="ttm")으로 온다.
+                continue
             if row.get(k) is None and isinstance(v, (int, float)):
                 row[k] = v
                 filled[k] = filled.get(k, 0) + 1
+                if k == "divYield":
+                    row["divSrc"] = "finnhub"
     if filled:
         print(f"  finnhub 보강: {filled}")
 
@@ -174,6 +299,7 @@ def build_market(market: str) -> None:
     details_dir = cfg["details"]
     table = {}
     ctx_by_ticker = {}
+    details_by_ticker = {}
     files = glob.glob(str(details_dir / "*.json"))
     for path in files:
         try:
@@ -188,7 +314,11 @@ def build_market(market: str) -> None:
         if metrics:
             table[ticker] = metrics
             ctx_by_ticker[ticker] = {"equityB": fund.get("equityB"), "salesB": fund.get("salesB")}
+            if market == "us":
+                details_by_ticker[ticker] = {"chartSeries": (detail.get("chartSeries") or [])[-1:],
+                                             "dividends": detail.get("dividends")}
 
+    apply_trailing_div_yield(market, table, details_by_ticker)
     merge_finnhub(market, table)
     # 이상치 규칙(scripts/fundamentals_sanity.py): 정의상 의미 없는 값(적자 PER·자본잠식
     # ROE·매출 0 순이익률 등)을 결측으로. finnhub 보강분까지 거치도록 병합 뒤에 한다.
@@ -196,6 +326,8 @@ def build_market(market: str) -> None:
     for ticker in list(table):
         for k in sanitize_row(table[ticker], ctx_by_ticker.get(ticker)):
             dropped[k] = dropped.get(k, 0) + 1
+        if "divYield" not in table[ticker]:
+            table[ticker].pop("divSrc", None)
         if not table[ticker]:
             del table[ticker]
     if dropped:

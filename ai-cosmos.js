@@ -1104,19 +1104,15 @@
   }
 
   // 지지/저항·추세선·기하학적 차트 패턴을 2D 차트 위에 그린다(종목 분석 탭과 동일 로직).
-  // 폰 폭 라벨 배치: 이미 놓인 상자와 겹치면 세로로 한 줄씩 비켜 보고, 그래도 겹치면 줄인 이름,
-  // 그래도 안 되면 글자는 생략(도형은 그대로). 데스크톱(narrow=false)은 예전처럼 바로 그린다.
-  function makeLabelPlacer(layout, narrow) {
+  // 라벨 배치(모든 폭): 이미 놓인 상자와 겹치면 세로로 한 줄씩 비켜 보고, 그래도 겹치면 줄인 이름,
+  // 그래도 안 되면 글자는 생략(도형은 그대로). 데스크톱에서도 패턴 6개 라벨이 겹쳐 읽히지 않았다.
+  function makeLabelPlacer(layout) {
     const boxes = [];
     const LINE = 12;
     const hit = (b) => boxes.some((o) => b.x < o.x + o.w + 3 && b.x + b.w + 3 > o.x && b.y < o.y + o.h && b.y + b.h > o.y);
     // texts: 긴 이름부터 짧은 이름 순. baseY: 기준 글자 기준선. dys: 비켜 볼 세로 오프셋들.
     return function place(texts, x, baseY, opts) {
       const o = opts || {};
-      if (!narrow) {
-        ctx.fillText(texts[0], x, baseY);
-        return true;
-      }
       const dys = o.dys || [0, LINE, 2 * LINE, -LINE, 3 * LINE, -2 * LINE];
       const top = layout.padT + 2;
       const bottom = layout.padT + layout.plotH - 2;
@@ -1160,7 +1156,7 @@
     if (!chartOverlays || alpha <= 0 || !chartBars.length) return;
     const { n, xAt, yAt } = layoutHelpers(layout);
     const narrow = w > 0 && w < LABEL_NARROW_W;
-    const placeLabel = makeLabelPlacer(layout, narrow);
+    const placeLabel = makeLabelPlacer(layout);
     const start = Math.round(chartViewStart);
     const total = chartOverlays.totalBars || chartFullBars.length;
     // 전체바 인덱스 → 가시 좌표(윈도우 밖이면 null)
@@ -1248,7 +1244,7 @@
       if (anchor) {
         ctx.font = "800 10.5px system-ui, sans-serif"; ctx.textAlign = "left"; ctx.fillStyle = color;
         const nm = pat.name || pat.pattern || "패턴";
-        placeLabel(narrow ? shortPatternNames(nm) : [nm], anchor.x, anchor.y + 14);
+        placeLabel(narrow ? shortPatternNames(nm) : [nm, ...shortPatternNames(nm)], anchor.x, anchor.y + 14);
       }
     });
 

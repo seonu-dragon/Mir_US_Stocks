@@ -242,7 +242,7 @@ function renderScreener({ trackSaved = false } = {}) {
       <td>${watchStarButton(item.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button></td>
       <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
-      <td>${escapeHtml(item.sector)}</td>
+      <td>${escapeHtml(sectorLabelKo(item.sector))}</td>
       <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
       <td class="${cls(item.monthChangePct)}">${fmtPct(item.monthChangePct)}</td>
       <td>${fmtRsi(item)}</td>
@@ -430,7 +430,7 @@ function runNlScreener() {
       <td>${watchStarButton(it.ticker)}</td>
       <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(it.ticker)}">${escapeHtml(stockLabel(it))}</button></td>
       <td class="col-sub">${escapeHtml(stockSubLabel(it))}</td>
-      <td>${escapeHtml(it.sector)}</td>
+      <td>${escapeHtml(sectorLabelKo(it.sector))}</td>
       <td class="${cls(it.changePct)}">${fmtDailyPct(it.changePct)}</td>
       <td class="${cls(it.monthChangePct)}">${fmtPct(it.monthChangePct)}</td>
       <td>${fmtEps(it)}</td>

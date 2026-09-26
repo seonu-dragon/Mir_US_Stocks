@@ -70,6 +70,7 @@ function sdApplyView(view) {
       btn.setAttribute("aria-selected", on ? "true" : "false");
       btn.tabIndex = on ? 0 : -1;
     });
+    sdRevealTab(nav);
   }
   document.querySelectorAll("#stockMain .sd-view").forEach((panel) => {
     const on = panel.dataset.view === view;
@@ -79,6 +80,18 @@ function sdApplyView(view) {
     if ("inert" in panel) panel.inert = !on;
   });
   sdUpdateEmpty();
+}
+
+// 폰에서 탭 줄이 가로로 넘치면(6탭 > 화면 폭) 선택한 탭이 가려지지 않게 탭 줄만 옆으로 민다.
+// scrollIntoView 는 페이지까지 세로로 움직이므로 쓰지 않는다.
+function sdRevealTab(nav) {
+  const btn = nav && nav.querySelector(".is-active");
+  if (!btn || nav.scrollWidth <= nav.clientWidth + 1) return;
+  const pad = 24;
+  const left = btn.getBoundingClientRect().left - nav.getBoundingClientRect().left + nav.scrollLeft;
+  const right = left + btn.offsetWidth;
+  if (left - pad < nav.scrollLeft) nav.scrollLeft = Math.max(0, left - pad);
+  else if (right + pad > nav.scrollLeft + nav.clientWidth) nav.scrollLeft = right + pad - nav.clientWidth;
 }
 
 // 탭을 연다. push=true 면 사용자가 누른 것 — URL 을 갱신하고, 본문이 화면 위로 지나가 있으면 탭 줄로 올린다.

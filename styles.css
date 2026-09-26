@@ -15218,3 +15218,133 @@ html[data-theme="dark"] {
 .movers-name .co-logo { margin-right: 8px; vertical-align: -5px; }
 .mir-rail-name-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .calp-who .co-logo { align-self: center; }
+/* ==============================================================
+   모바일 B(2026-09-27): 종목(분석·찾기·비교·공시) · 내 투자 · AI 모드 — 폰 가시성
+   기준: 본문 14px(보조 12~13), 터치 40~44px, 표는 첫 열 고정 또는 두 줄 카드(mobile-cards.js)
+   ============================================================== */
+/* 도넛 링이 viewBox 밖으로 잘리지 않게(portfolio.js 반지름 보정과 짝) */
+.pf-donut { overflow: visible; }
+/* AI 모드: 오른쪽 헤더 묶음을 통째로 숨기면서 'AI 모드' 토글(=나가기)까지 사라져 폰·PC 모두 나갈 버튼이 없었다.
+   토글만 남긴다(검색·설정은 계속 숨김). */
+body.ai-mode-active .topbar .ia-topbar-right { display: flex !important; flex: 0 0 auto; width: auto; }
+body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !important; }
+@media (max-width: 640px) {
+  /* 폰 AI 모드 헤더는 오른쪽에 붙은 좁은 고정 띠(로고·시장 전환)라 토글을 그 왼쪽 같은 줄에 둔다(줄바꿈하면 차트 칩을 덮는다). */
+  body.ai-mode-active .topbar .ia-topbar-right { position: absolute; top: 6px; right: calc(100% + 6px); width: auto; }
+  body.ai-mode-active #aiModeToggle { min-height: 38px; padding: 0 12px; white-space: nowrap; }
+
+  /* ── 종목 상세 ── */
+  .sd-tab { padding: 10px 12px; font-size: var(--fs-body); }
+  .sd-name { font-size: 20px; }
+  .sd-fact { padding: 9px 0; font-size: var(--fs-body); }
+  .sd-fact dt { font-size: var(--fs-sub); }
+  /* 차트 아래 보기 버튼: 7개를 한 줄에 넣어 '초기화·자동·로그'가 한 글자씩 줄바꿈되던 것 → 4 + 3 두 줄 */
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: 8px;
+  }
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) > button { grid-column: span 3; min-height: 44px; white-space: nowrap; }
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) > :is(#chartReset, #chartYAuto, #chartYLog) { grid-column: span 4; font-size: var(--fs-body); }
+  .chart-view-mobile .chart-ev-toggles button { min-height: 40px; }
+  /* 칩·세그먼트(기간·프리셋·재무 종류·밴드·DCF 기준 등): 32 → 40px */
+  #tab-search :is(.segmented button, .mf-chip, .ft-chip, .insider-filter button, .inst-quarter-btn, .fx-field-chip, .ia-seg-strip .sub-tab),
+  #tab-bulk :is(.segmented button, .pf-pie-switch button, .pf-stress-mode button, .toc-item) { min-height: 40px; }
+  #tab-search .ft-actions :is(.compact-btn, .segmented button) { height: 40px; min-height: 40px; }
+  /* '계산 방법'·'계정 원값' 같은 접힘 머리: 글자 한 줄(18~28px) → 44px 탭 영역 */
+  #tab-search :is(.stock-method, .sh-method, .mf-accounts, .es-details, .ci-hist) > summary,
+  #tab-bulk :is(.pf-risk-method, .stock-method) > summary { padding-top: 12px; padding-bottom: 12px; }
+  /* DCF: 슬라이더를 손가락으로 잡을 수 있게 높이(터치 영역) 36px, 숫자 칸 40px */
+  #dcfSection input[type="range"] { height: 36px; }
+  #dcfSection .dcf-field .dcf-num { min-height: 40px; max-width: 84px; font-size: 16px; }
+  .dcf-field { grid-template-columns: minmax(0, 1fr) 84px auto; }
+  /* 좁은 표(열 4~6개)까지 640px 로 강제하던 규칙을 종목 상세 안에서는 풀어 한 화면에 */
+  #sub-analysis .compact-table { min-width: 100%; }
+  #sub-analysis .table-wrap > .congress-trades-table { min-width: 0; width: 100%; }
+  #sub-analysis .congress-trades-table th, #sub-analysis .congress-trades-table td { white-space: normal; font-size: var(--fs-sub); }
+  /* 가로 스크롤이 남는 표: 첫 열(항목 이름) 고정 */
+  :is(.mf-table, .dcf-grid, .es-table, .compare-board) > :is(thead, tbody) > tr > :first-child,
+  .portfolio-tool-table table > :is(thead, tbody) > tr > :first-child,
+  #pfRiskBody table > :is(thead, tbody) > tr > :first-child {
+    position: sticky;
+    left: 0;
+    z-index: var(--z-layer-1);
+    background: var(--panel);
+  }
+  :is(.mf-table, .dcf-grid, .es-table, .compare-board) > tbody > tr:hover > :first-child { background: var(--bg-soft); }
+  .dcf-grid td.is-current, .dcf-grid td.dcf-grid-base { position: static; }
+  /* 종목이 따라가는 산업 지표: 이름·값·변화율 한 줄이 360px 에서 오른쪽으로 25px 넘쳤다 → 이름 한 줄, 값·변화율 둘째 줄 */
+  .industry-rev-row { grid-template-columns: minmax(0, 1fr) auto; row-gap: 2px; min-height: 44px; }
+  .industry-rev-row > .industry-rev-name { grid-column: 1 / -1; font-size: var(--fs-body); }
+  .industry-rev-yoy { justify-self: end; }
+  /* 이벤트 카드 안 작은 알약 버튼(원인 분석·의견 보기·글쓰기): 40px */
+  .event-action, .event-card .compact-btn { min-height: 40px; padding: 0 14px; border-radius: var(--r-sm); font-size: var(--fs-sub); }
+  /* 표 안 '원문'·ETF 이름 링크 등 글자 크기만 한 탭 영역 → 세로 여백 */
+  .etfh-link { min-height: 36px; }
+
+  /* ── 찾기 ── */
+  /* .grow(flex 1 1 280px)가 세로 배치에서 높이 280px 로 늘어 '저장된 수식 선택'·이름 칸이 화면 반을 차지하던 것 */
+  .saved-screener-controls > .grow { flex: 0 0 auto; }
+  .saved-screener-controls select, .saved-screener-controls input { min-height: 44px; }
+
+  /* ── 공시 피드·보유 종목: 두 줄 카드(mobile-cards.js 가 data-label·mc-key·mc-wide 를 붙인다) ── */
+  table.mcard,
+  .table-wrap > table.mcard,
+  table.mcard.table-wide { display: block; width: 100%; min-width: 0 !important; overflow: visible; }
+  table.mcard > thead { display: none; }
+  table.mcard > tbody { display: block; }
+  table.mcard > tbody > tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px 14px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--line);
+  }
+  table.mcard > tbody > tr.mc-note { display: block; }
+  table.mcard > tbody > tr[hidden] { display: none; }
+  table.mcard > tbody > tr > td {
+    position: static !important;
+    display: block;
+    min-width: 0;
+    max-width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent !important;
+    font-size: var(--fs-body);
+    text-align: left !important;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  table.mcard > tbody > tr > td:empty { display: none; }
+  table.mcard > tbody > tr > td[data-label]::before {
+    content: attr(data-label);
+    margin-right: 6px;
+    color: var(--muted);
+    font-size: var(--fs-cap);
+    font-weight: var(--fw-body);
+  }
+  table.mcard > tbody > tr > td.mc-key { font-weight: var(--fw-strong); }
+  table.mcard > tbody > tr > td.mc-key:first-child { color: var(--muted); font-size: var(--fs-sub); font-weight: var(--fw-body); font-variant-numeric: tabular-nums; }
+  table.mcard > tbody > tr > td.mc-wide { flex: 1 1 100%; }
+  table.mcard > tbody > tr > td.mc-wide::before { display: block; margin: 0 0 2px; }
+  table.mcard .ins-owner span, table.mcard .ins-owner em { display: inline; }
+  table.mcard .ins-owner em { margin-left: 6px; }
+  table.mcard .ins-ticker, table.mcard .ticker-link { min-height: 0 !important; padding: 0; font-size: var(--fs-16); }
+  table.mcard a { padding: 0; }
+  table.mcard > tbody > tr:hover > td { background: transparent !important; }
+  /* 보유 종목: 삭제(✕)는 줄 끝 오른쪽에 44px */
+  #pfTable table.mcard > tbody > tr { position: relative; padding-right: 48px; }
+  #pfTable table.mcard > tbody > tr > td:last-child.mc-key { position: absolute !important; top: 6px; right: 0; }
+  #pfTable table.mcard .pf-del { width: 44px; min-width: 44px; height: 44px; }
+
+  /* ── 내 투자 ── */
+  /* 보유 종목 입력: 폭 고정(130·100px) 칸이 제멋대로 줄바꿈되던 것 → 티커 한 줄 · 수량/평단 두 칸 · 버튼 줄 */
+  .pf-input { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .pf-input input#pfTicker { grid-column: 1 / -1; width: 100%; }
+  .pf-input input#pfQty, .pf-input input#pfCost { width: 100%; }
+  .pf-input input { height: 44px; }
+  .pf-input button { min-height: 44px; }
+  .watch-alert-controls input { min-height: 40px; }
+  .toc-item { font-size: var(--fs-body); }
+}

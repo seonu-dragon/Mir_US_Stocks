@@ -740,10 +740,13 @@ function zoomChartAt(frac, factor) {
 }
 
 // Narrower viewBox on phones gives the chart a taller, more readable aspect ratio.
+// 폰: viewBox 폭을 실제 표시 폭(≈290~360px)에 가깝게 둬야 SVG 글자·눈금이 줄지 않는다.
+// 예전엔 480 폭을 ~316px 로 줄여 그려 축 글자가 12 → 약 8px 로 보였다(2026-09-27 모바일 점검).
+// 왼쪽은 그릴 것이 없어 여백을 줄이고, 가격 축(오른쪽)만 자리를 둔다.
 function priceChartGeom() {
   return window.matchMedia("(max-width: 768px)").matches
-    ? { width: 480, padL: 42, padR: 46 }
-    : { width: 860, padL: 54, padR: 58 };
+    ? { width: 340, padL: 12, padR: 52, plotH: 240, mobile: true }
+    : { width: 860, padL: 54, padR: 58, plotH: 300, mobile: false };
 }
 
 function setupChartControls() {
@@ -1816,7 +1819,7 @@ function drawChart(item, options = {}) {
   const padR = geom.padR;
   const padT = 28;
   const plotW = width - padL - padR;
-  const plotH = 300;
+  const plotH = geom.plotH;
   const xPlotRight = padL + plotW;
 
   if (!rows.length) {
@@ -2231,7 +2234,7 @@ function drawChart(item, options = {}) {
   }
 
   // Shared x-axis: date (or index) ticks + light vertical guides on the price plot.
-  const tickCount = Math.min(6, Math.max(2, rows.length));
+  const tickCount = Math.min(geom.mobile ? 5 : 6, Math.max(2, rows.length));
   const ticks = [];
   for (let k = 0; k < tickCount; k += 1) {
     const idx = Math.round((k / (tickCount - 1)) * (rows.length - 1));

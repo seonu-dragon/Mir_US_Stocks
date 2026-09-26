@@ -848,7 +848,9 @@ function stockEventRows(item) {
   const bigMove = recentBigMove(rows);
   const earningsDate = item.liveEarnings?.nextDate || f.earningsDate || f.nextEarningsDate || item.earningsDate || null;
   const dividend = f.dividendRate || f.dividendYield || item.dividendYield || null;
-  return [
+  // 국내 종목에 미국 옵션 만기·Nasdaq 목표가 문구가 붙어 나오던 것(2026-09-27 모바일 점검에서 발견).
+  const kr = typeof isKrMarket === "function" && isKrMarket();
+  const rowsOut = [
     {
       type: "Earnings",
       title: earningsDate ? "다음 실적 발표" : "실적 일정",
@@ -865,9 +867,11 @@ function stockEventRows(item) {
     },
     {
       type: "Target",
-      title: "Nasdaq 1년 컨센서스 목표가",
+      title: kr ? "컨센서스 목표가" : "Nasdaq 1년 컨센서스 목표가",
       value: Number.isFinite(target) ? priceOrDash(target) : "데이터 없음",
-      note: targetUpside == null ? "Nasdaq 제공 목표가 데이터 없음" : `현재가 대비 ${fmtPct(targetUpside)} · Nasdaq 제공 집계값`,
+      note: targetUpside == null
+        ? (kr ? "목표가 데이터 없음" : "Nasdaq 제공 목표가 데이터 없음")
+        : (kr ? `현재가 대비 ${fmtPct(targetUpside)}` : `현재가 대비 ${fmtPct(targetUpside)} · Nasdaq 제공 집계값`),
       tone: targetUpside == null ? "muted" : cls(targetUpside)
     },
     {
@@ -894,6 +898,7 @@ function stockEventRows(item) {
       action: bigMove ? `<button type="button" class="event-action" data-move-analysis="${escapeHtml(bigMove.date)}">원인 분석</button>` : ""
     }
   ];
+  return kr ? rowsOut.filter((r) => r.type !== "Options") : rowsOut;
 }
 
 const EVENT_META = {

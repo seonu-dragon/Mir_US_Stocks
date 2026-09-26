@@ -3181,26 +3181,29 @@ let eventsBound = false;
 // 렌더러를 하나씩 고치지 않고 호스트의 childList 변화를 관찰해 다시 적용한다(검색·정렬로
 // 다시 그려도 그대로 동작). 자체 변경(hidden 토글·버튼 추가)은 applying 플래그로 무시한다.
 const LIST_LIMITS = [
-  { host: "insiderTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "insiderTable", item: "tbody > tr", limit: 50, step: 100, mobileLimit: 20 },
   { host: "valuationTable", item: "tbody > tr", limit: 50, step: 100 },
-  { host: "dividendTable", item: "tbody > tr", limit: 50, step: 100 },
-  { host: "krDartTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "dividendTable", item: "tbody > tr", limit: 50, step: 100, mobileLimit: 20 },
+  { host: "krDartTable", item: "tbody > tr", limit: 50, step: 100, mobileLimit: 20 },
   { host: "scannerCards", item: ":scope > *", limit: 12, step: 12 },
   // 찾기 › 상위 종목 표(find-table.js) — 개수를 96 으로 늘려도 처음엔 50행만.
   { host: "topStocksTableWrap", item: ":scope > table > tbody > tr", limit: 50, step: 50 },
   { host: "calendarBody", item: ".cal-day", limit: 4, step: 4 },
   { host: "insiderCluster", item: ".cluster-grid > .cluster-card", limit: 6, step: 6, mobileOnly: true },
   // stockTreemapList 는 treemap.js 가 렌더 측에서 40개만 만들고 '더 보기' 를 붙인다(중복 제거).
-  { host: "krOwnTable", item: "tbody > tr", limit: 50, step: 100 },
+  { host: "krOwnTable", item: "tbody > tr", limit: 50, step: 100, mobileLimit: 20 },
   // 공시 피드 표 — 수백 행이 한 번에 펼쳐지던 것. 본표(직계 table)만 자르고 뒤에 붙는 보조 표(FTD·조달)는 그대로.
   ...["eventsTable", "shortTable", "earnReactTable", "buybackTable", "contractTable", "dilutionTable", "activistTable", "ipoTable"]
-    .map((host) => ({ host, item: ":scope > table > tbody > tr", limit: 50, step: 100 })),
+    .map((host) => ({ host, item: ":scope > table > tbody > tr", limit: 50, step: 100, mobileLimit: 20 })),
 ];
 const isPhoneViewport = () => typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
 const listLimitState = new WeakMap();
 function applyListLimit(host, spec, { reset = false } = {}) {
   let st = listLimitState.get(host);
-  if (!st || reset) { st = { shown: spec.limit, applying: false }; listLimitState.set(host, st); }
+  // 폰에서는 공시 피드가 두 줄 카드(mobile-cards.js)라 한 행이 더 높다 — 처음 20행·20행씩(mobileLimit).
+  const phoneLimit = spec.mobileLimit && isPhoneViewport();
+  if (!st || reset) { st = { shown: phoneLimit ? spec.mobileLimit : spec.limit, applying: false }; listLimitState.set(host, st); }
+  const step = phoneLimit ? spec.mobileLimit : spec.step;
   if (st.applying) return;
   if (spec.mobileOnly && !isPhoneViewport()) st.shown = Infinity; // 데스크톱은 전부 보인다
   st.applying = true;
@@ -3218,8 +3221,8 @@ function applyListLimit(host, spec, { reset = false } = {}) {
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "ghost compact-btn list-more-btn";
-      btn.textContent = `더 보기 (${Math.min(spec.step, hiddenCount)}개 · 남은 ${hiddenCount}개)`;
-      btn.addEventListener("click", () => { st.shown += spec.step; applyListLimit(host, spec); });
+      btn.textContent = `더 보기 (${Math.min(step, hiddenCount)}개 · 남은 ${hiddenCount}개)`;
+      btn.addEventListener("click", () => { st.shown += step; applyListLimit(host, spec); });
       host.appendChild(btn);
     }
   } finally {

@@ -28,6 +28,7 @@
     py scripts/check_data_freshness.py --group market-indicators  # market-indicators.yml 말미
     py scripts/check_data_freshness.py --group market-calendar    # market-calendar.yml 말미
     py scripts/check_data_freshness.py --group etf-holdings       # market-calendar.yml etf 잡
+    py scripts/check_data_freshness.py --group company-logos      # company-info.yml logos 잡
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -232,6 +233,10 @@ CHECKS = {
     # 기업개요는 주 1회라 한 번 실패를 바로 잡도록 8일, 목표주가는 주 2회라 5일. 0건(count)도 잡는다.
     "company-profile": [
         ("data/company_profile/index.json", 8, True),
+    ],
+    # company-info.yml logos 잡(수요일) — 회사 로고. 인덱스 updatedAtKst 는 실행마다 새로 쓴다. 0개면 실패.
+    "company-logos": [
+        ("data/logos/index.json", 8, True),
     ],
     "price-targets": [
         ("data/us_price_targets/index.json", 5, True),

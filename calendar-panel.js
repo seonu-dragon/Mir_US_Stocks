@@ -90,7 +90,9 @@ function calPanelItemHtml(e) {
     const row = e.ticker && typeof stockByTicker === "function" ? stockByTicker(e.ticker) : null;
     const main = row ? stockLabel(row) : (e.market === "kr" ? (e.name || e.ticker) : (e.ticker || e.name));
     const sub = row ? stockSubLabel(row) : (e.market === "kr" ? "" : (e.ticker ? e.name : ""));
-    const label = `<strong>${escapeHtml(main)}</strong>${sub ? ` <span class="calp-sub">${escapeHtml(sub)}</span>` : ""}`;
+    const logo = e.ticker && typeof companyLogoHtml === "function"
+      ? companyLogoHtml(row ? row.ticker : e.ticker, e.market === "kr" || e.market === "us" ? e.market : null, row ? row.name : e.name, 18) : "";
+    const label = `${logo}<strong>${escapeHtml(main)}</strong>${sub ? ` <span class="calp-sub">${escapeHtml(sub)}</span>` : ""}`;
     who = row
       ? `<button type="button" class="calp-who" data-cal-ticker="${escapeHtml(row.ticker)}">${label}</button>`
       : `<span class="calp-who">${label}</span>`;

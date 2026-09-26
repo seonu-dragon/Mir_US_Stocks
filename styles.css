@@ -15158,3 +15158,63 @@ button.calp-who:hover strong { text-decoration: underline; }
 .ci-slot { margin: 12px 0 2px; }
 .ci-slot-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; font-size: var(--fs-cap); color: var(--muted); }
 .ci-slot-head em { font-style: normal; font-variant-numeric: tabular-nums; }
+
+/* ── 회사 로고 원형 아이콘(company-logo.js companyLogoHtml) ──
+   로고는 흰 판 위에 그린 불투명 WebP 라 판 색은 두 테마 모두 흰색. 모노그램 색은 등락색(빨강·초록·파랑)과
+   겹치지 않는 중립 톤 6가지 — 종목 이름 해시로 고른다. */
+:root {
+  --logo-plate: #ffffff;
+  --logo-ring: rgba(10, 20, 30, 0.10);
+  --logo-mono-fg: #ffffff;
+  --logo-mono-0: #5b6470;
+  --logo-mono-1: #7a6a58;
+  --logo-mono-2: #6b6480;
+  --logo-mono-3: #58707a;
+  --logo-mono-4: #806070;
+  --logo-mono-5: #6e6e62;
+}
+html[data-theme="dark"] {
+  --logo-ring: rgba(255, 255, 255, 0.14);
+  --logo-mono-0: #4a525c;
+  --logo-mono-1: #62564a;
+  --logo-mono-2: #585268;
+  --logo-mono-3: #485c64;
+  --logo-mono-4: #684e5c;
+  --logo-mono-5: #5a5a50;
+}
+.co-logo {
+  --co-logo: 24px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: var(--co-logo);
+  height: var(--co-logo);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--logo-plate);
+  box-shadow: 0 0 0 1px var(--logo-ring);
+  vertical-align: middle;
+  line-height: 1;
+}
+.co-logo-img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.co-logo--mono {
+  color: var(--logo-mono-fg);
+  font-size: calc(var(--co-logo) * 0.46);
+  font-weight: 700;
+  letter-spacing: 0;
+  user-select: none;
+}
+.co-logo--m0 { background: var(--logo-mono-0); }
+.co-logo--m1 { background: var(--logo-mono-1); }
+.co-logo--m2 { background: var(--logo-mono-2); }
+.co-logo--m3 { background: var(--logo-mono-3); }
+.co-logo--m4 { background: var(--logo-mono-4); }
+.co-logo--m5 { background: var(--logo-mono-5); }
+/* 적용 위치별 배치: 이름 앞에 붙이고 표 행 높이는 그대로(아이콘이 글자 두 줄 높이를 넘지 않게) */
+.stock-facts-head .co-logo { margin-right: 2px; }
+.ft-name .co-logo { margin-left: 6px; }
+.ft-name .co-logo + .ft-name-text { max-width: calc(100% - 62px); }
+.movers-name .co-logo { margin-right: 8px; vertical-align: -5px; }
+.mir-rail-name-wrap { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.calp-who .co-logo { align-self: center; }

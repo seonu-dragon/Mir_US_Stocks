@@ -1,4 +1,4 @@
-const BUILD_ID_FALLBACK = "4712f3438b";
+const BUILD_ID_FALLBACK = "064b79b3bc";
 let ACTIVE_CACHE_NAME = null;
 
 // 내비게이션 셸만 미리 받는다. app.js/styles.css 같은 자산은 페이지가 ?v=<내용해시>
@@ -158,6 +158,12 @@ self.addEventListener("fetch", (event) => {
       // 불변이 아니다. app.js 의 featureDataSrc 가 ?v=MIR_BUILD_ID 를 붙이는데 이 ID 는
       // 코드 배포 때만 바뀌므로, cacheFirst 로 두면 재방문자는 다음 코드 배포까지
       // 처음 본 날짜의 데이터를 계속 본다(2026-08-07~09-03 실제 발생). 항상 네트워크 우선.
+      // 회사 로고(data/logos/*.webp, 64px)만 예외: 목록 한 화면에 수십 개가 뜨는데 내용은 몇 주에 한 번
+      // 바뀐다. 캐시로 즉시 그리고 뒤에서 새로 받아 둔다(다음 방문에 반영) — cacheFirst 가 아니다.
+      // 로고 목록 인덱스(data/logos/index.js)는 아래 networkFirst 그대로다.
+      if (url.pathname.includes("/data/logos/") && url.pathname.endsWith(".webp")) {
+        return staleWhileRevalidate(req, cacheName);
+      }
       if (url.pathname.includes("/data/")) {
         return networkFirst(req, cacheName);
       }

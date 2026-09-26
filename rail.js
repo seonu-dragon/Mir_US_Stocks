@@ -109,7 +109,7 @@
       if (!s) return "";
       const sub = extra ? extra(t, s) : esc(subOf(t, s));
       return `<li><button type="button" class="mir-rail-row" data-rail-ticker="${esc(s.ticker)}">
-        <span class="mir-rail-name"><strong>${esc(nameOf(s.ticker, s))}</strong>${sub ? `<small>${sub}</small>` : ""}</span>
+        <span class="mir-rail-name-wrap">${typeof companyLogoHtml === "function" ? companyLogoHtml(s.ticker, null, s.name, 24) : ""}<span class="mir-rail-name"><strong>${esc(nameOf(s.ticker, s))}</strong>${sub ? `<small>${sub}</small>` : ""}</span></span>
         <span class="mir-rail-num">${esc(priceText(s.price))}</span>
         <span class="mir-rail-num ${dirCls(s.changePct)}">${esc(pctText(s.changePct))}</span>
       </button></li>`;

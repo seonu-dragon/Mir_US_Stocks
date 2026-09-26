@@ -5,7 +5,9 @@ name: Company profile & price targets
 #   + KR DART 기업개황·직원현황(증분). DART 하루 한도(2만)는 KR 일간 워크플로우·일요일 주간 잡과 나눠 쓰므로
 #   일요일을 피하고 실행당 호출 상한(기본 2,500)을 둔다 — 없던 회사부터 받고 다음 주에 이어 받는다.
 # - targets 잡(수·토): scripts/build_us_price_targets.py — Nasdaq analyst/targetprice, 시총 상위 1,000(1건 ~3초, ~55분).
-# 두 잡 모두 바뀐 샤드만 다시 쓴다(data/company_profile/, data/us_price_targets/).
+# - logos 잡(수요일): scripts/build_company_logos.py — 시총 상위 1,000/시장의 회사 공식 홈페이지 파비콘을
+#   64px WebP 로 줄여 data/logos/ 에 저장(키 불필요, 첫 실행 ~20분·이후 증분). 브라우저는 외부 로고 서비스를 부르지 않는다.
+# 세 잡 모두 바뀐 파일만 다시 쓴다(data/company_profile/, data/us_price_targets/, data/logos/).
 
 on:
   schedule:
@@ -14,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       job:
-        description: "profile | targets | all"
+        description: "profile | targets | logos | all"
         default: "all"
       kr_max_calls:
         description: "KR DART 호출 상한(처음 전체 채우기는 5200 — 다른 DART 워크플로우가 적은 날에)"
@@ -29,7 +31,7 @@ concurrency:
 
 jobs:
   profile:
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 3') || (github.event_name == 'workflow_dispatch' && inputs.job != 'targets') }}
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 3') || (github.event_name == 'workflow_dispatch' && (inputs.job == 'profile' || inputs.job == 'all')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -73,7 +75,7 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
 
   targets:
-    if: ${{ github.event_name == 'schedule' || inputs.job != 'profile' }}
+    if: ${{ github.event_name == 'schedule' || inputs.job == 'targets' || inputs.job == 'all' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -111,4 +113,45 @@ jobs:
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
           MSG="[Mir Actions 실패] ${{ github.workflow }} (targets) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
+  logos:
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 3') || (github.event_name == 'workflow_dispatch' && (inputs.job == 'logos' || inputs.job == 'all')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Company logos (official-site favicons)
+        run: python scripts/build_company_logos.py --market all --top 1000 --push
+
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group company-logos
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} (logos) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

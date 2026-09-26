@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=560d9ad6be" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=560d9ad6be"></noscript>
+    <link rel="preload" href="styles.css?v=7c16008f67" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=7c16008f67"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=757da48514"></script>
+    <script src="build_id.js?v=4958d50380"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3262,7 +3262,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="ai-mode.js?v=dca21f04cc"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=4d75c17333"></script>
-    <script src="movers.js?v=4a60812545"></script>
+    <script src="movers.js?v=e7ddc838b5"></script>
     <script src="portfolio.js?v=091c64de96"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
@@ -3274,7 +3274,9 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=293e1c98f6"></script>
-    <script src="feature-data.js?v=84576c1483"></script>
+    <script src="company-logo-core.js?v=632b6d829a"></script>
+    <script src="company-logo.js?v=aa6434614f"></script>
+    <script src="feature-data.js?v=c27ef2b527"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3324,14 +3326,14 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=3db2e5c53a"></script>
     <script src="find-table-core.js?v=7a807895ca"></script>
-    <script src="find-table.js?v=1a20e0a195"></script>
+    <script src="find-table.js?v=c762a4e24a"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
-    <script src="calendar-panel.js?v=9ba51cec03"></script>
+    <script src="calendar-panel.js?v=cde775a5ef"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=834b482c5a"></script>
+    <script src="app.js?v=21d7d05bdd"></script>
     <script src="ai-cosmos.js?v=83b89d5891"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
-    <script src="rail.js?v=f647c74678"></script>
+    <script src="rail.js?v=1d2bb06eeb"></script>
   </body>
 </html>

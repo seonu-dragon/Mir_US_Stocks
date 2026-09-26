@@ -1,0 +1,83 @@
+name: Screener backtest panel
+
+# 수식 스크리너 '과거 백테스트'의 월말 팩터 패널(scripts/build_screener_backtest_panel.mjs).
+# 레포의 data/details·data/korea/details(일봉)·data/financials(SEC 10-K)·data/korea/financials_history.json
+# 만 읽는 순수 Node 계산이라 외부 API·시크릿이 없다. 월말 기준이라 내용은 새 달이 끝날 때만 크게 바뀌지만,
+# 일봉 보정·재무 갱신을 반영하려고 주 1회 다시 만든다(로컬 측정: US 2.4천·KR 2.5천 종목 합계 약 15초~2분).
+# 산출물: data/screener_backtest_meta.{json,js} · data/korea/screener_backtest_meta.{json,js} ·
+#         data/screener_backtest/<us|kr>/<field>.json
+
+on:
+  schedule:
+    - cron: "40 20 * * 6"  # 일요일 05:40 KST — 주간 실적·재무(03:02)와 엣지 통계(04:20) 뒤
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # 한 시장이라도 실패하면 그 시장 파일은 그대로 두고 exit 1 — 다른 시장 결과는 이미 썼으므로
+      # 발행은 계속한다(|| 로 실패를 기억했다가 마지막에 빨갛게).
+      - name: Build panel
+        id: build
+        shell: bash
+        run: |
+          start=$(date +%s)
+          status=0
+          node scripts/build_screener_backtest_panel.mjs || status=$?
+          echo "elapsed_s=$(( $(date +%s) - start ))" >> "$GITHUB_OUTPUT"
+          echo "빌드 소요 $(( $(date +%s) - start ))초"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+
+      - name: Publish
+        shell: bash
+        run: |
+          python scripts/sec_client.py --publish \
+            data/screener_backtest_meta.json data/screener_backtest_meta.js \
+            data/korea/screener_backtest_meta.json data/korea/screener_backtest_meta.js \
+            data/screener_backtest \
+            --label "screener backtest panel (weekly)"
+
+      - name: Fail if a market failed
+        if: steps.build.outputs.status != '0'
+        run: exit 1
+
+      - name: Freshness gate
+        run: python scripts/check_data_freshness.py --group screener-backtest
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

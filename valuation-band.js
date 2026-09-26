@@ -4,17 +4,40 @@
 // 현재 배수가 자기 과거 분포의 몇 % 위치인지 보여 준다. 계산은 valuation-band-core.js(순수).
 //
 // 데이터: KR 은 data/korea/valuation_band/meta.js(window.KR_VALUATION_BAND_META, lazy) +
-// 종목을 열 때 샤드 JSON 하나(sNN.json)만 fetch. US 는 아직 없다 — 재무 확장 후 VALBAND_SOURCES
-// 에 us 항목(같은 샤드 모양)을 넣으면 renderValBandChart 이하가 그대로 쓰인다.
+// 종목을 열 때 샤드 JSON 하나(sNN.json)만 fetch. US 는 data/valuation_band/ 에 같은 모양으로
+// (build_us_valuation_band.py, SEC 재무 + 야후 월말 종가 산출) PSR 배열("s")이 더 있다.
+// 시장별 차이는 VALBAND_SOURCES 의 문구와 meta.excluded(계산하지 않은 종목의 사유)뿐이다.
 //
 // selectTicker(renderSearch) 가 부르고, 메타가 늦게 도착하면 refreshFeatureViews 가 다시 부른다.
 // 정보 표시이지 매매 신호가 아니다 — 문구에 '평균 회귀를 보장하지 않음' 을 항상 적는다.
 
 const VALBAND_SOURCES = {
-  kr: { featureKey: "krValBand", global: "KR_VALUATION_BAND_META", dir: "data/korea/valuation_band", sourceLabel: "KRX 공식 PER·PBR" },
+  kr: {
+    featureKey: "krValBand", global: "KR_VALUATION_BAND_META", dir: "data/korea/valuation_band", sourceLabel: "KRX 공식 PER·PBR",
+    baseNote: { per: "KRX 공식 EPS 는 직전 사업연도 기준이라 계단식", pbr: "KRX 공식 BPS" },
+    priceNote: "주가는 KRX 월말 종가를 액면분할·병합만 수정했습니다(배당 미반영).",
+  },
+  us: {
+    featureKey: "usValBand", global: "US_VALUATION_BAND_META", dir: "data/valuation_band", sourceLabel: "SEC 공시 재무 + 야후 월말 종가(Mir 산출)",
+    baseNote: {
+      per: "EPS = 최근 4분기 지배주주 순이익 ÷ 희석 주식수, 각 월말에 이미 공시된 분기만",
+      pbr: "BPS = 자본총계 ÷ 발행주식수, 분기 자료가 없는 구간은 연간 값",
+      psr: "SPS = 최근 4분기 매출 ÷ 발행주식수, 금융업은 계산 안 함",
+    },
+    priceNote: "주가는 야후 월말 종가(분할 조정, 배당 미반영)이고 공시 주식수는 분할을 감지해 같은 기준으로 환산했습니다. 분기 재무가 최근 12분기뿐이라 그 이전은 10-K 직후 몇 달만 PER·PSR 이 있고 나머지 달은 비워 둡니다(늦은 연간 이익으로 채우면 과거 배수가 부풀어 보입니다).",
+    excludedText: {
+      foreign: "해외발행인(20-F·40-F)이라 분기 실적이 없고 재무 통화·ADR 주식 기준이 달라 밴드를 계산하지 않습니다.",
+      currency: "재무제표 통화가 달러가 아니라 밴드를 계산하지 않습니다.",
+      shares: "현재 시가총액과 공시 주식수의 기준이 맞지 않아(복수 종류주·트래킹 주식 등) 밴드를 계산하지 않습니다.",
+      nohist: "월말 종가 이력이 없어(신규 상장·스팩 등) 밴드를 계산하지 않습니다.",
+      price: "주가 이력에 분할 미조정으로 의심되는 급변이 있어 밴드를 계산하지 않습니다.",
+      few: "유효한 월말 배수가 24개월 미만이라 밴드를 그리지 않습니다.",
+    },
+  },
 };
+const VALBAND_METRICS = { per: { label: "PER", base: "이익(EPS)" }, pbr: { label: "PBR", base: "순자산(BPS)" }, psr: { label: "PSR", base: "매출(SPS)" } };
 const _valBandShardCache = {};   // url → Promise<shard|null>
-const _valBandMetricPref = {};   // ticker → "per" | "pbr" (사용자가 고른 탭)
+const _valBandMetricPref = {};   // ticker → "per" | "pbr" | "psr" (사용자가 고른 탭)
 
 function valBandSource() {
   const cfg = marketCfg();
@@ -50,6 +73,14 @@ function renderValuationBand(item) {
     return;
   }
   const code = String(ticker);
+  // 계산하지 않은 종목(US: 해외발행인·복수 종류주 등)은 샤드를 받지 않고 사유만 한 줄로 적는다.
+  const why = meta.excluded && meta.excluded[code];
+  if (why) {
+    const text = (src.excludedText && src.excludedText[why]) || "이 종목은 밴드를 계산하지 않습니다.";
+    host.hidden = false;
+    host.innerHTML = `<h3>PER·PBR 밴드</h3><p class="muted">${escapeHtml(text)}</p>`;
+    return;
+  }
   valBandFetchShard(src, meta, code).then((shard) => {
     if (selectedTicker !== ticker) return;
     const s = MirValBandCore.seriesFromShard(shard, code);
@@ -64,35 +95,44 @@ function renderValBandCard(host, opts) {
   const { series, meta, item, src } = opts;
   const core = MirValBandCore;
   const price = Number(item.price);
-  const per = core.computeBands({ dates: series.dates, close: series.close, mult: series.per }, { currentPrice: price });
-  const pbr = core.computeBands({ dates: series.dates, close: series.close, mult: series.pbr }, { currentPrice: price });
-  if (!per.ok && !pbr.ok) {
-    host.innerHTML = `<h3>PER·PBR 밴드</h3><p class="muted">월말 배수 자료가 24개월 미만이라 밴드를 그리지 않습니다(유효 PER ${per.validCount}개월 · PBR ${pbr.validCount}개월).</p>`;
+  const bandOpts = { currentPrice: price };
+  const per = core.computeBands({ dates: series.dates, close: series.close, mult: series.per }, bandOpts);
+  const pbr = core.computeBands({ dates: series.dates, close: series.close, mult: series.pbr }, bandOpts);
+  // 금융업처럼 PSR 이 전부 비어 있으면 탭 자체를 만들지 않는다.
+  const psr = series.psr && series.psr.some((v) => v > 0) ? core.computeBands({ dates: series.dates, close: series.close, mult: series.psr }, bandOpts) : null;
+  const results = { per, pbr, psr };
+  const title = psr ? "PER·PBR·PSR 밴드" : "PER·PBR 밴드";
+  if (!per.ok && !pbr.ok && !(psr && psr.ok)) {
+    host.innerHTML = `<h3>${title}</h3><p class="muted">월말 배수 자료가 24개월 미만이라 밴드를 그리지 않습니다(유효 PER ${per.validCount}개월 · PBR ${pbr.validCount}개월${psr ? ` · PSR ${psr.validCount}개월` : ""}).</p>`;
     return;
   }
   const ticker = item.ticker;
   let metric = _valBandMetricPref[ticker] || core.defaultMetric(per, pbr);
-  if (metric === "per" && !per.ok) metric = "pbr";
-  if (metric === "pbr" && !pbr.ok) metric = "per";
+  if (!results[metric] || !results[metric].ok) metric = ["per", "pbr", "psr"].find((m) => results[m] && results[m].ok);
 
   const draw = () => {
     valBandSetGeom(host);
-    const res = metric === "per" ? per : pbr;
-    const label = metric === "per" ? "PER" : "PBR";
-    const mult = metric === "per" ? series.per : series.pbr;
-    const btn = (m, text, ok) => `<button type="button" data-vb-metric="${m}" class="${metric === m ? "is-active" : ""}" aria-pressed="${metric === m}"${ok ? "" : " disabled"}>${text}</button>`;
+    const res = results[metric];
+    const label = VALBAND_METRICS[metric].label;
+    const mult = series[metric];
+    const btn = (m) => {
+      const r = results[m];
+      if (!r) return "";
+      return `<button type="button" data-vb-metric="${m}" class="${metric === m ? "is-active" : ""}" aria-pressed="${metric === m}"${r.ok ? "" : " disabled"}>${VALBAND_METRICS[m].label} 밴드</button>`;
+    };
     const notice = valBandNotice(metric, per, pbr);
+    const baseNote = (src.baseNote && src.baseNote[metric]) || "";
     host.innerHTML = `
       <div class="valband-head">
-        <h3>PER·PBR 밴드 <span class="muted valband-sub">과거 ${res.ok ? res.validCount : 0}개월 배수 분포 · 월말</span></h3>
-        <div class="segmented valband-seg" role="group" aria-label="밴드 기준">${btn("per", "PER 밴드", per.ok)}${btn("pbr", "PBR 밴드", pbr.ok)}</div>
+        <h3>${title} <span class="muted valband-sub">과거 ${res.ok ? res.validCount : 0}개월 배수 분포 · 월말</span></h3>
+        <div class="segmented valband-seg" role="group" aria-label="밴드 기준">${btn("per")}${btn("pbr")}${btn("psr")}</div>
       </div>
       ${notice ? `<p class="valband-notice">${notice}</p>` : ""}
       ${res.ok ? valBandStats(res, label) : ""}
       ${res.ok ? renderValBandChart(series, res, mult, label) : `<p class="muted">${label} 유효 자료가 부족합니다.</p>`}
       <p class="valband-readout muted" aria-live="polite"></p>
       ${valBandValidationLine(meta)}
-      <p class="muted valband-foot">밴드 = 그 달 주당 ${metric === "per" ? "이익(EPS)" : "순자산(BPS)"} × 과거 ${label} 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값(KRX 공식 ${metric === "per" ? "EPS 는 직전 사업연도 기준이라 계단식" : "BPS"}). <b>과거 범위 안의 위치일 뿐이며 평균 회귀를 보장하지 않습니다.</b> 이익이 구조적으로 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 매매 신호가 아닌 정보입니다. 주가는 KRX 월말 종가를 액면분할·병합만 수정했습니다(배당 미반영). 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")} · 갱신 ${escapeHtml(meta.updatedAtKst || "")}.</p>`;
+      <p class="muted valband-foot">밴드 = 그 달 주당 ${VALBAND_METRICS[metric].base} × 과거 ${label} 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값${baseNote ? `(${escapeHtml(baseNote)})` : ""}. <b>과거 범위 안의 위치일 뿐이며 평균 회귀를 보장하지 않습니다.</b> 이익이 구조적으로 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 매매 신호가 아닌 정보입니다. ${escapeHtml(src.priceNote || "")} 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")} · 갱신 ${escapeHtml(meta.updatedAtKst || "")}.</p>`;
     host.querySelectorAll("[data-vb-metric]").forEach((b) => b.addEventListener("click", () => {
       if (b.disabled) return;
       metric = b.dataset.vbMetric;
@@ -105,6 +145,7 @@ function renderValBandCard(host, opts) {
 }
 
 function valBandNotice(metric, per, pbr) {
+  if (metric === "psr") return "";
   if (metric === "pbr" && per.ok && per.lastLoss) return "최근 결산이 적자라 PER 이 정의되지 않습니다 — 순자산 기준인 PBR 밴드를 기본으로 보여 줍니다.";
   if (metric === "pbr" && !per.ok) return `PER 유효 월이 ${per.validCount}개월뿐이라(적자 ${per.lossMonths}개월) PBR 밴드를 기본으로 보여 줍니다.`;
   if (metric === "per" && per.lossMonths) return `적자였던 ${per.lossMonths}개월은 PER 이 없어 밴드를 끊어 표시했습니다(붉은 음영).`;
@@ -258,5 +299,11 @@ function valBandValidationLine(meta) {
   const sign = (x) => `${x > 0 ? "+" : ""}${x.toFixed(1)}`;
   const tone = h.verdict === "우위" ? "pos" : h.verdict === "열위" ? "neg" : "";
   const three = h3 && !h3.insufficient ? ` · 3개월 ${sign(h3.meanExcessPct)}%p(${escapeHtml(h3.verdict)})` : "";
-  return `<p class="valband-verdict">과거 검증 <span class="muted">(${escapeHtml(v.rule)}, ${escapeHtml(h.from)}~${escapeHtml(h.to)} · ${h.months}개월 · 표본 ${Number(h.signalObs).toLocaleString("ko-KR")}건)</span>: 이후 12개월 수익률 중앙값이 같은 달 전체보다 평균 <b class="${tone}">${sign(h.meanExcessPct)}%p</b> <span class="muted">(97.5% 구간 ${sign(h.ciLowPct)}~${sign(h.ciHighPct)}, 전체를 이긴 달 ${h.hitRatePct}%)</span> — <b>${escapeHtml(h.verdict)}</b>${three}. <span class="muted">상장폐지 후 수익률이 빠져 생존편향이 남아 있고, 예측이 아닙니다.</span></p>`;
+  // US 는 벤치마크(SPY) 대비 + 같은 달 전체 종목 중앙값 대비(국내와 같은 정의)를 함께 적는다.
+  const vsWhat = v.benchLabel ? `${escapeHtml(v.benchLabel)} 수익률` : "같은 달 전체";
+  const beatWhat = v.benchLabel ? escapeHtml(v.bench || "벤치마크") : "전체";
+  const u = h.vsUniverse;
+  const uni = u ? ` <span class="muted">같은 달 전체 종목 중앙값 대비로는 ${sign(u.meanExcessPct)}%p(${sign(u.ciLowPct)}~${sign(u.ciHighPct)}, ${escapeHtml(u.verdict)}).</span>` : "";
+  const caveat = v.caveat || "상장폐지 후 수익률이 빠져 생존편향이 남아 있고, 예측이 아닙니다.";
+  return `<p class="valband-verdict">과거 검증 <span class="muted">(${escapeHtml(v.rule)}, ${escapeHtml(h.from)}~${escapeHtml(h.to)} · ${h.months}개월 · 표본 ${Number(h.signalObs).toLocaleString("ko-KR")}건)</span>: 이후 12개월 수익률 중앙값이 ${vsWhat}보다 평균 <b class="${tone}">${sign(h.meanExcessPct)}%p</b> <span class="muted">(97.5% 구간 ${sign(h.ciLowPct)}~${sign(h.ciHighPct)}, ${beatWhat}를 이긴 달 ${h.hitRatePct}%)</span> — <b>${escapeHtml(h.verdict)}</b>${three}.${uni} <span class="muted">${escapeHtml(caveat)}</span></p>`;
 }

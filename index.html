@@ -329,11 +329,11 @@ html[data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5543d928b9" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5543d928b9"></noscript>
+    <link rel="preload" href="styles.css?v=f90493696a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=f90493696a"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=97c1cce15a"></script>
+    <script src="build_id.js?v=9fa59db9f4"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1430,6 +1430,10 @@ html[data-theme="dark"] {
           <section class="investment-checklist-card animate-reveal" id="investmentChecklist" aria-live="polite"></section>
         </div>
         <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
+        <!-- 재무(financials.js renderFinancials) — SEC/DART 종목별 파일, 인덱스에 있는 종목만 -->
+        <section class="financials-card animate-reveal" id="financialsSection" hidden></section>
+        <!-- 역DCF · 시나리오 DCF(dcf.js renderDcf) — 재무 확장 파일이 있는 비금융 종목만 -->
+        <section class="financials-card dcf-card animate-reveal" id="dcfSection" hidden></section>
         <section class="stock-events-card animate-reveal" id="stockEvents"></section>
         <!-- 이 종목이 따라가는 산업 지표(industry.js renderIndustryReverse) — INDUSTRY_BY_TICKER 역인덱스 -->
         <section class="industry-reverse-card animate-reveal" id="industryReverse" hidden></section>
@@ -1437,6 +1441,8 @@ html[data-theme="dark"] {
         <section class="valband-card animate-reveal" id="valuationBand" hidden></section>
         <!-- 과거 이벤트 반응(event-study.js renderStockEventStudy) — data/event_study/tk 샤드 하나만 받는다 -->
         <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
+        <!-- 업종 상대 팩터 등급(factor-grades.js renderFactorGrades) — 스냅샷·map_fundamentals 로 브라우저 계산 -->
+        <section class="fgrade-card animate-reveal" id="factorGrades" hidden></section>
         <div class="analysis-balanced-grid analysis-quality-grid">
           <section class="data-quality-card animate-reveal" id="dataQualityPanel"></section>
           <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
@@ -1449,6 +1455,7 @@ html[data-theme="dark"] {
           <div class="segmented ia-seg ia-seg-strip" id="findModeSeg" role="group" aria-label="찾기 방식">
             <button type="button" class="is-active" data-find="top">상위 종목</button>
             <button type="button" data-find="screener">스크리너</button>
+            <button type="button" data-find="formula">수식</button>
             <button type="button" data-find="scanner">모멘텀</button>
             <button type="button" data-find="jump">급등/거래량</button>
             <button type="button" data-find="valuation">밸류에이션</button>
@@ -1693,6 +1700,82 @@ html[data-theme="dark"] {
             <tbody id="screenerTable"></tbody>
           </table>
         </div>
+        </div>
+
+        <div class="sub-panel" id="sub-formula">
+          <div class="section-title">
+            <h2>수식 스크리너</h2>
+            <p>조건을 수식으로 적어 종목을 거릅니다. 예: <code>roe &gt; 15 and pe &lt; sectorMedian(pe) and rsi14 &lt; 40</code></p>
+          </div>
+          <details class="about-data fx-help">
+            <summary>쓰는 법 · 사용할 수 있는 필드</summary>
+            <ul class="fx-help-list">
+              <li>연산: <code>+ - * /</code> · 비교 <code>&gt; &gt;= &lt; &lt;= == !=</code> · 논리 <code>and or not</code> · 괄호. 곱셈·나눗셈이 먼저, <code>and</code> 가 <code>or</code> 보다 먼저 묶입니다.</li>
+              <li>함수: <code>sectorMedian(x)</code> 섹터 중앙값 · <code>sectorPct(x)</code> 섹터 내 백분위(0~100, 클수록 큼) · <code>industryMedian(x)</code> · <code>industryPct(x)</code> 업종 기준 · <code>rank(x)</code> 시장 전체 순위(1 = 가장 큼) · <code>pct(x)</code> · <code>median(x)</code> · <code>abs</code> · <code>min</code> · <code>max</code> · <code>avg</code>.</li>
+              <li>값이 없는 종목(결측)은 조건을 충족하지 않은 것으로 봅니다. 0 으로 나누면 결측입니다. 그룹 집계는 그 그룹에 값 있는 종목이 5개 미만이면 결측입니다.</li>
+              <li>집계 함수의 모집단은 이 시장 전체(ETF 제외)이고, 유니버스 선택은 결과만 거릅니다. 필드는 시장 스냅샷·map_fundamentals 에 실제로 값이 있는 것만 보입니다(시장마다 다름).</li>
+            </ul>
+            <div class="fx-field-list" id="fxFieldList"></div>
+          </details>
+          <div class="fx-editor">
+            <label class="fx-label" for="fxInput">필터 수식</label>
+            <div class="fx-input-wrap">
+              <textarea id="fxInput" rows="2" spellcheck="false" autocomplete="off" autocapitalize="off" placeholder="roe > 15 and pe < sectorMedian(pe) and rsi14 < 40"></textarea>
+            </div>
+            <p class="fx-error" id="fxError" role="alert" hidden></p>
+            <div class="fx-actions">
+              <label>유니버스 <select id="fxBucket"></select></label>
+              <button type="button" id="fxRun" class="primary">검색</button>
+              <button type="button" class="ghost" id="fxShare">링크 복사</button>
+              <button type="button" class="ghost" id="fxClear">지움</button>
+            </div>
+            <div class="nl-examples fx-examples" id="fxExamples"></div>
+          </div>
+          <details class="ia-fold fx-fold">
+            <summary>조건 블록으로 조립</summary>
+            <div class="fx-blocks" id="fxBlocks"></div>
+            <div class="fx-actions">
+              <button type="button" class="ghost" id="fxAddBlock">조건 추가</button>
+              <label>연결 <select id="fxBlocksJoin"><option value="and">모두 만족(and)</option><option value="or">하나라도(or)</option></select></label>
+              <button type="button" class="ghost" id="fxBlocksApply">수식으로 만들기</button>
+            </div>
+            <p class="muted fx-preview"><code id="fxBlocksPreview"></code></p>
+          </details>
+          <details class="ia-fold fx-fold">
+            <summary>사용자 정의 열</summary>
+            <p class="muted fx-note">수식 결과를 표의 열로 추가하고 머리글을 눌러 정렬합니다(최대 4개). 예: 이익수익률 <code>100 / pe</code>, 섹터 내 ROE 위치 <code>sectorPct(roe)</code>.</p>
+            <div class="fx-columns" id="fxColumns"></div>
+            <div class="fx-actions">
+              <button type="button" class="ghost" id="fxAddColumn">열 추가</button>
+              <button type="button" class="ghost" id="fxColumnsApply">열 적용</button>
+            </div>
+          </details>
+          <section class="saved-screener-panel fx-saved" aria-labelledby="fxSavedTitle">
+            <div class="saved-screener-head">
+              <div>
+                <h3 id="fxSavedTitle">수식 저장 · 편입/이탈</h3>
+                <p>저장형 스크리너와 같은 목록에 저장되고, 새 스냅샷에서 신규 편입·이탈 종목을 보여 줍니다.</p>
+              </div>
+            </div>
+            <div class="saved-screener-controls">
+              <label class="grow">저장한 수식<select id="fxSavedSelect"><option value="">저장된 수식 선택</option></select></label>
+              <label class="grow">이름<input id="fxSavedName" type="text" maxlength="30" placeholder="예: 업종 대비 싼 고ROE"></label>
+              <button type="button" class="ghost" id="fxSavedSave">현재 수식 저장</button>
+              <button type="button" class="ghost" id="fxSavedDelete" disabled>삭제</button>
+            </div>
+            <div class="saved-screener-delta" id="fxDelta" aria-live="polite"></div>
+          </section>
+          <div class="fx-result-head">
+            <p class="muted fx-meta" id="fxMeta">수식을 입력하고 검색을 누르세요.</p>
+            <p class="fx-unverified">이 조건은 과거 검증되지 않았습니다 — 현재 스냅샷에서 조건에 맞는 종목 목록일 뿐, 이후 수익률에 대한 정보가 아닙니다.</p>
+            <div class="fx-backtest-slot" id="fxBacktestSlot" hidden></div>
+          </div>
+          <div class="table-wrap">
+            <table class="compact-table screener-table table-wide fx-table">
+              <thead id="fxHead"></thead>
+              <tbody id="fxBody"></tbody>
+            </table>
+          </div>
         </div>
 
         <div class="sub-panel" id="sub-scanner">
@@ -2387,6 +2470,23 @@ html[data-theme="dark"] {
             <div class="portfolio-tool-table" id="rebalanceTable"></div>
           </section>
           </details>
+          <details class="ia-fold ia-tool-fold" id="pfRiskFold">
+            <summary>위험 기여도 · 리스크 패리티 · 최소분산</summary>
+          <section class="portfolio-tool-card" id="pfRiskCard">
+            <div class="portfolio-tool-head">
+              <div><h3>위험 기여도 · 리스크 패리티 · 최소분산</h3></div>
+            </div>
+            <p class="muted">종목마다 포트폴리오 변동성의 몇 %를 만드는지(위험 기여도)와, 위험을 똑같이 나누는 비중(리스크 패리티)·변동성이 가장 작은 비중(최소분산)을 현재 비중과 나란히 봅니다. 기대수익은 쓰지 않습니다.</p>
+            <div class="pf-risk-controls">
+              <label>대상<select id="pfRiskSource"><option value="holdings">보유 포트폴리오</option><option value="backtest">시뮬레이터 종목·비중</option></select></label>
+              <label>추정 기간<select id="pfRiskLookback"><option value="252">최근 1년</option><option value="756" selected>최근 3년</option><option value="1260">최근 5년</option></select></label>
+              <label>종목 상한<span class="pf-risk-cap"><input id="pfRiskCap" type="number" min="0" max="100" step="5" placeholder="없음" inputmode="decimal"><em>%</em></span></label>
+              <button type="button" id="pfRiskRun" class="compact-btn">다시 계산</button>
+            </div>
+            <p class="muted pf-risk-status" id="pfRiskStatus" aria-live="polite"></p>
+            <div id="pfRiskBody"></div>
+          </section>
+          </details>
           <details class="ia-fold ia-tool-fold">
             <summary>스트레스 테스트</summary>
           <section class="portfolio-tool-card" id="stressTestCard">
@@ -2400,9 +2500,19 @@ html[data-theme="dark"] {
                 <option value="custom">직접 입력</option>
               </select>
             </div>
+            <div class="pf-stress-mode" role="tablist" aria-label="스트레스 테스트 방식">
+              <button type="button" role="tab" data-stress-mode="preset" class="is-active" aria-selected="true">가정 시나리오</button>
+              <button type="button" role="tab" data-stress-mode="crisis" aria-selected="false">과거 위기 재생</button>
+            </div>
+            <div id="stressPresetPane">
             <p class="muted">종목별 가정 충격률을 적용해 예상 평가손실과 스트레스 후 비중을 계산합니다.</p>
             <div class="portfolio-tool-summary" id="stressSummary"></div>
             <div class="portfolio-tool-table" id="stressTable"></div>
+            </div>
+            <div id="stressCrisisPane" hidden>
+            <p class="muted">현재 포트폴리오를 실제 과거 하락 구간(2008·2018 Q4·2020 코로나·2022 금리·2024-08)에 그대로 통과시킨 결과입니다. 종목마다 실측인지 지수 × β 대리인지 표시합니다.</p>
+            <div id="stressCrisisBody"></div>
+            </div>
           </section>
           </details>
           <details class="ia-fold ia-tool-fold">
@@ -2492,6 +2602,7 @@ html[data-theme="dark"] {
             <div class="backtest-chart-wrap">
               <svg id="backtestChart" viewBox="0 0 800 260" role="img" aria-label="누적 수익 차트"></svg>
             </div>
+            <div class="pf-tearsheet" id="backtestTearsheet"></div>
             <div class="table-wrap">
               <table class="backtest-table" id="backtestTable"></table>
             </div>
@@ -2968,7 +3079,7 @@ html[data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=c3397a4bcb"></script>
+    <script src="market_config.js?v=cf947f6707"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -2984,24 +3095,33 @@ html[data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="chart-indicators.js?v=742472f4c4"></script>
     <script src="community.js?v=af8ec25e4f"></script>
-    <script src="ai-mode.js?v=e03bf628f1"></script>
+    <script src="ai-mode.js?v=2642a3273b"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=7b5a9f25f0"></script>
     <script src="movers.js?v=4f92914563"></script>
-    <script src="portfolio.js?v=61ef6f3d50"></script>
+    <script src="portfolio.js?v=4e19177b3c"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
+    <script src="portfolio-risk-core.js?v=847eeadde4"></script>
+    <script src="portfolio-risk.js?v=cedc92eb46"></script>
     <script src="thesis-core.js?v=fb63922564"></script>
     <script src="thesis.js?v=53f3d6f7f5"></script>
-    <script src="screener.js?v=d734941458"></script>
+    <script src="screener.js?v=709605d4d0"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=643b0a9ecf"></script>
-    <script src="feature-data.js?v=72b5641898"></script>
+    <script src="feature-data.js?v=e7a6b005c0"></script>
     <script src="treemap.js?v=e89993e134"></script>
     <script src="industry.js?v=22801864ca"></script>
-    <script src="valuation-band-core.js?v=0e0b770b57"></script>
-    <script src="valuation-band.js?v=0fc9596115"></script>
+    <script src="valuation-band-core.js?v=11d961c47c"></script>
+    <script src="valuation-band.js?v=3db93da081"></script>
+    <script src="factor-grade-core.js?v=98a21c5909"></script>
+    <script src="factor-grades.js?v=7468787091"></script>
+    <script src="formula-core.js?v=03bd5d2e20"></script>
+    <script src="formula-screener.js?v=e2245e10f2"></script>
+    <script src="overfit-core.js?v=1f05fbc793"></script>
+    <script src="screener-backtest-core.js?v=f9ef330490"></script>
+    <script src="screener-backtest.js?v=a5f9e857fb"></script>
     <script src="signals.js?v=3a43ef5ebd"></script>
     <script src="macro-odds.js?v=533cf73954"></script>
     <script src="chart.js?v=aff4f193c6"></script>
@@ -3015,8 +3135,12 @@ html[data-theme="dark"] {
     <script src="event-study.js?v=95530093c5"></script>
     <script src="watchlist.js?v=830011f027"></script>
     <script src="earnings-insight.js?v=8e1bf51e44"></script>
+    <script src="financials-core.js?v=b3c48e127e"></script>
+    <script src="financials.js?v=2b33b47cc1"></script>
+    <script src="dcf-core.js?v=f8687c4ac3"></script>
+    <script src="dcf.js?v=3e6f86bccd"></script>
     <script src="subscribe-feeds.js?v=8e306f9e90"></script>
-    <script src="app.js?v=7e10b88500"></script>
+    <script src="app.js?v=c88e9e4856"></script>
     <script src="ai-cosmos.js?v=9ac692de17"></script>
     <script src="ai-mode-welcome.js?v=bc99fecec7"></script>
   </body>

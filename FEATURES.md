@@ -159,6 +159,10 @@
     - 하단 지표: 거래량(Volume), Vol MA20, Volume Ratio, OBV, A/D, CMF, MFI, RSI(14), MACD, Stochastic, ROC, Momentum, Williams %R, ATR, ADX, CCI, RS vs SPY/QQQ/Sector, Mansfield RS.
   - *차트 비교*: 주 차트 위에 다른 종목(예: SPY, QQQ)을 멀티 차트 형태로 추가 비교.
   - *프리셋 관리*: 차트 설정을 내 커스텀 프리셋으로 저장/불러오기/삭제 기능.
+- **업종 상대 팩터 등급 A~F (종목 분석 · AI 대시보드, 2026-09-26)**:
+  - 밸류(PER·PBR·PSR·EV/EBITDA·EV/EBIT·P/FCF, 0 이하 제외)·성장(매출·영업이익 성장률, 예상 EPS 성장률 추정치)·수익성(ROE·ROA·순이익률)·모멘텀(3개월 수익률·52주 고점 근접)·재무 건전성(부채비율·유동비율)을 **같은 업종 안** 백분위로 등급화(A ≥80 · B ≥60 · C ≥40 · D ≥20 · F). 업종 표본 10개 미만이면 섹터로 올리고, 그래도 모자라면 보류.
+  - 펼치면 구성 지표 값·업종 내 백분위·표본 수. 팩터마다 `factor_validation.json` 결과 한 줄(모멘텀 구성 지표는 대부분 미통과, 나머지는 '검증 대상 아님').
+  - 브라우저 계산(`factor-grade-core.js` + `factor-grades.js`): 새 데이터 파일 없이 열린 종목의 업종·섹터 집단만 계산(부팅 비용 0). 기존 스노우플레이크는 유지하되 '절대 기준'으로 명시.
 - **모멘텀 점수 스캐너** (2026-09-04 이전 이름 '상승확률 스캐너'):
   - 스냅샷 지표(추세·모멘텀·RSI·거래량 등)로 전 종목을 12~88점으로 점수화해 순위를 매긴다.
   - **확률이 아니다.** `scripts/build_factor_validation.mjs` 의 과거 검증에서 이 점수는
@@ -177,6 +181,23 @@
   - "RSI 30 이하 반도체주", "PER 15 이하 ROE 15 이상 대형주" 등의 자연어 입력을 파싱해 자동 스크리닝 필터를 적용하여 종목 발굴.
 - **조건 저장형 스크리너 (Saved Screener)**:
   - 사용자가 스크리닝한 조건을 저장하고 다음 날 데이터 스냅샷이 업데이트되었을 때 편입/이탈된 신규 종목의 델타(Delta)를 확인하는 추적 기능.
+- **사용자 정의 수식 스크리너 (종목 › 찾기 › 수식, 2026-09-26)**:
+  - `roe > 15 and pe < sectorMedian(pe) and rsi14 < 40` 같은 수식을 직접 쓰거나 조건 블록으로 조립. 파서는 `formula-core.js`(토크나이저 + 재귀 하강, **eval/new Function 없음**, node 테스트 `scripts/tests/test_formula_core.mjs`).
+  - 함수: `sectorMedian`·`sectorPct`·`industryMedian`·`industryPct`(그룹 표본 5개 미만이면 결측)·`rank`(1 = 가장 큼)·`pct`·`median`·`abs`·`min`·`max`·`avg`. 결측은 3값 논리로 **조건 불충족**, 0 나누기는 결측, 조건·숫자 혼용은 컴파일 단계 오류, 잘못된 필드는 비슷한 이름 제안.
+  - 필드는 스냅샷·map_fundamentals 에 이 시장에서 30종목 이상 값이 있는 것만 자동완성·필드 목록에 보인다(KR 부채비율·성장률, US 예상 EPS 성장률 등 시장별로 다름). 집계 모집단은 시장 전체(ETF 제외), 유니버스 선택은 결과만 거른다.
+  - 사용자 정의 열(최대 4개, 머리글 클릭 정렬), 공유 링크(`?tab=search&sub=formula&fx=<토큰>`), 저장은 **저장형 스크리너와 같은 목록**(`kind: "formula"`)이라 편입/이탈 델타가 그대로 동작하고 기존 저장 셀렉트에서도 `[수식]` 으로 열린다.
+  - 결과 옆에 "이 조건은 과거 검증되지 않았습니다" 표시. 3차 스크리너 백테스트 연결 지점: `window.MirFormulaBacktest.render(slotEl, { compiled, source, market, columns })` 를 정의하면 `#fxBacktestSlot` 에 붙는다(없으면 자리 숨김).
+- **스크리너 과거 백테스트 + 공통 과적합 검사 (종목 › 찾기 › 수식 › 결과 위, 2026-09-26)**: `screener-backtest.js`(화면) + `screener-backtest-core.js`(계산) + `overfit-core.js`(과적합 검사, 다른 백테스트도 쓸 수 있게 분리). node 테스트 `scripts/tests/test_screener_backtest_core.mjs`(DSR 알려진 값·룩어헤드·비용·회전율·현금·배지).
+  - 버튼을 눌러야 돈다(수식을 바꿀 때마다 자동 실행하지 않음). 매월 마지막 거래일에 수식을 적용 → 통과 종목 동일가중 → **다음 거래일 종가 체결**, 다음 달 체결일까지 보유. 거래비용 편도 0.1%(조정 가능), 통과 종목이 최소 종목 수(기본 5) 미만인 달은 현금. 결과: 누적 곡선(이 조건 · 같은 유니버스 동일가중 · SPY/KODEX 200), 연환산·누적·변동성·MDD(월말)·샤프·평균 종목 수·회전율·현금 개월.
+  - 비교 기준 '같은 유니버스 동일가중' = 그 시점에 살 수 있고 **수식 필드 값이 있는 종목 전체**. 재무 필드는 지금 재무 파일이 있는 회사에만 있어, 전 종목과 비교하면 필터가 아니라 커버리지(생존) 편향으로 초과수익이 생긴다(실측: KR `pb < 1 and roe > 8` 이 전 종목 대비 '통과' → 같은 모집단 대비 '불충분').
+  - 과적합 배지(통과/불충분/과적합 의심): 앞 70%·뒤 30% 분리, 월 초과수익 블록 부트스트랩 95% CI, **이 탭에서 서로 다른 수식·설정으로 돌린 시도 횟수**로 보정한 Deflated Sharpe Ratio(Bailey & López de Prado 2014, 시도 간 분산은 귀무 분산 1/(T−1) 이상으로 보수적). 기준 문장(`MirOverfitCore.CRITERIA`)을 화면과 신뢰도 센터에 그대로 공개. 생존편향 배지는 항상.
+  - 패널: `scripts/build_screener_backtest_panel.mjs`(워크플로우 `Screener backtest panel`, 일요일 05:40 KST, 순수 Node·시크릿 없음) → 메타 `data/screener_backtest_meta.{json,js}`·`data/korea/…`(FEATURE_DATA `screenerBacktest`, 시장별·lazy) + 필드별 샤드 `data/screener_backtest/<us|kr>/<field>.json`(수식에 쓰인 필드와 `fwd` 만 fetch). 약 5년(59개월), 가격 필드 12개 + 재무 필드(PER·PBR·PSR·ROE·ROA·순이익률·성장률 3종·부채비율, US 유동비율). 재무는 **US = 10-K 제출일(filed) 다음 날부터**, KR = 제출일 자료가 없어 사업보고서 법정 기한 다음 날(4월 1일)부터. 과거 시총 = 과거 종가 × 현재 주식 수(거래대금 대비 비현실적이면 비움). 편입 가능 = 20일 평균 거래대금 US 100만 달러·KR 3억 원 이상. 미조정 병합 봉(KR 하루 ±35% 초과, US 5배↑·90%↓)은 그날 수익 0 으로 보정. 과거 값이 없는 필드(`epsTtm`·`forwardPE`·`divYield`·`price` 등)를 쓰면 이유와 함께 "백테스트 불가"로 표시. 신뢰도 센터 "스크리너 백테스트 패널", freshness 그룹 `screener-backtest`(10일).
+- **재무 섹션 (2026-09-26, `financials.js` + `financials-core.js`)**: 종목 분석 뷰의 종목 이벤트 위(`#financialsSection`). 연간(최대 10년)/분기(최근 12분기) 토글, 차트 항목(매출·영업이익 + 영업이익률 선 / 순이익·희석 EPS / 현금흐름 OCF·설비투자·FCF / 현금·총차입금 / 주식수), 파생 지표 표(최근 5개 회계연도 + TTM: FCF·FCF 마진·영업이익률·ROIC·순차입금/EBITDA·주식수 증감·SBC/매출·이익의 질·유동비율 — 정의는 지표명 툴팁과 `financials-core.js` 머리 주석), 계정 원값 표(접이식), 출처·기준 결산기·최근 분기·반영 공시일 표시. 결측은 "—"(추정으로 안 채움), 누계에서 빼서 만든 분기 값은 †·옅은 막대. 금융업은 FCF·순차입금·ROIC·유동비율을 표에서 빼고, 20-F/40-F(해외발행인)는 보고통화·ADR 주식수 기준 차이를 각주로 알린다. 인덱스(`window.FINANCIALS_INDEX`, FEATURE_DATA `financialsIndex`, 시장별·lazy)에 있는 종목만 종목별 파일을 받는다(없으면 섹션 숨김, 404 없음). AI 모드의 "재무" 패널도 같은 데이터(없으면 옛 `financialsHistory` 표). 신뢰도 센터 "재무 확장" 등록.
+- **역DCF · 시나리오 DCF (2026-09-26, `dcf.js` + `dcf-core.js`)**: 종목 분석 뷰의 재무 섹션 바로 아래(`#dcfSection`). 예전 AI 모드의 고정 가정 DCF(할인율 9%·영구성장 2.5%, P/FCF 로 FCF 역추정)를 대체했다.
+  - 역DCF: EV(= 현재가 × 희석 주식수 + 순차입금)를 정당화하는 향후 10년 FCF 연성장률을 이분법으로 역산. 기준 FCF 는 TTM / 최근 3년 평균 토글(기본 = 작은 쪽, '보수적' 표시). 할인율 기본값 = 10년 국채(US FRED DGS10 `YIELD_CURVE`, KR 국고채 10년 `KR_ECOS_MACRO`) + ERP(Damodaran 내재 ERP 4.14% 2026-09-01, KR 은 국가위험 0.64% 가산 — 값·출처·기준일은 `dcf-core.js` 상수, 화면 표시). 사용자가 바꿀 수 있다. 금융업·적자·FCF 음수·통화 불일치·해외발행인은 계산하지 않고 이유 표시. 차입금 태그가 없으면 0 으로 계산하고 그 사실을 표시.
+  - 기저율: "이 매출 규모 기업 중 N년 동안 FCF(및 매출)가 연 g% 이상 자란 비율" — `data/dcf_base_rates.json/.js`(`window.DCF_BASE_RATES`, FEATURE_DATA `dcfBaseRates` lazy). 표본 수·기간·제외 수·생존편향을 화면에 표시. 10년치가 없으면 가능한 최장(현재 US 9년, KR 5년)으로 세고 그 기간을 표시. 표본 20개 미만이면 기저율을 내지 않는다.
+  - 시나리오 DCF: 매출 성장률(1~5년·6~10년)·영업이익률 목표(5년에 걸쳐 수렴)·세율·재투자율 슬라이더 + 할인율·영구성장률. 약세·기본·강세 3개를 따로 저장(localStorage `mir.dcf.v1`), 결과는 범위(약세~강세, 현재가 표시), 할인율×영구성장 5×5 민감도 격자. 주당 가치 = (EV − 순차입금) ÷ 희석 주식수. "시나리오 링크 복사"(`?market=&ticker=&dcf=`), "이 시나리오로 가설 만들기"(가설 추적 폼에 가정·주당 가치를 채워 연다).
+  - AI 모드 "역DCF" 패널이 같은 계산(요약)을 쓴다. 신뢰도 센터 "역DCF 기저율" 등록(표본·기간·한계). 테스트 `scripts/tests/test_dcf_core.mjs`(CI).
 - **밸류에이션 랭킹**:
   - PE, Forward PE, PEG, ROE, 배당수익률 등의 재무 지표를 기준으로 섹터 및 시가총액별 종목 정렬 및 검색.
 - **공매도 잔고 & 숏스퀴즈 스캐너 (Short Interest)**:
@@ -249,6 +270,13 @@
   - 동일 비중(Equal) 또는 커스텀 목표 비중에 따라 현재 포트폴리오 평가금액에서 각 종목별로 매수/매도해야 할 정밀 수량 계산.
 - **포트폴리오 스트레스 테스트**:
   - 시장 급락, 기술주 조정, 경기 침체, 금리 급등 등 시나리오별 가정 충격률을 포트폴리오에 반영하여 예상 손실액과 위험 노출 비중 변화를 시뮬레이션.
+  - **과거 위기 재생 (2026-09-26, `portfolio-risk.js`)** — 같은 카드의 `가정 시나리오 | 과거 위기 재생` 토글, 딥링크 `?tab=tools&pfrisk=crisis`: 현재 평가액 비중으로 2008 금융위기(2008-09-01~2009-03-09)·2018 Q4(10-01~12-24)·2020 코로나(02-19~03-23)·2022 금리 급등(01-03~10-12)·2024-08-05 전후(07-31~08-09)를 매수 후 보유로 통과시켜 구간 수익률·구간 내 최대낙폭·최저점·기준 지수(SPY/코스피) 비교. 종목마다 **실측**(상세 일봉 약 5년 → 없으면 위기 데이터셋) / **대리**(US 섹터 SPDR, XLRE·XLC 상장 전이면 SPY / KR 코스피·코스닥 지수의 일별 수익률 × 최근 3년 회귀 β, β 는 0~3 제한·이력 없으면 1 가정)를 표시하고 구간별 **대리 비중**을 적는다. 데이터 `data/crisis_history.json/.js`(`window.CRISIS_HISTORY`, lazy) — 빌더 `scripts/build_crisis_history.py`, 워크플로우 `Crisis history (stress replay)`(매월 1일). 워커 차트 프록시는 range=5y 고정이라(`fetchChart`) 5년 넘는 구간을 브라우저에서 받을 수 없어 빌드 시점에 받는다.
+- **위험 기여도 · 리스크 패리티 · 최소분산 (2026-09-26, `portfolio-risk.js` · 계산 `portfolio-risk-core.js`)** — 내 투자 › 도구, 딥링크 `?tab=tools&pfrisk=alloc`:
+  - 대상: 보유 포트폴리오(평가액 비중) 또는 포트폴리오 시뮬레이터의 종목·비중. 추정 기간 최근 1/3/5년(공통 거래일 일별 수익률, 상세 일봉 실측만 — 합성 이력 종목은 제외하고 표시).
+  - 공분산은 **Ledoit-Wolf 축소**(scikit-learn `LedoitWolf` 와 같은 식, 축소 강도 δ 표시). 종목별 연 변동성·위험 기여도(비중×한계기여/포트 변동성)·리스크 패리티 비중(순환 좌표하강)·최소분산 비중(롱온리, 종목 상한 입력, 가속 사영경사)을 현재 비중과 나란히.
+  - **표본 외 비교**: 추정 기간 앞 절반으로 비중을 정하고 뒤 절반의 실현 변동성·최대낙폭·수익률을 현재·동일·리스크 패리티·최소분산이 나란히(매일 같은 비중 유지 가정, 분할 1회 = 표본 1개라고 명시).
+  - `리스크 패리티/최소분산 → 리밸런싱 목표`(계산에서 빠진 종목은 현재 비중 유지) / 시뮬레이터 대상이면 `→ 시뮬레이터 직접 비중`(0% 허용) 후 실행.
+  - 최대 샤프·평균분산(기대수익 입력) 최적화는 표본 내 과적합이라 넣지 않았다(화면에도 사유 표기).
 - **포지션 크기 계산기 (Risk Budget)**:
   - 허용 손실 비율(%) 및 최대 투자 비중(%)을 바탕으로 손절가(Stop Loss) 기준 보수적인 최적의 진입 수량 계산.
 - **원화 기준 포트폴리오 (KRW View)**:
@@ -271,6 +299,7 @@
   - 로컬스토리지에 저장되는 포트폴리오, 관심종목, 알림 설정을 클라우드에 백업 및 다른 기기에서 불러오는 동기화 기능.
 - **포트폴리오 시뮬레이터 (Backtester)**:
   - 구성한 포트폴리오 비중으로 과거 특정 기간 동안 매수 후 보유(Buy and Hold)했을 때의 누적 수익률 차트, MDD, 샤프 지수, 변동성 등의 투자 위험 지표 시뮬레이션.
+  - **성과 지표(티어시트, 2026-09-26)**: 결과 아래 월별 수익률 히트맵(가로 스크롤은 표 안에서만)·연도별 수익(벤치마크 대비)·낙폭 구간 상위 5(고점·저점·회복일·깊이·기간)·롤링 12개월 샤프/β 차트·연환산 수익률·소르티노·칼마·상/하방 포착률·연환산/누적 초과수익. empyrical 공식을 `portfolio-risk-core.js` 로 옮겼고(연 252거래일, 무위험 0) 공식·기간을 화면에 적는다.
 - **적립식(주식 모으기) 시뮬레이터 (DCA)** — 내 투자 › 도구, 딥링크 `?tab=tools&dca=AAPL:60,MSFT:40`:
   - "매월/매주/매 거래일 N원(또는 $N)씩 샀다면?"을 과거 일봉 종가로 계산. 종목 1~5개(비중 분할), 매수일(1~28일·마지막 거래일)/요일, 기간(기본 최근 3년).
   - 출력: 누적 투자금 vs 평가액 차트(호버 툴팁), 총수익률, 연환산 **XIRR**(적립식은 CAGR 이 아니다), 시간가중 최대 낙폭, 최저 평가수익률, 종목별 보유 수량·평균 매수단가, 같은 총액 거치식(CAGR)·지수(SPY/KODEX 200 등) 적립식 비교.
@@ -344,10 +373,23 @@
   `data/korea/valuation_band/meta.{json,js}`(window.KR_VALUATION_BAND_META, lazy) + 샤드 32개
   `sNN.json`(종목을 열 때 하나만 fetch)으로 쓴다. 주간 워크플로우 `KR valuation band (PER/PBR)`
   (토 10:17 KST, 새 달만 증분 — 보통 0~2콜, 전체 재수집은 수동 full=true). 차트 코드는 시장 무관
-  (`valuation-band-core.js` 순수 계산 + `valuation-band.js` 카드) — US 는 재무 이력 확장 후
-  `VALBAND_SOURCES.us` 와 같은 모양의 샤드만 넣으면 된다. **주의**: KRX 는 간격 없이 몰아 보낸
+  (`valuation-band-core.js` 순수 계산 + `valuation-band.js` 카드) — US 판은 아래 항목. **주의**: KRX 는 간격 없이 몰아 보낸
   조회를 '자동화 대량 조회' 로 보고 IP 를 1일 차단한다(2026-09-26 실측) — 빌더는 1.2초(전체 2.5초)
   간격으로 보낸다.
+- **PER·PBR·PSR 밴드 (US, SEC 재무 산출, 2026-09-26)**: 국내판과 같은 카드·같은 샤드 모양
+  (`VALBAND_SOURCES.us`, PSR 배열 `s` 가 더 있음 — 탭 3개). `scripts/build_us_valuation_band.py` 가 **외부 호출
+  없이** `data/financials/*.json`(SEC XBRL)과 `data/details/*.json` 일봉(야후, 약 5년)만 읽어 월말 배수를 만든다.
+  각 월말에는 그때까지 **공시된(filed ≤ 월말) 값만** 쓰고(룩어헤드 방지), PER = 종가 ÷ (최근 4분기 지배주주
+  순이익 ÷ 희석 주식수) — 공시 EPS 는 분할 기준이 행마다 섞여 있어 쓰지 않는다. PBR = 종가 × 발행주식수 ÷
+  자본총계, PSR = 종가 × 주식수 ÷ TTM 매출(금융업 제외). 분기가 최근 12개뿐이라 이익·매출은 '그 시점의 최신
+  기간(기말 + 165일 이내)' 일 때만 쓰고 나머지 달은 비운다(늦은 연간 EPS 로 채우면 AAPL 2021-09 가 43배 vs 실제
+  28배로 부풀었다). 액면분할은 주식수 관측치 사슬에서 표준 분할 비율 + '자본총계는 그만큼 안 변함' 으로 감지해
+  현재 기준으로 환산(NVDA 4:1·10:1, AVGO·CMG·WMT 등 확인), 기준점은 현재 시가총액 ÷ 종가. 해외발행인·비달러
+  재무·주식 기준 불일치(BRK.B·V 등)·일봉 없음은 `meta.excluded` 에 사유 코드 → 카드에 사유 한 줄. 검증: '자기 과거
+  PBR(최소 24개월) 하위 20%' 의 이후 3·12개월 수익률 중앙값 − SPY(과 같은 달 전체 중앙값) — 현재 상장 종목뿐이라
+  생존편향이 크고 5년 표본이라 12개월은 25개 시작 월뿐임을 화면에 적는다(첫 산출: 12개월 SPY 대비 −8.3%p 열위,
+  전체 대비 −3.0%p 열위). 갱신은 `Weekly earnings history refresh` 의 `financials` 잡에서 US 재무 스텝 바로 뒤
+  (수 초), 신선도 `--group financials`(8일), 신뢰도 센터 'PER·PBR 밴드' US 행.
 
 ### ⑮ 데이터 신뢰도 · 부가 표시
 
@@ -423,6 +465,13 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - 미국 마켓 스냅샷 빌더의 로직을 복제 및 수정하여 코스피/코스닥 종목 데이터를 패러렐 수집하여 `data/korea/market_snapshot.json` 생성.
 - **데일리 업데이트 등록 스크립트 (`register_daily_update.ps1` / `run_daily_update.bat`)**:
   - 매일 오전 6시(한국 표준시)에 윈도우 작업 스케줄러(Windows Task Scheduler)에 스냅샷 데이터 수집 스크립트가 자동 가동되도록 OS 백그라운드 등록 및 구동 제어.
+- **재무 확장 빌더 (`build_financials_us.py` · `build_financials_kr.py` + `financials_common.py`, 2026-09-26)**:
+  - 주간(`Weekly earnings history refresh` 워크플로우의 별도 `financials` 잡, 일요일 03:02 KST · 수동 실행 시 `only_financials`·`kr_max_calls` 입력). **스키마·필드명·단위·로드 방법은 `scripts/financials_common.py` docstring** — 역DCF(ttm.fcf·sharesDilAvg/sharesOut·netDebt)·US PER 밴드(`build_us_valuation_band.py` — 분할 기준이 섞인 epsDil 대신 net·sharesDilAvg·equity·sharesOut·rev·filed 를 읽는다)·재무 위험 점수는 여기서 읽는다.
+  - 계정(키가 없으면 결측): rev·op·net·pretax·tax·interest·da·sbc·ocf·capex(양수=유출)·fcf·epsDil·sharesDilAvg / assets·liab(부채총계)·equity·cash·debt(차입금+사채, 리스 제외)·netDebt·curAssets·curLiab·receivables·sharesOut. 옛 `financialsHistory` 의 `debt` 는 부채총계였다 — 새 스키마의 `debt` 는 차입금이다.
+  - US: SEC companyfacts, 시총 상위 1,100(ETF 제외). us-gaap/ifrs-full 태그 대체 매핑표(매출 9개 후보 등), 기간마다 첫 태그 — 누계 빼기는 같은 태그끼리만. 분기 = 직접 3개월 값 또는 YTD 차이, 4분기 = 연간 − 9개월 누계. 20-F/40-F·금융업(Deposits·보험 태그·FINANCIAL 섹터)·비USD 보고통화는 flags. 증분: EDGAR 일별 색인(`daily-index/master.YYYYMMDD.idx`)으로 새 10-K/10-Q/20-F/40-F 를 낸 CIK 만 다시 받고, 120일 넘은 종목은 실행당 200개씩 재확인(상태 `data/financials_state.json`). 초당 ~8회·User-Agent.
+  - KR: DART fnlttSinglAcntAll(연결 우선·없으면 별도, 회사별 고정) + stockTotqySttus(보통주 유통주식수). 분기 보고서의 3개월·누계·전년 비교 컬럼을 모두 써서 8개 보고서로 12분기를 만든다. 하루 한도를 같은 워크플로우의 DART 빌더와 나눠 쓰므로 `--max-calls`(기본 4,000) 안에서 우선순위 계층(최신 사업보고서·최신 분기 → 나머지 최근 보고서 → 3년 전 사업보고서 → 주식수 → 6년 전)으로 받고, 받은 보고서는 종목 파일 `_raw.reports` 에 적어 다음 주에 이어 받는다. 감가상각비·주식보상비용·이자비용은 본문에 없는 회사가 많아 대부분 결측, 기말일은 DART 가 주지 않아 없음. 법인세 부호는 "세전 − 법인세 ≈ 순이익" 이 되는 쪽으로 표기만 맞춘다.
+  - 산출물: `data/financials/<TICKER>.json` · `data/korea/financials/<코드>.json`(종목별, 지연 로드), `data/financials_index.json/.js` · `data/korea/financials_index.json/.js`(`window.FINANCIALS_INDEX`). 신선도 `check_data_freshness.py --group financials`(8일). 순수 로직 테스트 `scripts/tests/test_financials_builders.py`, 파생 지표 `scripts/tests/test_financials_core.mjs`(CI).
+  - 역DCF 기저율(`build_dcf_base_rates.py`): 같은 `financials` 잡 끝에서 종목 파일로 다시 계산(네트워크 없음). 종목당 최근 창 1개(겹치는 창 금지), 창 = 최근 결산과 H년 전 결산(US 는 기말일 간격 H년±45일 — SEC fy 라벨이 어긋난 행이 있어서, KR 은 사업연도), H = 9·5. CAGR 은 두 끝이 양수일 때만, 규모 = 창 시작 매출. 금융업·통화 불일치 제외. 표본 없으면 기존 파일 유지 + exit 1. 신선도 `--group financials`(8일).
 - **산업·매크로 선행지표 빌더 (`build_industry_indicators.py` + `industry_fetchers.py` + `industry_sensitivity.py`)**:
   - 매일 06:10 KST(`Industry indicators` 워크플로우). 원천 15곳 이상(전부 무료·기존 secret) → 지표 152개의 시계열·YoY·기간 등락·5년 통계·동월 비교·신호등·다음 발표일·역인덱스·캘린더·선행 검증 결과를 `data/industry_*.json/.js` 로. 최신값만 주는 소스(TWSE·Cboe 풋콜)는 `data/industry_archive/` 에 적립.
   - 게이트: 지표 ID 중복·미정의 참조·관련 종목의 details 실재(없으면 exit 1)·시리즈 stale(직전 값 30일 승계)·최소 지표 수.
@@ -430,6 +479,8 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
   - KR 은 `Korea close briefing` 브리핑 뒤, US 는 `Daily US market snapshot` 스냅샷 발행 뒤 스텝(둘 다 `!cancelled()` + continue-on-error — 브리핑·스냅샷 실패와 서로 막지 않는다). 등락률·거래대금은 라이브 소스의 거래일 봉으로 다시 확인한다(KR 네이버 m.stock, US 야후 일봉 — details 일봉은 날짜가 빠지거나 늦다). US 거래일은 스냅샷 `priceDate`(야후 날짜로 정한 가격 기준일)가 1순위이고, 없을 때만 시총 상위 15종목의 야후 일봉과 스냅샷 등락률을 대조한 다수결. 00:00 UTC 뒤에 받은 야후 일봉에 마지막 거래일 봉이 빠지면(2026-09-26 run 36202139416 에서 보드가 멈춘 원인) 야후 `meta.regularMarketTime/Price`(시세 날짜가 마지막 봉의 바로 다음 거래일일 때만) → details 마지막 봉 → 그 종목 `priceDate` 가 거래일인 스냅샷 값 순으로 확인하고, 날짜를 확인 못 한 종목만 뺀다(보드 항목의 `priceSource`).
   - 근거: KR DART(`list.json` 종목별 + 기존 `kr_disclosures.json`)·네이버 뉴스 검색 API(키 없거나 거부되면 Google News RSS)·종목 상세 뉴스 / US SEC 8-K(efts 당일분 + `material_events.json`)·Google News RSS·종목 상세 야후 뉴스, 업종 시총가중 평균, 지수. 제목에 종목명/티커가 없는 기사는 버린다.
   - LLM 은 뉴스·공시 근거가 있는 종목만 10개 묶음으로 호출(시장당 하루 1~2회, 상한 4회). 같은 거래일 보드가 이미 정상이면 호출 없이 끝나고, 요약이 실패한 보드는 거래일당 최대 2회까지 재시도. 요약이 전부 실패하면 목록은 "요약 실패" 로 발행하고 exit 1.
+- **과거 위기 구간 빌더 (`build_crisis_history.py`, 2026-09-26)**:
+  - 매월 1일 11:23 KST(`Crisis history (stress replay)`, 수동 dispatch 의 `refetch` 로 전부 재수집). Yahoo v8 chart(period1/period2) 일봉 → 대리 지수(SPY·섹터 SPDR 11·^KS11·^KQ11)의 다섯 구간 + 최근 3년 종가, 시가총액 상위 US 250·KR 150 종목의 2008·2018 Q4·2020 구간. 값은 구간 첫날 = 1000 정규화 정수(분할 조정·배당 미포함)라 이미 받은 종목은 다시 받지 않고, 상장 전(심볼 없음)은 매번 다시 확인. 기준 지수 실패·종목 수 30% 넘게 감소 시 기존 파일 유지 + exit 1. ~390KB, 스트레스 테스트의 과거 위기 재생을 열 때만 로드.
 - **신호 원장·성적표 빌더 (`build_signal_ledger.mjs`, 2026-09-26)**:
   - `Daily US market snapshot`(특징주 뒤) · `Korea close briefing`(특징주 뒤) 끝의 `Record signal ledger` 스텝(`!cancelled()` + continue-on-error). `--record us|kr` 가 그날 화면 규칙(`signal-scorecard-core.js` 의 `extractSignals`)으로 신호를 다시 뽑아 원장 끝에 붙이고(같은 공시·지정·거래일은 1회, 상태 신호는 쿨다운 28일·내부자 60일, 기록일보다 7일 넘게 앞선 사건은 제외) 두 시장 성적표를 다시 집계한다. 발행은 `sec_client.py --publish`.
   - 무결성: 실행마다 manifest 의 파일 해시·묶음(offset/bytes) 해시·체인을 먼저 대조하고, 어긋나면 붙이지 않고 exit 1(성적표에는 '기록 해시 불일치'). `.gitattributes` 에서 원장은 `-text`(줄끝 변환 금지).

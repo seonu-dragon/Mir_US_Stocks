@@ -30,12 +30,13 @@
     return out;
   }
 
-  // 샤드 JSON 에서 한 종목을 꺼내 { dates, close, per, pbr } 로. 없으면 null.
+  // 샤드 JSON 에서 한 종목을 꺼내 { dates, close, per, pbr, psr } 로. 없으면 null.
+  // psr("s")은 US 샤드에만 있다 — 없으면 null(카드가 PSR 탭을 만들지 않는다).
   function seriesFromShard(shard, code) {
     if (!shard || !shard.t || !shard.m0 || !Number.isFinite(shard.n)) return null;
     const s = shard.t[code];
     if (!s) return null;
-    return { dates: monthSeq(shard.m0, shard.n), close: s.c || [], per: s.p || [], pbr: s.b || [] };
+    return { dates: monthSeq(shard.m0, shard.n), close: s.c || [], per: s.p || [], pbr: s.b || [], psr: Array.isArray(s.s) ? s.s : null };
   }
 
   // 정렬된 배열의 선형 보간 분위(numpy 기본과 같음).

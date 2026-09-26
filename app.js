@@ -966,6 +966,8 @@ function boot(options = {}) {
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   // 산업 지표 딥링크(?tab=industry&i=<id>&t=<변환>) — 탭을 그리기 전에 선택 상태만 심는다.
   if (route.get("i") && typeof industryPreselect === "function") industryPreselect(route.get("i"), route.get("t"));
+  // 수식 스크리너 공유 링크(?tab=search&sub=formula&fx=<토큰>) — 첫 렌더 때 수식을 채우고 실행한다.
+  if (route.get("fx") && typeof formulaScreenerPreload === "function") formulaScreenerPreload(route.get("fx"));
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
   const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
   const routeTicker = route.get("ticker");
@@ -2087,7 +2089,7 @@ let currentTab = "today";
 let searchSubTab = "analysis";
 // 종목 탭 서브탭은 4개(분석·찾기·비교·공시)지만 searchSubTab 은 잎 이름(top/screener/…/13f/…)을
 // 유지한다 — 렌더 분기와 ?tab=search&sub= 딥링크가 그 이름을 쓴다. 그룹은 여기서 계산한다.
-const FIND_SUBS = ["top", "screener", "scanner", "jump", "valuation"];
+const FIND_SUBS = ["top", "screener", "formula", "scanner", "jump", "valuation"];
 const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "eventstudy"];
 const INST_SUBS = ["13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
 // 공시 세그먼트 표시 순서(자사주 … IPO, KR: DART·5%룰·임원·지배구조)
@@ -2361,6 +2363,7 @@ const TAB_REDIRECT = {
   jump: { tab: "search", sub: "jump" },
   compare: { tab: "search", sub: "compare" },
   screener: { tab: "search", sub: "screener" },
+  formula: { tab: "search", sub: "formula" },
   scanner: { tab: "search", sub: "scanner" },
   earnings: { tab: "calendar", sub: "earnings" },
   // 구 URL 별칭 — 예전 10탭 이름은 전부 새 IA 의 잎으로 떨어진다.
@@ -2425,6 +2428,7 @@ function activateSearchSub(name, { push = false, skipRender = false, renderOptio
   if (searchSubTab === "jump") renderJump();
   if (searchSubTab === "compare") renderCompareBoard();
   if (searchSubTab === "screener") renderScreener();
+  if (searchSubTab === "formula" && typeof renderFormulaScreener === "function") renderFormulaScreener();
   if (searchSubTab === "valuation") renderValuation();
   if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "buyback") renderBuyback();
@@ -3221,6 +3225,8 @@ function setupEvents() {
     initBacktestDateRange();       // 스냅샷 기준 날짜 범위 갱신
     // 적립식 시뮬레이터(dca.js): 반대 시장 티커를 비우고 통화·벤치마크를 새 시장으로.
     if (window.MirDca) { window.MirDca.onMarketChange(); window.MirDca.setup(); }
+    // 위험 기여도·티어시트·과거 위기 재생(portfolio-risk.js): 반대 시장 결과를 버린다.
+    if (window.MirPortfolioRisk) { window.MirPortfolioRisk.onMarketChange(); window.MirPortfolioRisk.setup(); }
     // 투자 가설 추적(thesis.js): 현재 시장 가설만 다시 평가.
     if (window.MirThesis) window.MirThesis.onMarketChange();
     return;
@@ -3403,6 +3409,7 @@ function setupEvents() {
   setupCompareEvents();
   setupBacktestEvents();
   if (window.MirDca) window.MirDca.setup(); // 적립식 시뮬레이터(내 투자 › 도구)
+  if (window.MirPortfolioRisk) window.MirPortfolioRisk.setup(); // 위험 기여도·과거 위기 재생(내 투자 › 도구)
   if (window.MirThesis) window.MirThesis.setup(); // 투자 가설 추적(내 투자 › 도구) — 방문 시 조건 점검
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
@@ -4970,6 +4977,9 @@ function renderSearch(options = {}) {
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
+  if (typeof renderFactorGrades === "function") renderFactorGrades(item);
+  if (typeof renderFinancials === "function") renderFinancials(item);
+  if (typeof renderDcf === "function") renderDcf(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6334,7 +6344,21 @@ const TRUST_RECOVERY = {
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
-  "PER·PBR 밴드": { kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" }, tabs: "종목 탭 · 분석 · PER·PBR 밴드" },
+  "PER·PBR 밴드": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_us_valuation_band.py" },
+    kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" },
+    tabs: "종목 탭 · 분석 · PER·PBR 밴드",
+  },
+  "스크리너 백테스트 패널": {
+    us: { workflow: "Screener backtest panel", script: "scripts/build_screener_backtest_panel.mjs" },
+    kr: { workflow: "Screener backtest panel", script: "scripts/build_screener_backtest_panel.mjs" },
+    tabs: "종목 탭 · 찾기 · 수식 · 과거 백테스트",
+  },
+  "과거 위기 구간": {
+    us: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
+    kr: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
+    tabs: "내 투자 · 도구 · 스트레스 테스트 · 과거 위기 재생",
+  },
   "이벤트 스터디": {
     us: { workflow: "Event study (weekly)", script: "scripts/build_event_study.py --market us" },
     kr: { workflow: "Event study (weekly)", script: "scripts/build_event_study.py --market kr" },
@@ -6352,6 +6376,11 @@ const TRUST_RECOVERY = {
   },
   "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
   "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
+  "재무 확장": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_us.py" },
+    kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
+    tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
+  },
   "산업 선행지표": {
     us: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
     kr: { workflow: "Industry indicators", script: "scripts/build_industry_indicators.py" },
@@ -6593,12 +6622,69 @@ function dataTrustSources() {
     }
     rows.push(row);
   }
+  // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
+  rows.push(source("재무 확장", cfg.id === "kr" ? "DART 전체재무제표" : "SEC EDGAR XBRL companyfacts", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일 03:02", "financialsIndex"));
+  // 과거 위기 구간(2026-09-26) — 과거 가격이라 내용은 고정, 월 1회 새 상위 종목만 보탠다. 40일 여유.
+  {
+    const ch = window.CRISIS_HISTORY;
+    const row = source("과거 위기 구간", "Yahoo Finance 일봉(2008·2018·2020·2022·2024 구간)", ch, ["markets"], 960, "매월 1일 · 과거 구간 고정", "crisisHistory");
+    const mk = ch && ch.markets && ch.markets[cfg.id];
+    if (mk) row.extra = [["종목 시계열", `${Object.keys(mk.series || {}).length.toLocaleString()}개 (상위 ${mk.universe || "—"}종목 + 대리 지수)`], ["상장 전·없음", `${Object.keys(mk.missing || {}).length.toLocaleString()}종목 — 화면에서 대리(지수 × β)로 계산`]];
+    rows.push(row);
+  }
+  // 역DCF 기저율(2026-09-26) — 재무 확장 잡 끝에서 다시 계산. 표본 수·기간을 함께 적는다(과거 분포·생존편향).
+  {
+    const br = window.DCF_BASE_RATES;
+    const row = source("역DCF 기저율", "재무 확장 파일(SEC · DART) 파생", br, ["markets"], 192, "매주 일요일 03:02 (재무 확장 뒤)", "dcfBaseRates");
+    const m = br && br.markets && br.markets[cfg.id];
+    if (m) {
+      const hs = Object.keys(m.horizons || {}).sort((a, b) => b - a);
+      row.extra = [
+        ["표본", `${Number(m.companies || 0).toLocaleString()}개 기업 (재무 파일 ${Number(m.files || 0).toLocaleString()}개 중 비금융·통화 일치)`],
+        ["기간", hs.map((h) => `${h}년: ${m.horizons[h].period} · FCF n=${(m.horizons[h].all.fcf || []).length}`).join(" / ")],
+        ["한계", "생존편향(현재 상장 기업만) · 최근 약 10년 한 국면 · 예측 아님"],
+      ];
+    }
+    rows.push(row);
+  }
+  // 스크리너 백테스트 패널(2026-09-26) — 주간(일요일), 월말 기준이라 새 달이 끝나야 기간이 늘어난다. 10일 여유.
+  // 과적합 배지 기준(overfit-core.js CRITERIA)을 여기에도 그대로 공개한다.
+  {
+    const sbRaw = window.SCREENER_BACKTEST_META;
+    const sb = sbRaw && sbRaw.market === cfg.id ? sbRaw : null;
+    const row = source("스크리너 백테스트 패널", sb?.source || "Yahoo 일봉 · SEC/DART 연간 재무(시점 기준)", sb, ["tickers"], 240, "매주 일요일 · 월말 기준", "screenerBacktest");
+    if (sb) {
+      const crit = (window.MirOverfitCore && window.MirOverfitCore.CRITERIA) || [];
+      row.extra = [
+        ["기간", `${(sb.dates || [])[0] || "?"} ~ ${sb.periodEnd || "?"} (${sb.months || 0}개월, 월 리밸런싱)`],
+        ["유니버스", `${(sb.tickers || []).length.toLocaleString()}종목 · ${sb.minTradingValueLabel || ""} · 현재 상장 종목만(생존편향)`],
+        ["과거 값 있는 필드", Object.keys(sb.fields || {}).join(", ")],
+        ...(sb.rules || []).map((r, i) => [`규칙 ${i + 1}`, r]),
+        ...crit.map((c, i) => [`배지 기준 ${i + 1}`, c]),
+      ];
+    }
+    rows.push(row);
+  }
   if (cfg.id === "us") {
     rows.push(source("결제 불이행(FTD)", "SEC CNS", window.SEC_FTD, ["top"], 1080, "월 2회 · 약 2주 지연", "secFtd"));
     rows.push(source("WSB 감성", "Tradestie", window.WSB_SENTIMENT, ["rows"], 144, "매일", "wsbSentiment"));
     // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.
     rows.push(source("실적 전 비교", "SEC 8-K · Yahoo 옵션", window.EARNINGS_MOVE_COMPARE, ["stocks"], 72, "매일 06:30", "earningsMoveCompare", "", true));
     rows.push(source("실적 보도자료 요약", "SEC 8-K EX-99.1 · Gemini", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
+    // PER·PBR·PSR 밴드(US, 2026-09-26) — 주간 재무 확장 뒤 산출. 검증 결론(SPY 대비·전체 대비)도 적는다.
+    if (cfg.features?.valuationBand === true) {
+      const vbMeta = window.US_VALUATION_BAND_META;
+      const row = source("PER·PBR 밴드", "SEC 공시 재무 + 야후 월말 종가 (Mir 산출)", vbMeta, ["months"], 216, "매주 일요일 · 월말 기준", "usValBand");
+      const v12 = vbMeta?.validation?.horizons?.["12m"];
+      if (vbMeta) {
+        row.extra = [
+          ["기간", `${(vbMeta.months || [])[0] || "?"} ~ ${(vbMeta.months || []).slice(-1)[0] || "?"} (${(vbMeta.months || []).length}개월 · ${Number(vbMeta.count || 0).toLocaleString("ko-KR")}종목)`],
+          ["검증(저PBR 하위 20% → 12개월, SPY 대비)", v12 && !v12.insufficient ? `${v12.verdict} · 초과 ${v12.meanExcessPct}%p [${v12.ciLowPct}, ${v12.ciHighPct}] · ${v12.months}개월${v12.vsUniverse ? ` · 전체 중앙값 대비 ${v12.vsUniverse.meanExcessPct}%p(${v12.vsUniverse.verdict})` : ""}` : "표본 부족 · 미검증"],
+          ["계산 제외", Object.entries(vbMeta.excludedCounts || {}).map(([k, n]) => `${({ foreign: "해외발행인", currency: "비달러 재무", shares: "주식 기준 불일치", nohist: "일봉 없음", price: "분할 의심", few: "표본 부족" })[k] || k} ${n}`).join(" · ") || "없음"],
+        ];
+      }
+      rows.push(row);
+    }
   }
   if (cfg.id === "kr") {
     rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));
@@ -8137,6 +8223,8 @@ const HOME_ROUTE_RULES = [
   { tab: "search", sub: "jump", keywords: ["급등주", "급등", "거래량 급증", "거래량 터", "거래량터", "거래량 폭발", "surge", "gainers"] },
   // 종목 비교
   { tab: "search", sub: "compare", keywords: ["비교", "대비", " vs ", "vs.", "versus", "compare"] },
+  // 사용자 정의 수식 스크리너
+  { tab: "search", sub: "formula", keywords: ["수식", "수식 스크리너", "사용자 정의", "커스텀 스크리너", "formula"] },
   // 저평가 / 밸류
   { tab: "search", sub: "valuation", keywords: ["저평가", "밸류에이션", "밸류", "싼 종목", "싼 주식", "per", "pbr", "valuation", "undervalued"] },
   // 공매도

@@ -882,6 +882,7 @@ function renderPortfolio() {
     renderBenchmarkAttribution();
     renderInvestmentJournal();
     renderPortfolioXray();
+    renderPortfolioRiskViews();
     return;
   }
   // 현재 스냅샷에 없는 티커(상장폐지·시장 불일치)는 합계에서 뺀다 — 넣으면 $0 행과
@@ -908,6 +909,7 @@ function renderPortfolio() {
     renderBenchmarkAttribution();
     renderInvestmentJournal();
     renderPortfolioXray();
+    renderPortfolioRiskViews();
     return;
   }
   const totalValue = rows.reduce((s, r) => s + r.value, 0);
@@ -981,6 +983,12 @@ function renderPortfolio() {
   renderBenchmarkAttribution();
   renderInvestmentJournal();
   renderPortfolioXray();
+  renderPortfolioRiskViews();
+}
+
+// 위험 기여도 카드·과거 위기 재생(portfolio-risk.js)이 열려 있으면 보유 변경을 반영해 다시 계산한다.
+function renderPortfolioRiskViews() {
+  if (window.MirPortfolioRisk) window.MirPortfolioRisk.onPortfolioRender();
 }
 
 // ===== X-RAY 팩터 백분위 (스냅샷당 1회 계산 · 메모이즈) =====
@@ -1303,7 +1311,8 @@ function backtestWeightsForTickers(tickers) {
     return { weights: tickers.map(() => each) };
   }
   const raw = byId("backtestWeights")?.value || "";
-  const parts = raw.split(",").map((s) => Number(s.trim())).filter((n) => Number.isFinite(n) && n > 0);
+  // 0 도 허용한다 — 최소분산 비중(portfolio-risk.js)이 일부 종목을 0 으로 보내기 때문. 합계는 아래서 0 초과를 요구.
+  const parts = raw.split(",").map((s) => s.trim()).filter((s) => s !== "").map(Number).filter((n) => Number.isFinite(n) && n >= 0);
   if (parts.length !== tickers.length) return { error: `비중은 티커 ${tickers.length}개와 같은 개수로 입력하세요.` };
   const sum = parts.reduce((acc, n) => acc + n, 0);
   if (sum <= 0) return { error: "비중 합계가 0보다 커야 합니다." };
@@ -1525,6 +1534,8 @@ function renderBacktestResults(payload) {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
   drawBacktestChart(portfolioSeries, benchmarkSeries, startDate, endDate, benchmarkTicker);
+  // 성과 지표(티어시트) — 월별 히트맵·낙폭 구간·롤링 샤프/β 등(portfolio-risk.js).
+  if (window.MirPortfolioRisk) window.MirPortfolioRisk.renderTearsheet(payload);
   lastBacktestExportPayload = payload;
   box.hidden = false;
   setBacktestStatus("");

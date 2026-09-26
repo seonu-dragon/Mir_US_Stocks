@@ -1260,47 +1260,23 @@ function aiSnowflakePanel(item) {
     <div style="flex:1;min-width:150px">
       <div style="font-size:13px;color:var(--muted);margin-bottom:8px">종합 <b style="color:var(--text)">${total}/30</b> · 통과한 재무 체크</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px 16px;font-size:12px">${checks}</div>
-      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">각 축 = PER·PBR·성장·부채·ROE·배당 등 최대 6개 체크 중 통과 개수. 예측 점수가 아니라 재무 상태 요약입니다.</div>
+      <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65"><b>절대 기준</b>: 각 축 = PER 15 미만·ROE 15% 초과 같은 고정 기준 최대 6개 중 통과 개수라 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다. 같은 업종 안 위치는 아래 '업종 상대 팩터 등급'을 보세요. 예측 점수가 아니라 재무 상태 요약입니다.</div>
     </div>
   </div>`;
-  return aiModePanel("종목 체력", "스노우플레이크 · 재무 체크", body);
+  return aiModePanel("종목 체력", "스노우플레이크 · 절대 기준 재무 체크", body);
 }
 
-// DCF 적정주가(Simply Wall St 벤치마크). 2단계(10년 성장 + 영구성장) 현금흐름 할인.
-// 가정(성장률·할인율·영구성장)에 매우 민감해 '정답'이 아니라 한 참고 앵커다 — 라벨로 명시.
-function computeDcf(f, price) {
-  const n = (v) => (Number.isFinite(Number(v)) ? Number(v) : null);
-  const pfcf = n(f.pfcf), eps = n(f.epsTtm ?? f.eps), pe = n(f.pe), peg = n(f.peg);
-  const rg = n(f.revenueGrowth), og = n(f.operatingGrowth);
-  const fcfps = (pfcf > 0 && price > 0) ? price / pfcf : (eps > 0 ? eps : null); // FCF/주 우선, 없으면 EPS
-  if (!(fcfps > 0) || !(price > 0)) return null;
-  let g = rg != null ? rg : (og != null ? og : (peg > 0 && pe > 0 ? pe / peg : 6));
-  g = Math.max(-2, Math.min(18, g)) / 100;          // 과도한 가정 방지(-2%~18%)
-  const r = 0.09, tg = 0.025;                        // 할인율 9% · 영구성장 2.5%
-  let pv = 0, ff = fcfps;
-  for (let t = 1; t <= 10; t++) { ff *= (1 + g); pv += ff / Math.pow(1 + r, t); }
-  pv += (ff * (1 + tg) / (r - tg)) / Math.pow(1 + r, 10);
-  return { fair: pv, upside: pv / price - 1, growth: g * 100, basedOn: pfcf > 0 ? "FCF" : "EPS" };
-}
-
+// 역DCF(dcf.js) — 재무 확장 파일(SEC/DART)의 FCF·희석 주식수·순차입금으로 '현재가에 들어 있는 성장률' 을 역산.
+// 예전의 고정 가정 DCF(할인율 9%·영구성장 2.5%, P/FCF 로 FCF 역추정)는 이것으로 대체했다.
+// 재무 파일·금리·기저율이 아직 없으면 자리(data-dcf-ai)만 두고 받아지는 대로 바꿔 끼운다. 재무 파일이 없는 종목은 패널 없음.
 function aiDcfPanel(item) {
-  const mf = (typeof mapFundamentalsFor === "function" ? mapFundamentalsFor(item.ticker) : null) || {};
-  const norm = normalizedFundamentalsForItem(item) || {};
-  const f = { ...mf };
-  for (const k in norm) if (norm[k] != null) f[k] = norm[k];
-  const price = Number(item.price ?? f.price);
-  const d = computeDcf(f, price);
-  if (!d) return "";
-  const cfg = marketCfg();
-  const up = d.upside * 100;
-  const tone = up > 15 ? "good" : up < -15 ? "warn" : "";
-  const body = aiMetricGrid([
-    { label: "적정주가", value: cfg.formatPrice(d.fair) },
-    { label: "현재가", value: cfg.formatPrice(price) },
-    { label: "상/하방", value: `${up > 0 ? "+" : ""}${up.toFixed(0)}%`, tone },
-    { label: "가정 성장률", value: `${d.growth.toFixed(0)}%` },
-  ]) + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">2단계 DCF · ${d.basedOn} 기준 · 할인율 9% · 영구성장 2.5%. <b>가정에 매우 민감</b>해 정답이 아니라 참고 앵커입니다.</div>`;
-  return aiModePanel("적정주가 DCF", "현금흐름 할인 · 참고용", body);
+  if (!item || !item.ticker || typeof financialsCached !== "function" || typeof dcfAiPanelHtml !== "function") return "";
+  const file = financialsCached(item.ticker);
+  if (file === null) return "";
+  const inputsReady = window.DCF_BASE_RATES && (typeof dcfRiskFree === "function" && dcfRiskFree());
+  if (file && inputsReady) return dcfAiPanelHtml(item, file);
+  setTimeout(() => hydrateDcfAiPanels(item), 0);
+  return `<div data-dcf-ai="${escapeHtml(dcfKey(item.ticker))}" hidden></div>`;
 }
 
 // 다년 재무 추이(stockanalysis.com 벤치마크). build_kr_financials_history.py 가 DART 연간
@@ -1316,6 +1292,21 @@ function finMoney(v) {
   return `$${n.toLocaleString()}`;
 }
 function aiFinancialsPanel(item) {
+  // 재무 확장 데이터(financials.js, SEC/DART 종목별 파일)가 있으면 그쪽으로. 아직 안 받았으면
+  // 옛 financialsHistory 표를 자리(data-fin-ai)에 두고 받아지는 대로 바꿔 끼운다.
+  if (item && item.ticker && typeof financialsCached === "function") {
+    const file = financialsCached(item.ticker);
+    if (file) return financialsAiPanelHtml(file);
+    if (file === undefined && typeof hydrateFinancialsAiPanels === "function") {
+      const key = mfTickerKey(item.ticker);
+      setTimeout(() => hydrateFinancialsAiPanels(item.ticker), 0);
+      const legacy = aiLegacyFinancialsPanel(item);
+      return legacy ? `<div data-fin-ai="${escapeHtml(key)}">${legacy}</div>` : `<div data-fin-ai="${escapeHtml(key)}" hidden></div>`;
+    }
+  }
+  return aiLegacyFinancialsPanel(item);
+}
+function aiLegacyFinancialsPanel(item) {
   const rows = item && item.financialsHistory;
   if (!Array.isArray(rows) || rows.length < 2) return "";
   const sorted = rows.slice().sort((a, b) => b.y - a.y).slice(0, 10);
@@ -1663,6 +1654,7 @@ function renderAiModeDataBoard(item) {
     <div class="ai-mode-data-board">
       ${aiTechnicalPanel(item)}
       ${aiSnowflakePanel(item)}
+      ${typeof aiFactorGradePanel === "function" ? aiFactorGradePanel(item) : ""}
       ${aiDcfPanel(item)}
       ${aiFactorPanel(item)}
       ${aiRiskPanel(item)}

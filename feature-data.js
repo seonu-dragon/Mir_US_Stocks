@@ -118,6 +118,8 @@ const FEATURE_DATA = {
   // PER·PBR 밴드 메타(기간·검증·샤드 수, 작음). 종목별 시계열은 valuation-band.js 가 샤드 JSON
   // 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy) — KR 전용.
   krValBand: { global: "KR_VALUATION_BAND_META", path: "data/korea/valuation_band/meta.js", feature: "valuationBand", krOnly: true, lazy: true },
+  // US 판(SEC 재무 + 야후 월말 종가 산출, build_us_valuation_band.py). 메타에 제외 종목 사유가 함께 있다.
+  usValBand: { global: "US_VALUATION_BAND_META", path: "data/valuation_band/meta.js", feature: "valuationBand", usOnly: true, lazy: true },
   movers: { global: "MOVERS_REASONS", path: "data/movers_reasons.js", feature: "moversBoard", marketSpecific: true },
   // 신호 라이브 성적표(build_signal_ledger.mjs) — 두 시장이 한 파일(~40KB). 시그널 탭 하단 성적표와
   // 신호 카드·특징주·시장경보·스캐너의 '이 신호의 과거 성적' 한 줄이 읽는다.
@@ -125,6 +127,20 @@ const FEATURE_DATA = {
   // 이벤트 스터디 인덱스(build_event_study.py) — 유형 카탈로그·방법·한계(~20KB, 두 시장 한 파일).
   // 유형별 표본(data/event_study/<유형>.json)과 종목별 요약(tk/*.json)은 event-study.js 가 필요할 때 fetch.
   eventStudy: { global: "EVENT_STUDY_INDEX", path: "data/event_study/index.js", feature: "eventStudy", lazy: true },
+  // 재무 확장 인덱스(build_financials_us.py / build_financials_kr.py) — 종목별 재무 파일이 있는 종목 목록.
+  // 시장별 파일(US data/financials_index.js · KR data/korea/financials_index.js). 종목 분석의 재무 섹션을
+  // 처음 그릴 때만 받는다(lazy). 종목별 파일은 financials.js 가 fetch 한다.
+  financialsIndex: { global: "FINANCIALS_INDEX", path: "data/financials_index.js", marketSpecific: true, lazy: true },
+  // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
+  // '과거 위기 재생' 을 열 때만 받는다(lazy).
+  crisisHistory: { global: "CRISIS_HISTORY", path: "data/crisis_history.js", lazy: true },
+  // 역DCF 기저율 분포(build_dcf_base_rates.py) — 두 시장이 한 파일(~18KB). 종목 분석의 DCF 카드·AI 모드
+  // 역DCF 패널이 처음 그릴 때만 받는다(lazy).
+  dcfBaseRates: { global: "DCF_BASE_RATES", path: "data/dcf_base_rates.js", lazy: true },
+  // 수식 스크리너 과거 백테스트 패널 메타(build_screener_backtest_panel.mjs) — 시장별 파일
+  // (US data/screener_backtest_meta.js · KR data/korea/screener_backtest_meta.js, 약 70~140KB).
+  // 수식 스크리너에서 수식이 처음 컴파일될 때만 받는다(lazy). 필드 샤드는 screener-backtest.js 가 fetch.
+  screenerBacktest: { global: "SCREENER_BACKTEST_META", path: "data/screener_backtest_meta.js", marketSpecific: true, lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
@@ -254,6 +270,8 @@ function refreshFeatureViews() {
   if (currentTab === "bulk" && typeof renderBulk === "function") calls.push(renderBulk);
   // 산업 지표 탭은 4개 lazy 데이터셋(indicators·signal·calendar·byTicker)이 따로 도착한다.
   if (currentTab === "industry" && typeof renderIndustry === "function") calls.push(renderIndustry);
+  // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.
+  if (currentTab === "search" && searchSubTab === "formula" && typeof renderFormulaScreener === "function") calls.push(renderFormulaScreener);
   // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은
   // EARNINGS_MOVE_COMPARE / EARNINGS_RELEASES 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (earningsCalendarCache && byId("earningsCalendarBody") && typeof renderEarningsCalendarMarket === "function") {
@@ -287,6 +305,9 @@ function refreshFeatureViews() {
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
+          () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
+          () => { if (typeof renderFinancials === "function") renderFinancials(item); },
+          () => { if (typeof renderDcf === "function") renderDcf(item); },
         );
       }
     }

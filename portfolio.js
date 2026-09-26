@@ -850,7 +850,7 @@ function setupPortfolio() {
 
 function donutSvg(slices) {
   const total = slices.reduce((s, x) => s + x.value, 0) || 1;
-  const r = 52, cx = 60, cy = 60, sw = 22;
+  const r = 48, cx = 60, cy = 60, sw = 22; // r + sw/2 ≤ 60 — 예전 52 는 viewBox 밖으로 삐져 링 좌우가 잘렸다
   const C = 2 * Math.PI * r;
   let acc = 0;
   const segs = slices.map((s, i) => {

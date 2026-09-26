@@ -4,7 +4,11 @@
 // drawChart 가 그릴 때마다 부르므로 같은 시계열이면 바로 돌아간다(팬·줌 프레임마다 다시 만들지 않게).
 // 클래식 스크립트(전역 공유) — 이름은 dtbl 접두사로 충돌을 피한다.
 
-const DTBL_PAGE = 20;
+// 폰(≤640px)은 첫 화면에 10행 — 20행이면 표 하나가 화면 두 장을 차지했다(2026-09-27 모바일 점검).
+function dtblPage() {
+  try { return window.matchMedia("(max-width: 640px)").matches ? 10 : 20; } catch (_) { return 20; }
+}
+const DTBL_PAGE = dtblPage();
 const DTBL_MAX = 260; // 약 1년치 거래일
 let _dtblState = { key: "", shown: DTBL_PAGE, ticker: "" };
 

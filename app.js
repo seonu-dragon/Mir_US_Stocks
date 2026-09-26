@@ -6338,7 +6338,11 @@ const TRUST_RECOVERY = {
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
-  "PER·PBR 밴드": { kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" }, tabs: "종목 탭 · 분석 · PER·PBR 밴드" },
+  "PER·PBR 밴드": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_us_valuation_band.py" },
+    kr: { workflow: "KR valuation band (PER/PBR)", script: "scripts/build_kr_valuation_band.py" },
+    tabs: "종목 탭 · 분석 · PER·PBR 밴드",
+  },
   "과거 위기 구간": {
     us: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
     kr: { workflow: "Crisis history (stress replay)", script: "scripts/build_crisis_history.py" },
@@ -6617,6 +6621,20 @@ function dataTrustSources() {
     // 실적 인사이트(2026-09-25). 실적 시즌 밖엔 다가오는 발표·새 보도자료가 적어 allowEmpty.
     rows.push(source("실적 전 비교", "SEC 8-K · Yahoo 옵션", window.EARNINGS_MOVE_COMPARE, ["stocks"], 72, "매일 06:30", "earningsMoveCompare", "", true));
     rows.push(source("실적 보도자료 요약", "SEC 8-K EX-99.1 · Gemini", window.EARNINGS_RELEASES, ["releases"], 72, "매일 13:23", "earningsReleases", "", true));
+    // PER·PBR·PSR 밴드(US, 2026-09-26) — 주간 재무 확장 뒤 산출. 검증 결론(SPY 대비·전체 대비)도 적는다.
+    if (cfg.features?.valuationBand === true) {
+      const vbMeta = window.US_VALUATION_BAND_META;
+      const row = source("PER·PBR 밴드", "SEC 공시 재무 + 야후 월말 종가 (Mir 산출)", vbMeta, ["months"], 216, "매주 일요일 · 월말 기준", "usValBand");
+      const v12 = vbMeta?.validation?.horizons?.["12m"];
+      if (vbMeta) {
+        row.extra = [
+          ["기간", `${(vbMeta.months || [])[0] || "?"} ~ ${(vbMeta.months || []).slice(-1)[0] || "?"} (${(vbMeta.months || []).length}개월 · ${Number(vbMeta.count || 0).toLocaleString("ko-KR")}종목)`],
+          ["검증(저PBR 하위 20% → 12개월, SPY 대비)", v12 && !v12.insufficient ? `${v12.verdict} · 초과 ${v12.meanExcessPct}%p [${v12.ciLowPct}, ${v12.ciHighPct}] · ${v12.months}개월${v12.vsUniverse ? ` · 전체 중앙값 대비 ${v12.vsUniverse.meanExcessPct}%p(${v12.vsUniverse.verdict})` : ""}` : "표본 부족 · 미검증"],
+          ["계산 제외", Object.entries(vbMeta.excludedCounts || {}).map(([k, n]) => `${({ foreign: "해외발행인", currency: "비달러 재무", shares: "주식 기준 불일치", nohist: "일봉 없음", price: "분할 의심", few: "표본 부족" })[k] || k} ${n}`).join(" · ") || "없음"],
+        ];
+      }
+      rows.push(row);
+    }
   }
   if (cfg.id === "kr") {
     rows.push(source("ECOS 매크로", "한국은행 ECOS", window.KR_ECOS_MACRO, ["indicators"], 144, "매일 15:42", "ecosMacro"));

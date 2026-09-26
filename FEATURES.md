@@ -348,10 +348,23 @@
   `data/korea/valuation_band/meta.{json,js}`(window.KR_VALUATION_BAND_META, lazy) + 샤드 32개
   `sNN.json`(종목을 열 때 하나만 fetch)으로 쓴다. 주간 워크플로우 `KR valuation band (PER/PBR)`
   (토 10:17 KST, 새 달만 증분 — 보통 0~2콜, 전체 재수집은 수동 full=true). 차트 코드는 시장 무관
-  (`valuation-band-core.js` 순수 계산 + `valuation-band.js` 카드) — US 는 재무 이력 확장 후
-  `VALBAND_SOURCES.us` 와 같은 모양의 샤드만 넣으면 된다. **주의**: KRX 는 간격 없이 몰아 보낸
+  (`valuation-band-core.js` 순수 계산 + `valuation-band.js` 카드) — US 판은 아래 항목. **주의**: KRX 는 간격 없이 몰아 보낸
   조회를 '자동화 대량 조회' 로 보고 IP 를 1일 차단한다(2026-09-26 실측) — 빌더는 1.2초(전체 2.5초)
   간격으로 보낸다.
+- **PER·PBR·PSR 밴드 (US, SEC 재무 산출, 2026-09-26)**: 국내판과 같은 카드·같은 샤드 모양
+  (`VALBAND_SOURCES.us`, PSR 배열 `s` 가 더 있음 — 탭 3개). `scripts/build_us_valuation_band.py` 가 **외부 호출
+  없이** `data/financials/*.json`(SEC XBRL)과 `data/details/*.json` 일봉(야후, 약 5년)만 읽어 월말 배수를 만든다.
+  각 월말에는 그때까지 **공시된(filed ≤ 월말) 값만** 쓰고(룩어헤드 방지), PER = 종가 ÷ (최근 4분기 지배주주
+  순이익 ÷ 희석 주식수) — 공시 EPS 는 분할 기준이 행마다 섞여 있어 쓰지 않는다. PBR = 종가 × 발행주식수 ÷
+  자본총계, PSR = 종가 × 주식수 ÷ TTM 매출(금융업 제외). 분기가 최근 12개뿐이라 이익·매출은 '그 시점의 최신
+  기간(기말 + 165일 이내)' 일 때만 쓰고 나머지 달은 비운다(늦은 연간 EPS 로 채우면 AAPL 2021-09 가 43배 vs 실제
+  28배로 부풀었다). 액면분할은 주식수 관측치 사슬에서 표준 분할 비율 + '자본총계는 그만큼 안 변함' 으로 감지해
+  현재 기준으로 환산(NVDA 4:1·10:1, AVGO·CMG·WMT 등 확인), 기준점은 현재 시가총액 ÷ 종가. 해외발행인·비달러
+  재무·주식 기준 불일치(BRK.B·V 등)·일봉 없음은 `meta.excluded` 에 사유 코드 → 카드에 사유 한 줄. 검증: '자기 과거
+  PBR(최소 24개월) 하위 20%' 의 이후 3·12개월 수익률 중앙값 − SPY(과 같은 달 전체 중앙값) — 현재 상장 종목뿐이라
+  생존편향이 크고 5년 표본이라 12개월은 25개 시작 월뿐임을 화면에 적는다(첫 산출: 12개월 SPY 대비 −8.3%p 열위,
+  전체 대비 −3.0%p 열위). 갱신은 `Weekly earnings history refresh` 의 `financials` 잡에서 US 재무 스텝 바로 뒤
+  (수 초), 신선도 `--group financials`(8일), 신뢰도 센터 'PER·PBR 밴드' US 행.
 
 ### ⑮ 데이터 신뢰도 · 부가 표시
 
@@ -428,7 +441,7 @@ GitHub Pages의 정적 호스팅 한계를 극복하기 위해 Cloudflare Worker
 - **데일리 업데이트 등록 스크립트 (`register_daily_update.ps1` / `run_daily_update.bat`)**:
   - 매일 오전 6시(한국 표준시)에 윈도우 작업 스케줄러(Windows Task Scheduler)에 스냅샷 데이터 수집 스크립트가 자동 가동되도록 OS 백그라운드 등록 및 구동 제어.
 - **재무 확장 빌더 (`build_financials_us.py` · `build_financials_kr.py` + `financials_common.py`, 2026-09-26)**:
-  - 주간(`Weekly earnings history refresh` 워크플로우의 별도 `financials` 잡, 일요일 03:02 KST · 수동 실행 시 `only_financials`·`kr_max_calls` 입력). **스키마·필드명·단위·로드 방법은 `scripts/financials_common.py` docstring** — 역DCF(ttm.fcf·sharesDilAvg/sharesOut·netDebt)·US PER 밴드(quarterly[].epsDil → `MirFinCore.ttmSeries`, equity)·재무 위험 점수는 여기서 읽는다.
+  - 주간(`Weekly earnings history refresh` 워크플로우의 별도 `financials` 잡, 일요일 03:02 KST · 수동 실행 시 `only_financials`·`kr_max_calls` 입력). **스키마·필드명·단위·로드 방법은 `scripts/financials_common.py` docstring** — 역DCF(ttm.fcf·sharesDilAvg/sharesOut·netDebt)·US PER 밴드(`build_us_valuation_band.py` — 분할 기준이 섞인 epsDil 대신 net·sharesDilAvg·equity·sharesOut·rev·filed 를 읽는다)·재무 위험 점수는 여기서 읽는다.
   - 계정(키가 없으면 결측): rev·op·net·pretax·tax·interest·da·sbc·ocf·capex(양수=유출)·fcf·epsDil·sharesDilAvg / assets·liab(부채총계)·equity·cash·debt(차입금+사채, 리스 제외)·netDebt·curAssets·curLiab·receivables·sharesOut. 옛 `financialsHistory` 의 `debt` 는 부채총계였다 — 새 스키마의 `debt` 는 차입금이다.
   - US: SEC companyfacts, 시총 상위 1,100(ETF 제외). us-gaap/ifrs-full 태그 대체 매핑표(매출 9개 후보 등), 기간마다 첫 태그 — 누계 빼기는 같은 태그끼리만. 분기 = 직접 3개월 값 또는 YTD 차이, 4분기 = 연간 − 9개월 누계. 20-F/40-F·금융업(Deposits·보험 태그·FINANCIAL 섹터)·비USD 보고통화는 flags. 증분: EDGAR 일별 색인(`daily-index/master.YYYYMMDD.idx`)으로 새 10-K/10-Q/20-F/40-F 를 낸 CIK 만 다시 받고, 120일 넘은 종목은 실행당 200개씩 재확인(상태 `data/financials_state.json`). 초당 ~8회·User-Agent.
   - KR: DART fnlttSinglAcntAll(연결 우선·없으면 별도, 회사별 고정) + stockTotqySttus(보통주 유통주식수). 분기 보고서의 3개월·누계·전년 비교 컬럼을 모두 써서 8개 보고서로 12분기를 만든다. 하루 한도를 같은 워크플로우의 DART 빌더와 나눠 쓰므로 `--max-calls`(기본 4,000) 안에서 우선순위 계층(최신 사업보고서·최신 분기 → 나머지 최근 보고서 → 3년 전 사업보고서 → 주식수 → 6년 전)으로 받고, 받은 보고서는 종목 파일 `_raw.reports` 에 적어 다음 주에 이어 받는다. 감가상각비·주식보상비용·이자비용은 본문에 없는 회사가 많아 대부분 결측, 기말일은 DART 가 주지 않아 없음. 법인세 부호는 "세전 − 법인세 ≈ 순이익" 이 되는 쪽으로 표기만 맞춘다.

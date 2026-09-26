@@ -191,6 +191,9 @@ CHECKS = {
         ("data/korea/financials_index.json", 8, True),
         # 역DCF 기저율 — 같은 잡 끝에서 실행마다 다시 쓴다.
         ("data/dcf_base_rates.json", 8, True),
+        # US PER·PBR·PSR 밴드(build_us_valuation_band.py) — 같은 잡의 다음 스텝. 파일만 읽어 매번
+        # 전체를 다시 쓰므로 실행마다 updatedAtKst 가 오른다. 0종목(count)도 잡는다.
+        ("data/valuation_band/meta.json", 8, True),
     ],
     "earnings-releases": [
         ("data/earnings_releases.json", 4, False),

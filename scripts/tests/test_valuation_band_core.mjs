@@ -117,6 +117,15 @@ test("seriesFromShard: 샤드 모양 파싱", () => {
   assert.equal(core.seriesFromShard(shard, "000000"), null);
 });
 
+test("seriesFromShard: US 샤드의 PSR(s) 배열, 없으면 null", () => {
+  const shard = { m0: "2025-11", n: 2, t: { AAPL: { c: [270, 280], p: [36, 37], b: [50, 52], s: [9.4, null] }, KO: { c: [70, 71], p: [25, 26], b: [10, 11] } } };
+  assert.deepEqual(core.seriesFromShard(shard, "AAPL").psr, [9.4, null]);
+  assert.equal(core.seriesFromShard(shard, "KO").psr, null);
+  // shardOf 는 영문 티커에도 같은 해시(파이썬 build_us_valuation_band.shard_of 와 동일 값)
+  assert.equal(core.shardOf("AAPL", 32), 22);
+  assert.equal(core.shardOf("BRK.B", 32), 18);
+});
+
 if (failures.length) {
   console.error(`valuation band core: ${failures.length} failed, ${passed} passed`);
   failures.forEach((f) => console.error("  ✕ " + f));

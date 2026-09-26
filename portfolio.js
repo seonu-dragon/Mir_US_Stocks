@@ -798,7 +798,10 @@ function renderInvestmentJournal() {
       <button type="button" class="journal-ticker" data-journal-ticker="${escapeHtml(row.ticker)}">${escapeHtml(stockLabel(row.ticker))}</button>
       <div><strong>${escapeHtml(row.thesis)}</strong><small>${escapeHtml(row.date || "")} · 진입 ${row.entry ? marketCfg().formatPrice(row.entry) : "-"} · 목표 ${row.target ? marketCfg().formatPrice(row.target) : "-"} · 손절 ${row.stop ? marketCfg().formatPrice(row.stop) : "-"}</small></div>
       <select data-journal-status="${escapeHtml(row.id)}" aria-label="${escapeHtml(stockLabel(row.ticker))} 기록 상태">${Object.entries(labels).map(([value, label]) => `<option value="${value}"${row.status === value ? " selected" : ""}>${label}</option>`).join("")}</select>
-      <button type="button" class="journal-delete" data-journal-delete="${escapeHtml(row.id)}" aria-label="기록 삭제">삭제</button>
+      <span class="journal-row-actions">
+        ${window.MirThesis ? `<button type="button" class="journal-delete journal-to-thesis" data-journal-thesis="${escapeHtml(row.id)}" title="이 메모를 조건으로 점검하는 투자 가설로 옮겨 적기">가설로</button>` : ""}
+        <button type="button" class="journal-delete" data-journal-delete="${escapeHtml(row.id)}" aria-label="기록 삭제">삭제</button>
+      </span>
     </article>`).join("");
   list.querySelectorAll("[data-journal-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.journalTicker, { openSearch: true })));
   list.querySelectorAll("[data-journal-status]").forEach((select) => select.addEventListener("change", () => {
@@ -806,6 +809,12 @@ function renderInvestmentJournal() {
     if (row) row.status = select.value;
     savePortfolioExtension(INVESTMENT_JOURNAL_KEY, investmentJournal);
     renderInvestmentJournal();
+  }));
+  // 자유 메모 → 투자 가설(thesis.js) 폼으로 옮겨 적기. 메모는 지우지 않는다.
+  list.querySelectorAll("[data-journal-thesis]").forEach((button) => button.addEventListener("click", () => {
+    const row = investmentJournal.find((item) => item.id === button.dataset.journalThesis);
+    if (!row || !window.MirThesis) return;
+    window.MirThesis.openForTicker(row.ticker, { text: row.thesis || "", target: row.target || "", stop: row.stop || "", entryPrice: row.entry || "" });
   }));
   list.querySelectorAll("[data-journal-delete]").forEach((button) => button.addEventListener("click", () => {
     investmentJournal = investmentJournal.filter((item) => item.id !== button.dataset.journalDelete);

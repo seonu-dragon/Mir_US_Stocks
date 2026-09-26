@@ -249,13 +249,23 @@ function renderWatchAlerts() {
   applyWatchAlertSettingsToUi(settings);
   const results = byId("watchAlertResults");
   const count = byId("watchAlertCount");
-  const rows = watchlist
+  const watchRows = watchlist
     .map((ticker) => stockByTicker(ticker))
     .filter(Boolean)
     .map((item) => applyLive(withDetail(item)))
     .filter(Boolean)
     .map((item) => ({ item, reasons: watchAlertReasons(item, settings) }))
     .filter((row) => row.reasons.length);
+  // 투자 가설 점검(thesis.js)의 위반·근접·실적 후 재점검을 같은 목록 맨 앞에 합친다.
+  const thesisRows = (window.MirThesis ? window.MirThesis.alertItems() : [])
+    .map((a) => ({ item: stockByTicker(a.ticker), reasons: [a.note] }))
+    .filter((row) => row.item);
+  const merged = new Map();
+  [...thesisRows, ...watchRows].forEach((row) => {
+    const prev = merged.get(row.item.ticker);
+    if (prev) prev.reasons.push(...row.reasons); else merged.set(row.item.ticker, { item: row.item, reasons: [...row.reasons] });
+  });
+  const rows = [...merged.values()];
   if (count) count.textContent = `${rows.length}건`;
   if (!results) return;
   results.innerHTML = rows.length
@@ -593,6 +603,8 @@ function cloudSyncPayload() {
     watchlistKr: storedWatchlist("kr"),
     portfolio: typeof portfolioCloudPayload === "function" ? portfolioCloudPayload() : portfolio,
     alertSettings: watchAlertSettings(),
+    // 투자 가설(thesis.js) — 워커 바디 상한(32KB) 안으로 줄인 사본. 로컬 원본은 그대로.
+    theses: window.MirThesis ? window.MirThesis.cloudPayload() : undefined,
     updatedAt: Date.now(),
   };
 }
@@ -655,6 +667,10 @@ async function pullCloudSync() {
     }
     if (prefs.alertSettings && typeof prefs.alertSettings === "object") {
       saveWatchAlertSettings({ ...watchAlertSettings(), ...prefs.alertSettings });
+    }
+    // 투자 가설: 로컬과 병합(같은 가설은 더 최근 수정본, 삭제 표식은 합집합).
+    if (prefs.theses && typeof prefs.theses === "object" && window.MirThesis) {
+      window.MirThesis.applyCloud(prefs.theses);
     }
     updateCloudSyncStatus("불러옴");
   } catch (e) { /* ignore */ }

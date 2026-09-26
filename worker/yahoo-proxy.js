@@ -2583,6 +2583,16 @@ async function handleSyncPrefsPut(request, env) {
     alertSettings: prefs.alertSettings && typeof prefs.alertSettings === "object" ? prefs.alertSettings : {},
     updatedAt: Number(prefs.updatedAt) || Date.now(),
   };
+  // 시장별 관심종목(클라이언트가 보내는데 예전엔 여기서 버려져 pull 이 구형 필드로만 복원했다)과
+  // 투자 가설(thesis.js, 클라이언트가 16KB 안으로 줄여 보낸다). 전체 바디는 위 32KB 상한이 막는다.
+  if (Array.isArray(prefs.watchlistUs)) payload.watchlistUs = prefs.watchlistUs.slice(0, 80);
+  if (Array.isArray(prefs.watchlistKr)) payload.watchlistKr = prefs.watchlistKr.slice(0, 80);
+  if (prefs.theses && typeof prefs.theses === "object" && !Array.isArray(prefs.theses)) {
+    payload.theses = {
+      items: Array.isArray(prefs.theses.items) ? prefs.theses.items.slice(0, 100) : [],
+      deleted: Array.isArray(prefs.theses.deleted) ? prefs.theses.deleted.slice(-300) : [],
+    };
+  }
   // TTL 이 없으면 한 번 만들어진 clientId 키가 영구히 남는다(익명 clientId 는
   // 브라우저 저장소를 지우면 새로 생긴다) → 180일 무갱신이면 만료.
   await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload), { expirationTtl: SYNC_PREFS_TTL_SEC });

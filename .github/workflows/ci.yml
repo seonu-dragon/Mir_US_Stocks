@@ -85,6 +85,9 @@ jobs:
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs
 
+      # 투자 가설 추적 순수 계산(thesis-core.js): 조건 위반/근접 판정·이력 보존·벤치마크 대비 성적·병합·클라우드 축약.
+      - name: Thesis tracker tests
+        run: node scripts/tests/test_thesis_core.mjs
       # PER·PBR 밴드 순수 계산(valuation-band-core.js): 분위·백분위·적자 끊김·샤드 해시(PY 와 동일).
       - name: Valuation band tests
         run: node scripts/tests/test_valuation_band_core.mjs

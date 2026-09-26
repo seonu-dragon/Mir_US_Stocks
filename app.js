@@ -1673,8 +1673,16 @@ function renderActionBoard() {
   if (!grid) return;
   const watched = watchlist.map((ticker) => stockByTicker(ticker)).filter(Boolean);
   const movers = watched.slice().sort((a, b) => Math.abs(Number(b.changePct || 0)) - Math.abs(Number(a.changePct || 0))).slice(0, 4);
-  const alerts = watched.map((item) => ({ item, reasons: watchAlertReasons(item, watchAlertSettings()) }))
-    .filter((row) => row.reasons.length).slice(0, 4);
+  // 투자 가설 점검(위반·실적 후 재점검·근접)을 조건 감지 카드 맨 앞에 — 관심종목이 아니어도.
+  const thesisAlerts = (window.MirThesis ? window.MirThesis.alertItems() : [])
+    .map((a) => ({ item: stockByTicker(a.ticker), reasons: [a.note] })).filter((row) => row.item);
+  const alertMap = new Map();
+  [...thesisAlerts, ...watched.map((item) => ({ item, reasons: watchAlertReasons(item, watchAlertSettings()) }))
+    .filter((row) => row.reasons.length)].forEach((row) => {
+    const prev = alertMap.get(row.item.ticker);
+    if (prev) prev.reasons.push(...row.reasons); else alertMap.set(row.item.ticker, { item: row.item, reasons: [...row.reasons] });
+  });
+  const alerts = [...alertMap.values()].slice(0, 4);
   const portfolioRows = portfolioActionRows();
   const scheduleRows = upcomingActionRows();
   const showFilings = marketCfg().features?.materialEvents !== false;
@@ -1693,7 +1701,7 @@ function renderActionBoard() {
   const scheduleWide = !myEventRows.length || !showFilings;
   grid.innerHTML =
     actionBoardCard("관심종목 변동", "등락폭이 큰 순서", movers.map((item) => actionStockRow(item, item.company)), "관심종목을 추가하면 변동을 추적합니다.", { tab: "bulk" }) +
-    actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? "저장한 조건에 맞는 종목" : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
+    actionBoardCard(alerts.length ? "조건 감지" : "내 포트폴리오", alerts.length ? (thesisAlerts.length ? "투자 가설 점검 · 저장한 조건" : "저장한 조건에 맞는 종목") : "평가손익 상위 보유 종목", alertOrPortfolio, "조건 감지 또는 보유 종목이 없습니다.", { tab: "bulk" }) +
     actionBoardCard("다가오는 일정", "경제지표와 관심종목 실적", scheduleRows, "가까운 일정이 아직 없습니다.", { tab: "calendar" }, scheduleWide ? "is-wide" : "") +
     (showFilings ? actionBoardCard("새 공시", isKrMarket() ? "관심종목 우선 · DART" : "관심종목 우선 · SEC 8-K", filingRows, "새로 확인할 주요 공시가 없습니다.", { tab: "institutional", sub: "events" }) : "") +
     // 이벤트가 하나도 없으면 카드 자체를 그리지 않는다 — 빈 껍데기 금지.
@@ -3206,6 +3214,8 @@ function setupEvents() {
     initBacktestDateRange();       // 스냅샷 기준 날짜 범위 갱신
     // 적립식 시뮬레이터(dca.js): 반대 시장 티커를 비우고 통화·벤치마크를 새 시장으로.
     if (window.MirDca) { window.MirDca.onMarketChange(); window.MirDca.setup(); }
+    // 투자 가설 추적(thesis.js): 현재 시장 가설만 다시 평가.
+    if (window.MirThesis) window.MirThesis.onMarketChange();
     return;
   }
   eventsBound = true;
@@ -3386,6 +3396,7 @@ function setupEvents() {
   setupCompareEvents();
   setupBacktestEvents();
   if (window.MirDca) window.MirDca.setup(); // 적립식 시뮬레이터(내 투자 › 도구)
+  if (window.MirThesis) window.MirThesis.setup(); // 투자 가설 추적(내 투자 › 도구) — 방문 시 조건 점검
   setupEarningsEvents();
   document.addEventListener("click", (event) => {
     const moveButton = event.target.closest("[data-move-analysis]");
@@ -7288,7 +7299,9 @@ function renderMyInvestSummary() {
   // 관심종목은 비면 기본 목록(defaultWatchlist)이 자동으로 채워진다 — 손대지 않은 기본
   // 목록은 '아직 내 종목이 없다' 로 본다. 그래야 첫 방문자에게 빈 상태가 보인다.
   const hasWatch = Array.isArray(watchlist) && watchlist.length > 0 && !watchlistIsSeed();
-  const isEmpty = !hasPortfolio && !hasWatch;
+  // 투자 가설(thesis.js)만 있어도 본문을 보인다 — 보유·관심 상단의 가설 요약 줄이 가려지지 않게.
+  const hasThesis = Boolean(window.MirThesis && window.MirThesis.items.length);
+  const isEmpty = !hasPortfolio && !hasWatch && !hasThesis;
   // 도구 서브탭을 연 경우(딥링크 ?tab=tools, 종목 화면의 '적립식으로 샀다면')에는 빈 상태 대신 본문을 보인다.
   const toolsOpen = bulkSubTab === "tools";
   empty.hidden = !isEmpty || toolsOpen;

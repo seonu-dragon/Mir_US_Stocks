@@ -70,9 +70,9 @@ FIGI_RECHECK_DAYS = 120
 KNOWN_UIT = {"SPY", "DIA", "MDY"}
 EXCLUDE_TEXT = {
     "uit": "단위투자신탁(UIT)이라 N-PORT 보고서를 내지 않습니다",
-    "trust": "1940년법 펀드가 아니라(원자재·가상자산 신탁 등) N-PORT 보고서를 내지 않습니다",
+    "trust": "SEC 펀드 목록에 이 티커의 시리즈가 없어(원자재·가상자산 신탁 등 1940년법 펀드가 아닌 경우) N-PORT 보고서를 찾지 못했습니다",
     "nofiling": "아직 공개된 N-PORT 보고서가 없습니다(신규 상장 등)",
-    "outside": "순자산 상위 300개 밖이라 구성 자료를 만들지 않았습니다",
+    "outside": "순자산 상위 {top}개 밖이라 구성 자료를 만들지 않았습니다",
     "error": "N-PORT 보고서를 읽지 못했습니다",
 }
 ASSET_KIND = {"EC": "equity", "EP": "equity", "DBT": "debt", "LON": "debt", "STIV": "cash"}
@@ -485,6 +485,8 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--top", type=int, default=300)
     ap.add_argument("--only", default="", help="쉼표 구분 ETF 티커만(로컬 확인용 — 순위·역조회는 새로 만들지 않는다)")
+    ap.add_argument("--pool-min-cap", type=float, default=0.0,
+                    help="스냅샷 운용자산(marketCapB)이 이 값 이상인 ETF 만 후보로(초기 표본용 — 기본 0 = 전체)")
     ap.add_argument("--push", action="store_true")
     args = ap.parse_args()
 
@@ -508,7 +510,8 @@ def main() -> int:
     errors: list[str] = []
 
     # 1단계: N-PORT 가 있는 ETF 전부의 최신 보고서와 순자산(문서 머리만) — 운용자산 순위용.
-    pool = sorted(only) if only else sorted(all_etfs)
+    pool = sorted(only) if only else sorted(
+        t for t, e in all_etfs.items() if float(e.get("marketCapB") or 0) >= args.pool_min_cap)
     filings: dict[str, dict] = {}
     cands: list[tuple[str, float | None]] = []
     for i, t in enumerate(pool, 1):
@@ -623,7 +626,7 @@ def main() -> int:
         "tickerCoverage": round(mapped_w / total_w * 100, 1) if total_w else prev_index.get("tickerCoverage"),
         "etfs": dict(sorted(index_etfs.items())),
         "excluded": dict(sorted(excluded.items())),
-        "excludedText": EXCLUDE_TEXT,
+        "excludedText": {k: v.replace("{top}", str(args.top)) for k, v in EXCLUDE_TEXT.items()},
         "revShards": rev_keys,
         "errors": errors[:30],
     }

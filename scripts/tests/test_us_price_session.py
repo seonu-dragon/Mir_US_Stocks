@@ -198,3 +198,176 @@ def test_gate_requires_price_date():
 @pytest.mark.parametrize("day", sorted(d for ds in CAL.NYSE_HOLIDAYS.values() for d in ds))
 def test_holidays_are_weekdays(day):
     assert date.fromisoformat(day).weekday() < 5
+
+
+# ── 소형주 날짜 확인 시세(야후 spark) — 2026-09-26 재현 ─────────────────────────
+# run 36202139416(09-26 01:00Z 무렵): 스크리너는 10분 간격 3회 재조회에도 09-24 값.
+# 야후 spark 는 같은 시각 09-25 봉까지 있었다. 아래 timestamp·종가는 실측 응답.
+RUN_0926 = datetime(2026, 9, 26, 1, 0, tzinfo=timezone.utc)  # 09-25 21:00 ET
+SPARK_TS = [1789997400, 1790083800, 1790170200, 1790256600, 1790343000]  # 09-21..09-25 09:30 ET
+SPARK_0926 = {
+    "SOUN": {"symbol": "SOUN", "timestamp": SPARK_TS, "close": [6.17, 6.12, 6.01, 6.1, 6.05]},
+    "ACHR": {"symbol": "ACHR", "timestamp": SPARK_TS, "close": [5.43, 5.69, 5.71, 5.71, 5.61]},
+    "BRK-B": {"symbol": "BRK-B", "timestamp": SPARK_TS, "close": [480.0, 481.0, 482.0, 483.0, 486.0]},
+    # 거래정지: 마지막 봉이 09-24 에서 멈춤
+    "HALT": {"symbol": "HALT", "timestamp": SPARK_TS[:4], "close": [1.0, 1.1, 1.2, 1.3]},
+}
+
+
+def _spark_fetch(payload):
+    def fetch(symbols):
+        wanted = {UD.yahoo_symbol(s) for s in symbols}
+        return UD.fetch_yahoo_spark(
+            symbols, fetch_json=lambda _url: {k: v for k, v in payload.items() if k in wanted},
+        )
+    return fetch
+
+
+def test_fetch_yahoo_spark_maps_symbols_and_ny_dates():
+    urls = []
+
+    def fake(url):
+        urls.append(url)
+        return SPARK_0926
+
+    out = UD.fetch_yahoo_spark(["SOUN", "BRK.B", "NOPE"], fetch_json=fake)
+    assert "BRK-B" in urls[0] and "range=5d" in urls[0]
+    assert set(out) == {"SOUN", "BRK.B"}  # 요청 안 한 심볼·없는 심볼은 버린다
+    assert out["SOUN"][-1] == {"date": "2026-09-25", "close": 6.05}
+    assert out["SOUN"][0]["date"] == "2026-09-21"
+
+
+def test_fetch_yahoo_spark_retries_429_then_gives_up():
+    import urllib.error
+    calls = []
+
+    def throttled(url):
+        calls.append(url)
+        raise urllib.error.HTTPError(url, 429, "Too Many Requests", None, None)
+
+    assert UD.fetch_yahoo_spark(["SOUN"], fetch_json=throttled, sleep=lambda _s: None) == {}
+    assert len(calls) == UD.SPARK_RETRIES
+
+
+def test_small_caps_use_dated_spark_close_when_screener_stale():
+    # 스크리너(09-24 값): SOUN 6.10, ACHR 5.71. 기대: 09-25 종가·09-24 대비 등락률.
+    universe = [
+        {"symbol": "NVDA", "preferHistory": True, "quotePrice": 225.51},
+        {"symbol": "SOUN", "quotePrice": 6.10, "quoteChangePct": 1.5, "quoteVolume": 9.0},
+        {"symbol": "ACHR", "quotePrice": 5.71, "quoteChangePct": 0.0},
+        {"symbol": "BRK.B", "quotePrice": 483.0},
+        {"symbol": "HALT", "quotePrice": 1.3},
+        {"symbol": "GONE", "quotePrice": 2.0, "quoteChangePct": 3.0},  # spark 에 없음
+    ]
+    result = UD.apply_dated_small_cap_quotes(universe, fetch_batch=_spark_fetch(SPARK_0926), now=RUN_0926)
+    by = {m["symbol"]: m for m in universe}
+    assert by["SOUN"]["quotePrice"] == 6.05 and by["SOUN"]["priceDate"] == "2026-09-25"
+    assert round(by["SOUN"]["quoteChangePct"], 2) == -0.82  # 6.05 / 6.10 - 1
+    assert by["SOUN"]["screenerPrice"] == 6.10 and by["SOUN"]["priceSource"] == "yahoo-spark"
+    assert by["ACHR"]["quotePrice"] == 5.61 and round(by["ACHR"]["quoteChangePct"], 2) == -1.75
+    assert by["BRK.B"]["quotePrice"] == 486.0
+    assert by["HALT"]["priceDate"] == "2026-09-24"  # 날짜는 사실대로(게이트가 불일치로 센다)
+    assert "priceDate" not in by["GONE"] and by["GONE"]["quotePrice"] == 2.0  # 스크리너 폴백
+    assert "priceDate" not in by["NVDA"] and by["NVDA"]["quotePrice"] == 225.51  # 대형주는 build_one 몫
+    assert result["targets"] == 5 and result["dated"] == 4 and result["undated"] == 1
+    assert result["priceDateCounts"] == {"2026-09-25": 3, "2026-09-24": 1}
+
+
+def test_spark_drops_intraday_partial_bar():
+    # 09-25 11:00 ET 수동 실행이면 09-25 봉은 부분 봉 → 기준일 09-24.
+    universe = [{"symbol": "SOUN", "quotePrice": 6.0}]
+    UD.apply_dated_small_cap_quotes(
+        universe, fetch_batch=_spark_fetch(SPARK_0926),
+        now=datetime(2026, 9, 25, 15, 0, tzinfo=timezone.utc),
+    )
+    assert universe[0]["priceDate"] == "2026-09-24" and universe[0]["quotePrice"] == 6.1
+
+
+def test_screener_retry_does_not_overwrite_spark_dated_price(monkeypatch):
+    monkeypatch.setattr(UD, "SCREENER_PROBE_SYMBOLS", ("NVDA", "META", "GOOGL"))
+    closes = {"NVDA": (225.51, 224.58), "META": (744.10, 777.59), "GOOGL": (337.83, 342.36)}
+    universe = [{"symbol": s, "quotePrice": c[0]} for s, c in closes.items()]
+    universe.append({"symbol": "SOUN", "quotePrice": 6.05, "priceDate": "2026-09-25",
+                     "priceSource": "yahoo-spark", "quoteVolume": 1.0})
+
+    def probe(symbol):
+        prev, latest = closes[symbol]
+        return _bars([("2026-09-22", prev), ("2026-09-23", prev), ("2026-09-24", latest)]), None
+
+    def screener():
+        rows = [{"symbol": s, "quotePrice": c[1]} for s, c in closes.items()]
+        return rows + [{"symbol": "SOUN", "quotePrice": 9.99, "quoteChangePct": 50.0, "quoteVolume": 7.0}]
+
+    UD.ensure_fresh_screener(universe, fetch_screener=screener, fetch_probe=probe,
+                             retries=1, wait_sec=0, sleep=lambda _s: None, now=RUN_NOW)
+    soun = universe[-1]
+    assert soun["quotePrice"] == 6.05 and soun["quoteVolume"] == 7.0
+
+
+def test_ensure_fresh_screener_retries_zero_skips_wait(monkeypatch):
+    monkeypatch.setattr(UD, "SCREENER_PROBE_SYMBOLS", ("NVDA", "META", "GOOGL"))
+    closes = {"NVDA": (225.51, 224.58), "META": (744.10, 777.59), "GOOGL": (337.83, 342.36)}
+    universe = [{"symbol": s, "quotePrice": c[0]} for s, c in closes.items()]
+
+    def probe(symbol):
+        prev, latest = closes[symbol]
+        return _bars([("2026-09-22", prev), ("2026-09-23", prev), ("2026-09-24", latest)]), None
+
+    sleeps = []
+    result = UD.ensure_fresh_screener(universe, fetch_screener=lambda: [], fetch_probe=probe,
+                                      retries=0, wait_sec=600, sleep=sleeps.append, now=RUN_NOW)
+    assert result["status"] == "stale" and result["retries"] == 0 and sleeps == []
+
+
+def test_make_stock_spark_price_on_synthetic_rows_has_no_bar_missing():
+    meta = {"symbol": "SOUN", "company": "SoundHound", "industry": "Software", "sector": "TECHNOLOGY",
+            "groups": set(), "marketCapB": 2.5, "quotePrice": 6.05, "quoteChangePct": -0.82,
+            "priceDate": "2026-09-25", "priceSource": "yahoo-spark"}
+    rows = UD.synthetic_history("SOUN", 6.05, -0.82, 1e6)
+    stock = UD.make_stock(meta, rows)
+    assert stock["price"] == 6.05 and stock["changePct"] == -0.8
+    assert stock["priceDate"] == "2026-09-25" and "sessionBarMissing" not in stock
+
+
+def test_summarize_price_dates_counts_undated():
+    stocks = [{"priceDate": "2026-09-25"}] * 3 + [{}] * 2
+    _, check = UD.summarize_price_dates(stocks)
+    assert check["total"] == 5 and check["undated"] == 2 and check["yahooDated"] == 3
+
+
+def _payload_0926(*, on=7150, off=73, undated=18, screener="stale"):
+    return {
+        "priceDate": "2026-09-25",
+        "priceCheck": {
+            "yahooDated": on + off, "total": on + off + undated, "undated": undated,
+            "priceDateCounts": {"2026-09-25": on, "2026-09-24": off},
+            "screener": {"status": screener, "stale": 17, "fresh": 0, "retries": 0},
+        },
+    }
+
+
+def test_gate_0926_screener_stale_but_small_caps_dated_passes_with_warning():
+    problems, oks = CDF.check_us_price_session(_payload_0926(), now=RUN_0926)
+    assert problems == []
+    assert any(o.startswith("WARN") and "스크리너" in o for o in oks)
+
+
+def test_gate_0926_spark_blocked_and_screener_stale_fails():
+    # spark 가 막혀 소형주 3,938개가 스크리너(09-24) 폴백 → 날짜 미확인 54%
+    payload = _payload_0926(on=3241, off=62, undated=3938)
+    problems, _ = CDF.check_us_price_session(payload, now=RUN_0926)
+    assert len(problems) == 1 and "55." in problems[0] and "스크리너" in problems[0]
+
+
+def test_gate_undated_not_counted_when_screener_fresh():
+    payload = _payload_0926(on=3241, off=62, undated=3938, screener="fresh")
+    problems, oks = CDF.check_us_price_session(payload, now=RUN_0926)
+    assert problems == [] and "스크리너 fresh 라 제외" in oks[-1]
+
+
+def test_gate_fails_when_small_caps_dated_a_day_behind():
+    # 소형주 spark 봉이 전부 09-24 에서 멈춘 경우: 스냅샷 priceDate 는 대형주 최빈값이라
+    # 통과하지만 종목 단위 불일치가 잡는다.
+    payload = _payload_0926(on=3241, off=3924, undated=14, screener="fresh")
+    problems, _ = CDF.check_us_price_session(payload, now=RUN_0926)
+    assert len(problems) == 1 and "불일치 3924" in problems[0]

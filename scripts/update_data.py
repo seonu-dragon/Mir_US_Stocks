@@ -12,6 +12,7 @@ import sys
 import tempfile
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -2032,7 +2033,12 @@ def make_stock(meta, rows):
     # 않게 한다. chartSeries 에는 봉을 만들지 않는다(시가를 모른다) — 예전처럼 전날 봉의
     # 종가를 덮어쓰면 09-22 봉에 09-23 종가가 붙는다(2026-09-24 실측).
     price_date = meta.get("priceDate")
-    bar_missing = bool(price_date and rows and str(rows[-1].get("date") or "") < price_date)
+    # 소형주(yahoo-spark)는 rows 가 합성이거나 오래된 캐시라 '빠진 봉' 개념이 없다 —
+    # 가격만 날짜 확인된 값이고 rows 는 예전 방식 그대로 쓴다.
+    bar_missing = bool(
+        price_date and meta.get("priceSource") != "yahoo-spark"
+        and rows and str(rows[-1].get("date") or "") < price_date
+    )
     if bar_missing:
         closes = closes + [price]
         volumes = volumes + [float(meta.get("quoteVolume") or volumes[-1])]
@@ -2584,8 +2590,9 @@ def history_fetch_summary(stats, lock):
 #      거래일 봉이 빠져 있었다(09-17·22·23·24·25 다섯 번 모두, 그 전엔 한 번도 없음).
 #      그 위에 스크리너 가격을 '마지막 봉의 종가'로 덮어써 09-22 봉에 09-23 종가가 붙었다.
 # 이제 실측 이력 종목은 야후의 **날짜가 붙은** 값(일봉 날짜 / meta.regularMarketTime)으로
-# 기준일을 정하고 그 날의 종가·전 거래일 종가로 가격·등락률을 만든다. 스크리너 값은
-# 이력이 없는 소형주용으로만 남기고, 표본 대조로 신선도를 확인해 늦으면 기다렸다 다시 받는다.
+# 기준일을 정하고 그 날의 종가·전 거래일 종가로 가격·등락률을 만든다. 이력이 없는
+# 소형주는 야후 spark 배치의 날짜 붙은 종가를 쓰고(2026-09-26~, 아래 SPARK 절), 스크리너
+# 값은 spark 로도 날짜를 못 얻은 종목의 폴백으로만 남는다(priceDate 없음 = 날짜 미확인).
 _YAHOO_QUOTES = {}
 _YAHOO_QUOTES_LOCK = threading.Lock()
 
@@ -2757,9 +2764,11 @@ def ensure_fresh_screener(universe, *, fetch_screener=None, fetch_probe=None,
                           retries=None, wait_sec=None, sleep=time.sleep, now=None):
     """스크리너가 전 거래일 값이면 기다렸다 다시 받아 universe 의 시세를 갈아 끼운다.
 
-    이력 종목은 build_one 에서 야후 날짜 기준 가격으로 다시 맞추므로, 여기 결과가
-    실제로 좌우하는 건 이력이 없는 소형주의 가격이다. 끝까지 늦으면 status=stale 로
-    남겨 신선도 게이트가 워크플로우를 빨갛게 만든다.
+    이력 종목은 build_one 에서 야후 날짜 기준 가격으로 다시 맞추고, 이력 없는 소형주도
+    apply_dated_small_cap_quotes 가 야후 spark 의 날짜 붙은 종가로 먼저 맞춘다. 그래서
+    여기 결과가 좌우하는 건 spark 에서도 날짜를 못 얻은 종목뿐이다. 소형주 대부분이 날짜
+    확인되면 build_snapshot 이 retries=0 으로 불러 재조회 대기(최대 30분)를 건너뛴다.
+    status=stale 은 게이트에서 경고로만 쓰이고, 실패 판정은 날짜 미확인·불일치 비율이 한다.
     """
     fetch_screener = fetch_screener or fetch_nasdaq_screener
     fetch_probe = fetch_probe or fetch_yahoo_probe
@@ -2803,6 +2812,12 @@ def ensure_fresh_screener(universe, *, fetch_screener=None, fetch_probe=None,
             meta = by_symbol.get(symbol)
             if meta is None:
                 continue
+            if meta.get("priceSource") == "yahoo-spark":
+                # 이미 날짜 확인된 종가(apply_dated_small_cap_quotes)는 날짜 없는 값으로 덮지 않는다.
+                # 거래량만 갱신한다(spark 에는 거래량이 없다).
+                if row.get("quoteVolume") is not None:
+                    meta["quoteVolume"] = row["quoteVolume"]
+                continue
             for key in ("quotePrice", "quoteChangePct", "quoteVolume"):
                 if row.get(key) is not None:
                     meta[key] = row[key]
@@ -2818,24 +2833,146 @@ def ensure_fresh_screener(universe, *, fetch_screener=None, fetch_probe=None,
     return result
 
 
+# ── 소형주 날짜 확인 시세: 야후 spark 배치 ────────────────────────────────────
+# 2026-09-26 사고(run 36202139416): Nasdaq 스크리너가 01:00Z 무렵 10분 간격 3회 재조회에도
+# 전 거래일 값(표본 stale 17 · fresh 0)이라, 스크리너 가격만 쓰던 실측 이력 없는 종목
+# ~3,900개가 하루 밀렸다. 스크리너 갱신 시각은 날마다 들쭉날쭉하다(09-22 00:38Z·09-24 00:11Z
+# 에는 제때). 그래서 이 종목들도 **날짜가 붙은** 종가로 가격·등락률을 만든다.
+# 후보 실측(2026-09-26, 스크리너가 여전히 09-24 값이던 시각, 국내 IP):
+#  - 야후 v8 spark(range=5d, interval=1d): crumb 불필요, 요청당 최대 20심볼(21 이상 400),
+#    일봉 timestamp+close. 3,938심볼 = 197요청, 4 스레드 20초, 429 없음, 3,924 반환·
+#    3,912가 09-25 봉. → 채택. 대형주(#209)와 같은 야후 일봉 날짜 기준이라 일관된다.
+#  - 야후 v7 quote: crumb 없이 401. 제외.
+#  - Nasdaq api/quote/watchlist: lastTradeTimestamp·previousClosePrice 가 있으나 실질 20심볼
+#    상한(200심볼은 404)이고 스크리너와 같은 회사 API. 예비 후보로만 기록.
+#  - yfinance download: 내부적으로 심볼별 chart 호출 + pandas 메모리. 제외.
+# 실패한 종목은 스크리너 값을 그대로 쓰되 priceDate 를 달지 않는다(날짜 미확인) —
+# 신선도 게이트가 그 비율을 센다.
+SPARK_BATCH = 20
+SPARK_WORKERS = int(os.environ.get("SPARK_WORKERS", "4"))
+SPARK_RETRIES = 3
+# 소형주 대상 중 이 비율 이상이 날짜 확인되면 스크리너 재조회 대기(최대 30분)를 건너뛴다.
+SPARK_COVERAGE_SKIP_SCREENER_WAIT = 0.95
+
+
+def fetch_yahoo_spark(symbols, *, fetch_json=None, sleep=time.sleep):
+    """야후 spark 한 배치(≤20심볼) → {원래 심볼: [{"date", "close"}, ...]}.
+
+    날짜는 봉 timestamp(정규장 시작 09:30 ET)의 뉴욕 날짜. close 가 None 인 봉은 뺀다.
+    429·일시 오류는 잠깐 쉬고 재시도, 끝내 실패하면 빈 dict(그 심볼들은 날짜 미확인).
+    """
+    fetch_json = fetch_json or (lambda url: request_json(url, timeout=30))
+    ysym = {yahoo_symbol(s): s for s in symbols}
+    url = "https://query1.finance.yahoo.com/v8/finance/spark?" + urllib.parse.urlencode(
+        {"symbols": ",".join(ysym), "range": "5d", "interval": "1d"}
+    )
+    payload = None
+    for attempt in range(SPARK_RETRIES):
+        try:
+            payload = fetch_json(url)
+            break
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and attempt + 1 < SPARK_RETRIES:
+                sleep(2 * (attempt + 1))
+                continue
+            return {}
+        except Exception:
+            if attempt + 1 < SPARK_RETRIES:
+                sleep(1)
+                continue
+            return {}
+    out = {}
+    for key, item in (payload or {}).items():
+        symbol = ysym.get(key)
+        if not symbol or not isinstance(item, dict):
+            continue
+        rows = []
+        for ts, close in zip(item.get("timestamp") or [], item.get("close") or []):
+            close = _finite_or_none(close)
+            if ts is None or not close or close <= 0:
+                continue
+            rows.append({"date": datetime.fromtimestamp(ts, ET_TZ).date().isoformat(), "close": close})
+        if rows:
+            out[symbol] = rows
+    return out
+
+
+def apply_dated_small_cap_quotes(universe, *, fetch_batch=None, workers=None, now=None):
+    """실측 이력 대상이 아닌 종목(소형주 등)의 가격·등락률을 야후 spark 의 날짜 붙은
+    종가/전 거래일 종가로 바꾼다. 대형주의 resolve_session_price 를 그대로 써서
+    미완료(장중) 봉은 버린다. 반환: priceCheck["smallCap"] 집계.
+    """
+    fetch_batch = fetch_batch or fetch_yahoo_spark
+    workers = SPARK_WORKERS if workers is None else workers
+    targets = [meta for meta in universe if not meta.get("preferHistory")]
+    symbols = [meta["symbol"] for meta in targets]
+    batches = [symbols[i:i + SPARK_BATCH] for i in range(0, len(symbols), SPARK_BATCH)]
+    started = time.time()
+    got = {}
+    if batches:
+        with ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
+            for part in executor.map(fetch_batch, batches):
+                got.update(part or {})
+    dates = {}
+    dated = 0
+    for meta in targets:
+        session = resolve_session_price(got.get(meta["symbol"]) or [], None, now=now)
+        if not session:
+            continue
+        prev = session["prevClose"]
+        if meta.get("quotePrice") is not None:
+            meta["screenerPrice"] = meta.get("quotePrice")
+        meta["quotePrice"] = session["price"]
+        meta["quoteChangePct"] = ((session["price"] / prev) - 1) * 100 if prev else None
+        meta["priceDate"] = session["priceDate"]
+        meta["priceSource"] = "yahoo-spark"
+        dates[session["priceDate"]] = dates.get(session["priceDate"], 0) + 1
+        dated += 1
+    result = {
+        "source": "yahoo-spark",
+        "targets": len(targets),
+        "dated": dated,
+        "undated": len(targets) - dated,
+        "priceDateCounts": dict(sorted(dates.items(), key=lambda kv: (-kv[1], kv[0]))[:4]),
+        "requests": len(batches),
+        "seconds": round(time.time() - started, 1),
+    }
+    print(
+        f"[가격기준일] 소형주 야후 spark: 대상 {result['targets']} · 날짜 확인 {dated} · "
+        f"미확인 {result['undated']} · 분포 {result['priceDateCounts']} · "
+        f"{result['requests']}요청 {result['seconds']}초"
+    )
+    return result
+
+
 def summarize_price_dates(stocks):
-    """스냅샷 수준 priceDate(야후 날짜 기준 종목의 최빈 기준일)와 집계."""
+    """스냅샷 수준 priceDate(날짜 확인 종목의 최빈 기준일)와 집계.
+
+    total/undated 는 신선도 게이트가 '날짜 미확인·기준일 불일치 비율' 을 계산하는 데 쓴다.
+    priceDateCounts 는 상위 4개 날짜만 — 기준일이 그 안에 없으면 게이트는 전부 불일치로 본다.
+    """
     counts = {}
     bar_missing = 0
+    total = 0
     for item in stocks:
+        total += 1
         day = item.get("priceDate")
         if day:
             counts[day] = counts.get(day, 0) + 1
         if item.get("sessionBarMissing"):
             bar_missing += 1
+    dated = sum(counts.values())
     if not counts:
-        return None, {"yahooDated": 0, "sessionBarMissing": bar_missing, "priceDateCounts": {}}
+        return None, {"yahooDated": 0, "sessionBarMissing": bar_missing, "priceDateCounts": {},
+                      "total": total, "undated": total}
     price_date = max(counts, key=lambda day: (counts[day], day))
     top = dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:4])
     return price_date, {
-        "yahooDated": sum(counts.values()),
+        "yahooDated": dated,
         "sessionBarMissing": bar_missing,
         "priceDateCounts": top,
+        "total": total,
+        "undated": total - dated,
     }
 
 
@@ -3189,7 +3326,12 @@ def build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_c
 
 def build_snapshot():
     universe, etf_category_map, etf_universe_count, lev_etf_count, exchange_backfill_count = build_universe()
-    screener_check = ensure_fresh_screener(universe)
+    small_cap_check = apply_dated_small_cap_quotes(universe)
+    coverage = small_cap_check["dated"] / small_cap_check["targets"] if small_cap_check["targets"] else 1.0
+    # 소형주 대부분이 날짜 확인되면 스크리너가 늦어도 기다릴 이유가 없다(잡 시간 최대 30분 절약).
+    screener_check = ensure_fresh_screener(
+        universe, retries=0 if coverage >= SPARK_COVERAGE_SKIP_SCREENER_WAIT else None,
+    )
     stocks = []
     errors = []
     with ThreadPoolExecutor(max_workers=32) as executor:
@@ -3214,8 +3356,9 @@ def build_snapshot():
     fabricated = honesty["fabricated"]
     price_date, price_check = summarize_price_dates(stocks)
     price_check["screener"] = screener_check
+    price_check["smallCap"] = small_cap_check
     print(
-        f"[가격기준일] priceDate {price_date} · 야후 날짜 확인 {price_check['yahooDated']}종목 · "
+        f"[가격기준일] priceDate {price_date} · 날짜 확인 {price_check['yahooDated']}/{price_check['total']}종목 · "
         f"기준일 봉 누락 {price_check['sessionBarMissing']} · 분포 {price_check['priceDateCounts']}"
     )
 

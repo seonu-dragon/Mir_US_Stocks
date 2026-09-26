@@ -219,6 +219,8 @@ MIN_CHECKS = {
 
 
 US_SNAPSHOT = "data/market_snapshot.json"
+# 날짜 미확인·기준일 불일치 종목 비율 상한 — 근거는 check_us_price_session 주석.
+US_PRICE_DATE_MISMATCH_MAX = 0.05
 
 
 def check_us_price_session(payload: dict, now: datetime | None = None) -> tuple[list[str], list[str]]:
@@ -249,13 +251,53 @@ def check_us_price_session(payload: dict, now: datetime | None = None) -> tuple[
         )
     else:
         oks.append(f"OK {US_SNAPSHOT}: 가격 기준일 {price_date} (마지막 완료 거래일 {expected.isoformat()})")
-    screener = ((payload.get("priceCheck") or {}).get("screener") or {})
-    if screener.get("status") == "stale":
+    price_check = payload.get("priceCheck") or {}
+    screener = price_check.get("screener") or {}
+    screener_stale = screener.get("status") == "stale"
+    screener_msg = (
+        f"Nasdaq 스크리너가 전 거래일 값(표본 stale {screener.get('stale')} · "
+        f"fresh {screener.get('fresh')}, 재시도 {screener.get('retries')})"
+    )
+    if "total" not in price_check:
+        # 2026-09-26 이전 스냅샷(종목별 날짜 집계 없음): 스크리너 stale 자체가 실패.
+        if screener_stale:
+            problems.append(f"{US_SNAPSHOT}: {screener_msg} — 실측 이력이 없는 종목 가격이 하루 밀렸다")
+        return problems, oks
+
+    # 종목 단위 판정(2026-09-26~). 소형주도 야후 spark 의 날짜 붙은 종가를 쓰므로 스크리너
+    # stale 만으로는 실패시키지 않는다 — 09-26 처럼 스크리너가 늦어도 소형주 가격은 제때일
+    # 수 있다. 대신 '기준일이 아닌 날짜' + '날짜 미확인'(스크리너 폴백) 종목 비율을 본다.
+    # 가격이 비슷한지가 아니라 종목마다 붙은 날짜 필드로만 판정한다(KR 지수 게이트 오탐 교훈).
+    # 날짜 미확인 종목은 스크리너가 표본 대조로 fresh 로 확인된 날엔 세지 않는다.
+    # 기준 5%: 09-25 정상 스냅샷의 불일치는 ~1.2%(대형주 중 거래정지·상장폐지 62 + 소형주
+    # 09-24 봉 11 + spark 누락 14 / 7,241). 진짜 하루 밀림은 소형주 전체(~54%)나 전 종목
+    # 단위로 오고, spark 가 막혀 폴백이 되면 미확인이 ~54% 로 뛴다 — 5%(~360종목)면
+    # 평시의 4배 여유를 두고 소형주 소스의 10% 손실부터 잡는다.
+    reference = expected.isoformat() if expected is not None else price_date
+    total = int(price_check.get("total") or 0)
+    dated = int(price_check.get("yahooDated") or 0)
+    undated = int(price_check.get("undated") or 0)
+    on_reference = int((price_check.get("priceDateCounts") or {}).get(reference) or 0)
+    off_date = max(0, dated - on_reference)
+    undated_counted = 0 if screener.get("status") == "fresh" else undated
+    bad = off_date + undated_counted
+    ratio = bad / total if total else 1.0
+    detail = (
+        f"기준일 {reference} 불일치 {off_date} · 날짜 미확인 {undated}"
+        f"{'(스크리너 fresh 라 제외)' if undated and not undated_counted else ''} / 전체 {total}"
+    )
+    if ratio > US_PRICE_DATE_MISMATCH_MAX:
         problems.append(
-            f"{US_SNAPSHOT}: Nasdaq 스크리너가 전 거래일 값(표본 stale {screener.get('stale')} · "
-            f"fresh {screener.get('fresh')}, 재시도 {screener.get('retries')}) — "
-            "실측 이력이 없는 종목 가격이 하루 밀렸다"
+            f"{US_SNAPSHOT}: 가격 날짜 불일치·미확인 {ratio:.1%} > {US_PRICE_DATE_MISMATCH_MAX:.0%} "
+            f"({detail}) — 일부 미국 종목 시세가 거래일 단위로 밀렸다"
+            + (f"; {screener_msg}" if screener_stale else "")
         )
+    else:
+        oks.append(f"OK {US_SNAPSHOT}: 가격 날짜 불일치·미확인 {ratio:.1%} ({detail})")
+        if screener_stale:
+            oks.append(
+                f"WARN {US_SNAPSHOT}: {screener_msg} — 소형주는 야후 spark 날짜 확인 종가를 써서 실패로 보지 않음"
+            )
     return problems, oks
 
 

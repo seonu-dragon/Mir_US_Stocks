@@ -1629,13 +1629,23 @@ def fetch_nasdaq_fundamentals(symbol, price_hint=None, market_cap_b=None):
             headers=headers,
             timeout=12,
         ).get("data", {}).get("earningsPerShare", [])
-        previous = [row for row in eps_data if row.get("type") == "PreviousQuarter" and row.get("earnings")]
-        upcoming = [row for row in eps_data if row.get("type") == "UpcomingQuarter" and row.get("consensus")]
-        if previous:
+        # 나스닥 eps 표는 빈 분기를 0.0 으로, 결측을 -999.0 으로 준다(2026-09-26 실측: BEPC
+        # 2025-09 분기 earnings -999.0 → epsTtm -999). 두 값을 빼고, 4개 분기가 다 있을 때만
+        # TTM 으로 합한다 — 1~3개 분기 합은 TTM 이 아니다(MAIR: 한 분기 83088 → epsTtm 83088).
+        def _eps_ok(v):
+            try:
+                f = float(v)
+            except (TypeError, ValueError):
+                return False
+            return math.isfinite(f) and f != 0 and f != -999.0
+        previous = [row for row in eps_data if row.get("type") == "PreviousQuarter" and _eps_ok(row.get("earnings"))]
+        upcoming = [row for row in eps_data if row.get("type") == "UpcomingQuarter" and _eps_ok(row.get("consensus"))]
+        if len(previous) >= 4:
             out["epsTtm"] = round(sum(float(row.get("earnings") or 0) for row in previous[-4:]), 2)
         if upcoming:
-            out["epsNextY"] = round(sum(float(row.get("consensus") or 0) for row in upcoming[:4]), 2)
             out["epsNextQ"] = float(upcoming[0].get("consensus") or 0)
+        if len(upcoming) >= 4:  # 다음 4개 분기 합만 '다음 1년' 추정치다
+            out["epsNextY"] = round(sum(float(row.get("consensus") or 0) for row in upcoming[:4]), 2)
     except Exception:
         pass
 
@@ -1796,12 +1806,18 @@ def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
         return {}
 
     def pct_val(raw):
+        # yfinance info 의 returnOnEquity·*Margins 는 항상 비율(0.25 = 25%)이다. 예전엔
+        # |x| <= 1.5 일 때만 ×100 해서 150% 넘는 ROE·마진(-500% 등)이 1.5% 로 줄었다
+        # (2026-09-26 확인: AAPL returnOnEquity 1.4875 → 148.75%).
         if raw is None:
             return None
-        val = float(raw)
-        if abs(val) <= 1.5:
-            return round(val * 100, 2)
-        return round(val, 2)
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(val):
+            return None
+        return round(val * 100, 2)
 
     out = {}
     mcap = info.get("marketCap")
@@ -1845,19 +1861,26 @@ def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
             out[dst] = val
     cr = info.get("currentRatio")
     qr = info.get("quickRatio")
+    # 야후는 배수(1.003)로 주지만 나스닥 비율표·DART·화면(fmtRatio 가 ÷100)은 %(100.3) 기준이다.
+    # 섞이면 히트맵 구간표(80~300%)에서 야후분이 전부 '최하' 로 칠해진다 — %로 맞춘다.
     if cr is not None:
-        out["currentRatio"] = round(float(cr), 2)
+        out["currentRatio"] = round(float(cr) * 100, 2)
     if qr is not None:
-        out["quickRatio"] = round(float(qr), 2)
+        out["quickRatio"] = round(float(qr) * 100, 2)
 
     price = price_hint or out.get("prevClose") or info.get("regularMarketPrice")
     market_cap = out.get("marketCapB") or market_cap_b
     pe = info.get("trailingPE")
     fpe = info.get("forwardPE")
-    if pe:
-        out["pe"] = round(float(pe), 2)
-    if fpe:
-        out["forwardPE"] = round(float(fpe), 2)
+    # EPS 가 0 이면 야후가 trailingPE "Infinity" 를 준다 → float("inf") 가 json 에 Infinity 로
+    # 써져 파일이 JSON 으로 안 읽힌다(CAES). 유한값만 받는다.
+    try:
+        if pe and math.isfinite(float(pe)):
+            out["pe"] = round(float(pe), 2)
+        if fpe and math.isfinite(float(fpe)):
+            out["forwardPE"] = round(float(fpe), 2)
+    except (TypeError, ValueError):
+        pass
     # 시장지도 색상 기준용 추가 지표 (PEG / 배당수익률 / EV·EBITDA / P·FCF)
     peg = info.get("trailingPegRatio") or info.get("pegRatio")
     if peg:
@@ -1865,14 +1888,20 @@ def fetch_yahoo_fundamentals(symbol, price_hint=None, market_cap_b=None):
             out["peg"] = round(float(peg), 2)
         except (TypeError, ValueError):
             pass
+    # 배당수익률: 예전엔 dividendYield 가 0~1 이면 ×100 했는데, 지금 yfinance 의 dividendYield 는
+    # 이미 % 다(2026-09-26 실측: HIFS 0.85 = 0.85%, AAPL 0.32, BCAT 21.62). 그래서 수익률 1% 미만
+    # 종목이 전부 100배(HIFS 85%, MOG.B 31%)가 됐다. 단위가 분명한 '연 배당금 ÷ 현재가' 를 먼저
+    # 쓰고, 없으면 dividendYield(%) 를 그대로 쓴다.
+    div_rate = info.get("dividendRate")
+    px_for_dy = price_hint or info.get("regularMarketPrice") or info.get("previousClose")
     dy = info.get("dividendYield")
-    if dy not in (None, ""):
-        try:
-            dy = float(dy)
-            # yfinance 가 0.012(비율) 또는 1.2(%) 둘 다 반환할 수 있어 정규화
-            out["divYield"] = round(dy * 100 if 0 < dy < 1 else dy, 2)
-        except (TypeError, ValueError):
-            pass
+    try:
+        if div_rate not in (None, "") and px_for_dy and float(px_for_dy) > 0 and float(div_rate) >= 0:
+            out["divYield"] = round(float(div_rate) / float(px_for_dy) * 100, 2)
+        elif dy not in (None, "") and math.isfinite(float(dy)) and float(dy) >= 0:
+            out["divYield"] = round(float(dy), 2)
+    except (TypeError, ValueError):
+        pass
     ev_ebitda = info.get("enterpriseToEbitda")
     if ev_ebitda:
         try:

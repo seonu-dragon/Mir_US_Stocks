@@ -29,6 +29,7 @@ if sys.platform == "win32":
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from briefing_store import atomic_write_text  # noqa: E402  중단 시 잘린 파일 방지
+from fundamentals_sanity import sanitize_row  # noqa: E402  이상치 규칙(정의상 무의미 → 결측)
 
 MARKET_PATHS = {
     "us": {
@@ -82,7 +83,7 @@ def num(v):
         f = float(v)
     except (TypeError, ValueError):
         return None
-    if f != f:  # NaN
+    if f != f or f in (float("inf"), float("-inf")):  # NaN·무한대(야후 trailingPE "Infinity")
         return None
     return round(f, 4)
 
@@ -170,6 +171,7 @@ def build_market(market: str) -> None:
     cfg = MARKET_PATHS[market]
     details_dir = cfg["details"]
     table = {}
+    ctx_by_ticker = {}
     files = glob.glob(str(details_dir / "*.json"))
     for path in files:
         try:
@@ -183,8 +185,19 @@ def build_market(market: str) -> None:
         metrics = extract(fund)
         if metrics:
             table[ticker] = metrics
+            ctx_by_ticker[ticker] = {"equityB": fund.get("equityB"), "salesB": fund.get("salesB")}
 
     merge_finnhub(market, table)
+    # 이상치 규칙(scripts/fundamentals_sanity.py): 정의상 의미 없는 값(적자 PER·자본잠식
+    # ROE·매출 0 순이익률 등)을 결측으로. finnhub 보강분까지 거치도록 병합 뒤에 한다.
+    dropped = {}
+    for ticker in list(table):
+        for k in sanitize_row(table[ticker], ctx_by_ticker.get(ticker)):
+            dropped[k] = dropped.get(k, 0) + 1
+        if not table[ticker]:
+            del table[ticker]
+    if dropped:
+        print(f"  이상치 규칙으로 결측 처리: {dropped}")
     add_value_score(table)
 
     payload = json.dumps(table, ensure_ascii=False, separators=(",", ":"))

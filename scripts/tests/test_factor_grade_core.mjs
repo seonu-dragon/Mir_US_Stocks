@@ -23,6 +23,19 @@ function mk(n, industry, sector, fn) {
 }
 const byKey = (res, key) => res.factors.find((f) => f.key === key);
 
+test("opts.clip: 백분위는 윈저라이즈 값으로, 화면 value 는 원자료", () => {
+  // 20종목 ROE 1~19 + 3948(자본 극소). clip 으로 300 에 눌러도 순위는 그대로(맨 위 동점 없음) — 값은 원자료로 보인다.
+  const stocks = [...mk(19, "X", "S", (i) => ({ roe: i + 1 })), { ticker: "CL", industry: "X", sector: "S", roe: 3948.15 }];
+  const idx = core.createGradeIndex(stocks, { clip: (k, v) => (k === "roe" ? Math.min(v, 300) : v) });
+  const cl = byKey(idx.gradesFor("CL"), "profit");
+  const m = cl.metrics.find((x) => x.key === "roe");
+  assert.equal(m.value, 3948.15);
+  assert.equal(m.clipped, true);
+  assert.equal(cl.grade, "A");
+  const other = byKey(idx.gradesFor("X18"), "profit").metrics.find((x) => x.key === "roe");
+  assert.equal(other.clipped, false);
+});
+
 test("gradeLetter 경계", () => {
   assert.equal(core.gradeLetter(100), "A");
   assert.equal(core.gradeLetter(80), "A");

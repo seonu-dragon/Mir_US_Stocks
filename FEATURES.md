@@ -187,6 +187,11 @@
   - 필드는 스냅샷·map_fundamentals 에 이 시장에서 30종목 이상 값이 있는 것만 자동완성·필드 목록에 보인다(KR 부채비율·성장률, US 예상 EPS 성장률 등 시장별로 다름). 집계 모집단은 시장 전체(ETF 제외), 유니버스 선택은 결과만 거른다.
   - 사용자 정의 열(최대 4개, 머리글 클릭 정렬), 공유 링크(`?tab=search&sub=formula&fx=<토큰>`), 저장은 **저장형 스크리너와 같은 목록**(`kind: "formula"`)이라 편입/이탈 델타가 그대로 동작하고 기존 저장 셀렉트에서도 `[수식]` 으로 열린다.
   - 결과 옆에 "이 조건은 과거 검증되지 않았습니다" 표시. 3차 스크리너 백테스트 연결 지점: `window.MirFormulaBacktest.render(slotEl, { compiled, source, market, columns })` 를 정의하면 `#fxBacktestSlot` 에 붙는다(없으면 자리 숨김).
+- **펀더멘털 이상치 규칙 (2026-09-26, `scripts/fundamentals_sanity.py` + `fundamentals-sanity-core.js`)**: map_fundamentals(US·KR) 값의 공통 규칙. 지어낸 값으로 바꾸지 않는다.
+  - 정의상 의미 없는 값 → 결측: 무한대·NaN, 배수(PER·선행 PER·PEG·PSR·PBR·P/FCF·EV/EBITDA·EV/EBIT) ≤ 0(KR 적자 음수 PER 이 히트맵에서 '싸다' 초록으로 칠해지던 문제), 부채비율·배당성향 등 음수, 자본잠식 종목의 ROE(빌더는 equityB ≤ 0, 브라우저는 PBR < 0·부채비율 < 0 으로 판정), 매출 0 의 순이익률(빌더만), |ROA| > 1000%(소스·단위 불일치), 나스닥 EPS 결측 표식 -999.
+  - 극단값이지만 실제일 수 있는 값(콜게이트 ROE 3,948% 등)은 남기고 고정 경계(PLAUSIBLE) 밖이면 '이상치 가능' 꼬리표: 수식 스크리너·밸류 랭킹은 정렬에서 경계 안 값 뒤로, 히트맵 섹터 평균·업종 상대 등급 백분위는 경계로 눌러(윈저라이즈) 계산. 조건 판정에는 원자료를 쓴다.
+  - 빌더(`build_map_fundamentals.py`)가 다음 실행부터 적용하고, 브라우저가 map_fundamentals 로드 직후(`loadMapFundamentalsScript`) 한 번 더 적용해 옛 파일에도 즉시 효과. 단위 오류는 원천(`update_data.py`)에서 고침: 야후 dividendYield(이미 %) ×100 버그, ROE·마진 |x|>1.5 미변환, currentRatio 배수→%, trailingPE Infinity, 나스닥 EPS 1~3분기 합을 TTM 으로 쓰던 것.
+  - 테스트: `scripts/tests/test_fundamentals_sanity.py`(규칙·빌더·야후 단위, JS 경계표 동일성) + `scripts/tests/test_fundamentals_sanity_core.mjs`(CI). 사례 파일 공유.
 - **스크리너 과거 백테스트 + 공통 과적합 검사 (종목 › 찾기 › 수식 › 결과 위, 2026-09-26)**: `screener-backtest.js`(화면) + `screener-backtest-core.js`(계산) + `overfit-core.js`(과적합 검사, 다른 백테스트도 쓸 수 있게 분리). node 테스트 `scripts/tests/test_screener_backtest_core.mjs`(DSR 알려진 값·룩어헤드·비용·회전율·현금·배지).
   - 버튼을 눌러야 돈다(수식을 바꿀 때마다 자동 실행하지 않음). 매월 마지막 거래일에 수식을 적용 → 통과 종목 동일가중 → **다음 거래일 종가 체결**, 다음 달 체결일까지 보유. 거래비용 편도 0.1%(조정 가능), 통과 종목이 최소 종목 수(기본 5) 미만인 달은 현금. 결과: 누적 곡선(이 조건 · 같은 유니버스 동일가중 · SPY/KODEX 200), 연환산·누적·변동성·MDD(월말)·샤프·평균 종목 수·회전율·현금 개월.
   - 비교 기준 '같은 유니버스 동일가중' = 그 시점에 살 수 있고 **수식 필드 값이 있는 종목 전체**. 재무 필드는 지금 재무 파일이 있는 회사에만 있어, 전 종목과 비교하면 필터가 아니라 커버리지(생존) 편향으로 초과수익이 생긴다(실측: KR `pb < 1 and roe > 8` 이 전 종목 대비 '통과' → 같은 모집단 대비 '불충분').

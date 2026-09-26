@@ -911,9 +911,12 @@ function sizeWeight(item, sizeMetric) {
 function average(items, metric) {
   if (!items || !items.length) return null;
   const vals = [];
+  // 펀더멘털 지표는 '이상치 가능' 경계로 눌러서(윈저라이즈) 평균한다 — ROE 3,948% 한 종목이
+  // 섹터 타일 색을 통째로 바꾸지 않게(fundamentals-sanity-core.js).
+  const clip = MAP_METRIC_CONFIG[metric] && window.MirFundSanity ? (v) => window.MirFundSanity.winsor(metric, v) : (v) => v;
   for (const item of items) {
     const v = mapMetricValue(item, metric);
-    if (Number.isFinite(v)) vals.push(v);
+    if (Number.isFinite(v)) vals.push(clip(v));
   }
   if (!vals.length) return null;
   return vals.reduce((sum, v) => sum + v, 0) / vals.length;

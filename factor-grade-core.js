@@ -122,6 +122,15 @@
     const byTicker = new Map(universe.map((s) => [s.ticker, s]));
     const valueCache = new Map();
     const poolCache = new Map();
+    // opts.clip(metricKey, v) → 백분위 계산에만 쓰는 값(윈저라이즈). 화면에 보이는 value 는 원자료 그대로.
+    // 브라우저는 MirFundSanity.winsor 를 넘긴다 — 경계 밖 극단값은 경계에서 동점으로 묶인다.
+    const clip = typeof opts.clip === "function" ? opts.clip : (k, v) => v;
+    function rankValue(stock, m) {
+      const v = metricValue(stock, m);
+      if (v == null) return null;
+      const c = finite(clip(m.key, v));
+      return c == null ? v : c;
+    }
 
     function metricValue(stock, m) {
       const ck = `${stock.ticker}\u0000${m.key}`;
@@ -144,7 +153,7 @@
       const members = universe.filter((s) => groupKey(s, level) === key);
       const metricInfo = factor.metrics.map((m) => {
         const vals = [];
-        members.forEach((s) => { const v = metricValue(s, m); if (v != null) vals.push(v * m.dir); });
+        members.forEach((s) => { const v = rankValue(s, m); if (v != null) vals.push(v * m.dir); });
         vals.sort((a, b) => a - b);
         return { m, sorted: vals, usable: vals.length >= minMetricSample };
       });
@@ -155,7 +164,7 @@
         const pcts = [];
         const detail = {};
         metricInfo.forEach((mi) => {
-          const raw = metricValue(s, mi.m);
+          const raw = rankValue(s, mi.m);
           const pct = mi.usable && raw != null ? percentileOf(mi.sorted, raw * mi.m.dir) : null;
           detail[mi.m.key] = pct;
           if (pct != null) pcts.push(pct);
@@ -196,6 +205,7 @@
           unit: mi.m.unit || "",
           dir: mi.m.dir,
           value: metricValue(stock, mi.m),
+          clipped: metricValue(stock, mi.m) != null && rankValue(stock, mi.m) !== metricValue(stock, mi.m),
           pct: detail[mi.m.key],
           n: mi.sorted.length,
           usable: mi.usable,

@@ -476,7 +476,15 @@ function loadMapFundamentalsScript(cfg) {
     const src = isKr ? "data/korea/map_fundamentals.js" : "data/map_fundamentals.js";
     const globalName = isKr ? "KOREA_MAP_FUNDAMENTALS" : "MAP_FUNDAMENTALS";
     const apply = () => {
-      window.MAP_FUNDAMENTALS = window[globalName] || {};
+      // 이상치 규칙(fundamentals-sanity-core.js): 적자 PER·자본잠식 ROE 등 정의상 의미 없는 값을
+      // 결측으로. 빌더도 같은 규칙을 적용하지만 이미 배포된 옛 파일에도 바로 효과가 나도록
+      // 여기서 한 번 더(제자리 수정 — 같은 객체를 보는 모든 화면에 반영). 두 번 해도 결과가 같다.
+      const table = window[globalName] || {};
+      if (window.MirFundSanity && !table.__sanitized) {
+        window.MAP_FUNDAMENTALS_SANITY = window.MirFundSanity.sanitizeTable(table);
+        Object.defineProperty(table, "__sanitized", { value: true, enumerable: false });
+      }
+      window.MAP_FUNDAMENTALS = table;
       // 시장마다 있는 지표가 달라 옵션을 다시 걸러야 한다(KR 은 P/S 가 없는 등).
       refreshFundamentalMetricOptions();
       resolve(true);

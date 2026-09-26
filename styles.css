@@ -14481,8 +14481,8 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
 
 /* ===== 시장지표 잎(#tab-marketindex, market-indicators.js) =====
    상승 빨강·하락 파랑(국내 시세 관례, 기존 --red/--blue 토큰). 카드 4열 → 폰 2열. */
-.mi-up { color: var(--red); }
-.mi-down { color: var(--blue); }
+.mi-up { color: var(--pos); }
+.mi-down { color: var(--neg); }
 .mi-flat { color: var(--muted); }
 .mi-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
 .mi-card { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); }

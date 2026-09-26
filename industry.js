@@ -139,118 +139,177 @@ function industryTransformUnit(ind, transform) {
 // ---------------------------------------------------------------------------
 // SVG 차트 (막대 = 레벨, 선 = YoY 우축, 띠 = 침체, 점선 = ±σ, 보라 = 종목 100기준)
 // ---------------------------------------------------------------------------
-function industrySpark(vals, w = 140, h = 34) {
-  const nums = vals.map(Number).filter(Number.isFinite);
-  if (nums.length < 2) return "";
+// 공백으로 보는 점 간격(일). 일간은 주말·연휴(최대 열흘)를, 주간은 한두 주 결측을 공백으로 치지 않는다.
+const INDUSTRY_GAP_DAYS = { D: 10, W: 22, M: 76, Q: 230 };
+
+// 점 목록({date,val}) 또는 숫자 배열. 점이면 x 를 날짜 비례로 둔다(적립 중인 월간 시리즈의 공백이 보이게).
+function industrySpark(pointsOrVals, w = 140, h = 34, freq = "") {
+  const C = window.MirIndustryChartCore;
+  const pts = (pointsOrVals || []).map((p) => (p && typeof p === "object" ? { t: C ? C.keyTime(p.date) : NaN, v: p.val == null ? NaN : Number(p.val) } : { t: NaN, v: p == null ? NaN : Number(p) }))
+    .filter((p) => Number.isFinite(p.v));
+  if (pts.length < 2) return "";
+  const nums = pts.map((p) => p.v);
   const mn = Math.min(...nums), mx = Math.max(...nums);
   const span = mx - mn || 1;
-  const x = (i) => 2 + (w - 4) * i / (nums.length - 1);
-  const y = (v) => 2 + (h - 4) * (1 - (v - mn) / span);
-  const d = nums.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const timed = pts.every((p) => Number.isFinite(p.t)) && pts[pts.length - 1].t > pts[0].t;
+  const t0 = timed ? pts[0].t : 0, tspan = timed ? pts[pts.length - 1].t - t0 : pts.length - 1;
+  const x = (p, i) => 3 + (w - 6) * ((timed ? p.t - t0 : i) / tspan);
+  const y = (v) => 3 + (h - 6) * (1 - (v - mn) / span);
+  // 데이터가 없는 공백 구간(industryGaps 와 같은 기준)은 실선으로 잇지 않고 옅은 점선으로 둔다.
+  const limit = (INDUSTRY_GAP_DAYS[freq] || 0) * 86400000;
+  const isGap = (i) => timed && limit > 0 && pts[i].t - pts[i - 1].t > limit;
+  const d = pts.map((p, i) => `${i && !isGap(i) ? "L" : "M"}${x(p, i).toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+  const gapD = pts.map((p, i) => (i && isGap(i) ? `M${x(pts[i - 1], i - 1).toFixed(1)},${y(pts[i - 1].v).toFixed(1)}L${x(p, i).toFixed(1)},${y(p.v).toFixed(1)}` : "")).join("");
   const col = nums[nums.length - 1] >= nums[0] ? "var(--pos)" : "var(--neg)";
-  return `<svg class="industry-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="${col}" stroke-width="1.5"/></svg>`;
+  // 점이 적으면(적립 중) 선만으로는 몇 개인지 안 보인다 — 점을 찍는다.
+  const dots = pts.length <= 6 ? pts.map((p, i) => `<circle cx="${x(p, i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2" fill="${col}"/>`).join("") : "";
+  return `<svg class="industry-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true"><path d="${d}" fill="none" stroke="${col}" stroke-width="1.5" stroke-linejoin="round"/>${gapD ? `<path d="${gapD}" fill="none" stroke="${col}" stroke-width="1" stroke-dasharray="2 3" opacity="0.6"/>` : ""}${dots}</svg>`;
 }
 
-function industryChartSvg(ind, points, primary, { yoyLine = null, overlay = null, overlayLabel = "", band = false, recession = [], unit = "" } = {}) {
-  const W = 880, H = 320, padL = 56, padR = 56, padT = 16, padB = 34;
+// 눈금 라벨: 간격(step)에 맞춘 소수 자릿수. 1,000 이상은 쉼표.
+function industryTickLabel(v, step) {
+  let dec = 0;
+  if (step < 1) { dec = Math.ceil(-Math.log10(step) - 1e-9); if (Math.abs(step * 10 ** dec - Math.round(step * 10 ** dec)) > 1e-6) dec += 1; }
+  else if (Math.abs(step - Math.round(step)) > 1e-9) dec = 1;
+  return Number(v).toLocaleString("en-US", { minimumFractionDigits: Math.min(dec, 4), maximumFractionDigits: Math.min(dec, 4) });
+}
+
+// 점 사이 공백(주기의 2.5배 초과) — 적립 중이거나 원천이 끊긴 구간. [앞 키, 뒤 키] 목록.
+function industryGaps(ind, points) {
+  const C = window.MirIndustryChartCore;
+  if (!C || points.length < 2) return [];
+  const limitDays = INDUSTRY_GAP_DAYS[ind.frequency] || 76;
+  const out = [];
+  for (let i = 1; i < points.length; i += 1) {
+    if (C.keyTime(points[i].date) - C.keyTime(points[i - 1].date) > limitDays * C.DAY_MS) out.push([points[i - 1].date, points[i].date]);
+  }
+  return out;
+}
+
+// 차트 SVG. width 는 그릴 자리의 실제 픽셀 폭 — viewBox 를 그 폭으로 잡아 글자가 늘어나거나 찌그러지지 않게 한다.
+// x 는 날짜 비례(MirIndustryChartCore.xLayout), y 는 1·2·5 눈금. 모든 도형은 플롯 영역 안에 머문다
+// (scripts/tests/test_industry_charts.mjs 가 지표 전부 × 기간·변환 조합으로 확인).
+function industryChartSvg(ind, points, primary, { yoyLine = null, overlay = null, overlayLabel = "", band = false, recession = [], unit = "", width = 880, transform = industryState.transform } = {}) {
+  const C = window.MirIndustryChartCore;
   const n = points.length;
+  if (!C) return '<p class="muted" style="padding:24px 0">차트를 그리지 못했습니다.</p>';
   if (n < 2) return '<p class="muted" style="padding:24px 0">그릴 점이 2개 미만입니다.</p>';
   const nums = primary.filter((v) => v != null && Number.isFinite(v));
   if (!nums.length) return '<p class="muted" style="padding:24px 0">이 변환은 이 구간에서 값이 없습니다.</p>';
-  let mn = Math.min(...nums), mx = Math.max(...nums);
+  const W = Math.max(300, Math.round(width));
+  const compact = W < 560;
+  const H = compact ? 240 : 320;
+  const FONT = 11;
+  const times = points.map((p) => C.keyTime(p.date));
   let mean = null, sd = null;
   if (band) {
     mean = nums.reduce((a, b) => a + b, 0) / nums.length;
     sd = Math.sqrt(nums.reduce((a, b) => a + (b - mean) ** 2, 0) / nums.length);
-    mn = Math.min(mn, mean - 2 * sd); mx = Math.max(mx, mean + 2 * sd);
   }
-  const barMode = ind.frequency !== "D" && n <= 140;
-  if (barMode && mn > 0 && industryState.transform === "level") mn = 0;
-  if (mn === mx) { mn -= 1; mx += 1; }
-  const pad = (mx - mn) * 0.06;
-  mn -= pad; mx += pad;
+  const yd = C.yDomain(primary, { zeroFloor: transform === "level", band: band && sd > 0 ? { mean, sd } : null, target: compact ? 4 : 5 });
+  const mn = yd.min, mx = yd.max;
+  const leftLabels = yd.ticks.map((v) => industryTickLabel(v, yd.step));
+  // 우축(YoY 또는 종목 100기준)
+  const right = overlay ? overlay : yoyLine;
+  const rightNums = right ? right.filter((v) => v != null && Number.isFinite(v)) : [];
+  const hasRight = rightNums.length >= 2;
+  let rd = null, rightLabels = [];
+  if (hasRight) {
+    let rmn = Math.min(...rightNums), rmx = Math.max(...rightNums);
+    if (!overlay) { rmn = Math.min(rmn, 0); rmx = Math.max(rmx, 0); }
+    rd = C.niceTicks(rmn, rmx, compact ? 4 : 5);
+    rightLabels = rd.ticks.map((v) => `${industryTickLabel(v, rd.step)}${overlay ? "" : "%"}`);
+  }
+  const padL = Math.ceil(Math.max(28, ...leftLabels.map((s) => C.textWidth(s, FONT))) + 10);
+  const padR = hasRight ? Math.ceil(Math.max(24, ...rightLabels.map((s) => C.textWidth(s, FONT))) + 10) : 16;
+  const padT = 12, padB = 28;
   const innerW = W - padL - padR, innerH = H - padT - padB;
-  const x = (i) => padL + innerW * (n === 1 ? 0.5 : i / (n - 1));
-  const y = (v) => padT + innerH * (1 - (v - mn) / (mx - mn));
-  const dates = points.map((p) => indDate(p.date));
+  const L = padL, R = W - padR, T = padT, B = H - padB;
+  const barMode = ind.frequency !== "D" && n <= 140 && innerW / n >= 3;
+  const lay = C.xLayout(times, { freq: ind.frequency, barMode, left: L, width: innerW });
+  const xs = lay.xs;
+  const clampX = (v) => Math.min(R, Math.max(L, v));
+  const y = (v) => T + innerH * (1 - (v - mn) / (mx - mn));
   const parts = [];
-  // 침체 음영
+  // 침체 음영(날짜 비례 — 막대와 같은 x)
   if (recession && recession.length) {
-    const t0 = dates[0].getTime(), t1 = dates[n - 1].getTime();
     recession.forEach((r) => {
-      const s = indDate(r.start).getTime(), e = (r.end ? indDate(r.end) : dates[n - 1]).getTime();
-      if (e < t0 || s > t1) return;
-      const xs = padL + innerW * (Math.max(s, t0) - t0) / (t1 - t0 || 1);
-      const xe = padL + innerW * (Math.min(e, t1) - t0) / (t1 - t0 || 1);
-      parts.push(`<rect x="${xs.toFixed(1)}" y="${padT}" width="${Math.max(2, xe - xs).toFixed(1)}" height="${innerH}" fill="var(--muted)" opacity="0.14"/>`);
+      const s = C.keyTime(r.start);
+      const eKey = r.end ? C.keyTime(r.end) : NaN;
+      // 월 키의 끝은 그 달 말까지 칠한다.
+      const e = Number.isFinite(eKey) ? eKey + (r.end.length === 7 ? 30 * C.DAY_MS : 0) : lay.d1;
+      if (!Number.isFinite(s) || e < lay.d0 || s > lay.d1) return;
+      const xa = clampX(lay.x(s)), xb = clampX(lay.x(e));
+      if (xb - xa < 0.5) return;
+      parts.push(`<rect x="${xa.toFixed(1)}" y="${T}" width="${(xb - xa).toFixed(1)}" height="${innerH}" fill="var(--muted)" opacity="0.14"/>`);
     });
   }
   // 격자 + 좌축
-  for (let k = 0; k <= 4; k += 1) {
-    const v = mn + (mx - mn) * k / 4;
-    parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"/>`);
-    parts.push(`<text x="${padL - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="industry-axis">${indFmtNum(v, 2)}</text>`);
-  }
-  if (mn < 0 && mx > 0) parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`);
+  yd.ticks.forEach((v, k) => {
+    const yy = y(v).toFixed(1);
+    parts.push(`<line x1="${L}" x2="${R}" y1="${yy}" y2="${yy}" stroke="var(--line)" stroke-width="1"/>`);
+    parts.push(`<text x="${L - 6}" y="${(y(v) + 4).toFixed(1)}" text-anchor="end" class="industry-axis">${leftLabels[k]}</text>`);
+  });
+  if (mn < 0 && mx > 0) parts.push(`<line x1="${L}" x2="${R}" y1="${y(0).toFixed(1)}" y2="${y(0).toFixed(1)}" stroke="var(--muted)" stroke-width="1" stroke-dasharray="3 3"/>`);
   // σ 밴드
   if (band && sd > 0) {
     [[1, "0.45"], [2, "0.25"]].forEach(([k, op]) => {
-      [mean + k * sd, mean - k * sd].forEach((v) => parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--accent)" stroke-opacity="${op}" stroke-dasharray="4 4"/>`));
+      [mean + k * sd, mean - k * sd].forEach((v) => { if (v >= mn && v <= mx) parts.push(`<line x1="${L}" x2="${R}" y1="${y(v).toFixed(1)}" y2="${y(v).toFixed(1)}" stroke="var(--accent)" stroke-opacity="${op}" stroke-dasharray="4 4"/>`); });
     });
-    parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${y(mean).toFixed(1)}" y2="${y(mean).toFixed(1)}" stroke="var(--accent)" stroke-opacity="0.6"/>`);
+    parts.push(`<line x1="${L}" x2="${R}" y1="${y(mean).toFixed(1)}" y2="${y(mean).toFixed(1)}" stroke="var(--accent)" stroke-opacity="0.6"/>`);
   }
-  // 본선
+  // 본선: 막대는 0(도메인 안으로 자른 값)에서 값까지 — 전부 음수인 시리즈도 막대가 플롯 위로 뚫고 나가지 않는다.
   if (barMode) {
-    const bw = Math.max(2, innerW / n * 0.62);
+    const bw = lay.barWidth;
+    const y0 = y(Math.min(mx, Math.max(mn, 0)));
     primary.forEach((v, i) => {
       if (v == null || !Number.isFinite(v)) return;
-      const y0 = y(Math.max(mn, 0) > mn ? 0 : mn), y1 = y(v);
-      const top = Math.min(y0, y1), hgt = Math.max(1, Math.abs(y0 - y1));
+      const y1 = y(v);
+      let top = Math.min(y0, y1);
+      const hgt = Math.max(1, Math.abs(y0 - y1));
+      if (top + hgt > B) top = B - hgt;
       const col = i === n - 1 ? "var(--primary)" : "color-mix(in srgb, var(--primary) 55%, transparent)";
-      parts.push(`<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${col}" rx="1"/>`);
+      parts.push(`<rect data-series="primary" x="${(xs[i] - bw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${hgt.toFixed(1)}" fill="${col}" rx="1"><title>${escapeHtml(indDateLabel(points[i].date))} · ${indFmtNum(v)}${unit ? ` ${escapeHtml(unit)}` : ""}</title></rect>`);
     });
   } else {
     let d = "";
-    primary.forEach((v, i) => { if (v == null || !Number.isFinite(v)) { d += " "; return; } d += `${d.endsWith(" ") || !d ? "M" : "L"}${x(i).toFixed(1)},${y(v).toFixed(1)}`; });
-    parts.push(`<path d="${d.trim()}" fill="none" stroke="var(--primary)" stroke-width="1.8"/>`);
+    primary.forEach((v, i) => { if (v == null || !Number.isFinite(v)) { d += " "; return; } d += `${d.endsWith(" ") || !d ? "M" : "L"}${xs[i].toFixed(1)},${y(v).toFixed(1)}`; });
+    parts.push(`<path data-series="primary" d="${d.trim()}" fill="none" stroke="var(--primary)" stroke-width="1.8" stroke-linejoin="round"/>`);
   }
-  // 우축 선(YoY 또는 종목 100기준)
-  const right = overlay ? overlay : yoyLine;
-  const rightNums = right ? right.filter((v) => v != null && Number.isFinite(v)) : [];
-  if (rightNums.length >= 2) {
-    let rmn = Math.min(...rightNums), rmx = Math.max(...rightNums);
-    if (!overlay) { rmn = Math.min(rmn, 0); rmx = Math.max(rmx, 0); }
-    if (rmn === rmx) { rmn -= 1; rmx += 1; }
-    const rp = (rmx - rmn) * 0.06; rmn -= rp; rmx += rp;
-    const ry = (v) => padT + innerH * (1 - (v - rmn) / (rmx - rmn));
+  if (hasRight) {
+    const ry = (v) => T + innerH * (1 - (v - rd.min) / (rd.max - rd.min));
     let d = "";
-    right.forEach((v, i) => { if (v == null || !Number.isFinite(v)) { d += " "; return; } d += `${d.endsWith(" ") || !d ? "M" : "L"}${x(i).toFixed(1)},${ry(v).toFixed(1)}`; });
+    right.forEach((v, i) => { if (v == null || !Number.isFinite(v)) { d += " "; return; } d += `${d.endsWith(" ") || !d ? "M" : "L"}${xs[i].toFixed(1)},${ry(v).toFixed(1)}`; });
     const col = overlay ? "var(--accent)" : "var(--red)";
-    parts.push(`<path d="${d.trim()}" fill="none" stroke="${col}" stroke-width="1.6" ${overlay ? "" : 'stroke-dasharray="5 3"'}/>`);
-    if (!overlay && rmn < 0 && rmx > 0) parts.push(`<line x1="${padL}" x2="${W - padR}" y1="${ry(0).toFixed(1)}" y2="${ry(0).toFixed(1)}" stroke="${col}" stroke-opacity="0.35" stroke-dasharray="2 4"/>`);
-    for (let k = 0; k <= 4; k += 1) {
-      const v = rmn + (rmx - rmn) * k / 4;
-      parts.push(`<text x="${W - padR + 6}" y="${(ry(v) + 4).toFixed(1)}" text-anchor="start" class="industry-axis" fill="${col}">${indFmtNum(v, 1)}${overlay ? "" : "%"}</text>`);
-    }
+    parts.push(`<path d="${d.trim()}" fill="none" stroke="${col}" stroke-width="1.6" stroke-linejoin="round" ${overlay ? "" : 'stroke-dasharray="5 3"'}/>`);
+    if (!overlay && rd.min < 0 && rd.max > 0) parts.push(`<line x1="${L}" x2="${R}" y1="${ry(0).toFixed(1)}" y2="${ry(0).toFixed(1)}" stroke="${col}" stroke-opacity="0.35" stroke-dasharray="2 4"/>`);
+    rd.ticks.forEach((v, k) => parts.push(`<text x="${R + 6}" y="${(ry(v) + 4).toFixed(1)}" text-anchor="start" class="industry-axis" fill="${col}">${rightLabels[k]}</text>`));
   }
-  // x 축 날짜 5개
-  const ticks = Math.min(6, n);
-  for (let k = 0; k < ticks; k += 1) {
-    const i = Math.round((n - 1) * k / (ticks - 1 || 1));
-    const label = points[i].date.length >= 10 ? points[i].date.slice(0, 7) : points[i].date;
-    parts.push(`<text x="${x(i).toFixed(1)}" y="${H - 10}" text-anchor="${k === 0 ? "start" : k === ticks - 1 ? "end" : "middle"}" class="industry-axis">${escapeHtml(label)}</text>`);
-  }
+  // x 축: 달 경계 눈금(라벨 폭 + 여백으로 개수 결정). 양 끝 라벨은 뷰박스 안으로 붙인다.
+  const tickW = C.textWidth("2026-08", FONT) + 22;
+  const ticks = C.timeTicks(lay.d0, lay.d1, Math.max(2, Math.floor(innerW / tickW)));
+  ticks.forEach((tk) => {
+    const xx = lay.x(tk.t);
+    const w = C.textWidth(tk.label, FONT);
+    const anchor = xx - w / 2 < 2 ? "start" : xx + w / 2 > W - 2 ? "end" : "middle";
+    const tx = anchor === "start" ? 2 : anchor === "end" ? W - 2 : xx;
+    parts.push(`<line x1="${xx.toFixed(1)}" x2="${xx.toFixed(1)}" y1="${B}" y2="${B - 4}" stroke="var(--line)" stroke-width="1"/>`);
+    parts.push(`<text x="${tx.toFixed(1)}" y="${H - 9}" text-anchor="${anchor}" class="industry-axis">${escapeHtml(tk.label)}</text>`);
+  });
   const legend = [
-    `<span class="industry-legend-item"><i style="background:var(--primary)"></i>${escapeHtml(INDUSTRY_TRANSFORM_LABELS[industryState.transform] || "레벨")}${unit ? ` (${escapeHtml(unit)})` : ""}</span>`,
-    rightNums.length >= 2 ? (overlay
+    `<span class="industry-legend-item"><i style="background:var(--primary)"></i>${escapeHtml(INDUSTRY_TRANSFORM_LABELS[transform] || "레벨")}${unit ? ` (${escapeHtml(unit)})` : ""}</span>`,
+    hasRight ? (overlay
       ? `<span class="industry-legend-item"><i style="background:var(--accent)"></i>${escapeHtml(overlayLabel)} 주가 100 기준 (우축)</span>`
       : `<span class="industry-legend-item"><i style="background:var(--red)"></i>YoY % (우축)</span>`) : "",
     band && sd > 0 ? `<span class="industry-legend-item"><i style="background:var(--accent);opacity:.6"></i>평균 ±1σ·±2σ</span>` : "",
     recession && recession.length ? `<span class="industry-legend-item"><i style="background:var(--muted);opacity:.35"></i>NBER 침체</span>` : "",
   ].filter(Boolean).join("");
-  return `<svg class="industry-chart-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(ind.name_kr)} 차트">${parts.join("")}</svg><div class="industry-legend">${legend}</div>`;
+  const gaps = industryGaps(ind, points);
+  const gapNote = gaps.length
+    ? `<p class="muted industry-gap-note">${gaps.slice(0, 3).map(([a, b]) => `${escapeHtml(indDateLabel(a))}~${escapeHtml(indDateLabel(b))} 사이`).join(", ")}${gaps.length > 3 ? ` 외 ${gaps.length - 3}곳` : ""}는 데이터가 없어 비워 두었습니다${/TWSE|TPEx/.test(ind.source || "") ? "(원천이 최신 달만 공개해 매달 적립 중)" : ""}.</p>`
+    : "";
+  return `<svg class="industry-chart-svg" viewBox="0 0 ${W} ${H}" data-plot="${L},${T},${R},${B}" role="img" aria-label="${escapeHtml(ind.name_kr)} 차트">${parts.join("")}</svg><div class="industry-legend">${legend}</div>${gapNote}`;
 }
-
 // ---------------------------------------------------------------------------
 // 렌더 — 진입점
 // ---------------------------------------------------------------------------
@@ -478,7 +537,7 @@ function renderIndustryCategoryHome(main, cat) {
       <div class="industry-card-name">${escapeHtml(ind.name_kr)}</div>
       <div class="industry-card-val"><b>${indFmtNum(ind.latest_value)}</b><span class="muted">${escapeHtml(ind.unit || "")}</span></div>
       <div class="industry-card-sub">${escapeHtml(indDateLabel(ind.latest_date))}${ind.latest_yoy != null ? ` · 전년비 <span class="${indCls(ind.latest_yoy)}">${indFmtSigned(ind.latest_yoy, "%", 1)}</span>` : ind.latest_mom != null ? ` · 직전 대비 <span class="${indCls(ind.latest_mom)}">${indFmtSigned(ind.latest_mom, industryTransformUnit(ind, "mom"), 2)}</span>` : ""}</div>
-      ${industrySpark((ind.series || []).slice(-24).map((p) => p.val), 220, 36)}
+      ${industrySpark((ind.series || []).slice(-24), 220, 36, ind.frequency)}
       <div class="industry-card-regime industry-dir-${escapeHtml((ind.regime || {}).direction || "unknown")}">${escapeHtml(INDUSTRY_DIRECTION_LABEL[(ind.regime || {}).direction] || "")}${(ind.regime || {}).level ? ` · ${escapeHtml(INDUSTRY_LEVEL_LABEL[ind.regime.level])}` : ""}</div>
     </button>`).join("");
   const chain = (cat.chain || []).map((s) => `<div class="industry-chain-stage"><span class="industry-chain-label">${escapeHtml(s.stage)}</span>${s.members.map((t) => industryTickerChip({ ticker: /^\d{6}$/.test(t) ? undefined : t, code: /^\d{6}$/.test(t) ? t : undefined, market: /^\d{6}$/.test(t) ? "kr" : "us", name: industryNameOf(t) }, "industry-chip-sm")).join("")}</div>`).join('<span class="industry-chain-arrow">→</span>');
@@ -612,9 +671,27 @@ function renderIndustryDetail(main, ind) {
   if (typeof requestIdleCallback === "function") requestIdleCallback(draw, { timeout: 400 }); else setTimeout(draw, 0);
 }
 
+// 차트는 실제 폭으로 그린다(viewBox = 픽셀) — 창 폭이 바뀌면 다시 그린다.
+let industryChartWidth = 0;
+let industryResizeTimer = 0;
+function industryBindResize() {
+  if (industryBindResize.done || typeof window.addEventListener !== "function") return;
+  industryBindResize.done = true;
+  window.addEventListener("resize", () => {
+    clearTimeout(industryResizeTimer);
+    industryResizeTimer = setTimeout(() => {
+      const host = byId("industryChart");
+      const ind = industryState.ind ? industryIndicator(industryState.ind) : null;
+      if (!host || !ind || !host.offsetParent) return;
+      if (Math.abs((host.clientWidth - 24) - industryChartWidth) > 16) renderIndustryChart(ind);
+    }, 200);
+  });
+}
+
 function renderIndustryChart(ind) {
   const host = byId("industryChart");
   if (!host || !ind) return;
+  industryBindResize();
   const d = industryData();
   const points = industrySlice(ind, industryState.range);
   const transform = (ind.transforms_available || ["level"]).includes(industryState.transform) ? industryState.transform : "level";
@@ -623,7 +700,9 @@ function renderIndustryChart(ind) {
   const recession = industryState.recession && d.recession ? d.recession : [];
   const unit = industryTransformUnit(ind, transform);
   const draw = (overlay, overlayLabel) => {
-    host.innerHTML = industryChartSvg(ind, points, primary, { yoyLine, overlay, overlayLabel, band: industryState.band, recession, unit });
+    const width = Math.max(300, (host.clientWidth || 904) - 24);  // .industry-chart 좌우 padding 12px
+    industryChartWidth = width;
+    host.innerHTML = industryChartSvg(ind, points, primary, { yoyLine, overlay, overlayLabel, band: industryState.band, recession, unit, width, transform });
   };
   if (!industryState.overlay) { draw(null, ""); return; }
   const ticker = industryState.overlay;
@@ -683,7 +762,7 @@ function industryReverseRow(id) {
     <span class="industry-rev-name">${escapeHtml(ind.name_kr)}${tail ? `<span class="industry-chip-tail">${escapeHtml(industrySensTail(tail.sensitivity))}</span>` : ""}</span>
     <span class="industry-rev-val"><b>${indFmtNum(ind.latest_value)}</b><span class="muted">${escapeHtml(ind.unit || "")}</span></span>
     <span class="industry-rev-yoy ${indCls(ind.latest_yoy)}">${ind.latest_yoy != null ? indFmtSigned(ind.latest_yoy, "%", 1) : (ind.latest_mom != null ? indFmtSigned(ind.latest_mom, industryTransformUnit(ind, "mom"), 2) : "—")}</span>
-    ${industrySpark((ind.series || []).slice(-12).map((p) => p.val), 96, 26)}
+    ${industrySpark((ind.series || []).slice(-12), 96, 26, ind.frequency)}
     <span class="industry-rev-next muted">${ind.next_release ? `D-${ind.next_release.days_ahead}` : escapeHtml(ind.latest_date)}</span>
   </button>`;
 }

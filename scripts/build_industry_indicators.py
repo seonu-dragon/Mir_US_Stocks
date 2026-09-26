@@ -43,6 +43,7 @@ import io
 import json
 import math
 import os
+import re
 import ssl
 import statistics
 import sys
@@ -924,6 +925,41 @@ def normalize_keys(series: list[tuple[str, float]], freq: str) -> list[tuple[str
     return list(series)
 
 
+_KEY_RE = {
+    "D": re.compile(r"^\d{4}-\d{2}-\d{2}$"), "W": re.compile(r"^\d{4}-\d{2}-\d{2}$"),
+    "M": re.compile(r"^\d{4}-(0[1-9]|1[0-2])$"), "Q": re.compile(r"^\d{4}-Q[1-4]$"),
+}
+
+
+def sanitize_series(series: list[tuple[str, float]], freq: str, today: date) -> tuple[list[tuple[str, float]], list[str]]:
+    """차트·통계에 들어가기 전 날짜 게이트. 주기에 맞는 키 형식만, 오름차순, 같은 키는 마지막 값 하나, 값은 유한수,
+    오늘(KST) 이후 기간은 버린다(월·분기 키는 그 기간의 첫날로 비교). 반환 (정리된 시리즈, 버린 이유 목록).
+    화면 쪽 같은 규칙: industry-chart-core.js seriesIssues — scripts/tests/test_industry_charts.mjs 가 재확인한다."""
+    rx = _KEY_RE.get(freq)
+    notes: list[str] = []
+    kept: dict[str, float] = {}
+    for k, v in series:
+        key = str(k)
+        try:
+            if rx is None or not rx.match(key):
+                raise ValueError
+            d = _date_of(key)
+        except (ValueError, TypeError):
+            notes.append(f"형식 {key!r}")
+            continue
+        if v is None or not math.isfinite(float(v)):
+            notes.append(f"값 {key}")
+            continue
+        if d > today:
+            notes.append(f"미래 {key}")
+            continue
+        if key in kept:
+            notes.append(f"중복 {key}")
+        kept[key] = float(v)
+    out = sorted(kept.items(), key=lambda kv: _date_of(kv[0]))
+    return out, notes
+
+
 def to_monthly(series: list[tuple[str, float]]) -> list[tuple[str, float]]:
     """일·주간 → 월별 마지막 값. 월간·분기는 그대로."""
     if not series:
@@ -1343,7 +1379,7 @@ def analyze(ind: dict, raw: list[tuple[str, float]], today: date) -> dict:
     freq = ind["frequency"]
     scale = ind.get("scale", 1.0)
     digits = ind.get("digits", 2)
-    series = normalize_keys([(k, v * scale) for k, v in raw], freq)
+    series, _ = sanitize_series(normalize_keys([(k, v * scale) for k, v in raw], freq), freq, today)
     if ind.get("kind") == "flow20":
         series = flow20(series)
     basis = ind.get("regime_basis", "yoy")
@@ -1409,12 +1445,16 @@ def build(keys: dict, only: set[str] = frozenset(), *, today: date | None = None
         iid = ind["id"]
         try:
             raw = fetch_raw(ind, keys, start_iso, only)
+            clean, notes = sanitize_series(normalize_keys(raw, ind["frequency"]), ind["frequency"], today)
+            if notes:
+                print(f"  [gate] {iid}: 날짜 게이트가 {len(notes)}개 정리 — {', '.join(notes[:4])}")
+            raw = clean
             if len(raw) < 3:
                 raise RuntimeError(f"관측 {len(raw)}개 — 너무 적다")
             if stale(raw, ind["frequency"], today, ind.get("stale_days")):
                 raise RuntimeError(f"stale — 최신 관측 {raw[-1][0]} (한도 {ind.get('stale_days') or STALE_DAYS[ind['frequency']]}일)")
             built[iid] = analyze(ind, raw, today)
-            raw_series[iid] = normalize_keys([(k, v * ind.get("scale", 1.0)) for k, v in raw], ind["frequency"])
+            raw_series[iid] = [(k, v * ind.get("scale", 1.0)) for k, v in raw]
             print(f"  [ok] {iid}: {built[iid]['latest_date']} {built[iid]['latest_value']} {ind['unit']}"
                   f" · YoY {built[iid]['latest_yoy']} · {built[iid]['regime']['direction']}")
         except Exception as exc:  # noqa: BLE001

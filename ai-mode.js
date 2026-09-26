@@ -1365,7 +1365,7 @@ function aiAnalystPanel(item) {
   const nextHtml = nextE ? `<div style="background:var(--panel-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span style="color:var(--muted)">다음 실적 발표 예정</span> <strong style="margin-left:6px">${escapeHtml(nextE)}</strong></div>` : "";
   if (!recHtml && !earnHtml && !nextHtml) return "";
   const ptSlot = typeof priceTargetSlotHtml === "function" ? priceTargetSlotHtml(item) : "";
-  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">출처: Finnhub(추천 분포·EPS 서프라이즈) · Nasdaq(목표주가) · Yahoo(실적 예정일). 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">출처: Finnhub(추천 분포·EPS 서프라이즈) · Nasdaq·Yahoo(목표주가) · Yahoo(실적 예정일). 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
   return aiModePanel("애널리스트 컨센서스", "추천 분포 · 목표주가 · EPS 서프라이즈", nextHtml + recHtml + ptSlot + earnHtml + note);
 }
 

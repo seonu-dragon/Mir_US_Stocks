@@ -207,7 +207,7 @@ function hydratePriceTargetSlots(key, price) {
     const body = t ? ciRangeHtml(t, price) : "";
     if (!body) return;
     const n = Number(t.n) || 0;
-    const head = `<div class="ci-slot-head"><span>목표주가 범위</span><em>Nasdaq${n ? ` · ${n}명` : ""}${t.asOf ? ` · 기준 ${escapeHtml(t.asOf)}` : ""}</em></div>`;
+    const head = `<div class="ci-slot-head"><span>목표주가 범위</span><em>${t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq"}${n ? ` · ${n}명` : ""}${t.asOf ? ` · 기준 ${escapeHtml(t.asOf)}` : ""}</em></div>`;
     document.querySelectorAll(`.ci-slot[data-pt-slot="${CSS.escape(key)}"]`).forEach((el) => {
       el.innerHTML = head + body;
       el.hidden = false;

@@ -126,6 +126,9 @@ const FEATURE_DATA = {
   // 시장별 파일(US data/financials_index.js · KR data/korea/financials_index.js). 종목 분석의 재무 섹션을
   // 처음 그릴 때만 받는다(lazy). 종목별 파일은 financials.js 가 fetch 한다.
   financialsIndex: { global: "FINANCIALS_INDEX", path: "data/financials_index.js", marketSpecific: true, lazy: true },
+  // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
+  // '과거 위기 재생' 을 열 때만 받는다(lazy).
+  crisisHistory: { global: "CRISIS_HISTORY", path: "data/crisis_history.js", lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다

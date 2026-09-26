@@ -1,0 +1,137 @@
+{
+ "updatedAtKst": "2026-09-26 16:23 KST",
+ "from": "2026-09-26",
+ "to": "2026-12-25",
+ "horizonDays": 90,
+ "source": "exchange_calendars 4.13.2 (XKRX·XNYS) · 만기는 거래소 규칙으로 계산 · FOMC 는 연준 공개 일정표",
+ "coverage": {
+  "kr": {
+   "exchange": "XKRX",
+   "lastSession": "2027-09-24"
+  },
+  "us": {
+   "exchange": "XNYS",
+   "lastSession": "2027-09-24"
+  }
+ },
+ "count": 15,
+ "events": [
+  {
+   "date": "2026-10-05",
+   "market": "kr",
+   "kind": "holiday",
+   "title": "한국 휴장",
+   "name": "개천절 대체휴일"
+  },
+  {
+   "date": "2026-10-08",
+   "market": "kr",
+   "kind": "expiry",
+   "quarterly": false,
+   "title": "코스피200 옵션 월물 만기",
+   "detail": "매월 둘째 목요일"
+  },
+  {
+   "date": "2026-10-09",
+   "market": "kr",
+   "kind": "holiday",
+   "title": "한국 휴장",
+   "name": "한글날"
+  },
+  {
+   "date": "2026-10-16",
+   "market": "us",
+   "kind": "expiry",
+   "quarterly": false,
+   "title": "미국 월간 옵션 만기",
+   "detail": "매월 셋째 금요일"
+  },
+  {
+   "date": "2026-10-29",
+   "time": "03:00",
+   "market": "us",
+   "kind": "fomc",
+   "title": "FOMC 기준금리 결정",
+   "detail": "미 동부 10/28 14:00 발표(회의 10/27~10/28)",
+   "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+  },
+  {
+   "date": "2026-11-12",
+   "market": "kr",
+   "kind": "expiry",
+   "quarterly": false,
+   "title": "코스피200 옵션 월물 만기",
+   "detail": "매월 둘째 목요일"
+  },
+  {
+   "date": "2026-11-20",
+   "market": "us",
+   "kind": "expiry",
+   "quarterly": false,
+   "title": "미국 월간 옵션 만기",
+   "detail": "매월 셋째 금요일"
+  },
+  {
+   "date": "2026-11-26",
+   "market": "us",
+   "kind": "holiday",
+   "title": "미국 휴장",
+   "name": "추수감사절"
+  },
+  {
+   "date": "2026-11-27",
+   "market": "us",
+   "kind": "early_close",
+   "title": "미국 단축 거래",
+   "name": "추수감사절 다음 날",
+   "detail": "13:00 ET 마감"
+  },
+  {
+   "date": "2026-12-10",
+   "market": "kr",
+   "kind": "expiry",
+   "quarterly": true,
+   "title": "한국 선물·옵션 동시 만기",
+   "detail": "매월 둘째 목요일"
+  },
+  {
+   "date": "2026-12-10",
+   "time": "04:00",
+   "market": "us",
+   "kind": "fomc",
+   "title": "FOMC 기준금리 결정",
+   "detail": "미 동부 12/9 14:00 발표(회의 12/8~12/9) · 경제전망(점도표) 포함",
+   "url": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
+  },
+  {
+   "date": "2026-12-18",
+   "market": "us",
+   "kind": "expiry",
+   "quarterly": true,
+   "title": "미국 분기 만기(주식·지수 옵션·선물 동시)",
+   "detail": "매월 셋째 금요일"
+  },
+  {
+   "date": "2026-12-24",
+   "market": "us",
+   "kind": "early_close",
+   "title": "미국 단축 거래",
+   "name": "성탄절 전날",
+   "detail": "13:00 ET 마감"
+  },
+  {
+   "date": "2026-12-25",
+   "market": "kr",
+   "kind": "holiday",
+   "title": "한국 휴장",
+   "name": "성탄절"
+  },
+  {
+   "date": "2026-12-25",
+   "market": "us",
+   "kind": "holiday",
+   "title": "미국 휴장",
+   "name": "성탄절"
+  }
+ ]
+}

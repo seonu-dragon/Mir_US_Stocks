@@ -91,6 +91,9 @@ jobs:
       # 시장지표 표기(market-indicators-core.js): 쉼표·▲1.23(+0.45%)·만기월·스파크라인 경로.
       - name: Market indicators core tests
         run: node scripts/tests/test_market_indicators_core.mjs
+      # 통합 캘린더 순수 계산(calendar-panel-core.js): 날짜·주/월 격자·데이터셋 정규화·칩/관심종목 필터·날짜별 묶음.
+      - name: Calendar panel core tests
+        run: node scripts/tests/test_calendar_panel_core.mjs
 
       # PER 기준 판정(per-basis-core.js): 국내 최근 4분기/연간/KRX 사업연도 라벨·현재가 재계산.
       - name: PER basis core tests

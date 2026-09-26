@@ -95,6 +95,8 @@
       whiteHouse: true,
       finraShortVolume: true,
       earningsCalendar: true,
+      // 미국 ETF 구성·'이 종목을 담은 ETF'(SEC N-PORT, build_us_etf_holdings.py). 국내 ETF 구성은 KRX 차단으로 없다.
+      etfHoldings: true,
       // 국내 시장경보·이상 종목 보드(KRX KIND)는 KR 전용.
       krMarketAlerts: false,
       // PER·PBR·PSR 밴드(valuation-band.js) — SEC 공시 재무(공시일 기준) + 야후 월말 종가로 산출한
@@ -258,7 +260,15 @@
       // 있지도 않은 data/korea/earnings_calendar.js 를 계속 요청해 404 를 냈고,
       // 매 방문마다 4.4초짜리 워커 왕복 뒤 빈 화면만 남았다. 실데이터가 생기기 전엔
       // 닫아 둔다 — 공매도와 같은 판단이다.
+      // 2026-09-26: DART '기업설명회(IR)개최' 공시에서 실적 IR 일시를 읽는 빌더가 생겼다
+      // (build_kr_ir_schedule.py → data/korea/ir_schedule.js, 아래 krIrSchedule). 그러나 이 서브탭(실적 일정 표)은
+      // 야후 예정일·EPS 추정·실적 전 비교가 전제라 IR 데이터로 채우면 '실적 전에 IR 을 여는 회사'만
+      // 보이는 표를 전체 일정처럼 보여 주게 된다. 켜는 조건: 코스피200 구성 종목의 절반 이상에
+      // 다가오는 실적일이 있는 소스가 생길 때(IR 공시는 분기 실적 시즌에도 대형주 일부만 낸다).
+      // 그전까지 국내 실적 예정일은 통합 캘린더 '실적' 칩에서 한계 문구와 함께만 보여 준다.
       earningsCalendar: false,
+      // 국내 실적 IR 일정(통합 캘린더 '실적' 칩). DART 목록 조회가 실패하면 빌더가 기존 파일을 유지한다.
+      krIrSchedule: true,
       // 돌파/되돌림 통계(build_breakout_retest.py)는 US 만 산출한다.
       // 없는 파일을 요청해 콘솔에 404 를 남기지 않도록 꺼 둔다.
       breakoutStats: false,

@@ -88,6 +88,10 @@ jobs:
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs
 
+      # 시장지표 표기(market-indicators-core.js): 쉼표·▲1.23(+0.45%)·만기월·스파크라인 경로.
+      - name: Market indicators core tests
+        run: node scripts/tests/test_market_indicators_core.mjs
+
       # 가격 축 세로 스케일 순수 계산(chart-yscale-core.js): 선형/로그 변환·축 드래그 줌·세로 팬·
       # 눈금 간격(1·2·2.5·5)·자동 맞춤 해제/복귀. 종목 분석 차트와 AI 모드 차트가 같이 쓴다.
       - name: Chart price-axis scale tests

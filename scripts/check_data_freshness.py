@@ -25,6 +25,7 @@
     py scripts/check_data_freshness.py --group financials         # weekly-earnings-history.yml financials 잡
     py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
     py scripts/check_data_freshness.py --group screener-backtest  # screener-backtest-panel.yml 말미
+    py scripts/check_data_freshness.py --group market-indicators  # market-indicators.yml 말미
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -217,6 +218,11 @@ CHECKS = {
     ],
     # screener-backtest-panel.yml(일요일 05:40 KST) — 수식 스크리너 과거 백테스트 패널. 주간이라 10일.
     # 빌더가 유니버스 200종목·월말 24개 미만이면 쓰지 않고 exit 1 이라 건수 대신 나이만 본다.
+    # market-indicators.yml(평일 하루 2회). 금요일 오후 실행 뒤 월요일 아침까지 약 2.6일이 정상이라 4일.
+    # 0건(count)도 잡는다 — 전부 실패하면 빌더가 파일을 안 쓰므로 나이로 드러난다.
+    "market-indicators": [
+        ("data/market_indicators.json", 4, True),
+    ],
     "screener-backtest": [
         ("data/screener_backtest_meta.json", 10, False),
         ("data/korea/screener_backtest_meta.json", 10, False),

@@ -142,6 +142,9 @@ jobs:
       - name: Append market history (fear/greed - macro)
         continue-on-error: true
         timeout-minutes: 10
+        # 원/달러는 ECOS 731Y001(일별)을 우선 쓴다 — 키가 없으면 ecos_macro.json·frankfurter 로.
+        env:
+          ECOS_API_KEY: ${{ secrets.ECOS_API_KEY }}
         run: python scripts/build_market_history.py --push
 
       # 오늘의 특징주(등락 상하위 + 한 줄 사유). 방금 발행된 US 스냅샷을 읽으므로 반드시

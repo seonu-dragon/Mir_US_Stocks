@@ -165,7 +165,7 @@ function moRecessionCard(rec, marketGroups) {
       ${rows}
     </div>
     <details class="mo-rules"><summary>임계값 근거</summary><ul>${basisList}</ul></details>
-    <p class="mo-meta">산업 지표 데이터 재사용 · 기준 ${escapeHtml(rec.industryUpdatedAtKst || "")}</p>
+    <p class="mo-meta">기준 ${escapeHtml(rec.industryUpdatedAtKst || "")}</p>
   </article>`;
 }
 
@@ -193,5 +193,5 @@ function renderMacroOdds() {
       <p>Kalshi·Polymarket 에서 거래되는 금리·물가·침체 시장의 가격(=참여자들이 매긴 확률)과 공식 침체 지표를 나란히 봅니다. 기준 ${escapeHtml(d.updatedAtKst || "")}.</p></div>
     <div class="mo-grid">${cards}</div>
     ${excluded}${downNote}
-    <p class="mo-disclaimer">${escapeHtml(d.disclaimer || "예측시장 가격은 참여자들의 베팅으로 형성된 값이며 예측의 정답이 아닙니다.")} 출처: ${escapeHtml(d.source || "")}.</p>`;
+    <p class="mo-disclaimer">${escapeHtml(d.disclaimer || "예측시장 가격은 참여자들의 베팅으로 형성된 값이며 예측의 정답이 아닙니다.")} 출처: ${escapeHtml(String(d.source || "").replace(/\s*\(산업 지표 재사용\)/, ""))}.</p>`;
 }

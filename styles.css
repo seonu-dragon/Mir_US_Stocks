@@ -14302,3 +14302,42 @@ html[data-theme="dark"] .financials-card { --mf-c1: #6b8cff; --mf-c2: #38bdf8; -
   .fxbt-controls input { width: 80px; }
   .fxbt-table th, .fxbt-table td { font-size: 12px; padding-left: 4px; padding-right: 4px; }
 }
+
+/* ===== 2026-09-26 다듬기: 오늘·시장 탭 ===== */
+/* 경제 캘린더(데스크톱): 날짜별 표마다 열 폭이 달라 숫자 열이 들쭉날쭉하던 것을 고정 폭 + 오른쪽 정렬로 */
+@media (min-width: 641px) {
+  .cal-table { table-layout: fixed; }
+  .cal-table col.cal-col-time { width: 64px; }
+  .cal-table col.cal-col-country { width: 60px; }
+  .cal-table col.cal-col-imp { width: 76px; }
+  .cal-table col.cal-col-num { width: 104px; }
+  .cal-table .cal-event { min-width: 0; overflow-wrap: anywhere; }
+  .cal-table .cal-num { text-align: right; font-variant-numeric: tabular-nums; }
+  .cal-table td.cal-num:empty::before { content: "—"; color: var(--muted); }
+}
+/* 캘린더 필터: 체크박스를 한 줄로(세로 목록이면 카드가 쓸데없이 높다) */
+.calendar-filter-group .check-label { display: inline-flex; height: 28px; }
+/* 시장 폭 표: 두 칸 그리드 안에서 min-width 760px 가 걸려 3개월·YTD 열이 가려져 있었다 */
+.market-table.table-wide { min-width: 0; }
+.market-table td:first-child { white-space: normal; min-width: 88px; }
+@media (max-width: 640px) {
+  .market-table.table-wide { min-width: 560px; }
+}
+/* 방법론 접기(신호 성적표·산업 지표) */
+.sig-score-method, .industry-method { margin: 4px 0 8px; }
+.sig-score-method > summary, .industry-method > summary { cursor: pointer; color: var(--text); font-weight: 600; font-size: var(--fs-cap); }
+.sig-score-method[open] > summary, .industry-method[open] > summary { margin-bottom: 6px; }
+/* 현재가 열은 2번째 칸이어도 오른쪽 정렬(환율표·국내 시장표는 티커 열이 없어 nth-child(2) 왼쪽 정렬에 걸렸다) */
+.market-table th.num, .market-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.market-table td { font-variant-numeric: tabular-nums; }
+/* 중요도 점: 빈 점이 '낮음'의 채운 점과 같은 회색이라 ●●● 세 개가 모두 같아 보였다 */
+.imp-dim { color: color-mix(in srgb, var(--text-muted) 30%, transparent); }
+/* 섹터 내 주요 종목 표: 숫자 열 오른쪽 정렬, 폰에서는 회사명 열을 숨겨 등락률이 첫 화면에 보이게 */
+.sector-constituents-card .compact-table th.num, .sector-constituents-card .compact-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) {
+  .sector-constituents-card .compact-table .col-sub { display: none; }
+}
+/* 오늘의 KR 공시 하이라이트: 다른 홈 카드(특징주·뉴스)와 같은 카드 틀 */
+.kr-highlights { margin: 12px 0 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); }
+.kr-highlights .section-title { display: block; }
+@media (max-width: 640px) { .kr-highlights { padding: 12px; } }

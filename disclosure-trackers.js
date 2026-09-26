@@ -1497,14 +1497,14 @@ function renderKrHighlights() {
   if (!items.length) { el.hidden = true; el.innerHTML = ""; return; }
   el.hidden = false;
   const chip = (it) => {
-    const c = it.tone === "good" ? "#30a46c" : it.tone === "warn" ? "#e5484d" : "var(--accent,#5b8def)";
+    const c = it.tone === "good" ? "var(--green)" : it.tone === "warn" ? "var(--red)" : "var(--primary)";
     return `<button type="button" class="kr-hl-chip" data-ticker="${escapeHtml(it.ticker)}" style="display:inline-flex;align-items:baseline;flex-wrap:wrap;gap:3px 7px;padding:7px 12px;border-left:3px solid ${c};border-radius:8px;background:var(--panel-soft);color:var(--text);cursor:pointer;text-align:left;line-height:1.4;height:auto;min-height:0">
       <span style="font-size:14px;font-weight:600;color:var(--text)">${escapeHtml(it.company)}</span>
       <span style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(it.label)}</span>
       <span style="font-size:12px;color:${c};font-weight:600">${escapeHtml(it.extra || "")}</span>
     </button>`;
   };
-  el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>흩어진 공시·수급을 종목별 서브탭에서 한눈에</p></div>
+  el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>유형별 대표 1건 · 누르면 종목 분석</p></div>
     <div class="kr-hl-chips" style="display:flex;flex-wrap:wrap;gap:8px">${items.map(chip).join("")}</div>`;
   delegateTickerClicks(el, ".kr-hl-chip");
 }

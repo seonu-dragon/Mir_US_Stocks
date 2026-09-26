@@ -70,7 +70,7 @@ function krAlertTickerCell(row) {
   const name = row.company || row.ticker;
   return known
     ? `<button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.ticker)}">${escapeHtml(name)}</button>`
-    : `<b class="kr-alert-name" title="${escapeHtml(row.ticker)} · 이 사이트 스냅샷에 없는 종목">${escapeHtml(name)}</b>`;
+    : `<b class="kr-alert-name" title="${escapeHtml(row.ticker)} · 이 사이트에서 분석을 제공하지 않는 종목">${escapeHtml(name)}</b>`;
 }
 
 const KR_ALERT_PREVIEW = 8;
@@ -153,8 +153,8 @@ function renderKrMarketAlerts() {
     <div class="signals-grid kr-alert-grid">${cards.join("")}</div>
     <p class="kr-alert-foot">기준 거래일 ${escapeHtml(base)} · 수집 ${escapeHtml(p.updatedAtKst || "")}.
       시장경보·거래정지·관리종목: KRX KIND(거래정지·관리종목은 수집 시점 현황). 상·하한가: 네이버 금융 등락률 목록.
-      52주 신고/신저가·거래대금 급증: 이 사이트 스냅샷의 실측 일봉${covered ? `(기준일 봉이 갱신된 ${Number(covered).toLocaleString()}종목, 주로 시가총액 상위)` : ""}에서 계산 — 거래대금은 종가×거래량 근사치.
-      단기과열종목·VI 발동은 무료 장마감 소스가 없어 싣지 않습니다.</p>`;
+      52주 신고/신저가·거래대금 급증: ${covered ? `시가총액 상위 위주 ${Number(covered).toLocaleString()}종목의 ` : ""}일봉으로 계산 — 거래대금은 종가×거래량 근사치.
+      단기과열종목·VI 발동은 싣지 않습니다.</p>`;
   host.querySelectorAll(".ins-ticker[data-ticker]").forEach((b) => b.addEventListener("click", () => {
     selectTicker(b.dataset.ticker, { openSearch: true });
   }));

@@ -83,7 +83,7 @@ function marketTableHtml(title, rows) {
         <table class="market-table table-wide">
           <thead>
             <tr>
-              <th>이름</th>${isKrMarket() ? "" : "<th>티커</th>"}<th>현재가</th><th>당일</th>
+              <th>이름</th>${isKrMarket() ? "" : "<th>티커</th>"}<th class="num">현재가</th><th>당일</th>
               <th>1주</th><th>1개월</th><th>3개월</th><th>YTD</th>
             </tr>
           </thead>
@@ -92,7 +92,7 @@ function marketTableHtml(title, rows) {
               <tr class="market-row" data-ticker="${ticker}" style="cursor:pointer;" title="${escapeHtml(isKrMarket() ? name : ticker)} 분석 보기">
                 <td>${escapeHtml(name)}</td>
                 ${isKrMarket() ? "" : `<td><strong>${escapeHtml(ticker)}</strong></td>`}
-                <td>${priceOrDash(s.price)}</td>
+                <td class="num">${priceOrDash(s.price)}</td>
                 <td class="${cls(s.changePct)}">${fmtDailyPct(s.changePct)}</td>
                 <td class="${cls(s.weekChangePct)}">${fmtPct(s.weekChangePct)}</td>
                 <td class="${cls(s.monthChangePct)}">${fmtPct(s.monthChangePct)}</td>
@@ -110,7 +110,7 @@ function marketTableHtml(title, rows) {
 function currencySectionShell() {
   const body = LIVE_DATA_PROXY
     ? `<p class="muted" id="currencyStatus">환율 불러오는 중…</p>`
-    : `<p class="muted">환율은 실시간 프록시(Cloudflare Worker) 연결 시 표시됩니다. (app.js의 LIVE_DATA_PROXY)</p>`;
+    : `<p class="muted">환율 데이터를 불러오지 못했습니다.</p>`;
   return `
     <div class="market-section" id="currencySection">
       <h3>환율 <span class="muted" style="font-size:12px;font-weight:600;">실시간</span></h3>
@@ -135,7 +135,7 @@ function loadCurrencies() {
       wrap.innerHTML = `
         <div class="table-wrap">
           <table class="market-table table-wide">
-            <thead><tr><th>통화쌍</th><th>현재가</th><th>당일</th><th>1개월</th></tr></thead>
+            <thead><tr><th>통화쌍</th><th class="num">현재가</th><th>당일</th><th>1개월</th></tr></thead>
             <tbody>
               ${fx.map((f) => {
                 const price = Number(f.price);
@@ -143,7 +143,7 @@ function loadCurrencies() {
                 return `
                   <tr>
                     <td>${escapeHtml(f.name || f.symbol)}</td>
-                    <td><strong>${Number.isFinite(price) ? price.toFixed(decimals) : "—"}</strong></td>
+                    <td class="num"><strong>${Number.isFinite(price) ? price.toFixed(decimals) : "—"}</strong></td>
                     <td class="${cls(f.changePct)}">${fmtDailyPct(f.changePct)}</td>
                     <td class="${cls(f.monthChangePct)}">${fmtPct(f.monthChangePct)}</td>
                   </tr>
@@ -271,7 +271,7 @@ function renderSectorEtfGrid(rows, period, benchmark) {
   const globalOffset = (etfRsPage - 1) * perPage;
 
   if (!rows.length) {
-    container.innerHTML = `<div class="empty-state">ETF 상대강도 데이터가 없습니다. 스냅샷을 다시 생성해 주세요.</div>`;
+    container.innerHTML = `<div class="empty-state">ETF 상대강도 데이터가 없습니다.</div>`;
     if (footer) footer.innerHTML = "";
     return;
   }
@@ -322,15 +322,15 @@ function renderSectorRotationBoard(rows, period, benchmark) {
     return { ...item, relShort, relLong, quadrant, activeRelative: relShort };
   });
   const groups = [
-    ["leading", "Leading", `${horizon.shortLabel}/${horizon.longLabel} 모두 벤치마크 초과`],
-    ["improving", "Improving", `최근 ${horizon.shortLabel} 상대강도 개선`],
-    ["weakening", "Weakening", `${horizon.longLabel}은 강하지만 최근 둔화`],
-    ["lagging", "Lagging", "벤치마크 대비 약세"]
+    ["leading", "주도", `${horizon.shortLabel}/${horizon.longLabel} 모두 벤치마크 초과`],
+    ["improving", "개선", `최근 ${horizon.shortLabel} 상대강도 개선`],
+    ["weakening", "둔화", `${horizon.longLabel}은 강하지만 최근 둔화`],
+    ["lagging", "소외", "벤치마크 대비 약세"]
   ];
   board.innerHTML = `
     <div class="rotation-head">
       <div>
-        <h3>Sector Rotation Map</h3>
+        <h3>섹터 회전 지도</h3>
         <p class="muted">${benchmark} 대비 ${horizon.shortLabel}/${horizon.longLabel} 상대강도로 ETF 그룹을 사분면으로 나눕니다.</p>
       </div>
       <div class="rotation-head-actions">
@@ -433,7 +433,7 @@ function inferLeveragedEtfMeta(stock) {
     underlying: "—",
     underlyingLabel: "미분류",
     scope: "thematic",
-    group: "스냅샷 자동 분류",
+    group: "기타 (자동 분류)",
     issuer: krIssuer ? krIssuer[1].toUpperCase() : "—",
     discovered: true,
   };
@@ -517,7 +517,7 @@ function levEtfCardHtml(item) {
         <span>1M <strong class="${monthCls}">${month}</strong></span>
         <span>RSI <strong>${rs}</strong></span>
       </div>
-      ${hasLive ? "" : `<p class="lev-etf-note muted">스냅샷 미포함 · 카탈로그 참고용</p>`}
+      ${hasLive ? "" : `<p class="lev-etf-note muted">시세 없음 · 목록 참고용</p>`}
     </article>
   `;
 }
@@ -734,7 +734,7 @@ function renderLeveragedEtfPage() {
   const liveCount = items.filter((item) => levEtfLiveRow(item.ticker)).length;
   if (meta) {
     const catUpdated = (isKrMarket() && data.leveragedEtfCatalog?.updated) || window.LEVERAGED_ETF_CATALOG?.updated || "";
-    meta.textContent = `총 ${items.length}개 · 스냅샷 시세 ${liveCount}개 · ${catUpdated}`;
+    meta.textContent = `총 ${items.length}개 · 시세 있음 ${liveCount}개${catUpdated ? ` · 목록 기준 ${catUpdated}` : ""}`;
   }
 
   if (!items.length) {
@@ -790,7 +790,7 @@ function renderLeveragedEtfPage() {
     });
     // 자동 발견분(메타 빈약)은 큐레이션 그룹 뒤로 — KR 에서 '스'가 '한'보다 앞서
     // 카탈로그(한국 레버리지·인버스)를 밀어내던 문제.
-    const autoIdx = groups.indexOf("스냅샷 자동 분류");
+    const autoIdx = groups.indexOf("기타 (자동 분류)");
     if (autoIdx >= 0) groups.push(groups.splice(autoIdx, 1)[0]);
     host.innerHTML = groups.map((group) => `
       <section class="lev-etf-section">

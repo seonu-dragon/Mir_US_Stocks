@@ -146,8 +146,7 @@
       body.innerHTML = `
         <div class="feed-sub-empty">
           <strong>구독 피드를 불러오지 못했습니다.</strong>
-          <p>피드는 배포된 사이트(GitHub Pages)에서 배포할 때마다 새로 만들어집니다. 잠시 뒤 다시 열어 보세요.
-            로컬 서버에서는 <code>py scripts/gen_feeds.py</code> 로 먼저 생성해야 보입니다.</p>
+          <p>잠시 뒤 다시 열어 보세요.</p>
         </div>`;
       return;
     }

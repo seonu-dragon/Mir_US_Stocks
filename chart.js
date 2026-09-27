@@ -1602,6 +1602,8 @@ function getChartEventKinds() {
     const core = chartEventCore();
     const raw = window.safeStorage ? window.safeStorage.getJSON(CHART_EVENT_KINDS_KEY, null) : null;
     chartEventKinds = core ? core.normalizeEnabled(raw) : { E: true, D: true, S: true, F: true };
+    // K = 큰 등락일(키 모먼트). 띠가 아니라 가격 플롯 위에 찍는다(timeline-core.js).
+    chartEventKinds.K = !(raw && raw.K === false);
   }
   return chartEventKinds;
 }
@@ -1630,12 +1632,75 @@ function chartEventsForItem(item) {
 
 // 공시 전역(MATERIAL_EVENTS·KR_DISCLOSURES)이 차트보다 늦게 도착하면 마커를 다시 그린다
 // (refreshFeatureViews 가 부른다). 이미 반영된 참조면 아무것도 안 한다.
+// 키 모먼트의 사유(타임라인 전역·과거 이벤트 샤드)가 늦게 와도 같은 방식으로 다시 그린다.
 function refreshChartEventsIfStale() {
   const c = _chartEventCache;
   if (!c.refs || !lastChartGeom) return;
   const f = chartEventFilings();
-  if (c.refs[4] === f.us && c.refs[5] === f.kr) return;
+  let kmStale = false;
+  if (chartKeyMomentsOn() && window.MirTimelineView && lastChartGeom.kmVersion != null) {
+    const it = currentChartItem();
+    kmStale = Boolean(it) && window.MirTimelineView.versionFor(it) !== lastChartGeom.kmVersion;
+  }
+  if (c.refs[4] === f.us && c.refs[5] === f.kr && !kmStale) return;
   redrawChart();
+}
+
+// ===== 키 모먼트(큰 등락일) — 가격 플롯 위 ▲▼ =====
+// 판정·사유 붙이기는 timeline-core.js, 자료 모으기·캐시는 timeline.js(window.MirTimelineView).
+// 일봉에서만 그린다(주봉·월봉의 한 봉은 여러 날이라 '그날의 사유'가 성립하지 않는다).
+function chartKeyMomentsOn() {
+  return getChartEventKinds().K !== false && chartState.barTf === "D";
+}
+
+function chartKeyMomentsSvg(pts) {
+  return pts.map((p, i) => {
+    const s = 5;
+    const d = p.up
+      ? `M ${p.x.toFixed(1)} ${(p.y - s).toFixed(1)} L ${(p.x + s).toFixed(1)} ${(p.y + s * 0.7).toFixed(1)} L ${(p.x - s).toFixed(1)} ${(p.y + s * 0.7).toFixed(1)} Z`
+      : `M ${p.x.toFixed(1)} ${(p.y + s).toFixed(1)} L ${(p.x + s).toFixed(1)} ${(p.y - s * 0.7).toFixed(1)} L ${(p.x - s).toFixed(1)} ${(p.y - s * 0.7).toFixed(1)} Z`;
+    return `<path class="chart-km ${p.up ? "is-up" : "is-down"}${p.m.reasons && p.m.reasons.length ? "" : " is-bare"}" data-km="${i}" d="${d}"></path>`;
+  }).join("");
+}
+
+function keyMomentTipHtml(m) {
+  const tl = window.MirTimeline;
+  const date = m.date.replace(/-/g, ".");
+  const pct = `${m.pct > 0 ? "+" : m.pct < 0 ? "−" : ""}${Math.abs(m.pct).toFixed(1)}%`;
+  const head = `<p class="chart-km-head"><b>${escapeHtml(date)} · 큰 등락 <span class="${cls(m.pct)}">${escapeHtml(pct)}</span></b><small>평소 하루 변동(직전 ${m.lookback || 60}거래일 표준편차 ${Number(m.sigma).toFixed(1)}%)의 ${Number(m.ratio).toFixed(1)}배</small></p>`;
+  const reasons = Array.isArray(m.reasons) ? m.reasons : [];
+  if (!reasons.length) {
+    return `${head}<p class="chart-km-none">사유 데이터 없음 — 이 날짜 ±1거래일에 수집된 공시·실적·배당·특징주 기록이 없습니다.</p>`;
+  }
+  const MAX = 5;
+  const rows = reasons.slice(0, MAX).map((e) => {
+    const when = e.offset ? (e.offset < 0 ? " (전 거래일)" : " (다음 거래일)") : "";
+    const link = /^https?:\/\//i.test(e.link || "") ? ` <a href="${escapeHtml(e.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
+    const label = tl && tl.CAT_LABEL[e.cat] ? tl.CAT_LABEL[e.cat] : "";
+    return `<li><span class="chart-ev-badge chart-km-badge">${escapeHtml(label.slice(0, 2))}</span><div><b>${escapeHtml(e.title)}${escapeHtml(when)}</b>${e.detail || link ? `<small>${escapeHtml(e.detail || "")}${link}</small>` : ""}</div></li>`;
+  }).join("");
+  const rest = reasons.length > MAX ? `<p class="chart-ev-tip-more">외 ${reasons.length - MAX}건 — 이벤트·공시 탭 통합 타임라인에서 전체 보기</p>` : "";
+  return `${head}<p class="chart-km-sub">같은 시기 기록(원인으로 확인된 것은 아님)</p><ul>${rows}</ul>${rest}`;
+}
+
+// 포인터 → 키 모먼트 마커(없으면 null). 묶음과 같은 모양({x, moment})으로 돌려 툴팁 함수를 같이 쓴다.
+function keyMomentHit(event) {
+  const g = lastChartGeom;
+  const svg = byId("priceChart");
+  if (!g || !svg || !Array.isArray(g.moments) || !g.moments.length) return null;
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return null;
+  const vbX = ((event.clientX - rect.left) / rect.width) * g.width;
+  const vbY = ((event.clientY - rect.top) / rect.height) * g.height;
+  const scale = g.width / rect.width;
+  const r = Math.max(8, (event.pointerType === "touch" ? 16 : 8) * scale);
+  let best = null;
+  let bestD = Infinity;
+  for (const p of g.moments) {
+    const d = Math.hypot(p.x - vbX, p.y - vbY);
+    if (d < bestD) { bestD = d; best = p; }
+  }
+  return best && bestD <= r ? { x: best.x, moment: best.m } : null;
 }
 
 function syncChartEventToggles() {
@@ -1663,17 +1728,18 @@ function setupChartEventToggles() {
 }
 
 // 차트 아래 한 줄 안내(기호 뜻 · 공시 수집 기간). 바뀔 때만 DOM 을 건드린다.
-function updateChartEventNote(events) {
+function updateChartEventNote(events, kmShown) {
   const el = byId("chartEventNote");
   if (!el) return;
   const core = chartEventCore();
   let text = "";
-  if (core && events.length) {
+  if (core && (events.length || kmShown)) {
     const kinds = getChartEventKinds();
     const has = (k) => events.some((e) => e.kind === k);
     const parts = core.KINDS.filter((k) => has(k) && kinds[k] !== false).map((k) => `${core.KIND_SYMBOL[k]} ${core.KIND_LABEL[k]}`);
-    if (parts.length) {
-      text = `차트 아래 기호: ${parts.join(" · ")}`;
+    if (parts.length || kmShown) {
+      text = parts.length ? `차트 아래 기호: ${parts.join(" · ")}` : "";
+      if (kmShown) text += `${text ? " · " : ""}가격 위 ▲▼ 큰 등락일 ${kmShown}곳(평소 변동의 2.5배 이상)`;
       if (has("F") && kinds.F !== false) {
         const f = chartEventFilings();
         const w = core.filingWindow(f.us || f.kr);
@@ -1717,6 +1783,7 @@ function hideChartEventTip(force) {
 }
 
 function chartEventTipHtml(cluster) {
+  if (cluster.moment) return keyMomentTipHtml(cluster.moment);
   const core = chartEventCore();
   const MAX = 6;
   const rows = cluster.items.slice(0, MAX).map((e) => {
@@ -1776,7 +1843,7 @@ function setupChartEventInteractions() {
   svg.addEventListener("pointerdown", (e) => { downX = e.clientX; downY = e.clientY; });
   svg.addEventListener("pointermove", (e) => {
     if (e.pointerType !== "mouse" || e.buttons) return; // 드래그(팬) 중·터치는 탭으로만
-    const hit = chartEventHit(e);
+    const hit = chartEventHit(e) || keyMomentHit(e);
     svg.classList.toggle("is-ev-hover", Boolean(hit));
     if (hit) {
       if (!chartEventTipPinned) showChartEventTip(hit, e.clientX, e.clientY, false);
@@ -1787,7 +1854,7 @@ function setupChartEventInteractions() {
   svg.addEventListener("pointerleave", () => { svg.classList.remove("is-ev-hover"); hideChartEventTip(false); });
   svg.addEventListener("pointerup", (e) => {
     if (Math.hypot(e.clientX - downX, e.clientY - downY) > 8) return; // 드래그(팬)는 탭이 아니다
-    const hit = chartEventHit(e);
+    const hit = chartEventHit(e) || keyMomentHit(e);
     if (hit) showChartEventTip(hit, e.clientX, e.clientY, true);
     else hideChartEventTip(true);
   });
@@ -2207,7 +2274,32 @@ function drawChart(item, options = {}) {
       evSvg = chartEventMarkersSvg(evClusters, evYC);
     }
   }
-  if (mainChart) updateChartEventNote(evAll);
+  // 키 모먼트(큰 등락일) — 가격 플롯 위 ▲▼. 폰은 6곳·PC 는 12곳까지(비율 큰 순).
+  let kmSvg = "";
+  let kmPts = [];
+  let kmVersion = null;
+  if (mainChart && window.MirTimelineView && window.MirTimeline && chartKeyMomentsOn()) {
+    const tl = window.MirTimeline;
+    kmVersion = window.MirTimelineView.versionFor(item);
+    const kmStart = allRows.indexOf(rows[0]);
+    if (kmStart >= 0) {
+      const dates = allRows.map((r) => r.d);
+      const ms = window.MirTimelineView.momentsFor(item)
+        .map((m) => ({ ...m, idx: tl.barIndexForDate(dates, m.date) }))
+        .filter((m) => m.idx >= 0 && dates[m.idx] && String(dates[m.idx]).slice(0, 10) === m.date);
+      kmPts = tl.visibleMoments(ms, kmStart, rows.length, geom.mobile ? 6 : 12).map((m) => {
+        const i = m.idx - kmStart;
+        const bar = plotRows[i] || rows[i];
+        const up = m.pct > 0;
+        let y = up ? yFor(bar.h) - 9 : yFor(bar.l) + 9;
+        if (!Number.isFinite(y)) return null;
+        y = Math.max(padT + 6, Math.min(padT + plotH - 6, y));
+        return { x: xFor(i), y, up, m };
+      }).filter(Boolean);
+      kmSvg = chartKeyMomentsSvg(kmPts);
+    }
+  }
+  if (mainChart) updateChartEventNote(evAll, kmPts.length);
 
   // Stacked indicator panels.
   let cursorY = padT + plotH + evStripH + gap;
@@ -2258,6 +2350,8 @@ function drawChart(item, options = {}) {
     log: yLog, manual: yManual, scale: yScale, autoMin: autoRef.min, autoMax: autoRef.max,
     times: buildChartTimes(rows),
     events: mainChart ? { clusters: evClusters, yC: evYC } : null,
+    moments: mainChart ? kmPts : [],
+    kmVersion,
   };
   const isLine = chartState.chartType === "line";
   const isHeikin = chartState.chartType === "heikin";
@@ -2306,6 +2400,7 @@ function drawChart(item, options = {}) {
     ${chandelierSvg}
     ${patSvg}
     ${techLevelSvg}
+    ${kmSvg}
     ${plotClose}
     <clipPath id="chartDrawClip"><rect x="${padL}" y="${yManual ? padT : 0}" width="${(width - padL).toFixed(1)}" height="${(yManual ? plotH : padT + plotH + 2).toFixed(1)}"></rect></clipPath>
     <g id="chartDrawLayer" clip-path="url(#chartDrawClip)">${renderChartDrawings()}</g>

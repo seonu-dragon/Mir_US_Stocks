@@ -28,6 +28,15 @@
   - 거의 투명하거나 한 가지 색뿐인 이미지, 흰 글자만 있는 투명 아이콘(흰 원판에서 안 보임)은 버린다.
   - 같은 이미지가 서로 다른 도메인 4곳 이상에서 나오면 호스팅 업체 기본 아이콘으로 보고 버린다.
 
+수집 경로(2026-09-27 보강 — 첫 실행에서 KR 306·US 356 종목이 모노그램이었다)
+  - 봇 UA 를 막는 사이트(Chevron 403 등)가 많아 일반 브라우저 UA 로 받는다.
+  - 인증서가 약한 국내 사이트(SSLError)는 검증 없이 한 번 더 받는다(공개 아이콘 이미지만 받는다).
+  - <link rel=icon> 은 </head> 까지 본다(알리바바처럼 head 가 400KB 를 넘는 페이지가 있다).
+  - 사이트에서 못 받거나 작으면 Google s2 → gstatic faviconV2(최대 128px) 순으로, www. 를 뗀 도메인도 본다.
+  - LOGO_OVERRIDES: 파비콘이 회사 로고가 아닌 경우(삼성전자 파비콘은 파란 'S' 앱 아이콘뿐 — 같은 사이트의
+    정사각 'SAMSUNG' 로고를 지정), DART·Wikidata 도메인이 비었거나 틀린 경우(XOM·BLK 는 지주사 재편으로 CIK 가
+    바뀌어 Wikidata 에서 못 찾는다)만 손으로 적는다. 지정 아이콘은 여러 계열사가 같이 써도 기본 아이콘으로 보지 않는다.
+
 증분
   - 성공한 종목은 28일, 실패한 종목은 14일 뒤에 다시 확인한다. 새로 상위 N 에 든 종목이 먼저다.
   - 이미지가 바이트 단위로 같으면 파일을 다시 쓰지 않는다(Pillow WebP 인코딩은 결정적).
@@ -39,7 +48,7 @@
   data/logos/state.json       빌더 증분 상태(브라우저는 안 읽는다)
 
 실행: python scripts/build_company_logos.py [--market us|kr|all] [--top 1000] [--max 2500]
-                                           [--only AAPL,005930] [--out DIR] [--push]
+                                           [--only AAPL,005930] [--out DIR] [--force] [--push]
 """
 
 from __future__ import annotations
@@ -82,13 +91,56 @@ FAIL_RETRY_DAYS = 14
 GENERIC_DOMAINS = 4  # 같은 이미지가 이만큼의 서로 다른 도메인에서 나오면 기본 아이콘으로 본다
 WORKERS = 8
 TIMEOUT = 12
-UA = {"User-Agent": "Mozilla/5.0 (compatible; MirLogoBot/1.0; +https://seonu-dragon.github.io/Mir_US_Stocks/)"}
+UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/126.0 Safari/537.36 (compatible; MirLogoBot/1.0; +https://seonu-dragon.github.io/Mir_US_Stocks/)"}
 WDQS = "https://query.wikidata.org/sparql"
 WD_UA = {"User-Agent": "Mir-US-Stocks/1.0 (https://github.com/seonu-dragon/Mir_US_Stocks) company-logo-builder",
          "Accept": "application/sparql-results+json"}
 ETF_SECTORS = {"EXCHANGE TRADED FUNDS", "ETF", "etf"}
 SOURCE = "각 회사 공식 홈페이지 파비콘(도메인: KR DART 기업개황 · US Wikidata 공식 웹사이트)"
 SAFE_TICKER = re.compile(r"^[A-Za-z0-9.\-]{1,15}$")
+
+# 손으로 고친 도메인(dom)·아이콘(icon). icon 은 회사가 자기 사이트에 올린 이미지 URL 만 적는다.
+SAMSUNG_SQUARE = ("https://www.samsung.com/etc.clientlibs/samsung/clientlibs/consumer/global/"
+                  "clientlib-common/resources/images/logo-square-letter.png")
+_SAMSUNG_GROUP = ["005930", "009150", "006400", "207940", "028260", "032830", "000810",
+                  "010140", "018260", "028050", "016360", "029780"]
+LOGO_OVERRIDES: dict = {
+    "kr": {
+        **{t: {"icon": SAMSUNG_SQUARE} for t in _SAMSUNG_GROUP},  # 삼성 계열: 그룹 공통 'SAMSUNG' 로고
+        "078930": {"dom": "www.gs.co.kr"},          # GS — DART 홈페이지 비어 있음
+        "323410": {"dom": "www.kakaobank.com"},     # 카카오뱅크
+        "128940": {"dom": "www.hanmi.co.kr"},       # 한미약품
+        "111770": {"dom": "www.youngonecorp.com"},  # 영원무역
+        # 자사 파비콘이 16px 뿐이거나 없어서 그룹 대표 사이트의 큰 아이콘을 쓴다
+        "000660": {"dom": "www.sk.com"},            # SK하이닉스
+        "402340": {"dom": "www.sk.com"},            # SK스퀘어
+        "272210": {"dom": "www.hanwha.com"},        # 한화시스템
+        # DART 홈페이지가 옛 주소라 아이콘을 못 받는다
+        "009540": {"dom": "www.hdksoe.co.kr"},      # HD한국조선해양
+        "011070": {"dom": "www.lginnotek.com"},     # LG이노텍
+        "090430": {"dom": "www.amorepacific.com"},  # 아모레퍼시픽
+    },
+    "us": {
+        "XOM": {"dom": "corporate.exxonmobil.com"},
+        "GOOGL": {"dom": "www.google.com"},         # abc.xyz 파비콘은 16px 빨간 'A'
+        "GOOG": {"dom": "www.google.com"},
+        "SKHY": {"dom": "www.sk.com"},
+        "BLK": {"dom": "www.blackrock.com"},
+        "C": {"dom": "www.citigroup.com"},          # Wikidata 가 엉뚱한 도메인(citibnqa.com)을 준다
+        "SNDK": {"dom": "www.sandisk.com"},
+        "BHP": {"dom": "www.bhp.com"},
+        "BNS": {"dom": "www.scotiabank.com"},
+        "CM": {"dom": "www.cibc.com"},
+        "BE": {"dom": "www.bloomenergy.com"},
+        "NWG": {"dom": "www.natwestgroup.com"},
+        "B": {"dom": "www.barrick.com"},
+        "DB": {"dom": "www.db.com"},
+        "WPM": {"dom": "www.wheatonpm.com"},
+        "TRGP": {"dom": "www.targaresources.com"},
+        "IMO": {"dom": "www.imperialoil.ca"},
+    },
+}
 
 
 def now_kst() -> str:
@@ -329,9 +381,19 @@ ATTR_RE = {k: re.compile(rf"\b{k}\s*=\s*[\"']?([^\"'>]+)", re.I) for k in ("rel"
 
 
 def http_get(session, url: str):
+    import requests
+
     try:
-        r = session.get(url, headers=UA, timeout=TIMEOUT, allow_redirects=True)
-        return r
+        return session.get(url, headers=UA, timeout=TIMEOUT, allow_redirects=True)
+    except requests.exceptions.SSLError:
+        # 약한 인증서를 쓰는 국내 기업 사이트가 많다 — 공개 아이콘만 받으므로 검증 없이 한 번 더.
+        try:
+            import urllib3
+
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+            return session.get(url, headers=UA, timeout=TIMEOUT, allow_redirects=True, verify=False)
+        except Exception:
+            return None
     except Exception:
         return None
 
@@ -346,7 +408,9 @@ def icon_candidates(session, domain: str) -> list[str]:
     cands = []
     base = page.url if page is not None else f"https://{domain}/"
     if page is not None and "html" in (page.headers.get("content-type") or "html"):
-        for tag in LINK_RE.findall(page.text[:400_000]):
+        text = page.text
+        end = text.find("</head>")
+        for tag in LINK_RE.findall(text[: end if end > 0 else 3_000_000]):
             rel = ATTR_RE["rel"].search(tag)
             href = ATTR_RE["href"].search(tag)
             if not rel or not href or "icon" not in rel.group(1).lower():
@@ -361,10 +425,12 @@ def icon_candidates(session, domain: str) -> list[str]:
     cands.sort(key=lambda x: x[0], reverse=True)
     root = f"{urllib.parse.urlparse(base).scheme or 'https'}://{urllib.parse.urlparse(base).hostname or domain}"
     urls = [u for _, u in cands] + [f"{root}/apple-touch-icon.png", f"{root}/favicon.ico"]
-    return list(dict.fromkeys(urls))[:5]
+    return list(dict.fromkeys(urls))[:6]
 
 
 GOOGLE_S2 = "https://www.google.com/s2/favicons?domain={domain}&sz={size}"
+GSTATIC = ("https://t1.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL"
+           "&url=https://{domain}&size=128")
 # 파비콘을 못 찾은 도메인에 Google 이 200 으로 돌려주는 기본 지구본 아이콘(원본 sha1). 실행 시작 때
 # 존재하지 않는 도메인으로 한 번 받아 채운다(learn_google_default).
 GOOGLE_DEFAULT: set[str] = set()
@@ -378,12 +444,26 @@ def learn_google_default() -> None:
         GOOGLE_DEFAULT.add(hashlib.sha1(r.content).hexdigest())
 
 
-def fetch_logo(domain: str):
-    """(webp bytes, via, 원본 px, webp sha) 또는 None. 후보 중 원본이 가장 큰 것을 쓴다."""
+def apex_variants(domain: str) -> list[str]:
+    d = domain.lower()
+    return list(dict.fromkeys([d, d[4:]] if d.startswith("www.") and d.count(".") >= 2 else [d]))
+
+
+def fetch_logo(domain: str, icon: str | None = None):
+    """(webp bytes, via, 원본 px, webp sha) 또는 None. 후보 중 원본이 가장 큰 것을 쓴다.
+
+    icon(LOGO_OVERRIDES) 이 있으면 그 이미지를 먼저 쓰고, 못 받을 때만 평소 경로로 간다.
+    """
     import requests
 
     best = None  # (native, im, via)
     with requests.Session() as s:
+        if icon:
+            r = http_get(s, icon)
+            got = decode(r.content) if r is not None and r.status_code == 200 else None
+            if got and got[1] >= MIN_NATIVE and quality_ok(got[0]):
+                data = to_webp(got[0])
+                return data, "override", got[1], hashlib.sha1(data).hexdigest()[:16]
         for url in icon_candidates(s, domain):
             r = http_get(s, url)
             if r is None or r.status_code != 200:
@@ -395,12 +475,17 @@ def fetch_logo(domain: str):
                 best = (got[1], got[0], "site")
             if best[0] >= SIZE:
                 break
-        if best is None or best[0] < SIZE:
-            r = http_get(s, GOOGLE_S2.format(domain=urllib.parse.quote(domain), size=SIZE))
-            if r is not None and r.status_code == 200 and hashlib.sha1(r.content).hexdigest() not in GOOGLE_DEFAULT:
+        # 사이트에서 못 받았거나 작으면 구글 파비콘 캐시(s2 → gstatic 128px), www. 를 뗀 도메인까지.
+        for dom in apex_variants(domain):
+            for tpl, via in ((GOOGLE_S2, "google-s2"), (GSTATIC, "gstatic")):
+                if best is not None and best[0] >= SIZE:
+                    break
+                r = http_get(s, tpl.format(domain=urllib.parse.quote(dom), size=SIZE))
+                if r is None or r.status_code != 200 or hashlib.sha1(r.content).hexdigest() in GOOGLE_DEFAULT:
+                    continue
                 got = decode(r.content)
                 if got and got[1] >= MIN_NATIVE and quality_ok(got[0]) and (best is None or got[1] > best[0]):
-                    best = (got[1], got[0], "google-s2")
+                    best = (got[1], got[0], via)
     if best is None:
         return None
     data = to_webp(best[1])
@@ -409,11 +494,35 @@ def fetch_logo(domain: str):
 
 # ───────────────────────────────────────────────────────── 실행
 
-def due(rec: dict | None, domain: str | None, t0: date) -> bool:
+def same_brand(domains) -> bool:
+    """도메인들이 한 그룹(에코프로·JW·LG 계열 등)인지 — 첫 라벨이 같은 두 글자 이상으로 시작하면 그룹 로고로 본다.
+
+    호스팅 업체 기본 아이콘은 서로 무관한 회사 도메인에 퍼지므로 이 조건에 걸리지 않는다.
+    """
+    labels = []
+    for d in domains:
+        d = str(d or "").lower()
+        if d.startswith("www."):
+            d = d[4:]
+        labels.append(d.split(".")[0])
+    if len(labels) < 2:
+        return False
+    prefix = labels[0]
+    for lab in labels[1:]:
+        n = 0
+        while n < min(len(prefix), len(lab)) and prefix[n] == lab[n]:
+            n += 1
+        prefix = prefix[:n]
+    return len(prefix) >= 2
+
+
+def due(rec: dict | None, domain: str | None, t0: date, icon: str | None = None) -> bool:
     if not rec:
         return True
     if domain and rec.get("dom") != domain:
         return True
+    if (icon or None) != (rec.get("icon") or None):
+        return True  # 지정 아이콘이 생기거나 바뀌거나 빠졌다
     try:
         at = date.fromisoformat(rec.get("at") or "")
     except ValueError:
@@ -422,7 +531,8 @@ def due(rec: dict | None, domain: str | None, t0: date) -> bool:
     return (t0 - at) >= timedelta(days=days)
 
 
-def run_market(market: str, top: int, budget: int, only: set[str], state: dict, out_dir: Path) -> dict:
+def run_market(market: str, top: int, budget: int, only: set[str], state: dict, out_dir: Path,
+               force: bool = False) -> dict:
     snap = US_SNAPSHOT if market == "us" else KR_SNAPSHOT
     tickers = universe(snap, top)
     if only:
@@ -432,13 +542,15 @@ def run_market(market: str, top: int, budget: int, only: set[str], state: dict, 
     wd = wikidata_sites() if market == "us" else None
     if not GOOGLE_DEFAULT:
         learn_google_default()
+    overrides = LOGO_OVERRIDES.get(market) or {}
+    icons = {t: overrides[t]["icon"] for t in tickers if (overrides.get(t) or {}).get("icon")}
     domains: dict = {}
     for t in tickers:
-        dom = None
+        dom = (overrides.get(t) or {}).get("dom")
         prof = profiles.get(t) or {}
         if prof.get("alias"):
             prof = profiles.get(prof["alias"]) or {}
-        if prof.get("web"):
+        if not dom and prof.get("web"):
             dom = host_of(prof["web"])
         if not dom and market == "us":
             dom = us_domain(t, prof.get("cik"), wd)
@@ -446,41 +558,42 @@ def run_market(market: str, top: int, budget: int, only: set[str], state: dict, 
             dom = (st.get(t) or {}).get("dom")  # 이번에 못 찾으면 지난번 도메인
         domains[t] = dom
     t0 = today()
-    todo = [t for t in tickers if domains.get(t) and (only or due(st.get(t), domains[t], t0))]
+    todo = [t for t in tickers if domains.get(t) and (only or force or due(st.get(t), domains[t], t0, icons.get(t)))]
     # 새 종목(상태 없음) → 오래 확인 안 한 순
     todo.sort(key=lambda t: (t in st, (st.get(t) or {}).get("at") or ""))
     todo = todo[:budget]
     print(f"[{market.upper()}] 대상 {len(tickers)} · 도메인 {sum(1 for t in tickers if domains.get(t))} · 이번 확인 {len(todo)}")
 
-    by_domain = {}
-    for t in todo:
-        by_domain.setdefault(domains[t], []).append(t)
+    keys = list(dict.fromkeys((domains[t], icons.get(t)) for t in todo))
     started = time.time()
     with ThreadPoolExecutor(WORKERS) as ex:
-        results = dict(zip(by_domain, ex.map(fetch_logo, list(by_domain))))
-    print(f"  수집 {len(by_domain)}개 도메인 · {time.time() - started:.0f}s")
+        fetched = ex.map(lambda k: fetch_logo(k[0], k[1]) if k[1] else fetch_logo(k[0]), keys)
+        results = dict(zip(keys, fetched))
+    print(f"  수집 {len(keys)}개 도메인 · {time.time() - started:.0f}s")
 
-    # 기본 아이콘 판정: 이번 결과 + 지난 상태의 원본 해시를 도메인 단위로 센다.
+    # 기본 아이콘 판정: 이번 결과 + 지난 상태의 원본 해시를 도메인 단위로 센다(지정 아이콘은 뺀다).
     sha_domains: dict = {}
-    for dom, res in results.items():
-        if res:
+    for (dom, _icon), res in results.items():
+        if res and res[1] != "override":
             sha_domains.setdefault(res[3], set()).add(dom)
     for rec in st.values():
-        if rec.get("ok") and rec.get("sha") and rec.get("dom"):
+        if rec.get("ok") and rec.get("sha") and rec.get("dom") and rec.get("via") != "override":
             sha_domains.setdefault(rec["sha"], set()).add(rec["dom"])
-    generic = {sha for sha, ds in sha_domains.items() if len(ds) >= GENERIC_DOMAINS}
+    generic = {sha for sha, ds in sha_domains.items() if len(ds) >= GENERIC_DOMAINS and not same_brand(ds)}
 
     ok = fail = written = 0
     for t in todo:
         dom = domains[t]
-        res = results.get(dom)
+        res = results.get((dom, icons.get(t)))
         path = out_dir / market / f"{t}.webp"
-        if res and res[3] not in generic:
+        if res and (res[1] == "override" or res[3] not in generic):
             data, via, native, sha = res
             if not path.exists() or path.read_bytes() != data:
                 atomic_write_bytes(path, data)
                 written += 1
             st[t] = {"dom": dom, "ok": 1, "via": via, "px": native, "sha": sha, "at": t0.isoformat()}
+            if icons.get(t):
+                st[t]["icon"] = icons[t]
             ok += 1
         else:
             prev_ok = (st.get(t) or {}).get("ok") and path.exists()
@@ -492,10 +605,12 @@ def run_market(market: str, top: int, budget: int, only: set[str], state: dict, 
                 st[t] = {**st[t], "at": (t0 - timedelta(days=OK_REFRESH_DAYS - FAIL_RETRY_DAYS)).isoformat()}
             else:
                 st[t] = {"dom": dom, "ok": 0, "at": t0.isoformat()}
+            if icons.get(t):
+                st[t]["icon"] = icons[t]
             fail += 1
     # 기본 아이콘으로 판정된 해시를 가진 예전 파일도 정리한다.
     for t, rec in st.items():
-        if rec.get("ok") and rec.get("sha") in generic:
+        if rec.get("ok") and rec.get("sha") in generic and rec.get("via") != "override":
             p = out_dir / market / f"{t}.webp"
             if p.exists():
                 p.unlink()
@@ -513,6 +628,7 @@ def main() -> int:
     ap.add_argument("--max", type=int, default=2500, help="시장별 이번 실행 확인 상한")
     ap.add_argument("--only", default="", help="쉼표로 구분한 티커(테스트용)")
     ap.add_argument("--out", default="", help="출력 폴더(기본 data/logos)")
+    ap.add_argument("--force", action="store_true", help="기한과 관계없이 상위 N 전부 다시 확인")
     ap.add_argument("--push", action="store_true")
     args = ap.parse_args()
     only = {x.strip().upper() for x in args.only.split(",") if x.strip()}
@@ -525,7 +641,7 @@ def main() -> int:
     state = load_json(state_json, {}) or {}
     status = 0
     for m in (["us", "kr"] if args.market == "all" else [args.market]):
-        r = run_market(m, args.top, args.max, only, state, out_dir)
+        r = run_market(m, args.top, args.max, only, state, out_dir, force=args.force)
         if r["tried"] and r["ok"] == 0:
             print(f"[{m.upper()}] 성공 0 · 실패 {r['fail']} — 소스 장애로 보고 실패 처리(기존 파일 유지)")
             status = 1

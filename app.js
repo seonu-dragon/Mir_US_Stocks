@@ -720,8 +720,23 @@ async function switchMarketMode(mode) {
   selectedTicker = cfg.defaultTicker;
   selectedSectorEtf = (cfg.sectorEtfs[0] || {}).ticker || selectedSectorEtf;
   selectedSectorBenchmark = cfg.etfBenchmarks[0] || selectedSectorBenchmark;
+  rewriteUrlForMarketSwitch(cfg);
   resetMarketCaches();
   await loadData({ preserveRoute: true });
+}
+
+// 시장 전환 시 주소창의 반대 시장 종목(?ticker=005930)이 남으면 boot 가 그 종목을 다시 열어
+// "종목 없음" 오류가 난다 → 종목은 새 시장 기본 종목(국내 005930 · 미국 NVDA)으로, market 도 새 시장으로.
+function rewriteUrlForMarketSwitch(cfg) {
+  try {
+    const url = new URL(window.location.href);
+    const p = url.searchParams;
+    if (p.has("market")) p.set("market", cfg.id);
+    if (p.has("ticker")) p.set("ticker", cfg.defaultTicker);
+    // 다른 시장 종목에 묶인 딥링크 값(DCF 시나리오·커뮤니티 종목 필터·이벤트 스터디 종목)은 버린다.
+    ["dcf", "cticker", "communityTicker", "est"].forEach((k) => p.delete(k));
+    history.replaceState(history.state, "", url.toString());
+  } catch (_) { /* history 차단 환경 */ }
 }
 
 let marketModeUiReady = false;

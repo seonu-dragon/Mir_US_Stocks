@@ -5187,6 +5187,7 @@ function renderSearch(options = {}) {
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderStockTimeline === "function") renderStockTimeline(item);
+  if (typeof renderLockupCard === "function") renderLockupCard(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
@@ -6713,6 +6714,7 @@ const TRUST_RECOVERY = {
     tabs: "오늘 탭 · 캘린더 · 전체 일정",
   },
   "실적 IR 일정": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_ir_schedule.py" }, tabs: "오늘 탭 · 캘린더 · 전체 일정(실적)" },
+  "보호예수 해제": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_lockups.py" }, tabs: "오늘 탭 · 캘린더(보호예수 해제) · 종목 상세 이벤트 · 증자·CB" },
   "ETF 구성 종목": { us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_us_etf_holdings.py" }, tabs: "종목 탭 · 분석 · 구성 종목 / 이 종목을 담은 ETF" },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
@@ -6925,6 +6927,8 @@ function dataTrustSources() {
   // 통합 캘린더(2026-09-26) — 휴장·만기(오프라인 계산)는 매일, 국내 실적 IR 은 매일, 미국 ETF 구성은 월 1회.
   rows.push(source("휴장·만기 달력", "exchange_calendars(XKRX·XNYS) · 연준 일정표", window.MARKET_CALENDAR, ["events"], 72, "매일 06:40", "marketCalendar"));
   if (cfg.id === "kr" && cfg.features?.krIrSchedule !== false) rows.push(source("실적 IR 일정", "DART 기업설명회 개최 공시", window.KR_IR_SCHEDULE, ["rows"], 72, "매일 06:40", "krIrSchedule", "", true));
+  // 보호예수 해제(2026-09-27) — 38.co.kr 공모주 상세의 보호예수 표. 매일 06:40, 해제 일정은 늘 수십 건이라 0건이면 이상.
+  if (cfg.id === "kr" && cfg.features?.krLockups !== false) rows.push(source("보호예수 해제", "38커뮤니케이션(투자설명서 보호예수 표)", window.KR_LOCKUPS, ["releases"], 96, "매일 06:40", "krLockups"));
   if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
   // 국내 ETF 구성(2026-09-27, KRX ETF PDF) — 내 투자 › 보유의 ETF 룩스루가 읽는다. 주 1회(토요일).
   if (cfg.id === "kr") rows.push(source("ETF 구성 종목", "KRX 정보데이터시스템 ETF PDF", window.KR_ETF_HOLDINGS, ["etfs"], 24 * 12, "매주 토요일", "krEtfHoldings"));

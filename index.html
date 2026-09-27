@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=9e6cdebcba" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=9e6cdebcba"></noscript>
+    <link rel="preload" href="styles.css?v=15c5a37480" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=15c5a37480"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=92db1fbec2"></script>
+    <script src="build_id.js?v=afe075c256"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1582,6 +1582,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="stock-events-card animate-reveal" id="stockEvents"></section>
               <!-- 과거 이벤트 반응(event-study.js renderStockEventStudy) — data/event_study/tk 샤드 하나만 받는다 -->
               <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
+              <!-- 보호예수 해제(lockups.js renderLockupCard) — 국내 신규 상장주만, data/korea/lockups.js(lazy) -->
+              <section class="es-card lk-card animate-reveal" id="krLockupCard" hidden></section>
             </div>
             <div class="sd-view" id="sdv-flow" data-view="flow" role="tabpanel">
               <!-- 미국 ETF 구성 종목 / 이 종목을 담은 ETF(etf-holdings.js renderEtfHoldings) — SEC N-PORT 샤드 하나만 받는다 -->
@@ -2262,6 +2264,8 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
             <label class="grow">검색<input id="dilutionSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
+          <!-- 다가오는 보호예수 해제(lockups.js renderLockupOverhang) — 국내만 -->
+          <div class="lk-ov" id="dilutionLockups" hidden></div>
           <div class="institutional-meta" id="dilutionMeta"></div>
           <div class="insider-table-wrap" id="dilutionTable"></div>
         </div>
@@ -3288,7 +3292,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="community.js?v=567e03431f"></script>
     <script src="ai-mode.js?v=dca21f04cc"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=4d75c17333"></script>
+    <script src="disclosure-trackers.js?v=9edc009bf0"></script>
     <script src="movers.js?v=e7ddc838b5"></script>
     <script src="portfolio.js?v=667afbf126"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
@@ -3305,7 +3309,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=0894ceb6de"></script>
+    <script src="feature-data.js?v=0a0a5576fa"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3369,11 +3373,13 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table.js?v=c762a4e24a"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="mobile-cards.js?v=aae191cacc"></script>
-    <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
-    <script src="calendar-panel.js?v=cde775a5ef"></script>
+    <script src="calendar-panel-core.js?v=261cacf9f0"></script>
+    <script src="calendar-panel.js?v=16ce5f782e"></script>
+    <script src="lockup-core.js?v=68e009b38b"></script>
+    <script src="lockups.js?v=b4b7282745"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=923868c41a"></script>
+    <script src="app.js?v=c1ee473e10"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=61f0c3fb14"></script>

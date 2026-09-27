@@ -168,6 +168,9 @@ const FEATURE_DATA = {
   marketCalendar: { global: "MARKET_CALENDAR", path: "data/market_calendar.js" },
   // 국내 실적 발표 예정(DART 기업설명회 개최 공시 파싱, build_kr_ir_schedule.py). 통합 캘린더를 열 때만.
   krIrSchedule: { global: "KR_IR_SCHEDULE", path: "data/korea/ir_schedule.js", feature: "krIrSchedule", krOnly: true, lazy: true },
+  // 국내 신규 상장주 보호예수 해제 일정 + 공모 수요예측·청약 결과(build_kr_lockups.py, ~150KB).
+  // 통합 캘린더·종목 상세 이벤트 카드·증자·CB 트래커가 처음 그릴 때만 받는다(lazy).
+  krLockups: { global: "KR_LOCKUPS", path: "data/korea/lockups.js", feature: "krLockups", krOnly: true, lazy: true },
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
   // etf-holdings.js 가 종목 분석을 열 때 하나만 fetch 한다.
   usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },
@@ -363,6 +366,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).
           () => { if (typeof renderStockTimeline === "function") renderStockTimeline(item); },
+          () => { if (typeof renderLockupCard === "function") renderLockupCard(item); },
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },

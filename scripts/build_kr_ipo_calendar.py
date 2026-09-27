@@ -235,6 +235,44 @@ def parse_listing_table(soup, comp_map: dict[str, str], underwriters=None) -> li
     return ipos
 
 
+LOCKUPS = ROOT / "data" / "korea" / "lockups.json"
+DEMAND_KEYS = ("instCompetition", "commitPct", "subscriptionCompetition")
+
+
+def _name_key(name: str) -> str:
+    """'영광(구.영광공작소)' · '시프트업(유가)' → '영광' · '시프트업' (괄호·공백 제거)."""
+    return re.sub(r"\([^)]*\)|\s", "", clean_company_name(name or ""))
+
+
+def attach_demand_stats(rows: list[dict], lockups_path: Path = LOCKUPS) -> int:
+    """수요예측 기관 경쟁률·의무보유 확약 비율·청약 경쟁률을 붙인다.
+
+    build_kr_lockups.py 가 같은 38.co.kr 의 수요예측 결과 목록·공모주 상세에서 이미 읽어 둔 값을
+    기업명으로 이어 붙인다(여기서 추가 요청은 하지 않는다). 확약 비율은 수요예측 **신청** 수량 기준이다.
+    """
+    try:
+        lk = json.loads(lockups_path.read_text(encoding="utf-8"))
+    except Exception:
+        return 0
+    by_name = {}
+    for r in lk.get("ipos") or []:
+        if isinstance(r, dict) and r.get("company"):
+            by_name.setdefault(_name_key(r["company"]), r)
+    n = 0
+    for row in rows:
+        src = by_name.get(_name_key(row.get("company", "")))
+        if not src:
+            continue
+        hit = False
+        for k in DEMAND_KEYS:
+            v = src.get(k)
+            if isinstance(v, (int, float)) and v > 0:
+                row[k] = v
+                hit = True
+        n += hit
+    return n
+
+
 def build() -> dict | None:
     """수집 결과 payload. 소스 조회에 실패하면 None(기존 파일 유지 신호)."""
     comp_map = load_company_ticker_map()
@@ -279,6 +317,8 @@ def build() -> dict | None:
             seen.add(ipo["company"])
             unique_ipos.append(ipo)
 
+    attach_demand_stats(unique_ipos)
+
     priced = sum(1 for r in unique_ipos if r.get("offerPrice") is not None)
     pending = sum(1 for r in unique_ipos if r.get("offerPricePending"))
     print(f"  공모가 확정 {priced}건 / 미확정(밴드만) {pending}건")
@@ -291,7 +331,8 @@ def build() -> dict | None:
         "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. "
                 "offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 "
                 "공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 "
-                "(중간값을 공모가로 추정하지 않는다).",
+                "(중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 "
+                "비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
         "ipos": unique_ipos
     }
     return payload

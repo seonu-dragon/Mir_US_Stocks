@@ -13,7 +13,7 @@
 
 산출물(<out>/):
   calendar-us.ics   미국 실적 예정일(시총 상위)·배당락일·IPO 가격확정·월간 옵션 만기·휴장·단축 거래
-  calendar-kr.ics   국내 실적 IR·배당 기준일·지급일, 공모 청약·신규 상장, 코스피200 옵션 만기·휴장
+  calendar-kr.ics   국내 실적 IR·배당 기준일·지급일, 공모 청약·신규 상장·보호예수 해제(추정일), 코스피200 옵션 만기·휴장
   econ.ics          FOMC 금리 결정(연준 공식 일정)·경제지표(investing.com, 워커 경유)·산업 지표 발표일
   disclosures-us.xml  SEC 8-K 중 중요 항목(빌더의 hot 분류 + 자사주)
   activist-us.xml     SEC 13D/13D-A(경영참여 목적 5%+)
@@ -456,6 +456,44 @@ def kr_calendar_events(data: Path, today: date) -> list[Event]:
     return events
 
 
+def kr_lockup_events(data: Path, today: date) -> list[Event]:
+    """국내 신규 상장주 의무보유(보호예수) 해제 — data/korea/lockups.json(build_kr_lockups.py).
+
+    해제일은 상장일 + 매각제한 기간으로 계산한 추정일이라 설명에 그렇게 적는다. UID 는 (종목·해제일).
+    """
+    lk = load_json(data / "korea" / "lockups.json") or {}
+    events: list[Event] = []
+    for r in lk.get("releases") or []:
+        if not isinstance(r, dict):
+            continue
+        d = parse_day(r.get("date"))
+        if not d or not in_window(d, today):
+            continue
+        co = r.get("company") or ""
+        shares = r.get("shares")
+        pct = r.get("pct")
+        head = f"{shares:,.0f}주" if isinstance(shares, (int, float)) else ""
+        if isinstance(pct, (int, float)):
+            head += f"(상장일 기준 주식수의 {pct:.1f}%)"
+        types = r.get("types") or {}
+        mix = ", ".join(f"{k} {v:,.0f}주" for k, v in types.items() if isinstance(v, (int, float)))
+        periods = "·".join(r.get("periods") or [])
+        desc = (f"{co}({r.get('code') or ''}) 상장 {r.get('listingDate') or ''} 뒤 {periods} 의무보유가 끝나는 물량 {head}. "
+                + (f"구성: {mix}. " if mix else "")
+                + "해제일은 상장일 + 기간으로 계산한 추정일(휴일이면 다음 영업일, 우리사주는 예탁일 기준). "
+                "기관 수요예측 확약 배정 물량은 포함되지 않습니다. 출처: 38커뮤니케이션 공모주 상세(투자설명서 보호예수 표). "
+                "매도 예정이 아니라 매도가 가능해지는 날입니다. 투자 권유가 아닙니다.")
+        events.append(Event(
+            stable_uid("kr-lockup", r.get("code") or co, d.isoformat()),
+            f"[보호예수 해제] {co}" + (f" {pct:.1f}%" if isinstance(pct, (int, float)) else ""),
+            day=d,
+            description=desc,
+            url=str(r.get("link") or ""),
+            categories=("보호예수",),
+        ))
+    return events
+
+
 def market_calendar_events(data: Path, today: date, market: str) -> list[Event]:
     """휴장·단축 거래(두 시장)와 국내 파생 만기 — data/market_calendar.json(exchange_calendars 계산).
 
@@ -804,8 +842,9 @@ def build_all(root: Path, out: Path, *, now: datetime, worker_rows: list[dict], 
             "시총 상위 실적 예정일·배당락일·IPO 가격확정·월간 옵션 만기·휴장일",
             us_calendar_events(data, today) + market_calendar_events(data, today, "us"))
     add_cal("calendar-kr", "kr", "국내 일정",
-            "실적 IR·배당 기준일·지급일, 공모 청약·신규 상장, 옵션 만기·휴장일",
-            kr_calendar_events(data, today) + kr_ir_events(data, today) + market_calendar_events(data, today, "kr"))
+            "실적 IR·배당 기준일·지급일, 공모 청약·신규 상장·보호예수 해제, 옵션 만기·휴장일",
+            kr_calendar_events(data, today) + kr_ir_events(data, today) + kr_lockup_events(data, today)
+            + market_calendar_events(data, today, "kr"))
     add_cal("econ", "all", "경제 일정",
             "FOMC 금리 결정·한미 주요 경제지표·산업 지표 발표일(한국 시간)", econ_events(data, today, worker_rows))
 

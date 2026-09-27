@@ -29,6 +29,7 @@
     py scripts/check_data_freshness.py --group market-calendar    # market-calendar.yml 말미
     py scripts/check_data_freshness.py --group etf-holdings       # market-calendar.yml etf 잡
     py scripts/check_data_freshness.py --group company-logos      # company-info.yml logos 잡
+    py scripts/check_data_freshness.py --group kr-etf-holdings    # kr-valuation-band.yml etf 잡
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -252,6 +253,11 @@ CHECKS = {
     ],
     "etf-holdings": [
         ("data/etf_holdings/index.json", 40, True),
+    ],
+    # kr-valuation-band.yml etf 잡(매주 토요일). 실행마다 updatedAtKst 를 새로 쓴다 — 12일이면
+    # 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료·차단 시 전량 실패).
+    "kr-etf-holdings": [
+        ("data/korea/etf_holdings.json", 12, True),
     ],
     "screener-backtest": [
         ("data/screener_backtest_meta.json", 10, False),

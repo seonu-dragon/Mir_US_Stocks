@@ -15002,6 +15002,65 @@ button.calp-who:hover strong { text-decoration: underline; }
   .etfh-sub { max-width: 170px; }
 }
 
+/* ===== ETF 룩스루 · 증권사 CSV 가져오기 미리보기 (lookthrough.js, 2026-09-27) ===== */
+.lt-card { margin-bottom: var(--space-4); }
+.lt-coverage { margin: 4px 0 14px; }
+.lt-stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--surface-2); }
+.lt-seg { display: block; height: 100%; }
+.lt-seg.is-direct, .lt-legend i.is-direct { background: var(--primary); }
+.lt-seg.is-covered, .lt-legend i.is-covered { background: color-mix(in srgb, var(--primary) 55%, var(--surface-2)); }
+.lt-seg.is-rest, .lt-legend i.is-rest { background: color-mix(in srgb, var(--muted) 45%, var(--surface-2)); }
+.lt-seg.is-missing, .lt-legend i.is-missing { background: repeating-linear-gradient(45deg, var(--muted) 0 3px, var(--surface-2) 3px 6px); }
+.lt-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 6px 0 0; font-size: var(--fs-cap); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.lt-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lt-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.lt-h4 { margin: 0 0 6px; font-size: var(--fs-sub); font-weight: var(--fw-strong); color: var(--text-2); }
+.lt-h4-sub { font-weight: normal; color: var(--muted); font-size: var(--fs-cap); }
+.lt-table .etfh-sub { max-width: 200px; }
+.lt-src { gap: 4px; }
+.lt-src span { padding: 1px 6px; white-space: nowrap; }
+.lt-src span.is-direct { border-color: var(--primary); color: var(--text); }
+.lt-overlaps { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lt-ov-head { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-sub); }
+.lt-overlaps .etfh-bar { width: 100%; margin: 4px 0 0; height: 6px; }
+.lt-ov-sub { margin: 3px 0 0; font-size: var(--fs-cap); color: var(--muted); overflow-wrap: anywhere; }
+.lt-small { font-size: var(--fs-cap); margin: 0; }
+.lt-etfs { margin-top: 14px; }
+.lt-missing { white-space: normal; max-width: none; }
+.lt-src-inline, .lt-asof-inline { display: none; }
+.pf-import-preview { margin: 0 0 var(--space-3); padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); min-width: 0; }
+.pf-import-preview[hidden] { display: none; }
+.pf-imp-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 6px; }
+.pf-imp-head h4 { margin: 0; font-size: var(--fs-body); }
+.pf-imp-head .muted { font-size: var(--fs-cap); }
+.pf-imp-note { margin: 0 0 8px; font-size: var(--fs-cap); }
+.pf-imp-error { margin: 0 0 6px; color: var(--tint-danger-fg); }
+.pf-imp-wrap { max-height: 360px; overflow: auto; background: var(--panel); border-radius: var(--r-sm); }
+.pf-imp-table { width: 100%; min-width: 0; }
+.pf-imp-table td, .pf-imp-table th { font-size: var(--fs-sub); }
+.pf-imp-table tr.is-skip td { color: var(--muted); }
+.pf-imp-chk { width: 28px; }
+.pf-imp-raw { overflow-wrap: anywhere; }
+.pf-imp-match select { max-width: 240px; min-height: 32px; font-size: var(--fs-sub); }
+.pf-imp-ok { color: var(--text); }
+.pf-imp-skip { font-size: var(--fs-cap); color: var(--muted); }
+.pf-imp-status { white-space: nowrap; font-size: var(--fs-cap); color: var(--text-2); }
+.pf-imp-replace { display: flex; align-items: center; gap: 6px; margin: 10px 0 0; font-size: var(--fs-sub); color: var(--text-2); }
+.pf-imp-actions { display: flex; gap: 8px; margin-top: 10px; }
+@media (max-width: 640px) {
+  .lt-table .lt-col-split, .lt-etfs .lt-col-split { display: none; }
+  .lt-table .etfh-bar { display: none; }
+  .lt-table .lt-col-src, .lt-etfs .lt-col-date { display: none; }
+  .lt-src-inline { display: flex; margin-top: 4px; }
+  .lt-asof-inline { display: block; }
+  .lt-src span { font-size: 11px; }
+  .pf-import-preview { padding: 10px; }
+  .pf-imp-match select { max-width: 130px; }
+  .pf-imp-table .pf-imp-status { display: none; }
+  .pf-imp-table td, .pf-imp-table th { padding: 6px 4px; font-size: var(--fs-cap); }
+  .pf-imp-raw { max-width: 90px; }
+}
+
 /* ===== 찾기 목록(배당 랭킹·신규상장·관리·경보) · 환율 계산기 · 시장지도 '기타 N개' 묶음 ===== */
 .ft-chips-wrap { display: flex; flex: 1 1 auto; align-items: center; gap: 6px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
 .ft-chips-wrap::-webkit-scrollbar { display: none; }

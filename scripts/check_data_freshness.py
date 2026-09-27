@@ -16,6 +16,7 @@
     py scripts/check_data_freshness.py --group short-interest  # short-interest.yml 말미
     py scripts/check_data_freshness.py --group edge-stats      # weekly-edge-stats.yml 말미
     py scripts/check_data_freshness.py --group 13f             # 13f-quarterly-refresh.yml 말미
+    py scripts/check_data_freshness.py --group 13f-holders     # 13f-quarterly-refresh.yml institutional-holders 잡
     py scripts/check_data_freshness.py --group white-house     # white-house-schedule.yml 말미
     py scripts/check_data_freshness.py --group macro-odds      # macro-odds.yml 말미
     py scripts/check_data_freshness.py --group earnings-move   # daily-earnings-calendar.yml 말미
@@ -176,6 +177,11 @@ CHECKS = {
     # 13f-quarterly-refresh.yml — 분기 공시(45일 시차)라 정상 상태도 오래 늙어 보인다.
     "13f": [
         ("data/institutional_13f.json", 120, True),
+    ],
+    # 13f-quarterly-refresh.yml institutional-holders 잡 — 분기 데이터셋(3개월 창)이 나올 때만 새로 쓰고
+    # 새 창이 없으면 파일을 건드리지 않는다. 창 간격 ~92일 + 공개 지연 ~2주 + 확인 크론 간격 → 130일.
+    "13f-holders": [
+        ("data/institutional_holders/index.json", 130, True),
     ],
     # white-house-schedule.yml(하루 3회). 스키마가 바뀌면 0건 + 신선한 타임스탬프가
     # 푸시될 수 있어 나이만이 아니라 0건(eventCount)도 본다.

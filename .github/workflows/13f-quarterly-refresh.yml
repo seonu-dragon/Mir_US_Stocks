@@ -6,7 +6,23 @@ on:
     - cron: "5 6 5 * *"
     # 분기 공시 집중 시즌(2·5·8·11월) 중순 추가 점검
     - cron: "10 6 15 2,5,8,11 *"
+    # SEC Form 13F 데이터셋(3개월 제출 창 zip)은 창이 끝난 뒤 2주쯤 지나 공개된다
+    # (6~8월 창 → 9월 중순, 실측 2026-09-14). 3·6·9·12월 20일·28일에 새 창을 확인한다 — holders 잡.
+    # 매월 5일 실행에서도 holders 잡이 돌지만 새 창이 없으면 곧바로 끝난다(증분).
+    - cron: "20 6 20,28 3,6,9,12 *"
   workflow_dispatch:
+    inputs:
+      job:
+        description: "실행할 잡 (all | snapshot = 기관 100곳 포트폴리오 | holders = 종목별 기관 보유 변화)"
+        required: false
+        default: "all"
+        type: choice
+        options: [all, snapshot, holders]
+      force:
+        description: "holders: 이미 처리한 최신 데이터셋이어도 다시 계산"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: write
@@ -17,6 +33,10 @@ concurrency:
 
 jobs:
   refresh-13f:
+    # 기관 100곳 포트폴리오(13f.info). 데이터셋 확인용 크론(20·28일)에는 돌지 않는다.
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.job != 'holders') ||
+      (github.event_name == 'schedule' && github.event.schedule != '20 6 20,28 3,6,9,12 *')
     runs-on: ubuntu-latest
     timeout-minutes: 120  # 실측 10분 안팎(2026-08)
     steps:
@@ -53,4 +73,47 @@ jobs:
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
           MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
+  # 종목별 기관 보유 변화 — SEC Form 13F 데이터셋(zip 약 100MB/창)을 스트리밍 집계. 새 창이 없으면
+  # 곧바로 끝나고(파일 안 건드림), 새 창이면 그 창과 직전 창만 받는다. 첫 실행(상태 없음)은 추이용 9개 창
+  # (약 0.9GB)을 차례로 받아 20~40분 걸린다. 러너 디스크는 창 하나씩 받고 지운다.
+  institutional-holders:
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.job != 'snapshot') ||
+      github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # OpenFIGI(CUSIP → 티커)는 무키로 돈다 — OPENFIGI_API_KEY 시크릿이 있으면 더 빠르고 더 많이 묻는다.
+      - name: Build and publish institutional holders (13F data sets)
+        env:
+          OPENFIGI_API_KEY: ${{ secrets.OPENFIGI_API_KEY }}
+          FORCE: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '--force' || '' }}
+        run: python scripts/build_13f_holders.py --push $FORCE
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group 13f-holders
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} (institutional holders) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

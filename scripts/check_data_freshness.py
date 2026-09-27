@@ -148,6 +148,9 @@ CHECKS = {
     # 산출물이 어느 그룹에도 없어, 소스가 죽어도 Actions 는 영원히 초록이었다.
     "sec-daily": [
         ("data/insider_trades.json", 4, False),
+        # Form 144 매도 예정(build_form144.py, insider-trades.yml 의 다음 스텝). 추적 상위 1000종목이면
+        # 하루 수십 건이 나와 45일 보관분이 0건일 수 없다 — 0건(count)도 잡는다.
+        ("data/form144.json", 4, True),
         # 의회 공시는 제출이 몰려 빈 날이 있지만 tradeCount 는 5년 누적이라
         # 0 이면 소스가 깨진 것이다.
         ("data/congress_trades.json", 8, True),

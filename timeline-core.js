@@ -33,6 +33,11 @@
   function isDate(d) {
     return typeof d === "string" && /^\d{4}-\d{2}-\d{2}/.test(d);
   }
+  // 8-K 3줄 요약·Form 144 줄 만들기(sec-filings-core.js). 브라우저는 전역, node 테스트는 require.
+  function secCore() {
+    if (root && root.MirSecFilings) return root.MirSecFilings;
+    try { return typeof require === "function" ? require("./sec-filings-core.js") : null; } catch (e) { return null; }
+  }
   function day(d) {
     return String(d).slice(0, 10);
   }
@@ -115,13 +120,15 @@
   //   earnings, dividends, splits,            // 상세 파일(earningsHistory · dividends · splits)
   //   earnReactions, earnReleases, earnMoves, // KR_EARNINGS_REACTIONS.rows · EARNINGS_RELEASES.releases · EARNINGS_MOVE_COMPARE.stocks[t]
   //   usFilings, usDilution, insiders, activist,       // MATERIAL_EVENTS.events · US_DILUTION.rows · INSIDER_TRADES.trades · ACTIVIST_STAKES.filings
+  //   form144,                                         // FORM144_FILINGS.filings(매도 예정 신고 + Form 4 짝짓기)
   //   krFilings, krEventDetails, krDividends, krContracts, krMajor, krInsiders, // DART 계열
   //   movers,        // MOVERS_REASONS (tradeDate + up/down)
   //   krReports,     // KR_CONSENSUS.stocks[t].reports
   //   history,       // { rows: 이벤트 스터디 종목 샤드 [[k, d0, car1, ...]], labels: {k: 라벨}, scale }
   //   moments,       // keyMoments() 결과 — '가격' 항목으로 넣는다
   // }
-  // → [{ id, date, cat, title, detail, link, goto, pct, src }] 최신순
+  // → [{ id, date, cat, title, detail, link, goto, pct, src, lines?, linesSrc?, linesLabel? }] 최신순
+  //   lines: 8-K 3줄 요약(규칙/AI) — 있으면 화면이 detail 아래에 줄로 보여 주고 출처 라벨을 단다.
   function collectTimeline(src) {
     const s = src || {};
     const kr = Boolean(s.kr);
@@ -231,9 +238,12 @@
         if (e && !e.link) e.link = f.link || "";
         if (items.length === 1) continue;
       }
+      const sc = secCore();
+      const sum = sc ? sc.eightkLines(f) : { lines: [] };
       push({
         date: f.fileDate, cat: isEarn && items.length === 1 ? "earn" : "filing", src: "8k",
         title: `8-K${f.hot ? " 주요 공시" : " 공시"}`, detail: items.map((it) => it.label).filter(Boolean).join(" · "), link: f.link || "",
+        ...(sum.lines.length ? { lines: sum.lines, linesSrc: sum.src, linesLabel: sum.label } : {}),
       });
     }
     for (const r of Array.isArray(s.usDilution) ? s.usDilution : []) {
@@ -260,6 +270,18 @@
       push({
         date: g.date, cat: "own", src: "insider", title: `내부자 ${g.code === "P" ? "매수" : "매도"}(Form 4)${g.n > 1 ? ` ${g.n}건` : ""}`,
         detail: [who, g.value ? `합계 ${usdShort(g.value)}` : ""].filter(Boolean).join(" · "), link: g.link,
+        goto: { view: "flow", card: "stockSmartMoney" },
+      });
+    }
+    // Form 144 매도 예정 신고 — 신고 1건 = 항목 1개. 같은 사람의 Form 4 매도를 찾았는지 함께 적는다.
+    for (const r of Array.isArray(s.form144) ? s.form144 : []) {
+      if (!r || !isDate(r.fileDate) || !mine(r.ticker)) continue;
+      const sc = secCore();
+      if (!sc) break;
+      const st = sc.form144Status(r);
+      push({
+        date: r.fileDate, cat: "own", src: "form144", title: `Form 144 매도 예정 신고 · ${st.label}`,
+        detail: [sc.form144Line(r), st.key === "sold" ? st.detail : ""].filter(Boolean).join(" · "), link: r.link || "",
         goto: { view: "flow", card: "stockSmartMoney" },
       });
     }

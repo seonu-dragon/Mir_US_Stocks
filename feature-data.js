@@ -108,6 +108,9 @@ const FEATURE_DATA = {
   // (lazy, activateTab 참고). 파이프라인이 파일을 배포하기 전에는 로드가 실패하고,
   // 그때는 서브탭 자체가 숨는다(applySearchSubVisibility).
   usDilution: { global: "US_DILUTION", path: "data/us_dilution.js", usOnly: true, lazy: true },
+  // Form 144 매도 예정 신고 + Form 4 짝짓기(build_form144.py). 공시 › 내부자의 'Form 144' 필터와
+  // 종목 통합 타임라인이 처음 필요할 때 받는다(lazy). 내부자 기능을 끈 시장(KR)에서는 받지 않는다.
+  form144: { global: "FORM144_FILINGS", path: "data/form144.js", feature: "insider", usOnly: true, lazy: true },
   // KR 일일 공매도 거래비중(KRX). 잔고(short_interest)와 별개 파일 — 공매도 탭을
   // 열 때만 시도(lazy)하고, 없으면 잔고/거래비중 토글이 숨는다.
   krShortVolume: { global: "KR_SHORT_VOLUME", path: "data/korea/short_volume.js", feature: "shortInterest", krOnly: true, lazy: true },

@@ -29,8 +29,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      # 8-K 3줄 요약: 규칙 기반(LLM 없음)이 기본이고, --llm-max 건만 시총 상위의 중요 Item 을
+      # Gemini flash-lite 로 요약한다(원문에 없는 숫자가 든 줄은 버림, 결과는 행에 캐시). 무료 한도를
+      # 보도자료 요약·특징주 사유와 나눠 쓰므로 실행당 2건. 키가 없으면 규칙 요약만.
       - name: Build material events
-        run: python scripts/build_material_events.py --backfill-days 14 --top 1500 --push
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/build_material_events.py --backfill-days 14 --top 1500 --llm-max 2 --push
       # 실적 보도자료 한국어 요약: 위 피드의 Item 2.02 8-K → EX-99.1 원문 → Gemini.
       # 요약 숫자는 원문 텍스트에 있는지 검증해 없으면 버린다. 한 실행 최대 30건.
       - name: Earnings press release summaries (Gemini)

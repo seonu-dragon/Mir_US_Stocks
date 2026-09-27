@@ -6731,6 +6731,10 @@ const TRUST_RECOVERY = {
     us: { workflow: "Insider trades (SEC Form 4)", script: "scripts/build_insider_trades.py" },
     tabs: "스마트머니 신호",
   },
+  "Form 144 매도 예정": {
+    us: { workflow: "Insider trades (SEC Form 4)", script: "scripts/build_form144.py" },
+    tabs: "공시 › 내부자 › Form 144 매도 예정 · 종목 통합 타임라인",
+  },
   "주요 공시": {
     us: { workflow: "Material events (SEC 8-K)", script: "scripts/build_material_events.py" },
     kr: { workflow: "KR DART disclosures + ownership", script: "scripts/build_kr_disclosures.py" },
@@ -6862,6 +6866,7 @@ function dataTrustSources() {
     },
   ];
   if (cfg.features?.insider !== false) rows.push(source("내부자 거래", "SEC Form 4", window.INSIDER_TRADES, ["trades"], 72, "영업일 기준 수집", "insider"));
+  if (cfg.features?.insider !== false && cfg.id === "us") rows.push(source("Form 144 매도 예정", "SEC Form 144 · Form 4 대조", window.FORM144_FILINGS, ["filings"], 72, "매일 13:17 (내부자 거래 직후)", "form144"));
   if (cfg.features?.materialEvents !== false) rows.push(source("주요 공시", cfg.id === "kr" ? "DART · 공시" : "SEC 8-K", window.MATERIAL_EVENTS, ["events"], 72, "매일", "events"));
   if (cfg.features?.activist !== false) rows.push(source("대량보유", "SEC 13D/G", window.ACTIVIST_STAKES, ["filings"], 168, "매주", "activist"));
   if (cfg.features?.ipo !== false) rows.push(source("IPO", cfg.id === "kr" ? "KRX · 공시" : "SEC S-1 · 424B4", window.IPO_CALENDAR, ["ipos"], 168, "매주", "ipo"));

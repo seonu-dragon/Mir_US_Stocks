@@ -45,8 +45,8 @@ function renderLockupCard(item) {
   const rows = info.upcoming.slice(0, 6).map((r) => {
     const val = core.valueAtPrice(r.shares, price);
     return `<tr>
-      <td class="ins-date">${escapeHtml(r.date)} <span class="ins-sub">${escapeHtml(core.relLabel(today, r.date))}</span></td>
-      <td>${escapeHtml((r.periods || []).join("·"))}</td>
+      <td class="ins-date">${escapeHtml(r.date)} <span class="ins-sub">${escapeHtml(core.relLabel(today, r.date))}</span>
+        <div class="ins-sub">상장 ${escapeHtml((r.periods || []).join("·"))} 후</div></td>
       <td class="num">${escapeHtml(core.fmtShares(r.shares))}${val ? `<div class="ins-sub">현재가 환산 ${escapeHtml(core.fmtWon(val))}</div>` : ""}</td>
       <td class="num"><strong>${r.pct != null ? `${Number(r.pct).toFixed(1)}%` : "—"}</strong></td>
       <td class="lk-types">${escapeHtml(core.typeLine(r.types))}</td>
@@ -57,7 +57,7 @@ function renderLockupCard(item) {
   const statHtml = stats.length ? `<dl class="lk-stats">${stats.map((s) => `<div><dt>${escapeHtml(s.k)}</dt><dd>${escapeHtml(s.v)}${s.note ? `<small class="muted"> ${escapeHtml(s.note)}</small>` : ""}</dd></div>`).join("")}</dl>` : "";
   let body;
   if (rows) {
-    body = `<div class="lk-table-wrap"><table class="insider-table lk-table"><thead><tr><th>해제일(추정)</th><th>상장 후</th><th class="num">주식수</th><th class="num">상장일 주식수 대비</th><th>구성</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    body = `<div class="lk-table-wrap"><table class="insider-table lk-table"><thead><tr><th>해제일(추정)</th><th class="num">주식수</th><th class="num" title="상장일 기준 공모 후 주식수 대비">비율</th><th>구성</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   } else if (ipo && ipo.noTable) {
     body = `<p class="muted">이 종목은 공모주 상세에 보호예수 표가 없어(2025년 이전 상장 양식) 해제 일정을 싣지 못했습니다.</p>`;
   } else if (ipo && ipo.verified === false) {
@@ -68,7 +68,7 @@ function renderLockupCard(item) {
   }
   const src = (info.next && info.next.link) || (ipo && ipo.no ? `https://www.38.co.kr/html/fund/?o=v&no=${encodeURIComponent(ipo.no)}` : "");
   host.hidden = false;
-  host.innerHTML = `<div class="es-card-head"><h3>보호예수 해제</h3><span class="muted">신규 상장주 의무보유 물량${ipo && ipo.listingDate ? ` · 상장 ${escapeHtml(ipo.listingDate)}` : ""}</span></div>
+  host.innerHTML = `<div class="es-card-head"><h3>보호예수 해제</h3><span class="muted">신규 상장주 의무보유 물량 · 비율은 상장일 주식수 대비${ipo && ipo.listingDate ? ` · 상장 ${escapeHtml(ipo.listingDate)}` : ""}</span></div>
     ${body}
     ${statHtml}
     <p class="muted lk-note">${escapeHtml(LOCKUP_DISCLAIMER)}

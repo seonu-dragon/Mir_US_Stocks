@@ -22,9 +22,11 @@
     { id: "holiday", label: "휴장" },
     { id: "expiry", label: "만기" },
     // 국내 전용(신규 상장주 의무보유 해제). markets 가 있으면 그 시장에서만 칩을 보인다.
-    { id: "lockup", label: "보호예수 해제", markets: ["kr"] },
+    { id: "lockup", label: "보호예수 해제", short: "보호예수", markets: ["kr"] },
   ];
   const KIND_LABEL = Object.fromEntries(KINDS.map((k) => [k.id, k.label]));
+  // 목록 항목 앞 태그는 폭이 좁아 짧은 이름을 쓴다(없으면 label).
+  const KIND_SHORT = Object.fromEntries(KINDS.map((k) => [k.id, k.short || k.label]));
   // 종목에 붙는 일정(관심종목만 보기가 거르는 대상). 휴장·만기·경제지표는 시장 전체 일정이라 그대로 둔다.
   const STOCK_KINDS = new Set(["earnings", "dividend", "ipo", "lockup"]);
   const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
@@ -237,7 +239,7 @@
       if (types.length) parts.push(types.join("·"));
       return {
         id: `kr-lockup-${r.code || r.company}-${normIso(r.date)}`, date: normIso(r.date), kind: "lockup", market: "kr",
-        title: "보호예수 해제(추정)", sub: (r.periods || []).length ? `상장 ${(r.periods || []).join("·")} 후` : "",
+        title: "보호예수 해제(추정일)", sub: (r.periods || []).length ? `상장 ${(r.periods || []).join("·")} 후` : "",
         ticker: String(r.code || ""), name: r.company || "", info: parts.join(" · "), link: r.link || "",
         pct: Number.isFinite(pct) ? pct : null,
       };
@@ -358,7 +360,7 @@
   }
 
   const api = {
-    KINDS, KIND_LABEL, STOCK_KINDS, WEEKDAY_KO,
+    KINDS, KIND_LABEL, KIND_SHORT, STOCK_KINDS, WEEKDAY_KO,
     normIso, addDays, addMonths, weekday, dayDiff, kstToday, weekRange, monthGrid, rangeFor, dayLabel,
     fromMarketCalendar, fromKrIr, fromUsCalendar, fromKrDividends, fromIpo, fromEcon, fromKrLockups,
     ipoDemandText, fmtShares, kindsFor,

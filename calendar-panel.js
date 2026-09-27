@@ -105,7 +105,7 @@ function calPanelItemHtml(e) {
   const info = e.info ? `<div class="calp-info">${escapeHtml(e.info)}</div>` : "";
   const link = e.link ? ` <a class="calp-link" href="${escapeHtml(e.link)}" target="_blank" rel="noopener">원문</a>` : "";
   return `<li class="calp-item${e.important ? " is-important" : ""}">
-    <span class="calp-tag" style="--calp-dot:${CAL_PANEL_KIND_DOT[e.kind] || "var(--muted)"}">${escapeHtml(core.KIND_LABEL[e.kind] || "")}</span>
+    <span class="calp-tag" style="--calp-dot:${CAL_PANEL_KIND_DOT[e.kind] || "var(--muted)"}">${escapeHtml((core.KIND_SHORT || core.KIND_LABEL)[e.kind] || "")}</span>
     <div class="calp-main"><div class="calp-line">${head}</div>${info}</div>
     <span class="calp-meta">${e.time ? `<span class="calp-time">${escapeHtml(e.time)}</span>` : ""}${mkt ? `<span class="calp-mkt">${mkt}</span>` : ""}${link}</span>
   </li>`;

@@ -15873,7 +15873,8 @@ body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !impo
 .lk-ov-pct { font-variant-numeric: tabular-nums; }
 .lk-ov-list .muted { font-size: var(--fs-cap); }
 @media (max-width: 640px) {
-  .lk-card .lk-table th:nth-child(5), .lk-card .lk-table td:nth-child(5) { display: none; }  /* 구성 열은 폰에서 숨김 */
+  .lk-card .lk-table th:nth-child(4), .lk-card .lk-table td:nth-child(4) { display: none; }  /* 구성 열은 폰에서 숨김 */
+  .lk-card .lk-table th, .lk-card .lk-table td { padding: 8px 6px; }
   .lk-ov-list { grid-template-columns: 1fr; }
   .lk-ov-head .es-link { margin-left: 0; }
 }

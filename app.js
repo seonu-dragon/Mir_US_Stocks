@@ -1753,6 +1753,8 @@ function renderActionBoard() {
     (myEventRows.length ? actionBoardCard("이번 주 내 종목 이벤트", isKrMarket() ? "관심·보유 종목 최근 2일 공시" : "관심·보유 종목 D-7 일정", myEventRows, "", { tab: "calendar" }) : "");
   grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
   grid.querySelectorAll("[data-action-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.actionTab, { sub: button.dataset.actionSub || null })));
+  // "오늘 내 주식은" 요약(my-digest.js)도 같은 시점(관심종목 변경·데이터 도착·시장 전환)에 다시 그린다.
+  if (typeof renderMyDigest === "function") renderMyDigest();
 }
 
 function setupActionBoard() {
@@ -3519,6 +3521,13 @@ function setupEvents() {
     e.target.value = "";
     if (!file) return;
     const reader = new FileReader();
+    // 증권사 잔고 파일(CP949·천 단위 쉼표·종목명만)은 바이트로 읽어 미리보기(lookthrough.js)로.
+    // 미리보기 모듈이 없으면 예전처럼 UTF-8 텍스트로 바로 가져온다.
+    if (window.MirLookthrough && window.MirBrokerCsvCore) {
+      reader.onload = () => window.MirLookthrough.openImport(new Uint8Array(reader.result || new ArrayBuffer(0)), file.name);
+      reader.readAsArrayBuffer(file);
+      return;
+    }
     reader.onload = () => importPortfolioCsv(String(reader.result || ""));
     reader.readAsText(file);
   });
@@ -5175,9 +5184,11 @@ function renderSearch(options = {}) {
   if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
+  if (typeof renderStockTimeline === "function") renderStockTimeline(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
+  if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
@@ -5201,6 +5212,8 @@ function renderSearch(options = {}) {
     renderEstimateRevision(refreshed);
     render52wRange(refreshed);
     renderStockEvents(refreshed);
+    // 통합 타임라인 — 실적·배당·일봉(큰 등락)이 상세 파일에 있어 상세가 도착하면 다시 그린다.
+    if (typeof renderStockTimeline === "function") renderStockTimeline(refreshed);
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);
@@ -6663,6 +6676,11 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
     tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
   },
+  "재무 위험 점검": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
+    kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
+    tabs: "종목 탭 · 찾기 › 수식(fScore·riskWarnings 필드)",
+  },
   "기업개요": {
     us: { workflow: "Company profile & price targets", script: "scripts/build_company_profile.py --market us" },
     kr: { workflow: "Company profile & price targets", script: "scripts/build_company_profile.py --market kr" },
@@ -6901,6 +6919,8 @@ function dataTrustSources() {
   rows.push(source("휴장·만기 달력", "exchange_calendars(XKRX·XNYS) · 연준 일정표", window.MARKET_CALENDAR, ["events"], 72, "매일 06:40", "marketCalendar"));
   if (cfg.id === "kr" && cfg.features?.krIrSchedule !== false) rows.push(source("실적 IR 일정", "DART 기업설명회 개최 공시", window.KR_IR_SCHEDULE, ["rows"], 72, "매일 06:40", "krIrSchedule", "", true));
   if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
+  // 국내 ETF 구성(2026-09-27, KRX ETF PDF) — 내 투자 › 보유의 ETF 룩스루가 읽는다. 주 1회(토요일).
+  if (cfg.id === "kr") rows.push(source("ETF 구성 종목", "KRX 정보데이터시스템 ETF PDF", window.KR_ETF_HOLDINGS, ["etfs"], 24 * 12, "매주 토요일", "krEtfHoldings"));
   // 이벤트 스터디(2026-09-26) — 주 1회 사전 계산. lazy 라 신뢰도 센터가 직접 받아 본다. 표본 수·기간·생존편향을 함께 적는다.
   {
     const es = window.EVENT_STUDY_INDEX;
@@ -6933,6 +6953,13 @@ function dataTrustSources() {
   }
   // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
   rows.push(source("상세 재무제표", cfg.id === "kr" ? "DART 전체 재무제표" : "SEC EDGAR 공시 재무", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일", "financialsIndex"));
+  // 재무 위험 점검 집계(2026-09-27) — 같은 잡 끝에서 재무 확장 파일로 다시 계산. 수식 스크리너 fScore·riskWarnings 필드.
+  {
+    const rc = window.RISK_CHECK;
+    const row = source("재무 위험 점검", "재무 확장 파일로 계산(F·Z·M 등)", rc, ["tickers"], 192, "매주 일요일", "riskCheck");
+    if (rc) row.extra = [["범위", "재무 확장 파일이 있는 종목 · 과거 재무제표 기준 점검(예측·매도 신호 아님)"], ["한계", "매출총이익·이익잉여금·판관비·유형자산 계정이 수집 데이터에 없어 Altman Z·Beneish M 은 현재 '데이터 없음'"]];
+    rows.push(row);
+  }
   // 기업개요(2026-09-26) — 주 1회(수요일). KR 은 DART 호출 상한 안에서 증분이라 한 실행에 전부 갱신되진 않는다.
   {
     const cp = window.COMPANY_PROFILE_INDEX;
@@ -7781,6 +7808,8 @@ function watchlistIsSeed() {
   return watchlist.every((t) => set.has(t));
 }
 function renderMyInvestSummary() {
+  // 보유 종목이 바뀌면(pfTable MutationObserver → 여기) "오늘 내 주식은" 요약도 다시 그린다.
+  if (typeof renderMyDigest === "function") renderMyDigest();
   const empty = byId("myInvestEmpty");
   const body = byId("myInvestBody");
   const box = byId("myInvestSummary");

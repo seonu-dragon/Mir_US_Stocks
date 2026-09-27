@@ -4,7 +4,8 @@
 // 여기는 필드 목록(시장별로 실제 값이 있는 것만)·입력 UI(자동완성·조건 블록)·사용자 정의 열·
 // 저장(기존 저장형 스크리너 목록·편입/이탈 델타와 공유)·공유 URL 을 맡는다.
 //
-// 데이터: 부팅 때 받은 시장 스냅샷(data.stocks) + map_fundamentals(MAP_FUNDAMENTALS). 새 데이터 파일 없음.
+// 데이터: 부팅 때 받은 시장 스냅샷(data.stocks) + map_fundamentals(MAP_FUNDAMENTALS)
+// + 재무 위험 점검 집계(RISK_CHECK, lazy — 이 화면을 열 때 받는다).
 // 집계 함수(sectorMedian 등)의 모집단은 이 시장 전체(ETF 제외)이고, 유니버스 선택은 결과만 거른다.
 //
 // 딥링크: ?tab=search&sub=formula&fx=<encodeState 토큰>
@@ -60,6 +61,26 @@ const FX_FIELDS = [
   { key: "foreignPct", label: "외국인 지분율(%)", group: "수급", src: "map_fundamentals", get: (it, f) => fxNum(f.foreignPct) },
   { key: "foreignExhaustion", label: "외국인 한도소진율(%)", group: "수급", src: "map_fundamentals", get: (it, f) => fxNum(f.foreignExhaustion) },
 ];
+// 재무 위험 점검 집계 한 행(build_risk_check.mjs cols 순서). 없으면 null.
+function fxRiskRow(it) {
+  const rc = window.RISK_CHECK;
+  if (!rc || !rc.tickers || !Array.isArray(rc.cols)) return null;
+  const row = rc.tickers[normalizeTickerKey(it.ticker)] || rc.tickers[it.ticker];
+  if (!row) return null;
+  const out = {};
+  rc.cols.forEach((k, i) => { out[k] = row[i]; });
+  return out;
+}
+// fxNum(null) 은 0 이 되므로(Number(null)) 결측을 먼저 거른다 — 데이터 없음이 0점으로 둔갑하지 않게.
+const fxRisk = (k) => (it) => { const r = fxRiskRow(it); return r && r[k] !== null && r[k] !== undefined ? fxNum(r[k]) : null; };
+FX_FIELDS.push(
+  // 재무 위험 점검(risk-check-core.js, 최근 연간 재무제표 기준 — 예측·매도 신호 아님). 데이터 없음 항목은 점수에서 빠진다.
+  { key: "fScore", label: "Piotroski F-Score(판정 항목 중 통과 수)", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("f") },
+  { key: "riskWarnings", label: "재무 위험 경고 수(체크리스트)", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("fail") },
+  { key: "riskChecked", label: "재무 위험 판정 항목 수", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("of") },
+  { key: "altmanZ", label: "Altman Z", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("z") },
+  { key: "beneishM", label: "Beneish M", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("m") },
+);
 const FX_FIELD_BY_KEY = Object.fromEntries(FX_FIELDS.map((f) => [f.key, f]));
 const FX_ALIASES = {
   per: "pe", pbr: "pb", psr: "ps", rsi: "rsi14", eps: "epsTtm", cap: "marketCap", mktcap: "marketCap",
@@ -79,7 +100,8 @@ let fxLastRun = null;
 function fxAvailableFields() {
   const stocks = (data && Array.isArray(data.stocks)) ? data.stocks : [];
   const mfCount = Object.keys(window.MAP_FUNDAMENTALS || {}).length;
-  const key = `${marketCfg().id}|${data && (data.updatedAtKst || data.updated_at_kst)}|${stocks.length}|${mfCount}`;
+  const rcCount = window.RISK_CHECK ? Number(window.RISK_CHECK.count) || 0 : 0;
+  const key = `${marketCfg().id}|${data && (data.updatedAtKst || data.updated_at_kst)}|${stocks.length}|${mfCount}|${rcCount}`;
   if (fxFieldsMemo && fxFieldsMemo.key === key) return fxFieldsMemo;
   const universe = stocks.filter((s) => s && !isStockEtf(s));
   const counts = {};
@@ -579,6 +601,8 @@ function renderFormulaScreener() {
       b.value = "all";
     }
   }
+  // 재무 위험 점검 필드(fScore 등)는 집계 파일이 도착하면 필드 목록에 나타난다(refreshFeatureViews 가 다시 그린다).
+  if (!window.RISK_CHECK) ensureFeatureData("riskCheck").then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
   fxBind();
   fxRenderFieldHelp();
   const ex = byId("fxExamples");

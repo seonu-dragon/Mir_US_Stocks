@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=3de1e5a002" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=3de1e5a002"></noscript>
+    <link rel="preload" href="styles.css?v=4839910f1d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=4839910f1d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d9d31e1a81"></script>
+    <script src="build_id.js?v=e947808085"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1538,6 +1538,8 @@ html[data-market="kr"][data-theme="dark"] {
               <div class="fundamental-table analysis-fundamentals animate-reveal" id="fundamentalTable"></div>
               <!-- 재무(financials.js renderFinancials) — SEC/DART 종목별 파일, 인덱스에 있는 종목만 -->
               <section class="financials-card animate-reveal" id="financialsSection" hidden></section>
+              <!-- 재무 위험 점검(risk-check.js renderRiskCheck) — F·Z·M 등 체크리스트, 재무 확장 파일이 있는 종목만 -->
+              <section class="financials-card rc-card animate-reveal" id="riskCheckSection" hidden></section>
               <!-- 실적 일정 · EPS 기록 · 발표 반응 · 실적 인사이트(renderStockEvents 가 채운다) -->
               <section class="stock-events-card sd-earnings-card animate-reveal" id="stockEarningsCard" hidden></section>
               <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
@@ -3276,7 +3278,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=c27ef2b527"></script>
+    <script src="feature-data.js?v=f808b34141"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3295,7 +3297,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-health-core.js?v=bd57169177"></script>
     <script src="stock-health.js?v=9e62cb61d0"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
-    <script src="formula-screener.js?v=ff803202d2"></script>
+    <script src="formula-screener.js?v=c873456a6d"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=da99b8e4b6"></script>
@@ -3318,6 +3320,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="financials.js?v=3e7d8558c4"></script>
+    <script src="risk-check-core.js?v=fb0647255f"></script>
+    <script src="risk-check.js?v=2afff877ba"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=c3c5b7132b"></script>
@@ -3334,7 +3338,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel.js?v=cde775a5ef"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=c14f9debec"></script>
+    <script src="app.js?v=50f3350d96"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=1d2bb06eeb"></script>

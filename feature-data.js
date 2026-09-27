@@ -155,6 +155,10 @@ const FEATURE_DATA = {
   // 수식 스크리너 과거 백테스트 패널 메타(build_screener_backtest_panel.mjs) — 시장별 파일
   // (US data/screener_backtest_meta.js · KR data/korea/screener_backtest_meta.js, 약 70~140KB).
   // 수식 스크리너에서 수식이 처음 컴파일될 때만 받는다(lazy). 필드 샤드는 screener-backtest.js 가 fetch.
+  // 재무 위험 점검 집계(build_risk_check.mjs — 재무 확장 파일로 risk-check-core.js 계산) — 시장별 파일
+  // (US data/risk_check.js · KR data/korea/risk_check.js, 약 35KB). 수식 스크리너를 열 때만 받는다(lazy).
+  // 종목 화면 카드(risk-check.js)는 이 집계가 아니라 종목 재무 파일로 직접 계산한다.
+  riskCheck: { global: "RISK_CHECK", path: "data/risk_check.js", marketSpecific: true, lazy: true },
   screenerBacktest: { global: "SCREENER_BACKTEST_META", path: "data/screener_backtest_meta.js", marketSpecific: true, lazy: true },
   // 휴장일·단축거래·파생 만기·FOMC(build_market_calendar.py, exchange_calendars 오프라인 계산, ~5KB).
   // 두 시장이 한 파일 — 통합 캘린더(calendar-panel.js)가 읽는다.
@@ -346,6 +350,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
+          () => { if (typeof renderRiskCheck === "function") renderRiskCheck(item); },
           () => { if (typeof renderDcf === "function") renderDcf(item); },
           () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },
           () => { if (typeof renderPriceTargets === "function") renderPriceTargets(item); },

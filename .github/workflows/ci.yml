@@ -154,6 +154,9 @@ jobs:
       # 재무 확장 파생 지표(financials-core.js): ROIC·순차입금/EBITDA·주식수 증감·TTM 시계열(연속 분기만)·결측 전파.
       - name: Financials core tests
         run: node scripts/tests/test_financials_core.mjs
+      # 재무 위험 점검(risk-check-core.js): Piotroski 9항목·Altman Z/Z''·Beneish M 교과서 값 검산, 데이터 없음 분리.
+      - name: Risk check core tests
+        run: node scripts/tests/test_risk_check_core.mjs
       # 역DCF · 시나리오 DCF(dcf-core.js): 역산 수렴·알려진 DCF 값·음수 FCF/금융업 거부·민감도 격자·기저율·URL 인코딩.
       - name: DCF core tests
         run: node scripts/tests/test_dcf_core.mjs

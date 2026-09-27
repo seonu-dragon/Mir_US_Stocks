@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=009dbe8581" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=009dbe8581"></noscript>
+    <link rel="preload" href="styles.css?v=c65895d7eb" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=c65895d7eb"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=f5562210ea"></script>
+    <script src="build_id.js?v=9bdf8b823a"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1586,6 +1586,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
               <!-- 보호예수 해제(lockups.js renderLockupCard) — 국내 신규 상장주만, data/korea/lockups.js(lazy) -->
               <section class="es-card lk-card animate-reveal" id="krLockupCard" hidden></section>
+              <!-- 연차보고서 위험요인 변화(risk-factors.js renderRiskFactors) — SEC 10-K Item 1A 전년 대비, US·인덱스에 있는 종목만 -->
+              <section class="financials-card rf-card animate-reveal" id="riskFactorsSection" hidden></section>
             </div>
             <div class="sd-view" id="sdv-flow" data-view="flow" role="tabpanel">
               <!-- 미국 ETF 구성 종목 / 이 종목을 담은 ETF(etf-holdings.js renderEtfHoldings) — SEC N-PORT 샤드 하나만 받는다 -->
@@ -1594,6 +1596,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="detail-panel sd-flow animate-reveal" id="stockFlowPanel" hidden></section>
               <!-- 스마트머니 종합(app.js renderSmartMoney) — US 전용 -->
               <section class="smart-money-card event-card-smart animate-reveal" id="stockSmartMoney" hidden></section>
+              <!-- 기관 보유 변화(inst-holders.js renderInstHolders) — US 전용, SEC 13F 데이터셋 첫 글자 샤드 하나만 받는다 -->
+              <section class="ih-card animate-reveal" id="instHoldersCard" hidden></section>
               <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
             </div>
             <div class="sd-view" id="sdv-ai" data-view="ai" role="tabpanel">
@@ -3315,7 +3319,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=0926d3b667"></script>
+    <script src="feature-data.js?v=ab86517654"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3336,7 +3340,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-health-core.js?v=bd57169177"></script>
     <script src="stock-health.js?v=9e62cb61d0"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
-    <script src="formula-screener.js?v=c873456a6d"></script>
+    <script src="formula-screener.js?v=f3b5d97cfb"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=da99b8e4b6"></script>
@@ -3367,13 +3371,15 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="financials.js?v=d751bc6672"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
     <script src="segments.js?v=8d54e784d4"></script>
+    <script src="risk-factors-core.js?v=05a50a5878"></script>
+    <script src="risk-factors.js?v=112696df89"></script>
     <script src="risk-check-core.js?v=c96b31592a"></script>
     <script src="risk-check.js?v=2afff877ba"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=c3c5b7132b"></script>
     <script src="daily-table.js?v=4b5b218185"></script>
-    <script src="stock-view.js?v=b0854500c3"></script>
+    <script src="stock-view.js?v=4b1d0570ec"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=3db2e5c53a"></script>
@@ -3387,7 +3393,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="lockups.js?v=b4b7282745"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=f17633b7c6"></script>
+    <script src="app.js?v=83fd394332"></script>
+    <script src="inst-holders-core.js"></script>
+    <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=61f0c3fb14"></script>

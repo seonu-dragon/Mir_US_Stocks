@@ -5184,6 +5184,7 @@ function renderSearch(options = {}) {
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
   if (typeof renderCrossMarketCard === "function") renderCrossMarketCard(item);
   if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
+  if (typeof renderInstHolders === "function") renderInstHolders(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderStockTimeline === "function") renderStockTimeline(item);
@@ -5192,6 +5193,7 @@ function renderSearch(options = {}) {
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
   if (typeof renderSegments === "function") renderSegments(item);
+  if (typeof renderRiskFactors === "function") renderRiskFactors(item);
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
@@ -6685,6 +6687,10 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Company profile & price targets", script: "scripts/build_kr_themes.py" },
     tabs: "시장 탭 · 테마, 종목 분석 · 이 종목의 테마",
   },
+  "연차보고서 위험요인 변화": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_factor_changes.py" },
+    tabs: "종목 분석 · 이벤트·공시 탭, 찾기 › 수식(riskTextSimilarity·riskChangePct 필드)",
+  },
   "재무 위험 점검": {
     us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
@@ -6717,6 +6723,7 @@ const TRUST_RECOVERY = {
   "실적 IR 일정": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_ir_schedule.py" }, tabs: "오늘 탭 · 캘린더 · 전체 일정(실적)" },
   "보호예수 해제": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_lockups.py" }, tabs: "오늘 탭 · 캘린더(보호예수 해제) · 종목 상세 이벤트 · 증자·CB" },
   "ETF 구성 종목": { us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_us_etf_holdings.py" }, tabs: "종목 탭 · 분석 · 구성 종목 / 이 종목을 담은 ETF" },
+  "기관 보유 변화(13F)": { us: { workflow: "Institutional 13F quarterly refresh", script: "scripts/build_13f_holders.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 기관 보유 변화" },
   "시장 스냅샷": {
     us: { workflow: "Daily US market snapshot", script: "scripts/update_data.py" },
     kr: { workflow: "Daily Korea market snapshot", script: "scripts/update_korea_data.py" },
@@ -6936,6 +6943,20 @@ function dataTrustSources() {
   // 보호예수 해제(2026-09-27) — 38.co.kr 공모주 상세의 보호예수 표. 매일 06:40, 해제 일정은 늘 수십 건이라 0건이면 이상.
   if (cfg.id === "kr" && cfg.features?.krLockups !== false) rows.push(source("보호예수 해제", "38커뮤니케이션(투자설명서 보호예수 표)", window.KR_LOCKUPS, ["releases"], 96, "매일 06:40", "krLockups"));
   if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
+  // 종목별 기관 보유 변화(2026-09-27, SEC 13F 데이터셋) — 분기 데이터셋이 나올 때만 새로 쓴다(3개월 + 공개 지연).
+  // 새 창이 없으면 파일을 건드리지 않으므로 130일(= 한 분기를 통째로 놓쳐야 울림). lazy 라 신뢰도 센터가 직접 받아 본다.
+  if (cfg.id === "us" && cfg.features?.instHolders !== false) {
+    const ih = window.US_INST_HOLDERS_INDEX;
+    const row = source("기관 보유 변화(13F)", "SEC Form 13F 데이터셋(분기말 보고, 45일 안 제출 후 공개)", ih, ["shards"], 24 * 130, "분기 데이터셋 공개 후(3·6·9·12월)", "usInstHolders");
+    if (ih) {
+      const cov = ih.coverage || {};
+      row.extra = [
+        ["기준 분기", `${ih.latest || "?"} (직전 ${ih.prev || "?"}) · 추이 ${(ih.quarters || []).length}분기`],
+        ["티커 연결", `보유 가치 기준 ${cov.mappedValuePct ?? "?"}% · CUSIP ${Number(cov.mappedCusips || 0).toLocaleString()}/${Number(cov.cusips || 0).toLocaleString()}`],
+      ];
+    }
+    rows.push(row);
+  }
   // 국내 ETF 구성(2026-09-27, KRX ETF PDF) — 내 투자 › 보유의 ETF 룩스루가 읽는다. 주 1회(토요일).
   if (cfg.id === "kr") rows.push(source("ETF 구성 종목", "KRX 정보데이터시스템 ETF PDF", window.KR_ETF_HOLDINGS, ["etfs"], 24 * 12, "매주 토요일", "krEtfHoldings"));
   // 이벤트 스터디(2026-09-26) — 주 1회 사전 계산. lazy 라 신뢰도 센터가 직접 받아 본다. 표본 수·기간·생존편향을 함께 적는다.
@@ -6978,6 +6999,20 @@ function dataTrustSources() {
       row.extra = [
         ["범위", `${Number(sg.count || 0).toLocaleString()}종목 · 사업부문 ${sg.coverage.segment || 0} · 지역 ${sg.coverage.geo || 0} · 제품 ${sg.coverage.product || 0}`],
         ["한계", `부문 합 ≠ 총매출 ${Number(sg.mismatchCount || 0).toLocaleString()}종목(부문 간 거래 포함·일부만 공시) — 화면에 표시 · 회사가 XBRL 로 태그한 부문만(국내 미지원)`],
+      ];
+    }
+    rows.push(row);
+  }
+  // 10-K 위험요인 변화(2026-09-28) — US 전용, 주간(일요일). SEC 원문 Item 1A 비교. 추출 실패 수를 함께 적는다.
+  if (cfg.id === "us") {
+    const rf = window.US_RISK_FACTORS_INDEX;
+    const row = source("연차보고서 위험요인 변화", "SEC EDGAR 10-K Item 1A · 20-F Item 3.D 원문", rf, ["tickers"], 192, "매주 일요일", "riskFactorsIndex");
+    if (rf) {
+      const reasons = Object.entries(rf.failedByReason || {}).map(([k, v]) => `${k} ${v}`).join(" · ");
+      row.extra = [
+        ["범위", `시총 상위부터 ${Number(rf.count || 0).toLocaleString()}종목 비교 · 추출·비교 실패 ${Number(rf.failedCount || 0).toLocaleString()}종목${reasons ? `(${reasons})` : ""}`],
+        ["방법", `${rf.method || ""} — LLM 없음. 변화 크기는 정보일 뿐 예측 아님`],
+        ["한계", "Item 1A 표지가 없는 통합 연차보고서는 'Risk Factors' 제목으로 찾아 경계가 어긋날 수 있음 · 40-F·전년 보고서가 없는 회사는 제외"],
       ];
     }
     rows.push(row);

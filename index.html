@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=3de1e5a002" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=3de1e5a002"></noscript>
+    <link rel="preload" href="styles.css?v=ee3b9c7470" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=ee3b9c7470"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d9d31e1a81"></script>
+    <script src="build_id.js?v=f520bae40f"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -602,6 +602,9 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
         <div class="watchlist-chips" id="watchlistChips"></div>
       </section>
+
+          <!-- "오늘 내 주식은" 보유·관심 종목 요약(my-digest.js) — 내 종목 이벤트 바로 위 -->
+          <section class="my-digest" id="myDigestToday" hidden aria-label="오늘 내 주식은"></section>
 
           <section class="daily-action-board ia-action-board" id="dailyActionBoard" aria-labelledby="dailyActionTitle">
             <div class="daily-action-head">
@@ -2520,6 +2523,7 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel is-active" id="sub-bulk-holdings">
         <div class="ia-stat-row" id="myInvestSummary" aria-live="polite"></div>
         <div class="thesis-strip" id="thesisStrip" hidden></div>
+        <section class="my-digest my-digest-bulk" id="myDigestBulk" hidden aria-label="오늘 내 주식은"></section>
         <section class="portfolio-card" id="portfolioCard">
           <div class="pf-head">
             <h3>보유 종목</h3>
@@ -3263,7 +3267,9 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=4d75c17333"></script>
     <script src="movers.js?v=e7ddc838b5"></script>
-    <script src="portfolio.js?v=2a4ccc384e"></script>
+    <script src="my-digest-core.js?v=fa7e90d91e"></script>
+    <script src="my-digest.js?v=6226eff130"></script>
+    <script src="portfolio.js?v=aaedde075d"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
@@ -3334,7 +3340,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel.js?v=cde775a5ef"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=c14f9debec"></script>
+    <script src="app.js?v=94fd3b886d"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=1d2bb06eeb"></script>

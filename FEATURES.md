@@ -42,6 +42,11 @@
 - **오늘의 특징주 (2026-09-25, `movers.js`)**: 장 마감 스냅샷 기준 등락률 상위·하위 종목(시장별 방향당 최대 10개, US 시총 20억 달러·거래대금 2,500만 달러 / KR 시총 2,000억·거래대금 50억 이상, ETF·스팩 제외, ±3% 이상)을 상승/하락 탭으로 보여 주고 종목마다 한 줄 사유 + 근거 유형 태그(공시·뉴스·섹터동조·불명) + 원문 링크 1~3개를 붙인다. 종목을 누르면 종목 분석으로 이동하고, 종목 분석의 "왜 상승했나?" 상자 맨 위에도 같은 사유가 뜬다.
   - 사유는 공시·뉴스 헤드라인만 입력으로 한 Gemini 요약이다. 근거가 없으면 **"뚜렷한 재료 확인 안 됨"**, 검증(인용 ID 가 입력 목록에 있는지·숫자가 근거에 있는지·LLM 자체 판정 same_company/explains_move)을 통과 못 하면 **"요약 실패"** 로 표시한다. 업종이 같이 움직였으면(시총가중 업종 평균 2% 이상·종목 등락의 30% 이상, 또는 같은 업종 특징주 3종목 이상) 그 사실을 LLM 이 아닌 코드가 스냅샷 수치로 먼저 적는다(`sectorNote`).
   - 기준 거래일·생성 시각·"자동 요약이라 틀릴 수 있음"·"매매 신호가 아닌 정보" 를 카드에 표기. 데이터 `data/movers_reasons.js`(US) · `data/korea/movers_reasons.js`(KR), 전역 `MOVERS_REASONS`(FEATURE_DATA `movers`, marketSpecific). 끄려면 `market_config.js` features 에 `moversBoard: false`.
+- **"오늘 내 주식은" 보유·관심 요약 (2026-09-27, `my-digest.js` · 계산 `my-digest-core.js`)**: 오늘 › 요약의 '내 종목 이벤트' 바로 위(`#myDigestToday`, 5종목 + 더 보기)와 내 투자 › 보유·관심 맨 위(`#myDigestBulk`, 전부)에 같은 카드. 일간/주간 토글(localStorage `mir.myDigest.mode`).
+  - *일간*: 보유(비중 큰 순) → 관심(등락폭 큰 순), 종목마다 3줄 이내 — ① 등락(스냅샷)·보유면 비중과 포트 기여(%p) ② 이유: 같은 거래일 오늘의 특징주 사유(movers, 거래일이 다르면 붙이지 않음) → 직전 평일~기준일 공시·실적(US 8-K·실적 보도자료 요약 / KR DART, 유형 우선순위) → 없으면 "특별한 공시·특징주 사유 없음 — 업종(섹터) 평균 대비 N%p · 지수 등락"(업종은 시총가중·ETF 제외·5종목 이상일 때만, US 는 섹터 한글명) ③ 14일 안 일정(US 실적 예정·배당락 / KR IR 실적·배당기준일·지급일, D-n). 머리 줄은 보유 포트 오늘 수익률(평가액 가중)과 가장 큰 기여 종목.
+  - *주간*: 지난 5거래일(스냅샷 `weekChangePct`, 가격 이력 없는 행은 제외 — 빌더가 당일 등락으로 채운 값이라) 보유 기여 상·하위 3(기여 = 5거래일 수익률 × 현재 평가액 비중, 보유 › 벤치마크 기여도와 같은 식 `contributionRows` 를 portfolio.js 와 공유). 보유가 없으면 관심종목 5거래일 등락 상·하위. 이유는 기간(기준일 −6일~기준일) 공시·실적 → 업종·지수 5거래일 대비.
+  - LLM 없음(템플릿·규칙), 추천·전망 문구 없음(테스트가 금칙어 검사). 기본 관심 목록만 있고 보유가 없으면 '관심종목 추가하기' 안내만. 새 데이터셋 없음 — 스냅샷 + MOVERS_REASONS · MATERIAL_EVENTS · EARNINGS_RELEASES · US_STOCK_CALENDAR / KR_DISCLOSURES · KR_DIVIDENDS · KR_IR_SCHEDULE(lazy 라 카드가 당김).
+  - 코어는 입력(종목 목록 + 데이터) → 구조화 요약 객체(`buildDailyDigest`/`buildWeeklyDigest`, 평문 `digestToText`)의 순수 함수라 Web Push 에 그대로 쓸 수 있다. 사건 조회(`pastEvents`/`upcomingEvents`)는 종목 통합 타임라인과 나중에 합칠 수 있게 경계를 분리. 마지막 요약은 `window.MirMyDigestLast`. 테스트 `scripts/tests/test_my_digest_core.mjs`(CI).
 - **MY DAILY DESK (액션 보드)**: 
   - 등록된 관심종목, 가상 포트폴리오, 주요 일정, 신규 공시 중 금일 확인이 필요한 이벤트만 수집하여 액션 리스트 생성.
   - 액션 보드 모드와 오늘의 뉴스 모드 간 토글.

@@ -195,7 +195,8 @@ def test_weekly_workflow_split_jobs_budgets_and_gate():
             if step.get("continue-on-error") and step.get("if") != "failure()":
                 assert step.get("timeout-minutes"), f"{name}/{step.get('name')} 스텝 한도 없음"
     gate = jobs["weekly-gate"]
-    assert set(gate["needs"]) == {"us-and-public", "kr-dart"} and "always()" in gate["if"]
+    # 관문은 최소한 두 수집 잡을 기다린다(부문 매출·위험요인 등 뒤에 붙은 잡도 needs 에 더해진다)
+    assert {"us-and-public", "kr-dart"} <= set(gate["needs"]) and "always()" in gate["if"]
     assert any((s.get("with") or {}).get("ref") == "main" for s in gate["steps"])
     assert any("--group weekly" in (s.get("run") or "") for s in gate["steps"])
     for job in ("us-and-public", "kr-dart"):

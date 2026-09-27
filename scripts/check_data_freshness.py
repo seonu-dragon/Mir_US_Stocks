@@ -131,6 +131,9 @@ CHECKS = {
         ("data/korea/nps_holdings.json", 6, True),
         ("data/korea/corp_groups.json", 6, False),
         ("data/us_financials_history.json", 6, True),
+        # 사업부문·지역·제품별 매출(build_segments_us.py, segments 잡). 새 공시가 없어도 실행마다 인덱스
+        # updatedAtKst 를 새로 쓴다. 0종목(count)도 잡는다.
+        ("data/segments_index.json", 6, True),
     ],
     # ipo-calendar.yml(매일 13:33 KST) — 희석 트래커가 continue-on-error.
     "ipo": [

@@ -49,7 +49,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 import sec_client as sec  # noqa: E402
 from financials_common import (  # noqa: E402
-    FLOW_FIELDS, INSTANT_FIELDS, MAX_ANNUAL, MAX_QUARTERS, SCHEMA_VERSION,
+    FLOW_FIELDS, INDEX_FIELDS, INSTANT_FIELDS, MAX_ANNUAL, MAX_QUARTERS, SCHEMA_VERSION,
     add_derived, build_ttm, clean_row, dumps_compact, has_core, index_entry, load_json,
     safe_file_name,
 )
@@ -72,6 +72,9 @@ REQUEST_SLEEP = 0.12            # 초당 ~8회(SEC 한도 10회)
 STALE_DAYS = 120
 RESCAN_OVERLAP_DAYS = 3         # companyfacts 반영 지연 대비 겹쳐 읽는다
 MAX_SCAN_GAP_DAYS = 45          # 이보다 오래 끊겼으면 색인 대신 전체 재수집
+# 추출 필드 세대. 필드를 보태면 올린다 — 상태의 fieldsVersion 이 이보다 낮으면 한 번 전체 재수집해
+# 옛 파일에도 새 필드가 채워진다(2 = 2026-09-27 재무 보강: grossProfit·cogs·sga·retainedEarnings·ppe·ltDebt).
+FIELDS_VERSION = 2
 
 # 계정별 태그 후보 — 앞이 우선. 기간마다 첫 번째로 값이 있는 태그를 쓴다.
 US_GAAP_TAGS = {
@@ -104,7 +107,19 @@ US_GAAP_TAGS = {
     "curLiab": ["LiabilitiesCurrent"],
     "receivables": ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent"],
     "sharesOut": ["CommonStockSharesOutstanding"],
+    # 재무 보강(2026-09-27) — risk-check-core.js 의 Altman Z·Beneish M 입력
+    "grossProfit": ["GrossProfit"],
+    "cogs": ["CostOfRevenue", "CostOfGoodsAndServicesSold", "CostOfGoodsSold", "CostOfServices"],
+    "sga": ["SellingGeneralAndAdministrativeExpense"],
+    "retainedEarnings": ["RetainedEarningsAccumulatedDeficit"],
+    "ppe": ["PropertyPlantAndEquipmentNet",
+            "PropertyPlantAndEquipmentAndFinanceLeaseRightOfUseAssetAfterAccumulatedDepreciationAndAmortization"],
+    # 장기차입금(비유동). 단일 태그가 없으면 debt 구성 태그(LongTermDebt − LongTermDebtCurrent)로 — lt_debt_from_parts
+    "ltDebt": ["LongTermDebtNoncurrent", "LongTermDebtAndCapitalLeaseObligations"],
 }
+# 판관비 단일 태그가 없는 회사(MSFT 등 — 판매·마케팅과 일반관리비를 따로 공시)는 두 줄이 같은 기간에
+# 모두 있을 때만 합한다(한쪽만 있으면 판관비가 아니라 결측).
+US_GAAP_SGA_PARTS = (["SellingAndMarketingExpense", "SellingExpense", "MarketingExpense"], ["GeneralAndAdministrativeExpense"])
 # 총차입금 구성 태그(instant). 조합 규칙은 debt_from_parts 참고.
 US_GAAP_DEBT = {
     "total": ["DebtLongtermAndShorttermCombinedAmount"],
@@ -138,6 +153,12 @@ IFRS_TAGS = {
     "curLiab": ["CurrentLiabilities"],
     "receivables": ["TradeAndOtherCurrentReceivables", "CurrentTradeReceivables"],
     "sharesOut": [],
+    "grossProfit": ["GrossProfit"],
+    "cogs": ["CostOfSales"],
+    "sga": ["SellingGeneralAndAdministrativeExpense"],
+    "retainedEarnings": ["RetainedEarnings"],
+    "ppe": ["PropertyPlantAndEquipment"],
+    "ltDebt": ["NoncurrentPortionOfNoncurrentBorrowings", "LongtermBorrowings"],
 }
 IFRS_DEBT = {
     "total": ["Borrowings"],
@@ -354,6 +375,18 @@ def debt_from_parts(parts: dict) -> float | None:
     return None
 
 
+def lt_debt_from_parts(parts: dict) -> float | None:
+    """장기차입금(비유동) 대체값 — 단일 태그가 없을 때 debt 구성 태그로. 장기 합계 − 유동성 부분.
+
+    합계(ltTotal)만 있고 유동성 부분이 없으면 비유동이라고 단정할 수 없어 결측으로 둔다.
+    """
+    if parts.get("ltNoncurrent") is not None:
+        return parts["ltNoncurrent"]
+    if parts.get("ltTotal") is not None and parts.get("ltCurrent") is not None:
+        return parts["ltTotal"] - parts["ltCurrent"]
+    return None
+
+
 def _industry(ns: dict, taxonomy: str, sector: str | None) -> str:
     if taxonomy == "us-gaap":
         if "Deposits" in ns or ("InterestAndDividendIncomeOperating" in ns and "OperatingIncomeLoss" not in ns):
@@ -422,6 +455,22 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
     for part, tags in debt_map.items():
         debt_facts[part] = [tf for tf in (collect(ns, t, currency) for t in tags) if tf]
 
+    sga_parts: list[list[TagFacts]] = []
+    if taxonomy == "us-gaap":
+        sga_parts = [[tf for tf in (collect(ns, t, currency) for t in tags) if tf] for tags in US_GAAP_SGA_PARTS]
+
+    def sga_from_parts(pick) -> float | None:
+        """pick(TagFacts) → 값|None. 두 구성이 모두 있을 때만 합."""
+        if len(sga_parts) != 2:
+            return None
+        vals = []
+        for tfs in sga_parts:
+            v = next((x for x in (pick(tf) for tf in tfs) if x is not None), None)
+            if v is None:
+                return None
+            vals.append(v)
+        return vals[0] + vals[1]
+
     annual_cal, quarter_cal, accns = build_calendar(ns, scan)
     if not annual_cal and not quarter_cal:
         return None
@@ -446,7 +495,7 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
             return dei_shares[end], "dei:EntityCommonStockSharesOutstanding"
         return None, None
 
-    def debt_at(end: str):
+    def debt_parts(end: str) -> dict:
         parts = {}
         for part, tfs in debt_facts.items():
             for tf in tfs:
@@ -454,7 +503,16 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
                 if rec:
                     parts[part] = rec[0]
                     break
-        return debt_from_parts(parts)
+        return parts
+
+    def debt_at(end: str):
+        return debt_from_parts(debt_parts(end))
+
+    def fill_lt_debt(row: dict, end: str) -> None:
+        if row.get("ltDebt") is None:
+            v = lt_debt_from_parts(debt_parts(end))
+            if v is not None:
+                row["ltDebt"] = v
 
     # ── 연간 ──
     annual_rows = []
@@ -478,6 +536,12 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
         dv = debt_at(end)
         if dv is not None:
             row["debt"] = dv
+        fill_lt_debt(row, end)
+        if row.get("sga") is None:
+            v = sga_from_parts(lambda tf: (flow_annual(tf, end, start) or (None,))[0])
+            if v is not None:
+                row["sga"] = v
+                tags_here["sga"] = "SellingAndMarketingExpense+GeneralAndAdministrativeExpense"
         if field_capex_negative(row):
             row["capex"] = abs(row["capex"])
         if has_core(row):
@@ -540,6 +604,13 @@ def extract_company(facts: dict, *, ticker: str, cik: int | None = None, sector:
         dv = debt_at(end)
         if dv is not None:
             row["debt"] = dv
+        fill_lt_debt(row, end)
+        if row.get("sga") is None and fq <= 3:
+            # 분기 판관비 합산은 직접 공시된 3개월 값끼리만(빼기로 만든 값을 섞지 않는다). 4분기는 생략.
+            v = sga_from_parts(lambda tf: (_latest([rec for (s_, e_), rec in tf.dur.items()
+                                                    if e_ == end and 75 <= (_days(s_, e_) or 0) <= 105]) or (None,))[0])
+            if v is not None:
+                row["sga"] = v
         if field_capex_negative(row):
             row["capex"] = abs(row["capex"])
         if derived:
@@ -691,7 +762,8 @@ def run(args) -> int:
 
     # 증분: 일별 색인으로 새 정기보고서를 낸 CIK
     scanned = _d(state.get("indexScannedThrough") or "")
-    full = args.full or scanned is None or (today - scanned).days > MAX_SCAN_GAP_DAYS
+    fields_old = int(state.get("fieldsVersion") or 1) < FIELDS_VERSION
+    full = args.full or scanned is None or (today - scanned).days > MAX_SCAN_GAP_DAYS or fields_old
     changed: set[int] = set()
     scanned_through = scanned
     if not full and not args.only:
@@ -702,7 +774,7 @@ def run(args) -> int:
         print(f"[US재무] 일별 색인 {start}~{last_ok}: 정기보고서 제출 CIK {len(changed)}곳")
     elif full:
         scanned_through = today - timedelta(days=1)
-        print("[US재무] 전체 재수집(첫 실행·--full·색인 공백)")
+        print("[US재무] 전체 재수집(첫 실행·--full·색인 공백" + ("·추출 필드 추가" if fields_old else "") + ")")
 
     todo = []
     stale = []
@@ -769,12 +841,12 @@ def run(args) -> int:
     payload = {
         "schema": SCHEMA_VERSION, "market": "us", "updatedAtKst": stamp, "source": SOURCE,
         "count": len(index_tickers), "freshCount": ok, "failedCount": failed,
-        "fields": "rev,op,net,pretax,tax,interest,da,sbc,ocf,capex,fcf,epsDil,sharesDilAvg,"
-                  "assets,liab,equity,cash,debt,netDebt,curAssets,curLiab,receivables,sharesOut",
+        "fields": INDEX_FIELDS,
         "tickers": dict(sorted(index_tickers.items())),
     }
     new_state = {"indexScannedThrough": (scanned_through or today).isoformat()
                  if not args.only else state.get("indexScannedThrough"),
+                 "fieldsVersion": FIELDS_VERSION if not args.only else state.get("fieldsVersion"),
                  "updatedAtKst": stamp, "tickers": dict(sorted(tstate.items()))}
     with repository_publish_lock(ROOT):
         sec.write_data(OUT_JSON, OUT_JS, "FINANCIALS_INDEX", payload, indent=None, min_ratio=0.8)

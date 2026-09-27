@@ -5186,6 +5186,7 @@ function renderSearch(options = {}) {
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
+  if (typeof renderSegments === "function") renderSegments(item);
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
@@ -6933,11 +6934,23 @@ function dataTrustSources() {
   }
   // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
   rows.push(source("상세 재무제표", cfg.id === "kr" ? "DART 전체 재무제표" : "SEC EDGAR 공시 재무", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일", "financialsIndex"));
+  // 사업부문·지역·제품별 매출(2026-09-27) — US 전용, 주간(일요일). SEC 10-K XBRL 부문 차원. 합계 불일치 종목 수를 함께 적는다.
+  if (cfg.id === "us") {
+    const sg = window.SEGMENTS_INDEX;
+    const row = source("사업부문·지역별 매출", "SEC EDGAR 10-K·20-F XBRL(부문·지역·제품 주석)", sg, ["tickers"], 192, "매주 일요일", "segmentsIndex");
+    if (sg && sg.coverage) {
+      row.extra = [
+        ["범위", `${Number(sg.count || 0).toLocaleString()}종목 · 사업부문 ${sg.coverage.segment || 0} · 지역 ${sg.coverage.geo || 0} · 제품 ${sg.coverage.product || 0}`],
+        ["한계", `부문 합 ≠ 총매출 ${Number(sg.mismatchCount || 0).toLocaleString()}종목(부문 간 거래 포함·일부만 공시) — 화면에 표시 · 회사가 XBRL 로 태그한 부문만(국내 미지원)`],
+      ];
+    }
+    rows.push(row);
+  }
   // 재무 위험 점검 집계(2026-09-27) — 같은 잡 끝에서 재무 확장 파일로 다시 계산. 수식 스크리너 fScore·riskWarnings 필드.
   {
     const rc = window.RISK_CHECK;
     const row = source("재무 위험 점검", "재무 확장 파일로 계산(F·Z·M 등)", rc, ["tickers"], 192, "매주 일요일", "riskCheck");
-    if (rc) row.extra = [["범위", "재무 확장 파일이 있는 종목 · 과거 재무제표 기준 점검(예측·매도 신호 아님)"], ["한계", "매출총이익·이익잉여금·판관비·유형자산 계정이 수집 데이터에 없어 Altman Z·Beneish M 은 현재 '데이터 없음'"]];
+    if (rc) row.extra = [["범위", "재무 확장 파일이 있는 종목 · 과거 재무제표 기준 점검(예측·매도 신호 아님)"], ["한계", "매출총이익·이익잉여금·판관비·유형자산·장기차입금은 2026-09-27 에 수집 필드로 추가 — 재수집 전 파일·해당 계정을 공시하지 않는 회사는 Altman Z·Beneish M 이 '데이터 없음'. 국내는 이자비용 공시가 드물어 이자보상배율이 자주 비어 있음"]];
     rows.push(row);
   }
   // 기업개요(2026-09-26) — 주 1회(수요일). KR 은 DART 호출 상한 안에서 증분이라 한 실행에 전부 갱신되진 않는다.

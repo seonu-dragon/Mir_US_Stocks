@@ -206,10 +206,64 @@ jobs:
           MSG="[Mir Actions 실패] ${{ github.workflow }} (kr-dart) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
 
+  # 사업부문·지역·제품별 매출(SEC 10-K·20-F XBRL instance 의 부문 차원, 2026-09-27). SEC 만 쓰고 키 불필요.
+  # 종목당 요청 4~7회(submissions + 공시 2건의 instance·레이블)라 처음 채울 때는 1,100종목에 한 시간 넘게
+  # 걸린다 — us-and-public 의 실적 이력 시간을 뺏지 않게 별도 잡(별도 러너)으로 돌리고, 시간 예산 안에서
+  # 시총순으로 받은 뒤 다음 주에 이어 받는다. 평시에는 EDGAR 일별 색인으로 새 10-K 를 낸 회사만 다시 받는다.
+  segments:
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.only_financials }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    env:
+      JOB_LIMIT: 75
+    steps:
+      - name: Record job start
+        run: echo "JOB_START_EPOCH=$(date +%s)" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: US revenue segments (SEC XBRL)
+        continue-on-error: true
+        timeout-minutes: 70
+        shell: bash
+        run: |
+          BUDGET=$(python scripts/step_budget.py --job-limit "$JOB_LIMIT" --reserve 8 --cap 60)
+          echo "[부문매출] 시간 예산 ${BUDGET}분"
+          if [ "$BUDGET" -lt 3 ]; then echo "[부문매출] 남은 시간 부족 — 건너뛴다"; exit 0; fi
+          python -u scripts/build_segments_us.py --push --time-budget-min "$BUDGET"
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} (segments) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
   # 위 빌더 스텝은 continue-on-error 라 소스가 영구히 죽어도 워크플로우는 초록이다.
-  # 두 잡이 끝난 뒤(성공·실패 무관) 최신 main 을 받아 산출물 타임스탬프 나이로 마지막 관문을 세운다.
+  # 세 잡이 끝난 뒤(성공·실패 무관) 최신 main 을 받아 산출물 타임스탬프 나이로 마지막 관문을 세운다.
   weekly-gate:
-    needs: [us-and-public, kr-dart]
+    needs: [us-and-public, kr-dart, segments]
     if: ${{ always() && (github.event_name != 'workflow_dispatch' || !inputs.only_financials) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10

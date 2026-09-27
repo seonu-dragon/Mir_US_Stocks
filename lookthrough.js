@@ -17,6 +17,7 @@
   let importState = null;   // { preview, fileName, replace }
 
   const SPECIAL_SECTOR = {
+    MISC: "기타",
     __unmapped: "미분류 주식",
     __nonequity: "채권·현금·기타",
     __rest: "공개 상위 밖",
@@ -156,7 +157,7 @@
       <thead><tr><th class="etfh-rank">#</th><th>종목</th><th class="num">합계</th><th class="num lt-col-split">직접</th><th class="num lt-col-split">ETF 경유</th><th class="lt-col-src">경로</th></tr></thead>
       <tbody>${r.exposures.map((e, i) => `<tr>
         <td class="etfh-rank">${i + 1}</td>
-        <td class="etfh-name">${stockCell(e)}</td>
+        <td class="etfh-name">${stockCell(e)}<p class="etfh-chips lt-src lt-src-inline">${sourceChips(e)}</p></td>
         <td class="num"><span class="etfh-w">${pct(e.totalPct, 2)}</span>${bar(e.totalPct, max)}</td>
         <td class="num lt-col-split">${e.directPct > 0 ? pct(e.directPct, 2) : "—"}</td>
         <td class="num lt-col-split">${e.viaPct > 0 ? pct(e.viaPct, 2) : "—"}</td>
@@ -178,11 +179,11 @@
         ? `<div class="etfh-block"><h4>ETF 간 중복</h4><p class="muted lt-small">구성 자료가 있는 ETF 가 2개 이상일 때 계산합니다.</p></div>` : "");
 
     const etfTable = `<div class="etfh-block lt-etfs"><h4>보유 ETF · 구성 기준일</h4><div class="table-wrap"><table class="etfh-table">
-      <thead><tr><th>ETF</th><th class="num">포트 비중</th><th class="num">기준일</th><th class="num lt-col-split">공개 상위 합</th></tr></thead>
+      <thead><tr><th>ETF</th><th class="num">포트 비중</th><th class="num lt-col-date">기준일</th><th class="num lt-col-split">공개 상위 합</th></tr></thead>
       <tbody>${r.etfRows.map((e) => `<tr>
-        <td class="etfh-name">${stockCell({ ticker: e.ticker, name: e.name })}${e.status === "missing" ? `<span class="etfh-sub lt-missing">${escapeHtml(e.reason)}</span>` : ""}</td>
+        <td class="etfh-name">${stockCell({ ticker: e.ticker, name: e.name })}${e.asOf ? `<span class="etfh-sub lt-asof-inline">기준일 ${escapeHtml(e.asOf)}</span>` : ""}${e.basis === "shares_x_close" ? `<span class="etfh-sub lt-missing">비중 = 계약수 × 미국 종가(KRX PDF 에 비중 없음)</span>` : ""}${e.status === "missing" ? `<span class="etfh-sub lt-missing">${escapeHtml(e.reason)}</span>` : ""}</td>
         <td class="num">${pct(e.weightPct)}</td>
-        <td class="num">${escapeHtml(e.asOf || "—")}</td>
+        <td class="num lt-col-date">${escapeHtml(e.asOf || "—")}</td>
         <td class="num lt-col-split">${e.status === "ok" ? `${pct(e.coveredPct)} <span class="muted">(${e.shownCount}/${Number(e.holdingsCount || 0).toLocaleString("en-US")})</span>` : "—"}</td>
       </tr>`).join("")}</tbody></table></div></div>`;
 
@@ -267,8 +268,8 @@
     const nSkip = p.rows.filter((r) => r.skip).length;
     host.innerHTML = `${head}
       <p class="muted pf-imp-note">반영할 ${nOn}종목${nPick ? ` · 후보에서 골라야 할 ${nPick}행` : ""}${nSkip ? ` · 제외 ${nSkip}행` : ""}. 같은 종목이 여러 줄이면 수량을 더하고 평단은 가중평균합니다. 이 브라우저에만 저장됩니다.</p>
-      <div class="table-wrap pf-imp-wrap"><table class="insider-table pf-imp-table">
-        <thead><tr><th></th><th>파일의 종목</th><th>매칭</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th>반영</th></tr></thead>
+      <div class="table-wrap pf-imp-wrap"><table class="insider-table pf-imp-table" style="min-width:0">
+        <thead><tr><th></th><th>파일의 종목</th><th>매칭</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="pf-imp-status">반영</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
       <label class="pf-imp-replace"><input type="checkbox" data-imp-replace ${importState.replace ? "checked" : ""}> 기존 보유 종목을 지우고 이 파일로 바꾸기</label>
       <div class="pf-imp-actions">

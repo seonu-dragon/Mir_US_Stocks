@@ -15,8 +15,12 @@
     (US0378331005 → '037833')을 국내 코드처럼 바꿔 버린다. 그래서 PDF 클래스를 직접 부르고
     코드는 parse_pdf_rows 가 판별한다(KR7xxxxxx 는 국내 단축코드, 그 밖의 ISIN 은 이름만).
   - 비중: KRX 비중(COMPST_RTO) → 없으면 구성금액(COMPST_AMT) → 평가금액(VALU_AMT) 비율.
-    해외 주식형 ETF 는 셋 다 0 인 경우가 있다(계약수만 공개) — 그 ETF 는 '비중 미공개'로
-    남기고 화면은 '구성 데이터 없음' 으로 표시한다(추정하지 않음).
+  - 해외 주식형(TIGER 미국S&P500 등)은 PDF 가 '설정현금액' 한 줄에 금액을 몰고 주식 행은 계약수만
+    준다(2026-09-27 실측: 금액 기준이면 현금 99.95%). 이때는 **계약수 × 미국 스냅샷 종가**로 주식
+    바스켓 안의 비중을 계산한다 — 미국 ISIN(US + CUSIP 9자리 + 검증 1자리)을 미국 ETF 빌더의
+    CUSIP → 티커 캐시(data/etf_holdings/cusip_map.json)로 잇고, 가격은 data/market_snapshot.json.
+    종목 행의 70% 이상에 가격이 붙을 때만 쓰고(weightBasis "shares_x_close"), 아니면 '비중 미공개'로
+    남겨 화면은 '구성 데이터 없음' 으로 표시한다(추정하지 않음).
   - 섹터 분포는 전체 구성 종목 기준으로 스냅샷 섹터를 이어 계산한다(이어지지 않는 해외 주식·
     채권·파생은 미분류/비주식).
 
@@ -51,6 +55,8 @@ import sec_client as sec  # noqa: E402
 from briefing_store import repository_publish_lock  # noqa: E402
 
 SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
+US_SNAPSHOT = ROOT / "data" / "market_snapshot.json"
+CUSIP_MAP = ROOT / "data" / "etf_holdings" / "cusip_map.json"
 OUT_JSON = ROOT / "data" / "korea" / "etf_holdings.json"
 OUT_JS = ROOT / "data" / "korea" / "etf_holdings.js"
 JS_VAR = "KR_ETF_HOLDINGS"
@@ -60,6 +66,7 @@ MIN_OK = 20            # 성공 ETF 가 이보다 적으면 발행하지 않는�
 SOURCE = "KRX 정보데이터시스템 ETF PDF(구성종목·설정단위 기준)"
 
 KR_ISIN_RE = re.compile(r"^KR7([0-9A-Z]{6})\d{3}$")
+US_ISIN_RE = re.compile(r"^US([0-9A-Z]{9})\d$")
 SHORT_CODE_RE = re.compile(r"^[0-9][0-9A-Z]{5}$")
 CASH_RE = re.compile(r"현금|예금|원화|설정현금|CASH|DEPOSIT|콜론|RP매수|미수|미지급", re.I)
 
@@ -93,10 +100,21 @@ def normalize_code(raw: str) -> tuple[str | None, str]:
     return None, s
 
 
-def parse_pdf_rows(rows: list[dict], universe: dict[str, dict], top_keep: int = TOP_KEEP) -> dict | None:
+def us_ticker_of(raw: str, cusip_map: dict | None) -> str | None:
+    """미국 ISIN → 티커(CUSIP 캐시). 없으면 None."""
+    m = US_ISIN_RE.match(str(raw or "").strip().upper())
+    if not m or not cusip_map:
+        return None
+    rec = cusip_map.get(m.group(1))
+    return (rec or {}).get("t") if isinstance(rec, dict) else (rec if isinstance(rec, str) else None)
+
+
+def parse_pdf_rows(rows: list[dict], universe: dict[str, dict], top_keep: int = TOP_KEEP,
+                   cusip_map: dict | None = None, us_universe: dict | None = None) -> dict | None:
     """KRX PDF 행 → {top, holdingsCount, sectors, sectorUnmapped, weightBasis}. 비중이 없으면 None.
 
-    universe: {6자리 코드: {"company", "sector", "etf": bool}} (국내 스냅샷)."""
+    universe: {6자리 코드: {"company", "sector", "etf": bool}} (국내 스냅샷).
+    cusip_map/us_universe: 해외 주식형의 계약수 × 미국 종가 계산용({CUSIP: {"t"}}, {티커: {"price", "sector", "company"}})."""
     items = []
     for r in rows or []:
         name = str(r.get("COMPST_ISU_NM") or "").strip()
@@ -106,9 +124,12 @@ def parse_pdf_rows(rows: list[dict], universe: dict[str, dict], top_keep: int = 
         items.append({
             "code": code, "raw": raw, "name": name,
             "rto": num(r.get("COMPST_RTO")), "amt": num(r.get("COMPST_AMT")), "valu": num(r.get("VALU_AMT")),
+            "shares": num(r.get("COMPST_ISU_CU1_SHRS")), "us": us_ticker_of(raw, cusip_map),
         })
     if not items:
         return None
+    for i in items:
+        i["cash"] = bool(CASH_RE.search(i["name"])) and not universe.get(i["code"] or "")
     basis = None
     if sum(i["rto"] for i in items if i["rto"] > 0) > 1:
         basis = "rto"
@@ -122,8 +143,23 @@ def parse_pdf_rows(rows: list[dict], universe: dict[str, dict], top_keep: int = 
                 for i in items:
                     i["w"] = max(0.0, i[key]) / tot * 100
                 break
+    # 현금 한 줄에 금액이 몰리고 주식 행 비중이 0 → 계약수 × 미국 종가(주식 바스켓 안의 비중).
+    if basis is not None:
+        cash_w = sum(i["w"] for i in items if i["cash"])
+        zero_stock = [i for i in items if not i["cash"] and i["w"] <= 0]
+        if cash_w >= 50 and len(zero_stock) >= 3:
+            basis = None
     if basis is None:
-        return None
+        stocks = [i for i in items if not i["cash"]]
+        uu = us_universe or {}
+        priced = [i for i in stocks if i["us"] and i["shares"] > 0 and num((uu.get(i["us"]) or {}).get("price")) > 0]
+        if not stocks or len(priced) < 3 or len(priced) < len(stocks) * 0.7:
+            return None
+        vals = {id(i): i["shares"] * num(uu[i["us"]]["price"]) for i in priced}
+        tot = sum(vals.values())
+        for i in items:
+            i["w"] = vals.get(id(i), 0.0) / tot * 100 if tot > 0 else 0.0
+        basis = "shares_x_close"
 
     sectors: dict[str, float] = {}
     unmapped = 0.0
@@ -133,15 +169,25 @@ def parse_pdf_rows(rows: list[dict], universe: dict[str, dict], top_keep: int = 
         if w <= 0:
             continue
         u = universe.get(i["code"]) if i["code"] else None
-        cash = bool(CASH_RE.search(i["name"])) and not u
-        kind = "cash" if cash else ("equity" if u and not u.get("etf") else ("fund" if u else "other"))
-        if u and not u.get("etf") and u.get("sector"):
-            sectors[u["sector"]] = sectors.get(u["sector"], 0.0) + w
+        us = (us_universe or {}).get(i["us"]) if i["us"] else None
+        cash = i["cash"]
+        if u:
+            kind = "equity" if not u.get("etf") else "fund"
+        elif i["us"]:
+            kind = "equity"
+        else:
+            kind = "cash" if cash else "other"
+        sector = (u or {}).get("sector") if u and not u.get("etf") else (us or {}).get("sector")
+        if sector and sector not in ("ETF", "EXCHANGE TRADED FUNDS"):
+            sectors[sector] = sectors.get(sector, 0.0) + w
         elif not cash:
             unmapped += w
         rec = {"n": (u or {}).get("company") or i["name"], "w": round(w, 3), "k": kind}
         if u:
             rec["t"] = i["code"]
+        elif i["us"]:
+            rec["t"] = i["us"]
+            rec["m"] = "us"
         out.append(rec)
     out.sort(key=lambda h: -h["w"])
     return {
@@ -169,6 +215,24 @@ def pick_universe(snapshot: dict, top: int) -> tuple[list[dict], dict[str, dict]
             etfs.append({"ticker": code, "name": s.get("company") or "", "cap": cap, "priceDate": s.get("priceDate")})
     etfs.sort(key=lambda e: -e["cap"])
     return etfs[:top], universe
+
+
+def load_us_refs() -> tuple[dict, dict]:
+    """(CUSIP → 티커 캐시, 미국 티커 → {price, sector, company}). 없으면 빈 dict."""
+    cmap, uu = {}, {}
+    try:
+        cmap = json.loads(CUSIP_MAP.read_text(encoding="utf-8"))
+    except Exception as exc:
+        print(f"  [경고] {CUSIP_MAP.name} 읽기 실패: {exc}")
+    try:
+        snap = json.loads(US_SNAPSHOT.read_text(encoding="utf-8"))
+        for s in snap.get("stocks") or []:
+            t = s.get("ticker")
+            if t:
+                uu[t] = {"price": s.get("price"), "sector": s.get("sector") or "", "company": s.get("company") or ""}
+    except Exception as exc:
+        print(f"  [경고] 미국 스냅샷 읽기 실패: {exc}")
+    return cmap, uu
 
 
 def candidate_dates(price_date: str | None, today: datetime.date, back: int = 6) -> list[str]:
@@ -220,6 +284,7 @@ def run(top: int, date: str | None, push: bool) -> None:
     if not etfs:
         print("  [실패] 스냅샷에 ETF 가 없다")
         raise SystemExit(1)
+    cusip_map, us_universe = load_us_refs()
     get_isin, pdf = _fetcher()
 
     # 조회일: 가장 큰 ETF 의 PDF 가 나오는 가장 최근 평일.
@@ -251,7 +316,7 @@ def run(top: int, date: str | None, push: bool) -> None:
         if rows is None:
             excluded[t] = "fetch"
             continue
-        parsed = parse_pdf_rows(rows, universe)
+        parsed = parse_pdf_rows(rows, universe, cusip_map=cusip_map, us_universe=us_universe)
         if not parsed:
             excluded[t] = "noweight" if rows else "empty"
             continue
@@ -270,10 +335,16 @@ def run(top: int, date: str | None, push: bool) -> None:
         "asOf": as_of_iso,
         "count": count,
         "topKeep": TOP_KEEP,
+        "basisText": {
+            "rto": "KRX 비중",
+            "amt": "구성금액 비율",
+            "valu": "평가금액 비율",
+            "shares_x_close": "계약수 × 미국 종가(주식 바스켓 안의 비중)",
+        },
         "etfs": out,
         "excluded": excluded,
         "excludedText": {
-            "noweight": "KRX PDF 에 비중·금액이 없음(해외 구성 등, 계약수만 공개)",
+            "noweight": "KRX PDF 에 비중·금액이 없고 계약수 × 종가로도 계산할 수 없음(해외 구성 등)",
             "empty": "KRX PDF 가 비어 있음",
             "fetch": "KRX 조회 실패",
             "isin": "ISIN 확인 실패",

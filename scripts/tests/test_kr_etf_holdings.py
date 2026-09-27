@@ -95,3 +95,31 @@ def test_candidate_dates_weekdays_from_price_date():
     ds = kb.candidate_dates("2026-09-27", datetime.date(2026, 9, 28), back=3)  # 일요일 기준일
     assert ds == ["20260925", "20260924", "20260923"]
     assert kb.candidate_dates(None, datetime.date(2026, 9, 28), back=1) == ["20260928"]
+
+
+def test_parse_shares_times_close_for_cash_settled_foreign_etf():
+    # TIGER 미국S&P500 류: 금액은 '설정현금액' 한 줄에 몰리고 주식 행은 계약수만 있다.
+    rows = [
+        {"COMPST_ISU_CD": "KRD010010001", "COMPST_ISU_NM": "설정현금액", "COMPST_AMT": "999,500", "COMPST_ISU_CU1_SHRS": "0"},
+        {"COMPST_ISU_CD": "KRD010010001", "COMPST_ISU_NM": "원화현금", "COMPST_AMT": "500", "COMPST_ISU_CU1_SHRS": "0"},
+        {"COMPST_ISU_CD": "US0378331005", "COMPST_ISU_NM": "APPLE INC", "COMPST_AMT": "0", "COMPST_ISU_CU1_SHRS": "10"},
+        {"COMPST_ISU_CD": "US5949181045", "COMPST_ISU_NM": "MICROSOFT CORP", "COMPST_AMT": "0", "COMPST_ISU_CU1_SHRS": "5"},
+        {"COMPST_ISU_CD": "US67066G1040", "COMPST_ISU_NM": "NVIDIA CORP", "COMPST_AMT": "0", "COMPST_ISU_CU1_SHRS": "20"},
+    ]
+    cmap = {"037833100": {"t": "AAPL"}, "594918104": {"t": "MSFT"}, "67066G104": {"t": "NVDA"}}
+    uu = {"AAPL": {"price": 200, "sector": "TECHNOLOGY"}, "MSFT": {"price": 400, "sector": "TECHNOLOGY"},
+          "NVDA": {"price": 150, "sector": "TECHNOLOGY"}}
+    p = kb.parse_pdf_rows(rows, UNIVERSE, cusip_map=cmap, us_universe=uu)
+    assert p["weightBasis"] == "shares_x_close"
+    # 값: AAPL 2000 · MSFT 2000 · NVDA 3000 → 28.571 / 28.571 / 42.857
+    assert p["top"][0] == {"n": "NVIDIA CORP", "w": 42.857, "k": "equity", "t": "NVDA", "m": "us"}
+    assert {h["t"] for h in p["top"]} == {"AAPL", "MSFT", "NVDA"}
+    assert p["sectors"] == [["TECHNOLOGY", 100.0]]
+    # 가격이 70% 미만이면 추정하지 않는다
+    assert kb.parse_pdf_rows(rows, UNIVERSE, cusip_map={"037833100": {"t": "AAPL"}}, us_universe=uu) is None
+
+
+def test_us_isin_maps_to_ticker_even_with_krx_ratio():
+    rows = [{"COMPST_ISU_CD": "US0378331005", "COMPST_ISU_NM": "APPLE INC", "COMPST_RTO": "7"}]
+    p = kb.parse_pdf_rows(rows, UNIVERSE, cusip_map={"037833100": {"t": "AAPL"}}, us_universe={"AAPL": {"price": 1, "sector": "TECHNOLOGY"}})
+    assert p["top"][0]["t"] == "AAPL" and p["sectors"] == [["TECHNOLOGY", 7.0]]

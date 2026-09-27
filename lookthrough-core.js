@@ -148,7 +148,7 @@
         addSector("__rest", wPort * Math.max(0, 100 - sum) / 100);
       }
       etfRows.push({ ticker: p.ticker, name: p.name || etf.name || "", weightPct: wPort, status: "ok",
-        asOf: etf.asOf || null, coveredPct: covered, shownCount: hm.size, holdingsCount: num(etf.holdingsCount) || hm.size });
+        asOf: etf.asOf || null, basis: etf.weightBasis || null, coveredPct: covered, shownCount: hm.size, holdingsCount: num(etf.holdingsCount) || hm.size });
     });
 
     const all = Array.from(expo.values()).map((e) => {

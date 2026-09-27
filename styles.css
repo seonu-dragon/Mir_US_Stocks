@@ -14997,6 +14997,7 @@ button.calp-who:hover strong { text-decoration: underline; }
 .lt-small { font-size: var(--fs-cap); margin: 0; }
 .lt-etfs { margin-top: 14px; }
 .lt-missing { white-space: normal; max-width: none; }
+.lt-src-inline, .lt-asof-inline { display: none; }
 .pf-import-preview { margin: 0 0 var(--space-3); padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface-2); min-width: 0; }
 .pf-import-preview[hidden] { display: none; }
 .pf-imp-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 6px; }
@@ -15019,9 +15020,15 @@ button.calp-who:hover strong { text-decoration: underline; }
 @media (max-width: 640px) {
   .lt-table .lt-col-split, .lt-etfs .lt-col-split { display: none; }
   .lt-table .etfh-bar { display: none; }
+  .lt-table .lt-col-src, .lt-etfs .lt-col-date { display: none; }
+  .lt-src-inline { display: flex; margin-top: 4px; }
+  .lt-asof-inline { display: block; }
   .lt-src span { font-size: 11px; }
   .pf-import-preview { padding: 10px; }
-  .pf-imp-match select { max-width: 150px; }
+  .pf-imp-match select { max-width: 130px; }
+  .pf-imp-table .pf-imp-status { display: none; }
+  .pf-imp-table td, .pf-imp-table th { padding: 6px 4px; font-size: var(--fs-cap); }
+  .pf-imp-raw { max-width: 90px; }
 }
 
 /* ===== 찾기 목록(배당 랭킹·신규상장·관리·경보) · 환율 계산기 · 시장지도 '기타 N개' 묶음 ===== */

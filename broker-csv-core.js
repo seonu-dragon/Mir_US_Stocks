@@ -273,7 +273,10 @@
       // 다른 시장 종목(국내 증권사 파일의 해외주식 등)은 현재 시장 스냅샷에 없다.
       const foreignHint = (market === "kr" && (rec.currency === "USD" || /^[A-Z]{1,5}(\.[A-Z])?$/.test(normCode(rec.rawCode, market))))
         || (market === "us" && (rec.currency === "KRW" || /^\d{6}$/.test(normCode(rec.rawCode, market))));
-      if (!skip && match.status === "none") skip = foreignHint ? "다른 시장 종목 — 시장을 바꿔 다시 가져오세요" : "종목을 찾지 못함";
+      // 코드로 못 찾은 다른 시장 표시(통화·코드 모양) 행은 이름이 비슷한 후보가 있어도 제외한다
+      // (국내 모드에서 '애플' → 'PLUS 애플채권혼합' 같은 엉뚱한 후보를 고르게 하지 않는다).
+      if (!skip && match.status !== "exact" && foreignHint) skip = "다른 시장 종목 — 시장을 바꿔 다시 가져오세요";
+      if (!skip && match.status === "none") skip = "종목을 찾지 못함";
       // 국내 증권사 파일의 해외주식이 원화 환산 단가로 적혀 있으면 달러 평단으로 쓸 수 없다.
       if (!skip && market === "us" && rec.currency === "KRW") skip = "원화 표시 단가 — 달러 평단 파일로 가져오세요";
       return { ...rec, skip, match, selected: !skip && match.status === "exact" ? match.ticker : "" };

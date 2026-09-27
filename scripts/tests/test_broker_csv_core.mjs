@@ -27,6 +27,7 @@ const KR = [
   { ticker: "005380", company: "현대차" },
   { ticker: "066570", company: "LG전자" },
   { ticker: "069500", company: "KODEX 200" },
+  { ticker: "447660", company: "PLUS 애플채권혼합" },
 ];
 const US = [
   { ticker: "AAPL", company: "Apple Inc." },

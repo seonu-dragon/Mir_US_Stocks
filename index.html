@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=3de1e5a002" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=3de1e5a002"></noscript>
+    <link rel="preload" href="styles.css?v=31b0c6369e" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=31b0c6369e"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d9d31e1a81"></script>
+    <script src="build_id.js?v=49b08d19d8"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2533,15 +2533,17 @@ html[data-market="kr"][data-theme="dark"] {
             <button type="button" class="ghost" id="pfClear">초기화</button>
             <button type="button" class="ghost" id="pfExportCsv">CSV보내기</button>
             <button type="button" class="ghost" id="pfImportCsv">CSV가져오기</button>
-            <input type="file" id="pfImportFile" accept=".csv,text/csv,text/plain" hidden>
+            <input type="file" id="pfImportFile" accept=".csv,.txt,text/csv,text/plain" hidden>
 
           </div>
+          <div class="pf-import-preview" id="pfImportPreview" hidden aria-live="polite"></div>
           <div class="pf-summary" id="pfSummary" hidden></div>
           <div class="pf-body">
             <div class="pf-table-wrap" id="pfTable"></div>
             <div class="pf-pie" id="pfPie"></div>
           </div>
         </section>
+        <section class="etfh-card lt-card" id="lookthroughCard" hidden></section>
 
         <div class="section-title">
           <h2>관심 리스트</h2>
@@ -3263,7 +3265,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=4d75c17333"></script>
     <script src="movers.js?v=e7ddc838b5"></script>
-    <script src="portfolio.js?v=2a4ccc384e"></script>
+    <script src="portfolio.js?v=ed2118f017"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
@@ -3276,7 +3278,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=c27ef2b527"></script>
+    <script src="feature-data.js?v=fd6acd09a3"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3334,7 +3336,10 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel.js?v=cde775a5ef"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=c14f9debec"></script>
+    <script src="lookthrough-core.js?v=1d19dfc6f8"></script>
+    <script src="broker-csv-core.js?v=3d34a16b8a"></script>
+    <script src="lookthrough.js?v=115ae3ef5a"></script>
+    <script src="app.js?v=8351b1679c"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=1d2bb06eeb"></script>

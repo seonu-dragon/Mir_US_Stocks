@@ -164,6 +164,9 @@ const FEATURE_DATA = {
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
   // etf-holdings.js 가 종목 분석을 열 때 하나만 fetch 한다.
   usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },
+  // 국내 ETF 구성(KRX ETF PDF, build_kr_etf_holdings.py) — 시총 상위 ETF 의 상위 25 구성·섹터 분포(한 파일).
+  // 내 투자 › 보유의 ETF 룩스루(lookthrough.js)가 보유 ETF 가 있을 때만 받는다(lazy).
+  krEtfHoldings: { global: "KR_ETF_HOLDINGS", path: "data/korea/etf_holdings.js", krOnly: true, lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다

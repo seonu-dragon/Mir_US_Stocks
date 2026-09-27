@@ -3519,6 +3519,13 @@ function setupEvents() {
     e.target.value = "";
     if (!file) return;
     const reader = new FileReader();
+    // 증권사 잔고 파일(CP949·천 단위 쉼표·종목명만)은 바이트로 읽어 미리보기(lookthrough.js)로.
+    // 미리보기 모듈이 없으면 예전처럼 UTF-8 텍스트로 바로 가져온다.
+    if (window.MirLookthrough && window.MirBrokerCsvCore) {
+      reader.onload = () => window.MirLookthrough.openImport(new Uint8Array(reader.result || new ArrayBuffer(0)), file.name);
+      reader.readAsArrayBuffer(file);
+      return;
+    }
     reader.onload = () => importPortfolioCsv(String(reader.result || ""));
     reader.readAsText(file);
   });
@@ -6881,6 +6888,8 @@ function dataTrustSources() {
   rows.push(source("휴장·만기 달력", "exchange_calendars(XKRX·XNYS) · 연준 일정표", window.MARKET_CALENDAR, ["events"], 72, "매일 06:40", "marketCalendar"));
   if (cfg.id === "kr" && cfg.features?.krIrSchedule !== false) rows.push(source("실적 IR 일정", "DART 기업설명회 개최 공시", window.KR_IR_SCHEDULE, ["rows"], 72, "매일 06:40", "krIrSchedule", "", true));
   if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
+  // 국내 ETF 구성(2026-09-27, KRX ETF PDF) — 내 투자 › 보유의 ETF 룩스루가 읽는다. 주 1회(토요일).
+  if (cfg.id === "kr") rows.push(source("ETF 구성 종목", "KRX 정보데이터시스템 ETF PDF", window.KR_ETF_HOLDINGS, ["etfs"], 24 * 12, "매주 토요일", "krEtfHoldings"));
   // 이벤트 스터디(2026-09-26) — 주 1회 사전 계산. lazy 라 신뢰도 센터가 직접 받아 본다. 표본 수·기간·생존편향을 함께 적는다.
   {
     const es = window.EVENT_STUDY_INDEX;

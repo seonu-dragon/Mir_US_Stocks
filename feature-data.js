@@ -347,6 +347,8 @@ function refreshFeatureViews() {
           () => { if (typeof renderEtfHoldings === "function") renderEtfHoldings(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
+          // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).
+          () => { if (typeof renderStockTimeline === "function") renderStockTimeline(item); },
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
@@ -368,6 +370,7 @@ function refreshFeatureViews() {
       const item = applyLive(withDetail(base));
       if (byId("selectedStock")) calls.push(() => renderSelected(item));
       // 가격 차트 이벤트 마커 — 8-K·DART 공시 전역이 차트보다 늦게 오면 그때 마커를 다시 그린다.
+      // 키 모먼트(큰 등락일)의 사유도 타임라인 자료 세대가 바뀌면 다시 그린다.
       if (typeof refreshChartEventsIfStale === "function") calls.push(refreshChartEventsIfStale);
       const facts = byId("searchFacts");
       if (facts) calls.push(() => renderSearchFacts(item));

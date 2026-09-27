@@ -1753,6 +1753,8 @@ function renderActionBoard() {
     (myEventRows.length ? actionBoardCard("이번 주 내 종목 이벤트", isKrMarket() ? "관심·보유 종목 최근 2일 공시" : "관심·보유 종목 D-7 일정", myEventRows, "", { tab: "calendar" }) : "");
   grid.querySelectorAll("[data-action-ticker]").forEach((button) => button.addEventListener("click", () => selectTicker(button.dataset.actionTicker, { openSearch: true })));
   grid.querySelectorAll("[data-action-tab]").forEach((button) => button.addEventListener("click", () => activateTab(button.dataset.actionTab, { sub: button.dataset.actionSub || null })));
+  // "오늘 내 주식은" 요약(my-digest.js)도 같은 시점(관심종목 변경·데이터 도착·시장 전환)에 다시 그린다.
+  if (typeof renderMyDigest === "function") renderMyDigest();
 }
 
 function setupActionBoard() {
@@ -5173,6 +5175,7 @@ function renderSearch(options = {}) {
   if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
+  if (typeof renderStockTimeline === "function") renderStockTimeline(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
@@ -5200,6 +5203,8 @@ function renderSearch(options = {}) {
     renderEstimateRevision(refreshed);
     render52wRange(refreshed);
     renderStockEvents(refreshed);
+    // 통합 타임라인 — 실적·배당·일봉(큰 등락)이 상세 파일에 있어 상세가 도착하면 다시 그린다.
+    if (typeof renderStockTimeline === "function") renderStockTimeline(refreshed);
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);
@@ -7774,6 +7779,8 @@ function watchlistIsSeed() {
   return watchlist.every((t) => set.has(t));
 }
 function renderMyInvestSummary() {
+  // 보유 종목이 바뀌면(pfTable MutationObserver → 여기) "오늘 내 주식은" 요약도 다시 그린다.
+  if (typeof renderMyDigest === "function") renderMyDigest();
   const empty = byId("myInvestEmpty");
   const body = byId("myInvestBody");
   const box = byId("myInvestSummary");

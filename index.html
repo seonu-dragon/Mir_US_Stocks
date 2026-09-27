@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=076ae651b5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=076ae651b5"></noscript>
+    <link rel="preload" href="styles.css?v=d147415ef4" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=d147415ef4"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=8e16271495"></script>
+    <script src="build_id.js?v=fde1582995"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2619,6 +2619,7 @@ html[data-market="kr"][data-theme="dark"] {
             </label>
           </div>
           <div class="watch-alert-results" id="watchAlertResults"></div>
+          <div class="push-alert-box" id="pushAlertBox" aria-label="푸시 알림 설정"></div>
         </div>
         </div>
 
@@ -3335,7 +3336,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study.js?v=bcfb67eb71"></script>
     <script src="timeline-core.js?v=bce5c51ba9"></script>
     <script src="timeline.js?v=29e0e9f49d"></script>
-    <script src="watchlist.js?v=2668548665"></script>
+    <script src="watchlist.js?v=5223caf8cb"></script>
+    <script src="push-alerts-core.js?v=fc049baf03"></script>
+    <script src="web-push.js?v=5e1529522c"></script>
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="financials.js?v=3e7d8558c4"></script>

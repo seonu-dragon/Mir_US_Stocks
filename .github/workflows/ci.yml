@@ -86,6 +86,16 @@ jobs:
       - name: Worker tests
         run: node worker/test_worker.mjs
 
+      # Web Push 워커(worker/mir-push.js): RFC 8291 부록 A 벡터(바이트 일치)·VAPID ES256 서명 검증·라우트(Origin·구독 검증·
+      # 쿨다운·410 정리)·크론(±N%·가격 도달·상한·예산 커서·요약·동기화 목록). EMBED 블록이 루트 원본과 같은지도 본다.
+      - name: Web Push worker tests
+        run: |
+          node scripts/sync_push_worker.mjs --check
+          node worker/test_push.mjs
+      # 푸시 알림 순수 로직(push-alerts-core.js): 설정·목록 정리, 크론 계획(서머타임·KST 슬롯), spark 파싱, 조건 평가, 상한·문구.
+      - name: Push alerts core tests
+        run: node scripts/tests/test_push_alerts_core.mjs
+
       # 적립식 시뮬레이터 순수 계산(dca-core.js): XIRR 알려진 값·휴장일 이월·정수 매수 이월·배당.
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs

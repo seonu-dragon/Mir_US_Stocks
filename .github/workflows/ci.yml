@@ -177,6 +177,10 @@ jobs:
       # 평균 목표가 서술(권유 문구 없음), 의견 분포 비율.
       - name: Company info core tests
         run: node scripts/tests/test_company_info_core.mjs
+      # 종목별 기관 보유 변화(inst-holders-core.js): 요약 수치(분할 추정 시 직전 수량 조정), 신규/증가/감소/청산 막대,
+      # 상위 기관 상태(직전 13F 없음 = 비교 불가), 분기 추이 스파크라인(빈 분기에서 선 끊기), 표시 형식.
+      - name: Institutional holders core tests
+        run: node scripts/tests/test_inst_holders_core.mjs
 
       # 회사 로고(company-logo-core.js): 인덱스 조회·우선주→보통주 로고·모노그램 글자·팔레트 번호.
       - name: Company logo core tests

@@ -15002,6 +15002,67 @@ button.calp-who:hover strong { text-decoration: underline; }
   .etfh-sub { max-width: 170px; }
 }
 
+/* 기관 보유 변화 (13F, inst-holders.js) — 수급·보유 탭, US 전용 */
+.ih-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }
+.ih-card[hidden] { display: none; }
+.ih-card .fundamental-head { background: none; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
+.ih-card .fundamental-head h3 { margin: 0; font-size: var(--fs-h3); }
+.ih-card .fundamental-head span { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; }
+.ih-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+.ih-stat { display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md, 8px); background: var(--surface-2); min-width: 0; }
+.ih-stat-l { font-size: var(--fs-cap); color: var(--muted); }
+.ih-stat-v { font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.ih-stat-s { font-size: var(--fs-cap); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.ih-stat-s.is-pos, .ih-delta.is-pos { color: var(--pos); }
+.ih-stat-s.is-neg, .ih-delta.is-neg { color: var(--neg); }
+.ih-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 16px 24px; align-items: start; }
+.ih-block + .ih-block { margin-top: 16px; }
+.ih-block h4 { margin: 0 0 8px; font-size: var(--fs-sub); font-weight: var(--fw-strong); color: var(--text-2); }
+.ih-block h4 span { font-weight: 400; font-size: var(--fs-cap); color: var(--muted); margin-left: 4px; }
+.ih-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 7px; }
+.ih-bars li { display: grid; grid-template-columns: 72px minmax(0, 1fr) 64px; gap: 8px; align-items: center; font-size: var(--fs-cap); }
+.ih-bl { color: var(--text-2); white-space: nowrap; }
+.ih-bar { display: block; height: 10px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.ih-bar i { display: block; height: 100%; border-radius: 3px; }
+.ih-bars li.is-pos .ih-bar i { background: var(--pos); }
+.ih-bars li.is-neg .ih-bar i { background: var(--neg); }
+.ih-bv { text-align: right; font-variant-numeric: tabular-nums; color: var(--text); }
+.ih-note { margin: 6px 0 0; font-size: var(--fs-cap); color: var(--muted); }
+.ih-sparks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ih-spark { margin: 0; min-width: 0; }
+.ih-spark figcaption { display: flex; justify-content: space-between; gap: 6px; font-size: var(--fs-cap); color: var(--muted); }
+.ih-spark figcaption strong { color: var(--text); font-variant-numeric: tabular-nums; font-weight: var(--fw-strong); }
+.ih-spark svg { display: block; width: 100%; height: 44px; margin-top: 4px; overflow: visible; }
+.ih-spark path { fill: none; stroke: var(--primary); stroke-width: 1.6; vector-effect: non-scaling-stroke; }
+.ih-spark circle { fill: var(--primary); }
+.ih-spark-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ih-table { width: 100%; min-width: 0; border-collapse: collapse; }
+.ih-table th, .ih-table td { padding: 7px 6px; font-size: var(--fs-sub); vertical-align: middle; }
+.ih-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.ih-rank { width: 24px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.ih-name { min-width: 0; }
+.ih-name strong { font-weight: var(--fw-strong); overflow-wrap: anywhere; }
+.ih-plain { font-weight: 500 !important; color: var(--text); }
+.ih-sub { display: block; font-size: var(--fs-cap); color: var(--muted); font-weight: 400; }
+.ih-link { min-height: 0; height: auto; padding: 0; border: 0; background: none; color: var(--link, var(--text)); font: inherit; text-align: left; cursor: pointer; }
+.ih-link:hover strong { text-decoration: underline; }
+.ih-badge { display: inline-block; padding: 1px 7px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: var(--fs-cap); color: var(--text-2); }
+.ih-badge.is-pos { color: var(--pos); border-color: currentColor; }
+.ih-badge.is-na { color: var(--muted); }
+.ih-opt { margin: 12px 0 0; font-size: var(--fs-cap); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.ih-foot { margin: 10px 0 0; font-size: var(--fs-cap); color: var(--muted); }
+@media (max-width: 1100px) {
+  .ih-grid { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 640px) {
+  .ih-card { padding: 12px; }
+  .ih-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ih-stat-v { font-size: 16px; }
+  .ih-table .ih-col-val { display: none; }
+  .ih-link { min-height: 36px; }
+  .ih-bars li { grid-template-columns: 64px minmax(0, 1fr) 56px; }
+}
+
 /* ===== ETF 룩스루 · 증권사 CSV 가져오기 미리보기 (lookthrough.js, 2026-09-27) ===== */
 .lt-card { margin-bottom: var(--space-4); }
 .lt-coverage { margin: 4px 0 14px; }

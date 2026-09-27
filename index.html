@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=076ae651b5" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=076ae651b5"></noscript>
+    <link rel="preload" href="styles.css?v=36a62f6c9d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=36a62f6c9d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=8e16271495"></script>
+    <script src="build_id.js?v=fb50f7fd79"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1579,6 +1579,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="detail-panel sd-flow animate-reveal" id="stockFlowPanel" hidden></section>
               <!-- 스마트머니 종합(app.js renderSmartMoney) — US 전용 -->
               <section class="smart-money-card event-card-smart animate-reveal" id="stockSmartMoney" hidden></section>
+              <!-- 기관 보유 변화(inst-holders.js renderInstHolders) — US 전용, SEC 13F 데이터셋 첫 글자 샤드 하나만 받는다 -->
+              <section class="ih-card animate-reveal" id="instHoldersCard" hidden></section>
               <section class="congress-trades-card animate-reveal" id="stockCongress"></section>
             </div>
             <div class="sd-view" id="sdv-ai" data-view="ai" role="tabpanel">
@@ -3293,7 +3295,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=4d0fe31e9a"></script>
+    <script src="feature-data.js?v=76ce302236"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3345,7 +3347,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=c3c5b7132b"></script>
     <script src="daily-table.js?v=4b5b218185"></script>
-    <script src="stock-view.js?v=b0854500c3"></script>
+    <script src="stock-view.js?v=4b1d0570ec"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=3db2e5c53a"></script>
@@ -3357,7 +3359,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel.js?v=cde775a5ef"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=3de0111114"></script>
+    <script src="inst-holders-core.js"></script>
+    <script src="inst-holders.js"></script>
+    <script src="app.js?v=dfb26d2e0d"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=61f0c3fb14"></script>

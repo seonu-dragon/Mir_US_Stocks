@@ -2116,12 +2116,12 @@ function renderCalendar(events) {
 // 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
 const TAB_GROUP_OF = {
   today: "today", calendar: "today", "ai-briefing": "today",
-  map: "market", sector: "market", health: "market", signals: "market", industry: "market", marketindex: "market", krflow: "market",
+  map: "market", sector: "market", health: "market", signals: "market", industry: "market", marketindex: "market", krflow: "market", krtheme: "market",
   search: "search", bulk: "bulk", community: "community",
 };
 const GROUP_LEAVES = {
   today: ["today", "ai-briefing", "calendar"],
-  market: ["map", "sector", "health", "marketindex", "signals", "industry", "krflow"],
+  market: ["map", "sector", "health", "marketindex", "signals", "industry", "krflow", "krtheme"],
 };
 // 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
 const lastGroupLeaf = { today: "today", market: "map" };
@@ -3566,6 +3566,8 @@ const TAB_RENDERERS = {
   marketindex: () => { if (typeof renderMarketIndicators === "function") renderMarketIndicators(); },
   // 국내 수급·자금(kr-flow-panels.js) — 데이터를 스스로 lazy 로드한다.
   krflow: () => { if (typeof renderKrFlowMarket === "function") renderKrFlowMarket(); },
+  // 국내 테마(kr-themes.js) — KR_THEMES 를 스스로 lazy 로드한다.
+  krtheme: () => { if (typeof renderKrThemes === "function") renderKrThemes(); },
   bulk: () => { renderBulk(); renderMyInvestSummary(); },
   health: () => renderHealth(),
   "ai-briefing": () => renderAiBriefing(),
@@ -5179,6 +5181,7 @@ function renderSearch(options = {}) {
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
+  if (typeof renderStockThemes === "function") renderStockThemes(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6656,6 +6659,10 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
     tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
   },
+  "테마 분류": {
+    kr: { workflow: "Company profile & price targets", script: "scripts/build_kr_themes.py" },
+    tabs: "시장 탭 · 테마, 종목 분석 · 이 종목의 테마",
+  },
   "기업개요": {
     us: { workflow: "Company profile & price targets", script: "scripts/build_company_profile.py --market us" },
     kr: { workflow: "Company profile & price targets", script: "scripts/build_company_profile.py --market kr" },
@@ -7019,6 +7026,20 @@ function dataTrustSources() {
           ["증시자금 기준일", kf.funds?.asOf || "—"],
           ["투자자별 기준일", kf.investors?.asOf || "—"],
           ["ECOS 월말 대조", kf.check ? `${kf.check.month} 예탁금 차이 ${kf.check.depDiffPct}%${kf.check.creditDiffPct != null ? ` · 신용융자 ${kf.check.creditDiffPct}%` : ""}` : "대조 자료 없음"],
+        ];
+      }
+      rows.push(row);
+    }
+    // 테마 분류(2026-09-27) — 주 1회(토요일), 사업보고서 원문을 시총 순으로 증분. 0건은 이상(allowEmpty 아님).
+    if (cfg.features?.krThemes === true) {
+      const kt = window.KR_THEMES;
+      const row = source("테마 분류", "DART 사업보고서 '사업의 내용' 원문 (애매한 문장만 Gemini 판정)", kt, ["themes"], 192, "매주 토요일 · 증분", "krThemes");
+      if (kt) {
+        const cv = kt.coverage || {};
+        row.extra = [
+          ["원문 확인", `${Number(cv.processed || 0).toLocaleString("ko-KR")} / ${Number(cv.universe || 0).toLocaleString("ko-KR")}종목 · 테마 있는 종목 ${Number(cv.withThemes || 0).toLocaleString("ko-KR")}`],
+          ["편입", `${Number(kt.count || 0).toLocaleString("ko-KR")}건 · AI 판정 편입 ${Number(cv.llmAccepted || 0).toLocaleString("ko-KR")} · 판정 대기 ${Number(cv.ambPending || 0).toLocaleString("ko-KR")}`],
+          ["규칙", `v${kt.rulesVersion || "?"} · 테마 ${Number(kt.themeCount || 0)}개`],
         ];
       }
       rows.push(row);
@@ -7951,7 +7972,7 @@ function setupOpenLinks() {
       scrollToTabContent();
       return;
     }
-    if (what === "health" || what === "signals" || what === "map" || what === "sector" || what === "krflow" || what === "ai-briefing") {
+    if (what === "health" || what === "signals" || what === "map" || what === "sector" || what === "krflow" || what === "krtheme" || what === "ai-briefing") {
       activateTab(what);
       scrollToTabContent();
     }
@@ -9028,6 +9049,8 @@ function cmdkBuildActions(query) {
   goto("시장 · 시장 폭", "health");
   goto("시장 · 시장지표", "marketindex");
   goto("시장 · 시그널", "signals");
+  // 국내 전용 잎 — 미국 모드에선 hiddenTabs 라 목록에서도 뺀다.
+  if (isKrMarket() && !featureOff("krThemes")) goto("시장 · 테마 (사업보고서 근거)", "krtheme");
   goto("종목 · 분석", "search", "analysis");
   goto("종목 · 찾기 (스크리너·스캐너)", "search", "find");
   goto("종목 · 비교", "search", "compare");

@@ -92,7 +92,7 @@
     const out = [];
     for (const th of themes || []) {
       const m = activeMembers(th).find((x) => x.t === ticker);
-      if (m) out.push({ id: th.id, name: th.name, group: th.group, kw: m.kw, by: m.by, pb: m.pb, n: m.n });
+      if (m) out.push({ id: th.id, name: th.name, group: th.group, kw: m.kw, by: m.by, pb: m.pb, n: m.n, sub: !!m.sub });
     }
     return out;
   }

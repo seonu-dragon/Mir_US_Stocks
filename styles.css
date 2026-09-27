@@ -7916,6 +7916,7 @@ button.community-hot-ticker {
   font-size: 11px; color: var(--text-muted); background: var(--panel);
 }
 .kt-by-llm { border-color: color-mix(in srgb, var(--primary) 45%, var(--line)); color: var(--primary); }
+.kt-by-sub { border-style: dashed; }
 .kt-foot { line-height: 1.6; }
 /* 종목 분석 좌측 — 이 종목의 테마 */
 .kt-chips-title { margin: 0 0 8px; font-size: var(--fs-sub); font-weight: 700; }

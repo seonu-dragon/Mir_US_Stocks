@@ -97,9 +97,10 @@ def test_supplier_sentence_is_dropped():
     assert kt.classify_hit(s, False, theme("substrate")) is None
 
 
-def test_downstream_customer_is_ambiguous():
+def test_downstream_customer_is_not_a_candidate():
+    # 키워드가 고객·응용처로 나열된 자리는 보류(LLM 판정)로도 보내지 않는다 — flash-lite 가 통과시켰었다.
     s = "또한, AI 가속기 등 신규 응용처 및 신규 고객 발굴 활동을 추진하여 기판 사업의 성장 기반을 강화하겠습니다."
-    assert kt.classify_hit(s, False, theme("hbm_ai_semi"))["lvl"] == "amb"
+    assert kt.classify_hit(s, False, theme("hbm_ai_semi")) is None
     s2 = "당사는 AI 데이터센터용 QLC 기반 고용량 SSD 제품을 개발하여 판매하고 있습니다."
     hit = kt.classify_hit(s2, False, theme("datacenter"))
     assert hit is None or hit["lvl"] == "amb"
@@ -253,3 +254,85 @@ def test_rules_are_well_formed():
         assert t["name"] and t["group"] and t["desc"] and t["strong"], t["id"]
         if t.get("weak"):
             assert t.get("ctx"), f"{t['id']}: weak 는 ctx 가 있어야 한다"
+
+
+# ───────────────────────── 2026-09-27 보강: 판정 캐시 버전 · 자회사 문장 · 제외 목록
+
+def test_evidence_key_changes_with_prompt_and_rules_version():
+    base = kt.evidence_key("000660", "auto", "문장")
+    assert base == kt.evidence_key("000660", "auto", "문장")
+    assert base != kt.evidence_key("000660", "auto", "문장", prompt_version=kt.LLM_PROMPT_VERSION + 1)
+    assert base != kt.evidence_key("000660", "auto", "문장", rules_version=rules.RULES_VERSION + 1)
+
+
+def test_old_version_verdict_is_not_used_and_pruned():
+    ev = "당사는 다수 고객사와 협력하여 HBM 을 공동 개발합니다."
+    tstate = {"000660": {"rc": "1", "amb": {"hbm_ai_semi": {"ev": ev, "kw": "HBM", "c": 0, "n": 2}}}}
+    old = kt.evidence_key("000660", "hbm_ai_semi", ev, prompt_version=kt.LLM_PROMPT_VERSION - 1)
+    cache = {old: True}
+    body = kt.assemble({}, {}, tstate, cache, {"000660": {"rc": "1"}}, {}, {}, None, "x")
+    assert next(t for t in body["themes"] if t["id"] == "hbm_ai_semi")["members"] == []
+    assert kt.prune_llm_cache(cache, tstate) == {}                       # 옛 버전 키는 버린다
+    cur = kt.evidence_key("000660", "hbm_ai_semi", ev)
+    assert kt.prune_llm_cache({cur: False, "zz": True}, tstate) == {cur: False}
+
+
+def test_subsidiary_sentences_are_labelled():
+    assert kt.is_subsidiary_sentence("당사의 종속회사들은 웹툰, 웹소설 등의 서비스를 운영하고 있습니다.")
+    assert kt.is_subsidiary_sentence("하나손해보험은 손해보험업을 영위하는 종합 손해보험사로 하나금융지주의 자회사로 편입하였습니다.")
+    assert not kt.is_subsidiary_sentence("당사 및 종속회사는 항공, 방산, 조선 사업 포트폴리오를 구성하고 있습니다.")
+    assert not kt.is_subsidiary_sentence("당사는 DRAM 을 생산합니다.")
+    # 다른 회사 이름(㈜)으로 시작하는 표 행 — 자기 이름이면 자회사가 아니다
+    own = kt.self_patterns(["한화에어로스페이스"])
+    assert kt.is_subsidiary_sentence("한화시스템㈜ 방산부문 구미사업장 전술통신장비 생산능력", own)
+    assert not kt.is_subsidiary_sentence("한화에어로스페이스㈜ 창원사업장 엔진 생산능력", own)
+
+
+def test_scan_marks_subsidiary_hit_and_prefers_parent_sentence():
+    sec = ('<TITLE>II. 사업의 내용</TITLE><P>당사의 종속회사들은 웹툰 서비스를 운영하고 있습니다.</P>'
+           '<TITLE>III. 재무</TITLE>')
+    hit = kt.scan_section(sec)["content"]
+    assert hit["lvl"] == "high" and hit["sub"] == 1
+    sec2 = ('<TITLE>II. 사업의 내용</TITLE><P>당사의 종속회사들은 웹툰 서비스를 운영하고 있습니다.</P>'
+            '<P>당사는 웹툰 플랫폼을 직접 운영하고 있습니다.</P><TITLE>III. 재무</TITLE>')
+    hit2 = kt.scan_section(sec2)["content"]
+    assert "sub" not in hit2 and hit2["ev"].startswith("당사는 웹툰")
+
+
+def test_assemble_carries_sub_label():
+    results = {"035420": {"content": {"lvl": "high", "ev": "당사의 종속회사들은 웹툰을 운영합니다.", "kw": "웹툰",
+                                      "c": 0, "n": 3, "sub": 1}}}
+    body = kt.assemble({}, results, {}, {}, {"035420": {"rc": "1"}}, {}, {}, None, "x")
+    m = next(t for t in body["themes"] if t["id"] == "content")["members"][0]
+    assert m["sub"] == 1 and m["by"] == "rule"
+
+
+def test_downstream_keyword_is_not_even_a_candidate():
+    s = "금속사업은 건설산업, 석유화학 플랜트 등의 중화학공업, 조선업 등 기초산업의 소재로 널리 사용되는 동관의 제조 및 판매를 영위하고 있습니다."
+    assert kt.classify_hit(s, False, theme("shipbuilding")) is None
+
+
+def test_exclusion_list_blocks_rule_llm_and_previous(monkeypatch):
+    monkeypatch.setattr(rules, "EXCLUDE", {("000660", "auto"): "테스트", ("028260", "biosimilar_cdmo"): "테스트"})
+    prev = {"themes": [{"id": "biosimilar_cdmo", "members": [{"t": "028260", "ev": "바이오사업은 …", "kw": "CMO", "by": "rule"}]}]}
+    results = {"028260": {}}
+    ev = "SSD 등 당사 낸드 솔루션 제품 공급을 늘리며 완성차 …"
+    tstate = {"000660": {"rc": "1", "amb": {"auto": {"ev": ev, "kw": "완성차", "c": 0, "n": 1}}}}
+    cache = {kt.evidence_key("000660", "auto", ev): True}
+    body = kt.assemble(prev, {}, tstate, cache, {}, {}, {}, None, "x")
+    by = {t["id"]: t for t in body["themes"]}
+    assert by["auto"]["members"] == [] and by["biosimilar_cdmo"]["members"] == []
+    body2 = kt.assemble({}, {"028260": {"biosimilar_cdmo": {"lvl": "high", "ev": "e", "kw": "CMO", "c": 0, "n": 1}}},
+                        {}, {}, {}, {}, {}, None, "x")
+    assert next(t for t in body2["themes"] if t["id"] == "biosimilar_cdmo")["members"] == []
+    assert kt.prune_llm_cache(cache, tstate) == {}
+    assert results  # (미사용 변수 방지)
+
+
+def test_exclusion_list_entries_are_valid():
+    ids = {t["id"] for t in rules.THEMES}
+    for (t, tid), why in rules.EXCLUDE.items():
+        assert len(t) == 6 and tid in ids and why, (t, tid)
+    # 2026-09-27 샘플 검토에서 잘못으로 확인된 편입
+    for pair in [("000660", "auto"), ("032830", "travel"), ("028260", "biosimilar_cdmo")]:
+        assert pair in rules.EXCLUDE

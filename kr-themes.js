@@ -82,6 +82,13 @@ function ktByBadge(by) {
     : '<span class="kt-by" title="테마 키워드 + 자기 지칭(당사·회사 등) + 사업 활동어가 한 문장에 있어 규칙으로 편입했습니다.">규칙</span>';
 }
 
+// 사업보고서가 연결 자회사의 사업으로 적은 문장(지주회사·대기업)으로 편입된 경우.
+function ktSubBadge(sub) {
+  return sub
+    ? '<span class="kt-by kt-by-sub" title="근거 문장이 모회사가 아니라 연결 자회사·계열회사의 사업을 설명합니다(사업보고서는 연결 기준으로 적습니다).">자회사 사업</span>'
+    : "";
+}
+
 function ktWriteUrl(id) {
   try {
     const url = new URL(window.location.href);
@@ -211,7 +218,7 @@ function ktDetailHtml(stat) {
           <span class="kt-member-cap">${escapeHtml(ktCap(s))}</span>
         </div>
         <p class="kt-ev" data-kt-ev="${escapeHtml(m.t)}"><span class="muted">근거 문장 불러오는 중…</span></p>
-        <p class="kt-meta">${ktByBadge(m.by)}<span>출처 ${ktSourceHtml(m.t)}</span>${Number(m.n) > 1 ? `<span title="같은 테마로 걸린 원문 문장 수 — 대표 문장 하나만 보여 줍니다">관련 문장 ${Number(m.n)}개</span>` : ""}${m.pb != null ? `<span>PBR ${Number(m.pb).toFixed(2)}배</span>` : ""}</p>
+        <p class="kt-meta">${ktByBadge(m.by)}${ktSubBadge(m.sub)}<span>출처 ${ktSourceHtml(m.t)}</span>${Number(m.n) > 1 ? `<span title="같은 테마로 걸린 원문 문장 수 — 대표 문장 하나만 보여 줍니다">관련 문장 ${Number(m.n)}개</span>` : ""}${m.pb != null ? `<span>PBR ${Number(m.pb).toFixed(2)}배</span>` : ""}</p>
       </li>`;
   }).join("");
   const perfLine = `${escapeHtml(periodLabel)} 동일가중 ${ktPct(stat[KT_VIEW.period].eq)} · 시총가중 ${ktPct(stat[KT_VIEW.period].cap)}`;
@@ -324,7 +331,7 @@ function renderStockThemes(item) {
   host.innerHTML = `
     <h3 class="kt-chips-title">이 종목의 테마 <small>사업보고서 근거</small></h3>
     ${list.length ? `<div class="kt-chips">${list.map((x) => `<button type="button" class="kt-chip" data-kt-chip="${escapeHtml(x.id)}" aria-expanded="false"
-        title="${escapeHtml(`근거 키워드 '${x.kw}' · ${repName}${x.by === "llm" ? " · AI 판정" : ""} — 눌러서 근거 문장 보기`)}">${escapeHtml(x.name)}${x.by === "llm" ? '<span class="kt-chip-ai" aria-label="AI 판정">AI</span>' : ""}</button>`).join("")}</div>
+        title="${escapeHtml(`근거 키워드 '${x.kw}' · ${repName}${x.by === "llm" ? " · AI 판정" : ""}${x.sub ? " · 자회사 사업" : ""} — 눌러서 근거 문장 보기`)}">${escapeHtml(x.name)}${x.by === "llm" ? '<span class="kt-chip-ai" aria-label="AI 판정">AI</span>' : ""}${x.sub ? '<span class="kt-chip-ai" aria-label="자회사 사업">자회사</span>' : ""}</button>`).join("")}</div>
       <div class="kt-chip-ev" hidden></div>`
     : '<p class="kt-note">사업보고서 \'사업의 내용\'에서 사전의 테마를 가리키는 근거 문장을 찾지 못했습니다.</p>'}`;
   if (!host.dataset.ktBound) {
@@ -365,7 +372,7 @@ function ktChipClick(ev) {
     const pair = evMap && evMap[ticker];
     box.innerHTML = `
       <p class="kt-ev">${pair ? `“${ktEvidenceHtml(pair[0], m && m.kw, pair[1])}”` : '<span class="muted">근거 문장을 불러오지 못했습니다.</span>'}</p>
-      <p class="kt-meta">${ktByBadge(m && m.by)}<span>출처 ${ktSourceHtml(ticker)}</span></p>
+      <p class="kt-meta">${ktByBadge(m && m.by)}${ktSubBadge(m && m.sub)}<span>출처 ${ktSourceHtml(ticker)}</span></p>
       <button type="button" class="ghost compact-btn kt-open" data-kt-open="${escapeHtml(id)}">${escapeHtml(th ? th.name : "")} 테마 전체 보기 ›</button>`;
   });
 }

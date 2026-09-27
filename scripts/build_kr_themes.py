@@ -78,6 +78,9 @@ AMB_TOP = 600           # 보류 후보(LLM 판정 대기)는 시총 상위 이 
 AMB_PER_TICKER = 5      # 그 밖은 몇 년이 걸려도 차례가 오지 않는다. 상태 파일 크기(커밋마다 통째로 바뀜)도 묶는다.
 SECTION_MAX = 800_000   # 사업의 내용 구간 상한(문자). 보험·지주사 보고서는 수십 MB 라 구간만 본다.
 LLM_MODEL = "gemini-2.5-flash-lite"
+# 판정 프롬프트 버전. 프롬프트를 고치면 올린다 — 캐시 키(evidence_key)에 규칙 버전과 함께 들어가서
+# 버전이 바뀐 옛 판정은 쓰이지 않고 다시 묻는다(2026-09-27 프롬프트를 조였는데 옛 '통과' 판정이 남았었다).
+LLM_PROMPT_VERSION = 2
 LLM_BATCH = 20
 ETF_SECTORS = {"EXCHANGE TRADED FUNDS", "ETF", "etf"}
 
@@ -126,6 +129,9 @@ ACTIVITY_RE = re.compile(R.ACTIVITY)
 SELF_RE = re.compile(R.SELF_REF)
 GLOBAL_NEG_RE = re.compile(R.GLOBAL_NEG)
 DOWNSTREAM_RE = re.compile(R.DOWNSTREAM_AFTER)
+SUB_RE = re.compile(R.SUBSIDIARY)
+PARENT_WITH_SUB_RE = re.compile(R.PARENT_WITH_SUB)
+NAMED_START_RE = re.compile(R.NAMED_COMPANY_START)
 MINOR_RE = re.compile(R.MINOR)
 CORE_SELF_RE = re.compile(r"당사|회사는|연결실체|연결회사")
 HEADING_RE = re.compile(R.HEADING_MARK)
@@ -248,11 +254,16 @@ def classify_hit(sent: str, is_row: bool, theme: dict, *, industry: bool = False
     # 표의 한 행은 제품표인지 연구개발 과제표·투자계획표인지 행만 보고는 못 가린다(두산에너빌리티
     # '항공/방산 AM 제작공정 기술개발' 행이 방산으로 들어갔었다) — 표 행은 늘 '애매'.
     base_ok = (not is_row) and (not industry) and self_ok and bool(ACTIVITY_RE.search(sent)) and not MINOR_RE.search(sent)
+    sub = is_subsidiary_sentence(sent, self_extra)
     first = None
     for rank, p in enumerate(theme["_strong"]):
         for m in p.finditer(sent):
-            lvl = "high" if (base_ok and not DOWNSTREAM_RE.search(sent[m.end():])) else "amb"
-            hit = {"lvl": lvl, "kw": m.group(0), "start": m.start(), "end": m.end(), "rank": rank}
+            # 키워드가 고객·응용 산업으로 나열된 자리('조선업 등 기초산업의 소재로', '데이터센터용')는 후보도 아니다 —
+            # 보류로 두면 LLM 이 통과시키는 일이 있었다(LS ELECTRIC 금속사업 → 조선·석유화학).
+            if DOWNSTREAM_RE.search(sent[m.end():]):
+                continue
+            lvl = "high" if base_ok else "amb"
+            hit = {"lvl": lvl, "kw": m.group(0), "start": m.start(), "end": m.end(), "rank": rank, "sub": sub}
             if lvl == "high":
                 return hit
             if first is None:
@@ -262,8 +273,19 @@ def classify_hit(sent: str, is_row: bool, theme: dict, *, industry: bool = False
     for p in theme["_weak"]:
         w = p.search(sent)
         if w and any(c.search(sent) for c in theme["_ctx"]):
-            return {"lvl": "amb", "kw": w.group(0), "start": w.start(), "end": w.end(), "rank": 99}
+            return {"lvl": "amb", "kw": w.group(0), "start": w.start(), "end": w.end(), "rank": 99, "sub": sub}
     return None
+
+
+def is_subsidiary_sentence(sent: str, self_extra=None) -> bool:
+    """자회사·종속회사·계열회사 사업을 설명하는 문장인가('당사 및 종속회사는' 처럼 모회사가 함께 주어면 아니다).
+    다른 회사 이름(㈜ 표기)으로 시작하는 문장도 자회사 문장으로 본다 — 자기 회사 이름이면 아니다."""
+    if PARENT_WITH_SUB_RE.search(sent):
+        return False
+    if SUB_RE.search(sent):
+        return True
+    m = NAMED_START_RE.search(sent[:40])
+    return bool(m) and not (self_extra is not None and self_extra.search(m.group(1)))
 
 
 def _hit_score(h: dict) -> float:
@@ -271,6 +293,7 @@ def _hit_score(h: dict) -> float:
     s += 2.0 if not h["row"] else 0.0
     s -= min(h.get("rank", 0), 10) * 0.25     # 규칙의 앞쪽 키워드(대표 표현)를 우선
     s += 1.0 if CORE_SELF_RE.search(h["ev"]) else 0.0   # '당사는 …' 으로 시작하는 자기 소개 문장을 우선
+    s -= 1.5 if h.get("sub") else 0.0                   # 같은 테마면 모회사 자신의 문장을 자회사 문장보다 우선
     s -= abs(len(h["ev"]) - 120) / 200.0              # 너무 짧은 주석성 문장(※ …)도, 긴 나열도 덜 선호
     s -= h["pos"] / 5000.0
     return s
@@ -302,18 +325,36 @@ def scan_section(section: str, themes=None, names=None) -> dict:
                 if not ev or ev not in full:
                     continue
                 counts[th["id"]] = counts.get(th["id"], 0) + 1
-                cand = {"lvl": hit["lvl"], "ev": ev, "kw": hit["kw"], "c": cut, "row": is_row, "pos": pos, "rank": hit["rank"]}
+                cand = {"lvl": hit["lvl"], "ev": ev, "kw": hit["kw"], "c": cut, "row": is_row, "pos": pos, "rank": hit["rank"],
+                        "sub": hit.get("sub", False)}
                 cur = best.get(th["id"])
                 if cur is None or _hit_score(cand) > _hit_score(cur):
                     best[th["id"]] = cand
     out = {}
     for tid, h in best.items():
         out[tid] = {"lvl": h["lvl"], "ev": h["ev"], "kw": h["kw"], "c": h["c"], "n": counts.get(tid, 1)}
+        if h.get("sub"):
+            out[tid]["sub"] = 1
     return out
 
 
-def evidence_key(ticker: str, theme_id: str, ev: str) -> str:
-    return hashlib.sha1(f"{ticker}|{theme_id}|{ev}".encode("utf-8")).hexdigest()[:16]
+def evidence_key(ticker: str, theme_id: str, ev: str, *, prompt_version: int | None = None,
+                 rules_version: int | None = None) -> str:
+    """LLM 판정 캐시 키. 프롬프트·규칙 버전이 들어가 버전이 바뀌면 같은 문장도 다시 판정한다."""
+    pv = LLM_PROMPT_VERSION if prompt_version is None else prompt_version
+    rv = R.RULES_VERSION if rules_version is None else rules_version
+    return hashlib.sha1(f"p{pv}|r{rv}|{ticker}|{theme_id}|{ev}".encode("utf-8")).hexdigest()[:16]
+
+
+def is_excluded(ticker: str, theme_id: str) -> bool:
+    return (ticker, theme_id) in R.EXCLUDE
+
+
+def prune_llm_cache(llm_cache: dict, tstate: dict) -> dict:
+    """지금 보류 후보에 대응하는 판정만 남긴다(버전이 바뀐 옛 키·사라진 후보·제외 목록은 버린다)."""
+    live = {evidence_key(t, tid, h["ev"]) for t, st in tstate.items()
+            for tid, h in (st.get("amb") or {}).items() if not is_excluded(t, tid)}
+    return {k: v for k, v in llm_cache.items() if k in live}
 
 
 def report_period(nm: str) -> str:
@@ -413,22 +454,26 @@ def assemble(prev_payload: dict, results: dict, tstate: dict, llm_cache: dict, l
             t = m.get("t")
             if not t or t in results or m.get("by") != "rule":
                 continue
-            if universe is not None and t not in universe:
+            if (universe is not None and t not in universe) or is_excluded(t, tid):
                 continue
-            by_theme[tid][t] = {k: m[k] for k in ("t", "ev", "kw", "c", "n", "by") if k in m}
+            by_theme[tid][t] = {k: m[k] for k in ("t", "ev", "kw", "c", "n", "by", "sub") if k in m}
     for t, hits in results.items():
         for tid, h in hits.items():
-            if h["lvl"] != "high" or tid not in by_theme:
+            if h["lvl"] != "high" or tid not in by_theme or is_excluded(t, tid):
                 continue
             by_theme[tid][t] = {"t": t, "ev": h["ev"], "kw": h["kw"], "c": h["c"], "n": h["n"], "by": "rule"}
+            if h.get("sub"):
+                by_theme[tid][t]["sub"] = 1
     for t, st in tstate.items():
         if universe is not None and t not in universe:
             continue
         for tid, h in (st.get("amb") or {}).items():
-            if tid not in by_theme or t in by_theme[tid]:
+            if tid not in by_theme or t in by_theme[tid] or is_excluded(t, tid):
                 continue
             if llm_cache.get(evidence_key(t, tid, h["ev"])) is True:
                 by_theme[tid][t] = {"t": t, "ev": h["ev"], "kw": h["kw"], "c": h.get("c", 0), "n": h.get("n", 1), "by": "llm"}
+                if h.get("sub"):
+                    by_theme[tid][t]["sub"] = 1
 
     themes_out = []
     used: set[str] = set()
@@ -709,7 +754,9 @@ def main() -> int:
             amb = {}
             if rank.get(t, 10**6) < AMB_TOP:
                 ambs = sorted(((tid, h) for tid, h in hits.items() if h["lvl"] == "amb"), key=lambda x: -x[1]["n"])
-                amb = {tid: {k: h[k] for k in ("ev", "kw", "c", "n")} for tid, h in ambs[:AMB_PER_TICKER]}
+                amb = {tid: {k: h[k] for k in ("ev", "kw", "c", "n", "sub") if k in h}
+                       for tid, h in ambs if not is_excluded(t, tid)}
+                amb = dict(list(amb.items())[:AMB_PER_TICKER])
             tstate[t] = {"rc": rep["rc"], "nm": rep.get("nm"), "dt": rep.get("dt"), "rv": R.RULES_VERSION, "at": stamp,
                          "high": sorted(tid for tid, h in hits.items() if h["lvl"] == "high")}
             if amb:
@@ -731,6 +778,8 @@ def main() -> int:
         for t in [k for k in tstate if k not in uni_set]:
             tstate.pop(t, None)
 
+    llm_cache = prune_llm_cache(llm_cache, tstate)
+    state["llm"] = llm_cache
     # 보류 후보 LLM 판정(선택). 시총 순으로, 아직 안 물어본 것만, 실행당 상한.
     gem = os.environ.get("GEMINI_API_KEY", "").strip()
     judged = accepted = 0
@@ -740,7 +789,7 @@ def main() -> int:
         for t in sorted(tstate, key=lambda x: rank.get(x, 10**6)):
             for tid, h in (tstate[t].get("amb") or {}).items():
                 key = evidence_key(t, tid, h["ev"])
-                if key in llm_cache or tid not in theme_meta:
+                if key in llm_cache or tid not in theme_meta or is_excluded(t, tid):
                     continue
                 pending.append({"key": key, "name": names.get(t) or t, "theme": theme_meta[tid]["name"],
                                 "desc": theme_meta[tid]["desc"], "ev": h["ev"]})
@@ -759,13 +808,15 @@ def main() -> int:
     fundamentals = load_json(MAP_FUND, {}) or {}
     body = assemble(prev_payload, results, tstate, llm_cache, listing, names, fundamentals, uni_set, stamp)
     amb_pending = sum(1 for t, st in tstate.items() for tid, h in (st.get("amb") or {}).items()
-                      if evidence_key(t, tid, h["ev"]) not in llm_cache)
+                      if evidence_key(t, tid, h["ev"]) not in llm_cache and not is_excluded(t, tid))
     with_themes = len({m["t"] for th in body["themes"] for m in th["members"]})
     payload = {
         "schema": 1,
         "updatedAtKst": now_kst(),
         "source": SOURCE,
         "rulesVersion": R.RULES_VERSION,
+        "llmPromptVersion": LLM_PROMPT_VERSION,
+        "excluded": len(R.EXCLUDE),
         "count": body["count"],
         "themeCount": len(body["themes"]),
         "coverage": {

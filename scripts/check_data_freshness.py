@@ -253,6 +253,8 @@ CHECKS = {
     "market-calendar": [
         ("data/market_calendar.json", 3, True),
         ("data/korea/ir_schedule.json", 3, False),
+        # 보호예수 해제 일정(38.co.kr, continue-on-error 스텝). 해제 일정은 늘 수십 건이라 0건이면 실패.
+        ("data/korea/lockups.json", 4, True),
     ],
     "etf-holdings": [
         ("data/etf_holdings/index.json", 40, True),

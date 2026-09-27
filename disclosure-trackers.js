@@ -327,6 +327,14 @@ function ipoOfferNote(r, cfg) {
   return "";
 }
 
+// 국내 공모주 수요예측·청약 결과 한 줄(build_kr_lockups.py 가 38 에서 읽어 IPO 캘린더에 붙인 값).
+// 의무보유 확약 비율은 수요예측 '신청' 수량 기준이다(배정 물량 아님).
+function ipoDemandNote(r) {
+  if (!isKrMarket() || !window.MirCalendarCore) return "";
+  const text = window.MirCalendarCore.ipoDemandText(r);
+  return text ? `<div class="ins-sub" title="의무보유 확약은 수요예측 신청 수량 기준">${escapeHtml(text)}</div>` : "";
+}
+
 // 공모가 성과 행: offerPrice 가 있고 스냅샷에서 현재가가 잡히는 종목만.
 // 같은 티커의 정정 제출이 여러 건이라 최신 제출 1건으로 dedupe 한다.
 //
@@ -466,7 +474,7 @@ function renderIpoCalendar() {
       <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
       <td><span class="ins-code ${sc}">${escapeHtml(r.stageLabel || "")}</span></td>
       ${isKrMarket() ? "" : `<td>${escapeHtml(r.ticker || "—")}</td>`}
-      <td>${escapeHtml(r.company || "")}${ipoOfferNote(r, cfg)}</td>
+      <td>${escapeHtml(r.company || "")}${ipoOfferNote(r, cfg)}${ipoDemandNote(r)}</td>
       <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");
@@ -1398,6 +1406,8 @@ function renderUsDilution() {
 
 function renderDilution() {
   bindListControls("dilutionSort", "dilutionSearch", (v) => dilutionSort = v, (v) => dilutionQuery = v, renderDilution);
+  // 보호예수 해제(lockups.js) — 국내만. 미국 모드에선 스스로 숨는다.
+  if (typeof renderLockupOverhang === "function") renderLockupOverhang();
   if (!isKrMarket()) { renderUsDilution(); return; }
   applyDilutionPanelLabels(false);
   const wrap = byId("dilutionTable"); const meta = byId("dilutionMeta");

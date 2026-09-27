@@ -15849,3 +15849,31 @@ body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !impo
   .md-go { min-height: 36px; align-items: center; }
   .md-more, .md-empty .compact-btn { min-height: 40px; }
 }
+
+/* ===== 보호예수 해제(lockups.js, 국내 전용, 2026-09-27) ===== */
+.lk-card .lk-table-wrap { overflow-x: auto; }
+.lk-card .lk-table { min-width: 0; width: 100%; }
+.lk-card .lk-table th, .lk-card .lk-table td { vertical-align: top; }
+.lk-card .lk-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lk-card .lk-types { font-size: var(--fs-cap); color: var(--text-muted); }
+.lk-stats { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 10px 0 0; }
+.lk-stats div { display: flex; gap: 6px; align-items: baseline; }
+.lk-stats dt { font-size: var(--fs-cap); color: var(--text-muted); }
+.lk-stats dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.lk-stats dd small { font-weight: 400; }
+.lk-note { font-size: var(--fs-cap); margin: 10px 0 0; line-height: 1.5; }
+.lk-ov { border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel-soft); padding: 10px 12px; margin: 0 0 12px; }
+.lk-ov[hidden] { display: none; }
+.lk-ov-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin-bottom: 6px; }
+.lk-ov-head .muted { font-size: var(--fs-cap); }
+.lk-ov-head .es-link { margin-left: auto; }
+.lk-ov-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 4px 16px; }
+.lk-ov-list li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; min-width: 0; font-size: var(--fs-sub); }
+.lk-ov-date { font-size: var(--fs-cap); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.lk-ov-pct { font-variant-numeric: tabular-nums; }
+.lk-ov-list .muted { font-size: var(--fs-cap); }
+@media (max-width: 640px) {
+  .lk-card .lk-table th:nth-child(5), .lk-card .lk-table td:nth-child(5) { display: none; }  /* 구성 열은 폰에서 숨김 */
+  .lk-ov-list { grid-template-columns: 1fr; }
+  .lk-ov-head .es-link { margin-left: 0; }
+}

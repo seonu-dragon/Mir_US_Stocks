@@ -6,7 +6,8 @@
 // - 날짜 계산(YYYY-MM-DD 문자열만 다룬다 — 시간대 섞임을 피하려고 Date 는 UTC 자정으로만 쓴다)
 // - 주/월 미니 달력 격자(일요일 시작)
 // - 데이터셋별 정규화: 휴장·만기·FOMC(MARKET_CALENDAR), 국내 IR(KR_IR_SCHEDULE), 미국 실적·배당락
-//   (US_STOCK_CALENDAR + 실적 스냅샷), 국내 배당(KR_DIVIDENDS), 공모주(IPO_CALENDAR), 경제지표(워커 ?calendar=1)
+//   (US_STOCK_CALENDAR + 실적 스냅샷), 국내 배당(KR_DIVIDENDS), 공모주(IPO_CALENDAR), 경제지표(워커 ?calendar=1),
+//   국내 보호예수 해제(KR_LOCKUPS — 상장일 + 기간으로 계산한 추정일)
 // - 칩·관심종목 필터, 날짜별 묶음
 // 이벤트 모양: { id, date, time, kind, market, title, name, ticker, info, link, sub }
 (function (root) {
@@ -20,10 +21,12 @@
     { id: "econ", label: "경제지표" },
     { id: "holiday", label: "휴장" },
     { id: "expiry", label: "만기" },
+    // 국내 전용(신규 상장주 의무보유 해제). markets 가 있으면 그 시장에서만 칩을 보인다.
+    { id: "lockup", label: "보호예수 해제", markets: ["kr"] },
   ];
   const KIND_LABEL = Object.fromEntries(KINDS.map((k) => [k.id, k.label]));
   // 종목에 붙는 일정(관심종목만 보기가 거르는 대상). 휴장·만기·경제지표는 시장 전체 일정이라 그대로 둔다.
-  const STOCK_KINDS = new Set(["earnings", "dividend", "ipo"]);
+  const STOCK_KINDS = new Set(["earnings", "dividend", "ipo", "lockup"]);
   const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 
   function pad(n) { return String(n).padStart(2, "0"); }
@@ -202,6 +205,45 @@
     return out;
   }
 
+  /** 수요예측·청약 결과 한 줄: '기관 1,109:1 · 확약 18.1% · 청약 1,375:1'. 값이 없으면 ''. */
+  function ipoDemandText(r) {
+    const parts = [];
+    const inst = Number(r && r.instCompetition);
+    const commit = Number(r && r.commitPct);
+    const sub = Number(r && r.subscriptionCompetition);
+    if (Number.isFinite(inst) && inst > 0) parts.push(`기관 경쟁률 ${fmtNum(Math.round(inst))}:1`);
+    if (Number.isFinite(commit) && commit > 0) parts.push(`의무보유 확약 ${commit.toFixed(1)}%`);
+    if (Number.isFinite(sub) && sub > 0) parts.push(`청약 경쟁률 ${fmtNum(Math.round(sub))}:1`);
+    return parts.join(" · ");
+  }
+
+  /** 주식수 → '1,234만 주' · '8,500주'. */
+  function fmtShares(n) {
+    const v = Number(n);
+    if (!Number.isFinite(v) || v <= 0) return "";
+    if (v >= 1e8) return `${(v / 1e8).toFixed(v >= 1e9 ? 0 : 1)}억 주`;
+    if (v >= 1e4) return `${fmtNum(Math.round(v / 1e4))}만 주`;
+    return `${fmtNum(v)}주`;
+  }
+
+  /** 국내 보호예수 해제(KR_LOCKUPS.releases). 해제일은 상장일 + 기간으로 계산한 추정일. */
+  function fromKrLockups(payload) {
+    return ((payload && payload.releases) || []).filter((r) => r && normIso(r.date)).map((r) => {
+      const pct = Number(r.pct);
+      const parts = [];
+      const sh = fmtShares(r.shares);
+      if (sh) parts.push(Number.isFinite(pct) ? `${sh} · 상장일 기준 주식수의 ${pct.toFixed(1)}%` : sh);
+      const types = Object.keys(r.types || {});
+      if (types.length) parts.push(types.join("·"));
+      return {
+        id: `kr-lockup-${r.code || r.company}-${normIso(r.date)}`, date: normIso(r.date), kind: "lockup", market: "kr",
+        title: "보호예수 해제(추정)", sub: (r.periods || []).length ? `상장 ${(r.periods || []).join("·")} 후` : "",
+        ticker: String(r.code || ""), name: r.company || "", info: parts.join(" · "), link: r.link || "",
+        pct: Number.isFinite(pct) ? pct : null,
+      };
+    });
+  }
+
   function fromIpo(payload, market) {
     const out = [];
     ((payload && payload.ipos) || []).forEach((r) => {
@@ -221,6 +263,8 @@
       if (Number(r.offerPrice) > 0) parts.push(`확정공모가 ${fmtNum(r.offerPrice)}원`);
       else if (band) parts.push(`희망공모가 ${fmtNum(band[0])}~${fmtNum(band[1])}원`);
       if (r.form) parts.push(`주관 ${r.form}`);
+      const demand = ipoDemandText(r);
+      if (demand) parts.push(demand);
       out.push({ id: `kr-ipo-${r.accession || r.company}`, date: iso, kind: "ipo", market: "kr",
         title: bidding ? "공모 청약 시작" : (r.stage === "priced" ? "신규 상장" : "신규 상장 예정"),
         ticker: r.ticker || "", name: r.company || "", info: parts.join(" · "), link: r.link || "" });
@@ -272,6 +316,11 @@
     });
   }
 
+  /** 이 시장에서 보이는 칩(KINDS 중 markets 가 없거나 시장이 맞는 것). */
+  function kindsFor(market) {
+    return KINDS.filter((k) => !k.markets || k.markets.includes(market));
+  }
+
   function countByKind(events) {
     const c = { all: 0 };
     KINDS.forEach((k) => { c[k.id] = 0; });
@@ -279,7 +328,7 @@
     return c;
   }
 
-  const KIND_ORDER = { holiday: 0, expiry: 1, econ: 2, earnings: 3, dividend: 4, ipo: 5 };
+  const KIND_ORDER = { holiday: 0, expiry: 1, econ: 2, earnings: 3, dividend: 4, ipo: 5, lockup: 6 };
   function sortEvents(events) {
     return (events || []).slice().sort((a, b) => (a.date !== b.date ? (a.date < b.date ? -1 : 1)
       : (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || String(a.time || "99").localeCompare(String(b.time || "99"))
@@ -311,7 +360,8 @@
   const api = {
     KINDS, KIND_LABEL, STOCK_KINDS, WEEKDAY_KO,
     normIso, addDays, addMonths, weekday, dayDiff, kstToday, weekRange, monthGrid, rangeFor, dayLabel,
-    fromMarketCalendar, fromKrIr, fromUsCalendar, fromKrDividends, fromIpo, fromEcon,
+    fromMarketCalendar, fromKrIr, fromUsCalendar, fromKrDividends, fromIpo, fromEcon, fromKrLockups,
+    ipoDemandText, fmtShares, kindsFor,
     filterEvents, countByKind, sortEvents, groupByDate, kindsByDate, dedupe, passesWatch,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

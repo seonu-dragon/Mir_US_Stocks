@@ -138,6 +138,9 @@ CHECKS = {
         # 사업부문·지역·제품별 매출(build_segments_us.py, segments 잡). 새 공시가 없어도 실행마다 인덱스
         # updatedAtKst 를 새로 쓴다. 0종목(count)도 잡는다.
         ("data/segments_index.json", 6, True),
+        # 10-K 위험요인 변화(build_risk_factor_changes.py, risk-factors 잡). 새 공시가 없어도 실행마다 인덱스
+        # updatedAtKst 를 새로 쓴다. 0종목(count)도 잡는다.
+        ("data/risk_factors/index.json", 6, True),
     ],
     # ipo-calendar.yml(매일 13:33 KST) — 희석 트래커가 continue-on-error.
     "ipo": [

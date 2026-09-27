@@ -184,6 +184,9 @@ jobs:
       # 사업부문·지역별 매출(segments-core.js): 상위 멤버+기타 묶음, 비중·전년비·3년 연평균, 합계 대조 문장.
       - name: Segments core tests
         run: node scripts/tests/test_segments_core.mjs
+      # 10-K 위험요인 변화(risk-factors-core.js): 인덱스 행 해석·백분위 문장·헤드라인·목록 자르기.
+      - name: Risk factors core tests
+        run: node scripts/tests/test_risk_factors_core.mjs
       # 역DCF · 시나리오 DCF(dcf-core.js): 역산 수렴·알려진 DCF 값·음수 FCF/금융업 거부·민감도 격자·기저율·URL 인코딩.
       - name: DCF core tests
         run: node scripts/tests/test_dcf_core.mjs

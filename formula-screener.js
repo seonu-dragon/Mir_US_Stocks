@@ -5,7 +5,7 @@
 // 저장(기존 저장형 스크리너 목록·편입/이탈 델타와 공유)·공유 URL 을 맡는다.
 //
 // 데이터: 부팅 때 받은 시장 스냅샷(data.stocks) + map_fundamentals(MAP_FUNDAMENTALS)
-// + 재무 위험 점검 집계(RISK_CHECK, lazy — 이 화면을 열 때 받는다).
+// + 재무 위험 점검 집계(RISK_CHECK, lazy — 이 화면을 열 때 받는다) + US 10-K 위험요인 변화 인덱스(US_RISK_FACTORS_INDEX, lazy).
 // 집계 함수(sectorMedian 등)의 모집단은 이 시장 전체(ETF 제외)이고, 유니버스 선택은 결과만 거른다.
 //
 // 딥링크: ?tab=search&sub=formula&fx=<encodeState 토큰>
@@ -81,6 +81,17 @@ FX_FIELDS.push(
   { key: "altmanZ", label: "Altman Z", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("z") },
   { key: "beneishM", label: "Beneish M", group: "재무 위험", src: "재무 위험 점검", get: fxRisk("m") },
 );
+// 10-K 위험요인 전년 대비 변화(US, build_risk_factor_changes.py 인덱스 — lazy). 변화 크기는 정보일 뿐 예측이 아니다.
+function fxRiskFactorsRow(it) {
+  const core = window.MirRiskFactorsCore;
+  return core && window.US_RISK_FACTORS_INDEX ? core.indexRow(window.US_RISK_FACTORS_INDEX, normalizeTickerKey(it.ticker)) : null;
+}
+FX_FIELDS.push(
+  { key: "riskTextSimilarity", label: "10-K 위험요인 전년 대비 유사도(%, 코사인)", group: "공시 텍스트", src: "10-K 위험요인 변화",
+    get: (it) => { const r = fxRiskFactorsRow(it); return r && typeof r.cos === "number" ? r.cos * 100 : null; } },
+  { key: "riskChangePct", label: "10-K 위험요인 변화 크기 백분위(0~100)", group: "공시 텍스트", src: "10-K 위험요인 변화",
+    get: (it) => { const r = fxRiskFactorsRow(it); return r && typeof r.pct === "number" ? r.pct : null; } },
+);
 const FX_FIELD_BY_KEY = Object.fromEntries(FX_FIELDS.map((f) => [f.key, f]));
 const FX_ALIASES = {
   per: "pe", pbr: "pb", psr: "ps", rsi: "rsi14", eps: "epsTtm", cap: "marketCap", mktcap: "marketCap",
@@ -101,7 +112,8 @@ function fxAvailableFields() {
   const stocks = (data && Array.isArray(data.stocks)) ? data.stocks : [];
   const mfCount = Object.keys(window.MAP_FUNDAMENTALS || {}).length;
   const rcCount = window.RISK_CHECK ? Number(window.RISK_CHECK.count) || 0 : 0;
-  const key = `${marketCfg().id}|${data && (data.updatedAtKst || data.updated_at_kst)}|${stocks.length}|${mfCount}|${rcCount}`;
+  const rfCount = window.US_RISK_FACTORS_INDEX ? Number(window.US_RISK_FACTORS_INDEX.count) || 0 : 0;
+  const key = `${marketCfg().id}|${data && (data.updatedAtKst || data.updated_at_kst)}|${stocks.length}|${mfCount}|${rcCount}|${rfCount}`;
   if (fxFieldsMemo && fxFieldsMemo.key === key) return fxFieldsMemo;
   const universe = stocks.filter((s) => s && !isStockEtf(s));
   const counts = {};
@@ -603,6 +615,8 @@ function renderFormulaScreener() {
   }
   // 재무 위험 점검 필드(fScore 등)는 집계 파일이 도착하면 필드 목록에 나타난다(refreshFeatureViews 가 다시 그린다).
   if (!window.RISK_CHECK) ensureFeatureData("riskCheck").then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
+  // 10-K 위험요인 필드(riskTextSimilarity 등, US)도 같은 방식 — KR 에서는 usOnly 라 받지 않는다.
+  if (!isKrMarket() && !window.US_RISK_FACTORS_INDEX) ensureFeatureData("riskFactorsIndex").then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
   fxBind();
   fxRenderFieldHelp();
   const ex = byId("fxExamples");

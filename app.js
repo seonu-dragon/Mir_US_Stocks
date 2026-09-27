@@ -5192,6 +5192,7 @@ function renderSearch(options = {}) {
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
   if (typeof renderSegments === "function") renderSegments(item);
+  if (typeof renderRiskFactors === "function") renderRiskFactors(item);
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
@@ -6685,6 +6686,10 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Company profile & price targets", script: "scripts/build_kr_themes.py" },
     tabs: "시장 탭 · 테마, 종목 분석 · 이 종목의 테마",
   },
+  "연차보고서 위험요인 변화": {
+    us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_factor_changes.py" },
+    tabs: "종목 분석 · 이벤트·공시 탭, 찾기 › 수식(riskTextSimilarity·riskChangePct 필드)",
+  },
   "재무 위험 점검": {
     us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
@@ -6973,6 +6978,20 @@ function dataTrustSources() {
       row.extra = [
         ["범위", `${Number(sg.count || 0).toLocaleString()}종목 · 사업부문 ${sg.coverage.segment || 0} · 지역 ${sg.coverage.geo || 0} · 제품 ${sg.coverage.product || 0}`],
         ["한계", `부문 합 ≠ 총매출 ${Number(sg.mismatchCount || 0).toLocaleString()}종목(부문 간 거래 포함·일부만 공시) — 화면에 표시 · 회사가 XBRL 로 태그한 부문만(국내 미지원)`],
+      ];
+    }
+    rows.push(row);
+  }
+  // 10-K 위험요인 변화(2026-09-28) — US 전용, 주간(일요일). SEC 원문 Item 1A 비교. 추출 실패 수를 함께 적는다.
+  if (cfg.id === "us") {
+    const rf = window.US_RISK_FACTORS_INDEX;
+    const row = source("연차보고서 위험요인 변화", "SEC EDGAR 10-K Item 1A · 20-F Item 3.D 원문", rf, ["tickers"], 192, "매주 일요일", "riskFactorsIndex");
+    if (rf) {
+      const reasons = Object.entries(rf.failedByReason || {}).map(([k, v]) => `${k} ${v}`).join(" · ");
+      row.extra = [
+        ["범위", `시총 상위부터 ${Number(rf.count || 0).toLocaleString()}종목 비교 · 추출·비교 실패 ${Number(rf.failedCount || 0).toLocaleString()}종목${reasons ? `(${reasons})` : ""}`],
+        ["방법", `${rf.method || ""} — LLM 없음. 변화 크기는 정보일 뿐 예측 아님`],
+        ["한계", "Item 1A 표지가 없는 통합 연차보고서는 'Risk Factors' 제목으로 찾아 경계가 어긋날 수 있음 · 40-F·전년 보고서가 없는 회사는 제외"],
       ];
     }
     rows.push(row);

@@ -14066,6 +14066,33 @@ html[data-theme="dark"] .sg-card { --sg-1: #6b8cff; --sg-2: #38bdf8; --sg-3: #fb
 @media (max-width: 640px) {
   .sg-table th:first-child { min-width: 0; max-width: 40vw; }
 }
+/* ===== 연차보고서 위험요인 변화(risk-factors.js, 2026-09-28) ===== */
+.rf-headline { margin: 8px 0 0; font-size: var(--fs-sub); font-weight: 600; line-height: 1.5; }
+.rf-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 10px 0 4px; }
+.rf-tile { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-md, 8px); background: var(--panel-soft); }
+.rf-tile-label { color: var(--muted); font-size: var(--fs-cap); }
+.rf-tile strong { font-size: var(--fs-body); font-variant-numeric: tabular-nums; }
+.rf-tile-sub { color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.rf-band.is-high { color: var(--text); border-color: var(--text); }
+.rf-group { margin-top: 14px; }
+.rf-group h4 { margin: 0 0 2px; font-size: var(--fs-sub); }
+.rf-count { color: var(--muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+.rf-count-note, .rf-hint { color: var(--muted); font-size: var(--fs-cap); font-weight: 400; }
+.rf-hint { margin: 0 0 4px; line-height: 1.5; }
+.rf-list { list-style: none; margin: 0; padding: 0; }
+.rf-item { padding: 6px 0; border-top: 1px solid var(--line); min-width: 0; }
+.rf-item p { margin: 0; font-size: var(--fs-sub); line-height: 1.55; overflow-wrap: anywhere; }
+.rf-item.is-heading p { font-weight: 600; }
+.rf-ratio { display: inline-block; margin-top: 2px; color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.rf-ins { margin-top: 4px; padding-left: 10px; border-left: 2px solid var(--line); color: var(--text-2, var(--muted)); font-size: var(--fs-cap); line-height: 1.55; overflow-wrap: anywhere; }
+.rf-ins-label { display: block; color: var(--muted); }
+.rf-ins q { display: block; }
+.rf-more { margin-top: 4px; }
+.rf-more > summary { cursor: pointer; color: var(--muted); font-size: var(--fs-cap); padding: 4px 0; }
+.rf-links { margin: 12px 0 0; font-size: var(--fs-cap); overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .rf-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 /* ===== 포트폴리오 위험 분석(portfolio-risk.js, 2026-09-26) ===== */
 .pf-risk-controls { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin-bottom: 8px; }
 .pf-risk-controls label { display: flex; flex-direction: column; gap: 3px; min-width: 0; color: var(--muted); font-size: var(--fs-cap); }

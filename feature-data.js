@@ -143,6 +143,10 @@ const FEATURE_DATA = {
   // 사업부문·지역·제품별 매출 인덱스(build_segments_us.py, SEC 10-K XBRL 차원) — US 전용. 종목 분석 재무 탭의
   // '사업부문·지역별 매출' 카드를 처음 그릴 때만 받는다(lazy). 종목별 파일은 segments.js 가 fetch 한다.
   segmentsIndex: { global: "SEGMENTS_INDEX", path: "data/segments_index.js", usOnly: true, lazy: true },
+  // 10-K 위험요인(Item 1A) 전년 대비 변화 인덱스(build_risk_factor_changes.py, SEC 원문 비교) — US 전용. 종목 분석
+  // 이벤트·공시 탭 '연차보고서 위험요인 변화' 카드·수식 스크리너 riskTextSimilarity 필드가 처음 필요할 때만 받는다(lazy).
+  // 종목별 문단 목록(data/risk_factors/tk/<T>.json)은 risk-factors.js 가 fetch 한다.
+  riskFactorsIndex: { global: "US_RISK_FACTORS_INDEX", path: "data/risk_factors/index.js", usOnly: true, lazy: true },
   // 기업개요(build_company_profile.py, KR DART · US SEC) — 시장별 샤드 버전만 담은 작은 인덱스. 종목 파일은
   // company-info.js 가 그 종목이 든 해시 샤드 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy).
   companyProfile: { global: "COMPANY_PROFILE_INDEX", path: "data/company_profile/index.js", lazy: true },
@@ -378,6 +382,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
           () => { if (typeof renderSegments === "function") renderSegments(item); },
+          () => { if (typeof renderRiskFactors === "function") renderRiskFactors(item); },
           () => { if (typeof renderRiskCheck === "function") renderRiskCheck(item); },
           () => { if (typeof renderDcf === "function") renderDcf(item); },
           () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },

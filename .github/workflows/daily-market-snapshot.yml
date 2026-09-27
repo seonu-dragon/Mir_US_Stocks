@@ -158,6 +158,15 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scripts/build_movers_reasons.py --market us --push
 
+      # 국내↔미국 연관 종목(관계 사전 + 최근 1년 수익률 상관). 방금 발행된 US 스냅샷·종목 일봉과
+      # 커밋된 KR 스냅샷만 읽는다(외부 호출 없음, ~10초). KR 모드 '간밤 미국 연관주' 가 이 US 마감 등락을 쓴다.
+      # 실패해도 스냅샷 발행·신선도 게이트를 막지 않는다(continue-on-error). 신선도는 us/kr 그룹이 감시.
+      - name: Build cross-market links (KR-US)
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        timeout-minutes: 10
+        run: python scripts/build_cross_market_links.py --push
+
       # 신호 라이브 성적표: 오늘 화면에 뜬 US 신호를 발행 시점 가격으로 원장(data/signal_ledger/us/)에
       # 동결(append-only)하고 발행 뒤 성적을 다시 집계한다(data/signal_scorecard.*). 스냅샷·특징주 뒤라야
       # 오늘 화면과 같다. 실패해도 스냅샷 발행·신선도 게이트를 막지 않는다(continue-on-error).

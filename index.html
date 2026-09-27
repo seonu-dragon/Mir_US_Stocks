@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=01421ca383" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=01421ca383"></noscript>
+    <link rel="preload" href="styles.css?v=2cf06325f8" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=2cf06325f8"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=30db0511e6"></script>
+    <script src="build_id.js?v=2f0fc6c3e3"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -602,6 +602,9 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
         <div class="watchlist-chips" id="watchlistChips"></div>
       </section>
+
+          <!-- "오늘 내 주식은" 보유·관심 종목 요약(my-digest.js) — 내 종목 이벤트 바로 위 -->
+          <section class="my-digest" id="myDigestToday" hidden aria-label="오늘 내 주식은"></section>
 
           <section class="daily-action-board ia-action-board" id="dailyActionBoard" aria-labelledby="dailyActionTitle">
             <div class="daily-action-head">
@@ -1401,6 +1404,7 @@ html[data-market="kr"][data-theme="dark"] {
                         <button type="button" data-ev-kind="D" class="is-active" aria-pressed="true" title="배당락일 표시">D</button>
                         <button type="button" data-ev-kind="S" class="is-active" aria-pressed="true" title="액면분할·병합 표시">S</button>
                         <button type="button" data-ev-kind="F" class="is-active" aria-pressed="true" title="주요 공시 표시">공</button>
+                        <button type="button" data-ev-kind="K" class="is-active" aria-pressed="true" title="큰 등락일(키 모먼트) 표시 — 평소 하루 변동의 2.5배 이상 움직인 날, 일봉에서만">등락</button>
                       </div>
                     </div>
                     <div class="control-group compact-control-group">
@@ -1538,6 +1542,8 @@ html[data-market="kr"][data-theme="dark"] {
               <div class="fundamental-table analysis-fundamentals animate-reveal" id="fundamentalTable"></div>
               <!-- 재무(financials.js renderFinancials) — SEC/DART 종목별 파일, 인덱스에 있는 종목만 -->
               <section class="financials-card animate-reveal" id="financialsSection" hidden></section>
+              <!-- 재무 위험 점검(risk-check.js renderRiskCheck) — F·Z·M 등 체크리스트, 재무 확장 파일이 있는 종목만 -->
+              <section class="financials-card rc-card animate-reveal" id="riskCheckSection" hidden></section>
               <!-- 실적 일정 · EPS 기록 · 발표 반응 · 실적 인사이트(renderStockEvents 가 채운다) -->
               <section class="stock-events-card sd-earnings-card animate-reveal" id="stockEarningsCard" hidden></section>
               <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
@@ -1556,6 +1562,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="range52-card sh-card animate-reveal" id="stockPeers" hidden></section>
             </div>
             <div class="sd-view" id="sdv-events" data-view="events" role="tabpanel">
+              <!-- 통합 타임라인(timeline.js renderStockTimeline) — 공시·실적·배당·지분·특징주·큰 등락을 시간순으로 -->
+              <section class="tl-card animate-reveal" id="stockTimeline" hidden></section>
               <section class="stock-events-card animate-reveal" id="stockEvents"></section>
               <!-- 과거 이벤트 반응(event-study.js renderStockEventStudy) — data/event_study/tk 샤드 하나만 받는다 -->
               <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
@@ -2520,6 +2528,7 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel is-active" id="sub-bulk-holdings">
         <div class="ia-stat-row" id="myInvestSummary" aria-live="polite"></div>
         <div class="thesis-strip" id="thesisStrip" hidden></div>
+        <section class="my-digest my-digest-bulk" id="myDigestBulk" hidden aria-label="오늘 내 주식은"></section>
         <section class="portfolio-card" id="portfolioCard">
           <div class="pf-head">
             <h3>보유 종목</h3>
@@ -3265,7 +3274,9 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="disclosure-trackers.js?v=4d75c17333"></script>
     <script src="movers.js?v=e7ddc838b5"></script>
-    <script src="portfolio.js?v=ed2118f017"></script>
+    <script src="portfolio.js?v=667afbf126"></script>
+    <script src="my-digest-core.js?v=fa7e90d91e"></script>
+    <script src="my-digest.js?v=6226eff130"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=e7fa020aec"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
@@ -3278,7 +3289,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=fd6acd09a3"></script>
+    <script src="feature-data.js?v=7dc989d6b6"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3297,7 +3308,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-health-core.js?v=bd57169177"></script>
     <script src="stock-health.js?v=9e62cb61d0"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
-    <script src="formula-screener.js?v=ff803202d2"></script>
+    <script src="formula-screener.js?v=c873456a6d"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=da99b8e4b6"></script>
@@ -3305,7 +3316,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="macro-odds.js?v=28a01082e3"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=733715a6b0"></script>
-    <script src="chart.js?v=e85db9794f"></script>
+    <script src="chart.js?v=9c951e2466"></script>
     <script src="institutional.js?v=09576dbcdc"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
     <script src="kr-panels.js?v=10bb49b991"></script>
@@ -3316,10 +3327,14 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="signal-scorecard.js?v=6fc77f71e2"></script>
     <script src="event-study-core.js?v=98c430e41a"></script>
     <script src="event-study.js?v=bcfb67eb71"></script>
+    <script src="timeline-core.js?v=bce5c51ba9"></script>
+    <script src="timeline.js?v=29e0e9f49d"></script>
     <script src="watchlist.js?v=2668548665"></script>
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="financials.js?v=3e7d8558c4"></script>
+    <script src="risk-check-core.js?v=fb0647255f"></script>
+    <script src="risk-check.js?v=2afff877ba"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=c3c5b7132b"></script>
@@ -3339,7 +3354,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=61f0c3fb14"></script>
-    <script src="app.js?v=8351b1679c"></script>
+    <script src="app.js?v=e0969dba5a"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=1d2bb06eeb"></script>

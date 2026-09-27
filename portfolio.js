@@ -692,14 +692,11 @@ async function renderBenchmarkAttributionNow() {
     const startDate = dateResult.dates[0];
     const endDate = dateResult.dates[dateResult.dates.length - 1];
     const benchmarkReturn = (benchmark.dateMap.get(endDate) / benchmark.dateMap.get(startDate) - 1) * 100;
-    const validValue = valid.reduce((sum, row) => sum + row.value, 0);
-    const rows = valid.map((row) => {
-      const weightPct = validValue > 0 ? row.value / validValue * 100 : 100 / valid.length;
-      const returnPct = (row.dateMap.get(endDate) / row.dateMap.get(startDate) - 1) * 100;
-      const contribution = returnPct * weightPct / 100;
-      const alphaContribution = (returnPct - benchmarkReturn) * weightPct / 100;
-      return { ...row, weightPct, returnPct, contribution, alphaContribution };
-    });
+    // 기여 = 기간 수익률 × 현재 비중(유효 종목끼리 재배분). "오늘 내 주식은" 주간 요약과 같은 식이라
+    // my-digest-core.js 의 contributionRows 를 함께 쓴다.
+    const rows = window.MirDigestCore.contributionRows(valid.map((row) => ({
+      ...row, returnPct: (row.dateMap.get(endDate) / row.dateMap.get(startDate) - 1) * 100,
+    })), benchmarkReturn);
     const portfolioReturn = rows.reduce((sum, row) => sum + row.contribution, 0);
     const alpha = portfolioReturn - benchmarkReturn;
     const excluded = positions.length - valid.length;

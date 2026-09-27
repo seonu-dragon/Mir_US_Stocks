@@ -352,7 +352,7 @@ def run(top: int, date: str | None, push: bool) -> None:
     }
     with repository_publish_lock(ROOT):
         # min_ratio: 직전 대비 60% 미만으로 줄면 덮지 않는다(로그인 만료로 절반만 받은 날 등).
-        sec.write_data(OUT_JSON, OUT_JS, JS_VAR, payload, indent=None, min_ratio=0.6)
+        sec.write_data(OUT_JSON, OUT_JS, "KR_ETF_HOLDINGS", payload, indent=None, min_ratio=0.6)
         print(f"Wrote {OUT_JS.relative_to(ROOT)} — {count}개 ETF · 기준일 {as_of_iso}")
         if push and not sec.git_publish(["data/korea/etf_holdings.json", "data/korea/etf_holdings.js"], "KR ETF holdings (KRX PDF)"):
             print("  [실패] git 게시 실패 — 발행되지 않았다")

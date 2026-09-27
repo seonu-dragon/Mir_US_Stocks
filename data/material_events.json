@@ -1,10 +1,11 @@
 {
-  "updatedAtKst": "2026-09-27 19:03 KST",
+  "updatedAtKst": "2026-09-28 07:06 KST",
   "lastFileDate": "2026-09-25",
   "partialFetch": false,
   "count": 687,
   "source": "SEC EDGAR 8-K",
-  "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만.",
+  "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만. summary 는 8-K 본문에서 규칙(템플릿+정규식)으로 뽑은 3줄 요약(숫자·이름은 원문 표기 그대로), aiSummary 는 시총 상위 일부만 Gemini 요약 후 원문에 없는 숫자가 든 줄을 버린 것.",
+  "summaryCount": 202,
   "events": [
     {
       "ticker": "DKNG",
@@ -22,7 +23,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001883685-26-000034",
-      "link": "https://www.sec.gov/Archives/edgar/data/1883685/000188368526000034/dkng-20260925.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1883685/000188368526000034/dkng-20260925.htm",
+      "summary": {
+        "item": "4.01",
+        "what": "감사인(회계법인) 교체 — 회사·감사인 간 이견 없음 명시",
+        "who": "BDO USA, P.C. → 후임 미정·미기재",
+        "amount": "",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CRCL",
@@ -40,7 +50,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001876042-26-000279",
-      "link": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000279/crcl-20260925.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000279/crcl-20260925.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 2명",
+        "who": "P. Sean Neville(이사) 사임, Jeremy Fox-Geen(CFO) 사임",
+        "amount": "기본급 $500,000",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CIFR",
@@ -62,7 +81,16 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001819989-26-000043",
-      "link": "https://www.sec.gov/Archives/edgar/data/1819989/000181998926000043/cifr-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1819989/000181998926000043/cifr-20260924.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DT",
@@ -84,7 +112,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001773383-26-000059",
-      "link": "https://www.sec.gov/Archives/edgar/data/1773383/000177338326000059/dt-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1773383/000177338326000059/dt-20260924.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Credit Agreement",
+        "who": "상대방 Bank of America, N.A.",
+        "amount": "$500,000,000",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "KEY",
@@ -104,7 +141,16 @@
       "accession": "0001628280-26-063618",
       "link": "https://www.sec.gov/Archives/edgar/data/91576/000162828026063618/key-20260925.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MRVL",
@@ -122,7 +168,16 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001628280-26-063592",
-      "link": "https://www.sec.gov/Archives/edgar/data/1835632/000162828026063592/mrvl-20260925.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1835632/000162828026063592/mrvl-20260925.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의 — 주당 $0.06",
+        "who": "",
+        "amount": "기준일 2026-10-09 · 지급일 2026-10-29",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FDS",
@@ -140,7 +195,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001628280-26-063495",
-      "link": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026063495/fds-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1013237/000162828026063495/fds-20260923.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Marcel Prins(이사) 선임",
+        "amount": "",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CART",
@@ -162,7 +226,16 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001579091-26-000047",
-      "link": "https://www.sec.gov/Archives/edgar/data/1579091/000157909126000047/cart-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1579091/000157909126000047/cart-20260921.htm",
+      "summary": {
+        "item": "3.02",
+        "what": "미등록 증권 발행(사모) — 5,833,333주",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -184,7 +257,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "LYV",
@@ -206,7 +288,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001335258-26-000038",
-      "link": "https://www.sec.gov/Archives/edgar/data/1335258/000133525826000038/lyv-20260925.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1335258/000133525826000038/lyv-20260925.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 보수·계약 변경 1명",
+        "who": "Michael G. Rowles(EVP) 보수·계약 변경",
+        "amount": "기본급 $500,000",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "EQH",
@@ -228,7 +319,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001333986-26-000048",
-      "link": "https://www.sec.gov/Archives/edgar/data/1333986/000133398626000048/axaeq-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1333986/000133398626000048/axaeq-20260923.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명 · 선임 1명",
+        "who": "Seth Bernstein(CEO) 퇴임, Onur Erzan(사장·CEO) 선임",
+        "amount": "기본급 $650,000",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MORN",
@@ -246,7 +346,8 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001289419-26-000048",
-      "link": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000048/morn-20260925.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000048/morn-20260925.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "MOS",
@@ -260,7 +361,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001285785-26-000125",
-      "link": "https://www.sec.gov/Archives/edgar/data/1285785/000128578526000125/formxchangeofofficerssepte.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1285785/000128578526000125/formxchangeofofficerssepte.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명 · 선임 1명",
+        "who": "Karen A. Swager 퇴임, Walter F. Precourt(EVP) 선임",
+        "amount": "기본급 $710,000",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NMP",
@@ -278,7 +388,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001213900-26-103585",
-      "link": "https://www.sec.gov/Archives/edgar/data/2054876/000121390026103585/ea0306553-8k425_nmp.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2054876/000121390026103585/ea0306553-8k425_nmp.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Amendment",
+        "who": "상대방 GTS Holdings",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "XOM",
@@ -296,7 +415,8 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001193125-26-402986",
-      "link": "https://www.sec.gov/Archives/edgar/data/2115436/000119312526402986/d15072d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2115436/000119312526402986/d15072d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "WMG",
@@ -310,7 +430,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001193125-26-402955",
-      "link": "https://www.sec.gov/Archives/edgar/data/1319161/000119312526402955/d266628d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1319161/000119312526402955/d266628d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Employment Agreement",
+        "who": "상대방 Valentin Blavatnik",
+        "amount": "$600,000",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SBAC",
@@ -324,7 +453,16 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001193125-26-402918",
-      "link": "https://www.sec.gov/Archives/edgar/data/1034054/000119312526402918/d152825d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1034054/000119312526402918/d152825d8k.htm",
+      "summary": {
+        "item": "2.03",
+        "what": "채무 발생 — 기업어음(CP) 프로그램",
+        "who": "",
+        "amount": "$2.5 billion",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MSTR",
@@ -338,7 +476,16 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001193125-26-401636",
-      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526401636/mstr-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526401636/mstr-20260924.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의",
+        "who": "",
+        "amount": "기준일 2026-11-01",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CTVA",
@@ -356,7 +503,8 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001193125-26-401618",
-      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526401618/d181849d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526401618/d181849d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CME",
@@ -370,7 +518,8 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0001156375-26-000060",
-      "link": "https://www.sec.gov/Archives/edgar/data/1156375/000115637526000060/cme-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1156375/000115637526000060/cme-20260924.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "DKS",
@@ -388,7 +537,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001140361-26-037715",
-      "link": "https://www.sec.gov/Archives/edgar/data/1089063/000114036126037715/ef20082695_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1089063/000114036126037715/ef20082695_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Underwriting Agreement",
+        "who": "상대방 BofA Securities, Inc.",
+        "amount": "$400,000,000",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SBXD",
@@ -402,7 +560,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-111044",
-      "link": "https://www.sec.gov/Archives/edgar/data/2015947/000110465926111044/tm2626181d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2015947/000110465926111044/tm2626181d1_8k.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 시가총액 요건 미달 통지",
+        "who": "거래소 NYSE",
+        "amount": "",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PSKY",
@@ -424,7 +591,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-111034",
-      "link": "https://www.sec.gov/Archives/edgar/data/2041610/000110465926111034/tm2610616d11_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2041610/000110465926111034/tm2610616d11_8k.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 자진 상장폐지(또는 이전) 결정",
+        "who": "거래소 NYSE",
+        "amount": "",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TPL",
@@ -442,7 +618,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-111009",
-      "link": "https://www.sec.gov/Archives/edgar/data/1811074/000110465926111009/tm2626094d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1811074/000110465926111009/tm2626094d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 보수·계약 변경",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RIOT",
@@ -456,7 +641,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-111003",
-      "link": "https://www.sec.gov/Archives/edgar/data/1167419/000110465926111003/riot-20260921x8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1167419/000110465926111003/riot-20260921x8k.htm",
+      "summary": {
+        "item": "1.02",
+        "what": "중요 계약 종료 — Credit Agreement",
+        "who": "상대방 Coinbase Credit, Inc.",
+        "amount": "$200 million",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SYY",
@@ -478,7 +672,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-110977",
-      "link": "https://www.sec.gov/Archives/edgar/data/96021/000110465926110977/tm2625144d26_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/96021/000110465926110977/tm2625144d26_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Fiftieth Supplemental Indenture",
+        "who": "",
+        "amount": "C$750 million",
+        "date": "2026-09-25",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MNST",
@@ -492,7 +695,17 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-110965",
-      "link": "https://www.sec.gov/Archives/edgar/data/865752/000110465926110965/tm2626151d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/865752/000110465926110965/tm2626151d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Rob Gehring(CEO) 사임",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true,
+      "aiChecked": true
     },
     {
       "ticker": "COR",
@@ -514,7 +727,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-110624",
-      "link": "https://www.sec.gov/Archives/edgar/data/1140859/000110465926110624/tm2626030d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1140859/000110465926110624/tm2626030d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Robert E. Sanchez(이사) 선임",
+        "amount": "",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DUK",
@@ -536,7 +758,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001104659-26-110588",
-      "link": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926110588/tm2626114d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1326160/000110465926110588/tm2626114d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Joyce Mullen(이사) 선임",
+        "amount": "",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AKAM",
@@ -572,7 +803,8 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0001023128-26-000053",
-      "link": "https://www.sec.gov/Archives/edgar/data/1023128/000102312826000053/lad-20260925.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1023128/000102312826000053/lad-20260925.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "DLTR",
@@ -590,7 +822,8 @@
       "hot": false,
       "fileDate": "2026-09-25",
       "accession": "0000935703-26-000116",
-      "link": "https://www.sec.gov/Archives/edgar/data/935703/000093570326000116/dltr-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/935703/000093570326000116/dltr-20260924.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ESS",
@@ -608,7 +841,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0000920522-26-000027",
-      "link": "https://www.sec.gov/Archives/edgar/data/920522/000092052226000027/ess-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/920522/000092052226000027/ess-20260924.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Term Loan Agreement",
+        "who": "상대방 Bank of America, N.A.",
+        "amount": "$225 million",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HIG",
@@ -630,7 +872,16 @@
       "hot": true,
       "fileDate": "2026-09-25",
       "accession": "0000874766-26-000064",
-      "link": "https://www.sec.gov/Archives/edgar/data/874766/000087476626000064/hig-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/874766/000087476626000064/hig-20260923.htm",
+      "summary": {
+        "item": "1.02",
+        "what": "중요 계약 종료 — Aggregate Excess of Loss Reinsurance Agreement",
+        "who": "상대방 National Indemnity Company",
+        "amount": "$1.12 billion",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "JQC",
@@ -644,7 +895,8 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001999371-26-021186",
-      "link": "https://www.sec.gov/Archives/edgar/data/1227476/000199937126021186/jqc-8k_092426.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1227476/000199937126021186/jqc-8k_092426.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "LINE",
@@ -666,7 +918,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001868159-26-000044",
-      "link": "https://www.sec.gov/Archives/edgar/data/1868159/000186815926000044/line-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1868159/000186815926000044/line-20260922.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 퇴임 1명 · 선임 1명",
+        "who": "James Wyper(이사) 사임, Paul Beiboer(이사) 선임, Sudarsan Thattai(CIO) 퇴임",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BKHA",
@@ -688,7 +949,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001829126-26-010385",
-      "link": "https://www.sec.gov/Archives/edgar/data/2000775/000182912626010385/blackhawkacq_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2000775/000182912626010385/blackhawkacq_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Non-Redemption Agreement",
+        "who": "상대방 Meteora Select Trading Opportunities Master, LP",
+        "amount": "$200.0 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ZS",
@@ -702,7 +972,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001713683-26-000193",
-      "link": "https://www.sec.gov/Archives/edgar/data/1713683/000171368326000193/zs-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1713683/000171368326000193/zs-20260924.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 선임 1명",
+        "who": "Ross Tackett 선임, Mike Rich 사임",
+        "amount": "",
+        "date": "2026-10-01",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SNX",
@@ -738,7 +1017,16 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001628280-26-063311",
-      "link": "https://www.sec.gov/Archives/edgar/data/1674101/000162828026063311/vrt-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1674101/000162828026063311/vrt-20260924.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -760,7 +1048,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CTVA",
@@ -778,7 +1075,8 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-401156",
-      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526401156/d170896d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526401156/d170896d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ROK",
@@ -792,7 +1090,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-401143",
-      "link": "https://www.sec.gov/Archives/edgar/data/1024478/000119312526401143/d155858d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1024478/000119312526401143/d155858d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명",
+        "who": "Scott A. Genereux 퇴임",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SF",
@@ -810,7 +1117,16 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-401093",
-      "link": "https://www.sec.gov/Archives/edgar/data/720672/000119312526401093/d52523d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/720672/000119312526401093/d52523d8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WFC",
@@ -846,7 +1162,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-401051",
-      "link": "https://www.sec.gov/Archives/edgar/data/1048286/000119312526401051/d145370d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1048286/000119312526401051/d145370d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Seventh Amended and Restated Credit Agreement",
+        "who": "상대방 Bank of America, N.A.",
+        "amount": "$4.50 billion",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AKAM",
@@ -876,7 +1201,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-401048",
-      "link": "https://www.sec.gov/Archives/edgar/data/1086222/000119312526401048/d288154d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1086222/000119312526401048/d288154d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Project Plan",
+        "who": "상대방 Anthropic, PBC",
+        "amount": "$11.6 billion",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "C",
@@ -918,7 +1252,16 @@
       "accession": "0001193125-26-401013",
       "link": "https://www.sec.gov/Archives/edgar/data/1116942/000119312526401013/d186334d8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$800 million",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WY",
@@ -938,7 +1281,8 @@
       "accession": "0001193125-26-400727",
       "link": "https://www.sec.gov/Archives/edgar/data/106535/000119312526400727/wy-20260924.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summaryChecked": true
     },
     {
       "ticker": "EOG",
@@ -956,7 +1300,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-400333",
-      "link": "https://www.sec.gov/Archives/edgar/data/821189/000119312526400333/d40889d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/821189/000119312526400333/d40889d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명 · 선임 1명",
+        "who": "Ann D. Janssen(이사) 퇴임, Jeffrey W. Hibbard 선임",
+        "amount": "",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NTNX",
@@ -970,7 +1323,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001193125-26-400318",
-      "link": "https://www.sec.gov/Archives/edgar/data/1618732/000119312526400318/ntnx-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1618732/000119312526400318/ntnx-20260924.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Tarkan Maner(사장·CCO) 사임",
+        "amount": "",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "UYSC",
@@ -988,7 +1350,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001185185-26-004284",
-      "link": "https://www.sec.gov/Archives/edgar/data/2036973/000118518526004284/uysc8k425092326.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2036973/000118518526004284/uysc8k425092326.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — First Amendment",
+        "who": "상대방 Isdera Group",
+        "amount": "",
+        "date": "2025-08-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "VST",
@@ -1010,7 +1381,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001140361-26-037577",
-      "link": "https://www.sec.gov/Archives/edgar/data/1692819/000114036126037577/ef20082680_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1692819/000114036126037577/ef20082680_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Series A Notes",
+        "who": "",
+        "amount": "$650,000,000",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SYY",
@@ -1028,7 +1408,8 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001104659-26-110464",
-      "link": "https://www.sec.gov/Archives/edgar/data/96021/000110465926110464/tm2625144d25_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/96021/000110465926110464/tm2625144d25_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "AIG",
@@ -1048,7 +1429,8 @@
       "accession": "0001104659-26-110438",
       "link": "https://www.sec.gov/Archives/edgar/data/5272/000110465926110438/tm2625844d1_8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summaryChecked": true
     },
     {
       "ticker": "CRL",
@@ -1066,7 +1448,16 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001100682-26-000142",
-      "link": "https://www.sec.gov/Archives/edgar/data/1100682/000110068226000142/crl-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1100682/000110068226000142/crl-20260924.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MET",
@@ -1080,7 +1471,8 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0001099219-26-000055",
-      "link": "https://www.sec.gov/Archives/edgar/data/1099219/000109921926000055/met-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1099219/000109921926000055/met-20260924.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ARE",
@@ -1098,7 +1490,16 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0001035443-26-000069",
-      "link": "https://www.sec.gov/Archives/edgar/data/1035443/000103544326000069/are-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1035443/000103544326000069/are-20260924.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Escrow Agreement",
+        "who": "상대방 Citibank, N.A.",
+        "amount": "$1 billion",
+        "date": "2026-07-09",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DRI",
@@ -1112,7 +1513,16 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0000940944-26-000035",
-      "link": "https://www.sec.gov/Archives/edgar/data/940944/000094094426000035/dri-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/940944/000094094426000035/dri-20260923.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "연례 주주총회 투표 결과",
+        "who": "",
+        "amount": "안건 4건 · 이사 9명 선임 · 부결 1건 (안건별 표 수는 원문)",
+        "date": "2026-09-24",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DRI",
@@ -1168,7 +1578,16 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0000829224-26-000145",
-      "link": "https://www.sec.gov/Archives/edgar/data/829224/000082922426000145/sbux-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/829224/000082922426000145/sbux-20260922.htm",
+      "summary": {
+        "item": "2.05",
+        "what": "구조조정(사업 철수·정리) 비용 — 시설·점포 정리",
+        "who": "",
+        "amount": "$300 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HBAN",
@@ -1182,7 +1601,8 @@
       "hot": true,
       "fileDate": "2026-09-24",
       "accession": "0000049196-26-000081",
-      "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000081/hban-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000081/hban-20260918.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "FITB",
@@ -1200,7 +1620,8 @@
       "hot": false,
       "fileDate": "2026-09-24",
       "accession": "0000035527-26-000224",
-      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000224/fitb-20260924.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000224/fitb-20260924.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "GLXY",
@@ -1214,7 +1635,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001859392-26-000105",
-      "link": "https://www.sec.gov/Archives/edgar/data/1859392/000185939226000105/glxy-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1859392/000185939226000105/glxy-20260922.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 선임 1명",
+        "who": "Robert Rico(CAO) 사임, Dritan Muneka(이사) 선임",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AUR",
@@ -1232,7 +1662,16 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001828108-26-000082",
-      "link": "https://www.sec.gov/Archives/edgar/data/1828108/000182810826000082/aur-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1828108/000182810826000082/aur-20260923.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "J",
@@ -1246,7 +1685,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001628280-26-063217",
-      "link": "https://www.sec.gov/Archives/edgar/data/52988/000162828026063217/j-20260810.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/52988/000162828026063217/j-20260810.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Shannon Miller(사장) 사임",
+        "amount": "",
+        "date": "2026-08-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "GIS",
@@ -1286,7 +1734,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "IBAC",
@@ -1308,7 +1765,8 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001493152-26-043952",
-      "link": "https://www.sec.gov/Archives/edgar/data/1998781/000149315226043952/form8-ka.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1998781/000149315226043952/form8-ka.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CAPN",
@@ -1338,7 +1796,8 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001493152-26-043931",
-      "link": "https://www.sec.gov/Archives/edgar/data/2024203/000149315226043931/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2024203/000149315226043931/form8-k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "V",
@@ -1352,7 +1811,8 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001403161-26-000121",
-      "link": "https://www.sec.gov/Archives/edgar/data/1403161/000140316126000121/v-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1403161/000140316126000121/v-20260918.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "IQV",
@@ -1374,7 +1834,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001193125-26-399616",
-      "link": "https://www.sec.gov/Archives/edgar/data/1478242/000119312526399616/d128109d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1478242/000119312526399616/d128109d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$2,000,000,000",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TRU",
@@ -1396,7 +1865,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001193125-26-399606",
-      "link": "https://www.sec.gov/Archives/edgar/data/1552033/000119312526399606/d117869d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1552033/000119312526399606/d117869d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Todd M. Cello(EVP) 사임",
+        "amount": "",
+        "date": "2026-09-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AA",
@@ -1426,7 +1904,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001193125-26-399499",
-      "link": "https://www.sec.gov/Archives/edgar/data/1675149/000119312526399499/aa-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1675149/000119312526399499/aa-20260923.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — 2034 Notes",
+        "who": "",
+        "amount": "$1,500,000,000",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RANG",
@@ -1444,7 +1931,8 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001193125-26-399473",
-      "link": "https://www.sec.gov/Archives/edgar/data/2035644/000119312526399473/d127603d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2035644/000119312526399473/d127603d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "JAZZ",
@@ -1466,7 +1954,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001193125-26-399425",
-      "link": "https://www.sec.gov/Archives/edgar/data/1232524/000119312526399425/d163027d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1232524/000119312526399425/d163027d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Amendment",
+        "who": "",
+        "amount": "$273,310,355.18",
+        "date": "2024-07-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CORT",
@@ -1488,7 +1985,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001193125-26-398561",
-      "link": "https://www.sec.gov/Archives/edgar/data/1088856/000119312526398561/d148256d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1088856/000119312526398561/d148256d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Sean Maduck(사장) 사임",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FIVE",
@@ -1510,7 +2016,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0001177609-26-000050",
-      "link": "https://www.sec.gov/Archives/edgar/data/1177609/000117760926000050/five-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1177609/000117760926000050/five-20260921.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Scott Settersten(이사) 선임",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TECH",
@@ -1532,7 +2047,16 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001140361-26-037450",
-      "link": "https://www.sec.gov/Archives/edgar/data/842023/000114036126037450/ef20082601_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/842023/000114036126037450/ef20082601_8k.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "임시 주주총회 투표 결과",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "IONS",
@@ -1554,7 +2078,16 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001140361-26-037371",
-      "link": "https://www.sec.gov/Archives/edgar/data/874015/000114036126037371/ef20082626_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/874015/000114036126037371/ef20082626_8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CTNT",
@@ -1576,7 +2109,8 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001104659-26-109828",
-      "link": "https://www.sec.gov/Archives/edgar/data/1951667/000110465926109828/tm2625304d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1951667/000110465926109828/tm2625304d1_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "RCL",
@@ -1594,7 +2128,8 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0001104659-26-109755",
-      "link": "https://www.sec.gov/Archives/edgar/data/884887/000110465926109755/tm2625963d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/884887/000110465926109755/tm2625963d1_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "SUI",
@@ -1618,7 +2153,16 @@
       "accession": "0000912593-26-000256",
       "link": "https://www.sec.gov/Archives/edgar/data/912593/000091259326000256/sui-20260922.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "2.01",
+        "what": "매각 완료",
+        "who": "상대방(매수자) Panther Bidco Limited",
+        "amount": "£772.3 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BSX",
@@ -1632,7 +2176,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0000885725-26-000061",
-      "link": "https://www.sec.gov/Archives/edgar/data/885725/000088572526000061/bsx-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/885725/000088572526000061/bsx-20260921.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명",
+        "who": "Arthur C. Butcher(EVP·사장) 퇴임",
+        "amount": "기본급 $780,000",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PPC",
@@ -1654,7 +2207,16 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0000802481-26-000068",
-      "link": "https://www.sec.gov/Archives/edgar/data/802481/000080248126000068/ppc-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/802481/000080248126000068/ppc-20260923.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "€500 million",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PAYX",
@@ -1706,7 +2268,16 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0000720005-26-000077",
-      "link": "https://www.sec.gov/Archives/edgar/data/720005/000072000526000077/rjf-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/720005/000072000526000077/rjf-20260923.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-23",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WFC",
@@ -1720,7 +2291,19 @@
       "hot": true,
       "fileDate": "2026-09-23",
       "accession": "0000072971-26-000308",
-      "link": "https://www.sec.gov/Archives/edgar/data/72971/000007297126000308/wfc-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/72971/000007297126000308/wfc-20260923.htm",
+      "summaryChecked": true,
+      "aiChecked": true,
+      "aiSummary": {
+        "lines": [
+          "Scott E. Powell이 최고 위험 관리 책임자로 임명됨",
+          "Wells Fargo & Company, Scott E. Powell (최고 위험 관리 책임자)",
+          ""
+        ],
+        "model": "gemini-2.5-flash-lite",
+        "droppedLines": 1,
+        "src": "ai"
+      }
     },
     {
       "ticker": "MCD",
@@ -1738,7 +2321,8 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0000063908-26-000076",
-      "link": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000076/mcd-20260923.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/63908/000006390826000076/mcd-20260923.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "FITB",
@@ -1756,7 +2340,8 @@
       "hot": false,
       "fileDate": "2026-09-23",
       "accession": "0000035527-26-000222",
-      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000222/fitb-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000222/fitb-20260922.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "GEHC",
@@ -1778,7 +2363,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001932393-26-000053",
-      "link": "https://www.sec.gov/Archives/edgar/data/1932393/000193239326000053/gehc-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1932393/000193239326000053/gehc-20260922.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Pascal Desroches(이사) 선임",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CRCL",
@@ -1792,7 +2386,8 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001876042-26-000276",
-      "link": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000276/crcl-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1876042/000187604226000276/crcl-20260917.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "FXAC",
@@ -1814,7 +2409,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001829126-26-010318",
-      "link": "https://www.sec.gov/Archives/edgar/data/2121703/000182912626010318/fortunexacq_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2121703/000182912626010318/fortunexacq_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Business Combination Agreement",
+        "who": "상대방 WT Realty Group",
+        "amount": "$2,431,250",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BKHA",
@@ -1828,7 +2432,8 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001829126-26-010313",
-      "link": "https://www.sec.gov/Archives/edgar/data/2000775/000182912626010313/blackhawkacq_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2000775/000182912626010313/blackhawkacq_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CRWV",
@@ -1856,7 +2461,16 @@
       "accession": "0001769628-26-000432",
       "link": "https://www.sec.gov/Archives/edgar/data/1769628/000176962826000432/crwv-20260917.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$100.0 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "VICI",
@@ -1870,7 +2484,8 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001705696-26-000094",
-      "link": "https://www.sec.gov/Archives/edgar/data/1705696/000170569626000094/vici-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1705696/000170569626000094/vici-20260921.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "TTWO",
@@ -1892,7 +2507,16 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001628280-26-063032",
-      "link": "https://www.sec.gov/Archives/edgar/data/946581/000162828026063032/ttwo-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/946581/000162828026063032/ttwo-20260917.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "연례 주주총회 투표 결과",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ADC",
@@ -1918,7 +2542,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001628280-26-063023",
-      "link": "https://www.sec.gov/Archives/edgar/data/917251/000162828026063023/adc-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/917251/000162828026063023/adc-20260917.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$400 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CW",
@@ -1936,7 +2569,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001628280-26-062997",
-      "link": "https://www.sec.gov/Archives/edgar/data/26324/000162828026062997/cw-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/26324/000162828026062997/cw-20260921.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Kevin M. Rayment(사장·CEO) 선임",
+        "amount": "기본급 $1,100,000",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -1958,7 +2600,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DTSQ",
@@ -1972,7 +2623,8 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001493152-26-043723",
-      "link": "https://www.sec.gov/Archives/edgar/data/2017950/000149315226043723/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2017950/000149315226043723/form8-k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "BNY",
@@ -1990,7 +2642,8 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001390777-26-000097",
-      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000139077726000097/bk-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1390777/000139077726000097/bk-20260922.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "MTB",
@@ -2010,7 +2663,8 @@
       "accession": "0001193125-26-398138",
       "link": "https://www.sec.gov/Archives/edgar/data/36270/000119312526398138/d181022d8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summaryChecked": true
     },
     {
       "ticker": "HLI",
@@ -2036,7 +2690,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-398130",
-      "link": "https://www.sec.gov/Archives/edgar/data/1302215/000119312526398130/d916717d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1302215/000119312526398130/d916717d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 선임 2명",
+        "who": "Thomas Reichert(이사) 선임, Christopher M. Crain(법무총괄) 사임, Prabha Sipi Bhandari(최고법무책임자) 선임",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BX",
@@ -2054,7 +2717,16 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-398100",
-      "link": "https://www.sec.gov/Archives/edgar/data/1393818/000119312526398100/d92415d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1393818/000119312526398100/d92415d8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WMG",
@@ -2068,7 +2740,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-398095",
-      "link": "https://www.sec.gov/Archives/edgar/data/1319161/000119312526398095/d171303d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1319161/000119312526398095/d171303d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Carianne Marshall(COO) 사임",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HALO",
@@ -2096,7 +2777,16 @@
       "accession": "0001193125-26-398015",
       "link": "https://www.sec.gov/Archives/edgar/data/1159036/000119312526398015/d148460d8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Convertible Notes",
+        "who": "",
+        "amount": "$200.0 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PSBD",
@@ -2114,7 +2804,16 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-397933",
-      "link": "https://www.sec.gov/Archives/edgar/data/1794776/000119312526397933/psbd-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1794776/000119312526397933/psbd-20260922.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의 — 주당 $0.02",
+        "who": "",
+        "amount": "기준일 2026-09-25 · 지급일 2026-10-13",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "THC",
@@ -2136,7 +2835,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-397901",
-      "link": "https://www.sec.gov/Archives/edgar/data/70318/000119312526397901/d104323d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/70318/000119312526397901/d104323d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$2,000,000,000",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MSGS",
@@ -2150,7 +2858,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-397309",
-      "link": "https://www.sec.gov/Archives/edgar/data/1636519/000119312526397309/d152993d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1636519/000119312526397309/d152993d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 보수·계약 변경",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FISV",
@@ -2164,7 +2881,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-397250",
-      "link": "https://www.sec.gov/Archives/edgar/data/798354/000119312526397250/d215103d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/798354/000119312526397250/d215103d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Adam L. Rosman(최고법무책임자) 사임",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HSIC",
@@ -2186,7 +2912,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-397208",
-      "link": "https://www.sec.gov/Archives/edgar/data/1000228/000119312526397208/d110297d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1000228/000119312526397208/d110297d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Fourth Amended and Restated Revolving Credit Agreement",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AON",
@@ -2212,7 +2947,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001193125-26-397203",
-      "link": "https://www.sec.gov/Archives/edgar/data/315293/000119312526397203/d38875d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/315293/000119312526397203/d38875d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Credit Agreement",
+        "who": "상대방 Citibank, N.A.",
+        "amount": "$4,000,000,000",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WYNN",
@@ -2230,7 +2974,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0001174922-26-000069",
-      "link": "https://www.sec.gov/Archives/edgar/data/1174922/000117492226000069/wynn-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1174922/000117492226000069/wynn-20260922.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "상대방 WRF",
+        "amount": "$900 million",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AZO",
@@ -2264,7 +3017,8 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0001104659-26-109644",
-      "link": "https://www.sec.gov/Archives/edgar/data/2031561/000110465926109644/tm2625917d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2031561/000110465926109644/tm2625917d1_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "LH",
@@ -2278,7 +3032,16 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0000920148-26-000205",
-      "link": "https://www.sec.gov/Archives/edgar/data/920148/000092014826000205/lh-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/920148/000092014826000205/lh-20260922.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ODFL",
@@ -2292,7 +3055,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0000878927-26-000027",
-      "link": "https://www.sec.gov/Archives/edgar/data/878927/000087892726000027/odfl-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/878927/000087892726000027/odfl-20260922.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명 · 선임 1명",
+        "who": "John D. Kasarda(이사) 퇴임, Worthing F. Jackman(이사) 선임",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CGNX",
@@ -2314,7 +3086,16 @@
       "hot": false,
       "fileDate": "2026-09-22",
       "accession": "0000851205-26-000071",
-      "link": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000071/cgnx-20260922.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/851205/000085120526000071/cgnx-20260922.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-22",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PNR",
@@ -2332,7 +3113,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0000077360-26-000050",
-      "link": "https://www.sec.gov/Archives/edgar/data/77360/000007736026000050/pnr-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/77360/000007736026000050/pnr-20260921.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Robert W. Hau(EVP·CFO) 선임",
+        "amount": "기본급 $775,000",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "GE",
@@ -2354,7 +3144,16 @@
       "hot": true,
       "fileDate": "2026-09-22",
       "accession": "0000040545-26-000059",
-      "link": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000059/ge-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000059/ge-20260921.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Judson Althoff(이사) 선임",
+        "amount": "",
+        "date": "2026-06-11",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "GJO",
@@ -2372,7 +3171,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001999371-26-020928",
-      "link": "https://www.sec.gov/Archives/edgar/data/1340909/000199937126020928/gjo-8k_091526.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1340909/000199937126020928/gjo-8k_091526.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "GJP",
@@ -2390,7 +3190,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001999371-26-020923",
-      "link": "https://www.sec.gov/Archives/edgar/data/1343491/000199937126020923/gjp-8k_091526.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1343491/000199937126020923/gjp-8k_091526.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "APO",
@@ -2404,7 +3205,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001858681-26-000051",
-      "link": "https://www.sec.gov/Archives/edgar/data/1858681/000185868126000051/apo-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1858681/000185868126000051/apo-20260921.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "QSEA",
@@ -2418,7 +3220,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001829126-26-010281",
-      "link": "https://www.sec.gov/Archives/edgar/data/2047455/000182912626010281/quartzsea_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2047455/000182912626010281/quartzsea_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "TTC",
@@ -2432,7 +3235,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001628280-26-062886",
-      "link": "https://www.sec.gov/Archives/edgar/data/737758/000162828026062886/ttc-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/737758/000162828026062886/ttc-20260921.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "David W. Huml(이사) 선임",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BG",
@@ -2450,7 +3262,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001628280-26-062880",
-      "link": "https://www.sec.gov/Archives/edgar/data/1996862/000162828026062880/bg-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1996862/000162828026062880/bg-20260917.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -2472,7 +3285,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "IBAC",
@@ -2490,7 +3312,8 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001493152-26-043585",
-      "link": "https://www.sec.gov/Archives/edgar/data/1998781/000149315226043585/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1998781/000149315226043585/form8-k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ALIS",
@@ -2508,7 +3331,8 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001493152-26-043574",
-      "link": "https://www.sec.gov/Archives/edgar/data/2026767/000149315226043574/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2026767/000149315226043574/form8-k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "BMNR",
@@ -2526,7 +3350,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001493152-26-043486",
-      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226043486/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226043486/form8-k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "APAC",
@@ -2544,7 +3369,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001437749-26-030772",
-      "link": "https://www.sec.gov/Archives/edgar/data/2043630/000143774926030772/apac20260921_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2043630/000143774926030772/apac20260921_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "TDG",
@@ -2558,7 +3384,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001260221-26-000062",
-      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000062/tdg-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000062/tdg-20260921.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "KFII",
@@ -2584,7 +3411,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001213900-26-101813",
-      "link": "https://www.sec.gov/Archives/edgar/data/2029976/000121390026101813/ea0305960-8k_kfgrow2.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2029976/000121390026101813/ea0305960-8k_kfgrow2.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$300,000",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "IPXG",
@@ -2602,7 +3438,16 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001213900-26-101659",
-      "link": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026101659/ea0306061-8k425_inflection7.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2088805/000121390026101659/ea0306061-8k425_inflection7.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-06-26",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PODD",
@@ -2624,7 +3469,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396779",
-      "link": "https://www.sec.gov/Archives/edgar/data/1145197/000119312526396779/d71204d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1145197/000119312526396779/d71204d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Ninth Amendment",
+        "who": "",
+        "amount": "$475 million",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "LB",
@@ -2638,7 +3492,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396773",
-      "link": "https://www.sec.gov/Archives/edgar/data/1995807/000119312526396773/lb-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1995807/000119312526396773/lb-20260918.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명",
+        "who": "Jason Williams(EVP) 퇴임",
+        "amount": "",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CDW",
@@ -2660,7 +3523,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396653",
-      "link": "https://www.sec.gov/Archives/edgar/data/1402057/000119312526396653/d240122d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1402057/000119312526396653/d240122d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — 2029 Notes",
+        "who": "",
+        "amount": "$500,000,000",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CTVA",
@@ -2674,7 +3546,16 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396123",
-      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526396123/d144225d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526396123/d144225d8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MSTR",
@@ -2694,7 +3575,8 @@
       "accession": "0001193125-26-396093",
       "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526396093/mstr-20260914.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summaryChecked": true
     },
     {
       "ticker": "ALKS",
@@ -2716,7 +3598,16 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396065",
-      "link": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526396065/alks-20260921.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526396065/alks-20260921.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WCC",
@@ -2738,7 +3629,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001193125-26-396005",
-      "link": "https://www.sec.gov/Archives/edgar/data/929008/000119312526396005/d163628d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/929008/000119312526396005/d163628d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — ABL Facility",
+        "who": "",
+        "amount": "$1,725 million",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AXON",
@@ -2766,7 +3666,16 @@
       "accession": "0001193125-26-395997",
       "link": "https://www.sec.gov/Archives/edgar/data/1069183/000119312526395997/d476163d8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$150.0 million",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "VII",
@@ -2792,7 +3701,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0001185185-26-004181",
-      "link": "https://www.sec.gov/Archives/edgar/data/2139246/000118518526004181/vac28k092126.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2139246/000118518526004181/vac28k092126.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결",
+        "who": "",
+        "amount": "$514,080.00",
+        "date": "2026-08-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WWD",
@@ -2814,7 +3732,16 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001171843-26-006140",
-      "link": "https://www.sec.gov/Archives/edgar/data/108312/000117184326006140/f8k_092126.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/108312/000117184326006140/f8k_092126.htm",
+      "summary": {
+        "item": "2.05",
+        "what": "구조조정(사업 철수·정리) 비용",
+        "who": "",
+        "amount": "$34 million ~ $47.5 million",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DKS",
@@ -2832,7 +3759,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001140361-26-037192",
-      "link": "https://www.sec.gov/Archives/edgar/data/1089063/000114036126037192/ef20082169_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1089063/000114036126037192/ef20082169_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "HPQ",
@@ -2850,7 +3778,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001140361-26-037170",
-      "link": "https://www.sec.gov/Archives/edgar/data/47217/000114036126037170/ef20082499_form8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/47217/000114036126037170/ef20082499_form8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ATR",
@@ -2864,7 +3793,8 @@
       "hot": false,
       "fileDate": "2026-09-21",
       "accession": "0001104659-26-109359",
-      "link": "https://www.sec.gov/Archives/edgar/data/896622/000110465926109359/tm2625862d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/896622/000110465926109359/tm2625862d1_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "AVTR",
@@ -2886,7 +3816,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0000947871-26-000877",
-      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000094787126000877/ss6842956_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000094787126000877/ss6842956_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Todd Garner(EVP·CFO) 선임",
+        "amount": "기본급 $700,000",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AVTR",
@@ -2908,7 +3847,16 @@
       "hot": true,
       "fileDate": "2026-09-21",
       "accession": "0000947871-26-000876",
-      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000094787126000876/ss6842956_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1722482/000094787126000876/ss6842956_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Todd Garner(EVP·CFO) 선임",
+        "amount": "기본급 $700,000",
+        "date": "2026-09-21",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "OKTA",
@@ -2926,7 +3874,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001660134-26-000072",
-      "link": "https://www.sec.gov/Archives/edgar/data/1660134/000166013426000072/okta-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1660134/000166013426000072/okta-20260914.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 선임 1명",
+        "who": "Emilie Choi(이사) 사임, Helen Riley 선임",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ROIV",
@@ -2944,7 +3901,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001635088-26-000095",
-      "link": "https://www.sec.gov/Archives/edgar/data/1635088/000163508826000095/roiv-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1635088/000163508826000095/roiv-20260916.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "주주총회 투표 결과",
+        "who": "",
+        "amount": "안건 3건 (안건별 표 수는 원문)",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "VLO",
@@ -2966,7 +3932,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001628280-26-062625",
-      "link": "https://www.sec.gov/Archives/edgar/data/1035002/000162828026062625/vlo-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1035002/000162828026062625/vlo-20260917.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Matthew Audette(이사) 선임",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PM",
@@ -2984,7 +3959,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001628280-26-062621",
-      "link": "https://www.sec.gov/Archives/edgar/data/1413329/000162828026062621/pm-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1413329/000162828026062621/pm-20260918.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -3006,7 +3990,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HL",
@@ -3038,7 +4031,16 @@
       "accession": "0001437749-26-030743",
       "link": "https://www.sec.gov/Archives/edgar/data/719413/000143774926030743/hl20260917_8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Credit Agreement",
+        "who": "상대방 Hecla Limited",
+        "amount": "$100 million",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MORN",
@@ -3056,7 +4058,8 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001289419-26-000046",
-      "link": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000046/morn-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1289419/000128941926000046/morn-20260918.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "MACI",
@@ -3074,7 +4077,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001213900-26-101166",
-      "link": "https://www.sec.gov/Archives/edgar/data/2016221/000121390026101166/ea0305899-8k425_melar1.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2016221/000121390026101166/ea0305899-8k425_melar1.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2025-07-30",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SVAQ",
@@ -3104,7 +4116,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001213900-26-101156",
-      "link": "https://www.sec.gov/Archives/edgar/data/2085659/000121390026101156/ea0305876-8k425_silicon.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2085659/000121390026101156/ea0305876-8k425_silicon.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Amendment",
+        "who": "상대방 SVAQ Merger Sub Inc.",
+        "amount": "$1,000,000",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AHR",
@@ -3126,7 +4147,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001193125-26-395604",
-      "link": "https://www.sec.gov/Archives/edgar/data/1632970/000119312526395604/ahr-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1632970/000119312526395604/ahr-20260918.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "STZ",
@@ -3148,7 +4178,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001193125-26-395558",
-      "link": "https://www.sec.gov/Archives/edgar/data/16918/000119312526395558/d104366d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/16918/000119312526395558/d104366d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Term Loan Credit Agreement",
+        "who": "",
+        "amount": "$300 million",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HALO",
@@ -3166,7 +4205,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001159036-26-000126",
-      "link": "https://www.sec.gov/Archives/edgar/data/1159036/000115903626000126/halo-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1159036/000115903626000126/halo-20260917.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "증권 공모 가격 결정",
+        "who": "",
+        "amount": "$1.3 billion",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DASH",
@@ -3184,7 +4232,8 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001140361-26-037109",
-      "link": "https://www.sec.gov/Archives/edgar/data/1792789/000114036126037109/ef20081998_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1792789/000114036126037109/ef20081998_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "DDS",
@@ -3206,7 +4255,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001104659-26-108945",
-      "link": "https://www.sec.gov/Archives/edgar/data/28917/000110465926108945/tm2625597d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/28917/000110465926108945/tm2625597d1_8k.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 자진 상장폐지(또는 이전) 결정",
+        "who": "거래소 NYSE",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AEE",
@@ -3224,7 +4282,8 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001104659-26-108859",
-      "link": "https://www.sec.gov/Archives/edgar/data/1002910/000110465926108859/tm2625603d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1002910/000110465926108859/tm2625603d1_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "STLD",
@@ -3242,7 +4301,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0001104659-26-108777",
-      "link": "https://www.sec.gov/Archives/edgar/data/1022671/000110465926108777/tm2625690d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1022671/000110465926108777/tm2625690d1_8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "LII",
@@ -3260,7 +4328,8 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001069202-26-000091",
-      "link": "https://www.sec.gov/Archives/edgar/data/1069202/000106920226000091/lii-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1069202/000106920226000091/lii-20260916.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "AMT",
@@ -3282,7 +4351,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0001053507-26-000145",
-      "link": "https://www.sec.gov/Archives/edgar/data/1053507/000105350726000145/amt-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1053507/000105350726000145/amt-20260917.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Kristen M. Ludgate(이사) 선임",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CLH",
@@ -3300,7 +4378,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0000822818-26-000040",
-      "link": "https://www.sec.gov/Archives/edgar/data/822818/000082281826000040/clh-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/822818/000082281826000040/clh-20260917.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "증권 공모 가격 결정",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PGR",
@@ -3318,7 +4405,8 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0000080661-26-000322",
-      "link": "https://www.sec.gov/Archives/edgar/data/80661/000008066126000322/pgr-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/80661/000008066126000322/pgr-20260918.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "PNR",
@@ -3336,7 +4424,16 @@
       "hot": true,
       "fileDate": "2026-09-18",
       "accession": "0000077360-26-000047",
-      "link": "https://www.sec.gov/Archives/edgar/data/77360/000007736026000047/pnr-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/77360/000007736026000047/pnr-20260917.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Louis V. Pinkham(이사) 선임",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HBAN",
@@ -3354,7 +4451,16 @@
       "hot": false,
       "fileDate": "2026-09-18",
       "accession": "0000049196-26-000079",
-      "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000079/hban-20260918.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000079/hban-20260918.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의",
+        "who": "",
+        "amount": "기준일 2026-11-15 · 지급일 2026-12-01",
+        "date": "2026-09-18",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CRBG",
@@ -3368,7 +4474,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001889539-26-000152",
-      "link": "https://www.sec.gov/Archives/edgar/data/1889539/000188953926000152/crbg-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1889539/000188953926000152/crbg-20260916.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "연례 주주총회 투표 결과",
+        "who": "",
+        "amount": "안건 3건 · 이사 11명 선임 (안건별 표 수는 원문)",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CRWV",
@@ -3392,7 +4507,16 @@
       "accession": "0001769628-26-000429",
       "link": "https://www.sec.gov/Archives/edgar/data/1769628/000176962826000429/crwv-20260917.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MDT",
@@ -3410,7 +4534,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001628280-26-062505",
-      "link": "https://www.sec.gov/Archives/edgar/data/1613103/000162828026062505/mdt-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1613103/000162828026062505/mdt-20260917.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ZG",
@@ -3428,7 +4553,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001617640-26-000060",
-      "link": "https://www.sec.gov/Archives/edgar/data/1617640/000161764026000060/z-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1617640/000161764026000060/z-20260916.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Rikki Tremblay(이사) 선임",
+        "amount": "기본급 $400,000",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PCTY",
@@ -3450,7 +4584,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001591698-26-000131",
-      "link": "https://www.sec.gov/Archives/edgar/data/1591698/000159169826000131/pcty-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1591698/000159169826000131/pcty-20260917.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — A&R Revolving Credit Agreement",
+        "who": "",
+        "amount": "$875.0 million",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "REXR",
@@ -3474,7 +4617,16 @@
       "accession": "0001571283-26-000051",
       "link": "https://www.sec.gov/Archives/edgar/data/1571283/000157128326000051/rexr-20260916.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "2.01",
+        "what": "매각 완료",
+        "who": "상대방(매수자) EQT Real Estate",
+        "amount": "$1.2 billion",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -3496,7 +4648,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WTRG",
@@ -3510,7 +4671,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001552781-26-000492",
-      "link": "https://www.sec.gov/Archives/edgar/data/78128/000155278126000492/e26385_wtrg-8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/78128/000155278126000492/e26385_wtrg-8k.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "소송 합의",
+        "who": "",
+        "amount": "",
+        "date": "2025-10-26",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AWK",
@@ -3524,7 +4694,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001410636-26-000143",
-      "link": "https://www.sec.gov/Archives/edgar/data/1410636/000141063626000143/awk-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1410636/000141063626000143/awk-20260915.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "소송 합의",
+        "who": "",
+        "amount": "",
+        "date": "2025-10-26",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NOEM",
@@ -3546,7 +4725,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001213900-26-101017",
-      "link": "https://www.sec.gov/Archives/edgar/data/1956648/000121390026101017/ea0305664-8k_co2energy.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1956648/000121390026101017/ea0305664-8k_co2energy.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 상장 유지 요건 관련 통지",
+        "who": "거래소 Nasdaq",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NHIC",
@@ -3568,7 +4756,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001213900-26-100990",
-      "link": "https://www.sec.gov/Archives/edgar/data/2043699/000121390026100990/ea0305792-8k425_newhold3.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2043699/000121390026100990/ea0305792-8k425_newhold3.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "주주총회 투표 결과",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RIBB",
@@ -3582,7 +4779,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001213900-26-100982",
-      "link": "https://www.sec.gov/Archives/edgar/data/2035016/000121390026100982/ea0305846-8k_ribbon.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2035016/000121390026100982/ea0305846-8k_ribbon.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "FERA",
@@ -3596,7 +4794,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001213900-26-100942",
-      "link": "https://www.sec.gov/Archives/edgar/data/2025401/000121390026100942/ea0305747-8k_fifth1.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2025401/000121390026100942/ea0305747-8k_fifth1.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 정기보고서 지연 제출 통지",
+        "who": "거래소 Nasdaq",
+        "amount": "요건 회복 기한 2026-10-29",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AON",
@@ -3614,7 +4821,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001193125-26-394533",
-      "link": "https://www.sec.gov/Archives/edgar/data/315293/000119312526394533/d105587d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/315293/000119312526394533/d105587d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "VMRK",
@@ -3628,7 +4836,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001193125-26-394451",
-      "link": "https://www.sec.gov/Archives/edgar/data/906107/000119312526394451/vmrk-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/906107/000119312526394451/vmrk-20260916.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "WSO",
@@ -3642,7 +4851,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001193125-26-394393",
-      "link": "https://www.sec.gov/Archives/edgar/data/105016/000119312526394393/wso-20260912.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/105016/000119312526394393/wso-20260912.htm",
+      "summary": {
+        "item": "3.02",
+        "what": "미등록 증권 발행(사모)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-12",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "XRPN",
@@ -3656,7 +4874,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001193125-26-394363",
-      "link": "https://www.sec.gov/Archives/edgar/data/2044009/000119312526394363/d141989d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2044009/000119312526394363/d141989d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ADI",
@@ -3674,7 +4893,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001193125-26-394361",
-      "link": "https://www.sec.gov/Archives/edgar/data/6281/000119312526394361/d175690d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/6281/000119312526394361/d175690d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — 2029 Notes",
+        "who": "",
+        "amount": "$500,000,000",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PBF",
@@ -3702,7 +4930,16 @@
       "accession": "0001193125-26-394108",
       "link": "https://www.sec.gov/Archives/edgar/data/1534504/000119312526394108/d175053d8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Indenture",
+        "who": "상대방 PBF Holding",
+        "amount": "$50,000,000",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AES",
@@ -3716,7 +4953,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001140361-26-036994",
-      "link": "https://www.sec.gov/Archives/edgar/data/874761/000114036126036994/ef20082051_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/874761/000114036126036994/ef20082051_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CRM",
@@ -3736,7 +4974,16 @@
       "accession": "0001108524-26-000210",
       "link": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000210/crm-20260916.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MOD",
@@ -3754,7 +5001,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001104659-26-108614",
-      "link": "https://www.sec.gov/Archives/edgar/data/67347/000110465926108614/tm2625565d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/67347/000110465926108614/tm2625565d1_8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NVT",
@@ -3772,7 +5028,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001104659-26-108580",
-      "link": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926108580/tm2625610d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926108580/tm2625610d1_8k.htm",
+      "summary": {
+        "item": "2.03",
+        "what": "채무 발생 — Term Loan",
+        "who": "",
+        "amount": "$250.0 million",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "JAN",
@@ -3794,7 +5059,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001104659-26-108578",
-      "link": "https://www.sec.gov/Archives/edgar/data/2100805/000110465926108578/tm2624344d4_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2100805/000110465926108578/tm2624344d4_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Credit Agreement",
+        "who": "상대방 Janus Living OP, LLC",
+        "amount": "$1.75 billion",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "EXE",
@@ -3820,7 +5094,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0001104659-26-108570",
-      "link": "https://www.sec.gov/Archives/edgar/data/895126/000110465926108570/tm2625334d5_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/895126/000110465926108570/tm2625334d5_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "$500,000,000",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ACM",
@@ -3838,7 +5121,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0001104659-26-108415",
-      "link": "https://www.sec.gov/Archives/edgar/data/868857/000110465926108415/tm2625416d2_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/868857/000110465926108415/tm2625416d2_8k.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의 — 주당 $0.31",
+        "who": "",
+        "amount": "지급일 2026-10-30",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TXN",
@@ -3856,7 +5148,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0000950103-26-014118",
-      "link": "https://www.sec.gov/Archives/edgar/data/97476/000095010326014118/dp253473_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/97476/000095010326014118/dp253473_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "FRHC",
@@ -3870,7 +5163,16 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0000924805-26-000051",
-      "link": "https://www.sec.gov/Archives/edgar/data/924805/000092480526000051/frhc-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/924805/000092480526000051/frhc-20260917.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "연례 주주총회 투표 결과",
+        "who": "",
+        "amount": "안건 3건 (안건별 표 수는 원문)",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ALL",
@@ -3888,7 +5190,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0000899051-26-000135",
-      "link": "https://www.sec.gov/Archives/edgar/data/899051/000089905126000135/all-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/899051/000089905126000135/all-20260917.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "LFUS",
@@ -3902,7 +5205,8 @@
       "hot": false,
       "fileDate": "2026-09-17",
       "accession": "0000889331-26-000014",
-      "link": "https://www.sec.gov/Archives/edgar/data/889331/000088933126000014/lfus-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/889331/000088933126000014/lfus-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ROST",
@@ -3924,7 +5228,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0000745732-26-000043",
-      "link": "https://www.sec.gov/Archives/edgar/data/745732/000074573226000043/rost-20260911.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/745732/000074573226000043/rost-20260911.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 선임 2명",
+        "who": "Sharon D. Garrett(이사) 사임, Shelley H. Bransten 선임, Christian B. Johnson 선임",
+        "amount": "",
+        "date": "2026-10-01",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "EAT",
@@ -3944,7 +5257,16 @@
       "accession": "0000703351-26-000032",
       "link": "https://www.sec.gov/Archives/edgar/data/703351/000070335126000032/eat-20260917.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TJX",
@@ -3958,7 +5280,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0000109198-26-000051",
-      "link": "https://www.sec.gov/Archives/edgar/data/109198/000010919826000051/tjx-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/109198/000010919826000051/tjx-20260916.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Craig A. Pintoff(이사) 선임",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PEP",
@@ -3972,7 +5303,16 @@
       "hot": true,
       "fileDate": "2026-09-17",
       "accession": "0000077476-26-000042",
-      "link": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000042/pep-20260917.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/77476/000007747626000042/pep-20260917.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Joaquin Duato(이사) 선임",
+        "amount": "",
+        "date": "2026-09-17",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "YHNA",
@@ -4002,7 +5342,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001683168-26-007194",
-      "link": "https://www.sec.gov/Archives/edgar/data/2020987/000168316826007194/yhn_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2020987/000168316826007194/yhn_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Trust Amendment",
+        "who": "",
+        "amount": "$100,000",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "LEN",
@@ -4034,7 +5383,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001628280-26-062267",
-      "link": "https://www.sec.gov/Archives/edgar/data/2023554/000162828026062267/sndk-20260910.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2023554/000162828026062267/sndk-20260910.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "David Goeckeler(CEO) 선임",
+        "amount": "",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "OSCR",
@@ -4048,7 +5406,16 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001568651-26-000074",
-      "link": "https://www.sec.gov/Archives/edgar/data/1568651/000156865126000074/oscr-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1568651/000156865126000074/oscr-20260916.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -4070,7 +5437,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "GNRC",
@@ -4092,7 +5468,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001437749-26-030550",
-      "link": "https://www.sec.gov/Archives/edgar/data/1474735/000143774926030550/gnrc20260915_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1474735/000143774926030550/gnrc20260915_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Transaction Agreement",
+        "who": "상대방 Amazon.com, Inc.",
+        "amount": "$8 billion",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "KDP",
@@ -4110,7 +5495,16 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001418135-26-000058",
-      "link": "https://www.sec.gov/Archives/edgar/data/1418135/000141813526000058/kdp-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1418135/000141813526000058/kdp-20260916.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의 — 주당 $0.23",
+        "who": "",
+        "amount": "기준일 2026-09-28 · 지급일 2026-10-09",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "OC",
@@ -4124,7 +5518,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001370946-26-000211",
-      "link": "https://www.sec.gov/Archives/edgar/data/1370946/000137094626000211/oc-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1370946/000137094626000211/oc-20260916.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Michael J. DeVito(이사) 선임",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FNF",
@@ -4142,7 +5545,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001331875-26-000087",
-      "link": "https://www.sec.gov/Archives/edgar/data/1331875/000133187526000087/fnf-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1331875/000133187526000087/fnf-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "KFII",
@@ -4156,7 +5560,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001213900-26-100525",
-      "link": "https://www.sec.gov/Archives/edgar/data/2029976/000121390026100525/ea0305697-8k_kfgrow2.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2029976/000121390026100525/ea0305697-8k_kfgrow2.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "RANG",
@@ -4170,7 +5575,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-393168",
-      "link": "https://www.sec.gov/Archives/edgar/data/2035644/000119312526393168/d157375d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2035644/000119312526393168/d157375d8k.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 정기보고서 지연 제출 통지",
+        "who": "거래소 Nasdaq",
+        "amount": "",
+        "date": "2026-09-11",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PSA",
@@ -4192,7 +5606,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-393149",
-      "link": "https://www.sec.gov/Archives/edgar/data/1393311/000119312526393149/d130476d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1393311/000119312526393149/d130476d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Notes",
+        "who": "",
+        "amount": "C$400 million",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TEVA",
@@ -4214,7 +5637,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-393116",
-      "link": "https://www.sec.gov/Archives/edgar/data/818686/000119312526393116/d155511d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/818686/000119312526393116/d155511d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — 2033 Euro Notes",
+        "who": "상대방 Teva Finance II",
+        "amount": "€500,000,000",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "EVRG",
@@ -4232,7 +5664,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-393088",
-      "link": "https://www.sec.gov/Archives/edgar/data/1711269/000119312526393088/d504888d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1711269/000119312526393088/d504888d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ALLY",
@@ -4250,7 +5683,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-393065",
-      "link": "https://www.sec.gov/Archives/edgar/data/40729/000119312526393065/d169200d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/40729/000119312526393065/d169200d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "AWK",
@@ -4268,7 +5702,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-392966",
-      "link": "https://www.sec.gov/Archives/edgar/data/1410636/000119312526392966/d36761d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1410636/000119312526392966/d36761d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "EXPD",
@@ -4282,7 +5717,8 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-392952",
-      "link": "https://www.sec.gov/Archives/edgar/data/746515/000119312526392952/expd-20250916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/746515/000119312526392952/expd-20250916.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ALKS",
@@ -4304,7 +5740,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-392527",
-      "link": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526392527/alks-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1520262/000119312526392527/alks-20260914.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Anne C. Whitaker(이사) 선임",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "VMRK",
@@ -4322,7 +5767,16 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001193125-26-392188",
-      "link": "https://www.sec.gov/Archives/edgar/data/906107/000119312526392188/vmrk-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/906107/000119312526392188/vmrk-20260915.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "WWD",
@@ -4340,7 +5794,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001171843-26-006074",
-      "link": "https://www.sec.gov/Archives/edgar/data/108312/000117184326006074/f8k_091626.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/108312/000117184326006074/f8k_091626.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "BAM",
@@ -4358,7 +5813,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001171843-26-006060",
-      "link": "https://www.sec.gov/Archives/edgar/data/1937926/000117184326006060/f8k_091526.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1937926/000117184326006060/f8k_091526.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "HALO",
@@ -4376,7 +5832,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001159036-26-000121",
-      "link": "https://www.sec.gov/Archives/edgar/data/1159036/000115903626000121/halo-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1159036/000115903626000121/halo-20260916.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "PODD",
@@ -4394,7 +5851,8 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001145197-26-000177",
-      "link": "https://www.sec.gov/Archives/edgar/data/1145197/000114519726000177/podd-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1145197/000114519726000177/podd-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "SYY",
@@ -4412,7 +5870,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001104659-26-108285",
-      "link": "https://www.sec.gov/Archives/edgar/data/96021/000110465926108285/tm2625144d7_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/96021/000110465926108285/tm2625144d7_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "ACM",
@@ -4426,7 +5885,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001104659-26-108255",
-      "link": "https://www.sec.gov/Archives/edgar/data/868857/000110465926108255/tm2625416d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/868857/000110465926108255/tm2625416d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명",
+        "who": "David Gan(최고법무책임자) 퇴임",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NVT",
@@ -4444,7 +5912,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001104659-26-108250",
-      "link": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926108250/tm2625115d7_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926108250/tm2625115d7_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "VNOM",
@@ -4458,7 +5927,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001104659-26-108245",
-      "link": "https://www.sec.gov/Archives/edgar/data/2074176/000110465926108245/tm2625491d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2074176/000110465926108245/tm2625491d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "John Grotzinger(이사) 선임",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ALDF",
@@ -4472,7 +5950,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001104659-26-108236",
-      "link": "https://www.sec.gov/Archives/edgar/data/2031561/000110465926108236/tm2625545d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2031561/000110465926108236/tm2625545d1_8k.htm",
+      "summary": {
+        "item": "3.01",
+        "what": "상장 관련 — 정기보고서 지연 제출 통지",
+        "who": "거래소 Nasdaq",
+        "amount": "",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "EXE",
@@ -4494,7 +5981,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001104659-26-108003",
-      "link": "https://www.sec.gov/Archives/edgar/data/895126/000110465926108003/tm2625334d2_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/895126/000110465926108003/tm2625334d2_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Underwriting Agreement",
+        "who": "상대방 Citigroup Global Markets Inc.",
+        "amount": "$500,000,000",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CNC",
@@ -4508,7 +6004,16 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0001071739-26-000172",
-      "link": "https://www.sec.gov/Archives/edgar/data/1071739/000107173926000172/cnc-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1071739/000107173926000172/cnc-20260916.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "JLL",
@@ -4530,7 +6035,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0001037976-26-000167",
-      "link": "https://www.sec.gov/Archives/edgar/data/1037976/000103797626000167/jll-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1037976/000103797626000167/jll-20260916.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Paul Morgan(COO) 선임",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "MLM",
@@ -4548,7 +6062,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0000950157-26-001024",
-      "link": "https://www.sec.gov/Archives/edgar/data/916076/000095015726001024/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/916076/000095015726001024/form8-k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Eighteenth Amendment",
+        "who": "상대방 Truist Bank",
+        "amount": "$700,000,000",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "EXE",
@@ -4566,7 +6089,8 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0000895126-26-000053",
-      "link": "https://www.sec.gov/Archives/edgar/data/895126/000089512626000053/exe-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/895126/000089512626000053/exe-20260916.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "LFUS",
@@ -4584,7 +6108,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0000889331-26-000012",
-      "link": "https://www.sec.gov/Archives/edgar/data/889331/000088933126000012/lfus-20260910.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/889331/000088933126000012/lfus-20260910.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Deepak Nayar 사임",
+        "amount": "기본급 $557,900",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AES",
@@ -4598,7 +6131,8 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0000874761-26-000153",
-      "link": "https://www.sec.gov/Archives/edgar/data/874761/000087476126000153/aes-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/874761/000087476126000153/aes-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "NKE",
@@ -4620,7 +6154,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0000320187-26-000170",
-      "link": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000170/nke-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/320187/000032018726000170/nke-20260915.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Alexandre Arnault(이사) 선임",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HBAN",
@@ -4640,7 +6183,16 @@
       "accession": "0000049196-26-000077",
       "link": "https://www.sec.gov/Archives/edgar/data/49196/000004919626000077/hban-20260916.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "HAL",
@@ -4654,7 +6206,8 @@
       "hot": false,
       "fileDate": "2026-09-16",
       "accession": "0000045012-26-000064",
-      "link": "https://www.sec.gov/Archives/edgar/data/45012/000004501226000064/hal-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/45012/000004501226000064/hal-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "AIG",
@@ -4668,7 +6221,16 @@
       "hot": true,
       "fileDate": "2026-09-16",
       "accession": "0000005272-26-000091",
-      "link": "https://www.sec.gov/Archives/edgar/data/5272/000000527226000091/aig-20260916.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/5272/000000527226000091/aig-20260916.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명",
+        "who": "Jon Hancock(EVP·CEO) 퇴임",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FPS",
@@ -4708,7 +6270,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001829126-26-010118",
-      "link": "https://www.sec.gov/Archives/edgar/data/1850059/000182912626010118/flagshipacq_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1850059/000182912626010118/flagshipacq_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Agreement",
+        "who": "상대방 Bluechip & Co.",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RKLB",
@@ -4730,7 +6301,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001753926-26-001769",
-      "link": "https://www.sec.gov/Archives/edgar/data/1819994/000175392626001769/g085951_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1819994/000175392626001769/g085951_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "AAOI",
@@ -4752,7 +6324,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001683168-26-007160",
-      "link": "https://www.sec.gov/Archives/edgar/data/1158114/000168316826007160/aaoi_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1158114/000168316826007160/aaoi_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Factory Premises Lease Agreement",
+        "who": "상대방 Ningbo Yiduofu Industrial Co.",
+        "amount": "",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TTD",
@@ -4766,7 +6347,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001671933-26-000099",
-      "link": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000099/ttd-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1671933/000167193326000099/ttd-20260914.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 보수·계약 변경 1명",
+        "who": "Jeff Green(CEO) 보수·계약 변경",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "GAP",
@@ -4780,7 +6370,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001628280-26-062054",
-      "link": "https://www.sec.gov/Archives/edgar/data/39911/000162828026062054/gps-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/39911/000162828026062054/gps-20260915.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Kirsten Green(이사) 선임",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RGEN",
@@ -4794,7 +6393,8 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001628280-26-062043",
-      "link": "https://www.sec.gov/Archives/edgar/data/730272/000162828026062043/rgen-20260910.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/730272/000162828026062043/rgen-20260910.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CCIF",
@@ -4808,7 +6408,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001628280-26-062035",
-      "link": "https://www.sec.gov/Archives/edgar/data/1517767/000162828026062035/ccif-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1517767/000162828026062035/ccif-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "JAZZ",
@@ -4822,7 +6423,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001628280-26-061978",
-      "link": "https://www.sec.gov/Archives/edgar/data/1232524/000162828026061978/jazz-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1232524/000162828026061978/jazz-20260915.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BMRN",
@@ -4836,7 +6446,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001628280-26-061973",
-      "link": "https://www.sec.gov/Archives/edgar/data/1048477/000162828026061973/bmrn-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1048477/000162828026061973/bmrn-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "SMMT",
@@ -4854,7 +6465,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001599298-26-000081",
-      "link": "https://www.sec.gov/Archives/edgar/data/1599298/000159929826000081/smmt-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1599298/000159929826000081/smmt-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -4876,7 +6488,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "UBER",
@@ -4894,7 +6515,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001552781-26-000486",
-      "link": "https://www.sec.gov/Archives/edgar/data/1543151/000155278126000486/e26383_uber-8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1543151/000155278126000486/e26383_uber-8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "JBS",
@@ -4912,7 +6534,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001213900-26-100180",
-      "link": "https://www.sec.gov/Archives/edgar/data/1791942/000121390026100180/ea0305591-8k_jbs.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1791942/000121390026100180/ea0305591-8k_jbs.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "LPBB",
@@ -4930,7 +6553,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001213900-26-099968",
-      "link": "https://www.sec.gov/Archives/edgar/data/2023676/000121390026099968/ea0305537-8k425_launch.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2023676/000121390026099968/ea0305537-8k425_launch.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "GSRF",
@@ -4944,7 +6568,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001213900-26-099873",
-      "link": "https://www.sec.gov/Archives/edgar/data/2072404/000121390026099873/ea0305509-8k_gsr4.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2072404/000121390026099873/ea0305509-8k_gsr4.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Anantha Ramamurti(이사) 사임",
+        "amount": "",
+        "date": "2026-09-09",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CDW",
@@ -4962,7 +6595,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-392039",
-      "link": "https://www.sec.gov/Archives/edgar/data/1402057/000119312526392039/d180681d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1402057/000119312526392039/d180681d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Underwriting Agreement",
+        "who": "상대방 CDW",
+        "amount": "$500,000,000",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "OKE",
@@ -4984,7 +6626,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-392003",
-      "link": "https://www.sec.gov/Archives/edgar/data/1039684/000119312526392003/d162704d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1039684/000119312526392003/d162704d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Equity Distribution Agreement",
+        "who": "상대방 BofA Securities, Inc.",
+        "amount": "$1,000,000,000",
+        "date": "2026-08-04",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PWR",
@@ -5006,7 +6657,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391989",
-      "link": "https://www.sec.gov/Archives/edgar/data/1050915/000119312526391989/d78508d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1050915/000119312526391989/d78508d8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Ellen Rubin(이사) 선임",
+        "amount": "",
+        "date": "2026-09-09",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "DELL",
@@ -5028,7 +6688,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391976",
-      "link": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526391976/d172674d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526391976/d172674d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — 2029 Notes",
+        "who": "",
+        "amount": "$1,250,000,000",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AN",
@@ -5046,7 +6715,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391953",
-      "link": "https://www.sec.gov/Archives/edgar/data/350698/000119312526391953/d83423d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/350698/000119312526391953/d83423d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "PSBD",
@@ -5060,7 +6730,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391940",
-      "link": "https://www.sec.gov/Archives/edgar/data/1794776/000119312526391940/psbd-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1794776/000119312526391940/psbd-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "COF",
@@ -5078,7 +6749,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391921",
-      "link": "https://www.sec.gov/Archives/edgar/data/927628/000119312526391921/d458116d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/927628/000119312526391921/d458116d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "PBF",
@@ -5096,7 +6768,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391405",
-      "link": "https://www.sec.gov/Archives/edgar/data/1534504/000119312526391405/d175358d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1534504/000119312526391405/d175358d8k.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "증권 공모 가격 결정",
+        "who": "",
+        "amount": "$500 million",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CTVA",
@@ -5118,7 +6799,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391369",
-      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526391369/d71834d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1755672/000119312526391369/d71834d8k.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-12",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AXON",
@@ -5144,7 +6834,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001193125-26-391320",
-      "link": "https://www.sec.gov/Archives/edgar/data/1069183/000119312526391320/d17675d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1069183/000119312526391320/d17675d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Second Amendment",
+        "who": "",
+        "amount": "$300.0 million",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RTX",
@@ -5162,7 +6861,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001140361-26-036662",
-      "link": "https://www.sec.gov/Archives/edgar/data/101829/000114036126036662/ef20082011_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/101829/000114036126036662/ef20082011_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명",
+        "who": "Shane Eddy 사임",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "OTIS",
@@ -5184,7 +6892,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001140361-26-036566",
-      "link": "https://www.sec.gov/Archives/edgar/data/1781335/000114036126036566/ef20081992_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1781335/000114036126036566/ef20081992_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명",
+        "who": "Judith F. Marks(CEO·사장) 퇴임",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "NVT",
@@ -5202,7 +6919,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001104659-26-107974",
-      "link": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926107974/tm2625115d3_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1720635/000110465926107974/tm2625115d3_8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "RHP",
@@ -5216,7 +6934,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001104659-26-107949",
-      "link": "https://www.sec.gov/Archives/edgar/data/1040829/000110465926107949/tm2625282d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1040829/000110465926107949/tm2625282d1_8k.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "배당 결의 — 주당 $1.20",
+        "who": "",
+        "amount": "기준일 2025-12-31 · 지급일 2026-10-15",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "VTR",
@@ -5230,7 +6957,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001104659-26-107921",
-      "link": "https://www.sec.gov/Archives/edgar/data/740260/000110465926107921/tm2625430d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/740260/000110465926107921/tm2625430d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Laurida Sayed(SVP) 선임",
+        "amount": "기본급 $500,000",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "ARCC",
@@ -5256,7 +6992,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001104659-26-107911",
-      "link": "https://www.sec.gov/Archives/edgar/data/1287750/000110465926107911/tm2625396d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1287750/000110465926107911/tm2625396d1_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Seventh Supplemental Indenture",
+        "who": "상대방 U.S. Bank Trust Company, National Association",
+        "amount": "$750,000,000",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "RBA",
@@ -5276,7 +7021,16 @@
       "accession": "0001104659-26-107718",
       "link": "https://www.sec.gov/Archives/edgar/data/1046102/000110465926107718/tm2625417d1_8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$500 million",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CTNT",
@@ -5298,7 +7052,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0001104659-26-107715",
-      "link": "https://www.sec.gov/Archives/edgar/data/1951667/000110465926107715/tm2624728d1_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1951667/000110465926107715/tm2624728d1_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Membership Interest Purchase Agreement",
+        "who": "상대방 Newland Asset Management LLC",
+        "amount": "$788,000",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CHTR",
@@ -5316,7 +7079,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0001091667-26-000055",
-      "link": "https://www.sec.gov/Archives/edgar/data/1091667/000109166726000055/chtr-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1091667/000109166726000055/chtr-20260915.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "COF",
@@ -5334,7 +7106,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0000927628-26-000134",
-      "link": "https://www.sec.gov/Archives/edgar/data/927628/000092762826000134/cof-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/927628/000092762826000134/cof-20260915.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "COF",
@@ -5352,7 +7133,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0000927628-26-000132",
-      "link": "https://www.sec.gov/Archives/edgar/data/927628/000092762826000132/cof-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/927628/000092762826000132/cof-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "DECK",
@@ -5366,7 +7148,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0000910521-26-000026",
-      "link": "https://www.sec.gov/Archives/edgar/data/910521/000091052126000026/deck-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/910521/000091052126000026/deck-20260914.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "연례 주주총회 투표 결과",
+        "who": "",
+        "amount": "안건 3건 · 이사 10명 선임 (안건별 표 수는 원문)",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "SANM",
@@ -5384,7 +7175,8 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0000897723-26-000041",
-      "link": "https://www.sec.gov/Archives/edgar/data/897723/000089772326000041/sanm-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/897723/000089772326000041/sanm-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "DHI",
@@ -5398,7 +7190,16 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0000882184-26-000108",
-      "link": "https://www.sec.gov/Archives/edgar/data/882184/000088218426000108/dhi-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/882184/000088218426000108/dhi-20260915.htm",
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$5.0 billion",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FLEX",
@@ -5420,7 +7221,16 @@
       "hot": true,
       "fileDate": "2026-09-15",
       "accession": "0000866374-26-000036",
-      "link": "https://www.sec.gov/Archives/edgar/data/866374/000086637426000036/flex-20260911.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/866374/000086637426000036/flex-20260911.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 2명",
+        "who": "George R. Oliver(이사) 선임, Mark Eubanks(이사) 선임",
+        "amount": "",
+        "date": "2026-09-11",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TYL",
@@ -5436,7 +7246,16 @@
       "accession": "0000860731-26-000052",
       "link": "https://www.sec.gov/Archives/edgar/data/860731/000086073126000052/tyl-20260915.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$260.0 million",
+        "date": "2026-09-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "TFC",
@@ -5456,7 +7275,8 @@
       "accession": "0000092230-26-000105",
       "link": "https://www.sec.gov/Archives/edgar/data/92230/000009223026000105/tfc-20260915.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summaryChecked": true
     },
     {
       "ticker": "AXP",
@@ -5470,7 +7290,8 @@
       "hot": false,
       "fileDate": "2026-09-15",
       "accession": "0000004962-26-000353",
-      "link": "https://www.sec.gov/Archives/edgar/data/4962/000000496226000353/axp-20260915.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/4962/000000496226000353/axp-20260915.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CAI",
@@ -5484,7 +7305,16 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0002019410-26-000061",
-      "link": "https://www.sec.gov/Archives/edgar/data/2019410/000201941026000061/cai-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2019410/000201941026000061/cai-20260914.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FVN",
@@ -5514,7 +7344,16 @@
       "hot": true,
       "fileDate": "2026-09-14",
       "accession": "0001829126-26-010068",
-      "link": "https://www.sec.gov/Archives/edgar/data/2010653/000182912626010068/futurevision2_8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2010653/000182912626010068/futurevision2_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결",
+        "who": "",
+        "amount": "$65,000",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "PSA",
@@ -5528,7 +7367,16 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001628280-26-061900",
-      "link": "https://www.sec.gov/Archives/edgar/data/1393311/000162828026061900/psa-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1393311/000162828026061900/psa-20260914.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CW",
@@ -5548,7 +7396,16 @@
       "accession": "0001628280-26-061788",
       "link": "https://www.sec.gov/Archives/edgar/data/26324/000162828026061788/cw-20260910.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$510 million",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "CR",
@@ -5566,7 +7423,16 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001628280-26-061780",
-      "link": "https://www.sec.gov/Archives/edgar/data/1944013/000162828026061780/cr-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1944013/000162828026061780/cr-20260914.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BMRN",
@@ -5580,7 +7446,16 @@
       "hot": true,
       "fileDate": "2026-09-14",
       "accession": "0001628280-26-061717",
-      "link": "https://www.sec.gov/Archives/edgar/data/1048477/000162828026061717/bmrn-20260910.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1048477/000162828026061717/bmrn-20260910.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Robert Plenge(이사) 선임",
+        "amount": "",
+        "date": "2026-09-10",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "KEY",
@@ -5598,7 +7473,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001628280-26-061680",
-      "link": "https://www.sec.gov/Archives/edgar/data/91576/000162828026061680/key-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/91576/000162828026061680/key-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "SYF",
@@ -5616,7 +7492,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001601712-26-000037",
-      "link": "https://www.sec.gov/Archives/edgar/data/1601712/000160171226000037/syf-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1601712/000160171226000037/syf-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "SMMT",
@@ -5634,7 +7511,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001599298-26-000078",
-      "link": "https://www.sec.gov/Archives/edgar/data/1599298/000159929826000078/smmt-20260913.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1599298/000159929826000078/smmt-20260913.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "NWSA",
@@ -5656,7 +7534,16 @@
       "buybackMention": true,
       "amountUsd": 1000000000.0,
       "kind": "buyback",
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "BMNR",
@@ -5674,7 +7561,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001493152-26-042492",
-      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226042492/form8-k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226042492/form8-k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "LULU",
@@ -5696,7 +7584,8 @@
       "hot": true,
       "fileDate": "2026-09-14",
       "accession": "0001397187-26-000129",
-      "link": "https://www.sec.gov/Archives/edgar/data/1397187/000139718726000129/lulu-20260908.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1397187/000139718726000129/lulu-20260908.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "CUBE",
@@ -5720,7 +7609,8 @@
       "accession": "0001298675-26-000041",
       "link": "https://www.sec.gov/Archives/edgar/data/1298675/000129867526000041/cube-20260914x8k.htm",
       "buybackMention": true,
-      "buybackChecked": true
+      "buybackChecked": true,
+      "summaryChecked": true
     },
     {
       "ticker": "TDG",
@@ -5734,7 +7624,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001260221-26-000059",
-      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000059/tdg-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000059/tdg-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "TDG",
@@ -5748,7 +7639,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001260221-26-000057",
-      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000057/tdg-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000057/tdg-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "TDG",
@@ -5762,7 +7654,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001260221-26-000056",
-      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000056/tdg-20260914.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1260221/000126022126000056/tdg-20260914.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "DMAA",
@@ -5780,7 +7673,16 @@
       "hot": true,
       "fileDate": "2026-09-14",
       "accession": "0001213900-26-099738",
-      "link": "https://www.sec.gov/Archives/edgar/data/2028614/000121390026099738/ea0305461-8k425_drugs.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/2028614/000121390026099738/ea0305461-8k425_drugs.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Amended and Restated Definitive Merger Agreement",
+        "who": "상대방 Power Analytics Global Corp",
+        "amount": "",
+        "date": "2026-09-08",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "D",
@@ -5798,7 +7700,16 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001193125-26-390654",
-      "link": "https://www.sec.gov/Archives/edgar/data/715957/000119312526390654/d107020d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/715957/000119312526390654/d107020d8k.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "AMT",
@@ -5820,7 +7731,16 @@
       "hot": true,
       "fileDate": "2026-09-14",
       "accession": "0001193125-26-390605",
-      "link": "https://www.sec.gov/Archives/edgar/data/1053507/000119312526390605/d156192d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/1053507/000119312526390605/d156192d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Base Indenture",
+        "who": "",
+        "amount": "$500.0 million",
+        "date": "2026-09-14",
+        "src": "rule"
+      },
+      "summaryChecked": true
     },
     {
       "ticker": "FCNCA",
@@ -5846,7 +7766,8 @@
       "hot": false,
       "fileDate": "2026-09-14",
       "accession": "0001193125-26-390576",
-      "link": "https://www.sec.gov/Archives/edgar/data/798941/000119312526390576/d505182d8k.htm"
+      "link": "https://www.sec.gov/Archives/edgar/data/798941/000119312526390576/d505182d8k.htm",
+      "summaryChecked": true
     },
     {
       "ticker": "TEVA",

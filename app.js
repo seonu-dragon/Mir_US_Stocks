@@ -6682,6 +6682,7 @@ const TRUST_RECOVERY = {
   "테마 분류": {
     kr: { workflow: "Company profile & price targets", script: "scripts/build_kr_themes.py" },
     tabs: "시장 탭 · 테마, 종목 분석 · 이 종목의 테마",
+  },
   "재무 위험 점검": {
     us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },

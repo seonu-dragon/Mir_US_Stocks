@@ -26,9 +26,27 @@
 
   const pct = (v, d = 1) => (Number.isFinite(v) ? `${v.toFixed(d)}%` : "—");
 
+  // 국내 모드: 국내 ETF 안의 미국 주식(계약수 × 미국 종가)은 미국 섹터 이름으로 온다 — 국내 스냅샷
+  // 섹터 이름(기술·금융…)에 맞춰 한 줄로 합친다. 미국 모드는 SECTOR_KO 번역.
+  const US_TO_KR_SECTOR = {
+    TECHNOLOGY: "기술", FINANCIAL: "금융", HEALTHCARE: "헬스케어", "CONSUMER CYCLICAL": "경기소비재",
+    "CONSUMER DEFENSIVE": "필수소비재", INDUSTRIALS: "산업재", "COMMUNICATION SERVICES": "커뮤니케이션",
+    "BASIC MATERIALS": "소재", ENERGY: "에너지", UTILITIES: "유틸리티", "REAL ESTATE": "부동산", MISC: "기타",
+  };
   function sectorLabel(s) {
     if (SPECIAL_SECTOR[s]) return SPECIAL_SECTOR[s];
+    if (isKrMarket() && US_TO_KR_SECTOR[s]) return US_TO_KR_SECTOR[s];
     return (typeof SECTOR_KO !== "undefined" && SECTOR_KO[s]) || s;
+  }
+  function mergedSectors(list) {
+    const acc = new Map();
+    list.forEach((x) => {
+      const label = sectorLabel(x.sector);
+      const cur = acc.get(label) || { label, pct: 0, special: x.sector.startsWith("__") };
+      cur.pct += x.pct;
+      acc.set(label, cur);
+    });
+    return Array.from(acc.values()).sort((a, b) => (a.special ? 1 : 0) - (b.special ? 1 : 0) || b.pct - a.pct);
   }
 
   function bar(w, max) {
@@ -164,9 +182,10 @@
         <td class="lt-col-src"><p class="etfh-chips lt-src">${sourceChips(e)}</p></td>
       </tr>`).join("")}</tbody></table></div>` : `<p class="muted">펼칠 수 있는 구성 종목이 없습니다.</p>`;
 
-    const smax = Math.max(...r.sectors.map((s) => s.pct), 0);
-    const sectors = r.sectors.length ? `<div class="etfh-block"><h4>섹터 노출</h4><ul class="etfh-bars">
-      ${r.sectors.slice(0, 14).map((s) => `<li class="${s.sector.startsWith("__") ? "is-muted" : ""}"><span class="etfh-bl">${escapeHtml(sectorLabel(s.sector))}</span>${bar(s.pct, smax)}<span class="etfh-bv">${pct(s.pct)}</span></li>`).join("")}
+    const secs = mergedSectors(r.sectors);
+    const smax = Math.max(...secs.map((s) => s.pct), 0);
+    const sectors = secs.length ? `<div class="etfh-block"><h4>섹터 노출</h4><ul class="etfh-bars">
+      ${secs.slice(0, 14).map((s) => `<li class="${s.special ? "is-muted" : ""}"><span class="etfh-bl">${escapeHtml(s.label)}</span>${bar(s.pct, smax)}<span class="etfh-bv">${pct(s.pct)}</span></li>`).join("")}
     </ul></div>` : "";
 
     const etfName = (t, n) => (isKrMarket() ? (n || t) : t);

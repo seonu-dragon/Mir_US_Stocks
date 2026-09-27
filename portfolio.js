@@ -986,6 +986,8 @@ function renderPortfolio() {
 // 위험 기여도 카드·과거 위기 재생(portfolio-risk.js)이 열려 있으면 보유 변경을 반영해 다시 계산한다.
 function renderPortfolioRiskViews() {
   if (window.MirPortfolioRisk) window.MirPortfolioRisk.onPortfolioRender();
+  // ETF 룩스루 카드(lookthrough.js) — 보유 ETF 를 구성 종목으로 펼쳐 다시 계산한다.
+  if (window.MirLookthrough) window.MirLookthrough.onPortfolioRender();
 }
 
 // ===== X-RAY 팩터 백분위 (스냅샷당 1회 계산 · 메모이즈) =====

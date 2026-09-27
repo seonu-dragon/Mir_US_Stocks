@@ -168,6 +168,12 @@ const FEATURE_DATA = {
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
   // etf-holdings.js 가 종목 분석을 열 때 하나만 fetch 한다.
   usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },
+  // 국내↔미국 연관 종목(build_cross_market_links.py) — 관계 사전 + 최근 1년 수익률 상관(~30KB, 두 시장 한 파일).
+  // 오늘 탭 '간밤 미국 연관주'(KR)·'국내 장 연관주'(US) 카드가 첫 화면이라 첫 단계에서 받는다. 종목 상세 카드도 같은 파일.
+  crossMarket: { global: "CROSS_MARKET_LINKS", path: "data/cross_market_links.js", feature: "crossMarket" },
+  // 국내 ETF 구성(KRX ETF PDF, build_kr_etf_holdings.py) — 시총 상위 ETF 의 상위 25 구성·섹터 분포(한 파일).
+  // 내 투자 › 보유의 ETF 룩스루(lookthrough.js)가 보유 ETF 가 있을 때만 받는다(lazy).
+  krEtfHoldings: { global: "KR_ETF_HOLDINGS", path: "data/korea/etf_holdings.js", krOnly: true, lazy: true },
 };
 const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
@@ -229,6 +235,7 @@ function ensureFeatureData(key) {
 const FIRST_SCREEN_FEATURE_KEYS = new Set([
   "sentimentGauges", "marketHistory", "macro", "yieldCurve", "events", "whitehouse", "ipo",
   "krDart", "krEventDetails", "krFlow", "krConsensus", "krDividends", "krContracts", "ecosMacro", "movers", "companyLogos",
+  "crossMarket",
 ]);
 function preloadFeatureData() {
   const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
@@ -291,6 +298,8 @@ function refreshFeatureViews() {
   if (typeof renderIndustryHomeCard === "function") calls.push(renderIndustryHomeCard);
   // 오늘의 특징주 카드 — movers 데이터가 오늘 탭 렌더보다 늦게 도착하면 여기서 다시 그린다.
   if (typeof renderMoversBoard === "function") calls.push(renderMoversBoard);
+  // 간밤 미국 연관주 / 국내 장 연관주 — CROSS_MARKET_LINKS 가 오늘 탭 렌더보다 늦게 오면 다시 그린다.
+  if (typeof renderCrossMarketHome === "function") calls.push(renderCrossMarketHome);
   // 오늘 탭 시장 현황·AI 브리핑 요약(home-dash.js) — 국내 수급(KR_MARKET_FUNDS)이 늦게 오면 다시 그린다.
   if (typeof renderHomeDash === "function") calls.push(renderHomeDash);
   // 찾기 › 상위 종목 표 — PER·PBR·ROE 열은 MAP_FUNDAMENTALS 가 늦게 오면 그때 채워진다.
@@ -344,6 +353,7 @@ function refreshFeatureViews() {
           () => renderEstimateRevision(item),
           () => renderStockEvents(item),
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
+          () => { if (typeof renderCrossMarketCard === "function") renderCrossMarketCard(item); },
           () => { if (typeof renderEtfHoldings === "function") renderEtfHoldings(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },

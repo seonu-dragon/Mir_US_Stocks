@@ -99,6 +99,12 @@ jobs:
       # 적립식 시뮬레이터 순수 계산(dca-core.js): XIRR 알려진 값·휴장일 이월·정수 매수 이월·배당.
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs
+      # ETF 룩스루(lookthrough-core.js: 직접+ETF 경유 합산·가중 중복도·섹터) + 증권사 CSV 가져오기
+      # (broker-csv-core.js: CP949 판별·키움/일반/Mir 형식·종목명 매칭, 픽스처 scripts/tests/fixtures/broker_csv).
+      - name: Lookthrough / broker CSV tests
+        run: |
+          node scripts/tests/test_lookthrough_core.mjs
+          node scripts/tests/test_broker_csv_core.mjs
       # 산업 지표 차트(industry-chart-core.js + industry.js industryChartSvg): 날짜 비례 x·막대 폭·눈금 단위 테스트,
       # 그리고 커밋된 data/industry_indicators.js 의 지표 전부 × 기간·변환·밴드·겹치기 × 데스크톱/모바일 폭을 그려
       # 플롯 밖 도형·잘린/겹친 축 라벨·날짜 역순/중복/미래·빈 시리즈를 검사한다.
@@ -216,6 +222,11 @@ jobs:
       # 일별 시세 표(daily-table-core.js): 전일대비 ▲/▼ 금액·등락률, 보합, 거래량 0, 표기.
       - name: Daily price table tests
         run: node scripts/tests/test_daily_table_core.mjs
+
+      # 국내↔미국 연관 종목(cross-market-core.js): 사람이 정한 관계 우선 정렬·자동 후보 거르기,
+      # 간밤 미국/국내 장 보드(문턱·방향별 상관·표본 부족 제외), 표기.
+      - name: Cross-market links core tests
+        run: node scripts/tests/test_cross_market_core.mjs
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

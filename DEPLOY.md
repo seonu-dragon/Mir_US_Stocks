@@ -166,6 +166,49 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - Actions 탭에서 각 워크플로를 `Run workflow`로 수동 테스트
    - 성공하면 GitHub Pages에 자동 반영됩니다.
 
+### Web Push 알림 워커 (`worker/mir-push.js`, 2026-09-27)
+
+관심·보유 종목 알림을 사이트를 닫아도 받게 하는 **별도 워커**(`mir-push`)다. yahoo-proxy 와 나눈 이유:
+그 워커는 시세·뉴스·커뮤니티·챗봇을 한 파일로 붙여넣는데, 푸시는 크론·암호화·KV 쓰기가 붙는
+다른 관심사라 여기서 난 오류·CPU 초과가 사이트 시세·커뮤니티를 같이 죽이지 않게 했다.
+**머지해도 반영되지 않는다** — 아래를 사용자가 직접 한 번 해야 알림이 켜진다. 그 전까지 사이트의
+'푸시 알림' 칸은 "준비 중"으로 숨겨져 있다(키·주소가 비어 있으면 자동으로).
+
+1. **VAPID 키 생성**(로컬, 한 번): `node scripts/gen_vapid_keys.mjs`
+   - 공개키·비밀키를 **화면에만** 출력한다. 비밀키는 파일·레포·채팅에 남기지 말고 3번에서 바로 붙여넣은 뒤 터미널을 닫는다.
+   - 키를 바꾸면 기존 구독이 전부 무효가 된다(사용자가 알림을 껐다 켜야 함). 유출이 아니면 바꾸지 말 것.
+2. **워커 만들기**: Cloudflare 대시보드 → Workers & Pages → Create → Worker → 이름 `mir-push` →
+   템플릿 코드를 지우고 **origin/main 의 `worker/mir-push.js` 전체**를 붙여넣고 Deploy.
+   - 붙여넣기 전 확인: `node scripts/sync_push_worker.mjs --check && node worker/test_push.mjs`
+     (EMBED 블록 = 루트 `my-digest-core.js`·`push-alerts-core.js` 원문. 원본을 고쳤으면 `node scripts/sync_push_worker.mjs` 후 커밋).
+3. **Secrets**(워커 → Settings → Variables and Secrets → Secret):
+   - `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`(1번 출력), `VAPID_SUBJECT`(= `mailto:본인메일`, 푸시 서비스가 문제 시 연락하는 주소)
+   - (선택, 변수) `PUSH_MAX_PER_RUN` — 실행당 최대 발송 수. 기본 10(무료 플랜 CPU 10ms 기준), 유료 플랜이면 40 까지.
+4. **KV**: KV 네임스페이스 `mir-push`(이름 자유)를 새로 만들고 워커 → Settings → Bindings → KV namespace →
+   변수 이름 **`PUSH_KV`** 로 연결.
+   - (선택) **`SYNC_KV`** — yahoo-proxy 의 `COMMUNITY_KV` 와 **같은 네임스페이스**를 한 번 더 바인딩하면,
+     사용자가 '클라우드 동기화 목록 자동 사용'을 켰을 때 크론이 `/sync/prefs` 값(다른 기기에서 바꾼 관심·보유·가설 목표가)을
+     매번 다시 읽는다. 없으면 기기가 보낸 목록만 쓴다(목록이 바뀔 때마다 기기가 다시 보낸다).
+5. **Cron Trigger**: 워커 → Settings → Triggers → Cron Triggers → **`*/30 * * * *`** 하나. 무엇을 할지는 코드가 정한다:
+   미 정규장·국내 정규장 30분마다 ±N%·가격 도달 / KST 07:30(화~토) 미국 '오늘 내 주식은' 요약 + 실적 D-1 /
+   KST 15:00 미국 8-K / KST 20:00(평일) 국내 요약 + DART 주요 공시.
+6. **확인**: `curl https://mir-push.<계정>.workers.dev/push/health` → `"configured": true` 와 `vapidPublicKey` 가 1번 공개키인지.
+7. **프런트 연결**(PR): `web-push.js` 맨 위 `MIR_PUSH_DEFAULTS` 에 `endpoint`(워커 주소)와 `vapidPublicKey`(**공개키만**)를
+   넣고 `py scripts/stamp_build_id.py` → PR → 머지. 라이브에서 내 투자 › 보유·관심 › '푸시 알림' → '이 기기에서 알림 받기' →
+   '테스트 알림'으로 도착 확인. 워커 로그(대시보드 → Logs)에는 발송·만료·실패가 있던 크론만 요약 한 줄이 찍힌다.
+
+운영 메모
+- 저장: KV `sub:<endpoint sha256 앞 32자>` = 구독 키·설정·목록·발송 상태. 사이트를 120일 안 열면 만료(열 때마다 7일 주기로 갱신).
+  푸시 서비스가 404/410 을 주면 즉시 삭제. '알림 끄기'는 KV 에서도 지운다. 보유 수량은 요약을 켰을 때만, 동기화 clientId 는
+  자동 사용을 켰을 때만 저장한다. IP 는 저장하지 않는다(리밋은 격리 메모리).
+- 하루 상한: 구독별 1~12건(기본 6, 요약 포함). 상한에 걸린 알림은 보내지 않고 '보낸 것으로' 기록해 다음 날 몰려오지 않게 한다.
+  한 크론에서 한 구독이 받는 알림은 시장별 1건(여러 조건은 한 알림의 여러 줄) + 요약.
+- 무료 플랜 한도: 서브리퀘스트 50/실행(야후 spark 최대 8 + Pages 데이터 최대 8 + 발송), KV 쓰기 1,000/일(크론 48회 + 발송한 구독 수),
+  CPU 10ms/실행. 발송 예산을 넘으면 다음 실행이 그 구독부터 잇는다(`cron:meta` 커서). 구독자가 수십 명을 넘으면 Workers Paid 로.
+- 시세: 야후 v7 spark(range=1d) — 지연 시세이고 알림에 그렇게 적는다. 국내 코드는 기기가 알려 준 접미사, 없으면 .KS → .KQ 재시도.
+  요약은 스냅샷(6MB) 대신 구독자 종목 시세로 만들어서 **업종 대비 비교가 빠진다**(사이트 카드에는 있다).
+- 공시·실적 일정·특징주 사유는 GitHub Pages 의 `data/*.json` 을 읽는다 — 배포가 멈추면 이 알림도 멈춘다.
+
 ### 키움 커뮤니티 글쓰기 (로컬 CLI)
 
 GitHub Actions 파이프라인(`kiwoom_content_pipeline.yml`)은 2026-07-07 에 폐기했고,

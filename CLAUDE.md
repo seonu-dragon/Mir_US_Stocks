@@ -222,3 +222,7 @@ exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P
   + `data/details/<T>.json` 의 `earningsHistory` 로 채운다. 그래도 없으면 `earnings: null`
   이고 `earningsStatus.state` 가 `unavailable` 이다 — `earnings` 를 빈 객체로 바꾸지 말 것
   (프론트가 truthy 면 라이브 값으로 캐시해 정적 캘린더 폴백을 가린다).
+- **Web Push 는 별도 워커 `worker/mir-push.js`**(2026-09-27) — 역시 수동 붙여넣기 배포이고 바인딩·시크릿·크론이
+  따로다(DEPLOY.md "Web Push 알림 워커"). 파일 안의 EMBED 블록은 루트 `my-digest-core.js`·`push-alerts-core.js`
+  원문이다 — 워커 쪽을 직접 고치지 말고 원본을 고친 뒤 `node scripts/sync_push_worker.mjs`(CI 가 `--check`).
+  `web-push.js` 의 `MIR_PUSH_DEFAULTS`(워커 주소·공개키)가 비어 있으면 알림 UI 는 "준비 중"이다.

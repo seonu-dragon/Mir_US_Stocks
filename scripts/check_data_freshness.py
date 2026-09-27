@@ -30,6 +30,7 @@
     py scripts/check_data_freshness.py --group etf-holdings       # market-calendar.yml etf 잡
     py scripts/check_data_freshness.py --group company-logos      # company-info.yml logos 잡
     py scripts/check_data_freshness.py --group kr-themes          # company-info.yml themes 잡
+    py scripts/check_data_freshness.py --group kr-etf-holdings    # kr-valuation-band.yml etf 잡
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
 """
@@ -78,6 +79,8 @@ CHECKS = {
         # 신호 성적표 — US·KR 워크플로우가 매일 다시 집계한다(기록할 신호가 없어도 갱신).
         ("data/signal_scorecard.json", 4, False),
         ("data/sentiment_gauges.json", 6, False),
+        # 국내↔미국 연관 종목 — US·KR 워크플로우가 매일 다시 만든다(주말에도 KR 브리핑이 돈다). 0건 = 이상.
+        ("data/cross_market_links.json", 4, True),
     ],
     "kr": [
         ("data/korea/market_snapshot.json", 2, False),
@@ -111,6 +114,7 @@ CHECKS = {
         ("data/korea/earnings_reactions.json", 6, False),  # 실적 시즌 밖엔 0건이 정상
         # 시장경보·이상 종목(KIND + 스냅샷 일봉). 관리종목·거래정지만으로도 늘 수백 건이라 0건 = 이상.
         ("data/korea/market_alerts.json", 6, True),
+        ("data/cross_market_links.json", 4, True),
     ],
     # kr-disclosures.yml(평일 15:30) — 세 빌더 모두 continue-on-error 라 DART 키가
     # 죽어도 초록이었다. 주말·연휴를 감안해 4~5일.
@@ -204,6 +208,9 @@ CHECKS = {
         # US PER·PBR·PSR 밴드(build_us_valuation_band.py) — 같은 잡의 다음 스텝. 파일만 읽어 매번
         # 전체를 다시 쓰므로 실행마다 updatedAtKst 가 오른다. 0종목(count)도 잡는다.
         ("data/valuation_band/meta.json", 8, True),
+        # 재무 위험 점검 집계(build_risk_check.mjs) — 같은 잡 끝에서 실행마다 전체를 다시 쓴다(count 로 0종목도 잡는다).
+        ("data/risk_check.json", 8, True),
+        ("data/korea/risk_check.json", 8, True),
     ],
     "earnings-releases": [
         ("data/earnings_releases.json", 4, False),
@@ -255,6 +262,11 @@ CHECKS = {
     ],
     "etf-holdings": [
         ("data/etf_holdings/index.json", 40, True),
+    ],
+    # kr-valuation-band.yml etf 잡(매주 토요일). 실행마다 updatedAtKst 를 새로 쓴다 — 12일이면
+    # 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료·차단 시 전량 실패).
+    "kr-etf-holdings": [
+        ("data/korea/etf_holdings.json", 12, True),
     ],
     "screener-backtest": [
         ("data/screener_backtest_meta.json", 10, False),

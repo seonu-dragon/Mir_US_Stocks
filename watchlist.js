@@ -63,6 +63,8 @@ let _cloudSyncPushTimer = null;
 function scheduleCloudSyncPush() {
   clearTimeout(_cloudSyncPushTimer);
   _cloudSyncPushTimer = setTimeout(() => pushCloudSync(), 1200);
+  // 푸시 알림 구독 중이면 워커의 관심·보유 목록도 같이 맞춘다(web-push.js, 목록이 바뀐 경우만 전송).
+  if (window.MirPush) window.MirPush.scheduleListSync();
 }
 
 function isInWatchlist(ticker) {

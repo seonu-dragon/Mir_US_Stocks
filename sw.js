@@ -1,4 +1,4 @@
-const BUILD_ID_FALLBACK = "9b30f2f9c4";
+const BUILD_ID_FALLBACK = "fa88e2c19a";
 let ACTIVE_CACHE_NAME = null;
 
 // 내비게이션 셸만 미리 받는다. app.js/styles.css 같은 자산은 페이지가 ?v=<내용해시>
@@ -142,6 +142,69 @@ self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "SKIP_WAITING") {
     self.skipWaiting();
   }
+});
+
+// ===== Web Push 알림(web-push.js 가 구독, worker/mir-push.js 가 발송) =====
+// push·notificationclick 은 fetch 핸들러를 거치지 않으므로 위·아래 캐시 전략과 무관하다.
+// 알림 본문은 워커가 RFC 8291 로 암호화해 보낸 JSON { title, body, url, tag }.
+// iOS(홈 화면 PWA)·크롬은 푸시마다 알림을 반드시 띄워야 한다(userVisibleOnly) — 조용히 버리지 않는다.
+function pushTargetUrl(raw) {
+  const scope = self.registration.scope;
+  try {
+    const u = new URL(raw || "./index.html", scope);
+    // 다른 출처로 여는 링크는 받지 않는다(알림을 누르면 이 사이트만 열린다).
+    return u.origin === self.location.origin ? u.href : scope;
+  } catch (_) {
+    return scope;
+  }
+}
+
+self.addEventListener("push", (event) => {
+  let msg = {};
+  try {
+    msg = event.data ? event.data.json() : {};
+  } catch (_) {
+    msg = { body: event.data ? event.data.text() : "" };
+  }
+  const scope = self.registration.scope;
+  const options = {
+    body: String(msg.body || ""),
+    icon: new URL("./assets/apple-touch-icon.png", scope).href,
+    badge: new URL("./assets/favicon-32.png", scope).href,
+    lang: "ko",
+    data: { url: pushTargetUrl(msg.url) },
+  };
+  if (msg.tag) {
+    options.tag = String(msg.tag);
+    options.renotify = true;
+  }
+  event.waitUntil(self.registration.showNotification(String(msg.title || "Mir 알림"), options));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const target = pushTargetUrl(event.notification.data && event.notification.data.url);
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((list) => {
+      const open = list.find((c) => c.url.startsWith(self.registration.scope));
+      if (open) {
+        const nav = open.navigate ? open.navigate(target).catch(() => open) : Promise.resolve(open);
+        return nav.then((c) => (c || open).focus());
+      }
+      return self.clients.openWindow(target);
+    })
+  );
+});
+
+// 브라우저가 구독을 갈아 끼우면 같은 공개키로 다시 구독만 해 둔다. 워커 등록(새 endpoint 전달)은
+// 사용자가 다음에 사이트를 열 때 web-push.js 가 endpoint 변화를 보고 한다(SW 는 워커 주소를 모른다).
+self.addEventListener("pushsubscriptionchange", (event) => {
+  const old = event.oldSubscription;
+  const key = old && old.options && old.options.applicationServerKey;
+  if (!key) return;
+  event.waitUntil(
+    self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key }).catch(() => {})
+  );
 });
 
 self.addEventListener("fetch", (event) => {

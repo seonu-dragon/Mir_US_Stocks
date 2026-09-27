@@ -266,6 +266,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements-actions.txt
 
+      # 재무 위험 점검 집계(build_risk_check.mjs)용
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
       - name: Configure git
         run: |
           git config user.name "github-actions[bot]"
@@ -304,6 +309,16 @@ jobs:
         continue-on-error: true
         timeout-minutes: 15
         run: python -u scripts/build_dcf_base_rates.py --push
+
+      # 재무 위험 점검 집계(수식 스크리너의 fScore·riskWarnings 필드) — 위 스텝들이 갱신한 종목 파일 +
+      # 스냅샷 업종·시총 + 국내 감사의견으로 risk-check-core.js 를 다시 계산(네트워크 없음, 몇 초).
+      - name: Risk check aggregate
+        continue-on-error: true
+        timeout-minutes: 10
+        shell: bash
+        run: |
+          node scripts/build_risk_check.mjs
+          python -u scripts/sec_client.py --publish data/risk_check.json data/risk_check.js data/korea/risk_check.json data/korea/risk_check.js --label "financial risk check aggregate"
 
       - name: Data freshness gate
         run: python -u scripts/check_data_freshness.py --group financials

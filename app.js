@@ -5173,6 +5173,7 @@ function renderSearch(options = {}) {
   if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
+  if (typeof renderStockTimeline === "function") renderStockTimeline(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
@@ -5199,6 +5200,8 @@ function renderSearch(options = {}) {
     renderEstimateRevision(refreshed);
     render52wRange(refreshed);
     renderStockEvents(refreshed);
+    // 통합 타임라인 — 실적·배당·일봉(큰 등락)이 상세 파일에 있어 상세가 도착하면 다시 그린다.
+    if (typeof renderStockTimeline === "function") renderStockTimeline(refreshed);
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);

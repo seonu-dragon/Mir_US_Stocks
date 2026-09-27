@@ -3600,6 +3600,7 @@ function renderAll() {
   renderTodayRegime();
   if (typeof renderIndustryHomeCard === "function") renderIndustryHomeCard();
   if (typeof renderMoversBoard === "function") renderMoversBoard();
+  if (typeof renderCrossMarketHome === "function") renderCrossMarketHome();
   if (typeof renderHomeDash === "function") renderHomeDash();
   renderTodayNews();
   renderMyInvestSummary();
@@ -5179,6 +5180,7 @@ function renderSearch(options = {}) {
   render52wRange(item);
   renderStockEvents(item);
   if (typeof renderIndustryReverse === "function") renderIndustryReverse(item);
+  if (typeof renderCrossMarketCard === "function") renderCrossMarketCard(item);
   if (typeof renderEtfHoldings === "function") renderEtfHoldings(item);
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
@@ -6662,6 +6664,11 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Korea close briefing", script: "scripts/build_movers_reasons.py --market kr" },
     tabs: "오늘 탭 · 요약 · 오늘의 특징주, 종목 분석 · 왜 상승했나?",
   },
+  "국내·미국 연관 종목": {
+    us: { workflow: "Daily US market snapshot", script: "scripts/build_cross_market_links.py" },
+    kr: { workflow: "Korea close briefing", script: "scripts/build_cross_market_links.py" },
+    tabs: "오늘 탭 · 요약 · 간밤 미국 연관주(KR)/국내 장 연관주(US), 종목 분석 · 개요 · 해외/국내 연관 종목",
+  },
   "정부조달 낙찰": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_gov_contracts.py" }, tabs: "종목 탭 · 수주 하단" },
   "수출 모멘텀": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_trade_exports.py" }, tabs: "시그널 탭 · 수출 모멘텀" },
   "재무 확장": {
@@ -6887,6 +6894,19 @@ function dataTrustSources() {
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
   // 조용한 날은 0종목이 정상이라 allowEmpty.
   if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · AI 자동 요약" : "SEC 8-K · 뉴스 헤드라인 · AI 자동 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));
+  // 국내↔미국 연관 종목(2026-09-27) — US 마감 스냅샷·KR 마감 브리핑 뒤 하루 두 번 다시 계산. 연휴 감안 4일(96시간).
+  if (cfg.features?.crossMarket !== false) {
+    const xm = window.CROSS_MARKET_LINKS;
+    const row = source("국내·미국 연관 종목", "종목 일봉(두 시장 스냅샷) · 관계는 사람이 정함", xm, ["links"], 96, "매일 (US 스냅샷·KR 마감 브리핑 뒤)", "crossMarket");
+    if (xm) {
+      const st = xm.strengths || {};
+      row.extra = [
+        ["관계", `사람이 정한 ${Number(xm.curatedCount || 0).toLocaleString()}쌍 (뚜렷 ${st.strong || 0} · 보통 ${st.moderate || 0} · 약함 ${st.weak || 0}) · 데이터 후보 ${Number(xm.autoCount || 0).toLocaleString()}쌍`],
+        ["기간", `${(xm.window || {}).from || "?"} ~ ${(xm.window || {}).to || "?"} · 미국 시장(SPY) 통제 편상관`],
+      ];
+    }
+    rows.push(row);
+  }
   // 예측시장(2026-09-25) — 하루 3회. 12시간 넘게 멈추면 두 번 연속 실패라 36시간 여유.
   rows.push(source("예측시장 확률", "Kalshi · Polymarket", window.MACRO_ODDS, ["groups"], 36, "하루 3회 (06·14·22시)", "macroOdds"));
   rows.push(source("리테일 관심도", "Wikimedia 조회수", window.WIKI_ATTENTION, [cfg.id === "kr" ? "kr" : "us"], 144, "매일", "wikiAttention"));

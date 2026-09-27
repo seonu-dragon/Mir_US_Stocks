@@ -50,7 +50,8 @@ jobs:
       - name: Build id stamps (?v= / MIR_BUILD_ID / sw.js)
         run: python scripts/stamp_build_id.py --check
 
-      # 충돌 해결 중 남은       - name: No merge conflict markers
+      # 충돌 해결 중 남은 <<<<<<< / >>>>>>> 표시가 커밋되지 않았는지.
+      - name: No merge conflict markers
         run: python scripts/check_merge_markers.py
 
       - name: CSS brace balance

@@ -7,17 +7,26 @@ name: Company profile & price targets
 # - targets 잡(수·토): scripts/build_us_price_targets.py — Nasdaq analyst/targetprice, 시총 상위 1,000(1건 ~3초, ~55분).
 # - logos 잡(수요일): scripts/build_company_logos.py — 시총 상위 1,000/시장의 회사 공식 홈페이지 파비콘을
 #   64px WebP 로 줄여 data/logos/ 에 저장(키 불필요, 첫 실행 ~20분·이후 증분). 브라우저는 외부 로고 서비스를 부르지 않는다.
-# 세 잡 모두 바뀐 파일만 다시 쓴다(data/company_profile/, data/us_price_targets/, data/logos/).
+# - themes 잡(토요일): scripts/build_kr_themes.py — 국내 테마 분류. DART 사업보고서 'II. 사업의 내용' 원문에서
+#   테마 근거 문장을 규칙으로 찾아 편입한다(시장 탭 '테마'·종목 '이 종목의 테마' 칩). 사업보고서 목록(list.json
+#   40~60콜) + 접수번호가 바뀐 종목의 원문(document.xml)만 시총 순으로 실행당 --max-docs(기본 600)까지 — 처음
+#   전체 채우기는 몇 주에 걸친다(dispatch 로 max_docs 를 늘려 앞당길 수 있다). 수요일 profile 잡(DART 2,500콜)과
+#   날을 나눴다. GEMINI_API_KEY 가 있으면 규칙으로 애매한 문장만 flash-lite 로 판정(실행당 40건 = 최대 2콜),
+#   없거나 한도면 애매한 문장은 편입하지 않고 다음 실행을 기다린다.
+# 네 잡 모두 바뀐 파일만 다시 쓴다(data/company_profile/, data/us_price_targets/, data/logos/, data/korea/themes/).
 
 on:
   schedule:
     - cron: "17 1 * * 3"   # 수요일 10:17 KST — profile + targets
-    - cron: "17 1 * * 6"   # 토요일 10:17 KST — targets 만
+    - cron: "17 1 * * 6"   # 토요일 10:17 KST — targets + themes
   workflow_dispatch:
     inputs:
       job:
-        description: "profile | targets | logos | all"
+        description: "profile | targets | logos | themes | all"
         default: "all"
+      theme_max_docs:
+        description: "KR 테마 — 이번 실행에 읽을 사업보고서 원문 상한(처음 전체 채우기는 2800, DART 호출 여유가 있는 날에)"
+        default: "600"
       kr_max_calls:
         description: "KR DART 호출 상한(처음 전체 채우기는 5200 — 다른 DART 워크플로우가 적은 날에)"
         default: "2500"
@@ -72,6 +81,51 @@ jobs:
         run: |
           if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
           MSG="[Mir Actions 실패] ${{ github.workflow }} (profile) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
+
+  themes:
+    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 6') || (github.event_name == 'workflow_dispatch' && (inputs.job == 'themes' || inputs.job == 'all')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: KR themes (DART business reports)
+        env:
+          DART_API_KEY: ${{ secrets.DART_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          KR_THEME_MAX_DOCS: ${{ inputs.theme_max_docs || '600' }}
+        run: python scripts/build_kr_themes.py --max-docs "$KR_THEME_MAX_DOCS" --push
+
+      - name: Data freshness gate
+        run: python scripts/check_data_freshness.py --group kr-themes
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} (themes) ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
 
   targets:

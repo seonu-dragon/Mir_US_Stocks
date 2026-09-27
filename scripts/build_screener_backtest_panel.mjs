@@ -113,6 +113,12 @@ const NO_HISTORY = {
   payoutRatio: "과거 배당 이력으로 만든 시점 값이 없습니다",
   foreignPct: "외국인 지분율 과거 이력이 없습니다",
   foreignExhaustion: "외국인 한도소진율 과거 이력이 없습니다",
+  // 재무 위험 점검(risk-check-core.js). US 는 SEC 연간 행 + 제출일로 시점 값을 만들 수 있지만 아직 패널에 넣지 않았다.
+  fScore: "재무 위험 점검 점수의 과거 시점 값을 아직 만들지 않았습니다",
+  riskWarnings: "재무 위험 점검 점수의 과거 시점 값을 아직 만들지 않았습니다",
+  riskChecked: "재무 위험 점검 점수의 과거 시점 값을 아직 만들지 않았습니다",
+  altmanZ: "재무 위험 점검 점수의 과거 시점 값을 아직 만들지 않았습니다",
+  beneishM: "재무 위험 점검 점수의 과거 시점 값을 아직 만들지 않았습니다",
   stochKNote: null,
 };
 delete NO_HISTORY.stochKNote;

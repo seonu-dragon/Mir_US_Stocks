@@ -181,6 +181,9 @@ const FEATURE_DATA = {
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
   // etf-holdings.js 가 종목 분석을 열 때 하나만 fetch 한다.
   usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },
+  // 종목별 기관 보유 변화(SEC 13F 데이터셋, build_13f_holders.py) 인덱스(~3KB). 종목 첫 글자 샤드는
+  // inst-holders.js 가 수급·보유 탭을 열 때 하나만 fetch 한다.
+  usInstHolders: { global: "US_INST_HOLDERS_INDEX", path: "data/institutional_holders/index.js", feature: "instHolders", usOnly: true, lazy: true },
   // 국내↔미국 연관 종목(build_cross_market_links.py) — 관계 사전 + 최근 1년 수익률 상관(~30KB, 두 시장 한 파일).
   // 오늘 탭 '간밤 미국 연관주'(KR)·'국내 장 연관주'(US) 카드가 첫 화면이라 첫 단계에서 받는다. 종목 상세 카드도 같은 파일.
   crossMarket: { global: "CROSS_MARKET_LINKS", path: "data/cross_market_links.js", feature: "crossMarket" },
@@ -369,6 +372,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderIndustryReverse === "function") renderIndustryReverse(item); },
           () => { if (typeof renderCrossMarketCard === "function") renderCrossMarketCard(item); },
           () => { if (typeof renderEtfHoldings === "function") renderEtfHoldings(item); },
+          () => { if (typeof renderInstHolders === "function") renderInstHolders(item); },
           () => { if (typeof renderValuationBand === "function") renderValuationBand(item); },
           () => { if (typeof renderStockEventStudy === "function") renderStockEventStudy(item); },
           // 통합 타임라인 — 공시·지분·특징주·이벤트 스터디 샤드가 각각 늦게 도착한다(timeline.js).

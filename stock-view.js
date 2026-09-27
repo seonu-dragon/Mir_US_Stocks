@@ -114,9 +114,14 @@ function activateStockView(view, { push = false, scroll = false } = {}) {
 
 // 수급·보유 탭의 US 카드(스마트머니 종합·정치인 매매)는 무거운 데이터셋(내부자·의회·13F, 합계 ~11MB)을
 // 읽는다. 부팅 때 받지 않으므로 이 탭을 처음 열 때 받고, 도착하면 refreshFeatureViews 가 두 카드를 다시 그린다.
+// 기관 보유 변화 카드(inst-holders.js)도 탭이 열렸을 때만 샤드를 받으므로 여기서 한 번 부른다.
 function sdEnsureFlowData() {
   if (typeof ensureFeatureData !== "function") return;
   if (typeof isKrMarket === "function" && isKrMarket()) return;
+  if (typeof renderInstHolders === "function" && typeof selectedBaseRow === "function") {
+    const row = selectedBaseRow();
+    if (row) renderInstHolders(row);
+  }
   const keys = ["insider", "congress", "inst13f", "activist"];
   if (keys.every((k) => window[(FEATURE_DATA[k] || {}).global])) return; // 이미 있음(ensureFeatureData 도 중복 요청은 안 한다)
   Promise.all(keys.map((k) => ensureFeatureData(k).catch(() => false)))

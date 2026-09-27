@@ -529,7 +529,8 @@ def _cached_fetcher(folder: Path, fetch):
             return path.read_text(encoding="utf-8")
         html = fetch(url)
         if html:
-            path.write_text(html, encoding="utf-8")
+            from briefing_store import atomic_write_text
+            atomic_write_text(path, html)  # 캐시도 부분 파일을 남기지 않게(빌더 계약)
         return html
     return get
 

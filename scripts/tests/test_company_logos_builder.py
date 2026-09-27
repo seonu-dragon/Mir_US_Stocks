@@ -182,3 +182,25 @@ def test_main_refuses_to_shrink_index(fake_env, monkeypatch, capsys):
     idx = json.loads((out / "index.json").read_text(encoding="utf-8"))
     assert idx["markets"]["kr"]["count"] == 100  # 급감하면 예전 목록 유지
     assert (out / "index.js").read_text(encoding="utf-8").startswith("window.COMPANY_LOGOS = ")
+
+
+def test_same_brand_group_logo_is_not_generic():
+    assert bl.same_brand(["www.ecopro.co.kr", "www.ecoprohn.co.kr", "ecopromaterials.com", "www.ecoprobm.co.kr"])
+    assert bl.same_brand(["www.jw-pharma.co.kr", "www.jw-shinyak.co.kr", "jw-holdings.co.kr", "www.jw-life.co.kr"])
+    assert not bl.same_brand(["panamericansilver.com", "spsamhwa.com", "tcmaterials.co.kr", "www.knco.co.kr"])
+    assert not bl.same_brand(["a.com"])
+
+
+def test_override_icon_bypasses_generic_and_is_due_on_change(fake_env, monkeypatch):
+    shared = _result(7)
+    over = (shared[0], "override", 500, shared[3])
+    monkeypatch.setattr(bl, "LOGO_OVERRIDES", {"kr": {f"00000{i}": {"icon": "https://x/logo.png"} for i in range(5)}})
+    monkeypatch.setattr(bl, "fetch_logo", lambda dom, icon=None: over if icon else None)
+    state: dict = {}
+    out = fake_env / "logos"
+    r = bl.run_market("kr", 10, 100, set(), state, out)
+    assert r["ok"] == 5  # 같은 지정 아이콘을 5개 도메인이 써도 기본 아이콘으로 버리지 않는다
+    assert state["kr"]["000000"]["icon"] == "https://x/logo.png"
+    t0 = bl.today()
+    assert not bl.due(state["kr"]["000000"], state["kr"]["000000"]["dom"], t0, "https://x/logo.png")
+    assert bl.due(state["kr"]["000000"], state["kr"]["000000"]["dom"], t0, "https://x/other.png")

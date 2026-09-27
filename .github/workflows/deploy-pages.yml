@@ -127,7 +127,8 @@ jobs:
                ':(exclude)data/korea/financials_history.json' ':(exclude)data/korea/krx_metrics.json' \
                ':(exclude)data/us_financials_history.json' ':(exclude)data/industry_archive' \
                ':(exclude)data/event_study_archive' ':(exclude)data/company_profile/state.json' ':(exclude)data/logos/state.json' \
-               ':(exclude)data/institutional_holders/state.json' ':(exclude)data/institutional_holders/cusip_map.json'; then
+               ':(exclude)data/institutional_holders/state.json' ':(exclude)data/institutional_holders/cusip_map.json' \
+               ':(exclude)data/korea/themes_state.json'; then
             echo "no site-affecting change between $LAST and $CUR — skipping"
             echo "deploy=false" >> "$GITHUB_OUTPUT"
           else
@@ -176,7 +177,8 @@ jobs:
                  _site/data/korea/financials_history.json _site/data/korea/krx_metrics.json \
                  _site/data/us_financials_history.json \
                  _site/data/company_profile/state.json _site/data/logos/state.json \
-                 _site/data/institutional_holders/state.json _site/data/institutional_holders/cusip_map.json
+                 _site/data/institutional_holders/state.json _site/data/institutional_holders/cusip_map.json \
+                 _site/data/korea/themes_state.json
           echo "artifact size:" && du -sh _site | cut -f1
 
       # 구독 피드(.ics 캘린더 + 공시 RSS). 데이터가 여러 워크플로우에서 따로 커밋되므로 전부가

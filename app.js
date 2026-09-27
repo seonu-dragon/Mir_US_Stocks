@@ -2118,12 +2118,12 @@ function renderCalendar(events) {
 // 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
 const TAB_GROUP_OF = {
   today: "today", calendar: "today", "ai-briefing": "today",
-  map: "market", sector: "market", health: "market", signals: "market", industry: "market", marketindex: "market", krflow: "market",
+  map: "market", sector: "market", health: "market", signals: "market", industry: "market", marketindex: "market", krflow: "market", krtheme: "market",
   search: "search", bulk: "bulk", community: "community",
 };
 const GROUP_LEAVES = {
   today: ["today", "ai-briefing", "calendar"],
-  market: ["map", "sector", "health", "marketindex", "signals", "industry", "krflow"],
+  market: ["map", "sector", "health", "marketindex", "signals", "industry", "krflow", "krtheme"],
 };
 // 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
 const lastGroupLeaf = { today: "today", market: "map" };
@@ -3575,6 +3575,8 @@ const TAB_RENDERERS = {
   marketindex: () => { if (typeof renderMarketIndicators === "function") renderMarketIndicators(); },
   // 국내 수급·자금(kr-flow-panels.js) — 데이터를 스스로 lazy 로드한다.
   krflow: () => { if (typeof renderKrFlowMarket === "function") renderKrFlowMarket(); },
+  // 국내 테마(kr-themes.js) — KR_THEMES 를 스스로 lazy 로드한다.
+  krtheme: () => { if (typeof renderKrThemes === "function") renderKrThemes(); },
   bulk: () => { renderBulk(); renderMyInvestSummary(); },
   health: () => renderHealth(),
   "ai-briefing": () => renderAiBriefing(),
@@ -5186,13 +5188,16 @@ function renderSearch(options = {}) {
   if (typeof renderValuationBand === "function") renderValuationBand(item);
   if (typeof renderStockEventStudy === "function") renderStockEventStudy(item);
   if (typeof renderStockTimeline === "function") renderStockTimeline(item);
+  if (typeof renderLockupCard === "function") renderLockupCard(item);
   if (typeof renderFactorGrades === "function") renderFactorGrades(item);
   if (typeof renderStockHealth === "function") renderStockHealth(item);
   if (typeof renderFinancials === "function") renderFinancials(item);
+  if (typeof renderSegments === "function") renderSegments(item);
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
+  if (typeof renderStockThemes === "function") renderStockThemes(item);
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -6677,6 +6682,10 @@ const TRUST_RECOVERY = {
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_financials_kr.py" },
     tabs: "종목 분석 · 재무 섹션, AI 모드 재무 패널",
   },
+  "테마 분류": {
+    kr: { workflow: "Company profile & price targets", script: "scripts/build_kr_themes.py" },
+    tabs: "시장 탭 · 테마, 종목 분석 · 이 종목의 테마",
+  },
   "재무 위험 점검": {
     us: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
     kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_risk_check.mjs" },
@@ -6707,6 +6716,7 @@ const TRUST_RECOVERY = {
     tabs: "오늘 탭 · 캘린더 · 전체 일정",
   },
   "실적 IR 일정": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_ir_schedule.py" }, tabs: "오늘 탭 · 캘린더 · 전체 일정(실적)" },
+  "보호예수 해제": { kr: { workflow: "Market calendar + ETF holdings", script: "scripts/build_kr_lockups.py" }, tabs: "오늘 탭 · 캘린더(보호예수 해제) · 종목 상세 이벤트 · 증자·CB" },
   "ETF 구성 종목": { us: { workflow: "Market calendar + ETF holdings", script: "scripts/build_us_etf_holdings.py" }, tabs: "종목 탭 · 분석 · 구성 종목 / 이 종목을 담은 ETF" },
   "기관 보유 변화(13F)": { us: { workflow: "Institutional 13F quarterly refresh", script: "scripts/build_13f_holders.py" }, tabs: "종목 탭 · 분석 · 수급·보유 · 기관 보유 변화" },
   "시장 스냅샷": {
@@ -6920,6 +6930,8 @@ function dataTrustSources() {
   // 통합 캘린더(2026-09-26) — 휴장·만기(오프라인 계산)는 매일, 국내 실적 IR 은 매일, 미국 ETF 구성은 월 1회.
   rows.push(source("휴장·만기 달력", "exchange_calendars(XKRX·XNYS) · 연준 일정표", window.MARKET_CALENDAR, ["events"], 72, "매일 06:40", "marketCalendar"));
   if (cfg.id === "kr" && cfg.features?.krIrSchedule !== false) rows.push(source("실적 IR 일정", "DART 기업설명회 개최 공시", window.KR_IR_SCHEDULE, ["rows"], 72, "매일 06:40", "krIrSchedule", "", true));
+  // 보호예수 해제(2026-09-27) — 38.co.kr 공모주 상세의 보호예수 표. 매일 06:40, 해제 일정은 늘 수십 건이라 0건이면 이상.
+  if (cfg.id === "kr" && cfg.features?.krLockups !== false) rows.push(source("보호예수 해제", "38커뮤니케이션(투자설명서 보호예수 표)", window.KR_LOCKUPS, ["releases"], 96, "매일 06:40", "krLockups"));
   if (cfg.id === "us" && cfg.features?.etfHoldings !== false) rows.push(source("ETF 구성 종목", "SEC Form N-PORT(분기말, 약 60일 지연)", window.US_ETF_HOLDINGS_INDEX, ["etfs"], 24 * 40, "매월 3일", "usEtfHoldings"));
   // 종목별 기관 보유 변화(2026-09-27, SEC 13F 데이터셋) — 분기 데이터셋이 나올 때만 새로 쓴다(3개월 + 공개 지연).
   // 새 창이 없으면 파일을 건드리지 않으므로 130일(= 한 분기를 통째로 놓쳐야 울림). lazy 라 신뢰도 센터가 직접 받아 본다.
@@ -6969,11 +6981,23 @@ function dataTrustSources() {
   }
   // 재무 확장(2026-09-26) — 주간(일요일 03:02). 한 번 실패를 바로 잡도록 8일(192시간). lazy 라 신뢰도 센터가 직접 받는다.
   rows.push(source("상세 재무제표", cfg.id === "kr" ? "DART 전체 재무제표" : "SEC EDGAR 공시 재무", window.FINANCIALS_INDEX, ["tickers"], 192, "매주 일요일", "financialsIndex"));
+  // 사업부문·지역·제품별 매출(2026-09-27) — US 전용, 주간(일요일). SEC 10-K XBRL 부문 차원. 합계 불일치 종목 수를 함께 적는다.
+  if (cfg.id === "us") {
+    const sg = window.SEGMENTS_INDEX;
+    const row = source("사업부문·지역별 매출", "SEC EDGAR 10-K·20-F XBRL(부문·지역·제품 주석)", sg, ["tickers"], 192, "매주 일요일", "segmentsIndex");
+    if (sg && sg.coverage) {
+      row.extra = [
+        ["범위", `${Number(sg.count || 0).toLocaleString()}종목 · 사업부문 ${sg.coverage.segment || 0} · 지역 ${sg.coverage.geo || 0} · 제품 ${sg.coverage.product || 0}`],
+        ["한계", `부문 합 ≠ 총매출 ${Number(sg.mismatchCount || 0).toLocaleString()}종목(부문 간 거래 포함·일부만 공시) — 화면에 표시 · 회사가 XBRL 로 태그한 부문만(국내 미지원)`],
+      ];
+    }
+    rows.push(row);
+  }
   // 재무 위험 점검 집계(2026-09-27) — 같은 잡 끝에서 재무 확장 파일로 다시 계산. 수식 스크리너 fScore·riskWarnings 필드.
   {
     const rc = window.RISK_CHECK;
     const row = source("재무 위험 점검", "재무 확장 파일로 계산(F·Z·M 등)", rc, ["tickers"], 192, "매주 일요일", "riskCheck");
-    if (rc) row.extra = [["범위", "재무 확장 파일이 있는 종목 · 과거 재무제표 기준 점검(예측·매도 신호 아님)"], ["한계", "매출총이익·이익잉여금·판관비·유형자산 계정이 수집 데이터에 없어 Altman Z·Beneish M 은 현재 '데이터 없음'"]];
+    if (rc) row.extra = [["범위", "재무 확장 파일이 있는 종목 · 과거 재무제표 기준 점검(예측·매도 신호 아님)"], ["한계", "매출총이익·이익잉여금·판관비·유형자산·장기차입금은 2026-09-27 에 수집 필드로 추가 — 재수집 전 파일·해당 계정을 공시하지 않는 회사는 Altman Z·Beneish M 이 '데이터 없음'. 국내는 이자비용 공시가 드물어 이자보상배율이 자주 비어 있음"]];
     rows.push(row);
   }
   // 기업개요(2026-09-26) — 주 1회(수요일). KR 은 DART 호출 상한 안에서 증분이라 한 실행에 전부 갱신되진 않는다.
@@ -7082,6 +7106,20 @@ function dataTrustSources() {
           ["증시자금 기준일", kf.funds?.asOf || "—"],
           ["투자자별 기준일", kf.investors?.asOf || "—"],
           ["ECOS 월말 대조", kf.check ? `${kf.check.month} 예탁금 차이 ${kf.check.depDiffPct}%${kf.check.creditDiffPct != null ? ` · 신용융자 ${kf.check.creditDiffPct}%` : ""}` : "대조 자료 없음"],
+        ];
+      }
+      rows.push(row);
+    }
+    // 테마 분류(2026-09-27) — 주 1회(토요일), 사업보고서 원문을 시총 순으로 증분. 0건은 이상(allowEmpty 아님).
+    if (cfg.features?.krThemes === true) {
+      const kt = window.KR_THEMES;
+      const row = source("테마 분류", "DART 사업보고서 '사업의 내용' 원문 (애매한 문장만 Gemini 판정)", kt, ["themes"], 192, "매주 토요일 · 증분", "krThemes");
+      if (kt) {
+        const cv = kt.coverage || {};
+        row.extra = [
+          ["원문 확인", `${Number(cv.processed || 0).toLocaleString("ko-KR")} / ${Number(cv.universe || 0).toLocaleString("ko-KR")}종목 · 테마 있는 종목 ${Number(cv.withThemes || 0).toLocaleString("ko-KR")}`],
+          ["편입", `${Number(kt.count || 0).toLocaleString("ko-KR")}건 · AI 판정 편입 ${Number(cv.llmAccepted || 0).toLocaleString("ko-KR")} · 판정 대기 ${Number(cv.ambPending || 0).toLocaleString("ko-KR")}`],
+          ["규칙", `v${kt.rulesVersion || "?"} · 테마 ${Number(kt.themeCount || 0)}개`],
         ];
       }
       rows.push(row);
@@ -8016,7 +8054,7 @@ function setupOpenLinks() {
       scrollToTabContent();
       return;
     }
-    if (what === "health" || what === "signals" || what === "map" || what === "sector" || what === "krflow" || what === "ai-briefing") {
+    if (what === "health" || what === "signals" || what === "map" || what === "sector" || what === "krflow" || what === "krtheme" || what === "ai-briefing") {
       activateTab(what);
       scrollToTabContent();
     }
@@ -9093,6 +9131,8 @@ function cmdkBuildActions(query) {
   goto("시장 · 시장 폭", "health");
   goto("시장 · 시장지표", "marketindex");
   goto("시장 · 시그널", "signals");
+  // 국내 전용 잎 — 미국 모드에선 hiddenTabs 라 목록에서도 뺀다.
+  if (isKrMarket() && !featureOff("krThemes")) goto("시장 · 테마 (사업보고서 근거)", "krtheme");
   goto("종목 · 분석", "search", "analysis");
   goto("종목 · 찾기 (스크리너·스캐너)", "search", "find");
   goto("종목 · 비교", "search", "compare");

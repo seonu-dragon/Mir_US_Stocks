@@ -353,3 +353,70 @@ def test_kr_rate_limit_still_saves_and_fails(tmp_path, monkeypatch):
     rc = kr.main_run(_args(), "k", dart_get=limited, corp_map=corp_map)
     assert rc == 1                                         # 한도 초과는 실패로 알린다
     assert (out / "000001.json").exists()                  # 그래도 받은 데까지는 저장
+
+
+# ─────────────────────────── 재무 보강(2026-09-27) ───────────────────────────
+def test_us_enrichment_fields_and_sga_parts_and_lt_debt_fallback():
+    facts = _us_facts()
+    g = facts["facts"]["us-gaap"]
+    K = ("k25", 2025, "FY", "10-K", "2025-11-01")
+    dur = lambda v: [_f("2024-10-01", "2025-09-30", v, *K)]          # noqa: E731
+    ins = lambda v: [_f(None, "2025-09-30", v, *K)]                  # noqa: E731
+    g["CostOfRevenue"] = {"units": {"USD": dur(250)}}
+    g["SellingAndMarketingExpense"] = {"units": {"USD": dur(30)}}
+    g["GeneralAndAdministrativeExpense"] = {"units": {"USD": dur(20)}}
+    g["RetainedEarningsAccumulatedDeficit"] = {"units": {"USD": ins(-15)}}
+    g["PropertyPlantAndEquipmentNet"] = {"units": {"USD": ins(300)}}
+    g["LongTermDebtCurrent"] = {"units": {"USD": ins(40)}}
+    a = us.extract_company(facts, ticker="TST", cik=1, updated="t")["annual"][-1]
+    assert a["cogs"] == 250 and "grossProfit" not in a              # 매출총이익 태그가 없으면 결측(계산으로 채우지 않음)
+    assert a["sga"] == 50                                           # 판매·마케팅 + 일반관리비(둘 다 있을 때만)
+    assert a["retainedEarnings"] == -15 and a["ppe"] == 300
+    assert a["ltDebt"] == 160                                       # LongTermDebt 200 − 유동성 40
+
+
+def test_us_sga_one_part_only_is_missing_and_lt_debt_rules():
+    facts = _us_facts()
+    facts["facts"]["us-gaap"]["SellingAndMarketingExpense"] = {
+        "units": {"USD": [_f("2024-10-01", "2025-09-30", 30, "k25", 2025, "FY", "10-K", "2025-11-01")]}}
+    a = us.extract_company(facts, ticker="TST", cik=1, updated="t")["annual"][-1]
+    assert "sga" not in a
+    assert "ltDebt" not in a                                        # 합계만 있고 유동성 부분이 없으면 결측
+    assert us.lt_debt_from_parts({"ltNoncurrent": 7, "ltTotal": 9, "ltCurrent": 1}) == 7
+    assert us.lt_debt_from_parts({}) is None
+
+
+def test_kr_enrichment_fields_parse():
+    rows = [
+        _row("IS", "ifrs-full_Revenue", "매출액", thstrm_amount=300, frmtrm_amount=250),
+        _row("IS", "ifrs-full_CostOfSales", "매출원가", thstrm_amount=200, frmtrm_amount=170),
+        _row("IS", "ifrs-full_GrossProfit", "매출총이익", thstrm_amount=100, frmtrm_amount=80),
+        _row("IS", "dart_TotalSellingGeneralAdministrativeExpenses", "판매비와관리비", thstrm_amount=40, frmtrm_amount=35),
+        _row("BS", "ifrs-full_Assets", "자산총계", thstrm_amount=1000, frmtrm_amount=900),
+        _row("BS", "ifrs-full_RetainedEarnings", "이익잉여금", thstrm_amount=500, frmtrm_amount=450),
+        _row("BS", "ifrs-full_PropertyPlantAndEquipment", "유형자산", thstrm_amount=300, frmtrm_amount=280),
+        _row("BS", "ifrs-full_ShorttermBorrowings", "단기차입금", thstrm_amount=10, frmtrm_amount=10),
+        _row("BS", "ifrs-full_LongtermBorrowings", "장기차입금", thstrm_amount=60, frmtrm_amount=70),
+        _row("BS", "", "사채", thstrm_amount=30, frmtrm_amount=30),
+    ]
+    raw = {}
+    kr.merge_raw(raw, kr.parse_report(rows, 2025, "11011"))
+    annual, _q = kr.rows_from_raw(raw)
+    by = {r["fy"]: r for r in annual}
+    a = by[2025]
+    assert (a["grossProfit"], a["cogs"], a["sga"]) == (100, 200, 40)
+    assert (a["retainedEarnings"], a["ppe"]) == (500, 300)
+    assert a["ltDebt"] == 90 and a["debt"] == 100                   # 장기 = 장기차입금 + 사채(단기 제외)
+    assert by[2024]["sga"] == 35
+
+
+def test_kr_needs_refreshes_latest_annual_once_for_new_fields():
+    today = date(2026, 9, 26)
+    raw = {"reports": {"2025_11011": {"rcept": "20260310000001"}, "2024_11011": {"rcept": "20250310000001"}}}
+    refresh = frozenset({"2025_11011"})
+    assert kr.needs(raw, "F", 2025, "11011", today, set(), refresh) is True     # 옛 세대(v 없음) → 다시
+    assert kr.needs(raw, "F", 2024, "11011", today, set(), refresh) is False    # 최신 사업보고서만
+    raw["reports"]["2025_11011"]["v"] = kr.RAW_VERSION
+    assert kr.needs(raw, "F", 2025, "11011", today, set(), refresh) is False
+    raw["reports"]["2025_11011"] = {"none": "2026-09-20"}
+    assert kr.needs(raw, "F", 2025, "11011", today, set(), refresh) is False    # 없던 보고서는 기존 규칙

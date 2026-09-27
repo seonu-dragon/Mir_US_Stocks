@@ -41,6 +41,9 @@ const MF_ACCOUNTS = [
   ["cash", "현금및현금성자산"], ["debt", "총차입금"], ["netDebt", "순차입금"], ["equity", "자본총계"],
   ["liab", "부채총계"], ["assets", "자산총계"], ["curAssets", "유동자산"], ["curLiab", "유동부채"],
   ["receivables", "매출채권"], ["sharesDilAvg", "희석 가중평균 주식수", "shares"], ["sharesOut", "기말 발행주식수", "shares"],
+  // 재무 보강(2026-09-27) — 재무 위험 점검(Altman Z·Beneish M)의 입력. 값이 있는 행만 표에 나온다.
+  ["grossProfit", "매출총이익"], ["cogs", "매출원가"], ["sga", "판매비와관리비"],
+  ["retainedEarnings", "이익잉여금"], ["ppe", "유형자산"], ["ltDebt", "장기차입금"],
 ];
 
 function mfMarket() {

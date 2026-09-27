@@ -12,6 +12,9 @@ DART 응답 구조(2026-09-26 실제 호출로 확인, 삼성전자 00126380)
       재무상태(BS): thstrm_amount = 분기말, frmtrm_amount = 전기말
   - 설비투자(유형자산의 취득)는 양수로 온다 — 회사마다 부호가 섞여 절댓값으로 통일(build_kr_earnings 와 같다).
   - 감가상각비·주식보상비용·이자비용은 대부분 본문에 없다(조정 한 줄 / 금융비용만) → 결측으로 둔다.
+    (금융비용은 외환차손·파생손실이 섞여 이자비용으로 쓰지 않는다 — 이자보상배율은 KR 대부분 '데이터 없음'.)
+  - 재무 보강(2026-09-27): 매출총이익·매출원가·판관비·이익잉여금·유형자산·장기차입금. 이미 받은 종목은
+    최신 사업보고서 1건만 다시 받아(RAW_VERSION) 채운다 — 1계층이라 첫 주에 종목당 1회가 더 든다.
   - 기말일(end)은 주지 않는다. 행은 fy(사업연도)·fq 로만 라벨한다.
   - 연결(CFS) 우선, 없으면(status 013) 별도(OFS). 회사별로 한 번 정하면 그 기준을 계속 쓴다(행이 섞이지 않게).
   - 주식수: stockTotqySttus(주식의 총수 현황) 사업보고서 보통주 유통주식수(발행 − 자기주식). 연간만.
@@ -56,7 +59,7 @@ except Exception:
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 import sec_client as sec  # noqa: E402
 from financials_common import (  # noqa: E402
-    FLOW_FIELDS, INSTANT_FIELDS, MAX_ANNUAL, MAX_QUARTERS, SCHEMA_VERSION,
+    FLOW_FIELDS, INDEX_FIELDS, INSTANT_FIELDS, MAX_ANNUAL, MAX_QUARTERS, SCHEMA_VERSION,
     add_derived, build_ttm, clean_row, dumps_compact, has_core, index_entry, load_json,
 )
 
@@ -95,6 +98,14 @@ ACCOUNTS = {
     "curLiab": (["ifrs-full_CurrentLiabilities"], ["유동부채"], ("BS",)),
     "receivables": (["ifrs-full_CurrentTradeReceivables", "ifrs-full_TradeAndOtherCurrentReceivables"],
                     ["매출채권", "매출채권및기타채권", "매출채권 및 기타채권", "매출채권 및 기타유동채권"], ("BS",)),
+    # 재무 보강(2026-09-27) — risk-check-core.js 의 Altman Z·Beneish M 입력
+    "grossProfit": (["ifrs-full_GrossProfit"], ["매출총이익", "매출총이익(손실)"], IS_SJ),
+    "cogs": (["ifrs-full_CostOfSales"], ["매출원가"], IS_SJ),
+    "sga": (["dart_TotalSellingGeneralAdministrativeExpenses", "ifrs-full_SellingGeneralAndAdministrativeExpense"],
+            ["판매비와관리비", "판매비와 관리비", "판매비 및 관리비"], IS_SJ),
+    "retainedEarnings": (["ifrs-full_RetainedEarnings"],
+                         ["이익잉여금", "이익잉여금(결손금)", "이익잉여금(결손)", "결손금"], ("BS",)),
+    "ppe": (["ifrs-full_PropertyPlantAndEquipment"], ["유형자산"], ("BS",)),
 }
 DA_DEP = (["ifrs-full_AdjustmentsForDepreciationExpense"], ["감가상각비"])
 DA_AMORT = (["ifrs-full_AdjustmentsForAmortisationExpense"], ["무형자산상각비"])
@@ -109,8 +120,19 @@ DEBT_NAMES = {
     "단기차입금", "장기차입금", "사채", "유동성장기부채", "유동성사채", "유동성장기차입금", "단기사채",
     "전환사채", "교환사채", "신주인수권부사채", "유동성전환사채",
 }
-BS_FIELDS = ("assets", "liab", "equity", "cash", "curAssets", "curLiab", "receivables", "debt")
-IS_FIELDS = ("rev", "op", "net", "pretax", "tax", "interest", "epsDil")
+# 장기차입금(비유동) — 장기차입금 + 사채(비유동). 유동성장기부채·유동성사채·리스부채는 뺀다.
+LT_DEBT_IDS = {
+    "ifrs-full_LongtermBorrowings", "ifrs-full_NoncurrentPortionOfNoncurrentBondsIssued",
+    "ifrs-full_NoncurrentPortionOfNoncurrentLoansReceived",
+}
+LT_DEBT_NAMES = {"장기차입금", "사채", "전환사채", "교환사채", "신주인수권부사채"}
+BS_FIELDS = ("assets", "liab", "equity", "cash", "curAssets", "curLiab", "receivables", "debt",
+             "retainedEarnings", "ppe", "ltDebt")
+IS_FIELDS = ("rev", "op", "net", "pretax", "tax", "interest", "epsDil", "grossProfit", "cogs", "sga")
+# `_raw` 에 담는 추출 필드 세대. 필드를 보태면 올린다 — 최신 사업보고서를 받은 기록(reports[..].v)이 이보다
+# 낮으면 그 보고서 한 개만 다시 받아 새 필드를 채운다(당기·전기 두 해가 한 번에 채워진다 → Beneish M 에 충분).
+# 2 = 2026-09-27 재무 보강(grossProfit·cogs·sga·retainedEarnings·ppe·ltDebt).
+RAW_VERSION = 2
 CF_FIELDS = ("ocf", "capex", "sbc", "da")
 
 
@@ -157,14 +179,14 @@ def _eps_diluted(rows, col):
     return None
 
 
-def _debt(rows, col):
+def _debt(rows, col, ids=DEBT_IDS, names=DEBT_NAMES):
     total, found, seen = 0, False, set()
     for r in rows:
         if r.get("sj_div") != "BS":
             continue
         aid, nm = r.get("account_id") or "", (r.get("account_nm") or "").strip()
-        if aid in DEBT_IDS or nm in DEBT_NAMES:
-            key = (aid if aid in DEBT_IDS else "", nm)
+        if aid in ids or nm in names:
+            key = (aid if aid in ids else "", nm)
             if key in seen:
                 continue
             seen.add(key)
@@ -191,6 +213,8 @@ def extract_columns(rows: list[dict], fields, col: str) -> dict:
     for f in fields:
         if f == "debt":
             v = _debt(rows, col)
+        elif f == "ltDebt":
+            v = _debt(rows, col, LT_DEBT_IDS, LT_DEBT_NAMES)
         elif f == "da":
             v = _da(rows, col)
         elif f == "epsDil":
@@ -422,10 +446,13 @@ def report_key(kind: str, year: int, code: str) -> str:
     return f"{'S' if kind == 'S' else ''}{year}_{code}"
 
 
-def needs(raw: dict, kind: str, year: int, code: str, today: date, recent_keys: set[str]) -> bool:
+def needs(raw: dict, kind: str, year: int, code: str, today: date, recent_keys: set[str],
+          refresh_keys: frozenset | set = frozenset()) -> bool:
     rec = (raw.get("reports") or {}).get(report_key(kind, year, code))
     if not rec:
         return True
+    if rec.get("rcept") is not None and report_key(kind, year, code) in refresh_keys             and int(rec.get("v") or 1) < RAW_VERSION:
+        return True      # 추출 필드가 늘었다 — 최신 사업보고서만 한 번 다시 받는다
     if rec.get("none"):
         # 기한 지났는데 없던 보고서: 최신 두 개만 RECHECK_DAYS 마다 다시 본다
         if report_key(kind, year, code) not in recent_keys:
@@ -513,8 +540,7 @@ def save_checkpoint(targets: dict, docs_raw: dict, pending: set, *, stamp: str, 
     payload = {
         "schema": SCHEMA_VERSION, "market": "kr", "updatedAtKst": stamp, "source": SOURCE,
         "count": len(index_tickers), "freshCount": fresh_total + written, "calls": calls,
-        "fields": "rev,op,net,pretax,tax,interest,da,sbc,ocf,capex,fcf,epsDil,"
-                  "assets,liab,equity,cash,debt,netDebt,curAssets,curLiab,receivables,sharesOut",
+        "fields": INDEX_FIELDS,
         "tickers": dict(sorted(index_tickers.items())),
     }
     with repository_publish_lock(ROOT):
@@ -572,6 +598,8 @@ def main_run(args, api_key: str, *, dart_get=None, corp_map=None, clock: Clock |
     pending: set[str] = set()
     state = {"fresh": 0, "saves": 0, "last_save": clock.elapsed_min(), "publish_failed": False}
     recent_keys = {report_key("F", y, c) for y, c in available_reports(today)[:2]}
+    latest_annual = next(y for y, c in available_reports(today) if c == "11011")
+    refresh_keys = frozenset({report_key("F", latest_annual, "11011")})
 
     def call(path, params):
         if calls["n"] >= args.max_calls:
@@ -609,7 +637,7 @@ def main_run(args, api_key: str, *, dart_get=None, corp_map=None, clock: Clock |
             for si, (t, corp, s) in enumerate(targets, 1):
                 raw = docs_raw[t]
                 for kind, year, code in tier:
-                    if not needs(raw, kind, year, code, today, recent_keys):
+                    if not needs(raw, kind, year, code, today, recent_keys, refresh_keys):
                         continue
                     key = report_key(kind, year, code)
                     reports = raw.setdefault("reports", {})
@@ -640,7 +668,8 @@ def main_run(args, api_key: str, *, dart_get=None, corp_map=None, clock: Clock |
                         continue
                     raw["fs"] = raw.get("fs") or fs
                     merge_raw(raw, parse_report(rows, year, code))
-                    reports[key] = {"rcept": str(rows[0].get("rcept_no") or ""), "at": today.isoformat()}
+                    reports[key] = {"rcept": str(rows[0].get("rcept_no") or ""), "at": today.isoformat(),
+                                    "v": RAW_VERSION}
                     pending.add(t)
                 if args.progress_every > 0 and si % args.progress_every == 0:
                     log(f"  계층 {ti}/{len(all_tiers)} · 종목 {si}/{len(targets)} · 호출 {calls['n']}/{args.max_calls}"

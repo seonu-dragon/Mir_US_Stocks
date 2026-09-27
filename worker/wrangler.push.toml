@@ -1,0 +1,35 @@
+# =============================================================================
+# Mir — Web Push 알림 워커(mir-push) 설정(참고용)
+# =============================================================================
+#
+# 정식 배포 경로는 yahoo-proxy 와 같이 **대시보드 붙여넣기**다(DEPLOY.md "Web Push 알림 워커").
+# 이 파일은 대시보드에서 손으로 만든 바인딩·크론 이름의 문서화이고, wrangler 로 올리고 싶을 때만 쓴다:
+#   wrangler kv namespace create PUSH_KV                 # 출력된 id 를 아래에 붙여넣기
+#   wrangler secret put VAPID_PUBLIC_KEY  --config worker/wrangler.push.toml
+#   wrangler secret put VAPID_PRIVATE_KEY --config worker/wrangler.push.toml
+#   wrangler secret put VAPID_SUBJECT     --config worker/wrangler.push.toml   # mailto:본인메일
+#   wrangler deploy --config worker/wrangler.push.toml
+#
+# 붙여넣기 전 확인: node scripts/sync_push_worker.mjs --check && node worker/test_push.mjs
+
+name = "mir-push"
+main = "mir-push.js"
+compatibility_date = "2026-09-01"
+
+# 30분마다(UTC). 무엇을 할지는 코드(push-alerts-core.js planJobs)가 KST·미 동부 시각으로 정한다.
+[triggers]
+crons = ["*/30 * * * *"]
+
+[[kv_namespaces]]
+binding = "PUSH_KV"
+id = "REPLACE_WITH_PUSH_KV_NAMESPACE_ID"
+
+# (선택) 클라우드 동기화 목록 자동 사용 — yahoo-proxy 의 COMMUNITY_KV 와 **같은 네임스페이스 id**.
+# 없으면 구독 때·목록 변경 때 기기가 보낸 목록만 쓴다.
+# [[kv_namespaces]]
+# binding = "SYNC_KV"
+# id = "REPLACE_WITH_COMMUNITY_KV_NAMESPACE_ID"
+
+[vars]
+# 실행당 최대 발송 수. 무료 플랜(CPU 10ms)은 10 안팎, 유료 플랜이면 40 까지.
+PUSH_MAX_PER_RUN = "10"

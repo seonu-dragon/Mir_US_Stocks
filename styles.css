@@ -15041,7 +15041,7 @@ button.calp-who:hover strong { text-decoration: underline; }
 .ih-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ih-rank { width: 24px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .ih-name { min-width: 0; }
-.ih-name strong { font-weight: var(--fw-strong); overflow-wrap: anywhere; }
+.ih-name strong { font-weight: var(--fw-strong); overflow-wrap: break-word; }
 .ih-plain { font-weight: 500 !important; color: var(--text); }
 .ih-sub { display: block; font-size: var(--fs-cap); color: var(--muted); font-weight: 400; }
 .ih-link { min-height: 0; height: auto; padding: 0; border: 0; background: none; color: var(--link, var(--text)); font: inherit; text-align: left; cursor: pointer; }
@@ -15058,7 +15058,8 @@ button.calp-who:hover strong { text-decoration: underline; }
   .ih-card { padding: 12px; }
   .ih-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ih-stat-v { font-size: 16px; }
-  .ih-table .ih-col-val { display: none; }
+  .ih-table .ih-col-val, .ih-table .ih-wsub { display: none; }
+  .ih-table th, .ih-table td { padding: 7px 4px; }
   .ih-link { min-height: 36px; }
   .ih-bars li { grid-template-columns: 64px minmax(0, 1fr) 56px; }
 }

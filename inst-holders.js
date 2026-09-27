@@ -140,16 +140,16 @@ function ihCardHtml(ticker, rec, sum, names, meta) {
       <thead><tr><th class="ih-rank">#</th><th>기관</th><th class="num">보유 주식</th><th class="num">직전 분기 대비</th><th class="num ih-col-val">가치</th></tr></thead>
       <tbody>${rows.map((r, i) => {
         const nameCell = r.link
-          ? `<button type="button" class="ih-link" data-ih-inst="${escapeHtml(r.link.id)}" title="${escapeHtml(`${r.link.name} 13F 포트폴리오 보기`)}"><strong>${escapeHtml(r.name)}</strong></button><span class="ih-sub">${escapeHtml(r.link.name)} · 13F 포트폴리오 보기</span>`
+          ? `<button type="button" class="ih-link" data-ih-inst="${escapeHtml(r.link.id)}" title="${escapeHtml(`${r.link.name} 13F 포트폴리오 보기`)}"><strong>${escapeHtml(r.name)}</strong></button><span class="ih-sub">${escapeHtml(r.link.name)} · 포트폴리오 보기</span>`
           : `<strong class="ih-plain">${escapeHtml(r.name)}</strong>`;
-        const delta = r.status === "na" ? `<span class="ih-badge is-na">직전 보고 없음</span>`
+        const delta = r.status === "na" ? `<span class="ih-badge is-na" title="이 기관은 직전 분기 13F 를 내지 않아 비교할 수 없습니다">직전 없음</span>`
           : r.status === "new" ? `<span class="ih-badge is-pos">신규</span>`
           : r.status === "same" ? `<span class="ih-badge">유지</span>`
           : `<span class="ih-delta ${r.status === "inc" ? "is-pos" : "is-neg"}">${escapeHtml(IH.fmtSignedPct(r.deltaPct))}</span>`;
         return `<tr>
           <td class="ih-rank">${i + 1}</td>
           <td class="ih-name">${nameCell}</td>
-          <td class="num">${escapeHtml(IH.fmtShares(r.shares))}${r.weightPct !== null ? `<span class="ih-sub">기관 합계의 ${r.weightPct.toFixed(1)}%</span>` : ""}</td>
+          <td class="num">${escapeHtml(IH.fmtShares(r.shares))}${r.weightPct !== null ? `<span class="ih-sub ih-wsub">기관 합계의 ${r.weightPct.toFixed(1)}%</span>` : ""}</td>
           <td class="num">${delta}</td>
           <td class="num ih-col-val">${escapeHtml(IH.fmtUsd(r.value))}</td>
         </tr>`;

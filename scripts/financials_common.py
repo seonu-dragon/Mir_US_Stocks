@@ -69,6 +69,9 @@
     fcf           ocf − capex (둘 다 있을 때만)                 통화
     epsDil        희석 주당순이익                              통화/주  ttm = 최근 4분기 합
     sharesDilAvg  가중평균 희석 주식수                         주      ttm = 최근 4분기 평균. 4분기(빼기 불가)는 결측
+    grossProfit   매출총이익                                   통화   (2026-09-27 추가 — 아래 '재무 보강' 참고)
+    cogs          매출원가                                     통화   매출총이익이 없는 회사도 있다(서비스업 등)
+    sga           판매비와관리비(SG&A)                          통화
   기말(잔액) 값 — 해당 기말 시점. ttm 은 최근 분기말
     assets        자산총계                                     통화
     liab          부채총계   (주의: 옛 financialsHistory 의 'debt' 는 부채총계였다. 여기 debt 는 차입금이다)
@@ -80,6 +83,9 @@
     curLiab       유동부채                                     통화
     receivables   매출채권                                     통화
     sharesOut     기말 발행주식수(보통주. KR 은 유통주식수 = 발행 − 자기주식, 연간만) 주
+    retainedEarnings 이익잉여금(결손이면 음수)                  통화   (2026-09-27 추가)
+    ppe           유형자산(순액, 감가상각 누계 차감 후)          통화
+    ltDebt        장기차입금(비유동 — 사채 포함, 유동성 장기부채·리스부채 제외) 통화
                   희석 '기말' 주식수는 공시되지 않는다 — 희석은 sharesDilAvg(가중평균)만 있다.
 
 ────────────────────────────────────────────────────────────────────────
@@ -92,6 +98,10 @@
   sharesOut 은 당시 기준, sharesDilAvg 는 재표시 기준일 수 있다) 쓰지 않고, net(4분기 합) ÷ sharesDilAvg,
   equity ÷ sharesOut, rev ÷ sharesOut 을 filed 기준 시점으로 계산한다. 주식수는 분할을 감지해 현재 기준으로
   환산. flags 에 foreignFiler/adrShareBasis 가 있으면 계산하지 않는다.
+- 재무 위험 점검(risk-check-core.js): Altman Z 는 retainedEarnings, Beneish M 은 grossProfit|cogs·sga·ppe·ltDebt,
+  이자보상배율은 interest 를 읽는다. 재무 보강 필드(grossProfit·cogs·sga·retainedEarnings·ppe·ltDebt)는
+  2026-09-27 에 보탰다 — 그 전에 받은 파일에는 없고, US 는 다음 재수집(--full 또는 새 공시), KR 은 최신
+  사업보고서를 한 번 더 받을 때(RAW_VERSION) 채워진다. 없는 파일은 해당 항목만 '데이터 없음'.
 - 재무 위험 점수: MirFinCore.derivedMetrics(file) 가 FCF 마진·ROIC·순차입금/EBITDA·주식수 증감률·
   SBC/매출·이익의 질을 연간/TTM 으로 돌려준다(정의는 financials-core.js 주석).
 """
@@ -106,9 +116,14 @@ from pathlib import Path
 SCHEMA_VERSION = 1
 
 FLOW_FIELDS = ("rev", "op", "net", "pretax", "tax", "interest", "da", "sbc", "ocf", "capex",
-               "epsDil", "sharesDilAvg")
+               "epsDil", "sharesDilAvg", "grossProfit", "cogs", "sga")
 INSTANT_FIELDS = ("assets", "liab", "equity", "cash", "debt", "curAssets", "curLiab",
-                  "receivables", "sharesOut")
+                  "receivables", "sharesOut", "retainedEarnings", "ppe", "ltDebt")
+# 인덱스 파일의 fields 문자열(두 빌더 공용)
+INDEX_FIELDS = ",".join(("rev", "op", "net", "pretax", "tax", "interest", "da", "sbc", "ocf", "capex", "fcf",
+                         "epsDil", "sharesDilAvg", "grossProfit", "cogs", "sga", "assets", "liab", "equity", "cash",
+                         "debt", "netDebt", "curAssets", "curLiab", "receivables", "sharesOut", "retainedEarnings",
+                         "ppe", "ltDebt"))
 DERIVED_FIELDS = ("fcf", "netDebt")
 ALL_FIELDS = FLOW_FIELDS + INSTANT_FIELDS + DERIVED_FIELDS
 

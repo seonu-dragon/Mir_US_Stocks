@@ -140,6 +140,9 @@ const FEATURE_DATA = {
   // 시장별 파일(US data/financials_index.js · KR data/korea/financials_index.js). 종목 분석의 재무 섹션을
   // 처음 그릴 때만 받는다(lazy). 종목별 파일은 financials.js 가 fetch 한다.
   financialsIndex: { global: "FINANCIALS_INDEX", path: "data/financials_index.js", marketSpecific: true, lazy: true },
+  // 사업부문·지역·제품별 매출 인덱스(build_segments_us.py, SEC 10-K XBRL 차원) — US 전용. 종목 분석 재무 탭의
+  // '사업부문·지역별 매출' 카드를 처음 그릴 때만 받는다(lazy). 종목별 파일은 segments.js 가 fetch 한다.
+  segmentsIndex: { global: "SEGMENTS_INDEX", path: "data/segments_index.js", usOnly: true, lazy: true },
   // 기업개요(build_company_profile.py, KR DART · US SEC) — 시장별 샤드 버전만 담은 작은 인덱스. 종목 파일은
   // company-info.js 가 그 종목이 든 해시 샤드 하나만 fetch 한다. 종목 분석 화면을 열 때만 받는다(lazy).
   companyProfile: { global: "COMPANY_PROFILE_INDEX", path: "data/company_profile/index.js", lazy: true },
@@ -370,6 +373,7 @@ function refreshFeatureViews() {
           () => { if (typeof renderFactorGrades === "function") renderFactorGrades(item); },
           () => { if (typeof renderStockHealth === "function") renderStockHealth(item); },
           () => { if (typeof renderFinancials === "function") renderFinancials(item); },
+          () => { if (typeof renderSegments === "function") renderSegments(item); },
           () => { if (typeof renderRiskCheck === "function") renderRiskCheck(item); },
           () => { if (typeof renderDcf === "function") renderDcf(item); },
           () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },

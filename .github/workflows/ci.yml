@@ -50,8 +50,7 @@ jobs:
       - name: Build id stamps (?v= / MIR_BUILD_ID / sw.js)
         run: python scripts/stamp_build_id.py --check
 
-      # 충돌 해결 중 남은 <<<<<<< / ======= / >>>>>>> 줄(HTML·CSS·YAML 은 문법 검사가 없다).
-      - name: No merge conflict markers
+      # 충돌 해결 중 남은       - name: No merge conflict markers
         run: python scripts/check_merge_markers.py
 
       - name: CSS brace balance
@@ -86,6 +85,16 @@ jobs:
       - name: Worker tests
         run: node worker/test_worker.mjs
 
+      # Web Push 워커(worker/mir-push.js): RFC 8291 부록 A 벡터(바이트 일치)·VAPID ES256 서명 검증·라우트(Origin·구독 검증·
+      # 쿨다운·410 정리)·크론(±N%·가격 도달·상한·예산 커서·요약·동기화 목록). EMBED 블록이 루트 원본과 같은지도 본다.
+      - name: Web Push worker tests
+        run: |
+          node scripts/sync_push_worker.mjs --check
+          node worker/test_push.mjs
+      # 푸시 알림 순수 로직(push-alerts-core.js): 설정·목록 정리, 크론 계획(서머타임·KST 슬롯), spark 파싱, 조건 평가, 상한·문구.
+      - name: Push alerts core tests
+        run: node scripts/tests/test_push_alerts_core.mjs
+
       # 적립식 시뮬레이터 순수 계산(dca-core.js): XIRR 알려진 값·휴장일 이월·정수 매수 이월·배당.
       - name: DCA simulator tests
         run: node scripts/tests/test_dca_core.mjs
@@ -112,6 +121,9 @@ jobs:
       # "오늘 내 주식은" 보유·관심 요약(my-digest-core.js): 사건 정규화·업종 평균·기여도·일간/주간 조립·추천 문구 없음.
       - name: My digest core tests
         run: node scripts/tests/test_my_digest_core.mjs
+      # 보호예수 해제(lockup-core.js): 종목별 해제·N일 안 해제 정렬·주식수/금액 표기·공모 수요예측 항목.
+      - name: Lockup core tests
+        run: node scripts/tests/test_lockup_core.mjs
       # 오늘 탭 지수 하루 차트 시간축(home-chart-core.js): 5분 봉 시각 배정·장 상태(장중/마감/휴장/단축)·눈금.
       - name: Home chart core tests
         run: node scripts/tests/test_home_chart_core.mjs
@@ -135,6 +147,9 @@ jobs:
       # 국내 수급·증시자금 순수 계산(kr-flow-core.js): 샤드 해시(PY 와 동일)·부호 포맷·막대/누적 기하.
       - name: KR flow core tests
         run: node scripts/tests/test_kr_flow_core.mjs
+      # 국내 테마 순수 계산(kr-themes-core.js): 동일/시총가중 등락·결측·저PBR 조건·순위·근거 문장 강조 조각.
+      - name: KR themes core tests
+        run: node scripts/tests/test_kr_themes_core.mjs
       # 수식 스크리너 파서·평가기(formula-core.js): 연산자 우선순위·괄호·결측(3값 논리)·0 나누기·
       # 그룹 집계(sectorMedian/sectorPct/rank)·오류 메시지·eval 미사용·공유 토큰 왕복.
       - name: Formula screener tests
@@ -215,6 +230,11 @@ jobs:
       # 일별 시세 표(daily-table-core.js): 전일대비 ▲/▼ 금액·등락률, 보합, 거래량 0, 표기.
       - name: Daily price table tests
         run: node scripts/tests/test_daily_table_core.mjs
+
+      # 국내↔미국 연관 종목(cross-market-core.js): 사람이 정한 관계 우선 정렬·자동 후보 거르기,
+      # 간밤 미국/국내 장 보드(문턱·방향별 상관·표본 부족 제외), 표기.
+      - name: Cross-market links core tests
+        run: node scripts/tests/test_cross_market_core.mjs
 
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)

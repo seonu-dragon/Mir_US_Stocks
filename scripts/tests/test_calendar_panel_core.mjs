@@ -149,6 +149,34 @@ test("날짜별 묶음·정렬(휴장→만기→경제→실적)", () => {
   assert.equal(core.dedupe([{ id: "x" }, { id: "x" }, { id: "y" }]).length, 2);
 });
 
+test("국내 보호예수 해제: 추정일·주식수·비율, 국내 전용 칩", () => {
+  const ev = core.fromKrLockups({ releases: [
+    { code: "0035S0", company: "빅웨이브로보틱스", date: "2026-10-29", shares: 1194638, pct: 11.22,
+      periods: ["1개월"], types: { "벤처금융": 1000000, "기타 주주": 194638 }, link: "https://www.38.co.kr/x" },
+    { code: "1", company: "날짜없음", date: "" },
+  ] });
+  assert.equal(ev.length, 1);
+  assert.equal(ev[0].kind, "lockup");
+  assert.equal(ev[0].market, "kr");
+  assert.equal(ev[0].ticker, "0035S0");
+  assert.equal(ev[0].sub, "상장 1개월 후");
+  assert.equal(ev[0].info, "119만 주 · 상장일 기준 주식수의 11.2% · 벤처금융·기타 주주");
+  assert.ok(core.STOCK_KINDS.has("lockup"));                       // 관심종목만 보기 대상
+  assert.ok(core.kindsFor("kr").some((k) => k.id === "lockup"));
+  assert.ok(!core.kindsFor("us").some((k) => k.id === "lockup"));   // 미국 모드엔 칩이 없다
+  assert.equal(core.fmtShares(8500), "8,500주");
+  assert.equal(core.fmtShares(250000000), "2.5억 주");
+});
+
+test("국내 공모주: 수요예측·청약 경쟁률 한 줄", () => {
+  const kr = core.fromIpo({ ipos: [
+    { company: "브릴스", stage: "filed", fileDate: "2026.10.01", accession: "kr-ipo-listed-브릴스", offerPrice: 19500,
+      instCompetition: 1187.74, commitPct: 21.75, subscriptionCompetition: 1676.26 },
+  ] }, "kr");
+  assert.equal(kr[0].info, "확정공모가 19,500원 · 기관 경쟁률 1,188:1 · 의무보유 확약 21.8% · 청약 경쟁률 1,676:1");
+  assert.equal(core.ipoDemandText({}), "");
+});
+
 if (failures.length) {
   console.error(`실패 ${failures.length}건:\n  ` + failures.join("\n  "));
   process.exit(1);

@@ -81,8 +81,8 @@
       "^GSPC": "SPY",
       "^RUT": "IWM",
     },
-    // 국내 전용 잎(수급·자금 = kr-flow-panels.js)은 미국 모드에서 숨긴다.
-    hiddenTabs: ["krflow"],
+    // 국내 전용 잎(수급·자금 = kr-flow-panels.js, 테마 = kr-themes.js)은 미국 모드에서 숨긴다.
+    hiddenTabs: ["krflow", "krtheme"],
     hiddenInstitutionalSubs: [],
     features: {
       congress: true,
@@ -104,6 +104,8 @@
       valuationBand: true,
       // 증시자금·시장 투자자별 매매·순매수 상위(금투협·네이버)는 국내 전용.
       krFunds: false,
+      // 테마 분류(DART 사업보고서 근거 문장)는 국내 전용.
+      krThemes: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -284,6 +286,9 @@
       // 시장 탭 '수급·자금' — 증시자금(금투협 freesis)·투자자별 일별 매매·순매수 상위
       // (data/korea/market_funds.js, build_kr_market_funds.py) + 종목 수급 '일별 보기'.
       krFunds: true,
+      // 시장 탭 '테마' + 종목 분석 '이 종목의 테마' 칩 — DART 사업보고서 '사업의 내용' 근거 문장으로만 편입
+      // (data/korea/themes.js + data/korea/themes/<id>.json, build_kr_themes.py).
+      krThemes: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

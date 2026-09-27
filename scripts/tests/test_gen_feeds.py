@@ -73,6 +73,12 @@ def site(tmp_path):
          "purpose": "2026년 3분기 경영실적 발표", "link": "https://dart/ir1"},
         {"code": "322180", "company": "LS티라유텍", "date": "2026-09-30", "time": "15:00", "earnings": False},
     ]})
+    _write(root, "korea/lockups.json", {"releases": [
+        {"code": "0035S0", "company": "빅웨이브로보틱스", "date": "2026-10-29", "listingDate": "2026-09-29",
+         "shares": 690000, "pct": 6.48, "periods": ["1개월"], "types": {"벤처금융": 600000, "기타 주주": 90000},
+         "link": "https://www.38.co.kr/html/fund/?o=v&no=2294"},
+        {"code": "111111", "company": "먼미래", "date": "2029-09-29", "shares": 1, "pct": 0.1},   # 90일 창 밖
+    ]})
     _write(root, "industry_calendar.json", {"events": [
         {"id": "h8", "name_kr": "은행 대출 (H.8)", "date": "2026-09-30", "time_kst": "05:30", "note": "매주"},
     ]})
@@ -311,3 +317,13 @@ def test_calendar_feeds_include_holidays_expiry_and_kr_ir(built):
     # 미국 옵션 만기는 규칙 이벤트 하나만(달력 파일의 만기와 중복되지 않는다).
     assert len([e for e in us if e["SUMMARY"].startswith("[옵션") and e["DTSTART;VALUE=DATE"] == "20261016"]) == 1
 
+
+
+def test_kr_calendar_includes_lockup_releases(built):
+    out, _ = built
+    kr = {e["SUMMARY"]: e for e in _events((out / "calendar-kr.ics").read_bytes().decode("utf-8"))}
+    ev = kr["[보호예수 해제] 빅웨이브로보틱스 6.5%"]
+    assert ev["DTSTART;VALUE=DATE"] == "20261029"
+    assert "추정일" in ev["DESCRIPTION"] and r"690\,000주" in ev["DESCRIPTION"]  # ics 는 쉼표를 \, 로 이스케이프
+    assert ev["CATEGORIES"] == "보호예수"
+    assert not any("먼미래" in s for s in kr)

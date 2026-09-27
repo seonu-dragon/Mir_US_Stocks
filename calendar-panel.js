@@ -14,6 +14,8 @@ const _calPanelStates = new WeakMap();
 const CAL_PANEL_KIND_DOT = {
   earnings: "var(--primary)", dividend: "var(--good)", ipo: "var(--warn)",
   econ: "var(--text-2)", holiday: "var(--bad)", expiry: "var(--teal)",
+  // 보호예수 해제(국내) — 두 테마 토큰을 섞어 다른 종류 점과 구분되게(다크 모드에선 두 토큰이 같이 밝아진다).
+  lockup: "color-mix(in srgb, var(--primary) 50%, var(--bad))",
 };
 
 function calPanelWatchSet() {
@@ -35,7 +37,7 @@ function calPanelEnsureData() {
   const cfg = marketCfg();
   const keys = ["marketCalendar", "ipo"];
   if (cfg.id === "us") keys.push("usCalendar");
-  else keys.push("krIrSchedule", "krDividends");
+  else keys.push("krIrSchedule", "krDividends", "krLockups");
   keys.forEach((k) => {
     if (typeof FEATURE_DATA === "undefined" || !FEATURE_DATA[k]) return;
     const meta = FEATURE_DATA[k];
@@ -56,7 +58,8 @@ function calPanelCollect(today) {
     ev = ev.concat(core.fromUsCalendar(window.US_STOCK_CALENDAR, window.EARNINGS_CALENDAR_SNAPSHOT, names, core.addDays(today, -7)));
     ev = ev.concat(core.fromIpo(window.IPO_CALENDAR, "us"));
   } else {
-    ev = ev.concat(core.fromKrIr(window.KR_IR_SCHEDULE), core.fromKrDividends(window.KR_DIVIDENDS), core.fromIpo(window.IPO_CALENDAR, "kr"));
+    ev = ev.concat(core.fromKrIr(window.KR_IR_SCHEDULE), core.fromKrDividends(window.KR_DIVIDENDS), core.fromIpo(window.IPO_CALENDAR, "kr"),
+      core.fromKrLockups(window.KR_LOCKUPS));
   }
   const econ = (typeof calendarEventsCache !== "undefined" && Array.isArray(calendarEventsCache)) ? calendarEventsCache : [];
   ev = ev.concat(core.fromEcon(econ));
@@ -102,7 +105,7 @@ function calPanelItemHtml(e) {
   const info = e.info ? `<div class="calp-info">${escapeHtml(e.info)}</div>` : "";
   const link = e.link ? ` <a class="calp-link" href="${escapeHtml(e.link)}" target="_blank" rel="noopener">원문</a>` : "";
   return `<li class="calp-item${e.important ? " is-important" : ""}">
-    <span class="calp-tag" style="--calp-dot:${CAL_PANEL_KIND_DOT[e.kind] || "var(--muted)"}">${escapeHtml(core.KIND_LABEL[e.kind] || "")}</span>
+    <span class="calp-tag" style="--calp-dot:${CAL_PANEL_KIND_DOT[e.kind] || "var(--muted)"}">${escapeHtml((core.KIND_SHORT || core.KIND_LABEL)[e.kind] || "")}</span>
     <div class="calp-main"><div class="calp-line">${head}</div>${info}</div>
     <span class="calp-meta">${e.time ? `<span class="calp-time">${escapeHtml(e.time)}</span>` : ""}${mkt ? `<span class="calp-mkt">${mkt}</span>` : ""}${link}</span>
   </li>`;
@@ -134,7 +137,10 @@ function calPanelFootHtml(cfg) {
   const parts = [];
   parts.push("휴장·만기는 거래소 규칙으로 계산(거래소 공지가 우선) · 경제지표는 investing.com 중요도 보통 이상, 이번 주·다음 주만");
   if (cfg.id === "us") parts.push("미국 실적일은 Yahoo Finance 예정일로 회사 확정 전에는 추정일일 수 있음");
-  else parts.push(`국내 실적: ${(window.KR_IR_SCHEDULE && window.KR_IR_SCHEDULE.note) || "실적 전에 기업설명회(IR)를 여는 회사만 잡힙니다."}`);
+  else {
+    parts.push(`국내 실적: ${(window.KR_IR_SCHEDULE && window.KR_IR_SCHEDULE.note) || "실적 전에 기업설명회(IR)를 여는 회사만 잡힙니다."}`);
+    parts.push("보호예수 해제: 상장일 + 매각제한 기간으로 계산한 추정일이며 매도가 '가능해지는' 날입니다(매도 예정 아님). 기관 수요예측 확약 배정 물량은 빠져 있습니다 · 출처 38커뮤니케이션(투자설명서 보호예수 표)");
+  }
   const stamp = mc && mc.updatedAtKst ? ` · 달력 기준 ${escapeHtml(mc.updatedAtKst)}` : "";
   return `<p class="calp-foot">${parts.map(escapeHtml).join("<br>")}${stamp}</p>`;
 }
@@ -144,7 +150,16 @@ function renderCalendarPanel(host, opts) {
   const core = window.MirCalendarCore;
   const cfg = marketCfg();
   const st = calPanelState(host, opts);
+  // 다른 화면의 '캘린더에서 보기'(lockups.js openLockupCalendar)가 칩을 정해 두고 연다 — 전체 화면 캘린더만 받는다.
+  if (!st.compact && window._calPanelPendingKind) {
+    st.kind = window._calPanelPendingKind;
+    st.anchor = core.kstToday();
+    st.selected = null;
+    window._calPanelPendingKind = null;
+  }
   const today = core.kstToday();
+  // 시장 전용 칩(국내 보호예수 해제)을 고른 채 시장을 바꾸면 전체로 되돌린다.
+  if (core.kindsFor && !core.kindsFor(cfg.id).some((k) => k.id === st.kind)) st.kind = "all";
   const range = core.rangeFor(st.view, st.anchor);
   const watchSet = calPanelWatchSet();
   const all = calPanelCollect(today);
@@ -154,7 +169,7 @@ function renderCalendarPanel(host, opts) {
   const byDate = core.kindsByDate(core.filterEvents(inRange, { kind: st.kind }));
   const loading = !window.MARKET_CALENDAR && !(typeof _featureDataFailed !== "undefined" && _featureDataFailed.marketCalendar);
 
-  const chips = core.KINDS.map((k) => `<button type="button" data-cal-kind="${k.id}" class="${st.kind === k.id ? "is-active" : ""}" aria-pressed="${st.kind === k.id}">${escapeHtml(k.label)}<span class="calp-count">${counts[k.id] || 0}</span></button>`).join("");
+  const chips = (core.kindsFor ? core.kindsFor(cfg.id) : core.KINDS).map((k) => `<button type="button" data-cal-kind="${k.id}" class="${st.kind === k.id ? "is-active" : ""}" aria-pressed="${st.kind === k.id}">${escapeHtml(k.label)}<span class="calp-count">${counts[k.id] || 0}</span></button>`).join("");
   const [ay, am] = st.anchor.split("-").map(Number);
   const title = st.view === "month" ? `${ay}년 ${am}월`
     : `${Number(range.start.slice(5, 7))}월 ${Number(range.start.slice(8))}일 ~ ${Number(range.end.slice(5, 7))}월 ${Number(range.end.slice(8))}일`;

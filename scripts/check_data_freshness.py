@@ -29,6 +29,7 @@
     py scripts/check_data_freshness.py --group market-calendar    # market-calendar.yml 말미
     py scripts/check_data_freshness.py --group etf-holdings       # market-calendar.yml etf 잡
     py scripts/check_data_freshness.py --group company-logos      # company-info.yml logos 잡
+    py scripts/check_data_freshness.py --group kr-themes          # company-info.yml themes 잡
     py scripts/check_data_freshness.py --group kr-etf-holdings    # kr-valuation-band.yml etf 잡
 
 임계는 주말·연휴를 감안해 여유 있게 잡았다 — 여기서 울리면 진짜 문제다.
@@ -78,6 +79,8 @@ CHECKS = {
         # 신호 성적표 — US·KR 워크플로우가 매일 다시 집계한다(기록할 신호가 없어도 갱신).
         ("data/signal_scorecard.json", 4, False),
         ("data/sentiment_gauges.json", 6, False),
+        # 국내↔미국 연관 종목 — US·KR 워크플로우가 매일 다시 만든다(주말에도 KR 브리핑이 돈다). 0건 = 이상.
+        ("data/cross_market_links.json", 4, True),
     ],
     "kr": [
         ("data/korea/market_snapshot.json", 2, False),
@@ -111,6 +114,7 @@ CHECKS = {
         ("data/korea/earnings_reactions.json", 6, False),  # 실적 시즌 밖엔 0건이 정상
         # 시장경보·이상 종목(KIND + 스냅샷 일봉). 관리종목·거래정지만으로도 늘 수백 건이라 0건 = 이상.
         ("data/korea/market_alerts.json", 6, True),
+        ("data/cross_market_links.json", 4, True),
     ],
     # kr-disclosures.yml(평일 15:30) — 세 빌더 모두 continue-on-error 라 DART 키가
     # 죽어도 초록이었다. 주말·연휴를 감안해 4~5일.
@@ -248,11 +252,18 @@ CHECKS = {
     "price-targets": [
         ("data/us_price_targets/index.json", 5, True),
     ],
+    # company-info.yml themes 잡(토요일) — 국내 테마 분류. 인덱스 updatedAtKst 는 실행마다 새로 쓴다(바뀐 원문이
+    # 없어도). 주 1회라 한 번 실패를 바로 잡도록 8일. 편입 0건(count)이면 실패 — 규칙·파서가 통째로 깨진 날이다.
+    "kr-themes": [
+        ("data/korea/themes.json", 8, True),
+    ],
     # market-calendar.yml(매일 06:40 KST) — 휴장·만기 달력(오프라인 계산)은 0건이면 실패, 국내 실적 IR 은 비수기
     # 0건이 정상이라 나이만. ETF 구성(월 1회, etf 잡)은 40일.
     "market-calendar": [
         ("data/market_calendar.json", 3, True),
         ("data/korea/ir_schedule.json", 3, False),
+        # 보호예수 해제 일정(38.co.kr, continue-on-error 스텝). 해제 일정은 늘 수십 건이라 0건이면 실패.
+        ("data/korea/lockups.json", 4, True),
     ],
     "etf-holdings": [
         ("data/etf_holdings/index.json", 40, True),

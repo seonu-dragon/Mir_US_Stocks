@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=c21851eeed" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=c21851eeed"></noscript>
+    <link rel="preload" href="styles.css?v=eb967d0d1e" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=eb967d0d1e"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=3b1a9a908d"></script>
+    <script src="build_id.js?v=2cbbc5fd36"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -587,6 +587,8 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="home-status-slot" id="homeStatusSlot" hidden></section>
           <section class="home-briefing" id="homeBriefing" hidden aria-label="AI 브리핑 요약"></section>
           <section class="movers-board" id="moversBoard" hidden aria-label="오늘의 특징주"></section>
+          <!-- 간밤 미국 연관주(KR) · 국내 장 연관주(US) — cross-market.js renderCrossMarketHome -->
+          <section class="xm-home" id="crossMarketHome" hidden aria-label="국내·미국 연관 종목 움직임"></section>
           <section class="industry-home-card" id="industryHomeCard" hidden aria-label="산업 신호등"></section>
           <section class="kr-highlights" id="krHighlights" hidden></section>
       <section class="watchlist-bar" id="watchlistBar" hidden>
@@ -782,6 +784,7 @@ html[data-market="kr"][data-theme="dark"] {
           <button class="sub-tab" data-sub="signals" data-advanced="true">시그널</button>
           <button class="sub-tab" data-sub="industry" data-advanced="true">산업 지표</button>
           <button class="sub-tab" data-sub="krflow">수급·자금</button>
+          <button class="sub-tab" data-sub="krtheme">테마</button>
         </nav>
 
         <div class="tab-leaf is-active" id="tab-map">
@@ -1283,6 +1286,14 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <div id="krFlowMarket"></div>
         </div>
+        <!-- 국내 테마 분류·테마 등락(kr-themes.js) — 국내 전용. 편입은 DART 사업보고서 근거 문장이 있을 때만 -->
+        <div class="tab-leaf" id="tab-krtheme">
+          <div class="section-title">
+            <h2>테마</h2>
+            <p>사업보고서 '사업의 내용' 원문 문장을 근거로 묶은 테마와 편입 종목의 등락입니다. 종목마다 근거 문장과 출처를 함께 보여 줍니다.</p>
+          </div>
+          <div id="krThemeMarket"></div>
+        </div>
       </section>
 
       <!-- ==================== 종목 탭 (분석 · 찾기 · 비교 · 공시) ==================== -->
@@ -1328,6 +1339,8 @@ html[data-market="kr"][data-theme="dark"] {
               <button type="button" class="ghost compact-btn" id="shareTickerLink" title="현재 종목 화면 링크 복사">종목 링크 복사</button>
             </div>
             <section class="range52-card sd-block animate-reveal" id="range52Bar"></section>
+            <!-- 이 종목의 테마(kr-themes.js renderStockThemes) — KR 전용, 칩을 누르면 사업보고서 근거 문장 -->
+            <section class="sd-block kt-stock animate-reveal" id="stockThemes" hidden></section>
             <button type="button" class="ghost sd-more-btn" id="stockSideMore" aria-expanded="false" aria-controls="stockSideExtra">투자정보 더보기</button>
             <div class="sd-extra" id="stockSideExtra">
               <!-- 투자정보(quote-info.js investInfoHtml) — renderFundamentals 가 채운다 -->
@@ -1532,6 +1545,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="news-card animate-reveal" id="searchNews"></section>
               <!-- 이 종목이 따라가는 산업 지표(industry.js renderIndustryReverse) — INDUSTRY_BY_TICKER 역인덱스 -->
               <section class="industry-reverse-card animate-reveal" id="industryReverse" hidden></section>
+              <!-- 해외/국내 연관 종목(cross-market.js renderCrossMarketCard) — 관계 사전 + 수익률 상관 -->
+              <section class="xm-card animate-reveal" id="crossMarketCard" hidden></section>
               <!-- 위험 · 시즈널리티(stock-health.js) — 일봉 종가로 계산한 과거 통계 -->
               <section class="range52-card sh-card animate-reveal" id="stockRisk" hidden></section>
               <!-- 기업개요(company-info.js renderCompanyInfo) — KR DART · US SEC 해시 샤드 -->
@@ -1569,6 +1584,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="stock-events-card animate-reveal" id="stockEvents"></section>
               <!-- 과거 이벤트 반응(event-study.js renderStockEventStudy) — data/event_study/tk 샤드 하나만 받는다 -->
               <section class="es-card animate-reveal" id="stockEventStudy" hidden></section>
+              <!-- 보호예수 해제(lockups.js renderLockupCard) — 국내 신규 상장주만, data/korea/lockups.js(lazy) -->
+              <section class="es-card lk-card animate-reveal" id="krLockupCard" hidden></section>
             </div>
             <div class="sd-view" id="sdv-flow" data-view="flow" role="tabpanel">
               <!-- 미국 ETF 구성 종목 / 이 종목을 담은 ETF(etf-holdings.js renderEtfHoldings) — SEC N-PORT 샤드 하나만 받는다 -->
@@ -2249,6 +2266,8 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
             <label class="grow">검색<input id="dilutionSearch" type="search" placeholder="종목명" autocomplete="off"></label>
           </div>
+          <!-- 다가오는 보호예수 해제(lockups.js renderLockupOverhang) — 국내만 -->
+          <div class="lk-ov" id="dilutionLockups" hidden></div>
           <div class="institutional-meta" id="dilutionMeta"></div>
           <div class="insider-table-wrap" id="dilutionTable"></div>
         </div>
@@ -2617,6 +2636,7 @@ html[data-market="kr"][data-theme="dark"] {
             </label>
           </div>
           <div class="watch-alert-results" id="watchAlertResults"></div>
+          <div class="push-alert-box" id="pushAlertBox" aria-label="푸시 알림 설정"></div>
         </div>
         </div>
 
@@ -3255,7 +3275,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=90ddbede6e"></script>
+    <script src="market_config.js?v=7b07385d6f"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3274,7 +3294,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="community.js?v=567e03431f"></script>
     <script src="ai-mode.js?v=dca21f04cc"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=4d75c17333"></script>
+    <script src="disclosure-trackers.js?v=9edc009bf0"></script>
     <script src="movers.js?v=e7ddc838b5"></script>
     <script src="portfolio.js?v=667afbf126"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
@@ -3291,7 +3311,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=e8f459d6d3"></script>
+    <script src="feature-data.js?v=af77d10f10"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3301,6 +3321,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="treemap.js?v=7face7d880"></script>
     <script src="industry-chart-core.js?v=012453fc55"></script>
     <script src="industry.js?v=f5bf50edee"></script>
+    <script src="cross-market-core.js"></script>
+    <script src="cross-market.js"></script>
     <script src="market-indicators-core.js?v=9ee5403887"></script>
     <script src="market-indicators.js?v=1821bc8c38"></script>
     <script src="valuation-band-core.js?v=8169dae7ed"></script>
@@ -3324,6 +3346,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="kr-panels.js?v=10bb49b991"></script>
     <script src="kr-flow-core.js?v=40d1f6309b"></script>
     <script src="kr-flow-panels.js?v=e0a5c6bc8b"></script>
+    <script src="kr-themes-core.js"></script>
+    <script src="kr-themes.js"></script>
     <script src="kr-alerts.js?v=c549e24ad9"></script>
     <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
     <script src="signal-scorecard.js?v=6fc77f71e2"></script>
@@ -3331,7 +3355,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study.js?v=bcfb67eb71"></script>
     <script src="timeline-core.js?v=bce5c51ba9"></script>
     <script src="timeline.js?v=29e0e9f49d"></script>
-    <script src="watchlist.js?v=2668548665"></script>
+    <script src="watchlist.js?v=5223caf8cb"></script>
+    <script src="push-alerts-core.js?v=fc049baf03"></script>
+    <script src="web-push.js?v=5e1529522c"></script>
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="financials.js?v=d751bc6672"></script>
@@ -3351,14 +3377,17 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table.js?v=c762a4e24a"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="mobile-cards.js?v=aae191cacc"></script>
-    <script src="calendar-panel-core.js?v=dc6d73e0b5"></script>
-    <script src="calendar-panel.js?v=cde775a5ef"></script>
+    <script src="calendar-panel-core.js?v=261cacf9f0"></script>
+    <script src="calendar-panel.js?v=16ce5f782e"></script>
+    <script src="lockup-core.js?v=68e009b38b"></script>
+    <script src="lockups.js?v=b4b7282745"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
+    <script src="app.js?v=cbb9d9d340"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
     <script src="lookthrough.js?v=61f0c3fb14"></script>
-    <script src="app.js?v=f1fe47e879"></script>
+    <script src="app.js?v=cbb9d9d340"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=1d2bb06eeb"></script>

@@ -1,5 +1,9 @@
 # 실시간 뉴스·차트 프록시 (Cloudflare Worker)
 
+> 이 폴더에는 워커가 둘이다: `yahoo-proxy.js`(아래 — 뉴스·차트·커뮤니티·챗봇·동기화)와
+> `mir-push.js`(Web Push 알림, 별도 워커 `mir-push`). 푸시 워커의 배포·바인딩·크론은
+> DEPLOY.md "Web Push 알림 워커", 자체 검증은 `node worker/test_push.mjs`.
+
 GitHub Pages는 정적 호스팅이라 방문자가 페이지를 열어도 서버에서 파이썬을 실행할 수 없습니다.
 이 Worker는 Cloudflare 무료 요금제에서 돌아가며, 종목 분석 페이지를 열 때 야후 파이낸스
 **뉴스와 실제 차트**를 그 자리에서 가져와 CORS 허용 JSON으로 돌려줍니다.

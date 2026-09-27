@@ -16092,3 +16092,24 @@ body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !impo
   .lk-ov-list { grid-template-columns: 1fr; }
   .lk-ov-head .es-link { margin-left: 0; }
 }
+
+/* 8-K 3줄 요약(규칙/AI) — 공시 › 8-K 피드 행과 종목 통합 타임라인 항목 (sec-filings-core.js) */
+.sec-sum { margin-top: 5px; display: flex; gap: 6px; align-items: flex-start; min-width: 0; }
+.sec-sum ul { margin: 0; padding: 0; list-style: none; min-width: 0; font-size: var(--fs-sub); line-height: 1.45; color: var(--text-2); }
+.sec-sum li { overflow-wrap: anywhere; }
+.sec-sum li + li { margin-top: 1px; }
+.sec-sum-src {
+  flex: none; font-size: var(--fs-cap); padding: 1px 6px; border-radius: var(--r-sm);
+  border: 1px solid var(--line); color: var(--text-muted); white-space: nowrap; line-height: 1.5;
+}
+.sec-sum-ai { border-color: color-mix(in srgb, var(--accent) 45%, transparent); color: var(--accent); }
+.tl-sum { margin-top: 4px; }
+/* Form 144 매도 예정(내부자 탭) */
+.f144-status { margin: 4px 0 6px; flex-wrap: wrap; }
+.f144-status b { font-weight: 600; margin-left: 2px; font-variant-numeric: tabular-nums; }
+.f144-note { font-size: var(--fs-cap); margin: 0 0 8px; line-height: 1.5; }
+.f144-broker { font-size: var(--fs-cap); color: var(--text-muted); max-width: 180px; }
+@media (max-width: 640px) {
+  .sec-sum { flex-direction: column; gap: 3px; }
+  .f144-table th:nth-child(7), .f144-table td:nth-child(7) { display: none; }  /* 브로커 열은 폰에서 숨김 */
+}

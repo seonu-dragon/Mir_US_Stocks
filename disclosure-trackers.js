@@ -69,8 +69,88 @@ function setupInsiderControls() {
   }
 }
 
+// ===== Form 144 매도 예정 신고 (내부자 탭의 'Form 144' 필터) =====
+// 계산·문구는 sec-filings-core.js(window.MirSecFilings). 데이터는 lazy(form144) — 처음 고를 때 받는다.
+let insiderF144Status = "all";
+function renderForm144Table() {
+  const wrap = byId("insiderTable");
+  const meta = byId("insiderMeta");
+  const cluster = byId("insiderCluster");
+  if (cluster) cluster.innerHTML = "";
+  if (!wrap) return;
+  const core = window.MirSecFilings;
+  const payload = window.FORM144_FILINGS;
+  if (!payload) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = '<p class="muted">Form 144 데이터를 불러오는 중…</p>';
+    if (typeof ensureFeatureData === "function") {
+      ensureFeatureData("form144").then((ok) => {
+        if (insiderKind !== "f144") return;
+        if (ok) renderForm144Table();
+        else wrap.innerHTML = '<p class="muted">아직 Form 144 데이터가 없습니다.</p>';
+      });
+    }
+    return;
+  }
+  const rowsAll = Array.isArray(payload.filings) ? payload.filings : [];
+  if (!core || !rowsAll.length) {
+    if (meta) meta.innerHTML = "";
+    wrap.innerHTML = '<p class="muted">아직 Form 144 데이터가 없습니다.</p>';
+    return;
+  }
+  if (meta) {
+    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || rowsAll.length).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC Form 144")}`
+      + (payload.insiderUpdatedAtKst ? ` · Form 4 대조 기준 ${escapeHtml(payload.insiderUpdatedAtKst)}` : "");
+  }
+  const counts = core.countForm144(rowsAll);
+  const rows = core.filterForm144(rowsAll, insiderF144Status, insiderQuery);
+  const shown = rows.slice(0, 300);
+  const seg = [["all", "전체"], ["sold", "실제 매도 확인됨"], ["pending", "아직"], ["unknown", "판단 불가"]]
+    .filter(([k]) => k === "all" || counts[k])
+    .map(([k, label]) => `<button type="button" data-f144-status="${k}" class="${insiderF144Status === k ? "is-active" : ""}" aria-pressed="${insiderF144Status === k}">${escapeHtml(label)} <b>${Number(counts[k] || 0).toLocaleString()}</b></button>`)
+    .join("");
+  const body = shown.map((r) => {
+    const st = core.form144Status(r);
+    const pct = core.form144Pct(r);
+    const tone = st.key === "sold" ? "ins-sell" : "ins-neutral";
+    return `<tr>
+      <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button><div class="ins-sub">${escapeHtml(r.issuer || "")}</div></td>
+      <td class="ins-owner"><span>${escapeHtml(r.person || "")}</span><em>${escapeHtml(r.relation || "")}</em></td>
+      <td class="ins-num">${insiderFmtShares(r.shares)}${pct !== null ? `<div class="ins-sub">발행주식의 ${pct < 0.01 ? "&lt;0.01" : pct.toFixed(2)}%</div>` : ""}</td>
+      <td class="ins-num">${insiderFmtUsd(r.marketValue)}</td>
+      <td class="ins-date">${escapeHtml(r.approxSaleDate || "—")}</td>
+      <td class="f144-broker">${escapeHtml(r.broker || "—")}</td>
+      <td><span class="ins-code ${tone}" title="${escapeHtml(st.detail)}">${escapeHtml(st.label)}</span>${st.key === "sold" ? `<div class="ins-sub">${escapeHtml(st.detail)}</div>` : ""}</td>
+      <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = `
+    <div class="insider-filter f144-status" role="group" aria-label="실제 매도 확인 여부">${seg}</div>
+    <p class="muted f144-note">Form 144 는 계열인이 팔기 전에 내는 <b>매도 예정</b> 신고입니다. 시가는 신고 시점 값이고, '실제 매도 확인됨'은 같은 이름의 Form 4 매도(예정일 3일 전~90일 뒤)를 찾은 것입니다. '아직'은 매도하지 않았다는 뜻이 아닙니다(Form 4 는 매도 후 2영업일 안에 나오고, 신탁·법인 명의면 못 찾습니다). 추천 아님.</p>
+    ${shown.length ? `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건 표시${rows.length > 300 ? " (검색으로 좁혀보세요)" : ""}</div>
+    <table class="insider-table table-wide f144-table">
+      <thead><tr>
+        <th>신고일</th><th>종목</th><th>신고인 / 관계</th><th class="ins-num">예정 주식수</th><th class="ins-num">시가</th>
+        <th>예정일</th><th>브로커</th><th>실제 매도</th><th class="ins-num">링크</th>
+      </tr></thead>
+      <tbody>${body}</tbody>
+    </table>` : '<p class="muted">조건에 맞는 신고가 없습니다.</p>'}`;
+  delegateTickerClicks(wrap, ".ins-ticker");
+  if (!wrap.dataset.f144Bound) {
+    wrap.dataset.f144Bound = "1";
+    wrap.addEventListener("click", (event) => {
+      const b = event.target.closest("[data-f144-status]");
+      if (!b || !wrap.contains(b)) return;
+      insiderF144Status = b.dataset.f144Status || "all";
+      renderForm144Table();
+    });
+  }
+}
+
 function renderInsiderTrades() {
   setupInsiderControls();
+  if (insiderKind === "f144") { renderForm144Table(); return; }
   renderInsiderCluster();
   const wrap = byId("insiderTable");
   const meta = byId("insiderMeta");
@@ -221,6 +301,15 @@ function setupEventsControls() {
   const s = byId("eventsSearch");
   if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", debounce(() => { eventsQuery = s.value; renderMaterialEvents(); }, 300)); }
 }
+// 8-K 3줄 요약(규칙/AI) — 출처 라벨 + 줄. 요약이 없으면 빈 문자열(Item 칩 + 원문 링크만).
+function eventsSummaryHtml(r) {
+  const core = window.MirSecFilings;
+  if (!core) return "";
+  const s = core.eightkLines(r);
+  if (!s.lines.length) return "";
+  return `<div class="sec-sum"><span class="sec-sum-src sec-sum-${escapeHtml(s.src)}" title="${escapeHtml(core.SUMMARY_NOTE)}">${escapeHtml(s.label)}</span><ul>${s.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul></div>`;
+}
+
 function renderMaterialEvents() {
   setupEventsControls();
   const wrap = byId("eventsTable");
@@ -232,11 +321,14 @@ function renderMaterialEvents() {
     wrap.innerHTML = `<p class="muted">아직 8-K 데이터가 없습니다.</p>`;
     return;
   }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 8-K")}${typeof esTrackerLink === "function" ? esTrackerLink(["us_8k_101", "us_earn"]) : ""}`;
+  const summarized = payload.events.filter((e) => e && (e.summary || e.aiSummary)).length;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건${summarized ? ` · 3줄 요약 ${summarized.toLocaleString()}건` : ""} · 출처 ${escapeHtml(payload.source || "SEC 8-K")}${typeof esTrackerLink === "function" ? esTrackerLink(["us_8k_101", "us_earn"]) : ""}`;
   const q = eventsQuery.trim().toLowerCase();
   let rows = payload.events;
   if (eventsHot === "hot") rows = rows.filter((r) => r.hot);
-  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.items || []).some((i) => (i.label || "").toLowerCase().includes(q)));
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.items || []).some((i) => (i.label || "").toLowerCase().includes(q))
+    // 3줄 요약(상대방·임원 이름 등)도 검색한다.
+    || (window.MirSecFilings ? window.MirSecFilings.eightkLines(r).lines.join(" ").toLowerCase().includes(q) : false));
   const shown = rows.slice(0, 300);
   if (!shown.length) { wrap.innerHTML = `<p class="muted">조건에 맞는 공시가 없습니다.</p>`; return; }
   const body = shown.map((r) => {
@@ -244,7 +336,7 @@ function renderMaterialEvents() {
     return `<tr>
       <td class="ins-date">${escapeHtml(r.fileDate || "")}</td>
       <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker || "")}">${escapeHtml(r.ticker || "")}</button><div class="ins-sub">${escapeHtml(r.company || "")}</div></td>
-      <td>${items}</td>
+      <td>${items}${eventsSummaryHtml(r)}</td>
       <td class="ins-num"><a href="${escapeHtml(discHref(r.link))}" target="_blank" rel="noopener">원문</a></td>
     </tr>`;
   }).join("");

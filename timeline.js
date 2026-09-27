@@ -2,7 +2,7 @@
 //
 // 계산(모으기·큰 등락 판정·사유 붙이기)은 timeline-core.js(window.MirTimeline). 여기는 전역 모으기·캐시·그리기.
 // 자료는 전부 이미 레포에 커밋돼 브라우저가 받는 전역이다 — 상세 파일(earningsHistory·dividends·splits·일봉),
-// US MATERIAL_EVENTS·US_DILUTION·INSIDER_TRADES·ACTIVIST_STAKES·EARNINGS_RELEASES·EARNINGS_MOVE_COMPARE,
+// US MATERIAL_EVENTS(3줄 요약 포함)·US_DILUTION·INSIDER_TRADES·FORM144_FILINGS·ACTIVIST_STAKES·EARNINGS_RELEASES·EARNINGS_MOVE_COMPARE,
 // KR KR_DISCLOSURES·KR_EVENT_DETAILS·KR_DIVIDENDS·KR_CONTRACTS·KR_OWNERSHIP·KR_EARNINGS_REACTIONS·KR_CONSENSUS,
 // 특징주 MOVERS_REASONS, 이벤트 스터디 종목 샤드(data/event_study/tk, 약 5년 과거 이벤트). 새 외부 호출·LLM 없음.
 // 대부분 지연 로드라 늦게 도착한다 — refreshFeatureViews 가 renderStockTimeline 과 refreshChartEventsIfStale 을
@@ -72,6 +72,7 @@ function tlSources(item) {
     usFilings: kr ? null : tlArr(w.MATERIAL_EVENTS, "events"),
     usDilution: kr ? null : tlArr(w.US_DILUTION, "rows"),
     insiders: kr ? null : tlArr(w.INSIDER_TRADES, "trades"),
+    form144: kr ? null : tlArr(w.FORM144_FILINGS, "filings"),
     activist: kr ? null : tlArr(w.ACTIVIST_STAKES, "filings"),
     krFilings: kr ? tlArr(w.KR_DISCLOSURES, "disclosures") : null,
     krEventDetails: kr && w.KR_EVENT_DETAILS ? w.KR_EVENT_DETAILS.details : null,
@@ -138,10 +139,14 @@ function tlItemHtml(it, momentByDate, code) {
   const link = /^https?:\/\//i.test(it.link || "") ? `<a class="tl-act" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
   const acts = `${link}${tlGotoHtml(it, code)}`;
   const hist = it.src === "history" ? '<span class="tl-hist">과거 기록</span>' : "";
+  // 8-K 3줄 요약(규칙/AI) — 출처 라벨을 달아 detail(Item 제목) 아래에 줄로.
+  const sum = Array.isArray(it.lines) && it.lines.length
+    ? `<div class="sec-sum tl-sum"><span class="sec-sum-src sec-sum-${escapeHtml(it.linesSrc || "rule")}">${escapeHtml(it.linesLabel || "요약")}</span><ul>${it.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul></div>`
+    : "";
   return `<li class="tl-item tl-cat-${escapeHtml(it.cat)}">
     <time datetime="${escapeHtml(it.date)}">${escapeHtml(tlDate(it.date))}</time>
     <span class="tl-badge">${escapeHtml(core.CAT_LABEL[it.cat] || it.cat)}</span>
-    <div class="tl-body"><b class="tl-title${tone}">${escapeHtml(it.title)}</b>${hist}${detail ? `<p>${escapeHtml(detail)}</p>` : ""}${acts ? `<div class="tl-acts">${acts}</div>` : ""}</div>
+    <div class="tl-body"><b class="tl-title${tone}">${escapeHtml(it.title)}</b>${hist}${detail ? `<p>${escapeHtml(detail)}</p>` : ""}${sum}${acts ? `<div class="tl-acts">${acts}</div>` : ""}</div>
   </li>`;
 }
 
@@ -163,7 +168,8 @@ function tlCoverageHtml(kr) {
     if (w.KR_OWNERSHIP) li.push(`<li><b>5%룰·임원 소유</b> 최근 ${Number(w.KR_OWNERSHIP.windowDays) || 7}일 지분공시.</li>`);
     li.push("<li><b>배당·수주·잠정실적 반응</b> DART 원문 파싱본(최근 약 180일). <b>목표가</b> 컨센서스에 실린 최근 증권사 리포트만.</li>");
   } else {
-    if (w.MATERIAL_EVENTS) li.push(`<li><b>8-K</b> ${escapeHtml(win(w.MATERIAL_EVENTS.events, "fileDate"))} 수집분(첨부 서류만 있는 건은 뺐습니다).</li>`);
+    if (w.MATERIAL_EVENTS) li.push(`<li><b>8-K</b> ${escapeHtml(win(w.MATERIAL_EVENTS.events, "fileDate"))} 수집분(첨부 서류만 있는 건은 뺐습니다). ${escapeHtml(window.MirSecFilings ? window.MirSecFilings.SUMMARY_NOTE : "")}</li>`);
+    if (w.FORM144_FILINGS) li.push(`<li><b>Form 144 매도 예정</b> ${escapeHtml(win(w.FORM144_FILINGS.filings, "fileDate"))} 신고분. '실제 매도 확인됨'은 같은 이름의 Form 4 매도를 찾은 것이고, '아직'은 매도하지 않았다는 뜻이 아닙니다(명의·표기가 다르면 못 찾음).</li>`);
     if (w.ACTIVIST_STAKES) li.push(`<li><b>13D/G</b> ${escapeHtml(win(w.ACTIVIST_STAKES.filings, "fileDate"))}.</li>`);
     if (w.US_DILUTION) li.push(`<li><b>증자 서류(S-3·424B5)</b> ${escapeHtml(win(w.US_DILUTION.rows, "fileDate"))}.</li>`);
     li.push(w.INSIDER_TRADES
@@ -191,6 +197,10 @@ function renderStockTimeline(item) {
   // 이 카드만 쓰는 가벼운 지연 데이터(US 증자 서류 ~180KB). 도착하면 refreshFeatureViews 가 다시 그린다.
   if (!kr && !window.US_DILUTION && typeof ensureFeatureData === "function") {
     ensureFeatureData("usDilution").then((ok) => { if (ok && typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); });
+  }
+  // Form 144 매도 예정 신고(~수백 KB, lazy) — 같은 방식.
+  if (!kr && !window.FORM144_FILINGS && typeof ensureFeatureData === "function") {
+    ensureFeatureData("form144").then((ok) => { if (ok && typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); });
   }
   const data = tlDataFor(item);
   const counts = core.countByCat(data.items);

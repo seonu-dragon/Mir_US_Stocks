@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=694f6986a2" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=694f6986a2"></noscript>
+    <link rel="preload" href="styles.css?v=c65895d7eb" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=c65895d7eb"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=c49989137e"></script>
+    <script src="build_id.js?v=9bdf8b823a"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2441,6 +2441,7 @@ html[data-market="kr"][data-theme="dark"] {
           <details class="about-data">
             <summary>이 데이터는?</summary>
             <p>SEC Form 4 공시 기반 임원·이사·10%+ 주주의 매매입니다. <b>P=공개시장 매수</b>, <b>S=매도</b>. 추적 종목 한정, 비파생(직접 보유) 거래만 표시합니다.</p>
+            <p><b>Form 144 매도 예정</b>은 계열인이 주식을 팔기 전에 내는 신고(예정 주식수·신고 시점 시가·예정일·브로커)이고, 같은 이름의 Form 4 매도가 나왔는지 대조해 '실제 매도 확인됨 / 아직'을 붙입니다.</p>
           <div class="data-disclaimer">
             <strong>공시 지연 주의</strong>
             <span>거래 후 2영업일 내 공시가 원칙이나 지연될 수 있고 실시간이 아닙니다. 옵션 행사(M)·세금정산(F)·부여(A)·증여(G)도 함께 표시되며 투자 권유가 아닙니다.</span>
@@ -2452,6 +2453,7 @@ html[data-market="kr"][data-theme="dark"] {
               <button type="button" data-kind="all" class="is-active">전체</button>
               <button type="button" data-kind="buy">매수 P</button>
               <button type="button" data-kind="sell">매도 S</button>
+              <button type="button" data-kind="f144" title="SEC Form 144 — 계열인이 팔기 전에 내는 매도 예정 신고">Form 144 매도 예정</button>
             </div>
             <label class="grow">
               검색
@@ -2495,13 +2497,14 @@ html[data-market="kr"][data-theme="dark"] {
           <details class="about-data">
             <summary>이 데이터는?</summary>
             <p>중대 이벤트 발생 시 제출하는 8-K입니다. 실적 발표·임원 변동·M&A·계약 등을 item 기준으로 분류해 보여줍니다. 추적 종목 한정.</p>
+            <p><b>3줄 요약</b>: 주요 Item(계약 체결·종료, 인수·매각, 채무, 구조조정, 상장 유지, 감사인 교체, 재무제표 재작성, 임원 변동, 주총, 배당·자사주 등)은 8-K 본문에서 <b>규칙 요약</b>(정해진 문형으로 날짜·금액·상대방·임원 이름/직책 추출, 숫자·이름은 원문 표기 그대로)을 붙입니다. 시총 상위 일부는 <b>AI 요약</b>(원문에 없는 숫자가 든 줄은 버림)을 씁니다. 뽑지 못하면 Item 제목과 원문 링크만 보여 줍니다. 자동 요약이라 틀릴 수 있습니다.</p>
           </details>
           <div class="insider-controls">
             <div class="insider-filter" id="eventsHotFilter" role="group" aria-label="중요도 필터">
               <button type="button" data-hot="all" class="is-active">전체</button>
               <button type="button" data-hot="hot">주요만</button>
             </div>
-            <label class="grow">검색<input id="eventsSearch" type="search" placeholder="티커·기업·이벤트" autocomplete="off"></label>
+            <label class="grow">검색<input id="eventsSearch" type="search" placeholder="티커·기업·이벤트·인물" autocomplete="off"></label>
           </div>
           <div class="institutional-meta" id="eventsMeta"></div>
           <div class="insider-table-wrap" id="eventsTable"></div>
@@ -3298,7 +3301,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="community.js?v=567e03431f"></script>
     <script src="ai-mode.js?v=dca21f04cc"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
-    <script src="disclosure-trackers.js?v=9edc009bf0"></script>
+    <script src="sec-filings-core.js"></script>
+    <script src="disclosure-trackers.js?v=4fcc0214d1"></script>
     <script src="movers.js?v=e7ddc838b5"></script>
     <script src="portfolio.js?v=667afbf126"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
@@ -3315,7 +3319,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="fmt.js?v=293e1c98f6"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=af8e85e830"></script>
+    <script src="feature-data.js?v=ab86517654"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=9c5a008760"></script>
     <script src="quote-info.js?v=a9172ce474"></script>
@@ -3357,8 +3361,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="signal-scorecard.js?v=6fc77f71e2"></script>
     <script src="event-study-core.js?v=98c430e41a"></script>
     <script src="event-study.js?v=bcfb67eb71"></script>
-    <script src="timeline-core.js?v=bce5c51ba9"></script>
-    <script src="timeline.js?v=29e0e9f49d"></script>
+    <script src="timeline-core.js?v=74aa63cc17"></script>
+    <script src="timeline.js?v=931239cd88"></script>
     <script src="watchlist.js?v=5223caf8cb"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=5e1529522c"></script>
@@ -3389,7 +3393,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="lockups.js?v=b4b7282745"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=9953d2621e"></script>
+    <script src="app.js?v=83fd394332"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

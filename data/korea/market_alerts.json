@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-09-27 21:51 KST",
-  "baseDate": "2026-09-23",
-  "count": 439,
+  "updatedAtKst": "2026-09-28 23:50 KST",
+  "baseDate": "2026-09-11",
+  "count": 546,
   "sources": {
     "kind": "KRX KIND 시장경보·투자유의 (kind.krx.co.kr)",
     "limits": "네이버 금융 m.stock 등락률 목록 (상한·하한 표시)",
@@ -10,431 +10,1087 @@
   "note": "시장경보·거래정지·관리종목은 KRX 공식 지정 현황. 52주 신고·신저가는 장중 고가·저가가 직전 251거래일 범위를 넘은 종목, 거래대금 급증은 종가×거래량 근사치의 20일 평균 대비 3배 이상(당일 30억원 이상). 매매 신호가 아니라 정보. 단기과열·VI 발동은 무료 EOD 소스가 없어 싣지 않는다.",
   "sections": {
     "caution": {
-      "asOf": "2026-09-23",
+      "asOf": "2026-09-11",
       "status": "ok",
       "rows": [
-        {
-          "ticker": "950260",
-          "company": "인제니아테라퓨틱스(Reg.S)",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "393210",
-          "company": "토마토시스템",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "314130",
-          "company": "지놈앤컴퍼니",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "291650",
-          "company": "츌립앤사이언스",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "250930",
-          "company": "예선테크",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "246960",
-          "company": "SCL사이언스",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "159010",
-          "company": "아스플로",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "123010",
-          "company": "MSDI",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "085910",
-          "company": "네오티스",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "084370",
-          "company": "유진테크",
-          "market": "kosdaq",
-          "type": "매매관여과다종목",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "079950",
-          "company": "인베니아",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "065680",
-          "company": "우주일렉트로",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "052860",
-          "company": "아이앤씨",
-          "market": "kosdaq",
-          "type": "투자경고 지정해제",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "052710",
-          "company": "아모텍",
-          "market": "kosdaq",
-          "type": "소수계좌 매수관여 과다",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "043340",
-          "company": "에쎈테크",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "036710",
-          "company": "심텍홀딩스",
-          "market": "kosdaq",
-          "type": "매매관여과다종목",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "036540",
-          "company": "SFA반도체",
-          "market": "kosdaq",
-          "type": "소수계좌 매수관여 과다",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "026910",
-          "company": "광진실업",
-          "market": "kosdaq",
-          "type": "단일계좌거래량",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "011300",
-          "company": "우성머티리얼스",
-          "market": "kospi",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "002360",
-          "company": "SH에너지화학",
-          "market": "kospi",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "002360",
-          "company": "SH에너지화학",
-          "market": "kospi",
-          "type": "매매관여과다종목",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "002360",
-          "company": "SH에너지화학",
-          "market": "kospi",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
-        {
-          "ticker": "0007J0",
-          "company": "인벤테라",
-          "market": "",
-          "type": "소수계좌 매수관여 과다",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28"
-        },
         {
           "ticker": "900100",
           "company": "파이온엑스",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "440110",
-          "company": "파두",
+          "ticker": "420770",
+          "company": "기가비스",
           "market": "kosdaq",
-          "type": "투자경고 지정해제",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "323350",
-          "company": "다원넥스뷰",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "323350",
-          "company": "다원넥스뷰",
+          "ticker": "412350",
+          "company": "레이저쎌",
           "market": "kosdaq",
           "type": "매매관여과다종목",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "321370",
+          "company": "센서뷰",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "312610",
+          "company": "에이에프더블류",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
           "ticker": "301300",
           "company": "바이브컴퍼니",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "291650",
-          "company": "츌립앤사이언스",
+          "ticker": "228850",
+          "company": "레이언스",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "250930",
-          "company": "예선테크",
+          "ticker": "217190",
+          "company": "제너셈",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "169330",
-          "company": "엠브레인",
+          "ticker": "199730",
+          "company": "바이오인프라",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "109670",
-          "company": "씨싸이트",
-          "market": "kosdaq",
-          "type": "소수계좌 매수관여 과다",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "109670",
-          "company": "씨싸이트",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "092870",
-          "company": "엑시콘",
-          "market": "kosdaq",
-          "type": "투자경고 지정해제",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "067770",
-          "company": "세진티에스",
+          "ticker": "183300",
+          "company": "코미코",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "052710",
-          "company": "아모텍",
-          "market": "kosdaq",
-          "type": "소수계좌 매수관여 과다",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "043340",
-          "company": "에쎈테크",
+          "ticker": "127710",
+          "company": "아시아경제",
           "market": "kosdaq",
           "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "043260",
-          "company": "성호전자",
-          "market": "kosdaq",
-          "type": "투자경고 지정예고",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "036540",
-          "company": "SFA반도체",
-          "market": "kosdaq",
-          "type": "소수계좌 매수관여 과다",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "0209J0",
-          "company": "케이비제34호스팩",
-          "market": "",
-          "type": "단일계좌거래량",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "011300",
-          "company": "우성머티리얼스",
-          "market": "kospi",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "011080",
-          "company": "형지I&C",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "009620",
-          "company": "삼보산업",
-          "market": "kosdaq",
-          "type": "소수지점/계좌",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        },
-        {
-          "ticker": "009620",
-          "company": "삼보산업",
+          "ticker": "127710",
+          "company": "아시아경제",
           "market": "kosdaq",
           "type": "매매관여과다종목",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23"
-        }
-      ]
-    },
-    "warning": {
-      "asOf": "2026-09-23",
-      "status": "ok",
-      "rows": [
-        {
-          "ticker": "351320",
-          "company": "넥사다이내믹스",
-          "market": "kosdaq",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28",
-          "releaseDate": ""
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
         },
         {
-          "ticker": "319660",
-          "company": "피에스케이",
+          "ticker": "123840",
+          "company": "뉴온",
           "market": "kosdaq",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28",
-          "releaseDate": ""
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "092780",
+          "company": "DYP",
+          "market": "kospi",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "092600",
+          "company": "앤씨앤",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "089790",
+          "company": "제이티",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "081180",
+          "company": "쎄크",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "072950",
+          "company": "빛샘전자",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "061250",
+          "company": "화일약품",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "058450",
+          "company": "한주에이알티",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "052300",
+          "company": "오션인더블유",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "033160",
+          "company": "엠케이전자",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "027740",
+          "company": "마니커",
+          "market": "kospi",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "010170",
+          "company": "대한광통신",
+          "market": "kosdaq",
+          "type": "단일계좌거래량",
+          "noticeDate": "2026-09-18",
+          "designatedDate": "2026-09-21"
+        },
+        {
+          "ticker": "457370",
+          "company": "한켐",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "348080",
+          "company": "큐라티스",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "348080",
+          "company": "큐라티스",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "334970",
+          "company": "프레스티지바이오로직스",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "321820",
+          "company": "아티스트컴퍼니",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "301300",
+          "company": "바이브컴퍼니",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "261780",
+          "company": "아리바이오랩",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "217190",
+          "company": "제너셈",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "201490",
+          "company": "미투온",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "199730",
+          "company": "바이오인프라",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "127710",
+          "company": "아시아경제",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "127710",
+          "company": "아시아경제",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
         },
         {
           "ticker": "109670",
           "company": "씨싸이트",
           "market": "kosdaq",
-          "noticeDate": "2026-09-23",
-          "designatedDate": "2026-09-28",
-          "releaseDate": ""
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
         },
         {
-          "ticker": "420770",
-          "company": "기가비스",
+          "ticker": "079190",
+          "company": "케스피온",
           "market": "kosdaq",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23",
-          "releaseDate": ""
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
         },
         {
-          "ticker": "078350",
-          "company": "한양디지텍",
+          "ticker": "061250",
+          "company": "화일약품",
           "market": "kosdaq",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23",
-          "releaseDate": ""
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
         },
         {
-          "ticker": "049470",
-          "company": "비트플래닛",
+          "ticker": "058450",
+          "company": "한주에이알티",
           "market": "kosdaq",
-          "noticeDate": "2026-09-22",
-          "designatedDate": "2026-09-23",
-          "releaseDate": ""
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
         },
         {
           "ticker": "036170",
           "company": "에이치엠넥스",
           "market": "kosdaq",
-          "noticeDate": "2026-09-21",
-          "designatedDate": "2026-09-22",
-          "releaseDate": ""
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-17",
+          "designatedDate": "2026-09-18"
+        },
+        {
+          "ticker": "389680",
+          "company": "유디엠텍",
+          "market": "kosdaq",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "344860",
+          "company": "이노진",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "344860",
+          "company": "이노진",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "334970",
+          "company": "프레스티지바이오로직스",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "309930",
+          "company": "조이웍스앤코",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "301300",
+          "company": "바이브컴퍼니",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "240600",
+          "company": "유진테크놀로지",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "232830",
+          "company": "아이티센피엔에스",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "232830",
+          "company": "아이티센피엔에스",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "071200",
+          "company": "인피니트헬스케어",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "071200",
+          "company": "인피니트헬스케어",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "064290",
+          "company": "인텍플러스",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "058450",
+          "company": "한주에이알티",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "035290",
+          "company": "골드앤에스",
+          "market": "kosdaq",
+          "type": "단일계좌거래량",
+          "noticeDate": "2026-09-16",
+          "designatedDate": "2026-09-17"
+        },
+        {
+          "ticker": "431190",
+          "company": "케이쓰리아이",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "389020",
+          "company": "자람테크놀로지",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "361570",
+          "company": "알비더블유",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "361570",
+          "company": "알비더블유",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "360350",
+          "company": "코셈",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "360350",
+          "company": "코셈",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "301300",
+          "company": "바이브컴퍼니",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "240600",
+          "company": "유진테크놀로지",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "199730",
+          "company": "바이오인프라",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "153490",
+          "company": "우리이앤엘하루틴",
+          "market": "kosdaq",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "114630",
+          "company": "폴라리스우노",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "080580",
+          "company": "오킨스전자",
+          "market": "kosdaq",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "071200",
+          "company": "인피니트헬스케어",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "071200",
+          "company": "인피니트헬스케어",
+          "market": "kosdaq",
+          "type": "단일계좌거래량",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "062970",
+          "company": "한국첨단소재",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "058450",
+          "company": "한주에이알티",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "024840",
+          "company": "KBI메탈",
+          "market": "kosdaq",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
         },
         {
           "ticker": "017900",
           "company": "광전자",
           "market": "kospi",
-          "noticeDate": "2026-09-21",
-          "designatedDate": "2026-09-22",
-          "releaseDate": ""
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
         },
+        {
+          "ticker": "014950",
+          "company": "삼익제약",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-15",
+          "designatedDate": "2026-09-16"
+        },
+        {
+          "ticker": "900300",
+          "company": "오가닉티코스메틱",
+          "market": "kosdaq",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "488280",
+          "company": "에스투더블유",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "455180",
+          "company": "케이지에이",
+          "market": "kosdaq",
+          "type": "종가급변",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "431190",
+          "company": "케이쓰리아이",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "411080",
+          "company": "샌즈랩",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "361570",
+          "company": "알비더블유",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "360350",
+          "company": "코셈",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "360350",
+          "company": "코셈",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "301300",
+          "company": "바이브컴퍼니",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "291810",
+          "company": "핀텔",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "216080",
+          "company": "제테마",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "199730",
+          "company": "바이오인프라",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "162300",
+          "company": "신스틸",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "140430",
+          "company": "카티스",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "140430",
+          "company": "카티스",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "140430",
+          "company": "카티스",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "134580",
+          "company": "탑코미디어",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "092600",
+          "company": "앤씨앤",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "092040",
+          "company": "아미코젠",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "071200",
+          "company": "인피니트헬스케어",
+          "market": "kosdaq",
+          "type": "상한가잔량",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "065770",
+          "company": "CS",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "060570",
+          "company": "드림어스컴퍼니",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "058450",
+          "company": "한주에이알티",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "012340",
+          "company": "뉴인텍",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-14",
+          "designatedDate": "2026-09-15"
+        },
+        {
+          "ticker": "493330",
+          "company": "지에프아이",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "431190",
+          "company": "케이쓰리아이",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "331920",
+          "company": "셀레믹스",
+          "market": "kosdaq",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "317770",
+          "company": "엑스페릭스",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "309930",
+          "company": "조이웍스앤코",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "309930",
+          "company": "조이웍스앤코",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "297090",
+          "company": "씨에스베어링",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "225430",
+          "company": "케이엠제약",
+          "market": "kosdaq",
+          "type": "단일계좌거래량",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "117670",
+          "company": "알파칩스",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "117670",
+          "company": "알파칩스",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "098120",
+          "company": "마이크로컨텍솔",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "092600",
+          "company": "앤씨앤",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "060570",
+          "company": "드림어스컴퍼니",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "060570",
+          "company": "드림어스컴퍼니",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "058450",
+          "company": "한주에이알티",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "031980",
+          "company": "피에스케이홀딩스",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "025870",
+          "company": "신라에스지",
+          "market": "kosdaq",
+          "type": "단일계좌거래량",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "012630",
+          "company": "HDC",
+          "market": "kospi",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "009730",
+          "company": "이렘",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "009730",
+          "company": "이렘",
+          "market": "kosdaq",
+          "type": "종가급변",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "001290",
+          "company": "상상인증권",
+          "market": "kospi",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "001210",
+          "company": "금호전기",
+          "market": "kospi",
+          "type": "투자경고 지정해제",
+          "noticeDate": "2026-09-11",
+          "designatedDate": "2026-09-14"
+        },
+        {
+          "ticker": "950250",
+          "company": "테라뷰",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "418620",
+          "company": "E8",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "308100",
+          "company": "형지글로벌",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "300080",
+          "company": "플리토",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "219130",
+          "company": "타이거일렉",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "198940",
+          "company": "한주라이트메탈",
+          "market": "kosdaq",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "198940",
+          "company": "한주라이트메탈",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "187660",
+          "company": "페니트리움바이오",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "134580",
+          "company": "탑코미디어",
+          "market": "kosdaq",
+          "type": "소수계좌 매수관여 과다",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "109670",
+          "company": "씨싸이트",
+          "market": "kosdaq",
+          "type": "투자경고 지정예고",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "060570",
+          "company": "드림어스컴퍼니",
+          "market": "kosdaq",
+          "type": "매매관여과다종목",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "0197V0",
+          "company": "엔에이치스팩34호",
+          "market": "",
+          "type": "단일계좌거래량",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "019680",
+          "company": "대교",
+          "market": "kospi",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        },
+        {
+          "ticker": "015590",
+          "company": "DKME",
+          "market": "kospi",
+          "type": "소수지점/계좌",
+          "noticeDate": "2026-09-10",
+          "designatedDate": "2026-09-11"
+        }
+      ]
+    },
+    "warning": {
+      "asOf": "2026-09-11",
+      "status": "ok",
+      "rows": [
         {
           "ticker": "216400",
           "company": "인바이츠바이오코아",
@@ -569,7 +1225,7 @@
           "market": "kosdaq",
           "noticeDate": "2026-09-09",
           "designatedDate": "2026-09-10",
-          "releaseDate": ""
+          "releaseDate": "2026-09-28"
         },
         {
           "ticker": "032580",
@@ -580,17 +1236,105 @@
           "releaseDate": ""
         },
         {
+          "ticker": "440110",
+          "company": "파두",
+          "market": "kosdaq",
+          "noticeDate": "2026-09-08",
+          "designatedDate": "2026-09-09",
+          "releaseDate": "2026-09-23"
+        },
+        {
+          "ticker": "079950",
+          "company": "인베니아",
+          "market": "kosdaq",
+          "noticeDate": "2026-09-07",
+          "designatedDate": "2026-09-08",
+          "releaseDate": "2026-09-22"
+        },
+        {
+          "ticker": "092870",
+          "company": "엑시콘",
+          "market": "kosdaq",
+          "noticeDate": "2026-09-04",
+          "designatedDate": "2026-09-07",
+          "releaseDate": "2026-09-23"
+        },
+        {
+          "ticker": "153490",
+          "company": "우리이앤엘하루틴",
+          "market": "kosdaq",
+          "noticeDate": "2026-09-01",
+          "designatedDate": "2026-09-02",
+          "releaseDate": "2026-09-16"
+        },
+        {
+          "ticker": "024840",
+          "company": "KBI메탈",
+          "market": "kosdaq",
+          "noticeDate": "2026-09-01",
+          "designatedDate": "2026-09-02",
+          "releaseDate": "2026-09-16"
+        },
+        {
+          "ticker": "900300",
+          "company": "오가닉티코스메틱",
+          "market": "kosdaq",
+          "noticeDate": "2026-08-31",
+          "designatedDate": "2026-09-01",
+          "releaseDate": "2026-09-15"
+        },
+        {
+          "ticker": "080580",
+          "company": "오킨스전자",
+          "market": "kosdaq",
+          "noticeDate": "2026-08-31",
+          "designatedDate": "2026-09-01",
+          "releaseDate": "2026-09-16"
+        },
+        {
+          "ticker": "389680",
+          "company": "유디엠텍",
+          "market": "kosdaq",
+          "noticeDate": "2026-08-28",
+          "designatedDate": "2026-08-31",
+          "releaseDate": "2026-09-17"
+        },
+        {
+          "ticker": "331920",
+          "company": "셀레믹스",
+          "market": "kosdaq",
+          "noticeDate": "2026-08-28",
+          "designatedDate": "2026-08-31",
+          "releaseDate": "2026-09-14"
+        },
+        {
+          "ticker": "001210",
+          "company": "금호전기",
+          "market": "kospi",
+          "noticeDate": "2026-08-28",
+          "designatedDate": "2026-08-31",
+          "releaseDate": "2026-09-14"
+        },
+        {
           "ticker": "073190",
           "company": "듀오백",
           "market": "kosdaq",
           "noticeDate": "2026-08-10",
           "designatedDate": "2026-08-11",
           "releaseDate": ""
+        },
+        {
+          "ticker": "001290",
+          "company": "상상인증권",
+          "market": "kospi",
+          "noticeDate": "2026-08-10",
+          "designatedDate": "2026-08-11",
+          "releaseDate": "2026-09-14"
         }
       ]
     },
     "risk": {
-      "asOf": "2026-09-23",
+      "asOf": "2026-09-11",
       "status": "ok",
       "rows": [
         {
@@ -607,12 +1351,28 @@
           "market": "kosdaq",
           "noticeDate": "2026-09-08",
           "designatedDate": "2026-09-09",
-          "releaseDate": ""
+          "releaseDate": "2026-09-28"
+        },
+        {
+          "ticker": "216400",
+          "company": "인바이츠바이오코아",
+          "market": "",
+          "noticeDate": "2026-09-03",
+          "designatedDate": "2026-09-07",
+          "releaseDate": "2026-09-21"
+        },
+        {
+          "ticker": "302920",
+          "company": "더콘텐츠온",
+          "market": "",
+          "noticeDate": "2026-09-03",
+          "designatedDate": "2026-09-04",
+          "releaseDate": "2026-09-18"
         }
       ]
     },
     "halt": {
-      "asOf": "2026-09-27",
+      "asOf": "2026-09-28",
       "status": "ok",
       "rows": [
         {
@@ -670,33 +1430,21 @@
           "reason": "상장폐지 사유발생"
         },
         {
-          "ticker": "464240",
-          "company": "KIWOOM 26-09회사채(AA-이상)액티브",
-          "market": "etf",
-          "reason": ""
+          "ticker": "001770",
+          "company": "SHD",
+          "market": "kospi",
+          "reason": "시가총액 미달"
         },
         {
-          "ticker": "488200",
-          "company": "KIWOOM K-2차전지북미공급망",
-          "market": "etf",
-          "reason": ""
-        },
-        {
-          "ticker": "488210",
-          "company": "KIWOOM K-반도체북미공급망",
-          "market": "etf",
-          "reason": ""
-        },
-        {
-          "ticker": "454180",
-          "company": "KIWOOM 차이나내수소비TOP CSI",
-          "market": "etf",
-          "reason": ""
-        },
-        {
-          "ticker": "225190",
-          "company": "LK삼양",
+          "ticker": "472230",
+          "company": "에스케이증권제11호스팩",
           "market": "kosdaq",
+          "reason": "상장폐지 사유발생"
+        },
+        {
+          "ticker": "064960",
+          "company": "SNT모티브",
+          "market": "kospi",
           "reason": ""
         },
         {
@@ -728,18 +1476,6 @@
           "company": "금양",
           "market": "kospi",
           "reason": "감사의견거절(발행ELW, 발행ETN 포함)"
-        },
-        {
-          "ticker": "208860",
-          "company": "다산디엠씨",
-          "market": "kosdaq",
-          "reason": ""
-        },
-        {
-          "ticker": "154040",
-          "company": "다산솔루에타",
-          "market": "kosdaq",
-          "reason": ""
         },
         {
           "ticker": "068240",
@@ -904,6 +1640,12 @@
           "reason": "투자자 보호"
         },
         {
+          "ticker": "067770",
+          "company": "세진티에스",
+          "market": "kosdaq",
+          "reason": "상장폐지 사유발생"
+        },
+        {
           "ticker": "352770",
           "company": "셀레스트라",
           "market": "kosdaq",
@@ -931,7 +1673,7 @@
           "ticker": "276040",
           "company": "스코넥",
           "market": "kosdaq",
-          "reason": "상장적격성 실질심사 대상(사유발생)"
+          "reason": "회생절차개시신청(발행 ELW 포함)"
         },
         {
           "ticker": "056090",
@@ -1084,6 +1826,12 @@
           "reason": "감사의견거절(발행ELW, 발행ETN 포함)"
         },
         {
+          "ticker": "473050",
+          "company": "유안타제15호스팩",
+          "market": "kosdaq",
+          "reason": "상장폐지 사유발생"
+        },
+        {
           "ticker": "468760",
           "company": "유진스팩10호",
           "market": "kosdaq",
@@ -1190,12 +1938,6 @@
           "company": "좋은사람들",
           "market": "kosdaq",
           "reason": "주식의 병합, 분할 등 전자등록 변경, 말소"
-        },
-        {
-          "ticker": "109070",
-          "company": "주성코퍼레이션",
-          "market": "kospi",
-          "reason": ""
         },
         {
           "ticker": "051980",
@@ -1380,9 +2122,23 @@
       ]
     },
     "admin": {
-      "asOf": "2026-09-27",
+      "asOf": "2026-09-28",
       "status": "ok",
       "rows": [
+        {
+          "ticker": "001770",
+          "company": "SHD",
+          "market": "kospi",
+          "designatedDate": "2026-09-28",
+          "reason": "시가총액 미달,상장폐지 사유의 발생"
+        },
+        {
+          "ticker": "377220",
+          "company": "프롬바이오",
+          "market": "kosdaq",
+          "designatedDate": "2026-09-28",
+          "reason": "시가총액 미달"
+        },
         {
           "ticker": "348950",
           "company": "제이알글로벌리츠",
@@ -1591,14 +2347,14 @@
           "company": "에스케이증권제11호스팩",
           "market": "kosdaq",
           "designatedDate": "2026-08-24",
-          "reason": "SPAC 상장예비심사청구서 미제출 등"
+          "reason": "SPAC 상장예비심사청구서 미제출 등,상장폐지사유 발생"
         },
         {
           "ticker": "473050",
           "company": "유안타제15호스팩",
           "market": "kosdaq",
           "designatedDate": "2026-08-24",
-          "reason": "SPAC 상장예비심사청구서 미제출 등"
+          "reason": "상장폐지사유 발생,SPAC 상장예비심사청구서 미제출 등"
         },
         {
           "ticker": "288980",
@@ -1780,7 +2536,7 @@
           "company": "뉴인텍",
           "market": "kosdaq",
           "designatedDate": "2026-08-13",
-          "reason": "주가 미달(동전주)"
+          "reason": "시가총액 미달,주가 미달(동전주)"
         },
         {
           "ticker": "022220",
@@ -2053,7 +2809,7 @@
           "company": "세진티에스",
           "market": "kosdaq",
           "designatedDate": "2026-07-21",
-          "reason": "시가총액 미달"
+          "reason": "시가총액 미달,상장폐지사유 발생"
         },
         {
           "ticker": "191410",
@@ -2126,25 +2882,11 @@
           "reason": "ETF 신탁원본액 및 순자산총액이 50억원 미만(반기말 현재)"
         },
         {
-          "ticker": "454180",
-          "company": "KIWOOM 차이나내수소비TOP CSI",
-          "market": "etf",
-          "designatedDate": "2026-07-01",
-          "reason": "ETF 신탁원본액 및 순자산총액이 50억원 미만(반기말 현재)"
-        },
-        {
           "ticker": "032685",
           "company": "소프트센우",
           "market": "",
           "designatedDate": "2026-07-01",
           "reason": "종류주식의 시가총액 요건 미달,종류주식의 상장주식수 요건 미달,종류주식의 거래량 요건 미달"
-        },
-        {
-          "ticker": "001770",
-          "company": "SHD",
-          "market": "kospi",
-          "designatedDate": "2026-06-26",
-          "reason": "시가총액 미달"
         },
         {
           "ticker": "069920",
@@ -2193,7 +2935,7 @@
           "company": "스코넥",
           "market": "kosdaq",
           "designatedDate": "2026-04-08",
-          "reason": "파산신청,상장적격성 실질심사 대상 결정,상장폐지사유 발생"
+          "reason": "파산신청,회생절차 개시신청,상장적격성 실질심사 대상 결정,상장폐지사유 발생"
         },
         {
           "ticker": "393970",
@@ -2646,557 +3388,672 @@
       ]
     },
     "limitUp": {
-      "asOf": "2026-09-23",
+      "asOf": "2026-09-28",
       "status": "ok",
       "rows": [
         {
-          "ticker": "396300",
-          "company": "HT로보틱스",
+          "ticker": "028300",
+          "company": "HLB",
           "market": "kosdaq",
-          "price": 6010.0,
+          "price": 39700.0,
           "changePct": 29.95
+        },
+        {
+          "ticker": "024850",
+          "company": "HLB이노베이션",
+          "market": "kosdaq",
+          "price": 19680.0,
+          "changePct": 29.99
+        },
+        {
+          "ticker": "067630",
+          "company": "HLB생명과학",
+          "market": "kosdaq",
+          "price": 3405.0,
+          "changePct": 29.96
+        },
+        {
+          "ticker": "047920",
+          "company": "HLB제약",
+          "market": "kosdaq",
+          "price": 9620.0,
+          "changePct": 30.0
+        },
+        {
+          "ticker": "115450",
+          "company": "HLB테라퓨틱스",
+          "market": "kosdaq",
+          "price": 2580.0,
+          "changePct": 29.84
+        },
+        {
+          "ticker": "256840",
+          "company": "한국비엔씨",
+          "market": "kosdaq",
+          "price": 3425.0,
+          "changePct": 29.98
+        },
+        {
+          "ticker": "003580",
+          "company": "HLB글로벌",
+          "market": "kospi",
+          "price": 2055.0,
+          "changePct": 29.82
+        },
+        {
+          "ticker": "338220",
+          "company": "뷰노",
+          "market": "kosdaq",
+          "price": 7240.0,
+          "changePct": 29.98
+        },
+        {
+          "ticker": "187420",
+          "company": "HLB제넥스",
+          "market": "kosdaq",
+          "price": 2320.0,
+          "changePct": 29.83
+        },
+        {
+          "ticker": "109670",
+          "company": "씨싸이트",
+          "market": "kosdaq",
+          "price": 12870.0,
+          "changePct": 30.0
+        },
+        {
+          "ticker": "046210",
+          "company": "HLB파나진",
+          "market": "kosdaq",
+          "price": 1432.0,
+          "changePct": 29.95
+        },
+        {
+          "ticker": "278650",
+          "company": "HLB바이오스텝",
+          "market": "kosdaq",
+          "price": 3250.0,
+          "changePct": 30.0
+        },
+        {
+          "ticker": "196300",
+          "company": "HLB펩",
+          "market": "kosdaq",
+          "price": 5590.0,
+          "changePct": 30.0
+        },
+        {
+          "ticker": "206400",
+          "company": "베노티앤알",
+          "market": "kosdaq",
+          "price": 854.0,
+          "changePct": 29.98
+        }
+      ]
+    },
+    "limitDown": {
+      "asOf": "2026-09-28",
+      "status": "ok",
+      "rows": [
+        {
+          "ticker": "270520",
+          "company": "앱튼",
+          "market": "kosdaq",
+          "price": 1415.0,
+          "changePct": -29.95
+        },
+        {
+          "ticker": "291810",
+          "company": "핀텔",
+          "market": "kosdaq",
+          "price": 833.0,
+          "changePct": -29.94
+        },
+        {
+          "ticker": "0010S0",
+          "company": "와이즈플래닛컴퍼니",
+          "market": "",
+          "price": 32450.0,
+          "changePct": -29.91
+        }
+      ]
+    },
+    "newHigh": {
+      "asOf": "2026-09-11",
+      "status": "ok",
+      "covered": 834,
+      "rows": [
+        {
+          "ticker": "029460",
+          "company": "케이씨",
+          "market": "kospi",
+          "price": 43350.0,
+          "changePct": 0.0,
+          "level": 43350.0
+        },
+        {
+          "ticker": "077500",
+          "company": "유니퀘스트",
+          "market": "kospi",
+          "price": 9650.0,
+          "changePct": 5.0,
+          "level": 9650.0
+        },
+        {
+          "ticker": "052860",
+          "company": "아이앤씨",
+          "market": "kosdaq",
+          "price": 7490.0,
+          "changePct": 10.3,
+          "level": 7490.0
+        }
+      ]
+    },
+    "newLow": {
+      "asOf": "2026-09-11",
+      "status": "ok",
+      "covered": 834,
+      "rows": [
+        {
+          "ticker": "394800",
+          "company": "쓰리빌리언",
+          "market": "kosdaq",
+          "price": 7190.0,
+          "changePct": 24.0,
+          "level": 4245.0
+        },
+        {
+          "ticker": "003520",
+          "company": "영진약품",
+          "market": "kospi",
+          "price": 1035.0,
+          "changePct": 1.3,
+          "level": 1035.0
+        },
+        {
+          "ticker": "241590",
+          "company": "화승엔터프라이즈",
+          "market": "kospi",
+          "price": 2775.0,
+          "changePct": 2.8,
+          "level": 2750.0
+        },
+        {
+          "ticker": "013890",
+          "company": "지누스",
+          "market": "kospi",
+          "price": 7040.0,
+          "changePct": -4.1,
+          "level": 7040.0
+        },
+        {
+          "ticker": "462520",
+          "company": "조선내화",
+          "market": "kospi",
+          "price": 12780.0,
+          "changePct": 0.5,
+          "level": 12700.0
+        },
+        {
+          "ticker": "494120",
+          "company": "큐리오시스",
+          "market": "kosdaq",
+          "price": 8620.0,
+          "changePct": 5.5,
+          "level": 7990.0
+        },
+        {
+          "ticker": "079960",
+          "company": "동양이엔피",
+          "market": "kosdaq",
+          "price": 16890.0,
+          "changePct": 1.4,
+          "level": 16890.0
+        },
+        {
+          "ticker": "039840",
+          "company": "디오",
+          "market": "kosdaq",
+          "price": 9430.0,
+          "changePct": 0.0,
+          "level": 9430.0
+        },
+        {
+          "ticker": "006060",
+          "company": "화승인더",
+          "market": "kospi",
+          "price": 2245.0,
+          "changePct": 1.6,
+          "level": 2245.0
+        },
+        {
+          "ticker": "011280",
+          "company": "태림포장",
+          "market": "kospi",
+          "price": 1381.0,
+          "changePct": 0.4,
+          "level": 1381.0
+        },
+        {
+          "ticker": "004840",
+          "company": "DRB동일",
+          "market": "kospi",
+          "price": 3895.0,
+          "changePct": -0.1,
+          "level": 3895.0
+        },
+        {
+          "ticker": "104460",
+          "company": "디와이피엔에프",
+          "market": "kosdaq",
+          "price": 6840.0,
+          "changePct": 1.5,
+          "level": 6840.0
+        },
+        {
+          "ticker": "337930",
+          "company": "젝시믹스",
+          "market": "kosdaq",
+          "price": 2400.0,
+          "changePct": 2.1,
+          "level": 2400.0
+        },
+        {
+          "ticker": "019680",
+          "company": "대교",
+          "market": "kospi",
+          "price": 1634.0,
+          "changePct": -0.1,
+          "level": 1634.0
+        },
+        {
+          "ticker": "043610",
+          "company": "KT지니뮤직",
+          "market": "kosdaq",
+          "price": 1129.0,
+          "changePct": -3.0,
+          "level": 1129.0
+        },
+        {
+          "ticker": "002700",
+          "company": "신일전자",
+          "market": "kospi",
+          "price": 935.0,
+          "changePct": 1.5,
+          "level": 935.0
+        },
+        {
+          "ticker": "452160",
+          "company": "제이엔비",
+          "market": "kosdaq",
+          "price": 3040.0,
+          "changePct": 1.5,
+          "level": 2945.0
+        },
+        {
+          "ticker": "079000",
+          "company": "와토스코리아",
+          "market": "kosdaq",
+          "price": 3710.0,
+          "changePct": -1.7,
+          "level": 3710.0
+        },
+        {
+          "ticker": "177830",
+          "company": "파버나인",
+          "market": "kosdaq",
+          "price": 2145.0,
+          "changePct": 0.2,
+          "level": 2130.0
+        },
+        {
+          "ticker": "030720",
+          "company": "동원수산",
+          "market": "kospi",
+          "price": 4880.0,
+          "changePct": -3.2,
+          "level": 4880.0
+        },
+        {
+          "ticker": "289220",
+          "company": "자이언트스텝",
+          "market": "kosdaq",
+          "price": 896.0,
+          "changePct": -1.0,
+          "level": 896.0
+        },
+        {
+          "ticker": "002820",
+          "company": "SUN&L",
+          "market": "kospi",
+          "price": 1221.0,
+          "changePct": -9.1,
+          "level": 1221.0
+        },
+        {
+          "ticker": "065770",
+          "company": "CS",
+          "market": "kosdaq",
+          "price": 849.0,
+          "changePct": -5.7,
+          "level": 849.0
+        }
+      ]
+    },
+    "valueSurge": {
+      "asOf": "2026-09-11",
+      "status": "ok",
+      "covered": 834,
+      "rows": [
+        {
+          "ticker": "217820",
+          "company": "원익피앤이",
+          "market": "kosdaq",
+          "price": 2375.0,
+          "changePct": 5.6,
+          "valueEok": 263.5,
+          "avgValueEok": 4.9,
+          "ratio": 53.3
+        },
+        {
+          "ticker": "488280",
+          "company": "에스투더블유",
+          "market": "kosdaq",
+          "price": 15050.0,
+          "changePct": -5.2,
+          "valueEok": 513.5,
+          "avgValueEok": 14.1,
+          "ratio": 36.5
+        },
+        {
+          "ticker": "115500",
+          "company": "케이씨에스",
+          "market": "kosdaq",
+          "price": 11050.0,
+          "changePct": 9.6,
+          "valueEok": 234.5,
+          "avgValueEok": 6.7,
+          "ratio": 34.8
+        },
+        {
+          "ticker": "123690",
+          "company": "한국화장품",
+          "market": "kospi",
+          "price": 6330.0,
+          "changePct": -0.2,
+          "valueEok": 217.8,
+          "avgValueEok": 7.2,
+          "ratio": 30.1
+        },
+        {
+          "ticker": "356680",
+          "company": "엑스게이트",
+          "market": "kosdaq",
+          "price": 18630.0,
+          "changePct": 2.2,
+          "valueEok": 2670.0,
+          "avgValueEok": 111.8,
+          "ratio": 23.9
+        },
+        {
+          "ticker": "456010",
+          "company": "아이씨티케이",
+          "market": "kosdaq",
+          "price": 26350.0,
+          "changePct": 16.6,
+          "valueEok": 645.4,
+          "avgValueEok": 29.5,
+          "ratio": 21.9
         },
         {
           "ticker": "115440",
           "company": "우리넷",
           "market": "kosdaq",
-          "price": 12120.0,
-          "changePct": 29.9
+          "price": 11970.0,
+          "changePct": -1.2,
+          "valueEok": 308.2,
+          "avgValueEok": 16.1,
+          "ratio": 19.1
         },
         {
-          "ticker": "109670",
-          "company": "씨싸이트",
+          "ticker": "411080",
+          "company": "샌즈랩",
           "market": "kosdaq",
-          "price": 11400.0,
-          "changePct": 29.99
+          "price": 6500.0,
+          "changePct": 2.4,
+          "valueEok": 113.3,
+          "avgValueEok": 6.6,
+          "ratio": 17.1
         },
         {
-          "ticker": "131100",
-          "company": "티엔엔터테인먼트",
+          "ticker": "117670",
+          "company": "알파칩스",
           "market": "kosdaq",
-          "price": 3120.0,
-          "changePct": 30.0
+          "price": 10700.0,
+          "changePct": -0.9,
+          "valueEok": 39.7,
+          "avgValueEok": 2.3,
+          "ratio": 17.0
         },
         {
-          "ticker": "900100",
-          "company": "파이온엑스",
+          "ticker": "052710",
+          "company": "아모텍",
           "market": "kosdaq",
-          "price": 1041.0,
-          "changePct": 29.96
-        }
-      ]
-    },
-    "limitDown": {
-      "asOf": "2026-09-23",
-      "status": "ok",
-      "rows": []
-    },
-    "newHigh": {
-      "asOf": "2026-09-23",
-      "status": "ok",
-      "covered": 889,
-      "rows": [
+          "price": 19000.0,
+          "changePct": 0.4,
+          "valueEok": 645.8,
+          "avgValueEok": 41.7,
+          "ratio": 15.5
+        },
         {
-          "ticker": "003490",
-          "company": "대한항공",
+          "ticker": "322510",
+          "company": "제이엘케이",
+          "market": "kosdaq",
+          "price": 5130.0,
+          "changePct": 6.9,
+          "valueEok": 63.4,
+          "avgValueEok": 4.2,
+          "ratio": 15.1
+        },
+        {
+          "ticker": "362320",
+          "company": "청담글로벌",
+          "market": "kosdaq",
+          "price": 4290.0,
+          "changePct": 1.1,
+          "valueEok": 44.7,
+          "avgValueEok": 3.3,
+          "ratio": 13.6
+        },
+        {
+          "ticker": "149950",
+          "company": "아바텍",
+          "market": "kosdaq",
+          "price": 11610.0,
+          "changePct": -4.2,
+          "valueEok": 88.6,
+          "avgValueEok": 7.5,
+          "ratio": 11.8
+        },
+        {
+          "ticker": "042510",
+          "company": "라온시큐어",
+          "market": "kosdaq",
+          "price": 11750.0,
+          "changePct": 7.3,
+          "valueEok": 222.6,
+          "avgValueEok": 21.8,
+          "ratio": 10.2
+        },
+        {
+          "ticker": "009470",
+          "company": "삼화전기",
           "market": "kospi",
-          "price": 31500.0,
-          "changePct": 0.3,
-          "level": 32100.0
-        },
-        {
-          "ticker": "252990",
-          "company": "샘씨엔에스",
-          "market": "kosdaq",
-          "price": 18110.0,
-          "changePct": 4.3,
-          "level": 18460.0
-        },
-        {
-          "ticker": "053800",
-          "company": "안랩",
-          "market": "kosdaq",
-          "price": 73600.0,
-          "changePct": 4.0,
-          "level": 75500.0
-        },
-        {
-          "ticker": "068930",
-          "company": "디지털대성",
-          "market": "kosdaq",
-          "price": 9650.0,
-          "changePct": 0.8,
-          "level": 9950.0
-        },
-        {
-          "ticker": "109670",
-          "company": "씨싸이트",
-          "market": "kosdaq",
-          "price": 11400.0,
-          "changePct": 30.0,
-          "level": 11400.0
-        }
-      ]
-    },
-    "newLow": {
-      "asOf": "2026-09-23",
-      "status": "ok",
-      "covered": 889,
-      "rows": [
-        {
-          "ticker": "015760",
-          "company": "한국전력",
-          "market": "kospi",
-          "price": 30450.0,
-          "changePct": -1.3,
-          "level": 30150.0
-        },
-        {
-          "ticker": "259960",
-          "company": "크래프톤",
-          "market": "kospi",
-          "price": 198500.0,
-          "changePct": -1.7,
-          "level": 197000.0
-        },
-        {
-          "ticker": "352820",
-          "company": "하이브",
-          "market": "kospi",
-          "price": 157700.0,
-          "changePct": 0.9,
-          "level": 153900.0
-        },
-        {
-          "ticker": "029780",
-          "company": "삼성카드",
-          "market": "kospi",
-          "price": 42750.0,
-          "changePct": -0.2,
-          "level": 42450.0
-        },
-        {
-          "ticker": "298380",
-          "company": "에이비엘바이오",
-          "market": "kosdaq",
-          "price": 50700.0,
-          "changePct": -0.8,
-          "level": 49350.0
-        },
-        {
-          "ticker": "145020",
-          "company": "휴젤",
-          "market": "kosdaq",
-          "price": 186800.0,
-          "changePct": -1.9,
-          "level": 185900.0
-        },
-        {
-          "ticker": "035900",
-          "company": "JYP Ent.",
-          "market": "kosdaq",
-          "price": 37800.0,
-          "changePct": 0.8,
-          "level": 37300.0
-        },
-        {
-          "ticker": "243070",
-          "company": "휴온스",
-          "market": "kosdaq",
-          "price": 18800.0,
-          "changePct": -0.8,
-          "level": 18800.0
-        },
-        {
-          "ticker": "061250",
-          "company": "화일약품",
-          "market": "kosdaq",
-          "price": 6380.0,
+          "price": 25800.0,
           "changePct": -0.6,
-          "level": 6210.0
+          "valueEok": 87.8,
+          "avgValueEok": 9.5,
+          "ratio": 9.2
         },
         {
-          "ticker": "084650",
-          "company": "랩지노믹스",
+          "ticker": "452450",
+          "company": "피아이이",
           "market": "kosdaq",
-          "price": 2925.0,
-          "changePct": 17.0,
-          "level": 2490.0
+          "price": 5160.0,
+          "changePct": -3.5,
+          "valueEok": 161.9,
+          "avgValueEok": 18.4,
+          "ratio": 8.8
         },
         {
-          "ticker": "009190",
-          "company": "대양금속",
-          "market": "kospi",
-          "price": 963.0,
-          "changePct": -14.8,
-          "level": 802.0
-        },
-        {
-          "ticker": "006370",
-          "company": "대구백화점",
-          "market": "kospi",
-          "price": 2930.0,
-          "changePct": -3.3,
-          "level": 2875.0
-        },
-        {
-          "ticker": "006490",
-          "company": "프리티",
-          "market": "kospi",
-          "price": 1355.0,
-          "changePct": -1.9,
-          "level": 1313.0
-        },
-        {
-          "ticker": "276730",
-          "company": "한울앤제주",
+          "ticker": "054920",
+          "company": "한컴위드",
           "market": "kosdaq",
-          "price": 954.0,
-          "changePct": 2.8,
-          "level": 902.0
-        },
-        {
-          "ticker": "095910",
-          "company": "에스에너지",
-          "market": "kosdaq",
-          "price": 576.0,
-          "changePct": 0.2,
-          "level": 550.0
-        },
-        {
-          "ticker": "060900",
-          "company": "에이전트AI",
-          "market": "kosdaq",
-          "price": 2710.0,
-          "changePct": -11.4,
-          "level": 2670.0
-        },
-        {
-          "ticker": "377220",
-          "company": "프롬바이오",
-          "market": "kosdaq",
-          "price": 2460.0,
-          "changePct": -9.1,
-          "level": 2460.0
-        },
-        {
-          "ticker": "067770",
-          "company": "세진티에스",
-          "market": "kosdaq",
-          "price": 1570.0,
-          "changePct": -7.7,
-          "level": 1252.0
-        },
-        {
-          "ticker": "250930",
-          "company": "예선테크",
-          "market": "kosdaq",
-          "price": 855.0,
-          "changePct": -12.8,
-          "level": 850.0
-        },
-        {
-          "ticker": "058450",
-          "company": "한주에이알티",
-          "market": "kosdaq",
-          "price": 865.0,
-          "changePct": -5.0,
-          "level": 830.0
-        },
-        {
-          "ticker": "196490",
-          "company": "디에이테크놀로지",
-          "market": "kosdaq",
-          "price": 202.0,
-          "changePct": -96.7,
-          "level": 202.0
-        }
-      ]
-    },
-    "valueSurge": {
-      "asOf": "2026-09-23",
-      "status": "ok",
-      "covered": 889,
-      "rows": [
-        {
-          "ticker": "058860",
-          "company": "KTis",
-          "market": "kospi",
-          "price": 2590.0,
-          "changePct": 5.7,
-          "valueEok": 130.6,
-          "avgValueEok": 0.8,
-          "ratio": 157.0
-        },
-        {
-          "ticker": "027040",
-          "company": "서울전자통신",
-          "market": "kosdaq",
-          "price": 1851.0,
-          "changePct": 8.6,
-          "valueEok": 130.6,
-          "avgValueEok": 1.0,
-          "ratio": 126.1
-        },
-        {
-          "ticker": "393210",
-          "company": "토마토시스템",
-          "market": "kosdaq",
-          "price": 3715.0,
-          "changePct": 12.1,
-          "valueEok": 565.0,
-          "avgValueEok": 8.7,
-          "ratio": 64.7
-        },
-        {
-          "ticker": "419050",
-          "company": "삼기에너지솔루션즈",
-          "market": "kosdaq",
-          "price": 1884.0,
-          "changePct": 17.5,
-          "valueEok": 686.9,
-          "avgValueEok": 16.7,
-          "ratio": 41.2
-        },
-        {
-          "ticker": "002360",
-          "company": "SH에너지화학",
-          "market": "kospi",
-          "price": 2610.0,
-          "changePct": 23.1,
-          "valueEok": 35.9,
-          "avgValueEok": 1.3,
-          "ratio": 27.2
-        },
-        {
-          "ticker": "431190",
-          "company": "케이쓰리아이",
-          "market": "kosdaq",
-          "price": 4305.0,
-          "changePct": 11.8,
-          "valueEok": 73.0,
-          "avgValueEok": 3.0,
-          "ratio": 24.1
-        },
-        {
-          "ticker": "109670",
-          "company": "씨싸이트",
-          "market": "kosdaq",
-          "price": 11400.0,
-          "changePct": 30.0,
-          "valueEok": 102.4,
-          "avgValueEok": 4.3,
-          "ratio": 23.7
-        },
-        {
-          "ticker": "478340",
-          "company": "나라스페이스테크놀로지",
-          "market": "kosdaq",
-          "price": 14050.0,
-          "changePct": 7.8,
-          "valueEok": 1367.0,
-          "avgValueEok": 66.3,
-          "ratio": 20.6
-        },
-        {
-          "ticker": "044450",
-          "company": "KSS해운",
-          "market": "kospi",
-          "price": 11730.0,
-          "changePct": 16.6,
-          "valueEok": 104.7,
-          "avgValueEok": 6.9,
-          "ratio": 15.3
-        },
-        {
-          "ticker": "004440",
-          "company": "삼일씨엔에스",
-          "market": "kospi",
-          "price": 5420.0,
-          "changePct": 5.5,
-          "valueEok": 40.3,
-          "avgValueEok": 2.7,
-          "ratio": 14.9
-        },
-        {
-          "ticker": "117730",
-          "company": "티로보틱스",
-          "market": "kosdaq",
-          "price": 14200.0,
-          "changePct": 8.1,
-          "valueEok": 81.3,
+          "price": 4745.0,
+          "changePct": 0.0,
+          "valueEok": 71.6,
           "avgValueEok": 8.9,
-          "ratio": 9.2
+          "ratio": 8.0
         },
         {
-          "ticker": "026910",
-          "company": "광진실업",
+          "ticker": "382900",
+          "company": "범한퓨얼셀",
           "market": "kosdaq",
-          "price": 2590.0,
-          "changePct": -13.2,
-          "valueEok": 43.4,
-          "avgValueEok": 4.7,
-          "ratio": 9.2
-        },
-        {
-          "ticker": "122350",
-          "company": "삼기",
-          "market": "kosdaq",
-          "price": 1624.0,
-          "changePct": 1.4,
-          "valueEok": 147.1,
-          "avgValueEok": 16.2,
-          "ratio": 9.1
-        },
-        {
-          "ticker": "068930",
-          "company": "디지털대성",
-          "market": "kosdaq",
-          "price": 9650.0,
-          "changePct": 0.8,
-          "valueEok": 33.4,
-          "avgValueEok": 4.3,
-          "ratio": 7.7
-        },
-        {
-          "ticker": "380550",
-          "company": "뉴로핏",
-          "market": "kosdaq",
-          "price": 7800.0,
-          "changePct": 5.8,
-          "valueEok": 59.8,
-          "avgValueEok": 7.9,
+          "price": 23800.0,
+          "changePct": -0.8,
+          "valueEok": 214.3,
+          "avgValueEok": 28.3,
           "ratio": 7.6
         },
         {
-          "ticker": "009190",
-          "company": "대양금속",
-          "market": "kospi",
-          "price": 963.0,
-          "changePct": -14.8,
-          "valueEok": 35.3,
-          "avgValueEok": 5.3,
-          "ratio": 6.6
-        },
-        {
-          "ticker": "017890",
-          "company": "한국알콜",
+          "ticker": "140670",
+          "company": "알에스오토메이션",
           "market": "kosdaq",
-          "price": 15420.0,
-          "changePct": 7.1,
-          "valueEok": 38.2,
-          "avgValueEok": 5.9,
-          "ratio": 6.4
+          "price": 10320.0,
+          "changePct": -1.4,
+          "valueEok": 39.4,
+          "avgValueEok": 5.6,
+          "ratio": 7.0
         },
         {
-          "ticker": "253590",
-          "company": "네오셈",
+          "ticker": "263860",
+          "company": "지니언스",
           "market": "kosdaq",
-          "price": 13640.0,
-          "changePct": 3.3,
-          "valueEok": 379.1,
-          "avgValueEok": 62.7,
-          "ratio": 6.0
+          "price": 19130.0,
+          "changePct": 4.1,
+          "valueEok": 100.2,
+          "avgValueEok": 16.4,
+          "ratio": 6.1
         },
         {
-          "ticker": "012200",
-          "company": "계양전기",
-          "market": "kospi",
-          "price": 3300.0,
-          "changePct": -13.6,
-          "valueEok": 100.1,
-          "avgValueEok": 18.4,
-          "ratio": 5.4
-        },
-        {
-          "ticker": "255220",
-          "company": "SG",
+          "ticker": "443670",
+          "company": "에스피소프트",
           "market": "kosdaq",
-          "price": 1210.0,
-          "changePct": 7.6,
-          "valueEok": 117.6,
-          "avgValueEok": 23.6,
+          "price": 4955.0,
+          "changePct": -0.9,
+          "valueEok": 487.2,
+          "avgValueEok": 80.4,
+          "ratio": 6.1
+        },
+        {
+          "ticker": "073010",
+          "company": "케이에스피",
+          "market": "kosdaq",
+          "price": 3365.0,
+          "changePct": 1.2,
+          "valueEok": 79.3,
+          "avgValueEok": 13.8,
+          "ratio": 5.7
+        },
+        {
+          "ticker": "158430",
+          "company": "아톤",
+          "market": "kosdaq",
+          "price": 5660.0,
+          "changePct": 3.1,
+          "valueEok": 57.1,
+          "avgValueEok": 10.1,
+          "ratio": 5.6
+        },
+        {
+          "ticker": "024060",
+          "company": "흥구석유",
+          "market": "kosdaq",
+          "price": 13310.0,
+          "changePct": 7.7,
+          "valueEok": 1860.8,
+          "avgValueEok": 374.6,
           "ratio": 5.0
         },
         {
-          "ticker": "270520",
-          "company": "앱튼",
-          "market": "kosdaq",
-          "price": 2020.0,
-          "changePct": -16.4,
-          "valueEok": 34.7,
-          "avgValueEok": 7.3,
-          "ratio": 4.8
-        },
-        {
-          "ticker": "005290",
-          "company": "동진쎄미켐",
-          "market": "kosdaq",
-          "price": 46850.0,
-          "changePct": 9.1,
-          "valueEok": 461.0,
-          "avgValueEok": 100.4,
-          "ratio": 4.6
-        },
-        {
-          "ticker": "299660",
-          "company": "셀리드",
-          "market": "kosdaq",
-          "price": 2605.0,
-          "changePct": -9.7,
-          "valueEok": 204.1,
-          "avgValueEok": 44.6,
-          "ratio": 4.6
-        },
-        {
-          "ticker": "103590",
-          "company": "일진전기",
+          "ticker": "092790",
+          "company": "넥스틸",
           "market": "kospi",
-          "price": 81800.0,
-          "changePct": 6.9,
-          "valueEok": 817.6,
-          "avgValueEok": 218.5,
+          "price": 13600.0,
+          "changePct": 1.5,
+          "valueEok": 449.7,
+          "avgValueEok": 117.9,
+          "ratio": 3.8
+        },
+        {
+          "ticker": "457370",
+          "company": "한켐",
+          "market": "kosdaq",
+          "price": 10770.0,
+          "changePct": -4.6,
+          "valueEok": 363.6,
+          "avgValueEok": 99.0,
           "ratio": 3.7
         },
         {
-          "ticker": "229640",
-          "company": "LS에코에너지",
+          "ticker": "126730",
+          "company": "코칩",
+          "market": "kosdaq",
+          "price": 22050.0,
+          "changePct": -2.9,
+          "valueEok": 490.4,
+          "avgValueEok": 140.7,
+          "ratio": 3.5
+        },
+        {
+          "ticker": "005860",
+          "company": "한일사료",
+          "market": "kosdaq",
+          "price": 2385.0,
+          "changePct": 1.1,
+          "valueEok": 67.1,
+          "avgValueEok": 20.2,
+          "ratio": 3.3
+        },
+        {
+          "ticker": "100590",
+          "company": "머큐리",
+          "market": "kosdaq",
+          "price": 4875.0,
+          "changePct": -2.4,
+          "valueEok": 124.1,
+          "avgValueEok": 37.5,
+          "ratio": 3.3
+        },
+        {
+          "ticker": "117580",
+          "company": "대성에너지",
           "market": "kospi",
-          "price": 64000.0,
-          "changePct": 7.6,
-          "valueEok": 405.8,
-          "avgValueEok": 108.2,
-          "ratio": 3.7
+          "price": 7220.0,
+          "changePct": 2.6,
+          "valueEok": 75.1,
+          "avgValueEok": 23.4,
+          "ratio": 3.2
         },
         {
-          "ticker": "163730",
-          "company": "핑거",
+          "ticker": "000440",
+          "company": "중앙에너비스",
           "market": "kosdaq",
-          "price": 12520.0,
-          "changePct": 5.1,
-          "valueEok": 44.5,
-          "avgValueEok": 12.5,
-          "ratio": 3.6
-        },
-        {
-          "ticker": "240810",
-          "company": "원익IPS",
-          "market": "kosdaq",
-          "price": 132400.0,
-          "changePct": 1.6,
-          "valueEok": 3421.2,
-          "avgValueEok": 979.3,
-          "ratio": 3.5
-        },
-        {
-          "ticker": "440110",
-          "company": "파두",
-          "market": "kosdaq",
-          "price": 81400.0,
-          "changePct": 12.6,
-          "valueEok": 1041.0,
-          "avgValueEok": 296.5,
-          "ratio": 3.5
+          "price": 12850.0,
+          "changePct": 3.2,
+          "valueEok": 36.2,
+          "avgValueEok": 12.0,
+          "ratio": 3.0
         }
       ]
     }

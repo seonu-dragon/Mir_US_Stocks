@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-09-28 08:56:50 KST",
+  "updatedAtKst": "2026-09-28 20:15:29 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 7734,
+  "tradeCount": 7731,
   "politicianCount": 158,
   "rankings": [
     {
@@ -171,9 +171,9 @@
       "chamber": "House",
       "party": "D",
       "estReturnPct": 23.26,
-      "buyCount": 425,
-      "sellCount": 144,
-      "tradeCount": 570,
+      "buyCount": 424,
+      "sellCount": 143,
+      "tradeCount": 568,
       "committees": [
         "Financial Services"
       ]
@@ -1199,9 +1199,9 @@
         "Financial Services"
       ],
       "district": "NJ05",
-      "tradeCount": 570,
-      "buyCount": 425,
-      "sellCount": 144,
+      "tradeCount": 568,
+      "buyCount": 424,
+      "sellCount": 143,
       "recentTrades": [
         {
           "politician": "Josh Gottheimer",
@@ -29907,88 +29907,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-mo-brooks",
-      "name": "Mo Brooks",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "AL05",
-      "tradeCount": 4,
-      "buyCount": 2,
-      "sellCount": 2,
-      "recentTrades": [
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "VZ",
-          "asset": "Verizon Communications Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-07-22",
-          "disclosureDate": "07/22/2022",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021568.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-12",
-          "disclosureDate": "10/21/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019626.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-12",
-          "disclosureDate": "10/12/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020998.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "D",
-          "asset": "Dominion Energy, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-09-29",
-          "disclosureDate": "09/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019626.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-john-j-mcguire",
       "name": "John J McGuire",
       "chamber": "House",
@@ -30436,6 +30354,71 @@
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20017965.pdf",
           "district": "TX03",
           "source": "house_ptr"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-mo-brooks",
+      "name": "Mo Brooks",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "AL05",
+      "tradeCount": 3,
+      "buyCount": 1,
+      "sellCount": 2,
+      "recentTrades": [
+        {
+          "politician": "Mo Brooks",
+          "chamber": "House",
+          "ticker": "VZ",
+          "asset": "Verizon Communications Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-07-22",
+          "disclosureDate": "07/22/2022",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021568.pdf",
+          "district": "AL05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mo Brooks",
+          "chamber": "House",
+          "ticker": "T",
+          "asset": "AT&T Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-12",
+          "disclosureDate": "10/21/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019626.pdf",
+          "district": "AL05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mo Brooks",
+          "chamber": "House",
+          "ticker": "T",
+          "asset": "AT&T Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-12",
+          "disclosureDate": "10/12/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020998.pdf",
+          "district": "AL05",
+          "source": "house_ptr",
+          "party": "R"
         }
       ],
       "estReturnPct": null
@@ -48291,7 +48274,7 @@
     },
     "INTU": {
       "ticker": "INTU",
-      "netBuys": 16,
+      "netBuys": 15,
       "netSells": 12,
       "politicianCount": 12,
       "trades": [
@@ -84449,8 +84432,8 @@
     "W": {
       "ticker": "W",
       "netBuys": 4,
-      "netSells": 3,
-      "politicianCount": 4,
+      "netSells": 2,
+      "politicianCount": 3,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -84551,23 +84534,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022948.pdf",
           "district": "NY10",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Josh Gottheimer",
-          "chamber": "House",
-          "ticker": "W",
-          "asset": "Wayfair Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-09-29",
-          "disclosureDate": "10/07/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019593.pdf",
-          "district": "NJ05",
           "source": "house_ptr",
           "party": "D"
         }
@@ -138771,9 +138737,9 @@
     },
     "D": {
       "ticker": "D",
-      "netBuys": 8,
+      "netBuys": 7,
       "netSells": 5,
-      "politicianCount": 8,
+      "politicianCount": 7,
       "trades": [
         {
           "politician": "Sheri Biggs",
@@ -138978,23 +138944,6 @@
           "district": "VA04",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "D",
-          "asset": "Dominion Energy, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2021-09-29",
-          "disclosureDate": "09/29/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019626.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -164924,8 +164873,8 @@
         "Real Estate",
         "Technology"
       ],
-      "buyCount": 440,
-      "sellCount": 147,
+      "buyCount": 439,
+      "sellCount": 146,
       "topTickers": [
         {
           "ticker": "MSFT",
@@ -164963,7 +164912,7 @@
       "topPoliticians": [
         {
           "name": "Josh Gottheimer",
-          "count": 425
+          "count": 424
         },
         {
           "name": "Nancy Pelosi",

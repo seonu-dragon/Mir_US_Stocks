@@ -271,6 +271,97 @@ def test_small_caps_use_dated_spark_close_when_screener_stale():
     assert "priceDate" not in by["NVDA"] and by["NVDA"]["quotePrice"] == 225.51  # 대형주는 build_one 몫
     assert result["targets"] == 5 and result["dated"] == 4 and result["undated"] == 1
     assert result["priceDateCounts"] == {"2026-09-25": 3, "2026-09-24": 1}
+    # 대상 5종은 보강 하한(30) 미만이라 chart 를 치지 않는다. 기준일(09-25) 일치만 센다.
+    assert result["onSession"] == 3 and result["chartBackfill"]["attempted"] == 0
+
+
+# 2026-09-29 run 36505151016: spark 가 01:22Z 에 아직 09-28 봉이 없어 소형주 89% 가
+# 09-25 에 멈췄다. 대형주 chart meta 는 같은 시각 09-28 종가였다.
+RUN_0929 = datetime(2026, 9, 29, 1, 22, tzinfo=timezone.utc)  # 09-28 21:22 ET
+QUOTE_0928 = int(datetime(2026, 9, 28, 20, 0, 1, tzinfo=timezone.utc).timestamp())
+
+
+def test_backfill_uses_chart_quote_when_spark_bar_is_previous_session():
+    universe = []
+    for i in range(4):
+        universe.append({
+            "symbol": f"S{i}", "quotePrice": 6.05, "screenerPrice": 6.10,
+            "priceDate": "2026-09-25", "priceSource": "yahoo-spark",
+        })
+    calls = []
+
+    def probe(symbol):
+        calls.append(symbol)
+        rows = _bars([("2026-09-24", 6.10), ("2026-09-25", 6.05)])
+        return rows, {"time": QUOTE_0928, "price": 5.83, "volume": 1000.0}
+
+    result = UD.backfill_small_caps_behind_session(
+        universe, fetch_probe=probe, workers=1, sleep=lambda _s: None,
+        now=RUN_0929, min_targets=1,
+    )
+    assert result["attempted"] == 4 and result["updated"] == 4 and result["failed"] == 0
+    assert calls == ["S0", "S1", "S2", "S3"]
+    assert universe[0]["priceDate"] == "2026-09-28" and universe[0]["quotePrice"] == 5.83
+    assert universe[0]["screenerPrice"] == 6.10 and universe[0]["priceSource"] == "yahoo-spark"
+    assert round(universe[0]["quoteChangePct"], 2) == round((5.83 / 6.05 - 1) * 100, 2)
+
+
+def test_backfill_skips_when_off_session_share_is_within_gate():
+    universe = [
+        {"symbol": f"S{i}", "priceDate": "2026-09-28", "quotePrice": 1.0, "priceSource": "yahoo-spark"}
+        for i in range(39)
+    ]
+    universe.append({"symbol": "HALT", "priceDate": "2026-09-25", "quotePrice": 1.0, "priceSource": "yahoo-spark"})
+
+    def probe(_symbol):
+        raise AssertionError("5% 이하면 chart 를 치지 않는다")
+
+    result = UD.backfill_small_caps_behind_session(
+        universe, fetch_probe=probe, now=RUN_0929, min_targets=1,
+    )
+    assert result["attempted"] == 0 and universe[-1]["priceDate"] == "2026-09-25"
+
+
+def test_backfill_keeps_spark_when_chart_is_not_newer():
+    universe = [{
+        "symbol": "HALT", "quotePrice": 1.3, "screenerPrice": 1.3,
+        "priceDate": "2026-09-25", "priceSource": "yahoo-spark",
+    }]
+
+    def probe(_symbol):
+        return _bars([("2026-09-24", 1.2), ("2026-09-25", 1.3)]), None
+
+    result = UD.backfill_small_caps_behind_session(
+        universe, fetch_probe=probe, workers=1, sleep=lambda _s: None,
+        now=RUN_0929, min_targets=1,
+    )
+    assert result["attempted"] == 1 and result["updated"] == 0
+    assert universe[0]["quotePrice"] == 1.3 and universe[0]["priceDate"] == "2026-09-25"
+
+
+def test_apply_dated_backfills_spark_lag_from_chart_quote():
+    symbols = [f"S{i}" for i in range(4)]
+    payload = {
+        symbol: {"symbol": symbol, "timestamp": SPARK_TS, "close": [1.0, 1.0, 1.0, 1.0, 6.05]}
+        for symbol in symbols
+    }
+    universe = [{"symbol": symbol, "quotePrice": 6.10} for symbol in symbols]
+    seen = []
+
+    def probe(symbol):
+        seen.append(symbol)
+        return _bars([("2026-09-24", 6.10), ("2026-09-25", 6.05)]), {"time": QUOTE_0928, "price": 5.83}
+
+    result = UD.apply_dated_small_cap_quotes(
+        universe, fetch_batch=_spark_fetch(payload), fetch_quote=probe,
+        now=RUN_0929, min_targets=1,
+    )
+    assert len(seen) == 4
+    assert all(meta["priceDate"] == "2026-09-28" and meta["quotePrice"] == 5.83 for meta in universe)
+    assert all(meta["screenerPrice"] == 6.10 for meta in universe)
+    assert result["onSession"] == 4 and result["dated"] == 4
+    assert result["chartBackfill"]["updated"] == 4
+    assert result["priceDateCounts"] == {"2026-09-28": 4}
 
 
 def test_spark_drops_intraday_partial_bar():

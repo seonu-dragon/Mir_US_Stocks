@@ -27,7 +27,7 @@ if sys.platform == "win32":
 
 from briefing_store import apply_briefing_fragments, repository_publish_lock
 from sec_client import ET_TZ, require_us_market_closed
-from us_market_calendar import session_close as us_session_close
+from us_market_calendar import last_completed_session, session_close as us_session_close
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -3032,8 +3032,13 @@ def ensure_fresh_screener(universe, *, fetch_screener=None, fetch_probe=None,
 SPARK_BATCH = 20
 SPARK_WORKERS = int(os.environ.get("SPARK_WORKERS", "4"))
 SPARK_RETRIES = 3
-# 소형주 대상 중 이 비율 이상이 날짜 확인되면 스크리너 재조회 대기(최대 30분)를 건너뛴다.
+# 소형주 대상 중 이 비율 이상이 '마지막 완료 거래일' 로 날짜 확인되면
+# 스크리너 재조회 대기(최대 30분)를 건너뛴다. 아무 날짜나 있으면 통과시키면
+# 전 거래일 봉만 받은 날에도 대기를 건너뛴다(2026-09-29 run 36505151016).
 SPARK_COVERAGE_SKIP_SCREENER_WAIT = 0.95
+# 대상이 이보다 적으면(단위 테스트·부분 실행) chart 보강을 하지 않는다.
+SMALL_CAP_BACKFILL_MIN_TARGETS = 30
+CHART_BACKFILL_WORKERS = int(os.environ.get("CHART_BACKFILL_WORKERS", "8"))
 
 
 def fetch_yahoo_spark(symbols, *, fetch_json=None, sleep=time.sleep):
@@ -3078,10 +3083,132 @@ def fetch_yahoo_spark(symbols, *, fetch_json=None, sleep=time.sleep):
     return out
 
 
-def apply_dated_small_cap_quotes(universe, *, fetch_batch=None, workers=None, now=None):
+def _write_small_cap_session(meta, session):
+    """날짜가 확인된 소형주 시세를 meta 에 반영한다.
+
+    priceSource 는 yahoo-spark 로 유지한다. 이 종목의 rows 는 합성이거나 오래된
+    캐시라, yahoo 로 두면 make_stock 이 '빠진 봉'으로 보고 합성 시계열을 하루 민다.
+    screenerPrice 는 처음 한 번만 남긴다(보강이 원래 스크리너 값을 덮지 않게).
+    """
+    if "screenerPrice" not in meta and meta.get("quotePrice") is not None:
+        meta["screenerPrice"] = meta.get("quotePrice")
+    prev = session["prevClose"]
+    meta["quotePrice"] = session["price"]
+    meta["quoteChangePct"] = ((session["price"] / prev) - 1) * 100 if prev else None
+    if session.get("volume"):
+        meta["quoteVolume"] = session["volume"]
+    meta["priceDate"] = session["priceDate"]
+    meta["priceSource"] = "yahoo-spark"
+
+
+def _fetch_chart_session(meta, *, fetch_probe, sleep, now):
+    """종목 chart(일봉 + meta 시세) → (meta, session|None, error|None).
+
+    한 종목 실패가 스냅샷 전체를 멈추지 않게 예외는 삼킨다.
+    """
+    last = None
+    got = None
+    try:
+        for attempt in range(SPARK_RETRIES):
+            try:
+                got = fetch_probe(meta["symbol"])
+                break
+            except Exception as exc:
+                last = exc
+                if attempt + 1 < SPARK_RETRIES:
+                    sleep(1.0 * (attempt + 1))
+        if not got:
+            return meta, None, last
+        rows, quote = got
+        session = resolve_session_price(rows or [], quote, now=now)
+        current = meta.get("priceDate") or ""
+        if not session or session["priceDate"] <= current:
+            return meta, None, None
+        return meta, session, None
+    except Exception as exc:
+        return meta, None, exc
+
+
+def backfill_small_caps_behind_session(targets, *, fetch_probe=None, workers=None,
+                                      sleep=time.sleep, now=None, min_targets=None):
+    """spark 마지막 봉이 완료 거래일보다 뒤처진 종목을 chart meta 시세로 맞춘다.
+
+    2026-09-29 run 36505151016: 크론이 00:51 UTC 까지 밀렸고, spark(약 01:22Z)의
+    5일 일봉이 소형주 3,562/4,001 에서 금요일(09-25)에 멈췄다. 428개만 월요일
+    봉이 있었다. 같은 잡의 대형주 chart 는 일봉이 없어도 meta.regularMarketTime
+    으로 09-28 종가를 채웠다(sessionBarMissing 233). spark 응답에는 그 시각이 없다.
+    기준일이 아닌 종목 비율이 5% 를 넘을 때만(평시 거래정지 ~1% 는 그대로 둔다)
+    종목별 chart 를 받아 대형주와 같은 resolve_session_price 로 덮어쓴다.
+    """
+    empty = {"attempted": 0, "updated": 0, "failed": 0, "expected": None}
+    expected = last_completed_session(now)
+    if expected is None or not targets:
+        return empty
+    expected_iso = expected.isoformat()
+    empty["expected"] = expected_iso
+    floor = SMALL_CAP_BACKFILL_MIN_TARGETS if min_targets is None else min_targets
+    lagging = [meta for meta in targets if meta.get("priceDate") != expected_iso]
+    # 5% 이하(게이트와 같은 경계)이거나 대상이 너무 적으면 네트워크를 치지 않는다.
+    if len(targets) < floor or len(lagging) * 20 <= len(targets):
+        return empty
+    fetch_probe = fetch_probe or fetch_yahoo_probe
+    workers = CHART_BACKFILL_WORKERS if workers is None else workers
+    updated = failed = 0
+    with ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
+        fetched = executor.map(
+            lambda meta: _fetch_chart_session(meta, fetch_probe=fetch_probe, sleep=sleep, now=now),
+            lagging,
+        )
+        for meta, session, err in fetched:
+            if err:
+                failed += 1
+            if not session:
+                continue
+            _write_small_cap_session(meta, session)
+            updated += 1
+    print(
+        f"[가격기준일] 소형주 chart 보강: 대상 {len(lagging)} · 기준일 {expected_iso} 로 갱신 {updated} · "
+        f"조회 실패 {failed}"
+    )
+    return {"attempted": len(lagging), "updated": updated, "failed": failed, "expected": expected_iso}
+
+
+def _summarize_small_cap_dates(targets, *, requests, started, backfill, now):
+    dates = {}
+    for meta in targets:
+        day = meta.get("priceDate")
+        if day:
+            dates[day] = dates.get(day, 0) + 1
+    dated = sum(dates.values())
+    expected = last_completed_session(now)
+    expected_iso = expected.isoformat() if expected else None
+    result = {
+        "source": "yahoo-spark",
+        "targets": len(targets),
+        "dated": dated,
+        "undated": len(targets) - dated,
+        "priceDateCounts": dict(sorted(dates.items(), key=lambda kv: (-kv[1], kv[0]))[:4]),
+        "requests": requests,
+        "seconds": round(time.time() - started, 1),
+        # 마지막 완료 거래일과 같은 날짜만. 달력을 모르면 None(호출자가 dated 비율로 폴백).
+        "onSession": dates.get(expected_iso, 0) if expected_iso else None,
+        "expectedSession": expected_iso,
+        "chartBackfill": backfill,
+    }
+    print(
+        f"[가격기준일] 소형주 야후 spark: 대상 {result['targets']} · 날짜 확인 {dated} · "
+        f"미확인 {result['undated']} · 분포 {result['priceDateCounts']} · "
+        f"{result['requests']}요청 {result['seconds']}초"
+    )
+    return result
+
+
+def apply_dated_small_cap_quotes(universe, *, fetch_batch=None, fetch_quote=None,
+                                workers=None, now=None, min_targets=None):
     """실측 이력 대상이 아닌 종목(소형주 등)의 가격·등락률을 야후 spark 의 날짜 붙은
     종가/전 거래일 종가로 바꾼다. 대형주의 resolve_session_price 를 그대로 써서
-    미완료(장중) 봉은 버린다. 반환: priceCheck["smallCap"] 집계.
+    미완료(장중) 봉은 버린다. spark 봉이 완료 거래일보다 밀리면 chart meta 로 보강한다.
+    반환: priceCheck["smallCap"] 집계.
     """
     fetch_batch = fetch_batch or fetch_yahoo_spark
     workers = SPARK_WORKERS if workers is None else workers
@@ -3094,36 +3221,16 @@ def apply_dated_small_cap_quotes(universe, *, fetch_batch=None, workers=None, no
         with ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
             for part in executor.map(fetch_batch, batches):
                 got.update(part or {})
-    dates = {}
-    dated = 0
     for meta in targets:
         session = resolve_session_price(got.get(meta["symbol"]) or [], None, now=now)
-        if not session:
-            continue
-        prev = session["prevClose"]
-        if meta.get("quotePrice") is not None:
-            meta["screenerPrice"] = meta.get("quotePrice")
-        meta["quotePrice"] = session["price"]
-        meta["quoteChangePct"] = ((session["price"] / prev) - 1) * 100 if prev else None
-        meta["priceDate"] = session["priceDate"]
-        meta["priceSource"] = "yahoo-spark"
-        dates[session["priceDate"]] = dates.get(session["priceDate"], 0) + 1
-        dated += 1
-    result = {
-        "source": "yahoo-spark",
-        "targets": len(targets),
-        "dated": dated,
-        "undated": len(targets) - dated,
-        "priceDateCounts": dict(sorted(dates.items(), key=lambda kv: (-kv[1], kv[0]))[:4]),
-        "requests": len(batches),
-        "seconds": round(time.time() - started, 1),
-    }
-    print(
-        f"[가격기준일] 소형주 야후 spark: 대상 {result['targets']} · 날짜 확인 {dated} · "
-        f"미확인 {result['undated']} · 분포 {result['priceDateCounts']} · "
-        f"{result['requests']}요청 {result['seconds']}초"
+        if session:
+            _write_small_cap_session(meta, session)
+    backfill = backfill_small_caps_behind_session(
+        targets, fetch_probe=fetch_quote, now=now, min_targets=min_targets,
     )
-    return result
+    return _summarize_small_cap_dates(
+        targets, requests=len(batches), started=started, backfill=backfill, now=now,
+    )
 
 
 def summarize_price_dates(stocks):
@@ -3512,8 +3619,17 @@ def build_etf_relative_strength(stocks, lookup, etf_category_map, etf_universe_c
 def build_snapshot():
     universe, etf_category_map, etf_universe_count, lev_etf_count, exchange_backfill_count = build_universe()
     small_cap_check = apply_dated_small_cap_quotes(universe)
-    coverage = small_cap_check["dated"] / small_cap_check["targets"] if small_cap_check["targets"] else 1.0
-    # 소형주 대부분이 날짜 확인되면 스크리너가 늦어도 기다릴 이유가 없다(잡 시간 최대 30분 절약).
+    # '아무 날짜'가 아니라 마지막 완료 거래일 기준. 전 거래일 봉만 잔뜩 있어도
+    # 95% 로 세지 않는다(그러면 스크리너 재조회까지 건너뛰고 게이트가 죽는다).
+    on_session = small_cap_check.get("onSession")
+    targets_n = small_cap_check["targets"]
+    if targets_n and on_session is not None:
+        coverage = on_session / targets_n
+    elif targets_n:
+        coverage = small_cap_check["dated"] / targets_n
+    else:
+        coverage = 1.0
+    # 소형주 대부분이 기준일 종가면 스크리너가 늦어도 기다릴 이유가 없다(잡 시간 최대 30분 절약).
     screener_check = ensure_fresh_screener(
         universe, retries=0 if coverage >= SPARK_COVERAGE_SKIP_SCREENER_WAIT else None,
     )

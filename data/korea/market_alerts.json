@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-09-29 22:41 KST",
-  "baseDate": "2026-09-29",
-  "count": 469,
+  "updatedAtKst": "2026-09-30 03:39 KST",
+  "baseDate": "2026-09-28",
+  "count": 476,
   "sources": {
     "kind": "KRX KIND 시장경보·투자유의 (kind.krx.co.kr)",
     "limits": "네이버 금융 m.stock 등락률 목록 (상한·하한 표시)",
@@ -11,7 +11,7 @@
   "sections": {
     "caution": {
       "asOf": "2026-09-29",
-      "status": "ok",
+      "status": "carried",
       "rows": [
         {
           "ticker": "390110",
@@ -641,7 +641,7 @@
     },
     "warning": {
       "asOf": "2026-09-29",
-      "status": "ok",
+      "status": "carried",
       "rows": [
         {
           "ticker": "085910",
@@ -847,7 +847,7 @@
     },
     "risk": {
       "asOf": "2026-09-29",
-      "status": "ok",
+      "status": "carried",
       "rows": [
         {
           "ticker": "302920",
@@ -861,7 +861,7 @@
     },
     "halt": {
       "asOf": "2026-09-29",
-      "status": "ok",
+      "status": "carried",
       "rows": [
         {
           "ticker": "265690",
@@ -1593,7 +1593,7 @@
     },
     "admin": {
       "asOf": "2026-09-29",
-      "status": "ok",
+      "status": "carried",
       "rows": [
         {
           "ticker": "044380",
@@ -2940,9 +2940,9 @@
       ]
     },
     "newHigh": {
-      "asOf": "2026-09-29",
+      "asOf": "2026-09-28",
       "status": "ok",
-      "covered": 911,
+      "covered": 971,
       "rows": [
         {
           "ticker": "031980",
@@ -2958,7 +2958,15 @@
           "market": "kosdaq",
           "price": 20000.0,
           "changePct": 7.8,
-          "level": 20150.0
+          "level": 20000.0
+        },
+        {
+          "ticker": "053800",
+          "company": "안랩",
+          "market": "kosdaq",
+          "price": 76100.0,
+          "changePct": 2.0,
+          "level": 77600.0
         },
         {
           "ticker": "092870",
@@ -2966,7 +2974,23 @@
           "market": "kosdaq",
           "price": 48500.0,
           "changePct": 3.2,
-          "level": 48850.0
+          "level": 48500.0
+        },
+        {
+          "ticker": "017890",
+          "company": "한국알콜",
+          "market": "kosdaq",
+          "price": 15680.0,
+          "changePct": -0.3,
+          "level": 16420.0
+        },
+        {
+          "ticker": "068930",
+          "company": "디지털대성",
+          "market": "kosdaq",
+          "price": 9830.0,
+          "changePct": 1.6,
+          "level": 10000.0
         },
         {
           "ticker": "051160",
@@ -2974,7 +2998,7 @@
           "market": "kosdaq",
           "price": 12600.0,
           "changePct": -2.9,
-          "level": 13400.0
+          "level": 13390.0
         },
         {
           "ticker": "109670",
@@ -2983,29 +3007,13 @@
           "price": 16730.0,
           "changePct": 30.0,
           "level": 16730.0
-        },
-        {
-          "ticker": "469480",
-          "company": "IBKS제24호스팩",
-          "market": "kosdaq",
-          "price": 3270.0,
-          "changePct": -0.9,
-          "level": 3370.0
-        },
-        {
-          "ticker": "498390",
-          "company": "한화플러스제5호스팩",
-          "market": "kosdaq",
-          "price": 2710.0,
-          "changePct": 9.3,
-          "level": 2710.0
         }
       ]
     },
     "newLow": {
-      "asOf": "2026-09-29",
+      "asOf": "2026-09-28",
       "status": "ok",
-      "covered": 911,
+      "covered": 971,
       "rows": [
         {
           "ticker": "015760",
@@ -3013,7 +3021,7 @@
           "market": "kospi",
           "price": 30100.0,
           "changePct": -1.9,
-          "level": 29900.0
+          "level": 30000.0
         },
         {
           "ticker": "064350",
@@ -3021,15 +3029,7 @@
           "market": "kospi",
           "price": 112400.0,
           "changePct": -2.9,
-          "level": 110700.0
-        },
-        {
-          "ticker": "259960",
-          "company": "크래프톤",
-          "market": "kospi",
-          "price": 198300.0,
-          "changePct": -1.8,
-          "level": 196000.0
+          "level": 112400.0
         },
         {
           "ticker": "029780",
@@ -3037,7 +3037,7 @@
           "market": "kospi",
           "price": 42600.0,
           "changePct": -1.7,
-          "level": 42200.0
+          "level": 42250.0
         },
         {
           "ticker": "298380",
@@ -3045,7 +3045,7 @@
           "market": "kosdaq",
           "price": 49250.0,
           "changePct": -1.9,
-          "level": 48050.0
+          "level": 49250.0
         },
         {
           "ticker": "145020",
@@ -3053,202 +3053,7 @@
           "market": "kosdaq",
           "price": 184000.0,
           "changePct": -1.1,
-          "level": 178600.0
-        },
-        {
-          "ticker": "043610",
-          "company": "KT지니뮤직",
-          "market": "kosdaq",
-          "price": 1113.0,
-          "changePct": -4.0,
-          "level": 1108.0
-        },
-        {
-          "ticker": "007460",
-          "company": "에이프로젠",
-          "market": "kospi",
-          "price": 1951.0,
-          "changePct": -3.4,
-          "level": 1941.0
-        },
-        {
-          "ticker": "009190",
-          "company": "대양금속",
-          "market": "kospi",
-          "price": 712.0,
-          "changePct": -20.0,
-          "level": 701.0
-        },
-        {
-          "ticker": "006370",
-          "company": "대구백화점",
-          "market": "kospi",
-          "price": 2905.0,
-          "changePct": -2.0,
-          "level": 2805.0
-        },
-        {
-          "ticker": "369370",
-          "company": "블리츠웨이엔터테인먼트",
-          "market": "kosdaq",
-          "price": 3025.0,
-          "changePct": -2.7,
-          "level": 2880.0
-        },
-        {
-          "ticker": "003060",
-          "company": "에이프로젠바이오로직스",
-          "market": "kospi",
-          "price": 1508.0,
-          "changePct": -3.8,
-          "level": 1486.0
-        },
-        {
-          "ticker": "001380",
-          "company": "SG글로벌",
-          "market": "kospi",
-          "price": 1051.0,
-          "changePct": -4.7,
-          "level": 1009.0
-        },
-        {
-          "ticker": "006490",
-          "company": "프리티",
-          "market": "kospi",
-          "price": 1306.0,
-          "changePct": -8.4,
-          "level": 1300.0
-        },
-        {
-          "ticker": "095910",
-          "company": "에스에너지",
-          "market": "kosdaq",
-          "price": 555.0,
-          "changePct": -2.3,
-          "level": 542.0
-        },
-        {
-          "ticker": "335870",
-          "company": "윙스풋",
-          "market": "kosdaq",
-          "price": 4700.0,
-          "changePct": 11.9,
-          "level": 3900.0
-        },
-        {
-          "ticker": "060900",
-          "company": "에이전트AI",
-          "market": "kosdaq",
-          "price": 2270.0,
-          "changePct": -4.2,
-          "level": 2210.0
-        },
-        {
-          "ticker": "067770",
-          "company": "세진티에스",
-          "market": "kosdaq",
-          "price": 1049.0,
-          "changePct": -33.2,
-          "level": 999.0
-        },
-        {
-          "ticker": "354200",
-          "company": "엔젠바이오",
-          "market": "kosdaq",
-          "price": 971.0,
-          "changePct": -23.2,
-          "level": 886.0
-        },
-        {
-          "ticker": "240600",
-          "company": "유진테크놀로지",
-          "market": "kosdaq",
-          "price": 892.0,
-          "changePct": -12.6,
-          "level": 829.0
-        },
-        {
-          "ticker": "288980",
-          "company": "모아데이타",
-          "market": "kosdaq",
-          "price": 205.0,
-          "changePct": -6.0,
-          "level": 192.0
-        },
-        {
-          "ticker": "058450",
-          "company": "한주에이알티",
-          "market": "kosdaq",
-          "price": 574.0,
-          "changePct": -10.0,
-          "level": 535.0
-        }
-      ]
-    },
-    "valueSurge": {
-      "asOf": "2026-09-29",
-      "status": "ok",
-      "covered": 911,
-      "rows": [
-        {
-          "ticker": "267320",
-          "company": "나인테크",
-          "market": "kosdaq",
-          "price": 2640.0,
-          "changePct": 19.5,
-          "valueEok": 427.7,
-          "avgValueEok": 5.1,
-          "ratio": 83.6
-        },
-        {
-          "ticker": "003580",
-          "company": "HLB글로벌",
-          "market": "kospi",
-          "price": 2035.0,
-          "changePct": -1.0,
-          "valueEok": 119.5,
-          "avgValueEok": 2.0,
-          "ratio": 59.3
-        },
-        {
-          "ticker": "206400",
-          "company": "베노티앤알",
-          "market": "kosdaq",
-          "price": 920.0,
-          "changePct": 19.6,
-          "valueEok": 32.2,
-          "avgValueEok": 1.2,
-          "ratio": 27.9
-        },
-        {
-          "ticker": "490470",
-          "company": "세미파이브",
-          "market": "kosdaq",
-          "price": 18940.0,
-          "changePct": 15.8,
-          "valueEok": 1866.0,
-          "avgValueEok": 77.7,
-          "ratio": 24.0
-        },
-        {
-          "ticker": "047920",
-          "company": "HLB제약",
-          "market": "kosdaq",
-          "price": 12500.0,
-          "changePct": 29.9,
-          "valueEok": 544.2,
-          "avgValueEok": 23.7,
-          "ratio": 23.0
-        },
-        {
-          "ticker": "338220",
-          "company": "뷰노",
-          "market": "kosdaq",
-          "price": 8320.0,
-          "changePct": 22.0,
-          "valueEok": 237.5,
-          "avgValueEok": 12.9,
-          "ratio": 18.4
+          "level": 182300.0
         },
         {
           "ticker": "003570",
@@ -3256,69 +3061,198 @@
           "market": "kospi",
           "price": 30700.0,
           "changePct": 3.0,
-          "valueEok": 241.5,
-          "avgValueEok": 13.6,
-          "ratio": 17.8
+          "level": 25900.0
         },
         {
-          "ticker": "308430",
-          "company": "셀비온",
+          "ticker": "243070",
+          "company": "휴온스",
           "market": "kosdaq",
-          "price": 14860.0,
-          "changePct": 0.5,
-          "valueEok": 32.2,
-          "avgValueEok": 2.3,
-          "ratio": 14.2
+          "price": 18940.0,
+          "changePct": -1.0,
+          "level": 18800.0
         },
         {
-          "ticker": "099750",
-          "company": "이지케어텍",
+          "ticker": "043610",
+          "company": "KT지니뮤직",
           "market": "kosdaq",
-          "price": 7450.0,
-          "changePct": 2.5,
-          "valueEok": 89.1,
-          "avgValueEok": 8.1,
-          "ratio": 11.0
+          "price": 1113.0,
+          "changePct": -4.0,
+          "level": 1113.0
         },
         {
-          "ticker": "290690",
-          "company": "아리바이오홀딩스",
-          "market": "kosdaq",
-          "price": 2970.0,
-          "changePct": -25.6,
-          "valueEok": 141.5,
-          "avgValueEok": 16.1,
-          "ratio": 8.8
+          "ticker": "002880",
+          "company": "디와이에이",
+          "market": "kospi",
+          "price": 3470.0,
+          "changePct": 0.1,
+          "level": 3265.0
         },
         {
-          "ticker": "161580",
-          "company": "필옵틱스",
-          "market": "kosdaq",
-          "price": 38650.0,
-          "changePct": 12.7,
-          "valueEok": 910.0,
-          "avgValueEok": 111.2,
-          "ratio": 8.2
+          "ticker": "009190",
+          "company": "대양금속",
+          "market": "kospi",
+          "price": 712.0,
+          "changePct": -20.0,
+          "level": 712.0
         },
         {
-          "ticker": "256840",
-          "company": "한국비엔씨",
-          "market": "kosdaq",
-          "price": 3295.0,
+          "ticker": "003060",
+          "company": "에이프로젠바이오로직스",
+          "market": "kospi",
+          "price": 1508.0,
           "changePct": -3.8,
-          "valueEok": 823.4,
-          "avgValueEok": 106.1,
-          "ratio": 7.8
+          "level": 1508.0
         },
         {
-          "ticker": "950250",
-          "company": "테라뷰",
+          "ticker": "001380",
+          "company": "SG글로벌",
+          "market": "kospi",
+          "price": 1051.0,
+          "changePct": -4.7,
+          "level": 1051.0
+        },
+        {
+          "ticker": "276730",
+          "company": "한울앤제주",
           "market": "kosdaq",
-          "price": 4355.0,
-          "changePct": 30.0,
-          "valueEok": 381.3,
-          "avgValueEok": 48.6,
-          "ratio": 7.8
+          "price": 940.0,
+          "changePct": 4.8,
+          "level": 883.0
+        },
+        {
+          "ticker": "335870",
+          "company": "윙스풋",
+          "market": "kosdaq",
+          "price": 4700.0,
+          "changePct": 11.9,
+          "level": 4170.0
+        },
+        {
+          "ticker": "060900",
+          "company": "에이전트AI",
+          "market": "kosdaq",
+          "price": 2270.0,
+          "changePct": -4.2,
+          "level": 2270.0
+        },
+        {
+          "ticker": "354200",
+          "company": "엔젠바이오",
+          "market": "kosdaq",
+          "price": 971.0,
+          "changePct": -23.2,
+          "level": 971.0
+        },
+        {
+          "ticker": "291810",
+          "company": "핀텔",
+          "market": "kosdaq",
+          "price": 584.0,
+          "changePct": -29.9,
+          "level": 584.0
+        },
+        {
+          "ticker": "240600",
+          "company": "유진테크놀로지",
+          "market": "kosdaq",
+          "price": 892.0,
+          "changePct": -12.6,
+          "level": 892.0
+        },
+        {
+          "ticker": "044380",
+          "company": "주연테크",
+          "market": "kospi",
+          "price": 436.0,
+          "changePct": 7.7,
+          "level": 365.0
+        },
+        {
+          "ticker": "250930",
+          "company": "예선테크",
+          "market": "kosdaq",
+          "price": 524.0,
+          "changePct": -29.9,
+          "level": 524.0
+        },
+        {
+          "ticker": "011080",
+          "company": "형지I&C",
+          "market": "kosdaq",
+          "price": 456.0,
+          "changePct": 2.5,
+          "level": 439.0
+        },
+        {
+          "ticker": "058450",
+          "company": "한주에이알티",
+          "market": "kosdaq",
+          "price": 574.0,
+          "changePct": -10.0,
+          "level": 574.0
+        },
+        {
+          "ticker": "196490",
+          "company": "디에이테크놀로지",
+          "market": "kosdaq",
+          "price": 100.0,
+          "changePct": -28.6,
+          "level": 100.0
+        },
+        {
+          "ticker": "312610",
+          "company": "에이에프더블류",
+          "market": "kosdaq",
+          "price": 45.0,
+          "changePct": -40.8,
+          "level": 45.0
+        }
+      ]
+    },
+    "valueSurge": {
+      "asOf": "2026-09-28",
+      "status": "ok",
+      "covered": 971,
+      "rows": [
+        {
+          "ticker": "052790",
+          "company": "액토즈소프트",
+          "market": "kosdaq",
+          "price": 4755.0,
+          "changePct": -2.4,
+          "valueEok": 58.4,
+          "avgValueEok": 0.5,
+          "ratio": 110.9
+        },
+        {
+          "ticker": "131100",
+          "company": "티엔엔터테인먼트",
+          "market": "kosdaq",
+          "price": 2780.0,
+          "changePct": -2.8,
+          "valueEok": 37.2,
+          "avgValueEok": 0.4,
+          "ratio": 92.3
+        },
+        {
+          "ticker": "338220",
+          "company": "뷰노",
+          "market": "kosdaq",
+          "price": 8320.0,
+          "changePct": 22.0,
+          "valueEok": 143.0,
+          "avgValueEok": 7.1,
+          "ratio": 20.2
+        },
+        {
+          "ticker": "393210",
+          "company": "토마토시스템",
+          "market": "kosdaq",
+          "price": 3620.0,
+          "changePct": -14.9,
+          "valueEok": 658.3,
+          "avgValueEok": 39.6,
+          "ratio": 16.6
         },
         {
           "ticker": "001260",
@@ -3326,39 +3260,39 @@
           "market": "kospi",
           "price": 8230.0,
           "changePct": 5.4,
-          "valueEok": 34.9,
-          "avgValueEok": 5.1,
-          "ratio": 6.9
+          "valueEok": 45.4,
+          "avgValueEok": 3.1,
+          "ratio": 14.8
         },
         {
-          "ticker": "028300",
-          "company": "HLB",
+          "ticker": "094360",
+          "company": "칩스앤미디어",
           "market": "kosdaq",
-          "price": 40950.0,
-          "changePct": 3.1,
-          "valueEok": 2814.0,
-          "avgValueEok": 473.8,
-          "ratio": 5.9
+          "price": 12480.0,
+          "changePct": -0.7,
+          "valueEok": 99.6,
+          "avgValueEok": 7.8,
+          "ratio": 12.7
         },
         {
-          "ticker": "117730",
-          "company": "티로보틱스",
-          "market": "kosdaq",
-          "price": 14990.0,
-          "changePct": 5.8,
-          "valueEok": 60.8,
-          "avgValueEok": 13.5,
-          "ratio": 4.5
+          "ticker": "002360",
+          "company": "SH에너지화학",
+          "market": "kospi",
+          "price": 3300.0,
+          "changePct": 12.4,
+          "valueEok": 35.4,
+          "avgValueEok": 3.1,
+          "ratio": 11.4
         },
         {
-          "ticker": "032580",
-          "company": "피델릭스",
+          "ticker": "328130",
+          "company": "루닛",
           "market": "kosdaq",
-          "price": 7740.0,
-          "changePct": 10.4,
-          "valueEok": 163.7,
-          "avgValueEok": 37.4,
-          "ratio": 4.4
+          "price": 11820.0,
+          "changePct": 1.3,
+          "valueEok": 569.9,
+          "avgValueEok": 52.4,
+          "ratio": 10.9
         },
         {
           "ticker": "089010",
@@ -3366,9 +3300,99 @@
           "market": "kosdaq",
           "price": 26200.0,
           "changePct": 4.2,
-          "valueEok": 85.2,
-          "avgValueEok": 20.8,
-          "ratio": 4.1
+          "valueEok": 144.0,
+          "avgValueEok": 14.2,
+          "ratio": 10.1
+        },
+        {
+          "ticker": "256840",
+          "company": "한국비엔씨",
+          "market": "kosdaq",
+          "price": 3295.0,
+          "changePct": -3.8,
+          "valueEok": 672.0,
+          "avgValueEok": 71.5,
+          "ratio": 9.4
+        },
+        {
+          "ticker": "009830",
+          "company": "한화솔루션",
+          "market": "kospi",
+          "price": 32500.0,
+          "changePct": -2.5,
+          "valueEok": 3743.8,
+          "avgValueEok": 550.5,
+          "ratio": 6.8
+        },
+        {
+          "ticker": "242040",
+          "company": "나무AX",
+          "market": "kosdaq",
+          "price": 3110.0,
+          "changePct": -6.5,
+          "valueEok": 41.2,
+          "avgValueEok": 6.0,
+          "ratio": 6.8
+        },
+        {
+          "ticker": "025560",
+          "company": "미래산업",
+          "market": "kospi",
+          "price": 7710.0,
+          "changePct": 7.4,
+          "valueEok": 140.1,
+          "avgValueEok": 20.9,
+          "ratio": 6.7
+        },
+        {
+          "ticker": "017890",
+          "company": "한국알콜",
+          "market": "kosdaq",
+          "price": 15680.0,
+          "changePct": -0.3,
+          "valueEok": 49.1,
+          "avgValueEok": 7.7,
+          "ratio": 6.4
+        },
+        {
+          "ticker": "439580",
+          "company": "블루엠텍",
+          "market": "kosdaq",
+          "price": 2675.0,
+          "changePct": -9.5,
+          "valueEok": 147.4,
+          "avgValueEok": 22.9,
+          "ratio": 6.4
+        },
+        {
+          "ticker": "024850",
+          "company": "HLB이노베이션",
+          "market": "kosdaq",
+          "price": 16410.0,
+          "changePct": -16.6,
+          "valueEok": 211.4,
+          "avgValueEok": 34.1,
+          "ratio": 6.2
+        },
+        {
+          "ticker": "484590",
+          "company": "삼양컴텍",
+          "market": "kosdaq",
+          "price": 7270.0,
+          "changePct": 9.7,
+          "valueEok": 60.8,
+          "avgValueEok": 10.0,
+          "ratio": 6.1
+        },
+        {
+          "ticker": "468530",
+          "company": "프로티나",
+          "market": "kosdaq",
+          "price": 54200.0,
+          "changePct": 0.9,
+          "valueEok": 222.4,
+          "avgValueEok": 37.3,
+          "ratio": 6.0
         },
         {
           "ticker": "007810",
@@ -3376,69 +3400,109 @@
           "market": "kospi",
           "price": 75800.0,
           "changePct": 9.9,
-          "valueEok": 1047.4,
-          "avgValueEok": 279.2,
-          "ratio": 3.8
+          "valueEok": 1339.7,
+          "avgValueEok": 228.2,
+          "ratio": 5.9
         },
         {
-          "ticker": "323280",
-          "company": "태성",
-          "market": "kosdaq",
-          "price": 54400.0,
-          "changePct": 14.2,
-          "valueEok": 508.1,
-          "avgValueEok": 132.6,
-          "ratio": 3.8
-        },
-        {
-          "ticker": "457190",
-          "company": "이수스페셜티케미컬",
+          "ticker": "003570",
+          "company": "SNT다이내믹스",
           "market": "kospi",
-          "price": 72000.0,
-          "changePct": 10.9,
-          "valueEok": 308.7,
-          "avgValueEok": 82.7,
-          "ratio": 3.7
+          "price": 30700.0,
+          "changePct": 3.0,
+          "valueEok": 60.7,
+          "avgValueEok": 11.1,
+          "ratio": 5.5
         },
         {
-          "ticker": "261780",
-          "company": "아리바이오랩",
+          "ticker": "068930",
+          "company": "디지털대성",
           "market": "kosdaq",
-          "price": 3635.0,
-          "changePct": -0.9,
-          "valueEok": 131.5,
-          "avgValueEok": 37.4,
+          "price": 9830.0,
+          "changePct": 1.6,
+          "valueEok": 32.6,
+          "avgValueEok": 5.9,
+          "ratio": 5.5
+        },
+        {
+          "ticker": "458870",
+          "company": "씨어스",
+          "market": "kosdaq",
+          "price": 26100.0,
+          "changePct": -6.3,
+          "valueEok": 155.9,
+          "avgValueEok": 32.7,
+          "ratio": 4.8
+        },
+        {
+          "ticker": "069260",
+          "company": "TKG휴켐스",
+          "market": "kospi",
+          "price": 16120.0,
+          "changePct": -1.6,
+          "valueEok": 30.9,
+          "avgValueEok": 6.6,
+          "ratio": 4.7
+        },
+        {
+          "ticker": "005070",
+          "company": "코스모신소재",
+          "market": "kospi",
+          "price": 43600.0,
+          "changePct": -1.7,
+          "valueEok": 164.0,
+          "avgValueEok": 37.3,
+          "ratio": 4.4
+        },
+        {
+          "ticker": "044450",
+          "company": "KSS해운",
+          "market": "kospi",
+          "price": 12380.0,
+          "changePct": -0.4,
+          "valueEok": 51.4,
+          "avgValueEok": 12.0,
+          "ratio": 4.3
+        },
+        {
+          "ticker": "064960",
+          "company": "SNT모티브",
+          "market": "kospi",
+          "price": 27000.0,
+          "changePct": -1.5,
+          "valueEok": 71.4,
+          "avgValueEok": 17.7,
+          "ratio": 4.0
+        },
+        {
+          "ticker": "178320",
+          "company": "서진시스템",
+          "market": "kosdaq",
+          "price": 37450.0,
+          "changePct": 4.3,
+          "valueEok": 1194.4,
+          "avgValueEok": 341.5,
           "ratio": 3.5
         },
         {
-          "ticker": "376300",
-          "company": "디어유",
+          "ticker": "163730",
+          "company": "핑거",
           "market": "kosdaq",
-          "price": 18410.0,
-          "changePct": 8.1,
-          "valueEok": 35.1,
-          "avgValueEok": 10.5,
-          "ratio": 3.3
+          "price": 13830.0,
+          "changePct": -3.4,
+          "valueEok": 48.3,
+          "avgValueEok": 14.1,
+          "ratio": 3.4
         },
         {
-          "ticker": "083450",
-          "company": "GST",
+          "ticker": "092870",
+          "company": "엑시콘",
           "market": "kosdaq",
-          "price": 53400.0,
-          "changePct": 8.1,
-          "valueEok": 148.5,
-          "avgValueEok": 46.9,
-          "ratio": 3.2
-        },
-        {
-          "ticker": "403870",
-          "company": "HPSP",
-          "market": "kosdaq",
-          "price": 61700.0,
-          "changePct": 10.2,
-          "valueEok": 3089.4,
-          "avgValueEok": 1027.9,
-          "ratio": 3.0
+          "price": 48500.0,
+          "changePct": 3.2,
+          "valueEok": 373.5,
+          "avgValueEok": 119.5,
+          "ratio": 3.1
         }
       ]
     }

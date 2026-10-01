@@ -4011,6 +4011,16 @@ def git_push_updates(updated_at_kst):
     # 충돌 시 방금 만든 우리 버전을 채택한다(-X theirs 는 rebase 에서
     # replay 중인 로컬 커밋을 가리킨다). 끝내 실패하면 비-0 종료 —
     # 초록 CI 뒤에서 하루치 스냅샷이 조용히 미발행되는 것을 막는다.
+    # data/ 밖의 커밋 안 된 추적 파일 변경이 pull --rebase 를 막지 않게(sec_client.git_publish 와 같은 처리).
+    from sec_client import stash_unrelated_changes
+    restore = stash_unrelated_changes(lambda args, **kw: subprocess.run(["git", *args], cwd=ROOT, **kw))
+    try:
+        _push_snapshot_with_retries(branch)
+    finally:
+        restore()
+
+
+def _push_snapshot_with_retries(branch):
     for attempt in range(1, 4):
         try:
             subprocess.run(["git", "fetch", "origin", branch], cwd=ROOT, check=True)

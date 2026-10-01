@@ -2,20 +2,27 @@ name: Event study (weekly)
 
 # 이벤트 스터디 워크벤치(종목 탭 › 공시 › 이벤트 스터디) 사전 계산 — scripts/build_event_study.py.
 # US: SEC submissions API 로 추적 종목 시총 상위 1,200개의 8-K 항목·13D·424B5 를 다시 받고(약 10분, 초당 ~8건),
-# KR: DART list.json 분기 창(최근 2분기 + 아직 안 받은 분기 최대 4개)을 받은 뒤 두 시장의 초과수익 경로를
-# 다시 계산한다(data/event_study/, 아카이브 data/event_study_archive/ 는 배포 제외).
+# KR: DART list.json 을 증분으로 받는다 — 진행 중 분기는 직전 수집일 − 7일부터, 끝난 뒤 받은 분기는 건너뜀,
+# 안 받은 분기는 최근부터(평소 수십 콜). 그 뒤 두 시장의 초과수익 경로를 다시 계산한다
+# (data/event_study/, 아카이브 data/event_study_archive/ 는 배포 제외).
 # 일봉(data/details·data/korea/details)은 평일 스냅샷 워크플로우가 갱신하므로 주말에 한 번 돈다.
+#
+# 요일: 토요일. DART 키 하루 한도(2만)를 모든 워크플로우·로컬이 나눠 쓰는데, 일요일은
+# weekly-earnings-history(일 03:02 KST, KR 재무·분기 실적·소유구조)가 한도를 다 쓴다 — 09-27 첫 정기
+# 실행이 일요일 18:23 KST 첫 list.json 부터 020 으로 죽었다(같은 날 09:54 KST 에 주간 잡이 이미 020).
+# 토요일 DART 사용은 company-info themes(기본 ~650콜)뿐이다. 그래도 020 이 나면 직전 KR 이벤트로 발행하고
+# 경고만 남긴다(KR 마지막 정상 수집이 15일을 넘으면 실패).
 
 on:
   schedule:
-    - cron: "23 3 * * 0"  # 일요일 12:23 KST
+    - cron: "23 5 * * 6"  # 토요일 14:23 KST
   workflow_dispatch:
     inputs:
       market:
         description: "us | kr | all"
         default: "all"
       kr_quarters:
-        description: "이번 실행에서 받을 DART 분기 수(최근 2분기 포함, 5년 전체 = 21)"
+        description: "이번 실행에서 받을 DART 분기 수 상한(완료된 분기는 건너뜀, 5년 전체 = 21)"
         default: "6"
 
 permissions:

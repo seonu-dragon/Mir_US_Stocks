@@ -60,6 +60,17 @@ def _git_publish_data(project_dir: Path, commit_label: str, paths: list[str]) ->
         message = f"Auto-update schedule data ({commit_label}): {stamp}"
         _run_git(project_dir, ["commit", "-m", message, "--", *paths], check=True)
 
+    from sec_client import stash_unrelated_changes
+
+    # 발행 대상 밖 커밋 안 된 변경이 pull --rebase 를 막지 않게(sec_client.git_publish 와 같은 처리).
+    restore = stash_unrelated_changes(lambda args, **kw: _run_git(project_dir, args, **kw))
+    try:
+        return _push_with_retries(project_dir, branch)
+    finally:
+        restore()
+
+
+def _push_with_retries(project_dir: Path, branch: str) -> bool:
     last_error = None
     for attempt in range(1, 4):
         try:

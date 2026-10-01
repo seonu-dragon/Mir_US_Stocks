@@ -38,6 +38,13 @@ SERIES = [
 ]
 UA = {"User-Agent": "Mir US Stocks research (dydtjsdn@gmail.com)"}
 FRED_CSV = "https://fred.stlouisfed.org/graph/fredgraph.csv?id=" + ",".join(s[0] for s in SERIES)
+# FRED 의 DGS 시리즈는 재무부 고시를 다음 영업일에야 싣는다 — 06:05 KST(미 동부 전날 저녁) 실행 시점엔
+# 늘 하루 전(D-1)이 마지막이었다(2026-09-30 실행이 asOf 09-28). 같은 값(Daily Treasury Par Yield Curve
+# = CMT)을 재무부가 당일 저녁에 직접 고시하므로, FRED 마지막 날짜 이후 행만 거기서 덧붙인다.
+TREASURY_CSV = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/"
+                "daily-treasury-rates.csv/{year}/all?type=daily_treasury_yield_curve&field_tdr_date_value={year}&page&_format=csv")
+TREASURY_COLS = {"DGS1MO": "1 Mo", "DGS3MO": "3 Mo", "DGS6MO": "6 Mo", "DGS1": "1 Yr", "DGS2": "2 Yr",
+                 "DGS3": "3 Yr", "DGS5": "5 Yr", "DGS7": "7 Yr", "DGS10": "10 Yr", "DGS20": "20 Yr", "DGS30": "30 Yr"}
 
 
 def kst_now_str() -> str:
@@ -50,6 +57,35 @@ def fetch_csv(url: str) -> list[list[str]]:
     return [line.split(",") for line in text.splitlines() if line.strip()]
 
 
+def treasury_rows_as_fred(header: list[str], treasury: list[list[str]], after: str) -> list[list[str]]:
+    """재무부 CSV 행(MM/DD/YYYY, "10 Yr" 열)을 FRED 헤더 순서의 행(YYYY-MM-DD)으로 — after 보다 새 날짜만, 날짜 오름차순."""
+    if len(treasury) < 2:
+        return []
+    th = [h.strip().strip('"') for h in treasury[0]]
+    out = []
+    for r in treasury[1:]:
+        m = str(r[0]).strip().strip('"').split("/") if r else []
+        if len(m) != 3:
+            continue
+        iso = f"{m[2]}-{m[0].zfill(2)}-{m[1].zfill(2)}"
+        if iso <= after:
+            continue
+        row = [iso]
+        for name in header[1:]:
+            col = TREASURY_COLS.get(name)
+            j = th.index(col) if col in th else -1
+            row.append(r[j].strip() if 0 <= j < len(r) and r[j].strip() else ".")
+        if any(v != "." for v in row[1:]):
+            out.append(row)
+    return sorted(out, key=lambda x: x[0])
+
+
+def fetch_treasury(year: int) -> list[list[str]]:
+    text = sec.http_get_with_backoff(TREASURY_CSV.format(year=year), headers=UA, timeout=30,
+                                     label="treasury yield curve").decode("utf-8", "replace")
+    return [line.split(",") for line in text.splitlines() if line.strip()]
+
+
 def build() -> dict | None:
     rows = fetch_csv(FRED_CSV)
     if len(rows) < 2:
@@ -59,6 +95,16 @@ def build() -> dict | None:
     if not idx:
         return None
     data_rows = rows[1:]
+    fred_last = max((r[0] for r in data_rows if r), default="")
+    extra = []
+    try:
+        year = datetime.now(timezone(timedelta(hours=-5))).year
+        extra = treasury_rows_as_fred(header, fetch_treasury(year), fred_last)
+    except Exception as e:  # noqa: BLE001 — 재무부 실패는 FRED 만으로 계속(하루 늦을 뿐)
+        print(f"[yield] 재무부 당일 고시 실패({type(e).__name__}: {e}) — FRED 만 사용")
+    if extra:
+        print(f"[yield] FRED 마지막 {fred_last} 이후 재무부 고시 {len(extra)}일 덧붙임: {extra[-1][0]}")
+        data_rows = data_rows + extra
 
     def last_value(col: int):
         for r in reversed(data_rows):
@@ -110,7 +156,7 @@ def build() -> dict | None:
     return {
         "updatedAtKst": kst_now_str(),
         "asOf": as_of,
-        "source": "FRED · US Treasury constant maturity (DGS)",
+        "source": "FRED · US Treasury constant maturity (DGS)" + (" + Treasury.gov 당일 고시" if extra else ""),
         "curve": curve,
         "spreads": spreads,
         "spreadHistory": hist,

@@ -16216,3 +16216,66 @@ html[data-theme="dark"] #financialsSection.financials-card { --mf-c2: color-mix(
   .mf-tables { padding: 4px 10px 8px; }
 }
 /* ===== chart-card:end ===== */
+
+/* === 업데이트 소식 · 새 기능 카드 (changelog.js, 2026-10-01) — 이 블록 안에서만 고칠 것 === */
+.mir-cl-btn { position: relative; width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--topbar-line); border-radius: var(--r-sm); background: var(--topbar-ctl); color: var(--topbar-fg); cursor: pointer; }
+.mir-cl-btn:hover { border-color: var(--line-strong); }
+.mir-cl-btn svg { flex: none; width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+.mir-cl-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--neg, #c03535); box-shadow: 0 0 0 2px var(--topbar-ctl); }
+.mir-cl-dot[hidden] { display: none !important; }
+.mir-cl-btn .mir-cl-dot, .ia-gear-btn .mir-cl-dot-gear { position: absolute; top: 6px; right: 6px; }
+/* 전역 button 패딩(좌우 14px)이 40px 정사각 버튼 안 아이콘을 10px 로 눌러 왔다 — 톱니도 함께 0 으로. */
+.mir-cl-btn, .ia-gear-btn { padding: 0; }
+.ia-gear-btn { position: relative; }
+.ia-gear-btn svg { flex: none; }
+.ia-gear-btn .mir-cl-dot-gear { display: none !important; }   /* 톱니 점은 헤더 버튼을 숨기는 폰에서만 */
+.ia-popover-item-cl { display: flex; align-items: center; gap: 8px; }
+.ia-popover-item-cl .mir-cl-dot { box-shadow: none; }
+@media (max-width: 640px) {
+  .mir-cl-btn { display: none; }
+  .ia-gear-btn.mir-cl-has-unread .mir-cl-dot-gear:not([hidden]) { display: inline-block !important; }
+}
+
+.mir-cl-dialog { width: min(620px, calc(100vw - 24px)); max-width: none; max-height: min(84vh, 760px); padding: 0; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); color: var(--text); box-shadow: var(--shadow-dialog); overflow: hidden; }
+.mir-cl-dialog[open] { display: flex; flex-direction: column; }
+.mir-cl-dialog::backdrop { background: rgba(15, 23, 42, 0.5); }
+.mir-cl-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 12px; border-bottom: 1px solid var(--line); }
+.mir-cl-head h2 { margin: 0; font-size: var(--fs-title, 18px); font-weight: 700; }
+.mir-cl-head p { margin: 4px 0 0; font-size: var(--fs-sub, 13px); color: var(--text-muted); }
+.mir-cl-close { flex: none; width: 32px; height: 32px; border: 1px solid var(--line); border-radius: var(--r-sm); background: transparent; color: var(--text-2); cursor: pointer; font-size: 14px; line-height: 1; }
+.mir-cl-close:hover { background: var(--panel-soft); }
+.mir-cl-list { list-style: none; margin: 0; padding: 4px 20px 16px; overflow: auto; overscroll-behavior: contain; }
+.mir-cl-item { padding: 14px 0; border-bottom: 1px solid var(--line-soft, var(--line)); min-width: 0; }
+.mir-cl-item:last-child { border-bottom: 0; }
+.mir-cl-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: var(--fs-cap, 12px); color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.mir-cl-tag { display: inline-flex; align-items: center; padding: 0 6px; min-height: 18px; border-radius: var(--r-xs); border: 1px solid var(--line); font-size: 11px; color: var(--text-2); line-height: 1.5; white-space: nowrap; }
+.mir-cl-new { display: inline-flex; align-items: center; padding: 0 6px; min-height: 18px; border-radius: var(--r-xs); background: var(--tint-info); color: var(--tint-info-fg); font-size: 11px; font-weight: 600; }
+.mir-cl-title { margin: 6px 0 0; font-size: 15px; font-weight: 650; line-height: 1.4; overflow-wrap: anywhere; }
+.mir-cl-desc { margin: 4px 0 0; font-size: var(--fs-sub, 13px); line-height: 1.6; color: var(--text-2); overflow-wrap: anywhere; }
+.mir-cl-open { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; font-size: var(--fs-sub, 13px); font-weight: 600; color: var(--link); text-decoration: none; }
+.mir-cl-open:hover { text-decoration: underline; }
+.mir-cl-open small { font-weight: 400; color: var(--text-muted); }
+.mir-cl-empty { padding: 24px 0; color: var(--text-muted); }
+
+.mir-cl-card { position: relative; display: flex; align-items: flex-start; gap: 10px; margin: 0 0 12px; padding: 12px 40px 12px 14px; border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--line)); border-radius: var(--r-md); background: color-mix(in srgb, var(--accent) 6%, var(--panel)); color: var(--text); min-width: 0; max-width: 100%; box-sizing: border-box; }
+.mir-cl-card .mir-cl-ico { flex: none; width: 20px; height: 20px; margin-top: 1px; fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linejoin: round; }
+.mir-cl-card-body { min-width: 0; flex: 1 1 auto; }
+.mir-cl-card-head { margin: 0; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 14px; line-height: 1.45; }
+.mir-cl-card-head strong { font-weight: 650; overflow-wrap: anywhere; min-width: 0; }
+.mir-cl-label { flex: none; display: inline-flex; align-items: center; padding: 0 6px; min-height: 18px; border-radius: var(--r-xs); background: var(--primary-fill); color: var(--on-primary); font-size: 11px; font-weight: 600; }
+.mir-cl-card-desc { margin: 3px 0 0; font-size: var(--fs-sub, 13px); line-height: 1.55; color: var(--text-2); overflow-wrap: anywhere; }
+.mir-cl-card-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+.mir-cl-try { display: inline-flex; align-items: center; min-height: 30px; padding: 0 12px; border-radius: var(--r-sm); background: var(--primary-fill); color: var(--on-primary); font-size: var(--fs-sub, 13px); font-weight: 600; text-decoration: none; }
+.mir-cl-try:hover { filter: brightness(1.08); }
+.mir-cl-all { min-height: 30px; padding: 0; border: 0; background: none; color: var(--text-muted); font-size: var(--fs-cap, 12px); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.mir-cl-all:hover { color: var(--text); }
+.mir-cl-x { position: absolute; top: 8px; right: 8px; width: 28px; height: 28px; border: 0; border-radius: var(--r-sm); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 13px; line-height: 1; }
+.mir-cl-x:hover { background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--text); }
+.mir-cl-flash { outline: 2px solid color-mix(in srgb, var(--accent) 55%, transparent); outline-offset: 3px; border-radius: var(--r-md); transition: outline-color 1.2s ease; }
+@media (max-width: 640px) {
+  .mir-cl-card { padding: 10px 36px 10px 12px; gap: 8px; }
+  .mir-cl-card .mir-cl-ico { width: 18px; height: 18px; }
+  .mir-cl-head { padding: 14px 16px 10px; }
+  .mir-cl-list { padding: 2px 16px 12px; }
+}
+/* === 업데이트 소식 끝 === */

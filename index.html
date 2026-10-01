@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=1200edb312" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=1200edb312"></noscript>
+    <link rel="preload" href="styles.css?v=8c64705c25" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=8c64705c25"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=8f890c6230"></script>
+    <script src="build_id.js?v=209c97b0b5"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1334,6 +1334,8 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="stock-detail" id="stockDetail">
           <aside class="sd-side" id="stockSide" aria-label="종목 요약">
             <section class="detail-panel sd-quote animate-reveal" id="searchFacts"></section>
+            <!-- 오늘·임박 이벤트(stock-summary.js renderStockEventStrip) — 실적 D-7·배당·보호예수·새 공시 중 가까운 1~2개, 누르면 이벤트·공시 탭 -->
+            <section class="ss-strip" id="stockEventStrip" aria-label="오늘·임박 이벤트" hidden></section>
             <div class="sd-actions animate-reveal">
               <button type="button" class="ghost compact-btn" id="thesisFromTicker" title="이 종목의 매수 근거와 폐기 조건을 기록하고 방문할 때마다 점검">가설 추가</button>
               <button type="button" class="ghost compact-btn" id="dcaFromTicker" title="이 종목을 매월 같은 금액으로 샀다면 — 적립식 시뮬레이터로 이동">적립식으로 샀다면</button>
@@ -1367,6 +1369,8 @@ html[data-market="kr"][data-theme="dark"] {
             </nav>
             <div class="sd-views">
             <div class="sd-view is-active" id="sdv-overview" data-view="overview" role="tabpanel">
+              <!-- 한눈 요약(stock-summary.js renderStockSummary) — 시총·연간 실적 문장, 5개년 표, 최근 공시. 데이터가 거의 없으면 숨김 -->
+              <section class="ss-card animate-reveal" id="stockSummaryCard" hidden></section>
               <div class="chart-card animate-reveal">
                 <div class="section-title">
                   <h2 id="chartTitle">종목 차트</h2>
@@ -1537,8 +1541,6 @@ html[data-market="kr"][data-theme="dark"] {
                 <span class="sd-ai-teaser-text" id="stockAiTeaserText"></span>
                 <span class="sd-ai-teaser-go" aria-hidden="true">›</span>
               </button>
-              <!-- 일별 시세(daily-table.js renderDailyTable) — 차트와 같은 일봉, drawChart 가 부른다 -->
-              <section class="dtbl-card animate-reveal" id="dailyPriceTable" hidden></section>
               <div class="analysis-balanced-grid analysis-insight-grid">
                 <section class="move-explanation-card animate-reveal" id="moveExplanation" aria-live="polite"></section>
                 <section class="investment-checklist-card animate-reveal" id="investmentChecklist" aria-live="polite"></section>
@@ -1552,6 +1554,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="range52-card sh-card animate-reveal" id="stockRisk" hidden></section>
               <!-- 기업개요(company-info.js renderCompanyInfo) — KR DART · US SEC 해시 샤드 -->
               <section class="range52-card ci-card animate-reveal" id="companyInfo" hidden></section>
+              <!-- 일별 시세(daily-table.js renderDailyTable) — 차트와 같은 일봉, drawChart 가 부른다. 길어서 개요 탭 맨 아래 -->
+              <section class="dtbl-card animate-reveal" id="dailyPriceTable" hidden></section>
             </div>
             <div class="sd-view" id="sdv-fin" data-view="fin" role="tabpanel">
               <!-- 핵심 지표(chart-indicators.js renderFundamentals). ETF 면 구성 종목 표라 수급·보유 탭으로 옮겨진다 -->
@@ -3321,7 +3325,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=ab86517654"></script>
+    <script src="feature-data.js?v=c25eeb5c5a"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3393,9 +3397,11 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="calendar-panel.js?v=16ce5f782e"></script>
     <script src="lockup-core.js?v=68e009b38b"></script>
     <script src="lockups.js?v=b4b7282745"></script>
+    <script src="stock-summary-core.js?v=436336bada"></script>
+    <script src="stock-summary.js?v=98225ef0ab"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=bd311f1cec"></script>
+    <script src="app.js?v=3a639323fb"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

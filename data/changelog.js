@@ -3,6 +3,22 @@ window.MIR_CHANGELOG = {
   "updatedAt": "2026-10-01",
   "entries": [
     {
+      "id": "2026-10-01-stock-summary-event-strip",
+      "date": "2026-10-01",
+      "title": "종목 상세에 한눈 요약 카드와 오늘·임박 이벤트 줄",
+      "desc": "개요 탭 맨 위에 시가총액·최근 연간 매출·영업이익(전년 대비)·목표주가 컨센서스를 문장으로 정리하고, 5개년 실적 표와 최근 공시 5건을 함께 보여 줍니다. 가격 아래에는 실적 발표 7일 이내·배당·보호예수 해제·새 공시 중 가까운 일정을 한 줄로 띄우고, 누르면 이벤트·공시 탭으로 갑니다. 숫자마다 기준일·출처를 달았고 매매 추천이 아닙니다.",
+      "link": "?tab=search&sub=analysis&ticker=005930&market=kr",
+      "targets": [
+        "sdv-overview"
+      ],
+      "focus": [
+        "stockSummaryCard",
+        "stockEventStrip"
+      ],
+      "market": "all",
+      "pr": 277
+    },
+    {
       "id": "2026-10-01-fin-val-chart-cards",
       "date": "2026-10-01",
       "title": "재무·밸류 탭 차트를 같은 틀의 카드로",

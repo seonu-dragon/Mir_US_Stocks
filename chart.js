@@ -450,7 +450,7 @@ function buildChartProbPanel(result) {
   const statsBtns = [["population", "전체 통계"], ["individual", "종목 실측"]].map(([k, l]) =>
     `<button type="button" class="cprob-hz cprob-stats-btn${k === chartProbStatsMode ? " is-active" : ""}" data-cpstats="${k}">${l}</button>`).join("");
   const toolbar = `<div class="cprob-toolbar">
-      <span class="cprob-title">기술 점수 분석</span>
+      <span class="cprob-title">차트 분석</span>
       <div class="cprob-hz-group" role="group" aria-label="예측 기간">${btns}</div>
       <div class="cprob-hz-group" role="group" aria-label="패턴 통계 기준">${statsBtns}</div>
     </div>`;
@@ -647,7 +647,7 @@ function toggleChartProbAnalysis() {
   runChartProbAnalysis();
 }
 
-// "기술 점수 분석" 버튼: 이동평균선+지지/저항을 켜고, 엔진으로 기술 점수를 계산해 패널에 표시.
+// "차트 분석" 버튼(2026-10-01 '기술 점수 분석' 에서 개명): 이동평균선+지지/저항을 켜고, 엔진으로 기술 점수를 계산해 패널에 표시.
 function runChartProbAnalysis() {
   const panel = byId("chartProbPanel");
   if (!panel) return;

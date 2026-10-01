@@ -1,5 +1,5 @@
 /*
- * 차트 기술 점수 분석 엔진 (analysis.js)
+ * 차트 분석 엔진 (analysis.js) — 화면 이름 '차트 분석'(2026-10-01 '기술 점수 분석' 에서 개명)
  * ----------------------------------
  * 종목 하나의 5년치 일봉(OHLCV)을 받아 두 가지 방식으로 상승/하락 확률을 추정한다.
  *
@@ -3131,7 +3131,7 @@ function analysisHeadLabels(result) {
 }
 
 // 기본(종목 미지정) 메타 — analysis.html 의 정적 값과 같아야 한다.
-const ANALYSIS_BASE_TITLE = "차트 기술 점수 분석 | 미르의 미국 주식";
+const ANALYSIS_BASE_TITLE = "차트 분석 | 미르의 미국 주식";
 const ANALYSIS_BASE_DESC = "종목 차트 분석 기반 기술 점수(0~100)·과거 유사 구간 실측";
 
 function analysisMarketSuffix() {
@@ -3158,7 +3158,7 @@ function updateAnalysisMeta(ticker, company) {
   const label = company ? `${company}(${key})` : key;
   // 사이트명은 시장을 따른다 — 국내 종목을 열어도 '미르의 미국 주식'으로 나오던 문제(09-06).
   const siteName = (window.MirMarket && window.MirMarket.getConfig && window.MirMarket.getConfig().pageTitle) || "미르의 미국 주식";
-  const title = `${label} 기술 점수·차트 패턴 분석 | ${siteName}`;
+  const title = `${label} 차트 분석 | ${siteName}`;
   const desc = `${label} 의 차트 패턴·지지저항·과거 유사 구간 실측을 종합한 기술 점수(0~100). 확률 예측이 아닙니다.`;
   const url = `${ANALYSIS_BASE_URL}?t=${encodeURIComponent(key)}${analysisMarketSuffix()}`;
 
@@ -3180,7 +3180,7 @@ async function init() {
     const params = new URLSearchParams(window.location.search);
     const market = params.get("market");
     window.MirMarket.setMode(market === "kr" ? "kr" : window.MirMarket.getInitialMode());
-    document.title = window.MirMarket.getConfig().pageTitle + " · 차트 기술 점수 분석";
+    document.title = window.MirMarket.getConfig().pageTitle + " · 차트 분석";
   }
   // submit 바인딩을 통계 로드보다 먼저 건다. 예전엔 await ensureStats() 뒤에 바인딩해,
   // 통계가 오기 전에 Enter 를 치면 preventDefault 가 없어 폼이 네이티브 GET 으로 페이지를

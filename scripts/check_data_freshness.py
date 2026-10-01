@@ -23,6 +23,7 @@
     py scripts/check_data_freshness.py --group earnings-releases  # material-events.yml 말미
     py scripts/check_data_freshness.py --group kr-valuation-band  # kr-valuation-band.yml 말미
     py scripts/check_data_freshness.py --group event-study        # event-study.yml 말미
+    py scripts/check_data_freshness.py --group moment-news        # moment-news.yml 말미
     py scripts/check_data_freshness.py --group financials         # weekly-earnings-history.yml financials 잡
     py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
     py scripts/check_data_freshness.py --group screener-backtest  # screener-backtest-panel.yml 말미
@@ -239,6 +240,11 @@ CHECKS = {
     # 0건(count)도 잡는다(가격·아카이브를 못 읽으면 표본이 0).
     "event-study": [
         ("data/event_study/index.json", 10, True),
+    ],
+    # moment-news.yml(매일 12:40 KST) — 큰 등락일 그날 뉴스 미리 모으기. 실행마다 index updatedAtKst 를
+    # 새로 쓴다 — 3일이면 두 번 연속 실패. 건수는 보지 않는다(새 큰 등락일이 없는 날은 검색 0건이 정상).
+    "moment-news": [
+        ("data/moment_news/index.json", 3, False),
     ],
     # crisis-history.yml(매월 1일). 과거 구간이라 내용은 고정이지만 실행마다 updatedAtKst 와
     # 대리 지수 최근 3년(β 추정용)을 새로 쓴다 — 40일이면 한 번 실패, 0건(count)도 잡는다.

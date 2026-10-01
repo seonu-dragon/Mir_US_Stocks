@@ -1,0 +1,73 @@
+name: Moment news (daily)
+
+# 차트 '큰 등락일'(▲▼) 그날 뉴스 미리 모으기 — scripts/build_moment_news.py → data/moment_news/<us|kr>_NN.json.
+# 미국 시총 상위 500 · 국내 상위 200 의 최근 3년 큰 등락일마다 구글 뉴스 RSS 날짜 검색(±2일) 상위 3건.
+# Cloudflare 워커(?event_news)에선 구글 뉴스·GDELT 가 시간 초과라(2026-10-01 진단) GitHub 러너에서 모은다.
+# 처음엔 밀린 날짜가 약 1.5만 건이라 실행마다 시장별 --max-queries(기본 1,200)씩 최근 날짜부터 채운다
+# (미국 약 9일·국내 약 4일). 그 뒤로는 새로 생긴 큰 등락일만 몇 건씩. 구글이 연속으로 거절하면 받은 것까지 저장.
+
+on:
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다(DEPLOY.md "정시 실행 워커").
+  # mir-cron: "40 3 * * *"  # 매일 12:40 KST
+  workflow_dispatch:
+    inputs:
+      market:
+        description: "us | kr | all"
+        default: "all"
+      max_queries:
+        description: "시장별 검색 상한(실행당)"
+        default: "1200"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: scripts/requirements-actions.txt
+
+      - name: Install dependencies
+        run: pip install -r scripts/requirements-actions.txt
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build moment news
+        shell: bash
+        run: |
+          python scripts/build_moment_news.py \
+            --market "${{ github.event.inputs.market || 'all' }}" \
+            --max-queries "${{ github.event.inputs.max_queries || '1200' }}" \
+            --push
+
+      - name: Freshness gate
+        if: ${{ !cancelled() }}
+        run: python scripts/check_data_freshness.py --group moment-news
+
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

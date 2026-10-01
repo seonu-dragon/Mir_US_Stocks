@@ -62,6 +62,7 @@ const EMBEDDED_SCHEDULE = [
   {"workflow":"market-indicators.yml","cron":"30 22 * * 0-4","input":false},
   {"workflow":"market-indicators.yml","cron":"10 7 * * 1-5","input":false},
   {"workflow":"material-events.yml","cron":"23 4 * * *","input":false},
+  {"workflow":"moment-news.yml","cron":"40 3 * * *","input":false},
   {"workflow":"screener-backtest-panel.yml","cron":"40 20 * * 6","input":false},
   {"workflow":"short-interest.yml","cron":"47 5 * * 2,5","input":false},
   {"workflow":"us-close-briefing.yml","cron":"34 21 * * *","input":false},

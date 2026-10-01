@@ -3,6 +3,21 @@ window.MIR_CHANGELOG = {
   "updatedAt": "2026-10-01",
   "entries": [
     {
+      "id": "2026-10-01-today-market-feed",
+      "date": "2026-10-01",
+      "title": "오늘 탭에 '오늘 피드' — 시장 전체 하루 타임라인",
+      "desc": "오늘 탭에 하위 탭 '오늘 피드'를 더했습니다. 미국은 8-K 요약·실적·특징주·내부자 거래·Form 144·경제지표, 국내는 DART 공시·특징주·IR·보호예수 해제를 하루 단위로 모읍니다. 종류 칩으로 거르고 종목을 누르면 분석으로 갑니다. 오늘 자료가 없으면 최근 자료일을 날짜와 함께 보여 줍니다.",
+      "link": "?tab=today&sub=feed",
+      "targets": [
+        "tab-feed"
+      ],
+      "focus": [
+        "marketFeed"
+      ],
+      "market": "all",
+      "pr": 280
+    },
+    {
       "id": "2026-10-01-mobile-bottom-nav",
       "date": "2026-10-01",
       "title": "휴대폰 하단 탭 바와 종목 미니 바",

@@ -15,8 +15,9 @@
 // 클래식 스크립트(전역 공유). 최상위 이름은 mirPush 접두로 충돌을 피한다.
 
 const MIR_PUSH_DEFAULTS = {
-  endpoint: "",        // 예: "https://mir-push.<계정>.workers.dev" — 워커 배포 후 채운다
-  vapidPublicKey: "",  // scripts/gen_vapid_keys.mjs 가 출력한 VAPID_PUBLIC_KEY(공개키만)
+  endpoint: "https://mir-push.planbesides.workers.dev",  // 2026-10-01 배포(/push/health → configured: true)
+  // scripts/gen_vapid_keys.mjs 가 출력한 VAPID_PUBLIC_KEY(공개키만). 워커 시크릿과 같아야 한다 — 바꾸면 기존 구독 전부 무효.
+  vapidPublicKey: "BG4RJZBeX8GXcPoLZHSWctAstcMq3SNuh7FCgrJZhNRaR2Mzl67cQsKwGFUwClWgFknvzrvyTdKg_OIIt_p3yH0",
 };
 const MIR_PUSH_PREFS_KEY = "mir.push.prefs.v1";   // { prefs, manual: [{t, price, dir}] }
 const MIR_PUSH_STATE_KEY = "mir.push.state.v1";   // { endpoint, hash, syncedAt }

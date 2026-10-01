@@ -1,4 +1,4 @@
-// stock-view.js — 종목 상세(종목 › 분석)의 좌측 요약 패널 + 본문 6탭 전환.
+// stock-view.js — 종목 상세(종목 › 분석)의 좌측 요약 패널 + 본문 7탭 전환(기본 탭은 차트).
 //
 // 카드는 index.html 에서 탭별 컨테이너(#sdv-<view>)로 자리만 옮겼고, 각 카드를 그리는 함수
 // (renderSearch → drawChart·renderFinancials·renderDcf …)는 그대로다. 여기서는
@@ -11,10 +11,10 @@
 // refreshFeatureViews 가 숨은 탭 카드를 다시 그려도 안전하다.
 // 전역 이름은 sd 접두사(classic script 전역 공유).
 
-const SD_VIEWS = ["overview", "fin", "val", "events", "flow", "ai"];
+const SD_VIEWS = ["chart", "overview", "fin", "val", "events", "flow", "ai"];
 // 옛 이름·짧은 이름으로 온 링크도 받아 준다.
 const SD_VIEW_ALIAS = {
-  summary: "overview", chart: "overview", main: "overview",
+  summary: "overview", main: "chart", price: "chart", daily: "chart",
   financials: "fin", financial: "fin", earnings: "fin",
   valuation: "val", dcf: "val", band: "val",
   event: "events", disclosure: "events", disclosures: "events",
@@ -28,14 +28,14 @@ function sdNormalizeView(v) {
   return SD_VIEW_ALIAS[key] || null;
 }
 
-// 첫 화면에서 열 탭: &view= > &dcf=(시나리오 공유 링크) > 개요.
+// 첫 화면에서 열 탭: &view= > &dcf=(시나리오 공유 링크) > 차트.
 function sdInitialView() {
   let p = null;
-  try { p = new URLSearchParams(window.location.search); } catch (_) { return "overview"; }
+  try { p = new URLSearchParams(window.location.search); } catch (_) { return "chart"; }
   const v = sdNormalizeView(p.get("view"));
   if (v) return v;
   if (p.get("dcf")) return "val";
-  return "overview";
+  return "chart";
 }
 
 let sdCurrentView = sdInitialView();
@@ -55,7 +55,7 @@ function sdWriteUrl(view) {
       if (p.get("ticker") && p.get("ticker") !== selectedTicker) p.delete("dcf"); // 다른 종목의 시나리오는 버린다
       p.set("ticker", selectedTicker);
     }
-    if (view && view !== "overview") p.set("view", view);
+    if (view && view !== "chart") p.set("view", view);
     else p.delete("view");
     history.replaceState(history.state, "", url.toString());
   } catch (_) { /* history 차단 환경 */ }
@@ -82,7 +82,7 @@ function sdApplyView(view) {
   sdUpdateEmpty();
 }
 
-// 폰에서 탭 줄이 가로로 넘치면(6탭 > 화면 폭) 선택한 탭이 가려지지 않게 탭 줄만 옆으로 민다.
+// 폰에서 탭 줄이 가로로 넘치면(7탭 > 화면 폭) 선택한 탭이 가려지지 않게 탭 줄만 옆으로 민다.
 // scrollIntoView 는 페이지까지 세로로 움직이므로 쓰지 않는다.
 function sdRevealTab(nav) {
   const btn = nav && nav.querySelector(".is-active");
@@ -96,7 +96,7 @@ function sdRevealTab(nav) {
 
 // 탭을 연다. push=true 면 사용자가 누른 것 — URL 을 갱신하고, 본문이 화면 위로 지나가 있으면 탭 줄로 올린다.
 function activateStockView(view, { push = false, scroll = false } = {}) {
-  const v = sdNormalizeView(view) || "overview";
+  const v = sdNormalizeView(view) || "chart";
   sdCurrentView = v;
   sdApplyView(v);
   if (v === "ai" && typeof flushPendingAiReport === "function") flushPendingAiReport();

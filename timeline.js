@@ -258,7 +258,7 @@ function tlBindOnce(host) {
       if (typeof openEventStudy === "function") openEventStudy(t.dataset.tlStudy, { ticker: t.dataset.tlCode || "" });
       return;
     } else if (t.dataset.tlChart) {
-      if (typeof activateStockView === "function") activateStockView("overview", { push: true });
+      if (typeof activateStockView === "function") activateStockView("chart", { push: true });
       setTimeout(() => tlScrollTo(byId("priceChart")), 30);
       return;
     } else if (t.dataset.tlView) {

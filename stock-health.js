@@ -1,6 +1,6 @@
 // stock-health.js — 종목 체력(스노우플레이크) · 시장 백분위 · 유사종목 비교 · 위험/시즈널리티 카드.
 // 본문 HTML 을 한 곳에서 만들고 두 화면이 같이 쓴다:
-//   · 종목 상세(stock-view.js 6탭) — 밸류 탭 #stockSnowflake · #stockFactorPct · #stockPeers, 개요 탭 #stockRisk
+//   · 종목 상세(stock-view.js 7탭) — 밸류 탭 #stockSnowflake · #stockFactorPct · #stockPeers, 개요 탭 #stockRisk
 //   · AI 모드 종목 대시보드(ai-mode.js aiSnowflakePanel·aiFactorPanel·aiPeerPanel·aiRiskPanel 이 aiModePanel 로 감싼다)
 // 계산은 stock-health-core.js(window.MirStockHealthCore, node 테스트 있음). 시장 백분위는 portfolio.js 의
 // portfolioFactorPercentiles(스냅샷 키로 메모)를 그대로 쓴다. 클래식 스크립트 전역 공유 — 이름은 sh 접두사.

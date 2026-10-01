@@ -15,7 +15,7 @@ window.MIR_CHANGELOG = {
         "marketFeed"
       ],
       "market": "all",
-      "pr": null
+      "pr": 280
     },
     {
       "id": "2026-10-01-stock-summary-event-strip",

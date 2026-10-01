@@ -127,6 +127,24 @@ function stockInputValue(ticker) {
   const found = typeof stockByTicker === "function" ? stockByTicker(t) : null;
   return (found && (found.company || found.name)) || t;
 }
+// 네이버 뉴스 검색 링크(국내 이용자는 네이버 뉴스 화면이 익숙하다 — 2026-10-02).
+// date(YYYY-MM-DD)를 주면 그 전날~다음 날로 기간을 건다(장 전·장 마감 뒤 기사 포함). 검색 API 키가 필요 없는
+// 공개 검색 화면 링크라 기사 원문 대신 '네이버에서 보기'로 쓴다.
+function naverNewsSearchUrl(query, date) {
+  const p = new URLSearchParams({ where: "news", query: String(query || ""), sort: "0" });
+  if (/^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))) {
+    const at = (n) => {
+      const d = new Date(`${date}T12:00:00Z`);
+      d.setUTCDate(d.getUTCDate() + n);
+      return d.toISOString().slice(0, 10).replace(/-/g, ".");
+    };
+    p.set("pd", "3");
+    p.set("ds", at(-1));
+    p.set("de", at(1));
+  }
+  return `https://search.naver.com/search.naver?${p.toString()}`;
+}
+
 function stockLabel(tickerOrItem, item) {
   const ref = _stockRef(tickerOrItem, item);
   if (typeof isKrMarket === "function" && isKrMarket() && /^\d{1,6}(\.(KS|KQ))?$/i.test(ref.ticker)) return ref.name || ref.ticker;

@@ -1813,18 +1813,32 @@ function keyMomentTipHtml(m) {
       ? `<div class="chart-km-news">${keyMomentNewsBodyHtml({ status: "ok", news: view.momentNewsRows(it, m.date) })}</div>`
       : keyMomentNewsSlotHtml(m.date);
   }
+  newsSlot += kmNaverDateLink(m.date);
   if (!reasons.length) {
     return `${head}<p class="chart-km-none">공시·실적·배당·특징주 기록 없음 — 이 날짜 ±1거래일에 수집된 기록이 없습니다.</p>${newsSlot}`;
   }
   const MAX = 5;
   const rows = reasons.slice(0, MAX).map((e) => {
     const when = e.offset ? (e.offset < 0 ? " (전 거래일)" : " (다음 거래일)") : "";
-    const link = /^https?:\/\//i.test(e.link || "") ? ` <a href="${escapeHtml(e.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
+    const link = (/^https?:\/\//i.test(e.link || "") ? ` <a href="${escapeHtml(e.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "")
+      + (e.cat === "news" ? kmNaverTitleLink(e.title) : "");
     const label = tl && tl.CAT_LABEL[e.cat] ? tl.CAT_LABEL[e.cat] : "";
     return `<li><span class="chart-ev-badge chart-km-badge">${escapeHtml(label.slice(0, 2))}</span><div><b>${escapeHtml(e.title)}${escapeHtml(when)}</b>${e.detail || link ? `<small>${escapeHtml(e.detail || "")}${link}</small>` : ""}</div></li>`;
   }).join("");
   const rest = reasons.length > MAX ? `<p class="chart-ev-tip-more">외 ${reasons.length - MAX}건 — 이벤트·공시 탭 통합 타임라인에서 전체 보기</p>` : "";
   return `${head}<p class="chart-km-sub">같은 시기 기록(원인으로 확인된 것은 아님)</p><ul>${rows}</ul>${rest}${newsSlot}`;
+}
+
+// 국내 종목은 기사마다 '네이버'(제목 검색) 링크와, 툴팁 맨 아래 '네이버 뉴스에서 이 날짜 기사 보기'를 단다.
+function kmNaverOn() { return typeof isKrMarket === "function" && isKrMarket() && typeof naverNewsSearchUrl === "function"; }
+function kmNaverTitleLink(title) {
+  if (!kmNaverOn() || !title) return "";
+  return ` <a href="${escapeHtml(naverNewsSearchUrl(`"${String(title).slice(0, 60)}"`))}" target="_blank" rel="noopener noreferrer">네이버</a>`;
+}
+function kmNaverDateLink(date) {
+  const it = kmNaverOn() ? currentChartItem() : null;
+  if (!it) return "";
+  return `<p class="chart-km-naver"><a href="${escapeHtml(naverNewsSearchUrl(stockLabel(it), date))}" target="_blank" rel="noopener noreferrer">네이버 뉴스에서 이 날짜 기사 보기 ↗</a></p>`;
 }
 
 // ----- 큰 등락일 그날 뉴스(워커 ?event_news) -----
@@ -1853,7 +1867,7 @@ function keyMomentNewsBodyHtml(st) {
   const rows = st.news.map((n) => {
     const when = n.publishedAt ? String(n.publishedAt).slice(5, 10).replace("-", "/") : "";
     const link = /^https?:\/\//i.test(n.link || "") ? ` <a href="${escapeHtml(n.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
-    return `<li><span class="chart-ev-badge chart-km-badge">뉴</span><div><b>${escapeHtml(n.title)}</b><small>${escapeHtml([when, n.publisher].filter(Boolean).join(" · "))}${link}</small></div></li>`;
+    return `<li><span class="chart-ev-badge chart-km-badge">뉴</span><div><b>${escapeHtml(n.title)}</b><small>${escapeHtml([when, n.publisher].filter(Boolean).join(" · "))}${link}${kmNaverTitleLink(n.title)}</small></div></li>`;
   }).join("");
   return `<p class="chart-km-sub">그날 전후 뉴스(제목 검색 결과 — 원인으로 확인된 것은 아님)</p><ul>${rows}</ul>`;
 }

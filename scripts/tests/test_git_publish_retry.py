@@ -198,20 +198,15 @@ def test_unrelated_change_conflicting_with_remote_keeps_local_without_markers(re
 def test_local_run_never_stashes_user_changes(repo, tmp_path, monkeypatch):
     """Actions 밖(로컬)에서는 스태시하지 않는다 — 사용자 미커밋 변경·공유 스태시 스택을 건드리지 않는다(기존 동작)."""
     monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
-    (repo / "data" / "y.json").write_text('{"y": 0}
-', encoding="utf-8")
+    (repo / "data" / "y.json").write_text('{"y": 0}\n', encoding="utf-8")
     _git(repo, "add", ".")
     _git(repo, "commit", "-qm", "y")
     _git(repo, "push", "-q", "origin", "main")
-    _other_clone_pushes(repo, tmp_path, "data/z.json", '{"z": 1}
-')
-    (repo / "data" / "y.json").write_text('{"y": "user"}
-', encoding="utf-8")
-    (repo / "data" / "x.json").write_text('{"v": 6}
-', encoding="utf-8")
+    _other_clone_pushes(repo, tmp_path, "data/z.json", '{"z": 1}\n')
+    (repo / "data" / "y.json").write_text('{"y": "user"}\n', encoding="utf-8")
+    (repo / "data" / "x.json").write_text('{"v": 6}\n', encoding="utf-8")
     assert sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=1, sleep_s=0) is False
-    assert (repo / "data" / "y.json").read_text(encoding="utf-8") == '{"y": "user"}
-'
+    assert (repo / "data" / "y.json").read_text(encoding="utf-8") == '{"y": "user"}\n'
     assert _git(repo, "stash", "list").strip() == ""
 
 

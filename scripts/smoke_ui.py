@@ -44,6 +44,7 @@ LEGACY_LINKS = {
     "?tab=marketdata": ("market", "health"),
     "?tab=calendar": ("today", "calendar"),
     "?tab=briefing": ("today", "ai-briefing"),
+    "?tab=today&sub=feed": ("today", "feed"),
     "?tab=institutional&sub=congress": ("search", "congress"),
     "?tab=search&sub=analysis&ticker=AAPL": ("search", "analysis"),
     "?tab=search&sub=analysis&ticker=AAPL&view=fin": ("search", "analysis"),

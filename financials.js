@@ -143,7 +143,7 @@ function mfFormat(v, type, currency) {
 // ── 차트: 막대(최대 3계열) + 선(보조축) ──
 function mfChartSvg(points, preset, currency, width) {
   // viewBox 를 실제 폭에 맞춰 글자가 찌그러지지 않게 한다(preserveAspectRatio="none" 금지).
-  const W = Math.max(280, Math.round(width || 720)), H = W < 520 ? 180 : 220, padL = 52, padR = 8, top = 14, bottom = 26;
+  const W = Math.max(280, Math.round(width || 720)), H = W < 520 ? 180 : 220, padL = 52, padR = preset.line ? 56 : 8, top = 14, bottom = 26;  // 선 계열이 있으면 오른쪽 보조축 눈금 자리
   const n = points.length;
   if (!n) return "";
   const barKeys = preset.bars.map((b) => b[0]);
@@ -196,18 +196,61 @@ function mfChartSvg(points, preset, currency, width) {
         d += `${d ? "L" : "M"}${cx.toFixed(1)},${ly(v).toFixed(1)}`;
         dots += `<circle cx="${cx.toFixed(1)}" cy="${ly(v).toFixed(1)}" r="3" class="mf-dot"><title>${escapeHtml(p.label)} ${escapeHtml(preset.line[1])} ${escapeHtml(mfFormat(v, ltype, currency))}</title></circle>`;
       });
-      line = `<path d="${d}" class="mf-line"/>${dots}`;
+      // 보조축(오른쪽) 눈금: 선의 최댓값·최솟값 — 카드 위 '(%)'·'(EPS)' 단위 캡션과 짝.
+      const rt = (lmax === lmin ? [lmax] : [lmax, lmin]).map((v) => `<text x="${W - padR + 6}" y="${(ly(v) + 4).toFixed(1)}" text-anchor="start" class="mf-axis mf-tick mf-tick-r">${escapeHtml(mfFormat(v, ltype, currency))}</text>`).join("");
+      line = `<path d="${d}" class="mf-line"/>${dots}${rt}`;
     }
   }
-  return `<svg class="mf-chart" viewBox="0 0 ${W} ${H}" style="height:${H}px" role="img" aria-label="${escapeHtml(preset.label)} 차트">${grid}${zero}${bars}${line}${labels}</svg>`;
+  // 높이는 viewBox 비율로(카드 폭이 그린 폭과 달라져도 글자 비율 유지 — 재무 카드 격자, chart-card.js).
+  return `<svg class="mf-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(preset.label)} 차트">${grid}${zero}${bars}${line}${labels}</svg>`;
 }
 
-function mfLegend(preset) {
-  const cls = ["mf-c1", "mf-c2", "mf-c3"];
-  const items = preset.bars.map((b, i) => `<span><i class="mf-sw ${cls[i]}"></i>${escapeHtml(b[1])}</span>`);
-  if (preset.line) items.push(`<span><i class="mf-sw mf-sw-line"></i>${escapeHtml(preset.line[1])}(선)</span>`);
-  return `<div class="mf-legend">${items.join("")}</div>`;
+// 범례 항목(chart-card.js mirChartCard 의 legend) — 색은 카드 토큰(--mf-c1~3·--mf-line)만.
+function mfLegendItems(preset) {
+  const items = preset.bars.map((b, i) => ({ label: b[1], color: `var(--mf-c${i + 1})`, shape: "bar" }));
+  if (preset.line) items.push({ label: `${preset.line[1]}(우)`, color: "var(--mf-line)", shape: "line" });
+  return items;
 }
+
+// 축 단위 캡션: 왼쪽 = 막대(금액·주식수), 오른쪽 = 선(비율·EPS).
+function mfUnits(preset, currency) {
+  const money = currency === "KRW" ? "(원)" : currency === "USD" ? "(USD)" : `(${currency || ""})`;
+  const left = preset.unit === "shares" ? "(주)" : money;
+  let right = "";
+  if (preset.line) right = preset.line[2] === "pct" ? "(%)" : preset.line[2] === "eps" ? `(EPS ${currency === "KRW" ? "원" : currency === "USD" ? "$" : currency})` : "";
+  return { left, right };
+}
+
+// 같은 계열을 작은 표로(차트/표 전환). 최근 기간이 위.
+function mfSeriesTable(points, preset, currency) {
+  if (!points.length) return "";
+  const cols = preset.bars.map((b) => [b[0], b[1], preset.unit === "shares" ? "shares" : "money"]);
+  if (preset.line) cols.push([preset.line[0], preset.line[1], preset.line[2]]);
+  const head = cols.map((c) => `<th class="ins-num">${escapeHtml(c[1])}</th>`).join("");
+  const body = points.slice().reverse().map((p) => `<tr><th scope="row">${escapeHtml(p.label)}</th>${cols.map(([k, , t]) => {
+    const v = p[k];
+    return `<td class="ins-num${Number(v) < 0 ? " ins-sell" : ""}">${escapeHtml(mfFormat(v, t, currency))}</td>`;
+  }).join("")}</tr>`).join("");
+  return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table">
+    <thead><tr><th>기간</th>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+// 카드 하단 출처 한 줄(짧게) — 전체 출처·기준은 섹션 머리의 mfMetaLine.
+function mfShortSource(file, kind) {
+  const src = file.market === "kr" ? `DART ${file.basis === "OFS" ? "별도" : "연결"}` : `SEC ${file.annualForm || "10-K"}${(file.quarterly || []).length ? "·10-Q" : ""}`;
+  const rows = kind === "quarterly" ? (file.quarterly || []) : (file.annual || []);
+  const last = rows[rows.length - 1];
+  const basis = last && last.end ? ` · 기준 ${last.end}` : "";
+  return `출처 ${src}${basis}`;
+}
+
+const MF_CHART_HELP = {
+  income: "영업이익률 = 영업이익 ÷ 매출",
+  profit: "희석 EPS = 지배주주 순이익 ÷ 희석 가중평균 주식수",
+  cash: "FCF = 영업활동현금흐름 − 설비투자(유형자산 취득). FCF 마진 = FCF ÷ 매출",
+  balance: "총차입금 = 단기·장기 차입금과 사채의 합. 현금 = 현금및현금성자산",
+  shares: "희석 가중평균 = 기간 평균(희석 증권 포함), 기말 발행 = 기간 말 발행주식수",
+};
 
 function mfMetaLine(file) {
   const src = file.market === "kr"
@@ -288,12 +331,27 @@ function mfSectionHtml(file, width) {
   const kind = mfView.kind === "quarterly" && (file.quarterly || []).length ? "quarterly" : "annual";
   const general = !(file.flags || []).includes("financial");
   const presets = Object.entries(MF_CHARTS).filter(([, p]) => general || !p.general);
-  const chartKey = presets.some(([k]) => k === mfView.chart) ? mfView.chart : "income";
-  const preset = MF_CHARTS[chartKey];
-  const keys = preset.bars.map((b) => b[0]).concat(preset.line ? [preset.line[0]] : []);
-  const pts = core.series(file, kind, keys).slice(kind === "quarterly" ? -12 : -10);
   const { suppressed } = core.derivedMetrics(file, 5);
   const hasQ = (file.quarterly || []).length > 0;
+  const source = mfShortSource(file, kind);
+  // 항목 칩으로 하나씩 고르던 차트를 전부 카드로 나란히(넓은 칸 2열·폰 1열, chart-card.js).
+  const cards = presets.map(([key, preset]) => {
+    const keys = preset.bars.map((b) => b[0]).concat(preset.line ? [preset.line[0]] : []);
+    const pts = core.series(file, kind, keys).slice(kind === "quarterly" ? -12 : -10);
+    const units = mfUnits(preset, file.currency);
+    return mirChartCard({
+      id: `mf.${key}`,
+      title: preset.label,
+      sub: kind === "quarterly" ? "분기" : "연간",
+      unitLeft: units.left,
+      unitRight: units.right,
+      chart: `<div class="mf-chart-wrap">${mfChartSvg(pts, preset, file.currency, width)}</div>`,
+      table: mfSeriesTable(pts, preset, file.currency),
+      legend: mfLegendItems(preset),
+      source,
+      help: MF_CHART_HELP[key] || "",
+    });
+  });
   return `
     <div class="mf-head">
       <div>
@@ -307,14 +365,12 @@ function mfSectionHtml(file, width) {
         <button type="button" data-mf-kind="annual" class="${kind === "annual" ? "is-active" : ""}">연간</button>
         <button type="button" data-mf-kind="quarterly" class="${kind === "quarterly" ? "is-active" : ""}"${hasQ ? "" : ' disabled title="분기 공시 없음"'}>분기</button>
       </div>
-      <div class="mf-chips" role="group" aria-label="차트 항목">
-        ${presets.map(([k, p]) => `<button type="button" class="mf-chip${k === chartKey ? " is-active" : ""}" data-mf-chart="${k}">${escapeHtml(p.label)}</button>`).join("")}
-      </div>
     </div>
-    ${mfLegend(preset)}
-    <div class="mf-chart-wrap">${mfChartSvg(pts, preset, file.currency, width)}</div>
+    ${mirChartGrid(cards)}
+    <div class="mf-tables">
     ${mfDerivedTable(file)}
     ${mfAccountsTable(file, kind)}
+    </div>
     ${mfNotes(file, suppressed)}
     <p class="mf-foot">공시 수치를 옮긴 과거 정보이며 예측이 아닙니다. —는 공시에서 확인되지 않은 값이며 추정으로 채우지 않았습니다. †·옅은 막대는 누계 공시에서 빼서 만든 분기 값입니다(예: 4분기 = 연간 − 3분기 누계).</p>`;
 }
@@ -324,18 +380,17 @@ function mfBind(host) {
   host.dataset.mfBound = "1";
   host.addEventListener("click", (e) => {
     const k = e.target.closest("[data-mf-kind]");
-    const c = e.target.closest("[data-mf-chart]");
-    if (!k && !c) return;
-    if (k && !k.disabled) mfView.kind = k.dataset.mfKind;
-    if (c) mfView.chart = c.dataset.mfChart;
+    if (!k || k.disabled) return;
+    mfView.kind = k.dataset.mfKind;
     if (window.safeStorage) window.safeStorage.setJSON(MF_STATE_KEY, { kind: mfView.kind, chart: mfView.chart });
     if (mfCurrent && mfCurrent.file) host.innerHTML = mfSectionHtml(mfCurrent.file, mfChartWidth(host));
   });
 }
 
+// 카드 한 장 안쪽 폭 — 섹션 폭에서 격자 열 수(chart-card.js, CSS 컨테이너 쿼리와 같은 문턱)를 반영.
 function mfChartWidth(host) {
-  const w = host && host.clientWidth ? host.clientWidth - 32 : 0;
-  return w > 0 ? w : 720;
+  const w = host && host.clientWidth && typeof mirChartCardInnerWidth === "function" ? mirChartCardInnerWidth(host.clientWidth) : 0;
+  return w > 0 ? w : 420;
 }
 
 function mfHide(host) {

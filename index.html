@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=dbb91a180f" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=dbb91a180f"></noscript>
+    <link rel="preload" href="styles.css?v=e6c2437de9" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=e6c2437de9"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=d99681b120"></script>
+    <script src="build_id.js?v=dcf79db0db"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3321,6 +3321,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=293e1c98f6"></script>
+    <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
     <script src="feature-data.js?v=c25eeb5c5a"></script>
@@ -3338,7 +3339,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="market-indicators-core.js?v=9ee5403887"></script>
     <script src="market-indicators.js?v=1821bc8c38"></script>
     <script src="valuation-band-core.js?v=8169dae7ed"></script>
-    <script src="valuation-band.js?v=707d271766"></script>
+    <script src="valuation-band.js?v=1b83b93467"></script>
     <script src="factor-grade-core.js?v=5b2d301864"></script>
     <script src="factor-grades.js?v=0146d20671"></script>
     <script src="stock-health-core.js?v=bd57169177"></script>
@@ -3372,7 +3373,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="web-push.js?v=5e1529522c"></script>
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
-    <script src="financials.js?v=d751bc6672"></script>
+    <script src="financials.js?v=7b1b9657ee"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
     <script src="segments.js?v=8d54e784d4"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>

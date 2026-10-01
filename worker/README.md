@@ -42,6 +42,21 @@ GitHub Pages는 정적 호스팅이라 방문자가 페이지를 열어도 서�
 - 선택 사항: KV 바인딩을 변수 이름 `MOVE_CACHE`로 추가하면 종목·날짜별 분석을 30일 저장해 AI 호출을 줄입니다.
 
 Cloudflare Dashboard에서 **Settings → Variables and Secrets**에 `FINNHUB_API_KEY`를 Secret으로 추가할 수 있습니다. 키가 없어도 Google News RSS 날짜 검색으로 동작하지만, Finnhub를 함께 쓰면 기업 뉴스 누락 가능성이 낮아집니다.
+## 종목 차트 분봉 (`?intraday=1`, 2026-10-01)
+
+- 호출: `GET https://<worker>/?intraday=1&ticker=NVDA&interval=5m` (국내는 `005930.KS` 처럼 야후 심볼)
+- `interval`: `1m`(최근 5거래일) · `5m`·`15m`·`30m`(약 1개월) · `60m`(약 6개월). 그 밖의 값은 `5m`.
+  3분·10분은 화면(`chart.js`)이 1분·5분을 묶어 만든다.
+- 응답: `{ symbol, interval, range, tz, bars: [[시, 고, 저, 종, 거래량, "YYYY-MM-DDTHH:MM"(거래소 현지 시각)]] }`.
+- LLM·KV 를 쓰지 않는다. 엣지 캐시(`caches.default`) 60초로 같은 종목·간격 반복 요청을 흡수한다.
+
+## 큰 등락일 그날 뉴스 (`?event_news=1`, 2026-10-01)
+
+- 호출: `GET https://<worker>/?event_news=1&ticker=NVDA&date=2026-08-27` — 차트 ▲▼ 를 **눌렀을 때만** 부른다.
+- 위 '과거 가격 이벤트 원인 분석'과 같은 뉴스 수집(Finnhub·Google News·GDELT·야후 / 국내 Google News·네이버)에서
+  그날 ±2일 기사 최대 5건의 제목·출처·날짜·링크만 준다(LLM 요약 없음).
+- 허용 Origin 만, IP 분당 20회. `MOVE_CACHE` 에 `evnews:v1:<티커>:<날짜>` 로 30일(최근 1주 날짜는 6시간) 저장.
+
 ## 커뮤니티 게시판 (`/community`)
 
 - **KV 바인딩 필수**: Worker → Settings → Bindings → Add → **KV namespace** → 변수 이름 **`COMMUNITY_KV`**

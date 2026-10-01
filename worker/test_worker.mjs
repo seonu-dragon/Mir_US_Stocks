@@ -41,6 +41,8 @@ import {
   withLastGood,
   parseQuoteState,
   parseQuoteStateFromChart,
+  parseIntradayChart,
+  INTRADAY_RANGE,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -523,8 +525,8 @@ await test("LLM 게이트가 데이터 프록시(fx·indices·calendar)까지 �
   const src = readFileSync(WORKER_SRC, "utf8");
   const gated = src.split("\n")
     .filter((l) => l.includes("llmOriginAllowed(request)") && !l.includes("function llmOriginAllowed"));
-  // /chat, move_analysis, cachedTickerSummary, /sync/prefs PUT 네 곳에서만 게이트한다.
-  eq(gated.length, 4, "게이트 호출 지점 수");
+  // /chat, move_analysis, cachedTickerSummary, /sync/prefs PUT, event_news(뉴스 수집 비용) 다섯 곳에서만 게이트한다.
+  eq(gated.length, 5, "게이트 호출 지점 수");
   for (const marker of ['url.searchParams.get("fx")', 'url.searchParams.get("indices")', 'url.searchParams.get("calendar")']) {
     ok(src.includes(marker), `${marker} 경로가 사라졌다`);
   }
@@ -1157,6 +1159,60 @@ await test("신고 자동 숨김은 건수가 아니라 서로 다른 신고자(
   eq(distinctReporterCount({ reports: [{ clientId: "a", ipHash: "h1" }, { clientId: "b", ipHash: "h2" }, { clientId: "c", ipHash: "h3" }] }), 3, "서로 다른 IP 3명");
   eq(distinctReporterCount({ reports: [{ clientId: "a" }, { clientId: "a" }] }), 1, "ipHash 없으면 clientId 로");
   eq(distinctReporterCount(null), 0, "빈 값");
+});
+
+// ── 분봉 · 큰 등락일 뉴스(2026-10-01) ─────────────────────────────────────────
+
+console.log("\n[분봉·이벤트 뉴스]");
+
+await test("분봉: 거래소 현지 시각으로 바꾸고 종가 없는 봉은 뺀다", () => {
+  // 2026-09-30 09:30 / 09:35 / 09:40 ET(= 13:30Z …). 가운데 봉은 종가 없음.
+  const t0 = Date.UTC(2026, 8, 30, 13, 30) / 1000;
+  const { bars, tz } = parseIntradayChart({
+    meta: { exchangeTimezoneName: "America/New_York" },
+    timestamp: [t0, t0 + 300, t0 + 600],
+    indicators: { quote: [{ open: [10, 11, 12], high: [10.5, 11.5, 12.5], low: [9.5, 10.5, 11.5], close: [10.2, null, 12.1], volume: [100, 200, null] }] },
+  });
+  eq(tz, "America/New_York", "tz");
+  eq(bars.length, 2, "종가 없는 봉 제외");
+  eq(bars[0][5], "2026-09-30T09:30", "현지 시각");
+  eq(bars[1][5], "2026-09-30T09:40", "현지 시각");
+  eq(bars[1][4], 0, "거래량 없으면 0");
+  // 서울(국내) 09:00 KST = 00:00Z
+  const k = parseIntradayChart({ meta: { exchangeTimezoneName: "Asia/Seoul" }, timestamp: [Date.UTC(2026, 8, 30, 0, 0) / 1000], indicators: { quote: [{ close: [70000] }] } });
+  eq(k.bars[0][5], "2026-09-30T09:00", "KST");
+  eq(k.bars[0][0], 70000, "시가 없으면 종가로");
+});
+
+await test("분봉 경로: 허용 간격만 야후로 보내고(기간 매핑) 모르는 간격은 5분", async () => {
+  const t0 = Date.UTC(2026, 8, 30, 13, 30) / 1000;
+  const body = { chart: { result: [{ meta: { exchangeTimezoneName: "America/New_York" }, timestamp: [t0], indicators: { quote: [{ open: [1], high: [1], low: [1], close: [1], volume: [5] }] } }] } };
+  await withMockFetch(() => jsonResp(body), async (calls) => {
+    const r = await handleFetch(req("https://w/?intraday=1&ticker=NVDA&interval=1m"), {});
+    const got = await r.json();
+    eq(r.status, 200, "status");
+    eq(got.bars.length, 1, "bars");
+    ok(calls[0].url.includes("range=5d&interval=1m"), `1분은 5일: ${calls[0].url}`);
+    ok(r.headers.get("Access-Control-Allow-Origin"), "CORS");
+    await handleFetch(req("https://w/?intraday=1&ticker=NVDA&interval=7m"), {});
+    ok(calls[1].url.includes(`range=${INTRADAY_RANGE["5m"]}&interval=5m`), `모르는 간격 → 5분: ${calls[1].url}`);
+  });
+});
+
+await test("큰 등락일 뉴스: Origin 없으면 거부, 캐시 히트는 업스트림을 부르지 않는다", async () => {
+  const env = { MOVE_CACHE: memKv() };
+  const r0 = await handleFetch(req("https://w/?event_news=1&ticker=NVDA&date=2026-09-30"), env);
+  eq(r0.status, 403, "Origin 없음");
+  const bad = await handleFetch(req("https://w/?event_news=1&ticker=NVDA&date=20260930", { origin: ALLOWED }), env);
+  eq(bad.status, 400, "날짜 형식");
+  await env.MOVE_CACHE.put("evnews:v1:NVDA:2026-09-30", JSON.stringify({ ticker: "NVDA", date: "2026-09-30", news: [{ title: "t", link: "https://a" }] }));
+  await withMockFetch(() => { throw new Error("업스트림 호출됨"); }, async (calls) => {
+    const r = await handleFetch(req("https://w/?event_news=1&ticker=NVDA&date=2026-09-30", { origin: ALLOWED }), env);
+    const got = await r.json();
+    eq(got.cached, true, "cached");
+    eq(got.news.length, 1, "news");
+    eq(calls.length, 0, "업스트림 0회");
+  });
 });
 
 // ── 결과 ────────────────────────────────────────────────────────────────────

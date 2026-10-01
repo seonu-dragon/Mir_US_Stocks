@@ -381,6 +381,36 @@ export async function handleFetch(request, env) {
     // dashes (BRK.B -> BRK-B).
     const symbol = isKoreanTicker(ticker) ? ticker : ticker.replace(/\./g, "-");
     const kr = isKoreanTicker(ticker);
+    // 종목 차트 분봉(?intraday=1&interval=5m). LLM·KV 를 쓰지 않는 단순 시세라 Origin 게이트·
+    // KV 리밋(요청마다 KV 쓰기)을 두지 않고, 엣지 캐시 60초로 같은 종목 반복 요청을 흡수한다.
+    if (url.searchParams.get("intraday")) {
+      return cors(await handleIntraday(request, symbol, url.searchParams.get("interval")));
+    }
+
+    // 차트 '큰 등락일' 툴팁의 그날 전후 뉴스(?event_news=1&date=YYYY-MM-DD). LLM 없음 —
+    // move_analysis 와 같은 뉴스 수집(Finnhub·Google News·GDELT / 국내 Google News·네이버)만.
+    // 지난 날짜의 결과는 바뀌지 않으므로 KV 에 오래 둔다(캐시 히트는 리밋을 태우지 않는다).
+    if (url.searchParams.get("event_news")) {
+      const eventDate = String(url.searchParams.get("date") || "").slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return cors(json({ error: "invalid date" }, 400));
+      if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
+      const cacheKey = `evnews:v1:${ticker}:${eventDate}`;
+      if (env && env.MOVE_CACHE) {
+        const cached = await env.MOVE_CACHE.get(cacheKey, "json");
+        if (cached && Array.isArray(cached.news)) return cors(varyOrigin(json({ ...cached, cached: true }, 200, 3600)));
+      }
+      if (await ipRateLimited(request, env, "evnews", 20, 60)) {
+        return cors(json({ error: "rate_limited", message: "요청이 너무 잦습니다. 잠시 후 다시 시도해 주세요." }, 429, 0));
+      }
+      const payload = await eventNewsPayload(env, ticker, symbol, kr, eventDate);
+      if (env && env.MOVE_CACHE) {
+        // 최근 1주 안의 날짜는 기사가 더 붙을 수 있어 6시간, 그보다 오래된 날짜는 30일.
+        const ageDays = dateDistanceDays(eventDate, new Date().toISOString().slice(0, 10));
+        await env.MOVE_CACHE.put(cacheKey, JSON.stringify(payload), { expirationTtl: ageDays > 7 ? 2592000 : 21600 });
+      }
+      return cors(varyOrigin(json(payload, 200, 3600)));
+    }
+
     const modelOverride = await resolveModelOverride(env, request, url);
 
     // Price-event analysis is intentionally opt-in: the static site calls this
@@ -1527,6 +1557,85 @@ async function fetchQuoteState(symbol) {
     /* v7 은 세션/crumb 이 자주 막힌다 — 아래 chart 폴백으로 */
   }
   return fetchQuoteStateFromChart(symbol);
+}
+
+// ----- 분봉(종목 차트) -----
+// 야후 분봉은 간격마다 거슬러 받을 수 있는 기간이 다르다(1분 ≤ 7일, 2~30분 ≤ 60일, 60분 ≤ 730일).
+// 3분·10분은 화면이 1분·5분을 묶어 만든다(야후에 없는 간격).
+export const INTRADAY_RANGE = { "1m": "5d", "5m": "1mo", "15m": "1mo", "30m": "1mo", "60m": "6mo" };
+
+// 야후 chart result → [[o, h, l, c, v, "YYYY-MM-DDTHH:MM"(거래소 현지 시각)]]. 종가 없는 봉은 뺀다.
+export function parseIntradayChart(result) {
+  const ts = (result && result.timestamp) || [];
+  const q = (result && result.indicators && result.indicators.quote && result.indicators.quote[0]) || {};
+  const tz = (result && result.meta && result.meta.exchangeTimezoneName) || "America/New_York";
+  let fmt;
+  try {
+    fmt = new Intl.DateTimeFormat("en-CA", { timeZone: tz, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  } catch (e) {
+    fmt = new Intl.DateTimeFormat("en-CA", { timeZone: "UTC", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  }
+  const local = (sec) => {
+    const p = {};
+    for (const part of fmt.formatToParts(new Date(sec * 1000))) p[part.type] = part.value;
+    return `${p.year}-${p.month}-${p.day}T${p.hour}:${p.minute}`;
+  };
+  const out = [];
+  for (let i = 0; i < ts.length; i += 1) {
+    const c = q.close ? q.close[i] : null;
+    if (c == null || !Number.isFinite(Number(c))) continue;
+    const pick = (arr) => (arr && arr[i] != null && Number.isFinite(Number(arr[i])) ? arr[i] : c);
+    out.push([round(pick(q.open)), round(pick(q.high)), round(pick(q.low)), round(c), Math.round((q.volume && q.volume[i]) || 0), local(ts[i])]);
+  }
+  return { bars: out, tz };
+}
+
+async function handleIntraday(request, symbol, rawInterval) {
+  const interval = INTRADAY_RANGE[rawInterval] ? rawInterval : "5m";
+  const range = INTRADAY_RANGE[interval];
+  const cache = typeof caches !== "undefined" ? caches.default : null;
+  const cacheReq = new Request(`https://mir-intraday.cache/${encodeURIComponent(symbol)}/${interval}`);
+  if (cache) {
+    const hit = await cache.match(cacheReq);
+    if (hit) return hit;
+  }
+  let payload;
+  try {
+    const r = await fetchT(
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`,
+      { headers: UA },
+    );
+    if (!r.ok) return json({ error: "upstream", status: r.status, bars: [] }, 502, 0);
+    const data = await r.json();
+    const result = data && data.chart && data.chart.result && data.chart.result[0];
+    if (!result) return json({ error: "no_data", bars: [] }, 404, 60);
+    const { bars, tz } = parseIntradayChart(result);
+    payload = { symbol, interval, range, tz, bars, updatedAt: new Date().toISOString() };
+  } catch (e) {
+    return json({ error: "upstream", bars: [] }, 502, 0);
+  }
+  const resp = json(payload, 200, 60);
+  if (cache) await cache.put(cacheReq, resp.clone());
+  return resp;
+}
+
+// ----- 큰 등락일 전후 뉴스(차트 툴팁) -----
+// 그날 ±2일 기사만 최대 5건. 제목·출처·날짜·링크만 준다(요약·해석 없음).
+async function eventNewsPayload(env, ticker, symbol, isKr, eventDate) {
+  const company = await resolveCompanyName(ticker, symbol, isKr);
+  const found = isKr
+    ? await fetchHistoricalNewsKorean(env, ticker, company, eventDate)
+    : await fetchHistoricalNews(env, symbol, company, eventDate);
+  const news = (found.news || [])
+    .filter((item) => dateDistanceDays(item.publishedAt, eventDate) <= 2)
+    .slice(0, 5)
+    .map((item) => ({
+      title: String(item.title || "").slice(0, 200),
+      publisher: String(item.publisher || item.provider || "").slice(0, 60),
+      publishedAt: item.publishedAt || "",
+      link: item.link,
+    }));
+  return { ticker, date: eventDate, company, news, providers: found.providers || [] };
 }
 
 async function fetchChart(symbol) {

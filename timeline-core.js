@@ -10,9 +10,9 @@
 (function (root) {
   "use strict";
 
-  const CATS = ["earn", "filing", "own", "corp", "move", "target"];
-  const CAT_LABEL = { earn: "실적", filing: "공시", own: "지분·내부자", corp: "배당·분할", move: "가격", target: "목표가" };
-  const CAT_ORDER = { earn: 0, filing: 1, own: 2, corp: 3, target: 4, move: 5 };
+  const CATS = ["earn", "filing", "own", "corp", "news", "move", "target"];
+  const CAT_LABEL = { earn: "실적", filing: "공시", own: "지분·내부자", corp: "배당·분할", news: "뉴스", move: "가격", target: "목표가" };
+  const CAT_ORDER = { earn: 0, filing: 1, own: 2, corp: 3, target: 4, news: 5, move: 6 };
 
   // 국내 DART 공시 중 타임라인에 올리지 않는 서류(발행 절차 서류·명부 공고 등 — 같은 사건의
   // 부속 서류라 목록만 길게 만든다). 원문은 공시 탭 DART 피드에 그대로 있다.
@@ -124,6 +124,7 @@
   //   krFilings, krEventDetails, krDividends, krContracts, krMajor, krInsiders, // DART 계열
   //   movers,        // MOVERS_REASONS (tradeDate + up/down)
   //   krReports,     // KR_CONSENSUS.stocks[t].reports
+  //   news,          // 종목 상세의 최근 기사 [{title, link, publisher, publishedAt}] (US 야후 · KR 네이버)
   //   history,       // { rows: 이벤트 스터디 종목 샤드 [[k, d0, car1, ...]], labels: {k: 라벨}, scale }
   //   moments,       // keyMoments() 결과 — '가격' 항목으로 넣는다
   // }
@@ -380,6 +381,18 @@
         detail: tgt ? `${Math.round(tgt).toLocaleString("ko-KR")}원${chg}${r.opinion ? ` · ${r.opinion}` : ""}` : `목표가 제시 없음${r.opinion ? ` · ${r.opinion}` : ""}`,
       });
       if (r.broker) lastBy.set(r.broker, r);
+    }
+
+    // 뉴스(종목 상세에 실린 최근 기사, 종목당 최대 8건) — 제목·출처만. 같은 제목은 한 번.
+    const newsSeen = new Set();
+    for (const n of Array.isArray(s.news) ? s.news : []) {
+      const title = n && String(n.title || "").trim();
+      const link = n && /^https?:\/\//i.test(String(n.link || "")) ? String(n.link) : "";
+      if (!title || !n || !isDate(n.publishedAt)) continue;
+      const key = title.toLowerCase().replace(/\s+/g, " ");
+      if (newsSeen.has(key)) continue;
+      newsSeen.add(key);
+      push({ date: n.publishedAt, cat: "news", src: "news", title: title.slice(0, 160), detail: String(n.publisher || "").slice(0, 60), link });
     }
 
     // 과거 이벤트 기록(이벤트 스터디 종목 샤드, 약 5년) — 지금 창의 공시와 겹치면 뺀다.

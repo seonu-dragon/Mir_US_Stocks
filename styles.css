@@ -15492,7 +15492,7 @@ button.calp-who:hover strong { text-decoration: underline; }
 .chart-view-mobile .chart-ev-toggles { margin-left: 0; }
 .chart-view-mobile .chart-ev-toggles button { min-height: 32px; font-size: var(--fs-sub); }
 .chart-ev-tip {
-  position: fixed; z-index: var(--z-popover); max-width: min(320px, calc(100vw - 16px));
+  position: fixed; z-index: var(--z-dropdown); /* 오른쪽 고정 레일(--z-drawer) 위로 */ max-width: min(320px, calc(100vw - 16px));
   padding: 8px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-md);
   background: var(--panel); color: var(--text); box-shadow: var(--shadow);
   font-size: var(--fs-cap); line-height: 1.45; pointer-events: none;
@@ -15527,6 +15527,9 @@ button.calp-who:hover strong { text-decoration: underline; }
 .chart-ev-tip .chart-km-head .neg { color: var(--neg); }
 .chart-ev-tip .chart-km-sub { margin: 0 0 4px; color: var(--muted); }
 .chart-ev-tip .chart-km-none { margin: 0; color: var(--text-2); }
+/* 큰 등락일 툴팁은 뉴스가 뒤늦게 채워지며 넓어지지 않게 폭을 고정한다. */
+.chart-ev-tip.is-km { width: min(320px, calc(100vw - 16px)); }
+.chart-ev-tip .chart-km-news { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line); }
 .chart-ev-badge.chart-km-badge { width: auto; min-width: 18px; padding: 0 2px; font-size: 9px; border-color: var(--line-strong); color: var(--text-2); }
 
 /* ===== 종목 통합 타임라인(timeline.js) — 이벤트·공시 탭 ===== */
@@ -16565,3 +16568,11 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   html.mnav-on #tab-search:has(> .mnav-search-toggle) > #sub-analysis.mnav-has-stock:not(.mnav-search-open) > .toolbar { display: none; }
 }
 /* === mobile-nav end === */
+
+/* 종목 차트 봉 선택(2026-10-01): 분봉 선택 + 일·주·월. 기간 버튼은 분봉에서 흐리게(누르면 일봉으로). */
+.chart-tf-seg { align-items: stretch; }
+.chart-tf-select { width: auto; min-width: 0; min-height: 32px; height: auto; padding: 0 6px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); background: var(--chip-bg); color: var(--text-2); font: inherit; font-size: var(--fs-sub); cursor: pointer; }
+.chart-tf-select.is-active { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); font-weight: var(--fw-strong); }
+.chart-tf-select.is-active option { background: var(--panel); color: var(--text); font-weight: 400; }
+#rangeControls.is-muted button { opacity: 0.55; }
+#rangeControls.is-muted button:hover { opacity: 1; }

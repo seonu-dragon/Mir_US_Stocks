@@ -43,6 +43,7 @@ import {
   parseQuoteStateFromChart,
   parseIntradayChart,
   INTRADAY_RANGE,
+  crc32Shard,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1234,6 +1235,45 @@ await test("큰 등락일 뉴스: ±2일 한 번만, 소스 동시 호출, 막�
     eq(got.diag.finnhub.split(" ")[0], "no_key", "finnhub 키 없음");
     eq(calls.filter((c) => c.url.includes("news.google.com")).length, 1, "구글은 한 번만(±7일 재검색 없음)");
     ok(!calls.some((c) => c.url.includes("v1/finance/search")), "최신 야후 뉴스는 부르지 않는다");
+  });
+});
+
+await test("미리 모은 뉴스 샤드: crc32 % 64 가 빌더(zlib)·화면(shardOf)과 같다", () => {
+  eq(crc32Shard("NVDA"), 23, "NVDA");
+  eq(crc32Shard("005930"), 24, "005930");
+});
+
+const momentShard = (code, date, rows) => jsonResp({ v: 1, t: { [code]: { [date]: rows } } });
+
+await test("큰 등락일 뉴스: 미리 모은 날짜면 샤드만 읽고 구글·GDELT 는 부르지 않는다", async () => {
+  const env = { MOVE_CACHE: memKv() };
+  await withMockFetch((url) => {
+    if (url.includes("/data/moment_news/us_23.json")) return momentShard("NVDA", "2021-11-04", [["Nvidia hits record", "Bloomberg", "g:ABC", "2021-11-04"]]);
+    throw new Error("unexpected " + url);
+  }, async (calls) => {
+    const r = await handleFetch(req("https://w/?event_news=1&ticker=NVDA&date=2021-11-04", { origin: ALLOWED }), env);
+    const got = await r.json();
+    eq(got.news.length, 1, "news");
+    eq(got.news[0].link, "https://news.google.com/rss/articles/ABC?oc=5", "g: 링크 되돌림");
+    eq(calls.length, 1, "샤드 한 번만");
+  });
+});
+
+await test("원인 분석: 미리 모은 기사를 근거로 쓰고 구글·GDELT 를 부르지 않는다", async () => {
+  const env = { MOVE_CACHE: memKv() };
+  const chart = { chart: { result: [{ meta: { longName: "NVIDIA Corporation" }, timestamp: [], indicators: { quote: [{ open: [], high: [], low: [], close: [], volume: [] }] } }] } };
+  await withMockFetch((url) => {
+    if (url.includes("/data/moment_news/us_23.json")) return momentShard("NVDA", "2021-11-04", [["Nvidia stock jumps on metaverse push", "Reuters", "g:XYZ", "2021-11-04"]]);
+    if (url.includes("finance/chart")) return jsonResp(chart);
+    if (url.includes("v1/finance/search")) return jsonResp({ news: [] });
+    if (url.includes("news.google.com") || url.includes("gdeltproject")) throw new Error("blocked source called");
+    return jsonResp({});
+  }, async (calls) => {
+    const r = await handleFetch(req("https://w/?move_analysis=1&ticker=NVDA&date=2021-11-04&change=12", { origin: ALLOWED }), env);
+    const got = await r.json();
+    ok(got.sources.some((x) => x.title === "Nvidia stock jumps on metaverse push"), "미리 모은 기사가 근거에 있다");
+    ok(!calls.some((c) => c.url.includes("news.google.com") || c.url.includes("gdeltproject")), "구글·GDELT 미호출");
+    eq(got.searchWindowDays, 2, "±2일");
   });
 });
 

@@ -37,8 +37,12 @@ GitHub Pages는 정적 호스팅이라 방문자가 페이지를 열어도 서�
 ## 과거 가격 이벤트 원인 분석
 
 - 호출: `GET https://<worker>/?ticker=TSLA&company=Tesla&move_analysis=1&date=2026-04-15&change=7.62`
-- 먼저 이벤트 날짜 전후 2일의 뉴스를 검색하고, 결과가 부족하면 전후 7일까지 확대합니다.
-- `FINNHUB_API_KEY` Secret이 있으면 Finnhub 과거 뉴스를 함께 사용하고, Google News RSS 날짜 검색을 기본 폴백으로 사용합니다. GDELT와 Yahoo는 추가 보완 자료로 합칩니다.
+- 뉴스(2026-10-01 변경): 먼저 GitHub Actions 가 미리 모아 Pages 에 올린 큰 등락일 기사
+  (`data/moment_news/<us|kr>_NN.json`, 미국 시총 상위 500·국내 200, 최근 3년)를 읽는다. 그 날짜 기사가 있으면
+  구글·GDELT 는 부르지 않는다(±2일). 없으면 구글 뉴스 RSS·GDELT 를 ±3일 **동시에 5초 제한**으로 부른다.
+  어느 쪽이든 Finnhub(미국, 키 있을 때)와 최근 뉴스(미국 야후·국내 네이버)를 더해 관련도로 고른다.
+  예전엔 ±2일 → ±7일 재검색을 소스마다 차례로 8초씩 해서, Cloudflare 에서 구글·GDELT 가 시간 초과로
+  끝나면 30초 넘게 걸리고 뉴스가 비었다.
 - 같은 날짜의 SPY·QQQ 등락과 거래량도 AI에 전달해 종목 고유 재료와 시장 전체 움직임을 구분합니다.
 - 선택 사항: KV 바인딩을 변수 이름 `MOVE_CACHE`로 추가하면 종목·날짜별 분석을 30일 저장해 AI 호출을 줄입니다.
 

@@ -338,6 +338,8 @@ function refreshFeatureViews() {
   // 국내 수급·자금 — KR_MARKET_FUNDS 가 잎 렌더보다 늦게 도착하면 다시 그린다.
   if (currentTab === "krflow" && typeof renderKrFlowMarket === "function") calls.push(renderKrFlowMarket);
   if (currentTab === "krtheme" && typeof renderKrThemes === "function") calls.push(renderKrThemes);
+  // 오늘 피드 — 내부자·Form 144·IR·보호예수 등 lazy 데이터셋이 잎 렌더보다 늦게 도착한다.
+  if (currentTab === "feed" && typeof renderMarketFeed === "function") calls.push(renderMarketFeed);
   // 통합 캘린더 — 휴장·만기·IR·배당·IPO 데이터셋이 각각 늦게 도착한다.
   if (currentTab === "calendar" && typeof renderUnifiedCalendarIfVisible === "function") calls.push(renderUnifiedCalendarIfVisible);
   // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.

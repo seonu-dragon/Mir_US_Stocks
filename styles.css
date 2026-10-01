@@ -16322,6 +16322,57 @@ html[data-theme="dark"] #financialsSection.financials-card { --mf-c2: color-mix(
   .ss-table.ss-wide th:nth-child(2), .ss-table.ss-wide td:nth-child(2) { display: none; }  /* 달러 표기 표는 폰에서 가장 오래된 해를 숨김 */
 }
 /* === stock-summary end === */
+/* === market-feed (오늘 › 오늘 피드, market-feed.js, 2026-10-01) === */
+.mfeed { min-width: 0; }
+.mfeed-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 4px 0 10px; }
+.mfeed-date { display: inline-flex; align-items: center; gap: 6px; }
+.mfeed-date h3 { margin: 0; font-size: var(--fs-h3, 18px); font-weight: var(--fw-strong, 700); font-variant-numeric: tabular-nums; }
+.mfeed-step { min-width: 32px; min-height: 32px; height: 32px; padding: 0 8px; border: 1px solid var(--line-strong, var(--line)); border-radius: var(--r-sm); background: var(--chip-bg, var(--panel)); color: var(--text); font: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.mfeed-step:disabled { opacity: .35; cursor: default; }
+.mfeed-note { margin: 0; font-size: var(--fs-sub); min-width: 0; }
+.mfeed-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 10px; }
+.mfeed-chip { min-height: 32px; height: auto; padding: 4px 12px; border: 1px solid var(--line-strong, var(--line)); border-radius: var(--r-sm); background: var(--chip-bg, var(--panel)); color: var(--text-2); font: inherit; font-size: var(--fs-sub); cursor: pointer; white-space: nowrap; }
+.mfeed-chip-n { margin-left: 2px; font-variant-numeric: tabular-nums; font-weight: var(--fw-strong, 700); color: var(--text); }
+.mfeed-chip.is-active { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); }
+.mfeed-chip.is-active .mfeed-chip-n { color: var(--ink-fg); }
+.mfeed-loading { margin: 0 0 8px; font-size: var(--fs-cap); }
+.mfeed-list-host { min-width: 0; }
+.mfeed-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.mfeed-row { display: grid; grid-template-columns: 64px minmax(110px, 200px) 68px minmax(0, 1fr) auto; gap: 4px 12px; align-items: start; padding: 9px 2px; border-bottom: 1px solid var(--line); min-width: 0; }
+.mfeed-row[hidden] { display: none; }
+.mfeed-time { display: flex; flex-direction: column; font-size: var(--fs-sub); color: var(--text-2); font-variant-numeric: tabular-nums; line-height: 1.35; }
+.mfeed-time small { font-size: var(--fs-cap); color: var(--muted); }
+.mfeed-who { display: inline-flex; align-items: flex-start; gap: 6px; min-width: 0; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; line-height: 1.35; }
+button.mfeed-who { cursor: pointer; min-height: 0; height: auto; }
+button.mfeed-who:hover strong { text-decoration: underline; }
+.mfeed-who-text { display: flex; flex-direction: column; min-width: 0; }
+.mfeed-who strong { font-size: var(--fs-14, 14px); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mfeed-who small { font-size: var(--fs-cap); color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mfeed-who-plain { color: var(--text-2); font-size: var(--fs-sub); }
+.mfeed-tag { justify-self: start; padding: 0 6px; border: 1px solid var(--line); border-radius: var(--r-sm); font-size: var(--fs-cap); line-height: 20px; color: var(--text-2); white-space: nowrap; }
+.mfeed-body { min-width: 0; }
+.mfeed-text { margin: 0; font-size: var(--fs-sub); line-height: 1.5; color: var(--text); overflow-wrap: anywhere; }
+.mfeed-lines { margin: 4px 0 0; padding-left: 16px; font-size: var(--fs-cap); line-height: 1.55; color: var(--text-2); overflow-wrap: anywhere; }
+.mfeed-sub { display: block; margin-top: 2px; font-size: var(--fs-cap); color: var(--muted); }
+.mfeed-src { font-size: var(--fs-cap); white-space: nowrap; }
+.mfeed-link { color: var(--link); }
+.mfeed-list-host > .list-more-btn { margin: 10px 0 0; }
+.mfeed-empty { padding: 18px 2px; }
+.mfeed-empty p { margin: 0 0 4px; }
+.mfeed-basis { margin: 14px 0 0; font-size: var(--fs-cap); color: var(--text-2); }
+.mfeed-basis summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; }
+.mfeed-basis ul { list-style: none; margin: 4px 0 6px; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.mfeed-basis li { line-height: 1.5; overflow-wrap: anywhere; }
+.mfeed-basis p { margin: 4px 0 0; line-height: 1.6; }
+@media (max-width: 760px) {
+  .mfeed-row { grid-template-columns: 50px auto minmax(0, 1fr) auto; grid-template-areas: "time who who src" "time tag body body"; gap: 4px 8px; }
+  .mfeed-time { grid-area: time; }
+  .mfeed-who { grid-area: who; }
+  .mfeed-tag { grid-area: tag; }
+  .mfeed-body { grid-area: body; }
+  .mfeed-src { grid-area: src; }
+}
+/* === market-feed end === */
 
 /* === 재무 시가총액 겹쳐 보기 · 주주환원 (financials.js mfOverlay* · shareholder.js, 2026-10-01) — 이 블록 안에서만 고칠 것 === */
 #financialsSection.financials-card, #shareholderSection.financials-card { --mfo-line: var(--amber); }

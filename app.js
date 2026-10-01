@@ -2039,6 +2039,7 @@ function loadCalendar() {
       calendarEventsCache = mergeCalendarEvents((p && p.calendar) || [], whEvents);
       renderCalendarFiltered();
       renderActionBoard();
+      if (typeof renderMarketFeedIfVisible === "function") renderMarketFeedIfVisible();
     })
     .catch(() => {
       calendarLoaded = false;
@@ -2133,12 +2134,12 @@ function renderCalendar(events) {
 // 가진다 — 렌더러·피처 게이트·딥링크가 전부 이 이름을 보기 때문이다. 상단 탭 버튼은
 // 그룹(today/market/search/bulk/community)이고, 잎은 그룹 패널 안의 .tab-leaf 로 보인다.
 const TAB_GROUP_OF = {
-  today: "today", calendar: "today", "ai-briefing": "today",
+  today: "today", feed: "today", calendar: "today", "ai-briefing": "today",
   map: "market", sector: "market", health: "market", signals: "market", industry: "market", marketindex: "market", krflow: "market", krtheme: "market",
   search: "search", bulk: "bulk", community: "community",
 };
 const GROUP_LEAVES = {
-  today: ["today", "ai-briefing", "calendar"],
+  today: ["today", "feed", "ai-briefing", "calendar"],
   market: ["map", "sector", "health", "marketindex", "signals", "industry", "krflow", "krtheme"],
 };
 // 그룹 탭을 눌렀을 때 돌아갈 마지막 잎(첫 방문은 첫 잎).
@@ -2888,6 +2889,9 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "community") activateCommunitySub(sub || communitySubTab, { push: false, communityTicker });
   if (name !== "community") stopCommunityPolling();
   if (name === "map") renderTreemap();
+  // 오늘 피드(market-feed.js) — 진입마다 다시 그린다(기준일·데이터 도착 상태가 바뀔 수 있다). 무거운
+  // 내부자 데이터는 여기서 처음 요청된다.
+  if (name === "feed" && typeof renderMarketFeed === "function") renderMarketFeed();
   if (name === "signals") {
     // 한 번만 그린다(예전엔 진입마다 renderSignals + 데이터셋별 .then 렌더 ~10개 = 최대 15회).
     if (signalsDirty || !tabRendered.signals) renderSignalsIfVisible();
@@ -3238,6 +3242,8 @@ const LIST_LIMITS = [
   // 찾기 › 상위 종목 표(find-table.js) — 개수를 96 으로 늘려도 처음엔 50행만.
   { host: "topStocksTableWrap", item: ":scope > table > tbody > tr", limit: 50, step: 50 },
   { host: "calendarBody", item: ".cal-day", limit: 4, step: 4 },
+  // 오늘 › 오늘 피드(market-feed.js) — 하루 공시가 수백 건이라 처음 40행(폰 20행)만.
+  { host: "marketFeedList", item: ":scope > ol > li", limit: 40, step: 60, mobileLimit: 20 },
   { host: "insiderCluster", item: ".cluster-grid > .cluster-card", limit: 6, step: 6, mobileOnly: true },
   // stockTreemapList 는 treemap.js 가 렌더 측에서 40개만 만들고 '더 보기' 를 붙인다(중복 제거).
   { host: "krOwnTable", item: "tbody > tr", limit: 50, step: 100, mobileLimit: 20 },
@@ -8822,6 +8828,7 @@ const HOME_ROUTE_RULES = [
   // 매크로 / 마켓 데이터
   { tab: "health", keywords: ["금리", "환율", "매크로", "vix", "국채", "달러", "채권", "인플레이션", "macro", "yield", "rates", "fx"] },
   // AI 브리핑 — 페이지 전용어(preempt): "AI" 티커(C3.ai) 오탐 방지
+  { tab: "feed", preempt: true, keywords: ["오늘 피드", "오늘의 피드", "시장 타임라인", "오늘 공시", "공시 타임라인"] },
   { tab: "ai-briefing", preempt: true, keywords: ["ai 브리핑", "브리핑", "오늘 요약", "시장 요약", "오늘의 시장 요약", "briefing"] },
   // 커뮤니티 — 페이지 전용어(preempt)
   { tab: "community", preempt: true, keywords: ["커뮤니티", "토론", "게시판", "인기글", "의견", "투표", "community"] },
@@ -9200,6 +9207,7 @@ function cmdkBuildActions(query) {
     scrollToTabContent();
   } });
   goto("오늘 · 요약", "today");
+  goto("오늘 · 오늘 피드", "feed");
   goto("오늘 · AI 브리핑", "ai-briefing");
   goto("오늘 · 캘린더", "calendar");
   goto("시장 · 트리맵", "map");

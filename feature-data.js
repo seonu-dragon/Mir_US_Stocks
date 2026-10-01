@@ -387,6 +387,8 @@ function refreshFeatureViews() {
           () => { if (typeof renderSegments === "function") renderSegments(item); },
           () => { if (typeof renderRiskFactors === "function") renderRiskFactors(item); },
           () => { if (typeof renderRiskCheck === "function") renderRiskCheck(item); },
+          // 주주환원 — 재무 파일·국내 공시·8-K·이벤트 기록 샤드가 각각 늦게 온다(shareholder.js).
+          () => { if (typeof renderShareholder === "function") renderShareholder(item); },
           () => { if (typeof renderDcf === "function") renderDcf(item); },
           () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },
           () => { if (typeof renderPriceTargets === "function") renderPriceTargets(item); },

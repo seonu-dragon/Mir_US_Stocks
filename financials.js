@@ -9,9 +9,12 @@
 const MF_CACHE = new Map();      // `${market}:${ticker}` → 파일 | null(없음)
 const MF_PROMISES = new Map();
 const MF_STATE_KEY = "mir.financials.view";
-const mfView = Object.assign({ kind: "annual", chart: "income" },
+const mfView = Object.assign({ kind: "annual", chart: "income", mcap: {} },
   (window.safeStorage && window.safeStorage.getJSON(MF_STATE_KEY, null)) || {});
-let mfCurrent = null;            // { ticker, file } — 토글 재렌더용
+if (!mfView.mcap || typeof mfView.mcap !== "object") mfView.mcap = {};
+let mfCurrent = null;            // { ticker, file, item, priceSig } — 토글 재렌더용
+// 시가총액(우) 겹쳐 보기를 붙이는 카드(mcap-core.js). 켜면 그 카드의 선(영업이익률·EPS)이 시가총액 선으로 바뀐다.
+const MF_MCAP_CARDS = new Set(["income", "profit"]);
 
 const MF_CHARTS = {
   income: { label: "매출·영업이익", bars: [["rev", "매출"], ["op", "영업이익"]], line: ["opMargin", "영업이익률", "pct"] },
@@ -135,7 +138,7 @@ function mfFormat(v, type, currency) {
   if (type === "pct") return `${(n * 100).toFixed(1)}%`;
   if (type === "spct") return `${n > 0 ? "+" : ""}${(n * 100).toFixed(1)}%`;
   if (type === "x") return `${n.toFixed(2)}배`;
-  if (type === "eps") return mfEps(n, currency);
+  if (type === "eps" || type === "price") return mfEps(n, currency);
   if (type === "shares") return mfShares(n);
   return mfMoney(n, currency);
 }
@@ -184,8 +187,9 @@ function mfChartSvg(points, preset, currency, width) {
   if (preset.line) {
     const [lk, , ltype] = preset.line;
     const lv = points.map((p) => p[lk]).filter(Number.isFinite);
-    if (lv.length >= 2) {
-      const lmax = Math.max(...lv), lmin = Math.min(...lv);
+    if (lv.length >= (preset.lineZero ? 1 : 2)) {
+      // lineZero(시가총액·주가 겹쳐 보기): 0 부터 그려 변화 폭이 부풀어 보이지 않게 한다.
+      const lmax = Math.max(...lv), lmin = preset.lineZero ? Math.min(0, ...lv) : Math.min(...lv);
       const lspan = (lmax - lmin) || Math.abs(lmax) || 1;
       const ly = (v) => top + 6 + (lmax - v) / lspan * (plotH - 12);
       let d = "", dots = "";
@@ -194,11 +198,13 @@ function mfChartSvg(points, preset, currency, width) {
         if (!Number.isFinite(v)) return;
         const cx = padL + slot * i + slot / 2;
         d += `${d ? "L" : "M"}${cx.toFixed(1)},${ly(v).toFixed(1)}`;
-        dots += `<circle cx="${cx.toFixed(1)}" cy="${ly(v).toFixed(1)}" r="3" class="mf-dot"><title>${escapeHtml(p.label)} ${escapeHtml(preset.line[1])} ${escapeHtml(mfFormat(v, ltype, currency))}</title></circle>`;
+        const tipExtra = preset.lineTip ? preset.lineTip(p) : "";
+        dots += `<circle cx="${cx.toFixed(1)}" cy="${ly(v).toFixed(1)}" r="3" class="mf-dot"><title>${escapeHtml(p.label)} ${escapeHtml(preset.line[1])} ${escapeHtml(mfFormat(v, ltype, currency))}${escapeHtml(tipExtra)}</title></circle>`;
       });
       // 보조축(오른쪽) 눈금: 선의 최댓값·최솟값 — 카드 위 '(%)'·'(EPS)' 단위 캡션과 짝.
-      const rt = (lmax === lmin ? [lmax] : [lmax, lmin]).map((v) => `<text x="${W - padR + 6}" y="${(ly(v) + 4).toFixed(1)}" text-anchor="start" class="mf-axis mf-tick mf-tick-r">${escapeHtml(mfFormat(v, ltype, currency))}</text>`).join("");
-      line = `<path d="${d}" class="mf-line"/>${dots}${rt}`;
+      const rt = (lmax === lmin ? [lmax] : [lmax, lmin]).map((v) => `<text x="${W - padR + 6}" y="${(ly(v) + 4).toFixed(1)}" text-anchor="start" class="mf-axis mf-tick mf-tick-r">${v === 0 ? "0" : escapeHtml(mfFormat(v, ltype, currency))}</text>`).join("");
+      const lc = preset.lineClass ? ` ${preset.lineClass}` : "";
+      line = `<g class="mf-line-g${lc}"><path d="${d}" class="mf-line"/>${dots}${rt}</g>`;
     }
   }
   // 높이는 viewBox 비율로(카드 폭이 그린 폭과 달라져도 글자 비율 유지 — 재무 카드 격자, chart-card.js).
@@ -208,7 +214,7 @@ function mfChartSvg(points, preset, currency, width) {
 // 범례 항목(chart-card.js mirChartCard 의 legend) — 색은 카드 토큰(--mf-c1~3·--mf-line)만.
 function mfLegendItems(preset) {
   const items = preset.bars.map((b, i) => ({ label: b[1], color: `var(--mf-c${i + 1})`, shape: "bar" }));
-  if (preset.line) items.push({ label: `${preset.line[1]}(우)`, color: "var(--mf-line)", shape: "line" });
+  if (preset.line) items.push({ label: `${preset.line[1]}(우)`, color: preset.lineColor || "var(--mf-line)", shape: "line" });
   return items;
 }
 
@@ -217,18 +223,24 @@ function mfUnits(preset, currency) {
   const money = currency === "KRW" ? "(원)" : currency === "USD" ? "(USD)" : `(${currency || ""})`;
   const left = preset.unit === "shares" ? "(주)" : money;
   let right = "";
-  if (preset.line) right = preset.line[2] === "pct" ? "(%)" : preset.line[2] === "eps" ? `(EPS ${currency === "KRW" ? "원" : currency === "USD" ? "$" : currency})` : "";
+  if (preset.line) {
+    const t = preset.line[2];
+    const unit = currency === "KRW" ? "원" : currency === "USD" ? "$" : currency;
+    right = t === "pct" ? "(%)" : t === "eps" ? `(EPS ${unit})` : t === "money" ? money : t === "price" ? `(주가 ${unit})` : "";
+  }
   return { left, right };
 }
 
 // 같은 계열을 작은 표로(차트/표 전환). 최근 기간이 위.
-function mfSeriesTable(points, preset, currency) {
+function mfSeriesTable(points, preset, currency, extraCols) {
   if (!points.length) return "";
   const cols = preset.bars.map((b) => [b[0], b[1], preset.unit === "shares" ? "shares" : "money"]);
   if (preset.line) cols.push([preset.line[0], preset.line[1], preset.line[2]]);
+  (extraCols || []).forEach((c) => cols.push(c));
   const head = cols.map((c) => `<th class="ins-num">${escapeHtml(c[1])}</th>`).join("");
   const body = points.slice().reverse().map((p) => `<tr><th scope="row">${escapeHtml(p.label)}</th>${cols.map(([k, , t]) => {
     const v = p[k];
+    if (t === "text") return `<td class="ins-num">${escapeHtml(v ? String(v) : "—")}</td>`;
     return `<td class="ins-num${Number(v) < 0 ? " ins-sell" : ""}">${escapeHtml(mfFormat(v, t, currency))}</td>`;
   }).join("")}</tr>`).join("");
   return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table">
@@ -326,7 +338,7 @@ function mfAccountsTable(file, kind) {
     <thead><tr><th>계정</th>${head}</tr></thead><tbody>${body}</tbody></table></div></details>`;
 }
 
-function mfSectionHtml(file, width) {
+function mfSectionHtml(file, width, item) {
   const core = window.MirFinCore;
   const kind = mfView.kind === "quarterly" && (file.quarterly || []).length ? "quarterly" : "annual";
   const general = !(file.flags || []).includes("financial");
@@ -335,20 +347,35 @@ function mfSectionHtml(file, width) {
   const hasQ = (file.quarterly || []).length > 0;
   const source = mfShortSource(file, kind);
   // 항목 칩으로 하나씩 고르던 차트를 전부 카드로 나란히(넓은 칸 2열·폰 1열, chart-card.js).
+  const overlay = mfOverlay(file, kind, item);
   const cards = presets.map(([key, preset]) => {
     const keys = preset.bars.map((b) => b[0]).concat(preset.line ? [preset.line[0]] : []);
     const pts = core.series(file, kind, keys).slice(kind === "quarterly" ? -12 : -10);
-    const units = mfUnits(preset, file.currency);
+    const canOverlay = MF_MCAP_CARDS.has(key) && overlay && overlay.mode;
+    const on = !!(canOverlay && mfView.mcap[key]);
+    let drawPreset = preset, extraCols = null, lead = "", cap = "";
+    if (canOverlay) {
+      mfAttachOverlay(pts, overlay);
+      lead = mfOverlayToggle(key, overlay, on);
+      if (on) {
+        drawPreset = mfOverlayPreset(preset, overlay);
+        cap = mfOverlayCaption(overlay);
+        // 표에는 원래 선(영업이익률·EPS)과 겹친 값 · 기준 종가일을 함께 둔다.
+        extraCols = [[drawPreset.line[0], drawPreset.line[1], drawPreset.line[2]], ["closeDate", "기준 종가일", "text"]];
+      }
+    }
+    const units = mfUnits(drawPreset, file.currency);
     return mirChartCard({
       id: `mf.${key}`,
       title: preset.label,
       sub: kind === "quarterly" ? "분기" : "연간",
       unitLeft: units.left,
       unitRight: units.right,
-      chart: `<div class="mf-chart-wrap">${mfChartSvg(pts, preset, file.currency, width)}</div>`,
-      table: mfSeriesTable(pts, preset, file.currency),
-      legend: mfLegendItems(preset),
-      source,
+      lead,
+      chart: `<div class="mf-chart-wrap">${mfChartSvg(pts, drawPreset, file.currency, width)}</div>${cap}`,
+      table: mfSeriesTable(pts, preset, file.currency, extraCols),
+      legend: mfLegendItems(drawPreset),
+      source: on ? `${source} · 종가 ${overlay.priceSourceShort}` : source,
       help: MF_CHART_HELP[key] || "",
     });
   });
@@ -375,15 +402,106 @@ function mfSectionHtml(file, width) {
     <p class="mf-foot">공시 수치를 옮긴 과거 정보이며 예측이 아닙니다. —는 공시에서 확인되지 않은 값이며 추정으로 채우지 않았습니다. †·옅은 막대는 누계 공시에서 빼서 만든 분기 값입니다(예: 4분기 = 연간 − 3분기 누계).</p>`;
 }
 
+function mfSaveView() {
+  if (window.safeStorage) window.safeStorage.setJSON(MF_STATE_KEY, { kind: mfView.kind, chart: mfView.chart, mcap: mfView.mcap });
+}
+
+// ── 시가총액(우) 겹쳐 보기 — 계산은 mcap-core.js(window.MirMcapCore) ──
+function mfPriceSig(item) {
+  const cs = item && Array.isArray(item.chartSeries) ? item.chartSeries : null;
+  if (!cs || !cs.length) return "";
+  const last = cs[cs.length - 1];
+  const lastDate = Array.isArray(last) ? last[5] : (last && (last.date || last.d)) || "";
+  return `${cs.length}|${lastDate}|${Array.isArray(item.splits) ? item.splits.length : "-"}`;
+}
+
+function mfOverlay(file, kind, item) {
+  const mc = window.MirMcapCore;
+  const cfg = typeof marketCfg === "function" ? marketCfg() : null;
+  if (!mc || !item || (cfg && cfg.features && cfg.features.mcapOverlay === false)) return null;
+  if (!Array.isArray(item.chartSeries) || !item.chartSeries.length) return null;
+  const market = file.market === "kr" ? "kr" : "us";
+  const flags = file.flags || [];
+  const res = mc.overlaySeries({
+    file, kind,
+    chartSeries: item.chartSeries,
+    anchor: mc.anchorShares(item, market),
+    splits: item.splits,
+    currencyMismatch: !!file.currency && file.currency !== (market === "kr" ? "KRW" : "USD"),
+    noShares: flags.includes("foreignFiler") || flags.includes("adrShareBasis"),
+  });
+  if (!res.mode) return null;
+  res.market = market;
+  const naver = item.barsSource === "naver";
+  res.priceSource = market === "kr"
+    ? `${naver ? "네이버" : "야후"} 수정주가(분할·무상증자·유상증자 권리락 조정)`
+    : "야후 일봉(분할 조정 종가, 배당 미반영)";
+  res.priceSourceShort = market === "kr" ? (naver ? "네이버 수정주가" : "야후 수정주가") : "야후";
+  return res;
+}
+
+function mfAttachOverlay(points, overlay) {
+  const mc = window.MirMcapCore;
+  points.forEach((p) => {
+    const hit = overlay.byKey[mc.periodKey(p)];
+    p.mcap = hit && Number.isFinite(hit.mcap) ? hit.mcap : null;
+    p.px = hit && Number.isFinite(hit.close) ? hit.close : null;
+    p.closeDate = hit ? hit.closeDate : null;
+  });
+}
+
+function mfOverlayPreset(preset, overlay) {
+  const isCap = overlay.mode === "mcap";
+  return Object.assign({}, preset, {
+    line: isCap ? ["mcap", "시가총액", "money"] : ["px", "수정주가", "price"],
+    lineZero: true,
+    lineClass: "mfo-line",
+    lineColor: "var(--mfo-line)",
+    lineTip: (p) => (p.closeDate ? ` · 종가 ${p.closeDate}` : ""),
+  });
+}
+
+function mfOverlayToggle(key, overlay, on) {
+  const label = overlay.mode === "mcap" ? "시가총액(우)" : "수정주가(우)";
+  return `<div class="mfo-bar"><button type="button" class="mfo-toggle" data-mfo="${escapeHtml(key)}" aria-pressed="${on ? "true" : "false"}">`
+    + `<i class="mfo-sw" aria-hidden="true"></i>${label}</button></div>`;
+}
+
+function mfOverlayCaption(overlay) {
+  const mc = window.MirMcapCore;
+  const bits = ["같이 그렸을 뿐 인과 관계를 뜻하지 않습니다."];
+  if (overlay.mode === "mcap") {
+    bits.push(overlay.market === "kr"
+      ? "시가총액 = 기말(직전 거래일) 종가 × 기말 유통주식수(자기주식·우선주 제외, DART)."
+      : "시가총액 = 기말(직전 거래일) 종가 × 기말 발행주식수(그 기말 값이 없으면 희석 가중평균, SEC).");
+    if (overlay.splits && overlay.splits.length) bits.push("공시 주식수를 액면분할·무상증자 기준에 맞춰 환산했습니다.");
+  } else {
+    bits.push(`${mc.REASON_TEXT[overlay.reason] || "시가총액 대신 수정주가를 그렸습니다"}.`);
+  }
+  bits.push(`종가는 ${overlay.priceSource}, ${overlay.firstPriceDate || ""}부터입니다 — 그 전 기간과 종가·주식수가 없는 기간은 비웠습니다.`);
+  if (overlay.market === "kr") bits.push("국내는 결산월을 12월로 가정했고, 수정주가라 당시 실제 시가총액과 몇 % 다를 수 있습니다.");
+  return `<p class="mfo-cap">${escapeHtml(bits.join(" "))}</p>`;
+}
+
 function mfBind(host) {
   if (host.dataset.mfBound) return;
   host.dataset.mfBound = "1";
   host.addEventListener("click", (e) => {
+    const t = e.target.closest("[data-mfo]");
+    if (t) {
+      const key = t.dataset.mfo;
+      mfView.mcap = Object.assign({}, mfView.mcap, { [key]: !mfView.mcap[key] });
+      mfSaveView();
+      if (mfCurrent && mfCurrent.file) host.innerHTML = mfSectionHtml(mfCurrent.file, mfChartWidth(host), mfCurrent.item);
+      const again = host.querySelector(`[data-mfo="${key}"]`);
+      if (again) again.focus();
+      return;
+    }
     const k = e.target.closest("[data-mf-kind]");
     if (!k || k.disabled) return;
     mfView.kind = k.dataset.mfKind;
-    if (window.safeStorage) window.safeStorage.setJSON(MF_STATE_KEY, { kind: mfView.kind, chart: mfView.chart });
-    if (mfCurrent && mfCurrent.file) host.innerHTML = mfSectionHtml(mfCurrent.file, mfChartWidth(host));
+    mfSaveView();
+    if (mfCurrent && mfCurrent.file) host.innerHTML = mfSectionHtml(mfCurrent.file, mfChartWidth(host), mfCurrent.item);
   });
 }
 
@@ -413,10 +531,15 @@ function renderFinancials(item) {
     mfBind(host);
     // 같은 종목이 이미 그려져 있으면 다시 그리지 않는다(refreshFeatureViews 가 부팅 중 여러 번 부른다 —
     // 펼쳐 둔 계정 표가 접히지 않게).
-    if (mfCurrent && mfCurrent.file === cached && !host.hidden && host.firstElementChild) return;
-    mfCurrent = { ticker, file: cached };
+    // 단, 상세 일봉(시가총액 겹쳐 보기의 종가)이 나중에 도착했으면 다시 그린다.
+    const priceSig = mfPriceSig(item);
+    if (mfCurrent && mfCurrent.file === cached && mfCurrent.priceSig === priceSig && !host.hidden && host.firstElementChild) {
+      mfCurrent.item = item;
+      return;
+    }
+    mfCurrent = { ticker, file: cached, item, priceSig };
     host.hidden = false;
-    host.innerHTML = mfSectionHtml(cached, mfChartWidth(host));
+    host.innerHTML = mfSectionHtml(cached, mfChartWidth(host), item);
     return;
   }
   if (cached === null) { mfHide(host); return; }

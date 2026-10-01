@@ -179,6 +179,12 @@ jobs:
       # 재무 확장 파생 지표(financials-core.js): ROIC·순차입금/EBITDA·주식수 증감·TTM 시계열(연속 분기만)·결측 전파.
       - name: Financials core tests
         run: node scripts/tests/test_financials_core.mjs
+      # 재무 차트 시가총액 겹쳐 보기(mcap-core.js: 분할 환산 — NVDA 10:1·000500 무상증자 1.8배, 수정주가 대체·건너뜀) +
+      # 주주환원(shareholder-core.js: 배당 주기·연도/회계연도 합·배당성향 적자·자사주 공시·주식수 변화).
+      - name: Market-cap overlay / shareholder core tests
+        run: |
+          node scripts/tests/test_mcap_core.mjs
+          node scripts/tests/test_shareholder_core.mjs
       # 재무 위험 점검(risk-check-core.js): Piotroski 9항목·Altman Z/Z''·Beneish M 교과서 값 검산, 데이터 없음 분리.
       - name: Risk check core tests
         run: node scripts/tests/test_risk_check_core.mjs

@@ -5220,6 +5220,7 @@ function renderSearch(options = {}) {
   if (typeof renderSegments === "function") renderSegments(item);
   if (typeof renderRiskFactors === "function") renderRiskFactors(item);
   if (typeof renderRiskCheck === "function") renderRiskCheck(item);
+  if (typeof renderShareholder === "function") renderShareholder(item);
   if (typeof renderDcf === "function") renderDcf(item);
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
@@ -5255,6 +5256,9 @@ function renderSearch(options = {}) {
     renderNews(refreshed);
     // 위험·시즈널리티는 종목 상세의 chartSeries, 체력은 상세 fundamentals 를 쓴다.
     if (typeof renderStockHealth === "function") renderStockHealth(refreshed);
+    // 재무 차트의 시가총액 겹쳐 보기(상세 일봉)·주주환원(상세 배당 기록)도 상세가 도착하면 다시 그린다.
+    if (typeof renderFinancials === "function") renderFinancials(refreshed);
+    if (typeof renderShareholder === "function") renderShareholder(refreshed);
   });
 
   // If not triggered via natural language AI search, instantly reveal dashboard components.

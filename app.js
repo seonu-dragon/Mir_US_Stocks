@@ -5653,7 +5653,9 @@ function applyLive(item) {
   if (quote) out.liveQuote = quote;
   if (Array.isArray(chart) && chart.length) {
     if (isKrMarket()) {
-      const base = Array.isArray(item.chartSeries) ? item.chartSeries : [];
+      // 상세 일봉이 네이버 원천일 때만 우선한다. 야후로 만든 옛 상세 파일(이월 종목 포함)에는
+      // 기준일 봉 누락 때 전날 봉을 덮어쓴 값이 남아 있어(#272 이전 빌더), 실시간 일봉이 더 낫다.
+      const base = item.barsSource === "naver" && Array.isArray(item.chartSeries) ? item.chartSeries : [];
       const merged = mergeKrLiveBars(base, chart);
       out.chartSeries = alignKrSessionBar(merged, item);
       if (merged === chart) {

@@ -418,7 +418,23 @@ function updateDataLoadedAt(date = new Date()) {
   const el = byId("updatedAt");
   if (!el) return;
   const snapshotTime = data && (data.updatedAtKst || data.updated_at_kst);
-  el.textContent = snapshotTime || formatKstDateTime(date);
+  const basis = snapshotPriceBasisText();
+  el.textContent = `${snapshotTime || formatKstDateTime(date)}${basis ? ` · ${basis}` : ""}`;
+}
+
+// 스냅샷 주가의 기준 거래일("09.30 종가 기준"). 미국 스냅샷은 Actions 대기 탓에 KST 오전 늦게 올라오고,
+// 그 사이 일부 종목만 전 거래일 종가가 남는 날이 있어 그 날짜도 함께 적는다("· 일부 종목 09.29").
+function snapshotPriceBasisText() {
+  const md = (d) => `${d.slice(5, 7)}.${d.slice(8, 10)}`;
+  const main = String((data && data.priceDate) || "").slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(main)) return "";
+  const older = {};
+  for (const s of (data.stocks || [])) {
+    const d = String((s && s.priceDate) || "").slice(0, 10);
+    if (d && d < main && /^\d{4}-\d{2}-\d{2}$/.test(d)) older[d] = (older[d] || 0) + 1;
+  }
+  const lag = Object.keys(older).sort((a, b) => older[b] - older[a])[0];
+  return `${md(main)} 종가 기준${lag ? ` · 일부 종목 ${md(lag)}` : ""}`;
 }
 
 // Inject the active market's snapshot .js (window global) on demand. Used as the
@@ -915,7 +931,7 @@ function applyMarketOnlyUi() {
   if (rsQqqLabel && rsQqqLabel.lastChild) rsQqqLabel.lastChild.textContent = ` RS vs ${rsB2}`;
   const cadenceNote = byId("snapshotCadenceNote");
   if (cadenceNote) {
-    cadenceNote.textContent = `주가 ${cfg.snapshotCadence || "매일 06:00 KST"} 갱신 · 항목별 기준 시각은 신뢰도 센터에서`;
+    cadenceNote.textContent = `주가 ${cfg.snapshotCadence || "매일 오전(보통 10시 전후 KST)"} 갱신 · 항목별 기준 시각은 신뢰도 센터에서`;
   }
   const topMinCapText = byId("topMinMarketCapLabelText");
   if (topMinCapText) {
@@ -6853,7 +6869,7 @@ function dataTrustSources() {
       count: (data.stocks || []).length,
       timestamp: snapshotTime,
       maxHours: 36,
-      cadence: cfg.snapshotCadence || "매일 06:00 KST",
+      cadence: cfg.snapshotCadence || "매일 오전(보통 10시 전후 KST)",
       recovery: recoveryFor("시장 스냅샷"),
       status: trustStatus(snapshotTime, (data.stocks || []).length, 36),
     },

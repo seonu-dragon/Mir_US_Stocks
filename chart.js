@@ -711,9 +711,143 @@ function runChartProbAnalysis() {
   });
 }
 
+// ===== 분봉(2026-10-01) =====
+// 커밋된 스냅샷엔 일봉만 있어서 분봉은 워커(?intraday=1)가 야후에서 그때그때 받아 온다(엣지 캐시 60초).
+// 간격은 국내 증권사 차트와 같은 1·3·5·10·15·30·60분. 야후에 없는 3분·10분은 1분·5분을 묶는다.
+// 기간(1M~5Y) 버튼은 일·주·월봉용이라 분봉에선 쓰지 않는다 — 분봉은 간격마다 받을 수 있는 최근 구간
+// (1·3분 5거래일, 5~30분 약 1개월, 60분 약 6개월)을 받고, 처음엔 그중 `view` 봉만큼 확대해 보여 준다.
+// 분봉에선 일봉 날짜에 묶인 것(이벤트 띠·큰 등락일·패턴·상대강도·비교)은 그리지 않는다.
+const CHART_INTRADAY = {
+  m1: { iv: "1m", group: 1, label: "1분", view: 390, span: "최근 5거래일" },
+  m3: { iv: "1m", group: 3, label: "3분", view: 260, span: "최근 5거래일" },
+  m5: { iv: "5m", group: 1, label: "5분", view: 234, span: "최근 약 1개월" },
+  m10: { iv: "5m", group: 2, label: "10분", view: 195, span: "최근 약 1개월" },
+  m15: { iv: "15m", group: 1, label: "15분", view: 182, span: "최근 약 1개월" },
+  m30: { iv: "30m", group: 1, label: "30분", view: 182, span: "최근 약 1개월" },
+  m60: { iv: "60m", group: 1, label: "60분", view: 140, span: "최근 약 6개월" },
+};
+const CHART_INTRADAY_TTL_MS = 60000;
+const _chartIntraday = {}; // "<야후 심볼>|<간격>" → { status: loading|ok|error, at, rows, msg }
+let chartIntradayFitPending = false;
+
+function isIntradayTf(tf) { return Object.prototype.hasOwnProperty.call(CHART_INTRADAY, tf); }
+
+// 1분 → 3분, 5분 → 10분: 같은 날 같은 n분 칸(자정 기준 분 / n)끼리 묶는다. 미국 09:30·국내 09:00 은
+// 3·10 의 배수라 칸이 장 시작에 맞는다.
+function groupIntradayRows(rows, n) {
+  if (!(n > 1)) return rows;
+  const out = [];
+  let key = "";
+  let g = null;
+  for (const r of rows) {
+    const t = String(r.d);
+    const mins = Number(t.slice(11, 13)) * 60 + Number(t.slice(14, 16));
+    const k = `${t.slice(0, 10)}|${Math.floor(mins / n)}`;
+    if (k !== key || !g) {
+      g = { o: r.o, h: r.h, l: r.l, c: r.c, v: r.v || 0, d: r.d };
+      out.push(g);
+      key = k;
+    } else {
+      g.h = Math.max(g.h, r.h);
+      g.l = Math.min(g.l, r.l);
+      g.c = r.c;
+      g.v += r.v || 0;
+    }
+  }
+  return out;
+}
+
+// 지금 종목·간격의 분봉 상태. 없거나 60초 지났으면 받아 오고, 도착하면 차트를 다시 그린다.
+function chartIntradayState(item) {
+  const spec = CHART_INTRADAY[chartState.barTf];
+  if (!spec || !item) return { status: "error", rows: [], msg: "분봉 간격을 알 수 없습니다." };
+  if (!LIVE_DATA_PROXY) return { status: "error", rows: [], msg: "분봉 서버가 설정돼 있지 않습니다." };
+  const sym = liveProxyTicker(item);
+  const key = `${sym}|${spec.iv}`;
+  const cur = _chartIntraday[key];
+  const fresh = cur && (cur.status === "loading" || Date.now() - cur.at < CHART_INTRADAY_TTL_MS);
+  if (!fresh) {
+    const keep = cur && cur.status === "ok" ? cur.rows : null; // 갱신 중에도 직전 봉은 계속 보여 준다
+    _chartIntraday[key] = { status: keep ? "ok" : "loading", at: Date.now(), rows: keep || [], msg: "" };
+    const url = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?intraday=1&ticker=${encodeURIComponent(sym)}&interval=${spec.iv}`;
+    fetch(url, { cache: "no-store" }).then((r) => r.json()).then((d) => {
+      // 예전 워커는 이 경로를 몰라 종목 상세(분봉 없음)를 돌려준다 — bars 가 없으면 준비 안 된 것으로 본다.
+      if (!d || !Array.isArray(d.bars)) throw new Error("no_bars_route");
+      const rows = d.bars.map((b) => ({ o: Number(b[0]), h: Number(b[1]), l: Number(b[2]), c: Number(b[3]), v: Number(b[4] || 0), d: String(b[5]) }))
+        .filter((r) => Number.isFinite(r.c));
+      _chartIntraday[key] = { status: "ok", at: Date.now(), rows, msg: rows.length ? "" : "이 종목은 분봉 데이터가 없습니다." };
+    }).catch((err) => {
+      _chartIntraday[key] = {
+        status: "error", at: Date.now(), rows: keep || [],
+        msg: String(err && err.message) === "no_bars_route" ? "분봉 서버를 업데이트하는 중입니다. 잠시 후 다시 시도해 주세요." : "분봉을 받지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      };
+    }).finally(() => {
+      const now = currentChartItem();
+      if (isIntradayTf(chartState.barTf) && now && now.ticker === item.ticker) redrawChart();
+    });
+  }
+  const st = _chartIntraday[key];
+  return { status: st.status, rows: groupIntradayRows(st.rows, spec.group), msg: st.msg };
+}
+
+// 차트가 그리는 봉 전체: 분봉이면 받아 둔 분봉, 아니면 일봉(→ 주·월봉 묶음).
+function chartBarRows(item) {
+  if (isIntradayTf(chartState.barTf)) return chartIntradayState(item).rows;
+  return resampleBars(getChartRows(item), chartState.barTf);
+}
+
+function chartTfLabel(tf) {
+  if (isIntradayTf(tf)) return `${CHART_INTRADAY[tf].label}봉`;
+  return { D: "일봉", W: "주봉", M: "월봉" }[tf] || "일봉";
+}
+
+// 봉 종류 바꾸기(일·주·월 버튼, 분봉 선택, 기간 버튼에서 공통).
+function setChartBarTf(tf) {
+  chartState.barTf = isIntradayTf(tf) || ["D", "W", "M"].includes(tf) ? tf : "D";
+  chartState.zoom = 1;
+  chartState.offset = 0;
+  chartIntradayFitPending = isIntradayTf(chartState.barTf);
+  syncChartBarTfUi();
+  redrawChart();
+}
+
+function syncChartBarTfUi() {
+  const intraday = isIntradayTf(chartState.barTf);
+  byId("barTimeframeControls")?.querySelectorAll("button[data-tf]").forEach((b) => {
+    const on = b.dataset.tf === chartState.barTf;
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const sel = byId("barIntradaySelect");
+  if (sel) {
+    sel.value = intraday ? chartState.barTf : "";
+    sel.classList.toggle("is-active", intraday);
+  }
+  // 분봉에선 기간 버튼이 적용되지 않는다 — 선택 표시를 끄고, 누르면 일봉으로 돌아가 그 기간을 연다.
+  const range = byId("rangeControls");
+  if (range) {
+    range.classList.toggle("is-muted", intraday);
+    range.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", !intraday && b.dataset.range === chartState.range));
+  }
+  const sub = byId("chartSubtitle");
+  if (sub) {
+    sub.textContent = intraday
+      ? `${CHART_INTRADAY[chartState.barTf].label}봉 · ${CHART_INTRADAY[chartState.barTf].span} · 야후 시세(지연될 수 있음)`
+      : `${chartTfLabel(chartState.barTf)} 기준 · 하루 한 번 갱신`;
+  }
+}
+
+// x 축 눈금 라벨: 분봉은 시각(같은 날이면 HH:MM, 아니면 M/D HH:MM), 그 외는 날짜.
+function chartTickLabel(d, sameDay) {
+  if (!isIntradayTf(chartState.barTf)) return formatChartDate(d);
+  const t = String(d);
+  const hm = t.slice(11, 16);
+  return sameDay ? hm : `${Number(t.slice(5, 7))}/${Number(t.slice(8, 10))} ${hm}`;
+}
+
 // Number of bars available for the active range (matches visibleChartRows logic).
 function chartBaseLength(item) {
-  const rows = resampleBars(getChartRows(item), chartState.barTf);
+  const rows = chartBarRows(item);
   return rangeBarCount(rows.length);
 }
 
@@ -755,6 +889,8 @@ function setupChartControls() {
       chartState.range = button.dataset.range;
       chartState.zoom = 1;
       chartState.offset = 0;
+      // 분봉에선 기간이 적용되지 않으니 일봉으로 돌아가 고른 기간을 연다.
+      if (isIntradayTf(chartState.barTf)) { setChartBarTf("D"); return; }
       byId("rangeControls").querySelectorAll("button").forEach((item) => item.classList.toggle("is-active", item === button));
       redrawChart();
     });
@@ -772,16 +908,13 @@ function setupChartControls() {
   byId("chartReset").addEventListener("click", resetChartView);
   const tfControls = byId("barTimeframeControls");
   if (tfControls) {
-    tfControls.querySelectorAll("button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        chartState.barTf = btn.dataset.tf;
-        chartState.zoom = 1;
-        chartState.offset = 0;
-        tfControls.querySelectorAll("button").forEach((b) => b.classList.toggle("is-active", b === btn));
-        redrawChart();
-      });
+    tfControls.querySelectorAll("button[data-tf]").forEach((btn) => {
+      btn.addEventListener("click", () => setChartBarTf(btn.dataset.tf));
     });
   }
+  const intradaySel = byId("barIntradaySelect");
+  if (intradaySel) intradaySel.addEventListener("change", () => setChartBarTf(intradaySel.value || "D"));
+  syncChartBarTfUi();
   ["showSma5", "showSma10", "showSma20", "showSma60", "showSma120",
    "showEma20", "showEma60", "showBoll", "showVwap", "showSupertrend", "showIchimoku", "showKeltner", "showDonchian", "showSupportResistance", "showTechLevels", "showPatterns",
    "showVolume", "showVolMa20", "showVolumeRatio", "showObv", "showAd",
@@ -886,9 +1019,7 @@ function syncChartControlUi() {
   byId("rangeControls")?.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("is-active", button.dataset.range === chartState.range);
   });
-  byId("barTimeframeControls")?.querySelectorAll("button").forEach((button) => {
-    button.classList.toggle("is-active", button.dataset.tf === chartState.barTf);
-  });
+  syncChartBarTfUi();
   byId("chartTypeControls")?.querySelectorAll("button").forEach((button) => {
     button.classList.toggle("is-active", (button.dataset.ctype || "candle") === chartState.chartType);
   });
@@ -1669,8 +1800,11 @@ function keyMomentTipHtml(m) {
   const pct = `${m.pct > 0 ? "+" : m.pct < 0 ? "−" : ""}${Math.abs(m.pct).toFixed(1)}%`;
   const head = `<p class="chart-km-head"><b>${escapeHtml(date)} · 큰 등락 <span class="${cls(m.pct)}">${escapeHtml(pct)}</span></b><small>평소 하루 변동(직전 ${m.lookback || 60}거래일 표준편차 ${Number(m.sigma).toFixed(1)}%)의 ${Number(m.ratio).toFixed(1)}배</small></p>`;
   const reasons = Array.isArray(m.reasons) ? m.reasons : [];
+  // 붙은 기록에 뉴스가 없으면 그날 ±2일 기사를 워커에서 찾아 아래 칸에 채운다(fillKeyMomentNews).
+  const hasNews = reasons.some((e) => e.cat === "news");
+  const newsSlot = hasNews ? "" : keyMomentNewsSlotHtml(m.date);
   if (!reasons.length) {
-    return `${head}<p class="chart-km-none">사유 데이터 없음 — 이 날짜 ±1거래일에 수집된 공시·실적·배당·특징주 기록이 없습니다.</p>`;
+    return `${head}<p class="chart-km-none">공시·실적·배당·특징주 기록 없음 — 이 날짜 ±1거래일에 수집된 기록이 없습니다.</p>${newsSlot}`;
   }
   const MAX = 5;
   const rows = reasons.slice(0, MAX).map((e) => {
@@ -1680,7 +1814,61 @@ function keyMomentTipHtml(m) {
     return `<li><span class="chart-ev-badge chart-km-badge">${escapeHtml(label.slice(0, 2))}</span><div><b>${escapeHtml(e.title)}${escapeHtml(when)}</b>${e.detail || link ? `<small>${escapeHtml(e.detail || "")}${link}</small>` : ""}</div></li>`;
   }).join("");
   const rest = reasons.length > MAX ? `<p class="chart-ev-tip-more">외 ${reasons.length - MAX}건 — 이벤트·공시 탭 통합 타임라인에서 전체 보기</p>` : "";
-  return `${head}<p class="chart-km-sub">같은 시기 기록(원인으로 확인된 것은 아님)</p><ul>${rows}</ul>${rest}`;
+  return `${head}<p class="chart-km-sub">같은 시기 기록(원인으로 확인된 것은 아님)</p><ul>${rows}</ul>${rest}${newsSlot}`;
+}
+
+// ----- 큰 등락일 그날 뉴스(워커 ?event_news) -----
+// 결과는 "<심볼>|<날짜>" 로 기억한다(지난 날짜라 바뀌지 않는다). 예전 워커는 이 경로를 몰라 종목 상세를
+// 돌려주므로 date 가 맞는 응답만 받는다.
+const _kmNews = {}; // key → { status: loading|ok|error, news }
+
+function keyMomentNewsKey(date) {
+  const it = currentChartItem();
+  return it ? `${liveProxyTicker(it)}|${date}` : "";
+}
+
+function keyMomentNewsSlotHtml(date) {
+  if (!LIVE_DATA_PROXY) return "";
+  const key = keyMomentNewsKey(date);
+  if (!key) return "";
+  return `<div class="chart-km-news" data-km-news="${escapeHtml(key)}">${keyMomentNewsBodyHtml(_kmNews[key])}</div>`;
+}
+
+function keyMomentNewsBodyHtml(st) {
+  // 마우스를 올리기만 했을 땐 찾지 않는다(뉴스 수집은 워커 KV·외부 검색을 쓴다) — 눌렀을 때만.
+  if (!st) return '<p class="chart-km-sub">▲▼ 를 누르면 그날 전후 뉴스를 찾아봅니다.</p>';
+  if (st.status === "loading") return '<p class="chart-km-sub">그날 전후 뉴스 찾는 중…</p>';
+  if (st.status === "error") return '<p class="chart-km-none">뉴스를 불러오지 못했습니다.</p>';
+  if (!st.news.length) return '<p class="chart-km-none">그날 전후(±2일) 기사를 찾지 못했습니다.</p>';
+  const rows = st.news.map((n) => {
+    const when = n.publishedAt ? String(n.publishedAt).slice(5, 10).replace("-", "/") : "";
+    const link = /^https?:\/\//i.test(n.link || "") ? ` <a href="${escapeHtml(n.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
+    return `<li><span class="chart-ev-badge chart-km-badge">뉴</span><div><b>${escapeHtml(n.title)}</b><small>${escapeHtml([when, n.publisher].filter(Boolean).join(" · "))}${link}</small></div></li>`;
+  }).join("");
+  return `<p class="chart-km-sub">그날 전후 뉴스(제목 검색 결과 — 원인으로 확인된 것은 아님)</p><ul>${rows}</ul>`;
+}
+
+function fillKeyMomentNews(tip) {
+  const slot = tip && tip.querySelector("[data-km-news]");
+  if (!slot) return;
+  const key = slot.dataset.kmNews;
+  const st = _kmNews[key];
+  if (st && st.status !== "error") return;
+  const [sym, date] = key.split("|");
+  _kmNews[key] = { status: "loading", news: [] };
+  const url = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?event_news=1&ticker=${encodeURIComponent(sym)}&date=${encodeURIComponent(date)}`;
+  fetch(url).then((r) => r.json()).then((d) => {
+    if (!d || d.date !== date || !Array.isArray(d.news)) throw new Error("no_route");
+    _kmNews[key] = { status: "ok", news: d.news.filter((n) => n && n.title) };
+  }).catch(() => {
+    _kmNews[key] = { status: "error", news: [] };
+  }).finally(() => {
+    const live = document.querySelector(`#chartEventTip [data-km-news="${CSS.escape(key)}"]`);
+    if (live) {
+      live.innerHTML = keyMomentNewsBodyHtml(_kmNews[key]);
+      clampChartEventTip(byId("chartEventTip")); // 내용이 늘어난 만큼 화면 안으로 다시 맞춘다
+    }
+  });
 }
 
 // 포인터 → 키 모먼트 마커(없으면 null). 묶음과 같은 모양({x, moment})으로 돌려 툴팁 함수를 같이 쓴다.
@@ -1795,15 +1983,27 @@ function chartEventTipHtml(cluster) {
   return `<ul>${rows}</ul>${rest}`;
 }
 
+// 뒤늦게 내용이 늘어난 툴팁(그날 뉴스)을 화면 안으로 다시 넣는다.
+function clampChartEventTip(tip) {
+  if (!tip || tip.hidden) return;
+  const vw = document.documentElement.clientWidth || window.innerWidth || 0; // 스크롤바 폭 제외
+  const vh = window.innerHeight || document.documentElement.clientHeight || 0;
+  const r = tip.getBoundingClientRect();
+  if (r.right > vw - 8) tip.style.left = `${Math.round(Math.max(8, vw - r.width - 8))}px`;
+  if (r.bottom > vh - 8) tip.style.top = `${Math.round(Math.max(8, vh - r.height - 8))}px`;
+}
+
 // 툴팁을 화면 좌표(clientX/Y) 근처에 띄운다. position: fixed 라 카드 배치와 무관하게 화면 안으로 맞춘다.
 function showChartEventTip(cluster, clientX, clientY, pinned) {
   const g = lastChartGeom;
   const tip = chartEventTipEl();
   tip.innerHTML = chartEventTipHtml(cluster);
+  tip.classList.toggle("is-km", Boolean(cluster.moment));
   tip.classList.toggle("is-pinned", Boolean(pinned));
   tip.hidden = false;
+  if (cluster.moment && pinned) fillKeyMomentNews(tip);
   chartEventTipPinned = Boolean(pinned);
-  const vw = window.innerWidth || document.documentElement.clientWidth || 0;
+  const vw = document.documentElement.clientWidth || window.innerWidth || 0; // 스크롤바 폭 제외
   const vh = window.innerHeight || document.documentElement.clientHeight || 0;
   const r = tip.getBoundingClientRect();
   let left = clientX - r.width / 2;
@@ -1878,7 +2078,15 @@ function drawChart(item, options = {}) {
   setupChartEventInteractions();
   const mainChart = !options.svgElement;
   const svg = options.svgElement || byId("priceChart");
-  const allRows = resampleBars(getChartRows(item), chartState.barTf);
+  const intraday = isIntradayTf(chartState.barTf);
+  const intradayState = intraday ? chartIntradayState(item) : null;
+  const allRows = intraday ? intradayState.rows : resampleBars(getChartRows(item), chartState.barTf);
+  // 분봉을 처음 받았을 때 한 번: 받은 구간 전체가 아니라 간격별 기본 봉 수만큼 확대해 보여 준다.
+  if (intraday && chartIntradayFitPending && allRows.length) {
+    chartIntradayFitPending = false;
+    chartState.zoom = Math.min(40, Math.max(1, allRows.length / CHART_INTRADAY[chartState.barTf].view));
+    chartState.offset = 0;
+  }
   const rows = visibleChartRows(allRows);
   const geom = priceChartGeom();
   const width = geom.width;
@@ -1892,7 +2100,10 @@ function drawChart(item, options = {}) {
   if (!rows.length) {
     if (mainChart) { updateChartEventNote([]); hideChartEventTip(true); }
     svg.setAttribute("viewBox", `0 0 ${width} 360`);
-    svg.innerHTML = `<rect x="0" y="0" width="${width}" height="360" rx="8" class="chart-bg"></rect><text x="${width / 2}" y="180" text-anchor="middle" class="chart-axis">차트 데이터 없음</text>`;
+    const emptyMsg = intraday
+      ? (intradayState.status === "loading" ? `${CHART_INTRADAY[chartState.barTf].label}봉 불러오는 중…` : (intradayState.msg || "분봉 데이터 없음"))
+      : "차트 데이터 없음";
+    svg.innerHTML = `<rect x="0" y="0" width="${width}" height="360" rx="8" class="chart-bg"></rect><text x="${width / 2}" y="180" text-anchor="middle" class="chart-axis">${escapeHtml(emptyMsg)}</text>`;
     return;
   }
 
@@ -1916,15 +2127,16 @@ function drawChart(item, options = {}) {
   if (chartState.showCmf) panels.push({ t: "cmf", h: 56 });
   if (chartState.showMfi) panels.push({ t: "mfi", h: 56 });
   if (chartState.showTtmSqueeze) panels.push({ t: "ttm", h: 58 });
-  if (hasRelativePanel(item)) panels.push({ t: "relative", h: 70 });
-  if (compareTickers.length) panels.push({ t: "compare", h: 72 });
+  // 상대강도·비교는 일봉 날짜로 맞춘다 — 분봉에선 그리지 않는다.
+  if (!intraday && hasRelativePanel(item)) panels.push({ t: "relative", h: 70 });
+  if (!intraday && compareTickers.length) panels.push({ t: "compare", h: 72 });
   const panelsH = panels.reduce((sum, p) => sum + p.h + gap, 0);
   const axisH = 26;
   // 이벤트 마커 띠: 켜진 종류의 이벤트가 하나라도 있으면(보이는 구간 밖이어도) 자리를 잡아
   // 팬·줌 중에 차트 높이가 들썩이지 않게 한다.
   const evCore = chartEventCore();
   const evKinds = getChartEventKinds();
-  const evAll = mainChart ? chartEventsForItem(item) : [];
+  const evAll = mainChart && !intraday ? chartEventsForItem(item) : [];
   const evOn = evAll.filter((e) => evKinds[e.kind] !== false);
   const evStripH = evOn.length ? CHART_EVENT_STRIP_H : 0;
   const height = padT + plotH + evStripH + panelsH + axisH;
@@ -2066,7 +2278,7 @@ function drawChart(item, options = {}) {
   // 좌어깨/머리/우어깨를 라벨링, 목선을 점선으로 표시. 전체 일봉으로 감지하고
   // 날짜로 보이는 봉에 매핑한다(확대해도 일관).
   let patSvg = "";
-  if (!chartPanActive && chartState.showPatterns && window.MirProb && window.MirProb.detectConfirmations) {
+  if (!intraday && !chartPanActive && chartState.showPatterns && window.MirProb && window.MirProb.detectConfirmations) {
     const dailyRows = getChartRows(item);
     const labels = window.MirProb.patternLabels || {};
     const firstD = rows[0].d;
@@ -2328,10 +2540,11 @@ function drawChart(item, options = {}) {
   // Shared x-axis: date (or index) ticks + light vertical guides on the price plot.
   const tickCount = Math.min(geom.mobile ? 5 : 6, Math.max(2, rows.length));
   const ticks = [];
+  const sameDay = String(rows[0].d || "").slice(0, 10) === String(rows[rows.length - 1].d || "").slice(0, 10);
   for (let k = 0; k < tickCount; k += 1) {
     const idx = Math.round((k / (tickCount - 1)) * (rows.length - 1));
     const anchor = k === 0 ? "start" : (k === tickCount - 1 ? "end" : "middle");
-    const label = rows[idx] && rows[idx].d ? formatChartDate(rows[idx].d) : `${idx + 1}`;
+    const label = rows[idx] && rows[idx].d ? chartTickLabel(rows[idx].d, sameDay) : `${idx + 1}`;
     ticks.push({ x: xFor(idx), label, anchor });
   }
   const vGuides = ticks.map((t) => `<line x1="${t.x.toFixed(1)}" y1="${padT}" x2="${t.x.toFixed(1)}" y2="${padT + plotH}" class="chart-grid"></line>`).join("");
@@ -2340,7 +2553,7 @@ function drawChart(item, options = {}) {
   const first = rows[0];
   const last = rows[rows.length - 1];
   const chartChange = pctFrom(last.c, first.c);
-  const tfLabel = { D: "일봉", W: "주봉", M: "월봉" }[chartState.barTf] || "일봉";
+  const tfLabel = chartTfLabel(chartState.barTf);
 
   // 드로잉(추세선/피보) 좌표 매핑용 지오메트리 저장. times 는 날짜 앵커 ↔ 화면비율
   // 변환용(보이는 봉들의 타임스탬프, 오름차순).
@@ -2409,7 +2622,7 @@ function drawChart(item, options = {}) {
     <g id="chartEventHover" class="chart-ev-hover"></g>
     ${evSvg}
     ${dateLabels}
-    <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${chartState.range} · ${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length}봉 · 종가 ${chartPriceLabel(last.c)} · ${fmtPct(chartChange)}</text>
+    <text x="${padL}" y="20" class="chart-label">${escapeHtml(stockLabel(item))} ${intraday ? "" : `${chartState.range} · `}${tfLabel}${isHeikin ? " · Heikin" : ""} · ${rows.length}봉 · ${intraday ? "현재" : "종가"} ${chartPriceLabel(last.c)} · ${fmtPct(chartChange)}</text>
     <text x="${padL}" y="36" class="chart-axis">${activeIndicatorLabels(item)}</text>
     ${lastTag}
     ${axisHit}

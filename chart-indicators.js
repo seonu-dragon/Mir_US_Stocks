@@ -434,6 +434,8 @@ function fillInferredDates(rows) {
 
 // How many bars the active range maps to, expressed in the active timeframe's units.
 function rangeBarCount(total) {
+  // 분봉은 기간 버튼이 없다 — 받은 봉 전체가 바탕이고, 처음 보이는 폭은 chart.js 가 확대로 맞춘다.
+  if (typeof isIntradayTf === "function" && isIntradayTf(chartState.barTf)) return total;
   const dailyMap = { "1M": 22, "3M": 66, "6M": 132, "1Y": 252, "5Y": 1260 };
   const div = chartState.barTf === "W" ? 5 : (chartState.barTf === "M" ? 21 : 1);
   const want = Math.round((dailyMap[chartState.range] || total) / div);

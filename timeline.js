@@ -83,6 +83,7 @@ function tlSources(item) {
     movers: mv,
     krReports: kr && w.KR_CONSENSUS && w.KR_CONSENSUS.stocks && w.KR_CONSENSUS.stocks[code] ? w.KR_CONSENSUS.stocks[code].reports : null,
     history: tlHistoryFor(item.ticker),
+    news: Array.isArray(item.news) ? item.news : null,
   };
 }
 
@@ -133,7 +134,7 @@ function tlItemHtml(it, momentByDate, code) {
     const reasons = m && m.reasons ? m.reasons : [];
     detail += reasons.length
       ? ` · 같은 시기(±1거래일) 기록: ${reasons.slice(0, 3).map((r) => r.title).join(", ")}${reasons.length > 3 ? ` 외 ${reasons.length - 3}건` : ""}`
-      : " · 사유 데이터 없음(이 날짜 ±1거래일에 수집된 공시·실적·배당·특징주 기록이 없습니다)";
+      : " · 사유 데이터 없음(이 날짜 ±1거래일에 수집된 공시·실적·배당·특징주·뉴스 기록이 없습니다 — 차트의 ▲▼ 를 누르면 그날 뉴스를 찾아봅니다)";
   }
   const tone = it.cat === "move" && Number.isFinite(it.pct) ? ` ${cls(it.pct)}` : "";
   const link = /^https?:\/\//i.test(it.link || "") ? `<a class="tl-act" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
@@ -177,6 +178,7 @@ function tlCoverageHtml(kr) {
       : '<li><b>Form 4 내부자</b> 아직 받지 않았습니다(약 4MB). <button type="button" class="tl-act" data-tl-load="insider">내부자 거래도 불러오기</button></li>');
     li.push("<li><b>목표가</b> 미국은 날짜가 붙은 목표가 변화 기록이 없어 넣지 않았습니다(목표주가 범위는 좌측 패널).</li>");
   }
+  li.push(`<li><b>뉴스</b> 종목 상세에 실린 최근 기사(${kr ? "네이버" : "야후"}, 종목당 최대 8건)만. 차트의 큰 등락일(▲▼)을 누르면 그날 ±2일 기사를 따로 찾아봅니다(제목만, 원인 확인은 아님).</li>`);
   const mv = w.MOVERS_REASONS;
   if (mv && mv.tradeDate) li.push(`<li><b>특징주 사유</b> ${escapeHtml(mv.tradeDate)} 하루치 자동 요약(틀릴 수 있음).</li>`);
   li.push(window.EVENT_STUDY_INDEX

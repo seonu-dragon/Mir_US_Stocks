@@ -254,6 +254,27 @@ test("일봉 반응: 휴장일 발표는 다음 거래일, 첫 봉은 계산하�
   assert.equal(r2.nextPct, 0);
 });
 
+test("뉴스: 종목 상세 기사가 '뉴스' 항목이 되고 큰 등락일 ±1거래일 사유로 붙는다", () => {
+  const rows = bars("2026-06-01", wiggle(40, { 30: 0.12 }));
+  const moments = T.keyMoments(rows);
+  assert.equal(moments.length, 1);
+  const d = moments[0].date;
+  const news = [
+    { title: "Acme soars after deal", link: "https://news.example/a", publisher: "Reuters", publishedAt: `${d}T14:00:00Z` },
+    { title: "Acme soars after deal", link: "https://news.example/b", publisher: "Dup", publishedAt: d }, // 같은 제목 → 한 번
+    { title: "링크 없는 기사", publisher: "X", publishedAt: d },                                          // 링크 없어도 제목은 남긴다
+    { title: "날짜 없음", link: "https://news.example/c" },                                               // 날짜 없으면 뺀다
+  ];
+  const items = T.collectTimeline({ ticker: "ACME", rows, moments, news });
+  const got = items.filter((e) => e.cat === "news");
+  assert.equal(got.length, 2);
+  assert.equal(got.find((e) => e.title.startsWith("Acme")).detail, "Reuters");
+  assert.equal(T.CAT_LABEL.news, "뉴스");
+  const withR = T.attachReasons(moments, items, rows.map((r) => r.d), 1);
+  assert.ok(withR[0].reasons.some((e) => e.cat === "news"));
+  assert.equal(T.countByCat(items).news, 2);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   for (const f of failures) console.error(" - " + f);

@@ -158,8 +158,9 @@ def _other_clone_pushes(repo, tmp_path, rel, text):
     _git(other, "push", "-q", "origin", "main")
 
 
-def test_unstaged_unrelated_tracked_change_does_not_block_rebase(repo, tmp_path):
+def test_unstaged_unrelated_tracked_change_does_not_block_rebase(repo, tmp_path, monkeypatch):
     """같은 잡의 --push 없는 빌더가 쓴 추적 파일(커밋 안 됨)이 pull --rebase 를 막던 문제(2026-09-29)."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
     (repo / "data" / "y.json").write_text('{"y": 0}\n', encoding="utf-8")
     _git(repo, "add", ".")
     _git(repo, "commit", "-qm", "y")
@@ -176,8 +177,9 @@ def test_unstaged_unrelated_tracked_change_does_not_block_rebase(repo, tmp_path)
     assert (repo / "data" / "z.json").exists()                               # 원격 변경도 받았다
 
 
-def test_unrelated_change_conflicting_with_remote_keeps_local_without_markers(repo, tmp_path):
+def test_unrelated_change_conflicting_with_remote_keeps_local_without_markers(repo, tmp_path, monkeypatch):
     """원격도 같은 파일을 바꿨으면 이 잡이 만든 쪽을 남기고, 충돌 표식·스테이징·스태시를 남기지 않는다."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
     (repo / "data" / "y.json").write_text('{"y": 0}\n', encoding="utf-8")
     _git(repo, "add", ".")
     _git(repo, "commit", "-qm", "y")
@@ -191,3 +193,31 @@ def test_unrelated_change_conflicting_with_remote_keeps_local_without_markers(re
     assert _git(repo, "diff", "--cached", "--name-only").strip() == ""
     assert _git(repo, "stash", "list").strip() == ""
     assert _git(repo, "show", "--name-only", "--format=", "HEAD").split() == ["data/x.json"]
+
+
+def test_local_run_never_stashes_user_changes(repo, tmp_path, monkeypatch):
+    """Actions 밖(로컬)에서는 스태시하지 않는다 — 사용자 미커밋 변경·공유 스태시 스택을 건드리지 않는다(기존 동작)."""
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    (repo / "data" / "y.json").write_text('{"y": 0}
+', encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "y")
+    _git(repo, "push", "-q", "origin", "main")
+    _other_clone_pushes(repo, tmp_path, "data/z.json", '{"z": 1}
+')
+    (repo / "data" / "y.json").write_text('{"y": "user"}
+', encoding="utf-8")
+    (repo / "data" / "x.json").write_text('{"v": 6}
+', encoding="utf-8")
+    assert sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=1, sleep_s=0) is False
+    assert (repo / "data" / "y.json").read_text(encoding="utf-8") == '{"y": "user"}
+'
+    assert _git(repo, "stash", "list").strip() == ""
+
+
+def test_stash_helper_is_noop_outside_actions(monkeypatch):
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    calls = []
+    restore = sec.stash_unrelated_changes(lambda args, **kw: calls.append(args))
+    restore()
+    assert calls == []

@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import random
 import re
 import time
@@ -403,6 +404,10 @@ def stash_unrelated_changes(run):
     (스테이징 안 함) 커밋 대상은 여전히 `paths` 뿐이다. 프로세스가 중간에 죽어도 변경은
     `git stash list` 에 남는다(로컬 작업트리에서 돌 때를 위한 안전망).
     """
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        # 로컬 작업트리에는 사용자의 미커밋 변경이 많고 스태시 스택은 동시 세션들과 공유된다 —
+        # 로컬 --push 가 사용자 변경을 스태시/팝하지 않도록 Actions 러너에서만 동작한다(로컬은 기존 동작).
+        return lambda: None
     dirty = run(["status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True,
                 check=True).stdout.strip()
     if not dirty:

@@ -15,7 +15,7 @@ window.MIR_CHANGELOG = {
         "shareholderSection"
       ],
       "market": "all",
-      "pr": null
+      "pr": 281
     },
     {
       "id": "2026-10-01-fin-mcap-overlay",
@@ -30,7 +30,7 @@ window.MIR_CHANGELOG = {
         "financialsSection"
       ],
       "market": "all",
-      "pr": null
+      "pr": 281
     },
     {
       "id": "2026-10-01-mobile-bottom-nav",

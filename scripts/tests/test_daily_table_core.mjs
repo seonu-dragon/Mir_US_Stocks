@@ -82,10 +82,11 @@ const ser = [
 ];
 const snap = { date: "2026-09-30", close: 269500, volume: 15700594 };
 
-test("기준일 봉을 날짜로 찾아 스냅샷 종가·거래량으로(뒤에 장중 봉이 있어도)", () => {
+test("기준일 봉을 날짜로 찾아 스냅샷 종가로(뒤에 장중 봉이 있어도) — 거래량은 일봉 그대로", () => {
   const out = D.alignSessionBar(ser, snap, kst("2026-10-01T10:25:00"));
   assert.notEqual(out, ser);
-  assert.deepEqual(out[2], [274500, 276000, 267500, 269500, 15700594, "2026-09-30"]);
+  // 거래량은 일봉(KRX+NXT 합산, 네이버 일별 시세) 정의를 유지 — 스냅샷 KRX 거래량으로 한 봉만 덮지 않는다.
+  assert.deepEqual(out[2], [274500, 276000, 267500, 269500, 16477580, "2026-09-30"]);
   assert.deepEqual(out[3], ser[3]);              // 장중 봉은 그대로
   assert.deepEqual(ser[2][3], 268500);           // 원본은 건드리지 않는다
 });
@@ -112,7 +113,56 @@ test("객체 행({o,h,l,c,v,d})도 맞춘다", () => {
   const objs = ser.map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4], d: r[5] }));
   const out = D.alignSessionBar(objs, snap, kst("2026-10-01T10:25:00"));
   assert.equal(out[2].c, 269500);
-  assert.equal(out[2].v, 15700594);
+  assert.equal(out[2].v, 16477580);
+});
+
+test("종가가 이미 같으면(네이버 일봉) 거래량이 달라도 그대로", () => {
+  const naver = ser.map((r) => (r[5] === "2026-09-30" ? [...r.slice(0, 3), 269500, r[4], r[5]] : r));
+  assert.equal(D.alignSessionBar(naver, snap, kst("2026-10-01T10:25:00")), naver);
+});
+
+// ── 국내 상세(네이버) + 실시간(야후) 합치기 ───────────────────────────────
+const naverDetail = [
+  [266000, 276000, 266000, 275000, 15963864, "2026-09-29"],   // 네이버 09-29 275,000
+  [274500, 276000, 267500, 269500, 16477580, "2026-09-30"],
+];
+const yahooLive = [
+  [266000, 276000, 266000, 272500, 15963864, "2026-09-29"],   // 야후 09-29 272,500
+  [274500, 276000, 267500, 268500, 16477580, "2026-09-30"],
+  [271500, 271500, 264500, 268750, 5000000, "2026-10-01"],    // 오늘 장중
+];
+
+test("mergeLiveBars: 상세가 덮는 날짜는 상세 값, 실시간은 더 새 날짜만", () => {
+  const out = D.mergeLiveBars(naverDetail, yahooLive);
+  assert.equal(out.length, 3);
+  assert.equal(out[0][3], 275000);
+  assert.equal(out[1][3], 269500);
+  assert.deepEqual(out[2], yahooLive[2]);
+  assert.equal(naverDetail.length, 2);                       // 원본 불변
+});
+
+test("mergeLiveBars: 덧붙일 게 없으면 상세 배열 그대로, 상세가 없으면 실시간 그대로", () => {
+  assert.equal(D.mergeLiveBars(naverDetail, yahooLive.slice(0, 2)), naverDetail);
+  assert.equal(D.mergeLiveBars([], yahooLive), yahooLive);
+  assert.equal(D.mergeLiveBars(null, yahooLive), yahooLive);
+  assert.equal(D.mergeLiveBars(naverDetail, []), naverDetail);
+  // 날짜 없는(옛) 상세는 비교할 수 없어 실시간을 쓴다
+  assert.equal(D.mergeLiveBars([[1, 1, 1, 1, 1]], yahooLive), yahooLive);
+});
+
+test("mergeLiveBars: 객체 행도, 실시간이 상세보다 오래돼도", () => {
+  const objs = yahooLive.map((r) => ({ o: r[0], h: r[1], l: r[2], c: r[3], v: r[4], d: r[5] }));
+  const out = D.mergeLiveBars(naverDetail, objs);
+  assert.equal(out.length, 3);
+  assert.equal(out[2].d, "2026-10-01");
+  assert.equal(D.mergeLiveBars([...naverDetail, [1, 1, 1, 1, 1, "2026-10-02"]], yahooLive).length, 3);
+});
+
+test("합친 뒤 기준일 맞추기: 09-29 는 네이버 275,000, 09-30 은 스냅샷, 10-01 장중", () => {
+  const merged = D.mergeLiveBars(naverDetail, yahooLive);
+  const out = D.alignSessionBar(merged, snap, kst("2026-10-01T10:25:00"));
+  assert.equal(out, merged);                                   // 네이버 종가 = 스냅샷 종가
+  assert.deepEqual(out.map((r) => r[3]), [275000, 269500, 268750]);
 });
 
 test("확정 전 표식: 장중 / 잠정 / 확정", () => {
@@ -155,7 +205,7 @@ test("기준일 행 전일대비는 머리글과 같은 기준, 장중 행은 �
   assert.equal(out[1].c, 269500);
   assert.equal(out[1].change, -3000);
   assert.equal(D.fmtChange(out[1].change, out[1].pct, true).text, "▼3,000(−1.10%)");
-  assert.equal(out[1].v, 15700594);
+  assert.equal(out[1].v, 16477580);   // 일봉 거래량(KRX+NXT 합산) 유지
   assert.equal(out[2].official, false);
 });
 

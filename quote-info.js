@@ -70,7 +70,10 @@ function renderQuoteInfo(item) {
   const low = w ? w.low : (qiNum(f.week52Low) ?? qiNum(mf.low52));
   const high = w ? w.high : (qiNum(f.week52High) ?? qiNum(mf.high52));
   const pos = w ? w.pos : (low !== null && high !== null && high > low && price !== null ? Math.max(0, Math.min(100, (price - low) / (high - low) * 100)) : null);
-  const volume = qiNum(item.volume) ?? (bar && !bar.barMissing ? bar.volume : null);
+  // 국내 거래량은 일별 시세 표와 같은 정의(기준일 일봉 = 네이버 일별 시세, KRX+NXT 합산)를 먼저 쓴다(2026-10-01).
+  // 스냅샷 목록 거래량(KRX)과 다를 수 있다. 기준일 봉이 없으면 스냅샷 값.
+  const barVolume = bar && !bar.barMissing && qiNum(bar.volume) > 0 ? qiNum(bar.volume) : null;
+  const volume = qiIsKr() ? (barVolume ?? qiNum(item.volume)) : (qiNum(item.volume) ?? barVolume);
   const amount = qiNum(item.amount);
   const prevClose = (bar && bar.prevClose) ?? qiNum(f.prevClose);
   const asOf = core.fmtDate(item.priceDate || (bar && bar.date) || "");
@@ -95,7 +98,8 @@ function renderQuoteInfo(item) {
     qiRow("시가", qiPrice(bar && bar.open)),
     qiRow("고가", qiPrice(bar && bar.high), { cls: bar && prevClose !== null && bar.high !== null ? (bar.high > prevClose ? "pos" : bar.high < prevClose ? "neg" : "") : "" }),
     qiRow("저가", qiPrice(bar && bar.low), { cls: bar && prevClose !== null && bar.low !== null ? (bar.low > prevClose ? "pos" : bar.low < prevClose ? "neg" : "") : "" }),
-    qiRow("거래량", volume === null ? "—" : escapeHtml(core.fmtShares(volume))),
+    qiRow("거래량", volume === null ? "—" : escapeHtml(core.fmtShares(volume)),
+      kr && barVolume !== null ? { title: "KRX·NXT 합산(네이버 일별 시세와 같은 기준)" } : undefined),
     kr
       ? qiRow("거래대금", amount === null ? "—" : escapeHtml(qiMoneyLarge(amount)))
       : qiRow("거래대금", amount === null ? "—" : `≈ ${escapeHtml(qiMoneyLarge(amount))}`, { title: "종가 × 거래량 근사" }),

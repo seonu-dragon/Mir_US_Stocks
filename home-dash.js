@@ -545,7 +545,7 @@ function renderHomeMarketStatus() {
   if (flow) parts.push(flow);
   const asOf = (typeof data !== "undefined" && data && data.updatedAtKst) || "";
   host.innerHTML = parts.length
-    ? `<h2 class="home-status-title">시장 현황</h2>${parts.join("")}${asOf ? `<p class="home-status-foot">종목 수 기준 ${escapeHtml(asOf)}</p>` : ""}`
+    ? `<h2 class="home-status-title">시장 현황</h2>${parts.join("")}${asOf ? `<p class="home-status-foot">종목 수 기준 ${escapeHtml(asOf)}${typeof snapshotPriceBasisText === "function" && snapshotPriceBasisText() ? ` · ${escapeHtml(snapshotPriceBasisText())}` : ""}</p>` : ""}`
     : `<h2 class="home-status-title">시장 현황</h2><p class="muted home-status-note">종목 데이터를 불러오는 중입니다.</p>`;
 }
 

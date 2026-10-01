@@ -354,7 +354,7 @@
     document.getElementById("captureTitle").textContent = krCode && meta.name ? `${meta.name} · ${meta.ticker}` : `${meta.ticker} · ${meta.name}`;
     document.getElementById("captureMeta").textContent =
       `종가 ${formatPrice(last.c, meta.market)} · ${last.d || ""}`;
-    document.getElementById("capturePeriod").textContent = `${meta.period} · 일봉 · 기술 점수 분석`;
+    document.getElementById("capturePeriod").textContent = `${meta.period} · 일봉 · 차트 분석`;
     document.getElementById("captureStatus").textContent = "캡처 준비 완료";
     document.getElementById("chart-capture-area").dataset.ready = "1";
   }

@@ -125,6 +125,8 @@
   //   movers,        // MOVERS_REASONS (tradeDate + up/down)
   //   krReports,     // KR_CONSENSUS.stocks[t].reports
   //   news,          // 종목 상세의 최근 기사 [{title, link, publisher, publishedAt}] (US 야후 · KR 네이버)
+  //   momentNews,    // 큰 등락일 미리 모은 뉴스 { 날짜: [[제목, 출처, 링크, 기사날짜], …] } (build_moment_news.py)
+  //   momentNewsLink,// 저장된 링크 → 실제 URL(구글 뉴스 "g:<ID>" 되돌리기). 없으면 그대로.
   //   history,       // { rows: 이벤트 스터디 종목 샤드 [[k, d0, car1, ...]], labels: {k: 라벨}, scale }
   //   moments,       // keyMoments() 결과 — '가격' 항목으로 넣는다
   // }
@@ -393,6 +395,21 @@
       if (newsSeen.has(key)) continue;
       newsSeen.add(key);
       push({ date: n.publishedAt, cat: "news", src: "news", title: title.slice(0, 160), detail: String(n.publisher || "").slice(0, 60), link });
+    }
+    const mnLink = typeof s.momentNewsLink === "function" ? s.momentNewsLink : (x) => x;
+    const mn = s.momentNews && typeof s.momentNews === "object" ? s.momentNews : {};
+    for (const d of Object.keys(mn)) {
+      for (const r of Array.isArray(mn[d]) ? mn[d] : []) {
+        if (!Array.isArray(r)) continue;
+        const title = String(r[0] || "").trim();
+        const when = isDate(r[3]) ? r[3] : d;
+        if (!title || !isDate(when)) continue;
+        const key = title.toLowerCase().replace(/\s+/g, " ");
+        if (newsSeen.has(key)) continue;
+        newsSeen.add(key);
+        const link = String(mnLink(r[2]) || "");
+        push({ date: when, cat: "news", src: "momentNews", title: title.slice(0, 160), detail: String(r[1] || "").slice(0, 60), link: /^https?:\/\//i.test(link) ? link : "" });
+      }
     }
 
     // 과거 이벤트 기록(이벤트 스터디 종목 샤드, 약 5년) — 지금 창의 공시와 겹치면 뺀다.

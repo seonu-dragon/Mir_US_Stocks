@@ -1802,7 +1802,17 @@ function keyMomentTipHtml(m) {
   const reasons = Array.isArray(m.reasons) ? m.reasons : [];
   // 붙은 기록에 뉴스가 없으면 그날 ±2일 기사를 워커에서 찾아 아래 칸에 채운다(fillKeyMomentNews).
   const hasNews = reasons.some((e) => e.cat === "news");
-  const newsSlot = hasNews ? "" : keyMomentNewsSlotHtml(m.date);
+  let newsSlot = "";
+  if (!hasNews) {
+    // 미리 모은 뉴스(주요 종목·최근 3년)가 이 날짜를 이미 검색했으면 그것을 그대로 보여 주고(±2일이라
+    // ±1거래일 사유에 안 붙은 기사도 여기서 보인다), 아니면(대상 밖·아직 못 채운 날짜) 누를 때 워커에 묻는다.
+    const view = window.MirTimelineView;
+    const it = currentChartItem();
+    const checked = view && typeof view.momentNewsChecked === "function" ? view.momentNewsChecked(it, m.date) : null;
+    newsSlot = checked
+      ? `<div class="chart-km-news">${keyMomentNewsBodyHtml({ status: "ok", news: view.momentNewsRows(it, m.date) })}</div>`
+      : keyMomentNewsSlotHtml(m.date);
+  }
   if (!reasons.length) {
     return `${head}<p class="chart-km-none">공시·실적·배당·특징주 기록 없음 — 이 날짜 ±1거래일에 수집된 기록이 없습니다.</p>${newsSlot}`;
   }

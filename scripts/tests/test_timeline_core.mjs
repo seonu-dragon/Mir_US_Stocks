@@ -275,6 +275,25 @@ test("뉴스: 종목 상세 기사가 '뉴스' 항목이 되고 큰 등락일 ±
   assert.equal(T.countByCat(items).news, 2);
 });
 
+test("미리 모은 큰 등락일 뉴스(momentNews): 링크 되돌리기·상세 뉴스와 같은 제목은 한 번", () => {
+  const rows = bars("2026-06-01", wiggle(40, { 30: 0.12 }));
+  const moments = T.keyMoments(rows);
+  const d = moments[0].date;
+  const items = T.collectTimeline({
+    ticker: "ACME", rows, moments,
+    news: [{ title: "Acme soars after deal", link: "https://n.example/a", publisher: "Reuters", publishedAt: d }],
+    momentNews: { [d]: [["Acme soars after deal", "Dup", "g:AAA", d], ["Acme guidance raised", "WSJ", "g:BBB", d], ["bad"]] },
+    momentNewsLink: (x) => (String(x).startsWith("g:") ? `https://news.google.com/rss/articles/${String(x).slice(2)}?oc=5` : x),
+  });
+  const got = items.filter((e) => e.cat === "news");
+  // 상세 뉴스 1 + 새 기사 1 + 제목만 있는 행 1(기사 날짜가 없으면 그 큰 등락일 날짜로). 같은 제목은 한 번.
+  assert.equal(got.length, 3);
+  assert.equal(got.filter((e) => e.title === "Acme soars after deal").length, 1);
+  const g = got.find((e) => e.src === "momentNews");
+  assert.equal(g.link, "https://news.google.com/rss/articles/BBB?oc=5");
+  assert.equal(g.detail, "WSJ");
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   for (const f of failures) console.error(" - " + f);

@@ -50,6 +50,38 @@ function tlHistoryFor(ticker) {
   return null;
 }
 
+// 큰 등락일 그날 뉴스(build_moment_news.py, 미국 시총 상위 500·국내 상위 200 · 최근 3년).
+// data/moment_news/<us|kr>_NN.json 샤드에서 이 종목 것만 꺼낸다 — { 날짜: [[제목, 출처, 링크, 기사날짜], …] }.
+// 대상 밖 종목은 {} (없음) — 차트는 그때만 워커(?event_news)에 묻는다. 도착하면 피처 뷰 새로고침.
+const TL_MOMENT_NEWS_SHARDS = 64; // build_moment_news.SHARDS 와 같아야 한다
+const _tlMomentNews = {};         // "<시장>|<코드>" → { 날짜: rows } (도착 전엔 키 없음)
+const _tlMomentNewsShards = {};   // url → Promise
+
+function tlMomentNewsFor(ticker) {
+  const m = tlIsKr() ? "kr" : "us";
+  const code = tlCode(ticker);
+  const key = `${m}|${code}`;
+  if (_tlMomentNews[key]) return _tlMomentNews[key];
+  const core = window.MirEventStudyCore;
+  if (!core || typeof core.shardOf !== "function") return null;
+  const url = `data/moment_news/${m}_${String(core.shardOf(code, TL_MOMENT_NEWS_SHARDS)).padStart(2, "0")}.json`;
+  if (!_tlMomentNewsShards[url]) {
+    _tlMomentNewsShards[url] = fetch(url).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  }
+  _tlMomentNewsShards[url].then((pl) => {
+    if (_tlMomentNews[key]) return;
+    _tlMomentNews[key] = (pl && pl.t && pl.t[code]) || {};
+    if (typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh();
+  });
+  return null;
+}
+
+// 구글 뉴스 링크는 "g:<기사ID>" 로 줄여 저장돼 있다(빌더 compact_link).
+function tlMomentNewsLink(link) {
+  const s = String(link || "");
+  return s.startsWith("g:") ? `https://news.google.com/rss/articles/${s.slice(2)}?oc=5` : s;
+}
+
 function tlArr(obj, key) {
   return obj && Array.isArray(obj[key]) ? obj[key] : null;
 }
@@ -84,6 +116,8 @@ function tlSources(item) {
     krReports: kr && w.KR_CONSENSUS && w.KR_CONSENSUS.stocks && w.KR_CONSENSUS.stocks[code] ? w.KR_CONSENSUS.stocks[code].reports : null,
     history: tlHistoryFor(item.ticker),
     news: Array.isArray(item.news) ? item.news : null,
+    momentNews: tlMomentNewsFor(item.ticker),
+    momentNewsLink: tlMomentNewsLink,
   };
 }
 
@@ -110,6 +144,20 @@ function tlDataFor(item) {
 window.MirTimelineView = {
   momentsFor(item) { return tlDataFor(item).moments; },
   versionFor(item) { return tlDataFor(item).version; },
+  // 미리 모은 뉴스가 이 날짜를 검색했는가(0건 포함). true 면 차트가 워커에 다시 묻지 않는다.
+  // null = 아직 샤드 도착 전(모름).
+  momentNewsChecked(item, date) {
+    const mn = item ? tlMomentNewsFor(item.ticker) : null;
+    if (!mn) return null;
+    return Object.prototype.hasOwnProperty.call(mn, date);
+  },
+  momentNewsLink: tlMomentNewsLink,
+  // 그 날짜에 미리 모은 기사(±2일) — [{title, publisher, publishedAt, link}].
+  momentNewsRows(item, date) {
+    const mn = item ? tlMomentNewsFor(item.ticker) : null;
+    const rows = mn && Array.isArray(mn[date]) ? mn[date] : [];
+    return rows.filter(Array.isArray).map((r) => ({ title: String(r[0] || ""), publisher: String(r[1] || ""), link: tlMomentNewsLink(r[2]), publishedAt: String(r[3] || date) }));
+  },
 };
 
 function tlDate(d) { return String(d || "").replace(/-/g, "."); }
@@ -178,7 +226,7 @@ function tlCoverageHtml(kr) {
       : '<li><b>Form 4 내부자</b> 아직 받지 않았습니다(약 4MB). <button type="button" class="tl-act" data-tl-load="insider">내부자 거래도 불러오기</button></li>');
     li.push("<li><b>목표가</b> 미국은 날짜가 붙은 목표가 변화 기록이 없어 넣지 않았습니다(목표주가 범위는 좌측 패널).</li>");
   }
-  li.push(`<li><b>뉴스</b> 종목 상세에 실린 최근 기사(${kr ? "네이버" : "야후"}, 종목당 최대 8건)만. 차트의 큰 등락일(▲▼)을 누르면 그날 ±2일 기사를 따로 찾아봅니다(제목만, 원인 확인은 아님).</li>`);
+  li.push(`<li><b>뉴스</b> 종목 상세에 실린 최근 기사(${kr ? "네이버" : "야후"}, 최대 8건) + ${kr ? "국내 시총 상위 200" : "미국 시총 상위 500"} 종목은 최근 3년 큰 등락일마다 미리 모은 그날 ±2일 기사(구글 뉴스 검색 상위 3건, 매일 조금씩 채움). 그 밖의 종목은 차트의 ▲▼ 를 누르면 따로 찾아봅니다. 제목만 — 원인으로 확인된 것은 아닙니다.</li>`);
   const mv = w.MOVERS_REASONS;
   if (mv && mv.tradeDate) li.push(`<li><b>특징주 사유</b> ${escapeHtml(mv.tradeDate)} 하루치 자동 요약(틀릴 수 있음).</li>`);
   li.push(window.EVENT_STUDY_INDEX

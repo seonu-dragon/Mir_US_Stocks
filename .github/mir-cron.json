@@ -132,6 +132,11 @@
       "input": false
     },
     {
+      "workflow": "moment-news.yml",
+      "cron": "40 3 * * *",
+      "input": false
+    },
+    {
       "workflow": "screener-backtest-panel.yml",
       "cron": "40 20 * * 6",
       "input": false

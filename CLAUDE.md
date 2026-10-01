@@ -233,3 +233,7 @@ exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P
   따로다(DEPLOY.md "Web Push 알림 워커"). 파일 안의 EMBED 블록은 루트 `my-digest-core.js`·`push-alerts-core.js`
   원문이다 — 워커 쪽을 직접 고치지 말고 원본을 고친 뒤 `node scripts/sync_push_worker.mjs`(CI 가 `--check`).
   `web-push.js` 의 `MIR_PUSH_DEFAULTS`(워커 주소·공개키)가 비어 있으면 알림 UI 는 "준비 중"이다.
+- **정시 실행은 별도 워커 `worker/mir-cron.js`**(2026-10-01). GitHub `schedule:` 이 5~8시간 늦어서 예약은 이 워커가
+  매분 workflow_dispatch 로 깨운다. 워크플로우에 `schedule:` 을 쓰지 말고 `on:` 에 `# mir-cron: "<UTC cron>"` 주석을
+  달고 `node scripts/sync_cron_worker.mjs`(→ `.github/mir-cron.json` + EMBED, CI `--check`). 예외는 감시자
+  `pages-queue-watchdog.yml`·`cron-watchdog.yml` 뿐. 슬롯마다 다른 잡을 고르는 워크플로우는 `cron` 입력 + `(github.event.schedule || inputs.cron)`.

@@ -37,7 +37,8 @@ APP_JS = ROOT / "app.js"
 # - "Daily Korea News Top 5": SNS/Naver/ 아래에만 커밋하는데 deploy-pages.yml 이 SNS/ 를
 #   rsync 제외하므로 배포해도 사이트는 그대로다(2026-09-03 트리거에서 제거).
 # - "CI": PR 검사만.
-NOT_DATA_WORKFLOWS = {"Deploy Pages", "Pages queue watchdog", "Daily Korea News Top 5", "CI"}
+# - "Cron watchdog": mir-cron 워커가 놓친 예약을 dispatch 만 한다(커밋 없음, 2026-10-01).
+NOT_DATA_WORKFLOWS = {"Deploy Pages", "Pages queue watchdog", "Daily Korea News Top 5", "CI", "Cron watchdog"}
 
 
 def _read(path: Path) -> str:

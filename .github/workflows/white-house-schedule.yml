@@ -1,10 +1,12 @@
 name: White House schedule refresh
 
 on:
-  schedule:
-    - cron: "0 21 * * *"  # 21:00 UTC = 06:00 KST
-    - cron: "0 7 * * *"   # 07:00 UTC = 16:00 KST
-    - cron: "0 12 * * *"  # 12:00 UTC = 21:00 KST
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다.
+  # GitHub `schedule:` 은 5~8시간 늦게 출발해 2026-10-01 에 옮겼다 — DEPLOY.md "정시 실행 워커".
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # mir-cron: "0 21 * * *"  # 21:00 UTC = 06:00 KST
+  # mir-cron: "0 7 * * *"   # 07:00 UTC = 16:00 KST
+  # mir-cron: "0 12 * * *"  # 12:00 UTC = 21:00 KST
   workflow_dispatch:
 
 permissions:

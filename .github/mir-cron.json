@@ -1,0 +1,180 @@
+{
+  "note": "scripts/sync_cron_worker.mjs 생성물 — 직접 고치지 말고 워크플로우의 `# mir-cron:` 주석을 고친 뒤 다시 생성. 시각은 UTC.",
+  "schedule": [
+    {
+      "workflow": "13f-quarterly-refresh.yml",
+      "cron": "5 6 5 * *",
+      "input": true
+    },
+    {
+      "workflow": "13f-quarterly-refresh.yml",
+      "cron": "10 6 15 2,5,8,11 *",
+      "input": true
+    },
+    {
+      "workflow": "13f-quarterly-refresh.yml",
+      "cron": "20 6 20,28 3,6,9,12 *",
+      "input": true
+    },
+    {
+      "workflow": "activist-stakes.yml",
+      "cron": "28 4 * * *",
+      "input": false
+    },
+    {
+      "workflow": "company-info.yml",
+      "cron": "17 1 * * 3",
+      "input": true
+    },
+    {
+      "workflow": "company-info.yml",
+      "cron": "17 1 * * 6",
+      "input": true
+    },
+    {
+      "workflow": "congress-trades.yml",
+      "cron": "38 4 * * *",
+      "input": false
+    },
+    {
+      "workflow": "crisis-history.yml",
+      "cron": "23 2 1 * *",
+      "input": false
+    },
+    {
+      "workflow": "daily-earnings-calendar.yml",
+      "cron": "30 21 * * *",
+      "input": false
+    },
+    {
+      "workflow": "daily-korea-market-snapshot.yml",
+      "cron": "0 13 * * 1-5",
+      "input": true
+    },
+    {
+      "workflow": "daily-korea-news.yml",
+      "cron": "43 19 * * *",
+      "input": false
+    },
+    {
+      "workflow": "daily-market-snapshot.yml",
+      "cron": "5 21 * * *",
+      "input": false
+    },
+    {
+      "workflow": "event-study.yml",
+      "cron": "23 5 * * 6",
+      "input": false
+    },
+    {
+      "workflow": "industry-indicators.yml",
+      "cron": "10 21 * * *",
+      "input": false
+    },
+    {
+      "workflow": "insider-trades.yml",
+      "cron": "17 4 * * *",
+      "input": false
+    },
+    {
+      "workflow": "ipo-calendar.yml",
+      "cron": "33 4 * * *",
+      "input": false
+    },
+    {
+      "workflow": "korea-close-briefing.yml",
+      "cron": "42 6 * * *",
+      "input": false
+    },
+    {
+      "workflow": "korea-premarket-briefing.yml",
+      "cron": "6 21 * * *",
+      "input": false
+    },
+    {
+      "workflow": "kr-disclosures.yml",
+      "cron": "30 6 * * 1-5",
+      "input": false
+    },
+    {
+      "workflow": "kr-valuation-band.yml",
+      "cron": "17 1 * * 6",
+      "input": false
+    },
+    {
+      "workflow": "macro-odds.yml",
+      "cron": "37 21,5,13 * * *",
+      "input": false
+    },
+    {
+      "workflow": "market-calendar.yml",
+      "cron": "40 21 * * *",
+      "input": true
+    },
+    {
+      "workflow": "market-calendar.yml",
+      "cron": "10 21 2 * *",
+      "input": true
+    },
+    {
+      "workflow": "market-indicators.yml",
+      "cron": "30 22 * * 0-4",
+      "input": false
+    },
+    {
+      "workflow": "market-indicators.yml",
+      "cron": "10 7 * * 1-5",
+      "input": false
+    },
+    {
+      "workflow": "material-events.yml",
+      "cron": "23 4 * * *",
+      "input": false
+    },
+    {
+      "workflow": "screener-backtest-panel.yml",
+      "cron": "40 20 * * 6",
+      "input": false
+    },
+    {
+      "workflow": "short-interest.yml",
+      "cron": "47 5 * * 2,5",
+      "input": false
+    },
+    {
+      "workflow": "us-close-briefing.yml",
+      "cron": "34 21 * * *",
+      "input": false
+    },
+    {
+      "workflow": "us-premarket-briefing.yml",
+      "cron": "7 12 * * *",
+      "input": false
+    },
+    {
+      "workflow": "weekly-earnings-history.yml",
+      "cron": "2 18 * * 6",
+      "input": false
+    },
+    {
+      "workflow": "weekly-edge-stats.yml",
+      "cron": "20 19 * * 6",
+      "input": false
+    },
+    {
+      "workflow": "white-house-schedule.yml",
+      "cron": "0 21 * * *",
+      "input": false
+    },
+    {
+      "workflow": "white-house-schedule.yml",
+      "cron": "0 7 * * *",
+      "input": false
+    },
+    {
+      "workflow": "white-house-schedule.yml",
+      "cron": "0 12 * * *",
+      "input": false
+    }
+  ]
+}

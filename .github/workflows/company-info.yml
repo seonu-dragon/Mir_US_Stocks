@@ -16,9 +16,11 @@ name: Company profile & price targets
 # 네 잡 모두 바뀐 파일만 다시 쓴다(data/company_profile/, data/us_price_targets/, data/logos/, data/korea/themes/).
 
 on:
-  schedule:
-    - cron: "17 1 * * 3"   # 수요일 10:17 KST — profile + targets
-    - cron: "17 1 * * 6"   # 토요일 10:17 KST — targets + themes
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다.
+  # GitHub `schedule:` 은 5~8시간 늦게 출발해 2026-10-01 에 옮겼다 — DEPLOY.md "정시 실행 워커".
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # mir-cron: "17 1 * * 3"   # 수요일 10:17 KST — profile + targets
+  # mir-cron: "17 1 * * 6"   # 토요일 10:17 KST — targets + themes
   workflow_dispatch:
     inputs:
       job:
@@ -30,6 +32,10 @@ on:
       kr_max_calls:
         description: "KR DART 호출 상한(처음 전체 채우기는 5200 — 다른 DART 워크플로우가 적은 날에)"
         default: "2500"
+      cron:
+        description: "예약 슬롯(UTC cron) — Cloudflare 워커 mir-cron 이 넣는다. 손으로 돌릴 땐 비워 둔다"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -40,7 +46,7 @@ concurrency:
 
 jobs:
   profile:
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 3') || (github.event_name == 'workflow_dispatch' && (inputs.job == 'profile' || inputs.job == 'all')) }}
+    if: ${{ (github.event.schedule || inputs.cron) == '17 1 * * 3' || (github.event_name == 'workflow_dispatch' && inputs.cron == '' && (inputs.job == 'profile' || inputs.job == 'all')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
@@ -84,7 +90,7 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
 
   themes:
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 6') || (github.event_name == 'workflow_dispatch' && (inputs.job == 'themes' || inputs.job == 'all')) }}
+    if: ${{ (github.event.schedule || inputs.cron) == '17 1 * * 6' || (github.event_name == 'workflow_dispatch' && inputs.cron == '' && (inputs.job == 'themes' || inputs.job == 'all')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
@@ -129,7 +135,7 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
 
   targets:
-    if: ${{ github.event_name == 'schedule' || inputs.job == 'targets' || inputs.job == 'all' }}
+    if: ${{ github.event_name == 'schedule' || inputs.cron != '' || inputs.job == 'targets' || inputs.job == 'all' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -170,7 +176,7 @@ jobs:
           curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null
 
   logos:
-    if: ${{ (github.event_name == 'schedule' && github.event.schedule == '17 1 * * 3') || (github.event_name == 'workflow_dispatch' && (inputs.job == 'logos' || inputs.job == 'all')) }}
+    if: ${{ (github.event.schedule || inputs.cron) == '17 1 * * 3' || (github.event_name == 'workflow_dispatch' && inputs.cron == '' && (inputs.job == 'logos' || inputs.job == 'all')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

@@ -1,10 +1,12 @@
 name: Daily US market snapshot
 
 on:
-  schedule:
-    # 21:05 UTC — EDT 17:05 / EST 16:05 ET. 둘 다 정규장 마감(16:00 ET) 이후다.
-    # 예전 "5 20"(20:05 UTC)은 겨울(EST)에 15:05 ET, 즉 마감 55분 전이었다.
-    - cron: "5 21 * * *"  # 06:05 KST (UTC+9) — US market close snapshot
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다.
+  # GitHub `schedule:` 은 5~8시간 늦게 출발해 2026-10-01 에 옮겼다 — DEPLOY.md "정시 실행 워커".
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # 21:05 UTC — EDT 17:05 / EST 16:05 ET. 둘 다 정규장 마감(16:00 ET) 이후다.
+  # 예전 "5 20"(20:05 UTC)은 겨울(EST)에 15:05 ET, 즉 마감 55분 전이었다.
+  # mir-cron: "5 21 * * *"  # 06:05 KST (UTC+9) — US market close snapshot
   workflow_dispatch:
 
 permissions:

@@ -61,9 +61,12 @@ PC가 꺼져 있어도 GitHub 서버에서 데이터를 갱신하고 `data/`를 
 | 매월 5일 15:05 · 2·5·8·11월 15일 15:10 | 13F 포트폴리오(크론 2개) | `13f-quarterly-refresh.yml` |
 | 평일 22:00 (+ dispatch) | 국내 시장 스냅샷 백업 경로 | `daily-korea-market-snapshot.yml` |
 | 매시 :17 | 배포 큐 좀비 run 감시(데이터 갱신 아님) | `pages-queue-watchdog.yml` |
+| 매시 :41 | 정시 실행 감시 — mir-cron 이 놓친 예약 대신 실행(데이터 갱신 아님) | `cron-watchdog.yml` |
 
-표의 시각은 **크론 지정 시각(KST)** 이고, GitHub 크론은 밀집 시간대에 수십 분씩 밀린다
-(국내 마감 브리핑 실측 22:00~23:40 KST). 화면에 찍히는 갱신 시각은 실제 실행 시각이다.
+표의 시각은 **예약 시각(KST)** 이다. 2026-10-01 부터 예약은 GitHub `schedule:` 이 아니라
+**Cloudflare 워커 `mir-cron`** 이 그 시각에 workflow_dispatch 로 깨운다(아래 "정시 실행 워커").
+GitHub `schedule:` 은 5~8시간씩 늦게 출발했다(국내 마감 브리핑 15:42 예약 → 실측 21:24~23:25 KST).
+전체 예약표는 `.github/mir-cron.json`(생성물), 원본은 각 워크플로우의 `# mir-cron:` 주석이다.
 
 한 워크플로우가 이름값 하나만 돌리는 게 아니다 — **동반 빌더**가 같은 job 안에서 함께 돈다:
 
@@ -208,6 +211,37 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
 - 시세: 야후 v7 spark(range=1d) — 지연 시세이고 알림에 그렇게 적는다. 국내 코드는 기기가 알려 준 접미사, 없으면 .KS → .KQ 재시도.
   요약은 스냅샷(6MB) 대신 구독자 종목 시세로 만들어서 **업종 대비 비교가 빠진다**(사이트 카드에는 있다).
 - 공시·실적 일정·특징주 사유는 GitHub Pages 의 `data/*.json` 을 읽는다 — 배포가 멈추면 이 알림도 멈춘다.
+
+### 정시 실행 워커 (`worker/mir-cron.js`, 2026-10-01)
+
+GitHub `schedule:` 은 예약 시각을 지키지 않는다(2026-09 실측 5~8시간 지연 — 15:42 예약이 밤 10~11시에 출발).
+반면 workflow_dispatch(= Run workflow 버튼)는 즉시 출발하므로, 예약 시각은 **별도 워커 `mir-cron`** 이 매분 깨어나
+GitHub API 로 dispatch 한다. 워크플로우에는 `schedule:` 대신 `# mir-cron: "<UTC cron>"` 주석만 남긴다.
+**머지해도 반영되지 않는다 — 아래를 사용자가 한 번 해야 한다.** 그 전까지는 `cron-watchdog.yml`(GitHub schedule, 매시)이
+슬롯 후 90분이 지난 예약을 대신 돌린다(늦지만 빠지지는 않는다).
+
+1. **GitHub 토큰**: github.com → Settings → Developer settings → Personal access tokens → **Fine-grained tokens** →
+   Generate new token. Repository access = **Only select repositories → Mir_US_Stocks**, Permissions → Repository →
+   **Actions: Read and write**(Metadata: Read 는 자동). 만료일은 길게(최대 1년) — 만료되면 정시 실행이 멈추고 감시자 알림이 온다.
+2. **워커 만들기**: Cloudflare 대시보드 → Workers & Pages → Create → Worker → 이름 `mir-cron` → 템플릿을 지우고
+   **origin/main 의 `worker/mir-cron.js` 전체**를 붙여넣고 Deploy. (붙여넣기 전: `node scripts/sync_cron_worker.mjs --check && node worker/test_cron.mjs`)
+3. **Secret**: 워커 → Settings → Variables and Secrets → `GITHUB_TOKEN` = 1번 토큰.
+   (선택 변수 `GITHUB_REPO`(기본 seonu-dragon/Mir_US_Stocks), `GITHUB_REF`(기본 main))
+4. **Cron Trigger**: 워커 → Settings → Trigger Events → Cron Triggers → **`* * * * *`**(매분) 하나.
+   무엇을 언제 깨울지는 레포의 `.github/mir-cron.json` 이 정한다 — 워커가 10분마다 다시 읽으므로 예약을 바꿔도 재배포 불필요.
+5. **확인**: `https://mir-cron.<계정>.workers.dev/health?token=1` → `"configured": true`, `"tokenOk": true`,
+   `"scheduleSource": "remote"`, `next` 에 다음 예약 5개. 다음 예약 시각 직후 Actions 탭에 `workflow_dispatch` run 이 생기면 끝.
+
+동작 메모
+- 중복 방지(KV 없음): dispatch 전에 "슬롯 시각 이후 만들어진 run 이 있는지"를 본다. 사람이 먼저 돌렸어도 건너뛴다.
+  실패하면 슬롯 후 1·3·7·15·30·60분에 다시 확인한다. run 조회가 실패하면 dispatch 하지 않는다(중복보다 지연이 낫다).
+- 예약 슬롯마다 다른 잡을 돌리는 워크플로우(13F·company-info·market-calendar·국내 스냅샷 백업)는 workflow_dispatch 에
+  `cron` 입력을 선언했고, 워커가 슬롯 cron 을 넘긴다. 잡 `if:` 는 `(github.event.schedule || inputs.cron)` 으로 슬롯을 판정한다.
+  사람이 Run workflow 로 돌릴 땐 `cron` 을 비워 두면 예전 수동 실행과 같다.
+- 예약을 추가·변경: 워크플로우 `on:` 에 `# mir-cron: "M H d m w"`(UTC) 주석 → `node scripts/sync_cron_worker.mjs` → 커밋.
+  `schedule:` 을 새로 쓰면 CI 가 막는다(워커 dispatch + 늦은 schedule 로 하루 두 번 돈다). 감시자 두 개만 예외.
+- 무료 플랜: 매분 실행 = 하루 1,440회(요청 한도 10만), 실행당 GitHub 호출은 확인할 슬롯이 있을 때만 몇 회.
+- 로그: 워커 → Logs 에 dispatch·실패가 있던 분만 한 줄. 감시자가 대신 돌리면 텔레그램 "[Mir 정시 실행]" 알림.
 
 ### 키움 커뮤니티 글쓰기 (로컬 CLI)
 

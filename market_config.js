@@ -25,7 +25,8 @@
     defaultTicker: "NVDA",
     searchPlaceholder: "한국어·티커·영문 (예: 테슬라, NVIDIA)",
     cardnewsDefault: "us",
-    snapshotCadence: "매일 06:00 KST",
+    // 크론은 06:05 KST 지만 Actions 대기열 탓에 실제 발행은 보통 09:30~10:00 KST 다(2026-10 실측).
+    snapshotCadence: "매일 오전(보통 10시 전후 KST)",
     liveTickerSuffix: "",
     formatTicker: (t) => String(t || "").toUpperCase(),
     yahooTicker: (t) => String(t || "").toUpperCase().replace(/\./g, "-"),

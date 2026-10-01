@@ -360,7 +360,7 @@
           const ev = Array.isArray(r.evidence) ? r.evidence.find((x) => x && x.link) : null;
           push({
             date: mv.tradeDate, cat: "move", src: "movers", title: `특징주 ${signedPct(r.changePct, 2)}`,
-            detail: ok ? `${r.reason} (자동 요약 — 틀릴 수 있음)` : (st === "none" ? "뚜렷한 재료 확인 안 됨" : "사유 요약 실패"),
+            detail: ok ? `${r.reason} (자동 요약 — 틀릴 수 있음)` : (st === "none" ? "뚜렷한 재료 확인 안 됨" : "뚜렷한 사유 확인 안 됨"),
             pct: num(r.changePct), link: ev ? ev.link : "",
           });
         }

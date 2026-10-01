@@ -5,14 +5,15 @@
 //   FEATURE_DATA.movers(marketSpecific) 로 시장별 파일을 받고, 시장 전환 시 전역이 지워진다.
 // 화면: 오늘 탭 › 요약의 "오늘의 특징주" 카드(상승/하락 탭), 종목 분석의 "왜 상승했나?"
 //   상자 맨 위 한 줄. 사유는 공시·뉴스 헤드라인·업종 평균만 근거로 한 자동 요약이다 —
-//   근거가 없으면 "뚜렷한 재료 확인 안 됨", 검증을 통과 못 하면 "요약 실패" 로 보여 준다.
+//   근거가 없으면 "뚜렷한 재료 확인 안 됨", 요약이 검증을 통과 못 하면 "뚜렷한 사유 확인 안 됨"(흐린 글씨)으로
+//   보여 준다 — 예전 "요약 실패"는 종목에 문제가 있는 것처럼 읽혀 중립 문구로 바꿨다(2026-10-01).
 // 클래식 스크립트(전역 공유). 최상위 이름은 movers 접두로 충돌을 피한다.
 
 let moversSide = "up";
 
 const MOVERS_STATUS_TEXT = {
   none: "뚜렷한 재료 확인 안 됨",
-  failed: "요약 실패",
+  failed: "뚜렷한 사유 확인 안 됨",
 };
 
 function moversPayload() {
@@ -39,7 +40,7 @@ function moversTagChips(row) {
 function moversReasonText(row, quietFailed) {
   const status = row.reasonStatus || "failed";
   if (status === "failed") {
-    // 목록 전체가 실패면 위에 한 번만 안내하고 줄마다 '요약 실패'를 반복하지 않는다.
+    // 목록 전체가 실패면 위에 한 번만 안내하고 줄마다 같은 문구를 반복하지 않는다.
     if (quietFailed) return row.sectorNote ? `<span class="movers-sector-note">${escapeHtml(row.sectorNote)}</span>` : "";
     // 요약이 실패해도 업종 동조는 스냅샷 수치로 코드가 쓴 사실이라 그대로 보여 준다.
     const note = row.sectorNote ? `<span class="movers-sector-note">${escapeHtml(row.sectorNote)}</span><span class="movers-sep" aria-hidden="true"> · </span>` : "";
@@ -87,8 +88,8 @@ function renderMoversBoard() {
   const tab = (side, label, n) => `<button type="button" class="movers-tab${moversSide === side ? " is-active" : ""}" data-movers-side="${side}" aria-pressed="${moversSide === side}">${label} <span class="muted">${n}</span></button>`;
   const allFailed = rows.length > 0 && rows.every((row) => (row.reasonStatus || "failed") === "failed");
   const statusBanner = allFailed
-    ? `<p class="movers-banner">이번 목록은 사유 요약을 만들지 못했습니다. 등락률과 업종 동조만 표시합니다.</p>`
-    : (p.status === "llm_failed" ? `<p class="movers-banner">일부 종목은 사유 요약을 만들지 못해 '요약 실패'로 표시됩니다.</p>` : "");
+    ? `<p class="movers-banner">이번 목록은 사유 요약 없이 등락률과 업종 동조만 표시합니다.</p>`
+    : ""; // 일부만 실패한 날은 해당 줄의 흐린 문구로 충분하다(경고 배너를 띄우지 않는다).
   const body = rows.length
     ? `<ol class="movers-list">${rows.map((row) => `
         <li class="movers-row">

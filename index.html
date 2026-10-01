@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=6313c6c53b" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=6313c6c53b"></noscript>
+    <link rel="preload" href="styles.css?v=bdfa689eac" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=bdfa689eac"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=15ad9a8e93"></script>
+    <script src="build_id.js?v=fe8f69e945"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3377,20 +3377,20 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="mcap-core.js?v=d0d2d05df5"></script>
-    <script src="shareholder-core.js?v=5dc474b4b0"></script>
-    <script src="financials.js?v=36dbc9e4a3"></script>
+    <script src="shareholder-core.js?v=29bba37222"></script>
+    <script src="financials.js?v=824e745d50"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
     <script src="segments.js?v=8d54e784d4"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>
     <script src="risk-factors.js?v=112696df89"></script>
     <script src="risk-check-core.js?v=c96b31592a"></script>
     <script src="risk-check.js?v=2afff877ba"></script>
-    <script src="shareholder.js?v=966e8e73be"></script>
+    <script src="shareholder.js?v=c948ca3523"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=5e4945f830"></script>
     <script src="daily-table.js?v=3032d04f0e"></script>
-    <script src="stock-view.js?v=93a2375e84"></script>
+    <script src="stock-view.js?v=9c36ddbb48"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=bcbe452c0b"></script>
@@ -3406,7 +3406,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=98225ef0ab"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=dd9ad08606"></script>
+    <script src="app.js?v=a4d42eb1ec"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
@@ -3418,5 +3418,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- 업데이트 소식 + 화면별 '새 기능' 카드(changelog.js). 데이터 data/changelog.js 는 부팅 뒤 지연 로드 -->
     <script src="changelog-core.js?v=9182db96c9"></script>
     <script src="changelog.js?v=641304e2e0"></script>
+    <!-- 폰 하단 탭 바 · 종목 미니 바 · 접는 종목 검색(mobile-nav.js, 640px 이하만) -->
+    <script src="mobile-nav.js?v=80013749fe"></script>
   </body>
 </html>

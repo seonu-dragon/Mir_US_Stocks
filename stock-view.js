@@ -202,6 +202,8 @@ function sdSyncStickyTop() {
   const wrap = document.querySelector(".tabs-scroll-wrap");
   let top = 0;
   if (wrap && getComputedStyle(wrap).position === "sticky") top = wrap.offsetHeight;
+  // 폰 하단 탭 바를 쓰는 동안(mobile-nav.js)은 상단 탭 줄이 숨고, 대신 맨 위 종목 미니 바 아래에 붙는다.
+  if (typeof window.mirMobileNavTopOffset === "function") top += window.mirMobileNavTopOffset();
   host.style.setProperty("--sd-sticky-top", `${Math.round(top)}px`);
 }
 

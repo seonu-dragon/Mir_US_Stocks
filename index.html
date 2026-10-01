@@ -370,7 +370,7 @@ html[data-market="kr"][data-theme="dark"] {
     <noscript><link rel="stylesheet" href="styles.css?v=87a1f8856d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=e3f441b056"></script>
+    <script src="build_id.js?v=09c0507589"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1374,7 +1374,8 @@ html[data-market="kr"][data-theme="dark"] {
           </aside>
           <div class="sd-main" id="stockMain">
             <nav class="sd-tabs" id="stockViewTabs" role="tablist" aria-label="종목 상세 보기">
-              <button type="button" class="sd-tab is-active" data-view="overview">개요</button>
+              <button type="button" class="sd-tab is-active" data-view="chart">차트</button>
+              <button type="button" class="sd-tab" data-view="overview">개요</button>
               <button type="button" class="sd-tab" data-view="fin">재무</button>
               <button type="button" class="sd-tab" data-view="val">밸류</button>
               <button type="button" class="sd-tab" data-view="events">이벤트·공시</button>
@@ -1382,9 +1383,7 @@ html[data-market="kr"][data-theme="dark"] {
               <button type="button" class="sd-tab" data-view="ai">AI 진단</button>
             </nav>
             <div class="sd-views">
-            <div class="sd-view is-active" id="sdv-overview" data-view="overview" role="tabpanel">
-              <!-- 한눈 요약(stock-summary.js renderStockSummary) — 시총·연간 실적 문장, 5개년 표, 최근 공시. 데이터가 거의 없으면 숨김 -->
-              <section class="ss-card animate-reveal" id="stockSummaryCard" hidden></section>
+            <div class="sd-view is-active" id="sdv-chart" data-view="chart" role="tabpanel">
               <div class="chart-card animate-reveal">
                 <div class="section-title">
                   <h2 id="chartTitle">종목 차트</h2>
@@ -1550,6 +1549,12 @@ html[data-market="kr"][data-theme="dark"] {
                 <p class="chart-ev-note" id="chartEventNote" hidden></p>
               </div>
               <div id="chartProbPanel" class="cprob" hidden></div>
+              <!-- 일별 시세(daily-table.js renderDailyTable) — 차트와 같은 일봉, drawChart 가 부른다. 길어서 차트 탭 맨 아래 -->
+              <section class="dtbl-card animate-reveal" id="dailyPriceTable" hidden></section>
+            </div>
+            <div class="sd-view" id="sdv-overview" data-view="overview" role="tabpanel">
+              <!-- 한눈 요약(stock-summary.js renderStockSummary) — 시총·연간 실적 문장, 5개년 표, 최근 공시. 데이터가 거의 없으면 숨김 -->
+              <section class="ss-card animate-reveal" id="stockSummaryCard" hidden></section>
               <button type="button" class="sd-ai-teaser" id="stockAiTeaser" data-goto-view="ai" hidden>
                 <span class="sd-ai-teaser-label">AI 진단</span>
                 <span class="sd-ai-teaser-text" id="stockAiTeaserText"></span>
@@ -1568,8 +1573,6 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="range52-card sh-card animate-reveal" id="stockRisk" hidden></section>
               <!-- 기업개요(company-info.js renderCompanyInfo) — KR DART · US SEC 해시 샤드 -->
               <section class="range52-card ci-card animate-reveal" id="companyInfo" hidden></section>
-              <!-- 일별 시세(daily-table.js renderDailyTable) — 차트와 같은 일봉, drawChart 가 부른다. 길어서 개요 탭 맨 아래 -->
-              <section class="dtbl-card animate-reveal" id="dailyPriceTable" hidden></section>
             </div>
             <div class="sd-view" id="sdv-fin" data-view="fin" role="tabpanel">
               <!-- 핵심 지표(chart-indicators.js renderFundamentals). ETF 면 구성 종목 표라 수급·보유 탭으로 옮겨진다 -->
@@ -3378,7 +3381,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="factor-grade-core.js?v=5b2d301864"></script>
     <script src="factor-grades.js?v=0146d20671"></script>
     <script src="stock-health-core.js?v=bd57169177"></script>
-    <script src="stock-health.js?v=9e62cb61d0"></script>
+    <script src="stock-health.js?v=28f9036a6e"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
     <script src="formula-screener.js?v=f3b5d97cfb"></script>
     <script src="named-filters-core.js?v=1b7e71d5e3"></script>
@@ -3404,7 +3407,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study-core.js?v=98c430e41a"></script>
     <script src="event-study.js?v=bcfb67eb71"></script>
     <script src="timeline-core.js?v=f526b05e90"></script>
-    <script src="timeline.js?v=931239cd88"></script>
+    <script src="timeline.js?v=97e9480c7d"></script>
     <script src="watchlist.js?v=5223caf8cb"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=5e1529522c"></script>
@@ -3424,7 +3427,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=5e4945f830"></script>
     <script src="daily-table.js?v=3032d04f0e"></script>
-    <script src="stock-view.js?v=9c36ddbb48"></script>
+    <script src="stock-view.js?v=f8f4e5eff8"></script>
     <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=bcbe452c0b"></script>
@@ -3455,6 +3458,6 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="changelog-core.js?v=9182db96c9"></script>
     <script src="changelog.js?v=641304e2e0"></script>
     <!-- 폰 하단 탭 바 · 종목 미니 바 · 접는 종목 검색(mobile-nav.js, 640px 이하만) -->
-    <script src="mobile-nav.js?v=80013749fe"></script>
+    <script src="mobile-nav.js?v=2bed868760"></script>
   </body>
 </html>

@@ -150,10 +150,11 @@ def test_deeplinks(browser, base: str) -> None:
     page.close()
 
 
-# 종목 상세 6탭(stock-view.js) 딥링크: &view= 가 해당 탭을 열고, 옛 공유 링크(&dcf=)는 밸류 탭으로,
-# view 가 없으면 개요. 탭을 누르면 URL 에 &view= 가 남는다.
+# 종목 상세 7탭(stock-view.js) 딥링크: &view= 가 해당 탭을 열고, 옛 공유 링크(&dcf=)는 밸류 탭으로,
+# view 가 없으면 차트. 탭을 누르면 URL 에 &view= 가 남는다.
 STOCK_VIEW_LINKS = {
-    "?tab=search&sub=analysis&ticker=AAPL": "overview",
+    "?tab=search&sub=analysis&ticker=AAPL": "chart",
+    "?tab=search&sub=analysis&ticker=AAPL&view=overview": "overview",
     "?tab=search&sub=analysis&ticker=AAPL&view=fin": "fin",
     "?tab=search&sub=analysis&ticker=AAPL&view=val": "val",
     "?tab=search&sub=analysis&ticker=AAPL&view=events": "events",
@@ -199,10 +200,10 @@ def test_stock_views(browser, base: str) -> None:
       chart: document.getElementById('priceChart')?.getBoundingClientRect().width || 0,
       fin: document.getElementById('sdv-fin')?.getBoundingClientRect().width || 0,
     })""")
-    check("숨은 개요 탭의 차트도 폭 유지", widths["chart"] > 300, str(widths))
-    page.click('#stockViewTabs [data-view="overview"]')
+    check("숨은 차트 탭의 차트도 폭 유지", widths["chart"] > 300, str(widths))
+    page.click('#stockViewTabs [data-view="chart"]')
     page.wait_for_timeout(300)
-    check("개요로 돌아오면 URL 에서 view 제거", "view=" not in page.evaluate("location.search"))
+    check("차트로 돌아오면 URL 에서 view 제거", "view=" not in page.evaluate("location.search"))
     shoot(page, "stock-detail")
     page.close()
 

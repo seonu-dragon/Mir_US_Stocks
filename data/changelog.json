@@ -3,6 +3,16 @@
   "updatedAt": "2026-10-01",
   "entries": [
     {
+      "id": "2026-10-01-stock-chart-tab",
+      "date": "2026-10-01",
+      "title": "종목 상세에 차트 탭을 따로",
+      "desc": "개요 탭에 함께 있던 종목 차트를 맨 앞 '차트' 탭으로 분리했습니다. 종목을 열면 차트 탭이 먼저 보이고, 기술 점수 분석과 일별 시세도 이 탭에 있습니다. 한눈 요약·뉴스·산업 지표·위험·기업개요는 개요 탭에서 봅니다.",
+      "link": "?tab=search&sub=analysis&ticker=NVDA&market=us",
+      "targets": [],
+      "market": "all",
+      "pr": null
+    },
+    {
       "id": "2026-10-01-named-filters",
       "date": "2026-10-01",
       "title": "찾기에 규칙을 공개한 필터 목록",
@@ -76,7 +86,7 @@
       "date": "2026-10-01",
       "title": "종목 상세에 한눈 요약 카드와 오늘·임박 이벤트 줄",
       "desc": "개요 탭 맨 위에 시가총액·최근 연간 매출·영업이익(전년 대비)·목표주가 컨센서스를 문장으로 정리하고, 5개년 실적 표와 최근 공시 5건을 함께 보여 줍니다. 가격 아래에는 실적 발표 7일 이내·배당·보호예수 해제·새 공시 중 가까운 일정을 한 줄로 띄우고, 누르면 이벤트·공시 탭으로 갑니다. 숫자마다 기준일·출처를 달았고 매매 추천이 아닙니다.",
-      "link": "?tab=search&sub=analysis&ticker=005930&market=kr",
+      "link": "?tab=search&sub=analysis&ticker=005930&market=kr&view=overview",
       "targets": [
         "sdv-overview"
       ],

@@ -333,12 +333,6 @@ function hdIntradayPlot(ix, row, price, chg) {
     .map((v) => `<span style="top:${yp(v).toFixed(2)}%">${hdAxisFmt(v, step)}</span>`).join("");
   const xLabels = tTicks.map((t, i) => `<span class="${i % 2 ? "is-odd" : ""}${t === t0 ? " is-first" : ""}${t === t1 ? " is-last" : ""}" style="left:${xp(t).toFixed(2)}%">${tLabel(t)}</span>`).join("");
   const lastCls = prevClose == null ? "" : last.v > prevClose ? "pos" : last.v < prevClose ? "neg" : "";
-  const zoneNote = mkt === "us"
-    ? (() => {
-      const diff = (core.zoneParts(now, "Asia/Seoul").offsetMin - core.zoneParts(now, "America/New_York").offsetMin) / 60;
-      return `시각은 미 동부시간(ET) · 한국시간 = ET + ${diff}시간`;
-    })()
-    : mkt === "crypto" ? "시각은 한국시간 · 24시간 거래" : "시각은 한국시간";
   const plot = `<div class="home-chart-plot" data-hd-uid="${uid}">
       <div class="home-chart-area">
         <svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${escapeHtml(ix.name)} 하루 추이, ${tLabel(pts[0].t)}부터 ${tLabel(last.t)}까지">
@@ -354,14 +348,9 @@ function hdIntradayPlot(ix, row, price, chg) {
       <div class="home-chart-yaxis" aria-hidden="true">${yLabels}<b class="home-chart-last ${lastCls}" style="top:${lastY.toFixed(2)}%">${hdFmtLevel(last.v)}</b></div>
       <div class="home-chart-xaxis" aria-hidden="true">${xLabels}</div>
     </div>`;
-  const bits = placed.kind === "live" ? [`${tLabel(last.t)} 기준`, "5분 간격"] : ["5분 간격"];
-  if (prevClose != null) bits.push("가로 점선은 전일 종가");
-  bits.push(zoneNote);
-  const src = mkt === "kr" ? "출처 Yahoo Finance · 가격·등락률은 네이버" : "출처 Yahoo Finance";
-  const upd = hdLive.at ? ` · 갱신 ${hdKstClock(hdLive.at)} KST` : "";
   return {
     plot,
-    caption: `${bits.join(" · ")} · ${src}${upd}`,
+    caption: hdLive.at ? `갱신 ${hdKstClock(hdLive.at)} KST` : "",
     badge: hdStatusBadge(placed.kind, session),
     interact: { pts, t0, t1, prevClose, tLabel, mkt, xp, yp, kind: placed.kind },
   };
@@ -418,8 +407,8 @@ function renderHomeIndexChart() {
   const intraday = hdIntradayPlot(ix, row, price, chg);
   if (intraday) {
     host.innerHTML = `${hdChartHead(ix, price, chg, intraday.badge, analysis)}
-      ${intraday.plot}
-      <p class="home-chart-cap">${escapeHtml(intraday.caption)}</p>`;
+      ${intraday.plot}${intraday.caption ? `
+      <p class="home-chart-cap">${escapeHtml(intraday.caption)}</p>` : ""}`;
     hdBindCrosshair(host, intraday.interact);
   } else {
     // 2) 라이브를 못 받은 국내 스냅샷: 추종 ETF 종가 근사(가격 눈금 없음).
@@ -545,7 +534,7 @@ function renderHomeMarketStatus() {
   if (flow) parts.push(flow);
   const asOf = (typeof data !== "undefined" && data && data.updatedAtKst) || "";
   host.innerHTML = parts.length
-    ? `<h2 class="home-status-title">시장 현황</h2>${parts.join("")}${asOf ? `<p class="home-status-foot">종목 수 기준 ${escapeHtml(asOf)}${typeof snapshotPriceBasisText === "function" && snapshotPriceBasisText() ? ` · ${escapeHtml(snapshotPriceBasisText())}` : ""}</p>` : ""}`
+    ? `<h2 class="home-status-title">시장 현황</h2>${parts.join("")}${asOf ? `<p class="home-status-foot">${escapeHtml(asOf)}${typeof snapshotPriceBasisText === "function" && snapshotPriceBasisText() ? ` · ${escapeHtml(snapshotPriceBasisText())}` : ""}</p>` : ""}`
     : `<h2 class="home-status-title">시장 현황</h2><p class="muted home-status-note">종목 데이터를 불러오는 중입니다.</p>`;
 }
 
@@ -640,8 +629,7 @@ function renderHomeBriefing() {
     <details class="home-brief-more">
       <summary>전체 펼치기</summary>
       <div class="briefing-content home-brief-full" data-key="${escapeHtml(best.key)}"></div>
-    </details>
-    <p class="home-brief-note">AI 가 수집 데이터로 쓴 요약이라 틀릴 수 있습니다. 투자 권유가 아닙니다.</p>`;
+    </details>`;
   const more = host.querySelector(".home-brief-more");
   more?.addEventListener("toggle", () => {
     const full = more.querySelector(".home-brief-full");

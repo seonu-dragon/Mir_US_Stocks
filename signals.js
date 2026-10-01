@@ -259,7 +259,7 @@ function renderYieldCurve() {
   const last10 = (yc.curve.find((c) => c.m === "10Y") || {}).y;
   host.innerHTML = `
     <div class="section-title"><h2>미국 국채 수익률 곡선</h2>
-      <p>FRED 기준 ${escapeHtml(yc.asOf || "")} · 지수·종목만으로 안 보이는 '돈의 값(금리)'과 장단기 스프레드입니다. 예측이 아니라 현재 상태 요약입니다.</p></div>
+      <p>기준 ${escapeHtml(yc.asOf || "")}</p></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
         <div style="flex:1;min-width:240px">${yieldCurveSvg(yc.curve)}</div>
@@ -270,7 +270,6 @@ function renderYieldCurve() {
         </div>
       </div>
       ${spark ? `<div style="margin-top:12px"><div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">10Y − 2Y 스프레드 · 최근 1년</div>${spark}</div>` : ""}
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">장단기 금리 역전(스프레드 음수)은 과거 경기침체를 앞서 나타난 적이 많지만 시점 차이가 커 매매 신호로 쓰기 어렵습니다. 출처: ${escapeHtml(yc.source || "FRED")}.</p>
     </div>`;
 }
 
@@ -314,12 +313,11 @@ function renderTreasuryAuctions() {
   const coming = Array.isArray(ta.upcoming) && ta.upcoming.length
     ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0">다가오는 경매: ${ta.upcoming.map((u) => `${escapeHtml(u.date || "")} ${escapeHtml(u.term || "")}${Number.isFinite(u.offeringB) ? ` $${u.offeringB}B` : ""}`).join(" · ")}</p>` : "";
   host.innerHTML = `
-    <div class="section-title"><h2>미 국채 경매 수요</h2>
-      <p>응찰배수(bid-to-cover)가 같은 만기 직전 6회 평균 대비 얼마나 강했는지입니다. 입찰 부진은 장기금리 급등의 단골 트리거라 위 수익률 곡선과 함께 봅니다.</p></div>
+    <div class="section-title"><h2>미 국채 경매 수요</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>경매일</th><th>만기</th><th class="ins-num">응찰배수</th><th class="ins-num">vs 직전6회</th><th class="ins-num">낙찰금리</th><th class="ins-num">규모</th><th class="ins-num">간접낙찰</th></tr></thead><tbody>${rows}</tbody></table></div>
       ${coming}
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">간접낙찰 비중은 해외 중앙은행·실수요 계열 수요의 프록시입니다. 출처: ${escapeHtml(ta.source || "US Treasury FiscalData")} · 기준 ${escapeHtml(ta.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">기준 ${escapeHtml(ta.asOf || "")}</p>
     </div>`;
 }
 
@@ -360,11 +358,10 @@ function renderCotPositioning() {
     </article>`;
   }).join("");
   host.innerHTML = `
-    <div class="section-title"><h2>선물 투기 포지셔닝 (CFTC COT)</h2>
-      <p>헤지펀드·운용사의 순포지션(계약수)과 그 값이 최근 3년 범위에서 어디쯤인지입니다. 0%·100% 근처는 쏠림이 붐빈다는 뜻이지 방향 신호가 아닙니다.</p></div>
+    <div class="section-title"><h2>선물 투기 포지셔닝 (CFTC COT)</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px">${cards}</div>
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">지수·금리·통화는 Leveraged Funds(헤지펀드), 원자재는 Managed Money 기준. 매주 금요일 발표(화요일 기준)라 최대 열흘 늦을 수 있습니다. 출처: ${escapeHtml(cot.source || "CFTC")} · 기준 ${escapeHtml(cot.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">기준 ${escapeHtml(cot.asOf || "")}</p>
     </div>`;
 }
 
@@ -391,11 +388,10 @@ function renderWikiAttention() {
     </tr>`;
   }).join("");
   host.innerHTML = `
-    <div class="section-title"><h2>리테일 관심도 (위키 조회수)</h2>
-      <p>${isKrMarket() ? "한국어" : "영어"} 위키피디아 회사 문서의 최근 7일 평균 조회수를 직전 30일 평균과 비교했습니다. 관심이 몰리는 곳의 프록시일 뿐 방향 신호가 아닙니다.</p></div>
+    <div class="section-title"><h2>리테일 관심도 (위키 조회수)</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">배율</th><th class="ins-num">7일 평균</th><th class="ins-num">직전 30일</th><th>30일 추이</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">회사와 위키 문서가 확실히 대응되는 종목만 싣습니다. 출처: ${escapeHtml(wa.source || "Wikimedia")} · ${escapeHtml(wa.updatedAtKst || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">갱신 ${escapeHtml(wa.updatedAtKst || "")}</p>
     </div>`;
   host.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
 }
@@ -426,11 +422,10 @@ function renderEcosMacro() {
     </article>`;
   }).join("");
   host.innerHTML = `
-    <div class="section-title"><h2>한국 매크로 (한국은행 ECOS)</h2>
-      <p>기준금리·국고채 커브·신용스프레드·환율·물가·뉴스심리를 한 줄로 요약했습니다. 예측이 아니라 현재 상태의 요약입니다.</p></div>
+    <div class="section-title"><h2>한국 매크로 (한국은행 ECOS)</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px">${tiles}</div>
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">뉴스심리지수는 한국은행 실험적 통계(100=중립)입니다. 출처: ${escapeHtml(m.source || "한국은행 ECOS")} · 기준 ${escapeHtml(m.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">기준 ${escapeHtml(m.asOf || "")}</p>
     </div>`;
 }
 
@@ -457,11 +452,10 @@ function renderTradeExports() {
     </article>`;
   }).join("");
   host.innerHTML = `
-    <div class="section-title"><h2>수출 모멘텀 (관세청)</h2>
-      <p>주력 품목의 월간 수출액과 전년동월비입니다. 반도체·자동차 같은 수출주에게 실적 발표보다 앞서는 컨텍스트이며, 매월 15일경 전월 확정치가 반영됩니다.</p></div>
+    <div class="section-title"><h2>수출 모멘텀 (관세청)</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">${tiles}</div>
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">금액은 미달러 기준(억달러), 24개월 추이. 출처: ${escapeHtml(t.source || "관세청")} · 기준월 ${escapeHtml(t.asOf || "")}.</p>
+      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">단위 억달러 · 기준월 ${escapeHtml(t.asOf || "")}</p>
     </div>`;
 }
 
@@ -731,8 +725,7 @@ function renderFearGreed() {
     </div>`;
   }).join("");
   host.innerHTML = `
-    <div class="section-title"><h2>시장 심리 종합지수</h2>
-      <p>${isKrMarket() ? "국내 시장 지표(시장 폭·모멘텀·주가 강도)를" : "시장 폭·모멘텀·주가 강도·옵션 풋콜·신용스프레드를"} 0~100으로 종합했습니다. 예측이 아니라 현재 공포/탐욕 상태의 요약입니다.</p></div>
+    <div class="section-title"><h2>시장 심리 종합지수</h2></div>
     <div style="background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:8px">
       <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px">
         <strong style="font-size:34px;font-variant-numeric:tabular-nums;color:${lab.c}">${value}</strong>
@@ -743,7 +736,6 @@ function renderFearGreed() {
       ${fgHistBlock()}
       <div style="margin-top:14px">${subs}</div>
       ${externalGaugesHtml()}
-      <p style="font-size:var(--fs-cap);color:var(--muted);margin:12px 0 0;line-height:1.65">각 요소를 0(공포)~100(탐욕)으로 정규화해 단순 평균했습니다. 극단값에서 되돌림이 잦다는 해석이 있으나 시점 신호로 쓰긴 어렵습니다.</p>
     </div>`;
 }
 
@@ -771,13 +763,11 @@ function renderMacroIndicators() {
   const histTiles = ["usdKrw", "t10y2y", "hySpread", "cpiYoY", "unemployment"]
     .map(historyTile).filter(Boolean).join("");
   const histBlock = histTiles
-    ? `<div class="section-title" style="margin-top:6px"><h2>매크로 추이</h2>
-        <p>하루 한 번 기록한 값의 추이입니다.</p></div>
+    ? `<div class="section-title" style="margin-top:6px"><h2>매크로 추이</h2></div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:8px">${histTiles}</div>`
     : "";
   host.innerHTML = `
-    <div class="section-title"><h2>매크로 지표</h2>
-      <p>FRED 기준 핵심 거시지표입니다. 화살표 색은 방향의 좋고 나쁨(인플레·실업·신용스프레드는 상승이 부정적). 예측이 아니라 현재값·직전 대비입니다.</p></div>
+    <div class="section-title"><h2>매크로 지표</h2></div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:8px">${m.indicators.map(tile).join("")}</div>
     ${histBlock}`;
   // 히스토리 타일 클릭/키보드 → 상세 팝업(위임 대신 직접 배선; 타일 수가 적다).

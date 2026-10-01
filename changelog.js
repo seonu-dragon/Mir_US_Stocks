@@ -142,7 +142,6 @@
       <div class="mir-cl-head">
         <div>
           <h2 id="changelogTitle">업데이트 소식</h2>
-          <p>새로 들어온 기능과 고친 점을 최신순으로 모았습니다.</p>
         </div>
         <button type="button" class="mir-cl-close" data-cl-close aria-label="닫기" title="닫기">✕</button>
       </div>

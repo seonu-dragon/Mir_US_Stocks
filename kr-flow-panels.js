@@ -49,8 +49,7 @@ function renderKrFlowMarket() {
   host.innerHTML = `
     ${krFlowInvestorCard(payload)}
     ${krFlowFundsCard(payload)}
-    ${krFlowTopCard(payload)}
-    <p class="ia-footnote kf-foot">수급·자금 흐름은 지난 거래를 보여 줄 뿐 이후 주가 방향을 알려 주지 않습니다. 투자 권유가 아닙니다.</p>`;
+    ${krFlowTopCard(payload)}`;
   if (!host.dataset.kfBound) {
     host.dataset.kfBound = "1";
     host.addEventListener("click", krFlowOnClick);
@@ -125,7 +124,7 @@ function krFlowInvestorCard(payload) {
         </figcaption>
       </figure>
       <p class="kf-lastday">${escapeHtml(krFlowDateShort(last.d))} ${lastDay}</p>
-      <p class="kf-source">출처: ${escapeHtml((payload.source || {}).investors || "네이버 금융")} · ${escapeHtml(inv.asOf || "")} 기준</p>
+      <p class="kf-source">${escapeHtml(inv.asOf || "")} 기준</p>
     </section>`;
 }
 
@@ -160,16 +159,10 @@ function krFlowFundsCard(payload) {
         ${krFlowSpark(recent, key)}
       </div>`;
   }).join("");
-  const chk = payload.check;
-  const chkLine = chk && chk.ok
-    ? `<p class="kf-source">한국은행 ECOS 월말치와 대조: ${escapeHtml(chk.month)} 예탁금 ${chk.depFreesis}조${chk.creditFreesis != null ? ` · 신용융자 ${chk.creditFreesis}조` : ""} 일치</p>`
-    : "";
   return `
     <section class="kf-card" aria-label="증시자금">
       <header class="kf-head"><h3>증시자금</h3><span class="kf-sub">최근 60거래일 추이 · ${escapeHtml(funds.asOf || "")} 기준</span></header>
       <div class="kf-funds">${cards}</div>
-      <p class="kf-source">출처: ${escapeHtml((payload.source || {}).funds || "금융투자협회")} · 영업일 1~2일 뒤 공표</p>
-      ${chkLine}
     </section>`;
 }
 
@@ -207,7 +200,7 @@ function krFlowTopCard(payload) {
         ${krFlowSeg("side", [["Buy", "순매수"], ["Sell", "순매도"]], side)}
         ${krFlowSeg("win", [["d1", "1일"], ["d5", "5일"]], KRFLOW_VIEW.topWin)}
       </header>
-      <p class="kf-sub">${escapeHtml(range)} · 금액은 종목별 순매수 수량 × 그날 종가로 계산한 추정치(억 원), 등락률은 마지막 날 기준 · ETF 제외</p>
+      <p class="kf-sub">${escapeHtml(range)}</p>
       <div class="kf-top">
         ${krFlowTopTable(sect[`frn${side}`], `외국인 ${word}`)}
         ${krFlowTopTable(sect[`org${side}`], `기관 ${word}`)}
@@ -264,7 +257,7 @@ function krFlowDailyTable(rows) {
         <tbody>${body}</tbody>
       </table>
     </div>
-    <p class="krflow-note">순매수 수량(주) · 최근 ${rows.length}거래일 · 출처 네이버 금융</p>`;
+    <p class="krflow-note">순매수 수량(주) · 최근 ${rows.length}거래일</p>`;
 }
 
 function krFlowFillDaily(details) {

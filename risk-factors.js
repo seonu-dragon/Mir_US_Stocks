@@ -62,7 +62,7 @@ function rfListItem(x, kind) {
   return `<li class="rf-item${head}"><p lang="en">${escapeHtml(x.t)}</p>${meta}${ins}</li>`;
 }
 
-function rfList(title, items, total, kind, hint) {
+function rfList(title, items, total, kind) {
   const core = window.MirRiskFactorsCore;
   const v = core.listView(items, RF_LIST_LIMIT);
   if (!v.total) return "";
@@ -71,7 +71,6 @@ function rfList(title, items, total, kind, hint) {
     ? `<details class="rf-more"><summary>${v.rest.length}개 더 보기</summary><ul class="rf-list">${v.rest.map((x) => rfListItem(x, kind)).join("")}</ul></details>` : "";
   return `<section class="rf-group rf-${kind}">
     <h4>${escapeHtml(title)} <span class="rf-count">${Number(total).toLocaleString()}</span>${capped}</h4>
-    ${hint ? `<p class="rf-hint">${escapeHtml(hint)}</p>` : ""}
     <ul class="rf-list">${v.shown.map((x) => rfListItem(x, kind)).join("")}</ul>${more}
   </section>`;
 }
@@ -80,12 +79,10 @@ function rfSectionHtml(file, row, index) {
   const core = window.MirRiskFactorsCore;
   const c = file.counts || {};
   const form = file.cur.form || "10-K";
-  const item = form === "20-F" ? "Item 3.D" : "Item 1A";
   const band = core.changeBand(row && row.pct);
   const wc = core.wordsChange(file.cur.words, file.prev.words);
   const n = index && index.count;
   const meta = [
-    `출처 SEC ${escapeHtml(form)} ${item} Risk Factors 원문`,
     `올해 제출 ${escapeHtml(file.cur.filed || "—")} · 전년 ${escapeHtml(file.prev.filed || "—")}`,
   ];
   if (file.updatedAtKst) meta.push(`갱신 ${escapeHtml(String(file.updatedAtKst).slice(0, 10))}`);
@@ -120,19 +117,17 @@ function rfSectionHtml(file, row, index) {
     <p class="rf-headline">${escapeHtml(core.headline(file))}</p>
     ${tiles}
     <p class="mf-note">${escapeHtml(core.pctSentence(row && row.pct, n))}</p>
-    ${rfList("새로 생긴 위험 문단", file.added, c.added, "added", "전년 보고서에 닮은 문단이 없는 올해 문단의 첫 문장(영어 원문). 제목으로 보이는 문단을 앞에 둡니다.")}
-    ${rfList("빠진 문단", file.removed, c.removed, "removed", "올해 보고서에 닮은 문단이 없는 전년 문단의 첫 문장.")}
-    ${rfList("크게 바뀐 문단", file.changed, c.big, "changed", "전년 문단과 50~75%만 일치하는 문단 — 덜 일치하는 순.")}
+    ${rfList("새로 생긴 위험 문단", file.added, c.added, "added")}
+    ${rfList("빠진 문단", file.removed, c.removed, "removed")}
+    ${rfList("크게 바뀐 문단", file.changed, c.big, "changed")}
     <p class="rf-links">원문: ${rfDocLink(file.cur, `올해 ${form} (${file.cur.filed || ""})`)} · ${rfDocLink(file.prev, `전년 ${form} (${file.prev.filed || ""})`)}</p>
-    ${note ? `<p class="mf-note">${escapeHtml(note)}</p>` : ""}
-    <p class="mf-foot">변화 크기는 정보일 뿐 예측이 아닙니다(매수·매도 추천 아님). <a href="${core.PAPER_URL}" target="_blank" rel="noopener noreferrer">${escapeHtml(core.PAPER_LABEL)}</a>는 연차보고서 문장을 전년보다 많이 바꾼 회사의 이후 수익률이 낮았다고 보고했지만, 이 사이트가 그 결과를 검증한 것은 아닙니다. 숫자·연도만 바뀐 문장은 같은 문장으로 봅니다. 문단 대응은 단어 순서 일치 비율(≥90% 그대로 · 50~90% 수정 · 50% 미만 새 문단)로 기계적으로 판정합니다.</p>`;
+    ${note ? `<p class="mf-note">${escapeHtml(note)}</p>` : ""}`;
 }
 
 function rfFailureHtml(fail) {
   const link = fail.url ? ` · <a href="${escapeHtml(fail.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(fail.form || "10-K")} 원문 (${escapeHtml(fail.filed || "")})</a>` : "";
   return `
-    <div class="mf-head"><div><h3>연차보고서 위험요인 변화</h3>
-    <p class="mf-meta">출처 SEC EDGAR 연차보고서 원문</p></div></div>
+    <div class="mf-head"><div><h3>연차보고서 위험요인 변화</h3></div></div>
     <p class="mf-note">전년 대비 비교를 하지 못했습니다 — ${escapeHtml(fail.text)}${link}</p>`;
 }
 

@@ -106,14 +106,11 @@ function renderCrossMarketCard(item) {
   const { curated, auto } = C.linksFor(p, view, ticker);
   if (!curated.length && !auto.length) { host.hidden = true; host.innerHTML = ""; return; }
   const title = view === "kr" ? "해외 연관 종목" : "국내 연관 종목";
-  const win = p.window || {};
   const head = `<div class="xm-colhead" aria-hidden="true"><span>종목</span><span>관계</span><span>최근 등락</span><span>상관</span></div>`;
   host.hidden = false;
   host.innerHTML = `<h3>${title}</h3>
-    <p class="xm-sub muted">관계는 사람이 정한 것이고, 상관은 최근 1년 일간 수익률(미국 D일 → 국내 다음 거래일)에서 미국 시장 전체(SPY) 움직임을 뺀 값입니다. 누르면 ${view === "kr" ? "미국" : "국내"} 모드로 바뀌어 그 종목이 열립니다.</p>
     ${curated.length ? `${head}<div class="xm-list">${curated.map(xmDetailRow).join("")}</div>` : ""}
-    ${auto.length ? `<p class="xm-auto-head">데이터로 찾은 후보 <span class="muted">· 상관만 높은 쌍, 사람이 확인한 관계 아님</span></p><div class="xm-list">${auto.map(xmDetailRow).join("")}</div>` : ""}
-    <p class="muted xm-foot">상관 기준: 뚜렷 ${Number((p.thresholds || {}).strong || 0.25).toFixed(2)} 이상 · 보통 약 0.13 이상 · 그 미만은 '관계 약함'. 기간 ${escapeHtml(win.from || "")} ~ ${escapeHtml(win.to || "")}, 등락은 각 시장 마지막 거래일. 과거 통계일 뿐 앞으로의 주가를 예측하지 않으며 매매 신호가 아닙니다. 생성 ${escapeHtml(p.updatedAtKst || "")}</p>`;
+    ${auto.length ? `<p class="xm-auto-head">데이터로 찾은 후보 <span class="muted">· 상관만 높은 쌍, 사람이 확인한 관계 아님</span></p><div class="xm-list">${auto.map(xmDetailRow).join("")}</div>` : ""}`;
   xmBindGo(host);
 }
 
@@ -139,7 +136,7 @@ function renderCrossMarketHome() {
   const title = view === "kr" ? "간밤 미국 연관주" : "국내 장 연관주";
   const sub = view === "kr"
     ? `미국 ${escapeHtml(asOf)} 장 마감 기준 · ±${minAbs}% 이상 움직인 미국 종목과 연결된 국내 종목`
-    : `한국 ${escapeHtml(asOf)} 장 마감 기준(미국 장보다 먼저 닫힘) · ±${minAbs}% 이상 움직인 국내 종목과 연결된 미국 종목`;
+    : `한국 ${escapeHtml(asOf)} 장 마감 기준 · ±${minAbs}% 이상 움직인 국내 종목과 연결된 미국 종목`;
   const corrWord = view === "kr" ? "간밤→다음날 상관" : "같은 날 상관";
   const body = board.rows.length
     ? `<ol class="xm-board">${board.rows.map((m) => `
@@ -163,7 +160,6 @@ function renderCrossMarketHome() {
         <p>${sub}</p>
       </div>
     </div>
-    ${body}
-    <p class="muted xm-foot">관계는 사람이 정한 것('데이터 후보'는 상관만 높은 쌍)이고, 상관은 최근 1년 일간 수익률에서 미국 시장 전체 움직임을 뺀 과거 통계입니다. 오늘 주가를 예측하지 않으며 매매 신호가 아닙니다. 누르면 그 종목이 열립니다.</p>`;
+    ${body}`;
   xmBindGo(host);
 }

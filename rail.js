@@ -98,7 +98,7 @@
   function asOfLine() {
     try {
       const d = typeof data !== "undefined" ? data : null;
-      if (d && d.updatedAtKst) return `<p class="mir-rail-foot">스냅샷 기준 ${esc(d.updatedAtKst)} · 투자 권유 아님</p>`;
+      if (d && d.updatedAtKst) return `<p class="mir-rail-foot">스냅샷 기준 ${esc(d.updatedAtKst)}</p>`;
     } catch (e) { /* ignore */ }
     return "";
   }

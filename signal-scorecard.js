@@ -184,8 +184,6 @@ function renderSignalScorecard() {
   const hzBtns = [5, 20, 60].map((x) => `<button type="button" class="sig-score-hz${x === h ? " is-active" : ""}" data-sc-horizon="${x}" aria-pressed="${x === h}">${SIG_SCORE_HORIZON_LABEL[x]}</button>`).join("");
   host.innerHTML = `
     <div class="section-title sig-score-head">
-      <p>Mir 가 화면에 띄운 신호를 <b>발행 시점에 동결</b>해 매일 적립하고, 발행 뒤 실제 수익률을 ${escapeHtml(bench.label || "벤치마크")} 와 비교합니다.
-        표본이 ${Number(p.minSample || 30)}개 미만이면 '판단 보류'입니다. 결과가 나빠도 그대로 보여 줍니다 — 매매 신호가 아닌 정보입니다.</p>
       <div class="sig-score-hzs" role="group" aria-label="보유 기간">${hzBtns}</div>
     </div>
     <div class="sig-score-grid">${kinds.map((k) => sigScoreCard(k, h)).join("")}</div>
@@ -197,7 +195,7 @@ function renderSignalScorecard() {
       <p><b>소급 복원</b> ${escapeHtml(method.backfill || "")}</p>
       <p><b>원장</b> ${Number(L.rows || 0).toLocaleString()}줄(소급 ${Number(L.backfill || 0).toLocaleString()} · 실시간 ${Number(L.live || 0).toLocaleString()}) · ${escapeHtml(L.firstDate || "—")} ~ ${escapeHtml(L.lastDate || "—")} · ${integrity}${files ? `<br>월별 파일: ${files} · <a href="data/signal_ledger/${escapeHtml(m)}/manifest.json" target="_blank" rel="noopener">해시 목록</a>` : ""}</p>
       </details>
-      <p class="muted">가격 기준: ${escapeHtml(bench.label || "")} 마지막 일봉 ${escapeHtml(bench.lastDate || "—")} · 집계 ${escapeHtml(p.updatedAtKst || "")} · 출처 ${escapeHtml(p.source || "")}
+      <p class="muted">가격 기준: ${escapeHtml(bench.label || "")} 마지막 일봉 ${escapeHtml(bench.lastDate || "—")} · 집계 ${escapeHtml(p.updatedAtKst || "")}
         <button type="button" class="ia-link" data-open="trust">데이터 신뢰도 센터 열기</button></p>
     </div>`;
 }

@@ -718,7 +718,7 @@ function tmGroupTooltip(group, metric) {
     <div class="tooltip-head">
       <div>
         <strong>기타 ${group.stocks.length}개</strong>
-        <span>${escapeHtml(tmSectorLabel(group.sector))}${group.zoomIndustry ? ` · ${escapeHtml(group.zoomIndustry)}` : ""} · 지도에서 너무 작은 종목 묶음</span>
+        <span>${escapeHtml(tmSectorLabel(group.sector))}${group.zoomIndustry ? ` · ${escapeHtml(group.zoomIndustry)}` : ""}</span>
       </div>
       <div class="tooltip-price">
         <b>${fmtMetric(tmGroupValue(group, metric), metric)}</b>
@@ -726,7 +726,7 @@ function tmGroupTooltip(group, metric) {
       </div>
     </div>
     <div class="tooltip-peers">
-      <span>시가총액 상위${more > 0 ? ` · 외 ${more}개` : ""} · ${group.action === "zoom" ? "누르면 섹터 확대" : "누르면 전체 목록"}</span>
+      <span>시가총액 상위${more > 0 ? ` · 외 ${more}개` : ""}</span>
       ${top.map((item) => peerTooltipRow(item)).join("")}
     </div>
   `;
@@ -752,7 +752,7 @@ function tmOpenPopover(group, tile) {
       const v = mapMetricValue(it, metric);
       return `<li><button type="button" class="tm-pop-item" data-ticker="${escapeHtml(it.ticker)}"><span class="tm-pop-name">${escapeHtml(stockLabel(it))}</span><span class="tm-pop-cap">${escapeHtml(fmtBillions(it.marketCapB))}</span><span class="tm-pop-val ${MAP_METRIC_CONFIG[metric] ? "" : cls(v)}">${fmtMetric(v, metric)}</span></button></li>`;
     }).join("")}</ul>
-    <p class="tm-pop-note">시가총액 큰 순 · 누르면 종목 분석</p>`;
+    <p class="tm-pop-note">시가총액 큰 순</p>`;
   map.appendChild(pop);
   pop.addEventListener("keydown", (e) => { if (e.key === "Escape") { tmClosePopover(); tile.focus(); } });
   // 타일 근처에 두되 지도 밖으로 나가지 않게.

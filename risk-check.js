@@ -83,7 +83,7 @@ function rcBeneishHtml(c) {
 
 function rcSectionHtml(res, file, item) {
   const cur = file.currency;
-  const src = file.market === "kr" ? `DART ${file.basis === "OFS" ? "별도" : "연결"}` : "SEC 공시";
+  const basis = file.market === "kr" ? ` · ${file.basis === "OFS" ? "별도" : "연결"}` : "";
   const checks = res.checks.map((c) => rcRowHtml(c.label, c.status, c.rule, rcCheckDetail(c, res, cur))).join("");
   const fscore = res.checks.find((c) => c.key === "fscore");
   const beneish = res.checks.find((c) => c.key === "beneish");
@@ -96,7 +96,7 @@ function rcSectionHtml(res, file, item) {
     <div class="mf-head">
       <div>
         <h3>재무 위험 점검</h3>
-        <p class="mf-meta">재무 위험 점검 — 과거 재무제표 기준, 예측이 아님 · FY${escapeHtml(String(res.fy))}${res.prevFy ? ` 대 FY${escapeHtml(String(res.prevFy))}` : ""} 연간 · ${src}</p>
+        <p class="mf-meta">FY${escapeHtml(String(res.fy))}${res.prevFy ? ` 대 FY${escapeHtml(String(res.prevFy))}` : ""} 연간${basis}</p>
       </div>
       <div class="rc-score ${tone}" aria-label="통과 ${res.pass} / ${res.of}">
         <strong>통과 ${res.pass}/${res.of}</strong>
@@ -107,7 +107,7 @@ function rcSectionHtml(res, file, item) {
     ${fscore && res.piotroski.items.length ? rcPiotroskiHtml(res.piotroski, cur) : ""}
     ${beneish ? rcBeneishHtml(beneish) : ""}
     <details class="rc-more"><summary>산식·판정 기준</summary><dl class="rc-rules">${res.checks.map((c) => `<dt>${escapeHtml(c.label)}</dt><dd>${escapeHtml(c.rule)}</dd>`).join("")}</dl></details>
-    <p class="mf-foot">매도 신호가 아닙니다. 공시된 과거 재무제표로 교과서 공식(Piotroski 2000 · Altman 1968/Z'' · Beneish 1999)을 계산한 점검이며 앞으로의 주가·부도를 예측하지 않습니다. 산식과 판정 기준은 항목 이름 툴팁과 '산식·판정 기준'에 있습니다. '데이터 없음'·'해당 없음'은 통과 수와 분모에서 모두 뺐고, 없는 계정을 추정으로 채우지 않았습니다. ${modelNote}${res.financial ? " 금융업은 Altman·Beneish·이자보상배율 등 제조업용 지표가 해당 없음입니다." : ""}</p>`;
+    <p class="mf-foot">'데이터 없음'·'해당 없음'은 통과 수와 분모에서 모두 뺐고, 없는 계정을 추정으로 채우지 않았습니다. ${modelNote}${res.financial ? " 금융업은 Altman·Beneish·이자보상배율 등 제조업용 지표가 해당 없음입니다." : ""}</p>`;
 }
 
 function rcMarketValue(item, file) {

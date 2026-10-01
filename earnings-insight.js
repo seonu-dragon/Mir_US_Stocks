@@ -103,8 +103,7 @@ function eiCompareHtml(row) {
             </table>
           </div>
         </details>` : ""}
-      <p class="ei-note">숫자를 나란히 놓은 정보이며 매매 판단이 아닙니다. 과거 반응은 SEC 8-K Item 2.02 제출 시각으로 장전·장후를 갈라 발표 뒤 첫 정규장 종가 등락을 쓰고,
-        예상변동폭은 반응일 이후 첫 만기의 등가격 스트래들 ÷ 현재가입니다(만기까지 전체 기간 기준). 기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
+      <p class="ei-note">기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
     </div>`;
 }
 
@@ -125,7 +124,7 @@ function eiReleaseCardHtml(rel, { compact = false } = {}) {
       ${rel.guidanceNote ? `<p class="ei-guid-note">${escapeHtml(rel.guidanceNote)}</p>` : ""}
       <p class="ei-src">원문 <a href="${escapeHtml(rel.exhibitUrl || rel.filingUrl || "")}" target="_blank" rel="noopener">EX-99.1 보도자료</a> ·
         <a href="${escapeHtml(rel.filingUrl || "")}" target="_blank" rel="noopener">8-K 제출</a> ·
-        AI 한국어 요약(원문에 있는 숫자만) · 기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
+        기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
     </article>`;
 }
 
@@ -186,8 +185,7 @@ function earningsMoveCompareSectionHtml(items) {
           <tbody>${body}</tbody>
         </table>
       </div>
-      <p class="ei-note">과거: 최근 최대 8회 실적 발표 뒤 첫 거래일 종가 등락의 절댓값 평균(괄호는 표본 수). 옵션: 실적 반응일 이후 첫 만기의 등가격 스트래들 ÷ 현재가.
-        매매 판단이 아닌 숫자 비교입니다. 출처 SEC EDGAR · Yahoo 옵션 · 기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
+      <p class="ei-note">괄호는 표본 수 · 기준 ${escapeHtml(payload.updatedAtKst || "")}</p>
     </details>`;
 }
 

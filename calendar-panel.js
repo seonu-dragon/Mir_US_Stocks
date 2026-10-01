@@ -132,17 +132,9 @@ function calPanelGridHtml(st, byDate, today) {
   return `<table class="calp-grid"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function calPanelFootHtml(cfg) {
+function calPanelFootHtml() {
   const mc = window.MARKET_CALENDAR;
-  const parts = [];
-  parts.push("휴장·만기는 거래소 규칙으로 계산(거래소 공지가 우선) · 경제지표는 investing.com 중요도 보통 이상, 이번 주·다음 주만");
-  if (cfg.id === "us") parts.push("미국 실적일은 Yahoo Finance 예정일로 회사 확정 전에는 추정일일 수 있음");
-  else {
-    parts.push(`국내 실적: ${(window.KR_IR_SCHEDULE && window.KR_IR_SCHEDULE.note) || "실적 전에 기업설명회(IR)를 여는 회사만 잡힙니다."}`);
-    parts.push("보호예수 해제: 상장일 + 매각제한 기간으로 계산한 추정일이며 매도가 '가능해지는' 날입니다(매도 예정 아님). 기관 수요예측 확약 배정 물량은 빠져 있습니다 · 출처 38커뮤니케이션(투자설명서 보호예수 표)");
-  }
-  const stamp = mc && mc.updatedAtKst ? ` · 달력 기준 ${escapeHtml(mc.updatedAtKst)}` : "";
-  return `<p class="calp-foot">${parts.map(escapeHtml).join("<br>")}${stamp}</p>`;
+  return mc && mc.updatedAtKst ? `<p class="calp-foot">달력 기준 ${escapeHtml(mc.updatedAtKst)}</p>` : "";
 }
 
 function renderCalendarPanel(host, opts) {
@@ -214,7 +206,7 @@ function renderCalendarPanel(host, opts) {
       </div>
       <div class="calp-list" aria-live="polite">${list}</div>
     </div>
-    ${calPanelFootHtml(cfg)}
+    ${calPanelFootHtml()}
     ${st.compact && opts && opts.container === "rail" ? `<div class="mir-rail-tools"><button type="button" class="mir-rail-link" data-rail-goto="calendar">캘린더 전체 보기</button></div>` : ""}
   </div>`;
 

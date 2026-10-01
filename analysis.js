@@ -2414,7 +2414,6 @@ function renderPatternCard(result) {
     ${rows}
     <p class="pat-note muted">※ 고전 패턴은 통계적으로 '약한 우위'에 그칩니다. 방향은 교과서 정의가 아니라 <b>과거 실측 상승률</b>로 표시했습니다.</p>
     <p class="pat-note muted">※ 패턴 통계는 현재 상장 중인 종목만으로 집계되어, 상장폐지된 종목이 빠진 생존 편향이 있습니다.</p>
-    <p class="pat-note muted">※ 수익률 통계는 배당을 포함한 총수익 기준입니다(배당 데이터가 있는 종목).</p>
   </div>`;
 }
 
@@ -2618,7 +2617,7 @@ function calibrationInnerHtml(score, horizon) {
     ${block.significantBuckets === 0 ? `<div style="margin-top:4px;">이 시장·${horizon}거래일 기준으로는 <b>어떤 점수 구간도 시장 평균과 유의하게 다르지 않았습니다</b> — 점수가 방향을 맞힌다는 근거가 없습니다.</div>` : ""}
     <div class="muted" style="margin-top:4px;font-size:var(--fs-cap);">
       ${sample.stocks ? `${sample.stocks}종목 ` : ""}${range ? `${range} ` : ""}워크포워드 실측 ·
-      겹치는 표본을 감안한 유효표본수로 구간을 계산했고, 종목 간 상관은 보정하지 않았습니다(구간이 실제보다 좁을 수 있음).
+      종목 간 상관을 보정하지 않아 구간이 실제보다 좁을 수 있음.
     </div>`;
 }
 
@@ -2785,11 +2784,6 @@ function buildResultHTML(result) {
     </div>
 
     ${moreHtml}
-
-    <div class="disclaimer">
-      이 수치는 <b>과거 가격 패턴에 기반한 기술적 추정</b>일 뿐이며 미래 수익을 보장하지 않습니다.
-      실적·금리·뉴스 등 펀더멘털 변수는 반영되지 않습니다. 투자 판단과 책임은 본인에게 있습니다.
-    </div>
   `;
 }
 
@@ -2822,7 +2816,6 @@ function renderTechnicalLevelsCard(result) {
   return `<div class="card tech-levels-card">
     <h3>기술적 레벨 · 변동폭</h3>
     ${parts.join("")}
-    <p class="pat-note muted">※ 과거 가격으로 계산한 기준선이며, 매매 신호나 투자 권유가 아닙니다.</p>
   </div>`;
 }
 
@@ -2869,12 +2862,13 @@ function renderOptionsContextCard(result) {
   if (o.maxPain != null) parts.push(`맥스페인 <b>${fmtPrice(o.maxPain)}</b>`);
   if (o.expectedMovePct != null) parts.push(`예상 변동폭 <b>±${o.expectedMovePct.toFixed(1)}%</b>`);
   if (!parts.length) return "";
-  const oi = (o.callOI != null && o.putOI != null)
-    ? ` · 콜 OI ${Math.round(o.callOI).toLocaleString()} / 풋 OI ${Math.round(o.putOI).toLocaleString()}` : "";
+  const meta = [];
+  if (o.updatedAtKst) meta.push(escapeHtml(o.updatedAtKst));
+  if (o.callOI != null && o.putOI != null) meta.push(`콜 OI ${Math.round(o.callOI).toLocaleString()} / 풋 OI ${Math.round(o.putOI).toLocaleString()}`);
   return `<div class="card options-card">
     <h3>옵션 포지셔닝 <span class="muted">(실측${o.expiry ? ` · 만기 ${escapeHtml(o.expiry)}` : ""})</span></h3>
     <p class="base-line">${parts.join(" · ")}</p>
-    <p class="muted" style="margin:0;font-size:12px;">출처: ${escapeHtml(o.source)}${o.updatedAtKst ? ` · ${escapeHtml(o.updatedAtKst)}` : ""}${oi}</p>
+    ${meta.length ? `<p class="muted" style="margin:0;font-size:12px;">${meta.join(" · ")}</p>` : ""}
   </div>`;
 }
 
@@ -2983,7 +2977,7 @@ function instFlowInnerHtml(ticker) {
     ins = `<span class="muted">내부자 거래 불러오는 중…</span>`;
   }
   const sh = _instFlowShards[key];
-  const asOf = sh && sh.meta && sh.meta.latest ? `13F 기준 ${escapeHtml(sh.meta.latest)} 분기말(공개 지연) · 출처 SEC 13F 데이터셋 · Form 4` : "";
+  const asOf = sh && sh.meta && sh.meta.latest ? `13F 기준 ${escapeHtml(sh.meta.latest)} 분기말(공개 지연)` : "";
   return `<p class="pat-stat">${inst}</p>
     <p class="pat-stat">${ins}</p>
     ${recent ? `<ul class="muted" style="margin:6px 0 0;padding-left:18px;font-size:12px;">${recent}</ul>` : ""}

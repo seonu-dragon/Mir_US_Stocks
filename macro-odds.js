@@ -103,7 +103,7 @@ function moVenueBlock(g) {
   const rules = g.rules
     ? `<details class="mo-rules"><summary>판정 기준(원문)</summary><p lang="en">${escapeHtml(g.rules)}</p></details>` : "";
   const cpiNote = g.topic === "cpi"
-    ? `<p class="mo-note">${g.venue === "Kalshi" ? "각 줄은 '그 값을 넘을' 확률(누적)입니다." : "각 줄은 발표치가 '정확히 그 값'일 확률(구간)입니다."} 결판이 난 3% 미만·97% 초과 구간은 뺐습니다.</p>` : "";
+    ? `<p class="mo-note">${g.venue === "Kalshi" ? "각 줄은 '그 값을 넘을' 확률(누적)입니다." : "각 줄은 발표치가 '정확히 그 값'일 확률(구간)입니다."}</p>` : "";
   return `<div class="mo-venue">
     <div class="mo-venue-head">
       <a href="${escapeHtml(g.url || "#")}" target="_blank" rel="noopener noreferrer" class="mo-venue-name" title="${escapeHtml(MO_VENUE_NOTE[g.venue] || "")}">${escapeHtml(g.venue)}</a>
@@ -111,7 +111,7 @@ function moVenueBlock(g) {
     </div>
     ${body}
     ${cpiNote}
-    <p class="mo-meta">${when} · ${volTxt} · ${liqTxt}${g.settlement ? ` · 판정 출처 ${escapeHtml(g.settlement)}` : ""} · ${escapeHtml(g.priceBasis || "")}</p>
+    <p class="mo-meta">${when} · ${volTxt} · ${liqTxt}</p>
     ${rules}
   </div>`;
 }
@@ -139,11 +139,8 @@ function moRecessionCard(rec, marketGroups) {
     if (r.breached === true) state = `<span class="mo-state is-over">임계 초과</span>`;
     else if (r.breached === false) state = `<span class="mo-state">임계 미만</span>`;
     else state = `<span class="mo-state is-na">판정 없음</span>`;
-    const src = r.sourceUrl
-      ? `<a href="${escapeHtml(r.sourceUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(r.source || "출처")}</a>`
-      : escapeHtml(r.source || "");
     return `<div class="mo-sig" role="row">
-      <div class="mo-sig-name" role="cell"><strong>${escapeHtml(r.name)}</strong><div class="mo-sub" title="${escapeHtml(r.basis || "")}">${src}</div></div>
+      <div class="mo-sig-name" role="cell"><strong>${escapeHtml(r.name)}</strong></div>
       <div class="mo-sig-val" role="cell"><strong>${moFmtSignal(r)}</strong></div>
       <div class="mo-sig-thr mo-sub" role="cell"><span class="mo-mlabel">임계 </span>${escapeHtml(r.thresholdText || "")}</div>
       <div class="mo-sig-state" role="cell">${state}</div>
@@ -158,7 +155,6 @@ function moRecessionCard(rec, marketGroups) {
   const basisList = rec.indicators.map((r) => `<li><strong>${escapeHtml(r.name)}</strong> — ${escapeHtml(r.basis || "")}</li>`).join("");
   return `<article class="mo-card mo-card-wide">
     <h3>침체 신호 모음 <span class="mo-count">${rec.evaluated}개 중 <b>${rec.breached}</b>개 임계 초과</span></h3>
-    <p class="mo-note">공식 지표를 한 표에 모았습니다. 점수로 합치지 않고, 각 지표를 발표 기관·원 논문의 임계값과 비교만 합니다. 월간 지표는 발표 시차가 있어 기준 시점이 서로 다릅니다.</p>
     ${mkt ? `<div class="mo-mkts"><span class="mo-sub">예측시장의 올해 침체 확률</span>${mkt}</div>` : ""}
     <div class="mo-sigs" role="table" aria-label="침체 신호 지표">
       <div class="mo-sig mo-sig-head" role="row"><div role="columnheader">지표</div><div role="columnheader" class="mo-sig-val">현재값</div><div role="columnheader">임계</div><div role="columnheader">상태</div><div role="columnheader">기준 시점</div><div role="columnheader">추이</div></div>
@@ -190,8 +186,7 @@ function renderMacroOdds() {
   const downNote = down.length ? `<p class="mo-note">이번 갱신에서 ${escapeHtml(down.join(", "))} 수집에 실패해 해당 거래소 값이 빠졌습니다.</p>` : "";
   host.innerHTML = `
     <div class="section-title"><h2>예측시장 확률 · 침체 신호 <span class="mo-tag">미국 매크로</span></h2>
-      <p>Kalshi·Polymarket 에서 거래되는 금리·물가·침체 시장의 가격(=참여자들이 매긴 확률)과 공식 침체 지표를 나란히 봅니다. 기준 ${escapeHtml(d.updatedAtKst || "")}.</p></div>
+      <p>기준 ${escapeHtml(d.updatedAtKst || "")}</p></div>
     <div class="mo-grid">${cards}</div>
-    ${excluded}${downNote}
-    <p class="mo-disclaimer">${escapeHtml(d.disclaimer || "예측시장 가격은 참여자들의 베팅으로 형성된 값이며 예측의 정답이 아닙니다.")} 출처: ${escapeHtml(String(d.source || "").replace(/\s*\(산업 지표 재사용\)/, ""))}.</p>`;
+    ${excluded}${downNote}`;
 }

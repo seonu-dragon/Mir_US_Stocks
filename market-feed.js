@@ -101,7 +101,7 @@ function mfeedRowHtml(e, market) {
     ? `<span class="mfeed-time-main">${escapeHtml(e.time)}</span>${e.timeNote ? `<small>${escapeHtml(e.timeNote)}</small>` : ""}`
     : `<span class="mfeed-time-main">${escapeHtml(core.shortDate(e.date))}</span>`;
   const lines = Array.isArray(e.lines) && e.lines.length
-    ? `<ul class="mfeed-lines">${e.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>${e.linesLabel ? `<small class="mfeed-sub">${escapeHtml(e.linesLabel)} — 틀릴 수 있으니 원문 확인</small>` : ""}`
+    ? `<ul class="mfeed-lines">${e.lines.map((l) => `<li>${escapeHtml(l)}</li>`).join("")}</ul>${e.linesLabel ? `<small class="mfeed-sub">${escapeHtml(e.linesLabel)}</small>` : ""}`
     : "";
   const sub = e.sub ? `<small class="mfeed-sub">${escapeHtml(e.sub)}</small>` : "";
   const href = e.link && typeof safeHttpHref === "function" ? safeHttpHref(e.link) : "";
@@ -124,11 +124,10 @@ function mfeedBasisHtml(basis, date) {
     else if (b.status === "behind") state = `이 날짜 자료 없음 · 최신 자료일 ${core.shortDate(b.latest)}`;
     else if (b.status === "empty") state = "이 날짜 0건";
     else state = `${b.n}건`;
-    const upd = b.updatedAt ? ` · 수집 ${escapeHtml(b.updatedAt)}` : "";
-    return `<li><strong>${escapeHtml(b.label)}</strong> <span>${escapeHtml(state)}</span><span class="muted"> · ${escapeHtml(b.source)}${upd}</span></li>`;
+    const upd = b.updatedAt ? `<span class="muted"> · 수집 ${escapeHtml(b.updatedAt)}</span>` : "";
+    return `<li><strong>${escapeHtml(b.label)}</strong> <span>${escapeHtml(state)}</span>${upd}</li>`;
   }).join("");
-  return `<details class="mfeed-basis"><summary>출처·기준 시각 (${escapeHtml(core.shortDate(date))})</summary><ul>${rows}</ul>
-    <p class="muted">시각이 없는 공시는 제출일만 표시합니다. 시각은 그 시장 현지 시각(미국은 미 동부, 경제지표는 한국 시간을 함께 표기)이고, 특징주는 장 마감 기준입니다. 특징주 사유·8-K 요약은 자동 요약이라 틀릴 수 있고, 매매 신호가 아닌 정보입니다.</p></details>`;
+  return `<details class="mfeed-basis"><summary>기준 시각 (${escapeHtml(core.shortDate(date))})</summary><ul>${rows}</ul></details>`;
 }
 
 function renderMarketFeed() {

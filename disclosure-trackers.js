@@ -99,7 +99,7 @@ function renderForm144Table() {
     return;
   }
   if (meta) {
-    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || rowsAll.length).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC Form 144")}`
+    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || rowsAll.length).toLocaleString()}건`
       + (payload.insiderUpdatedAtKst ? ` · Form 4 대조 기준 ${escapeHtml(payload.insiderUpdatedAtKst)}` : "");
   }
   const counts = core.countForm144(rowsAll);
@@ -127,7 +127,6 @@ function renderForm144Table() {
   }).join("");
   wrap.innerHTML = `
     <div class="insider-filter f144-status" role="group" aria-label="실제 매도 확인 여부">${seg}</div>
-    <p class="muted f144-note">Form 144 는 계열인이 팔기 전에 내는 <b>매도 예정</b> 신고입니다. 시가는 신고 시점 값이고, '실제 매도 확인됨'은 같은 이름의 Form 4 매도(예정일 3일 전~90일 뒤)를 찾은 것입니다. '아직'은 매도하지 않았다는 뜻이 아닙니다(Form 4 는 매도 후 2영업일 안에 나오고, 신탁·법인 명의면 못 찾습니다). 추천 아님.</p>
     ${shown.length ? `<div class="insider-count">${rows.length.toLocaleString()}건 중 ${shown.length.toLocaleString()}건 표시${rows.length > 300 ? " (검색으로 좁혀보세요)" : ""}</div>
     <table class="insider-table table-wide f144-table">
       <thead><tr>
@@ -162,7 +161,7 @@ function renderInsiderTrades() {
     return;
   }
   if (meta) {
-    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC Form 4")}${typeof esTrackerLink === "function" ? esTrackerLink("us_insider_cluster") : ""}`;
+    meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건${typeof esTrackerLink === "function" ? esTrackerLink("us_insider_cluster") : ""}`;
   }
   const q = insiderQuery.trim().toLowerCase();
   let rows = payload.trades;
@@ -224,7 +223,7 @@ function renderInsiderCluster() {
     .slice(0, 12);
   if (!clusters.length) { el.innerHTML = ""; return; }
   el.innerHTML = `
-    <div class="cluster-head">클러스터 매수 <span>보관 기간 내 2인 이상 임원이 공개시장 매수(P)한 종목 — 강한 내부자 신뢰 신호</span></div>
+    <div class="cluster-head">클러스터 매수</div>
     <div class="cluster-grid">
       ${clusters.map((g) => `
         <button type="button" class="cluster-card" data-ticker="${escapeHtml(g.ticker)}" title="${g.owners.size}명 매수 · ${g.count}건">
@@ -263,7 +262,7 @@ function renderActivistStakes() {
     wrap.innerHTML = `<p class="muted">아직 13D/G 데이터가 없습니다.</p>`;
     return;
   }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC 13D/G")}${typeof esTrackerLink === "function" ? esTrackerLink("us_13d") : ""}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건${typeof esTrackerLink === "function" ? esTrackerLink("us_13d") : ""}`;
   const q = activistQuery.trim().toLowerCase();
   let rows = payload.filings;
   if (activistKind !== "all") rows = rows.filter((r) => r.kind === activistKind);
@@ -322,7 +321,7 @@ function renderMaterialEvents() {
     return;
   }
   const summarized = payload.events.filter((e) => e && (e.summary || e.aiSummary)).length;
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건${summarized ? ` · 3줄 요약 ${summarized.toLocaleString()}건` : ""} · 출처 ${escapeHtml(payload.source || "SEC 8-K")}${typeof esTrackerLink === "function" ? esTrackerLink(["us_8k_101", "us_earn"]) : ""}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건${summarized ? ` · 3줄 요약 ${summarized.toLocaleString()}건` : ""}${typeof esTrackerLink === "function" ? esTrackerLink(["us_8k_101", "us_earn"]) : ""}`;
   const q = eventsQuery.trim().toLowerCase();
   let rows = payload.events;
   if (eventsHot === "hot") rows = rows.filter((r) => r.hot);
@@ -552,7 +551,7 @@ function renderIpoCalendar() {
   const perfActive = ipoView === "perf" && perf.ranked.length > 0;
   if (stageFilter) stageFilter.style.display = perfActive ? "none" : "";
   if (perfActive) { renderIpoPerformance(perf, wrap, meta, payload); return; }
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건 · 출처 ${escapeHtml(payload.source || "SEC S-1/424B4")}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 총 ${Number(payload.count || 0).toLocaleString()}건`;
   const q = ipoQuery.trim().toLowerCase();
   let rows = payload.ipos;
   if (ipoStage !== "all") rows = rows.filter((r) => r.stage === ipoStage);
@@ -632,8 +631,7 @@ function renderValuation() {
   if (sanity) rows.sort((a, b) => sanity.sortCompare(metric, a.value, b.value, valOrder === "asc" ? 1 : -1));
   else rows.sort((a, b) => (valOrder === "asc" ? a.value - b.value : b.value - a.value));
   const shown = rows.slice(0, 200);
-  const krNote = isKrMarket() ? " · 당일 등락은 상하한가 ±30% 기준 표시" : "";
-  if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}${krNote}`;
+  if (meta) meta.innerHTML = `${rows.length.toLocaleString()}개 종목 · ${cfg.label || metric}`;
   if (!shown.length) { wrap.innerHTML = `<p class="muted">펀더멘털 데이터가 있는 종목이 없습니다.</p>`; return; }
   const fmtv = (v) => {
     if (cfg.fmt === "pct") return `${v.toFixed(1)}%`;
@@ -683,8 +681,7 @@ function ftdSectionHtml() {
   }).join("");
   const period = ftd.period ? `${ftd.period.from} ~ ${ftd.period.to}` : "";
   return `<div style="margin-top:22px">
-    <h3 style="font-size:14px;margin:0 0 4px">결제 불이행(FTD) 상위 <span style="font-weight:400;font-size:11.5px;color:var(--muted)">SEC CNS · ${escapeHtml(period)} · 약 2주 지연</span></h3>
-    <p style="font-size:var(--fs-cap);color:var(--muted);margin:0 0 8px;line-height:1.65">결제가 실제로 밀린 물량입니다. 급증은 대차 물량 고갈(스퀴즈 압력) 논의에 등장하지만 지연 발행이라 사후 컨텍스트로만 보세요. 발행주식수 대비 %는 시총÷주가 근사값입니다.</p>
+    <h3 style="font-size:14px;margin:0 0 4px">결제 불이행(FTD) 상위 <span style="font-weight:400;font-size:11.5px;color:var(--muted)">${escapeHtml(period)} · 약 2주 지연</span></h3>
     <div style="overflow-x:auto"><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">발행주식 대비</th><th class="ins-num">최대 FTD</th><th class="ins-num">금액</th><th class="ins-num">직전 반월 대비</th></tr></thead><tbody>${rows}</tbody></table></div>
   </div>`;
 }
@@ -972,7 +969,7 @@ function renderUsBuybacks() {
   const shownRows = buybackShowAll ? rows : withAmt;
   if (meta) meta.innerHTML = `업데이트 ${escapeHtml((window.MATERIAL_EVENTS || {}).updatedAtKst || "")} · 금액 확인 ${withAmt.length}건`
     + (noAmt ? ` · 금액 미확인 ${noAmt}건 <button type="button" class="link-btn" id="buybackToggleAll">${buybackShowAll ? "숨기기" : "포함해 보기"}</button>` : "")
-    + ` · 출처 SEC 8-K${typeof esTrackerLink === "function" ? esTrackerLink("us_buyback") : ""}`;
+    + (typeof esTrackerLink === "function" ? esTrackerLink("us_buyback") : "");
   byId("buybackToggleAll")?.addEventListener("click", () => { buybackShowAll = !buybackShowAll; buybackLimit = 50; renderUsBuybacks(); });
   if (!shownRows.length) { wrap.innerHTML = `<p class="muted">${withAmt.length ? "조건에 맞는 발표가 없습니다." : "금액이 확인된 자사주 발표가 없습니다. 위에서 미확인분을 펼쳐 볼 수 있습니다."}</p>`; return; }
   const body = shownRows.slice(0, buybackLimit).map((r) => `<tr>
@@ -1166,7 +1163,7 @@ function renderUsEarningsReactions() {
   if (earnReactSort === "react") rows.sort((a, b) => Math.max(Math.abs(b.d0 ?? 0), Math.abs(b.d1 ?? 0)) - Math.max(Math.abs(a.d0 ?? 0), Math.abs(a.d1 ?? 0)));
   else rows.sort((a, b) => b.date.localeCompare(a.date));
   if (meta) meta.innerHTML = rows.length
-    ? `업데이트 ${escapeHtml((window.ANALYST_CONSENSUS || {}).updatedAtKst || "")} · 최근 발표 ${rows.length}건 · 시총 상위 50종목 · 종가 기준${typeof esTrackerLink === "function" ? esTrackerLink("us_earn") : ""}`
+    ? `업데이트 ${escapeHtml((window.ANALYST_CONSENSUS || {}).updatedAtKst || "")} · 최근 발표 ${rows.length}건 · 시총 상위 50종목${typeof esTrackerLink === "function" ? esTrackerLink("us_earn") : ""}`
     : "";
   if (!rows.length) { wrap.innerHTML = `<p class="muted">최근 실적 발표 데이터가 없습니다.</p>`; return; }
   const pctCell = (v) => Number.isFinite(v) ? `<span class="${v > 0 ? "ins-buy" : v < 0 ? "ins-sell" : ""}">${v > 0 ? "+" : ""}${v.toFixed(1)}%</span>` : "—";
@@ -1409,7 +1406,6 @@ function govContractsSectionHtml() {
   </tr>`).join("");
   return `<div style="margin-top:22px">
     <h3 style="font-size:14px;margin:0 0 4px">정부조달 낙찰 (나라장터) <span style="font-weight:400;font-size:11.5px;color:var(--muted)">최근 90일 · 상장사 매칭분 · ${escapeHtml(gov.updatedAtKst || "")}</span></h3>
-    <p style="font-size:var(--fs-cap);color:var(--muted);margin:0 0 8px;line-height:1.65">공시 의무 문턱 아래의 정부 계약까지 잡힙니다. 상호가 정확히 일치하는 상장사만 실으므로 영문·한글 표기가 다른 일부 대기업 건은 빠질 수 있습니다.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
       <div style="overflow-x:auto"><div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">누적 수주 상위</div><table class="insider-table" style="min-width:0"><thead><tr><th>#</th><th>종목</th><th class="ins-num">누적 낙찰액</th><th class="ins-num">건수</th><th>최근</th></tr></thead><tbody>${topRows}</tbody></table></div>
       <div style="overflow-x:auto"><div style="font-size:var(--fs-cap);color:var(--muted);margin-bottom:4px">최근 낙찰</div><table class="insider-table" style="min-width:0"><thead><tr><th>낙찰일</th><th>종목 · 발주기관</th><th>사업명</th><th class="ins-num">금액</th></tr></thead><tbody>${recent}</tbody></table></div>
@@ -1483,7 +1479,7 @@ function renderUsDilution() {
   if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q) || (r.title || "").toLowerCase().includes(q));
   if (dilutionSort === "amount") rows.sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1));
   else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건 · 출처 ${escapeHtml(payload.source || "SEC EDGAR")}${typeof esTrackerLink === "function" ? esTrackerLink("us_424b5") : ""}`;
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · ${rows.length}건${typeof esTrackerLink === "function" ? esTrackerLink("us_424b5") : ""}`;
   const formCls = (f) => (/424B5/i.test(f) ? "ins-sell" : "ins-neutral");
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
@@ -1611,7 +1607,7 @@ function renderKrHighlights() {
       <span style="font-size:12px;color:${c};font-weight:600">${escapeHtml(it.extra || "")}</span>
     </button>`;
   };
-  el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2><p>유형별 대표 1건 · 누르면 종목 분석</p></div>
+  el.innerHTML = `<div class="section-title" style="margin-bottom:8px"><h2>오늘의 KR 공시 하이라이트</h2></div>
     <div class="kr-hl-chips" style="display:flex;flex-wrap:wrap;gap:8px">${items.map(chip).join("")}</div>`;
   delegateTickerClicks(el, ".kr-hl-chip");
 }

@@ -98,9 +98,9 @@
     const num = (v) => Number(v);
     if (num(ipo.offerPrice) > 0) out.push({ k: "공모가", v: `${fmtNum(ipo.offerPrice)}원` });
     if (num(ipo.instCompetition) > 0) out.push({ k: "기관 경쟁률", v: `${fmtNum(Math.round(ipo.instCompetition))}:1` });
-    if (num(ipo.commitPct) > 0) out.push({ k: "의무보유 확약", v: `${num(ipo.commitPct).toFixed(1)}%`, note: "수요예측 신청 수량 기준" });
+    if (num(ipo.commitPct) > 0) out.push({ k: "의무보유 확약", v: `${num(ipo.commitPct).toFixed(1)}%` });
     if (num(ipo.subscriptionCompetition) > 0) out.push({ k: "청약 경쟁률", v: `${fmtNum(Math.round(ipo.subscriptionCompetition))}:1` });
-    if (num(ipo.lockedPct) > 0) out.push({ k: "상장일 매각제한", v: `${num(ipo.lockedPct).toFixed(1)}%`, note: "상장일 기준 주식수 대비" });
+    if (num(ipo.lockedPct) > 0) out.push({ k: "상장일 매각제한", v: `${num(ipo.lockedPct).toFixed(1)}%` });
     return out;
   }
 

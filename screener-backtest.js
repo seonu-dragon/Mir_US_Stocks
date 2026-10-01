@@ -102,7 +102,6 @@
         <h4>과거 백테스트 <span class="muted">(월 리밸런싱 · ${esc(meta.dates[0])}~${esc(meta.periodEnd || "")})</span></h4>
         <span class="fxbt-badge is-survivor" title="${esc("현재 상장 종목만 들어 있어 상장폐지된 종목의 손실이 빠져 있습니다 — 모든 결과가 실제보다 좋게 나옵니다.")}">생존편향 있음 · 성과 과대</span>
       </div>
-      <p class="muted fxbt-note">매월 마지막 거래일에 이 수식을 적용해 통과 종목을 같은 비중으로 샀다고 가정한 과거 결과입니다. 정보 제공용이며 매매 권유가 아닙니다. 과거 성과는 미래를 보장하지 않습니다.</p>
       ${missing.length ? `<div class="fxbt-missing" role="note"><b>이 필드는 과거 값이 없어 백테스트할 수 없습니다.</b><ul>${missing.map((f) => `<li><code>${esc(f)}</code> — ${esc(reasonOf(f))}</li>`).join("")}</ul><p class="muted">과거 값이 있는 필드: ${esc(Object.keys(meta.fields).join(", "))}</p></div>`
         : `<div class="fxbt-controls">
           <label>거래비용(편도 %)<input class="fxbt-cost" type="number" min="0" max="5" step="0.05" value="${esc(String(+(settings.costRate * 100).toFixed(3)))}" inputmode="decimal"></label>
@@ -215,7 +214,7 @@
           <li>재무 필드는 지금 살아남은 회사에만 있어 비교 기준도 같은 종목들로 맞췄습니다(생존편향). 섹터·업종은 현재 분류를 과거에 그대로 씁니다.</li>
           <li>최대 낙폭은 월말 값으로만 재서 실제 장중·일간 낙폭보다 작게 나옵니다. 벤치마크는 배당을 뺀 가격 수익률이며 비용을 넣지 않았습니다.</li>
         </ul>
-        <p class="muted">출처: ${esc(meta.source || "")} · 갱신 ${esc(meta.updatedAtKst || "")}</p>
+        <p class="muted">갱신 ${esc(meta.updatedAtKst || "")}</p>
       </details>`;
   }
 

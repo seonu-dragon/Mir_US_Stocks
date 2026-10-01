@@ -164,7 +164,6 @@ function renderCommunityHotTopics() {
   el.innerHTML = `
     <div class="community-hot-head">
       <strong>지금 가장 뜨거운 종목</strong>
-      <span class="muted">Reddit · Stocktwits · Yahoo 종합</span>
     </div>
     <div class="community-hot-grid">
       ${topics.map((topic, idx) => {

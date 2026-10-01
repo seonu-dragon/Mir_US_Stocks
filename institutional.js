@@ -204,7 +204,6 @@ function renderInstitutional13f() {
     : "정기 갱신";
   meta.innerHTML = `
     <div class="institutional-meta-grid">
-      <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "SEC EDGAR 13F-HR")}</strong></article>
       <article><span>갱신 주기</span><strong>${escapeHtml(schedule)}</strong></article>
       <article><span>마지막 갱신</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
     </div>
@@ -405,7 +404,6 @@ function renderCongressTrades() {
 
   meta.innerHTML = `
     <div class="institutional-meta-grid">
-      <article><span>데이터 출처</span><strong>${escapeHtml(payload.source || "Congress PTR")}</strong></article>
       <article><span>갱신 주기</span><strong>매일 06:00 KST (미국 장마감 브리핑)</strong></article>
       <article><span>마지막 갱신</span><strong>${escapeHtml(payload.updatedAtKst || "-")}</strong></article>
     </div>
@@ -434,7 +432,6 @@ function renderCongressTrades() {
   thinRows.forEach((row) => { row._displayRank = null; });
   const rankingRows = rankedRows.concat(thinRows);
   const rankTotal = rankingRows.length;
-  const thinCount = thinRows.length;
   const rankPageCount = Math.max(1, Math.ceil(rankTotal / CONGRESS_RANK_PAGE_SIZE));
   if (congressRankPage >= rankPageCount) congressRankPage = 0;
   const rankStart = congressRankPage * CONGRESS_RANK_PAGE_SIZE;
@@ -443,9 +440,7 @@ function renderCongressTrades() {
     rankings.innerHTML = `
       <div class="congress-section-head">
         <h3>의원별 추정 수익률 랭킹</h3>
-        <p class="congress-section-note">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>
-        <p class="congress-section-note">순위는 <b>매수+매도 ${CONGRESS_RANK_MIN_TRADES}건 이상</b>(또는 매수 단독 ${CONGRESS_RANK_MIN_BUYS}건 이상)인 의원만 매깁니다. 표본이 그보다 적으면 <b>표본부족</b> 배지를 달아 순위 없이 아래에 붙입니다${thinCount ? ` — 현재 ${thinCount}명` : ""}.</p>
-      </div>
+        <p class="congress-section-note">최근 18개월 매수 거래 기준 추정 수익률 · 정당: <b>R</b>=공화당 · <b>D</b>=민주당 · <b>I</b>=무소속</p>      </div>
       <div class="table-wrap">
         <table class="congress-rank-table table-wide">
           <thead>
@@ -501,7 +496,6 @@ function renderCongressTrades() {
           <button type="button" class="congress-help-button" data-congress-matrix-help aria-expanded="${congressMatrixHelpOpen}" title="기능 설명">!</button>
         </h3>
         ${congressMatrixHelpOpen ? congressMatrixHelpHtml() : ""}
-        <p class="congress-section-note">위원회 소속 의원 매수·매도 패턴 요약 (등록된 의원 기준)</p>
       </div>
       <div class="congress-matrix-grid">
         ${matrixRows.slice(0, 12).map((row) => `

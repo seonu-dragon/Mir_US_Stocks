@@ -8,7 +8,6 @@
 
   const MAX_ASSETS = 5;
   const COLORS = { value: "#2563eb", invested: "#64748b", lump: "#d97706", bench: "#94a3b8" };
-  const WEEKDAY_LABELS = ["", "월", "화", "수", "목", "금"];
 
   let assets = []; // [{ ticker, weight }]
   let running = false;
@@ -168,12 +167,6 @@
       fractional: !!$("dcaFractional")?.checked,
       benchmark: $("dcaBenchmark")?.value || "",
     };
-  }
-
-  function freqLabel(f) {
-    if (f.freq === "daily") return "매 거래일";
-    if (f.freq === "weekly") return `매주 ${WEEKDAY_LABELS[f.weekday] || "월"}요일`;
-    return f.monthDay === "last" ? "매월 마지막 거래일" : `매월 ${f.monthDay}일`;
   }
 
   // ----- 가격 이력 -----
@@ -384,12 +377,8 @@
     $("dcaWarn").innerHTML = [...warnings, ...notes].length
       ? `<p class="backtest-warn">${[...warnings, ...notes].map(esc).join(" ")}</p>` : "";
     $("dcaNotes").innerHTML = `
-      <strong>계산 기준:</strong> ${esc(freqLabel(f))} ${esc(money(f.amount))}씩, 매수가는 매수일 종가(야후 일봉, 액면분할 반영).
-      배당은 ${f.reinvest ? "배당락일 종가로 재투자" : "현금으로 받아 평가액에 포함(재투자 안 함)"} — 배당 이력이 없는 종목은 가격만 반영합니다.
       데이터 기준: ${esc(res.endDate)} 종가.
-      연환산은 적립식이 XIRR(납입 시점별 금액가중), 거치식은 CAGR 입니다 — 적립식에 CAGR 을 쓰면 늦게 들어간 돈까지 전 기간 굴린 것으로 계산돼 틀립니다.
-      최대 낙폭은 적립금 유입 효과를 뺀 시간가중 수익률 기준입니다.
-      <br><strong>유의:</strong> 과거 수익이 미래 수익을 보장하지 않습니다. 세금·수수료·환전 비용은 반영하지 않았고, 현재 상장된 종목만 계산할 수 있어 생존 편향이 있습니다. 투자 권유가 아닌 참고 정보입니다.`;
+      세금·수수료·환전 비용은 반영하지 않았고, 현재 상장된 종목만 계산할 수 있어 생존 편향이 있습니다.`;
     box.hidden = false; // 먼저 보여야 차트 폭(clientWidth)을 잰다
     drawChart(state);
   }

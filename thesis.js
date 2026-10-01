@@ -532,7 +532,7 @@
         ${cell("벤치마크 대비 적중", s.hitRate === null ? "—" : `${s.hits}/${s.scored} (${s.hitRate.toFixed(0)}%)`)}
         ${cell("초과수익 평균 · 중앙", `${signed(s.avgExcess, "%p")} · ${signed(s.medianExcess, "%p")}`, tone(s.medianExcess))}
       </div>
-      <p class="muted thesis-note">적중 = 같은 기간 ${esc(label(BENCH[mkt()]))}보다 수익률이 높았던 경우(절대 수익률로는 매기지 않습니다 — 시장 전체가 오른 덕을 실력으로 착각하기 쉬워서). 표본 ${s.scored}건${s.scored < 10 ? " — 10건 미만이면 우연과 구별하기 어렵습니다" : ""}. 등록·종료 시점 스냅샷 종가 기준의 가격 수익률이며 배당·세금·수수료·환율은 반영하지 않았습니다.${s.unscored ? ` 벤치마크 가격이 없어 제외 ${s.unscored}건.` : ""}</p>
+      <p class="muted thesis-note">표본 ${s.scored}건${s.scored < 10 ? " — 10건 미만이면 우연과 구별하기 어렵습니다" : ""}.${s.unscored ? ` 벤치마크 가격이 없어 제외 ${s.unscored}건.` : ""}</p>
       <div class="portfolio-tool-table"><table><thead><tr><th>종목</th><th>기간</th><th>종목</th><th>${esc(label(BENCH[mkt()]))}</th><th>차이</th></tr></thead><tbody>${rows}</tbody></table></div>`;
   }
 
@@ -563,7 +563,7 @@
     const sc = $("thesisScore");
     if (sc) sc.innerHTML = scoreHtml(all);
     const asof = $("thesisAsOf");
-    if (asof) asof.textContent = `점검 기준: ${snapshotAsOf()} 데이터 · 이벤트 출처 ${mkt() === "kr" ? "KRX 시장경보·DART 잠정실적" : "실적 발표·SEC Form 4(내부자 거래)·실적 예정일"}`;
+    if (asof) asof.textContent = `점검 기준: ${snapshotAsOf()} 데이터`;
   }
 
   // ----- 동작 -----

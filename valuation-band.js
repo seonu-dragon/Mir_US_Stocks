@@ -13,7 +13,7 @@
 
 const VALBAND_SOURCES = {
   kr: {
-    featureKey: "krValBand", global: "KR_VALUATION_BAND_META", dir: "data/korea/valuation_band", sourceLabel: "KRX 공식 PER·PBR",
+    featureKey: "krValBand", global: "KR_VALUATION_BAND_META", dir: "data/korea/valuation_band",
     baseNote: { per: "KRX 공식 EPS 는 직전 사업연도 기준이라 계단식", pbr: "KRX 공식 BPS" },
     // KRX 공식 PER = 현재가 ÷ 직전 사업연도 EPS. 과거와 같은 잣대로 비교하려고 그대로 쓰되,
     // 투자정보의 대표 PER(최근 4분기)과 다른 이유를 화면에 적는다.
@@ -22,7 +22,7 @@ const VALBAND_SOURCES = {
     priceNote: "주가는 KRX 월말 종가를 액면분할·병합만 수정했습니다(배당 미반영).",
   },
   us: {
-    featureKey: "usValBand", global: "US_VALUATION_BAND_META", dir: "data/valuation_band", sourceLabel: "SEC 공시 재무 + 야후 월말 종가(Mir 산출)",
+    featureKey: "usValBand", global: "US_VALUATION_BAND_META", dir: "data/valuation_band",
     baseNote: {
       per: "EPS = 최근 4분기 지배주주 순이익 ÷ 희석 주식수, 각 월말에 이미 공시된 분기만",
       pbr: "BPS = 자본총계 ÷ 발행주식수, 분기 자료가 없는 구간은 연간 값",
@@ -132,7 +132,7 @@ function renderValBandCard(host, opts) {
         : `<p class="muted valband-empty">${label} 유효 자료가 ${res.validCount}개월뿐이라 밴드를 그리지 않습니다.</p>`,
       table: res.ok ? valBandTable(series, res, series[m], label) : "",
       legend: res.ok ? valBandLegendItems(res) : [],
-      source: `출처 ${src.sourceLabel} · 기준일 ${meta.lastDate || ""}`,
+      source: meta.lastDate ? `기준일 ${meta.lastDate}` : "",
       help,
     });
   });
@@ -142,7 +142,7 @@ function renderValBandCard(host, opts) {
     </div>
     ${mirChartGrid(cards)}
     ${valBandValidationLine(meta)}
-    <p class="muted valband-foot"><b>과거 범위 안의 위치일 뿐 평균 회귀를 보장하지 않으며, 매매 신호가 아닙니다.</b> 이익 구조가 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")}</p>
+    <p class="muted valband-foot">${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")}</p>
     <details class="stock-method"><summary>계산 방법</summary>
       <p>밴드 = 그 달 주당 이익(EPS)·순자산(BPS)${psr ? "·매출(SPS)" : ""} × 과거 배수 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값.</p>
       ${metrics.map((m) => (src.baseNote && src.baseNote[m]) ? `<p>${VALBAND_METRICS[m].label}: ${escapeHtml(src.baseNote[m])}</p>` : "").join("")}

@@ -186,7 +186,7 @@ function tlItemHtml(it, momentByDate, code) {
     const reasons = m && m.reasons ? m.reasons : [];
     detail += reasons.length
       ? ` · 같은 시기(±1거래일) 기록: ${reasons.slice(0, 3).map((r) => r.title).join(", ")}${reasons.length > 3 ? ` 외 ${reasons.length - 3}건` : ""}`
-      : " · 사유 데이터 없음(이 날짜 ±1거래일에 수집된 공시·실적·배당·특징주·뉴스 기록이 없습니다 — 차트의 ▲▼ 를 누르면 그날 뉴스를 찾아봅니다)";
+      : " · 사유 데이터 없음";
   }
   const tone = it.cat === "move" && Number.isFinite(it.pct) ? ` ${cls(it.pct)}` : "";
   const link = /^https?:\/\//i.test(it.link || "") ? `<a class="tl-act" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
@@ -280,7 +280,7 @@ function renderStockTimeline(item) {
        ${rest > 0 ? `<button type="button" class="tl-more" data-tl-more="1">더 보기 (남은 ${rest}건)</button>` : ""}`
     : '<p class="muted tl-empty">수집된 기간 안에 이 종목의 공시·실적·배당·지분 기록이 없습니다. 아래 수집 범위를 참고하세요.</p>';
   host.hidden = false;
-  host.innerHTML = `<div class="tl-head"><h3>통합 타임라인</h3><span class="muted">공시·실적·배당·지분·특징주·큰 등락을 시간순으로 · 사실 나열이며 매매 추천이 아닙니다</span></div>
+  host.innerHTML = `<div class="tl-head"><h3>통합 타임라인</h3></div>
     <div class="tl-chips" role="group" aria-label="타임라인 유형 필터">${chips}</div>
     ${body}
     ${tlCoverageHtml(kr)}`;

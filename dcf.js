@@ -44,13 +44,13 @@ function dcfRiskFree() {
     const ind = d && (d.indicators || []).find((x) => x.key === "ktb10");
     if (ind && Number.isFinite(Number(ind.value))) {
       const a = String(ind.asOf || d.asOf || "");
-      return { pct: Number(ind.value), label: "국고채 10년", source: "한국은행 ECOS", asOf: a.length === 8 ? `${a.slice(0, 4)}-${a.slice(4, 6)}-${a.slice(6)}` : a };
+      return { pct: Number(ind.value), label: "국고채 10년", asOf: a.length === 8 ? `${a.slice(0, 4)}-${a.slice(4, 6)}-${a.slice(6)}` : a };
     }
     return null;
   }
   const y = window.YIELD_CURVE;
   const p = y && (y.curve || []).find((c) => c.m === "10Y");
-  if (p && Number.isFinite(Number(p.y))) return { pct: Number(p.y), label: "미 국채 10년(DGS10)", source: "FRED", asOf: y.asOf || "" };
+  if (p && Number.isFinite(Number(p.y))) return { pct: Number(p.y), label: "미 국채 10년(DGS10)", asOf: y.asOf || "" };
   return null;
 }
 function dcfEnsureInputs() {
@@ -208,7 +208,7 @@ function dcfCommonHtml(ctx, c) {
   const rf = dr.rfInfo;
   const note = dr.fallback
     ? `기본값 ${dcfPct(dr.r)}(금리 자료가 없어 고정값)`
-    : `기본값 ${dcfPct(dr.r, 2)} = ${escapeHtml(rf.label)} ${rf.pct.toFixed(2)}%(${escapeHtml(rf.source)}, ${escapeHtml(rf.asOf)}) + 주식위험프리미엄 ${dcfPct(erp.value, 2)}(${escapeHtml(erp.source)}, ${escapeHtml(erp.asOf)}) · 베타 1 가정`;
+    : `기본값 ${dcfPct(dr.r, 2)} = ${escapeHtml(rf.label)} ${rf.pct.toFixed(2)}%(${escapeHtml(rf.asOf)}) + 주식위험프리미엄 ${dcfPct(erp.value, 2)}(${escapeHtml(erp.asOf)}) · 베타 1 가정`;
   const rv = +(c.r * 100).toFixed(2), tv = +(c.tg * 100).toFixed(2);
   return `<div class="dcf-common">
       <label class="dcf-field"><span>할인율</span><input type="number" min="3" max="25" step="0.1" value="${rv}" data-dcf-common="r" class="dcf-num" aria-label="할인율 %"><em>%</em></label>
@@ -299,7 +299,6 @@ function dcfSectionHtml(ctx) {
       <div class="dcf-grid-slot">${dcfGridHtml(ctx, c)}</div>
       ${assumed.length ? `<p class="dcf-muted">자료가 없어 가정값으로 시작한 항목: ${escapeHtml(assumed.join(", "))}.</p>` : ""}
     </div>
-    <p class="mf-foot">추정치이며 가정에 극도로 민감합니다(할인율 1%p 차이로 주당 가치가 수십 % 달라질 수 있습니다). 투자 권유나 목표주가가 아닙니다.</p>
     <details class="stock-method"><summary>계산 방법</summary>
       <p>FCF = 영업활동현금흐름 − 설비투자. 주당 가치 = (기업가치 − 순차입금) ÷ ${escapeHtml(c.shares ? c.shares.label : "희석 주식수")}.</p>
       <p>시나리오 DCF 는 최근 4분기(TTM) 매출에서 시작하고, 영업이익률은 현재 값에서 5년차 목표로 직선 이동합니다.</p>
@@ -485,7 +484,7 @@ function dcfAiPanelHtml(item, rawFile) {
     { label: "기준 FCF", value: `${mfMoney(rev.fcf0, file.currency)} · ${rev.basis === "avg3" ? "3년 평균" : "TTM"}` },
     { label: "할인율 · 영구성장", value: `${dcfPct(r)} · ${dcfPct(tg)}` },
     { label: "과거 달성 비율", value: brText },
-  ]) + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">현재가 ${escapeHtml(dcfPrice(price))}를 정당화하려면 향후 10년 FCF 가 매년 이만큼 자라야 한다는 역산입니다. 할인율 = ${dr.fallback ? "고정 기본값" : `${escapeHtml(dr.rfInfo.label)} + 주식위험프리미엄(Damodaran)`}. 과거 달성 비율은 비슷한 매출 규모 기업의 과거 분포(생존편향 있음)입니다. <b>추정치이며 가정에 극도로 민감</b>하고 투자 권유가 아닙니다. 가정을 바꾸는 시나리오 DCF 는 종목 분석 화면에 있습니다.${rev.shares && rev.shares.fallback ? ` 주식수: ${escapeHtml(rev.shares.label)}.` : ""}</div>`;
+  ]) + `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:10px;line-height:1.65">과거 달성 비율은 생존편향이 있습니다.${rev.shares && rev.shares.fallback ? ` 주식수: ${escapeHtml(rev.shares.label)}.` : ""}</div>`;
   return aiModePanel("역DCF", "시장 가격에 들어 있는 성장률 · 추정", body);
 }
 

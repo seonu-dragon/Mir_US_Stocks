@@ -97,7 +97,7 @@ function factorGradeRowHtml(f) {
     detail = `<div class="fgrade-table-wrap"><table class="fgrade-table">
         <thead><tr><th>구성 지표</th><th class="num">이 종목</th><th class="num">${escapeHtml(f.levelLabel)} 내 백분위</th><th class="num">표본</th></tr></thead>
         <tbody>${rows}</tbody></table></div>
-      <p class="fgrade-note">${escapeHtml(f.desc)}. 백분위는 좋은 쪽이 100. 구성 지표 백분위의 평균을 ${escapeHtml(f.levelLabel)} 안에서 다시 백분위로 바꿔 등급을 매깁니다.</p>`;
+      <p class="fgrade-note">${escapeHtml(f.desc)}. 백분위는 좋은 쪽이 100.</p>`;
   } else if (f.status === "held" && f.tried && f.tried.length) {
     detail = `<p class="fgrade-note">업종·섹터 모두 비교 표본이 ${window.MirFactorGradeCore.DEFAULT_MIN_SAMPLE}개 미만이라 등급을 매기지 않았습니다.</p>`;
   }
@@ -119,7 +119,7 @@ function factorGradeBodyHtml(item) {
   }
   const when = (data && (data.updatedAtKst || data.updated_at_kst)) || "";
   return `<div class="fgrade-list">${res.factors.map(factorGradeRowHtml).join("")}</div>
-    <p class="fgrade-foot">A 백분위 80 이상 · B 60~80 · C 40~60 · D 20~40 · F 20 미만. 비교 집단은 같은 업종(표본 ${idx.minSample}개 미만이면 섹터), 적자·음수 배수는 밸류 비교에서 뺍니다. 예상 EPS 성장률은 애널리스트 추정치입니다. 매매 신호가 아니라 현재 위치를 요약한 정보입니다.${when ? ` 기준 ${escapeHtml(when)}.` : ""}</p>`;
+    <p class="fgrade-foot">A 백분위 80 이상 · B 60~80 · C 40~60 · D 20~40 · F 20 미만.${when ? ` 기준 ${escapeHtml(when)}.` : ""}</p>`;
 }
 
 function renderFactorGrades(item) {
@@ -130,7 +130,7 @@ function renderFactorGrades(item) {
   // 펼쳐 둔 팩터는 다시 그려도 펼친 채로 둔다(데이터 늦게 도착 → 재렌더).
   const open = new Set([...box.querySelectorAll("details.fgrade-row[open] .fgrade-name")].map((el) => el.textContent));
   box.hidden = false;
-  box.innerHTML = `<div class="fgrade-head"><h3>업종 상대 팩터 등급</h3><span class="muted fgrade-sub">같은 업종 안 백분위 · 예측 아님</span></div>${body}`;
+  box.innerHTML = `<div class="fgrade-head"><h3>업종 상대 팩터 등급</h3><span class="muted fgrade-sub">같은 업종 안 백분위</span></div>${body}`;
   if (open.size) box.querySelectorAll("details.fgrade-row").forEach((d) => { if (open.has(d.querySelector(".fgrade-name")?.textContent)) d.open = true; });
 }
 
@@ -139,7 +139,7 @@ function aiFactorGradePanel(item) {
   if (typeof aiModePanel !== "function") return "";
   const body = factorGradeBodyHtml(item);
   if (!body) return "";
-  return aiModePanel("업종 상대 팩터 등급", "같은 업종 안 백분위 · 예측 아님", `<div class="fgrade-card-inner" data-fgrade-ticker="${escapeHtml(item.ticker)}">${body}</div>`);
+  return aiModePanel("업종 상대 팩터 등급", "같은 업종 안 백분위", `<div class="fgrade-card-inner" data-fgrade-ticker="${escapeHtml(item.ticker)}">${body}</div>`);
 }
 
 // 검증 파일·MAP_FUNDAMENTALS 가 늦게 도착하면 보이는 곳만 다시 그린다.

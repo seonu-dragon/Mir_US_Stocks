@@ -457,6 +457,7 @@ def git_publish(paths, label, *, cwd=None, attempts=5, sleep_s=10.0, backoff=2.0
       서버 쪽 일시 장애는 수십 초~몇 분이라 간격을 늘려야 넘긴다.
     """
     import subprocess
+    from cardnews_reconcile import reapply_and_commit, touches_card_files
     repo = Path(cwd) if cwd else ROOT
     def run(args, **kw):
         return subprocess.run(["git", *args], cwd=repo, **kw)
@@ -482,6 +483,9 @@ def git_publish(paths, label, *, cwd=None, attempts=5, sleep_s=10.0, backoff=2.0
                 # 우리 버전을 채택한다(-X theirs 는 rebase 에서 replay 중인 로컬
                 # 커밋을 가리킨다). schedule_store 와 같은 전략.
                 run(["pull", "--rebase", "-X", "theirs", "origin", branch], check=True)
+                # -X theirs 가 그사이 발행된 오늘 카드뉴스를 덮었으면 되돌린다(cardnews_reconcile 참고).
+                if touches_card_files(paths):
+                    reapply_and_commit(run, repo)
                 run(["push", "origin", branch], check=True)
                 print(f"  [Git] origin/{branch} {label} 푸시 완료")
                 return True

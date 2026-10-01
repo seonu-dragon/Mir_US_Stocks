@@ -4028,6 +4028,10 @@ def _push_snapshot_with_retries(branch):
                 ["git", "pull", "--rebase", "-X", "theirs", "origin", branch],
                 cwd=ROOT, check=True,
             )
+            # 체크아웃 뒤에 발행된 오늘 카드뉴스를 -X theirs 가 옛 덱으로 덮었으면 되돌린다
+            # (2026-10-01 10:21 발행분이 10:30 스냅샷 push 에 09-29 덱으로 덮였다 — cardnews_reconcile).
+            from cardnews_reconcile import reapply_and_commit
+            reapply_and_commit(lambda args, **kw: subprocess.run(["git", *args], cwd=ROOT, **kw), ROOT)
             subprocess.run(["git", "push", "origin", branch], cwd=ROOT, check=True)
             print("[Git] Pushed market data to remote.")
             return

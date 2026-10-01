@@ -3,6 +3,20 @@ window.MIR_CHANGELOG = {
   "updatedAt": "2026-10-01",
   "entries": [
     {
+      "id": "2026-10-01-named-filters",
+      "date": "2026-10-01",
+      "title": "찾기에 규칙을 공개한 필터 목록",
+      "desc": "'52주 고점 5% 이내'처럼 규칙을 이름으로 쓴 필터를 시장별로 13~14개 모았습니다. 지금 통과 종목 수, 복사하거나 수식 스크리너에서 열 수 있는 수식, 백테스트 데이터가 있으면 기간·연환산 수익률·과적합 검사 한 줄을 보여 줍니다(과거 결과이며 미래 수익을 뜻하지 않습니다).",
+      "link": "?tab=find&filter=near-52w-high",
+      "targets": [
+        "sub-filters"
+      ],
+      "focus": [
+        "nfDetail"
+      ],
+      "market": "all"
+    },
+    {
       "id": "2026-10-01-stock-summary-event-strip",
       "date": "2026-10-01",
       "title": "종목 상세에 한눈 요약 카드와 오늘·임박 이벤트 줄",

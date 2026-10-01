@@ -1017,12 +1017,14 @@ function boot(options = {}) {
   fetchMarketHeader();
   renderSnapshotIndices();
   const initialTab = route.get("tab");
-  const initialSub = route.get("sub");
+  // 필터 목록 딥링크(?tab=find&filter=<id>) — sub 가 없으면 찾기 › 필터 목록으로 연다.
+  const initialSub = route.get("sub") || (route.get("filter") && ["find", "search"].includes(route.get("tab")) ? "filters" : null);
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
   // 산업 지표 딥링크(?tab=industry&i=<id>&t=<변환>) — 탭을 그리기 전에 선택 상태만 심는다.
   if (route.get("i") && typeof industryPreselect === "function") industryPreselect(route.get("i"), route.get("t"));
   // 수식 스크리너 공유 링크(?tab=search&sub=formula&fx=<토큰>) — 첫 렌더 때 수식을 채우고 실행한다.
   if (route.get("fx") && typeof formulaScreenerPreload === "function") formulaScreenerPreload(route.get("fx"));
+  if (route.get("filter") && typeof namedFiltersPreload === "function") namedFiltersPreload(route.get("filter"));
   if (initialCommunityTicker) applyCommunityBoardTickerFilter(initialCommunityTicker);
   const mapRoute = route.get("map_bucket") || route.get("map_sector") || route.get("map_metric");
   const routeTicker = route.get("ticker");
@@ -2156,7 +2158,7 @@ let currentTab = "today";
 let searchSubTab = "analysis";
 // 종목 탭 서브탭은 4개(분석·찾기·비교·공시)지만 searchSubTab 은 잎 이름(top/screener/…/13f/…)을
 // 유지한다 — 렌더 분기와 ?tab=search&sub= 딥링크가 그 이름을 쓴다. 그룹은 여기서 계산한다.
-const FIND_SUBS = ["top", "screener", "formula", "scanner", "jump", "valuation"];
+const FIND_SUBS = ["top", "filters", "screener", "formula", "scanner", "jump", "valuation"];
 const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "eventstudy"];
 const INST_SUBS = ["13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
 // 공시 세그먼트 표시 순서(자사주 … IPO, KR: DART·5%룰·임원·지배구조)
@@ -2497,6 +2499,7 @@ function activateSearchSub(name, { push = false, skipRender = false, renderOptio
   if (searchSubTab === "compare") renderCompareBoard();
   if (searchSubTab === "screener") renderScreener();
   if (searchSubTab === "formula" && typeof renderFormulaScreener === "function") renderFormulaScreener();
+  if (searchSubTab === "filters" && typeof renderNamedFilters === "function") renderNamedFilters();
   if (searchSubTab === "valuation") renderValuation();
   if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "buyback") renderBuyback();

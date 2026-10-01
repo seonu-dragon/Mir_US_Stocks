@@ -224,6 +224,12 @@
   - 필드는 스냅샷·map_fundamentals 에 이 시장에서 30종목 이상 값이 있는 것만 자동완성·필드 목록에 보인다(KR 부채비율·성장률, US 예상 EPS 성장률 등 시장별로 다름). 집계 모집단은 시장 전체(ETF 제외), 유니버스 선택은 결과만 거른다.
   - 사용자 정의 열(최대 4개, 머리글 클릭 정렬), 공유 링크(`?tab=search&sub=formula&fx=<토큰>`), 저장은 **저장형 스크리너와 같은 목록**(`kind: "formula"`)이라 편입/이탈 델타가 그대로 동작하고 기존 저장 셀렉트에서도 `[수식]` 으로 열린다.
   - 결과 옆에 "이 조건은 과거 검증되지 않았습니다" 표시. 3차 스크리너 백테스트 연결 지점: `window.MirFormulaBacktest.render(slotEl, { compiled, source, market, columns })` 를 정의하면 `#fxBacktestSlot` 에 붙는다(없으면 자리 숨김).
+- **필터 목록 — 규칙을 공개한 이름 붙은 필터 (종목 › 찾기 › 필터 목록, 2026-10-01)**: 레퍼런스 butler.works '버틀러 필터'. `named-filters-core.js`(정의·개수·문장, node 테스트 `scripts/tests/test_named_filters_core.mjs`) + `named-filters.js`(화면).
+  - 시장별 13개(US)·14개(KR). 이름이 곧 규칙이다("52주 고점 5% 이내", "부채비율 100% 미만 + ROE 15% 이상", "Piotroski F-Score 8점 이상" 등) — '유망'·'우량'·'기대주' 같은 평가어는 테스트가 막는다. 전부 수식 스크리너 수식이고 그 시장에 값이 있는 필드만 쓴다(KR 부채비율·성장률·배당성향·외국인 지분율, US 선행 PER·예상 EPS 성장률·유동비율).
+  - PC 왼쪽 목록(그룹: 가격·추세 / 재무·밸류 / 배당·지분 / 재무 위험 점검, 이름 + 지금 통과 종목 수) · 폰(≤900px)은 셀렉트. 오른쪽: 규칙 설명, 수식(복사 · '수식 스크리너에서 열기'), 과거 결과 한 줄, 통과 종목 표(사용 필드 열 + 시총, 머리글 정렬, 200행). 개수는 수식 스크리너와 같은 행·필드로 브라우저에서 센다(ETF 제외 시장 전체).
+  - 과거 결과: `scripts/build_named_filter_stats.mjs` 가 스크리너 백테스트 패널로 미리 계산(같은 계산·기본값 — 월말 판정·다음 거래일 체결·거래비용 편도 0.1%·5종목 미만 현금, 판정 시도 횟수 = 그 시장 필터 수) → `data/named_filter_stats.{json,js}`·`data/korea/…`(FEATURE_DATA `namedFilterStats`, 시장별·lazy). `Screener backtest panel` 워크플로우가 패널 직후 다시 만들고 신선도 그룹 `screener-backtest` 가 본다. 패널에 없는 필드(fScore·divYield·forwardPE·foreignPct 등)를 쓰는 필터와 정의 수식이 바뀐 뒤 아직 다시 계산되지 않은 필터는 '검증 데이터 없음'. 문장 끝에 "과거 결과이며 미래 수익을 뜻하지 않습니다" + 생존편향·배당 제외.
+  - 선택은 `localStorage mir.find.filter.<us|kr>` 와 URL `?tab=find&filter=<id>` 에 남는다(sub 없이 filter 만 와도 필터 목록으로 연다).
+  - 없는 소스: 외국인·기관 동반 순매수 일수, 연속 배당 연수는 종목별 필드가 없어 넣지 않았다.
 - **펀더멘털 이상치 규칙 (2026-09-26, `scripts/fundamentals_sanity.py` + `fundamentals-sanity-core.js`)**: map_fundamentals(US·KR) 값의 공통 규칙. 지어낸 값으로 바꾸지 않는다.
   - 정의상 의미 없는 값 → 결측: 무한대·NaN, 배수(PER·선행 PER·PEG·PSR·PBR·P/FCF·EV/EBITDA·EV/EBIT) ≤ 0(KR 적자 음수 PER 이 히트맵에서 '싸다' 초록으로 칠해지던 문제), 부채비율·배당성향 등 음수, 자본잠식 종목의 ROE(빌더는 equityB ≤ 0, 브라우저는 PBR < 0·부채비율 < 0 으로 판정), 매출 0 의 순이익률(빌더만), |ROA| > 1000%(소스·단위 불일치), 나스닥 EPS 결측 표식 -999.
   - 극단값이지만 실제일 수 있는 값(콜게이트 ROE 3,948% 등)은 남기고 고정 경계(PLAUSIBLE) 밖이면 '이상치 가능' 꼬리표: 수식 스크리너·밸류 랭킹은 정렬에서 경계 안 값 뒤로, 히트맵 섹터 평균·업종 상대 등급 백분위는 경계로 눌러(윈저라이즈) 계산. 조건 판정에는 원자료를 쓴다.

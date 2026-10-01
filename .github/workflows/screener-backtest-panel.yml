@@ -50,6 +50,8 @@ jobs:
           start=$(date +%s)
           status=0
           node scripts/build_screener_backtest_panel.mjs || status=$?
+          # 찾기 › 필터 목록의 과거 결과 한 줄 — 방금 만든 패널로 계산(수 초). 실패하면 기존 파일 유지 + 빨갛게.
+          node scripts/build_named_filter_stats.mjs || status=$?
           echo "elapsed_s=$(( $(date +%s) - start ))" >> "$GITHUB_OUTPUT"
           echo "빌드 소요 $(( $(date +%s) - start ))초"
           echo "status=$status" >> "$GITHUB_OUTPUT"
@@ -60,7 +62,7 @@ jobs:
           python scripts/sec_client.py --publish \
             data/screener_backtest_meta.json data/screener_backtest_meta.js \
             data/korea/screener_backtest_meta.json data/korea/screener_backtest_meta.js \
-            data/screener_backtest \
+            data/screener_backtest             data/named_filter_stats.json data/named_filter_stats.js             data/korea/named_filter_stats.json data/korea/named_filter_stats.js \
             --label "screener backtest panel (weekly)"
 
       - name: Fail if a market failed

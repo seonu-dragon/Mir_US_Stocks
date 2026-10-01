@@ -173,6 +173,8 @@ const FEATURE_DATA = {
   // 종목 화면 카드(risk-check.js)는 이 집계가 아니라 종목 재무 파일로 직접 계산한다.
   riskCheck: { global: "RISK_CHECK", path: "data/risk_check.js", marketSpecific: true, lazy: true },
   screenerBacktest: { global: "SCREENER_BACKTEST_META", path: "data/screener_backtest_meta.js", marketSpecific: true, lazy: true },
+  // 찾기 › 필터 목록의 과거 결과 한 줄(build_named_filter_stats.mjs — 위 패널로 미리 계산, 시장별 ~5KB). 그 화면을 열 때만(lazy).
+  namedFilterStats: { global: "NAMED_FILTER_STATS", path: "data/named_filter_stats.js", marketSpecific: true, lazy: true },
   // 휴장일·단축거래·파생 만기·FOMC(build_market_calendar.py, exchange_calendars 오프라인 계산, ~5KB).
   // 두 시장이 한 파일 — 통합 캘린더(calendar-panel.js)가 읽는다.
   marketCalendar: { global: "MARKET_CALENDAR", path: "data/market_calendar.js" },
@@ -342,6 +344,8 @@ function refreshFeatureViews() {
   if (currentTab === "calendar" && typeof renderUnifiedCalendarIfVisible === "function") calls.push(renderUnifiedCalendarIfVisible);
   // 수식 스크리너 — MAP_FUNDAMENTALS 가 늦게 오면 필드 목록·결과가 바뀐다.
   if (currentTab === "search" && searchSubTab === "formula" && typeof renderFormulaScreener === "function") calls.push(renderFormulaScreener);
+  // 필터 목록 — 같은 이유(MAP_FUNDAMENTALS·RISK_CHECK·과거 결과 파일이 늦게 오면 개수·문장이 바뀐다).
+  if (currentTab === "search" && searchSubTab === "filters" && typeof renderNamedFilters === "function") calls.push(renderNamedFilters);
   // 실적 일정(오늘 탭)의 '실적 전 비교' 표와 US 실적발표 서브탭의 보도자료 요약은
   // EARNINGS_MOVE_COMPARE / EARNINGS_RELEASES 가 늦게 도착하면 그때 다시 그려야 보인다.
   if (earningsCalendarCache && byId("earningsCalendarBody") && typeof renderEarningsCalendarMarket === "function") {

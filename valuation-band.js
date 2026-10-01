@@ -41,7 +41,6 @@ const VALBAND_SOURCES = {
 };
 const VALBAND_METRICS = { per: { label: "PER", base: "이익(EPS)" }, pbr: { label: "PBR", base: "순자산(BPS)" }, psr: { label: "PSR", base: "매출(SPS)" } };
 const _valBandShardCache = {};   // url → Promise<shard|null>
-const _valBandMetricPref = {};   // ticker → "per" | "pbr" | "psr" (사용자가 고른 탭)
 
 function valBandSource() {
   const cfg = marketCfg();
@@ -110,77 +109,96 @@ function renderValBandCard(host, opts) {
     host.innerHTML = `<h3>${title}</h3><p class="muted">월말 배수 자료가 24개월 미만이라 밴드를 그리지 않습니다(유효 PER ${per.validCount}개월 · PBR ${pbr.validCount}개월${psr ? ` · PSR ${psr.validCount}개월` : ""}).</p>`;
     return;
   }
-  const ticker = item.ticker;
-  let metric = _valBandMetricPref[ticker] || core.defaultMetric(per, pbr);
-  if (!results[metric] || !results[metric].ok) metric = ["per", "pbr", "psr"].find((m) => results[m] && results[m].ok);
-
-  const draw = () => {
-    valBandSetGeom(host);
-    const res = results[metric];
-    const label = VALBAND_METRICS[metric].label;
-    const mult = series[metric];
-    const btn = (m) => {
-      const r = results[m];
-      if (!r) return "";
-      return `<button type="button" data-vb-metric="${m}" class="${metric === m ? "is-active" : ""}" aria-pressed="${metric === m}"${r.ok ? "" : " disabled"}>${VALBAND_METRICS[m].label} 밴드</button>`;
-    };
-    const notice = valBandNotice(metric, per, pbr);
-    const baseNote = (src.baseNote && src.baseNote[metric]) || "";
-    const statSuffix = (src.statSuffix && src.statSuffix[metric]) || "";
-    const statHint = (src.statHint && src.statHint[metric]) || "";
-    host.innerHTML = `
-      <div class="valband-head">
-        <h3>${title} <span class="muted valband-sub">과거 ${res.ok ? res.validCount : 0}개월 배수 분포 · 월말</span></h3>
-        <div class="segmented valband-seg" role="group" aria-label="밴드 기준">${btn("per")}${btn("pbr")}${btn("psr")}</div>
-      </div>
-      ${notice ? `<p class="valband-notice">${notice}</p>` : ""}
-      ${res.ok ? valBandStats(res, statSuffix ? `${label}(${statSuffix})` : label) : ""}
-      ${res.ok && statHint ? `<p class="muted valband-hint">${escapeHtml(statHint)}</p>` : ""}
-      ${res.ok ? renderValBandChart(series, res, mult, label) : `<p class="muted">${label} 유효 자료가 부족합니다.</p>`}
-      <p class="valband-readout muted" aria-live="polite"></p>
-      ${valBandValidationLine(meta)}
-      <p class="muted valband-foot"><b>과거 범위 안의 위치일 뿐 평균 회귀를 보장하지 않으며, 매매 신호가 아닙니다.</b> 이익 구조가 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")}</p>
-      <details class="stock-method"><summary>계산 방법</summary>
-        <p>밴드 = 그 달 주당 ${VALBAND_METRICS[metric].base} × 과거 ${label} 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값${baseNote ? `(${escapeHtml(baseNote)})` : ""}.</p>
-        ${src.priceNote ? `<p>${escapeHtml(src.priceNote)}</p>` : ""}
-      </details>`;
-    host.querySelectorAll("[data-vb-metric]").forEach((b) => b.addEventListener("click", () => {
-      if (b.disabled) return;
-      metric = b.dataset.vbMetric;
-      _valBandMetricPref[ticker] = metric;
-      draw();
-    }));
-    valBandBindHover(host, series, res, mult, label);
-  };
-  draw();
+  // PER·PBR·PSR 을 탭으로 하나씩 고르던 것을 카드로 나란히(넓은 칸 2열·폰 1열, chart-card.js).
+  // 각 카드 SVG 폭은 그 카드 안쪽 폭 — 섹션 폭과 격자 열 수로 정한다.
+  const hostW = valBandHostWidth(host);
+  const geom = valBandGeomFor(typeof mirChartCardInnerWidth === "function" ? mirChartCardInnerWidth(hostW) : hostW);
+  const metrics = ["per", "pbr", "psr"].filter((m) => results[m]);
+  const cards = metrics.map((m) => {
+    const res = results[m];
+    const label = VALBAND_METRICS[m].label;
+    const statSuffix = (src.statSuffix && src.statSuffix[m]) || "";
+    const help = [(src.statHint && src.statHint[m]) || "", (src.baseNote && src.baseNote[m]) ? `기준: ${src.baseNote[m]}` : ""].filter(Boolean).join(" ");
+    const notice = valBandNotice(m, per);
+    const lead = `${notice ? `<p class="valband-notice">${notice}</p>` : ""}${res.ok ? valBandLead(res, statSuffix ? `${label}(${statSuffix})` : label) : ""}`;
+    return mirChartCard({
+      id: `vb.${m}`,
+      title: `${label} 밴드`,
+      sub: `${VALBAND_METRICS[m].base.replace(/\(.*\)/, "")} 대비 · 월말`,
+      unitLeft: `(${marketCfg().id === "kr" ? "원" : "USD"})`,
+      lead,
+      chart: res.ok
+        ? `<div data-vb-chart="${m}">${renderValBandChart(series, res, series[m], label, geom)}<p class="valband-readout muted" aria-live="polite"></p></div>`
+        : `<p class="muted valband-empty">${label} 유효 자료가 ${res.validCount}개월뿐이라 밴드를 그리지 않습니다.</p>`,
+      table: res.ok ? valBandTable(series, res, series[m], label) : "",
+      legend: res.ok ? valBandLegendItems(res) : [],
+      source: `출처 ${src.sourceLabel} · 기준일 ${meta.lastDate || ""}`,
+      help,
+    });
+  });
+  host.innerHTML = `
+    <div class="valband-head">
+      <h3>${title} <span class="muted valband-sub">과거 배수 분포 · 월말</span></h3>
+    </div>
+    ${mirChartGrid(cards)}
+    ${valBandValidationLine(meta)}
+    <p class="muted valband-foot"><b>과거 범위 안의 위치일 뿐 평균 회귀를 보장하지 않으며, 매매 신호가 아닙니다.</b> 이익 구조가 바뀐 회사는 과거 배수가 기준이 되지 못합니다. 출처 ${escapeHtml(src.sourceLabel)} · ${escapeHtml(series.dates[0])}~${escapeHtml(series.dates[series.dates.length - 1])} · 기준일 ${escapeHtml(meta.lastDate || "")}</p>
+    <details class="stock-method"><summary>계산 방법</summary>
+      <p>밴드 = 그 달 주당 이익(EPS)·순자산(BPS)${psr ? "·매출(SPS)" : ""} × 과거 배수 분위(하위 10·25·50·75·90%). 현재 배수 = 현재가 ÷ 최근 월말 주당 값.</p>
+      ${metrics.map((m) => (src.baseNote && src.baseNote[m]) ? `<p>${VALBAND_METRICS[m].label}: ${escapeHtml(src.baseNote[m])}</p>` : "").join("")}
+      ${src.priceNote ? `<p>${escapeHtml(src.priceNote)}</p>` : ""}
+    </details>`;
+  metrics.forEach((m) => {
+    const res = results[m];
+    const box = host.querySelector(`[data-vb-chart="${m}"]`);
+    if (res.ok && box) valBandBindHover(box, series, res, series[m], VALBAND_METRICS[m].label, geom);
+  });
 }
 
-function valBandNotice(metric, per, pbr) {
-  if (metric === "psr") return "";
-  if (metric === "pbr" && per.ok && per.lastLoss) return "최근 결산이 적자라 PER 이 정의되지 않습니다 — 순자산 기준인 PBR 밴드를 기본으로 보여 줍니다.";
-  if (metric === "pbr" && !per.ok) return `PER 유효 월이 ${per.validCount}개월뿐이라(적자 ${per.lossMonths}개월) PBR 밴드를 기본으로 보여 줍니다.`;
-  if (metric === "per" && per.lossMonths) return `적자였던 ${per.lossMonths}개월은 PER 이 없어 밴드를 끊어 표시했습니다(붉은 음영).`;
-  if (metric === "per" && per.lastLoss) return "최근 결산이 적자라 현재 PER 위치를 계산하지 않습니다. PBR 밴드를 함께 보세요.";
+// 카드 머리 한 줄: 현재 배수 · 과거 분포 백분위(옛 6칸 통계의 '현재' 칸). 분위 배수는 범례로.
+function valBandLead(res, label) {
+  const cur = res.current;
+  if (!cur) return `<p class="valband-lead"><span>현재 ${escapeHtml(label)}</span> <b>—</b> <em>최근 적자 · 계산 안 함</em></p>`;
+  return `<p class="valband-lead"><span>현재 ${escapeHtml(label)}</span> <b>${valBandFmtMult(cur.mult)}배</b> <em>과거 분포 백분위 ${Math.round(cur.pct)}</em></p>`;
+}
+
+const VALBAND_LEVEL_NAMES = ["하위 10%", "하위 25%", "중앙값", "상위 25%", "상위 10%"];
+const VALBAND_LEVEL_OPACITY = [0.45, 0.65, 0.9, 0.65, 0.45];
+function valBandLegendItems(res) {
+  const items = [{ label: "주가", color: "var(--text)", shape: "line" }];
+  res.levels.forEach((lv, i) => items.push({ label: VALBAND_LEVEL_NAMES[i], value: `${valBandFmtMult(lv)}배`, color: "var(--accent)", shape: i === 0 || i === 4 ? "dash" : "line", opacity: VALBAND_LEVEL_OPACITY[i] }));
+  return items;
+}
+
+// 같은 계열을 표로: 최근 12개월 + 현재(최근이 위).
+function valBandTable(series, res, mult, label) {
+  const cfg = marketCfg();
+  const n = series.dates.length;
+  const rows = [];
+  if (res.current) rows.push(`<tr><th scope="row">현재</th><td class="ins-num">${escapeHtml(cfg.formatPrice(res.current.price))}</td><td class="ins-num">${valBandFmtMult(res.current.mult)}배</td><td class="ins-num">—</td></tr>`);
+  for (let i = n - 1; i >= Math.max(0, n - 12); i--) {
+    const m = mult[i];
+    const c = series.close[i];
+    const mid = res.bands[2][i];
+    rows.push(`<tr><th scope="row">${escapeHtml(series.dates[i])}</th><td class="ins-num">${c ? escapeHtml(cfg.formatPrice(c)) : "—"}</td><td class="ins-num">${m === -1 ? "적자" : m > 0 ? `${valBandFmtMult(m)}배` : "—"}</td><td class="ins-num">${mid ? escapeHtml(cfg.formatPrice(mid)) : "—"}</td></tr>`);
+  }
+  return `<div class="table-wrap cc-table-wrap"><table class="insider-table cc-table">
+    <thead><tr><th>월말</th><th class="ins-num">주가</th><th class="ins-num">${escapeHtml(label)}</th><th class="ins-num">중앙값 밴드</th></tr></thead>
+    <tbody>${rows.join("")}</tbody></table></div><p class="muted cc-table-note">최근 12개월만 표시합니다.</p>`;
+}
+
+// 카드별 안내(카드가 나란히 있으므로 '기본으로 보여 줌' 이 아니라 '함께 보라' 로).
+function valBandNotice(metric, per) {
+  if (metric !== "per") return "";
+  if (!per.ok) return `PER 유효 월이 ${per.validCount}개월뿐입니다(적자 ${per.lossMonths}개월). 순자산 기준인 PBR 밴드를 함께 보세요.`;
+  if (per.lossMonths) return `적자였던 ${per.lossMonths}개월은 PER 이 없어 밴드를 끊어 표시했습니다(회색 음영).`;
+  if (per.lastLoss) return "최근 결산이 적자라 현재 PER 위치를 계산하지 않습니다. PBR 밴드를 함께 보세요.";
   return "";
 }
 
 function valBandFmtMult(v) {
   if (!Number.isFinite(v)) return "—";
   return v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
-}
-
-function valBandStats(res, label) {
-  const cur = res.current;
-  const cells = [];
-  if (cur) {
-    const pct = Math.round(cur.pct);
-    cells.push(`<div class="valband-stat valband-stat-main"><span>현재 ${label}</span><b>${valBandFmtMult(cur.mult)}배</b><em>과거 분포 백분위 ${pct}</em></div>`);
-  } else {
-    cells.push(`<div class="valband-stat valband-stat-main"><span>현재 ${label}</span><b>—</b><em>최근 적자 · 계산 안 함</em></div>`);
-  }
-  const names = ["하위 10%", "하위 25%", "중앙값", "상위 25%", "상위 10%"];
-  res.levels.forEach((lv, i) => cells.push(`<div class="valband-stat"><span><i class="valband-sw valband-sw-${i}"></i>${names[i]}</span><b>${valBandFmtMult(lv)}배</b></div>`));
-  return `<div class="valband-stats">${cells.join("")}</div>`;
 }
 
 function valBandAxisLabel(v) {
@@ -194,21 +212,19 @@ function valBandAxisLabel(v) {
 }
 
 // 폭은 카드 실제 폭(px)에 맞춰 그 자리에서 정한다 — viewBox 를 고정하면 넓은 화면에서 글자·선까지
-// 두세 배로 커진다. 높이는 폰 220 / 그 외 260.
+// 두세 배로 커진다. 높이는 좁은 카드 220 / 그 외 260. 카드가 여러 장이라 기하는 카드마다 넘긴다.
 let VALBAND_GEOM = { W: 640, H: 250, L: 46, R: 12, T: 10, B: 24 };
-function valBandSetGeom(host) {
-  let w = 640;
-  if (host && host.clientWidth) {
-    const cs = getComputedStyle(host);
-    w = host.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
-  }
-  w = Math.round(w);
-  const W = Math.max(300, Math.min(w, 1200));
-  VALBAND_GEOM = { W, H: W < 480 ? 220 : 260, L: 46, R: 12, T: 10, B: 24 };
+function valBandHostWidth(host) {
+  if (!host || !host.clientWidth) return 640;
+  const cs = getComputedStyle(host);
+  return Math.round(host.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0));
+}
+function valBandGeomFor(w) {
+  const W = Math.max(300, Math.min(Math.round(w) || 640, 1200));
+  return { W, H: W < 480 ? 220 : 260, L: 46, R: 12, T: 10, B: 24 };
 }
 
-function valBandScales(series, res) {
-  const g = VALBAND_GEOM;
+function valBandScales(series, res, g = VALBAND_GEOM) {
   const n = series.dates.length;
   const hasNow = !!res.current;
   const slots = n + (hasNow ? 1 : 0);
@@ -227,10 +243,9 @@ function valBandScales(series, res) {
 }
 
 // 시장 무관 SVG. series.close 는 수정종가, res 는 computeBands 결과, mult 는 적자(-1) 표시용.
-function renderValBandChart(series, res, mult, label) {
+function renderValBandChart(series, res, mult, label, g = VALBAND_GEOM) {
   const core = MirValBandCore;
-  const g = VALBAND_GEOM;
-  const { xOf, yOf, lo, hi, hasNow } = valBandScales(series, res);
+  const { xOf, yOf, lo, hi, hasNow } = valBandScales(series, res, g);
   const n = series.dates.length;
   // 적자 구간 음영
   const loss = core.lossRanges(mult).map(([a, b]) => {
@@ -271,19 +286,19 @@ function renderValBandChart(series, res, mult, label) {
   </svg></div>`;
 }
 
-function valBandBindHover(host, series, res, mult, label) {
+function valBandBindHover(host, series, res, mult, label, g = VALBAND_GEOM) {
   const svg = host.querySelector(".valband-chart svg");
   const hit = host.querySelector(".valband-hit");
   const guide = host.querySelector(".valband-guide");
   const out = host.querySelector(".valband-readout");
   if (!svg || !hit || !out || !res.ok) return;
-  const { xOf, slots } = valBandScales(series, res);
+  const { xOf, slots } = valBandScales(series, res, g);
   const cfg = marketCfg();
   const n = series.dates.length;
   const show = (ev) => {
     const r = svg.getBoundingClientRect();
     if (!r.width) return;
-    const x = ((ev.clientX - r.left) / r.width) * VALBAND_GEOM.W;
+    const x = ((ev.clientX - r.left) / r.width) * g.W;
     let best = 0;
     let bestD = Infinity;
     for (let i = 0; i < slots; i++) { const d = Math.abs(xOf(i) - x); if (d < bestD) { bestD = d; best = i; } }

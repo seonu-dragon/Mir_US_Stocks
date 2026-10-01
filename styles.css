@@ -16115,6 +16115,107 @@ body.ai-mode-active .ia-topbar-right > :not(#aiModeToggle) { display: none !impo
   .sec-sum { flex-direction: column; gap: 3px; }
   .f144-table th:nth-child(7), .f144-table td:nth-child(7) { display: none; }  /* 브로커 열은 폰에서 숨김 */
 }
+/* ===== chart-card:start — 차트 카드 공통 틀 + 면(surface) 구분(2026-10-01, chart-card.js) =====
+   재무·밸류 탭의 카드는 테두리·그림자 대신 옅은 바탕면 + 반경 8 로 나눈다. 범위는 이 블록이 만든
+   .cc-* 와 #sdv-fin / #sdv-val 의 직계 카드, 그 안의 KPI 타일뿐 — 다른 화면 카드는 그대로.
+   계열색은 기존 토큰(accent·ink·muted)만. 등락색(--pos/--neg)은 가격 변화 외에는 쓰지 않는다. */
+:root {
+  --surface-card: #f5f6f8;      /* 페이지(흰 바탕) 위 카드 면 */
+  --surface-panel: #ffffff;     /* 카드 안에 한 번 더 들어간 타일 면 */
+  --surface-radius: 8px;
+}
+html[data-theme="dark"] {
+  --surface-card: #1a1d21;
+  --surface-panel: #23272c;
+}
+#sdv-fin > section,
+#sdv-fin > .fundamental-table,
+#sdv-val > section {
+  border: 0;
+  box-shadow: none;
+  border-radius: var(--surface-radius);
+  background: var(--surface-card);
+}
+/* 차트 격자를 담는 두 섹션은 바탕 없이 열어 두고 카드 각각이 면을 갖는다. */
+#sdv-fin > #financialsSection,
+#sdv-val > #valuationBand {
+  background: transparent;
+  padding: 0;
+  margin: 0;
+}
+#financialsSection.financials-card {
+  --mf-c1: var(--accent);
+  --mf-c2: color-mix(in srgb, var(--accent) 38%, var(--surface-card));
+  --mf-c3: var(--muted);
+  --mf-line: var(--ink);
+}
+html[data-theme="dark"] #financialsSection.financials-card { --mf-c2: color-mix(in srgb, var(--accent) 55%, var(--surface-card)); }
+.mf-tables { margin-top: 12px; padding: 4px 14px 10px; border-radius: var(--surface-radius); background: var(--surface-card); }
+.mf-tables:not(:has(*)) { display: none; }
+/* 회색 카드 안 표: 머리 줄(sticky top)·폰 고정 첫 열(sticky left)은 불투명해야 하므로 흰 바탕 대신 카드 면 색 */
+#sdv-fin > section .insider-table th,
+#sdv-val > section .insider-table th,
+#sdv-fin > section :is(.mf-table, .cc-table, .dcf-grid) > :is(thead, tbody) > tr > :first-child,
+#sdv-val > section :is(.mf-table, .cc-table, .dcf-grid) > :is(thead, tbody) > tr > :first-child { background: var(--surface-card); }
+.mf-tables .mf-table td { background: transparent; }
+#financialsSection .mf-controls { margin: 10px 0 12px; }
+#valuationBand .valband-head { margin-bottom: 12px; }
+#valuationBand > .valband-verdict, #valuationBand > .valband-foot { margin-top: 10px; }
+/* KPI 타일·DCF 타일 등 카드 안 타일: 테두리 대신 한 단계 밝은 면 */
+#sdv-val .dcf-facts > div, #sdv-val .dcf-note, #sdv-fin .estimate-revision-grid article { border-color: transparent; background: var(--surface-panel); }
+
+.cc-scope { container: mircc / inline-size; min-width: 0; }
+.cc-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; align-items: stretch; }
+@container mircc (min-width: 720px) {
+  .cc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.cc-card { display: flex; flex-direction: column; min-width: 0; margin: 0; padding: 12px 14px 10px; border-radius: var(--surface-radius); background: var(--surface-card); }
+.cc-card.cc-wide { grid-column: 1 / -1; }
+.cc-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; }
+.cc-title { margin: 0; font-size: var(--fs-body); font-weight: 600; color: var(--text); min-width: 0; }
+.cc-sub { margin-left: 4px; font-size: var(--fs-cap); font-weight: 400; color: var(--muted); }
+.cc-toggle { display: inline-flex; flex: 0 0 auto; padding: 2px; border-radius: var(--r-sm); background: var(--surface-panel); }
+.cc-toggle button { min-height: 24px; height: 24px; padding: 0 9px; border: 0; border-radius: var(--r-xs); background: transparent; color: var(--muted); font-size: var(--fs-cap); cursor: pointer; }
+.cc-toggle button.is-active { background: var(--ink); color: var(--ink-fg); font-weight: 600; }
+.cc-pane { min-width: 0; margin-top: 6px; }
+.cc-pane[hidden] { display: none; }
+.cc-units { display: flex; justify-content: space-between; margin: 0 0 2px; color: var(--muted); font-size: 11px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.cc-card .mf-chart-wrap { margin: 0; }
+.cc-card .mf-chart { height: auto; }
+.cc-card .mf-chart .mf-tick { stroke: var(--surface-card); }
+.cc-card .mf-chart .mf-dot { fill: var(--surface-card); }
+.cc-card .mf-chart .mf-zero { stroke: var(--line-strong); }
+.cc-foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 6px 12px; margin-top: auto; padding-top: 8px; }
+.cc-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 0; padding: 0; list-style: none; color: var(--text-2); font-size: var(--fs-cap); }
+.cc-legend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.cc-legend b { font-weight: 600; color: var(--text); font-variant-numeric: tabular-nums; }
+.cc-sw { display: inline-block; flex: 0 0 auto; width: 10px; height: 10px; border-radius: 2px; background: var(--cc-sw); }
+.cc-sw-line { width: 14px; height: 2px; border-radius: 1px; }
+.cc-sw-dash { width: 14px; height: 0; border-top: 2px dashed var(--cc-sw); background: none; border-radius: 0; }
+.cc-sw-dot { width: 8px; height: 8px; border-radius: 50%; }
+.cc-source { position: relative; display: inline-flex; align-items: center; gap: 6px; margin-left: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.cc-help { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border: 1px solid var(--line-strong); border-radius: 50%; color: var(--muted); font-size: 10px; font-weight: 600; cursor: help; }
+.cc-help::after { content: attr(data-tip); position: absolute; right: 0; bottom: calc(100% + 6px); z-index: var(--z-popover); width: max-content; max-width: min(300px, 78vw); padding: 8px 10px; border-radius: var(--r-md); background: var(--ink); color: var(--ink-fg); font-size: var(--fs-cap); font-weight: 400; line-height: 1.55; white-space: normal; text-align: left; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .12s; }
+.cc-help:hover::after, .cc-help:focus-visible::after, .cc-help:focus::after { opacity: 1; visibility: visible; }
+.cc-table-wrap { max-height: 320px; overflow: auto; }
+.cc-table { width: 100%; min-width: 0; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.cc-table th, .cc-table td { background: transparent; white-space: nowrap; }
+.cc-table th[scope="row"] { text-align: left; font-weight: 500; }
+.cc-table-note { margin: 4px 0 0; font-size: 11px; }
+/* 밸류 밴드 카드 안 */
+.cc-card .valband-notice { margin: 6px 0 0; }
+.valband-lead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; margin: 6px 0 0; font-size: var(--fs-cap); color: var(--muted); }
+.valband-lead b { font-size: var(--fs-title); font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.valband-lead em { font-style: normal; color: var(--text-2); font-variant-numeric: tabular-nums; }
+.cc-card .valband-readout { margin: 2px 0 0; font-size: 11px; }
+.cc-card .valband-tick { font-size: 10px; }
+.cc-card .valband-loss { fill: var(--muted); fill-opacity: .12; }
+.valband-empty { margin: 8px 0; font-size: var(--fs-cap); }
+@media (max-width: 640px) {
+  .cc-card { padding: 10px 12px 8px; }
+  .mf-tables { padding: 4px 10px 8px; }
+}
+/* ===== chart-card:end ===== */
 
 /* === 업데이트 소식 · 새 기능 카드 (changelog.js, 2026-10-01) — 이 블록 안에서만 고칠 것 === */
 .mir-cl-btn { position: relative; width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--topbar-line); border-radius: var(--r-sm); background: var(--topbar-ctl); color: var(--topbar-fg); cursor: pointer; }

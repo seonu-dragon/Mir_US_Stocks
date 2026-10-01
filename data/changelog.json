@@ -3,6 +3,23 @@
   "updatedAt": "2026-10-01",
   "entries": [
     {
+      "id": "2026-10-01-fin-val-chart-cards",
+      "date": "2026-10-01",
+      "title": "재무·밸류 탭 차트를 같은 틀의 카드로",
+      "desc": "재무 탭의 매출·이익·현금흐름 등 차트 5종과 밸류 탭의 PER·PBR·PSR 밴드를 같은 모양의 카드로 나란히 보여 줍니다. 카드마다 차트↔표 전환이 있고, 고른 보기는 이 브라우저에 기억합니다.",
+      "link": "?tab=search&sub=analysis&ticker=NVDA&market=us&view=fin",
+      "targets": [
+        "sdv-fin",
+        "sdv-val"
+      ],
+      "focus": [
+        "financialsSection",
+        "valuationBand"
+      ],
+      "market": "all",
+      "pr": 276
+    },
+    {
       "id": "2026-10-01-kr-daily-naver",
       "date": "2026-10-01",
       "title": "국내 일봉을 네이버 금융(수정주가) 기준으로 통일",

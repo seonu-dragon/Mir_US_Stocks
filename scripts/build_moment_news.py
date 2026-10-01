@@ -50,6 +50,10 @@ from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E
 
 KST = ZoneInfo("Asia/Seoul")
 OUT_DIR = ROOT / "data" / "moment_news"
+# 진행 요약 인덱스(종목·큰 등락일·수집·남은 건수). 샤드는 이벤트 스터디처럼 직접 쓰고, 인덱스는 write_data
+# (0건 방어)로 마지막에 쓴다. 화면은 샤드만 읽는다 — 인덱스는 진행 확인·신선도용.
+OUT_JSON = OUT_DIR / "index.json"
+OUT_JS = OUT_DIR / "index.js"
 SHARDS = 64
 US_TOP = 500
 KR_TOP = 200
@@ -187,8 +191,8 @@ def load_shards(market: str) -> dict[int, dict]:
     return out
 
 
-def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) -> tuple[list[Path], int, bool]:
-    """(바뀐 샤드 경로, 이번에 물은 횟수, 막혔는지)."""
+def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) -> tuple[list[Path], int, bool, dict]:
+    """(바뀐 샤드 경로, 이번에 물은 횟수, 막혔는지, 진행 요약)."""
     cfg = MARKETS[market]["cfg"]
     stocks = universe(market)
     shards = load_shards(market)
@@ -205,8 +209,9 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) ->
                 pending.append((m["date"], -float(s["marketCapB"]), s, m))
     pending.sort(key=lambda x: (x[0], -x[1]), reverse=True)  # 최근 날짜부터, 같은 날은 시총 큰 순
     print(f"[moment-news] {market}: 대상 {len(stocks)}종목 · 큰 등락일 {total_moments}건 · 밀린 {len(pending)}건")
+    summary = {"tickers": len(stocks), "moments": total_moments, "pending": len(pending)}
     if dry_run:
-        return [], 0, False
+        return [], 0, False, summary
     touched: set[int] = set()
     asked, found, fail_streak, blocked = 0, 0, 0, False
     for day, _, s, _m in pending:
@@ -250,8 +255,9 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) ->
         OUT_DIR.mkdir(parents=True, exist_ok=True)
         atomic_write_text(p, json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
         paths.append(p)
-    print(f"[moment-news] {market}: 이번 검색 {asked}건(기사 찾음 {found}) · 남은 {max(0, len(pending) - asked)}건 · 샤드 {len(paths)}개 저장")
-    return paths, asked, blocked
+    summary.update({"pending": max(0, len(pending) - asked), "askedThisRun": asked, "foundThisRun": found, "blocked": blocked})
+    print(f"[moment-news] {market}: 이번 검색 {asked}건(기사 찾음 {found}) · 남은 {summary['pending']}건 · 샤드 {len(paths)}개 저장")
+    return paths, asked, blocked, summary
 
 
 def main() -> int:
@@ -264,12 +270,24 @@ def main() -> int:
     since = (datetime.now(KST).date() - timedelta(days=365 * YEARS)).isoformat()
     markets = ["us", "kr"] if args.market == "all" else [args.market]
     changed, any_blocked, asked_total = [], False, 0
+    prev = (mv.load_json(OUT_JSON, {}) or {}).get("markets") or {}
+    summaries = dict(prev)
     with repository_publish_lock(ROOT):
         for m in markets:
-            paths, asked, blocked = build_market(m, max_queries=args.max_queries, dry_run=args.dry_run, since=since)
+            paths, asked, blocked, summary = build_market(m, max_queries=args.max_queries, dry_run=args.dry_run, since=since)
             changed += paths
             asked_total += asked
             any_blocked |= blocked
+            summaries[m] = summary
+        if args.dry_run:
+            return 0
+        index = {
+            "updatedAtKst": datetime.now(KST).strftime("%Y-%m-%d %H:%M KST"),
+            "shards": SHARDS, "years": YEARS, "perMoment": PER_MOMENT, "windowDays": WINDOW_DAYS,
+            "universe": {"us": US_TOP, "kr": KR_TOP}, "markets": summaries,
+        }
+        sec.write_data(OUT_JSON, OUT_JS, "MOMENT_NEWS_INDEX", index, indent=None)
+        changed += [OUT_JSON, OUT_JS]
         if args.push and changed:
             rel = [p.relative_to(ROOT).as_posix() for p in changed]
             if not sec.git_publish(rel, "moment news"):

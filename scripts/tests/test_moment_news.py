@@ -67,5 +67,5 @@ def test_blocked_streak_stops_run(monkeypatch, tmp_path):
     monkeypatch.setattr(b, "search_moment", boom)
     monkeypatch.setattr(b.time, "sleep", lambda _s: None)
     monkeypatch.setattr(b, "MAX_FAIL_STREAK", 2)
-    paths, asked, blocked = b.build_market("us", max_queries=10, dry_run=False, since="2000-01-01")
+    paths, asked, blocked, _summary = b.build_market("us", max_queries=10, dry_run=False, since="2000-01-01")
     assert blocked and asked == 0 and len(calls) == 2 and paths == []

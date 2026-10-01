@@ -1205,13 +1205,35 @@ await test("큰 등락일 뉴스: Origin 없으면 거부, 캐시 히트는 업�
   eq(r0.status, 403, "Origin 없음");
   const bad = await handleFetch(req("https://w/?event_news=1&ticker=NVDA&date=20260930", { origin: ALLOWED }), env);
   eq(bad.status, 400, "날짜 형식");
-  await env.MOVE_CACHE.put("evnews:v1:NVDA:2026-09-30", JSON.stringify({ ticker: "NVDA", date: "2026-09-30", news: [{ title: "t", link: "https://a" }] }));
+  await env.MOVE_CACHE.put("evnews:v2:NVDA:2026-09-30", JSON.stringify({ ticker: "NVDA", date: "2026-09-30", news: [{ title: "t", link: "https://a" }] }));
   await withMockFetch(() => { throw new Error("업스트림 호출됨"); }, async (calls) => {
     const r = await handleFetch(req("https://w/?event_news=1&ticker=NVDA&date=2026-09-30", { origin: ALLOWED }), env);
     const got = await r.json();
     eq(got.cached, true, "cached");
     eq(got.news.length, 1, "news");
     eq(calls.length, 0, "업스트림 0회");
+  });
+});
+
+await test("큰 등락일 뉴스: ±2일 한 번만, 소스 동시 호출, 막힌 소스는 diag 로 남고 나머지로 답한다", async () => {
+  const env = { MOVE_CACHE: memKv() };
+  const rss = `<rss><channel><item><title>Acme jumps on deal - Reuters</title><link>https://n.example/a</link><source>Reuters</source><pubDate>Thu, 04 Nov 2021 07:00:00 GMT</pubDate></item>`
+    + `<item><title>Acme old story</title><link>https://n.example/b</link><source>X</source><pubDate>Mon, 25 Oct 2021 07:00:00 GMT</pubDate></item></channel></rss>`;
+  await withMockFetch((url) => {
+    if (url.includes("finance/chart")) return jsonResp({ chart: { result: [{ meta: { longName: "Acme Corp" } }] } });
+    if (url.includes("news.google.com")) return new Response(rss, { status: 200 });
+    if (url.includes("gdeltproject")) return new Response("Please limit requests", { status: 200 });
+    throw new Error("unexpected " + url);
+  }, async (calls) => {
+    const r = await handleFetch(req("https://w/?event_news=1&ticker=ACME&date=2021-11-04", { origin: ALLOWED }), env);
+    const got = await r.json();
+    eq(got.news.length, 1, "±2일 밖 기사는 뺀다");
+    eq(got.news[0].publishedAt, "2021-11-04", "date");
+    ok(/^ok 2 /.test(got.diag.google), `google diag ${got.diag.google}`);
+    eq(got.diag.gdelt, got.diag.gdelt.startsWith("not_json") ? got.diag.gdelt : "x", "gdelt 안내문은 not_json");
+    eq(got.diag.finnhub.split(" ")[0], "no_key", "finnhub 키 없음");
+    eq(calls.filter((c) => c.url.includes("news.google.com")).length, 1, "구글은 한 번만(±7일 재검색 없음)");
+    ok(!calls.some((c) => c.url.includes("v1/finance/search")), "최신 야후 뉴스는 부르지 않는다");
   });
 });
 

@@ -254,6 +254,11 @@ jobs:
       - name: Cross-market links core tests
         run: node scripts/tests/test_cross_market_core.mjs
 
+      # 업데이트 소식(changelog-core.js): 안 읽음·화면별 '새 기능' 카드 고르기 + 손으로 쓰는 data/changelog.{json,js}
+      # 가 같은 내용인지, 링크가 상대 URL 인지, targets/focus 요소 id 가 index/analysis.html 에 있는지.
+      - name: Changelog core tests
+        run: node scripts/tests/test_changelog_core.mjs
+
       # 배포 번들이 만들어지고(페이지별 이어붙이기 + esbuild 압축) 한 스크립트로 파싱되는지.
       - name: Bundle build (dry run, minified)
         run: |

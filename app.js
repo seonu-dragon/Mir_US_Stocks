@@ -9178,6 +9178,7 @@ function cmdkBuildActions(query) {
   } });
   actions.push({ label: "대화 내보내기 (.md)", hint: "현재 세션", run: () => exportAiChatMarkdown() });
   actions.push({ label: "테마 전환 (다크/라이트)", hint: "화면", run: () => byId("themeToggle")?.click() });
+  actions.push({ label: "업데이트 소식 (새 기능·개선)", hint: "공지", run: () => window.MirChangelog?.open?.() });
   if (selectedTicker) actions.push({ label: `종목 링크 복사 (${selectedTicker})`, hint: "공유", run: () => byId("shareTickerLink")?.click() });
   if (aiActive) {
     actions.push({ label: "AI 모드 나가기", hint: "Esc", run: () => window.MirAI?.exit?.() });

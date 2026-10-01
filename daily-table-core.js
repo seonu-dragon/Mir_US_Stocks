@@ -108,9 +108,12 @@
     return clk.date > day || (clk.date === day && clk.minutes >= KR_CLOSE_CONFIRMED);
   }
 
-  // 일봉 시리즈([시,고,저,종,거래량,날짜] 또는 {o,h,l,c,v,d}) 에서 snap.date 봉의 종가·거래량을 스냅샷
-  // (네이버 KRX 정규장) 값으로 바꾼다. 고가·저가는 그 종가를 포함하도록 넓힌다. 그 날짜 봉이 없으면
-  // 만들지 않는다(시가를 모른다). 마지막 봉만 보던 예전 방식은 기준일 뒤에 장중 봉이 붙으면 놓쳤다.
+  // 일봉 시리즈([시,고,저,종,거래량,날짜] 또는 {o,h,l,c,v,d}) 에서 snap.date 봉의 종가를 스냅샷(네이버, KRX)
+  // 값으로 바꾼다. 고가·저가는 그 종가를 포함하도록 넓힌다. 그 날짜 봉이 없으면 만들지 않는다(시가를 모른다).
+  // 마지막 봉만 보던 예전 방식은 기준일 뒤에 장중 봉이 붙으면 놓쳤다.
+  // 거래량은 바꾸지 않는다(2026-10-01): 일봉 거래량은 전 구간 '네이버 일별 시세 = KRX+NXT 합산' 으로 통일했다.
+  // 스냅샷 목록 거래량(KRX)으로 기준일 한 봉만 덮으면 같은 표 안에서 정의가 섞인다(005930 09-30 일봉
+  // 16,477,580 vs 스냅샷 15,700,594). 일봉이 네이버면 종가도 이미 같아 보통 아무것도 바꾸지 않는다.
   // 바뀐 게 없으면 같은 배열을 돌려준다(호출부 메모·표 키가 흔들리지 않게).
   function alignSessionBar(series, snap, nowMs) {
     if (!Array.isArray(series) || !series.length || !snap) return series;
@@ -118,8 +121,6 @@
     const day = String(snap.date || "").slice(0, 10);
     if (close === null || close <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return series;
     if (!krSessionClosed(day, nowMs)) return series;
-    const vol = num(snap.volume);
-    const useVol = vol !== null && vol > 0;
     for (let i = series.length - 1; i >= 0; i -= 1) {
       const r = series[i];
       const d = rowDate(r);
@@ -127,18 +128,16 @@
       if (d !== day) continue;
       let bar;
       if (Array.isArray(r)) {
-        if (num(r[3]) === close && (!useVol || num(r[4]) === vol)) return series;
+        if (num(r[3]) === close) return series;
         bar = r.slice();
         bar[3] = close;
         if (num(bar[1]) !== null) bar[1] = Math.max(num(bar[1]), close);
         if (num(bar[2]) !== null && num(bar[2]) > 0) bar[2] = Math.min(num(bar[2]), close);
-        if (useVol) bar[4] = vol;
       } else if (r && typeof r === "object") {
-        if (num(r.c) === close && (!useVol || num(r.v) === vol)) return series;
+        if (num(r.c) === close) return series;
         bar = { ...r, c: close };
         if (num(r.h) !== null) bar.h = Math.max(num(r.h), close);
         if (num(r.l) !== null && num(r.l) > 0) bar.l = Math.min(num(r.l), close);
-        if (useVol) bar.v = vol;
       } else {
         return series;
       }
@@ -147,6 +146,26 @@
       return out;
     }
     return series;
+  }
+
+  // 국내: 상세 파일 일봉(네이버, 수정주가)과 실시간 프록시 일봉(워커 = 야후 .KS/.KQ)을 합친다.
+  // 상세 파일이 덮는 날짜는 전부 상세 파일 값이고, 실시간 봉은 상세 파일 마지막 날짜보다 **새 날짜만** 잇는다
+  // (오늘 장중 봉 등). 예전엔 실시간 일봉이 오면 시계열을 통째로 바꿔 과거 종가가 다시 야후 값이 됐다
+  // (005930 09-29 야후 272,500 vs 네이버 275,000). 상세 파일이 없거나 날짜가 없으면 실시간을 그대로 쓴다.
+  // 덧붙일 게 없으면 base 를 그대로 돌려준다(메모·표 키 안정). 원본 배열은 바꾸지 않는다.
+  function mergeLiveBars(base, live) {
+    const b = Array.isArray(base) ? base : [];
+    const l = Array.isArray(live) ? live : [];
+    if (!b.length) return l;
+    if (!l.length) return b;
+    let last = "";
+    for (let i = b.length - 1; i >= 0 && !last; i -= 1) last = rowDate(b[i]);
+    if (!last) return l;
+    const tail = l.filter((r) => {
+      const d = rowDate(r);
+      return !!d && d > last;
+    });
+    return tail.length ? b.concat(tail) : b;
   }
 
   // 국내 호가 단위(전일가 구간). ETF·ETN 은 2,000원 미만 1원, 그 외 5원.
@@ -218,7 +237,7 @@
     return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s.slice(2).replace(/-/g, ".") : (s || "—");
   }
 
-  const api = { buildDailyRows, marketClock, provisionalLabel, krSessionClosed, alignSessionBar, krTick, snapshotPrevClose, fmtPrice, fmtChange, fmtVolume, fmtDate, fmtDateShort };
+  const api = { buildDailyRows, marketClock, provisionalLabel, krSessionClosed, alignSessionBar, mergeLiveBars, krTick, snapshotPrevClose, fmtPrice, fmtChange, fmtVolume, fmtDate, fmtDateShort };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirDailyTable = api;
 })(typeof window !== "undefined" ? window : (typeof globalThis !== "undefined" ? globalThis : null));

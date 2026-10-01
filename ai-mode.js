@@ -1138,7 +1138,7 @@ function aiDataQualityPanel(item) {
   const missing = missingFundamentalFields(f);
   return aiModePanel("데이터 품질", "출처", aiMetricGrid([
     { label: "데이터 기준", value: data.updatedAtKst || data.updated_at_kst || "—" },
-    { label: "가격 이력", value: `${chartRows.length.toLocaleString()}거래일`, detail: sourceLabel(item.historySource) },
+    { label: "가격 이력", value: `${chartRows.length.toLocaleString()}거래일`, detail: sourceLabel(item.barsSource || item.historySource) },
     { label: "재무 출처", value: sourceLabel(f.source) },
     { label: "누락 지표", value: missing.length ? `${missing.length}개` : "없음", tone: missing.length > 5 ? "warn" : "" },
   ]));

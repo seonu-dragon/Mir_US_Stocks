@@ -1331,7 +1331,7 @@ function renderDataQualityPanel(item) {
   const missing = missingFundamentalFields(f);
   const chartRows = getChartRows(item);
   const source = sourceLabel(f.source);
-  const history = sourceLabel(item.historySource);
+  const history = sourceLabel(item.barsSource || item.historySource);
   const quality = missing.length <= 2 && chartRows.length > 240 ? "good" : missing.length <= 5 ? "warn" : "muted";
   const toneText = quality === "good" ? "양호" : quality === "warn" ? "일부 누락" : "제한적";
   box.innerHTML = `

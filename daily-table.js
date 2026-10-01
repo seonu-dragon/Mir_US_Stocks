@@ -24,6 +24,25 @@ function dtblSourceLabel(item) {
   return "";
 }
 
+// 가격 기준일(스냅샷 priceDate) 행과 확정 전 행 표식. 기준일 행의 종가·거래량은 app.js 의
+// alignKrSessionBar 가 시리즈 단계에서 스냅샷 값으로 맞춰 두고(차트·시세정보와 같은 값),
+// 여기서는 전일대비를 머리글과 같은 기준으로 낸다.
+function dtblRowOptions(item, rowsAll, kr) {
+  const core = window.MirDailyTable;
+  const priceDate = /^\d{4}-\d{2}-\d{2}$/.test(String(item.priceDate || "")) ? String(item.priceDate) : "";
+  const opts = { priceDate, reconciled: false };
+  if (!priceDate) return opts;
+  opts.provisional = (d) => core.provisionalLabel(d, { market: kr ? "kr" : "us", priceDate });
+  const idx = rowsAll.findIndex((r) => r && String(r.d || "").slice(0, 10) === priceDate);
+  const price = Number(item.price);
+  if (idx < 0 || !(price > 0) || Math.abs(Number(rowsAll[idx].c) - price) > 1e-6 * price) return opts;
+  opts.reconciled = true;
+  const prevBar = idx > 0 ? Number(rowsAll[idx - 1].c) : null;
+  const prevClose = core.snapshotPrevClose(price, item.changePct, prevBar, { kr, etf: typeof isStockEtf === "function" && isStockEtf(item) });
+  if (prevClose !== null) opts.prevClose = prevClose;
+  return opts;
+}
+
 function renderDailyTable(item, options = {}) {
   const host = byId("dailyPriceTable");
   const core = window.MirDailyTable;
@@ -32,7 +51,8 @@ function renderDailyTable(item, options = {}) {
   // 종가만 있는 종목(closeSeries)은 시가·고가·저가가 합성값이라 표를 띄우지 않는다.
   if (!Array.isArray(series) || series.length < 2) { dtblHide(host); _dtblState.key = ""; return; }
   const last = series[series.length - 1];
-  const key = `${item.ticker}|${series.length}|${Array.isArray(last) ? last.join(",") : JSON.stringify(last)}`;
+  // 장중 → 잠정 표식은 시각에 따라 바뀌므로 분 단위 시각도 키에 넣는다(같은 분 안의 재호출만 건너뛴다).
+  const key = `${item.ticker}|${series.length}|${Array.isArray(last) ? last.join(",") : JSON.stringify(last)}|${item.priceDate || ""}|${item.price || ""}|${Math.floor(Date.now() / 60000)}`;
   if (item.ticker !== _dtblState.ticker) _dtblState = { key: "", shown: DTBL_PAGE, ticker: item.ticker };
   if (!options.force && key === _dtblState.key && !host.hidden) return;
   _dtblState.key = key;
@@ -41,15 +61,19 @@ function renderDailyTable(item, options = {}) {
   if (rowsAll.some((r) => r && r.synthetic)) { dtblHide(host); return; }
   const kr = dtblIsKr();
   const shown = Math.min(DTBL_MAX, _dtblState.shown);
-  const rows = core.buildDailyRows(rowsAll, shown);
+  const opts = dtblRowOptions(item, rowsAll, kr);
+  const rows = core.buildDailyRows(rowsAll, shown, opts);
   if (!rows.length) { dtblHide(host); return; }
   const total = Math.min(DTBL_MAX, rowsAll.filter((r) => r && Number(r.c) > 0).length);
 
   const body = rows.map((r) => {
     const ch = core.fmtChange(r.change, r.pct, kr);
     const cls = ch.dir === "up" ? "pos" : ch.dir === "down" ? "neg" : "";
-    return `<tr>
-      <td class="dtbl-date"><span class="dtbl-d-long">${escapeHtml(core.fmtDate(r.d))}</span><span class="dtbl-d-short">${escapeHtml(core.fmtDateShort(r.d))}</span></td>
+    const tag = r.provisional
+      ? ` <span class="dtbl-tag" title="${r.provisional === "장중" ? "정규장 진행 중 — 종가가 아니라 현재까지의 값" : "확정 종가 반영 전 값"}">${escapeHtml(r.provisional)}</span>`
+      : "";
+    return `<tr${r.provisional ? ` class="dtbl-provisional"` : ""}>
+      <td class="dtbl-date"><span class="dtbl-d-long">${escapeHtml(core.fmtDate(r.d))}</span><span class="dtbl-d-short">${escapeHtml(core.fmtDateShort(r.d))}</span>${tag}</td>
       <td class="num dtbl-close">${escapeHtml(core.fmtPrice(r.c, kr))}</td>
       <td class="num dtbl-chg ${cls}">${escapeHtml(ch.text)}</td>
       <td class="num dtbl-ohl">${escapeHtml(core.fmtPrice(r.o, kr))}</td>
@@ -64,13 +88,25 @@ function renderDailyTable(item, options = {}) {
     : "";
   const src = dtblSourceLabel(item);
   const unit = kr ? "원 · 주" : "USD · 주";
-  host.innerHTML = `<div class="fundamental-head"><h3>일별 시세</h3><span>기준 ${escapeHtml(core.fmtDate(rows[0].d))} · 단위 ${unit}</span></div>
+  // 머리 기준일 = 확정 종가가 있는 가장 최근 날짜. 그 위의 장중·잠정 봉은 따로 적는다.
+  const firstFinal = rows.find((r) => !r.provisional);
+  const live = rows.filter((r) => r.provisional);
+  const asOf = [
+    firstFinal ? `기준 ${core.fmtDate(firstFinal.d)} 종가` : "",
+    live.length ? `${core.fmtDate(live[0].d)} ${live[0].provisional}` : "",
+    `단위 ${unit}`,
+  ].filter(Boolean).join(" · ");
+  const official = rows.find((r) => r.official);
+  const officialNote = kr && official && opts.reconciled
+    ? ` · ${core.fmtDate(official.d)} 종가·거래량은 네이버 금융(KRX 정규장) 기준`
+    : "";
+  host.innerHTML = `<div class="fundamental-head"><h3>일별 시세</h3><span>${escapeHtml(asOf)}</span></div>
     <div class="table-wrap"><table class="dtbl-table">
       <thead><tr><th scope="col">날짜</th><th scope="col" class="num">종가</th><th scope="col" class="num">전일대비</th><th scope="col" class="num dtbl-ohl">시가</th><th scope="col" class="num dtbl-ohl">고가</th><th scope="col" class="num dtbl-ohl">저가</th><th scope="col" class="num">거래량</th></tr></thead>
       <tbody>${body}</tbody>
     </table></div>
     ${more}
-    <p class="dtbl-foot">일봉 종가 기준${src ? ` · 출처 ${escapeHtml(src)}` : ""} · 과거 가격은 액면분할이 반영된 수정 가격일 수 있음</p>`;
+    <p class="dtbl-foot">일봉 종가 기준${src ? ` · 출처 ${escapeHtml(src)}` : ""}${escapeHtml(officialNote)}${live.length ? " · 장중·잠정 행은 확정 종가가 아님" : ""} · 과거 가격은 액면분할이 반영된 수정 가격일 수 있음</p>`;
   host.hidden = false;
 }
 

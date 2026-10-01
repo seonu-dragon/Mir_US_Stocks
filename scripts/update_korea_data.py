@@ -586,6 +586,43 @@ def align_last_bar_to_close(rows: list, quote_date: str | None, close: float | N
     return True
 
 
+def rows_through_quote_date(rows: list, quote_date: str | None) -> list:
+    """시세 기준일(네이버 localTradedAt)보다 뒤 날짜의 야후 봉을 뺀다.
+
+    헤더·등락률·거래량은 네이버 기준일 값인데, 그보다 새 봉이 남으면 make_stock 이 그 봉을 '마지막 봉'으로
+    보고 기준일 가격을 덮어쓴다(새벽·개장 전 실행에서 야후가 다음 날 봉을 먼저 줄 때). 빠진 봉은 다음
+    실행의 증분 수집이 다시 채운다. 날짜가 없는 행은 판단할 수 없어 그대로 둔다.
+    """
+    if not rows or not quote_date:
+        return rows
+    kept = [row for row in rows if not row.get("date") or str(row["date"])[:10] <= quote_date]
+    return kept if len(kept) >= 2 else rows
+
+
+def prepare_session_rows(meta: dict, rows: list) -> tuple[list, bool]:
+    """make_stock 직전, 실측 이력(yahoo/yahoo-cache) 일봉을 네이버 시세 기준일에 맞춘다. (rows, 종가 맞춤 여부).
+
+    1) 기준일보다 뒤 날짜 봉은 뺀다(rows_through_quote_date).
+    2) 기준일 봉이 없으면(야후가 그날 봉을 아직 안 줌) make_stock 이 마지막 봉 종가를 덮어쓰지 않고 가격을
+       다음 날 값으로 이어 붙이게 meta["priceDate"] 를 넘긴다(US 와 같은 sessionBarMissing 경로). 기준일
+       거래량이 0 이면(개장 전 등 그날 체결이 없음) 이어 붙일 세션이 없으므로 켜지 않는다 — 전날 종가가
+       두 번 들어간다.
+    3) 기준일 봉이 있으면 종가를 KRX 종가로 맞춘다(align_last_bar_to_close).
+    합성 이력(snapshot)은 날짜가 지어낸 값이라 건드리지 않는다.
+    """
+    if meta.get("historySource") not in {"yahoo", "yahoo-cache"}:
+        return rows, False
+    quote_date = meta.get("quoteDate")
+    if quote_date:
+        rows = rows_through_quote_date(rows, quote_date)
+        if (meta.get("quoteVolume") or 0) > 0:
+            meta["priceDate"] = quote_date
+    fixed = False
+    if meta.get("quotePrice"):
+        fixed = align_last_bar_to_close(rows, quote_date, meta.get("quotePrice"))
+    return rows, fixed
+
+
 def fetch_market_page(sosok: int, page: int) -> list[dict]:
     """sosok: 0=KOSPI, 1=KOSDAQ. m.stock.naver.com 시가총액 순 목록(페이지당 100건)."""
     market = "kospi" if sosok == 0 else "kosdaq"
@@ -1238,9 +1275,7 @@ def build_one(meta: dict):
         if news:
             meta["news"] = news
 
-    lastbar_fixed = False
-    if meta.get("historySource") in {"yahoo", "yahoo-cache"} and meta.get("quotePrice"):
-        lastbar_fixed = align_last_bar_to_close(rows, meta.get("quoteDate"), meta.get("quotePrice"))
+    rows, lastbar_fixed = prepare_session_rows(meta, rows)
     stock = UD.make_stock(meta, rows)
     if lastbar_fixed:
         stock["lastBarSource"] = "krx-close"     # 마지막 봉 종가를 KRX 종가(네이버)로 맞췄다
@@ -1256,8 +1291,11 @@ def build_one(meta: dict):
     stock["marketCapT"] = round(meta.get("marketCapT") or 0, 3)
     stock["marketCapB"] = stock["marketCapT"]
     stock["currency"] = "KRW"
-    # 가격 기준 거래일(KST). make_stock 에 meta["priceDate"] 로 넘기지 않는 이유: 그 경로는 US 의
-    # '기준일 봉 누락' 보정(가격을 다음 날 값으로 이어 붙임)을 켠다 — KR 이력 규칙은 그대로 둔다.
+    # 가격 기준 거래일(KST). 실측 이력 종목은 위에서 meta["priceDate"] 로도 넘겨 make_stock 의 '기준일 봉
+    # 누락' 보정을 켠다. 예전엔 KR 에서 이 보정을 꺼 두었는데, 그러면 make_stock 이 **날짜와 무관하게**
+    # 마지막 봉 종가를 현재가로 덮어써, 야후가 기준일 봉을 빠뜨린 실행(2026-09-30·10-01 03시대 KST)마다
+    # 전날 봉에 오늘 종가가 붙고 전날 종가가 closeSeries 에서 사라졌다(005930: 09-29 봉 272,500 →
+    # 269,500, 09-30 봉 없음). 합성 이력(snapshot)은 날짜가 지어낸 값이라 그대로 둔다.
     if meta.get("quoteDate"):
         stock["priceDate"] = meta["quoteDate"]
     if stock.get("market") != "etf":

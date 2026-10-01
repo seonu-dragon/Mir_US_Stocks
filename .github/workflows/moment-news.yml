@@ -56,6 +56,10 @@ jobs:
             --max-queries "${{ github.event.inputs.max_queries || '1200' }}" \
             --push
 
+      - name: Freshness gate
+        if: ${{ !cancelled() }}
+        run: python scripts/check_data_freshness.py --group moment-news
+
       - name: Notify failure (Telegram)
         if: failure()
         continue-on-error: true

@@ -44,7 +44,7 @@ KR (추적 종목 비ETF)
   py scripts/build_event_study.py                      # 두 시장 수집 + 경로 재계산
   py scripts/build_event_study.py --market us --push
   py scripts/build_event_study.py --no-fetch           # 아카이브로 경로만 재계산
-  py scripts/build_event_study.py --kr-quarters 21     # DART 5년치 한 번에(약 2,800회 호출)
+  py scripts/build_event_study.py --kr-quarters 21     # DART 5년치 한 번에(약 2,800회 호출 — 처음 한 번만)
 """
 
 from __future__ import annotations
@@ -596,6 +596,41 @@ def kr_quarters(today: date, n_years: int = 5):
     return out
 
 
+KR_REFETCH_OVERLAP_DAYS = 7   # 진행 중 분기를 이어 받을 때 직전 수집일보다 이만큼 앞부터(늦게 색인된 공시 대비)
+
+
+def quarter_end(label: str) -> date:
+    y, q = int(label[:4]), int(label[-1])
+    return date(y + (1 if q == 4 else 0), 1 if q == 4 else q * 3 + 1, 1) - timedelta(days=1)
+
+
+def kr_fetch_plan(qs, done: dict, n_quarters: int):
+    """이번 실행에서 받을 (bgn, end, label) 목록 — DART 호출을 최소화한다.
+
+    - 분기가 끝난 '뒤'에 받은 분기(수집일 > 분기 말일)는 완료: 다시 받지 않는다(접수일 기준 목록이라
+      분기가 끝나면 더 늘지 않는다). 예전엔 최근 2분기를 매주 통째로 다시 받아 한 분기 내내 직전 분기
+      전체(수백 콜)를 반복했다.
+    - 끝나기 전에 받은 분기(진행 중 포함)는 직전 수집일 − KR_REFETCH_OVERLAP_DAYS 부터만 받는다.
+    - 안 받은 분기는 최근부터. 전체 개수는 max(2, n_quarters) 로 자른다.
+    """
+    plan = []
+    for bgn, end, label in qs:
+        stamp = str(done.get(label) or "")[:10]
+        if not stamp:
+            plan.append((bgn, end, label))
+            continue
+        try:
+            fetched = date.fromisoformat(stamp)
+        except ValueError:
+            plan.append((bgn, end, label))
+            continue
+        if fetched > quarter_end(label):
+            continue
+        resume = (fetched - timedelta(days=KR_REFETCH_OVERLAP_DAYS)).strftime("%Y%m%d")
+        plan.append((max(bgn, resume), end, label))
+    return plan[: max(2, n_quarters)]
+
+
 def kr_tracked():
     snap = read_json(ROOT / "data" / "korea" / "market_snapshot.json", {}) or {}
     out = {}
@@ -606,6 +641,18 @@ def kr_tracked():
         if code != "000000":
             out[code] = s
     return out
+
+
+KR_DART_STALE_DAYS = 15   # DART 한도 초과로 KR 수집을 건너뛴 게 이보다 오래 이어지면 exit 1(텔레그램)
+
+
+def kr_dart_age_days(archive: dict, today: date | None = None) -> int | None:
+    stamp = str(archive.get("dartFetchedAtKst") or "")[:10]
+    try:
+        fetched = date.fromisoformat(stamp)
+    except ValueError:
+        return None
+    return ((today or datetime.now(KST).date()) - fetched).days
 
 
 def collect_kr(archive: dict, args) -> tuple[dict, bool]:
@@ -619,19 +666,35 @@ def collect_kr(archive: dict, args) -> tuple[dict, bool]:
         return {**archive, "events": sorted(events.values(), key=lambda e: (e["d"], e["key"]))}, False
     tracked = kr_tracked()
     qs = kr_quarters(datetime.now(KST).date())
-    # 최근 2분기는 늘 다시 받는다(분기 중간에 받은 건 미완). 나머지는 안 받은 분기만, 최근부터.
-    todo = [q for i, q in enumerate(qs) if i < 2 or q[2] not in done][: max(2, args.kr_quarters)]
+    # 끝난 뒤에 한 번 다 받은 분기는 다시 안 받는다. 진행 중이거나 끝나기 전에 받은 분기는
+    # 직전 수집일 − 7일부터만(접수일 기준이라 그 앞은 이미 다 받았다). 안 받은 분기는 최근부터.
+    todo = kr_fetch_plan(qs, done, args.kr_quarters)
     healthy = True
+    rate_limited = False
     for bgn, end, label in todo:
+        if rate_limited:
+            break
         n_before = len(events)
         errors = 0
         for cls in ("Y", "K"):
+            if rate_limited:
+                break
             for ty in ("B", "I"):
+                if rate_limited:
+                    break
                 page = 1
                 while page <= 400:
                     try:
                         data = dart_get("list.json", {"bgn_de": bgn, "end_de": end, "corp_cls": cls, "pblntf_ty": ty,
                                                       "page_no": str(page), "page_count": "100"}, key)
+                    except SystemExit as exc:
+                        # DART 020(일일 한도 초과) — 남은 호출을 포기하되 프로세스는 살려 둔다.
+                        # 받은 이벤트는 실제 공시라 아카이브에 더해도 되고, 이 분기는 완료로 찍지 않으니
+                        # 다음 실행이 다시 받는다. US 결과와 직전 KR 아카이브로 경로는 계속 만든다.
+                        print(f"  [kr] {label} {cls}/{ty} p{page}: {exc}")
+                        rate_limited = True
+                        errors += 1
+                        break
                     except Exception as exc:
                         print(f"  [kr] {label} {cls}/{ty} p{page} 실패: {exc}")
                         errors += 1
@@ -670,8 +733,12 @@ def collect_kr(archive: dict, args) -> tuple[dict, bool]:
     missing = [q[2] for q in qs if q[2] not in done]
     if missing:
         print(f"[kr] 아직 안 받은 분기 {len(missing)}개: {', '.join(missing[:6])}{'…' if len(missing) > 6 else ''}")
-    return {**archive, "events": sorted(events.values(), key=lambda e: (e["d"], e["key"])), "dartQuarters": done,
-            "dartMissing": missing, "dartFetchedAtKst": now_kst_str() if healthy else archive.get("dartFetchedAtKst")}, healthy
+    out = {**archive, "events": sorted(events.values(), key=lambda e: (e["d"], e["key"])), "dartQuarters": done,
+           "dartMissing": missing, "dartFetchedAtKst": now_kst_str() if healthy else archive.get("dartFetchedAtKst")}
+    out.pop("dartRateLimitedAtKst", None)
+    if rate_limited:
+        out["dartRateLimitedAtKst"] = now_kst_str()
+    return out, healthy
 
 
 def accrue_kr(events: dict) -> None:
@@ -859,6 +926,10 @@ def build_outputs(results: dict, archives: dict) -> tuple[dict, list[str]]:
             "universe": a.get("universe"), "collectedAtKst": a.get("secFetchedAtKst") if m == "us" else a.get("dartFetchedAtKst"),
             "dartMissing": a.get("dartMissing") if m == "kr" else None,
         }
+        if m == "kr" and a.get("dartRateLimitedAtKst"):
+            # 이번 실행은 DART 한도로 KR 목록을 다 못 받았다 — collectedAtKst 는 마지막 정상 수집 시각 그대로.
+            markets[m]["partial"] = True
+            markets[m]["dartRateLimitedAtKst"] = a["dartRateLimitedAtKst"]
     index = {
         "updatedAtKst": now_kst_str(),
         "source": "SEC EDGAR submissions · DART 공시 목록 · Mir 공시 데이터(적립) · 가격: 종목 상세 일봉(Yahoo)",
@@ -891,7 +962,7 @@ def main() -> int:
     ap.add_argument("--market", choices=["us", "kr", "all"], default="all")
     ap.add_argument("--no-fetch", action="store_true", help="수집 없이 아카이브로 경로만 재계산")
     ap.add_argument("--us-top", type=int, default=1200, help="US 시총 상위 N 종목(실측 이력·비ETF)")
-    ap.add_argument("--kr-quarters", type=int, default=6, help="이번 실행에서 받을 DART 분기 수(최근 2분기 포함)")
+    ap.add_argument("--kr-quarters", type=int, default=6, help="이번 실행에서 받을 DART 분기 수 상한(완료된 분기는 건너뜀)")
     ap.add_argument("--pct-budget", type=int, default=300, help="13D 지분율 XML 조회 상한")
     ap.add_argument("--push", action="store_true")
     args = ap.parse_args()
@@ -916,6 +987,17 @@ def main() -> int:
             ok = False
         else:
             archives[m] = {**new, "market": m, "updatedAtKst": now_kst_str()}
+            if not ok and new.get("dartRateLimitedAtKst"):
+                # DART 일일 한도(020)는 다른 워크플로우·로컬과 키를 나눠 쓰는 데서 오는 일시 상황이다.
+                # 직전 KR 아카이브(+받은 만큼)로 계속 발행하고, KR 수집이 오래 멈췄을 때만 실패로 본다.
+                age = kr_dart_age_days(archives[m])
+                if age is not None and age <= KR_DART_STALE_DAYS:
+                    print(f"::warning::[kr] DART 한도 초과(020) — 직전 KR 이벤트(수집 {age}일 전)로 계속한다. "
+                          f"다음 실행이 이어 받는다.")
+                    ok = True
+                else:
+                    print(f"[kr] DART 한도 초과(020)인데 마지막 정상 수집이 {age}일 전 — 실패로 알린다"
+                          f"(한도 {KR_DART_STALE_DAYS}일)")
         healthy = healthy and ok
 
     results = {}

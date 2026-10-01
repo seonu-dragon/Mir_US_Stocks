@@ -141,3 +141,78 @@ def test_only_listed_paths_are_committed(repo):
     assert "unrelated.txt" in _git(repo, "status", "--porcelain")
     files = _git(repo, "show", "--name-only", "--format=", "HEAD").split()
     assert files == ["data/x.json"]
+
+
+def _other_clone_pushes(repo, tmp_path, rel, text):
+    """다른 워크플로우가 먼저 push 한 상황."""
+    remote = _git(repo, "remote", "get-url", "origin").strip()
+    other = tmp_path / "other"
+    _git(tmp_path, "clone", "-q", remote, str(other))
+    _git(other, "config", "user.email", "o@example.com")
+    _git(other, "config", "user.name", "o")
+    _git(other, "config", "commit.gpgsign", "false")
+    (other / rel).parent.mkdir(parents=True, exist_ok=True)
+    (other / rel).write_text(text, encoding="utf-8")
+    _git(other, "add", ".")
+    _git(other, "commit", "-qm", "other")
+    _git(other, "push", "-q", "origin", "main")
+
+
+def test_unstaged_unrelated_tracked_change_does_not_block_rebase(repo, tmp_path, monkeypatch):
+    """같은 잡의 --push 없는 빌더가 쓴 추적 파일(커밋 안 됨)이 pull --rebase 를 막던 문제(2026-09-29)."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    (repo / "data" / "y.json").write_text('{"y": 0}\n', encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "y")
+    _git(repo, "push", "-q", "origin", "main")
+    _other_clone_pushes(repo, tmp_path, "data/z.json", '{"z": 1}\n')
+    (repo / "data" / "y.json").write_text('{"y": 7}\n', encoding="utf-8")   # 발행 대상 밖, 커밋 안 됨
+    (repo / "data" / "x.json").write_text('{"v": 3}\n', encoding="utf-8")
+    assert sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=1, sleep_s=0) is True
+    # 커밋에는 x.json 만, y.json 변경은 커밋 안 된 채 그대로.
+    assert _git(repo, "show", "--name-only", "--format=", "HEAD").split() == ["data/x.json"]
+    assert (repo / "data" / "y.json").read_text(encoding="utf-8") == '{"y": 7}\n'
+    assert " M data/y.json" in _git(repo, "status", "--porcelain")
+    assert _git(repo, "stash", "list").strip() == ""
+    assert (repo / "data" / "z.json").exists()                               # 원격 변경도 받았다
+
+
+def test_unrelated_change_conflicting_with_remote_keeps_local_without_markers(repo, tmp_path, monkeypatch):
+    """원격도 같은 파일을 바꿨으면 이 잡이 만든 쪽을 남기고, 충돌 표식·스테이징·스태시를 남기지 않는다."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    (repo / "data" / "y.json").write_text('{"y": 0}\n', encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "y")
+    _git(repo, "push", "-q", "origin", "main")
+    _other_clone_pushes(repo, tmp_path, "data/y.json", '{"y": "remote"}\n')
+    (repo / "data" / "y.json").write_text('{"y": "local"}\n', encoding="utf-8")
+    (repo / "data" / "x.json").write_text('{"v": 4}\n', encoding="utf-8")
+    assert sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=1, sleep_s=0) is True
+    text = (repo / "data" / "y.json").read_text(encoding="utf-8")
+    assert text == '{"y": "local"}\n' and "<<<<<<<" not in text
+    assert _git(repo, "diff", "--cached", "--name-only").strip() == ""
+    assert _git(repo, "stash", "list").strip() == ""
+    assert _git(repo, "show", "--name-only", "--format=", "HEAD").split() == ["data/x.json"]
+
+
+def test_local_run_never_stashes_user_changes(repo, tmp_path, monkeypatch):
+    """Actions 밖(로컬)에서는 스태시하지 않는다 — 사용자 미커밋 변경·공유 스태시 스택을 건드리지 않는다(기존 동작)."""
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    (repo / "data" / "y.json").write_text('{"y": 0}\n', encoding="utf-8")
+    _git(repo, "add", ".")
+    _git(repo, "commit", "-qm", "y")
+    _git(repo, "push", "-q", "origin", "main")
+    _other_clone_pushes(repo, tmp_path, "data/z.json", '{"z": 1}\n')
+    (repo / "data" / "y.json").write_text('{"y": "user"}\n', encoding="utf-8")
+    (repo / "data" / "x.json").write_text('{"v": 6}\n', encoding="utf-8")
+    assert sec.git_publish(["data/x.json"], "x", cwd=repo, attempts=1, sleep_s=0) is False
+    assert (repo / "data" / "y.json").read_text(encoding="utf-8") == '{"y": "user"}\n'
+    assert _git(repo, "stash", "list").strip() == ""
+
+
+def test_stash_helper_is_noop_outside_actions(monkeypatch):
+    monkeypatch.delenv("GITHUB_ACTIONS", raising=False)
+    calls = []
+    restore = sec.stash_unrelated_changes(lambda args, **kw: calls.append(args))
+    restore()
+    assert calls == []

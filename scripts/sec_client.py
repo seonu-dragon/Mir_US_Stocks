@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import gzip
 import json
+import os
 import random
 import re
 import time
@@ -384,6 +385,63 @@ def write_data(out_json, out_js, js_var, payload, *, indent=2, allow_empty=False
     )
 
 
+UNRELATED_STASH_MSG = "mir-publish: unrelated working-tree changes"
+
+
+def stash_unrelated_changes(run):
+    """커밋하지 않은(발행 대상 밖) 추적 파일 변경을 잠시 치운다 → 되돌릴 함수를 돌려준다.
+
+    `git pull --rebase` 는 추적 파일에 커밋 안 된 변경이 하나라도 있으면
+    "cannot pull with rebase: You have unstaged changes" 로 바로 죽는다. 한 잡에서
+    `--push` 없는 빌더(수익률 곡선·매크로 등)가 파일을 쓰고, 그걸 한꺼번에 커밋하는
+    스텝(update_data.py)이 실패하면 뒤 스텝들의 발행이 5회 재시도 모두 이렇게 죽었다
+    (2026-09-29 run 36519009402).
+
+    `--autostash` 를 쓰지 않는 이유: 다시 적용할 때 충돌하면 git 이 작업 트리에 충돌
+    표식(<<<<<<<)을 남기고, 다음 스텝의 `git add` 가 그걸 그대로 커밋할 수 있다.
+    여기서는 같은 파일이 원격에서도 바뀌어 충돌하면 **방금 이 잡이 만든 쪽(스태시)** 을
+    고른다 — `-X theirs` 와 같은 원칙. 되돌린 뒤 변경은 원래처럼 '커밋 안 된' 상태로 남고
+    (스테이징 안 함) 커밋 대상은 여전히 `paths` 뿐이다. 프로세스가 중간에 죽어도 변경은
+    `git stash list` 에 남는다(로컬 작업트리에서 돌 때를 위한 안전망).
+    """
+    if os.environ.get("GITHUB_ACTIONS") != "true":
+        # 로컬 작업트리에는 사용자의 미커밋 변경이 많고 스태시 스택은 동시 세션들과 공유된다 —
+        # 로컬 --push 가 사용자 변경을 스태시/팝하지 않도록 Actions 러너에서만 동작한다(로컬은 기존 동작).
+        return lambda: None
+    dirty = run(["status", "--porcelain", "--untracked-files=no"], capture_output=True, text=True,
+                check=True).stdout.strip()
+    if not dirty:
+        return lambda: None
+    run(["stash", "push", "-m", UNRELATED_STASH_MSG], check=True, capture_output=True, text=True)
+    print(f"  [Git] 발행 대상 밖 변경 {len(dirty.splitlines())}개를 잠시 스태시")
+
+    def restore():
+        top = run(["stash", "list", "-1", "--format=%gs"], capture_output=True, text=True, check=False).stdout.strip()
+        if UNRELATED_STASH_MSG not in top:
+            print("  [Git] 경고: 되돌릴 스태시가 맨 위에 없다 — 손대지 않는다(git stash list 확인)")
+            return
+        popped = run(["stash", "pop"], capture_output=True, text=True, check=False)
+        if popped.returncode != 0:
+            conflicted = run(["diff", "--name-only", "--diff-filter=U"], capture_output=True, text=True,
+                             check=False).stdout.split()
+            for f in conflicted:
+                # stash 적용의 theirs = 스태시(이 잡이 만든 쪽). add 로 충돌 표시를 풀고 아래 reset 으로 다시 내린다.
+                if run(["checkout", "--theirs", "--", f], check=False, capture_output=True, text=True).returncode == 0:
+                    run(["add", "--", f], check=False, capture_output=True, text=True)
+            still = run(["diff", "--name-only", "--diff-filter=U"], capture_output=True, text=True,
+                        check=False).stdout.split()
+            run(["reset", "-q"], check=False, capture_output=True, text=True)
+            if conflicted and not still:
+                run(["stash", "drop"], check=False, capture_output=True, text=True)
+                print(f"  [Git] 스태시 되돌림 충돌 {len(conflicted)}개 — 이 잡이 만든 쪽으로 복원")
+            else:
+                print("  [Git] 경고: 스태시를 되돌리지 못했다 — git stash list 에 남겨 둔다")
+        else:
+            run(["reset", "-q"], check=False, capture_output=True, text=True)
+
+    return restore
+
+
 def git_publish(paths, label, *, cwd=None, attempts=5, sleep_s=10.0, backoff=2.0):
     """data 경로들을 커밋·푸시. paths: 레포 루트 기준 상대경로 리스트.
 
@@ -413,26 +471,31 @@ def git_publish(paths, label, *, cwd=None, attempts=5, sleep_s=10.0, backoff=2.0
     if status.stdout.strip():
         stamp = datetime.now(KST).strftime("%Y-%m-%d %H:%M")
         run(["commit", "-m", f"Auto-update {label}: {stamp}", "--", *paths], check=True)
-    for attempt in range(1, attempts + 1):
-        try:
-            run(["fetch", "origin", branch], check=True)
-            # 이 헬퍼를 쓰는 빌더는 모두 매 실행마다 데이터 파일을 통째로
-            # 재생성한다. 다른 워크플로우가 먼저 push 해 충돌하면 방금 만든
-            # 우리 버전을 채택한다(-X theirs 는 rebase 에서 replay 중인 로컬
-            # 커밋을 가리킨다). schedule_store 와 같은 전략.
-            run(["pull", "--rebase", "-X", "theirs", "origin", branch], check=True)
-            run(["push", "origin", branch], check=True)
-            print(f"  [Git] origin/{branch} {label} 푸시 완료")
-            return True
-        except Exception as error:
-            # 실패한 rebase 가 중간 상태로 남으면 다음 시도의 pull 이
-            # "unmerged files" 로 죽어 재시도가 전부 무의미해진다. 정리 후 재시도.
-            run(["rebase", "--abort"], capture_output=True, text=True, check=False)
-            if attempt < attempts:
-                print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
-                if sleep_s:
-                    time.sleep(sleep_s * (backoff ** (attempt - 1)))
-    return False
+    # 발행 대상 밖의 커밋 안 된 변경(같은 잡의 --push 없는 빌더 산출물 등)이 pull --rebase 를 막지 않게.
+    restore = stash_unrelated_changes(run)
+    try:
+        for attempt in range(1, attempts + 1):
+            try:
+                run(["fetch", "origin", branch], check=True)
+                # 이 헬퍼를 쓰는 빌더는 모두 매 실행마다 데이터 파일을 통째로
+                # 재생성한다. 다른 워크플로우가 먼저 push 해 충돌하면 방금 만든
+                # 우리 버전을 채택한다(-X theirs 는 rebase 에서 replay 중인 로컬
+                # 커밋을 가리킨다). schedule_store 와 같은 전략.
+                run(["pull", "--rebase", "-X", "theirs", "origin", branch], check=True)
+                run(["push", "origin", branch], check=True)
+                print(f"  [Git] origin/{branch} {label} 푸시 완료")
+                return True
+            except Exception as error:
+                # 실패한 rebase 가 중간 상태로 남으면 다음 시도의 pull 이
+                # "unmerged files" 로 죽어 재시도가 전부 무의미해진다. 정리 후 재시도.
+                run(["rebase", "--abort"], capture_output=True, text=True, check=False)
+                if attempt < attempts:
+                    print(f"  [Git] 푸시 시도 {attempt} 실패: {error}")
+                    if sleep_s:
+                        time.sleep(sleep_s * (backoff ** (attempt - 1)))
+        return False
+    finally:
+        restore()
 
 
 CARRY_EXPIRY_DAYS = 14

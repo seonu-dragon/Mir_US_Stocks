@@ -454,9 +454,7 @@ export async function handleFetch(request, env) {
         ...benchmarks.map(([sym]) => fetchChart(sym)),
       ]);
       const companyLabel = company || ticker;
-      const newsResult = kr
-        ? await fetchHistoricalNewsKorean(env, ticker, companyLabel, eventDate)
-        : await fetchHistoricalNews(env, ticker, companyLabel, eventDate);
+      const newsResult = await moveAnalysisNews(env, ticker, symbol, companyLabel, eventDate, kr);
       const benchLabels = Object.fromEntries(benchmarks);
       const marketContext = {};
       benchmarks.forEach(([sym], i) => { marketContext[sym] = chartMoveContext(benchCharts[i], eventDate); });
@@ -686,118 +684,6 @@ function parseGoogleNewsRss(xml) {
     })(),
     provider: "Google News",
   })).filter((item) => item.title && item.link);
-}
-
-async function fetchGoogleNewsRss(ticker, company, from, to, isKr = false) {
-  try {
-    const companyTerm = String(company || "").trim();
-    const after = shiftIsoDate(from, -1);
-    const before = shiftIsoDate(to, 1);
-    // Korean stocks: the numeric code isn't searchable, so query the (Korean)
-    // company name in the Korean locale; US: company name and/or ticker in English.
-    if (isKr) {
-      const term = companyTerm || ticker;
-      const query = `\"${term}\" 주가 after:${after} before:${before}`;
-      const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=ko&gl=KR&ceid=KR:ko`;
-      const response = await fetchT(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
-      if (!response.ok) return [];
-      return parseGoogleNewsRss(await response.text());
-    }
-    const identity = companyTerm && companyTerm.toUpperCase() !== ticker
-      ? `(\"${companyTerm}\" OR \"${ticker}\")`
-      : `\"${ticker}\"`;
-    const query = `${identity} stock after:${after} before:${before}`;
-    const endpoint = `https://news.google.com/rss/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`;
-    const response = await fetchT(endpoint, { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } });
-    if (!response.ok) return [];
-    return parseGoogleNewsRss(await response.text());
-  } catch (error) {
-    return [];
-  }
-}
-async function fetchGdeltNews(ticker, company, from, to) {
-  try {
-    const companyTerm = String(company || "").trim();
-    const query = companyTerm && companyTerm.toUpperCase() !== ticker
-      ? `\"${companyTerm}\" OR \"${ticker}\"`
-      : `\"${ticker}\"`;
-    const startdatetime = `${from.replace(/-/g, "")}000000`;
-    const enddatetime = `${to.replace(/-/g, "")}235959`;
-    const endpoint = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=75&format=json&sort=HybridRel&startdatetime=${startdatetime}&enddatetime=${enddatetime}`;
-    const response = await fetchT(endpoint, { headers: UA });
-    if (!response.ok) return [];
-    const payload = await response.json();
-    return (payload.articles || []).map((item) => ({
-      title: item.title || "",
-      summary: "",
-      publisher: item.domain || item.sourcecountry || "GDELT",
-      link: item.url || "",
-      publishedAt: normalizeGdeltDate(item.seendate),
-      provider: "GDELT",
-    }));
-  } catch (error) {
-    return [];
-  }
-}
-
-async function historicalNewsWindow(env, ticker, company, eventDate, days) {
-  const from = shiftIsoDate(eventDate, -days);
-  const to = shiftIsoDate(eventDate, days);
-  const [finnhub, googleNews] = await Promise.all([
-    fetchFinnhubNews(env, ticker, from, to),
-    fetchGoogleNewsRss(ticker, company, from, to),
-  ]);
-  let ranked = rankHistoricalNews([...finnhub, ...googleNews], ticker, company, eventDate);
-  if (ranked.length < 3) {
-    const gdelt = await fetchGdeltNews(ticker, company, from, to);
-    ranked = rankHistoricalNews([...ranked, ...gdelt], ticker, company, eventDate);
-  }
-  return ranked;
-}
-
-async function fetchHistoricalNews(env, ticker, company, eventDate) {
-  let windowDays = 2;
-  let news = await historicalNewsWindow(env, ticker, company, eventDate, windowDays);
-  if (news.length < 3) {
-    windowDays = 7;
-    news = await historicalNewsWindow(env, ticker, company, eventDate, windowDays);
-  }
-  // 여기선 위에서 이미 Finnhub 를 쓴다(historicalNewsWindow) — 야후는 폴백이 아니라
-  // 추가 소스로 섞고 rankHistoricalNews 가 관련도로 거른다. 그래서 야후를 직접 부른다.
-  const yahoo = await fetchNewsFromYahoo(ticker);
-  news = rankHistoricalNews([...news, ...yahoo.map((item) => ({ ...item, provider: "Yahoo" }))], ticker, company, eventDate);
-  const providers = [...new Set(news.map((item) => item.provider).filter(Boolean))];
-  return { news, providers, windowDays };
-}
-
-// Korean price-event news. Google News (Korean locale) + GDELT both support a
-// date window, which the Naver stock-news API does not (it only pages backwards
-// from today). Naver recent news is added as a supplement for recent events.
-async function historicalNewsWindowKorean(ticker, company, eventDate, days) {
-  const from = shiftIsoDate(eventDate, -days);
-  const to = shiftIsoDate(eventDate, days);
-  const [googleNews, gdelt] = await Promise.all([
-    fetchGoogleNewsRss(ticker, company, from, to, true),
-    fetchGdeltNews(ticker, company, from, to),
-  ]);
-  return rankHistoricalNews([...googleNews, ...gdelt], ticker, company, eventDate);
-}
-
-async function fetchHistoricalNewsKorean(env, ticker, company, eventDate) {
-  let windowDays = 3;
-  let news = await historicalNewsWindowKorean(ticker, company, eventDate, windowDays);
-  if (news.length < 3) {
-    windowDays = 8;
-    news = await historicalNewsWindowKorean(ticker, company, eventDate, windowDays);
-  }
-  // For recent events Naver's stock news API is dense and reliable — fold it in.
-  const naver = await fetchNaverNews(ticker);
-  news = rankHistoricalNews(
-    [...news, ...naver.map((item) => ({ ...item, provider: "Naver" }))],
-    ticker, company, eventDate,
-  );
-  const providers = [...new Set(news.map((item) => item.provider).filter(Boolean))];
-  return { news, providers, windowDays };
 }
 
 function evidenceConfidence(news, eventDate) {
@@ -1669,7 +1555,57 @@ async function eventNewsGdelt(ticker, company, from, to) {
   }));
 }
 
+// ----- 미리 모은 큰 등락일 뉴스(GitHub Actions build_moment_news.py → Pages data/moment_news) -----
+// 미국 시총 상위 500·국내 상위 200 의 최근 3년 큰 등락일마다 구글 뉴스 ±2일 상위 3건. 러너에선 구글 뉴스가
+// 잘 되므로 거기서 모으고, 워커는 Pages 의 종목 샤드만 읽는다(구글·GDELT 가 Cloudflare 에서 시간 초과라).
+// 샤드 = crc32(코드) % 64 — 빌더 zlib.crc32 · 화면 MirEventStudyCore.shardOf 와 같은 값.
+export const MOMENT_NEWS_SHARDS = 64;
+export function crc32Shard(code, shards = MOMENT_NEWS_SHARDS) {
+  let c = ~0 >>> 0;
+  const bytes = new TextEncoder().encode(String(code));
+  for (let i = 0; i < bytes.length; i += 1) {
+    c ^= bytes[i];
+    for (let k = 0; k < 8; k += 1) c = (c >>> 1) ^ (0xEDB88320 & -(c & 1));
+  }
+  return ((c ^ ~0) >>> 0) % shards;
+}
+
+function momentNewsCode(ticker, isKr) {
+  return isKr ? String(ticker).replace(/\.(KS|KQ)$/i, "") : String(ticker).toUpperCase();
+}
+
+// { checked: 그 날짜를 미리 검색했는가(0건 포함), news: [{title, publisher, link, publishedAt, provider}] }
+async function fetchMomentNews(ticker, isKr, eventDate) {
+  const code = momentNewsCode(ticker, isKr);
+  const m = isKr ? "kr" : "us";
+  const url = `${MIR_PAGES_DATA_BASE}/moment_news/${m}_${String(crc32Shard(code)).padStart(2, "0")}.json`;
+  try {
+    const r = await fetchT(url, { headers: { Accept: "application/json" }, cf: { cacheTtl: 1800 } }, 4000);
+    if (!r.ok) return { checked: false, news: [] };
+    const data = await r.json();
+    const byDate = data && data.t && data.t[code];
+    if (!byDate || !Object.prototype.hasOwnProperty.call(byDate, eventDate)) return { checked: false, news: [] };
+    const rows = Array.isArray(byDate[eventDate]) ? byDate[eventDate] : [];
+    const news = rows.filter(Array.isArray).map((row) => {
+      const link = String(row[2] || "");
+      return {
+        title: String(row[0] || ""), summary: "", publisher: String(row[1] || ""),
+        link: link.startsWith("g:") ? `https://news.google.com/rss/articles/${link.slice(2)}?oc=5` : link,
+        publishedAt: String(row[3] || eventDate), provider: "Google News(미리 수집)",
+      };
+    }).filter((item) => item.title && /^https?:\/\//i.test(item.link));
+    return { checked: true, news };
+  } catch (e) {
+    return { checked: false, news: [] };
+  }
+}
+
 async function eventNewsPayload(env, ticker, symbol, isKr, eventDate) {
+  const pre = await fetchMomentNews(ticker, isKr, eventDate);
+  if (pre.checked) {
+    const news = pre.news.slice(0, 5).map(({ title, publisher, publishedAt, link }) => ({ title, publisher, publishedAt, link }));
+    return { ticker, date: eventDate, company: "", news, providers: news.length ? ["Google News(미리 수집)"] : [], diag: { moment_news: `ok ${news.length}` } };
+  }
   const company = await resolveCompanyName(ticker, symbol, isKr);
   const from = shiftIsoDate(eventDate, -2);
   const to = shiftIsoDate(eventDate, 2);
@@ -1691,6 +1627,29 @@ async function eventNewsPayload(env, ticker, symbol, isKr, eventDate) {
     }));
   const diag = Object.fromEntries(sources.map((s) => [s.name, s.diag]));
   return { ticker, date: eventDate, company, news, providers: [...new Set(ranked.map((i) => i.provider).filter(Boolean))], diag };
+}
+
+// move_analysis 용 뉴스. 예전(fetchHistoricalNews*)은 ±2일 → 부족하면 ±7일, 소스를 차례로 8초씩 불러
+// Cloudflare 에서 구글·GDELT 가 시간 초과로 끝나면 30초 넘게 걸리고 비었다(2026-10-01). 순서:
+// 1) 미리 모은 기사(있으면 구글·GDELT 생략) 2) 없으면 구글·GDELT 를 ±3일 동시 5초.
+// 어느 쪽이든 Finnhub(미국, 키 있을 때)·최근 뉴스(미국 야후 / 국내 네이버)를 더해 관련도로 고른다.
+async function moveAnalysisNews(env, ticker, symbol, company, eventDate, isKr) {
+  const pre = await fetchMomentNews(ticker, isKr, eventDate);
+  const code = momentNewsCode(ticker, isKr);
+  const from = shiftIsoDate(eventDate, pre.news.length ? -2 : -3);
+  const to = shiftIsoDate(eventDate, pre.news.length ? 2 : 3);
+  const tasks = [
+    isKr ? fetchNaverNews(ticker).then((rows) => rows.map((item) => ({ ...item, provider: "Naver" }))) : fetchNewsFromYahoo(symbol).then((rows) => rows.map((item) => ({ ...item, provider: "Yahoo" }))),
+  ];
+  if (!isKr && env && env.FINNHUB_API_KEY) tasks.push(fetchFinnhubNews(env, symbol, from, to));
+  if (!pre.news.length) {
+    tasks.push(eventNewsSource("google", () => eventNewsGoogle(isKr ? code : symbol, company, from, to, isKr)).then((s) => s.items));
+    tasks.push(eventNewsSource("gdelt", () => eventNewsGdelt(isKr ? code : symbol, company, from, to)).then((s) => s.items));
+  }
+  const settled = await Promise.all(tasks.map((t) => t.catch(() => [])));
+  const news = rankHistoricalNews([...pre.news, ...settled.flat()], isKr ? code : symbol, company, eventDate);
+  const providers = [...new Set(news.map((item) => item.provider).filter(Boolean))];
+  return { news, providers, windowDays: pre.news.length ? 2 : 3 };
 }
 
 async function fetchChart(symbol) {

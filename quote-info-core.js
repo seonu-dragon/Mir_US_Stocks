@@ -117,7 +117,9 @@
   // KR 은 빌더가 종가로 산출(attach_week52_from_history), US 는 소스(나스닥)가 장중 고저다.
   function week52Range(series, opts) {
     const o = opts || {};
-    const rows = barRows(series).slice(-WEEK52_BARS);
+    // 가격 기준일보다 새 봉(장중·잠정)은 넣지 않는다 — 기준일 현재가와 날짜가 어긋난다.
+    const pd = /^\d{4}-\d{2}-\d{2}/.test(String(o.priceDate || "")) ? String(o.priceDate).slice(0, 10) : "";
+    const rows = barRows(series).filter((r) => !pd || !r[5] || String(r[5]).slice(0, 10) <= pd).slice(-WEEK52_BARS);
     if (rows.length < MIN_WEEK52_BARS) return null;
     const closeBasis = o.basis === "close";
     let high = -Infinity, low = Infinity, highDate = null, lowDate = null;
@@ -136,17 +138,27 @@
   }
 
   // 가격 기준일의 봉. { date, open, high, low, prevClose, volume, barMissing }.
-  // 마지막 봉이 기준일보다 이르면(야후가 그날 봉을 아직 안 줌) 전일 종가만 확실하다.
+  // 기준일 봉을 날짜로 찾는다 — 마지막 봉이 아니다. 실시간 일봉엔 기준일(스냅샷) 뒤에 오늘 장중 봉이
+  // 붙어 있을 수 있고, 그 봉의 시가·고가·저가를 '기준일' 카드에 넣으면 날짜가 섞인다(2026-10-01 005930).
+  // 기준일 봉이 없으면(야후가 그날 봉을 아직 안 줌) 그 전 봉의 종가(전일)만 확실하다.
   function sessionBar(series, priceDate) {
     const rows = barRows(series);
     if (!rows.length) return null;
-    const last = rows[rows.length - 1];
-    const lastDate = String(last[5] || "");
-    const pd = String(priceDate || "");
-    if (pd && lastDate && lastDate < pd) {
-      return { date: pd, open: null, high: null, low: null, prevClose: num(last[3]), volume: null, barMissing: true };
+    const pd = String(priceDate || "").slice(0, 10);
+    let idx = rows.length - 1;
+    if (pd) {
+      let i = rows.length - 1;
+      while (i >= 0 && rows[i][5] && String(rows[i][5]).slice(0, 10) > pd) i -= 1;
+      if (i < 0) return { date: pd, open: null, high: null, low: null, prevClose: null, volume: null, barMissing: true };
+      const d = String(rows[i][5] || "").slice(0, 10);
+      if (d && d < pd) {
+        return { date: pd, open: null, high: null, low: null, prevClose: num(rows[i][3]), volume: null, barMissing: true };
+      }
+      idx = i;
     }
-    const prev = rows.length >= 2 ? rows[rows.length - 2] : null;
+    const last = rows[idx];
+    const lastDate = String(last[5] || "");
+    const prev = idx >= 1 ? rows[idx - 1] : null;
     return {
       date: lastDate || null,
       open: num(last[0]),

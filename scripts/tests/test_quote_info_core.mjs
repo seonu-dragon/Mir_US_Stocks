@@ -106,6 +106,36 @@ test("세션 봉: 기준일 봉이 빠졌으면 전일 종가만", () => {
   assert.equal(b.barMissing, true);
 });
 
+test("세션 봉: 기준일 뒤에 장중 봉이 있어도 기준일 봉(2026-10-01 005930)", () => {
+  const s = [
+    [284500, 285500, 268500, 270000, 21346064, "2026-09-28"],
+    [266000, 276000, 266000, 272500, 15963864, "2026-09-29"],
+    [274500, 276000, 267500, 269500, 15700594, "2026-09-30"],
+    [271500, 271500, 264500, 268750, 5000000, "2026-10-01"],
+  ];
+  const b = core.sessionBar(s, "2026-09-30");
+  assert.equal(b.date, "2026-09-30");
+  assert.equal(b.open, 274500);
+  assert.equal(b.high, 276000);
+  assert.equal(b.low, 267500);
+  assert.equal(b.prevClose, 272500);
+  assert.equal(b.volume, 15700594);
+  assert.equal(b.barMissing, false);
+  // 기준일 봉이 빠지고 그 뒤 봉만 있으면 → 그 전 봉 종가만
+  const gap = core.sessionBar([s[0], s[1], s[3]], "2026-09-30");
+  assert.equal(gap.barMissing, true);
+  assert.equal(gap.prevClose, 272500);
+  assert.equal(gap.open, null);
+});
+
+test("52주: 기준일보다 새 봉(장중)은 넣지 않는다", () => {
+  const s = bars(60, () => 100);
+  s.push([100, 100, 50, 60, 1, "2099-01-01"]);
+  const r = core.week52Range(s, { price: 100, priceDate: "2026-09-25" });
+  assert.equal(r.low, 99);
+  assert.notEqual(r.lowDate, "2099-01-01");
+});
+
 test("최근 1년 배당 합", () => {
   const d = [["2025-02-01", 0.24], ["2025-11-10", 0.26], ["2026-02-09", 0.26], ["2026-05-11", 0.26], ["2026-08-11", 0.26]];
   const r = core.trailingDividend(d, "2026-09-25");

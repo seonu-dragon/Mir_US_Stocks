@@ -5591,36 +5591,24 @@ function renderSmartMoney(item) {
     <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
 
-// 국내: 실시간 프록시(야후) 일봉의 마지막 봉이 스냅샷 기준일과 같은 날이고 그날 정규장이 끝났으면
-// 종가를 스냅샷의 KRX 종가로 맞추고 고가·저가를 넓힌다(빌더 align_last_bar_to_close 와 같은 규칙).
-// 야후 .KS 마지막 봉이 KRX 종가와 다른 날이 많아(삼성전자 09-23 285,500 vs 286,500) 머리글·시세정보와
-// 차트·일별 시세 표가 어긋났다. 날짜가 다르거나 장중이면 건드리지 않는다.
-function alignKrLiveLastBar(chart, item) {
-  const close = Number(item && item.price);
-  const day = String((item && item.priceDate) || "").slice(0, 10);
-  if (!(close > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return chart;
-  const kst = new Date(Date.now() + 9 * 3600 * 1000);
-  const today = kst.toISOString().slice(0, 10);
-  const closed = today > day || (today === day && kst.getUTCHours() * 60 + kst.getUTCMinutes() >= 15 * 60 + 40);
-  if (!closed) return chart;
-  const last = chart[chart.length - 1];
-  if (Array.isArray(last)) {
-    if (String(last[5] || "").slice(0, 10) !== day || Number(last[3]) === close) return chart;
-    const bar = last.slice();
-    bar[3] = close;
-    if (Number.isFinite(Number(bar[1]))) bar[1] = Math.max(Number(bar[1]), close);
-    if (Number(bar[2]) > 0) bar[2] = Math.min(Number(bar[2]), close);
-    return chart.slice(0, -1).concat([bar]);
-  }
-  if (last && typeof last === "object") {
-    const d = String(last.d ?? last.date ?? "").slice(0, 10);
-    if (d !== day || Number(last.c) === close) return chart;
-    const bar = { ...last, c: close };
-    if (Number.isFinite(Number(last.h))) bar.h = Math.max(Number(last.h), close);
-    if (Number(last.l) > 0) bar.l = Math.min(Number(last.l), close);
-    return chart.slice(0, -1).concat([bar]);
-  }
-  return chart;
+// 국내: 일봉(실시간 프록시 야후 또는 상세 파일)에서 스냅샷 기준일(priceDate) 봉을 **날짜로 찾아** 그날
+// 정규장이 끝났으면 종가·거래량을 스냅샷(네이버, KRX 정규장) 값으로 맞추고 고가·저가를 넓힌다(빌더
+// align_last_bar_to_close 와 같은 규칙). 야후 .KS 봉이 KRX 종가와 다른 날이 많아(삼성전자 09-23 285,500 vs
+// 286,500) 머리글·시세정보와 차트·일별 시세 표가 어긋났다. 예전엔 마지막 봉만 봐서, 기준일 뒤에 오늘 장중
+// 봉이 붙으면(2026-10-01 005930: 머리글 09-30 269,500 vs 표 268,500) 맞추지 못했다. 그 날짜 봉이 없거나
+// 장중이면 건드리지 않는다. 계산은 daily-table-core.js(MirDailyTable.alignSessionBar).
+const _krAlignMemo = new WeakMap();
+function alignKrSessionBar(series, item) {
+  const core = window.MirDailyTable;
+  if (!core || !Array.isArray(series) || !series.length || !item) return series;
+  const snap = { date: item.priceDate, close: item.price, volume: item.volume };
+  // 장 마감(15:40) 전후로 결과가 바뀌므로 10분 단위 시각까지 메모 키에 넣는다.
+  const key = `${snap.date}|${snap.close}|${snap.volume}|${Math.floor(Date.now() / 600000)}`;
+  const memo = _krAlignMemo.get(series);
+  if (memo && memo.key === key) return memo.out;
+  const out = core.alignSessionBar(series, snap);
+  _krAlignMemo.set(series, { key, out });
+  return out;
 }
 
 // Merge any live (proxy-fetched) chart/news over the snapshot+detail data.
@@ -5634,7 +5622,7 @@ function applyLive(item) {
   const out = { ...item };
   if (quote) out.liveQuote = quote;
   if (Array.isArray(chart) && chart.length) {
-    out.chartSeries = isKrMarket() ? alignKrLiveLastBar(chart, item) : chart;
+    out.chartSeries = isKrMarket() ? alignKrSessionBar(chart, item) : chart;
     out.historySource = "yahoo";
   }
   // KR keeps the build's curated Korean (Naver) headlines unless the live proxy
@@ -5675,6 +5663,9 @@ function maybeFetchLiveData(base) {
       const merged = applyLive(withDetail(refreshedBase));
       if (base.__liveStub) renderSearchFacts(merged);
       drawChart(merged);
+      // 시세정보 카드도 실시간 일봉으로 다시 — 상세 파일에 기준일 봉이 없어 시가·고가·저가를 비웠는데
+      // 일별 시세 표(실시간 일봉)에는 그 봉이 있는 화면이 됐다(NVDA, 2026-10-01).
+      render52wRange(merged);
       renderEarningsCalendar(merged);
       renderStockEvents(merged);
       renderEarningsReaction(merged);
@@ -5853,7 +5844,12 @@ function withDetail(item) {
   if (!item) return item;
   const key = safeTicker(item.ticker);
   const detail = detailCache[key] || detailCache[item.ticker];
-  return detail ? { ...item, ...detail } : item;
+  if (!detail) return item;
+  const out = { ...item, ...detail };
+  // 상세 파일 일봉도 기준일 봉의 거래량은 야후 값(네이버 일별 시세의 통합 거래량과 같음)이라 스냅샷
+  // (네이버 시세 목록, KRX 정규장)과 다르다 — 시세정보 카드·일별 시세 표·차트가 같은 날 같은 값을 쓰도록 맞춘다.
+  if (isKrMarket() && Array.isArray(detail.chartSeries)) out.chartSeries = alignKrSessionBar(detail.chartSeries, item);
+  return out;
 }
 
 function safeTicker(ticker) {

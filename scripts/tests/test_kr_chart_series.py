@@ -239,3 +239,78 @@ def test_backfill_skips_tickers_that_already_have_real_history():
     picked = K.history_backfill_symbols(metas, prev, quota=10)
     assert "000000" not in picked and "000001" not in picked
     assert "000002" in picked
+
+
+# --------------------------------------------------------------------------
+# 기준일 봉 누락(2026-09-30·10-01 새벽 실행, 005930) — 전날 봉에 오늘 종가가 붙지 않는다
+# --------------------------------------------------------------------------
+
+def _dated_rows():
+    closes = [("2026-09-22", 277500.0), ("2026-09-23", 286500.0), ("2026-09-28", 270000.0), ("2026-09-29", 272500.0)]
+    base = [
+        {"date": f"2026-08-{i + 1:02d}", "open": 250000.0, "high": 251000.0, "low": 249000.0,
+         "close": 250000.0, "volume": 1e7}
+        for i in range(30)
+    ]
+    return base + [
+        {"date": d, "open": c, "high": c + 1000, "low": c - 1000, "close": c, "volume": 1.5e7}
+        for d, c in closes
+    ]
+
+
+def test_missing_session_bar_does_not_overwrite_previous_close():
+    rows = _dated_rows()
+    meta = _meta(historySource="yahoo", quotePrice=269500.0, quoteDate="2026-09-30",
+                 quoteVolume=15700594, quoteChangePct=-1.1)
+    rows, fixed = K.prepare_session_rows(meta, rows)
+    assert not fixed
+    stock = UD.make_stock(meta, rows)
+    last = stock["chartSeries"][-1]
+    assert last[5] == "2026-09-29" and last[3] == 272500.0   # 09-29 봉은 09-29 종가 그대로
+    assert stock["closeSeries"][-2:] == [272500.0, 269500.0]  # 09-29 종가가 사라지지 않는다
+    assert stock["price"] == 269500.0
+    assert stock["priceDate"] == "2026-09-30"
+    assert stock.get("sessionBarMissing") is True
+
+
+def test_session_bar_present_is_aligned_to_krx_close():
+    rows = _dated_rows() + [{"date": "2026-09-30", "open": 274500.0, "high": 276000.0, "low": 267500.0,
+                              "close": 268500.0, "volume": 16477580.0}]
+    meta = _meta(historySource="yahoo", quotePrice=269500.0, quoteDate="2026-09-30",
+                 quoteVolume=15700594, quoteChangePct=-1.1)
+    rows, fixed = K.prepare_session_rows(meta, rows)
+    assert fixed
+    stock = UD.make_stock(meta, rows)
+    assert stock["chartSeries"][-1][3] == 269500.0 and stock["chartSeries"][-1][5] == "2026-09-30"
+    assert stock["closeSeries"][-2:] == [272500.0, 269500.0]
+    assert not stock.get("sessionBarMissing")
+
+
+def test_bars_after_quote_date_are_dropped():
+    rows = _dated_rows() + [
+        {"date": "2026-09-30", "open": 274500.0, "high": 276000.0, "low": 267500.0, "close": 268500.0, "volume": 1.6e7},
+        {"date": "2026-10-01", "open": 271500.0, "high": 271500.0, "low": 264500.0, "close": 268750.0, "volume": 5e6},
+    ]
+    meta = _meta(historySource="yahoo", quotePrice=269500.0, quoteDate="2026-09-30", quoteVolume=15700594)
+    rows, _ = K.prepare_session_rows(meta, rows)
+    assert rows[-1]["date"] == "2026-09-30"
+    stock = UD.make_stock(meta, rows)
+    assert stock["chartSeries"][-1][5] == "2026-09-30"
+    assert stock["chartSeries"][-1][3] == 269500.0
+
+
+def test_no_volume_quote_day_keeps_old_rule():
+    # 개장 전(체결 0): 기준일이 오늘이어도 '빠진 봉'으로 보지 않는다 — 전날 종가를 두 번 넣지 않는다.
+    rows = _dated_rows()
+    meta = _meta(historySource="yahoo", quotePrice=272500.0, quoteDate="2026-09-30", quoteVolume=0)
+    rows, _ = K.prepare_session_rows(meta, rows)
+    assert "priceDate" not in meta
+    stock = UD.make_stock(meta, rows)
+    assert stock["closeSeries"][-2:] == [270000.0, 272500.0]
+
+
+def test_synthetic_history_is_left_alone():
+    rows = _dated_rows()
+    meta = _meta(historySource="snapshot", quotePrice=269500.0, quoteDate="2026-09-30", quoteVolume=100)
+    out, fixed = K.prepare_session_rows(meta, rows)
+    assert out is rows and not fixed and "priceDate" not in meta

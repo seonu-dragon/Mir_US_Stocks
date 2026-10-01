@@ -92,6 +92,13 @@ jobs:
         run: |
           node scripts/sync_push_worker.mjs --check
           node worker/test_push.mjs
+      # 정시 실행 워커(worker/mir-cron.js) + 감시자(scripts/cron_watchdog.mjs): cron 해석·재시도 오프셋·멱등 dispatch·
+      # cron 입력 전달·예약표 원격/EMBED. --check 는 워크플로우 `# mir-cron:` 주석 ↔ .github/mir-cron.json ↔ EMBED 동기와
+      # `schedule:` 이 감시자 외에 남지 않았는지(남으면 하루 두 번 돈다)를 본다.
+      - name: Cron dispatch worker tests
+        run: |
+          node scripts/sync_cron_worker.mjs --check
+          node worker/test_cron.mjs
       # 푸시 알림 순수 로직(push-alerts-core.js): 설정·목록 정리, 크론 계획(서머타임·KST 슬롯), spark 파싱, 조건 평가, 상한·문구.
       - name: Push alerts core tests
         run: node scripts/tests/test_push_alerts_core.mjs

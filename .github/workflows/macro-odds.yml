@@ -4,8 +4,10 @@ name: Macro odds (prediction markets)
 # 침체 신호는 산업 지표(data/industry_indicators.json)를 재사용하므로 Industry indicators(06:10 KST)
 # 뒤인 06:37 에 첫 실행을 둔다. Polymarket 은 한국 IP 에서 451 로 막히지만 미국 러너에서는 열린다.
 on:
-  schedule:
-    - cron: "37 21,5,13 * * *"  # 06:37 · 14:37 · 22:37 KST
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다.
+  # GitHub `schedule:` 은 5~8시간 늦게 출발해 2026-10-01 에 옮겼다 — DEPLOY.md "정시 실행 워커".
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # mir-cron: "37 21,5,13 * * *"  # 06:37 · 14:37 · 22:37 KST
   workflow_dispatch:
 
 permissions:

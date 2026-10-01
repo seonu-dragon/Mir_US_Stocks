@@ -1,15 +1,17 @@
 name: Institutional 13F quarterly refresh
 
 on:
-  schedule:
-    # 매월 5일 06:05 UTC = 15:05 KST — 분기 공시(45일 지연) 반영 여부 점검
-    - cron: "5 6 5 * *"
-    # 분기 공시 집중 시즌(2·5·8·11월) 중순 추가 점검
-    - cron: "10 6 15 2,5,8,11 *"
-    # SEC Form 13F 데이터셋(3개월 제출 창 zip)은 창이 끝난 뒤 2주쯤 지나 공개된다
-    # (6~8월 창 → 9월 중순, 실측 2026-09-14). 3·6·9·12월 20일·28일에 새 창을 확인한다 — holders 잡.
-    # 매월 5일 실행에서도 holders 잡이 돌지만 새 창이 없으면 곧바로 끝난다(증분).
-    - cron: "20 6 20,28 3,6,9,12 *"
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다.
+  # GitHub `schedule:` 은 5~8시간 늦게 출발해 2026-10-01 에 옮겼다 — DEPLOY.md "정시 실행 워커".
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # 매월 5일 06:05 UTC = 15:05 KST — 분기 공시(45일 지연) 반영 여부 점검
+  # mir-cron: "5 6 5 * *"
+  # 분기 공시 집중 시즌(2·5·8·11월) 중순 추가 점검
+  # mir-cron: "10 6 15 2,5,8,11 *"
+  # SEC Form 13F 데이터셋(3개월 제출 창 zip)은 창이 끝난 뒤 2주쯤 지나 공개된다
+  # (6~8월 창 → 9월 중순, 실측 2026-09-14). 3·6·9·12월 20일·28일에 새 창을 확인한다 — holders 잡.
+  # 매월 5일 실행에서도 holders 잡이 돌지만 새 창이 없으면 곧바로 끝난다(증분).
+  # mir-cron: "20 6 20,28 3,6,9,12 *"
   workflow_dispatch:
     inputs:
       job:
@@ -23,6 +25,11 @@ on:
         required: false
         default: false
         type: boolean
+      cron:
+        description: "예약 슬롯(UTC cron) — Cloudflare 워커 mir-cron 이 넣는다. 손으로 돌릴 땐 비워 둔다"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: write
@@ -35,8 +42,8 @@ jobs:
   refresh-13f:
     # 기관 100곳 포트폴리오(13f.info). 데이터셋 확인용 크론(20·28일)에는 돌지 않는다.
     if: >-
-      (github.event_name == 'workflow_dispatch' && inputs.job != 'holders') ||
-      (github.event_name == 'schedule' && github.event.schedule != '20 6 20,28 3,6,9,12 *')
+      (github.event_name == 'workflow_dispatch' && inputs.cron == '' && inputs.job != 'holders') ||
+      ((github.event_name == 'schedule' || inputs.cron != '') && (github.event.schedule || inputs.cron) != '20 6 20,28 3,6,9,12 *')
     runs-on: ubuntu-latest
     timeout-minutes: 120  # 실측 10분 안팎(2026-08)
     steps:

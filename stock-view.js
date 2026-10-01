@@ -139,7 +139,7 @@ function showStockViewFor(el) {
 // 탭 버튼을 흐리게 한다(누를 수는 있다). 카드가 늦게 채워지는 경우가 많아 변화를 지켜본다.
 function sdCardVisible(node) {
   if (!node || node.nodeType !== 1 || node.hidden) return false;
-  if (node.classList.contains("sd-empty")) return false;
+  if (node.classList.contains("sd-empty") || node.classList.contains("mir-cl-card")) return false; // '새 기능' 안내 카드(changelog.js)는 내용으로 치지 않는다
   if (node.tagName === "SCRIPT" || node.tagName === "TEMPLATE") return false;
   if (node.classList.contains("analysis-balanced-grid")) return [...node.children].some(sdCardVisible);
   return node.innerHTML.trim() !== "";

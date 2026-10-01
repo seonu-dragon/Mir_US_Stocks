@@ -370,7 +370,7 @@ html[data-market="kr"][data-theme="dark"] {
     <noscript><link rel="stylesheet" href="styles.css?v=315dce1895"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=1220502720"></script>
+    <script src="build_id.js?v=f77808c113"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -614,7 +614,6 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="daily-action-head">
               <div>
                 <h2 id="dailyActionTitle">내 종목 이벤트</h2>
-                <p>관심종목, 포트폴리오, 일정과 새 공시 중 지금 확인할 항목만 모았습니다.</p>
               </div>
               <div class="daily-action-meta">
                 <span id="dailyActionCount" class="daily-action-count">확인 중</span>
@@ -632,7 +631,6 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="mfeed" id="marketFeed" aria-labelledby="marketFeedTitle">
             <div class="section-title">
               <h2 id="marketFeedTitle">오늘 피드</h2>
-              <p>이미 발행된 공시·특징주·내부자 거래·실적·경제지표를 하루 단위로 모았습니다. 종류 칩을 누르면 그 종류만 봅니다.</p>
             </div>
             <div id="marketFeedHead"><p class="muted">피드를 준비하는 중…</p></div>
             <div id="marketFeedList" class="mfeed-list-host"></div>
@@ -643,7 +641,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="tab-leaf" id="tab-ai-briefing">
         <div class="section-title">
           <h2>AI 브리핑</h2>
-          <p>국내 장마감 시황과 미국 장전 프리마켓 브리핑입니다. 각 블록의 기준 시각을 함께 확인하세요.</p>
         </div>
         <div class="data-disclaimer" id="aiDataStatus"></div>
         <div class="briefing-schedule" aria-label="AI 브리핑 업데이트 일정">
@@ -695,7 +692,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel is-active" id="sub-all">
           <div class="section-title">
             <h2>전체 일정</h2>
-            <p>실적·배당·공모주·경제지표·휴장·파생 만기를 한국 시간 기준으로 모았습니다.</p>
             <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="FOMC·경제지표·실적·배당·IPO 일정을 구글/애플 캘린더에 구독합니다">캘린더 구독</button>
           </div>
           <div id="calendarPanelHost"><p class="muted">일정을 불러오는 중…</p></div>
@@ -704,7 +700,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel" id="sub-macro">
           <div class="section-title">
             <h2>경제 캘린더</h2>
-            <p>한국·미국 경제지표와 백악관 일정을 한국 시간(KST) 기준으로 모았습니다.</p>
             <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="FOMC·경제지표·실적·배당·IPO 일정을 구글/애플 캘린더에 구독합니다">캘린더 구독</button>
           </div>
           <div class="calendar-filters" id="calendarFilters">
@@ -732,7 +727,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel" id="sub-earnings">
           <div class="section-title">
             <h2>시장 실적 캘린더</h2>
-            <p>관심종목·대형주의 다가오는 실적 발표 일정입니다. 출처: Yahoo Finance</p>
             <button type="button" class="ghost compact-btn feed-sub-btn" data-feed-subscribe="calendar" title="시총 상위 실적 예정일을 캘린더 앱에 구독합니다">캘린더 구독</button>
           </div>
           <div class="toolbar earnings-toolbar">
@@ -937,7 +931,6 @@ html[data-market="kr"][data-theme="dark"] {
           <div>
             <div class="section-title">
               <h2>시장 지도</h2>
-              <p>섹터별 영역 안에서 타일 크기는 선택한 크기 기준, 색상은 선택한 지표를 의미합니다.</p>
             </div>
             <div class="segmented ia-map-view-seg" id="mapViewSeg" role="group" aria-label="지도 보기 방식" hidden>
               <button type="button" data-map-view="map" class="is-active" aria-pressed="true">지도</button>
@@ -1151,7 +1144,6 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="lev-etf-controls-bar">
             <div class="section-title compact-title">
               <h2>레버리지·인버스·옵션형 ETF</h2>
-              <p>섹터·지수·개별종목의 레버리지/인버스/커버드콜·변동성 ETF를 한곳에서 정리했습니다.</p>
             </div>
             <div class="lev-etf-controls-row">
               <label>
@@ -1201,7 +1193,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel" id="sub-rrg">
           <div class="section-title">
             <h2>RRG · 섹터 상대회전 그래프</h2>
-            <p>벤치마크 대비 각 섹터 ETF의 상대강도(가로)와 상대 모멘텀(세로)을 사분면으로 표시합니다. 시계 방향(주도→둔화→소외→회복)으로 순환합니다.</p>
           </div>
           <div class="rrg-controls">
             <label>주기
@@ -1215,13 +1206,11 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <div class="rrg-wrap" id="rrgWrap"></div>
           <div class="rrg-legend" id="rrgLegend"></div>
-          <p class="muted rrg-note">상대강도·모멘텀은 벤치마크 대비 종가 비율을 정규화(기준 100)해 계산한 근사치입니다. 투자 권유가 아닙니다.</p>
         </div>
         </div>
         <div class="tab-leaf" id="tab-health">
           <div class="section-title">
             <h2>시장 폭</h2>
-            <p>주요 지수·국가·채권·원자재·환율과 상승/하락 종목 분포입니다. 지수·ETF는 최근 수집 시각 기준, 환율은 실시간입니다.</p>
           </div>
           <section class="index-strip" id="indexStripFull" aria-label="지수 전체"></section>
           <section class="summary-band" id="marketSummary"></section>
@@ -1233,9 +1222,6 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="ia-signal-summary" id="signalsSummary" aria-label="오늘의 시그널 3개"></section>
           <details class="ia-fold" id="fold-signalsGrid" open>
             <summary>종목 시그널</summary>
-            <div class="section-title">
-              <p id="signalsIntro">내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다. 각 신호가 발행 뒤 실제로 어떻게 됐는지는 '신호 성적표' 항목에 적립합니다.</p>
-            </div>
             <div class="signals-grid" id="signalsGrid"></div>
           </details>
           <details class="ia-fold" id="fold-krMarketAlerts" open hidden>
@@ -1297,7 +1283,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="tab-leaf" id="tab-krflow">
           <div class="section-title">
             <h2>수급·자금</h2>
-            <p>코스피·코스닥 투자자별 순매수와 증시 주변 자금(예탁금·신용융자·미수금·반대매매)입니다.</p>
           </div>
           <div id="krFlowMarket"></div>
         </div>
@@ -1305,7 +1290,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="tab-leaf" id="tab-krtheme">
           <div class="section-title">
             <h2>테마</h2>
-            <p>사업보고서 '사업의 내용' 원문 문장을 근거로 묶은 테마와 편입 종목의 등락입니다. 종목마다 근거 문장과 출처를 함께 보여 줍니다.</p>
           </div>
           <div id="krThemeMarket"></div>
         </div>
@@ -1911,7 +1895,6 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="saved-screener-head">
             <div>
               <h3 id="savedScreenerTitle">저장형 스크리너</h3>
-              <p>현재 조건을 저장해 두면 데이터가 갱신될 때 새로 들어오고 빠진 종목을 보여 줍니다.</p>
             </div>
             <span class="saved-screener-badge" id="savedScreenerBadge">저장 0개</span>
           </div>
@@ -2000,7 +1983,6 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="saved-screener-head">
               <div>
                 <h3 id="fxSavedTitle">수식 저장 · 편입/이탈</h3>
-                <p>저장형 스크리너와 같은 목록에 저장되고, 데이터가 갱신되면 새로 들어오고 빠진 종목을 보여 줍니다.</p>
               </div>
             </div>
             <div class="saved-screener-controls">
@@ -2199,7 +2181,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p>과거 약 5년의 공시·이벤트(US: SEC 8-K 항목·13D·424B5·실적 발표, KR: DART 잠정실적·공급계약·자사주·증자·CB 등)마다 −5 ~ +60 거래일의 <b>초과수익</b>(시장조정 또는 시장모형)을 구해, 고른 조건으로 평균·중앙값 누적 곡선과 날짜 묶음 부트스트랩 95% 구간을 그립니다. 같은 종목의 무작위 날짜를 대조군으로 함께 보여 줍니다.</p>
           <div class="data-disclaimer">
             <strong>연구용 정보</strong>
-            <span>과거 평균일 뿐 예측이 아니며 매매 신호가 아닙니다. 현재 추적 중인 종목만 가격 이력이 있어 상장폐지 종목은 빠집니다(생존편향). Mir 가 띄운 신호의 발행 뒤 성적은 시그널 탭 '신호 성적표'에서 따로 봅니다.</span>
+            <span>현재 추적 중인 종목만 가격 이력이 있어 상장폐지 종목은 빠집니다(생존편향). Mir 가 띄운 신호의 발행 뒤 성적은 시그널 탭 '신호 성적표'에서 따로 봅니다.</span>
           </div>
           </details>
           <div id="eventStudyRoot" class="es-root"></div>
@@ -2211,10 +2193,10 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <details class="about-data">
             <summary>이 데이터는?</summary>
-            <p>DART 주요사항보고 기반. 회사가 <b>자기주식을 취득</b>(주주환원·주가부양)하거나 처분·소각한 <b>공시 사실</b>입니다. 규모는 <b>시가총액 대비</b>로 비교합니다. 예측 신호가 아닙니다.</p>
+            <p>DART 주요사항보고 기반. 회사가 <b>자기주식을 취득</b>(주주환원·주가부양)하거나 처분·소각한 <b>공시 사실</b>입니다. 규모는 <b>시가총액 대비</b>로 비교합니다.</p>
           <div class="data-disclaimer">
             <strong>공시 사실</strong>
-            <span>최근 공시분만 표시하며 실시간이 아닙니다. 취득 '결정'이 매입 완료를 뜻하지 않습니다(신탁·장내 취득은 기간에 걸쳐 집행). 투자 권유가 아닙니다.</span>
+            <span>최근 공시분만 표시하며 실시간이 아닙니다. 취득 '결정'이 매입 완료를 뜻하지 않습니다(신탁·장내 취득은 기간에 걸쳐 집행).</span>
           </div>
           </details>
           <div class="insider-controls">
@@ -2239,10 +2221,10 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <details class="about-data">
             <summary>이 데이터는?</summary>
-            <p>DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외. 예측 신호가 아닙니다.</p>
+            <p>DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외.</p>
           <div class="data-disclaimer">
             <strong>사실 피드</strong>
-            <span>공시 유형별 과거 반응은 무작위와 구분되지 않습니다(잠정실적 포함). 발표 후 주가 움직임을 보여줄 뿐 투자 권유가 아닙니다.</span>
+            <span>공시 유형별 과거 반응은 무작위와 구분되지 않습니다(잠정실적 포함).</span>
           </div>
           </details>
           <div class="insider-controls">
@@ -2262,7 +2244,7 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <details class="about-data">
             <summary>이 데이터는?</summary>
-            <p>DART '현금·현물배당결정' 공시 원문에서 파싱. <b>시가배당률·주당배당금</b>과 <b>배당기준일(배당락 근거)·지급예정일</b>입니다. 공시된 사실이며 투자 권유가 아닙니다.</p>
+            <p>DART '현금·현물배당결정' 공시 원문에서 파싱. <b>시가배당률·주당배당금</b>과 <b>배당기준일(배당락 근거)·지급예정일</b>입니다.</p>
           <div class="data-disclaimer">
             <strong>공시 사실</strong>
             <span>최근 공시분만 표시합니다. 배당기준일 전전영업일이 배당락일입니다. 공시 원문 파싱이라 일부 값이 비어 있을 수 있습니다.</span>
@@ -2285,10 +2267,10 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <details class="about-data">
             <summary>이 데이터는?</summary>
-            <p>DART '단일판매·공급계약체결' 공시 원문에서 파싱. <b>계약금액</b>과 <b>최근 매출액 대비 비중</b>(클수록 실적 영향 큼)입니다. 예측 신호가 아닙니다.</p>
+            <p>DART '단일판매·공급계약체결' 공시 원문에서 파싱. <b>계약금액</b>과 <b>최근 매출액 대비 비중</b>(클수록 실적 영향 큼)입니다.</p>
           <div class="data-disclaimer">
             <strong>공시 사실</strong>
-            <span>최근 공시분만 표시합니다. 조건부·미공개로 규모를 알 수 없는 계약은 제외됩니다. 투자 권유가 아닙니다.</span>
+            <span>최근 공시분만 표시합니다. 조건부·미공개로 규모를 알 수 없는 계약은 제외됩니다.</span>
           </div>
           </details>
           <div class="insider-controls">
@@ -2308,10 +2290,10 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
           <details class="about-data">
             <summary>이 데이터는?</summary>
-            <p>DART 주요사항보고 기반. 유상증자·전환사채(CB)·신주인수권부사채(BW)·교환사채(EB) 발행으로 <b>주식수가 늘어 기존 주주가 희석</b>되는 공시입니다. <b>희석률</b>이 클수록 영향이 큽니다. 자사주 매입의 반대편 리스크이며, 예측 신호가 아닙니다.</p>
+            <p>DART 주요사항보고 기반. 유상증자·전환사채(CB)·신주인수권부사채(BW)·교환사채(EB) 발행으로 <b>주식수가 늘어 기존 주주가 희석</b>되는 공시입니다. <b>희석률</b>이 클수록 영향이 큽니다. 자사주 매입의 반대편 리스크입니다.</p>
           <div class="data-disclaimer">
             <strong>공시 사실</strong>
-            <span>최근 공시분만 표시합니다. 전환·행사가는 CB/BW의 잠재 희석 기준입니다. 발행 '결정'이며 최종 발행·전환 규모는 달라질 수 있습니다. 투자 권유가 아닙니다.</span>
+            <span>최근 공시분만 표시합니다. 전환·행사가는 CB/BW의 잠재 희석 기준입니다. 발행 '결정'이며 최종 발행·전환 규모는 달라질 수 있습니다.</span>
           </div>
           </details>
           <div class="insider-controls">
@@ -2336,7 +2318,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p>FINRA 격주 공시(Nasdaq) 기반. <b>잔고일수(Days to Cover)</b>가 높을수록 숏 커버에 오래 걸려 스퀴즈 가능성이 큽니다. <b>Nasdaq 상장 종목 한정</b>.</p>
           <div class="data-disclaimer">
             <strong>지연 주의</strong>
-            <span>공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다. 투자 권유가 아닙니다.</span>
+            <span>공매도 잔고는 한 달에 두 번(격주) 공시되며 실시간이 아닙니다.</span>
           </div>
           </details>
           <div class="insider-controls">
@@ -2378,7 +2360,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p>대량보유(5%룰)와 임원·주요주주 소유 공시의 <b>상세 수치</b>입니다. 공시 목록이 제목만 알려주는 것과 달리, 누가 몇 %를 얼마나 늘리고 줄였는지 보여줍니다.</p>
           <div class="data-disclaimer">
             <strong>지분공시 해석 주의</strong>
-            <span>보고 의무 발생 후 며칠 지나 제출될 수 있어 실시간이 아닙니다. 보유비율은 보고자 기준이며 특별관계자 합산 여부가 보고서마다 다를 수 있습니다. 투자 권유가 아닙니다.</span>
+            <span>보고 의무 발생 후 며칠 지나 제출될 수 있어 실시간이 아닙니다. 보유비율은 보고자 기준이며 특별관계자 합산 여부가 보고서마다 다를 수 있습니다.</span>
           </div>
           </details>
           <div class="institutional-meta" id="krOwnMeta"></div>
@@ -2463,7 +2445,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p>상원·하원 금융 공시(PTR) 기반 의원별 매매 기록, 추정 수익률 랭킹, 상임위원회×업종 크로스 분석입니다.</p>
           <div class="data-disclaimer">
             <strong>공시 지연 주의</strong>
-            <span>거래 후 최대 45일 내 공시되며 실시간 매매가 아닙니다. 수익률은 최근 매수 거래의 추정값이며 투자 권유가 아닙니다.</span>
+            <span>거래 후 최대 45일 내 공시되며 실시간 매매가 아닙니다. 수익률은 최근 매수 거래의 추정값입니다.</span>
           </div>
           </details>
           <div class="institutional-meta" id="congressMeta"></div>
@@ -2496,7 +2478,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p><b>Form 144 매도 예정</b>은 계열인이 주식을 팔기 전에 내는 신고(예정 주식수·신고 시점 시가·예정일·브로커)이고, 같은 이름의 Form 4 매도가 나왔는지 대조해 '실제 매도 확인됨 / 아직'을 붙입니다.</p>
           <div class="data-disclaimer">
             <strong>공시 지연 주의</strong>
-            <span>거래 후 2영업일 내 공시가 원칙이나 지연될 수 있고 실시간이 아닙니다. 옵션 행사(M)·세금정산(F)·부여(A)·증여(G)도 함께 표시되며 투자 권유가 아닙니다.</span>
+            <span>거래 후 2영업일 내 공시가 원칙이나 지연될 수 있고 실시간이 아닙니다. 옵션 행사(M)·세금정산(F)·부여(A)·증여(G)도 함께 표시됩니다.</span>
           </div>
           </details>
           <div class="institutional-meta" id="insiderMeta"></div>
@@ -2527,7 +2509,7 @@ html[data-market="kr"][data-theme="dark"] {
             <p>5% 이상 지분 취득 시 의무 공시입니다. <b>13D=경영참여(액티비스트)</b>, <b>13G=단순투자(수동)</b>, /A=정정. 추적 종목 한정.</p>
           <div class="data-disclaimer">
             <strong>해석 주의</strong>
-            <span>13D는 행동주의 개입 신호일 수 있으나, 13G는 대형 패시브 펀드의 5% 돌파인 경우가 많습니다. 공시 지연이 있으며 투자 권유가 아닙니다.</span>
+            <span>13D는 행동주의 개입 신호일 수 있으나, 13G는 대형 패시브 펀드의 5% 돌파인 경우가 많습니다. 공시 지연이 있습니다.</span>
           </div>
           </details>
           <div class="institutional-meta" id="activistMeta"></div>
@@ -2612,7 +2594,6 @@ html[data-market="kr"][data-theme="dark"] {
         <section class="portfolio-card" id="portfolioCard">
           <div class="pf-head">
             <h3>보유 종목</h3>
-            <span class="muted">평단가·수량을 입력해 손익·섹터 분산·일간 기여도를 확인하세요. (이 브라우저에 저장)</span>
           </div>
           <div class="pf-input">
             <input id="pfTicker" placeholder="티커 (예: NVDA)" autocomplete="off">
@@ -2674,7 +2655,6 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="watch-alert-head">
             <div>
               <h3>관심종목 조건 감지</h3>
-              <p class="muted">조건에 맞는 관심종목을 이 화면에서 바로 표시합니다. 설정은 이 브라우저에 저장됩니다.</p>
             </div>
             <span class="event-badge" id="watchAlertCount">0</span>
           </div>
@@ -2706,7 +2686,7 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="portfolio-tool-head">
               <div><h3>팩터 노출 · 집중도</h3></div>
             </div>
-            <p class="muted">보유 비중으로 가중한 시장 내 팩터 백분위와 집중도(HHI)입니다. 예측이 아니라 포트폴리오의 성향·쏠림을 보여줍니다.</p>
+            <p class="muted">보유 비중으로 가중한 시장 내 팩터 백분위와 집중도(HHI)입니다.</p>
             <div id="pfXrayBody"></div>
           </section>
           </details>
@@ -2720,7 +2700,6 @@ html[data-market="kr"][data-theme="dark"] {
                 <button type="button" class="ghost compact-btn" id="rebalanceNormalize">100% 맞춤</button>
               </div>
             </div>
-            <p class="muted">현재 평가금액을 유지한다고 가정해 목표 비중별 매수·매도 수량을 계산합니다.</p>
             <div class="portfolio-tool-summary" id="rebalanceSummary"></div>
             <div class="portfolio-tool-table" id="rebalanceTable"></div>
           </section>
@@ -2760,12 +2739,10 @@ html[data-market="kr"][data-theme="dark"] {
               <button type="button" role="tab" data-stress-mode="crisis" aria-selected="false">과거 위기 재생</button>
             </div>
             <div id="stressPresetPane">
-            <p class="muted">종목별 가정 충격률을 적용해 예상 평가손실과 스트레스 후 비중을 계산합니다.</p>
             <div class="portfolio-tool-summary" id="stressSummary"></div>
             <div class="portfolio-tool-table" id="stressTable"></div>
             </div>
             <div id="stressCrisisPane" hidden>
-            <p class="muted">현재 포트폴리오를 실제 과거 하락 구간(2008·2018 Q4·2020 코로나·2022 금리·2024-08)에 그대로 통과시킨 결과입니다. 종목마다 실측인지 지수 × β 대리인지 표시합니다.</p>
             <div id="stressCrisisBody"></div>
             </div>
           </section>
@@ -2777,7 +2754,6 @@ html[data-market="kr"][data-theme="dark"] {
               <div><h3>포지션 크기 계산기</h3></div>
               <strong>롱 포지션 기준</strong>
             </div>
-            <p class="muted">손절 시 허용 손실과 최대 투자비중 중 더 보수적인 기준으로 매수 수량을 계산합니다.</p>
             <div class="position-size-form">
               <label>종목<input id="positionTicker" list="tickerOptions" placeholder="NVDA" autocomplete="off"></label>
               <label>투자금<input id="positionCapital" type="number" min="1" step="100" value="10000"></label>
@@ -2870,7 +2846,6 @@ html[data-market="kr"][data-theme="dark"] {
         <section class="dca-panel" id="dcaPanel">
           <div class="section-title compact-title">
             <h2>적립식(주식 모으기) 시뮬레이터</h2>
-            <p>매 주기 같은 금액으로 샀다면 지금 얼마인지, 과거 일봉 종가로 계산합니다.</p>
           </div>
           <div class="toolbar backtest-toolbar backtest-ticker-toolbar">
             <label class="grow">
@@ -3005,7 +2980,6 @@ html[data-market="kr"][data-theme="dark"] {
               <div><h3>투자 가설 추적</h3></div>
               <strong id="thesisCount">0건</strong>
             </div>
-            <p class="muted">매수 근거와 '틀렸다고 볼 조건'을 숫자로 적어 두면, 올 때마다 현재 데이터로 점검해 위반·근접·정상을 표시합니다. 매매 신호가 아니라 내 기록을 점검하는 도구입니다. (이 브라우저에 저장)</p>
             <div class="thesis-toolbar">
               <button type="button" class="primary compact-btn" data-thesis-new>새 가설</button>
               <nav class="thesis-filter" aria-label="가설 목록 필터">
@@ -3054,7 +3028,6 @@ html[data-market="kr"][data-theme="dark"] {
               <div><h3>배당 캘린더 · 현금흐름</h3></div>
               <strong id="dividendPlannerTotal">연 $0</strong>
             </div>
-            <p class="muted">보유 수량과 연간 주당배당금을 기준으로 향후 12개월 현금흐름을 계산합니다.</p>
             <div class="portfolio-tool-summary" id="dividendPlannerSummary"></div>
             <div class="portfolio-tool-table" id="dividendPlannerTable"></div>
             <div class="dividend-month-grid" id="dividendMonthGrid"></div>
@@ -3082,7 +3055,6 @@ html[data-market="kr"][data-theme="dark"] {
                 <select id="portfolioBenchmarkPeriod" aria-label="성과 비교 기간"><option value="22">1개월</option><option value="63" selected>3개월</option><option value="252">1년</option></select>
               </div>
             </div>
-            <p class="muted">현재 포트폴리오 비중을 기준으로 기간 수익률과 벤치마크 대비 종목별 초과수익 기여도를 계산합니다.</p>
             <div class="portfolio-tool-summary benchmark-summary" id="benchmarkAttributionSummary"></div>
             <p class="portfolio-tool-status muted" id="benchmarkAttributionStatus"></p>
             <div class="portfolio-tool-table" id="benchmarkAttributionTable"></div>
@@ -3117,7 +3089,6 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="sub-panel is-active" id="sub-community-trending">
           <div class="section-title">
             <h2>실시간 소셜 트렌드</h2>
-            <p>Reddit WSB, Stocktwits, Yahoo Finance에서 지금 주목받는 종목입니다. 티커를 누르면 종목 분석으로 이동합니다.</p>
           </div>
           <div class="community-hot-topics" id="communityHotTopics"></div>
           <div class="social-sentiment-tables community-trend-tables">
@@ -3345,26 +3316,26 @@ html[data-market="kr"][data-theme="dark"] {
          KR mode never downloads the US-only ~7MB of congress + 13F + activist etc. -->
     <script src="indicators.js?v=f226af20a0"></script>
     <script src="pattern_detectors_extended.js?v=da47646599"></script>
-    <script src="analysis.js?v=144478302a"></script>
+    <script src="analysis.js?v=3a08b9737e"></script>
     <!-- app.js 1단계 분리(기계적 이동): 아래 3개는 app.js 보다 먼저 로드되는 classic script.
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="per-basis-core.js?v=b7c4da7066"></script>
-    <script src="chart-indicators.js?v=0652255517"></script>
-    <script src="community.js?v=567e03431f"></script>
-    <script src="ai-mode.js?v=3fafd52a89"></script>
+    <script src="chart-indicators.js?v=03d141eb13"></script>
+    <script src="community.js?v=bb33beb40d"></script>
+    <script src="ai-mode.js?v=5d079047c9"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
-    <script src="disclosure-trackers.js?v=4fcc0214d1"></script>
-    <script src="movers.js?v=7550ee0a21"></script>
+    <script src="disclosure-trackers.js?v=effe8caf70"></script>
+    <script src="movers.js?v=0f28afc00d"></script>
     <script src="portfolio.js?v=667afbf126"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
-    <script src="my-digest.js?v=6226eff130"></script>
+    <script src="my-digest.js?v=c9677d21bf"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
-    <script src="dca.js?v=e7fa020aec"></script>
+    <script src="dca.js?v=996abc89fa"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
-    <script src="portfolio-risk.js?v=42bb40aa23"></script>
+    <script src="portfolio-risk.js?v=1b61da56cb"></script>
     <script src="thesis-core.js?v=c15fe03cd1"></script>
-    <script src="thesis.js?v=d5dc13738c"></script>
+    <script src="thesis.js?v=7e27c93e95"></script>
     <script src="screener.js?v=dbff5b958e"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
@@ -3377,96 +3348,96 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
     <script src="company-info-core.js?v=c15f9a8b38"></script>
-    <script src="company-info.js?v=0afc274331"></script>
+    <script src="company-info.js?v=733910ee44"></script>
     <script src="treemap-core.js?v=6cefd0806f"></script>
-    <script src="treemap.js?v=7face7d880"></script>
+    <script src="treemap.js?v=718f6ad5a7"></script>
     <script src="industry-chart-core.js?v=012453fc55"></script>
-    <script src="industry.js?v=f5bf50edee"></script>
+    <script src="industry.js?v=0417923e0f"></script>
     <script src="cross-market-core.js"></script>
     <script src="cross-market.js"></script>
     <script src="market-indicators-core.js?v=9ee5403887"></script>
-    <script src="market-indicators.js?v=1821bc8c38"></script>
+    <script src="market-indicators.js?v=494e14ac2b"></script>
     <script src="valuation-band-core.js?v=8169dae7ed"></script>
-    <script src="valuation-band.js?v=1b83b93467"></script>
+    <script src="valuation-band.js?v=17d3b1f6fa"></script>
     <script src="factor-grade-core.js?v=5b2d301864"></script>
-    <script src="factor-grades.js?v=0146d20671"></script>
+    <script src="factor-grades.js?v=5426730498"></script>
     <script src="stock-health-core.js?v=bd57169177"></script>
-    <script src="stock-health.js?v=28f9036a6e"></script>
+    <script src="stock-health.js?v=32ed43c310"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
     <script src="formula-screener.js?v=f3b5d97cfb"></script>
     <script src="named-filters-core.js?v=1b7e71d5e3"></script>
     <script src="named-filters.js?v=f9090037d9"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
-    <script src="screener-backtest.js?v=da99b8e4b6"></script>
-    <script src="signals.js?v=43fe0d4978"></script>
-    <script src="macro-odds.js?v=28a01082e3"></script>
+    <script src="screener-backtest.js?v=a0c51be370"></script>
+    <script src="signals.js?v=e77bd401e9"></script>
+    <script src="macro-odds.js?v=62883cf258"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=733715a6b0"></script>
-    <script src="chart.js?v=b8559326a5"></script>
-    <script src="institutional.js?v=09576dbcdc"></script>
+    <script src="chart.js?v=c8e97b04d0"></script>
+    <script src="institutional.js?v=66573766c9"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
-    <script src="kr-panels.js?v=10bb49b991"></script>
+    <script src="kr-panels.js?v=d62108a45e"></script>
     <script src="kr-flow-core.js?v=40d1f6309b"></script>
-    <script src="kr-flow-panels.js?v=e0a5c6bc8b"></script>
+    <script src="kr-flow-panels.js?v=0ee0a6ebb6"></script>
     <script src="kr-themes-core.js"></script>
     <script src="kr-themes.js"></script>
-    <script src="kr-alerts.js?v=c549e24ad9"></script>
+    <script src="kr-alerts.js?v=d064670f43"></script>
     <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
-    <script src="signal-scorecard.js?v=6fc77f71e2"></script>
+    <script src="signal-scorecard.js?v=39c27046fb"></script>
     <script src="event-study-core.js?v=98c430e41a"></script>
-    <script src="event-study.js?v=bcfb67eb71"></script>
+    <script src="event-study.js?v=039f23654c"></script>
     <script src="timeline-core.js?v=e827c62edd"></script>
-    <script src="timeline.js?v=6c995a785b"></script>
+    <script src="timeline.js?v=00320d1067"></script>
     <script src="watchlist.js?v=5223caf8cb"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=9a1ecf4141"></script>
-    <script src="earnings-insight.js?v=3d92f45757"></script>
+    <script src="earnings-insight.js?v=d71fe2ed8c"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
     <script src="mcap-core.js?v=d0d2d05df5"></script>
     <script src="shareholder-core.js?v=29bba37222"></script>
-    <script src="financials.js?v=824e745d50"></script>
+    <script src="financials.js?v=781bc6bcff"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
-    <script src="segments.js?v=8d54e784d4"></script>
+    <script src="segments.js?v=8269869238"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>
-    <script src="risk-factors.js?v=112696df89"></script>
+    <script src="risk-factors.js?v=ae6b66065e"></script>
     <script src="risk-check-core.js?v=c96b31592a"></script>
-    <script src="risk-check.js?v=2afff877ba"></script>
-    <script src="shareholder.js?v=c948ca3523"></script>
+    <script src="risk-check.js?v=5ce23e8811"></script>
+    <script src="shareholder.js?v=2a88b88d08"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
-    <script src="dcf.js?v=85ba809573"></script>
+    <script src="dcf.js?v=ecc88fc9b8"></script>
     <script src="daily-table-core.js?v=5e4945f830"></script>
-    <script src="daily-table.js?v=3032d04f0e"></script>
+    <script src="daily-table.js?v=0f27127020"></script>
     <script src="stock-view.js?v=f8f4e5eff8"></script>
-    <script src="subscribe-feeds.js?v=bbd9ef139d"></script>
+    <script src="subscribe-feeds.js?v=c5e0fba053"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
-    <script src="home-dash.js?v=bcbe452c0b"></script>
+    <script src="home-dash.js?v=78ed9833bc"></script>
     <script src="find-table-core.js?v=7a807895ca"></script>
-    <script src="find-table.js?v=c762a4e24a"></script>
+    <script src="find-table.js?v=eb1356532f"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="mobile-cards.js?v=aae191cacc"></script>
     <script src="calendar-panel-core.js?v=261cacf9f0"></script>
     <script src="market-feed-core.js?v=f09c7d8fe8"></script>
-    <script src="market-feed.js?v=a2e20b16f9"></script>
-    <script src="calendar-panel.js?v=16ce5f782e"></script>
-    <script src="lockup-core.js?v=68e009b38b"></script>
-    <script src="lockups.js?v=b4b7282745"></script>
-    <script src="stock-summary-core.js?v=436336bada"></script>
-    <script src="stock-summary.js?v=98225ef0ab"></script>
+    <script src="market-feed.js?v=2816aeb33d"></script>
+    <script src="calendar-panel.js?v=d3f7a04e2e"></script>
+    <script src="lockup-core.js?v=efe4fefb2c"></script>
+    <script src="lockups.js?v=916fe5735b"></script>
+    <script src="stock-summary-core.js?v=e89196e8f9"></script>
+    <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
-    <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=c9b65e6b4c"></script>
+    <script src="etf-holdings.js?v=80ac5d35cb"></script>
+    <script src="app.js?v=dbaeb0f923"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
-    <script src="lookthrough.js?v=61f0c3fb14"></script>
+    <script src="lookthrough.js?v=0f6e55352d"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
-    <script src="rail.js?v=1d2bb06eeb"></script>
+    <script src="rail.js?v=1f288908d6"></script>
     <!-- 업데이트 소식 + 화면별 '새 기능' 카드(changelog.js). 데이터 data/changelog.js 는 부팅 뒤 지연 로드 -->
     <script src="changelog-core.js?v=9182db96c9"></script>
-    <script src="changelog.js?v=641304e2e0"></script>
+    <script src="changelog.js?v=05c1bce239"></script>
     <!-- 폰 하단 탭 바 · 종목 미니 바 · 접는 종목 검색(mobile-nav.js, 640px 이하만) -->
     <script src="mobile-nav.js?v=2bed868760"></script>
   </body>

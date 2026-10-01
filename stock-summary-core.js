@@ -238,7 +238,7 @@
       if (parts.length >= 2) {
         out.segment = {
           text: `주요 사업부문 ${parts.join(" · ")}`,
-          note: `SEC ${seg.form || "10-K"} 부문 공시${num(seg.fy) !== null ? ` FY${seg.fy}` : ""} 매출 비중(부문 합 기준)`,
+          note: `${num(seg.fy) !== null ? `FY${seg.fy} ` : ""}매출 비중(부문 합 기준)`,
         };
       }
     }

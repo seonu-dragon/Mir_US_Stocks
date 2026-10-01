@@ -141,7 +141,6 @@ function renderKrThemes() {
   const rankPool = C.rankThemes(withMembers, KT_VIEW.period, KT_VIEW.weight, KT_RANK_MIN)
     .filter((s) => C.statValue(s, KT_VIEW.period, KT_VIEW.weight) != null);
   const periodLabel = (KT_PERIODS.find(([k]) => k === KT_VIEW.period) || [])[1] || "";
-  const weightLabel = (KT_WEIGHTS.find(([k]) => k === KT_VIEW.weight) || [])[1] || "";
   const rankItem = (s, i) => {
     const v = C.statValue(s, KT_VIEW.period, KT_VIEW.weight);
     return `<li><button type="button" class="kt-rank-item" data-kt-theme="${escapeHtml(s.id)}">
@@ -170,7 +169,7 @@ function renderKrThemes() {
         ${ktSeg("period", KT_PERIODS, KT_VIEW.period)}
         ${ktSeg("weight", KT_WEIGHTS, KT_VIEW.weight)}
       </header>
-      <p class="kt-sub">편입 종목 ${weightLabel} 평균 · 스냅샷 종가 기준(${escapeHtml(String(data?.updatedAtKst || "").slice(0, 16))}) · 편입 ${KT_RANK_MIN}종목 이상만 순위</p>
+      <p class="kt-sub">기준 ${escapeHtml(String(data?.updatedAtKst || "").slice(0, 16))}</p>
       <div class="kt-rank">
         <div class="kt-rank-col"><h4>${periodLabel} 급상승 테마</h4><ol>${top.map(rankItem).join("") || '<li class="muted">순위를 낼 테마가 아직 없습니다.</li>'}</ol></div>
         ${bottom.length ? `<div class="kt-rank-col"><h4>${periodLabel} 약세 테마</h4><ol>${bottom.map((s, i) => rankItem(s, rankPool.length - 1 - i)).join("")}</ol></div>` : ""}
@@ -190,10 +189,7 @@ function renderKrThemes() {
       </div>
       ${empty ? `<p class="kt-note">편입 종목이 아직 없는 테마 ${empty}개는 표에서 뺐습니다.</p>` : ""}
     </section>
-    <p class="ia-footnote kt-foot">편입 기준: DART 사업보고서 'II. 사업의 내용' 원문에 테마를 가리키는 문장이 있을 때만(문장은 원문 그대로, 출처 링크).
-      규칙 편입 = 테마 키워드·자기 지칭(당사 등)·사업 활동어가 한 문장에 있음 / AI 판정 = 규칙으로 애매한 문장만 Gemini 가 판정.
-      원문 확인 ${Number(cov.processed || 0).toLocaleString("ko-KR")} / ${Number(cov.universe || 0).toLocaleString("ko-KR")}종목(시가총액 순으로 매주 추가) · 갱신 ${escapeHtml(P.updatedAtKst || "")}.
-      테마 등락은 지난 가격 움직임일 뿐 이후 방향을 알려 주지 않습니다. 투자 권유가 아닙니다.</p>`;
+    <p class="ia-footnote kt-foot">원문 확인 ${Number(cov.processed || 0).toLocaleString("ko-KR")} / ${Number(cov.universe || 0).toLocaleString("ko-KR")}종목 · 갱신 ${escapeHtml(P.updatedAtKst || "")}</p>`;
   if (KT_VIEW.sel) ktFillDetail(KT_VIEW.sel);
 }
 
@@ -218,7 +214,7 @@ function ktDetailHtml(stat) {
           <span class="kt-member-cap">${escapeHtml(ktCap(s))}</span>
         </div>
         <p class="kt-ev" data-kt-ev="${escapeHtml(m.t)}"><span class="muted">근거 문장 불러오는 중…</span></p>
-        <p class="kt-meta">${ktByBadge(m.by)}${ktSubBadge(m.sub)}<span>출처 ${ktSourceHtml(m.t)}</span>${Number(m.n) > 1 ? `<span title="같은 테마로 걸린 원문 문장 수 — 대표 문장 하나만 보여 줍니다">관련 문장 ${Number(m.n)}개</span>` : ""}${m.pb != null ? `<span>PBR ${Number(m.pb).toFixed(2)}배</span>` : ""}</p>
+        <p class="kt-meta">${ktByBadge(m.by)}${ktSubBadge(m.sub)}<span>${ktSourceHtml(m.t)}</span>${Number(m.n) > 1 ? `<span title="같은 테마로 걸린 원문 문장 수 — 대표 문장 하나만 보여 줍니다">관련 문장 ${Number(m.n)}개</span>` : ""}${m.pb != null ? `<span>PBR ${Number(m.pb).toFixed(2)}배</span>` : ""}</p>
       </li>`;
   }).join("");
   const perfLine = `${escapeHtml(periodLabel)} 동일가중 ${ktPct(stat[KT_VIEW.period].eq)} · 시총가중 ${ktPct(stat[KT_VIEW.period].cap)}`;
@@ -329,7 +325,7 @@ function renderStockThemes(item) {
   host.hidden = false;
   host.dataset.ktTicker = ticker;
   host.innerHTML = `
-    <h3 class="kt-chips-title">이 종목의 테마 <small>사업보고서 근거</small></h3>
+    <h3 class="kt-chips-title">이 종목의 테마</h3>
     ${list.length ? `<div class="kt-chips">${list.map((x) => `<button type="button" class="kt-chip" data-kt-chip="${escapeHtml(x.id)}" aria-expanded="false"
         title="${escapeHtml(`근거 키워드 '${x.kw}' · ${repName}${x.by === "llm" ? " · AI 판정" : ""}${x.sub ? " · 자회사 사업" : ""} — 눌러서 근거 문장 보기`)}">${escapeHtml(x.name)}${x.by === "llm" ? '<span class="kt-chip-ai" aria-label="AI 판정">AI</span>' : ""}${x.sub ? '<span class="kt-chip-ai" aria-label="자회사 사업">자회사</span>' : ""}</button>`).join("")}</div>
       <div class="kt-chip-ev" hidden></div>`
@@ -372,7 +368,7 @@ function ktChipClick(ev) {
     const pair = evMap && evMap[ticker];
     box.innerHTML = `
       <p class="kt-ev">${pair ? `“${ktEvidenceHtml(pair[0], m && m.kw, pair[1])}”` : '<span class="muted">근거 문장을 불러오지 못했습니다.</span>'}</p>
-      <p class="kt-meta">${ktByBadge(m && m.by)}${ktSubBadge(m && m.sub)}<span>출처 ${ktSourceHtml(ticker)}</span></p>
+      <p class="kt-meta">${ktByBadge(m && m.by)}${ktSubBadge(m && m.sub)}<span>${ktSourceHtml(ticker)}</span></p>
       <button type="button" class="ghost compact-btn kt-open" data-kt-open="${escapeHtml(id)}">${escapeHtml(th ? th.name : "")} 테마 전체 보기 ›</button>`;
   });
 }

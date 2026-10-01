@@ -99,11 +99,10 @@ function renderCompanyInfo(item) {
     if (selectedTicker !== ticker || ciIsKr() !== kr) return;
     if (!rec) return ciHide(host);
     const meta = window.COMPANY_PROFILE_INDEX.markets[market] || {};
-    const src = kr ? "DART 기업개황·직원현황" : "SEC EDGAR";
     host.hidden = false;
     host.innerHTML = `<div class="qi-head"><h3>기업개요</h3></div>
       <table class="ci-table"><tbody>${ciProfileRows(rec, item, kr)}</tbody></table>
-      <p class="ci-src">출처 ${escapeHtml(src)} · 기준 ${escapeHtml(rec.asOf || String(meta.updatedAtKst || "").slice(0, 10))}</p>`;
+      <p class="ci-src">기준 ${escapeHtml(rec.asOf || String(meta.updatedAtKst || "").slice(0, 10))}</p>`;
   });
 }
 
@@ -184,8 +183,7 @@ function renderPriceTargets(item) {
     const n = Number(t.n) || 0;
     host.hidden = false;
     host.innerHTML = `<div class="qi-head"><h3>목표주가 범위</h3><span>${n ? `애널리스트 ${n}명 · ` : ""}기준 ${escapeHtml(t.asOf || "")}</span></div>
-      ${body}
-      <p class="ci-src">출처 ${t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq"} · 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
+      ${body}`;
   });
 }
 
@@ -207,7 +205,7 @@ function hydratePriceTargetSlots(key, price) {
     const body = t ? ciRangeHtml(t, price) : "";
     if (!body) return;
     const n = Number(t.n) || 0;
-    const head = `<div class="ci-slot-head"><span>목표주가 범위</span><em>${t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq"}${n ? ` · ${n}명` : ""}${t.asOf ? ` · 기준 ${escapeHtml(t.asOf)}` : ""}</em></div>`;
+    const head = `<div class="ci-slot-head"><span>목표주가 범위</span><em>${[n ? `${n}명` : "", t.asOf ? `기준 ${escapeHtml(t.asOf)}` : ""].filter(Boolean).join(" · ")}</em></div>`;
     document.querySelectorAll(`.ci-slot[data-pt-slot="${CSS.escape(key)}"]`).forEach((el) => {
       el.innerHTML = head + body;
       el.hidden = false;

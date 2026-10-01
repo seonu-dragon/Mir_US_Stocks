@@ -207,15 +207,12 @@
       </tr>`).join("")}</tbody></table></div></div>`;
 
     const multi = r.multiSourceCount ? ` · 두 경로 이상으로 겹쳐 든 종목 ${r.multiSourceCount}개` : "";
-    const srcText = isKrMarket()
-      ? "출처 KRX 정보데이터시스템 ETF PDF(설정 단위 구성, 기준일은 ETF별 표기)"
-      : "출처 SEC Form N-PORT(분기말 보유 내역, 약 60일 뒤 공개 — 기준일은 ETF별 표기)";
     return `<div class="fundamental-head"><h3>ETF 룩스루 — 실제 종목 노출</h3><span>평가액 기준 · 종목 ${r.exposureCount}개로 펼침${escapeHtml(multi)}</span></div>
       ${coverage}
       <div class="etfh-grid"><div class="etfh-main"><h4 class="lt-h4">실제 종목 노출 상위 ${Math.min(TOP_N, r.exposures.length)}</h4>${expo}</div>
       <div class="etfh-side">${overlaps}${sectors}</div></div>
       ${etfTable}
-      <p class="etfh-foot">${srcText} · ETF 마다 공개 상위 ${Number(d.topKeep || 25)}개 구성만 펼치므로 종목 노출·중복도는 하한이고 나머지는 '공개 상위 밖'으로 따로 셉니다 · 현재 구성과 다를 수 있음 · 사실 표시일 뿐 매수·매도 추천이 아닙니다</p>`;
+      <p class="etfh-foot">ETF 마다 공개 상위 ${Number(d.topKeep || 25)}개 구성만 펼치므로 종목 노출·중복도는 하한이고 나머지는 '공개 상위 밖'으로 따로 셉니다 · 현재 구성과 다를 수 있음</p>`;
   }
 
   // ---------------------------------------------------------------- CSV 가져오기 미리보기

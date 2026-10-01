@@ -95,9 +95,6 @@ function krFlowCard(item) {
           ${row("개인", f.i5, f.i20, null)}
         </tbody>
       </table>
-      <p class="krflow-note">누가 샀는지를 보여줄 뿐, 다음날 주가와는 무관합니다
-         — 외국인·기관 순매수 상위 10%와 하위 10%의 다음날 수익률은 무작위와 구분되지
-         않았습니다(60거래일 검정).</p>
       ${typeof krFlowDailyToggle === "function" ? krFlowDailyToggle(item) : ""}
     </div>`;
 }
@@ -186,10 +183,9 @@ function krConsensusCard(item) {
   }
 
   const caveats = [];
-  caveats.push("국내 증권사 목표주가는 구조적으로 낙관 편향이 있습니다(시장 중앙값 +67.6%). 참고용이며 매매 신호가 아닙니다.");
   if (thin) caveats.push(`추정 기관이 ${cnt}곳뿐이라 사실상 개별 의견에 가깝습니다.`);
   if (isStale) caveats.push("최근 리포트가 오래되어 목표가가 작성 당시 주가 기준으로 낡았을 수 있습니다.");
-  const caveatHtml = `<p class="krflow-note">${caveats.map(escapeHtml).join(" ")}</p>`;
+  const caveatHtml = caveats.length ? `<p class="krflow-note">${caveats.map(escapeHtml).join(" ")}</p>` : "";
 
   return `
     <div class="krflow-card">
@@ -247,9 +243,8 @@ function krNpsCard(item) {
   if (!rows.length) return "";
   return `
     <div class="krflow-card">
-      <div style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline"><strong>국민연금 보유</strong><span class="muted" style="font-size:var(--fs-cap)">기준 ${escapeHtml(nps.asOf || "")} · 연 1회 공시</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline"><strong>국민연금 보유</strong><span class="muted" style="font-size:var(--fs-cap)">기준 ${escapeHtml(nps.asOf || "")}</span></div>
       <table class="krflow-table"><tbody>${rows.map(([k, v]) => `<tr><th>${k}</th><td>${v}</td></tr>`).join("")}</tbody></table>
-      <p class="krflow-note">연말 기준 연 1회 공시라 현재 보유와 다를 수 있습니다. 참고용 컨텍스트입니다.</p>
     </div>`;
 }
 
@@ -359,7 +354,6 @@ function renderKrDisclosures() {
     if (payload.firstFileDate && payload.lastFileDate) {
       parts.push(`${payload.firstFileDate} ~ ${payload.lastFileDate}`);
     }
-    parts.push(payload.source);
     meta.textContent = parts.filter(Boolean).join(" · ");
   }
   renderKrDisclosureMethod();
@@ -432,7 +426,6 @@ function renderKrOwnProfile() {
       payload.updatedAtKst,
       `${payload.year || ""} 사업보고서 기준`,
       `${payload.companyCount || 0}종목`,
-      payload.source,
     ].filter(Boolean).join(" · ");
   }
 
@@ -496,7 +489,6 @@ function renderKrOwnership() {
       `최근 ${payload.windowDays || 7}일`,
       `대량보유 ${payload.majorCount || 0}건`,
       `임원 ${payload.insiderCount || 0}건`,
-      payload.source,
     ].filter(Boolean).join(" · ");
   }
 

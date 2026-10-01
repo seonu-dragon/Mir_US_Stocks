@@ -119,7 +119,7 @@ function sgTable(view, currency) {
 
 function sgMeta(file) {
   const f = (file.filings || [])[0];
-  const bits = [`출처 SEC ${escapeHtml((f && f.form) || "10-K")} XBRL(부문 공시)`];
+  const bits = [];
   if (f && f.end) bits.push(`최근 결산 ${escapeHtml(f.end)}`);
   if (f && f.filed) bits.push(`제출 ${escapeHtml(f.filed)}`);
   if (file.currency && file.currency !== "USD") bits.push(`통화 ${escapeHtml(file.currency)}`);
@@ -154,7 +154,7 @@ function sgSectionHtml(file, axisKey, width) {
     <div class="mf-chart-wrap">${sgChartSvg(view, cur, width)}</div>
     ${sgTable(view, cur)}
     ${note ? `<p class="mf-note sg-note">${escapeHtml(note)}</p>` : ""}
-    <p class="mf-foot">회사가 10-K 부문·지역·제품 주석에 XBRL 로 태그한 매출을 옮긴 과거 정보이며 예측·추천이 아닙니다. 비중은 ${escapeHtml(view.label)} 합 기준, 전년비·3년 연평균은 두 해 모두 값이 있을 때만 계산합니다(—는 공시에서 확인되지 않은 값). 부문 구성이 바뀐 해는 멤버가 연도마다 다를 수 있습니다. 가로줄은 같은 공시의 총매출입니다.</p>`;
+    <p class="mf-foot">비중은 ${escapeHtml(view.label)} 합 기준입니다. —는 공시에서 확인되지 않은 값입니다. 부문 구성이 바뀐 해는 멤버가 연도마다 다를 수 있습니다. 가로줄은 같은 공시의 총매출입니다.</p>`;
 }
 
 function sgHide(host) {

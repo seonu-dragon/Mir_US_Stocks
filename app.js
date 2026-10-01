@@ -897,12 +897,6 @@ function applyMarketOnlyUi() {
       ? "삼성전자의 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다."
       : "엔비디아의 실시간 차트와 핵심 기술 지표, 실적 상황을 종합 점검합니다.";
   }
-  const sigIntro = byId("signalsIntro");
-  if (sigIntro) {
-    sigIntro.textContent = krMode
-      ? "52주 신고가 근접 등 한국 시장 시그널을 한 화면에 모았습니다. KRX 시장경보·거래정지·관리종목은 '시장경보·이상 종목' 항목에 있습니다."
-      : "내부자 클러스터 매수·52주 신고가 돌파·주요 공시(8-K)·액티비스트(13D)·신규 상장을 한 화면에 모았습니다.";
-  }
   // 집계 인사이트(의회·내부자 종합)는 미국 전용 데이터 → KR에서는 빈 섹션이 되므로 숨긴다.
   const aggFold = byId("fold-aggInsights");
   const aggInsights = byId("aggInsights");
@@ -5364,7 +5358,7 @@ function renderMoveExplanation(item) {
       <strong class="${cls(change)}">${fmtDailyPct(change)}</strong>
     </div>
     ${typeof moversAnalysisNote === "function" ? moversAnalysisNote(item) : ""}
-    <p class="move-explanation-summary">${escapeHtml(stockLabel(item))}는 오늘 ${magnitude} ${direction}을 보였습니다. 아래는 확인 가능한 데이터 근거이며 원인을 확정하는 설명은 아닙니다.</p>
+    <p class="move-explanation-summary">${escapeHtml(stockLabel(item))}는 오늘 ${magnitude} ${direction}을 보였습니다.</p>
     <div class="move-evidence-list">${evidence.join("") || `<p class="muted">연결할 수 있는 근거 데이터가 아직 없습니다.</p>`}</div>
     <p class="move-explanation-note">시세·뉴스·공시의 기준 시각이 다를 수 있습니다.</p>`;
 }
@@ -5452,7 +5446,7 @@ function renderInvestmentChecklist(item) {
     </div>
     <div class="investment-check-progress"><i style="width:${(passed / results.length) * 100}%"></i></div>
     <div class="investment-check-list">${results.map((row) => checklistRow(row.label, row)).join("")}</div>
-    <p class="investment-check-note">${warned ? `주의 항목 ${warned}개를 원문 데이터와 함께 확인하세요.` : "규칙 기반 요약이며 매수·매도 추천이 아닙니다."}</p>`;
+    ${warned ? `<p class="investment-check-note">주의 항목 ${warned}개를 원문 데이터와 함께 확인하세요.</p>` : ""}`;
 }
 
 function loadEstimateHistoryStore() {
@@ -5569,8 +5563,7 @@ function renderEstimateRevision(item) {
           : `<em class="${weekChange.tone}">7일 ${weekChange.text}</em><em class="${monthChange.tone}">30일 ${monthChange.text}</em>`;
         return `<article><span>${escapeHtml(metric.label)}</span><strong>${estimateValue(current[metric.key], metric.kind)}</strong><div>${chips}</div></article>`;
       }).join("")}
-    </div>
-    <p>이 기기에서 본 값을 날마다 기록해 7일·30일 전과 비교합니다.</p>`;
+    </div>`;
 }
 
 // ===== #2 스마트머니 통합 뷰 (내부자 + 의회 + 13F + 13D/G) =====
@@ -6607,7 +6600,6 @@ function renderMarketBreadth() {
       <div>
         <span class="daily-action-kicker">시장 폭</span>
         <h2>시장 폭 지표</h2>
-        <p>스냅샷 ${n.toLocaleString()}개 종목(ETF 제외) 기준 시장 전체의 참여도·체력입니다.</p>
       </div>
       <span class="breadth-regime breadth-${regime.k}">${regime.t} · A/D ${adLine >= 0 ? "+" : ""}${adLine.toFixed(0)}</span>
     </div>
@@ -6631,7 +6623,6 @@ function renderMarketBreadth() {
       <div class="breadth-sectors-title">섹터별 상승 비율</div>
       ${sectorHtml}
     </div>
-    <p class="breadth-note">참여도가 넓을수록(상승 비율·모멘텀 강세 높을수록) 추세가 건강합니다. 지수만 오르고 폭이 좁으면(소수 종목 주도) 되돌림 위험을 함께 봐야 합니다.</p>
   `;
 }
 
@@ -7920,7 +7911,7 @@ function renderSignalsSummary() {
   if (!top.length) { host.innerHTML = ""; host.hidden = true; return; }
   host.hidden = false;
   host.innerHTML = `
-    <div class="section-title"><h2>오늘의 시그널 3개</h2><p>수집한 지표 중 오늘 변화가 가장 큰 세 가지입니다. 예측이 아니라 현재 상태 요약입니다.</p></div>
+    <div class="section-title"><h2>오늘의 시그널 3개</h2></div>
     <div class="ia-signal-grid">
       ${top.map((s) => `<article class="ia-signal-card ${escapeHtml(s.tone)}">
         <span class="ia-signal-label">${escapeHtml(s.label)}</span>

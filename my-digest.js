@@ -235,11 +235,6 @@ function renderMyDigestNow() {
       : `${escapeHtml(basis)} 장 마감 기준 · 보유 ${d.counts.holdings} · 관심 ${d.counts.watch}`;
     const tab = (mode, label) => `<button type="button" class="movers-tab${myDigestMode === mode ? " is-active" : ""}" data-md-mode="${mode}" aria-pressed="${myDigestMode === mode}">${label}</button>`;
     const missing = d && d.missing.length ? `<p class="muted md-note">스냅샷에 없는 종목 ${d.missing.length}개는 뺐습니다.</p>` : "";
-    const foot = myDigestMode === "weekly"
-      ? (w.mode === "contribution"
-        ? "기여 = 5거래일 수익률 × 현재 평가액 비중(보유 › 벤치마크 기여도와 같은 근사). 이유는 기간 중 공시·실적 → 업종·지수 대비 순서의 사실이며 원인을 단정하지 않습니다."
-        : "보유 종목이 없어 관심종목의 5거래일 등락으로 보여 줍니다. 이유는 기간 중 공시·실적 → 업종·지수 대비 순서의 사실입니다.")
-      : "이유는 ① 오늘의 특징주 자동 요약 ② 직전 거래일~기준일 공시·실적 ③ 업종·지수 대비 순서로 붙인 사실이며 원인을 단정하지 않습니다.";
     el.innerHTML = `
       <div class="md-head">
         <div><h2>${myDigestMode === "weekly" ? "이번 주 내 주식은" : "오늘 내 주식은"}</h2><p>${sub}</p></div>
@@ -247,8 +242,7 @@ function renderMyDigestNow() {
       </div>
       ${myDigestHeadlineHtml(d, w)}
       ${myDigestMode === "weekly" ? myDigestWeeklyHtml(w) : myDigestDailyHtml(d, compact)}
-      ${missing}
-      <p class="md-foot muted">${foot} 매매 추천이 아닌 정보입니다.</p>`;
+      ${missing}`;
   });
 }
 

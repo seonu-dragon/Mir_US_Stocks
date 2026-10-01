@@ -111,38 +111,38 @@ function shrKpis(s, cur) {
   const tiles = [];
   tiles.push(["배당 주기", s.frequency.label, s.lastDividend ? `최근 배당락 ${s.lastDividend.date}` : ""]);
   tiles.push(["최근 1년 주당배당금", s.trailing.count ? shrPerShare(s.trailing.sum, cur) : "—", s.trailing.count ? `${s.trailing.count}회 · 배당락일 기준` : "최근 1년 기록 없음"]);
-  tiles.push(["배당수익률(현재)", Number.isFinite(s.yieldPct) ? `${s.yieldPct.toFixed(2)}%` : "—", s.yieldSrc || ""]);
+  tiles.push(["배당수익률(현재)", Number.isFinite(s.yieldPct) ? `${s.yieldPct.toFixed(2)}%` : "—", ""]);
   const p = s.ttmPayout;
-  tiles.push(["배당성향", shrPayoutText(p), p ? (p.basis === "ttm" ? "최근 1년 배당 ÷ 최근 4분기 EPS" : "네이버·KRX, 직전 결산") : ""]);
+  tiles.push(["배당성향", shrPayoutText(p), p ? (p.basis === "ttm" ? "최근 1년 배당 ÷ 최근 4분기 EPS" : "직전 결산") : ""]);
   return `<dl class="shr-kpis">${tiles.map(([k, v, sub]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>${sub ? `<dd class="shr-kpi-sub">${escapeHtml(sub)}</dd>` : ""}</div>`).join("")}</dl>`;
 }
 
 function shrBuybackBody(o) {
-  const { kr, cur, share, recent, hist, us8k, discWindow, histSrc } = o;
+  const { kr, cur, share, recent, hist, us8k, discWindow } = o;
   const parts = [];
   if (share) {
     const basis = share.basis === "dil" ? "희석 가중평균" : (kr ? "기말 유통주식수" : "기말 발행주식수");
     parts.push(`<div class="shr-row"><span class="shr-k">주식수 변화</span><span class="shr-v">1년 <b>${escapeHtml(shrSignedPct(share.y1Pct))}</b>${share.y3Pct !== null ? ` · 3년 <b>${escapeHtml(shrSignedPct(share.y3Pct))}</b>` : ""}</span>`
-      + `<span class="shr-sub">${escapeHtml(basis)} · 분할 환산 · ${escapeHtml(share.lastEnd)} 결산 기준. 줄면 자사주 매입·소각, 늘면 발행·주식보상 쪽입니다.</span></div>`);
+      + `<span class="shr-sub">${escapeHtml(basis)} · 분할 환산 · ${escapeHtml(share.lastEnd)} 결산 기준</span></div>`);
   }
   if (kr && recent && recent.rows.length) {
     const rows = recent.rows.slice(0, 6).map((r) => `<tr><td class="ins-date">${escapeHtml(r.date)}</td><td>${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">${escapeHtml(r.label)}</a>` : escapeHtml(r.label)}</td>`
       + `<td class="ins-num">${r.amount ? escapeHtml(shrMoney(r.amount, "KRW")) : "—"}</td><td class="ins-num">${r.shares ? escapeHtml(Math.round(r.shares).toLocaleString("ko-KR")) + "주" : "—"}</td></tr>`).join("");
-    parts.push(`<div class="shr-block"><p class="shr-k">최근 자기주식 공시 <span class="shr-sub">DART · ${escapeHtml(discWindow || "최근 공시 창")}</span></p>
+    parts.push(`<div class="shr-block"><p class="shr-k">최근 자기주식 공시 <span class="shr-sub">${escapeHtml(discWindow || "최근 공시 창")}</span></p>
       <div class="table-wrap mf-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr><th>공시일</th><th>유형</th><th class="ins-num">금액</th><th class="ins-num">주식수</th></tr></thead><tbody>${rows}</tbody></table></div></div>`);
   }
   if (!kr && us8k && us8k.length) {
     const confirmed = us8k.filter((r) => r.confirmed && r.amount);
     const mention = us8k.length - confirmed.length;
     const rows = confirmed.slice(0, 5).map((r) => `<tr><td class="ins-date">${escapeHtml(r.date)}</td><td class="ins-num">${escapeHtml(shrMoney(r.amount, "USD"))}</td><td>${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">8-K 원문</a>` : ""}</td></tr>`).join("");
-    parts.push(`<div class="shr-block"><p class="shr-k">자사주 매입 발표 <span class="shr-sub">SEC 8-K · 최근 수집분${mention ? ` · 금액 미확인 ${mention}건` : ""}</span></p>
+    parts.push(`<div class="shr-block"><p class="shr-k">자사주 매입 발표 <span class="shr-sub">최근 수집분${mention ? ` · 금액 미확인 ${mention}건` : ""}</span></p>
       ${rows ? `<div class="table-wrap mf-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr><th>공시일</th><th class="ins-num">승인 한도</th><th>원문</th></tr></thead><tbody>${rows}</tbody></table></div>` : `<p class="muted shr-sub">금액이 확인된 발표는 없습니다.</p>`}</div>`);
   }
   if (hist) {
     const kinds = Object.keys(hist.kinds);
     const head = kinds.map((k) => `<th class="ins-num">${escapeHtml(hist.labels[k] || k)}</th>`).join("");
     const body = hist.years.slice().reverse().map((y) => `<tr><th scope="row">${escapeHtml(y.year)}</th>${kinds.map((k) => `<td class="ins-num">${y.counts[k] || "—"}</td>`).join("")}</tr>`).join("");
-    parts.push(`<div class="shr-block"><p class="shr-k">자사주 관련 공시 건수 <span class="shr-sub">${escapeHtml(histSrc)} · ${escapeHtml(hist.first.slice(0, 7))}~${escapeHtml(hist.last.slice(0, 7))} · 건수만(금액 없음)</span></p>
+    parts.push(`<div class="shr-block"><p class="shr-k">자사주 관련 공시 건수 <span class="shr-sub">${escapeHtml(hist.first.slice(0, 7))}~${escapeHtml(hist.last.slice(0, 7))} · 건수만(금액 없음)</span></p>
       <div class="table-wrap mf-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr><th>연도</th>${head}</tr></thead><tbody>${body}</tbody></table></div></div>`);
   }
   return parts.join("");
@@ -234,12 +234,10 @@ function renderShareholder(item) {
 
   const withPayout = s.fiscal && s.years.some((y) => Number.isFinite(y.payout) || y.deficit);
   const divYears = s.years.some((y) => y.count > 0) ? s.years : [];
-  const divSrc = `야후 배당 기록(배당락일, 분할 조정) · ${s.coverageStart ? `${s.coverageStart}부터` : ""}`;
   const cards = [];
   if (divYears.length) {
     const notes = [];
     if (divYears.some((y) => y.partial)) notes.push(s.fiscal ? "* 결산 전 회계연도 — 지금까지 배당락분" : "* 올해 — 지금까지 배당락분");
-    if (withPayout) notes.push("배당성향 = 회계연도 안 배당락 합 ÷ 그 해 EPS(지배주주 순이익 ÷ 분할 환산 희석 주식수). 적자 해는 '적자'");
     if (kr) notes.push("국내는 배당락일 연도로 묶습니다 — 결산배당 기준일을 이듬해 2~3월로 옮긴 회사는 결산배당이 다음 해에 잡힙니다");
     notes.push("'기록 없음'은 그해 배당이 없었거나 기록이 빠진 해입니다");
     if (missing.length) notes.push(`DART 배당 결정 공시가 있는데 배당 기록이 없는 해: ${missing.join(", ")} — 기록 누락 가능`);
@@ -252,7 +250,7 @@ function renderShareholder(item) {
       chart: `<div class="mf-chart-wrap">${shrDpsSvg(divYears, cur, width, withPayout)}</div><p class="mfo-cap">${escapeHtml(notes.join(". "))}.</p>`,
       table: shrDpsTable(divYears, cur, withPayout),
       legend: [{ label: "주당배당금", color: "var(--mf-c1)", shape: "bar" }].concat(withPayout ? [{ label: "배당성향(우)", color: "var(--mfo-line)", shape: "line" }] : []),
-      source: `출처 ${divSrc}`,
+      source: s.coverageStart ? `${s.coverageStart}부터` : "",
       help: "주당배당금은 배당락일 기준으로 더한 값입니다(지급일 아님). 분할·무상증자 뒤 기준으로 조정돼 당시 공시 금액과 다를 수 있습니다.",
     }));
   }
@@ -260,17 +258,12 @@ function renderShareholder(item) {
     const ds = (window.KR_DISCLOSURES.disclosures || []).map((d) => d.fileDate).filter(Boolean).sort();
     return ds.length ? `${ds[0]}~${ds[ds.length - 1]} 공시분` : "";
   })() : "";
-  const bbBody = shrBuybackBody({ kr, cur, share, recent, hist, us8k, discWindow, histSrc: kr ? "DART 공시 기록" : "SEC 8-K 기록" });
+  const bbBody = shrBuybackBody({ kr, cur, share, recent, hist, us8k, discWindow });
   if (bbBody) {
     cards.push(mirChartCard({
       id: "shr.buyback",
       title: "자사주 · 주식수",
       chart: `<div class="shr-bb">${bbBody}</div>`,
-      source: `출처 ${[
-        share ? (kr ? "DART 재무 주식수" : "SEC 재무 희석 주식수") : "",
-        (kr && recent && recent.rows.length) || hist ? (kr ? "DART 자기주식 공시" : "SEC 8-K 기록") : "",
-        !kr && us8k.length ? "SEC 8-K" : "",
-      ].filter((x, i, a) => x && a.indexOf(x) === i).join(" · ")}`,
       help: kr ? "국내 자사주 금액·주식수는 최근 공시 창(약 1주) 안의 공시만 있습니다. 공시 건수 표는 이벤트 기록(약 5년)에서 세었고 금액은 없습니다." : "미국은 재무 파일에 자사주 매입 현금(현금흐름표) 계정을 아직 싣지 않아, 희석 주식수 변화와 8-K 발표만 보여 줍니다.",
     }));
   }
@@ -289,6 +282,5 @@ function renderShareholder(item) {
       <button type="button" class="shr-rank-link" data-shr-rank>배당 랭킹 보기 <span aria-hidden="true">›</span></button>
     </div>
     ${s.hasDividends ? shrKpis(s, cur) : `<p class="mf-note">최근 ${s.coverageStart ? `${s.coverageStart} 이후` : ""} 배당 기록이 없습니다.</p>`}
-    ${mirChartGrid(cards)}
-    <p class="mf-foot">과거 기록이며 앞으로의 배당·자사주 매입을 뜻하지 않습니다. 매수·매도 추천이 아닙니다.</p>`;
+    ${mirChartGrid(cards)}`;
 }

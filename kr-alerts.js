@@ -61,7 +61,7 @@ function krMarketAlertNotice(item) {
   return list.map((a) => `
       <p class="audit-notice audit-${a.tone} kr-alert-notice">
         <b>${escapeHtml(a.label)}${a.key === "halt" || a.key === "admin" ? "" : " 종목"}</b>
-        <span>${escapeHtml(a.detail)}${a.detail ? " · " : ""}KRX KIND 기준 ${escapeHtml(a.asOf)}</span>
+        <span>${escapeHtml(a.detail)}${a.detail ? " · " : ""}기준 ${escapeHtml(a.asOf)}</span>
       </p>`).join("");
 }
 
@@ -146,15 +146,10 @@ function renderKrMarketAlerts() {
 
   const chips = sections.filter(([key]) => S[key]).map(([key, title, , rows]) =>
     `<span class="kr-alert-chip${rows.length ? "" : " is-zero"}" data-kind="${key}">${escapeHtml(title)} <b>${rows.length.toLocaleString()}</b></span>`).join("");
-  const covered = S.newHigh?.covered || S.valueSurge?.covered;
   host.innerHTML = `
-    <div class="section-title"><p>KRX 가 지정한 시장경보·거래정지·관리종목과, 기준 거래일의 상·하한가·52주 신고/신저가·거래대금 급증 종목입니다. 매매 신호가 아니라 현재 상태에 대한 정보입니다.</p></div>
     <div class="kr-alert-chips">${chips}</div>
     <div class="signals-grid kr-alert-grid">${cards.join("")}</div>
-    <p class="kr-alert-foot">기준 거래일 ${escapeHtml(base)} · 수집 ${escapeHtml(p.updatedAtKst || "")}.
-      시장경보·거래정지·관리종목: KRX KIND(거래정지·관리종목은 수집 시점 현황). 상·하한가: 네이버 금융 등락률 목록.
-      52주 신고/신저가·거래대금 급증: ${covered ? `시가총액 상위 위주 ${Number(covered).toLocaleString()}종목의 ` : ""}일봉으로 계산 — 거래대금은 종가×거래량 근사치.
-      단기과열종목·VI 발동은 싣지 않습니다.</p>`;
+    <p class="kr-alert-foot">기준 거래일 ${escapeHtml(base)} · 수집 ${escapeHtml(p.updatedAtKst || "")}</p>`;
   host.querySelectorAll(".ins-ticker[data-ticker]").forEach((b) => b.addEventListener("click", () => {
     selectTicker(b.dataset.ticker, { openSearch: true });
   }));

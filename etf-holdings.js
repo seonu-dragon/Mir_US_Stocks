@@ -131,7 +131,7 @@ function etfhCompositionHtml(sh) {
 
   return `<div class="fundamental-head"><h3>구성 종목 (SEC 공시)</h3><span>${escapeHtml(headSub)}</span></div>
     <div class="etfh-grid"><div class="etfh-main">${table}</div><div class="etfh-side">${sectorHtml}${ctryHtml}</div></div>
-    <p class="etfh-foot">출처 SEC Form N-PORT(분기말 보유 내역, 약 60일 뒤 공개) · 제출일 ${escapeHtml(sh.filed || "—")}${sh.url ? ` · <a href="${escapeHtml(sh.url)}" target="_blank" rel="noopener">원문</a>` : ""} · 현재 구성과 다를 수 있음 · 섹터는 이 사이트 분류로 이은 주식만</p>`;
+    <p class="etfh-foot">제출일${escapeHtml(sh.filed || "—")}${sh.url ? ` · <a href="${escapeHtml(sh.url)}" target="_blank" rel="noopener">원문</a>` : ""} · 현재 구성과 다를 수 있음 · 섹터는 이 사이트 분류로 이은 주식만</p>`;
 }
 
 function etfhOwnersHtml(ticker, rec, meta) {
@@ -147,5 +147,5 @@ function etfhOwnersHtml(ticker, rec, meta) {
         <td class="num"><span class="etfh-w">${etfhPct(w)}</span>${etfhBar(w, max)}</td>
         <td class="num etfh-col-date">${escapeHtml((etfs[e] && etfs[e].asOf) || "—")}</td>
       </tr>`).join("")}</tbody></table></div>
-    <p class="etfh-foot">출처 SEC Form N-PORT(분기말 보유 내역, 기준일 ${escapeHtml(range)}) · SPY·DIA 는 단위투자신탁이라 보고서가 없어 빠짐 · 현재 비중과 다를 수 있음</p>`;
+    <p class="etfh-foot">기준일 ${escapeHtml(range)} · SPY·DIA 는 단위투자신탁이라 보고서가 없어 빠짐 · 현재 비중과 다를 수 있음</p>`;
 }

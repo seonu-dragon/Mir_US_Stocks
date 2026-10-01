@@ -171,8 +171,7 @@
       </section>
       ${tickerBlock(manifest, mode)}`;
     body.innerHTML = `
-      <p class="feed-sub-meta">기준 시각 ${esc(manifest.generatedAtKst || "확인 불가")} · 출처는 각 일정·공시 설명에 적혀 있습니다(Yahoo Finance·SEC EDGAR·DART·연준·investing.com·38커뮤니케이션).
-        공시·일정 사실을 알리는 정보이며 투자 권유가 아닙니다.</p>
+      <p class="feed-sub-meta">기준 시각 ${esc(manifest.generatedAtKst || "확인 불가")}</p>
       ${focus === "disclosures" ? rssSection + calSection : calSection + rssSection}`;
     bindTicker(manifest);
   }

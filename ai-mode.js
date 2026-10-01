@@ -1270,7 +1270,7 @@ function aiRiskPanel(item) {
 }
 function aiFactorPanel(item) {
   const body = typeof stockFactorPctBodyHtml === "function" ? stockFactorPctBodyHtml(item) : "";
-  return body ? aiModePanel("팩터 스코어", "시장 전체 백분위 · 예측 아님", body) : "";
+  return body ? aiModePanel("팩터 스코어", "시장 전체 백분위", body) : "";
 }
 function aiPeerPanel(item) {
   const body = typeof stockPeerBodyHtml === "function" ? stockPeerBodyHtml(item) : "";
@@ -1297,8 +1297,7 @@ function aiShortVolumePanel(item) {
       detail: Number.isFinite(mkt) ? `평균 ${mkt.toFixed(1)}%` : "" },
     { label: `${hist.length}일 범위`, value: hist.length ? `${Math.min(...hist).toFixed(0)}~${Math.max(...hist).toFixed(0)}%` : "—" },
   ]);
-  const body = grid + (spark ? `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 ${hist.length}일 추이</div>${spark}` : "")
-    + `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">FINRA 규정 SHO 통합 공매도 거래량 ÷ 총거래량. 마켓메이커 헤지·데이트레이딩도 포함되어 시장 평균이 ~50% 안팎으로 높습니다. 공매도 '잔고(포지션)'가 아니라 그날 매도 흐름의 '참여도'이며, 예측·매매 신호가 아닙니다.</p>`;
+  const body = grid + (spark ? `<div style="font-size:12px;color:var(--muted);margin:12px 0 4px">최근 ${hist.length}일 추이</div>${spark}` : "");
   return aiModePanel("일일 공매도량", `FINRA · ${fs.asOf || ""}`, body);
 }
 
@@ -1318,7 +1317,7 @@ function aiDividendPanel(item) {
       tone: Number(s.payout) > 80 ? "warn" : "" },
     { label: "배당락일", value: s.exDate ? escapeHtml(s.exDate) : "—" },
   ]);
-  const cmp = vsAvg != null ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--pos)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}. 배당성향이 높을수록 이익 대비 배당 부담이 큽니다. 참고용입니다.</p>` : "";
+  const cmp = vsAvg != null ? `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">현재 수익률이 5년 평균보다 ${vsAvg > 0 ? `<b style="color:var(--pos)">${vsAvg.toFixed(2)}%p 높습니다</b>(가격 하락 또는 배당 증가)` : `<b>${Math.abs(vsAvg).toFixed(2)}%p 낮습니다</b>`}.</p>` : "";
   return aiModePanel("배당", "Yahoo · 연간 기준", grid + cmp);
 }
 
@@ -1365,8 +1364,7 @@ function aiAnalystPanel(item) {
   const nextHtml = nextE ? `<div style="background:var(--panel-soft);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px"><span style="color:var(--muted)">다음 실적 발표 예정</span> <strong style="margin-left:6px">${escapeHtml(nextE)}</strong></div>` : "";
   if (!recHtml && !earnHtml && !nextHtml) return "";
   const ptSlot = typeof priceTargetSlotHtml === "function" ? priceTargetSlotHtml(item) : "";
-  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">출처: Finnhub(추천 분포·EPS 서프라이즈) · Nasdaq·Yahoo(목표주가) · Yahoo(실적 예정일). 애널리스트 추정치이며 예측이나 투자 권유가 아닙니다.</p>`;
-  return aiModePanel("애널리스트 컨센서스", "추천 분포 · 목표주가 · EPS 서프라이즈", nextHtml + recHtml + ptSlot + earnHtml + note);
+  return aiModePanel("애널리스트 컨센서스", "추천 분포 · 목표주가 · EPS 서프라이즈", nextHtml + recHtml + ptSlot + earnHtml);
 }
 
 // 옵션 심리 — 풋/콜 비율(미결제약정) + 맥스페인. 둘 다 참고용 심리·수급 지표이지 매매
@@ -1394,8 +1392,7 @@ function aiOptionsPanel(item) {
     { label: "풋/콜 (거래량)", value: Number.isFinite(pcVol) ? pcVol.toFixed(2) : "—", tone: pcTone(pcVol) },
     { label: "미결제약정", value: `${kfmt(s.callOI)} C / ${kfmt(s.putOI)} P` },
   ]);
-  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">최근접 만기 ${escapeHtml(s.expiry || "")} 기준. 예상 변동폭=등가격 스트래들 프리미엄이 시사하는 만기까지의 ±변동 크기(만기가 가까우면 작습니다). 맥스페인=만기에 옵션 매수자 총손실이 최대가 되는 행사가(‘주가가 그쪽으로 끌린다’는 속설은 논쟁적). 풋/콜은 헤지·방향성 베팅이 섞인 심리 지표입니다. 예측·매매 신호가 아닙니다. 출처: Yahoo.</p>`;
-  return aiModePanel("옵션 심리", `풋/콜 · 맥스페인 · 만기 ${escapeHtml(s.expiry || "")}`, grid + note);
+  return aiModePanel("옵션 심리", `풋/콜 · 맥스페인 · 만기 ${escapeHtml(s.expiry || "")}`, grid);
 }
 
 // 연방 계약(USASpending) — 정부 매출이 큰 종목만. 최근 12개월 prime award 규모·건수.
@@ -1412,7 +1409,7 @@ function aiFederalContractsPanel(item) {
     { label: "최대 단일 집행", value: usd(s.top) },
     { label: "집행 건수", value: `${(Number(s.count) || 0).toLocaleString()}${approx ? "+" : ""}건` },
   ]);
-  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">USASpending.gov 계약(A/B/C/D) 트랜잭션의 <b>실제 집행액(obligation)</b> 합입니다. 다년 계약 상한이 아니라 그 기간에 집행된 금액이며, 금액 큰 순 상위만 합산해 총액은 근사치입니다. 정부라는 '고객'의 규모를 보여주는 참고용 대체 데이터로 예측·매매 신호가 아닙니다. 기간 ${escapeHtml(fc.windowStart || "")}~${escapeHtml(fc.windowEnd || "")}.</p>`;
+  const note = `<p style="font-size:var(--fs-cap);color:var(--muted);margin:10px 0 0;line-height:1.65">기간${escapeHtml(fc.windowStart || "")}~${escapeHtml(fc.windowEnd || "")}.</p>`;
   return aiModePanel("연방 계약", "USASpending · 최근 12개월 집행액", grid + note);
 }
 
@@ -1435,7 +1432,7 @@ function aiIndustryPanel(item) {
     const yoy = ind.latest_yoy;
     const dir = (ind.regime || {}).direction;
     const dirLabel = { improving: "개선", deteriorating: "악화", flat: "보합" }[dir] || "—";
-    return `<tr><td style="overflow:hidden"><strong class="ai-industry-link" data-ind="${escapeHtml(id)}" role="button" tabindex="0">${escapeHtml(ind.name_kr)}</strong><div style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(ind.latest_date)} · ${escapeHtml(String(ind.source || "").replace(/\s*OpenAPI/gi, ""))}</div></td>
+    return `<tr><td style="overflow:hidden"><strong class="ai-industry-link" data-ind="${escapeHtml(id)}" role="button" tabindex="0">${escapeHtml(ind.name_kr)}</strong><div style="font-size:var(--fs-cap);color:var(--muted)">${escapeHtml(ind.latest_date)}</div></td>
       <td style="${rt}">${escapeHtml(indFmtNum(ind.latest_value))}<div style="color:var(--muted);font-size:var(--fs-cap)">${escapeHtml(ind.unit || "")}</div></td>
       <td style="${rt}" class="${Number.isFinite(Number(yoy)) ? cls(Number(yoy)) : ""}">${yoy != null ? escapeHtml(indFmtSigned(yoy, "%", 1)) : "—"}</td>
       <td style="${rt}">${escapeHtml(dirLabel)}</td></tr>`;
@@ -1443,8 +1440,7 @@ function aiIndustryPanel(item) {
   const body = `<div class="ai-mode-table-wrap"><table class="ai-mode-table" style="table-layout:fixed;width:100%;min-width:0">
     <colgroup><col style="width:42%"><col style="width:22%"><col style="width:19%"><col style="width:17%"></colgroup>
     <thead><tr><th>지표</th><th style="text-align:right;white-space:nowrap">최신</th><th style="text-align:right;white-space:nowrap">전년비</th><th style="text-align:right;white-space:nowrap">방향</th></tr></thead>
-    <tbody>${rows}</tbody></table></div>
-    <div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">이 종목의 업황을 앞서 보여 주는 공식 통계(FRED·TWSE·한국은행·OECD). 신호등은 증가율의 방향이며 주가 방향이 아닙니다. 지표명을 누르면 산업 지표 탭으로 갑니다.</div>`;
+    <tbody>${rows}</tbody></table></div>`;
   return aiModePanel("산업 선행지표", "이 종목이 따라가는 지표 · 서술 통계", body);
 }
 
@@ -1892,8 +1888,7 @@ function aiVerdictPanel(item) {
     <div class="ai-dash-chips" aria-label="후속 질문">
       <span class="ai-dash-chips-h">이어서 묻기</span>
       ${AI_DASH_CHIPS.map((c) => `<button type="button" data-dash-q="${escapeHtml(c.q)}" data-dash-l="${escapeHtml(c.l)}">${escapeHtml(c.l)}</button>`).join("")}
-    </div>
-    <small class="ai-verdict-disc">규칙 기반 참고 지표 · 매수/매도 추천이 아닙니다</small>`;
+    </div>`;
 }
 
 const AI_DASH_CHIPS = [

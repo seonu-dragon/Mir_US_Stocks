@@ -58,7 +58,7 @@ function stockSnowflakeBodyHtml(item) {
       <div class="sh-sf-checks">${checks}</div>
     </div>
   </div>
-  <p class="sh-note"><b>절대 기준</b>이라 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다. 같은 업종 안 위치는 '업종 상대 팩터 등급'을 보세요. 예측이 아니라 재무 상태 요약입니다.${asOf ? ` 기준 ${escapeHtml(asOf)}.` : ""}</p>
+  <p class="sh-note"><b>절대 기준</b>이라 업종 차이(은행 PBR·성장주 PER 등)를 반영하지 않습니다.${asOf ? ` 기준 ${escapeHtml(asOf)}.` : ""}</p>
   <details class="sh-method"><summary>계산 방법</summary>
     <p>축마다 고정 기준 최대 6개 중 통과 개수입니다(값이 없는 기준은 분모에서 뺍니다).</p>
     <p>밸류: PER 15·25 미만, PBR 1.5·3 미만, PSR 2 미만, PEG 1.5 미만 · 성장: PEG 1·1.5 미만, 예상 PER &lt; PER, 매출성장 0·10% 초과, 이익성장 플러스</p>
@@ -79,7 +79,7 @@ function stockFactorPctBodyHtml(item) {
       <div class="sh-fp-track"><div class="sh-fp-fill ${tone}" style="width:${v == null ? 0 : v}%"></div></div>
       <span class="sh-fp-val">${v == null ? "—" : v}</span></div>`;
   }).join("");
-  return `${bars}<p class="sh-note">시장 전체 종목 중 백분위(0~100, 클수록 저평가·강세·우량·고성장·대형). 모멘텀=3개월 수익률, 퀄리티=ROE·순이익률·부채, 성장=매출성장(없으면 예상 EPS 성장). 예측이 아니라 현재 위치입니다.</p>`;
+  return `${bars}<p class="sh-note">시장 전체 종목 중 백분위(0~100, 클수록 저평가·강세·우량·고성장·대형).</p>`;
 }
 
 // ── 유사종목 비교 ─────────────────────────────────────────────────────────
@@ -110,7 +110,7 @@ function stockPeerBodyHtml(item) {
       <colgroup><col class="c-name"><col class="c-cap"><col class="c-pe"><col class="c-pb"><col class="c-chg"></colgroup>
       <thead><tr><th>종목</th><th class="num">시총</th><th class="num">PER</th><th class="num">PBR</th><th class="num">3개월</th></tr></thead>
       <tbody>${rows}</tbody></table></div>
-    <p class="sh-note">${escapeHtml(sel.basis)} 시총 상위 ${sel.peers.length}개(강조 행이 현재 종목). 종목명을 누르면 해당 종목으로 이동합니다.</p>`;
+    <p class="sh-note">${escapeHtml(sel.basis)} 시총 상위 ${sel.peers.length}개(강조 행이 현재 종목)</p>`;
 }
 
 function stockPeerBasis(item) {
@@ -151,7 +151,7 @@ function stockRiskBodyHtml(item) {
   ];
   const grid = `<div class="ai-mode-metric-grid">${metrics.map((m) => `<article><span>${escapeHtml(m.label)}</span><strong class="${m.tone || ""}">${escapeHtml(String(m.value))}</strong>${m.detail ? `<em>${escapeHtml(m.detail)}</em>` : ""}</article>`).join("")}</div>`;
   return `${grid}<div class="sh-sub-head">월별 시즈널리티 (평균 수익률, 21거래일 환산)</div>${shSeasonalitySvg(r.monthly)}
-    <p class="sh-note">위 기간의 일봉 종가로 계산한 과거 통계입니다. 월별 표본은 연도 수만큼이라 적고, 앞으로의 수익을 뜻하지 않습니다.</p>`;
+    <p class="sh-note">월별 표본은 연도 수만큼이라 적습니다.</p>`;
 }
 
 // ── 종목 상세 카드 ────────────────────────────────────────────────────────
@@ -168,7 +168,7 @@ function shFillCard(id, title, sub, body) {
 function renderStockHealth(item) {
   const ok = item && item.ticker && !item.__liveStub;
   shFillCard("stockSnowflake", "종목 체력", "스노우플레이크 · 절대 기준", ok ? stockSnowflakeBodyHtml(item) : "");
-  shFillCard("stockFactorPct", "팩터 스코어", "시장 전체 백분위 · 예측 아님", ok ? stockFactorPctBodyHtml(item) : "");
+  shFillCard("stockFactorPct", "팩터 스코어", "시장 전체 백분위", ok ? stockFactorPctBodyHtml(item) : "");
   shFillCard("stockPeers", "유사종목 비교", ok ? `${stockPeerBasis(item)} · 시총순` : "", ok ? stockPeerBodyHtml(item) : "");
   shFillCard("stockRisk", "위험 · 시즈널리티", "가격 이력 기반 · 과거 통계", ok ? stockRiskBodyHtml(item) : "");
 }

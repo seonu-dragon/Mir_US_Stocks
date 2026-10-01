@@ -145,7 +145,7 @@ function renderMoversBoard() {
     <div class="section-title movers-head">
       <div>
         <h2>오늘의 특징주</h2>
-        <p>${escapeHtml(p.tradeDate || "")} 장 마감 기준 · 자동 요약이라 틀릴 수 있음</p>
+        <p>${escapeHtml(p.tradeDate || "")} 장 마감 기준</p>
       </div>
       <div class="movers-tabs" role="group" aria-label="상승·하락 전환">${tab("up", "상승", sliceN(board.up).length)}${tab("down", "하락", sliceN(board.down).length)}</div>
     </div>
@@ -153,7 +153,7 @@ function renderMoversBoard() {
     ${statusBanner}
     ${body}
     ${universe === "large" && typeof signalScoreLine === "function" ? signalScoreLine(moversSide === "down" ? "movers_down" : "movers_up") : ""}
-    <p class="movers-foot muted">${idx ? `지수 ${idx} · ` : ""}${escapeHtml(board.criteria || "")}<br>근거: ${escapeHtml(p.source || "")} · 생성 ${escapeHtml(p.updatedAtKst || "")} · 공시·헤드라인만 본 요약이며 매매 신호가 아닌 정보입니다.</p>`;
+    <p class="movers-foot muted">${idx ? `지수 ${idx} · ` : ""}${escapeHtml(board.criteria || "")}</p>`;
   el.querySelectorAll("[data-movers-side]").forEach((btn) => {
     btn.addEventListener("click", () => { moversSide = btn.dataset.moversSide === "down" ? "down" : "up"; renderMoversBoard(); });
   });
@@ -173,6 +173,5 @@ function moversAnalysisNote(item) {
   return `<div class="movers-analysis-note">
       <span class="movers-analysis-label">오늘의 특징주 · ${escapeHtml(p.tradeDate || "")} ${fmtDailyPct(row.changePct)}</span>
       <div class="movers-why">${moversTagChips(row)}${moversReasonText(row)}${moversEvidenceLinks(row)}</div>
-      <small class="muted">공시·뉴스 헤드라인 기반 자동 요약이라 틀릴 수 있습니다.</small>
     </div>`;
 }

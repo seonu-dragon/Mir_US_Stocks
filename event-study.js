@@ -411,7 +411,7 @@ function esTableHtml(ix, series, qMap) {
     }).join("");
   }).join("");
   return `<div class="es-table-wrap"><table class="es-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>
-    <p class="muted es-note">판정은 대조군(같은 종목의 무작위 날짜)과의 차이 95% 구간이 0을 벗어났는지로 봅니다. 대조군 평균이 0에서 벗어난 만큼은 이벤트와 무관한 종목군 자체의 흐름(생존편향 포함)입니다. 비용은 반영하지 않았고, 과거 평균은 앞으로의 반응을 보장하지 않습니다.</p>`;
+    <p class="muted es-note">대조군 평균이 0에서 벗어난 만큼은 이벤트와 무관한 종목군 자체의 흐름(생존편향 포함)입니다.</p>`;
 }
 
 function esRecentHtml(ix, main) {
@@ -449,7 +449,7 @@ function esLimitsHtml(ix, market) {
       ${mk.dartMissing && mk.dartMissing.length ? `<li>아직 반영되지 않은 DART 분기 ${mk.dartMissing.length}개(${escapeHtml(mk.dartMissing.slice(0, 4).join(", "))}…).</li>` : ""}
     </ul>
   </details>
-  <p class="muted es-source">출처: ${escapeHtml(ix.source || "")} · 기준 ${escapeHtml(ix.updatedAtKst || "")}</p>`;
+  <p class="muted es-source">기준 ${escapeHtml(ix.updatedAtKst || "")}</p>`;
 }
 
 // ---------------------------------------------------------------- 종목 분석 카드
@@ -490,6 +490,6 @@ function renderStockEventStudy(item) {
     host.hidden = false;
     host.innerHTML = `<div class="es-card-head"><h3>과거 이벤트 반응</h3><span class="muted">시장조정 초과수익 평균 · 0일부터 · 기준 ${escapeHtml(ix.updatedAtKst || "")}</span></div>
       <div class="es-table-wrap"><table class="es-table es-card-table"><thead><tr><th>이벤트</th><th class="num">건수</th><th class="num">0~+1일</th><th class="num">0~+5일</th><th class="num">0~+20일</th><th class="num">최근</th><th></th></tr></thead><tbody>${body}</tbody></table></div>
-      <p class="muted es-note">한 종목의 표본은 몇 건뿐이라 우연이 크게 작용합니다. 전체 표본과 비교해 보세요. 최근 약 5년 이벤트만 셌고, 매매 신호가 아닙니다.</p>`;
+      <p class="muted es-note">한 종목의 표본은 몇 건뿐이라 우연이 크게 작용합니다. 최근 약 5년 이벤트만 셌습니다.</p>`;
   });
 }

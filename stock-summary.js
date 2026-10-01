@@ -92,14 +92,14 @@ function ssConsensus(item) {
     if (!c) return null;
     return {
       kind: "kr", target: c.targetPrice, count: c.estimateCount,
-      asOf: window.KR_CONSENSUS.asOf || c.lastReportDate || "", source: "FnGuide 컨센서스(네이버 금융)",
+      asOf: window.KR_CONSENSUS.asOf || c.lastReportDate || "",
     };
   }
   if (item.__liveStub || typeof ciLoadTargets !== "function") return null;
   const key = String(item.ticker || "").toUpperCase();
   if (_ssTargets.has(key)) {
     const t = _ssTargets.get(key);
-    return t ? { kind: "us", avg: t.avg, lo: t.lo, hi: t.hi, n: t.n, asOf: t.asOf, source: t.src === "yahoo" ? "Yahoo Finance" : "Nasdaq" } : null;
+    return t ? { kind: "us", avg: t.avg, lo: t.lo, hi: t.hi, n: t.n, asOf: t.asOf } : null;
   }
   const ready = window.US_PRICE_TARGETS_INDEX
     ? Promise.resolve(true)
@@ -131,7 +131,7 @@ function ssSummaryHtml(sum) {
     ? `<div class="ss-events"><h4>최근 공시·이벤트</h4><ul>${sum.events.map((e) => `<li><time datetime="${esc(e.date)}">${esc(e.dateText)}</time>${e.badge ? `<span class="ss-badge">${esc(e.badge)}</span>` : ""}<span class="ss-ev-text"><b>${esc(e.title)}</b>${e.detail ? ` · ${esc(e.detail)}` : ""}</span></li>`).join("")}</ul></div>`
     : "";
   const notes = sum.notes.length ? `<p class="ss-cap ss-notes">기준 · ${sum.notes.map(esc).join(" · ")}</p>` : "";
-  return `<div class="ss-head"><h3>한눈 요약</h3><span class="ss-cap">공시·시세 데이터로 만든 사실 요약 · 매매 추천이 아닙니다</span></div>
+  return `<div class="ss-head"><h3>한눈 요약</h3></div>
     ${lead}${notes}${seg}${table}${events}
     <div class="ss-actions">
       <button type="button" class="ghost compact-btn" data-goto-view="events">이벤트·공시 전체 보기</button>

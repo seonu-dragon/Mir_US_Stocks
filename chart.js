@@ -1826,7 +1826,7 @@ function keyMomentTipHtml(m) {
     return `<li><span class="chart-ev-badge chart-km-badge">${escapeHtml(label.slice(0, 2))}</span><div><b>${escapeHtml(e.title)}${escapeHtml(when)}</b>${e.detail || link ? `<small>${escapeHtml(e.detail || "")}${link}</small>` : ""}</div></li>`;
   }).join("");
   const rest = reasons.length > MAX ? `<p class="chart-ev-tip-more">외 ${reasons.length - MAX}건 — 이벤트·공시 탭 통합 타임라인에서 전체 보기</p>` : "";
-  return `${head}<p class="chart-km-sub">같은 시기 기록(원인으로 확인된 것은 아님)</p><ul>${rows}</ul>${rest}${newsSlot}`;
+  return `${head}<p class="chart-km-sub">같은 시기 기록</p><ul>${rows}</ul>${rest}${newsSlot}`;
 }
 
 // 국내 종목은 기사마다 '네이버'(제목 검색) 링크와, 툴팁 맨 아래 '네이버 뉴스에서 이 날짜 기사 보기'를 단다.
@@ -1860,7 +1860,7 @@ function keyMomentNewsSlotHtml(date) {
 
 function keyMomentNewsBodyHtml(st) {
   // 마우스를 올리기만 했을 땐 찾지 않는다(뉴스 수집은 워커 KV·외부 검색을 쓴다) — 눌렀을 때만.
-  if (!st) return '<p class="chart-km-sub">▲▼ 를 누르면 그날 전후 뉴스를 찾아봅니다.</p>';
+  if (!st) return "";
   if (st.status === "loading") return '<p class="chart-km-sub">그날 전후 뉴스 찾는 중…</p>';
   if (st.status === "error") return '<p class="chart-km-none">뉴스를 불러오지 못했습니다. 다시 누르면 한 번 더 찾습니다.</p>';
   if (!st.news.length) return '<p class="chart-km-none">그날 전후(±2일) 기사를 찾지 못했습니다.</p>';
@@ -1869,7 +1869,7 @@ function keyMomentNewsBodyHtml(st) {
     const link = /^https?:\/\//i.test(n.link || "") ? ` <a href="${escapeHtml(n.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
     return `<li><span class="chart-ev-badge chart-km-badge">뉴</span><div><b>${escapeHtml(n.title)}</b><small>${escapeHtml([when, n.publisher].filter(Boolean).join(" · "))}${link}${kmNaverTitleLink(n.title)}</small></div></li>`;
   }).join("");
-  return `<p class="chart-km-sub">그날 전후 뉴스(제목 검색 결과 — 원인으로 확인된 것은 아님)</p><ul>${rows}</ul>`;
+  return `<p class="chart-km-sub">그날 전후 뉴스</p><ul>${rows}</ul>`;
 }
 
 function fillKeyMomentNews(tip) {
@@ -1956,13 +1956,12 @@ function updateChartEventNote(events, kmShown) {
     const parts = core.KINDS.filter((k) => has(k) && kinds[k] !== false).map((k) => `${core.KIND_SYMBOL[k]} ${core.KIND_LABEL[k]}`);
     if (parts.length || kmShown) {
       text = parts.length ? `차트 아래 기호: ${parts.join(" · ")}` : "";
-      if (kmShown) text += `${text ? " · " : ""}가격 위 ▲▼ 큰 등락일 ${kmShown}곳(평소 변동의 2.5배 이상)`;
+      if (kmShown) text += `${text ? " · " : ""}가격 위 ▲▼ 큰 등락일 ${kmShown}곳`;
       if (has("F") && kinds.F !== false) {
         const f = chartEventFilings();
         const w = core.filingWindow(f.us || f.kr);
         if (w) text += ` (공시는 ${w.from.slice(5).replace("-", "/")}~${w.to.slice(5).replace("-", "/")} 수집분만)`;
       }
-      text += " · 기호를 가리키거나 누르면 날짜·내용 표시";
     }
   }
   if (el.textContent !== text) el.textContent = text;

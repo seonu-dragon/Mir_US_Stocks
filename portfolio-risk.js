@@ -220,7 +220,7 @@
       </div>
       ${oos ? `
       <h4 class="pf-risk-sub">표본 외 비교 — 앞 구간으로 비중을 정하고 뒤 구간에서 실제로 어땠나</h4>
-      <p class="muted pf-risk-note">추정 ${esc(oos.inSample.start)} ~ ${esc(oos.inSample.end)} (${oos.inSample.days}거래일) → 검증 ${esc(oos.outSample.start)} ~ ${esc(oos.outSample.end)} (${oos.outSample.days}거래일). 검증 구간은 매일 같은 비중을 유지한다고 가정했습니다.</p>
+      <p class="muted pf-risk-note">추정 ${esc(oos.inSample.start)} ~ ${esc(oos.inSample.end)} (${oos.inSample.days}거래일) → 검증 ${esc(oos.outSample.start)} ~ ${esc(oos.outSample.end)} (${oos.outSample.days}거래일)</p>
       <div class="portfolio-tool-table">
         <table>
           <thead><tr><th>방식</th><th>앞 구간 추정 변동성</th><th>뒤 구간 실현 변동성</th><th>뒤 구간 최대낙폭</th><th>뒤 구간 수익률</th></tr></thead>
@@ -241,7 +241,7 @@
           <li>위험 기여도 = 그 종목이 포트폴리오 변동성에서 차지하는 몫(합계 100%). 비중보다 5%p 넘게 크면 강조했습니다.</li>
           <li>리스크 패리티는 위험 기여가 모두 같아지는 비중, 최소분산은 변동성이 가장 작은 비중입니다(공매도 없음, ${esc(capNote)})${res.riskParity.converged ? "" : " — 이번 리스크 패리티는 근사값입니다"}.</li>
           <li>기대수익을 넣는 최적화는 과거 수익률에 과적합되기 쉬워 제공하지 않습니다.</li>
-          <li>과거 변동성·상관은 앞으로 바뀝니다. 매매 권유가 아닌 정보이며, 거래비용·세금은 반영하지 않습니다.</li>
+          <li>거래비용·세금은 반영하지 않습니다.</li>
         </ul>
       </details>`;
     body.querySelectorAll("[data-pf-risk-apply]").forEach((btn) => btn.addEventListener("click", () => applyScheme(btn.dataset.pfRiskApply)));
@@ -360,7 +360,7 @@
           <li>샤프 = 평균(r) / 표준편차(r) × √252, 소르티노는 분모를 하락일 변동만으로, 칼마 = 연환산 수익률 / |최대 낙폭|.</li>
           <li>상방(하방) 포착률 = 벤치마크가 오른(내린) 날만 본 연환산 수익률 비율. 하방은 낮을수록 방어적입니다.</li>
           <li>β·롤링 지표는 최근 252거래일 창을 5거래일마다 다시 계산합니다. 월 수익은 월말 종가 기준입니다.</li>
-          <li>과거 구간 결과이며 예측이 아닙니다. 지금 상장된 종목만 쓰므로 생존 편향이 있습니다.</li>
+          <li>지금 상장된 종목만 쓰므로 생존 편향이 있습니다.</li>
         </ul>
       </details>`;
   }
@@ -530,8 +530,8 @@
           <li>현재 평가액 비중으로 구간 첫 거래일에 사서 끝까지 보유했다고 가정한 경로입니다(리밸런싱 없음, 배당 미포함). 구간 달력은 ${m === "kr" ? "코스피" : "SPY"} 거래일.</li>
           <li>실측: 종목의 실제 일봉 — 상세 이력(최근 약 5년) 또는 과거 구간 데이터(시가총액 상위 ${m === "kr" ? "KR" : "US"} ${mk.universe || "—"}종목, 2008·2018·2020 구간).</li>
           <li>대리: 당시 상장 전이거나 이력이 없는 종목은 ${m === "kr" ? "코스피·코스닥 지수" : "섹터 SPDR ETF(XLRE·XLC 는 상장 전 구간이면 SPY)"}의 일별 수익률 × β 로 계산했습니다. β 는 최근 3년 일별 수익률 회귀(상세 이력이 없으면 1 가정, 0~3 으로 제한). 위기 때 실제 β 는 평소와 달라지는 경우가 많아 대리 비중이 클수록 결과를 거칠게 보세요.</li>
-          <li>지금 보유한 종목 기준이라 당시 사라진 종목은 없습니다(생존 편향). 과거 재현이지 예측이 아닙니다.</li>
-          <li>출처: ${esc(hist.source || "")} · 데이터 기준 ${esc(hist.updatedAtKst || "")}.</li>
+          <li>지금 보유한 종목 기준이라 당시 사라진 종목은 없습니다(생존 편향).</li>
+          <li>데이터 기준 ${esc(hist.updatedAtKst || "")}.</li>
         </ul>
       </details>`;
     pane.querySelectorAll("[data-crisis-window]").forEach((b) => b.addEventListener("click", () => {

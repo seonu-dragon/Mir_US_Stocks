@@ -815,7 +815,6 @@ function renderStockEvents(item) {
     <div class="event-head">
       <div>
         <h3>종목 이벤트</h3>
-        <p class="muted">옵션 만기, 목표가, 배당, 뉴스, 가격 변동, 커뮤니티 의견을 한곳에 모았습니다.</p>
       </div>
       <span class="event-badge">${escapeHtml(stockLabel(item))}</span>
     </div>
@@ -1340,7 +1339,6 @@ function renderDataQualityPanel(item) {
     <div class="quality-head">
       <div>
         <h3>데이터 품질 / 출처</h3>
-        <p class="muted">가격·재무·뉴스가 어디서 왔고 무엇이 비어 있는지 먼저 확인합니다.</p>
       </div>
       <span class="quality-badge quality-${quality}">${toneText}</span>
     </div>
@@ -1407,7 +1405,6 @@ function renderFundamentals(item) {
   const f = normalizedFundamentalsForItem(item);
   const detailMode = data.detailPolicy?.mode === "split";
   const hasFundamentals = Object.keys(f).length > 0;
-  const krT = isKrMarket();
   const ttm = typeof qiTtmRatios === "function" ? qiTtmRatios(item) : null;
   const investFull = typeof investInfoHtml === "function" ? investInfoHtml(item, f, ttm) : "";
   const investHtml = placeInvestInfo(investFull);
@@ -1444,7 +1441,7 @@ function renderFundamentals(item) {
   ];
 
   const sourceText = hasFundamentals
-    ? (krT ? "Yahoo Finance · 네이버 금융" : f.source === "yahoo" ? "Yahoo Finance · Nasdaq/SEC" : f.source === "sec" ? "SEC 분기 공시" : "Nasdaq · SEC · Yahoo")
+    ? ""
     : (detailMode ? "불러오는 중이거나 이 종목의 값이 없습니다." : "일부 지표는 다음 갱신 후 표시됩니다.");
 
   const groupHtml = (g) => `
@@ -1463,7 +1460,7 @@ function renderFundamentals(item) {
   byId("fundamentalTable").innerHTML = `
     <div class="fundamental-head">
       <h3>핵심 지표</h3>
-      <span>${sourceText}</span>
+      ${sourceText ? `<span>${sourceText}</span>` : ""}
     </div>
     ${investHtml}
     <div class="fund-groups">

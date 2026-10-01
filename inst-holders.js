@@ -160,5 +160,5 @@ function ihCardHtml(ticker, rec, sum, names, meta) {
     <div class="ih-stats">${stats}</div>
     <div class="ih-grid"><div class="ih-main">${barHtml}${trendHtml}</div><div class="ih-side">${table}</div></div>
     ${optHtml}
-    <p class="ih-foot">출처 SEC Form 13F 데이터셋 · 운용자산 1억 달러 이상 기관이 분기말 보유를 45일 안에 보고(공개는 그 뒤) — 지금 보유와 다를 수 있음${escapeHtml(prelim)} · 기관별로 같은 종목 여러 줄은 합산, 정정 보고는 최신본만 · 공매도·해외 상장분은 보고 대상이 아님 · 사실 표시이며 추천이 아닙니다</p>`;
+    <p class="ih-foot">지금 보유와 다를 수 있음${escapeHtml(prelim)} · 공매도·해외 상장분은 보고 대상이 아님</p>`;
 }

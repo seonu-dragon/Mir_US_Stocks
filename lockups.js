@@ -7,9 +7,6 @@
 //  3) 통합 캘린더의 '보호예수 해제' 칩(calendar-panel.js · calendar-panel-core.js fromKrLockups)
 // 해제일은 상장일 + 매각제한 기간으로 계산한 추정일이고, '매도 가능해지는 날' 이지 매도 예정이 아니다.
 
-const LOCKUP_DISCLAIMER = "해제일은 상장일 + 매각제한 기간으로 계산한 추정일입니다(휴일이면 다음 영업일, 우리사주는 예탁일 기준). "
-  + "매도가 가능해지는 날일 뿐 매도 예정이 아니며, 기관 수요예측 확약 배정 물량은 포함되지 않습니다. 투자 권유가 아닙니다.";
-
 function lockupPayload() { return window.KR_LOCKUPS || null; }
 
 function lockupToday() {
@@ -54,7 +51,7 @@ function renderLockupCard(item) {
   }).join("");
   const ipo = info.ipo;
   const stats = core.ipoStats(ipo);
-  const statHtml = stats.length ? `<dl class="lk-stats">${stats.map((s) => `<div><dt>${escapeHtml(s.k)}</dt><dd>${escapeHtml(s.v)}${s.note ? `<small class="muted"> ${escapeHtml(s.note)}</small>` : ""}</dd></div>`).join("")}</dl>` : "";
+  const statHtml = stats.length ? `<dl class="lk-stats">${stats.map((s) => `<div><dt>${escapeHtml(s.k)}</dt><dd>${escapeHtml(s.v)}</dd></div>`).join("")}</dl>` : "";
   let body;
   if (rows) {
     body = `<div class="lk-table-wrap"><table class="insider-table lk-table"><thead><tr><th>해제일(추정)</th><th class="num">주식수</th><th class="num" title="상장일 기준 공모 후 주식수 대비">비율</th><th>구성</th></tr></thead><tbody>${rows}</tbody></table></div>`;
@@ -68,11 +65,10 @@ function renderLockupCard(item) {
   }
   const src = (info.next && info.next.link) || (ipo && ipo.no ? `https://www.38.co.kr/html/fund/?o=v&no=${encodeURIComponent(ipo.no)}` : "");
   host.hidden = false;
-  host.innerHTML = `<div class="es-card-head"><h3>보호예수 해제</h3><span class="muted">신규 상장주 의무보유 물량 · 비율은 상장일 주식수 대비${ipo && ipo.listingDate ? ` · 상장 ${escapeHtml(ipo.listingDate)}` : ""}</span></div>
+  host.innerHTML = `<div class="es-card-head"><h3>보호예수 해제</h3>${ipo && ipo.listingDate ? `<span class="muted">상장 ${escapeHtml(ipo.listingDate)}</span>` : ""}</div>
     ${body}
     ${statHtml}
-    <p class="muted lk-note">${escapeHtml(LOCKUP_DISCLAIMER)}
-      ${src ? `<a href="${escapeHtml(src)}" target="_blank" rel="noopener">원문(38커뮤니케이션)</a> · ` : ""}<button type="button" class="es-link is-inline" data-lk-calendar>캘린더에서 보기</button></p>`;
+    <p class="muted lk-note">${src ? `<a href="${escapeHtml(src)}" target="_blank" rel="noopener">원문(38커뮤니케이션)</a> · ` : ""}<button type="button" class="es-link is-inline" data-lk-calendar>캘린더에서 보기</button></p>`;
   if (!host.dataset.lkBound) {
     host.dataset.lkBound = "1";
     host.addEventListener("click", (ev) => { if (ev.target.closest("[data-lk-calendar]")) openLockupCalendar(); });
@@ -100,7 +96,7 @@ function renderLockupOverhang() {
       <span class="muted">${escapeHtml((r.periods || []).join("·"))} · ${escapeHtml(core.fmtShares(r.shares))}</span></li>`;
   }).join("");
   host.hidden = false;
-  host.innerHTML = `<div class="lk-ov-head"><strong>다가오는 보호예수 해제</strong><span class="muted">30일 안 · 상장일 주식수 대비 1% 이상 · 추정일</span>
+  host.innerHTML = `<div class="lk-ov-head"><strong>다가오는 보호예수 해제</strong><span class="muted">30일 안</span>
       <button type="button" class="es-link is-inline" data-lk-calendar>캘린더에서 전체 보기</button></div>
     <ul class="lk-ov-list">${items}</ul>`;
   if (!host.dataset.lkBound) {

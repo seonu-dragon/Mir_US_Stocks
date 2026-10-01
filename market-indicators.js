@@ -50,7 +50,7 @@
           <label class="fx-calc-field fx-calc-sel"><select id="fxCalcFrom" aria-label="입력 통화">${codes.map((k) => `<option value="${k}"${k === fxState.from ? " selected" : ""}>${FX_NAMES[k]} (${k})</option>`).join("")}</select></label>
         </div>
         <div id="fxCalcResult">${fxResultHtml()}</div>
-        <p class="fx-calc-note">시장 환율(Yahoo Finance) 기준 원화 크로스 계산 · 기준일 ${esc(dateText)} · 1단위당 원: ${esc(rateLine)}. 은행 고시 매매기준율·현찰·송금 환율이 아니며 수수료가 반영되지 않습니다.</p>
+        <p class="fx-calc-note">기준일 ${esc(dateText)} · 1단위당 원: ${esc(rateLine)}</p>
       </div>`;
   }
 
@@ -160,9 +160,8 @@
         <td class="mi-n">${esc(c.fmtNum(it.value, 3))}</td>
         <td class="mi-n ${dirCls(it.change)}">${esc(c.fmtChangeAbs(it.change, 3))}</td>
         <td class="mi-n mi-d">${esc(c.fmtDate(it.asOf))}</td>
-        <td class="mi-opt mi-src">${esc(it.source || "")}</td>
       </tr>`).join("");
-    return `<div class="mi-table-wrap"><table class="mi-table"><thead><tr><th scope="col">국가</th><th scope="col" class="mi-n">금리(%)</th><th scope="col" class="mi-n">전일대비(%p)</th><th scope="col" class="mi-n">기준일</th><th scope="col" class="mi-opt">출처</th></tr></thead><tbody>${body}</tbody></table></div>`;
+    return `<div class="mi-table-wrap"><table class="mi-table"><thead><tr><th scope="col">국가</th><th scope="col" class="mi-n">금리(%)</th><th scope="col" class="mi-n">전일대비(%p)</th><th scope="col" class="mi-n">기준일</th></tr></thead><tbody>${body}</tbody></table></div>`;
   }
 
   function rateTable(rows) {
@@ -200,13 +199,13 @@
 
     const indexRows = INDEX_GROUPS.flatMap(([g]) => groups[g] || []);
     const parts = [];
-    parts.push(`<div class="section-title"><h2>시장지표</h2><p>원자재 선물·해외 지수·환율·주요국 국채 금리와 기준금리.</p></div>`);
+    parts.push(`<div class="section-title"><h2>시장지표</h2></div>`);
     if (cards.length) parts.push(`<div class="mi-cards">${cards.map(cardHtml).join("")}</div>`);
 
     const left = [];
     const right = [];
     // 두 열에 높이를 맞춰 배치: 왼쪽 지수·에너지·금속, 오른쪽 환율·국채·기준금리·농축산물.
-    if (indexRows.length) left.push(panel("지수", priceTable(indexRows), "선물은 연속 근월물"));
+    if (indexRows.length) left.push(panel("지수", priceTable(indexRows)));
     ["energy", "metals"].forEach((g) => { if ((groups[g] || []).length) left.push(panel(GROUP_TITLES[g], priceTable(groups[g], { contract: true, unit: true }))); });
     if ((groups.fx || []).length) {
       right.push(panel("환율", priceTable(groups.fx), "엔은 100엔 기준"));
@@ -218,7 +217,7 @@
     if ((groups.agri || []).length) right.push(panel(GROUP_TITLES.agri, priceTable(groups.agri, { contract: true, unit: true })));
     parts.push(`<div class="mi-grid"><div class="mi-col">${left.join("")}</div><div class="mi-col">${right.join("")}</div></div>`);
 
-    parts.push(`<p class="mi-foot">출처: Yahoo Finance(선물·지수·환율, 지연 시세) · FRED · 한국은행 ECOS · 일본 재무성 · 독일연방은행 · 영란은행 · BIS. 기준일은 각 시장 현지 날짜. 업데이트 ${esc(data.updatedAtKst || "")}. 정보 제공용이며 투자 권유가 아닙니다.</p>`);
+    parts.push(`<p class="mi-foot">업데이트 ${esc(data.updatedAtKst || "")}</p>`);
     // 재렌더(데이터 도착 등) 때 입력칸에 포커스가 있었으면 되돌린다.
     const hadFocus = document.activeElement && document.activeElement.id === "fxCalcAmount";
     host.innerHTML = parts.join("");

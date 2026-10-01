@@ -191,7 +191,6 @@ function ftRenderDividend(wrap, core) {
     : base;
   const all = core.dividendRanking(scoped, { fundFor: ftFund, calFor: ftCal, sanity: window.MirFundSanity || null });
   const rows = all.slice(0, FT_DIV_LIMIT);
-  const us = ftMarket() === "us";
   const bucketLabel = typeof labelForSelect === "function" ? labelForSelect("topBucket") : "";
   ftSetMeta(`배당 랭킹 · ${bucketLabel ? `${bucketLabel} · ` : ""}배당수익률 순 · ${all.length.toLocaleString("ko-KR")}개${all.length > rows.length ? ` 중 상위 ${rows.length}개` : ""}`);
   if (!window.MAP_FUNDAMENTALS) {
@@ -221,12 +220,8 @@ function ftRenderDividend(wrap, core) {
     </tr>`;
   }).join("");
   const asOf = (typeof data === "object" && data && data.updatedAtKst) || "";
-  const calAt = us ? ((window.US_STOCK_CALENDAR || {}).updatedAtKst || "") : "";
-  const note = us
-    ? `배당수익률은 최근 12개월 실제 지급 배당 합 ÷ 현재가입니다(특별배당 포함, 배당 기록이 빈 종목은 야후·Finnhub 값 — 칸에 마우스를 올리면 기준 표시). 배당성향은 시가총액 상위 약 200종목만 있습니다${calAt ? `(${escapeHtml(calAt)})` : ""}. 상위권에는 폐쇄형 펀드·신탁이 섞일 수 있고, 분배금에 원금 반환이 포함될 수 있습니다.`
-    : `배당수익률·주당배당금은 네이버·KRX 공식 값, 배당성향은 DART 재무지표입니다(직전 사업연도 기준).`;
   wrap.innerHTML = ftTableHtml(head, body, "ft-list-table")
-    + `<p class="ft-list-note">${note} 적자 기업은 배당성향을 계산하지 않습니다. ETF 제외. 과거 배당이 앞으로의 배당을 보장하지 않으며 투자 권유가 아닙니다.${asOf ? ` 가격 기준 ${escapeHtml(asOf)}.` : ""}</p>`;
+    + (asOf ? `<p class="ft-list-note">가격 기준 ${escapeHtml(asOf)}</p>` : "");
 }
 
 function ftRenderIpo(wrap, core) {
@@ -269,11 +264,8 @@ function ftRenderIpo(wrap, core) {
       ${last}
     </tr>`;
   }).join("");
-  const note = kr
-    ? `38커뮤니케이션 신규상장 목록 기준. 공모가는 확정 공모가, 현재가는 스냅샷 종가라 상장 첫날 등락과 다릅니다.`
-    : `SEC 424B4(공모가 확정) 공시 중 같은 회사의 S-1/F-1 등록 신청이 수집 기간에 있는 건만 보여 줍니다. 제출일은 실제 상장일과 하루 이틀 다를 수 있고, 기존 상장사의 공모가 섞일 수 있습니다.`;
   wrap.innerHTML = ftTableHtml(head, body, "ft-list-table")
-    + `<p class="ft-list-note">${note} 정보 제공용이며 투자 권유가 아닙니다. 업데이트 ${escapeHtml(ipo.updatedAtKst || "")}.</p>`;
+    + `<p class="ft-list-note">업데이트 ${escapeHtml(ipo.updatedAtKst || "")}</p>`;
 }
 
 function ftRenderAlerts(wrap, core) {
@@ -308,7 +300,7 @@ function ftRenderAlerts(wrap, core) {
   }).join("");
   const asOf = [...new Set(core.ALERT_KINDS.map((k) => (al.sections[k.key] || {}).asOf).filter(Boolean))].sort().pop() || al.baseDate || "";
   wrap.innerHTML = chips + ftTableHtml(head, body, "ft-list-table")
-    + `<p class="ft-list-note">KRX KIND 지정 현황 · 기준일 ${escapeHtml(asOf)}. 매매 신호가 아니라 정보입니다.</p>`;
+    + `<p class="ft-list-note">기준일 ${escapeHtml(asOf)}</p>`;
 }
 
 function ftRenderList(wrap, core) {
@@ -401,8 +393,7 @@ function ftRenderPanel() {
           </span>
         </li>`;
       }).join("")}
-    </ul>
-    <p class="ft-cols-note">이 브라우저에 시장별로 저장됩니다. 값이 없는 종목은 "—" 로 표시합니다.</p>`;
+    </ul>`;
 }
 
 function ftRerender() { renderFindTable(ftLast.rows, ftLast.metric); }

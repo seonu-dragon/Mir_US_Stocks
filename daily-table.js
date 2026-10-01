@@ -17,32 +17,6 @@ function dtblIsKr() { return typeof isKrMarket === "function" && isKrMarket(); }
 
 function dtblHide(host) { if (host) { host.hidden = true; host.innerHTML = ""; } }
 
-// 일봉 원천. barsSource(빌더가 detail 에 기록: naver | yahoo)가 우선, 없으면 예전 historySource.
-function dtblSourceLabel(item) {
-  const s = String((item && (item.barsSource || item.historySource)) || "").toLowerCase();
-  if (s.includes("naver")) return "네이버 금융";
-  if (s.includes("yahoo")) return "Yahoo Finance";
-  if (s.includes("krx")) return "KRX";
-  return "";
-}
-
-// 각주: 출처 · 거래량 정의 · 수정주가 설명. 국내 일봉은 네이버 수정주가(분할·증자 권리락, ETF 는 분배금 반영)이고
-// 거래량은 네이버 일별 시세와 같은 KRX+NXT 합산이다(2026-10-01). 네이버 일봉이 없는 종목은 야후라고 밝힌다.
-function dtblFootParts(item, kr, src) {
-  const naver = String((item && item.barsSource) || "").toLowerCase() === "naver";
-  const parts = [];
-  if (src) {
-    const liveFrom = /^\d{4}-\d{2}-\d{2}$/.test(String(item.liveBarsFrom || "")) ? item.liveBarsFrom : "";
-    let label = `출처 ${src}`;
-    if (kr && naver) label = "출처 네이버 금융(수정주가)";
-    else if (kr && src === "Yahoo Finance") label = "출처 Yahoo Finance(네이버 일봉 없음)";
-    if (kr && naver && liveFrom) label += ` · ${window.MirDailyTable.fmtDate(liveFrom)}부터는 실시간(Yahoo) 봉`;
-    parts.push(label);
-  }
-  if (kr) parts.push("거래량은 KRX·NXT 합산(네이버 일별 시세 기준)");
-  return { parts, naver };
-}
-
 // 가격 기준일(스냅샷 priceDate) 행과 확정 전 행 표식. 기준일 행의 종가·거래량은 app.js 의
 // alignKrSessionBar 가 시리즈 단계에서 스냅샷 값으로 맞춰 두고(차트·시세정보와 같은 값),
 // 여기서는 전일대비를 머리글과 같은 기준으로 낸다.
@@ -105,7 +79,6 @@ function renderDailyTable(item, options = {}) {
   const more = remain > 0
     ? `<button type="button" class="ghost compact-btn list-more-btn dtbl-more" data-dtbl-more="1">더 보기 (${Math.min(DTBL_PAGE, remain)}개 · 남은 ${remain}개)</button>`
     : "";
-  const src = dtblSourceLabel(item);
   const unit = kr ? "원 · 주" : "USD · 주";
   // 머리 기준일 = 확정 종가가 있는 가장 최근 날짜. 그 위의 장중·잠정 봉은 따로 적는다.
   const firstFinal = rows.find((r) => !r.provisional);
@@ -115,22 +88,13 @@ function renderDailyTable(item, options = {}) {
     live.length ? `${core.fmtDate(live[0].d)} ${live[0].provisional}` : "",
     `단위 ${unit}`,
   ].filter(Boolean).join(" · ");
-  const official = rows.find((r) => r.official);
-  const foot = dtblFootParts(item, kr, src);
-  // 일봉이 네이버면 종가가 이미 KRX 와 같다. 야후 일봉일 때만 기준일 종가를 스냅샷으로 맞췄다고 적는다.
-  const officialNote = kr && official && opts.reconciled && !foot.naver
-    ? ` · ${core.fmtDate(official.d)} 종가는 네이버 금융(KRX) 기준`
-    : "";
-  const adjNote = kr && foot.naver
-    ? "과거 가격은 분할·증자 권리락(ETF는 분배금)을 반영한 수정주가"
-    : "과거 가격은 액면분할이 반영된 수정 가격일 수 있음";
   host.innerHTML = `<div class="fundamental-head"><h3>일별 시세</h3><span>${escapeHtml(asOf)}</span></div>
     <div class="table-wrap"><table class="dtbl-table">
       <thead><tr><th scope="col">날짜</th><th scope="col" class="num">종가</th><th scope="col" class="num">전일대비</th><th scope="col" class="num dtbl-ohl">시가</th><th scope="col" class="num dtbl-ohl">고가</th><th scope="col" class="num dtbl-ohl">저가</th><th scope="col" class="num">거래량</th></tr></thead>
       <tbody>${body}</tbody>
     </table></div>
     ${more}
-    <p class="dtbl-foot">일봉 종가 기준${foot.parts.map((t) => ` · ${escapeHtml(t)}`).join("")}${escapeHtml(officialNote)}${live.length ? " · 장중·잠정 행은 확정 종가가 아님" : ""} · ${escapeHtml(adjNote)}</p>`;
+    ${live.length ? `<p class="dtbl-foot">장중·잠정 행은 확정 종가가 아님</p>` : ""}`;
   host.hidden = false;
 }
 

@@ -552,11 +552,11 @@ function renderIndustryCategoryHome(main, cat) {
   main.innerHTML = `
     <div class="industry-home-head">
       <h2>${escapeHtml(cat.name)}</h2>
-      <div class="industry-signal-line">신호등 <b class="pos">개선 ${sig.improving}</b> · <b class="neg">악화 ${sig.deteriorating}</b> · <b>보합 ${sig.flat}</b>${sig.unknown ? ` · <span class="muted">판정 불가 ${sig.unknown}</span>` : ""}<span class="muted industry-signal-note">증가율의 방향(YoY 3개월 평균의 3개월 변화)이며 주가 방향이 아닙니다.</span></div>
+      <div class="industry-signal-line">신호등 <b class="pos">개선 ${sig.improving}</b> · <b class="neg">악화 ${sig.deteriorating}</b> · <b>보합 ${sig.flat}</b>${sig.unknown ? ` · <span class="muted">판정 불가 ${sig.unknown}</span>` : ""}</div>
     </div>
     ${indPanel("최근 발표 지표 3", "", `<div class="industry-cards">${cards}</div>`)}
-    ${chain ? indPanel("밸류체인", "종목을 누르면 분석으로 이동", `<div class="industry-chain">${chain}</div>`) : ""}
-    ${etfs ? indPanel("관련 섹터 ETF", "섹터 탭으로", `<div class="industry-chips">${etfs}</div>`) : ""}
+    ${chain ? indPanel("밸류체인", "",`<div class="industry-chain">${chain}</div>`) : ""}
+    ${etfs ? indPanel("관련 섹터 ETF", "",`<div class="industry-chips">${etfs}</div>`) : ""}
     ${indPanel("이 카테고리의 지표", `${inds.length}개`, `<div class="industry-table-wrap"><table class="industry-table" style="min-width:0"><thead><tr><th>지표</th><th class="num">최신</th><th class="num">전년비</th><th class="num">기준</th><th class="num">다음 발표</th></tr></thead><tbody>${rows}</tbody></table></div>`)}`;
   main.querySelectorAll("[data-ind]").forEach((el) => {
     const go = () => industrySelect(el.dataset.ind, { cat: cat.id });
@@ -644,13 +644,13 @@ function renderIndustryDetail(main, ind) {
       <button type="button" class="ghost compact-btn" id="industryLink">링크 복사</button>
     </div>
     <div class="industry-chart" id="industryChart"></div>
-    ${indPanel("기간별 등락", ind.perf_mode === "diff" ? "단위 차이(레벨 지표)" : "변화율", `<div class="industry-perf">${perfCells}</div><p class="muted industry-foot">주기보다 짧은 칸(월간 지표의 1D·1W 등)과 기준점이 성긴 칸은 비워 둡니다.</p>`)}
+    ${indPanel("기간별 등락", ind.perf_mode === "diff" ? "단위 차이(레벨 지표)" : "변화율", `<div class="industry-perf">${perfCells}</div>`)}
     ${sea ? indPanel("동월 비교", `${sea.month}월 전년비`, `<div class="industry-seasonal"><div><span class="muted">${sea.years}년 평균</span><b>${indFmtSigned(sea.same_month_yoy_avg, "%", 1)}</b></div><div><span class="muted">올해</span><b class="${indCls(sea.this_year_yoy)}">${indFmtSigned(sea.this_year_yoy, "%", 1)}</b></div><div><span class="muted">판정</span><b>${sea.verdict === "above" ? "평년보다 강함" : "평년보다 약함"}</b></div></div>`) : ""}
     ${stats ? indPanel(`${stats.window_years}년 통계`, `${stats.n}개 관측`, `<div class="industry-seasonal"><div><span class="muted">평균</span><b>${indFmtNum(stats.mean)}</b></div><div><span class="muted">표준편차</span><b>${indFmtNum(stats.sd)}</b></div><div><span class="muted">최소</span><b>${indFmtNum(stats.min.val)}</b><span class="muted">${escapeHtml(stats.min.date)}</span></div><div><span class="muted">최대</span><b>${indFmtNum(stats.max.val)}</b><span class="muted">${escapeHtml(stats.max.date)}</span></div></div>`) : ""}
-    ${related ? indPanel("관련 상장사", "누르면 종목 분석으로", `<div class="industry-chips">${related}</div><p class="muted industry-foot">검증된 선행 상관이 있는 종목만 꼬리표가 붙습니다. 꼬리표가 없다고 상관이 없다는 뜻은 아닙니다(검증 미통과 또는 표본 부족).${d.sensitivity_summary ? ` 전체 ${d.sensitivity_summary.tested}쌍 검사 · ${d.sensitivity_summary.validated}쌍 통과 · 표본 부족 ${d.sensitivity_summary.insufficient}.` : ""}</p><details class="industry-method"><summary>검증 방법</summary><p class="muted industry-foot">겹치지 않는 구간의 변화율로 섹터 대비 초과수익과의 상관을 보고, 표본 밖 기간에서 한 번만 검정합니다. 블록 부트스트랩으로 신뢰구간을 구하고, 여러 쌍을 동시에 본 데 따른 우연은 FDR 10%로 걸러 냅니다.</p></details>`) : ""}
+    ${related ? indPanel("관련 상장사", "", `<div class="industry-chips">${related}</div><details class="industry-method"><summary>검증 방법</summary><p class="muted industry-foot">겹치지 않는 구간의 변화율로 섹터 대비 초과수익과의 상관을 보고, 표본 밖 기간에서 한 번만 검정합니다. 블록 부트스트랩으로 신뢰구간을 구하고, 여러 쌍을 동시에 본 데 따른 우연은 FDR 10%로 걸러 냅니다.</p></details>`) : ""}
     ${relatedInd ? indPanel("같이 보는 지표", "", `<div class="industry-chips">${relatedInd}</div>`) : ""}
-    ${indPanel("해석", "사실 요소만", `<p class="industry-interp">${escapeHtml(industryInterpretation(ind))}</p>${ind.note ? `<p class="muted industry-foot">${escapeHtml(ind.note)}</p>` : ""}`)}
-    <p class="muted industry-foot">출처 ${escapeHtml(ind.source || "")}${ind.license && ind.license.note ? ` · ${escapeHtml(ind.license.note)}` : ""} · 갱신 ${escapeHtml(d.updatedAtKst || "")}</p>`;
+    ${indPanel("해석", "",`<p class="industry-interp">${escapeHtml(industryInterpretation(ind))}</p>${ind.note ? `<p class="muted industry-foot">${escapeHtml(ind.note)}</p>` : ""}`)}
+    <p class="muted industry-foot">갱신 ${escapeHtml(d.updatedAtKst || "")}</p>`;
   main.querySelector(".industry-crumb")?.addEventListener("click", (e) => industrySelectCategory(e.currentTarget.dataset.cat));
   main.querySelectorAll("[data-range]").forEach((b) => b.addEventListener("click", () => { industryState.range = b.dataset.range; main.querySelectorAll("[data-range]").forEach((x) => x.classList.toggle("is-active", x === b)); renderIndustryChart(ind); }));
   byId("industryTransform")?.addEventListener("change", (e) => { industryState.transform = e.target.value; renderIndustryChart(ind); industrySyncUrl(); });
@@ -789,7 +789,7 @@ function renderIndustryReverse(item) {
   host.hidden = false;
   host.innerHTML = `<h3>이 종목이 따라가는 산업 지표</h3>
     <div class="industry-rev-list">${ids.slice(0, 3).map(industryReverseRow).join("")}</div>
-    <p class="muted industry-foot">관련 지표 ${ids.length}개 중 최근 발표 순 3개 · 누르면 산업 지표 탭으로 갑니다. 주가 방향을 뜻하지 않습니다.</p>`;
+    <p class="muted industry-foot">관련 지표 ${ids.length}개 중 최근 발표 순 3개</p>`;
   host.querySelectorAll("[data-ind]").forEach((b) => b.addEventListener("click", () => openIndustryIndicator(b.dataset.ind)));
 }
 

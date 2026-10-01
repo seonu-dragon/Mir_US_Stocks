@@ -249,11 +249,9 @@ function mfSeriesTable(points, preset, currency, extraCols) {
 
 // 카드 하단 출처 한 줄(짧게) — 전체 출처·기준은 섹션 머리의 mfMetaLine.
 function mfShortSource(file, kind) {
-  const src = file.market === "kr" ? `DART ${file.basis === "OFS" ? "별도" : "연결"}` : `SEC ${file.annualForm || "10-K"}${(file.quarterly || []).length ? "·10-Q" : ""}`;
   const rows = kind === "quarterly" ? (file.quarterly || []) : (file.annual || []);
   const last = rows[rows.length - 1];
-  const basis = last && last.end ? ` · 기준 ${last.end}` : "";
-  return `출처 ${src}${basis}`;
+  return last && last.end ? `기준 ${last.end}` : "";
 }
 
 const MF_CHART_HELP = {
@@ -265,12 +263,10 @@ const MF_CHART_HELP = {
 };
 
 function mfMetaLine(file) {
-  const src = file.market === "kr"
-    ? `DART ${file.basis === "OFS" ? "별도" : "연결"}재무제표`
-    : `SEC 공시(${escapeHtml(file.annualForm || "10-K")}${(file.quarterly || []).length ? "·10-Q" : ""})`;
   const a = (file.annual || [])[file.annual.length - 1];
   const q = (file.quarterly || [])[file.quarterly.length - 1];
-  const bits = [`출처 ${src}`];
+  const bits = [];
+  if (file.market === "kr") bits.push(`${file.basis === "OFS" ? "별도" : "연결"}재무제표`);
   if (a) bits.push(`최근 결산 FY${a.fy}${a.end ? `(${a.end})` : ""}`);
   if (q) bits.push(`최근 분기 ${q.fy} ${q.fq}Q${q.end ? `(${q.end})` : ""}`);
   if (file.lastFiled) bits.push(`반영 공시 ${escapeHtml(file.lastFiled)}`);
@@ -375,7 +371,7 @@ function mfSectionHtml(file, width, item) {
       chart: `<div class="mf-chart-wrap">${mfChartSvg(pts, drawPreset, file.currency, width)}</div>${cap}`,
       table: mfSeriesTable(pts, preset, file.currency, extraCols),
       legend: mfLegendItems(drawPreset),
-      source: on ? `${source} · 종가 ${overlay.priceSourceShort}` : source,
+      source,
       help: MF_CHART_HELP[key] || "",
     });
   });
@@ -399,7 +395,7 @@ function mfSectionHtml(file, width, item) {
     ${mfAccountsTable(file, kind)}
     </div>
     ${mfNotes(file, suppressed)}
-    <p class="mf-foot">공시 수치를 옮긴 과거 정보이며 예측이 아닙니다. —는 공시에서 확인되지 않은 값이며 추정으로 채우지 않았습니다. †·옅은 막대는 누계 공시에서 빼서 만든 분기 값입니다(예: 4분기 = 연간 − 3분기 누계).</p>`;
+    <p class="mf-foot">—는 공시에서 확인되지 않은 값이며 추정으로 채우지 않았습니다. †·옅은 막대는 누계 공시에서 빼서 만든 분기 값입니다(예: 4분기 = 연간 − 3분기 누계).</p>`;
 }
 
 function mfSaveView() {
@@ -432,11 +428,6 @@ function mfOverlay(file, kind, item) {
   });
   if (!res.mode) return null;
   res.market = market;
-  const naver = item.barsSource === "naver";
-  res.priceSource = market === "kr"
-    ? `${naver ? "네이버" : "야후"} 수정주가(분할·무상증자·유상증자 권리락 조정)`
-    : "야후 일봉(분할 조정 종가, 배당 미반영)";
-  res.priceSourceShort = market === "kr" ? (naver ? "네이버 수정주가" : "야후 수정주가") : "야후";
   return res;
 }
 
@@ -469,16 +460,9 @@ function mfOverlayToggle(key, overlay, on) {
 
 function mfOverlayCaption(overlay) {
   const mc = window.MirMcapCore;
-  const bits = ["같이 그렸을 뿐 인과 관계를 뜻하지 않습니다."];
-  if (overlay.mode === "mcap") {
-    bits.push(overlay.market === "kr"
-      ? "시가총액 = 기말(직전 거래일) 종가 × 기말 유통주식수(자기주식·우선주 제외, DART)."
-      : "시가총액 = 기말(직전 거래일) 종가 × 기말 발행주식수(그 기말 값이 없으면 희석 가중평균, SEC).");
-    if (overlay.splits && overlay.splits.length) bits.push("공시 주식수를 액면분할·무상증자 기준에 맞춰 환산했습니다.");
-  } else {
-    bits.push(`${mc.REASON_TEXT[overlay.reason] || "시가총액 대신 수정주가를 그렸습니다"}.`);
-  }
-  bits.push(`종가는 ${overlay.priceSource}, ${overlay.firstPriceDate || ""}부터입니다 — 그 전 기간과 종가·주식수가 없는 기간은 비웠습니다.`);
+  const bits = [];
+  if (overlay.mode !== "mcap") bits.push(`${mc.REASON_TEXT[overlay.reason] || "시가총액 대신 수정주가를 그렸습니다"}.`);
+  bits.push(`종가는 ${overlay.firstPriceDate || ""}부터입니다 — 그 전 기간과 종가·주식수가 없는 기간은 비웠습니다.`);
   if (overlay.market === "kr") bits.push("국내는 결산월을 12월로 가정했고, 수정주가라 당시 실제 시가총액과 몇 % 다를 수 있습니다.");
   return `<p class="mfo-cap">${escapeHtml(bits.join(" "))}</p>`;
 }
@@ -575,7 +559,7 @@ function financialsAiPanelHtml(file) {
   const table = `<div class="insider-table-wrap"><table class="insider-table" style="table-layout:fixed;width:100%;min-width:0">
     <colgroup><col style="width:14%"><col style="width:23%"><col style="width:21%"><col style="width:21%"><col style="width:21%"></colgroup>
     <thead><tr><th>연도</th><th class="ins-num">매출</th><th class="ins-num">영업이익</th><th class="ins-num">순이익</th><th class="ins-num">${suppressed.has("fcf") ? "이익률" : "FCF"}</th></tr></thead><tbody>${rows}</tbody></table></div>`;
-  const foot = `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">${mfMetaLine(file)}. 과거 공시 수치이며 예측이 아닙니다. 종목 분석 화면의 재무 섹션에 분기·파생 지표가 있습니다.</div>`;
+  const foot = `<div style="font-size:var(--fs-cap);color:var(--muted);margin-top:8px;line-height:1.65">${mfMetaLine(file)}</div>`;
   return aiModePanel("재무", `${ttm.basis === "4Q" ? "TTM · " : ""}연간 추이 (${file.market === "kr" ? "DART" : "SEC"})`, grid + table + foot, "ai-fin-panel");
 }
 

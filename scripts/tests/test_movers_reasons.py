@@ -371,3 +371,54 @@ def test_call_gemini_daily_quota_skips_wait_and_flags_quota(monkeypatch):
 
 def test_default_model_order_prefers_lite():
     assert b.GEMINI_MODELS[0] == "gemini-2.5-flash-lite"    # 브리핑이 먼저 쓰는 flash 를 아낀다
+
+
+# ─────────── 대형주 / 전체 시장 두 보드(2026-10-01) ───────────
+def _snap_stock(ticker, chg, cap):
+    return {"ticker": ticker, "company": f"{ticker} Inc", "changePct": chg, "marketCapB": cap,
+            "sector": "Technology", "industry": "Software"}
+
+
+def test_pick_movers_all_universe_drops_cap_and_value_floors(monkeypatch):
+    snap = {"stocks": [
+        _snap_stock("BIG", 9.0, 50), _snap_stock("TINY", 40.0, 0.01),
+        {**_snap_stock("ETF1", 30.0, 10), "sector": "EXCHANGE TRADED FUNDS"},
+    ]}
+    # 거래대금 1만 달러 — 대형주 하한(2,500만)엔 못 미치고 전체 시장엔 하한이 없다
+    monkeypatch.setattr(b, "verified_bar", lambda cfg, m, t, d, s=None: (
+        {"date": d, "close": 10.0, "changePct": s["changePct"], "volume": 1000 if t == "TINY" else 1e7,
+         "source": "yahoo"}, {}))
+    cfg = b.MARKETS["us"]
+    large = b.pick_movers(snap, cfg, "us", "2026-09-30", "large")
+    allm = b.pick_movers(snap, cfg, "us", "2026-09-30", "all")
+    assert [m["ticker"] for m in large["up"]] == ["BIG"]
+    assert [m["ticker"] for m in allm["up"]] == ["TINY", "BIG"]      # ETF 는 전체 시장에서도 뺀다
+
+
+def test_build_writes_two_boards_and_keeps_legacy_top10(monkeypatch, tmp_path):
+    import json as _json
+    snap_path = tmp_path / "snap.json"
+    snap_path.write_text(_json.dumps({"priceDate": "2026-09-30", "stocks": [{"ticker": "X", "changePct": 0.1}]}),
+                         encoding="utf-8")
+    monkeypatch.setitem(b.MARKETS, "us", {**b.MARKETS["us"], "snapshot": snap_path,
+                                          "out_json": tmp_path / "out.json"})
+    monkeypatch.setattr(b, "snapshot_price_date", lambda snap, now=None: snap.get("priceDate"))
+
+    def mk(t, chg):
+        return {"ticker": t, "company": t, "industry": "", "sector": "", "changePct": chg, "close": 1.0,
+                "tradingValue": 1, "priceSource": "yahoo", "marketCapB": 1, "_detail": {}}
+
+    large = {"up": [mk(f"L{i}", 10 - i * 0.1) for i in range(20)], "down": []}
+    allm = {"up": [mk("S1", 50)] + [mk(f"L{i}", 10 - i * 0.1) for i in range(19)], "down": []}
+    monkeypatch.setattr(b, "pick_movers", lambda snap, cfg, m, d, uni="large", cache=None: large if uni == "large" else allm)
+    monkeypatch.setattr(b, "us_disclosures", lambda tickers, d: {})
+    monkeypatch.setattr(b, "collect_news", lambda s, m, d: [])
+    monkeypatch.setattr(b, "sector_context", lambda *a: None)
+    monkeypatch.setattr(b.time, "sleep", lambda _s: None)
+    payload, code = b.build("us", use_llm=False, force=True)
+    assert code == 0
+    assert payload["count"] == 21                                     # 겹친 19종목은 한 번만
+    assert [r["ticker"] for r in payload["up"]] == [f"L{i}" for i in range(10)]
+    assert len(payload["boards"]["large"]["up"]) == 20
+    assert payload["boards"]["all"]["up"][0]["ticker"] == "S1"
+    assert "하한 없음" in payload["boards"]["all"]["criteria"]

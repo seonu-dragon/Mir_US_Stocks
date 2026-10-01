@@ -7,9 +7,34 @@
 //   상자 맨 위 한 줄. 사유는 공시·뉴스 헤드라인·업종 평균만 근거로 한 자동 요약이다 —
 //   근거가 없으면 "뚜렷한 재료 확인 안 됨", 요약이 검증을 통과 못 하면 "뚜렷한 사유 확인 안 됨"(흐린 글씨)으로
 //   보여 준다 — 예전 "요약 실패"는 종목에 문제가 있는 것처럼 읽혀 중립 문구로 바꿨다(2026-10-01).
+// 범위·개수(2026-10-01): 빌더가 boards.large(대형주) · boards.all(전체 시장, ETF·스팩만 제외)을 방향별
+//   20종목까지 만들어 두고, 카드에서 범위와 표시 개수(10·15·20, 기본 대형주 10)를 고른다. 선택은
+//   브라우저(safeStorage)에 기억한다. boards 가 없는 옛 파일이면 최상위 up/down(대형주 10)만 보인다.
 // 클래식 스크립트(전역 공유). 최상위 이름은 movers 접두로 충돌을 피한다.
 
 let moversSide = "up";
+const MOVERS_UNIVERSES = { large: "대형주", all: "전체 시장" };
+const MOVERS_COUNTS = [10, 15, 20];
+const MOVERS_PREF_KEY = "mir_movers_prefs";
+
+function moversPrefs() {
+  const raw = (window.safeStorage && window.safeStorage.getJSON(MOVERS_PREF_KEY, null)) || {};
+  return {
+    universe: MOVERS_UNIVERSES[raw.universe] ? raw.universe : "large",
+    count: MOVERS_COUNTS.includes(Number(raw.count)) ? Number(raw.count) : MOVERS_COUNTS[0],
+  };
+}
+
+function moversSavePrefs(patch) {
+  if (window.safeStorage) window.safeStorage.setJSON(MOVERS_PREF_KEY, { ...moversPrefs(), ...patch });
+}
+
+// 고른 범위의 보드 { criteria, up, down } — boards 가 없으면(옛 파일) 최상위 = 대형주.
+function moversBoardOf(p, universe) {
+  const b = p.boards && p.boards[universe];
+  if (b && Array.isArray(b.up) && Array.isArray(b.down)) return b;
+  return universe === "large" ? { criteria: p.criteria, up: p.up, down: p.down } : null;
+}
 
 const MOVERS_STATUS_TEXT = {
   none: "뚜렷한 재료 확인 안 됨",
@@ -29,7 +54,13 @@ function moversEntryFor(ticker) {
   const p = moversPayload();
   if (!p || !ticker) return null;
   const t = String(ticker).toUpperCase();
-  return [...p.up, ...p.down].find((row) => String(row.ticker).toUpperCase() === t) || null;
+  const pools = [p.up, p.down];
+  Object.keys(MOVERS_UNIVERSES).forEach((u) => { const b = moversBoardOf(p, u); if (b) pools.push(b.up, b.down); });
+  for (const rows of pools) {
+    const hit = rows.find((row) => String(row.ticker).toUpperCase() === t);
+    if (hit) return hit;
+  }
+  return null;
 }
 
 function moversTagChips(row) {
@@ -83,8 +114,17 @@ function renderMoversBoard() {
     ensureFeatureData("movers").then((ok) => { if (ok && moversPayload()) renderMoversBoard(); });
     return;
   }
-  const rows = moversSide === "down" ? p.down : p.up;
+  const prefs = moversPrefs();
+  const hasAll = !!moversBoardOf(p, "all");
+  const universe = hasAll ? prefs.universe : "large";
+  const board = moversBoardOf(p, universe);
+  const sliceN = (list) => list.slice(0, prefs.count);
+  const rows = sliceN(moversSide === "down" ? board.down : board.up);
   el.hidden = false;
+  // 신호 성적표는 최상위 up/down(대형주 10)만 기록한다 — 전체 시장 보드 밑엔 붙이지 않는다.
+  const uniBtn = (u) => `<button type="button" class="movers-tab${universe === u ? " is-active" : ""}" data-movers-universe="${u}" aria-pressed="${universe === u}">${MOVERS_UNIVERSES[u]}</button>`;
+  const controls = `${hasAll ? `<div class="movers-tabs" role="group" aria-label="대상 범위">${Object.keys(MOVERS_UNIVERSES).map(uniBtn).join("")}</div>` : ""}
+      <label class="movers-count">표시 <select data-movers-count aria-label="표시 개수">${MOVERS_COUNTS.map((n) => `<option value="${n}"${n === prefs.count ? " selected" : ""}>${n}개</option>`).join("")}</select></label>`;
   const tab = (side, label, n) => `<button type="button" class="movers-tab${moversSide === side ? " is-active" : ""}" data-movers-side="${side}" aria-pressed="${moversSide === side}">${label} <span class="muted">${n}</span></button>`;
   const allFailed = rows.length > 0 && rows.every((row) => (row.reasonStatus || "failed") === "failed");
   const statusBanner = allFailed
@@ -99,7 +139,7 @@ function renderMoversBoard() {
           </button>
           <div class="movers-why">${moversTagChips(row)}${moversReasonText(row, allFailed)}${moversEvidenceLinks(row)}</div>
         </li>`).join("")}</ol>`
-    : `<p class="muted">기준(${escapeHtml(p.criteria || "")})을 넘은 ${moversSide === "down" ? "하락" : "상승"} 종목이 없습니다.</p>`;
+    : `<p class="muted">기준(${escapeHtml(board.criteria || "")})을 넘은 ${moversSide === "down" ? "하락" : "상승"} 종목이 없습니다.</p>`;
   const idx = (p.indexMoves || []).map((i) => `${escapeHtml(i.name)} <b class="${cls(Number(i.changePct))}">${fmtSignedPct(Number(i.changePct))}</b>`).join(" · ");
   el.innerHTML = `
     <div class="section-title movers-head">
@@ -107,15 +147,21 @@ function renderMoversBoard() {
         <h2>오늘의 특징주</h2>
         <p>${escapeHtml(p.tradeDate || "")} 장 마감 기준 · 자동 요약이라 틀릴 수 있음</p>
       </div>
-      <div class="movers-tabs" role="group" aria-label="상승·하락 전환">${tab("up", "상승", p.up.length)}${tab("down", "하락", p.down.length)}</div>
+      <div class="movers-tabs" role="group" aria-label="상승·하락 전환">${tab("up", "상승", sliceN(board.up).length)}${tab("down", "하락", sliceN(board.down).length)}</div>
     </div>
+    <div class="movers-controls">${controls}</div>
     ${statusBanner}
     ${body}
-    ${typeof signalScoreLine === "function" ? signalScoreLine(moversSide === "down" ? "movers_down" : "movers_up") : ""}
-    <p class="movers-foot muted">${idx ? `지수 ${idx} · ` : ""}${escapeHtml(p.criteria || "")}<br>근거: ${escapeHtml(p.source || "")} · 생성 ${escapeHtml(p.updatedAtKst || "")} · 공시·헤드라인만 본 요약이며 매매 신호가 아닌 정보입니다.</p>`;
+    ${universe === "large" && typeof signalScoreLine === "function" ? signalScoreLine(moversSide === "down" ? "movers_down" : "movers_up") : ""}
+    <p class="movers-foot muted">${idx ? `지수 ${idx} · ` : ""}${escapeHtml(board.criteria || "")}<br>근거: ${escapeHtml(p.source || "")} · 생성 ${escapeHtml(p.updatedAtKst || "")} · 공시·헤드라인만 본 요약이며 매매 신호가 아닌 정보입니다.</p>`;
   el.querySelectorAll("[data-movers-side]").forEach((btn) => {
     btn.addEventListener("click", () => { moversSide = btn.dataset.moversSide === "down" ? "down" : "up"; renderMoversBoard(); });
   });
+  el.querySelectorAll("[data-movers-universe]").forEach((btn) => {
+    btn.addEventListener("click", () => { moversSavePrefs({ universe: btn.dataset.moversUniverse }); renderMoversBoard(); });
+  });
+  const countSel = el.querySelector("[data-movers-count]");
+  if (countSel) countSel.addEventListener("change", () => { moversSavePrefs({ count: Number(countSel.value) }); renderMoversBoard(); });
   delegateTickerClicks(el, ".movers-go");
 }
 

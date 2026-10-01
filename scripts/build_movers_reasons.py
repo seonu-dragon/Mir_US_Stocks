@@ -20,10 +20,15 @@
    있는지 (b) 문장 속 숫자가 인용 근거·등락률에 있는지 검사하고, 어기면 그 종목은
    "요약 실패"로 발행한다(사유 없이 목록만 나가지 않는다).
 
-호출량: 시장당 하루 LLM 보통 1회(20종목 한 묶음), 공개 레포에 매일 커밋되므로 이 이상 늘리지
-말 것. GEMINI_API_KEY 는 브리핑 4종·국내 뉴스·실적 보도자료와 같은 키이고 무료 티어는 모델별
+대상 범위(2026-10-01): 보드는 두 가지 — 대형주(시총·거래대금 하한) · 전체 시장(ETF·스팩만 제외,
+하한 없음) — 를 방향별 20종목까지 미리 만든다. 화면(movers.js)이 범위와 표시 개수(10~20)를 고른다.
+두 보드에 같이 오른 종목은 근거·요약을 한 번만 만든다. 최상위 up/down 은 대형주 상위 10종목 그대로다 —
+신호 성적표(build_signal_ledger)·내 종목 요약·푸시가 읽는 정의를 바꾸지 않으려고.
+
+호출량: 시장당 하루 LLM 보통 2회(두 보드 합쳐 중복 빼고 약 75종목을 40종목 묶음으로 — 2026-10-01
+사용자 확인 후 1회 → 2회로 늘렸다), 공개 레포에 매일 커밋되므로 이 이상 늘리지 말 것. GEMINI_API_KEY 는 브리핑 4종·국내 뉴스·실적 보도자료와 같은 키이고 무료 티어는 모델별
 하루 20건이다(2026-09-26 KR 특징주 20종목 중 10종목이 429 로 요약 실패). 그래서
-  - 20종목을 한 번에 묻고(출력 검증은 종목별 그대로),
+  - 40종목을 한 번에 묻고(출력 검증은 종목별 그대로),
   - 브리핑이 먼저 쓰는 flash 대신 flash-lite 부터 쓰고, 429 면 분당 한도는 지수 백오프(15→30초) 후
     같은 모델 재시도, 하루 한도(PerDay)면 기다리지 않고 다음 모델로 넘어간다,
   - 같은 거래일 두 번째 시도는 직전 보드에서 이미 요약된 종목을 그대로 두고 실패한 종목만 다시 묻는다,
@@ -73,10 +78,12 @@ OUT_JS = ROOT / "data" / "movers_reasons.js"
 JS_GLOBAL = "MOVERS_REASONS"
 
 NO_MATERIAL = "뚜렷한 재료 확인 안 됨"
-TOP_N = 10               # 방향별 최대 종목 수
+TOP_N = 20               # 보드(범위)별·방향별 최대 종목 수 — 화면이 10~20 중 고른다
+LEGACY_TOP_N = 10        # 최상위 up/down(대형주) — 신호 성적표·내 종목 요약·푸시가 읽는 예전 정의
+UNIVERSES = ("large", "all")   # 대형주(시총·거래대금 하한) · 전체 시장(ETF·스팩만 제외)
 MIN_ABS_MOVE = 3.0       # 이보다 작게 움직인 종목은 '특징주'가 아니다
-LLM_BATCH = 20           # 한 번의 Gemini 호출에 넣는 종목 수(TOP_N×2 = 한 번에 전부)
-MAX_LLM_CALLS = 3        # 한 실행의 상한(보통 1회 + 빠진 종목 재요청 1회)
+LLM_BATCH = 40           # 한 번의 Gemini 호출에 넣는 종목 수(두 보드 중복 제외 약 75종목 → 2묶음)
+MAX_LLM_CALLS = 3        # 한 실행의 상한(보통 2회 + 빠진 종목 재요청 1회)
 MAX_NEWS_PER_STOCK = 6
 MAX_DISC_PER_STOCK = 4
 # 브리핑 4종이 flash 를 먼저 쓴다 — 특징주는 flash-lite 부터(실적 보도자료 요약도 lite, 하루 ≤10건).
@@ -95,6 +102,7 @@ MARKETS = {
         "min_cap": 2.0,            # marketCapB = 십억 달러 → 20억 달러
         "min_value": 25e6,         # 거래대금 2,500만 달러
         "criteria": "시총 20억 달러 이상 · 거래대금 2,500만 달러 이상 · ETF 제외",
+        "all_criteria": "전체 시장(시총·거래대금 하한 없음) · ETF 제외",
         "currency": "USD",
     },
     "kr": {
@@ -107,6 +115,7 @@ MARKETS = {
         "min_cap": 0.2,            # marketCapB = 조원 → 2,000억 원
         "min_value": 5e9,          # 거래대금 50억 원
         "criteria": "시총 2,000억 원 이상 · 거래대금 50억 원 이상 · ETF·스팩 제외",
+        "all_criteria": "전체 시장(시총·거래대금 하한 없음) · ETF·스팩 제외",
         "currency": "KRW",
     },
 }
@@ -430,17 +439,24 @@ def verified_bar(cfg: dict, market: str, ticker: str, trade_date: str,
     return None, detail
 
 
-MAX_VERIFY_PER_SIDE = 45
+MAX_VERIFY_PER_SIDE = 60   # TOP_N 20 을 채우려고 확인하는 후보 상한(확인 실패·불일치로 빠지는 몫 포함)
 
 
-def pick_movers(snap: dict, cfg: dict, market: str, trade_date: str):
+def pick_movers(snap: dict, cfg: dict, market: str, trade_date: str, universe: str = "large",
+                bar_cache: dict | None = None):
+    """universe: large = 시총·거래대금 하한 적용 · all = ETF·스팩만 빼고 하한 없음.
+    bar_cache: {티커: (봉, details)} — 두 보드를 만들 때 같은 종목을 두 번 조회하지 않게."""
+    large = universe == "large"
+    bar_cache = {} if bar_cache is None else bar_cache
     pool = []
     for s in snap.get("stocks") or []:
         if is_excluded(s, cfg, market):
             continue
         chg = fnum(s.get("changePct"))
         cap = fnum(s.get("marketCapB"))
-        if chg is None or cap is None or cap < cfg["min_cap"] or abs(chg) < MIN_ABS_MOVE:
+        if chg is None or abs(chg) < MIN_ABS_MOVE:
+            continue
+        if large and (cap is None or cap < cfg["min_cap"]):
             continue
         pool.append(s)
     out = {"up": [], "down": []}
@@ -450,7 +466,9 @@ def pick_movers(snap: dict, cfg: dict, market: str, trade_date: str):
         for s in ranked[:MAX_VERIFY_PER_SIDE]:
             if len(out[side]) >= TOP_N:
                 break
-            bar, detail = verified_bar(cfg, market, s["ticker"], trade_date, s)
+            if s["ticker"] not in bar_cache:
+                bar_cache[s["ticker"]] = verified_bar(cfg, market, s["ticker"], trade_date, s)
+            bar, detail = bar_cache[s["ticker"]]
             if not bar:
                 dropped["거래일 봉 확인 불가"] += 1
                 continue
@@ -460,7 +478,7 @@ def pick_movers(snap: dict, cfg: dict, market: str, trade_date: str):
                 dropped["등락률 불일치"] += 1
                 continue
             value = bar["close"] * bar["volume"]
-            if value < cfg["min_value"]:
+            if large and value < cfg["min_value"]:
                 dropped["거래대금 미달"] += 1
                 continue
             out[side].append({
@@ -848,7 +866,7 @@ def call_gemini(prompt: str, *, models=None, sleep=None, opener=None) -> tuple[s
     sleep = sleep or time.sleep
     opener = opener or urllib.request.urlopen
     body = {"contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2, "maxOutputTokens": 8192,
+            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.2, "maxOutputTokens": 16384,
                                  # 2.5 계열은 사고 토큰이 출력 한도를 먹어 JSON 이 잘린다 — 한 줄 요약엔 필요 없다.
                                  "thinkingConfig": {"thinkingBudget": 0}}}
     last_err = ""
@@ -1061,6 +1079,11 @@ def summarize(movers: dict, market: str, indices: list[dict], trade_date: str, u
 
 # ---------------------------------------------------------------------------
 
+def board_criteria(cfg: dict, universe: str) -> str:
+    base = cfg["criteria"] if universe == "large" else cfg["all_criteria"]
+    return f"{base} · 등락률 ±{MIN_ABS_MOVE:g}% 이상 · 방향별 최대 {TOP_N}종목"
+
+
 def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]:
     cfg = MARKETS[market]
     snap = load_json(cfg["snapshot"])
@@ -1087,9 +1110,22 @@ def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]
     attempt = int(prev.get("attempt") or 1) + 1 if prev.get("tradeDate") == trade_date else 1
     print(f"[특징주] {cfg['label']} 거래일 {trade_date}")
 
-    movers = pick_movers(snap, cfg, market, trade_date)
-    print(f"  상승 {len(movers['up'])} · 하락 {len(movers['down'])}")
+    bar_cache: dict = {}
+    picked = {}
+    for uni in UNIVERSES:
+        picked[uni] = pick_movers(snap, cfg, market, trade_date, uni, bar_cache)
+        print(f"  [{uni}] 상승 {len(picked[uni]['up'])} · 하락 {len(picked[uni]['down'])}")
+    # 두 보드에 같이 오른 종목은 한 번만 근거를 모으고 요약한다(대형주 쪽 객체를 쓴다).
+    movers: dict[str, list[dict]] = {"up": [], "down": []}
+    seen: set[str] = set()
+    for uni in UNIVERSES:
+        for side in ("up", "down"):
+            for m in picked[uni][side]:
+                if m["ticker"] not in seen:
+                    seen.add(m["ticker"])
+                    movers[side].append(m)
     all_stocks = movers["up"] + movers["down"]
+    print(f"  중복 제외 {len(all_stocks)}종목")
     if not all_stocks:
         # 조용한 날일 수 있다 — 빈 보드를 '정상'으로 발행한다(0건 방어는 allow_empty).
         print("  기준을 넘는 종목이 없다")
@@ -1097,7 +1133,11 @@ def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]
     disc = (kr_disclosures if market == "kr" else us_disclosures)(tickers, trade_date) if tickers else {}
     indices = index_moves(snap, market)
 
-    clusters = board_clusters(movers)
+    # 업종 묶음은 화면에 보이는 보드 단위로 — 대형주 보드가 먼저, 전체 시장 보드는 남은 종목만.
+    clusters: dict[str, list[dict]] = {}
+    for uni in UNIVERSES:
+        for t, mates in board_clusters(picked[uni]).items():
+            clusters.setdefault(t, mates)
     for s in all_stocks:
         ctx = sector_context(snap, cfg, market, s)
         s["_sector"] = ctx
@@ -1124,8 +1164,16 @@ def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]
 
     prev_rows = {}
     if prev.get("tradeDate") == trade_date:
-        prev_rows = {r.get("ticker"): r for r in (prev.get("up") or []) + (prev.get("down") or []) if r.get("ticker")}
-    boards, meta = summarize(movers, market, indices, trade_date, use_llm, prev_rows=prev_rows)
+        prev_all = (prev.get("up") or []) + (prev.get("down") or [])
+        for b in (prev.get("boards") or {}).values():
+            prev_all += (b.get("up") or []) + (b.get("down") or [])
+        prev_rows = {r.get("ticker"): r for r in prev_all if r.get("ticker")}
+    summarized, meta = summarize(movers, market, indices, trade_date, use_llm, prev_rows=prev_rows)
+    by_ticker = {r["ticker"]: r for r in summarized["up"] + summarized["down"]}
+    boards = {uni: {"criteria": board_criteria(cfg, uni),
+                    "up": [by_ticker[m["ticker"]] for m in picked[uni]["up"]],
+                    "down": [by_ticker[m["ticker"]] for m in picked[uni]["down"]]}
+              for uni in UNIVERSES}
     # 이 빌더(시장별)가 오늘(KST) 부른 Gemini 횟수 — 같은 날 재시도면 누적. 키를 7개 워크플로우가 나눠 쓴다.
     today_kst = datetime.now(KST).date().isoformat()
     prev_llm = prev.get("llm") or {}
@@ -1134,7 +1182,7 @@ def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]
     meta["callsToday"] = carried + meta["llmCalls"]
     print(f"  Gemini 호출: 이번 {meta['llmCalls']}회(실행 상한 {MAX_LLM_CALLS}) · 오늘 누적 {meta['callsToday']}회"
           f"({market}) · 재사용 {meta['reused']}종목 · 요청 {meta['asked']}종목 · 모델 {','.join(meta['models']) or '-'}")
-    rows = boards["up"] + boards["down"]
+    rows = list(by_ticker.values())
     failed = sum(r["reasonStatus"] == "failed" for r in rows)
     status = "ok" if not failed else ("llm_failed" if failed == meta["asked"] and not meta["reused"] else "partial")
     if not use_llm and meta["llmStocks"]:
@@ -1146,15 +1194,17 @@ def build(market: str, *, use_llm: bool, force: bool) -> tuple[dict | None, int]
         "status": status,
         "attempt": attempt,
         "count": len(rows),
-        "criteria": f"{cfg['criteria']} · 등락률 ±{MIN_ABS_MOVE:g}% 이상 · 방향별 최대 {TOP_N}종목",
+        # 최상위 criteria·up·down = 대형주 상위 10 (예전 정의 — 신호 성적표·요약·푸시용).
+        "criteria": f"{cfg['criteria']} · 등락률 ±{MIN_ABS_MOVE:g}% 이상 · 방향별 최대 {LEGACY_TOP_N}종목",
         "source": ("DART · 네이버 뉴스/Google News · 시장 스냅샷" if market == "kr"
                    else "SEC 8-K · Google News · Yahoo · 시장 스냅샷"),
         "note": "공시·뉴스 헤드라인·업종 평균만을 근거로 한 자동 요약이라 틀릴 수 있다. "
                 "근거가 없으면 '뚜렷한 재료 확인 안 됨', 요약이 검증을 통과하지 못하면 '요약 실패'. 매매 신호가 아니다.",
         "llm": meta,
         "indexMoves": indices,
-        "up": boards["up"],
-        "down": boards["down"],
+        "up": boards["large"]["up"][:LEGACY_TOP_N],
+        "down": boards["large"]["down"][:LEGACY_TOP_N],
+        "boards": boards,   # {large, all} × {criteria, up, down} 방향별 최대 TOP_N — 화면이 범위·개수를 고른다
     }
     print(f"  요약: LLM {meta['llmCalls']}회({meta['llmStocks']}종목) · 실패 {failed} · 상태 {status}")
     return payload, (1 if status == "llm_failed" else 0)

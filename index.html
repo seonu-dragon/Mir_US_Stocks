@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=87a1f8856d" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=87a1f8856d"></noscript>
+    <link rel="preload" href="styles.css?v=25d39edd5c" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=25d39edd5c"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=09c0507589"></script>
+    <script src="build_id.js?v=db8f2dea4b"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3345,7 +3345,7 @@ html[data-market="kr"][data-theme="dark"] {
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
     <script src="disclosure-trackers.js?v=4fcc0214d1"></script>
-    <script src="movers.js?v=51489a8c4d"></script>
+    <script src="movers.js?v=7550ee0a21"></script>
     <script src="portfolio.js?v=667afbf126"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
     <script src="my-digest.js?v=6226eff130"></script>

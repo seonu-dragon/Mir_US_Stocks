@@ -551,6 +551,8 @@
     dateWindow,
     rcpNo,
     dayIso,
+    // 시장 전체 '오늘 피드'(market-feed-core.js)가 같은 잡음 서류 목록을 쓴다.
+    KR_NOISE_TYPES,
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirTimeline = api;

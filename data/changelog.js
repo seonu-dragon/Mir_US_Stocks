@@ -17,6 +17,51 @@ window.MIR_CHANGELOG = {
       "market": "all"
     },
     {
+      "id": "2026-10-01-fin-shareholder-return",
+      "date": "2026-10-01",
+      "title": "재무 탭에 주주환원 카드(배당·자사주)",
+      "desc": "연도별 주당배당금과 배당성향(적자 해는 '적자'), 배당 주기·최근 1년 배당·현재 배당수익률, 자사주 공시와 주식수 변화를 한곳에 모았습니다. 출처·기준일을 달았고 배당 기록이 없는 종목·ETF 는 숨깁니다. 배당 랭킹으로 바로 갈 수 있습니다.",
+      "link": "?tab=search&sub=analysis&ticker=KO&market=us&view=fin",
+      "targets": [
+        "sdv-fin"
+      ],
+      "focus": [
+        "shareholderSection"
+      ],
+      "market": "all",
+      "pr": 281
+    },
+    {
+      "id": "2026-10-01-fin-mcap-overlay",
+      "date": "2026-10-01",
+      "title": "재무 차트에 시가총액(우) 겹쳐 보기",
+      "desc": "매출·영업이익, 순이익·EPS 카드에서 '시가총액(우)'을 켜면 기말 종가 × 기말 주식수 선이 오른쪽 축에 겹칩니다. 액면분할·무상증자는 주식수를 같은 기준으로 환산했고, 맞출 수 없으면 수정주가만 그립니다. 같이 그렸을 뿐 인과 관계를 뜻하지 않습니다.",
+      "link": "?tab=search&sub=analysis&ticker=NVDA&market=us&view=fin",
+      "targets": [
+        "sdv-fin"
+      ],
+      "focus": [
+        "financialsSection"
+      ],
+      "market": "all",
+      "pr": 281
+    },
+    {
+      "id": "2026-10-01-today-market-feed",
+      "date": "2026-10-01",
+      "title": "오늘 탭에 '오늘 피드' — 시장 전체 하루 타임라인",
+      "desc": "오늘 탭에 하위 탭 '오늘 피드'를 더했습니다. 미국은 8-K 요약·실적·특징주·내부자 거래·Form 144·경제지표, 국내는 DART 공시·특징주·IR·보호예수 해제를 하루 단위로 모읍니다. 종류 칩으로 거르고 종목을 누르면 분석으로 갑니다. 오늘 자료가 없으면 최근 자료일을 날짜와 함께 보여 줍니다.",
+      "link": "?tab=today&sub=feed",
+      "targets": [
+        "tab-feed"
+      ],
+      "focus": [
+        "marketFeed"
+      ],
+      "market": "all",
+      "pr": 280
+    },
+    {
       "id": "2026-10-01-mobile-bottom-nav",
       "date": "2026-10-01",
       "title": "휴대폰 하단 탭 바와 종목 미니 바",

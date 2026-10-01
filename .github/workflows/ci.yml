@@ -183,6 +183,12 @@ jobs:
       # 재무 확장 파생 지표(financials-core.js): ROIC·순차입금/EBITDA·주식수 증감·TTM 시계열(연속 분기만)·결측 전파.
       - name: Financials core tests
         run: node scripts/tests/test_financials_core.mjs
+      # 재무 차트 시가총액 겹쳐 보기(mcap-core.js: 분할 환산 — NVDA 10:1·000500 무상증자 1.8배, 수정주가 대체·건너뜀) +
+      # 주주환원(shareholder-core.js: 배당 주기·연도/회계연도 합·배당성향 적자·자사주 공시·주식수 변화).
+      - name: Market-cap overlay / shareholder core tests
+        run: |
+          node scripts/tests/test_mcap_core.mjs
+          node scripts/tests/test_shareholder_core.mjs
       # 재무 위험 점검(risk-check-core.js): Piotroski 9항목·Altman Z/Z''·Beneish M 교과서 값 검산, 데이터 없음 분리.
       - name: Risk check core tests
         run: node scripts/tests/test_risk_check_core.mjs
@@ -257,6 +263,11 @@ jobs:
       # 간밤 미국/국내 장 보드(문턱·방향별 상관·표본 부족 제외), 표기.
       - name: Cross-market links core tests
         run: node scripts/tests/test_cross_market_core.mjs
+
+      # 오늘 탭 › 오늘 피드(market-feed-core.js): 8-K·실적·특징주·Form 4·Form 144·경제지표 / DART·IR·보호예수를 하루 피드로 합치기,
+      # 기준일(오늘·주말·휴장·수집 전), 하루 정렬, 칩 개수 = 필터 행 수, 출처별 기준 시각, 판정 문구 금지.
+      - name: Market feed core tests
+        run: node scripts/tests/test_market_feed_core.mjs
 
       # 업데이트 소식(changelog-core.js): 안 읽음·화면별 '새 기능' 카드 고르기 + 손으로 쓰는 data/changelog.{json,js}
       # 가 같은 내용인지, 링크가 상대 URL 인지, targets/focus 요소 id 가 index/analysis.html 에 있는지.

@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=13c9247b34" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=13c9247b34"></noscript>
+    <link rel="preload" href="styles.css?v=87a1f8856d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=87a1f8856d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=add20209ab"></script>
+    <script src="build_id.js?v=e3f441b056"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -567,6 +567,7 @@ html[data-market="kr"][data-theme="dark"] {
       <section class="panel is-active" id="tab-today">
         <nav class="sub-tabs ia-sub-tabs" id="todaySubTabs" aria-label="오늘 하위 섹션">
           <button class="sub-tab is-active" data-sub="today">요약</button>
+          <button class="sub-tab" data-sub="feed">오늘 피드</button>
           <button class="sub-tab" data-sub="ai-briefing">AI 브리핑</button>
           <button class="sub-tab" data-sub="calendar">캘린더</button>
         </nav>
@@ -623,6 +624,19 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="daily-action-grid" id="dailyActionGrid" aria-live="polite">
               <p class="muted">오늘의 확인 항목을 정리하는 중입니다.</p>
             </div>
+          </section>
+        </div>
+
+        <!-- 오늘 피드(market-feed.js): 이 시장의 하루 공시·8-K·특징주·내부자·실적·경제지표를 시간순으로 -->
+        <div class="tab-leaf" id="tab-feed">
+          <section class="mfeed" id="marketFeed" aria-labelledby="marketFeedTitle">
+            <div class="section-title">
+              <h2 id="marketFeedTitle">오늘 피드</h2>
+              <p>이미 발행된 공시·특징주·내부자 거래·실적·경제지표를 하루 단위로 모았습니다. 종류 칩을 누르면 그 종류만 봅니다.</p>
+            </div>
+            <div id="marketFeedHead"><p class="muted">피드를 준비하는 중…</p></div>
+            <div id="marketFeedList" class="mfeed-list-host"></div>
+            <div id="marketFeedFoot"></div>
           </section>
         </div>
 
@@ -1566,6 +1580,8 @@ html[data-market="kr"][data-theme="dark"] {
               <section class="financials-card sg-card animate-reveal" id="segmentsSection" hidden></section>
               <!-- 재무 위험 점검(risk-check.js renderRiskCheck) — F·Z·M 등 체크리스트, 재무 확장 파일이 있는 종목만 -->
               <section class="financials-card rc-card animate-reveal" id="riskCheckSection" hidden></section>
+              <!-- 주주환원(shareholder.js renderShareholder) — 배당 기록·배당성향·자사주 공시·주식수 변화. 자료가 없으면(ETF 등) 숨김 -->
+              <section class="financials-card shr-card animate-reveal" id="shareholderSection" hidden></section>
               <!-- 실적 일정 · EPS 기록 · 발표 반응 · 실적 인사이트(renderStockEvents 가 채운다) -->
               <section class="stock-events-card sd-earnings-card animate-reveal" id="stockEarningsCard" hidden></section>
               <section class="estimate-revision-card animate-reveal" id="estimateRevisionCard" aria-live="polite"></section>
@@ -3343,7 +3359,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=731bc33612"></script>
+    <script src="feature-data.js?v=541d0fde25"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3387,20 +3403,23 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="signal-scorecard.js?v=6fc77f71e2"></script>
     <script src="event-study-core.js?v=98c430e41a"></script>
     <script src="event-study.js?v=bcfb67eb71"></script>
-    <script src="timeline-core.js?v=9f9646e894"></script>
+    <script src="timeline-core.js?v=f526b05e90"></script>
     <script src="timeline.js?v=931239cd88"></script>
     <script src="watchlist.js?v=5223caf8cb"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=5e1529522c"></script>
     <script src="earnings-insight.js?v=3d92f45757"></script>
     <script src="financials-core.js?v=b3c48e127e"></script>
-    <script src="financials.js?v=7b1b9657ee"></script>
+    <script src="mcap-core.js?v=d0d2d05df5"></script>
+    <script src="shareholder-core.js?v=29bba37222"></script>
+    <script src="financials.js?v=824e745d50"></script>
     <script src="segments-core.js?v=75ff141f1d"></script>
     <script src="segments.js?v=8d54e784d4"></script>
     <script src="risk-factors-core.js?v=05a50a5878"></script>
     <script src="risk-factors.js?v=112696df89"></script>
     <script src="risk-check-core.js?v=c96b31592a"></script>
     <script src="risk-check.js?v=2afff877ba"></script>
+    <script src="shareholder.js?v=c948ca3523"></script>
     <script src="dcf-core.js?v=a1ee21f8bd"></script>
     <script src="dcf.js?v=85ba809573"></script>
     <script src="daily-table-core.js?v=5e4945f830"></script>
@@ -3414,6 +3433,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
     <script src="mobile-cards.js?v=aae191cacc"></script>
     <script src="calendar-panel-core.js?v=261cacf9f0"></script>
+    <script src="market-feed-core.js?v=f09c7d8fe8"></script>
+    <script src="market-feed.js?v=a2e20b16f9"></script>
     <script src="calendar-panel.js?v=16ce5f782e"></script>
     <script src="lockup-core.js?v=68e009b38b"></script>
     <script src="lockups.js?v=b4b7282745"></script>
@@ -3421,7 +3442,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=98225ef0ab"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=32f6d0c89d"></script>
+    <script src="app.js?v=c9b65e6b4c"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

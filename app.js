@@ -5607,9 +5607,10 @@ function renderSmartMoney(item) {
     <p class="sm-note">내부자·의회·기관·대량보유 공시 종합 — 상세는 ‘거장 포트폴리오’ 탭 참조</p>`;
 }
 
-// 국내: 일봉(실시간 프록시 야후 또는 상세 파일)에서 스냅샷 기준일(priceDate) 봉을 **날짜로 찾아** 그날
-// 정규장이 끝났으면 종가·거래량을 스냅샷(네이버, KRX 정규장) 값으로 맞추고 고가·저가를 넓힌다(빌더
-// align_last_bar_to_close 와 같은 규칙). 야후 .KS 봉이 KRX 종가와 다른 날이 많아(삼성전자 09-23 285,500 vs
+// 국내: 일봉(상세 파일 = 네이버, 그 뒤 날짜만 실시간 프록시 야후)에서 스냅샷 기준일(priceDate) 봉을 **날짜로
+// 찾아** 그날 정규장이 끝났으면 종가를 스냅샷(네이버, KRX) 값으로 맞추고 고가·저가를 넓힌다(빌더
+// align_last_bar_to_close 와 같은 규칙). 거래량은 덮지 않는다 — 일봉 거래량은 전 구간 KRX+NXT 합산(네이버 일별
+// 시세)으로 통일했다(2026-10-01, daily-table-core.js alignSessionBar 주석). 야후 .KS 봉이 KRX 종가와 다른 날이 많아(삼성전자 09-23 285,500 vs
 // 286,500) 머리글·시세정보와 차트·일별 시세 표가 어긋났다. 예전엔 마지막 봉만 봐서, 기준일 뒤에 오늘 장중
 // 봉이 붙으면(2026-10-01 005930: 머리글 09-30 269,500 vs 표 268,500) 맞추지 못했다. 그 날짜 봉이 없거나
 // 장중이면 건드리지 않는다. 계산은 daily-table-core.js(MirDailyTable.alignSessionBar).
@@ -5617,13 +5618,26 @@ const _krAlignMemo = new WeakMap();
 function alignKrSessionBar(series, item) {
   const core = window.MirDailyTable;
   if (!core || !Array.isArray(series) || !series.length || !item) return series;
-  const snap = { date: item.priceDate, close: item.price, volume: item.volume };
+  const snap = { date: item.priceDate, close: item.price };
   // 장 마감(15:40) 전후로 결과가 바뀌므로 10분 단위 시각까지 메모 키에 넣는다.
-  const key = `${snap.date}|${snap.close}|${snap.volume}|${Math.floor(Date.now() / 600000)}`;
+  const key = `${snap.date}|${snap.close}|${Math.floor(Date.now() / 600000)}`;
   const memo = _krAlignMemo.get(series);
   if (memo && memo.key === key) return memo.out;
   const out = core.alignSessionBar(series, snap);
   _krAlignMemo.set(series, { key, out });
+  return out;
+}
+
+// 국내: 상세 파일 일봉(네이버)이 덮는 날짜는 그 값, 실시간(워커·야후) 봉은 그보다 새 날짜만(MirDailyTable.mergeLiveBars).
+// 같은 (상세, 실시간) 쌍이면 같은 배열을 돌려준다 — alignKrSessionBar 메모와 일별 시세 표 키가 흔들리지 않게.
+const _krLiveMergeMemo = new WeakMap();
+function mergeKrLiveBars(base, live) {
+  const core = window.MirDailyTable;
+  if (!core || typeof core.mergeLiveBars !== "function") return live;
+  const memo = _krLiveMergeMemo.get(live);
+  if (memo && memo.base === base) return memo.out;
+  const out = core.mergeLiveBars(base, live);
+  _krLiveMergeMemo.set(live, { base, out });
   return out;
 }
 
@@ -5638,7 +5652,21 @@ function applyLive(item) {
   const out = { ...item };
   if (quote) out.liveQuote = quote;
   if (Array.isArray(chart) && chart.length) {
-    out.chartSeries = isKrMarket() ? alignKrSessionBar(chart, item) : chart;
+    if (isKrMarket()) {
+      // 상세 일봉이 네이버 원천일 때만 우선한다. 야후로 만든 옛 상세 파일(이월 종목 포함)에는
+      // 기준일 봉 누락 때 전날 봉을 덮어쓴 값이 남아 있어(#272 이전 빌더), 실시간 일봉이 더 낫다.
+      const base = item.barsSource === "naver" && Array.isArray(item.chartSeries) ? item.chartSeries : [];
+      const merged = mergeKrLiveBars(base, chart);
+      out.chartSeries = alignKrSessionBar(merged, item);
+      if (merged === chart) {
+        out.barsSource = "yahoo";                       // 상세 일봉이 없어 실시간(야후) 일봉만 쓴다
+      } else if (merged.length > base.length) {
+        const first = merged[base.length];
+        out.liveBarsFrom = String((Array.isArray(first) ? first[5] : first && first.d) || "").slice(0, 10);
+      }
+    } else {
+      out.chartSeries = chart;
+    }
     out.historySource = "yahoo";
   }
   // KR keeps the build's curated Korean (Naver) headlines unless the live proxy
@@ -5892,6 +5920,7 @@ async function fetchLiveDetailForTicker(ticker) {
       company: payload.name || normalized,
       chartSeries: payload.chart,
       historySource: "yahoo",
+      barsSource: "yahoo",
       __liveGenerated: true,
     };
   } catch {

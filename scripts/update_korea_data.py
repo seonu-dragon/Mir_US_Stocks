@@ -2,7 +2,8 @@
 
 Data sources:
   - Naver Finance: KOSPI/KOSDAQ stock list, price, change, market cap, volume
-  - Yahoo Finance: 5Y daily OHLCV history, fundamentals, news (via .KS / .KQ suffix)
+  - Naver chart API: 5Y adjusted daily OHLCV (api.stock.naver.com/chart/domestic/item)
+  - Yahoo Finance: daily OHLCV fallback (barsSource=yahoo), dividend/split events, news (via .KS / .KQ suffix)
 
 Output:
   - data/korea/market_snapshot.json
@@ -1170,6 +1171,171 @@ def attach_week52_from_history(stock: dict, rows: list) -> None:
     fund["week52Low"] = round(float(lo), 2)
 
 
+# ===================== 일봉 원천: 네이버 (2026-10-01) =====================
+# 국내 일봉(chartSeries)의 원천은 네이버 차트 API 다. 야후(.KS/.KQ)는 네이버가 그 종목을 못 줄 때만 쓴다.
+#
+# 왜: 야후 .KS 일봉 종가가 KRX 와 다른 날이 많았다(2026-09-26 실측 25종목 × 37거래일 중 23%,
+# 005930 09-29 야후 272,500 vs KRX 275,000, 에코프로비엠 09-29 109,000 vs 106,900). #272 는 기준일
+# 봉만 스냅샷으로 고쳤고, 그 전 날짜들은 여전히 야후 값이었다.
+#
+# 엔드포인트: api.stock.naver.com/chart/domestic/item/{code}/day?startDateTime=YYYYMMDD0000&endDateTime=...
+#   - 날짜 범위 한 번에 5년(≈1,400봉)이 0.2초 안팎에 온다. 값이 숫자형이라 파싱이 단순하다.
+#   - **수정주가**다: 무상증자·유상증자 권리락·분할을 과거 봉에 소급 반영한다(000500 06-30 무상증자 1.8:1 —
+#     직전 봉이 야후 165,833 / 네이버 165,872 로 둘 다 조정, 원가 ≈298,500). ETF 는 분배금까지 소급 조정한다
+#     (069500 2021-07-02 야후 원가 43,585 / 네이버 39,495). m.stock 일별 시세 화면·fchart 도 같은 값을 준다.
+#   - 거래량은 네이버 일별 시세의 거래량(KRX 정규장 + NXT 합산)이다. 야후 일봉 거래량과 같고, 스냅샷 목록의
+#     거래량(KRX)과는 다를 수 있다(005930 09-30 일봉 16,477,580 vs 스냅샷 15,700,594). 일봉은 전 구간 이 정의로
+#     통일한다 — 기준일 봉 거래량도 스냅샷 값으로 덮지 않는다(app.js alignKrSessionBar).
+#   - 당일 장중에 부르면 오늘 봉이 들어온다. prepare_session_rows 가 시세 기준일 뒤 봉을 빼고, 다음 실행의
+#     증분이 겹침 구간을 새 값으로 덮어 확정값이 된다.
+#
+# 증분: 직전 detail 이 네이버 봉이고 최근이면 마지막 봉 21일 전부터만 받아 겹침을 비교한다. 수정주가는 권리락
+# 날 과거 전체가 바뀌므로 겹치는 종가가 하나라도 다르면 5년 전체를 다시 받는다. 야후 봉 캐시(전환 첫날)도 전체.
+NAVER_CHART_API = "https://api.stock.naver.com/chart/domestic/item"
+NAVER_FULL_LOOKBACK_DAYS = 1900       # ≈ 5.2년 — 자른 뒤 HISTORY_BAR_CAP(1,260봉)만 남긴다
+NAVER_INCREMENTAL_OVERLAP_DAYS = 21   # 증분 요청 시작 = 캐시 마지막 봉 - 21일(겹침 비교 구간)
+NAVER_CACHE_MAX_AGE_DAYS = 10         # 캐시 마지막 봉이 이보다 오래되면 전체
+NAVER_MIN_ROWS = 30                   # 야후 경로와 같은 최소 봉 수(미만이면 실패로 보고 폴백)
+NAVER_OVERLAP_TOL = 1e-6              # 같은 원천끼리 비교라 사실상 일치해야 한다
+BARS_SOURCE_NAVER = "naver"
+BARS_SOURCE_YAHOO = "yahoo"
+# load_cached_history 가 읽은 직전 detail 의 barsSource(없으면 야후 시절 detail = "yahoo").
+_CACHED_BARS_SOURCE: dict[str, str] = {}
+
+
+def _naver_iso(local_date) -> str | None:
+    text = str(local_date or "").strip()
+    if len(text) >= 8 and text[:8].isdigit():
+        return f"{text[:4]}-{text[4:6]}-{text[6:8]}"
+    return None
+
+
+def parse_naver_daily(payload) -> list[dict]:
+    """네이버 차트 API 응답 → [{date, open, high, low, close, volume}] (날짜 오름차순, 중복 없음).
+
+    목록 그대로(…/day?startDateTime=) 또는 {"priceInfos": [...]}(…?periodType=dayCandle) 둘 다 받는다.
+    종가가 없거나 0 이하인 행은 버린다. 시가·고가·저가가 비면(거래정지일) 종가로 채운다 — 야후 파서와 같은 규칙.
+    """
+    items = payload.get("priceInfos") if isinstance(payload, dict) else payload
+    by_date: dict[str, dict] = {}
+    for item in items or []:
+        if not isinstance(item, dict):
+            continue
+        day = _naver_iso(item.get("localDate"))
+        close = _fnum(item.get("closePrice"))
+        if not day or close is None or close <= 0:
+            continue
+
+        def px(key):
+            value = _fnum(item.get(key))
+            return value if value is not None and value > 0 else close
+
+        volume = _fnum(item.get("accumulatedTradingVolume"))
+        by_date[day] = {
+            "date": day,
+            "open": px("openPrice"),
+            "high": max(px("highPrice"), close),
+            "low": min(px("lowPrice"), close),
+            "close": close,
+            "volume": float(volume) if volume is not None and volume > 0 else 0.0,
+        }
+    return [by_date[day] for day in sorted(by_date)]
+
+
+def fetch_naver_daily(code: str, start, end, retries: int = 3) -> list[dict]:
+    """[start, end] (date) 구간 일봉. 네이버 전역 스로틀(_naver_throttle)을 같이 쓴다."""
+    url = (
+        f"{NAVER_CHART_API}/{urllib.parse.quote(str(code))}/day"
+        f"?startDateTime={start:%Y%m%d}0000&endDateTime={end:%Y%m%d}2359"
+    )
+    headers = {**HTTP_HEADERS, "Accept": "application/json", "Referer": "https://m.stock.naver.com/"}
+    last_exc: Exception | None = None
+    for attempt in range(retries):
+        _naver_throttle()
+        try:
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                return parse_naver_daily(json.loads(resp.read().decode("utf-8")))
+        except Exception as exc:  # 429/5xx/네트워크 — 짧게 물러섰다 재시도
+            last_exc = exc
+            if attempt < retries - 1:
+                time.sleep(1.0 * (attempt + 1))
+    raise RuntimeError(f"naver daily failed: {code}: {last_exc}")
+
+
+def naver_overlap_ok(cached_rows: list, fresh_rows: list) -> bool:
+    """증분 병합해도 되는가. 캐시의 마지막 봉(장중·확정 전일 수 있음)을 뺀 겹침 날짜의 종가가 전부 같아야 한다.
+
+    수정주가는 권리락·분할 날 과거 전체를 다시 계산하므로, 하나라도 다르면 캐시를 버리고 전체를 받는다.
+    겹침이 하나도 없으면(휴장이 길었거나 날짜가 어긋남) 판단할 수 없어 False.
+    """
+    if not cached_rows or not fresh_rows:
+        return False
+    fresh_close = {row["date"]: row["close"] for row in fresh_rows}
+    first_fresh = fresh_rows[0]["date"]
+    overlap = [row for row in cached_rows if row["date"] >= first_fresh][:-1]
+    if not overlap:
+        return False
+    for row in overlap:
+        fresh = fresh_close.get(row["date"])
+        cached = row.get("close")
+        if fresh is None or not cached:
+            return False
+        if abs(fresh - cached) > NAVER_OVERLAP_TOL * abs(cached):
+            return False
+    return True
+
+
+def fetch_naver_history_smart(code: str, cached, cached_source: str | None, *,
+                              force_full: bool = False, today=None, fetch_fn=None):
+    """네이버 일봉 수집 진입점. 반환 (rows, mode) — mode ∈ {"incremental", "full", "full-mismatch"}.
+
+    cached = load_cached_history 결과 (rows, dividends) 또는 None. cached_source 는 그 rows 의 원천.
+    fetch_fn(code, start, end) 는 테스트용 주입점(기본 fetch_naver_daily). 실패는 예외로 올려 호출부가 야후로 폴백한다.
+    """
+    fetch = fetch_fn or fetch_naver_daily
+    if today is None:
+        today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    mode = "full"
+    cached_rows = cached[0] if cached else None
+    if (
+        not force_full
+        and cached_rows
+        and cached_source == BARS_SOURCE_NAVER
+        and not UD.should_force_full_refresh(code, today)
+    ):
+        try:
+            last = datetime.strptime(str(cached_rows[-1]["date"])[:10], "%Y-%m-%d").date()
+        except (KeyError, TypeError, ValueError):
+            last = None
+        if last is not None and 0 <= (today - last).days <= NAVER_CACHE_MAX_AGE_DAYS:
+            fresh = fetch(code, last - timedelta(days=NAVER_INCREMENTAL_OVERLAP_DAYS), today)
+            if fresh and naver_overlap_ok(cached_rows, fresh):
+                return UD.merge_history_rows(cached_rows, fresh), "incremental"
+            mode = "full-mismatch"
+    rows = fetch(code, today - timedelta(days=NAVER_FULL_LOOKBACK_DAYS), today)
+    if len(rows) < NAVER_MIN_ROWS:
+        raise RuntimeError(f"Not enough naver rows for {code}: {len(rows)}")
+    return rows[-UD.HISTORY_BAR_CAP:], mode
+
+
+def refresh_kr_events(ysym: str, symbol: str, cached) -> tuple[list | None, list | None]:
+    """네이버 봉을 쓴 종목의 배당·분할 이벤트는 여전히 야후에서 받는다(네이버 차트 API 에는 이벤트가 없다).
+
+    봉은 버리고 이벤트만 쓴다. 직전 detail 에 배당이 있으면 1년치만 받아 합치고, 없으면 5년. 야후가 실패하면
+    직전 값을 그대로 이월한다(이벤트가 사라지지 않게). 반환 (dividends, splits) — splits None = 모름(키 생략).
+    """
+    cached_divs = cached[1] if cached else None
+    full = not cached_divs
+    try:
+        _, fresh_divs = fetch_yahoo_history_kr(ysym, range_="5y" if full else "1y")
+    except Exception:
+        UD._FRESH_SPLITS.pop(str(ysym), None)
+        return (cached_divs or None), UD.take_splits(ysym, symbol, False)
+    divs = fresh_divs if full else UD.merge_dividend_events(cached_divs, fresh_divs)
+    return (divs or None), UD.take_splits(ysym, symbol, full)
+
+
 def load_cached_history(symbol: str):
     """직전 발행된 KR detail 의 실측 chartSeries 를 rows 로 복원한다(fetch 실패 폴백).
 
@@ -1198,6 +1364,8 @@ def load_cached_history(symbol: str):
         if len(rows) < 30:
             return None
         UD.remember_cached_splits(symbol, detail)
+        # barsSource 키가 없으면 네이버 전환(2026-10-01) 전 detail = 야후 봉.
+        _CACHED_BARS_SOURCE[str(symbol)] = str(detail.get("barsSource") or BARS_SOURCE_YAHOO)
         return rows, UD._cached_dividends(detail)
     except Exception:
         return None
@@ -1207,6 +1375,25 @@ def load_cached_history(symbol: str):
 FORCE_FULL_HISTORY = False  # --full-history 플래그(수동 복구용)
 _history_stats = {"incremental": 0, "full": 0, "mismatch": 0}
 _history_stats_lock = threading.Lock()
+
+
+_bars_stats = {"naver": 0, "yahoo-fallback": 0}
+_bars_fallback_samples: list[str] = []
+
+
+def _note_bars_source(kind: str, detail: str | None = None):
+    with _history_stats_lock:
+        _bars_stats[kind] = _bars_stats.get(kind, 0) + 1
+        if detail and len(_bars_fallback_samples) < 5:
+            _bars_fallback_samples.append(detail[:160])
+
+
+def bars_source_summary() -> str:
+    with _history_stats_lock:
+        snap = dict(_bars_stats)
+        samples = list(_bars_fallback_samples)
+    line = f"[일봉원천] 네이버 {snap.get('naver', 0)} · 야후 폴백 {snap.get('yahoo-fallback', 0)}"
+    return line + (f" (예: {' | '.join(samples)})" if samples else "")
 
 
 def _note_history_mode(mode: str):
@@ -1229,16 +1416,36 @@ def build_one(meta: dict):
     ysym = meta["yahooSymbol"]
     error = None
     mode = None
+    events_done = False  # 네이버 경로는 refresh_kr_events 가 splits 까지 정한다
     try:
         if meta.get("preferHistory"):
-            rows, dividends, mode = UD.fetch_history_smart(
-                symbol,
-                lambda range_: fetch_yahoo_history_kr(ysym, range_=range_),
-                lambda: load_cached_history(symbol),
-                force_full=FORCE_FULL_HISTORY,
-            )
+            # 일봉 원천은 네이버(위 '일봉 원천' 절). 실패한 종목만 야후로 받는다.
+            cached = load_cached_history(symbol)
+            cached_source = _CACHED_BARS_SOURCE.get(str(symbol)) if cached else None
+            try:
+                rows, mode = fetch_naver_history_smart(
+                    symbol, cached, cached_source, force_full=FORCE_FULL_HISTORY,
+                )
+                meta["barsSource"] = BARS_SOURCE_NAVER
+                _note_bars_source(BARS_SOURCE_NAVER)
+                dividends, splits = refresh_kr_events(ysym, symbol, cached)
+                events_done = True
+                if splits is not None:
+                    meta["splits"] = splits
+                if dividends:
+                    dividends = [d for d in dividends if d[0] >= rows[0]["date"]]
+            except Exception as naver_exc:
+                # 캐시가 네이버 봉이면 야후 1년치를 그 꼬리에 잇지 않는다(원천이 섞인 시계열 금지) → 야후 전체.
+                rows, dividends, mode = UD.fetch_history_smart(
+                    symbol,
+                    lambda range_: fetch_yahoo_history_kr(ysym, range_=range_),
+                    lambda: None if cached_source == BARS_SOURCE_NAVER else load_cached_history(symbol),
+                    force_full=FORCE_FULL_HISTORY,
+                )
+                meta["barsSource"] = BARS_SOURCE_YAHOO
+                _note_bars_source("yahoo-fallback", f"{symbol}: {naver_exc}")
             _note_history_mode(mode)
-            meta["historySource"] = "yahoo"
+            meta["historySource"] = "yahoo"  # = '오늘 받은 실측'(원천 무관, 정직성 게이트 의미 유지). 원천은 barsSource.
             if dividends:
                 meta["dividends"] = dividends
         else:
@@ -1254,9 +1461,13 @@ def build_one(meta: dict):
             error = f"{symbol}: {exc} (직전 실측 이력 재사용)"
         else:
             error = f"{symbol}: {exc}"
-    splits = UD.take_splits(ysym, symbol, mode in {"full", "full-mismatch"})
-    if splits is not None:
-        meta["splits"] = splits
+    if meta.get("historySource") == "yahoo-cache":
+        # 직전 detail 을 그대로 이월 — 원천도 그 detail 의 것.
+        meta["barsSource"] = _CACHED_BARS_SOURCE.get(str(symbol), BARS_SOURCE_YAHOO)
+    if not events_done:
+        splits = UD.take_splits(ysym, symbol, mode in {"full", "full-mismatch"})
+        if splits is not None:
+            meta["splits"] = splits
 
     if meta.get("preferFundamentals"):
         # Naver covers every listed Korean stock; Yahoo's .KS fundamentals are sparse
@@ -1277,6 +1488,8 @@ def build_one(meta: dict):
 
     rows, lastbar_fixed = prepare_session_rows(meta, rows)
     stock = UD.make_stock(meta, rows)
+    if meta.get("barsSource") and stock.get("chartSeries"):
+        stock["barsSource"] = meta["barsSource"]  # 일봉 원천(naver|yahoo) — detail 에 실려 일별 시세 표 각주에 쓰인다
     if lastbar_fixed:
         stock["lastBarSource"] = "krx-close"     # 마지막 봉 종가를 KRX 종가(네이버)로 맞췄다
     if meta.get("listedShares"):
@@ -1530,17 +1743,25 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
         "marketCapB": (info.get("capEok") or 0) / 10000.0,  # 억원 → 조원
         "preferHistory": True,
     }
+    # 일봉은 본 유니버스와 같이 네이버(수정주가·분배금 반영) 우선, 실패 시 야후.
+    bars_source = BARS_SOURCE_NAVER
     try:
-        rows, dividends = fetch_yahoo_history_kr(ysym)
-        if dividends:
-            meta["dividends"] = dividends
+        rows, _mode = fetch_naver_history_smart(code, None, None, force_full=True)
     except Exception:
-        UD._FRESH_SPLITS.pop(ysym, None)
-        return None
-    splits = UD.take_splits(ysym, code, True)
-    if splits is not None:
-        meta["splits"] = splits
+        bars_source = BARS_SOURCE_YAHOO
+        try:
+            rows, dividends = fetch_yahoo_history_kr(ysym)
+            if dividends:
+                meta["dividends"] = dividends
+        except Exception:
+            UD._FRESH_SPLITS.pop(ysym, None)
+            return None
+        splits = UD.take_splits(ysym, code, True)
+        if splits is not None:
+            meta["splits"] = splits
     stock = UD.make_stock(meta, rows)
+    if stock.get("chartSeries"):
+        stock["barsSource"] = bars_source
     backfill_change_from_history(stock, rows)  # 야후 실 히스토리 → 개장 전 0% 보정
     stock["ticker"] = code
     stock["market"] = "etf"
@@ -1944,6 +2165,7 @@ def build_snapshot(limit: int | None = None) -> dict:
     prefer_tickers = {m["symbol"] for m in metas if m.get("preferHistory")}
     honesty = UD.enforce_history_honesty_gate(stocks, prefer_tickers, prev_stocks)
     print(UD.history_fetch_summary(_history_stats, _history_stats_lock))
+    print(bars_source_summary())
     cached_count = honesty["cached_count"]
     fabricated = honesty["fabricated"]
 
@@ -2029,12 +2251,17 @@ def build_snapshot(limit: int | None = None) -> dict:
                 sum(1 for s_ in stocks if s_.get("chartSeries")) / max(1, len(stocks)), 4
             ),
             "backfillQuota": HISTORY_BACKFILL_PER_RUN,
+            # 일봉 원천별 종목 수(naver | yahoo). 이월(yahoo-cache)은 그 detail 의 원천으로 센다.
+            "barsSource": {
+                src: sum(1 for s_ in stocks if s_.get("chartSeries") and s_.get("barsSource") == src)
+                for src in (BARS_SOURCE_NAVER, BARS_SOURCE_YAHOO)
+            },
         },
         "universeCount": len(metas),
         "groupCounts": group_counts,
         "historyPolicy": {
             "realHistoryMax": MAX_REAL_HISTORY,
-            "note": "Top symbols use Yahoo 5Y daily OHLCV; others use Naver snapshot mini-chart.",
+            "note": "Top symbols use Naver 5Y adjusted daily OHLCV (Yahoo fallback, see barsSource); others use Naver snapshot mini-chart.",
         },
     }
 
@@ -2302,10 +2529,12 @@ def split_snapshot_details(payload: dict):
                 "yahooSymbol": stock.get("yahooSymbol"),
                 "market": "kr",
             })
+            if stock.get("barsSource"):
+                detail["barsSource"] = stock["barsSource"]
             details[stock["ticker"]] = detail
         light_stocks.append({
             k: v for k, v in stock.items()
-            if k not in set(UD.DETAIL_KEYS) | set(UD.DETAIL_META_KEYS)
+            if k not in set(UD.DETAIL_KEYS) | set(UD.DETAIL_META_KEYS) | {"barsSource"}
         })
     light = dict(payload)
     light["stocks"] = light_stocks

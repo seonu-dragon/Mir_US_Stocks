@@ -81,6 +81,13 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   - 내용이 같다고 한쪽을 지우면 브라우저나 증분 빌드 중 하나가 깨진다.
 - 무거운 데이터셋(13F/congress/insider, 합계 ~11MB)은 부팅 시 받지 않고 해당 탭을
   처음 열 때 로드된다(`FEATURE_DATA` 의 `heavy: true`).
+- **국내 일봉(chartSeries) 원천은 네이버**다(2026-10-01, `update_korea_data.py` '일봉 원천' 절).
+  `api.stock.naver.com/chart/domestic/item/{code}/day` 수정주가(분할·증자 권리락, ETF 는 분배금까지
+  소급), 거래량은 네이버 일별 시세와 같은 KRX+NXT 합산. 네이버가 실패한 종목만 야후이고 detail 의
+  `barsSource`(naver|yahoo)에 남는다. `historySource` 는 여전히 `yahoo`/`yahoo-cache` = '오늘 받은
+  실측/이월' 의미라 원천과 무관하다(소비처 20여 곳이 이 값을 본다 — 바꾸지 말 것). 배당·분할 이벤트는
+  야후. 프론트는 상세 파일 봉이 덮는 날짜를 이기고 워커(야후) 실시간 봉은 그 뒤 날짜만 붙인다
+  (`MirDailyTable.mergeLiveBars`).
 - `repository_publish_lock` (`scripts/briefing_store.py`): 스냅샷 writer 와 git
   commit/push 를 이 머신에서 직렬화한다. 락 소유권을 **환경변수로 자식에게 상속**시켜,
   락 안에서 띄운 subprocess 빌더가 자기 부모를 기다리다 죽지 않게 한다.

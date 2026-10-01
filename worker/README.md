@@ -54,9 +54,11 @@ Cloudflare Dashboard에서 **Settings → Variables and Secrets**에 `FINNHUB_AP
 ## 큰 등락일 그날 뉴스 (`?event_news=1`, 2026-10-01)
 
 - 호출: `GET https://<worker>/?event_news=1&ticker=NVDA&date=2026-08-27` — 차트 ▲▼ 를 **눌렀을 때만** 부른다.
-- 위 '과거 가격 이벤트 원인 분석'과 같은 뉴스 수집(Finnhub·Google News·GDELT·야후 / 국내 Google News·네이버)에서
+- Google News RSS·GDELT·Finnhub(키 있을 때)를 **동시에 5초 제한**으로 불러
   그날 ±2일 기사 최대 5건의 제목·출처·날짜·링크만 준다(LLM 요약 없음).
-- 허용 Origin 만, IP 분당 20회. `MOVE_CACHE` 에 `evnews:v1:<티커>:<날짜>` 로 30일(최근 1주 날짜는 6시간) 저장.
+- 허용 Origin 만, IP 분당 20회. `MOVE_CACHE` 에 `evnews:v2:<티커>:<날짜>` 로 30일(최근 1주 날짜는 6시간, 0건은 1시간) 저장.
+- 응답의 `diag` 에 소스별 결과(`ok <건수> <ms>` · `timeout` · `http <코드>` · `not_json` · `no_key`)가 실린다.
+  첫 버전은 move_analysis 수집(±7일 재검색·순차·8초)을 그대로 써서 Cloudflare 에서 30초 걸리고 0건이었다(2026-10-01).
 
 ## 커뮤니티 게시판 (`/community`)
 

@@ -394,7 +394,7 @@ export async function handleFetch(request, env) {
       const eventDate = String(url.searchParams.get("date") || "").slice(0, 10);
       if (!/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) return cors(json({ error: "invalid date" }, 400));
       if (!llmOriginAllowed(request)) return cors(json({ error: "forbidden_origin" }, 403, 0));
-      const cacheKey = `evnews:v1:${ticker}:${eventDate}`;
+      const cacheKey = `evnews:v2:${ticker}:${eventDate}`;
       if (env && env.MOVE_CACHE) {
         const cached = await env.MOVE_CACHE.get(cacheKey, "json");
         if (cached && Array.isArray(cached.news)) return cors(varyOrigin(json({ ...cached, cached: true }, 200, 3600)));
@@ -405,8 +405,10 @@ export async function handleFetch(request, env) {
       const payload = await eventNewsPayload(env, ticker, symbol, kr, eventDate);
       if (env && env.MOVE_CACHE) {
         // 최근 1주 안의 날짜는 기사가 더 붙을 수 있어 6시간, 그보다 오래된 날짜는 30일.
+        // 0건은 소스가 잠깐 막힌 것일 수 있어 1시간만 둔다.
         const ageDays = dateDistanceDays(eventDate, new Date().toISOString().slice(0, 10));
-        await env.MOVE_CACHE.put(cacheKey, JSON.stringify(payload), { expirationTtl: ageDays > 7 ? 2592000 : 21600 });
+        const ttl = !payload.news.length ? 3600 : (ageDays > 7 ? 2592000 : 21600);
+        await env.MOVE_CACHE.put(cacheKey, JSON.stringify(payload), { expirationTtl: ttl });
       }
       return cors(varyOrigin(json(payload, 200, 3600)));
     }
@@ -1620,13 +1622,65 @@ async function handleIntraday(request, symbol, rawInterval) {
 }
 
 // ----- 큰 등락일 전후 뉴스(차트 툴팁) -----
-// 그날 ±2일 기사만 최대 5건. 제목·출처·날짜·링크만 준다(요약·해석 없음).
+// 그날 ±2일 기사 최대 5건. 제목·출처·날짜·링크만 준다(요약·해석 없음).
+// move_analysis 의 수집(±2일 → 부족하면 ±7일, 소스 순차, 각 8초)을 그대로 쓰면 Cloudflare 에서 구글 뉴스·
+// GDELT 가 시간 초과로 끝나 첫 응답이 30초 걸리고 0건이었다(2026-10-01 라이브). 여기서는 ±2일 한 번만,
+// 소스를 동시에 5초 제한으로 부르고, 소스별 결과(diag)를 응답에 실어 어느 소스가 막히는지 보이게 한다.
+const EVENT_NEWS_TIMEOUT_MS = 5000;
+
+async function eventNewsSource(name, run) {
+  const t0 = Date.now();
+  try {
+    const out = await run();
+    if (out && out.status) return { name, items: [], diag: `${out.status} ${Date.now() - t0}ms` };
+    const items = Array.isArray(out) ? out : [];
+    return { name, items, diag: `ok ${items.length} ${Date.now() - t0}ms` };
+  } catch (e) {
+    return { name, items: [], diag: `${e && e.name === "AbortError" ? "timeout" : "error"} ${Date.now() - t0}ms` };
+  }
+}
+
+async function eventNewsGoogle(ticker, company, from, to, isKr) {
+  const after = shiftIsoDate(from, -1);
+  const before = shiftIsoDate(to, 1);
+  const term = String(company || "").trim();
+  const query = isKr
+    ? `"${term || ticker}" after:${after} before:${before}`
+    : `${term && term.toUpperCase() !== ticker ? `("${term}" OR "${ticker}")` : `"${ticker}"`} stock after:${after} before:${before}`;
+  const loc = isKr ? "hl=ko&gl=KR&ceid=KR:ko" : "hl=en-US&gl=US&ceid=US:en";
+  const r = await fetchT(`https://news.google.com/rss/search?q=${encodeURIComponent(query)}&${loc}`,
+    { headers: { ...UA, Accept: "application/rss+xml, application/xml, text/xml" } }, EVENT_NEWS_TIMEOUT_MS);
+  if (!r.ok) return { status: `http ${r.status}` };
+  return parseGoogleNewsRss(await r.text());
+}
+
+async function eventNewsGdelt(ticker, company, from, to) {
+  const term = String(company || "").trim();
+  const query = term && term.toUpperCase() !== ticker ? `"${term}" OR "${ticker}"` : `"${ticker}"`;
+  const url = `https://api.gdeltproject.org/api/v2/doc/doc?query=${encodeURIComponent(query)}&mode=ArtList&maxrecords=50&format=json&sort=HybridRel&startdatetime=${from.replace(/-/g, "")}000000&enddatetime=${to.replace(/-/g, "")}235959`;
+  const r = await fetchT(url, { headers: UA }, EVENT_NEWS_TIMEOUT_MS);
+  if (!r.ok) return { status: `http ${r.status}` };
+  const text = await r.text();
+  let payload;
+  try { payload = JSON.parse(text); } catch (e) { return { status: "not_json" }; } // 과다 호출이면 안내문(텍스트)을 준다
+  return (payload.articles || []).map((item) => ({
+    title: item.title || "", summary: "", publisher: item.domain || "GDELT", link: item.url || "",
+    publishedAt: normalizeGdeltDate(item.seendate), provider: "GDELT",
+  }));
+}
+
 async function eventNewsPayload(env, ticker, symbol, isKr, eventDate) {
   const company = await resolveCompanyName(ticker, symbol, isKr);
-  const found = isKr
-    ? await fetchHistoricalNewsKorean(env, ticker, company, eventDate)
-    : await fetchHistoricalNews(env, symbol, company, eventDate);
-  const news = (found.news || [])
+  const from = shiftIsoDate(eventDate, -2);
+  const to = shiftIsoDate(eventDate, 2);
+  const code = isKr ? ticker.replace(/\.(KS|KQ)$/i, "") : symbol;
+  const sources = await Promise.all([
+    eventNewsSource("google", () => eventNewsGoogle(code, company, from, to, isKr)),
+    eventNewsSource("gdelt", () => eventNewsGdelt(code, company, from, to)),
+    isKr ? null : eventNewsSource("finnhub", () => (env && env.FINNHUB_API_KEY ? fetchFinnhubNews(env, symbol, from, to) : { status: "no_key" })),
+  ].filter(Boolean));
+  const ranked = rankHistoricalNews(sources.flatMap((s) => s.items), code, company, eventDate);
+  const news = ranked
     .filter((item) => dateDistanceDays(item.publishedAt, eventDate) <= 2)
     .slice(0, 5)
     .map((item) => ({
@@ -1635,7 +1689,8 @@ async function eventNewsPayload(env, ticker, symbol, isKr, eventDate) {
       publishedAt: item.publishedAt || "",
       link: item.link,
     }));
-  return { ticker, date: eventDate, company, news, providers: found.providers || [] };
+  const diag = Object.fromEntries(sources.map((s) => [s.name, s.diag]));
+  return { ticker, date: eventDate, company, news, providers: [...new Set(ranked.map((i) => i.provider).filter(Boolean))], diag };
 }
 
 async function fetchChart(symbol) {

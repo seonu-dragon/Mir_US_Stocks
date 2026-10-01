@@ -1838,7 +1838,7 @@ function keyMomentNewsBodyHtml(st) {
   // 마우스를 올리기만 했을 땐 찾지 않는다(뉴스 수집은 워커 KV·외부 검색을 쓴다) — 눌렀을 때만.
   if (!st) return '<p class="chart-km-sub">▲▼ 를 누르면 그날 전후 뉴스를 찾아봅니다.</p>';
   if (st.status === "loading") return '<p class="chart-km-sub">그날 전후 뉴스 찾는 중…</p>';
-  if (st.status === "error") return '<p class="chart-km-none">뉴스를 불러오지 못했습니다.</p>';
+  if (st.status === "error") return '<p class="chart-km-none">뉴스를 불러오지 못했습니다. 다시 누르면 한 번 더 찾습니다.</p>';
   if (!st.news.length) return '<p class="chart-km-none">그날 전후(±2일) 기사를 찾지 못했습니다.</p>';
   const rows = st.news.map((n) => {
     const when = n.publishedAt ? String(n.publishedAt).slice(5, 10).replace("-", "/") : "";
@@ -1856,13 +1856,18 @@ function fillKeyMomentNews(tip) {
   if (st && st.status !== "error") return;
   const [sym, date] = key.split("|");
   _kmNews[key] = { status: "loading", news: [] };
+  slot.innerHTML = keyMomentNewsBodyHtml(_kmNews[key]); // 누르자마자 '찾는 중'
   const url = `${LIVE_DATA_PROXY.replace(/\/$/, "")}/?event_news=1&ticker=${encodeURIComponent(sym)}&date=${encodeURIComponent(date)}`;
-  fetch(url).then((r) => r.json()).then((d) => {
+  // 첫 검색(캐시 없음)은 외부 뉴스 검색이라 몇 초 걸린다 — 20초가 넘으면 포기하고 다시 누를 수 있게 둔다.
+  const ctrl = typeof AbortController === "function" ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), 20000) : 0;
+  fetch(url, ctrl ? { signal: ctrl.signal } : undefined).then((r) => r.json()).then((d) => {
     if (!d || d.date !== date || !Array.isArray(d.news)) throw new Error("no_route");
     _kmNews[key] = { status: "ok", news: d.news.filter((n) => n && n.title) };
   }).catch(() => {
     _kmNews[key] = { status: "error", news: [] };
   }).finally(() => {
+    clearTimeout(timer);
     const live = document.querySelector(`#chartEventTip [data-km-news="${CSS.escape(key)}"]`);
     if (live) {
       live.innerHTML = keyMomentNewsBodyHtml(_kmNews[key]);

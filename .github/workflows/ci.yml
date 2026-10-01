@@ -235,6 +235,11 @@ jobs:
       - name: Timeline core tests
         run: node scripts/tests/test_timeline_core.mjs
 
+      # 종목 상세 한눈 요약·오늘·임박 이벤트(stock-summary-core.js): 조사(은/는)·금액 단위·전년 대비(흑자/적자 전환),
+      # 빠진 절 생략(자리표시 없음)·ETF/빈 데이터 숨김, 5개년 표, 실적 D-7·배당·보호예수·새 공시 묶음·가까운 순.
+      - name: Stock summary core tests
+        run: node scripts/tests/test_stock_summary_core.mjs
+
       # 8-K 3줄 요약·Form 144 표시(sec-filings-core.js): AI > 규칙 > 없음 우선순위, 출처 라벨,
       # Form 144 발행주식 대비 %·Form 4 짝짓기 상태 문구, 타임라인 항목에 요약 줄·Form 144 항목.
       - name: SEC filings (8-K summary · Form 144) core tests

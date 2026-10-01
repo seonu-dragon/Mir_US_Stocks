@@ -5215,6 +5215,8 @@ function renderSearch(options = {}) {
   if (typeof renderCompanyInfo === "function") renderCompanyInfo(item);
   if (typeof renderPriceTargets === "function") renderPriceTargets(item);
   if (typeof renderStockThemes === "function") renderStockThemes(item);
+  // 한눈 요약 · 오늘·임박 이벤트(stock-summary.js) — 타임라인·재무가 위에서 준비된 뒤
+  if (typeof renderStockSummary === "function") { renderStockSummary(item); renderStockEventStrip(item); }
   renderEarningsReaction(item);
   renderDataQualityPanel(item);
   renderFundamentals(item);
@@ -5237,6 +5239,7 @@ function renderSearch(options = {}) {
     renderStockEvents(refreshed);
     // 통합 타임라인 — 실적·배당·일봉(큰 등락)이 상세 파일에 있어 상세가 도착하면 다시 그린다.
     if (typeof renderStockTimeline === "function") renderStockTimeline(refreshed);
+    if (typeof renderStockSummary === "function") { renderStockSummary(refreshed); renderStockEventStrip(refreshed); }
     renderEarningsReaction(refreshed);
     renderDataQualityPanel(refreshed);
     renderFundamentals(refreshed);

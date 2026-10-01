@@ -391,6 +391,8 @@ function refreshFeatureViews() {
           () => { if (typeof renderCompanyInfo === "function") renderCompanyInfo(item); },
           () => { if (typeof renderPriceTargets === "function") renderPriceTargets(item); },
           () => { if (typeof renderStockThemes === "function") renderStockThemes(item); },
+          // 한눈 요약 · 오늘·임박 이벤트 — 공시·일정·컨센서스 전역이 늦게 오면 다시 그린다(stock-summary.js).
+          () => { if (typeof renderStockSummary === "function") { renderStockSummary(item); renderStockEventStrip(item); } },
         );
       }
     }

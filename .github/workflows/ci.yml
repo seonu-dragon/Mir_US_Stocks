@@ -155,6 +155,10 @@ jobs:
       # 그룹 집계(sectorMedian/sectorPct/rank)·오류 메시지·eval 미사용·공유 토큰 왕복.
       - name: Formula screener tests
         run: node scripts/tests/test_formula_core.mjs
+      # 찾기 › 필터 목록(named-filters-core.js): 정의(평가어 없는 이름·시장별 필드·수식 컴파일)·선택 우선순위·
+      # 개수(formula-core 와 동일)·과거 결과 문장(정의가 바뀌면 숨김) + 커밋된 named_filter_stats 가 정의와 맞는지.
+      - name: Named filters core tests
+        run: node scripts/tests/test_named_filters_core.mjs
       # 업종 상대 팩터 등급(factor-grade-core.js): 업종 내 백분위·섹터 승격·표본 부족 보류·검증 요약 문구.
       - name: Factor grade tests
         run: node scripts/tests/test_factor_grade_core.mjs

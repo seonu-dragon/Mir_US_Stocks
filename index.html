@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=7c76a64afe" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=7c76a64afe"></noscript>
+    <link rel="preload" href="styles.css?v=87a1f8856d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=87a1f8856d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=b32c8edc9f"></script>
+    <script src="build_id.js?v=e3f441b056"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1646,6 +1646,7 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="ia-find-bar">
           <div class="segmented ia-seg ia-seg-strip" id="findModeSeg" role="group" aria-label="찾기 방식">
             <button type="button" class="is-active" data-find="top">상위 종목</button>
+            <button type="button" data-find="filters">필터 목록</button>
             <button type="button" data-find="screener">스크리너</button>
             <button type="button" data-find="formula">수식</button>
             <button type="button" data-find="scanner">모멘텀</button>
@@ -1667,6 +1668,23 @@ html[data-market="kr"][data-theme="dark"] {
               </select>
             </label>
           </div>
+        <!-- 필터 목록: 규칙을 공개한 이름 붙은 필터(named-filters.js · named-filters-core.js) -->
+        <div class="sub-panel" id="sub-filters">
+          <div class="nf-layout" id="nfLayout">
+            <nav class="toc-nav nf-nav" id="nfNav" aria-label="필터 목록"></nav>
+            <div class="nf-body">
+              <label class="nf-select-wrap">필터 <select id="nfSelect" aria-label="필터 고르기"></select></label>
+              <div class="nf-detail" id="nfDetail"></div>
+              <p class="muted nf-meta" id="nfMeta"></p>
+              <div class="table-wrap">
+                <table class="compact-table screener-table table-wide fx-table nf-table">
+                  <thead id="nfHead"></thead>
+                  <tbody id="nfBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
         <div class="sub-panel" id="sub-top">
         <!-- 칩 필터 줄 · 열 설정 · 표/카드 토글(find-table.js) -->
         <div class="ft-bar" id="findTableBar">
@@ -3341,7 +3359,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=d1145a89d4"></script>
+    <script src="feature-data.js?v=541d0fde25"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3363,6 +3381,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-health.js?v=9e62cb61d0"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
     <script src="formula-screener.js?v=f3b5d97cfb"></script>
+    <script src="named-filters-core.js?v=1b7e71d5e3"></script>
+    <script src="named-filters.js?v=f9090037d9"></script>
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=da99b8e4b6"></script>
@@ -3422,7 +3442,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=98225ef0ab"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=5279fc6f46"></script>
-    <script src="app.js?v=e0c2a8432a"></script>
+    <script src="app.js?v=c9b65e6b4c"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

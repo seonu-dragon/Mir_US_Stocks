@@ -288,6 +288,9 @@ CHECKS = {
     "screener-backtest": [
         ("data/screener_backtest_meta.json", 10, False),
         ("data/korea/screener_backtest_meta.json", 10, False),
+        # 찾기 › 필터 목록 과거 결과(build_named_filter_stats.mjs, 같은 워크플로우). 계산된 필터 0개면 실패.
+        ("data/named_filter_stats.json", 10, True),
+        ("data/korea/named_filter_stats.json", 10, True),
     ],
 }
 

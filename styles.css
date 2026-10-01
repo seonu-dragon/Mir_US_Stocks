@@ -16322,6 +16322,42 @@ html[data-theme="dark"] #financialsSection.financials-card { --mf-c2: color-mix(
   .ss-table.ss-wide th:nth-child(2), .ss-table.ss-wide td:nth-child(2) { display: none; }  /* 달러 표기 표는 폰에서 가장 오래된 해를 숨김 */
 }
 /* === stock-summary end === */
+/* === named-filters start === */
+/* 종목 › 찾기 › 필터 목록(named-filters.js). 목록 모양은 .toc-nav/.toc-item(목차 레이아웃)을 그대로 쓰고 여기서는 덧붙이기만. */
+#sub-filters .nf-layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 20px; align-items: start; }
+#sub-filters .nf-nav { gap: 1px; }
+#sub-filters .nf-nav-group { margin: 12px 12px 4px; color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-strong); }
+#sub-filters .nf-nav-group:first-child { margin-top: 2px; }
+#sub-filters .nf-item { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+#sub-filters .nf-item-name { min-width: 0; }
+#sub-filters .nf-item-count { flex: none; color: var(--muted); font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+#sub-filters .nf-item.is-active .nf-item-count { color: var(--text-2); }
+#sub-filters .nf-body { min-width: 0; }
+#sub-filters .nf-select-wrap { display: none; }
+#sub-filters .nf-head { margin: 0 0 12px; }
+#sub-filters .nf-group { color: var(--muted); font-size: var(--fs-cap); }
+#sub-filters .nf-title { margin: 2px 0 6px; font-size: var(--fs-18, 18px); font-weight: var(--fw-title); line-height: 1.35; }
+#sub-filters .nf-rule { margin: 0; color: var(--text-2); font-size: var(--fs-sub); line-height: 1.55; }
+#sub-filters .nf-formula,
+#sub-filters .nf-history { margin: 0 0 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-soft); }
+#sub-filters .nf-label { display: block; margin: 0 0 4px; color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-strong); }
+#sub-filters .nf-code { display: block; overflow-x: auto; padding: 0; background: transparent; color: var(--text); font-size: var(--fs-sub); white-space: pre-wrap; word-break: break-word; }
+#sub-filters .nf-formula-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+#sub-filters .nf-history p { margin: 0; font-size: var(--fs-sub); line-height: 1.55; }
+#sub-filters .nf-history .nf-caveat { margin-top: 4px; color: var(--muted); font-size: var(--fs-cap); }
+#sub-filters .nf-verdict { display: inline-block; padding: 0 8px; border-radius: var(--r-pill); font-size: var(--fs-cap); font-weight: 600; line-height: 1.7; white-space: nowrap; cursor: help; }
+#sub-filters .nf-verdict.is-pass { background: var(--tint-info); color: var(--primary); }
+#sub-filters .nf-verdict.is-insufficient { background: var(--panel-soft); color: var(--text-muted); }
+#sub-filters .nf-verdict.is-overfit { background: var(--tint-neg); color: var(--red); }
+#sub-filters .nf-meta { margin: 12px 0 8px; font-size: var(--fs-cap); }
+#sub-filters .nf-meta:empty { display: none; }
+@media (max-width: 900px) {
+  #sub-filters .nf-layout { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  #sub-filters .nf-nav { display: none; }
+  #sub-filters .nf-select-wrap { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; color: var(--muted); font-size: var(--fs-sub); }
+  #sub-filters .nf-select-wrap select { flex: 1 1 auto; min-width: 0; min-height: 40px; }
+}
+/* === named-filters end === */
 /* === market-feed (오늘 › 오늘 피드, market-feed.js, 2026-10-01) === */
 .mfeed { min-width: 0; }
 .mfeed-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 4px 0 10px; }

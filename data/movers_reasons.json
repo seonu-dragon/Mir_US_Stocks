@@ -1,7 +1,7 @@
 {
   "market": "us",
-  "tradeDate": "2026-09-29",
-  "updatedAtKst": "2026-09-30 10:08 KST",
+  "tradeDate": "2026-09-30",
+  "updatedAtKst": "2026-10-01 10:31 KST",
   "status": "partial",
   "attempt": 1,
   "count": 20,
@@ -14,10 +14,10 @@
     "reused": 0,
     "asked": 20,
     "models": [
-      "gemini-2.5-flash"
+      "gemini-2.5-flash-lite"
     ],
     "errors": [],
-    "callDate": "2026-09-30",
+    "callDate": "2026-10-01",
     "callsToday": 1
   },
   "indexMoves": [
@@ -32,62 +32,15 @@
   ],
   "up": [
     {
-      "ticker": "IOVA",
-      "company": "Iovance Biotherapeutics Inc.",
+      "ticker": "NIVF",
+      "company": "NewGenIvf Group Limited Class A Ordinary Shares",
       "sector": "HEALTHCARE",
-      "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
-      "changePct": 31.48,
-      "close": 14.45,
-      "tradingValue": 1127536722,
+      "industry": "Misc Health and Biotechnology Services",
+      "changePct": 133.33,
+      "close": 0.168,
+      "tradingValue": 142412592,
       "priceSource": "yahoo-meta",
-      "marketCapB": 6.545,
-      "reason": "2026년 매출 전망 상향 및 Amtagvi 수요 증가",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "IOVA Stock Hits Over 2-Year Highs – Why Iovance Raised Its FY2026 Revenue Outlook",
-          "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxPZ1VXMnFSN0pJcERLal9MbWFPZGdoM2tCUXhUcWRnck85Q3U1cVhrWlhfNWJXTHFmOHJOWFFLcmxXVWJFcnlFSVhLV3B2OFh6UHJhbVlXUlpuSnhlTWtiM2QtRTJXVDh3Y1dTZGlPNVdVaVVWMFJaaDRTM1A3U2U3R1BvSGV1Zjg0VzdHZEFBdm4?oc=5",
-          "source": "Yahoo Finance",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Iovance stock rises as analysts cheer new outlook (IOVA:NASDAQ)",
-          "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxPTDhUNU5rQ3ZQVUp0eEJZWTBXQlFwbUY1ekQxNHNTVXhkMmViZTZfSGloU1oyRDlhc18zcS1INi1kNDlpbHNPZ1pKek9ETm92V0QwXzBSUzZ4bTczVjBnTTM2Sk9HZ0dLdFZXQlhRdDluRGhud1Z1cWk5RFFVbVFYWmZ2WnZnTWx3M2JIRA?oc=5",
-          "source": "Seeking Alpha",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Iovance Biotherapeutics’ Amtagvi Demand Drives 2026 Revenue Guidance Bump, Stock Soars",
-          "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxNUm14MGZBdGZxMFJic2xmaU05ZnFfelZuMzFqM2NLbFFuamYtcmY2ZDBfYWI1ODJJNlJoTS1QQzFiaUZJTm8tVHUwN2JLcW9Ea0IxbWpLdkNJZnVhMmhQWXNITDBLSE5HZTZfRnlhODM1bndscU5UeUFEaFBaVGliSDNWcUVpZ2N1UWp0ZlU4eEdzbklNMmNPWGd0M29ZTmFuSjc1cTVUWWUzdV8wb29Ea203UnBYQk5TWllNVGNZRmxvY21Xd1JackJWZkdwejVfeFNlN1dCWVg?oc=5",
-          "source": "Benzinga",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
-        "avgPct": 0.59,
-        "n": 62,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "CCL",
-      "company": "Carnival Corporation Ltd. Common Shares",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Marine Transportation",
-      "changePct": 13.41,
-      "close": 25.11,
-      "tradingValue": 1891390612,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 34.392,
+      "marketCapB": 17.348,
       "reason": "",
       "reasonStatus": "failed",
       "sectorNote": "",
@@ -95,440 +48,23 @@
       "evidence": [],
       "sectorMove": {
         "level": "업종",
-        "name": "Marine Transportation",
-        "avgPct": 1.79,
-        "n": 38,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "WRBY",
-      "company": "Warby Parker Inc. Class A",
-      "sector": "HEALTHCARE",
-      "industry": "Ophthalmic Goods",
-      "changePct": 11.39,
-      "close": 27.47,
-      "tradingValue": 142777907,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 3.396,
-      "reason": "Meta의 AI 안경 추진 및 Alphabet과의 스마트 안경 계약",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Warby Parker Stock Surges on Meta’s AI Glasses Push. Why Smart Eyewear Is Booming.",
-          "link": "https://news.google.com/rss/articles/CBMiggFBVV95cUxOTTVkYlhmMVZ6U0dmT0QxUTBjakhnLXRyUEI1ejJKRUpjTTIzdWFOTmdwUTdDeDVrRzhyRTdRdF9kMHpMZW15dHRFZEpVT2ZsRHJzVlJ5M24yVEFQMzl5V3VGOEVvSFk4VjRVa1RvbDEzLXE3NkFTMzhGckhzY0pqM3FB?oc=5",
-          "source": "barrons.com",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Warby Parker Soars On Alphabet Smart Glasses Deal",
-          "link": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOT1FSYUVZX2w2RHUxazROZVFtc0lFaXhUTDFPWkN1eTZNcmp4Rk5kWDBjNmFnU3ZZX01OcUhIM2RpbEN6UFJIN2tWVXlHaGxMVzRqOGVYLWJQcWowUmlkSlRMM2VxYjVwcTdGRU12bkhUWS1RWnZMRzZFcTFaT3ROUGJLaWYxdTVvZ1dyU3ZfVVVJZw?oc=5",
-          "source": "TipRanks",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Ophthalmic Goods",
-        "avgPct": 0.54,
+        "name": "Misc Health and Biotechnology Services",
+        "avgPct": 0.2,
         "n": 5,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "BE",
-      "company": "Bloom Energy Corporation Class A",
-      "sector": "INDUSTRIALS",
-      "industry": "Electrical Components & Equipment",
-      "changePct": 10.8,
-      "close": 291.25,
-      "tradingValue": 6883181732,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 85.781,
-      "reason": "뚜렷한 재료 확인 안 됨",
-      "reasonStatus": "none",
-      "sectorNote": "",
-      "tags": [
-        "불명"
-      ],
-      "evidence": [],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "INDUSTRIALS",
-        "avgPct": -0.17,
-        "n": 395,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "MGNI",
-      "company": "Magnite Inc.",
-      "sector": "TECHNOLOGY",
-      "industry": "Computer Software: Programming Data Processing",
-      "changePct": 9.7,
-      "close": 25.67,
-      "tradingValue": 106127686,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 3.682,
-      "reason": "Google 법원 판결 후 성장 전망 개선 및 BofA 목표가 50% 상향",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Magnite's Growth Outlook Improves 'Considerably' After Google Court Ruling, BofA Says",
-          "link": "https://news.google.com/rss/articles/CBMipwFBVV95cUxQVTIwbTBZXzBDVHdKUENpUC1odVRMZFFUaF9oS2F6dnhrM3RKMlRGdWs1dTdSanEwUWxGN0QzSzB4X1R0b0QtRy00akZFcU05R0dOU1VzMWtWenZuby1SYk5hVG5oZUpaRVBkdF9zZExTS18zNFFuSzNCTFhGUDJXVVpxZDd1TkY3LS13cVlyM2hNajRxNGhUYWdQRkVVNF9aSlRHUzZ3OA?oc=5",
-          "source": "Yahoo Finance",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Magnite could be a big winner as DOJ takes aim at Google's ad dominance -- BofA (MGNI:NASDAQ)",
-          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxOMWNhWlF4Z1dCdXRCMlVJTURiSnVDdWNRY09ueDhNODk0SjZVcllISjJFRTJZei1NdDA5TlFhUWRkNGZrVW5DLVplWkZVaENfWFNpNmdTaHV3b2tCajdiSDdibldvbE9FNk94QzNKcV92RFhpdnhtN252RVgwQV9IM0ViV3BJNGF6TnRVUTA3YW5kLUJaME1FVTVSRVRub0FBTlBfY3NZekdxTy14VE5ENUJ2OHRrdw?oc=5",
-          "source": "Seeking Alpha",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "BofA Securities Lifts Magnite (MGNI) Price Target 50% Amid DOJ F",
-          "link": "https://news.google.com/rss/articles/CBMixAFBVV95cUxOcm55Z0dBcS1YWURGNjgtZTVzcVRubHJ4WnZJQUlUOU52TXRJVk9BMmdiN0tHdHNkVkp2ZjNZY3dLSmJoSWcwU0VvLTVSX1FRZUh5THlhYUpON3UwVVhGRDJBSWI4dnA0TVZSbFUydjVuNDMyMDJfa0pWVlF1U3NWcmRvMXAxWXBOM0puUllNSG1yTEVqWXdCWEwzVU5OOVNtSUZ5bFZqdm5QTC1hV1g1NFJuS0dlc1ZkRmxNRlZtX0lYQnFV?oc=5",
-          "source": "GuruFocus",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Computer Software: Programming Data Processing",
-        "avgPct": 0.1,
-        "n": 39,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "RXRX",
-      "company": "Recursion Pharmaceuticals Inc. Class A",
-      "sector": "HEALTHCARE",
-      "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
-      "changePct": 8.92,
-      "close": 4.03,
-      "tradingValue": 86173345,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 2.157,
-      "reason": "AI 신약 개발에 대한 기대감으로 주가 급등",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "AI Drug Discovery Hype Sends Recursion Stock Soaring",
-          "link": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPQTNnQ3NaeUlDSVFGeW1xbkwwbm9WLTY1U0h6NWtndnZENk4zV01FMVhLVU5RRjFpMEhqMmVTaVVPMDlqLTVqcXRtSzN0LVl4eGxLc0dITy1LaXhteXRwZkRmV2dUTndzRXcwdUNSUEVtelJHNVFvY3E3bGdGOGhFTVdGU1JkV09rWUQ2NlR1bFFDNS1pRWc?oc=5",
-          "source": "TipRanks",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
-        "avgPct": 0.8,
-        "n": 62,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "RCL",
-      "company": "Royal Caribbean Cruises Ltd.",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Marine Transportation",
-      "changePct": 7.45,
-      "close": 260.67,
-      "tradingValue": 1048615195,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 69.717,
-      "reason": "Sandals 거래에 대한 월스트리트의 지지 및 애널리스트 상향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "RCL Stock Rallies As Wall Street Backs Sandals Deal",
-          "link": "https://news.google.com/rss/articles/CBMijAFBVV95cUxNMnFwNDBfM2FSelZuUlF5R0lUX0dQcjB6cHVac2JodlZQY3JtaGxXWXd2WXdUblc3N01aWDNsSGNiNjFLSmtjdFNvd2VzMW9TX0I0aWVVUWJYV0tJdzQwT1J6eVd2V2ZocHFJWFhvc1BZVG1ILVFzRDRBajJGTHZESHNVTzJMWm5zdmlTYQ?oc=5",
-          "source": "timothysykes.com",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "RCL Stock Draws Bullish Targets As Sandals Deal Reshapes The Story",
-          "link": "https://news.google.com/rss/articles/CBMiiAFBVV95cUxQek1zRk0zSkk5NWhWcnJTcTBqRE1UdE5FLXIyMEFkTTR2dENpNmdzX21fX01SUlpzZE9BY243Vkl6SkhtV2tCZ0JFMzBOTldIdWpPMGhBanhoOWZVMnpKS0E2a3hlM3NQa0JkTVc5MmNoZk1qYy01MmFfSVFxcWV5YUw5Zml3bTVR?oc=5",
-          "source": "StocksToTrade",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Royal Caribbean Cruises (NYSE:RCL) Shares Gap Up on Analyst Upgrade",
-          "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxOdU1aVGQwSU1MeEM1emwzenlUZWt0MEY4NTBKOFVZR3hoLVRMaXNOeUh2ZUo2UTVGV1FiekFXRzFWVUp3WGZubXVNbE51VEU0SlNCLS1lVGFLdldLTlVvU3dXV3dsNGhpb0V4XzhaTUhDdEJxQ2REZmJOX3JMMldzekFJbklETUk1V05SRjNWR0hDQ1A4X3ZrZWZuSHFfb0ZSbmVPdmZhVGFFdjdUUGJmOWRoV0ZJakVpcWNNQW5KSjZVeTQ?oc=5",
-          "source": "MarketBeat",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Marine Transportation",
-        "avgPct": 1.79,
-        "n": 38,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "CAMT",
-      "company": "Camtek Ltd. Ordinary Shares",
-      "sector": "TECHNOLOGY",
-      "industry": "Electronic Components",
-      "changePct": 7.16,
-      "close": 152.82,
-      "tradingValue": 52625095,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 7.114,
-      "reason": "",
-      "reasonStatus": "failed",
-      "sectorNote": "",
-      "tags": [],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Electronic Components",
-        "avgPct": 1.6,
-        "n": 16,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "WING",
-      "company": "Wingstop Inc.",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Restaurants",
-      "changePct": 6.7,
-      "close": 108.62,
-      "tradingValue": 205064567,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 2.959,
-      "reason": "NFL 프로모션 시작으로 강세 전망",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Wingstop (WING) Stock Draws Bullish Calls As NFL Promotions Kick In",
-          "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTE1xYTRTa1p2anJ2MjlHN0RTSDlHUjN4VktkcVhqLW1ZVENfcUNIeFhkelc0MFhBcVJkdmVNek80WVZBUzkwMTFXVXIyTEx5bFJSQml2am9mRTZ2MFhsOFRvZHUtcnhtX1E3TkJKeWhaMkNPendrT0E3d3RR?oc=5",
-          "source": "timothysykes.com",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Wingstop Stock Draws Bullish Targets As NFL Promotions Kick Off",
-          "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE5XbnY4czY0dng4Y1J6LWZkM3ZMYW1hUmM3SUltTmk4amRlZC1xOEV6TlZ4aG82eG00NXhJWkNYVGVRdlB3X2FvN3ZWdDFGbzV5Wkp4dzJRbFhsS194RngzM09SeHNXOTRiZXZVOWVRcFBsMXBFeXc?oc=5",
-          "source": "StocksToTrade",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Restaurants",
-        "avgPct": 0.1,
-        "n": 27,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "AGX",
-      "company": "Argan Inc.",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Engineering & Construction",
-      "changePct": 6.53,
-      "close": 378.39,
-      "tradingValue": 160113080,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 5.309,
-      "reason": "JP Morgan이 비중확대 유지 및 목표가 785달러로 하향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Argan (NYSE:AGX) Stock Price Target Lowered at JPMorgan Chase & Co.",
-          "link": "https://news.google.com/rss/articles/CBMiwgFBVV95cUxPbnpmZ1RUUTlEQnhvLURpM0VUdEdKMEN6Ry04cG9kYTZYVW9VaUtHT21iQ2Jzc0F2QTE3UWl6MEtIMkRPNzN0OUdJNXBxZ2FPTXBlZWhULWI0WWJ5QjQyS0dqTHN5UUJVWHhyZTdmZThZcmpibGtzaGstbzA0S2ZMaEc1UDJ1NjlnTzJUQTZTcFl1bmgzNTlfQmRhTTJTdjJtdWdlTTltcU11OXFadmQtaTRDcWdPTlRZOVk3bmdPeC00UQ?oc=5",
-          "source": "MarketBeat",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Argan Jumps 6.2% After JP Morgan Maintains Overweight",
-          "link": "https://news.google.com/rss/articles/CBMiigFBVV95cUxQT0VxQ0Nyc1JUU1lxNDZKRWE4MHNTWFNHN2RjVXBHVTFsRk15d01aLWhlcFIyTkJnZXhDWHZSbEZPc29lbVEyMkpQNGwwNmRZME1zbzN2RGUzU3ZnWk1pUGlrT2xrOC1WTjR2YUdEbFJiWUJZY0dBZTQ1V0ZwOWx1azhhQlBJNlhPSFHSAYoBQVVfeXFMUE9FcUNDcnNSVFNZcTQ2SkVhODBzU1hTRzdkY1VwR1UxbEZNeXdNWi1oZXBSMk5CZ2V4Q1h2UmxGT3NvZW1RMjJKUDRsMDZkWTBNc28zdkRlM1N2Z1pNaVBpa09sazgtVk40dmFHRGxSYllCWWNHQWU0NVdGcDlsdWs4YUJQSTZYT0hR?oc=5",
-          "source": "AlphaStreet",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "AGX Maintained by JP Morgan -- Price Target Lowered to $785",
-          "link": "https://news.google.com/rss/articles/CBMimgFBVV95cUxOMkRmSnY2N0VhVTZxMExNZ0g4c0d4bm83WW0wTnZHa0t4MmJLcUducnBKcUFjd3hzV3V1QU1lMzlGSHBYdDZGSkc5U1ZEcXZoXzEwZ3NLNG5wQ0N1ejBwdjdyczJiZjdfLUJwZkNWU3JROG1BeTN4NGp3cGpyMjdSNEJ0bVJNTThkcU9SZTFZTC1xdUYtU2ZBSVJn?oc=5",
-          "source": "GuruFocus",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Engineering & Construction",
-        "avgPct": 0.63,
-        "n": 8,
-        "weighting": "시총가중"
-      }
-    }
-  ],
-  "down": [
-    {
-      "ticker": "FICO",
-      "company": "Fair Isaac Corporation",
-      "sector": "TECHNOLOGY",
-      "industry": "Application Software",
-      "changePct": -26.52,
-      "close": 617.87,
-      "tradingValue": 3025069895,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 13.345,
-      "reason": "Fannie와 Freddie가 FICO 신용 점수 경쟁사 허용 및 정부의 독점 해소",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Fair Isaac stock plunges 20% after Fannie and Freddie open door to FICO credit score rival",
-          "link": "https://news.google.com/rss/articles/CBMi6AFBVV95cUxQZUNNbWNGWTNpeUltb3JBY3dhZHlHdW5hYklzQ2tKaGFid3JMNHBnODJnei1sQlVvbndnS3pmaG4wWjNwZlVrQ1lOVW1vVDBkS0l1YTJwbU1qeUloaGRteEk4TlFLZ1ZRcEpoN01UZUI1UWUwWjFlMjdDTGZVTHNGVzNnRWN1bHFPTlJEeGU5LTlHMVZaMXZQMERIME5RcjY5WDNNZVlyWDJxcWdSclM4UGxZZVhWZzh0QzN4cnZhZW1pXzQ4MkpsZWxscTY0bGotWXBZYTB1Z29kQXJnUVhkS1FFd3VFRTVt?oc=5",
-          "source": "Yahoo Finance",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Fair Isaac Tanks After Government Snaps FICO Score Monopoly For Mortgage Pricing",
-          "link": "https://news.google.com/rss/articles/CBMingFBVV95cUxNWExYTmQxQ21LN2k0cjAwb2hWMkZLOVVuTll6REdoeGFLZDd2MkVtb3lyenRuSmNqMXhwaGowVU5YWmlIblFNbnRtM2VoOVBWN0pNc3ZMV2lRZmlZZE1FQTBGS3Y1amh0Qk5WUjVWUF9aOFBmVTROZ1Z0azAtQ3IwRVVWaUQ0elpkdC1nd25zT2dhSE1jMXItMFBubUJyQQ?oc=5",
-          "source": "Investor's Business Daily",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "FICO stock drops 20%: Analysts break down the impact of FHFA’s single pricing grid",
-          "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxNQk93UThwVU5mUHR0WjRxblN3M0JEMGRIU2dYWmdHclM4VmtYcXJ5UU5DUXZ0dlZlSTg3c0h4YjRnbVdXTkNMN1NkZXhjMk5iMU0wUWRpbmNOOHMtVE1aTTlNVUJuYVVKMm1zaFEyMHdnSVBocnN3b1BhNHdubGV3SmF5V2N2amJzN1QtaFNrQlRJYm01NVpZQ1pqaWhjaHlZVUM5V3FnSkpock80RDZ6QnZ1akN1UE9FTUhEWkl1ajktSjZTVEZjRTEycW95RGZCbFE?oc=5",
-          "source": "Investing.com",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "섹터",
-        "name": "TECHNOLOGY",
-        "avgPct": 0.17,
-        "n": 416,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "WGS",
-      "company": "GeneDx Holdings Corp. Class A",
-      "sector": "HEALTHCARE",
-      "industry": "Medical/Nursing Services",
-      "changePct": -11.8,
-      "close": 75.79,
-      "tradingValue": 100924844,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 2.26,
-      "reason": "공매도 공격으로 주가 급락",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "Short-Seller Fury Sends GeneDx Stock Into Tailspin",
-          "link": "https://news.google.com/rss/articles/CBMikwFBVV95cUxPOXNFXzF5M3BOVWVaRmlmYjJJRVJEQWdIT1QyTWp3akdUYlZnN1hwLU5CdndDY2RZR2g0WXdibjBORF90N3FBUVBiSWI3VXVBMTh5M3pQWlpjZDVXR1U4ZzhlOE1sSUtTcUpjYW9UQ3ZyTV83M2JxdGNwOExsSjNEbkpaQnF2T1I1U1hTVW1LSllrMWM?oc=5",
-          "source": "TipRanks",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Medical/Nursing Services",
-        "avgPct": -0.5,
-        "n": 15,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "NESR",
-      "company": "National Energy Services Reunited Corp Ordinary Shares",
-      "sector": "ENERGY",
-      "industry": "Oilfield Services/Equipment",
-      "changePct": -11.14,
-      "close": 26.49,
-      "tradingValue": 140503569,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 2.672,
-      "reason": "UBS가 목표가를 46.00달러로 하향 조정",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
-        {
-          "type": "news",
-          "title": "NESR Maintained by UBS -- Price Target Lowered to $46.00",
-          "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxQeVJmNVdaZUdHV1ZGcE9zUFlUVWR3N0NDWkxZWHAzNExKRUEzcXE1cVJ1cWRMRkNmTjBZSkc3UDE5ZkVZZ2NiLWw3eUhvYk9TWE5QSmFKamJoVDVXUlRIX202OWhiZ0IxSnJPT2F5ejN3SDZaNndLTHlNQnhkR1lxNzRJUXJtOVZOQkFGMDhWUUtackJR?oc=5",
-          "source": "GuruFocus",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Oilfield Services/Equipment",
-        "avgPct": -3.0,
-        "n": 11,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "PIPR",
-      "company": "Piper Sandler Companies",
+      "ticker": "LGHL",
+      "company": "Lion Group Holding Ltd. American Depositary Share",
       "sector": "FINANCIAL",
       "industry": "Investment Bankers/Brokers/Service",
-      "changePct": -9.72,
-      "close": 64.72,
-      "tradingValue": 155229237,
+      "changePct": 25.94,
+      "close": 5.68,
+      "tradingValue": 111076183,
       "priceSource": "yahoo-meta",
-      "marketCapB": 4.574,
-      "reason": "Perella Weinberg 인수 협상 및 52주 신저가 기록",
+      "marketCapB": 153.05,
+      "reason": "암호화폐 투자 확대 및 포트폴리오 재편",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -537,45 +73,38 @@
       "evidence": [
         {
           "type": "news",
-          "title": "Piper Sandler Companies (NYSE:PIPR) Sets New 1-Year Low - Here's Why",
-          "link": "https://news.google.com/rss/articles/CBMiwAFBVV95cUxNdTRMZ1NfNDZVdEQ1UHQ1OU50NHBOZXRxQ1hwTE9XSGt5VU5qdzVjQm9UZ1FCeHR0SFhQV2NYazVZWTJEaHR4ZzhtV1JONm00Tk1kZ0c5UnBvTjRZalhmUWx2Z2VSVTdzTS00dWhkUEhfSG94TlliTjFTVkJqQ0E5NVhmcHF5MktNQkVlNEo1QzFPUmI0STJRWDc2Mk5RTk9NVXRuNGxvd2huZVo3X3ZmVzBzUGJGRmFycmRxMW5kWkc?oc=5",
-          "source": "MarketBeat",
-          "date": "2026-09-29"
+          "title": "After selling all its Solana and some Bitcoin, Lion Group bought about 38,102 HYPE tokens.",
+          "link": "https://news.google.com/rss/articles/CBMiuwFBVV95cUxNb21wWWdSQ3RjaTRuUUZMSHp6ZWxpTnpvYXBhWTU0ZTJZbTZyS0V6MWIwd3BoOVRkX0pNN0NOYWJkUXhSS0hibDU3RFB3aEVwZkFzM0xZWlo0RDdBM3JPNV82ZG9ja0tiTmQ2WU9yTGl5UTI0LXE5MXZoUVBrUFVPTnozd0I5NGhyekhMR0Nha0h4VDBSNExkZkhyNnhfRGFlY21vSjE2aXRfbHVGRWkxYXpSSDA2RDdrN3lj?oc=5",
+          "source": "Stock Titan",
+          "date": "2026-09-30"
         },
         {
           "type": "news",
-          "title": "Piper Sandler stock hits 52-week low at 68.1 USD",
-          "link": "https://news.google.com/rss/articles/CBMipgFBVV95cUxQV3czanJ0NkF0cVk5VlctQk12WUdWZ1pIbk1KSVA4cDQ4OXhLMmt1aTJzcWFHMHhyeU5BSENnQWtkVWlKY0ZxajlaN0Z2Nzh1OVduTlRmSHE4V19iV3lfZGVZclA5aVJqWFctTjNPdExtMDVvRUVOVXQtLTBfYVlFQXg3di1CSkhtMGx4UkVSa2hudDhfVHdpTkJqVUtKczhYemtJRTln?oc=5",
-          "source": "Investing.com",
-          "date": "2026-09-29"
-        },
-        {
-          "type": "news",
-          "title": "Exclusive | Piper Sandler Holds Talks to Buy Perella Weinberg",
-          "link": "https://news.google.com/rss/articles/CBMimAFBVV95cUxPTzNKYl9Sc2JhTUJjclJHLVBnakJTY2RhVmNIcVJ3ckNOZUFxWENvZ3hlVVY0blZ6eGl2MjZtSDZxdWdtY2l2V2cyNl9YR3VwakJmV1cwakg4ZVVYdUNqSGFFRUdMOGxVb280ODl2cHdfcV9qLXd0eTZhVFFTd0c5b2xTWEx2RXJvZFhyNk9jc3BLUllWTEJwZA?oc=5",
-          "source": "wsj.com",
-          "date": "2026-09-29"
+          "title": "Lion Group Holding (LGHL) Restructures Digital Asset Portfolio, Boosts Hyperliquid Token Holdings",
+          "link": "https://news.google.com/rss/articles/CBMizgFBVV95cUxOMXhhZDNXRm5KN205QjhOWU5XWU5jbEZhQ2NBR0tLVUZXYmlHU0VQQlc1eE04YktjbTJORUs1dG41NENzUVlDak1QOUJ3UHRyVE51aFFYN1JUcldlc01FZU9GVFRqc2RvZEczUWdPZWVJeDd1Z2VqWi14dlNvamRheVMxMlJxWVhueHU5TlZLekkxNkdRSURGaUdwRklsRkcyc29Lb0NlRlNZTXBad2N0dzVHTUhKMDRnUWhHUkxCZTIxOUN3LUZKVmpVZXA4Zw?oc=5",
+          "source": "GuruFocus",
+          "date": "2026-09-30"
         }
       ],
       "sectorMove": {
         "level": "업종",
         "name": "Investment Bankers/Brokers/Service",
-        "avgPct": -2.1,
+        "avgPct": -1.23,
         "n": 49,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "DKNG",
-      "company": "DraftKings Inc. Class A",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Services-Misc. Amusement & Recreation",
-      "changePct": -7.42,
-      "close": 19.59,
-      "tradingValue": 497364809,
+      "ticker": "ROG",
+      "company": "Rogers Corporation",
+      "sector": "INDUSTRIALS",
+      "industry": "Major Chemicals",
+      "changePct": 10.73,
+      "close": 152.99,
+      "tradingValue": 167032646,
       "priceSource": "yahoo-meta",
-      "marketCapB": 9.726,
-      "reason": "AI 타겟팅 의혹 및 예측 시장 지출 증가 우려",
+      "marketCapB": 2.734,
+      "reason": "2030년 조정 주당순이익 14달러 목표 제시",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -584,38 +113,187 @@
       "evidence": [
         {
           "type": "news",
-          "title": "DKNG Stock Under Fire As AI Targeting Allegations Hit",
-          "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTFBiY3MtR1o2YldrNDZ1SHpCSFZja045amswT1AxbFNTQ3lYT21Fd044UXpfY0RRbVAwZ3h6ZFYwRExNWUZyWkFnR2dIcDVick13RVNEZlFzNlFmVFE2S2phaUI4Y3B5UUx6bEFJck9xc2prTEx3dVE?oc=5",
-          "source": "StocksToTrade",
-          "date": "2026-09-29"
+          "title": "$14 per share in adjusted earnings is Rogers' 2030 target",
+          "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxOeFVESU9RdHFldk1LQXQ2ckdrM1daNjZZMnN3Q0NkM3VPclduRE41UGd6RkdCaXR3ZnhteTcxTW51MTloMEdMNklsUTBMaGJvRDh5RHdvNzlxM244LUgzQlNNakhrd1JlZzB3bS1tckFtYTJhc2RBSEJtcUt3eGJOcVdCMGttclEzc3dHSWhTeG1QQVp0ZHg2ZjAzWDVTemRzOTZ2RUtBUGlPY2I0Ry0zRFhuaEdhNFBqUmtnOTBB?oc=5",
+          "source": "Stock Titan",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Major Chemicals",
+        "avgPct": -0.21,
+        "n": 40,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "FORM",
+      "company": "FormFactor Inc. FormFactor Inc.",
+      "sector": "TECHNOLOGY",
+      "industry": "Semiconductors",
+      "changePct": 9.59,
+      "close": 149.31,
+      "tradingValue": 328761060,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 11.664,
+      "reason": "CEO 지분 매도 및 반도체 행사 주목",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "FORM Stock Climbs As CEO Sells Shares And SEMICON West Spotlight Builds",
+          "link": "https://news.google.com/rss/articles/CBMifEFVX3lxTE1LMWdZM3hGYVBObTVEdHdzTXg0ZEJ4elBWNy0wOVhPNVI3NHREbEJOUFEtMWdnYkpqWERGcTJHWkM0S2tfT0N2QXZjSjBpMkFLQ010Z2R2bVg2S3hNbzJweGJEREp2dnM2MWFIVkR4aExmMXVtNmxDQ3I4Qk8?oc=5",
+          "source": "timothysykes.com",
+          "date": "2026-09-30"
         },
         {
           "type": "news",
-          "title": "DraftKings Falls as Investors Weigh Higher Prediction-Market Spending",
-          "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxObG5WWUtzcEhrYy03eEYxaDNKM3lyd3lsZURTaGZLQUZ6THhUSlQ5VkUtRmtta1JqdThWNUl6c1JoeHRuSElQYVR6eHRQR3RTYnl6RXpyUkVobDhkd21ScU1CQmxwel9Hd0Z5ZGVnSHdXNktlTzlPRzVBbmx2eVBtZDVCdU1WOUh1ZXY2dEdkejladTNnZ1JESlFHME44bzlnLXB5dg?oc=5",
-          "source": "Quiver Quantitative",
-          "date": "2026-09-29"
+          "title": "FORM Stock Climbs As Traders Track Insider Moves And SEMICON Buzz",
+          "link": "https://news.google.com/rss/articles/CBMieEFVX3lxTE9meGlWUVpIWFlQX1dIWHYxeFdxZWMyb2JZR2gyczY3aDd2eWZacExJR09Ndno3U0FxMm5CNG0wUWh0QmctNkltaHFNdmlUYThfdGQ5a2RiTGxKUUNXWXJXRmNlWkJoR2l3ZkhzNTV2akRBM3NCU3o3Mg?oc=5",
+          "source": "StocksToTrade",
+          "date": "2026-09-30"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "Services-Misc. Amusement & Recreation",
-        "avgPct": -0.1,
-        "n": 23,
+        "name": "Semiconductors",
+        "avgPct": 0.02,
+        "n": 74,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "SRAD",
-      "company": "Sportradar Group AG Class A Ordinary Shares",
+      "ticker": "ZETA",
+      "company": "Zeta Global Holdings Corp. Class A",
       "sector": "TECHNOLOGY",
-      "industry": "Computer Software: Programming Data Processing",
-      "changePct": -7.37,
-      "close": 11.56,
-      "tradingValue": 33429000,
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 9.01,
+      "close": 31.57,
+      "tradingValue": 352186428,
       "priceSource": "yahoo-meta",
-      "marketCapB": 3.604,
-      "reason": "규제 우려로 주가 하락",
+      "marketCapB": 7.924,
+      "reason": "신규 영국 리더십 및 확장 추진",
+      "reasonStatus": "ok",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Braze·JFrog 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Zeta Global Holdings (ZETA) Looks Fully Valued After Its New U.K. Leadership Move",
+          "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxQMjlON3R5WWF4MDY3ZDBzTlZ2WFB2N3ZkMzcwN0hDa2hfS2NHTW5HVkw3bnJrQ1k4VFVUMmtjNmdmWG9MWjdlckZBdjg1aVVqSVVfTkxCYV9IdFlmTXNjc3pSZGJLdzZvMFd0T0JsOWxIQWNlNldBUUtQd2dScVhrSGVNeVZrbXlHYU5jc3ZTdWNETmN5bXZsbDNXdlYxZGpsTmwxZ1FKSXluYlI5QTVvYWd5cWl2bE1Tb1ZhZFh5RS1ib0dPdVhIeFY3d3lHRGo4OXhEYWNUSnHSAdgBQVVfeXFMUDI5Tjd0eVlheDA2N2Qwc05WdlhQdjd2ZDM3MDdIQ2toX0tjR01uR1ZMN25ya0NZOFRVVDJrYzZnZlhvTFo3ZXJGQXY4NWlVaklVX05MQmFfSHRZZk1zY3N6UmRiS3c2bzBXdE9CbDlsSEFjZTZXQVFLUHdnUnFYa0hlTXlWa215R2FOY3N2U3VjRE5jeW12bGwzV3ZWMWRqbE5sMWdRSkl5bmJSOUE1b2FneXFpdmxNU29WYWRYeUUtYm9HT3VYSHhWN3d5R0RqODl4RGFjVEpx?oc=5",
+          "source": "simplywall.st",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "Zeta Global jumps as investors weigh expansion push and strong recent execution",
+          "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxPdFYwb3pGdnNNaTR1X3BFSVotbEhIZE94dy0wSE1uaHN5VDQtcG9wQ3NlZEZfcXFrZ1RicWhNUGFnV3JYTUJvYUphQVNyaWx6c1dFX1VZT2tON21IN2lBM3pDWk1IcnljSF9WcjhQanN4bGlCM3RZLXUtMW9YXzhlSW1KemRJT1JSRlhkWTdJZnZweDg5VGpCbEJhSFdXUFRyVnBqeWItQjhLcnAxSXBfUFhR?oc=5",
+          "source": "quiverquant.com",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.84,
+        "n": 136,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "BRZE",
+      "company": "Braze Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 8.42,
+      "close": 25.1,
+      "tradingValue": 72362748,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 2.851,
+      "reason": "컨퍼런스 후 투자가치 재평가",
+      "reasonStatus": "ok",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Zeta Global·JFrog 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Cantor Fitzgerald reiterates Braze stock rating after conference By Investing.com",
+          "link": "https://news.google.com/rss/articles/CBMiwwFBVV95cUxPUVZ5YUdpYTgtUGxxTlgwTEhGbnJDLVhtcVZTWU1yZXczbzBPZktyeVVrOGdfRWFLdERkMFVHU29ENVFDd1VQMWRCbU9nOXZDZVFzX3ExcTJpUUFoWnRDdFcweDItdGVZeVU0M0JLaE82UEthVzFWR2VCRTJGTnZHTXJkRTh5OXFEalQtcGI4dm5jWGVTMnpob1RyZkwwYzdFbTdaSmJEcC1lc2V1Z1RuOFRmdXBqNGhSa1N5UElleWFzUTQ?oc=5",
+          "source": "Investing.com Nigeria",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.84,
+        "n": 136,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "FROG",
+      "company": "JFrog Ltd. Ordinary Shares",
+      "sector": "TECHNOLOGY",
+      "industry": "Computer Software: Prepackaged Software",
+      "changePct": 7.38,
+      "close": 97.04,
+      "tradingValue": 178667331,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 11.965,
+      "reason": "AI 보안 로드맵 추진",
+      "reasonStatus": "ok",
+      "sectorNote": "Computer Software: Prepackaged Software 업종 동반 상승(Zeta Global·Braze 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "FROG Stock Climbs As JFrog Doubles Down On AI Security",
+          "link": "https://news.google.com/rss/articles/CBMib0FVX3lxTE0zU0U5UjRJSU52UHBvcGE5OS1OODF6YmNTSXcwWXpqNnYzTUNFdjFCMUtwYVZLZy0wNmJ4eldtd01KM2o4TDZqdHdEb2NveDRUQVVnVzlHR0tBN0tyNTZsMk5OdmdPSWtfa0VKT01Mdw?oc=5",
+          "source": "StocksToTrade",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "FROG Stock Climbs As AI Security Roadmap Gains Traction",
+          "link": "https://news.google.com/rss/articles/CBMic0FVX3lxTE1qdGRfM0hpa3RRejFjeDVibGlVSDQ4UElhT2lDQS1sRVltWjJ3eUV3ZFU4d096cmsxdUpHX3JXaDlFVFNOTFBNVmFvVkZFdGxTSXh3OFk1ZzRncFZoU09QQTc5R1VTTnpiX2c0NnFqX1l4ZzQ?oc=5",
+          "source": "timothysykes.com",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Computer Software: Prepackaged Software",
+        "avgPct": 0.84,
+        "n": 136,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "ACMR",
+      "company": "ACM Research Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Industrial Machinery/Components",
+      "changePct": 7.02,
+      "close": 80.92,
+      "tradingValue": 141132653,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 5.636,
+      "reason": "상하이 자회사 수주 잔고 88.2% 증가",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -624,87 +302,38 @@
       "evidence": [
         {
           "type": "news",
-          "title": "Sportradar Stock Stumbles As Regulatory Fears Mount",
-          "link": "https://news.google.com/rss/articles/CBMilAFBVV95cUxNMUpwendtcF9Oa19HU0YzSkliY0cteEkyV3lxbEJoYnRodGVTNm5QWVhPcEdJWkdNbkF6SkpiT3l4Tk5jbGJYVUI2Y1FLZnVsMlNkc0ZORE1wNHlqY0EwUEN1RnZNUUtqcGd6SW5pdVBYNkF5WkJZa0VUVUpZM3pTSnVENk8tU2Zxb2FWUVp6TFFDMDJ5?oc=5",
-          "source": "TipRanks",
-          "date": "2026-09-29"
-        }
-      ],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Computer Software: Programming Data Processing",
-        "avgPct": 0.32,
-        "n": 39,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "AIR",
-      "company": "AAR Corp.",
-      "sector": "INDUSTRIALS",
-      "industry": "Aerospace",
-      "changePct": -7.25,
-      "close": 106.75,
-      "tradingValue": 272901038,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 4.298,
-      "reason": "",
-      "reasonStatus": "failed",
-      "sectorNote": "",
-      "tags": [],
-      "evidence": [],
-      "sectorMove": {
-        "level": "업종",
-        "name": "Aerospace",
-        "avgPct": 0.23,
-        "n": 18,
-        "weighting": "시총가중"
-      }
-    },
-    {
-      "ticker": "NEOG",
-      "company": "Neogen Corporation",
-      "sector": "HEALTHCARE",
-      "industry": "Biotechnology: In Vitro & In Vivo Diagnostic Substances",
-      "changePct": -7.22,
-      "close": 12.73,
-      "tradingValue": 188695746,
-      "priceSource": "yahoo-meta",
-      "marketCapB": 2.776,
-      "reason": "FDA의 Hycoat 관련 경고로 주가 하락",
-      "reasonStatus": "ok",
-      "sectorNote": "",
-      "tags": [
-        "뉴스"
-      ],
-      "evidence": [
+          "title": "Backlog rose 88.2% at ACM Research (ACMR)'s Shanghai subsidiary.",
+          "link": "https://news.google.com/rss/articles/CBMiqAFBVV95cUxNdWR3bGdUQzdhOWplc1dUSy15c2hLeUdiTHdfbUxFckZmWUVGVjdIb0haTVpoaGh1bktaMlhLOUtKTkR1Y2w2ZEg2a2Q1OUIySElIajhxNGlfcWx5RGpnT2FFMTYyTk1WVlFyaEU4Ymo2bkVVVW9BQWg1Qm9LTndtRzdDcEI0MFEzaTkzSnlKekMzazF4RkpoWk9VdVZKTm44NDI4dXliUEI?oc=5",
+          "source": "Stock Titan",
+          "date": "2026-09-30"
+        },
         {
           "type": "news",
-          "title": "Neogen drops after FDA warning over Hycoat (NEOG:NASDAQ)",
-          "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNaHVZc0pwbWhJSFRTbDE3WUkxVGEwYWZ6Q3NHUVhDTklHb2ItRlpXWDBzOVAxX2FTdWkwUzhOYzlwRE8xbUtIb0hJdFcxN2s4dV83QU43aEZTTUJrMFZ6bGhMSUNlRGwzakhONnFhLWRJSHh0Y3lGaFJTVUNJbWxudA?oc=5",
-          "source": "Seeking Alpha",
-          "date": "2026-09-29"
+          "title": "ACM Research's Shanghai Unit's Total Backlog Rises 88%; Shares Gain",
+          "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxPUEtrYzJLR3lyVjBOcnRSZkU1bzd2QXdTN050bnFXUFFaS3d1WDRLNmtsTXBuSHhxclRvUV9MUE5kSG96dXRvNnBQYm9DQ3lPS3RHNTNvOUZfSXV4eklrLTJzV0Rhc0NQdVM1c0FHZ29aazZ6c1JlajdrZU53b0FicUctMUp4WTdtTmRjTmpKd0Y0Rk1nSmFFNmV0S1lKdHlPVXB3SGx5Y0lCdUxoV1hJODN5dTNiU0ljZWc?oc=5",
+          "source": "marketscreener.com",
+          "date": "2026-09-30"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "Biotechnology: In Vitro & In Vivo Diagnostic Substances",
-        "avgPct": 0.47,
-        "n": 8,
+        "name": "Industrial Machinery/Components",
+        "avgPct": -0.66,
+        "n": 89,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "GPCR",
-      "company": "Structure Therapeutics Inc. American Depositary Shares",
+      "ticker": "SLS",
+      "company": "SELLAS Life Sciences Group Inc.",
       "sector": "HEALTHCARE",
       "industry": "Biotechnology: Pharmaceutical Preparations",
-      "changePct": -6.77,
-      "close": 32.69,
-      "tradingValue": 30889467,
+      "changePct": 6.95,
+      "close": 12.31,
+      "tradingValue": 105638327,
       "priceSource": "yahoo-meta",
-      "marketCapB": 2.331,
-      "reason": "바이오텍 시장 침체로 주가 급락",
+      "marketCapB": 2.486,
+      "reason": "AML 치료제 데이터 발표 기대감",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -713,31 +342,38 @@
       "evidence": [
         {
           "type": "news",
-          "title": "Biotech Chill Sends Structure Therapeutics Stock Tumbling",
-          "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxPLWNuaTJFT09sbkRLMDEwbW03TXF6UGZnSGxXa29yd0JuRU8tczFEQUxGSmcwOVNRUmQ1c01CVzFUdUhJcjA1amZRUHFIQnJ0WGhHRy1fbU52LUEyLXV0Qks0ck83djVlRnE3OEo4c2dHdVBpRng2XzRhYml3V29mOWRvWnlpRGJGR0xRVHVCTDY1VVd3TGExSjVvZ2c?oc=5",
-          "source": "TipRanks",
+          "title": "SLS Stock Jumps Overnight: ‘Potent’ AML Drug Data Ahead Of Cancer Summit Fuels Fresh Momentum",
+          "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOQ2VmdGVlTkVCa1BkOXQzckxjRmZUS1c5U3ppUHc5N1FnRWtqWjZIRTZDVkI5WHlodGhZYVQ3dG5wLWRMNDFvTXh2eTVlZEpjd2ZjNmpMaklfb19RYnN4TWtQVW1ZanNsZ241UERPNUJIeFVqekIwdkk5YmxRYTlMNGNHTF8tdlQwNDhqcEtzXzlpZnF3WThCMnhwRi01MXpzaWlaLXBSeTc5RUZuRnJMbGFlQi03T1pWREtHaGVqZw?oc=5",
+          "source": "Stocktwits",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "SLS Stock Rises Overnight: Traders Rally Behind Jim Cramer's 'Two Thumbs Up' Call Ahead Of Key AML Readout",
+          "link": "https://news.google.com/rss/articles/CBMirwFBVV95cUxPSkdLNjN2dmcwOTNfUnVXanFFOEJwd3hWSEpzVkxrXzdzYlhienYxS0tYRUVTNHYzRW9fd0k0SzBRT2RiTVZWdFpjZ0F6V0Y2d3dNblFpQkNZVmFrQlk4Y0cyeVE4U2tVckMzT1N2RjhTZnpFd3BqY19GdThCQXI1alZaZGpsTjRMdkVyRlQxcEp6Q0V0bHVaYW1WOU4tdEc3WDduckZDbW0ya3cyR0Rz?oc=5",
+          "source": "Stocktwits",
           "date": "2026-09-29"
         }
       ],
       "sectorMove": {
         "level": "업종",
         "name": "Biotechnology: Pharmaceutical Preparations",
-        "avgPct": -0.57,
-        "n": 201,
+        "avgPct": -1.36,
+        "n": 203,
         "weighting": "시총가중"
       }
     },
     {
-      "ticker": "AMC",
-      "company": "AMC Entertainment Holdings Inc. Class A",
-      "sector": "CONSUMER CYCLICAL",
-      "industry": "Movies/Entertainment",
-      "changePct": -6.38,
-      "close": 3.08,
-      "tradingValue": 132431718,
+      "ticker": "IBRX",
+      "company": "ImmunityBio Inc.",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Biological Products (No Diagnostic Substances)",
+      "changePct": 6.91,
+      "close": 9.44,
+      "tradingValue": 256561509,
       "priceSource": "yahoo-meta",
-      "marketCapB": 2.749,
-      "reason": "부채 재융자 계획 및 애널리스트 회의론 직면",
+      "marketCapB": 10.005,
+      "reason": "ANKTIVA 매출 증가 및 종양학 네트워크 확장",
       "reasonStatus": "ok",
       "sectorNote": "",
       "tags": [
@@ -746,24 +382,429 @@
       "evidence": [
         {
           "type": "news",
-          "title": "AMC (AMC) Stock Looks Fully Priced After Its Debt Refinancing Plan",
-          "link": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxORWRFamM1Z1hDcl9RWmNTTnZaZmRuYW5wdkVOeHRIa240NzN4S0d0cjRwcU84WjA3bUpXNTMxU0VrRVh0bDEwR2RBbGhBRVBubFkxVUFpbmZmT2Fqczh3VGFyTXBVUVlPVmpMdmJkTVVGRXkwNWF6NUlYSTlCcVlrYjIyQWRMMmlRdnptaTc1R2JhVEQ4RmFlZjBxUi1GUERmakhJQzNYTkJYbk5ENnoxV0RDeTQ5QnY2UE9IbUotMWVyTUNibDZjaC1nU0g4RnZvczFaRNIB2gFBVV95cUxQVE4tUm5IRVNTUmRmdjJ0WmlkUGtkRFlSdmdUUDd2d3VpVUdaNUxQSkJCWFFtZmRLYkozcjdadjBQZjE3ZnJ5LThWbjJIRlM0VmJ0VnpQZm5JSEkwdThDUkRvdldKVDQyME5PRFdpZF9RX3VqWXpNd19uT0ZPN3VQeTVYM0Y1RGFydG5vRE5LSHkyRXhqNFBWYlA4cmxDbmV0TFlZdDl5RkxLRTJwaDVVcFVIM045VWlmYi1qSDZQOUVma3F0Vy13MVk1R0M5TU1YY3ZFZi1mQjEzZw?oc=5",
-          "source": "simplywall.st",
-          "date": "2026-09-29"
+          "title": "ImmunityBio Shares Rise as Investors Revisit ANKTIVA Expansion and Revenue Momentum",
+          "link": "https://news.google.com/rss/articles/CBMitwFBVV95cUxQZS1OWUd4TlhoNWhYUk5NbGZEY09DWTM0TWlKTGJncjRZcGtkVG9Ha1JPU2VKMF9PYWpJMEJiTmV2U3FXS29EQXZfaVExNUZXSDN4blc5Z1ZlSDI1dHN6R3NSbDF3OHFuZHdlLW1vazJNTzNKYThOWXQ4Mk5pMTlpZWdHbVVWcUtyS2tBd2hicmU2QlZaN3I4MWVwZkxJajJaLUpabU9FRW11YVhjN2tfSGx5ZENQQzg?oc=5",
+          "source": "quiverquant.com",
+          "date": "2026-09-30"
         },
         {
           "type": "news",
-          "title": "AMC Stock Faces Heavy Debt Refi, Analyst Skepticism",
-          "link": "https://news.google.com/rss/articles/CBMikAFBVV95cUxNRk42X0syRTNHQ3JXOGZyek56dnVlQXFqa09scVVsdXpGeUM4Q1B1MUZTUVZVa2lBVFdTUjlZRE1obDBiWExnQXo5Z3JTalNwSE9OYVJQV2hBM3NIam55bjQxYWQ2X3phdlRTSjBHT3UtbENHZFRDQ1J2X2ZiWUNRb2laRUlXTTBKTkQ2cTl6M3g?oc=5",
-          "source": "timothysykes.com",
-          "date": "2026-09-29"
+          "title": "IBRX Stock Holds Gains As Soon‑Shiong Expands Oncology Network",
+          "link": "https://news.google.com/rss/articles/CBMiekFVX3lxTFBWaEhEU1dENU1vaGkxQXk3cUYxTnI4eHJsRHVxSk1uM19fTGdBc0VfVDExMDhqZkc3c3cySzZuQnNaRm16bF91MkFQYmNLcjlmSW1RbG52UjV3cVpkazJxOXNqNnRnSEFfcENJLUdDa1czU1NHbDFYbGR3?oc=5",
+          "source": "StocksToTrade",
+          "date": "2026-09-30"
         }
       ],
       "sectorMove": {
         "level": "업종",
-        "name": "Movies/Entertainment",
-        "avgPct": 0.27,
-        "n": 5,
+        "name": "Biotechnology: Biological Products (No Diagnostic Substances)",
+        "avgPct": -0.9,
+        "n": 65,
+        "weighting": "시총가중"
+      }
+    }
+  ],
+  "down": [
+    {
+      "ticker": "LQDA",
+      "company": "Liquidia Corporation",
+      "sector": "HEALTHCARE",
+      "industry": "Biotechnology: Pharmaceutical Preparations",
+      "changePct": -57.19,
+      "close": 30.26,
+      "tradingValue": 689047464,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 2.709,
+      "reason": "특허 분쟁 소송 패소",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Liquidia slumps after US court rules for United Therapeutics in patent fight",
+          "link": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxPV2V3UHN1T3NRUjM5U010MklTTTk0dFdwMmhhNGlPT0RoWDJBYUxsRkppbDAxaVZ1UWpnS0JWWUpjaEd0aGFoUW50MTFJRC1lN3FhT1Z2YUNrSVlmMW5fTWNHVW85U1BsVmpJZTNFOFBzcmdFZkRrbHRLemIzZ1ljNzF1RVdoX0ZhY1c4a25NMjV6S2EwX1AyWUJGTlNJam5SdlFiSVJSb3g2R0gxUXpYbV9pZW4wT3BiR1lfTUdpSUpNOWl2bVRfTEowbmFpQmRONDRyekFBMjY?oc=5",
+          "source": "Reuters",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "Liquidia plunges after court ruling in United Therapeutics patent fight (LQDA:NASDAQ)",
+          "link": "https://news.google.com/rss/articles/CBMirAFBVV95cUxNbGNKRXFQNEVIdzF1MVJjQXRfcDFBRE1aYXBYaEstR3lpNHgtSEVYN2VPZEJwdFRhNk5PMGc1SE5Sa3g0V051ZGlEbVAyc2dSbi0zOFhFMVprM0d2Rm1XRFItSm9GWi1ZdlRaMmJJRG0zSkxqa2xULW95NUpFQjFJOGZwdXRDbWw5RGt3RWhMOFJhc2hwM0RaUjZJNVNMNWNUTkYwUDI5ME1ZVVV4?oc=5",
+          "source": "Seeking Alpha",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "A court found Liquidia infringed two patent claims. Its inhaled treatment could face limits.",
+          "link": "https://news.google.com/rss/articles/CBMiugFBVV95cUxQQ01yckVsSFJNVEF5SlhTcFlONGR2U3Q0ZTYzTEthNkFJekN5UUsyLUlhWXFhQjBDcVM2WmZuVHZXTng1QWJDYlczN1dkUjgtdkJINUpwX3RSY0dqb1phV1JEd3VLejlKUjFSbnhDUnVEbXppLUU3Rk0xUV9ZaWtzTDl2ZnZONmlRNTYxRGt6bU9QNEJzWDZqSUFpYWdyd0VyY2JjVmtXRTJ0TVJtVHp1RDhKSUZGbVZ3eXc?oc=5",
+          "source": "Stock Titan",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Biotechnology: Pharmaceutical Preparations",
+        "avgPct": -1.32,
+        "n": 203,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "TRLV",
+      "company": "Trulieve Cannabis Corp. Subordinate Voting Shares",
+      "sector": "HEALTHCARE",
+      "industry": "Medicinal Chemicals and Botanical Products",
+      "changePct": -12.17,
+      "close": 10.9,
+      "tradingValue": 91173399,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 2.099,
+      "reason": "DEA 규제 완화 기대감",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Cantor Fitzgerald reiterates Trulieve Cannabis stock rating after DEA pause By Investing.com",
+          "link": "https://news.google.com/rss/articles/CBMi0gFBVV95cUxPbFp4U0ZCR01XRzRJeG14LTFEV25fWGZJbFNXVTNqNW5hcFZiaHBQdFAwUFZnVHN4QzB3WU9GRTYxQVFhcDczQURJNndCZkUtaEhoN3NvOWZkblF0ZVF3YWxuRU1GMlliOGZDckpuSmVrdlcwMmNCWUdwRXVGT2l4SVUzQVFpRUZ6Rk1OdDZDb2M5ZDFsV2JlZDhPVm1HbEs3dVJHNHk1VWV0TnZyQWNQTWVIUnhMNGszSVBUa1k1bWxPNEluTlVYRXRpOGlIbnpqeGc?oc=5",
+          "source": "Investing.com South Africa",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Medicinal Chemicals and Botanical Products",
+        "avgPct": -0.78,
+        "n": 6,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "JBL",
+      "company": "Jabil Inc.",
+      "sector": "TECHNOLOGY",
+      "industry": "Electrical Products",
+      "changePct": -10.03,
+      "close": 286.86,
+      "tradingValue": 1410735598,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 30.059,
+      "reason": "2027 회계연도 전망치 하향 조정",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Jabil retreats 10% amid fiscal 2027 outlook (JBL:NYSE)",
+          "link": "https://news.google.com/rss/articles/CBMihwFBVV95cUxPaEhWNmZ2dWl5Tk1wZ0o3RlJEYUduMDAyZGk1eTRxVG9KRjF3WHA3SERQVDlOTjZmY1FqZUFsMTExbHZKdmlKam9vZ1JRSG9ydE9KdWlfS0RIOWdwdXJMejNCT2N4V1pRQ19ITHJVMkdmbldyelZoOUlPdTBJZU54cVM0VnVSTVU?oc=5",
+          "source": "Seeking Alpha",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Electrical Products",
+        "avgPct": -0.82,
+        "n": 22,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "BLLN",
+      "company": "BillionToOne Inc. Class A",
+      "sector": "HEALTHCARE",
+      "industry": "Medical Specialities",
+      "changePct": -9.93,
+      "close": 106.44,
+      "tradingValue": 103085969,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 5.023,
+      "reason": "내부 임원 지분 매도",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Billiontoone (NASDAQ:BLLN) Stock: Insider Oguzhan Atay Sells 8,333 Shares",
+          "link": "https://news.google.com/rss/articles/CBMiywFBVV95cUxNV2swVy1NSDZsZFF0emd4UGRGMjhrcWkxUlJwODFqcms2RzA0Y1MwQUZlXzloLXFEcWd3QjNUR3RjNnRzTTlvemk0bThOTmlJbWRxZFloWU0xdGFMdXBvNUcwWlB6Nk9oUjR1UldheEtfOEJhOFRkQkNWbk1UZkRiNEdBNUw5M2YwbHIxN0JlT0Y4UHptNkh5Sl9mZ0tHTFlMUko4WG5Qd3dkS2dBV3pWUDJMN1NJV21qMElCZHBkelJtdVBTMC1EOE5YQQ?oc=5",
+          "source": "MarketBeat",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "A spouse sells 2,666 shares as BillionToOne (BLLN) CEO sells 8,333 under trading plans.",
+          "link": "https://news.google.com/rss/articles/CBMisgFBVV95cUxQQnZnenFPWmp1VjdVN01MTF9GVFg4elI5c0Q3Y19DNG9hYV9fZVNodTQ1RUVnT2NvcWlTUVlndUdGVFg4aFZsdDZoMkVxcnh5LU0wUVJ5T0lydnZrQ19xT2JqdF9oc2xLM1hVTk9vcTBnVnN3VExUWDZ5cXFhajB6YmxBam96UUJjeVNZckJvU2dUQ3lrQ1FTNWJTaEZrY0R4clBGRWpsT3k5TnVfQ1liUEFn?oc=5",
+          "source": "Stock Titan",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "BillionToOne chairman and CEO Atay sells $1.3 million in shares",
+          "link": "https://news.google.com/rss/articles/CBMivwFBVV95cUxOQTdXcWlYOFYzX2lHU1d4NlpBODNYbnJITm5VTllqVVcyVE5ubDZHdVRKRHFHU3kzZHI2TVRsUTl1aHBUV18tWjJ5czRseVI3dWNHbVpqc3pBQmU1MjAtZzdYSUFxcV9oUU5fb1FiYXRUUUZ2NGp0cEE3WmtFQXRqR3JWVTVxV29qeldtTkprb0dwSlBoSkNTQUQ2dE9DNnQtSWlLdzlPZ29OUHo2cmVYZTR6R2tSaFZZbllMbDMyUQ?oc=5",
+          "source": "Investing.com India",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Medical Specialities",
+        "avgPct": -0.43,
+        "n": 30,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "CBRS",
+      "company": "Cerebras Systems Inc. Class A",
+      "sector": "TECHNOLOGY",
+      "industry": "Semiconductors",
+      "changePct": -8.87,
+      "close": 177.65,
+      "tradingValue": 2447050051,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 42.203,
+      "reason": "OpenAI 의존도 및 대량보유 주식 매도 물량 출회",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Cerebras Stock Falls Again Because So Much Depends on OpenAI",
+          "link": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBFY2JSOFdrX3BxRWJ3cTdpUExNMDJTbGlZUzhzQlFpaHZJanM5UUYzeHpuNFVpV08wcS03S281TWlKY1UxNG9sc3M3UmFuYXNxcDVMSThHZE0yWWNhQ1ZmazNvalJPaG5wVkVGMHFQekNrYWdsa3JrcVJaLUxVdFk?oc=5",
+          "source": "Barron's",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "Cerebras Stock Falls as 19.4 Million-Share Unlock Hits",
+          "link": "https://news.google.com/rss/articles/CBMitgFBVV95cUxONjd3TE5SUFpHYTAxQ2NNYXJVdUIwcENSdnBZTV9JS1ZnQUd4S0J4VG9ZbHNhSThnSklEZV9fbk82REp5UWFQQzl5LTdiMzB5MlIyWGFpZFZXSlZIM08ydVZCSmVoWTJldjRRclZrbFEwcUsxcGNhbFNOeEx2bmRFUlljQjkxLWJFQVBZdGFpWENralhSN09YNGYyUHBfVEpTd0l6R2ZUZWFrTkg1UUlSRWFFVFQ0UQ?oc=5",
+          "source": "Benzinga",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Semiconductors",
+        "avgPct": 0.05,
+        "n": 74,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "MTG",
+      "company": "MGIC Investment Corporation",
+      "sector": "FINANCIAL",
+      "industry": "Property-Casualty Insurers",
+      "changePct": -8.53,
+      "close": 25.84,
+      "tradingValue": 137319858,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 5.3,
+      "reason": "주택담보대출 보험업계 전반의 약세",
+      "reasonStatus": "ok",
+      "sectorNote": "Property-Casualty Insurers 업종 동반 하락(Essent Common Shares·NMI 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "NMI Holdings, MGIC Investment, Essent Group, Enact Holdings, and Stewart Information Services Stocks Trade Down, What You Need To Know",
+          "link": "https://news.google.com/rss/articles/CBMimwJBVV95cUxPYk91WHRJZ1d3dzBicGwzLXpIUUFmUGd2UUZ6WW93S1JpVkJtUE53R3B5MTVWOTJpNXlHMnVUTWQ5cWF3NHlndEQ4cmpPcW55QlhmLWd6cnZSR2NkaXp3dzlLaEZNSFZjZFRWdGlNdFA3VFR1NnduSUszTS1WT0lnS2F1V1lDTk90UUt0RjQtLUlNSnhNWmpIU3pKWG94WHB2bmwzVGh3cENPbWYwa2Z5STJrbU0tQ0NuV0FWLXVvZmh6MGZMNE1IUWpyel9BZ0FVV0UyMGRqaWZSM0QzVEJHUFkzVXlQQkJTV05LVDdrMENuSTFobEg0LXNXeWFfSEFUWkdZRTNlX1NEVHZqZDRDQ2dUYVJybXYxbVkw?oc=5",
+          "source": "StockStory",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "MGIC Investment Corp. drops 9% amid sector-wide mortgage insurer weakness (MTG:NYSE)",
+          "link": "https://news.google.com/rss/articles/CBMirgFBVV95cUxPTjJLSElyQmE0WGlxLU5oV251QkhBOGRXUFNndV82MEwxLWVnWXVUci1QeUtwWURBamZZZUZkVVRhdWR5M3ZVaGFNakxxU0hQcjUxdXJRbXZvOTNqbm5fSnU0XzdtZm9EUG96X3pHbThDX2V3U0ZteXJlWlBfZTZOb2FEVHNpeWpSSjRScGdxOVZHLS1BRUFKenlEU0oxQzdNMXZrQ3lUMG5ZYlE2RWc?oc=5",
+          "source": "Seeking Alpha",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Property-Casualty Insurers",
+        "avgPct": -1.7,
+        "n": 51,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "ESNT",
+      "company": "Essent Group Ltd. Common Shares",
+      "sector": "FINANCIAL",
+      "industry": "Property-Casualty Insurers",
+      "changePct": -8.43,
+      "close": 57.91,
+      "tradingValue": 98089811,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 5.205,
+      "reason": "12일 연속 하락세 및 업계 전반의 약세",
+      "reasonStatus": "ok",
+      "sectorNote": "Property-Casualty Insurers 업종 동반 하락(MGIC Investment·NMI 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Essent Group slumps 8% amid 12-day losing streak (ESNT:NYSE)",
+          "link": "https://news.google.com/rss/articles/CBMijgFBVV95cUxPbUxxS2JIa2RVVDE3SW1tcmJzY1hEVGtJSVlsSXFhSldQOENnV3pGbFZ6dGZSdE5JMk4welFFeF9xdUFYcVZFdmk4azdMSWo1Tm40RS1BbVVURmVyYUxRbEJCVzFNMzlxWkliSU91bkJrdldCZ1FEZGhjcVJYZVl0cG9laVdYNUxJY1VncThB?oc=5",
+          "source": "Seeking Alpha",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "NMI Holdings, MGIC Investment, Essent Group, Enact Holdings, and Stewart Information Services Stocks Trade Down, What You Need To Know",
+          "link": "https://news.google.com/rss/articles/CBMimgJBVV95cUxNdDFBS0V3Q29hX1ExUW1lSVpHS19XZnhBc2RiX2Y4RlJNVF9pYXZZSEhfR3lfdGlxN3ZGTWlVRWNhRWgyZVFCVUl5OEwtaEY0WkRvM1lPSGdEbWlIQ09wWjF3U284Q3hfX1Y0QkhKYVVuQnRvRmYtc2ZZOGtlak1iR3RtR2VJUzBPR3d0ZVhNSjZ1aWJYS1k4TmRuR2hRczQ5ZmhQRkRraXg1ZWowWTNzcWJINFY2ekhscWJNR1NSRkc3bXNvSW9lZjlGT0UxWG93SXYzN1VHNFRld21JRXBsOE1BbW9HOUhLeGF6cnNNZmR3SlpBSC1mOUw4MVFVV29zbUpkU0J4Q1NwTnJEOVZ3dWFrM09RLTI3bEE?oc=5",
+          "source": "TradingView",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Property-Casualty Insurers",
+        "avgPct": -1.7,
+        "n": 51,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "NMIH",
+      "company": "NMI Holdings Inc.",
+      "sector": "FINANCIAL",
+      "industry": "Property-Casualty Insurers",
+      "changePct": -8.37,
+      "close": 37.32,
+      "tradingValue": 74539945,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 2.807,
+      "reason": "업계 전반의 약세 및 5.8% 하락",
+      "reasonStatus": "ok",
+      "sectorNote": "Property-Casualty Insurers 업종 동반 하락(MGIC Investment·Essent Common Shares 등)",
+      "tags": [
+        "섹터동조",
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "NMI Holdings retreats 8%, extending slide amid sector weakness (NMIH:NASDAQ)",
+          "link": "https://news.google.com/rss/articles/CBMinAFBVV95cUxPUVdSSEJ0dmlSRkpVS3h2MVN6RlB5NEpnUDlCNm5RNFpqS3RHWVFtV3EwVWdmYzVISi10bU9ReEt0dWFUZWNBcnZGTkxVT0xhRWlmSjYzWThiSnlZWEZ5Q3ZBbzYwWV9HdVJzaWF0M3h3c1RjMWR1eUNHX3dvLXJkamthTU1UN0JsNXdHeTR6YmdrYXVRMTRfc3JIcHY?oc=5",
+          "source": "Seeking Alpha",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "NMI Holdings (NMIH) Shares Slide 8.37% Amid Industry Headwinds a",
+          "link": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQRlp5V29zQWZiODZjLXNJYnd3am9hb1FfUVk4UWc1d2ZjSXNTSy1TOFJYQ0Zsc24zU093aGlVRjNlTjloUEVFZkItUlFnZmJMVGw2eXUzWTJrSEZiaVI2NHR1ODlOcDFOTW5jVjFMdTM2M1M2ZU4zY0N3NjFGNXRreFVIelZLX0d6aEVyWWpSTDZNRVF4WDdXY3JVOFhHR3hkNW9qLUVBVm9SeVlvVG5BNzFQRkxIOGlFa2t0T1N3?oc=5",
+          "source": "GuruFocus",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "NMI Holdings Drops 5.8% Amid Sector-Wide Selling",
+          "link": "https://news.google.com/rss/articles/CBMigwFBVV95cUxPOENFZEpuNTAwX2NKS0ZNd056V2hxTnZ5dkZUMFVVY1FNMXN1Tk1XS1BDcUpFVV9pMkk2bXlVQXN2XzA3STlxMVIybXNsOTRrSElPaWNsd2licWhzTkpITmlWY3dhZkNEdEYxZF9FdGRPbDFNRDRMTEFtLUZVNC1yOWwwQdIBgwFBVV95cUxPOENFZEpuNTAwX2NKS0ZNd056V2hxTnZ5dkZUMFVVY1FNMXN1Tk1XS1BDcUpFVV9pMkk2bXlVQXN2XzA3STlxMVIybXNsOTRrSElPaWNsd2licWhzTkpITmlWY3dhZkNEdEYxZF9FdGRPbDFNRDRMTEFtLUZVNC1yOWwwQQ?oc=5",
+          "source": "AlphaStreet",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Property-Casualty Insurers",
+        "avgPct": -1.73,
+        "n": 51,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "SECZ",
+      "company": "Securitize Corp.",
+      "sector": "FINANCIAL",
+      "industry": "Finance: Consumer Services",
+      "changePct": -7.89,
+      "close": 14.59,
+      "tradingValue": 48915499,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 2.382,
+      "reason": "ADI Chain 통합 및 토큰화 확대",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Securitize And ADI Foundation Integrate Securitize's Institutional Tokenization Infrastructure With ADI Chain To Expand Institutional Tokenization Across Global",
+          "link": "https://news.google.com/rss/articles/CBMi5wFBVV95cUxOT1ZleWVYOEdHM0FDUjFvRk91MVcyTU90Y1dUdEgzQjlYQnFGX3ZTTGZSY3hpUUFnVVBqWkhiTENVczh6TWZaMThDNDFJZWZVYktMQmxtZ2pNSTJheVkwVDlXUnc3RDc0aGpNUVRfd0pPbGV3ZUxxNktpWEltbHBYRDIwdEhlRGpyYkpKRXhpX0VjYzNtQXNNU0NvdDRFd1VTZ3JhMkdJMGYwYU5icmhSRXgtZHJQMHVJY0hieExhZVZHWl9QTDhTalQ5ZkJWSDA0S1N0UHIzSVRhVWNqYVZqcFJaSjlZNk0?oc=5",
+          "source": "marketscreener.com",
+          "date": "2026-09-30"
+        },
+        {
+          "type": "news",
+          "title": "Securitize Integrates with ADI Chain to Expand Institutional Tokenization Across Global Markets",
+          "link": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxPdTIxN1BLRE9UelJhUy1ENl9wODE5S0pWX1BfWWt5RkdQOWNqRHBHamtmR2FpQXVia3VSZ3FTQldLbmd4ano1dUMwbEVDbG5hQjc3S1NLY0F6cldRM0F1dFkwNDVFZ2dMbGxLZDVLSFRnVGRHd2J2Z096WU8tWUNFTF93cFhaaHNlZWdDaHZPejFNcHpxbXlGRFZINC14bDlUMGc2dmZVOUpZMGdTYUdCZk0tWmxKRnJLQU9objRGeGJQdnRQMk8tcWR4Y2J4ejluQTJnOS16YlpNQklUVUdVTURiV3p4dw?oc=5",
+          "source": "PR Newswire",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Finance: Consumer Services",
+        "avgPct": -0.63,
+        "n": 77,
+        "weighting": "시총가중"
+      }
+    },
+    {
+      "ticker": "HUT",
+      "company": "Hut 8 Corp.",
+      "sector": "FINANCIAL",
+      "industry": "Finance: Consumer Services",
+      "changePct": -7.28,
+      "close": 86.1,
+      "tradingValue": 616908825,
+      "priceSource": "yahoo-meta",
+      "marketCapB": 10.613,
+      "reason": "내부 임원 지분 매도",
+      "reasonStatus": "ok",
+      "sectorNote": "",
+      "tags": [
+        "뉴스"
+      ],
+      "evidence": [
+        {
+          "type": "news",
+          "title": "Hut 8 director sells $2 million in shares",
+          "link": "https://news.google.com/rss/articles/CBMidkFVX3lxTE9oVWJERVcxY0ZqZ2VjdHZiaGpyUW1tR05KNk8yeTktcVhXLUV6Z1FDRVRBNTZVZ1BqblVQdDhiUlRtejFTNDQzNzR1VE41bUpnNmotX3FpLXl2TWhfRTVIeUdZcWVsaDJMMHdBUmpBX1VUeTJGQ3c?oc=5",
+          "source": "roundtable.io",
+          "date": "2026-09-30"
+        }
+      ],
+      "sectorMove": {
+        "level": "업종",
+        "name": "Finance: Consumer Services",
+        "avgPct": -0.56,
+        "n": 77,
         "weighting": "시총가중"
       }
     }

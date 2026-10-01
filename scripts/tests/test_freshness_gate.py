@@ -157,6 +157,9 @@ UNMONITORED_BY_DESIGN = {
     # 입력이 gitignore 된 로컬 아카이브(data/korea/_archive, 5년 공시+일봉)라
     # CI 에서 만들 수 없다. 분기 1회쯤 로컬에서 수동 갱신한다.
     "data/korea/disclosure_stats.json": "로컬 아카이브 입력이라 CI 산출 불가(수동)",
+    # 2026-10-01 신설 소스. 첫 실데이터 검증 전이라 화면이 읽지 않고, 파일이 생기기
+    # 전에 kr-dart 관문에 넣으면 그 관문이 빨개진다. 화면 연결 때 CHECKS 로 옮길 것.
+    "data/korea/ksd_actions.json": "신설 소스 검증 중(소비처 없음) — 화면 연결 시 감시 편입",
 }
 
 

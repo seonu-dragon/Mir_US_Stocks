@@ -643,10 +643,67 @@ def test_mobile(browser, base: str) -> None:
     check("카드뉴스가 한 줄", box is not None and box["oneRow"])
     check("본문 가로 스크롤 없음",
           page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"))
-    tabs_h = page.evaluate("() => Math.min(...[...document.querySelectorAll('#mainTabs .tab, .ia-sub-tabs .sub-tab')]"
+    # 폰에서는 상단 4탭 줄 대신 하단 탭 바(mobile-nav.js, 2026-10-01)가 주 내비게이션이다 —
+    # 보이는 쪽(하단 바 항목 + 서브탭)이 모두 44px 이상이어야 한다.
+    tabs_h = page.evaluate("() => Math.min(...[...document.querySelectorAll('#mainTabs .tab, .ia-sub-tabs .sub-tab, #mnavBar .mnav-item')]"
                            ".filter(b => b.offsetParent).map(b => b.getBoundingClientRect().height))")
     check("탭·서브탭 터치 타깃 44px 이상", tabs_h >= 44, f"min={tabs_h:.0f}px")
+    bar = page.evaluate("""() => {
+      const bar = document.getElementById('mnavBar');
+      if (!bar || getComputedStyle(bar).display === 'none') return null;
+      const r = bar.getBoundingClientRect();
+      return {
+        items: [...bar.querySelectorAll('.mnav-item')].map((b) => b.textContent.trim()),
+        atBottom: Math.abs(r.bottom - innerHeight) <= 1,
+        topTabsHidden: getComputedStyle(document.getElementById('tabsScrollWrap')).display === 'none',
+        padOk: parseFloat(getComputedStyle(document.body).paddingBottom) >= r.height - 1,
+      };
+    }""")
+    check("하단 탭 바 5개(오늘·시장·종목·내 투자·검색)",
+          bar is not None and bar["items"] == ["오늘", "시장", "종목", "내 투자", "검색"], str(bar and bar["items"]))
+    check("하단 탭 바가 화면 맨 아래 고정 · 본문 아래 여백으로 가리지 않음",
+          bar is not None and bar["atBottom"] and bar["padOk"], str(bar))
+    check("하단 바가 있으면 상단 탭 줄은 숨김", bar is not None and bar["topTabsHidden"])
+    page.click("#mnavBar [data-mnav=market]")
+    page.wait_for_timeout(800)
+    check("하단 바 '시장'으로 시장 탭 열림", page.evaluate(
+        "() => document.getElementById('tab-market').classList.contains('is-active')"
+        " && document.querySelector('#mnavBar .is-active')?.dataset.mnav === 'market'"))
     shoot(page, "mobile-home")
+    page.close()
+
+    # 종목 › 분석: 요약이 화면 위로 지나가면 맨 위 미니 바, 본문 6탭은 그 바로 아래에 붙는다.
+    page = browser.new_page(viewport={"width": 390, "height": 844})
+    watch(page)
+    page.goto(base + "?tab=search&ticker=NVDA", wait_until="load")
+    page.wait_for_selector("#searchFacts .sd-name", timeout=20000)
+    page.wait_for_timeout(1500)
+    check("종목 검색 줄은 돋보기 버튼으로 접힘", page.evaluate(
+        "() => getComputedStyle(document.querySelector('#sub-analysis > .toolbar')).display === 'none'"
+        " && !!document.getElementById('mnavSearchToggle')?.offsetParent"))
+    page.click("#mnavSearchToggle")
+    page.wait_for_timeout(300)
+    check("돋보기를 누르면 검색 줄이 열리고 입력칸에 포커스", page.evaluate(
+        "() => getComputedStyle(document.querySelector('#sub-analysis > .toolbar')).display !== 'none'"
+        " && document.activeElement?.id === 'tickerSearch'"))
+    page.keyboard.press("Escape")
+    page.mouse.wheel(0, 1600)
+    page.wait_for_timeout(900)
+    mini = page.evaluate("""() => {
+      const m = document.getElementById('mnavMini');
+      const tabs = document.getElementById('stockViewTabs').getBoundingClientRect();
+      if (!m) return null;
+      const r = m.getBoundingClientRect();
+      return { shown: !m.hidden && r.height > 0, name: m.querySelector('.mnav-mini-name')?.textContent || '',
+               price: m.querySelector('.mnav-mini-price')?.textContent || '',
+               tabsUnder: Math.abs(tabs.top - r.bottom) <= 2 };
+    }""")
+    check("스크롤하면 종목 미니 바(이름·가격)", mini is not None and mini["shown"] and "NVIDIA" in mini["name"] and mini["price"] != "",
+          str(mini))
+    check("본문 6탭이 미니 바 바로 아래에 고정", mini is not None and mini["tabsUnder"], str(mini))
+    check("종목 화면 가로 스크롤 없음",
+          page.evaluate("() => document.documentElement.scrollWidth <= window.innerWidth + 1"))
+    shoot(page, "mobile-stock-mini")
     page.close()
 
 

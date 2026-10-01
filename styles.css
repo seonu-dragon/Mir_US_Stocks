@@ -16373,3 +16373,113 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   .mfeed-src { grid-area: src; }
 }
 /* === market-feed end === */
+
+/* === mobile-nav start === (2026-10-01, mobile-nav.js) — 폰(640px 이하) 하단 탭 바 · 종목 미니 바 · 접는 종목 검색.
+   html.mnav-on 은 JS 가 하단 바를 붙인 뒤에만 켜진다(JS 실패 시 상단 탭 줄이 그대로 남는다). 데스크톱은 변화 없음. */
+.mnav-bar, .mnav-mini, .mnav-search-toggle { display: none; }
+@media (max-width: 640px) {
+  html.mnav-on { --mnav-h: 56px; --mnav-total: calc(var(--mnav-h) + env(safe-area-inset-bottom, 0px)); }
+  html.mnav-on body:not(.ai-mode-active) { padding-bottom: var(--mnav-total); }
+  html.mnav-on { scroll-padding-bottom: calc(var(--chat-safe-bottom) + var(--mnav-total)); }
+  /* 상단 4탭 줄은 하단 바가 대신한다(서브탭은 그대로). AI 모드는 하단 바를 쓰지 않으니 원래대로. */
+  html.mnav-on body:not(.ai-mode-active) .tabs-scroll-wrap { display: none; }
+
+  /* ── 하단 탭 바 ── */
+  html.mnav-on body:not(.ai-mode-active) .mnav-bar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 55;
+    display: flex; align-items: stretch;
+    padding: 0 max(4px, env(safe-area-inset-right, 0px)) env(safe-area-inset-bottom, 0px) max(4px, env(safe-area-inset-left, 0px));
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    -webkit-backdrop-filter: saturate(1.6) blur(14px);
+    backdrop-filter: saturate(1.6) blur(14px);
+  }
+  html.mnav-on.mnav-typing .mnav-bar { display: none !important; }
+  .mnav-item {
+    flex: 1 1 0; min-width: 0; min-height: var(--mnav-h, 56px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    margin: 0; padding: 6px 0 5px; border: 0; border-radius: 0; background: transparent; box-shadow: none;
+    color: var(--muted); font: inherit; font-size: var(--fs-cap); font-weight: 500; line-height: 1.2; letter-spacing: -0.2px;
+    cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .mnav-item:hover { background: transparent; color: var(--text-2); transform: none; }
+  .mnav-item svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  .mnav-item span { white-space: nowrap; }
+  .mnav-item.is-active { color: var(--ink); font-weight: 700; }
+  .mnav-item.is-active svg { stroke-width: 1.9; }
+  .mnav-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -4px; border-radius: var(--r-md); }
+
+  /* 바 위로 올려야 하는 고정 요소: 챗 FAB · 앱 토스트 · 오프라인 배너 · 표 열 선택 패널.
+     margin-bottom 은 bottom 값(드래그·푸터 리프트로 바뀜)을 건드리지 않고 그만큼 위로 민다. */
+  html.mnav-on body:not(.ai-mode-active) .chatbot:not(.is-chat-open) { margin-bottom: var(--mnav-total); }
+  html.mnav-on body:not(.ai-mode-active) .chatbot.is-scroll-hidden:not(.is-chat-open),
+  html.mnav-on body:not(.ai-mode-active) .chatbot.is-cover-hidden:not(.is-chat-open) { transform: translateY(calc(100% + var(--mnav-total) + 24px)); }
+  html.mnav-on body:not(.ai-mode-active) :is(.app-toast, .ft-cols-panel) { margin-bottom: var(--mnav-total); }
+  html.mnav-on body:not(.ai-mode-active) .offline-banner { bottom: calc(var(--mnav-total) + 12px); }
+  /* ⌘K 팔레트(z 90)가 열리면 FAB(z 900)가 팔레트 목록 위에 떠 있었다 */
+  html.mnav-on body:has(.cmdk-overlay:not([hidden])) .chatbot { visibility: hidden; }
+
+  /* ── 종목 미니 바(요약이 화면 위로 지나가면) ── */
+  html.mnav-on body:not(.ai-mode-active) .mnav-mini:not([hidden]) {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 56;
+    display: flex; align-items: center; gap: 2px;
+    height: calc(54px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) max(6px, env(safe-area-inset-right, 0px)) 0 max(8px, env(safe-area-inset-left, 0px));
+    border-bottom: 1px solid var(--line);
+    background: var(--bg);
+    animation: mnav-mini-in 0.16s ease-out;
+  }
+  .mnav-mini-main {
+    flex: 1 1 auto; min-width: 0; min-height: 48px;
+    display: flex; align-items: center; gap: 10px;
+    margin: 0; padding: 0 4px; border: 0; border-radius: var(--r-md); background: transparent; box-shadow: none;
+    color: var(--text); font: inherit; text-align: left; cursor: pointer;
+  }
+  .mnav-mini-main:hover { background: transparent; transform: none; }
+  .mnav-mini-logo { flex: none; display: inline-flex; }
+  .mnav-mini-logo:empty { display: none; }
+  .mnav-mini-logo .co-logo { margin: 0; }
+  .mnav-mini-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 1px; line-height: 1.25; }
+  .mnav-mini-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-body); font-weight: var(--fw-title); letter-spacing: -0.3px; }
+  .mnav-mini-quote { display: flex; align-items: baseline; gap: 6px; min-width: 0; overflow: hidden; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .mnav-mini-price { font-size: var(--fs-sub); font-weight: var(--fw-title); }
+  .mnav-mini-chg { min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-cap); font-weight: var(--fw-strong); }
+  .mnav-mini-star {
+    flex: none; width: 44px; height: 44px; margin: 0; padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 0; border-radius: 50%; background: transparent; box-shadow: none;
+    color: var(--muted); font-size: 22px; line-height: 1; cursor: pointer;
+  }
+  .mnav-mini-star:hover { background: transparent; transform: none; }
+  .mnav-mini-star.is-on { color: #f59e0b; }
+  .mnav-mini-star[hidden] { display: none; }
+  @keyframes mnav-mini-in { from { transform: translateY(-100%); } to { transform: none; } }
+
+  /* 본문 6탭: 미니 바 바로 아래 고정되는 가로 칩 줄(--sd-sticky-top 에 미니 바 높이가 들어 있다, stock-view.js) */
+  html.mnav-on body:not(.ai-mode-active) .sd-tabs {
+    gap: 6px; padding: 8px 0; border-bottom: 1px solid var(--line);
+    background: var(--bg); box-shadow: -16px 0 0 var(--bg), 16px 0 0 var(--bg);
+  }
+  html.mnav-on body:not(.ai-mode-active) .sd-tab {
+    min-height: 40px; margin: 0; padding: 0 14px;
+    border: 1px solid var(--line-strong); border-radius: 20px;
+    background: var(--panel); color: var(--text-2); font-weight: 600;
+  }
+  html.mnav-on body:not(.ai-mode-active) .sd-tab.is-active { border-color: var(--ink); background: var(--ink); color: var(--ink-fg); }
+  html.mnav-on body:not(.ai-mode-active) .sd-tab.is-empty:not(.is-active) { color: var(--muted); }
+
+  /* ── 종목 검색 줄 접기: 종목이 열려 있으면 서브탭 줄 오른쪽 돋보기로 편다 ── */
+  html.mnav-on #tab-search { position: relative; }
+  html.mnav-on #tab-search:has(> #sub-analysis.is-active.mnav-has-stock) > .mnav-search-toggle {
+    position: absolute; top: var(--mnav-search-top, 16px); right: var(--mnav-search-right, 16px); z-index: 2;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; margin: 0; padding: 0;
+    border: 0; border-radius: 50%; background: transparent; box-shadow: none; color: var(--text);
+  }
+  html.mnav-on #tab-search > .mnav-search-toggle:hover { background: var(--panel-soft); transform: none; }
+  html.mnav-on #tab-search > .mnav-search-toggle.is-on { background: var(--panel-soft); }
+  .mnav-search-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; }
+  html.mnav-on #tab-search:has(> #sub-analysis.is-active.mnav-has-stock) > #searchSubTabs { padding-right: 48px; }
+  html.mnav-on #tab-search:has(> .mnav-search-toggle) > #sub-analysis.mnav-has-stock:not(.mnav-search-open) > .toolbar { display: none; }
+}
+/* === mobile-nav end === */

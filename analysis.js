@@ -2155,7 +2155,9 @@ function analyzeRows(rows, horizon, meta) {
   const techLevels = computeTechnicalLevels(clean, price);
   const gapFill = computeGapFillStats(clean);
   const optionsStats = (!isKrAnalysisMode() && meta.ticker) ? optionsStatsForTicker(meta.ticker) : null;
-  const institutionalFlow = (!isKrAnalysisMode() && meta.ticker) ? institutionalFlowForTicker(meta.ticker) : null;
+  // 기관·내부자 수급 카드는 티커만 들고 간다 — 13F 샤드·내부자 데이터는 카드가 펼쳐질 때 받아 채운다
+  // (hydrateInstFlowCards). 분석 시점의 전역으로 계산하면 analysis.html 에선 늘 '데이터 없음' 이었다.
+  const institutionalFlow = (!isKrAnalysisMode() && meta.ticker) ? { ticker: String(meta.ticker).toUpperCase() } : null;
 
   // 실측(과거 유사 상황) 가중치는 독립 표본 수에 비례 — 표본이 많을수록 신뢰.
   // 60개에서 최대 0.5 가중(과거에는 표본 수와 무관하게 항상 0.5였음).
@@ -2876,19 +2878,149 @@ function renderOptionsContextCard(result) {
   </div>`;
 }
 
+// 기관 · 내부자 수급 카드 (미국 전용)
+// 13F 는 SEC 13F 데이터셋 종목별 샤드(data/institutional_holders/<첫 글자>.json, 수백 KB)를 쓰고,
+// 내부자 거래는 data/insider_trades.js(약 4MB)를 쓴다. 둘 다 무거워서 분석 결과를 그릴 때는 받지 않고,
+// 카드가 들어 있는 '상세 분석 더보기'를 펼칠 때 받는다(analysis.html·대시보드 공통, toggle 위임).
+// 대시보드는 이미 INSIDER_TRADES 를 받았을 수 있다 — 있으면 그대로 쓴다.
+const _instFlowShards = {};      // 샤드 키 → json | null(실패) — 도착한 것만
+const _instFlowShardJobs = {};   // 샤드 키 → Promise
+let _instFlowIndexJob = null;    // Promise<index json | null>
+let _instFlowInsiderState = "";  // "" | "loading" | "failed"
+
+function instFlowShardKey(ticker) {
+  const c = String(ticker || "_").charAt(0).toUpperCase();
+  return c >= "A" && c <= "Z" ? c : "_";
+}
+
+function instFlowLoadShard(ticker) {
+  const key = instFlowShardKey(ticker);
+  if (key in _instFlowShards) return Promise.resolve(_instFlowShards[key]);
+  if (_instFlowShardJobs[key]) return _instFlowShardJobs[key];
+  if (!_instFlowIndexJob) {
+    _instFlowIndexJob = fetch("data/institutional_holders/index.json", { cache: "no-cache" })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((j) => { if (!j) _instFlowIndexJob = null; return j; });
+  }
+  _instFlowShardJobs[key] = _instFlowIndexJob.then((meta) => {
+    if (!meta) return null;
+    if (!(meta.shards || []).includes(key)) return { meta, n: {}, t: {} }; // 이 글자로 시작하는 종목이 없음
+    const ver = (meta.shardVer && meta.shardVer[key]) || meta.updatedAtKst || "";
+    return fetch(`data/institutional_holders/${encodeURIComponent(key)}.json?v=${encodeURIComponent(ver)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((j) => (j ? { meta, n: j.n || {}, t: j.t || {} } : null));
+  }).then((sh) => {
+    delete _instFlowShardJobs[key];
+    // 실패는 이번 방문 동안 기억한다(같은 404 를 펼칠 때마다 다시 부르지 않게).
+    _instFlowShards[key] = sh;
+    return sh;
+  });
+  return _instFlowShardJobs[key];
+}
+
+function instFlowEnsureInsider() {
+  if (window.INSIDER_TRADES) return Promise.resolve(true);
+  if (_instFlowInsiderState === "failed") return Promise.resolve(false);
+  // 대시보드: feature-data.js 의 지연 로더(같은 스크립트를 한 번만 넣는다)를 쓴다.
+  const job = typeof ensureFeatureData === "function"
+    ? ensureFeatureData("insider")
+    : new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = `data/insider_trades.js?v=${encodeURIComponent(window.MIR_BUILD_ID || "dev")}`;
+      script.async = true;
+      script.addEventListener("load", () => resolve(!!window.INSIDER_TRADES), { once: true });
+      script.addEventListener("error", () => resolve(false), { once: true });
+      document.head.appendChild(script);
+    });
+  if (_instFlowInsiderState !== "loading") {
+    _instFlowInsiderState = "loading";
+    job.then((ok) => { _instFlowInsiderState = ok ? "" : "failed"; });
+  }
+  return job;
+}
+
+function instFlowFmtUsd(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return "—";
+  if (n >= 1e12) return `$${(n / 1e12).toFixed(2)}T`;
+  if (n >= 1e9) return `$${(n / 1e9).toFixed(1)}B`;
+  if (n >= 1e6) return `$${(n / 1e6).toFixed(1)}M`;
+  return `$${Math.round(n).toLocaleString("en-US")}`;
+}
+
+function instFlowInnerHtml(ticker) {
+  const key = instFlowShardKey(ticker);
+  let inst;
+  if (!(key in _instFlowShards)) {
+    inst = `<span class="muted">13F 보유 기관 불러오는 중…</span>`;
+  } else if (!_instFlowShards[key]) {
+    inst = `<span class="muted">13F 보유 데이터를 불러오지 못했습니다. 잠시 뒤 다시 펼쳐 보세요.</span>`;
+  } else {
+    const sh = _instFlowShards[key];
+    const rec = sh.t[ticker];
+    if (!rec || !(Number(rec.h) > 0)) {
+      inst = `<span class="muted">SEC 13F 보고분에 이 종목을 보유한 기관이 없습니다(ETF·신규 상장 등).</span>`;
+    } else {
+      const delta = Number.isFinite(Number(rec.ph)) ? rec.h - rec.ph : null;
+      const top = (rec.top || [])[0];
+      const topName = top ? String(sh.n[String(top[0])] || "").replace(/\s*\/[A-Z]{2,3}\/?\s*$/, "").replace(/\\[A-Z]{2,3}\s*$/, "").trim() : "";
+      const pct = Number.isFinite(Number(rec.p)) ? ` · 발행주식의 <b>${Number(rec.p).toFixed(1)}%</b>` : "";
+      inst = `13F 보고 기관 <b>${Number(rec.h).toLocaleString("en-US")}</b>곳${delta !== null ? ` (직전 분기 대비 ${delta > 0 ? "+" : ""}${delta.toLocaleString("en-US")})` : ""}`
+        + ` · 보유 가치 <b>${instFlowFmtUsd(rec.v)}</b>${pct}${topName ? ` · 최대 ${escapeHtml(topName)}` : ""}`;
+    }
+  }
+  let ins;
+  let recent = "";
+  if (window.INSIDER_TRADES) {
+    const f = institutionalFlowForTicker(ticker);
+    ins = f.insiderCount ? `내부자 거래 <b>${f.insiderCount}</b>건 · 순매수 편향 <b>${f.netBuyBias >= 0 ? "+" : ""}${f.netBuyBias}</b>` : "최근 내부자 거래 없음";
+    recent = (f.recent || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
+  } else if (_instFlowInsiderState === "failed") {
+    ins = `<span class="muted">내부자 거래 데이터를 불러오지 못했습니다.</span>`;
+  } else {
+    ins = `<span class="muted">내부자 거래 불러오는 중…</span>`;
+  }
+  const sh = _instFlowShards[key];
+  const asOf = sh && sh.meta && sh.meta.latest ? `13F 기준 ${escapeHtml(sh.meta.latest)} 분기말(공개 지연) · 출처 SEC 13F 데이터셋 · Form 4` : "";
+  return `<p class="pat-stat">${inst}</p>
+    <p class="pat-stat">${ins}</p>
+    ${recent ? `<ul class="muted" style="margin:6px 0 0;padding-left:18px;font-size:12px;">${recent}</ul>` : ""}
+    ${asOf ? `<p class="muted" style="margin:6px 0 0;font-size:12px;">${asOf}</p>` : ""}`;
+}
+
+// 화면에 있는 수급 카드를 지금 데이터로 다시 채운다. load=true 면 빠진 데이터를 받고, 도착하면 다시 채운다.
+function hydrateInstFlowCards(scope, load) {
+  if (typeof document === "undefined") return;
+  const cards = (scope || document).querySelectorAll("[data-inst-flow]");
+  cards.forEach((card) => {
+    const ticker = card.getAttribute("data-inst-flow");
+    const body = card.querySelector(".inst-flow-body");
+    if (!ticker || !body) return;
+    body.innerHTML = instFlowInnerHtml(ticker);
+    if (!load) return;
+    const refill = () => hydrateInstFlowCards(null, false);
+    if (!(instFlowShardKey(ticker) in _instFlowShards)) instFlowLoadShard(ticker).then(refill);
+    if (!window.INSIDER_TRADES && _instFlowInsiderState !== "failed") instFlowEnsureInsider().then(refill);
+  });
+}
+
+// '상세 분석 더보기'를 펼칠 때만 받는다. toggle 은 버블링되지 않아 캡처 단계에서 위임한다.
+if (typeof document !== "undefined" && document.addEventListener) {
+  document.addEventListener("toggle", (ev) => {
+    const d = ev.target;
+    if (d && d.open && d.classList && d.classList.contains("cprob-more")) hydrateInstFlowCards(d, true);
+  }, true);
+}
+
 function renderInstitutionalFlowCard(result) {
   if (isKrAnalysisMode()) return "";
   const f = result.institutionalFlow;
-  if (!f) return "";
-  // 13F 보유액은 항상 달러(백만 단위) — US 전용 카드라 $ 하드코딩이 맞다.
-  const inst = f.instCount ? `13F 보유 기관 <b>${f.instCount}</b>곳 · 합계 <b>$${f.totalValueM.toFixed(0)}M</b>${f.topInst ? ` (${escapeHtml(f.topInst)})` : ""}` : "13F 보유 기관 데이터 없음";
-  const ins = f.insiderCount ? `내부자 거래 <b>${f.insiderCount}</b>건 · 순매수 편향 <b>${f.netBuyBias >= 0 ? "+" : ""}${f.netBuyBias}</b>` : "최근 내부자 거래 없음";
-  const recent = (f.recent || []).map((r) => `<li>${escapeHtml(r)}</li>`).join("");
-  return `<div class="card inst-flow-card">
+  if (!f || !f.ticker) return "";
+  return `<div class="card inst-flow-card" data-inst-flow="${escapeHtml(f.ticker)}">
     <h3>기관 · 내부자 수급</h3>
-    <p class="pat-stat">${inst}</p>
-    <p class="pat-stat">${ins}</p>
-    ${recent ? `<ul class="muted" style="margin:6px 0 0;padding-left:18px;font-size:12px;">${recent}</ul>` : ""}
+    <div class="inst-flow-body">${instFlowInnerHtml(f.ticker)}</div>
   </div>`;
 }
 

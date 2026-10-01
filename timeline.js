@@ -174,6 +174,10 @@ function tlGotoHtml(it, code) {
   return "";
 }
 
+function tlNameForNaver(code) {
+  return typeof stockLabel === "function" ? stockLabel(code) : code;
+}
+
 function tlItemHtml(it, momentByDate, code) {
   const core = tlCore();
   let detail = it.detail || "";
@@ -186,7 +190,13 @@ function tlItemHtml(it, momentByDate, code) {
   }
   const tone = it.cat === "move" && Number.isFinite(it.pct) ? ` ${cls(it.pct)}` : "";
   const link = /^https?:\/\//i.test(it.link || "") ? `<a class="tl-act" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
-  const acts = `${link}${tlGotoHtml(it, code)}`;
+  // 국내: 뉴스는 제목으로, 큰 등락은 그 날짜로 네이버 뉴스 검색 링크(네이버 화면이 익숙한 이용자용).
+  let naver = "";
+  if (tlIsKr() && typeof naverNewsSearchUrl === "function") {
+    if (it.cat === "news") naver = `<a class="tl-act" href="${escapeHtml(naverNewsSearchUrl(`"${String(it.title).slice(0, 60)}"`))}" target="_blank" rel="noopener noreferrer">네이버</a>`;
+    else if (it.src === "moment") naver = `<a class="tl-act" href="${escapeHtml(naverNewsSearchUrl(tlNameForNaver(code), it.date))}" target="_blank" rel="noopener noreferrer">네이버 뉴스(이 날짜)</a>`;
+  }
+  const acts = `${link}${naver}${tlGotoHtml(it, code)}`;
   const hist = it.src === "history" ? '<span class="tl-hist">과거 기록</span>' : "";
   // 8-K 3줄 요약(규칙/AI) — 출처 라벨을 달아 detail(Item 제목) 아래에 줄로.
   const sum = Array.isArray(it.lines) && it.lines.length

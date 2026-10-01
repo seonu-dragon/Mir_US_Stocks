@@ -15530,6 +15530,8 @@ button.calp-who:hover strong { text-decoration: underline; }
 /* 큰 등락일 툴팁은 뉴스가 뒤늦게 채워지며 넓어지지 않게 폭을 고정한다. */
 .chart-ev-tip.is-km { width: min(320px, calc(100vw - 16px)); }
 .chart-ev-tip .chart-km-news { margin-top: 8px; padding-top: 6px; border-top: 1px dashed var(--line); }
+.chart-ev-tip .chart-km-naver { margin: 8px 0 0; font-weight: 600; }
+.chart-ev-tip .chart-km-naver a { color: #03a94d; } /* 네이버 링크임을 알아보게 */
 .chart-ev-badge.chart-km-badge { width: auto; min-width: 18px; padding: 0 2px; font-size: 9px; border-color: var(--line-strong); color: var(--text-2); }
 
 /* ===== 종목 통합 타임라인(timeline.js) — 이벤트·공시 탭 ===== */

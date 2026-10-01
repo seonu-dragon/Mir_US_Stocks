@@ -2807,8 +2807,11 @@ function scrollToTabContent() {
   // 짧은 탭(예: 캘린더)은 문서 자체가 뷰포트보다 조금만 길어서 탭 바를 맨 위까지
   // 올릴 수 없다. 그럴 땐 스크롤 가능한 끝까지가 목표다 — 이 한계를 안 두면
   // 도달 못 하는 좌표를 향해 재정렬이 끝없이 돈다.
+  // 폰 하단 탭 바(mobile-nav.js)를 쓰면 상단 탭 줄이 display:none 이라 좌표가 0 으로 읽힌다 —
+  // 그러면 '현재 위치 - 8px' 을 목표로 6초간 위로 기어간다. 그땐 열린 탭 패널 맨 위를 기준으로 한다.
+  const anchor = () => (wrap.offsetParent !== null ? wrap : document.querySelector("main > .panel.is-active") || wrap);
   const targetY = () => {
-    const want = wrap.getBoundingClientRect().top + window.pageYOffset - TAB_SCROLL_GAP;
+    const want = anchor().getBoundingClientRect().top + window.pageYOffset - TAB_SCROLL_GAP;
     const max = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
     return Math.min(Math.max(0, want), max);
   };

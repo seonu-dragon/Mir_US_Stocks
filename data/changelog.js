@@ -17,6 +17,16 @@ window.MIR_CHANGELOG = {
       "market": "all"
     },
     {
+      "id": "2026-10-01-mobile-bottom-nav",
+      "date": "2026-10-01",
+      "title": "휴대폰 하단 탭 바와 종목 미니 바",
+      "desc": "휴대폰에서 오늘·시장·종목·내 투자·검색을 화면 아래 탭 바로 바로 오갑니다. 종목 화면을 내리면 맨 위에 로고·이름·가격·등락과 관심(☆) 버튼이 한 줄로 고정되고, 개요·재무·밸류 등 6개 보기는 그 아래 칩 줄로 붙어 따라옵니다. 종목 검색 입력칸은 돋보기 버튼 안으로 접었습니다.",
+      "link": "?tab=search&sub=analysis&ticker=NVDA&market=us",
+      "targets": [],
+      "market": "all",
+      "pr": null
+    },
+    {
       "id": "2026-10-01-stock-summary-event-strip",
       "date": "2026-10-01",
       "title": "종목 상세에 한눈 요약 카드와 오늘·임박 이벤트 줄",

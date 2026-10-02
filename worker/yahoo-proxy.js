@@ -1885,12 +1885,65 @@ async function fetchNaverIndexQuote(code) {
   }
 }
 
+// ^KS11/^KQ11 의 **장중 시리즈**도 네이버 1분봉으로 만든다(2026-10-02). 야후 국내 지수 5분봉은
+// 지연돼 들어와 장 초반엔 0개였다(10-02 09:17 실측: 야후 오늘 봉 0개, 네이버 1분봉 09:00부터 실시간)
+// → 오늘 탭 코스피·코스닥 차트가 라이브로 안 나왔다. 화면(home-chart-core placeSeries)의 규약
+// "i 번째 값 = 09:00 + 5i 분" 에 맞춰 같은 5분 칸의 마지막 값으로 묶고, 빈 칸은 직전 값으로 채워
+// 시각이 밀리지 않게 한다. 오늘 1분봉이 없으면(장 전·휴장일) 야후 시리즈로 폴백한다.
+export const KR_INDEX_OPEN_MIN = 9 * 60;
+
+export function naverMinuteToSeries(rows, ymd) {
+  if (!Array.isArray(rows) || !ymd) return null;
+  const byBar = new Map();
+  const sorted = rows
+    .filter((r) => r && typeof r.localDateTime === "string" && r.localDateTime.startsWith(ymd))
+    .sort((a, b) => (a.localDateTime < b.localDateTime ? -1 : a.localDateTime > b.localDateTime ? 1 : 0));
+  for (const r of sorted) {
+    const hh = Number(r.localDateTime.slice(8, 10));
+    const mm = Number(r.localDateTime.slice(10, 12));
+    const v = Number(r.currentPrice);
+    const m = hh * 60 + mm - KR_INDEX_OPEN_MIN;
+    if (!Number.isFinite(m) || m < 0 || !Number.isFinite(v) || v <= 0) continue;
+    byBar.set(Math.floor(m / 5), v);
+  }
+  if (!byBar.size) return null;
+  const last = Math.max(...byBar.keys());
+  const first = byBar.get(Math.min(...byBar.keys()));
+  const out = [];
+  let prev = first;
+  for (let i = 0; i <= last; i += 1) {
+    if (byBar.has(i)) prev = byBar.get(i);
+    out.push(prev);
+  }
+  return out.length >= 2 ? out : null;
+}
+
+function kstYmd(now = Date.now()) {
+  const d = new Date(now + 9 * 3600 * 1000);
+  return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+}
+
+async function fetchNaverIndexMinuteSeries(code) {
+  try {
+    const ymd = kstYmd();
+    const r = await fetchT(
+      `https://api.stock.naver.com/chart/domestic/index/${encodeURIComponent(code)}/minute?startDateTime=${ymd}0900&endDateTime=${ymd}1600`,
+      { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" } },
+    );
+    if (!r.ok) return null;
+    return naverMinuteToSeries(await r.json(), ymd);
+  } catch (e) {
+    return null;
+  }
+}
+
 async function fetchIndices() {
   const out = [];
   await Promise.all(INDEX_LIST.map(async ([symbol, name]) => {
     try {
       const naverCode = KR_INDEX_NAVER_CODES[symbol];
       const naverPromise = naverCode ? fetchNaverIndexQuote(naverCode) : Promise.resolve(null);
+      const naverSeriesPromise = naverCode ? fetchNaverIndexMinuteSeries(naverCode) : Promise.resolve(null);
       let res = null;
       try {
         const r = await fetchT(
@@ -1905,7 +1958,8 @@ async function fetchIndices() {
       if (!res) {
         // 야후가 죽어도 KR 지수는 네이버 값만으로 카드를 채운다(시리즈는 비움).
         const naver = await naverPromise;
-        if (naver) out.push({ symbol, name, price: round(naver.price), changePct: Math.round(naver.changePct * 100) / 100, changePctSource: "naver", changePctPolicy: "naver-primary", series: [] });
+        const naverSeries = await naverSeriesPromise;
+        if (naver) out.push({ symbol, name, price: round(naver.price), changePct: Math.round(naver.changePct * 100) / 100, changePctSource: "naver", changePctPolicy: "naver-primary", series: (naverSeries || []).map(round), ...(naverSeries ? { seriesSource: "naver-1m" } : {}) });
         return;
       }
       const meta = res.meta || {};
@@ -1921,6 +1975,7 @@ async function fetchIndices() {
         console.error(`index changePct divergence: ${symbol} meta=${changePct.toFixed(2)} series=${seriesChangePct.toFixed(2)} prevClose=${prevClose}`);
       }
       const naver = await naverPromise;
+      const naverSeries = await naverSeriesPromise;
       if (naverCode && !naver) {
         console.error(`KR index naver quote failed: ${symbol} — yahoo ${source} 폴백`);
       }
@@ -1932,7 +1987,8 @@ async function fetchIndices() {
         changePctSource: naver ? "naver" : source,
         // 배포 게이트(check_kr_index_parity.py)가 '네이버 기준 워커' 인지 구분하는 표식.
         ...(naverCode ? { changePctPolicy: "naver-primary" } : {}),
-        series: closes.map(round),
+        series: (naverSeries || closes).map(round),
+        ...(naverSeries ? { seriesSource: "naver-1m" } : {}),
       });
     } catch (e) {
       /* skip */

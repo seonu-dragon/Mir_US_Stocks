@@ -8,14 +8,15 @@
 //   · 칩 줄: #topBucket(지수/그룹)·#topMetric(정렬 지표) 셀렉트를 칩으로 비춘다 — 칩을 누르면 셀렉트 값을
 //     바꾸고 change 이벤트를 보내 기존 핸들러가 다시 그린다(셀렉트는 고급 필터 안에 그대로 있다).
 //   · 긴 표는 LIST_LIMITS(topStocksTableWrap, 50행 + 더 보기)가 자른다.
-//   · '목록' 칩(#findChipsPreset): 배당 랭킹 · 신규상장 · 관리·경보(국내) · 서학개미 TOP(미국). 켜면 같은 표 자리에 그 목록을
+//   · '목록' 칩(#findChipsPreset): 배당 랭킹 · 신규상장 · 관리·경보(국내) · 서학개미 TOP(미국) · 목표가 변경(target-changes.js).
+//     켜면 같은 표 자리에 그 목록을
 //     그린다(계산은 find-table-core.js). 정렬 지표 칩을 누르거나 같은 칩을 다시 누르면 일반 표로 돌아온다.
 
 const FT_VIEW_KEY = "mir.find.view";
 const FT_METRIC_CHIPS = ["changePct", "monthChangePct", "volumeRatio", "amount", "marketCapB", "pe", "rsi14"];
 const FT_DIV_LIMIT = 300;
 let ftLast = { rows: [], metric: "changePct" };
-let ftList = null; // null | "dividend" | "ipo" | "alerts" | "seohak"
+let ftList = null; // null | "dividend" | "ipo" | "alerts" | "seohak" | "targets"
 let ftAlertFilter = "all";
 let ftSeohak = { kind: "custody", period: "1w" };
 let ftSeohakTried = false;
@@ -110,7 +111,7 @@ function ftApplyView() {
   const seg = byId("findViewSeg");
   if (seg) seg.hidden = Boolean(ftList);
   const bucketChips = byId("findChipsBucket");
-  if (bucketChips) bucketChips.hidden = ftList === "ipo" || ftList === "alerts" || ftList === "seohak";
+  if (bucketChips) bucketChips.hidden = ftList === "ipo" || ftList === "alerts" || ftList === "seohak" || ftList === "targets";
   byId("findViewSeg")?.querySelectorAll("[data-fview]").forEach((b) => {
     const on = b.dataset.fview === view;
     b.classList.toggle("is-active", on);
@@ -385,6 +386,7 @@ function ftRenderList(wrap, core) {
   if (ftList === "dividend") ftRenderDividend(wrap, core);
   else if (ftList === "ipo") ftRenderIpo(wrap, core);
   else if (ftList === "alerts") ftRenderAlerts(wrap, core);
+  else if (ftList === "targets" && typeof tcRenderList === "function") tcRenderList(wrap);
 }
 
 function ftSetList(next) {
@@ -402,6 +404,7 @@ function ftSyncPresetChips() {
   const presets = [["dividend", "배당 랭킹"], ["ipo", "신규상장"]];
   if (ftMarket() === "kr" && window.KR_MARKET_ALERTS) presets.push(["alerts", "관리·경보"]);
   if (ftMarket() === "us") presets.push(["seohak", "서학개미 TOP"]);
+  if (typeof tcRenderList === "function") presets.push(["targets", "목표가 변경"]);
   const sig = presets.map((p) => p[0]).join("|") + `#${ftList || ""}`;
   if (host.dataset.sig === sig) return;
   host.dataset.sig = sig;

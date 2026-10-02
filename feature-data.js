@@ -161,6 +161,9 @@ const FEATURE_DATA = {
   // 오늘의 특징주·오른쪽 레일이 첫 화면이라 첫 단계에서 받는다. 도착 전에는 모노그램.
   companyLogos: { global: "COMPANY_LOGOS", path: "data/logos/index.js" },
   usPriceTargets: { global: "US_PRICE_TARGETS_INDEX", path: "data/us_price_targets/index.js", usOnly: true, lazy: true },
+  // 국내 증권사 목표주가 상향·하향(build_kr_target_changes.py) — 최근 30일 변경 + 종목별 이력 샤드 버전.
+  // 종목 › 찾기 '목표가 변경' 목록과 컨센서스 카드의 '증권사별 목표가 이력'이 처음 필요할 때만 받는다(lazy).
+  krTargetChanges: { global: "KR_TARGET_CHANGES", path: "data/korea/target_changes.js", krOnly: true, lazy: true },
   // 과거 위기 구간 가격 경로(build_crisis_history.py) — 두 시장이 한 파일. 스트레스 테스트의
   // '과거 위기 재생' 을 열 때만 받는다(lazy).
   crisisHistory: { global: "CRISIS_HISTORY", path: "data/crisis_history.js", lazy: true },

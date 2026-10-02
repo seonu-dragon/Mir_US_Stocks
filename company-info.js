@@ -153,6 +153,19 @@ function ciPriceTargetHtml(t, price) {
       <div class="ci-op-legend"><span><i class="ci-op-buy"></i>매수 ${t.buy}</span><span><i class="ci-op-hold"></i>보유 ${t.hold}</span><span><i class="ci-op-sell"></i>매도 ${t.sell}</span></div>
     </div>`);
   }
+  // 평균 목표가 이력(th, 우리가 수집할 때 값이 바뀐 날만 — 2026-10-02 부터 쌓임).
+  const th = Array.isArray(t.th) ? t.th.slice().reverse() : [];
+  if (th.length > 1) {
+    const money = (v) => escapeHtml(priceOrDash(v));
+    const rows = th.slice(0, 20).map((r, i) => {
+      const prev = th[i + 1];
+      const pct = prev && prev[2] ? (r[2] / prev[2] - 1) * 100 : null;
+      return `<tr><td>${escapeHtml(String(r[0]))}</td><td class="num">${money(r[1])}</td><td class="num">${money(r[2])}${pct != null && Math.abs(pct) >= 0.05 ? ` <span class="${cls(pct)}">${fmtPct(pct)}</span>` : ""}</td><td class="num">${money(r[3])}</td></tr>`;
+    }).join("");
+    parts.push(`<details class="ci-hist"><summary>목표가 변경 이력</summary>
+      <table class="ci-hist-table"><thead><tr><th>날짜</th><th class="num">최저</th><th class="num">평균</th><th class="num">최고</th></tr></thead><tbody>${rows}</tbody></table>
+    </details>`);
+  }
   const hist = Array.isArray(t.hist) ? t.hist.slice(-12).reverse() : [];
   if (hist.length > 1) {
     const rows = hist.map((r) => `<tr><td>${escapeHtml(String(r[0]))}</td><td class="num">${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td></tr>`).join("");

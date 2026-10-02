@@ -36,6 +36,7 @@ from congress_party_lookup import (  # noqa: E402
 from briefing_store import repository_publish_lock  # noqa: E402
 from sec_client import git_publish  # noqa: E402
 import congress_performance as CP  # noqa: E402
+import senate_efd  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 SENATE_URL = (
@@ -49,6 +50,7 @@ HOUSE_URL = (
 QUIVER_URL = "https://api.quiverquant.com/beta/live/congresstrading"
 OUT_JSON = ROOT / "data" / "congress_trades.json"
 OUT_JS = ROOT / "data" / "congress_trades.js"
+SENATE_CACHE = ROOT / "data" / "senate_ptr_cache.json"  # eFD 보고서별 거래 캐시(배포 제외)
 
 AMOUNT_RE = re.compile(r"\$?([\d,]+)\s*-\s*\$?([\d,]+)")
 TICKER_BAD = {"--", "N/A", "NA", "NONE", "UNKNOWN"}
@@ -174,6 +176,7 @@ def _normalize_senate(row: dict) -> dict | None:
     if not name:
         return None
     side = _trade_side(row.get("type", ""))
+    disclosed = _parse_date(row.get("disclosure_date", ""))
     return {
         "politician": _canonical_name(name),
         "chamber": "Senate",
@@ -184,7 +187,7 @@ def _normalize_senate(row: dict) -> dict | None:
         "amount": str(row.get("amount") or "").strip(),
         "amountMid": _parse_amount_mid(row.get("amount")),
         "transactionDate": tx_date.strftime("%Y-%m-%d"),
-        "disclosureDate": "",
+        "disclosureDate": disclosed.strftime("%Y-%m-%d") if disclosed else "",
         "owner": str(row.get("owner") or "").strip(),
         "sourceUrl": str(row.get("ptr_link") or "").strip(),
         "district": "",
@@ -350,6 +353,28 @@ def _load_trades(cutoff: datetime) -> tuple[list[dict], dict[str, str], int]:
             sources_ok += 1
     except Exception as exc:
         print(f"[warn] house fetch failed: {exc}")
+
+    # Senate eFD (공식, 전자 PTR). Quiver(유료 401)·legacy 미러(2021 정지) 대신 상원 1차 원천.
+    try:
+        kept = 0
+        efd_rows = senate_efd.fetch_senate_rows(cutoff, SENATE_CACHE)
+        for row in efd_rows:
+            t = _normalize_senate(row)
+            if not t:
+                continue
+            t["source"] = "senate_efd"
+            tx = _parse_date(t["transactionDate"])
+            if not tx or tx < cutoff:
+                continue
+            key = _trade_key(t)
+            if key not in merged:
+                merged[key] = t
+                kept += 1
+        print(f"[fetch] senate eFD: {kept}/{len(efd_rows)} trades since {cutoff.date()}")
+        if efd_rows:
+            sources_ok += 1
+    except Exception as exc:
+        print(f"[warn] senate eFD fetch failed: {exc}")
 
     # Legacy Senate mirror (stale but useful pre-2021)
     try:
@@ -726,7 +751,8 @@ def write_files(payload: dict) -> None:
 
 def publish_payload(project_dir: Path, commit_label: str = "Congress Trades") -> bool:
     return git_publish(
-        ["data/congress_trades.json", "data/congress_trades.js"],
+        ["data/congress_trades.json", "data/congress_trades.js"]
+        + (["data/senate_ptr_cache.json"] if SENATE_CACHE.exists() else []),
         f"congress trades ({commit_label})",
         cwd=project_dir,
     )

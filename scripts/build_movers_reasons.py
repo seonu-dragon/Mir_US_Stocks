@@ -64,6 +64,7 @@ SCRIPTS = ROOT / "scripts"
 if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
+import naver_search  # noqa: E402
 import sec_client as sec  # noqa: E402
 import us_market_calendar as usc  # noqa: E402
 from briefing_store import repository_publish_lock  # noqa: E402
@@ -647,23 +648,22 @@ _naver_state = {"disabled": False}
 
 
 def naver_news(query: str) -> list[dict] | None:
-    """네이버 뉴스 검색 API. 키가 없거나 거부되면 None(= 폴백 사용)."""
-    cid, secret = os.getenv("NAVER_CLIENT_ID", ""), os.getenv("NAVER_CLIENT_SECRET", "")
-    if not cid or not secret or _naver_state["disabled"]:
+    """네이버 뉴스 검색(naver_search — API Hub 우선, 옛 개발자센터 키 폴백). 키가 없거나 거부되면 None(= 폴백 사용).
+
+    링크는 네이버 뉴스 기사 페이지(n.news.naver.com)가 있으면 그것을 쓴다 — 국내 이용자는 네이버 화면이
+    익숙하다(2026-10-02). 없으면 언론사 원문.
+    """
+    if _naver_state["disabled"]:
         return None
-    url = "https://openapi.naver.com/v1/search/news.json?" + urllib.parse.urlencode(
-        {"query": query, "display": 30, "sort": "date"})
     try:
-        req = urllib.request.Request(url, headers={
-            "X-Naver-Client-Id": cid, "X-Naver-Client-Secret": secret, "Accept": "application/json", **UA})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            items = json.loads(resp.read().decode("utf-8")).get("items") or []
-    except urllib.error.HTTPError as exc:
-        if exc.code in (401, 403):
-            print(f"  [경고] 네이버 뉴스 API {exc.code} — 이번 실행은 Google News 로 대체")
-            _naver_state["disabled"] = True
+        items = naver_search.search_news(query, display=30, sort="date")
+    except naver_search.NaverAuthError as exc:
+        print(f"  [경고] {exc} — 이번 실행은 Google News 로 대체")
+        _naver_state["disabled"] = True
         return None
     except Exception:
+        return None
+    if items is None:
         return None
     out = []
     for it in items:
@@ -671,8 +671,9 @@ def naver_news(query: str) -> list[dict] | None:
             pub = parsedate_to_datetime(it.get("pubDate")).astimezone(timezone.utc)
         except Exception:
             pub = None
-        link = it.get("originallink") or it.get("link") or ""
-        host = urllib.parse.urlparse(link).netloc.replace("www.", "")
+        nlink = it.get("link") or ""
+        link = nlink if naver_search.is_naver_news_link(nlink) else (it.get("originallink") or nlink)
+        host = urllib.parse.urlparse(it.get("originallink") or link).netloc.replace("www.", "")
         out.append({"title": clean_text(it.get("title")), "link": link, "source": host or "네이버 뉴스", "pub": pub})
     return out
 

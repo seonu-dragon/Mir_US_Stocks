@@ -189,11 +189,12 @@ function tlItemHtml(it, momentByDate, code) {
       : " · 사유 데이터 없음";
   }
   const tone = it.cat === "move" && Number.isFinite(it.pct) ? ` ${cls(it.pct)}` : "";
-  const link = /^https?:\/\//i.test(it.link || "") ? `<a class="tl-act" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
+  const naverPage = /(^|\/\/)n\.news\.naver\.com\//.test(String(it.link || ""));
+  const link = /^https?:\/\//i.test(it.link || "") ? `<a class="tl-act" href="${escapeHtml(it.link)}" target="_blank" rel="noopener noreferrer">${naverPage ? "네이버 뉴스" : "원문"}</a>` : "";
   // 국내: 뉴스는 제목으로, 큰 등락은 그 날짜로 네이버 뉴스 검색 링크(네이버 화면이 익숙한 이용자용).
   let naver = "";
   if (tlIsKr() && typeof naverNewsSearchUrl === "function") {
-    if (it.cat === "news") naver = `<a class="tl-act" href="${escapeHtml(naverNewsSearchUrl(`"${String(it.title).slice(0, 60)}"`))}" target="_blank" rel="noopener noreferrer">네이버</a>`;
+    if (it.cat === "news" && !naverPage) naver = `<a class="tl-act" href="${escapeHtml(naverNewsSearchUrl(`"${String(it.title).slice(0, 60)}"`))}" target="_blank" rel="noopener noreferrer">네이버</a>`;
     else if (it.src === "moment") naver = `<a class="tl-act" href="${escapeHtml(naverNewsSearchUrl(tlNameForNaver(code), it.date))}" target="_blank" rel="noopener noreferrer">네이버 뉴스(이 날짜)</a>`;
   }
   const acts = `${link}${naver}${tlGotoHtml(it, code)}`;

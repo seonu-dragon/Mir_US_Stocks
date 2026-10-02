@@ -27,6 +27,13 @@ import xml.etree.ElementTree as ET
 
 KST = ZoneInfo("Asia/Seoul")
 NAVER_NEWS_API = "https://openapi.naver.com/v1/search/news.json"
+# 2026-07-31 부터 검색 API 신규 신청은 네이버 클라우드 NAVER API Hub 로만 된다(옛 개발자센터는 2027-06-30 종료).
+# 환경변수 NAVER_APIHUB_KEY_ID / NAVER_APIHUB_KEY 가 있으면 이쪽을 쓰고, 없으면 옛 Client ID/Secret.
+NAVER_HUB_NEWS_API = "https://naverapihub.apigw.ntruss.com/search/v1/news"
+
+
+def _clean_key(value: str | None) -> str:
+    return (value or "").strip().rstrip(",").strip().strip('"').strip("'")
 NAVER_ECONOMY_SECTION_URLS = (
     "https://news.naver.com/section/101",
     "https://news.naver.com/breakingnews/section/101/259",  # finance
@@ -287,6 +294,8 @@ class NewsCollector:
     def __init__(self, client_id: str, client_secret: str, config: CollectorConfig) -> None:
         self.client_id = client_id
         self.client_secret = client_secret
+        self.hub_key_id = _clean_key(os.getenv("NAVER_APIHUB_KEY_ID"))
+        self.hub_key = _clean_key(os.getenv("NAVER_APIHUB_KEY"))
         self.config = config
         self._naver_disabled_reason = ""
         self._section_items_returned = False
@@ -300,15 +309,13 @@ class NewsCollector:
                 "sort": "date",
             }
         )
-        request = Request(
-            f"{NAVER_NEWS_API}?{params}",
-            headers={
-                "X-Naver-Client-Id": self.client_id,
-                "X-Naver-Client-Secret": self.client_secret,
-                "User-Agent": USER_AGENT,
-                "Accept": "application/json",
-            },
-        )
+        if self.hub_key_id and self.hub_key:
+            url = f"{NAVER_HUB_NEWS_API}?{params}&format=json"
+            auth = {"X-NCP-APIGW-API-KEY-ID": self.hub_key_id, "X-NCP-APIGW-API-KEY": self.hub_key}
+        else:
+            url = f"{NAVER_NEWS_API}?{params}"
+            auth = {"X-Naver-Client-Id": self.client_id, "X-Naver-Client-Secret": self.client_secret}
+        request = Request(url, headers={**auth, "User-Agent": USER_AGENT, "Accept": "application/json"})
         try:
             with urlopen(request, timeout=self.config.timeout) as response:
                 payload = json.loads(response.read().decode("utf-8"))
@@ -390,7 +397,8 @@ class NewsCollector:
         if source not in {"auto", "naver", "naver-section", "google"}:
             raise ValueError("source must be one of: auto, naver, naver-section, google")
 
-        can_use_naver = bool(self.client_id and self.client_secret and not self._naver_disabled_reason)
+        has_keys = (self.hub_key_id and self.hub_key) or (self.client_id and self.client_secret)
+        can_use_naver = bool(has_keys and not self._naver_disabled_reason)
         if source in {"auto", "naver"} and can_use_naver:
             try:
                 items = self._request_json(query)
@@ -405,7 +413,7 @@ class NewsCollector:
                 print(f"  [경고] 네이버 API 사용 불가, 공개 경제 섹션으로 전환: {exc}")
 
         if source == "naver":
-            reason = self._naver_disabled_reason or "NAVER_CLIENT_ID/SECRET이 없습니다."
+            reason = self._naver_disabled_reason or "NAVER_APIHUB_KEY_ID/KEY(또는 NAVER_CLIENT_ID/SECRET)이 없습니다."
             raise RuntimeError(reason)
 
         if source in {"auto", "naver-section"} and not self._section_items_returned:

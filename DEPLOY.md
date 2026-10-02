@@ -114,15 +114,17 @@ git push 충돌은 각 빌더의 `fetch → pull --rebase -X theirs → push` �
    - `DART_API_KEY` (KR 공시·배당·수주·실적 계열 전반)
    - `FINNHUB_API_KEY` (US 밸류에이션 지표·애널리스트 컨센서스)
    - `KRX_ID` / `KRX_PW` (KRX 회원 로그인 — 국내 공매도 잔고)
-   - `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET` (국내 뉴스 검색)
+   - `NAVER_APIHUB_KEY_ID` / `NAVER_APIHUB_KEY` (국내 뉴스 검색 — 네이버 클라우드 NAVER API Hub. 2026-07-31 부터
+     개발자센터 검색 API 신규 신청이 막혀 이쪽으로 옮겼다. 키는 10자/40자. 옛 `NAVER_CLIENT_ID` / `NAVER_CLIENT_SECRET`
+     (20자/10자)도 남아 있으면 폴백으로 쓰지만 2027-06-30 종료) — `scripts/naver_search.py`
    - `ECOS_API_KEY` (한국은행 ECOS 매크로 — korea-close-briefing)
    - `DATA_GO_KR_KEY` (공공데이터포털 — NPS 보유·기업집단·나라장터·관세청 계열)
    - `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` (브리핑 진행 알림 + 실패 통지)
 
 3. **Cloudflare Worker 바인딩** (`worker/yahoo-proxy.js` 가 실제 사용하는 목록.
    워커는 머지해도 자동 반영되지 않는다 — 대시보드에 붙여넣는 수동 배포)
-   - Secrets: `GEMINI_API_KEY`, `FINNHUB_API_KEY`, `NAVER_CLIENT_ID`,
-     `NAVER_CLIENT_SECRET`, `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`,
+   - Secrets: `GEMINI_API_KEY`, `FINNHUB_API_KEY`, `NAVER_APIHUB_KEY_ID`, `NAVER_APIHUB_KEY`(없으면 옛 `NAVER_CLIENT_ID`,
+     `NAVER_CLIENT_SECRET`), `COMMUNITY_ADMIN_KEY`, (선택) `GEMINI_MODEL`,
      **`IP_HASH_SALT`** — 신고·투표 중복 판정용 IP 해시 솔트. 이름만 "선택"이지
      **넣어야 한다**: 없으면 코드에 박힌 공개 문자열(`mir-community-v1`)이 쓰여
      해시에서 IPv4 원본을 전수 대입으로 즉시 복원할 수 있고, 그 해시는 관리자

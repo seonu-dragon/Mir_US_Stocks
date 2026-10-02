@@ -1820,8 +1820,8 @@ function keyMomentTipHtml(m) {
   const MAX = 5;
   const rows = reasons.slice(0, MAX).map((e) => {
     const when = e.offset ? (e.offset < 0 ? " (전 거래일)" : " (다음 거래일)") : "";
-    const link = (/^https?:\/\//i.test(e.link || "") ? ` <a href="${escapeHtml(e.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "")
-      + (e.cat === "news" ? kmNaverTitleLink(e.title) : "");
+    const link = (/^https?:\/\//i.test(e.link || "") ? ` <a href="${escapeHtml(e.link)}" target="_blank" rel="noopener noreferrer">${kmLinkLabel(e.link)}</a>` : "")
+      + (e.cat === "news" ? kmNaverTitleLink(e.title, e.link) : "");
     const label = tl && tl.CAT_LABEL[e.cat] ? tl.CAT_LABEL[e.cat] : "";
     return `<li><span class="chart-ev-badge chart-km-badge">${escapeHtml(label.slice(0, 2))}</span><div><b>${escapeHtml(e.title)}${escapeHtml(when)}</b>${e.detail || link ? `<small>${escapeHtml(e.detail || "")}${link}</small>` : ""}</div></li>`;
   }).join("");
@@ -1831,8 +1831,11 @@ function keyMomentTipHtml(m) {
 
 // 국내 종목은 기사마다 '네이버'(제목 검색) 링크와, 툴팁 맨 아래 '네이버 뉴스에서 이 날짜 기사 보기'를 단다.
 function kmNaverOn() { return typeof isKrMarket === "function" && isKrMarket() && typeof naverNewsSearchUrl === "function"; }
-function kmNaverTitleLink(title) {
-  if (!kmNaverOn() || !title) return "";
+function isNaverNewsLink(link) { return /(^|\/\/)n\.news\.naver\.com\//.test(String(link || "")); }
+// 링크가 이미 네이버 뉴스 기사 페이지면 '원문' 대신 '네이버 뉴스'(빌더가 국내 기사를 네이버 페이지로 바꿔 둔다).
+function kmLinkLabel(link) { return isNaverNewsLink(link) ? "네이버 뉴스" : "원문"; }
+function kmNaverTitleLink(title, link) {
+  if (!kmNaverOn() || !title || isNaverNewsLink(link)) return "";
   return ` <a href="${escapeHtml(naverNewsSearchUrl(`"${String(title).slice(0, 60)}"`))}" target="_blank" rel="noopener noreferrer">네이버</a>`;
 }
 function kmNaverDateLink(date) {
@@ -1866,8 +1869,8 @@ function keyMomentNewsBodyHtml(st) {
   if (!st.news.length) return '<p class="chart-km-none">그날 전후(±2일) 기사를 찾지 못했습니다.</p>';
   const rows = st.news.map((n) => {
     const when = n.publishedAt ? String(n.publishedAt).slice(5, 10).replace("-", "/") : "";
-    const link = /^https?:\/\//i.test(n.link || "") ? ` <a href="${escapeHtml(n.link)}" target="_blank" rel="noopener noreferrer">원문</a>` : "";
-    return `<li><span class="chart-ev-badge chart-km-badge">뉴</span><div><b>${escapeHtml(n.title)}</b><small>${escapeHtml([when, n.publisher].filter(Boolean).join(" · "))}${link}${kmNaverTitleLink(n.title)}</small></div></li>`;
+    const link = /^https?:\/\//i.test(n.link || "") ? ` <a href="${escapeHtml(n.link)}" target="_blank" rel="noopener noreferrer">${kmLinkLabel(n.link)}</a>` : "";
+    return `<li><span class="chart-ev-badge chart-km-badge">뉴</span><div><b>${escapeHtml(n.title)}</b><small>${escapeHtml([when, n.publisher].filter(Boolean).join(" · "))}${link}${kmNaverTitleLink(n.title, n.link)}</small></div></li>`;
   }).join("");
   return `<p class="chart-km-sub">그날 전후 뉴스</p><ul>${rows}</ul>`;
 }

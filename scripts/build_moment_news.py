@@ -45,6 +45,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import build_movers_reasons as mv  # noqa: E402  (구글 뉴스 RSS 파싱·제목 매칭·ETF 제외를 같이 쓴다)
+import naver_search  # noqa: E402
 import sec_client as sec  # noqa: E402
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 
@@ -144,6 +145,42 @@ def google_rss(query: str, market: str) -> list[dict]:
         raise Blocked(type(exc).__name__) from exc
 
 
+# 국내 기사는 구글로 찾은 뒤 같은 제목을 네이버 뉴스 검색(API Hub)에서 찾아 네이버 뉴스 기사 페이지
+# (n.news.naver.com) 링크로 바꾼다 — 국내 이용자는 네이버 화면이 익숙하다(2026-10-02). 찾지 못하면 구글 링크 그대로.
+# 키가 없거나 인증이 거부되면 이 실행에서는 끈다. 하루 한도 25,000회(실행당 최대 1,200 × 3).
+_naver = {"off": False, "converted": 0, "asked": 0}
+KR_CANDIDATES = 8     # 국내 기사 후보 수(그날에 가까운 순)
+KR_NAVER_TRIES = 6    # 그중 네이버 페이지를 찾아보는 최대 건수(날짜당) — 실행당 최대 1,200 × 6 = 7,200회
+
+
+def _norm_title(t: str) -> str:
+    return re.sub(r"[^0-9a-z가-힣]", "", mv.clean_text(t).lower())
+
+
+def naver_link_for(title: str) -> str | None:
+    if _naver["off"]:
+        return None
+    try:
+        _naver["asked"] += 1
+        items = naver_search.search_news(f'"{title[:80]}"', display=5, sort="sim", timeout=10)
+    except naver_search.NaverAuthError as exc:
+        print(f"  [경고] {exc} — 이번 실행은 네이버 링크 변환을 끈다")
+        _naver["off"] = True
+        return None
+    except Exception:
+        return None
+    if items is None:
+        _naver["off"] = True  # 키 없음
+        return None
+    want = _norm_title(title)[:20]
+    for it in items:
+        link = it.get("link") or ""
+        if naver_search.is_naver_news_link(link) and want and _norm_title(it.get("title"))[:20] == want:
+            _naver["converted"] += 1
+            return link.split("?")[0]
+    return None
+
+
 GOOGLE_ARTICLE = re.compile(r"^https://news\.google\.com/rss/articles/([A-Za-z0-9_\-]+)\?oc=5$")
 
 
@@ -178,7 +215,32 @@ def search_moment(stock: dict, market: str, day: str) -> list[list[str]]:
         seen.add(key)
         picked.append((abs((pd - d).days), [n["title"][:200], str(n.get("source") or "")[:60], compact_link(n["link"]), pd.isoformat()]))
     picked.sort(key=lambda x: x[0])  # 그날에 가까운 기사부터(같은 거리면 검색 순서)
-    return [row for _, row in picked[:PER_MOMENT]]
+    if market != "kr":
+        return [row for _, row in picked[:PER_MOMENT]]
+    # 국내: 그날에 가까운 후보부터 KR_NAVER_TRIES 건까지 네이버 뉴스 페이지를 찾아, 네이버 페이지가 있는
+    # 기사를 먼저 고르고 모자라면 나머지(언론사 원문·구글 링크)로 채운다. 구글이 고른 기사의 상당수는
+    # 네이버 뉴스 제휴사가 아니라 네이버 페이지가 없다(2026-10-02 실측 36건 중 11건만 변환).
+    cands = [row for _, row in picked[:KR_CANDIDATES]]
+    naver_rows, other_rows = [], []
+    for k, row in enumerate(cands):
+        if len(naver_rows) < PER_MOMENT and k < KR_NAVER_TRIES:
+            relink_row(row)
+        (naver_rows if naver_search.is_naver_news_link(row[2]) else other_rows).append(row)
+    return (naver_rows + other_rows)[:PER_MOMENT]
+
+
+def relink_row(row: list) -> bool:
+    """국내 기사 한 줄을 네이버 뉴스 링크로 바꿔 본다. 시도한 줄은 5번째 칸에 1 을 남겨 다시 묻지 않는다
+    (화면은 앞 4칸만 읽는다). 바꿨으면 True."""
+    if len(row) >= 5 or naver_search.is_naver_news_link(row[2]) or _naver["off"]:
+        return False
+    nlink = naver_link_for(row[0])
+    if _naver["off"]:
+        return False  # 키 문제로 꺼졌으면 '시도함' 표시를 남기지 않는다(키를 고치면 다시 시도)
+    if nlink:
+        row[2] = nlink
+    row.append(1)
+    return bool(nlink)
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +253,8 @@ def load_shards(market: str) -> dict[int, dict]:
     return out
 
 
-def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) -> tuple[list[Path], int, bool, dict]:
+def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
+                 relink_budget: int = 0) -> tuple[list[Path], int, bool, dict]:
     """(바뀐 샤드 경로, 이번에 물은 횟수, 막혔는지, 진행 요약)."""
     cfg = MARKETS[market]["cfg"]
     stocks = universe(market)
@@ -235,6 +298,26 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) ->
         shards[i].setdefault(s["ticker"], {})[day] = rows
         touched.add(i)
         time.sleep(SLEEP_S)
+    # 예전에 구글 링크로 저장된 국내 기사를 실행마다 relink_budget 줄씩 네이버 링크로 바꾼다(최근 날짜부터).
+    if market == "kr" and relink_budget > 0 and not _naver["off"]:
+        todo = []
+        for i, t in shards.items():
+            for tk, by_date in t.items():
+                for day, rows in by_date.items():
+                    for row in rows:
+                        if isinstance(row, list) and len(row) == 4 and not naver_search.is_naver_news_link(row[2]):
+                            todo.append((day, i, row))
+        todo.sort(key=lambda x: x[0], reverse=True)
+        done = 0
+        for day, i, row in todo[:relink_budget]:
+            if _naver["off"]:
+                break
+            relink_row(row)
+            touched.add(i)
+            done += 1
+            time.sleep(0.05)
+        if todo:
+            print(f"  예전 기사 네이버 링크 재시도: {done}/{len(todo)}줄")
     # 대상에서 빠진 종목·기간 밖 날짜는 정리한다(파일이 끝없이 커지지 않게).
     for i, t in shards.items():
         for tk in list(t):
@@ -256,6 +339,9 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str) ->
         atomic_write_text(p, json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
         paths.append(p)
     summary.update({"pending": max(0, len(pending) - asked), "askedThisRun": asked, "foundThisRun": found, "blocked": blocked})
+    if market == "kr":
+        summary["naverLinks"] = _naver["converted"]
+        print(f"  네이버 링크 변환: {_naver['converted']}/{_naver['asked']}건{' (꺼짐)' if _naver['off'] else ''}")
     print(f"[moment-news] {market}: 이번 검색 {asked}건(기사 찾음 {found}) · 남은 {summary['pending']}건 · 샤드 {len(paths)}개 저장")
     return paths, asked, blocked, summary
 
@@ -264,6 +350,7 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="큰 등락일 그날 뉴스 미리 모으기")
     ap.add_argument("--market", choices=["us", "kr", "all"], default="all")
     ap.add_argument("--max-queries", type=int, default=1200, help="실행당 검색 상한(시장별)")
+    ap.add_argument("--relink-budget", type=int, default=1500, help="실행당 예전 국내 기사 네이버 링크 재시도 줄 수")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--push", action="store_true")
     args = ap.parse_args()
@@ -274,7 +361,8 @@ def main() -> int:
     summaries = dict(prev)
     with repository_publish_lock(ROOT):
         for m in markets:
-            paths, asked, blocked, summary = build_market(m, max_queries=args.max_queries, dry_run=args.dry_run, since=since)
+            paths, asked, blocked, summary = build_market(m, max_queries=args.max_queries, dry_run=args.dry_run, since=since,
+                                                          relink_budget=args.relink_budget)
             changed += paths
             asked_total += asked
             any_blocked |= blocked

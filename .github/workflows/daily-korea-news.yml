@@ -21,6 +21,8 @@ jobs:
     timeout-minutes: 30
     env:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      NAVER_APIHUB_KEY_ID: ${{ secrets.NAVER_APIHUB_KEY_ID }}
+      NAVER_APIHUB_KEY: ${{ secrets.NAVER_APIHUB_KEY }}
       NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
       NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

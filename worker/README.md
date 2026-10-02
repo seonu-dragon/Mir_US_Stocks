@@ -54,8 +54,9 @@ Cloudflare Dashboard에서 **Settings → Variables and Secrets**에 `FINNHUB_AP
   3분·10분은 화면(`chart.js`)이 1분·5분을 묶어 만든다.
 - 응답: `{ symbol, interval, range, tz, bars: [[시, 고, 저, 종, 거래량, "YYYY-MM-DDTHH:MM"(거래소 현지 시각)]] }`.
 - LLM·KV 를 쓰지 않는다. 엣지 캐시(`caches.default`) 60초로 같은 종목·간격 반복 요청을 흡수한다.
-- 국내 심볼(`.KS`/`.KQ`)이면 응답에 `quote` 를 싣는다(2026-10-02): 네이버 실시간 현재가(`m.stock` basic)와
-  네이버 일봉의 **전 거래일 정규장 종가**(시세 화면의 '전일'은 장 마감 뒤 NXT 거래까지 합친 값일 수 있어 쓰지 않음).
+- 국내 심볼(`.KS`/`.KQ`)이면 응답에 `quote` 를 싣는다(2026-10-02): 네이버 시세(`m.stock` basic)의 KRX 현재가와,
+  '전일 대비'에서 거꾸로 푼 **KRX 전일 종가**. 네이버 일봉 API 는 2026-09-14 부터 NXT 거래까지 합친 통합 종가라 쓰지 않는다
+  (삼성전자 10/01: KRX 276,000 = 다음·야후 · 네이버 일봉 274,500).
   종목 분석 '현재' 줄(`live-quote.js`)이 쓴다. 실패하면 `quote` 없이 분봉만.
 
 ## 큰 등락일 그날 뉴스 (`?event_news=1`, 2026-10-01)

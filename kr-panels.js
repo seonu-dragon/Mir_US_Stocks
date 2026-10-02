@@ -194,6 +194,7 @@ function krConsensusCard(item) {
         <tbody>${rowsHtml}</tbody>
       </table>
       ${reportsHtml}
+      ${typeof tcKrHistoryDetailsHtml === "function" ? tcKrHistoryDetailsHtml(item.ticker) : ""}
       ${caveatHtml}
     </div>`;
 }

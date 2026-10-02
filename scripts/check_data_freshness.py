@@ -104,6 +104,8 @@ CHECKS = {
         # 컨센서스는 FnGuide/네이버 스크랩이라 소스가 바뀌면 조용히 0건이 될 수 있다.
         # 다만 빌더가 0건이면 기존 파일을 덮지 않으므로 실제로는 나이 쪽이 먼저 운다.
         ("data/korea/consensus.json", 5, True),
+        # 증권사 목표가 상향·하향(build_kr_target_changes.py) — 실행마다 updatedAtKst 를 새로 쓴다. 연휴 감안 7일.
+        ("data/korea/target_changes.json", 7, False),
         ("data/korea/ecos_macro.json", 6, False),
         ("data/korea/gov_contracts.json", 8, False),
         ("data/korea/trade_exports.json", 8, False),

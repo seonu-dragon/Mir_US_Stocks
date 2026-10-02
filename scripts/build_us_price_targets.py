@@ -13,10 +13,11 @@
 성공이 대상의 절반 미만이면 소스 이상으로 보고 아무것도 쓰지 않고 exit 1.
 
 레코드 {"lo","avg","hi": 달러, "buy","hold","sell","n": 의견 수(n = 셋의 합), "hist": [["YYYY-MM", buy, hold, sell], ...],
-        "asOf": 수집일}. 범위 값이 lo ≤ avg ≤ hi 를 어기거나 0 이하면 범위 키를 뺀다(의견 분포만 남김).
+        "asOf": 수집일, "th": [[수집일, 최저, 평균, 최고, 의견 수], ...] 목표가 이력(2026-10-02~, 값이 바뀐 날만)}. 범위 값이 lo ≤ avg ≤ hi 를 어기거나 0 이하면 범위 키를 뺀다(의견 분포만 남김).
 
 산출물
   data/us_price_targets/index.json/.js   window.US_PRICE_TARGETS_INDEX — 건수·출처·기준 시각·샤드 버전
+                                         + changes: 최근 30일 평균 목표가 ±3% 넘는 변경 [{t, d, prev, avg, pct, n}]
   data/us_price_targets/NN.json          16 샤드 {"v":1,"t":{티커: 레코드}} — 바뀐 샤드만 다시 쓴다
 
 점 티커(주식 클래스: BRK.B · BF.B · HEI.A · LEN.B …, 2026-09-26 실측)
@@ -40,7 +41,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -248,6 +249,44 @@ def universe(top: int) -> list[str]:
     return out
 
 
+TH_MAX = 60          # 종목당 목표가 이력 점 수(주 2회 수집 → 약 7개월)
+CHANGE_DAYS = 30     # 인덱스의 '최근 변경' 목록 보관 일수
+CHANGE_MIN_PCT = 3.0  # 평균 목표가가 이만큼 넘게 움직였을 때만 목록에 올린다(애널리스트 한 명 갱신 잡음 제외)
+
+
+def carry_target_history(old: dict, rec: dict, stamp: str) -> tuple[list, dict | None]:
+    """목표가 이력 th = [[수집일, 최저, 평균, 최고, 의견 수], ...](오래된 순). Nasdaq 은 목표가 월별 이력을 주지
+    않아(y 는 그달 주가) 우리가 수집할 때마다 바뀐 값만 쌓는다. (새 th, 평균 변화 {d, prev, avg, pct, n} | None)."""
+    th = [list(x) for x in (old.get("th") or []) if isinstance(x, list) and len(x) >= 4]
+    if not th and old.get("avg"):
+        th = [[old.get("asOf") or stamp, old.get("lo"), old.get("avg"), old.get("hi"), old.get("n")]]
+    if not rec.get("avg"):
+        return th[-TH_MAX:], None
+    point = [stamp, rec.get("lo"), rec.get("avg"), rec.get("hi"), rec.get("n")]
+    chg = None
+    if not th or th[-1][1:4] != point[1:4]:
+        prev_avg = th[-1][2] if th else None
+        if th and th[-1][0] == stamp:
+            th[-1] = point
+        else:
+            th.append(point)
+        if prev_avg:
+            pct = (rec["avg"] / prev_avg - 1) * 100
+            if abs(pct) >= CHANGE_MIN_PCT:
+                chg = {"d": stamp, "prev": prev_avg, "avg": rec["avg"], "pct": round(pct, 1), "n": rec.get("n")}
+    return th[-TH_MAX:], chg
+
+
+def merge_changes(prev: list | None, fresh: list[dict], stamp: str, keep: set) -> list[dict]:
+    """직전 인덱스의 변경 목록 + 이번 실행분, CHANGE_DAYS 안·커버리지에 남은 종목만, 같은 (종목, 날짜)는 새 값."""
+    cutoff = (datetime.fromisoformat(stamp) - timedelta(days=CHANGE_DAYS)).date().isoformat()
+    by = {}
+    for row in list(prev or []) + list(fresh):
+        if isinstance(row, dict) and row.get("t") in keep and str(row.get("d") or "") >= cutoff:
+            by[(row["t"], row["d"])] = row
+    return sorted(by.values(), key=lambda r: (r["d"], abs(r.get("pct") or 0)), reverse=True)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="US 목표주가 범위(Nasdaq)")
     ap.add_argument("--top", type=int, default=1000)
@@ -262,6 +301,7 @@ def main() -> int:
     stamp = datetime.now(KST).date().isoformat()
     ok = none = fail = 0
     yahoo_ok = 0
+    changes: list[dict] = []
     yahoo = YahooTargets()
     t0 = time.time()
     for i, t in enumerate(tickers, 1):
@@ -285,7 +325,13 @@ def main() -> int:
                 continue
         if kind == "ok":
             old = records.get(t) or {}
-            rec["asOf"] = old.get("asOf") if {k: v for k, v in old.items() if k != "asOf"} == rec else stamp
+            same = {k: v for k, v in old.items() if k not in ("asOf", "th")} == rec
+            rec["asOf"] = old.get("asOf") if same else stamp
+            th, chg = carry_target_history(old, rec, stamp)
+            if th:
+                rec["th"] = th
+            if chg:
+                changes.append({"t": t, **chg})
             records[t] = rec
             ok += 1
         elif kind == "none":
@@ -310,6 +356,7 @@ def main() -> int:
         return 1
 
     written, ver = write_shards(OUT_DIR, "", SHARDS, records)
+    prev_index = load_json(OUT_JSON, {}) or {}
     payload = {
         "schema": 1,
         "updatedAtKst": now_kst(),
@@ -320,6 +367,7 @@ def main() -> int:
         "yahooShareClass": yahoo_ok,
         "shards": SHARDS,
         "ver": ver,
+        "changes": merge_changes(prev_index.get("changes"), changes, stamp, set(records)),
     }
     write_data(OUT_JSON, OUT_JS, "US_PRICE_TARGETS_INDEX", payload, indent=None, min_ratio=0.7)
     print(f"[목표주가] 레코드 {len(records)} · 바뀐 샤드 {len(written)}")

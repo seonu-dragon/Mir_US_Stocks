@@ -2142,11 +2142,11 @@ let searchSubTab = "analysis";
 // 종목 탭 서브탭은 4개(분석·찾기·비교·공시)지만 searchSubTab 은 잎 이름(top/screener/…/13f/…)을
 // 유지한다 — 렌더 분기와 ?tab=search&sub= 딥링크가 그 이름을 쓴다. 그룹은 여기서 계산한다.
 const FIND_SUBS = ["top", "filters", "screener", "formula", "scanner", "jump", "valuation"];
-const DISC_SEARCH_SUBS = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "eventstudy"];
+const DISC_SEARCH_SUBS = ["buyback", "valueup", "earnreact", "dividend", "contract", "dilution", "short", "eventstudy"];
 const INST_SUBS = ["13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown"];
 // 공시 세그먼트 표시 순서(자사주 … IPO, KR: DART·5%룰·임원·지배구조)
 // eventstudy(이벤트 스터디 워크벤치)는 맨 뒤 — 공시 세그먼트 기본 잎(첫 가시 탭)을 바꾸지 않는다.
-const DISC_ORDER = ["buyback", "earnreact", "dividend", "contract", "dilution", "short", "13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown", "eventstudy"];
+const DISC_ORDER = ["buyback", "valueup", "earnreact", "dividend", "contract", "dilution", "short", "13f", "congress", "insider", "activist", "events", "ipo", "dart", "krown", "eventstudy"];
 let lastFindSub = "top";
 let lastDiscSub = null;
 let discKrownKind = "major";
@@ -2166,7 +2166,7 @@ function disclosureViewActive() {
   return currentTab === "search" && INST_SUBS.includes(searchSubTab) && searchSubTab === institutionalSubTab;
 }
 // KR 전용(krDart) 종목검색 서브탭 — US 에선 가시성 게이트가 숨긴다.
-const KR_DART_SUBTABS = new Set(["buyback", "earnreact", "dividend", "contract", "dilution"]);
+const KR_DART_SUBTABS = new Set(["buyback", "valueup", "earnreact", "dividend", "contract", "dilution"]);
 // dividend·earnreact 는 US 자체 데이터(us_calendar·analyst_consensus+details)가 생겨
 // 양시장 탭이 됐다. US 에선 항상 표시, KR 에선 종전대로 krDart 게이트를 따른다.
 // buyback·dilution 도 US 데이터(8-K kind / us_dilution.js)가 생겨 양시장 탭이지만,
@@ -2486,6 +2486,7 @@ function activateSearchSub(name, { push = false, skipRender = false, renderOptio
   if (searchSubTab === "valuation") renderValuation();
   if (searchSubTab === "short") renderShortInterest();
   if (searchSubTab === "buyback") renderBuyback();
+  if (searchSubTab === "valueup" && typeof renderValueup === "function") renderValueup();
   if (searchSubTab === "earnreact") renderEarningsReactions();
   if (searchSubTab === "dividend") renderDividends();
   if (searchSubTab === "contract") renderContracts();
@@ -6949,6 +6950,10 @@ function dataTrustSources() {
     rows.push(source("배당 결정", "DART 원문 파싱", window.KR_DIVIDENDS, ["rows"], 72, "매일", "krDividends", "", true));
     rows.push(source("공급계약", "DART 원문 파싱", window.KR_CONTRACTS, ["rows"], 72, "매일", "krContracts", "", true));
     rows.push(source("실적발표 반응", "DART · Yahoo", window.KR_EARNINGS_REACTIONS, ["rows"], 72, "매일", "krEarningsReact", "", true));
+    rows.push(source("밸류업·주주환원", "DART 공시 · 원문 파싱", window.KR_VALUEUP, ["rows"], 72, "매일", "krValueup"));
+  }
+  if (cfg.id === "kr" && cfg.features?.earningsCalendar !== false) {
+    rows.push(source("실적 예정일(추정)", "DART 발표 이력", window.KOREA_EARNINGS_CALENDAR, ["earnings"], 72, "매일", "", "", true));
   }
   // 2026-08-06 신규 무키 피드 — 등록하지 않으면 신뢰도 센터의 감시 사각지대가 된다.
   rows.push(source("COT 포지셔닝", "CFTC", window.COT_POSITIONING, ["markets"], 336, "매주 금요일 발표", "cotPositioning"));
@@ -8793,6 +8798,7 @@ const HOME_ROUTE_RULES = [
   // IPO / 신규 상장
   { tab: "search", sub: "ipo", keywords: ["신규 상장", "신규상장", "공모주", "공모", "따상", "ipo"] },
   // 실적 발표 반응
+  { tab: "search", sub: "valueup", keywords: ["밸류업", "기업가치 제고", "기업가치제고", "주주환원", "자사주 소각", "배당 증액", "value-up"] },
   { tab: "search", sub: "earnreact", keywords: ["실적 발표 후", "실적발표 후", "실적 반응", "어닝 반응", "실적 서프라이즈", "earnings reaction"] },
   // 공시 / DART
   { tab: "search", sub: "dart", keywords: ["공시", "dart", "전자공시"] },

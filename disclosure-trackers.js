@@ -1048,6 +1048,116 @@ function renderBuyback() {
   delegateTickerClicks(wrap, ".ins-ticker");
 }
 
+// ===== 밸류업 · 주주환원 모아보기 (KR 전용) =====
+// build_kr_valueup.py 가 만든 KR_VALUEUP(최근 1년: 밸류업 계획·주주환원 정책 / 자사주 취득 / 소각 /
+// 배당 증액). 자사주 탭은 최근 7일 공시뿐이라, 1년치를 한 표로 모으는 쪽은 여기다.
+let valueupKind = "all", valueupSort = "date", valueupQuery = "", valueupLimit = 100, _valueupTried = false;
+
+function setupValueupControls() {
+  const bind = (id, apply) => {
+    const el = byId(id);
+    if (el && !el.dataset.bound) {
+      el.dataset.bound = "1";
+      el.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+        apply(b); valueupLimit = 100;
+        el.querySelectorAll("button").forEach((x) => x.classList.toggle("is-active", x === b)); renderValueup();
+      }));
+    }
+  };
+  bind("valueupKind", (b) => { valueupKind = b.dataset.kind; });
+  bind("valueupSort", (b) => { valueupSort = b.dataset.sort; });
+  const s = byId("valueupSearch");
+  if (s && !s.dataset.bound) { s.dataset.bound = "1"; s.addEventListener("input", () => { valueupQuery = s.value; valueupLimit = 100; renderValueup(); }); }
+}
+
+const VALUEUP_KIND_CLS = { plan: "ins-buy", buyback: "ins-buy", cancel: "ins-buy", dividendUp: "ins-buy" };
+
+function valueupEok(won) {
+  const v = Number(won) / 1e8;
+  if (!Number.isFinite(v) || v <= 0) return "";
+  return v >= 10000 ? `${(v / 10000).toFixed(2).replace(/\.?0+$/, "")}조원` : `${v >= 100 ? Math.round(v).toLocaleString() : v.toFixed(1).replace(/\.0$/, "")}억원`;
+}
+
+// 행 → { detail(내용 문장), size(정렬용 수치), sizeText }
+function valueupDescribe(r, capT) {
+  if (r.kind === "plan") {
+    const bits = [];
+    if (Number.isFinite(r.payoutPct)) bits.push(`배당성향 ${r.payoutPct}%`);
+    if (Number.isFinite(r.divGrowthPct)) bits.push(`배당금 ${r.divGrowthPct > 0 ? "+" : ""}${r.divGrowthPct}%`);
+    if (r.highDividend) bits.push("고배당기업");
+    const head = r.planName || r.excerpt || "";
+    return { detail: head, sub: [r.planName && r.excerpt ? r.excerpt : "", bits.join(" · ")].filter(Boolean).join(" — "), size: null, sizeText: "" };
+  }
+  if (r.kind === "buyback") {
+    const capPct = (r.amount && capT) ? r.amount / (capT * 1e12) * 100 : null;
+    return {
+      detail: [valueupEok(r.amount), r.shares ? `${Number(r.shares).toLocaleString()}주` : ""].filter(Boolean).join(" · ") || "금액 미확인",
+      sub: r.purpose || "", size: capPct, sizeText: capPct != null ? `시총의 ${capPct.toFixed(2)}%` : "",
+    };
+  }
+  if (r.kind === "cancel") {
+    return {
+      detail: [r.shares ? `${Number(r.shares).toLocaleString()}주` : "", valueupEok(r.amount)].filter(Boolean).join(" · ") || "—",
+      sub: r.method || "", size: Number.isFinite(r.sharesPct) ? r.sharesPct : null,
+      sizeText: Number.isFinite(r.sharesPct) ? `발행주식의 ${r.sharesPct.toFixed(2)}%` : "",
+    };
+  }
+  if (r.kind === "dividendUp") {
+    return {
+      detail: `${r.divKind || "배당"} 주당 ${Number(r.dps).toLocaleString()}원`,
+      sub: `1년 전 ${Number(r.prevDps).toLocaleString()}원(${r.prevDate || ""})${Number.isFinite(r.yieldPct) ? ` · 시가배당률 ${r.yieldPct}%` : ""}`,
+      size: r.dpsYoyPct, sizeText: Number.isFinite(r.dpsYoyPct) ? `+${r.dpsYoyPct.toFixed(1)}%` : "",
+    };
+  }
+  return { detail: r.title || "", sub: "", size: null, sizeText: "" };
+}
+
+function renderValueup() {
+  setupValueupControls();
+  const wrap = byId("valueupTable");
+  const meta = byId("valueupMeta");
+  if (!wrap) return;
+  if (!window.KR_VALUEUP) {
+    if (!_valueupTried) {
+      _valueupTried = true;
+      wrap.innerHTML = '<p class="muted">데이터를 불러오는 중…</p>';
+      ensureFeatureData("krValueup").then(renderValueup);
+    } else {
+      wrap.innerHTML = '<p class="muted">밸류업·주주환원 데이터를 불러오지 못했습니다.</p>';
+    }
+    return;
+  }
+  const payload = window.KR_VALUEUP || {};
+  const capByTicker = {};
+  ((typeof data !== "undefined" && data && data.stocks) || []).forEach((s) => { if (s.ticker) capByTicker[s.ticker] = Number(s.marketCapT ?? s.marketCapB ?? 0); });
+  let rows = (payload.rows || []).map((r) => ({ ...r, ...valueupDescribe(r, capByTicker[r.ticker] || null) }));
+  if (valueupKind !== "all") rows = rows.filter((r) => r.kind === valueupKind);
+  const q = valueupQuery.trim().toLowerCase();
+  if (q) rows = rows.filter((r) => (r.ticker || "").toLowerCase().includes(q) || (r.company || "").toLowerCase().includes(q));
+  const perCompany = {};
+  rows.forEach((r) => { perCompany[r.ticker] = (perCompany[r.ticker] || 0) + 1; });
+  if (valueupSort === "size") rows.sort((a, b) => (b.size ?? -1) - (a.size ?? -1) || (b.date || "").localeCompare(a.date || ""));
+  else if (valueupSort === "company") rows.sort((a, b) => (perCompany[b.ticker] - perCompany[a.ticker]) || (a.company || "").localeCompare(b.company || "") || (b.date || "").localeCompare(a.date || ""));
+  else rows.sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+
+  const c = payload.counts || {};
+  if (meta) meta.innerHTML = `업데이트 ${escapeHtml(payload.updatedAtKst || "")} · 계획 ${(c.plan || 0).toLocaleString()} · 자사주 취득 ${(c.buyback || 0).toLocaleString()} · 소각 ${(c.cancel || 0).toLocaleString()} · 배당 증액 ${(c.dividendUp || 0).toLocaleString()}건`;
+  if (!rows.length) { wrap.innerHTML = '<p class="muted">조건에 맞는 공시가 없습니다.</p>'; return; }
+  const shown = rows.slice(0, valueupLimit);
+  const body = shown.map((r) => `<tr>
+    <td class="ins-date">${escapeHtml(r.date || "")}</td>
+    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company || r.ticker)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), valueupSort === "company" && perCompany[r.ticker] > 1 ? `${perCompany[r.ticker]}건` : "")}</div></td>
+    <td class="ins-sub ${VALUEUP_KIND_CLS[r.kind] || ""}">${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">${escapeHtml(r.label || "")}</a>` : escapeHtml(r.label || "")}</td>
+    <td><span>${escapeHtml(r.detail || "")}</span>${r.sub ? `<div class="ins-sub">${escapeHtml(r.sub)}</div>` : ""}</td>
+    <td class="ins-num"><strong>${escapeHtml(r.sizeText || "—")}</strong></td>
+  </tr>`).join("");
+  const remain = rows.length - shown.length;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>유형</th><th>내용</th><th class="ins-num">규모</th></tr></thead><tbody>${body}</tbody></table>`
+    + (remain > 0 ? `<button type="button" class="ghost compact-btn list-more-btn" id="valueupMore">더 보기 (남은 ${remain.toLocaleString()}건)</button>` : "");
+  byId("valueupMore")?.addEventListener("click", () => { valueupLimit += 200; renderValueup(); });
+  delegateTickerClicks(wrap, ".ins-ticker");
+}
+
 // ===== 실적 발표(잠정) · 주가반응 (KR 전용) =====
 // build_kr_earnings_reactions.py 가 만든 KR_EARNINGS_REACTIONS(잠정실적 공시 + 발표일·
 // 익일 등락률)를 그대로 표로 보여준다. 예측 신호가 아니라 사실 피드다.
@@ -1074,7 +1184,7 @@ function applyEarnReactPanelLabels(isUs) {
   const p = panel.querySelector(".section-title p");
   if (p) p.innerHTML = isUs
     ? `Yahoo 실적 이력 기반. 시총 상위 종목의 <b>EPS 서프라이즈</b>와 <b>발표일(D0)·익일(D+1) 종가 등락률</b>입니다. 장 마감 후 발표는 반응이 주로 익일에 나타납니다. 예측 신호가 아닙니다.`
-    : `DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외. 예측 신호가 아닙니다.`;
+    : `DART '영업(잠정)실적' 공시의 <b>잠정 숫자</b>와 <b>발표일·익일 등락률</b>입니다. 예측 신호가 아닙니다.`;
   const disc = panel.querySelector(".data-disclaimer span");
   if (disc) disc.textContent = isUs
     ? "발표일·등락률은 저장된 일봉 종가 기준이며 실시간이 아닙니다. 과거 반응이 반복된다는 보장은 없습니다. 투자 권유가 아닙니다."
@@ -1210,11 +1320,25 @@ function renderEarningsReactions() {
   const body = rows.slice(0, 200).map((r) => `<tr>
     <td class="ins-date">${escapeHtml(r.date)}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), r.consolidated ? "연결" : "별도")}</div></td>
+    <td>${krPrelimCell(r)}</td>
     <td class="ins-num">${pct(r.dayPct)}</td>
     <td class="ins-num">${pct(r.nextPct)}</td>
   </tr>`).join("");
-  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th class="ins-num">공시일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
+  wrap.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>공시일</th><th>종목</th><th>잠정 실적</th><th class="ins-num">공시일 등락</th><th class="ins-num">익일 등락</th></tr></thead><tbody>${body}</tbody></table>`;
   delegateTickerClicks(wrap, ".ins-ticker");
+}
+
+// 잠정 실적 칸: 빌더(kr_prelim_parse.py)가 원문 표에서 만든 summary 문장 + 연간 컨센서스 대비 누계 달성률.
+// 숫자를 못 읽은 공시(판매대수 등 금액이 아닌 자체 표)는 '—'.
+function krPrelimCell(r) {
+  if (!r || !r.summary) return '<span class="muted">—</span>';
+  const c = r.consensus || {};
+  const prog = [
+    Number.isFinite(c.revenueProgressPct) ? `매출 ${c.revenueProgressPct.toFixed(0)}%` : "",
+    Number.isFinite(c.opProgressPct) ? `영업이익 ${c.opProgressPct.toFixed(0)}%` : "",
+  ].filter(Boolean).join(" · ");
+  const sub = prog ? `<div class="ins-sub">연간 컨센서스(${escapeHtml(String(c.estimateFy || "").slice(0, 4))}) 대비 누계 ${prog}</div>` : "";
+  return `<span>${escapeHtml(r.summary)}</span>${sub}`;
 }
 
 // ===== 배당 캘린더 (KR 전용) =====

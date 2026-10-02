@@ -2811,6 +2811,10 @@ def persist_snapshot(snapshot, light, details):
     run_subbuilder("earnings_reactions/kr", "build_kr_earnings_reactions.py")
     # 배당·공급계약 공시 원문 파싱(DART document.xml). 공시 빌더가 먼저 돌아야 한다.
     run_subbuilder("corp_disclosures/kr", "build_kr_corp_disclosures.py")
+    # 밸류업·주주환원 1년치(밸류업 계획·자사주 취득·소각·배당 증액). kr_disclosures 의 최근 7일을 이어 붙인다.
+    run_subbuilder("valueup/kr", "build_kr_valueup.py")
+    # 실적 발표 예정일(작년 같은 분기 실제 발표일 기준 추정). DART 호출 없이 kr_disclosures 로 이력만 갱신.
+    run_subbuilder("earnings_calendar/kr", "build_kr_earnings_calendar.py")
     # 애널리스트 컨센서스(FnGuide 목표주가·투자의견·추정기관수 + 증권사 리포트 원문).
     # 시총 상위 종목을 스냅샷에서 읽으므로 스냅샷을 쓴 뒤에 돌아야 한다. 인증 없는
     # 공개 소스만 쓰고 실패하면 기존 파일을 유지한 채 종료한다.

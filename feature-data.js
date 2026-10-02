@@ -48,6 +48,8 @@ const FEATURE_DATA = {
   krEarningsReact:{ global: "KR_EARNINGS_REACTIONS", path: "data/korea/earnings_reactions.js", feature: "krDart", krOnly: true },
   // 배당·공급계약 공시 원문 파싱(build_kr_corp_disclosures.py). KR 전용.
   krDividends:{ global: "KR_DIVIDENDS", path: "data/korea/dividends.js", feature: "krDart", krOnly: true },
+  // 밸류업·주주환원 1년치(밸류업 계획·자사주 취득·소각·배당 증액, build_kr_valueup.py). 탭을 열 때만 받는다.
+  krValueup:{ global: "KR_VALUEUP", path: "data/korea/valueup.js", feature: "krDart", krOnly: true, heavy: true },
   krContracts:{ global: "KR_CONTRACTS", path: "data/korea/contracts.js", feature: "krDart", krOnly: true },
   // 미국 국채 수익률 곡선(FRED). 매크로 컨텍스트라 두 시장 모두에서 로드(미국 금리는
   // 글로벌 위험자산에 공통 영향). 시그널 탭 상단에 곡선·장단기 스프레드로 표시.
@@ -360,6 +362,9 @@ function refreshFeatureViews() {
   }
   if (currentTab === "search" && searchSubTab === "earnreact" && typeof renderEarningsReactions === "function") {
     calls.push(renderEarningsReactions);
+  }
+  if (currentTab === "search" && searchSubTab === "valueup" && typeof renderValueup === "function") {
+    calls.push(renderValueup);
   }
   if (currentTab === "search" && INST_SUBS.includes(searchSubTab)) {
     calls.push(() => activateInstitutionalSub(institutionalSubTab, { push: false }));

@@ -7,7 +7,8 @@
 //        data/korea/investor_flow_daily/sNN.json(시총 상위 480종목 20거래일, build_kr_investor_flow.py)
 // 사실 표시용이다 — 수급·신용잔고로 매매 판단을 만들지 않는다.
 
-const KRFLOW_VIEW = { market: "KOSPI", period: 21, investor: "frn", topSide: "Buy", topWin: "d1" };
+const KRFLOW_VIEW = { market: "KOSPI", period: 21, investor: "frn", topSide: "Buy", topWin: "d1", stKind: "frn", stSide: "Buy", stMarket: "all", stMin: 3 };
+const KRFLOW_STREAK_SHOW = 15;
 const KRFLOW_PERIODS = [[5, "1주"], [21, "1개월"], [63, "3개월"]];
 const KRFLOW_INVESTORS = [["ind", "개인"], ["frn", "외국인"], ["org", "기관"]];
 const KRFLOW_FUND_CARDS = [
@@ -49,7 +50,8 @@ function renderKrFlowMarket() {
   host.innerHTML = `
     ${krFlowInvestorCard(payload)}
     ${krFlowFundsCard(payload)}
-    ${krFlowTopCard(payload)}`;
+    ${krFlowTopCard(payload)}
+    ${krFlowStreakCard(payload)}`;
   if (!host.dataset.kfBound) {
     host.dataset.kfBound = "1";
     host.addEventListener("click", krFlowOnClick);
@@ -65,6 +67,10 @@ function krFlowOnClick(ev) {
     else if (key === "investor") KRFLOW_VIEW.investor = val;
     else if (key === "side") KRFLOW_VIEW.topSide = val;
     else if (key === "win") KRFLOW_VIEW.topWin = val;
+    else if (key === "stKind") KRFLOW_VIEW.stKind = val;
+    else if (key === "stSide") KRFLOW_VIEW.stSide = val;
+    else if (key === "stMarket") KRFLOW_VIEW.stMarket = val;
+    else if (key === "stMin") KRFLOW_VIEW.stMin = Number(val) || 2;
     renderKrFlowMarket();
     return;
   }
@@ -205,6 +211,45 @@ function krFlowTopCard(payload) {
         ${krFlowTopTable(sect[`frn${side}`], `외국인 ${word}`)}
         ${krFlowTopTable(sect[`org${side}`], `기관 ${word}`)}
       </div>
+    </section>`;
+}
+
+// 외국인·기관·동시(쌍끌이) n일 연속 순매수/순매도. 데이터는 build_kr_investor_flow.py compute_streaks(20거래일 창).
+function krFlowStreakCard(payload) {
+  const C = window.MirKrFlowCore;
+  const st = payload.streaks;
+  if (!st || !C || typeof C.streakRows !== "function") return "";
+  const v = KRFLOW_VIEW;
+  const word = v.stSide === "Buy" ? "순매수" : "순매도";
+  const who = { frn: "외국인", org: "기관", both: "외국인·기관 동시" }[v.stKind] || "";
+  const rows = C.streakRows(st[`${v.stKind}${v.stSide}`], v.stMarket, v.stMin, KRFLOW_STREAK_SHOW);
+  const body = rows.map((x, i) => `
+    <tr data-kf-ticker="${escapeHtml(x.t)}" tabindex="0">
+      <td class="kf-rank">${i + 1}</td>
+      <th scope="row">${escapeHtml(x.n || x.t)}</th>
+      <td class="kf-streak-days">${escapeHtml(C.streakLabel(x, st.window))}</td>
+      <td class="${C.tone(x.a)}">${C.fmtSigned(x.a)}</td>
+      <td class="${C.tone(x.r)}">${x.r == null ? "—" : fmtSignedPct(x.r)}</td>
+    </tr>`).join("");
+  const table = rows.length
+    ? `<table class="kf-table kf-streak-table">
+        <thead><tr><th></th><th>종목</th><th>연속</th><th>누적 금액(억)</th><th>기간 등락률</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table>`
+    : `<p class="muted">조건에 맞는 종목 없음</p>`;
+  return `
+    <section class="kf-card" aria-label="연속 ${word}">
+      <header class="kf-head">
+        <h3>연속 ${word}</h3>
+        ${krFlowSeg("stKind", [["frn", "외국인"], ["org", "기관"], ["both", "동시"]], v.stKind)}
+        ${krFlowSeg("stSide", [["Buy", "순매수"], ["Sell", "순매도"]], v.stSide)}
+      </header>
+      <div class="kf-streak-filters">
+        ${krFlowSeg("stMarket", [["all", "전체"], ["kospi", "코스피"], ["kosdaq", "코스닥"]], v.stMarket)}
+        ${krFlowSeg("stMin", [[2, "2일+"], [3, "3일+"], [5, "5일+"], [10, "10일+"]], v.stMin)}
+      </div>
+      <p class="kf-sub">${escapeHtml(who)} ${word} · ${escapeHtml(krFlowDateShort(st.asOf))} 기준</p>
+      ${table}
     </section>`;
 }
 

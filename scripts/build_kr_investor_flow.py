@@ -56,8 +56,9 @@ data/korea/investor_flow_daily/sNN.json(16개)에 남긴다. 새 호출은 없�
   - 내용이 같으면 파일을 다시 쓰지 않는다(주말·연휴 재실행에 커밋이 생기지 않게).
     그래서 샤드에는 실행 시각을 넣지 않는다.
 
-외국인·기관 순매수 금액 상위(수량 × 종가, 추정)는 샤드 대상과 무관하게 전 종목 일별 행으로
-여기서 계산해 investor_flow.json 의 top 에 싣는다(build_kr_market_funds.py 가 옮겨 싣는다).
+외국인·기관 순매수 금액 상위(수량 × 종가, 추정)와 n일 연속 순매수·순매도(streaks)는 샤드 대상과
+무관하게 전 종목 일별 행으로 여기서 계산해 investor_flow.json 의 top·streaks 에 싣는다
+(build_kr_market_funds.py 가 옮겨 싣는다).
 """
 
 from __future__ import annotations
@@ -93,6 +94,7 @@ DAILY_SHARDS = 16
 DAILY_MAX = 480              # 일별 표 대상 종목 수(시총 상위, 상세 파일 보유) — 하루 300KB 예산에 맞춘 값
 DETAILS_DIR = ROOT / "data" / "korea" / "details"
 TOP_N = 10
+STREAK_N = 60   # 연속 순매수·순매도 목록 길이(화면이 시장 필터 뒤 앞쪽만 보여 준다)
 HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json",
@@ -324,6 +326,67 @@ def compute_top(daily: dict[str, list], names: dict[str, str], n: int = TOP_N) -
     return out
 
 
+def _streak(rows: list, sign_of) -> tuple[int, int]:
+    """최신 행부터 같은 부호가 이어진 행 수와 그 부호(+1 매수 / -1 매도). 0·결측에서 끊는다."""
+    first = sign_of(rows[0]) if rows else 0
+    if not first:
+        return 0, 0
+    k = 0
+    for r in rows:
+        if sign_of(r) != first:
+            break
+        k += 1
+    return k, first
+
+
+def compute_streaks(daily: dict[str, list], names: dict[str, str], markets: dict[str, str],
+                    n: int = STREAK_N, window: int = FLOW_DAYS) -> dict | None:
+    """외국인·기관·쌍끌이(둘 다) n일 연속 순매수/순매도 — 최신 거래일까지 이어진 연속만.
+
+    일별 행은 최신순 [YYYYMMDD, 종가, 전일대비, 개인, 외국인, 기관, 보유율]. 연속일이 수집 창(window)을
+    다 채우면 그보다 길 수 있어 x=1 로 표시한다(화면 '20일+'). 금액 = Σ 수량 × 그날 종가(추정, 억 원),
+    r = 연속 시작 전날 종가 대비 최신 종가 등락률(%). 2일 이상만 싣고 연속일 → |금액| 순으로 자른다.
+    """
+    latest = max((rows[0][0] for rows in daily.values() if rows and rows[0] and rows[0][0]), default=None)
+    if not latest:
+        return None
+
+    def sgn(v):
+        return 0 if v is None or v == 0 else (1 if v > 0 else -1)
+
+    kinds = {
+        "frn": lambda r: sgn(r[4]),
+        "org": lambda r: sgn(r[5]),
+        "both": lambda r: (sgn(r[4]) if sgn(r[4]) == sgn(r[5]) else 0),
+    }
+    acc = {f"{k}{side}": [] for k in kinds for side in ("Buy", "Sell")}
+    for t, rows in daily.items():
+        rows = [r for r in rows if r and len(r) >= 6]
+        if not rows or rows[0][0] != latest or rows[0][1] is None:
+            continue
+        for kind, sign_of in kinds.items():
+            days, sign = _streak(rows, sign_of)
+            if days < 2:
+                continue
+            seg = rows[:days]
+            amt = 0.0
+            for r in seg:
+                if r[1] is None:
+                    continue
+                qty = (r[4] or 0) + (r[5] or 0) if kind == "both" else (r[4] if kind == "frn" else r[5]) or 0
+                amt += float(qty) * float(r[1])
+            item = {"t": t, "n": names.get(t, t), "m": markets.get(t, ""), "d": days, "a": round(amt / 1e8, 1)}
+            if days == len(rows) >= window:
+                item["x"] = 1
+            if days < len(rows) and rows[days][1]:
+                item["r"] = round((float(rows[0][1]) / float(rows[days][1]) - 1) * 100, 2)
+            acc[f"{kind}{'Buy' if sign > 0 else 'Sell'}"].append(item)
+    out = {"asOf": f"{latest[:4]}-{latest[4:6]}-{latest[6:8]}", "window": window}
+    for key, items in acc.items():
+        out[key] = sorted(items, key=lambda x: (-x["d"], -abs(x["a"])))[:n]
+    return out
+
+
 def summarize(rows: list[dict]) -> dict:
     """최근 5일·20일 순매수 합계와 거래량 대비 비율."""
     def total(key, n):
@@ -408,7 +471,9 @@ def main() -> int:
     for t in target_daily:
         if t in out:
             out[t]["dy"] = 1
-    top = compute_top(daily, {str(s["ticker"]).zfill(6): s.get("company") or "" for s in stocks})
+    names = {str(s["ticker"]).zfill(6): s.get("company") or "" for s in stocks}
+    top = compute_top(daily, names)
+    streaks = compute_streaks(daily, names, {str(s["ticker"]).zfill(6): s.get("market") or "" for s in stocks})
     print(f"[수급] 일별 샤드 대상 {len(target_daily)}종목 · 바뀐 샤드 {len(daily_paths)}개 · "
           f"{daily_bytes / 1024:.0f}KB")
     payload = {
@@ -423,6 +488,8 @@ def main() -> int:
         "dailyCount": len(target_daily),
         # 외국인·기관 순매수 금액 상위(전 종목, 수량 × 종가 추정). build_kr_market_funds.py 가 옮겨 싣는다.
         "top": top,
+        # 외국인·기관·쌍끌이 연속 순매수/순매도(전 종목, 20거래일 창). build_kr_market_funds.py 가 옮겨 싣는다.
+        "streaks": streaks,
         "stocks": out,
     }
     text = json.dumps(payload, ensure_ascii=False, separators=(",", ":"))

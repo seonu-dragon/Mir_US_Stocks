@@ -179,7 +179,23 @@
     return decodeStock(shard.t[code], dates);
   }
 
-  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows };
+  // 연속 순매수·순매도 목록(build_kr_investor_flow.py compute_streaks) → 시장 필터 + 최소 연속일 + 앞 limit 개.
+  // market: "all" | "kospi" | "kosdaq". 항목 {t, n, m, d(연속일), a(억), r(연속 기간 등락률), x(창을 다 채움)}.
+  function streakRows(list, market, minDays, limit) {
+    const src = Array.isArray(list) ? list : [];
+    const m = String(market || "all").toLowerCase();
+    const min = finite(minDays) ? minDays : 2;
+    const out = src.filter((x) => x && finite(x.d) && x.d >= min && (m === "all" || String(x.m || "").toLowerCase() === m));
+    return finite(limit) && limit > 0 ? out.slice(0, limit) : out;
+  }
+
+  // 연속일 표기: 수집 창을 다 채운 종목은 그보다 길 수 있어 '20일+'.
+  function streakLabel(x, windowDays) {
+    if (!x || !finite(x.d)) return "—";
+    return x.x ? `${finite(windowDays) ? windowDays : x.d}일+` : `${x.d}일`;
+  }
+
+  const api = { shardOf, fmtSigned, fmtPlain, tone, lastN, cumulative, sumKey, delta, barGeometry, linePath, isoDate, undelta, decodeStock, dailyRows, streakRows, streakLabel };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrFlowCore = api;
 })(typeof window !== "undefined" ? window : null);

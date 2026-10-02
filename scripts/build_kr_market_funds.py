@@ -251,9 +251,9 @@ def fetch_investors(prev: dict, now: datetime) -> tuple[dict, list[str]]:
 
 
 # ---------------------------------------------------------------- 3) 순매수 상위
-def load_top(path: Path | None = None) -> dict | None:
+def load_top(path: Path | None = None, key: str = "top") -> dict | None:
     try:
-        return json.loads((path or FLOW_JSON).read_text(encoding="utf-8")).get("top")
+        return json.loads((path or FLOW_JSON).read_text(encoding="utf-8")).get(key)
     except (OSError, json.JSONDecodeError, AttributeError):
         return None
 
@@ -335,6 +335,7 @@ def main() -> int:
 
     # 3) 순매수 상위(파일만 읽음)
     top = load_top() or prev.get("top")
+    streaks = load_top(key="streaks") or prev.get("streaks")
 
     if not funds_rows and not any(investors.get(m) for m in MARKETS):
         print("[중단] 증시자금·투자자별 모두 0건 — 파일을 쓰지 않는다.")
@@ -356,11 +357,13 @@ def main() -> int:
             "funds": "금융투자협회 종합통계(freesis)",
             "investors": "네이버 금융 (코스피·코스닥 투자자별 순매수)",
             "top": "네이버 금융 종목별 순매수 수량 × 종가(추정)",
+            "streaks": "네이버 금융 종목별 20거래일 순매수(연속일·수량 × 종가 추정)",
         },
         "funds": {"asOf": funds_rows[-1]["d"] if funds_rows else None, "rows": funds_rows},
         "investors": {"asOf": max((investors[m][-1]["d"] for m in MARKETS if investors.get(m)), default=None),
                       **{m: investors.get(m) or [] for m in MARKETS}},
         "top": top,
+        "streaks": streaks,
         "check": ecos_check(funds_rows, industry),
         "errors": errors[:10],
     }

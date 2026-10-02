@@ -8,15 +8,17 @@
 //   · 칩 줄: #topBucket(지수/그룹)·#topMetric(정렬 지표) 셀렉트를 칩으로 비춘다 — 칩을 누르면 셀렉트 값을
 //     바꾸고 change 이벤트를 보내 기존 핸들러가 다시 그린다(셀렉트는 고급 필터 안에 그대로 있다).
 //   · 긴 표는 LIST_LIMITS(topStocksTableWrap, 50행 + 더 보기)가 자른다.
-//   · '목록' 칩(#findChipsPreset): 배당 랭킹 · 신규상장 · 관리·경보(국내). 켜면 같은 표 자리에 그 목록을
+//   · '목록' 칩(#findChipsPreset): 배당 랭킹 · 신규상장 · 관리·경보(국내) · 서학개미 TOP(미국). 켜면 같은 표 자리에 그 목록을
 //     그린다(계산은 find-table-core.js). 정렬 지표 칩을 누르거나 같은 칩을 다시 누르면 일반 표로 돌아온다.
 
 const FT_VIEW_KEY = "mir.find.view";
 const FT_METRIC_CHIPS = ["changePct", "monthChangePct", "volumeRatio", "amount", "marketCapB", "pe", "rsi14"];
 const FT_DIV_LIMIT = 300;
 let ftLast = { rows: [], metric: "changePct" };
-let ftList = null; // null | "dividend" | "ipo" | "alerts"
+let ftList = null; // null | "dividend" | "ipo" | "alerts" | "seohak"
 let ftAlertFilter = "all";
+let ftSeohak = { kind: "custody", period: "1w" };
+let ftSeohakTried = false;
 
 function ftCore() { return window.MirFindTableCore; }
 function ftMarket() { return typeof isKrMarket === "function" && isKrMarket() ? "kr" : "us"; }
@@ -108,7 +110,7 @@ function ftApplyView() {
   const seg = byId("findViewSeg");
   if (seg) seg.hidden = Boolean(ftList);
   const bucketChips = byId("findChipsBucket");
-  if (bucketChips) bucketChips.hidden = ftList === "ipo" || ftList === "alerts";
+  if (bucketChips) bucketChips.hidden = ftList === "ipo" || ftList === "alerts" || ftList === "seohak";
   byId("findViewSeg")?.querySelectorAll("[data-fview]").forEach((b) => {
     const on = b.dataset.fview === view;
     b.classList.toggle("is-active", on);
@@ -122,6 +124,7 @@ function ftApplyView() {
 function renderFindTable(rows, metric) {
   ftLast = { rows: rows || [], metric: metric || "changePct" };
   if (ftList === "alerts" && ftMarket() !== "kr") ftList = null;
+  if (ftList === "seohak" && ftMarket() !== "us") ftList = null;
   ftSyncChips();
   ftApplyView();
   const wrap = byId("topStocksTableWrap");
@@ -303,7 +306,82 @@ function ftRenderAlerts(wrap, core) {
     + `<p class="ft-list-note">기준일 ${escapeHtml(asOf)}</p>`;
 }
 
+// 서학개미 TOP — SEIBro 미국 주식 보관·결제 상위 50(build_seohak_top.py). 금액은 USD.
+const FT_SEOHAK_KINDS = [["custody", "보관금액"], ["net", "순매수"], ["buy", "매수"], ["sell", "매도"]];
+const FT_SEOHAK_PERIODS = [["1w", "1주"], ["1m", "1개월"]];
+
+function ftUsd(v) {
+  if (v == null || !Number.isFinite(Number(v))) return "—";
+  const n = Number(v);
+  const a = Math.abs(n);
+  const s = n < 0 ? "−" : "";
+  if (a >= 1e9) return `${s}$${(a / 1e9).toFixed(2)}B`;
+  if (a >= 1e6) return `${s}$${(a / 1e6).toFixed(1)}M`;
+  return `${s}$${Math.round(a).toLocaleString("en-US")}`;
+}
+
+function ftRankMove(r) {
+  if (r.isNew) return `<span class="ft-flag">신규</span>`;
+  if (r.prevRank == null) return "—";
+  const d = r.prevRank - r.rank;
+  if (!d) return `<span class="muted">−</span>`;
+  return `<span class="${d > 0 ? "pos" : "neg"}">${d > 0 ? "▲" : "▼"}${Math.abs(d)}</span>`;
+}
+
+function ftRenderSeohak(wrap) {
+  const sd = window.SEOHAK_TOP;
+  if (!sd || !sd.lists) {
+    ftSetMeta("서학개미 TOP");
+    if (!ftSeohakTried && typeof ensureFeatureData === "function") {
+      ftSeohakTried = true;
+      ensureFeatureData("seohakTop").then(() => { if (ftList === "seohak") ftRerender(); });
+      wrap.innerHTML = `<p class="ft-empty muted">서학개미 데이터를 불러오는 중입니다.</p>`;
+    } else {
+      wrap.innerHTML = `<p class="ft-empty muted">서학개미 데이터가 아직 없습니다.</p>`;
+    }
+    return;
+  }
+  const custody = ftSeohak.kind === "custody";
+  const key = custody ? "custody" : `${ftSeohak.kind}_${ftSeohak.period}`;
+  const list = sd.lists[key];
+  const chip = (attr, k, label, on) => `<button type="button" class="ft-chip${on ? " is-active" : ""}" data-${attr}="${k}" aria-pressed="${on ? "true" : "false"}">${label}</button>`;
+  const chips = `<div class="ft-chips ft-subchips" role="group" aria-label="구분">${FT_SEOHAK_KINDS.map(([k, label]) => chip("ft-seohak-kind", k, label, ftSeohak.kind === k)).join("")}</div>`
+    + (custody ? "" : `<div class="ft-chips ft-subchips" role="group" aria-label="기간">${FT_SEOHAK_PERIODS.map(([k, label]) => chip("ft-seohak-period", k, label, ftSeohak.period === k)).join("")}</div>`);
+  const kindLabel = (FT_SEOHAK_KINDS.find((x) => x[0] === ftSeohak.kind) || [])[1] || "";
+  if (!list || !Array.isArray(list.rows) || !list.rows.length) {
+    ftSetMeta(`서학개미 TOP · ${kindLabel}`);
+    wrap.innerHTML = chips + `<p class="ft-empty muted">이 목록은 아직 수집되지 않았습니다.</p>`;
+    return;
+  }
+  const span = custody ? `기준 ${ftFmtDate(list.date)}` : `${ftFmtDate(list.start)}~${ftFmtDate(list.date)}`;
+  ftSetMeta(`서학개미 TOP · ${kindLabel}${custody ? "" : " 결제"} 상위 ${list.rows.length} · ${span}`);
+  const stocks = (typeof data === "object" && data && Array.isArray(data.stocks)) ? data.stocks : [];
+  const byTicker = new Map(stocks.map((s) => [s.ticker, s]));
+  const moneyCols = custody ? [["amount", "보관금액"]] : [["net", "순매수"], ["buy", "매수"], ["sell", "매도"]];
+  const sortKey = custody ? "amount" : ftSeohak.kind;
+  const head = `<th scope="col" class="ft-name">종목</th>`
+    + moneyCols.map(([k, label]) => k === sortKey
+      ? `<th scope="col" class="num is-sorted" aria-sort="descending">${label} ▼</th>`
+      : `<th scope="col" class="num">${label}</th>`).join("")
+    + `<th scope="col" class="num">1주 전 대비</th><th scope="col" class="num">현재가</th><th scope="col" class="num">등락률</th>`;
+  const body = list.rows.map((r) => {
+    const item = r.t ? byTicker.get(r.t) || null : null;
+    const chg = item && Number.isFinite(Number(item.changePct)) ? `<span class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</span>` : "—";
+    const money = moneyCols.map(([k]) => `<td class="num${k === "net" && Number(r[k]) < 0 ? " neg" : ""}">${ftUsd(r[k])}</td>`).join("");
+    return `<tr${item ? ` data-ticker="${escapeHtml(item.ticker)}" tabindex="0"` : ' class="is-static"'}>
+      ${ftNameCell(r.rank, item, r.name, item ? null : (r.t || ""))}
+      ${money}
+      <td class="num">${ftRankMove(r)}</td>
+      <td class="num">${ftPriceText(item)}</td>
+      <td class="num">${chg}</td>
+    </tr>`;
+  }).join("");
+  wrap.innerHTML = chips + ftTableHtml(head, body, "ft-list-table")
+    + `<p class="ft-list-note">업데이트 ${escapeHtml(sd.updatedAtKst || "")}</p>`;
+}
+
 function ftRenderList(wrap, core) {
+  if (ftList === "seohak") { ftRenderSeohak(wrap); return; }
   if (ftList === "dividend") ftRenderDividend(wrap, core);
   else if (ftList === "ipo") ftRenderIpo(wrap, core);
   else if (ftList === "alerts") ftRenderAlerts(wrap, core);
@@ -323,6 +401,7 @@ function ftSyncPresetChips() {
   if (!host) return;
   const presets = [["dividend", "배당 랭킹"], ["ipo", "신규상장"]];
   if (ftMarket() === "kr" && window.KR_MARKET_ALERTS) presets.push(["alerts", "관리·경보"]);
+  if (ftMarket() === "us") presets.push(["seohak", "서학개미 TOP"]);
   const sig = presets.map((p) => p[0]).join("|") + `#${ftList || ""}`;
   if (host.dataset.sig === sig) return;
   host.dataset.sig = sig;
@@ -457,6 +536,10 @@ function setupFindTable() {
       if (e.target.closest("[data-ft-ext]")) return; // 원문 링크는 새 탭으로만
       const af = e.target.closest("[data-ft-alert]");
       if (af) { ftAlertFilter = af.dataset.ftAlert; ftRerender(); return; }
+      const sk = e.target.closest("[data-ft-seohak-kind]");
+      if (sk) { ftSeohak.kind = sk.dataset.ftSeohakKind; ftRerender(); return; }
+      const sp = e.target.closest("[data-ft-seohak-period]");
+      if (sp) { ftSeohak.period = sp.dataset.ftSeohakPeriod; ftRerender(); return; }
       const sort = e.target.closest(".ft-sort");
       if (sort) { ftSetSelect("topMetric", sort.dataset.metric); return; }
       const tr = e.target.closest("tr[data-ticker]");

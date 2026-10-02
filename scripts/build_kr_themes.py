@@ -60,6 +60,7 @@ if str(SCRIPTS) not in sys.path:
     sys.path.insert(0, str(SCRIPTS))
 
 import kr_theme_rules as R  # noqa: E402
+from kr_theme_anchors import CLOSED, CORE  # noqa: E402
 from briefing_store import atomic_write_text, repository_publish_lock  # noqa: E402
 from sec_client import DART_REGRESSION_FLOOR, write_data  # noqa: E402
 
@@ -470,6 +471,7 @@ def assemble(prev_payload: dict, results: dict, tstate: dict, llm_cache: dict, l
 
     - 이번에 처리한 종목(results)은 새 규칙 결과로 교체, 나머지는 직전 payload 의 규칙 편입을 유지.
     - LLM 판정(llm_cache)으로 통과한 보류 후보는 상태의 amb 에서 매번 다시 붙인다(by='llm').
+    - 대표 종목(kr_theme_anchors.CORE)도 매번 다시 붙인다(by='core').
     - universe 가 주어지면 그 밖(상장폐지·스팩 해산 등) 종목은 뺀다.
     """
     by_theme: dict[str, dict[str, dict]] = {t["id"]: {} for t in R.THEMES}
@@ -515,6 +517,31 @@ def assemble(prev_payload: dict, results: dict, tstate: dict, llm_cache: dict, l
             if not mt or (neg and neg.search(nm)) or is_excluded(t, th["id"]):
                 continue
             by_theme[th["id"]][t] = {"t": t, "ev": f"상장 종목명 '{nm}'", "kw": mt.group(0), "by": "name"}
+
+    # 대표 종목(kr_theme_anchors.CORE): 규칙이 놓친 테마 핵심 종목을 편집으로 붙인다(by='core').
+    # 근거는 그 종목의 보류 후보 문장(원문)이 있으면 그것, 없으면 빈 문장 — 문장을 지어내지 않는다.
+    for tid, pairs in CORE.items():
+        if tid not in by_theme:
+            continue
+        for t, _ in pairs:
+            if t in by_theme[tid] or is_excluded(t, tid):
+                continue
+            if universe is not None and t not in universe:
+                continue
+            h = ((tstate.get(t) or {}).get("amb") or {}).get(tid)
+            by_theme[tid][t] = ({"t": t, "ev": h["ev"], "kw": h["kw"], "c": h.get("c", 0), "n": h.get("n", 1), "by": "core"}
+                                if h else {"t": t, "ev": "", "kw": "", "by": "core"})
+    # 닫힌 테마(CLOSED)는 대표 종목만 — 규칙이 잡은 납품사·장비사는 뺀다.
+    for tid in CLOSED:
+        keep = {t for t, _ in CORE.get(tid, ())}
+        if tid in by_theme:
+            by_theme[tid] = {t: m for t, m in by_theme[tid].items() if t in keep}
+    # 스팩은 스팩 테마에만 — 합병 전 스팩의 사업보고서는 합병 대상·업종 설명을 담아 다른 테마에 걸린다.
+    spac_re = re.compile(next(th["nameRe"] for th in R.THEMES if th["id"] == "spac"))
+    for tid, members in by_theme.items():
+        if tid != "spac":
+            for t in [t for t in members if spac_re.search(names.get(t) or "")]:
+                members.pop(t)
 
     themes_out = []
     used: set[str] = set()

@@ -7,9 +7,20 @@
 from __future__ import annotations
 
 import json
+import re
+
+import pytest
 
 import build_kr_themes as kt
+import kr_theme_anchors as anchors
 import kr_theme_rules as rules
+
+
+@pytest.fixture(autouse=True)
+def _no_core(monkeypatch):
+    """조립 테스트는 대표 종목(CORE) 없이 규칙·LLM 동작만 본다. 대표 종목은 아래 전용 테스트에서."""
+    monkeypatch.setattr(kt, "CORE", {})
+    monkeypatch.setattr(kt, "CLOSED", frozenset())
 
 
 def theme(tid):
@@ -356,3 +367,65 @@ def test_name_based_themes_spac_and_reits():
     by = {t["id"]: {m["t"] for m in t["members"]} for t in body["themes"]}
     assert by["spac"] == {"111111"}
     assert by["reits"] == {"222222"}
+
+
+# ───────────────────────── 대표 종목(kr_theme_anchors.CORE)
+
+def test_core_anchor_uses_amb_sentence_or_empty(monkeypatch):
+    monkeypatch.setattr(kt, "CORE", {"hbm_ai_semi": (("000660", "SK하이닉스"), ("005930", "삼성전자"), ("999999", "상장폐지")),
+                                     "auto_oem": (("005380", "현대차"),),
+                                     "memory": (("000660", "SK하이닉스"),)})
+    ev = "HBM3E 12단 제품의 양산 공급을 확대했습니다."
+    tstate = {"000660": {"rc": "1", "amb": {"hbm_ai_semi": {"ev": ev, "kw": "HBM3E", "c": 0, "n": 26}}}}
+    results = {"000660": {"memory": {"lvl": "high", "ev": "당사는 DRAM 을 생산합니다.", "kw": "DRAM", "c": 0, "n": 9}}}
+    body = kt.assemble({}, results, tstate, {}, {"000660": {"rc": "1"}}, {}, {}, {"000660", "005930", "005380"}, "2026-10-02")
+    by = {t["id"]: t for t in body["themes"]}
+    hbm = {m["t"]: m for m in by["hbm_ai_semi"]["members"]}
+    assert hbm["000660"] == {"t": "000660", "ev": ev, "kw": "HBM3E", "n": 26, "by": "core"}   # 원문 보류 문장을 근거로
+    assert hbm["005930"] == {"t": "005930", "ev": "", "kw": "", "by": "core"}                 # 문장이 없으면 지어내지 않는다
+    assert "999999" not in hbm                                                                # 상장 종목 밖은 건너뜀
+    assert by["auto_oem"]["members"] == [{"t": "005380", "ev": "", "kw": "", "by": "core"}]
+    assert by["memory"]["members"][0]["by"] == "rule"                                        # 규칙 편입은 그대로
+
+
+def test_core_anchor_respects_exclusion(monkeypatch):
+    monkeypatch.setattr(kt, "CORE", {"auto": (("000660", "SK하이닉스"),)})
+    monkeypatch.setattr(rules, "EXCLUDE", {("000660", "auto"): "테스트"})
+    body = kt.assemble({}, {}, {}, {}, {}, {}, {}, None, "2026-10-02")
+    assert next(t for t in body["themes"] if t["id"] == "auto")["members"] == []
+
+
+def test_core_anchor_table_is_well_formed():
+    ids = set(rules.THEME_IDS)
+    for tid, pairs in anchors.CORE.items():
+        assert tid in ids, tid
+        tickers = [t for t, _ in pairs]
+        assert len(tickers) == len(set(tickers)), tid
+        for t, nm in pairs:
+            assert re.fullmatch(r"\d{6}", t) and nm, (tid, t)
+            assert (t, tid) not in rules.EXCLUDE, (tid, t)
+
+
+def test_core_evidence_round_trips_through_split_and_merge(tmp_path, monkeypatch):
+    monkeypatch.setattr(kt, "CORE", {"auto_oem": (("005380", "현대차"),)})
+    body = kt.assemble({}, {}, {}, {}, {}, {}, {}, {"005380"}, "2026-10-02")
+    index, files = kt.split_evidence(body)
+    kt.write_evidence_files(files, tmp_path)
+    merged = kt.merge_evidence(index, tmp_path)
+    assert next(t for t in merged["themes"] if t["id"] == "auto_oem")["members"][0]["by"] == "core"
+
+
+def test_closed_theme_keeps_only_core(monkeypatch):
+    monkeypatch.setattr(kt, "CORE", {"auto_oem": (("005380", "현대차"),)})
+    monkeypatch.setattr(kt, "CLOSED", frozenset({"auto_oem"}))
+    results = {"331740": {"auto_oem": {"lvl": "high", "ev": "당사는 완성차 제조사에 보안 솔루션을 공급합니다.", "kw": "완성차", "c": 0, "n": 25}}}
+    body = kt.assemble({}, results, {}, {}, {}, {}, {}, None, "2026-10-02")
+    assert [m["t"] for m in next(t for t in body["themes"] if t["id"] == "auto_oem")["members"]] == ["005380"]
+
+
+def test_spac_only_in_spac_theme():
+    results = {"482520": {"game": {"lvl": "high", "ev": "당사는 게임을 개발합니다.", "kw": "게임", "c": 0, "n": 9}}}
+    body = kt.assemble({}, results, {}, {}, {}, {"482520": "교보16호스팩"}, {}, {"482520"}, "2026-10-02")
+    by = {t["id"]: t for t in body["themes"]}
+    assert by["game"]["members"] == []
+    assert [m["t"] for m in by["spac"]["members"]] == ["482520"]

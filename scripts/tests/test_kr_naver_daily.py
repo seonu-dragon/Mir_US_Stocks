@@ -186,18 +186,59 @@ def isolated_details(tmp_path, monkeypatch):
     return tmp_path
 
 
-def test_build_one_uses_naver_bars_and_yahoo_events(isolated_details, monkeypatch):
+def _krx_from(rows, delta=-2500.0):
+    """야후(KRX) 봉 — 통합 종가가 시작된 09-14 부터 종가가 다르다고 가정(실측: 09-29 KRX 272,500 · 네이버 275,000)."""
+    out = []
+    for r in rows:
+        c = r["close"] + (delta if r["date"] >= K.NAVER_INTEGRATED_SINCE else 0.0)
+        out.append({**r, "close": c, "high": max(r["high"], c), "low": min(r["low"], c)})
+    return out
+
+
+def test_build_one_uses_naver_bars_then_krx_from_yahoo_after_integration(isolated_details, monkeypatch):
     full = _fixture_rows()
     monkeypatch.setattr(K, "fetch_naver_daily", lambda code, start, end, retries=3: list(full))
     monkeypatch.setattr(K, "fetch_yahoo_history_kr",
-                        lambda ysym, range_="5y": (_bars(1, 40, 9.0), [["2026-09-05", 361.0]]))
+                        lambda ysym, range_="5y": (_krx_from(full), [["2026-09-05", 361.0]]))
     stock, err = K.build_one(_meta())
     assert err is None
     assert stock["barsSource"] == "naver"
     assert stock["historySource"] == "yahoo"                # '오늘 받은 실측' 의미는 그대로
+    assert stock["krxBarsSince"] == K.NAVER_INTEGRATED_SINCE
     closes = {row[5]: row[3] for row in stock["chartSeries"]}
-    assert closes["2026-09-29"] == 275000.0
-    assert stock["dividends"] == [["2026-09-05", 361.0]]   # 이벤트만 야후, 봉은 버린다
+    naver = {r["date"]: r["close"] for r in full}
+    assert closes["2026-09-29"] == naver["2026-09-29"] - 2500.0   # 통합 이후는 야후(KRX)
+    assert closes["2026-09-01"] == naver["2026-09-01"]            # 그 전은 네이버(수정주가)
+    assert stock["dividends"] == [["2026-09-05", 361.0]]
+
+
+def test_etf_keeps_naver_bars(isolated_details, monkeypatch):
+    full = _fixture_rows()
+    monkeypatch.setattr(K, "fetch_naver_daily", lambda code, start, end, retries=3: list(full))
+    monkeypatch.setattr(K, "fetch_yahoo_history_kr", lambda ysym, range_="5y": (_krx_from(full), []))
+    stock, err = K.build_one({**_meta(), "market": "etf"})
+    assert err is None and "krxBarsSince" not in stock
+    closes = {row[5]: row[3] for row in stock["chartSeries"]}
+    assert closes["2026-09-29"] == {r["date"]: r["close"] for r in full}["2026-09-29"]
+
+
+def test_spliced_cache_stays_incremental():
+    """통합 이후 캐시 봉은 야후 값이라 네이버와 늘 다르다 — 그 앞 날짜로만 비교해 전체 재수집하지 않는다."""
+    full = _fixture_rows()
+    cached = _krx_from(full[:-1])
+    fetch = FakeFetch(full)
+    rows, mode = K.fetch_naver_history_smart("005930", (cached, []), "naver", today=TODAY, fetch_fn=fetch,
+                                             integrated_since=K.NAVER_INTEGRATED_SINCE)
+    assert mode == "incremental" and len(fetch.calls) == 1
+    start, _ = fetch.calls[0]
+    assert start.isoformat() < K.NAVER_INTEGRATED_SINCE          # 통합 이전 날짜가 겹침에 들어오게 앞당김
+
+
+def test_splice_skips_dates_yahoo_does_not_have():
+    rows = [{"date": "2026-09-30", "open": 1, "high": 1, "low": 1, "close": 1.0, "volume": 1},
+            {"date": "2026-10-01", "open": 2, "high": 2, "low": 2, "close": 2.0, "volume": 2}]
+    n = K.splice_krx_bars(rows, [{"date": "2026-09-30", "open": 5, "high": 6, "low": 4, "close": 5.5, "volume": 9}])
+    assert n == 1 and rows[0]["close"] == 5.5 and rows[1]["close"] == 2.0   # 없는 날은 지어내지 않는다
 
 
 def test_build_one_falls_back_to_yahoo_and_says_so(isolated_details, monkeypatch):

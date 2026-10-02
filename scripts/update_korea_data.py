@@ -27,7 +27,7 @@ import time
 import urllib.parse
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -637,13 +637,14 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
         # 옛 HTML 파서는 숫자 6자리 코드만 잡았다(0193T0 같은 영숫자 ETF 는 KR_ETFS 로만).
         if not re.fullmatch(r"\d{6}", code) or not company:
             continue
-        # closePrice = KRX 정규장 종가(장중엔 KRX 현재가). 넥스트레이드(NXT) 애프터마켓 가격은
-        # overMarketPriceInfo.overPrice 로 따로 온다 — 대표가로 쓰지 않는다. 2026-09-26 실측 25종목:
-        # closePrice 는 KRX 일별 종가(siseJson)와 25/25 일치, overPrice 는 8종목이 달랐다.
+        # closePrice = 장중엔 KRX 현재가, 15:30~16:00 엔 정규장 종가. 넥스트레이드(NXT) 애프터마켓 가격은
+        # overMarketPriceInfo.overPrice 로 따로 온다 — 대표가로 쓰지 않는다. 다만 16:00 시간외 단일가가
+        # 시작되면 closePrice 도 그 가격으로 바뀐다(2026-10-02 실측) → apply_krx_official_close 가 덮는다.
         price = _raw_number(item, "closePriceRaw", "closePrice")
         if price is None:
             continue
         change_pct = parse_number(str(item.get("fluctuationsRatio") or ""))
+        change = _raw_number(item, "compareToPreviousClosePriceRaw", "compareToPreviousClosePrice")
         cap_raw = _raw_number(item, "marketValueRaw", "marketValue")
         listed_shares = listed_shares_from(item)
         # marketValueRaw 는 원 단위, marketValue 텍스트는 백만원 단위
@@ -667,6 +668,8 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             "yahooSymbol": yahoo_ticker(code, market),
             "quotePrice": price,
             "quoteChangePct": change_pct if change_pct is not None else 0.0,
+            # 전일 종가(= 현재가 − 전일 대비). KRX 종가로 덮을 때 ETF 등락률을 다시 계산하는 데 쓴다.
+            "quotePrevClose": (price - change) if change is not None and price - change > 0 else None,
             "quoteVolume": volume,
             "quoteAmount": amount,
             "quoteDate": quote_date,
@@ -678,6 +681,70 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             "groups": groups,
         })
     return out
+
+
+KRX_CLOSE_TIMEOUT = 300  # 초. pykrx 로그인 + 주식·ETF 전 종목 2요청이라 보통 10초 안쪽.
+
+
+def override_with_krx_close(rows, krx_rows: dict, krx_date: str) -> int:
+    """네이버 목록 행의 대표가를 KRX 공식 정규장 종가로 덮는다. 바꾼 행 수를 돌려준다.
+
+    네이버 closePrice 는 16:00 시간외 단일가부터 그 가격으로 바뀐다(fetch_kr_krx_close.py 주석).
+    시세 기준일(quoteDate)이 KRX 일자와 같은 행만 바꾼다 — 거래정지 종목처럼 기준일이 다른 행은
+    그날 KRX 값이 없거나 뜻이 달라 그대로 둔다. 등락률은 KRX 값, 없으면(ETF) 네이버 전일 종가로 계산.
+    상장주식수(listedShares)는 그대로다 — 시총만 KRX 공식값으로 바꾼다.
+    """
+    changed = 0
+    for row in rows:
+        k = krx_rows.get(row.get("symbol"))
+        if not k or row.get("quoteDate") != krx_date or not k.get("close"):
+            continue
+        close = float(k["close"])
+        pct = k.get("changePct")
+        prev = row.get("quotePrevClose")
+        if pct is None and prev:
+            pct = (close / prev - 1) * 100
+        if row.get("quotePrice") != close:
+            changed += 1
+        row["quotePrice"] = close
+        if pct is not None:
+            row["quoteChangePct"] = round(float(pct), 2)
+        if k.get("volume") is not None:
+            row["quoteVolume"] = float(k["volume"])
+        if k.get("amount") is not None:
+            row["quoteAmount"] = round(float(k["amount"]) / 1e6)  # 원 → 백만원(네이버 목록과 같은 단위)
+        if k.get("cap"):
+            row["marketCapT"] = row["marketCapB"] = float(k["cap"]) / 1e12
+    return changed
+
+
+def apply_krx_official_close(universe: dict[str, dict]) -> None:
+    """KRX 공식 일별 시세를 서브프로세스(pykrx 로그인)로 받아 네이버 대표가를 덮는다.
+
+    자격증명(KRX_ID/KRX_PW)이 없거나 실패하면 네이버 값 그대로 진행한다 — 16:00 전 실행이면 그 값도
+    정규장 종가다. 기준일은 목록 행에서 가장 많은 quoteDate(= 그날 거래일).
+    """
+    if not (os.environ.get("KRX_ID") and os.environ.get("KRX_PW")):
+        print("[krx-close] KRX_ID/KRX_PW 없음 — 네이버 closePrice 그대로(16:00 이후 실행이면 시간외 가격일 수 있다)")
+        return
+    dates: dict[str, int] = {}
+    for row in universe.values():
+        if row.get("quoteDate"):
+            dates[row["quoteDate"]] = dates.get(row["quoteDate"], 0) + 1
+    if not dates:
+        return
+    krx_date = max(dates, key=dates.get)
+    with tempfile.TemporaryDirectory() as tmp:
+        out = Path(tmp) / "krx_close.json"
+        if not run_subbuilder("krx-close", "fetch_kr_krx_close.py", "--date", krx_date.replace("-", ""),
+                              "--out", str(out), timeout=KRX_CLOSE_TIMEOUT) or not out.exists():
+            print("[krx-close] KRX 공식 종가를 못 받았다 — 네이버 closePrice 그대로 진행")
+            return
+        payload = json.loads(out.read_text(encoding="utf-8"))
+    if payload.get("date") != krx_date:
+        return
+    changed = override_with_krx_close(universe.values(), payload.get("rows") or {}, krx_date)
+    print(f"[krx-close] {krx_date} KRX 공식 종가 {len(payload.get('rows') or {})}종목 · 네이버와 달라 바꾼 행 {changed}")
 
 
 def fetch_all_listed(limit: int | None = None) -> list[dict]:
@@ -701,6 +768,8 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
                 break
         if limit and len(universe) >= limit:
             break
+
+    apply_krx_official_close(universe)
 
     metas = sorted(universe.values(), key=lambda m: m.get("marketCapT") or 0, reverse=True)
     if limit:
@@ -1189,6 +1258,17 @@ def attach_week52_from_history(stock: dict, rows: list) -> None:
 #   - 당일 장중에 부르면 오늘 봉이 들어온다. prepare_session_rows 가 시세 기준일 뒤 봉을 빼고, 다음 실행의
 #     증분이 겹침 구간을 새 값으로 덮어 확정값이 된다.
 #
+# ── 2026-10-02 정정: 네이버 일봉은 2026-09-14 부터 'KRX 종가'가 아니다 ──
+# 네이버 일봉 API(chart/day · fchart · siseJson 모두 같은 값)는 2026-09-14 부터 주식 종가가 장 마감 뒤 넥스트레이드
+# (NXT) 거래까지 합친 통합 종가다. 다음 금융(KRX)·야후와 2025-02~2026-09-13 은 400일 넘게 정확히 일치하다가
+# 09-14 부터 주식 192종목일 중 182일이 어긋났고(야후는 6일, 전부 수정주가가 원래 다른 207940), ETF 는 NXT
+# 대상이 아니라 그대로 일치했다(20종목 실측). 위 '야후가 KRX 와 다른 날 23%'(09-26)는 이 통합 종가를 KRX 로
+# 잘못 본 비교였다 — 005930 09-29 의 KRX 종가는 272,500(다음·야후)이고 275,000 은 통합 종가다.
+# 그래서 주식은 NAVER_INTEGRATED_SINCE 이후 봉을 야후 일봉(KRX)으로 덮는다(splice_krx_bars). 그 전 구간·ETF 는
+# 네이버(수정주가) 그대로. 야후 봉은 배당·분할 이벤트용으로 이미 받던 응답을 쓴다(추가 요청 없음).
+NAVER_INTEGRATED_SINCE = "2026-09-14"
+_krx_splice_stats = {"stocks": 0, "bars": 0, "noYahoo": 0}
+
 # 증분: 직전 detail 이 네이버 봉이고 최근이면 마지막 봉 21일 전부터만 받아 겹침을 비교한다. 수정주가는 권리락
 # 날 과거 전체가 바뀌므로 겹치는 종가가 하나라도 다르면 5년 전체를 다시 받는다. 야후 봉 캐시(전환 첫날)도 전체.
 NAVER_CHART_API = "https://api.stock.naver.com/chart/domestic/item"
@@ -1263,7 +1343,7 @@ def fetch_naver_daily(code: str, start, end, retries: int = 3) -> list[dict]:
     raise RuntimeError(f"naver daily failed: {code}: {last_exc}")
 
 
-def naver_overlap_ok(cached_rows: list, fresh_rows: list) -> bool:
+def naver_overlap_ok(cached_rows: list, fresh_rows: list, before: str | None = None) -> bool:
     """증분 병합해도 되는가. 캐시의 마지막 봉(장중·확정 전일 수 있음)을 뺀 겹침 날짜의 종가가 전부 같아야 한다.
 
     수정주가는 권리락·분할 날 과거 전체를 다시 계산하므로, 하나라도 다르면 캐시를 버리고 전체를 받는다.
@@ -1274,6 +1354,10 @@ def naver_overlap_ok(cached_rows: list, fresh_rows: list) -> bool:
     fresh_close = {row["date"]: row["close"] for row in fresh_rows}
     first_fresh = fresh_rows[0]["date"]
     overlap = [row for row in cached_rows if row["date"] >= first_fresh][:-1]
+    if before:
+        # 주식: before(NAVER_INTEGRATED_SINCE) 이후 캐시 봉은 야후(KRX)로 덮인 값이라 네이버 통합 종가와 늘 다르다
+        # — 그 앞 날짜로만 수정주가 변경(권리락 등)을 판단한다.
+        overlap = [row for row in overlap if row["date"] < before]
     if not overlap:
         return False
     for row in overlap:
@@ -1287,7 +1371,7 @@ def naver_overlap_ok(cached_rows: list, fresh_rows: list) -> bool:
 
 
 def fetch_naver_history_smart(code: str, cached, cached_source: str | None, *,
-                              force_full: bool = False, today=None, fetch_fn=None):
+                              force_full: bool = False, today=None, fetch_fn=None, integrated_since: str | None = None):
     """네이버 일봉 수집 진입점. 반환 (rows, mode) — mode ∈ {"incremental", "full", "full-mismatch"}.
 
     cached = load_cached_history 결과 (rows, dividends) 또는 None. cached_source 는 그 rows 의 원천.
@@ -1309,8 +1393,12 @@ def fetch_naver_history_smart(code: str, cached, cached_source: str | None, *,
         except (KeyError, TypeError, ValueError):
             last = None
         if last is not None and 0 <= (today - last).days <= NAVER_CACHE_MAX_AGE_DAYS:
-            fresh = fetch(code, last - timedelta(days=NAVER_INCREMENTAL_OVERLAP_DAYS), today)
-            if fresh and naver_overlap_ok(cached_rows, fresh):
+            start = last - timedelta(days=NAVER_INCREMENTAL_OVERLAP_DAYS)
+            if integrated_since:
+                # 비교할 통합 이전 날짜가 겹침에 들어오도록 시작을 앞당긴다(요청은 여전히 한 번).
+                start = min(start, date.fromisoformat(integrated_since) - timedelta(days=NAVER_INCREMENTAL_OVERLAP_DAYS))
+            fresh = fetch(code, start, today)
+            if fresh and naver_overlap_ok(cached_rows, fresh, before=integrated_since):
                 return UD.merge_history_rows(cached_rows, fresh), "incremental"
             mode = "full-mismatch"
     rows = fetch(code, today - timedelta(days=NAVER_FULL_LOOKBACK_DAYS), today)
@@ -1319,21 +1407,46 @@ def fetch_naver_history_smart(code: str, cached, cached_source: str | None, *,
     return rows[-UD.HISTORY_BAR_CAP:], mode
 
 
-def refresh_kr_events(ysym: str, symbol: str, cached) -> tuple[list | None, list | None]:
+def refresh_kr_events(ysym: str, symbol: str, cached, *, need_since: str | None = None):
     """네이버 봉을 쓴 종목의 배당·분할 이벤트는 여전히 야후에서 받는다(네이버 차트 API 에는 이벤트가 없다).
 
     봉은 버리고 이벤트만 쓴다. 직전 detail 에 배당이 있으면 1년치만 받아 합치고, 없으면 5년. 야후가 실패하면
-    직전 값을 그대로 이월한다(이벤트가 사라지지 않게). 반환 (dividends, splits) — splits None = 모름(키 생략).
+    직전 값을 그대로 이월한다(이벤트가 사라지지 않게). 반환 (dividends, splits, yahoo_rows) — splits None = 모름(키 생략),
+    yahoo_rows 는 같은 응답의 야후 일봉(KRX 종가 — splice_krx_bars 가 쓴다, 실패면 []).
+    need_since 를 주면 그 날짜부터의 봉이 들도록 1년으로 모자랄 때 전체(5y)로 받는다.
     """
     cached_divs = cached[1] if cached else None
     full = not cached_divs
+    if not full and need_since:
+        today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+        full = (today - date.fromisoformat(need_since)).days > 330
     try:
-        _, fresh_divs = fetch_yahoo_history_kr(ysym, range_="5y" if full else "1y")
+        yrows, fresh_divs = fetch_yahoo_history_kr(ysym, range_="5y" if full else "1y")
     except Exception:
         UD._FRESH_SPLITS.pop(str(ysym), None)
-        return (cached_divs or None), UD.take_splits(ysym, symbol, False)
+        return (cached_divs or None), UD.take_splits(ysym, symbol, False), []
     divs = fresh_divs if full else UD.merge_dividend_events(cached_divs, fresh_divs)
-    return (divs or None), UD.take_splits(ysym, symbol, full)
+    return (divs or None), UD.take_splits(ysym, symbol, full), yrows
+
+
+def splice_krx_bars(rows: list, yahoo_rows: list, since: str = NAVER_INTEGRATED_SINCE) -> int:
+    """since 이후 날짜의 봉을 같은 날짜의 야후 봉(KRX 시·고·저·종·거래량)으로 바꾼다. 바꾼 봉 수.
+
+    야후에 그 날짜가 없으면(그날 봉을 아직 안 줌 등) 네이버 봉을 그대로 둔다 — 봉을 지어내지 않는다.
+    rows 를 제자리에서 바꾼다.
+    """
+    by_date = {r["date"]: r for r in yahoo_rows or [] if r.get("date") and r.get("close")}
+    n = 0
+    for i, row in enumerate(rows):
+        if row.get("date", "") < since:
+            continue
+        y = by_date.get(row["date"])
+        if not y:
+            continue
+        rows[i] = {**row, "open": y["open"], "high": max(y["high"], y["close"]), "low": min(y["low"], y["close"]),
+                   "close": y["close"], "volume": y.get("volume", row.get("volume", 0.0))}
+        n += 1
+    return n
 
 
 def load_cached_history(symbol: str):
@@ -1392,7 +1505,9 @@ def bars_source_summary() -> str:
     with _history_stats_lock:
         snap = dict(_bars_stats)
         samples = list(_bars_fallback_samples)
-    line = f"[일봉원천] 네이버 {snap.get('naver', 0)} · 야후 폴백 {snap.get('yahoo-fallback', 0)}"
+        krx = dict(_krx_splice_stats)
+    line = (f"[일봉원천] 네이버 {snap.get('naver', 0)} · 야후 폴백 {snap.get('yahoo-fallback', 0)}"
+            f" · KRX(야후) 덮어쓰기 {krx['bars']}봉/{krx['stocks']}종목(야후 없음 {krx['noYahoo']})")
     return line + (f" (예: {' | '.join(samples)})" if samples else "")
 
 
@@ -1422,14 +1537,25 @@ def build_one(meta: dict):
             # 일봉 원천은 네이버(위 '일봉 원천' 절). 실패한 종목만 야후로 받는다.
             cached = load_cached_history(symbol)
             cached_source = _CACHED_BARS_SOURCE.get(str(symbol)) if cached else None
+            # NXT 대상(주식)만 통합 종가 문제가 있다 — ETF 는 네이버(분배금 소급 수정주가) 그대로.
+            stock_like = meta.get("market") != "etf"
+            since = NAVER_INTEGRATED_SINCE if stock_like else None
             try:
                 rows, mode = fetch_naver_history_smart(
-                    symbol, cached, cached_source, force_full=FORCE_FULL_HISTORY,
+                    symbol, cached, cached_source, force_full=FORCE_FULL_HISTORY, integrated_since=since,
                 )
                 meta["barsSource"] = BARS_SOURCE_NAVER
                 _note_bars_source(BARS_SOURCE_NAVER)
-                dividends, splits = refresh_kr_events(ysym, symbol, cached)
+                dividends, splits, yahoo_rows = refresh_kr_events(ysym, symbol, cached, need_since=since)
                 events_done = True
+                if since:
+                    spliced = splice_krx_bars(rows, yahoo_rows, since)
+                    with _history_stats_lock:
+                        _krx_splice_stats["stocks"] += 1
+                        _krx_splice_stats["bars"] += spliced
+                        _krx_splice_stats["noYahoo"] += 0 if yahoo_rows else 1
+                    if spliced:
+                        meta["krxSpliceSince"] = since
                 if splits is not None:
                     meta["splits"] = splits
                 if dividends:
@@ -1490,6 +1616,8 @@ def build_one(meta: dict):
     stock = UD.make_stock(meta, rows)
     if meta.get("barsSource") and stock.get("chartSeries"):
         stock["barsSource"] = meta["barsSource"]  # 일봉 원천(naver|yahoo) — detail 에 실려 일별 시세 표 각주에 쓰인다
+        if meta.get("krxSpliceSince"):
+            stock["krxBarsSince"] = meta["krxSpliceSince"]  # 이 날짜부터는 야후(KRX) 봉 — 네이버는 통합 종가
     if lastbar_fixed:
         stock["lastBarSource"] = "krx-close"     # 마지막 봉 종가를 KRX 종가(네이버)로 맞췄다
     if meta.get("listedShares"):

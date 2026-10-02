@@ -46,6 +46,7 @@ import {
   INTRADAY_RANGE,
   crc32Shard,
   fetchNaverLiveQuote,
+  parseNaverBasicQuote,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1296,22 +1297,23 @@ await test("원인 분석: 미리 모은 기사를 근거로 쓰고 구글·GDEL
   });
 });
 
-await test("국내 분봉: 네이버 현재가 + 일봉 전 거래일 종가를 quote 로 싣는다", async () => {
+await test("국내 분봉: 네이버 시세(KRX) 현재가와 '전일 대비'로 푼 전일 종가를 quote 로 싣는다", async () => {
   const t0 = Date.UTC(2026, 9, 2, 1, 33) / 1000;
   const yahoo = { chart: { result: [{ meta: { exchangeTimezoneName: "Asia/Seoul" }, timestamp: [t0], indicators: { quote: [{ open: [274250], high: [274250], low: [274250], close: [274250], volume: [0] }] } }] } };
   await withMockFetch((url) => {
     if (url.includes("finance/chart")) return jsonResp(yahoo);
-    if (url.includes("/basic")) return jsonResp({ closePrice: "276,000", localTradedAt: "2026-10-02T10:57:00+09:00", marketStatus: "OPEN" });
-    if (url.includes("/day?")) return jsonResp([{ localDate: "20260930", closePrice: 269500 }, { localDate: "20261001", closePrice: 274500 }, { localDate: "20261002", closePrice: 276000 }]);
+    if (url.includes("/basic")) return jsonResp({ closePrice: "275,500", compareToPreviousClosePrice: "-500", compareToPreviousPrice: { code: "5" }, localTradedAt: "2026-10-02T11:12:00+09:00", marketStatus: "OPEN" });
     throw new Error("unexpected " + url);
-  }, async () => {
+  }, async (calls) => {
     const r = await handleFetch(req("https://w/?intraday=1&ticker=005930.KS&interval=1m"), {});
     const got = await r.json();
-    eq(got.quote.price, 276000, "price");
-    eq(got.quote.prevClose, 274500, "전 거래일 정규장 종가(오늘 봉 제외)");
-    eq(got.quote.marketState, "OPEN", "state");
+    eq(got.quote.price, 275500, "price");
+    eq(got.quote.prevClose, 276000, "하락 500 → 전일 276,000(KRX)");
     eq(got.quote.source, "naver", "source");
+    ok(!calls.some((c) => c.url.includes("/day?")), "네이버 일봉(통합 종가)은 부르지 않는다");
   });
+  eq(parseNaverBasicQuote({ closePrice: "10,000", compareToPreviousClosePrice: "300", compareToPreviousPrice: { code: "2" } }).prevClose, 9700, "상승");
+  eq(parseNaverBasicQuote({ closePrice: "10,000", compareToPreviousClosePrice: "0", compareToPreviousPrice: { code: "3" } }).prevClose, 10000, "보합");
   await withMockFetch(() => { throw new Error("down"); }, async () => {
     eq(await fetchNaverLiveQuote("005930.KS"), null, "실패하면 null");
   });

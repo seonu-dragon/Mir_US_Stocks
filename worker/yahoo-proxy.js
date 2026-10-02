@@ -1510,43 +1510,37 @@ async function handleIntraday(request, symbol, rawInterval) {
   return resp;
 }
 
-// 네이버 실시간 시세 + 전 거래일 정규장 종가. 실패하면 null(화면은 분봉으로 계산한다).
-// 전일 종가를 시세 화면의 '전일'(장 마감 뒤 NXT 거래까지 합친 값일 수 있다)이 아니라 일봉의 직전 날짜
-// 종가로 잡는다 — 증권사 앱처럼 정규장 종가 대비 등락이 되도록(2026-10-02 삼성전자 10/01: 일봉 274,500).
+// 네이버 실시간 시세(KRX). 전일 종가는 시세의 '전일 대비'에서 거꾸로 푼다 — 네이버 일봉 API(chart/day ·
+// fchart · siseJson)는 2026-09-14 부터 장 마감 뒤 NXT 거래까지 합친 통합 종가라 KRX 종가와 다르다
+// (삼성전자 10/01: KRX 276,000 = 다음·야후 · 네이버 일봉 274,500). basic 의 closePrice·compareToPreviousClosePrice
+// 는 KRX 기준이고 NXT 가격은 overMarketPriceInfo 로 따로 온다. 실패하면 null(화면은 분봉으로 계산한다).
+const NAVER_RISE_CODES = new Set(["1", "2"]);   // 상한·상승
+const NAVER_FALL_CODES = new Set(["4", "5"]);   // 하한·하락
+export function parseNaverBasicQuote(basic) {
+  const num = (v) => Number(String(v == null ? "" : v).replace(/,/g, ""));
+  const price = num(basic && basic.closePrice);
+  if (!Number.isFinite(price) || price <= 0) return null;
+  const diff = Math.abs(num(basic.compareToPreviousClosePrice));
+  const code = String((basic.compareToPreviousPrice && basic.compareToPreviousPrice.code) || "");
+  const sign = NAVER_RISE_CODES.has(code) ? 1 : NAVER_FALL_CODES.has(code) ? -1 : 0;
+  const prevClose = Number.isFinite(diff) ? price - sign * diff : null;
+  const localTime = String(basic.localTradedAt || "");
+  return {
+    price, prevClose, localTime,
+    time: localTime ? new Date(localTime).toISOString() : new Date().toISOString(),
+    marketState: String(basic.marketStatus || "").toUpperCase(),
+    source: "naver",
+  };
+}
+
 export async function fetchNaverLiveQuote(symbol) {
   const code = String(symbol || "").replace(/\.(KS|KQ)$/i, "").replace(/[^0-9A-Za-z]/g, "");
   if (!code) return null;
-  const headers = { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" };
-  const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
-  const now = new Date();
-  const from = new Date(now.getTime() - 14 * 86400000);
   try {
-    const [basicRes, dayRes] = await Promise.all([
-      fetchT(`https://m.stock.naver.com/api/stock/${encodeURIComponent(code)}/basic`, { headers }, 4000),
-      fetchT(`https://api.stock.naver.com/chart/domestic/item/${encodeURIComponent(code)}/day?startDateTime=${ymd(from)}0000&endDateTime=${ymd(now)}2359`, { headers }, 4000),
-    ]);
-    if (!basicRes.ok) return null;
-    const basic = await basicRes.json();
-    const price = Number(String(basic.closePrice || "").replace(/,/g, ""));
-    if (!Number.isFinite(price) || price <= 0) return null;
-    const localTime = String(basic.localTradedAt || "");
-    const today = localTime.slice(0, 10).replace(/-/g, "");
-    let prevClose = null;
-    if (dayRes.ok) {
-      const rows = await dayRes.json();
-      const list = Array.isArray(rows) ? rows : (rows && rows.priceInfos) || [];
-      for (let i = list.length - 1; i >= 0; i -= 1) {
-        const d = String(list[i].localDate || "");
-        const c = Number(list[i].closePrice);
-        if (d && d < today && Number.isFinite(c) && c > 0) { prevClose = c; break; }
-      }
-    }
-    return {
-      price, prevClose, localTime,
-      time: localTime ? new Date(localTime).toISOString() : now.toISOString(),
-      marketState: String(basic.marketStatus || "").toUpperCase(),
-      source: "naver",
-    };
+    const r = await fetchT(`https://m.stock.naver.com/api/stock/${encodeURIComponent(code)}/basic`,
+      { headers: { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" } }, 4000);
+    if (!r.ok) return null;
+    return parseNaverBasicQuote(await r.json());
   } catch (e) {
     return null;
   }

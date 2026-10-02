@@ -3742,6 +3742,7 @@ function stockSummaryHtml(item) {
       <strong class="sd-price">${escapeHtml(priceOrDash(item.price))}</strong>${typeof quoteKrwApproxHtml === "function" ? quoteKrwApproxHtml(item.price) : ""}
     </div>
     <p class="sd-change">${stockChangeHtml(item)}<span class="sd-asof">${escapeHtml(stockAsOfText(item))}</span></p>
+    ${typeof liveQuoteLineHtml === "function" ? liveQuoteLineHtml(item) : ""}
     ${sessionQuoteLine(item)}
     ${item.__liveStub ? `<p class="muted">${liveDone[item.ticker] ? (liveChartCache[item.ticker] ? "정기 수집 대상이 아닌 종목 — 실시간 시세만 표시" : "정기 수집 대상이 아닌 종목 — 실시간 시세도 없음") : "정기 수집 대상이 아닌 종목 — 실시간 조회 중…"}</p>` : ""}
     ${auditOpinionNotice(item)}

@@ -16578,3 +16578,9 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .chart-tf-select.is-active option { background: var(--panel); color: var(--text); font-weight: 400; }
 #rangeControls.is-muted button { opacity: 0.55; }
 #rangeControls.is-muted button:hover { opacity: 1; }
+
+/* 종목 분석 '현재' 시세 한 줄(live-quote.js, 2026-10-02) — 장 마감 기준 줄 아래 */
+.sd-live { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 4px 0 0; font-size: var(--fs-sub); font-variant-numeric: tabular-nums; }
+.sd-live-label { padding: 0 6px; border-radius: 999px; background: var(--chip-bg); color: var(--text-2); font-size: var(--fs-cap); font-weight: 600; }
+.sd-live-price { font-weight: 700; }
+.sd-live .sd-asof { color: var(--muted); font-size: var(--fs-cap); }

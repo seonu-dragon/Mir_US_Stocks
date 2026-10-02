@@ -7957,6 +7957,8 @@ button.community-hot-ticker {
 .kf-spark path { fill: none; stroke: var(--primary); stroke-width: 1.5; }
 .kf-top { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 8px; }
 .kf-top-col { min-width: 0; }
+.kf-streak-filters { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 2px 0 6px; }
+.kf-streak-table td.kf-streak-days { font-weight: 600; }
 .kf-top-col h4 { margin: 0 0 4px; font-size: var(--fs-sub); font-weight: 600; }
 .kf-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: var(--fs-sub); }
 .kf-table th, .kf-table td { padding: 5px 4px; text-align: right; border-bottom: 1px solid var(--line); white-space: nowrap; }

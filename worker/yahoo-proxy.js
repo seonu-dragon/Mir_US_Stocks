@@ -27,7 +27,7 @@
 // (DEPLOY.md "Cloudflare Worker 바인딩"). 바인딩: AI, MOVE_CACHE(KV), COMMUNITY_KV(KV),
 // (선택) COMMUNITY_DO(Durable Object, class CommunityStore — 유료 플랜 + wrangler 필요.
 // 없으면 커뮤니티는 KV 경로로 그대로 동작한다),
-// Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_CLIENT_ID/SECRET, COMMUNITY_ADMIN_KEY,
+// Secrets: FINNHUB_API_KEY, GEMINI_API_KEY, NAVER_APIHUB_KEY_ID/KEY(또는 옛 NAVER_CLIENT_ID/SECRET), COMMUNITY_ADMIN_KEY,
 // (선택) GEMINI_MODEL, IP_HASH_SALT.
 // =============================================================================
 
@@ -2936,15 +2936,25 @@ function buildChatNewsQueries(userText, entities, market) {
 }
 
 async function fetchNaverNewsOpenApi(query, env, display = 10) {
+  // 2026-07-31 부터 검색 API 신규 신청은 네이버 클라우드 NAVER API Hub 로만 된다(옛 개발자센터 2027-06-30 종료).
+  // NAVER_APIHUB_KEY_ID / NAVER_APIHUB_KEY 가 있으면 그쪽, 없으면 옛 NAVER_CLIENT_ID / SECRET.
+  const hubId = env && env.NAVER_APIHUB_KEY_ID;
+  const hubKey = env && env.NAVER_APIHUB_KEY;
   const clientId = env && env.NAVER_CLIENT_ID;
   const clientSecret = env && env.NAVER_CLIENT_SECRET;
-  if (!clientId || !clientSecret || !query) return null;
+  const useHub = Boolean(hubId && hubKey);
+  if ((!useHub && (!clientId || !clientSecret)) || !query) return null;
   try {
-    const url = `https://openapi.naver.com/v1/search/news.json?query=${encodeURIComponent(query)}&display=${Math.min(Math.max(display, 1), 20)}&start=1&sort=date`;
+    const qs = `query=${encodeURIComponent(query)}&display=${Math.min(Math.max(display, 1), 20)}&start=1&sort=date`;
+    const url = useHub
+      ? `https://naverapihub.apigw.ntruss.com/search/v1/news?${qs}&format=json`
+      : `https://openapi.naver.com/v1/search/news.json?${qs}`;
+    const auth = useHub
+      ? { "X-NCP-APIGW-API-KEY-ID": hubId, "X-NCP-APIGW-API-KEY": hubKey }
+      : { "X-Naver-Client-Id": clientId, "X-Naver-Client-Secret": clientSecret };
     const response = await fetchT(url, {
       headers: {
-        "X-Naver-Client-Id": clientId,
-        "X-Naver-Client-Secret": clientSecret,
+        ...auth,
         "User-Agent": "MirChatRAG/1.0",
         Accept: "application/json",
       },
@@ -2955,7 +2965,8 @@ async function fetchNaverNewsOpenApi(query, env, display = 10) {
       title: stripNewsHtml(item.title),
       summary: stripNewsHtml(item.description),
       publisher: "",
-      link: item.originallink || item.link || "",
+      // 네이버 뉴스 기사 페이지가 있으면 그쪽(국내 이용자는 네이버 화면이 익숙하다), 없으면 언론사 원문.
+      link: (/n\.news\.naver\.com\//.test(item.link || "") ? item.link : (item.originallink || item.link)) || "",
       publishedAt: item.pubDate ? new Date(item.pubDate).toISOString().slice(0, 10) : "",
       provider: "Naver Search API",
     })).filter((item) => item.title);

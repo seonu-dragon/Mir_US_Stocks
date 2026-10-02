@@ -50,6 +50,10 @@ jobs:
 
       - name: Build moment news
         shell: bash
+        env:
+          # 국내 기사를 네이버 뉴스 기사 페이지 링크로 바꾸는 데 쓴다(없으면 구글 링크 그대로).
+          NAVER_APIHUB_KEY_ID: ${{ secrets.NAVER_APIHUB_KEY_ID }}
+          NAVER_APIHUB_KEY: ${{ secrets.NAVER_APIHUB_KEY }}
         run: |
           python scripts/build_moment_news.py \
             --market "${{ github.event.inputs.market || 'all' }}" \

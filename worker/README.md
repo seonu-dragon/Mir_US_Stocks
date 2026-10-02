@@ -131,6 +131,7 @@ Secret 으로 넣으세요(값을 바꾸면 그 시점 이후 신고·투표의 
 Worker → **Settings → Variables and Secrets**에 아래를 추가하면 국내 뉴스 검색 품질이 좋아집니다.
 (SNS 자동화 파이프라인과 동일한 키)
 
+- `NAVER_APIHUB_KEY_ID` / `NAVER_APIHUB_KEY` (네이버 클라우드 NAVER API Hub 검색 — 있으면 우선)
 - `NAVER_CLIENT_ID`
 - `NAVER_CLIENT_SECRET`
 

@@ -874,19 +874,7 @@ function applyMarketOnlyUi() {
   setPh("eventsSearch", krMode ? "회사명·이벤트" : "티커·기업·이벤트");
   setPh("ipoSearch", krMode ? "회사명" : "회사·티커");
   setPh("levEtfSearch", krMode ? "ETF 이름·기초자산" : "티커·이름·기초자산");
-  // 홈 추천 칩·AI 첫 화면 카드: 국내 모드에서 미국 종목(NVDA) 예시가 나오지 않게.
-  const primaryChip = byId("homeSuggestPrimary");
-  if (primaryChip) {
-    primaryChip.dataset.query = krMode ? "삼성전자 분석해줘" : "NVDA 분석해줘";
-    primaryChip.textContent = primaryChip.dataset.query;
-  }
-  const secondaryChip = byId("homeSuggestSecondary");
-  if (secondaryChip) {
-    secondaryChip.dataset.query = krMode ? "SK하이닉스 어때?" : "삼성전자 어때?";
-    secondaryChip.textContent = secondaryChip.dataset.query;
-  }
-  const homeInput = byId("homeSearchInput");
-  if (homeInput) homeInput.placeholder = krMode ? "예: 삼성전자 지금 사도 될까? / SK하이닉스 분석해줘" : "예: 삼성전자 지금 사도 될까? / NVDA 분석해줘";
+  // AI 첫 화면 카드: 국내 모드에서 미국 종목(NVDA) 예시가 나오지 않게(검색창 추천은 cmdkBuildActions).
   const aiCard = byId("aiSuggestPrimary");
   if (aiCard) {
     aiCard.dataset.query = krMode ? "삼성전자 분석해줘" : "NVDA 분석해줘";
@@ -6388,7 +6376,7 @@ function setupTickerAutocomplete(inputId, options = {}) {
 }
 
 // 티커를 '입력받는' 상자는 전부 여기서 한 구현(setupTickerAutocomplete)에 물린다.
-// 히어로 검색(#homeSearchInput)과 ⌘K 팔레트는 라우팅까지 하는 별도 표면이라 예외다.
+// 통합 검색(⌘K 팔레트 — 헤더·하단 '검색')은 라우팅까지 하는 별도 표면이라 예외다.
 // 표(공시 패널)의 #*Search 들은 티커 입력이 아니라 필터라서 여기 없다.
 function setupTickerSearchHelpers() {
   buildTickerSearchIndex();
@@ -8092,9 +8080,7 @@ function setupHeaderSearch() {
   if (!btn || btn.dataset.bound) return;
   btn.dataset.bound = "1";
   btn.addEventListener("click", () => {
-    if (typeof cmdkOpen === "function") { cmdkOpen(); return; }
-    const input = byId("homeSearchInput");
-    if (input) { input.scrollIntoView({ block: "center", behavior: "smooth" }); input.focus(); }
+    cmdkOpen();
   });
 }
 function openDataTrustCenter() {
@@ -9046,23 +9032,6 @@ function revealComponentsStaggered() {
 }
 
 function setupAiSearchEvents() {
-  const form = byId("homeSearchForm");
-  const input = byId("homeSearchInput");
-  if (form && input) {
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      handleHomeSearch(input.value);
-    });
-  }
-  
-  document.querySelectorAll(".search-suggest-chip").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const q = btn.dataset.query;
-      if (input) input.value = q;
-      handleHomeSearch(q);
-    });
-  });
-
   const refreshBtn = byId("analysisAiReportRefresh");
   if (refreshBtn) {
     refreshBtn.addEventListener("click", () => {
@@ -9096,10 +9065,10 @@ function cmdkEnsureDom() {
   overlay.className = "cmdk-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
-    <div class="cmdk" role="dialog" aria-modal="true" aria-label="커맨드 팔레트">
+    <div class="cmdk" role="dialog" aria-modal="true" aria-label="종목·질문 검색">
       <div class="cmdk-input-row">
-        <span class="cmdk-glyph" aria-hidden="true">⌘</span>
-        <input id="cmdkInput" type="text" placeholder="명령 또는 종목 검색  (예: 새 대화, NVDA, 삼성전자)" autocomplete="off" spellcheck="false">
+        <svg class="cmdk-glyph" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input id="cmdkInput" type="text" placeholder="종목명이나 질문 (예: NVDA, 삼성전자 지금 사도 될까?)" autocomplete="off" spellcheck="false" aria-label="종목·질문 검색">
         <kbd>Esc</kbd>
       </div>
       <ul id="cmdkList" class="cmdk-list" role="listbox"></ul>
@@ -9179,6 +9148,27 @@ function cmdkBuildActions(query) {
     });
   }
 
+  // 질문 검색(구 홈 '무엇이 궁금하신가요?' 입력창, 2026-10-02 통합) — 입력 문장을 그대로
+  // handleHomeSearch(종목 해석 → 답할 수 있는 화면 라우팅 → 종목 검색 폴백)로, AI 모드면 AI 질문으로.
+  const ask = (text) => () => {
+    if (cmdkIsAiActive() && window.MirAI?.queryStock) {
+      const input = byId("aiChatInput");
+      if (input) input.value = text;
+      window.MirAI.queryStock(text);
+    } else {
+      handleHomeSearch(text);
+    }
+  };
+  if (q) {
+    // 문장(공백·물음표)이거나 종목이 안 잡혔으면 질문을 맨 위에, 종목명 하나면 종목 결과 다음에 둔다.
+    const sentence = /\s|\?/.test(q) || !actions.length;
+    actions.push({ label: `“${q}” 질문으로 찾기`, hint: aiActive ? "AI 모드에 질문" : "분석·관련 화면", score: sentence ? 2000 : 900, run: ask(q) });
+  } else {
+    const kr = isKrMarket();
+    [kr ? "삼성전자 분석해줘" : "NVDA 분석해줘", kr ? "SK하이닉스 어때?" : "삼성전자 어때?", "배당 좋은 주식"]
+      .forEach((text) => actions.push({ label: text, hint: "추천 검색", score: 1500, run: ask(text) }));
+  }
+
   actions.push({ label: "새 대화 시작", hint: "AI 모드", run: () => {
     if (!aiActive) window.MirAI?.toggle?.(true);
     document.body.classList.remove("ai-conversation-view");
@@ -9225,7 +9215,7 @@ function cmdkBuildActions(query) {
 
   // 퍼지 필터 (종목 결과는 이미 질의로 골라졌으므로 keep)
   return actions
-    .map((a) => ({ ...a, _s: a.keep ? 1000 : cmdkFuzzyScore(a.label, q) }))
+    .map((a) => ({ ...a, _s: a.score != null ? a.score : a.keep ? 1000 : cmdkFuzzyScore(a.label, q) }))
     .filter((a) => a._s > 0)
     .sort((a, b) => b._s - a._s)
     .slice(0, 12);

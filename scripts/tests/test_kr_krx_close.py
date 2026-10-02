@@ -2,7 +2,7 @@
 
 증상: 네이버 m.stock 목록 closePrice 가 16:00 시간외 단일가부터 그 가격으로 바뀐다. 마감 브리핑 잡이
 19:09 KST 에 돈 2026-10-01 스냅샷은 삼성전자 273,000(KRX 종가 276,000)처럼 대표가가 틀렸다.
-수정: build_kr_krx_close.py(pykrx)로 받은 KRX 공식 일별 시세로 같은 기준일 행을 덮는다.
+수정: fetch_kr_krx_close.py(pykrx)로 받은 KRX 공식 일별 시세로 같은 기준일 행을 덮는다.
 """
 from __future__ import annotations
 

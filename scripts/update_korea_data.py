@@ -689,7 +689,7 @@ KRX_CLOSE_TIMEOUT = 300  # 초. pykrx 로그인 + 주식·ETF 전 종목 2요청
 def override_with_krx_close(rows, krx_rows: dict, krx_date: str) -> int:
     """네이버 목록 행의 대표가를 KRX 공식 정규장 종가로 덮는다. 바꾼 행 수를 돌려준다.
 
-    네이버 closePrice 는 16:00 시간외 단일가부터 그 가격으로 바뀐다(build_kr_krx_close.py 주석).
+    네이버 closePrice 는 16:00 시간외 단일가부터 그 가격으로 바뀐다(fetch_kr_krx_close.py 주석).
     시세 기준일(quoteDate)이 KRX 일자와 같은 행만 바꾼다 — 거래정지 종목처럼 기준일이 다른 행은
     그날 KRX 값이 없거나 뜻이 달라 그대로 둔다. 등락률은 KRX 값, 없으면(ETF) 네이버 전일 종가로 계산.
     상장주식수(listedShares)는 그대로다 — 시총만 KRX 공식값으로 바꾼다.
@@ -736,7 +736,7 @@ def apply_krx_official_close(universe: dict[str, dict]) -> None:
     krx_date = max(dates, key=dates.get)
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / "krx_close.json"
-        if not run_subbuilder("krx-close", "build_kr_krx_close.py", "--date", krx_date.replace("-", ""),
+        if not run_subbuilder("krx-close", "fetch_kr_krx_close.py", "--date", krx_date.replace("-", ""),
                               "--out", str(out), timeout=KRX_CLOSE_TIMEOUT) or not out.exists():
             print("[krx-close] KRX 공식 종가를 못 받았다 — 네이버 closePrice 그대로 진행")
             return

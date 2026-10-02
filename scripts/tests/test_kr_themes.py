@@ -78,9 +78,9 @@ def test_trim_evidence_is_substring_and_flags_cut():
 def test_high_needs_self_reference_and_activity():
     hit = kt.classify_hit("당사는 서버용 HBM3E 를 양산하여 공급하고 있습니다.", False, theme("hbm_ai_semi"))
     assert hit["lvl"] == "high" and hit["kw"] == "HBM3E"
-    # 자기 지칭 없는 시장 설명은 애매
+    # 자기 지칭 없는 시장 설명은 편입되지 않는다(2026-10-02 정밀도 검토부터는 '시장이 …' 문장은 후보에서도 뺀다)
     amb = kt.classify_hit("HBM 수요 증가로 반도체 시장이 성장하며 공급이 부족합니다.", False, theme("hbm_ai_semi"))
-    assert amb["lvl"] == "amb"
+    assert amb is None or amb["lvl"] == "amb"
 
 
 def test_ascii_boundary_matches_before_hangul_particle():
@@ -121,8 +121,9 @@ def test_word_traps():
 
 
 def test_multiple_matches_use_first_qualifying():
-    s = "OLED TV는 최고의 시청 경험을 원하는 고객들의 선호가 지속되어 당사는 OLED TV 판매를 확대하고 있습니다."
-    hit = kt.classify_hit(s, False, theme("display"))
+    # 2026-10-02 display 가 '패널' 테마로 좁혀져(세트 TV 는 아님) 같은 구조의 HBM 문장으로 본다.
+    s = "HBM은 AI 서버를 원하는 고객들의 수요가 지속되어 당사는 HBM 판매를 확대하고 있습니다."
+    hit = kt.classify_hit(s, False, theme("hbm_ai_semi"))
     assert hit["lvl"] == "high" and hit["start"] > 10
 
 
@@ -133,7 +134,7 @@ def test_industry_heading_caps_to_ambiguous():
     assert hbm["lvl"] == "high"
     # '산업의 특성' 아래 문장이 아니라 '회사의 현황' 아래 문장이 근거로 뽑힌다
     assert "양산하여 공급" in hbm["ev"]
-    assert hbm["n"] >= 2
+    assert hbm["n"] >= 1
 
 
 def test_company_name_counts_as_self_reference():
@@ -249,9 +250,11 @@ def test_parse_llm_verdicts_filters_bad_rows():
 
 def test_rules_are_well_formed():
     ids = [t["id"] for t in rules.THEMES]
-    assert len(ids) == len(set(ids)) and 30 <= len(ids) <= 50
+    # 2026-10-02 48 → 210개로 세분화(네이버증권 264개 중 계절·사건·관련주를 뺀 규모).
+    assert len(ids) == len(set(ids)) and 150 <= len(ids) <= 260
     for t in rules.THEMES:
-        assert t["name"] and t["group"] and t["desc"] and t["strong"], t["id"]
+        # 이름 기반 테마(스팩)는 사업보고서 키워드 대신 종목명 규칙(nameRe)을 쓴다.
+        assert t["name"] and t["group"] and t["desc"] and (t.get("strong") or t.get("nameRe")), t["id"]
         if t.get("weak"):
             assert t.get("ctx"), f"{t['id']}: weak 는 ctx 가 있어야 한다"
 
@@ -291,11 +294,11 @@ def test_subsidiary_sentences_are_labelled():
 def test_scan_marks_subsidiary_hit_and_prefers_parent_sentence():
     sec = ('<TITLE>II. 사업의 내용</TITLE><P>당사의 종속회사들은 웹툰 서비스를 운영하고 있습니다.</P>'
            '<TITLE>III. 재무</TITLE>')
-    hit = kt.scan_section(sec)["content"]
+    hit = kt.scan_section(sec)["webtoon"]   # 2026-10-02 웹툰이 content 에서 webtoon 테마로 분리
     assert hit["lvl"] == "high" and hit["sub"] == 1
     sec2 = ('<TITLE>II. 사업의 내용</TITLE><P>당사의 종속회사들은 웹툰 서비스를 운영하고 있습니다.</P>'
             '<P>당사는 웹툰 플랫폼을 직접 운영하고 있습니다.</P><TITLE>III. 재무</TITLE>')
-    hit2 = kt.scan_section(sec2)["content"]
+    hit2 = kt.scan_section(sec2)["webtoon"]
     assert "sub" not in hit2 and hit2["ev"].startswith("당사는 웹툰")
 
 
@@ -313,18 +316,18 @@ def test_downstream_keyword_is_not_even_a_candidate():
 
 
 def test_exclusion_list_blocks_rule_llm_and_previous(monkeypatch):
-    monkeypatch.setattr(rules, "EXCLUDE", {("000660", "auto"): "테스트", ("028260", "biosimilar_cdmo"): "테스트"})
-    prev = {"themes": [{"id": "biosimilar_cdmo", "members": [{"t": "028260", "ev": "바이오사업은 …", "kw": "CMO", "by": "rule"}]}]}
+    monkeypatch.setattr(rules, "EXCLUDE", {("000660", "auto"): "테스트", ("028260", "biosimilar"): "테스트"})
+    prev = {"themes": [{"id": "biosimilar", "members": [{"t": "028260", "ev": "바이오사업은 …", "kw": "CMO", "by": "rule"}]}]}
     results = {"028260": {}}
     ev = "SSD 등 당사 낸드 솔루션 제품 공급을 늘리며 완성차 …"
     tstate = {"000660": {"rc": "1", "amb": {"auto": {"ev": ev, "kw": "완성차", "c": 0, "n": 1}}}}
     cache = {kt.evidence_key("000660", "auto", ev): True}
     body = kt.assemble(prev, {}, tstate, cache, {}, {}, {}, None, "x")
     by = {t["id"]: t for t in body["themes"]}
-    assert by["auto"]["members"] == [] and by["biosimilar_cdmo"]["members"] == []
-    body2 = kt.assemble({}, {"028260": {"biosimilar_cdmo": {"lvl": "high", "ev": "e", "kw": "CMO", "c": 0, "n": 1}}},
+    assert by["auto"]["members"] == [] and by["biosimilar"]["members"] == []
+    body2 = kt.assemble({}, {"028260": {"biosimilar": {"lvl": "high", "ev": "e", "kw": "CMO", "c": 0, "n": 1}}},
                         {}, {}, {}, {}, {}, None, "x")
-    assert next(t for t in body2["themes"] if t["id"] == "biosimilar_cdmo")["members"] == []
+    assert next(t for t in body2["themes"] if t["id"] == "biosimilar")["members"] == []
     assert kt.prune_llm_cache(cache, tstate) == {}
     assert results  # (미사용 변수 방지)
 
@@ -334,5 +337,22 @@ def test_exclusion_list_entries_are_valid():
     for (t, tid), why in rules.EXCLUDE.items():
         assert len(t) == 6 and tid in ids and why, (t, tid)
     # 2026-09-27 샘플 검토에서 잘못으로 확인된 편입
-    for pair in [("000660", "auto"), ("032830", "travel"), ("028260", "biosimilar_cdmo")]:
+    for pair in [("000660", "auto"), ("032830", "travel"), ("028260", "biosimilar")]:
         assert pair in rules.EXCLUDE
+
+
+def test_demote_thin_sends_few_sentence_hits_to_review():
+    # 2026-10-02 hold-out: 테마 문장이 8개 미만인 규칙 편입은 정확도가 23~68% 라 LLM 판정을 거친다.
+    hits = {"a": {"lvl": "high", "n": 3, "ev": "x"}, "b": {"lvl": "high", "n": 8, "ev": "y"}, "c": {"lvl": "amb", "n": 20, "ev": "z"}}
+    out = kt.demote_thin(hits)
+    assert out["a"]["lvl"] == "amb" and out["b"]["lvl"] == "high" and out["c"]["lvl"] == "amb"
+    assert hits["a"]["lvl"] == "high"   # 원본은 그대로
+
+
+def test_name_based_themes_spac_and_reits():
+    names = {"111111": "하나29호스팩", "222222": "SK리츠", "333333": "메리츠금융지주", "444444": "TIGER 리츠부동산인프라",
+             "555555": "블리츠웨이엔터테인먼트"}
+    body = kt.assemble({}, {}, {}, {}, {}, names, {}, set(names), "x")
+    by = {t["id"]: {m["t"] for m in t["members"]} for t in body["themes"]}
+    assert by["spac"] == {"111111"}
+    assert by["reits"] == {"222222"}

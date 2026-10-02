@@ -7993,6 +7993,7 @@ button.community-hot-ticker {
 .kt-head h3 { margin: 0; font-size: 16px; font-weight: 700; margin-right: auto; }
 .kt-seg button { min-height: 30px; font-size: var(--fs-cap); }
 .kt-count, .kt-sub, .kt-note { font-size: var(--fs-cap); color: var(--text-muted); }
+.kt-search { flex: 1 1 180px; max-width: 260px; min-height: 34px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface, transparent); color: inherit; font: inherit; font-size: var(--fs-sub, 13px); }
 .kt-sub, .kt-note { margin: 4px 0 0; line-height: 1.5; }
 .kt-card .pos, .kt-stock .pos { color: var(--pos); }
 .kt-card .neg, .kt-stock .neg { color: var(--neg); }

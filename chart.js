@@ -2661,4 +2661,5 @@ function drawChart(item, options = {}) {
   `;
   // 일별 시세 표(daily-table.js)는 같은 일봉을 쓴다. 시계열이 그대로면 즉시 돌아간다.
   if (mainChart && typeof renderDailyTable === "function") renderDailyTable(item);
+  if (mainChart && typeof renderSeasonality === "function") renderSeasonality(item);
 }

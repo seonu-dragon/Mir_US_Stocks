@@ -1499,12 +1499,57 @@ async function handleIntraday(request, symbol, rawInterval) {
     if (!result) return json({ error: "no_data", bars: [] }, 404, 60);
     const { bars, tz } = parseIntradayChart(result);
     payload = { symbol, interval, range, tz, bars, updatedAt: new Date().toISOString() };
+    // 국내는 야후 분봉이 약 20분 늦고 종가 동시호가(15:20~15:30)가 빠진다 — 종목 분석 '현재' 줄용으로
+    // 네이버 실시간 현재가와 네이버 일봉의 전 거래일 종가를 같이 싣는다(live-quote-core.js).
+    if (isKoreanTicker(symbol)) payload.quote = await fetchNaverLiveQuote(symbol);
   } catch (e) {
     return json({ error: "upstream", bars: [] }, 502, 0);
   }
   const resp = json(payload, 200, 60);
   if (cache) await cache.put(cacheReq, resp.clone());
   return resp;
+}
+
+// 네이버 실시간 시세 + 전 거래일 정규장 종가. 실패하면 null(화면은 분봉으로 계산한다).
+// 전일 종가를 시세 화면의 '전일'(장 마감 뒤 NXT 거래까지 합친 값일 수 있다)이 아니라 일봉의 직전 날짜
+// 종가로 잡는다 — 증권사 앱처럼 정규장 종가 대비 등락이 되도록(2026-10-02 삼성전자 10/01: 일봉 274,500).
+export async function fetchNaverLiveQuote(symbol) {
+  const code = String(symbol || "").replace(/\.(KS|KQ)$/i, "").replace(/[^0-9A-Za-z]/g, "");
+  if (!code) return null;
+  const headers = { "User-Agent": "Mozilla/5.0", Accept: "application/json", Referer: "https://m.stock.naver.com/" };
+  const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, "");
+  const now = new Date();
+  const from = new Date(now.getTime() - 14 * 86400000);
+  try {
+    const [basicRes, dayRes] = await Promise.all([
+      fetchT(`https://m.stock.naver.com/api/stock/${encodeURIComponent(code)}/basic`, { headers }, 4000),
+      fetchT(`https://api.stock.naver.com/chart/domestic/item/${encodeURIComponent(code)}/day?startDateTime=${ymd(from)}0000&endDateTime=${ymd(now)}2359`, { headers }, 4000),
+    ]);
+    if (!basicRes.ok) return null;
+    const basic = await basicRes.json();
+    const price = Number(String(basic.closePrice || "").replace(/,/g, ""));
+    if (!Number.isFinite(price) || price <= 0) return null;
+    const localTime = String(basic.localTradedAt || "");
+    const today = localTime.slice(0, 10).replace(/-/g, "");
+    let prevClose = null;
+    if (dayRes.ok) {
+      const rows = await dayRes.json();
+      const list = Array.isArray(rows) ? rows : (rows && rows.priceInfos) || [];
+      for (let i = list.length - 1; i >= 0; i -= 1) {
+        const d = String(list[i].localDate || "");
+        const c = Number(list[i].closePrice);
+        if (d && d < today && Number.isFinite(c) && c > 0) { prevClose = c; break; }
+      }
+    }
+    return {
+      price, prevClose, localTime,
+      time: localTime ? new Date(localTime).toISOString() : now.toISOString(),
+      marketState: String(basic.marketStatus || "").toUpperCase(),
+      source: "naver",
+    };
+  } catch (e) {
+    return null;
+  }
 }
 
 // ----- 큰 등락일 전후 뉴스(차트 툴팁) -----

@@ -45,6 +45,7 @@ import {
   parseIntradayChart,
   INTRADAY_RANGE,
   crc32Shard,
+  fetchNaverLiveQuote,
 } from "./yahoo-proxy.js";
 
 const WORKER_SRC = fileURLToPath(new URL("./yahoo-proxy.js", import.meta.url));
@@ -1292,6 +1293,27 @@ await test("원인 분석: 미리 모은 기사를 근거로 쓰고 구글·GDEL
     ok(got.sources.some((x) => x.title === "Nvidia stock jumps on metaverse push"), "미리 모은 기사가 근거에 있다");
     ok(!calls.some((c) => c.url.includes("news.google.com") || c.url.includes("gdeltproject")), "구글·GDELT 미호출");
     eq(got.searchWindowDays, 2, "±2일");
+  });
+});
+
+await test("국내 분봉: 네이버 현재가 + 일봉 전 거래일 종가를 quote 로 싣는다", async () => {
+  const t0 = Date.UTC(2026, 9, 2, 1, 33) / 1000;
+  const yahoo = { chart: { result: [{ meta: { exchangeTimezoneName: "Asia/Seoul" }, timestamp: [t0], indicators: { quote: [{ open: [274250], high: [274250], low: [274250], close: [274250], volume: [0] }] } }] } };
+  await withMockFetch((url) => {
+    if (url.includes("finance/chart")) return jsonResp(yahoo);
+    if (url.includes("/basic")) return jsonResp({ closePrice: "276,000", localTradedAt: "2026-10-02T10:57:00+09:00", marketStatus: "OPEN" });
+    if (url.includes("/day?")) return jsonResp([{ localDate: "20260930", closePrice: 269500 }, { localDate: "20261001", closePrice: 274500 }, { localDate: "20261002", closePrice: 276000 }]);
+    throw new Error("unexpected " + url);
+  }, async () => {
+    const r = await handleFetch(req("https://w/?intraday=1&ticker=005930.KS&interval=1m"), {});
+    const got = await r.json();
+    eq(got.quote.price, 276000, "price");
+    eq(got.quote.prevClose, 274500, "전 거래일 정규장 종가(오늘 봉 제외)");
+    eq(got.quote.marketState, "OPEN", "state");
+    eq(got.quote.source, "naver", "source");
+  });
+  await withMockFetch(() => { throw new Error("down"); }, async () => {
+    eq(await fetchNaverLiveQuote("005930.KS"), null, "실패하면 null");
   });
 });
 

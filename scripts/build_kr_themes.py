@@ -18,7 +18,7 @@
      scripts/kr_theme_rules.py 의 키워드·동의어 규칙으로 후보를 고른다(LLM 없음).
        high = 테마 키워드 + 사업 활동어 + 자기 지칭(당사·회사·연결실체 …)  → 규칙으로 편입
        amb  = 키워드는 있는데 남의 이야기(시장 현황·고객 산업)일 수 있는 문장 → 보류
-  4. (선택) GEMINI_API_KEY 가 있으면 보류 후보만 flash-lite 로 판정한다 — 실행당 --llm-max(기본 200)건,
+  4. (선택) GEMINI_API_KEY 가 있으면 보류 후보만 flash-lite 로 판정한다 — 실행당 --llm-max(기본 0 — KR_THEME_LLM_MAX)건,
      한 번에 20건씩(= 최대 2콜). 판정 결과는 상태 파일에 캐시해 같은 문장을 다시 묻지 않는다.
      키가 없거나 한도면 보류는 그대로 보류(편입 안 함). 근거 문장은 LLM 이 쓰지 않는다 — 원문 문장 그대로다.
   5. 저PBR 금융은 금융업 근거 문장 + KRX 공식 PBR(data/korea/map_fundamentals.json, 빌드일) < 1.
@@ -28,7 +28,7 @@
   data/korea/themes/<id>.json  테마별 근거 문장 {id, ev: {티커: [문장, 잘림표시]}} — 테마를 펼치거나 칩을 누를 때만 fetch
   data/korea/themes_state.json 증분 상태(종목별 처리한 접수번호·규칙 버전·보류 후보·LLM 판정 캐시). 브라우저는 안 읽는다.
 
-실행: python scripts/build_kr_themes.py [--max-docs 600] [--llm-max 200] [--no-llm] [--only 005930,000660] [--push]
+실행: python scripts/build_kr_themes.py [--max-docs 600] [--llm-max N] [--no-llm] [--only 005930,000660] [--push]
       오프라인 재현: --doc-dir DIR(<접수번호>.xml 원문) --listing-file FILE({티커: {rc, nm, dt}})
 """
 
@@ -78,7 +78,10 @@ AMB_TOP = 600           # 보류 후보(LLM 판정 대기)는 시총 상위 이 
 AMB_PER_TICKER = 5      # 그 밖은 몇 년이 걸려도 차례가 오지 않는다. 상태 파일 크기(커밋마다 통째로 바뀜)도 묶는다.
 SECTION_MAX = 800_000   # 사업의 내용 구간 상한(문자). 보험·지주사 보고서는 수십 MB 라 구간만 본다.
 # 2026-10-02: flash-lite(생각 없음)는 사람 판정과 61% 일치·정상 편입 절반 탈락, 2.5-flash(생각 1024)는 79%·88% 정밀도.
-LLM_MODEL = "gemini-2.5-flash"
+# 모델·실행당 건수는 환경변수로. 기본은 **판정 안 함(0건)** — Gemini 무료 한도가 모델별 하루 20건 수준이고
+# 브리핑 4종이 gemini-2.5-flash 를 먼저 쓴다(scripts/briefings). 테마 판정이 그 한도를 먹으면 브리핑이 밀린다.
+# 유료 키를 붙였거나 한도 여유가 확실할 때만 KR_THEME_LLM_MAX 를 올린다(문장 8개 미만 규칙 편입·보류 후보가 대상).
+LLM_MODEL = os.environ.get("KR_THEME_LLM_MODEL") or "gemini-2.5-flash"
 LLM_THINKING = 1024
 # 판정 프롬프트 버전. 프롬프트를 고치면 올린다 — 캐시 키(evidence_key)에 규칙 버전과 함께 들어가서
 # 버전이 바뀐 옛 판정은 쓰이지 않고 다시 묻는다(2026-09-27 프롬프트를 조였는데 옛 '통과' 판정이 남았었다).
@@ -727,7 +730,7 @@ def load_universe() -> tuple[list[str], dict]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="국내 테마 분류(DART 사업보고서 근거 문장)")
     ap.add_argument("--max-docs", type=int, default=int(os.environ.get("KR_THEME_MAX_DOCS") or 600))
-    ap.add_argument("--llm-max", type=int, default=200)
+    ap.add_argument("--llm-max", type=int, default=int(os.environ.get("KR_THEME_LLM_MAX") or 0))
     ap.add_argument("--no-llm", action="store_true")
     ap.add_argument("--only", default="", help="쉼표로 구분한 티커(테스트용)")
     ap.add_argument("--doc-dir", default="", help="오프라인: <접수번호>.xml 원문 폴더")

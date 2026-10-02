@@ -11,8 +11,8 @@ name: Company profile & price targets
 #   테마 근거 문장을 규칙으로 찾아 편입한다(시장 탭 '테마'·종목 '이 종목의 테마' 칩). 사업보고서 목록(list.json
 #   40~60콜) + 접수번호가 바뀐 종목의 원문(document.xml)만 시총 순으로 실행당 --max-docs(기본 600)까지 — 처음
 #   전체 채우기는 몇 주에 걸친다(dispatch 로 max_docs 를 늘려 앞당길 수 있다). 수요일 profile 잡(DART 2,500콜)과
-#   날을 나눴다. GEMINI_API_KEY 가 있으면 규칙으로 애매한 문장만 flash-lite 로 판정(실행당 40건 = 최대 2콜),
-#   없거나 한도면 애매한 문장은 편입하지 않고 다음 실행을 기다린다.
+#   날을 나눴다. Gemini 는 쓰지 않는다(2026-10-02) — 이 단계에 GEMINI_API_KEY 를 넘기지 않아서, 규칙으로
+#   애매한 문장(보류)은 편입하지 않는다. 무료 한도(모델별 하루 ~20건)는 브리핑 몫으로 남긴다.
 # 네 잡 모두 바뀐 파일만 다시 쓴다(data/company_profile/, data/us_price_targets/, data/logos/, data/korea/themes/).
 
 on:
@@ -115,7 +115,6 @@ jobs:
       - name: KR themes (DART business reports)
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           KR_THEME_MAX_DOCS: ${{ inputs.theme_max_docs || '600' }}
         run: python scripts/build_kr_themes.py --max-docs "$KR_THEME_MAX_DOCS" --push
 

@@ -180,7 +180,7 @@ jobs:
                  _site/data/us_financials_history.json \
                  _site/data/company_profile/state.json _site/data/logos/state.json \
                  _site/data/institutional_holders/state.json _site/data/institutional_holders/cusip_map.json \
-                 _site/data/korea/themes_state.json _site/data/korea/target_reports_state.json \
+                 _site/data/korea/themes_state.json _site/data/korea/target_reports_state.json \
                  _site/data/korea/valueup_state.json _site/data/korea/earnings_dates_state.json
           echo "artifact size:" && du -sh _site | cut -f1
 

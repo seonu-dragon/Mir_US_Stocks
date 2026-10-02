@@ -269,6 +269,9 @@ jobs:
       # 일별 시세 표(daily-table-core.js): 전일대비 ▲/▼ 금액·등락률, 보합, 거래량 0, 표기.
       - name: Daily price table tests
         run: node scripts/tests/test_daily_table_core.mjs
+      # 월별 시즈널리티(seasonality-core.js): 월말 종가 수익률·진행 중인 달 제외·공백 달·상승 확률.
+      - name: Seasonality core tests
+        run: node scripts/tests/test_seasonality_core.mjs
 
       # 국내↔미국 연관 종목(cross-market-core.js): 사람이 정한 관계 우선 정렬·자동 후보 거르기,
       # 간밤 미국/국내 장 보드(문턱·방향별 상관·표본 부족 제외), 표기.

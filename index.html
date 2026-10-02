@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=aabe9a7108" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=aabe9a7108"></noscript>
+    <link rel="preload" href="styles.css?v=1955516db0" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=1955516db0"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=488d3b0863"></script>
+    <script src="build_id.js?v=ba4a3c1e6e"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -1525,6 +1525,8 @@ html[data-market="kr"][data-theme="dark"] {
                 <p class="chart-ev-note" id="chartEventNote" hidden></p>
               </div>
               <div id="chartProbPanel" class="cprob" hidden></div>
+              <!-- 월별 시즈널리티(seasonality.js renderSeasonality) — 같은 일봉의 월말 종가로 연도×월 수익률 히트맵. drawChart 가 부른다 -->
+              <section class="dtbl-card seas-card animate-reveal" id="seasonalityCard" hidden></section>
               <!-- 일별 시세(daily-table.js renderDailyTable) — 차트와 같은 일봉, drawChart 가 부른다. 길어서 차트 탭 맨 아래 -->
               <section class="dtbl-card animate-reveal" id="dailyPriceTable" hidden></section>
             </div>
@@ -3346,7 +3348,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="factor-grade-core.js?v=5b2d301864"></script>
     <script src="factor-grades.js?v=5426730498"></script>
     <script src="stock-health-core.js?v=bd57169177"></script>
-    <script src="stock-health.js?v=32ed43c310"></script>
+    <script src="stock-health.js?v=6c979538f5"></script>
     <script src="formula-core.js?v=03bd5d2e20"></script>
     <script src="formula-screener.js?v=f3b5d97cfb"></script>
     <script src="named-filters-core.js?v=1b7e71d5e3"></script>
@@ -3358,7 +3360,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="macro-odds.js?v=62883cf258"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=733715a6b0"></script>
-    <script src="chart.js?v=e668576d9a"></script>
+    <script src="chart.js?v=b001a4c86c"></script>
     <script src="institutional.js?v=66573766c9"></script>
     <script src="markets-etf.js?v=603b74fc3f"></script>
     <script src="kr-panels.js?v=d62108a45e"></script>
@@ -3392,6 +3394,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dcf.js?v=ecc88fc9b8"></script>
     <script src="daily-table-core.js?v=5e4945f830"></script>
     <script src="daily-table.js?v=0f27127020"></script>
+    <script src="seasonality-core.js?v=aba17c25f3"></script>
+    <script src="seasonality.js?v=fee2629b20"></script>
     <script src="stock-view.js?v=f8f4e5eff8"></script>
     <script src="subscribe-feeds.js?v=c5e0fba053"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>

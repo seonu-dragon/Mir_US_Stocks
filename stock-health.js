@@ -150,7 +150,10 @@ function stockRiskBodyHtml(item) {
     { label: "표본", value: `${r.n}일`, detail: r.from && r.to ? `${String(r.from).slice(0, 10)}~${String(r.to).slice(0, 10)}` : "" },
   ];
   const grid = `<div class="ai-mode-metric-grid">${metrics.map((m) => `<article><span>${escapeHtml(m.label)}</span><strong class="${m.tone || ""}">${escapeHtml(String(m.value))}</strong>${m.detail ? `<em>${escapeHtml(m.detail)}</em>` : ""}</article>`).join("")}</div>`;
-  return `${grid}<div class="sh-sub-head">월별 시즈널리티 (평균 수익률, 21거래일 환산)</div>${shSeasonalitySvg(r.monthly)}
+  // 월별 평균은 차트 탭 '월별 시즈널리티' 표(seasonality-core.js, 월말 종가)와 같은 값을 쓴다 — 두 화면 숫자가 갈리지 않게.
+  const seas = window.MirSeasonality ? window.MirSeasonality.compute(getChartRows(item)) : null;
+  const monthly = seas ? seas.summary.map((m) => m.avg) : r.monthly;
+  return `${grid}<div class="sh-sub-head">월별 시즈널리티 (평균 수익률)</div>${shSeasonalitySvg(monthly)}
     <p class="sh-note">월별 표본은 연도 수만큼이라 적습니다.</p>`;
 }
 

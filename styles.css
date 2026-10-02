@@ -15587,6 +15587,20 @@ button.calp-who:hover strong { text-decoration: underline; }
 /* ===== 일별 시세 표(daily-table.js) ===== */
 .dtbl-card { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--panel); padding: 14px 16px; min-width: 0; }
 .dtbl-card[hidden] { display: none; }
+/* 월별 시즈널리티 히트맵(seasonality.js) — 14열이라 폰에서는 표만 가로 스크롤 */
+.seas-card { margin-bottom: 12px; }
+.seas-table { width: 100%; border-collapse: separate; border-spacing: 2px; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
+.seas-table th, .seas-table td { padding: 4px 5px; text-align: right; white-space: nowrap; border-radius: 4px; }
+.seas-table thead th { color: var(--muted); font-weight: 600; }
+.seas-table th[scope="row"] { text-align: left; color: var(--muted); font-weight: 600; position: sticky; left: 0; background: var(--panel); z-index: 1; }
+.seas-table .seas-sum th, .seas-table .seas-sum td { font-weight: 700; }
+.seas-table tr.seas-sum-last th, .seas-table tr.seas-sum-last td { padding-bottom: 8px; }
+.seas-table .seas-empty { color: var(--muted); }
+.seas-table .seas-partial { font-style: italic; opacity: .75; }
+.seas-table .seas-cur { outline: 1px solid var(--line); }
+.seas-table .seas-total { font-weight: 600; }
+.seas-table .seas-win.pos { color: var(--pos); }
+.seas-table .seas-win.neg { color: var(--neg); }
 .dtbl-card .fundamental-head { background: none; padding: 0; border: 0; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin-bottom: 8px; }
 .dtbl-card .fundamental-head h3 { margin: 0; font-size: var(--fs-h3); }
 .dtbl-card .fundamental-head span { font-size: var(--fs-cap); color: var(--muted); font-variant-numeric: tabular-nums; }

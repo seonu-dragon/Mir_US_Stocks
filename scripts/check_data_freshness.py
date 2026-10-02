@@ -76,6 +76,8 @@ CHECKS = {
         ("data/sec_ftd.json", 45, False),
         ("data/wiki_attention.json", 6, False),
         ("data/wsb_sentiment.json", 6, False),
+        # 서학개미 TOP(SEIBro) — US 스냅샷 잡이 매일 다시 쓴다. 연휴 감안 6일. 0건 = 소스 이상.
+        ("data/seohak_top.json", 6, True),
         # 오늘의 특징주 — 거래일에만 새로 쓴다(같은 거래일 재실행은 건너뜀). 연휴 감안 6일.
         ("data/movers_reasons.json", 6, False),
         # 신호 성적표 — US·KR 워크플로우가 매일 다시 집계한다(기록할 신호가 없어도 갱신).

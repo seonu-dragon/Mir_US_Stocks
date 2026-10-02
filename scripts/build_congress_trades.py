@@ -35,6 +35,7 @@ from congress_party_lookup import (  # noqa: E402
 )
 from briefing_store import repository_publish_lock  # noqa: E402
 from sec_client import git_publish  # noqa: E402
+import congress_performance as CP  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 SENATE_URL = (
@@ -481,6 +482,25 @@ def _estimate_returns(trades: list[dict], months: int = 18, max_tickers: int = 1
     return returns
 
 
+def _build_performance(trades: list[dict]) -> dict | None:
+    """체결일·공시일 진입 SPY 대비 초과수익(congress_performance). 가격을 못 받으면 None(화면은 옛 랭킹)."""
+    window = CP.trades_in_window(trades)
+    if not window:
+        return None
+    start = min(CP._d(t["transactionDate"]) for t in window) - timedelta(days=10)
+    try:
+        prices = CP.load_prices(sorted({t["ticker"] for t in window}), start)
+    except Exception as exc:
+        print(f"[perf] 가격 수집 실패: {exc}")
+        return None
+    if CP.BENCH not in prices:
+        print("[perf] SPY 가격 없음 — 성과 랭킹 건너뜀")
+        return None
+    perf = CP.compute_performance(window, prices)
+    print(f"[perf] 가격 {len(prices)}종목 · 잰 거래 {perf['measuredTrades']} · 순위 의원 {len(perf['members'])}")
+    return perf
+
+
 def _build_committee_matrix(trades: list[dict]) -> list[dict]:
     matrix: dict[str, dict] = {}
     for trade in trades:
@@ -562,6 +582,7 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
             t["party"] = party
 
     returns = {} if skip_returns else _estimate_returns(trades, months=return_months)
+    performance = None if skip_returns else _build_performance(trades)
 
     by_pol: dict[str, dict] = {}
     by_ticker: dict[str, dict] = {}
@@ -647,6 +668,12 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
         reverse=True,
     )
 
+    if performance:
+        meta_by_name = {p["name"]: p for p in politicians}
+        for row in performance["members"]:
+            pol = meta_by_name.get(row["name"]) or {}
+            row.update({"id": pol.get("id", ""), "chamber": pol.get("chamber", ""), "party": pol.get("party", "")})
+
     ticker_index = {}
     for tk, cell in by_ticker.items():
         ticker_index[tk] = {
@@ -684,6 +711,7 @@ def build_payload(*, lookback_years: int = 5, return_months: int = 18, skip_retu
         ],
         "politicians": sorted(politicians, key=lambda p: -p["tradeCount"])[:300],
         "byTicker": ticker_index,
+        "performance": performance,
         "committeeSectorMatrix": _build_committee_matrix(trades),
         "recentTrades": trades[:200],
     }

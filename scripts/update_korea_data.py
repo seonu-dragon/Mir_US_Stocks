@@ -639,7 +639,7 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             continue
         # closePrice = 장중엔 KRX 현재가, 15:30~16:00 엔 정규장 종가. 넥스트레이드(NXT) 애프터마켓 가격은
         # overMarketPriceInfo.overPrice 로 따로 온다 — 대표가로 쓰지 않는다. 다만 16:00 시간외 단일가가
-        # 시작되면 closePrice 도 그 가격으로 바뀐다(2026-10-02 실측) → apply_krx_official_close 가 덮는다.
+        # 시작되면 closePrice 도 그 가격으로 바뀐다(2026-10-02 실측) → apply_regular_close 가 덮는다.
         price = _raw_number(item, "closePriceRaw", "closePrice")
         if price is None:
             continue
@@ -668,7 +668,7 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
             "yahooSymbol": yahoo_ticker(code, market),
             "quotePrice": price,
             "quoteChangePct": change_pct if change_pct is not None else 0.0,
-            # 전일 종가(= 현재가 − 전일 대비). KRX 종가로 덮을 때 ETF 등락률을 다시 계산하는 데 쓴다.
+            # 전일 종가(= 현재가 − 전일 대비). 정규장 종가로 덮을 때 다음이 전일가를 안 주면 등락률 계산에 쓴다.
             "quotePrevClose": (price - change) if change is not None and price - change > 0 else None,
             "quoteVolume": volume,
             "quoteAmount": amount,
@@ -683,68 +683,77 @@ def fetch_market_page(sosok: int, page: int) -> list[dict]:
     return out
 
 
-KRX_CLOSE_TIMEOUT = 300  # 초. pykrx 로그인 + 주식·ETF 전 종목 2요청이라 보통 10초 안쪽.
+DAUM_QUOTE_API = "https://finance.daum.net/api/quotes/A{code}?summary=false"
+DAUM_WORKERS = 8  # 2026-10-02 실측: 8동시 200종목 1.7초, 오류 0
 
 
-def override_with_krx_close(rows, krx_rows: dict, krx_date: str) -> int:
-    """네이버 목록 행의 대표가를 KRX 공식 정규장 종가로 덮는다. 바꾼 행 수를 돌려준다.
+def fetch_daum_regular_close(code: str) -> dict | None:
+    """다음 금융 종목 시세에서 정규장 종가만 뽑는다. {date, close, prevClose} 또는 None.
 
-    네이버 closePrice 는 16:00 시간외 단일가부터 그 가격으로 바뀐다(fetch_kr_krx_close.py 주석).
-    시세 기준일(quoteDate)이 KRX 일자와 같은 행만 바꾼다 — 거래정지 종목처럼 기준일이 다른 행은
-    그날 KRX 값이 없거나 뜻이 달라 그대로 둔다. 등락률은 KRX 값, 없으면(ETF) 네이버 전일 종가로 계산.
-    상장주식수(listedShares)는 그대로다 — 시총만 KRX 공식값으로 바꾼다.
+    tradePrice 는 시간외 가격까지 따라가지만 regularTradePrice 는 정규장 종가로 남는다(2026-10-02 17:33
+    실측: SK하이닉스 tradePrice 1,843,000 / regularTradePrice 1,841,000 = KRX 종가).
+    """
+    headers = {**HTTP_HEADERS, "Accept": "application/json", "Referer": "https://finance.daum.net/"}
+    for attempt in range(2):
+        try:
+            req = urllib.request.Request(DAUM_QUOTE_API.format(code=code), headers=headers)
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                d = json.loads(resp.read().decode("utf-8"))
+            break
+        except Exception:
+            time.sleep(1.0 * (attempt + 1))
+    else:
+        return None
+    close, prev, day = d.get("regularTradePrice"), d.get("prevClosingPrice"), str(d.get("tradeDate") or "")
+    if not isinstance(close, (int, float)) or close <= 0 or not re.fullmatch(r"\d{8}", day):
+        return None
+    return {"date": f"{day[0:4]}-{day[4:6]}-{day[6:8]}", "close": float(close),
+            "prevClose": float(prev) if isinstance(prev, (int, float)) and prev > 0 else None}
+
+
+def override_with_regular_close(rows, regular: dict) -> int:
+    """네이버 목록 행의 대표가를 정규장 종가로 덮는다. 바꾼 행 수를 돌려준다.
+
+    네이버 목록 closePrice 는 16:00 시간외 단일가부터 그 가격으로 바뀐다(2026-10-02 16:13 실측 상위
+    200종목 중 157종목, NXT 없는 우선주 포함). KRX 일별 시세(pykrx)도 당일분은 18시 전까지 시간외
+    가격을 보여 줘서 쓰지 않는다. 기준일(quoteDate)이 같은 행만 바꾼다 — 거래정지처럼 기준일이 다른
+    행은 뜻이 달라 그대로 둔다. 시총은 상장주식수(없으면 가격 비율)로 다시 계산한다.
     """
     changed = 0
     for row in rows:
-        k = krx_rows.get(row.get("symbol"))
-        if not k or row.get("quoteDate") != krx_date or not k.get("close"):
+        r = regular.get(row.get("symbol"))
+        if not r or r["date"] != row.get("quoteDate"):
             continue
-        close = float(k["close"])
-        pct = k.get("changePct")
-        prev = row.get("quotePrevClose")
-        if pct is None and prev:
-            pct = (close / prev - 1) * 100
-        if row.get("quotePrice") != close:
-            changed += 1
+        close, old = r["close"], row.get("quotePrice")
+        if old == close:
+            continue
+        changed += 1
         row["quotePrice"] = close
-        if pct is not None:
-            row["quoteChangePct"] = round(float(pct), 2)
-        if k.get("volume") is not None:
-            row["quoteVolume"] = float(k["volume"])
-        if k.get("amount") is not None:
-            row["quoteAmount"] = round(float(k["amount"]) / 1e6)  # 원 → 백만원(네이버 목록과 같은 단위)
-        if k.get("cap"):
-            row["marketCapT"] = row["marketCapB"] = float(k["cap"]) / 1e12
+        prev = r.get("prevClose") or row.get("quotePrevClose")
+        if prev:
+            row["quoteChangePct"] = round((close / prev - 1) * 100, 2)
+        if row.get("listedShares"):
+            cap_t = row["listedShares"] * close / 1e12
+        elif row.get("marketCapT") and old:
+            cap_t = row["marketCapT"] * close / old
+        else:
+            continue
+        row["marketCapT"] = row["marketCapB"] = cap_t
     return changed
 
 
-def apply_krx_official_close(universe: dict[str, dict]) -> None:
-    """KRX 공식 일별 시세를 서브프로세스(pykrx 로그인)로 받아 네이버 대표가를 덮는다.
-
-    자격증명(KRX_ID/KRX_PW)이 없거나 실패하면 네이버 값 그대로 진행한다 — 16:00 전 실행이면 그 값도
-    정규장 종가다. 기준일은 목록 행에서 가장 많은 quoteDate(= 그날 거래일).
-    """
-    if not (os.environ.get("KRX_ID") and os.environ.get("KRX_PW")):
-        print("[krx-close] KRX_ID/KRX_PW 없음 — 네이버 closePrice 그대로(16:00 이후 실행이면 시간외 가격일 수 있다)")
+def apply_regular_close(universe: dict[str, dict]) -> None:
+    """다음 금융 regularTradePrice 로 네이버 대표가를 정규장 종가로 덮는다. 실패한 종목은 네이버 값 그대로."""
+    codes = [code for code, row in universe.items() if row.get("quoteDate")]
+    if not codes:
         return
-    dates: dict[str, int] = {}
-    for row in universe.values():
-        if row.get("quoteDate"):
-            dates[row["quoteDate"]] = dates.get(row["quoteDate"], 0) + 1
-    if not dates:
-        return
-    krx_date = max(dates, key=dates.get)
-    with tempfile.TemporaryDirectory() as tmp:
-        out = Path(tmp) / "krx_close.json"
-        if not run_subbuilder("krx-close", "fetch_kr_krx_close.py", "--date", krx_date.replace("-", ""),
-                              "--out", str(out), timeout=KRX_CLOSE_TIMEOUT) or not out.exists():
-            print("[krx-close] KRX 공식 종가를 못 받았다 — 네이버 closePrice 그대로 진행")
-            return
-        payload = json.loads(out.read_text(encoding="utf-8"))
-    if payload.get("date") != krx_date:
-        return
-    changed = override_with_krx_close(universe.values(), payload.get("rows") or {}, krx_date)
-    print(f"[krx-close] {krx_date} KRX 공식 종가 {len(payload.get('rows') or {})}종목 · 네이버와 달라 바꾼 행 {changed}")
+    regular: dict[str, dict] = {}
+    with ThreadPoolExecutor(max_workers=DAUM_WORKERS) as ex:
+        for code, r in zip(codes, ex.map(fetch_daum_regular_close, codes)):
+            if r:
+                regular[code] = r
+    changed = override_with_regular_close(universe.values(), regular)
+    print(f"[정규장종가] 다음 {len(regular)}/{len(codes)}종목 · 네이버와 달라 바꾼 행 {changed}")
 
 
 def fetch_all_listed(limit: int | None = None) -> list[dict]:
@@ -769,7 +778,7 @@ def fetch_all_listed(limit: int | None = None) -> list[dict]:
         if limit and len(universe) >= limit:
             break
 
-    apply_krx_official_close(universe)
+    apply_regular_close(universe)
 
     metas = sorted(universe.values(), key=lambda m: m.get("marketCapT") or 0, reverse=True)
     if limit:

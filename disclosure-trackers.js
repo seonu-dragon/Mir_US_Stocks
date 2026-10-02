@@ -1148,7 +1148,7 @@ function renderValueup() {
     <td class="ins-date">${escapeHtml(r.date || "")}</td>
     <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(r.company || r.ticker)}</button><div class="ins-sub">${joinSubParts(tickerHint(r.ticker), valueupSort === "company" && perCompany[r.ticker] > 1 ? `${perCompany[r.ticker]}건` : "")}</div></td>
     <td class="ins-sub ${VALUEUP_KIND_CLS[r.kind] || ""}">${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" rel="noopener">${escapeHtml(r.label || "")}</a>` : escapeHtml(r.label || "")}</td>
-    <td><span>${escapeHtml(r.detail || "")}</span>${r.sub ? `<div class="ins-sub">${escapeHtml(r.sub)}</div>` : ""}</td>
+    <td class="valueup-detail"><span>${escapeHtml(r.detail || "")}</span>${r.sub ? `<div class="ins-sub">${escapeHtml(r.sub)}</div>` : ""}</td>
     <td class="ins-num"><strong>${escapeHtml(r.sizeText || "—")}</strong></td>
   </tr>`).join("");
   const remain = rows.length - shown.length;

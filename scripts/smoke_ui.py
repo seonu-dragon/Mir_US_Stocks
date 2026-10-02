@@ -445,19 +445,22 @@ def test_kr_market(browser, base: str) -> None:
     page.evaluate("() => { window.MirMarket.setMode('kr'); }")
     page.wait_for_timeout(600)
 
+    # 2026-10-02: KR 실적 일정은 DART 발표 이력 기반 '추정' 예정일로 켰다(build_kr_earnings_calendar.py).
     boot(page, f"{base}?tab=calendar")
-    check("[KR] 데이터 없는 실적 서브탭은 숨김", page.evaluate("""() => {
+    check("[KR] 실적 서브탭 표시(추정 예정일)", page.evaluate("""() => {
       const b = document.querySelector('#calendarSubTabs [data-sub="earnings"]');
-      return !!b && (b.hidden || getComputedStyle(b).display === 'none');
+      return !!b && !b.hidden && getComputedStyle(b).display !== 'none';
     }"""))
-    check("[KR] 없는 파일을 요청하지 않음(404 없음)",
+    check("[KR] 실적 일정 파일 404 없음",
           not any("earnings_calendar" in x for x in bad),
           "; ".join(x for x in bad if "earnings_calendar" in x))
 
     boot(page, f"{base}?tab=calendar&sub=earnings")
+    page.select_option("#earnHorizon", "30")
+    page.wait_for_timeout(500)
     body = page.locator("#earningsCalendarBody").inner_text()
-    check("[KR] 딥링크로 들어와도 이유를 밝힘",
-          "제공하지 않습니다" in body and "불러오는 중" not in body,
+    check("[KR] 딥링크로 들어오면 추정 배지와 함께 일정이 보임",
+          "추정" in body and "불러오는 중" not in body,
           body.replace("\n", " ")[:80])
 
     boot(page, f"{base}?tab=health")

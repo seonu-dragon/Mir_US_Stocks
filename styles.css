@@ -6288,6 +6288,8 @@ footer {
 .earn-tier-mega { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--accent); }
 .earn-tier-large { background: color-mix(in srgb, var(--teal) 14%, transparent); color: var(--teal); }
 .earn-tier-mid { background: var(--panel-soft); color: var(--muted); }
+/* 밸류업 표 '내용' 칸 — 계획 요약이 길어 줄바꿈 없이 두면 규모 열이 화면 밖으로 밀린다 */
+.insider-table td.valueup-detail { white-space: normal; min-width: 240px; max-width: 560px; }
 /* 국내 실적 예정일(작년 같은 분기 발표일 기준 추정) 표시 */
 .earn-est { display: inline-block; font-style: normal; font-size: var(--fs-cap); font-weight: 600; padding: 0 5px; margin-left: 4px; border-radius: var(--r-pill); background: var(--panel-soft); color: var(--muted); vertical-align: middle; }
 

@@ -324,7 +324,7 @@ def build(source_rows: list[dict], prev_rows: list[dict], state: dict, api_key: 
                 extra = parse_plan(rows) if kind == "plan" else parse_cancel(rows)
                 stats["parsed"] += 1
         if kind == "plan" and r["label"] == "주주환원 정책":
-            m = re.search(r"\((주주[^)]*)\)\s*$", r["title"])
+            m = re.search(r"\(([^()]*)\)\s*$", r["title"])  # 제목 끝 괄호 = 정책 이름
             if m:
                 extra.setdefault("planName", m.group(1))
         out.append({**base, **extra})

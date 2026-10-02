@@ -1,7 +1,7 @@
 {
- "updatedAtKst": "2026-10-02 06:41 KST",
- "from": "2026-10-02",
- "to": "2026-12-31",
+ "updatedAtKst": "2026-10-03 06:11 KST",
+ "from": "2026-10-03",
+ "to": "2027-01-01",
  "horizonDays": 90,
  "source": "exchange_calendars 4.13.2 (XKRX·XNYS) · 만기는 거래소 규칙으로 계산 · FOMC 는 연준 공개 일정표",
  "coverage": {
@@ -14,7 +14,7 @@
    "lastSession": "2027-10-01"
   }
  },
- "count": 16,
+ "count": 18,
  "events": [
   {
    "date": "2026-10-05",
@@ -139,6 +139,20 @@
    "kind": "holiday",
    "title": "한국 휴장",
    "name": "연말 휴장"
+  },
+  {
+   "date": "2027-01-01",
+   "market": "kr",
+   "kind": "holiday",
+   "title": "한국 휴장",
+   "name": "신정"
+  },
+  {
+   "date": "2027-01-01",
+   "market": "us",
+   "kind": "holiday",
+   "title": "미국 휴장",
+   "name": "신정"
   }
  ]
 }

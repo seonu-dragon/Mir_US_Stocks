@@ -79,6 +79,8 @@ const FEATURE_DATA = {
   sentimentGauges: { global: "SENTIMENT_GAUGES", path: "data/sentiment_gauges.js" },
   // WSB 댓글 감성(Tradestie). AI 브리핑 탭 소셜 표 전용 — US 전용 lazy.
   wsbSentiment: { global: "WSB_SENTIMENT", path: "data/wsb_sentiment.js", usOnly: true, lazy: true },
+  // 서학개미 TOP(SEIBro 미국 주식 보관·결제 상위 50) — 찾기 › 목록 칩을 처음 누를 때만 받는다.
+  seohakTop: { global: "SEOHAK_TOP", path: "data/seohak_top.js", usOnly: true, lazy: true },
   // 한국은행 ECOS 매크로(기준금리·국고채·신용스프레드·환율·CPI·뉴스심리). KR 전용.
   ecosMacro: { global: "KR_ECOS_MACRO", path: "data/korea/ecos_macro.js", krOnly: true },
   // 관세청 품목별 수출 모멘텀(반도체·자동차·배터리 등 월간 수출액·YoY). KR 전용.

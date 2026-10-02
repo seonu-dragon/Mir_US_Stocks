@@ -122,6 +122,13 @@ jobs:
         timeout-minutes: 5
         run: python scripts/build_wsb_sentiment.py
 
+      # 서학개미 TOP — 예탁결제원 SEIBro 미국 주식 보관·결제 상위 50(무키). 다음 스냅샷 단계의
+      # `git add data/` 가 함께 발행한다.
+      - name: Build Seohak TOP (SEIBro)
+        continue-on-error: true
+        timeout-minutes: 5
+        run: python scripts/build_seohak_top.py
+
       - name: Build sentiment gauges (crypto/CNN F&G)
         continue-on-error: true
         timeout-minutes: 5

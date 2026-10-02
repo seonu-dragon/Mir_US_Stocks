@@ -18,7 +18,7 @@
      scripts/kr_theme_rules.py 의 키워드·동의어 규칙으로 후보를 고른다(LLM 없음).
        high = 테마 키워드 + 사업 활동어 + 자기 지칭(당사·회사·연결실체 …)  → 규칙으로 편입
        amb  = 키워드는 있는데 남의 이야기(시장 현황·고객 산업)일 수 있는 문장 → 보류
-  4. (선택) GEMINI_API_KEY 가 있으면 보류 후보만 flash-lite 로 판정한다 — 실행당 --llm-max(기본 40)건,
+  4. (선택) GEMINI_API_KEY 가 있으면 보류 후보만 flash-lite 로 판정한다 — 실행당 --llm-max(기본 200)건,
      한 번에 20건씩(= 최대 2콜). 판정 결과는 상태 파일에 캐시해 같은 문장을 다시 묻지 않는다.
      키가 없거나 한도면 보류는 그대로 보류(편입 안 함). 근거 문장은 LLM 이 쓰지 않는다 — 원문 문장 그대로다.
   5. 저PBR 금융은 금융업 근거 문장 + KRX 공식 PBR(data/korea/map_fundamentals.json, 빌드일) < 1.
@@ -28,7 +28,7 @@
   data/korea/themes/<id>.json  테마별 근거 문장 {id, ev: {티커: [문장, 잘림표시]}} — 테마를 펼치거나 칩을 누를 때만 fetch
   data/korea/themes_state.json 증분 상태(종목별 처리한 접수번호·규칙 버전·보류 후보·LLM 판정 캐시). 브라우저는 안 읽는다.
 
-실행: python scripts/build_kr_themes.py [--max-docs 600] [--llm-max 40] [--no-llm] [--only 005930,000660] [--push]
+실행: python scripts/build_kr_themes.py [--max-docs 600] [--llm-max 200] [--no-llm] [--only 005930,000660] [--push]
       오프라인 재현: --doc-dir DIR(<접수번호>.xml 원문) --listing-file FILE({티커: {rc, nm, dt}})
 """
 
@@ -77,10 +77,12 @@ EV_MAX = 200            # 근거 문장 최대 길이(넘으면 키워드 주변
 AMB_TOP = 600           # 보류 후보(LLM 판정 대기)는 시총 상위 이 순위 안 종목만 상태에 남긴다 — 실행당 판정 40건이라
 AMB_PER_TICKER = 5      # 그 밖은 몇 년이 걸려도 차례가 오지 않는다. 상태 파일 크기(커밋마다 통째로 바뀜)도 묶는다.
 SECTION_MAX = 800_000   # 사업의 내용 구간 상한(문자). 보험·지주사 보고서는 수십 MB 라 구간만 본다.
-LLM_MODEL = "gemini-2.5-flash-lite"
+# 2026-10-02: flash-lite(생각 없음)는 사람 판정과 61% 일치·정상 편입 절반 탈락, 2.5-flash(생각 1024)는 79%·88% 정밀도.
+LLM_MODEL = "gemini-2.5-flash"
+LLM_THINKING = 1024
 # 판정 프롬프트 버전. 프롬프트를 고치면 올린다 — 캐시 키(evidence_key)에 규칙 버전과 함께 들어가서
 # 버전이 바뀐 옛 판정은 쓰이지 않고 다시 묻는다(2026-09-27 프롬프트를 조였는데 옛 '통과' 판정이 남았었다).
-LLM_PROMPT_VERSION = 2
+LLM_PROMPT_VERSION = 3
 LLM_BATCH = 20
 ETF_SECTORS = {"EXCHANGE TRADED FUNDS", "ETF", "etf"}
 
@@ -142,8 +144,12 @@ COMPANY_HEAD_RE = re.compile(R.COMPANY_HEAD)
 def compiled_themes() -> list[dict]:
     out = []
     for t in R.THEMES:
+        # _any: strong ∪ weak 를 정규식 하나로 — 문장에 이 테마 키워드가 하나도 없으면 바로 건너뛴다.
+        # 테마가 200개를 넘으면서 문장 × 테마 × 키워드 개별 검사가 보고서당 3.5초였다(2026-10-02).
+        kws = [_ascii_bounds(p) for p in list(t.get("strong") or []) + list(t.get("weak") or [])]
         out.append({**t, "_strong": _compile(t.get("strong")), "_weak": _compile(t.get("weak")),
-                    "_ctx": _compile(t.get("ctx")), "_neg": _compile(t.get("neg"))})
+                    "_ctx": _compile(t.get("ctx")), "_neg": _compile(t.get("neg")),
+                    "_any": re.compile("|".join(f"(?:{k})" for k in kws), re.I) if kws else None})
     return out
 
 
@@ -246,7 +252,11 @@ def classify_hit(sent: str, is_row: bool, theme: dict, *, industry: bool = False
     strong 키워드가 여러 번 나오면 '편입' 조건을 만족하는 첫 위치를 쓴다(LG전자 문장 앞머리의 'OLED TV 는
     … 고객' 은 전방 이야기지만 뒤의 '당사는 OLED TV 를 …' 은 자기 사업이다).
     """
-    if len(sent) < 8 or GLOBAL_NEG_RE.search(sent):
+    if len(sent) < 8:
+        return None
+    if "_any" in theme and (theme["_any"] is None or not theme["_any"].search(sent)):
+        return None
+    if GLOBAL_NEG_RE.search(sent):
         return None
     if any(p.search(sent) for p in theme["_neg"]):
         return None
@@ -297,6 +307,20 @@ def _hit_score(h: dict) -> float:
     s -= abs(len(h["ev"]) - 120) / 200.0              # 너무 짧은 주석성 문장(※ …)도, 긴 나열도 덜 선호
     s -= h["pos"] / 5000.0
     return s
+
+
+# 규칙 편입(high)이라도 테마 키워드가 걸린 문장이 이보다 적으면 '보류'로 내려 LLM 판정을 거친다.
+# 2026-10-02 hold-out(시총 401~800위 379종목) 사람 판정: 문장 1개 23% · 2개 32% · 3~4개 36% · 5~7개 61% ·
+# 8~12개 68% · 13개 이상 82~100% 가 맞았다 — 한두 번 지나가는 언급(고객·응용처·곁가지)은 대부분 오편입.
+HIGH_MIN_N = 8
+
+
+def demote_thin(hits: dict, min_n: int = HIGH_MIN_N) -> dict:
+    """문장 수가 적은 규칙 편입을 보류(amb)로 내린다."""
+    out = {}
+    for tid, h in hits.items():
+        out[tid] = {**h, "lvl": "amb"} if h["lvl"] == "high" and int(h.get("n") or 1) < min_n else h
+    return out
 
 
 def scan_section(section: str, themes=None, names=None) -> dict:
@@ -475,6 +499,20 @@ def assemble(prev_payload: dict, results: dict, tstate: dict, llm_cache: dict, l
                 if h.get("sub"):
                     by_theme[tid][t]["sub"] = 1
 
+    # 이름 기반 테마(스팩·리츠): 사업보고서가 아니라 상장 종목명으로 판정한다(nameRe / nameNeg).
+    # 종목명 자체가 법적 형태를 말해 주는 경우만 쓴다 — 사업 내용 테마에는 쓰지 않는다.
+    pool = sorted(universe) if universe is not None else sorted(names)
+    for th in R.THEMES:
+        if not th.get("nameRe"):
+            continue
+        pat, neg = re.compile(th["nameRe"]), re.compile(th["nameNeg"]) if th.get("nameNeg") else None
+        for t in pool:
+            nm = names.get(t) or ""
+            mt = pat.search(nm)
+            if not mt or (neg and neg.search(nm)) or is_excluded(t, th["id"]):
+                continue
+            by_theme[th["id"]][t] = {"t": t, "ev": f"상장 종목명 '{nm}'", "kw": mt.group(0), "by": "name"}
+
     themes_out = []
     used: set[str] = set()
     for th in R.THEMES:
@@ -490,6 +528,10 @@ def assemble(prev_payload: dict, results: dict, tstate: dict, llm_cache: dict, l
         members.sort(key=lambda m: m["t"])
         used.update(m["t"] for m in members)
         entry = {"id": th["id"], "name": th["name"], "group": th["group"], "desc": th["desc"], "members": members}
+        if th.get("about"):
+            entry["about"] = th["about"]
+        if th.get("replaces"):
+            entry["replaces"] = th["replaces"]
         if th.get("filter"):
             entry["filter"] = th["filter"]
         themes_out.append(entry)
@@ -634,8 +676,8 @@ def llm_judge(cands: list[dict], api_key: str) -> dict[str, bool]:
         + json.dumps(items, ensure_ascii=False)
     )
     body = {"contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.0, "maxOutputTokens": 2048,
-                                 "thinkingConfig": {"thinkingBudget": 0}}}
+            "generationConfig": {"responseMimeType": "application/json", "temperature": 0.0, "maxOutputTokens": 8192,
+                                 "thinkingConfig": {"thinkingBudget": LLM_THINKING}}}
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{LLM_MODEL}:generateContent"
     req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
                                  headers={"Content-Type": "application/json", "x-goog-api-key": api_key})
@@ -685,7 +727,7 @@ def load_universe() -> tuple[list[str], dict]:
 def main() -> int:
     ap = argparse.ArgumentParser(description="국내 테마 분류(DART 사업보고서 근거 문장)")
     ap.add_argument("--max-docs", type=int, default=int(os.environ.get("KR_THEME_MAX_DOCS") or 600))
-    ap.add_argument("--llm-max", type=int, default=40)
+    ap.add_argument("--llm-max", type=int, default=200)
     ap.add_argument("--no-llm", action="store_true")
     ap.add_argument("--only", default="", help="쉼표로 구분한 티커(테스트용)")
     ap.add_argument("--doc-dir", default="", help="오프라인: <접수번호>.xml 원문 폴더")
@@ -740,14 +782,21 @@ def main() -> int:
     results: dict[str, dict] = {}
     rank = {t: i for i, t in enumerate(universe)}
     ok = fail = nosec = 0
+    # 시간 예산: 잡 timeout(150분) 전에 멈추고 받은 만큼 저장한다 — 다음 실행이 접수번호·규칙 버전으로 이어서 처리.
+    # 2026-10-02 테마 210개로 늘며 보고서당 약 1.4초 + DART 다운로드라 전체 2,600종목은 한 번에 못 끝난다.
+    budget_s = float(os.environ.get("KR_THEME_TIME_BUDGET_MIN") or 110) * 60
+    t_start = time.monotonic()
     try:
         for t in plan[: max(0, args.max_docs)]:
+            if time.monotonic() - t_start > budget_s:
+                print(f"[시간] 예산 {budget_s / 60:.0f}분 소진 — {ok}건에서 멈추고 저장(나머지는 다음 실행)")
+                break
             rep = listing[t]
             sec, status = fetch_report_section(rep["rc"], api_key, doc_dir)
             if status == "fail":
                 fail += 1
                 continue
-            hits = scan_section(sec, names=[names.get(t), rep.get("corp")]) if sec else {}
+            hits = demote_thin(scan_section(sec, names=[names.get(t), rep.get("corp")])) if sec else {}
             if status == "nosection":
                 nosec += 1
             results[t] = hits
@@ -795,9 +844,15 @@ def main() -> int:
                                 "desc": theme_meta[tid]["desc"], "ev": h["ev"]})
         pending = pending[: args.llm_max]
         for i in range(0, len(pending), LLM_BATCH):
-            got = llm_judge(pending[i: i + LLM_BATCH], gem)
+            got = {}
+            for attempt in range(3):           # 무료 한도(분당 요청)에 걸리면 기다렸다가 다시
+                got = llm_judge(pending[i: i + LLM_BATCH], gem)
+                if got:
+                    break
+                time.sleep(20 * (attempt + 1))
             if not got:
                 break
+            time.sleep(6)
             llm_cache.update(got)
             judged += len(got)
             accepted += sum(1 for v in got.values() if v)

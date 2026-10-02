@@ -9,7 +9,7 @@
 // 애매한 문장만 Gemini 가 판정한 것('AI 판정' 표시). 테마 등락은 스냅샷 종가 기준이다. 매매 추천이 아니다.
 // 이름은 kt* 로 전역 충돌을 피한다(scripts/check_global_name_collisions.py).
 
-const KT_VIEW = { period: "d", weight: "eq", sel: null, group: "" };
+const KT_VIEW = { period: "d", weight: "eq", sel: null, group: "", q: "" };
 const KT_PERIODS = [["d", "오늘"], ["w", "1주"], ["m", "1개월"]];
 const KT_WEIGHTS = [["eq", "동일가중"], ["cap", "시총가중"]];
 const KT_RANK_MIN = 2;     // 순위 카드는 편입 2종목 이상 테마만(한 종목이면 개별 종목 등락이다)
@@ -40,7 +40,9 @@ function ktLoadEvidence(theme) {
 
 function ktTheme(id) {
   const P = window.KR_THEMES;
-  return P && Array.isArray(P.themes) ? P.themes.find((t) => t.id === id) || null : null;
+  if (!P || !Array.isArray(P.themes)) return null;
+  // 2026-10-02 테마 세분화로 없어진 옛 id(예: battery_material)는 그걸 쪼갠 첫 테마로 연다(옛 링크 보존).
+  return P.themes.find((t) => t.id === id) || P.themes.find((t) => t.replaces === id) || null;
 }
 
 // KR 스냅샷 시총은 조 원 단위(marketCapT = marketCapB).
@@ -77,8 +79,9 @@ function ktSourceHtml(ticker) {
 }
 
 function ktByBadge(by) {
+  if (by === "name") return '<span class="kt-by" title="상장 종목명이 법적 형태(스팩·리츠)를 말해 줍니다.">종목명</span>';
   return by === "llm"
-    ? '<span class="kt-by kt-by-llm" title="규칙만으로는 애매해 Gemini(flash-lite)가 이 문장을 판정했습니다. 문장 자체는 원문 그대로입니다.">AI 판정</span>'
+    ? '<span class="kt-by kt-by-llm" title="규칙만으로는 확신하기 어려워 Gemini가 이 문장을 판정했습니다. 문장 자체는 원문 그대로입니다.">AI 판정</span>'
     : '<span class="kt-by" title="테마 키워드 + 자기 지칭(당사·회사 등) + 사업 활동어가 한 문장에 있어 규칙으로 편입했습니다.">규칙</span>';
 }
 
@@ -124,6 +127,10 @@ function renderKrThemes() {
   if (!host.dataset.ktBound) {
     host.dataset.ktBound = "1";
     host.addEventListener("click", ktOnClick);
+    // 테마 이름 검색 — 다시 그리지 않고 행만 숨긴다(다시 그리면 입력칸 포커스가 날아간다).
+    host.addEventListener("input", (ev) => {
+      if (ev.target && ev.target.id === "ktSearch") { KT_VIEW.q = ev.target.value; ktApplySearch(host); }
+    });
   }
   const C = ktCore();
   const cov = P.coverage || {};
@@ -153,7 +160,7 @@ function renderKrThemes() {
     const sel = s.id === KT_VIEW.sel;
     const d = s.d, w = s.w, m = s.m;
     const pick = (cell) => cell[KT_VIEW.weight === "cap" ? "cap" : "eq"];
-    return `<tr class="kt-row${sel ? " is-selected" : ""}" data-kt-theme="${escapeHtml(s.id)}" aria-expanded="${sel}">
+    return `<tr class="kt-row${sel ? " is-selected" : ""}" data-kt-theme="${escapeHtml(s.id)}" data-kt-name="${escapeHtml(`${s.name} ${s.group || ""}`)}" aria-expanded="${sel}">
         <th scope="row"><span class="kt-name">${escapeHtml(s.name)}</span><small class="kt-group">${escapeHtml(s.group || "")}</small></th>
         <td>${s.n}${s.llm ? `<small class="kt-llm-n" title="그중 AI 판정 편입">·AI ${s.llm}</small>` : ""}</td>
         <td class="${KT_VIEW.period === "d" ? "is-key" : ""}">${ktPct(pick(d))}</td>
@@ -176,7 +183,8 @@ function renderKrThemes() {
       </div>
     </section>
     <section class="kt-card" aria-label="전체 테마">
-      <header class="kt-head"><h3>전체 테마</h3><span class="kt-count">${withMembers.length}개 테마 · 편입 ${Number(P.count).toLocaleString("ko-KR")}건</span></header>
+      <header class="kt-head"><h3>전체 테마</h3><span class="kt-count">${withMembers.length}개 테마 · 편입 ${Number(P.count).toLocaleString("ko-KR")}건</span>
+        <input type="search" id="ktSearch" class="kt-search" placeholder="테마 검색 (예: 양극재, HBM)" aria-label="테마 검색" value="${escapeHtml(KT_VIEW.q)}"></header>
       <div class="kt-groups" role="group" aria-label="테마 분류">
         <button type="button" data-kt="group:" class="kt-chip-f ${!KT_VIEW.group ? "is-active" : ""}">전체</button>
         ${groups.map((g) => `<button type="button" data-kt="group:${escapeHtml(g)}" class="kt-chip-f ${KT_VIEW.group === g ? "is-active" : ""}">${escapeHtml(g)}</button>`).join("")}
@@ -190,7 +198,18 @@ function renderKrThemes() {
       ${empty ? `<p class="kt-note">편입 종목이 아직 없는 테마 ${empty}개는 표에서 뺐습니다.</p>` : ""}
     </section>
     <p class="ia-footnote kt-foot">원문 확인 ${Number(cov.processed || 0).toLocaleString("ko-KR")} / ${Number(cov.universe || 0).toLocaleString("ko-KR")}종목 · 갱신 ${escapeHtml(P.updatedAtKst || "")}</p>`;
+  if (KT_VIEW.q) ktApplySearch(host);
   if (KT_VIEW.sel) ktFillDetail(KT_VIEW.sel);
+}
+
+function ktApplySearch(host) {
+  const q = String(KT_VIEW.q || "").trim().toLowerCase().replace(/\s+/g, "");
+  host.querySelectorAll(".kt-row").forEach((row) => {
+    const hit = !q || String(row.dataset.ktName || "").toLowerCase().replace(/\s+/g, "").includes(q);
+    row.hidden = !hit;
+    const detail = row.nextElementSibling;
+    if (detail && detail.classList.contains("kt-detail-row")) detail.hidden = !hit;
+  });
 }
 
 function ktDetailHtml(stat) {
@@ -220,7 +239,7 @@ function ktDetailHtml(stat) {
   const perfLine = `${escapeHtml(periodLabel)} 동일가중 ${ktPct(stat[KT_VIEW.period].eq)} · 시총가중 ${ktPct(stat[KT_VIEW.period].cap)}`;
   return `
     <div class="kt-detail-head">
-      <div><h4>${escapeHtml(th.name)}</h4><p class="kt-desc">${escapeHtml(th.desc || "")}</p></div>
+      <div><h4>${escapeHtml(th.name)}</h4><p class="kt-desc">${escapeHtml(th.about || th.desc || "")}</p></div>
       <p class="kt-detail-perf">${perfLine}</p>
     </div>
     ${th.filter && th.filter.pbMax != null ? `<p class="kt-note">금융업 근거 문장이 있는 종목 중 KRX 공식 PBR ${th.filter.pbMax}배 미만(빌드일 ${escapeHtml(String(P.updatedAtKst || "").slice(0, 10))} 기준)만 셉니다${hidden > 0 ? ` — PBR 조건 밖 ${hidden}종목 제외` : ""}.</p>` : ""}
@@ -313,7 +332,9 @@ function renderStockThemes(item) {
   const renderKey = `${ticker}|${P.updatedAtKst || ""}`;
   if (host.dataset.ktKey === renderKey && host.innerHTML) return;
   host.dataset.ktKey = renderKey;
-  const list = ktCore().themesForTicker(P.themes, ticker);
+  // 자기 사업 테마를 먼저, 자회사 사업은 뒤로. 지주사는 30개 넘게 붙어 8개까지만 펼쳐 두고 나머지는 접는다.
+  const list = ktCore().themesForTicker(P.themes, ticker).slice().sort((a, b) => (a.sub ? 1 : 0) - (b.sub ? 1 : 0));
+  const KT_CHIP_SHOW = 8;
   const done = Array.isArray(P.done) && P.done.includes(ticker);
   if (!list.length && !done) {
     host.hidden = true;
@@ -326,8 +347,8 @@ function renderStockThemes(item) {
   host.dataset.ktTicker = ticker;
   host.innerHTML = `
     <h3 class="kt-chips-title">이 종목의 테마</h3>
-    ${list.length ? `<div class="kt-chips">${list.map((x) => `<button type="button" class="kt-chip" data-kt-chip="${escapeHtml(x.id)}" aria-expanded="false"
-        title="${escapeHtml(`근거 키워드 '${x.kw}' · ${repName}${x.by === "llm" ? " · AI 판정" : ""}${x.sub ? " · 자회사 사업" : ""} — 눌러서 근거 문장 보기`)}">${escapeHtml(x.name)}${x.by === "llm" ? '<span class="kt-chip-ai" aria-label="AI 판정">AI</span>' : ""}${x.sub ? '<span class="kt-chip-ai" aria-label="자회사 사업">자회사</span>' : ""}</button>`).join("")}</div>
+    ${list.length ? `<div class="kt-chips">${list.map((x, i) => `<button type="button" class="kt-chip" data-kt-chip="${escapeHtml(x.id)}" aria-expanded="false"${i >= KT_CHIP_SHOW ? " hidden" : ""}
+        title="${escapeHtml(`근거 키워드 '${x.kw}' · ${repName}${x.by === "llm" ? " · AI 판정" : ""}${x.sub ? " · 자회사 사업" : ""} — 눌러서 근거 문장 보기`)}">${escapeHtml(x.name)}${x.by === "llm" ? '<span class="kt-chip-ai" aria-label="AI 판정">AI</span>' : ""}${x.sub ? '<span class="kt-chip-ai" aria-label="자회사 사업">자회사</span>' : ""}</button>`).join("")}${list.length > KT_CHIP_SHOW ? `<button type="button" class="kt-chip kt-chip-more" data-kt-more>+${list.length - KT_CHIP_SHOW}개 더</button>` : ""}</div>
       <div class="kt-chip-ev" hidden></div>`
     : '<p class="kt-note">사업보고서 \'사업의 내용\'에서 사전의 테마를 가리키는 근거 문장을 찾지 못했습니다.</p>'}`;
   if (!host.dataset.ktBound) {
@@ -339,6 +360,12 @@ function renderStockThemes(item) {
 function ktChipClick(ev) {
   const host = byId("stockThemes");
   if (!host) return;
+  const more = ev.target.closest("[data-kt-more]");
+  if (more) {
+    host.querySelectorAll(".kt-chip[hidden]").forEach((b) => { b.hidden = false; });
+    more.remove();
+    return;
+  }
   const open = ev.target.closest("[data-kt-open]");
   if (open) {
     openKrTheme(open.dataset.ktOpen);

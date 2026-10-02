@@ -391,6 +391,65 @@ function congressMatrixHelpHtml() {
   `;
 }
 
+// 의원 매매 성과 랭킹(build_congress_trades → congress_performance). 기준: 체결일 진입(의원 본인 성과) /
+// 공시일 진입(공시를 보고 따라 산 경우). 값은 SPY 같은 구간 대비 초과수익, 거래당 최대 1년 보유.
+let congressPerfBasis = "tx";
+
+function congressPerfRows(perf) {
+  const key = congressPerfBasis;
+  return (perf.members || [])
+    .filter((m) => m[key] && Number.isFinite(m[key].avgExcess))
+    .slice()
+    .sort((a, b) => b[key].avgExcess - a[key].avgExcess);
+}
+
+function congressPerfHtml(perf) {
+  const key = congressPerfBasis;
+  const rows = congressPerfRows(perf);
+  const pages = Math.max(1, Math.ceil(rows.length / CONGRESS_RANK_PAGE_SIZE));
+  if (congressRankPage >= pages) congressRankPage = 0;
+  const start = congressRankPage * CONGRESS_RANK_PAGE_SIZE;
+  const pageRows = rows.slice(start, start + CONGRESS_RANK_PAGE_SIZE);
+  const seg = (k, label) => `<button type="button"${key === k ? ' class="is-active"' : ""} data-perf-basis="${k}" aria-pressed="${key === k}">${label}</button>`;
+  return `
+    <div class="congress-section-head">
+      <h3>의원별 매매 성과 (S&amp;P500 대비)</h3>
+      <div class="segmented" role="group" aria-label="진입 기준">${seg("tx", "거래일 기준")}${seg("disc", "공시일 기준 (따라 사기)")}</div>
+      <p class="congress-section-note">기준일 ${escapeHtml(perf.asOf || "-")}</p>
+    </div>
+    <div class="table-wrap">
+      <table class="congress-rank-table table-wide">
+        <thead>
+          <tr><th>#</th><th>의원</th><th>정당</th><th>평균 초과수익</th><th>중앙값</th><th>시장을 이긴 비율</th><th>거래</th><th>공시 지연</th></tr>
+        </thead>
+        <tbody>
+          ${pageRows.length ? pageRows.map((m, i) => {
+            const st = m[key];
+            return `
+            <tr data-pol-id="${escapeHtml(m.id || "")}">
+              <td>${start + i + 1}</td>
+              <td><button type="button" class="congress-pol-link" data-pol-id="${escapeHtml(m.id || "")}">${escapeHtml(m.name || "")}</button> <span class="muted">${escapeHtml(m.chamber === "Senate" ? "상원" : m.chamber === "House" ? "하원" : "")}</span></td>
+              <td>${escapeHtml(m.party || "-")}</td>
+              <td class="${cls(st.avgExcess)}">${fmtPct(st.avgExcess)}</td>
+              <td class="${cls(st.medianExcess)}">${fmtPct(st.medianExcess)}</td>
+              <td>${Number(st.winRate).toFixed(0)}%</td>
+              <td>${st.n}</td>
+              <td>${Number.isFinite(m.lagDays) ? `${m.lagDays}일` : "—"}</td>
+            </tr>`;
+          }).join("") : `<tr><td colspan="8" class="muted">랭킹 데이터가 없습니다.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+    ${rows.length > CONGRESS_RANK_PAGE_SIZE ? `
+      <nav class="congress-rank-pagination" aria-label="랭킹 페이지">
+        <button type="button" class="congress-page-btn" data-rank-page="prev" ${congressRankPage <= 0 ? "disabled" : ""}>이전</button>
+        <span class="congress-page-label">${congressRankPage + 1} / ${pages}</span>
+        <button type="button" class="congress-page-btn" data-rank-page="next" ${congressRankPage >= pages - 1 ? "disabled" : ""}>다음</button>
+      </nav>
+    ` : ""}
+  `;
+}
+
 function renderCongressTrades() {
   setupCongressUi();
   const payload = congressTradesData();
@@ -436,7 +495,34 @@ function renderCongressTrades() {
   if (congressRankPage >= rankPageCount) congressRankPage = 0;
   const rankStart = congressRankPage * CONGRESS_RANK_PAGE_SIZE;
   const rankPageRows = rankingRows.slice(rankStart, rankStart + CONGRESS_RANK_PAGE_SIZE);
-  if (rankings) {
+  const perf = payload.performance;
+  if (rankings && perf && Array.isArray(perf.members) && perf.members.length) {
+    rankings.innerHTML = congressPerfHtml(perf);
+    rankings.querySelectorAll(".congress-pol-link").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        selectedPoliticianId = btn.dataset.polId || "";
+        if (select) select.value = selectedPoliticianId;
+        renderCongressTrades();
+        scrollToCongressDetail();
+      });
+    });
+    rankings.querySelectorAll("[data-perf-basis]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        congressPerfBasis = btn.dataset.perfBasis === "disc" ? "disc" : "tx";
+        congressRankPage = 0;
+        renderCongressTrades();
+      });
+    });
+    rankings.querySelectorAll(".congress-page-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (btn.disabled) return;
+        const pages = Math.max(1, Math.ceil(congressPerfRows(perf).length / CONGRESS_RANK_PAGE_SIZE));
+        if (btn.dataset.rankPage === "prev") congressRankPage = Math.max(0, congressRankPage - 1);
+        if (btn.dataset.rankPage === "next") congressRankPage = Math.min(pages - 1, congressRankPage + 1);
+        renderCongressTrades();
+      });
+    });
+  } else if (rankings) {
     rankings.innerHTML = `
       <div class="congress-section-head">
         <h3>의원별 추정 수익률 랭킹</h3>

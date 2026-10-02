@@ -130,6 +130,23 @@ test("dailyRows: 공통 날짜 / own 날짜 / 없음", () => {
   assert.deepEqual(core.dailyRows(null, "005930"), []);
 });
 
+test("streakRows: 시장·최소 연속일 필터와 개수 제한", () => {
+  const list = [
+    { t: "a", m: "kospi", d: 12 }, { t: "b", m: "kosdaq", d: 9 }, { t: "c", m: "kospi", d: 4 },
+    { t: "d", m: "kosdaq", d: 2 }, null, { t: "e", m: "kospi" },
+  ];
+  assert.deepEqual(core.streakRows(list, "all", 3).map((x) => x.t), ["a", "b", "c"]);
+  assert.deepEqual(core.streakRows(list, "kosdaq", 2).map((x) => x.t), ["b", "d"]);
+  assert.deepEqual(core.streakRows(list, "KOSPI", 5, 1).map((x) => x.t), ["a"]);
+  assert.deepEqual(core.streakRows(null, "all", 2), []);
+});
+
+test("streakLabel: 창을 다 채우면 'N일+'", () => {
+  assert.equal(core.streakLabel({ d: 7 }, 20), "7일");
+  assert.equal(core.streakLabel({ d: 20, x: 1 }, 20), "20일+");
+  assert.equal(core.streakLabel(null, 20), "—");
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

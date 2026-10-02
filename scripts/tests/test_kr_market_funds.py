@@ -194,3 +194,55 @@ def test_load_top_reads_investor_flow(tmp_path):
     f.write_text(json.dumps({"top": {"asOf": "2026-09-23"}}), encoding="utf-8")
     assert mf.load_top(f) == {"asOf": "2026-09-23"}
     assert mf.load_top(tmp_path / "none.json") is None
+
+
+def _rows(frn, org, closes=None, start=20260923):
+    """최신순 일별 행. frn/org 는 최신부터의 수량 목록."""
+    n = len(frn)
+    closes = closes or [1000 + i for i in range(n)]
+    return [[str(start - i), closes[i], 0, 0, frn[i], org[i], 1.0] for i in range(n)]
+
+
+def test_compute_streaks_counts_from_latest_and_breaks_on_flip_or_zero():
+    daily = {
+        # 외국인: 3일 연속 매수 후 매도로 끊김 / 기관: 2일 연속 매도 후 0
+        "005930": _rows([100, 200, 300, -50, 10], [-10, -20, 0, -5, -5], closes=[110, 105, 100, 90, 95]),
+        # 최신일 행이 없는(거래정지) 종목은 빠진다
+        "999999": _rows([1, 1, 1], [1, 1, 1], start=20260922),
+        # 하루짜리는 싣지 않는다
+        "000660": _rows([5, -5], [0, 0]),
+    }
+    st = flow.compute_streaks(daily, {"005930": "삼성전자"}, {"005930": "kospi"}, window=5)
+    assert st["asOf"] == "2026-09-23" and st["window"] == 5
+    fb = st["frnBuy"]
+    assert [x["t"] for x in fb] == ["005930"]
+    x = fb[0]
+    assert x["d"] == 3 and x["n"] == "삼성전자" and x["m"] == "kospi"
+    assert x["a"] == round((100 * 110 + 200 * 105 + 300 * 100) / 1e8, 1)
+    assert x["r"] == round((110 / 90 - 1) * 100, 2)   # 연속 시작 전날(4번째 행) 종가 대비
+    assert "x" not in x
+    assert st["orgSell"][0]["d"] == 2
+    assert st["bothBuy"] == [] and st["frnSell"] == []
+    assert flow.compute_streaks({}, {}, {}) is None
+
+
+def test_compute_streaks_both_and_window_cap():
+    daily = {
+        # 창(4일)을 다 채운 동시 매수 → x=1, 기간 등락률은 기준 행이 없어 없음
+        "111111": _rows([1, 2, 3, 4], [5, 6, 7, 8]),
+        "222222": _rows([3, 3, 3, 3], [3, 3, -3, 3]),
+    }
+    st = flow.compute_streaks(daily, {}, {}, window=4)
+    both = st["bothBuy"]
+    assert [x["t"] for x in both] == ["111111", "222222"]
+    assert both[0]["d"] == 4 and both[0]["x"] == 1 and "r" not in both[0]
+    assert both[0]["a"] == round(sum((f + o) * c for f, o, c in [(1, 5, 1000), (2, 6, 1001), (3, 7, 1002), (4, 8, 1003)]) / 1e8, 1)
+    assert both[1]["d"] == 2 and "x" not in both[1]
+    # 정렬: 연속일 → |금액|
+    assert st["frnBuy"][0]["t"] == "111111" and st["frnBuy"][0]["d"] == st["frnBuy"][1]["d"] == 4
+
+
+def test_load_top_reads_streaks_key(tmp_path):
+    f = tmp_path / "investor_flow.json"
+    f.write_text(json.dumps({"top": {"asOf": "a"}, "streaks": {"asOf": "b"}}), encoding="utf-8")
+    assert mf.load_top(f, key="streaks") == {"asOf": "b"}

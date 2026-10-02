@@ -1,8 +1,8 @@
 {
-  "updatedAtKst": "2026-10-01 19:10 KST",
+  "updatedAtKst": "2026-10-02 13:34 KST",
   "lastFileDate": "2026-10-01",
   "partialFetch": false,
-  "count": 589,
+  "count": 594,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
@@ -27,6 +27,28 @@
       "link": "https://www.sec.gov/Archives/edgar/data/894556/000168316826007510/citrotech_s1a1.htm"
     },
     {
+      "company": "Accelevation Holdings Corp.",
+      "ticker": "ACCV",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-01",
+      "accession": "0001628280-26-064097:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141406/000162828026064097/accelevationllc-424b4.htm",
+      "offerPrice": 18.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Uranium Royalty Corp.",
+      "ticker": "UROY",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-01",
+      "accession": "0001493152-26-045386:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2143673/000149315226045386/forms-1.htm"
+    },
+    {
       "company": "INTERPACE BIOSCIENCES, INC.  (IDXG, IDXGD)",
       "ticker": null,
       "stage": "amended",
@@ -45,6 +67,36 @@
       "fileDate": "2026-10-01",
       "accession": "0001493152-26-045187:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1054102/000149315226045187/forms-1a.htm"
+    },
+    {
+      "company": "WhiteHawk Minerals Corp.",
+      "ticker": "WHK",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-01",
+      "accession": "0001193125-26-410790:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1921603/000119312526410790/whk-20261001.htm"
+    },
+    {
+      "company": "VSEE HEALTH, INC.  (VSEE, VSEED, VSEEW)",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-01",
+      "accession": "0001185185-26-004518:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1864531/000118518526004518/vsees1091726.htm"
+    },
+    {
+      "company": "POP GLOBAL ACQUISITION Ltd",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-01",
+      "accession": "0001185185-26-004481:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2150455/000118518526004481/popglobals1080826.htm"
     },
     {
       "company": "Essential Minerals Acquisition Corp",

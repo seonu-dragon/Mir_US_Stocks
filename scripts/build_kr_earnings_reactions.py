@@ -5,9 +5,12 @@ DART 공시목록(kr_disclosures.json)의 '영업(잠정)실적(공정공시)' �
 발표의 **D0 등락률**과 **익일 등락률**을 야후 일봉으로 계산한다(D0 = 공시일이
 거래일이면 그 날, 아니면 다음 거래일). dayPct·nextPct 는 시장수익률을 빼지 않은
 원(raw) 등락률이고, 코스피/코스닥 지수 동일일 수익률을 뺀 초과수익률은
-dayExPct·nextExPct 로 따로 담는다. 잠정 매출·영업이익 '숫자'는 공시 본문에만
-있어(구조화 API 없음) 여기선 다루지 않는다 — 발표가 언제 있었고 그 뒤 주가가
-어떻게 움직였는지(사실)만 보여준다.
+dayExPct·nextExPct 로 따로 담는다.
+
+잠정 매출·영업이익 '숫자'는 공시 원문(document.xml)에만 있다(구조화 API 없음). 2026-10-02 부터
+원문 표를 kr_prelim_parse 로 결정적으로 파싱해 results(억원)·summary(템플릿 문장)를 붙이고,
+FnGuide 연간 컨센서스가 있으면 누계 달성률(consensus)을 붙인다. LLM 은 쓰지 않는다.
+이미 파싱한 공시(link 기준)는 직전 파일 값을 재사용해 DART 를 다시 부르지 않는다.
 
 주의(정직성): 공시 유형별 과거 주가반응은 이미 검정됐고 잠정실적을 포함해 무작위를
 이긴 유형은 없었다(build_kr_disclosure_stats.py, 41유형 중 0). 그래서 이건 '예측 신호'가
@@ -20,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 import urllib.parse
 import urllib.request
@@ -30,13 +34,21 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=ROOT / ".env")
+except Exception:
+    pass
+
 from briefing_store import repository_publish_lock  # noqa: E402
+import kr_prelim_parse as KP  # noqa: E402
 
 KST = ZoneInfo("Asia/Seoul")
 DISCLOSURES = ROOT / "data" / "kr_disclosures.json"
 SNAPSHOT = ROOT / "data" / "korea" / "market_snapshot.json"
 OUT_JSON = ROOT / "data" / "korea" / "earnings_reactions.json"
 OUT_JS = ROOT / "data" / "korea" / "earnings_reactions.js"
+CONSENSUS = ROOT / "data" / "korea" / "consensus.json"
 
 UA = {"User-Agent": "Mozilla/5.0", "Accept": "application/json"}
 
@@ -108,6 +120,52 @@ def reactions(series, file_date: str):
     return day, nxt
 
 
+def _load_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def attach_results(rows: list, prev_rows: list, consensus: dict, api_key: str) -> dict:
+    """각 행에 잠정실적 숫자(results)·요약(summary)·컨센서스 달성률(consensus)을 붙인다.
+
+    직전 파일에 같은 link 의 results 가 있으면 재사용한다(원문은 바뀌지 않는다 — 정정은 새 접수번호).
+    키가 없으면 새 행은 숫자 없이 둔다(지어내지 않는다). 반환: 파싱 통계.
+    """
+    from build_kr_corp_disclosures import fetch_doc, rcpt_of
+
+    cached = {r.get("link"): r for r in prev_rows if isinstance(r, dict) and r.get("results")}
+    stats = {"reused": 0, "parsed": 0, "fetchFailed": 0, "noTable": 0}
+    for row in rows:
+        if row.get("subsidiary"):
+            row.pop("results", None)
+            row.pop("summary", None)
+            continue
+        old = cached.get(row.get("link"))
+        if old:
+            row["results"], row["summary"] = old["results"], old.get("summary", "")
+            stats["reused"] += 1
+        elif api_key and rcpt_of(row):
+            doc = fetch_doc(rcpt_of(row), api_key)
+            if not doc:
+                stats["fetchFailed"] += 1
+                continue
+            parsed = KP.parse_prelim(doc)
+            if not parsed:
+                stats["noTable"] += 1
+                continue
+            row["results"], row["summary"] = parsed, KP.summarize(parsed)
+            stats["parsed"] += 1
+        if row.get("results"):
+            prog = KP.consensus_progress(row["results"], consensus.get(row.get("ticker")))
+            if prog:
+                row["consensus"] = prog
+            else:
+                row.pop("consensus", None)
+    return stats
+
+
 # 시장수익률 차감용 지수. 야후에서 스톡과 같은 방식으로 받는다.
 INDEX_SYMBOLS = {"kospi": "^KS11", "kosdaq": "^KQ11"}
 
@@ -141,7 +199,7 @@ def build():
         # 기존 계약(원수익률) 그대로 두고 별도 필드로 얹는다(app.js 호환).
         market = "kosdaq" if ysym.endswith(".KQ") else "kospi"
         idx_day, idx_nxt = reactions(index_series.get(market) or [], file_date)
-        out.append({
+        row = {
             "ticker": ticker,
             "company": r.get("company") or ticker,
             "date": file_date,
@@ -151,7 +209,11 @@ def build():
             "dayExPct": _excess(day, idx_day),
             "nextExPct": _excess(nxt, idx_nxt),
             "link": r.get("link") or "",
-        })
+        }
+        # '(자회사의주요경영사항)' 은 모회사가 대신 낸 자회사 실적 — 숫자를 모회사 실적처럼 붙이지 않는다.
+        if "자회사" in (r.get("title") or ""):
+            row["subsidiary"] = True
+        out.append(row)
     out.sort(key=lambda x: x["date"], reverse=True)
     covered = sum(1 for x in out if x["dayPct"] is not None)
     payload = {
@@ -161,7 +223,8 @@ def build():
                 "빼지 않은 원(raw) 등락률, dayExPct·nextExPct 는 코스피/코스닥 지수 동일일 "
                 "수익률을 뺀 초과수익률(%p). D0 는 공시일이 거래일이 아니면 다음 거래일로 귀속. "
                 "DART 목록에 접수 시각이 없어 장마감 후 접수 건의 당일/익일 구분은 불가. "
-                "잠정 매출·영업이익 숫자는 공시 본문에만 있어 제외. 예측 신호가 아니다"
+                "잠정 숫자(results, 억원)는 공시 원문 표를 파싱한 값이고 summary 는 그 값으로 만든 템플릿 문장. "
+                "consensus 는 누계 실적 ÷ FnGuide 연간 컨센서스(같은 회계연도)의 달성률. 예측 신호가 아니다"
                 "(공시유형 반응은 무작위와 무차별).",
         "count": len(out),
         "rows": out,
@@ -188,8 +251,17 @@ def main() -> int:
     # 공시 조회 창이 7일이라 매 실행 파일을 통째로 갈아엎으면 표가 한 주치로 쪼그라든다
     # (라이브 실측 8행, 2026-09-15 감사). 직전 파일의 최근 180일 행을 합쳐 발행한다.
     sec.merge_previous_rows(payload, OUT_JSON, "실적반응", keep_days=180)
+    # 잠정 숫자 파싱(DART 원문). 병합 뒤 전 행에 — 숫자가 없는 옛 행도 원문을 받아 채우고(한 번만), 컨센서스 달성률은 매번 다시 단다.
+    prev_rows = _load_json(OUT_JSON).get("rows") or []
+    consensus = _load_json(CONSENSUS).get("stocks") or {}
+    api_key = os.environ.get("DART_API_KEY", "").strip()
+    stats = attach_results(payload["rows"], prev_rows, consensus, api_key)
+    print(f"[실적반응] 잠정 숫자 — 재사용 {stats['reused']} · 새로 파싱 {stats['parsed']} · "
+          f"원문 실패 {stats['fetchFailed']} · 표 없음 {stats['noTable']}"
+          + ("" if api_key else " (DART_API_KEY 없음 — 새 행은 숫자 없이)"))
     payload["rows"].sort(key=lambda x: x.get("date") or "", reverse=True)
     payload["count"] = len(payload["rows"])
+    payload["parseStats"] = stats
     payload.setdefault("note", "")
     with repository_publish_lock(ROOT):
         OUT_JSON.parent.mkdir(parents=True, exist_ok=True)

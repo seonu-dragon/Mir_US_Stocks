@@ -1119,13 +1119,17 @@ function aiShortInterestPanel(item) {
 function aiEarningsPanel(item) {
   if (!aiPanelEnabled("earningsCalendar")) return "";
   const earnings = item.liveEarnings || {};
+  // 국내는 워커(야후)가 예정일을 주지 않는다 — 정적 추정 일정(KOREA_EARNINGS_CALENDAR)으로 채운다.
+  const krEst = !earnings.nextDate && isKrMarket()
+    ? ((window.KOREA_EARNINGS_CALENDAR || {}).earnings || []).find((r) => r.ticker === item.ticker)
+    : null;
   const reactions = earningsReactionRows(item).slice(0, 4).map((row) => [
     escapeHtml(row.date || "—"),
     row.surprise == null ? "—" : `<span class="${cls(row.surprise)}">${fmtPct(row.surprise)}</span>`,
     row.post5 == null ? "—" : `<span class="${cls(row.post5)}">${fmtPct(row.post5)}</span>`,
   ]);
   const next = aiMetricGrid([
-    { label: "다음 실적", value: earnings.nextDate || "—" },
+    { label: "다음 실적", value: earnings.nextDate || (krEst ? `${krEst.nextDate} (추정)` : "—") },
     { label: "EPS 예상", value: earnings.epsEstimate ?? "—" },
     { label: "EPS", value: fmtEps(item) },
   ]);

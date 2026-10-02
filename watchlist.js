@@ -430,7 +430,32 @@ function enrichEarningsRow(row) {
     price, changePct: Number.isFinite(Number(stock.changePct)) ? Number(stock.changePct) : null,
     epsEstimate: (row.epsEstimate != null ? Number(row.epsEstimate) : null),
     target, upside, watch: isInWatchlist(t),
+    // 국내 예정일은 작년 같은 분기 실제 발표일 기준 추정(build_kr_earnings_calendar.py).
+    estimated: !!row.estimated, estimateNote: earnEstimateNote(row),
   };
+}
+
+function earnEstimateNote(row) {
+  if (!row || !row.estimated) return "";
+  if (row.basis === "deadline") return "법정 제출기한 기준 추정";
+  const what = row.basis === "prelim" ? "잠정실적 공시일" : "분기·반기·사업보고서 제출일";
+  return `작년 같은 분기 ${what}${row.lastYearDate ? `(${row.lastYearDate})` : ""} 기준 추정`;
+}
+function earnEstimateBadge(it) {
+  return it.estimated ? ` <em class="earn-est" title="${escapeHtml(it.estimateNote)}">추정</em>` : "";
+}
+
+// 실적 일정 툴바는 미국 기준 문구라 국내 모드에서 범위 라벨만 바꾸고 미국 섹터 필터는 숨긴다.
+function applyEarnToolbarMarket() {
+  const kr = isKrMarket();
+  const opt = byId("earnScope")?.querySelector('option[value="sp500"]');
+  if (opt) opt.textContent = kr ? "시총 상위" : "S&P 500 상위";
+  const sector = byId("earnSector");
+  if (sector) {
+    if (kr && sector.value !== "all") { sector.value = "all"; earnSector = "all"; }
+    const label = sector.closest("label");
+    if (label) label.style.display = kr ? "none" : "";
+  }
 }
 
 const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
@@ -438,6 +463,7 @@ const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 function renderEarningsCalendarMarket(rows) {
   const body = byId("earningsCalendarBody");
   if (!body) return;
+  applyEarnToolbarMarket();
   const horizon = Number(byId("earnHorizon")?.value || 14);
   const today = snapshotBaseDate();
   today.setHours(0, 0, 0, 0);
@@ -511,7 +537,7 @@ function earningsCalendarGrid(items, today) {
           ${list.map((it) => `
             <button type="button" class="earn-cal-chip" data-ticker="${escapeHtml(it.ticker)}" title="${escapeHtml(it.company)}">
               <span class="earn-chip-top">${it.watch ? `<i class="earn-star">★</i>` : ""}<b>${escapeHtml(stockLabel(it))}</b>${earnChange(it.changePct)}</span>
-              <span class="earn-chip-sub">${it.capTier ? `${escapeHtml(it.capTier)} · ` : ""}${escapeHtml(it.sectorKo || "-")}</span>
+              <span class="earn-chip-sub">${it.capTier ? `${escapeHtml(it.capTier)} · ` : ""}${escapeHtml(it.sectorKo || "-")}${earnEstimateBadge(it)}</span>
             </button>`).join("")}
         </div>
       </div>`;
@@ -541,7 +567,7 @@ function earningsListView(items, today) {
               <span class="earn-row-id">
                 ${it.watch ? `<i class="earn-star">★</i>` : ""}
                 <b>${escapeHtml(stockLabel(it))}</b>
-                <em>${escapeHtml(stockSubLabel(it))}</em>
+                <em>${escapeHtml(stockSubLabel(it))}</em>${earnEstimateBadge(it)}
               </span>
               <span class="earn-row-sector">${escapeHtml(it.sectorKo || "-")}</span>
               <span class="earn-row-price">${it.price != null ? priceOrDash(it.price) : "—"} ${earnChange(it.changePct)}</span>

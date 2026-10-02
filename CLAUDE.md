@@ -145,8 +145,9 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
 **없는 데이터는 기능을 끈다.** 빈 화면을 띄우거나 없는 파일을 계속 요청하지 않는다.
 `market_config.js` 의 `features` 로 시장별로 차단한다(키가 없으면 켜진 것으로 본다 —
 판정은 `=== false` 로 할 것. `!features.x` 로 쓰면 키 없는 시장까지 꺼진다).
-현재 KR 에서 꺼 둔 것: `earningsCalendar`(국내는 실적 예정일 소스가 없다 — 빌더는
-지나간 분기 실적만 만들고 워커도 빈 배열을 준다), `breakoutStats`(US 만 산출).
+현재 KR 에서 꺼 둔 것: `breakoutStats`(US 만 산출). KR `earningsCalendar` 는 2026-10-02 에 켰다 —
+국내엔 실적 예정일 공개 소스가 없어(워커·야후는 빈 배열) `build_kr_earnings_calendar.py` 가 DART 실제 발표
+이력(작년 같은 분기 잠정실적·정기보고서 접수일 + 364일)으로 **추정**하고, 화면은 행마다 '추정' 배지를 단다.
 콘솔 404 를 방치하면 진짜 404 를 가린다.
 
 ## 2026-09-15 전수 감사

@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=57073cd3d4" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=57073cd3d4"></noscript>
+    <link rel="preload" href="styles.css?v=3da74637af" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=3da74637af"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=7b9d03a809"></script>
+    <script src="build_id.js?v=cba5b86827"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2136,6 +2136,7 @@ html[data-market="kr"][data-theme="dark"] {
           <nav class="sub-tabs ia-seg-strip" id="discSubTabs" aria-label="공시 종류">
             <button class="sub-tab" data-disc="eventstudy" title="과거 공시·이벤트 전체의 발표 뒤 초과수익을 조건별로">이벤트 스터디</button>
             <button class="sub-tab" data-disc="buyback">자사주</button>
+            <button class="sub-tab" data-disc="valueup" title="밸류업 계획·자사주 취득·소각·배당 증액 공시를 1년치 한 표로">밸류업</button>
             <button class="sub-tab" data-disc="earnreact">실적발표</button>
             <button class="sub-tab" data-disc="dividend">배당</button>
             <button class="sub-tab" data-disc="contract">수주</button>
@@ -2199,13 +2200,36 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="insider-table-wrap" id="buybackTable"></div>
         </div>
 
+        <div class="sub-panel" id="sub-valueup">
+          <div class="section-title">
+            <h2>밸류업 · 주주환원 모아보기</h2>
+          </div>
+          <div class="insider-controls">
+            <div class="insider-filter" id="valueupKind" role="group" aria-label="종류">
+              <button type="button" data-kind="all" class="is-active">전체</button>
+              <button type="button" data-kind="plan">밸류업 계획</button>
+              <button type="button" data-kind="buyback">자사주 취득</button>
+              <button type="button" data-kind="cancel">소각</button>
+              <button type="button" data-kind="dividendUp">배당 증액</button>
+            </div>
+            <div class="insider-filter" id="valueupSort" role="group" aria-label="정렬">
+              <button type="button" data-sort="date" class="is-active">최신순</button>
+              <button type="button" data-sort="size">규모 큰순</button>
+              <button type="button" data-sort="company">기업별 건수순</button>
+            </div>
+            <label class="grow">검색<input id="valueupSearch" type="search" placeholder="종목명" autocomplete="off"></label>
+          </div>
+          <div class="institutional-meta" id="valueupMeta"></div>
+          <div class="insider-table-wrap" id="valueupTable"></div>
+        </div>
+
         <div class="sub-panel" id="sub-earnreact">
           <div class="section-title">
             <h2>실적 발표(잠정) · 주가반응</h2>
           </div>
           <details class="about-data">
             <summary>이 데이터는?</summary>
-            <p>DART '영업(잠정)실적' 공시 기반. 회사가 <b>실적을 발표한 사실</b>과 <b>발표일·익일 등락률</b>입니다. 잠정 숫자는 공시 본문에만 있어 제외.</p>
+            <p>DART '영업(잠정)실적' 공시의 <b>잠정 숫자</b>와 <b>발표일·익일 등락률</b>입니다.</p>
           <div class="data-disclaimer">
             <strong>사실 피드</strong>
             <span>공시 유형별 과거 반응은 무작위와 구분되지 않습니다(잠정실적 포함).</span>
@@ -3289,7 +3313,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=7393d81926"></script>
+    <script src="market_config.js?v=b94a4a247b"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3306,10 +3330,10 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="per-basis-core.js?v=b7c4da7066"></script>
     <script src="chart-indicators.js?v=03d141eb13"></script>
     <script src="community.js?v=bb33beb40d"></script>
-    <script src="ai-mode.js?v=5d079047c9"></script>
+    <script src="ai-mode.js?v=2340bb5cb0"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
-    <script src="disclosure-trackers.js?v=effe8caf70"></script>
+    <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
     <script src="movers.js?v=0f28afc00d"></script>
     <script src="portfolio.js?v=667afbf126"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
@@ -3327,7 +3351,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=af2f3671e5"></script>
+    <script src="feature-data.js?v=18d943829b"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3375,7 +3399,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study.js?v=039f23654c"></script>
     <script src="timeline-core.js?v=e827c62edd"></script>
     <script src="timeline.js?v=b5dfda8d63"></script>
-    <script src="watchlist.js?v=5223caf8cb"></script>
+    <script src="watchlist.js?v=1343542240"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=9a1ecf4141"></script>
     <script src="earnings-insight.js?v=d71fe2ed8c"></script>
@@ -3415,7 +3439,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=e41cfdc22a"></script>
+    <script src="app.js?v=d58762fad4"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

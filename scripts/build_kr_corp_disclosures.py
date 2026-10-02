@@ -193,7 +193,10 @@ def parse_contract(txt: str) -> dict:
 
 def build(api_key: str, limit: int | None):
     rows = json.loads(DISCLOSURES.read_text(encoding="utf-8")).get("disclosures") or []
-    div_src = [r for r in rows if "현금ㆍ현물배당결정" in (r.get("title") or "") and rcpt_of(r)]
+    # '(자회사의 주요경영사항)' 은 모회사가 대신 낸 자회사 배당이다 — 모회사 배당(1주당 배당금·시가배당률)으로
+    # 붙이면 틀린다(2026-10-02: 현대지에프홀딩스, 밸류업 백필의 미스토홀딩스 +12,222%). build_kr_valueup 과 같은 규칙.
+    div_src = [r for r in rows if "현금ㆍ현물배당결정" in (r.get("title") or "")
+               and "자회사" not in (r.get("title") or "") and rcpt_of(r)]
     con_src = [r for r in rows if "단일판매ㆍ공급계약체결" in (r.get("title") or "") and rcpt_of(r)]
     if limit:
         div_src, con_src = div_src[:limit], con_src[:limit]

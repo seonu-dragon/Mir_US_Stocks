@@ -36,6 +36,7 @@ import {
   resetYahooSessionState,
   resolveIndexChangePct,
   parseNaverIndexBasic,
+  naverMinuteToSeries,
   resetPublishedEarningsMemo,
   resolveModelOverride,
   withLastGood,
@@ -856,6 +857,23 @@ await test("resolveIndexChangePct: prevClose 가 있으면 언제나 meta 기준
   // 둘 다 없으면 0
   const none = resolveIndexChangePct(null, null, []);
   eq(none.changePct, 0, "데이터 없음"); eq(none.source, "none");
+});
+
+await test("naverMinuteToSeries: 네이버 1분봉 → 09:00 기준 5분 칸 종가(빈 칸은 직전 값, 다른 날짜 제외)", () => {
+  const row = (hhmm, v) => ({ localDateTime: `20261002${hhmm}00`, currentPrice: v });
+  const rows = [
+    row("0904", 101), row("0900", 100), row("0901", 100.5),   // 순서 섞여 와도 칸의 마지막(09:04) 값
+    row("0912", 103),                                          // 09:05~09:09 칸 비어 있음 → 101 로 채움
+    { localDateTime: "20261001153000", currentPrice: 999 },    // 어제 봉은 버린다
+    row("0859", 50),                                           // 개장 전 봉도 버린다
+  ];
+  eq(JSON.stringify(naverMinuteToSeries(rows, "20261002")), "[101,101,103]", "칸 정렬·빈 칸 채움");
+  eq(naverMinuteToSeries([row("0900", 100)], "20261002"), null, "1칸뿐이면 null(야후 폴백)");
+  eq(naverMinuteToSeries([], "20261002"), null, "오늘 봉 없음");
+  // 장 마감: 15:30 봉은 79번째(09:00 + 5×78) — 화면은 마지막 값을 종가로 15:30 에 놓는다.
+  const day = []; for (let m = 0; m <= 390; m += 1) { const h = 9 + Math.floor(m / 60); day.push(row(`${String(h).padStart(2, "0")}${String(m % 60).padStart(2, "0")}`, 100 + m)); }
+  const s = naverMinuteToSeries(day, "20261002");
+  eq(s.length, 79, "09:00~15:30 → 79칸"); eq(s[78], 490, "마지막 = 15:30 값");
 });
 
 await test("3%p 비교로 값을 뒤집던 오버라이드가 사라졌다", () => {

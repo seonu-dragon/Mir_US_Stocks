@@ -849,8 +849,10 @@ def main() -> int:
         print(f"[원문] {exc}")
     print(f"[원문] 처리 {ok} · 사업의 내용 없음 {nosec} · 실패 {fail}")
     if plan and ok == 0 and fail > 0:
-        print("[중단] 원문을 하나도 못 받았다 — 기존 파일 유지")
-        return 1
+        # 받은 원문이 없어도 다시 조립은 한다 — 처리 안 된 종목은 직전 규칙 편입을 그대로 잇고(assemble),
+        # 대표 종목·제외 목록(kr_theme_anchors·EXCLUDE) 변경은 원문과 무관하게 반영돼야 한다.
+        # (10-02: 남은 대기 53종목이 매번 실패하는 보고서라 이 단계에서 멈춰 대표 종목이 반영되지 않았다.)
+        print("[원문] 하나도 못 받음 — 직전 편입으로 다시 조립만 한다")
 
     uni_set = None if only else set(universe)
     if uni_set is not None:

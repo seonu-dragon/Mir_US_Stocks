@@ -138,6 +138,10 @@ def attach_results(rows: list, prev_rows: list, consensus: dict, api_key: str) -
     cached = {r.get("link"): r for r in prev_rows if isinstance(r, dict) and r.get("results")}
     stats = {"reused": 0, "parsed": 0, "fetchFailed": 0, "noTable": 0}
     for row in rows:
+        if row.get("subsidiary"):
+            row.pop("results", None)
+            row.pop("summary", None)
+            continue
         old = cached.get(row.get("link"))
         if old:
             row["results"], row["summary"] = old["results"], old.get("summary", "")
@@ -195,7 +199,7 @@ def build():
         # 기존 계약(원수익률) 그대로 두고 별도 필드로 얹는다(app.js 호환).
         market = "kosdaq" if ysym.endswith(".KQ") else "kospi"
         idx_day, idx_nxt = reactions(index_series.get(market) or [], file_date)
-        out.append({
+        row = {
             "ticker": ticker,
             "company": r.get("company") or ticker,
             "date": file_date,
@@ -205,7 +209,11 @@ def build():
             "dayExPct": _excess(day, idx_day),
             "nextExPct": _excess(nxt, idx_nxt),
             "link": r.get("link") or "",
-        })
+        }
+        # '(자회사의주요경영사항)' 은 모회사가 대신 낸 자회사 실적 — 숫자를 모회사 실적처럼 붙이지 않는다.
+        if "자회사" in (r.get("title") or ""):
+            row["subsidiary"] = True
+        out.append(row)
     out.sort(key=lambda x: x["date"], reverse=True)
     covered = sum(1 for x in out if x["dayPct"] is not None)
     payload = {

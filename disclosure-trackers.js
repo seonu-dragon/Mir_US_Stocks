@@ -1331,6 +1331,7 @@ function renderEarningsReactions() {
 // 잠정 실적 칸: 빌더(kr_prelim_parse.py)가 원문 표에서 만든 summary 문장 + 연간 컨센서스 대비 누계 달성률.
 // 숫자를 못 읽은 공시(판매대수 등 금액이 아닌 자체 표)는 '—'.
 function krPrelimCell(r) {
+  if (r && r.subsidiary) return '<span class="muted">자회사 실적</span>';
   if (!r || !r.summary) return '<span class="muted">—</span>';
   const c = r.consensus || {};
   const prog = [

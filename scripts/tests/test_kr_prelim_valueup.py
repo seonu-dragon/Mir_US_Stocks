@@ -71,6 +71,18 @@ def test_consensus_progress_only_consolidated_same_fy():
     assert P.consensus_progress({**p, "consolidated": False}, est) is None
 
 
+def test_reactions_skip_subsidiary_and_reuse_cached_results():
+    import build_kr_earnings_reactions as R
+
+    parsed = P.parse_prelim(_doc("006800_2026q2_consolidated.xml"))
+    prev = [{"link": "L1", "results": parsed, "summary": "cached"}]
+    rows = [{"ticker": "006800", "link": "L1"},
+            {"ticker": "000001", "link": "L2", "subsidiary": True, "results": parsed, "summary": "x"}]
+    stats = R.attach_results(rows, prev, {}, api_key="")
+    assert rows[0]["summary"] == "cached" and stats["reused"] == 1
+    assert "results" not in rows[1] and "summary" not in rows[1]  # 자회사 실적은 모회사 숫자로 쓰지 않는다
+
+
 # --------------------------------------------------------------------------
 # 밸류업
 # --------------------------------------------------------------------------
@@ -81,6 +93,7 @@ def test_valueup_classify_keeps_attachment_marked_originals():
     assert V.classify("기업가치제고계획(자율공시) (2025년 이행현황)") == ("plan", "밸류업 이행현황")
     assert V.classify("주요사항보고서(자기주식취득신탁계약체결결정)") == ("buyback", "신탁 취득")
     assert V.classify("주요사항보고서(자기주식처분결정)") is None
+    assert V.classify("현금ㆍ현물배당결정(자회사의주요경영사항)") is None  # 자회사 배당은 모회사 배당이 아니다
 
 
 def test_parse_cancel_and_trust_buyback_from_te_cells():

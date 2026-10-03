@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-03 06:38:09 KST",
+  "updatedAtKst": "2026-10-03 13:42:03 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10971,
+  "tradeCount": 10956,
   "politicianCount": 199,
   "rankings": [
     {
@@ -24,7 +24,7 @@
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 145.27,
+      "estReturnPct": 145.32,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
@@ -48,7 +48,7 @@
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 60.97,
+      "estReturnPct": 62.15,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
@@ -80,30 +80,6 @@
     },
     {
       "rank": 7,
-      "id": "house-kelly-louise-morrison",
-      "name": "Kelly Louise Morrison",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 47.01,
-      "buyCount": 6,
-      "sellCount": 17,
-      "tradeCount": 26,
-      "committees": []
-    },
-    {
-      "rank": 8,
-      "id": "house-rob-bresnahan",
-      "name": "Rob Bresnahan",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 46.74,
-      "buyCount": 111,
-      "sellCount": 165,
-      "tradeCount": 276,
-      "committees": []
-    },
-    {
-      "rank": 9,
       "id": "senate-katie-britt",
       "name": "Katie Britt",
       "chamber": "Senate",
@@ -115,7 +91,19 @@
       "committees": []
     },
     {
-      "rank": 10,
+      "rank": 8,
+      "id": "house-rob-bresnahan",
+      "name": "Rob Bresnahan",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 43.38,
+      "buyCount": 111,
+      "sellCount": 165,
+      "tradeCount": 276,
+      "committees": []
+    },
+    {
+      "rank": 9,
       "id": "house-robert-e-latta",
       "name": "Robert E. Latta",
       "chamber": "House",
@@ -127,7 +115,7 @@
       "committees": []
     },
     {
-      "rank": 11,
+      "rank": 10,
       "id": "house-valerie-hoyle",
       "name": "Valerie Hoyle",
       "chamber": "House",
@@ -136,6 +124,18 @@
       "buyCount": 97,
       "sellCount": 89,
       "tradeCount": 186,
+      "committees": []
+    },
+    {
+      "rank": 11,
+      "id": "house-jared-moskowitz",
+      "name": "Jared Moskowitz",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 31.83,
+      "buyCount": 129,
+      "sellCount": 58,
+      "tradeCount": 187,
       "committees": []
     },
     {
@@ -154,18 +154,6 @@
     },
     {
       "rank": 13,
-      "id": "house-jared-moskowitz",
-      "name": "Jared Moskowitz",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 31.73,
-      "buyCount": 129,
-      "sellCount": 58,
-      "tradeCount": 187,
-      "committees": []
-    },
-    {
-      "rank": 14,
       "id": "house-dwight-evans",
       "name": "Dwight Evans",
       "chamber": "House",
@@ -177,7 +165,7 @@
       "committees": []
     },
     {
-      "rank": 15,
+      "rank": 14,
       "id": "senate-shelley-m-capito",
       "name": "Shelley M Capito",
       "chamber": "Senate",
@@ -189,7 +177,7 @@
       "committees": []
     },
     {
-      "rank": 16,
+      "rank": 15,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -203,7 +191,7 @@
       ]
     },
     {
-      "rank": 17,
+      "rank": 16,
       "id": "house-lisa-mcclain",
       "name": "Lisa McClain",
       "chamber": "House",
@@ -215,7 +203,7 @@
       "committees": []
     },
     {
-      "rank": 18,
+      "rank": 17,
       "id": "house-ed-case",
       "name": "Ed Case",
       "chamber": "House",
@@ -227,7 +215,7 @@
       "committees": []
     },
     {
-      "rank": 19,
+      "rank": 18,
       "id": "house-cleo-fields",
       "name": "Cleo Fields",
       "chamber": "House",
@@ -239,7 +227,7 @@
       "committees": []
     },
     {
-      "rank": 20,
+      "rank": 19,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
@@ -253,7 +241,7 @@
       ]
     },
     {
-      "rank": 21,
+      "rank": 20,
       "id": "house-byron-donalds",
       "name": "Byron Donalds",
       "chamber": "House",
@@ -265,7 +253,7 @@
       "committees": []
     },
     {
-      "rank": 22,
+      "rank": 21,
       "id": "house-michael-rulli",
       "name": "Michael Rulli",
       "chamber": "House",
@@ -277,7 +265,7 @@
       "committees": []
     },
     {
-      "rank": 23,
+      "rank": 22,
       "id": "senate-alan-armstrong",
       "name": "Alan Armstrong",
       "chamber": "Senate",
@@ -289,7 +277,7 @@
       "committees": []
     },
     {
-      "rank": 24,
+      "rank": 23,
       "id": "house-thomas-h-kean",
       "name": "Thomas H. Kean",
       "chamber": "House",
@@ -301,7 +289,7 @@
       "committees": []
     },
     {
-      "rank": 25,
+      "rank": 24,
       "id": "senate-markwayne-mullin",
       "name": "Markwayne Mullin",
       "chamber": "Senate",
@@ -316,7 +304,7 @@
       ]
     },
     {
-      "rank": 26,
+      "rank": 25,
       "id": "senate-john-w-hickenlooper",
       "name": "John W Hickenlooper",
       "chamber": "Senate",
@@ -328,7 +316,7 @@
       "committees": []
     },
     {
-      "rank": 27,
+      "rank": 26,
       "id": "senate-john-boozman",
       "name": "John Boozman",
       "chamber": "Senate",
@@ -343,7 +331,7 @@
       ]
     },
     {
-      "rank": 28,
+      "rank": 27,
       "id": "house-rick-larsen",
       "name": "Rick Larsen",
       "chamber": "House",
@@ -355,7 +343,7 @@
       "committees": []
     },
     {
-      "rank": 29,
+      "rank": 28,
       "id": "senate-sheldon-whitehouse",
       "name": "Sheldon Whitehouse",
       "chamber": "Senate",
@@ -370,7 +358,7 @@
       ]
     },
     {
-      "rank": 30,
+      "rank": 29,
       "id": "house-david-j-taylor",
       "name": "David J. Taylor",
       "chamber": "House",
@@ -382,7 +370,7 @@
       "committees": []
     },
     {
-      "rank": 31,
+      "rank": 30,
       "id": "senate-gary-c-peters",
       "name": "Gary C Peters",
       "chamber": "Senate",
@@ -394,7 +382,7 @@
       "committees": []
     },
     {
-      "rank": 32,
+      "rank": 31,
       "id": "house-dan-newhouse",
       "name": "Dan Newhouse",
       "chamber": "House",
@@ -406,19 +394,19 @@
       "committees": []
     },
     {
-      "rank": 33,
+      "rank": 32,
       "id": "house-maria-elvira-salazar",
       "name": "Maria Elvira Salazar",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 2.82,
+      "estReturnPct": 2.83,
       "buyCount": 42,
       "sellCount": 15,
       "tradeCount": 59,
       "committees": []
     },
     {
-      "rank": 34,
+      "rank": 33,
       "id": "house-gilbert-cisneros",
       "name": "Gilbert Cisneros",
       "chamber": "House",
@@ -430,7 +418,7 @@
       "committees": []
     },
     {
-      "rank": 35,
+      "rank": 34,
       "id": "house-john-j-mcguire",
       "name": "John J McGuire",
       "chamber": "House",
@@ -442,7 +430,7 @@
       "committees": []
     },
     {
-      "rank": 36,
+      "rank": 35,
       "id": "house-jonathan-jackson",
       "name": "Jonathan Jackson",
       "chamber": "House",
@@ -454,19 +442,19 @@
       "committees": []
     },
     {
-      "rank": 37,
+      "rank": 36,
       "id": "house-lloyd-doggett",
       "name": "Lloyd Doggett",
       "chamber": "House",
       "party": "D",
       "estReturnPct": -0.44,
-      "buyCount": 67,
+      "buyCount": 66,
       "sellCount": 0,
-      "tradeCount": 67,
+      "tradeCount": 66,
       "committees": []
     },
     {
-      "rank": 38,
+      "rank": 37,
       "id": "house-richard-dean-mccormick",
       "name": "Richard Dean McCormick",
       "chamber": "House",
@@ -478,19 +466,19 @@
       "committees": []
     },
     {
-      "rank": 39,
+      "rank": 38,
       "id": "house-richard-w-allen",
       "name": "Richard W. Allen",
       "chamber": "House",
       "party": "",
       "estReturnPct": -1.98,
       "buyCount": 18,
-      "sellCount": 33,
-      "tradeCount": 51,
+      "sellCount": 32,
+      "tradeCount": 50,
       "committees": []
     },
     {
-      "rank": 40,
+      "rank": 39,
       "id": "house-john-mcguire",
       "name": "John McGuire",
       "chamber": "House",
@@ -502,7 +490,7 @@
       "committees": []
     },
     {
-      "rank": 41,
+      "rank": 40,
       "id": "house-julie-johnson",
       "name": "Julie Johnson",
       "chamber": "House",
@@ -514,7 +502,7 @@
       "committees": []
     },
     {
-      "rank": 42,
+      "rank": 41,
       "id": "senate-a-mitchell-mcconnell-jr",
       "name": "A. Mitchell McConnell, Jr.",
       "chamber": "Senate",
@@ -526,7 +514,7 @@
       "committees": []
     },
     {
-      "rank": 43,
+      "rank": 42,
       "id": "house-kevin-hern",
       "name": "Kevin Hern",
       "chamber": "House",
@@ -538,7 +526,7 @@
       "committees": []
     },
     {
-      "rank": 44,
+      "rank": 43,
       "id": "house-april-mcclain-delaney",
       "name": "April McClain Delaney",
       "chamber": "House",
@@ -550,7 +538,7 @@
       "committees": []
     },
     {
-      "rank": 45,
+      "rank": 44,
       "id": "house-cliff-bentz",
       "name": "Cliff Bentz",
       "chamber": "House",
@@ -562,7 +550,7 @@
       "committees": []
     },
     {
-      "rank": 46,
+      "rank": 45,
       "id": "house-james-french-hill",
       "name": "James French Hill",
       "chamber": "House",
@@ -574,7 +562,7 @@
       "committees": []
     },
     {
-      "rank": 47,
+      "rank": 46,
       "id": "house-scott-franklin",
       "name": "Scott Franklin",
       "chamber": "House",
@@ -586,7 +574,7 @@
       "committees": []
     },
     {
-      "rank": 48,
+      "rank": 47,
       "id": "house-daniel-meuser",
       "name": "Daniel Meuser",
       "chamber": "House",
@@ -4145,7 +4133,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 46.74
+      "estReturnPct": 43.38
     },
     {
       "id": "house-kevin-hern",
@@ -4853,7 +4841,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 60.97
+      "estReturnPct": 62.15
     },
     {
       "id": "house-julie-johnson",
@@ -5920,360 +5908,6 @@
       "estReturnPct": 15.98
     },
     {
-      "id": "house-virginia-foxx",
-      "name": "Virginia Foxx",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "NC05",
-      "tradeCount": 196,
-      "buyCount": 158,
-      "sellCount": 38,
-      "recentTrades": [
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "ARLP",
-          "asset": "Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-05-15",
-          "disclosureDate": "06/01/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034670.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "ARLP",
-          "asset": "Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-02-13",
-          "disclosureDate": "02/13/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034095.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "PSA",
-          "asset": "Public Storage Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-01-12",
-          "disclosureDate": "02/01/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033947.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "EFC",
-          "asset": "Ellington Financial Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-12-30",
-          "disclosureDate": "01/05/2026",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033734.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "ARLP",
-          "asset": "Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-11-17",
-          "disclosureDate": "12/01/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033553.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "HTGC",
-          "asset": "Hercules Capital, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-08-19",
-          "disclosureDate": "09/02/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20032040.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "EFC",
-          "asset": "Ellington Financial Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-06-30",
-          "disclosureDate": "07/01/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030587.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "HTGC",
-          "asset": "Hercules Capital, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-20",
-          "disclosureDate": "06/03/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030450.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "EFC",
-          "asset": "Ellington Financial Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-03-31",
-          "disclosureDate": "04/02/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029061.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "FLNG",
-          "asset": "FLEX LNG Ltd. Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-03-07",
-          "disclosureDate": "04/02/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029061.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "PBA",
-          "asset": "Pembina Pipeline Corp. Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2025-03-07",
-          "disclosureDate": "04/02/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029061.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "ET",
-          "asset": "Energy Transfer LP Common Units",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-02-19",
-          "disclosureDate": "03/01/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027876.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "AMGN",
-          "asset": "Amgen Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-12-06",
-          "disclosureDate": "01/06/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "DUK",
-          "asset": "Duke Energy Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-12-06",
-          "disclosureDate": "01/06/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "JNJ",
-          "asset": "Johnson & Johnson Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-12-06",
-          "disclosureDate": "01/06/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "PSA",
-          "asset": "Public Storage Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-12-06",
-          "disclosureDate": "01/06/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "HTGC",
-          "asset": "Hercules Capital, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-11-20",
-          "disclosureDate": "12/11/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026376.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "HTGC",
-          "asset": "Hercules Capital, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2024-10-23",
-          "disclosureDate": "11/01/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026124.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "EFC",
-          "asset": "Ellington Financial Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-09-30",
-          "disclosureDate": "10/15/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026032.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "HTGC",
-          "asset": "Hercules Capital, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-08-20",
-          "disclosureDate": "09/03/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025771.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "senate-shelley-m-capito",
       "name": "Shelley M Capito",
       "chamber": "Senate",
@@ -6626,6 +6260,360 @@
         }
       ],
       "estReturnPct": 30.04
+    },
+    {
+      "id": "house-virginia-foxx",
+      "name": "Virginia Foxx",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "NC05",
+      "tradeCount": 195,
+      "buyCount": 157,
+      "sellCount": 38,
+      "recentTrades": [
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "ARLP",
+          "asset": "Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-05-15",
+          "disclosureDate": "06/01/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034670.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "ARLP",
+          "asset": "Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-02-13",
+          "disclosureDate": "02/13/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034095.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "PSA",
+          "asset": "Public Storage Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-01-12",
+          "disclosureDate": "02/01/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033947.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "EFC",
+          "asset": "Ellington Financial Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-12-30",
+          "disclosureDate": "01/05/2026",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033734.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "ARLP",
+          "asset": "Alliance Resource Partners, L.P. - Common Units Representing Limited Partnership Interests",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-11-17",
+          "disclosureDate": "12/01/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033553.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "HTGC",
+          "asset": "Hercules Capital, Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-08-19",
+          "disclosureDate": "09/02/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20032040.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "EFC",
+          "asset": "Ellington Financial Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-06-30",
+          "disclosureDate": "07/01/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030587.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "HTGC",
+          "asset": "Hercules Capital, Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-20",
+          "disclosureDate": "06/03/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030450.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "EFC",
+          "asset": "Ellington Financial Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-03-31",
+          "disclosureDate": "04/02/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029061.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "FLNG",
+          "asset": "FLEX LNG Ltd. Ordinary Shares",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-03-07",
+          "disclosureDate": "04/02/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029061.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "PBA",
+          "asset": "Pembina Pipeline Corp. Ordinary Shares",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2025-03-07",
+          "disclosureDate": "04/02/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029061.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "ET",
+          "asset": "Energy Transfer LP Common Units",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-02-19",
+          "disclosureDate": "03/01/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027876.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "AMGN",
+          "asset": "Amgen Inc. - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-12-06",
+          "disclosureDate": "01/06/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "DUK",
+          "asset": "Duke Energy Corporation",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-12-06",
+          "disclosureDate": "01/06/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "JNJ",
+          "asset": "Johnson & Johnson Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-12-06",
+          "disclosureDate": "01/06/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "PSA",
+          "asset": "Public Storage Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-12-06",
+          "disclosureDate": "01/06/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026516.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "HTGC",
+          "asset": "Hercules Capital, Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-11-20",
+          "disclosureDate": "12/11/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026376.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "HTGC",
+          "asset": "Hercules Capital, Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2024-10-23",
+          "disclosureDate": "11/01/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026124.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "EFC",
+          "asset": "Ellington Financial Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-09-30",
+          "disclosureDate": "10/15/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026032.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Virginia Foxx",
+          "chamber": "House",
+          "ticker": "HTGC",
+          "asset": "Hercules Capital, Inc. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-08-20",
+          "disclosureDate": "09/03/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025771.pdf",
+          "district": "NC05",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": null
     },
     {
       "id": "house-april-mcclain-delaney",
@@ -7333,7 +7321,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 31.73
+      "estReturnPct": 31.83
     },
     {
       "id": "house-valerie-hoyle",
@@ -9814,7 +9802,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 145.27
+      "estReturnPct": 145.32
     },
     {
       "id": "senate-john-w-hickenlooper",
@@ -13717,8 +13705,8 @@
       "party": "D",
       "committees": [],
       "district": "TX37",
-      "tradeCount": 67,
-      "buyCount": 67,
+      "tradeCount": 66,
+      "buyCount": 66,
       "sellCount": 0,
       "recentTrades": [
         {
@@ -15478,7 +15466,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 2.82
+      "estReturnPct": 2.83
     },
     {
       "id": "house-richard-dean-mccormick",
@@ -16543,340 +16531,6 @@
       "estReturnPct": 58.98
     },
     {
-      "id": "house-richard-w-allen",
-      "name": "Richard W. Allen",
-      "chamber": "House",
-      "party": "",
-      "committees": [],
-      "district": "GA12",
-      "tradeCount": 51,
-      "buyCount": 18,
-      "sellCount": 33,
-      "recentTrades": [
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "AVGO",
-          "asset": "Broadcom Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-08-12",
-          "disclosureDate": "09/15/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035492.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "ROL",
-          "asset": "Rollins, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-08-12",
-          "disclosureDate": "09/15/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035492.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "TSM",
-          "asset": "Taiwan Semiconductor Manufacturing Company Ltd. F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: R.W. Allen & Associates, Inc. > RWA&A - Securities",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-08-12",
-          "disclosureDate": "09/15/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035492.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "ABT",
-          "asset": "Abbott Laboratories Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-07-14",
-          "disclosureDate": "08/17/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035260.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "AMD",
-          "asset": "Advanced Micro Devices, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-07-14",
-          "disclosureDate": "08/17/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035260.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "AVGO",
-          "asset": "Broadcom Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-07-14",
-          "disclosureDate": "08/17/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035260.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "INTU",
-          "asset": "Intuit Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-06-10",
-          "disclosureDate": "07/07/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034945.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "ACN",
-          "asset": "Accenture plc Class A Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-05-08",
-          "disclosureDate": "06/08/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034740.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "AXP",
-          "asset": "American Express Company Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-05-08",
-          "disclosureDate": "06/08/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034740.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "TSM",
-          "asset": "Taiwan Semiconductor Manufacturing Company Ltd. F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: LIVTR",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-05-08",
-          "disclosureDate": "06/08/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034740.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "ABT",
-          "asset": "Abbott Laboratories Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-04-16",
-          "disclosureDate": "05/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "INTU",
-          "asset": "Intuit Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-04-16",
-          "disclosureDate": "05/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "PG",
-          "asset": "Procter & Gamble Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-04-16",
-          "disclosureDate": "05/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "SPGI",
-          "asset": "S&P Global Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001",
-          "amountMid": 15001,
-          "transactionDate": "2026-04-16",
-          "disclosureDate": "05/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "AMP",
-          "asset": "Ameriprise Financial, Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2026-04-15",
-          "disclosureDate": "05/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "TSM",
-          "asset": "Taiwan Semiconductor Manufacturing Company Ltd.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-02-19",
-          "disclosureDate": "03/05/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034133.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "INTU",
-          "asset": "Intuit Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-02-18",
-          "disclosureDate": "03/05/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034133.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "PAYX",
-          "asset": "Paychex, Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-01-14",
-          "disclosureDate": "02/04/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033945.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "NFLX",
-          "asset": "Netflix, Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-12-12",
-          "disclosureDate": "01/06/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033751.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "CHD",
-          "asset": "Church & Dwight Company, Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: LIVTR",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-10-10",
-          "disclosureDate": "11/05/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033415.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
-        }
-      ],
-      "estReturnPct": -1.98
-    },
-    {
       "id": "house-john-rutherford",
       "name": "John Rutherford",
       "chamber": "House",
@@ -17583,6 +17237,340 @@
         }
       ],
       "estReturnPct": -14.3
+    },
+    {
+      "id": "house-richard-w-allen",
+      "name": "Richard W. Allen",
+      "chamber": "House",
+      "party": "",
+      "committees": [],
+      "district": "GA12",
+      "tradeCount": 50,
+      "buyCount": 18,
+      "sellCount": 32,
+      "recentTrades": [
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "AVGO",
+          "asset": "Broadcom Inc. - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-08-12",
+          "disclosureDate": "09/15/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035492.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "ROL",
+          "asset": "Rollins, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-08-12",
+          "disclosureDate": "09/15/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035492.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "TSM",
+          "asset": "Taiwan Semiconductor Manufacturing Company Ltd. F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: R.W. Allen & Associates, Inc. > RWA&A - Securities",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-08-12",
+          "disclosureDate": "09/15/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035492.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "ABT",
+          "asset": "Abbott Laboratories Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-07-14",
+          "disclosureDate": "08/17/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035260.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "AMD",
+          "asset": "Advanced Micro Devices, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-07-14",
+          "disclosureDate": "08/17/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035260.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "AVGO",
+          "asset": "Broadcom Inc. - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-07-14",
+          "disclosureDate": "08/17/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035260.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "INTU",
+          "asset": "Intuit Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-06-10",
+          "disclosureDate": "07/07/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034945.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "ACN",
+          "asset": "Accenture plc Class A Ordinary Shares",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-05-08",
+          "disclosureDate": "06/08/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034740.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "AXP",
+          "asset": "American Express Company Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-05-08",
+          "disclosureDate": "06/08/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034740.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "TSM",
+          "asset": "Taiwan Semiconductor Manufacturing Company Ltd. F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: LIVTR",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-05-08",
+          "disclosureDate": "06/08/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034740.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "ABT",
+          "asset": "Abbott Laboratories Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-04-16",
+          "disclosureDate": "05/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "INTU",
+          "asset": "Intuit Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-04-16",
+          "disclosureDate": "05/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "PG",
+          "asset": "Procter & Gamble Company",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-04-16",
+          "disclosureDate": "05/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "SPGI",
+          "asset": "S&P Global Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001",
+          "amountMid": 15001,
+          "transactionDate": "2026-04-16",
+          "disclosureDate": "05/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "AMP",
+          "asset": "Ameriprise Financial, Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-04-15",
+          "disclosureDate": "05/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034473.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "TSM",
+          "asset": "Taiwan Semiconductor Manufacturing Company Ltd.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-02-19",
+          "disclosureDate": "03/05/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034133.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "INTU",
+          "asset": "Intuit Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-02-18",
+          "disclosureDate": "03/05/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034133.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "PAYX",
+          "asset": "Paychex, Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-01-14",
+          "disclosureDate": "02/04/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033945.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "NFLX",
+          "asset": "Netflix, Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-12-12",
+          "disclosureDate": "01/06/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20033751.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        },
+        {
+          "politician": "Richard W. Allen",
+          "chamber": "House",
+          "ticker": "CHD",
+          "asset": "Church & Dwight Company, Inc. Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: LIVTR",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-10-10",
+          "disclosureDate": "11/05/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033415.pdf",
+          "district": "GA12",
+          "source": "house_ptr"
+        }
+      ],
+      "estReturnPct": -1.98
     },
     {
       "id": "house-susie-lee",
@@ -23600,7 +23588,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 47.01
+      "estReturnPct": null
     },
     {
       "id": "senate-david-h-mccormick",
@@ -27454,360 +27442,6 @@
           "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/ac2ba9f8-2938-46be-a501-88910e9d2299/",
           "district": "",
           "source": "senate_efd",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
-      "id": "house-patrick-fallon",
-      "name": "Patrick Fallon",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "TX04",
-      "tradeCount": 21,
-      "buyCount": 6,
-      "sellCount": 15,
-      "recentTrades": [
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "TWTR",
-          "asset": "Twitter, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-10-31",
-          "disclosureDate": "11/04/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021950.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "TWTR",
-          "asset": "Twitter, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2022-01-24",
-          "disclosureDate": "02/01/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020374.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "ORCC",
-          "asset": "Owl Rock Capital Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-30",
-          "disclosureDate": "12/23/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020096.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "TWTR",
-          "asset": "Twitter, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-19",
-          "disclosureDate": "11/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "PYPL",
-          "asset": "PayPal Holdings, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-11-19",
-          "disclosureDate": "11/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "TWTR",
-          "asset": "Twitter, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-19",
-          "disclosureDate": "11/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "VZ",
-          "asset": "Verizon Communications Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-19",
-          "disclosureDate": "11/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "PYPL",
-          "asset": "PayPal Holdings, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-11-15",
-          "disclosureDate": "12/23/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020096.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "AMZN",
-          "asset": "Amazon.com, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-26",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "CVX",
-          "asset": "Chevron Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-10-18",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "CRWD",
-          "asset": "CrowdStrike Holdings, Inc. - Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-10-18",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "BA",
-          "asset": "Boeing Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "FDX",
-          "asset": "FedEx Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "AMZN",
-          "asset": "Amazon.com, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "AAL",
-          "asset": "American Airlines group, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "TWTR",
-          "asset": "Twitter, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "DIS",
-          "asset": "Walt Disney Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "LUV",
-          "asset": "Southwest Airlines Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/04/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019582.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
           "party": "R"
         }
       ],
@@ -34328,202 +33962,202 @@
       "estReturnPct": null
     },
     {
-      "id": "house-donald-sternoff-honorable-beyer",
-      "name": "Donald Sternoff Honorable Beyer",
+      "id": "house-patrick-fallon",
+      "name": "Patrick Fallon",
       "chamber": "House",
-      "party": "D",
+      "party": "R",
       "committees": [],
-      "district": "VA08",
+      "district": "TX04",
       "tradeCount": 11,
-      "buyCount": 2,
-      "sellCount": 9,
+      "buyCount": 5,
+      "sellCount": 6,
       "recentTrades": [
         {
-          "politician": "Donald Sternoff Honorable Beyer",
+          "politician": "Patrick Fallon",
           "chamber": "House",
-          "ticker": "NVDA",
-          "asset": "NVIDIA Corporation",
+          "ticker": "TWTR",
+          "asset": "Twitter, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-10-31",
+          "disclosureDate": "11/04/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021950.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "TWTR",
+          "asset": "Twitter, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2022-01-24",
+          "disclosureDate": "02/01/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020374.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "ORCC",
+          "asset": "Owl Rock Capital Corporation",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2021-11-30",
+          "disclosureDate": "12/23/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020096.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "TWTR",
+          "asset": "Twitter, Inc.",
           "side": "sell",
           "type": "Sale",
           "amount": "$1,001 - $15,000",
           "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
+          "transactionDate": "2021-11-19",
+          "disclosureDate": "11/20/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
+          "district": "TX04",
           "source": "house_ptr",
-          "party": "D"
+          "party": "R"
         },
         {
-          "politician": "Donald Sternoff Honorable Beyer",
+          "politician": "Patrick Fallon",
           "chamber": "House",
-          "ticker": "TJX",
-          "asset": "TJX Companies, Inc.",
+          "ticker": "PYPL",
+          "asset": "PayPal Holdings, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2021-11-19",
+          "disclosureDate": "11/20/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "TWTR",
+          "asset": "Twitter, Inc.",
           "side": "buy",
           "type": "Purchase",
           "amount": "$1,001 - $15,000",
           "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
+          "transactionDate": "2021-11-19",
+          "disclosureDate": "11/20/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
+          "district": "TX04",
           "source": "house_ptr",
-          "party": "D"
+          "party": "R"
         },
         {
-          "politician": "Donald Sternoff Honorable Beyer",
+          "politician": "Patrick Fallon",
           "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
+          "ticker": "VZ",
+          "asset": "Verizon Communications Inc.",
           "side": "sell",
           "type": "Sale",
           "amount": "$1,001 - $15,000",
           "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
+          "transactionDate": "2021-11-19",
+          "disclosureDate": "11/20/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
+          "district": "TX04",
           "source": "house_ptr",
-          "party": "D"
+          "party": "R"
         },
         {
-          "politician": "Donald Sternoff Honorable Beyer",
+          "politician": "Patrick Fallon",
           "chamber": "House",
-          "ticker": "TDOC",
-          "asset": "Teladoc Health, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-26",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-01",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "DAIUF",
-          "asset": "Daifuku Co Ltd Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-01",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "V",
-          "asset": "Visa Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-01",
-          "disclosureDate": "11/28/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "NTLA",
-          "asset": "Intellia Therapeutics, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-29",
-          "disclosureDate": "10/30/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "LVMHF",
-          "asset": "LVMH Moet Hennessy Louis Vuitton Ordinary Shares",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-29",
-          "disclosureDate": "10/30/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "FNV",
-          "asset": "Franco-Nevada Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/17/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "PI",
-          "asset": "Impinj, Inc.",
+          "ticker": "PYPL",
+          "asset": "PayPal Holdings, Inc.",
           "side": "buy",
           "type": "Purchase",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2021-11-15",
+          "disclosureDate": "12/23/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20020096.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "AMZN",
+          "asset": "Amazon.com, Inc.",
+          "side": "sell",
+          "type": "Sale",
           "amount": "$1,001 - $15,000",
           "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/17/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
-          "district": "VA08",
+          "transactionDate": "2021-10-26",
+          "disclosureDate": "11/02/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
+          "district": "TX04",
           "source": "house_ptr",
-          "party": "D"
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "CVX",
+          "asset": "Chevron Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2021-10-18",
+          "disclosureDate": "11/02/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Patrick Fallon",
+          "chamber": "House",
+          "ticker": "CRWD",
+          "asset": "CrowdStrike Holdings, Inc. - Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2021-10-18",
+          "disclosureDate": "11/02/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
+          "district": "TX04",
+          "source": "house_ptr",
+          "party": "R"
         }
       ],
       "estReturnPct": null
@@ -34873,6 +34507,173 @@
           "owner": "Spouse",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030868.pdf",
           "district": "WA09",
+          "source": "house_ptr",
+          "party": "D"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-donald-sternoff-honorable-beyer",
+      "name": "Donald Sternoff Honorable Beyer",
+      "chamber": "House",
+      "party": "D",
+      "committees": [],
+      "district": "VA08",
+      "tradeCount": 9,
+      "buyCount": 1,
+      "sellCount": 8,
+      "recentTrades": [
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "NVDA",
+          "asset": "NVIDIA Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-26",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "TJX",
+          "asset": "TJX Companies, Inc.",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-26",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Square, Inc. Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-26",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "TDOC",
+          "asset": "Teladoc Health, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-26",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "SQ",
+          "asset": "Square, Inc. Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-01",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "DAIUF",
+          "asset": "Daifuku Co Ltd Ordinary Shares",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-01",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "V",
+          "asset": "Visa Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-01",
+          "disclosureDate": "11/28/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019895.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "NTLA",
+          "asset": "Intellia Therapeutics, Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-29",
+          "disclosureDate": "10/30/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
+          "district": "VA08",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Donald Sternoff Honorable Beyer",
+          "chamber": "House",
+          "ticker": "LVMHF",
+          "asset": "LVMH Moet Hennessy Louis Vuitton Ordinary Shares",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-29",
+          "disclosureDate": "10/30/2021",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
+          "district": "VA08",
           "source": "house_ptr",
           "party": "D"
         }
@@ -48751,7 +48552,7 @@
     },
     "KO": {
       "ticker": "KO",
-      "netBuys": 34,
+      "netBuys": 33,
       "netSells": 18,
       "politicianCount": 20,
       "trades": [
@@ -70771,8 +70572,8 @@
     "BA": {
       "ticker": "BA",
       "netBuys": 12,
-      "netSells": 11,
-      "politicianCount": 18,
+      "netSells": 10,
+      "politicianCount": 17,
       "trades": [
         {
           "politician": "Kevin Hern",
@@ -71147,23 +70948,6 @@
           "district": "NY03",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "BA",
-          "asset": "Boeing Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -73537,7 +73321,7 @@
     "AMZN": {
       "ticker": "AMZN",
       "netBuys": 67,
-      "netSells": 25,
+      "netSells": 24,
       "politicianCount": 46,
       "trades": [
         {
@@ -74138,8 +73922,8 @@
     "DIS": {
       "ticker": "DIS",
       "netBuys": 17,
-      "netSells": 28,
-      "politicianCount": 31,
+      "netSells": 27,
+      "politicianCount": 30,
       "trades": [
         {
           "politician": "Kevin Hern",
@@ -84509,8 +84293,8 @@
     "FDX": {
       "ticker": "FDX",
       "netBuys": 10,
-      "netSells": 7,
-      "politicianCount": 12,
+      "netSells": 6,
+      "politicianCount": 11,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -84783,23 +84567,6 @@
           "district": "NJ05",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "FDX",
-          "asset": "FedEx Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -101648,8 +101415,8 @@
     "LUV": {
       "ticker": "LUV",
       "netBuys": 1,
-      "netSells": 5,
-      "politicianCount": 5,
+      "netSells": 4,
+      "politicianCount": 4,
       "trades": [
         {
           "politician": "Matthew Robert Van Epps",
@@ -101734,23 +101501,6 @@
           "district": "PA03",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "LUV",
-          "asset": "Southwest Airlines Company",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/04/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019582.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -125178,7 +124928,7 @@
     "VZ": {
       "ticker": "VZ",
       "netBuys": 21,
-      "netSells": 29,
+      "netSells": 28,
       "politicianCount": 29,
       "trades": [
         {
@@ -135832,8 +135582,8 @@
     "FCX": {
       "ticker": "FCX",
       "netBuys": 3,
-      "netSells": 5,
-      "politicianCount": 6,
+      "netSells": 4,
+      "politicianCount": 5,
       "trades": [
         {
           "politician": "Alan Armstrong",
@@ -135953,22 +135703,6 @@
           "district": "NJ05",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Richard W. Allen",
-          "chamber": "House",
-          "ticker": "FCX",
-          "asset": "Freeport-McMoRan, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/06/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019790.pdf",
-          "district": "GA12",
-          "source": "house_ptr"
         }
       ]
     },
@@ -144005,9 +143739,9 @@
     },
     "SQ": {
       "ticker": "SQ",
-      "netBuys": 10,
-      "netSells": 14,
-      "politicianCount": 11,
+      "netBuys": 9,
+      "netSells": 13,
+      "politicianCount": 10,
       "trades": [
         {
           "politician": "Gilbert Cisneros",
@@ -144382,40 +144116,6 @@
           "district": "NY03",
           "source": "house_ptr",
           "party": "D"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "SQ",
-          "asset": "Square, Inc. Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
         }
       ]
     },
@@ -166119,8 +165819,8 @@
     "FNV": {
       "ticker": "FNV",
       "netBuys": 1,
-      "netSells": 1,
-      "politicianCount": 2,
+      "netSells": 0,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Thomas H. Kean",
@@ -166138,23 +165838,6 @@
           "district": "NJ07",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "FNV",
-          "asset": "Franco-Nevada Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/17/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -169691,7 +169374,7 @@
     },
     "PPL": {
       "ticker": "PPL",
-      "netBuys": 2,
+      "netBuys": 1,
       "netSells": 2,
       "politicianCount": 3,
       "trades": [
@@ -169742,23 +169425,6 @@
           "disclosureDate": "03/14/2022",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022213.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "PPL",
-          "asset": "PPl Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/04/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019717.pdf",
           "district": "NC05",
           "source": "house_ptr",
           "party": "R"
@@ -172010,8 +171676,8 @@
     "AAL": {
       "ticker": "AAL",
       "netBuys": 6,
-      "netSells": 2,
-      "politicianCount": 3,
+      "netSells": 1,
+      "politicianCount": 2,
       "trades": [
         {
           "politician": "Tim Moore",
@@ -172129,23 +171795,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20029134.pdf",
           "district": "NC14",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "AAL",
-          "asset": "American Airlines group, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
-          "district": "TX04",
           "source": "house_ptr",
           "party": "R"
         }
@@ -173867,9 +173516,9 @@
     },
     "PI": {
       "ticker": "PI",
-      "netBuys": 3,
+      "netBuys": 2,
       "netSells": 0,
-      "politicianCount": 2,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Marjorie Taylor Greene",
@@ -173904,23 +173553,6 @@
           "district": "GA14",
           "source": "house_ptr",
           "party": "R"
-        },
-        {
-          "politician": "Donald Sternoff Honorable Beyer",
-          "chamber": "House",
-          "ticker": "PI",
-          "asset": "Impinj, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "10/17/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019648.pdf",
-          "district": "VA08",
-          "source": "house_ptr",
-          "party": "D"
         }
       ]
     },
@@ -206506,7 +206138,7 @@
     "TWTR": {
       "ticker": "TWTR",
       "netBuys": 2,
-      "netSells": 4,
+      "netSells": 3,
       "politicianCount": 2,
       "trades": [
         {
@@ -206590,23 +206222,6 @@
           "disclosureDate": "11/20/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019902.pdf",
-          "district": "TX04",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick Fallon",
-          "chamber": "House",
-          "ticker": "TWTR",
-          "asset": "Twitter, Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-04",
-          "disclosureDate": "11/02/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019752.pdf",
           "district": "TX04",
           "source": "house_ptr",
           "party": "R"
@@ -214142,7 +213757,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-02",
-    "measuredTrades": 6934,
+    "measuredTrades": 6675,
     "members": [
       {
         "name": "Nancy Pelosi",
@@ -214158,52 +213773,18 @@
         "party": "D"
       },
       {
-        "name": "Debbie Wasserman Schultz",
-        "tx": {
-          "n": 10,
-          "avgExcess": 21.43,
-          "medianExcess": 24.35,
-          "winRate": 60.0
-        },
-        "buyAvgExcess": 35.92,
-        "lagDays": 1,
-        "id": "house-debbie-wasserman-schultz",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Pete Sessions",
-        "tx": {
-          "n": 24,
-          "avgExcess": 19.33,
-          "medianExcess": 15.09,
-          "winRate": 83.3
-        },
-        "disc": {
-          "n": 17,
-          "avgExcess": 13.43,
-          "medianExcess": 13.08,
-          "winRate": 70.6
-        },
-        "buyAvgExcess": 13.89,
-        "lagDays": 4,
-        "id": "house-pete-sessions",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Jerry Moran,",
         "tx": {
-          "n": 26,
-          "avgExcess": 16.88,
-          "medianExcess": 13.19,
-          "winRate": 69.2
+          "n": 25,
+          "avgExcess": 17.08,
+          "medianExcess": 14.52,
+          "winRate": 68.0
         },
         "disc": {
-          "n": 26,
-          "avgExcess": 15.61,
-          "medianExcess": 9.45,
-          "winRate": 69.2
+          "n": 25,
+          "avgExcess": 16.08,
+          "medianExcess": 10.72,
+          "winRate": 68.0
         },
         "buyAvgExcess": 46.62,
         "lagDays": 34,
@@ -214214,18 +213795,18 @@
       {
         "name": "Tim Walberg",
         "tx": {
-          "n": 14,
-          "avgExcess": 15.91,
-          "medianExcess": 6.07,
-          "winRate": 71.4
+          "n": 13,
+          "avgExcess": 16.93,
+          "medianExcess": 6.43,
+          "winRate": 69.2
         },
         "disc": {
-          "n": 14,
-          "avgExcess": -1.44,
-          "medianExcess": 2.54,
-          "winRate": 57.1
+          "n": 13,
+          "avgExcess": -1.71,
+          "medianExcess": 2.99,
+          "winRate": 53.8
         },
-        "buyAvgExcess": 15.1,
+        "buyAvgExcess": 16.23,
         "lagDays": 476,
         "id": "house-tim-walberg",
         "chamber": "House",
@@ -214244,6 +213825,26 @@
         "id": "house-kelly-louise-morrison",
         "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "Pete Sessions",
+        "tx": {
+          "n": 21,
+          "avgExcess": 13.64,
+          "medianExcess": 11.91,
+          "winRate": 81.0
+        },
+        "disc": {
+          "n": 15,
+          "avgExcess": 8.45,
+          "medianExcess": 11.72,
+          "winRate": 66.7
+        },
+        "buyAvgExcess": 13.89,
+        "lagDays": 4,
+        "id": "house-pete-sessions",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Tina Smith",
@@ -214268,21 +213869,41 @@
       {
         "name": "Marjorie Taylor Greene",
         "tx": {
-          "n": 182,
-          "avgExcess": 8.53,
-          "medianExcess": 5.16,
-          "winRate": 54.9
+          "n": 181,
+          "avgExcess": 8.68,
+          "medianExcess": 5.22,
+          "winRate": 55.2
         },
         "disc": {
-          "n": 171,
-          "avgExcess": 8.96,
-          "medianExcess": 5.92,
-          "winRate": 55.6
+          "n": 170,
+          "avgExcess": 9.12,
+          "medianExcess": 6.08,
+          "winRate": 55.9
         },
-        "buyAvgExcess": 8.53,
+        "buyAvgExcess": 8.68,
         "lagDays": 1,
         "id": "house-marjorie-taylor-greene",
         "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Shelley M Capito",
+        "tx": {
+          "n": 131,
+          "avgExcess": 8.39,
+          "medianExcess": 6.38,
+          "winRate": 61.1
+        },
+        "disc": {
+          "n": 131,
+          "avgExcess": 8.16,
+          "medianExcess": 4.7,
+          "winRate": 61.1
+        },
+        "buyAvgExcess": 11.2,
+        "lagDays": 20,
+        "id": "senate-shelley-m-capito",
+        "chamber": "Senate",
         "party": "R"
       },
       {
@@ -214306,23 +213927,23 @@
         "party": "I"
       },
       {
-        "name": "Shelley M Capito",
+        "name": "Byron Donalds",
         "tx": {
-          "n": 134,
-          "avgExcess": 7.67,
-          "medianExcess": 5.93,
-          "winRate": 60.4
+          "n": 70,
+          "avgExcess": 7.3,
+          "medianExcess": 5.37,
+          "winRate": 54.3
         },
         "disc": {
-          "n": 134,
-          "avgExcess": 7.83,
-          "medianExcess": 3.99,
-          "winRate": 60.4
+          "n": 70,
+          "avgExcess": 8.64,
+          "medianExcess": 11.88,
+          "winRate": 57.1
         },
-        "buyAvgExcess": 9.55,
-        "lagDays": 20,
-        "id": "senate-shelley-m-capito",
-        "chamber": "Senate",
+        "buyAvgExcess": -7.13,
+        "lagDays": 19,
+        "id": "house-byron-donalds",
+        "chamber": "House",
         "party": "R"
       },
       {
@@ -214346,43 +213967,43 @@
         "party": "D"
       },
       {
-        "name": "Byron Donalds",
-        "tx": {
-          "n": 71,
-          "avgExcess": 6.92,
-          "medianExcess": 4.59,
-          "winRate": 53.5
-        },
-        "disc": {
-          "n": 71,
-          "avgExcess": 8.42,
-          "medianExcess": 11.67,
-          "winRate": 56.3
-        },
-        "buyAvgExcess": -7.46,
-        "lagDays": 19,
-        "id": "house-byron-donalds",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Thomas H Tuberville",
         "tx": {
-          "n": 349,
-          "avgExcess": 6.08,
-          "medianExcess": 5.03,
-          "winRate": 58.2
+          "n": 338,
+          "avgExcess": 6.26,
+          "medianExcess": 5.12,
+          "winRate": 58.0
         },
         "disc": {
-          "n": 349,
-          "avgExcess": 3.67,
-          "medianExcess": 4.13,
-          "winRate": 57.3
+          "n": 338,
+          "avgExcess": 3.61,
+          "medianExcess": 3.63,
+          "winRate": 56.8
         },
-        "buyAvgExcess": -13.43,
+        "buyAvgExcess": -13.61,
         "lagDays": 40,
         "id": "senate-thomas-h-tuberville",
         "chamber": "Senate",
+        "party": "R"
+      },
+      {
+        "name": "Jefferson Shreve",
+        "tx": {
+          "n": 241,
+          "avgExcess": 5.69,
+          "medianExcess": 8.66,
+          "winRate": 56.0
+        },
+        "disc": {
+          "n": 241,
+          "avgExcess": 5.67,
+          "medianExcess": 7.2,
+          "winRate": 57.3
+        },
+        "buyAvgExcess": 0.22,
+        "lagDays": 5,
+        "id": "house-jefferson-shreve",
+        "chamber": "House",
         "party": "R"
       },
       {
@@ -214424,26 +214045,6 @@
         "id": "house-richard-w-allen",
         "chamber": "House",
         "party": ""
-      },
-      {
-        "name": "Jefferson Shreve",
-        "tx": {
-          "n": 247,
-          "avgExcess": 4.98,
-          "medianExcess": 8.32,
-          "winRate": 55.5
-        },
-        "disc": {
-          "n": 247,
-          "avgExcess": 4.92,
-          "medianExcess": 7.17,
-          "winRate": 56.7
-        },
-        "buyAvgExcess": -0.91,
-        "lagDays": 5,
-        "id": "house-jefferson-shreve",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "William R. Keating",
@@ -214514,18 +214115,18 @@
       {
         "name": "Julie Johnson",
         "tx": {
-          "n": 231,
-          "avgExcess": 4.02,
-          "medianExcess": 9.31,
+          "n": 226,
+          "avgExcess": 3.81,
+          "medianExcess": 9.28,
           "winRate": 59.3
         },
         "disc": {
-          "n": 231,
-          "avgExcess": 5.25,
-          "medianExcess": 8.76,
+          "n": 226,
+          "avgExcess": 4.96,
+          "medianExcess": 8.49,
           "winRate": 61.5
         },
-        "buyAvgExcess": -7.69,
+        "buyAvgExcess": -7.34,
         "lagDays": 22,
         "id": "house-julie-johnson",
         "chamber": "House",
@@ -214534,41 +214135,22 @@
       {
         "name": "Jared Moskowitz",
         "tx": {
-          "n": 156,
-          "avgExcess": 3.62,
-          "medianExcess": 1.74,
-          "winRate": 52.6
+          "n": 149,
+          "avgExcess": 3.7,
+          "medianExcess": 1.89,
+          "winRate": 53.0
         },
         "disc": {
-          "n": 149,
-          "avgExcess": 3.71,
-          "medianExcess": 2.53,
-          "winRate": 53.7
+          "n": 142,
+          "avgExcess": 3.77,
+          "medianExcess": 2.32,
+          "winRate": 53.5
         },
-        "buyAvgExcess": 2.5,
+        "buyAvgExcess": 3.53,
         "lagDays": 22,
         "id": "house-jared-moskowitz",
         "chamber": "House",
         "party": "D"
-      },
-      {
-        "name": "Mike Kelly",
-        "tx": {
-          "n": 10,
-          "avgExcess": 3.55,
-          "medianExcess": 8.99,
-          "winRate": 60.0
-        },
-        "disc": {
-          "n": 10,
-          "avgExcess": 7.02,
-          "medianExcess": 11.69,
-          "winRate": 80.0
-        },
-        "lagDays": 33,
-        "id": "house-mike-kelly",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "James Comer",
@@ -214591,16 +214173,36 @@
         "party": "R"
       },
       {
-        "name": "Kevin Hern",
+        "name": "Josh Gottheimer",
         "tx": {
-          "n": 91,
-          "avgExcess": 2.81,
-          "medianExcess": 4.82,
-          "winRate": 63.7
+          "n": 297,
+          "avgExcess": 2.86,
+          "medianExcess": 2.71,
+          "winRate": 54.2
         },
         "disc": {
-          "n": 64,
-          "avgExcess": 0.23,
+          "n": 295,
+          "avgExcess": 3.43,
+          "medianExcess": 1.22,
+          "winRate": 50.8
+        },
+        "buyAvgExcess": 0.01,
+        "lagDays": 21,
+        "id": "house-josh-gottheimer",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Kevin Hern",
+        "tx": {
+          "n": 88,
+          "avgExcess": 2.75,
+          "medianExcess": 4.83,
+          "winRate": 63.6
+        },
+        "disc": {
+          "n": 62,
+          "avgExcess": 0.19,
           "medianExcess": 2.03,
           "winRate": 51.6
         },
@@ -214611,40 +214213,20 @@
         "party": "R"
       },
       {
-        "name": "Josh Gottheimer",
-        "tx": {
-          "n": 304,
-          "avgExcess": 2.63,
-          "medianExcess": 2.64,
-          "winRate": 53.9
-        },
-        "disc": {
-          "n": 302,
-          "avgExcess": 3.21,
-          "medianExcess": 0.59,
-          "winRate": 50.3
-        },
-        "buyAvgExcess": -0.45,
-        "lagDays": 21,
-        "id": "house-josh-gottheimer",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "Valerie Hoyle",
         "tx": {
-          "n": 182,
-          "avgExcess": 2.5,
-          "medianExcess": 0.51,
-          "winRate": 51.1
+          "n": 174,
+          "avgExcess": 2.55,
+          "medianExcess": 0.16,
+          "winRate": 50.6
         },
         "disc": {
-          "n": 108,
-          "avgExcess": 2.72,
-          "medianExcess": -4.0,
-          "winRate": 48.1
+          "n": 105,
+          "avgExcess": 3.17,
+          "medianExcess": -4.03,
+          "winRate": 48.6
         },
-        "buyAvgExcess": -3.32,
+        "buyAvgExcess": -2.63,
         "lagDays": 317,
         "id": "house-valerie-hoyle",
         "chamber": "House",
@@ -214654,13 +214236,13 @@
         "name": "Richard Dean McCormick",
         "tx": {
           "n": 43,
-          "avgExcess": 1.68,
-          "medianExcess": 5.14,
+          "avgExcess": 1.67,
+          "medianExcess": 4.84,
           "winRate": 65.1
         },
         "disc": {
           "n": 43,
-          "avgExcess": 0.22,
+          "avgExcess": 0.21,
           "medianExcess": 3.04,
           "winRate": 60.5
         },
@@ -214669,46 +214251,6 @@
         "id": "house-richard-dean-mccormick",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "John James",
-        "tx": {
-          "n": 114,
-          "avgExcess": 1.49,
-          "medianExcess": 4.28,
-          "winRate": 53.5
-        },
-        "disc": {
-          "n": 113,
-          "avgExcess": 2.52,
-          "medianExcess": 3.17,
-          "winRate": 53.1
-        },
-        "buyAvgExcess": -4.52,
-        "lagDays": 85,
-        "id": "house-john-james",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "A. Mitchell McConnell, Jr.",
-        "tx": {
-          "n": 12,
-          "avgExcess": 1.4,
-          "medianExcess": -2.79,
-          "winRate": 50.0
-        },
-        "disc": {
-          "n": 11,
-          "avgExcess": 3.49,
-          "medianExcess": -4.29,
-          "winRate": 45.5
-        },
-        "buyAvgExcess": 1.4,
-        "lagDays": 16,
-        "id": "senate-a-mitchell-mcconnell-jr",
-        "chamber": "Senate",
-        "party": ""
       },
       {
         "name": "Kathy Manning",
@@ -214751,6 +214293,46 @@
         "party": "D"
       },
       {
+        "name": "John James",
+        "tx": {
+          "n": 109,
+          "avgExcess": 1.32,
+          "medianExcess": 4.35,
+          "winRate": 54.1
+        },
+        "disc": {
+          "n": 108,
+          "avgExcess": 2.74,
+          "medianExcess": 3.83,
+          "winRate": 53.7
+        },
+        "buyAvgExcess": -5.42,
+        "lagDays": 99,
+        "id": "house-john-james",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Thomas H. Kean",
+        "tx": {
+          "n": 47,
+          "avgExcess": 1.11,
+          "medianExcess": -2.12,
+          "winRate": 46.8
+        },
+        "disc": {
+          "n": 47,
+          "avgExcess": 1.3,
+          "medianExcess": -7.87,
+          "winRate": 36.2
+        },
+        "buyAvgExcess": -4.78,
+        "lagDays": 19,
+        "id": "house-thomas-h-kean",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Matthew Robert Van Epps",
         "tx": {
           "n": 13,
@@ -214772,62 +214354,82 @@
       {
         "name": "Bruce Westerman",
         "tx": {
-          "n": 97,
-          "avgExcess": 0.63,
-          "medianExcess": 0.18,
-          "winRate": 51.5
+          "n": 94,
+          "avgExcess": 0.57,
+          "medianExcess": 0.68,
+          "winRate": 52.1
         },
         "disc": {
-          "n": 97,
-          "avgExcess": -0.36,
-          "medianExcess": 1.29,
-          "winRate": 52.6
+          "n": 94,
+          "avgExcess": -0.23,
+          "medianExcess": 1.45,
+          "winRate": 53.2
         },
-        "buyAvgExcess": 4.42,
+        "buyAvgExcess": 4.0,
         "lagDays": 10,
         "id": "house-bruce-westerman",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Greg Landsman",
+        "name": "Maria Elvira Salazar",
         "tx": {
-          "n": 49,
-          "avgExcess": -0.05,
-          "medianExcess": 1.27,
-          "winRate": 53.1
+          "n": 47,
+          "avgExcess": 0.31,
+          "medianExcess": -2.31,
+          "winRate": 48.9
         },
         "disc": {
-          "n": 49,
-          "avgExcess": 4.37,
-          "medianExcess": 9.46,
-          "winRate": 59.2
+          "n": 42,
+          "avgExcess": -1.44,
+          "medianExcess": -5.4,
+          "winRate": 33.3
         },
-        "buyAvgExcess": -3.79,
-        "lagDays": 14,
-        "id": "house-greg-landsman",
+        "buyAvgExcess": -0.98,
+        "lagDays": 13,
+        "id": "house-maria-elvira-salazar",
         "chamber": "House",
-        "party": "D"
+        "party": "R"
       },
       {
         "name": "Markwayne Mullin",
         "tx": {
-          "n": 277,
-          "avgExcess": -0.19,
-          "medianExcess": -2.94,
-          "winRate": 46.6
+          "n": 219,
+          "avgExcess": 0.17,
+          "medianExcess": -1.67,
+          "winRate": 47.5
         },
         "disc": {
-          "n": 277,
-          "avgExcess": 0.61,
-          "medianExcess": -0.43,
-          "winRate": 48.7
+          "n": 219,
+          "avgExcess": 1.41,
+          "medianExcess": 0.98,
+          "winRate": 50.7
         },
-        "buyAvgExcess": 0.76,
-        "lagDays": 29,
+        "buyAvgExcess": 2.6,
+        "lagDays": 26,
         "id": "senate-markwayne-mullin",
         "chamber": "Senate",
         "party": "R"
+      },
+      {
+        "name": "Greg Landsman",
+        "tx": {
+          "n": 48,
+          "avgExcess": -0.0,
+          "medianExcess": 1.37,
+          "winRate": 54.2
+        },
+        "disc": {
+          "n": 48,
+          "avgExcess": 3.82,
+          "medianExcess": 8.66,
+          "winRate": 58.3
+        },
+        "buyAvgExcess": -3.98,
+        "lagDays": 14,
+        "id": "house-greg-landsman",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Gary C Peters",
@@ -214850,93 +214452,74 @@
         "party": "D"
       },
       {
-        "name": "Thomas H. Kean",
-        "tx": {
-          "n": 49,
-          "avgExcess": -0.35,
-          "medianExcess": -2.12,
-          "winRate": 46.9
-        },
-        "disc": {
-          "n": 49,
-          "avgExcess": 0.79,
-          "medianExcess": -7.87,
-          "winRate": 36.7
-        },
-        "buyAvgExcess": -4.55,
-        "lagDays": 19,
-        "id": "house-thomas-h-kean",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Rob Bresnahan",
         "tx": {
-          "n": 273,
-          "avgExcess": -0.44,
-          "medianExcess": 4.45,
-          "winRate": 52.7
+          "n": 266,
+          "avgExcess": -0.28,
+          "medianExcess": 4.83,
+          "winRate": 53.0
         },
-        "buyAvgExcess": -5.55,
+        "buyAvgExcess": -4.07,
         "lagDays": 10,
         "id": "house-rob-bresnahan",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Greg Stanton",
-        "tx": {
-          "n": 39,
-          "avgExcess": -0.58,
-          "medianExcess": 4.55,
-          "winRate": 53.8
-        },
-        "disc": {
-          "n": 39,
-          "avgExcess": 1.48,
-          "medianExcess": 5.23,
-          "winRate": 56.4
-        },
-        "lagDays": 2,
-        "id": "house-greg-stanton",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "John Boozman",
         "tx": {
-          "n": 404,
-          "avgExcess": -0.68,
-          "medianExcess": -1.22,
-          "winRate": 45.8
+          "n": 394,
+          "avgExcess": -0.67,
+          "medianExcess": -1.36,
+          "winRate": 45.7
         },
         "disc": {
-          "n": 395,
-          "avgExcess": -0.49,
-          "medianExcess": -1.04,
-          "winRate": 45.1
+          "n": 385,
+          "avgExcess": -0.51,
+          "medianExcess": -1.15,
+          "winRate": 44.4
         },
-        "buyAvgExcess": -3.6,
+        "buyAvgExcess": -3.51,
         "lagDays": 28,
         "id": "senate-john-boozman",
         "chamber": "Senate",
         "party": "R"
       },
       {
-        "name": "Lisa McClain",
+        "name": "Rick Larsen",
         "tx": {
-          "n": 646,
-          "avgExcess": -0.83,
-          "medianExcess": -0.28,
-          "winRate": 49.7
+          "n": 19,
+          "avgExcess": -0.86,
+          "medianExcess": -3.44,
+          "winRate": 47.4
         },
         "disc": {
-          "n": 646,
-          "avgExcess": -0.39,
+          "n": 19,
+          "avgExcess": -1.21,
+          "medianExcess": -1.48,
+          "winRate": 42.1
+        },
+        "buyAvgExcess": -10.93,
+        "lagDays": 1,
+        "id": "house-rick-larsen",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Lisa McClain",
+        "tx": {
+          "n": 630,
+          "avgExcess": -0.92,
+          "medianExcess": -0.46,
+          "winRate": 49.5
+        },
+        "disc": {
+          "n": 630,
+          "avgExcess": -0.45,
           "medianExcess": 0.82,
           "winRate": 50.3
         },
-        "buyAvgExcess": -6.89,
+        "buyAvgExcess": -6.8,
         "lagDays": 20,
         "id": "house-lisa-mcclain",
         "chamber": "House",
@@ -214963,6 +214546,25 @@
         "party": "D"
       },
       {
+        "name": "Greg Stanton",
+        "tx": {
+          "n": 36,
+          "avgExcess": -0.94,
+          "medianExcess": 3.19,
+          "winRate": 52.8
+        },
+        "disc": {
+          "n": 36,
+          "avgExcess": 0.83,
+          "medianExcess": 4.06,
+          "winRate": 55.6
+        },
+        "lagDays": 2,
+        "id": "house-greg-stanton",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
         "name": "Michael C. Burgess",
         "tx": {
           "n": 16,
@@ -214983,62 +214585,22 @@
         "party": "R"
       },
       {
-        "name": "Maria Elvira Salazar",
-        "tx": {
-          "n": 51,
-          "avgExcess": -1.0,
-          "medianExcess": -4.95,
-          "winRate": 47.1
-        },
-        "disc": {
-          "n": 46,
-          "avgExcess": -2.08,
-          "medianExcess": -5.4,
-          "winRate": 34.8
-        },
-        "buyAvgExcess": -3.32,
-        "lagDays": 13,
-        "id": "house-maria-elvira-salazar",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Ritchie John Torres",
         "tx": {
-          "n": 62,
-          "avgExcess": -1.39,
+          "n": 60,
+          "avgExcess": -1.61,
           "medianExcess": -1.07,
-          "winRate": 46.8
+          "winRate": 46.7
         },
         "disc": {
-          "n": 62,
-          "avgExcess": 5.68,
-          "medianExcess": 9.58,
-          "winRate": 56.5
+          "n": 60,
+          "avgExcess": 5.11,
+          "medianExcess": 5.48,
+          "winRate": 55.0
         },
-        "buyAvgExcess": -10.85,
+        "buyAvgExcess": -10.63,
         "lagDays": 298,
         "id": "house-ritchie-john-torres",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Rick Larsen",
-        "tx": {
-          "n": 24,
-          "avgExcess": -1.6,
-          "medianExcess": -6.34,
-          "winRate": 45.8
-        },
-        "disc": {
-          "n": 24,
-          "avgExcess": -1.99,
-          "medianExcess": -4.79,
-          "winRate": 41.7
-        },
-        "buyAvgExcess": -17.18,
-        "lagDays": 1,
-        "id": "house-rick-larsen",
         "chamber": "House",
         "party": "D"
       },
@@ -215063,24 +214625,24 @@
         "party": "D"
       },
       {
-        "name": "Julia Letlow",
+        "name": "Sheldon Whitehouse",
         "tx": {
-          "n": 100,
-          "avgExcess": -2.19,
-          "medianExcess": -8.43,
-          "winRate": 39.0
+          "n": 87,
+          "avgExcess": -2.28,
+          "medianExcess": 1.95,
+          "winRate": 52.9
         },
         "disc": {
-          "n": 100,
-          "avgExcess": -2.68,
-          "medianExcess": -6.96,
-          "winRate": 43.0
+          "n": 87,
+          "avgExcess": 0.32,
+          "medianExcess": 2.78,
+          "winRate": 60.9
         },
-        "buyAvgExcess": -8.99,
-        "lagDays": 105,
-        "id": "house-julia-letlow",
-        "chamber": "House",
-        "party": "R"
+        "buyAvgExcess": -11.19,
+        "lagDays": 25,
+        "id": "senate-sheldon-whitehouse",
+        "chamber": "Senate",
+        "party": "D"
       },
       {
         "name": "Blake Moore",
@@ -215103,24 +214665,24 @@
         "party": "R"
       },
       {
-        "name": "Sheldon Whitehouse",
+        "name": "Julia Letlow",
         "tx": {
-          "n": 88,
-          "avgExcess": -2.39,
-          "medianExcess": 1.94,
-          "winRate": 52.3
+          "n": 95,
+          "avgExcess": -3.0,
+          "medianExcess": -9.25,
+          "winRate": 38.9
         },
         "disc": {
-          "n": 88,
-          "avgExcess": 0.22,
-          "medianExcess": 2.7,
-          "winRate": 60.2
+          "n": 95,
+          "avgExcess": -3.78,
+          "medianExcess": -8.13,
+          "winRate": 42.1
         },
-        "buyAvgExcess": -11.19,
-        "lagDays": 25,
-        "id": "senate-sheldon-whitehouse",
-        "chamber": "Senate",
-        "party": "D"
+        "buyAvgExcess": -10.74,
+        "lagDays": 105,
+        "id": "house-julia-letlow",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Dan Newhouse",
@@ -215158,19 +214720,19 @@
       {
         "name": "Jonathan Jackson",
         "tx": {
-          "n": 73,
-          "avgExcess": -4.61,
-          "medianExcess": -8.68,
-          "winRate": 37.0
+          "n": 72,
+          "avgExcess": -4.65,
+          "medianExcess": -9.23,
+          "winRate": 37.5
         },
         "disc": {
-          "n": 73,
-          "avgExcess": -2.25,
-          "medianExcess": -5.04,
-          "winRate": 41.1
+          "n": 72,
+          "avgExcess": -2.23,
+          "medianExcess": -5.47,
+          "winRate": 41.7
         },
-        "buyAvgExcess": -12.38,
-        "lagDays": 21,
+        "buyAvgExcess": -12.65,
+        "lagDays": 22,
         "id": "house-jonathan-jackson",
         "chamber": "House",
         "party": "D"
@@ -215178,18 +214740,18 @@
       {
         "name": "Alan Armstrong",
         "tx": {
-          "n": 365,
-          "avgExcess": -4.87,
-          "medianExcess": -8.53,
-          "winRate": 35.9
+          "n": 355,
+          "avgExcess": -4.95,
+          "medianExcess": -8.99,
+          "winRate": 35.8
         },
         "disc": {
-          "n": 363,
+          "n": 353,
           "avgExcess": -3.3,
-          "medianExcess": -4.87,
-          "winRate": 36.9
+          "medianExcess": -4.73,
+          "winRate": 37.1
         },
-        "buyAvgExcess": -7.6,
+        "buyAvgExcess": -7.72,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -215218,22 +214780,42 @@
       {
         "name": "Gilbert Cisneros",
         "tx": {
-          "n": 630,
-          "avgExcess": -5.77,
-          "medianExcess": -7.11,
-          "winRate": 38.6
+          "n": 605,
+          "avgExcess": -5.87,
+          "medianExcess": -7.09,
+          "winRate": 38.2
         },
         "disc": {
-          "n": 592,
-          "avgExcess": -6.29,
-          "medianExcess": -7.44,
-          "winRate": 37.5
+          "n": 569,
+          "avgExcess": -6.34,
+          "medianExcess": -7.49,
+          "winRate": 36.9
         },
-        "buyAvgExcess": -8.41,
+        "buyAvgExcess": -8.46,
         "lagDays": 24,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "Carol Devine Miller",
+        "tx": {
+          "n": 17,
+          "avgExcess": -5.9,
+          "medianExcess": -1.09,
+          "winRate": 47.1
+        },
+        "disc": {
+          "n": 17,
+          "avgExcess": -4.74,
+          "medianExcess": -3.07,
+          "winRate": 41.2
+        },
+        "buyAvgExcess": -13.59,
+        "lagDays": 32,
+        "id": "house-carol-devine-miller",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "George Whitesides",
@@ -215246,26 +214828,6 @@
         "id": "house-george-whitesides",
         "chamber": "House",
         "party": "D"
-      },
-      {
-        "name": "Carol Devine Miller",
-        "tx": {
-          "n": 20,
-          "avgExcess": -6.52,
-          "medianExcess": -3.45,
-          "winRate": 45.0
-        },
-        "disc": {
-          "n": 20,
-          "avgExcess": -8.73,
-          "medianExcess": -5.88,
-          "winRate": 40.0
-        },
-        "buyAvgExcess": -13.59,
-        "lagDays": 32,
-        "id": "house-carol-devine-miller",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "Earl Blumenauer",
@@ -215285,26 +214847,6 @@
         "lagDays": 18,
         "id": "house-earl-blumenauer",
         "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Thomas R Carper",
-        "tx": {
-          "n": 65,
-          "avgExcess": -7.0,
-          "medianExcess": -8.59,
-          "winRate": 38.5
-        },
-        "disc": {
-          "n": 65,
-          "avgExcess": -7.71,
-          "medianExcess": -5.26,
-          "winRate": 40.0
-        },
-        "buyAvgExcess": -17.69,
-        "lagDays": 18,
-        "id": "senate-thomas-r-carper",
-        "chamber": "Senate",
         "party": "D"
       },
       {
@@ -215329,60 +214871,80 @@
       {
         "name": "Scott Franklin",
         "tx": {
-          "n": 38,
-          "avgExcess": -7.45,
-          "medianExcess": -9.57,
-          "winRate": 39.5
+          "n": 35,
+          "avgExcess": -7.97,
+          "medianExcess": -11.23,
+          "winRate": 37.1
         },
         "disc": {
-          "n": 38,
-          "avgExcess": -4.1,
-          "medianExcess": -1.11,
-          "winRate": 44.7
+          "n": 35,
+          "avgExcess": -4.85,
+          "medianExcess": -1.25,
+          "winRate": 42.9
         },
-        "buyAvgExcess": -12.29,
-        "lagDays": 9,
+        "buyAvgExcess": -13.77,
+        "lagDays": 11,
         "id": "house-scott-franklin",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Sheri Biggs",
+        "name": "Thomas R Carper",
         "tx": {
-          "n": 36,
-          "avgExcess": -9.18,
-          "medianExcess": -3.24,
-          "winRate": 38.9
+          "n": 62,
+          "avgExcess": -8.15,
+          "medianExcess": -11.45,
+          "winRate": 37.1
         },
         "disc": {
-          "n": 36,
-          "avgExcess": -5.54,
-          "medianExcess": -0.67,
-          "winRate": 50.0
+          "n": 62,
+          "avgExcess": -8.92,
+          "medianExcess": -9.98,
+          "winRate": 38.7
+        },
+        "buyAvgExcess": -18.12,
+        "lagDays": 18,
+        "id": "senate-thomas-r-carper",
+        "chamber": "Senate",
+        "party": "D"
+      },
+      {
+        "name": "April McClain Delaney",
+        "tx": {
+          "n": 176,
+          "avgExcess": -9.08,
+          "medianExcess": -9.1,
+          "winRate": 27.3
+        },
+        "disc": {
+          "n": 176,
+          "avgExcess": -8.06,
+          "medianExcess": -7.21,
+          "winRate": 34.1
+        },
+        "buyAvgExcess": -13.06,
+        "lagDays": 12,
+        "id": "house-april-mcclain-delaney",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Sheri Biggs",
+        "tx": {
+          "n": 35,
+          "avgExcess": -9.36,
+          "medianExcess": -3.26,
+          "winRate": 40.0
+        },
+        "disc": {
+          "n": 35,
+          "avgExcess": -4.14,
+          "medianExcess": 0.17,
+          "winRate": 51.4
         },
         "buyAvgExcess": 1.97,
         "lagDays": 146,
         "id": "house-sheri-biggs",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Virginia Foxx",
-        "tx": {
-          "n": 43,
-          "avgExcess": -9.67,
-          "medianExcess": -8.11,
-          "winRate": 32.6
-        },
-        "disc": {
-          "n": 38,
-          "avgExcess": -9.31,
-          "medianExcess": -9.07,
-          "winRate": 34.2
-        },
-        "buyAvgExcess": -11.87,
-        "lagDays": 15,
-        "id": "house-virginia-foxx",
         "chamber": "House",
         "party": "R"
       },
@@ -215407,24 +214969,24 @@
         "party": "R"
       },
       {
-        "name": "April McClain Delaney",
+        "name": "Virginia Foxx",
         "tx": {
-          "n": 185,
-          "avgExcess": -10.56,
-          "medianExcess": -9.63,
-          "winRate": 27.0
+          "n": 41,
+          "avgExcess": -10.41,
+          "medianExcess": -10.25,
+          "winRate": 29.3
         },
         "disc": {
-          "n": 185,
-          "avgExcess": -9.56,
-          "medianExcess": -7.9,
-          "winRate": 33.5
+          "n": 38,
+          "avgExcess": -9.31,
+          "medianExcess": -9.07,
+          "winRate": 34.2
         },
-        "buyAvgExcess": -14.97,
-        "lagDays": 12,
-        "id": "house-april-mcclain-delaney",
+        "buyAvgExcess": -12.23,
+        "lagDays": 15,
+        "id": "house-virginia-foxx",
         "chamber": "House",
-        "party": "D"
+        "party": "R"
       },
       {
         "name": "Lloyd Doggett",

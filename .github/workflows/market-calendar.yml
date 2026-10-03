@@ -95,6 +95,9 @@ jobs:
         env:
           OPENFIGI_API_KEY: ${{ secrets.OPENFIGI_API_KEY }}
         run: python scripts/build_us_etf_holdings.py --push
+      # 미국 테마는 ETF 보유 내역만으로 만든다(네트워크 없음) — 보유가 바뀐 직후 같은 잡에서 다시 쓴다.
+      - name: Build US themes (from ETF holdings)
+        run: python scripts/build_us_themes.py --push
       - name: Data freshness gate
         run: python scripts/check_data_freshness.py --group etf-holdings
       - name: Notify failure (Telegram)

@@ -72,7 +72,20 @@ function ktCap(s) {
 
 function ktName(t, s) {
   const P = ktData() || {};
-  return (s && s.company) || ((P.reports || {})[t] || [])[3] || ((P.names || {})[t]) || t;
+  const raw = (s && s.company) || ((P.reports || {})[t] || [])[3] || ((P.names || {})[t]) || t;
+  return ktSrc().market === "us" ? ktShortUsName(raw) : raw;
+}
+
+// 미국 스냅샷 회사명은 법인 표기가 길다("Teck Resources Ltd Ordinary Shares") — 표·카드에선 핵심만.
+function ktShortUsName(name) {
+  let n = String(name || "").replace(/^The\s+/i, "");
+  for (let i = 0; i < 3; i += 1) {
+    n = n.replace(/\s*\((?:Holding Company|The|Canada|[^)]*Shares?[^)]*)\)\s*$/i, "")
+      .replace(/[\s,]+(?:Class [A-Z]\b|Common Stock|Common Shares|Ordinary Shares|Subordinate Voting Shares|American Depositary Shares|Depositary Shares|Units?\b|New\b).*$/i, "")
+      .replace(/[\s,]+(?:Inc\.?|Incorporated|Corporation|Corp\.?|Company|Co\.|Ltd\.?|Limited|plc|N\.V\.|S\.A\.|L\.P\.|LP|Holdings?|Group)$/i, "")
+      .trim();
+  }
+  return n || String(name || "");
 }
 
 function ktLogo(t, name, px) {
@@ -87,6 +100,13 @@ function ktPct(v, digits) {
 function ktSeg(key, options, current) {
   return `<div class="segmented kt-seg" role="group">${options.map(([v, label]) => `
     <button type="button" data-kt="${key}:${v}" class="${v === current ? "is-active" : ""}" aria-pressed="${v === current}">${label}</button>`).join("")}</div>`;
+}
+
+// 기여(%p) — 반올림해 0 이면 부호 없이.
+function ktPp(v) {
+  const r = Math.round(Number(v) * 100) / 100;
+  if (!Number.isFinite(r) || r === 0) return '<span class="muted">0.00%p</span>';
+  return `<span class="${r > 0 ? "pos" : "neg"}">${r > 0 ? "+" : ""}${r.toFixed(2)}%p</span>`;
 }
 
 function ktPeriodLabel(p) { return (KT_PERIODS.find(([k]) => k === p) || [])[1] || ""; }
@@ -340,7 +360,7 @@ function ktMySection(ctx) {
   for (const s of mine) {
     const list = C.themesForTicker(P.themes, s.ticker).filter((x) => !x.sub).slice(0, 4);
     if (!list.length) continue;
-    rows.push(`<li><button type="button" class="kt-my-name" data-kt-ticker="${escapeHtml(s.ticker)}">${ktLogo(s.ticker, s.company, 18)}<span>${escapeHtml(s.company || s.ticker)}</span></button>
+    rows.push(`<li><button type="button" class="kt-my-name" data-kt-ticker="${escapeHtml(s.ticker)}">${ktLogo(s.ticker, s.company, 18)}<span>${escapeHtml(ktName(s.ticker, s))}</span></button>
         <span class="kt-my-themes">${list.map((x) => `<button type="button" class="kt-chip" data-kt-theme="${escapeHtml(x.id)}">${escapeHtml(x.name)} ${ktPct(val(statById[x.id] || {}))}</button>`).join("")}</span></li>`);
     if (rows.length >= 8) break;
   }
@@ -519,7 +539,7 @@ function ktDetailView(ctx) {
   ], { label: `${th.name} 테마 지수와 ${src.bench[1]}` }) : "";
   const posC = Object.entries(contrib).filter(([, v]) => v.c > 0).sort((a, b) => b[1].c - a[1].c).slice(0, 3);
   const negC = Object.entries(contrib).filter(([, v]) => v.c < 0).sort((a, b) => a[1].c - b[1].c).slice(0, 2);
-  const contribChip = ([t, v]) => `<button type="button" class="kt-contrib" data-kt-ticker="${escapeHtml(t)}">${escapeHtml(ktName(t, map[t]))} <b class="${v.c >= 0 ? "pos" : "neg"}">${v.c >= 0 ? "+" : ""}${v.c.toFixed(2)}%p</b></button>`;
+  const contribChip = ([t, v]) => `<button type="button" class="kt-contrib" data-kt-ticker="${escapeHtml(t)}">${escapeHtml(ktName(t, map[t]))} ${ktPp(v.c)}</button>`;
   const rel = C.related(P.themes, th.id, 6);
   const wk = C.weightKey(KT_VIEW.weight);
   const kr = src.market === "kr";
@@ -534,7 +554,7 @@ function ktDetailView(ctx) {
           ${why ? `<small class="kt-why" title="${escapeHtml(`오늘 등락 이유(자동 요약, ${reasons.__date || ""})`)}">${escapeHtml(why)}</small>` : ""}</th>
         <td class="is-key">${s ? ktPct(s[key]) : '<span class="muted">—</span>'}${susp.has(m.t) ? KT_SUSPECT_BADGE : ""}</td>
         <td class="kt-col-cap">${escapeHtml(ktCap(s))}</td>
-        <td class="kt-col-contrib">${c ? `<span class="${c.c >= 0 ? "pos" : "neg"}">${c.c >= 0 ? "+" : ""}${c.c.toFixed(2)}%p</span>` : '<span class="muted">—</span>'}</td>
+        <td class="kt-col-contrib">${c ? ktPp(c.c) : '<span class="muted">—</span>'}</td>
         <td class="kt-col-ev${kr ? "" : " is-etf"}"><div class="kt-ev-cell">${kr ? `<span class="kt-kw">${escapeHtml(m.kw || "")}</span>${ktByBadge(m.by)}${ktSubBadge(m.sub)}` : ktEtfEvidenceHtml(m)}${evBtn}</div></td>
       </tr>${kr ? `<tr class="kt-ev-row" data-kt-ev-row="${escapeHtml(m.t)}" hidden><td colspan="5">
           <p class="kt-ev" data-kt-ev="${escapeHtml(m.t)}"><span class="muted">근거 문장 불러오는 중…</span></p>

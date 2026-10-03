@@ -82,8 +82,8 @@
       "^GSPC": "SPY",
       "^RUT": "IWM",
     },
-    // 국내 전용 잎(수급·자금 = kr-flow-panels.js, 테마 = kr-themes.js)은 미국 모드에서 숨긴다.
-    hiddenTabs: ["krflow", "krtheme"],
+    // 국내 전용 잎(수급·자금 = kr-flow-panels.js)은 미국 모드에서 숨긴다. 테마(kr-themes.js)는 미국도 쓴다(US_THEMES).
+    hiddenTabs: ["krflow"],
     hiddenInstitutionalSubs: [],
     features: {
       congress: true,
@@ -107,8 +107,8 @@
       krFunds: false,
       // 테마 분류(DART 사업보고서 근거 문장)는 국내 전용.
       krThemes: false,
-      // 미국 테마(테마 ETF N-PORT 보유 내역, build_us_themes.py) — 데이터 준비 전까지 끈다.
-      usThemes: false,
+      // 미국 테마(테마 ETF N-PORT 보유 내역, build_us_themes.py · 월 1회 ETF 보유 갱신 직후).
+      usThemes: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

@@ -289,6 +289,8 @@ CHECKS = {
     ],
     "etf-holdings": [
         ("data/etf_holdings/index.json", 40, True),
+        # 미국 테마(build_us_themes.py) — 같은 잡에서 ETF 보유 직후 다시 쓴다(updatedAtKst 매번 갱신). 0건이면 실패.
+        ("data/us_themes.json", 40, True),
     ],
     # kr-valuation-band.yml etf 잡(매주 토요일). 실행마다 updatedAtKst 를 새로 쓴다 — 12일이면
     # 두 번 연속 실패. 0건(count)도 잡는다(KRX 로그인 만료·차단 시 전량 실패).

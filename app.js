@@ -7193,6 +7193,18 @@ function dataTrustSources() {
       }
       rows.push(row);
     }
+    // 미국 테마(2026-10-03) — 테마 ETF N-PORT 보유 내역. ETF 보유 갱신(월 1회, market-calendar etf 잡) 직후 다시 만든다.
+    if (cfg.features?.usThemes === true) {
+      const ut = window.US_THEMES;
+      const row = source("테마 분류", "SEC Form N-PORT — 테마 ETF 보유 내역", ut, ["themes"], 24 * 40, "월 1회 · ETF 보유 갱신 직후", "usThemes");
+      if (ut) {
+        row.extra = [
+          ["편입", `${Number(ut.count || 0).toLocaleString("ko-KR")}건 · 테마 ${Number(ut.themeCount || 0)}개 · ETF ${Object.keys(ut.etfs || {}).length}개`],
+          ["보유 기준일", Array.isArray(ut.asOfRange) ? ut.asOfRange.join(" ~ ") : "—"],
+        ];
+      }
+      rows.push(row);
+    }
     // PER·PBR 밴드(2026-09-26) — 주간 점검, 새 달이 끝났을 때만 시계열이 늘어난다. 검증 결론도 함께 적는다.
     if (cfg.features?.valuationBand === true) {
       const vbMeta = window.KR_VALUATION_BAND_META;
@@ -9208,6 +9220,7 @@ function cmdkBuildActions(query) {
   goto("시장 · 시그널", "signals");
   // 국내 전용 잎 — 미국 모드에선 hiddenTabs 라 목록에서도 뺀다.
   if (isKrMarket() && !featureOff("krThemes")) goto("시장 · 테마 (사업보고서 근거)", "krtheme");
+  if (!isKrMarket() && !featureOff("usThemes")) goto("시장 · 테마 (테마 ETF 보유 근거)", "krtheme");
   goto("종목 · 분석", "search", "analysis");
   goto("종목 · 찾기 (스크리너·스캐너)", "search", "find");
   goto("종목 · 비교", "search", "compare");

@@ -136,6 +136,8 @@ const FEATURE_DATA = {
   // 국내 테마 분류 인덱스(build_kr_themes.py) — 테마 사전·편입 종목·보고서 출처(근거 문장은 테마별 파일,
   // kr-themes.js 가 펼칠 때 fetch). 시장 탭 '테마' 와 종목 분석 '이 종목의 테마' 칩이 처음 그릴 때만 받는다(lazy).
   krThemes: { global: "KR_THEMES", path: "data/korea/themes.js", feature: "krThemes", krOnly: true, lazy: true },
+  // 미국 테마(build_us_themes.py) — 테마 ETF 의 SEC N-PORT 보유 내역으로 편입. 같은 테마 화면(kr-themes.js)이 그린다.
+  usThemes: { global: "US_THEMES", path: "data/us_themes.js", feature: "usThemes", usOnly: true, lazy: true },
   movers: { global: "MOVERS_REASONS", path: "data/movers_reasons.js", feature: "moversBoard", marketSpecific: true },
   // 신호 라이브 성적표(build_signal_ledger.mjs) — 두 시장이 한 파일(~40KB). 시그널 탭 하단 성적표와
   // 신호 카드·특징주·시장경보·스캐너의 '이 신호의 과거 성적' 한 줄이 읽는다.

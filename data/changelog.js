@@ -1,7 +1,19 @@
 window.MIR_CHANGELOG = {
   "note": "업데이트 소식(손으로 쓰는 파일, 빌더 없음). 새 항목은 맨 위에 추가하고 data/changelog.js 도 같은 내용으로 고칠 것 — scripts/tests/test_changelog_core.mjs 가 두 파일이 같은지, id·날짜·링크·화면 id 가 올바른지 본다. targets 는 index.html/analysis.html 의 요소 id(그 화면 맨 위에 '새 기능' 카드), 비우면 목록에만 나온다.",
-  "updatedAt": "2026-10-01",
+  "updatedAt": "2026-10-03",
   "entries": [
+    {
+      "id": "2026-10-03-theme-flow",
+      "date": "2026-10-03",
+      "title": "테마 화면을 흐름 중심으로",
+      "desc": "테마 탭을 강세·약세 요약 카드, 테마 지도, 테마 로테이션(시장 대비 1주·1개월), 내 관심·보유 종목이 든 테마, 주도주를 붙인 전체 표로 다시 짰습니다. 테마를 누르면 테마 지수 차트(코스피 200 비교), 종목별 등락 기여, 오늘 움직인 이유, 연관 테마를 한 화면에서 봅니다. 하루 ±30%를 넘는 미수정 가격 종목은 테마 등락에서 빼고 기본 집계는 중앙값입니다.",
+      "link": "?tab=krtheme&market=kr",
+      "targets": [
+        "tab-krtheme"
+      ],
+      "market": "kr",
+      "pr": null
+    },
     {
       "id": "2026-10-01-stock-chart-tab",
       "date": "2026-10-01",

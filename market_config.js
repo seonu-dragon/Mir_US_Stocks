@@ -107,6 +107,8 @@
       krFunds: false,
       // 테마 분류(DART 사업보고서 근거 문장)는 국내 전용.
       krThemes: false,
+      // 미국 테마(테마 ETF N-PORT 보유 내역, build_us_themes.py) — 데이터 준비 전까지 끈다.
+      usThemes: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

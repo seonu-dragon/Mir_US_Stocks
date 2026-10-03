@@ -18,6 +18,15 @@
   // 수정되지 않은 가격이거나 스냅샷 필드 오류다(2026-10-02: 씨아이테크 +751%, 중앙첨단소재 changePct
   // +895% 인데 종가 시계열은 -0.5%). 이런 종목 하나가 테마 평균을 +51% 로 끌어올렸다.
   const LIMIT_PCT = 30.5;
+  // 종가 시계열의 하루 변화는 제한폭으로 재면 안 된다 — yahoo-cache 종목은 빠진 날이 있어 이틀 상한가가
+  // 한 칸에 +69% 로 붙는다(2026-10-02 티엠씨 +29.95% 상한가가 시계열로는 +35.9%). 그래서 시계열은
+  // 빠진 날로는 설명 안 되는 급변(2배 초과·0.4배 미만 — 액면병합·감자·병합 수준)만 가격 이상으로 본다.
+  const STEP_UP = 2.0, STEP_DOWN = 0.4;
+  function badStep(a, b) {
+    if (!(a > 0) || !(b > 0)) return false;
+    const r = b / a;
+    return r > STEP_UP || r < STEP_DOWN;
+  }
 
   function finite(v) { return typeof v === "number" && Number.isFinite(v); }
 
@@ -36,10 +45,7 @@
     const cs = Array.isArray(s.closeSeries) ? s.closeSeries : [];
     const bars = PERIOD_BARS[period] || 1;
     const start = Math.max(1, bars === Infinity ? 1 : cs.length - bars);
-    for (let i = start; i < cs.length; i += 1) {
-      const a = Number(cs[i - 1]), b = Number(cs[i]);
-      if (finite(a) && finite(b) && a > 0 && b > 0 && Math.abs((b / a - 1) * 100) > lim) return true;
-    }
+    for (let i = start; i < cs.length; i += 1) if (badStep(Number(cs[i - 1]), Number(cs[i]))) return true;
     return false;
   }
 
@@ -140,6 +146,133 @@
     return out;
   }
 
+  // 테마 지수 — 편입 종목 종가(closeSeries) 끝 bars 개를 각자 첫 값=0% 로 맞춘 뒤 날마다 동일가중 평균.
+  // 그 구간에 가격 이상(제한폭 밖 하루 점프)이 있거나 시계열이 짧은 종목은 뺀다. { series:[%...], n }
+  function themeIndex(members, stockMap, bars, opts) {
+    const limit = opts && "limit" in opts ? opts.limit : LIMIT_PCT;
+    const len = Math.max(2, bars || 21);
+    const rows = [];
+    for (const m of members || []) {
+      const s = stockMap && stockMap[m.t];
+      const cs = s && Array.isArray(s.closeSeries) ? s.closeSeries.slice(-len).map(Number) : [];
+      if (cs.length < len || !cs.every((v) => finite(v) && v > 0)) continue;
+      let bad = false;
+      if (limit != null) {
+        for (let i = 1; i < cs.length; i += 1) if (badStep(cs[i - 1], cs[i])) { bad = true; break; }
+        if (Math.abs(num(s.changePct) || 0) > limit) bad = true;
+      }
+      if (bad) continue;
+      rows.push(cs.map((v) => (v / cs[0] - 1) * 100));
+    }
+    if (!rows.length) return { series: [], n: 0 };
+    const series = [];
+    for (let i = 0; i < len; i += 1) series.push(rows.reduce((a, r) => a + r[i], 0) / rows.length);
+    return { series, n: rows.length };
+  }
+
+  // 한 종목 시계열을 0% 기준으로(벤치마크 선 — 코스피 200·S&P 500 ETF).
+  function normSeries(s, bars) {
+    const len = Math.max(2, bars || 21);
+    const cs = s && Array.isArray(s.closeSeries) ? s.closeSeries.slice(-len).map(Number) : [];
+    if (cs.length < 2 || !(cs[0] > 0) || !cs.every(finite)) return [];
+    return cs.map((v) => (v / cs[0] - 1) * 100);
+  }
+
+  // 기간 등락 상위 k 종목(주도주). 가격 이상 종목은 뺀다. [{ t, r }]
+  function leaders(members, stockMap, period, k, opts) {
+    const key = PERIOD_KEYS[period] || PERIOD_KEYS.d;
+    const limit = opts && "limit" in opts ? opts.limit : LIMIT_PCT;
+    return (members || [])
+      .map((m) => ({ t: m.t, s: stockMap && stockMap[m.t] }))
+      .filter((x) => x.s && num(x.s[key]) != null && !suspect(x.s, period, limit))
+      .map((x) => ({ t: x.t, r: num(x.s[key]) }))
+      .sort((a, b) => b.r - a.r)
+      .slice(0, k || 2);
+  }
+
+  // 시총가중 테마 등락에 대한 종목별 기여(%p) — w·r/Σw. 합하면 시총가중 등락이 된다. { 티커: {r, w, c} }
+  function contributions(members, stockMap, period, opts) {
+    const key = PERIOD_KEYS[period] || PERIOD_KEYS.d;
+    const limit = opts && "limit" in opts ? opts.limit : LIMIT_PCT;
+    const rows = [];
+    let W = 0;
+    for (const m of members || []) {
+      const s = stockMap && stockMap[m.t];
+      const r = s ? num(s[key]) : null;
+      const w = s ? Number(s.marketCapB) : NaN;
+      if (r == null || !finite(w) || w <= 0 || suspect(s, period, limit)) continue;
+      rows.push({ t: m.t, r, w });
+      W += w;
+    }
+    const out = {};
+    for (const x of rows) out[x.t] = { r: x.r, w: W ? x.w / W : 0, c: W ? (x.w * x.r) / W : 0 };
+    return out;
+  }
+
+  // 전 거래일 테마 값(순위 변동용) — 시계열 끝에서 두 번째 하루 변화. { id: 값 }
+  function prevDayValues(themes, stockMap, weight, opts) {
+    const limit = opts && "limit" in opts ? opts.limit : LIMIT_PCT;
+    const wk = weightKey(weight);
+    const out = {};
+    for (const th of themes || []) {
+      const vals = [];
+      let sum = 0, W = 0, wr = 0;
+      for (const m of activeMembers(th)) {
+        const s = stockMap && stockMap[m.t];
+        const cs = s && Array.isArray(s.closeSeries) ? s.closeSeries : [];
+        if (cs.length < 3) continue;
+        const a = Number(cs[cs.length - 3]), b = Number(cs[cs.length - 2]);
+        if (!(a > 0) || !(b > 0)) continue;
+        if (limit != null && badStep(a, b)) continue;
+        const r = (b / a - 1) * 100;
+        vals.push(r);
+        sum += r;
+        const w = Number(s.marketCapB);
+        if (finite(w) && w > 0) { W += w; wr += w * r; }
+      }
+      if (!vals.length) continue;
+      out[th.id] = wk === "med" ? median(vals) : wk === "cap" ? (W ? wr / W : null) : sum / vals.length;
+    }
+    return out;
+  }
+
+  // 값 맵 → 순위(1부터, 내림차순). ids 로 순위 낼 대상을 제한한다.
+  function ranksOf(values, ids) {
+    const list = (ids || Object.keys(values || {})).filter((id) => finite(values[id]));
+    list.sort((a, b) => values[b] - values[a]);
+    const out = {};
+    list.forEach((id, i) => { out[id] = i + 1; });
+    return out;
+  }
+
+  // 연관 테마 — 편입 종목 겹침(자카드). 공통 2종목 이상만. [{ id, name, common, j }]
+  function related(themes, id, k) {
+    const all = themes || [];
+    const base = all.find((t) => t.id === id);
+    if (!base) return [];
+    const A = new Set(activeMembers(base).map((m) => m.t));
+    if (!A.size) return [];
+    const out = [];
+    for (const th of all) {
+      if (th.id === id) continue;
+      const B = new Set(activeMembers(th).map((m) => m.t));
+      let common = 0;
+      B.forEach((t) => { if (A.has(t)) common += 1; });
+      if (common < 2) continue;
+      out.push({ id: th.id, name: th.name, common, j: common / (A.size + B.size - common) });
+    }
+    return out.sort((a, b) => b.j - a.j || b.common - a.common).slice(0, k || 5);
+  }
+
+  // 로테이션 사분면 — x: 1개월 등락, y: 1주 등락(둘 다 시장 기준선 대비 %p).
+  function quadrant(x, y) {
+    if (!finite(x) || !finite(y)) return "";
+    if (x >= 0 && y >= 0) return "lead";       // 주도
+    if (x >= 0) return "fade";                 // 약화
+    if (y >= 0) return "rise";                 // 개선
+    return "lag";                              // 소외
+  }
+
   function dartUrl(rcept) {
     return /^\d{14}$/.test(String(rcept || "")) ? `https://dart.fss.or.kr/dsaf001/main.do?rcpNo=${rcept}` : "";
   }
@@ -175,7 +308,7 @@
     return seen;
   }
 
-  const api = { PERIOD_KEYS, LIMIT_PCT, suspect, median, weightKey, activeMembers, perf, themeStats, rankThemes, statValue, themesForTicker, dartUrl, evidenceParts, fmtPct, tone, groups };
+  const api = { PERIOD_KEYS, LIMIT_PCT, suspect, median, weightKey, themeIndex, normSeries, leaders, contributions, prevDayValues, ranksOf, related, quadrant, activeMembers, perf, themeStats, rankThemes, statValue, themesForTicker, dartUrl, evidenceParts, fmtPct, tone, groups };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrThemesCore = api;
 })(typeof window !== "undefined" ? window : null);

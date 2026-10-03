@@ -837,12 +837,53 @@ function setupPortfolio() {
       else portfolio.push({ ticker: t, qty, avgCost: cost });
       savePortfolio();
       byId("pfTicker").value = ""; byId("pfQty").value = ""; byId("pfCost").value = "";
+      showAppToast(`${stockLabel(t)} ${existing ? "수정" : "추가"}했습니다.`);
       renderPortfolio();
+      byId("pfTicker")?.focus();
     };
     add.addEventListener("click", doAdd);
-    byId("pfClear")?.addEventListener("click", () => { portfolio = []; savePortfolio(); renderPortfolio(); });
     ["pfTicker", "pfQty", "pfCost"].forEach((id) => byId(id)?.addEventListener("keydown", (e) => { if (e.key === "Enter") doAdd(); }));
+    // '+ 종목 추가' 는 입력칸을 열고 닫기만 한다(입력칸이 늘 펼쳐져 표 위를 차지하던 것).
+    byId("pfAddToggle")?.addEventListener("click", () => pfSetInputOpen(byId("pfInputRow")?.hidden !== false));
+    byId("pfAddCancel")?.addEventListener("click", () => pfSetInputOpen(false));
+    // 전체 삭제는 '⋯' 메뉴 안, 4초 안에 두 번 눌러야 지운다. confirm 대화상자는 쓰지 않는다.
+    const clear = byId("pfClear");
+    clear?.addEventListener("click", () => {
+      if (!portfolio.length) { showAppToast("지울 보유 종목이 없습니다."); return; }
+      if (clear.dataset.armed !== "1") {
+        clear.dataset.armed = "1";
+        clear.textContent = `한 번 더 누르면 ${portfolio.length}종목 전부 삭제`;
+        clearTimeout(pfClearTimer);
+        pfClearTimer = setTimeout(() => { clear.dataset.armed = ""; clear.textContent = "전체 삭제"; }, 4000);
+        return;
+      }
+      clearTimeout(pfClearTimer);
+      clear.dataset.armed = ""; clear.textContent = "전체 삭제";
+      portfolio = []; savePortfolio(); renderPortfolio();
+      const more = byId("pfMore"); if (more) more.open = false;
+      showAppToast("보유 종목을 모두 지웠습니다.");
+    });
+    // 메뉴 항목을 누르면 메뉴를 닫는다(전체 삭제 첫 클릭은 확인 대기라 열어 둔다). 바깥을 눌러도 닫는다.
+    byId("pfMore")?.addEventListener("click", (e) => {
+      const item = e.target.closest(".pf-more-menu button");
+      if (item && item.id !== "pfClear") byId("pfMore").open = false;
+    });
+    document.addEventListener("click", (e) => {
+      const more = byId("pfMore");
+      if (more && more.open && !more.contains(e.target)) more.open = false;
+    });
   }
+}
+let pfClearTimer = 0;
+let pfEditing = "";   // 행 안에서 편집 중인 티커
+
+function pfSetInputOpen(open) {
+  const row = byId("pfInputRow");
+  const btn = byId("pfAddToggle");
+  if (!row) return;
+  row.hidden = !open;
+  if (btn) { btn.setAttribute("aria-expanded", String(open)); btn.textContent = open ? "입력 닫기" : "+ 종목 추가"; }
+  if (open && portfolio.length) byId("pfTicker")?.focus();
 }
 
 function donutSvg(slices) {
@@ -870,6 +911,7 @@ function renderPortfolio() {
   if (!portfolio.length) {
     if (summaryEl) summaryEl.innerHTML = "";
     tableEl.innerHTML = `<p class="muted">보유 종목을 추가하면 손익과 섹터 분산이 표시됩니다.</p>`;
+    if (byId("pfInputRow")?.hidden) pfSetInputOpen(true);
     if (pieEl) pieEl.innerHTML = "";
     renderDividendPlanner();
     renderRebalanceCalculator();
@@ -926,20 +968,51 @@ function renderPortfolio() {
   }
 
   rows.sort((a, b) => b.value - a.value);
-  const body = rows.map((r) => `<tr>
-    <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${escapeHtml(stockLabel(r.ticker, r.stock))}</button></td>
-    <td class="ins-num">${r.qty.toLocaleString()}</td>
-    <td class="ins-num">${marketCfg().formatPrice(r.avgCost)}</td>
-    <td class="ins-num">${marketCfg().formatPrice(r.price)}</td>
-    <td class="ins-num">${fmtPfMoney(r.value)}</td>
-    <td class="ins-num">${totalValue > 0 ? (r.value / totalValue * 100).toFixed(1) : "0"}%</td>
-    <td class="ins-num ${cls(r.pl)}">${fmtPct(r.plPct)}</td>
-    <td class="ins-num"><button type="button" class="pf-del" data-ticker="${escapeHtml(r.ticker)}" title="삭제">✕</button></td>
-  </tr>`).join("");
-  tableEl.innerHTML = `<table class="insider-table table-wide"><thead><tr><th>종목</th><th class="ins-num">수량</th><th class="ins-num">평단</th><th class="ins-num">현재가</th><th class="ins-num">평가액</th><th class="ins-num">비중</th><th class="ins-num">손익</th><th></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">시세 데이터가 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
+  // 보유 표(2026-10-03): 종목(수량·평단·현재가는 부제) · 오늘 · 평가액 · 손익(금액·%) · 비중 막대.
+  // 수량·평단은 행의 '편집'을 누르면 그 자리에서 고친다.
+  const fmtPfDelta = (v) => `${v >= 0 ? "+" : "-"}${fmtPfMoney(Math.abs(v))}`;
+  const maxW = Math.max(...rows.map((r) => r.value), 1);
+  const body = rows.map((r) => {
+    const w = totalValue > 0 ? (r.value / totalValue) * 100 : 0;
+    const dayAmt = r.changePct > -100 ? r.value - r.value / (1 + r.changePct / 100) : 0;
+    const logo = typeof companyLogoHtml === "function" ? companyLogoHtml(r.ticker, null, stockLabel(r.ticker, r.stock), 22) : "";
+    const editing = pfEditing === r.ticker;
+    return `<tr class="pf-row${editing ? " is-editing" : ""}">
+    <th scope="row"><button type="button" class="pf-name ins-ticker" data-ticker="${escapeHtml(r.ticker)}">${logo}<span><b>${escapeHtml(stockLabel(r.ticker, r.stock))}</b><small>${r.qty.toLocaleString()}주 · 평단 ${marketCfg().formatPrice(r.avgCost)}<span class="pf-cur"> · 현재 ${marketCfg().formatPrice(r.price)}</span></small></span></button></th>
+    <td class="ins-num pf-day"><b class="${cls(r.changePct)}">${fmtDailyPct(r.changePct)}</b><small class="${cls(dayAmt)}">${fmtPfDelta(dayAmt)}</small></td>
+    <td class="ins-num pf-col-value">${fmtPfMoney(r.value)}</td>
+    <td class="ins-num pf-pl"><b class="${cls(r.pl)}">${fmtPfDelta(r.pl)}</b><small class="${cls(r.pl)}">${fmtPct(r.plPct)}</small></td>
+    <td class="ins-num pf-col-weight"><span class="pf-wbar"><i style="width:${((r.value / maxW) * 100).toFixed(1)}%"></i></span>${w.toFixed(1)}%</td>
+    <td class="ins-num pf-col-edit"><button type="button" class="ghost compact-btn pf-edit" data-ticker="${escapeHtml(r.ticker)}" aria-expanded="${editing}" title="수량·평단 수정 또는 삭제">${editing ? "닫기" : "편집"}</button></td>
+  </tr>${editing ? `<tr class="pf-edit-row"><td colspan="6"><div class="pf-edit-form" data-ticker="${escapeHtml(r.ticker)}">
+      <label>수량<input type="number" min="0" step="any" class="pf-edit-qty" value="${r.qty}"></label>
+      <label>평단가<input type="number" min="0" step="any" class="pf-edit-cost" value="${r.avgCost}"></label>
+      <button type="button" class="primary compact-btn pf-edit-save">저장</button>
+      <button type="button" class="ghost compact-btn pf-del" data-ticker="${escapeHtml(r.ticker)}">이 종목 삭제</button>
+    </div></td></tr>` : ""}`;
+  }).join("");
+  tableEl.innerHTML = `<table class="insider-table pf-table"><thead><tr><th>종목</th><th class="ins-num">오늘</th><th class="ins-num pf-col-value">평가액</th><th class="ins-num">손익</th><th class="ins-num pf-col-weight">비중</th><th class="pf-col-edit"><span class="sr-only">편집</span></th></tr></thead><tbody>${body}</tbody></table>${missing ? `<p class="muted font-small">시세 데이터가 없는 ${missing}개 종목은 합계에서 제외했습니다.</p>` : ""}`;
   tableEl.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => selectTicker(b.dataset.ticker, { openSearch: true })));
+  tableEl.querySelectorAll(".pf-edit").forEach((b) => b.addEventListener("click", () => {
+    pfEditing = pfEditing === b.dataset.ticker ? "" : b.dataset.ticker;
+    renderPortfolio();
+  }));
+  tableEl.querySelectorAll(".pf-edit-save").forEach((b) => b.addEventListener("click", () => {
+    const form = b.closest(".pf-edit-form");
+    const t = form?.dataset.ticker;
+    const qty = Number(form?.querySelector(".pf-edit-qty")?.value);
+    const cost = Number(form?.querySelector(".pf-edit-cost")?.value);
+    if (!(qty > 0) || !(cost > 0)) { showAppToast("수량과 평단가는 0보다 커야 합니다."); return; }
+    const item = portfolio.find((p) => p.ticker === t);
+    if (item) { item.qty = qty; item.avgCost = cost; }
+    pfEditing = "";
+    savePortfolio(); renderPortfolio();
+  }));
   tableEl.querySelectorAll(".pf-del").forEach((b) => b.addEventListener("click", () => {
-    portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker); savePortfolio(); renderPortfolio();
+    portfolio = portfolio.filter((p) => p.ticker !== b.dataset.ticker);
+    pfEditing = "";
+    savePortfolio(); renderPortfolio();
+    showAppToast(`${stockLabel(b.dataset.ticker)} 삭제했습니다.`);
   }));
 
   // 섹터/종목 비중 도넛
@@ -949,7 +1022,8 @@ function renderPortfolio() {
       slices = rows.map((row) => ({ label: stockLabel(row.ticker, row.stock), ticker: row.ticker, value: row.value })).sort((a, b) => b.value - a.value);
     } else {
       const bySector = {};
-      rows.forEach((row) => { bySector[row.sector] = (bySector[row.sector] || 0) + row.value; });
+      // 섹터명은 한글로(관심 표와 같은 표기) — 예전엔 TECHNOLOGY·EXCHANGE TRADED FUNDS 가 그대로 나왔다.
+      rows.forEach((row) => { const k = typeof sectorLabelKo === "function" ? sectorLabelKo(row.sector) : row.sector; bySector[k] = (bySector[k] || 0) + row.value; });
       slices = Object.entries(bySector).map(([label, value]) => ({ label, value })).sort((a, b) => b.value - a.value);
     }
     const legend = slices.map((slice, index) => {

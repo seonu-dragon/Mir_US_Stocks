@@ -16734,3 +16734,64 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .sd-live-label { padding: 0 6px; border-radius: 999px; background: var(--chip-bg); color: var(--text-2); font-size: var(--fs-cap); font-weight: 600; }
 .sd-live-price { font-weight: 700; }
 .sd-live .sd-asof { color: var(--muted); font-size: var(--fs-cap); }
+
+/* 내 투자 1단계(2026-10-03): 보유 표 · 추가/더보기 메뉴 · 특이사항 없음 칩 · 룩스루/알림 접기 */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.pf-head { align-items: center; justify-content: space-between; }
+.pf-actions { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+.pf-more { position: relative; }
+.pf-more > summary { list-style: none; cursor: pointer; min-width: 34px; text-align: center; font-weight: 700; letter-spacing: 1px; }
+.pf-more > summary::-webkit-details-marker { display: none; }
+.pf-more-menu {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 200px; display: flex; flex-direction: column; padding: 4px;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.pf-more-menu button { justify-content: flex-start; text-align: left; padding: 8px 10px; border: 0; border-radius: var(--r-sm); background: none; color: var(--text); font-size: var(--fs-sub); cursor: pointer; }
+.pf-more-menu button:hover { background: var(--surface-2); }
+.pf-more-menu .pf-danger { color: var(--neg); }
+.pf-more-menu .pf-danger[data-armed="1"] { background: color-mix(in srgb, var(--neg) 12%, transparent); font-weight: 700; }
+.pf-input[hidden] { display: none; }
+.pf-table { width: 100%; border-collapse: collapse; }
+.pf-table th, .pf-table td { padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.pf-table thead th { font-size: var(--fs-cap); font-weight: 500; color: var(--text-muted); }
+.pf-table tbody th { text-align: left; font-weight: 400; }
+.pf-name { display: inline-flex; align-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--text); cursor: pointer; text-align: left; }
+.pf-name > span { display: flex; flex-direction: column; min-width: 0; }
+.pf-name b { font-weight: 700; }
+.pf-name:hover b { text-decoration: underline; }
+.pf-name small { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+.pf-day b, .pf-pl b { display: block; font-variant-numeric: tabular-nums; }
+.pf-day small, .pf-pl small { display: block; font-size: 11px; font-variant-numeric: tabular-nums; }
+.pf-col-weight { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pf-wbar { display: inline-block; width: 56px; height: 6px; margin-right: 6px; vertical-align: middle; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+.pf-wbar i { display: block; height: 100%; background: var(--primary); border-radius: 3px; }
+.pf-col-edit { width: 1%; }
+.pf-edit { min-height: 28px; padding: 2px 10px; font-size: var(--fs-cap); }
+.pf-row.is-editing { background: var(--surface-2); }
+.pf-edit-row > td { background: var(--surface-2); }
+.pf-edit-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.pf-edit-form label { display: flex; flex-direction: column; gap: 2px; font-size: 11px; color: var(--text-muted); }
+.pf-edit-form input { width: 120px; height: 34px; padding: 0 8px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--panel); color: var(--text); }
+.pf-edit-form .pf-del { color: var(--neg); margin-left: auto; }
+.md-quiet { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.md-quiet-label { font-size: var(--fs-cap); color: var(--text-muted); margin-right: 2px; }
+.md-quiet-chip { padding: 3px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); color: var(--text); font-size: var(--fs-cap); cursor: pointer; }
+.md-quiet-chip:hover { border-color: var(--text-muted); }
+.md-quiet-chip b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.lt-fold > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; cursor: pointer; list-style: none; }
+.lt-fold > summary::-webkit-details-marker { display: none; }
+.lt-fold > summary::after { content: "펼치기"; margin-left: auto; font-size: var(--fs-cap); color: var(--primary); }
+.lt-fold[open] > summary::after { content: "접기"; }
+.lt-fold > summary b { font-size: var(--fs-body); }
+.lt-fold > summary span { font-size: var(--fs-cap); color: var(--text-muted); }
+.lt-fold[open] > summary { margin-bottom: 10px; }
+.wa-settings { margin-top: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.wa-settings > summary { cursor: pointer; font-size: var(--fs-sub); font-weight: 600; color: var(--text-muted); padding: 4px 0; }
+.wa-settings[open] > summary { color: var(--text); margin-bottom: 8px; }
+@media (max-width: 640px) {
+  .pf-table .pf-col-value, .pf-table .pf-col-weight { display: none; }
+  .pf-table th, .pf-table td { padding: 9px 4px; }
+  .pf-name small .pf-cur { display: none; }
+  .pf-edit-form input { width: 100%; }
+  .pf-edit-form label { flex: 1 1 40%; }
+}

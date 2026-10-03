@@ -128,12 +128,29 @@ function myDigestLogo(ticker, name) {
   return typeof companyLogoHtml === "function" ? companyLogoHtml(ticker, null, name, 20) : "";
 }
 
+// 볼 만한 일이 있는 종목 — 실제 사유(특징주·공시/실적)가 붙었거나, 2주 안 일정이 있거나, 크게(±3%) 움직였다.
+// 나머지('특별한 사유 없음 — 업종 평균과 비슷')는 한 줄 칩으로 접는다(2026-10-03: 11줄이 전부 그 문구였다).
+const MY_DIGEST_BIG_MOVE = 3;
+function myDigestNotable(it) {
+  const t = it.reason && it.reason.type;
+  return t === "movers" || t === "event" || (it.upcoming && it.upcoming.length > 0)
+    || (it.changePct != null && Math.abs(it.changePct) >= MY_DIGEST_BIG_MOVE);
+}
+
+function myDigestQuietHtml(quiet) {
+  if (!quiet.length) return "";
+  return `<div class="md-quiet"><span class="md-quiet-label">특이사항 없음 ${quiet.length}종목</span>${quiet.map((it) =>
+    `<button type="button" class="md-go md-quiet-chip" data-ticker="${escapeHtml(it.ticker)}" title="종목 분석 열기">${escapeHtml(it.name)} <b class="${cls(it.changePct)}">${it.changePct == null ? "—" : fmtDailyPct(it.changePct)}</b></button>`).join("")}</div>`;
+}
+
 function myDigestDailyHtml(d, compact) {
   if (!d.items.length) {
     return `<p class="muted">보유·관심 종목이 현재 ${escapeHtml(marketCfg().id === "kr" ? "국내" : "미국")} 시장 스냅샷에 없습니다.</p>`;
   }
-  const limit = compact && !myDigestExpanded ? MY_DIGEST_TODAY_LIMIT : d.items.length;
-  const rows = d.items.slice(0, limit).map((it) => {
+  const notable = d.items.filter(myDigestNotable);
+  const quiet = d.items.filter((it) => !myDigestNotable(it));
+  const limit = compact && !myDigestExpanded ? MY_DIGEST_TODAY_LIMIT : notable.length;
+  const rows = notable.slice(0, limit).map((it) => {
     const contrib = it.contributionPct != null
       ? `<small class="md-contrib">비중 ${it.weightPct.toFixed(0)}% · 기여 <b class="${cls(it.contributionPct)}">${escapeHtml(window.MirDigestCore.fmtPp(it.contributionPct))}</b></small>` : "";
     const next = it.upcoming.length
@@ -149,9 +166,9 @@ function myDigestDailyHtml(d, compact) {
         ${next}
       </li>`;
   }).join("");
-  const more = compact && d.items.length > MY_DIGEST_TODAY_LIMIT
-    ? `<button type="button" class="ghost compact-btn md-more" data-md-more="1">${myDigestExpanded ? "접기" : `${d.items.length - MY_DIGEST_TODAY_LIMIT}개 더 보기`}</button>` : "";
-  return `<ol class="md-list">${rows}</ol>${more}`;
+  const more = compact && notable.length > MY_DIGEST_TODAY_LIMIT
+    ? `<button type="button" class="ghost compact-btn md-more" data-md-more="1">${myDigestExpanded ? "접기" : `${notable.length - MY_DIGEST_TODAY_LIMIT}개 더 보기`}</button>` : "";
+  return `${rows ? `<ol class="md-list">${rows}</ol>` : ""}${more}${myDigestQuietHtml(quiet)}`;
 }
 
 function myDigestWeeklyHtml(w) {

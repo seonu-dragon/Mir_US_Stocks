@@ -106,6 +106,14 @@
   }
 
   // ---------------------------------------------------------------- 룩스루 카드
+  // 2026-10-03: 카드는 접힌 한 줄 요약으로 시작한다. ETF 가 포트폴리오의 30% 이상일 때만 처음부터 펼친다
+  // (ETF 5% 하나 때문에 15행 표가 보유 화면 한 덩어리를 차지했다). 사용자가 한 번 열고 닫으면 그대로 둔다.
+  const LT_OPEN_SHARE = 30;
+  let ltUserOpen = null;
+  function foldHtml(summary, inner, open) {
+    return `<details class="lt-fold"${open ? " open" : ""}><summary><b>ETF 룩스루</b><span>${summary}</span></summary>${inner}</details>`;
+  }
+
   function render() {
     const host = byId("lookthroughCard");
     if (!host) return;
@@ -117,22 +125,28 @@
     if (importState && importState.market !== (isKrMarket() ? "kr" : "us")) closeImport();
     if (!core || !etfTickers.length) { host.hidden = true; host.innerHTML = ""; return; }
     host.hidden = false;
-    if (!host.innerHTML) host.innerHTML = `<div class="fundamental-head"><h3>ETF 룩스루 — 실제 종목 노출</h3></div><p class="muted">ETF 구성 자료를 불러오는 중…</p>`;
+    if (!host.innerHTML) host.innerHTML = foldHtml("ETF 구성 자료를 불러오는 중…", "", false);
     bind(host);
     loadEtfData(etfTickers).then((d) => {
       if (seq !== renderSeq) return;
       const sectorOf = (t) => { const s = stockByTicker(t); return s && !isStockEtf(s) ? s.sector : null; };
       const r = core.computeLookthrough({ positions, etfs: d.etfs, missing: d.missing, sectorOf, topN: TOP_N });
-      host.innerHTML = cardHtml(r, d);
+      const etfShare = Math.max(0, 100 - r.coverage.directPct);
+      const open = ltUserOpen == null ? etfShare >= LT_OPEN_SHARE : ltUserOpen;
+      const summary = `ETF 비중 ${pct(etfShare)} · 실제 종목 ${r.exposureCount}개로 펼쳐 보기`;
+      host.innerHTML = foldHtml(escapeHtml(summary), cardHtml(r, d), open);
     }).catch(() => {
       if (seq !== renderSeq) return;
-      host.innerHTML = `<div class="fundamental-head"><h3>ETF 룩스루 — 실제 종목 노출</h3></div><p class="muted">ETF 구성 자료를 불러오지 못했습니다.</p>`;
+      host.innerHTML = foldHtml("ETF 구성 자료를 불러오지 못했습니다.", "", false);
     });
   }
 
   function bind(host) {
     if (host.dataset.ltBound) return;
     host.dataset.ltBound = "1";
+    host.addEventListener("toggle", (ev) => {
+      if (ev.target && ev.target.classList && ev.target.classList.contains("lt-fold")) ltUserOpen = ev.target.open;
+    }, true);
     host.addEventListener("click", (ev) => {
       const b = ev.target.closest("[data-lt-ticker]");
       if (b && host.contains(b)) selectTicker(b.dataset.ltTicker, { openSearch: true });

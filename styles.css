@@ -8094,7 +8094,7 @@ button.community-hot-ticker {
 }
 
 /* 테마 화면 2단계(2026-10-03): 요약 카드 · 테마 지도 · 로테이션 · 내 종목 · 상세(지수 차트·기여도) */
-#krThemeMarket { display: grid; gap: 12px; min-width: 0; }
+#krThemeMarket { display: grid; gap: 12px; min-width: 0; scroll-margin-top: 96px; }
 #krThemeMarket > .kt-card { margin: 0; }
 .kt-cards-title { margin: 12px 0 6px; font-size: var(--fs-sub); font-weight: 600; color: var(--text-muted); }
 .kt-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }

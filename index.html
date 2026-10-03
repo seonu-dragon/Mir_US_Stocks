@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=c1b14c1929" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=c1b14c1929"></noscript>
+    <link rel="preload" href="styles.css?v=c5eb5d4ac1" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=c5eb5d4ac1"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=db760ff5a9"></script>
+    <script src="build_id.js?v=69b0d79255"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3313,7 +3313,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=f0192753b0"></script>
+    <script src="market_config.js?v=e85ea15c6f"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3351,7 +3351,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=18d943829b"></script>
+    <script src="feature-data.js?v=39ac1a2c8f"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3439,7 +3439,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=d58762fad4"></script>
+    <script src="app.js?v=2da9423bff"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

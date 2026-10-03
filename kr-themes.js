@@ -9,9 +9,10 @@
 // 애매한 문장만 Gemini 가 판정한 것('AI 판정' 표시). 테마 등락은 스냅샷 종가 기준이다. 매매 추천이 아니다.
 // 이름은 kt* 로 전역 충돌을 피한다(scripts/check_global_name_collisions.py).
 
-const KT_VIEW = { period: "d", weight: "eq", sel: null, group: "", q: "" };
+const KT_VIEW = { period: "d", weight: "med", sel: null, group: "", q: "" };
 const KT_PERIODS = [["d", "오늘"], ["w", "1주"], ["m", "1개월"]];
-const KT_WEIGHTS = [["eq", "동일가중"], ["cap", "시총가중"]];
+// 기본은 중앙값 — 평균은 한 종목의 급등락(또는 미수정 가격)에 끌려간다.
+const KT_WEIGHTS = [["med", "중앙값"], ["eq", "동일가중"], ["cap", "시총가중"]];
 const KT_RANK_MIN = 2;     // 순위 카드는 편입 2종목 이상 테마만(한 종목이면 개별 종목 등락이다)
 const _ktEvCache = {};
 
@@ -85,6 +86,8 @@ function ktEvLine(pair, m) {
     ? `“${ktEvidenceHtml(pair[0], m && m.kw, pair[1])}”`
     : '<span class="muted">근거 문장을 불러오지 못했습니다.</span>';
 }
+
+const KT_SUSPECT_BADGE = '<span class="kt-by kt-by-suspect" title="이 기간에 하루 ±30%(가격제한폭)를 넘는 가격 변동이 있습니다. 액면병합·감자·거래재개 등 수정되지 않은 가격일 수 있어 테마 등락 계산에서 뺐습니다.">가격 이상 · 집계 제외</span>';
 
 function ktByBadge(by) {
   if (by === "core") return '<span class="kt-by kt-by-core" title="이 테마를 대표하는 종목으로 직접 지정했습니다.">대표 종목</span>';
@@ -168,7 +171,7 @@ function renderKrThemes() {
   const rows = ranked.map((s) => {
     const sel = s.id === KT_VIEW.sel;
     const d = s.d, w = s.w, m = s.m;
-    const pick = (cell) => cell[KT_VIEW.weight === "cap" ? "cap" : "eq"];
+    const pick = (cell) => cell[ktCore().weightKey(KT_VIEW.weight)];
     return `<tr class="kt-row${sel ? " is-selected" : ""}" data-kt-theme="${escapeHtml(s.id)}" data-kt-name="${escapeHtml(`${s.name} ${s.group || ""}`)}" aria-expanded="${sel}">
         <th scope="row"><span class="kt-name">${escapeHtml(s.name)}</span><small class="kt-group">${escapeHtml(s.group || "")}</small></th>
         <td>${s.n}${s.llm ? `<small class="kt-llm-n" title="그중 AI 판정 편입">·AI ${s.llm}</small>` : ""}</td>
@@ -231,6 +234,9 @@ function ktDetailHtml(stat) {
   const key = C.PERIOD_KEYS[KT_VIEW.period];
   const periodLabel = (KT_PERIODS.find(([k]) => k === KT_VIEW.period) || [])[1] || "";
   const P = window.KR_THEMES || {};
+  const cell = stat[KT_VIEW.period];
+  const perfLine = `${escapeHtml(periodLabel)} 중앙값 ${ktPct(cell.med)} · 동일가중 ${ktPct(cell.eq)} · 시총가중 ${ktPct(cell.cap)}`;
+  const susp = new Set(cell.excluded || []);
   const items = members.map((m) => {
     const s = map[m.t];
     const name = (s && s.company) || ((P.reports || {})[m.t] || [])[3] || m.t;
@@ -238,20 +244,20 @@ function ktDetailHtml(stat) {
     return `<li class="kt-member" data-kt-member="${escapeHtml(m.t)}">
         <div class="kt-member-head">
           <button type="button" class="kt-member-name" data-kt-ticker="${escapeHtml(m.t)}">${logo}<span>${escapeHtml(name)}</span></button>
-          <span class="kt-member-num">${s ? ktPct(s[key]) : '<span class="muted">—</span>'}<small>${escapeHtml(periodLabel)}</small></span>
+          <span class="kt-member-num">${s ? ktPct(s[key]) : '<span class="muted">—</span>'}<small>${escapeHtml(periodLabel)}</small></span>${susp.has(m.t) ? KT_SUSPECT_BADGE : ""}
           <span class="kt-member-cap">${escapeHtml(ktCap(s))}</span>
         </div>
         <p class="kt-ev" data-kt-ev="${escapeHtml(m.t)}"><span class="muted">근거 문장 불러오는 중…</span></p>
         <p class="kt-meta">${ktByBadge(m.by)}${ktSubBadge(m.sub)}<span>${ktSourceHtml(m.t)}</span>${Number(m.n) > 1 ? `<span title="같은 테마로 걸린 원문 문장 수 — 대표 문장 하나만 보여 줍니다">관련 문장 ${Number(m.n)}개</span>` : ""}${m.pb != null ? `<span>PBR ${Number(m.pb).toFixed(2)}배</span>` : ""}</p>
       </li>`;
   }).join("");
-  const perfLine = `${escapeHtml(periodLabel)} 동일가중 ${ktPct(stat[KT_VIEW.period].eq)} · 시총가중 ${ktPct(stat[KT_VIEW.period].cap)}`;
   return `
     <div class="kt-detail-head">
       <div><h4>${escapeHtml(th.name)}</h4><p class="kt-desc">${escapeHtml(th.about || th.desc || "")}</p></div>
       <p class="kt-detail-perf">${perfLine}</p>
     </div>
     ${th.filter && th.filter.pbMax != null ? `<p class="kt-note">금융업 근거 문장이 있는 종목 중 KRX 공식 PBR ${th.filter.pbMax}배 미만(빌드일 ${escapeHtml(String(P.updatedAtKst || "").slice(0, 10))} 기준)만 셉니다${hidden > 0 ? ` — PBR 조건 밖 ${hidden}종목 제외` : ""}.</p>` : ""}
+    ${susp.size ? `<p class="kt-note">가격 이상 ${susp.size}종목은 테마 등락 계산에서 뺐습니다 — 하루 ±30%(가격제한폭)를 넘는 변동은 액면병합·감자 등 수정되지 않은 가격일 가능성이 큽니다.</p>` : ""}
     <ol class="kt-members">${items || '<li class="muted">조건을 만족하는 종목이 없습니다.</li>'}</ol>`;
 }
 

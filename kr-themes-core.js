@@ -11,9 +11,44 @@
 (function (root) {
   "use strict";
 
-  const PERIOD_KEYS = { d: "changePct", w: "weekChangePct", m: "monthChangePct" };
+  const PERIOD_KEYS = { d: "changePct", w: "weekChangePct", m: "monthChangePct", q: "threeMonthChangePct" };
+  // 기간별로 closeSeries 끝에서 몇 개의 일간 변화를 보는지(1주 5거래일·1개월 21·3개월은 시계열 전체).
+  const PERIOD_BARS = { d: 1, w: 5, m: 21, q: Infinity };
+  // 국내 가격제한폭 ±30%. 이보다 큰 하루 변동은 실제 거래가 아니라 액면병합·감자·거래재개 등
+  // 수정되지 않은 가격이거나 스냅샷 필드 오류다(2026-10-02: 씨아이테크 +751%, 중앙첨단소재 changePct
+  // +895% 인데 종가 시계열은 -0.5%). 이런 종목 하나가 테마 평균을 +51% 로 끌어올렸다.
+  const LIMIT_PCT = 30.5;
 
   function finite(v) { return typeof v === "number" && Number.isFinite(v); }
+
+  function num(raw) {
+    const r = raw == null || raw === "" ? NaN : Number(raw);   // Number(null) 은 0 이라 결측을 보합으로 셀 뻔했다
+    return finite(r) ? r : null;
+  }
+
+  // 이 종목의 이 기간 등락을 믿을 수 없나 — 일간 등락이 제한폭 밖이거나, 기간 안에 제한폭 밖 하루 점프가 있다.
+  // limit 이 null 이면(가격제한폭 없는 시장) 검사하지 않는다.
+  function suspect(s, period, limit) {
+    const lim = limit === undefined ? LIMIT_PCT : limit;
+    if (!s || lim == null) return false;
+    const d = num(s.changePct);
+    if (d != null && Math.abs(d) > lim) return true;
+    const cs = Array.isArray(s.closeSeries) ? s.closeSeries : [];
+    const bars = PERIOD_BARS[period] || 1;
+    const start = Math.max(1, bars === Infinity ? 1 : cs.length - bars);
+    for (let i = start; i < cs.length; i += 1) {
+      const a = Number(cs[i - 1]), b = Number(cs[i]);
+      if (finite(a) && finite(b) && a > 0 && b > 0 && Math.abs((b / a - 1) * 100) > lim) return true;
+    }
+    return false;
+  }
+
+  function median(xs) {
+    if (!xs.length) return null;
+    const v = xs.slice().sort((a, b) => a - b);
+    const h = Math.floor(v.length / 2);
+    return v.length % 2 ? v[h] : (v[h - 1] + v[h]) / 2;
+  }
 
   // 테마의 수치 조건(저PBR 금융의 pbMax)을 통과한 편입 종목. PBR 을 모르면 뺀다(조건을 확인 못 함).
   function activeMembers(theme) {
@@ -23,17 +58,21 @@
     return members.filter((m) => finite(m.pb) && m.pb < pbMax);
   }
 
-  // 편입 종목의 기간 등락 — 동일가중 평균(eq)·시총가중 평균(cap)·상승/하락 수.
+  // 편입 종목의 기간 등락 — 중앙값(med)·동일가중 평균(eq)·시총가중 평균(cap)·상승/하락 수.
   // stockMap: 티커 → 스냅샷 행. 등락이 없는 종목은 계산에서 빠지고 covered 에 안 센다.
-  function perf(members, stockMap, period) {
+  // 가격 이상(suspect) 종목은 모든 집계에서 빼고 excluded 에 티커를 남긴다 — 화면이 '몇 종목 제외'를 밝힌다.
+  function perf(members, stockMap, period, opts) {
     const key = PERIOD_KEYS[period] || PERIOD_KEYS.d;
+    const limit = opts && "limit" in opts ? opts.limit : LIMIT_PCT;
     let sum = 0, n = 0, wsum = 0, wret = 0, up = 0, down = 0;
+    const vals = [], excluded = [];
     for (const m of members || []) {
       const s = stockMap && stockMap[m.t];
-      const raw = s ? s[key] : null;
-      const r = raw == null || raw === "" ? NaN : Number(raw);   // Number(null) 은 0 이라 결측을 보합으로 셀 뻔했다
-      if (!finite(r)) continue;
+      const r = s ? num(s[key]) : null;
+      if (r == null) continue;
+      if (suspect(s, period, limit)) { excluded.push(m.t); continue; }
       n += 1;
+      vals.push(r);
       sum += r;
       if (r > 0) up += 1;
       else if (r < 0) down += 1;
@@ -41,23 +80,27 @@
       if (finite(w) && w > 0) { wsum += w; wret += w * r; }
     }
     return {
+      med: median(vals),
       eq: n ? sum / n : null,
       cap: wsum > 0 ? wret / wsum : null,
       covered: n,
-      up, down,
+      up, down, excluded,
     };
   }
 
-  function themeStats(themes, stockMap) {
+  function weightKey(weight) { return weight === "cap" ? "cap" : weight === "eq" ? "eq" : "med"; }
+
+  function themeStats(themes, stockMap, opts) {
     return (themes || []).map((th) => {
       const members = activeMembers(th);
       return {
         id: th.id, name: th.name, group: th.group, desc: th.desc,
         n: members.length,
         llm: members.filter((m) => m.by === "llm").length,
-        d: perf(members, stockMap, "d"),
-        w: perf(members, stockMap, "w"),
-        m: perf(members, stockMap, "m"),
+        d: perf(members, stockMap, "d", opts),
+        w: perf(members, stockMap, "w", opts),
+        m: perf(members, stockMap, "m", opts),
+        q: perf(members, stockMap, "q", opts),
       };
     });
   }
@@ -66,7 +109,7 @@
   // '테마' 가 아니라 개별 종목 등락이다. 값이 없는 테마는 맨 뒤.
   function rankThemes(stats, period, weight, minN) {
     const p = PERIOD_KEYS[period] ? period : "d";
-    const wk = weight === "cap" ? "cap" : "eq";
+    const wk = weightKey(weight);
     const floor = finite(minN) ? minN : 0;
     const val = (s) => (s[p] && finite(s[p][wk]) ? s[p][wk] : null);
     return (stats || [])
@@ -83,7 +126,7 @@
 
   function statValue(stat, period, weight) {
     const cell = stat && stat[PERIOD_KEYS[period] ? period : "d"];
-    const v = cell ? cell[weight === "cap" ? "cap" : "eq"] : null;
+    const v = cell ? cell[weightKey(weight)] : null;
     return finite(v) ? v : null;
   }
 
@@ -132,7 +175,7 @@
     return seen;
   }
 
-  const api = { PERIOD_KEYS, activeMembers, perf, themeStats, rankThemes, statValue, themesForTicker, dartUrl, evidenceParts, fmtPct, tone, groups };
+  const api = { PERIOD_KEYS, LIMIT_PCT, suspect, median, weightKey, activeMembers, perf, themeStats, rankThemes, statValue, themesForTicker, dartUrl, evidenceParts, fmtPct, tone, groups };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root) root.MirKrThemesCore = api;
 })(typeof window !== "undefined" ? window : null);

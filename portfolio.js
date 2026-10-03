@@ -435,7 +435,10 @@ function renderStressTest() {
   });
   const stressed = detailed.reduce((sum, row) => sum + row.stressedValue, 0);
   const impact = stressed - original;
-  summary.innerHTML = `
+  const worst = detailed.slice().sort((a, b) => a.impact - b.impact)[0];
+  const verdict = original > 0
+    ? `<p class="tool-verdict${impact / original <= -0.15 ? " is-warn" : ""}">이 시나리오면 ${fmtStressDelta(impact)} (${(impact / original * 100).toFixed(1)}%)${worst && worst.impact < 0 ? ` · 가장 큰 손실 ${escapeHtml(stockLabel(worst.ticker))} ${fmtStressDelta(worst.impact)}` : ""}</p>` : "";
+  summary.innerHTML = `${verdict}
     <div><span>현재 평가액</span><strong>${fmtStressMoney(original)}</strong></div>
     <div><span>스트레스 후</span><strong>${fmtStressMoney(stressed)}</strong></div>
     <div><span>예상 변화</span><strong class="${cls(impact)}">${fmtStressDelta(impact)} (${original > 0 ? (impact / original * 100).toFixed(1) : "0.0"}%)</strong></div>`;
@@ -1177,7 +1180,14 @@ function renderPortfolioXray() {
     { label: "상위 3종목 비중", value: `${top3.toFixed(0)}%`, tone: top3 > 60 ? "warn" : "" },
     { label: "유효 종목수", value: effN.toFixed(1), detail: `보유 ${rows.length}종목` },
   ]);
-  host.innerHTML = `<div style="font-size:12px;color:var(--muted);margin:2px 0 4px">팩터 노출 (비중 가중 백분위)</div>${factorBars}
+  // 결론 한 줄 — 집중도 판정 + 시장 대비 뚜렷한 성향(백분위 70↑ 높음, 30↓ 낮음).
+  const tilt = axes.map(([label, k]) => [label, wsum[k] > 0 ? Math.round(acc[k] / wsum[k]) : null]).filter(([, v]) => v != null);
+  const high = tilt.filter(([, v]) => v >= 70).map(([l]) => l);
+  const low = tilt.filter(([, v]) => v <= 30).map(([l]) => l);
+  const concWord = hhi > 0.25 ? "높음" : hhi > 0.15 ? "보통" : "잘 분산됨";
+  const tiltText = [high.length ? `${high.join("·")} 높음` : "", low.length ? `${low.join("·")} 낮음` : ""].filter(Boolean).join(", ");
+  const verdict = `<p class="tool-verdict${hhi > 0.25 || top3 > 60 ? " is-warn" : ""}">상위 3종목이 ${top3.toFixed(0)}% · 집중도 ${concWord}${tiltText ? ` · 성향: ${tiltText}` : ""}</p>`;
+  host.innerHTML = `${verdict}<div style="font-size:12px;color:var(--muted);margin:2px 0 4px">팩터 노출 (비중 가중 백분위)</div>${factorBars}
     <div style="font-size:12px;color:var(--muted);margin:14px 0 6px">집중도</div>${concGrid}`;
 }
 

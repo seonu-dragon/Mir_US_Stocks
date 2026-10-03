@@ -191,7 +191,12 @@
       : "종목 상한 없음";
     const oos = res.oos;
     const target = inp.source === "backtest" ? "시뮬레이터 직접 비중" : "리밸런싱 목표";
-    body.innerHTML = `
+    // 결론 한 줄 — 비중보다 위험을 가장 많이 떠안은 종목.
+    const over = rows.slice().sort((a, b) => (b.rc - b.cur) - (a.rc - a.cur))[0];
+    const verdict = over && over.rc - over.cur > 0.05
+      ? `<p class="tool-verdict is-warn">${esc(label(over.ticker))}이(가) 비중 ${pct(over.cur)}로 위험의 ${pct(over.rc)}를 차지합니다 · 위험을 고르게 나누면 연 변동성 ${pct(res.current.vol)} → ${pct(res.riskParity.vol)}</p>`
+      : `<p class="tool-verdict">비중과 위험 기여가 크게 어긋난 종목은 없습니다 · 현재 연 변동성 ${pct(res.current.vol)}</p>`;
+    body.innerHTML = `${verdict}
       <div class="portfolio-tool-summary pf-risk-summary">
         <div><span>현재 비중 · 연 변동성</span><strong>${pct(res.current.vol)}</strong></div>
         <div><span>리스크 패리티 · 연 변동성</span><strong>${pct(res.riskParity.vol)}</strong></div>

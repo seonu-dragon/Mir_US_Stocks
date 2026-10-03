@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=f304409bd7" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=f304409bd7"></noscript>
+    <link rel="preload" href="styles.css?v=998b339127" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=998b339127"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=25543ecb33"></script>
+    <script src="build_id.js?v=4742b53526"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2710,8 +2710,8 @@ html[data-market="kr"][data-theme="dark"] {
         </div>
 
         <div class="sub-panel" id="sub-bulk-tools">
-          <details class="ia-fold ia-tool-fold" data-toc-key="xray">
-            <summary>팩터 노출 · 집중도 (X-RAY)</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="xray" data-toc-group="점검">
+            <summary>집중도 · 투자 성향</summary>
           <section class="portfolio-tool-card" id="pfXrayCard">
             <div class="portfolio-tool-head">
               <div><h3>팩터 노출 · 집중도</h3></div>
@@ -2720,22 +2720,8 @@ html[data-market="kr"][data-theme="dark"] {
             <div id="pfXrayBody"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="rebalance">
-            <summary>포트폴리오 리밸런싱</summary>
-          <section class="portfolio-tool-card" id="rebalanceCard">
-            <div class="portfolio-tool-head">
-              <div><h3>포트폴리오 리밸런싱</h3></div>
-              <div class="portfolio-tool-actions">
-                <button type="button" class="ghost compact-btn" id="rebalanceEqual">동일 비중</button>
-                <button type="button" class="ghost compact-btn" id="rebalanceNormalize">100% 맞춤</button>
-              </div>
-            </div>
-            <div class="portfolio-tool-summary" id="rebalanceSummary"></div>
-            <div class="portfolio-tool-table" id="rebalanceTable"></div>
-          </section>
-          </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="pfrisk" id="pfRiskFold">
-            <summary>위험 기여도 · 리스크 패리티 · 최소분산</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="pfrisk" data-toc-group="점검" id="pfRiskFold">
+            <summary>위험 기여도 · 비중 제안</summary>
           <section class="portfolio-tool-card" id="pfRiskCard">
             <div class="portfolio-tool-head">
               <div><h3>위험 기여도 · 리스크 패리티 · 최소분산</h3></div>
@@ -2751,8 +2737,62 @@ html[data-market="kr"][data-theme="dark"] {
             <div id="pfRiskBody"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="stress">
-            <summary>스트레스 테스트</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="corr" data-toc-group="점검">
+            <summary>함께 움직이는 종목(상관관계)</summary>
+        <section class="corr-card" id="corrCard">
+          <div class="corr-head">
+            <div>
+              <h3>관심종목 상관관계</h3>
+              <p class="muted">관심종목 간 일간 수익률 상관계수입니다. 빨강=같이 움직임(분산효과 낮음), 파랑=반대로 움직임. 값이 낮을수록 분산투자에 유리합니다.</p>
+            </div>
+            <span class="muted" id="corrMeta"></span>
+          </div>
+          <div class="corr-wrap" id="corrMatrix"></div>
+        </section>
+          </details>
+          <details class="ia-fold ia-tool-fold" data-toc-key="bench" data-toc-group="성과">
+            <summary>지수 대비 성과 · 기여도</summary>
+          <section class="portfolio-tool-card portfolio-wide-card" id="benchmarkAttributionCard">
+            <div class="portfolio-tool-head">
+              <div><h3>벤치마크 성과 · 기여도</h3></div>
+              <div class="portfolio-tool-actions benchmark-controls">
+                <select id="portfolioBenchmark" aria-label="비교 벤치마크"><option value="SPY">SPY</option><option value="QQQ">QQQ</option><option value="DIA">DIA</option><option value="IWM">IWM</option></select>
+                <select id="portfolioBenchmarkPeriod" aria-label="성과 비교 기간"><option value="22">1개월</option><option value="63" selected>3개월</option><option value="252">1년</option></select>
+              </div>
+            </div>
+            <div class="portfolio-tool-summary benchmark-summary" id="benchmarkAttributionSummary"></div>
+            <p class="portfolio-tool-status muted" id="benchmarkAttributionStatus"></p>
+            <div class="portfolio-tool-table" id="benchmarkAttributionTable"></div>
+          </section>
+          </details>
+          <details class="ia-fold ia-tool-fold" data-toc-key="krw" data-toc-group="성과">
+            <summary>원화로 본 내 자산</summary>
+          <section class="portfolio-tool-card portfolio-wide-card" id="krwPortfolioCard">
+            <div class="portfolio-tool-head">
+              <div><h3>원화 기준 포트폴리오</h3></div>
+              <strong id="krwCurrentRate">USD/KRW 로딩 중</strong>
+            </div>
+            <p class="muted">종목별 매입 환율을 입력하면 원화 평가손익을 주가 효과와 환율 효과로 분리합니다.</p>
+            <div class="portfolio-tool-summary krw-portfolio-summary" id="krwPortfolioSummary"></div>
+            <div class="portfolio-tool-table" id="krwPortfolioTable"></div>
+          </section>
+          </details>
+          <details class="ia-fold ia-tool-fold" data-toc-key="rebalance" data-toc-group="계획">
+            <summary>목표 비중 맞추기(리밸런싱)</summary>
+          <section class="portfolio-tool-card" id="rebalanceCard">
+            <div class="portfolio-tool-head">
+              <div><h3>포트폴리오 리밸런싱</h3></div>
+              <div class="portfolio-tool-actions">
+                <button type="button" class="ghost compact-btn" id="rebalanceEqual">동일 비중</button>
+                <button type="button" class="ghost compact-btn" id="rebalanceNormalize">100% 맞춤</button>
+              </div>
+            </div>
+            <div class="portfolio-tool-summary" id="rebalanceSummary"></div>
+            <div class="portfolio-tool-table" id="rebalanceTable"></div>
+          </section>
+          </details>
+          <details class="ia-fold ia-tool-fold" data-toc-key="stress" data-toc-group="계획">
+            <summary>하락장 시나리오</summary>
           <section class="portfolio-tool-card" id="stressTestCard">
             <div class="portfolio-tool-head">
               <div><h3>포트폴리오 스트레스 테스트</h3></div>
@@ -2777,8 +2817,8 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="position">
-            <summary>포지션 크기 계산기</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="position" data-toc-group="계획">
+            <summary>얼마나 살까(포지션 크기)</summary>
           <section class="portfolio-tool-card" id="positionSizeCard">
             <div class="portfolio-tool-head">
               <div><h3>포지션 크기 계산기</h3></div>
@@ -2796,8 +2836,8 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="position-size-result" id="positionSizeResult"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="sim">
-            <summary>포트폴리오 시뮬레이터</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="sim" data-toc-group="계획">
+            <summary>과거에 샀다면(시뮬레이터)</summary>
         <div class="backtest-panel" id="backtestPanel">
           <div class="section-title compact-title">
             <h2>포트폴리오 시뮬레이터</h2>
@@ -2871,8 +2911,8 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </div>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="dca" id="dcaFold">
-            <summary>적립식 시뮬레이터</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="dca" data-toc-group="계획" id="dcaFold">
+            <summary>적립식으로 샀다면</summary>
         <section class="dca-panel" id="dcaPanel">
           <div class="section-title compact-title">
             <h2>적립식(주식 모으기) 시뮬레이터</h2>
@@ -2990,21 +3030,8 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="corr">
-            <summary>관심종목 상관관계</summary>
-        <section class="corr-card" id="corrCard">
-          <div class="corr-head">
-            <div>
-              <h3>관심종목 상관관계</h3>
-              <p class="muted">관심종목 간 일간 수익률 상관계수입니다. 빨강=같이 움직임(분산효과 낮음), 파랑=반대로 움직임. 값이 낮을수록 분산투자에 유리합니다.</p>
-            </div>
-            <span class="muted" id="corrMeta"></span>
-          </div>
-          <div class="corr-wrap" id="corrMatrix"></div>
-        </section>
-          </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="thesis" id="thesisFold">
-            <summary>투자 가설 추적</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="thesis" data-toc-group="기록" id="thesisFold">
+            <summary>투자 가설 점검</summary>
           <section class="portfolio-tool-card thesis-card" id="thesisPanel">
             <div class="portfolio-tool-head">
               <div><h3>투자 가설 추적</h3></div>
@@ -3031,8 +3058,8 @@ html[data-market="kr"][data-theme="dark"] {
             <p class="muted thesis-note" id="thesisAsOf"></p>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="journal">
-            <summary>투자 아이디어 · 매매일지</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="journal" data-toc-group="기록">
+            <summary>매매일지 · 아이디어</summary>
           <section class="portfolio-tool-card investment-journal-card" id="investmentJournalCard">
             <div class="portfolio-tool-head">
               <div><h3>투자 아이디어 · 매매일지</h3></div>
@@ -3051,8 +3078,8 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="journal-list" id="journalList"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="dividend">
-            <summary>배당 캘린더 · 현금흐름</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="dividend" data-toc-group="기록">
+            <summary>배당 캘린더</summary>
           <section class="portfolio-tool-card" id="dividendPlannerCard">
             <div class="portfolio-tool-head">
               <div><h3>배당 캘린더 · 현금흐름</h3></div>
@@ -3063,35 +3090,8 @@ html[data-market="kr"][data-theme="dark"] {
             <div class="dividend-month-grid" id="dividendMonthGrid"></div>
           </section>
           </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="krw">
-            <summary>원화 기준 포트폴리오</summary>
-          <section class="portfolio-tool-card portfolio-wide-card" id="krwPortfolioCard">
-            <div class="portfolio-tool-head">
-              <div><h3>원화 기준 포트폴리오</h3></div>
-              <strong id="krwCurrentRate">USD/KRW 로딩 중</strong>
-            </div>
-            <p class="muted">종목별 매입 환율을 입력하면 원화 평가손익을 주가 효과와 환율 효과로 분리합니다.</p>
-            <div class="portfolio-tool-summary krw-portfolio-summary" id="krwPortfolioSummary"></div>
-            <div class="portfolio-tool-table" id="krwPortfolioTable"></div>
-          </section>
-          </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="bench">
-            <summary>벤치마크 성과 · 기여도</summary>
-          <section class="portfolio-tool-card portfolio-wide-card" id="benchmarkAttributionCard">
-            <div class="portfolio-tool-head">
-              <div><h3>벤치마크 성과 · 기여도</h3></div>
-              <div class="portfolio-tool-actions benchmark-controls">
-                <select id="portfolioBenchmark" aria-label="비교 벤치마크"><option value="SPY">SPY</option><option value="QQQ">QQQ</option><option value="DIA">DIA</option><option value="IWM">IWM</option></select>
-                <select id="portfolioBenchmarkPeriod" aria-label="성과 비교 기간"><option value="22">1개월</option><option value="63" selected>3개월</option><option value="252">1년</option></select>
-              </div>
-            </div>
-            <div class="portfolio-tool-summary benchmark-summary" id="benchmarkAttributionSummary"></div>
-            <p class="portfolio-tool-status muted" id="benchmarkAttributionStatus"></p>
-            <div class="portfolio-tool-table" id="benchmarkAttributionTable"></div>
-          </section>
-          </details>
-          <details class="ia-fold ia-tool-fold" data-toc-key="sync">
-            <summary>클라우드 동기화</summary>
+          <details class="ia-fold ia-tool-fold" data-toc-key="sync" data-toc-group="설정">
+            <summary>다른 기기와 동기화</summary>
           <div class="cloud-sync-panel">
             <div class="cloud-sync-head">
               <strong>클라우드 동기화</strong>
@@ -3104,6 +3104,7 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
           </div>
           </details>
+
         </div>
         </div>
       </section>
@@ -3357,7 +3358,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="sec-filings-core.js"></script>
     <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
     <script src="movers.js?v=0f28afc00d"></script>
-    <script src="portfolio.js?v=3219ff0f53"></script>
+    <script src="portfolio.js?v=a100144957"></script>
     <script src="my-invest-core.js?v=f6643ad3d2"></script>
     <script src="my-invest.js?v=9c4d59c533"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
@@ -3365,7 +3366,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=996abc89fa"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
-    <script src="portfolio-risk.js?v=1b61da56cb"></script>
+    <script src="portfolio-risk.js?v=f525ddf596"></script>
     <script src="thesis-core.js?v=c15fe03cd1"></script>
     <script src="thesis.js?v=7e27c93e95"></script>
     <script src="screener.js?v=dbff5b958e"></script>
@@ -3451,7 +3452,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table-core.js?v=7a807895ca"></script>
     <script src="find-table.js?v=70e4100c66"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
-    <script src="toc-layout.js?v=d3e6f7b6a1"></script>
+    <script src="toc-layout.js?v=a05156a05c"></script>
     <script src="mobile-cards.js?v=0e05cff78d"></script>
     <script src="calendar-panel-core.js?v=261cacf9f0"></script>
     <script src="market-feed-core.js?v=f09c7d8fe8"></script>

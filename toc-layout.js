@@ -54,8 +54,18 @@ function setupTocLayout(spec) {
   layout.append(nav, body);
   folds[0].before(layout);
 
+  // 접힘에 data-toc-group 이 있으면 묶음이 바뀔 때마다 목차에 작은 제목을 넣는다(내 투자 › 분석: 점검·성과·계획·기록·설정).
+  let lastGroup = "";
   const items = folds.map((fold, i) => {
     const key = tocFoldKey(fold, i);
+    const group = fold.dataset.tocGroup || "";
+    if (group && group !== lastGroup) {
+      const h = document.createElement("span");
+      h.className = "toc-group";
+      h.textContent = group;
+      nav.appendChild(h);
+      lastGroup = group;
+    }
     const title = (fold.querySelector(":scope > summary")?.textContent || key).replace(/\s+/g, " ").trim();
     const btn = document.createElement("button");
     btn.type = "button";

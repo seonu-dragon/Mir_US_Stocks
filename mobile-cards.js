@@ -14,7 +14,7 @@ const MCARD_HOSTS = [
   "eventsTable", "insiderTable", "activistTable", "ipoTable",
   "buybackTable", "earnReactTable", "dividendTable", "contractTable", "dilutionTable", "shortTable",
   // pfTable 은 2026-10-03 부터 모바일에서도 표 그대로(평가액·비중 열만 숨김) — 카드로 바꾸면 행이 4배로 길어진다.
-  "krOwnTable", "krDartTable", "bulkTable",
+  "krOwnTable", "krDartTable",
 ];
 const MCARD_KEY_RE = /^(#|종목|티커|공시일|거래일|일자|날짜|발표일|신고일|상장일)$/;
 const MCARD_WIDE_RE = /(이벤트|보고자|제목|내용|사유|회사명|보고서)/;

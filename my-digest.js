@@ -283,7 +283,7 @@ function setupMyDigest() {
         return;
       }
       if (event.target.closest("[data-md-add]")) {
-        activateTab("bulk", { sub: "holdings" });
+        activateTab("bulk", { sub: "watch" });
       }
     });
     if (typeof delegateTickerClicks === "function") delegateTickerClicks(el, ".md-go");

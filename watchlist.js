@@ -99,6 +99,103 @@ function toggleWatchlist(ticker) {
   }
 }
 
+// ===== 관심 리스트 여러 개(2026-10-03) =====
+// '전체' 는 기존 watchlist(★) 그대로다. 사용자가 만든 리스트는 시장별 [{ id, name, tickers }] 로 따로 저장하고,
+// 리스트에 넣은 종목은 전체(★)에도 넣는다. 리스트에서 빼면 그 리스트에서만 빠진다(★ 는 유지).
+// 클라우드 동기화 대상은 아직 전체(★)뿐이다.
+const WL_GROUPS_MAX = 12;
+let wlActiveGroup = "";
+function wlGroupsKey() { return `mir_watch_groups_${isKrMarket() ? "kr" : "us"}`; }
+function wlGroups() {
+  try {
+    const raw = JSON.parse(window.safeStorage.get(wlGroupsKey()) || "[]");
+    return Array.isArray(raw) ? raw.filter((g) => g && g.id && g.name && Array.isArray(g.tickers)) : [];
+  } catch (_) { return []; }
+}
+function wlSaveGroups(list) {
+  try { window.safeStorage.set(wlGroupsKey(), JSON.stringify(list.slice(0, WL_GROUPS_MAX))); } catch (_) { /* 저장 실패 무시 */ }
+}
+function wlActiveTickers() {
+  if (!wlActiveGroup) return watchlist.slice();
+  const g = wlGroups().find((x) => x.id === wlActiveGroup);
+  if (!g) { wlActiveGroup = ""; return watchlist.slice(); }
+  return g.tickers.slice();
+}
+function wlAddTicker(raw) {
+  const t = normalizeTickerKey(resolveCommunityTickerInput ? (resolveCommunityTickerInput(raw) || raw) : raw);
+  if (!t || !stockByTicker(t)) { showAppToast(`'${raw}' 종목을 찾지 못했습니다.`); return false; }
+  if (wlActiveGroup) {
+    const list = wlGroups();
+    const g = list.find((x) => x.id === wlActiveGroup);
+    if (g && !g.tickers.includes(t)) { g.tickers.push(t); wlSaveGroups(list); }
+  }
+  if (!isInWatchlist(t)) toggleWatchlist(t);
+  else renderBulk();
+  showAppToast(`${stockLabel(t)} 추가했습니다.`);
+  return true;
+}
+function wlRemoveTicker(t) {
+  if (wlActiveGroup) {
+    const list = wlGroups();
+    const g = list.find((x) => x.id === wlActiveGroup);
+    if (g) { g.tickers = g.tickers.filter((x) => x !== t); wlSaveGroups(list); }
+    renderBulk();
+    return;
+  }
+  toggleWatchlist(t);
+}
+function wlCreateGroup(name) {
+  const nm = String(name || "").trim().slice(0, 20);
+  if (!nm) return;
+  const list = wlGroups();
+  if (list.length >= WL_GROUPS_MAX) { showAppToast(`리스트는 ${WL_GROUPS_MAX}개까지 만들 수 있습니다.`); return; }
+  const id = `g${Date.now().toString(36)}`;
+  list.push({ id, name: nm, tickers: [] });
+  wlSaveGroups(list);
+  wlActiveGroup = id;
+  renderBulk();
+}
+function wlDeleteGroup(id) {
+  wlSaveGroups(wlGroups().filter((g) => g.id !== id));
+  if (wlActiveGroup === id) wlActiveGroup = "";
+  renderBulk();
+}
+
+function renderWatchGroups() {
+  const host = byId("wlGroups");
+  if (!host) return;
+  const groups = wlGroups();
+  const chip = (id, name, n) => `<button type="button" class="wl-group${wlActiveGroup === id ? " is-active" : ""}" data-wl-group="${escapeHtml(id)}" aria-pressed="${wlActiveGroup === id}">${escapeHtml(name)} <small>${n}</small></button>`;
+  const active = groups.find((g) => g.id === wlActiveGroup);
+  host.innerHTML = `${chip("", "전체", watchlist.filter((t) => stockByTicker(t)).length)}${groups.map((g) => chip(g.id, g.name, g.tickers.filter((t) => stockByTicker(t)).length)).join("")}
+    <span class="wl-new"><button type="button" class="ghost compact-btn" data-wl-new="1">+ 새 리스트</button></span>
+    ${active ? `<button type="button" class="ghost compact-btn wl-del" data-wl-del="${escapeHtml(active.id)}">'${escapeHtml(active.name)}' 삭제</button>` : ""}`;
+  if (host.dataset.bound) return;
+  host.dataset.bound = "1";
+  host.addEventListener("click", (ev) => {
+    const g = ev.target.closest("[data-wl-group]");
+    if (g) { wlActiveGroup = g.dataset.wlGroup; renderBulk(); return; }
+    if (ev.target.closest("[data-wl-new]")) {
+      const box = host.querySelector(".wl-new");
+      box.innerHTML = `<form class="wl-new-form"><input maxlength="20" placeholder="리스트 이름 (예: AI, 배당)" aria-label="새 리스트 이름"><button type="submit" class="primary compact-btn">만들기</button></form>`;
+      const input = box.querySelector("input");
+      input.focus();
+      box.querySelector("form").addEventListener("submit", (e) => { e.preventDefault(); wlCreateGroup(input.value); });
+      return;
+    }
+    const del = ev.target.closest("[data-wl-del]");
+    if (del) {
+      if (del.dataset.armed !== "1") {
+        del.dataset.armed = "1";
+        del.textContent = "한 번 더 누르면 삭제(종목 ★ 는 유지)";
+        setTimeout(() => { if (del.isConnected) renderWatchGroups(); }, 4000);
+        return;
+      }
+      wlDeleteGroup(del.dataset.wlDel);
+    }
+  });
+}
+
 function saveWatchlistFromInput(text) {
   const tickers = resolveTickerListInput(text);
   if (!tickers.length) return;

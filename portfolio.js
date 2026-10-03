@@ -1062,6 +1062,8 @@ function renderPortfolioRiskViews() {
   if (window.MirPortfolioRisk) window.MirPortfolioRisk.onPortfolioRender();
   // ETF 룩스루 카드(lookthrough.js) — 보유 ETF 를 구성 종목으로 펼쳐 다시 계산한다.
   if (window.MirLookthrough) window.MirLookthrough.onPortfolioRender();
+  // 내 투자 › 요약의 자산 추이·배분 카드(my-invest.js).
+  if (typeof renderMyInvest === "function") renderMyInvest();
 }
 
 // ===== X-RAY 팩터 백분위 (스냅샷당 1회 계산 · 메모이즈) =====
@@ -1179,35 +1181,102 @@ function renderPortfolioXray() {
     <div style="font-size:12px;color:var(--muted);margin:14px 0 6px">집중도</div>${concGrid}`;
 }
 
+// 관심 리스트 표(2026-10-03) — 보기 전환: 기본(현재가·오늘·1개월·52주 고점 대비) · 기술(RSI·거래량·신호) ·
+// 펀더멘털(섹터·시총·PER·EPS·실적). 리스트(전체/사용자 리스트)는 watchlist.js wlActiveTickers.
+const WL_VIEW_KEY = "mir.watch.view";
+let wlView = (() => { try { const v = window.safeStorage.get(WL_VIEW_KEY); return ["basic", "tech", "fund"].includes(v) ? v : "basic"; } catch (_) { return "basic"; } })();
+
+function wlCapLabel(item) {
+  const v = Number(item.marketCapB);
+  if (!(v > 0)) return "—";
+  if (isKrMarket()) return v >= 1 ? `${v >= 100 ? Math.round(v).toLocaleString("ko-KR") : v.toFixed(1)}조` : `${Math.round(v * 10000).toLocaleString("ko-KR")}억`;
+  return v >= 1000 ? `$${(v / 1000).toFixed(2)}T` : `$${v.toFixed(v >= 100 ? 0 : 1)}B`;
+}
+
 function renderBulk() {
   renderPortfolio();
   renderCorrelationMatrix();
-  const minRs = Number(byId("bulkRs").value || 0);
-  const input = byId("bulkInput");
-  if (input && !input.value.trim()) input.value = watchlist.join(", ");
-  const tickers = resolveTickerListInput(input.value);
-  const rows = tickers
-    .map((ticker) => stockByTicker(ticker))
-    .filter(Boolean)
-    // RSI 필터: 값이 없는(합성 이력) 종목은 임계 0 일 때만 통과.
-    .filter((item) => { const r = rsiValue(item); return r == null ? minRs <= 0 : r >= minRs; });
+  if (typeof renderWatchGroups === "function") renderWatchGroups();
+  const tickers = typeof wlActiveTickers === "function" ? wlActiveTickers() : watchlist.slice();
+  const rows = tickers.map((ticker) => stockByTicker(ticker)).filter(Boolean);
   renderWatchlistStats(rows);
+  const sum = byId("wlSummary");
+  if (sum) {
+    const up = rows.filter((s) => Number(s.changePct) > 0).length;
+    const avg = rows.length ? rows.reduce((a, s) => a + (Number(s.changePct) || 0), 0) / rows.length : null;
+    sum.innerHTML = rows.length ? `${rows.length}종목 · 오늘 상승 ${up} · 평균 <b class="${cls(avg)}">${fmtPct(avg)}</b>` : "";
+  }
+  byId("wlView")?.querySelectorAll("[data-wl-view]").forEach((b) => {
+    const on = b.dataset.wlView === wlView;
+    b.classList.toggle("is-active", on);
+    b.setAttribute("aria-pressed", String(on));
+  });
+  const cols = {
+    basic: [["현재가", "num wl-col-price"], ["오늘", "num"], ["1개월", "num"], ["52주 고점 대비", "num wl-col-hi"]],
+    tech: [["오늘", "num"], ["RSI", "num"], ["거래량", "num"], ["신호", "wl-col-sig"]],
+    fund: [["섹터", "wl-col-sec"], ["시총", "num"], ["PER", "num"], ["EPS", "num wl-col-eps"]],
+  }[wlView];
+  const head = byId("bulkHead");
+  if (head) head.innerHTML = `<tr><th class="wl-col-star"><span class="sr-only">관심</span></th><th>종목</th>${cols.map(([l, c]) => `<th class="${c}">${l}</th>`).join("")}<th class="wl-col-x"><span class="sr-only">빼기</span></th></tr>`;
+  const cell = (item) => {
+    if (wlView === "tech") {
+      return `<td class="num ${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td><td class="num">${fmtRsi(item)}</td><td class="num">${Number(item.volumeRatio || 0).toFixed(1)}x</td><td class="wl-col-sig">${signalFor(item)}</td>`;
+    }
+    if (wlView === "fund") {
+      const mf = typeof mapFundamentalsFor === "function" ? (mapFundamentalsFor(item.ticker) || {}) : {};
+      const pe = Number(mf.pe);
+      return `<td class="wl-col-sec">${escapeHtml(sectorLabelKo(item.sector))}</td><td class="num">${wlCapLabel(item)}</td><td class="num">${pe > 0 ? `${pe.toFixed(1)}배` : "—"}</td><td class="num wl-col-eps">${fmtEps(item)}</td>`;
+    }
+    const hi = Number(item.newHighDistancePct);
+    return `<td class="num wl-col-price">${marketCfg().formatPrice(Number(item.price))}</td><td class="num ${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td><td class="num ${cls(item.monthChangePct)}">${fmtPct(Number(item.monthChangePct))}</td><td class="num wl-col-hi">${Number.isFinite(hi) ? (hi <= 0.05 ? '<span class="wl-hi">신고가</span>' : `-${hi.toFixed(1)}%`) : "—"}</td>`;
+  };
+  const empty = wlActiveGroupEmptyText();
   byId("bulkTable").innerHTML = rows.length ? rows.map((item) => `
     <tr>
-      <td>${watchStarButton(item.ticker)}</td>
-      <td><button type="button" class="ticker-link" data-ticker="${escapeHtml(item.ticker)}">${escapeHtml(stockLabel(item))}</button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}</td>
-      <td class="col-sub">${escapeHtml(stockSubLabel(item))}</td>
-      <td>${escapeHtml(sectorLabelKo(item.sector))}</td>
-      <td class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</td>
-      <td>${fmtRsi(item)}</td>
-      <td>${fmtEps(item)}</td>
-      <td>${Number(item.volumeRatio || 0).toFixed(1)}x</td>
-      <td>${signalFor(item)}</td>
+      <td class="wl-col-star">${watchStarButton(item.ticker)}</td>
+      <th scope="row"><button type="button" class="ticker-link wl-name" data-ticker="${escapeHtml(item.ticker)}">${typeof companyLogoHtml === "function" ? companyLogoHtml(item.ticker, null, stockLabel(item), 20) : ""}<span><b>${escapeHtml(stockLabel(item))}</b><small>${escapeHtml(stockSubLabel(item))}</small></span></button>${typeof earningsDdayBadge === "function" ? earningsDdayBadge(item.ticker) : ""}</th>
+      ${cell(item)}
+      <td class="wl-col-x"><button type="button" class="ghost wl-x" data-wl-remove="${escapeHtml(item.ticker)}" title="${typeof wlActiveGroup !== "undefined" && wlActiveGroup ? "이 리스트에서 빼기" : "관심 해제"}" aria-label="빼기">✕</button></td>
     </tr>
-  `).join("") : `<tr><td colspan="9" class="muted">관심종목을 추가하거나 티커를 입력하세요.</td></tr>`;
+  `).join("") : `<tr><td colspan="${cols.length + 3}" class="muted">${empty}</td></tr>`;
   byId("bulkTable").querySelectorAll(".ticker-link").forEach((btn) => {
     btn.addEventListener("click", () => selectTicker(btn.dataset.ticker, { openSearch: true }));
   });
+  byId("bulkTable").querySelectorAll("[data-wl-remove]").forEach((btn) => {
+    btn.addEventListener("click", () => wlRemoveTicker(btn.dataset.wlRemove));
+  });
+  wlSetupUi();
+}
+
+function wlActiveGroupEmptyText() {
+  return typeof wlActiveGroup !== "undefined" && wlActiveGroup
+    ? "이 리스트가 비어 있습니다. 위 입력칸으로 종목을 추가해 보세요."
+    : "관심종목이 없습니다. 위 입력칸으로 추가하거나 종목 화면에서 ☆ 를 누르세요.";
+}
+
+function wlSetupUi() {
+  const form = byId("wlAddForm");
+  if (form && !form.dataset.bound) {
+    form.dataset.bound = "1";
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = byId("wlAddInput");
+      const raw = String(input?.value || "").trim();
+      if (!raw) return;
+      if (wlAddTicker(raw) && input) input.value = "";
+    });
+  }
+  const view = byId("wlView");
+  if (view && !view.dataset.bound) {
+    view.dataset.bound = "1";
+    view.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-wl-view]");
+      if (!b) return;
+      wlView = b.dataset.wlView;
+      try { window.safeStorage.set(WL_VIEW_KEY, wlView); } catch (_) { /* 무시 */ }
+      renderBulk();
+    });
+  }
 }
 
 function signalFor(item) {

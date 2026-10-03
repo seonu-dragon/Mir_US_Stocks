@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=c5eb5d4ac1" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=c5eb5d4ac1"></noscript>
+    <link rel="preload" href="styles.css?v=5f928e58af" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=5f928e58af"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=69b0d79255"></script>
+    <script src="build_id.js?v=95c42274e2"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2600,19 +2600,28 @@ html[data-market="kr"][data-theme="dark"] {
         <div class="thesis-strip" id="thesisStrip" hidden></div>
         <section class="my-digest my-digest-bulk" id="myDigestBulk" hidden aria-label="오늘 내 주식은"></section>
         <section class="portfolio-card" id="portfolioCard">
+          <!-- 2026-10-03: 입력칸은 '+ 종목 추가' 뒤로, CSV·전체 삭제는 '⋯' 메뉴로(전체 삭제는 두 번 눌러야 지운다). -->
           <div class="pf-head">
             <h3>보유 종목</h3>
+            <div class="pf-actions">
+              <button type="button" id="pfAddToggle" class="primary compact-btn" aria-expanded="false" aria-controls="pfInputRow">+ 종목 추가</button>
+              <details class="pf-more" id="pfMore">
+                <summary class="ghost compact-btn" aria-label="보유 종목 더보기 메뉴" title="더보기">⋯</summary>
+                <div class="pf-more-menu" role="menu">
+                  <button type="button" role="menuitem" id="pfImportCsv">증권사 CSV 가져오기</button>
+                  <button type="button" role="menuitem" id="pfExportCsv">CSV로 내보내기</button>
+                  <button type="button" role="menuitem" class="pf-danger" id="pfClear">전체 삭제</button>
+                </div>
+              </details>
+            </div>
           </div>
-          <div class="pf-input">
-            <input id="pfTicker" placeholder="티커 (예: NVDA)" autocomplete="off">
-            <input id="pfQty" type="number" min="0" step="any" placeholder="수량">
-            <input id="pfCost" type="number" min="0" step="any" placeholder="평단가 $">
+          <div class="pf-input" id="pfInputRow" hidden>
+            <input id="pfTicker" placeholder="티커·종목명 (예: NVDA)" autocomplete="off" aria-label="종목">
+            <input id="pfQty" type="number" min="0" step="any" placeholder="수량" aria-label="수량">
+            <input id="pfCost" type="number" min="0" step="any" placeholder="평단가 $" aria-label="평단가">
             <button type="button" id="pfAdd" class="primary">추가</button>
-            <button type="button" class="ghost" id="pfClear">초기화</button>
-            <button type="button" class="ghost" id="pfExportCsv">CSV보내기</button>
-            <button type="button" class="ghost" id="pfImportCsv">CSV가져오기</button>
+            <button type="button" class="ghost" id="pfAddCancel">닫기</button>
             <input type="file" id="pfImportFile" accept=".csv,.txt,text/csv,text/plain" hidden>
-
           </div>
           <div class="pf-import-preview" id="pfImportPreview" hidden aria-live="polite"></div>
           <div class="pf-summary" id="pfSummary" hidden></div>
@@ -2666,24 +2675,29 @@ html[data-market="kr"][data-theme="dark"] {
             </div>
             <span class="event-badge" id="watchAlertCount">0</span>
           </div>
-          <div class="watch-alert-controls">
-            <label><input id="alertUseRs" type="checkbox" checked><span>RSI ≥</span><input id="alertMinRs" type="number" min="0" max="100" value="60"></label>
-            <label><input id="alertUseEps" type="checkbox"><span>흑자 (EPS&gt;0)</span></label>
-            <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3" aria-label="52주 신고가 근접 기준 퍼센트"><em>%</em></label>
-            <label><input id="alertUseVol" type="checkbox" checked><span>거래량 배율</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2" aria-label="거래량 배율 기준"><em>x</em></label>
-            <label class="watch-alert-toggle-only"><input id="alertUseSma20" type="checkbox"><span>SMA 20 위 회복</span></label>
-            <label class="watch-alert-with-select"><input id="alertUsePattern" type="checkbox"><span>차트 패턴</span>
-              <select id="alertPatternCat">
-                <option value="any">전체</option>
-                <option value="double">쌍바닥/쌍천장</option>
-                <option value="hns">헤드앤숄더</option>
-                <option value="breakout">돌파</option>
-                <option value="candle">캔들</option>
-              </select>
-            </label>
-          </div>
           <div class="watch-alert-results" id="watchAlertResults"></div>
-          <div class="push-alert-box" id="pushAlertBox" aria-label="푸시 알림 설정"></div>
+          <details class="wa-settings" id="watchAlertSettings">
+            <summary>알림 조건 · 푸시 설정</summary>
+            <div class="wa-settings-body" id="watchAlertSettingsBody">
+            <div class="watch-alert-controls">
+              <label><input id="alertUseRs" type="checkbox" checked><span>RSI ≥</span><input id="alertMinRs" type="number" min="0" max="100" value="60"></label>
+              <label><input id="alertUseEps" type="checkbox"><span>흑자 (EPS&gt;0)</span></label>
+              <label><input id="alertUseHigh" type="checkbox" checked><span>52주 신고가 근접</span><input id="alertHighDist" type="number" min="0" step="0.5" value="3" aria-label="52주 신고가 근접 기준 퍼센트"><em>%</em></label>
+              <label><input id="alertUseVol" type="checkbox" checked><span>거래량 배율</span><input id="alertMinVol" type="number" min="0" step="0.1" value="2" aria-label="거래량 배율 기준"><em>x</em></label>
+              <label class="watch-alert-toggle-only"><input id="alertUseSma20" type="checkbox"><span>SMA 20 위 회복</span></label>
+              <label class="watch-alert-with-select"><input id="alertUsePattern" type="checkbox"><span>차트 패턴</span>
+                <select id="alertPatternCat">
+                  <option value="any">전체</option>
+                  <option value="double">쌍바닥/쌍천장</option>
+                  <option value="hns">헤드앤숄더</option>
+                  <option value="breakout">돌파</option>
+                  <option value="candle">캔들</option>
+                </select>
+              </label>
+            </div>
+              <div class="push-alert-box" id="pushAlertBox" aria-label="푸시 알림 설정"></div>
+            </div>
+          </details>
         </div>
         </div>
 
@@ -3335,9 +3349,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="sec-filings-core.js"></script>
     <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
     <script src="movers.js?v=0f28afc00d"></script>
-    <script src="portfolio.js?v=667afbf126"></script>
+    <script src="portfolio.js?v=21c532ed5f"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
-    <script src="my-digest.js?v=c9677d21bf"></script>
+    <script src="my-digest.js?v=9de895b64a"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=996abc89fa"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
@@ -3428,7 +3442,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table.js?v=70e4100c66"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
-    <script src="mobile-cards.js?v=aae191cacc"></script>
+    <script src="mobile-cards.js?v=fcc7320f3e"></script>
     <script src="calendar-panel-core.js?v=261cacf9f0"></script>
     <script src="market-feed-core.js?v=f09c7d8fe8"></script>
     <script src="market-feed.js?v=2816aeb33d"></script>
@@ -3444,7 +3458,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
     <script src="broker-csv-core.js?v=e295776cb3"></script>
-    <script src="lookthrough.js?v=0f6e55352d"></script>
+    <script src="lookthrough.js?v=bf49f004ba"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
     <script src="rail.js?v=1f288908d6"></script>

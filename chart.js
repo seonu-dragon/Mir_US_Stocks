@@ -950,6 +950,23 @@ function setupMobileChartViewControls() {
   const homeParent = group.parentNode;
   const homeNext = group.nextSibling; // 복원 시 이 노드 앞에 다시 삽입
   const mq = window.matchMedia("(max-width: 640px)");
+  // 2026-10-03: 폰에서는 한 줄(‹ − + › 초기화 ⋯)만 보이고, 자동·로그·이벤트 기호는 ⋯ 로 펼친다(예전 3줄 18버튼).
+  let more = byId("chartViewMore");
+  if (!more) {
+    more = document.createElement("button");
+    more.type = "button";
+    more.id = "chartViewMore";
+    more.className = "chart-view-more";
+    more.textContent = "⋯";
+    more.title = "세로 맞춤·로그·이벤트 기호";
+    more.setAttribute("aria-label", "차트 보기 설정 더 보기");
+    more.setAttribute("aria-expanded", "false");
+    more.addEventListener("click", () => {
+      const open = group.classList.toggle("is-expanded");
+      more.setAttribute("aria-expanded", String(open));
+    });
+    byId("chartReset")?.insertAdjacentElement("afterend", more);
+  }
   const apply = () => {
     if (mq.matches) {
       if (chart.nextElementSibling !== group) chart.insertAdjacentElement("afterend", group);

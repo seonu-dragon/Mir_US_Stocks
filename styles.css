@@ -16892,3 +16892,79 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   .toc-nav > .toc-group { display: inline-flex; align-items: center; flex: 0 0 auto; margin: 0 2px 0 10px; padding: 0; }
   .toc-nav > .toc-group:first-child { margin-left: 0; }
 }
+
+/* ==========================================================================
+   모바일 최적화 1단계(2026-10-03) — 한 줄 헤더 · 고정 하위 탭 · 한 줄 '새 기능' 배너 · 터치 영역
+   근거: 모바일 점검(390×844)에서 콘텐츠 전 고정 영역이 헤더 2줄(115px)+하위 탭+배너(120px)로 첫 화면의
+   1/3 이었고, 스크롤하면 하위 탭이 사라졌다. 터치 영역은 칩·세그먼트가 30px 안팎(권장 44pt/48dp).
+   ========================================================================== */
+@media (max-width: 640px) {
+  /* 헤더 한 줄: 로고 · 시장 전환 · AI · 설정. 검색은 하단 탭바 '검색'이 같은 기능이다. */
+  .topbar.ia-topbar { flex-direction: row; flex-wrap: nowrap; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; }
+  .topbar .ia-topbar-left { flex: 1 1 auto; width: auto; min-width: 0; gap: 8px; justify-content: flex-start; }
+  .topbar .ia-topbar-right { flex: 0 0 auto; width: auto; gap: 6px; }
+  .ia-topbar .brand-text h1 { font-size: 16px; white-space: nowrap; }
+  .ia-header-search { display: none; }
+  .ia-topbar .market-mode-switch { flex: 0 0 auto; }
+  .ia-topbar .market-mode-switch button { min-height: 34px; padding: 0 10px; font-size: var(--fs-cap); }
+  .ia-topbar .ai-mode-btn { min-height: 36px; padding: 0 10px; font-size: var(--fs-cap); }
+  .ia-topbar .ia-gear-btn { width: 36px; height: 36px; }
+
+  /* 하위 탭은 스크롤해도 맨 위에 붙어 있다(긴 화면에서 다른 하위 탭으로 가려면 맨 위까지 올라가야 했다).
+     종목 탭은 제외 — 이미 mobile-nav.js 미니 바(종목명·가격)+본문 탭이 붙고, 돋보기 버튼이 하위 탭 줄 위에 떠 있다. */
+  .panel:not(#tab-search) > .ia-sub-tabs, .panel > #myInvestBody > .ia-sub-tabs {
+    position: sticky; top: 0; z-index: 40; margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px;
+    background: var(--bg); box-shadow: 0 1px 0 var(--line);
+  }
+
+  /* '새 기능' 배너는 한 줄: 아이콘 · 제목 · 해보기 · ✕ (설명은 해보기/업데이트 소식에서). */
+  .mir-cl-card { align-items: center; padding: 6px 40px 6px 12px; margin-bottom: 10px; }
+  .mir-cl-card-body { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .mir-cl-card-head { flex: 1 1 auto; min-width: 0; flex-wrap: nowrap; font-size: var(--fs-sub); }
+  .mir-cl-card-head strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mir-cl-card-desc, .mir-cl-card .mir-cl-all { display: none; }
+  .mir-cl-card-actions { flex: 0 0 auto; margin-top: 0; }
+  .mir-cl-card .mir-cl-try { min-height: 32px; display: inline-flex; align-items: center; }
+
+  /* 터치 영역: 칩·세그먼트·작은 버튼을 40px 이상으로(보이는 크기는 패딩으로만 키운다). */
+  .compact-btn, .segmented > button, .kt-seg button, .inv-seg button, .wl-view button,
+  .kt-chip, .md-quiet-chip, .wl-group, .kt-contrib, .movers-tab, .md-more, .pf-edit, .chip, .filter-chip {
+    min-height: 40px;
+  }
+  .kt-chip, .md-quiet-chip, .kt-contrib { display: inline-flex; align-items: center; }
+}
+
+/* 모바일 최적화 2단계(2026-10-03) — 긴 목록 접기(mobile-clamp.js) · 오늘 요약에서 '내 주식'을 지수 바로 아래로 */
+.mc-hidden { display: none !important; }
+.mc-more { display: block; width: 100%; min-height: 42px; margin: 8px 0 4px; font-size: var(--fs-sub); }
+@media (max-width: 640px) {
+  #tab-today-summary.is-active { display: flex; flex-direction: column; }
+  #tab-today-summary > * { order: 10; }
+  #tab-today-summary > .mir-cl-card { order: 0; }
+  #tab-today-summary > #todayRegime { order: 1; }
+  #tab-today-summary > #homeDash { order: 2; }
+  #tab-today-summary > #myDigestToday { order: 3; }
+}
+/* 차트 아래 보기 버튼(폰): 한 줄 6칸 — ‹ − + › 초기화 ⋯ / ⋯ 를 누르면 자동·로그·이벤트 기호 */
+.chart-view-more { display: none; }
+@media (max-width: 640px) {
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) > button,
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) > :is(#chartReset, #chartYAuto, #chartYLog) { grid-column: span 1; min-height: 42px; font-size: var(--fs-sub); padding-left: 0; padding-right: 0; }
+  #chartViewGroup.chart-view-mobile > .icon-controls:not(.chart-ev-toggles) > :is(#chartYAuto, #chartYLog) { grid-column: span 3; }
+  #chartViewGroup.chart-view-mobile .chart-view-more { display: inline-flex; align-items: center; justify-content: center; font-weight: 700; }
+  #chartViewGroup.chart-view-mobile .chart-view-more[aria-expanded="true"] { background: var(--text); color: var(--panel); }
+  #chartViewGroup.chart-view-mobile:not(.is-expanded) :is(#chartYAuto, #chartYLog),
+  #chartViewGroup.chart-view-mobile:not(.is-expanded) > .chart-ev-toggles,
+  #chartViewGroup.chart-view-mobile:not(.is-expanded) + .chart-ev-note { display: none; }
+}
+/* 작은 글자 링크·정렬 머리: 보이는 크기는 그대로 두고 터치 영역만 넓힌다(음수 여백으로 레이아웃 불변). */
+@media (max-width: 640px) {
+  .mfeed-link, .ft-sort, #sub-disclosures a, .md-link, .movers-why a {
+    display: inline-block; position: relative; padding: 11px 6px; margin: -11px -6px;
+  }
+  .ins-ticker { padding-left: 6px; padding-right: 6px; min-width: 40px; }
+  .mir-cl-card .mir-cl-x { width: 40px; }
+  #sub-disclosures summary { padding-top: 12px; padding-bottom: 12px; }
+}
+@media (max-width: 640px) { .ca-examples button { min-height: 36px; padding: 0 8px; } }

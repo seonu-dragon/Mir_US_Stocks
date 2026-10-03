@@ -16968,3 +16968,26 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   #sub-disclosures summary { padding-top: 12px; padding-bottom: 12px; }
 }
 @media (max-width: 640px) { .ca-examples button { min-height: 36px; padding: 0 8px; } }
+
+/* ==========================================================================
+   모바일 하단 정리(2026-10-03)
+   - 떠다니는 '미르 도우미' 버튼은 폰에서 숨긴다(사용자 요청 — AI 는 헤더 'AI 모드'로 쓴다).
+     다른 화면이 대화창을 직접 열면(.is-chat-open) 그대로 보인다.
+   - 그 버튼 자리로 비워 둔 본문 하단 여백 96px 을 16px 로. 마지막 카드와 '데이터 기준' 사이가 124px 이었다.
+   - 하단 안내는 옅은 배경 띠로 구분하고 줄 간격을 좁힌다(네이버 증권 모바일 ~28px·회색 띠,
+     야후·Finviz 는 콘텐츠 바로 뒤 — 100px 넘게 비우는 곳은 없었다).
+   ========================================================================== */
+@media (max-width: 640px) {
+  .chatbot:not(.is-chat-open) { display: none !important; }
+  main { padding-bottom: 16px; }
+  .ia-footer {
+    gap: 6px; margin-top: 8px; padding: 16px 16px 20px;
+    border-top: 1px solid var(--line); background: var(--panel-soft, var(--surface-2));
+    font-size: var(--fs-cap); line-height: 1.55;
+  }
+  .ia-footer-meta strong { font-size: var(--fs-cap); }
+  .ia-footer-links { gap: 16px; }
+  .ia-footer .ia-link { min-height: 36px; }
+  .ia-footer-note { gap: 4px 12px; }
+  .ia-footer p { margin: 0; }
+}

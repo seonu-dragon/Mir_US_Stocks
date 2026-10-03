@@ -8013,7 +8013,7 @@ button.community-hot-ticker {
   color: var(--text); text-align: left; cursor: pointer; font-size: var(--fs-sub);
 }
 .kt-rank-item:hover { background: var(--surface-2); }
-.kt-rank-no { width: 1.4em; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.kt-rank-no { flex: 0 0 auto; min-width: 1.6em; white-space: nowrap; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 .kt-rank-name { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
 .kt-rank-n { color: var(--text-muted); font-size: var(--fs-cap); white-space: nowrap; }
 .kt-rank-item b { font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -8064,6 +8064,7 @@ button.community-hot-ticker {
 }
 .kt-by-llm { border-color: color-mix(in srgb, var(--primary) 45%, var(--line)); color: var(--primary); }
 .kt-by-sub { border-style: dashed; }
+.kt-by-suspect { border-color: color-mix(in srgb, var(--warn, #d97706) 55%, var(--line)); color: var(--warn, #b45309); }
 .kt-by-core { border-color: color-mix(in srgb, var(--primary) 60%, var(--line)); font-weight: 600; }
 .kt-foot { line-height: 1.6; }
 /* 종목 분석 좌측 — 이 종목의 테마 */

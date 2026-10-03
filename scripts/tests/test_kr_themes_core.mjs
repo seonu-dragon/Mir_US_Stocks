@@ -102,6 +102,39 @@ test("fmtPct · tone · groups", () => {
   assert.deepEqual(core.groups([{ group: "반도체" }, { group: "금융" }, { group: "반도체" }, {}]), ["반도체", "금융"]);
 });
 
+test("suspect/perf: 가격제한폭 밖 종목은 집계에서 빠지고 중앙값은 이상치에 안 끌린다", () => {
+  const S = {
+    A: { changePct: 1, weekChangePct: 2, marketCapB: 10, closeSeries: [100, 100, 101] },
+    B: { changePct: 2, weekChangePct: 3, marketCapB: 10, closeSeries: [100, 100, 102] },
+    C: { changePct: 3, weekChangePct: 4, marketCapB: 10, closeSeries: [100, 100, 103] },
+    X: { changePct: 751.2, weekChangePct: 751.2, marketCapB: 1, closeSeries: [907, 907, 7720] },      // 미수정 가격
+    Y: { changePct: 895.2, weekChangePct: -0.5, marketCapB: 1, closeSeries: [10350, 10350, 10300] },  // 필드 오류
+    Z: { changePct: 1, weekChangePct: 60, marketCapB: 1, closeSeries: [100, 150, 151, 152, 152, 152] }, // 주중 점프
+  };
+  const mem = ["A", "B", "C", "X", "Y", "Z"].map((t) => ({ t }));
+  const d = core.perf(mem, S, "d");
+  assert.deepEqual(d.excluded.slice().sort(), ["X", "Y"]);
+  assert.equal(d.covered, 4);
+  assert.equal(d.med, 1.5);
+  const w = core.perf(mem, S, "w");
+  assert.deepEqual(w.excluded.slice().sort(), ["X", "Y", "Z"]);
+  assert.equal(w.med, 3);
+  assert.equal(core.perf(mem, S, "d", { limit: null }).excluded.length, 0);   // 가격제한폭 없는 시장
+  assert.equal(core.suspect(S.A, "q"), false);
+  assert.equal(core.suspect(S.Z, "d"), false);   // 며칠 전 점프는 오늘 등락엔 영향 없다
+});
+
+test("median · weightKey · statValue(med)", () => {
+  assert.equal(core.median([]), null);
+  assert.equal(core.median([3, 1, 2]), 2);
+  assert.equal(core.weightKey("cap"), "cap");
+  assert.equal(core.weightKey("eq"), "eq");
+  assert.equal(core.weightKey(undefined), "med");
+  const st = core.themeStats([{ id: "x", members: [{ t: "A" }, { t: "B" }] }], stocks);
+  assert.equal(core.statValue(st[0], "d", "med"), 0.5);
+  assert.ok("q" in st[0]);
+});
+
 if (failures.length) {
   console.error(`kr-themes-core: ${failures.length} 실패 / ${passed} 통과`);
   failures.forEach((f) => console.error("  ✕ " + f));

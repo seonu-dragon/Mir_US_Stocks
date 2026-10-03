@@ -3588,7 +3588,7 @@ const TAB_RENDERERS = {
   krflow: () => { if (typeof renderKrFlowMarket === "function") renderKrFlowMarket(); },
   // 국내 테마(kr-themes.js) — KR_THEMES 를 스스로 lazy 로드한다.
   krtheme: () => { if (typeof renderKrThemes === "function") renderKrThemes(); },
-  bulk: () => { renderBulk(); renderMyInvestSummary(); },
+  bulk: () => { renderBulk(); renderMyInvestSummary(); if (typeof renderMyInvest === "function") renderMyInvest(); },
   health: () => renderHealth(),
   "ai-briefing": () => renderAiBriefing(),
   // map(폭 의존이라 진입마다)·signals(dirty 플래그)·search/institutional/calendar/community
@@ -6388,6 +6388,8 @@ function setupTickerSearchHelpers() {
     onUnresolved: (raw) => selectTicker(raw),
   });
   setupTickerAutocomplete("bulkInput", { multi: true, onCommit: () => renderBulk() });
+  // 관심 리스트 추가칸 — 후보를 고르면 바로 추가한다(Enter 는 폼 submit 이 처리).
+  setupTickerAutocomplete("wlAddInput", { submitOnEnter: false, onCommit: (t) => { if (t && wlAddTicker(t)) { const i = byId("wlAddInput"); if (i) i.value = ""; } } });
   setupTickerAutocomplete("compareInput", { multi: true, onCommit: () => renderCompareBoard() });
   // 백테스트 입력은 portfolio.js 가 Enter 를 이미 처리한다(같은 resolveTickerListInput
   // 을 쓴다) — 여기서 또 확정하면 같은 티커를 두 번 넣는다.
@@ -7796,9 +7798,11 @@ function exportBacktestCsv() {
 // =====================================================================================
 
 // ----- 내 투자 서브탭(보유·관심 / 도구) -----
-let bulkSubTab = "holdings";
+// 2026-10-03: 요약 · 보유 · 관심 · 분석(tools). 옛 '보유·관심' 딥링크(sub=holdings)는 보유로 간다.
+const BULK_SUBS = ["summary", "holdings", "watch", "tools"];
+let bulkSubTab = "summary";
 function activateBulkSub(name, { push = false } = {}) {
-  bulkSubTab = name === "tools" ? "tools" : "holdings";
+  bulkSubTab = BULK_SUBS.includes(name) ? name : "summary";
   byId("bulkSubTabs")?.querySelectorAll(".sub-tab").forEach((btn) => btn.classList.toggle("is-active", btn.dataset.sub === bulkSubTab));
   document.querySelectorAll("#tab-bulk > #myInvestBody > .sub-panel").forEach((p) => p.classList.remove("is-active"));
   byId(`sub-bulk-${bulkSubTab}`)?.classList.add("is-active");
@@ -9225,8 +9229,10 @@ function cmdkBuildActions(query) {
   goto("종목 · 찾기 (스크리너·스캐너)", "search", "find");
   goto("종목 · 비교", "search", "compare");
   goto("종목 · 공시 (13F·정치인·내부자·DART)", "search", "disclosures");
-  goto("내 투자 · 보유·관심", "bulk", "holdings");
-  goto("내 투자 · 도구", "bulk", "tools");
+  goto("내 투자 · 요약", "bulk", "summary");
+  goto("내 투자 · 보유 종목", "bulk", "holdings");
+  goto("내 투자 · 관심 리스트", "bulk", "watch");
+  goto("내 투자 · 분석 도구", "bulk", "tools");
   goto("커뮤니티 · 트렌딩", "community", "trending");
   goto("커뮤니티 · 종목 토론", "community", "board");
   goto("커뮤니티 · 투표", "community", "vote");

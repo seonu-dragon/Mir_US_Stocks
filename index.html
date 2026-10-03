@@ -366,11 +366,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=5f928e58af" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=5f928e58af"></noscript>
+    <link rel="preload" href="styles.css?v=f304409bd7" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=f304409bd7"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=95c42274e2"></script>
+    <script src="build_id.js?v=25543ecb33"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -2590,15 +2590,24 @@ html[data-market="kr"][data-theme="dark"] {
           </form>
         </div>
         <div id="myInvestBody">
+        <!-- 2026-10-03 내 투자 재편: 요약(한눈에) · 보유 · 관심 · 분석(옛 '도구'). 옛 딥링크 sub=holdings·tools 는 그대로 통한다. -->
         <nav class="sub-tabs ia-sub-tabs" id="bulkSubTabs" aria-label="내 투자 하위 섹션">
-          <button class="sub-tab is-active" data-sub="holdings">보유 · 관심</button>
-          <button class="sub-tab" data-sub="tools" data-advanced="true">도구</button>
+          <button class="sub-tab is-active" data-sub="summary">요약</button>
+          <button class="sub-tab" data-sub="holdings">보유</button>
+          <button class="sub-tab" data-sub="watch">관심</button>
+          <button class="sub-tab" data-sub="tools" data-advanced="true">분석</button>
         </nav>
 
-        <div class="sub-panel is-active" id="sub-bulk-holdings">
+        <div class="sub-panel is-active" id="sub-bulk-summary">
         <div class="ia-stat-row" id="myInvestSummary" aria-live="polite"></div>
+        <!-- 자산 추이 · 배분 한눈에(my-invest.js) — 현재 보유 수량으로 계산한 추이(매매 이력이 없다) -->
+        <section class="my-trend-card" id="myTrendCard" hidden aria-label="내 자산 추이"></section>
+        <section class="my-alloc-card" id="myAllocCard" hidden aria-label="자산 배분"></section>
         <div class="thesis-strip" id="thesisStrip" hidden></div>
         <section class="my-digest my-digest-bulk" id="myDigestBulk" hidden aria-label="오늘 내 주식은"></section>
+        </div>
+
+        <div class="sub-panel" id="sub-bulk-holdings">
         <section class="portfolio-card" id="portfolioCard">
           <!-- 2026-10-03: 입력칸은 '+ 종목 추가' 뒤로, CSV·전체 삭제는 '⋯' 메뉴로(전체 삭제는 두 번 눌러야 지운다). -->
           <div class="pf-head">
@@ -2631,43 +2640,42 @@ html[data-market="kr"][data-theme="dark"] {
           </div>
         </section>
         <section class="etfh-card lt-card" id="lookthroughCard" hidden></section>
-
-        <div class="section-title">
-          <h2>관심 리스트</h2>
         </div>
-        <div class="toolbar">
-          <label class="grow">
-            관심종목 티커
-            <input id="bulkInput" placeholder="한국어·티커·영문, 쉼표 구분 (예: 테슬라, Apple)" autocomplete="off">
-          </label>
-          <label>
-            최소 RSI
-            <input id="bulkRs" type="number" min="0" max="100" value="0">
-          </label>
-          <button type="button" id="bulkSave" class="ghost">저장</button>
-          <button type="button" id="bulkRun" class="ghost">분석</button>
-          <button type="button" class="ghost" id="bulkCompare">비교 탭</button>
+
+        <div class="sub-panel" id="sub-bulk-watch">
+        <!-- 2026-10-03 관심 리스트: 쉼표 텍스트 편집 대신 검색해 추가 · 리스트 여러 개(브라우저 저장) · 보기 전환(기본/기술/펀더멘털).
+             옛 입력칸(#bulkInput·#bulkRs·저장·분석)은 다른 코드가 참조해 숨긴 채 둔다. -->
+        <div class="section-title wl-title">
+          <h2>관심 리스트</h2>
+          <span class="wl-sum" id="wlSummary"></span>
+        </div>
+        <div class="wl-bar">
+          <form class="wl-add" id="wlAddForm">
+            <input id="wlAddInput" placeholder="종목 추가 — 티커·종목명" autocomplete="off" aria-label="관심 리스트에 추가할 종목">
+            <button type="submit" class="primary compact-btn">추가</button>
+          </form>
+          <div class="segmented wl-view" id="wlView" role="group" aria-label="표 보기">
+            <button type="button" data-wl-view="basic" class="is-active" aria-pressed="true">기본</button>
+            <button type="button" data-wl-view="tech" aria-pressed="false">기술</button>
+            <button type="button" data-wl-view="fund" aria-pressed="false">펀더멘털</button>
+          </div>
+          <button type="button" class="ghost compact-btn" id="bulkCompare">비교 탭에서 보기</button>
+        </div>
+        <div class="wl-groups" id="wlGroups" role="group" aria-label="관심 리스트 선택"></div>
+        <div class="toolbar wl-legacy" hidden>
+          <input id="bulkInput" autocomplete="off" aria-hidden="true" tabindex="-1">
+          <input id="bulkRs" type="number" min="0" max="100" value="0" aria-hidden="true" tabindex="-1">
+          <button type="button" id="bulkSave" tabindex="-1">저장</button>
+          <button type="button" id="bulkRun" tabindex="-1">분석</button>
         </div>
         <div class="table-wrap">
-          <table>
-            <thead>
-              <tr>
-                <th></th>
-                <th>종목</th>
-                <th class="col-sub">회사</th>
-                <th>섹터</th>
-                <th>등락</th>
-                <th>RSI</th>
-                <th>EPS</th>
-                <th>거래량</th>
-                <th>신호</th>
-              </tr>
-            </thead>
+          <table class="wl-table">
+            <thead id="bulkHead"></thead>
             <tbody id="bulkTable"></tbody>
           </table>
         </div>
 
-        <div class="watchlist-stats" id="watchlistStats"></div>
+        <div class="watchlist-stats" id="watchlistStats" hidden></div>
         <div class="watch-alert-panel" id="watchAlertPanel">
           <div class="watch-alert-head">
             <div>
@@ -3349,9 +3357,11 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="sec-filings-core.js"></script>
     <script src="disclosure-trackers.js?v=c54c8f3c48"></script>
     <script src="movers.js?v=0f28afc00d"></script>
-    <script src="portfolio.js?v=21c532ed5f"></script>
+    <script src="portfolio.js?v=3219ff0f53"></script>
+    <script src="my-invest-core.js?v=f6643ad3d2"></script>
+    <script src="my-invest.js?v=9c4d59c533"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
-    <script src="my-digest.js?v=9de895b64a"></script>
+    <script src="my-digest.js?v=c3e6d0903f"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=996abc89fa"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
@@ -3413,7 +3423,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study.js?v=039f23654c"></script>
     <script src="timeline-core.js?v=e827c62edd"></script>
     <script src="timeline.js?v=b5dfda8d63"></script>
-    <script src="watchlist.js?v=1343542240"></script>
+    <script src="watchlist.js?v=4e83918d7a"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=9a1ecf4141"></script>
     <script src="earnings-insight.js?v=d71fe2ed8c"></script>
@@ -3442,7 +3452,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="find-table.js?v=70e4100c66"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
     <script src="toc-layout.js?v=d3e6f7b6a1"></script>
-    <script src="mobile-cards.js?v=fcc7320f3e"></script>
+    <script src="mobile-cards.js?v=0e05cff78d"></script>
     <script src="calendar-panel-core.js?v=261cacf9f0"></script>
     <script src="market-feed-core.js?v=f09c7d8fe8"></script>
     <script src="market-feed.js?v=2816aeb33d"></script>
@@ -3453,7 +3463,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=1b5a19a0f6"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=2da9423bff"></script>
+    <script src="app.js?v=0c8cc5ddd8"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

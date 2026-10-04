@@ -58,14 +58,24 @@ const fmtPct = (value) => {
   return `${pctMarker(n)}${fmtSignedPct(n)}`;
 };
 
-// 당일 등락률 전용 — KR 은 가격제한폭(±30%) 을 넘을 수 없으므로, 넘는 값은 데이터
+// 당일 등락률 전용 — 소수 둘째 자리(네이버 증권·증권사 앱과 같은 자릿수, UI 2단계). KR 은 가격제한폭(±30%) 을 넘을 수 없으므로, 넘는 값은 데이터
 // 오류(전일종가 어긋남 등)로 보고 상하한으로 클램프하고 "(상하한)" 을 표시한다.
 const fmtDailyPct = (value) => {
   const raw = Number(value) || 0;
   const n = isKrMarket() ? krDisplayChangePct(raw) : raw;
   const atLimit = isKrMarket() && Math.abs(raw) > KR_PRICE_LIMIT_PCT + 0.05;
   const suffix = atLimit ? " (상하한)" : "";
-  return `${pctMarker(n)}${fmtSignedPct(n)}${suffix}`;
+  return `${pctMarker(n)}${fmtSignedPct(n, 2)}${suffix}`;
+};
+// 당일 등락 '금액 (비율)' — 예: ▲ 56.27 (+0.73%). 금액이 없으면 비율만(fmtDailyPct).
+// 금액은 지수·가격 단위 그대로(통화 기호 없음), 비율은 fmtDailyPct 규칙(KR 클램프 포함).
+const fmtDailyChange = (abs, pct) => {
+  const a = Number(abs);
+  if (abs == null || !Number.isFinite(a)) return fmtDailyPct(pct);
+  const p = Number(pct) || 0;
+  const dir = p !== 0 ? p : a;
+  const amt = Math.abs(a).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `${pctMarker(dir)}${amt} (${fmtSignedPct(isKrMarket() ? krDisplayChangePct(p) : p, 2)})`;
 };
 const cls = (value) => value > 0 ? "pos" : value < 0 ? "neg" : "muted";
 const byId = (id) => document.getElementById(id);

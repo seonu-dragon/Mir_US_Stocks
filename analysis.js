@@ -2176,6 +2176,7 @@ function analyzeRows(rows, horizon, meta) {
     bars: clean.length,
     lastDate: clean[clean.length - 1].d,
     price,
+    prevClose: clean.length > 1 ? clean[clean.length - 2].c : null,
     horizon,
     consensus,
     signals,
@@ -2758,7 +2759,8 @@ function buildResultHTML(result) {
     <div class="head-card">
       <div class="head-meta">
         <h2>${escapeHtml(analysisHeadLabels(result).main)} <span class="muted">${escapeHtml(analysisHeadLabels(result).sub)}</span></h2>
-        <p class="muted"><span class="nowrap">기준일 ${escapeHtml(result.lastDate)}</span> · <span class="nowrap">종가 ${fmtPrice(result.price)}</span> · <span class="nowrap">분석 봉 ${result.bars}개</span></p>
+        ${analysisPriceRowHtml(result)}
+        <p class="muted"><span class="nowrap">기준일 ${escapeHtml(result.lastDate)} 종가</span> · <span class="nowrap">분석 봉 ${result.bars}개</span></p>
       </div>
       ${result.base ? `<div class="verdict" style="color:${color}">${verdictText(up)}</div>` : ""}
     </div>
@@ -2785,6 +2787,23 @@ function buildResultHTML(result) {
 
     ${moreHtml}
   `;
+}
+
+// 머리글 가격 줄: 큰 종가 + 전일 대비 '▲ 3.09 (+1.34%)'(UI 2단계 — 가격을 먼저 보이게).
+// analysis.html 은 fmt.js 를 싣지 않아 같은 표기를 여기서 만든다(색은 시장별 --pos/--neg).
+function analysisPriceRowHtml(result) {
+  const price = Number(result && result.price);
+  if (!Number.isFinite(price)) return "";
+  const prev = Number(result.prevClose);
+  let chg = "";
+  if (Number.isFinite(prev) && prev > 0) {
+    const d = price - prev, pct = (d / prev) * 100;
+    const dir = d > 0 ? "pos" : d < 0 ? "neg" : "muted";
+    const mark = d > 0 ? "▲ " : d < 0 ? "▼ " : "";
+    const amt = fmtPrice(Math.abs(d)).replace(/^\$/, "");
+    chg = `<span class="ca-chg ${dir}">${mark}${escapeHtml(amt)} (${pct > 0 ? "+" : ""}${pct.toFixed(2)}%)</span>`;
+  }
+  return `<p class="ca-price-row"><span class="ca-price">${escapeHtml(fmtPrice(price))}</span>${chg}</p>`;
 }
 
 function renderTechnicalLevelsCard(result) {

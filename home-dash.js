@@ -26,13 +26,34 @@ function hdFmtLevel(v) {
   return n == null ? "—" : n.toLocaleString("en-US", { maximumFractionDigits: 2, minimumFractionDigits: n < 100 ? 2 : 2 });
 }
 
-function hdSpark(series, up) {
+// 전일 종가 = 현재가 / (1 + 등락률). 큰 차트(hdRenderChart)와 같은 근사.
+function hdPrevClose(price, chg) {
+  const p = hdNum(price), c = hdNum(chg);
+  return p != null && c != null && c > -100 ? p / (1 + c / 100) : null;
+}
+
+// 카드 미니차트: 선 + 전일 종가 점선 + 점선까지 면 채우기(네이버 증권 지수 카드 방식, UI 2단계).
+function hdSpark(series, up, prevClose) {
   const vals = (series || []).map(Number).filter(Number.isFinite);
   if (vals.length < 2) return "";
-  const w = 64, h = 28;
-  const min = Math.min(...vals), max = Math.max(...vals), rng = max - min || 1;
-  const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${(h - 2 - ((v - min) / rng) * (h - 4)).toFixed(1)}`).join(" ");
-  return `<svg class="home-idx-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="${up ? "var(--pos)" : "var(--neg)"}" stroke-width="1.5" vector-effect="non-scaling-stroke"></polyline></svg>`;
+  const w = 120, h = 32;
+  const base = hdNum(prevClose);
+  const all = base != null ? vals.concat([base]) : vals;
+  const min = Math.min(...all), max = Math.max(...all), rng = max - min || 1;
+  const Y = (v) => (h - 2 - ((v - min) / rng) * (h - 4)).toFixed(1);
+  const pts = vals.map((v, i) => `${((i / (vals.length - 1)) * w).toFixed(1)},${Y(v)}`).join(" ");
+  const col = up ? "var(--pos)" : "var(--neg)";
+  const by = base != null ? Y(base) : h;
+  const area = `<polygon points="0,${by} ${pts} ${w},${by}" fill="${col}" fill-opacity="0.12" stroke="none"></polygon>`;
+  const line = base != null ? `<line x1="0" x2="${w}" y1="${by}" y2="${by}" class="home-idx-spark-base" vector-effect="non-scaling-stroke"></line>` : "";
+  return `<svg class="home-idx-spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">${area}${line}<polyline points="${pts}" fill="none" stroke="${col}" stroke-width="1.5" vector-effect="non-scaling-stroke"></polyline></svg>`;
+}
+
+// 카드 등락: '▲ 56.27 (+0.73%)'. 전일 종가를 못 구하면 비율만.
+function hdChgText(price, chg) {
+  if (chg == null) return "—";
+  const prev = hdPrevClose(price, chg);
+  return fmtDailyChange(prev != null ? hdNum(price) - prev : null, chg);
 }
 
 function hdFxCards() {
@@ -43,7 +64,7 @@ function hdFxCards() {
   return `<div class="home-idx-card is-static" role="presentation" title="환율은 현재가와 등락률만 제공합니다">
       <span class="home-idx-name">USD/KRW</span>
       <span class="home-idx-price">${hdFmtLevel(usd.price)}</span>
-      <span class="home-idx-chg ${chg == null ? "muted" : cls(chg)}">${chg == null ? "—" : fmtPct(chg)}</span>
+      <span class="home-idx-chg ${chg == null ? "muted" : cls(chg)}">${hdChgText(usd.price, chg)}</span>
     </div>`;
 }
 
@@ -79,8 +100,8 @@ function renderHomeIndexCarousel(el, indices) {
     return `<button type="button" class="home-idx-card${on ? " is-active" : ""}" role="option" aria-selected="${on ? "true" : "false"}" tabindex="${on ? 0 : -1}" data-symbol="${escapeHtml(ix.symbol || "")}">
       <span class="home-idx-name">${escapeHtml(ix.name)}</span>
       <span class="home-idx-price">${ix.price == null ? "—" : hdFmtLevel(ix.price)}</span>
-      <span class="home-idx-chg ${chg == null ? "muted" : cls(chg)}">${chg == null ? "—" : fmtPct(chg)}</span>
-      ${hdSpark(ix.series, (chg ?? 0) >= 0)}
+      <span class="home-idx-chg ${chg == null ? "muted" : cls(chg)}">${hdChgText(ix.price, chg)}</span>
+      ${hdSpark(ix.series, (chg ?? 0) >= 0, hdPrevClose(ix.price, chg))}
     </button>`;
   }).join("") + hdFxCards();
   if (!el.dataset.hdBound) {
@@ -260,7 +281,7 @@ function hdChartHead(ix, price, chg, badge, analysis) {
       <div class="home-chart-title">
         <strong>${escapeHtml(ix.name)}</strong>
         <span class="home-chart-price">${price == null ? "—" : hdFmtLevel(price)}</span>
-        <span class="home-chart-chg ${chg == null ? "muted" : cls(chg)}">${chg == null ? "—" : fmtPct(chg)}</span>
+        <span class="home-chart-chg ${chg == null ? "muted" : cls(chg)}">${hdChgText(price, chg)}</span>
         ${badge && badge.text ? `<span class="home-chart-badge ${badge.cls}">${escapeHtml(badge.text)}</span>` : ""}
       </div>
       ${analysis ? `<button type="button" class="ghost compact-btn home-chart-go" data-ticker="${escapeHtml(analysis)}" title="${escapeHtml(ix.name)}을(를) 추종하는 ${escapeHtml(analysis)} 종목 분석">${escapeHtml(stockLabel(analysis))} 분석 ›</button>` : ""}

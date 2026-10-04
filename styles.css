@@ -16916,6 +16916,8 @@ button.mfeed-who:hover strong { text-decoration: underline; }
     position: sticky; top: 0; z-index: 40; margin-left: -12px; margin-right: -12px; padding-left: 12px; padding-right: 12px;
     background: var(--bg); box-shadow: 0 1px 0 var(--line);
   }
+  /* 설정 팝오버는 헤더(z 30)의 쌓임 맥락 안에 있어 위 고정 하위 탭(z 40)에 '테마' 줄이 가려졌다 — 열려 있을 때만 헤더를 그 위로. */
+  .ia-topbar:has(.ia-popover:not([hidden])) { z-index: calc(var(--z-legend-pop) + 1); }
 
   /* '새 기능' 배너는 한 줄: 아이콘 · 제목 · 해보기 · ✕ (설명은 해보기/업데이트 소식에서). */
   .mir-cl-card { align-items: center; padding: 6px 40px 6px 12px; margin-bottom: 10px; }

@@ -17032,9 +17032,18 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .movers-name { display: flex; align-items: center; gap: 10px; overflow: visible; white-space: normal; font-size: var(--fs-body); }
 .movers-name .co-logo { flex: none; margin-right: 0; vertical-align: middle; }
 .movers-nm { display: flex; flex-direction: column; min-width: 0; line-height: 1.3; }
-/* 이름은 말줄임 없이 줄바꿈으로 전부 보인다(회사명이 길면 두 줄 — 'XIAO-I Corporation American De…'가 잘렸다). */
-.movers-nm b { font-size: 16px; font-weight: var(--fw-title); overflow-wrap: anywhere; }
-.movers-name .movers-nm small { margin-left: 0; color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); line-height: 1.35; overflow-wrap: anywhere; }
+/* 이름 칸(네이버 증권 PC 랭킹 실측: 종목명 15px·보조 12px 모두 한 줄 nowrap + 말줄임, 행 높이 고정).
+   PC 는 이름 칸을 넓혀(360~460px) 회사명을 한 줄에 다 싣는다 — 190px 칸에 줄바꿈을 허용했더니
+   'NewGe/nlvf/Group…' 처럼 단어 중간까지 끊겨 6~8줄이 됐다. 그래도 넘치는 이름만 말줄임(전체는 title).
+   900px 이하(폰·좁은 창)는 한 칸 전체 폭 — 이름을 단어 단위로 줄바꿈해 전부 보이고 이유는 아래 줄. */
+.movers-row { grid-template-columns: minmax(360px, 460px) minmax(0, 1fr); align-items: center; }
+.movers-nm b, .movers-name .movers-nm small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.movers-nm b { font-size: 16px; font-weight: var(--fw-title); }
+.movers-name .movers-nm small { margin-left: 0; color: var(--muted); font-size: var(--fs-cap); font-weight: var(--fw-body); line-height: 1.35; }
+@media (max-width: 900px) {
+  .movers-row { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .movers-nm b, .movers-name .movers-nm small { overflow: visible; white-space: normal; overflow-wrap: break-word; }
+}
 .movers-go:hover .movers-name { text-decoration: none; }
 .movers-go:hover .movers-nm b { color: var(--primary); }
 .movers-chg { font-size: 16px; font-weight: var(--fw-title); }

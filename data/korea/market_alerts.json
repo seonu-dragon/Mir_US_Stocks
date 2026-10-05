@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-04 16:17 KST",
+  "updatedAtKst": "2026-10-05 16:34 KST",
   "baseDate": "2026-10-02",
-  "count": 453,
+  "count": 457,
   "sources": {
     "kind": "KRX KIND 시장경보·투자유의 (kind.krx.co.kr)",
     "limits": "네이버 금융 m.stock 등락률 목록 (상한·하한 표시)",
@@ -820,7 +820,7 @@
       ]
     },
     "halt": {
-      "asOf": "2026-10-04",
+      "asOf": "2026-10-05",
       "status": "ok",
       "rows": [
         {
@@ -1528,7 +1528,7 @@
       ]
     },
     "admin": {
-      "asOf": "2026-10-04",
+      "asOf": "2026-10-05",
       "status": "ok",
       "rows": [
         {
@@ -1823,14 +1823,14 @@
           "company": "금양",
           "market": "kospi",
           "designatedDate": "2026-08-18",
-          "reason": "보고서 미제출(반기보고서),상장폐지 사유의 발생,반기검토의견 의견거절"
+          "reason": "보고서 미제출(반기보고서),반기검토의견 의견거절,상장폐지 사유의 발생"
         },
         {
           "ticker": "011000",
           "company": "진원생명과학",
           "market": "kospi",
           "designatedDate": "2026-08-18",
-          "reason": "자본잠식(자본금의 50/100이상 잠식),반기검토의견 의견거절"
+          "reason": "반기검토의견 의견거절,자본잠식(자본금의 50/100이상 잠식)"
         },
         {
           "ticker": "011810",
@@ -2509,7 +2509,7 @@
           "company": "범양건영",
           "market": "kospi",
           "designatedDate": "2026-01-07",
-          "reason": "회생절차개시신청,상장폐지 사유의 발생,반기검토의견 의견거절"
+          "reason": "회생절차개시신청,반기검토의견 의견거절,상장폐지 사유의 발생"
         },
         {
           "ticker": "234920",
@@ -2849,7 +2849,7 @@
     "newHigh": {
       "asOf": "2026-10-02",
       "status": "ok",
-      "covered": 1076,
+      "covered": 1125,
       "rows": [
         {
           "ticker": "222800",
@@ -2912,7 +2912,7 @@
     "newLow": {
       "asOf": "2026-10-02",
       "status": "ok",
-      "covered": 1076,
+      "covered": 1125,
       "rows": [
         {
           "ticker": "015760",
@@ -2939,6 +2939,14 @@
           "level": 8480.0
         },
         {
+          "ticker": "037330",
+          "company": "인지디스플레",
+          "market": "kosdaq",
+          "price": 684.0,
+          "changePct": -1.4,
+          "level": 673.0
+        },
+        {
           "ticker": "072770",
           "company": "멤레이비티",
           "market": "kosdaq",
@@ -2953,6 +2961,14 @@
           "price": 1100.0,
           "changePct": 0.1,
           "level": 1052.0
+        },
+        {
+          "ticker": "377220",
+          "company": "프롬바이오",
+          "market": "kosdaq",
+          "price": 1888.0,
+          "changePct": -7.0,
+          "level": 1877.0
         },
         {
           "ticker": "015260",
@@ -2979,12 +2995,12 @@
           "level": 241.0
         },
         {
-          "ticker": "250930",
-          "company": "예선테크",
-          "market": "kosdaq",
-          "price": 529.0,
-          "changePct": 13.8,
-          "level": 441.0
+          "ticker": "001770",
+          "company": "SHD",
+          "market": "kospi",
+          "price": 3925.0,
+          "changePct": -1.9,
+          "level": 3400.0
         },
         {
           "ticker": "011080",
@@ -3001,6 +3017,14 @@
           "price": 540.0,
           "changePct": -0.2,
           "level": 490.0
+        },
+        {
+          "ticker": "250930",
+          "company": "예선테크",
+          "market": "kosdaq",
+          "price": 529.0,
+          "changePct": 13.8,
+          "level": 441.0
         },
         {
           "ticker": "005110",
@@ -3023,7 +3047,7 @@
     "valueSurge": {
       "asOf": "2026-10-02",
       "status": "ok",
-      "covered": 1076,
+      "covered": 1125,
       "rows": [
         {
           "ticker": "032300",
@@ -3124,6 +3148,16 @@
           "valueEok": 51.0,
           "avgValueEok": 9.5,
           "ratio": 5.3
+        },
+        {
+          "ticker": "085670",
+          "company": "뉴프렉스",
+          "market": "kosdaq",
+          "price": 3705.0,
+          "changePct": 7.9,
+          "valueEok": 41.0,
+          "avgValueEok": 7.9,
+          "ratio": 5.2
         },
         {
           "ticker": "026960",

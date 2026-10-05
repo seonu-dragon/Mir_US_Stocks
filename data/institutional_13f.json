@@ -1,8 +1,8 @@
 {
-  "updatedAtKst": "2026-09-16 21:10 KST",
+  "updatedAtKst": "2026-10-05 15:06 KST",
   "updateSchedule": "quarterly",
   "source": "SEC EDGAR 13F-HR via 13f.info",
-  "note": "분기마다 제출되는 공시 기준 보유 내역입니다. 매일 갱신해도 동일하므로 분기 공시 후에만 업데이트합니다. 실시간 매매가 아닙니다.",
+  "note": "분기마다 제출되는 공시 기준 보유 내역입니다. 실시간 매매가 아닙니다.",
   "quartersPerInstitution": 10,
   "institutionCount": 153,
   "institutions": [
@@ -33590,572 +33590,287 @@
       "manager": "",
       "cik": "0000093751",
       "status": "ok",
-      "reportDate": "2026-06-30",
-      "filedDate": "2026-08-07",
-      "accession": "0000093751-26-000507",
+      "reportDate": "2026-03-31",
+      "filedDate": "2026-05-15",
+      "accession": "0000093751-26-000315",
       "holdings": [
         {
           "ticker": "NVDA",
           "issuer": "NVIDIA CORPORATION",
           "titleOfClass": "COM",
           "cusip": "67066G104",
-          "valueK": 202047567,
-          "shares": 1009783437,
+          "valueK": 173343323,
+          "shares": 993885601,
           "putCall": "",
-          "weightPct": 5.99,
-          "valueM": 202047.6
+          "weightPct": 5.98,
+          "valueM": 173343.3
         },
         {
           "ticker": "AAPL",
           "issuer": "APPLE INC",
           "titleOfClass": "COM",
           "cusip": "037833100",
-          "valueK": 177993996,
-          "shares": 615129929,
+          "valueK": 152868226,
+          "shares": 602341409,
           "putCall": "",
           "weightPct": 5.28,
-          "valueM": 177994.0
+          "valueM": 152868.2
         },
         {
           "ticker": "MSFT",
           "issuer": "MICROSOFT CORP",
           "titleOfClass": "COM",
           "cusip": "594918104",
-          "valueK": 117744958,
-          "shares": 315653206,
+          "valueK": 113534207,
+          "shares": 306708289,
           "putCall": "",
-          "weightPct": 3.49,
-          "valueM": 117745.0
+          "weightPct": 3.92,
+          "valueM": 113534.2
         },
         {
           "ticker": "AMZN",
           "issuer": "AMAZON COM INC",
           "titleOfClass": "COM",
           "cusip": "023135106",
-          "valueK": 94665539,
-          "shares": 397186958,
+          "valueK": 81319088,
+          "shares": 390450321,
           "putCall": "",
           "weightPct": 2.81,
-          "valueM": 94665.5
+          "valueM": 81319.1
         },
         {
           "ticker": "GOOGL",
           "issuer": "ALPHABET INC",
           "titleOfClass": "CAP STK CL A",
           "cusip": "02079K305",
-          "valueK": 85403303,
-          "shares": 238977259,
+          "valueK": 65063075,
+          "shares": 226259132,
           "putCall": "",
-          "weightPct": 2.53,
-          "valueM": 85403.3
+          "weightPct": 2.25,
+          "valueM": 65063.1
         },
         {
           "ticker": "AVGO",
           "issuer": "BROADCOM INC",
           "titleOfClass": "COM",
           "cusip": "11135F101",
-          "valueK": 74379179,
-          "shares": 196900541,
+          "valueK": 59234095,
+          "shares": 191380232,
           "putCall": "",
-          "weightPct": 2.21,
-          "valueM": 74379.2
+          "weightPct": 2.05,
+          "valueM": 59234.1
         },
         {
           "ticker": "GOOG",
           "issuer": "ALPHABET INC",
           "titleOfClass": "CAP STK CL C",
           "cusip": "02079K107",
-          "valueK": 67458979,
-          "shares": 190923442,
+          "valueK": 53274133,
+          "shares": 185714752,
           "putCall": "",
-          "weightPct": 2.0,
-          "valueM": 67459.0
-        },
-        {
-          "ticker": "MU",
-          "issuer": "MICRON TECHNOLOGY INC",
-          "titleOfClass": "COM",
-          "cusip": "595112103",
-          "valueK": 57802075,
-          "shares": 50075870,
-          "putCall": "",
-          "weightPct": 1.71,
-          "valueM": 57802.1
+          "weightPct": 1.84,
+          "valueM": 53274.1
         },
         {
           "ticker": "META",
           "issuer": "META PLATFORMS INC",
           "titleOfClass": "CL A",
           "cusip": "30303M102",
-          "valueK": 51841811,
-          "shares": 92033963,
+          "valueK": 50647144,
+          "shares": 88523840,
           "putCall": "",
-          "weightPct": 1.54,
-          "valueM": 51841.8
+          "weightPct": 1.75,
+          "valueM": 50647.1
         },
         {
           "ticker": "TSLA",
           "issuer": "TESLA INC",
           "titleOfClass": "COM",
           "cusip": "88160R101",
-          "valueK": 49402311,
-          "shares": 117456756,
+          "valueK": 42638036,
+          "shares": 114695458,
           "putCall": "",
           "weightPct": 1.47,
-          "valueM": 49402.3
-        },
-        {
-          "ticker": "LLY",
-          "issuer": "ELI LILLY & CO",
-          "titleOfClass": "COM",
-          "cusip": "532457108",
-          "valueK": 43438261,
-          "shares": 36215754,
-          "putCall": "",
-          "weightPct": 1.29,
-          "valueM": 43438.3
-        },
-        {
-          "ticker": "AMD",
-          "issuer": "ADVANCED MICRO DEVICES INC",
-          "titleOfClass": "COM",
-          "cusip": "007903107",
-          "valueK": 43197447,
-          "shares": 74361687,
-          "putCall": "",
-          "weightPct": 1.28,
-          "valueM": 43197.4
+          "valueM": 42638.0
         },
         {
           "ticker": "JPM",
           "issuer": "JPMORGAN CHASE & CO",
           "titleOfClass": "COM",
           "cusip": "46625H100",
-          "valueK": 40984757,
-          "shares": 125209293,
+          "valueK": 36557222,
+          "shares": 124276661,
           "putCall": "",
-          "weightPct": 1.22,
-          "valueM": 40984.8
-        },
-        {
-          "ticker": "BRK-B",
-          "issuer": "BERKSHIRE HATHAWAY INC DEL",
-          "titleOfClass": "CL B NEW",
-          "cusip": "084670702",
-          "valueK": 37903435,
-          "shares": 75747788,
-          "putCall": "",
-          "weightPct": 1.12,
-          "valueM": 37903.4
-        },
-        {
-          "ticker": "CAT",
-          "issuer": "CATERPILLAR INC",
-          "titleOfClass": "COM",
-          "cusip": "149123101",
-          "valueK": 36624377,
-          "shares": 34392316,
-          "putCall": "",
-          "weightPct": 1.09,
-          "valueM": 36624.4
-        },
-        {
-          "ticker": "JNJ",
-          "issuer": "JOHNSON & JOHNSON",
-          "titleOfClass": "COM",
-          "cusip": "478160104",
-          "valueK": 33975097,
-          "shares": 133776025,
-          "putCall": "",
-          "weightPct": 1.01,
-          "valueM": 33975.1
-        },
-        {
-          "ticker": "INTC",
-          "issuer": "INTEL CORP",
-          "titleOfClass": "COM",
-          "cusip": "458140100",
-          "valueK": 30278720,
-          "shares": 216849675,
-          "putCall": "",
-          "weightPct": 0.9,
-          "valueM": 30278.7
-        },
-        {
-          "ticker": "V",
-          "issuer": "VISA INC",
-          "titleOfClass": "COM CL A",
-          "cusip": "92826C839",
-          "valueK": 28432626,
-          "shares": 82872209,
-          "putCall": "",
-          "weightPct": 0.84,
-          "valueM": 28432.6
+          "weightPct": 1.26,
+          "valueM": 36557.2
         },
         {
           "ticker": "XOM",
           "issuer": "EXXON MOBIL CORP",
           "titleOfClass": "COM",
           "cusip": "30231G102",
-          "valueK": 28275271,
-          "shares": 206811526,
+          "valueK": 36291017,
+          "shares": 213904380,
           "putCall": "",
-          "weightPct": 0.84,
-          "valueM": 28275.3
+          "weightPct": 1.25,
+          "valueM": 36291.0
         },
         {
-          "ticker": "AMAT",
-          "issuer": "APPLIED MATLS INC",
+          "ticker": "BRK-B",
+          "issuer": "BERKSHIRE HATHAWAY INC DEL",
+          "titleOfClass": "CL B NEW",
+          "cusip": "084670702",
+          "valueK": 35508270,
+          "shares": 74099062,
+          "putCall": "",
+          "weightPct": 1.23,
+          "valueM": 35508.3
+        },
+        {
+          "ticker": "LLY",
+          "issuer": "ELI LILLY & CO",
           "titleOfClass": "COM",
-          "cusip": "038222105",
-          "valueK": 27647533,
-          "shares": 38240019,
+          "cusip": "532457108",
+          "valueK": 32753011,
+          "shares": 35610002,
           "putCall": "",
-          "weightPct": 0.82,
-          "valueM": 27647.5
+          "weightPct": 1.13,
+          "valueM": 32753.0
         },
         {
-          "ticker": "LRCX",
-          "issuer": "LAM RESEARCH CORP",
-          "titleOfClass": "COM NEW",
-          "cusip": "512807306",
-          "valueK": 26320467,
-          "shares": 60704130,
+          "ticker": "JNJ",
+          "issuer": "JOHNSON & JOHNSON",
+          "titleOfClass": "COM",
+          "cusip": "478160104",
+          "valueK": 32626943,
+          "shares": 133476288,
           "putCall": "",
-          "weightPct": 0.78,
-          "valueM": 26320.5
+          "weightPct": 1.13,
+          "valueM": 32626.9
         },
         {
           "ticker": "CVX",
           "issuer": "CHEVRON CORPORATION",
           "titleOfClass": "COM",
           "cusip": "166764100",
-          "valueK": 24606679,
-          "shares": 148447634,
+          "valueK": 31684234,
+          "shares": 153137916,
           "putCall": "",
-          "weightPct": 0.73,
-          "valueM": 24606.7
+          "weightPct": 1.09,
+          "valueM": 31684.2
         },
         {
-          "ticker": "CSCO",
-          "issuer": "CISCO SYS INC",
-          "titleOfClass": "COM",
-          "cusip": "17275R102",
-          "valueK": 23157598,
-          "shares": 197153062,
+          "ticker": "V",
+          "issuer": "VISA INC",
+          "titleOfClass": "COM CL A",
+          "cusip": "92826C839",
+          "valueK": 24876169,
+          "shares": 82306015,
           "putCall": "",
-          "weightPct": 0.69,
-          "valueM": 23157.6
+          "weightPct": 0.86,
+          "valueM": 24876.2
+        },
+        {
+          "ticker": "CAT",
+          "issuer": "CATERPILLAR INC",
+          "titleOfClass": "COM",
+          "cusip": "149123101",
+          "valueK": 24711512,
+          "shares": 34880604,
+          "putCall": "",
+          "weightPct": 0.85,
+          "valueM": 24711.5
         },
         {
           "ticker": "WMT",
           "issuer": "WALMART INC",
           "titleOfClass": "COM",
           "cusip": "931142103",
-          "valueK": 21297030,
-          "shares": 188036646,
+          "valueK": 23152665,
+          "shares": 185928865,
+          "putCall": "",
+          "weightPct": 0.8,
+          "valueM": 23152.7
+        },
+        {
+          "ticker": "LMT",
+          "issuer": "LOCKHEED MARTIN CORP",
+          "titleOfClass": "COM",
+          "cusip": "539830109",
+          "valueK": 19676271,
+          "shares": 32555588,
+          "putCall": "",
+          "weightPct": 0.68,
+          "valueM": 19676.3
+        },
+        {
+          "ticker": "MA",
+          "issuer": "MASTERCARD INCORPORATED",
+          "titleOfClass": "CL A",
+          "cusip": "57636Q104",
+          "valueK": 18226608,
+          "shares": 36478022,
           "putCall": "",
           "weightPct": 0.63,
-          "valueM": 21297.0
+          "valueM": 18226.6
+        },
+        {
+          "ticker": "COST",
+          "issuer": "COSTCO WHOLESALE CORPORATION",
+          "titleOfClass": "COM",
+          "cusip": "22160K105",
+          "valueK": 18087428,
+          "shares": 18152232,
+          "putCall": "",
+          "weightPct": 0.62,
+          "valueM": 18087.4
+        },
+        {
+          "ticker": "RTX",
+          "issuer": "RTX CORPORATION",
+          "titleOfClass": "COM",
+          "cusip": "75513E101",
+          "valueK": 17860468,
+          "shares": 92589262,
+          "putCall": "",
+          "weightPct": 0.62,
+          "valueM": 17860.5
+        },
+        {
+          "ticker": "ABBV",
+          "issuer": "ABBVIE INC",
+          "titleOfClass": "COM",
+          "cusip": "00287Y109",
+          "valueK": 17663997,
+          "shares": 81217516,
+          "putCall": "",
+          "weightPct": 0.61,
+          "valueM": 17664.0
+        },
+        {
+          "ticker": "MU",
+          "issuer": "MICRON TECHNOLOGY INC",
+          "titleOfClass": "COM",
+          "cusip": "595112103",
+          "valueK": 17656292,
+          "shares": 52239483,
+          "putCall": "",
+          "weightPct": 0.61,
+          "valueM": 17656.3
         },
         {
           "ticker": "MS",
           "issuer": "MORGAN STANLEY",
           "titleOfClass": "COM NEW",
           "cusip": "617446448",
-          "valueK": 20812192,
-          "shares": 99560815,
+          "valueK": 16677555,
+          "shares": 101340194,
           "putCall": "",
-          "weightPct": 0.62,
-          "valueM": 20812.2
+          "weightPct": 0.58,
+          "valueM": 16677.6
         }
       ],
       "quarters": [
-        {
-          "reportLabel": "Q2 2026",
-          "reportDate": "2026-06-30",
-          "filedDate": "2026-08-07",
-          "accession": "0000093751-26-000507",
-          "accessionRaw": "000009375126000507",
-          "holdings": [
-            {
-              "ticker": "NVDA",
-              "issuer": "NVIDIA CORPORATION",
-              "titleOfClass": "COM",
-              "cusip": "67066G104",
-              "valueK": 202047567,
-              "shares": 1009783437,
-              "putCall": "",
-              "weightPct": 5.99,
-              "valueM": 202047.6
-            },
-            {
-              "ticker": "AAPL",
-              "issuer": "APPLE INC",
-              "titleOfClass": "COM",
-              "cusip": "037833100",
-              "valueK": 177993996,
-              "shares": 615129929,
-              "putCall": "",
-              "weightPct": 5.28,
-              "valueM": 177994.0
-            },
-            {
-              "ticker": "MSFT",
-              "issuer": "MICROSOFT CORP",
-              "titleOfClass": "COM",
-              "cusip": "594918104",
-              "valueK": 117744958,
-              "shares": 315653206,
-              "putCall": "",
-              "weightPct": 3.49,
-              "valueM": 117745.0
-            },
-            {
-              "ticker": "AMZN",
-              "issuer": "AMAZON COM INC",
-              "titleOfClass": "COM",
-              "cusip": "023135106",
-              "valueK": 94665539,
-              "shares": 397186958,
-              "putCall": "",
-              "weightPct": 2.81,
-              "valueM": 94665.5
-            },
-            {
-              "ticker": "GOOGL",
-              "issuer": "ALPHABET INC",
-              "titleOfClass": "CAP STK CL A",
-              "cusip": "02079K305",
-              "valueK": 85403303,
-              "shares": 238977259,
-              "putCall": "",
-              "weightPct": 2.53,
-              "valueM": 85403.3
-            },
-            {
-              "ticker": "AVGO",
-              "issuer": "BROADCOM INC",
-              "titleOfClass": "COM",
-              "cusip": "11135F101",
-              "valueK": 74379179,
-              "shares": 196900541,
-              "putCall": "",
-              "weightPct": 2.21,
-              "valueM": 74379.2
-            },
-            {
-              "ticker": "GOOG",
-              "issuer": "ALPHABET INC",
-              "titleOfClass": "CAP STK CL C",
-              "cusip": "02079K107",
-              "valueK": 67458979,
-              "shares": 190923442,
-              "putCall": "",
-              "weightPct": 2.0,
-              "valueM": 67459.0
-            },
-            {
-              "ticker": "MU",
-              "issuer": "MICRON TECHNOLOGY INC",
-              "titleOfClass": "COM",
-              "cusip": "595112103",
-              "valueK": 57802075,
-              "shares": 50075870,
-              "putCall": "",
-              "weightPct": 1.71,
-              "valueM": 57802.1
-            },
-            {
-              "ticker": "META",
-              "issuer": "META PLATFORMS INC",
-              "titleOfClass": "CL A",
-              "cusip": "30303M102",
-              "valueK": 51841811,
-              "shares": 92033963,
-              "putCall": "",
-              "weightPct": 1.54,
-              "valueM": 51841.8
-            },
-            {
-              "ticker": "TSLA",
-              "issuer": "TESLA INC",
-              "titleOfClass": "COM",
-              "cusip": "88160R101",
-              "valueK": 49402311,
-              "shares": 117456756,
-              "putCall": "",
-              "weightPct": 1.47,
-              "valueM": 49402.3
-            },
-            {
-              "ticker": "LLY",
-              "issuer": "ELI LILLY & CO",
-              "titleOfClass": "COM",
-              "cusip": "532457108",
-              "valueK": 43438261,
-              "shares": 36215754,
-              "putCall": "",
-              "weightPct": 1.29,
-              "valueM": 43438.3
-            },
-            {
-              "ticker": "AMD",
-              "issuer": "ADVANCED MICRO DEVICES INC",
-              "titleOfClass": "COM",
-              "cusip": "007903107",
-              "valueK": 43197447,
-              "shares": 74361687,
-              "putCall": "",
-              "weightPct": 1.28,
-              "valueM": 43197.4
-            },
-            {
-              "ticker": "JPM",
-              "issuer": "JPMORGAN CHASE & CO",
-              "titleOfClass": "COM",
-              "cusip": "46625H100",
-              "valueK": 40984757,
-              "shares": 125209293,
-              "putCall": "",
-              "weightPct": 1.22,
-              "valueM": 40984.8
-            },
-            {
-              "ticker": "BRK-B",
-              "issuer": "BERKSHIRE HATHAWAY INC DEL",
-              "titleOfClass": "CL B NEW",
-              "cusip": "084670702",
-              "valueK": 37903435,
-              "shares": 75747788,
-              "putCall": "",
-              "weightPct": 1.12,
-              "valueM": 37903.4
-            },
-            {
-              "ticker": "CAT",
-              "issuer": "CATERPILLAR INC",
-              "titleOfClass": "COM",
-              "cusip": "149123101",
-              "valueK": 36624377,
-              "shares": 34392316,
-              "putCall": "",
-              "weightPct": 1.09,
-              "valueM": 36624.4
-            },
-            {
-              "ticker": "JNJ",
-              "issuer": "JOHNSON & JOHNSON",
-              "titleOfClass": "COM",
-              "cusip": "478160104",
-              "valueK": 33975097,
-              "shares": 133776025,
-              "putCall": "",
-              "weightPct": 1.01,
-              "valueM": 33975.1
-            },
-            {
-              "ticker": "INTC",
-              "issuer": "INTEL CORP",
-              "titleOfClass": "COM",
-              "cusip": "458140100",
-              "valueK": 30278720,
-              "shares": 216849675,
-              "putCall": "",
-              "weightPct": 0.9,
-              "valueM": 30278.7
-            },
-            {
-              "ticker": "V",
-              "issuer": "VISA INC",
-              "titleOfClass": "COM CL A",
-              "cusip": "92826C839",
-              "valueK": 28432626,
-              "shares": 82872209,
-              "putCall": "",
-              "weightPct": 0.84,
-              "valueM": 28432.6
-            },
-            {
-              "ticker": "XOM",
-              "issuer": "EXXON MOBIL CORP",
-              "titleOfClass": "COM",
-              "cusip": "30231G102",
-              "valueK": 28275271,
-              "shares": 206811526,
-              "putCall": "",
-              "weightPct": 0.84,
-              "valueM": 28275.3
-            },
-            {
-              "ticker": "AMAT",
-              "issuer": "APPLIED MATLS INC",
-              "titleOfClass": "COM",
-              "cusip": "038222105",
-              "valueK": 27647533,
-              "shares": 38240019,
-              "putCall": "",
-              "weightPct": 0.82,
-              "valueM": 27647.5
-            },
-            {
-              "ticker": "LRCX",
-              "issuer": "LAM RESEARCH CORP",
-              "titleOfClass": "COM NEW",
-              "cusip": "512807306",
-              "valueK": 26320467,
-              "shares": 60704130,
-              "putCall": "",
-              "weightPct": 0.78,
-              "valueM": 26320.5
-            },
-            {
-              "ticker": "CVX",
-              "issuer": "CHEVRON CORPORATION",
-              "titleOfClass": "COM",
-              "cusip": "166764100",
-              "valueK": 24606679,
-              "shares": 148447634,
-              "putCall": "",
-              "weightPct": 0.73,
-              "valueM": 24606.7
-            },
-            {
-              "ticker": "CSCO",
-              "issuer": "CISCO SYS INC",
-              "titleOfClass": "COM",
-              "cusip": "17275R102",
-              "valueK": 23157598,
-              "shares": 197153062,
-              "putCall": "",
-              "weightPct": 0.69,
-              "valueM": 23157.6
-            },
-            {
-              "ticker": "WMT",
-              "issuer": "WALMART INC",
-              "titleOfClass": "COM",
-              "cusip": "931142103",
-              "valueK": 21297030,
-              "shares": 188036646,
-              "putCall": "",
-              "weightPct": 0.63,
-              "valueM": 21297.0
-            },
-            {
-              "ticker": "MS",
-              "issuer": "MORGAN STANLEY",
-              "titleOfClass": "COM NEW",
-              "cusip": "617446448",
-              "valueK": 20812192,
-              "shares": 99560815,
-              "putCall": "",
-              "weightPct": 0.62,
-              "valueM": 20812.2
-            }
-          ],
-          "status": "ok"
-        },
         {
           "reportLabel": "Q1 2026",
           "reportDate": "2026-03-31",
@@ -36717,6 +36432,291 @@
               "putCall": "",
               "weightPct": 0.61,
               "valueM": 13701.8
+            }
+          ],
+          "status": "ok"
+        },
+        {
+          "reportLabel": "Q4 2023",
+          "reportDate": "2023-12-31",
+          "filedDate": "2024-02-14",
+          "accession": "0000093751-24-000484",
+          "accessionRaw": "000009375124000484",
+          "holdings": [
+            {
+              "ticker": "AAPL",
+              "issuer": "APPLE INC",
+              "titleOfClass": "COM",
+              "cusip": "037833100",
+              "valueK": 112832602,
+              "shares": 586052057,
+              "putCall": "",
+              "weightPct": 5.49,
+              "valueM": 112832.6
+            },
+            {
+              "ticker": "MSFT",
+              "issuer": "MICROSOFT CORP",
+              "titleOfClass": "COM",
+              "cusip": "594918104",
+              "valueK": 111919763,
+              "shares": 297627282,
+              "putCall": "",
+              "weightPct": 5.44,
+              "valueM": 111919.8
+            },
+            {
+              "ticker": "AMZN",
+              "issuer": "AMAZON COM INC",
+              "titleOfClass": "COM",
+              "cusip": "023135106",
+              "valueK": 52369116,
+              "shares": 344669717,
+              "putCall": "",
+              "weightPct": 2.55,
+              "valueM": 52369.1
+            },
+            {
+              "ticker": "NVDA",
+              "issuer": "NVIDIA CORPORATION",
+              "titleOfClass": "COM",
+              "cusip": "67066G104",
+              "valueK": 45392453,
+              "shares": 91661188,
+              "putCall": "",
+              "weightPct": 2.21,
+              "valueM": 45392.5
+            },
+            {
+              "ticker": "META",
+              "issuer": "META PLATFORMS INC",
+              "titleOfClass": "CL A",
+              "cusip": "30303M102",
+              "valueK": 31534455,
+              "shares": 89090450,
+              "putCall": "",
+              "weightPct": 1.53,
+              "valueM": 31534.5
+            },
+            {
+              "ticker": "GOOGL",
+              "issuer": "ALPHABET INC",
+              "titleOfClass": "CAP STK CL A",
+              "cusip": "02079K305",
+              "valueK": 31117297,
+              "shares": 222759661,
+              "putCall": "",
+              "weightPct": 1.51,
+              "valueM": 31117.3
+            },
+            {
+              "ticker": "TSLA",
+              "issuer": "TESLA INC",
+              "titleOfClass": "COM",
+              "cusip": "88160R101",
+              "valueK": 27052391,
+              "shares": 108871505,
+              "putCall": "",
+              "weightPct": 1.32,
+              "valueM": 27052.4
+            },
+            {
+              "ticker": "GOOG",
+              "issuer": "ALPHABET INC",
+              "titleOfClass": "CAP STK CL C",
+              "cusip": "02079K107",
+              "valueK": 26829510,
+              "shares": 190374731,
+              "putCall": "",
+              "weightPct": 1.31,
+              "valueM": 26829.5
+            },
+            {
+              "ticker": "BRK-B",
+              "issuer": "BERKSHIRE HATHAWAY INC DEL",
+              "titleOfClass": "CL B NEW",
+              "cusip": "084670702",
+              "valueK": 24711193,
+              "shares": 69285015,
+              "putCall": "",
+              "weightPct": 1.2,
+              "valueM": 24711.2
+            },
+            {
+              "ticker": "UNH",
+              "issuer": "UNITEDHEALTH GROUP INC",
+              "titleOfClass": "COM",
+              "cusip": "91324P102",
+              "valueK": 23964345,
+              "shares": 45518920,
+              "putCall": "",
+              "weightPct": 1.17,
+              "valueM": 23964.3
+            },
+            {
+              "ticker": "XOM",
+              "issuer": "EXXON MOBIL CORP",
+              "titleOfClass": "COM",
+              "cusip": "30231G102",
+              "valueK": 21539575,
+              "shares": 215438841,
+              "putCall": "",
+              "weightPct": 1.05,
+              "valueM": 21539.6
+            },
+            {
+              "ticker": "JPM",
+              "issuer": "JPMORGAN CHASE & CO",
+              "titleOfClass": "COM",
+              "cusip": "46625H100",
+              "valueK": 21289626,
+              "shares": 125159471,
+              "putCall": "",
+              "weightPct": 1.04,
+              "valueM": 21289.6
+            },
+            {
+              "ticker": "JNJ",
+              "issuer": "JOHNSON & JOHNSON",
+              "titleOfClass": "COM",
+              "cusip": "478160104",
+              "valueK": 20831419,
+              "shares": 132904295,
+              "putCall": "",
+              "weightPct": 1.01,
+              "valueM": 20831.4
+            },
+            {
+              "ticker": "AVGO",
+              "issuer": "BROADCOM INC",
+              "titleOfClass": "COM",
+              "cusip": "11135F101",
+              "valueK": 20643084,
+              "shares": 18493245,
+              "putCall": "",
+              "weightPct": 1.0,
+              "valueM": 20643.1
+            },
+            {
+              "ticker": "LLY",
+              "issuer": "ELI LILLY & CO",
+              "titleOfClass": "COM",
+              "cusip": "532457108",
+              "valueK": 19695308,
+              "shares": 33787327,
+              "putCall": "",
+              "weightPct": 0.96,
+              "valueM": 19695.3
+            },
+            {
+              "ticker": "V",
+              "issuer": "VISA INC",
+              "titleOfClass": "COM CL A",
+              "cusip": "92826C839",
+              "valueK": 19097258,
+              "shares": 73352251,
+              "putCall": "",
+              "weightPct": 0.93,
+              "valueM": 19097.3
+            },
+            {
+              "ticker": "CVX",
+              "issuer": "CHEVRON CORP NEW",
+              "titleOfClass": "COM",
+              "cusip": "166764100",
+              "valueK": 18575296,
+              "shares": 124532696,
+              "putCall": "",
+              "weightPct": 0.9,
+              "valueM": 18575.3
+            },
+            {
+              "ticker": "LMT",
+              "issuer": "LOCKHEED MARTIN CORP",
+              "titleOfClass": "COM",
+              "cusip": "539830109",
+              "valueK": 16792503,
+              "shares": 37049916,
+              "putCall": "",
+              "weightPct": 0.82,
+              "valueM": 16792.5
+            },
+            {
+              "ticker": "PG",
+              "issuer": "PROCTER AND GAMBLE CO",
+              "titleOfClass": "COM",
+              "cusip": "742718109",
+              "valueK": 15109722,
+              "shares": 103109884,
+              "putCall": "",
+              "weightPct": 0.73,
+              "valueM": 15109.7
+            },
+            {
+              "ticker": "HD",
+              "issuer": "HOME DEPOT INC",
+              "titleOfClass": "COM",
+              "cusip": "437076102",
+              "valueK": 15007166,
+              "shares": 43304478,
+              "putCall": "",
+              "weightPct": 0.73,
+              "valueM": 15007.2
+            },
+            {
+              "ticker": "MA",
+              "issuer": "MASTERCARD INCORPORATED",
+              "titleOfClass": "CL A",
+              "cusip": "57636Q104",
+              "valueK": 14856138,
+              "shares": 34831864,
+              "putCall": "",
+              "weightPct": 0.72,
+              "valueM": 14856.1
+            },
+            {
+              "ticker": "MRK",
+              "issuer": "MERCK & CO INC",
+              "titleOfClass": "COM",
+              "cusip": "58933Y105",
+              "valueK": 12828426,
+              "shares": 116865977,
+              "putCall": "",
+              "weightPct": 0.62,
+              "valueM": 12828.4
+            },
+            {
+              "ticker": "COST",
+              "issuer": "COSTCO WHSL CORP NEW",
+              "titleOfClass": "COM",
+              "cusip": "22160K105",
+              "valueK": 12595729,
+              "shares": 18661237,
+              "putCall": "",
+              "weightPct": 0.61,
+              "valueM": 12595.7
+            },
+            {
+              "ticker": "ABBV",
+              "issuer": "ABBVIE INC",
+              "titleOfClass": "COM",
+              "cusip": "00287Y109",
+              "valueK": 12118788,
+              "shares": 78200866,
+              "putCall": "",
+              "weightPct": 0.59,
+              "valueM": 12118.8
+            },
+            {
+              "ticker": "CRM",
+              "issuer": "SALESFORCE INC",
+              "titleOfClass": "COM",
+              "cusip": "79466L302",
+              "valueK": 12114104,
+              "shares": 46036727,
+              "putCall": "",
+              "weightPct": 0.59,
+              "valueM": 12114.1
             }
           ],
           "status": "ok"
@@ -221940,7 +221940,7 @@
       "cik": "0001960830",
       "status": "ok",
       "reportDate": "2026-06-30",
-      "filedDate": "2026-08-13",
+      "filedDate": "2026-08-14",
       "accession": "0000919574-26-005191",
       "holdings": [
         {
@@ -222091,7 +222091,7 @@
         {
           "reportLabel": "Q2 2026",
           "reportDate": "2026-06-30",
-          "filedDate": "2026-08-13",
+          "filedDate": "2026-08-14",
           "accession": "0000919574-26-005191",
           "accessionRaw": "000091957426005191",
           "holdings": [
@@ -226337,7 +226337,7 @@
       "cik": "0001230239",
       "status": "ok",
       "reportDate": "2026-06-30",
-      "filedDate": "2026-08-13",
+      "filedDate": "2026-08-14",
       "accession": "0000919574-26-005175",
       "holdings": [
         {
@@ -226620,7 +226620,7 @@
         {
           "reportLabel": "Q2 2026",
           "reportDate": "2026-06-30",
-          "filedDate": "2026-08-13",
+          "filedDate": "2026-08-14",
           "accession": "0000919574-26-005175",
           "accessionRaw": "000091957426005175",
           "holdings": [
@@ -241732,7 +241732,7 @@
       "cik": "0001328785",
       "status": "ok",
       "reportDate": "2026-06-30",
-      "filedDate": "2026-08-13",
+      "filedDate": "2026-08-14",
       "accession": "0001172661-26-003417",
       "holdings": [
         {
@@ -242015,7 +242015,7 @@
         {
           "reportLabel": "Q2 2026",
           "reportDate": "2026-06-30",
-          "filedDate": "2026-08-13",
+          "filedDate": "2026-08-14",
           "accession": "0001172661-26-003417",
           "accessionRaw": "000117266126003417",
           "holdings": [
@@ -290780,7 +290780,7 @@
       "cik": "0001720792",
       "status": "ok",
       "reportDate": "2026-06-30",
-      "filedDate": "2026-08-13",
+      "filedDate": "2026-08-14",
       "accession": "0000919574-26-005176",
       "holdings": [
         {
@@ -291063,7 +291063,7 @@
         {
           "reportLabel": "Q2 2026",
           "reportDate": "2026-06-30",
-          "filedDate": "2026-08-13",
+          "filedDate": "2026-08-14",
           "accession": "0000919574-26-005176",
           "accessionRaw": "000091957426005176",
           "holdings": [
@@ -319031,7 +319031,7 @@
       "cik": "0000949509",
       "status": "ok",
       "reportDate": "2026-06-30",
-      "filedDate": "2026-08-13",
+      "filedDate": "2026-08-14",
       "accession": "0000949509-26-000005",
       "holdings": [
         {
@@ -319314,7 +319314,7 @@
         {
           "reportLabel": "Q2 2026",
           "reportDate": "2026-06-30",
-          "filedDate": "2026-08-13",
+          "filedDate": "2026-08-14",
           "accession": "0000949509-26-000005",
           "accessionRaw": "000094950926000005",
           "holdings": [

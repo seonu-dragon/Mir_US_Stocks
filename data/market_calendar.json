@@ -1,20 +1,20 @@
 {
- "updatedAtKst": "2026-10-06 06:41 KST",
- "from": "2026-10-06",
- "to": "2027-01-04",
+ "updatedAtKst": "2026-10-07 06:41 KST",
+ "from": "2026-10-07",
+ "to": "2027-01-05",
  "horizonDays": 90,
  "source": "exchange_calendars 4.13.2 (XKRX·XNYS) · 만기는 거래소 규칙으로 계산 · FOMC 는 연준 공개 일정표",
  "coverage": {
   "kr": {
    "exchange": "XKRX",
-   "lastSession": "2027-10-05"
+   "lastSession": "2027-10-06"
   },
   "us": {
    "exchange": "XNYS",
-   "lastSession": "2027-10-05"
+   "lastSession": "2027-10-06"
   }
  },
- "count": 17,
+ "count": 18,
  "events": [
   {
    "date": "2026-10-08",
@@ -146,6 +146,14 @@
    "kind": "holiday",
    "title": "미국 휴장",
    "name": "신정"
+  },
+  {
+   "date": "2027-01-05",
+   "market": "kr",
+   "kind": "expiry",
+   "quarterly": false,
+   "title": "코스피200 옵션 월물 만기",
+   "detail": "매월 둘째 목요일, 휴장이라 직전 거래일로 당김"
   }
  ]
 }

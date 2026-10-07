@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-07 06:39:45 KST",
+  "updatedAtKst": "2026-10-07 13:42:43 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10953,
+  "tradeCount": 10952,
   "politicianCount": 199,
   "rankings": [
     {
@@ -60,7 +60,7 @@
       "name": "Angus S King, Jr.",
       "chamber": "Senate",
       "party": "I",
-      "estReturnPct": 55.87,
+      "estReturnPct": 55.92,
       "buyCount": 26,
       "sellCount": 16,
       "tradeCount": 42,
@@ -84,7 +84,7 @@
       "name": "Rob Bresnahan",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 45.35,
+      "estReturnPct": 45.39,
       "buyCount": 111,
       "sellCount": 165,
       "tradeCount": 276,
@@ -116,6 +116,18 @@
     },
     {
       "rank": 10,
+      "id": "house-valerie-hoyle",
+      "name": "Valerie Hoyle",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 38.9,
+      "buyCount": 97,
+      "sellCount": 89,
+      "tradeCount": 186,
+      "committees": []
+    },
+    {
+      "rank": 11,
       "id": "house-jared-moskowitz",
       "name": "Jared Moskowitz",
       "chamber": "House",
@@ -124,18 +136,6 @@
       "buyCount": 129,
       "sellCount": 58,
       "tradeCount": 187,
-      "committees": []
-    },
-    {
-      "rank": 11,
-      "id": "house-valerie-hoyle",
-      "name": "Valerie Hoyle",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 35.01,
-      "buyCount": 97,
-      "sellCount": 89,
-      "tradeCount": 186,
       "committees": []
     },
     {
@@ -196,7 +196,7 @@
       "name": "Lisa McClain",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 27.33,
+      "estReturnPct": 27.38,
       "buyCount": 332,
       "sellCount": 332,
       "tradeCount": 664,
@@ -306,7 +306,7 @@
       "name": "Markwayne Mullin",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 12.39,
+      "estReturnPct": 12.42,
       "buyCount": 254,
       "sellCount": 101,
       "tradeCount": 355,
@@ -447,7 +447,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 0.45,
+      "estReturnPct": 0.47,
       "buyCount": 51,
       "sellCount": 36,
       "tradeCount": 87,
@@ -1293,7 +1293,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 27.33
+      "estReturnPct": 27.38
     },
     {
       "id": "house-gilbert-cisneros",
@@ -3779,7 +3779,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 12.39
+      "estReturnPct": 12.42
     },
     {
       "id": "house-rob-bresnahan",
@@ -4133,7 +4133,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 45.35
+      "estReturnPct": 45.39
     },
     {
       "id": "house-kevin-hern",
@@ -6268,8 +6268,8 @@
       "party": "R",
       "committees": [],
       "district": "NC05",
-      "tradeCount": 195,
-      "buyCount": 157,
+      "tradeCount": 194,
+      "buyCount": 156,
       "sellCount": 38,
       "recentTrades": [
         {
@@ -7675,7 +7675,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 35.01
+      "estReturnPct": 38.9
     },
     {
       "id": "house-lois-frankel",
@@ -11218,7 +11218,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 0.45
+      "estReturnPct": 0.47
     },
     {
       "id": "house-christopher-l-jacobs",
@@ -19694,7 +19694,7 @@
           "party": "I"
         }
       ],
-      "estReturnPct": 55.87
+      "estReturnPct": 55.92
     },
     {
       "id": "house-michael-c-burgess",
@@ -156640,7 +156640,7 @@
     },
     "GSK": {
       "ticker": "GSK",
-      "netBuys": 10,
+      "netBuys": 9,
       "netSells": 7,
       "politicianCount": 8,
       "trades": [
@@ -156912,23 +156912,6 @@
           "disclosureDate": "04/08/2022",
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020914.pdf",
-          "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Virginia Foxx",
-          "chamber": "House",
-          "ticker": "GSK",
-          "asset": "glaxoSmithKline PlC",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-08",
-          "disclosureDate": "10/08/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019717.pdf",
           "district": "NC05",
           "source": "house_ptr",
           "party": "R"
@@ -213589,7 +213572,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-06",
-    "measuredTrades": 6872,
+    "measuredTrades": 6869,
     "members": [
       {
         "name": "Nancy Pelosi",
@@ -213856,8 +213839,8 @@
         "name": "Katie Britt",
         "tx": {
           "n": 24,
-          "avgExcess": 5.23,
-          "medianExcess": 0.06,
+          "avgExcess": 5.2,
+          "medianExcess": -0.22,
           "winRate": 50.0
         },
         "disc": {
@@ -213957,7 +213940,7 @@
           "medianExcess": 8.68,
           "winRate": 61.5
         },
-        "buyAvgExcess": -7.73,
+        "buyAvgExcess": -7.72,
         "lagDays": 22,
         "id": "house-julie-johnson",
         "chamber": "House",
@@ -214002,7 +213985,7 @@
         "tx": {
           "n": 156,
           "avgExcess": 3.79,
-          "medianExcess": 1.51,
+          "medianExcess": 1.52,
           "winRate": 52.6
         },
         "disc": {
@@ -214047,7 +214030,7 @@
         },
         "disc": {
           "n": 302,
-          "avgExcess": 3.22,
+          "avgExcess": 3.21,
           "medianExcess": 0.94,
           "winRate": 51.0
         },
@@ -214335,16 +214318,16 @@
         "tx": {
           "n": 403,
           "avgExcess": -0.53,
-          "medianExcess": -1.0,
+          "medianExcess": -1.11,
           "winRate": 45.7
         },
         "disc": {
           "n": 394,
           "avgExcess": -0.45,
           "medianExcess": -0.76,
-          "winRate": 45.2
+          "winRate": 45.4
         },
-        "buyAvgExcess": -3.65,
+        "buyAvgExcess": -3.66,
         "lagDays": 28,
         "id": "senate-john-boozman",
         "chamber": "Senate",
@@ -214412,16 +214395,16 @@
       {
         "name": "Lisa McClain",
         "tx": {
-          "n": 645,
-          "avgExcess": -0.95,
-          "medianExcess": -0.91,
-          "winRate": 49.0
+          "n": 646,
+          "avgExcess": -0.89,
+          "medianExcess": -0.78,
+          "winRate": 49.1
         },
         "disc": {
-          "n": 645,
-          "avgExcess": -0.54,
+          "n": 646,
+          "avgExcess": -0.48,
           "medianExcess": -0.35,
-          "winRate": 49.6
+          "winRate": 49.7
         },
         "buyAvgExcess": -6.93,
         "lagDays": 20,
@@ -214533,7 +214516,7 @@
         "name": "Sheldon Whitehouse",
         "tx": {
           "n": 91,
-          "avgExcess": -2.45,
+          "avgExcess": -2.46,
           "medianExcess": 1.77,
           "winRate": 53.8
         },
@@ -214573,7 +214556,7 @@
         "name": "Jonathan Jackson",
         "tx": {
           "n": 72,
-          "avgExcess": -4.54,
+          "avgExcess": -4.53,
           "medianExcess": -8.45,
           "winRate": 37.5
         },
@@ -214583,7 +214566,7 @@
           "medianExcess": -6.18,
           "winRate": 41.7
         },
-        "buyAvgExcess": -12.92,
+        "buyAvgExcess": -12.9,
         "lagDays": 21,
         "id": "house-jonathan-jackson",
         "chamber": "House",
@@ -214608,7 +214591,7 @@
         "tx": {
           "n": 365,
           "avgExcess": -5.14,
-          "medianExcess": -8.99,
+          "medianExcess": -9.03,
           "winRate": 36.7
         },
         "disc": {
@@ -214646,18 +214629,18 @@
       {
         "name": "Gilbert Cisneros",
         "tx": {
-          "n": 630,
-          "avgExcess": -5.88,
-          "medianExcess": -7.77,
-          "winRate": 37.5
+          "n": 627,
+          "avgExcess": -5.89,
+          "medianExcess": -7.76,
+          "winRate": 37.6
         },
         "disc": {
-          "n": 629,
-          "avgExcess": -6.22,
-          "medianExcess": -7.64,
-          "winRate": 37.0
+          "n": 626,
+          "avgExcess": -6.25,
+          "medianExcess": -7.81,
+          "winRate": 36.9
         },
-        "buyAvgExcess": -8.53,
+        "buyAvgExcess": -8.5,
         "lagDays": 24,
         "id": "house-gilbert-cisneros",
         "chamber": "House",

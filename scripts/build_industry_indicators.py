@@ -238,7 +238,7 @@ INDICATORS: list[dict] = [
         ["tech_semi", "kr_industry"], "MU SNDK WDC STX 005930 000660", tpex_codes=["8299", "3260"],
         related_ind=["kr_xpi_dram", "kr_xpi_flash"], note="가격×물량의 공식 월간 프록시 — DRAM 현물가를 대신한다. 南亞科·華邦電(TWSE) + 群聯·威剛(TPEx)"),
     _tw("tw_handset_optics_rev", ["3008", "4938"], "대만 스마트폰 광학·조립 월매출 합산", "Taiwan Handset Optics/Assembly Revenue (Largan·Pegatron)",
-        ["tech_semi"], "AAPL QCOM SWKS QRVO 011070", note="아이폰 빌드 사이클. 大立光 3008·和碩 4938"),
+        ["tech_semi"], "AAPL QCOM SWKS 011070", note="아이폰 빌드 사이클. 大立光 3008·和碩 4938"),
     _tw("tw_container_liner_rev", ["2603", "2609", "2615"], "대만 컨테이너 3사 월매출 합산", "Taiwan Container Liners Revenue (Evergreen·Yang Ming·Wan Hai)",
         ["shipping_logistics"], "ZIM MATX DAC GSL CMRE 011200", note="운임×물동량의 실제 매출 — SCFI 헤드라인의 재배포 가능한 대체. 長榮 2603·陽明 2609·萬海 2615"),
     _tw("tw_aspeed_bmc_rev", [], "Aspeed(BMC) 월매출", "Aspeed Technology Monthly Revenue (TPEx 5274)", ["ai_datacenter", "tech_semi"],

@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-06 16:16 KST",
+  "updatedAtKst": "2026-10-07 16:18 KST",
   "lastFileDate": "2026.11.24",
-  "count": 41,
+  "count": 39,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -246,19 +246,15 @@
       ]
     },
     {
-      "company": "다비오",
+      "company": "엘리스그룹",
       "ticker": null,
       "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "대신증권",
-      "fileDate": "2026.10.19",
-      "accession": "kr-ipo-bidding-다비오",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        12300,
-        16600
-      ]
+      "stageLabel": "신규 상장 예정",
+      "form": "미래에셋증권,삼성증권",
+      "fileDate": "2026.10.20",
+      "accession": "kr-ipo-listed-엘리스그룹",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 90500
     },
     {
       "company": "SK증권스팩14호",
@@ -300,7 +296,8 @@
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 23500,
       "instCompetition": 1097.62,
-      "commitPct": 5.29
+      "commitPct": 5.29,
+      "subscriptionCompetition": 685.0
     },
     {
       "company": "디티에스(구.동양티에스)",
@@ -330,21 +327,6 @@
       "offerPriceBand": [
         6800,
         7800
-      ]
-    },
-    {
-      "company": "엘리스그룹",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "미래에셋증권,삼성증권",
-      "fileDate": "2026.10.07",
-      "accession": "kr-ipo-bidding-엘리스그룹",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        70400,
-        90500
       ]
     },
     {
@@ -434,7 +416,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "",
+      "form": "한국투자증권",
       "fileDate": "2026.09.22",
       "accession": "kr-ipo-listed-한국스팩17호",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -576,20 +558,6 @@
       "offerPrice": 21500,
       "commitPct": 1.91,
       "subscriptionCompetition": 666.78
-    },
-    {
-      "company": "레메디",
-      "ticker": "387690",
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.07.13",
-      "accession": "kr-ipo-listed-레메디",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 20700,
-      "instCompetition": 1146.41,
-      "commitPct": 17.93,
-      "subscriptionCompetition": 1706.71
     }
   ]
 }

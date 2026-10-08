@@ -1,11 +1,121 @@
 {
-  "updatedAtKst": "2026-10-07 13:34 KST",
-  "lastFileDate": "2026-10-06",
+  "updatedAtKst": "2026-10-08 13:33 KST",
+  "lastFileDate": "2026-10-07",
   "partialFetch": false,
-  "count": 551,
+  "count": 562,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "FireFly Robotics, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-07",
+      "accession": "0001493152-26-046104:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1660851/000149315226046104/forms-1.htm"
+    },
+    {
+      "company": "Elements Ventures Group Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001477932-26-006096:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1954227/000147793226006096/elements_s1a.htm"
+    },
+    {
+      "company": "Elements Ventures Group Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001477932-26-006096:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1954227/000147793226006096/elements_s1a.htm"
+    },
+    {
+      "company": "Harbour Island Acquisition Corp. I",
+      "ticker": "HRIA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001213900-26-107627:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131072/000121390026107627/ea0299154-03.htm"
+    },
+    {
+      "company": "Harbour Island Acquisition Corp. I",
+      "ticker": "HRIA",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001213900-26-107627:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131072/000121390026107627/ea0299154-03.htm"
+    },
+    {
+      "company": "VS Trust  (SVIX, UVIX)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001213900-26-107622:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1793497/000121390026107622/ea0307918-s1a1_vstrust.htm"
+    },
+    {
+      "company": "VS Trust  (SVIX, UVIX)",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001213900-26-107622:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1793497/000121390026107622/ea0307918-s1a1_vstrust.htm"
+    },
+    {
+      "company": "Retension Pharmaceuticals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001213900-26-107572:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2002988/000121390026107572/ea0276911-09.htm"
+    },
+    {
+      "company": "Retension Pharmaceuticals, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-07",
+      "accession": "0001213900-26-107572:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2002988/000121390026107572/ea0276911-09.htm"
+    },
+    {
+      "company": "Decoy Therapeutics Inc.",
+      "ticker": "DCOY",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-07",
+      "accession": "0001193125-26-417053:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1615219/000119312526417053/dcoy-20261007.htm"
+    },
+    {
+      "company": "Centinel Spine Holdco, Inc.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-07",
+      "accession": "0001104659-26-114375:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2132065/000110465926114375/tm2613312-6_s1.htm"
+    },
     {
       "company": "ACTUATE THERAPEUTICS, INC.",
       "ticker": "ACTU",

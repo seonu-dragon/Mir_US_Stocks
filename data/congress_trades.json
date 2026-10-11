@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-11 06:40:16 KST",
+  "updatedAtKst": "2026-10-11 13:43:37 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10966,
+  "tradeCount": 10961,
   "politicianCount": 199,
   "rankings": [
     {
@@ -145,9 +145,9 @@
       "chamber": "House",
       "party": "D",
       "estReturnPct": 31.99,
-      "buyCount": 423,
-      "sellCount": 144,
-      "tradeCount": 568,
+      "buyCount": 421,
+      "sellCount": 143,
+      "tradeCount": 565,
       "committees": [
         "Financial Services"
       ]
@@ -1682,9 +1682,9 @@
         "Financial Services"
       ],
       "district": "NJ05",
-      "tradeCount": 568,
-      "buyCount": 423,
-      "sellCount": 144,
+      "tradeCount": 565,
+      "buyCount": 421,
+      "sellCount": 143,
       "recentTrades": [
         {
           "politician": "Josh Gottheimer",
@@ -38061,71 +38061,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-mo-brooks",
-      "name": "Mo Brooks",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "AL05",
-      "tradeCount": 3,
-      "buyCount": 1,
-      "sellCount": 2,
-      "recentTrades": [
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "VZ",
-          "asset": "Verizon Communications Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-07-22",
-          "disclosureDate": "07/22/2022",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021568.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-12",
-          "disclosureDate": "10/21/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019626.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mo Brooks",
-          "chamber": "House",
-          "ticker": "T",
-          "asset": "AT&T Inc.",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-12",
-          "disclosureDate": "10/12/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020998.pdf",
-          "district": "AL05",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "house-david-e-price",
       "name": "David E. Price",
       "chamber": "House",
@@ -40014,6 +39949,37 @@
           "district": "MA06",
           "source": "house_ptr",
           "party": "D"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-mo-brooks",
+      "name": "Mo Brooks",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "AL05",
+      "tradeCount": 1,
+      "buyCount": 0,
+      "sellCount": 1,
+      "recentTrades": [
+        {
+          "politician": "Mo Brooks",
+          "chamber": "House",
+          "ticker": "VZ",
+          "asset": "Verizon Communications Inc.",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-07-22",
+          "disclosureDate": "07/22/2022",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021568.pdf",
+          "district": "AL05",
+          "source": "house_ptr",
+          "party": "R"
         }
       ],
       "estReturnPct": null
@@ -70228,8 +70194,8 @@
     "QCOM": {
       "ticker": "QCOM",
       "netBuys": 26,
-      "netSells": 26,
-      "politicianCount": 17,
+      "netSells": 25,
+      "politicianCount": 16,
       "trades": [
         {
           "politician": "Maria Elvira Salazar",
@@ -74138,9 +74104,9 @@
     },
     "T": {
       "ticker": "T",
-      "netBuys": 22,
-      "netSells": 17,
-      "politicianCount": 22,
+      "netBuys": 21,
+      "netSells": 16,
+      "politicianCount": 21,
       "trades": [
         {
           "politician": "Tim Moore",
@@ -140957,7 +140923,7 @@
     },
     "BX": {
       "ticker": "BX",
-      "netBuys": 14,
+      "netBuys": 13,
       "netSells": 6,
       "politicianCount": 12,
       "trades": [
@@ -141280,23 +141246,6 @@
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023313.pdf",
           "district": "NC06",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Josh Gottheimer",
-          "chamber": "House",
-          "ticker": "BX",
-          "asset": "blackstone Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-12",
-          "disclosureDate": "11/04/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019761.pdf",
-          "district": "NJ05",
           "source": "house_ptr",
           "party": "D"
         }
@@ -200711,9 +200660,9 @@
     },
     "AFRM": {
       "ticker": "AFRM",
-      "netBuys": 3,
+      "netBuys": 2,
       "netSells": 1,
-      "politicianCount": 3,
+      "politicianCount": 2,
       "trades": [
         {
           "politician": "Daniel Goldman",
@@ -200763,23 +200712,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019748.pdf",
           "district": "NY03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Josh Gottheimer",
-          "chamber": "House",
-          "ticker": "AFRM",
-          "asset": "Affirm Holdings, Inc. - Class A",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-12",
-          "disclosureDate": "11/04/2021",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019761.pdf",
-          "district": "NJ05",
           "source": "house_ptr",
           "party": "D"
         }
@@ -213698,7 +213630,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-09",
-    "measuredTrades": 6872,
+    "measuredTrades": 6868,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -213768,26 +213700,6 @@
         "party": "R"
       },
       {
-        "name": "Pete Sessions",
-        "tx": {
-          "n": 20,
-          "avgExcess": 14.53,
-          "medianExcess": 13.36,
-          "winRate": 80.0
-        },
-        "disc": {
-          "n": 14,
-          "avgExcess": 9.31,
-          "medianExcess": 12.4,
-          "winRate": 71.4
-        },
-        "buyAvgExcess": 13.89,
-        "lagDays": 4,
-        "id": "house-pete-sessions",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Kelly Louise Morrison",
         "tx": {
           "n": 23,
@@ -213800,6 +213712,26 @@
         "id": "house-kelly-louise-morrison",
         "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "Pete Sessions",
+        "tx": {
+          "n": 21,
+          "avgExcess": 14.19,
+          "medianExcess": 11.91,
+          "winRate": 81.0
+        },
+        "disc": {
+          "n": 15,
+          "avgExcess": 8.45,
+          "medianExcess": 11.72,
+          "winRate": 66.7
+        },
+        "buyAvgExcess": 13.89,
+        "lagDays": 4,
+        "id": "house-pete-sessions",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Tina Smith",
@@ -213924,19 +213856,19 @@
       {
         "name": "Thomas H Tuberville",
         "tx": {
-          "n": 348,
-          "avgExcess": 6.11,
-          "medianExcess": 5.24,
-          "winRate": 58.0
+          "n": 339,
+          "avgExcess": 6.54,
+          "medianExcess": 5.71,
+          "winRate": 58.1
         },
         "disc": {
-          "n": 348,
-          "avgExcess": 3.23,
-          "medianExcess": 2.44,
-          "winRate": 54.0
+          "n": 339,
+          "avgExcess": 3.66,
+          "medianExcess": 2.81,
+          "winRate": 54.9
         },
-        "buyAvgExcess": -13.43,
-        "lagDays": 40,
+        "buyAvgExcess": -14.31,
+        "lagDays": 41,
         "id": "senate-thomas-h-tuberville",
         "chamber": "Senate",
         "party": "R"
@@ -214149,18 +214081,18 @@
       {
         "name": "Josh Gottheimer",
         "tx": {
-          "n": 303,
-          "avgExcess": 2.61,
-          "medianExcess": 2.41,
-          "winRate": 52.8
+          "n": 302,
+          "avgExcess": 2.56,
+          "medianExcess": 2.21,
+          "winRate": 52.6
         },
         "disc": {
-          "n": 301,
-          "avgExcess": 3.17,
-          "medianExcess": 0.25,
-          "winRate": 50.2
+          "n": 300,
+          "avgExcess": 3.2,
+          "medianExcess": 0.73,
+          "winRate": 50.3
         },
-        "buyAvgExcess": -0.42,
+        "buyAvgExcess": -0.5,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
@@ -214226,26 +214158,6 @@
         "party": ""
       },
       {
-        "name": "Kevin Hern",
-        "tx": {
-          "n": 100,
-          "avgExcess": 1.74,
-          "medianExcess": 2.53,
-          "winRate": 60.0
-        },
-        "disc": {
-          "n": 64,
-          "avgExcess": -0.18,
-          "medianExcess": -0.31,
-          "winRate": 50.0
-        },
-        "buyAvgExcess": -2.06,
-        "lagDays": 6,
-        "id": "house-kevin-hern",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Richard Dean McCormick",
         "tx": {
           "n": 43,
@@ -214262,6 +214174,26 @@
         "buyAvgExcess": -6.25,
         "lagDays": 13,
         "id": "house-richard-dean-mccormick",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Kevin Hern",
+        "tx": {
+          "n": 99,
+          "avgExcess": 1.53,
+          "medianExcess": 2.44,
+          "winRate": 59.6
+        },
+        "disc": {
+          "n": 64,
+          "avgExcess": -0.18,
+          "medianExcess": -0.31,
+          "winRate": 50.0
+        },
+        "buyAvgExcess": -2.06,
+        "lagDays": 6,
+        "id": "house-kevin-hern",
         "chamber": "House",
         "party": "R"
       },
@@ -214904,6 +214836,26 @@
         "party": "R"
       },
       {
+        "name": "Virginia Foxx",
+        "tx": {
+          "n": 41,
+          "avgExcess": -10.52,
+          "medianExcess": -10.25,
+          "winRate": 29.3
+        },
+        "disc": {
+          "n": 38,
+          "avgExcess": -9.4,
+          "medianExcess": -9.07,
+          "winRate": 34.2
+        },
+        "buyAvgExcess": -12.33,
+        "lagDays": 15,
+        "id": "house-virginia-foxx",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Lloyd Doggett",
         "tx": {
           "n": 40,
@@ -214984,26 +214936,6 @@
         "party": "R"
       },
       {
-        "name": "Virginia Foxx",
-        "tx": {
-          "n": 36,
-          "avgExcess": -13.98,
-          "medianExcess": -12.44,
-          "winRate": 22.2
-        },
-        "disc": {
-          "n": 33,
-          "avgExcess": -13.22,
-          "medianExcess": -12.09,
-          "winRate": 27.3
-        },
-        "buyAvgExcess": -16.64,
-        "lagDays": 15,
-        "id": "house-virginia-foxx",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "James French Hill",
         "tx": {
           "n": 15,
@@ -215047,8 +214979,8 @@
         "Real Estate",
         "Technology"
       ],
-      "buyCount": 438,
-      "sellCount": 147,
+      "buyCount": 436,
+      "sellCount": 146,
       "topTickers": [
         {
           "ticker": "MSFT",
@@ -215086,7 +215018,7 @@
       "topPoliticians": [
         {
           "name": "Josh Gottheimer",
-          "count": 423
+          "count": 421
         },
         {
           "name": "Nancy Pelosi",

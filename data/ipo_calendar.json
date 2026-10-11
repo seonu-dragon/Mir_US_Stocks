@@ -1,8 +1,8 @@
 {
-  "updatedAtKst": "2026-10-10 13:34 KST",
+  "updatedAtKst": "2026-10-11 13:34 KST",
   "lastFileDate": "2026-10-09",
   "partialFetch": false,
-  "count": 585,
+  "count": 571,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
@@ -5858,148 +5858,6 @@
       "link": "https://www.sec.gov/Archives/edgar/data/1903784/000118518526003448/vogenx424b4081126.htm",
       "offerPrice": 13.0,
       "offerPriceChecked": 2
-    },
-    {
-      "company": "Karman Line Acquisition Corp.",
-      "ticker": "XTER",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001829126-26-008622:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2134856/000182912626008622/karmanlineacq_s1a.htm"
-    },
-    {
-      "company": "Karman Line Acquisition Corp.",
-      "ticker": "XTER",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001829126-26-008622:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2134856/000182912626008622/karmanlineacq_s1a.htm"
-    },
-    {
-      "company": "Aura Consolidated Group, Inc.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-11",
-      "accession": "0001628280-26-055463:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2055301/000162828026055463/aura-sx1.htm"
-    },
-    {
-      "company": "SharonAI Holdings Inc.  (SHAZ, SHAZW)",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001493152-26-037203:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2068385/000149315226037203/forms-1a.htm"
-    },
-    {
-      "company": "SharonAI Holdings Inc.  (SHAZ, SHAZW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001493152-26-037203:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2068385/000149315226037203/forms-1a.htm"
-    },
-    {
-      "company": "AMERICAN BATTERY MATERIALS, INC.",
-      "ticker": "BLTH",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001493152-26-037118:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1487718/000149315226037118/forms-1a.htm"
-    },
-    {
-      "company": "AMERICAN BATTERY MATERIALS, INC.",
-      "ticker": "BLTH",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001493152-26-037118:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1487718/000149315226037118/forms-1a.htm"
-    },
-    {
-      "company": "NorthStrive Acquisition Corp I.",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001213900-26-087889:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133719/000121390026087889/ea0298151-02.htm"
-    },
-    {
-      "company": "NorthStrive Acquisition Corp I.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001213900-26-087889:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/2133719/000121390026087889/ea0298151-02.htm"
-    },
-    {
-      "company": "FTC Solar, Inc.",
-      "ticker": "FTCI",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-11",
-      "accession": "0001213900-26-087398:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1828161/000121390026087398/ea0301271-s1_ftcsolar.htm"
-    },
-    {
-      "company": "DATA I/O CORP",
-      "ticker": "DAIO",
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001193125-26-344149:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/351998/000119312526344149/d128048ds1a.htm"
-    },
-    {
-      "company": "DATA I/O CORP",
-      "ticker": "DAIO",
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-11",
-      "accession": "0001193125-26-344149:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/351998/000119312526344149/d128048ds1a.htm"
-    },
-    {
-      "company": "Janus Living, Inc.",
-      "ticker": "JAN",
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-08-11",
-      "accession": "0001104659-26-094083:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2100805/000110465926094083/tm2621355-9_424b4.htm",
-      "offerPrice": 29.0,
-      "offerPriceChecked": 2
-    },
-    {
-      "company": "YOUNEEQAI TECHNICAL SERVICES, INC.",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1",
-      "fileDate": "2026-08-11",
-      "accession": "0001065949-26-000044:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1976923/000106594926000044/yqais1v4.htm"
     }
   ]
 }

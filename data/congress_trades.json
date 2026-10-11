@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-11 13:43:37 KST",
+  "updatedAtKst": "2026-10-12 06:39:00 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 10961,
@@ -213630,7 +213630,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-09",
-    "measuredTrades": 6868,
+    "measuredTrades": 6861,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -213700,6 +213700,26 @@
         "party": "R"
       },
       {
+        "name": "Pete Sessions",
+        "tx": {
+          "n": 20,
+          "avgExcess": 14.53,
+          "medianExcess": 13.36,
+          "winRate": 80.0
+        },
+        "disc": {
+          "n": 14,
+          "avgExcess": 9.31,
+          "medianExcess": 12.4,
+          "winRate": 71.4
+        },
+        "buyAvgExcess": 13.89,
+        "lagDays": 4,
+        "id": "house-pete-sessions",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Kelly Louise Morrison",
         "tx": {
           "n": 23,
@@ -213712,26 +213732,6 @@
         "id": "house-kelly-louise-morrison",
         "chamber": "House",
         "party": "D"
-      },
-      {
-        "name": "Pete Sessions",
-        "tx": {
-          "n": 21,
-          "avgExcess": 14.19,
-          "medianExcess": 11.91,
-          "winRate": 81.0
-        },
-        "disc": {
-          "n": 15,
-          "avgExcess": 8.45,
-          "medianExcess": 11.72,
-          "winRate": 66.7
-        },
-        "buyAvgExcess": 13.89,
-        "lagDays": 4,
-        "id": "house-pete-sessions",
-        "chamber": "House",
-        "party": "R"
       },
       {
         "name": "Tina Smith",
@@ -214836,26 +214836,6 @@
         "party": "R"
       },
       {
-        "name": "Virginia Foxx",
-        "tx": {
-          "n": 41,
-          "avgExcess": -10.52,
-          "medianExcess": -10.25,
-          "winRate": 29.3
-        },
-        "disc": {
-          "n": 38,
-          "avgExcess": -9.4,
-          "medianExcess": -9.07,
-          "winRate": 34.2
-        },
-        "buyAvgExcess": -12.33,
-        "lagDays": 15,
-        "id": "house-virginia-foxx",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Lloyd Doggett",
         "tx": {
           "n": 40,
@@ -214932,6 +214912,26 @@
         "buyAvgExcess": -21.71,
         "lagDays": 9,
         "id": "house-c-scott-franklin",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Virginia Foxx",
+        "tx": {
+          "n": 36,
+          "avgExcess": -13.98,
+          "medianExcess": -12.44,
+          "winRate": 22.2
+        },
+        "disc": {
+          "n": 33,
+          "avgExcess": -13.22,
+          "medianExcess": -12.09,
+          "winRate": 27.3
+        },
+        "buyAvgExcess": -16.64,
+        "lagDays": 15,
+        "id": "house-virginia-foxx",
         "chamber": "House",
         "party": "R"
       },

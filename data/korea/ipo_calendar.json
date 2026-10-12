@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-11 16:17 KST",
+  "updatedAtKst": "2026-10-12 16:20 KST",
   "lastFileDate": "2026.11.24",
-  "count": 39,
+  "count": 42,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -21,6 +21,21 @@
       ]
     },
     {
+      "company": "엔키화이트햇",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "신영증권",
+      "fileDate": "2026.11.12",
+      "accession": "kr-ipo-bidding-엔키화이트햇",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        13000,
+        16500
+      ]
+    },
+    {
       "company": "하나에어로다이내믹스",
       "ticker": null,
       "stage": "filed",
@@ -33,6 +48,21 @@
       "offerPriceBand": [
         4700,
         5700
+      ]
+    },
+    {
+      "company": "다비오",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "대신증권",
+      "fileDate": "2026.11.10",
+      "accession": "kr-ipo-bidding-다비오",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        12300,
+        16600
       ]
     },
     {
@@ -63,6 +93,21 @@
       "offerPriceBand": [
         9700,
         12200
+      ]
+    },
+    {
+      "company": "영광와이케이엠씨",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "대신증권",
+      "fileDate": "2026.11.04",
+      "accession": "kr-ipo-bidding-영광와이케이엠씨",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        9400,
+        11000
       ]
     },
     {
@@ -405,7 +450,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "대신증권",
+      "form": "",
       "fileDate": "2026.09.23",
       "accession": "kr-ipo-listed-와이즈플래닛컴퍼니",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -419,7 +464,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "KB증권",
+      "form": "",
       "fileDate": "2026.09.22",
       "accession": "kr-ipo-listed-KB스팩34호",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -443,7 +488,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "대신증권",
+      "form": "",
       "fileDate": "2026.09.21",
       "accession": "kr-ipo-listed-네오사피엔스",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",

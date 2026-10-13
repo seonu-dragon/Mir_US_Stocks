@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-12 16:20 KST",
+  "updatedAtKst": "2026-10-13 16:34 KST",
   "lastFileDate": "2026.11.24",
-  "count": 42,
+  "count": 41,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -18,6 +18,21 @@
       "offerPriceBand": [
         15000,
         17800
+      ]
+    },
+    {
+      "company": "아델",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "삼성증권,미래에셋증권",
+      "fileDate": "2026.11.23",
+      "accession": "kr-ipo-bidding-아델",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        18000,
+        25000
       ]
     },
     {
@@ -63,6 +78,21 @@
       "offerPriceBand": [
         12300,
         16600
+      ]
+    },
+    {
+      "company": "에이엘로봇",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "대신증권",
+      "fileDate": "2026.11.06",
+      "accession": "kr-ipo-bidding-에이엘로봇",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        15700,
+        17600
       ]
     },
     {
@@ -171,6 +201,21 @@
       ]
     },
     {
+      "company": "SK증권스팩14호",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "SK증권",
+      "fileDate": "2026.10.27",
+      "accession": "kr-ipo-listed-SK증권스팩14호",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        2000,
+        2000
+      ]
+    },
+    {
       "company": "아이엠스팩1호",
       "ticker": null,
       "stage": "filed",
@@ -186,19 +231,17 @@
       ]
     },
     {
-      "company": "에이엘로봇",
+      "company": "디티에스(구.동양티에스)",
       "ticker": null,
       "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "대신증권",
-      "fileDate": "2026.10.26",
-      "accession": "kr-ipo-bidding-에이엘로봇",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        15700,
-        17600
-      ]
+      "stageLabel": "신규 상장 예정",
+      "form": "대신증권,유진증권",
+      "fileDate": "2026.10.23",
+      "accession": "kr-ipo-listed-디티에스(구.동양티에스)",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 18500,
+      "instCompetition": 983.98,
+      "commitPct": 13.31
     },
     {
       "company": "래블업",
@@ -329,22 +372,8 @@
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
       "offerPrice": 90500,
       "instCompetition": 388.84,
-      "commitPct": 13.7
-    },
-    {
-      "company": "SK증권스팩14호",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "SK증권",
-      "fileDate": "2026.10.15",
-      "accession": "kr-ipo-bidding-SK증권스팩14호",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        2000,
-        2000
-      ]
+      "commitPct": 13.7,
+      "subscriptionCompetition": 408.0
     },
     {
       "company": "멜콘(구.에스앤에프솔루션)",
@@ -373,21 +402,6 @@
       "instCompetition": 1097.62,
       "commitPct": 5.29,
       "subscriptionCompetition": 685.0
-    },
-    {
-      "company": "디티에스(구.동양티에스)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "대신증권,유진증권",
-      "fileDate": "2026.10.13",
-      "accession": "kr-ipo-bidding-디티에스(구.동양티에스)",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        17000,
-        18500
-      ]
     },
     {
       "company": "브릴스",
@@ -422,7 +436,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "유진투자증권,미래에셋증권",
+      "form": "",
       "fileDate": "2026.09.29",
       "accession": "kr-ipo-listed-빅웨이브로보틱스",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -577,34 +591,6 @@
       "instCompetition": 50.4,
       "commitPct": 2.23,
       "subscriptionCompetition": 3.09
-    },
-    {
-      "company": "케이앤에스아이앤씨",
-      "ticker": "487400",
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.08.13",
-      "accession": "kr-ipo-listed-케이앤에스아이앤씨",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 11000,
-      "instCompetition": 938.24,
-      "commitPct": 0.78,
-      "subscriptionCompetition": 1079.55
-    },
-    {
-      "company": "딜리셔스",
-      "ticker": "483350",
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.08.12",
-      "accession": "kr-ipo-listed-딜리셔스",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 7000,
-      "instCompetition": 184.06,
-      "commitPct": 0.1,
-      "subscriptionCompetition": 10.29
     }
   ]
 }

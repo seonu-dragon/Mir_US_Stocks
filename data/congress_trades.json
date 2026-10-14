@@ -1,10 +1,10 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-14 06:39:21 KST",
+  "updatedAtKst": "2026-10-14 13:43:09 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10948,
-  "politicianCount": 199,
+  "tradeCount": 10939,
+  "politicianCount": 198,
   "rankings": [
     {
       "rank": 1,
@@ -44,6 +44,18 @@
     },
     {
       "rank": 4,
+      "id": "house-julia-letlow",
+      "name": "Julia Letlow",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 51.43,
+      "buyCount": 70,
+      "sellCount": 34,
+      "tradeCount": 104,
+      "committees": []
+    },
+    {
+      "rank": 5,
       "id": "senate-katie-britt",
       "name": "Katie Britt",
       "chamber": "Senate",
@@ -55,7 +67,7 @@
       "committees": []
     },
     {
-      "rank": 5,
+      "rank": 6,
       "id": "house-jefferson-shreve",
       "name": "Jefferson Shreve",
       "chamber": "House",
@@ -67,7 +79,7 @@
       "committees": []
     },
     {
-      "rank": 6,
+      "rank": 7,
       "id": "senate-angus-s-king-jr",
       "name": "Angus S King, Jr.",
       "chamber": "Senate",
@@ -76,18 +88,6 @@
       "buyCount": 26,
       "sellCount": 16,
       "tradeCount": 42,
-      "committees": []
-    },
-    {
-      "rank": 7,
-      "id": "house-julia-letlow",
-      "name": "Julia Letlow",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 40.29,
-      "buyCount": 70,
-      "sellCount": 34,
-      "tradeCount": 104,
       "committees": []
     },
     {
@@ -396,7 +396,7 @@
       "name": "Gilbert Cisneros",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 2.81,
+      "estReturnPct": 2.86,
       "buyCount": 520,
       "sellCount": 127,
       "tradeCount": 651,
@@ -483,7 +483,7 @@
       "name": "Dan Newhouse",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -1.26,
+      "estReturnPct": -1.16,
       "buyCount": 57,
       "sellCount": 15,
       "tradeCount": 72,
@@ -579,7 +579,7 @@
       "name": "Scott Franklin",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -12.06,
+      "estReturnPct": -11.95,
       "buyCount": 36,
       "sellCount": 14,
       "tradeCount": 50,
@@ -618,9 +618,9 @@
       "party": "R",
       "committees": [],
       "district": "",
-      "tradeCount": 887,
-      "buyCount": 349,
-      "sellCount": 538,
+      "tradeCount": 885,
+      "buyCount": 348,
+      "sellCount": 537,
       "recentTrades": [
         {
           "politician": "Thomas H Tuberville",
@@ -1671,7 +1671,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 2.81
+      "estReturnPct": 2.86
     },
     {
       "id": "house-josh-gottheimer",
@@ -9826,7 +9826,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 40.29
+      "estReturnPct": 51.43
     },
     {
       "id": "senate-john-w-hickenlooper",
@@ -13012,7 +13012,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -1.26
+      "estReturnPct": -1.16
     },
     {
       "id": "house-greg-landsman",
@@ -14791,9 +14791,9 @@
       "party": "D",
       "committees": [],
       "district": "OR03",
-      "tradeCount": 63,
+      "tradeCount": 62,
       "buyCount": 26,
-      "sellCount": 37,
+      "sellCount": 36,
       "recentTrades": [
         {
           "politician": "Earl Blumenauer",
@@ -15134,360 +15134,6 @@
           "district": "OR03",
           "source": "house_ptr",
           "party": "D"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
-      "id": "house-mark-green",
-      "name": "Mark Green",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "TN07",
-      "tradeCount": 57,
-      "buyCount": 15,
-      "sellCount": 42,
-      "recentTrades": [
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-02-28",
-          "disclosureDate": "03/05/2025",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027900.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2025-02-18",
-          "disclosureDate": "02/25/2025",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027845.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$500,001 - $1,000,000",
-          "amountMid": 750000,
-          "transactionDate": "2025-01-30",
-          "disclosureDate": "02/03/2025",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026701.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-01-02",
-          "disclosureDate": "01/08/2025",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026538.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2024-12-03",
-          "disclosureDate": "12/16/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026418.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2024-10-24",
-          "disclosureDate": "10/28/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026092.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-09-30",
-          "disclosureDate": "10/02/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025948.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2024-08-28",
-          "disclosureDate": "09/05/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025797.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2024-08-05",
-          "disclosureDate": "08/07/2024",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025614.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2024-07-01",
-          "disclosureDate": "07/08/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025429.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-06-03",
-          "disclosureDate": "06/11/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025255.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2024-05-10",
-          "disclosureDate": "05/13/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025064.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-04-25",
-          "disclosureDate": "04/30/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024954.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-04-01",
-          "disclosureDate": "04/04/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024800.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2024-03-11",
-          "disclosureDate": "03/13/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024677.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2024-02-26",
-          "disclosureDate": "02/29/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024572.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-01-29",
-          "disclosureDate": "01/31/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024413.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-01-11",
-          "disclosureDate": "01/15/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024062.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "NGL",
-          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$250,001 - $500,000",
-          "amountMid": 375000,
-          "transactionDate": "2023-08-04",
-          "disclosureDate": "08/07/2023",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023441.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "ET",
-          "asset": "Energy Transfer LP Common Units",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$100,001",
-          "amountMid": 100001,
-          "transactionDate": "2023-07-18",
-          "disclosureDate": "07/20/2023",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023358.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
         }
       ],
       "estReturnPct": null
@@ -16555,6 +16201,360 @@
       "estReturnPct": 63.26
     },
     {
+      "id": "house-mark-green",
+      "name": "Mark Green",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "TN07",
+      "tradeCount": 54,
+      "buyCount": 13,
+      "sellCount": 41,
+      "recentTrades": [
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-02-28",
+          "disclosureDate": "03/05/2025",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027900.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2025-02-18",
+          "disclosureDate": "02/25/2025",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027845.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$500,001 - $1,000,000",
+          "amountMid": 750000,
+          "transactionDate": "2025-01-30",
+          "disclosureDate": "02/03/2025",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026701.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-01-02",
+          "disclosureDate": "01/08/2025",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026538.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2024-12-03",
+          "disclosureDate": "12/16/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026418.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2024-10-24",
+          "disclosureDate": "10/28/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026092.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-09-30",
+          "disclosureDate": "10/02/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025948.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Advisors Investment Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2024-08-28",
+          "disclosureDate": "09/05/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025797.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2024-08-05",
+          "disclosureDate": "08/07/2024",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025614.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2024-07-01",
+          "disclosureDate": "07/08/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025429.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-06-03",
+          "disclosureDate": "06/11/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025255.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2024-05-10",
+          "disclosureDate": "05/13/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025064.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-04-25",
+          "disclosureDate": "04/30/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024954.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-04-01",
+          "disclosureDate": "04/04/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024800.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2024-03-11",
+          "disclosureDate": "03/13/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024677.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2024-02-26",
+          "disclosureDate": "02/29/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024572.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Equitable Retirement Account",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-01-29",
+          "disclosureDate": "01/31/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024413.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-01-11",
+          "disclosureDate": "01/15/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024062.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "NGL",
+          "asset": "NGL ENERGY PARTNERS LP Common Units representing Limited Partner Interests",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$250,001 - $500,000",
+          "amountMid": 375000,
+          "transactionDate": "2023-08-04",
+          "disclosureDate": "08/07/2023",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023441.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Mark Green",
+          "chamber": "House",
+          "ticker": "ET",
+          "asset": "Energy Transfer LP Common Units",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$100,001",
+          "amountMid": 100001,
+          "transactionDate": "2023-07-18",
+          "disclosureDate": "07/20/2023",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023358.pdf",
+          "district": "TN07",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
       "id": "house-john-rutherford",
       "name": "John Rutherford",
       "chamber": "House",
@@ -17260,7 +17260,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -12.06
+      "estReturnPct": -11.95
     },
     {
       "id": "house-richard-w-allen",
@@ -19727,9 +19727,9 @@
       "party": "D",
       "committees": [],
       "district": "CA18",
-      "tradeCount": 40,
+      "tradeCount": 39,
       "buyCount": 3,
-      "sellCount": 37,
+      "sellCount": 36,
       "recentTrades": [
         {
           "politician": "Zoe Lofgren",
@@ -31414,258 +31414,6 @@
       "estReturnPct": null
     },
     {
-      "id": "house-austin-scott",
-      "name": "Austin Scott",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "GA08",
-      "tradeCount": 14,
-      "buyCount": 3,
-      "sellCount": 10,
-      "recentTrades": [
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-02-17",
-          "disclosureDate": "02/17/2026",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20032279.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-06-16",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GE",
-          "asset": "GE Aerospace Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-23",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-14",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GE",
-          "asset": "GE Aerospace Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-03-04",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GE",
-          "asset": "GE Aerospace Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-12-13",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "F",
-          "asset": "Ford Motor Company Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-10-02",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLT",
-          "asset": "Katapult Holdings, Inc. - Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-07-31",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "BE",
-          "asset": "Bloom Energy Corporation Class A Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-07-15",
-          "disclosureDate": "08/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "GEHC",
-          "asset": "GE HealthCare Technologies Inc.",
-          "side": "exchange",
-          "type": "Exchange",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-01-04",
-          "disclosureDate": "01/09/2023",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022312.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLTW",
-          "asset": "Katapult Holdings, Inc. - Warrant",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-30",
-          "disclosureDate": "11/30/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019915.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "KPLTW",
-          "asset": "Katapult Holdings, Inc. - Warrant",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-11-24",
-          "disclosureDate": "11/24/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019877.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "BE",
-          "asset": "Bloom Energy Corporation Class A",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-21",
-          "disclosureDate": "10/21/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019670.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "PLUG",
-          "asset": "Plug Power, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "10/15/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
       "id": "senate-lindsey-graham",
       "name": "Lindsey Graham",
       "chamber": "Senate",
@@ -32639,6 +32387,241 @@
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034807.pdf",
           "district": "TN07",
           "source": "house_ptr"
+        }
+      ],
+      "estReturnPct": null
+    },
+    {
+      "id": "house-austin-scott",
+      "name": "Austin Scott",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "GA08",
+      "tradeCount": 13,
+      "buyCount": 2,
+      "sellCount": 10,
+      "recentTrades": [
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-02-17",
+          "disclosureDate": "02/17/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20032279.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-06-16",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GE",
+          "asset": "GE Aerospace Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-23",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-14",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GE",
+          "asset": "GE Aerospace Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-03-04",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GE",
+          "asset": "GE Aerospace Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-12-13",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "F",
+          "asset": "Ford Motor Company Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-10-02",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLT",
+          "asset": "Katapult Holdings, Inc. - Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-07-31",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "BE",
+          "asset": "Bloom Energy Corporation Class A Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-07-15",
+          "disclosureDate": "08/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030902.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "GEHC",
+          "asset": "GE HealthCare Technologies Inc.",
+          "side": "exchange",
+          "type": "Exchange",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-01-04",
+          "disclosureDate": "01/09/2023",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022312.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLTW",
+          "asset": "Katapult Holdings, Inc. - Warrant",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-30",
+          "disclosureDate": "11/30/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019915.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "KPLTW",
+          "asset": "Katapult Holdings, Inc. - Warrant",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-11-24",
+          "disclosureDate": "11/24/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019877.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Austin Scott",
+          "chamber": "House",
+          "ticker": "BE",
+          "asset": "Bloom Energy Corporation Class A",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-10-21",
+          "disclosureDate": "10/21/2021",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019670.pdf",
+          "district": "GA08",
+          "source": "house_ptr",
+          "party": "R"
         }
       ],
       "estReturnPct": null
@@ -40255,37 +40238,6 @@
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019726.pdf",
           "district": "IN08",
           "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
-    },
-    {
-      "id": "senate-patrick-j-toomey",
-      "name": "Patrick J Toomey",
-      "chamber": "Senate",
-      "party": "R",
-      "committees": [],
-      "district": "",
-      "tradeCount": 1,
-      "buyCount": 1,
-      "sellCount": 0,
-      "recentTrades": [
-        {
-          "politician": "Patrick J Toomey",
-          "chamber": "Senate",
-          "ticker": "SPG",
-          "asset": "Simon Property Group, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "2021-11-15",
-          "owner": "Joint",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/26f2c5b8-4bed-4ba0-a4b0-94ddcddc8d95/",
-          "district": "",
-          "source": "senate_efd",
           "party": "R"
         }
       ],
@@ -76610,8 +76562,8 @@
     "AMZN": {
       "ticker": "AMZN",
       "netBuys": 67,
-      "netSells": 24,
-      "politicianCount": 46,
+      "netSells": 23,
+      "politicianCount": 45,
       "trades": [
         {
           "politician": "Cory A Booker",
@@ -85852,7 +85804,7 @@
     },
     "INTC": {
       "ticker": "INTC",
-      "netBuys": 35,
+      "netBuys": 34,
       "netSells": 30,
       "politicianCount": 28,
       "trades": [
@@ -116656,9 +116608,9 @@
     },
     "SPG": {
       "ticker": "SPG",
-      "netBuys": 18,
+      "netBuys": 17,
       "netSells": 2,
-      "politicianCount": 6,
+      "politicianCount": 5,
       "trades": [
         {
           "politician": "Jonathan Jackson",
@@ -116981,23 +116933,6 @@
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020415.pdf",
           "district": "IN05",
           "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Patrick J Toomey",
-          "chamber": "Senate",
-          "ticker": "SPG",
-          "asset": "Simon Property Group, Inc. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "2021-11-15",
-          "owner": "Joint",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/26f2c5b8-4bed-4ba0-a4b0-94ddcddc8d95/",
-          "district": "",
-          "source": "senate_efd",
           "party": "R"
         }
       ]
@@ -196066,8 +196001,8 @@
     "DANOY": {
       "ticker": "DANOY",
       "netBuys": 0,
-      "netSells": 2,
-      "politicianCount": 2,
+      "netSells": 1,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Daniel Goldman",
@@ -196083,23 +196018,6 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023404.pdf",
           "district": "NY10",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Earl Blumenauer",
-          "chamber": "House",
-          "ticker": "DANOY",
-          "asset": "Danone Sponsored ADR",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "11/07/2021",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019771.pdf",
-          "district": "OR03",
           "source": "house_ptr",
           "party": "D"
         }
@@ -206890,7 +206808,7 @@
     "AA": {
       "ticker": "AA",
       "netBuys": 3,
-      "netSells": 3,
+      "netSells": 2,
       "politicianCount": 2,
       "trades": [
         {
@@ -206971,23 +206889,6 @@
           "amount": "$100,001 - $250,000",
           "amountMid": 175000,
           "transactionDate": "2021-10-18",
-          "disclosureDate": "2021-11-10",
-          "owner": "Joint",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/aad16d9a-4250-452f-8dd8-3a85be9e8739/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "R"
-        },
-        {
-          "politician": "Thomas H Tuberville",
-          "chamber": "Senate",
-          "ticker": "AA",
-          "asset": "Alcoa Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
           "disclosureDate": "2021-11-10",
           "owner": "Joint",
           "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/aad16d9a-4250-452f-8dd8-3a85be9e8739/",
@@ -210792,8 +210693,8 @@
     "PSXP": {
       "ticker": "PSXP",
       "netBuys": 2,
-      "netSells": 1,
-      "politicianCount": 2,
+      "netSells": 0,
+      "politicianCount": 1,
       "trades": [
         {
           "politician": "Virginia Foxx",
@@ -210826,23 +210727,6 @@
           "owner": "Joint",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020355.pdf",
           "district": "NC05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "PSXP",
-          "asset": "Phillips 66 Partners lP Common units representing limited partner interest in the Partnership",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$500,001 - $1,000,000",
-          "amountMid": 750000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "10/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019654.pdf",
-          "district": "TN07",
           "source": "house_ptr",
           "party": "R"
         }
@@ -213055,7 +212939,7 @@
     },
     "CAPL": {
       "ticker": "CAPL",
-      "netBuys": 1,
+      "netBuys": 0,
       "netSells": 1,
       "politicianCount": 1,
       "trades": [
@@ -213072,23 +212956,6 @@
           "disclosureDate": "11/09/2021",
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019780.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "CAPL",
-          "asset": "CrossAmerica Partners lP Common units representing limited partner interests",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "10/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019654.pdf",
           "district": "TN07",
           "source": "house_ptr",
           "party": "R"
@@ -213378,56 +213245,6 @@
           "party": "R"
         }
       ]
-    },
-    "SHLX": {
-      "ticker": "SHLX",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Mark Green",
-          "chamber": "House",
-          "ticker": "SHLX",
-          "asset": "Shell Midstream Partners, l.P. Common units representing limited Partner Interests",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "10/20/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019654.pdf",
-          "district": "TN07",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
-    },
-    "PLUG": {
-      "ticker": "PLUG",
-      "netBuys": 1,
-      "netSells": 0,
-      "politicianCount": 1,
-      "trades": [
-        {
-          "politician": "Austin Scott",
-          "chamber": "House",
-          "ticker": "PLUG",
-          "asset": "Plug Power, Inc.",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-10-15",
-          "disclosureDate": "10/15/2021",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2021/20019635.pdf",
-          "district": "GA08",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ]
     }
   },
   "performance": {
@@ -213435,22 +213252,8 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-13",
-    "measuredTrades": 6864,
+    "measuredTrades": 6715,
     "members": [
-      {
-        "name": "Debbie Wasserman Schultz",
-        "tx": {
-          "n": 10,
-          "avgExcess": 26.5,
-          "medianExcess": 27.82,
-          "winRate": 70.0
-        },
-        "buyAvgExcess": 35.92,
-        "lagDays": 1,
-        "id": "house-debbie-wasserman-schultz",
-        "chamber": "House",
-        "party": "D"
-      },
       {
         "name": "Nancy Pelosi",
         "tx": {
@@ -213467,16 +213270,16 @@
       {
         "name": "Jerry Moran,",
         "tx": {
-          "n": 26,
-          "avgExcess": 16.89,
-          "medianExcess": 12.56,
-          "winRate": 69.2
+          "n": 25,
+          "avgExcess": 17.09,
+          "medianExcess": 13.26,
+          "winRate": 68.0
         },
         "disc": {
-          "n": 26,
-          "avgExcess": 15.52,
-          "medianExcess": 9.45,
-          "winRate": 69.2
+          "n": 25,
+          "avgExcess": 15.99,
+          "medianExcess": 10.72,
+          "winRate": 68.0
         },
         "buyAvgExcess": 47.37,
         "lagDays": 34,
@@ -213528,7 +213331,7 @@
         "name": "Kelly Louise Morrison",
         "tx": {
           "n": 23,
-          "avgExcess": 13.9,
+          "avgExcess": 13.81,
           "medianExcess": 7.45,
           "winRate": 65.2
         },
@@ -213559,6 +213362,26 @@
         "party": "D"
       },
       {
+        "name": "James Comer",
+        "tx": {
+          "n": 14,
+          "avgExcess": 9.53,
+          "medianExcess": -10.49,
+          "winRate": 42.9
+        },
+        "disc": {
+          "n": 14,
+          "avgExcess": 9.58,
+          "medianExcess": -9.89,
+          "winRate": 35.7
+        },
+        "buyAvgExcess": 9.53,
+        "lagDays": 1,
+        "id": "house-james-comer",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Marjorie Taylor Greene",
         "tx": {
           "n": 182,
@@ -213579,40 +213402,20 @@
         "party": "R"
       },
       {
-        "name": "Angus S King, Jr.",
-        "tx": {
-          "n": 37,
-          "avgExcess": 7.28,
-          "medianExcess": 2.49,
-          "winRate": 56.8
-        },
-        "disc": {
-          "n": 37,
-          "avgExcess": 9.43,
-          "medianExcess": 6.36,
-          "winRate": 54.1
-        },
-        "buyAvgExcess": 7.76,
-        "lagDays": 28,
-        "id": "senate-angus-s-king-jr",
-        "chamber": "Senate",
-        "party": "I"
-      },
-      {
         "name": "Byron Donalds",
         "tx": {
-          "n": 71,
-          "avgExcess": 7.19,
-          "medianExcess": 6.14,
-          "winRate": 53.5
+          "n": 64,
+          "avgExcess": 8.01,
+          "medianExcess": 6.79,
+          "winRate": 54.7
         },
         "disc": {
-          "n": 71,
-          "avgExcess": 8.69,
-          "medianExcess": 12.93,
-          "winRate": 59.2
+          "n": 64,
+          "avgExcess": 10.32,
+          "medianExcess": 12.95,
+          "winRate": 60.9
         },
-        "buyAvgExcess": -6.69,
+        "buyAvgExcess": -1.98,
         "lagDays": 19,
         "id": "house-byron-donalds",
         "chamber": "House",
@@ -213661,18 +213464,18 @@
       {
         "name": "Thomas H Tuberville",
         "tx": {
-          "n": 339,
-          "avgExcess": 6.51,
-          "medianExcess": 5.71,
-          "winRate": 57.8
+          "n": 336,
+          "avgExcess": 6.35,
+          "medianExcess": 5.6,
+          "winRate": 57.7
         },
         "disc": {
-          "n": 339,
-          "avgExcess": 3.54,
+          "n": 336,
+          "avgExcess": 3.53,
           "medianExcess": 2.81,
           "winRate": 56.0
         },
-        "buyAvgExcess": -14.29,
+        "buyAvgExcess": -14.41,
         "lagDays": 41,
         "id": "senate-thomas-h-tuberville",
         "chamber": "Senate",
@@ -213681,18 +213484,18 @@
       {
         "name": "Katie Britt",
         "tx": {
-          "n": 24,
-          "avgExcess": 5.58,
-          "medianExcess": 1.27,
-          "winRate": 54.2
+          "n": 23,
+          "avgExcess": 5.7,
+          "medianExcess": 0.94,
+          "winRate": 52.2
         },
         "disc": {
-          "n": 24,
-          "avgExcess": 4.56,
-          "medianExcess": 3.43,
-          "winRate": 58.3
+          "n": 23,
+          "avgExcess": 5.5,
+          "medianExcess": 3.64,
+          "winRate": 60.9
         },
-        "buyAvgExcess": 3.98,
+        "buyAvgExcess": 4.05,
         "lagDays": 271,
         "id": "senate-katie-britt",
         "chamber": "Senate",
@@ -213701,18 +213504,18 @@
       {
         "name": "Jefferson Shreve",
         "tx": {
-          "n": 246,
-          "avgExcess": 5.41,
-          "medianExcess": 8.49,
-          "winRate": 55.7
+          "n": 240,
+          "avgExcess": 4.91,
+          "medianExcess": 7.35,
+          "winRate": 55.0
         },
         "disc": {
-          "n": 246,
-          "avgExcess": 5.35,
-          "medianExcess": 7.19,
-          "winRate": 56.9
+          "n": 240,
+          "avgExcess": 4.91,
+          "medianExcess": 6.97,
+          "winRate": 56.2
         },
-        "buyAvgExcess": -0.91,
+        "buyAvgExcess": -0.27,
         "lagDays": 5,
         "id": "house-jefferson-shreve",
         "chamber": "House",
@@ -213739,6 +213542,26 @@
         "party": "D"
       },
       {
+        "name": "Angus S King, Jr.",
+        "tx": {
+          "n": 36,
+          "avgExcess": 4.71,
+          "medianExcess": 1.64,
+          "winRate": 55.6
+        },
+        "disc": {
+          "n": 36,
+          "avgExcess": 7.46,
+          "medianExcess": 3.32,
+          "winRate": 52.8
+        },
+        "buyAvgExcess": 3.75,
+        "lagDays": 28,
+        "id": "senate-angus-s-king-jr",
+        "chamber": "Senate",
+        "party": "I"
+      },
+      {
         "name": "John Curtis",
         "tx": {
           "n": 26,
@@ -213749,26 +213572,6 @@
         "id": "house-john-curtis",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Julie Johnson",
-        "tx": {
-          "n": 231,
-          "avgExcess": 3.95,
-          "medianExcess": 9.31,
-          "winRate": 59.3
-        },
-        "disc": {
-          "n": 231,
-          "avgExcess": 5.19,
-          "medianExcess": 9.56,
-          "winRate": 61.0
-        },
-        "buyAvgExcess": -7.64,
-        "lagDays": 22,
-        "id": "house-julie-johnson",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "Tim Moore",
@@ -213789,6 +213592,26 @@
         "id": "house-tim-moore",
         "chamber": "House",
         "party": "R"
+      },
+      {
+        "name": "Julie Johnson",
+        "tx": {
+          "n": 226,
+          "avgExcess": 3.81,
+          "medianExcess": 9.15,
+          "winRate": 58.8
+        },
+        "disc": {
+          "n": 226,
+          "avgExcess": 4.91,
+          "medianExcess": 8.95,
+          "winRate": 60.2
+        },
+        "buyAvgExcess": -7.53,
+        "lagDays": 22,
+        "id": "house-julie-johnson",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Robert E. Latta",
@@ -213826,118 +213649,98 @@
       {
         "name": "Jared Moskowitz",
         "tx": {
-          "n": 156,
-          "avgExcess": 3.4,
-          "medianExcess": 1.61,
-          "winRate": 51.9
+          "n": 155,
+          "avgExcess": 3.14,
+          "medianExcess": 1.6,
+          "winRate": 51.6
         },
         "disc": {
-          "n": 149,
-          "avgExcess": 3.28,
-          "medianExcess": 1.38,
-          "winRate": 51.7
+          "n": 148,
+          "avgExcess": 3.07,
+          "medianExcess": 1.08,
+          "winRate": 51.4
         },
-        "buyAvgExcess": 2.48,
+        "buyAvgExcess": 2.07,
         "lagDays": 22,
         "id": "house-jared-moskowitz",
         "chamber": "House",
         "party": "D"
       },
       {
-        "name": "James Comer",
-        "tx": {
-          "n": 15,
-          "avgExcess": 3.15,
-          "medianExcess": -11.6,
-          "winRate": 40.0
-        },
-        "disc": {
-          "n": 15,
-          "avgExcess": 3.22,
-          "medianExcess": -11.49,
-          "winRate": 33.3
-        },
-        "buyAvgExcess": 3.15,
-        "lagDays": 1,
-        "id": "house-james-comer",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Richard W. Allen",
         "tx": {
-          "n": 37,
-          "avgExcess": 2.84,
-          "medianExcess": 2.91,
-          "winRate": 62.2
-        },
-        "disc": {
           "n": 34,
-          "avgExcess": 3.78,
-          "medianExcess": 3.12,
+          "avgExcess": 2.6,
+          "medianExcess": 2.9,
           "winRate": 58.8
         },
-        "buyAvgExcess": -9.39,
-        "lagDays": 24,
+        "disc": {
+          "n": 32,
+          "avgExcess": 3.65,
+          "medianExcess": 3.12,
+          "winRate": 59.4
+        },
+        "buyAvgExcess": -13.77,
+        "lagDays": 22,
         "id": "house-richard-w-allen",
         "chamber": "House",
         "party": ""
       },
       {
-        "name": "Valerie Hoyle",
-        "tx": {
-          "n": 182,
-          "avgExcess": 2.5,
-          "medianExcess": 0.51,
-          "winRate": 51.1
-        },
-        "disc": {
-          "n": 108,
-          "avgExcess": 2.72,
-          "medianExcess": -4.0,
-          "winRate": 48.1
-        },
-        "buyAvgExcess": -3.32,
-        "lagDays": 317,
-        "id": "house-valerie-hoyle",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "Josh Gottheimer",
         "tx": {
-          "n": 302,
-          "avgExcess": 2.35,
-          "medianExcess": 2.29,
-          "winRate": 52.6
+          "n": 293,
+          "avgExcess": 1.99,
+          "medianExcess": 1.67,
+          "winRate": 52.2
         },
         "disc": {
-          "n": 300,
-          "avgExcess": 3.04,
-          "medianExcess": 0.73,
-          "winRate": 50.3
+          "n": 291,
+          "avgExcess": 2.67,
+          "medianExcess": -0.04,
+          "winRate": 49.8
         },
-        "buyAvgExcess": -0.84,
+        "buyAvgExcess": -1.1,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
         "party": "D"
       },
       {
-        "name": "Richard Dean McCormick",
+        "name": "Valerie Hoyle",
         "tx": {
-          "n": 43,
-          "avgExcess": 1.67,
-          "medianExcess": 3.85,
-          "winRate": 58.1
+          "n": 176,
+          "avgExcess": 1.92,
+          "medianExcess": 0.16,
+          "winRate": 50.6
         },
         "disc": {
-          "n": 43,
-          "avgExcess": 0.2,
-          "medianExcess": 3.91,
-          "winRate": 55.8
+          "n": 105,
+          "avgExcess": 2.29,
+          "medianExcess": -4.03,
+          "winRate": 47.6
         },
-        "buyAvgExcess": -4.93,
+        "buyAvgExcess": -4.46,
+        "lagDays": 317,
+        "id": "house-valerie-hoyle",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Richard Dean McCormick",
+        "tx": {
+          "n": 41,
+          "avgExcess": 1.77,
+          "medianExcess": 4.73,
+          "winRate": 58.5
+        },
+        "disc": {
+          "n": 41,
+          "avgExcess": 0.52,
+          "medianExcess": 3.91,
+          "winRate": 56.1
+        },
+        "buyAvgExcess": -4.96,
         "lagDays": 13,
         "id": "house-richard-dean-mccormick",
         "chamber": "House",
@@ -213946,19 +213749,19 @@
       {
         "name": "John James",
         "tx": {
-          "n": 114,
-          "avgExcess": 1.49,
-          "medianExcess": 4.28,
-          "winRate": 53.5
+          "n": 113,
+          "avgExcess": 1.62,
+          "medianExcess": 4.35,
+          "winRate": 54.0
         },
         "disc": {
-          "n": 113,
-          "avgExcess": 2.52,
-          "medianExcess": 3.17,
-          "winRate": 53.1
+          "n": 112,
+          "avgExcess": 2.66,
+          "medianExcess": 3.83,
+          "winRate": 53.6
         },
         "buyAvgExcess": -4.52,
-        "lagDays": 85,
+        "lagDays": 99,
         "id": "house-john-james",
         "chamber": "House",
         "party": "R"
@@ -213967,13 +213770,13 @@
         "name": "Kevin Hern",
         "tx": {
           "n": 101,
-          "avgExcess": 1.37,
+          "avgExcess": 1.35,
           "medianExcess": 1.54,
           "winRate": 58.4
         },
         "disc": {
           "n": 64,
-          "avgExcess": -0.48,
+          "avgExcess": -0.5,
           "medianExcess": -0.64,
           "winRate": 45.3
         },
@@ -213984,41 +213787,21 @@
         "party": "R"
       },
       {
-        "name": "Kathy Manning",
-        "tx": {
-          "n": 45,
-          "avgExcess": 1.37,
-          "medianExcess": 0.76,
-          "winRate": 53.3
-        },
-        "disc": {
-          "n": 45,
-          "avgExcess": 0.46,
-          "medianExcess": -0.18,
-          "winRate": 48.9
-        },
-        "buyAvgExcess": -5.01,
-        "lagDays": 21,
-        "id": "house-kathy-manning",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "Greg Landsman",
         "tx": {
-          "n": 47,
-          "avgExcess": 1.32,
+          "n": 45,
+          "avgExcess": 1.35,
           "medianExcess": 1.47,
-          "winRate": 55.3
+          "winRate": 55.6
         },
         "disc": {
-          "n": 47,
-          "avgExcess": 4.06,
-          "medianExcess": 9.46,
-          "winRate": 57.4
+          "n": 45,
+          "avgExcess": 4.78,
+          "medianExcess": 12.74,
+          "winRate": 60.0
         },
         "buyAvgExcess": -2.24,
-        "lagDays": 14,
+        "lagDays": 10,
         "id": "house-greg-landsman",
         "chamber": "House",
         "party": "D"
@@ -214065,22 +213848,62 @@
       {
         "name": "Bruce Westerman",
         "tx": {
-          "n": 97,
-          "avgExcess": 0.63,
-          "medianExcess": 0.18,
-          "winRate": 51.5
+          "n": 93,
+          "avgExcess": 0.96,
+          "medianExcess": 0.15,
+          "winRate": 50.5
         },
         "disc": {
-          "n": 97,
-          "avgExcess": -0.36,
-          "medianExcess": 1.29,
-          "winRate": 52.6
+          "n": 93,
+          "avgExcess": 0.27,
+          "medianExcess": 0.7,
+          "winRate": 51.6
         },
-        "buyAvgExcess": 4.42,
-        "lagDays": 10,
+        "buyAvgExcess": 3.21,
+        "lagDays": 8,
         "id": "house-bruce-westerman",
         "chamber": "House",
         "party": "R"
+      },
+      {
+        "name": "Markwayne Mullin",
+        "tx": {
+          "n": 223,
+          "avgExcess": 0.53,
+          "medianExcess": -0.51,
+          "winRate": 48.0
+        },
+        "disc": {
+          "n": 223,
+          "avgExcess": 2.19,
+          "medianExcess": 1.41,
+          "winRate": 50.7
+        },
+        "buyAvgExcess": 1.52,
+        "lagDays": 26,
+        "id": "senate-markwayne-mullin",
+        "chamber": "Senate",
+        "party": "R"
+      },
+      {
+        "name": "Kathy Manning",
+        "tx": {
+          "n": 44,
+          "avgExcess": 0.33,
+          "medianExcess": 0.62,
+          "winRate": 52.3
+        },
+        "disc": {
+          "n": 44,
+          "avgExcess": -0.73,
+          "medianExcess": -1.1,
+          "winRate": 47.7
+        },
+        "buyAvgExcess": -6.65,
+        "lagDays": 21,
+        "id": "house-kathy-manning",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Dwight Evans",
@@ -214103,56 +213926,36 @@
         "party": "D"
       },
       {
-        "name": "Markwayne Mullin",
-        "tx": {
-          "n": 226,
-          "avgExcess": 0.2,
-          "medianExcess": -0.8,
-          "winRate": 47.3
-        },
-        "disc": {
-          "n": 226,
-          "avgExcess": 1.79,
-          "medianExcess": 0.49,
-          "winRate": 50.0
-        },
-        "buyAvgExcess": 0.93,
-        "lagDays": 26,
-        "id": "senate-markwayne-mullin",
-        "chamber": "Senate",
-        "party": "R"
-      },
-      {
-        "name": "John Boozman",
-        "tx": {
-          "n": 403,
-          "avgExcess": -0.38,
-          "medianExcess": -0.83,
-          "winRate": 45.7
-        },
-        "disc": {
-          "n": 403,
-          "avgExcess": -0.27,
-          "medianExcess": -1.07,
-          "winRate": 44.4
-        },
-        "buyAvgExcess": -3.49,
-        "lagDays": 28,
-        "id": "senate-john-boozman",
-        "chamber": "Senate",
-        "party": "R"
-      },
-      {
         "name": "Rob Bresnahan",
         "tx": {
-          "n": 273,
-          "avgExcess": -0.44,
-          "medianExcess": 4.45,
-          "winRate": 52.7
+          "n": 266,
+          "avgExcess": 0.27,
+          "medianExcess": 5.62,
+          "winRate": 53.0
         },
-        "buyAvgExcess": -5.55,
+        "buyAvgExcess": -4.02,
         "lagDays": 10,
         "id": "house-rob-bresnahan",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Maria Elvira Salazar",
+        "tx": {
+          "n": 54,
+          "avgExcess": -0.23,
+          "medianExcess": -3.09,
+          "winRate": 46.3
+        },
+        "disc": {
+          "n": 43,
+          "avgExcess": -2.88,
+          "medianExcess": -4.55,
+          "winRate": 32.6
+        },
+        "buyAvgExcess": -2.57,
+        "lagDays": 16,
+        "id": "house-maria-elvira-salazar",
         "chamber": "House",
         "party": "R"
       },
@@ -214176,62 +213979,42 @@
         "party": "D"
       },
       {
-        "name": "Cleo Fields",
+        "name": "John Boozman",
         "tx": {
-          "n": 113,
-          "avgExcess": -0.63,
-          "medianExcess": 0.82,
-          "winRate": 50.4
+          "n": 395,
+          "avgExcess": -0.75,
+          "medianExcess": -0.91,
+          "winRate": 45.6
         },
         "disc": {
-          "n": 18,
-          "avgExcess": 12.23,
-          "medianExcess": 1.61,
-          "winRate": 66.7
+          "n": 395,
+          "avgExcess": -0.55,
+          "medianExcess": -1.11,
+          "winRate": 44.3
         },
-        "buyAvgExcess": -0.4,
-        "lagDays": 3,
-        "id": "house-cleo-fields",
-        "chamber": "House",
-        "party": "D"
+        "buyAvgExcess": -3.94,
+        "lagDays": 28,
+        "id": "senate-john-boozman",
+        "chamber": "Senate",
+        "party": "R"
       },
       {
         "name": "Thomas H. Kean",
         "tx": {
-          "n": 49,
-          "avgExcess": -0.75,
-          "medianExcess": 1.18,
-          "winRate": 51.0
+          "n": 48,
+          "avgExcess": -0.82,
+          "medianExcess": 0.27,
+          "winRate": 50.0
         },
         "disc": {
-          "n": 49,
-          "avgExcess": 0.39,
-          "medianExcess": -6.65,
-          "winRate": 36.7
+          "n": 48,
+          "avgExcess": 0.03,
+          "medianExcess": -7.69,
+          "winRate": 35.4
         },
-        "buyAvgExcess": -4.72,
-        "lagDays": 19,
+        "buyAvgExcess": -4.93,
+        "lagDays": 18,
         "id": "house-thomas-h-kean",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Lisa McClain",
-        "tx": {
-          "n": 646,
-          "avgExcess": -0.79,
-          "medianExcess": -0.71,
-          "winRate": 49.1
-        },
-        "disc": {
-          "n": 646,
-          "avgExcess": -0.36,
-          "medianExcess": -0.31,
-          "winRate": 49.8
-        },
-        "buyAvgExcess": -6.87,
-        "lagDays": 20,
-        "id": "house-lisa-mcclain",
         "chamber": "House",
         "party": "R"
       },
@@ -214256,26 +214039,6 @@
         "party": "D"
       },
       {
-        "name": "Maria Elvira Salazar",
-        "tx": {
-          "n": 57,
-          "avgExcess": -0.92,
-          "medianExcess": -4.36,
-          "winRate": 45.6
-        },
-        "disc": {
-          "n": 46,
-          "avgExcess": -2.91,
-          "medianExcess": -4.7,
-          "winRate": 32.6
-        },
-        "buyAvgExcess": -3.28,
-        "lagDays": 16,
-        "id": "house-maria-elvira-salazar",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Michael C. Burgess",
         "tx": {
           "n": 16,
@@ -214298,22 +214061,42 @@
       {
         "name": "Ritchie John Torres",
         "tx": {
-          "n": 62,
-          "avgExcess": -1.39,
-          "medianExcess": -1.07,
-          "winRate": 46.8
+          "n": 61,
+          "avgExcess": -1.04,
+          "medianExcess": -0.48,
+          "winRate": 47.5
         },
         "disc": {
-          "n": 62,
-          "avgExcess": 5.68,
-          "medianExcess": 9.58,
-          "winRate": 56.5
+          "n": 61,
+          "avgExcess": 6.12,
+          "medianExcess": 9.73,
+          "winRate": 57.4
         },
         "buyAvgExcess": -10.85,
-        "lagDays": 298,
+        "lagDays": 309,
         "id": "house-ritchie-john-torres",
         "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "Lisa McClain",
+        "tx": {
+          "n": 630,
+          "avgExcess": -1.2,
+          "medianExcess": -0.71,
+          "winRate": 49.0
+        },
+        "disc": {
+          "n": 630,
+          "avgExcess": -0.75,
+          "medianExcess": -0.31,
+          "winRate": 49.8
+        },
+        "buyAvgExcess": -7.1,
+        "lagDays": 20,
+        "id": "house-lisa-mcclain",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Blake Moore",
@@ -214358,18 +214141,18 @@
       {
         "name": "Julia Letlow",
         "tx": {
-          "n": 99,
-          "avgExcess": -3.5,
+          "n": 95,
+          "avgExcess": -3.46,
           "medianExcess": -9.88,
-          "winRate": 37.4
+          "winRate": 36.8
         },
         "disc": {
-          "n": 99,
-          "avgExcess": -4.02,
+          "n": 95,
+          "avgExcess": -4.25,
           "medianExcess": -7.7,
-          "winRate": 42.4
+          "winRate": 42.1
         },
-        "buyAvgExcess": -10.81,
+        "buyAvgExcess": -11.41,
         "lagDays": 105,
         "id": "house-julia-letlow",
         "chamber": "House",
@@ -214378,16 +214161,16 @@
       {
         "name": "Carol Devine Miller",
         "tx": {
-          "n": 18,
-          "avgExcess": -4.08,
-          "medianExcess": -0.31,
-          "winRate": 50.0
+          "n": 17,
+          "avgExcess": -3.98,
+          "medianExcess": 0.48,
+          "winRate": 52.9
         },
         "disc": {
-          "n": 18,
-          "avgExcess": -3.41,
-          "medianExcess": -2.95,
-          "winRate": 44.4
+          "n": 17,
+          "avgExcess": -2.16,
+          "medianExcess": -2.83,
+          "winRate": 47.1
         },
         "buyAvgExcess": -13.92,
         "lagDays": 32,
@@ -214399,7 +214182,7 @@
         "name": "Dan Newhouse",
         "tx": {
           "n": 52,
-          "avgExcess": -4.09,
+          "avgExcess": -4.07,
           "medianExcess": -7.23,
           "winRate": 42.3
         },
@@ -214409,27 +214192,47 @@
           "medianExcess": -11.84,
           "winRate": 42.1
         },
-        "buyAvgExcess": -9.12,
+        "buyAvgExcess": -9.09,
         "lagDays": 15,
         "id": "house-dan-newhouse",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Jonathan Jackson",
+        "name": "Cleo Fields",
         "tx": {
-          "n": 72,
-          "avgExcess": -4.78,
-          "medianExcess": -8.41,
-          "winRate": 37.5
+          "n": 104,
+          "avgExcess": -4.23,
+          "medianExcess": -0.62,
+          "winRate": 47.1
         },
         "disc": {
-          "n": 72,
-          "avgExcess": -2.77,
-          "medianExcess": -5.66,
-          "winRate": 37.5
+          "n": 14,
+          "avgExcess": 0.33,
+          "medianExcess": 0.33,
+          "winRate": 57.1
         },
-        "buyAvgExcess": -12.69,
+        "buyAvgExcess": -4.19,
+        "lagDays": 3,
+        "id": "house-cleo-fields",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Jonathan Jackson",
+        "tx": {
+          "n": 71,
+          "avgExcess": -4.58,
+          "medianExcess": -8.22,
+          "winRate": 38.0
+        },
+        "disc": {
+          "n": 71,
+          "avgExcess": -2.45,
+          "medianExcess": -5.04,
+          "winRate": 38.0
+        },
+        "buyAvgExcess": -12.53,
         "lagDays": 21,
         "id": "house-jonathan-jackson",
         "chamber": "House",
@@ -214458,18 +214261,18 @@
       {
         "name": "Alan Armstrong",
         "tx": {
-          "n": 364,
-          "avgExcess": -5.05,
-          "medianExcess": -8.72,
+          "n": 359,
+          "avgExcess": -5.0,
+          "medianExcess": -8.44,
           "winRate": 37.6
         },
         "disc": {
-          "n": 362,
-          "avgExcess": -3.36,
-          "medianExcess": -4.79,
+          "n": 357,
+          "avgExcess": -3.22,
+          "medianExcess": -4.67,
           "winRate": 35.9
         },
-        "buyAvgExcess": -7.57,
+        "buyAvgExcess": -7.43,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -214502,26 +214305,6 @@
         "party": "D"
       },
       {
-        "name": "Gilbert Cisneros",
-        "tx": {
-          "n": 626,
-          "avgExcess": -6.06,
-          "medianExcess": -8.2,
-          "winRate": 38.2
-        },
-        "disc": {
-          "n": 625,
-          "avgExcess": -6.46,
-          "medianExcess": -7.63,
-          "winRate": 36.6
-        },
-        "buyAvgExcess": -8.58,
-        "lagDays": 24,
-        "id": "house-gilbert-cisneros",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "Gary C Peters",
         "tx": {
           "n": 18,
@@ -214542,44 +214325,44 @@
         "party": "D"
       },
       {
-        "name": "Earl Blumenauer",
+        "name": "Gilbert Cisneros",
         "tx": {
-          "n": 15,
-          "avgExcess": -6.95,
-          "medianExcess": -5.93,
-          "winRate": 33.3
+          "n": 606,
+          "avgExcess": -6.55,
+          "medianExcess": -8.27,
+          "winRate": 37.3
         },
         "disc": {
-          "n": 15,
-          "avgExcess": -5.73,
-          "medianExcess": -1.62,
-          "winRate": 46.7
+          "n": 605,
+          "avgExcess": -6.89,
+          "medianExcess": -8.02,
+          "winRate": 35.7
         },
-        "buyAvgExcess": -5.65,
-        "lagDays": 18,
-        "id": "house-earl-blumenauer",
+        "buyAvgExcess": -8.77,
+        "lagDays": 24,
+        "id": "house-gilbert-cisneros",
         "chamber": "House",
         "party": "D"
       },
       {
-        "name": "Scott Franklin",
+        "name": "Thomas R Carper",
         "tx": {
-          "n": 38,
-          "avgExcess": -7.22,
-          "medianExcess": -9.62,
-          "winRate": 39.5
+          "n": 61,
+          "avgExcess": -6.65,
+          "medianExcess": -7.09,
+          "winRate": 39.3
         },
         "disc": {
-          "n": 38,
-          "avgExcess": -3.87,
-          "medianExcess": -1.11,
-          "winRate": 44.7
+          "n": 61,
+          "avgExcess": -7.43,
+          "medianExcess": -4.48,
+          "winRate": 41.0
         },
-        "buyAvgExcess": -11.93,
-        "lagDays": 9,
-        "id": "house-scott-franklin",
-        "chamber": "House",
-        "party": "R"
+        "buyAvgExcess": -17.34,
+        "lagDays": 18,
+        "id": "senate-thomas-r-carper",
+        "chamber": "Senate",
+        "party": "D"
       },
       {
         "name": "Mark Green",
@@ -214601,38 +214384,58 @@
         "party": "R"
       },
       {
-        "name": "Thomas R Carper",
+        "name": "Earl Blumenauer",
         "tx": {
-          "n": 64,
-          "avgExcess": -8.01,
-          "medianExcess": -9.66,
-          "winRate": 37.5
+          "n": 14,
+          "avgExcess": -7.94,
+          "medianExcess": -6.8,
+          "winRate": 28.6
         },
         "disc": {
-          "n": 64,
-          "avgExcess": -9.03,
-          "medianExcess": -6.63,
-          "winRate": 39.1
+          "n": 14,
+          "avgExcess": -6.57,
+          "medianExcess": -3.92,
+          "winRate": 42.9
         },
-        "buyAvgExcess": -17.69,
-        "lagDays": 18,
-        "id": "senate-thomas-r-carper",
-        "chamber": "Senate",
+        "buyAvgExcess": -5.65,
+        "lagDays": 20,
+        "id": "house-earl-blumenauer",
+        "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "Scott Franklin",
+        "tx": {
+          "n": 36,
+          "avgExcess": -8.39,
+          "medianExcess": -12.08,
+          "winRate": 38.9
+        },
+        "disc": {
+          "n": 36,
+          "avgExcess": -4.4,
+          "medianExcess": -3.18,
+          "winRate": 44.4
+        },
+        "buyAvgExcess": -13.73,
+        "lagDays": 9,
+        "id": "house-scott-franklin",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Sheri Biggs",
         "tx": {
-          "n": 36,
-          "avgExcess": -9.26,
-          "medianExcess": -3.24,
-          "winRate": 36.1
+          "n": 35,
+          "avgExcess": -9.44,
+          "medianExcess": -3.26,
+          "winRate": 37.1
         },
         "disc": {
-          "n": 36,
-          "avgExcess": -5.62,
-          "medianExcess": -0.67,
-          "winRate": 50.0
+          "n": 35,
+          "avgExcess": -4.21,
+          "medianExcess": 0.17,
+          "winRate": 51.4
         },
         "buyAvgExcess": -0.71,
         "lagDays": 146,
@@ -214663,18 +214466,18 @@
       {
         "name": "April McClain Delaney",
         "tx": {
-          "n": 185,
-          "avgExcess": -11.8,
-          "medianExcess": -10.34,
-          "winRate": 25.9
+          "n": 182,
+          "avgExcess": -12.46,
+          "medianExcess": -10.42,
+          "winRate": 24.7
         },
         "disc": {
-          "n": 185,
-          "avgExcess": -10.78,
-          "medianExcess": -8.35,
-          "winRate": 28.6
+          "n": 182,
+          "avgExcess": -11.61,
+          "medianExcess": -8.66,
+          "winRate": 27.5
         },
-        "buyAvgExcess": -16.47,
+        "buyAvgExcess": -17.2,
         "lagDays": 12,
         "id": "house-april-mcclain-delaney",
         "chamber": "House",
@@ -214704,13 +214507,13 @@
         "name": "Michael Patrick Guest",
         "tx": {
           "n": 11,
-          "avgExcess": -13.22,
+          "avgExcess": -13.32,
           "medianExcess": -21.47,
           "winRate": 27.3
         },
         "disc": {
           "n": 11,
-          "avgExcess": -18.71,
+          "avgExcess": -18.81,
           "medianExcess": -17.24,
           "winRate": 36.4
         },
@@ -214743,13 +214546,12 @@
       {
         "name": "James French Hill",
         "tx": {
-          "n": 15,
-          "avgExcess": -14.24,
-          "medianExcess": -9.96,
-          "winRate": 20.0
+          "n": 14,
+          "avgExcess": -18.43,
+          "medianExcess": -12.31,
+          "winRate": 14.3
         },
         "buyAvgExcess": -24.83,
-        "lagDays": 7,
         "id": "house-james-french-hill",
         "chamber": "House",
         "party": ""

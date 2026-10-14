@@ -172,6 +172,22 @@ def test_run_market_keeps_old_file_on_transient_failure(fake_env, monkeypatch):
     assert state["kr"]["000000"]["ok"] == 1
 
 
+def test_run_market_counts_only_fresh_attempts_for_outage(fake_env, monkeypatch):
+    # 2026-10-14: 지난번에도 실패한 종목의 14일 재시도만 돌아 0건 성공 → 장애로 오탐했다
+    out = fake_env / "logos"
+    monkeypatch.setattr(bl, "fetch_logo", lambda dom: None)
+    old = (bl.today() - timedelta(days=20)).isoformat()
+    state: dict = {"kr": {f"00{i:04d}": {"dom": f"www.co{i}.co.kr", "ok": 0, "at": old} for i in range(6)}}
+    r = bl.run_market("kr", 10, 100, set(), state, out)
+    assert r["tried"] == 6 and r["ok"] == 0 and r["fresh"] == 0
+    # 새 종목이 섞여 있으면 그건 진짜 시도다
+    del state["kr"]["000000"]
+    for rec in state["kr"].values():
+        rec["at"] = old
+    r = bl.run_market("kr", 10, 100, set(), state, out)
+    assert r["fresh"] == 1
+
+
 def test_main_refuses_to_shrink_index(fake_env, monkeypatch, capsys):
     out = fake_env / "logos"
     out.mkdir()

@@ -233,7 +233,9 @@ def wikidata_sites() -> dict | None:
                 time.sleep(wait)
                 continue
             r.raise_for_status()
-            rows = r.json()["results"]["bindings"]
+            # 2026-10-14: 응답 문자열 안에 이스케이프 안 된 제어문자(사이트 URL)가 섞여 strict 파서가
+            # 세 번 다 거절했다(같은 응답이라 재시도로는 안 낫는다) — strict=False 로 받는다.
+            rows = r.json(strict=False)["results"]["bindings"]
             break
         except Exception as e:  # noqa: BLE001
             print(f"  [Wikidata] 실패: {e}")
@@ -562,6 +564,8 @@ def run_market(market: str, top: int, budget: int, only: set[str], state: dict, 
     # 새 종목(상태 없음) → 오래 확인 안 한 순
     todo.sort(key=lambda t: (t in st, (st.get(t) or {}).get("at") or ""))
     todo = todo[:budget]
+    # 지난번에도 못 받은 종목(14일마다 재시도)만 돌았다면 0건 성공은 장애가 아니다(2026-10-14 US 15건 오탐).
+    fresh = sum(1 for t in todo if (st.get(t) or {}).get("ok", 1))
     print(f"[{market.upper()}] 대상 {len(tickers)} · 도메인 {sum(1 for t in tickers if domains.get(t))} · 이번 확인 {len(todo)}")
 
     keys = list(dict.fromkeys((domains[t], icons.get(t)) for t in todo))
@@ -618,7 +622,7 @@ def run_market(market: str, top: int, budget: int, only: set[str], state: dict, 
     have = sorted(p.stem for p in (out_dir / market).glob("*.webp")) if (out_dir / market).exists() else []
     in_top = sum(1 for t in tickers if (out_dir / market / f"{t}.webp").exists())
     print(f"  성공 {ok} · 실패 {fail} · 새로 쓴 파일 {written} · 보유 {len(have)} · 상위 {len(tickers)} 중 {in_top}")
-    return {"ok": ok, "fail": fail, "tried": len(todo), "have": have, "universe": len(tickers), "inTop": in_top}
+    return {"ok": ok, "fail": fail, "tried": len(todo), "fresh": fresh, "have": have, "universe": len(tickers), "inTop": in_top}
 
 
 def main() -> int:
@@ -642,9 +646,11 @@ def main() -> int:
     status = 0
     for m in (["us", "kr"] if args.market == "all" else [args.market]):
         r = run_market(m, args.top, args.max, only, state, out_dir, force=args.force)
-        if r["tried"] and r["ok"] == 0:
+        if r["fresh"] and r["ok"] == 0:
             print(f"[{m.upper()}] 성공 0 · 실패 {r['fail']} — 소스 장애로 보고 실패 처리(기존 파일 유지)")
             status = 1
+        elif r["tried"] and r["ok"] == 0:
+            print(f"[{m.upper()}] 성공 0 — 전부 지난번에도 실패한 종목의 재시도라 장애로 보지 않는다")
         prev = markets_meta.get(m) or {}
         if prev.get("count") and len(r["have"]) < int(prev["count"]) * 0.8:
             print(f"[{m.upper()}] 로고 {prev['count']} → {len(r['have'])} 급감 — 인덱스를 쓰지 않는다")

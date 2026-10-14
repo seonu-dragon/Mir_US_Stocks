@@ -52,6 +52,9 @@ jobs:
       - name: Build market calendar (holidays · expiries · FOMC)
         run: python scripts/build_market_calendar.py --push
       - name: Build KR IR schedule (DART)
+        # DART 가 잠깐 죽으면(2026-10-10 06:40 빈 본문) 이 스텝이 잡을 끊어 아래 보호예수까지 못 돌았다.
+        # 매일 돌고 실패해도 기존 파일을 유지하므로 continue-on-error — 길게 멈추면 신선도 게이트(나이 3일)가 잡는다.
+        continue-on-error: true
         env:
           DART_API_KEY: ${{ secrets.DART_API_KEY }}
         run: python scripts/build_kr_ir_schedule.py --push

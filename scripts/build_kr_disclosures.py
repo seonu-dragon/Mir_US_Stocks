@@ -13,6 +13,7 @@ import os
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
@@ -163,13 +164,32 @@ def dart_abort_if_rate_limited(status: str, where: str = "") -> None:
         )
 
 
-def dart_get(path: str, params: dict, api_key: str) -> dict:
+# 2026-10-10(토·일) DART 가 몇 시간 동안 연결 타임아웃·빈 본문(JSON 아님)을 돌려줘 테마(company-info)·
+# 실적 IR(market-calendar) 빌더가 한 번의 실패로 통째로 죽었다. 일시 장애(네트워크·5xx·JSON 아님)만
+# 간격을 늘려 다시 받는다. 4xx 는 키·파라미터 문제라 재시도하지 않는다.
+DART_RETRY_WAITS = (3, 10, 30)
+
+
+def dart_get(path: str, params: dict, api_key: str, waits=DART_RETRY_WAITS, sleep=time.sleep) -> dict:
     q = {**params, "crtfc_key": api_key}
     url = f"{DART_BASE}/{path}?{urllib.parse.urlencode(q)}"
     req = urllib.request.Request(url, headers={"User-Agent": "Mir-US-Stocks/1.0"})
-    dart_pace()
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
+    for attempt in range(len(waits) + 1):
+        dart_pace()
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+            break
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == len(waits):
+                raise
+            last = e
+        except (urllib.error.URLError, TimeoutError, ConnectionError, ValueError) as e:
+            if attempt == len(waits):
+                raise
+            last = e
+        print(f"  [DART 재시도 {attempt + 1}/{len(waits)}] {path}: {type(last).__name__}: {last} — {waits[attempt]}초 후")
+        sleep(waits[attempt])
     dart_abort_if_rate_limited(data.get("status"), path)
     return data
 
@@ -222,23 +242,30 @@ def load_corp_map(api_key: str, *, use_cache: bool = True) -> dict[str, str]:
     req = urllib.request.Request(url, headers={"User-Agent": "Mir-US-Stocks/1.0"})
     try:
         # 2026-09-26 weekly kr-dart 잡: 러너에서 한 번 30초 타임아웃으로 DART 빌더 5개가 모두 중단됐다
-        # (러너엔 outputs/ 캐시가 없다). 연결 지연은 일시적인 경우가 많아 간격을 두고 세 번까지 받는다.
-        zip_data = b""
-        for attempt in range(3):
+        # (러너엔 outputs/ 캐시가 없다). 연결 지연은 일시적인 경우가 많아 간격을 두고 다시 받는다.
+        # 2026-10-10(일 03:02 KST) 에는 응답은 왔는데 ZIP 이 아니어서(점검·오류 본문) 재시도 없이
+        # 빌더 5개가 모두 중단됐다 — ZIP 검사까지 재시도 안에서 한다.
+        waits = (15, 30, 60, 120)
+        for attempt in range(len(waits) + 1):
             try:
                 dart_pace()
                 with urllib.request.urlopen(req, timeout=60) as resp:
                     zip_data = resp.read()
+                try:
+                    with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
+                        with zf.open("CORPCODE.xml") as xml_file:
+                            root = ET.parse(xml_file).getroot()
+                except zipfile.BadZipFile:
+                    head = zip_data[:200].decode("utf-8", "replace")
+                    if '"020"' in head or "<status>020</status>" in head:
+                        dart_abort_if_rate_limited("020", "corpCode.xml")
+                    raise ValueError(f"ZIP 아님({len(zip_data)}B): {head!r}")
                 break
             except Exception as exc:  # noqa: BLE001 — 마지막 시도 실패는 아래 except 로
-                if attempt == 2:
+                if attempt == len(waits):
                     raise
-                print(f"  corpCode.xml 받기 실패({attempt + 1}/3): {exc} — 15초 뒤 다시")
-                time.sleep(15)
-        with zipfile.ZipFile(io.BytesIO(zip_data)) as zf:
-            with zf.open("CORPCODE.xml") as xml_file:
-                tree = ET.parse(xml_file)
-                root = tree.getroot()
+                print(f"  corpCode.xml 받기 실패({attempt + 1}/{len(waits)}): {exc} — {waits[attempt]}초 뒤 다시")
+                time.sleep(waits[attempt])
         out = {}
         for list_node in root.findall("list"):
             stock = list_node.findtext("stock_code")

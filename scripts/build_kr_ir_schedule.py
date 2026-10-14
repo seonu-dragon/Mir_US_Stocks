@@ -140,13 +140,17 @@ def fetch_list(api_key: str, bgn: date, end: date) -> list[dict]:
         url = (f"{LIST_URL}?crtfc_key={api_key}&bgn_de={bgn:%Y%m%d}&end_de={end:%Y%m%d}"
                f"&pblntf_ty=I&page_count=100&page_no={page}")
         last = None
-        for attempt in range(3):
+        # 2026-10-10(일 06:40 KST) DART 가 빈 본문을 돌려줘 1.5·3초 간격 세 번이 모두 실패했다 —
+        # 점검·장애는 수 분 단위라 간격을 늘린다(최대 약 2분 반).
+        for attempt, wait in enumerate((5, 20, 45, 90, 0)):
             try:
                 d = http_json(url)
                 break
             except Exception as exc:  # 일시 장애는 재시도
                 last = exc
-                time.sleep(1.5 * (attempt + 1))
+                if wait:
+                    print(f"  list.json 재시도({attempt + 1}/4, page {page}): {exc} — {wait}초 뒤", file=sys.stderr)
+                    time.sleep(wait)
         else:
             raise RuntimeError(f"list.json 실패(page {page}): {last}")
         status = d.get("status")

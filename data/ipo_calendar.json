@@ -1,11 +1,196 @@
 {
-  "updatedAtKst": "2026-10-13 13:34 KST",
-  "lastFileDate": "2026-10-09",
+  "updatedAtKst": "2026-10-14 13:34 KST",
+  "lastFileDate": "2026-10-13",
   "partialFetch": false,
-  "count": 551,
+  "count": 566,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Hall Chadwick Acquisition Corp II",
+      "ticker": "HCAX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001829126-26-011094:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130219/000182912626011094/hallchadwickacq2_s1a.htm"
+    },
+    {
+      "company": "Hall Chadwick Acquisition Corp II",
+      "ticker": "HCAX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001829126-26-011094:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2130219/000182912626011094/hallchadwickacq2_s1a.htm"
+    },
+    {
+      "company": "VME Companies, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001575872-26-000691:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2113640/000157587226000691/vmec004_s1a.htm"
+    },
+    {
+      "company": "VME Companies, Inc.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001575872-26-000691:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2113640/000157587226000691/vmec004_s1a.htm"
+    },
+    {
+      "company": "Alternative Ballistics Corp",
+      "ticker": "ALBC",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-13",
+      "accession": "0001493152-26-046881:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1834868/000149315226046881/forms-1.htm"
+    },
+    {
+      "company": "WeShop Holdings Ltd",
+      "ticker": "WSHP",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-13",
+      "accession": "0001493152-26-046880:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2048271/000149315226046880/form424b4.htm",
+      "offerPriceNone": true,
+      "offerPriceNoneReason": "resale",
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "WeShop Holdings Ltd",
+      "ticker": "WSHP",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-13",
+      "accession": "0001493152-26-046878:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2048271/000149315226046878/form424b4.htm",
+      "offerPrice": 5.17,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "NON INVASIVE MONITORING SYSTEMS INC /FL/",
+      "ticker": "NIMU",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001493152-26-046657:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/720762/000149315226046657/forms-1a.htm"
+    },
+    {
+      "company": "NON INVASIVE MONITORING SYSTEMS INC /FL/",
+      "ticker": "NIMU",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001493152-26-046657:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/720762/000149315226046657/forms-1a.htm"
+    },
+    {
+      "company": "EuroSPAC Acquisition Corp.",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-13",
+      "accession": "0001477932-26-006184:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2156779/000147793226006184/euro_s1.htm"
+    },
+    {
+      "company": "KiNRG, Inc.",
+      "ticker": "BYOP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001213900-26-109090:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/95572/000121390026109090/ea0307852-s1a3_kinrg.htm"
+    },
+    {
+      "company": "KiNRG, Inc.",
+      "ticker": "BYOP",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001213900-26-109090:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/95572/000121390026109090/ea0307852-s1a3_kinrg.htm"
+    },
+    {
+      "company": "Apex Treasury Corp II",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-13",
+      "accession": "0001213900-26-108751:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2159678/000121390026108751/ea0307903-01.htm"
+    },
+    {
+      "company": "NuvOx Therapeutics, Inc.",
+      "ticker": "NUOX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001213900-26-108590:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1966126/000121390026108590/ea0225257-11.htm"
+    },
+    {
+      "company": "NuvOx Therapeutics, Inc.",
+      "ticker": "NUOX",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001213900-26-108590:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1966126/000121390026108590/ea0225257-11.htm"
+    },
+    {
+      "company": "Arxis, Inc.",
+      "ticker": "ARXS",
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-13",
+      "accession": "0001193125-26-419718:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2093536/000119312526419718/arxs-20261013.htm"
+    },
+    {
+      "company": "SPACCircle Acquisition Corp.",
+      "ticker": "SCQC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001185185-26-004687:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131303/000118518526004687/spacs1a2100926.htm"
+    },
+    {
+      "company": "SPACCircle Acquisition Corp.",
+      "ticker": "SCQC",
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-13",
+      "accession": "0001185185-26-004687:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2131303/000118518526004687/spacs1a2100926.htm"
+    },
     {
       "company": "Sunshine Biopharma Inc.  (SBFM, SBFMW)",
       "ticker": null,
@@ -5609,38 +5794,6 @@
       "fileDate": "2026-08-17",
       "accession": "0001104659-26-097534:S-1",
       "link": "https://www.sec.gov/Archives/edgar/data/1317685/000110465926097534/tm2613541d3_s1.htm"
-    },
-    {
-      "company": "BIOVIE INC.  (BIVI, BIVIW)",
-      "ticker": null,
-      "stage": "amended",
-      "stageLabel": "등록 정정",
-      "form": "S-1/A",
-      "fileDate": "2026-08-14",
-      "accession": "0001520138-26-000350:S-1/A",
-      "link": "https://www.sec.gov/Archives/edgar/data/1580149/000152013826000350/bivi_s1a3-3.htm"
-    },
-    {
-      "company": "BIOVIE INC.  (BIVI, BIVIW)",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "등록 신청",
-      "form": "S-1/A",
-      "fileDate": "2026-08-14",
-      "accession": "0001520138-26-000350:S-1",
-      "link": "https://www.sec.gov/Archives/edgar/data/1580149/000152013826000350/bivi_s1a3-3.htm"
-    },
-    {
-      "company": "Londian Wason New Energy Tech Inc.",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "상장(가격확정)",
-      "form": "424B4",
-      "fileDate": "2026-08-14",
-      "accession": "0001193125-26-351136:424B4",
-      "link": "https://www.sec.gov/Archives/edgar/data/2006960/000119312526351136/d476818d424b4.htm",
-      "offerPrice": 22.0,
-      "offerPriceChecked": 2
     }
   ]
 }

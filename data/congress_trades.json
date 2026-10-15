@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-15 06:39:13 KST",
+  "updatedAtKst": "2026-10-15 13:43:33 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 10985,
@@ -24,7 +24,7 @@
       "name": "John Fetterman",
       "chamber": "Senate",
       "party": "D",
-      "estReturnPct": 74.12,
+      "estReturnPct": 74.13,
       "buyCount": 8,
       "sellCount": 2,
       "tradeCount": 10,
@@ -507,7 +507,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -2.95,
+      "estReturnPct": -5.44,
       "buyCount": 51,
       "sellCount": 36,
       "tradeCount": 87,
@@ -11218,7 +11218,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -2.95
+      "estReturnPct": -5.44
     },
     {
       "id": "house-christopher-l-jacobs",
@@ -34310,7 +34310,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 74.12
+      "estReturnPct": 74.13
     },
     {
       "id": "house-adam-smith",
@@ -214192,7 +214192,7 @@
         "name": "Shelley M Capito",
         "tx": {
           "n": 134,
-          "avgExcess": 6.99,
+          "avgExcess": 7.0,
           "medianExcess": 6.48,
           "winRate": 60.4
         },
@@ -214202,7 +214202,7 @@
           "medianExcess": 3.87,
           "winRate": 57.5
         },
-        "buyAvgExcess": 10.15,
+        "buyAvgExcess": 10.18,
         "lagDays": 20,
         "id": "senate-shelley-m-capito",
         "chamber": "Senate",
@@ -214464,8 +214464,8 @@
         "disc": {
           "n": 302,
           "avgExcess": 2.8,
-          "medianExcess": 0.16,
-          "winRate": 50.7
+          "medianExcess": 0.13,
+          "winRate": 50.3
         },
         "buyAvgExcess": -1.12,
         "lagDays": 21,
@@ -214686,7 +214686,7 @@
           "medianExcess": -0.93,
           "winRate": 45.7
         },
-        "buyAvgExcess": -3.38,
+        "buyAvgExcess": -3.39,
         "lagDays": 28,
         "id": "senate-john-boozman",
         "chamber": "Senate",
@@ -214970,7 +214970,7 @@
         "tx": {
           "n": 52,
           "avgExcess": -4.39,
-          "medianExcess": -7.67,
+          "medianExcess": -7.66,
           "winRate": 42.3
         },
         "disc": {
@@ -215019,7 +215019,7 @@
           "medianExcess": -4.51,
           "winRate": 36.5
         },
-        "buyAvgExcess": -6.92,
+        "buyAvgExcess": -6.91,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -215081,17 +215081,17 @@
         "name": "Gilbert Cisneros",
         "tx": {
           "n": 629,
-          "avgExcess": -6.17,
+          "avgExcess": -6.16,
           "medianExcess": -7.33,
           "winRate": 38.3
         },
         "disc": {
           "n": 625,
-          "avgExcess": -6.59,
-          "medianExcess": -7.32,
+          "avgExcess": -6.58,
+          "medianExcess": -7.28,
           "winRate": 36.6
         },
-        "buyAvgExcess": -8.71,
+        "buyAvgExcess": -8.68,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
@@ -215105,7 +215105,7 @@
           "medianExcess": -1.96,
           "winRate": 42.9
         },
-        "buyAvgExcess": -1.9,
+        "buyAvgExcess": -1.89,
         "lagDays": 1,
         "id": "house-michael-rulli",
         "chamber": "House",
@@ -215294,13 +215294,13 @@
         "name": "Michael Patrick Guest",
         "tx": {
           "n": 11,
-          "avgExcess": -14.48,
+          "avgExcess": -14.55,
           "medianExcess": -22.69,
           "winRate": 27.3
         },
         "disc": {
           "n": 11,
-          "avgExcess": -19.81,
+          "avgExcess": -19.87,
           "medianExcess": -18.29,
           "winRate": 36.4
         },

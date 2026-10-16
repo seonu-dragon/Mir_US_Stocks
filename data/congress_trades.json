@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-16 06:39:44 KST",
+  "updatedAtKst": "2026-10-16 13:43:41 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 10993,
@@ -104,18 +104,6 @@
     },
     {
       "rank": 9,
-      "id": "house-valerie-hoyle",
-      "name": "Valerie Hoyle",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 36.01,
-      "buyCount": 97,
-      "sellCount": 89,
-      "tradeCount": 186,
-      "committees": []
-    },
-    {
-      "rank": 10,
       "id": "house-rob-bresnahan",
       "name": "Rob Bresnahan",
       "chamber": "House",
@@ -127,7 +115,7 @@
       "committees": []
     },
     {
-      "rank": 11,
+      "rank": 10,
       "id": "senate-shelley-m-capito",
       "name": "Shelley M Capito",
       "chamber": "Senate",
@@ -136,6 +124,18 @@
       "buyCount": 37,
       "sellCount": 157,
       "tradeCount": 194,
+      "committees": []
+    },
+    {
+      "rank": 11,
+      "id": "house-valerie-hoyle",
+      "name": "Valerie Hoyle",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 33.41,
+      "buyCount": 97,
+      "sellCount": 89,
+      "tradeCount": 186,
       "committees": []
     },
     {
@@ -152,6 +152,20 @@
     },
     {
       "rank": 13,
+      "id": "house-josh-gottheimer",
+      "name": "Josh Gottheimer",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 25.81,
+      "buyCount": 420,
+      "sellCount": 143,
+      "tradeCount": 564,
+      "committees": [
+        "Financial Services"
+      ]
+    },
+    {
+      "rank": 14,
       "id": "house-jared-moskowitz",
       "name": "Jared Moskowitz",
       "chamber": "House",
@@ -163,33 +177,7 @@
       "committees": []
     },
     {
-      "rank": 14,
-      "id": "house-josh-gottheimer",
-      "name": "Josh Gottheimer",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 24.35,
-      "buyCount": 420,
-      "sellCount": 143,
-      "tradeCount": 564,
-      "committees": [
-        "Financial Services"
-      ]
-    },
-    {
       "rank": 15,
-      "id": "house-thomas-h-kean",
-      "name": "Thomas H. Kean",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 24.26,
-      "buyCount": 42,
-      "sellCount": 14,
-      "tradeCount": 67,
-      "committees": []
-    },
-    {
-      "rank": 16,
       "id": "house-dwight-evans",
       "name": "Dwight Evans",
       "chamber": "House",
@@ -201,7 +189,7 @@
       "committees": []
     },
     {
-      "rank": 17,
+      "rank": 16,
       "id": "house-lisa-mcclain",
       "name": "Lisa McClain",
       "chamber": "House",
@@ -213,7 +201,7 @@
       "committees": []
     },
     {
-      "rank": 18,
+      "rank": 17,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
@@ -227,7 +215,7 @@
       ]
     },
     {
-      "rank": 19,
+      "rank": 18,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
@@ -241,7 +229,7 @@
       ]
     },
     {
-      "rank": 20,
+      "rank": 19,
       "id": "house-cleo-fields",
       "name": "Cleo Fields",
       "chamber": "House",
@@ -253,7 +241,7 @@
       "committees": []
     },
     {
-      "rank": 21,
+      "rank": 20,
       "id": "house-byron-donalds",
       "name": "Byron Donalds",
       "chamber": "House",
@@ -265,7 +253,7 @@
       "committees": []
     },
     {
-      "rank": 22,
+      "rank": 21,
       "id": "house-michael-rulli",
       "name": "Michael Rulli",
       "chamber": "House",
@@ -277,7 +265,7 @@
       "committees": []
     },
     {
-      "rank": 23,
+      "rank": 22,
       "id": "senate-alan-armstrong",
       "name": "Alan Armstrong",
       "chamber": "Senate",
@@ -286,6 +274,18 @@
       "buyCount": 322,
       "sellCount": 47,
       "tradeCount": 369,
+      "committees": []
+    },
+    {
+      "rank": 23,
+      "id": "house-thomas-h-kean",
+      "name": "Thomas H. Kean",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 13.38,
+      "buyCount": 42,
+      "sellCount": 14,
+      "tradeCount": 67,
       "committees": []
     },
     {
@@ -305,11 +305,23 @@
     },
     {
       "rank": 25,
+      "id": "house-rick-larsen",
+      "name": "Rick Larsen",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 10.98,
+      "buyCount": 21,
+      "sellCount": 19,
+      "tradeCount": 41,
+      "committees": []
+    },
+    {
+      "rank": 26,
       "id": "senate-markwayne-mullin",
       "name": "Markwayne Mullin",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 12.34,
+      "estReturnPct": 10.81,
       "buyCount": 254,
       "sellCount": 101,
       "tradeCount": 355,
@@ -317,18 +329,6 @@
         "Armed Services",
         "Environment"
       ]
-    },
-    {
-      "rank": 26,
-      "id": "house-richard-dean-mccormick",
-      "name": "Richard Dean McCormick",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 11.74,
-      "buyCount": 30,
-      "sellCount": 25,
-      "tradeCount": 55,
-      "committees": []
     },
     {
       "rank": 27,
@@ -356,14 +356,14 @@
     },
     {
       "rank": 29,
-      "id": "house-rick-larsen",
-      "name": "Rick Larsen",
+      "id": "house-richard-dean-mccormick",
+      "name": "Richard Dean McCormick",
       "chamber": "House",
-      "party": "D",
-      "estReturnPct": 7.16,
-      "buyCount": 21,
-      "sellCount": 19,
-      "tradeCount": 41,
+      "party": "R",
+      "estReturnPct": 6.61,
+      "buyCount": 30,
+      "sellCount": 25,
+      "tradeCount": 55,
       "committees": []
     },
     {
@@ -2003,7 +2003,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 24.35
+      "estReturnPct": 25.81
     },
     {
       "id": "house-daniel-goldman",
@@ -3779,7 +3779,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 12.34
+      "estReturnPct": 10.81
     },
     {
       "id": "house-rob-bresnahan",
@@ -7675,7 +7675,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 36.01
+      "estReturnPct": 33.41
     },
     {
       "id": "house-lois-frankel",
@@ -14404,7 +14404,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 24.26
+      "estReturnPct": 13.38
     },
     {
       "id": "house-ritchie-john-torres",
@@ -15466,7 +15466,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 11.74
+      "estReturnPct": 6.61
     },
     {
       "id": "house-john-curtis",
@@ -19340,7 +19340,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 7.16
+      "estReturnPct": 10.98
     },
     {
       "id": "house-thomas-suozzi",
@@ -214057,7 +214057,7 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-15",
-    "measuredTrades": 6887,
+    "measuredTrades": 6857,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
@@ -214144,7 +214144,7 @@
         "name": "Pete Sessions",
         "tx": {
           "n": 23,
-          "avgExcess": 12.33,
+          "avgExcess": 12.3,
           "medianExcess": 11.9,
           "winRate": 78.3
         },
@@ -214210,7 +214210,7 @@
         },
         "disc": {
           "n": 71,
-          "avgExcess": 8.36,
+          "avgExcess": 8.35,
           "medianExcess": 14.92,
           "winRate": 57.7
         },
@@ -214261,26 +214261,6 @@
         "party": "R"
       },
       {
-        "name": "Thomas H Tuberville",
-        "tx": {
-          "n": 339,
-          "avgExcess": 6.46,
-          "medianExcess": 5.49,
-          "winRate": 58.1
-        },
-        "disc": {
-          "n": 339,
-          "avgExcess": 2.96,
-          "medianExcess": 2.65,
-          "winRate": 55.5
-        },
-        "buyAvgExcess": -14.18,
-        "lagDays": 41,
-        "id": "senate-thomas-h-tuberville",
-        "chamber": "Senate",
-        "party": "R"
-      },
-      {
         "name": "John W Hickenlooper",
         "tx": {
           "n": 28,
@@ -214299,6 +214279,26 @@
         "id": "senate-john-w-hickenlooper",
         "chamber": "Senate",
         "party": "D"
+      },
+      {
+        "name": "Thomas H Tuberville",
+        "tx": {
+          "n": 324,
+          "avgExcess": 6.04,
+          "medianExcess": 4.83,
+          "winRate": 57.1
+        },
+        "disc": {
+          "n": 324,
+          "avgExcess": 2.38,
+          "medianExcess": 1.74,
+          "winRate": 54.6
+        },
+        "buyAvgExcess": -14.18,
+        "lagDays": 41,
+        "id": "senate-thomas-h-tuberville",
+        "chamber": "Senate",
+        "party": "R"
       },
       {
         "name": "Katie Britt",
@@ -214416,7 +214416,7 @@
         },
         "disc": {
           "n": 231,
-          "avgExcess": 4.64,
+          "avgExcess": 4.63,
           "medianExcess": 8.76,
           "winRate": 59.3
         },
@@ -214467,6 +214467,26 @@
         "party": "R"
       },
       {
+        "name": "Josh Gottheimer",
+        "tx": {
+          "n": 288,
+          "avgExcess": 3.12,
+          "medianExcess": 2.68,
+          "winRate": 53.8
+        },
+        "disc": {
+          "n": 287,
+          "avgExcess": 3.46,
+          "medianExcess": 0.25,
+          "winRate": 50.2
+        },
+        "buyAvgExcess": 0.3,
+        "lagDays": 21,
+        "id": "house-josh-gottheimer",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
         "name": "Valerie Hoyle",
         "tx": {
           "n": 182,
@@ -214507,26 +214527,6 @@
         "party": ""
       },
       {
-        "name": "Josh Gottheimer",
-        "tx": {
-          "n": 303,
-          "avgExcess": 1.99,
-          "medianExcess": 1.87,
-          "winRate": 52.8
-        },
-        "disc": {
-          "n": 302,
-          "avgExcess": 2.68,
-          "medianExcess": -0.49,
-          "winRate": 48.7
-        },
-        "buyAvgExcess": -1.1,
-        "lagDays": 21,
-        "id": "house-josh-gottheimer",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
         "name": "Matthew Robert Van Epps",
         "tx": {
           "n": 13,
@@ -214546,25 +214546,6 @@
         "party": ""
       },
       {
-        "name": "Mike Kelly",
-        "tx": {
-          "n": 10,
-          "avgExcess": 1.71,
-          "medianExcess": 4.79,
-          "winRate": 60.0
-        },
-        "disc": {
-          "n": 10,
-          "avgExcess": 5.27,
-          "medianExcess": 9.01,
-          "winRate": 70.0
-        },
-        "lagDays": 33,
-        "id": "house-mike-kelly",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Richard Dean McCormick",
         "tx": {
           "n": 43,
@@ -214578,9 +214559,28 @@
           "medianExcess": 0.79,
           "winRate": 53.5
         },
-        "buyAvgExcess": -1.33,
+        "buyAvgExcess": -1.28,
         "lagDays": 13,
         "id": "house-richard-dean-mccormick",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Mike Kelly",
+        "tx": {
+          "n": 10,
+          "avgExcess": 1.65,
+          "medianExcess": 4.47,
+          "winRate": 50.0
+        },
+        "disc": {
+          "n": 10,
+          "avgExcess": 5.21,
+          "medianExcess": 9.01,
+          "winRate": 70.0
+        },
+        "lagDays": 33,
+        "id": "house-mike-kelly",
         "chamber": "House",
         "party": "R"
       },
@@ -214688,13 +214688,13 @@
         "name": "Richard W. Allen",
         "tx": {
           "n": 37,
-          "avgExcess": 0.35,
-          "medianExcess": -0.07,
-          "winRate": 48.6
+          "avgExcess": 0.32,
+          "medianExcess": -0.34,
+          "winRate": 45.9
         },
         "disc": {
           "n": 37,
-          "avgExcess": 1.26,
+          "avgExcess": 1.23,
           "medianExcess": 0.45,
           "winRate": 54.1
         },
@@ -214708,7 +214708,7 @@
         "name": "John Boozman",
         "tx": {
           "n": 403,
-          "avgExcess": -0.44,
+          "avgExcess": -0.43,
           "medianExcess": -0.75,
           "winRate": 45.4
         },
@@ -214761,7 +214761,7 @@
         "name": "Kevin Hern",
         "tx": {
           "n": 106,
-          "avgExcess": -0.81,
+          "avgExcess": -0.82,
           "medianExcess": -0.7,
           "winRate": 47.2
         },
@@ -214787,7 +214787,7 @@
         },
         "disc": {
           "n": 646,
-          "avgExcess": -0.33,
+          "avgExcess": -0.32,
           "medianExcess": -0.91,
           "winRate": 49.5
         },
@@ -214901,13 +214901,13 @@
         "name": "Rick Larsen",
         "tx": {
           "n": 23,
-          "avgExcess": -1.42,
+          "avgExcess": -1.45,
           "medianExcess": -7.66,
           "winRate": 34.8
         },
         "disc": {
           "n": 23,
-          "avgExcess": -1.96,
+          "avgExcess": -1.99,
           "medianExcess": -8.11,
           "winRate": 34.8
         },
@@ -214987,11 +214987,11 @@
         },
         "disc": {
           "n": 362,
-          "avgExcess": -2.06,
+          "avgExcess": -2.05,
           "medianExcess": -3.55,
           "winRate": 38.7
         },
-        "buyAvgExcess": -5.68,
+        "buyAvgExcess": -5.67,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
@@ -215001,13 +215001,13 @@
         "name": "Julia Letlow",
         "tx": {
           "n": 99,
-          "avgExcess": -3.65,
+          "avgExcess": -3.66,
           "medianExcess": -9.88,
           "winRate": 37.4
         },
         "disc": {
           "n": 99,
-          "avgExcess": -4.12,
+          "avgExcess": -4.13,
           "medianExcess": -8.13,
           "winRate": 42.4
         },
@@ -215128,7 +215128,7 @@
         "disc": {
           "n": 625,
           "avgExcess": -6.03,
-          "medianExcess": -6.3,
+          "medianExcess": -6.36,
           "winRate": 38.6
         },
         "buyAvgExcess": -7.73,

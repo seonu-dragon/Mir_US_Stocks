@@ -1,11 +1,65 @@
 {
-  "updatedAtKst": "2026-10-15 13:34 KST",
-  "lastFileDate": "2026-10-14",
+  "updatedAtKst": "2026-10-16 13:34 KST",
+  "lastFileDate": "2026-10-15",
   "partialFetch": false,
-  "count": 582,
+  "count": 587,
   "source": "SEC EDGAR S-1 / 424B4",
   "note": "424B4=가격확정(상장 임박/직후), S-1=등록 신청. 티커는 prospectus에 표기된 경우만. offerPrice(공모가 USD)는 424B4 원문에서 단일 값으로 확정된 경우만 채운다. offerPriceKind='unit'이면 주당이 아니라 유닛당 가격(SPAC 등). offerPriceNone=true는 공모가가 존재하지 않는 공시(리세일/직상장/ATM/채권/보충서, 사유는 offerPriceNoneReason). 둘 다 없으면 '아직 모름'이다.",
   "ipos": [
+    {
+      "company": "Cashlin",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "등록 신청",
+      "form": "S-1",
+      "fileDate": "2026-10-15",
+      "accession": "0001683168-26-007889:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/2155673/000168316826007889/cashlin_s1.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-15",
+      "accession": "0001477932-26-006268:S-1/A",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226006268/medx_s1a.htm"
+    },
+    {
+      "company": "MED-X, INC.",
+      "ticker": null,
+      "stage": "amended",
+      "stageLabel": "등록 정정",
+      "form": "S-1/A",
+      "fileDate": "2026-10-15",
+      "accession": "0001477932-26-006268:S-1",
+      "link": "https://www.sec.gov/Archives/edgar/data/1620704/000147793226006268/medx_s1a.htm"
+    },
+    {
+      "company": "Iambic Therapeutics, Inc.",
+      "ticker": "IAM",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-15",
+      "accession": "0001193125-26-422865:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/1997038/000119312526422865/iambic_inception_424b4.htm",
+      "offerPrice": 16.0,
+      "offerPriceChecked": 2
+    },
+    {
+      "company": "Amaero Inc.",
+      "ticker": "AMRO",
+      "stage": "priced",
+      "stageLabel": "상장(가격확정)",
+      "form": "424B4",
+      "fileDate": "2026-10-15",
+      "accession": "0001193125-26-422334:424B4",
+      "link": "https://www.sec.gov/Archives/edgar/data/2141616/000119312526422334/project_alchemy_-_424b4.htm",
+      "offerPrice": 4.25,
+      "offerPriceChecked": 2
+    },
     {
       "company": "ACTUATE THERAPEUTICS, INC.",
       "ticker": "ACTU",

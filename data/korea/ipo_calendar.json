@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-16 16:22 KST",
+  "updatedAtKst": "2026-10-17 16:32 KST",
   "lastFileDate": "2026.11.24",
-  "count": 41,
+  "count": 43,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -51,6 +51,21 @@
       ]
     },
     {
+      "company": "씨앤엠",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "한국투자증권",
+      "fileDate": "2026.11.12",
+      "accession": "kr-ipo-bidding-씨앤엠",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        10000,
+        13000
+      ]
+    },
+    {
       "company": "엔키화이트햇",
       "ticker": null,
       "stage": "filed",
@@ -63,6 +78,21 @@
       "offerPriceBand": [
         13000,
         16500
+      ]
+    },
+    {
+      "company": "제이앤티지",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "대신증권,NH투자증권",
+      "fileDate": "2026.11.12",
+      "accession": "kr-ipo-bidding-제이앤티지",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        26400,
+        31900
       ]
     },
     {
@@ -324,7 +354,9 @@
       "fileDate": "2026.10.20",
       "accession": "kr-ipo-bidding-티앤이코리아",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPrice": 15300
+      "offerPrice": 15300,
+      "instCompetition": 1041.02,
+      "commitPct": 29.52
     },
     {
       "company": "크리에이츠",
@@ -417,7 +449,7 @@
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "대신증권",
+      "form": "",
       "fileDate": "2026.09.30",
       "accession": "kr-ipo-listed-덕산넵코어스(구.넵코어스)",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -445,7 +477,7 @@
       "ticker": "486510",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "한국투자증권",
+      "form": "",
       "fileDate": "2026.09.29",
       "accession": "kr-ipo-listed-글로벌테크놀로지",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",

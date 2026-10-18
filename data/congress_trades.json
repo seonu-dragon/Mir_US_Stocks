@@ -1,6 +1,6 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-18 13:41:56 KST",
+  "updatedAtKst": "2026-10-19 06:38:42 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
   "tradeCount": 10969,
@@ -213724,21 +213724,35 @@
     "horizonDays": 365,
     "minTrades": 10,
     "asOf": "2026-10-16",
-    "measuredTrades": 6098,
+    "measuredTrades": 6827,
     "members": [
+      {
+        "name": "Debbie Wasserman Schultz",
+        "tx": {
+          "n": 10,
+          "avgExcess": 26.85,
+          "medianExcess": 25.27,
+          "winRate": 70.0
+        },
+        "buyAvgExcess": 35.92,
+        "lagDays": 1,
+        "id": "house-debbie-wasserman-schultz",
+        "chamber": "House",
+        "party": "D"
+      },
       {
         "name": "Jerry Moran,",
         "tx": {
-          "n": 24,
-          "avgExcess": 17.13,
+          "n": 26,
+          "avgExcess": 16.88,
           "medianExcess": 13.21,
-          "winRate": 66.7
+          "winRate": 69.2
         },
         "disc": {
-          "n": 24,
-          "avgExcess": 15.68,
-          "medianExcess": 8.2,
-          "winRate": 66.7
+          "n": 26,
+          "avgExcess": 15.62,
+          "medianExcess": 9.45,
+          "winRate": 69.2
         },
         "buyAvgExcess": 46.56,
         "lagDays": 34,
@@ -213749,18 +213763,18 @@
       {
         "name": "Tim Walberg",
         "tx": {
-          "n": 13,
-          "avgExcess": 17.07,
-          "medianExcess": 6.43,
-          "winRate": 69.2
+          "n": 14,
+          "avgExcess": 16.05,
+          "medianExcess": 6.07,
+          "winRate": 71.4
         },
         "disc": {
-          "n": 13,
-          "avgExcess": -1.54,
-          "medianExcess": -1.1,
-          "winRate": 46.2
+          "n": 14,
+          "avgExcess": -0.9,
+          "medianExcess": -0.49,
+          "winRate": 50.0
         },
-        "buyAvgExcess": 16.23,
+        "buyAvgExcess": 15.1,
         "lagDays": 476,
         "id": "house-tim-walberg",
         "chamber": "House",
@@ -213780,64 +213794,38 @@
         "party": "D"
       },
       {
-        "name": "Katie Britt",
-        "tx": {
-          "n": 17,
-          "avgExcess": 12.93,
-          "medianExcess": 2.89,
-          "winRate": 58.8
-        },
-        "disc": {
-          "n": 17,
-          "avgExcess": 7.3,
-          "medianExcess": 3.47,
-          "winRate": 58.8
-        },
-        "buyAvgExcess": 15.17,
-        "lagDays": 271,
-        "id": "senate-katie-britt",
-        "chamber": "Senate",
-        "party": "R"
-      },
-      {
         "name": "Pete Sessions",
         "tx": {
-          "n": 21,
-          "avgExcess": 11.86,
+          "n": 23,
+          "avgExcess": 12.18,
           "medianExcess": 11.9,
-          "winRate": 76.2
+          "winRate": 78.3
         },
         "disc": {
-          "n": 14,
-          "avgExcess": 8.21,
-          "medianExcess": 12.31,
-          "winRate": 64.3
+          "n": 15,
+          "avgExcess": 8.45,
+          "medianExcess": 11.72,
+          "winRate": 66.7
         },
-        "buyAvgExcess": 14.51,
-        "lagDays": 3,
+        "buyAvgExcess": 13.89,
+        "lagDays": 4,
         "id": "house-pete-sessions",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Marjorie Taylor Greene",
+        "name": "Kelly Louise Morrison",
         "tx": {
-          "n": 160,
-          "avgExcess": 10.21,
-          "medianExcess": 5.26,
-          "winRate": 56.9
+          "n": 23,
+          "avgExcess": 11.74,
+          "medianExcess": 2.53,
+          "winRate": 60.9
         },
-        "disc": {
-          "n": 150,
-          "avgExcess": 10.64,
-          "medianExcess": 9.68,
-          "winRate": 56.7
-        },
-        "buyAvgExcess": 10.21,
-        "lagDays": 1,
-        "id": "house-marjorie-taylor-greene",
+        "buyAvgExcess": 10.02,
+        "lagDays": 15,
+        "id": "house-kelly-louise-morrison",
         "chamber": "House",
-        "party": "R"
+        "party": "D"
       },
       {
         "name": "Tina Smith",
@@ -213860,112 +213848,78 @@
         "party": "D"
       },
       {
-        "name": "Michael C. Burgess",
+        "name": "Marjorie Taylor Greene",
         "tx": {
-          "n": 10,
-          "avgExcess": 8.82,
-          "medianExcess": 5.74,
-          "winRate": 50.0
+          "n": 182,
+          "avgExcess": 8.67,
+          "medianExcess": 5.16,
+          "winRate": 55.5
         },
         "disc": {
-          "n": 10,
-          "avgExcess": 9.43,
-          "medianExcess": 3.62,
-          "winRate": 50.0
+          "n": 171,
+          "avgExcess": 9.12,
+          "medianExcess": 5.92,
+          "winRate": 55.6
         },
-        "buyAvgExcess": -18.32,
-        "lagDays": 2,
-        "id": "house-michael-c-burgess",
+        "buyAvgExcess": 8.67,
+        "lagDays": 1,
+        "id": "house-marjorie-taylor-greene",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Kelly Louise Morrison",
+        "name": "Angus S King, Jr.",
         "tx": {
-          "n": 17,
-          "avgExcess": 8.48,
-          "medianExcess": -4.33,
-          "winRate": 47.1
+          "n": 37,
+          "avgExcess": 7.08,
+          "medianExcess": 5.26,
+          "winRate": 59.5
         },
-        "buyAvgExcess": 10.02,
-        "lagDays": 15,
-        "id": "house-kelly-louise-morrison",
-        "chamber": "House",
-        "party": "D"
+        "disc": {
+          "n": 37,
+          "avgExcess": 9.23,
+          "medianExcess": 7.81,
+          "winRate": 56.8
+        },
+        "buyAvgExcess": 8.38,
+        "lagDays": 28,
+        "id": "senate-angus-s-king-jr",
+        "chamber": "Senate",
+        "party": "I"
       },
       {
         "name": "Byron Donalds",
         "tx": {
-          "n": 60,
-          "avgExcess": 7.62,
-          "medianExcess": 7.05,
-          "winRate": 53.3
+          "n": 71,
+          "avgExcess": 7.07,
+          "medianExcess": 7.95,
+          "winRate": 53.5
         },
         "disc": {
-          "n": 60,
-          "avgExcess": 8.95,
-          "medianExcess": 14.01,
-          "winRate": 61.7
+          "n": 71,
+          "avgExcess": 8.13,
+          "medianExcess": 15.1,
+          "winRate": 60.6
         },
-        "buyAvgExcess": -0.29,
+        "buyAvgExcess": -6.07,
         "lagDays": 19,
         "id": "house-byron-donalds",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "John W Hickenlooper",
-        "tx": {
-          "n": 27,
-          "avgExcess": 7.15,
-          "medianExcess": 13.82,
-          "winRate": 66.7
-        },
-        "disc": {
-          "n": 27,
-          "avgExcess": 5.72,
-          "medianExcess": 16.35,
-          "winRate": 55.6
-        },
-        "buyAvgExcess": -10.91,
-        "lagDays": 25,
-        "id": "senate-john-w-hickenlooper",
-        "chamber": "Senate",
-        "party": "D"
-      },
-      {
-        "name": "Thomas H Tuberville",
-        "tx": {
-          "n": 263,
-          "avgExcess": 7.14,
-          "medianExcess": 5.73,
-          "winRate": 58.6
-        },
-        "disc": {
-          "n": 263,
-          "avgExcess": 2.97,
-          "medianExcess": 2.08,
-          "winRate": 55.1
-        },
-        "buyAvgExcess": -17.32,
-        "lagDays": 42,
-        "id": "senate-thomas-h-tuberville",
-        "chamber": "Senate",
-        "party": "R"
-      },
-      {
         "name": "Shelley M Capito",
         "tx": {
-          "n": 128,
-          "avgExcess": 6.85,
+          "n": 134,
+          "avgExcess": 6.65,
           "medianExcess": 6.21,
-          "winRate": 60.2
+          "winRate": 60.4
         },
         "disc": {
-          "n": 128,
-          "avgExcess": 6.85,
+          "n": 134,
+          "avgExcess": 6.86,
           "medianExcess": 3.87,
-          "winRate": 57.8
+          "winRate": 57.5
         },
         "buyAvgExcess": 10.46,
         "lagDays": 20,
@@ -213974,44 +213928,84 @@
         "party": "R"
       },
       {
-        "name": "Angus S King, Jr.",
+        "name": "Thomas H Tuberville",
         "tx": {
-          "n": 30,
-          "avgExcess": 5.56,
-          "medianExcess": 1.23,
-          "winRate": 56.7
+          "n": 294,
+          "avgExcess": 6.51,
+          "medianExcess": 5.6,
+          "winRate": 58.2
         },
         "disc": {
-          "n": 30,
-          "avgExcess": 7.3,
-          "medianExcess": 3.32,
-          "winRate": 53.3
+          "n": 294,
+          "avgExcess": 2.71,
+          "medianExcess": 1.34,
+          "winRate": 53.4
         },
-        "buyAvgExcess": 5.36,
-        "lagDays": 28,
-        "id": "senate-angus-s-king-jr",
+        "buyAvgExcess": -17.96,
+        "lagDays": 42,
+        "id": "senate-thomas-h-tuberville",
         "chamber": "Senate",
-        "party": "I"
+        "party": "R"
       },
       {
-        "name": "Jared Moskowitz",
+        "name": "Katie Britt",
         "tx": {
-          "n": 139,
-          "avgExcess": 5.0,
-          "medianExcess": 1.91,
-          "winRate": 52.5
+          "n": 24,
+          "avgExcess": 6.02,
+          "medianExcess": 1.89,
+          "winRate": 54.2
         },
         "disc": {
-          "n": 132,
-          "avgExcess": 4.3,
-          "medianExcess": 2.25,
-          "winRate": 53.8
+          "n": 24,
+          "avgExcess": 5.54,
+          "medianExcess": 3.76,
+          "winRate": 58.3
         },
-        "buyAvgExcess": 4.58,
-        "lagDays": 22,
-        "id": "house-jared-moskowitz",
-        "chamber": "House",
+        "buyAvgExcess": 4.57,
+        "lagDays": 271,
+        "id": "senate-katie-britt",
+        "chamber": "Senate",
+        "party": "R"
+      },
+      {
+        "name": "John W Hickenlooper",
+        "tx": {
+          "n": 28,
+          "avgExcess": 5.89,
+          "medianExcess": 13.57,
+          "winRate": 64.3
+        },
+        "disc": {
+          "n": 28,
+          "avgExcess": 4.9,
+          "medianExcess": 16.16,
+          "winRate": 53.6
+        },
+        "buyAvgExcess": -12.84,
+        "lagDays": 24,
+        "id": "senate-john-w-hickenlooper",
+        "chamber": "Senate",
         "party": "D"
+      },
+      {
+        "name": "Jefferson Shreve",
+        "tx": {
+          "n": 246,
+          "avgExcess": 5.41,
+          "medianExcess": 8.49,
+          "winRate": 55.7
+        },
+        "disc": {
+          "n": 246,
+          "avgExcess": 5.35,
+          "medianExcess": 7.19,
+          "winRate": 56.9
+        },
+        "buyAvgExcess": -0.91,
+        "lagDays": 5,
+        "id": "house-jefferson-shreve",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Robert E. Latta",
@@ -214024,26 +214018,6 @@
         "buyAvgExcess": 4.95,
         "lagDays": 1,
         "id": "house-robert-e-latta",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Jefferson Shreve",
-        "tx": {
-          "n": 216,
-          "avgExcess": 4.87,
-          "medianExcess": 6.53,
-          "winRate": 55.1
-        },
-        "disc": {
-          "n": 216,
-          "avgExcess": 5.08,
-          "medianExcess": 6.97,
-          "winRate": 56.5
-        },
-        "buyAvgExcess": -0.2,
-        "lagDays": 5,
-        "id": "house-jefferson-shreve",
         "chamber": "House",
         "party": "R"
       },
@@ -214068,150 +214042,170 @@
         "party": "D"
       },
       {
-        "name": "James Comer",
-        "tx": {
-          "n": 12,
-          "avgExcess": 4.77,
-          "medianExcess": -13.48,
-          "winRate": 33.3
-        },
-        "disc": {
-          "n": 12,
-          "avgExcess": 5.39,
-          "medianExcess": -11.6,
-          "winRate": 25.0
-        },
-        "buyAvgExcess": 4.77,
-        "lagDays": 1,
-        "id": "house-james-comer",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Tim Moore",
-        "tx": {
-          "n": 68,
-          "avgExcess": 3.93,
-          "medianExcess": -1.59,
-          "winRate": 48.5
-        },
-        "disc": {
-          "n": 59,
-          "avgExcess": 3.73,
-          "medianExcess": -6.99,
-          "winRate": 47.5
-        },
-        "buyAvgExcess": 9.43,
-        "lagDays": 24,
-        "id": "house-tim-moore",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "John Curtis",
         "tx": {
-          "n": 23,
-          "avgExcess": 3.38,
-          "medianExcess": 9.53,
-          "winRate": 56.5
+          "n": 26,
+          "avgExcess": 4.43,
+          "medianExcess": 9.8,
+          "winRate": 61.5
         },
         "id": "house-john-curtis",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Valerie Hoyle",
+        "name": "Tim Moore",
         "tx": {
-          "n": 166,
-          "avgExcess": 3.28,
-          "medianExcess": -0.66,
-          "winRate": 50.0
+          "n": 76,
+          "avgExcess": 4.03,
+          "medianExcess": 1.89,
+          "winRate": 51.3
         },
         "disc": {
-          "n": 99,
-          "avgExcess": 3.75,
-          "medianExcess": 0.35,
-          "winRate": 50.5
+          "n": 66,
+          "avgExcess": 4.54,
+          "medianExcess": 0.07,
+          "winRate": 50.0
         },
-        "buyAvgExcess": -1.32,
-        "lagDays": 317,
-        "id": "house-valerie-hoyle",
+        "buyAvgExcess": 8.96,
+        "lagDays": 24,
+        "id": "house-tim-moore",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Jared Moskowitz",
+        "tx": {
+          "n": 156,
+          "avgExcess": 3.23,
+          "medianExcess": 0.62,
+          "winRate": 50.6
+        },
+        "disc": {
+          "n": 149,
+          "avgExcess": 2.82,
+          "medianExcess": 1.38,
+          "winRate": 53.0
+        },
+        "buyAvgExcess": 2.87,
+        "lagDays": 22,
+        "id": "house-jared-moskowitz",
         "chamber": "House",
         "party": "D"
       },
       {
-        "name": "Josh Gottheimer",
+        "name": "James Comer",
         "tx": {
-          "n": 244,
-          "avgExcess": 3.21,
-          "medianExcess": 2.81,
-          "winRate": 53.7
+          "n": 15,
+          "avgExcess": 3.15,
+          "medianExcess": -11.6,
+          "winRate": 40.0
         },
         "disc": {
-          "n": 243,
-          "avgExcess": 3.41,
-          "medianExcess": 0.25,
-          "winRate": 50.2
+          "n": 15,
+          "avgExcess": 3.22,
+          "medianExcess": -11.49,
+          "winRate": 33.3
         },
-        "buyAvgExcess": 0.99,
-        "lagDays": 21,
-        "id": "house-josh-gottheimer",
+        "buyAvgExcess": 3.15,
+        "lagDays": 1,
+        "id": "house-james-comer",
         "chamber": "House",
-        "party": "D"
+        "party": "R"
       },
       {
         "name": "Julie Johnson",
         "tx": {
-          "n": 211,
-          "avgExcess": 3.17,
-          "medianExcess": 9.25,
-          "winRate": 58.3
+          "n": 231,
+          "avgExcess": 3.09,
+          "medianExcess": 9.0,
+          "winRate": 58.9
         },
         "disc": {
-          "n": 211,
-          "avgExcess": 4.44,
-          "medianExcess": 8.07,
+          "n": 231,
+          "avgExcess": 4.33,
+          "medianExcess": 8.12,
           "winRate": 59.7
         },
-        "buyAvgExcess": -8.77,
+        "buyAvgExcess": -7.17,
         "lagDays": 22,
         "id": "house-julie-johnson",
         "chamber": "House",
         "party": "D"
       },
       {
-        "name": "Dwight Evans",
+        "name": "A. Mitchell McConnell, Jr.",
         "tx": {
-          "n": 10,
-          "avgExcess": 3.03,
-          "medianExcess": 0.08,
+          "n": 12,
+          "avgExcess": 3.08,
+          "medianExcess": -0.6,
           "winRate": 50.0
         },
         "disc": {
-          "n": 10,
-          "avgExcess": 2.55,
-          "medianExcess": 0.01,
-          "winRate": 50.0
+          "n": 11,
+          "avgExcess": 4.87,
+          "medianExcess": -0.39,
+          "winRate": 45.5
         },
-        "buyAvgExcess": 10.48,
-        "lagDays": 13,
-        "id": "house-dwight-evans",
+        "buyAvgExcess": 3.08,
+        "lagDays": 16,
+        "id": "senate-a-mitchell-mcconnell-jr",
+        "chamber": "Senate",
+        "party": ""
+      },
+      {
+        "name": "Josh Gottheimer",
+        "tx": {
+          "n": 288,
+          "avgExcess": 2.82,
+          "medianExcess": 2.72,
+          "winRate": 53.1
+        },
+        "disc": {
+          "n": 287,
+          "avgExcess": 3.2,
+          "medianExcess": 0.25,
+          "winRate": 50.2
+        },
+        "buyAvgExcess": -0.06,
+        "lagDays": 21,
+        "id": "house-josh-gottheimer",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Valerie Hoyle",
+        "tx": {
+          "n": 182,
+          "avgExcess": 2.5,
+          "medianExcess": 0.51,
+          "winRate": 51.1
+        },
+        "disc": {
+          "n": 108,
+          "avgExcess": 2.72,
+          "medianExcess": -4.0,
+          "winRate": 48.1
+        },
+        "buyAvgExcess": -3.32,
+        "lagDays": 317,
+        "id": "house-valerie-hoyle",
         "chamber": "House",
         "party": "D"
       },
       {
         "name": "Matthew Robert Van Epps",
         "tx": {
-          "n": 11,
-          "avgExcess": 2.78,
+          "n": 13,
+          "avgExcess": 2.1,
           "medianExcess": 8.46,
-          "winRate": 63.6
+          "winRate": 61.5
         },
         "disc": {
-          "n": 11,
-          "avgExcess": 2.7,
+          "n": 13,
+          "avgExcess": 2.0,
           "medianExcess": 9.85,
-          "winRate": 54.5
+          "winRate": 53.8
         },
         "lagDays": 1,
         "id": "house-matthew-robert-van-epps",
@@ -214221,58 +214215,38 @@
       {
         "name": "John James",
         "tx": {
-          "n": 97,
-          "avgExcess": 1.64,
-          "medianExcess": 4.44,
-          "winRate": 54.6
+          "n": 114,
+          "avgExcess": 1.49,
+          "medianExcess": 4.28,
+          "winRate": 53.5
         },
         "disc": {
-          "n": 96,
-          "avgExcess": 2.95,
-          "medianExcess": 4.79,
-          "winRate": 54.2
+          "n": 113,
+          "avgExcess": 2.52,
+          "medianExcess": 3.17,
+          "winRate": 53.1
         },
-        "buyAvgExcess": -4.92,
-        "lagDays": 101,
+        "buyAvgExcess": -4.52,
+        "lagDays": 85,
         "id": "house-john-james",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Markwayne Mullin",
-        "tx": {
-          "n": 208,
-          "avgExcess": 1.16,
-          "medianExcess": 0.48,
-          "winRate": 50.5
-        },
-        "disc": {
-          "n": 208,
-          "avgExcess": 3.28,
-          "medianExcess": 1.53,
-          "winRate": 54.3
-        },
-        "buyAvgExcess": 0.29,
-        "lagDays": 26,
-        "id": "senate-markwayne-mullin",
-        "chamber": "Senate",
-        "party": "R"
-      },
-      {
         "name": "Richard Dean McCormick",
         "tx": {
-          "n": 41,
-          "avgExcess": 1.09,
-          "medianExcess": 0.67,
-          "winRate": 53.7
+          "n": 43,
+          "avgExcess": 1.48,
+          "medianExcess": 1.68,
+          "winRate": 55.8
         },
         "disc": {
-          "n": 41,
-          "avgExcess": -0.23,
+          "n": 43,
+          "avgExcess": 0.08,
           "medianExcess": -0.12,
           "winRate": 48.8
         },
-        "buyAvgExcess": -0.08,
+        "buyAvgExcess": 0.58,
         "lagDays": 13,
         "id": "house-richard-dean-mccormick",
         "chamber": "House",
@@ -214281,96 +214255,101 @@
       {
         "name": "Kathy Manning",
         "tx": {
-          "n": 43,
-          "avgExcess": 0.16,
-          "medianExcess": 0.48,
-          "winRate": 51.2
+          "n": 45,
+          "avgExcess": 1.37,
+          "medianExcess": 0.76,
+          "winRate": 53.3
         },
         "disc": {
-          "n": 43,
-          "avgExcess": -0.68,
-          "medianExcess": -2.02,
-          "winRate": 46.5
+          "n": 45,
+          "avgExcess": 0.46,
+          "medianExcess": -0.18,
+          "winRate": 48.9
         },
-        "buyAvgExcess": -5.75,
+        "buyAvgExcess": -5.01,
         "lagDays": 21,
         "id": "house-kathy-manning",
         "chamber": "House",
         "party": "D"
       },
       {
-        "name": "John Boozman",
+        "name": "Greg Landsman",
         "tx": {
-          "n": 357,
-          "avgExcess": 0.12,
-          "medianExcess": -0.09,
-          "winRate": 46.5
+          "n": 47,
+          "avgExcess": 1.32,
+          "medianExcess": 1.47,
+          "winRate": 55.3
         },
         "disc": {
-          "n": 357,
-          "avgExcess": 0.11,
-          "medianExcess": -0.28,
-          "winRate": 45.4
+          "n": 47,
+          "avgExcess": 4.06,
+          "medianExcess": 9.46,
+          "winRate": 57.4
         },
-        "buyAvgExcess": -2.25,
-        "lagDays": 28,
-        "id": "senate-john-boozman",
+        "buyAvgExcess": -2.24,
+        "lagDays": 14,
+        "id": "house-greg-landsman",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Mike Kelly",
+        "tx": {
+          "n": 10,
+          "avgExcess": 0.92,
+          "medianExcess": 2.07,
+          "winRate": 50.0
+        },
+        "disc": {
+          "n": 10,
+          "avgExcess": 4.5,
+          "medianExcess": 7.66,
+          "winRate": 70.0
+        },
+        "lagDays": 33,
+        "id": "house-mike-kelly",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Markwayne Mullin",
+        "tx": {
+          "n": 226,
+          "avgExcess": 0.79,
+          "medianExcess": -0.55,
+          "winRate": 48.7
+        },
+        "disc": {
+          "n": 226,
+          "avgExcess": 2.35,
+          "medianExcess": 1.03,
+          "winRate": 52.7
+        },
+        "buyAvgExcess": 1.51,
+        "lagDays": 26,
+        "id": "senate-markwayne-mullin",
         "chamber": "Senate",
         "party": "R"
       },
       {
-        "name": "Rob Bresnahan",
+        "name": "Bruce Westerman",
         "tx": {
-          "n": 237,
-          "avgExcess": 0.09,
-          "medianExcess": 5.54,
-          "winRate": 53.6
+          "n": 97,
+          "avgExcess": 0.63,
+          "medianExcess": 0.18,
+          "winRate": 51.5
         },
-        "buyAvgExcess": -5.1,
+        "disc": {
+          "n": 97,
+          "avgExcess": -0.36,
+          "medianExcess": 1.29,
+          "winRate": 52.6
+        },
+        "buyAvgExcess": 4.42,
         "lagDays": 10,
-        "id": "house-rob-bresnahan",
+        "id": "house-bruce-westerman",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Ritchie John Torres",
-        "tx": {
-          "n": 57,
-          "avgExcess": -0.05,
-          "medianExcess": -0.26,
-          "winRate": 49.1
-        },
-        "disc": {
-          "n": 57,
-          "avgExcess": 4.02,
-          "medianExcess": 1.53,
-          "winRate": 54.4
-        },
-        "buyAvgExcess": -8.6,
-        "lagDays": 288,
-        "id": "house-ritchie-john-torres",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Greg Landsman",
-        "tx": {
-          "n": 38,
-          "avgExcess": -0.3,
-          "medianExcess": 1.37,
-          "winRate": 55.3
-        },
-        "disc": {
-          "n": 38,
-          "avgExcess": 2.68,
-          "medianExcess": 8.66,
-          "winRate": 57.9
-        },
-        "buyAvgExcess": -2.21,
-        "lagDays": 8,
-        "id": "house-greg-landsman",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "Richard W. Allen",
@@ -214393,18 +214372,271 @@
         "party": ""
       },
       {
-        "name": "Sheldon Whitehouse",
+        "name": "Rob Bresnahan",
         "tx": {
-          "n": 79,
-          "avgExcess": -0.59,
-          "medianExcess": 3.21,
-          "winRate": 57.0
+          "n": 273,
+          "avgExcess": -0.44,
+          "medianExcess": 4.45,
+          "winRate": 52.7
+        },
+        "buyAvgExcess": -5.55,
+        "lagDays": 10,
+        "id": "house-rob-bresnahan",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "John Boozman",
+        "tx": {
+          "n": 403,
+          "avgExcess": -0.55,
+          "medianExcess": -0.66,
+          "winRate": 45.7
         },
         "disc": {
-          "n": 77,
-          "avgExcess": 0.76,
-          "medianExcess": 2.78,
-          "winRate": 62.3
+          "n": 403,
+          "avgExcess": -0.44,
+          "medianExcess": -0.47,
+          "winRate": 45.2
+        },
+        "buyAvgExcess": -3.22,
+        "lagDays": 28,
+        "id": "senate-john-boozman",
+        "chamber": "Senate",
+        "party": "R"
+      },
+      {
+        "name": "Greg Stanton",
+        "tx": {
+          "n": 39,
+          "avgExcess": -0.58,
+          "medianExcess": 4.55,
+          "winRate": 53.8
+        },
+        "disc": {
+          "n": 39,
+          "avgExcess": 1.48,
+          "medianExcess": 5.23,
+          "winRate": 56.4
+        },
+        "lagDays": 2,
+        "id": "house-greg-stanton",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Thomas H. Kean",
+        "tx": {
+          "n": 49,
+          "avgExcess": -0.69,
+          "medianExcess": 1.98,
+          "winRate": 51.0
+        },
+        "disc": {
+          "n": 49,
+          "avgExcess": 0.44,
+          "medianExcess": -4.55,
+          "winRate": 40.8
+        },
+        "buyAvgExcess": -3.97,
+        "lagDays": 19,
+        "id": "house-thomas-h-kean",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Lisa McClain",
+        "tx": {
+          "n": 649,
+          "avgExcess": -0.74,
+          "medianExcess": -0.91,
+          "winRate": 49.0
+        },
+        "disc": {
+          "n": 646,
+          "avgExcess": -0.23,
+          "medianExcess": 0.56,
+          "winRate": 50.2
+        },
+        "buyAvgExcess": -6.5,
+        "lagDays": 20,
+        "id": "house-lisa-mcclain",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Cleo Fields",
+        "tx": {
+          "n": 115,
+          "avgExcess": -0.96,
+          "medianExcess": -0.41,
+          "winRate": 49.6
+        },
+        "disc": {
+          "n": 18,
+          "avgExcess": 12.23,
+          "medianExcess": 1.61,
+          "winRate": 66.7
+        },
+        "buyAvgExcess": -1.22,
+        "lagDays": 3,
+        "id": "house-cleo-fields",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Michael C. Burgess",
+        "tx": {
+          "n": 16,
+          "avgExcess": -0.98,
+          "medianExcess": -0.34,
+          "winRate": 43.8
+        },
+        "disc": {
+          "n": 16,
+          "avgExcess": -1.2,
+          "medianExcess": -0.79,
+          "winRate": 43.8
+        },
+        "buyAvgExcess": -28.48,
+        "lagDays": 2,
+        "id": "house-michael-c-burgess",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Ritchie John Torres",
+        "tx": {
+          "n": 62,
+          "avgExcess": -1.39,
+          "medianExcess": -1.07,
+          "winRate": 46.8
+        },
+        "disc": {
+          "n": 62,
+          "avgExcess": 5.68,
+          "medianExcess": 9.58,
+          "winRate": 56.5
+        },
+        "buyAvgExcess": -10.85,
+        "lagDays": 298,
+        "id": "house-ritchie-john-torres",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Kevin Hern",
+        "tx": {
+          "n": 106,
+          "avgExcess": -1.69,
+          "medianExcess": -2.54,
+          "winRate": 46.2
+        },
+        "disc": {
+          "n": 96,
+          "avgExcess": -2.86,
+          "medianExcess": -2.68,
+          "winRate": 38.5
+        },
+        "buyAvgExcess": -1.59,
+        "lagDays": 8,
+        "id": "house-kevin-hern",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Rick Larsen",
+        "tx": {
+          "n": 23,
+          "avgExcess": -1.82,
+          "medianExcess": -8.34,
+          "winRate": 34.8
+        },
+        "disc": {
+          "n": 23,
+          "avgExcess": -2.36,
+          "medianExcess": -8.11,
+          "winRate": 34.8
+        },
+        "buyAvgExcess": -13.91,
+        "lagDays": 2,
+        "id": "house-rick-larsen",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Maria Elvira Salazar",
+        "tx": {
+          "n": 57,
+          "avgExcess": -1.93,
+          "medianExcess": -4.19,
+          "winRate": 43.9
+        },
+        "disc": {
+          "n": 46,
+          "avgExcess": -3.22,
+          "medianExcess": -7.17,
+          "winRate": 39.1
+        },
+        "buyAvgExcess": -3.97,
+        "lagDays": 16,
+        "id": "house-maria-elvira-salazar",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Blake Moore",
+        "tx": {
+          "n": 18,
+          "avgExcess": -2.34,
+          "medianExcess": 2.41,
+          "winRate": 50.0
+        },
+        "disc": {
+          "n": 18,
+          "avgExcess": -2.36,
+          "medianExcess": 2.44,
+          "winRate": 50.0
+        },
+        "buyAvgExcess": 3.45,
+        "lagDays": 3,
+        "id": "house-blake-moore",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Dwight Evans",
+        "tx": {
+          "n": 11,
+          "avgExcess": -2.54,
+          "medianExcess": -2.77,
+          "winRate": 45.5
+        },
+        "disc": {
+          "n": 11,
+          "avgExcess": 1.41,
+          "medianExcess": -5.14,
+          "winRate": 45.5
+        },
+        "buyAvgExcess": 10.48,
+        "lagDays": 13,
+        "id": "house-dwight-evans",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Sheldon Whitehouse",
+        "tx": {
+          "n": 91,
+          "avgExcess": -3.06,
+          "medianExcess": 1.93,
+          "winRate": 51.6
+        },
+        "disc": {
+          "n": 88,
+          "avgExcess": -0.5,
+          "medianExcess": 2.63,
+          "winRate": 59.1
         },
         "buyAvgExcess": -13.71,
         "lagDays": 25,
@@ -214413,343 +214645,196 @@
         "party": "D"
       },
       {
-        "name": "Cleo Fields",
-        "tx": {
-          "n": 112,
-          "avgExcess": -0.6,
-          "medianExcess": 0.11,
-          "winRate": 50.0
-        },
-        "disc": {
-          "n": 18,
-          "avgExcess": 12.23,
-          "medianExcess": 1.61,
-          "winRate": 66.7
-        },
-        "buyAvgExcess": -0.19,
-        "lagDays": 3,
-        "id": "house-cleo-fields",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Kevin Hern",
-        "tx": {
-          "n": 92,
-          "avgExcess": -0.99,
-          "medianExcess": -0.26,
-          "winRate": 50.0
-        },
-        "disc": {
-          "n": 83,
-          "avgExcess": -2.16,
-          "medianExcess": -0.48,
-          "winRate": 43.4
-        },
-        "buyAvgExcess": 0.08,
-        "lagDays": 9,
-        "id": "house-kevin-hern",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Bruce Westerman",
-        "tx": {
-          "n": 89,
-          "avgExcess": -1.02,
-          "medianExcess": 0.15,
-          "winRate": 50.6
-        },
-        "disc": {
-          "n": 89,
-          "avgExcess": -1.65,
-          "medianExcess": 0.7,
-          "winRate": 51.7
-        },
-        "buyAvgExcess": 2.99,
-        "lagDays": 10,
-        "id": "house-bruce-westerman",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Lisa McClain",
-        "tx": {
-          "n": 576,
-          "avgExcess": -1.29,
-          "medianExcess": -1.8,
-          "winRate": 48.3
-        },
-        "disc": {
-          "n": 573,
-          "avgExcess": -0.43,
-          "medianExcess": 0.94,
-          "winRate": 50.4
-        },
-        "buyAvgExcess": -6.25,
-        "lagDays": 20,
-        "id": "house-lisa-mcclain",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Maria Elvira Salazar",
-        "tx": {
-          "n": 52,
-          "avgExcess": -1.39,
-          "medianExcess": -5.28,
-          "winRate": 44.2
-        },
-        "disc": {
-          "n": 41,
-          "avgExcess": -3.54,
-          "medianExcess": -8.24,
-          "winRate": 36.6
-        },
-        "buyAvgExcess": -3.47,
-        "lagDays": 16,
-        "id": "house-maria-elvira-salazar",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Greg Stanton",
-        "tx": {
-          "n": 33,
-          "avgExcess": -1.73,
-          "medianExcess": 1.82,
-          "winRate": 51.5
-        },
-        "disc": {
-          "n": 33,
-          "avgExcess": -0.13,
-          "medianExcess": 2.88,
-          "winRate": 54.5
-        },
-        "lagDays": 2,
-        "id": "house-greg-stanton",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Julia Letlow",
-        "tx": {
-          "n": 87,
-          "avgExcess": -1.79,
-          "medianExcess": -7.62,
-          "winRate": 39.1
-        },
-        "disc": {
-          "n": 87,
-          "avgExcess": -3.76,
-          "medianExcess": -7.29,
-          "winRate": 41.4
-        },
-        "buyAvgExcess": -9.02,
-        "lagDays": 111,
-        "id": "house-julia-letlow",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Thomas H. Kean",
-        "tx": {
-          "n": 46,
-          "avgExcess": -2.36,
-          "medianExcess": -1.29,
-          "winRate": 47.8
-        },
-        "disc": {
-          "n": 46,
-          "avgExcess": -1.23,
-          "medianExcess": -5.46,
-          "winRate": 37.0
-        },
-        "buyAvgExcess": -5.97,
-        "lagDays": 18,
-        "id": "house-thomas-h-kean",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Alan Armstrong",
         "tx": {
-          "n": 326,
-          "avgExcess": -2.94,
-          "medianExcess": -5.33,
-          "winRate": 39.0
+          "n": 364,
+          "avgExcess": -3.33,
+          "medianExcess": -5.54,
+          "winRate": 38.5
         },
         "disc": {
-          "n": 324,
-          "avgExcess": -1.3,
-          "medianExcess": -2.59,
-          "winRate": 41.4
+          "n": 362,
+          "avgExcess": -1.78,
+          "medianExcess": -3.19,
+          "winRate": 40.3
         },
-        "buyAvgExcess": -4.59,
+        "buyAvgExcess": -5.07,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
         "party": "R"
       },
       {
-        "name": "Blake Moore",
+        "name": "Julia Letlow",
         "tx": {
-          "n": 16,
-          "avgExcess": -3.28,
-          "medianExcess": -4.26,
-          "winRate": 43.8
+          "n": 99,
+          "avgExcess": -3.67,
+          "medianExcess": -9.88,
+          "winRate": 36.4
         },
         "disc": {
-          "n": 16,
-          "avgExcess": -3.27,
-          "medianExcess": -4.65,
-          "winRate": 43.8
+          "n": 99,
+          "avgExcess": -4.13,
+          "medianExcess": -8.13,
+          "winRate": 41.4
         },
-        "buyAvgExcess": 0.0,
-        "lagDays": 3,
-        "id": "house-blake-moore",
+        "buyAvgExcess": -10.26,
+        "lagDays": 105,
+        "id": "house-julia-letlow",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Jonathan Jackson",
-        "tx": {
-          "n": 66,
-          "avgExcess": -3.56,
-          "medianExcess": -6.6,
-          "winRate": 40.9
-        },
-        "disc": {
-          "n": 66,
-          "avgExcess": -1.8,
-          "medianExcess": -2.03,
-          "winRate": 43.9
-        },
-        "buyAvgExcess": -10.86,
-        "lagDays": 23,
-        "id": "house-jonathan-jackson",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Rick Larsen",
-        "tx": {
-          "n": 20,
-          "avgExcess": -3.71,
-          "medianExcess": -8.91,
-          "winRate": 30.0
-        },
-        "disc": {
-          "n": 20,
-          "avgExcess": -4.27,
-          "medianExcess": -9.51,
-          "winRate": 30.0
-        },
-        "buyAvgExcess": -15.0,
-        "lagDays": 2,
-        "id": "house-rick-larsen",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Gary C Peters",
-        "tx": {
-          "n": 17,
-          "avgExcess": -4.72,
-          "medianExcess": 0.77,
-          "winRate": 52.9
-        },
-        "disc": {
-          "n": 17,
-          "avgExcess": -8.4,
-          "medianExcess": -4.65,
-          "winRate": 41.2
-        },
-        "buyAvgExcess": -6.56,
-        "lagDays": 15,
-        "id": "senate-gary-c-peters",
-        "chamber": "Senate",
-        "party": "D"
-      },
-      {
         "name": "Dan Newhouse",
         "tx": {
-          "n": 44,
-          "avgExcess": -4.73,
-          "medianExcess": -7.99,
-          "winRate": 38.6
+          "n": 52,
+          "avgExcess": -4.02,
+          "medianExcess": -7.34,
+          "winRate": 40.4
         },
         "disc": {
-          "n": 15,
-          "avgExcess": -7.93,
+          "n": 19,
+          "avgExcess": -6.72,
           "medianExcess": -12.94,
-          "winRate": 40.0
+          "winRate": 42.1
         },
-        "buyAvgExcess": -9.33,
+        "buyAvgExcess": -8.37,
         "lagDays": 15,
         "id": "house-dan-newhouse",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "David J. Taylor",
+        "name": "Carol Devine Miller",
         "tx": {
-          "n": 107,
-          "avgExcess": -5.05,
-          "medianExcess": -3.23,
-          "winRate": 45.8
+          "n": 18,
+          "avgExcess": -4.08,
+          "medianExcess": -0.31,
+          "winRate": 50.0
         },
         "disc": {
-          "n": 106,
-          "avgExcess": -5.4,
-          "medianExcess": -4.18,
-          "winRate": 44.3
+          "n": 18,
+          "avgExcess": -3.41,
+          "medianExcess": -2.95,
+          "winRate": 44.4
         },
-        "buyAvgExcess": -4.18,
+        "buyAvgExcess": -13.92,
+        "lagDays": 32,
+        "id": "house-carol-devine-miller",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Jonathan Jackson",
+        "tx": {
+          "n": 72,
+          "avgExcess": -4.19,
+          "medianExcess": -6.6,
+          "winRate": 40.3
+        },
+        "disc": {
+          "n": 72,
+          "avgExcess": -2.27,
+          "medianExcess": -2.03,
+          "winRate": 43.1
+        },
+        "buyAvgExcess": -11.78,
+        "lagDays": 21,
+        "id": "house-jonathan-jackson",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Gary C Peters",
+        "tx": {
+          "n": 18,
+          "avgExcess": -4.25,
+          "medianExcess": 2.22,
+          "winRate": 55.6
+        },
+        "disc": {
+          "n": 18,
+          "avgExcess": -7.52,
+          "medianExcess": -2.49,
+          "winRate": 44.4
+        },
+        "buyAvgExcess": -5.1,
+        "lagDays": 16,
+        "id": "senate-gary-c-peters",
+        "chamber": "Senate",
+        "party": "D"
+      },
+      {
+        "name": "David J. Taylor",
+        "tx": {
+          "n": 114,
+          "avgExcess": -4.26,
+          "medianExcess": -1.9,
+          "winRate": 47.4
+        },
+        "disc": {
+          "n": 113,
+          "avgExcess": -4.63,
+          "medianExcess": -3.83,
+          "winRate": 46.0
+        },
+        "buyAvgExcess": -3.08,
         "lagDays": 8,
         "id": "house-david-j-taylor",
         "chamber": "House",
         "party": "R"
       },
       {
-        "name": "Scott Franklin",
-        "tx": {
-          "n": 32,
-          "avgExcess": -5.62,
-          "medianExcess": -8.06,
-          "winRate": 37.5
-        },
-        "disc": {
-          "n": 32,
-          "avgExcess": -4.93,
-          "medianExcess": -5.76,
-          "winRate": 40.6
-        },
-        "buyAvgExcess": -9.09,
-        "lagDays": 15,
-        "id": "house-scott-franklin",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Gilbert Cisneros",
         "tx": {
-          "n": 567,
-          "avgExcess": -6.18,
-          "medianExcess": -6.48,
-          "winRate": 39.2
+          "n": 629,
+          "avgExcess": -5.67,
+          "medianExcess": -6.11,
+          "winRate": 39.7
         },
         "disc": {
-          "n": 564,
-          "avgExcess": -6.51,
-          "medianExcess": -5.6,
-          "winRate": 37.8
+          "n": 625,
+          "avgExcess": -6.04,
+          "medianExcess": -5.2,
+          "winRate": 38.2
         },
-        "buyAvgExcess": -8.27,
+        "buyAvgExcess": -7.64,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
         "party": "D"
+      },
+      {
+        "name": "George Whitesides",
+        "tx": {
+          "n": 16,
+          "avgExcess": -5.99,
+          "medianExcess": 4.98,
+          "winRate": 56.2
+        },
+        "id": "house-george-whitesides",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Scott Franklin",
+        "tx": {
+          "n": 38,
+          "avgExcess": -6.55,
+          "medianExcess": -7.17,
+          "winRate": 39.5
+        },
+        "disc": {
+          "n": 38,
+          "avgExcess": -3.09,
+          "medianExcess": -1.11,
+          "winRate": 44.7
+        },
+        "buyAvgExcess": -10.68,
+        "lagDays": 9,
+        "id": "house-scott-franklin",
+        "chamber": "House",
+        "party": "R"
       },
       {
         "name": "Michael Rulli",
@@ -214764,6 +214849,26 @@
         "id": "house-michael-rulli",
         "chamber": "House",
         "party": "R"
+      },
+      {
+        "name": "Earl Blumenauer",
+        "tx": {
+          "n": 15,
+          "avgExcess": -6.95,
+          "medianExcess": -5.93,
+          "winRate": 33.3
+        },
+        "disc": {
+          "n": 15,
+          "avgExcess": -5.73,
+          "medianExcess": -1.62,
+          "winRate": 46.7
+        },
+        "buyAvgExcess": -5.65,
+        "lagDays": 18,
+        "id": "house-earl-blumenauer",
+        "chamber": "House",
+        "party": "D"
       },
       {
         "name": "Mark Green",
@@ -214785,24 +214890,24 @@
         "party": "R"
       },
       {
-        "name": "Carol Devine Miller",
+        "name": "Thomas R Carper",
         "tx": {
-          "n": 16,
-          "avgExcess": -7.96,
-          "medianExcess": -3.45,
-          "winRate": 43.8
-        },
-        "disc": {
-          "n": 16,
-          "avgExcess": -6.79,
-          "medianExcess": -5.88,
+          "n": 64,
+          "avgExcess": -8.01,
+          "medianExcess": -9.66,
           "winRate": 37.5
         },
-        "buyAvgExcess": -13.92,
-        "lagDays": 32,
-        "id": "house-carol-devine-miller",
-        "chamber": "House",
-        "party": "R"
+        "disc": {
+          "n": 64,
+          "avgExcess": -9.03,
+          "medianExcess": -6.63,
+          "winRate": 39.1
+        },
+        "buyAvgExcess": -17.69,
+        "lagDays": 18,
+        "id": "senate-thomas-r-carper",
+        "chamber": "Senate",
+        "party": "D"
       },
       {
         "name": "Lloyd Doggett",
@@ -214825,110 +214930,18 @@
         "party": "D"
       },
       {
-        "name": "Thomas R Carper",
-        "tx": {
-          "n": 54,
-          "avgExcess": -8.48,
-          "medianExcess": -9.66,
-          "winRate": 38.9
-        },
-        "disc": {
-          "n": 54,
-          "avgExcess": -9.46,
-          "medianExcess": -6.63,
-          "winRate": 38.9
-        },
-        "buyAvgExcess": -18.42,
-        "lagDays": 18,
-        "id": "senate-thomas-r-carper",
-        "chamber": "Senate",
-        "party": "D"
-      },
-      {
-        "name": "Earl Blumenauer",
-        "tx": {
-          "n": 13,
-          "avgExcess": -8.7,
-          "medianExcess": -7.67,
-          "winRate": 23.1
-        },
-        "disc": {
-          "n": 13,
-          "avgExcess": -6.95,
-          "medianExcess": -6.22,
-          "winRate": 46.2
-        },
-        "buyAvgExcess": -5.65,
-        "lagDays": 22,
-        "id": "house-earl-blumenauer",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "April McClain Delaney",
-        "tx": {
-          "n": 171,
-          "avgExcess": -9.99,
-          "medianExcess": -8.51,
-          "winRate": 26.9
-        },
-        "disc": {
-          "n": 171,
-          "avgExcess": -8.84,
-          "medianExcess": -7.22,
-          "winRate": 25.7
-        },
-        "buyAvgExcess": -13.53,
-        "lagDays": 12,
-        "id": "house-april-mcclain-delaney",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "George Whitesides",
-        "tx": {
-          "n": 15,
-          "avgExcess": -10.14,
-          "medianExcess": 0.8,
-          "winRate": 53.3
-        },
-        "id": "house-george-whitesides",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Virginia Foxx",
-        "tx": {
-          "n": 40,
-          "avgExcess": -10.34,
-          "medianExcess": -9.24,
-          "winRate": 30.0
-        },
-        "disc": {
-          "n": 37,
-          "avgExcess": -9.38,
-          "medianExcess": -10.92,
-          "winRate": 35.1
-        },
-        "buyAvgExcess": -12.03,
-        "lagDays": 15,
-        "id": "house-virginia-foxx",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Sheri Biggs",
         "tx": {
-          "n": 33,
-          "avgExcess": -10.38,
-          "medianExcess": -3.26,
-          "winRate": 36.4
+          "n": 36,
+          "avgExcess": -9.26,
+          "medianExcess": -3.24,
+          "winRate": 36.1
         },
         "disc": {
-          "n": 33,
-          "avgExcess": -4.63,
-          "medianExcess": -0.02,
-          "winRate": 48.5
+          "n": 36,
+          "avgExcess": -5.62,
+          "medianExcess": -0.76,
+          "winRate": 47.2
         },
         "buyAvgExcess": -0.91,
         "lagDays": 146,
@@ -214937,57 +214950,98 @@
         "party": "R"
       },
       {
-        "name": "C. Scott Franklin",
+        "name": "Virginia Foxx",
         "tx": {
-          "n": 19,
-          "avgExcess": -10.98,
-          "medianExcess": -12.23,
-          "winRate": 26.3
+          "n": 41,
+          "avgExcess": -10.09,
+          "medianExcess": -8.22,
+          "winRate": 31.7
         },
         "disc": {
-          "n": 19,
-          "avgExcess": -10.98,
-          "medianExcess": -15.92,
-          "winRate": 21.1
+          "n": 38,
+          "avgExcess": -9.12,
+          "medianExcess": -9.07,
+          "winRate": 36.8
         },
-        "buyAvgExcess": -19.81,
+        "buyAvgExcess": -11.69,
+        "lagDays": 15,
+        "id": "house-virginia-foxx",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "April McClain Delaney",
+        "tx": {
+          "n": 185,
+          "avgExcess": -11.5,
+          "medianExcess": -8.95,
+          "winRate": 26.5
+        },
+        "disc": {
+          "n": 185,
+          "avgExcess": -10.39,
+          "medianExcess": -7.33,
+          "winRate": 24.9
+        },
+        "buyAvgExcess": -15.53,
+        "lagDays": 12,
+        "id": "house-april-mcclain-delaney",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "C. Scott Franklin",
+        "tx": {
+          "n": 20,
+          "avgExcess": -12.85,
+          "medianExcess": -13.37,
+          "winRate": 25.0
+        },
+        "disc": {
+          "n": 20,
+          "avgExcess": -12.7,
+          "medianExcess": -16.51,
+          "winRate": 20.0
+        },
+        "buyAvgExcess": -21.71,
         "lagDays": 9,
         "id": "house-c-scott-franklin",
         "chamber": "House",
         "party": "R"
       },
       {
+        "name": "James French Hill",
+        "tx": {
+          "n": 15,
+          "avgExcess": -14.83,
+          "medianExcess": -12.13,
+          "winRate": 20.0
+        },
+        "buyAvgExcess": -24.83,
+        "lagDays": 7,
+        "id": "house-james-french-hill",
+        "chamber": "House",
+        "party": ""
+      },
+      {
         "name": "Michael Patrick Guest",
         "tx": {
-          "n": 10,
-          "avgExcess": -17.32,
-          "medianExcess": -32.1,
-          "winRate": 30.0
+          "n": 11,
+          "avgExcess": -15.82,
+          "medianExcess": -30.5,
+          "winRate": 27.3
         },
         "disc": {
-          "n": 10,
-          "avgExcess": -20.2,
-          "medianExcess": -20.71,
-          "winRate": 40.0
+          "n": 11,
+          "avgExcess": -20.74,
+          "medianExcess": -24.98,
+          "winRate": 36.4
         },
-        "buyAvgExcess": -11.37,
+        "buyAvgExcess": -9.61,
         "lagDays": 26,
         "id": "house-michael-patrick-guest",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "James French Hill",
-        "tx": {
-          "n": 11,
-          "avgExcess": -22.31,
-          "medianExcess": -15.02,
-          "winRate": 18.2
-        },
-        "buyAvgExcess": -35.01,
-        "id": "house-james-french-hill",
-        "chamber": "House",
-        "party": ""
       },
       {
         "name": "David H McCormick",

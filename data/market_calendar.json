@@ -1,20 +1,20 @@
 {
- "updatedAtKst": "2026-10-19 06:41 KST",
- "from": "2026-10-19",
- "to": "2027-01-17",
+ "updatedAtKst": "2026-10-20 06:41 KST",
+ "from": "2026-10-20",
+ "to": "2027-01-18",
  "horizonDays": 90,
  "source": "exchange_calendars 4.13.2 (XKRX·XNYS) · 만기는 거래소 규칙으로 계산 · FOMC 는 연준 공개 일정표",
  "coverage": {
   "kr": {
    "exchange": "XKRX",
-   "lastSession": "2027-10-18"
+   "lastSession": "2027-10-19"
   },
   "us": {
    "exchange": "XNYS",
-   "lastSession": "2027-10-18"
+   "lastSession": "2027-10-19"
   }
  },
- "count": 16,
+ "count": 17,
  "events": [
   {
    "date": "2026-10-29",
@@ -139,6 +139,13 @@
    "quarterly": false,
    "title": "미국 월간 옵션 만기",
    "detail": "매월 셋째 금요일"
+  },
+  {
+   "date": "2027-01-18",
+   "market": "us",
+   "kind": "holiday",
+   "title": "미국 휴장",
+   "name": "마틴 루서 킹 데이"
   }
  ]
 }

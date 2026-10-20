@@ -1,11 +1,83 @@
 {
-  "updatedAtKst": "2026-10-19 13:34 KST",
-  "lastFileDate": "2026-10-16",
+  "updatedAtKst": "2026-10-20 13:34 KST",
+  "lastFileDate": "2026-10-19",
   "partialFetch": false,
-  "count": 545,
+  "count": 543,
   "source": "SEC EDGAR S-3 / S-3ASR / 424B5",
   "note": "추적 universe 한정. S-3=shelf 등록(발행 여력 확보), 424B5=실제 발행 보충서. amountUsd 는 제목/설명에 금액이 명시돼 단일 값으로 확정된 경우만.",
   "rows": [
+    {
+      "ticker": "GOAI",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-10-19",
+      "title": "Eva Live Inc  (GOAI)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1983736/000149315226047591/form424b5.htm",
+      "accession": "0001493152-26-047591"
+    },
+    {
+      "ticker": "HOST",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-10-19",
+      "title": "Host Digital Inc.  (HOST)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1948864/000149315226047468/forms-3.htm",
+      "accession": "0001493152-26-047468"
+    },
+    {
+      "ticker": "PUSA",
+      "formType": "S-3",
+      "formLabel": "일괄신고 등록(Shelf)",
+      "fileDate": "2026-10-19",
+      "title": "Powerus Corp  (PUSA)",
+      "url": "https://www.sec.gov/Archives/edgar/data/2009312/000149315226047466/forms-3.htm",
+      "accession": "0001493152-26-047466"
+    },
+    {
+      "ticker": "WMT",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-10-19",
+      "title": "Walmart Inc.  (WMT)",
+      "url": "https://www.sec.gov/Archives/edgar/data/104169/000119312526424989/d61801d424b5.htm",
+      "accession": "0001193125-26-424989"
+    },
+    {
+      "ticker": "BAC",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-10-19",
+      "title": "BANK OF AMERICA CORP /DE/  (BAC, BAC-PB, BAC-PE, BAC-PK, BAC-PL, BAC-PM, BAC-PN, BAC-PO, BAC-PP, BAC-PQ, BAC-PS, BML-PG, BML-PL)",
+      "url": "https://www.sec.gov/Archives/edgar/data/70858/000119312526424835/d415907d424b5.htm",
+      "accession": "0001193125-26-424835"
+    },
+    {
+      "ticker": "WMT",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-10-19",
+      "title": "Walmart Inc.  (WMT)",
+      "url": "https://www.sec.gov/Archives/edgar/data/104169/000119312526424733/d38470d424b5.htm",
+      "accession": "0001193125-26-424733"
+    },
+    {
+      "ticker": "RUBI",
+      "formType": "424B5",
+      "formLabel": "발행 보충서(추가발행)",
+      "fileDate": "2026-10-19",
+      "title": "Rubico Inc.  (RUBI)",
+      "url": "https://www.sec.gov/Archives/edgar/data/1943421/000117184326006687/f424b5_101726.htm",
+      "accession": "0001171843-26-006687"
+    },
+    {
+      "ticker": "CMS",
+      "formType": "S-3ASR",
+      "formLabel": "자동 일괄신고(WKSI)",
+      "fileDate": "2026-10-19",
+      "title": "CMS ENERGY CORP  (CMS, CMSA, CMSC, CMSD, CMS-PC)",
+      "url": "https://www.sec.gov/Archives/edgar/data/811156/000110465926116867/tm2627669d1_s3asr.htm",
+      "accession": "0001104659-26-116867"
+    },
     {
       "ticker": "VBIO",
       "formType": "S-3",
@@ -4820,96 +4892,6 @@
       "title": "ACCURAY INC  (ARAY)",
       "url": "https://www.sec.gov/Archives/edgar/data/1138723/000095010326012769/dp252098_s3a.htm",
       "accession": "0000950103-26-012769"
-    },
-    {
-      "ticker": "NXL",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "Nexalin Technology, Inc.  (NXL)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1527352/000182912626009171/nexalintech_424b5.htm",
-      "accession": "0001829126-26-009171"
-    },
-    {
-      "ticker": "KWM",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "K Wave Media Ltd.  (KWM, KWMWW)",
-      "url": "https://www.sec.gov/Archives/edgar/data/2000756/000182912626009144/kwavemedia_424b5.htm",
-      "accession": "0001829126-26-009144"
-    },
-    {
-      "ticker": "WXM",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "WF International Ltd.  (WXM)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1979610/000173112226001111/e7872_424b5.htm",
-      "accession": "0001731122-26-001111"
-    },
-    {
-      "ticker": "PFS",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "PROVIDENT FINANCIAL SERVICES INC  (PFS)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1178970/000155278126000455/e26357_pfs-424b5.htm",
-      "accession": "0001552781-26-000455"
-    },
-    {
-      "ticker": "AMLX",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "Amylyx Pharmaceuticals, Inc.  (AMLX)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1658551/000119312526359416/d180581d424b5.htm",
-      "accession": "0001193125-26-359416"
-    },
-    {
-      "ticker": "PYXS",
-      "formType": "S-3",
-      "formLabel": "일괄신고 등록(Shelf)",
-      "fileDate": "2026-08-20",
-      "title": "Pyxis Oncology, Inc.  (PYXS)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1782223/000119312526359246/pyxs-20260820.htm",
-      "accession": "0001193125-26-359246"
-    },
-    {
-      "ticker": "QNBC",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "QNB CORP.  (QNBC)",
-      "url": "https://www.sec.gov/Archives/edgar/data/750558/000119312526358403/2026_capital_raise_prosp.htm",
-      "accession": "0001193125-26-358403"
-    },
-    {
-      "ticker": "EHGO",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "EShallGo Inc.  (EHGO)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1879754/000118518526003637/ehgo424b5082026.htm",
-      "accession": "0001185185-26-003637"
-    },
-    {
-      "ticker": "EDSA",
-      "formType": "424B5",
-      "formLabel": "발행 보충서(추가발행)",
-      "fileDate": "2026-08-20",
-      "title": "Edesa Biotech, Inc.  (EDSA)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1540159/000117184326005685/f424b5_082026.htm",
-      "accession": "0001171843-26-005685"
-    },
-    {
-      "ticker": "BKV",
-      "formType": "S-3ASR",
-      "formLabel": "자동 일괄신고(WKSI)",
-      "fileDate": "2026-08-20",
-      "title": "BKV Corp  (BKV)",
-      "url": "https://www.sec.gov/Archives/edgar/data/1838406/000110465926099236/tm2622879-1_s3asr.htm",
-      "accession": "0001104659-26-099236"
     }
   ]
 }

@@ -1,9 +1,9 @@
 {
   "source": "Quiver Quant (최신) + House/Senate PTR 공시 미러",
-  "updatedAtKst": "2026-10-20 13:43:23 KST",
+  "updatedAtKst": "2026-10-21 06:39:54 KST",
   "lookbackYears": 5,
   "note": "의회 PTR(Periodic Transaction Report) 공시 기반입니다. 실제 체결 후 최대 45일 지연될 수 있으며, 수익률은 최근 매수 거래의 추정값입니다.",
-  "tradeCount": 10957,
+  "tradeCount": 10959,
   "politicianCount": 198,
   "rankings": [
     {
@@ -12,7 +12,7 @@
       "name": "Tim Moore",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 127.99,
+      "estReturnPct": 130.34,
       "buyCount": 49,
       "sellCount": 28,
       "tradeCount": 77,
@@ -24,7 +24,7 @@
       "name": "John Fetterman",
       "chamber": "Senate",
       "party": "D",
-      "estReturnPct": 73.77,
+      "estReturnPct": 72.56,
       "buyCount": 8,
       "sellCount": 2,
       "tradeCount": 10,
@@ -36,7 +36,7 @@
       "name": "Jerry Moran,",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 58.89,
+      "estReturnPct": 57.14,
       "buyCount": 15,
       "sellCount": 39,
       "tradeCount": 54,
@@ -48,7 +48,7 @@
       "name": "Katie Britt",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 46.72,
+      "estReturnPct": 46.76,
       "buyCount": 16,
       "sellCount": 8,
       "tradeCount": 24,
@@ -60,7 +60,7 @@
       "name": "Julia Letlow",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 45.86,
+      "estReturnPct": 45.77,
       "buyCount": 70,
       "sellCount": 34,
       "tradeCount": 104,
@@ -68,38 +68,38 @@
     },
     {
       "rank": 6,
+      "id": "house-robert-e-latta",
+      "name": "Robert E. Latta",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 40.52,
+      "buyCount": 21,
+      "sellCount": 0,
+      "tradeCount": 21,
+      "committees": []
+    },
+    {
+      "rank": 7,
       "id": "senate-angus-s-king-jr",
       "name": "Angus S King, Jr.",
       "chamber": "Senate",
       "party": "I",
-      "estReturnPct": 41.12,
+      "estReturnPct": 40.01,
       "buyCount": 26,
       "sellCount": 16,
       "tradeCount": 42,
       "committees": []
     },
     {
-      "rank": 7,
+      "rank": 8,
       "id": "house-jefferson-shreve",
       "name": "Jefferson Shreve",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 40.3,
+      "estReturnPct": 40.0,
       "buyCount": 104,
       "sellCount": 144,
       "tradeCount": 249,
-      "committees": []
-    },
-    {
-      "rank": 8,
-      "id": "house-robert-e-latta",
-      "name": "Robert E. Latta",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 38.5,
-      "buyCount": 21,
-      "sellCount": 0,
-      "tradeCount": 21,
       "committees": []
     },
     {
@@ -108,7 +108,7 @@
       "name": "Rob Bresnahan",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 33.64,
+      "estReturnPct": 34.34,
       "buyCount": 111,
       "sellCount": 165,
       "tradeCount": 276,
@@ -120,7 +120,7 @@
       "name": "Valerie Hoyle",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 33.05,
+      "estReturnPct": 33.11,
       "buyCount": 97,
       "sellCount": 89,
       "tradeCount": 186,
@@ -132,7 +132,7 @@
       "name": "Shelley M Capito",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 31.99,
+      "estReturnPct": 31.82,
       "buyCount": 37,
       "sellCount": 157,
       "tradeCount": 194,
@@ -144,7 +144,7 @@
       "name": "Ed Case",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 26.64,
+      "estReturnPct": 25.37,
       "buyCount": 6,
       "sellCount": 1,
       "tradeCount": 7,
@@ -156,7 +156,7 @@
       "name": "Josh Gottheimer",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 23.22,
+      "estReturnPct": 23.04,
       "buyCount": 410,
       "sellCount": 143,
       "tradeCount": 554,
@@ -170,7 +170,7 @@
       "name": "Jared Moskowitz",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 22.84,
+      "estReturnPct": 22.65,
       "buyCount": 129,
       "sellCount": 58,
       "tradeCount": 187,
@@ -182,7 +182,7 @@
       "name": "Dwight Evans",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 21.65,
+      "estReturnPct": 21.3,
       "buyCount": 9,
       "sellCount": 15,
       "tradeCount": 24,
@@ -190,23 +190,11 @@
     },
     {
       "rank": 16,
-      "id": "house-lisa-mcclain",
-      "name": "Lisa McClain",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 17.48,
-      "buyCount": 340,
-      "sellCount": 332,
-      "tradeCount": 672,
-      "committees": []
-    },
-    {
-      "rank": 17,
       "id": "house-marjorie-taylor-greene",
       "name": "Marjorie Taylor Greene",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 16.8,
+      "estReturnPct": 17.38,
       "buyCount": 203,
       "sellCount": 5,
       "tradeCount": 208,
@@ -215,12 +203,36 @@
       ]
     },
     {
+      "rank": 17,
+      "id": "house-lisa-mcclain",
+      "name": "Lisa McClain",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 17.23,
+      "buyCount": 340,
+      "sellCount": 332,
+      "tradeCount": 672,
+      "committees": []
+    },
+    {
       "rank": 18,
+      "id": "house-byron-donalds",
+      "name": "Byron Donalds",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 15.52,
+      "buyCount": 39,
+      "sellCount": 34,
+      "tradeCount": 73,
+      "committees": []
+    },
+    {
+      "rank": 19,
       "id": "house-nancy-pelosi",
       "name": "Nancy Pelosi",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 15.28,
+      "estReturnPct": 14.78,
       "buyCount": 15,
       "sellCount": 3,
       "tradeCount": 20,
@@ -229,39 +241,27 @@
       ]
     },
     {
-      "rank": 19,
-      "id": "house-byron-donalds",
-      "name": "Byron Donalds",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 15.09,
-      "buyCount": 39,
-      "sellCount": 34,
-      "tradeCount": 73,
-      "committees": []
-    },
-    {
       "rank": 20,
-      "id": "house-cleo-fields",
-      "name": "Cleo Fields",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 14.79,
-      "buyCount": 109,
-      "sellCount": 6,
-      "tradeCount": 115,
-      "committees": []
-    },
-    {
-      "rank": 21,
       "id": "house-thomas-h-kean",
       "name": "Thomas H. Kean",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 14.09,
+      "estReturnPct": 14.6,
       "buyCount": 42,
       "sellCount": 14,
       "tradeCount": 67,
+      "committees": []
+    },
+    {
+      "rank": 21,
+      "id": "house-rick-larsen",
+      "name": "Rick Larsen",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 14.0,
+      "buyCount": 21,
+      "sellCount": 19,
+      "tradeCount": 41,
       "committees": []
     },
     {
@@ -270,7 +270,7 @@
       "name": "Alan Armstrong",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 12.69,
+      "estReturnPct": 13.93,
       "buyCount": 322,
       "sellCount": 47,
       "tradeCount": 369,
@@ -278,14 +278,14 @@
     },
     {
       "rank": 23,
-      "id": "house-michael-rulli",
-      "name": "Michael Rulli",
+      "id": "house-cleo-fields",
+      "name": "Cleo Fields",
       "chamber": "House",
-      "party": "R",
-      "estReturnPct": 12.68,
-      "buyCount": 16,
-      "sellCount": 19,
-      "tradeCount": 35,
+      "party": "D",
+      "estReturnPct": 13.85,
+      "buyCount": 109,
+      "sellCount": 6,
+      "tradeCount": 115,
       "committees": []
     },
     {
@@ -294,7 +294,7 @@
       "name": "John Boozman",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 12.21,
+      "estReturnPct": 12.51,
       "buyCount": 216,
       "sellCount": 194,
       "tradeCount": 410,
@@ -305,14 +305,14 @@
     },
     {
       "rank": 25,
-      "id": "house-rick-larsen",
-      "name": "Rick Larsen",
+      "id": "house-michael-rulli",
+      "name": "Michael Rulli",
       "chamber": "House",
-      "party": "D",
-      "estReturnPct": 11.93,
-      "buyCount": 21,
+      "party": "R",
+      "estReturnPct": 12.3,
+      "buyCount": 16,
       "sellCount": 19,
-      "tradeCount": 41,
+      "tradeCount": 35,
       "committees": []
     },
     {
@@ -321,7 +321,7 @@
       "name": "Markwayne Mullin",
       "chamber": "Senate",
       "party": "R",
-      "estReturnPct": 10.55,
+      "estReturnPct": 10.76,
       "buyCount": 254,
       "sellCount": 101,
       "tradeCount": 355,
@@ -336,7 +336,7 @@
       "name": "David J. Taylor",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 7.35,
+      "estReturnPct": 8.18,
       "buyCount": 74,
       "sellCount": 54,
       "tradeCount": 128,
@@ -348,7 +348,7 @@
       "name": "Richard Dean McCormick",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 7.06,
+      "estReturnPct": 8.11,
       "buyCount": 30,
       "sellCount": 25,
       "tradeCount": 55,
@@ -356,26 +356,26 @@
     },
     {
       "rank": 29,
-      "id": "house-kevin-hern",
-      "name": "Kevin Hern",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 5.76,
-      "buyCount": 134,
-      "sellCount": 118,
-      "tradeCount": 261,
-      "committees": []
-    },
-    {
-      "rank": 30,
       "id": "house-lloyd-doggett",
       "name": "Lloyd Doggett",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": 5.1,
+      "estReturnPct": 6.6,
       "buyCount": 70,
       "sellCount": 0,
       "tradeCount": 70,
+      "committees": []
+    },
+    {
+      "rank": 30,
+      "id": "house-kevin-hern",
+      "name": "Kevin Hern",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 6.02,
+      "buyCount": 134,
+      "sellCount": 118,
+      "tradeCount": 261,
       "committees": []
     },
     {
@@ -384,7 +384,7 @@
       "name": "Maria Elvira Salazar",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": 4.51,
+      "estReturnPct": 5.76,
       "buyCount": 48,
       "sellCount": 18,
       "tradeCount": 68,
@@ -392,35 +392,59 @@
     },
     {
       "rank": 32,
-      "id": "senate-john-w-hickenlooper",
-      "name": "John W Hickenlooper",
-      "chamber": "Senate",
-      "party": "D",
-      "estReturnPct": 3.9,
-      "buyCount": 27,
-      "sellCount": 74,
-      "tradeCount": 101,
-      "committees": []
-    },
-    {
-      "rank": 33,
       "id": "senate-gary-c-peters",
       "name": "Gary C Peters",
       "chamber": "Senate",
       "party": "D",
-      "estReturnPct": 3.05,
+      "estReturnPct": 4.56,
       "buyCount": 14,
       "sellCount": 14,
       "tradeCount": 28,
       "committees": []
     },
     {
+      "rank": 33,
+      "id": "house-dan-newhouse",
+      "name": "Dan Newhouse",
+      "chamber": "House",
+      "party": "R",
+      "estReturnPct": 3.58,
+      "buyCount": 57,
+      "sellCount": 15,
+      "tradeCount": 72,
+      "committees": []
+    },
+    {
       "rank": 34,
+      "id": "senate-john-w-hickenlooper",
+      "name": "John W Hickenlooper",
+      "chamber": "Senate",
+      "party": "D",
+      "estReturnPct": 3.5,
+      "buyCount": 27,
+      "sellCount": 74,
+      "tradeCount": 101,
+      "committees": []
+    },
+    {
+      "rank": 35,
+      "id": "house-julie-johnson",
+      "name": "Julie Johnson",
+      "chamber": "House",
+      "party": "D",
+      "estReturnPct": 2.89,
+      "buyCount": 80,
+      "sellCount": 159,
+      "tradeCount": 241,
+      "committees": []
+    },
+    {
+      "rank": 36,
       "id": "senate-sheldon-whitehouse",
       "name": "Sheldon Whitehouse",
       "chamber": "Senate",
       "party": "D",
-      "estReturnPct": 3.03,
+      "estReturnPct": 2.71,
       "buyCount": 22,
       "sellCount": 89,
       "tradeCount": 111,
@@ -430,36 +454,12 @@
       ]
     },
     {
-      "rank": 35,
-      "id": "house-dan-newhouse",
-      "name": "Dan Newhouse",
-      "chamber": "House",
-      "party": "R",
-      "estReturnPct": 2.72,
-      "buyCount": 57,
-      "sellCount": 15,
-      "tradeCount": 72,
-      "committees": []
-    },
-    {
-      "rank": 36,
-      "id": "house-julie-johnson",
-      "name": "Julie Johnson",
-      "chamber": "House",
-      "party": "D",
-      "estReturnPct": 2.13,
-      "buyCount": 80,
-      "sellCount": 159,
-      "tradeCount": 241,
-      "committees": []
-    },
-    {
       "rank": 37,
       "id": "house-cliff-bentz",
       "name": "Cliff Bentz",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -0.36,
+      "estReturnPct": 0.67,
       "buyCount": 1,
       "sellCount": 1,
       "tradeCount": 2,
@@ -471,7 +471,7 @@
       "name": "A. Mitchell McConnell, Jr.",
       "chamber": "Senate",
       "party": "",
-      "estReturnPct": -0.61,
+      "estReturnPct": -0.13,
       "buyCount": 21,
       "sellCount": 2,
       "tradeCount": 23,
@@ -483,7 +483,7 @@
       "name": "Gilbert Cisneros",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -2.47,
+      "estReturnPct": -2.29,
       "buyCount": 546,
       "sellCount": 135,
       "tradeCount": 685,
@@ -495,7 +495,7 @@
       "name": "John McGuire",
       "chamber": "House",
       "party": "",
-      "estReturnPct": -2.66,
+      "estReturnPct": -2.94,
       "buyCount": 8,
       "sellCount": 0,
       "tradeCount": 8,
@@ -507,7 +507,7 @@
       "name": "Jonathan Jackson",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -4.21,
+      "estReturnPct": -3.28,
       "buyCount": 51,
       "sellCount": 36,
       "tradeCount": 87,
@@ -519,7 +519,7 @@
       "name": "James French Hill",
       "chamber": "House",
       "party": "",
-      "estReturnPct": -6.49,
+      "estReturnPct": -5.07,
       "buyCount": 6,
       "sellCount": 10,
       "tradeCount": 16,
@@ -527,38 +527,38 @@
     },
     {
       "rank": 43,
-      "id": "house-richard-w-allen",
-      "name": "Richard W. Allen",
-      "chamber": "House",
-      "party": "",
-      "estReturnPct": -9.08,
-      "buyCount": 18,
-      "sellCount": 34,
-      "tradeCount": 52,
-      "committees": []
-    },
-    {
-      "rank": 44,
       "id": "house-scott-franklin",
       "name": "Scott Franklin",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -9.22,
+      "estReturnPct": -7.54,
       "buyCount": 36,
       "sellCount": 14,
       "tradeCount": 50,
       "committees": []
     },
     {
-      "rank": 45,
+      "rank": 44,
       "id": "house-april-mcclain-delaney",
       "name": "April McClain Delaney",
       "chamber": "House",
       "party": "D",
-      "estReturnPct": -9.41,
+      "estReturnPct": -8.25,
       "buyCount": 147,
       "sellCount": 39,
       "tradeCount": 187,
+      "committees": []
+    },
+    {
+      "rank": 45,
+      "id": "house-richard-w-allen",
+      "name": "Richard W. Allen",
+      "chamber": "House",
+      "party": "",
+      "estReturnPct": -8.47,
+      "buyCount": 18,
+      "sellCount": 34,
+      "tradeCount": 52,
       "committees": []
     },
     {
@@ -567,7 +567,7 @@
       "name": "John J McGuire",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -14.86,
+      "estReturnPct": -15.71,
       "buyCount": 2,
       "sellCount": 1,
       "tradeCount": 3,
@@ -579,7 +579,7 @@
       "name": "Daniel Meuser",
       "chamber": "House",
       "party": "R",
-      "estReturnPct": -23.14,
+      "estReturnPct": -23.23,
       "buyCount": 1,
       "sellCount": 5,
       "tradeCount": 6,
@@ -1293,7 +1293,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -2.47
+      "estReturnPct": -2.29
     },
     {
       "id": "house-lisa-mcclain",
@@ -1647,7 +1647,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 17.48
+      "estReturnPct": 17.23
     },
     {
       "id": "house-josh-gottheimer",
@@ -2003,7 +2003,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 23.22
+      "estReturnPct": 23.04
     },
     {
       "id": "house-daniel-goldman",
@@ -2714,7 +2714,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 12.21
+      "estReturnPct": 12.51
     },
     {
       "id": "senate-thomas-r-carper",
@@ -3422,7 +3422,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 12.69
+      "estReturnPct": 13.93
     },
     {
       "id": "senate-markwayne-mullin",
@@ -3779,7 +3779,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 10.55
+      "estReturnPct": 10.76
     },
     {
       "id": "house-rob-bresnahan",
@@ -4133,7 +4133,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 33.64
+      "estReturnPct": 34.34
     },
     {
       "id": "house-kevin-hern",
@@ -4487,7 +4487,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 5.76
+      "estReturnPct": 6.02
     },
     {
       "id": "house-jefferson-shreve",
@@ -4841,7 +4841,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 40.3
+      "estReturnPct": 40.0
     },
     {
       "id": "house-julie-johnson",
@@ -5195,7 +5195,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 2.13
+      "estReturnPct": 2.89
     },
     {
       "id": "house-kathy-manning",
@@ -5905,7 +5905,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 16.8
+      "estReturnPct": 17.38
     },
     {
       "id": "senate-shelley-m-capito",
@@ -6259,7 +6259,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 31.99
+      "estReturnPct": 31.82
     },
     {
       "id": "house-virginia-foxx",
@@ -6967,7 +6967,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -9.41
+      "estReturnPct": -8.25
     },
     {
       "id": "house-jared-moskowitz",
@@ -7321,7 +7321,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 22.84
+      "estReturnPct": 22.65
     },
     {
       "id": "house-valerie-hoyle",
@@ -7675,7 +7675,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 33.05
+      "estReturnPct": 33.11
     },
     {
       "id": "house-david-j-taylor",
@@ -8029,7 +8029,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 7.35
+      "estReturnPct": 8.18
     },
     {
       "id": "house-lois-frankel",
@@ -9091,7 +9091,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 14.79
+      "estReturnPct": 13.85
     },
     {
       "id": "senate-sheldon-whitehouse",
@@ -9448,7 +9448,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 3.03
+      "estReturnPct": 2.71
     },
     {
       "id": "house-julia-letlow",
@@ -9802,7 +9802,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 45.86
+      "estReturnPct": 45.77
     },
     {
       "id": "senate-john-w-hickenlooper",
@@ -10156,7 +10156,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 3.9
+      "estReturnPct": 3.5
     },
     {
       "id": "house-bruce-westerman",
@@ -11218,7 +11218,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": -4.21
+      "estReturnPct": -3.28
     },
     {
       "id": "house-christopher-l-jacobs",
@@ -11926,7 +11926,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 127.99
+      "estReturnPct": 130.34
     },
     {
       "id": "senate-daniel-s-sullivan",
@@ -12634,7 +12634,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 15.09
+      "estReturnPct": 15.52
     },
     {
       "id": "house-dan-newhouse",
@@ -12988,7 +12988,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 2.72
+      "estReturnPct": 3.58
     },
     {
       "id": "house-greg-landsman",
@@ -13696,7 +13696,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 5.1
+      "estReturnPct": 6.6
     },
     {
       "id": "house-maria-elvira-salazar",
@@ -14050,7 +14050,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 4.51
+      "estReturnPct": 5.76
     },
     {
       "id": "house-thomas-h-kean",
@@ -14404,7 +14404,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 14.09
+      "estReturnPct": 14.6
     },
     {
       "id": "house-ritchie-john-torres",
@@ -15466,7 +15466,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 7.06
+      "estReturnPct": 8.11
     },
     {
       "id": "house-john-curtis",
@@ -16174,7 +16174,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 58.89
+      "estReturnPct": 57.14
     },
     {
       "id": "house-mark-green",
@@ -16862,7 +16862,7 @@
           "source": "house_ptr"
         }
       ],
-      "estReturnPct": -9.08
+      "estReturnPct": -8.47
     },
     {
       "id": "house-john-rutherford",
@@ -17570,7 +17570,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -9.22
+      "estReturnPct": -7.54
     },
     {
       "id": "house-pete-sessions",
@@ -18986,7 +18986,7 @@
           "party": "I"
         }
       ],
-      "estReturnPct": 41.12
+      "estReturnPct": 40.01
     },
     {
       "id": "house-rick-larsen",
@@ -19340,7 +19340,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 11.93
+      "estReturnPct": 14.0
     },
     {
       "id": "house-michael-c-burgess",
@@ -21110,7 +21110,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 12.68
+      "estReturnPct": 12.3
     },
     {
       "id": "house-thomas-suozzi",
@@ -23234,7 +23234,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 3.05
+      "estReturnPct": 4.56
     },
     {
       "id": "house-kelly-louise-morrison",
@@ -24984,7 +24984,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 21.65
+      "estReturnPct": 21.3
     },
     {
       "id": "senate-katie-britt",
@@ -25338,7 +25338,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 46.72
+      "estReturnPct": 46.76
     },
     {
       "id": "senate-a-mitchell-mcconnell-jr",
@@ -25672,7 +25672,7 @@
           "source": "senate_efd"
         }
       ],
-      "estReturnPct": -0.61
+      "estReturnPct": -0.13
     },
     {
       "id": "house-debbie-wasserman-schultz",
@@ -26734,7 +26734,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": 38.5
+      "estReturnPct": 40.52
     },
     {
       "id": "senate-ron-l-wyden",
@@ -27801,7 +27801,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 15.28
+      "estReturnPct": 14.78
     },
     {
       "id": "house-blake-moore",
@@ -30042,7 +30042,7 @@
           "source": "house_ptr"
         }
       ],
-      "estReturnPct": -6.49
+      "estReturnPct": -5.07
     },
     {
       "id": "house-steve-cohen",
@@ -34092,7 +34092,174 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 73.77
+      "estReturnPct": 72.56
+    },
+    {
+      "id": "house-laurel-lee",
+      "name": "Laurel Lee",
+      "chamber": "House",
+      "party": "R",
+      "committees": [],
+      "district": "FL15",
+      "tradeCount": 9,
+      "buyCount": 5,
+      "sellCount": 3,
+      "recentTrades": [
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "NOKBF",
+          "asset": "NOKIA A SHS",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-18",
+          "disclosureDate": "09/21/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035490.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-08-24",
+          "disclosureDate": "09/21/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035490.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "HURA",
+          "asset": "TuHURA Biosciences, Inc. - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2025-07-13",
+          "disclosureDate": "08/03/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030810.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "WBD",
+          "asset": "Warner Bros. Discovery, Inc. - Series A Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-11-29",
+          "disclosureDate": "01/05/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030875.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "HURA",
+          "asset": "TuHURA Biosciences, Inc. - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-11-25",
+          "disclosureDate": "01/05/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026513.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "GEV",
+          "asset": "GE Vernova Inc. Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2024-11-08",
+          "disclosureDate": "11/12/2024",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026063.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "HURA",
+          "asset": "TuHURA Biosciences, Inc. - Common Stock",
+          "side": "exchange",
+          "type": "Exchange",
+          "amount": "$100,001 - $250,000",
+          "amountMid": 175000,
+          "transactionDate": "2024-10-18",
+          "disclosureDate": "11/12/2024",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026063.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "JPM",
+          "asset": "JP Morgan Chase & Co. Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2024-09-10",
+          "disclosureDate": "09/13/2024",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025714.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "AAPL",
+          "asset": "Apple Inc. - Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2024-07-05",
+          "disclosureDate": "07/30/2024",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025546.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ],
+      "estReturnPct": null
     },
     {
       "id": "house-adam-smith",
@@ -34735,7 +34902,7 @@
           "source": "house_ptr"
         }
       ],
-      "estReturnPct": -2.66
+      "estReturnPct": -2.94
     },
     {
       "id": "house-greg-steube",
@@ -35018,140 +35185,7 @@
           "party": "D"
         }
       ],
-      "estReturnPct": 26.64
-    },
-    {
-      "id": "house-laurel-lee",
-      "name": "Laurel Lee",
-      "chamber": "House",
-      "party": "R",
-      "committees": [],
-      "district": "FL15",
-      "tradeCount": 7,
-      "buyCount": 4,
-      "sellCount": 2,
-      "recentTrades": [
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "HURA",
-          "asset": "TuHURA Biosciences, Inc. - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2025-07-13",
-          "disclosureDate": "08/03/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030810.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "WBD",
-          "asset": "Warner Bros. Discovery, Inc. - Series A Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-11-29",
-          "disclosureDate": "01/05/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030875.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "HURA",
-          "asset": "TuHURA Biosciences, Inc. - Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-11-25",
-          "disclosureDate": "01/05/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20026513.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "GEV",
-          "asset": "GE Vernova Inc. Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2024-11-08",
-          "disclosureDate": "11/12/2024",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026063.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "HURA",
-          "asset": "TuHURA Biosciences, Inc. - Common Stock",
-          "side": "exchange",
-          "type": "Exchange",
-          "amount": "$100,001 - $250,000",
-          "amountMid": 175000,
-          "transactionDate": "2024-10-18",
-          "disclosureDate": "11/12/2024",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20026063.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "JPM",
-          "asset": "JP Morgan Chase & Co. Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2024-09-10",
-          "disclosureDate": "09/13/2024",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025714.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Laurel Lee",
-          "chamber": "House",
-          "ticker": "AAPL",
-          "asset": "Apple Inc. - Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2024-07-05",
-          "disclosureDate": "07/30/2024",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025546.pdf",
-          "district": "FL15",
-          "source": "house_ptr",
-          "party": "R"
-        }
-      ],
-      "estReturnPct": null
+      "estReturnPct": 25.37
     },
     {
       "id": "house-james-e-banks",
@@ -35908,7 +35942,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -23.14
+      "estReturnPct": -23.23
     },
     {
       "id": "house-brian-babin",
@@ -37302,7 +37336,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -14.86
+      "estReturnPct": -15.71
     },
     {
       "id": "house-james-a-himes",
@@ -38110,7 +38144,7 @@
           "party": "R"
         }
       ],
-      "estReturnPct": -0.36
+      "estReturnPct": 0.67
     },
     {
       "id": "house-terri-a-sewell",
@@ -52525,6 +52559,31 @@
           "owner": "Self",
           "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023757.pdf",
           "district": "VA01",
+          "source": "house_ptr",
+          "party": "R"
+        }
+      ]
+    },
+    "NOKBF": {
+      "ticker": "NOKBF",
+      "netBuys": 1,
+      "netSells": 0,
+      "politicianCount": 1,
+      "trades": [
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "NOKBF",
+          "asset": "NOKIA A SHS",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-09-18",
+          "disclosureDate": "09/21/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035490.pdf",
+          "district": "FL15",
           "source": "house_ptr",
           "party": "R"
         }
@@ -74084,6 +74143,439 @@
         }
       ]
     },
+    "BAC": {
+      "ticker": "BAC",
+      "netBuys": 9,
+      "netSells": 16,
+      "politicianCount": 19,
+      "trades": [
+        {
+          "politician": "Laurel Lee",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2026-08-24",
+          "disclosureDate": "09/21/2026",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035490.pdf",
+          "district": "FL15",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "James A. Himes",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Fidelity Brokerage",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2026-07-20",
+          "disclosureDate": "07/20/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035047.pdf",
+          "district": "CT04",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Alan Armstrong",
+          "chamber": "Senate",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2026-03-27",
+          "disclosureDate": "2026-07-21",
+          "owner": "Self",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/fda235b3-bad7-4637-8fa1-053f354d929c/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "R"
+        },
+        {
+          "politician": "Lisa McClain",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-10-30",
+          "disclosureDate": "11/01/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033446.pdf",
+          "district": "MI09",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Angus S King, Jr.",
+          "chamber": "Senate",
+          "ticker": "BAC",
+          "asset": "Bank of America Corp",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-07-21",
+          "disclosureDate": "2025-08-18",
+          "owner": "Spouse",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/218c16a3-d408-4cc0-aa89-08730d05dfc3/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "I"
+        },
+        {
+          "politician": "Lisa McClain",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-06-17",
+          "disclosureDate": "08/13/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030891.pdf",
+          "district": "MI09",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Jefferson Shreve",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-05-12",
+          "disclosureDate": "05/15/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030387.pdf",
+          "district": "IN06",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Marjorie Taylor Greene",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-05-05",
+          "disclosureDate": "05/06/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030295.pdf",
+          "district": "GA14",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Boozman",
+          "chamber": "Senate",
+          "ticker": "BAC",
+          "asset": "Bank of America Corp",
+          "side": "sell",
+          "type": "Sale (Partial)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-04-15",
+          "disclosureDate": "2025-05-14",
+          "owner": "Joint",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/52c9fa8c-a4fa-4f74-9013-0e1076574cfa/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "R"
+        },
+        {
+          "politician": "Rob Bresnahan",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-04-08",
+          "disclosureDate": "04/08/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030291.pdf",
+          "district": "PA08",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Jefferson Shreve",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$50,001 - $100,000",
+          "amountMid": 75000,
+          "transactionDate": "2025-04-07",
+          "disclosureDate": "04/25/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030231.pdf",
+          "district": "IN06",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "George Whitesides",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-03-24",
+          "disclosureDate": "03/24/2025",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027982.pdf",
+          "district": "CA27",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Tim Walberg",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$15,001 - $50,000",
+          "amountMid": 32500,
+          "transactionDate": "2025-02-07",
+          "disclosureDate": "05/29/2026",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034660.pdf",
+          "district": "MI05",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "John Boozman",
+          "chamber": "Senate",
+          "ticker": "BAC",
+          "asset": "Bank of America Corp",
+          "side": "sell",
+          "type": "Sale (Partial)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2025-02-05",
+          "disclosureDate": "2025-03-06",
+          "owner": "Joint",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b6f24083-8ed9-4368-b482-3d14155c1e9b/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "R"
+        },
+        {
+          "politician": "Valerie Hoyle",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-10-29",
+          "disclosureDate": "09/11/2025",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20032070.pdf",
+          "district": "OR04",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Blake Moore",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2024-01-19",
+          "disclosureDate": "01/22/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024354.pdf",
+          "district": "UT01",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Jerry Moran,",
+          "chamber": "Senate",
+          "ticker": "BAC",
+          "asset": "Bank of America Corp",
+          "side": "sell",
+          "type": "Sale (Full)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-12-14",
+          "disclosureDate": "2024-01-17",
+          "owner": "Spouse",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b08cdf32-a5e7-4767-97b1-20c8750638ca/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "R"
+        },
+        {
+          "politician": "John James",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-11-10",
+          "disclosureDate": "08/13/2024",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025719.pdf",
+          "district": "MI10",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Greg Stanton",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2023-10-24",
+          "disclosureDate": "10/26/2023",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023892.pdf",
+          "district": "AZ04",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Christopher L. Jacobs",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-12-12",
+          "disclosureDate": "01/10/2023",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022265.pdf",
+          "district": "NY27",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Christopher L. Jacobs",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-10-12",
+          "disclosureDate": "11/11/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021989.pdf",
+          "district": "NY27",
+          "source": "house_ptr",
+          "party": "R"
+        },
+        {
+          "politician": "Kathy Manning",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-08-03",
+          "disclosureDate": "09/06/2022",
+          "owner": "Joint",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021695.pdf",
+          "district": "NC06",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Kathy Manning",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "buy",
+          "type": "Purchase",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-07-15",
+          "disclosureDate": "08/02/2022",
+          "owner": "Spouse",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021470.pdf",
+          "district": "NC06",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Earl Blumenauer",
+          "chamber": "House",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation",
+          "side": "sell",
+          "type": "Sale",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2022-03-14",
+          "disclosureDate": "03/14/2022",
+          "owner": "Self",
+          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020675.pdf",
+          "district": "OR03",
+          "source": "house_ptr",
+          "party": "D"
+        },
+        {
+          "politician": "Jerry Moran,",
+          "chamber": "Senate",
+          "ticker": "BAC",
+          "asset": "Bank of America Corporation Common Stock",
+          "side": "sell",
+          "type": "Sale (Partial)",
+          "amount": "$1,001 - $15,000",
+          "amountMid": 8000,
+          "transactionDate": "2021-12-21",
+          "disclosureDate": "2022-01-21",
+          "owner": "Spouse",
+          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a8e388bc-72c5-4227-b6f3-64b7bb779883/",
+          "district": "",
+          "source": "senate_efd",
+          "party": "R"
+        }
+      ]
+    },
     "LOW": {
       "ticker": "LOW",
       "netBuys": 10,
@@ -91350,422 +91842,6 @@
           "district": "NJ05",
           "source": "house_ptr",
           "party": "D"
-        }
-      ]
-    },
-    "BAC": {
-      "ticker": "BAC",
-      "netBuys": 9,
-      "netSells": 15,
-      "politicianCount": 18,
-      "trades": [
-        {
-          "politician": "James A. Himes",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New S\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000 O\u0000: Fidelity Brokerage",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2026-07-20",
-          "disclosureDate": "07/20/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035047.pdf",
-          "district": "CT04",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Alan Armstrong",
-          "chamber": "Senate",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2026-03-27",
-          "disclosureDate": "2026-07-21",
-          "owner": "Self",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/fda235b3-bad7-4637-8fa1-053f354d929c/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "R"
-        },
-        {
-          "politician": "Lisa McClain",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-10-30",
-          "disclosureDate": "11/01/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20033446.pdf",
-          "district": "MI09",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Angus S King, Jr.",
-          "chamber": "Senate",
-          "ticker": "BAC",
-          "asset": "Bank of America Corp",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-07-21",
-          "disclosureDate": "2025-08-18",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/218c16a3-d408-4cc0-aa89-08730d05dfc3/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "I"
-        },
-        {
-          "politician": "Lisa McClain",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-06-17",
-          "disclosureDate": "08/13/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030891.pdf",
-          "district": "MI09",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Jefferson Shreve",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-05-12",
-          "disclosureDate": "05/15/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030387.pdf",
-          "district": "IN06",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Marjorie Taylor Greene",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-05-05",
-          "disclosureDate": "05/06/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030295.pdf",
-          "district": "GA14",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Boozman",
-          "chamber": "Senate",
-          "ticker": "BAC",
-          "asset": "Bank of America Corp",
-          "side": "sell",
-          "type": "Sale (Partial)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-04-15",
-          "disclosureDate": "2025-05-14",
-          "owner": "Joint",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/52c9fa8c-a4fa-4f74-9013-0e1076574cfa/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "R"
-        },
-        {
-          "politician": "Rob Bresnahan",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-04-08",
-          "disclosureDate": "04/08/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030291.pdf",
-          "district": "PA08",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Jefferson Shreve",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$50,001 - $100,000",
-          "amountMid": 75000,
-          "transactionDate": "2025-04-07",
-          "disclosureDate": "04/25/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20030231.pdf",
-          "district": "IN06",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "George Whitesides",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-03-24",
-          "disclosureDate": "03/24/2025",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20027982.pdf",
-          "district": "CA27",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Tim Walberg",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$15,001 - $50,000",
-          "amountMid": 32500,
-          "transactionDate": "2025-02-07",
-          "disclosureDate": "05/29/2026",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20034660.pdf",
-          "district": "MI05",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "John Boozman",
-          "chamber": "Senate",
-          "ticker": "BAC",
-          "asset": "Bank of America Corp",
-          "side": "sell",
-          "type": "Sale (Partial)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2025-02-05",
-          "disclosureDate": "2025-03-06",
-          "owner": "Joint",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b6f24083-8ed9-4368-b482-3d14155c1e9b/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "R"
-        },
-        {
-          "politician": "Valerie Hoyle",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-10-29",
-          "disclosureDate": "09/11/2025",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2025/20032070.pdf",
-          "district": "OR04",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Blake Moore",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2024-01-19",
-          "disclosureDate": "01/22/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20024354.pdf",
-          "district": "UT01",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Jerry Moran,",
-          "chamber": "Senate",
-          "ticker": "BAC",
-          "asset": "Bank of America Corp",
-          "side": "sell",
-          "type": "Sale (Full)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-12-14",
-          "disclosureDate": "2024-01-17",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b08cdf32-a5e7-4767-97b1-20c8750638ca/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "R"
-        },
-        {
-          "politician": "John James",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-11-10",
-          "disclosureDate": "08/13/2024",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2024/20025719.pdf",
-          "district": "MI10",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Greg Stanton",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2023-10-24",
-          "disclosureDate": "10/26/2023",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20023892.pdf",
-          "district": "AZ04",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Christopher L. Jacobs",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-12-12",
-          "disclosureDate": "01/10/2023",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2023/20022265.pdf",
-          "district": "NY27",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Christopher L. Jacobs",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-10-12",
-          "disclosureDate": "11/11/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021989.pdf",
-          "district": "NY27",
-          "source": "house_ptr",
-          "party": "R"
-        },
-        {
-          "politician": "Kathy Manning",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-08-03",
-          "disclosureDate": "09/06/2022",
-          "owner": "Joint",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021695.pdf",
-          "district": "NC06",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Kathy Manning",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "buy",
-          "type": "Purchase",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-07-15",
-          "disclosureDate": "08/02/2022",
-          "owner": "Spouse",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20021470.pdf",
-          "district": "NC06",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Earl Blumenauer",
-          "chamber": "House",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation",
-          "side": "sell",
-          "type": "Sale",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2022-03-14",
-          "disclosureDate": "03/14/2022",
-          "owner": "Self",
-          "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2022/20020675.pdf",
-          "district": "OR03",
-          "source": "house_ptr",
-          "party": "D"
-        },
-        {
-          "politician": "Jerry Moran,",
-          "chamber": "Senate",
-          "ticker": "BAC",
-          "asset": "Bank of America Corporation Common Stock",
-          "side": "sell",
-          "type": "Sale (Partial)",
-          "amount": "$1,001 - $15,000",
-          "amountMid": 8000,
-          "transactionDate": "2021-12-21",
-          "disclosureDate": "2022-01-21",
-          "owner": "Spouse",
-          "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/a8e388bc-72c5-4227-b6f3-64b7bb779883/",
-          "district": "",
-          "source": "senate_efd",
-          "party": "R"
         }
       ]
     },
@@ -213562,15 +213638,15 @@
     "benchmark": "SPY",
     "horizonDays": 365,
     "minTrades": 10,
-    "asOf": "2026-10-19",
-    "measuredTrades": 6840,
+    "asOf": "2026-10-20",
+    "measuredTrades": 6843,
     "members": [
       {
         "name": "Debbie Wasserman Schultz",
         "tx": {
           "n": 10,
-          "avgExcess": 26.61,
-          "medianExcess": 24.88,
+          "avgExcess": 26.52,
+          "medianExcess": 24.35,
           "winRate": 70.0
         },
         "buyAvgExcess": 35.92,
@@ -213584,16 +213660,16 @@
         "tx": {
           "n": 26,
           "avgExcess": 16.88,
-          "medianExcess": 13.01,
+          "medianExcess": 13.67,
           "winRate": 69.2
         },
         "disc": {
           "n": 26,
-          "avgExcess": 15.59,
+          "avgExcess": 15.66,
           "medianExcess": 9.45,
           "winRate": 69.2
         },
-        "buyAvgExcess": 46.8,
+        "buyAvgExcess": 46.09,
         "lagDays": 34,
         "id": "senate-jerry-moran",
         "chamber": "Senate",
@@ -213603,14 +213679,14 @@
         "name": "Tim Walberg",
         "tx": {
           "n": 14,
-          "avgExcess": 16.07,
+          "avgExcess": 15.85,
           "medianExcess": 6.07,
           "winRate": 71.4
         },
         "disc": {
           "n": 14,
-          "avgExcess": -1.56,
-          "medianExcess": -1.43,
+          "avgExcess": -1.68,
+          "medianExcess": -0.63,
           "winRate": 50.0
         },
         "buyAvgExcess": 15.1,
@@ -213623,11 +213699,11 @@
         "name": "Nancy Pelosi",
         "tx": {
           "n": 11,
-          "avgExcess": 14.1,
-          "medianExcess": 16.24,
+          "avgExcess": 13.26,
+          "medianExcess": 15.28,
           "winRate": 72.7
         },
-        "buyAvgExcess": 13.65,
+        "buyAvgExcess": 12.87,
         "id": "house-nancy-pelosi",
         "chamber": "House",
         "party": "D"
@@ -213636,13 +213712,13 @@
         "name": "Pete Sessions",
         "tx": {
           "n": 23,
-          "avgExcess": 12.39,
+          "avgExcess": 12.33,
           "medianExcess": 11.9,
           "winRate": 78.3
         },
         "disc": {
           "n": 17,
-          "avgExcess": 7.16,
+          "avgExcess": 7.12,
           "medianExcess": 11.54,
           "winRate": 64.7
         },
@@ -213656,9 +213732,9 @@
         "name": "Kelly Louise Morrison",
         "tx": {
           "n": 23,
-          "avgExcess": 11.51,
-          "medianExcess": 4.2,
-          "winRate": 60.9
+          "avgExcess": 11.11,
+          "medianExcess": 4.16,
+          "winRate": 56.5
         },
         "buyAvgExcess": 10.02,
         "lagDays": 15,
@@ -213670,15 +213746,15 @@
         "name": "Tina Smith",
         "tx": {
           "n": 14,
-          "avgExcess": 9.86,
-          "medianExcess": 15.64,
-          "winRate": 64.3
+          "avgExcess": 9.41,
+          "medianExcess": 15.41,
+          "winRate": 57.1
         },
         "disc": {
           "n": 14,
-          "avgExcess": 10.45,
-          "medianExcess": 11.29,
-          "winRate": 71.4
+          "avgExcess": 9.99,
+          "medianExcess": 11.24,
+          "winRate": 64.3
         },
         "buyAvgExcess": 47.45,
         "lagDays": 10,
@@ -213690,39 +213766,19 @@
         "name": "Marjorie Taylor Greene",
         "tx": {
           "n": 182,
-          "avgExcess": 8.63,
+          "avgExcess": 8.66,
           "medianExcess": 5.16,
           "winRate": 55.5
         },
         "disc": {
           "n": 171,
-          "avgExcess": 9.08,
+          "avgExcess": 9.11,
           "medianExcess": 5.92,
           "winRate": 55.6
         },
-        "buyAvgExcess": 8.63,
+        "buyAvgExcess": 8.66,
         "lagDays": 1,
         "id": "house-marjorie-taylor-greene",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Byron Donalds",
-        "tx": {
-          "n": 71,
-          "avgExcess": 7.16,
-          "medianExcess": 8.5,
-          "winRate": 53.5
-        },
-        "disc": {
-          "n": 71,
-          "avgExcess": 8.28,
-          "medianExcess": 15.1,
-          "winRate": 60.6
-        },
-        "buyAvgExcess": -6.03,
-        "lagDays": 19,
-        "id": "house-byron-donalds",
         "chamber": "House",
         "party": "R"
       },
@@ -213730,37 +213786,57 @@
         "name": "Angus S King, Jr.",
         "tx": {
           "n": 37,
-          "avgExcess": 7.14,
-          "medianExcess": 3.24,
+          "avgExcess": 7.19,
+          "medianExcess": 6.89,
           "winRate": 59.5
         },
         "disc": {
           "n": 37,
-          "avgExcess": 9.29,
-          "medianExcess": 6.36,
-          "winRate": 56.8
+          "avgExcess": 9.31,
+          "medianExcess": 9.49,
+          "winRate": 59.5
         },
-        "buyAvgExcess": 8.24,
+        "buyAvgExcess": 8.45,
         "lagDays": 28,
         "id": "senate-angus-s-king-jr",
         "chamber": "Senate",
         "party": "I"
       },
       {
+        "name": "Byron Donalds",
+        "tx": {
+          "n": 71,
+          "avgExcess": 7.12,
+          "medianExcess": 6.57,
+          "winRate": 53.5
+        },
+        "disc": {
+          "n": 71,
+          "avgExcess": 8.34,
+          "medianExcess": 14.42,
+          "winRate": 62.0
+        },
+        "buyAvgExcess": -5.98,
+        "lagDays": 19,
+        "id": "house-byron-donalds",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Shelley M Capito",
         "tx": {
           "n": 134,
-          "avgExcess": 6.7,
+          "avgExcess": 6.66,
           "medianExcess": 6.45,
-          "winRate": 60.4
+          "winRate": 59.7
         },
         "disc": {
           "n": 134,
-          "avgExcess": 6.92,
-          "medianExcess": 4.25,
-          "winRate": 57.5
+          "avgExcess": 6.89,
+          "medianExcess": 4.24,
+          "winRate": 58.2
         },
-        "buyAvgExcess": 10.33,
+        "buyAvgExcess": 10.5,
         "lagDays": 20,
         "id": "senate-shelley-m-capito",
         "chamber": "Senate",
@@ -213770,19 +213846,39 @@
         "name": "Thomas H Tuberville",
         "tx": {
           "n": 294,
-          "avgExcess": 6.54,
-          "medianExcess": 5.67,
-          "winRate": 58.2
+          "avgExcess": 6.55,
+          "medianExcess": 5.6,
+          "winRate": 58.5
         },
         "disc": {
           "n": 294,
-          "avgExcess": 2.75,
-          "medianExcess": 2.03,
-          "winRate": 54.1
+          "avgExcess": 2.64,
+          "medianExcess": 1.15,
+          "winRate": 52.7
         },
-        "buyAvgExcess": -18.02,
+        "buyAvgExcess": -17.97,
         "lagDays": 42,
         "id": "senate-thomas-h-tuberville",
+        "chamber": "Senate",
+        "party": "R"
+      },
+      {
+        "name": "Katie Britt",
+        "tx": {
+          "n": 24,
+          "avgExcess": 6.09,
+          "medianExcess": 1.71,
+          "winRate": 54.2
+        },
+        "disc": {
+          "n": 24,
+          "avgExcess": 5.56,
+          "medianExcess": 1.83,
+          "winRate": 62.5
+        },
+        "buyAvgExcess": 4.6,
+        "lagDays": 271,
+        "id": "senate-katie-britt",
         "chamber": "Senate",
         "party": "R"
       },
@@ -213790,41 +213886,21 @@
         "name": "John W Hickenlooper",
         "tx": {
           "n": 28,
-          "avgExcess": 6.03,
-          "medianExcess": 14.28,
+          "avgExcess": 5.65,
+          "medianExcess": 12.86,
           "winRate": 64.3
         },
         "disc": {
           "n": 28,
-          "avgExcess": 4.64,
-          "medianExcess": 17.08,
+          "avgExcess": 4.38,
+          "medianExcess": 15.45,
           "winRate": 53.6
         },
-        "buyAvgExcess": -12.99,
+        "buyAvgExcess": -13.53,
         "lagDays": 24,
         "id": "senate-john-w-hickenlooper",
         "chamber": "Senate",
         "party": "D"
-      },
-      {
-        "name": "Katie Britt",
-        "tx": {
-          "n": 24,
-          "avgExcess": 5.85,
-          "medianExcess": 1.35,
-          "winRate": 50.0
-        },
-        "disc": {
-          "n": 24,
-          "avgExcess": 5.67,
-          "medianExcess": 2.04,
-          "winRate": 62.5
-        },
-        "buyAvgExcess": 4.51,
-        "lagDays": 271,
-        "id": "senate-katie-britt",
-        "chamber": "Senate",
-        "party": "R"
       },
       {
         "name": "Jefferson Shreve",
@@ -213843,6 +213919,20 @@
         "buyAvgExcess": -0.91,
         "lagDays": 5,
         "id": "house-jefferson-shreve",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
+        "name": "Robert E. Latta",
+        "tx": {
+          "n": 14,
+          "avgExcess": 4.97,
+          "medianExcess": 2.71,
+          "winRate": 57.1
+        },
+        "buyAvgExcess": 4.97,
+        "lagDays": 1,
+        "id": "house-robert-e-latta",
         "chamber": "House",
         "party": "R"
       },
@@ -213879,78 +213969,24 @@
         "party": "R"
       },
       {
-        "name": "Robert E. Latta",
-        "tx": {
-          "n": 14,
-          "avgExcess": 4.41,
-          "medianExcess": 2.71,
-          "winRate": 57.1
-        },
-        "buyAvgExcess": 4.41,
-        "lagDays": 1,
-        "id": "house-robert-e-latta",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Tim Moore",
         "tx": {
           "n": 76,
-          "avgExcess": 3.9,
-          "medianExcess": 1.88,
-          "winRate": 52.6
+          "avgExcess": 4.06,
+          "medianExcess": 2.65,
+          "winRate": 51.3
         },
         "disc": {
           "n": 66,
-          "avgExcess": 4.44,
-          "medianExcess": 0.25,
+          "avgExcess": 4.52,
+          "medianExcess": -0.27,
           "winRate": 50.0
         },
-        "buyAvgExcess": 8.32,
+        "buyAvgExcess": 8.85,
         "lagDays": 24,
         "id": "house-tim-moore",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Jared Moskowitz",
-        "tx": {
-          "n": 156,
-          "avgExcess": 3.22,
-          "medianExcess": 1.36,
-          "winRate": 50.6
-        },
-        "disc": {
-          "n": 149,
-          "avgExcess": 2.82,
-          "medianExcess": 1.38,
-          "winRate": 51.7
-        },
-        "buyAvgExcess": 2.84,
-        "lagDays": 22,
-        "id": "house-jared-moskowitz",
-        "chamber": "House",
-        "party": "D"
-      },
-      {
-        "name": "Julie Johnson",
-        "tx": {
-          "n": 231,
-          "avgExcess": 3.22,
-          "medianExcess": 9.25,
-          "winRate": 58.4
-        },
-        "disc": {
-          "n": 231,
-          "avgExcess": 4.47,
-          "medianExcess": 8.43,
-          "winRate": 59.7
-        },
-        "buyAvgExcess": -7.33,
-        "lagDays": 22,
-        "id": "house-julie-johnson",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "James Comer",
@@ -213973,20 +214009,79 @@
         "party": "R"
       },
       {
+        "name": "Julie Johnson",
+        "tx": {
+          "n": 231,
+          "avgExcess": 3.07,
+          "medianExcess": 8.12,
+          "winRate": 58.9
+        },
+        "disc": {
+          "n": 231,
+          "avgExcess": 4.33,
+          "medianExcess": 8.03,
+          "winRate": 59.7
+        },
+        "buyAvgExcess": -7.25,
+        "lagDays": 22,
+        "id": "house-julie-johnson",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Jared Moskowitz",
+        "tx": {
+          "n": 156,
+          "avgExcess": 3.0,
+          "medianExcess": -0.47,
+          "winRate": 49.4
+        },
+        "disc": {
+          "n": 149,
+          "avgExcess": 2.64,
+          "medianExcess": 0.77,
+          "winRate": 52.3
+        },
+        "buyAvgExcess": 2.67,
+        "lagDays": 22,
+        "id": "house-jared-moskowitz",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
+        "name": "Matthew Robert Van Epps",
+        "tx": {
+          "n": 13,
+          "avgExcess": 2.96,
+          "medianExcess": 11.79,
+          "winRate": 53.8
+        },
+        "disc": {
+          "n": 13,
+          "avgExcess": 2.85,
+          "medianExcess": 10.72,
+          "winRate": 53.8
+        },
+        "lagDays": 1,
+        "id": "house-matthew-robert-van-epps",
+        "chamber": "House",
+        "party": ""
+      },
+      {
         "name": "Josh Gottheimer",
         "tx": {
           "n": 288,
-          "avgExcess": 2.96,
-          "medianExcess": 2.8,
-          "winRate": 53.5
+          "avgExcess": 2.87,
+          "medianExcess": 3.14,
+          "winRate": 53.1
         },
         "disc": {
           "n": 287,
-          "avgExcess": 3.33,
-          "medianExcess": -0.11,
-          "winRate": 49.8
+          "avgExcess": 3.24,
+          "medianExcess": 0.25,
+          "winRate": 50.2
         },
-        "buyAvgExcess": 0.03,
+        "buyAvgExcess": -0.04,
         "lagDays": 21,
         "id": "house-josh-gottheimer",
         "chamber": "House",
@@ -214013,39 +214108,20 @@
         "party": "D"
       },
       {
-        "name": "Matthew Robert Van Epps",
-        "tx": {
-          "n": 13,
-          "avgExcess": 2.11,
-          "medianExcess": 10.19,
-          "winRate": 53.8
-        },
-        "disc": {
-          "n": 13,
-          "avgExcess": 2.0,
-          "medianExcess": 9.3,
-          "winRate": 53.8
-        },
-        "lagDays": 1,
-        "id": "house-matthew-robert-van-epps",
-        "chamber": "House",
-        "party": ""
-      },
-      {
         "name": "A. Mitchell McConnell, Jr.",
         "tx": {
           "n": 12,
-          "avgExcess": 2.09,
-          "medianExcess": -2.0,
+          "avgExcess": 2.14,
+          "medianExcess": -1.94,
           "winRate": 50.0
         },
         "disc": {
           "n": 11,
-          "avgExcess": 4.06,
-          "medianExcess": -3.34,
+          "avgExcess": 4.09,
+          "medianExcess": -3.2,
           "winRate": 45.5
         },
-        "buyAvgExcess": 2.09,
+        "buyAvgExcess": 2.14,
         "lagDays": 16,
         "id": "senate-a-mitchell-mcconnell-jr",
         "chamber": "Senate",
@@ -214055,17 +214131,17 @@
         "name": "Richard Dean McCormick",
         "tx": {
           "n": 43,
-          "avgExcess": 1.56,
-          "medianExcess": 1.9,
-          "winRate": 58.1
+          "avgExcess": 1.52,
+          "medianExcess": 2.06,
+          "winRate": 60.5
         },
         "disc": {
           "n": 43,
-          "avgExcess": 0.15,
-          "medianExcess": 0.95,
-          "winRate": 55.8
+          "avgExcess": 0.12,
+          "medianExcess": -0.11,
+          "winRate": 48.8
         },
-        "buyAvgExcess": -0.62,
+        "buyAvgExcess": -0.06,
         "lagDays": 13,
         "id": "house-richard-dean-mccormick",
         "chamber": "House",
@@ -214112,25 +214188,6 @@
         "party": "D"
       },
       {
-        "name": "Mike Kelly",
-        "tx": {
-          "n": 10,
-          "avgExcess": 1.34,
-          "medianExcess": 2.15,
-          "winRate": 50.0
-        },
-        "disc": {
-          "n": 10,
-          "avgExcess": 4.91,
-          "medianExcess": 8.24,
-          "winRate": 70.0
-        },
-        "lagDays": 33,
-        "id": "house-mike-kelly",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Greg Landsman",
         "tx": {
           "n": 47,
@@ -214155,19 +214212,38 @@
         "tx": {
           "n": 226,
           "avgExcess": 0.76,
-          "medianExcess": -0.37,
-          "winRate": 49.1
+          "medianExcess": -0.55,
+          "winRate": 48.7
         },
         "disc": {
           "n": 226,
-          "avgExcess": 2.32,
-          "medianExcess": 1.09,
-          "winRate": 52.2
+          "avgExcess": 2.34,
+          "medianExcess": 0.69,
+          "winRate": 50.9
         },
-        "buyAvgExcess": 1.35,
+        "buyAvgExcess": 1.33,
         "lagDays": 26,
         "id": "senate-markwayne-mullin",
         "chamber": "Senate",
+        "party": "R"
+      },
+      {
+        "name": "Mike Kelly",
+        "tx": {
+          "n": 10,
+          "avgExcess": 0.73,
+          "medianExcess": 3.14,
+          "winRate": 60.0
+        },
+        "disc": {
+          "n": 10,
+          "avgExcess": 4.27,
+          "medianExcess": 8.69,
+          "winRate": 70.0
+        },
+        "lagDays": 33,
+        "id": "house-mike-kelly",
+        "chamber": "House",
         "party": "R"
       },
       {
@@ -214194,17 +214270,17 @@
         "name": "Richard W. Allen",
         "tx": {
           "n": 38,
-          "avgExcess": -0.11,
-          "medianExcess": -0.72,
-          "winRate": 44.7
+          "avgExcess": -0.32,
+          "medianExcess": -0.28,
+          "winRate": 47.4
         },
         "disc": {
           "n": 37,
-          "avgExcess": 1.0,
-          "medianExcess": 0.38,
-          "winRate": 54.1
+          "avgExcess": 0.72,
+          "medianExcess": 0.8,
+          "winRate": 51.4
         },
-        "buyAvgExcess": -11.66,
+        "buyAvgExcess": -11.57,
         "lagDays": 24,
         "id": "house-richard-w-allen",
         "chamber": "House",
@@ -214225,20 +214301,40 @@
         "party": "R"
       },
       {
+        "name": "Thomas H. Kean",
+        "tx": {
+          "n": 49,
+          "avgExcess": -0.5,
+          "medianExcess": 0.6,
+          "winRate": 53.1
+        },
+        "disc": {
+          "n": 49,
+          "avgExcess": 0.59,
+          "medianExcess": -2.92,
+          "winRate": 40.8
+        },
+        "buyAvgExcess": -3.96,
+        "lagDays": 19,
+        "id": "house-thomas-h-kean",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "John Boozman",
         "tx": {
           "n": 403,
-          "avgExcess": -0.49,
+          "avgExcess": -0.57,
           "medianExcess": -0.6,
-          "winRate": 46.4
+          "winRate": 46.9
         },
         "disc": {
           "n": 403,
-          "avgExcess": -0.38,
-          "medianExcess": -0.35,
-          "winRate": 46.4
+          "avgExcess": -0.47,
+          "medianExcess": -0.89,
+          "winRate": 46.9
         },
-        "buyAvgExcess": -3.34,
+        "buyAvgExcess": -3.39,
         "lagDays": 28,
         "id": "senate-john-boozman",
         "chamber": "Senate",
@@ -214264,64 +214360,24 @@
         "party": "D"
       },
       {
-        "name": "Thomas H. Kean",
-        "tx": {
-          "n": 49,
-          "avgExcess": -0.68,
-          "medianExcess": 1.64,
-          "winRate": 53.1
-        },
-        "disc": {
-          "n": 49,
-          "avgExcess": 0.42,
-          "medianExcess": -3.88,
-          "winRate": 40.8
-        },
-        "buyAvgExcess": -4.13,
-        "lagDays": 19,
-        "id": "house-thomas-h-kean",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Lisa McClain",
         "tx": {
           "n": 649,
           "avgExcess": -0.69,
-          "medianExcess": -0.95,
-          "winRate": 49.0
+          "medianExcess": -1.13,
+          "winRate": 48.7
         },
         "disc": {
           "n": 646,
-          "avgExcess": -0.18,
-          "medianExcess": 0.41,
-          "winRate": 50.2
+          "avgExcess": -0.16,
+          "medianExcess": -0.48,
+          "winRate": 49.8
         },
-        "buyAvgExcess": -6.66,
+        "buyAvgExcess": -6.53,
         "lagDays": 20,
         "id": "house-lisa-mcclain",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Cleo Fields",
-        "tx": {
-          "n": 115,
-          "avgExcess": -0.88,
-          "medianExcess": -0.41,
-          "winRate": 49.6
-        },
-        "disc": {
-          "n": 18,
-          "avgExcess": 12.23,
-          "medianExcess": 1.61,
-          "winRate": 66.7
-        },
-        "buyAvgExcess": -1.14,
-        "lagDays": 3,
-        "id": "house-cleo-fields",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "Michael C. Burgess",
@@ -214344,6 +214400,26 @@
         "party": "R"
       },
       {
+        "name": "Cleo Fields",
+        "tx": {
+          "n": 115,
+          "avgExcess": -1.07,
+          "medianExcess": -0.41,
+          "winRate": 49.6
+        },
+        "disc": {
+          "n": 18,
+          "avgExcess": 12.23,
+          "medianExcess": 1.61,
+          "winRate": 66.7
+        },
+        "buyAvgExcess": -1.43,
+        "lagDays": 3,
+        "id": "house-cleo-fields",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
         "name": "Ritchie John Torres",
         "tx": {
           "n": 62,
@@ -214364,20 +214440,40 @@
         "party": "D"
       },
       {
+        "name": "Maria Elvira Salazar",
+        "tx": {
+          "n": 57,
+          "avgExcess": -1.44,
+          "medianExcess": -4.91,
+          "winRate": 38.6
+        },
+        "disc": {
+          "n": 46,
+          "avgExcess": -2.77,
+          "medianExcess": -7.16,
+          "winRate": 39.1
+        },
+        "buyAvgExcess": -3.03,
+        "lagDays": 16,
+        "id": "house-maria-elvira-salazar",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Rick Larsen",
         "tx": {
           "n": 23,
-          "avgExcess": -1.45,
-          "medianExcess": -7.7,
+          "avgExcess": -1.53,
+          "medianExcess": -8.17,
           "winRate": 34.8
         },
         "disc": {
           "n": 23,
-          "avgExcess": -1.99,
-          "medianExcess": -7.59,
+          "avgExcess": -2.07,
+          "medianExcess": -7.52,
           "winRate": 34.8
         },
-        "buyAvgExcess": -13.89,
+        "buyAvgExcess": -13.45,
         "lagDays": 2,
         "id": "house-rick-larsen",
         "chamber": "House",
@@ -214387,61 +214483,21 @@
         "name": "Kevin Hern",
         "tx": {
           "n": 106,
-          "avgExcess": -1.45,
-          "medianExcess": -1.58,
-          "winRate": 46.2
+          "avgExcess": -1.96,
+          "medianExcess": -1.9,
+          "winRate": 42.5
         },
         "disc": {
           "n": 96,
-          "avgExcess": -2.71,
-          "medianExcess": -1.57,
-          "winRate": 43.8
+          "avgExcess": -3.23,
+          "medianExcess": -2.11,
+          "winRate": 38.5
         },
         "buyAvgExcess": -1.66,
         "lagDays": 8,
         "id": "house-kevin-hern",
         "chamber": "House",
         "party": "R"
-      },
-      {
-        "name": "Maria Elvira Salazar",
-        "tx": {
-          "n": 57,
-          "avgExcess": -1.77,
-          "medianExcess": -4.99,
-          "winRate": 38.6
-        },
-        "disc": {
-          "n": 46,
-          "avgExcess": -3.2,
-          "medianExcess": -6.18,
-          "winRate": 39.1
-        },
-        "buyAvgExcess": -3.85,
-        "lagDays": 16,
-        "id": "house-maria-elvira-salazar",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Dwight Evans",
-        "tx": {
-          "n": 11,
-          "avgExcess": -2.01,
-          "medianExcess": -1.04,
-          "winRate": 45.5
-        },
-        "disc": {
-          "n": 11,
-          "avgExcess": 1.93,
-          "medianExcess": -5.14,
-          "winRate": 45.5
-        },
-        "buyAvgExcess": 10.77,
-        "lagDays": 13,
-        "id": "house-dwight-evans",
-        "chamber": "House",
-        "party": "D"
       },
       {
         "name": "Blake Moore",
@@ -214464,6 +214520,26 @@
         "party": "R"
       },
       {
+        "name": "Dwight Evans",
+        "tx": {
+          "n": 11,
+          "avgExcess": -2.45,
+          "medianExcess": -1.0,
+          "winRate": 45.5
+        },
+        "disc": {
+          "n": 11,
+          "avgExcess": 1.48,
+          "medianExcess": -5.14,
+          "winRate": 45.5
+        },
+        "buyAvgExcess": 10.58,
+        "lagDays": 13,
+        "id": "house-dwight-evans",
+        "chamber": "House",
+        "party": "D"
+      },
+      {
         "name": "Sheldon Whitehouse",
         "tx": {
           "n": 91,
@@ -214473,71 +214549,71 @@
         },
         "disc": {
           "n": 88,
-          "avgExcess": -0.52,
-          "medianExcess": 2.7,
+          "avgExcess": -0.49,
+          "medianExcess": 2.63,
           "winRate": 59.1
         },
-        "buyAvgExcess": -13.97,
+        "buyAvgExcess": -13.74,
         "lagDays": 25,
         "id": "senate-sheldon-whitehouse",
         "chamber": "Senate",
         "party": "D"
       },
       {
-        "name": "Julia Letlow",
-        "tx": {
-          "n": 99,
-          "avgExcess": -3.63,
-          "medianExcess": -9.88,
-          "winRate": 37.4
-        },
-        "disc": {
-          "n": 99,
-          "avgExcess": -4.06,
-          "medianExcess": -8.13,
-          "winRate": 42.4
-        },
-        "buyAvgExcess": -10.45,
-        "lagDays": 105,
-        "id": "house-julia-letlow",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
         "name": "Alan Armstrong",
         "tx": {
           "n": 364,
-          "avgExcess": -3.84,
-          "medianExcess": -6.8,
-          "winRate": 37.6
+          "avgExcess": -3.31,
+          "medianExcess": -6.18,
+          "winRate": 40.1
         },
         "disc": {
           "n": 364,
-          "avgExcess": -2.25,
-          "medianExcess": -3.21,
-          "winRate": 37.6
+          "avgExcess": -1.73,
+          "medianExcess": -3.16,
+          "winRate": 40.9
         },
-        "buyAvgExcess": -5.78,
+        "buyAvgExcess": -5.06,
         "lagDays": 116,
         "id": "senate-alan-armstrong",
         "chamber": "Senate",
         "party": "R"
       },
       {
+        "name": "Julia Letlow",
+        "tx": {
+          "n": 99,
+          "avgExcess": -3.75,
+          "medianExcess": -9.88,
+          "winRate": 37.4
+        },
+        "disc": {
+          "n": 99,
+          "avgExcess": -4.17,
+          "medianExcess": -8.13,
+          "winRate": 42.4
+        },
+        "buyAvgExcess": -10.35,
+        "lagDays": 105,
+        "id": "house-julia-letlow",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Dan Newhouse",
         "tx": {
           "n": 52,
-          "avgExcess": -3.85,
-          "medianExcess": -8.31,
+          "avgExcess": -3.92,
+          "medianExcess": -8.19,
           "winRate": 40.4
         },
         "disc": {
           "n": 19,
-          "avgExcess": -6.79,
-          "medianExcess": -11.88,
+          "avgExcess": -6.42,
+          "medianExcess": -10.16,
           "winRate": 42.1
         },
-        "buyAvgExcess": -8.39,
+        "buyAvgExcess": -8.13,
         "lagDays": 15,
         "id": "house-dan-newhouse",
         "chamber": "House",
@@ -214567,17 +214643,17 @@
         "name": "David J. Taylor",
         "tx": {
           "n": 114,
-          "avgExcess": -4.34,
-          "medianExcess": -2.18,
-          "winRate": 46.5
+          "avgExcess": -4.18,
+          "medianExcess": -2.12,
+          "winRate": 45.6
         },
         "disc": {
           "n": 114,
-          "avgExcess": -4.61,
-          "medianExcess": -3.74,
-          "winRate": 45.6
+          "avgExcess": -4.45,
+          "medianExcess": -3.67,
+          "winRate": 43.9
         },
-        "buyAvgExcess": -3.37,
+        "buyAvgExcess": -3.0,
         "lagDays": 8,
         "id": "house-david-j-taylor",
         "chamber": "House",
@@ -214587,17 +214663,17 @@
         "name": "Jonathan Jackson",
         "tx": {
           "n": 72,
-          "avgExcess": -4.37,
-          "medianExcess": -7.87,
-          "winRate": 40.3
+          "avgExcess": -4.25,
+          "medianExcess": -7.32,
+          "winRate": 41.7
         },
         "disc": {
           "n": 72,
-          "avgExcess": -2.47,
-          "medianExcess": -2.6,
-          "winRate": 40.3
+          "avgExcess": -2.33,
+          "medianExcess": -2.41,
+          "winRate": 41.7
         },
-        "buyAvgExcess": -12.17,
+        "buyAvgExcess": -11.8,
         "lagDays": 21,
         "id": "house-jonathan-jackson",
         "chamber": "House",
@@ -214607,17 +214683,17 @@
         "name": "Gary C Peters",
         "tx": {
           "n": 18,
-          "avgExcess": -4.98,
-          "medianExcess": 1.95,
-          "winRate": 55.6
+          "avgExcess": -4.5,
+          "medianExcess": 1.4,
+          "winRate": 61.1
         },
         "disc": {
           "n": 18,
-          "avgExcess": -8.26,
-          "medianExcess": -2.42,
+          "avgExcess": -7.76,
+          "medianExcess": -2.26,
           "winRate": 50.0
         },
-        "buyAvgExcess": -7.32,
+        "buyAvgExcess": -5.82,
         "lagDays": 16,
         "id": "senate-gary-c-peters",
         "chamber": "Senate",
@@ -214626,18 +214702,18 @@
       {
         "name": "Gilbert Cisneros",
         "tx": {
-          "n": 642,
-          "avgExcess": -5.59,
-          "medianExcess": -5.49,
-          "winRate": 40.5
+          "n": 643,
+          "avgExcess": -5.24,
+          "medianExcess": -4.91,
+          "winRate": 41.2
         },
         "disc": {
           "n": 625,
-          "avgExcess": -6.09,
-          "medianExcess": -6.22,
-          "winRate": 39.0
+          "avgExcess": -5.74,
+          "medianExcess": -5.04,
+          "winRate": 40.3
         },
-        "buyAvgExcess": -7.68,
+        "buyAvgExcess": -7.05,
         "lagDays": 23,
         "id": "house-gilbert-cisneros",
         "chamber": "House",
@@ -214659,33 +214735,19 @@
         "name": "Scott Franklin",
         "tx": {
           "n": 38,
-          "avgExcess": -6.41,
-          "medianExcess": -6.64,
+          "avgExcess": -6.34,
+          "medianExcess": -6.5,
           "winRate": 39.5
         },
         "disc": {
           "n": 38,
-          "avgExcess": -3.04,
+          "avgExcess": -2.97,
           "medianExcess": -1.11,
           "winRate": 44.7
         },
-        "buyAvgExcess": -10.57,
+        "buyAvgExcess": -10.43,
         "lagDays": 9,
         "id": "house-scott-franklin",
-        "chamber": "House",
-        "party": "R"
-      },
-      {
-        "name": "Michael Rulli",
-        "tx": {
-          "n": 35,
-          "avgExcess": -6.82,
-          "medianExcess": -4.44,
-          "winRate": 42.9
-        },
-        "buyAvgExcess": -2.55,
-        "lagDays": 1,
-        "id": "house-michael-rulli",
         "chamber": "House",
         "party": "R"
       },
@@ -214710,6 +214772,20 @@
         "party": "D"
       },
       {
+        "name": "Michael Rulli",
+        "tx": {
+          "n": 35,
+          "avgExcess": -6.97,
+          "medianExcess": -4.54,
+          "winRate": 42.9
+        },
+        "buyAvgExcess": -2.94,
+        "lagDays": 1,
+        "id": "house-michael-rulli",
+        "chamber": "House",
+        "party": "R"
+      },
+      {
         "name": "Mark Green",
         "tx": {
           "n": 18,
@@ -214732,17 +214808,17 @@
         "name": "Lloyd Doggett",
         "tx": {
           "n": 43,
-          "avgExcess": -8.25,
-          "medianExcess": -12.8,
-          "winRate": 32.6
+          "avgExcess": -7.8,
+          "medianExcess": -12.14,
+          "winRate": 34.9
         },
         "disc": {
           "n": 39,
-          "avgExcess": -9.33,
-          "medianExcess": -13.25,
+          "avgExcess": -9.0,
+          "medianExcess": -12.48,
           "winRate": 28.2
         },
-        "buyAvgExcess": -8.25,
+        "buyAvgExcess": -7.8,
         "lagDays": 24,
         "id": "house-lloyd-doggett",
         "chamber": "House",
@@ -214772,17 +214848,17 @@
         "name": "Sheri Biggs",
         "tx": {
           "n": 36,
-          "avgExcess": -9.27,
+          "avgExcess": -9.25,
           "medianExcess": -3.24,
           "winRate": 36.1
         },
         "disc": {
           "n": 36,
-          "avgExcess": -5.63,
-          "medianExcess": -0.82,
-          "winRate": 47.2
+          "avgExcess": -5.61,
+          "medianExcess": -0.67,
+          "winRate": 50.0
         },
-        "buyAvgExcess": -1.02,
+        "buyAvgExcess": -0.41,
         "lagDays": 146,
         "id": "house-sheri-biggs",
         "chamber": "House",
@@ -214792,17 +214868,17 @@
         "name": "Virginia Foxx",
         "tx": {
           "n": 41,
-          "avgExcess": -10.17,
-          "medianExcess": -8.9,
-          "winRate": 31.7
+          "avgExcess": -10.25,
+          "medianExcess": -9.57,
+          "winRate": 29.3
         },
         "disc": {
           "n": 38,
-          "avgExcess": -9.19,
+          "avgExcess": -9.26,
           "medianExcess": -9.07,
           "winRate": 36.8
         },
-        "buyAvgExcess": -11.82,
+        "buyAvgExcess": -11.86,
         "lagDays": 15,
         "id": "house-virginia-foxx",
         "chamber": "House",
@@ -214812,17 +214888,17 @@
         "name": "April McClain Delaney",
         "tx": {
           "n": 185,
-          "avgExcess": -11.59,
-          "medianExcess": -8.69,
-          "winRate": 25.4
+          "avgExcess": -11.63,
+          "medianExcess": -8.87,
+          "winRate": 24.9
         },
         "disc": {
           "n": 185,
-          "avgExcess": -10.5,
-          "medianExcess": -7.88,
+          "avgExcess": -10.52,
+          "medianExcess": -7.14,
           "winRate": 24.9
         },
-        "buyAvgExcess": -15.75,
+        "buyAvgExcess": -15.67,
         "lagDays": 12,
         "id": "house-april-mcclain-delaney",
         "chamber": "House",
@@ -214852,8 +214928,8 @@
         "name": "James French Hill",
         "tx": {
           "n": 15,
-          "avgExcess": -14.66,
-          "medianExcess": -11.06,
+          "avgExcess": -14.91,
+          "medianExcess": -13.51,
           "winRate": 20.0
         },
         "buyAvgExcess": -24.83,
@@ -214866,17 +214942,17 @@
         "name": "Michael Patrick Guest",
         "tx": {
           "n": 11,
-          "avgExcess": -15.35,
-          "medianExcess": -29.94,
+          "avgExcess": -16.13,
+          "medianExcess": -31.16,
           "winRate": 27.3
         },
         "disc": {
           "n": 11,
-          "avgExcess": -20.27,
-          "medianExcess": -24.5,
+          "avgExcess": -21.09,
+          "medianExcess": -25.54,
           "winRate": 36.4
         },
-        "buyAvgExcess": -9.0,
+        "buyAvgExcess": -9.14,
         "lagDays": 26,
         "id": "house-michael-patrick-guest",
         "chamber": "House",
@@ -214886,17 +214962,17 @@
         "name": "David H McCormick",
         "tx": {
           "n": 26,
-          "avgExcess": -27.65,
+          "avgExcess": -27.61,
           "medianExcess": -36.14,
           "winRate": 7.7
         },
         "disc": {
           "n": 26,
-          "avgExcess": -31.2,
+          "avgExcess": -31.16,
           "medianExcess": -35.57,
           "winRate": 7.7
         },
-        "buyAvgExcess": -35.19,
+        "buyAvgExcess": -35.11,
         "lagDays": 26,
         "id": "senate-david-h-mccormick",
         "chamber": "Senate",
@@ -216336,6 +216412,23 @@
       "district": "CA31",
       "source": "house_ptr",
       "party": "D"
+    },
+    {
+      "politician": "Laurel Lee",
+      "chamber": "House",
+      "ticker": "NOKBF",
+      "asset": "NOKIA A SHS",
+      "side": "buy",
+      "type": "Purchase",
+      "amount": "$15,001 - $50,000",
+      "amountMid": 32500,
+      "transactionDate": "2026-09-18",
+      "disclosureDate": "09/21/2026",
+      "owner": "Spouse",
+      "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035490.pdf",
+      "district": "FL15",
+      "source": "house_ptr",
+      "party": "R"
     },
     {
       "politician": "Gilbert Cisneros",
@@ -218428,6 +218521,23 @@
       "party": "D"
     },
     {
+      "politician": "Laurel Lee",
+      "chamber": "House",
+      "ticker": "BAC",
+      "asset": "Bank of America Corporation Common Stock F\u0000\u0000\u0000\u0000\u0000 S\u0000\u0000\u0000\u0000\u0000: New",
+      "side": "sell",
+      "type": "Sale",
+      "amount": "$50,001 - $100,000",
+      "amountMid": 75000,
+      "transactionDate": "2026-08-24",
+      "disclosureDate": "09/21/2026",
+      "owner": "Spouse",
+      "sourceUrl": "https://disclosures-clerk.house.gov/public_disc/ptr-pdfs/2026/20035490.pdf",
+      "district": "FL15",
+      "source": "house_ptr",
+      "party": "R"
+    },
+    {
       "politician": "April McClain Delaney",
       "chamber": "House",
       "ticker": "ESE",
@@ -218715,40 +218825,6 @@
       "district": "MD06",
       "source": "house_ptr",
       "party": "D"
-    },
-    {
-      "politician": "Alan Armstrong",
-      "chamber": "Senate",
-      "ticker": "WMB",
-      "asset": "Williams Companies, Inc. (The) Common Stock Option Type: Call Strike price: $75.00 Expires: 2026-08-21",
-      "side": "buy",
-      "type": "Purchase",
-      "amount": "$15,001 - $50,000",
-      "amountMid": 32500,
-      "transactionDate": "2026-08-20",
-      "disclosureDate": "2026-09-17",
-      "owner": "Joint",
-      "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/b999bc0e-3eb0-4ca9-ab07-8e8f2e04b41f/",
-      "district": "",
-      "source": "senate_efd",
-      "party": "R"
-    },
-    {
-      "politician": "John Boozman",
-      "chamber": "Senate",
-      "ticker": "JNJ",
-      "asset": "Johnson & Johnson Common Stock",
-      "side": "sell",
-      "type": "Sale (Partial)",
-      "amount": "$1,001 - $15,000",
-      "amountMid": 8000,
-      "transactionDate": "2026-08-20",
-      "disclosureDate": "2026-09-11",
-      "owner": "Joint",
-      "sourceUrl": "https://efdsearch.senate.gov/search/view/ptr/6298991b-e48f-4b11-9bbb-dfc94a7e1b32/",
-      "district": "",
-      "source": "senate_efd",
-      "party": "R"
     }
   ]
 }

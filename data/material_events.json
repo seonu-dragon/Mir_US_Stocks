@@ -1,12 +1,817 @@
 {
-  "updatedAtKst": "2026-10-19 13:24 KST",
-  "lastFileDate": "2026-10-16",
+  "updatedAtKst": "2026-10-20 13:25 KST",
+  "lastFileDate": "2026-10-19",
   "partialFetch": false,
-  "count": 670,
+  "count": 703,
   "source": "SEC EDGAR 8-K",
   "note": "추적 종목 한정. item 코드 기반 이벤트 분류이며 상세는 원문 링크 참조. kind=buyback 은 전문검색 매칭 자사주 발표, amountUsd 는 원문에서 단일 값으로 확정된 경우만. summary 는 8-K 본문에서 규칙(템플릿+정규식)으로 뽑은 3줄 요약(숫자·이름은 원문 표기 그대로), aiSummary 는 시총 상위 일부만 Gemini 요약 후 원문에 없는 숫자가 든 줄을 버린 것.",
-  "summaryCount": 417,
+  "summaryCount": 433,
   "events": [
+    {
+      "ticker": "QSEA",
+      "company": "Quartzsea Acquisition Corp  (QSEA, QSEAR, QSEAU)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "5.03",
+          "label": "정관 변경"
+        },
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001829126-26-011279",
+      "link": "https://www.sec.gov/Archives/edgar/data/2047455/000182912626011279/quartzsea_8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Amendment",
+        "who": "상대방 Continental Stock Transfer & Trust",
+        "amount": "$100,000",
+        "date": "2026-10-15",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "SSEA",
+      "company": "STARRY SEA ACQUISITION CORP  (SSEA, SSEAR, SSEAU)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001829126-26-011252",
+      "link": "https://www.sec.gov/Archives/edgar/data/2059165/000182912626011252/starrysea_8k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "MDT",
+      "company": "Medtronic plc  (MDT)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001628280-26-066291",
+      "link": "https://www.sec.gov/Archives/edgar/data/1613103/000162828026066291/mdt-20261015.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Michael Marinaro(EVP·사장) 선임",
+        "amount": "기본급 $1,000,000",
+        "date": "2026-10-15",
+        "src": "rule"
+      },
+      "summaryChecked": true,
+      "aiChecked": true,
+      "aiSummary": {
+        "lines": [
+          "마이클 마리나로가 사장으로 임명됨.",
+          "마이클 마리나로, 메드트로닉 사장",
+          ""
+        ],
+        "model": "gemini-2.5-flash-lite",
+        "droppedLines": 1,
+        "src": "ai"
+      }
+    },
+    {
+      "ticker": "WAL",
+      "company": "WESTERN ALLIANCE BANCORPORATION  (WAL, WAL-PA)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001628280-26-066286",
+      "link": "https://www.sec.gov/Archives/edgar/data/1212545/000162828026066286/wal-20261019.htm",
+      "buybackMention": true,
+      "buybackChecked": true
+    },
+    {
+      "ticker": "CCK",
+      "company": "CROWN HOLDINGS, INC.  (CCK)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001628280-26-066281",
+      "link": "https://www.sec.gov/Archives/edgar/data/1219601/000162828026066281/cck-20261019.htm"
+    },
+    {
+      "ticker": "NWSA",
+      "company": "NEWS CORP  (NWS, NWSA, NWSLL)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001564708-26-000231",
+      "link": "https://www.sec.gov/Archives/edgar/data/1564708/000156470826000231/nws-20261016.htm",
+      "buybackMention": true,
+      "amountUsd": 1000000000.0,
+      "kind": "buyback",
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$1 billion",
+        "date": "",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "BMNR",
+      "company": "BITMINE IMMERSION TECHNOLOGIES, INC.  (BMNP, BMNR)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001493152-26-047517",
+      "link": "https://www.sec.gov/Archives/edgar/data/1829311/000149315226047517/form8-k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "CHRD",
+      "company": "Chord Energy Corp  (CHRD)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001486159-26-000037",
+      "link": "https://www.sec.gov/Archives/edgar/data/1486159/000148615926000037/chrd-20261016.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 사임 1명 · 선임 1명",
+        "who": "Daniel Brown(사장) 사임, Michael Lou(사장) 선임",
+        "amount": "",
+        "date": "2026-10-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "ATII",
+      "company": "Archimedes Tech SPAC Partners II Co.  (ATII, ATIIU, ATIIW)",
+      "items": [
+        {
+          "code": "5.07",
+          "label": "주총 투표결과"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001437749-26-032855",
+      "link": "https://www.sec.gov/Archives/edgar/data/2028516/000143774926032855/atii20261016_8k.htm",
+      "summary": {
+        "item": "5.07",
+        "what": "임시 주주총회 투표 결과",
+        "who": "",
+        "amount": "안건 7건 (안건별 표 수는 원문)",
+        "date": "2026-10-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "AGNC",
+      "company": "AGNC Investment Corp.  (AGNC, AGNCL, AGNCM, AGNCN, AGNCO, AGNCP, AGNCZ)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001423689-26-000144",
+      "link": "https://www.sec.gov/Archives/edgar/data/1423689/000142368926000144/agnc-20261019.htm"
+    },
+    {
+      "ticker": "CDW",
+      "company": "CDW Corp  (CDW)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001402057-26-000106",
+      "link": "https://www.sec.gov/Archives/edgar/data/1402057/000140205726000106/cdw-20261015.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "GME",
+      "company": "GameStop Corp.  (GME, GME-WT)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001326380-26-000064",
+      "link": "https://www.sec.gov/Archives/edgar/data/1326380/000132638026000064/gme-20261019.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "TW",
+      "company": "Tradeweb Markets Inc.  (TW)",
+      "items": [
+        {
+          "code": "1.01",
+          "label": "중요계약 체결"
+        },
+        {
+          "code": "3.02",
+          "label": "주식 비등록 매각"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001193125-26-425378",
+      "link": "https://www.sec.gov/Archives/edgar/data/1758730/000119312526425378/d140509d8k.htm",
+      "summary": {
+        "item": "1.01",
+        "what": "중요 계약 체결 — Equity Purchase Agreement",
+        "who": "상대방 Park Merger Sub LLC",
+        "amount": "$1.970 billion",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "MKSI",
+      "company": "MKS INC  (MKSI)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001193125-26-424709",
+      "link": "https://www.sec.gov/Archives/edgar/data/1049502/000119312526424709/mksi-20261019.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "TTMI",
+      "company": "TTM TECHNOLOGIES INC  (TTMI)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001193125-26-424707",
+      "link": "https://www.sec.gov/Archives/edgar/data/1116942/000119312526424707/d187690d8k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "MSTR",
+      "company": "Strategy Inc  (MSTR, STRC, STRD, STRF, STRK)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001193125-26-424688",
+      "link": "https://www.sec.gov/Archives/edgar/data/1050446/000119312526424688/mstr-20261019.htm",
+      "buybackMention": true,
+      "buybackChecked": true,
+      "summary": {
+        "item": "8.01",
+        "what": "자사주 매입 프로그램",
+        "who": "",
+        "amount": "$2.0 billion",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "KMX",
+      "company": "CARMAX INC  (KMX)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001170010-26-000109",
+      "link": "https://www.sec.gov/Archives/edgar/data/1170010/000117001026000109/kmx-20261019.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Darren W. Woodell(부사장) 선임",
+        "amount": "기본급 $385,000",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "AES",
+      "company": "AES CORP  (AES)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001140361-26-040117",
+      "link": "https://www.sec.gov/Archives/edgar/data/874761/000114036126040117/ef20083812_8k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "JEF",
+      "company": "Jefferies Financial Group Inc.  (JEF)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001140361-26-039988",
+      "link": "https://www.sec.gov/Archives/edgar/data/96223/000114036126039988/ef20083976_8k.htm",
+      "buybackMention": true,
+      "buybackChecked": true,
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "BALL",
+      "company": "BALL Corp  (BALL)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001104659-26-116918",
+      "link": "https://www.sec.gov/Archives/edgar/data/9389/000110465926116918/ball-20261019x8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 퇴임 1명 · 선임 1명",
+        "who": "Kathleen Pitre(사장) 선임, Mandy Glew(사장) 퇴임",
+        "amount": "",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "STLD",
+      "company": "STEEL DYNAMICS INC  (STLD)",
+      "items": [
+        {
+          "code": "8.01",
+          "label": "기타 주요 이벤트"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001104659-26-116898",
+      "link": "https://www.sec.gov/Archives/edgar/data/1022671/000110465926116898/tm2627861d1_8k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "PFG",
+      "company": "PRINCIPAL FINANCIAL GROUP INC  (PFG)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001104659-26-116869",
+      "link": "https://www.sec.gov/Archives/edgar/data/1126328/000110465926116869/tm2627739d1_8k.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "EXE",
+      "company": "EXPAND ENERGY Corp  (EXE)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001104659-26-116739",
+      "link": "https://www.sec.gov/Archives/edgar/data/895126/000110465926116739/tm2627775d1_8k.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Daniel E. Brown(사장·CEO) 선임",
+        "amount": "기본급 $1,000,000",
+        "date": "2026-10-26",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "EG",
+      "company": "EVEREST GROUP, LTD.  (EG)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001095073-26-000038",
+      "link": "https://www.sec.gov/Archives/edgar/data/1095073/000109507326000038/everestre-20261019.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "CHTR",
+      "company": "CHARTER COMMUNICATIONS, INC. /MO/  (CHTR, CHTRP)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0001091667-26-000060",
+      "link": "https://www.sec.gov/Archives/edgar/data/1091667/000109166726000060/chtr-20261019.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "WTFC",
+      "company": "WINTRUST FINANCIAL CORP  (WTFC, WTFCN)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0001015328-26-000026",
+      "link": "https://www.sec.gov/Archives/edgar/data/1015328/000101532826000026/wtfc-20261019.htm"
+    },
+    {
+      "ticker": "BOKF",
+      "company": "BOK FINANCIAL CORP  (BOKF)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0000875357-26-000054",
+      "link": "https://www.sec.gov/Archives/edgar/data/875357/000087535726000054/bokf-20261019.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "보도자료 제출(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "CLF",
+      "company": "CLEVELAND-CLIFFS INC.  (CLF)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0000764065-26-000112",
+      "link": "https://www.sec.gov/Archives/edgar/data/764065/000076406526000112/clf-20261019.htm"
+    },
+    {
+      "ticker": "WSM",
+      "company": "WILLIAMS SONOMA INC  (WSM)",
+      "items": [
+        {
+          "code": "5.02",
+          "label": "임원·이사 변동"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0000719955-26-000223",
+      "link": "https://www.sec.gov/Archives/edgar/data/719955/000071995526000223/wsm-20261016.htm",
+      "summary": {
+        "item": "5.02",
+        "what": "임원·이사 변동 — 선임 1명",
+        "who": "Lynn Martin(이사) 선임",
+        "amount": "",
+        "date": "2026-10-16",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "ZION",
+      "company": "ZIONS BANCORPORATION, NATIONAL ASSOCIATION /UT/  (ZION, ZIONP)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0000109380-26-000125",
+      "link": "https://www.sec.gov/Archives/edgar/data/109380/000010938026000125/zion-20261019.htm"
+    },
+    {
+      "ticker": "MMM",
+      "company": "3M CO  (MMM)",
+      "items": [
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        }
+      ],
+      "hot": false,
+      "fileDate": "2026-10-19",
+      "accession": "0000066740-26-000303",
+      "link": "https://www.sec.gov/Archives/edgar/data/66740/000006674026000303/mmm-20261019.htm",
+      "summaryChecked": true
+    },
+    {
+      "ticker": "FITB",
+      "company": "FIFTH THIRD BANCORP  (FITB, FITB-PA, FITB-PI, FITB-PK, FITB-PM)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "7.01",
+          "label": "Reg FD 공시"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0000035527-26-000229",
+      "link": "https://www.sec.gov/Archives/edgar/data/35527/000003552726000229/fitb-20261019.htm",
+      "summary": {
+        "item": "7.01",
+        "what": "투자자 프레젠테이션 자료 공개(Reg FD)",
+        "who": "",
+        "amount": "",
+        "date": "2026-10-19",
+        "src": "rule"
+      },
+      "summaryChecked": true
+    },
+    {
+      "ticker": "WRB",
+      "company": "BERKLEY W R CORP  (WRB, WRB-PE, WRB-PF, WRB-PG, WRB-PH)",
+      "items": [
+        {
+          "code": "2.02",
+          "label": "실적 발표"
+        },
+        {
+          "code": "9.01",
+          "label": "재무제표·첨부"
+        }
+      ],
+      "hot": true,
+      "fileDate": "2026-10-19",
+      "accession": "0000011544-26-000046",
+      "link": "https://www.sec.gov/Archives/edgar/data/11544/000001154426000046/wrb-20261019.htm"
+    },
     {
       "ticker": "XOM",
       "company": "ExxonMobil Holdings Corp  (XOM)",

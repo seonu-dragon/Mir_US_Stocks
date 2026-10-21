@@ -3370,10 +3370,52 @@ async function handleSyncPrefsPut(request, env) {
       deleted: Array.isArray(prefs.theses.deleted) ? prefs.theses.deleted.slice(-300) : [],
     };
   }
+  // 관심 사용자 리스트·종목 메모(2026-10-21, watchlist-core.js). 보낸 시장 필드만 저장한다.
+  for (const m of ["Us", "Kr"]) {
+    const groups = sanitizeSyncWatchGroups(prefs[`watchGroups${m}`]);
+    if (groups) payload[`watchGroups${m}`] = groups;
+    const notes = sanitizeSyncWatchNotes(prefs[`watchNotes${m}`]);
+    if (notes) payload[`watchNotes${m}`] = notes;
+  }
   // TTL 이 없으면 한 번 만들어진 clientId 키가 영구히 남는다(익명 clientId 는
   // 브라우저 저장소를 지우면 새로 생긴다) → 180일 무갱신이면 만료.
   await env.COMMUNITY_KV.put(syncKvKey(clientId), JSON.stringify(payload), { expirationTtl: SYNC_PREFS_TTL_SEC });
   return privateJson({ ok: true, updatedAt: payload.updatedAt });
+}
+
+// 사용자 리스트: 최대 12개 · 리스트당 80종목 · 이름 20자. 배열이 아니면 null(필드를 만들지 않음).
+function sanitizeSyncWatchGroups(raw) {
+  if (!Array.isArray(raw)) return null;
+  const out = [];
+  const seen = new Set();
+  for (const g of raw) {
+    if (out.length >= 12) break;
+    if (!g || typeof g !== "object") continue;
+    const id = String(g.id || "").slice(0, 24);
+    const name = String(g.name || "").trim().slice(0, 20);
+    if (!id || !name || seen.has(id) || !Array.isArray(g.tickers)) continue;
+    seen.add(id);
+    const tickers = g.tickers.map((t) => String(t || "").trim().toUpperCase().slice(0, 24)).filter(Boolean).slice(0, 80);
+    out.push({ id, name, tickers });
+  }
+  return out;
+}
+
+// 종목 메모: { TICKER: { t: 글 200자, u: 고친 시각 } } 최대 300개(빈 글은 삭제 표식). 객체가 아니면 null.
+function sanitizeSyncWatchNotes(raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out = {};
+  let n = 0;
+  for (const k of Object.keys(raw)) {
+    if (n >= 300) break;
+    const key = String(k || "").trim().toUpperCase();
+    const v = raw[k];
+    const u = Number(v && v.u);
+    if (!key || key.length > 24 || !v || typeof v !== "object" || !Number.isFinite(u) || u <= 0) continue;
+    out[key] = { t: String(v.t == null ? "" : v.t).slice(0, 200), u };
+    n += 1;
+  }
+  return out;
 }
 
 async function handleCommunityClear(request, env) {

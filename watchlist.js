@@ -158,18 +158,62 @@ document.addEventListener("toggle", (e) => {
 // ===== 관심 리스트 여러 개(2026-10-03) =====
 // '전체' 는 기존 watchlist(★) 그대로다. 사용자가 만든 리스트는 시장별 [{ id, name, tickers }] 로 따로 저장하고,
 // 리스트에 넣은 종목은 전체(★)에도 넣는다. 리스트에서 빼면 그 리스트에서만 빠진다(★ 는 유지).
-// 클라우드 동기화 대상은 아직 전체(★)뿐이다.
+// 리스트도 클라우드에 동기화한다(2026-10-21, watchGroupsUs/Kr) — 편집은 ★ 목록과 같은 '로컬 편집' 표시를 남긴다.
 const WL_GROUPS_MAX = 12;
 let wlActiveGroup = "";
-function wlGroupsKey() { return `mir_watch_groups_${isKrMarket() ? "kr" : "us"}`; }
-function wlGroups() {
+function wlGroupsKey(marketId) { return `mir_watch_groups_${marketId || (isKrMarket() ? "kr" : "us")}`; }
+function wlGroups(marketId) {
   try {
-    const raw = JSON.parse(window.safeStorage.get(wlGroupsKey()) || "[]");
+    const raw = JSON.parse(window.safeStorage.get(wlGroupsKey(marketId)) || "[]");
     return Array.isArray(raw) ? raw.filter((g) => g && g.id && g.name && Array.isArray(g.tickers)) : [];
   } catch (_) { return []; }
 }
-function wlSaveGroups(list) {
-  try { window.safeStorage.set(wlGroupsKey(), JSON.stringify(list.slice(0, WL_GROUPS_MAX))); } catch (_) { /* 저장 실패 무시 */ }
+// opts.marketId: 다른 시장 저장분, opts.push === false: 클라우드에서 받은 값(로컬 편집 아님)
+function wlSaveGroups(list, opts = {}) {
+  const key = wlGroupsKey(opts.marketId);
+  try {
+    const prev = window.safeStorage.get(key);
+    const next = JSON.stringify(list.slice(0, WL_GROUPS_MAX));
+    window.safeStorage.set(key, next);
+    if (opts.push !== false && prev !== next) {
+      window.safeStorage.set(WATCHLIST_DIRTY_KEY, String(Date.now()));
+      scheduleCloudSyncPush();
+    }
+  } catch (_) { /* 저장 실패 무시 */ }
+}
+
+// ===== 종목 메모(2026-10-21) =====
+// 시장별 { TICKER: { t: 글(200자), u: 고친 시각 } }. 빈 글은 삭제 표식으로 남겨 다른 기기에도 지워지게 한다.
+// 클라우드와는 종목마다 더 나중에 고친 쪽으로 병합한다(watchlist-core.js mergeNotes) — 바디 상한 때문에
+// 일부만 올라가도 다른 기기에서 지워지지 않는다.
+function wlNotesKey(marketId) { return `mir_watch_notes_${marketId || (isKrMarket() ? "kr" : "us")}`; }
+function wlNotes(marketId) {
+  const core = window.MirWatchCore;
+  try {
+    const raw = JSON.parse(window.safeStorage.get(wlNotesKey(marketId)) || "{}");
+    return core ? core.normalizeNotes(raw) : {};
+  } catch (_) { return {}; }
+}
+function wlNoteText(ticker) {
+  const n = wlNotes()[normalizeTickerKey(ticker)];
+  return n && n.t ? n.t : "";
+}
+function wlSaveNotes(notes, opts = {}) {
+  const key = wlNotesKey(opts.marketId);
+  try {
+    const prev = window.safeStorage.get(key);
+    const next = JSON.stringify(notes);
+    window.safeStorage.set(key, next);
+    if (opts.push !== false && prev !== next) {
+      window.safeStorage.set(WATCHLIST_DIRTY_KEY, String(Date.now()));
+      scheduleCloudSyncPush();
+    }
+  } catch (_) { /* 저장 실패 무시 */ }
+}
+function wlSetNote(ticker, text) {
+  const core = window.MirWatchCore;
+  if (!core) return;
+  wlSaveNotes(core.setNote(wlNotes(), normalizeTickerKey(ticker), text, Date.now()));
 }
 function wlActiveTickers() {
   if (!wlActiveGroup) return watchlist.slice();
@@ -747,8 +791,12 @@ function storedWatchlist(marketId) {
   } catch (e) { return []; }
 }
 
+// 워커 /sync/prefs 바디 상한(yahoo-proxy.js SYNC_PREFS_MAX_BODY_BYTES)에서 여유를 뺀 값.
+const CLOUD_SYNC_BODY_BUDGET = 32 * 1024 - 512;
+
 function cloudSyncPayload() {
-  return {
+  const core = window.MirWatchCore;
+  const prefs = {
     // legacy `watchlist`(현재 시장 목록)는 구형 클라이언트 호환용으로 남긴다.
     // 시장별 필드를 따로 실어 한쪽 시장 사용이 다른 쪽 목록을 덮어쓰지 않게 한다.
     watchlist,
@@ -760,6 +808,44 @@ function cloudSyncPayload() {
     theses: window.MirThesis ? window.MirThesis.cloudPayload() : undefined,
     updatedAt: Date.now(),
   };
+  if (!core) return prefs;
+  prefs.watchGroupsUs = core.sanitizeGroups(wlGroups("us"));
+  prefs.watchGroupsKr = core.sanitizeGroups(wlGroups("kr"));
+  // 메모는 남는 바이트만큼 최신 수정순으로 싣는다(못 실은 것은 로컬에 그대로 — 병합이 지우지 않는다).
+  const used = core.utf8Bytes(JSON.stringify({ clientId: getCommunityClientId(), prefs: { ...prefs, watchNotesUs: {}, watchNotesKr: {} } }));
+  const fit = core.fitNotes({ us: wlNotes("us"), kr: wlNotes("kr") }, Math.max(0, CLOUD_SYNC_BODY_BUDGET - used));
+  prefs.watchNotesUs = fit.notes.us;
+  prefs.watchNotesKr = fit.notes.kr;
+  return prefs;
+}
+
+// 클라우드의 리스트·메모를 로컬에 반영한다. 리스트는 ★ 목록과 같은 규칙(아직 안 올린 로컬 편집이 있으면
+// 로컬 유지, 필드가 없으면 — 옛 워커·옛 클라이언트 — 건드리지 않음), 메모는 종목별 수정 시각 병합.
+function applyCloudWatchExtras(prefs, localNewer) {
+  const core = window.MirWatchCore;
+  if (!core) return false;
+  let changed = false;
+  ["us", "kr"].forEach((m) => {
+    const groups = m === "kr" ? prefs.watchGroupsKr : prefs.watchGroupsUs;
+    if (!localNewer && Array.isArray(groups)) {
+      const next = core.sanitizeGroups(groups);
+      if (JSON.stringify(next) !== JSON.stringify(wlGroups(m))) {
+        wlSaveGroups(next, { marketId: m, push: false });
+        changed = true;
+      }
+    }
+    const notes = m === "kr" ? prefs.watchNotesKr : prefs.watchNotesUs;
+    if (notes && typeof notes === "object") {
+      const local = wlNotes(m);
+      const merged = core.mergeNotes(local, notes);
+      if (JSON.stringify(merged) !== JSON.stringify(local)) {
+        wlSaveNotes(merged, { marketId: m, push: false });
+        changed = true;
+      }
+    }
+  });
+  if (changed && wlActiveGroup && !wlGroups().some((g) => g.id === wlActiveGroup)) wlActiveGroup = "";
+  return changed;
 }
 
 async function pushCloudSync() {
@@ -820,6 +906,10 @@ async function pullCloudSync() {
         window.safeStorage.set(watchlistStorageKey(otherId),
           JSON.stringify([...new Set(other.map((t) => String(t || "").trim().toUpperCase()).filter(Boolean))].slice(0, 80)));
       } catch (e) { /* ignore */ }
+    }
+    if (applyCloudWatchExtras(prefs, localNewer)) {
+      watchRenderWhenVisible("bulk", "tab-bulk", () => renderBulk());
+      if (window.MirRail) window.MirRail.refresh();
     }
     if (Array.isArray(prefs.portfolio) && prefs.portfolio.length) {
       if (typeof applyCloudPortfolio === "function") {

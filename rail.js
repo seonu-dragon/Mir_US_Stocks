@@ -131,7 +131,9 @@
   }
 
   function renderWatch() {
-    const list = (typeof watchlist !== "undefined" && Array.isArray(watchlist)) ? watchlist : [];
+    // 관심 표와 같은 순서(내 순서 또는 표의 열 정렬, portfolio.js wlRailTickers).
+    let list = (typeof watchlist !== "undefined" && Array.isArray(watchlist)) ? watchlist : [];
+    if (typeof wlRailTickers === "function") { try { list = wlRailTickers(); } catch (e) { /* 표 쪽 실패는 저장 순서로 */ } }
     const rows = rowsHtml(list);
     return listBlock(rows, "관심종목이 없습니다. 종목 분석 화면의 ☆ 로 추가하세요.")
       + `<div class="mir-rail-tools"><button type="button" class="mir-rail-link" data-rail-goto="bulk">관심 리스트 전체 보기</button></div>`;

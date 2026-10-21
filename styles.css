@@ -16985,6 +16985,35 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .wl-table .ticker-link.wl-name b { color: var(--text); }
 .wl-table .ticker-link.wl-name:hover b { text-decoration: underline !important; }
 @media (max-width: 640px) { .wl-table .wl-col-price { display: none; } }
+/* 관심 리스트 표 정렬·내 순서·메모(2026-10-21) */
+.wl-sort { min-height: 0; margin: 0; padding: 0; border: 0; background: transparent; color: inherit; font: inherit; box-shadow: none; cursor: pointer; text-align: inherit; }
+.wl-sort:hover { color: var(--text); background: transparent; }
+.wl-table thead th.is-sorted { color: var(--text); font-weight: 700; }
+.wl-sort-hint { margin: 0 0 8px; font-size: var(--fs-cap); color: var(--text-muted); }
+.wl-sort-hint[hidden] { display: none; }
+.wl-link { min-height: 0; padding: 0; border: 0; background: none; color: var(--accent); font: inherit; text-decoration: underline; cursor: pointer; }
+.wl-lead { display: inline-flex; align-items: center; gap: 2px; }
+.wl-drag { min-width: 24px; min-height: 32px; padding: 0 4px; border: 0; background: none; color: var(--text-muted); font-size: 13px; letter-spacing: -2px; cursor: grab; touch-action: none; user-select: none; }
+.wl-drag:hover, .wl-drag:focus-visible { color: var(--text); }
+.wl-table tbody.is-dragging, .wl-table tbody.is-dragging * { cursor: grabbing; user-select: none; }
+.wl-table tr.is-dragging { background: var(--panel-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.wl-row-tools { display: inline-flex; align-items: center; gap: 2px; }
+.wl-note-btn { min-height: 26px; padding: 0 8px; color: var(--text-muted); }
+.wl-note-btn.has-note { color: var(--accent); }
+.wl-note-text { margin: 4px 0 0; max-width: 32em; font-size: 12px; line-height: 1.45; color: var(--text-muted); white-space: normal; overflow-wrap: anywhere; }
+.wl-note-row td { padding-top: 0; background: var(--panel-soft); }
+.wl-note-form { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 8px; }
+.wl-note-form input { flex: 1 1 260px; min-width: 0; }
+.wl-note-form button { width: auto; flex: 0 0 auto; }
+.wl-note-count { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+/* 폰: 표 폭을 예전과 같게 — 손잡이가 있으면 ★ 를 숨긴다(✕ 가 같은 일을 하고, 정렬 중엔 ★ 가 돌아온다) */
+@media (max-width: 640px) {
+  .wl-lead .wl-drag + .watch-star { display: none; }
+  .wl-drag { min-width: 32px; min-height: 40px; font-size: 15px; }
+  .wl-row-tools { gap: 0; }
+  .wl-row-tools .ghost { padding: 0 4px; }
+  .wl-table td.wl-col-x { padding-left: 2px; padding-right: 2px; }
+}
 
 /* 내 투자 › 분석(2026-10-03): 목차 묶음 제목 · 도구 맨 위 결론 한 줄 */
 .toc-nav > .toc-group { display: block; margin: 14px 0 4px; padding: 0 12px; font-size: 11px; font-weight: 700; color: var(--text-muted); letter-spacing: 0.02em; }

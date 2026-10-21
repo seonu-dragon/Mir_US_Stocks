@@ -16596,6 +16596,7 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .shr-rank-link:hover { border-color: var(--text-2); }
 .shr-rank-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .shr-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.shr-kpis.shr-kpis-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .shr-kpis > div { min-width: 0; padding: 10px 12px; border-radius: var(--surface-radius); background: var(--surface-card); }
 .shr-kpis dt { margin: 0; color: var(--muted); font-size: var(--fs-cap); }
 .shr-kpis dd { margin: 2px 0 0; color: var(--text); font-size: var(--fs-title); font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
@@ -16612,7 +16613,7 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .shr-block .mf-table-wrap { margin-top: 4px; max-height: 240px; overflow: auto; }
 .shr-block a { color: var(--accent); }
 @media (max-width: 760px) {
-  .shr-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shr-kpis, .shr-kpis.shr-kpis-6 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 640px) {
   .shr-kpis > div { padding: 8px 10px; }
@@ -17228,3 +17229,61 @@ button.mfeed-who:hover strong { text-decoration: underline; }
 .wx-oi { margin: 0; padding: 0; list-style: none; }
 .wx-oi li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 10px; padding: 3px 0; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; }
 .wx-oi li span { color: var(--text-muted); text-align: right; }
+/* ===== VIX 기간구조 (vix-term.js) · 애널리스트 의견·추정치 (analyst-revisions.js), 2026-10-21 ===== */
+.vt-card, .ar-card { --vt-spot: #1d4ed8; --vt-fut: #b45309; --vt-past: #8b95a5; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-bottom: 8px; min-width: 0; }
+html[data-theme="dark"] .vt-card, html[data-theme="dark"] .ar-card { --vt-spot: #6b8cff; --vt-fut: #fbbf24; --vt-past: #7b8494; }
+.vt-kpis { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+.vt-kpis > div { min-width: 0; padding: 10px 12px; border-radius: 12px; background: var(--panel-soft); }
+.vt-kpis dt { margin: 0; color: var(--muted); font-size: var(--fs-cap); }
+.vt-kpis dd { margin: 2px 0 0; }
+.vt-kpi-v { font-size: var(--fs-title); font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.vt-kpi-sub { color: var(--muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
+.vt-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: var(--fs-cap); color: var(--muted); margin-bottom: 4px; }
+.vt-key::before { content: ""; display: inline-block; width: 16px; height: 0; border-top: 2px solid currentColor; vertical-align: middle; margin-right: 5px; }
+.vt-key.vt-spot::before { border-color: var(--vt-spot); }
+.vt-key.vt-fut::before { border-color: var(--vt-fut); }
+.vt-key.vt-week::before { border-color: var(--vt-past); border-top-style: dashed; }
+.vt-key.vt-month::before { border-color: var(--vt-past); border-top-style: dotted; }
+.vt-chart { display: block; width: 100%; height: auto; max-height: 280px; }
+.vt-grid { stroke: var(--line); stroke-width: 1; }
+.vt-grid-x { stroke-dasharray: 2 3; }
+.vt-axis { fill: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.vt-line { fill: none; stroke-width: 2; stroke-linejoin: round; }
+.vt-line.vt-spot { stroke: var(--vt-spot); }
+.vt-line.vt-fut { stroke: var(--vt-fut); }
+.vt-line.vt-week { stroke: var(--vt-past); stroke-dasharray: 5 4; stroke-width: 1.5; }
+.vt-line.vt-month { stroke: var(--vt-past); stroke-dasharray: 1.5 3; stroke-width: 1.5; }
+.vt-dot.vt-spot { fill: var(--vt-spot); }
+.vt-dot.vt-fut { fill: var(--vt-fut); }
+.vt-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+.vt-chip { padding: 2px 8px; border: 1px solid var(--line); border-radius: 999px; font-size: var(--fs-cap); font-variant-numeric: tabular-nums; color: var(--text); }
+.vt-chip b { font-weight: 600; color: var(--muted); margin-right: 2px; }
+.vt-spark { margin: 4px 0 12px; }
+.vt-spark-head { display: flex; justify-content: space-between; gap: 8px; font-size: var(--fs-cap); color: var(--muted); margin-bottom: 2px; }
+.vt-spark-svg { display: block; width: 100%; height: 64px; }
+.vt-one { stroke: var(--muted); stroke-opacity: 0.5; stroke-dasharray: 3 3; }
+.vt-table-wrap, .ar-table-wrap { overflow-x: auto; }
+.vt-table, .ar-table { min-width: 0; }
+.vt-up, .ar-up { color: var(--pos); }
+.vt-down, .ar-down { color: var(--neg); }
+.vt-foot, .ar-foot { font-size: var(--fs-cap); color: var(--muted); margin: 10px 0 0; }
+.ar-chips { margin-bottom: 10px; }
+.ar-more { margin-top: 8px; }
+.ar-breadth { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; font-size: var(--fs-sub); margin-bottom: 10px; }
+.ar-breadth > span:first-child { color: var(--muted); }
+.ar-lead-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.ar-lead-grid > section { min-width: 0; }
+.ar-lead-grid h3 { margin: 0 0 6px; font-size: var(--fs-sub); font-weight: 600; }
+.ar-empty { font-size: var(--fs-cap); }
+.ar-end { display: block; color: var(--muted); font-size: 11px; font-weight: 400; }
+.ar-sub { margin: 14px 0 6px; font-size: var(--fs-sub); font-weight: 600; }
+.ar-est-table th[scope="row"] { text-align: left; white-space: nowrap; }
+@media (max-width: 760px) {
+  .vt-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ar-lead-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .vt-card, .ar-card { padding: 12px; }
+  .vt-kpi-v { font-size: var(--fs-body); }
+}
+/* === VIX 기간구조 · 애널리스트 end === */

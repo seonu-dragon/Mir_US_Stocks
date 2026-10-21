@@ -173,7 +173,8 @@
   순수 계산 `signal-scorecard-core.js`(테스트 `scripts/tests/test_signal_scorecard_core.mjs`). 07-23~09-25 는 git 이력의
   커밋 시점 파일에서 '소급 복원'(US 12:00 · KR 20:00 KST 이전 커밋만).
 - **접이식 위젯**: 시장 심리 종합지수 · 매크로 지표 · 미국 국채 수익률 곡선 ·
-  예측시장 확률 · 침체 신호(2026-09-25) · 한국 거시지표(ECOS) · 수출입 동향 · 국채 경매 · 선물 포지션(COT) · 위키피디아 관심도 ·
+  예측시장 확률 · 침체 신호(2026-09-25) · 한국 거시지표(ECOS) · 수출입 동향 · 국채 경매 · 선물 포지션(COT) ·
+  VIX 기간구조 · 애널리스트 의견 변경(미국) · EPS 추정치 변화(미국)(2026-10-21) · 위키피디아 관심도 ·
   집계 인사이트. 상세 설명은 아래 '매크로 · 옵션 · 수급 심리 패널'.
 
 ### ⑧-2 시장 탭 › 산업 지표 (산업·매크로 선행지표 터미널, 2026-09-18)
@@ -232,6 +233,13 @@
 - **조건 저장형 스크리너 (Saved Screener)**:
   - 사용자가 스크리닝한 조건을 저장하고 다음 날 데이터 스냅샷이 업데이트되었을 때 편입/이탈된 신규 종목의 델타(Delta)를 확인하는 추적 기능.
 - **찾기 › 상위 종목 '목록' 칩 (2026-09-26)**: 정렬 칩 옆 `배당 랭킹` · `신규상장` · `관리·경보`(국내만) · `서학개미 TOP`(미국만). 계산은 `find-table-core.js`, 화면은 `find-table.js`. 정렬 칩을 누르거나 같은 칩을 다시 누르면 일반 표로.
+  - *연속 배당 증가 (US, 2026-10-21)*: 배당 랭킹에 '연속 증가' 열, 종목 상세 주주환원 카드에 '연속 배당 증가'·'연속 배당 지급' 타일(5·10년 연평균,
+    기록 첫머리에 닿으면 'N년+'·기록 시작 연도, 최근 감액 연도). `scripts/build_dividend_growth.py` — 야후 배당 기록 1985~(`period1` + `interval=1mo`;
+    `range=max` 는 표본만 준다), 특별배당(앞뒤 중앙값·1년 전후 같은 차례 2배 초과)·끼어든 소액 기록 제외, 연간 배당 = 마지막 정기 지급일에서
+    (365 − 간격/2)일 창의 합(횟수가 어긋나면 연간 횟수 × 중앙값) → 연속 증가는 실제보다 짧게 셀 수는 있어도 길게 세지 않는다(KO·PG·JNJ 39년+,
+    XOM 39년+, MMM 0년·2025 감액 확인). → `data/dividend_growth.{json,js}`(`DIVIDEND_GROWTH`, usOnly·lazy), `Company profile & price targets` 의
+    `dividends` 잡(수요일), 신선도 `dividend-growth`. 국내는 배당절차 개선(2023~24, 결산배당 배당락일이 이듬해로 이동)으로 배당락일 기준 연간 합이
+    어긋나 만들지 않는다(features `dividendGrowth: false`) — DART 사업연도 배당이 필요.
   - *배당 랭킹*: 지수/그룹 칩 범위 안에서 배당수익률 순(ETF 제외, 상위 300). 이상치 규칙(`fundamentals-sanity-core.js`, 30% 초과)은 뒤로 보내고 '이상치 가능' 표시, 적자 기업은 배당성향 '적자'. 열: 배당수익률·주당배당금·배당성향·PER·시총. 국내 = MAP_FUNDAMENTALS(`divYield`·`payoutRatio`·`dps` — `dps` 는 `build_map_fundamentals.py` 에 이번에 추가, 다음 KR 스냅샷부터 채워짐), 미국 = MAP_FUNDAMENTALS `divYield` + `US_STOCK_CALENDAR`(시총 상위 ~200종목의 `divRate`·`payout`). 연속 배당 연수는 두 시장 모두 소스가 없어 넣지 않았다. 일반 표 열 설정에도 주당배당금·배당성향 열 추가.
   - *미국 배당수익률 기준 (2026-09-27)*: Finnhub `dividendYieldIndicatedAnnual` 이 연환산 배당을 오래된 가격으로 나눠 부풀려져 있었다(야후와 겹치는 168종목 중 54개가 1.3배 이상, T 6.85% vs 4.37%). `build_map_fundamentals.py` 가 상세 파일 `dividends` 의 최근 1년 실제 지급 합 ÷ 스냅샷 현재가로 `divYield`·`dps` 를 다시 계산하고 기준을 `divSrc`(`ttm`·`yahoo`·`finnhub`)로 남긴다. 과거 지급 간격으로 본 연간 횟수보다 1년 안 건수가 적으면(기록 누락 — RY·ACN) 쓰지 않고 야후(상세 fundamentals → `us_calendar`) → Finnhub `currentDividendYieldTTM`(새 형식 `divBasis:"ttm"` 만, 옛 연환산 값은 버림) 순. 히트맵·수식 스크리너·배당 랭킹이 같은 값을 쓰고, 랭킹 칸에 마우스를 올리면 기준이 보인다. 특별배당은 실제 지급이라 포함(PGR·CME 가 야후 예상 수익률보다 높게 나옴).
   - *서학개미 TOP (2026-10-02, 미국만)*: 국내 투자자의 미국 주식 보관금액 상위 50(기준일, T-2영업일) · 결제 상위 50(순매수·매수·매도 × 1주·1개월). 원천 = 예탁결제원 SEIBro '종목별내역(주식TOP50)' websquare 엔드포인트(무키, `scripts/build_seohak_top.py` → `data/seohak_top.{json,js}`, 순위 기록 `data/seohak_top_state.json`). ISIN → 티커는 ETF·13F 빌더의 CUSIP 캐시 → OpenFIGI(ID_ISIN) 순, 분할·변경으로 이름 뒤에 붙은 새 ISIN 을 먼저 쓴다. '1주 전 대비'는 7일 이상 앞선 가장 최근 기록과 비교(기록이 쌓이기 전엔 '—', 그때 없던 종목은 '신규'). 금액 USD. 미르 유니버스에 없는 종목(SGOV·SPCX 등)은 클릭 없이 이름·티커만. US 스냅샷 잡(06:05 KST)의 스냅샷 직전 단계에서 돌고 신선도 감시는 0건까지 잡는다. 칩을 처음 누를 때 지연 로드(`seohakTop`).
@@ -443,6 +451,20 @@
   - *침체 신호 모음*: 새 수집 없이 산업 지표 데이터(`industry_indicators.json`)의 삼 법칙(0.50%p)·Chauvet-Piger 침체확률(80%)·10년−3개월/10년−2년 금리차(0 미만 역전)·CFNAI 3개월 평균(−0.70)·GZ 모형 침체확률(공인 임계 없음 → 판정 제외)을 한 표에 두고 현재값·임계·초과 여부·기준 시점만 보여 준다. 합성 점수는 만들지 않고 "N개 중 M개 임계 초과" 만 센다. 예측시장의 올해 침체 확률을 같은 카드에 나란히 둔다.
 - **옵션 심리 (Options Stats)**:
   - Yahoo 옵션 체인 기반 풋/콜 미결제약정 비율, 맥스페인(Max Pain), 만기 기준 예상 변동폭.
+- **VIX 기간구조 (2026-10-21, `vix-term.js` + `vix-term-core.js`)**: 시그널 탭 위젯(`&sig=vixterm`, 두 시장 모두). Cboe 현물 지수
+  (VIX1D·VIX9D·VIX·VIX3M·VIX6M·VIX1Y, `cdn.cboe.com` 일별 종가 CSV)와 VX 선물 월물 정산가(계약별 CDN CSV — 만기는 '다음 달 셋째 금요일 −30일'
+  규칙으로 찾고 파일이 없으면 하루씩 당김, 하루 늦은 날은 거래소 일별 정산가 CSV 로 보충)를 만기 일수(제곱근 눈금) 위 한 그림에 —
+  오늘 선물·1주 전·1개월 전 겹침. 타일: VIX/VIX3M 비율(콘탱고/백워데이션 연속 일수·1년 백분위) · 1·2개월물 차 · VIX · 1년 중 백워데이션 일수,
+  비율 1년 추이(1.00 기준선), 월물 표(만기·남은 일수·정산가·전일 대비·미결제약정). 빌더 `scripts/build_vix_term_structure.py` →
+  `data/vix_term_structure.{json,js}`(`VIX_TERM_STRUCTURE`, lazy, ~14KB), `Market indicators` 워크플로우 스텝(평일 07:30·16:10 KST), 신선도 `vix-term`.
+- **애널리스트 의견 변경 · EPS 추정치 변화 (US, 2026-10-21, `analyst-revisions.js` + `analyst-revisions-core.js`)**: 야후 quoteSummary
+  (`upgradeDowngradeHistory`·`earningsTrend`, 크럼 — 키 없음) 시총 상위 800. ① 시그널 위젯 '애널리스트 의견 변경' — 최근 30일 증권사별 상향·하향·
+  신규·유지·재확인과 목표가 이전→새 값(칩: 전체·의견 상향·하향·신규·목표가 상향·하향, 30행 + 100행씩 더 보기) ② 시그널 위젯 'EPS 추정치 변화' —
+  올해 회계연도 컨센서스 EPS 30일 변화 상·하위 10(추정 5명 이상, 기준값 |0.05| 미만은 비율 없음)과 상향/하향 종목 수 ③ 종목 상세 재무 탭
+  '실적 추정치 변화' 카드 — 기간(이번·다음 분기, 올해·내년 회계연도)별 현재·7·30·90일 전 EPS, 30·90일 변화, 30일 상향/하향 애널리스트 수,
+  최근 의견 변경 8건. 예전 카드(브라우저 localStorage 에 방문마다 쌓은 값)는 데이터에 없는 종목·국내에서만 쓴다. 빌더
+  `scripts/build_us_analyst_revisions.py` → `data/us_rating_changes.{json,js}`(`US_RATING_CHANGES`) · `data/us_estimate_revisions.{json,js}`
+  (`US_ESTIMATE_REVISIONS`, 둘 다 usOnly·lazy), `Daily earnings calendar` 워크플로우 스텝(06:30 KST), 신선도 `analyst-revisions`. 끄려면 features `analystRevisions: false`.
 - **CFTC COT 투기 포지셔닝**:
   - CFTC 공식 주간 보고서(TFF·Disaggregated)에서 헤지펀드(Leveraged Funds)·기관(Asset Manager)·Managed Money의 지수·금리·통화·원자재 선물 순포지션을 3년 백분위로 표시 (2026-08 추가).
 - **공매도 3축 (잔고 · 흐름 · 결제 불이행)**:

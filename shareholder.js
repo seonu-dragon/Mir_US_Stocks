@@ -107,14 +107,20 @@ function shrDpsTable(years, cur, withPayout) {
   return `<div class="table-wrap mf-table-wrap cc-table-wrap"><table class="insider-table mf-table cc-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
-function shrKpis(s, cur) {
+function shrKpis(s, cur, growth) {
   const tiles = [];
   tiles.push(["배당 주기", s.frequency.label, s.lastDividend ? `최근 배당락 ${s.lastDividend.date}` : ""]);
   tiles.push(["최근 1년 주당배당금", s.trailing.count ? shrPerShare(s.trailing.sum, cur) : "—", s.trailing.count ? `${s.trailing.count}회 · 배당락일 기준` : "최근 1년 기록 없음"]);
   tiles.push(["배당수익률(현재)", Number.isFinite(s.yieldPct) ? `${s.yieldPct.toFixed(2)}%` : "—", ""]);
   const p = s.ttmPayout;
   tiles.push(["배당성향", shrPayoutText(p), p ? (p.basis === "ttm" ? "최근 1년 배당 ÷ 최근 4분기 EPS" : "직전 결산") : ""]);
-  return `<dl class="shr-kpis">${tiles.map(([k, v, sub]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>${sub ? `<dd class="shr-kpi-sub">${escapeHtml(sub)}</dd>` : ""}</div>`).join("")}</dl>`;
+  // 배당 성장 이력(DIVIDEND_GROWTH, 1985~ 배당 기록) — 미국만. 연속이 기록 첫머리에 닿으면 'N년+'.
+  const dg = window.MirDivGrowthCore;
+  if (growth && dg) {
+    tiles.push(["연속 배당 증가", dg.streakText(growth), dg.subText(growth)]);
+    tiles.push(["연속 배당 지급", dg.paidText(growth), growth.cagr10 != null ? `10년 연평균 ${dg.cagrText(growth.cagr10)}` : ""]);
+  }
+  return `<dl class="shr-kpis${tiles.length > 4 ? " shr-kpis-6" : ""}">${tiles.map(([k, v, sub]) => `<div><dt>${escapeHtml(k)}</dt><dd>${escapeHtml(v)}</dd>${sub ? `<dd class="shr-kpi-sub">${escapeHtml(sub)}</dd>` : ""}</div>`).join("")}</dl>`;
 }
 
 function shrBuybackBody(o) {
@@ -220,6 +226,9 @@ function renderShareholder(item) {
   const hist = histRaw && histRaw.rows ? sh.buybackHistory(histRaw.rows, dayBase) : null;
   const us8k = !kr ? sh.usBuybackAnnouncements(ticker, (window.MATERIAL_EVENTS || {}).events) : [];
   const missing = kr && histRaw && histRaw.rows ? sh.missingDividendYears(s.years, histRaw.rows, dayBase) : [];
+  if (!kr && feats.dividendGrowth !== false && !window.DIVIDEND_GROWTH) shrEnsure("dividendGrowth");
+  const growth = !kr && feats.dividendGrowth !== false && window.DIVIDEND_GROWTH && window.MirDivGrowthCore
+    ? window.MirDivGrowthCore.record(window.DIVIDEND_GROWTH, ticker) : null;
 
   const hasBuyback = !!(share || (recent && recent.rows.length) || hist || us8k.length);
   // 상세 파일이 아직 없으면(배당 기록을 모름) 기다린다 — 빈 카드를 먼저 띄우지 않는다.
@@ -227,7 +236,7 @@ function renderShareholder(item) {
   if (!s.hasDividends && !hasBuyback) { shrHide(host); return; }
 
   const width = shrWidth(host);
-  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing]);
+  const sig = JSON.stringify([ticker, market, width, s.years, s.yieldPct, s.ttmPayout, share, recent && recent.rows.length, hist && hist.total, us8k.length, missing, growth]);
   shrBind(host);
   if (sig === shrSig && !host.hidden && host.firstElementChild) return;
   shrSig = sig;
@@ -281,6 +290,6 @@ function renderShareholder(item) {
       </div>
       <button type="button" class="shr-rank-link" data-shr-rank>배당 랭킹 보기 <span aria-hidden="true">›</span></button>
     </div>
-    ${s.hasDividends ? shrKpis(s, cur) : `<p class="mf-note">최근 ${s.coverageStart ? `${s.coverageStart} 이후` : ""} 배당 기록이 없습니다.</p>`}
+    ${s.hasDividends ? shrKpis(s, cur, growth) : `<p class="mf-note">최근 ${s.coverageStart ? `${s.coverageStart} 이후` : ""} 배당 기록이 없습니다.</p>`}
     ${mirChartGrid(cards)}`;
 }

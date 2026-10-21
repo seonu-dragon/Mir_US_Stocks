@@ -855,6 +855,9 @@ function renderSignals() {
   if (typeof renderKrMarketAlerts === "function") renderKrMarketAlerts();
   renderTreasuryAuctions();
   renderCotPositioning();
+  if (typeof renderVixTerm === "function") renderVixTerm();
+  if (typeof renderRatingChanges === "function") renderRatingChanges();
+  if (typeof renderEstimateRevisions === "function") renderEstimateRevisions();
   renderWikiAttention();
   const el = byId("signalsGrid");
   if (!el) return;

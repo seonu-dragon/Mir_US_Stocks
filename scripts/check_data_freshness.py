@@ -28,6 +28,9 @@
     py scripts/check_data_freshness.py --group crisis-history  # crisis-history.yml 말미
     py scripts/check_data_freshness.py --group screener-backtest  # screener-backtest-panel.yml 말미
     py scripts/check_data_freshness.py --group market-indicators  # market-indicators.yml 말미
+    py scripts/check_data_freshness.py --group vix-term           # market-indicators.yml VIX 기간구조 스텝
+    py scripts/check_data_freshness.py --group analyst-revisions  # daily-earnings-calendar.yml 애널리스트 스텝
+    py scripts/check_data_freshness.py --group dividend-growth    # company-info.yml dividends 잡
     py scripts/check_data_freshness.py --group market-calendar    # market-calendar.yml 말미
     py scripts/check_data_freshness.py --group etf-holdings       # market-calendar.yml etf 잡
     py scripts/check_data_freshness.py --group company-logos      # company-info.yml logos 잡
@@ -216,6 +219,12 @@ CHECKS = {
     "earnings-move": [
         ("data/earnings_move_compare.json", 4, False),
     ],
+    # daily-earnings-calendar.yml 의 애널리스트 스텝(build_us_analyst_revisions.py, 매일 06:30 KST). 실행마다
+    # updatedAtKst 를 새로 쓴다. 추정치 0종목 = 소스 이상(빌더가 50 미만이면 쓰지 않지만 나이로도 잡는다).
+    "analyst-revisions": [
+        ("data/us_estimate_revisions.json", 4, True),
+        ("data/us_rating_changes.json", 4, False),
+    ],
     # material-events.yml(매일 13:23 KST) 의 보도자료 요약 스텝. 새 2.02 가 없어도 실행마다
     # 타임스탬프를 올리므로 나이가 늙으면 빌더(키·Gemini·SEC)가 죽은 것이다.
     # weekly-earnings-history.yml 의 financials 잡(일요일 03:02 KST). 재무 확장 인덱스는 실행마다
@@ -261,6 +270,14 @@ CHECKS = {
     # 0건(count)도 잡는다 — 전부 실패하면 빌더가 파일을 안 쓰므로 나이로 드러난다.
     "market-indicators": [
         ("data/market_indicators.json", 4, True),
+    ],
+    # market-indicators.yml 의 VIX 기간구조 스텝(평일 하루 2회). 곡선 점 0개(count) = 소스 이상.
+    "vix-term": [
+        ("data/vix_term_structure.json", 4, True),
+    ],
+    # company-info.yml dividends 잡(수요일) — 배당 성장 이력. 주 1회라 9일.
+    "dividend-growth": [
+        ("data/dividend_growth.json", 9, True),
     ],
     # company-info.yml — 기업개요(수요일)·US 목표주가 범위(수·토). 인덱스 updatedAtKst 는 실행마다 새로 쓴다.
     # 기업개요는 주 1회라 한 번 실패를 바로 잡도록 8일, 목표주가는 주 2회라 5일. 0건(count)도 잡는다.

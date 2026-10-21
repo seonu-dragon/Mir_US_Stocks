@@ -109,6 +109,11 @@
       krThemes: false,
       // 미국 테마(테마 ETF N-PORT 보유 내역, build_us_themes.py · 월 1회 ETF 보유 갱신 직후).
       usThemes: true,
+      // 애널리스트 의견 변경 피드 · 종목별 EPS 추정치 7·30·60·90일 변화(야후, build_us_analyst_revisions.py).
+      analystRevisions: true,
+      // 배당 성장 이력(연속 증가·연속 지급·5/10년 연평균, build_dividend_growth.py).
+      dividendGrowth: true,
+      // VIX 기간구조(Cboe 현물 지수 + VX 선물, build_vix_term_structure.py) — 국내 모드에서도 보인다(키 생략 = 켜짐).
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;
@@ -298,6 +303,11 @@
       // 시장 탭 '테마' + 종목 분석 '이 종목의 테마' 칩 — DART 사업보고서 '사업의 내용' 근거 문장으로만 편입
       // (data/korea/themes.js + data/korea/themes/<id>.json, build_kr_themes.py).
       krThemes: true,
+      // 애널리스트 의견 변경·EPS 추정치 변화는 야후 미국 데이터뿐이다(국내 컨센서스는 FnGuide 카드).
+      analystRevisions: false,
+      // 배당 성장 이력 — 국내는 배당절차 개선(2023~24)으로 배당락일 기준 연간 합이 어긋나 빌더가 만들지 않는다
+      // (scripts/build_dividend_growth.py 의 MARKETS 주석). DART 사업연도 배당으로 만들기 전엔 끈다.
+      dividendGrowth: false,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

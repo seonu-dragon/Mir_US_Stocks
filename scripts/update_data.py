@@ -2255,12 +2255,19 @@ def make_stock(meta, rows):
     #      발행하지 않는다" 에 정면으로 어긋난다 — rsi14 와 같은 기준으로 맞춘다.
     if history_source in REAL_HISTORY_SOURCES:
         history_rows = rows[-1260:]
+        # 마지막 봉 종가를 현재가로 바꾸는 건 그 봉이 **기준일(priceDate) 봉일 때만**이다.
+        # 소형주(yahoo-spark)는 bar_missing 을 끄므로, 예전엔 몇 주 묵은 캐시 마지막 봉(예: 09-18)의
+        # 종가에 오늘 가격이 실행마다 덮였다 — 2026-10-21 실측 US details 7,247개 중 624개(8.6%)의
+        # 마지막 봉 종가가 그 봉의 고가·저가 밖이었다(AEIS 09-18 고 262.95·저 256.76·종 239.65,
+        # AMTD 10-15 고 0.62·종 24.78 → 섹터 평균 등락률 +6.4% 왜곡).
+        last_date = str(history_rows[-1].get("date") or "") if history_rows else ""
+        overwrite_last = not bar_missing and (not price_date or not last_date or last_date >= price_date)
         stock["chartSeries"] = [
             [
                 round(row["open"], 2),
                 round(row["high"], 2),
                 round(row["low"], 2),
-                round(price if index == len(history_rows) - 1 and not bar_missing else row["close"], 2),
+                round(price if index == len(history_rows) - 1 and overwrite_last else row["close"], 2),
                 int(row["volume"]),
                 row.get("date"),  # YYYY-MM-DD for the chart x-axis (None if unavailable)
             ]
@@ -2614,6 +2621,13 @@ def load_cached_history(symbol):
                 "close": float(entry[3]),
                 "volume": float(entry[4] or 0),
             })
+        # 위 make_stock 버그(2026-10-21 수정 전)로 마지막 봉 종가에 다른 날 가격이 덮인 캐시가 있다.
+        # 종가가 그 봉의 고가·저가 범위를 2% 넘게 벗어나면 진짜 종가를 알 수 없으므로 그 봉은 버린다
+        # (다음 실측 수집이 다시 채운다). 지어낸 값으로 메우지 않는다.
+        if rows:
+            last = rows[-1]
+            if last["high"] > 0 and last["low"] > 0 and not (last["low"] * 0.98 <= last["close"] <= last["high"] * 1.02):
+                rows.pop()
         if len(rows) < 30:
             return None
         remember_cached_splits(symbol, detail)

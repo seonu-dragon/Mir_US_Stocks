@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 import traceback
 import urllib.parse
@@ -587,18 +588,26 @@ def test_ticker_deeplink_seo(browser, base: str) -> None:
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
     locs = [u.findtext("s:loc", namespaces=ns)
             for u in ET.parse(sitemap).findall("s:url", ns)]
-    check("sitemap 에 종목 딥링크 수록", sum("?t=" in (l or "") for l in locs) > 0,
-          f"{len(locs)} URL")
+    # 2026-10-22: 종목 URL 은 정적 요약 페이지(stock/<시장>/<티커>.html, 배포 때 생성). 배포가 못 만든 종목은
+    # 분석 딥링크(?t=)로 되돌려진다 — 둘 중 하나로 종목이 실려 있으면 된다.
+    stock_re = re.compile(r"/stock/(us|kr)/([^/]+)\.html$")
+    n_stock = sum(1 for l in locs if (m := stock_re.search(l or "")) and m.group(2) != "index")
+    check("sitemap 에 종목 페이지 수록", n_stock + sum("?t=" in (l or "") for l in locs) > 0,
+          f"{len(locs)} URL · 정적 {n_stock}")
     check("sitemap 이중 이스케이프 없음", not any("&amp;" in (l or "") for l in locs))
     check("sitemap 중복 URL 없음", len(locs) == len(set(locs)))
 
     missing = []
     for loc in locs:
-        if "?t=" not in loc:
+        m = stock_re.search(loc or "")
+        if m and m.group(2) != "index":
+            ticker, kr = m.group(2), m.group(1) == "kr"
+        elif "?t=" in loc:
+            q = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)
+            ticker = q.get("t", [""])[0]
+            kr = q.get("market", [""])[0] == "kr"
+        else:
             continue
-        q = urllib.parse.parse_qs(urllib.parse.urlparse(loc).query)
-        ticker = q.get("t", [""])[0]
-        kr = q.get("market", [""])[0] == "kr"
         path = (root / "data" / "korea" / "details" / f"{ticker}.json") if kr \
             else (root / "data" / "details" / f"{ticker}.json")
         if not path.exists():
@@ -633,6 +642,20 @@ def test_ticker_deeplink_seo(browser, base: str) -> None:
     page.wait_for_timeout(3000)
     base_canon = meta('link[rel="canonical"]', "href") or ""
     check("종목 미지정이면 기본 canonical", base_canon.endswith("/analysis.html"), base_canon)
+
+    # 정적 요약 페이지는 배포 스테이징에서만 생긴다(gen_stock_pages.py) — 로컬 서버(레포 그대로)엔 없으니 건너뛴다.
+    static = base.replace("index.html", "stock/us/NVDA.html")
+    resp = page.goto(static, wait_until="domcontentloaded", timeout=60000)
+    if resp is not None and resp.status == 404 and ("127.0.0.1" in base or "localhost" in base):
+        print("SKIP  정적 종목 페이지 - 로컬 서버에는 없음(배포 때 생성)")
+    else:
+        canon = meta('link[rel="canonical"]', "href") or ""
+        check("정적 종목 페이지 canonical 이 자기 자신", canon.endswith("/stock/us/NVDA.html"), canon)
+        ld = page.evaluate("() => { const s = document.querySelector('script[type=\"application/ld+json\"]');"
+                           " try { return JSON.parse(s.textContent)['@graph'].map((g) => g['@type']); } catch (e) { return null; } }")
+        check("정적 종목 페이지 JSON-LD", ld and "WebPage" in ld and "BreadcrumbList" in ld, str(ld))
+        check("정적 종목 페이지가 분석 딥링크를 건다",
+              page.locator('a[href*="analysis.html?t=NVDA"]').count() > 0)
     page.close()
 
 

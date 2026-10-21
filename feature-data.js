@@ -209,6 +209,18 @@ const _featureDataPromises = {};
 // 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
 // 같은 404 를 반복 요청했다. 시장 전환(resetMarketCaches)이나 수동 재확인 때만 비운다.
 const _featureDataFailed = {};
+// 지금 받는 중인(<script> 를 붙였고 load/error 가 아직 안 온) 데이터셋 키. 종목 상세 탭이 '데이터 없음'을
+// 단정하기 전에 본다(stock-view.js sdUpdateEmpty) — 도착 전의 빈 카드를 '없음'으로 깜빡이지 않게.
+const _featureDataInFlight = {};
+// 부팅 프리로드(preloadFeatureData)가 아직 첫 묶음을 요청하지 않았으면 true — 그 전엔 '받는 중'도 0개라
+// 빈 카드를 '없음'으로 오판한다.
+let _featurePreloadStarted = false;
+function featureDataLoadingKeys() {
+  return Object.keys(_featureDataInFlight);
+}
+function featurePreloadPending() {
+  return !_featurePreloadStarted;
+}
 function clearFeatureDataFailures() {
   Object.keys(_featureDataFailed).forEach((k) => delete _featureDataFailed[k]);
 }
@@ -237,13 +249,15 @@ function ensureFeatureData(key) {
   }
   const src = featureDataSrc(path);
 
+  _featureDataInFlight[key] = true;
   _featureDataPromises[key] = new Promise((resolve) => {
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
     script.dataset.featureData = key;
-    script.addEventListener("load", () => resolve(!!window[meta.global]), { once: true });
+    script.addEventListener("load", () => { delete _featureDataInFlight[key]; resolve(!!window[meta.global]); }, { once: true });
     script.addEventListener("error", () => {
+      delete _featureDataInFlight[key];
       delete _featureDataPromises[key];
       _featureDataFailed[key] = { failedAt: Date.now() };
       resolve(false);
@@ -270,10 +284,10 @@ const FIRST_SCREEN_FEATURE_KEYS = new Set([
 function preloadFeatureData() {
   const phone = typeof window.matchMedia === "function" && window.matchMedia("(max-width: 640px)").matches;
   const saveData = !!(navigator.connection && navigator.connection.saveData);
-  const load = (keys) => keys.forEach((key) => {
+  const load = (keys) => { _featurePreloadStarted = true; keys.forEach((key) => {
     if (FEATURE_DATA[key].heavy || FEATURE_DATA[key].lazy) return;
     ensureFeatureData(key).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
-  });
+  }); };
   const all = Object.keys(FEATURE_DATA);
   if (!phone && !saveData) {
     const run = () => load(all);

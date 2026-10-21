@@ -1320,7 +1320,7 @@ def parse_naver_daily(payload) -> list[dict]:
             return value if value is not None and value > 0 else close
 
         volume = _fnum(item.get("accumulatedTradingVolume"))
-        by_date[day] = {
+        row = {
             "date": day,
             "open": px("openPrice"),
             "high": max(px("highPrice"), close),
@@ -1328,7 +1328,51 @@ def parse_naver_daily(payload) -> list[dict]:
             "close": close,
             "volume": float(volume) if volume is not None and volume > 0 else 0.0,
         }
+        # 외국인 보유율(%) — 같은 응답의 foreignRetentionRate. 없거나 범위 밖이면 싣지 않는다(지어내지 않음).
+        frr = _fnum(item.get("foreignRetentionRate"))
+        if frr is not None and 0 <= frr <= 100:
+            row["foreignRate"] = round(float(frr), 2)
+        by_date[day] = row
     return [by_date[day] for day in sorted(by_date)]
+
+
+# ── 외국인 보유율 추이(2026-10-21) ──
+# 네이버 일봉 응답의 foreignRetentionRate 를 detail 의 `foreignRetention` 에 보존한다. 형식은 숫자 배열 하나:
+# chartSeries **마지막 len(배열) 개 봉과 같은 순서로 정렬**된 보유율(%)이고, 모르는 날은 null 이다(앞쪽 null 은
+# 잘라 낸다). 날짜 문자열을 따로 싣지 않아 종목당 ~1.5KB(250봉) — 배포 용량(details 169MB)에 부담이 작다.
+# splice_krx_bars 가 주식 봉 가격을 야후(KRX)로 덮어도 보유율은 네이버 값을 그대로 둔다({**row, ...}).
+FOREIGN_RETENTION_BARS = 250  # ≈ 1년
+
+
+def foreign_retention_series(rows: list, chart_series: list, limit: int = FOREIGN_RETENTION_BARS) -> list | None:
+    """rows 의 foreignRate 를 chartSeries 꼬리(최대 limit 봉)에 날짜로 맞춘 배열. 값이 하나도 없으면 None."""
+    if not chart_series:
+        return None
+    by_date = {r.get("date"): r.get("foreignRate") for r in rows or [] if r.get("foreignRate") is not None}
+    if not by_date:
+        return None
+    tail = chart_series[-limit:]
+    out = [by_date.get(bar[5]) if isinstance(bar, (list, tuple)) and len(bar) > 5 else None for bar in tail]
+    while out and out[0] is None:
+        out.pop(0)
+    return out if any(v is not None for v in out) else None
+
+
+def restore_foreign_rates(rows: list, detail: dict) -> int:
+    """직전 detail 의 foreignRetention 을 그 chartSeries 날짜로 되돌려 rows 에 붙인다(증분 병합에서 이력 유지). 붙인 수."""
+    series = detail.get("foreignRetention") if isinstance(detail, dict) else None
+    chart = detail.get("chartSeries") if isinstance(detail, dict) else None
+    if not isinstance(series, list) or not series or not isinstance(chart, list) or len(chart) < len(series):
+        return 0
+    dates = [bar[5] if isinstance(bar, (list, tuple)) and len(bar) > 5 else None for bar in chart[-len(series):]]
+    rate_by_date = {d: v for d, v in zip(dates, series) if d and isinstance(v, (int, float))}
+    n = 0
+    for row in rows:
+        v = rate_by_date.get(row.get("date"))
+        if v is not None and row.get("foreignRate") is None:
+            row["foreignRate"] = float(v)
+            n += 1
+    return n
 
 
 def fetch_naver_daily(code: str, start, end, retries: int = 3) -> list[dict]:
@@ -1485,6 +1529,7 @@ def load_cached_history(symbol: str):
             })
         if len(rows) < 30:
             return None
+        restore_foreign_rates(rows, detail)
         UD.remember_cached_splits(symbol, detail)
         # barsSource 키가 없으면 네이버 전환(2026-10-01) 전 detail = 야후 봉.
         _CACHED_BARS_SOURCE[str(symbol)] = str(detail.get("barsSource") or BARS_SOURCE_YAHOO)
@@ -1627,6 +1672,9 @@ def build_one(meta: dict):
         stock["barsSource"] = meta["barsSource"]  # 일봉 원천(naver|yahoo) — detail 에 실려 일별 시세 표 각주에 쓰인다
         if meta.get("krxSpliceSince"):
             stock["krxBarsSince"] = meta["krxSpliceSince"]  # 이 날짜부터는 야후(KRX) 봉 — 네이버는 통합 종가
+    foreign = foreign_retention_series(rows, stock.get("chartSeries"))
+    if foreign:
+        stock["foreignRetention"] = foreign  # 외국인 보유율(%) — chartSeries 꼬리 정렬(위 '외국인 보유율 추이' 절)
     if lastbar_fixed:
         stock["lastBarSource"] = "krx-close"     # 마지막 봉 종가를 KRX 종가(네이버)로 맞췄다
     if meta.get("listedShares"):
@@ -1899,6 +1947,9 @@ def fetch_one_etf_stock(info: dict) -> dict | None:
     stock = UD.make_stock(meta, rows)
     if stock.get("chartSeries"):
         stock["barsSource"] = bars_source
+        foreign = foreign_retention_series(rows, stock["chartSeries"])
+        if foreign:
+            stock["foreignRetention"] = foreign
     backfill_change_from_history(stock, rows)  # 야후 실 히스토리 → 개장 전 0% 보정
     stock["ticker"] = code
     stock["market"] = "etf"
@@ -2668,10 +2719,12 @@ def split_snapshot_details(payload: dict):
             })
             if stock.get("barsSource"):
                 detail["barsSource"] = stock["barsSource"]
+            if stock.get("foreignRetention") and detail.get("chartSeries"):
+                detail["foreignRetention"] = stock["foreignRetention"]
             details[stock["ticker"]] = detail
         light_stocks.append({
             k: v for k, v in stock.items()
-            if k not in set(UD.DETAIL_KEYS) | set(UD.DETAIL_META_KEYS) | {"barsSource"}
+            if k not in set(UD.DETAIL_KEYS) | set(UD.DETAIL_META_KEYS) | {"barsSource", "foreignRetention"}
         })
     light = dict(payload)
     light["stocks"] = light_stocks

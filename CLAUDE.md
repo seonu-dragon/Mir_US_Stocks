@@ -88,6 +88,9 @@ py scripts/smoke_ui.py --base https://seonu-dragon.github.io/Mir_US_Stocks/index
   실측/이월' 의미라 원천과 무관하다(소비처 20여 곳이 이 값을 본다 — 바꾸지 말 것). 배당·분할 이벤트는
   야후. 프론트는 상세 파일 봉이 덮는 날짜를 이기고 워커(야후) 실시간 봉은 그 뒤 날짜만 붙인다
   (`MirDailyTable.mergeLiveBars`).
+  같은 응답의 `foreignRetentionRate` 는 detail 의 `foreignRetention`(숫자 배열 하나, **chartSeries 마지막 len 개 봉과
+  같은 순서**, 모르는 날 null, 최대 250봉)으로 보존된다(2026-10-21). 증분 수집이라 이력은 실행마다 쌓이고, 다음
+  실행의 `load_cached_history` 가 직전 detail 에서 되돌려 이어 붙인다. 종목 상세 수급 탭 '외국인 보유율 추이'가 읽는다.
 - `repository_publish_lock` (`scripts/briefing_store.py`): 스냅샷 writer 와 git
   commit/push 를 이 머신에서 직렬화한다. 락 소유권을 **환경변수로 자식에게 상속**시켜,
   락 안에서 띄운 subprocess 빌더가 자기 부모를 기다리다 죽지 않게 한다.

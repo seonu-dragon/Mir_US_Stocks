@@ -97,6 +97,7 @@ function sdRevealTab(nav) {
 // 탭을 연다. push=true 면 사용자가 누른 것 — URL 을 갱신하고, 본문이 화면 위로 지나가 있으면 탭 줄로 올린다.
 function activateStockView(view, { push = false, scroll = false } = {}) {
   const v = sdNormalizeView(view) || "chart";
+  if (v !== sdCurrentView) sdPendingStart = 0;
   sdCurrentView = v;
   sdApplyView(v);
   if (v === "ai" && typeof flushPendingAiReport === "function") flushPendingAiReport();
@@ -115,9 +116,21 @@ function activateStockView(view, { push = false, scroll = false } = {}) {
 // 수급·보유 탭의 US 카드(스마트머니 종합·정치인 매매)는 무거운 데이터셋(내부자·의회·13F, 합계 ~11MB)을
 // 읽는다. 부팅 때 받지 않으므로 이 탭을 처음 열 때 받고, 도착하면 refreshFeatureViews 가 두 카드를 다시 그린다.
 // 기관 보유 변화 카드(inst-holders.js)도 탭이 열렸을 때만 샤드를 받으므로 여기서 한 번 부른다.
+// 국내는 수급(krFlow)·기업집단·국민연금 카드가 부팅 뒤 유휴 시간에 받는 데이터셋을 읽어, 딥링크(&view=flow)로
+// 바로 들어오면 몇 초간 카드가 비어 있었다 — 탭을 열면 바로 요청하고 도착하면 다시 그린다.
+const SD_KR_FLOW_KEYS = ["krFlow", "krCorpGroups", "krNps"];
 function sdEnsureFlowData() {
   if (typeof ensureFeatureData !== "function") return;
-  if (typeof isKrMarket === "function" && isKrMarket()) return;
+  if (typeof isKrMarket === "function" && isKrMarket()) {
+    const want = SD_KR_FLOW_KEYS.filter((k) => FEATURE_DATA[k] && !window[FEATURE_DATA[k].global]);
+    if (!want.length) return;
+    Promise.all(want.map((k) => ensureFeatureData(k).catch(() => false)))
+      .then(() => {
+        if (typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh();
+        sdUpdateEmpty();
+      });
+    return;
+  }
   if (typeof renderInstHolders === "function" && typeof selectedBaseRow === "function") {
     const row = selectedBaseRow();
     if (row) renderInstHolders(row);
@@ -137,6 +150,32 @@ function showStockViewFor(el) {
 // ── 빈 탭 안내 ────────────────────────────────────────────────────────────────
 // 카드는 데이터가 없으면 hidden 이 되거나 비어 있다. 탭 안에 보이는 카드가 하나도 없으면 한 줄 안내를 띄우고
 // 탭 버튼을 흐리게 한다(누를 수는 있다). 카드가 늦게 채워지는 경우가 많아 변화를 지켜본다.
+//
+// 단, 아직 받는 중이면 '없음'이 아니라 '불러오는 중'이다(2026-10-21). 라이브에서 &view=flow 딥링크가 피처 데이터
+// 도착 전 약 4초간 "이 종목은 이 탭에 보여 줄 데이터가 없습니다"를 띄웠고, 재무·밸류·이벤트 탭도 같은 식으로
+// 깜빡였다. 받는 중 = 종목 상세 파일·피처 데이터셋(<script>)이 아직 도착 전이거나, 부팅 직후 유예(카드별 샤드
+// fetch 는 추적하지 않으므로 그 몫). 그 동안엔 0.5초마다 다시 보고, 최대 SD_EMPTY_MAX_WAIT_MS 뒤엔 판정한다.
+const SD_BOOT_GRACE_MS = 4000;
+const SD_EMPTY_MAX_WAIT_MS = 15000;
+const SD_EMPTY_TEXT = "이 종목은 이 탭에 보여 줄 데이터가 없습니다.";
+const SD_LOADING_TEXT = "불러오는 중…";
+let sdPendingStart = 0;
+let sdPendingTimer = 0;
+
+function sdNow() {
+  return (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+}
+
+function sdDataPending() {
+  if (sdNow() < SD_BOOT_GRACE_MS) return true;
+  if (typeof featurePreloadPending === "function" && featurePreloadPending()) return true;
+  if (typeof featureDataLoadingKeys === "function" && featureDataLoadingKeys().length) return true;
+  if (typeof selectedTicker === "string" && selectedTicker && typeof detailPromises !== "undefined" && typeof detailCache !== "undefined") {
+    const key = typeof safeTicker === "function" ? safeTicker(selectedTicker) : selectedTicker;
+    if (detailPromises[key] && !detailCache[key]) return true;
+  }
+  return false;
+}
 function sdCardVisible(node) {
   if (!node || node.nodeType !== 1 || node.hidden) return false;
   if (node.classList.contains("sd-empty") || node.classList.contains("mir-cl-card")) return false; // '새 기능' 안내 카드(changelog.js)는 내용으로 치지 않는다
@@ -164,7 +203,25 @@ function sdUpdateEmpty() {
       if (panel.dataset.view === sdCurrentView) activeEmpty = !has;
     });
     const empty = byId("stockViewEmpty");
-    if (empty) empty.hidden = !activeEmpty;
+    let pending = false;
+    if (activeEmpty) {
+      if (!sdPendingStart) sdPendingStart = sdNow();
+      pending = sdDataPending() && sdNow() - sdPendingStart < SD_EMPTY_MAX_WAIT_MS;
+    } else {
+      sdPendingStart = 0;
+    }
+    if (empty) {
+      empty.hidden = !activeEmpty;
+      const text = pending ? SD_LOADING_TEXT : SD_EMPTY_TEXT;
+      if (empty.textContent !== text) empty.textContent = text;
+      empty.classList.toggle("is-loading", pending);
+    }
+    if (pending) {
+      // 받는 중인 탭은 흐리게 하지 않는다(곧 채워질 수 있다).
+      const btn = byId("stockViewTabs")?.querySelector(`[data-view="${sdCurrentView}"]`);
+      if (btn) btn.classList.remove("is-empty");
+      if (!sdPendingTimer) sdPendingTimer = setTimeout(() => { sdPendingTimer = 0; sdUpdateEmpty(); }, 500);
+    }
   });
 }
 

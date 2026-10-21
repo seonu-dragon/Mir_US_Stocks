@@ -468,6 +468,18 @@ function loadEarningsCalendar(force = false) {
     renderEarningsCalendarMarket(earningsCalendarCache);
     return;
   }
+  // 스냅샷 파일(data/[korea/]earnings_calendar.js)은 부팅 때 기다리지 않고 붙인다(app.js loadSnapshot). 딥링크
+  // (&tab=calendar&sub=earnings)로 들어오면 이 함수가 그보다 먼저 불려, 예전엔 '스냅샷이 비었다'고 보고 워커로
+  // 갔다 — 워커는 KR·US 모두 빈 배열을 주므로 "실적 일정 데이터가 없습니다."로 굳었다(2026-10-21 라이브 재현).
+  // 도착(또는 실패)을 한 번 기다린 뒤 다시 판단한다. 실패한 시장은 다시 기다리지 않는다.
+  if (!earningsSnapshotReady() && typeof loadEarningsCalendarSnapshot === "function" && !_earnSnapWaited[cfg.id]) {
+    _earnSnapWaited[cfg.id] = true;
+    body.innerHTML = `<p class="muted">실적 일정을 불러오는 중…</p>`;
+    loadEarningsCalendarSnapshot(cfg).then(() => {
+      if (marketCfg().id === cfg.id) loadEarningsCalendar(force);
+    });
+    return;
+  }
   const staticRows = staticEarningsRowsForTickers(earningsTickerPool());
 
   // 기본 경로: 매일 갱신되는 스냅샷을 즉시 렌더(대기 없음).
@@ -493,15 +505,25 @@ function loadEarningsCalendar(force = false) {
     .then((r) => (r.ok ? r.json() : null))
     .then((payload) => {
       const liveRows = (payload && payload.earnings) || [];
-      earningsCalendarCache = liveRows.length ? liveRows : staticRows;
-      if (earningsCalendarCache.length) renderEarningsCalendarMarket(earningsCalendarCache);
+      // 기다리는 사이 스냅샷이 도착했을 수 있어 정적 행을 다시 뽑는다. 둘 다 비면 캐시하지 않는다(빈 배열을
+      // 캐시하면 다음 진입도 빈 화면에 머문다).
+      const rows = liveRows.length ? liveRows : staticEarningsRowsForTickers(earningsTickerPool());
+      earningsCalendarCache = rows.length ? rows : null;
+      if (rows.length) renderEarningsCalendarMarket(rows);
       else body.innerHTML = `<p class="muted">실적 일정 데이터가 없습니다.</p>`;
     })
     .catch(() => {
-      if (staticRows.length) { earningsCalendarCache = staticRows; renderEarningsCalendarMarket(staticRows); }
+      const rows = staticEarningsRowsForTickers(earningsTickerPool());
+      if (rows.length) { earningsCalendarCache = rows; renderEarningsCalendarMarket(rows); }
       else body.innerHTML = `<p class="muted">실적 일정을 불러오지 못했습니다.</p>`;
     })
     .finally(() => { earningsCalendarLoading = false; });
+}
+
+// 시장별로 스냅샷 도착을 한 번만 기다린다(실패한 <script> 는 load/error 를 다시 주지 않는다).
+const _earnSnapWaited = {};
+function earningsSnapshotReady() {
+  return !!(isKrMarket() ? window.KOREA_EARNINGS_CALENDAR : window.EARNINGS_CALENDAR_SNAPSHOT);
 }
 
 function localDateFromIso(iso) {

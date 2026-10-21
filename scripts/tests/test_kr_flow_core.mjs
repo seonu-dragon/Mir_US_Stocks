@@ -147,6 +147,28 @@ test("streakLabel: 창을 다 채우면 'N일+'", () => {
   assert.equal(core.streakLabel(null, 20), "—");
 });
 
+test("foreignRetention: chartSeries 꼬리에 날짜로 맞추고 null·범위 밖은 건너뛴다", () => {
+  const cs = [];
+  for (let i = 1; i <= 10; i += 1) cs.push([1, 1, 1, 1, 1, `2026-10-${String(i).padStart(2, "0")}`]);
+  const fr = core.foreignRetention([46.1, null, 46.3, 146, 46.5, 46.6], cs, 4);
+  assert.equal(fr.pts.length, 4);
+  assert.deepEqual(fr.first, { d: "2026-10-05", v: 46.1 });
+  assert.deepEqual(fr.last, { d: "2026-10-10", v: 46.6 });
+  assert.equal(fr.vals[1], null);
+  assert.equal(fr.vals[3], null);
+  assert.equal(fr.change, 0.5);
+  assert.equal(fr.min, 46.1);
+  assert.equal(fr.max, 46.6);
+});
+
+test("foreignRetention: 점이 적거나 배열이 없으면 null(패널 숨김)", () => {
+  const cs = [[1, 1, 1, 1, 1, "2026-10-01"], [1, 1, 1, 1, 1, "2026-10-02"]];
+  assert.equal(core.foreignRetention([1, 2], cs), null);
+  assert.equal(core.foreignRetention(undefined, cs), null);
+  assert.equal(core.foreignRetention([1, 2, 3], cs), null); // 봉보다 길면 정렬 불가
+  assert.equal(core.foreignRetention([1, 2], cs, 2).pts.length, 2);
+});
+
 if (failures.length) {
   console.error(`FAIL ${failures.length} / ${passed + failures.length}`);
   failures.forEach((f) => console.error(" - " + f));

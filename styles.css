@@ -17314,3 +17314,51 @@ html[data-theme="dark"] .vt-card, html[data-theme="dark"] .ar-card { --vt-spot: 
   .vt-kpi-v { font-size: var(--fs-body); }
 }
 /* === VIX 기간구조 · 애널리스트 end === */
+/* === 종목 비교 (compare-board.js) === */
+:root {
+  /* 비교 종목 선 색 — 등락색(--pos/--neg)·초록은 피한다 */
+  --cmp-1: #2563eb; --cmp-2: #ea580c; --cmp-3: #7c3aed; --cmp-4: #0891b2;
+  --cmp-5: #db2777; --cmp-6: #ca8a04; --cmp-7: #92400e; --cmp-8: #1f2937;
+}
+html[data-theme="dark"] {
+  --cmp-1: #60a5fa; --cmp-2: #fb923c; --cmp-3: #a78bfa; --cmp-4: #22d3ee;
+  --cmp-5: #f472b6; --cmp-6: #facc15; --cmp-7: #d6a46b; --cmp-8: #e5e7eb;
+}
+.cmp-chips:empty { display: none; }
+.cmp-chips { margin: 8px 0 4px; }
+.cmp-card { margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--panel); min-width: 0; }
+.cmp-card-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 8px; }
+.cmp-card-head h3 { margin: 0 auto 0 0; font-size: var(--fs-body); font-weight: 700; }
+.cmp-card-head .segmented { max-width: 100%; overflow-x: auto; }
+.cmp-chart-wrap { position: relative; }
+.cmp-chart-wrap svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.cmp-tip { min-width: 150px; }
+.cmp-tip-row { display: flex; align-items: center; gap: 6px; }
+.cmp-tip-row i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.cmp-tip-row span { flex: 1; margin-right: 8px; }
+.cmp-cross { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.chart-grid.cmp-zero { stroke: var(--muted); stroke-opacity: 0.55; stroke-dasharray: none; }
+.cmp-hover-dot { stroke: var(--panel); stroke-width: 1.5; }
+.cmp-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; padding-top: 6px; font-size: var(--fs-cap); }
+.cmp-leg { display: inline-flex; align-items: center; gap: 5px; font-variant-numeric: tabular-nums; }
+.cmp-asof { margin-top: 4px; font-size: var(--fs-cap); }
+.cmp-dot { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; vertical-align: middle; }
+.compare-board .cmp-sub { font-size: var(--fs-cap); font-weight: 400; }
+.compare-board td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.compare-board .metric-label { font-weight: 700; color: var(--muted); min-width: 110px; text-align: left; }
+.compare-board td.cmp-hi, .compare-board td.cmp-lo { font-weight: 700; }
+.cmp-mark { margin-left: 4px; color: var(--muted); font-size: 11px; font-weight: 500; }
+.compare-board .cmp-sort { height: auto; min-height: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; text-align: left; }
+.compare-board .cmp-sort:hover, .compare-board .cmp-sort.is-sorted { color: var(--text); background: none; }
+.cmp-sort-ind { margin-left: 3px; font-size: 10px; }
+.cmp-fin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.cmp-fin { min-width: 0; padding: 8px; border: 1px solid var(--line); border-radius: var(--r-md); }
+.cmp-fin-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+.cmp-fin-head h4 { margin: 0; font-size: var(--fs-sub); font-weight: 600; }
+.cmp-fin-unit { font-size: var(--fs-cap); }
+@media (max-width: 640px) {
+  .cmp-card { padding: 10px 8px; }
+  .cmp-toolbar { flex-wrap: wrap; }
+  .cmp-fin-grid { grid-template-columns: minmax(0, 1fr); }
+}
+/* === 종목 비교 end === */

@@ -86,6 +86,7 @@ function resetScreenerMarketState() {
   savedScreeners = [];
   loadSavedScreeners();
   renderSavedScreenerPicker();
+  if (typeof compareBoardMarketReset === "function") compareBoardMarketReset();
   const input = byId("compareInput");
   if (input) input.value = (watchlist || []).slice(0, 4).join(", ");
 }
@@ -630,68 +631,4 @@ function setupScreenerEvents() {
   byId("savedScreenerDelete")?.addEventListener("click", deleteSelectedScreener);
 }
 
-// ===== 종목 비교 =====
-const COMPARE_METRICS = [
-  ["가격", (i) => priceOrDash(i.price)],
-  ["당일", (i) => fmtDailyPct(i.changePct), (i) => cls(i.changePct)],
-  ["1주", (i) => fmtPct(i.weekChangePct), (i) => cls(i.weekChangePct)],
-  ["1개월", (i) => fmtPct(i.monthChangePct), (i) => cls(i.monthChangePct)],
-  ["3개월", (i) => fmtPct(i.threeMonthChangePct), (i) => cls(i.threeMonthChangePct)],
-  ["RSI", (i) => fmtRsi(i)],
-  ["EPS", (i) => fmtEps(i)],
-  ["거래량", (i) => `${Number(i.volumeRatio || 0).toFixed(1)}x`],
-  ["시총", (i) => fmtBillions(i.marketCapB)],
-  ["신고가 거리", (i) => (Number.isFinite(Number(i.newHighDistancePct)) ? fmtPct(-Number(i.newHighDistancePct)) : "—")],
-  ["PER", (i) => fmtMultiple(i.fundamentals?.pe)],
-  ["선행 PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
-  ["PSR", (i) => fmtMultiple(i.fundamentals?.ps)],
-  ["PBR", (i) => fmtMultiple(i.fundamentals?.pb)],
-  ["섹터", (i) => escapeHtml((typeof sectorLabelKo === "function" ? sectorLabelKo(i.sector) : i.sector) || "—")],
-  ["신호", (i) => signalFor(i)],
-];
-
-function compareTickersFromInput() {
-  const raw = byId("compareInput")?.value || "";
-  return resolveTickerListInput(raw).slice(0, 6);
-}
-
-function renderCompareBoard() {
-  const table = byId("compareBoard");
-  if (!table) return;
-  const tickers = compareTickersFromInput();
-  if (!tickers.length) {
-    table.innerHTML = `<tr><td class="muted">비교할 티커를 입력하세요. (최대 6개)</td></tr>`;
-    return;
-  }
-  const items = tickers.map((t) => withDetail(stockByTicker(t))).filter(Boolean);
-  let html = `<thead><tr><th>지표</th>${items.map((i) => `<th><button type="button" class="ticker-link" data-ticker="${escapeHtml(i.ticker)}">${escapeHtml(stockLabel(i))}</button>${stockSubLabel(i) ? `<div class="muted" style="font-size:var(--fs-cap);font-weight:400">${escapeHtml(stockSubLabel(i))}</div>` : ""}</th>`).join("")}</tr></thead><tbody>`;
-  COMPARE_METRICS.forEach(([label, fmt, toneFn]) => {
-    html += `<tr><td class="metric-label">${label}</td>${items.map((item) => {
-      const tone = toneFn ? toneFn(item) : "";
-      return `<td${tone ? ` class="${tone}"` : ""}>${fmt(item)}</td>`;
-    }).join("")}</tr>`;
-  });
-  html += "</tbody>";
-  table.innerHTML = html;
-  delegateTickerClicks(table, ".ticker-link");
-  tickers.forEach((t) => {
-    const key = safeTicker(t);
-    if (detailCache[key]) return;
-    loadStockDetail(t).then((detail) => {
-      if (!detail) return;
-      if (compareTickersFromInput().join() === tickers.join()) renderCompareBoard();
-    });
-  });
-}
-
-function setupCompareEvents() {
-  const run = () => renderCompareBoard();
-  byId("compareRun")?.addEventListener("click", run);
-  byId("compareFromWatchlist")?.addEventListener("click", () => {
-    const input = byId("compareInput");
-    if (input) input.value = watchlist.slice(0, 6).join(", ");
-    run();
-  });
-  const input = byId("compareInput");
-  if (input && !input.value) input.value = watchlist.slice(0, 4).join(", ");
-}
+// ===== 종목 비교 ===== → compare-board.js (renderCompareBoard · setupCompareEvents)

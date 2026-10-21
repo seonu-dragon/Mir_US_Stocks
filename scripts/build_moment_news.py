@@ -254,8 +254,10 @@ def load_shards(market: str) -> dict[int, dict]:
 
 
 def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
-                 relink_budget: int = 0) -> tuple[list[Path], int, bool, dict]:
-    """(바뀐 샤드 경로, 이번에 물은 횟수, 막혔는지, 진행 요약)."""
+                 relink_budget: int = 0, deadline: float | None = None) -> tuple[list[Path], int, bool, dict]:
+    """(바뀐 샤드 경로, 이번에 물은 횟수, 막혔는지, 진행 요약).
+
+    deadline(time.monotonic 기준)을 넘기면 검색·링크 재시도를 멈추고 받은 것까지 저장한다."""
     cfg = MARKETS[market]["cfg"]
     stocks = universe(market)
     shards = load_shards(market)
@@ -277,8 +279,13 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
         return [], 0, False, summary
     touched: set[int] = set()
     asked, found, fail_streak, blocked = 0, 0, 0, False
+    timed_out = False
     for day, _, s, _m in pending:
         if asked >= max_queries:
+            break
+        if deadline is not None and time.monotonic() >= deadline:
+            timed_out = True
+            print(f"  시간 예산 소진 — {market} 검색을 {asked}건에서 멈춘다(받은 것까지 저장)")
             break
         try:
             rows = search_moment(s, market, day)
@@ -312,6 +319,9 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
         for day, i, row in todo[:relink_budget]:
             if _naver["off"]:
                 break
+            if deadline is not None and time.monotonic() >= deadline:
+                timed_out = True
+                break
             relink_row(row)
             touched.add(i)
             done += 1
@@ -338,7 +348,8 @@ def build_market(market: str, *, max_queries: int, dry_run: bool, since: str,
         OUT_DIR.mkdir(parents=True, exist_ok=True)
         atomic_write_text(p, json.dumps(payload, ensure_ascii=False, separators=(",", ":")) + "\n")
         paths.append(p)
-    summary.update({"pending": max(0, len(pending) - asked), "askedThisRun": asked, "foundThisRun": found, "blocked": blocked})
+    summary.update({"pending": max(0, len(pending) - asked), "askedThisRun": asked, "foundThisRun": found, "blocked": blocked,
+                    "timedOut": timed_out})
     if market == "kr":
         summary["naverLinks"] = _naver["converted"]
         print(f"  네이버 링크 변환: {_naver['converted']}/{_naver['asked']}건{' (꺼짐)' if _naver['off'] else ''}")
@@ -351,6 +362,11 @@ def main() -> int:
     ap.add_argument("--market", choices=["us", "kr", "all"], default="all")
     ap.add_argument("--max-queries", type=int, default=1200, help="실행당 검색 상한(시장별)")
     ap.add_argument("--relink-budget", type=int, default=1500, help="실행당 예전 국내 기사 네이버 링크 재시도 줄 수")
+    # 2026-10-21: 10-02 에 국내 기사 네이버 링크 변환(날짜당 최대 6회 + 재시도 1,500줄)이 붙은 뒤로 한 실행이
+    # 워크플로우 제한(80분)을 넘겨 매일 cancelled — 샤드·인덱스를 마지막에 한 번에 쓰므로 19일간 아무것도
+    # 발행되지 않았고, cancelled 라 신선도 게이트·텔레그램도 건너뛰었다. 시간 예산 안에서 멈추고 저장한다.
+    ap.add_argument("--time-budget-min", type=float, default=55.0,
+                    help="검색 전체 시간 예산(분). all 이면 미국이 앞 45%%, 국내가 나머지를 쓴다. 0 이면 무제한")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--push", action="store_true")
     args = ap.parse_args()
@@ -359,10 +375,16 @@ def main() -> int:
     changed, any_blocked, asked_total = [], False, 0
     prev = (mv.load_json(OUT_JSON, {}) or {}).get("markets") or {}
     summaries = dict(prev)
+    t0 = time.monotonic()
+    budget_s = max(0.0, args.time_budget_min) * 60
     with repository_publish_lock(ROOT):
-        for m in markets:
+        for k, m in enumerate(markets):
+            deadline = None
+            if budget_s > 0:
+                share = 0.45 if (len(markets) > 1 and k == 0) else 1.0
+                deadline = t0 + budget_s * share
             paths, asked, blocked, summary = build_market(m, max_queries=args.max_queries, dry_run=args.dry_run, since=since,
-                                                          relink_budget=args.relink_budget)
+                                                          relink_budget=args.relink_budget, deadline=deadline)
             changed += paths
             asked_total += asked
             any_blocked |= blocked

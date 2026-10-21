@@ -642,6 +642,10 @@ function renderRrg() {
 function corrPearson(a, b) {
   const n = Math.min(a.length, b.length);
   if (n < 10) return NaN;
+  // 두 수익률 열은 둘 다 '오늘'에서 끝난다 — 길이가 다르면 **뒤에서** 맞춰야 같은 날끼리 짝이 된다.
+  // 예전엔 앞에서 n 개를 잘라 이력이 짧은 종목(30봉 등)과의 상관이 날짜가 어긋난 채 계산됐다.
+  a = a.slice(a.length - n);
+  b = b.slice(b.length - n);
   let sa = 0, sb = 0;
   for (let i = 0; i < n; i++) { sa += a[i]; sb += b[i]; }
   const ma = sa / n, mb = sb / n;
@@ -697,6 +701,8 @@ function renderCorrelationMatrix() {
     return `<tr><th class="corr-rowhead" title="${escapeHtml(rt)}">${escapeHtml(stockLabel(rt))}</th>${cells}</tr>`;
   }).join("");
   box.innerHTML = `<table class="corr-table"><thead><tr>${head}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+  // 스냅샷 closeSeries 는 40봉(수익률 39개)이라 lookback(60)보다 짧다 — 실제로 쓴 거래일 수를 적는다.
+  const usedDays = Math.min(lookback, ...tickers.map((t) => returns[t].length));
   let sum = 0, cnt = 0, maxPair = null;
   for (let i = 0; i < tickers.length; i++) {
     for (let j = i + 1; j < tickers.length; j++) {
@@ -707,8 +713,8 @@ function renderCorrelationMatrix() {
   if (meta) {
     const skipNote = syntheticSkipped ? ` · 합성 이력 ${syntheticSkipped}종목 제외` : "";
     meta.textContent = cnt
-      ? `최근 ${lookback}거래일 · ${tickers.length}종목 · 평균 상관 ${(sum / cnt).toFixed(2)}${maxPair ? ` · 최고 ${stockLabel(maxPair.a)}–${stockLabel(maxPair.b)} ${maxPair.c.toFixed(2)}` : ""}${skipNote}`
-      : `최근 ${lookback}거래일${skipNote}`;
+      ? `최근 ${usedDays}거래일 · ${tickers.length}종목 · 평균 상관 ${(sum / cnt).toFixed(2)}${maxPair ? ` · 최고 ${stockLabel(maxPair.a)}–${stockLabel(maxPair.b)} ${maxPair.c.toFixed(2)}` : ""}${skipNote}`
+      : `최근 ${usedDays}거래일${skipNote}`;
   }
 }
 

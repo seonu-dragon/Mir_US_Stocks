@@ -126,3 +126,23 @@ def test_kr_prefers_articles_with_naver_page(monkeypatch):
     rows = b.search_moment({"ticker": "005930", "company": "삼성전자"}, "kr", day.isoformat())
     assert [r[0] for r in rows] == ["삼성전자 기사 둘", "삼성전자 기사 넷", "삼성전자 기사 하나"]
     assert rows[0][2].startswith("https://n.news.naver.com/")
+
+
+def test_deadline_stops_search_and_still_saves(monkeypatch, tmp_path):
+    # 2026-10-21: 시간 예산을 넘기면 검색을 멈추고 받은 것까지 저장한다(예전엔 80분 제한에 cancelled → 0건 발행).
+    monkeypatch.setattr(b, "OUT_DIR", tmp_path)
+    monkeypatch.setattr(b, "universe", lambda m: [{"ticker": f"T{i}", "company": f"Co{i}", "marketCapB": 100 - i} for i in range(3)])
+    s = _series(80, {50: 0.12})
+    monkeypatch.setattr(b.mv, "load_json", lambda p, d=None: {"chartSeries": s} if "details" in str(p) else d)
+    clock = {"t": 0.0}
+    monkeypatch.setattr(b.time, "monotonic", lambda: clock["t"])
+    monkeypatch.setattr(b.time, "sleep", lambda _s: None)
+
+    def one(stock, market, day):
+        clock["t"] += 10
+        return [["Co title", "S", "g:X", day]]
+
+    monkeypatch.setattr(b, "search_moment", one)
+    paths, asked, blocked, summary = b.build_market("us", max_queries=10, dry_run=False, since="2000-01-01", deadline=15)
+    assert asked == 2 and not blocked and summary["timedOut"] is True
+    assert paths and all(p.exists() for p in paths)

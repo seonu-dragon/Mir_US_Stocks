@@ -6729,6 +6729,8 @@ const TRUST_RECOVERY = {
   "외부 공포탐욕": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sentiment_gauges.py" }, tabs: "시그널 탭 · 심리지수 비교 타일" },
   "결제 불이행(FTD)": { us: { workflow: "Daily US market snapshot", script: "scripts/build_sec_ftd.py" }, tabs: "종목 탭 · 공매도 하단" },
   "WSB 감성": { us: { workflow: "Daily US market snapshot", script: "scripts/build_wsb_sentiment.py" }, tabs: "AI 브리핑 탭 · 소셜 표" },
+  "소유구조 프로필": { kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_kr_ownership_profile.py" }, tabs: "종목 탭 · 수급·보유 · 소유구조" },
+  "감사의견": { kr: { workflow: "Weekly earnings history refresh", script: "scripts/build_kr_audit_opinion.py" }, tabs: "종목 탭 · 재무 위험 점검" },
   "ECOS 매크로": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_ecos_macro.py" }, tabs: "시그널 탭 · 한국 매크로" },
   "증시자금·투자자 동향": { kr: { workflow: "Korea close briefing", script: "scripts/build_kr_market_funds.py" }, tabs: "시장 탭 · 수급·자금" },
   "PER·PBR 밴드": {
@@ -7000,6 +7002,12 @@ function dataTrustSources() {
     rows.push(source("공급계약", "DART 원문 파싱", window.KR_CONTRACTS, ["rows"], 72, "매일", "krContracts", "", true));
     rows.push(source("실적발표 반응", "DART · Yahoo", window.KR_EARNINGS_REACTIONS, ["rows"], 72, "매일", "krEarningsReact", "", true));
     rows.push(source("밸류업·주주환원", "DART 공시 · 원문 파싱", window.KR_VALUEUP, ["rows"], 72, "매일", "krValueup"));
+    // 주간 DART 정기보고서 산출물(2026-10-21) — 등록돼 있지 않아 10-04 부터 17일간 멈춘 동안(#327 이 git
+    // config 스텝을 지워 커밋 실패) 신뢰도 센터는 '정상 40'만 보였다. 주 1회 + 재시도 슬롯이라 10일(240시간).
+    rows.push(source("감사의견", "DART 정기보고서", window.KR_AUDIT_OPINION, ["opinions"], 240, "매주 일요일", "krAudit"));
+  }
+  if (cfg.features?.krOwnership === true) {
+    rows.push(source("소유구조 프로필", "DART 정기보고서", window.KR_OWNERSHIP_PROFILE, ["profiles"], 240, "매주 일요일", "krOwnProfile"));
   }
   if (cfg.id === "kr" && cfg.features?.earningsCalendar !== false) {
     rows.push(source("실적 예정일(추정)", "DART 발표 이력", window.KOREA_EARNINGS_CALENDAR, ["earnings"], 72, "매일", "", "", true));

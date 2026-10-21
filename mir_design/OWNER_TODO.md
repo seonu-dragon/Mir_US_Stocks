@@ -18,7 +18,7 @@
 워커는 머지해도 반영되지 않는다(대시보드 붙여넣기 수동 배포). 아래 PR 이 **전부 main 에 머지된 뒤** 한 번만 하면 된다.
 
 - [ ] 미반영 PR: #292 · #295 · #298 · #300 (이미 머지됨, 라이브 워커에는 아직 없음)
-- [ ] 이번 라운드 PR: (메인 세션이 머지 후 번호 추가 — Cloudflare 플랫폼 PR, 데이터 라우트 ?symsearch ?insights ?options PR 등)
+- [ ] 이번 라운드 PR: #337(Cloudflare 플랫폼) · (메인 세션이 머지 후 번호 추가 — 데이터 라우트 ?symsearch ?insights ?options PR 등)
 
 절차
 1. 로컬에서 최신 main 받기 → 붙여넣기 전 검증:
@@ -52,7 +52,7 @@
   PR 이 **라이브에 반영된 것을 확인한 뒤**(`curl -s https://seonu-dragon.github.io/Mir_US_Stocks/index.html | grep bundle.js`
   해시가 바뀌었는지) 맨 마지막에 넣는다. 되돌리려면 이 시크릿만 지우면 된다(즉시 검증 생략으로 돌아감).
 
-출처 PR: (이번 Cloudflare 플랫폼 PR)
+출처 PR: #337
 
 ---
 
@@ -86,7 +86,7 @@
 
 `AI`(Workers AI) · `MOVE_CACHE`(KV) · `COMMUNITY_KV`(KV) · (선택) `COMMUNITY_DO`. 목록은 DEPLOY.md 3번.
 
-출처 PR: (이번 Cloudflare 플랫폼 PR)
+출처 PR: #337
 
 ---
 
@@ -118,7 +118,7 @@
   로컬(localhost·127.0.0.1·file://)에선 넣지 않는다. 사이트에 CSP 가 없고 SW(`sw.js`)는 다른 출처 요청을
   건드리지 않아 충돌이 없다(2026-10-21 확인).
 
-출처 PR: (이번 Cloudflare 플랫폼 PR)
+출처 PR: #337
 
 ---
 
@@ -158,4 +158,4 @@ curl -s "$W/?indices=1" | head -c 200
 - Web Analytics: 토큰을 넣고 배포한 뒤 몇 분 지나 대시보드 **Web Analytics** 에 방문이 잡히는지.
   브라우저 개발자 도구 Network 에 `beacon.min.js` 와 `cloudflareinsights.com/cdn-cgi/rum` 이 보이면 정상.
 
-출처 PR: (이번 Cloudflare 플랫폼 PR)
+출처 PR: #337

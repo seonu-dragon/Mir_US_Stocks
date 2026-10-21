@@ -9156,7 +9156,7 @@ setupAiStreamStopEvents();
 // ===== Ctrl+K 커맨드 팔레트 =====
 // 앱 다이얼로그(app-dialog)와 같은 디자인 토큰의 오버레이 팔레트.
 // Ctrl+K(또는 입력 중이 아닐 때 /)로 열고, ↑↓ + Enter, Esc 로 조작.
-const cmdkState = { open: false, index: 0, items: [] };
+const cmdkState = { open: false, index: 0, items: [], returnFocus: null };
 
 function cmdkEnsureDom() {
   let overlay = byId("cmdkOverlay");
@@ -9169,10 +9169,10 @@ function cmdkEnsureDom() {
     <div class="cmdk" role="dialog" aria-modal="true" aria-label="종목·질문 검색">
       <div class="cmdk-input-row">
         <svg class="cmdk-glyph" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="cmdkInput" type="text" placeholder="종목명이나 질문 (예: NVDA, 삼성전자 지금 사도 될까?)" autocomplete="off" spellcheck="false" aria-label="종목·질문 검색">
+        <input id="cmdkInput" type="text" placeholder="종목명이나 질문 (예: NVDA, 삼성전자 지금 사도 될까?)" autocomplete="off" spellcheck="false" aria-label="종목·질문 검색" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="cmdkList">
         <kbd>Esc</kbd>
       </div>
-      <ul id="cmdkList" class="cmdk-list" role="listbox"></ul>
+      <ul id="cmdkList" class="cmdk-list" role="listbox" aria-label="검색 결과"></ul>
       <div class="cmdk-foot"><span>↑↓ 이동</span><span>Enter 실행</span><span>Ctrl+K 닫기</span></div>
     </div>`;
   document.body.appendChild(overlay);
@@ -9473,3 +9473,19 @@ function setupCommandPalette() {
   }, true);
 }
 setupCommandPalette();
+
+// 본문 바로가기: #mainContent 로 가는 앵커 이동은 히스토리 항목을 만들어 뒤로가기 가드(popstate)가
+// '한 번 더 뒤로 가기하면 종료' 를 띄웠다 — 주소를 바꾸지 않고 포커스만 옮긴다.
+function setupSkipLink() {
+  const link = document.querySelector("a.skip-link");
+  if (!link || link.dataset.bound) return;
+  link.dataset.bound = "1";
+  link.addEventListener("click", (e) => {
+    const main = byId("mainContent");
+    if (!main) return;
+    e.preventDefault();
+    main.focus({ preventScroll: true });
+    main.scrollIntoView({ block: "start" });
+  });
+}
+setupSkipLink();

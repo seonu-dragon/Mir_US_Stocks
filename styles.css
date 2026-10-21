@@ -124,22 +124,8 @@
   box-sizing: border-box;
 }
 
-/* 본문 바로가기: 평소엔 숨기고 키보드 포커스를 받으면 왼쪽 위에 나타난다. */
-.skip-link {
-  position: absolute;
-  left: 8px;
-  top: -60px;
-  z-index: 1000;
-  padding: 10px 14px;
-  border-radius: 8px;
-  background: #1d4ed8;
-  color: #fff;
-  font-weight: 700;
-  text-decoration: none;
-}
-.skip-link:focus,
-.skip-link:focus-visible { top: 8px; outline: 2px solid #fff; outline-offset: 2px; }
-#mainContent:focus { outline: none; }
+/* 본문 바로가기: 첫 페인트엔 화면 밖에 두기만(모양·포커스 표시는 critical 밖, 파일 끝 블록) */
+.skip-link { position: absolute; left: 8px; top: -60px; }
 /* === critical:end === */
 
 /* critical 밖 토큰: 첫 페인트(탑바·탭·요약 띠)에 안 쓰여 인라인 critical CSS 예산(300줄)에서 뺐다.
@@ -9288,12 +9274,12 @@ html[data-theme="dark"] .nl-example:hover { background: var(--surface-2); }
 }
 .rf-fng { font-weight: 600; }
 /* 공포탐욕 글자색(게이지 호 색보다 짙게 — 흰 배경 4.5:1 이상). 다크는 밝은 단계. */
-.fng-t-0 { color: #b91c1c; fill: #b91c1c; }
-.fng-t-1 { color: #c2410c; fill: #c2410c; }
-.fng-t-2 { color: #a16207; fill: #a16207; }
-.fng-t-3 { color: #4d7c0f; fill: #4d7c0f; }
-.fng-t-4 { color: #15803d; fill: #15803d; }
-.fng-t-na { color: var(--muted); fill: var(--muted); }
+:root .fng-t-0 { color: #b91c1c; fill: #b91c1c; }
+:root .fng-t-1 { color: #c2410c; fill: #c2410c; }
+:root .fng-t-2 { color: #a16207; fill: #a16207; }
+:root .fng-t-3 { color: #4d7c0f; fill: #4d7c0f; }
+:root .fng-t-4 { color: #15803d; fill: #15803d; }
+:root .fng-t-na { color: var(--muted); fill: var(--muted); }
 html[data-theme="dark"] .fng-t-0 { color: #f87171; fill: #f87171; }
 html[data-theme="dark"] .fng-t-1 { color: #fb923c; fill: #fb923c; }
 html[data-theme="dark"] .fng-t-2 { color: #facc15; fill: #facc15; }
@@ -17185,6 +17171,12 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   body:has(> #caMain) > .topbar h1 { margin: 0; font-size: var(--fs-title); }
   body:has(> #caMain) > .topbar .ghost-button { width: auto; min-height: 36px; padding: 6px 12px; font-size: var(--fs-sub); }
 }
+
+/* ===== 본문 바로가기(skip link) — 포커스를 받으면 왼쪽 위에 나타난다 ===== */
+.skip-link { z-index: 1000; padding: 10px 14px; border-radius: 8px; background: #1d4ed8; color: #fff; font-weight: 700; text-decoration: none; }
+.skip-link:focus,
+.skip-link:focus-visible { top: 8px; outline: 2px solid #fff; outline-offset: 2px; }
+#mainContent:focus { outline: none; }
 
 /* ===== 2026-10-21 모바일 터치 타깃(24px 미만이던 것) ===== */
 @media (max-width: 640px) {

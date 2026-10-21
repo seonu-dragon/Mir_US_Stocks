@@ -473,8 +473,16 @@ async function mirTurnstileToken() {
 }
 
 // 요청 본문에 토큰을 붙인다. 키가 없으면 body 를 그대로 돌려준다(필드 추가 없음).
+// 토큰을 못 받으면(잘못된 사이트 키·위젯 차단·시간 초과) 막지 않고 토큰 없이 보낸다 — 판단은 워커가 한다.
+// 워커에 TURNSTILE_SECRET 이 없으면 그대로 통과, 있으면 403 turnstile_required 로 한국어 문구가 뜬다.
+// 예전엔 여기서 예외가 나 글쓰기 자체가 막혔다(2026-10-21 잘못된 사이트 키 400020 으로 확인).
 async function mirWithTurnstile(body) {
-  const token = await mirTurnstileToken();
+  let token = null;
+  try {
+    token = await mirTurnstileToken();
+  } catch (e) {
+    token = null;
+  }
   return token ? { ...body, turnstileToken: token } : body;
 }
 

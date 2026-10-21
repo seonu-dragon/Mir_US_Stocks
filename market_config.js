@@ -512,7 +512,7 @@
  */
 (function () {
   const MIR_CLOUDFLARE_DEFAULTS = {
-    turnstileSiteKey: "0x4AAAAAAAFewsRbIdrpuyvp3",
+    turnstileSiteKey: "",
     webAnalyticsToken: "42eb7b0a466f4f748ca5bda8e3fbffe6",
   };
   const cfg = Object.assign({}, MIR_CLOUDFLARE_DEFAULTS, window.MIR_CLOUDFLARE || {});

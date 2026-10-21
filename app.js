@@ -2916,7 +2916,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     // 아직 안 온 데이터셋만 요청하고, 도착은 refreshFeatureViews(250ms 디바운스) 한 번으로 합쳐 그린다.
     SIGNALS_FEATURE_KEYS.forEach((k) => {
       const meta = FEATURE_DATA[k];
-      if (!meta || window[meta.global] || _featureDataFailed[k] || !featureDataEnabled(meta, marketCfg())) return;
+      if (!meta || window[meta.global] || featureDataRecentlyFailed(k) || !featureDataEnabled(meta, marketCfg())) return;
       ensureFeatureData(k).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
     });
   }

@@ -102,11 +102,14 @@ function sigScoreRecentTable(k) {
     const s = row[`s${h}`];
     return `<td class="num muted">${s === "noprice" ? "가격 없음" : s === "stale" ? "끊김" : "대기"}</td>`;
   };
-  const body = k.recent.map((row) => `<tr>
+  const body = k.recent.map((row) => {
+    const label = String((typeof stockLabel === "function" ? stockLabel(row.t) : row.t) || row.t || "");
+    return `<tr>
       <td>${escapeHtml(row.d.slice(5))}${row.src === "backfill" ? '<small class="muted"> 소급</small>' : ""}</td>
-      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.t)}">${escapeHtml(typeof stockLabel === "function" ? stockLabel(row.t) : row.t)}</button></td>
+      <td><button type="button" class="ins-ticker" data-ticker="${escapeHtml(row.t)}" aria-label="${escapeHtml(`${label || "종목"} 종목 보기`)}">${escapeHtml(label || "—")}</button></td>
       ${cell(row, 5)}${cell(row, 20)}
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
   return `<details class="sig-score-recent"><summary>최근 표본 ${k.recent.length}건</summary>
     <div class="sig-score-table-wrap"><table class="sig-score-table">
       <thead><tr><th>기록일</th><th>종목</th><th class="num">5거래일</th><th class="num">20거래일</th></tr></thead>

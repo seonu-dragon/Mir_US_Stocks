@@ -153,6 +153,7 @@
 * {
   box-sizing: border-box;
 }
+.skip-link { position: absolute; left: 8px; top: -60px; }
 html {
   scroll-padding-bottom: var(--chat-safe-bottom);
 }
@@ -366,11 +367,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=855f6fb38b" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=855f6fb38b"></noscript>
+    <link rel="preload" href="styles.css?v=fcaf2a52f4" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=fcaf2a52f4"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=75e7ab960c"></script>
+    <script src="build_id.js?v=f4748dc558"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -382,6 +383,7 @@ html[data-market="kr"][data-theme="dark"] {
     </script>
   </head>
   <body>
+    <a class="skip-link" href="#mainContent">본문 바로가기</a>
     <header class="topbar ia-topbar">
       <div class="topbar-left ia-topbar-left">
         <div class="brand-lockup" id="brandHome" role="button" tabindex="0" aria-label="맨 위로 이동" title="맨 위로">
@@ -450,7 +452,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </header>
 
-    <main>
+    <main id="mainContent" tabindex="-1">
       <!-- AI 모드 전용 챗 대화방 -->
       <section class="panel" id="tab-ai-chat" hidden>
         <div id="aiCosmos" class="ai-cosmos" aria-hidden="true"></div>
@@ -1790,7 +1792,7 @@ html[data-market="kr"][data-theme="dark"] {
               <option value="96">96</option>
             </select>
           </label>
-          <button type="button" class="ghost" id="topResetFilters">초기화</button>
+          <button type="button" class="ghost" id="topResetFilters" aria-label="찾기 필터 초기화">초기화</button>
         </div>
           </div>
         </details>
@@ -3084,12 +3086,17 @@ html[data-market="kr"][data-theme="dark"] {
               <strong id="journalCount">0건</strong>
             </div>
             <div class="journal-form">
+              <label class="sr-only" for="journalTicker">종목</label>
               <input id="journalTicker" placeholder="티커" autocomplete="off">
               <select id="journalStatus" aria-label="진행 상태"><option value="idea">검토</option><option value="open">보유</option><option value="closed">종료</option></select>
+              <label class="sr-only" for="journalEntry">진입가</label>
               <input id="journalEntry" type="number" min="0" step="any" placeholder="진입가">
+              <label class="sr-only" for="journalTarget">목표가</label>
               <input id="journalTarget" type="number" min="0" step="any" placeholder="목표가">
+              <label class="sr-only" for="journalStop">손절가</label>
               <input id="journalStop" type="number" min="0" step="any" placeholder="손절가">
               <input id="journalDate" type="date" aria-label="기록일">
+              <label class="sr-only" for="journalThesis">메모</label>
               <textarea id="journalThesis" rows="2" placeholder="매수 근거, 촉매, 핵심 리스크를 기록하세요."></textarea>
               <button type="button" id="journalSave">기록 저장</button>
             </div>
@@ -3354,7 +3361,7 @@ html[data-market="kr"][data-theme="dark"] {
       </div>
     </div>
 
-    <script src="market_config.js?v=da0eb1d867"></script>
+    <script src="market_config.js?v=f63648d965"></script>
     <!-- Market snapshots are loaded on demand by loadData() for the active market only
          (see app.js). Avoids downloading both US (~10.7MB) and KR (~3.2MB) every visit. -->
     <!-- map_fundamentals loaded on demand per market in loadData() -->
@@ -3370,7 +3377,7 @@ html[data-market="kr"][data-theme="dark"] {
          로드 시점에 app.js 를 참조하는 실행이 없어(이벤트 바인딩 호출부는 app.js 잔류) app.js 앞 로드로 충분하다. -->
     <script src="per-basis-core.js?v=b7c4da7066"></script>
     <script src="chart-indicators.js?v=b6e24bd92e"></script>
-    <script src="community.js?v=bb33beb40d"></script>
+    <script src="community.js?v=40d4d177d9"></script>
     <script src="ai-mode.js?v=2340bb5cb0"></script>
     <!-- app.js 2단계 분리(기계적 이동): 아래 3개도 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="sec-filings-core.js"></script>
@@ -3382,21 +3389,21 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="my-invest-core.js?v=f6643ad3d2"></script>
     <script src="my-invest.js?v=9c4d59c533"></script>
     <script src="my-digest-core.js?v=fa7e90d91e"></script>
-    <script src="my-digest.js?v=c3e6d0903f"></script>
+    <script src="my-digest.js?v=faf5db9ef8"></script>
     <script src="dca-core.js?v=69a09baee1"></script>
     <script src="dca.js?v=996abc89fa"></script>
     <script src="portfolio-risk-core.js?v=847eeadde4"></script>
     <script src="portfolio-risk.js?v=f525ddf596"></script>
     <script src="thesis-core.js?v=c15fe03cd1"></script>
     <script src="thesis.js?v=7e27c93e95"></script>
-    <script src="screener.js?v=dbff5b958e"></script>
+    <script src="screener.js?v=69cc6482eb"></script>
     <!-- app.js 3단계 분리(기계적 이동): 포맷 헬퍼·피처 데이터 레지스트리·트리맵·시그널.
          선언만 있고 로드 시점 실행문이 없어 app.js 앞 로드로 충분하다. -->
     <script src="fmt.js?v=9928ec38f6"></script>
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=bc727d1275"></script>
+    <script src="feature-data.js?v=d8ac111690"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3405,9 +3412,9 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="company-info-core.js?v=c15f9a8b38"></script>
     <script src="company-info.js?v=18922cebc0"></script>
     <script src="treemap-core.js?v=6cefd0806f"></script>
-    <script src="treemap.js?v=718f6ad5a7"></script>
+    <script src="treemap.js?v=9eb9c4dfbf"></script>
     <script src="industry-chart-core.js?v=012453fc55"></script>
-    <script src="industry.js?v=0417923e0f"></script>
+    <script src="industry.js?v=50e28b3e6b"></script>
     <script src="cross-market-core.js"></script>
     <script src="cross-market.js"></script>
     <script src="market-indicators-core.js?v=9ee5403887"></script>
@@ -3425,7 +3432,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="overfit-core.js?v=1f05fbc793"></script>
     <script src="screener-backtest-core.js?v=f9ef330490"></script>
     <script src="screener-backtest.js?v=a0c51be370"></script>
-    <script src="signals.js?v=e77bd401e9"></script>
+    <script src="signals.js?v=ea465ab019"></script>
     <script src="macro-odds.js?v=62883cf258"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=733715a6b0"></script>
@@ -3440,12 +3447,12 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="kr-themes.js"></script>
     <script src="kr-alerts.js?v=d064670f43"></script>
     <script src="signal-scorecard-core.js?v=2f62f2b929"></script>
-    <script src="signal-scorecard.js?v=39c27046fb"></script>
+    <script src="signal-scorecard.js?v=c8f8961baa"></script>
     <script src="event-study-core.js?v=98c430e41a"></script>
     <script src="event-study.js?v=039f23654c"></script>
     <script src="timeline-core.js?v=e827c62edd"></script>
-    <script src="timeline.js?v=b5dfda8d63"></script>
-    <script src="watchlist.js?v=b7a51efeda"></script>
+    <script src="timeline.js?v=10a1c71063"></script>
+    <script src="watchlist.js?v=c54b56654e"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=9a1ecf4141"></script>
     <script src="earnings-insight.js?v=d71fe2ed8c"></script>
@@ -3471,22 +3478,22 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="home-chart-core.js?v=7081095dd9"></script>
     <script src="home-dash.js?v=15e699c81d"></script>
     <script src="find-table-core.js?v=7a807895ca"></script>
-    <script src="find-table.js?v=b9fdfc6a50"></script>
+    <script src="find-table.js?v=75219a0a5a"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
     <script src="toc-layout.js?v=a05156a05c"></script>
     <script src="mobile-cards.js?v=0e05cff78d"></script>
     <script src="mobile-clamp.js?v=1e24e8d7c5"></script>
     <script src="calendar-panel-core.js?v=86078ffe15"></script>
     <script src="market-feed-core.js?v=f09c7d8fe8"></script>
-    <script src="market-feed.js?v=2816aeb33d"></script>
-    <script src="calendar-panel.js?v=d3f7a04e2e"></script>
+    <script src="market-feed.js?v=d654db82b3"></script>
+    <script src="calendar-panel.js?v=f7a9e72afc"></script>
     <script src="lockup-core.js?v=efe4fefb2c"></script>
     <script src="lockups.js?v=916fe5735b"></script>
     <script src="stock-summary-core.js?v=e89196e8f9"></script>
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=0404ed9c85"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=5c5d4b57bd"></script>
+    <script src="app.js?v=b70f778d34"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

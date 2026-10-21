@@ -109,6 +109,17 @@ function fngLabel(score) {
   return "극단적 욕심";
 }
 
+// 글자용 단계 클래스(fng-t-0~4). 게이지 호 색(fngColor)은 밝은 노랑·연두라 흰 배경 글자로는 2:1 안팎이라
+// 글자는 테마별로 대비 4.5:1 이상인 색을 CSS(.fng-t-*)에서 고른다.
+function fngToneClass(score) {
+  if (!Number.isFinite(Number(score))) return "fng-t-na";
+  if (score < 25) return "fng-t-0";
+  if (score < 45) return "fng-t-1";
+  if (score <= 55) return "fng-t-2";
+  if (score <= 75) return "fng-t-3";
+  return "fng-t-4";
+}
+
 function fngColor(score) {
   if (score < 25) return "#dc2626";
   if (score < 45) return "#f97316";
@@ -206,7 +217,15 @@ function fetchMarketHeader() {
 // scKind: 신호 성적표(signal-scorecard.js)의 신호 종류 — 카드 아래 '이 신호의 과거 성적' 한 줄.
 function signalCard(title, items, note, scKind = "") {
   const body = items.length
-    ? items.map((x) => `<li><button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(stockLabel(x.ticker))}</button><span>${escapeHtml(x.note || "")}</span></li>`).join("")
+    ? items.map((x) => {
+      // 티커가 없는 항목(국내 신규 상장 — 아직 종목코드 미배정)은 누를 곳이 없으니 이름만 글자로 보인다.
+      const label = x.ticker ? stockLabel(x.ticker) : (x.label || "—");
+      const note = x.note && x.note !== label ? x.note : "";
+      const head = x.ticker
+        ? `<button type="button" class="ins-ticker" data-ticker="${escapeHtml(x.ticker)}">${escapeHtml(label)}</button>`
+        : `<strong class="ins-ticker-plain">${escapeHtml(label)}</strong>`;
+      return `<li>${head}<span>${escapeHtml(note)}</span></li>`;
+    }).join("")
     : `<li class="muted">해당 신호 없음</li>`;
   const score = scKind && typeof signalScoreLine === "function" ? signalScoreLine(scKind) : "";
   return `<div class="signal-card"><h3>${title}</h3>${note ? `<p class="sig-note">${escapeHtml(note)}</p>` : ""}<ul>${body}</ul>${score}</div>`;
@@ -640,9 +659,19 @@ function fearGreedComponents() {
     let posM = 0, totM = 0;
     for (const s of stocks) { const v = Number(s.monthChangePct); if (Number.isFinite(v)) { totM++; if (v > 0) posM++; } }
     if (totM > 0) comps.push({ key: "모멘텀", score: clamp(posM / totM * 100), detail: "1개월 상승 비율" });
-    const highs = stocks.filter((s) => Number(s.newHighDistancePct) <= 2).length;
-    const lows = stocks.filter((s) => { const d = (typeof low52DistPct === "function") ? low52DistPct(s) : NaN; return Number.isFinite(d) && d <= 5; }).length;
-    if (highs + lows > 0) comps.push({ key: "주가 강도", score: clamp(highs / (highs + lows) * 100), detail: "신고가 vs 신저가" });
+    // 신고가·신저가는 같은 종목 집합에서 센다. 예전엔 신고가는 스냅샷 전 종목, 신저가는 52주 저가
+    // (MAP_FUNDAMENTALS)가 있는 종목만 세서 — 그 파일이 아직 안 왔거나 저가가 빈 종목이 많으면 신저가가 0 이 되어
+    // 이 요소가 100(극단적 탐욕)으로 튀고 종합지수를 끌어올렸다. 저가를 모르는 종목은 양쪽 모두에서 뺀다.
+    let highs = 0, lows = 0, known = 0;
+    for (const s of stocks) {
+      const d = (typeof low52DistPct === "function") ? low52DistPct(s) : NaN;
+      const h = s.newHighDistancePct == null ? NaN : Number(s.newHighDistancePct);
+      if (!Number.isFinite(d) || !Number.isFinite(h)) continue;
+      known++;
+      if (h <= 2) highs++;
+      if (d <= 5) lows++;
+    }
+    if (known >= 20 && highs + lows > 0) comps.push({ key: "주가 강도", score: clamp(highs / (highs + lows) * 100), detail: "신고가 vs 신저가" });
   }
   // 옵션 풋콜·신용스프레드·VIX 는 US 전용 데이터(OPTIONS_STATS·MACRO_INDICATORS
   // 는 미국 시장만 수집). KR 모드에서 이걸 섞으면 미국이 탐욕일 때 국내 주식이
@@ -842,7 +871,16 @@ function renderSignals() {
   }
   if (cfg.features?.ipo !== false) {
     const ipo = ((window.IPO_CALENDAR || {}).ipos || []).filter((i) => i.stage === "priced").slice(0, 8);
-    cards.push(signalCard("신규 상장(가격확정)", ipo.map((i) => ({ ticker: i.ticker || "—", note: i.company || "" }))));
+    // 국내 신규 상장은 종목코드가 비어 온다 — 스냅샷에 같은 회사명이 있으면 그 코드로 잇는다.
+    const byName = (name) => (name ? data.stocks.find((s) => s.company === name) : null);
+    cards.push(signalCard("신규 상장(가격확정)", ipo.map((i) => {
+      const ticker = i.ticker || (byName(i.company) || {}).ticker || "";
+      const price = Number(i.offerPrice);
+      const parts = [];
+      if (ticker && !isKrMarket() && i.company) parts.push(i.company);
+      if (Number.isFinite(price) && price > 0) parts.push(`공모가 ${marketCfg().formatPrice(price)}`);
+      return { ticker, label: i.company || "—", note: parts.join(" · ") };
+    })));
   }
   el.innerHTML = cards.join("");
   el.querySelectorAll(".ins-ticker").forEach((b) => b.addEventListener("click", () => {

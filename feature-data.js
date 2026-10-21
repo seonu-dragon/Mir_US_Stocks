@@ -206,9 +206,14 @@ const FEATURE_DATA = {
   krEtfHoldings: { global: "KR_ETF_HOLDINGS", path: "data/korea/etf_holdings.js", krOnly: true, lazy: true },
 };
 const _featureDataPromises = {};
-// 실패한 로드는 세션 안에서 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
-// 같은 404 를 반복 요청했다. 시장 전환(resetMarketCaches)이나 수동 재확인 때만 비운다.
+// 실패한 로드는 잠시(FEATURE_DATA_RETRY_MS) 다시 시도하지 않는다(키 → 실패 시각). 예전엔 부르는 곳마다
+// 같은 404 를 반복 요청했고, 그 뒤엔 반대로 세션 내내 재시도하지 않아 일시적인 네트워크 끊김 한 번에
+// 탭을 새로 고치기 전까지 패널이 비었다. 시장 전환(resetMarketCaches)이나 수동 재확인 때도 비운다.
 const _featureDataFailed = {};
+const FEATURE_DATA_RETRY_MS = 5 * 60 * 1000;
+// 스크립트가 load/error 를 끝내 안 내는 경우(멈춘 연결)의 상한. 무거운 데이터셋(수 MB)은 더 길게.
+const FEATURE_DATA_TIMEOUT_MS = 45 * 1000;
+const FEATURE_DATA_TIMEOUT_HEAVY_MS = 90 * 1000;
 // 지금 받는 중인(<script> 를 붙였고 load/error 가 아직 안 온) 데이터셋 키. 종목 상세 탭이 '데이터 없음'을
 // 단정하기 전에 본다(stock-view.js sdUpdateEmpty) — 도착 전의 빈 카드를 '없음'으로 깜빡이지 않게.
 const _featureDataInFlight = {};
@@ -223,6 +228,14 @@ function featurePreloadPending() {
 }
 function clearFeatureDataFailures() {
   Object.keys(_featureDataFailed).forEach((k) => delete _featureDataFailed[k]);
+}
+// 최근(재시도 대기 시간 안)에 실패했으면 true. 대기 시간이 지났으면 기록을 지워 다시 받게 한다.
+function featureDataRecentlyFailed(key) {
+  const f = _featureDataFailed[key];
+  if (!f) return false;
+  if (Date.now() - (Number(f.failedAt) || 0) < FEATURE_DATA_RETRY_MS) return true;
+  delete _featureDataFailed[key];
+  return false;
 }
 
 function featureDataEnabled(meta, cfg) {
@@ -240,7 +253,7 @@ function ensureFeatureData(key) {
   if (!meta) return Promise.resolve(false);
   if (window[meta.global]) return Promise.resolve(true);
   if (!featureDataEnabled(meta, marketCfg())) return Promise.resolve(false);
-  if (_featureDataFailed[key]) return Promise.resolve(false);
+  if (featureDataRecentlyFailed(key)) return Promise.resolve(false);
   if (_featureDataPromises[key]) return _featureDataPromises[key];
 
   let path = meta.path;
@@ -252,16 +265,33 @@ function ensureFeatureData(key) {
   _featureDataInFlight[key] = true;
   _featureDataPromises[key] = new Promise((resolve) => {
     const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.dataset.featureData = key;
-    script.addEventListener("load", () => { delete _featureDataInFlight[key]; resolve(!!window[meta.global]); }, { once: true });
-    script.addEventListener("error", () => {
+    let settled = false;
+    let timer = null;
+    const fail = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
       delete _featureDataInFlight[key];
       delete _featureDataPromises[key];
       _featureDataFailed[key] = { failedAt: Date.now() };
+      script.remove(); // 재시도 때 새 태그로 다시 받는다(이미 받던 중이면 늦게라도 실행돼 전역이 채워질 수 있다)
       resolve(false);
+    };
+    script.src = src;
+    script.async = true;
+    script.dataset.featureData = key;
+    script.addEventListener("load", () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      delete _featureDataInFlight[key];
+      const ok = !!window[meta.global];
+      // 받았는데 전역이 비면(빈 파일·문법 오류) 실패로 본다 — 약속을 남겨 두면 재시도가 영영 막힌다.
+      if (!ok) { delete _featureDataPromises[key]; _featureDataFailed[key] = { failedAt: Date.now() }; }
+      resolve(ok);
     }, { once: true });
+    script.addEventListener("error", fail, { once: true });
+    timer = setTimeout(fail, meta.heavy ? FEATURE_DATA_TIMEOUT_HEAVY_MS : FEATURE_DATA_TIMEOUT_MS);
     document.head.appendChild(script);
   });
   return _featureDataPromises[key];

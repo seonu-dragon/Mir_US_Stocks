@@ -37,7 +37,7 @@ function mfeedEnsureData(market) {
     const k = keys[g];
     const meta = typeof FEATURE_DATA !== "undefined" ? FEATURE_DATA[k] : null;
     if (!meta || window[meta.global] || !featureDataEnabled(meta, marketCfg())) return;
-    if (typeof _featureDataFailed !== "undefined" && _featureDataFailed[k]) return;
+    if (typeof featureDataRecentlyFailed === "function" && featureDataRecentlyFailed(k)) return;
     if (mfeedLoading[g]) return;
     mfeedLoading[g] = true;
     ensureFeatureData(k).then(() => {

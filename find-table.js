@@ -20,6 +20,49 @@ let ftList = null; // null | "dividend" | "ipo" | "alerts" | "seohak" | "targets
 let ftAlertFilter = "all";
 let ftSeohak = { kind: "custody", period: "1w" };
 let ftSeohakTried = false;
+// 표 머리 정렬 상태. flip: 같은 지표 열을 다시 누르면 기본 방향을 뒤집는다(선정·정렬 모두 —
+// renderTopStocks 가 ftMetricDirection 을 읽는다). text: 이름·섹터 같은 글자 열의 표 안 정렬.
+let ftSort = { metric: null, flip: false, text: null, textDir: 1 };
+
+// 지표의 실제 정렬 방향(1=큰 값 먼저, -1=작은 값 먼저).
+function ftMetricDirection(metric) {
+  const base = typeof metricSortDirection === "function" ? metricSortDirection(metric) : 1;
+  return ftSort.flip && ftSort.metric === metric ? -base : base;
+}
+
+function ftTextValue(item, key) {
+  if (key === "name") return String((typeof stockLabel === "function" ? stockLabel(item) : item.ticker) || "");
+  if (key === "sector") return [ftSector(item.sector), item.industry].filter(Boolean).join(" · ");
+  return "";
+}
+
+function ftSortClick(btn) {
+  const text = btn.dataset.ftText;
+  if (text) {
+    // 글자 열: 처음엔 가나다순, 다시 누르면 역순.
+    ftSort.textDir = ftSort.text === text ? -ftSort.textDir : 1;
+    ftSort.text = text;
+    ftRerender();
+    return;
+  }
+  const metric = btn.dataset.metric;
+  const sel = byId("topMetric");
+  if (!metric || !sel) return;
+  if (sel.value === metric && !ftSort.text) {
+    // 같은 열 다시 누름 → 방향 토글(목록 선정부터 다시 — 하위 N 종목을 보려면 다시 골라야 한다).
+    ftSort.flip = !(ftSort.metric === metric && ftSort.flip);
+    ftSort.metric = metric;
+  } else {
+    ftSort = { metric, flip: false, text: null, textDir: 1 };
+  }
+  ftSort.text = null;
+  if (sel.value === metric) {
+    if (typeof renderTopStocks === "function") renderTopStocks();
+    else ftRerender();
+  } else {
+    ftSetSelect("topMetric", metric);
+  }
+}
 
 function ftCore() { return window.MirFindTableCore; }
 function ftMarket() { return typeof isKrMarket === "function" && isKrMarket() ? "kr" : "us"; }
@@ -139,16 +182,36 @@ function renderFindTable(rows, metric) {
     wrap.innerHTML = `<p class="ft-empty muted">조건에 맞는 종목이 없습니다. 고급 필터를 완화해 보세요.</p>`;
     return;
   }
-  const dir = typeof metricSortDirection === "function" ? metricSortDirection(ftLast.metric) : 1;
+  // 지표가 바뀌었으면(셀렉트·칩) 뒤집기는 그 지표에만 남긴다.
+  if (ftSort.metric && ftSort.metric !== ftLast.metric) ftSort.flip = false;
+  const dir = ftMetricDirection(ftLast.metric);
+  const textKey = ftSort.text && (ftSort.text === "name" || cols.some((c) => c.key === ftSort.text)) ? ftSort.text : null;
+  const textHead = (key, label, cl) => {
+    const on = textKey === key;
+    const arrow = on ? (ftSort.textDir > 0 ? " ▲" : " ▼") : "";
+    return `<th class="${cl}${on ? " is-sorted" : ""}" scope="col" aria-sort="${on ? (ftSort.textDir > 0 ? "ascending" : "descending") : "none"}"><button type="button" class="ft-sort" data-ft-text="${key}" title="${escapeHtml(label)} 순으로 정렬">${escapeHtml(label)}${arrow}</button></th>`;
+  };
   const head = cols.map((c) => {
-    const sorted = c.metric && c.metric === ftLast.metric;
+    if (!c.metric && !c.num) return textHead(c.key, c.label, "");
+    const sorted = !textKey && c.metric && c.metric === ftLast.metric;
     const arrow = sorted ? (dir < 0 ? " ▲" : " ▼") : "";
     const cl = `${c.num ? "num" : ""}${sorted ? " is-sorted" : ""}`;
     return c.metric
       ? `<th class="${cl}" scope="col" aria-sort="${sorted ? (dir < 0 ? "ascending" : "descending") : "none"}"><button type="button" class="ft-sort" data-metric="${c.metric}" title="${escapeHtml(c.label)} 기준으로 정렬">${escapeHtml(c.label)}${arrow}</button></th>`
       : `<th class="${cl}" scope="col">${escapeHtml(c.label)}</th>`;
   }).join("");
-  const body = ftLast.rows.map(({ item }, i) => {
+  let viewRows = ftLast.rows;
+  if (textKey) {
+    const coll = typeof Intl !== "undefined" && Intl.Collator ? new Intl.Collator("ko", { numeric: true, sensitivity: "base" }) : null;
+    viewRows = viewRows.slice().sort((a, b) => {
+      const x = ftTextValue(a.item, textKey);
+      const y = ftTextValue(b.item, textKey);
+      if (!x && y) return 1; // 빈 값은 방향과 무관하게 맨 뒤
+      if (x && !y) return -1;
+      return ftSort.textDir * (coll ? coll.compare(x, y) : x.localeCompare(y));
+    });
+  }
+  const body = viewRows.map(({ item }, i) => {
     const cells = cols.map((c) => {
       const [html, cl] = ftCell(item, c.key);
       return `<td class="${c.num ? "num" : ""}${cl ? ` ${cl}` : ""}">${html}</td>`;
@@ -160,7 +223,7 @@ function renderFindTable(rows, metric) {
     </tr>`;
   }).join("");
   wrap.innerHTML = `<table class="compact-table table-wide ft-table">
-      <thead><tr><th scope="col" class="ft-name">종목</th>${head}</tr></thead>
+      <thead><tr>${textHead("name", "종목", "ft-name")}${head}</tr></thead>
       <tbody>${body}</tbody>
     </table>`;
 }
@@ -260,7 +323,7 @@ function ftRenderIpo(wrap, core) {
     const sub = item ? null : "시세 미수집";
     const last = kr
       ? `<td class="ft-text">${escapeHtml(r.broker || "—")}</td>`
-      : `<td class="ft-text">${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" rel="noopener" data-ft-ext>424B4</a>` : "—"}</td>`;
+      : `<td class="ft-text">${safeHttpHref(r.link) ? `<a href="${escapeHtml(safeHttpHref(r.link))}" target="_blank" rel="noopener" data-ft-ext>424B4</a>` : "—"}</td>`;
     return `<tr${item ? ` data-ticker="${escapeHtml(item.ticker)}" tabindex="0"` : ' class="is-static"'}>
       ${ftNameCell(null, item, kr ? r.company : `${r.ticker ? `${r.ticker} · ` : ""}${r.company}`, sub)}
       <td class="num">${ftFmtDate(r.date)}</td>
@@ -568,7 +631,7 @@ function setupFindTable() {
       const sp = e.target.closest("[data-ft-seohak-period]");
       if (sp) { ftSeohak.period = sp.dataset.ftSeohakPeriod; ftRerender(); return; }
       const sort = e.target.closest(".ft-sort");
-      if (sort) { ftSetSelect("topMetric", sort.dataset.metric); return; }
+      if (sort) { ftSortClick(sort); return; }
       const tr = e.target.closest("tr[data-ticker]");
       if (tr) selectTicker(tr.dataset.ticker, { openSearch: true });
     });

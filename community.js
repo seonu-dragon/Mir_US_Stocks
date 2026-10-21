@@ -544,7 +544,8 @@ function communityAvatarColor(name) {
   const str = String(name || "익명");
   let hash = 0;
   for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
-  return `hsl(${hash % 360}, 55%, 45%)`;
+  // 흰 글자 이니셜이 어느 색상에서도 4.5:1 이상이 되도록 명도를 낮게(45% 는 노랑·연두에서 2.5:1).
+  return `hsl(${hash % 360}, 55%, 30%)`;
 }
 
 function communityAvatarHtml(name) {

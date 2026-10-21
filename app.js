@@ -892,6 +892,10 @@ function applyMarketOnlyUi() {
   const aggInsights = byId("aggInsights");
   if (aggFold) aggFold.hidden = krMode;
   if (aggInsights) aggInsights.style.display = krMode ? "none" : "";
+  // '원화로 본 내 자산'은 달러 자산의 환율 효과를 나누는 도구 — 국내 모드엔 나눌 것이 없어 빈 화면이었다.
+  // 숨긴 접힘은 목차(toc-layout.js)에서도 빠진다.
+  const krwFold = document.querySelector('details.ia-tool-fold[data-toc-key="krw"]');
+  if (krwFold) krwFold.hidden = krMode;
   populateSectorBenchmarkSelect(cfg);
   populateEtfRsBenchmarkSelect(cfg);
   const pfBench = byId("portfolioBenchmark");
@@ -1001,6 +1005,13 @@ function boot(options = {}) {
   fetchMarketHeader();
   renderSnapshotIndices();
   const initialTab = route.get("tab");
+  // 다른 시장 전용 화면 딥링크(market= 으로 시장을 못박은 경우만 여기까지 온다 — 아니면
+  // market_config.js 가 그 시장으로 연다). 조용히 다른 화면으로 가지 않게 한 번 알린다.
+  const onlyMarket = window.MirMarket && typeof window.MirMarket.deeplinkMarket === "function" ? window.MirMarket.deeplinkMarket(route) : null;
+  if (onlyMarket && onlyMarket !== marketCfg().id && !boot._marketOnlyToastShown) {
+    boot._marketOnlyToastShown = true;
+    setTimeout(() => showAppToast(onlyMarket === "kr" ? "국내 시장 전용 화면입니다 · 상단에서 '한국'으로 바꿔 보세요" : "미국 시장 전용 화면입니다 · 상단에서 '미국'으로 바꿔 보세요", 3600), 400);
+  }
   // 필터 목록 딥링크(?tab=find&filter=<id>) — sub 가 없으면 찾기 › 필터 목록으로 연다.
   const initialSub = route.get("sub") || (route.get("filter") && ["find", "search"].includes(route.get("tab")) ? "filters" : null);
   const initialCommunityTicker = route.get("cticker") || route.get("communityTicker");
@@ -1466,7 +1477,7 @@ function regimeFngCardHtml() {
   const gaugeScore = live ? score : 50;
   const label = live ? fngLabel(score) : (marketHeader.fngStatus === "error" ? "연결 실패" : "로딩 중");
   const asOf = live && marketHeader.fng.source === "snapshot" && marketHeader.fng.asOf ? ` · 스냅샷 기준 ${marketHeader.fng.asOf}` : "";
-  const color = live ? fngColor(score) : "#94a3b8";
+  const tone = live ? fngToneClass(score) : "fng-t-na";
   // 바늘은 늘 위쪽 반원만 가리키므로 점수는 허브 아래에 둔다(바늘과 겹치지 않게).
   const cx = 100, cy = 82, r = 72, w = 16;
   const deg = (s) => 180 - (s / 100) * 180;
@@ -1487,10 +1498,10 @@ function regimeFngCardHtml() {
         ${arcs}
         <line class="gauge-needle" x1="${cx}" y1="${cy}" x2="${nx.toFixed(1)}" y2="${ny.toFixed(1)}" stroke-width="3" stroke-linecap="round"></line>
         <circle class="gauge-hub" cx="${cx}" cy="${cy}" r="5"></circle>
-        <text x="${cx}" y="${cy + 34}" text-anchor="middle" class="fng-score" fill="${color}">${live ? score : "--"}</text>
+        <text x="${cx}" y="${cy + 34}" text-anchor="middle" class="fng-score ${tone}">${live ? score : "--"}</text>
       </svg>
       <div class="rf-foot">
-        <span class="rf-fng" style="color:${color}">${escapeHtml(label)}${escapeHtml(asOf)}</span>
+        <span class="rf-fng ${tone}">${escapeHtml(label)}${escapeHtml(asOf)}</span>
         <span class="rf-stat" title="당일 상승 종목 비율">상승 ${Math.round(regime.upPct * 100)}%</span>
       </div>
     </div>`;
@@ -2638,10 +2649,20 @@ function applyCommunityBoardTickerFilter(ticker) {
   if (tickerEl) tickerEl.value = resolved;
 }
 
+// 트렌딩(Reddit·Stocktwits·Yahoo·WSB)은 미국 소셜 데이터다. 스냅샷에 없으면(국내 모드) 서브탭을 숨기고 토론으로 연다.
+function communityTrendingAvailable() {
+  const s = (typeof data === "object" && data && data.social_sentiment) || null;
+  return Boolean(s && ["reddit", "stocktwits", "yahoo"].some((k) => Array.isArray(s[k]) && s[k].length));
+}
+
 function activateCommunitySub(name, { push = false, communityTicker = null } = {}) {
   // '오늘의 뉴스' 서브탭은 IA 재편으로 삭제(카드뉴스는 오늘 탭 한 곳) — 옛 링크는 트렌딩으로.
   if (name === "sns" || name === "news") name = "trending";
-  communitySubTab = name || "trending";
+  const trendingOk = communityTrendingAvailable();
+  const trendBtn = byId("communitySubTabs")?.querySelector('[data-sub="trending"]');
+  if (trendBtn) setTabHidden(trendBtn, !trendingOk);
+  if (!name || (name === "trending" && !trendingOk)) name = trendingOk ? "trending" : "board";
+  communitySubTab = name;
   if (communityTicker != null) applyCommunityBoardTickerFilter(communityTicker);
   const nav = byId("communitySubTabs");
   if (nav) {
@@ -2901,6 +2922,8 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
   if (name === "health") renderIndexStrip(marketHeader.indices);
   // 첫 진입 탭은 여기서 처음 그린다(부팅 때 전 탭을 그리지 않는다 — renderAll 참고).
   renderTabContent(name);
+  // 다른 화면에서 ★ 를 눌러 미뤄 둔 렌더(watchlist.js)를 이제 보이는 것부터 그린다.
+  if (typeof flushWatchDeferredRenders === "function") flushWatchDeferredRenders();
   // US 증자·희석 데이터는 종목검색 서브탭에서만 쓰므로 탭 첫 진입 때 한 번만 시도.
   // 파일이 아직 배포 전이면 조용히 실패하고 서브탭이 숨은 채 유지된다.
   if (name === "search" && !isKrMarket() && !window.US_DILUTION && FEATURE_DATA.usDilution && !FEATURE_DATA.usDilution.tried) {
@@ -2922,7 +2945,7 @@ function activateTab(name, { push = true, ticker = null, sub = null, communityTi
     // 아직 안 온 데이터셋만 요청하고, 도착은 refreshFeatureViews(250ms 디바운스) 한 번으로 합쳐 그린다.
     SIGNALS_FEATURE_KEYS.forEach((k) => {
       const meta = FEATURE_DATA[k];
-      if (!meta || window[meta.global] || _featureDataFailed[k] || !featureDataEnabled(meta, marketCfg())) return;
+      if (!meta || window[meta.global] || featureDataRecentlyFailed(k) || !featureDataEnabled(meta, marketCfg())) return;
       ensureFeatureData(k).then((ok) => { if (ok) scheduleFeatureViewRefresh(); });
     });
   }
@@ -3346,7 +3369,8 @@ function setupEvents() {
   eventsBound = true;
   ["bucketFilter", "sectorFilter", "metricFilter", "tileSizeFilter"].forEach((id) => byId(id).addEventListener("change", renderTreemap));
   // 5천 타일 트리맵을 키 입력마다 다시 그리지 않도록 디바운스.
-  byId("heatmapSearch").addEventListener("input", debounce(renderTreemap, 150));
+  // 입력마다는 타일 강조 클래스만 바꾼다(applyTreemapSearchHighlight) — 필요할 때만 전체 재렌더.
+  byId("heatmapSearch").addEventListener("input", debounce(applyTreemapSearchHighlight, 150));
   // Enter 확정(현재 시장에서 찾으면 타일 포커스, 못 찾으면 반대 시장까지)은
   // setupTickerSearchHelpers 의 공용 자동완성이 처리한다.
   // 모바일 트리맵 필터 접기/펼치기(CSS 는 640px 이하에서만 접는다).
@@ -4453,7 +4477,8 @@ function renderTopStocks() {
     .filter((item) => topPresetMatches(item, preset))
     .map((item) => ({ item, value: metricValue(item, metric) }))
     .filter(({ value }) => Number.isFinite(value))
-    .sort((a, b) => metricSortDirection(metric) * (b.value - a.value))
+    // 찾기 표에서 같은 열을 다시 누르면 방향이 뒤집힌다(find-table.js ftMetricDirection).
+    .sort((a, b) => (typeof ftMetricDirection === "function" ? ftMetricDirection(metric) : metricSortDirection(metric)) * (b.value - a.value))
     .slice(0, limit);
 
   const filterText = [
@@ -6290,10 +6315,28 @@ function setupTickerAutocomplete(inputId, options = {}) {
   const list = document.createElement("div");
   list.className = "ticker-ac-list";
   list.hidden = true;
+  // combobox/listbox 시맨틱 — 입력칸 포커스를 유지한 채 고른 후보를 aria-activedescendant 로 알린다.
+  const listId = `${inputId}-ac-list`;
+  list.id = listId;
+  list.setAttribute("role", "listbox");
+  list.setAttribute("aria-label", "종목 후보");
   wrap.appendChild(list);
+  input.setAttribute("role", "combobox");
+  input.setAttribute("aria-autocomplete", "list");
+  input.setAttribute("aria-controls", listId);
+  input.setAttribute("aria-expanded", "false");
 
   let timer = null;
   let activeIdx = -1;
+
+  function syncActive(items) {
+    items.forEach((el, i) => {
+      el.classList.toggle("is-active", i === activeIdx);
+      el.setAttribute("aria-selected", i === activeIdx ? "true" : "false");
+    });
+    if (activeIdx >= 0 && items[activeIdx]) input.setAttribute("aria-activedescendant", items[activeIdx].id);
+    else input.removeAttribute("aria-activedescendant");
+  }
 
   function closeList() {
     // 대기 중인 자동완성 갱신까지 끊는다 — Enter 로 확정한 뒤 디바운스 타이머가 목록을
@@ -6303,6 +6346,8 @@ function setupTickerAutocomplete(inputId, options = {}) {
     list.hidden = true;
     list.innerHTML = "";
     activeIdx = -1;
+    input.setAttribute("aria-expanded", "false");
+    input.removeAttribute("aria-activedescendant");
   }
 
   function applySuggestion(ticker) {
@@ -6326,13 +6371,14 @@ function setupTickerAutocomplete(inputId, options = {}) {
       return;
     }
     list.innerHTML = items.map((item, index) => `
-      <button type="button" class="ticker-ac-item${index === activeIdx ? " is-active" : ""}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
+      <button type="button" class="ticker-ac-item${index === activeIdx ? " is-active" : ""}" role="option" id="${listId}-${index}" tabindex="-1" aria-selected="${index === activeIdx ? "true" : "false"}" data-ticker="${escapeHtml(item.ticker)}" data-index="${index}">
         <strong>${escapeHtml(stockLabel(item))}</strong>
         <span>${escapeHtml(stockSubLabel(item) || (isKrCodeTicker(item.ticker) ? (stockByTicker(item.ticker)?.industry || stockByTicker(item.ticker)?.sector || "") : ""))}</span>
         ${item.hint && item.hint !== item.ticker && item.hint !== item.company && item.hint !== "티커" ? `<em>${escapeHtml(item.hint)}</em>` : ""}
       </button>
     `).join("");
     list.hidden = false;
+    input.setAttribute("aria-expanded", "true");
     list.querySelectorAll(".ticker-ac-item").forEach((btn) => {
       btn.addEventListener("mousedown", (event) => {
         event.preventDefault();
@@ -6388,6 +6434,8 @@ function setupTickerAutocomplete(inputId, options = {}) {
     if ((multi ? tickerInputActiveToken(input).token : input.value.trim()).length) refresh();
   });
   input.addEventListener("keydown", (event) => {
+    // 한글 IME 조합 중의 Enter·화살표는 조합 확정용이다 — 후보 선택·확정으로 처리하지 않는다.
+    if (event.isComposing || event.keyCode === 229) return;
     const items = [...list.querySelectorAll(".ticker-ac-item")];
     if (!items.length) {
       // 목록이 없을 때도 키보드 모델은 같다 — Enter 는 입력한 글자를 그대로 확정한다.
@@ -6400,11 +6448,11 @@ function setupTickerAutocomplete(inputId, options = {}) {
     if (event.key === "ArrowDown") {
       event.preventDefault();
       activeIdx = (activeIdx + 1) % items.length;
-      items.forEach((el, i) => el.classList.toggle("is-active", i === activeIdx));
+      syncActive(items);
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       activeIdx = activeIdx <= 0 ? items.length - 1 : activeIdx - 1;
-      items.forEach((el, i) => el.classList.toggle("is-active", i === activeIdx));
+      syncActive(items);
     } else if (event.key === "Enter") {
       // ↑/↓ 로 고른 게 있으면 그것, 없으면 입력한 글자를 확정한다.
       if (activeIdx >= 0) {
@@ -8000,12 +8048,6 @@ function syncSignalFolds() {
 }
 
 // ----- 내 투자: 빈 상태 + 4숫자 요약 -----
-function watchlistIsSeed() {
-  const seed = (typeof defaultWatchlist === "function" ? defaultWatchlist() : []) || [];
-  if (!Array.isArray(watchlist) || watchlist.length !== seed.length) return false;
-  const set = new Set(seed);
-  return watchlist.every((t) => set.has(t));
-}
 function renderMyInvestSummary() {
   // 보유 종목이 바뀌면(pfTable MutationObserver → 여기) "오늘 내 주식은" 요약도 다시 그린다.
   if (typeof renderMyDigest === "function") renderMyDigest();
@@ -8014,9 +8056,9 @@ function renderMyInvestSummary() {
   const box = byId("myInvestSummary");
   if (!empty || !body) return;
   const hasPortfolio = Array.isArray(portfolio) && portfolio.length > 0;
-  // 관심종목은 비면 기본 목록(defaultWatchlist)이 자동으로 채워진다 — 손대지 않은 기본
-  // 목록은 '아직 내 종목이 없다' 로 본다. 그래야 첫 방문자에게 빈 상태가 보인다.
-  const hasWatch = Array.isArray(watchlist) && watchlist.length > 0 && !watchlistIsSeed();
+  // 첫 방문자의 기본 관심 목록도 실제 목록으로 본다 — ★·레일·테마 '내 종목'과 같은 기준.
+  // 예전엔 기본 목록이면 빈 상태를 띄워 같은 종목이 다른 화면엔 보이고 여기만 비어 있었다.
+  const hasWatch = Array.isArray(watchlist) && watchlist.length > 0;
   // 투자 가설(thesis.js)만 있어도 본문을 보인다 — 보유·관심 상단의 가설 요약 줄이 가려지지 않게.
   const hasThesis = Boolean(window.MirThesis && window.MirThesis.items.length);
   const isEmpty = !hasPortfolio && !hasWatch && !hasThesis;
@@ -8028,7 +8070,7 @@ function renderMyInvestSummary() {
   if (!hasPortfolio) {
     box.innerHTML = hasWatch
       ? `<p class="muted">관심종목 ${watchlist.length}개를 추적 중입니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`
-      : `<p class="muted">기본 관심종목을 보고 있습니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`;
+      : `<p class="muted">관심종목이 없습니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`;
     return;
   }
   const rows = portfolio.map((p) => {
@@ -8216,13 +8258,7 @@ function setupMyInvestEmpty() {
       if (!raw) return;
       const resolved = normalizeTickerKey(resolveTickerQuery(raw) || raw);
       if (!stockByTicker(resolved)) { showAppToast(`'${raw}' 을(를) 찾지 못했습니다. 티커나 종목명을 확인해 주세요.`); return; }
-      // 손대지 않은 기본 목록이면 그 자리를 내 첫 종목으로 바꾼다(기본 5개에 섞이지 않게).
-      if (watchlistIsSeed()) {
-        watchlist = [resolved];
-        persistWatchlist();
-        renderWatchlistBar();
-        renderActionBoard();
-      } else if (!watchlist.includes(resolved)) {
+      if (!watchlist.includes(resolved)) {
         toggleWatchlist(resolved);
       }
       input.value = "";
@@ -9137,8 +9173,8 @@ setupAiStreamStopEvents();
 
 // ===== Ctrl+K 커맨드 팔레트 =====
 // 앱 다이얼로그(app-dialog)와 같은 디자인 토큰의 오버레이 팔레트.
-// Ctrl+K(또는 AI 모드에서 입력 중이 아닐 때 /)로 열고, ↑↓ + Enter, Esc 로 조작.
-const cmdkState = { open: false, index: 0, items: [] };
+// Ctrl+K(또는 입력 중이 아닐 때 /)로 열고, ↑↓ + Enter, Esc 로 조작.
+const cmdkState = { open: false, index: 0, items: [], returnFocus: null };
 
 function cmdkEnsureDom() {
   let overlay = byId("cmdkOverlay");
@@ -9151,10 +9187,10 @@ function cmdkEnsureDom() {
     <div class="cmdk" role="dialog" aria-modal="true" aria-label="종목·질문 검색">
       <div class="cmdk-input-row">
         <svg class="cmdk-glyph" viewBox="0 0 24 24" aria-hidden="true" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <input id="cmdkInput" type="text" placeholder="종목명이나 질문 (예: NVDA, 삼성전자 지금 사도 될까?)" autocomplete="off" spellcheck="false" aria-label="종목·질문 검색">
+        <input id="cmdkInput" type="text" placeholder="종목명이나 질문 (예: NVDA, 삼성전자 지금 사도 될까?)" autocomplete="off" spellcheck="false" aria-label="종목·질문 검색" role="combobox" aria-autocomplete="list" aria-expanded="true" aria-controls="cmdkList">
         <kbd>Esc</kbd>
       </div>
-      <ul id="cmdkList" class="cmdk-list" role="listbox"></ul>
+      <ul id="cmdkList" class="cmdk-list" role="listbox" aria-label="검색 결과"></ul>
       <div class="cmdk-foot"><span>↑↓ 이동</span><span>Enter 실행</span><span>Ctrl+K 닫기</span></div>
     </div>`;
   document.body.appendChild(overlay);
@@ -9197,38 +9233,45 @@ function cmdkBuildActions(query) {
 
   // 종목 검색 (티커·회사명·한글 별칭) — AI 모드면 AI 질문, 아니면 분석 탭 이동
   const q = String(query || "").trim();
-  if (q.length >= 1) {
-    const seen = new Set();
-    const pushStock = (row) => {
-      if (!row || seen.has(row.ticker) || seen.size >= 5) return;
-      seen.add(row.ticker);
-      actions.push({
-        label: [stockLabel(row), stockSubLabel(row)].filter(Boolean).join(" · "),
-        hint: aiActive ? "AI 모드 분석" : "종목 분석 이동",
-        keep: true, // 종목은 퍼지 재필터 없이 그대로 노출
-        run: () => {
-          if (aiActive && window.MirAI?.queryStock) {
-            const input = byId("aiChatInput");
-            if (input) input.value = `${stockInputValue(row.ticker)} 분석해줘`;
-            window.MirAI.queryStock(`${stockInputValue(row.ticker)} 분석해줘`);
-          } else {
-            navigateToStockAnalysis(row.ticker, `${row.ticker} 분석`, { animate: false });
-          }
-        },
-      });
-    };
-    try {
-      const resolved = extractStockTickerFromQuery(q);
-      if (resolved) pushStock(stockByTicker(resolved));
-    } catch (_) { /* ignore */ }
-    // 키 입력마다 전 종목의 ticker/company 를 새로 소문자화하지 않는다 —
-    // buildTickerSearchIndex 가 미리 만든 소문자 필드를 시총 순으로 훑는다.
-    const ql = q.toLowerCase();
-    const rows = (tickerSearchIndex && tickerSearchIndex.byMarketCap) || [];
-    rows.some((row) => {
-      if (row.tickerLower.startsWith(ql) || row.companyLower.includes(ql)) pushStock(stockByTicker(row.ticker));
-      return seen.size >= 5;
+  const seen = new Set();
+  // 종목 결과는 스냅샷 현재가·등락을 같이 보인다(quote). score 를 주면 빈 질의에서도 상단에 고정된다.
+  const pushStock = (row, score) => {
+    if (!row || seen.has(row.ticker) || seen.size >= 5) return;
+    seen.add(row.ticker);
+    actions.push({
+      label: [stockLabel(row), stockSubLabel(row)].filter(Boolean).join(" · "),
+      hint: score != null ? "최근 본 종목" : (aiActive ? "AI 모드 분석" : "종목 분석 이동"),
+      quote: { price: row.price, changePct: row.changePct },
+      keep: true, // 종목은 퍼지 재필터 없이 그대로 노출
+      score,
+      run: () => {
+        if (aiActive && window.MirAI?.queryStock) {
+          const input = byId("aiChatInput");
+          if (input) input.value = `${stockInputValue(row.ticker)} 분석해줘`;
+          window.MirAI.queryStock(`${stockInputValue(row.ticker)} 분석해줘`);
+        } else {
+          navigateToStockAnalysis(row.ticker, `${row.ticker} 분석`, { animate: false });
+        }
+      },
     });
+  };
+  if (q.length >= 1) {
+    // 종목 매칭은 티커 자동완성과 같은 함수(searchTickerSuggestions — 초성·한글 별칭·시총 순)를 쓴다.
+    // 문장형 질문("삼성전자 지금 사도 될까?")만 그 앞에 문장 속 종목을 먼저 뽑는다.
+    if (/\s|\?/.test(q)) {
+      try {
+        const resolved = extractStockTickerFromQuery(q);
+        if (resolved) pushStock(stockByTicker(resolved));
+      } catch (_) { /* ignore */ }
+    }
+    try {
+      searchTickerSuggestions(q, 5).forEach((hit) => pushStock(stockByTicker(hit.ticker)));
+    } catch (_) { /* ignore */ }
+  } else {
+    // 빈 질의: 최근 본 종목(우측 레일과 같은 기록)을 맨 위에.
+    let recent = [];
+    try { recent = window.MirRail && typeof window.MirRail.recent === "function" ? window.MirRail.recent() : []; } catch (_) { recent = []; }
+    recent.slice(0, 5).forEach((t, i) => pushStock(stockByTicker(t), 3000 - i));
   }
 
   // 질문 검색(구 홈 '무엇이 궁금하신가요?' 입력창, 2026-10-02 통합) — 입력 문장을 그대로
@@ -9299,7 +9342,7 @@ function cmdkBuildActions(query) {
   goto("내 투자 · 보유 종목", "bulk", "holdings");
   goto("내 투자 · 관심 리스트", "bulk", "watch");
   goto("내 투자 · 분석 도구", "bulk", "tools");
-  goto("커뮤니티 · 트렌딩", "community", "trending");
+  if (communityTrendingAvailable()) goto("커뮤니티 · 트렌딩", "community", "trending");
   goto("커뮤니티 · 종목 토론", "community", "board");
   goto("커뮤니티 · 투표", "community", "vote");
   actions.push({ label: "데이터 신뢰도 센터", hint: "데이터 상태", run: () => openDataTrustCenter() });
@@ -9321,13 +9364,21 @@ function cmdkRender(query) {
   cmdkState.index = Math.min(cmdkState.index, Math.max(0, cmdkState.items.length - 1));
   if (!cmdkState.items.length) {
     list.innerHTML = `<li class="cmdk-empty muted">일치하는 명령이 없습니다.</li>`;
+    cmdkSyncActiveDescendant();
     return;
   }
+  const quoteHtml = (qt) => {
+    if (!qt || !Number.isFinite(Number(qt.price))) return "";
+    const pct = Number(qt.changePct);
+    const chg = Number.isFinite(pct) ? `<em class="${cls(pct)}">${escapeHtml(fmtDailyPct(pct))}</em>` : "";
+    return `<span class="cmdk-quote"><b>${escapeHtml(priceOrDash(qt.price))}</b>${chg}</span>`;
+  };
   list.innerHTML = cmdkState.items.map((a, i) => `
-    <li class="cmdk-item${i === cmdkState.index ? " is-active" : ""}" role="option" aria-selected="${i === cmdkState.index}" data-index="${i}">
+    <li class="cmdk-item${i === cmdkState.index ? " is-active" : ""}" role="option" id="cmdk-opt-${i}" aria-selected="${i === cmdkState.index}" data-index="${i}">
       <span class="cmdk-label">${escapeHtml(a.label)}</span>
-      <span class="cmdk-hint">${escapeHtml(a.hint || "")}</span>
+      <span class="cmdk-meta">${quoteHtml(a.quote)}<span class="cmdk-hint">${escapeHtml(a.hint || "")}</span></span>
     </li>`).join("");
+  cmdkSyncActiveDescendant();
   list.querySelectorAll(".cmdk-item").forEach((el) => {
     el.addEventListener("click", () => cmdkRun(Number(el.dataset.index)));
     el.addEventListener("mousemove", () => {
@@ -9346,17 +9397,32 @@ function cmdkHighlight() {
     el.setAttribute("aria-selected", on ? "true" : "false");
     if (on) el.scrollIntoView({ block: "nearest" });
   });
+  cmdkSyncActiveDescendant();
+}
+
+// 스크린리더용: 입력칸 포커스를 유지한 채 '지금 고른 항목'을 aria-activedescendant 로 알린다.
+function cmdkSyncActiveDescendant() {
+  const input = byId("cmdkInput");
+  if (!input) return;
+  const has = cmdkState.items.length > 0 && byId(`cmdk-opt-${cmdkState.index}`);
+  if (has) input.setAttribute("aria-activedescendant", `cmdk-opt-${cmdkState.index}`);
+  else input.removeAttribute("aria-activedescendant");
 }
 
 function cmdkRun(index) {
   const action = cmdkState.items[index];
   if (!action) return;
-  cmdkClose();
+  // 실행할 땐 포커스를 되돌리지 않는다 — 실행된 화면(종목 분석 등)이 포커스를 가져간다.
+  cmdkClose({ restoreFocus: false });
   try { action.run(); } catch (_) { /* ignore */ }
 }
 
 function cmdkOpen() {
   const overlay = cmdkEnsureDom();
+  if (!cmdkState.open) {
+    const prev = document.activeElement;
+    cmdkState.returnFocus = prev && prev !== document.body ? prev : null;
+  }
   overlay.hidden = false;
   cmdkState.open = true;
   cmdkState.index = 0;
@@ -9366,10 +9432,17 @@ function cmdkOpen() {
   requestAnimationFrame(() => input.focus());
 }
 
-function cmdkClose() {
+function cmdkClose(opts = {}) {
   const overlay = byId("cmdkOverlay");
+  const wasOpen = cmdkState.open;
   if (overlay) overlay.hidden = true;
   cmdkState.open = false;
+  const back = cmdkState.returnFocus;
+  cmdkState.returnFocus = null;
+  // Esc·바깥 클릭·Ctrl+K 로 닫으면 연 자리(헤더 검색 버튼 등)로 포커스를 돌려준다.
+  if (wasOpen && opts.restoreFocus !== false && back && back.isConnected && typeof back.focus === "function") {
+    try { back.focus({ preventScroll: true }); } catch (_) { /* ignore */ }
+  }
 }
 
 function setupCommandPalette() {
@@ -9402,17 +9475,41 @@ function setupCommandPalette() {
       if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
         e.preventDefault(); e.stopPropagation(); cmdkClose(); return;
       }
+      // 포커스 트랩: 팔레트 안에서 포커스를 받을 곳은 입력칸뿐이다(항목은 ↑↓ 로 고른다).
+      if (e.key === "Tab") {
+        e.preventDefault(); e.stopPropagation();
+        byId("cmdkInput")?.focus();
+        return;
+      }
       return;
     }
-    // 열기: Ctrl+K 어디서나, / 는 AI 모드에서 입력 중이 아닐 때
+    // 열기: Ctrl+K 어디서나, / 는 입력 중이 아닐 때(어느 모드든)
     if ((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")) {
       e.preventDefault(); e.stopPropagation(); cmdkOpen(); return;
     }
-    if (e.key === "/" && cmdkIsAiActive()) {
+    if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey && !e.isComposing) {
       const el = document.activeElement;
-      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable);
-      if (!typing) { e.preventDefault(); e.stopPropagation(); cmdkOpen(); }
+      const typing = el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
+      // 다른 다이얼로그가 떠 있으면 그 위에 겹쳐 열지 않는다.
+      const dialogOpen = document.querySelector("dialog[open]");
+      if (!typing && !dialogOpen) { e.preventDefault(); e.stopPropagation(); cmdkOpen(); }
     }
   }, true);
 }
 setupCommandPalette();
+
+// 본문 바로가기: #mainContent 로 가는 앵커 이동은 히스토리 항목을 만들어 뒤로가기 가드(popstate)가
+// '한 번 더 뒤로 가기하면 종료' 를 띄웠다 — 주소를 바꾸지 않고 포커스만 옮긴다.
+function setupSkipLink() {
+  const link = document.querySelector("a.skip-link");
+  if (!link || link.dataset.bound) return;
+  link.dataset.bound = "1";
+  link.addEventListener("click", (e) => {
+    const main = byId("mainContent");
+    if (!main) return;
+    e.preventDefault();
+    main.focus({ preventScroll: true });
+    main.scrollIntoView({ block: "start" });
+  });
+}
+setupSkipLink();

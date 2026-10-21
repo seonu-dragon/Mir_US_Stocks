@@ -162,14 +162,20 @@ window.MirTimelineView = {
 
 function tlDate(d) { return String(d || "").replace(/-/g, "."); }
 
+// 같은 문구의 버튼이 항목마다 반복되므로 접근 가능한 이름에 날짜·제목을 붙인다.
+function tlActAria(label, it) {
+  const ctx = [tlDate(it.date), String(it.title || "").slice(0, 60)].filter(Boolean).join(" ");
+  return ` aria-label="${escapeHtml(ctx ? `${label}: ${ctx}` : label)}"`;
+}
+
 function tlGotoHtml(it, code) {
   const g = it.goto;
   if (!g) return "";
-  if (g.chart) return `<button type="button" class="tl-act" data-tl-chart="${escapeHtml(g.chart)}">차트에서 보기</button>`;
-  if (g.study) return `<button type="button" class="tl-act" data-tl-study="${escapeHtml(g.study)}" data-tl-code="${escapeHtml(code)}">이벤트 스터디</button>`;
+  if (g.chart) return `<button type="button" class="tl-act" data-tl-chart="${escapeHtml(g.chart)}"${tlActAria("차트에서 보기", it)}>차트에서 보기</button>`;
+  if (g.study) return `<button type="button" class="tl-act" data-tl-study="${escapeHtml(g.study)}" data-tl-code="${escapeHtml(code)}"${tlActAria("이벤트 스터디", it)}>이벤트 스터디</button>`;
   if (g.view) {
     const label = TL_GOTO_LABEL[g.view] || "관련 패널";
-    return `<button type="button" class="tl-act" data-tl-view="${escapeHtml(g.view)}" data-tl-card="${escapeHtml(g.card || "")}">${escapeHtml(label)}</button>`;
+    return `<button type="button" class="tl-act" data-tl-view="${escapeHtml(g.view)}" data-tl-card="${escapeHtml(g.card || "")}"${tlActAria(label, it)}>${escapeHtml(label)}</button>`;
   }
   return "";
 }

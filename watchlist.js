@@ -32,8 +32,12 @@ function migrateLegacyWatchlist() {
 
 function initWatchlist(urlList) {
   migrateLegacyWatchlist();
+  // 기본 목록은 저장 키가 아예 없을 때(첫 방문)만 채운다. 사용자가 일부러 비운 목록([])은 그대로 둔다.
+  let hasSaved = false;
   try {
-    const saved = JSON.parse(window.safeStorage.get(watchlistStorageKey()) || "[]");
+    const raw = window.safeStorage.get(watchlistStorageKey());
+    hasSaved = raw != null;
+    const saved = JSON.parse(raw || "[]");
     watchlist = Array.isArray(saved) ? saved.map((t) => normalizeTickerKey(t)).filter(Boolean) : [];
   } catch (e) {
     watchlist = [];
@@ -45,7 +49,7 @@ function initWatchlist(urlList) {
     if (fromUrl.length) watchlist = [...new Set([...fromUrl, ...watchlist])];
     persistWatchlist();
   }
-  if (!watchlist.length) watchlist = defaultWatchlist().slice();
+  if (!watchlist.length && !hasSaved) watchlist = defaultWatchlist().slice();
   persistWatchlist();
 }
 
@@ -88,9 +92,15 @@ function isInWatchlist(ticker) {
   return watchlist.includes(normalizeTickerKey(ticker));
 }
 
+function watchStarLabel(ticker) {
+  const s = typeof stockByTicker === "function" ? stockByTicker(ticker) : null;
+  const name = s && typeof stockLabel === "function" ? stockLabel(s) : String(ticker || "");
+  return `${name} 관심종목`;
+}
+
 function watchStarButton(ticker) {
   const on = isInWatchlist(ticker);
-  return `<button type="button" class="watch-star${on ? " is-on" : ""}" data-watch="${escapeHtml(ticker)}" title="관심종목">${on ? "★" : "☆"}</button>`;
+  return `<button type="button" class="watch-star${on ? " is-on" : ""}" data-watch="${escapeHtml(ticker)}" title="관심종목" aria-label="${escapeHtml(watchStarLabel(ticker))}" aria-pressed="${on ? "true" : "false"}">${on ? "★" : "☆"}</button>`;
 }
 
 function toggleWatchlist(ticker) {
@@ -100,14 +110,17 @@ function toggleWatchlist(ticker) {
   else watchlist.push(t);
   persistWatchlist();
   renderWatchlistBar();
-  renderSummary();
-  renderWatchAlerts();
-  renderBulk();
-  renderActionBoard();
+  // ★ 한 번에 무거운 렌더(시장 요약·알림·내 투자 표+상관행렬·오늘 액션보드)를 다 돌리지 않는다 —
+  // 지금 보이는 화면만 바로 그리고, 가려진 화면은 다음에 보일 때(탭 전환·접힘 펼침) 그린다.
+  watchRenderWhenVisible("summary", "marketSummary", renderSummary);
+  watchRenderWhenVisible("alerts", "watchAlertPanel", renderWatchAlerts);
+  watchRenderWhenVisible("bulk", "tab-bulk", () => { renderBulk(); renderMyInvestSummary(); });
+  watchRenderWhenVisible("action", "dailyActionGrid", renderActionBoard);
   document.querySelectorAll(`[data-watch="${t}"]`).forEach((btn) => {
     const on = isInWatchlist(t);
     btn.classList.toggle("is-on", on);
     btn.textContent = on ? "★" : "☆";
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
   });
   const facts = byId("searchFacts");
   if (facts && selectedTicker === t) {
@@ -115,6 +128,33 @@ function toggleWatchlist(ticker) {
     if (base) renderSearchFacts(applyLive(withDetail(base)));
   }
 }
+
+// ----- 관심종목 변경 후 '보일 때 다시 그리기' -----
+const _watchDeferredRenders = new Map(); // key → { id, fn }
+function watchElVisible(id) {
+  const el = byId(id);
+  return Boolean(el && el.getClientRects().length);
+}
+function watchRenderWhenVisible(key, id, fn) {
+  if (watchElVisible(id)) {
+    _watchDeferredRenders.delete(key);
+    try { fn(); } catch (e) { /* 한 화면 실패가 나머지를 막지 않게 */ }
+  } else {
+    _watchDeferredRenders.set(key, { id, fn });
+  }
+}
+// activateTab(탭 전환)·details 펼침 뒤에 부른다. 이제 보이는 것만 그리고 나머지는 계속 미룬다.
+function flushWatchDeferredRenders() {
+  if (!_watchDeferredRenders.size) return;
+  [..._watchDeferredRenders.entries()].forEach(([key, { id, fn }]) => {
+    if (!watchElVisible(id)) return;
+    _watchDeferredRenders.delete(key);
+    try { fn(); } catch (e) { /* ignore */ }
+  });
+}
+document.addEventListener("toggle", (e) => {
+  if (e.target && e.target.open) flushWatchDeferredRenders();
+}, true);
 
 // ===== 관심 리스트 여러 개(2026-10-03) =====
 // '전체' 는 기존 watchlist(★) 그대로다. 사용자가 만든 리스트는 시장별 [{ id, name, tickers }] 로 따로 저장하고,
@@ -233,16 +273,21 @@ function renderWatchlistBar() {
   const items = watchlist.map((t) => stockByTicker(t)).filter(Boolean);
   const up = items.filter((s) => Number(s.changePct) > 0).length;
   if (summary) summary.textContent = `${items.length}개 · 상승 ${items.length ? Math.round((up / items.length) * 100) : 0}%`;
-  chips.innerHTML = items.map((item) => `
-    <button type="button" class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
-      <strong>${escapeHtml(stockLabel(item))}</strong>
-      <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
-      <span class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거">×</span>
-    </button>
-  `).join("");
-  chips.querySelectorAll(".watch-chip").forEach((chip) => {
-    chip.addEventListener("click", (event) => {
-      if (event.target.closest("[data-remove]")) return;
+  // 칩 = 종목 열기 버튼 + 제거 버튼(형제). 예전엔 × 가 버튼 안의 span 이라 키보드로 지울 수 없었다.
+  chips.innerHTML = items.map((item) => {
+    const label = escapeHtml(stockLabel(item));
+    return `
+    <span class="watch-chip" data-ticker="${escapeHtml(item.ticker)}">
+      <button type="button" class="watch-chip-open" data-ticker="${escapeHtml(item.ticker)}">
+        <strong>${label}</strong>
+        <em class="${cls(item.changePct)}">${fmtDailyPct(item.changePct)}</em>
+      </button>
+      <button type="button" class="watch-chip-remove" data-remove="${escapeHtml(item.ticker)}" title="제거" aria-label="${label} 관심종목에서 제거">×</button>
+    </span>
+  `;
+  }).join("");
+  chips.querySelectorAll(".watch-chip-open").forEach((chip) => {
+    chip.addEventListener("click", () => {
       selectTicker(chip.dataset.ticker, { openSearch: true });
     });
   });

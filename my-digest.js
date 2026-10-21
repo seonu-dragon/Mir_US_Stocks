@@ -41,9 +41,8 @@ function myDigestEnsureData() {
 
 function myDigestTargets() {
   const holdings = (Array.isArray(portfolio) ? portfolio : []).filter((p) => p && p.ticker && Number(p.qty) > 0);
-  const seed = typeof watchlistIsSeed === "function" ? watchlistIsSeed() : false;
-  // 손대지 않은 기본 관심 목록은 '내 종목' 이 아니다(내 투자 탭 빈 상태와 같은 규칙).
-  const watch = seed ? [] : (Array.isArray(watchlist) ? watchlist : []);
+  // 기본 관심 목록도 실제 목록으로 본다(내 투자 탭 본문과 같은 규칙).
+  const watch = Array.isArray(watchlist) ? watchlist : [];
   return { holdings: holdings.map((p) => ({ ticker: normalizeTickerKey(p.ticker), qty: Number(p.qty) })), watch: watch.map((t) => normalizeTickerKey(t)) };
 }
 

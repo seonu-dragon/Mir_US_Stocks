@@ -7982,12 +7982,6 @@ function syncSignalFolds() {
 }
 
 // ----- 내 투자: 빈 상태 + 4숫자 요약 -----
-function watchlistIsSeed() {
-  const seed = (typeof defaultWatchlist === "function" ? defaultWatchlist() : []) || [];
-  if (!Array.isArray(watchlist) || watchlist.length !== seed.length) return false;
-  const set = new Set(seed);
-  return watchlist.every((t) => set.has(t));
-}
 function renderMyInvestSummary() {
   // 보유 종목이 바뀌면(pfTable MutationObserver → 여기) "오늘 내 주식은" 요약도 다시 그린다.
   if (typeof renderMyDigest === "function") renderMyDigest();
@@ -7996,9 +7990,9 @@ function renderMyInvestSummary() {
   const box = byId("myInvestSummary");
   if (!empty || !body) return;
   const hasPortfolio = Array.isArray(portfolio) && portfolio.length > 0;
-  // 관심종목은 비면 기본 목록(defaultWatchlist)이 자동으로 채워진다 — 손대지 않은 기본
-  // 목록은 '아직 내 종목이 없다' 로 본다. 그래야 첫 방문자에게 빈 상태가 보인다.
-  const hasWatch = Array.isArray(watchlist) && watchlist.length > 0 && !watchlistIsSeed();
+  // 첫 방문자의 기본 관심 목록도 실제 목록으로 본다 — ★·레일·테마 '내 종목'과 같은 기준.
+  // 예전엔 기본 목록이면 빈 상태를 띄워 같은 종목이 다른 화면엔 보이고 여기만 비어 있었다.
+  const hasWatch = Array.isArray(watchlist) && watchlist.length > 0;
   // 투자 가설(thesis.js)만 있어도 본문을 보인다 — 보유·관심 상단의 가설 요약 줄이 가려지지 않게.
   const hasThesis = Boolean(window.MirThesis && window.MirThesis.items.length);
   const isEmpty = !hasPortfolio && !hasWatch && !hasThesis;
@@ -8010,7 +8004,7 @@ function renderMyInvestSummary() {
   if (!hasPortfolio) {
     box.innerHTML = hasWatch
       ? `<p class="muted">관심종목 ${watchlist.length}개를 추적 중입니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`
-      : `<p class="muted">기본 관심종목을 보고 있습니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`;
+      : `<p class="muted">관심종목이 없습니다. 보유 종목을 추가하면 평가금액·손익이 여기에 표시됩니다.</p>`;
     return;
   }
   const rows = portfolio.map((p) => {
@@ -8198,13 +8192,7 @@ function setupMyInvestEmpty() {
       if (!raw) return;
       const resolved = normalizeTickerKey(resolveTickerQuery(raw) || raw);
       if (!stockByTicker(resolved)) { showAppToast(`'${raw}' 을(를) 찾지 못했습니다. 티커나 종목명을 확인해 주세요.`); return; }
-      // 손대지 않은 기본 목록이면 그 자리를 내 첫 종목으로 바꾼다(기본 5개에 섞이지 않게).
-      if (watchlistIsSeed()) {
-        watchlist = [resolved];
-        persistWatchlist();
-        renderWatchlistBar();
-        renderActionBoard();
-      } else if (!watchlist.includes(resolved)) {
+      if (!watchlist.includes(resolved)) {
         toggleWatchlist(resolved);
       }
       input.value = "";

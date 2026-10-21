@@ -32,8 +32,12 @@ function migrateLegacyWatchlist() {
 
 function initWatchlist(urlList) {
   migrateLegacyWatchlist();
+  // 기본 목록은 저장 키가 아예 없을 때(첫 방문)만 채운다. 사용자가 일부러 비운 목록([])은 그대로 둔다.
+  let hasSaved = false;
   try {
-    const saved = JSON.parse(window.safeStorage.get(watchlistStorageKey()) || "[]");
+    const raw = window.safeStorage.get(watchlistStorageKey());
+    hasSaved = raw != null;
+    const saved = JSON.parse(raw || "[]");
     watchlist = Array.isArray(saved) ? saved.map((t) => normalizeTickerKey(t)).filter(Boolean) : [];
   } catch (e) {
     watchlist = [];
@@ -45,7 +49,7 @@ function initWatchlist(urlList) {
     if (fromUrl.length) watchlist = [...new Set([...fromUrl, ...watchlist])];
     persistWatchlist();
   }
-  if (!watchlist.length) watchlist = defaultWatchlist().slice();
+  if (!watchlist.length && !hasSaved) watchlist = defaultWatchlist().slice();
   persistWatchlist();
 }
 

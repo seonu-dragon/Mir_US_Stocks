@@ -305,9 +305,9 @@
       krThemes: true,
       // 애널리스트 의견 변경·EPS 추정치 변화는 야후 미국 데이터뿐이다(국내 컨센서스는 FnGuide 카드).
       analystRevisions: false,
-      // 배당 성장 이력 — 국내는 배당절차 개선(2023~24)으로 배당락일 기준 연간 합이 어긋나 빌더가 만들지 않는다
-      // (scripts/build_dividend_growth.py 의 MARKETS 주석). DART 사업연도 배당으로 만들기 전엔 끈다.
-      dividendGrowth: false,
+      // 배당 성장 이력 — 국내는 배당락일 기준 연간 합이 배당절차 개선(2023~24)으로 어긋나서, DART 사업보고서
+      // '배당에 관한 사항'(사업연도 귀속 주당배당금, 액면 환산)으로 따로 만든다(build_kr_dividend_growth.py).
+      dividendGrowth: true,
     },
     matchBucket(item, groups, bucket) {
       if (bucket === "watchlist") return window._mirWatchlistMatch?.(item) ?? false;

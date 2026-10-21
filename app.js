@@ -7144,7 +7144,7 @@ function dataTrustSources() {
     rows.push(source("EPS 추정치 변화", "Yahoo Finance", window.US_ESTIMATE_REVISIONS, ["tickers"], 96, "매일 06:30", "usEstimateRevisions"));
   }
   // 배당 성장 이력 — 주 1회(수요일 기업개요 워크플로우). 10일(240시간).
-  if (cfg.id === "us" && cfg.features?.dividendGrowth !== false) rows.push(source("배당 성장 이력", "Yahoo Finance 배당 기록(1985~)", window.DIVIDEND_GROWTH, ["tickers"], 240, "매주 수요일", "dividendGrowth"));
+  if (cfg.features?.dividendGrowth !== false) rows.push(source("배당 성장 이력", cfg.id === "kr" ? "DART 사업보고서 배당에 관한 사항(2013~)" : "Yahoo Finance 배당 기록(1985~)", window.DIVIDEND_GROWTH, ["tickers"], 240, "매주 수요일", "dividendGrowth"));
   // 오늘의 특징주(2026-09-25) — 거래일에만 새로 쓰므로 주말·연휴를 감안해 5일(120시간).
   // 조용한 날은 0종목이 정상이라 allowEmpty.
   if (cfg.features?.moversBoard !== false) rows.push(source("오늘의 특징주", cfg.id === "kr" ? "DART · 뉴스 헤드라인 · AI 자동 요약" : "SEC 8-K · 뉴스 헤드라인 · AI 자동 요약", window.MOVERS_REASONS, ["up", "down"], 120, "장 마감 후 매일", "movers", "", true));

@@ -75,7 +75,7 @@ test("정렬 가능한 열의 metric 은 #topMetric 옵션 값", () => {
 });
 
 // lazy 열(추정치·의견·배당 성장·옵션)의 정렬 지표는 formula-screener.js 가 미국에서만 #topMetric 에 넣는 옵션(XM_SORT_KEYS)이다.
-test("lazy 열: 미국 전용, 정렬 지표는 XM_SORT_KEYS 안, 국내 목록·기본값에 없음", () => {
+test("lazy 열: 미국 전용(배당 성장만 두 시장), 정렬 지표는 XM_SORT_KEYS 안, 국내 목록·기본값에 없음", () => {
   const fs = require("node:fs");
   const src = fs.readFileSync(new URL("../../formula-screener.js", import.meta.url), "utf8");
   const m = /const XM_SORT_KEYS = \[([^\]]*)\]/.exec(src);
@@ -83,13 +83,15 @@ test("lazy 열: 미국 전용, 정렬 지표는 XM_SORT_KEYS 안, 국내 목록�
   const keys = m[1].split(",").map((x) => x.trim().replace(/"/g, "")).filter(Boolean);
   const lazy = core.COLUMNS.filter((c) => c.lazy);
   assert.ok(lazy.length >= 5);
+  // 배당 연속 증가는 국내도 DART 사업보고서로 만든다(2026-10-22) — 나머지는 미국 전용.
+  const BOTH = new Set(["divGrowthYears"]);
   lazy.forEach((c) => {
-    assert.deepEqual(c.markets, ["us"], c.key);
+    assert.deepEqual(c.markets, BOTH.has(c.key) ? ["us", "kr"] : ["us"], c.key);
     assert.ok(keys.includes(c.metric), `${c.key}→${c.metric}`);
     assert.ok(src.includes(`key: "${c.key}"`), `XM_METRICS 에 ${c.key}`);
   });
   const kr = core.availableColumns("kr").map((c) => c.key);
-  lazy.forEach((c) => assert.ok(!kr.includes(c.key), `국내에 ${c.key}`));
+  lazy.forEach((c) => assert.ok(BOTH.has(c.key) ? kr.includes(c.key) : !kr.includes(c.key), `국내에 ${c.key}`));
   assert.deepEqual(core.sanitizeColumns(["epsRev30", "price"], "kr"), ["price"]);
   assert.deepEqual(core.toggleColumn(core.defaultColumns("us"), "epsRev30", true, "us").slice(-1), ["epsRev30"]);
   lazy.forEach((c) => assert.ok(!core.defaultColumns("us").includes(c.key), "기본 열은 lazy 데이터를 받지 않게"));

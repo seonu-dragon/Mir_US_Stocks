@@ -29,7 +29,7 @@ function makeCtx(market = "us", features = {}) {
     const FEATURE_DATA = {
       usEstimateRevisions: { global: "US_ESTIMATE_REVISIONS", feature: "analystRevisions", usOnly: true },
       usRatingChanges: { global: "US_RATING_CHANGES", feature: "analystRevisions", usOnly: true },
-      dividendGrowth: { global: "DIVIDEND_GROWTH", feature: "dividendGrowth", usOnly: true },
+      dividendGrowth: { global: "DIVIDEND_GROWTH", feature: "dividendGrowth", marketSpecific: true },
       optionsStats: { global: "OPTIONS_STATS", usOnly: true },
     };
     function featureDataEnabled(meta, cfg) {
@@ -68,17 +68,18 @@ const DG = { lastYear: 2025, cols: ["up", "paid", "cagr5", "cagr10", "last", "si
   tickers: { AAA: [12, 14, 6.6, 9.1, 0.99, 2012, true, true, null, 1] } };
 const OPT = { stocks: { AAA: { putCallOI: 0.82, expectedMovePct: 1.8 } } };
 
-test("feature-data.js 의 실제 정의와 테스트 흉내가 같다(전역 이름·usOnly·feature)", () => {
+test("feature-data.js 의 실제 정의와 테스트 흉내가 같다(전역 이름·usOnly/marketSpecific·feature)", () => {
   const src = fs.readFileSync(path.join(ROOT, "feature-data.js"), "utf8");
-  for (const [key, global, feature] of [["usEstimateRevisions", "US_ESTIMATE_REVISIONS", "analystRevisions"], ["usRatingChanges", "US_RATING_CHANGES", "analystRevisions"], ["dividendGrowth", "DIVIDEND_GROWTH", "dividendGrowth"], ["optionsStats", "OPTIONS_STATS", null]]) {
+  // 배당 성장은 2026-10-22 부터 시장별 파일(국내 DART, build_kr_dividend_growth.py)이다.
+  for (const [key, global, feature, scope] of [["usEstimateRevisions", "US_ESTIMATE_REVISIONS", "analystRevisions", "usOnly: true"], ["usRatingChanges", "US_RATING_CHANGES", "analystRevisions", "usOnly: true"], ["dividendGrowth", "DIVIDEND_GROWTH", "dividendGrowth", "marketSpecific: true"], ["optionsStats", "OPTIONS_STATS", null, "usOnly: true"]]) {
     const line = src.split("\n").find((l) => l.trim().startsWith(`${key}:`));
     assert.ok(line, key);
-    assert.ok(line.includes(`global: "${global}"`) && line.includes("usOnly: true"), line);
+    assert.ok(line.includes(`global: "${global}"`) && line.includes(scope), line);
     if (feature) assert.ok(line.includes(`feature: "${feature}"`), line);
   }
 });
 
-test("US: 데이터가 오기 전에도 필드 목록에 있고, 국내에서는 숨긴다", () => {
+test("US: 데이터가 오기 전에도 필드 목록에 있고, 국내에서는 미국 전용만 숨긴다", () => {
   const us = makeCtx("us");
   ev(us, `data.stocks = [{ ticker: "AAA", marketCapB: 10 }]`);
   const keys = ev(us, "fxAvailableFields().keys");
@@ -87,7 +88,8 @@ test("US: 데이터가 오기 전에도 필드 목록에 있고, 국내에서는
   const kr = makeCtx("kr");
   ev(kr, `data.stocks = [{ ticker: "005930", marketCapB: 10 }]`);
   const kk = ev(kr, "fxAvailableFields().keys");
-  ["epsRev30", "ratingUp30", "divGrowthYears", "optPcr"].forEach((k) => assert.ok(!kk.includes(k), `국내 ${k}`));
+  ["epsRev30", "ratingUp30", "optPcr"].forEach((k) => assert.ok(!kk.includes(k), `국내 ${k}`));
+  ["divGrowthYears", "divPaidYears", "divCagr5"].forEach((k) => assert.ok(kk.includes(k), `국내 배당 성장 ${k}(DART)`));
   const c = ev(kr, `MirFormulaCore.compile("epsRev30 > 0", fxCompileOptions("bool"))`);
   assert.equal(c.ok, false, "국내에서 쓰면 컴파일 오류");
 });
@@ -156,7 +158,7 @@ test("lazy 받기: 조건에 쓰인 필드의 데이터만, 꺼진 시장은 받
   assert.deepEqual([...ev(ctx, "__ensured")], ["usEstimateRevisions", "usRatingChanges"], "이미 받는 중인 것은 다시 부르지 않는다");
   const kr = makeCtx("kr");
   ev(kr, `xmEnsure(["epsRev30", "divGrowthYears", "optPcr"])`);
-  assert.deepEqual([...ev(kr, "__ensured")], []);
+  assert.deepEqual([...ev(kr, "__ensured")], ["dividendGrowth"], "국내는 배당 성장(DART)만 받는다");
 });
 
 await new Promise((r) => setTimeout(r, 0));

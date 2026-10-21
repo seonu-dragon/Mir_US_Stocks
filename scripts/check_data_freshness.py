@@ -141,8 +141,12 @@ CHECKS = {
         ("data/korea/ownership_profile.json", 6, False),
         ("data/korea/audit_opinion.json", 6, False),
         ("data/korea/financials_history.json", 6, True),
-        ("data/korea/nps_holdings.json", 6, True),
-        ("data/korea/corp_groups.json", 6, False),
+        # 국민연금 보유(연말 기준, 연 1회 공개)·공정위 기업집단(5/1 지정, 연 1회)은 원천이 1년에 한 번 바뀐다.
+        # 6일이면 주간 실행이 공공데이터포털 간헐 타임아웃으로 한 번만 실패해도(2026-10-17 둘 다 timed out)
+        # 바로 신선도 실패·감시 경보가 됐다 — 값은 그대로인데. 주간 2회 연속 실패(14일 + 여유 1일)부터 운다.
+        # data_health_core.freshness_max_hours 가 이 값을 그대로 읽는다(신뢰도 센터엔 이 둘의 프로필이 없다).
+        ("data/korea/nps_holdings.json", 15, True),
+        ("data/korea/corp_groups.json", 15, False),
         ("data/us_financials_history.json", 6, True),
         # 사업부문·지역·제품별 매출(build_segments_us.py, segments 잡). 새 공시가 없어도 실행마다 인덱스
         # updatedAtKst 를 새로 쓴다. 0종목(count)도 잡는다.

@@ -28,7 +28,9 @@ DART 공시 원문(document.xml) 앵커링 파싱(build_kr_disclosures 배당 / 
     달라 '1우'→'우' 변형 1가지만 추가로 시도하고, 그래도 없으면 버린다.
 
 산출물: data/korea/ksd_actions.json + .js(window.KR_KSD_ACTIONS).
-행이 MIN_ROWS 미만이거나 수집 오류가 과하면 기존 파일 유지 + exit 1.
+하루 쿼터에 걸리면 받은 데까지 발행하고(custnoMap·refreshedAt 저장, 못 받은 종목은 직전 행 이월 —
+build() 주석), 다음 실행이 안 받은 종목부터 이어 간다. 이번에 새로 받은 종목이 0 이거나 행이 MIN_ROWS
+미만이면 기존 파일 유지 + exit 1.
 """
 
 from __future__ import annotations
@@ -174,46 +176,98 @@ def resolve_div_ticker(item: dict, ticker: str, by_name: dict[str, str]) -> str 
     return None
 
 
-def build(key: str, limit: int) -> dict:
+def _load_prev() -> dict:
+    if not OUT_JSON.exists():
+        return {}
+    try:
+        return json.loads(OUT_JSON.read_text(encoding="utf-8")) or {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+def refresh_order(universe: list[dict], refreshed_at: dict[str, str]) -> list[dict]:
+    """이번 실행에서 볼 순서 — 한 번도 안 받은 종목, 그다음 오래전에 받은 종목부터(같으면 시총 순 유지).
+
+    쿼터가 실행 도중 끝나도 다음 실행이 이어서 받아, 몇 번이면 유니버스 전체가 돈다."""
+    return sorted(universe, key=lambda s: refreshed_at.get(s["ticker"], ""))
+
+
+def carry_rows(rows, refreshed: set, keep: set, cutoff_iso: str, date_key: str) -> list[dict]:
+    """이번에 다시 받지 못한 종목(src)의 직전 행을 그대로 이월한다(창 밖 날짜·유니버스 밖 종목은 버린다)."""
+    out = []
+    for row in rows or []:
+        src = row.get("src") or row.get("ticker")
+        if src in refreshed or src not in keep:
+            continue
+        if (row.get(date_key) or "") < cutoff_iso:
+            continue
+        out.append(row)
+    return out
+
+
+def build(key: str, limit: int, *, call_fn=None, prev: dict | None = None, sleep=time.sleep) -> dict:
+    """유니버스를 '오래 안 받은 순'으로 돌며 KSD 를 조회한다.
+
+    2026-10-14~21 매 실행 실패(continue-on-error 라 초록): custnoMap 캐시가 담긴 산출물이 **한 번도** 써지지
+    않아(첫 성공 전) 매일 300종목 전부 getIssucoCustnoByShortIsin 부터 불렀고, 그 조회가 하루 약 100회째에서
+    429(LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR)로 막혀 "연속 429 5종목" 으로 전체를 버렸다 —
+    캐시가 계속 비어 있으니 다음 날도 같은 자리에서 또 죽었다(10-16·19·20·21 로그 모두 100번째 종목 부근). 이제
+      - 발행회사번호 조회가 쿼터에 걸리면 조회만 멈추고, 이미 아는 종목은 계속 받는다.
+      - 어느 오퍼레이션이든 쿼터가 끝나면 그 자리에서 멈추고 받은 데까지 발행한다(custnoMap 포함 — 다음 실행이 이어 감).
+      - 다시 받지 못한 종목의 직전 행은 refreshedAt(종목별 마지막 수집일)과 함께 이월한다. 지어낸 행은 없다.
+    """
+    call_fn = call_fn or call
+    prev = _load_prev() if prev is None else prev
     universe, by_name = load_universe(limit)
     print(f"유니버스 {len(universe)}종목(시총 상위) / 이름매핑 {len(by_name)}개")
 
-    prev_map: dict[str, str] = {}
-    if OUT_JSON.exists():
-        try:
-            prev_map = {k: str(v) for k, v in
-                        (json.loads(OUT_JSON.read_text(encoding="utf-8"))
-                         .get("custnoMap") or {}).items()}
-        except Exception:  # noqa: BLE001
-            prev_map = {}
-
+    custno_map = {k: str(v) for k, v in (prev.get("custnoMap") or {}).items()}
+    refreshed_at = {k: str(v) for k, v in (prev.get("refreshedAt") or {}).items()}
+    today = kst_now().strftime("%Y-%m-%d")
     cutoff = (kst_now() - timedelta(days=LOOKBACK_DAYS)).strftime("%Y%m%d")
-    custno_map: dict[str, str] = {}
     dividends: list[dict] = []
     issues: list[dict] = []
     seen_div: set[tuple] = set()
+    refreshed: set[str] = set()
     errors = 0
     consec_429 = 0
     calls = 0
+    lookup_blocked = False
+    stopped = None
 
-    for i, s in enumerate(universe, 1):
-        ticker, company = s["ticker"], s.get("company") or ""
+    def api(op: str, **params):
+        nonlocal calls
+        calls += 1
         try:
-            custno = prev_map.get(ticker)
-            if not custno:
-                found = call("getIssucoCustnoByShortIsin", key, shortIsin=ticker)
-                calls += 1
-                time.sleep(SLEEP)
-                if not found:
-                    continue  # KSD 미등록(신규상장 직후 등) — 다음 실행에 재시도
-                custno = found[0].get("issucoCustno") or ""
-                if not custno:
-                    continue
-            custno_map[ticker] = custno
+            return call_fn(op, key, **params)
+        finally:
+            sleep(SLEEP)
 
-            sched = call("getIssucoRgtSchedule", key, issucoCustno=custno)
-            calls += 1
-            time.sleep(SLEEP)
+    for i, s in enumerate(refresh_order(universe, refreshed_at), 1):
+        ticker, company = s["ticker"], s.get("company") or ""
+        custno = custno_map.get(ticker)
+        if not custno and lookup_blocked:
+            continue  # 발행회사번호 조회 쿼터 소진 — 다음 실행에서 받는다
+        t_div: list[dict] = []
+        t_iss: list[dict] = []
+        try:
+            if not custno:
+                try:
+                    found = api("getIssucoCustnoByShortIsin", shortIsin=ticker)
+                except ApiError as e:
+                    if "429" not in str(e):
+                        raise
+                    lookup_blocked = True
+                    print(f"  [{ticker}] 발행회사번호 조회 쿼터 소진(429) — 이번 실행은 이미 아는 종목만 받는다")
+                    continue
+                custno = (found[0].get("issucoCustno") or "") if found else ""
+                if not custno:
+                    refreshed.add(ticker)  # KSD 미등록(신규상장 직후 등) — 오늘 확인했다
+                    refreshed_at[ticker] = today
+                    continue
+                custno_map[ticker] = custno
+
+            sched = api("getIssucoRgtSchedule", issucoCustno=custno)
             div_dates: list[str] = []
             for ev in sched:
                 std = ev.get("rgtStdDt") or ""
@@ -223,15 +277,13 @@ def build(key: str, limit: int) -> dict:
                 if DIV_RE.search(kind):
                     div_dates.append(std)
                 elif ISSUE_RE.search(kind):
-                    issues.append({
+                    t_iss.append({
                         "ticker": ticker, "company": company, "kind": kind,
-                        "stage": "record", "date": iso(std), "recordDate": iso(std),
+                        "stage": "record", "date": iso(std), "recordDate": iso(std), "src": ticker,
                     })
 
             for std in sorted(set(div_dates), reverse=True):
-                div_items = call("getDivInfo", key, issucoCustno=custno, rgtStdDt=std)
-                calls += 1
-                for item in div_items:
+                for item in api("getDivInfo", issucoCustno=custno, rgtStdDt=std):
                     t = resolve_div_ticker(item, ticker, by_name)
                     if not t:
                         continue  # 정확 일치 실패(구형 우선주 등) — 버린다
@@ -243,7 +295,7 @@ def build(key: str, limit: int) -> dict:
                         amt = float(item.get("cashAlocAmt") or 0)
                     except ValueError:
                         amt = 0.0
-                    dividends.append({
+                    t_div.append({
                         "ticker": t,
                         "company": company if t == ticker else (item.get("korSecnNm") or company),
                         "secKind": item.get("secnKacdNm") or None,
@@ -252,42 +304,58 @@ def build(key: str, limit: int) -> dict:
                         # 0원은 '미확정'(기준일만 예고) — 확정액과 구분해 null 로 둔다.
                         "cashAmt": amt if amt > 0 else None,
                         "payDate": iso(item.get("th1PayTermBeginDt")),
+                        "src": ticker,
                     })
-                time.sleep(SLEEP)
 
-            chg_items = call("getIssucoStkQtyChgList", key, issucoCustno=custno)
-            calls += 1
-            for chg in chg_items:
+            for chg in api("getIssucoStkQtyChgList", issucoCustno=custno):
                 d = chg.get("issuDt") or ""
                 if len(d) != 8 or d < cutoff:
                     continue
                 qty = chg.get("issuQty")
-                issues.append({
+                t_iss.append({
                     "ticker": ticker, "company": company,
                     "kind": chg.get("secnIssuRacdNm") or "발행",
                     "stage": "issued", "date": iso(d), "issueDate": iso(d),
                     "listDate": iso(chg.get("listDt")),
                     "qty": int(float(qty)) if qty else None,
+                    "src": ticker,
                 })
-            time.sleep(SLEEP)
         except ApiError as e:
             errors += 1
             print(f"  [{ticker}] {e}")
             consec_429 = consec_429 + 1 if "429" in str(e) else 0
             if consec_429 >= MAX_CONSEC_429:
-                raise ApiError(f"연속 429 {consec_429}종목 — 일일 쿼터 소진으로 중단") from e
+                stopped = f"연속 429 {consec_429}종목 — 일일 쿼터 소진, 받은 데까지 발행"
+                print(f"  {stopped}")
+                break
             if errors > MAX_TICKER_ERRORS:
-                raise ApiError(f"종목 단위 실패 {errors}건 초과 — 중단") from e
-        else:
-            consec_429 = 0
+                stopped = f"종목 단위 실패 {errors}건 초과 — 중단, 받은 데까지 발행"
+                print(f"  {stopped}")
+                break
+            continue
+        consec_429 = 0
+        # 한 종목의 조회가 전부 성공했을 때만 그 종목 행을 바꾼다(반쪽 행 금지 — 실패면 직전 행 이월).
+        dividends.extend(t_div)
+        issues.extend(t_iss)
+        refreshed.add(ticker)
+        refreshed_at[ticker] = today
         if i % 100 == 0:
             print(f"  {i}/{len(universe)} … 배당 {len(dividends)} / 증자·감자 {len(issues)}"
                   f" (호출 {calls}, 오류 {errors})")
 
+    keep = {s["ticker"] for s in universe}
+    cutoff_iso = iso(cutoff) or ""
+    carried_div = carry_rows(prev.get("dividends"), refreshed, keep, cutoff_iso, "recordDate")
+    carried_iss = carry_rows(prev.get("issues"), refreshed, keep, cutoff_iso, "date")
+    dividends += carried_div
+    issues += carried_iss
     dividends.sort(key=lambda r: (r["recordDate"] or "", r["ticker"]), reverse=True)
     issues.sort(key=lambda r: (r["date"] or "", r["ticker"]), reverse=True)
-    print(f"수집 완료: 배당 {len(dividends)}행 / 증자·감자·소각 {len(issues)}행 "
-          f"(호출 {calls}, 오류 {errors})")
+    covered = sum(1 for s in universe if s["ticker"] in refreshed_at)
+    blocked_note = " · 발행회사번호 조회 쿼터 소진" if lookup_blocked else ""
+    print(f"수집 완료: 이번에 받은 종목 {len(refreshed)}/{len(universe)} (누적 {covered}) · 이월 행 배당 {len(carried_div)}"
+          f" / 증자 {len(carried_iss)} · 배당 {len(dividends)}행 / 증자·감자·소각 {len(issues)}행"
+          f" (호출 {calls}, 오류 {errors}){blocked_note}")
 
     return {
         "updatedAtKst": kst_now().strftime("%Y-%m-%d %H:%M KST"),
@@ -295,9 +363,13 @@ def build(key: str, limit: int) -> dict:
         "source": "한국예탁결제원 기업정보서비스(공공데이터포털 OpenAPI) · "
                   f"시총 상위 {len(universe)}종목 · 최근 {LOOKBACK_DAYS}일 "
                   "권리일정·배당내역·주식수변동",
+        # 하루 쿼터 때문에 한 실행이 유니버스를 다 못 돌 수 있다 — 종목별 마지막 수집일(refreshedAt)과 함께 밝힌다.
+        "coverage": {"universe": len(universe), "covered": covered, "refreshedThisRun": len(refreshed),
+                     "lookupBlocked": lookup_blocked, "stopped": stopped},
         "dividends": dividends,
         "issues": issues,
         "custnoMap": custno_map,
+        "refreshedAt": {t: d for t, d in refreshed_at.items() if t in keep},
     }
 
 
@@ -323,6 +395,9 @@ def main() -> int:
         print(f"[ksd] 수집 실패({type(e).__name__}: {e}) — 기존 파일 유지")
         return 1
 
+    if not payload["coverage"]["refreshedThisRun"]:
+        print(f"[ksd] 이번 실행에서 새로 받은 종목 0 ({payload['coverage']['stopped'] or '쿼터 소진'}) — 기존 파일 유지")
+        return 1
     rows = len(payload["dividends"]) + len(payload["issues"])
     if rows < MIN_ROWS:
         print(f"[ksd] 행 {rows}건 < {MIN_ROWS} — 기존 파일 유지")

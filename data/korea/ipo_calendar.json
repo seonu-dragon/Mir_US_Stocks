@@ -1,7 +1,7 @@
 {
-  "updatedAtKst": "2026-10-20 16:22 KST",
+  "updatedAtKst": "2026-10-21 16:23 KST",
   "lastFileDate": "2026.12.10",
-  "count": 42,
+  "count": 43,
   "source": "38 Communication (38.co.kr)",
   "note": "국내 신규 IPO 일정 정보. 청약 예정 및 최근 신규 상장 완료 리스트. offerPrice(원)는 확정공모가만 싣는다. offerPricePending=true는 수요예측 전이라 공모가가 아직 없는 행이고, 있으면 offerPriceBand=[하단,상단]이 희망공모가 밴드다 (중간값을 공모가로 추정하지 않는다). instCompetition·commitPct(수요예측 신청 수량 기준 의무보유 확약 비율)·subscriptionCompetition 은 build_kr_lockups.py 가 읽은 38 수요예측 결과·공모주 상세 값이다.",
   "ipos": [
@@ -18,6 +18,36 @@
       "offerPriceBand": [
         5400,
         6800
+      ]
+    },
+    {
+      "company": "이노보테라퓨틱스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "한국투자증권",
+      "fileDate": "2026.12.07",
+      "accession": "kr-ipo-bidding-이노보테라퓨틱스",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        20000,
+        24000
+      ]
+    },
+    {
+      "company": "에이엔에이치스트럭쳐",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "공모 청약 예정",
+      "form": "NH투자증권",
+      "fileDate": "2026.11.27",
+      "accession": "kr-ipo-bidding-에이엔에이치스트럭쳐",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
+      "offerPricePending": true,
+      "offerPriceBand": [
+        11200,
+        13600
       ]
     },
     {
@@ -273,6 +303,19 @@
       "instCompetition": 240.46
     },
     {
+      "company": "인텔리빅스",
+      "ticker": null,
+      "stage": "filed",
+      "stageLabel": "신규 상장 예정",
+      "form": "미래에셋증권",
+      "fileDate": "2026.10.30",
+      "accession": "kr-ipo-listed-인텔리빅스",
+      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
+      "offerPrice": 9000,
+      "instCompetition": 1234.3,
+      "commitPct": 6.14
+    },
+    {
       "company": "한화플러스스팩6호",
       "ticker": null,
       "stage": "filed",
@@ -398,26 +441,11 @@
       "subscriptionCompetition": 1538.51
     },
     {
-      "company": "인텔리빅스",
-      "ticker": null,
-      "stage": "filed",
-      "stageLabel": "공모 청약 예정",
-      "form": "미래에셋증권",
-      "fileDate": "2026.10.21",
-      "accession": "kr-ipo-bidding-인텔리빅스",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=k",
-      "offerPricePending": true,
-      "offerPriceBand": [
-        7600,
-        9000
-      ]
-    },
-    {
       "company": "엘리스그룹",
       "ticker": null,
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "미래에셋증권,삼성증권",
+      "form": "",
       "fileDate": "2026.10.20",
       "accession": "kr-ipo-listed-엘리스그룹",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -445,7 +473,7 @@
       "ticker": "250030",
       "stage": "priced",
       "stageLabel": "신규 상장 완료",
-      "form": "하나증권",
+      "form": "",
       "fileDate": "2026.10.15",
       "accession": "kr-ipo-listed-진코스텍",
       "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
@@ -587,20 +615,6 @@
       "instCompetition": 63.41,
       "commitPct": 0.17,
       "subscriptionCompetition": 2.85
-    },
-    {
-      "company": "해치텍",
-      "ticker": null,
-      "stage": "priced",
-      "stageLabel": "신규 상장 완료",
-      "form": "",
-      "fileDate": "2026.08.25",
-      "accession": "kr-ipo-listed-해치텍",
-      "link": "https://www.38.co.kr/html/fund/index.htm?o=nw",
-      "offerPrice": 23000,
-      "instCompetition": 101.91,
-      "commitPct": 15.08,
-      "subscriptionCompetition": 25.73
     }
   ]
 }

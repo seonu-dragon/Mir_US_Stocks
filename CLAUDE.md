@@ -221,12 +221,15 @@ exit 0 으로 삼킨다. **새 작업을 시작하기 전에 그 문서의 §1(P
   `ai-mode.js:1770`(html2canvas `?v=1.4.1`). 해당 파일을 실제로 교체할 때만 손으로
   숫자를 올리면 된다 — **그 외에는 건드리지 말 것**(값이 갈라져도 스탬프가 못 잡는다).
 - `sitemap.xml` 은 `scripts/build_sitemap.py` 가 생성한다(**직접 고치지 말 것**).
-  홈·분석 + 시가총액 상위 300종목/시장의 `analysis.html?t=` 딥링크 = 602 URL.
-  스냅샷이 크게 바뀌면 다시 돌린다: `py scripts/build_sitemap.py`
-  (`--check` 로 최신 여부만 확인 가능). 전체 1만+ 를 넣지 않은 건 의도적이다 —
-  클라이언트 렌더 페이지를 한꺼번에 올리면 thin content 로 취급되기 쉽다.
-  딥링크가 색인되려면 `analysis.js` 의 `updateAnalysisMeta` 가 종목별 canonical 을
-  써 줘야 한다. 둘 중 하나만 바꾸면 효과가 없다.
+  홈·분석 + 시가총액 상위 300종목/시장의 **정적 요약 페이지 `stock/<시장>/<티커>.html`** + 시장별 허브
+  `stock/<시장>/index.html` + 산업 지표 딥링크(2026-10-22 부터, 그 전엔 `analysis.html?t=` 딥링크였다).
+  정적 페이지는 **레포에 없다** — `deploy-pages.yml` 이 스테이징(`_site/`)에서 `scripts/gen_stock_pages.py` 로
+  sitemap 목록대로 만든다(서버 렌더 요약 + JSON-LD + 자기 canonical, ~5MB). 그 스크립트는 먼저 `_site/sitemap.xml`
+  을 딥링크판으로 바꿔 두고 실제로 만든 페이지만 정적 URL 로 되돌리므로, 실패해도 404 URL 을 제출하지 않는다.
+  URL 규칙(`stock_page_rel`·`analysis_deeplink`·`HUB_REL`)은 `build_sitemap.py` 한 곳이고 두 스크립트가 같이 쓴다.
+  스냅샷이 크게 바뀌면 다시 돌린다: `py scripts/build_sitemap.py`(`--check` 로 최신 여부만 확인 가능).
+  전체 1만+ 를 넣지 않은 건 의도적이다(thin content). 분석 딥링크로 들어온 경우는 여전히 `analysis.js` 의
+  `updateAnalysisMeta` 가 종목별 canonical 을 쓴다.
 
 ## Cloudflare Worker (worker/)
 

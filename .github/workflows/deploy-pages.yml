@@ -307,6 +307,14 @@ jobs:
         continue-on-error: true
         run: python3 scripts/compact_site_json.py --root _site data/market_snapshot.json data/korea/market_snapshot.json
 
+      # 종목 정적 요약 페이지(2026-10-22 SEO) — sitemap.xml 이 올린 stock/<시장>/<티커>.html 을 여기서 만든다(레포에 커밋 X,
+      # 시장별 상위 300 + 허브, ~5MB). 스크립트가 먼저 _site/sitemap.xml 을 분석 딥링크판으로 바꿔 두고 실제로 만든
+      # 페이지만 정적 URL 로 되돌리므로, 실패해도 404 URL 이 제출되지 않는다.
+      - name: Build static stock pages (staging copy)
+        if: steps.gate.outputs.deploy != 'false'
+        continue-on-error: true
+        run: python3 scripts/gen_stock_pages.py --root _site
+
       # 구독 피드(.ics 캘린더 + 공시 RSS). 데이터가 여러 워크플로우에서 따로 커밋되므로 전부가
       # 합쳐지는 여기(배포 스테이징)에서 만든다 — 레포에는 커밋하지 않는다(data/feeds/ 는
       # .gitignore). 경제지표는 워커 ?calendar=1 을 한 번 부르고, 실패해도 FOMC·산업 지표로

@@ -1,4 +1,9 @@
-"""sitemap.xml 생성 — 홈/분석 페이지 + 종목별 딥링크.
+"""sitemap.xml 생성 — 홈/분석 페이지 + 종목 정적 요약 페이지(stock/<시장>/<티커>.html) + 허브.
+
+2026-10-22: 종목 URL 을 분석 딥링크(analysis.html?t=, JS 렌더)에서 정적 요약 페이지로 바꿨다. 그 페이지는
+레포에 없고 배포 스테이징에서 scripts/gen_stock_pages.py 가 이 파일의 목록대로 만든다(못 만든 종목은 그
+스크립트가 _site/sitemap.xml 에서 딥링크로 되돌린다 — 404 URL 을 제출하지 않게). URL 규칙은 아래
+stock_page_rel·analysis_deeplink·HUB_REL 한 곳에서 정하고 두 스크립트가 같이 쓴다.
 
 왜 종목 딥링크를 넣나:
   종목 상세 데이터가 US 7,098 · KR 3,796 개 있는데 sitemap 에는 URL 이 2개뿐이라,
@@ -10,9 +15,8 @@
   올린다(--limit 로 조절).
 
 전제:
-  analysis.js 의 updateAnalysisMeta 가 ?t= 진입 시 canonical·제목·설명·OG 를 그
-  종목 것으로 바꿔 준다. 그게 없으면 canonical 이 전부 analysis.html 을 가리켜서
-  여기 올린 URL 들은 중복으로 무시된다 — 이 스크립트만 돌려서는 효과가 없다.
+  정적 페이지는 자기 자신을 canonical 로 쓴다. 분석 딥링크(배포에서 되돌려진 종목·직접 공유 링크)는
+  analysis.js 의 updateAnalysisMeta 가 ?t= 진입 시 canonical·제목·설명·OG 를 그 종목 것으로 바꿔 준다.
 
 사용법:
   py scripts/build_sitemap.py                 # 시장별 상위 300종목
@@ -42,6 +46,19 @@ from briefing_store import atomic_write_text  # noqa: E402  중단 시 잘린 �
 BASE = "https://seonu-dragon.github.io/Mir_US_Stocks"
 OUT = ROOT / "sitemap.xml"
 KST = ZoneInfo("Asia/Seoul")
+
+# 정적 요약 페이지·허브·분석 딥링크 URL(BASE 뒤 상대 경로). gen_stock_pages.py 도 이걸 쓴다.
+HUB_REL = {"us": "stock/us/index.html", "kr": "stock/kr/index.html"}
+
+
+def stock_page_rel(market: str, ticker: str) -> str:
+    return f"stock/{market}/{ticker}.html"
+
+
+def analysis_deeplink(market: str, ticker: str) -> str:
+    # KR 은 ?market=kr 이 있어야 분석 페이지가 국내 모드로 뜬다(analysis.js analysisMarketSuffix 와 같다).
+    return f"analysis.html?t={ticker}" + ("&market=kr" if market == "kr" else "")
+
 
 MARKETS = {
     "us": {"snapshot": ROOT / "data" / "market_snapshot.json",
@@ -103,7 +120,7 @@ def build_xml(limit: int) -> str:
         '<?xml version="1.0" encoding="UTF-8"?>',
         "<!--",
         "  scripts/build_sitemap.py 가 생성한다. 직접 고치지 말 것.",
-        "  홈·분석 페이지 + 시가총액 상위 종목의 분석 딥링크(?t=).",
+        "  홈·분석 페이지 + 시가총액 상위 종목의 정적 요약 페이지(stock/, 배포 때 생성) + 시장별 허브.",
         "  sector-detail.html 은 리다이렉트, chart_capture.html 은 내부 도구라 제외.",
         "-->",
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
@@ -127,12 +144,10 @@ def build_xml(limit: int) -> str:
     url(f"{BASE}/analysis.html", newest, "daily", "0.8")
 
     for market, tickers, date in (("us", us_tickers, us_date), ("kr", kr_tickers, kr_date)):
+        if tickers:
+            url(f"{BASE}/{HUB_REL[market]}", date, "daily", "0.6")
         for ticker in tickers:
-            # KR 은 ?market=kr 이 있어야 분석 페이지가 국내 모드로 뜬다.
-            # 여기서는 날 것의 & 를 쓴다 — XML 이스케이프는 url() 의 escape() 가
-            # 한 번만 해야 한다. 미리 &amp; 로 써 두면 &amp;amp; 가 된다.
-            suffix = "&market=kr" if market == "kr" else ""
-            url(f"{BASE}/analysis.html?t={ticker}{suffix}", date, "weekly", "0.5")
+            url(f"{BASE}/{stock_page_rel(market, ticker)}", date, "daily", "0.5")
 
     # 산업 지표 딥링크(index.html?tab=industry&i=) — 지표 하나가 URL 하나(기획서 4장).
     ind_path = ROOT / "data" / "industry_indicators.json"
@@ -171,11 +186,16 @@ def check_sitemap(current: str, expected: str, max_drift: float) -> int:
         return 1
     dead = []
     for loc in sorted(cur):
-        q = parse_qs(urlparse(loc).query)
-        t = (q.get("t") or [""])[0]
-        if not t or not urlparse(loc).path.endswith("analysis.html"):
-            continue
-        market = "kr" if (q.get("market") or [""])[0] == "kr" else "us"
+        path = urlparse(loc).path
+        sm = re.search(r"/stock/(us|kr)/([^/]+)\.html$", path)
+        if sm and sm.group(2) != "index":
+            market, t = sm.group(1), sm.group(2)
+        else:
+            q = parse_qs(urlparse(loc).query)
+            t = (q.get("t") or [""])[0]
+            if not t or not path.endswith("analysis.html"):
+                continue
+            market = "kr" if (q.get("market") or [""])[0] == "kr" else "us"
         if not (MARKETS[market]["details"] / f"{t}.json").exists():
             dead.append(loc)
     missing, extra = exp - cur, cur - exp

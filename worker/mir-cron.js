@@ -48,6 +48,7 @@ const EMBEDDED_SCHEDULE = [
   {"workflow":"daily-korea-market-snapshot.yml","cron":"0 13 * * 1-5","input":true},
   {"workflow":"daily-korea-news.yml","cron":"43 19 * * *","input":false},
   {"workflow":"daily-market-snapshot.yml","cron":"5 21 * * *","input":false},
+  {"workflow":"data-health-watch.yml","cron":"30 23 * * *","input":false},
   {"workflow":"event-study.yml","cron":"23 5 * * 6","input":false},
   {"workflow":"industry-indicators.yml","cron":"10 21 * * *","input":false},
   {"workflow":"insider-trades.yml","cron":"17 4 * * *","input":false},

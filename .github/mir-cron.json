@@ -62,6 +62,11 @@
       "input": false
     },
     {
+      "workflow": "data-health-watch.yml",
+      "cron": "30 23 * * *",
+      "input": false
+    },
+    {
       "workflow": "event-study.yml",
       "cron": "23 5 * * 6",
       "input": false

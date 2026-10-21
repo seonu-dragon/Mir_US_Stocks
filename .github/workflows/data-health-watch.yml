@@ -1,0 +1,67 @@
+name: Data health watch
+
+# 데이터 건강 감시 — 라이브 사이트에서 서빙되는 데이터셋 전부를 하루 한 번 훑는다
+# (scripts/data_health_watch.py, 판정은 scripts/data_health_core.py).
+# Actions 가 전부 초록인데 데이터가 조용히 멈추거나 오염된 사례가 반복돼서 만들었다 — 기존 신선도 관문은
+# 그 워크플로우가 끝까지 돌았을 때만 울리고(타임아웃 cancelled 면 건너뜀), continue-on-error 스텝의
+# 실패(커밋 실패 포함)는 job 을 초록으로 남긴다. 이 감시는 워크플로우 결과와 무관하게 라이브 파일 자체와
+# 최근 run 의 스텝 실패 주석을 본다.
+#   · 신선도(주말·휴장 차감) · 구조(빈 데이터·키 누락·행 수 급감·NaN) · 값 이상(종가가 고·저 밖, 비정상 등락률,
+#     null 비율 급증, 지수 vs 구성 종목) · 워크플로우(실패·중도 취소·가려진 스텝 실패) · 배포(라이브 vs 레포)
+# 결과는 data/health_report.json/.js 로 발행(신뢰도 센터 '데이터 건강' 섹션), 문제가 있으면 텔레그램 한 메시지
+# (같은 문제는 하루 1회 — data/health_alert_state.json, 배포 제외). 문제를 '찾은 것' 은 초록이고,
+# 감시 자체가 실패하면(라이브·GitHub API·텔레그램·push 실패) 빨강 + 아래 실패 알림.
+on:
+  # 정시 실행: Cloudflare 워커 mir-cron 이 아래 시각(UTC cron)에 workflow_dispatch 로 깨운다.
+  # GitHub `schedule:` 은 5~8시간 늦게 출발해 2026-10-01 에 옮겼다 — DEPLOY.md "정시 실행 워커".
+  # 시각을 바꾸면 `node scripts/sync_cron_worker.mjs` 로 .github/mir-cron.json 을 다시 만든다.
+  # US 스냅샷(06:05 KST)·배포가 끝난 뒤, 전날 KR 마감 자료까지 라이브에 있는 시각.
+  # mir-cron: "30 23 * * *"  # 08:30 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+  checks: read
+
+concurrency:
+  group: mir-publish-${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # 상세 일봉(data/details·data/korea/details)을 전수로 보므로 전체 체크아웃(이력은 1커밋).
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # exchange_calendars: 주말·휴장 차감용 XNYS·XKRX 달력. requests·python-dotenv: 기존 텔레그램 헬퍼.
+      - name: Install dependencies
+        run: python -m pip install --quiet exchange_calendars requests python-dotenv
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Watch data health
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -u scripts/data_health_watch.py --push
+      # 감시자가 조용히 죽으면 아무도 모른다 — 다른 워크플로우와 같은 형태로 실패를 알린다.
+      - name: Notify failure (Telegram)
+        if: failure()
+        continue-on-error: true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        shell: bash
+        run: |
+          if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then exit 0; fi
+          MSG="[Mir Actions 실패] ${{ github.workflow }} ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -fsS "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" --data-urlencode "text=${MSG}" >/dev/null

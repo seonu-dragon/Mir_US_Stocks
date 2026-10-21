@@ -367,11 +367,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=578d5d6c65" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=578d5d6c65"></noscript>
+    <link rel="preload" href="styles.css?v=5e448b191d" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=5e448b191d"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=4c985d529e"></script>
+    <script src="build_id.js?v=b296180b8a"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -3319,6 +3319,7 @@ html[data-market="kr"][data-theme="dark"] {
           <div class="ia-dialog-actions"><button type="button" class="ghost compact-btn" id="dataTrustRefresh">상태 다시 확인</button><button type="button" class="ghost compact-btn" id="dataTrustClose" aria-label="닫기">✕ 닫기</button></div>
         </div>
         <div class="data-trust-summary" id="dataTrustSummary"></div>
+        <section class="data-health" id="dataHealthPanel" aria-label="데이터 건강" hidden></section>
         <div class="data-trust-grid" id="dataTrustGrid" aria-live="polite"></div>
         <p class="data-trust-note"><button type="button" class="ia-link" data-open="scorecard">신호 성적표 보기 — 화면에 띄운 신호가 발행 뒤 실제로 어떻게 됐는지</button></p>
         <p class="data-trust-note">상태는 사이트에 게시된 최신 자료 기준입니다. 원본 서비스의 실시간 장애 여부는 반영하지 않습니다.</p>
@@ -3408,7 +3409,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="chart-card.js?v=304e9a8185"></script>
     <script src="company-logo-core.js?v=632b6d829a"></script>
     <script src="company-logo.js?v=aa6434614f"></script>
-    <script src="feature-data.js?v=f668440353"></script>
+    <script src="feature-data.js?v=d076b496fb"></script>
     <script src="fundamentals-sanity-core.js?v=bb3337a94a"></script>
     <script src="quote-info-core.js?v=aac6865fbb"></script>
     <script src="quote-info.js?v=0de503edb4"></script>
@@ -3505,7 +3506,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
     <script src="mobile-lists.js?v=aa21ba9e7e"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=8f11e5bc13"></script>
+    <script src="app.js?v=bc269f1ccf"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>

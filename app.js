@@ -4443,7 +4443,8 @@ function renderTopStocks() {
     .filter((item) => topPresetMatches(item, preset))
     .map((item) => ({ item, value: metricValue(item, metric) }))
     .filter(({ value }) => Number.isFinite(value))
-    .sort((a, b) => metricSortDirection(metric) * (b.value - a.value))
+    // 찾기 표에서 같은 열을 다시 누르면 방향이 뒤집힌다(find-table.js ftMetricDirection).
+    .sort((a, b) => (typeof ftMetricDirection === "function" ? ftMetricDirection(metric) : metricSortDirection(metric)) * (b.value - a.value))
     .slice(0, limit);
 
   const filterText = [

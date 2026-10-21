@@ -1,4 +1,4 @@
-const BUILD_ID_FALLBACK = "29b7187953";
+const BUILD_ID_FALLBACK = "fae5bc845b";
 let ACTIVE_CACHE_NAME = null;
 
 // 내비게이션 셸만 미리 받는다. app.js/styles.css 같은 자산은 페이지가 ?v=<내용해시>
@@ -212,6 +212,11 @@ self.addEventListener("fetch", (event) => {
   if (req.method !== "GET") return;
 
   const url = new URL(req.url);
+  // 다른 출처(워커·CDN·R2 상세 버킷 등)는 가로채지 않는다 — 브라우저 HTTP 캐시 + 네트워크.
+  // 종목 상세(data/details·data/korea/details)도 같은 출처일 때 통과시킨다: 1만 개가 넘는 파일을
+  // Cache Storage 에 쌓지 않고, cacheFirst 로 옛 일봉이 굳는 일도 없다. details-source.js 의
+  // detailsBase 로 R2(다른 출처)로 옮겨도 이 두 줄 덕분에 취급이 같다(/data/ network-first 규칙과
+  // 마찬가지로 '항상 네트워크'). R2 상세를 여기서 캐시하도록 바꾸지 말 것.
   if (url.origin !== self.location.origin) return;
   if (isDetailData(url.pathname)) return;
 

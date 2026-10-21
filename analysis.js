@@ -2306,16 +2306,17 @@ function resolveKoAliasToTicker(raw) {
   return best ? best.ticker : text;
 }
 
-function analysisDetailPath(ticker) {
+// 상세 파일 요청 — 경로(Pages 상대 경로 / R2 기능 플래그)는 details-source.js 한 곳에서 정한다.
+function analysisFetchDetail(ticker, init) {
   const key = analysisTickerKey(ticker);
-  if (window.MirMarket) return window.MirMarket.detailPath(key);
-  return `data/details/${encodeURIComponent(key)}.json`;
+  if (window.MirMarket) return window.MirMarket.fetchDetail(key, init);
+  return fetch(`data/details/${encodeURIComponent(key)}.json`, init);
 }
 
 async function loadDetail(ticker) {
   const key = analysisTickerKey(ticker);
   if (!key) return null;
-  const res = await fetch(analysisDetailPath(key), { cache: "no-cache" });
+  const res = await analysisFetchDetail(key, { cache: "no-cache" });
   if (res.ok) return res.json();
   // 저장된 시장이 반대쪽이면(국내 모드에서 sitemap 의 미국 딥링크를 여는 등)
   // 여기서 끝내지 않고 반대 시장 상세를 한 번 더 본다. 찾으면 그 시장으로
@@ -2336,11 +2337,12 @@ async function loadDetailFromOtherMarket(ticker) {
     ? (/^\d{1,6}$/.test(raw) ? raw.padStart(6, "0") : null)
     : raw.toUpperCase();
   if (!key) return null;
-  const path = other === "kr"
-    ? `data/korea/details/${encodeURIComponent(key)}.json`
-    : `data/details/${encodeURIComponent(key)}.json`;
   try {
-    const res = await fetch(path, { cache: "no-cache" });
+    const res = window.MirDetails
+      ? await window.MirDetails.fetch(key, other, { cache: "no-cache" })
+      : await fetch(other === "kr"
+        ? `data/korea/details/${encodeURIComponent(key)}.json`
+        : `data/details/${encodeURIComponent(key)}.json`, { cache: "no-cache" });
     if (!res.ok) return null;
     const payload = await res.json();
     if (typeof MM.setMode === "function") MM.setMode(other);

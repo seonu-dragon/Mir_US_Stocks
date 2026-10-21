@@ -6012,8 +6012,11 @@ function loadStockDetail(ticker) {
   if (!key) return Promise.resolve(null);
   if (detailCache[key]) return Promise.resolve(detailCache[key]);
   if (detailPromises[key]) return detailPromises[key];
-  const detailUrl = (window.MirMarket && window.MirMarket.detailPath(key)) || `data/details/${encodeURIComponent(key)}.json`;
-  detailPromises[key] = fetch(detailUrl, { cache: "no-cache" })
+  // 경로 결정(Pages 상대 경로 / R2 기능 플래그)은 MirMarket.fetchDetail → details-source.js 한 곳.
+  const detailFetch = window.MirMarket
+    ? window.MirMarket.fetchDetail(key, { cache: "no-cache" })
+    : fetch(`data/details/${encodeURIComponent(key)}.json`, { cache: "no-cache" });
+  detailPromises[key] = detailFetch
     // 옛 빌더가 쓴 상세 파일엔 표준 JSON 이 아닌 NaN 토큰이 섞여 있을 수 있다(2026-09-26 기준
     // 미국 1,576개). response.json() 은 그 파일 전체를 버리므로 NaN 만 null 로 바꿔 다시 읽는다.
     .then((response) => (response.ok ? response.text() : null))

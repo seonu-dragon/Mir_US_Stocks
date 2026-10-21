@@ -18,10 +18,13 @@
     };
   }
 
-  function detailPath(ticker, market) {
-    return market === "kr"
+  // 경로 결정(Pages 상대 경로 / R2 기능 플래그)은 details-source.js 한 곳. 없으면 예전 상대 경로.
+  function fetchDetail(ticker, market, init) {
+    if (window.MirDetails) return window.MirDetails.fetch(ticker, market === "kr" ? "kr" : "us", init);
+    const path = market === "kr"
       ? `data/korea/details/${encodeURIComponent(ticker)}.json`
       : `data/details/${encodeURIComponent(ticker)}.json`;
+    return fetch(path, init);
   }
 
   function escapeHtml(text) {
@@ -372,7 +375,7 @@
       return;
     }
     try {
-      const res = await fetch(detailPath(cfg.ticker, cfg.market), { cache: "no-store" });
+      const res = await fetchDetail(cfg.ticker, cfg.market, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const detail = await res.json();
       const allRows = (detail.chartSeries || [])

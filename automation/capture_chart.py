@@ -16,6 +16,9 @@ from urllib.parse import urlencode
 from utils import PROJECT_ROOT, chart_output_path, detail_json_path, load_env_file
 
 # 캡처 페이지가 실제로 읽는 파일. 이것만 스테이징 폴더에 복사해 서빙한다.
+# details-source.js(상세 경로 R2 기능 플래그)는 일부러 넣지 않는다 — 로컬 캡처는 방금 빌드한
+# 로컬 상세 파일을 그려야 하는데, 플래그가 켜져 있으면 아직 push 전인 옛 R2 사본을 먼저 읽게 된다.
+# 스크립트가 없으면 chart_capture.js 가 예전 상대 경로(아래에서 복사하는 상세 파일)로 읽는다.
 CAPTURE_ASSETS = (
     "chart_capture.html",
     "chart_capture.js",

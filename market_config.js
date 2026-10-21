@@ -407,10 +407,28 @@
     return next;
   }
 
+  // 현재 시장 규칙으로 정규화한 상세 파일 키(국내 6자리 패딩, 미국 대문자).
+  function detailKey(ticker) {
+    const cfg = getConfig();
+    return cfg.id === "kr" ? cfg.formatTicker(ticker) : String(ticker || "").toUpperCase();
+  }
+
+  // Pages 기준 상대 경로(예전 그대로). 실제 요청은 fetchDetail 로 — R2 기능 플래그
+  // (details-source.js 의 detailsBase)를 거친다.
   function detailPath(ticker) {
     const cfg = getConfig();
-    const key = cfg.id === "kr" ? cfg.formatTicker(ticker) : String(ticker || "").toUpperCase();
-    return `${cfg.detailsDir}/${encodeURIComponent(key)}.json`;
+    return `${cfg.detailsDir}/${encodeURIComponent(detailKey(ticker))}.json`;
+  }
+
+  function detailUrl(ticker) {
+    const MD = window.MirDetails;
+    return MD ? MD.url(detailKey(ticker), getMode()) : detailPath(ticker);
+  }
+
+  // 상세 파일 요청의 단일 진입점(현재 시장). detailsBase 가 비면 fetch(detailPath(ticker), init) 와 같다.
+  function fetchDetail(ticker, init) {
+    const MD = window.MirDetails;
+    return MD ? MD.fetch(detailKey(ticker), getMode(), init) : fetch(detailPath(ticker), init);
   }
 
   // CSS 토큰 색을 JS(캔버스·SVG)에서 읽는다. 등락색(--pos/--neg)은 시장별(한국 = 상승 빨강·하락 파랑,
@@ -459,6 +477,9 @@
     deeplinkMarket,
     setMode,
     detailPath,
+    detailKey,
+    detailUrl,
+    fetchDetail,
     isKrEtfLike,
     STORAGE_KEY,
   };

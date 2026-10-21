@@ -494,6 +494,32 @@ def kr_lockup_events(data: Path, today: date) -> list[Event]:
     return events
 
 
+def us_split_events(data: Path, today: date) -> list[Event]:
+    """미국 액면분할·병합 효력일 — data/us_splits.json(build_us_splits.py, Nasdaq 분할 캘린더). UID 는 (티커·효력일)."""
+    sp = load_json(data / "us_splits.json") or {}
+    events: list[Event] = []
+    for r in sp.get("rows") or []:
+        if not isinstance(r, dict) or not r.get("ticker"):
+            continue
+        d = parse_day(r.get("date"))
+        if not d or not in_window(d, today):
+            continue
+        t = str(r["ticker"])
+        reverse = r.get("kind") == "reverse"
+        what = "주식 병합(역분할)" if reverse else "액면분할"
+        ratio = str(r.get("ratio") or "")
+        desc = (f"{r.get('name') or t}({t}) {what} {ratio.replace(':', ' : ')} — 효력일 {d.isoformat()}. "
+                "비율 A : B 는 B주가 A주가 된다는 뜻입니다. 출처: Nasdaq 분할 캘린더. 투자 권유가 아닙니다.")
+        events.append(Event(
+            stable_uid("us-split", t, d.isoformat()),
+            f"[{'병합' if reverse else '분할'}] {t} {ratio.replace(':', ' : ')}",
+            day=d,
+            description=desc,
+            categories=("액면분할",),
+        ))
+    return events
+
+
 def market_calendar_events(data: Path, today: date, market: str) -> list[Event]:
     """휴장·단축 거래(두 시장)와 국내 파생 만기 — data/market_calendar.json(exchange_calendars 계산).
 
@@ -839,8 +865,8 @@ def build_all(root: Path, out: Path, *, now: datetime, worker_rows: list[dict], 
                 "path": f"data/feeds/{rel}", "count": text.count("<item>")}
 
     add_cal("calendar-us", "us", "미국 일정",
-            "시총 상위 실적 예정일·배당락일·IPO 가격확정·월간 옵션 만기·휴장일",
-            us_calendar_events(data, today) + market_calendar_events(data, today, "us"))
+            "시총 상위 실적 예정일·배당락일·IPO 가격확정·액면분할·월간 옵션 만기·휴장일",
+            us_calendar_events(data, today) + us_split_events(data, today) + market_calendar_events(data, today, "us"))
     add_cal("calendar-kr", "kr", "국내 일정",
             "실적 IR·배당 기준일·지급일, 공모 청약·신규 상장·보호예수 해제, 옵션 만기·휴장일",
             kr_calendar_events(data, today) + kr_ir_events(data, today) + kr_lockup_events(data, today)

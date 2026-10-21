@@ -7,7 +7,7 @@
 // - 주/월 미니 달력 격자(일요일 시작)
 // - 데이터셋별 정규화: 휴장·만기·FOMC(MARKET_CALENDAR), 국내 IR(KR_IR_SCHEDULE), 미국 실적·배당락
 //   (US_STOCK_CALENDAR + 실적 스냅샷), 국내 배당(KR_DIVIDENDS), 공모주(IPO_CALENDAR), 경제지표(워커 ?calendar=1),
-//   국내 보호예수 해제(KR_LOCKUPS — 상장일 + 기간으로 계산한 추정일)
+//   국내 보호예수 해제(KR_LOCKUPS — 상장일 + 기간으로 계산한 추정일), 미국 액면분할·병합(US_SPLITS — Nasdaq)
 // - 칩·관심종목 필터, 날짜별 묶음
 // 이벤트 모양: { id, date, time, kind, market, title, name, ticker, info, link, sub }
 (function (root) {
@@ -23,12 +23,14 @@
     { id: "expiry", label: "만기" },
     // 국내 전용(신규 상장주 의무보유 해제). markets 가 있으면 그 시장에서만 칩을 보인다.
     { id: "lockup", label: "보호예수 해제", short: "보호예수", markets: ["kr"] },
+    // 미국 전용(액면분할·병합 효력일, Nasdaq 분할 캘린더).
+    { id: "split", label: "액면분할", short: "분할", markets: ["us"] },
   ];
   const KIND_LABEL = Object.fromEntries(KINDS.map((k) => [k.id, k.label]));
   // 목록 항목 앞 태그는 폭이 좁아 짧은 이름을 쓴다(없으면 label).
   const KIND_SHORT = Object.fromEntries(KINDS.map((k) => [k.id, k.short || k.label]));
   // 종목에 붙는 일정(관심종목만 보기가 거르는 대상). 휴장·만기·경제지표는 시장 전체 일정이라 그대로 둔다.
-  const STOCK_KINDS = new Set(["earnings", "dividend", "ipo", "lockup"]);
+  const STOCK_KINDS = new Set(["earnings", "dividend", "ipo", "lockup", "split"]);
   const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 
   function pad(n) { return String(n).padStart(2, "0"); }
@@ -251,6 +253,20 @@
     });
   }
 
+  /** 미국 액면분할·병합(US_SPLITS.rows, build_us_splits.py). 'A:B' = B주가 A주로(효력일 기준). */
+  function fromUsSplits(payload) {
+    return ((payload && payload.rows) || []).filter((r) => r && r.ticker && normIso(r.date)).map((r) => {
+      const [a, b] = String(r.ratio || "").split(":");
+      const reverse = r.kind === "reverse";
+      const info = a && b ? (reverse ? `${b}주 → ${a}주로 병합` : `1주 → ${Number(a) / Number(b)}주로 분할`) : "";
+      return {
+        id: `us-split-${r.ticker}-${normIso(r.date)}`, date: normIso(r.date), kind: "split", market: "us",
+        title: reverse ? "주식 병합(역분할)" : "액면분할", sub: r.ratio ? r.ratio.replace(":", " : ") : "",
+        ticker: String(r.ticker), name: r.name || "", info,
+      };
+    });
+  }
+
   function fromIpo(payload, market) {
     const out = [];
     ((payload && payload.ipos) || []).forEach((r) => {
@@ -335,7 +351,7 @@
     return c;
   }
 
-  const KIND_ORDER = { holiday: 0, expiry: 1, econ: 2, earnings: 3, dividend: 4, ipo: 5, lockup: 6 };
+  const KIND_ORDER = { holiday: 0, expiry: 1, econ: 2, earnings: 3, dividend: 4, ipo: 5, lockup: 6, split: 7 };
   function sortEvents(events) {
     return (events || []).slice().sort((a, b) => (a.date !== b.date ? (a.date < b.date ? -1 : 1)
       : (KIND_ORDER[a.kind] - KIND_ORDER[b.kind]) || String(a.time || "99").localeCompare(String(b.time || "99"))
@@ -367,7 +383,7 @@
   const api = {
     KINDS, KIND_LABEL, KIND_SHORT, STOCK_KINDS, WEEKDAY_KO,
     normIso, addDays, addMonths, weekday, dayDiff, kstToday, weekRange, monthGrid, rangeFor, dayLabel,
-    fromMarketCalendar, fromKrIr, fromUsCalendar, fromKrDividends, fromIpo, fromEcon, fromKrLockups,
+    fromMarketCalendar, fromKrIr, fromUsCalendar, fromKrDividends, fromIpo, fromEcon, fromKrLockups, fromUsSplits,
     ipoDemandText, fmtShares, kindsFor,
     filterEvents, countByKind, sortEvents, groupByDate, kindsByDate, dedupe, passesWatch,
   };

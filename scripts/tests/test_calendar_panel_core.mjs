@@ -149,6 +149,25 @@ test("날짜별 묶음·정렬(휴장→만기→경제→실적)", () => {
   assert.equal(core.dedupe([{ id: "x" }, { id: "x" }, { id: "y" }]).length, 2);
 });
 
+test("미국 액면분할: 정분할·병합 문구, 미국 전용 칩, 관심종목 필터 대상", () => {
+  const ev = core.fromUsSplits({ rows: [
+    { ticker: "SOXX", name: "iShares Semiconductor ETF", ratio: "3:1", factor: 3, kind: "forward", date: "2026-11-05" },
+    { ticker: "LU", name: "Lufax", ratio: "1:10", factor: 0.1, kind: "reverse", date: "2026-10-23" },
+    { ticker: "NVDA", name: "NVIDIA", ratio: "3:2", factor: 1.5, kind: "forward", date: "2026-12-01" },
+    { ticker: "", date: "2026-10-23" },
+    { ticker: "X", date: "bad" },
+  ] });
+  assert.equal(ev.length, 3);
+  assert.deepEqual([ev[0].kind, ev[0].market, ev[0].title, ev[0].sub, ev[0].info], ["split", "us", "액면분할", "3 : 1", "1주 → 3주로 분할"]);
+  assert.deepEqual([ev[1].title, ev[1].info], ["주식 병합(역분할)", "10주 → 1주로 병합"]);
+  assert.equal(ev[2].info, "1주 → 1.5주로 분할");
+  assert.equal(ev[0].id, "us-split-SOXX-2026-11-05");
+  assert.ok(core.STOCK_KINDS.has("split"));
+  assert.ok(core.kindsFor("us").some((k) => k.id === "split"));
+  assert.ok(!core.kindsFor("kr").some((k) => k.id === "split"));
+  assert.deepEqual(core.fromUsSplits(null), []);
+});
+
 test("국내 보호예수 해제: 추정일·주식수·비율, 국내 전용 칩", () => {
   const ev = core.fromKrLockups({ releases: [
     { code: "0035S0", company: "빅웨이브로보틱스", date: "2026-10-29", shares: 1194638, pct: 11.22,

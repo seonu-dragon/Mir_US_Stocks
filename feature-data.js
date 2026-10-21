@@ -192,6 +192,8 @@ const FEATURE_DATA = {
   // 국내 신규 상장주 보호예수 해제 일정 + 공모 수요예측·청약 결과(build_kr_lockups.py, ~150KB).
   // 통합 캘린더·종목 상세 이벤트 카드·증자·CB 트래커가 처음 그릴 때만 받는다(lazy).
   krLockups: { global: "KR_LOCKUPS", path: "data/korea/lockups.js", feature: "krLockups", krOnly: true, lazy: true },
+  // 미국 액면분할·병합 일정(Nasdaq 분할 캘린더, build_us_splits.py, ~3KB). 통합 캘린더를 열 때만.
+  usSplits: { global: "US_SPLITS", path: "data/us_splits.js", feature: "usSplits", usOnly: true, lazy: true },
   // 미국 ETF 구성·역조회 인덱스(SEC N-PORT, build_us_etf_holdings.py). ETF별·종목 첫 글자별 샤드는
   // etf-holdings.js 가 종목 분석을 열 때 하나만 fetch 한다.
   usEtfHoldings: { global: "US_ETF_HOLDINGS_INDEX", path: "data/etf_holdings/index.js", feature: "etfHoldings", usOnly: true, lazy: true },

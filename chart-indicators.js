@@ -162,9 +162,12 @@ function stockByTicker(ticker) {
 }
 
 // ----- Indicator panels -----
-function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW) {
+function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW, ctxRows) {
   const volumes = rows.map((row) => row.v || 0);
-  const ma20 = smaSeries(volumes, 20);
+  // MA20 은 앞쪽 이력까지로 계산해 보이는 구간 왼쪽 19봉이 비지 않게 한다.
+  const ma20 = ctxRows && ctxRows.length >= rows.length
+    ? lastN(smaSeries(ctxRows.map((row) => row.v || 0), 20), rows.length)
+    : smaSeries(volumes, 20);
   const maxSource = chartState.showVolMa20 ? volumes.concat(ma20.filter((v) => v != null)) : volumes;
   const volMax = Math.max(...maxSource, 1);
   const yFor = (value) => top + height - (value / volMax) * height;
@@ -185,12 +188,15 @@ function renderVolumePanel(rows, xFor, x1, x2, top, height, candleW) {
   `;
 }
 
-function renderObvPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "OBV", values: obvArray(rows), color: "#60a5fa" }], xFor, x1, x2, top, height, "OBV");
+// OBV·A/D 는 누적이라 보이는 봉만으로 계산하면 팬할 때마다 0 에서 다시 쌓여 모양이 바뀐다.
+function renderObvPanel(rows, xFor, x1, x2, top, height, visN) {
+  const values = visN ? lastN(obvArray(rows), visN) : obvArray(rows);
+  return renderLinePanel([{ name: "OBV", values, color: "#60a5fa" }], xFor, x1, x2, top, height, "OBV");
 }
 
-function renderAdPanel(rows, xFor, x1, x2, top, height) {
-  return renderLinePanel([{ name: "A/D", values: accumulationDistributionArray(rows), color: "#34d399" }], xFor, x1, x2, top, height, "Accum/Dist");
+function renderAdPanel(rows, xFor, x1, x2, top, height, visN) {
+  const values = visN ? lastN(accumulationDistributionArray(rows), visN) : accumulationDistributionArray(rows);
+  return renderLinePanel([{ name: "A/D", values, color: "#34d399" }], xFor, x1, x2, top, height, "Accum/Dist");
 }
 
 function renderRocPanel(closes, xFor, x1, x2, top, height, visN) {
@@ -462,6 +468,21 @@ function chartAnalysisContextRows(allRows) {
   const end = base.length - offset;
   const ctxStart = Math.max(0, end - Math.max(252, windowSize + 80));
   return base.slice(ctxStart, end);
+}
+
+// 지표(이평·RSI·MACD·거래량 MA 등) 계산용 컨텍스트: 보이는 구간 + 기간 버튼 밖 앞쪽 이력까지.
+// chartAnalysisContextRows 는 기간(base) 안에서만 앞쪽을 잡아 1M(22봉)에선 MACD·SMA60/120 이
+// 아예 안 그려지고 1Y 에서도 SMA120 앞 119봉이 비었다. 보이는 rows 는 이 배열의 꼬리다.
+const CHART_IND_WARMUP = 260;
+function chartIndicatorContextRows(allRows) {
+  const rangeSize = rangeBarCount(allRows.length);
+  const baseLen = Math.min(allRows.length, rangeSize);
+  const windowSize = Math.max(12, Math.floor(baseLen / chartState.zoom));
+  const maxOffset = Math.max(0, baseLen - windowSize);
+  const offset = Math.min(chartState.offset, maxOffset);
+  const end = allRows.length - offset;
+  const start = Math.max(0, end - Math.min(baseLen, windowSize) - CHART_IND_WARMUP);
+  return allRows.slice(start, end);
 }
 
 // 지지/저항 레벨 계산은 analysis.js(window.MirProb.supportResistanceLevels)로 일원화했다.

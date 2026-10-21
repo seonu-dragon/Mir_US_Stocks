@@ -497,8 +497,9 @@
       let pos = 0;
       let neg = 0;
       for (let j = i - period + 1; j <= i; j += 1) { pos += rmf[j].pos; neg += rmf[j].neg; }
-      const ratio = neg ? pos / neg : 100;
-      out[i] = 100 - 100 / (1 + ratio);
+      // 무거래·횡보(pos=neg=0)는 RSI 와 같이 50, 하락 흐름 없이 오르기만 하면 100.
+      if (!pos && !neg) { out[i] = 50; continue; }
+      out[i] = neg ? 100 - 100 / (1 + pos / neg) : 100;
     }
     return out;
   }

@@ -39,19 +39,32 @@ function initWatchlist(urlList) {
     watchlist = [];
   }
   if (urlList) {
+    // 공유 링크(?watchlist=)는 받는 사람의 목록을 덮어쓰지 않는다 — 예전엔 교체 후 저장·클라우드
+    // 푸시까지 해서 내 관심종목이 영구히 사라졌다. 공유 종목을 앞에 두고 기존 목록을 뒤에 합친다.
     const fromUrl = String(urlList).split(",").map((t) => normalizeTickerKey(t.trim())).filter((t) => stockByTicker(t));
-    if (fromUrl.length) watchlist = [...new Set(fromUrl)];
+    if (fromUrl.length) watchlist = [...new Set([...fromUrl, ...watchlist])];
     persistWatchlist();
   }
   if (!watchlist.length) watchlist = defaultWatchlist().slice();
   persistWatchlist();
 }
 
+const WATCHLIST_DIRTY_KEY = "mir_watchlist_dirty_at";
+
 function persistWatchlist() {
   // 스냅샷에 없는 티커도 버리지 않는다 — 저장 시점 필터는 시장 전환/스냅샷 누락 때
   // 목록을 조용히 갉아먹는다. 화면에 뿌릴 때만 stockByTicker 로 거른다.
   watchlist = [...new Set(watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean))];
-  try { window.safeStorage.set(watchlistStorageKey(), JSON.stringify(watchlist)); } catch (e) { /* ignore */ }
+  try {
+    const key = watchlistStorageKey();
+    const prev = window.safeStorage.get(key);
+    const next = JSON.stringify(watchlist);
+    // 이미 있던 목록이 바뀌었으면 '클라우드에 아직 안 올린 로컬 편집'으로 표시한다. 부팅 때 pull 이
+    // 이 편집을 옛 클라우드 사본으로 덮어쓰지 않게(예전엔 공유 링크 병합·직전 편집이 다음 부팅에 사라졌다).
+    // 새 기기의 기본 목록(prev 없음)은 표시하지 않는다 — 다른 기기의 클라우드 목록이 이겨야 한다.
+    if (prev != null && prev !== next) window.safeStorage.set(WATCHLIST_DIRTY_KEY, String(Date.now()));
+    window.safeStorage.set(key, next);
+  } catch (e) { /* ignore */ }
   const input = byId("bulkInput");
   // 편집창도 표시 규칙을 따른다(국내: 회사명, 미국: 티커). 회사명은 resolveTickerQuery 가
   // 다시 코드로 해석하므로 저장/불러오기 왕복에 문제가 없다. 이름을 모르는 코드는 코드 그대로.
@@ -739,12 +752,15 @@ async function pushCloudSync() {
   const url = communityApiUrl("/sync/prefs");
   if (!url) return;
   try {
-    await fetch(url, {
+    const res = await fetch(url, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clientId: getCommunityClientId(), prefs: cloudSyncPayload() }),
     });
+    // 4xx/5xx 인데 '저장됨'을 띄우던 것 — 실패면 로컬 편집 표시를 남겨 다음 pull 이 덮지 않게 한다.
+    if (!res.ok) return;
     window.safeStorage.set(CLOUD_SYNC_KEY, String(Date.now()));
+    window.safeStorage.remove(WATCHLIST_DIRTY_KEY);
     updateCloudSyncStatus("저장됨");
   } catch (e) { /* ignore */ }
 }
@@ -761,10 +777,17 @@ async function pullCloudSync() {
     if (!prefs) return;
     const marketId = isKrMarket() ? "kr" : "us";
     const scoped = marketId === "kr" ? prefs.watchlistKr : prefs.watchlistUs;
+    // 클라우드 사본보다 나중에 고친 로컬 관심종목이 아직 안 올라갔으면 로컬이 이긴다(올리기를 다시 예약).
+    const dirtyAt = Number(window.safeStorage.get(WATCHLIST_DIRTY_KEY) || 0);
+    const localNewer = dirtyAt > 0 && dirtyAt > Number(prefs.updatedAt || 0);
+    if (localNewer) scheduleCloudSyncPush();
     const other = marketId === "kr" ? prefs.watchlistUs : prefs.watchlistKr;
-    if (Array.isArray(scoped) && scoped.length) {
+    if (localNewer) {
+      // 현재 시장 목록은 그대로 둔다.
+    } else if (Array.isArray(scoped) && scoped.length) {
       watchlist = [...new Set(scoped.map((t) => normalizeTickerKey(t)).filter(Boolean))].slice(0, 80);
       persistWatchlist();
+      window.safeStorage.remove(WATCHLIST_DIRTY_KEY); // 클라우드 사본을 받은 것 — 로컬 편집이 아니다
     } else if (!Array.isArray(scoped) && Array.isArray(prefs.watchlist) && prefs.watchlist.length) {
       // 시장별 필드가 없는 구형 payload: 현재 시장 패턴(KR=6자리 숫자)에 맞는 것만 취한다.
       const mine = prefs.watchlist.map((t) => normalizeTickerKey(t)).filter(Boolean)
@@ -772,6 +795,7 @@ async function pullCloudSync() {
       if (mine.length) {
         watchlist = [...new Set(mine)].slice(0, 80);
         persistWatchlist();
+        window.safeStorage.remove(WATCHLIST_DIRTY_KEY);
       }
     }
     // 반대 시장 목록은 저장소만 갱신한다(값이 실려 온 경우에만 — 빈 값으로 지우지 않는다).

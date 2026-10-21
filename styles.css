@@ -1779,6 +1779,37 @@ button.ghost {
   stroke: #fff;
   stroke-width: 1.5;
 }
+/* 크로스헤어 + OHLCV 데이터 창(chart.js renderChartCrosshair) */
+.chart-crosshair { pointer-events: none; }
+.chart-xhair {
+  stroke: var(--chart-axis);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  opacity: 0.85;
+}
+.chart-xhair-tag rect { fill: #3a3f47; }
+.chart-xhair-tag text {
+  fill: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.chart-ohlc {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--chart-axis);
+  font-variant-numeric: tabular-nums;
+  paint-order: stroke;
+  stroke: var(--chart-bg);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+.chart-ohlc-d { fill: var(--text, currentColor); }
+.chart-ohlc-v { fill: var(--text, currentColor); }
+.chart-ohlc-v.is-up { fill: var(--pos); }
+.chart-ohlc-v.is-down { fill: var(--neg); }
+#priceChart:focus { outline: none; }
+#priceChart:focus-visible { outline: 2px solid var(--accent, #2563eb); outline-offset: 2px; }
 .chart-last-tag {
   pointer-events: none;
 }

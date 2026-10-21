@@ -617,7 +617,7 @@ function renderIndustryDetail(main, ind) {
       <div class="industry-detail-en muted">${escapeHtml(ind.name_en || "")}</div>
       <div class="industry-detail-meta">
         ${badge(`등급 ${ind.grade || "A"}`)} ${badge(`${ind.frequency === "D" ? "일간" : ind.frequency === "W" ? "주간" : ind.frequency === "Q" ? "분기" : "월간"}`)}
-        <a href="${escapeHtml(ind.source_url || "#")}" target="_blank" rel="noopener" class="industry-source-link">출처 ${escapeHtml(ind.source || "")}</a>
+        <a href="${escapeHtml(safeHttpHref(ind.source_url) || "#")}" target="_blank" rel="noopener" class="industry-source-link">출처 ${escapeHtml(ind.source || "")}</a>
         ${ind.source_series_id ? `<span class="muted">· ${escapeHtml(ind.source_series_id)}</span>` : ""}
       </div>
     </div>

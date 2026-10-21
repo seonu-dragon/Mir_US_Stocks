@@ -323,7 +323,7 @@ function ftRenderIpo(wrap, core) {
     const sub = item ? null : "시세 미수집";
     const last = kr
       ? `<td class="ft-text">${escapeHtml(r.broker || "—")}</td>`
-      : `<td class="ft-text">${r.link ? `<a href="${escapeHtml(r.link)}" target="_blank" rel="noopener" data-ft-ext>424B4</a>` : "—"}</td>`;
+      : `<td class="ft-text">${safeHttpHref(r.link) ? `<a href="${escapeHtml(safeHttpHref(r.link))}" target="_blank" rel="noopener" data-ft-ext>424B4</a>` : "—"}</td>`;
     return `<tr${item ? ` data-ticker="${escapeHtml(item.ticker)}" tabindex="0"` : ' class="is-static"'}>
       ${ftNameCell(null, item, kr ? r.company : `${r.ticker ? `${r.ticker} · ` : ""}${r.company}`, sub)}
       <td class="num">${ftFmtDate(r.date)}</td>

@@ -640,7 +640,7 @@ const COMPARE_METRICS = [
   ["선행 PER", (i) => fmtMultiple(i.fundamentals?.forwardPE)],
   ["PSR", (i) => fmtMultiple(i.fundamentals?.ps)],
   ["PBR", (i) => fmtMultiple(i.fundamentals?.pb)],
-  ["섹터", (i) => i.sector],
+  ["섹터", (i) => escapeHtml((typeof sectorLabelKo === "function" ? sectorLabelKo(i.sector) : i.sector) || "—")],
   ["신호", (i) => signalFor(i)],
 ];
 

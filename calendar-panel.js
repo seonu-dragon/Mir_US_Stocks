@@ -103,7 +103,8 @@ function calPanelItemHtml(e) {
   const head = who ? `${who}<span class="calp-what">${escapeHtml(e.title)}${e.sub ? ` · ${escapeHtml(e.sub)}` : ""}</span>`
     : `<strong class="calp-what-main">${escapeHtml(e.title)}</strong>${e.name ? `<span class="calp-what">${escapeHtml(e.name)}</span>` : ""}${e.sub ? `<span class="calp-what">${escapeHtml(e.sub)}</span>` : ""}`;
   const info = e.info ? `<div class="calp-info">${escapeHtml(e.info)}</div>` : "";
-  const link = e.link ? ` <a class="calp-link" href="${escapeHtml(e.link)}" target="_blank" rel="noopener">원문</a>` : "";
+  const href = typeof safeHttpHref === "function" ? safeHttpHref(e.link) : "";
+  const link = href ? ` <a class="calp-link" href="${escapeHtml(href)}" target="_blank" rel="noopener">원문</a>` : "";
   return `<li class="calp-item${e.important ? " is-important" : ""}">
     <span class="calp-tag" style="--calp-dot:${CAL_PANEL_KIND_DOT[e.kind] || "var(--muted)"}">${escapeHtml((core.KIND_SHORT || core.KIND_LABEL)[e.kind] || "")}</span>
     <div class="calp-main"><div class="calp-line">${head}</div>${info}</div>

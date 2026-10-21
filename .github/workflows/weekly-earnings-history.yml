@@ -149,6 +149,14 @@ jobs:
       - name: Install dependencies
         run: pip install -r scripts/requirements-actions.txt
 
+      # 2026-10-21: #327(10-15)이 캐시·재시도 스텝을 넣으면서 이 스텝을 덮어써 지웠다 → 5개 빌더가 전부
+      # 수집은 끝내고 `git commit` 에서 "Author identity unknown"(exit 128)으로 죽었고, 스텝이
+      # continue-on-error 라 잡은 초록이었다(KR 지표·다년재무·감사의견·분기실적·소유구조 10-04 에서 정지).
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       # corpCode 지도(outputs/_cache, 7일 캐시)를 run 사이에 이어 쓴다 — DART 가 corpCode.xml 을 못 줄 때
       # load_corp_map 이 만료된 캐시로라도 진행한다(빈 지도면 5개 빌더가 전부 멈춘다).
       - name: Restore DART corpCode cache

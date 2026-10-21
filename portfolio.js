@@ -236,12 +236,15 @@ function dividendMonthBuckets(rows) {
     const exMonthIdx = exParts.month - 1;
     const step = 12 / frequency;
     const perPayment = annualCash / frequency;
-    months.forEach((month, offset) => {
+    // 배당락 달은 지급 달보다 LAG 만큼 앞이므로 창 시작 전 달(offset < 0)의 배당락도 본다 —
+    // 예전엔 offset 0 부터만 돌아, 지난달 배당락분(이번 달 지급)이 막대에서 빠져 '연간 예상'과
+    // 12개월 막대 합계가 한 번 지급만큼 어긋났다(2026-10-21 라이브: 연 $27.56 vs 막대 합 $26.31).
+    for (let offset = -DIVIDEND_PAYMENT_LAG_MONTHS; offset < months.length; offset += 1) {
       const date = new Date(now.getFullYear(), now.getMonth() + offset, 1);
-      if (((date.getMonth() - exMonthIdx) + 12) % step !== 0) return;
+      if (((date.getMonth() - exMonthIdx) + 12) % step !== 0) continue;
       const payOffset = offset + DIVIDEND_PAYMENT_LAG_MONTHS;
-      if (payOffset < months.length) months[payOffset].value += perPayment;
-    });
+      if (payOffset >= 0 && payOffset < months.length) months[payOffset].value += perPayment;
+    }
   });
   return months;
 }

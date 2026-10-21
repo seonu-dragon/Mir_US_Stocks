@@ -51,6 +51,8 @@ jobs:
       - name: Build moment news
         shell: bash
         env:
+          # 진행 로그를 실시간으로(버퍼링되면 시간 초과 때 로그가 한 줄도 안 남는다 — 10-02~20 실측).
+          PYTHONUNBUFFERED: "1"
           # 국내 기사를 네이버 뉴스 기사 페이지 링크로 바꾸는 데 쓴다(없으면 구글 링크 그대로).
           NAVER_APIHUB_KEY_ID: ${{ secrets.NAVER_APIHUB_KEY_ID }}
           NAVER_APIHUB_KEY: ${{ secrets.NAVER_APIHUB_KEY }}
@@ -58,6 +60,7 @@ jobs:
           python scripts/build_moment_news.py \
             --market "${{ github.event.inputs.market || 'all' }}" \
             --max-queries "${{ github.event.inputs.max_queries || '1200' }}" \
+            --time-budget-min 55 \
             --push
 
       - name: Freshness gate
@@ -65,7 +68,8 @@ jobs:
         run: python scripts/check_data_freshness.py --group moment-news
 
       - name: Notify failure (Telegram)
-        if: failure()
+        # 시간 초과(cancelled)도 알린다 — 10-02~20 매일 cancelled 였는데 failure() 만 봐서 아무도 몰랐다.
+        if: failure() || cancelled()
         continue-on-error: true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

@@ -166,6 +166,91 @@
     return out;
   }
 
+  // 고정 라벨(현재가 태그) 하나를 움직이지 않고 나머지를 그 위·아래로 비켜 놓는다.
+  // ys[pin] 은 그대로 두고, 나머지는 pin 과 gap 이상 떨어지게 [top,bottom] 안에서 spreadLabels 처럼 편다.
+  // 한쪽 자리가 모자라면(예: 현재가가 바닥 근처인데 아래쪽 라벨이 여럿) 넘치는 것을 반대쪽으로 옮긴다.
+  function spreadLabelsPinned(ys, pin, gap, top, bottom) {
+    const py = ys[pin];
+    if (!finite(py)) return spreadLabels(ys, gap, top, bottom);
+    const out = ys.slice();
+    const others = ys.map((y, i) => ({ y, i })).filter((o) => o.i !== pin && finite(o.y)).sort((a, b) => a.y - b.y);
+    if (!others.length) return out;
+    let above = others.filter((o) => o.y <= py);
+    let below = others.filter((o) => o.y > py);
+    const capAbove = Math.max(0, Math.floor((py - gap - top) / gap) + 1);
+    const capBelow = Math.max(0, Math.floor((bottom - (py + gap)) / gap) + 1);
+    while (below.length > capBelow && above.length < capAbove) above = above.concat([below.shift()]);
+    while (above.length > capAbove && below.length < capBelow) below = [above.pop()].concat(below);
+    const place = (group, lo, hi) => {
+      if (!group.length) return;
+      const placed = spreadLabels(group.map((o) => o.y), gap, lo, Math.max(lo, hi));
+      group.forEach((o, k) => { out[o.i] = placed[k]; });
+    };
+    place(above, top, py - gap);
+    place(below, py + gap, bottom);
+    return out;
+  }
+
+  // 드로잉 손잡이(끝점·모서리). 화면 좌표 도형 → [{x,y,xs,ys}] — xs/ys 는 그 손잡이가 움직이는 좌표 이름.
+  // 수평선은 손잡이 대신 몸통을 위아래로만 옮긴다.
+  function drawHandles(shape) {
+    if (!shape) return [];
+    const { type, x1, y1, x2, y2 } = shape;
+    if (type === "trend" || type === "ray" || type === "fib") {
+      return [{ x: x1, y: y1, xs: "x1", ys: "y1" }, { x: x2, y: y2, xs: "x2", ys: "y2" }];
+    }
+    if (type === "rect") {
+      return [
+        { x: x1, y: y1, xs: "x1", ys: "y1" }, { x: x2, y: y2, xs: "x2", ys: "y2" },
+        { x: x1, y: y2, xs: "x1", ys: "y2" }, { x: x2, y: y1, xs: "x2", ys: "y1" },
+      ];
+    }
+    return [];
+  }
+
+  // 고른 도형에서 포인터가 잡은 자리: 손잡이면 { kind: "handle", xs, ys }, 몸통이면 { kind: "body" }, 아니면 null.
+  // 손잡이가 몸통보다 먼저다(끝점은 선 위이기도 하므로).
+  function editGrabAt(shape, px, py, tol) {
+    if (!shape || !finite(px) || !finite(py)) return null;
+    let best = null;
+    let bestD = Infinity;
+    for (const h of drawHandles(shape)) {
+      if (!finite(h.x) || !finite(h.y)) continue;
+      const d = Math.hypot(px - h.x, py - h.y);
+      if (d <= tol && d < bestD) { best = h; bestD = d; }
+    }
+    if (best) return { kind: "handle", xs: best.xs, ys: best.ys };
+    return shapeDistance(shape, px, py) <= tol ? { kind: "body" } : null;
+  }
+
+  // 끌기 결과(화면 좌표). 몸통 = 전체 평행 이동(수평선은 세로만), 손잡이 = 그 좌표만.
+  // changed 는 바뀐 좌표 이름 — 호출자는 바뀐 것만 날짜·가격으로 되돌린다(안 바뀐 앵커는 그대로 둬
+  // 화면 밖 끝점이 가장자리로 끌려오지 않게).
+  function applyEditDrag(shape, grab, dx, dy) {
+    const out = { x1: shape.x1, y1: shape.y1, x2: shape.x2, y2: shape.y2, changed: [] };
+    if (!grab || !finite(dx) || !finite(dy)) return out;
+    if (grab.kind === "body") {
+      if (shape.type === "hline") {
+        out.y1 += dy; out.y2 += dy; out.changed = ["y1", "y2"];
+      } else {
+        out.x1 += dx; out.x2 += dx; out.y1 += dy; out.y2 += dy; out.changed = ["x1", "x2", "y1", "y2"];
+      }
+      return out;
+    }
+    if (grab.kind === "handle" && grab.xs && grab.ys) {
+      out[grab.xs] += dx; out[grab.ys] += dy; out.changed = [grab.xs, grab.ys];
+    }
+    return out;
+  }
+
+  // 비교선 마지막 값이 보이는 가격 범위 밖이면 가장자리 방향("up"|"down"), 안이면 "".
+  function edgeOf(value, min, max) {
+    if (!finite(value)) return "";
+    if (value > max) return "up";
+    if (value < min) return "down";
+    return "";
+  }
+
   // 오른쪽 여백(미래 봉 자리) 봉 수: 마지막 봉이 가격 축에 붙지 않게. 봉이 적으면 최소 2봉.
   function rightPadBars(n) {
     if (!(n > 1)) return 0;
@@ -190,6 +275,11 @@
     validDrawing,
     compareOverlay,
     spreadLabels,
+    spreadLabelsPinned,
+    drawHandles,
+    editGrabAt,
+    applyEditDrag,
+    edgeOf,
     rightPadBars,
     shouldRefreshIntraday,
   };

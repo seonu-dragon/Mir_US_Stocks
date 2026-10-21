@@ -367,11 +367,11 @@ html[data-market="kr"][data-theme="dark"] {
          상단 셸을 먼저 칠하고, 전체 시트는 preload->stylesheet 스왑으로 뒤이어
          붙인다. JS 가 없으면 noscript 로 정상 로드한다. 인라인 셸이 above-the-fold
          (헤더/히어로/탭/토큰·다크테마)를 모두 덮으므로 FOUC 없이 첫 페인트가 빨라진다. -->
-    <link rel="preload" href="styles.css?v=fcaf2a52f4" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="styles.css?v=fcaf2a52f4"></noscript>
+    <link rel="preload" href="styles.css?v=de9ecaf32a" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="styles.css?v=de9ecaf32a"></noscript>
     <!-- safeStorage: 모든 스크립트가 쓰는 localStorage 래퍼. 반드시 첫 외부 스크립트(각 파일의 인라인 폴백은 2026-09-04 제거). -->
     <script src="storage.js?v=dff414d117"></script>
-    <script src="build_id.js?v=cc5db6cb3a"></script>
+    <script src="build_id.js?v=e0462bcf06"></script>
     <script>
       (function () {
         if (!("serviceWorker" in navigator)) return;
@@ -579,20 +579,6 @@ html[data-market="kr"][data-theme="dark"] {
           <section class="xm-home" id="crossMarketHome" hidden aria-label="국내·미국 연관 종목 움직임"></section>
           <section class="industry-home-card" id="industryHomeCard" hidden aria-label="산업 신호등"></section>
           <section class="kr-highlights" id="krHighlights" hidden></section>
-      <section class="watchlist-bar" id="watchlistBar" hidden>
-        <div class="watchlist-head">
-          <div>
-            <strong>관심종목</strong>
-            <span class="muted" id="watchlistSummary">0개</span>
-          </div>
-          <div class="watchlist-head-actions">
-            <button type="button" class="ghost compact-btn" id="watchlistOpenBulk">리스트 관리</button>
-            <button type="button" class="ghost compact-btn" id="watchlistShare">링크 공유</button>
-          </div>
-        </div>
-        <div class="watchlist-chips" id="watchlistChips"></div>
-      </section>
-
           <!-- "오늘 내 주식은" 보유·관심 종목 요약(my-digest.js) — 내 종목 이벤트 바로 위 -->
           <section class="my-digest" id="myDigestToday" hidden aria-label="오늘 내 주식은"></section>
 
@@ -1457,6 +1443,7 @@ html[data-market="kr"][data-theme="dark"] {
                       <button type="button" data-cmode="overlay" class="is-active" aria-pressed="true" title="가격 차트 위 %">겹쳐 보기</button>
                       <button type="button" data-cmode="panel" aria-pressed="false" title="아래 별도 패널">패널</button>
                     </div>
+                    <button type="button" class="ghost chart-compare-fit" id="chartCompareFit" aria-pressed="false" title="세로 자동 맞춤에 비교선까지 넣기(끄면 메인 종목 기준)">비교선까지 맞춤</button>
                     <div class="compare-chip-list" id="chartCompareList"></div>
                   </div>
                     <div class="chart-preset-bar">
@@ -3436,8 +3423,8 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="macro-odds.js?v=62883cf258"></script>
     <script src="chart-yscale-core.js?v=33f67dd978"></script>
     <script src="chart-events-core.js?v=733715a6b0"></script>
-    <script src="chart-tools-core.js?v=7ddef31106"></script>
-    <script src="chart.js?v=bdfbb95dbd"></script>
+    <script src="chart-tools-core.js?v=63fb5b1156"></script>
+    <script src="chart.js?v=03cf6beb77"></script>
     <script src="institutional.js?v=02c52dab3b"></script>
     <script src="markets-etf.js?v=e8d8cf0ec6"></script>
     <script src="kr-panels.js?v=4a548a9ebb"></script>
@@ -3452,7 +3439,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="event-study.js?v=039f23654c"></script>
     <script src="timeline-core.js?v=e827c62edd"></script>
     <script src="timeline.js?v=10a1c71063"></script>
-    <script src="watchlist.js?v=c54b56654e"></script>
+    <script src="watchlist.js?v=3bca119a9d"></script>
     <script src="push-alerts-core.js?v=fc049baf03"></script>
     <script src="web-push.js?v=9a1ecf4141"></script>
     <script src="earnings-insight.js?v=d71fe2ed8c"></script>
@@ -3476,24 +3463,24 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="stock-view.js?v=ca6650f62f"></script>
     <script src="subscribe-feeds.js?v=c5e0fba053"></script>
     <script src="home-chart-core.js?v=7081095dd9"></script>
-    <script src="home-dash.js?v=15e699c81d"></script>
+    <script src="home-dash.js?v=4e82c9ca6c"></script>
     <script src="find-table-core.js?v=7a807895ca"></script>
     <script src="find-table.js?v=75219a0a5a"></script>
     <script src="target-changes.js?v=d7758698d4"></script>
     <script src="toc-layout.js?v=a05156a05c"></script>
     <script src="mobile-cards.js?v=0e05cff78d"></script>
-    <script src="mobile-clamp.js?v=1e24e8d7c5"></script>
+    <script src="mobile-clamp.js?v=40e43360da"></script>
     <script src="calendar-panel-core.js?v=86078ffe15"></script>
     <script src="market-feed-core.js?v=f09c7d8fe8"></script>
     <script src="market-feed.js?v=d654db82b3"></script>
-    <script src="calendar-panel.js?v=f7a9e72afc"></script>
+    <script src="calendar-panel.js?v=8ef6d7af6d"></script>
     <script src="lockup-core.js?v=efe4fefb2c"></script>
     <script src="lockups.js?v=916fe5735b"></script>
     <script src="stock-summary-core.js?v=e89196e8f9"></script>
     <script src="stock-summary.js?v=1cc5fa4c73"></script>
-    <script src="mobile-lists.js?v=0404ed9c85"></script>
+    <script src="mobile-lists.js?v=aa21ba9e7e"></script>
     <script src="etf-holdings.js?v=80ac5d35cb"></script>
-    <script src="app.js?v=205f6aa6ca"></script>
+    <script src="app.js?v=de4a06c98f"></script>
     <script src="inst-holders-core.js"></script>
     <script src="inst-holders.js"></script>
     <script src="lookthrough-core.js?v=8ce1b12e01"></script>
@@ -3501,7 +3488,7 @@ html[data-market="kr"][data-theme="dark"] {
     <script src="lookthrough.js?v=bf49f004ba"></script>
     <script src="ai-cosmos.js?v=16916cca17"></script>
     <script src="ai-mode-welcome.js?v=6a44282cfb"></script>
-    <script src="rail.js?v=1f288908d6"></script>
+    <script src="rail.js?v=62e20dcf27"></script>
     <!-- 업데이트 소식 + 화면별 '새 기능' 카드(changelog.js). 데이터 data/changelog.js 는 부팅 뒤 지연 로드 -->
     <script src="changelog-core.js?v=9182db96c9"></script>
     <script src="changelog.js?v=05c1bce239"></script>

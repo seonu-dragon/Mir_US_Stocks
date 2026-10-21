@@ -25,7 +25,9 @@ function mclampApply(spec) {
   groups.forEach((g, gi) => {
     const key = `${spec.host}|${gi}`;
     const items = [...g.querySelectorAll(spec.items)];
-    let btn = g.querySelector(":scope .mc-more");
+    // 버튼은 목록 바로 뒤(afterend)라 목록이 곧 호스트이면(dailyActionGrid) 호스트 밖에 놓인다 — 묶음 안에서만
+    // 찾으면 못 찾고 다시 그릴 때마다 새 버튼을 붙여 '더 보기'가 3개씩 쌓였다(2026-10-21). 열쇠로 찾는다.
+    let btn = document.querySelector(`.mc-more[data-mc-key="${key}"]`);
     const clamp = mclampIsPhone() && !mclampOpen.has(key) && items.length > spec.n + 1;
     items.forEach((it, i) => it.classList.toggle("mc-hidden", clamp && i >= spec.n));
     if (!clamp) { if (btn) btn.remove(); return; }

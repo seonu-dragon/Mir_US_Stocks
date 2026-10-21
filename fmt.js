@@ -26,7 +26,8 @@ function fmtRsi(item) {
 }
 // 시장별 통화로 EPS 포맷. KR 은 원(정수), US 는 달러(소수 2자리). 음수도 자연 처리.
 function fmtEpsValue(v) {
-  if (!Number.isFinite(Number(v))) return "—";
+  // Number(null) = 0 이라 EPS 결측(epsTtmValue → null)이 "$0.00" 으로 찍혔다.
+  if (v == null || v === "" || !Number.isFinite(Number(v))) return "—";
   const n = Number(v);
   return isKrMarket() ? `${Math.round(n).toLocaleString("ko-KR")}원` : `$${n.toFixed(2)}`;
 }

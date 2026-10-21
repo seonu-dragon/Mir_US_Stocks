@@ -1261,6 +1261,10 @@ function setupChartInteractions() {
   let lastTapAt = 0;
   let lastTapX = 0;
   let lastTapY = 0;
+  // 이번 드래그에서 실제로 화면이 바뀌었는지. 안 움직인 클릭에서 pointerup 마다 다시 그리면
+  // (innerHTML 교체) 눌렀던 노드가 사라져 브라우저가 click·dblclick 을 만들지 않는다 —
+  // 마우스 더블클릭 초기화가 안 되던 원인.
+  let panChanged = false;
 
   const beginPan = (event) => {
     if (event.target.closest && event.target.closest("[data-yscale]")) return; // A/L 버튼
@@ -1280,6 +1284,7 @@ function setupChartInteractions() {
       : NaN;
     dragPlotPxH = yp ? Math.max(1, yp.plotPxH) : 1;
     dragPointerId = event.pointerId;
+    panChanged = false;
     chartPanActive = true;
     startX = event.clientX;
     startY = event.clientY;
@@ -1300,6 +1305,7 @@ function setupChartInteractions() {
     if (dragMode === "yzoom") {
       // 가격 축 드래그: 위로 끌면 늘리고(확대) 아래로 끌면 압축. 움직였을 때만 수동으로 전환.
       if (dragYStart && Math.abs(dy) >= 1) {
+        panChanged = true;
         const f = window.MirYScale.dragZoomFactor(dy, dragPlotPxH);
         setChartYManual(window.MirYScale.zoomRange(dragYStart, f, dragYAnchor, chartYScale.log, dragYRef));
         scheduleChartPanRedraw();
@@ -1309,6 +1315,7 @@ function setupChartInteractions() {
     }
     // 자동 맞춤이 꺼져 있으면 본문 드래그가 세로로도 움직인다(켜져 있으면 가로만 — 예전 동작).
     if (!chartYScale.auto && dragYStart && dy !== 0) {
+      panChanged = true;
       setChartYManual(window.MirYScale.panRange(dragYStart, dy, dragPlotPxH, chartYScale.log));
       scheduleChartPanRedraw();
     }
@@ -1317,6 +1324,7 @@ function setupChartInteractions() {
     let next = Math.round(startOffset + dx * barsPerPx);
     next = Math.max(0, Math.min(Math.max(0, dragN - dragWindow), next));
     if (next !== chartState.offset) {
+      panChanged = true;
       chartState.offset = next;
       scheduleChartPanRedraw();
     }
@@ -1367,6 +1375,10 @@ function setupChartInteractions() {
     if (doubleTap) { // resetChartView 와 같은 상태; 리드로우는 아래 한 번
       chartState = { ...chartState, zoom: 1, offset: 0 };
       chartYScale = window.MirYScale.withAuto(chartYScale);
+    }
+    if (!doubleTap && !panChanged && !chartPanRafId) {
+      chartPanActive = false; // 그린 적이 없으니 다시 그릴 것도 없다(click·dblclick 보존)
+      return;
     }
     endChartPan();
   };

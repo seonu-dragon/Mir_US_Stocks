@@ -1,6 +1,6 @@
 // 배당 성장 이력 — 순수 표기 모듈(DOM 없음).
 // 브라우저 window.MirDivGrowthCore, node 테스트 scripts/tests/test_dividend_growth_core.mjs.
-// 입력 window.DIVIDEND_GROWTH(scripts/build_dividend_growth.py, 미국 전용):
+// 입력 window.DIVIDEND_GROWTH(시장별 — 미국 scripts/build_dividend_growth.py, 국내 build_kr_dividend_growth.py):
 //   { lastYear, cols: [up, paid, cagr5, cagr10, last, since, capped, paidCapped, lastCut, specials], tickers: {T: [...]} }
 // up = 연속 증가 연수, paid = 연속 지급 연수(둘 다 lastYear 까지), capped/paidCapped = 연속이 기록 첫머리(since)에
 // 닿아 그 앞은 모름 → 화면은 'N년+' 로 적는다.

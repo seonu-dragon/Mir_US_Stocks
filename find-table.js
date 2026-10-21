@@ -287,9 +287,9 @@ function ftRenderDividend(wrap, core) {
     return;
   }
   const outlierTip = window.MirFundSanity ? window.MirFundSanity.describe("divYield") : "";
-  // 연속 배당 증가(DIVIDEND_GROWTH, 미국 전용 lazy) — 받기 전·국내에는 열이 없다.
+  // 연속 배당 증가(DIVIDEND_GROWTH, 시장별 lazy — 미국 야후·국내 DART) — 받기 전에는 열이 없다.
   const cfgFeats = (typeof marketCfg === "function" && marketCfg().features) || {};
-  const dgOn = ftMarket() !== "kr" && cfgFeats.dividendGrowth !== false;
+  const dgOn = cfgFeats.dividendGrowth !== false;
   if (dgOn && !window.DIVIDEND_GROWTH && typeof ensureFeatureData === "function") {
     ensureFeatureData("dividendGrowth").then((ok) => { if (ok && typeof scheduleFeatureViewRefresh === "function") scheduleFeatureViewRefresh(); });
   }

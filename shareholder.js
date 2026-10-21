@@ -114,7 +114,7 @@ function shrKpis(s, cur, growth) {
   tiles.push(["배당수익률(현재)", Number.isFinite(s.yieldPct) ? `${s.yieldPct.toFixed(2)}%` : "—", ""]);
   const p = s.ttmPayout;
   tiles.push(["배당성향", shrPayoutText(p), p ? (p.basis === "ttm" ? "최근 1년 배당 ÷ 최근 4분기 EPS" : "직전 결산") : ""]);
-  // 배당 성장 이력(DIVIDEND_GROWTH, 1985~ 배당 기록) — 미국만. 연속이 기록 첫머리에 닿으면 'N년+'.
+  // 배당 성장 이력(DIVIDEND_GROWTH — 미국 야후 1985~, 국내 DART 사업보고서 2013~). 연속이 기록 첫머리에 닿으면 'N년+'.
   const dg = window.MirDivGrowthCore;
   if (growth && dg) {
     tiles.push(["연속 배당 증가", dg.streakText(growth), dg.subText(growth)]);
@@ -226,8 +226,8 @@ function renderShareholder(item) {
   const hist = histRaw && histRaw.rows ? sh.buybackHistory(histRaw.rows, dayBase) : null;
   const us8k = !kr ? sh.usBuybackAnnouncements(ticker, (window.MATERIAL_EVENTS || {}).events) : [];
   const missing = kr && histRaw && histRaw.rows ? sh.missingDividendYears(s.years, histRaw.rows, dayBase) : [];
-  if (!kr && feats.dividendGrowth !== false && !window.DIVIDEND_GROWTH) shrEnsure("dividendGrowth");
-  const growth = !kr && feats.dividendGrowth !== false && window.DIVIDEND_GROWTH && window.MirDivGrowthCore
+  if (feats.dividendGrowth !== false && !window.DIVIDEND_GROWTH) shrEnsure("dividendGrowth");
+  const growth = feats.dividendGrowth !== false && window.DIVIDEND_GROWTH && window.MirDivGrowthCore
     ? window.MirDivGrowthCore.record(window.DIVIDEND_GROWTH, ticker) : null;
 
   const hasBuyback = !!(share || (recent && recent.rows.length) || hist || us8k.length);

@@ -40,7 +40,7 @@
     { key: "epsRev30", label: "추정치 30일", markets: ["us"], num: true, metric: "epsRev30", lazy: true },
     { key: "ratingUp30", label: "의견 상향 30일", markets: ["us"], num: true, metric: "ratingUp30", lazy: true },
     { key: "targetChg30", label: "목표가 변경 30일", markets: ["us"], num: true, metric: "targetChg30", lazy: true },
-    { key: "divGrowthYears", label: "배당 연속 증가", markets: ["us"], num: true, metric: "divGrowthYears", lazy: true },
+    { key: "divGrowthYears", label: "배당 연속 증가", markets: ["us", "kr"], num: true, metric: "divGrowthYears", lazy: true },
     { key: "optPcr", label: "풋/콜", markets: ["us"], num: true, metric: "optPcr", lazy: true },
     { key: "optMove", label: "예상 변동폭", markets: ["us"], num: true, metric: "optMove", lazy: true },
   ];

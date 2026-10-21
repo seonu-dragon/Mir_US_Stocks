@@ -282,6 +282,8 @@ CHECKS = {
     # company-info.yml dividends 잡(수요일) — 배당 성장 이력. 주 1회라 9일.
     "dividend-growth": [
         ("data/dividend_growth.json", 9, True),
+        # 국내(DART 사업보고서, 같은 잡의 continue-on-error 스텝). 호출 상한으로 며칠에 나눠 채워도 updatedAtKst 는 매번 새로 쓴다.
+        ("data/korea/dividend_growth.json", 9, True),
     ],
     # company-info.yml — 기업개요(수요일)·US 목표주가 범위(수·토). 인덱스 updatedAtKst 는 실행마다 새로 쓴다.
     # 기업개요는 주 1회라 한 번 실패를 바로 잡도록 8일, 목표주가는 주 2회라 5일. 0건(count)도 잡는다.

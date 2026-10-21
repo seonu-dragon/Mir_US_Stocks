@@ -17185,3 +17185,21 @@ button.mfeed-who:hover strong { text-decoration: underline; }
   body:has(> #caMain) > .topbar h1 { margin: 0; font-size: var(--fs-title); }
   body:has(> #caMain) > .topbar .ghost-button { width: auto; min-height: 36px; padding: 6px 12px; font-size: var(--fs-sub); }
 }
+
+/* ===== 2026-10-21 모바일 터치 타깃(24px 미만이던 것) ===== */
+@media (max-width: 640px) {
+  /* 캘린더: 필터 체크박스·관심만 체크 — 글자 줄 전체를 44px 로, 상자도 키운다 */
+  .calendar-filter-group .check-label,
+  .calp-watch.check-label { height: auto; min-height: 44px; padding: 0 4px; }
+  .calendar-filter-group .check-label input[type="checkbox"],
+  .calp-watch input[type="checkbox"] { width: 20px; height: 20px; }
+  /* 캘린더 ‹ › 이동 */
+  .calp-nav .compact-btn { min-width: 44px; min-height: 44px; }
+  /* 오늘 요약 AI 브리핑 '전체 펼치기' */
+  .home-brief-more > summary { display: flex; align-items: center; min-height: 44px; cursor: pointer; }
+  /* 공시 '이 유형의 과거 반응 보기' */
+  .es-link { min-height: 44px; padding-top: 10px; padding-bottom: 6px; }
+  .es-link.is-inline { display: inline-block; min-height: 32px; padding: 6px 0; }
+  /* AI 브리핑 본문 링크: 문장 안 링크는 줄 높이를 바꾸지 않고 눌리는 면만 위아래로 넓힌다 */
+  .briefing-content a { padding: 6px 0; }
+}
